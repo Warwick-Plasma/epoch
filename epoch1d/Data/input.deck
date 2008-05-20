@@ -1,0 +1,4 @@
+import:control.deck   #import the file control.deck
+import:boundary.deck  #import the file boundary.deck
+import:species.deck   #import the file species.deck
+import:output.deck    #import the file output.deck

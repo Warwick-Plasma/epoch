@@ -1,0 +1,9 @@
+begin:boundaries
+	#Can be "other" or "periodic" currently
+	#There is beta support for "simple_laser" boundary conditions
+	#Which drives a laser beam in from a boundary by applying a time
+	#varying electric field at the boundary
+	xbc_left=other
+	xbc_right=other
+end:boundaries
+
