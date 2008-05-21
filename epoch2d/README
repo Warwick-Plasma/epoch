@@ -1,0 +1,46 @@
+EPOCH2D
+-------
+Epoch2D is the oldest of the three codes, and still uses arrays to represent particle properties rather than linked lists, and only runs in particle decomposed mode. Unless there is a negative reaction to the linked lists, this code will be upgraded to match the structure of Epoch1D. Most of the time you will only have to change the codes input deck files and the single source file "initial_conditions.f90"
+
+
+Compiling the code
+------------------
+The code should compile on typing "make" in the installed directory. 
+Type "make clean" to unbuild the code and remove all temporary files. This does not delete data which must be removed by hand.
+Type "make visit" to build the plugin to allow the LLNL Visit(https://wci.llnl.gov/codes/visit/) to read the output files from the PIC code
+
+Starting the code
+-----------------
+To run the code at the command line (on two processors), just type
+
+mpirun -np 2 ./bin/epoch2d 
+
+Usually a similar approach will work on a cluster (see the included epoch2d.pbs example script).
+
+The input deck
+--------------
+
+The code expects there to be a file "input.deck" in the root directory of the code (an example is supplied) and most of the parameters are specified in the input deck. There are comments in the input deck which explain the options available.
+
+
+Representation of particles in the code
+---------------------------------------
+
+As this is a very old form of the Epoch code, particle properties are specified using arrays. These are
+
+REAL Part_Pos(1:npart,1:2)    - The position in x,y
+REAL Part_P(1:npart,1:3)      - The momentum in x,y,z
+INTEGER Part_Species(1:npart) - The particle species number
+
+The species properties are given as
+Species(iSpecies,1) - Charge for species iSpecies
+Species(iSpecies,2) - Mass for species iSpecies
+
+Setting the initial conditions
+------------------------------
+
+To set the initial conditions, you need to modify the routine "Equilibrium" in the file "initial_conditions.F90". To set field initial conditions, you simply set the corresponding array to have the value wanted, there is an array simply called "x" or "y" which contains the x or y position of a given point on the grid. You should always set the arrays from -1:nx+1,-1:ny+1. The arrays are
+
+Ex, Ey, Ez, Bx, By, Bz
+
+The particles must be initially set up individually, having positions between (x_start:x_end,y_start:y_end) with any momentum required. There is a helper function MomentumFromTemperature which will return a random value for a momentum obtained from a thermal distribution for a given mass and temperature. The particles arrays run from 1:npart and each particle must be assigned all three properties (position, momentum, species). If species is set to zero then the code will ignore that particle. Species must be between 1:nspecies.

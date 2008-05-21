@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#PBS -l nodes=8:ppn=4,walltime=72:00:00 -q prod
+#PBS -N PIC2D(PSC_variant)
+cd $PBS_O_WORKDIR
+date
+mpirun -machinefile $PBS_NODEFILE -np 32 ./bin/pic2d
+date
+exit 0
+
