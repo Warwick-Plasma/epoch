@@ -112,9 +112,9 @@ DO ipart=1,MainRoot%Count
 		Current%Part_Species=2
 	ENDIF
 	Current%Part_Pos=(random(idum)*(x_end_local-x_start_local))+x_start_local
-	Current%Part_P(0) = MomentumFromTemperature(species(Current%Part_Species,2),Temperature,idum)
+	Current%Part_P(1) = MomentumFromTemperature(species(Current%Part_Species,2),Temperature,idum)
 	!No motion out of plane
-	Current%Part_P(1:2)=0.0_num
+	Current%Part_P(2:3)=0.0_num
 	Current=>Current%Next
 ENDDO
 
