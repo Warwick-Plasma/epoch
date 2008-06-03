@@ -89,12 +89,12 @@ CONTAINS
        count=count+npart_per_cell_global(ix)
        IF (count .GE. npart_per_rank_ideal) THEN
           count=0
-          nx_each_rank_new(partition)=ix-nx_each_rank_new(partition-1)
+          nx_each_rank_new(partition)=ix-SUM(nx_each_rank_new(0:partition-1))
           partition=partition+1
           IF (partition .EQ. nproc-1) EXIT
        ENDIF
     ENDDO
-    nx_each_rank_new(nproc-1)=nx_global - nx_each_rank_new(nproc-2)
+    nx_each_rank_new(nproc-1)=nx_global - SUM(nx_each_rank_new(0:nproc-2))
 
 !!$    nx_each_rank_new=nx
 
@@ -166,6 +166,7 @@ CONTAINS
        x_starts(iproc)=x_global(startpoint(iproc))
        x_ends(iproc)=x_global(endpoint(iproc)+1)
     ENDDO
+
 
     DEALLOCATE(jx,jy,jz)
     ALLOCATE(jx(-2:nx_each_rank_new(rank)+3),jy(-2:nx_each_rank_new(rank)+3),jz(-2:nx_each_rank_new(rank)+3))

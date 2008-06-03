@@ -28,13 +28,15 @@ CONTAINS
     REAL(num) :: x1,x2
     INTEGER :: i
     TYPE(Particle), POINTER :: Cur
-    INTEGER :: n, clock
+    INTEGER :: n, clock,rate=1000,max
     INTEGER :: idum
     REAL(num),DIMENSION(-1:nx_global+2) :: temp
     TYPE(ParticlePointer),DIMENSION(1:nspecies) :: SpeciesList
 
 
-    CALL SYSTEM_CLOCK(COUNT=clock)
+    max_rand=0.0_num
+    max=100000000
+    CALL SYSTEM_CLOCK(clock,rate,max)
     idum=-(clock+rank)
 
     lambda_d=dx/0.4_num
@@ -59,9 +61,10 @@ CONTAINS
 
 !!$    weight=1.0_num
 !!$    DO WHILE(ASSOCIATED(Cur))
-!!$       Cur%Part_pos=random(idum)*5.0_num
+!!$       Cur%Part_pos=(random(idum)*(x_end-x_start))+x_start
 !!$       Cur%Part_species=1
-!!$       Cur%Part_p(1)=1.0e8_num * m0
+!!$       Cur%Part_p=0.0_num
+!!$       Cur%Part_p(1) = 1.0e8_num * m0
 !!$       Cur=>Cur%Next
 !!$    ENDDO
 
@@ -91,7 +94,6 @@ CONTAINS
     CALL SetupParticleListByTemperature(temp,DIR_X,SpeciesList(2),idum)
     temp=0.0_num
     CALL SetupParticlesByTemperature(temp,DIR_Y+DIR_Z,idum)
-
 
 
 

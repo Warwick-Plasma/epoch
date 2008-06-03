@@ -32,6 +32,7 @@ MODULE constants
   REAL(num),PARAMETER :: M0 = 9.10938188e-31_num !kg Mass of electron
   REAL(num),PARAMETER :: kb = 1.3806503e-23_num  !m^2kgs(-2)K^(-1)
   REAL(num),PARAMETER :: epsilon0 = 8.85418782e-12_num
+  REAL(num),PARAMETER :: mu0 = 1.25663706e-6_num
   REAL(num),PARAMETER :: c = 2.99792458e8_num
 
 END MODULE constants
@@ -129,6 +130,12 @@ MODULE shared_data
   INTEGER :: Full_Dump_Every
   INTEGER, PARAMETER :: num_vars_to_dump = 25
   INTEGER, DIMENSION(num_vars_to_dump) :: DumpMask
+
+  !Energy diagnostics
+  REAL(num),DIMENSION(1:3) :: en_kinetic
+  REAL(num),DIMENSION(:,:),ALLOCATABLE :: en_kinetic_species
+  REAL(num) :: en_kinetic_total
+  REAL(num),DIMENSION(:),ALLOCATABLE :: en_kinetic_species_total
 
   !Termination control
   LOGICAL :: halt = .FALSE.

@@ -72,6 +72,12 @@ CONTAINS
     INTEGER :: xmin,xmax,ymin,ymax
     REAL(num) :: wx,wy,wz,cell_y_r0
 
+    !Kinetic energy calculation
+    REAL(num) :: ek_particle,temp
+    REAL(num),DIMENSION(1:3) :: ek_particle_dir
+    REAL(num),DIMENSION(:),ALLOCATABLE :: temp_1d
+    REAL(num),DIMENSION(:,:),ALLOCATABLE :: temp_2d
+
     REAL(num) :: x0,mean
     INTEGER :: iSpecies
 
@@ -96,7 +102,13 @@ CONTAINS
 
     ipart=0
     Cur=>MainRoot%Head
-    DO WHILE (ipart < MainRoot%Count)
+
+    en_kinetic=0.0_num
+    en_kinetic_species=0.0_num
+    en_kinetic_total=0.0_num
+    en_kinetic_species_total=0.0_num
+
+    DO WHILE (ASSOCIATED(Cur))
 
        !Set the weighting functions to zero for each new particle
        Xi0x=0.0
@@ -117,12 +129,6 @@ CONTAINS
        part_m  = species(cur%Part_species,2)
 #endif
 
-       !Calculate v(t+0.5dt) from p(t)
-       !See PSC manual page (25-27)
-       root=1.0_num/SQRT((part_m)**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
-       part_vx = part_px * root
-       part_vy = part_py * root
-       part_vz = part_pz * root
 
        !Particle weighting function
 #ifdef PER_PARTICLE_WEIGHT
@@ -131,6 +137,21 @@ CONTAINS
        part_weight=weight
 #endif
 
+       !This shouldn't happen, but try to handle bad particles gracefully
+       IF (part_weight .EQ. 0 .OR. Cur%Part_Species .EQ. 0) THEN
+          ipart=ipart+1
+          Cur=>Cur%Next
+          CYCLE
+       ENDIF
+       !Calculate v(t+0.5dt) from p(t)
+       !See PSC manual page (25-27)
+       root=1.0_num/SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+       part_vx = part_px * root
+       part_vy = part_py * root
+       part_vz = part_pz * root
+
+
+       !PRINT *,part_vx
 
        !Move particles to half timestep position to first order
        part_x=part_x + part_vx*dt/2.0_num
@@ -154,11 +175,21 @@ CONTAINS
 
        !      PRINT *,cell_x1
 
-       IF (cell_x1 .GT. nx+2) PRINT *,"ERROR in push",rank, Cur%Part_Pos, part_x, x_start_local
+       IF (cell_x1 .GT. nx+2 .OR. cell_x1 .LT. 0) PRINT *,"ERROR in push",rank, Cur%Part_Pos, part_x, part_px,ipart
 
-       ekbar_sum(cell_x1-1,cur%part_species)=ekbar_sum(cell_x1-1,Cur%part_species) + gmx * 0.5_num * part_m * (part_vx**2+part_vy**2+part_vz**2)
-       ekbar_sum(cell_x1,cur%part_species)  =ekbar_sum(cell_x1,Cur%part_species)   + g0x * 0.5_num * part_m * (part_vx**2+part_vy**2+part_vz**2)
-       ekbar_sum(cell_x1+1,cur%part_species)=ekbar_sum(cell_x1+1,Cur%part_species) + gpx * 0.5_num * part_m * (part_vx**2+part_vy**2+part_vz**2)
+       ek_particle=SQRT(((part_px*part_weight)**2+(part_py*part_weight)**2+(part_pz*part_weight)**2)*c**2 + (part_m*part_weight)**2*c**4) - (part_m*part_weight)*c**2
+       ek_particle_dir(1)=SQRT(((part_px*part_weight)**2)*c**2 + (part_m*part_weight)**2*c**4) - (part_m*part_weight)*c**2
+       ek_particle_dir(2)=SQRT(((part_py*part_weight)**2)*c**2 + (part_m*part_weight)**2*c**4) - (part_m*part_weight)*c**2
+       ek_particle_dir(3)=SQRT(((part_pz*part_weight)**2)*c**2 + (part_m*part_weight)**2*c**4) - (part_m*part_weight)*c**2
+       !ek_particle=part_weight * part_m/2.0_num * (part_vx**2+part_vy**2+part_vz**2)
+       en_kinetic=en_kinetic+ek_particle_dir
+       en_kinetic_total=en_kinetic_total+ek_particle
+       en_kinetic_species(Cur%Part_species,:)=en_kinetic_species(Cur%Part_species,:)+ek_particle_dir
+       en_kinetic_species_total(Cur%Part_species)=en_kinetic_species_total(Cur%Part_species)+ek_particle
+
+       ekbar_sum(cell_x1-1,cur%part_species)=ekbar_sum(cell_x1-1,Cur%part_species) + gmx * ek_particle
+       ekbar_sum(cell_x1,cur%part_species)  =ekbar_sum(cell_x1,Cur%part_species)   + g0x * ek_particle
+       ekbar_sum(cell_x1+1,cur%part_species)=ekbar_sum(cell_x1+1,Cur%part_species) + gpx * ek_particle
 
        ct(cell_x1-1,cur%part_species)=ct(cell_x1-1,Cur%part_species) + gmx
        ct(cell_x1,cur%part_species)  =ct(cell_x1,Cur%part_species)   + g0x
@@ -206,7 +237,7 @@ CONTAINS
 
        !Half timestep,then use Boris1970 rotation, see Birdsall and Langdon
 
-       root = cmratio / SQRT((part_m)**2 + (pxm**2 + pym**2 + pzm**2)/c**2)
+       root = cmratio / SQRT(part_m**2 + (pxm**2 + pym**2 + pzm**2)/c**2)
        taux = bx_part * root
        tauy = by_part * root
        tauz = bz_part * root
@@ -228,7 +259,7 @@ CONTAINS
        part_pz = pzp + cmratio * ez_part
 
        !Calculate particle velocity from particle momentum
-       root = 1.0_num/SQRT((part_m)**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+       root = 1.0_num/SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
        part_vx=part_px * root
        part_vy=part_py * root
        part_vz=part_pz * root
@@ -345,6 +376,7 @@ CONTAINS
     ENDIF
 
 
+    !Calculate the mean kinetic energy for each species in space
     ek_bar=0.0_num
     DO ispecies=1,nspecies
        DO ix=1,nx
@@ -352,6 +384,25 @@ CONTAINS
           ek_bar(ix,ispecies)=mean
        ENDDO
     ENDDO
+
+    !Add the total kinetic energy for the diagnostics
+    CALL MPI_REDUCE(en_kinetic_total,temp,1,mpireal,MPI_SUM,0,comm,errcode)
+    en_kinetic_total=temp
+
+    ALLOCATE(temp_1d(1:3))
+    CALL MPI_REDUCE(en_kinetic,temp_1d,3,mpireal,MPI_SUM,0,comm,errcode)
+    en_kinetic=temp_1d
+    DEALLOCATE(temp_1d)
+
+    ALLOCATE(temp_1d(1:nspecies))
+    CALL MPI_REDUCE(en_kinetic_species_total,temp_1d,nspecies,mpireal,MPI_SUM,0,comm,errcode)   
+    en_kinetic_species_total=temp_1d
+    DEALLOCATE(temp_1d)
+
+    ALLOCATE(temp_2d(1:nspecies,1:3))
+    CALL MPI_REDUCE(en_kinetic_species,temp_2d,nspecies*3,mpireal,MPI_SUM,0,comm,errcode)
+    en_kinetic_species=temp_2d
+    DEALLOCATE(temp_2d)
 
     DEALLOCATE(Xi0x)
     DEALLOCATE(Xi1x)

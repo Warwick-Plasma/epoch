@@ -13,7 +13,7 @@ MODULE diagnostics
 
   PRIVATE
 
-  PUBLIC :: set_dt, output_routines
+  PUBLIC :: set_dt, output_routines, init_energy_account
 
 CONTAINS
 
@@ -22,7 +22,7 @@ CONTAINS
 
     INTEGER, INTENT(in) :: i
     LOGICAL :: print_arrays,last_call
-    CHARACTER(LEN=13+Data_Dir_Max_Length) :: filename
+    CHARACTER(LEN=9+Data_Dir_Max_Length+n_zeros) :: filename
     CHARACTER(LEN=30) :: FileNameDesc
     CHARACTER(LEN=35) :: Temp_Name
     INTEGER,SAVE :: output_file=0
@@ -31,6 +31,9 @@ CONTAINS
     INTEGER(KIND=8) :: n_part_per_it=10000
     INTEGER :: iSpecies,code
 
+
+    !Always call the energy account
+    CALL energy_account
 
     CALL io_test(i,print_arrays,last_call)
 
@@ -155,7 +158,6 @@ CONTAINS
        DEALLOCATE(Data)
     ENDIF
 
-
   END SUBROUTINE output_routines
 
   SUBROUTINE io_test(i, print_arrays, last_call)
@@ -194,15 +196,145 @@ CONTAINS
 
     !Force the code to always give the correct number of output dumps
     IF (dt_snapshots .GT. 0.0_num) dt1=MIN(dx/c,dt_snapshots)
-!    dt1=MIN(dt1,2.0_num*pi/omega)
+    !    dt1=MIN(dt1,2.0_num*pi/omega)
     dt=dt_multiplier * MIN(dt1,dx/c)
 
   END SUBROUTINE set_dt
+
+  SUBROUTINE NullifyString(String)
+
+    CHARACTER(LEN=*),INTENT(INOUT) :: String
+    INTEGER :: i
+
+    DO i=1,LEN(String)
+       String(i:i)=ACHAR(0)
+    ENDDO
+
+  END SUBROUTINE NullifyString
+
+  SUBROUTINE AssignNullString(StringIn,StringOut)
+
+    CHARACTER(LEN=*),INTENT(IN) :: StringIn
+    CHARACTER(LEN=*),INTENT(INOUT):: StringOut
+    INTEGER :: SizeIn,SizeOut,CopyLen,I
+
+    SizeIn=LEN(StringIn)
+    SizeOut=LEN(StringOut)
+
+    IF (SizeIn .LE. SizeOut) THEN
+       CopyLen=SizeIn
+    ELSE
+       CopyLen=SizeOut
+    ENDIF
+
+    DO i=1,SizeOut
+       IF (i .LE. CopyLen) THEN
+          StringOut(i:i)=StringIn(i:i)
+       ELSE
+          StringOut(i:i)=ACHAR(0)
+       ENDIF
+    ENDDO
+
+  END SUBROUTINE AssignNullString
+
+  SUBROUTINE Init_Energy_Account()
+
+    CHARACTER(LEN=3) :: Header="CTL"
+    INTEGER,PARAMETER :: LEN_STRING=40
+    CHARACTER(LEN=LEN_STRING) :: Name
+    INTEGER  :: VarCount
+    INTEGER :: SOF
+    INTEGER :: I
+
+
+    !Number of variables
+    VarCount=7 + nspecies + 3*nspecies
+    !Size of a floating point variable
+    SOF=num
+
+
+    !This is a test run for a new format for writing energy etc diagnostics
+
+    !Only rank 0 writes energy diagnostics
+    IF (rank .EQ. 0) THEN
+       WRITE(30) Header
+       WRITE(30) SOF
+       WRITE(30) LEN_STRING
+       WRITE(30) VarCount
+
+       CALL AssignNullString("En_total",Name)
+       WRITE(30) Name
+
+       CALL AssignNullString("En_Electric",Name)
+       WRITE(30) Name
+
+       CALL AssignNullString("En_Magnetic",Name)
+       WRITE(30) Name
+
+       CALL AssignNullString("En_Kinetic_total",Name)
+       WRITE(30) Name
+
+       CALL AssignNullString("En_Kinetic_x",Name)
+       WRITE(30) Name
+       CALL AssignNullString("En_Kinetic_y",Name)
+       WRITE(30) Name
+       CALL AssignNullString("En_Kinetic_z",Name)
+       WRITE(30) Name
+
+       DO i=1,nspecies
+          WRITE(Name,'("En_Kinetic_",a)') TRIM(Species_Name(i)%Value)
+          CALL AssignNullString(TRIM(Name),Name)
+          WRITE(30) Name
+       ENDDO
+
+       DO i=1,nspecies
+          WRITE(Name,'("En_Kinetic_x_",a)') TRIM(Species_Name(i)%Value)
+          CALL AssignNullString(TRIM(Name),Name)
+          WRITE(30) Name
+          WRITE(Name,'("En_Kinetic_y_",a)') TRIM(Species_Name(i)%Value)
+          CALL AssignNullString(TRIM(Name),Name)
+          WRITE(30) Name
+          WRITE(Name,'("En_Kinetic_z_",a)') TRIM(Species_Name(i)%Value)
+          CALL AssignNullString(TRIM(Name),Name)
+          WRITE(30) Name
+       ENDDO
+
+    ENDIF
+
+  END SUBROUTINE Init_Energy_Account
 
   SUBROUTINE energy_account()
 
     !Put energy conservation diagnostics in here
 
+    REAL(num) :: En_Electric, En_Magnetic,temp
+    INTEGER :: I
+
+    En_Electric=SUM(epsilon0/2.0_num * (Ex(1:nx)**2 + Ey(1:nx)**2 + Ez(1:nx)**2)*dx)
+    En_Magnetic=SUM(1.0_num/(2.0_num*mu0) * (Bx(1:nx)**2 + By(1:nx)**2 + Bz(1:nx)**2)*dx)
+
+    IF (domain .EQ. DO_DECOMPOSED) THEN
+       !If running with decomposed domains, then sum over processors
+       CALL MPI_REDUCE(En_Magnetic,temp,1,mpireal,MPI_SUM,0,comm,errcode)
+       En_Magnetic=temp
+       CALL MPI_REDUCE(En_Electric,temp,1,mpireal,MPI_SUM,0,comm,errcode)
+       En_Electric=Temp
+    ENDIF
+
+    !Kinetic energy is calculated during the particle push phase, so do nothing here for that
+    IF (rank .EQ. 0) THEN
+       WRITE(30) Time
+       WRITE(30) En_Electric+En_Magnetic+En_Kinetic_total
+       WRITE(30) En_Electric
+       WRITE(30) En_Magnetic
+       WRITE(30) En_Kinetic_total
+       WRITE(30) En_Kinetic
+       WRITE(30) En_Kinetic_Species_total
+       DO I=1,nspecies
+          WRITE(30) En_Kinetic_Species(I,:)
+       ENDDO
+    ENDIF
+    !PRINT *,en_kinetic
   END SUBROUTINE energy_account
 
 
@@ -320,7 +452,8 @@ CONTAINS
     partcount=0
     DO WHILE(ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
        partcount=partcount+1
-       root=1.0_num/SQRT(species(Cur%part_species,2)**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+       root=SQRT((species(Cur%part_species,2))**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+       IF (root .NE. 0.0_num) root=1.0_num/root
        data(partcount) = Cur%Part_p(1) * root
        Cur=>Cur%Next
     ENDDO
@@ -342,7 +475,8 @@ CONTAINS
     partcount=0
     DO WHILE(ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
        partcount=partcount+1
-       root=1.0_num/SQRT(species(Cur%part_species,2)**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+       root=SQRT((species(Cur%part_species,2))**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+       IF (root .NE. 0.0_num) root=1.0_num/root
        data(partcount) = Cur%Part_p(2) * root
        Cur=>Cur%Next
     ENDDO
@@ -364,7 +498,8 @@ CONTAINS
     partcount=0
     DO WHILE(ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
        partcount=partcount+1
-       root=1.0_num/SQRT(species(Cur%part_species,2)**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+       root=SQRT(species(Cur%part_species,2)**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+       IF (root .NE. 0.0_num) root=1.0_num/root
        data(partcount) = Cur%Part_p(3) * root
        Cur=>Cur%Next
     ENDDO
@@ -382,6 +517,7 @@ CONTAINS
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
 
+    IF (start) Cur=>MainRoot%Head
     partcount=0
     DO WHILE(ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
        partcount=partcount+1

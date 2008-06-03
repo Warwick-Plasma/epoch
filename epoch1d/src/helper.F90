@@ -7,6 +7,7 @@ MODULE helper
   SAVE
   !Direction parameters
   INTEGER, PARAMETER :: DIR_X=1, DIR_Y=2, DIR_Z=4, DIR_UX=8, DIR_UY=16, DIR_UZ=32
+  REAL(num) :: max_rand
 
 CONTAINS
 
@@ -85,7 +86,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: Direction
     TYPE(ParticlePointer),INTENT(IN) :: PartList
     INTEGER, INTENT(INOUT) :: idum
-    REAL(num) :: mass,temp_local,cell_x_r,cell_frac_x
+    REAL(num) :: mass,temp_local,cell_x_r,cell_frac_x,part_weight
     REAL(num) :: g0x,gpx,gmx
     TYPE(particle),POINTER :: Current
     INTEGER :: cell_x,cell_xp
@@ -99,6 +100,14 @@ CONTAINS
 #else
        mass=species(Current%part_species,2)
 #endif
+
+       !Particle weighting function
+#ifdef PER_PARTICLE_WEIGHT
+       part_weight=Current%Weight
+#else
+       part_weight=weight
+#endif
+
 
        !Assume that temperature is cell centred
        cell_x_r = (Current%Part_Pos-x_start)/dx
@@ -141,7 +150,7 @@ CONTAINS
     TYPE(particle),POINTER :: Current
     INTEGER :: cell_x,cell_xp
     INTEGER(KIND=8) :: ipart
-    REAL(num),DIMENSION(:),ALLOCATABLE :: Weight_Fn
+    REAL(num),DIMENSION(:),ALLOCATABLE :: Weight_Fn,Temp
     REAL(num),DIMENSION(-1:1) :: gx
     REAL(num) :: Data,rpos
     INTEGER :: Low, High, Point, OldPoint
@@ -212,10 +221,11 @@ CONTAINS
        Current=>Current%Next
        ipart=ipart+1
     ENDDO
+    PRINT *,weight_local
 #else
     !If not then use a CDF type scheme to redistibute the pseudoparticle density
     !This isn't perfect because particles are still split evenly across processors
-    ALLOCATE(Weight_Fn(1:nx_global))
+    ALLOCATE(Weight_Fn(1:nx_global),temp(-1:nx_global+2))
     DO ix=1,nx_global
        Weight_Fn(ix)=SUM(Density(1:ix)/SUM(Density))
     ENDDO
@@ -260,8 +270,9 @@ CONTAINS
     ipart=0
     DO WHILE(ipart < PartList%Count)
        cell_x_r = (Current%Part_Pos-x_start) / dx
-       cell_x  = NINT(cell_x_r)+1
+       cell_x  = NINT(cell_x_r)
        cell_frac_x = REAL(cell_x,num) - cell_x_r
+       cell_x=cell_x+1
 
        gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
        gx( 0) = 0.75_num - cell_frac_x**2
@@ -276,7 +287,8 @@ CONTAINS
        Current=>Current%Next
        ipart=ipart+1
     ENDDO
-    CALL MPI_ALLREDUCE(MPI_IN_PLACE,Weight_Fn,nx_global+4,mpireal,MPI_SUM,comm,errcode)
+    CALL MPI_ALLREDUCE(Weight_Fn,Temp,nx_global+4,mpireal,MPI_SUM,comm,errcode)
+    Weight_Fn=Temp
     DO ix=1,nx_global
        IF (Weight_Fn(ix) .GT. 0.0_num) THEN
           Weight_Fn(ix)=Density(ix)/Weight_Fn(ix)
@@ -318,7 +330,6 @@ CONTAINS
 
     w = SQRT((-2.0_num * LOG(w) )/w)
 
-
     MomentumFromTemperature = rand1 * w * stdev
 
   END FUNCTION MomentumFromTemperature
@@ -341,6 +352,8 @@ CONTAINS
 
     Random=AM*idum
     idum=XOR(idum,mask)
+
+    IF (random .GT. max_rand) max_rand=random
 
   END FUNCTION Random
 

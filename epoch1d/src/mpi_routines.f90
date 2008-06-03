@@ -73,9 +73,7 @@ CONTAINS
     ALLOCATE(ek_bar(1:nx,1:nspecies),ekbar_sum(-2:nx+3,1:nspecies))
     ALLOCATE(ct(-2:nx+3,1:nspecies))
     ALLOCATE(x_starts(0:nproc-1), x_ends(0:nproc-1))
-
-    jx_sum=0.0_num
-    jx_sum2=0.0_num
+    ALLOCATE(en_kinetic_species(1:nspecies,1:3),en_kinetic_species_total(1:nspecies)) 
 
     CALL Create_Allocated_PartList(MainRoot, npart)
 

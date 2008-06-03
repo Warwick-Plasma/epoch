@@ -8,6 +8,8 @@ MODULE setup
   USE iocontrol
   USE inputfunctions
   USE Strings
+  USE diagnostics
+
   IMPLICIT NONE
 
   PRIVATE
@@ -51,7 +53,6 @@ CONTAINS
        x_end_local=x_end
     ENDIF
 
-
     !Setup grid
     x(0)=x_start_local-dx
     DO ix=1,nx
@@ -71,9 +72,11 @@ CONTAINS
     IF (rank == 0) THEN
        WRITE(file2, '(a,"/pic1d.dat")') TRIM(data_dir)
        OPEN(unit=20, STATUS = 'REPLACE',FILE = file2)
-       WRITE(file3, '(a,"/en.dat")') TRIM(data_dir)
+       WRITE(file3, '(a,"/en.ctl")') TRIM(data_dir)
        OPEN(unit=30, STATUS = 'REPLACE',FILE = file3,FORM="binary")
     END IF
+
+    CALL Init_Energy_Account
 
   END SUBROUTINE open_files
 
