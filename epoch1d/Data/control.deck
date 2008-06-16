@@ -2,11 +2,11 @@ begin:control
 
 	#global number of elements
 	nx=2048    #in x
-        npart=40000 #number of particles
+        npart=160000 #number of particles
 
 	#maximum number of iterations
 	#set to -1 to run until finished
-	nsteps=-1
+	nsteps=1
 
 	#final time of simulation (s)
         t_end=1e-6

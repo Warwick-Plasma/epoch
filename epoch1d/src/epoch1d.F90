@@ -73,7 +73,7 @@ PROGRAM pic
   IF (rank .EQ. 0) PRINT *,"Equilibrium set up OK, running code"
   CALL set_dt
   CALL update_eb_fields_half
-  CALL push_particles
+  !CALL push_particles
   CALL update_eb_fields_final
 
   CALL output_routines(i) !diagnostics.f90

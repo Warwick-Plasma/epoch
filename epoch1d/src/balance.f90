@@ -117,42 +117,42 @@ CONTAINS
     CALL MPI_ALLGATHERV(Ex(1:nx),nx,mpireal,Temp_Field,nx_each_rank,displs,mpireal,comm,errcode)
     DEALLOCATE(Ex)
     ALLOCATE(Ex(-2:nx_each_rank_new(rank)+2))
+    Ex=0.0_num
     Ex(1:nx_each_rank_new(rank)) = Temp_Field(startpoint(rank):endpoint(rank))
 
     !Rebalance Ey
     CALL MPI_ALLGATHERV(Ey(1:nx),nx,mpireal,Temp_Field,nx_each_rank,displs,mpireal,comm,errcode)
     DEALLOCATE(Ey)
     ALLOCATE(Ey(-2:nx_each_rank_new(rank)+2))
+    Ey=0.0_num
     Ey(1:nx_each_rank_new(rank))=Temp_Field(startpoint(rank):endpoint(rank))
 
     !Rebalance Ez
     CALL MPI_ALLGATHERV(Ez(1:nx),nx,mpireal,Temp_Field,nx_each_rank,displs,mpireal,comm,errcode)
     DEALLOCATE(Ez)
     ALLOCATE(Ez(-2:nx_each_rank_new(rank)+2))
+    Ez=0.0_num
     Ez(1:nx_each_rank_new(rank))=Temp_Field(startpoint(rank):endpoint(rank))
 
     !Rebalance Bx
     CALL MPI_ALLGATHERV(Bx(1:nx),nx,mpireal,Temp_Field,nx_each_rank,displs,mpireal,comm,errcode)
     DEALLOCATE(Bx)
     ALLOCATE(Bx(-2:nx_each_rank_new(rank)+2))
+    Bx=0.0_num
     Bx(1:nx_each_rank_new(rank))=Temp_Field(startpoint(rank):endpoint(rank))
 
     !Rebalance By
     CALL MPI_ALLGATHERV(By(1:nx),nx,mpireal,Temp_Field,nx_each_rank,displs,mpireal,comm,errcode)
     DEALLOCATE(By)
     ALLOCATE(By(-2:nx_each_rank_new(rank)+2))
+    By=0.0_num
     By(1:nx_each_rank_new(rank))=Temp_Field(startpoint(rank):endpoint(rank))
 
     !Rebalance Bz
     CALL MPI_ALLGATHERV(Bz(1:nx),nx,mpireal,Temp_Field,nx_each_rank,displs,mpireal,comm,errcode)
     DEALLOCATE(Bz)
     ALLOCATE(Bz(-2:nx_each_rank_new(rank)+2))
-    Bz(1:nx_each_rank_new(rank))=Temp_Field(startpoint(rank):endpoint(rank))
-
-    !Rebalance Bz
-    CALL MPI_ALLGATHERV(Bz(1:nx),nx,mpireal,Temp_Field,nx_each_rank,displs,mpireal,comm,errcode)
-    DEALLOCATE(Bz)
-    ALLOCATE(Bz(-2:nx_each_rank_new(rank)+2))
+    Bz=0.0_num
     Bz(1:nx_each_rank_new(rank))=Temp_Field(startpoint(rank):endpoint(rank))
 
     !Rebalance X

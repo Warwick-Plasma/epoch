@@ -95,6 +95,9 @@ CONTAINS
     temp=0.0_num
     CALL SetupParticlesByTemperature(temp,DIR_Y+DIR_Z,idum)
 
+    DO ix=1,nx
+       Ex(ix)=x(ix)
+    ENDDO
 
 
   END SUBROUTINE Equilibrium

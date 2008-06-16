@@ -1,6 +1,6 @@
 # Set the compiler flags
 #FFLAGS = -fast#-fast #-arch pn4 -tpp7 -tune pn4 -ax
-FFLAGS = -O3
+FFLAGS = -C
 
 
 # Set some of the build parameters
