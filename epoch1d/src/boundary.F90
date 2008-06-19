@@ -26,8 +26,12 @@ CONTAINS
   SUBROUTINE Field_Reduction(Val)
 
     REAL(num),DIMENSION(-2:),INTENT(INOUT) :: Val
+    REAL(num),DIMENSION(:),ALLOCATABLE ::Temp
 
-    CALL MPI_ALLREDUCE(MPI_IN_PLACE,Val,nx_global+4,mpireal,MPI_SUM,comm,errcode)
+    ALLOCATE(Temp(-2:nx_global+3))
+    CALL MPI_ALLREDUCE(Val,Temp,nx_global+6,mpireal,MPI_SUM,comm,errcode)
+    Val=Temp
+    DEALLOCATE(Temp)
 
   END SUBROUTINE Field_Reduction
 
