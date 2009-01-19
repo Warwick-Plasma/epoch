@@ -1,3 +1,5 @@
+COMMON background,wkdir_global
+wkdir_global="Data"
 @ IDL/StartCFD.pro
 .r IDL/StartPIC.pro
 
