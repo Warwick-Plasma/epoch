@@ -216,18 +216,18 @@ CONTAINS
        ENDDO
 !!$
 !!$       !**DEBUG**
-       CALL general_2d_dist_fn("test_x_px",(/DIR_X,DIR_PX/),ranges(1:2,:),resolution(1:2),1,restrictions,use_restrictions)
-       resolution=200
-       ranges=0.0_num
-       ranges(2:3,1)=-1.0e-19_num
-       ranges(2:3,2)=1.0e-19_num
-       use_restrictions=.FALSE.
-       CALL general_2d_dist_fn("test_x_py",(/DIR_X,DIR_PY/),ranges(1:2,:),resolution(1:2),1,restrictions,use_restrictions)
-       resolution=200
-       ranges=0.0_num
-       ranges(2:3,1)=-1.0e-19_num
-       ranges(2:3,2)=1.0e-19_num
-       use_restrictions=.FALSE.
+!       CALL general_2d_dist_fn("test_x_px",(/DIR_X,DIR_PX/),ranges(1:2,:),resolution(1:2),1,restrictions,use_restrictions)
+!       resolution=200
+!       ranges=0.0_num
+!       ranges(2:3,1)=-1.0e-19_num
+!       ranges(2:3,2)=1.0e-19_num
+!       use_restrictions=.FALSE.
+!       CALL general_2d_dist_fn("test_x_py",(/DIR_X,DIR_PY/),ranges(1:2,:),resolution(1:2),1,restrictions,use_restrictions)
+!       resolution=200
+!       ranges=0.0_num
+!       ranges(2:3,1)=-1.0e-19_num
+!       ranges(2:3,2)=1.0e-19_num
+!       use_restrictions=.FALSE.
        !CALL general_3d_dist_fn("test_x_px_py",(/DIR_X,DIR_PX,DIR_PY/),ranges,resolution,1,restrictions,use_restrictions)
 
        !Close the file
