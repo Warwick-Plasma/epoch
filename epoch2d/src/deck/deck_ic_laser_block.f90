@@ -62,18 +62,30 @@ CONTAINS
        workinglaser%profile=0.0_num
        output%stackpoint=0
        CALL Tokenize(Value,output,HandleICLaserDeck)
-       DO iy=1,ny
-          workinglaser%profile(iy) = EvaluateAtPoint(output,0,iy,HandleICLaserDeck)
-       ENDDO
+       IF (WorkingLaser%Direction .EQ. BD_LEFT .OR. WorkingLaser%Direction .EQ. BD_RIGHT) THEN
+          DO iy=1,ny
+             workinglaser%profile(iy) = EvaluateAtPoint(output,0,iy,HandleICLaserDeck)
+          ENDDO
+       ELSE IF (WorkingLaser%Direction .EQ. BD_UP .OR. WorkingLaser%Direction .EQ. BD_DOWN) THEN
+          DO ix=1,nx
+             workinglaser%profile(ix) = EvaluateAtPoint(output,ix,0,HandleICLaserDeck)
+          ENDDO
+       ENDIF
        RETURN
     ENDIF
     IF (StrCmp(Element,"phase")) THEN
        workinglaser%phase=0.0_num
        output%stackpoint=0
        CALL Tokenize(Value,output,HandleICLaserDeck)
-       DO iy=1,ny
-          workinglaser%phase(iy) = EvaluateAtPoint(output,0,iy,HandleICLaserDeck)
-       ENDDO
+       IF (WorkingLaser%Direction .EQ. BD_LEFT .OR. WorkingLaser%Direction .EQ. BD_RIGHT) THEN
+          DO iy=1,ny
+             workinglaser%phase(iy) = EvaluateAtPoint(output,0,iy,HandleICLaserDeck)
+          ENDDO
+       ELSE IF (WorkingLaser%Direction .EQ. BD_UP .OR. WorkingLaser%Direction .EQ. BD_DOWN) THEN
+          DO ix=1,nx
+             workinglaser%phase(ix) = EvaluateAtPoint(output,ix,0,HandleICLaserDeck)
+          ENDDO
+       ENDIF
        RETURN
     ENDIF
     IF (StrCmp(Element,"t_start")) THEN
