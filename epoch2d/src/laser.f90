@@ -1,5 +1,8 @@
 MODULE laser
 
+  !This module contributed by
+  !Dr. N. J. Sircombe
+
   USE shared_data
   USE partlist
   USE shared_parser_data
@@ -242,7 +245,7 @@ CONTAINS
     ALLOCATE(FMinus(1:ny))
     FMinus=0.0_num
     err=0
-    Bx(-1,1:ny) =  0.0_num
+    Bx(nx+1,1:ny) =  0.0_num
 
     Current=>Laser_Right
     DO WHILE(ASSOCIATED(Current))

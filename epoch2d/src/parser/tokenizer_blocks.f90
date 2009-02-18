@@ -70,6 +70,9 @@ CONTAINS
     IF (StrCmp(name,"c")) AsConstant=CONST_C
     IF (StrCmp(name,"epsilonnought")) AsConstant=CONST_EPS0
     IF (StrCmp(name,"munought"))      AsConstant=CONST_MU0
+    IF (StrCmp(name,"ev")) AsConstant=CONST_EV
+    IF (StrCmp(name,"kev")) AsConstant=CONST_KEV
+    IF (StrCmp(name,"mev")) AsConstant=CONST_MEV
     IF (StrCmp(name,"x"))  AsConstant=CONST_X
     IF (StrCmp(name,"y"))  AsConstant=CONST_Y
     IF (StrCmp(name,"lengthx")) AsConstant=CONST_LX

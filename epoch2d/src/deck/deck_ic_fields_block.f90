@@ -15,7 +15,7 @@ CONTAINS
 
   FUNCTION HandleICFieldsDeck(Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
-    CHARACTER(30) :: Part1
+    CHARACTER(LEN=EntryLength) :: Part1
     INTEGER :: Part2
     INTEGER :: HandleICFieldsDeck
     INTEGER :: loop,elementselected,partswitch

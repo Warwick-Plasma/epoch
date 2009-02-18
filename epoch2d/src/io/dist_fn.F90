@@ -9,6 +9,80 @@ MODULE dist_fn
 
 CONTAINS
 
+  SUBROUTINE Attach_Dist_Fn(Block)
+    TYPE(Distribution_Function_Block),POINTER :: Block
+    TYPE(Distribution_Function_Block),POINTER :: Current
+
+    Current=>Dist_Fns
+    IF (.NOT. ASSOCIATED(Current)) THEN
+       !This is the first distribution function to add
+       Dist_Fns=>Block
+       RETURN
+    ENDIF
+    DO WHILE(ASSOCIATED(Current%Next))
+       Current=>Current%Next
+    ENDDO
+    Current%Next=>Block
+
+  END SUBROUTINE Attach_Dist_Fn
+
+  SUBROUTINE Setup_Dist_Fn(Block)
+    TYPE(Distribution_Function_Block),POINTER :: Block
+
+    NULLIFY(Block%Next)
+    ALLOCATE(Block%Use_Species(1:nSpecies))
+    Block%Ranges=1.0_num
+    Block%Use_Restrictions=.FALSE.
+    Block%nDims=-1
+  END SUBROUTINE Setup_Dist_Fn
+
+  SUBROUTINE Clean_Dist_Fns
+
+    TYPE(Distribution_Function_Block),POINTER :: Current,Next
+
+    Current=>Dist_Fns
+    DO WHILE(ASSOCIATED(Current))
+       Next=>Current%Next
+       DEALLOCATE(Current)
+       Current=>Next
+    ENDDO
+
+  END SUBROUTINE Clean_Dist_Fns
+
+  SUBROUTINE Write_Dist_Fns(code)
+    INTEGER,INTENT(IN) :: code
+
+    INTEGER :: iSpecies
+    REAL(num),DIMENSION(3,2) :: ranges
+    LOGICAL,DIMENSION(5) :: use_restrictions
+    REAL(num),DIMENSION(5,2) :: restrictions
+    INTEGER,DIMENSION(3) :: resolution=(/100,100,100/)
+    TYPE(Distribution_Function_Block),POINTER :: Current
+
+    !Write the distribution functions
+    Current=>Dist_Fns
+    DO WHILE(ASSOCIATED(Current))
+       IF (IAND(Current%Dumpmask,code) .NE. 0) THEN
+          DO iSpecies=1,nSpecies
+             IF (.NOT. Current%Use_Species(iSpecies)) CYCLE
+             ranges=Current%Ranges
+             resolution=Current%Resolution
+             restrictions=Current%restrictions
+             use_restrictions=Current%Use_Restrictions
+
+             IF (Current%nDims .EQ. 2) THEN
+                CALL general_2d_dist_fn(Current%Name,Current%Directions(1:2),ranges(1:2,:),resolution(1:2),iSpecies,restrictions,use_restrictions)
+             ELSE
+                CALL general_3d_dist_fn(Current%Name,Current%Directions,ranges,resolution,iSpecies,restrictions,use_restrictions)
+             ENDIF
+             IF (Current%Store_Ranges) Current%Ranges=ranges
+          ENDDO
+       ENDIF
+       Current=>Current%Next
+    ENDDO
+  END SUBROUTINE Write_Dist_Fns
+
+
   SUBROUTINE general_3d_dist_fn(name,direction,range,resolution,species,restrictions,use_restrictions)
 
     CHARACTER(LEN=*),INTENT(IN) :: name
@@ -42,6 +116,7 @@ CONTAINS
     REAL(num),DIMENSION(3) :: conv 
     INTEGER,DIMENSION(3) :: cell
     LOGICAL :: UseThis
+    REAL(num) :: RealSpace_Area
 
 
     TYPE(Particle),POINTER :: Current
@@ -68,6 +143,8 @@ CONTAINS
     Use_Direction=.FALSE.
     l_Direction=0
 
+    RealSpace_Area=1.0_num
+
 
     DO iDim=1,3
        IF (direction(iDim) .EQ. DIR_X) THEN
@@ -81,7 +158,7 @@ CONTAINS
           Parallel(iDim)=.TRUE.
           Use_Direction(iDim,1)=.TRUE.
           l_Direction(iDim)=1
-          conv(iDim)=MAX(length_x,length_y)/100.0_num
+          conv(iDim)=MAX(length_x,length_y)
           CYCLE
        ENDIF
        IF (direction(iDim) .EQ. DIR_Y)  THEN
@@ -95,7 +172,7 @@ CONTAINS
           Parallel(iDim)=.TRUE.
           Use_Direction(iDim,2)=.TRUE.
           l_Direction(iDim)=2
-          conv(iDim)=MAX(length_x,length_y)/100.0_num
+          conv(iDim)=MAX(length_x,length_y)
           CYCLE
        ENDIF
        conv(iDim)=c*m0
@@ -121,6 +198,9 @@ CONTAINS
           l_Direction(iDim)=5
        ENDIF
     ENDDO
+
+    IF (.NOT. use_x) RealSpace_Area=RealSpace_Area*dx
+    IF (.NOT. use_y) RealSpace_Area=RealSpace_Area*dy
 
     DO iDim=1,3
        IF (P_Count(iDim) .GT. 1) calc_mod(iDim)=.TRUE.
@@ -179,10 +259,10 @@ CONTAINS
           range(iDim,2)=1.0_num
        ENDIF
        !Calculate the maxmium range of a momentum direction
-       IF (range(iDim,2)-range(iDim,1) .GT. Max_P_Conv) Max_P_Conv=range(iDim,2)-range(iDim,1)
+       IF (range(iDim,2)-range(iDim,1) .GT. Max_P_Conv .AND. .NOT. Parallel(iDim)) Max_P_Conv=range(iDim,2)-range(iDim,1)
     ENDDO
 
-    DO iDim=1,2
+    DO iDim=1,3
        IF (.NOT. Parallel(iDim)) conv(iDim)=Max_P_Conv
     ENDDO
 
@@ -245,7 +325,7 @@ CONTAINS
              cell(iDim)=NINT((CurrentData-range(iDim,1))/dgrid(iDim))+1
              IF (cell(iDim) .LT. 1 .OR. cell(iDim) .GT. resolution(iDim)) UseThis=.FALSE.
           ENDDO
-          IF (UseThis) Data(cell(1),cell(2),cell(3))=Data(cell(1),cell(2),cell(3))+Current%Weight
+          IF (UseThis) Data(cell(1),cell(2),cell(3))=Data(cell(1),cell(2),cell(3))+Current%Weight * realspace_area
        ENDIF
        Current=>Current%Next
     ENDDO
@@ -264,6 +344,11 @@ CONTAINS
 
     CALL cfd_Write_3D_Cartesian_Grid(TRIM(Grid_Name),"Grid",grid1(1:global_resolution(1)),grid2(1:global_resolution(2))&
          ,Grid3(1:global_resolution(3)),0)
+    IF (Use_Offset_Grid) THEN
+       IF (Parallel(1)) grid1=grid1-range(1,1)
+       IF (Parallel(2)) grid2=grid2-range(2,1)
+       IF (Parallel(3)) grid3=grid3-range(3,1)
+    ENDIF
     CALL cfd_Write_3D_Cartesian_Grid(TRIM(Norm_Grid_Name),"Grid",grid1(1:global_resolution(1))/conv(1),grid2(1:global_resolution(2))/conv(2)&
          ,Grid3(1:global_resolution(3))/conv(3),0)
 
@@ -311,6 +396,7 @@ CONTAINS
     REAL(num),DIMENSION(2) :: conv 
     INTEGER,DIMENSION(2) :: cell
     LOGICAL :: UseThis
+    REAL(num) :: RealSpace_Area
 
 
     TYPE(Particle),POINTER :: Current
@@ -336,6 +422,7 @@ CONTAINS
     P_Count=0
     Use_Direction=.FALSE.
     l_Direction=0
+    RealSpace_Area=1.0_num
 
 
     DO iDim=1,2
@@ -393,6 +480,9 @@ CONTAINS
        ENDIF
     ENDDO
 
+    IF (.NOT. use_x) RealSpace_Area=RealSpace_Area*dx
+    IF (.NOT. use_y) RealSpace_Area=RealSpace_Area*dy
+
     DO iDim=1,2
        IF (P_Count(iDim) .GT. 1) calc_mod(iDim)=.TRUE.
     ENDDO
@@ -445,7 +535,7 @@ CONTAINS
           range(iDim,2)=temp_data
 
           !Calculate the maxmium range of a momentum direction
-          IF (range(iDim,2)-range(iDim,1) .GT. Max_P_Conv) Max_P_Conv=range(iDim,2)-range(iDim,1)
+          IF (range(iDim,2)-range(iDim,1) .GT. Max_P_Conv .AND. .NOT. Parallel(iDim)) Max_P_Conv=range(iDim,2)-range(iDim,1)
        ENDIF
        !Fix so that if distribution function is zero then it picks an arbitrary scale in that direction
        IF (range(iDim,1) .EQ. range(iDim,2)) THEN
@@ -513,7 +603,7 @@ CONTAINS
              IF (cell(iDim) .LT. 1 .OR. cell(iDim) .GT. resolution(iDim)) UseThis=.FALSE.
           ENDDO
 
-          IF (UseThis)Data(cell(1),cell(2))=Data(cell(1),cell(2))+Current%Weight
+          IF (UseThis)Data(cell(1),cell(2))=Data(cell(1),cell(2))+Current%Weight*RealSpace_Area
        ENDIF
        Current=>Current%Next
     ENDDO
@@ -533,6 +623,10 @@ CONTAINS
 
     CALL cfd_Write_2D_Cartesian_Grid(TRIM(Grid_Name),"Grid",grid1(1:global_resolution(1)),grid2(1:global_resolution(2))&
          ,0)
+    IF (Use_Offset_Grid) THEN
+       IF (Parallel(1)) grid1=grid1-range(1,1)
+       IF (Parallel(2)) grid2=grid2-range(2,1)
+    ENDIF
     CALL cfd_Write_2D_Cartesian_Grid(TRIM(Norm_Grid_Name),"Grid",grid1(1:global_resolution(1))/conv(1),grid2(1:global_resolution(2))/conv(2)&
          ,0)
 

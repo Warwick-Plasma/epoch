@@ -1,6 +1,7 @@
 MODULE particles
   USE shared_data
   USE boundary
+  USE partlist
 
   IMPLICIT NONE
 
@@ -39,6 +40,15 @@ CONTAINS
     REAL(num) :: root,part_vx,part_vy,part_vz,part_weight
     INTEGER :: part_species
 
+    !Used for particle probes (to see of probe conditions are satisfied)
+#ifdef PARTICLE_PROBES
+    REAL(num) :: init_part_x, init_part_y, final_part_x, final_part_y
+    TYPE(particle_probe), POINTER :: current_probe
+    TYPE(particle), POINTER :: particle_copy
+    REAL(num) :: probe_x1, probe_y1, probe_x2, probe_y2, probe_a, probe_b
+    REAL(num) :: probe_temp,probe_energy
+#endif
+
     !Contains the floating point version of the cell number (never actually used)
     REAL(num) :: cell_x_r,cell_y_r
 
@@ -60,7 +70,7 @@ CONTAINS
     REAL(num) :: hmx,hmy,h0x,h0y,hpx,hpy
 
     !Fields at particle location
-    REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part
+    REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part,e_part
 
     !P+ and P- from Page27 of manual
     REAL(num) :: pxp,pxm,pyp,pym,pzp,pzm
@@ -77,9 +87,9 @@ CONTAINS
 
     !Temporary variables
     REAL(num) :: sum_local,sum_local_sqr,mean,jmx
-    INTEGER :: iSpecies,ixt,iyt
+    INTEGER :: iSpecies,ixt,iyt,next_species
 
-    TYPE(Particle),POINTER :: Current
+    TYPE(Particle),POINTER :: Current,Next,New_Part
 
     ALLOCATE(Xi0x(-2:2), Xi0y(-2:2))
     ALLOCATE(Xi1x(-2:2), Xi1y(-2:2))
@@ -101,16 +111,12 @@ CONTAINS
 
     part_weight=weight
 
-!!$    DO iyt=0,ny+1
-!!$       DO ixt=0,nx+1
-
     DO iSpecies=1,nspecies
        Current=>ParticleSpecies(iSpecies)%AttachedList%Head
        DO ipart=1,ParticleSpecies(iSpecies)%AttachedList%Count
+          Next=>Current%Next
 #ifdef PER_PARTICLE_WEIGHT
           part_weight=Current%Weight
-#else
-          part_weight=weight
 #endif
           !Set the weighting functions to zero for each new particle
           Xi0x=0.0_num
@@ -133,6 +139,11 @@ CONTAINS
 #else
           part_q  = ParticleSpecies(iSpecies)%Charge
           part_m  = ParticleSpecies(iSpecies)%Mass
+#endif
+
+#ifdef PARTICLE_PROBES
+          init_part_x = Current%Part_pos(1)
+          init_part_y = Current%Part_pos(2)
 #endif
 
           !Calculate v(t+0.5dt) from p(t)
@@ -165,19 +176,9 @@ CONTAINS
           cell_frac_y = REAL(cell_y1,num) - cell_y_r
           cell_y1=cell_y1+1
 
-!!$                IF (cell_x1 .NE. ixt .OR. cell_y1 .NE. iyt) CYCLE
-
-          IF (cell_x1 .LT. -2 .OR. cell_y1 .LT. -2) PRINT *,"BAD",part_px,part_py
-
           !Grid weighting factors in 2D (2D analogue of equation 4.77 page 25 of manual)
           !These weight grid properties onto particles
-!!$          gmx=0.5_num * (0.5_num + cell_frac_x)**2
-!!$          g0x=0.75_num - cell_frac_x**2
-!!$          gpx=0.5_num * (0.5_num - cell_frac_x)**2
-!!$
-!!$          gmy=0.5_num * (0.5_num + cell_frac_y)**2
-!!$          g0y=0.75_num - cell_frac_y**2
-!!$          gpy=0.5_num * (0.5_num - cell_frac_y)**2
+
 
           gmx = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
           g0x = 0.75_num - ABS(cell_frac_x)**2
@@ -324,102 +325,164 @@ CONTAINS
           Current%Part_p  (2) = part_py
           Current%Part_p  (3) = part_pz
 
-          !Original code calculates densities of electrons, ions and neutrals here
-          !This has been removed to reduce memory footprint
+#ifdef PARTICLE_PROBES
+          final_part_x = Current%Part_pos(1)
+          final_part_y = Current%Part_pos(2)
+#endif
 
-          !Now advance to t+1.5dt to calculate current. This is detailed in the manual
-          !Between pages 37 and 41. The version coded up looks completely different to that
-          !In the manual, but is equivalent
-          !Use t+1.5 dt so that can update J to t+dt at 2nd order
-          part_x = part_x + part_vx * dt/2.0_num
-          part_y = part_y + part_vy * dt/2.0_num
+          !If the code is compiled with tracer particle support then put in an
+          !If statement so that the current is not calculated for this species
+#ifdef TRACER_PARTICLES
+          IF (.NOT. ParticleSpecies(iSpecies)%Tracer) THEN
+#endif
 
-          cell_x_r = part_x / dx
-          cell_x3  = NINT(cell_x_r)
-          cell_frac_x = REAL(cell_x3,num) - cell_x_r
-          cell_x3=cell_x3+1
+             !Now advance to t+1.5dt to calculate current. This is detailed in the manual
+             !Between pages 37 and 41. The version coded up looks completely different to that
+             !In the manual, but is equivalent
+             !Use t+1.5 dt so that can update J to t+dt at 2nd order
+             part_x = part_x + part_vx * dt/2.0_num
+             part_y = part_y + part_vy * dt/2.0_num
 
-          cell_y_r = part_y / dy
-          cell_y3  = NINT(cell_y_r)
-          cell_frac_y = REAL(cell_y3,num) - cell_y_r
-          cell_y3=cell_y3+1
+             cell_x_r = part_x / dx
+             cell_x3  = NINT(cell_x_r)
+             cell_frac_x = REAL(cell_x3,num) - cell_x_r
+             cell_x3=cell_x3+1
 
-          IF (cell_y3-cell_y1-1 .LT. -2) PRINT *,"ERROR ",cell_y1,cell_y2,rank
+             cell_y_r = part_y / dy
+             cell_y3  = NINT(cell_y_r)
+             cell_frac_y = REAL(cell_y3,num) - cell_y_r
+             cell_y3=cell_y3+1
 
-          Xi1x(cell_x3 - cell_x1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-          Xi1x(cell_x3 - cell_x1 + 0) = 0.75_num - ABS(cell_frac_x)**2
-          Xi1x(cell_x3 - cell_x1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+             IF (cell_y3-cell_y1-1 .LT. -2) PRINT *,"ERROR ",cell_y1,cell_y2,rank
 
-          Xi1y(cell_y3 - cell_y1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-          Xi1y(cell_y3 - cell_y1 + 0) = 0.75_num - ABS(cell_frac_y)**2
-          Xi1y(cell_y3 - cell_y1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+             Xi1x(cell_x3 - cell_x1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+             Xi1x(cell_x3 - cell_x1 + 0) = 0.75_num - ABS(cell_frac_x)**2
+             Xi1x(cell_x3 - cell_x1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
 
-          !Now change Xi1* to be Xi1*-Xi0*. This makes the representation of the current update much simpler
-          Xi1x = Xi1x - Xi0x
-          Xi1y = Xi1y - Xi0y
+             Xi1y(cell_y3 - cell_y1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
+             Xi1y(cell_y3 - cell_y1 + 0) = 0.75_num - ABS(cell_frac_y)**2
+             Xi1y(cell_y3 - cell_y1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+
+             !Now change Xi1* to be Xi1*-Xi0*. This makes the representation of the current update much simpler
+             Xi1x = Xi1x - Xi0x
+             Xi1y = Xi1y - Xi0y
 
 
-          !Remember that due to CFL condition particle can never cross more than one gridcell
-          !In one timestep
+             !Remember that due to CFL condition particle can never cross more than one gridcell
+             !In one timestep
 
-          IF (cell_x3 == cell_x1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
-             xmin = -1
-             xmax = +1
-          ELSE IF (cell_x3 == cell_x1 - 1) THEN !Particle has moved one cell to left
-             xmin = -2
-             xmax = +1
-          ELSE IF (cell_x3 == cell_x1 + 1) THEN !Particle has moved one cell to right
-             xmin=-1
-             xmax=+2
-          ENDIF
+             IF (cell_x3 == cell_x1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
+                xmin = -1
+                xmax = +1
+             ELSE IF (cell_x3 == cell_x1 - 1) THEN !Particle has moved one cell to left
+                xmin = -2
+                xmax = +1
+             ELSE IF (cell_x3 == cell_x1 + 1) THEN !Particle has moved one cell to right
+                xmin=-1
+                xmax=+2
+             ENDIF
 
-          IF (cell_y3 == cell_y1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
-             ymin = -1
-             ymax = +1
-          ELSE IF (cell_y3 == cell_y1 - 1) THEN !Particle has moved one cell to left
-             ymin = -2
-             ymax = +1
-          ELSE IF (cell_y3 == cell_y1 + 1) THEN !Particle has moved one cell to right
-             ymin=-1
-             ymax=+2
-          ENDIF
+             IF (cell_y3 == cell_y1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
+                ymin = -1
+                ymax = +1
+             ELSE IF (cell_y3 == cell_y1 - 1) THEN !Particle has moved one cell to left
+                ymin = -2
+                ymax = +1
+             ELSE IF (cell_y3 == cell_y1 + 1) THEN !Particle has moved one cell to right
+                ymin=-1
+                ymax=+2
+             ENDIF
 
-          !Set these to zero due to diffential inside loop
-          jxh=0.0_num
-          jyh=0.0_num
-          jzh=0.0_num
+             !Set these to zero due to diffential inside loop
+             jxh=0.0_num
+             jyh=0.0_num
+             jzh=0.0_num
 
-          DO iy=ymin,ymax
-             DO ix=xmin,xmax
-                wx = Xi1x(ix) * (Xi0y(iy) + 0.5_num * Xi1y(iy))
-                wy = Xi1y(iy) * (Xi0x(ix) + 0.5_num * Xi1x(ix))
-                wz = Xi0x(ix) * Xi0y(iy) &
-                     +0.5_num*xi1x(ix)*xi0y(iy)&
-                     +0.5_num*xi0x(ix)*xi1y(iy)&
-                     +1.0_num/3.0_num * xi1x(ix) * xi1y(iy)
+             DO iy=ymin,ymax
+                DO ix=xmin,xmax
+                   wx = Xi1x(ix) * (Xi0y(iy) + 0.5_num * Xi1y(iy))
+                   wy = Xi1y(iy) * (Xi0x(ix) + 0.5_num * Xi1x(ix))
+                   wz = Xi0x(ix) * Xi0y(iy) &
+                        +0.5_num*xi1x(ix)*xi0y(iy)&
+                        +0.5_num*xi0x(ix)*xi1y(iy)&
+                        +1.0_num/3.0_num * xi1x(ix) * xi1y(iy)
 
-                !This is the bit that actually solves d(rho)/dt=-div(J)
-                jxh(ix,iy)=jxh(ix-1,iy) - Part_q * wx * 1.0_num/dt * part_weight/dy 
-                jyh(ix,iy)=jyh(ix,iy-1) - Part_q * wy * 1.0_num/dt * part_weight/dx
-                jzh(ix,iy)=Part_q * Part_vz * wz  * part_weight/(dx*dy)
+                   !This is the bit that actually solves d(rho)/dt=-div(J)
+                   jxh(ix,iy)=jxh(ix-1,iy) - Part_q * wx * 1.0_num/dt * part_weight/dy 
+                   jyh(ix,iy)=jyh(ix,iy-1) - Part_q * wy * 1.0_num/dt * part_weight/dx
+                   jzh(ix,iy)=Part_q * Part_vz * wz  * part_weight/(dx*dy)
 
-                Jx(cell_x1+ix,cell_y1+iy)=Jx(cell_x1+ix,cell_y1+iy)&
-                     +jxh(ix,iy)
-                Jy(cell_x1+ix,cell_y1+iy)=Jy(cell_x1+ix,cell_y1+iy)&
-                     +jyh(ix,iy)
-                Jz(cell_x1+ix,cell_y1+iy)=Jz(cell_x1+ix,cell_y1+iy)&
-                     +jzh(ix,iy)
+                   Jx(cell_x1+ix,cell_y1+iy)=Jx(cell_x1+ix,cell_y1+iy)&
+                        +jxh(ix,iy)
+                   Jy(cell_x1+ix,cell_y1+iy)=Jy(cell_x1+ix,cell_y1+iy)&
+                        +jyh(ix,iy)
+                   Jz(cell_x1+ix,cell_y1+iy)=Jz(cell_x1+ix,cell_y1+iy)&
+                        +jzh(ix,iy)
 
+                ENDDO
              ENDDO
+#ifdef TRACER_PARTICLES
+          ENDIF
+#endif
+#ifdef PARTICLE_PROBES
+          ! Compare the current particle with the parameters of any probes in the system. 
+          ! These particles are copied into a separate part of the output file.
+
+          Current_probe=>ParticleSpecies(iSpecies)%AttachedProbes
+
+          ! Cycle through probes
+          DO WHILE(ASSOCIATED(Current_probe))
+             !Note that this is the energy of a single REAL particle in the pseudoparticle, NOT the energy of the pseudoparticle
+             probe_energy=(SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2)/(part_m * c)**2) - 1.0_num)&
+                  * (part_m * c**2)
+
+             ! right energy? (in J)
+             IF(probe_energy.GT.current_probe%ek_min)THEN
+                IF((probe_energy.LT.current_probe%ek_max).OR.(current_probe%ek_max.LT.0.0_num)) THEN
+
+                   ! Probe lines are defined by two points. particles crossing the line are recorded
+                   ! assumes transit from left -> right. Put the top at the bottom and bottom at the top
+                   ! to catch right-> left moving particles.
+                   probe_x1 = current_probe%vertex_bottom(1)
+                   probe_y1 = current_probe%vertex_bottom(2)
+                   probe_x2 = current_probe%vertex_top(1)
+                   probe_y2 = current_probe%vertex_top(2)
+
+                   probe_a = (probe_y1 * probe_x2 - probe_x1 * probe_y2) / (probe_y1 - probe_y2)
+                   probe_b = (probe_x1 - probe_x2) / (probe_y1 - probe_y2)
+
+                   ! direction?
+                   IF(probe_y2 .LT. probe_y1) THEN
+                      probe_temp = init_part_x
+                      init_part_x = final_part_x
+                      final_part_x = probe_temp
+                      probe_temp = init_part_y
+                      init_part_y = final_part_y
+                      final_part_y = probe_temp
+                   ENDIF
+
+                   IF((final_part_y .LT. MAX(probe_y1,probe_y2)) .AND. (final_part_y .GT. min(probe_y1,probe_y2))) THEN
+                      IF(init_part_x .LE. probe_a + probe_b * init_part_y) THEN
+                         IF(final_part_x .GT. probe_a + probe_b * final_part_y) THEN
+
+                            ! this particle is wanted so copy it to the list associated with this probe
+                            ALLOCATE(particle_copy)
+                            particle_copy = current
+                            CALL add_Particle_To_PartList(current_probe%sampled_particles,particle_copy)
+                            NULLIFY(particle_copy)
+
+                         ENDIF
+                      ENDIF
+                   ENDIF
+                ENDIF
+             ENDIF
+             current_probe => current_probe%next
           ENDDO
-          !       IF (MAXVAL(ABS(jz)) .NE. jmx) PRINT *,"J Change",jmx, wz,Part_vz
-          Current=>Current%Next
+
+#endif
+          Current=>Next
        ENDDO
     ENDDO
-
-!!$          ENDDO
-!!$       ENDDO
-
 
     !Domain is decomposed. Just add currents at edges
     CALL Processor_Summation_BCS(Jx)
@@ -428,6 +491,7 @@ CONTAINS
     CALL Field_BC(Jy)
     CALL Processor_Summation_BCS(Jz)
     CALL Field_BC(Jz)
+
 
     DO iSpecies=1,nspecies
        CALL Processor_Summation_BCS(ekbar_sum(:,:,iSpecies))
@@ -458,9 +522,9 @@ CONTAINS
 
     CALL Particle_bcs
 
-!    JX=0.0_num
-!    JY=0.0_num
-!    Jz=0.0_num
+    !    JX=0.0_num
+    !    JY=0.0_num
+    !    Jz=0.0_num
 
   END SUBROUTINE push_particles
 

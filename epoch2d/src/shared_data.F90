@@ -3,7 +3,20 @@
 ! All the names in here are public provided the MODULE is USE'd
 !**************************************************************** 
 
+
 MODULE constants
+  !These tell the code to setup secondary particles lists for each particle species
+#ifdef PART_IONISE
+#define USE_SECONDARY_LIST
+#endif
+
+#ifdef PARTICLE_CELL_DIVISION
+#define USE_SECONDARY_LIST
+#endif
+
+#ifdef PART_IONISE_FULL
+#define PART_IONISE
+#endif
   IMPLICIT NONE
   INTEGER, PARAMETER :: num = KIND(1.D0)
   INTEGER, PARAMETER :: dbl = KIND(1.D0)
@@ -20,11 +33,13 @@ MODULE constants
 
   INTEGER, PARAMETER :: Version = 1, Revision = 3
 
+  !Error codes
   INTEGER,PARAMETER ::ERR_NONE=0,ERR_UNKNOWN_BLOCK=1,ERR_UNKNOWN_ELEMENT=2
   INTEGER,PARAMETER ::ERR_PRESET_ELEMENT=4,ERR_PRESET_ELEMENT_USE_LATER=8
   INTEGER,PARAMETER ::ERR_BAD_VALUE=16,ERR_MISSING_ELEMENTS=32,ERR_TERMINATE=64
-  INTEGER,PARAMETER ::ERR_REQUIRED_ELEMENT_NOT_SET=128
-  INTEGER,PARAMETER ::ERR_OTHER=1024
+  INTEGER,PARAMETER ::ERR_REQUIRED_ELEMENT_NOT_SET=128, ERR_PP_OPTIONS_WRONG=256
+  INTEGER,PARAMETER ::ERR_BAD_ARRAY_LENGTH=512
+  INTEGER,PARAMETER ::ERR_OTHER=2048
 
   !IC codes
   !This is a bitmask, remember that
@@ -47,6 +62,8 @@ MODULE constants
   REAL(num),PARAMETER :: kb = 1.3806503e-23_num  !m^2kgs(-2)K^(-1)
   REAL(num),PARAMETER :: epsilon0 = 8.85418782e-12_num
   REAL(num),PARAMETER :: mu0 = 1.0_num/(C**2*epsilon0)
+  REAL(num),PARAMETER :: h_planck=6.626068e-34_num
+  REAL(num),PARAMETER :: ev = Q0 !J
 
   !Direction parameters
   INTEGER, PARAMETER :: DIR_X=1, DIR_Y=2, DIR_Z=4, DIR_PX=8, DIR_PY=16, DIR_PZ=32
@@ -82,7 +99,8 @@ MODULE shared_parser_data
 
   !Actual constants
   INTEGER,PARAMETER :: CONST_PI=1, CONST_KB=2, CONST_ME=3, CONST_QE=4
-  INTEGER,PARAMETER :: CONST_EPS0=5, CONST_MU0=6, CONST_C=7
+  INTEGER,PARAMETER :: CONST_EPS0=5, CONST_MU0=6, CONST_C=7, CONST_EV=8
+  INTEGER,PARAMETER :: CONST_KEV=9, CONST_MEV=10
 
   !Constants refering to grid properties
   INTEGER,PARAMETER :: CONST_X=25, CONST_Y=26, CONST_Z=27
@@ -169,6 +187,7 @@ MODULE shared_data
   TYPE :: Entry
      CHARACTER(EntryLength) :: Value
   END TYPE Entry
+  CHARACTER(LEN=EntryLength) :: Extended_Error_String
 
   !---------------------------------------------------------------------------------------
   !Particles
@@ -205,27 +224,49 @@ MODULE shared_data
 
   !Object representing a particle species
   TYPE :: ParticleFamily
+     !Core properties
      CHARACTER(EntryLength) :: Name
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
-     TYPE(ParticleList),DIMENSION(:,:),POINTER :: SecondaryList
-     INTEGER(KIND=8) :: GlobalCount
-     LOGICAL :: Split
-     INTEGER(KIND=8) :: npart_max
-#endif
-     TYPE(ParticleList) :: AttachedList
      TYPE(ParticleFamily),POINTER :: Next,Prev
      INTEGER :: ID
      LOGICAL :: Dump
 
      REAL(num) :: Charge
      REAL(num) :: Mass
-     REAL(num) :: Fraction
+     INTEGER(KIND=8) :: Count
+     TYPE(ParticleList) :: AttachedList
+
+#ifdef TRACER_PARTICLES
+     LOGICAL :: Tracer
+#endif
+
+     !Particle cell division
+#ifdef PARTICLE_CELL_DIVISION
+     INTEGER(KIND=8) :: GlobalCount
+     LOGICAL :: Split
+     INTEGER(KIND=8) :: npart_max
+#endif
+     !Secondary list
+#ifdef USE_SECONDARY_LIST
+     TYPE(ParticleList),DIMENSION(:,:),POINTER :: SecondaryList
+#endif
 
      !Injection of particles
      INTEGER(KIND=8) :: npart_per_cell
-     REAL(num) :: Density
-     REAL(num),DIMENSION(3) :: Temperature
+     REAL(num),DIMENSION(:),ALLOCATABLE :: Density
+     REAL(num),DIMENSION(:,:),ALLOCATABLE :: Temperature
 
+     !Species_ionisation
+#ifdef PART_IONISE
+     LOGICAL :: ionise
+     INTEGER :: ionise_to_species
+     INTEGER :: release_species
+     REAL(num) :: critical_field
+     REAL(num) :: ionisation_energy
+#endif
+     !Attached Probes for this species
+#ifdef PARTICLE_PROBES
+     TYPE(Particle_Probe),POINTER :: AttachedProbes
+#endif
   END TYPE ParticleFamily
 
   !---------------------------------------------------------------------------------------
@@ -260,8 +301,14 @@ MODULE shared_data
      !The number of dimensions left
      INTEGER :: nDims
 
+     !The dumpmask for the distribution function
      INTEGER :: DumpMask
 
+     !Whether or not to store the range returned from the distribtution function code
+     !This allows the code to store auto determined ranges(experimental)
+     LOGICAL :: Store_Ranges
+
+     !The variables which define the ranges and resolutions of the distribution function
      INTEGER,DIMENSION(3) :: Directions
      REAL(num),DIMENSION(3,2) :: Ranges
      INTEGER,DIMENSION(3) :: Resolution
@@ -269,10 +316,24 @@ MODULE shared_data
      REAL(num),DIMENSION(5,2) :: Restrictions
      LOGICAL,DIMENSION(5) :: Use_Restrictions
 
+     !Pointer to next distribution function
      TYPE(Distribution_Function_Block),POINTER :: Next
 
   END TYPE Distribution_Function_Block
   TYPE(Distribution_Function_Block),POINTER :: Dist_Fns
+
+#ifdef PARTICLE_PROBES
+  TYPE :: Particle_Probe
+     REAL(num), DIMENSION(2) :: vertex_top, vertex_bottom
+     REAL(num) :: ek_min, ek_max
+     CHARACTER(LEN=ENTRYLENGTH) :: Name
+
+     TYPE(ParticleFamily), POINTER :: probe_species
+     TYPE(ParticleList) :: sampled_particles
+     TYPE(particle_probe),POINTER :: Next
+     INTEGER :: Dump
+  END TYPE Particle_Probe
+#endif
 
   !---------------------------------------------------------------------------------------
   !Core code
@@ -285,6 +346,7 @@ MODULE shared_data
   INTEGER :: nprocx,nprocy
   INTEGER :: nsteps,nspecies=-1
   REAL(num), ALLOCATABLE, DIMENSION(:,:)     :: Ex,Ey,Ez,Bx,By,Bz,Jx,Jy,Jz
+  REAL(num), ALLOCATABLE, DIMENSION(:,:)     :: wk_array
 
   TYPE(ParticleFamily),DIMENSION(:),POINTER :: ParticleSpecies
   REAL(num), ALLOCATABLE, DIMENSION(:,:,:)   :: ekbar !Temperature per species
@@ -358,7 +420,7 @@ MODULE shared_data
   INTEGER :: subtype_field,subtype_particle_var,subtype_particle,subtype_particle_int
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp 
   INTEGER :: Full_Dump_Every,Restart_Dump_Every
-  INTEGER, PARAMETER :: num_vars_to_dump = 25
+  INTEGER, PARAMETER :: num_vars_to_dump = 28
   INTEGER, DIMENSION(num_vars_to_dump) :: DumpMask 
   INTEGER :: output_file
   LOGICAL :: force_final_to_be_restartable

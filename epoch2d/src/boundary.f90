@@ -1,3 +1,4 @@
+
 MODULE boundary
 
   USE shared_data
@@ -33,20 +34,20 @@ CONTAINS
     !For some types of boundary, fields and particles are treated in different ways, deal with that here
     IF (xbc_right == BC_OTHER) THEN
        xbc_right_particle=BC_REFLECT
-       xbc_right_field=BC_ZERO_GRADIENT
+       xbc_right_field=BC_CLAMP
     ENDIF
     IF (xbc_left == BC_OTHER) THEN
        xbc_left_particle=BC_REFLECT
-       xbc_left_field=BC_ZERO_GRADIENT
+       xbc_left_field=BC_CLAMP
     ENDIF
 
     IF (ybc_up == BC_OTHER) THEN
        ybc_up_particle=BC_REFLECT
-       ybc_up_field=BC_ZERO_GRADIENT
+       ybc_up_field=BC_CLAMP
     ENDIF
     IF (ybc_down == BC_OTHER) THEN
        ybc_down_particle=BC_REFLECT
-       ybc_down_field=BC_ZERO_GRADIENT
+       ybc_down_field=BC_CLAMP
     ENDIF
 
     !Laser boundaries reflect particles off a hard wall
@@ -116,18 +117,22 @@ CONTAINS
 
     IF ((xbc_left_field == BC_ZERO_GRADIENT .OR. Force) .AND. left == MPI_PROC_NULL) THEN
        Field(0,:)=Field(1,:)
+       Field(-1,:)=Field(2,:)
     ENDIF
 
     IF ((xbc_right_field == BC_ZERO_GRADIENT .OR. Force)  .AND. right == MPI_PROC_NULL) THEN
        Field(nx+1,:)=Field(nx,:)
+       Field(nx+2,:)=Field(nx-1,:)
     ENDIF
 
     IF ((ybc_down_field == BC_ZERO_GRADIENT .OR. Force) .AND. down == MPI_PROC_NULL) THEN
        Field(:,0)=Field(:,1)
+       Field(:,-1)=Field(:,2)
     ENDIF
 
     IF ((ybc_up_field == BC_ZERO_GRADIENT .OR. Force) .AND. up == MPI_PROC_NULL) THEN
        Field(:,ny+1)=Field(:,ny)
+       Field(:,ny+2)=Field(:,ny-1)
     ENDIF
 
 
@@ -139,19 +144,19 @@ CONTAINS
 
 
     IF (xbc_left_field == BC_CLAMP .AND. left == MPI_PROC_NULL) THEN
-       Field(0,:)=0.0_num
+       Field(-1:0,:)=0.0_num
     ENDIF
 
     IF (xbc_right_field == BC_CLAMP .AND. right == MPI_PROC_NULL) THEN
-       Field(nx+1,:)=0.0_num
+       Field(nx+1:nx+2,:)=0.0_num
     ENDIF
 
     IF (ybc_down_field == BC_CLAMP .AND. down == MPI_PROC_NULL) THEN
-       Field(:,0)=0.0_num
+       Field(:,-1:0)=0.0_num
     ENDIF
 
     IF (ybc_up_field == BC_CLAMP .AND. up == MPI_PROC_NULL) THEN
-       Field(:,ny+1)=0.0_num
+       Field(:,ny+1:ny+2)=0.0_num
     ENDIF
 
 

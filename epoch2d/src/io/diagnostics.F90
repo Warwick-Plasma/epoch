@@ -8,8 +8,9 @@ MODULE diagnostics
   USE output
   USE iocontrol
   USE balance
-  USE particlepointeradvance
   USE dist_fn
+  USE probes
+  USE iterators
 
   IMPLICIT NONE
 
@@ -32,21 +33,6 @@ CONTAINS
     INTEGER(KIND=8) :: n_part_per_it=100000,npart_local,npart_dump_global
     INTEGER :: iSpecies,code
     INTEGER,DIMENSION(2) :: dims
-    TYPE(Distribution_Function_Block),POINTER :: Current
-
-
-    !**DEBUG**
-    REAL(num),DIMENSION(3,2) :: ranges
-    LOGICAL,DIMENSION(5) :: use_restrictions
-    REAL(num),DIMENSION(5,2) :: restrictions
-    INTEGER,DIMENSION(3) :: resolution=(/100,100,100/)
-
-    resolution=200
-    ranges=0.0_num
-    ranges(2:3,1)=-1.0e-19_num
-    ranges(2:3,2)=1.0e-19_num
-    use_restrictions=.FALSE.
-    !**END DEBUG**
 
     dims=(/nx_global,ny_global/)
 
@@ -63,8 +49,16 @@ CONTAINS
        IF (last_call .AND. force_final_to_be_restartable) code=IOR(code,IO_RESTARTABLE)
 
        npart_local=Get_Total_Local_Dumped_Particles(IAND(code,IO_RESTARTABLE) .NE. 0)
+
        CALL MPI_ALLREDUCE(npart_local,npart_dump_global,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
        CALL CreateSubtypes(IAND(code,IO_RESTARTABLE) .NE. 0)
+       !If the code is doing a restart dump then tell the iterators that this is a restart dump
+       IF (IAND(code,IO_RESTARTABLE) .NE. 0) THEN 
+          Iterator_Settings%Restart=.TRUE.
+       ELSE
+          Iterator_Settings%Restart=.FALSE.
+       ENDIF
+
        ALLOCATE(Data(-2:nx+3,-2:ny+3))
        !Open the file
        !(filename,rank_of_current_process,MPI_COMMUNICATOR (can be MPI_COMM_WORLD), MPI_FILE_MODE (passed straight to MPI_FILE_OPEN))
@@ -196,39 +190,26 @@ CONTAINS
        CALL cfd_Write_2D_Cartesian_Variable_Parallel("Rank","Processor",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
 #endif
 
-       Current=>Dist_Fns
-       DO WHILE(ASSOCIATED(Current))
-          IF (IAND(Current%Dumpmask,code) .NE. 0) THEN
-             DO iSpecies=1,nSpecies
-                ranges=Current%Ranges
-                resolution=Current%Resolution
-                restrictions=Current%restrictions
-                use_restrictions=Current%Use_Restrictions
+       IF (IAND(dumpmask(26),code) .NE. 0) THEN
+          CALL Write_Dist_Fns(code)
+       ENDIF
+#ifdef PARTICLE_PROBES
+       IF (IAND(dumpmask(27),code) .NE. 0) THEN
+          CALL Write_Probes(code)
+       ENDIF
+#endif
 
-                IF (Current%nDims .EQ. 2) THEN
-                   CALL general_2d_dist_fn(Current%Name,Current%Directions,ranges,resolution,iSpecies,restrictions,use_restrictions)
-                ELSE
-                   CALL general_3d_dist_fn(Current%Name,Current%Directions,ranges,resolution,iSpecies,restrictions,use_restrictions)
-                ENDIF
+       IF (IAND(DumpMask(28),code) .NE. 0) THEN
+          CALL calc_temperature(Data,0)
+          CALL cfd_Write_2D_Cartesian_Variable_Parallel("Temperature","Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
+          IF (IAND(DumpMask(28),IO_SPECIES) .NE. 0) THEN
+             DO iSpecies=1,nspecies
+                CALL calc_temperature(Data,iSpecies)
+                WRITE(Temp_Name,'("Temperature_",a)') TRIM(ParticleSpecies(iSpecies)%Name)
+                CALL cfd_Write_2D_Cartesian_Variable_Parallel(TRIM(ADJUSTL(Temp_Name)),"Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
              ENDDO
           ENDIF
-          Current=>Current%Next
-       ENDDO
-!!$
-!!$       !**DEBUG**
-!       CALL general_2d_dist_fn("test_x_px",(/DIR_X,DIR_PX/),ranges(1:2,:),resolution(1:2),1,restrictions,use_restrictions)
-!       resolution=200
-!       ranges=0.0_num
-!       ranges(2:3,1)=-1.0e-19_num
-!       ranges(2:3,2)=1.0e-19_num
-!       use_restrictions=.FALSE.
-!       CALL general_2d_dist_fn("test_x_py",(/DIR_X,DIR_PY/),ranges(1:2,:),resolution(1:2),1,restrictions,use_restrictions)
-!       resolution=200
-!       ranges=0.0_num
-!       ranges(2:3,1)=-1.0e-19_num
-!       ranges(2:3,2)=1.0e-19_num
-!       use_restrictions=.FALSE.
-       !CALL general_3d_dist_fn("test_x_px_py",(/DIR_X,DIR_PX,DIR_PY/),ranges,resolution,1,restrictions,use_restrictions)
+       ENDIF
 
        !Close the file
        CALL cfd_Close()
@@ -282,6 +263,7 @@ CONTAINS
     dtx=dx/c
     dty=dy/c
     dt=dtx*dty/SQRT(dtx**2+dty**2)
+!    dt=MIN(dtx**2,dty**2)/SQRT(dtx**2+dty**2)
     IF (dt_laser .NE. 0.0_num) dt=MIN(dt,dt_laser)
     dt=dt_multiplier * dt 
 
@@ -292,538 +274,7 @@ CONTAINS
 
   END SUBROUTINE energy_account
 
-  SUBROUTINE Write_Species(filehandle,current_displacement)
 
-    INTEGER,INTENT(IN) :: filehandle
-    INTEGER(KIND=MPI_OFFSET_KIND),INTENT(IN) :: current_displacement
-
-!!$    CALL MPI_FILE_SET_VIEW(filehandle, current_displacement, MPI_INTEGER, subtype_particle_int,&
-!!$         "native", MPI_INFO_NULL,cfd_errcode)
-!!$    CALL MPI_FILE_WRITE_ALL(filehandle, Part_Species,npart , MPI_INTEGER, status, errcode)
-
-  END SUBROUTINE Write_Species
-
-  !Iterator for particle positions
-  SUBROUTINE iterate_particles(data,n_points,direction,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: Data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL,INTENT(IN) :: start
-    INTEGER,INTENT(IN) :: direction
-    TYPE(Particle),POINTER,SAVE :: Cur
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-    INTEGER(8) :: partcount
-
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-             Data(partcount)=Cur%Part_Pos(direction)-Window_Shift(direction)
-             !IF (Cur%Part_Pos(1) .EQ. Cur%Part_Pos(2)) PRINT *,"PATBAD"
-             Cur=>Cur%Next
-          ENDDO
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_particles
-
-  !Iterator for particle charge
-  SUBROUTINE iterate_charge(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-#ifdef PER_PARTICLE_CHARGEMASS
-             data(partcount) = Cur%Charge
-#else
-             data(partcount) = CurrentFamily%Charge
-#endif
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_charge
-
-#ifdef PER_PARTICLE_WEIGHT
-
-  !Iterator for particle weight
-  !Only present if you are using the PER_PARTICLE_WEIGHT
-  !Precompiler option
-  SUBROUTINE iterate_weight(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-             data(partcount)=Cur%Weight
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_weight
-#endif
-
-  !Iterator for particle mass
-  SUBROUTINE iterate_mass(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-#ifdef PER_PARTICLE_CHARGEMASS
-             data(partcount) = Cur%Mass
-#else
-             data(partcount) = CurrentFamily%Mass
-#endif
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_mass
-
-#ifdef PART_DEBUG
-  !Iterator for particle processor
-  SUBROUTINE iterate_processor(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-             data(partcount)=REAL(cur%Processor,num)
-             IF (cur%Processor .GE. nproc) PRINT *,"Bad Processor"
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_processor
-
-  SUBROUTINE iterate_processor0(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-             data(partcount)=REAL(cur%Processor_at_t0,num)
-             IF (cur%Processor .GE. nproc) PRINT *,"Bad Processor"
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_processor0
-#endif
-
-  !Iterator for particle processor
-  SUBROUTINE iterate_species(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-             data(partcount)=REAL(CurrentFamily%ID,num)
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_species
-
-  !Iterator for particle velocities
-  SUBROUTINE iterate_vx(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root,part_m
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-#ifdef PER_PARTICLE_CHARGEMASS
-             part_m = Cur%Mass
-#else
-             part_m = CurrentFamily%Mass
-#endif
-             root=SQRT(part_m**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
-             IF (root .NE. 0.0_num) root=1.0_num/root
-             data(partcount) = Cur%Part_p(1) * root
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_vx
-
-  SUBROUTINE iterate_vy(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root,part_m
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-#ifdef PER_PARTICLE_CHARGEMASS
-             part_m = Cur%Mass
-#else
-             part_m = CurrentFamily%Mass
-#endif
-             root=SQRT(part_m**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
-             IF (root .NE. 0.0_num) root=1.0_num/root
-             data(partcount) = Cur%Part_p(2) * root
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_vy
-
-  SUBROUTINE iterate_vz(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-    REAL(num) :: root,part_m
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-#ifdef PER_PARTICLE_CHARGEMASS
-             part_m = Cur%Mass
-#else
-             part_m = CurrentFamily%Mass
-#endif
-             root=SQRT(part_m**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
-             IF (root .NE. 0.0_num) root=1.0_num/root
-             data(partcount) = Cur%Part_p(3) * root
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_vz
-
-  !Iterator for particle momenta
-  SUBROUTINE iterate_px(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-             data(partcount) = Cur%Part_p(1)
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_px
-
-  SUBROUTINE iterate_py(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-             data(partcount) = Cur%Part_p(2)
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_py
-
-  SUBROUTINE iterate_pz(data,n_points,start)
-
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
-    INTEGER(8),INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
-
-    TYPE(ParticleList),POINTER,SAVE :: CurrentList
-    TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
-
-    IF (start)  THEN
-       CALL Start_ParticleFamily(CurrentFamily,CurrentList,Cur)
-    ENDIF
-    partcount=0
-    DO WHILE (ASSOCIATED(CurrentFamily) .AND. (partcount .LT. n_points))
-       DO WHILE (ASSOCIATED(CurrentList) .AND. (partcount .LT. n_points))
-          DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-             partcount=partcount+1
-             data(partcount) = Cur%Part_p(3)
-             Cur=>Cur%Next
-          ENDDO
-          !If the current partlist is exhausted, switch to the next one
-          IF (.NOT. ASSOCIATED(Cur)) CALL Advance_ParticleList(CurrentList,Cur)
-       ENDDO
-       !If the current particlefamily is exhausted, then switch to the next one
-       DO WHILE (.NOT. ASSOCIATED(Cur))
-          CALL Advance_ParticleFamily(CurrentFamily,CurrentList,Cur)
-          IF (.NOT. ASSOCIATED(CurrentFamily)) EXIT
-          IF (.NOT. CurrentFamily%Dump) NULLIFY(Cur)
-       ENDDO
-    ENDDO
-    n_points=partcount
-
-  END SUBROUTINE iterate_pz
 
 
 END MODULE diagnostics

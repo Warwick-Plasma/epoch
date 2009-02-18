@@ -91,11 +91,11 @@ CONTAINS
     subtype_particle=0
 
 
-    npart=npart_global/nproc
-    IF (npart*nproc /= npart_global) THEN
-       IF (rank .EQ.0) PRINT *,"Unable to divide particles at t=0. Quitting."
-       CALL MPI_ABORT(MPI_COMM_WORLD,errcode)
-    ENDIF
+!!$    npart=npart_global/nproc
+!!$    IF (npart*nproc /= npart_global) THEN
+!!$       IF (rank .EQ.0) PRINT *,"Unable to divide particles at t=0. Quitting."
+!!$       CALL MPI_ABORT(MPI_COMM_WORLD,errcode)
+!!$    ENDIF
 
 
     ALLOCATE(x(-2:nx+3),y(-2:ny+3))
@@ -131,9 +131,9 @@ CONTAINS
     ENDDO
     DO iSpecies=1,nSpecies
        ParticleSpecies(iSpecies)%ID=iSpecies
-       npart_this_species=REAL(npart,num)*ParticleSpecies(iSpecies)%Fraction
+       npart_this_species=ParticleSpecies(iSpecies)%Count
        NULLIFY(ParticleSpecies(iSpecies)%AttachedList%Next,ParticleSpecies(iSpecies)%AttachedList%Prev)
-       IF (Restart) THEN
+       IF (Restart .OR. IOR(ictype,IC_AUTOLOAD) .NE. 0) THEN
           CALL Create_Empty_PartList(ParticleSpecies(iSpecies)%AttachedList)
        ELSE
           CALL Create_Allocated_PartList(ParticleSpecies(iSpecies)%AttachedList, npart_this_species)

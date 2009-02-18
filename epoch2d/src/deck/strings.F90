@@ -8,22 +8,24 @@ CONTAINS
   FUNCTION StrCmp(StrIn,StrTest)
 
     CHARACTER(*),INTENT(IN) ::  StrIn,StrTest
-    CHARACTER(30) :: StrTrim
+    CHARACTER(LEN=EntryLength) :: StrTrim
     LOGICAL :: StrCmp
 
     StrTrim=TRIM(ADJUSTL(StrIn))
 
-    IF (LEN(StrTest) .GT. LEN(StrIn)) THEN
+    IF (LEN(StrTest) .GT. LEN(StrTrim)) THEN
        StrCmp=.FALSE.
        return
     ENDIF
 
-    IF (StrTrim(LEN(StrTest)+1:LEN(StrTest)+1) .NE. " ") THEN
-       StrCmp=.FALSE.
-       RETURN
+    IF (LEN(StrTest) .LT. EntryLength) THEN
+       IF (StrTrim(LEN(StrTest)+1:LEN(StrTest)+1) .NE. " ") THEN
+          StrCmp=.FALSE.
+          RETURN
+       ENDIF
     ENDIF
 
-    StrCmp=StrTrim(1:Len(StrTest)) == StrTest
+    StrCmp=(StrTrim(1:Len(StrTest)) == StrTest)
 
   END FUNCTION StrCmp
 

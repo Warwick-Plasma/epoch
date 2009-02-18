@@ -98,7 +98,7 @@ CONTAINS
        starts_x=cell_x_start
        ends_x=cell_x_end
     ENDIF
-    
+
     !Sweep in Y
     IF (IAND(Balance_Mode,LB_Y) .NE. 0 .OR. IAND(Balance_Mode,LB_AUTO) .NE. 0) THEN
        !Rebalancing in Y
@@ -242,31 +242,31 @@ CONTAINS
     ALLOCATE(Ex(-2:nx_new+3,-2:ny_new+3))
     Ex=temp
 
-   temp=0.0_num
+    temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Ey,temp)
     DEALLOCATE(Ey)
     ALLOCATE(Ey(-2:nx_new+3,-2:ny_new+3))
     Ey=temp
 
-   temp=0.0_num
+    temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Ez,temp)
     DEALLOCATE(Ez)
     ALLOCATE(Ez(-2:nx_new+3,-2:ny_new+3))
     Ez=temp
 
-   temp=0.0_num
+    temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Bx,temp)
     DEALLOCATE(Bx)
     ALLOCATE(Bx(-2:nx_new+3,-2:ny_new+3))
     Bx=temp
 
-   temp=0.0_num
+    temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,By,temp)
     DEALLOCATE(By)
     ALLOCATE(By(-2:nx_new+3,-2:ny_new+3))
     By=temp
 
-   temp=0.0_num
+    temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Bz,temp)
     DEALLOCATE(Bz)
     ALLOCATE(Bz(-2:nx_new+3,-2:ny_new+3))
@@ -330,6 +330,8 @@ CONTAINS
 
     nx_new=new_cell_x_end-new_cell_x_start+1
     ny_new=new_cell_y_end-new_cell_y_start+1
+
+!    PRINT *,rank,new_cell_x_start,new_cell_y_start," "
 
     !This is a horrible, horrible way of doing this, I MUST think of a better way
 
@@ -462,7 +464,6 @@ CONTAINS
     ENDIF
 
     npart_per_proc_ideal=SUM(Density)/nproc
-
     partition=2
     starts(1)=1
     total=0
@@ -498,14 +499,14 @@ CONTAINS
 
 
     DO iproc=0,nprocx-1
-       IF (aParticle%Part_Pos(1) .GT. x_starts(iproc) - dx/2.0_num .AND. aParticle%Part_Pos(1) .LE. x_ends(iproc) + dx/2.0_num) THEN
+       IF (aParticle%Part_Pos(1) .GE. x_starts(iproc) - dx/2.0_num .AND. aParticle%Part_Pos(1) .LE. x_ends(iproc) + dx/2.0_num) THEN
           coords(2)=iproc
           EXIT
        ENDIF
     ENDDO
 
     DO iproc=0,nprocy-1
-       IF (aParticle%Part_Pos(2) .GT. y_starts(iproc) -dy/2.0_num .AND. aParticle%Part_Pos(2) .LE. y_ends(iproc) + dy/2.0_num) THEN
+       IF (aParticle%Part_Pos(2) .GE. y_starts(iproc) -dy/2.0_num .AND. aParticle%Part_Pos(2) .LE. y_ends(iproc) + dy/2.0_num) THEN
           coords(1)=iproc
           EXIT
        ENDIF
@@ -544,7 +545,7 @@ CONTAINS
           Next=>Current%Next
           part_proc=GetParticleProcessor(Current)
           IF (part_proc .LT. 0) THEN
-             PRINT *,"Unlocatable particle on processor",rank,Current%Part_Pos
+             PRINT *,"Unlocatable particle on processor",rank,Current%Part_Pos,dx,dy
              CALL MPI_BARRIER(comm,errcode)
              STOP
           ENDIF
@@ -608,10 +609,21 @@ CONTAINS
     CALL MPI_TYPE_COMMIT(subtype_field,errcode)
     DEALLOCATE(lengths,starts)
 
+    subtype_particle_var=Create_Particle_Subtype(npart_local)
+
+  END SUBROUTINE CreateSubtypes
+
+  FUNCTION Create_Particle_Subtype(nPart_Local)
+
+    INTEGER(KIND=8),INTENT(IN) :: nPart_Local
+    INTEGER :: Create_Particle_Subtype
+
+    INTEGER,DIMENSION(:),ALLOCATABLE :: lengths, starts
+
+
     ! Create the subarray for the particles in this problem: subtype decribes where this
     ! process's data fits into the global picture.
     CALL MPI_ALLGATHER(npart_local,1,MPI_INTEGER8,npart_each_rank,1,MPI_INTEGER8,comm,errcode)
-
 
     ALLOCATE(lengths(1),starts(1))
     lengths=npart_local
@@ -620,16 +632,12 @@ CONTAINS
        starts=starts+npart_each_rank(ix)
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(1,lengths,starts,mpireal,subtype_particle_var,errcode)
-    CALL MPI_TYPE_COMMIT(subtype_particle_var,errcode)
+    CALL MPI_TYPE_INDEXED(1,lengths,starts,mpireal,Create_Particle_Subtype,errcode)
+    CALL MPI_TYPE_COMMIT(Create_Particle_Subtype,errcode)
 
-    CALL MPI_TYPE_INDEXED(1,lengths,starts,MPI_INTEGER,subtype_particle_int,errcode)
-    CALL MPI_TYPE_COMMIT(subtype_particle_int,errcode)
     DEALLOCATE(lengths,starts)
 
-
-
-  END SUBROUTINE CreateSubtypes
+  END FUNCTION Create_Particle_Subtype
 
   SUBROUTINE CreateSubtypesForLoad(npart_local)
 

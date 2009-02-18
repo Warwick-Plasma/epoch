@@ -1,19 +1,28 @@
 MODULE deck
 
+  !Basic operations
   USE shared_data
   USE strings
   USE strings_advanced
-  USE initial_conditions
+  !Deck internals
+  USE deck_constant_block
+  USE deck_deo_block
+  !Deck Blocks
   USE deck_control_block
   USE deck_boundaries_block
   USE deck_species_block
   USE deck_io_block
+  USE deck_window_block
+  !Initial Condition Blocks
+  USE deck_ic_laser_block
   USE deck_ic_species_block
   USE deck_ic_fields_block
-  USE deck_constant_block
-  USE deck_deo_block
-  USE deck_ic_laser_block
-  USE deck_window_block
+  !Extended IO Blocks
+  USE deck_eio_dist_fn_block
+#ifdef PARTICLE_PROBES
+  USE deck_eio_particle_probe_block
+#endif
+  !Custom blocks
   USE custom_deck
 
   IMPLICIT NONE
@@ -27,6 +36,176 @@ MODULE deck
   LOGICAL :: InvalidBlock
 CONTAINS
 
+  !---------------------------------------------------------------------------------
+  !These subroutines actually call the routines which read the deck blocks
+  !---------------------------------------------------------------------------------
+
+  !This subroutine is called when a new block is started
+  !If a block NEEDS to do something when it starts, then
+  !The revelevant subroutine should be called here
+  SUBROUTINE StartBlock(BlockName)
+    CHARACTER(LEN=*),INTENT(IN) :: BlockName
+
+    IF (StrCmp(BlockName,"laser")) CALL Laser_Start
+    IF (StrCmp(BlockName,"window")) CALL Window_Start
+    IF (StrCmp(BlockName,"dist_fn")) CALL Dist_Fn_Start
+#ifdef PARTICLE_PROBES
+    IF (StrCmp(BlockName,"probe")) CALL Probe_Block_Start
+#endif
+
+  END SUBROUTINE StartBlock
+
+  !This subroutine is called when a new block is ended
+  !If a block NEEDS to do something when it ends, then
+  !The revelevant subroutine should be called here
+  SUBROUTINE EndBlock(BlockName)
+    CHARACTER(LEN=*),INTENT(IN) :: BlockName
+
+    IF (StrCmp(BlockName,"laser")) CALL Laser_End
+    IF (StrCmp(BlockName,"dist_fn")) CALL Dist_Fn_End
+#ifdef PARTICLE_PROBES
+    IF (StrCmp(BlockName,"probe")) CALL Probe_Block_End
+#endif
+
+
+  END SUBROUTINE EndBlock
+
+
+  FUNCTION HandleBlock(BlockName,BlockElement,BlockValue)
+
+    CHARACTER(len=*),INTENT(IN) :: BlockName, BlockElement,BlockValue
+    CHARACTER(len=EntryLength) :: Part1
+    INTEGER :: HandleBlock
+    INTEGER :: Part2,Result
+
+    HandleBlock=ERR_UNKNOWN_BLOCK
+    !Constants can be defined in any deck state, so put them here
+    IF (StrCmp(BlockName,"constant")) THEN
+       HandleBlock=HandleConstantDeck(BlockElement,BlockValue)
+       RETURN
+    ENDIF
+    IF (StrCmp(BlockName,"deo")) THEN
+       HandleBlock=HandleDEODeck(BlockElement,BlockValue)
+       RETURN
+    ENDIF
+    IF (Deck_State .EQ. DS_DECK) THEN
+       !Test for known blocks
+       IF (StrCmp(BlockName,"control"))  THEN
+          HandleBlock=HandleControlDeck(BlockElement,BlockValue)
+          RETURN
+       ENDIF
+       IF (StrCmp(BlockName,"boundaries")) THEN
+          HandleBlock=HandleBoundaryDeck(BlockElement,BlockValue)
+          RETURN
+       ENDIF
+       IF (StrCmp(BlockName,"species")) THEN
+          HandleBlock=HandleSpeciesDeck(BlockElement,BlockValue)
+          RETURN
+       ENDIF
+       IF (StrCmp(BlockName,"output")) THEN
+          HandleBlock=HandleIODeck(BlockElement,BlockValue)
+          RETURN
+       ENDIF
+       IF (StrCmp(BlockName,"window")) THEN
+          HandleBlock=HandleWindowDeck(BlockElement,BlockValue)
+          RETURN
+       ENDIF
+    ELSE IF (Deck_State .EQ. DS_IC) THEN
+       !Initial conditions blocks go here
+       IF (StrCmp(BlockName,"fields")) THEN
+          HandleBlock=HandleICFieldsDeck(BlockElement,BlockValue)
+          RETURN
+       ENDIF
+       IF (StrCmp(BlockName,"laser")) THEN
+          HandleBlock=HandleICLaserDeck(BlockElement,BlockValue)
+          RETURN
+       ENDIF
+       Result=ERR_NONE
+       CALL SplitOffInt(BlockName,Part1,Part2,Result)
+       IF (Result .EQ. ERR_NONE) THEN
+          IF (StrCmp(Part1,"species")) THEN
+             HandleBlock=HandleICSpeciesDeck(part2,BlockElement,BlockValue)
+          ENDIF
+          RETURN
+       ENDIF
+    ELSE IF (Deck_State .EQ. DS_EIO) THEN
+       IF (StrCmp(BlockName,"dist_fn")) THEN
+          HandleBlock=HandleEIODistFnDeck(BlockElement,BlockValue)
+          RETURN
+       ENDIF
+       IF (StrCmp(BlockName,"probe")) THEN
+#ifdef PARTICLE_PROBES
+          HandleBlock=HandleProbeDeck(BlockElement,BlockValue)
+          RETURN
+#else
+          HandleBlock=ERR_PP_OPTIONS_WRONG
+          Extended_Error_String="-DPARTICLE_PROBES"
+          RETURN
+#endif
+       ENDIF
+    ENDIF
+
+    !Pass through to the custom block
+    HandleBlock=HandleCustomBlock(BlockName,BlockElement,BlockValue)
+
+  END FUNCTION HandleBlock
+
+
+
+  !These subroutines are there to check for the basic minimal compulsory blocks are present
+  !They're a bit ugly, but they seem to be the easiest way to do it without adding complexity to the code
+  SUBROUTINE CheckCompulsoryBlocks(errcode_deck)
+
+    INTEGER :: index
+    LOGICAL :: Problem_Found
+    INTEGER,INTENT(INOUT) :: errcode_deck
+
+    Problem_Found=.FALSE.
+
+    errcode_deck=ERR_NONE
+
+    IF (Deck_State .EQ. DS_DECK) THEN
+       errcode_deck=IOR(errcode_deck,CheckControlBlock())
+       errcode_deck=IOR(errcode_deck,CheckBoundaryBlock())
+       errcode_deck=IOR(errcode_deck,CheckSpeciesBlock())
+       errcode_deck=IOR(errcode_deck,CheckIOBlock())
+       errcode_deck=IOR(errcode_deck,CheckWindowBlock())
+       errcode_deck=IOR(errcode_deck,CheckCustomBlocks())
+    ELSE IF (Deck_State .EQ. DS_IC) THEN
+       errcode_deck=IOR(errcode_deck,CheckICFieldsBlock())
+       errcode_deck=IOR(errcode_deck,CheckICSpeciesBlock())
+    ENDIF
+    errcode_deck=IOR(errcode_deck,CheckCustomBlocks())
+
+    problem_found =(IAND(errcode_deck,ERR_MISSING_ELEMENTS) .NE. 0) 
+
+    IF (Problem_Found) THEN
+       errcode_deck=IOR(errcode_deck,ERR_TERMINATE)
+       IF (rank .EQ. 0) THEN
+          PRINT *,""
+          PRINT *,"Not all required elements of input deck specified. Please fix input deck and rerun code"
+          WRITE(40,*) ""
+          WRITE(40,*) "Not all required elements of input deck specified. Please fix input deck and rerun code"
+       ENDIF
+    ELSE
+       IF (rank .EQ. 0) THEN
+          IF (Deck_State .EQ. DS_DECK) THEN
+             PRINT *,"Input deck complete and valid. Attempting to set up equilibrium"
+             PRINT *,""
+             WRITE(40,*) "Input deck complete and valid."
+          ELSE IF (Deck_State .EQ. DS_IC) THEN
+             PRINT *,"Initial conditions complete and valid. Attempting to load particles"
+             PRINT *,""
+             WRITE(40,*) "Initial conditions complete and valid."
+          ENDIF
+       ENDIF
+    ENDIF
+
+  END SUBROUTINE CheckCompulsoryBlocks
+
+  !---------------------------------------------------------------------------------
+  !These subroutines are the in depth detail of how the parser works
+  !---------------------------------------------------------------------------------
   FUNCTION GetFreeLUN()
 
     !This subroutine simply cycles round until it finds a free lun between MinLun and MaxLun
@@ -287,6 +466,7 @@ CONTAINS
     IF (IAND(Errcode_deck,ERR_UNKNOWN_ELEMENT) /= 0) THEN
        IF (rank .EQ. rankcheck) THEN
           WRITE(40,*) ""
+          PRINT *,""
           PRINT *,"***WARNING*** Unrecognised element ",TRIM(Element), " in input deck. Code will continue to run, but behaviour is undefined"
           WRITE(40,*) "***WARNING*** Unrecognised element ",TRIM(Element), " in input deck. Code will continue to run, but behaviour is undefined"
           PRINT *,""
@@ -305,6 +485,7 @@ CONTAINS
     IF (IAND(Errcode_deck, ERR_PRESET_ELEMENT_USE_LATER) /= 0) THEN
        IF (rank .EQ. rankcheck) THEN
           WRITE(40,*) ""
+          PRINT *,""
           PRINT *,"***WARNING*** Element ",TRIM(Element), " is set multiple times in this deck. Code will continue using last value in deck"
           WRITE(40,*) "***WARNING*** Element ",TRIM(Element), " is set multiple times in this deck. Code will continue using last value in deck"
           PRINT *,""
@@ -314,6 +495,7 @@ CONTAINS
     IF (IAND(Errcode_deck, ERR_BAD_VALUE) /= 0) THEN
        IF (rank .EQ. rankcheck) THEN
           WRITE(40,*) ""
+          PRINT *,""
           PRINT *,"***ERROR*** Value ",TRIM(Value)," in element ",TRIM(Element)," is invalid or could not be parsed. Code will terminate."
           WRITE(40,*) "***ERROR*** Value ",TRIM(Value)," in element ",TRIM(Element)," is invalid or could not be parsed. Code will terminate."
           PRINT *,""
@@ -321,19 +503,43 @@ CONTAINS
           Errcode_deck=IOR(Errcode_deck,ERR_TERMINATE)
        ENDIF
     ENDIF
+!!$    IF (IAND(Errcode_deck, ERR_BAD_VALUE_NO_TERMINATE) /= 0) THEN
+!!$       IF (rank .EQ. rankcheck) THEN
+!!$          WRITE(40,*) ""
+!!$          PRINT *,""
+!!$          PRINT *,"***ERROR*** Value ",TRIM(Value)," in non essential element ",TRIM(Element)," is invalid or could not be parsed. Code will continue but behaviour is undefined."
+!!$          WRITE(40,*) "***ERROR*** Value ",TRIM(Value)," in non essential element ",TRIM(Element)," is invalid or could not be parsed. Code will continue but behaviour is undefined."
+!!$          PRINT *,""
+!!$          WRITE(40,*) ""
+!!$       ENDIF
+!!$    ENDIF
     IF (IAND(Errcode_deck, ERR_REQUIRED_ELEMENT_NOT_SET) /= 0) THEN
        IF (rank .EQ. rankcheck) THEN
           WRITE(40,*) ""
-          PRINT *,"***ERROR*** Value ",TRIM(Value)," in element ",TRIM(Element)," cannot be set because a prerequisite element has not been set. Code will terminate"
-          WRITE(40,*) "***ERROR*** Value ",TRIM(Value)," in element ",TRIM(Element)," cannot be set because a prerequisite element has not been set. Code will terminate"
+          PRINT *,""
+          PRINT *,"***ERROR*** Value ",TRIM(Value)," in element ",TRIM(Element)," cannot be set because a prerequisite element, ", TRIM(Extended_Error_String),",has not been set. Code will terminate"
+          WRITE(40,*) "***ERROR*** Value ",TRIM(Value)," in element ",TRIM(Element)," cannot be set because a prerequisite element, ", TRIM(Extended_Error_String),",has not been set. Code will terminate"
           PRINT *,""
           WRITE(40,*) ""
           Errcode_deck=IOR(Errcode_deck,ERR_TERMINATE)
        ENDIF
     ENDIF
+    IF (IAND(Errcode_deck , ERR_PP_OPTIONS_WRONG) /= 0) THEN
+       IF (rank .EQ. rankcheck) THEN
+          WRITE(40,*) ""
+          PRINT *,""
+          PRINT *,"***ERROR*** The element ",TRIM(Element)," of block ",TRIM(Current_Block_Name)," cannot be set because the code has not been compiled with the correct preprocessor options.",&
+               "Code will continue, but to use selected features, please recompile with ",TRIM(Extended_Error_String)," option"
+          WRITE(40,*) "***ERROR*** The element ",TRIM(Element)," of block ",TRIM(Current_Block_Name)," cannot be set because the code has not been compiled with the correct preprocessor options.",&
+               "Code will continue, but to use selected features, please recompile with ",TRIM(Extended_Error_String)," option"
+          PRINT *,""
+          WRITE(40,*) ""
+       ENDIF
+    ENDIF
     IF (IAND(Errcode_deck , ERR_OTHER) /= 0) THEN
        IF (rank .EQ. rankcheck) THEN
           WRITE(40,*) ""
+          PRINT *,""
           PRINT *,"***ERROR*** You have managed to find an impossible situation in this code. Good for you. Just because of that, code will terminate."
           WRITE(40,*) "***ERROR*** You have managed to find an impossible situation in this code. Good for you. Just because of that, code will terminate."
           PRINT *,""
@@ -345,144 +551,5 @@ CONTAINS
     ErrCount=ErrCount+1
 
   END SUBROUTINE HandleDeckElement
-
-  !This subroutine is called when a new block is started
-  !If a block NEEDS to do something when it starts, then
-  !The revelevant subroutine should be called here
-  SUBROUTINE StartBlock(BlockName)
-    CHARACTER(LEN=*),INTENT(IN) :: BlockName
-
-    IF (StrCmp(BlockName,"laser")) CALL Laser_Start
-    IF (StrCmp(BlockName,"window")) CALL Window_Start
-
-  END SUBROUTINE StartBlock
-
-  !This subroutine is called when a new block is ended
-  !If a block NEEDS to do something when it ends, then
-  !The revelevant subroutine should be called here
-  SUBROUTINE EndBlock(BlockName)
-    CHARACTER(LEN=*),INTENT(IN) :: BlockName
-
-    IF (StrCmp(BlockName,"laser")) CALL Laser_End
-
-  END SUBROUTINE EndBlock
-
-
-  FUNCTION HandleBlock(BlockName,BlockElement,BlockValue)
-
-    CHARACTER(len=*),INTENT(IN) :: BlockName, BlockElement,BlockValue
-    CHARACTER(len=EntryLength) :: Part1
-    INTEGER :: HandleBlock
-    INTEGER :: Part2,Result
-
-    HandleBlock=ERR_UNKNOWN_BLOCK
-    !Constants can be defined in any deck state, so put them here
-    IF (StrCmp(BlockName,"constant")) THEN
-       HandleBlock=HandleConstantDeck(BlockElement,BlockValue)
-       RETURN
-    ENDIF
-    IF (StrCmp(BlockName,"deo")) THEN
-       HandleBlock=HandleDEODeck(BlockElement,BlockValue)
-       RETURN
-    ENDIF
-    IF (Deck_State .EQ. DS_DECK) THEN
-       !Test for known blocks
-       IF (StrCmp(BlockName,"control"))  THEN
-          HandleBlock=HandleControlDeck(BlockElement,BlockValue)
-          RETURN
-       ENDIF
-       IF (StrCmp(BlockName,"boundaries")) THEN
-          HandleBlock=HandleBoundaryDeck(BlockElement,BlockValue)
-          RETURN
-       ENDIF
-       IF (StrCmp(BlockName,"species")) THEN
-          HandleBlock=HandleSpeciesDeck(BlockElement,BlockValue)
-          RETURN
-       ENDIF
-       IF (StrCmp(BlockName,"output")) THEN
-          HandleBlock=HandleIODeck(BlockElement,BlockValue)
-          RETURN
-       ENDIF
-       IF (StrCmp(BlockName,"window")) THEN
-          HandleBlock=HandleWindowDeck(BlockElement,BlockValue)
-          RETURN
-       ENDIF
-    ELSE IF (Deck_State .EQ. DS_IC) THEN
-       !Initial conditions blocks go here
-       IF (StrCmp(BlockName,"fields")) THEN
-          HandleBlock=HandleICFieldsDeck(BlockElement,BlockValue)
-          RETURN
-       ENDIF
-       IF (StrCmp(BlockName,"laser")) THEN
-          HandleBlock=HandleICLaserDeck(BlockElement,BlockValue)
-          RETURN
-       ENDIF
-       Result=ERR_NONE
-       CALL SplitOffInt(BlockName,Part1,Part2,Result)
-       IF (Result .EQ. ERR_NONE) THEN
-          IF (StrCmp(Part1,"species")) THEN
-             HandleBlock=HandleICSpeciesDeck(part2,BlockElement,BlockValue)
-          ENDIF
-          RETURN
-       ENDIF
-    ENDIF
-
-    !Pass through to the custom block
-    HandleBlock=HandleCustomBlock(BlockName,BlockElement,BlockValue)
-
-  END FUNCTION HandleBlock
-
-
-
-  !These subroutines are there to check for the basic minimal compulsory blocks are present
-  !They're a bit ugly, but they seem to be the easiest way to do it without adding complexity to the code
-  SUBROUTINE CheckCompulsoryBlocks(errcode_deck)
-
-    INTEGER :: index
-    LOGICAL :: Problem_Found
-    INTEGER,INTENT(INOUT) :: errcode_deck
-
-    Problem_Found=.FALSE.
-
-    errcode_deck=ERR_NONE
-
-    IF (Deck_State .EQ. DS_DECK) THEN
-       errcode_deck=IOR(errcode_deck,CheckControlBlock())
-       errcode_deck=IOR(errcode_deck,CheckBoundaryBlock())
-       errcode_deck=IOR(errcode_deck,CheckSpeciesBlock())
-       errcode_deck=IOR(errcode_deck,CheckIOBlock())
-       errcode_deck=IOR(errcode_deck,CheckWindowBlock())
-       errcode_deck=IOR(errcode_deck,CheckCustomBlocks())
-    ELSE IF (Deck_State .EQ. DS_IC) THEN
-       errcode_deck=IOR(errcode_deck,CheckICFieldsBlock())
-       errcode_deck=IOR(errcode_deck,CheckICSpeciesBlock())
-    ENDIF
-    errcode_deck=IOR(errcode_deck,CheckCustomBlocks())
-
-    problem_found =(IAND(errcode_deck,ERR_MISSING_ELEMENTS) .NE. 0) 
-
-    IF (Problem_Found) THEN
-       errcode_deck=IOR(errcode_deck,ERR_TERMINATE)
-       IF (rank .EQ. 0) THEN
-          PRINT *,""
-          PRINT *,"Not all required elements of input deck specified. Please fix input deck and rerun code"
-          WRITE(40,*) ""
-          WRITE(40,*) "Not all required elements of input deck specified. Please fix input deck and rerun code"
-       ENDIF
-    ELSE
-       IF (rank .EQ. 0) THEN
-          IF (Deck_State .EQ. DS_DECK) THEN
-             PRINT *,"Input deck complete and valid. Attempting to set up equilibrium"
-             PRINT *,""
-             WRITE(40,*) "Input deck complete and valid."
-          ELSE IF (Deck_State .EQ. DS_IC) THEN
-             PRINT *,"Initial conditions complete and valid. Attempting to load particles"
-             PRINT *,""
-             WRITE(40,*) "Initial conditions complete and valid."
-          ENDIF
-       ENDIF
-    ENDIF
-
-  END SUBROUTINE CheckCompulsoryBlocks
 
 END MODULE deck

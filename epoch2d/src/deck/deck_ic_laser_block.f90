@@ -20,7 +20,7 @@ CONTAINS
 
   FUNCTION HandleICLaserDeck(Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
-    CHARACTER(30) :: Part1
+    CHARACTER(LEN=EntryLength) :: Part1
     INTEGER :: Part2
     INTEGER :: HandleICLaserDeck
     INTEGER :: loop,elementselected,partswitch
@@ -46,6 +46,7 @@ CONTAINS
           PRINT *,"***ERROR*** Cannot set laser properties before direction is set"
           WRITE(40,*) "***ERROR*** Cannot set laser properties before direction is set"
        ENDIF
+       Extended_Error_String="direction"
        HandleICLaserDeck=ERR_REQUIRED_ELEMENT_NOT_SET
        RETURN
     ENDIF

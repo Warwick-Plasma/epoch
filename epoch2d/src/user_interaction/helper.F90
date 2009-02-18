@@ -19,9 +19,10 @@ CONTAINS
     idum=-(clock+rank+1)
     DO iSpecies=1,nspecies
        PartFam=>ParticleSpecies(iSpecies)
-       ParticleSpecies(iSpecies)%Density=InitialConditions(iSpecies)%Rho(nx,ny/2)
-       ParticleSpecies(iSpecies)%Temperature=InitialConditions(iSpecies)%Temp(nx,ny/2,:)
-
+       IF (move_window) THEN
+          ParticleSpecies(iSpecies)%Density=InitialConditions(iSpecies)%Rho(nx,:)
+          ParticleSpecies(iSpecies)%Temperature=InitialConditions(iSpecies)%Temp(nx,:,:)
+       ENDIF
        CALL SetupParticleDensity(InitialConditions(iSpecies)%Rho,Partfam,InitialConditions(iSpecies)%MinRho,InitialConditions(iSpecies)%MaxRho,idum)
        CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,1),DIR_X,PartFam,idum)
        CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,2),DIR_Y,PartFam,idum)
@@ -37,7 +38,7 @@ CONTAINS
        ALLOCATE(InitialConditions(iSpecies)%Rho(-2:nx+3,-2:ny+3))
        ALLOCATE(InitialConditions(iSpecies)%Temp(-2:nx+3,-2:nx+3,1:3))
 
-       InitialConditions(iSpecies)%Rho=0.0_num
+       InitialConditions(iSpecies)%Rho=1.0_num
        InitialConditions(iSpecies)%Temp=0.0_num
        InitialConditions(iSpecies)%MinRho=0.0_num
        InitialConditions(iSpecies)%MaxRho=0.0_num
@@ -76,7 +77,7 @@ CONTAINS
     REAL(num) :: valid_cell_frac
     REAL(dbl) :: frac, frac_to_pos,rpos
     LOGICAL :: fullrand
-    INTEGER :: upper_x, upper_y, cell_x,cell_y
+    INTEGER :: upper_x, upper_y, lower_x, lower_y, cell_x,cell_y
     REAL(num) :: cell_x_r,dcell_x,cell_frac_x
     REAL(num) :: cell_y_r,dcell_y,cell_frac_y
     INTEGER(KIND=8) :: i
@@ -86,17 +87,25 @@ CONTAINS
 
     upper_x=nx
     upper_y=ny
+    lower_x=1
+    lower_y=1
 
-!!$    IF (Coordinates(2) .EQ. nprocx-1) upper_x=nx!-1
-!!$    IF (Coordinates(1) .EQ. nprocy-1) upper_y=ny!-1
+    IF (Coordinates(2) .EQ. nprocx-1) upper_x=nx+1
+    IF (Coordinates(2) .EQ. 0) lower_x=0
+    IF (Coordinates(1) .EQ. nprocy-1) upper_y=ny+1
+    IF (Coordinates(1) .EQ. 0) lower_y=0
 
     PartList=>SpeciesList%AttachedList
 
-    npart_this_species=PartList%Count
-    CALL MPI_ALLREDUCE(PartList%Count,npart_this_species,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
+    npart_this_species=SpeciesList%Count
+    IF (npart_this_species .LT. 0) THEN
+       IF (rank .EQ. 0) PRINT *,"Unable to continue, species ",TRIM(SpeciesList%Name)," has not had a number of particles set"
+       CALL MPI_ABORT(comm,errcode)
+    ENDIF
+    IF (npart_this_species .EQ. 0) RETURN
     num_valid_cells_local=0
-    DO iy=1,upper_y
-       DO ix=1,upper_x
+    DO iy=lower_y,upper_y
+       DO ix=lower_x,upper_x
           IF (loadlist(ix,iy)) num_valid_cells_local=num_valid_cells_local+1
        ENDDO
     ENDDO
@@ -124,8 +133,8 @@ CONTAINS
     Current=>PartList%Head
     IF (npart_per_cell .GT. 0) THEN
 
-       DO ix=1,upper_x
-          DO iy=1,upper_y
+       DO ix=lower_x,upper_x
+          DO iy=lower_y,upper_y
              ipart=0
              IF (loadlist(ix,iy)) THEN
                 DO WHILE(ASSOCIATED(Current) .AND. ipart .LT. npart_per_cell)
@@ -151,6 +160,7 @@ CONTAINS
        ENDDO
 
     ENDIF
+
 
     DO i=1,npart_left*4
        IF (.NOT. ASSOCIATED(Current)) EXIT
@@ -182,10 +192,12 @@ CONTAINS
        Current=>Next
     ENDDO
     CALL MPI_REDUCE(PartList%Count,npart_this_species,1,MPI_INTEGER8,MPI_SUM,0,comm,errcode)
+    SpeciesList%Count=npart_this_species
     IF (rank .EQ. 0) THEN
        PRINT *,"Loaded",npart_this_species,"particles of species ",TRIM(SpeciesList%Name)
        WRITE(20,*) "Loaded",npart_this_species,"particles of species ",TRIM(SpeciesList%Name)
     ENDIF
+    CALL Particle_BCS
 
 
   END SUBROUTINE LoadParticles
@@ -280,7 +292,6 @@ CONTAINS
     ALLOCATE(Density(-2:nx+3,-2:ny+3),DensityMap(-2:nx+3,-2:ny+3))
     Density=0.0_num
     Density=DensityIn
-
     CALL Field_BC(Density)
 
     DensityMap=.FALSE.
@@ -313,12 +324,12 @@ CONTAINS
     !First loop converts number density into weight function
     DO WHILE(ipart < PartList%Count)
        IF (.NOT. ASSOCIATED(Current)) PRINT *,"Bad Particle"
-       cell_x_r = (Current%Part_Pos(1)-x_start_local) / dx !- 0.5_num
+       cell_x_r = (Current%Part_Pos(1)-x_start_local) / dx - 0.5_num
        cell_x=NINT(cell_x_r)
        cell_frac_x = REAL(cell_x,num) - cell_x_r
        cell_x=cell_x+1
 
-       cell_y_r = (Current%Part_Pos(2)-y_start_local) / dy !- 0.5_num
+       cell_y_r = (Current%Part_Pos(2)-y_start_local) / dy - 0.5_num
        cell_y=NINT(cell_y_r)
        cell_frac_y = REAL(cell_y,num) - cell_y_r
        cell_y=cell_y+1

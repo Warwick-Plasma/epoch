@@ -10,7 +10,7 @@ SAVE
 
 INTEGER(KIND=8) :: npart_per_cell_min=5
 
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
+#ifdef PARTICLE_CELL_DIVISION
 CONTAINS
 
   SUBROUTINE Reorder_Particles_to_grid

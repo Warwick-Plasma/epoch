@@ -18,7 +18,7 @@ CONTAINS
   FUNCTION HandleICSpeciesDeck(Species_ID,Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
     INTEGER,INTENT(IN) :: Species_ID
-    CHARACTER(30) :: Part1
+    CHARACTER(LEN=EntryLength) :: Part1
     INTEGER :: Part2
     INTEGER :: HandleICSpeciesDeck
     INTEGER :: loop,elementselected,partswitch

@@ -15,6 +15,7 @@ MODULE setup
 
   PUBLIC :: after_control,minimal_init,restart_data
   PUBLIC :: open_files, close_files
+  PUBLIC :: setup_species
 
   SAVE
   TYPE(ParticleList) :: MainRoot
@@ -29,6 +30,7 @@ CONTAINS
     Comm=MPI_COMM_NULL
 
     Window_Shift=0.0_num
+    npart_global=-1
 
     NULLIFY(Laser_Left)
     NULLIFY(Laser_Right)
@@ -87,15 +89,49 @@ CONTAINS
 
   END SUBROUTINE after_control
 
-  SUBROUTINE open_files
+  SUBROUTINE Setup_Species
+    INTEGER :: iSpecies
 
+    ALLOCATE(ParticleSpecies(1:nSpecies))
+
+    DO iSpecies=1,nSpecies
+       ParticleSpecies(iSpecies)%name=blank
+       ParticleSpecies(iSpecies)%mass=-1.0_num
+       ParticleSpecies(iSpecies)%Dump=.TRUE.
+       ParticleSpecies(iSpecies)%Count=-1
+#ifdef SPLIT_PARTICLES_AFTER_PUSH
+       ParticleSpecies(iSpecies)%Split=.FALSE.
+       ParticleSpecies(iSpecies)%npart_max=0.0_num     
+#endif
+#ifdef PART_IONISE
+       ParticleSpecies(iSpecies)%ionise=.FALSE.
+       ParticleSpecies(iSpecies)%ionise_to_species=.FALSE.
+       ParticleSpecies(iSpecies)%release_species=-1
+       ParticleSpecies(iSpecies)%critical_field=0.0_num
+#endif
+#ifdef TRACER_PARTICLES
+       ParticleSpecies(iSpecies)%Tracer=.FALSE.
+#endif
+#ifdef PARTICLE_PROBES
+       NULLIFY(ParticleSpecies(iSpecies)%AttachedProbes)
+#endif
+    ENDDO
+
+  END SUBROUTINE Setup_Species
+
+  SUBROUTINE open_files
 
     CHARACTER(LEN=11+Data_Dir_Max_Length) :: file2
     CHARACTER(LEN=7+Data_Dir_Max_Length) :: file3
+    INTEGER :: Errcode
 
     IF (rank == 0) THEN
        WRITE(file2, '(a,"/epoch2d.dat")') TRIM(data_dir)
-       OPEN(unit=20, STATUS = 'REPLACE',FILE = file2)
+       OPEN(unit=20, STATUS = 'REPLACE',FILE = file2, IOSTAT=errcode)
+       IF (errcode .NE. 0) THEN
+             PRINT *,"***ERROR*** Cannot create epoch2d.dat output file. The most common cause of this problem is that the ouput directory does not exist"
+             CALL MPI_ABORT(comm,errcode)
+       ENDIF
 !!$       WRITE(file3, '(a,"/en.dat")') TRIM(data_dir)
 !!$       OPEN(unit=30, STATUS = 'REPLACE',FILE = file3,FORM="binary")
     END IF

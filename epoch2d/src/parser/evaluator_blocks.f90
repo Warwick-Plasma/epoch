@@ -154,6 +154,21 @@ CONTAINS
        RETURN
     ENDIF
 
+    IF (opcode .EQ. CONST_EV) THEN
+       CALL PushOnEval(ev)
+       RETURN
+    ENDIF
+
+    IF (opcode .EQ. CONST_KEV) THEN
+       CALL PushOnEval(ev*1000.0_num)
+       RETURN
+    ENDIF
+
+    IF (opcode .EQ. CONST_MEV) THEN
+       CALL PushOnEval(ev*1.0e6_num)
+       RETURN
+    ENDIF
+
     IF (opcode .EQ. CONST_LX) THEN
        CALL PushOnEval(length_x)
        RETURN

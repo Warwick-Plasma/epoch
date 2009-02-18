@@ -8,6 +8,25 @@ MODULE window
   IMPLICIT NONE
 CONTAINS
 
+  SUBROUTINE Allocate_Window
+    INTEGER :: iSpecies
+
+    DO iSpecies=1,nspecies
+       ALLOCATE(ParticleSpecies(iSpecies)%Density(-2:ny+2))
+       ALLOCATE(ParticleSpecies(iSpecies)%Temperature(-2:ny+2,1:3))
+    ENDDO
+
+  END SUBROUTINE Allocate_Window
+
+  SUBROUTINE Deallocate_Window
+    INTEGER :: iSpecies
+
+    DO iSpecies=1,nspecies
+       IF (ALLOCATED(ParticleSpecies(iSpecies)%Density)) DEALLOCATE(ParticleSpecies(iSpecies)%Density)
+       IF (ALLOCATED(ParticleSpecies(iSpecies)%Temperature))DEALLOCATE(ParticleSpecies(iSpecies)%Temperature)
+    ENDDO
+  END SUBROUTINE Deallocate_Window
+
   SUBROUTINE Shift_Window
 
     INTEGER :: iWindow
@@ -51,9 +70,16 @@ CONTAINS
   SUBROUTINE Insert_Particles
 
     TYPE(Particle),POINTER :: Current
-    INTEGER :: iSpecies, iPart,i
+    INTEGER :: iSpecies, iPart,i,iSuby
     REAL(num) :: rand
     INTEGER :: clock,idum
+    REAL(num) :: cell_x_r,dcell_x,cell_frac_x
+    REAL(num) :: cell_y_r,dcell_y,cell_frac_y
+    INTEGER :: cell_x,cell_y
+    REAL(num),DIMENSION(-1:1) :: gx
+    REAL(num),DIMENSION(-1:1) :: gy
+    REAL(num) :: weight_local, temp_local
+
 
     !This subroutine injects particles at the right hand edge of the box
 
@@ -70,10 +96,40 @@ CONTAINS
 
                 rand=RANDOM(idum)-0.5_num
                 Current%Part_Pos(2)=y(iy)+dy*rand
+
+                cell_x_r = (Current%Part_Pos(1)-x_start_local) / dx -0.5_num
+                cell_x=NINT(cell_x_r)
+                cell_frac_x = REAL(cell_x,num) - cell_x_r
+                cell_x=cell_x+1
+
+                cell_y_r = (Current%Part_Pos(2)-y_start_local) / dy -0.5_num
+                cell_y=NINT(cell_y_r)
+                cell_frac_y = REAL(cell_y,num) - cell_y_r
+                cell_y=cell_y+1
+
+!!$                IF (cell_y .NE. iy) PRINT *,"BAD CELL"
+
+                gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
+                gx( 0) = 0.75_num - cell_frac_x**2
+                gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
+
+                gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
+                gy( 0) = 0.75_num - cell_frac_y**2
+                gy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
+
                 DO i=1,3
-                   Current%Part_P(i)=MomentumFromTemperature(ParticleSpecies(iSpecies)%Mass,ParticleSpecies(iSpecies)%Temperature(i),idum)
+                   temp_local=0.0_num
+                   DO iSuby=-1,+1
+                      temp_local=temp_local+gy(iSuby)*ParticleSpecies(iSpecies)%Temperature(cell_y+iSuby,i)
+                   ENDDO
+                   Current%Part_P(i)=MomentumFromTemperature(ParticleSpecies(iSpecies)%Mass,temp_local,idum)
                 ENDDO
-                Current%Weight=ParticleSpecies(iSpecies)%Density/(REAL(ParticleSpecies(iSpecies)%npart_per_cell,num)/(dx*dy))
+
+                weight_local=0.0_num
+                DO iSuby=-1,+1
+                   weight_local=weight_local+gy(iSuby)*ParticleSpecies(iSpecies)%Density(cell_y+iSuby)/(REAL(ParticleSpecies(iSpecies)%npart_per_cell,num)/(dx*dy))
+                ENDDO
+                Current%Weight=weight_local
 #ifdef PART_DEBUG
                 Current%Processor=rank
                 Current%Processor_at_t0=rank

@@ -38,6 +38,35 @@ CONTAINS
 
   END SUBROUTINE SplitOffInt
 
+  SUBROUTINE SplitRange(StrIn,Real1,Real2,ERR)
+
+    CHARACTER(*),INTENT(IN) :: StrIn
+    REAL(num),INTENT(OUT) :: Real1,Real2
+    INTEGER,INTENT(INOUT) :: ERR
+    INTEGER :: StrLen,Char,pos,C
+
+    StrLen=LEN(TRIM(StrIn))
+    pos=-1
+
+    DO Char=1,StrLen
+       C=ICHAR(StrIn(Char:Char))
+       !Separate on a >
+       IF (C .EQ. 62) THEN
+          pos=Char
+          EXIT
+       ENDIF
+    ENDDO
+
+    IF (pos < 0) THEN 
+       ERR=IOR(ERR,ERR_BAD_VALUE)
+       RETURN
+    ENDIF
+!!$    PRINT *,TRIM(StrIn)," A ",TRIM(StrIn(1:pos-1))," B ",TRIM(StrIn(pos+1:strlen))
+    Real1=AsRealSimple(TRIM(StrIn(1:pos-1)),ERR)
+    Real2=AsRealSimple(TRIM(StrIn(pos+1:StrLen)),ERR)
+
+  END SUBROUTINE SplitRange
+
 
   FUNCTION AsInteger(StrIn,ERR)
     CHARACTER(*),INTENT(IN) :: StrIn

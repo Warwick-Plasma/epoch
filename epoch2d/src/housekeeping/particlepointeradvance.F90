@@ -3,7 +3,8 @@ MODULE ParticlePointerAdvance
 
   IMPLICIT NONE
 
-
+SAVE
+TYPE(ParticleFamily), POINTER, SAVE :: CurrentHead
 
 CONTAINS
 

@@ -13,6 +13,9 @@ PROGRAM pic
   USE shared_data
   USE setup
   USE initial_conditions
+#ifdef NO_DECK
+  USE control
+#endif
   USE deck
   USE welcome
   USE diagnostics
@@ -23,15 +26,18 @@ PROGRAM pic
   USE balance
   USE helper
   USE solve_gauss
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
+#ifdef PARTICLE_CELL_DIVISION
   USE split_particle
+#endif
+#ifdef PART_IONISE
+  USE ionise
 #endif
   USE custom_deck
   USE window
 
   IMPLICIT NONE
 
-  INTEGER :: i = 0
+  INTEGER :: iSpecies,i=0
   REAL(num) :: walltime_current,dwalltime
   LOGICAL :: halt = .FALSE.
 
@@ -46,11 +52,21 @@ PROGRAM pic
      READ(*,*) data_dir
   ENDIF
   CALL MPI_BCAST(data_dir,64,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)
+#ifdef NO_DECK
+  CALL Setup_Control_Block
+  CALL Setup_Boundaries_Block
+  CALL Setup_Species_Block
+  CALL Setup_Output_Block
+  IF (rank .EQ. 0) PRINT *,"Control variables setup OK. Setting initial conditions"
+#else
   CALL Read_Deck("input.deck",.TRUE.)
+#endif
   CALL Setup_Particle_Boundaries !boundary.f90
   CALL mpi_initialise !mpi_routines.f90
   CALL After_Control !setup.f90
   CALL open_files    !setup.f90
+
+  IF (move_window) CALL Allocate_Window !window.f90
 
   !If the user has specified extended IO options then read the file
   IF (use_extended_io) THEN
@@ -102,11 +118,17 @@ PROGRAM pic
      CALL Balance_Workload(.TRUE.)
   ENDIF
 
+  !npart_global isn't really used anymore, just check where it is used
+  IF (npart_global .LT. 0) THEN
+     npart_global=0
+     DO iSpecies=1,nSpecies
+        npart_global=npart_global+ParticleSpecies(iSpecies)%Count
+     ENDDO
+  ENDIF
+
   CALL Particle_Bcs
   CALL EField_BCS
   CALL BField_BCS(.FALSE.)
-
-  CALL MPI_BARRIER(comm,errcode)
 
   IF (.NOT. restart) THEN
      CALL set_dt
@@ -123,7 +145,7 @@ PROGRAM pic
      CALL set_dt
      CALL update_eb_fields_half
      CALL push_particles
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
+#ifdef PARTICLE_CELL_DIVISION
      !After this line, the particles can be accessed on a cell by cell basis
      !Using the ParticleFamily%SecondaryList property
      CALL Reorder_Particles_to_grid
@@ -132,6 +154,9 @@ PROGRAM pic
      CALL Reattach_Particles_to_mainlist
 #endif
      CALL update_eb_fields_final
+#ifdef PART_IONISE
+     CALL ionise_particles
+#endif
      CALL output_routines(i)
      time=time+dt
      IF (DLB) THEN
@@ -158,6 +183,14 @@ PROGRAM pic
            CALL Particle_BCS
         ENDIF
      ENDIF
+     !This section ensures that the particle count for the ParticleSpecies objects is accurate
+     !This makes some things easier, but increases communication
+#ifdef PARTICLE_COUNT_UPDATE
+     DO iSpecies=1,nSpecies
+        CALL MPI_ALLREDUCE(ParticleSpecies(iSpecies)%AttachedList%Count,ParticleSpecies(iSpecies)%Count&
+             ,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
+     ENDDO
+#endif
      IF (halt) EXIT
   END DO
   IF (rank .EQ. 0) PRINT *,"Final runtime of core =",MPI_WTIME(errcode)-walltime_current

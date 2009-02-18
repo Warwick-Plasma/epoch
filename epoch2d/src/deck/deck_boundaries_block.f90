@@ -10,7 +10,7 @@ MODULE deck_boundaries_block
 
   INTEGER,PARAMETER :: BoundaryBlockElements=4
   LOGICAL, DIMENSION(BoundaryBlockElements)  :: BoundaryBlockDone
-  CHARACTER(len=30),DIMENSION(BoundaryBlockElements) :: BoundaryBlockName=(/"xbc_left","xbc_right","ybc_up","ybc_down"/)
+  CHARACTER(len=EntryLength),DIMENSION(BoundaryBlockElements) :: BoundaryBlockName=(/"xbc_left","xbc_right","ybc_up","ybc_down"/)
 
 CONTAINS
 
