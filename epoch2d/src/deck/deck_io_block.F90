@@ -11,7 +11,8 @@ MODULE deck_io_block
   INTEGER, PARAMETER :: N_Var_Special = 7
   INTEGER,PARAMETER :: IOBlockElements=N_Var_Special+num_vars_to_dump
   LOGICAL, DIMENSION(IOBlockElements)  :: IOBlockDone
-  CHARACTER(len=30),DIMENSION(IOBlockElements) :: IOBlockName=(/"dt_snapshot","full_dump_every","restart_dump_every","force_final_to_be_restartable","use_offset_grid","use_extended_io","extended_io_file","particles","grid","px","py","pz","vx","vy","vz",&
+  CHARACTER(len=EntryLength),DIMENSION(IOBlockElements) :: IOBlockName=(/"dt_snapshot","full_dump_every","restart_dump_every","force_final_to_be_restartable","use_offset_grid","use_extended_io",&
+       "extended_io_file","particles","grid","px","py","pz","vx","vy","vz",&
        "ex","ey","ez","bx","by","bz","jx","jy","jz","charge","mass",&
        "ekbar","mass_density","charge_density","number_density","particle_weight","species_id","distribution_functions","particle_probes","temperature"/)
 
@@ -62,6 +63,14 @@ CONTAINS
 
     IF (elementselected .LE. N_Var_Special) RETURN
     IF (elementselected .GT. N_Var_Special) DumpMask(elementselected-N_Var_Special)=AsReal(Value,HandleIODeck)
+
+    !If setting dumpmask for particle probes then report if the code wasn't compiled for particle probes
+#ifndef PARTICLE_PROBES   
+    IF (elementselected-N_Var_Special .EQ. 27) THEN
+       HandleIODeck=ERR_PP_OPTIONS_WRONG
+       Extended_Error_String="-DPARTICLE_PROBES"
+    ENDIF
+#endif
 
   END FUNCTION HandleIODeck
 
