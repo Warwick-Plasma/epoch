@@ -47,6 +47,40 @@ CONTAINS
     WRITE(*,'("Welcome to EPOCH2D Version ",I1,".",I1,"ALPHA")'),Version,Revision
     WRITE(*,*) ""
 
+    WRITE(*,*) "The code was compiled with the following compile time options"
+    WRITE(*,*) "*************************************************************"
+#ifdef PART_DEBUG
+    WRITE(*,*) "Particle Debug information -DPART_DEBUG"
+#endif
+#ifdef FIELD_DEBUG
+    WRITE(*,*) "Field Debug information -DFIELD_DEBUG"
+#endif
+#ifdef PARTICLE_CELL_DIVISION
+    WRITE(*,*) "Particle/cell ordering -DPARTICLE_CELL_DIVISION"
+#endif
+#ifdef PER_PARTICLE_WEIGHT
+    WRITE(*,*) "Per particle weighting -DPER_PARTICLE_WEIGHT"
+#endif
+#ifdef PARTICLE_COUNT_UPDATE
+    WRITE(*,*) "Global particle counting -DPARTICLE_COUNT_UPDATE"
+#endif
+#ifdef TRACER_PARTICLES
+    WRITE(*,*) "Tracer particle support -DTRACER_PARTICLES"
+#endif
+#ifdef PARTICLE_PROBES
+    WRITE(*,*) "Particle probe support -DPARTICLE_PROBES"
+#endif
+#ifdef PER_PARTICLE_CHARGEMASS
+    WRITE(*,*) "Per particle charge and mass -DPER_PARTICLE_CHARGEMASS"
+#endif
+#ifdef PART_IONISE
+    WRITE(*,*) "Particle ionisation model -DPART_IONISE"
+#endif
+#ifdef NO_DECK
+    WRITE(*,*) "Deactivated input deck support -DNO_DECK"
+#endif
+    WRITE(*,*) "*************************************************************"
+    WRITE(*,*) ""
   END SUBROUTINE welcome_message
 
 END MODULE welcome
