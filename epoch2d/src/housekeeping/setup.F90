@@ -9,6 +9,7 @@ MODULE setup
   USE Strings
   USE balance
   USE partlist
+  USE mpi_subtype_control
   IMPLICIT NONE
 
   PRIVATE
@@ -172,7 +173,7 @@ CONTAINS
 
     npart=npart_global/nproc
     Const_Weight=.FALSE.
-    CALL CreateSubTypesForLoad(npart)
+    CALL Create_SubTypes_For_Load(npart)
 
     ! Create the filename for the last snapshot
     WRITE(filename, '("nfs:",a,"/",i4.4,".cfd")') TRIM(data_dir), restart_snapshot
@@ -230,7 +231,7 @@ CONTAINS
              IF (npart_l .NE. npart_global) THEN
                 IF (rank .EQ. 0) PRINT *,"Number of particles does not match, changing npart to match",npart_l
                 npart=npart_l/nproc
-                CALL CreateSubTypesForLoad(npart)
+                CALL Create_SubTypes_For_Load(npart)
                 CALL Create_Allocated_PartList(MainRoot,npart)
                 ALLOCATE(Species_ID(1:npart))
                 Current=>MainRoot%Head
@@ -266,7 +267,7 @@ CONTAINS
                    IF (rank .EQ. 0) PRINT *,"Cannot evenly subdivide particles over",nproc,"processors. Trying to fix"
                    IF (rank .LT. npart_l-(npart*nproc)) npart=npart+1
                 ENDIF
-                CALL CreateSubTypesForLoad(npart)
+                CALL Create_SubTypes_For_Load(npart)
                 CALL Create_Allocated_PartList(MainRoot,npart)
                 ALLOCATE(Species_ID(1:npart))
                 Current=>MainRoot%Head

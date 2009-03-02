@@ -84,7 +84,6 @@ CONTAINS
     INTEGER :: j
 
 
-
     upper_x=nx
     upper_y=ny
     lower_x=1
@@ -112,6 +111,14 @@ CONTAINS
 
     !Calculate global number of particles per cell
     CALL MPI_ALLREDUCE(num_valid_cells_local,num_valid_cells,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
+
+    IF (num_valid_cells .EQ. 0) THEN
+       IF (rank .EQ. 0) THEN
+          PRINT *,"Intial condition settings mean that there are no cells where particles may validly be placed for at least one species. Code terminates."
+          CALL MPI_ABORT(comm,errcode)
+       ENDIF
+    ENDIF
+
 
     valid_cell_frac=REAL(num_valid_cells_local,num)/REAL(num_valid_cells,num)
     num_new_particles=INT(npart_this_species*valid_cell_frac,KIND=8)

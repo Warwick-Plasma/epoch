@@ -3,43 +3,11 @@ MODULE balance
   USE shared_data
   USE partlist
   USE boundary
+  USE mpi_subtype_control
 
   IMPLICIT NONE
 
 CONTAINS
-
-  FUNCTION Get_Total_Local_Particles()
-
-    !This subroutine describes the total number of particles on the current processor
-    !It simply sums over every particle species
-
-    INTEGER(KIND=8) :: Get_Total_Local_Particles
-    INTEGER :: iSpecies
-    Get_Total_Local_Particles=0
-    DO iSpecies = 1,nspecies
-       Get_Total_Local_Particles=Get_Total_Local_Particles+ParticleSpecies(iSpecies)%AttachedList%Count
-    ENDDO
-
-  END FUNCTION Get_Total_Local_Particles
-
-  FUNCTION Get_Total_Local_Dumped_Particles(Force_Restart)
-
-    !This subroutine describes the total number of particles on the current processor
-    !which are members of species with the Dump=T attribute in the input deck
-    !If FORCE_RESTART=.TRUE. then the subroutine simply counts all the particles
-
-    LOGICAL,INTENT(IN) :: Force_Restart
-    INTEGER(KIND=8) :: Get_Total_Local_Dumped_Particles
-    INTEGER :: iSpecies
-
-    Get_Total_Local_Dumped_Particles=0
-    DO iSpecies = 1,nspecies
-       IF (ParticleSpecies(iSpecies)%Dump .OR. Force_Restart) THEN
-          Get_Total_Local_Dumped_Particles=Get_Total_Local_Dumped_Particles+ParticleSpecies(iSpecies)%AttachedList%Count
-       ENDIF
-    ENDDO
-
-  END FUNCTION Get_Total_Local_Dumped_Particles
 
   SUBROUTINE Balance_Workload(OverRide)
 
@@ -57,6 +25,7 @@ CONTAINS
     REAL(num) :: balance_frac,balance_frac_x,balance_frac_y
     INTEGER(KIND=8) :: Max_x,Max_y,wk,Min_x,Min_y,npart_local
     INTEGER :: iProc,iSpecies,iLaser
+    INTEGER, DIMENSION(2,2) :: Domain
 #ifdef PART_DEBUG
     TYPE(Particle),POINTER :: Current
 #endif
@@ -153,7 +122,9 @@ CONTAINS
     new_cell_y_end=ends_y(coordinates(1)+1)
 
     !Redeistribute the field variables
-    CALL Redistribute_Fields(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end)
+    domain(1,:)=(/new_cell_x_start,new_cell_x_end/)
+    domain(2,:)=(/new_cell_y_start,new_cell_y_end/)
+    CALL Redistribute_Fields(domain)
 
     !Copy the new lengths into the permanent variables
     cell_x_start=starts_x
@@ -220,54 +191,79 @@ CONTAINS
 
   END SUBROUTINE Balance_Workload
 
-  SUBROUTINE Redistribute_Fields(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end)
+  SUBROUTINE Redistribute_Fields(new_domain)
 
     !This subroutine redistributes the 2D field variables over the new processor layout
     !If using a 2D field of your own then se the Redistribute_Field subroutine to implement it
     !1D fields, you're on your own (have global copies and use those to repopulate?)
-    INTEGER, INTENT(IN) :: new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end
     INTEGER :: nx_new,ny_new,iLaser
+    INTEGER,DIMENSION(2,2),INTENT(IN) :: new_domain
     REAL(num),DIMENSION(:,:), ALLOCATABLE :: temp
     REAL(num),DIMENSION(:), ALLOCATABLE :: temp1d
     TYPE(Laser_Block),POINTER :: Current
 
-    nx_new=new_cell_x_end-new_cell_x_start+1
-    ny_new=new_cell_y_end-new_cell_y_start+1
+    nx_new=new_domain(1,2)-new_domain(1,1)+1
+    ny_new=new_domain(2,2)-new_domain(2,1)+1
 
     ALLOCATE(temp(-2:nx_new+3,-2:ny_new+3))
 
     temp=0.0_num
-    CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Ex,temp)
+    CALL Redistribute_Field(new_domain,Ex,temp)
     DEALLOCATE(Ex)
     ALLOCATE(Ex(-2:nx_new+3,-2:ny_new+3))
     Ex=temp
 
+<<<<<<< .mine
+    temp=0.0_num
+    CALL Redistribute_Field(new_domain,Ey,temp)
+=======
     temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Ey,temp)
+>>>>>>> .r31
     DEALLOCATE(Ey)
     ALLOCATE(Ey(-2:nx_new+3,-2:ny_new+3))
     Ey=temp
 
+<<<<<<< .mine
+    temp=0.0_num
+    CALL Redistribute_Field(new_domain,Ez,temp)
+=======
     temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Ez,temp)
+>>>>>>> .r31
     DEALLOCATE(Ez)
     ALLOCATE(Ez(-2:nx_new+3,-2:ny_new+3))
     Ez=temp
 
+<<<<<<< .mine
+    temp=0.0_num
+    CALL Redistribute_Field(new_domain,Bx,temp)
+=======
     temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Bx,temp)
+>>>>>>> .r31
     DEALLOCATE(Bx)
     ALLOCATE(Bx(-2:nx_new+3,-2:ny_new+3))
     Bx=temp
 
+<<<<<<< .mine
+    temp=0.0_num
+    CALL Redistribute_Field(new_domain,By,temp)
+=======
     temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,By,temp)
+>>>>>>> .r31
     DEALLOCATE(By)
     ALLOCATE(By(-2:nx_new+3,-2:ny_new+3))
     By=temp
 
+<<<<<<< .mine
+    temp=0.0_num
+    CALL Redistribute_Field(new_domain,Bz,temp)
+=======
     temp=0.0_num
     CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Bz,temp)
+>>>>>>> .r31
     DEALLOCATE(Bz)
     ALLOCATE(Bz(-2:nx_new+3,-2:ny_new+3))
     Bz=temp
@@ -279,13 +275,13 @@ CONTAINS
     Current=>Laser_Left
     DO WHILE(ASSOCIATED(Current))
        temp1d=0.0_num
-       CALL Redistribute_Field_1D(new_cell_y_start,new_cell_y_end,cell_y_start(coordinates(1)+1)&
+       CALL Redistribute_Field_1D(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
             ,cell_y_end(coordinates(1)+1),ny_global,Current%Profile,temp1d,DIR_X)
        DEALLOCATE(Current%Profile)
        ALLOCATE(Current%Profile(-2:ny_new+3))
        Current%Profile=temp1d
        temp1d=0.0_num
-       CALL Redistribute_Field_1D(new_cell_y_start,new_cell_y_end,cell_y_start(coordinates(1)+1)&
+       CALL Redistribute_Field_1D(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
             ,cell_y_end(coordinates(1)+1),ny_global,Current%Phase,temp1d,DIR_X)
        DEALLOCATE(Current%Phase)
        ALLOCATE(Current%Phase(-2:ny_new+3))
@@ -296,13 +292,13 @@ CONTAINS
     Current=>Laser_Right
     DO WHILE(ASSOCIATED(Current))
        temp1d=0.0_num
-       CALL Redistribute_Field_1D(new_cell_y_start,new_cell_y_end,cell_y_start(coordinates(1)+1)&
+       CALL Redistribute_Field_1D(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
             ,cell_y_end(coordinates(1)+1),ny_global,Current%Profile,temp1d,DIR_X)
        DEALLOCATE(Current%Profile)
        ALLOCATE(Current%Profile(-2:ny_new+3))
        Current%Profile=temp1d
        temp1d=0.0_num
-       CALL Redistribute_Field_1D(new_cell_y_start,new_cell_y_end,cell_y_start(coordinates(1)+1)&
+       CALL Redistribute_Field_1D(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
             ,cell_y_end(coordinates(1)+1),ny_global,Current%Phase,temp1d,DIR_X)
        DEALLOCATE(Current%Profile)
        ALLOCATE(Current%Profile(-2:ny_new+3))
@@ -310,45 +306,126 @@ CONTAINS
 
        Current=>Current%Next
     ENDDO
+    !1D arrays
+    DEALLOCATE(temp1d)
+    ALLOCATE(temp1d(-2:nx_new+3))
+    Current=>Laser_Up
+    DO WHILE(ASSOCIATED(Current))
+       temp1d=0.0_num
+       CALL Redistribute_Field_1D(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
+            ,cell_x_end(coordinates(2)+1),nx_global,Current%Profile,temp1d,DIR_Y)
+       DEALLOCATE(Current%Profile)
+       ALLOCATE(Current%Profile(-2:nx_new+3))
+       Current%Profile=temp1d
+       temp1d=0.0_num
+       CALL Redistribute_Field_1D(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
+            ,cell_x_end(coordinates(2)+1),ny_global,Current%Phase,temp1d,DIR_Y)
+       DEALLOCATE(Current%Profile)
+       ALLOCATE(Current%Profile(-2:nx_new+3))
+       Current%Profile=temp1d
+       Current=>Current%Next
+    ENDDO
+    Current=>Laser_Down
+    DO WHILE(ASSOCIATED(Current))
+       temp1d=0.0_num
+       CALL Redistribute_Field_1D(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
+            ,cell_x_end(coordinates(2)+1),nx_global,Current%Profile,temp1d,DIR_Y)
+       DEALLOCATE(Current%Profile)
+       ALLOCATE(Current%Profile(-2:nx_new+3))
+       Current%Profile=temp1d
+       temp1d=0.0_num
+       CALL Redistribute_Field_1D(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
+            ,cell_x_end(coordinates(2)+1),ny_global,Current%Phase,temp1d,DIR_Y)
+       DEALLOCATE(Current%Profile)
+       ALLOCATE(Current%Profile(-2:nx_new+3))
+       Current%Profile=temp1d
+       Current=>Current%Next
+    ENDDO
 #endif
 
 
   END SUBROUTINE Redistribute_Fields
 
-  SUBROUTINE Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Field_In,Field_Out)
+  SUBROUTINE Redistribute_Field(domain,Field,NewField)
 
     !This subroutine redistributes the fields over the new processor layout
-    !The current version works by producing a global copy on each processor
-    !And then extracting the required part for the local processor.
-    !This is not in general a good idea
-    INTEGER, INTENT(IN) :: new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end
-    REAL(num),DIMENSION(-2:,-2:),INTENT(IN) :: Field_In
-    REAL(num),DIMENSION(-2:,-2:),INTENT(OUT) :: Field_Out
-    REAL(num),DIMENSION(:,:),ALLOCATABLE :: Field_New,Field_Temp
-    INTEGER :: nx_new,ny_new
-    INTEGER :: comm_new,iproc,color
+    !The current version works by writing the field to a file and then each processor
+    !Loads back in it's own part. This is better than the previous version where
+    !Each processor produced it's own copy of the global array and then took
+    !It's own subsection
+    INTEGER,DIMENSION(2,2),INTENT(IN) :: domain
+    REAL(num),DIMENSION(-2:,-2:),INTENT(IN) :: Field
+    REAL(num),DIMENSION(-2:,-2:),INTENT(OUT) :: NewField
+    INTEGER :: nx_new,ny_new,ixd,iyd,izd
+    INTEGER :: subtype_write, subtype_read, fh
+    INTEGER(KIND=MPI_OFFSET_KIND) :: offset=0
+    CHARACTER(LEN=9+Data_Dir_Max_Length+n_zeros) :: filename
 
-    nx_new=new_cell_x_end-new_cell_x_start+1
-    ny_new=new_cell_y_end-new_cell_y_start+1
+    WRITE(filename, '(a,"/balance.dat")') TRIM(data_dir)
 
+<<<<<<< .mine
+    nx_new=domain(1,2)-domain(1,1)+1
+    ny_new=domain(2,2)-domain(2,1)+1
+=======
 !    PRINT *,rank,new_cell_x_start,new_cell_y_start," "
 
     !This is a horrible, horrible way of doing this, I MUST think of a better way
+>>>>>>> .r31
 
-    !Create a global copy of the whole array
-    ALLOCATE(Field_New(1:nx_global,1:ny_global),Field_Temp(1:nx_global,1:ny_global))
-    Field_New=0.0_num
-    Field_New(cell_x_start(coordinates(2)+1):cell_x_end(coordinates(2)+1),&
-         cell_y_start(coordinates(1)+1):cell_y_end(coordinates(1)+1))=Field_In(1:nx,1:ny)
-    CALL MPI_ALLREDUCE(Field_New,Field_Temp,nx_global*ny_global,mpireal,MPI_SUM,comm,errcode)
+    CALL MPI_FILE_OPEN(comm,TRIM(Filename),MPI_MODE_RDWR+MPI_MODE_CREATE,MPI_INFO_NULL,fh,errcode)
+    subtype_write = Create_Current_Field_Subtype()
+    subtype_read  = Create_Field_Subtype(nx_new,ny_new,domain(1,1),domain(2,1))
 
-    Field_Out(1:nx_new,1:ny_new)=Field_Temp(new_cell_x_start:new_cell_x_end,new_cell_y_start:new_cell_y_end)
-    DEALLOCATE(Field_Temp)
+    CALL MPI_FILE_SET_VIEW(fh,offset,mpireal,subtype_write,"native",MPI_INFO_NULL,errcode)
+    CALL MPI_FILE_WRITE_ALL(fh,Field(1:nx,1:ny),nx*ny,mpireal,status,errcode)
+    CALL MPI_BARRIER(comm,errcode)
+    CALL MPI_FILE_SEEK(fh,offset,MPI_SEEK_SET,errcode)
+    CALL MPI_FILE_SET_VIEW(fh,offset,mpireal,subtype_read,"native",MPI_INFO_NULL,errcode)
+    CALL MPI_FILE_READ_ALL(fh,NewField(1:nx_new,1:ny_new),nx_new*ny_new,mpireal,status,errcode)
+    CALL MPI_FILE_CLOSE(fh,errcode)
+    CALL MPI_BARRIER(comm,errcode)
 
-    !Call boundary conditions (this does not include any special BCS)
-    CALL Do_Field_MPI_With_Lengths(Field_out,nx_new,ny_new)
+    CALL MPI_TYPE_FREE(subtype_write,errcode)
+    CALL MPI_TYPE_FREE(subtype_read,errcode)
+
+    CALL Do_Field_MPI_With_Lengths(NewField,nx_new,ny_new)
 
   END SUBROUTINE Redistribute_Field
+
+!!$  SUBROUTINE Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Field_In,Field_Out)
+!!$
+!!$    !This subroutine redistributes the fields over the new processor layout
+!!$    !The current version works by producing a global copy on each processor
+!!$    !And then extracting the required part for the local processor.
+!!$    !This is not in general a good idea
+!!$    INTEGER, INTENT(IN) :: new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end
+!!$    REAL(num),DIMENSION(-2:,-2:),INTENT(IN) :: Field_In
+!!$    REAL(num),DIMENSION(-2:,-2:),INTENT(OUT) :: Field_Out
+!!$    REAL(num),DIMENSION(:,:),ALLOCATABLE :: Field_New,Field_Temp
+!!$    INTEGER :: nx_new,ny_new
+!!$    INTEGER :: comm_new,iproc,color
+!!$
+!!$    nx_new=new_cell_x_end-new_cell_x_start+1
+!!$    ny_new=new_cell_y_end-new_cell_y_start+1
+!!$
+!!$!    PRINT *,rank,new_cell_x_start,new_cell_y_start," "
+!!$
+!!$    !This is a horrible, horrible way of doing this, I MUST think of a better way
+!!$
+!!$    !Create a global copy of the whole array
+!!$    ALLOCATE(Field_New(1:nx_global,1:ny_global),Field_Temp(1:nx_global,1:ny_global))
+!!$    Field_New=0.0_num
+!!$    Field_New(cell_x_start(coordinates(2)+1):cell_x_end(coordinates(2)+1),&
+!!$         cell_y_start(coordinates(1)+1):cell_y_end(coordinates(1)+1))=Field_In(1:nx,1:ny)
+!!$    CALL MPI_ALLREDUCE(Field_New,Field_Temp,nx_global*ny_global,mpireal,MPI_SUM,comm,errcode)
+!!$
+!!$    Field_Out(1:nx_new,1:ny_new)=Field_Temp(new_cell_x_start:new_cell_x_end,new_cell_y_start:new_cell_y_end)
+!!$    DEALLOCATE(Field_Temp)
+!!$
+!!$    !Call boundary conditions (this does not include any special BCS)
+!!$    CALL Do_Field_MPI_With_Lengths(Field_out,nx_new,ny_new)
+!!$
+!!$  END SUBROUTINE Redistribute_Field
 
   SUBROUTINE Redistribute_Field_1D(new_start,new_end,old_start,old_end,npts_global,Field_In,Field_Out,direction)
     !This subroutine redistributes a 1D field over the new processor layout
@@ -609,6 +686,9 @@ CONTAINS
     CALL MPI_TYPE_COMMIT(subtype_field,errcode)
     DEALLOCATE(lengths,starts)
 
+<<<<<<< .mine
+    subtype_particle_var=Create_Particle_Subtype(npart_local)
+=======
     subtype_particle_var=Create_Particle_Subtype(npart_local)
 
   END SUBROUTINE CreateSubtypes
@@ -624,7 +704,12 @@ CONTAINS
     ! Create the subarray for the particles in this problem: subtype decribes where this
     ! process's data fits into the global picture.
     CALL MPI_ALLGATHER(npart_local,1,MPI_INTEGER8,npart_each_rank,1,MPI_INTEGER8,comm,errcode)
+>>>>>>> .r31
 
+<<<<<<< .mine
+  END SUBROUTINE CreateSubtypes
+
+=======
     ALLOCATE(lengths(1),starts(1))
     lengths=npart_local
     starts=0
@@ -639,48 +724,5 @@ CONTAINS
 
   END FUNCTION Create_Particle_Subtype
 
-  SUBROUTINE CreateSubtypesForLoad(npart_local)
-
-    !This subroutines creates the MPI types which represent the data for the field and
-    !particles data. It is used when reading data. To this end, it takes npart_local
-    !rather than determining it from the data structures
-
-    INTEGER, DIMENSION(:),ALLOCATABLE :: lengths,starts
-    INTEGER(KIND=8),INTENT(IN) :: npart_local
-
-
-    ALLOCATE(lengths(1:ny),starts(1:ny))
-
-    lengths=nx
-    DO iy=0,ny-1
-       starts(iy+1)=(cell_y_start(coordinates(1)+1)+iy-1) * nx_global + cell_x_start(coordinates(2)+1) -1
-    ENDDO
-
-    CALL MPI_TYPE_INDEXED(ny,lengths,starts,mpireal,subtype_field,errcode)
-    CALL MPI_TYPE_COMMIT(subtype_field,errcode)
-    DEALLOCATE(lengths,starts)
-
-    ! Create the subarray for the particles in this problem: subtype decribes where this
-    ! process's data fits into the global picture.
-    CALL MPI_ALLGATHER(npart_local,1,MPI_INTEGER8,npart_each_rank,1,MPI_INTEGER8,comm,errcode)
-
-
-    ALLOCATE(lengths(1),starts(1))
-    lengths=npart_local
-    starts=0
-    DO ix=1,rank
-       starts=starts+npart_each_rank(ix)
-    ENDDO
-
-    CALL MPI_TYPE_INDEXED(1,lengths,starts,mpireal,subtype_particle_var,errcode)
-    CALL MPI_TYPE_COMMIT(subtype_particle_var,errcode)
-
-    CALL MPI_TYPE_INDEXED(1,lengths,starts,MPI_INTEGER,subtype_particle_int,errcode)
-    CALL MPI_TYPE_COMMIT(subtype_particle_int,errcode)
-    DEALLOCATE(lengths,starts)
-
-
-  END SUBROUTINE CreateSubtypesForLoad
-
-
+>>>>>>> .r31
 END MODULE balance
