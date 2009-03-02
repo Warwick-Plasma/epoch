@@ -11,6 +11,7 @@ MODULE diagnostics
   USE dist_fn
   USE probes
   USE iterators
+  USE mpi_subtype_control
 
   IMPLICIT NONE
 
@@ -51,7 +52,7 @@ CONTAINS
        npart_local=Get_Total_Local_Dumped_Particles(IAND(code,IO_RESTARTABLE) .NE. 0)
 
        CALL MPI_ALLREDUCE(npart_local,npart_dump_global,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
-       CALL CreateSubtypes(IAND(code,IO_RESTARTABLE) .NE. 0)
+       CALL Create_Subtypes(IAND(code,IO_RESTARTABLE) .NE. 0)
        !If the code is doing a restart dump then tell the iterators that this is a restart dump
        IF (IAND(code,IO_RESTARTABLE) .NE. 0) THEN 
           Iterator_Settings%Restart=.TRUE.

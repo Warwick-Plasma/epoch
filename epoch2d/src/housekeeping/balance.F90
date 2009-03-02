@@ -213,57 +213,34 @@ CONTAINS
     ALLOCATE(Ex(-2:nx_new+3,-2:ny_new+3))
     Ex=temp
 
-<<<<<<< .mine
+
     temp=0.0_num
     CALL Redistribute_Field(new_domain,Ey,temp)
-=======
-    temp=0.0_num
-    CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Ey,temp)
->>>>>>> .r31
     DEALLOCATE(Ey)
     ALLOCATE(Ey(-2:nx_new+3,-2:ny_new+3))
     Ey=temp
 
-<<<<<<< .mine
     temp=0.0_num
     CALL Redistribute_Field(new_domain,Ez,temp)
-=======
-    temp=0.0_num
-    CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Ez,temp)
->>>>>>> .r31
     DEALLOCATE(Ez)
     ALLOCATE(Ez(-2:nx_new+3,-2:ny_new+3))
     Ez=temp
 
-<<<<<<< .mine
     temp=0.0_num
     CALL Redistribute_Field(new_domain,Bx,temp)
-=======
-    temp=0.0_num
-    CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Bx,temp)
->>>>>>> .r31
     DEALLOCATE(Bx)
     ALLOCATE(Bx(-2:nx_new+3,-2:ny_new+3))
     Bx=temp
 
-<<<<<<< .mine
+
     temp=0.0_num
     CALL Redistribute_Field(new_domain,By,temp)
-=======
-    temp=0.0_num
-    CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,By,temp)
->>>>>>> .r31
     DEALLOCATE(By)
     ALLOCATE(By(-2:nx_new+3,-2:ny_new+3))
     By=temp
 
-<<<<<<< .mine
     temp=0.0_num
     CALL Redistribute_Field(new_domain,Bz,temp)
-=======
-    temp=0.0_num
-    CALL Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Bz,temp)
->>>>>>> .r31
     DEALLOCATE(Bz)
     ALLOCATE(Bz(-2:nx_new+3,-2:ny_new+3))
     Bz=temp
@@ -363,14 +340,8 @@ CONTAINS
 
     WRITE(filename, '(a,"/balance.dat")') TRIM(data_dir)
 
-<<<<<<< .mine
     nx_new=domain(1,2)-domain(1,1)+1
     ny_new=domain(2,2)-domain(2,1)+1
-=======
-!    PRINT *,rank,new_cell_x_start,new_cell_y_start," "
-
-    !This is a horrible, horrible way of doing this, I MUST think of a better way
->>>>>>> .r31
 
     CALL MPI_FILE_OPEN(comm,TRIM(Filename),MPI_MODE_RDWR+MPI_MODE_CREATE,MPI_INFO_NULL,fh,errcode)
     subtype_write = Create_Current_Field_Subtype()
@@ -659,70 +630,4 @@ CONTAINS
 
   END SUBROUTINE Distribute_Particles
 
-  SUBROUTINE CreateSubtypes(Force_Restart)
-
-    !This subroutines creates the MPI types which represent the data for the field and
-    !particles data. It is used when writing data
-    LOGICAL,INTENT(IN) :: Force_Restart
-    INTEGER(KIND=8), DIMENSION(3) :: length,disp,type
-    INTEGER :: ndims=2
-    INTEGER,DIMENSION(:),ALLOCATABLE :: lengths, starts
-
-    INTEGER(KIND=8) :: npart_local
-
-    npart_local = Get_Total_Local_Dumped_Particles(Force_Restart)
-
-    ! Create the subarray for the fields in this problem: subtype decribes where this
-    ! process's data fits into the global picture.
-
-    ALLOCATE(lengths(1:ny),starts(1:ny))
-
-    lengths=nx
-    DO iy=0,ny-1
-       starts(iy+1)=(cell_y_start(coordinates(1)+1)+iy-1) * nx_global + cell_x_start(coordinates(2)+1) -1
-    ENDDO
-
-    CALL MPI_TYPE_INDEXED(ny,lengths,starts,mpireal,subtype_field,errcode)
-    CALL MPI_TYPE_COMMIT(subtype_field,errcode)
-    DEALLOCATE(lengths,starts)
-
-<<<<<<< .mine
-    subtype_particle_var=Create_Particle_Subtype(npart_local)
-=======
-    subtype_particle_var=Create_Particle_Subtype(npart_local)
-
-  END SUBROUTINE CreateSubtypes
-
-  FUNCTION Create_Particle_Subtype(nPart_Local)
-
-    INTEGER(KIND=8),INTENT(IN) :: nPart_Local
-    INTEGER :: Create_Particle_Subtype
-
-    INTEGER,DIMENSION(:),ALLOCATABLE :: lengths, starts
-
-
-    ! Create the subarray for the particles in this problem: subtype decribes where this
-    ! process's data fits into the global picture.
-    CALL MPI_ALLGATHER(npart_local,1,MPI_INTEGER8,npart_each_rank,1,MPI_INTEGER8,comm,errcode)
->>>>>>> .r31
-
-<<<<<<< .mine
-  END SUBROUTINE CreateSubtypes
-
-=======
-    ALLOCATE(lengths(1),starts(1))
-    lengths=npart_local
-    starts=0
-    DO ix=1,rank
-       starts=starts+npart_each_rank(ix)
-    ENDDO
-
-    CALL MPI_TYPE_INDEXED(1,lengths,starts,mpireal,Create_Particle_Subtype,errcode)
-    CALL MPI_TYPE_COMMIT(Create_Particle_Subtype,errcode)
-
-    DEALLOCATE(lengths,starts)
-
-  END FUNCTION Create_Particle_Subtype
-
->>>>>>> .r31
 END MODULE balance
