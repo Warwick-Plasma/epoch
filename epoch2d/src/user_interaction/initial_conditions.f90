@@ -8,6 +8,7 @@ MODULE initial_conditions
   USE iocontrol
   USE laser
   USE simple_io
+  USE helper
 
   IMPLICIT NONE
 
@@ -67,8 +68,6 @@ CONTAINS
   SUBROUTINE ManualLoad
     TYPE(Particle),POINTER :: Current
     INTEGER :: iSpecies
-
-
 
   END SUBROUTINE ManualLoad
 

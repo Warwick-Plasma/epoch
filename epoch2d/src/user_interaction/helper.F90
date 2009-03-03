@@ -458,6 +458,49 @@ CONTAINS
 
   END FUNCTION MomentumFromTemperature
 
+  FUNCTION Sample_Dist_Function(axis,Dist_Fn,idum)
+    REAL(num),DIMENSION(:),INTENT(IN) :: axis,Dist_Fn
+    INTEGER, INTENT(INOUT) :: idum
+    REAL(num),DIMENSION(:),ALLOCATABLE :: CDF
+    REAL(num) :: Position,d_cdf
+    INTEGER :: n_points, iPoint, start, endpoint, current
+    REAL(num) :: Sample_Dist_Function
+
+    n_points=SIZE(Dist_Fn)
+    ALLOCATE(CDF(1:n_points))
+    DO iPoint=1,n_points
+       CDF(iPoint)=SUM(Dist_Fn(1:iPoint))
+    ENDDO
+    CDF=CDF/SUM(Dist_Fn)
+
+    Position=Random(iDum)
+
+    start=1
+    endpoint=n_points
+    current=(start+endpoint)/2
+
+!!$    DO
+!!$       IF (CDF(Current) .LT. Position .AND. CDF(Current+1) .GE. Position) EXIT
+!!$       IF (CDF(Current) .GT. Position .AND. CDF(Current-1) .LE. Position) EXIT
+!!$       IF (CDF(Current) .GT. Position) endpoint=(start+endpoint)/2
+!!$       IF (CDF(Current) .LT. Position) start=(start+endpoint)/2
+!!$       current=(start+endpoint)/2
+!!$    ENDDO
+    DO current=1,n_points
+       IF (CDF(Current) .LE. Position .AND. CDF(Current+1) .GE. Position) THEN
+          d_cdf=CDF(Current+1)-CDF(Current)
+          Sample_Dist_Function=(Axis(Current)*(Position-CDF(Current))/d_cdf + &
+               Axis(Current+1)*(CDF(Current+1)-Position)/d_cdf)
+          EXIT
+       ENDIF
+    ENDDO
+
+!!$    Sample_Dist_Function=Axis(Current)
+    DEALLOCATE(CDF)
+
+
+  END FUNCTION Sample_Dist_Function
+
   FUNCTION Random(idum)
 
     INTEGER,INTENT(INOUT) :: idum
