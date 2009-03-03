@@ -31,7 +31,7 @@ OBJFILES = shared_data.o boundary.o iocommon.o output.o output_arb.o output_cart
  split_particles.o strings_advanced.o shunt.o evaluate.o tokenizer_blocks.o evaluator_blocks.o\
  custom_deck.o custom_parser.o stack.o deck_ic_species_block.o deck_constant_block.o deck_deo_block.o\
  deck_window_block.o deck_eio_dist_fn_block.o deck_eio_particle_probe_block.o\
- iterators.o probes.o mpi_subtype_control.o deck_ic_external_block.o\
+ iterators.o probes.o mpi_subtype_control.o deck_ic_external_block.o simple_io.o\
  deck_ic_fields_block.o laser.o deck_ic_laser_block.o custom_laser.o window.o dist_fn.o control.o\
  particlepointeradvance.o deck_control_block.o deck_species_block.o deck.o welcome.o balance.o \
  solve_gauss.o FMC_MPI.o epoch2d.o
@@ -76,6 +76,7 @@ balance.o: balance.F90 shared_data.o partlist.o boundary.o mpi_subtype_control.o
 partlist.o:partlist.F90 shared_data.o
 setup.o:setup.F90 shared_data.o input_arb.o input_cartesian.o input_particle.o strings.o partlist.o balance.o mpi_subtype_control.o
 boundary.o:boundary.f90 shared_data.o partlist.o
+simple_io.o:simple_io.F90 shared_data.o mpi_subtype_control.o boundary.o
 iocommon.o:iocommon.f90 shared_data.o
 inputfunctions.o: inputfunctions.f90 iocommon.o shared_data.o
 input_cartesian.o: input_cartesian.f90 inputfunctions.o iocommon.o shared_data.o
@@ -109,14 +110,14 @@ custom_deck.o:custom_deck.f90 shared_data.o strings.o strings_advanced.o shunt.o
 custom_laser.o:custom_laser.f90 shared_data.o
 window.o:window.F90 shared_data.o boundary.o partlist.o helper.o
 helper.o:helper.F90 shared_data.o boundary.o
-initial_conditions.o:initial_conditions.f90 strings.o shared_data.o helper.o shunt.o laser.o
+initial_conditions.o:initial_conditions.f90 strings.o shared_data.o helper.o shunt.o laser.o dist_fn.o probes.o simple_io.o
 deck_io_block.o:deck_io_block.F90 strings.o shared_data.o strings_advanced.o
 deck_control_block.o:deck_control_block.f90 strings.o shared_data.o strings_advanced.o
 deck_boundaries_block.o:deck_boundaries_block.f90 strings.o shared_data.o strings_advanced.o
 deck_species_block.o:deck_species_block.F90 strings.o shared_data.o strings_advanced.o setup.o
 deck_ic_species_block.o:deck_ic_species_block.f90 shared_data.o strings_advanced.o strings.o shunt.o evaluate.o
 deck_ic_fields_block.o:deck_ic_fields_block.f90 shared_data.o strings_advanced.o strings.o shunt.o evaluate.o
-deck_ic_external_block.o:deck_ic_external_block.f90 shared_data.o strings_advanced.o boundary.o
+deck_ic_external_block.o:deck_ic_external_block.f90 shared_data.o strings_advanced.o simple_io.o
 deck_constant_block.o:deck_constant_block.f90 shared_data.o strings.o strings_advanced.o
 deck_deo_block.o:deck_deo_block.f90 shared_data.o strings.o strings_advanced.o shunt.o
 deck_ic_laser_block.o:deck_ic_laser_block.f90 shared_data.o laser.o strings.o strings_advanced.o shunt.o evaluate.o
@@ -125,7 +126,7 @@ deck_eio_dist_fn_block.o:deck_eio_dist_fn_block.f90 shared_data.o strings_advanc
 deck_eio_particle_probe_block.o:deck_eio_particle_probe_block.F90 shared_data.o probes.o strings_advanced.o
 deck.o:deck.F90 shared_data.o strings.o deck_control_block.o deck_boundaries_block.o deck_species_block.o\
 	strings_advanced.o custom_deck.o deck_ic_species_block.o deck_constant_block.o deck_deo_block.o deck_ic_laser_block.o deck_window_block.o\
-	deck_eio_dist_fn_block.o deck_eio_particle_probe_block.o
+	deck_eio_dist_fn_block.o deck_eio_particle_probe_block.o deck_ic_external_block.o
 welcome.o: welcome.F90 shared_data.o
 split_particles.o: split_particles.F90 partlist.o shared_data.o helper.o
 FMC_MPI.o: FMC_MPI.f90

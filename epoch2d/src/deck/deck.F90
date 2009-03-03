@@ -53,6 +53,8 @@ CONTAINS
 #ifdef PARTICLE_PROBES
     IF (StrCmp(BlockName,"probe")) CALL Probe_Block_Start
 #endif
+    IF (StrCmp(BlockName,"species_external")) CALL Start_External
+    IF (StrCmp(BlockName,"fields_external")) CALL Start_External
 
   END SUBROUTINE StartBlock
 

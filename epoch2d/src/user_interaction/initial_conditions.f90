@@ -4,8 +4,10 @@ MODULE initial_conditions
   USE strings
   USE shunt
   USE dist_fn
+  USE probes
   USE iocontrol
   USE laser
+  USE simple_io
 
   IMPLICIT NONE
 

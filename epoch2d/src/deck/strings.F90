@@ -51,6 +51,16 @@ CONTAINS
 
   END FUNCTION AsIntegerSimple
 
+  FUNCTION AsLongIntegerSimple(StrIn,ERR)
+    CHARACTER(*),INTENT(IN) :: StrIn
+    INTEGER,INTENT(INOUT) :: ERR
+    INTEGER(KIND=8) :: AsLongIntegerSimple,Value,f
+    READ(unit=StrIn,fmt=*,iostat=f) value
+    IF (f .NE. 0) ERR=IOR(ERR,ERR_BAD_VALUE)
+    AsLongIntegerSimple=value
+
+  END FUNCTION AsLongIntegerSimple
+
   FUNCTION AsDirection(StrIn,ERR)
     CHARACTER(*),INTENT(IN) :: StrIn
     INTEGER,INTENT(INOUT) :: ERR

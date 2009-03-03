@@ -44,7 +44,7 @@ CONTAINS
        WRITE(*,*),LOGOSTRING
     ENDDO
     WRITE(*,*) ""
-    WRITE(*,'("Welcome to EPOCH2D Version ",I1,".",I1,"ALPHA")'),Version,Revision
+    WRITE(*,'("Welcome to EPOCH2D Version ",I1,".",I1)'),Version,Revision
     WRITE(*,*) ""
 
     CALL compiler_directives
