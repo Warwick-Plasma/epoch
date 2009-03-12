@@ -59,7 +59,7 @@ CONTAINS
 
     IF (xbc_right == BC_SIMPLE_LASER .OR. xbc_right == BC_SIMPLE_OUTFLOW) THEN
        xbc_right_particle=BC_OPEN
-       xbc_left_field=BC_ZERO_GRADIENT
+       xbc_right_field=BC_ZERO_GRADIENT
        AnyOpen=.TRUE.
     ENDIF
 
@@ -138,25 +138,47 @@ CONTAINS
 
   END SUBROUTINE Field_Zero_Gradient
 
-  SUBROUTINE Field_Clamp_Zero(Field)
+  SUBROUTINE Field_Clamp_Zero(Field,Stagger)
 
     REAL(num),DIMENSION(-2:,-2:),INTENT(INOUT) :: Field
+    INTEGER,DIMENSION(2),INTENT(IN) :: Stagger
 
 
     IF (xbc_left_field == BC_CLAMP .AND. left == MPI_PROC_NULL) THEN
-       Field(-1:0,:)=0.0_num
+       IF (stagger(1) .EQ. 1) THEN
+          Field(0,:)=0.0_num
+          Field(-1,:)=-Field(1,:)
+       ELSE
+          Field(0,:)=-Field(1,:)
+          Field(-1,:)=-Field(2,:)
+       ENDIF
     ENDIF
 
     IF (xbc_right_field == BC_CLAMP .AND. right == MPI_PROC_NULL) THEN
-       Field(nx+1:nx+2,:)=0.0_num
+       IF (stagger(1) .EQ. 1) THEN
+          Field(nx,:)=0.0_num
+       ELSE
+          Field(nx+1,:)=-Field(nx,:)
+          Field(nx+2,:)=-Field(nx-1,:)
+       ENDIF
     ENDIF
 
     IF (ybc_down_field == BC_CLAMP .AND. down == MPI_PROC_NULL) THEN
-       Field(:,-1:0)=0.0_num
+       IF (stagger(2) .EQ. 1) THEN
+          Field(:,-1:0)=0.0_num
+       ELSE
+          Field(:,0)=-Field(:,1)
+          Field(:,-1)=-Field(:,2)
+       ENDIF
     ENDIF
 
     IF (ybc_up_field == BC_CLAMP .AND. up == MPI_PROC_NULL) THEN
-       Field(:,ny+1:ny+2)=0.0_num
+       IF (stagger(2) .EQ. 1) THEN
+          Field(:,ny:ny+2)=0.0_num
+       ELSE
+          Field(:,ny+1)=-Field(:,ny)
+          Field(:,ny+2)=-Field(:,ny-1)
+       ENDIF
     ENDIF
 
 
@@ -246,19 +268,19 @@ CONTAINS
           DEALLOCATE(temp)
        ENDDO
     ENDDO
-
-    IF (left == MPI_PROC_NULL .AND. xbc_left_field == BC_REFLECT) THEN
-       Array(1,:)=Array(1,:)+SUM(Array(-2:0,:),1)
-    ENDIF
-    IF (right == MPI_PROC_NULL .AND. xbc_right_field == BC_REFLECT) THEN
-       Array(nx,:)=Array(nx,:)+SUM(Array(nx+1:nx+2,:),1)
-    ENDIF
-    IF (up == MPI_PROC_NULL .AND. ybc_up_field == BC_REFLECT) THEN
-       Array(:,ny)=Array(:,ny)+SUM(Array(:,ny+1:ny+2),1)
-    ENDIF
-    IF (down == MPI_PROC_NULL .AND. ybc_down_field == BC_REFLECT) THEN
-       Array(:,1)=Array(:,1)+SUM(Array(:,-2:0),1)
-    ENDIF
+!!$
+!!$    IF (left == MPI_PROC_NULL .AND. xbc_left_field == BC_CLAMP) THEN
+!!$       Array(1,:)=Array(1,:)+SUM(Array(-2:0,:),1)
+!!$    ENDIF
+!!$    IF (right == MPI_PROC_NULL .AND. xbc_right_field == BC_CLAMP) THEN
+!!$       Array(nx,:)=Array(nx,:)+SUM(Array(nx+1:nx+2,:),1)
+!!$    ENDIF
+!!$    IF (up == MPI_PROC_NULL .AND. ybc_up_field == BC_CLAMP) THEN
+!!$       Array(:,ny)=Array(:,ny)+SUM(Array(:,ny+1:ny+2),1)
+!!$    ENDIF
+!!$    IF (down == MPI_PROC_NULL .AND. ybc_down_field == BC_CLAMP) THEN
+!!$       Array(:,1)=Array(:,1)+SUM(Array(:,-2:0),1)
+!!$    ENDIF
 
 
     CALL Field_BC(Array)
@@ -273,9 +295,9 @@ CONTAINS
     CALL Field_BC(Ez)
 
     !These apply zero field boundary conditions on the edges
-    CALL Field_Clamp_Zero(Ex)
-    CALL Field_Clamp_Zero(Ey)
-    CALL Field_Clamp_Zero(Ez)
+    CALL Field_Clamp_Zero(Ex,(/1,0/))
+    CALL Field_Clamp_Zero(Ey,(/0,1/))
+    CALL Field_Clamp_Zero(Ez,(/0,0/))
     !These apply zero field gradient boundary conditions on the edges
     CALL Field_Zero_Gradient(Ex,.FALSE.)
     CALL Field_Zero_Gradient(Ey,.FALSE.)
@@ -294,9 +316,9 @@ CONTAINS
 
     IF (.NOT. MPI_Only) THEN
        !These apply zero field boundary conditions on the edges
-       CALL Field_Clamp_Zero(Bx)
-       CALL Field_Clamp_Zero(By)
-       CALL Field_Clamp_Zero(Bz)
+       CALL Field_Clamp_Zero(Bx,(/0,1/))
+       CALL Field_Clamp_Zero(By,(/1,0/))
+       CALL Field_Clamp_Zero(Bz,(/1,1/))
        !These apply zero field boundary conditions on the edges
        CALL Field_Zero_Gradient(Bx,.FALSE.)
        CALL Field_Zero_Gradient(By,.FALSE.)
@@ -337,26 +359,21 @@ CONTAINS
           IF (Cur%Part_Pos(1) .LE. x_start-dx/2.0_num .AND. left == MPI_PROC_NULL .AND. xbc_left_particle == BC_REFLECT) THEN
              !Particle has crossed left boundary
              cur%part_pos(1) =  2.0_num * (x_start-dx/2.0_num) - cur%part_pos(1)
-             !IF (cur%part_pos(1) .LT. x_start) WRITE(10+rank,*) "BAD PARTICLE LOW X"
              Cur%part_p(1) = - Cur%part_p(1)
           ENDIF
           IF (Cur%Part_Pos(1) .GE. x_end+dx/2.0_num .AND. right == MPI_PROC_NULL .AND. xbc_right_particle == BC_REFLECT) THEN
              !Particle has crossed right boundary
              Cur%part_pos(1) =  2.0_num *(x_end+dx/2.0_num) - Cur%part_pos(1)
-             !IF (cur%part_pos(1) .GT. x_end) WRITE(10+rank,*) "BAD PARTICLE HIGH X"
              Cur%part_p(1) = - Cur%part_p(1)
           ENDIF
           IF (Cur%Part_Pos(2) .LE. y_start-dy/2.0_num .AND. down == MPI_PROC_NULL .AND. ybc_down_particle == BC_REFLECT) THEN
              !Particle has crossed bottom boundary
              cur%part_pos(2) =  2.0_num * (y_start-dy/2.0_num) - cur%part_pos(2)
-             !IF (cur%part_pos(2) .LT. y_start) WRITE(10+rank,*) "BAD PARTICLE LOW Y",cur%part_pos(2),y_start,y(0)
              Cur%part_p(2) = - Cur%part_p(2)
           ENDIF
           IF (Cur%Part_Pos(2) .GE. y_end+dy/2.0_num .AND. up == MPI_PROC_NULL .AND. ybc_up_particle == BC_REFLECT) THEN
-             !          PRINT *,"Reflecting"
              !Particle has crossed top boundary
              Cur%part_pos(2) =  2.0_num * (y_end + dy/2.0_num) - Cur%part_pos(2)
-             !IF (cur%part_pos(2) .GT. y_end) WRITE(10+rank,*) "BAD PARTICLE HIGH Y"
              Cur%part_p(2) = - Cur%part_p(2)
           ENDIF
 
@@ -376,7 +393,11 @@ CONTAINS
              IF (.NOT. out_of_bounds) THEN
                 CALL Add_Particle_To_PartList(send(xbd,ybd),Cur)
              ELSE
-                CALL Add_Particle_To_PartList(ejected_particles,Cur)
+                IF (DumpMask(29) .NE. IO_NEVER) THEN
+                   CALL Add_Particle_To_PartList(ejected_particles,Cur)
+                ELSE
+                   DEALLOCATE(Cur)
+                ENDIF
              ENDIF
           ENDIF
 

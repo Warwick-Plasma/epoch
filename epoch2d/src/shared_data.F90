@@ -340,6 +340,11 @@ MODULE shared_data
   !---------------------------------------------------------------------------------------
   INTEGER :: mpireal = MPI_DOUBLE_PRECISION
 
+#ifdef NEWTONIAN
+  !In a Newtonian code, can't guarantee that particles won't exceed lightspeed
+  !Therefore record the fastest particle speed here
+  REAL(num) :: Max_Part_V
+#endif
   INTEGER :: nx,ny
   INTEGER :: nx_global, ny_global
   INTEGER(8) :: npart_global
@@ -420,7 +425,7 @@ MODULE shared_data
   INTEGER :: subtype_field,subtype_particle_var,subtype_particle,subtype_particle_int
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp 
   INTEGER :: Full_Dump_Every,Restart_Dump_Every
-  INTEGER, PARAMETER :: num_vars_to_dump = 28
+  INTEGER, PARAMETER :: num_vars_to_dump = 29
   INTEGER, DIMENSION(num_vars_to_dump) :: DumpMask 
   INTEGER :: output_file
   LOGICAL :: force_final_to_be_restartable

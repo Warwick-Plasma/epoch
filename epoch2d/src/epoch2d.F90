@@ -110,7 +110,6 @@ PROGRAM pic
   IF (.NOT. Neutral_Background) CALL Do_Gauss
   CALL Balance_Workload(.TRUE.)
 
-
   IF (IAND(ictype,IC_MANUAL) .NE. 0) THEN
      CALL ManualLoad
      CALL Distribute_Particles
@@ -139,6 +138,7 @@ PROGRAM pic
      CALL output_routines(i) !diagnostics.f90
   ENDIF
   walltime_current=MPI_WTIME(errcode)
+
   DO
      IF ((i >= nsteps .AND. nsteps >=0) .OR. (time >= t_end) .OR. halt) EXIT
      i = i + 1

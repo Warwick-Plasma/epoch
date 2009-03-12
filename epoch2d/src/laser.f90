@@ -190,8 +190,8 @@ CONTAINS
     !Set the y magnetic field
     By(0,1:ny)=(1.0_num / (C + lx*C**2)) &
          * (-4.0_num * Fplus &
-         + 2.0_num * Ez(0,1:ny) - (C - lx*C**2)*By(0,1:ny) &
-         - (dt / epsilon0) * Jz(0,1:ny))
+         + 2.0_num * Ez(1,1:ny) - (C - lx*C**2)*By(1,1:ny) &
+         - (dt / epsilon0) * Jz(1,1:ny))
 
 
     FPlus=0.0_num
@@ -208,27 +208,11 @@ CONTAINS
 
     Bz(0,1:ny)=(1.0_num / (C + lx*C**2)) &
          * (4.0_num * Fplus &
-         - 2.0_num * Ey(0,1:ny) - (C - lx*C**2)*Bz(0,1:ny) &
-         + (dt / epsilon0) * Jy(0,1:ny))
+         - 2.0_num * Ey(1,1:ny) - (C - lx*C**2)*Bz(1,1:ny) &
+         + (dt / epsilon0) * Jy(1,1:ny))
     DEALLOCATE(FPlus)
-    !CALL Bfield_bcs
-
+    
   END SUBROUTINE laser_bcs_left
-
-  SUBROUTINE outflow_bcs_left
-    REAL(num):: lx
-
-    lx=dt/dx
-    Bx(0,1:ny) =  0.0_num
-    !Set the y magnetic field
-    By(0,1:ny)=(1.0_num / (C + lx*C**2)) &
-         * (2.0_num * Ez(0,1:ny) - (C - lx*C**2)*By(0,1:ny) &
-         - (dt / epsilon0) * Jz(0,1:ny))
-    Bz(0,1:ny)=(1.0_num / (C + lx*C**2)) &
-         * (-2.0_num * Ey(0,1:ny) - (C - lx*C**2)*Bz(0,1:ny) &
-         + (dt / epsilon0) * Jy(0,1:ny))
-    !CALL Bfield_bcs
-  END SUBROUTINE outflow_bcs_left
 
 
   !Laser boundary for the right boundary
@@ -259,10 +243,10 @@ CONTAINS
        Current=>Current%Next
     ENDDO
 
-    By(nx+1,1:ny)=(1.0_num / (C + lx*C**2)) &
+    By(nx,1:ny)=(1.0_num / (C + lx*C**2)) &
          * (4.0_num * Fminus &
-         - 2.0_num * Ez(nx+2,1:ny) - (C - lx*C**2)*By(nx+1,1:ny) &
-         + (dt / epsilon0) * Jz(nx+2,1:ny))
+         - 2.0_num * Ez(nx,1:ny) - (C - lx*C**2)*By(nx,1:ny) &
+         + (dt / epsilon0) * Jz(nx,1:ny))
 
 
     FMinus=0.0_num
@@ -277,31 +261,14 @@ CONTAINS
        Current=>Current%Next
     ENDDO
 
-    Bz(nx+1,1:ny)=(1.0_num / (C + lx*C**2)) &
+    Bz(nx,1:ny)=(1.0_num / (C + lx*C**2)) &
          * (-4.0_num * Fminus &
-         + 2.0_num * Ey(nx+2,1:ny) - (C - lx*C**2)*Bz(nx+1,1:ny) &
-         - (dt / epsilon0) * Jy(nx+2,1:ny))
+         + 2.0_num * Ey(nx,1:ny) - (C - lx*C**2)*Bz(nx,1:ny) &
+         - (dt / epsilon0) * Jy(nx,1:ny))
 
     DEALLOCATE(FMinus)
-    !    CALL Bfield_bcs
-
+ 
   END SUBROUTINE laser_bcs_right
-
-  SUBROUTINE outflow_bcs_right
-    REAL(num):: lx
-
-    lx=dt/dx
-    Bx(nx+1,1:ny) =  0.0_num
-    !Set the y magnetic field
-    By(nx+1,1:ny)=(1.0_num / (C + lx*C**2)) &
-         * (- 2.0_num * Ez(nx+1,1:ny) - (C - lx*C**2)*By(nx+1,1:ny) &
-         + (dt / epsilon0) * Jz(nx+1,1:ny))
-    Bz(nx+1,1:ny)=(1.0_num / (C + lx*C**2)) &
-         * (2.0_num * Ey(nx+1,1:ny) - (C - lx*C**2)*Bz(nx+1,1:ny) &
-         - (dt / epsilon0) * Jy(nx+1,1:ny))
-    !    CALL BField_bcs
-  END SUBROUTINE outflow_bcs_right
-
 
 
   !Laser boundary for the bottom boundary
@@ -337,8 +304,8 @@ CONTAINS
     !Set the y magnetic field
     Bx(1:nx,0)=(1.0_num / (C + ly*C**2)) &
          * (-4.0_num * Fplus &
-         - 2.0_num * Ez(1:nx,0) - (C - ly*C**2)*Bx(1:nx,0) &
-         - (dt / epsilon0) * Jz(1:nx,0))
+         - 2.0_num * Ez(1:nx,1) - (C - ly*C**2)*Bx(1:nx,1) &
+         - (dt / epsilon0) * Jz(1:nx,1))
 
 
     FPlus=0.0_num
@@ -355,28 +322,11 @@ CONTAINS
 
     Bz(1:nx,0)=(1.0_num / (C + ly*C**2)) &
          * (4.0_num * Fplus &
-         + 2.0_num * Ex(1:nx,0) - (C - ly*C**2)*Bz(1:nx,0) &
-         + (dt / epsilon0) * Jx(1:nx,0))
+         + 2.0_num * Ex(1:nx,1) - (C - ly*C**2)*Bz(1:nx,1) &
+         + (dt / epsilon0) * Jx(1:nx,1))
     DEALLOCATE(FPlus)
 
-    !CALL BField_bcs
-
   END SUBROUTINE laser_bcs_down
-
-  SUBROUTINE outflow_bcs_down
-    REAL(num):: ly
-
-    ly=dt/dy
-    !Set the x magnetic field
-    Bx(1:nx,0)=(1.0_num / (C + ly*C**2)) &
-         * (-2.0_num * Ez(1:nx,0) - (C - ly*C**2)*Bx(1:nx,0) &
-         - (dt / epsilon0) * Jz(1:nx,0))
-    By(1:nx,0) =  0.0_num
-    Bz(1:nx,0)=(1.0_num / (C + ly*C**2)) &
-         * (2.0_num * Ex(1:nx,0) - (C - ly*C**2)*Bz(1:nx,0) &
-         + (dt / epsilon0) * Jx(1:nx,0))
-    !CALL BField_bcs
-  END SUBROUTINE outflow_bcs_down
 
   !Laser boundary for the bottom boundary
   SUBROUTINE laser_bcs_up
@@ -408,11 +358,11 @@ CONTAINS
     ENDDO
 
 
-    !Set the y magnetic field
-    Bx(1:nx,ny+1)=(1.0_num / (C + ly*C**2)) &
+    !Set the x magnetic field
+    Bx(1:nx,ny)=(1.0_num / (C + ly*C**2)) &
          * (-4.0_num * Fplus &
-         + 2.0_num * Ez(1:nx,ny) - (C - ly*C**2)*Bx(1:nx,ny) &
-         - (dt / epsilon0) * Jz(1:nx,ny))
+         + 2.0_num * Ez(1:nx,ny-1) - (C - ly*C**2)*Bx(1:nx,ny-1) &
+         - (dt / epsilon0) * Jz(1:nx,ny-1))
 
 
     FPlus=0.0_num
@@ -427,28 +377,72 @@ CONTAINS
        Current=>Current%Next
     ENDDO
 
-    Bz(1:nx,ny+1)=(1.0_num / (C + ly*C**2)) &
+    Bz(1:nx,ny)=(1.0_num / (C + ly*C**2)) &
          * (4.0_num * Fplus &
-         - 2.0_num * Ex(1:nx,ny) - (C - ly*C**2)*Bz(1:nx,ny) &
-         + (dt / epsilon0) * Jx(1:nx,ny))
+         - 2.0_num * Ex(1:nx,ny-1) + (C - ly*C**2)*Bz(1:nx,ny-1) &
+         + (dt / epsilon0) * Jx(1:nx,ny-1))
     DEALLOCATE(FPlus)
 
-    !CALL BField_bcs
-
   END SUBROUTINE laser_bcs_up
+
+  SUBROUTINE outflow_bcs_left
+    REAL(num):: lx
+
+    lx=dt/dx
+    Bx(0,1:ny) =  0.0_num
+    !Set the y magnetic field
+    By(0,1:ny)=(1.0_num / (C + lx*C**2)) &
+         * (2.0_num * Ez(1,1:ny) - (C - lx*C**2)*By(1,1:ny) &
+         - (dt / epsilon0) * Jz(1,1:ny))
+    Bz(0,1:ny)=(1.0_num / (C + lx*C**2)) &
+         * (-2.0_num * Ey(1,1:ny) - (C - lx*C**2)*Bz(1,1:ny) &
+         + (dt / epsilon0) * Jy(1,1:ny))
+    
+  END SUBROUTINE outflow_bcs_left
+
+  SUBROUTINE outflow_bcs_right
+    REAL(num):: lx
+
+    lx=dt/dx
+    Bx(nx,1:ny) =  0.0_num
+    !Set the y magnetic field
+    By(nx,1:ny)=(1.0_num / (C + lx*C**2)) &
+         * (- 2.0_num * Ez(nx-1,1:ny) - (C - lx*C**2)*By(nx-1,1:ny) &
+         + (dt / epsilon0) * Jz(nx-1,1:ny))
+    Bz(nx,1:ny)=(1.0_num / (C + lx*C**2)) &
+         * (2.0_num * Ey(nx-1,1:ny) - (C - lx*C**2)*Bz(nx-1,1:ny) &
+         - (dt / epsilon0) * Jy(nx-1,1:ny))
+  END SUBROUTINE outflow_bcs_right
+
+  SUBROUTINE outflow_bcs_down
+    REAL(num):: ly
+
+    ly=dt/dy
+    !Set the x magnetic field
+    Bx(1:nx,0)=(1.0_num / (C + ly*C**2)) &
+         * (-2.0_num * Ez(1:nx,1) - (C - ly*C**2)*Bx(1:nx,1) &
+         + (dt / epsilon0) * Jz(1:nx,0))
+    By(1:nx,0) =  0.0_num
+    Bz(1:nx,0)=(1.0_num / (C + ly*C**2)) &
+         * (+2.0_num * Ex(1:nx,1) - (C - ly*C**2)*Bz(1:nx,1) &
+         - (dt / epsilon0) * Jx(1:nx,1))
+    !CALL BField_bcs
+  END SUBROUTINE outflow_bcs_down
 
   SUBROUTINE outflow_bcs_up
     REAL(num):: ly
 
     ly=dt/dy
+
     !Set the x magnetic field
-    Bx(1:nx,ny+1)=(1.0_num / (C + ly*C**2)) &
-         * (2.0_num * Ez(1:nx,ny) - (C - ly*C**2)*Bx(1:nx,ny) &
-         - (dt / epsilon0) * Jz(1:nx,ny))
-    By(1:nx,ny+1) =  0.0_num
-    Bz(1:nx,ny+1)=(1.0_num / (C + ly*C**2)) &
-         * (-2.0_num * Ex(1:nx,ny) - (C - ly*C**2)*Bz(1:nx,ny) &
-         + (dt / epsilon0) * Jx(1:nx,ny))
+    Bx(1:nx,ny)=(1.0_num / (C + ly*C**2)) &
+         * (2.0_num * Ez(1:nx,ny-1) - (C - ly*C**2)*Bx(1:nx,ny-1) &
+         - (dt / epsilon0) * Jz(1:nx,ny-1))
+    By(1:nx,ny) =  0.0_num
+    Bz(1:nx,ny)=(1.0_num / (C + ly*C**2)) &
+         * (-2.0_num * Ex(1:nx,ny-1) + (C - ly*C**2)*Bz(1:nx,ny-1)&
+         + (dt / epsilon0) * Jx(1:nx,ny-1))
+
     !CALL BField_bcs
   END SUBROUTINE outflow_bcs_up
 

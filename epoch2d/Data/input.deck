@@ -8,7 +8,7 @@ begin:control
 
 	#maximum number of iterations
 	#set to -1 to run until finished
-        nsteps=1
+        nsteps=-1
 
 	#final time of simulation
         t_end=3.0e-12

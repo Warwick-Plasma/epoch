@@ -261,11 +261,18 @@ CONTAINS
     REAL(num) :: dtx,dty
     INTEGER :: ix, iy
 
+!!$    dtx=dx/(6.0_num * c)
+!!$    dty=dy/(6.0_num * c)
     dtx=dx/c
     dty=dy/c
     dt=dtx*dty/SQRT(dtx**2+dty**2)
-!    dt=MIN(dtx**2,dty**2)/SQRT(dtx**2+dty**2)
+    !    dt=MIN(dtx**2,dty**2)/SQRT(dtx**2+dty**2)
     IF (dt_laser .NE. 0.0_num) dt=MIN(dt,dt_laser)
+#ifdef NEWTONIAN
+    dtx=dx/max_part_v
+    dty=dy/max_part_v
+    dt=MIN(dt,dtx*dty/SQRT(dtx**2+dty**2))
+#endif
     dt=dt_multiplier * dt 
 
   END SUBROUTINE set_dt

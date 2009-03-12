@@ -35,6 +35,10 @@ CONTAINS
     !J_temp is used in the MPI
     REAL(num),ALLOCATABLE,DIMENSION(:,:) :: J_temp
 
+    !Timestep used in calculating current update
+    !dt_j=dt for relativistic code, not for non-relativistic
+    REAL(num) :: dt_j
+
     !Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x,part_y,part_px,part_py,part_pz,part_q,part_m
     REAL(num) :: root,part_vx,part_vy,part_vz,part_weight
@@ -111,6 +115,12 @@ CONTAINS
 
     part_weight=weight
 
+#ifdef NEWTONIAN
+    Max_Part_V=0.0_num
+#endif
+
+    dt_j=dt
+
     DO iSpecies=1,nspecies
        Current=>ParticleSpecies(iSpecies)%AttachedList%Head
        DO ipart=1,ParticleSpecies(iSpecies)%AttachedList%Count
@@ -148,7 +158,11 @@ CONTAINS
 
           !Calculate v(t+0.5dt) from p(t)
           !See PSC manual page (25-27)
+#ifdef NEWTONIAN
+          root=1.0_num/part_m
+#else
           root=1.0_num/SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+#endif
           part_vx = part_px * root
           part_vy = part_py * root
           part_vz = part_pz * root
@@ -288,7 +302,11 @@ CONTAINS
 
           !Half timestep,then use Boris1970 rotation, see Birdsall and Langdon
 
+#ifdef NEWTONIAN
+          root = cmratio / part_m
+#else
           root = cmratio / SQRT(part_m**2 + (pxm**2 + pym**2 + pzm**2)/c**2)
+#endif
           taux = bx_part * root
           tauy = by_part * root
           tauz = bz_part * root
@@ -310,9 +328,18 @@ CONTAINS
           part_pz = pzp + cmratio * ez_part
 
           !Calculate particle velocity from particle momentum
+#ifdef NEWTONIAN
+          root = 1.0_num/part_m
+#else
           root = 1.0_num/SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+#endif
           part_vx=part_px * root
           part_vy=part_py * root
+
+#ifdef NEWTONIAN
+          IF (ABS(part_vx) .GT. max_part_v) max_part_v=ABS(part_vx)
+          IF (ABS(part_vy) .GT. max_part_v) max_part_v=ABS(part_vy)
+#endif
 
           !Move particles to end of time step at 2nd order accuracy
           part_x = part_x + part_vx * dt/2.0_num
@@ -336,12 +363,16 @@ CONTAINS
           IF (.NOT. ParticleSpecies(iSpecies)%Tracer) THEN
 #endif
 
+#ifdef NEWTONIAN
+             dt_j=0.05_num * MIN(MIN(dx,dy)/MAX(ABS(part_vx),ABS(part_vy)),dt)
+#endif
+
              !Now advance to t+1.5dt to calculate current. This is detailed in the manual
              !Between pages 37 and 41. The version coded up looks completely different to that
              !In the manual, but is equivalent
              !Use t+1.5 dt so that can update J to t+dt at 2nd order
-             part_x = part_x + part_vx * dt/2.0_num
-             part_y = part_y + part_vy * dt/2.0_num
+             part_x = part_x + part_vx * dt_j/2.0_num
+             part_y = part_y + part_vy * dt_j/2.0_num
 
              cell_x_r = part_x / dx
              cell_x3  = NINT(cell_x_r)
@@ -352,8 +383,6 @@ CONTAINS
              cell_y3  = NINT(cell_y_r)
              cell_frac_y = REAL(cell_y3,num) - cell_y_r
              cell_y3=cell_y3+1
-
-             IF (cell_y3-cell_y1-1 .LT. -2) PRINT *,"ERROR ",cell_y1,cell_y2,rank
 
              Xi1x(cell_x3 - cell_x1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
              Xi1x(cell_x3 - cell_x1 + 0) = 0.75_num - ABS(cell_frac_x)**2
@@ -408,8 +437,8 @@ CONTAINS
                         +1.0_num/3.0_num * xi1x(ix) * xi1y(iy)
 
                    !This is the bit that actually solves d(rho)/dt=-div(J)
-                   jxh(ix,iy)=jxh(ix-1,iy) - Part_q * wx * 1.0_num/dt * part_weight/dy 
-                   jyh(ix,iy)=jyh(ix,iy-1) - Part_q * wy * 1.0_num/dt * part_weight/dx
+                   jxh(ix,iy)=jxh(ix-1,iy) - Part_q * wx * 1.0_num/dt_j * part_weight/dy 
+                   jyh(ix,iy)=jyh(ix,iy-1) - Part_q * wy * 1.0_num/dt_j * part_weight/dx
                    jzh(ix,iy)=Part_q * Part_vz * wz  * part_weight/(dx*dy)
 
                    Jx(cell_x1+ix,cell_y1+iy)=Jx(cell_x1+ix,cell_y1+iy)&

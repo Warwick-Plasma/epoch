@@ -115,6 +115,8 @@ CONTAINS
     use_offset_grid=.TRUE.
     use_extended_io=.FALSE.
 
+    DumpMask=IO_NEVER
+
     !Dumpmask is a bitmasked variable which determines whether or not to
     !dump a given variable at a given type of output dump. The possible values are
     !IO_NEVER - Default value, never dump
@@ -149,6 +151,10 @@ CONTAINS
     !23  - number density (Can have IO_SPECIES)
     !24  - Particle weighting value
     !25  - Particle species information
+    !26  - Distribution functions
+    !27  - Particle Probes
+    !28  - Temperature
+    !29  - Ejected particles
 
     DumpMask(2)=IO_ALWAYS
     DumpMask(9:10)=IO_ALWAYS

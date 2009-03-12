@@ -321,7 +321,11 @@ CONTAINS
 #else
              part_m = CurrentFamily%Mass
 #endif
+#ifdef NEWTONIAN
+             root=part_m
+#else
              root=SQRT(part_m**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+#endif
              IF (root .NE. 0.0_num) root=1.0_num/root
              data(partcount) = Cur%Part_p(1) * root
              Cur=>Cur%Next
@@ -365,7 +369,11 @@ CONTAINS
 #else
              part_m = CurrentFamily%Mass
 #endif
+#ifdef NEWTONIAN
+             root=part_m
+#else
              root=SQRT(part_m**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+#endif
              IF (root .NE. 0.0_num) root=1.0_num/root
              data(partcount) = Cur%Part_p(2) * root
              Cur=>Cur%Next
@@ -408,7 +416,11 @@ CONTAINS
 #else
              part_m = CurrentFamily%Mass
 #endif
+#ifdef NEWTONIAN
+             root=part_m
+#else
              root=SQRT(part_m**2 + (Cur%part_p(1)**2 + Cur%part_p(2)**2 + Cur%part_p(3)**2)/c**2)
+#endif
              IF (root .NE. 0.0_num) root=1.0_num/root
              data(partcount) = Cur%Part_p(3) * root
              Cur=>Cur%Next

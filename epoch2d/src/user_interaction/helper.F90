@@ -438,7 +438,7 @@ CONTAINS
     !It generates gaussian distributed random numbers
     !The standard deviation (stdev) is related to temperature
 
-    stdev=SQRT(temperature*kb*mass)
+    stdev=SQRT(2.0_num * temperature*kb*mass)
 
     DO
        rand1=Random(idum)

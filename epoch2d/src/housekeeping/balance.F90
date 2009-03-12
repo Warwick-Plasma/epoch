@@ -277,9 +277,9 @@ CONTAINS
        temp1d=0.0_num
        CALL Redistribute_Field_1D(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
             ,cell_y_end(coordinates(1)+1),ny_global,Current%Phase,temp1d,DIR_X)
-       DEALLOCATE(Current%Profile)
-       ALLOCATE(Current%Profile(-2:ny_new+3))
-       Current%Profile=temp1d
+       DEALLOCATE(Current%Phase)
+       ALLOCATE(Current%Phase(-2:ny_new+3))
+       Current%Phase=temp1d
 
        Current=>Current%Next
     ENDDO
@@ -296,10 +296,10 @@ CONTAINS
        Current%Profile=temp1d
        temp1d=0.0_num
        CALL Redistribute_Field_1D(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
-            ,cell_x_end(coordinates(2)+1),ny_global,Current%Phase,temp1d,DIR_Y)
-       DEALLOCATE(Current%Profile)
-       ALLOCATE(Current%Profile(-2:nx_new+3))
-       Current%Profile=temp1d
+            ,cell_x_end(coordinates(2)+1),nx_global,Current%Phase,temp1d,DIR_Y)
+       DEALLOCATE(Current%Phase)
+       ALLOCATE(Current%Phase(-2:nx_new+3))
+       Current%Phase=temp1d
        Current=>Current%Next
     ENDDO
     Current=>Laser_Down
@@ -312,10 +312,10 @@ CONTAINS
        Current%Profile=temp1d
        temp1d=0.0_num
        CALL Redistribute_Field_1D(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
-            ,cell_x_end(coordinates(2)+1),ny_global,Current%Phase,temp1d,DIR_Y)
-       DEALLOCATE(Current%Profile)
-       ALLOCATE(Current%Profile(-2:nx_new+3))
-       Current%Profile=temp1d
+            ,cell_x_end(coordinates(2)+1),nx_global,Current%Phase,temp1d,DIR_Y)
+       DEALLOCATE(Current%Phase)
+       ALLOCATE(Current%Phase(-2:nx_new+3))
+       Current%Phase=temp1d
        Current=>Current%Next
     ENDDO
 #endif

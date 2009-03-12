@@ -85,6 +85,9 @@ CONTAINS
 #ifdef NO_DECK
     WRITE(*,*) "Deactivated input deck support -DNO_DECK"
 #endif
+#ifdef NEWTONIAN
+    WRITE(*,*) "Newtonian dynamics (no relativity) -DNEWTONIAN"
+#endif
     WRITE(*,*) "*************************************************************"
     WRITE(*,*) ""
 
