@@ -116,7 +116,7 @@ CONTAINS
     REAL(num),DIMENSION(3) :: conv 
     INTEGER,DIMENSION(3) :: cell
     LOGICAL :: UseThis
-    REAL(num) :: RealSpace_Area
+    REAL(num) :: RealSpace_Area, part_weight
 
 
     TYPE(Particle),POINTER :: Current
@@ -304,6 +304,7 @@ CONTAINS
     Data=0.0_num
 
     Current=>ParticleSpecies(Species)%AttachedList%Head
+    part_weight=weight
     DO WHILE(ASSOCIATED(Current))
        Particle_Data(1:2)=Current%Part_Pos
        Particle_Data(3:5)=Current%Part_P
@@ -325,7 +326,10 @@ CONTAINS
              cell(iDim)=NINT((CurrentData-range(iDim,1))/dgrid(iDim))+1
              IF (cell(iDim) .LT. 1 .OR. cell(iDim) .GT. resolution(iDim)) UseThis=.FALSE.
           ENDDO
-          IF (UseThis) Data(cell(1),cell(2),cell(3))=Data(cell(1),cell(2),cell(3))+Current%Weight * realspace_area
+#ifdef PER_PARTICLE_WEIGHT
+          part_weight=Current%Weight
+#endif
+          IF (UseThis) Data(cell(1),cell(2),cell(3))=Data(cell(1),cell(2),cell(3))+part_weight !* realspace_area
        ENDIF
        Current=>Current%Next
     ENDDO
@@ -396,7 +400,7 @@ CONTAINS
     REAL(num),DIMENSION(2) :: conv 
     INTEGER,DIMENSION(2) :: cell
     LOGICAL :: UseThis
-    REAL(num) :: RealSpace_Area
+    REAL(num) :: RealSpace_Area, part_weight
 
 
     TYPE(Particle),POINTER :: Current
@@ -581,6 +585,7 @@ CONTAINS
     Data=0.0_num
 
     Current=>ParticleSpecies(Species)%AttachedList%Head
+    part_weight=weight
     DO WHILE(ASSOCIATED(Current))
        Particle_Data(1:2)=Current%Part_Pos
        Particle_Data(3:5)=Current%Part_P
@@ -602,8 +607,10 @@ CONTAINS
              cell(iDim)=NINT((CurrentData-range(iDim,1))/dgrid(iDim))+1
              IF (cell(iDim) .LT. 1 .OR. cell(iDim) .GT. resolution(iDim)) UseThis=.FALSE.
           ENDDO
-
-          IF (UseThis)Data(cell(1),cell(2))=Data(cell(1),cell(2))+Current%Weight*RealSpace_Area
+#ifdef PER_PARTICLE_WEIGHT
+          part_weight=Current%Weight
+#endif
+          IF (UseThis)Data(cell(1),cell(2))=Data(cell(1),cell(2))+part_weight!*RealSpace_Area
        ENDIF
        Current=>Current%Next
     ENDDO

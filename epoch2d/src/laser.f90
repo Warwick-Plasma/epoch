@@ -407,11 +407,11 @@ CONTAINS
     Bx(nx,1:ny) =  0.0_num
     !Set the y magnetic field
     By(nx,1:ny)=(1.0_num / (C + lx*C**2)) &
-         * (- 2.0_num * Ez(nx-1,1:ny) - (C - lx*C**2)*By(nx-1,1:ny) &
-         + (dt / epsilon0) * Jz(nx-1,1:ny))
+         * (- 2.0_num * Ez(nx,1:ny) - (C - lx*C**2)*By(nx,1:ny) &
+         + (dt / epsilon0) * Jz(nx,1:ny))
     Bz(nx,1:ny)=(1.0_num / (C + lx*C**2)) &
-         * (2.0_num * Ey(nx-1,1:ny) - (C - lx*C**2)*Bz(nx-1,1:ny) &
-         - (dt / epsilon0) * Jy(nx-1,1:ny))
+         * (2.0_num * Ey(nx,1:ny) - (C - lx*C**2)*Bz(nx,1:ny) &
+         - (dt / epsilon0) * Jy(nx,1:ny))
   END SUBROUTINE outflow_bcs_right
 
   SUBROUTINE outflow_bcs_down
@@ -436,12 +436,12 @@ CONTAINS
 
     !Set the x magnetic field
     Bx(1:nx,ny)=(1.0_num / (C + ly*C**2)) &
-         * (2.0_num * Ez(1:nx,ny-1) - (C - ly*C**2)*Bx(1:nx,ny-1) &
-         - (dt / epsilon0) * Jz(1:nx,ny-1))
+         * (2.0_num * Ez(1:nx,ny) - (C - ly*C**2)*Bx(1:nx,ny) &
+         - (dt / epsilon0) * Jz(1:nx,ny))
     By(1:nx,ny) =  0.0_num
     Bz(1:nx,ny)=(1.0_num / (C + ly*C**2)) &
-         * (-2.0_num * Ex(1:nx,ny-1) + (C - ly*C**2)*Bz(1:nx,ny-1)&
-         + (dt / epsilon0) * Jx(1:nx,ny-1))
+         * (-2.0_num * Ex(1:nx,ny) + (C - ly*C**2)*Bz(1:nx,ny)&
+         + (dt / epsilon0) * Jx(1:nx,ny))
 
     !CALL BField_bcs
   END SUBROUTINE outflow_bcs_up

@@ -30,7 +30,7 @@ begin:laser
 	direction=left
         amp=3.88191e13       #1e20 W/cm^2
 	profile=exp(spot)
-        freq= 24.2831853e13   #red
+        freq= 128.2831853e13   #red
       	pol=0.0
         phase=0.0
 	t_profile=1.0

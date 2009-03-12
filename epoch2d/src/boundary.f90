@@ -53,25 +53,25 @@ CONTAINS
     !Laser boundaries reflect particles off a hard wall
     IF (xbc_left == BC_SIMPLE_LASER .OR. xbc_left == BC_SIMPLE_OUTFLOW) THEN
        xbc_left_particle=BC_OPEN
-       xbc_left_field=BC_ZERO_GRADIENT
+       xbc_left_field=BC_CLAMP
        AnyOpen=.TRUE.
     ENDIF
 
     IF (xbc_right == BC_SIMPLE_LASER .OR. xbc_right == BC_SIMPLE_OUTFLOW) THEN
        xbc_right_particle=BC_OPEN
-       xbc_right_field=BC_ZERO_GRADIENT
+       xbc_right_field=BC_CLAMP
        AnyOpen=.TRUE.
     ENDIF
 
     IF (ybc_up == BC_SIMPLE_LASER .OR. ybc_up == BC_SIMPLE_OUTFLOW) THEN
        ybc_up_particle=BC_OPEN
-       ybc_up_field=BC_ZERO_GRADIENT
+       ybc_up_field=BC_CLAMP
        AnyOpen=.TRUE.
     ENDIF
 
     IF (ybc_down == BC_SIMPLE_LASER .OR. ybc_down == BC_SIMPLE_OUTFLOW) THEN
        ybc_down_particle=BC_OPEN
-       ybc_down_field=BC_ZERO_GRADIENT
+       ybc_down_field=BC_CLAMP
        AnyOpen=.TRUE.
     ENDIF
 

@@ -4,7 +4,7 @@ begin:control
 	#global number of gridpoints
 	nx=400 #in x
         ny=100 #in y
-        npart=16.0e5
+        npart=16.0e4
 
 	#maximum number of iterations
 	#set to -1 to run until finished

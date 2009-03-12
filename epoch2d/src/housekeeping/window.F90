@@ -129,7 +129,9 @@ CONTAINS
                 DO iSuby=-1,+1
                    weight_local=weight_local+gy(iSuby)*ParticleSpecies(iSpecies)%Density(cell_y+iSuby)/(REAL(ParticleSpecies(iSpecies)%npart_per_cell,num)/(dx*dy))
                 ENDDO
+#ifdef PER_PARTICLE_WEIGHT
                 Current%Weight=weight_local
+#endif
 #ifdef PART_DEBUG
                 Current%Processor=rank
                 Current%Processor_at_t0=rank
