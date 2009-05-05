@@ -105,7 +105,7 @@ tokenizer_blocks.o:tokenizer_blocks.f90 shared_data.o strings.o
 evaluate.o:evaluate.f90 shared_data.o stack.o custom_parser.o evaluator_blocks.o
 stack.o:stack.f90 shared_data.o
 evaluator_blocks.o:evaluator_blocks.f90 shared_data.o strings.o custom_parser.o stack.o
-custom_parser.o:custom_parser.f90 shared_data.o tokenizer_blocks.o
+custom_parser.o:custom_parser.f90 shared_data.o tokenizer_blocks.o stack.o
 custom_deck.o:custom_deck.f90 shared_data.o strings.o strings_advanced.o shunt.o evaluate.o
 custom_laser.o:custom_laser.f90 shared_data.o
 window.o:window.F90 shared_data.o boundary.o partlist.o helper.o
