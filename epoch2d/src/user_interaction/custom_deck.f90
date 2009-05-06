@@ -16,7 +16,7 @@ CONTAINS
 
   FUNCTION HandleCustomBlock(blockname,Element,Value)
 
-    CHARACTER(len=30),INTENT(IN)::blockname,Element,Value
+    CHARACTER(len=entrylength),INTENT(IN)::blockname,Element,Value
     INTEGER :: HandleCustomBlock
     TYPE(primitivestack) :: output
     INTEGER :: ix,iy
