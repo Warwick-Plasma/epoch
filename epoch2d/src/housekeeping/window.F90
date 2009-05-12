@@ -52,6 +52,10 @@ CONTAINS
        CALL Shift_Field(Ey)
        CALL Shift_Field(Ez)
 
+       CALL Shift_Field(Jx)
+       CALL Shift_Field(Jy)
+       CALL Shift_Field(Jz)
+
        CALL Shift_Field(Bx)
        CALL Shift_Field(By)
        CALL Shift_Field(Bz)
