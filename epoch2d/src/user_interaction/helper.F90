@@ -23,7 +23,11 @@ CONTAINS
           ParticleSpecies(iSpecies)%Density=InitialConditions(iSpecies)%Rho(nx,:)
           ParticleSpecies(iSpecies)%Temperature=InitialConditions(iSpecies)%Temp(nx,:,:)
        ENDIF
-       CALL SetupParticleDensity(InitialConditions(iSpecies)%Rho,Partfam,InitialConditions(iSpecies)%MinRho,InitialConditions(iSpecies)%MaxRho,idum)
+#ifdef PER_PARTICLE_WEIGHT
+		       CALL SetupParticleDensity(InitialConditions(iSpecies)%Rho,Partfam,InitialConditions(iSpecies)%MinRho,InitialConditions(iSpecies)%MaxRho,idum)
+#else
+		       CALL NonUniformLoadParticles(InitialConditions(iSpecies)%Rho,Partfam,InitialConditions(iSpecies)%MinRho,InitialConditions(iSpecies)%MaxRho,idum)
+#endif
        CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,1),DIR_X,PartFam,idum)
        CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,2),DIR_Y,PartFam,idum)
        CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,3),DIR_Z,PartFam,idum)
@@ -61,6 +65,107 @@ CONTAINS
     ENDDO
     DEALLOCATE(InitialConditions)
   END SUBROUTINE DeallocateIC
+
+  SUBROUTINE NonUniformLoadParticles(Density,SpeciesList,minrho,maxrho,idum)
+
+    REAL(num),DIMENSION(-2:,-2:),INTENT(INOUT) :: Density
+    TYPE(ParticleFamily),POINTER :: SpeciesList
+    REAL(num),INTENT(INOUT) :: minrho,maxrho
+    INTEGER,INTENT(INOUT) :: idum
+
+    INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
+    INTEGER(KIND=8) :: npart_per_cell_average
+    INTEGER(KIND=8) :: npart_per_cell
+    REAL(num) :: Density_Total, Density_Total_global, Density_Average
+    INTEGER(KIND=8) :: npart_this_proc_new, ipart, npart_this_species
+    REAL(num) :: rpos
+
+    TYPE(ParticleList),POINTER :: PartList
+    TYPE(Particle),POINTER :: Current, Next
+
+    PartList=>SpeciesList%AttachedList
+
+    num_valid_cells=0
+    Density_Total=0.0_num
+    DO iy=1,ny
+       DO ix=1,nx
+          IF (Density(ix,iy) .GE. minrho) THEN
+             num_valid_cells=num_valid_cells+1
+             Density_Total=Density_Total + Density(ix,iy)
+          ENDIF
+          IF (Density(ix,iy) .GT. maxrho .AND. maxrho .GT. 0.0_num) Density(ix,iy) = maxrho
+       ENDDO
+    ENDDO
+
+    CALL MPI_ALLREDUCE(num_valid_cells,num_valid_cells_global,1,MPI_INTEGER8,MPI_MAX,comm,errcode)
+    npart_per_cell_average=SpeciesList%Count/num_valid_cells_global
+    IF (npart_per_cell_average == 0) npart_per_cell_average=1
+
+    CALL MPI_ALLREDUCE(Density_Total,Density_Total_global,1,mpireal,MPI_SUM,comm,errcode)
+    Density_Average=Density_Total_global/REAL(num_valid_cells_global,num)
+
+    !Assume that a cell with the average density has the average number of particles per cell
+    !Now calculate the new minimum density 
+    minrho = Density_Average/REAL(npart_per_cell_average,num)
+    !Set the particle weight
+    weight = minrho * dx * dy
+
+    !Recalculate the number of valid cells and the summed density
+    num_valid_cells=0
+    Density_Total=0.0_num
+    DO iy=1,ny
+       DO ix=1,nx
+          IF (Density(ix,iy) .GE. minrho) THEN
+             num_valid_cells=num_valid_cells+1
+             Density_Total=Density_Total + Density(ix,iy)
+          ENDIF
+       ENDDO
+    ENDDO
+
+    npart_this_proc_new=Density_Total/Density_Average * REAL(npart_per_cell_average,num)
+
+    CALL Destroy_PartList(PartList)
+    CALL Create_Allocated_PartList(PartList,npart_this_proc_new)
+    Current=>PartList%Head
+    DO ix=1,nx
+       DO iy=1,ny
+          ipart=0
+          npart_per_cell = Density(ix,iy)/Density_Average * REAL(npart_per_cell_average,num)
+          DO WHILE(ASSOCIATED(Current) .AND. ipart .LT. npart_per_cell)
+#ifdef PER_PARTICLE_CHARGEMASS
+             !Even if particles have per particle charge and mass, assume that 
+             !initially they all have the same charge and mass (user can easily override)
+             Current%Charge=SpeciesList%Charge
+             Current%Mass=SpeciesList%Mass
+#endif
+             rpos=random(idum)-0.5_num
+             rpos=(rpos*dx)+x(ix)
+             Current%Part_Pos(1)=rpos
+             rpos=random(idum)-0.5_num
+             rpos=(rpos*dy)+y(iy)
+             Current%Part_Pos(2)=rpos
+             ipart=ipart+1
+             Current=>Current%Next
+          ENDDO
+       ENDDO
+    ENDDO
+
+    DO WHILE(ASSOCIATED(Current))
+       Next=>Current%Next
+       CALL Remove_Particle_From_PartList(PartList,Current)
+       DEALLOCATE(Current)
+       Current=>Next
+    ENDDO
+    CALL MPI_REDUCE(PartList%Count,npart_this_species,1,MPI_INTEGER8,MPI_SUM,0,comm,errcode)
+    SpeciesList%Count=npart_this_species
+    IF (rank .EQ. 0) THEN
+       PRINT *,"Loaded",npart_this_species,"particles of species ",TRIM(SpeciesList%Name)
+       WRITE(20,*) "Loaded",npart_this_species,"particles of species ",TRIM(SpeciesList%Name)
+    ENDIF
+    CALL Particle_BCS
+
+
+  END SUBROUTINE NonUniformLoadParticles
 
   !This subroutine automatically loads a uniform density of pseudoparticles
   SUBROUTINE LoadParticles(SpeciesList,loadlist,idum)

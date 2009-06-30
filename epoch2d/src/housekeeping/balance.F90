@@ -142,13 +142,6 @@ CONTAINS
     x(0:nx+1)=x_global(new_cell_x_start-1:new_cell_x_end+1)
     y(0:ny+1)=y_global(new_cell_y_start-1:new_cell_y_end+1)
 
-    !Reallocate Currents (don't need to keep current timestep values for current so just reallocate)
-    DEALLOCATE(Jx,Jy,Jz)
-    ALLOCATE(Jx(-2:nx+3,-2:ny+3),Jy(-2:nx+3,-2:ny+3),Jz(-2:nx+3,-2:ny+3))
-    Jx=0.0_num
-    Jy=0.0_num
-    Jz=0.0_num
-
     !Reallocate the kinetic energy calculation
     DEALLOCATE(ekbar,ekbar_sum,ct)
     ALLOCATE(ekbar(1:nx,1:ny,1:nspecies),ekbar_sum(-2:nx+3,-2:ny+3,1:nspecies))
@@ -244,6 +237,24 @@ CONTAINS
     DEALLOCATE(Bz)
     ALLOCATE(Bz(-2:nx_new+3,-2:ny_new+3))
     Bz=temp
+
+	temp=0.0_num
+	CALL Redistribute_Field(new_domain,Jx,temp)
+	DEALLOCATE(Jx)
+	ALLOCATE(Jx(-2:nx_new+3,-2:ny_new+3))
+	Jx=temp
+
+	temp=0.0_num
+	CALL Redistribute_Field(new_domain,Jy,temp)
+	DEALLOCATE(Jy)
+	ALLOCATE(Jy(-2:nx_new+3,-2:ny_new+3))
+	Jy=temp
+
+	temp=0.0_num
+	CALL Redistribute_Field(new_domain,Jz,temp)
+	DEALLOCATE(Jz)
+	ALLOCATE(Jz(-2:nx_new+3,-2:ny_new+3))
+	Jz=temp
 
     DEALLOCATE(temp)
 
