@@ -161,7 +161,7 @@ CONTAINS
     Current=>PartList%Head
     ipart=0
     !First loop converts number density into weight function
-    ALLOCATE(Weight_Fn(-1:nx_global+2))
+    ALLOCATE(Weight_Fn(-1:nx_global+2),Temp(-1:nx_global+2))
     Weight_Fn=0.0_num
     DO WHILE(ipart < PartList%Count)
        cell_x_r = (Current%Part_Pos-x_start) / dx
@@ -181,7 +181,8 @@ CONTAINS
        Current=>Current%Next
        ipart=ipart+1
     ENDDO
-    CALL MPI_ALLREDUCE(MPI_IN_PLACE,Weight_Fn,nx_global+4,mpireal,MPI_SUM,comm,errcode)
+    CALL MPI_ALLREDUCE(Weight_Fn,Temp,nx_global+4,mpireal,MPI_SUM,comm,errcode)
+    Weight_Fn=Temp
 
     DO ix=-1,nx_global+1
        IF (Weight_Fn(ix) .GT. 0.0_num) THEN
@@ -221,7 +222,6 @@ CONTAINS
        Current=>Current%Next
        ipart=ipart+1
     ENDDO
-    PRINT *,weight_local
 #else
     !If not then use a CDF type scheme to redistibute the pseudoparticle density
     !This isn't perfect because particles are still split evenly across processors
@@ -264,7 +264,7 @@ CONTAINS
     DEALLOCATE(Weight_Fn)
     !Pseudoparticles are now positioned as best they can
     !Now set weight constant to match to real particle number density
-    ALLOCATE(Weight_Fn(-1:nx_global+2))
+    ALLOCATE(Weight_Fn(-1:nx_global+2),Temp(-1:nx_global+2))
     Weight_Fn=0.0_num
     Current=>PartList%Head
     ipart=0
@@ -296,7 +296,7 @@ CONTAINS
     ENDDO
     weight=SUM(Weight_Fn(1:nx_global))/REAL(nx_global,num)
 #endif
-    DEALLOCATE(Weight_Fn)
+    DEALLOCATE(Weight_Fn,Temp)
   END SUBROUTINE SetupParticleListByDensity
 
 
