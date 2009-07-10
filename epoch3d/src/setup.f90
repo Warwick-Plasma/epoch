@@ -19,7 +19,7 @@ CONTAINS
   SUBROUTINE minimal_init
 
     IF (num .EQ. 4) mpireal=MPI_REAL
-    DumpMask=.FALSE.
+    DumpMask=IO_NEVER
 
   END SUBROUTINE minimal_init
 
