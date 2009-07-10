@@ -345,7 +345,7 @@ CONTAINS
     By(1:nx,ny+1) =  0.0_num
 
 
-    Current=>Laser_Down
+    Current=>Laser_Up
     DO WHILE(ASSOCIATED(Current))
        !Evaluate the temporal evolution of the laser
        IF (time .GE. Current%t_start .AND. time .LE. Current%t_end) THEN
@@ -366,7 +366,7 @@ CONTAINS
 
 
     FPlus=0.0_num
-    Current=>Laser_Down
+    Current=>Laser_Up
     DO WHILE(ASSOCIATED(Current))
        !Evaluate the temporal evolution of the laser
        IF (time .GE. Current%t_start .AND. time .LE. Current%t_end) THEN
