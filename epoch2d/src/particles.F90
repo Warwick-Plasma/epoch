@@ -439,7 +439,7 @@ CONTAINS
                    !This is the bit that actually solves d(rho)/dt=-div(J)
                    jxh(ix,iy)=jxh(ix-1,iy) - Part_q * wx * 1.0_num/dt_j * part_weight/dy 
                    jyh(ix,iy)=jyh(ix,iy-1) - Part_q * wy * 1.0_num/dt_j * part_weight/dx
-                   jzh(ix,iy)=Part_q * Part_vz * wz  * part_weight/(dx*dy)
+                   jzh(ix,iy)=Part_q * Part_vz * wz  * part_weight * (dx*dy)
 
                    Jx(cell_x1+ix,cell_y1+iy)=Jx(cell_x1+ix,cell_y1+iy)&
                         +jxh(ix,iy)
