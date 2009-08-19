@@ -461,6 +461,12 @@ CONTAINS
 
           ! Cycle through probes
           DO WHILE(ASSOCIATED(Current_probe))
+				!Just cycle round if this probe isn't to be dumped.
+				 IF (Current_probe%dump .EQ. IO_NEVER) THEN
+					current_probe=>current_probe%next
+					CYCLE
+ 				 ENDIF
+
              !Note that this is the energy of a single REAL particle in the pseudoparticle, NOT the energy of the pseudoparticle
              probe_energy=(SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2)/(part_m * c)**2) - 1.0_num)&
                   * (part_m * c**2)
