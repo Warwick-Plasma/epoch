@@ -97,9 +97,6 @@ CONTAINS
           DO iy=mny,mxy,ordy
              DO ix=mnx,mxx,ordx
                 IF (MOD(ix+iy,2) .EQ. sweep) THEN
-!!$                   grid%phi(ix,iy)=(1.0-w)* grid%phi(ix,iy) + &
-!!$                        w * ((+grid%rho(ix,iy)+lamdax*(grid%phi(ix-1,iy)+grid%phi(ix+1,iy)) &
-!!$                        +lamday*(grid%phi(ix,iy-1)+grid%phi(ix,iy+1)))/(2.0_num*(lamdax+lamday)))
                    grid%phi(ix,iy)=(1.0-w)* grid%phi(ix,iy) + &
                         w * ((-grid%rho(ix,iy)+lamdax*(grid%phi(ix-1,iy)+grid%phi(ix+1,iy)) &
                         +lamday*(grid%phi(ix,iy-1)+grid%phi(ix,iy+1)))/(2.0_num*(lamdax+lamday)))
@@ -112,8 +109,6 @@ CONTAINS
 
        DO iy=1,ny_l
           DO ix=1,nx_l
-!!$             grid%resid(ix,iy)=grid%rho(ix,iy) + (lamdax*(grid%phi(ix-1,iy)-2.0_num*grid%phi(ix,iy)+grid%phi(ix+1,iy))+&
-!!$                  lamday*(grid%phi(ix,iy-1)-2.0_num*grid%phi(ix,iy)+grid%phi(ix,iy+1)))
              grid%resid(ix,iy)=grid%rho(ix,iy) - (lamdax*(grid%phi(ix-1,iy)-2.0_num*grid%phi(ix,iy)+grid%phi(ix+1,iy))+&
                   lamday*(grid%phi(ix,iy-1)-2.0_num*grid%phi(ix,iy)+grid%phi(ix,iy+1)))
           ENDDO
@@ -123,11 +118,10 @@ CONTAINS
        sum_global=sum_local
        IF (MPI_ON) CALL MPI_ALLREDUCE(sum_local,sum_global,1,mpireal,MPI_MAX,comm,errcode)
        IF (sum_global .LT. 1.0e-6_num) THEN
-!          PRINT *,"***CONVERGED***",grid%gridlevel,cycles,MAXVAL(ABS(grid%phi))
           grid%CONVERGED = .TRUE.
           EXIT
        ELSE 
-          !PRINT *,"Not Converged",grid%gridlevel,cycles
+			!Error trap
        ENDIF
     ENDDO
 
@@ -171,20 +165,6 @@ CONTAINS
                grid%phi(nx+1,1:ny),ny,mpireal,right,tag,comm,status,errcode)
        ENDIF
     ENDIF
-
-!!$       IF (MPI_ON) THEN
-!!$          CALL MPI_SENDRECV(grid%phi(1:nx,ny),nx,mpireal,up,tag,&
-!!$               grid%phi(1:nx,0),nx,mpireal,down,tag,comm,status,errcode)
-!!$          CALL MPI_SENDRECV(grid%phi(1:nx,1),nx,mpireal,down,tag,&
-!!$               grid%phi(1:nx,ny+1),nx,mpireal,up,tag,comm,status,errcode)
-!!$
-!!$          CALL MPI_SENDRECV(grid%phi(nx,1:ny),ny,mpireal,right,tag,&
-!!$               grid%phi(0,1:ny),ny,mpireal,left,tag,comm,status,errcode)
-!!$          CALL MPI_SENDRECV(grid%phi(1,1:ny),ny,mpireal,left,tag,&
-!!$               grid%phi(nx+1,1:ny),ny,mpireal,right,tag,comm,status,errcode)
-!!$       ENDIF 
-
-    !       CALL MPI_COMM_RANK(comm,rank,errcode)
 
   END SUBROUTINE Boundaries
 
@@ -289,9 +269,7 @@ CONTAINS
        !Are on coarsest grid so should solve directly.
        !I don't have a plugin LU decomp solver, so just do using a lot of Gauss_Seidel
        grid%converged=.FALSE.
-       !       DO WHILE (.NOT. grid%converged) 
        CALL Gauss_Seidel(grid,mu,bound)
-       !       ENDDO
        !Do nothing else on coarsest grid
     ENDIF
 

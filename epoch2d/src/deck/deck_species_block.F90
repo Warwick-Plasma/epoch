@@ -192,13 +192,7 @@ CONTAINS
     INTEGER :: CheckSpeciesBlock
     INTEGER :: iSpecies
 
-!!$    DO iSpecies=1,nSpecies
-!!$       IF (StrCmp(ParticleSpecies(iSpecies)%name,blank)) THEN
-!!$          CheckSpeciesBlock=ERR_MISSING_ELEMENTS
-!!$       ENDIF
-!!$    ENDDO
-
-    !Should do error checking but can't be bothered at the moment
+    !Should do error checking but isn't really necessary at the moment
     CheckSpeciesBlock=ERR_NONE
 
   END FUNCTION CheckSpeciesBlock

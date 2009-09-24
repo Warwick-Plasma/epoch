@@ -240,14 +240,6 @@ CONTAINS
        ENDDO
     ENDDO
 
-!!$    DO iy=-1,1
-!!$       DO ix=-1,1
-!!$          sizes(ix,iy)=(xEnd(ix,iy)-xStart(ix,iy)+1)*(yEnd(ix,iy)-yStart(ix,iy)+1)
-!!$       ENDDO
-!!$    ENDDO
-
-    !PRINT *,rank,ystart(0,1),yend(0,1),yshift(0,1)
-
     DO iy=-1,1
        DO ix=-1,1
           IF (ix == 0 .AND. iy == 0) CYCLE
@@ -268,20 +260,6 @@ CONTAINS
           DEALLOCATE(temp)
        ENDDO
     ENDDO
-!!$
-!!$    IF (left == MPI_PROC_NULL .AND. xbc_left_field == BC_CLAMP) THEN
-!!$       Array(1,:)=Array(1,:)+SUM(Array(-2:0,:),1)
-!!$    ENDIF
-!!$    IF (right == MPI_PROC_NULL .AND. xbc_right_field == BC_CLAMP) THEN
-!!$       Array(nx,:)=Array(nx,:)+SUM(Array(nx+1:nx+2,:),1)
-!!$    ENDIF
-!!$    IF (up == MPI_PROC_NULL .AND. ybc_up_field == BC_CLAMP) THEN
-!!$       Array(:,ny)=Array(:,ny)+SUM(Array(:,ny+1:ny+2),1)
-!!$    ENDIF
-!!$    IF (down == MPI_PROC_NULL .AND. ybc_down_field == BC_CLAMP) THEN
-!!$       Array(:,1)=Array(:,1)+SUM(Array(:,-2:0),1)
-!!$    ENDIF
-
 
     CALL Field_BC(Array)
 
@@ -436,7 +414,6 @@ CONTAINS
           Cur=>Cur%Next
        ENDDO
     ENDDO
-    !PRINT *,"Particle bcs_done",rank
 
   END SUBROUTINE Particle_bcs
 

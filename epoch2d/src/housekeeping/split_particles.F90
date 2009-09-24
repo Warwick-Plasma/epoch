@@ -31,8 +31,8 @@ CONTAINS
        Current=>ParticleSpecies(iSpecies)%AttachedList%Head
        DO WHILE(ASSOCIATED(Current))
           Next=>Current%Next
-          cellx=INT((Current%Part_pos(1)-x_start_local)/dx)!+1
-          celly=INT((Current%Part_pos(2)-y_start_local)/dy)!+1
+          cellx=INT((Current%Part_pos(1)-x_start_local)/dx)+1
+          celly=INT((Current%Part_pos(2)-y_start_local)/dy)+1
           CALL Remove_Particle_From_PartList(ParticleSpecies(iSpecies)%AttachedList,Current)
           CALL Add_Particle_To_PartList(ParticleSpecies(iSpecies)%SecondaryList(cellx,celly),Current)
           Current=>Next
@@ -58,6 +58,7 @@ CONTAINS
 
   END SUBROUTINE Reattach_Particles_to_mainlist
 
+#ifdef PER_PARTICLE_WEIGHT
   SUBROUTINE split_particles
 
     INTEGER :: iSpecies
@@ -104,6 +105,7 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE split_particles
+#endif
 
 #endif
 

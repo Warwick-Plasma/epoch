@@ -50,8 +50,15 @@ CONTAINS
        RETURN
     ENDIF
 
+	IF (StrCmp(Element,"mass_density")) THEN
+   	CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%rho(-2:nx+3,-2:ny+3),(/-2,nx+3/),(/-2,ny+3/),HandleICSpeciesDeck)
+		InitialConditions(Species_ID)%rho=InitialConditions(Species_ID)%rho/ParticleSpecies(Species_ID)%mass
+   	RETURN
+	ENDIF
+
     IF (StrCmp(Element,"temp")) THEN
        CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,1),(/-1,nx+2/),(/-1,ny+2/),HandleICSpeciesDeck)
+		 debug_mode=.false.
        InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,2)=InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,1)
        InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,3)=InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,1)
        RETURN

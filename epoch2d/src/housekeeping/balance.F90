@@ -374,41 +374,6 @@ CONTAINS
 
   END SUBROUTINE Redistribute_Field
 
-!!$  SUBROUTINE Redistribute_Field(new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end,Field_In,Field_Out)
-!!$
-!!$    !This subroutine redistributes the fields over the new processor layout
-!!$    !The current version works by producing a global copy on each processor
-!!$    !And then extracting the required part for the local processor.
-!!$    !This is not in general a good idea
-!!$    INTEGER, INTENT(IN) :: new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end
-!!$    REAL(num),DIMENSION(-2:,-2:),INTENT(IN) :: Field_In
-!!$    REAL(num),DIMENSION(-2:,-2:),INTENT(OUT) :: Field_Out
-!!$    REAL(num),DIMENSION(:,:),ALLOCATABLE :: Field_New,Field_Temp
-!!$    INTEGER :: nx_new,ny_new
-!!$    INTEGER :: comm_new,iproc,color
-!!$
-!!$    nx_new=new_cell_x_end-new_cell_x_start+1
-!!$    ny_new=new_cell_y_end-new_cell_y_start+1
-!!$
-!!$!    PRINT *,rank,new_cell_x_start,new_cell_y_start," "
-!!$
-!!$    !This is a horrible, horrible way of doing this, I MUST think of a better way
-!!$
-!!$    !Create a global copy of the whole array
-!!$    ALLOCATE(Field_New(1:nx_global,1:ny_global),Field_Temp(1:nx_global,1:ny_global))
-!!$    Field_New=0.0_num
-!!$    Field_New(cell_x_start(coordinates(2)+1):cell_x_end(coordinates(2)+1),&
-!!$         cell_y_start(coordinates(1)+1):cell_y_end(coordinates(1)+1))=Field_In(1:nx,1:ny)
-!!$    CALL MPI_ALLREDUCE(Field_New,Field_Temp,nx_global*ny_global,mpireal,MPI_SUM,comm,errcode)
-!!$
-!!$    Field_Out(1:nx_new,1:ny_new)=Field_Temp(new_cell_x_start:new_cell_x_end,new_cell_y_start:new_cell_y_end)
-!!$    DEALLOCATE(Field_Temp)
-!!$
-!!$    !Call boundary conditions (this does not include any special BCS)
-!!$    CALL Do_Field_MPI_With_Lengths(Field_out,nx_new,ny_new)
-!!$
-!!$  END SUBROUTINE Redistribute_Field
-
   SUBROUTINE Redistribute_Field_1D(new_start,new_end,old_start,old_end,npts_global,Field_In,Field_Out,direction)
     !This subroutine redistributes a 1D field over the new processor layout
     !The current version works by producing a global copy on each processor
@@ -612,7 +577,6 @@ CONTAINS
           Current%Processor=part_proc
 #endif
           IF (part_proc .NE. rank) THEN
-!!$          PRINT *,Current%Part_Pos,part_proc
              CALL Remove_Particle_From_PartList(ParticleSpecies(iSpecies)%AttachedList, Current)
              CALL Add_Particle_To_PartList(Pointers_Send(part_proc),Current)
           ENDIF

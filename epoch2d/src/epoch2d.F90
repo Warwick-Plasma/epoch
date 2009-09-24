@@ -143,16 +143,21 @@ PROGRAM pic
      IF ((i >= nsteps .AND. nsteps >=0) .OR. (time >= t_end) .OR. halt) EXIT
      i = i + 1
      CALL set_dt
+	!update e and b fields to the half timestep
      CALL update_eb_fields_half
+	!push the particles
      CALL push_particles
 #ifdef PARTICLE_CELL_DIVISION
      !After this line, the particles can be accessed on a cell by cell basis
      !Using the ParticleFamily%SecondaryList property
      CALL Reorder_Particles_to_grid
      !CALL Collisions  !An example, no collision operator yet
+#ifdef PER_PARTICLE_WEIGHT
      CALL Split_Particles !Early beta version of particle splitting operator
+#endif
      CALL Reattach_Particles_to_mainlist
 #endif
+	!update the electric and magnetic fields to the final values
      CALL update_eb_fields_final
 #ifdef PART_IONISE
      CALL ionise_particles

@@ -90,14 +90,6 @@ CONTAINS
     subtype_field=0
     subtype_particle=0
 
-
-!!$    npart=npart_global/nproc
-!!$    IF (npart*nproc /= npart_global) THEN
-!!$       IF (rank .EQ.0) PRINT *,"Unable to divide particles at t=0. Quitting."
-!!$       CALL MPI_ABORT(MPI_COMM_WORLD,errcode)
-!!$    ENDIF
-
-
     ALLOCATE(x(-2:nx+3),y(-2:ny+3))
     ALLOCATE(x_global(-2:nx_global+3),y_global(-2:ny_global+3))
     ALLOCATE(x_offset_global(-2:nx_global+3),y_offset_global(-2:ny_global+3))

@@ -104,8 +104,6 @@ MODULE Solve_Gauss
       nGrids_local=FLOOR(MIN(LOG(REAL(nx,num)),LOG(REAL(ny,num)))/LOG(2.0_num))-2
       CALL MPI_ALLREDUCE(nGrids_local,nGrids,1,MPI_INTEGER,MPI_MIN,comm,errcode)
 
-      !PRINT *,nGrids
-
       CALL Setup_Multigrid(nx,ny,nGrids,dx,dy)
       CALL Setup_MPI(left,right,up,down,comm)
       CALL Run_Multigrid(phi(1:nx,1:ny),rho(1:nx,1:ny),30,10,1000,force_converged)

@@ -2,6 +2,8 @@ MODULE particles
   USE shared_data
   USE boundary
   USE partlist
+  USE current_smooth
+  USE shape_functions
 
   IMPLICIT NONE
 
@@ -59,30 +61,25 @@ CONTAINS
     !The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x,cell_frac_y
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    !Defined at the particle position
-    REAL(num) :: gmx,gmy,g0x,g0y,gpx,gpy
+	!Particle Weight factors as described in the manual (FIXREF)
+	 REAL(num),DIMENSION(-2:2) :: gx, gy
 
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * hmx + F(j) * h0x + F(j+1) * hpx
+	!Particle Weight factors as described in the manual (FIXREF)
     !Defined at the particle position - 0.5 grid cell in each direction
     !This is to deal with the grid stagger
-    REAL(num) :: hmx,hmy,h0x,h0y,hpx,hpy
+	 REAL(num),DIMENSION(-2:2) :: hx, hy
 
     !Fields at particle location
     REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part,e_part
 
-    !P+ and P- from Page27 of manual
+    !P+ and P- from Boris1970
     REAL(num) :: pxp,pxm,pyp,pym,pzp,pzm
 
     !Charge to mass ratio modified by normalisation
     REAL(num) :: cmratio
 
-    !Tau variables from Page27 of manual
+    !Tau variables from Boris1970
     REAL(num) :: tau,taux,tauy,tauz 
 
     !Used by J update
@@ -95,12 +92,12 @@ CONTAINS
 
     TYPE(Particle),POINTER :: Current,Next,New_Part
 
-    ALLOCATE(Xi0x(-2:2), Xi0y(-2:2))
-    ALLOCATE(Xi1x(-2:2), Xi1y(-2:2))
+    ALLOCATE(Xi0x(-3:3), Xi0y(-3:3))
+    ALLOCATE(Xi1x(-3:3), Xi1y(-3:3))
 
-    ALLOCATE(jxh(-3:2,-2:2))
-    ALLOCATE(jyh(-2:2,-3:2))
-    ALLOCATE(jzh(-2:2,-2:2))
+    ALLOCATE(jxh(-4:3,-3:3))
+    ALLOCATE(jyh(-3:4,-4:3))
+    ALLOCATE(jzh(-3:3,-3:3))
 
     Jx=0.0_num
     Jy=0.0_num
@@ -190,63 +187,17 @@ CONTAINS
           cell_frac_y = REAL(cell_y1,num) - cell_y_r
           cell_y1=cell_y1+1
 
-          !Grid weighting factors in 2D (2D analogue of equation 4.77 page 25 of manual)
-          !These weight grid properties onto particles
+			!Particle Weight factors as described in the manual (FIXREF)
+	      !These weight grid properties onto particles
+			 CALL GridToParticle(cell_frac_x,gx)
+			 CALL GridToParticle(cell_frac_y,gy)
 
-
-          gmx = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-          g0x = 0.75_num - ABS(cell_frac_x)**2
-          gpx = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
-
-          gmy = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-          g0y = 0.75_num - ABS(cell_frac_y)**2
-          gpy = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-
-          sum_local=SQRT(((part_px*part_weight)**2+(part_py*part_weight)**2+(part_pz*part_weight)**2)*c**2 + (part_m*part_weight)**2*c**4) - (part_m*part_weight)*c**2
-          !Calculate the sum of the particle velocities
-          ekbar_sum(cell_x1-1,cell_y1-1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,part_species)+sum_local*gmx*gmy
-          ekbar_sum(cell_x1,cell_y1-1,part_species)=ekbar_sum(cell_x1,cell_y1-1,part_species)+sum_local*g0x*gmy
-          ekbar_sum(cell_x1+1,cell_y1-1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,part_species)+sum_local*gpx*gmy
-
-          ekbar_sum(cell_x1-1,cell_y1,part_species)=ekbar_sum(cell_x1-1,cell_y1,part_species)+sum_local*gmx*g0y
-          ekbar_sum(cell_x1,cell_y1,part_species)=ekbar_sum(cell_x1,cell_y1,part_species)+sum_local*g0x*g0y
-          ekbar_sum(cell_x1+1,cell_y1,part_species)=ekbar_sum(cell_x1+1,cell_y1,part_species)+sum_local*gpx*g0y
-
-          ekbar_sum(cell_x1-1,cell_y1+1,part_species)=ekbar_sum(cell_x1-1,cell_y1+1,part_species)+sum_local*gmx*gpy
-          ekbar_sum(cell_x1,cell_y1+1,part_species)=ekbar_sum(cell_x1,cell_y1+1,part_species)+sum_local*g0x*gpy
-          ekbar_sum(cell_x1+1,cell_y1+1,part_species)=ekbar_sum(cell_x1+1,cell_y1+1,part_species)+sum_local*gpx*gpy
-
-          !Calculate the particle weights on the grid
-          ct(cell_x1-1,cell_y1-1,part_species)=ct(cell_x1-1,cell_y1-1,part_species)+part_weight*gmx*gmy
-          ct(cell_x1,cell_y1-1,part_species)=ct(cell_x1,cell_y1-1,part_species)+part_weight*g0x*gmy
-          ct(cell_x1+1,cell_y1-1,part_species)=ct(cell_x1+1,cell_y1-1,part_species)+part_weight*gpx*gmy
-
-          ct(cell_x1-1,cell_y1,part_species)=ct(cell_x1-1,cell_y1,part_species)+part_weight*gmx*g0y
-          ct(cell_x1,cell_y1,part_species)=ct(cell_x1,cell_y1,part_species)+part_weight*g0x*g0y
-          ct(cell_x1+1,cell_y1,part_species)=ct(cell_x1+1,cell_y1,part_species)+part_weight*gpx*g0y
-
-          ct(cell_x1-1,cell_y1+1,part_species)=ct(cell_x1-1,cell_y1+1,part_species)+part_weight*gmx*gpy
-          ct(cell_x1,cell_y1+1,part_species)=ct(cell_x1,cell_y1+1,part_species)+part_weight*g0x*gpy
-          ct(cell_x1+1,cell_y1+1,part_species)=ct(cell_x1+1,cell_y1+1,part_species )+part_weight*gpx*gpy
-
-          !These are now the weighting factors correct for field weighting
-          gmx=0.5_num * (0.5_num + cell_frac_x)**2
-          g0x=0.75_num - cell_frac_x**2
-          gpx=0.5_num * (0.5_num - cell_frac_x)**2
-
-          gmy=0.5_num * (0.5_num + cell_frac_y)**2
-          g0y=0.75_num - cell_frac_y**2
-          gpy=0.5_num * (0.5_num - cell_frac_y)**2
-
-          !Particle weighting factors in 2D (2D analogue of 4.140 page 38 of manual)
+			 !Particle Weight factors as described in the manual (FIXREF)
           !These wieght particle properties onto grid
           !This is used later to calculate J
-          Xi0x(-1)=0.5_num * (1.5_num - ABS(cell_frac_x-1.0_num))**2
-          Xi0x(+0)=0.75_num - ABS(cell_frac_x)**2
-          Xi0x(+1)=0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
-          Xi0y(-1)=0.5_num * (1.5_num - ABS(cell_frac_y-1.0_num))**2
-          Xi0y(+0)=0.75_num - ABS(cell_frac_y)**2
-          Xi0y(+1)=0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+
+			CALL ParticleToGrid(cell_frac_x,Xi0x(-2:2))
+			CALL ParticleToGrid(cell_frac_y,Xi0y(-2:2))
 
           !Now redo shifted by half a cell due to grid stagger.
           !Use shifted version for Ex in X, Ey in Y, Ez in Z
@@ -261,38 +212,32 @@ CONTAINS
           cell_frac_y = REAL(cell_y2,num) - cell_y_r
           cell_y2=cell_y2+1
 
-          !Grid weighting factors in 3D (3D analogue of equation 4.77 page 25 of manual)
-          !These weight grid properties onto particles
-          hmx=0.5_num * (0.5_num + cell_frac_x)**2
-          h0x=0.75_num - cell_frac_x**2
-          hpx=0.5_num * (0.5_num - cell_frac_x)**2
-
-          hmy=0.5_num * (0.5_num + cell_frac_y)**2
-          h0y=0.75_num - cell_frac_y**2
-          hpy=0.5_num * (0.5_num - cell_frac_y)**2
+			 CALL GridToParticle(cell_frac_x,hx)
+			 CALL GridToParticle(cell_frac_y,hy)
 
           !These are the electric an magnetic fields interpolated to the
           !Particle position. They have been checked and are correct.
           !Actually checking this is messy.
-          ex_part=gmy * (hmx*ex(cell_x2-1,cell_y1-1) + h0x*ex(cell_x2,cell_y1-1) + hpx*ex(cell_x2+1,cell_y1-1))&
-               +g0y * (hmx*ex(cell_x2-1,cell_y1) + h0x*ex(cell_x2,cell_y1) + hpx*ex(cell_x2+1,cell_y1))&
-               +gpy * (hmx*ex(cell_x2-1,cell_y1+1) + h0x*ex(cell_x2,cell_y1+1) + hpx*ex(cell_x2+1,cell_y1+1))
-          ey_part=hmy * (gmx*ey(cell_x1-1,cell_y2-1) + g0x*ey(cell_x1,cell_y2-1) + gpx*ey(cell_x1+1,cell_y2-1))&
-               +h0y * (gmx*ey(cell_x1-1,cell_y2) + g0x*ey(cell_x1,cell_y2) + gpx*ey(cell_x1+1,cell_y2))&
-               +hpy * (gmx*ey(cell_x1-1,cell_y2+1) + g0x*ey(cell_x1,cell_y2+1) + gpx*ey(cell_x1+1,cell_y2+1))
-          ez_part=gmy * (gmx*ez(cell_x1-1,cell_y1-1) + g0x*ez(cell_x1,cell_y1-1) + gpx*ez(cell_x1+1,cell_y1-1)) &
-               +g0y * (gmx*ez(cell_x1-1,cell_y1) + g0x*ez(cell_x1,cell_y1) + gpx*ez(cell_x1+1,cell_y1)) &
-               +gpy * (gmx*ez(cell_x1-1,cell_y1+1) + g0x*ez(cell_x1,cell_y1+1) + gpx*ez(cell_x1+1,cell_y1+1))
 
-          bx_part=hmy * (gmx*bx(cell_x1-1,cell_y2-1) + g0x*Bx(cell_x1,cell_y2-1) + gpx*bx(cell_x1+1,cell_y2-1))&
-               +h0y * (gmx*bx(cell_x1-1,cell_y2) + g0x*Bx(cell_x1,cell_y2) + gpx*bx(cell_x1+1,cell_y2))&
-               +hpy * (gmx*bx(cell_x1-1,cell_y2+1) + g0x*Bx(cell_x1,cell_y2+1) + gpx*bx(cell_x1+1,cell_y2+1))
-          by_part=gmy * (hmx*by(cell_x2-1,cell_y1-1) + h0x*by(cell_x2,cell_y1-1) + hpx*by(cell_x2+1,cell_y1-1)) &
-               +g0y * (hmx*by(cell_x2-1,cell_y1) + h0x*by(cell_x2,cell_y1) + hpx*by(cell_x2+1,cell_y1)) &
-               +gpy * (hmx*by(cell_x2-1,cell_y1+1) + h0x*by(cell_x2,cell_y1+1) + hpx*by(cell_x2+1,cell_y1+1)) 
-          bz_part=hmy * (hmx*bz(cell_x2-1,cell_y2-1) + h0x*bz(cell_x2,cell_y2-1) + hpx*bz(cell_x2+1,cell_y2-1))&
-               +h0y * (hmx*bz(cell_x2-1,cell_y2) + h0x*bz(cell_x2,cell_y2) + hpx*bz(cell_x2+1,cell_y2))&
-               +hpy *(hmx*bz(cell_x2-1,cell_y2+1) + h0x*bz(cell_x2,cell_y2+1) + hpx*bz(cell_x2+1,cell_y2+1))
+			ex_part=0.0_num
+			ey_part=0.0_num
+			ez_part=0.0_num
+			bx_part=0.0_num
+			by_part=0.0_num
+			bz_part=0.0_num
+			
+			DO ix=-sf_order,sf_order
+				DO iy=-sf_order,sf_order
+					ex_part=ex_part + hx(ix)*gy(iy)*ex(cell_x2+ix,cell_y1+iy)
+					ey_part=ey_part + gx(ix)*hy(iy)*ey(cell_x1+ix,cell_y2+iy)
+					ez_part=ez_part + gx(ix)*gy(iy)*ez(cell_x1+ix,cell_y1+iy)
+					
+					bx_part=bx_part + gx(ix)*hy(iy)*bx(cell_x1+ix,cell_y2+iy)
+					by_part=by_part + hx(ix)*gy(iy)*by(cell_x2+ix,cell_y1+iy)
+					bz_part=bz_part + hx(ix)*hy(iy)*bz(cell_x2+ix,cell_y2+iy)
+				ENDDO
+			ENDDO
+
 
           !update particle momenta using weighted fields
           cmratio = part_q * 0.5_num * dt
@@ -301,7 +246,6 @@ CONTAINS
           pzm = part_pz + cmratio * ez_part
 
           !Half timestep,then use Boris1970 rotation, see Birdsall and Langdon
-
 #ifdef NEWTONIAN
           root = cmratio / part_m
 #else
@@ -367,9 +311,7 @@ CONTAINS
              dt_j=0.05_num * MIN(MIN(dx,dy)/MAX(ABS(part_vx),ABS(part_vy)),dt)
 #endif
 
-             !Now advance to t+1.5dt to calculate current. This is detailed in the manual
-             !Between pages 37 and 41. The version coded up looks completely different to that
-             !In the manual, but is equivalent
+             !Now advance to t+1.5dt to calculate current.
              !Use t+1.5 dt so that can update J to t+dt at 2nd order
              part_x = part_x + part_vx * dt_j/2.0_num
              part_y = part_y + part_vy * dt_j/2.0_num
@@ -384,13 +326,8 @@ CONTAINS
              cell_frac_y = REAL(cell_y3,num) - cell_y_r
              cell_y3=cell_y3+1
 
-             Xi1x(cell_x3 - cell_x1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-             Xi1x(cell_x3 - cell_x1 + 0) = 0.75_num - ABS(cell_frac_x)**2
-             Xi1x(cell_x3 - cell_x1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
-
-             Xi1y(cell_y3 - cell_y1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-             Xi1y(cell_y3 - cell_y1 + 0) = 0.75_num - ABS(cell_frac_y)**2
-             Xi1y(cell_y3 - cell_y1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+			CALL ParticleToGrid(cell_frac_x,Xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
+			CALL ParticleToGrid(cell_frac_y,Xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
 
              !Now change Xi1* to be Xi1*-Xi0*. This makes the representation of the current update much simpler
              Xi1x = Xi1x - Xi0x
@@ -401,25 +338,25 @@ CONTAINS
              !In one timestep
 
              IF (cell_x3 == cell_x1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
-                xmin = -1
-                xmax = +1
+                xmin = -sf_order
+                xmax = +sf_order
              ELSE IF (cell_x3 == cell_x1 - 1) THEN !Particle has moved one cell to left
-                xmin = -2
-                xmax = +1
+                xmin = -sf_order-1
+                xmax = +sf_order
              ELSE IF (cell_x3 == cell_x1 + 1) THEN !Particle has moved one cell to right
-                xmin=-1
-                xmax=+2
+                xmin=-sf_order
+                xmax=sf_order+1
              ENDIF
 
              IF (cell_y3 == cell_y1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
-                ymin = -1
-                ymax = +1
+                ymin = -sf_order
+                ymax = +sf_order
              ELSE IF (cell_y3 == cell_y1 - 1) THEN !Particle has moved one cell to left
-                ymin = -2
-                ymax = +1
+                ymin = -sf_order-1
+                ymax = +sf_order
              ELSE IF (cell_y3 == cell_y1 + 1) THEN !Particle has moved one cell to right
-                ymin=-1
-                ymax=+2
+                ymin=-sf_order
+                ymax=+sf_order+1
              ENDIF
 
              !Set these to zero due to diffential inside loop
@@ -439,7 +376,7 @@ CONTAINS
                    !This is the bit that actually solves d(rho)/dt=-div(J)
                    jxh(ix,iy)=jxh(ix-1,iy) - Part_q * wx * 1.0_num/dt_j * part_weight/dy 
                    jyh(ix,iy)=jyh(ix,iy-1) - Part_q * wy * 1.0_num/dt_j * part_weight/dx
-                   jzh(ix,iy)=Part_q * Part_vz * wz  * part_weight * (dx*dy)
+                   jzh(ix,iy)=Part_q * Part_vz * wz * part_weight/(dx*dy)
 
                    Jx(cell_x1+ix,cell_y1+iy)=Jx(cell_x1+ix,cell_y1+iy)&
                         +jxh(ix,iy)
@@ -461,12 +398,6 @@ CONTAINS
 
           ! Cycle through probes
           DO WHILE(ASSOCIATED(Current_probe))
-				!Just cycle round if this probe isn't to be dumped.
-				 IF (Current_probe%dump .EQ. IO_NEVER) THEN
-					current_probe=>current_probe%next
-					CYCLE
- 				 ENDIF
-
              !Note that this is the energy of a single REAL particle in the pseudoparticle, NOT the energy of the pseudoparticle
              probe_energy=(SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2)/(part_m * c)**2) - 1.0_num)&
                   * (part_m * c**2)
@@ -557,9 +488,7 @@ CONTAINS
 
     CALL Particle_bcs
 
-    !    JX=0.0_num
-    !    JY=0.0_num
-    !    Jz=0.0_num
+	 IF (Smooth_Currents) CALL Smooth_Current()
 
   END SUBROUTINE push_particles
 

@@ -128,20 +128,33 @@ CONTAINS
 
        !Since these use species lookup tables, have to use the iterator functions
        !(Variable_Name,Variable_Class,Iterator_Function,global_npart,npart_per_iteration,Mesh_Name,Mesh_Class,MPI_TYPE describing data distribution)
-       IF (IAND(DumpMask(18),code) .NE. 0) CALL cfd_Write_nD_Particle_Variable_With_Iterator_All("Q","Particles",iterate_charge,npart_dump_global,n_part_per_it,"Particles","Part_Grid",subtype_particle_var)
-       IF (IAND(DumpMask(19),code) .NE. 0) CALL cfd_Write_nD_Particle_Variable_With_Iterator_All("mass","Particles",iterate_mass,npart_dump_global,n_part_per_it,"Particles","Part_Grid",subtype_particle_var)
+       IF (IAND(DumpMask(18),code) .NE. 0)&
+ 			CALL cfd_Write_nD_Particle_Variable_With_Iterator_All("Q","Particles",&
+			iterate_charge,npart_dump_global,n_part_per_it&
+			,"Particles","Part_Grid",subtype_particle_var)
+       IF (IAND(DumpMask(19),code) .NE. 0)&
+ 			CALL cfd_Write_nD_Particle_Variable_With_Iterator_All("mass","Particles",&
+			iterate_mass,npart_dump_global,n_part_per_it&
+			,"Particles","Part_Grid",subtype_particle_var)
 
        IF (IAND(DumpMask(20),code) .NE. 0) THEN
-          DO iSpecies=1,nspecies
-             WRITE(Temp_Name,'("EkBar_",a)') TRIM(ParticleSpecies(iSpecies)%Name)
-             CALL cfd_Write_2D_Cartesian_Variable_Parallel(TRIM(ADJUSTL(Temp_Name)),"EkBar",Dims,Stagger,"Grid","Grid",ekbar(1:nx,1:ny,iSpecies),subtype_field)
-          ENDDO
+          CALL calc_ekbar(Data,0)
+          IF (IAND(DumpMask(20),IO_NO_INTRINSIC) .EQ. 0) &
+				CALL cfd_Write_2D_Cartesian_Variable_Parallel("EkBar","EkBar",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
+          IF (IAND(DumpMask(20),IO_SPECIES) .NE. 0) THEN
+             DO iSpecies=1,nspecies
+                CALL calc_ekbar(Data,iSpecies)
+                WRITE(Temp_Name,'("EkBar_",a)') TRIM(ParticleSpecies(iSpecies)%Name)
+                CALL cfd_Write_2D_Cartesian_Variable_Parallel(TRIM(ADJUSTL(Temp_Name)),"EkBar",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
+             ENDDO
+          ENDIF
        ENDIF
        !These are derived variables from the particles
        !Since you only dump after several particle updates it's actually quicker to
        IF (IAND(DumpMask(21),code) .NE. 0) THEN
           CALL calc_mass_density(Data,0)
-          CALL cfd_Write_2D_Cartesian_Variable_Parallel("Mass_Density","Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
+          IF (IAND(DumpMask(21),IO_NO_INTRINSIC) .EQ. 0) &
+				CALL cfd_Write_2D_Cartesian_Variable_Parallel("Mass_Density","Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
           IF (IAND(DumpMask(21),IO_SPECIES) .NE. 0) THEN
              DO iSpecies=1,nspecies
                 CALL calc_mass_density(Data,iSpecies)
@@ -152,7 +165,8 @@ CONTAINS
        ENDIF
        IF (IAND(DumpMask(22),code) .NE. 0) THEN
           CALL calc_charge_density(Data,0)
-          CALL cfd_Write_2D_Cartesian_Variable_Parallel("Charge_Density","Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
+  			 IF (IAND(DumpMask(22),IO_NO_INTRINSIC) .EQ. 0) &	
+          	CALL cfd_Write_2D_Cartesian_Variable_Parallel("Charge_Density","Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
           IF (IAND(DumpMask(22),IO_SPECIES) .NE. 0) THEN
              DO iSpecies=1,nspecies
                 CALL calc_charge_density(Data,iSpecies)
@@ -164,7 +178,8 @@ CONTAINS
 
        IF (IAND(DumpMask(23),code) .NE. 0) THEN
           CALL calc_number_density(Data,0)
-          CALL cfd_Write_2D_Cartesian_Variable_Parallel("Number_Density","Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
+			 IF (IAND(DumpMask(23),IO_NO_INTRINSIC) .EQ. 0) &
+          	CALL cfd_Write_2D_Cartesian_Variable_Parallel("Number_Density","Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
           IF (IAND(DumpMask(23),IO_SPECIES) .NE. 0) THEN
              DO iSpecies=1,nspecies
                 CALL calc_number_density(Data,iSpecies)
@@ -199,7 +214,6 @@ CONTAINS
           CALL Write_Probes(code)
        ENDIF
 #endif
-
        IF (IAND(DumpMask(28),code) .NE. 0) THEN
           CALL calc_temperature(Data,0)
           CALL cfd_Write_2D_Cartesian_Variable_Parallel("Temperature","Derived",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny),subtype_field)
@@ -233,6 +247,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: i
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
+	 INTEGER :: ioutput
 
     REAL(num), SAVE :: t1 = 0.0_num
 
@@ -243,6 +258,12 @@ CONTAINS
 
     print_arrays = .FALSE.
     last_call = .FALSE.
+
+	 DO ioutput = 1, num_vars_to_dump
+	 	IF (FLOOR((time - t1)/dt) .LE. averaged_data(ioutput)%average_over_iterations) THEN
+			CALL average_field(ioutput)
+		ENDIF
+	ENDDO
 
     IF (time >= t1) THEN
        print_arrays = .TRUE.
@@ -256,18 +277,54 @@ CONTAINS
 
   END SUBROUTINE io_test
 
-  SUBROUTINE set_dt        ! sets CFL limited step
+  SUBROUTINE average_field(ioutput)
+		INTEGER,INTENT(IN) :: ioutput
+		INTEGER :: count
+		
+		count=averaged_data(ioutput)%average_over_iterations
+			
+		SELECT CASE(ioutput)
+			CASE (9)
+				averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						ex/REAL(count,num)
+			CASE(10)
+					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						ey/REAL(count,num)
+			CASE(11)
+					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						ez/REAL(count,num)
+			CASE (12)
+				averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						bx/REAL(count,num)
+			CASE(13)
+					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						by/REAL(count,num)
+			CASE(14)
+					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						bz/REAL(count,num)
+			CASE (15)
+				averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						jx/REAL(count,num)
+			CASE(16)
+					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						jy/REAL(count,num)
+			CASE(17)
+					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+						jz/REAL(count,num)										
+			
+		END SELECT
+		
+  END SUBROUTINE average_field
+
+  SUBROUTINE set_dt()        ! sets CFL limited step
 
     REAL(num) :: dtx,dty
     INTEGER :: ix, iy
-
-!!$    dtx=dx/(6.0_num * c)
-!!$    dty=dy/(6.0_num * c)
     dtx=dx/c
     dty=dy/c
     dt=dtx*dty/SQRT(dtx**2+dty**2)
-    !    dt=MIN(dtx**2,dty**2)/SQRT(dtx**2+dty**2)
     IF (dt_laser .NE. 0.0_num) dt=MIN(dt,dt_laser)
+    IF (dt_plasma_frequency .NE. 0.0_num) dt=MIN(dt,dt_plasma_frequency)
 #ifdef NEWTONIAN
     dtx=dx/max_part_v
     dty=dy/max_part_v

@@ -373,9 +373,6 @@ CONTAINS
 
 
     CALL MPI_BARRIER(MPI_COMM_WORLD,errcode)
-!!$    IF (.NOT. FirstCall)  THEN
-!!$       RETURN
-!!$    ENDIF
 
     !Don't check compulsory blocks if going to bomb anyway, just stinks up the output file
     IF (.NOT. Terminate .AND. FirstCall) CALL CheckCompulsoryBlocks(errcode_deck)
@@ -514,16 +511,6 @@ CONTAINS
           Errcode_deck=IOR(Errcode_deck,ERR_TERMINATE)
        ENDIF
     ENDIF
-!!$    IF (IAND(Errcode_deck, ERR_BAD_VALUE_NO_TERMINATE) /= 0) THEN
-!!$       IF (rank .EQ. rankcheck) THEN
-!!$          WRITE(40,*) ""
-!!$          PRINT *,""
-!!$          PRINT *,"***ERROR*** Value ",TRIM(Value)," in non essential element ",TRIM(Element)," is invalid or could not be parsed. Code will continue but behaviour is undefined."
-!!$          WRITE(40,*) "***ERROR*** Value ",TRIM(Value)," in non essential element ",TRIM(Element)," is invalid or could not be parsed. Code will continue but behaviour is undefined."
-!!$          PRINT *,""
-!!$          WRITE(40,*) ""
-!!$       ENDIF
-!!$    ENDIF
     IF (IAND(Errcode_deck, ERR_REQUIRED_ELEMENT_NOT_SET) /= 0) THEN
        IF (rank .EQ. rankcheck) THEN
           WRITE(40,*) ""

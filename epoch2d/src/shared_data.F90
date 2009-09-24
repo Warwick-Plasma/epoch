@@ -49,7 +49,8 @@ MODULE constants
   INTEGER, PARAMETER :: DS_DECK=1, DS_IC=2, DS_EIO=3
 
   !IO codes
-  INTEGER, PARAMETER :: IO_NEVER=0, IO_ALWAYS=1, IO_FULL=2, IO_RESTARTABLE=4, IO_SPECIES=8
+  INTEGER, PARAMETER :: IO_NEVER=0, IO_ALWAYS=1, IO_FULL=2, IO_RESTARTABLE=4, IO_SPECIES=8, IO_AVERAGED=16
+  INTEGER, PARAMETER :: IO_NO_INTRINSIC=32
   !Domain codes
   INTEGER, PARAMETER :: DO_FULL=0,DO_DECOMPOSED=1
 
@@ -113,7 +114,7 @@ MODULE shared_parser_data
 
   INTEGER,PARAMETER :: CONST_IO_NEVER=44, CONST_IO_ALWAYS=45, CONST_IO_FULL=46, CONST_IO_RESTARTABLE=47, CONST_IO_SPECIES=48
   INTEGER,PARAMETER :: CONST_DIR_X=49, CONST_DIR_Y=50, CONST_DIR_Z=51, CONST_DIR_PX=52
-  INTEGER,PARAMETER :: CONST_DIR_PY=53, CONST_DIR_PZ=54
+  INTEGER,PARAMETER :: CONST_DIR_PY=53, CONST_DIR_PZ=54, CONST_VAR=55
 
   !Constants for initial conditions
   INTEGER,PARAMETER :: CONST_AUTOEARLY=20, CONST_AUTOLATE=21, CONST_EXTERNAL=22
@@ -131,7 +132,7 @@ MODULE shared_parser_data
   INTEGER,PARAMETER :: FUNC_SINH=24, FUNC_COSH=25, FUNC_EX=26
   INTEGER,PARAMETER :: FUNC_EY=27, FUNC_EZ=28, FUNC_BX=29
   INTEGER,PARAMETER :: FUNC_BY=30, FUNC_BZ=31, FUNC_SQRT=32
-  INTEGER,PARAMETER :: FUNC_GAUSS=33
+  INTEGER,PARAMETER :: FUNC_GAUSS=33, FUNC_SEMIGAUSS=34, FUNC_CRIT=35
 
   INTEGER,PARAMETER :: FUNC_CUSTOM_LOWBOUND=4096
 
@@ -139,7 +140,7 @@ MODULE shared_parser_data
   INTEGER,PARAMETER :: ASSOC_A=1, ASSOC_LA=2, ASSOC_RA=3
 
   INTEGER,PARAMETER :: Num_Ops=12
-  INTEGER, DIMENSION(Num_Ops), PARAMETER :: OPCODE_PRECEDENCE = (/1,1,2,2,5,1,1,1,1,2,2,1/)
+  INTEGER, DIMENSION(Num_Ops), PARAMETER :: OPCODE_PRECEDENCE = (/1,1,2,2,3,4,1,1,1,2,2,5/)
   INTEGER, DIMENSION(Num_Ops), PARAMETER :: OPCODE_ASSOC = (/ASSOC_A,ASSOC_LA,ASSOC_A,ASSOC_LA,ASSOC_LA,&
        ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_RA/)
 
@@ -149,6 +150,9 @@ MODULE shared_parser_data
      INTEGER :: type
      INTEGER :: Data
      REAL(num) :: NumericalData
+#ifdef PARSER_DEBUG
+	  CHARACTER(LEN=ENTRYLENGTH) :: Text
+#endif
   END TYPE StackElement
 
   TYPE :: PrimitiveStack
@@ -171,6 +175,8 @@ MODULE shared_parser_data
   TYPE(Deck_Constant),DIMENSION(:),ALLOCATABLE :: Deck_Constant_List
   TYPE(Deferred_Execution_Object),DIMENSION(:),ALLOCATABLE :: Deferred_Objects
 
+  REAL(num) :: context_variable !A context dependant variable which is used in various places in the code
+
 END MODULE shared_parser_data
 
 
@@ -192,6 +198,14 @@ MODULE shared_data
   !---------------------------------------------------------------------------------------
   !Particles
   !---------------------------------------------------------------------------------------
+
+  !The order for the spline interpolation used as a particle representation.
+#ifdef SPLINE_FOUR
+  INTEGER,PARAMETER :: sf_order=2
+#else
+  INTEGER,PARAMETER :: sf_order=1
+#endif
+
   !Object representing a particle
   TYPE :: Particle
      REAL(num), DIMENSION(3) :: Part_P
@@ -350,6 +364,7 @@ MODULE shared_data
   INTEGER(8) :: npart_global
   INTEGER :: nprocx,nprocy
   INTEGER :: nsteps,nspecies=-1
+  LOGICAL :: Smooth_Currents
   REAL(num), ALLOCATABLE, DIMENSION(:,:)     :: Ex,Ey,Ez,Bx,By,Bz,Jx,Jy,Jz
   REAL(num), ALLOCATABLE, DIMENSION(:,:)     :: wk_array
 
@@ -364,7 +379,7 @@ MODULE shared_data
 
   LOGICAL :: Neutral_Background= .TRUE.
 
-  REAL(num) :: dt, t_end, time,dt_multiplier, dt_laser
+  REAL(num) :: dt, t_end, time,dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_snapshots
   REAL(num) :: length_x, dx, x_start, x_end, x_start_local, x_end_local, length_x_local
   REAL(num) :: length_y, dy, y_start, y_end, y_start_local, y_end_local, length_y_local
@@ -431,6 +446,19 @@ MODULE shared_data
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: Use_Offset_Grid
   INTEGER :: n_zeros=4
+
+!---------------------------------------------------------------------------------------
+!Time averaged IO
+!---------------------------------------------------------------------------------------
+
+TYPE :: averaged_data_block
+	INTEGER :: AverageType=0
+	REAL(num),DIMENSION(:,:),POINTER :: data
+	INTEGER :: average_over_iterations=-1
+	REAL(num) :: average_over_real_time
+	INTEGER :: number_of_iterations
+END TYPE averaged_data_block
+TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
 
   !---------------------------------------------------------------------------------------
   !Laser boundaries

@@ -32,6 +32,15 @@ CONTAINS
 
     Window_Shift=0.0_num
     npart_global=-1
+	 Smooth_Currents=.FALSE.
+	
+	 Ex=0.0_num
+	 Ey=0.0_num
+	 Ez=0.0_num
+	 Bx=0.0_num
+	 By=0.0_num
+	 Bz=0.0_num
+	
 
     NULLIFY(Laser_Left)
     NULLIFY(Laser_Right)
@@ -55,12 +64,12 @@ CONTAINS
     x_global(0)=x_start-dx
     DO ix=1,nx_global+1
        x_global(ix)=x_global(ix-1)+dx
-       x_offset_global(ix)=x_global(ix)!-x_start
+       x_offset_global(ix)=x_global(ix)
     ENDDO
     y_global(0)=y_start-dy
     DO iy=1,ny_global+1
        y_global(iy)=y_global(iy-1)+dy
-       y_offset_global(iy)=y_global(iy)!-y_start
+       y_offset_global(iy)=y_global(iy)
     ENDDO
 
     DO iproc=0,nprocx-1
@@ -77,18 +86,30 @@ CONTAINS
     y_end_local=y_ends(coordinates(1))      
 
     !Setup local grid
-    x(-1)=x_start_local-dx*2.0_num !+ dx/2.0_num
+    x(-1)=x_start_local-dx*2.0_num
     DO ix=0,nx+2
        x(ix)=x(ix-1)+dx
     ENDDO
-    y(-1)=y_start_local-dy*2.0_num !+ dy/2.0_num
+    y(-1)=y_start_local-dy*2.0_num
     DO iy=0,ny+2
        y(iy)=y(iy-1)+dy
     ENDDO
 
     CALL set_initial_values
+	 CALL setup_data_averaging
 
   END SUBROUTINE after_control
+
+  SUBROUTINE setup_data_averaging()
+
+	INTEGER :: ioutput
+   DO iOutput = 1, num_vars_to_dump
+		IF(IAND(dumpmask(iOutput),IO_AVERAGED) .NE. 0) THEN
+			ALLOCATE(averaged_data(iOutput)%data(-2:nx+3,-2:ny+3))
+		ENDIF
+	ENDDO
+
+  END SUBROUTINE setup_data_averaging
 
   SUBROUTINE Setup_Species
     INTEGER :: iSpecies
@@ -133,8 +154,6 @@ CONTAINS
              PRINT *,"***ERROR*** Cannot create epoch2d.dat output file. The most common cause of this problem is that the ouput directory does not exist"
              CALL MPI_ABORT(comm,errcode)
        ENDIF
-!!$       WRITE(file3, '(a,"/en.dat")') TRIM(data_dir)
-!!$       OPEN(unit=30, STATUS = 'REPLACE',FILE = file3,FORM="binary")
     END IF
 
   END SUBROUTINE open_files

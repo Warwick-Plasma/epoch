@@ -127,8 +127,6 @@ CONTAINS
           rand=random(idum)
           !After all that, we now know the target ionisation fraction, so subtract the current fraction and ionise
           IF (rand .LT. (ion_frac-ndp_High/MAX(ndp_Low,none_zero))) THEN
-!!$
-!!$          IF (e_part .GT. ParticleSpecies(iSpecies)%Critical_Field) THEN
              CALL Remove_Particle_From_PartList(ParticleSpecies(iSpecies)%AttachedList,Current)
              next_species=ParticleSpecies(iSpecies)%ionise_to_species
              CALL Add_Particle_To_PartList(ParticleSpecies(next_species)%AttachedList,Current)
@@ -159,8 +157,6 @@ CONTAINS
 
     DEALLOCATE(number_density)
     DEALLOCATE(nd_Low,nd_High)
-
-!!$    PRINT *,m_if
 #endif
   END SUBROUTINE ionise_particles
 

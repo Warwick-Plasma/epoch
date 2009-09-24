@@ -31,7 +31,6 @@ CONTAINS
     DO i=1,NOPS
        IF (Char .EQ. Operators(i:i)) CharKind=CHAR_OPCODE
     ENDDO
-    !IF (Char >= "0" .AND. Char <= "9" .OR. Char .EQ. "." .OR. (Char .EQ. "-" .AND. unary)) CharKind=CHAR_NUMERIC
   END FUNCTION CharKind
 
   SUBROUTINE LoadBlock(name,block)
@@ -235,7 +234,6 @@ CONTAINS
 #ifdef PARSER_DEBUG
              Block%Text=TRIM(Current)
 #endif
-!!$             PRINT *,Block%Type,TRIM(Current)
              IF (Block%Type .EQ. PT_BAD) THEN
                 IF (rank .EQ. 0) THEN
                    PRINT *,"Unable to parse block with text ",TRIM(Current)
@@ -252,7 +250,6 @@ CONTAINS
 
              IF (Block%Type .NE. PT_PARENTHESIS .AND. Block%Type .NE. PT_NULL) THEN
                 last_block_type=Block%Type
-!!$                IF (DEBUG_MODE) PRINT *,"Setting",Block%Type
              ENDIF
 
              IF (Block%Type .EQ. PT_VARIABLE .OR. Block%Type .EQ. PT_CONSTANT) THEN

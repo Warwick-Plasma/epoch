@@ -20,9 +20,9 @@ CONTAINS
     TYPE(PrimitiveStack) :: Temp
 
     HandleDEODeck=ERR_NONE
-    Temp%stackpoint=0
 
     IF (Value .EQ. Blank) RETURN
+	 Temp%StackPoint=0
     CALL Tokenize(Value,Temp,ERR)
     IF (ERR .NE. ERR_NONE) THEN
        HandleDEODeck=ERR

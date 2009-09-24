@@ -18,10 +18,6 @@ CONTAINS
     TYPE(stackelement) :: block
 
     EvalStack%StackPoint=0
-!!$    IF (ERR .NE. ERR_NONE) THEN
-!!$       PRINT *,"STUPID",ERR
-!!$       STOP
-!!$    ENDIF
 
     DO i=1,inputstack%stackpoint
        block=inputstack%Data(i)

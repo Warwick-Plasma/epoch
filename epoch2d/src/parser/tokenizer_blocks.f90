@@ -101,6 +101,7 @@ CONTAINS
     IF (StrCmp(name,"dir_px")) AsConstant=CONST_DIR_PX
     IF (StrCmp(name,"dir_py")) AsConstant=CONST_DIR_PY
     IF (StrCmp(name,"dir_pz")) AsConstant=CONST_DIR_PZ
+	 IF (StrCmp(name,"var")) AsConstant=CONST_VAR
 
 
     !User submitted constant using "Register"
@@ -168,6 +169,8 @@ CONTAINS
     IF (StrCmp(name,"by")) AsFunction=FUNC_BY
     IF (StrCmp(name,"bz")) AsFunction=FUNC_BZ
     IF (StrCmp(name,"gauss")) AsFunction=FUNC_GAUSS
+	 IF (StrCmp(name,"semigauss")) AsFunction=FUNC_SEMIGAUSS
+	 IF (StrCmp(name,"critical")) AsFunction=FUNC_CRIT
 
     DO i=1,n_new_func
        IF (StrCmp(TRIM(name),TRIM(new_func_name(i)%Value))) THEN

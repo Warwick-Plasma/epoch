@@ -423,32 +423,6 @@ CONTAINS
     npart_this_it=MIN(npart_left, npart_per_it)
     CALL MPI_SEND(PartList%Count, 1, MPI_INTEGER, Dest, tag, comm, errcode)
 
-
-    !This is a reduced memory footprint algorithm
-    !Try to fix later
-!!$    !Copy the data for the particles into a buffer
-!!$    ALLOCATE(Data(1:npart_this_it*nvar))
-!!$    Current=>PartList%Head
-!!$    ct=0
-!!$
-!!$    npart_left=PartList%Count
-!!$    DO WHILE (npart_left .GT. 0)
-!!$
-!!$       !Copy the data into the buffer
-!!$       ct=0
-!!$       DO ipart=1,npart_this_it
-!!$          cpos=ct*nvar+1
-!!$          CALL Pack_Particle(Data(cpos:cpos+nvar),Current)
-!!$          Current=>Current%Next
-!!$          ct=ct+1
-!!$       ENDDO
-!!$
-!!$       !Send the data to the receiver
-!!$       CALL MPI_SEND(Data, npart_this_it*nvar, mpireal, Dest, tag, comm, errcode)
-!!$       npart_left=npart_left-npart_this_it
-!!$       npart_this_it=MIN(npart_left, npart_per_it)
-!!$    ENDDO
-
     ALLOCATE(Data(1:PartList%Count*nvar))
     Data=0.0_num
     Current=>PartList%Head
@@ -480,23 +454,6 @@ CONTAINS
 
     npart_left=Count
     npart_this_it=MIN(npart_left, npart_per_it)
-
-    !This is a reduced memory footprint algorithm
-    !Try to fix later
-!!$    !Copy the data for the particles into a buffer
-!!$    ALLOCATE(Data(1:npart_this_it*nvar))
-!!$    DO WHILE (npart_left .GT. 0)
-!!$       !Receive the actual data
-!!$       CALL MPI_RECV(Data, npart_this_it*nvar, mpireal, Src, tag, comm, status, errcode)
-!!$
-!!$       !Copy to temporary partlist and then attach that partlist to the end of the main partlist
-!!$       CALL Create_Filled_PartList(PartListTemp,Data, npart_this_it*nvar)
-!!$       CALL Append_PartList(PartList,PartListTemp)
-!!$
-!!$       !Reduce count for next iteration
-!!$       npart_left=npart_left-npart_this_it
-!!$       npart_this_it=MIN(npart_left, npart_per_it)
-!!$    ENDDO
 
     ALLOCATE(Data(1:Count*nvar))
     Data=0.0_num

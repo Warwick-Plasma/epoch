@@ -309,18 +309,23 @@ CONTAINS
        RETURN
     ENDIF
 
+	IF (opcode .EQ. CONST_VAR) THEN
+   	CALL PushOnEval(context_variable)
+   	RETURN
+	ENDIF
+
   END SUBROUTINE DoConstant
 
   SUBROUTINE DoFunctions(opcode,ix,iy,err)
 
     INTEGER,INTENT(IN) :: opcode,ix,iy
     INTEGER,INTENT(INOUT) :: err
-    REAL(num),DIMENSION(3) :: Values
+    REAL(num),DIMENSION(4) :: Values
     REAL(num) :: Result
     INTEGER :: Count, iPoint
     LOGICAL :: Done
     REAL(num),DIMENSION(:),ALLOCATABLE :: Var_Length_Values
-    REAL(num) :: point
+    REAL(num) :: point, T0
 
 
     IF (opcode .EQ. FUNC_SQRT) THEN
@@ -480,6 +485,24 @@ CONTAINS
        CALL PushOnEval(EXP(-((Values(1)-Values(2))/Values(3))**2))
        RETURN
     ENDIF
+
+IF (opcode .EQ. FUNC_SEMIGAUSS) THEN
+	 CALL GetValues(4,Values)
+    !Values are : time, maximum amplitude, amplitude at t=0, characteristic time width
+	 T0 = Values(4) * SQRT(-LOG(Values(3)/Values(2)))
+	 IF (Values(1) .LE. T0) THEN
+	 	CALL PushOnEval(Values(2) * EXP(-((Values(1)-T0)/Values(4))**2))
+	 ELSE
+		CALL PushOnEval(Values(2))
+	 ENDIF
+	 RETURN
+ENDIF
+
+IF (opcode .EQ. FUNC_CRIT) THEN
+	CALL GetValues(1,Values)
+	CALL PushOnEval(Values(1)**2 * m0 * epsilon0 / q0**2)
+	RETURN
+ENDIF
 
     !Check for custom functions
     Result = CustomFunction(opcode,ix,iy,err)

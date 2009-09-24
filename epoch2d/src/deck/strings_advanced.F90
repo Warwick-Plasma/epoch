@@ -61,7 +61,6 @@ CONTAINS
        ERR=IOR(ERR,ERR_BAD_VALUE)
        RETURN
     ENDIF
-!!$    PRINT *,TRIM(StrIn)," A ",TRIM(StrIn(1:pos-1))," B ",TRIM(StrIn(pos+1:strlen))
     Real1=AsRealSimple(TRIM(StrIn(1:pos-1)),ERR)
     Real2=AsRealSimple(TRIM(StrIn(pos+1:StrLen)),ERR)
 

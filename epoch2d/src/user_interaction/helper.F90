@@ -3,6 +3,7 @@ MODULE helper
   USE shared_data
   USE partlist
   USE boundary
+  USE shape_functions
   IMPLICIT NONE
 
   SAVE
@@ -57,7 +58,25 @@ CONTAINS
   END SUBROUTINE AllocateIC
 
   SUBROUTINE DeallocateIC
-    INTEGER :: iSpecies
+    INTEGER :: iSpecies, ix, iy
+	 REAL(num) :: min_dt, omega, k_max
+
+	 min_dt=1000000.0_num
+	 k_max=2.0_num * pi / MIN(dx,dy)
+	 !Identify the plasma frequency (Bohm-Gross dispersion relation)
+	 !Note that this doesn't get strongly relativistic plasmas right
+	DO iSpecies=1,nSpecies
+   	DO iy=1,ny
+      	DO ix=1,nx
+         	omega=SQRT((InitialConditions(iSpecies)%Rho(ix,iy) * Q0**2)/(ParticleSpecies(iSpecies)%Mass * epsilon0) + &
+              	3.0_num * k_max**2 * kb * MAXVAL(InitialConditions(iSpecies)%Temp(ix,iy,:))/(ParticleSpecies(iSpecies)%Mass))
+         	IF (2.0_num * pi/omega .LT. min_dt) min_dt=2.0_num * pi /omega
+      	ENDDO
+   	ENDDO
+	ENDDO
+	CALL MPI_ALLREDUCE(min_dt,dt_plasma_frequency,1,mpireal,MPI_MIN,comm,errcode)
+	!Must resolve plasma frequency
+	dt_plasma_frequency=dt_plasma_frequency/2.0_num
 
     DO iSpecies=1,nspecies
        DEALLOCATE(InitialConditions(iSpecies)%Rho)
@@ -314,9 +333,7 @@ CONTAINS
 
   END SUBROUTINE LoadParticles
 
-!!$
 !!$  !Subroutine to initialise a thermal particle distribution
-!!$  !Assumes linear interpolation of temperature between cells
   SUBROUTINE SetupParticleTemperature(Temperature,Direction,PartFamily,idum)
 
     REAL(num),DIMENSION(-2:,-2:), INTENT(IN) :: Temperature
@@ -327,8 +344,7 @@ CONTAINS
     REAL(num) :: mass,temp_local
     REAL(num) :: cell_x_r,cell_frac_x,cell_y_r,cell_frac_y
     REAL(num) :: part_weight
-    REAL(num) :: g0x,gpx,gmx
-    REAL(num) :: g0y,gpy,gmy
+    REAL(num),DIMENSION(-2:2) :: gx, gy
     TYPE(particle),POINTER :: Current
     INTEGER :: cell_x,cell_y
     INTEGER(KIND=8) :: ipart
@@ -354,18 +370,15 @@ CONTAINS
        cell_frac_y = REAL(cell_y,num) - cell_y_r
        cell_y=cell_y+1
 
-       gmx=0.5_num * (0.5_num + cell_frac_x)**2
-       g0x=0.75_num - cell_frac_x**2
-       gpx=0.5_num * (0.5_num - cell_frac_x)**2
+		 CALL GridToParticle(cell_frac_x,gx)
+		 CALL GridToParticle(cell_frac_y,gy)
 
-       gmy=0.5_num * (0.5_num + cell_frac_y)**2
-       g0y=0.75_num - cell_frac_y**2
-       gpy=0.5_num * (0.5_num - cell_frac_y)**2
-
-
-       temp_local=gmy*(gmx*Temperature(cell_x-1,cell_y-1) + g0x*Temperature(cell_x,cell_y-1) + gpx*Temperature(cell_x+1,cell_y-1)) + &
-            g0y*(gmx*Temperature(cell_x-1,cell_y) + g0x*Temperature(cell_x,cell_y) + gpx*Temperature(cell_x+1,cell_y)) + &
-            gpy*(gmx*Temperature(cell_x-1,cell_y+1) + g0x*Temperature(cell_x,cell_y+1) + gpx*Temperature(cell_x+1,cell_y+1))
+		 temp_local=0.0_num
+		 DO ix=-sf_order,sf_order
+			DO iy=-sf_order,sf_order
+				temp_local=temp_local+gx(ix)*gy(iy)*Temperature(cell_x+ix,cell_y+iy)
+			ENDDO
+ 		 ENDDO
 
        IF (IAND(Direction,DIR_X) .NE. 0) Current%Part_P(1)=MomentumFromTemperature(mass,temp_local,idum)
 
@@ -392,8 +405,8 @@ CONTAINS
     INTEGER :: cell_x,cell_y
     INTEGER(KIND=8) :: ipart
     REAL(num),DIMENSION(:,:),ALLOCATABLE :: Weight_Fn,Temp
-    REAL(num),DIMENSION(-1:1) :: gx
-    REAL(num),DIMENSION(-1:1) :: gy
+    REAL(num),DIMENSION(-2:2) :: gx
+    REAL(num),DIMENSION(-2:2) :: gy
     REAL(num) :: Data,rpos
     INTEGER :: Low, High, Point, OldPoint
     TYPE(ParticleList),POINTER :: PartList
@@ -446,21 +459,17 @@ CONTAINS
        cell_frac_y = REAL(cell_y,num) - cell_y_r
        cell_y=cell_y+1
 
-       gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-       gx( 0) = 0.75_num - ABS(cell_frac_x)**2
-       gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+		 CALL ParticleToGrid(cell_frac_x,gx)
+		 CALL ParticleToGrid(cell_frac_y,gy)
 
-       gy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-       gy( 0) = 0.75_num - ABS(cell_frac_y)**2
-       gy( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
        Data=1.0_num/(dx*dy) !Simply want to count particles per metre^2
-       DO iSuby=-1,1
-          DO iSubx=-1,1
+       DO iSuby=-sf_order,sf_order
+          DO iSubx=-sf_order,sf_order
              Weight_Fn(cell_x+iSubx,cell_y+iSuby) = Weight_Fn(cell_x+iSubx,cell_y+iSuby) + & 
                   gx(iSubx) * gy(iSuby) * Data
           ENDDO
        ENDDO
-!!$       Weight_Fn(cell_x,cell_y) = Weight_Fn(cell_x,cell_y) + Data
+
        Current=>Current%Next
        ipart=ipart+1
     ENDDO
@@ -492,27 +501,22 @@ CONTAINS
     Current=>PartList%Head
     ipart=0
     DO WHILE(ipart < PartList%Count)
-       cell_x_r = (Current%Part_Pos(1)-x_start_local) / dx -0.5_num
+       cell_x_r = (Current%Part_Pos(1)-x_start_local) / dx !-0.5_num
        cell_x=NINT(cell_x_r)
        cell_frac_x = REAL(cell_x,num) - cell_x_r
        cell_x=cell_x+1
 
-       cell_y_r = (Current%Part_Pos(2)-y_start_local) / dy -0.5_num
+       cell_y_r = (Current%Part_Pos(2)-y_start_local) / dy !-0.5_num
        cell_y=NINT(cell_y_r)
        cell_frac_y = REAL(cell_y,num) - cell_y_r
        cell_y=cell_y+1
 
-       gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
-       gx( 0) = 0.75_num - cell_frac_x**2
-       gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
-
-       gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
-       gy( 0) = 0.75_num - cell_frac_y**2
-       gy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
+		 CALL GridToParticle(cell_frac_x,gx)
+		 CALL GridToParticle(cell_frac_y,gy)
 
        weight_local=0.0_num
-       DO iSuby=-1,+1
-          DO iSubx=-1,+1
+       DO iSuby=-sf_order,sf_order
+          DO iSubx=-sf_order,+sf_order
              weight_local=weight_local+gx(iSubx)*gy(iSuby)*Weight_Fn(cell_x+iSubx,cell_y+iSuby)
           ENDDO
        ENDDO
@@ -520,9 +524,6 @@ CONTAINS
        Current=>Current%Next
        ipart=ipart+1
     ENDDO
-#else
-    IF (rank .EQ. 0) PRINT *,"Autoloader only available when using per particle weighting"
-    CALL MPI_ABORT(comm,errcode)
 #endif
     DEALLOCATE(Weight_Fn)
     DEALLOCATE(Density)
@@ -579,19 +580,13 @@ CONTAINS
     CDF=CDF/SUM(Dist_Fn)
 
     Position=Random(iDum)
+	sample_dist_function=0.0_num
 
     start=1
     endpoint=n_points
     current=(start+endpoint)/2
 
-!!$    DO
-!!$       IF (CDF(Current) .LT. Position .AND. CDF(Current+1) .GE. Position) EXIT
-!!$       IF (CDF(Current) .GT. Position .AND. CDF(Current-1) .LE. Position) EXIT
-!!$       IF (CDF(Current) .GT. Position) endpoint=(start+endpoint)/2
-!!$       IF (CDF(Current) .LT. Position) start=(start+endpoint)/2
-!!$       current=(start+endpoint)/2
-!!$    ENDDO
-    DO current=1,n_points
+    DO current=1,n_points-1
        IF (CDF(Current) .LE. Position .AND. CDF(Current+1) .GE. Position) THEN
           d_cdf=CDF(Current+1)-CDF(Current)
           Sample_Dist_Function=(Axis(Current)*(Position-CDF(Current))/d_cdf + &
@@ -599,8 +594,6 @@ CONTAINS
           EXIT
        ENDIF
     ENDDO
-
-!!$    Sample_Dist_Function=Axis(Current)
     DEALLOCATE(CDF)
 
 

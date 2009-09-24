@@ -5,11 +5,12 @@ MODULE deck_control_block
 
   IMPLICIT NONE
   SAVE 
-  INTEGER,PARAMETER :: ControlBlockElements =16
+  INTEGER,PARAMETER :: ControlBlockElements =17
   LOGICAL, DIMENSION(ControlBlockElements) :: ControlBlockDone =.FALSE.
   CHARACTER(len=EntryLength),DIMENSION(ControlBlockElements) :: ControlBlockName = (/"nx","ny","npart",&
        "nsteps","t_end","x_start","x_end","y_start","y_end",&
-       "dt_multiplier","dlb","dlb_threshold","initial_conditions","icfile","restart_snapshot","neutral_background"/)
+       "dt_multiplier","dlb","dlb_threshold","initial_conditions","icfile","restart_snapshot","neutral_background"&
+		 ,"smooth_currents"/)
 
 CONTAINS
 
@@ -70,6 +71,8 @@ CONTAINS
        restart_snapshot=AsInteger(Value,HandleControlDeck)
     CASE(16)
        neutral_background=AsLogical(Value,HandleControlDeck)
+    CASE(17)
+       smooth_currents=AsLogical(Value,HandleControlDeck)
     END SELECT
 
   END FUNCTION HandleControlDeck
@@ -81,6 +84,8 @@ CONTAINS
 
     !npart is not a required variable
     ControlBlockDone(3)=.TRUE.
+	 !Assume no current smoothing unless specified
+	 ControlBlockDone(17)=.TRUE.
 
     !If not using external load then don't need a file
     IF (IAND(ictype,IC_EXTERNAL) .EQ. 0) ControlBlockDone(14)=.TRUE.

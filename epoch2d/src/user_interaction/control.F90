@@ -47,7 +47,7 @@ CONTAINS
     !IC_MANUAL
     !IC_RESTART
     ictype=IC_EARLY_INTERNAL
-!!$    icfile%Value="ic.deck"
+    icfile%Value="ic.deck"
     restart_snapshot=0
     
     !Neutralising background

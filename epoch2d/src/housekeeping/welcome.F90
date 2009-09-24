@@ -61,6 +61,19 @@ CONTAINS
 #ifdef FIELD_DEBUG
     WRITE(*,*) "Field Debug information -DFIELD_DEBUG"
 #endif
+#ifdef SPLINE_FOUR
+	 WRITE(*,*) "Fourth order spline interpolation -DSPLINE_FOUR"
+#endif
+#ifdef HIGH_ORDER_FIELDS
+#ifdef ORDER_SIX
+	 WRITE(*,*) "6th order improved field solver -DHIGH_ORDER_FIELDS -DORDER_SIX"
+#else
+	 WRITE(*,*) "4th order field solver -DHIGH_ORDER_FIELDS"
+#endif
+#endif
+#ifdef HIGH_ORDER_SMOOTHING
+	WRITE(*,*) "High order current smoothing (matches particle interpolation function) -DHIGH_ORDER_SMOOTHING"
+#endif
 #ifdef PARTICLE_CELL_DIVISION
     WRITE(*,*) "Particle/cell ordering -DPARTICLE_CELL_DIVISION"
 #endif
