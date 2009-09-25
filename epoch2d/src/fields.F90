@@ -68,7 +68,8 @@ CONTAINS
     DO iy=1,ny
        DO ix=1,nx
           Ey(ix,iy)=Ey(ix,iy)&
-               -cnx*c**2 * SUM(Diff_Consts * Bz(ix-Large:ix+Small,iy))
+               -cnx*c**2 * SUM(Diff_Consts * Bz(ix-Large:ix+Small,iy))&
+               -0.5_num*dt*Jy(ix,iy)/epsilon0
        ENDDO
     ENDDO
 

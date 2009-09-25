@@ -6,7 +6,7 @@ FFLAGS = -O3 -fast
 TARGET = epoch2d
 
 #uncomment this line to make each particle have an individual weight
-DEFINES = -DPER_PARTICLE_WEIGHT -DPART_IONISE -DTRACER_PARTICLES -DPARTICLE_PROBES -DSPLINE_FOUR -DHIGH_ORDER_SMOOTHING
+DEFINES = -DPER_PARTICLE_WEIGHT
 
 #Copy this line onto the DEFINES line to turn on particle cell division
 #-DPARTICLE_CELL_DIVISION
