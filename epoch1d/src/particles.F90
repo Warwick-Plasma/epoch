@@ -272,14 +272,14 @@ CONTAINS
              !In one timestep
 
              IF (cell_x3 == cell_x1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
-                xmin = -1
-                xmax = +1
+                xmin = -sf_order
+                xmax = +sf_order
              ELSE IF (cell_x3 == cell_x1 - 1) THEN !Particle has moved one cell to left
-                xmin = -2
-                xmax = +1
+                xmin = -sf_order-1
+                xmax = +sf_order
              ELSE IF (cell_x3 == cell_x1 + 1) THEN !Particle has moved one cell to right
-                xmin=-1
-                xmax=+2
+                xmin=-sf_order
+                xmax=+sf_order+1
              ENDIF
 
              !Set these to zero due to diffential inside loop
