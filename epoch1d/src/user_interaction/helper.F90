@@ -453,7 +453,7 @@ CONTAINS
        cell_frac_x = REAL(cell_x,num) - cell_x_r
        cell_x=cell_x+1
 
-  	 	 CALL ParticleToGrid(cell_frac_x,gx)
+  	 	 CALL GridToParticle(cell_frac_x,gx)
 
        weight_local=0.0_num
           DO iSubx=-sf_order,+sf_order
