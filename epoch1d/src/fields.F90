@@ -5,11 +5,21 @@ MODULE field
 
   IMPLICIT NONE
 
-  REAL(num) :: alpha=0.0_num
-
 CONTAINS
 
   SUBROUTINE update_eb_fields_half
+
+#ifndef ORDER_SIX
+    REAL(num),DIMENSION(4) :: Diff_Consts&
+         =(/1.0_num/24.0_num,-9.0_num/8.0_num,9.0_num/8.0_num,-1.0_num/24.0_num/)
+    INTEGER,PARAMETER :: Large=2, Small=1
+#else
+    REAL(num),DIMENSION(6) :: Diff_Consts&
+         =(/3.0_num/640.0_num, -25.0_num/384.0_num, 75.0_num/64.0_num,&
+         -75.0_num/64.0_num,25.0_num/384.0_num,-3.0_num/640.0_num/)
+    INTEGER,PARAMETER :: Large=3, Small=2
+#endif
+
 
     REAL(num) :: lx,cnx
 
@@ -17,6 +27,8 @@ CONTAINS
     cnx=0.5_num*lx
 
     !Update Ex to t=t0+dt/2
+
+#ifndef HIGH_ORDER_FIELDS
 
     DO ix=1,nx
        Ex(ix)=Ex(ix)&
@@ -37,12 +49,33 @@ CONTAINS
             -0.5_num*dt*Jz(ix)/epsilon0
     ENDDO
 
+#else
+   DO ix=1,nx
+     	Ex(ix)=Ex(ix)&
+		-0.5_num*dt*Jx(ix)/epsilon0
+ 	ENDDO
+
+   DO ix=1,nx
+      Ey(ix)=Ey(ix)&
+           -cnx*c**2 * SUM(Diff_Consts * Bz(ix-Large:ix+Small))&
+			  -0.5_num*dt*Jy(ix)/epsilon0
+   ENDDO
+
+   DO ix=1,nx
+      Ez(ix)=Ez(ix)&
+           +cnx*c**2 * SUM(Diff_Consts * By(ix-Large:ix+Small))&
+           -0.5_num*dt*Jz(ix)/epsilon0
+   ENDDO
+#endif
+
+
     !Now have E(t+dt/2), do boundary conditions on E
 
     CALL Efield_bcs
 
     !Update B field to t+dt/2 using E(t+dt/2)
 
+#ifndef HIGH_ORDER_FIELDS
     !Bx unchanged in 1D
 
     !By
@@ -56,6 +89,17 @@ CONTAINS
        Bz(ix)=Bz(ix)&
             -cnx*(Ey(ix+1)-Ey(ix))
     ENDDO
+#else
+	DO ix=1,nx
+   	By(ix)=By(ix)&
+        	+cnx * SUM(Diff_Consts * Ez(ix-Small:ix+Large))
+	ENDDO
+	
+	DO ix=1,nx
+   	Bz(ix)=Bz(ix)&
+        	-cnx * SUM(Diff_Consts * Ey(ix-Small:ix+Large))
+	ENDDO
+#endif
 
     !Now have B field at t+dt/2. Do boundary conditions on B
     CALL Bfield_bcs(.FALSE.)
@@ -67,10 +111,22 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
+#ifndef ORDER_SIX
+    REAL(num),DIMENSION(4) :: Diff_Consts&
+         =(/1.0_num/24.0_num,-9.0_num/8.0_num,9.0_num/8.0_num,-1.0_num/24.0_num/)
+    INTEGER,PARAMETER :: Large=2, Small=1
+#else
+    REAL(num),DIMENSION(6) :: Diff_Consts&
+         =(/3.0_num/640.0_num, -25.0_num/384.0_num, 75.0_num/64.0_num,&
+         -75.0_num/64.0_num,25.0_num/384.0_num,-3.0_num/640.0_num/)
+    INTEGER,PARAMETER :: Large=3, Small=2
+#endif
+
     REAL(num) :: lx,cnx
 
     lx=dt/dx
     cnx=0.5_num*lx
+#ifndef HIGH_ORDER_FIELDS
     !Bx unchanged in 1D
 
     !By
@@ -84,6 +140,17 @@ CONTAINS
        Bz(ix)=Bz(ix)&
             -cnx*(Ey(ix+1)-Ey(ix))
     ENDDO
+#else
+	DO ix=1,nx
+		By(ix)=By(ix)&
+     		+cnx * SUM(Diff_Consts * Ez(ix-Small:ix+Large))
+	ENDDO
+
+	DO ix=1,nx
+		Bz(ix)=Bz(ix)&
+     		-cnx * SUM(Diff_Consts * Ey(ix-Small:ix+Large))
+	ENDDO
+#endif
 
 
     CALL BField_BCS(.FALSE.)
@@ -94,6 +161,7 @@ CONTAINS
     IF(xbc_right == BC_SIMPLE_OUTFLOW .AND. right == MPI_PROC_NULL) CALL outflow_bcs_right
     CALL BField_BCS(.TRUE.)
 
+#ifndef HIGH_ORDER_FIELDS
     !Ex
     DO ix=1,nx
        Ex(ix)=Ex(ix)&
@@ -113,6 +181,24 @@ CONTAINS
             +cnx*(By(ix)-By(ix-1))*c**2&
             -0.5*dt*Jz(ix)/epsilon0
     ENDDO
+#else
+	DO ix=1,nx
+  		Ex(ix)=Ex(ix)&
+		-0.5_num*dt*Jx(ix)/epsilon0
+	ENDDO
+
+	DO ix=1,nx
+   	Ey(ix)=Ey(ix)&
+        	-cnx*c**2 * SUM(Diff_Consts * Bz(ix-Large:ix+Small))&
+		  	-0.5_num*dt*Jy(ix)/epsilon0
+	ENDDO
+
+	DO ix=1,nx
+   	Ez(ix)=Ez(ix)&
+        	+cnx*c**2 * SUM(Diff_Consts * By(ix-Large:ix+Small))&
+        	-0.5_num*dt*Jz(ix)/epsilon0
+	ENDDO
+#endif
 
     CALL Efield_bcs
 

@@ -3,6 +3,7 @@ MODULE helper
   USE shared_data
   USE partlist
   USE boundary
+  USE shape_functions
   IMPLICIT NONE
 
   SAVE
@@ -367,7 +368,7 @@ CONTAINS
     INTEGER :: cell_x
     INTEGER(KIND=8) :: ipart
     REAL(num),DIMENSION(:),ALLOCATABLE :: Weight_Fn,Temp
-    REAL(num),DIMENSION(-1:1) :: gx
+    REAL(num),DIMENSION(-2:2) :: gx
     REAL(num) :: Data,rpos
     INTEGER :: Low, High, Point, OldPoint
     TYPE(ParticleList),POINTER :: PartList
@@ -413,12 +414,10 @@ CONTAINS
        cell_frac_x = REAL(cell_x,num) - cell_x_r
        cell_x=cell_x+1
 
-       gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-       gx( 0) = 0.75_num - ABS(cell_frac_x)**2
-       gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+		 CALL ParticleToGrid(cell_frac_x,gx)
 
        Data=1.0_num/(dx) !Simply want to count particles per metre^2
-          DO iSubx=-1,1
+          DO iSubx=-sf_order,sf_order
              Weight_Fn(cell_x+iSubx) = Weight_Fn(cell_x+iSubx) + & 
                   gx(iSubx) * Data
           ENDDO
@@ -454,12 +453,10 @@ CONTAINS
        cell_frac_x = REAL(cell_x,num) - cell_x_r
        cell_x=cell_x+1
 
-       gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
-       gx( 0) = 0.75_num - cell_frac_x**2
-       gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
+  	 	 CALL ParticleToGrid(cell_frac_x,gx)
 
        weight_local=0.0_num
-          DO iSubx=-1,+1
+          DO iSubx=-sf_order,+sf_order
              weight_local=weight_local+gx(iSubx)*Weight_Fn(cell_x+iSubx)
           ENDDO
        Current%Weight=weight_local

@@ -8,11 +8,11 @@ begin:dist_fn
 
 	#range is ignored for spatial coordinates
 	range1=1>1
-	range2=-3.0e-20>3.0e-20
+	range2=-4.0e-20>4.0e-20
 	
 	#resolution is ignored for spatial coordinates
 	resolution1=1
-	resolution2=100
+	resolution2=1000
 
 	include_species_1=T
 	include_species_2=T

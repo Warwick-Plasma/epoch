@@ -134,7 +134,7 @@ CONTAINS
     ENDDO
 
     !Set the y magnetic field
-    By(0)=(1.0_num / (C + lx*C**2)) &
+    By(-1:0)=(1.0_num / (C + lx*C**2)) &
          * (-4.0_num * Fplus &
          + 2.0_num * Ez(1) - (C - lx*C**2)*By(1) &
          - (dt / epsilon0) * Jz(1))
@@ -152,7 +152,7 @@ CONTAINS
        Current=>Current%Next
     ENDDO
 
-    Bz(0)=(1.0_num / (C + lx*C**2)) &
+    Bz(-1:0)=(1.0_num / (C + lx*C**2)) &
          * (4.0_num * Fplus &
          - 2.0_num * Ey(1) - (C - lx*C**2)*Bz(1) &
          + (dt / epsilon0) * Jy(1))
@@ -188,7 +188,7 @@ CONTAINS
        Current=>Current%Next
     ENDDO
 
-    By(nx)=(1.0_num / (C + lx*C**2)) &
+    By(nx:nx+1)=(1.0_num / (C + lx*C**2)) &
          * (4.0_num * Fminus &
          - 2.0_num * Ez(nx) - (C - lx*C**2)*By(nx) &
          + (dt / epsilon0) * Jz(nx))
@@ -206,7 +206,7 @@ CONTAINS
        Current=>Current%Next
     ENDDO
 
-    Bz(nx)=(1.0_num / (C + lx*C**2)) &
+    Bz(nx:nx+1)=(1.0_num / (C + lx*C**2)) &
          * (-4.0_num * Fminus &
          + 2.0_num * Ey(nx) - (C - lx*C**2)*Bz(nx) &
          - (dt / epsilon0) * Jy(nx))
@@ -217,12 +217,12 @@ CONTAINS
     REAL(num):: lx
 
     lx=dt/dx
-    Bx(0) =  0.0_num
+    Bx(-1:0) =  0.0_num
     !Set the y magnetic field
-    By(0)=(1.0_num / (C + lx*C**2)) &
+    By(-1:0)=(1.0_num / (C + lx*C**2)) &
          * (2.0_num * Ez(1) - (C - lx*C**2)*By(1) &
          - (dt / epsilon0) * Jz(1))
-    Bz(0)=(1.0_num / (C + lx*C**2)) &
+    Bz(-1:0)=(1.0_num / (C + lx*C**2)) &
          * (-2.0_num * Ey(1) - (C - lx*C**2)*Bz(1) &
          + (dt / epsilon0) * Jy(1))
     
@@ -234,10 +234,10 @@ CONTAINS
     lx=dt/dx
     Bx(nx) =  0.0_num
     !Set the y magnetic field
-    By(nx)=(1.0_num / (C + lx*C**2)) &
+    By(nx:nx+1)=(1.0_num / (C + lx*C**2)) &
          * (- 2.0_num * Ez(nx) - (C - lx*C**2)*By(nx) &
          + (dt / epsilon0) * Jz(nx))
-    Bz(nx)=(1.0_num / (C + lx*C**2)) &
+    Bz(nx:nx+1)=(1.0_num / (C + lx*C**2)) &
          * (2.0_num * Ey(nx) - (C - lx*C**2)*Bz(nx) &
          - (dt / epsilon0) * Jy(nx))
   END SUBROUTINE outflow_bcs_right
