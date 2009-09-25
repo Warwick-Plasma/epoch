@@ -1,0 +1,2 @@
+#!/bin/bash
+tar cvzf transport.tgz src/ $1/*.deck Makefile

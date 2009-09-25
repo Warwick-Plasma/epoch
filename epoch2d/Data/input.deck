@@ -1,0 +1,117 @@
+
+begin:control
+
+	#global number of gridpoints
+	nx=400 #in x
+        ny=100 #in y
+        npart=16.0e4
+
+	#maximum number of iterations
+	#set to -1 to run until finished
+        nsteps=-1
+
+	#final time of simulation
+        t_end=3.0e-12
+
+	#size of domain
+	x_start=-75e-6
+	x_end=150e-6
+        y_start=-50e-6
+        y_end=50e-6
+	
+	#Don't know if this should be in the deck or not
+	dt_multiplier=0.8
+
+	dlb=F
+	dlb_threshold=1.0
+
+	initial_conditions=external
+	icfile=ic.deck
+        restart_snapshot=98
+
+	#Setting neutral_background to F makes the code solve
+        #Poisson's equation for the initial electric field
+        #Setting it to T makes the initial electric field 0
+        neutral_background=T
+
+end:control
+
+begin:boundaries
+
+	xbc_left=simple_laser
+	xbc_right=simple_outflow
+	ybc_up=simple_outflow
+	ybc_down=simple_outflow
+
+end:boundaries
+
+begin:species
+	n_species=2
+
+	#electrons
+	charge1=-1.0
+	mass1=1.0
+	frac1=0.5
+	name1=Electron
+	dump1=T
+
+	#ions
+	charge2=1.0
+	mass2=1836.0
+	frac2=0.5
+	name2=Ions
+	dump2=T
+
+end:species
+
+
+begin:output
+
+	#If use_offset_grid is true then the code dumps a
+	#grid which displays positions relative to the
+	#Left hand edge of the window
+	use_offset_grid=F
+	#number of timesteps between output dumps
+	dt_snapshot=3.0e-14
+	#Number of dt_snapshot between full dumps
+        full_dump_every=10
+	restart_dump_every=-1
+	force_final_to_be_restartable=T
+
+	use_extended_io=T
+	extended_io_file=io.deck
+
+	#Properties at particle positions
+	particles=full
+        px=never
+        py=never
+        pz=never
+        vx=never
+        vy=never
+        vz=never
+        charge=never
+        mass=never
+        particle_weight=full
+	species_id=never
+
+	#Properties on grid
+	grid=always
+	ex=always
+	ey=always
+	ez=always
+	bx=always
+	by=always
+	bz=always
+	jx=always
+	jy=always
+	jz=never
+	ekbar=always
+	mass_density=never + species
+	charge_density=always
+	number_density=always + species
+        temperature=always+species
+
+	#extended io
+	distribution_functions=always
+	particle_probes=never
+end:output

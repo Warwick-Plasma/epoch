@@ -1,0 +1,7 @@
+#!/bin/bash
+#PBS -l select=8:ncpus=1:mem=500mb,walltime=08:00:00,place=free
+#PBS -V
+
+cd $PBS_O_WORKDIR
+
+mpirun ./bin/epoch1d < deck.file

@@ -1,0 +1,5 @@
+#! /bin/sh
+rm $1/*.cfd >& /dev/null
+rm $1/*.ctl >& /dev/null
+rm $1/*.dat >& /dev/null
+rm $1/*.status >& /dev/null
