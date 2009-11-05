@@ -5,7 +5,7 @@ FFLAGS = -O3 -heap-arrays 0#-heap-arrays 0#-fast
 TARGET = epoch3d
 
 #uncomment this line to make each particle have an individual weight
-DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES -DPART_IONISE -DPARSER_DEBUG
+DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES -DPART_IONISE -DSPLINE_FOUR
 
 #Copy this line onto the DEFINES line to turn on particle cell division
 #-DPARTICLE_CELL_DIVISION
@@ -31,7 +31,7 @@ OBJFILES = shared_data.o boundary.o iocommon.o output.o output_arb.o output_cart
  custom_deck.o custom_parser.o stack.o deck_ic_species_block.o deck_constant_block.o deck_deo_block.o deck_eio_dist_fn_block.o\
  deck_window_block.o mpi_subtype_control.o probes.o deck_eio_particle_probe_block.o deck_ic_external_block.o\
  deck_ic_fields_block.o laser.o deck_ic_laser_block.o custom_laser.o window.o dist_fn.o\
- particlepointeradvance.o deck_control_block.o deck_species_block.o deck.o welcome.o balance.o \
+ particlepointeradvance.o shape_functions.o deck_control_block.o deck_species_block.o deck.o welcome.o balance.o \
  solve_gauss.o FMC_MPI.o epoch3d.o
 FULLTARGET = $(BINDIR)/$(TARGET)
 
@@ -73,6 +73,7 @@ mpi_routines.o:mpi_routines.f90 shared_data.o partlist.o
 balance.o: balance.F90 shared_data.o partlist.o boundary.o mpi_subtype_control.o
 partlist.o:partlist.F90 shared_data.o
 setup.o:setup.F90 shared_data.o input_arb.o input_cartesian.o input_particle.o strings.o partlist.o balance.o mpi_subtype_control.o
+shape_functions.o:shape_functions.F90 shared_data.o
 boundary.o:boundary.f90 shared_data.o partlist.o
 iocommon.o:iocommon.f90 shared_data.o
 inputfunctions.o: inputfunctions.f90 iocommon.o shared_data.o
@@ -85,14 +86,14 @@ output_arb.o:output_arb.f90 iocommon.o shared_data.o
 output_cartesian.o:output_cartesian.f90 iocommon.o shared_data.o output.o
 output_particle.o:output_particle.f90 iocommon.o shared_data.o output.o
 iocontrol.o:iocontrol.f90 iocommon.o input.o output.o shared_data.o
-calc_df.o:calc_df.F90 shared_data.o boundary.o
+calc_df.o:calc_df.F90 shared_data.o boundary.o shape_functions.o
 particlepointeradvance.o:particlepointeradvance.F90 shared_data.o
 dist_fn.o:dist_fn.F90 shared_data.o partlist.o output_cartesian.o output.o iocontrol.o mpi_subtype_control.o
 probes.o:probes.F90 shared_data.o partlist.o iocontrol.o output_particle.o output.o balance.o mpi_subtype_control.o
 diagnostics.o:diagnostics.F90 shared_data.o boundary.o input.o output.o iocontrol.o iocommon.o output_particle.o output_cartesian.o output_arb.o balance.o particlepointeradvance.o dist_fn.o calc_df.o mpi_subtype_control.o probes.o
 laser.o:laser.f90 shared_data.o evaluate.o shunt.o partlist.o custom_laser.o
 fields.o:fields.f90 shared_data.o boundary.o laser.o
-particles.o: particles.F90 shared_data.o boundary.o
+particles.o: particles.F90 shared_data.o boundary.o shape_functions.o
 strings.o:strings.F90 shared_data.o
 strings_advanced.o:strings_advanced.F90 shared_data.o strings.o shunt.o evaluate.o
 shunt.o:shunt.F90 shared_data.o strings.o tokenizer_blocks.o
@@ -104,7 +105,7 @@ custom_parser.o:custom_parser.f90 shared_data.o tokenizer_blocks.o
 custom_deck.o:custom_deck.f90 shared_data.o strings.o strings_advanced.o shunt.o evaluate.o
 custom_laser.o:custom_laser.f90 shared_data.o
 window.o:window.F90 shared_data.o boundary.o partlist.o helper.o
-helper.o:helper.F90 shared_data.o boundary.o strings.o
+helper.o:helper.F90 shared_data.o boundary.o strings.o shape_functions.o
 initial_conditions.o:initial_conditions.f90 strings.o shared_data.o helper.o shunt.o
 deck_io_block.o:deck_io_block.F90 strings.o shared_data.o strings_advanced.o
 deck_control_block.o:deck_control_block.f90 strings.o shared_data.o strings_advanced.o

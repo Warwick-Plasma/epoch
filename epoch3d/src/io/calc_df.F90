@@ -1,6 +1,7 @@
 MODULE calc_df
   USE shared_data
   USE boundary
+  USE shape_functions
 
   IMPLICIT NONE
 
@@ -23,12 +24,8 @@ CONTAINS
     !The weight of a particle
     REAL(num) :: l_weight
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    !Defined at the particle position
-
-    REAL(num),DIMENSION(-1:1) :: gx,gy,gz
+	!Particle Weight factors as described in the manual (FIXREF)
+    REAL(num),DIMENSION(-2:2) :: gx,gy,gz
     !The data to be weighted onto the grid
     REAL(num) :: Data
 
@@ -87,23 +84,13 @@ CONTAINS
           cell_frac_z = REAL(cell_z,num) - cell_z_r
           cell_z=cell_z+1
 
-          !PRINT *,x(cell_x)-Current%Part_pos(1),x(cell_x+1)-Current%Part_pos(1)
+			 CALL ParticleToGrid(cell_frac_x,gx)
+			 CALL ParticleToGrid(cell_frac_y,gy)
+			 CALL ParticleToGrid(cell_frac_z,gz)			
 
-          gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-          gx( 0) = 0.75_num - ABS(cell_frac_x)**2
-          gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
-
-          gy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-          gy( 0) = 0.75_num - ABS(cell_frac_y)**2
-          gy( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-
-          gz(-1) = 0.5_num * (1.5_num - ABS(cell_frac_z - 1.0_num))**2
-          gz( 0) = 0.75_num - ABS(cell_frac_z)**2
-          gz( 1) = 0.5_num * (1.5_num - ABS(cell_frac_z + 1.0_num))**2
-
-          DO iz=-1,1
-             DO iy=-1,1
-                DO ix=-1,1
+          DO iz=-sf_order,sf_order
+             DO iy=-sf_order,sf_order
+                DO ix=-sf_order,sf_order
                    Data=part_m * l_weight / (dx*dy*dz)
                    DataArray(cell_x+ix,cell_y+iy,cell_z+iz) = DataArray(cell_x+ix,cell_y+iy,cell_z+iz) + &
                         gx(ix) * gy(iy) * gz(iz) * Data
@@ -142,7 +129,7 @@ CONTAINS
     !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     !Defined at the particle position
 
-    REAL(num),DIMENSION(-1:1) :: gx,gy,gz
+    REAL(num),DIMENSION(-2:2) :: gx,gy,gz
     !The data to be weighted onto the grid
     REAL(num) :: Data
 
@@ -202,21 +189,13 @@ CONTAINS
           cell_frac_z = REAL(cell_z,num) - cell_z_r
           cell_z=cell_z+1
 
-          gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-          gx( 0) = 0.75_num - ABS(cell_frac_x)**2
-          gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+			 CALL ParticleToGrid(cell_frac_x,gx)
+			 CALL ParticleToGrid(cell_frac_y,gy)
+			 CALL ParticleToGrid(cell_frac_z,gz)			
 
-          gy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-          gy( 0) = 0.75_num - ABS(cell_frac_y)**2
-          gy( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-
-          gz(-1) = 0.5_num * (1.5_num - ABS(cell_frac_z - 1.0_num))**2
-          gz( 0) = 0.75_num - ABS(cell_frac_z)**2
-          gz( 1) = 0.5_num * (1.5_num - ABS(cell_frac_z + 1.0_num))**2
-
-          DO iz=-1,1
-             DO iy=-1,1
-                DO ix=-1,1
+          DO iz=-sf_order,sf_order
+             DO iy=-sf_order,sf_order
+                DO ix=-sf_order,sf_order
                    Data=part_q * l_weight / (dx*dy*dz)
                    DataArray(cell_x+ix,cell_y+iy,cell_z+iz) = DataArray(cell_x+ix,cell_y+iy,cell_z+iz) + &
                         gx(ix) * gy(iy) * gz(iz) * Data
@@ -255,7 +234,7 @@ CONTAINS
     !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     !Defined at the particle position
 
-    REAL(num),DIMENSION(-1:1) :: gx,gy,gz
+    REAL(num),DIMENSION(-2:2) :: gx,gy,gz
     !The data to be weighted onto the grid
     REAL(num) :: Data
 
@@ -315,21 +294,13 @@ CONTAINS
           cell_frac_z = REAL(cell_z,num) - cell_z_r
           cell_z=cell_z+1
 
-          gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-          gx( 0) = 0.75_num - ABS(cell_frac_x)**2
-          gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+			 CALL ParticleToGrid(cell_frac_x,gx)
+			 CALL ParticleToGrid(cell_frac_y,gy)
+			 CALL ParticleToGrid(cell_frac_z,gz)			
 
-          gy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-          gy( 0) = 0.75_num - ABS(cell_frac_y)**2
-          gy( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-
-          gz(-1) = 0.5_num * (1.5_num - ABS(cell_frac_z - 1.0_num))**2
-          gz( 0) = 0.75_num - ABS(cell_frac_z)**2
-          gz( 1) = 0.5_num * (1.5_num - ABS(cell_frac_z + 1.0_num))**2
-
-          DO iz=-1,1
-             DO iy=-1,1
-                DO ix=-1,1
+          DO iz=-sf_order,sf_order
+             DO iy=-sf_order,sf_order
+                DO ix=-sf_order,sf_order
                    Data=l_weight / (dx*dy*dz)
                    DataArray(cell_x+ix,cell_y+iy,cell_z+iz) = DataArray(cell_x+ix,cell_y+iy,cell_z+iz) + &
                         gx(ix) * gy(iy) * gz(iz) * Data
@@ -342,9 +313,6 @@ CONTAINS
     ENDDO
 
     CALL Processor_Summation_BCS(DataArray)
-
-!!$    PRINT *,MAXVAL(DataArray)
-
 
   END SUBROUTINE calc_number_density
 
@@ -364,12 +332,7 @@ CONTAINS
     !The weight of a particle
     REAL(num) :: l_weight
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    !Defined at the particle position
-
-    REAL(num),DIMENSION(-1:1) :: gx,gy,gz
+    REAL(num),DIMENSION(-2:2) :: gx,gy,gz
     !The data to be weighted onto the grid
     REAL(num) :: Data
 
@@ -438,21 +401,13 @@ CONTAINS
           cell_frac_z = REAL(cell_z,num) - cell_z_r
           cell_z=cell_z+1
 
-          gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-          gx( 0) = 0.75_num - ABS(cell_frac_x)**2
-          gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
-
-          gy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-          gy( 0) = 0.75_num - ABS(cell_frac_y)**2
-          gy( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-
-          gz(-1) = 0.5_num * (1.5_num - ABS(cell_frac_z - 1.0_num))**2
-          gz( 0) = 0.75_num - ABS(cell_frac_z)**2
-          gz( 1) = 0.5_num * (1.5_num - ABS(cell_frac_z + 1.0_num))**2
-
-          DO iz=-1,1
-             DO iy=-1,1
-                DO ix=-1,1
+ 			 CALL ParticleToGrid(cell_frac_x,gx)
+			 CALL ParticleToGrid(cell_frac_y,gy)
+			 CALL ParticleToGrid(cell_frac_z,gz)
+			
+          DO iz=-sf_order,sf_order
+             DO iy=-sf_order,sf_order
+                DO ix=-sf_order,sf_order
                    Data=evaluator(Current,iSpecies)
                    DataArray(cell_x+ix,cell_y+iy,cell_z+iz) = DataArray(cell_x+ix,cell_y+iy,cell_z+iz) + &
                         gx(ix) * gy(iy) * gz(iz) * Data

@@ -4,6 +4,7 @@ MODULE helper
   USE partlist
   USE boundary
   USE strings
+  USE shape_functions
   IMPLICIT NONE
 
   SAVE
@@ -27,10 +28,11 @@ CONTAINS
 		 max_rho_local=MAXVAL(InitialConditions(iSpecies)%Rho)
 		 CALL MPI_ALLREDUCE(max_rho_local,max_rho,1,mpireal,MPI_MAX,comm,errcode)
 		 dt_plasma=MIN(dt_plasma,1.0_num/SQRT(max_rho*Q0**2/(M0*EPSILON0)))
-       !ParticleSpecies(iSpecies)%Window_Density=InitialConditions(iSpecies)%Rho(nx,:,:)
-       !ParticleSpecies(iSpecies)%Window_Temperature=InitialConditions(iSpecies)%Temp(nx,:,:,:)
-
+#ifdef PER_PARTICLE_WEIGHT
        CALL SetupParticleDensity(InitialConditions(iSpecies)%Rho,Partfam,InitialConditions(iSpecies)%MinRho,InitialConditions(iSpecies)%MaxRho,idum)
+#else
+       CALL NonUniformLoadParticles(InitialConditions(iSpecies)%Rho,Partfam,InitialConditions(iSpecies)%MinRho,InitialConditions(iSpecies)%MaxRho,idum)
+#endif
        CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,1),DIR_X,PartFam,idum)
        CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,2),DIR_Y,PartFam,idum)
        CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,3),DIR_Z,PartFam,idum)
@@ -39,7 +41,7 @@ CONTAINS
 	IF (rank .EQ. 0) PRINT *,"Plasma characteristic timescale ",dt_plasma
   END SUBROUTINE AutoLoad
 
-  SUBROUTINE AllocateIC
+  SUBROUTINE AllocateIC()
     INTEGER :: iSpecies
 
     ALLOCATE(InitialConditions(1:nspecies))
@@ -61,7 +63,7 @@ CONTAINS
     Bz=0.0_num
   END SUBROUTINE AllocateIC
 
-  SUBROUTINE DeallocateIC
+  SUBROUTINE DeallocateIC()
     INTEGER :: iSpecies
 
     DO iSpecies=1,nspecies
@@ -70,6 +72,116 @@ CONTAINS
     ENDDO
     DEALLOCATE(InitialConditions)
   END SUBROUTINE DeallocateIC
+
+  SUBROUTINE NonUniformLoadParticles(Density,SpeciesList,minrho,maxrho,idum)
+
+    REAL(num),DIMENSION(-2:,-2:,-2:),INTENT(INOUT) :: Density
+    TYPE(ParticleFamily),POINTER :: SpeciesList
+    REAL(num),INTENT(INOUT) :: minrho,maxrho
+    INTEGER,INTENT(INOUT) :: idum
+
+    INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
+    INTEGER(KIND=8) :: npart_per_cell_average
+    INTEGER(KIND=8) :: npart_per_cell
+    REAL(num) :: Density_Total, Density_Total_global, Density_Average
+    INTEGER(KIND=8) :: npart_this_proc_new, ipart, npart_this_species
+    REAL(num) :: rpos
+
+    TYPE(ParticleList),POINTER :: PartList
+    TYPE(Particle),POINTER :: Current, Next
+
+    PartList=>SpeciesList%AttachedList
+
+    num_valid_cells=0
+    Density_Total=0.0_num
+	DO iz=1,nz
+    	DO iy=1,ny
+       	DO ix=1,nx
+          	IF (Density(ix,iy,iz) .GE. minrho) THEN
+             	num_valid_cells=num_valid_cells+1
+             	Density_Total=Density_Total + Density(ix,iy,iz)
+          	ENDIF	
+          	IF (Density(ix,iy,iz) .GT. maxrho .AND. maxrho .GT. 0.0_num) Density(ix,iy,iz) = maxrho
+       	ENDDO
+    	ENDDO
+	ENDDO
+
+    CALL MPI_ALLREDUCE(num_valid_cells,num_valid_cells_global,1,MPI_INTEGER8,MPI_MAX,comm,errcode)
+    npart_per_cell_average=SpeciesList%Count/num_valid_cells_global
+    IF (npart_per_cell_average == 0) npart_per_cell_average=1
+
+    CALL MPI_ALLREDUCE(Density_Total,Density_Total_global,1,mpireal,MPI_SUM,comm,errcode)
+    Density_Average=Density_Total_global/REAL(num_valid_cells_global,num)
+
+    !Assume that a cell with the average density has the average number of particles per cell
+    !Now calculate the new minimum density 
+    minrho = Density_Average/REAL(npart_per_cell_average,num)
+    !Set the particle weight
+    weight = minrho * dx * dy *dz
+
+    !Recalculate the number of valid cells and the summed density
+    num_valid_cells=0
+    Density_Total=0.0_num
+	DO iz=1,nz
+    	DO iy=1,ny
+       	DO ix=1,nx
+          	IF (Density(ix,iy,iz) .GE. minrho) THEN
+             	num_valid_cells=num_valid_cells+1
+             	Density_Total=Density_Total + Density(ix,iy,iz)
+          	ENDIF
+       	ENDDO
+    	ENDDO
+	ENDDO
+
+    npart_this_proc_new=Density_Total/Density_Average * REAL(npart_per_cell_average,num)
+
+    CALL Destroy_PartList(PartList)
+    CALL Create_Allocated_PartList(PartList,npart_this_proc_new)
+    Current=>PartList%Head
+	DO iz=1,nz
+    	DO ix=1,nx
+       	DO iy=1,ny
+          	ipart=0
+          	npart_per_cell = Density(ix,iy,iz)/Density_Average * REAL(npart_per_cell_average,num)
+          	DO WHILE(ASSOCIATED(Current) .AND. ipart .LT. npart_per_cell)
+#ifdef PER_PARTICLE_CHARGEMASS
+             !Even if particles have per particle charge and mass, assume that 
+             !initially they all have the same charge and mass (user can easily override)
+             Current%Charge=SpeciesList%Charge
+             Current%Mass=SpeciesList%Mass
+#endif
+             rpos=random(idum)-0.5_num
+             rpos=(rpos*dx)+x(ix)
+             Current%Part_Pos(1)=rpos
+             rpos=random(idum)-0.5_num
+             rpos=(rpos*dy)+y(iy)
+             Current%Part_Pos(2)=rpos
+             rpos=random(idum)-0.5_num
+             rpos=(rpos*dz)+z(iz)
+             Current%Part_Pos(3)=rpos
+             ipart=ipart+1
+             Current=>Current%Next
+          ENDDO
+       ENDDO
+    ENDDO
+	ENDDO
+
+    DO WHILE(ASSOCIATED(Current))
+       Next=>Current%Next
+       CALL Remove_Particle_From_PartList(PartList,Current)
+       DEALLOCATE(Current)
+       Current=>Next
+    ENDDO
+    CALL MPI_REDUCE(PartList%Count,npart_this_species,1,MPI_INTEGER8,MPI_SUM,0,comm,errcode)
+    SpeciesList%Count=npart_this_species
+    IF (rank .EQ. 0) THEN
+       PRINT *,"Loaded",npart_this_species,"particles of species ",TRIM(SpeciesList%Name)
+       WRITE(20,*) "Loaded",npart_this_species,"particles of species ",TRIM(SpeciesList%Name)
+    ENDIF
+    CALL Particle_BCS
+
+
+  END SUBROUTINE NonUniformLoadParticles
 
   !This subroutine automatically loads a uniform density of pseudoparticles
   SUBROUTINE LoadParticles(SpeciesList,loadlist,idum)
@@ -324,7 +436,7 @@ CONTAINS
     INTEGER :: cell_x,cell_y,cell_z
     INTEGER(KIND=8) :: ipart
     REAL(num),DIMENSION(:,:,:),ALLOCATABLE :: Weight_Fn,Temp
-    REAL(num),DIMENSION(-1:1) :: gx,gy,gz
+    REAL(num),DIMENSION(-2:2) :: gx,gy,gz
     REAL(num) :: Data,rpos
     TYPE(ParticleList),POINTER :: PartList
     INTEGER :: iSubx,iSuby,iSubz
@@ -382,23 +494,15 @@ CONTAINS
        cell_z=NINT(cell_z_r)
        cell_frac_z = REAL(cell_z,num) - cell_z_r
        cell_z=cell_z+1
-!       PRINT *,rank,cell_z
 
-       gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-       gx( 0) = 0.75_num - ABS(cell_frac_x)**2
-       gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
-
-       gy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-       gy( 0) = 0.75_num - ABS(cell_frac_y)**2
-       gy( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-
-       gz(-1) = 0.5_num * (1.5_num - ABS(cell_frac_z - 1.0_num))**2
-       gz( 0) = 0.75_num - ABS(cell_frac_z)**2
-       gz( 1) = 0.5_num * (1.5_num - ABS(cell_frac_z + 1.0_num))**2
+		 CALL ParticleToGrid(cell_frac_x,gx)
+		 CALL ParticleToGrid(cell_frac_y,gy)
+		 CALL ParticleToGrid(cell_frac_z,gz)
+			
        Data=1.0_num/(dx*dy*dz) !Simply want to count particles per metre^2
-       DO iSubz=-1,1
-          DO iSuby=-1,1
-             DO iSubx=-1,1
+       DO iSubz=-sf_order,sf_order
+          DO iSuby=-sf_order,sf_order
+             DO iSubx=-sf_order,sf_order
                 Weight_Fn(cell_x+iSubx,cell_y+iSuby,cell_z+iSubz) = Weight_Fn(cell_x+iSubx,cell_y+iSuby,cell_z+iSubZ) + & 
                      gx(iSubx) * gy(iSuby) * gz(iSubz) * Data
              ENDDO
@@ -408,10 +512,6 @@ CONTAINS
        ipart=ipart+1
     ENDDO
     CALL Processor_Summation_BCS(Weight_Fn)
-!!$    IF (left  .EQ. MPI_PROC_NULL) Weight_Fn(0 ,:)=Weight_Fn(1,:)
-!!$    IF (right .EQ. MPI_PROC_NULL) Weight_Fn(nx,:)=Weight_Fn(nx-1,:)
-!!$    IF (down  .EQ. MPI_PROC_NULL) Weight_Fn(: ,0)=Weight_Fn(:,1)
-!!$    IF (up    .EQ. MPI_PROC_NULL) Weight_Fn(:,ny)=Weight_Fn(:,ny-1)
     CALL Field_Zero_Gradient(Weight_Fn,.TRUE.)
     DO iz=-2,nz+2
        DO iy=-2,ny+2
@@ -424,10 +524,6 @@ CONTAINS
           ENDDO
        ENDDO
     ENDDO
-!!$    IF (left  .EQ. MPI_PROC_NULL) Weight_Fn(0 ,:)=Weight_Fn(1,:)
-!!$    IF (right .EQ. MPI_PROC_NULL) Weight_Fn(nx,:)=Weight_Fn(nx-1,:)
-!!$    IF (down  .EQ. MPI_PROC_NULL) Weight_Fn(: ,0)=Weight_Fn(:,1)
-!!$    IF (up    .EQ. MPI_PROC_NULL) Weight_Fn(:,ny)=Weight_Fn(:,ny-1)
     CALL Field_Zero_Gradient(Weight_Fn,.TRUE.)
 
 
@@ -452,23 +548,14 @@ CONTAINS
        cell_frac_z = REAL(cell_z,num) - cell_z_r
        cell_z=cell_z+1
 
-
-       gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
-       gx( 0) = 0.75_num - cell_frac_x**2
-       gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
-
-       gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
-       gy( 0) = 0.75_num - cell_frac_y**2
-       gy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
-
-       gz(-1) = 0.5_num * (0.5_num + cell_frac_z)**2
-       gz( 0) = 0.75_num - cell_frac_z**2
-       gz( 1) = 0.5_num * (0.5_num - cell_frac_z)**2
+		 CALL GridToParticle(cell_frac_x,gx)
+		 CALL GridToParticle(cell_frac_y,gy)
+		 CALL GridToParticle(cell_frac_z,gz)
 
        weight_local=0.0_num
-       DO iSubz=-1,+1
-          DO iSuby=-1,+1
-             DO iSubx=-1,+1
+       DO iSubz=-sf_order,+sf_order
+          DO iSuby=-sf_order,+sf_order
+             DO iSubx=-sf_order,+sf_order
                 weight_local=weight_local+gx(iSubx)*gy(iSuby)*gz(iSubz)*Weight_Fn(cell_x+iSubx,cell_y+iSuby,cell_z+iSubz)
              ENDDO
           ENDDO
@@ -519,6 +606,41 @@ CONTAINS
     MomentumFromTemperature = rand1 * w * stdev
 
   END FUNCTION MomentumFromTemperature
+
+FUNCTION Sample_Dist_Function(axis,Dist_Fn,idum)
+  REAL(num),DIMENSION(:),INTENT(IN) :: axis,Dist_Fn
+  INTEGER, INTENT(INOUT) :: idum
+  REAL(num),DIMENSION(:),ALLOCATABLE :: CDF
+  REAL(num) :: Position,d_cdf
+  INTEGER :: n_points, iPoint, start, endpoint, current
+  REAL(num) :: Sample_Dist_Function
+
+  n_points=SIZE(Dist_Fn)
+  ALLOCATE(CDF(1:n_points))
+  DO iPoint=1,n_points
+     CDF(iPoint)=SUM(Dist_Fn(1:iPoint))
+  ENDDO
+  CDF=CDF/SUM(Dist_Fn)
+
+  Position=Random(iDum)
+	sample_dist_function=0.0_num
+
+  start=1
+  endpoint=n_points
+  current=(start+endpoint)/2
+
+  DO current=1,n_points-1
+     IF (CDF(Current) .LE. Position .AND. CDF(Current+1) .GE. Position) THEN
+        d_cdf=CDF(Current+1)-CDF(Current)
+        Sample_Dist_Function=(Axis(Current)*(Position-CDF(Current))/d_cdf + &
+             Axis(Current+1)*(CDF(Current+1)-Position)/d_cdf)
+        EXIT
+     ENDIF
+  ENDDO
+  DEALLOCATE(CDF)
+
+
+END FUNCTION Sample_Dist_Function
 
   FUNCTION Random(idum)
 

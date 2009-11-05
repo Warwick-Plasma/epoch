@@ -178,6 +178,14 @@ MODULE shared_data
   !---------------------------------------------------------------------------------------
   !Particles
   !---------------------------------------------------------------------------------------
+
+  !The order for the spline interpolation used as a particle representation.
+#ifdef SPLINE_FOUR
+  INTEGER,PARAMETER :: sf_order=2
+#else
+  INTEGER,PARAMETER :: sf_order=1
+#endif
+
   !Object representing a particle
   TYPE :: Particle
      REAL(num), DIMENSION(3) :: Part_P

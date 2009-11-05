@@ -6,8 +6,8 @@ MODULE deck_eio_particle_probe_block
 #ifndef PARTICLE_PROBES
 CONTAINS
 
-  SUBROUTINE Probe_Dummy
-  END SUBROUTINE Probe_Dummy
+  SUBROUTINE Probe_Deck_Dummy
+  END SUBROUTINE Probe_Deck_Dummy
 #else
 
   SAVE

@@ -1,6 +1,7 @@
 MODULE particles
   USE shared_data
   USE boundary
+  USE shape_functions
 
   IMPLICIT NONE
 
@@ -61,16 +62,16 @@ CONTAINS
     !Defined at the particle position
     REAL(num) :: gmx,gmy,gmz,g0x,g0y,g0z,gpx,gpy,gpz
 
+	!Particle Weight factors as described in the manual (FIXREF)
+ 	REAL(num),DIMENSION(-2:2) :: gx, gy, gz
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * hmx + F(j) * h0x + F(j+1) * hpx
-    !Defined at the particle position - 0.5 grid cell in each direction
-    !This is to deal with the grid stagger
-    REAL(num) :: hmx,hmy,hmz,h0x,h0y,h0z,hpx,hpy,hpz
+	!Particle Weight factors as described in the manual (FIXREF)
+ 	!Defined at the particle position - 0.5 grid cell in each direction
+ 	!This is to deal with the grid stagger
+ 	REAL(num),DIMENSION(-2:2) :: hx, hy, hz
 
-    !Fields at particle location
-    REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part
+	 !Fields at particle location
+	 REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part,e_part
 
     !P+ and P- from Page27 of manual
     REAL(num) :: pxp,pxm,pyp,pym,pzp,pzm
@@ -194,120 +195,19 @@ CONTAINS
           cell_frac_z = REAL(cell_z1,num) - cell_z_r
           cell_z1=cell_z1+1
 
-          fail=0
-          IF (cell_x1 .LT. 0) fail=fail+1
-          IF (cell_x1 .GT. nx+1) fail=fail+2
-          IF (cell_y1 .LT. 0) fail=fail+4
-          IF (cell_y1 .GT. ny+1) fail=fail+8
-          IF (cell_z1 .LT. 0) fail=fail+16
-          IF (cell_z1 .GT. nz+1) fail=fail+32
+			!Particle Weight factors as described in the manual (FIXREF)
+			!These weight grid properties onto particles
+ 			CALL GridToParticle(cell_frac_x,gx)
+ 			CALL GridToParticle(cell_frac_y,gy)
+ 			CALL GridToParticle(cell_frac_z,gz)
 
-          IF (fail .NE. 0) THEN
-             PRINT *,part_px,part_py,part_pz,part_m
-             !          CALL MPI_ABORT(comm,errcode)
-          ENDIF
+ 			!Particle Weight factors as described in the manual (FIXREF)
+ 			!These wieght particle properties onto grid
+ 			!This is used later to calculate J
 
-          !Grid weighting factors in 2D (2D analogue of equation 4.77 page 25 of manual)
-          !These weight grid properties onto particles
-          gmx=0.5_num * (0.5_num + cell_frac_x)**2
-          g0x=0.75_num - cell_frac_x**2
-          gpx=0.5_num * (0.5_num - cell_frac_x)**2
-
-          gmy=0.5_num * (0.5_num + cell_frac_y)**2
-          g0y=0.75_num - cell_frac_y**2
-          gpy=0.5_num * (0.5_num - cell_frac_y)**2
-
-          gmz=0.5_num * (0.5_num + cell_frac_z)**2
-          g0z=0.75_num - cell_frac_z**2
-          gpz=0.5_num * (0.5_num - cell_frac_z)**2
-
-          sum_local=SQRT(((part_px*part_weight)**2+(part_py*part_weight)**2+(part_pz*part_weight)**2)*c**2 + (part_m*part_weight)**2*c**4) - (part_m*part_weight)*c**2
-          !Calculate the sum of the particle velocities
-          ekbar_sum(cell_x1-1,cell_y1-1,cell_z1-1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1-1,part_species)+sum_local*gmx*gmy*gmz
-          ekbar_sum(cell_x1,cell_y1-1,cell_z1-1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1-1,part_species)+sum_local*g0x*gmy*gmz
-          ekbar_sum(cell_x1+1,cell_y1-1,cell_z1-1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1-1,part_species)+sum_local*gpx*gmy*gmz
-
-          ekbar_sum(cell_x1-1,cell_y1,cell_z1-1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1-1,part_species)+sum_local*gmx*g0y*gmz
-          ekbar_sum(cell_x1,cell_y1,cell_z1-1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1-1,part_species)+sum_local*g0x*g0y*gmz
-          ekbar_sum(cell_x1+1,cell_y1,cell_z1-1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1-1,part_species)+sum_local*gpx*g0y*gmz
-
-          ekbar_sum(cell_x1-1,cell_y1+1,cell_z1-1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1-1,part_species)+sum_local*gmx*gpy*gmz
-          ekbar_sum(cell_x1,cell_y1+1,cell_z1-1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1-1,part_species)+sum_local*g0x*gpy*gmz
-          ekbar_sum(cell_x1+1,cell_y1+1,cell_z1-1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1-1,part_species)+sum_local*gpx*gpy*gmz
-
-          ekbar_sum(cell_x1-1,cell_y1-1,cell_z1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1,part_species)+sum_local*gmx*gmy*g0z
-          ekbar_sum(cell_x1,cell_y1-1,cell_z1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1,part_species)+sum_local*g0x*gmy*g0z
-          ekbar_sum(cell_x1+1,cell_y1-1,cell_z1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1,part_species)+sum_local*gpx*gmy*g0z
-
-          ekbar_sum(cell_x1-1,cell_y1,cell_z1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1,part_species)+sum_local*gmx*g0y*g0z
-          ekbar_sum(cell_x1,cell_y1,cell_z1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1,part_species)+sum_local*g0x*g0y*g0z
-          ekbar_sum(cell_x1+1,cell_y1,cell_z1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1,part_species)+sum_local*gpx*g0y*g0z
-
-          ekbar_sum(cell_x1-1,cell_y1+1,cell_z1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1,part_species)+sum_local*gmx*gpy*g0z
-          ekbar_sum(cell_x1,cell_y1+1,cell_z1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1,part_species)+sum_local*g0x*gpy*g0z
-          ekbar_sum(cell_x1+1,cell_y1+1,cell_z1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1,part_species)+sum_local*gpx*gpy*g0z
-
-          ekbar_sum(cell_x1-1,cell_y1-1,cell_z1+1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1+1,part_species)+sum_local*gmx*gmy*gpz
-          ekbar_sum(cell_x1,cell_y1-1,cell_z1+1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1+1,part_species)+sum_local*g0x*gmy*gpz
-          ekbar_sum(cell_x1+1,cell_y1-1,cell_z1+1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1+1,part_species)+sum_local*gpx*gmy*gpz
-
-          ekbar_sum(cell_x1-1,cell_y1,cell_z1+1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1+1,part_species)+sum_local*gmx*g0y*gpz
-          ekbar_sum(cell_x1,cell_y1,cell_z1+1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1+1,part_species)+sum_local*g0x*g0y*gpz
-          ekbar_sum(cell_x1+1,cell_y1,cell_z1+1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1+1,part_species)+sum_local*gpx*g0y*gpz
-
-          ekbar_sum(cell_x1-1,cell_y1+1,cell_z1+1,part_species)=ekbar_sum(cell_x1-1,cell_y1-1,cell_z1+1,part_species)+sum_local*gmx*gpy*gpz
-          ekbar_sum(cell_x1,cell_y1+1,cell_z1+1,part_species)=ekbar_sum(cell_x1,cell_y1-1,cell_z1+1,part_species)+sum_local*g0x*gpy*gpz
-          ekbar_sum(cell_x1+1,cell_y1+1,cell_z1+1,part_species)=ekbar_sum(cell_x1+1,cell_y1-1,cell_z1+1,part_species)+sum_local*gpx*gpy*gpz
-
-          !Calculate the particle weights on the grid
-          ct(cell_x1-1,cell_y1-1,cell_z1-1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1-1,part_species)+ gmx*gmy*gmz
-          ct(cell_x1,cell_y1-1,cell_z1-1,part_species)=ct(cell_x1,cell_y1-1,cell_z1-1,part_species)+ g0x*gmy*gmz
-          ct(cell_x1+1,cell_y1-1,cell_z1-1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1-1,part_species)+gpx*gmy*gmz
-
-          ct(cell_x1-1,cell_y1,cell_z1-1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1-1,part_species)+gmx*g0y*gmz
-          ct(cell_x1,cell_y1,cell_z1-1,part_species)=ct(cell_x1,cell_y1-1,cell_z1-1,part_species)+g0x*g0y*gmz
-          ct(cell_x1+1,cell_y1,cell_z1-1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1-1,part_species)+gpx*g0y*gmz
-
-          ct(cell_x1-1,cell_y1+1,cell_z1-1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1-1,part_species)+gmx*gpy*gmz
-          ct(cell_x1,cell_y1+1,cell_z1-1,part_species)=ct(cell_x1,cell_y1-1,cell_z1-1,part_species)+g0x*gpy*gmz
-          ct(cell_x1+1,cell_y1+1,cell_z1-1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1-1,part_species)+gpx*gpy*gmz
-
-          ct(cell_x1-1,cell_y1-1,cell_z1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1,part_species)+gmx*gmy*g0z
-          ct(cell_x1,cell_y1-1,cell_z1,part_species)=ct(cell_x1,cell_y1-1,cell_z1,part_species)+g0x*gmy*g0z
-          ct(cell_x1+1,cell_y1-1,cell_z1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1,part_species)+gpx*gmy*g0z
-
-          ct(cell_x1-1,cell_y1,cell_z1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1,part_species)+gmx*g0y*g0z
-          ct(cell_x1,cell_y1,cell_z1,part_species)=ct(cell_x1,cell_y1-1,cell_z1,part_species)+g0x*g0y*g0z
-          ct(cell_x1+1,cell_y1,cell_z1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1,part_species)+gpx*g0y*g0z
-
-          ct(cell_x1-1,cell_y1+1,cell_z1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1,part_species)+gmx*gpy*g0z
-          ct(cell_x1,cell_y1+1,cell_z1,part_species)=ct(cell_x1,cell_y1-1,cell_z1,part_species)+g0x*gpy*g0z
-          ct(cell_x1+1,cell_y1+1,cell_z1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1,part_species)+gpx*gpy*g0z
-
-          ct(cell_x1-1,cell_y1-1,cell_z1+1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1+1,part_species)+gmx*gmy*gpz
-          ct(cell_x1,cell_y1-1,cell_z1+1,part_species)=ct(cell_x1,cell_y1-1,cell_z1+1,part_species)+g0x*gmy*gpz
-          ct(cell_x1+1,cell_y1-1,cell_z1+1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1+1,part_species)+gpx*gmy*gpz
-
-          ct(cell_x1-1,cell_y1,cell_z1+1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1+1,part_species)+gmx*g0y*gpz
-          ct(cell_x1,cell_y1,cell_z1+1,part_species)=ct(cell_x1,cell_y1-1,cell_z1+1,part_species)+g0x*g0y*gpz
-          ct(cell_x1+1,cell_y1,cell_z1+1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1+1,part_species)+gpx*g0y*gpz
-
-          ct(cell_x1-1,cell_y1+1,cell_z1+1,part_species)=ct(cell_x1-1,cell_y1-1,cell_z1+1,part_species)+gmx*gpy*gpz
-          ct(cell_x1,cell_y1+1,cell_z1+1,part_species)=ct(cell_x1,cell_y1-1,cell_z1+1,part_species)+g0x*gpy*gpz
-          ct(cell_x1+1,cell_y1+1,cell_z1+1,part_species)=ct(cell_x1+1,cell_y1-1,cell_z1+1,part_species)+gpx*gpy*gpz
-
-          !Particle weighting factors in 2D (2D analogue of 4.140 page 38 of manual)
-          !These wieght particle properties onto grid
-          !This is used later to calculate J
-          Xi0x(-1)=0.5_num * (1.5_num - ABS(cell_frac_x-1.0_num))**2
-          Xi0x(+0)=0.75_num - ABS(cell_frac_x)**2
-          Xi0x(+1)=0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
-          Xi0y(-1)=0.5_num * (1.5_num - ABS(cell_frac_y-1.0_num))**2
-          Xi0y(+0)=0.75_num - ABS(cell_frac_y)**2
-          Xi0y(+1)=0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-          Xi0z(-1)=0.5_num * (1.5_num - ABS(cell_frac_z-1.0_num))**2
-          Xi0z(+0)=0.75_num - ABS(cell_frac_z)**2
-          Xi0z(+1)=0.5_num * (1.5_num - ABS(cell_frac_z + 1.0_num))**2
+			CALL ParticleToGrid(cell_frac_x,Xi0x(-2:2))
+			CALL ParticleToGrid(cell_frac_y,Xi0y(-2:2))
+			CALL ParticleToGrid(cell_frac_z,Xi0z(-2:2))
 
           !Now redo shifted by half a cell due to grid stagger.
           !Use shifted version for Ex in X, Ey in Y, Ez in Z
@@ -327,21 +227,12 @@ CONTAINS
           cell_frac_z = REAL(cell_z2,num) - cell_z_r
           cell_z2 = cell_z2 + 1
 
-!!$
+			!Particle Weight factors as described in the manual (FIXREF)
+			!These weight grid properties onto particles
+			CALL GridToParticle(cell_frac_x,hx)
+			CALL GridToParticle(cell_frac_y,hy)
+			CALL GridToParticle(cell_frac_z,hz)
 
-          !Grid weighting factors in 3D (3D analogue of equation 4.77 page 25 of manual)
-          !These weight grid properties onto particles
-          hmx=0.5_num * (0.5_num + cell_frac_x)**2
-          h0x=0.75_num - cell_frac_x**2
-          hpx=0.5_num * (0.5_num - cell_frac_x)**2
-
-          hmy=0.5_num * (0.5_num + cell_frac_y)**2
-          h0y=0.75_num - cell_frac_y**2
-          hpy=0.5_num * (0.5_num - cell_frac_y)**2
-
-          hmz=0.5_num * (0.5_num + cell_frac_z)**2
-          h0z=0.75_num - cell_frac_z**2
-          hpz=0.5_num * (0.5_num - cell_frac_z)**2
 
           ex_part=0.0_num
           ey_part=0.0_num
@@ -353,65 +244,19 @@ CONTAINS
           !These are the electric an magnetic fields interpolated to the
           !Particle position. They have been checked and are correct.
           !Actually checking this is messy.
-          ex_part=gmz * (gmy * (hmx*ex(cell_x2-1,cell_y1-1,cell_z1-1) + h0x*ex(cell_x2,cell_y1-1,cell_z1-1) + hpx*ex(cell_x2+1,cell_y1-1,cell_z1-1))&
-               +g0y * (hmx*ex(cell_x2-1,cell_y1,cell_z1-1) + h0x*ex(cell_x2,cell_y1,cell_z1-1) + hpx*ex(cell_x2+1,cell_y1,cell_z1-1))&
-               +gpy * (hmx*ex(cell_x2-1,cell_y1+1,cell_z1-1) + h0x*ex(cell_x2,cell_y1+1,cell_z1-1) + hpx*ex(cell_x2+1,cell_y1+1,cell_z1-1)))&
-               +g0z   * (gmy * (hmx*ex(cell_x2-1,cell_y1-1,cell_z1) + h0x*ex(cell_x2,cell_y1-1,cell_z1) + hpx*ex(cell_x2+1,cell_y1-1,cell_z1))&
-               +g0y * (hmx*ex(cell_x2-1,cell_y1,cell_z1) + h0x*ex(cell_x2,cell_y1,cell_z1) + hpx*ex(cell_x2+1,cell_y1,cell_z1))&
-               +gpy * (hmx*ex(cell_x2-1,cell_y1+1,cell_z1) + h0x*ex(cell_x2,cell_y1+1,cell_z1) + hpx*ex(cell_x2+1,cell_y1+1,cell_z1)))+&
-               gpz    * (gmy * (hmx*ex(cell_x2-1,cell_y1-1,cell_z1+1) + h0x*ex(cell_x2,cell_y1-1,cell_z1+1) + hpx*ex(cell_x2+1,cell_y1-1,cell_z1+1))&
-               +g0y * (hmx*ex(cell_x2-1,cell_y1,cell_z1+1) + h0x*ex(cell_x2,cell_y1,cell_z1+1) + hpx*ex(cell_x2+1,cell_y1,cell_z1+1))&
-               +gpy * (hmx*ex(cell_x2-1,cell_y1+1,cell_z1+1) + h0x*ex(cell_x2,cell_y1+1,cell_z1+1) + hpx*ex(cell_x2+1,cell_y1+1,cell_z1+1)))
+ 			DO ix=-sf_order,sf_order
+				DO iy=-sf_order,sf_order
+					DO iz=-sf_order,sf_order
+						ex_part=ex_part + hx(ix)*gy(iy)*gz(iz)*ex(cell_x2+ix,cell_y1+iy,cell_z1+iz)
+						ey_part=ey_part + gx(ix)*hy(iy)*gz(iz)*ey(cell_x1+ix,cell_y2+iy,cell_z1+iz)
+						ez_part=ez_part + gx(ix)*gy(iy)*gz(iz)*ez(cell_x1+ix,cell_y1+iy,cell_z1+iz)
 
-          ey_part=gmz * (hmy * (gmx*ey(cell_x2-1,cell_y1-1,cell_z1-1) + g0x*ey(cell_x2,cell_y1-1,cell_z1-1) + gpx*ey(cell_x2+1,cell_y1-1,cell_z1-1))&
-               +h0y * (gmx*ey(cell_x2-1,cell_y1,cell_z1-1) + g0x*ey(cell_x2,cell_y1,cell_z1-1) + gpx*ey(cell_x2+1,cell_y1,cell_z1-1))&
-               +hpy * (gmx*ey(cell_x2-1,cell_y1+1,cell_z1-1) + g0x*ey(cell_x2,cell_y1+1,cell_z1-1) + gpx*ey(cell_x2+1,cell_y1+1,cell_z1-1)))&
-               +g0z   * (hmy * (gmx*ey(cell_x2-1,cell_y1-1,cell_z1) + g0x*ey(cell_x2,cell_y1-1,cell_z1) + gpx*ey(cell_x2+1,cell_y1-1,cell_z1))&
-               +h0y * (gmx*ey(cell_x2-1,cell_y1,cell_z1) + g0x*ey(cell_x2,cell_y1,cell_z1) + gpx*ey(cell_x2+1,cell_y1,cell_z1))&
-               +hpy * (gmx*ey(cell_x2-1,cell_y1+1,cell_z1) + g0x*ey(cell_x2,cell_y1+1,cell_z1) + gpx*ey(cell_x2+1,cell_y1+1,cell_z1)))+&
-               gpz    * (hmy * (gmx*ey(cell_x2-1,cell_y1-1,cell_z1+1) + g0x*ey(cell_x2,cell_y1-1,cell_z1+1) + gpx*ey(cell_x2+1,cell_y1-1,cell_z1+1))&
-               +h0y * (gmx*ey(cell_x2-1,cell_y1,cell_z1+1) + g0x*ey(cell_x2,cell_y1,cell_z1+1) + gpx*ey(cell_x2+1,cell_y1,cell_z1+1))&
-               +hpy * (gmx*ey(cell_x2-1,cell_y1+1,cell_z1+1) + g0x*ey(cell_x2,cell_y1+1,cell_z1+1) + gpx*ey(cell_x2+1,cell_y1+1,cell_z1+1)))
-
-          ez_part=hmz * (gmy * (gmx*ez(cell_x2-1,cell_y1-1,cell_z1-1) + g0x*ez(cell_x2,cell_y1-1,cell_z1-1) + gpx*ez(cell_x2+1,cell_y1-1,cell_z1-1))&
-               +g0y * (gmx*ez(cell_x2-1,cell_y1,cell_z1-1) + g0x*ez(cell_x2,cell_y1,cell_z1-1) + gpx*ez(cell_x2+1,cell_y1,cell_z1-1))&
-               +gpy * (gmx*ez(cell_x2-1,cell_y1+1,cell_z1-1) + g0x*ez(cell_x2,cell_y1+1,cell_z1-1) + gpx*ez(cell_x2+1,cell_y1+1,cell_z1-1)))&
-               +h0z   * (gmy * (gmx*ez(cell_x2-1,cell_y1-1,cell_z1) + g0x*ez(cell_x2,cell_y1-1,cell_z1) + gpx*ez(cell_x2+1,cell_y1-1,cell_z1))&
-               +g0y * (gmx*ez(cell_x2-1,cell_y1,cell_z1) + g0x*ez(cell_x2,cell_y1,cell_z1) + gpx*ez(cell_x2+1,cell_y1,cell_z1))&
-               +gpy * (gmx*ez(cell_x2-1,cell_y1+1,cell_z1) + g0x*ez(cell_x2,cell_y1+1,cell_z1) + gpx*ez(cell_x2+1,cell_y1+1,cell_z1)))+&
-               hpz    * (gmy * (gmx*ez(cell_x2-1,cell_y1-1,cell_z1+1) + g0x*ez(cell_x2,cell_y1-1,cell_z1+1) + gpx*ez(cell_x2+1,cell_y1-1,cell_z1+1))&
-               +g0y * (gmx*ez(cell_x2-1,cell_y1,cell_z1+1) + g0x*ez(cell_x2,cell_y1,cell_z1+1) + gpx*ez(cell_x2+1,cell_y1,cell_z1+1))&
-               +gpy * (gmx*ez(cell_x2-1,cell_y1+1,cell_z1+1) + g0x*ez(cell_x2,cell_y1+1,cell_z1+1) + gpx*ez(cell_x2+1,cell_y1+1,cell_z1+1)))
-
-          bx_part=hmz * (hmy * (gmx*bx(cell_x2-1,cell_y1-1,cell_z1-1) + g0x*bx(cell_x2,cell_y1-1,cell_z1-1) + gpx*bx(cell_x2+1,cell_y1-1,cell_z1-1))&
-               +h0y * (gmx*bx(cell_x2-1,cell_y1,cell_z1-1) + g0x*bx(cell_x2,cell_y1,cell_z1-1) + gpx*bx(cell_x2+1,cell_y1,cell_z1-1))&
-               +hpy * (gmx*bx(cell_x2-1,cell_y1+1,cell_z1-1) + g0x*bx(cell_x2,cell_y1+1,cell_z1-1) + gpx*bx(cell_x2+1,cell_y1+1,cell_z1-1)))&
-               +h0z   * (hmy * (gmx*bx(cell_x2-1,cell_y1-1,cell_z1) + g0x*bx(cell_x2,cell_y1-1,cell_z1) + gpx*bx(cell_x2+1,cell_y1-1,cell_z1))&
-               +h0y * (gmx*bx(cell_x2-1,cell_y1,cell_z1) + g0x*bx(cell_x2,cell_y1,cell_z1) + gpx*bx(cell_x2+1,cell_y1,cell_z1))&
-               +hpy * (gmx*bx(cell_x2-1,cell_y1+1,cell_z1) + g0x*bx(cell_x2,cell_y1+1,cell_z1) + gpx*bx(cell_x2+1,cell_y1+1,cell_z1)))+&
-               hpz    * (hmy * (gmx*bx(cell_x2-1,cell_y1-1,cell_z1+1) + g0x*bx(cell_x2,cell_y1-1,cell_z1+1) + gpx*bx(cell_x2+1,cell_y1-1,cell_z1+1))&
-               +h0y * (gmx*bx(cell_x2-1,cell_y1,cell_z1+1) + g0x*bx(cell_x2,cell_y1,cell_z1+1) + gpx*bx(cell_x2+1,cell_y1,cell_z1+1))&
-               +hpy * (gmx*bx(cell_x2-1,cell_y1+1,cell_z1+1) + g0x*bx(cell_x2,cell_y1+1,cell_z1+1) + gpx*bx(cell_x2+1,cell_y1+1,cell_z1+1)))
-
-          by_part=hmz * (gmy * (hmx*by(cell_x2-1,cell_y1-1,cell_z1-1) + h0x*by(cell_x2,cell_y1-1,cell_z1-1) + hpx*by(cell_x2+1,cell_y1-1,cell_z1-1))&
-               +g0y * (hmx*by(cell_x2-1,cell_y1,cell_z1-1) + h0x*by(cell_x2,cell_y1,cell_z1-1) + hpx*by(cell_x2+1,cell_y1,cell_z1-1))&
-               +gpy * (hmx*by(cell_x2-1,cell_y1+1,cell_z1-1) + h0x*by(cell_x2,cell_y1+1,cell_z1-1) + hpx*by(cell_x2+1,cell_y1+1,cell_z1-1)))&
-               +h0z   * (gmy * (gmx*by(cell_x2-1,cell_y1-1,cell_z1) + g0x*by(cell_x2,cell_y1-1,cell_z1) + gpx*by(cell_x2+1,cell_y1-1,cell_z1))&
-               +g0y * (hmx*by(cell_x2-1,cell_y1,cell_z1) + h0x*by(cell_x2,cell_y1,cell_z1) + hpx*by(cell_x2+1,cell_y1,cell_z1))&
-               +gpy * (gmx*by(cell_x2-1,cell_y1+1,cell_z1) + g0x*by(cell_x2,cell_y1+1,cell_z1) + gpx*by(cell_x2+1,cell_y1+1,cell_z1)))+&
-               hpz    * (gmy * (hmx*by(cell_x2-1,cell_y1-1,cell_z1+1) + h0x*by(cell_x2,cell_y1-1,cell_z1+1) + hpx*by(cell_x2+1,cell_y1-1,cell_z1+1))&
-               +g0y * (hmx*by(cell_x2-1,cell_y1,cell_z1+1) + h0x*by(cell_x2,cell_y1,cell_z1+1) + hpx*by(cell_x2+1,cell_y1,cell_z1+1))&
-               +gpy * (hmx*by(cell_x2-1,cell_y1+1,cell_z1+1) + h0x*by(cell_x2,cell_y1+1,cell_z1+1) + hpx*by(cell_x2+1,cell_y1+1,cell_z1+1)))
-
-          bz_part=gmz * (hmy * (hmx*bz(cell_x2-1,cell_y1-1,cell_z1-1) + h0x*bz(cell_x2,cell_y1-1,cell_z1-1) + hpx*bz(cell_x2+1,cell_y1-1,cell_z1-1))&
-               +h0y * (hmx*bz(cell_x2-1,cell_y1,cell_z1-1) + h0x*bz(cell_x2,cell_y1,cell_z1-1) + hpx*bz(cell_x2+1,cell_y1,cell_z1-1))&
-               +hpy * (hmx*bz(cell_x2-1,cell_y1+1,cell_z1-1) + h0x*bz(cell_x2,cell_y1+1,cell_z1-1) + hpx*bz(cell_x2+1,cell_y1+1,cell_z1-1)))&
-               +g0z   * (hmy * (hmx*bz(cell_x2-1,cell_y1-1,cell_z1) + h0x*bz(cell_x2,cell_y1-1,cell_z1) + hpx*bz(cell_x2+1,cell_y1-1,cell_z1))&
-               +h0y * (hmx*bz(cell_x2-1,cell_y1,cell_z1) + h0x*bz(cell_x2,cell_y1,cell_z1) + hpx*bz(cell_x2+1,cell_y1,cell_z1))&
-               +hpy * (hmx*bz(cell_x2-1,cell_y1+1,cell_z1) + h0x*bz(cell_x2,cell_y1+1,cell_z1) + hpx*bz(cell_x2+1,cell_y1+1,cell_z1)))+&
-               gpz    * (hmy * (gmx*bz(cell_x2-1,cell_y1-1,cell_z1+1) + h0x*bz(cell_x2,cell_y1-1,cell_z1+1) + hpx*bz(cell_x2+1,cell_y1-1,cell_z1+1))&
-               +h0y * (hmx*bz(cell_x2-1,cell_y1,cell_z1+1) + h0x*bz(cell_x2,cell_y1,cell_z1+1) + hpx*bz(cell_x2+1,cell_y1,cell_z1+1))&
-               +hpy * (hmx*bz(cell_x2-1,cell_y1+1,cell_z1+1) + h0x*bz(cell_x2,cell_y1+1,cell_z1+1) + hpx*bz(cell_x2+1,cell_y1+1,cell_z1+1)))
+						bx_part=bx_part + gx(ix)*hy(iy)*hz(iz)*bx(cell_x1+ix,cell_y2+iy,cell_z2+iz)
+						by_part=by_part + hx(ix)*gy(iy)*hz(iz)*by(cell_x2+ix,cell_y1+iy,cell_z2+iz)
+						bz_part=bz_part + hx(ix)*hy(iy)*gz(iz)*bz(cell_x2+ix,cell_y2+iy,cell_z1+iz)
+					ENDDO
+				ENDDO
+			ENDDO
 
           !update particle momenta using weighted fields
           cmratio = part_q * 0.5_num * dt
@@ -498,20 +343,9 @@ CONTAINS
              cell_frac_z = REAL(cell_z3,num) - cell_z_r
              cell_z3 = cell_z3 + 1
 
-
-!!$
-
-             Xi1x(cell_x3 - cell_x1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-             Xi1x(cell_x3 - cell_x1 + 0) = 0.75_num - ABS(cell_frac_x)**2
-             Xi1x(cell_x3 - cell_x1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
-
-             Xi1y(cell_y3 - cell_y1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-             Xi1y(cell_y3 - cell_y1 + 0) = 0.75_num - ABS(cell_frac_y)**2
-             Xi1y(cell_y3 - cell_y1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-
-             Xi1z(cell_z3 - cell_z1 - 1) = 0.5_num * (1.5_num - ABS(cell_frac_z - 1.0_num))**2
-             Xi1z(cell_z3 - cell_z1 + 0) = 0.75_num - ABS(cell_frac_z)**2
-             Xi1z(cell_z3 - cell_z1 + 1) = 0.5_num * (1.5_num - ABS(cell_frac_z + 1.0_num))**2
+				CALL ParticleToGrid(cell_frac_x,Xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
+				CALL ParticleToGrid(cell_frac_y,Xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
+				CALL ParticleToGrid(cell_frac_z,Xi1z(cell_z3-cell_z1-2:cell_z3-cell_z1+2))
 
              !Now change Xi1* to be Xi1*-Xi0*. This makes the representation of the current update much simpler
              Xi1x = Xi1x - Xi0x
@@ -522,46 +356,42 @@ CONTAINS
              !Remember that due to CFL condition particle can never cross more than one gridcell
              !In one timestep
              IF (cell_x3 == cell_x1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
-                xmin = -1
-                xmax = +1
+                xmin = -sf_order
+                xmax = +sf_order
              ELSE IF (cell_x3 == cell_x1 - 1) THEN !Particle has moved one cell to left
-                xmin = -2
-                xmax = +1
+                xmin = -sf_order-1
+                xmax = +sf_order
              ELSE IF (cell_x3 == cell_x1 + 1) THEN !Particle has moved one cell to right
-                xmin=-1
-                xmax=+2
+                xmin=-sf_order
+                xmax=+sf_order+1
              ENDIF
 
              IF (cell_y3 == cell_y1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
-                ymin = -1
-                ymax = +1
+                ymin = -sf_order
+                ymax = +sf_order
              ELSE IF (cell_y3 == cell_y1 - 1) THEN !Particle has moved one cell to left
-                ymin = -2
-                ymax = +1
+                ymin = -sf_order-1
+                ymax = +sf_order
              ELSE IF (cell_y3 == cell_y1 + 1) THEN !Particle has moved one cell to right
-                ymin=-1
-                ymax=+2
+                ymin=-sf_order
+                ymax=+sf_order+1
              ENDIF
 
              IF (cell_z3 == cell_z1) THEN !Particle is still in same cell at t+1.5dt as at t+0.5dt
-                zmin = -1
-                zmax = +1
+                zmin = -sf_order
+                zmax = +sf_order
              ELSE IF (cell_z3 == cell_z1 - 1) THEN !Particle has moved one cell to left
-                zmin = -2
-                zmax = +1
+                zmin = -sf_order-1
+                zmax = +sf_order
              ELSE IF (cell_z3 == cell_z1 + 1) THEN !Particle has moved one cell to right
-                zmin=-1
-                zmax=+2
+                zmin=-sf_order
+                zmax=+sf_order+1
              ENDIF
 
              !Set these to zero due to diffential inside loop
              jxh=0.0_num
              jyh=0.0_num
              jzh=0.0_num
-
-             !IF (part_vz .NE. 0) PRINT *,"Moving PARTICLE ERROR"
-
-             !      jmx=MAXVAL(ABS(jz))
 
              DO iz=zmin,zmax
                 DO iy=ymin,ymax
@@ -597,7 +427,6 @@ CONTAINS
 #ifdef TRACER_PARTICLES
           ENDIF
 #endif
-          !       IF (MAXVAL(ABS(jz)) .NE. jmx) PRINT *,"J Change",jmx, wz,Part_vz
 #ifdef PARTICLE_PROBES
           ! Compare the current particle with the parameters of any probes in the system. 
           ! These particles are copied into a separate part of the output file.
@@ -669,10 +498,6 @@ CONTAINS
     DEALLOCATE(jxh)
     DEALLOCATE(jyh)
     DEALLOCATE(jzh)
-
-    !    jx=0.0_num
-    !    jy=0.0_num
-    !    jz=0.0_num
 
     CALL Particle_bcs
 
