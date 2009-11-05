@@ -78,8 +78,6 @@ CONTAINS
           cell_frac_y = REAL(cell_y,num) - cell_y_r
           cell_y=cell_y+1
 
-          IF (cell_y .LT. -2) PRINT *,cell_y,rank,part_y
-
 			 CALL ParticleToGrid(cell_frac_x,gx)
 			 CALL ParticleToGrid(cell_frac_y,gy)
 
