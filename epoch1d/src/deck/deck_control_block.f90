@@ -74,7 +74,7 @@ CONTAINS
     CheckControlBlock=ERR_NONE
 
     !npart is not a required variable
-    ControlBlockDone(3)=.TRUE.
+    ControlBlockDone(2)=.TRUE.
 
     !If not using external load then don't need a file
     IF (IAND(ictype,IC_EXTERNAL) .EQ. 0) ControlBlockDone(11)=.TRUE.
