@@ -332,8 +332,6 @@ CONTAINS
     CALL cfd_Write_3D_Cartesian_Variable_Parallel(TRIM(Var_Name),"dist_fn",global_resolution,Stagger,TRIM(Norm_Grid_Name),"Grid"&
          ,Data,Type_new)
     CALL MPI_Type_Free(Type_new,errcode)
-    IF (need_reduce) &
-         CALL MPI_COMM_FREE(comm_new,errcode)
 
     DEALLOCATE(Data)
     DEALLOCATE(Grid1,Grid2,Grid3)
@@ -586,8 +584,6 @@ CONTAINS
     CALL cfd_Write_2D_Cartesian_Variable_Parallel(TRIM(Var_Name),"dist_fn",global_resolution,Stagger,TRIM(Norm_Grid_Name),"Grid"&
          ,Data,Type_new)
     CALL MPI_Type_Free(Type_new,errcode)
-    IF (need_reduce) &
-         CALL MPI_COMM_FREE(comm_new,errcode)
 
     DEALLOCATE(Data)
     DEALLOCATE(Grid1,Grid2)
