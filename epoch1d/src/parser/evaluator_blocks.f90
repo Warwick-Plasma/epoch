@@ -297,7 +297,7 @@ CONTAINS
 
     IF (opcode .EQ. FUNC_ABS) THEN
 	CALL GetValues(1,Values)
-	CALL PushOnEval(ABS(Values(1))
+	CALL PushOnEval(ABS(Values(1)))
 	RETURN
     ENDIF
     IF (opcode .EQ. FUNC_SQRT) THEN
