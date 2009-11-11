@@ -1,4 +1,4 @@
-	MODULE evaluator_blocks
+MODULE evaluator_blocks
 
   USE shared_parser_data
   USE shared_data
@@ -295,6 +295,11 @@ CONTAINS
 	 REAL(num) :: T0
 
 
+    IF (opcode .EQ. FUNC_ABS) THEN
+	CALL GetValues(1,Values)
+	CALL PushOnEval(ABS(Values(1))
+	RETURN
+    ENDIF
     IF (opcode .EQ. FUNC_SQRT) THEN
        CALL GetValues(1,Values)
        CALL PushOnEval(SQRT(Values(1)))

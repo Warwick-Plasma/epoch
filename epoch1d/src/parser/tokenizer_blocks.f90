@@ -134,6 +134,7 @@ CONTAINS
     INTEGER :: i
     AsFunction=PRC_NOT_THIS_TYPE
 
+    IF (StrCmp(name,"abs")) AsFunction=FUNC_ABS
     IF (StrCmp(name,"sqrt")) AsFunction=FUNC_SQRT
     IF (StrCmp(name,"sin"))   AsFunction=FUNC_SINE
     IF (StrCmp(name,"cos"))   AsFunction=FUNC_COSINE
