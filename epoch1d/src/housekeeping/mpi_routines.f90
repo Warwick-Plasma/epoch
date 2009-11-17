@@ -48,7 +48,7 @@ CONTAINS
          reorder, comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
     CALL MPI_CART_COORDS(comm, rank, 1, coordinates, errcode)
-    CALL MPI_CART_SHIFT(comm, 1, 1, left, right, errcode)
+    CALL MPI_CART_SHIFT(comm, 0, 1, left, right, errcode)
 
     nprocx=dims(1)
 
