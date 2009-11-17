@@ -134,7 +134,17 @@ CONTAINS
 
   SUBROUTINE set_initial_values
 
+    Ex=0.0_num
+    Ey=0.0_num
+    Ez=0.0_num
 
+    Bx=0.0_num
+    By=0.0_num
+    Bz=0.0_num
+
+    Jx=0.0_num
+    Jy=0.0_num
+    Jz=0.0_num
 
   END SUBROUTINE set_initial_values
 
