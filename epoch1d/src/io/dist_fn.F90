@@ -31,6 +31,7 @@ CONTAINS
 
     NULLIFY(Block%Next)
     ALLOCATE(Block%Use_Species(1:nSpecies))
+    Block%Use_Species=.FALSE.
     Block%Ranges=1.0_num
     Block%Use_Restrictions=.FALSE.
     Block%nDims=-1
