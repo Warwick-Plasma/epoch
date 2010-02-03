@@ -4,7 +4,7 @@ MODULE ParticlePointerAdvance
   IMPLICIT NONE
 
 SAVE
-TYPE(ParticleFamily), POINTER, SAVE :: CurrentHead
+TYPE(ParticleFamily), POINTER :: CurrentHead
 
 CONTAINS
 

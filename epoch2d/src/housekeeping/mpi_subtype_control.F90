@@ -88,7 +88,7 @@ CONTAINS
   ! Create_Current_Field_Subtype - Creates the subtype corresponding to the current
   ! load balanced geometry
   !---------------------------------------------------------------------------------
-  FUNCTION Create_Current_Field_Subtype
+  FUNCTION Create_Current_Field_Subtype()
     INTEGER :: Create_Current_Field_Subtype
     Create_Current_Field_Subtype=Create_Field_Subtype(nx,ny,cell_x_start(coordinates(2)+1),cell_y_start(coordinates(1)+1))
   END FUNCTION Create_Current_Field_Subtype

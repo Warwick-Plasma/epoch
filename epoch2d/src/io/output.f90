@@ -294,7 +294,7 @@ CONTAINS
 
     CHARACTER(LEN=*),DIMENSION(:),INTENT(IN) :: ExpressionName,ExpressionClass,Expression
 
-    PRINT *,LEN(Expression(0)),LEN(Expression(1))
+    PRINT *,LEN(Expression(1)),LEN(Expression(2))
 
   END SUBROUTINE cfd_Write_VisIT_Expression
 

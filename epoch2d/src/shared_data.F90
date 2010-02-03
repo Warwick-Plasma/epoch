@@ -460,7 +460,7 @@ TYPE :: averaged_data_block
 	REAL(num) :: average_over_real_time
 	INTEGER :: number_of_iterations
 END TYPE averaged_data_block
-TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
+TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
 
   !---------------------------------------------------------------------------------------
   !Laser boundaries
