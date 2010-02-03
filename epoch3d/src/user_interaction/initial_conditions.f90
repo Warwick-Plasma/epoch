@@ -20,22 +20,16 @@ CONTAINS
   !-----------------------------------------------------------------------------
 
   SUBROUTINE IC_Early
-
-
   END SUBROUTINE IC_Early
 
+
+
   SUBROUTINE IC_Late
-
-    INTEGER :: iSpecies
-
-
   END SUBROUTINE IC_Late
 
+
+
   SUBROUTINE ManualLoad
-    TYPE(Particle),POINTER :: Current
-    INTEGER :: iSpecies
-
-
   END SUBROUTINE ManualLoad
 
 END MODULE initial_conditions

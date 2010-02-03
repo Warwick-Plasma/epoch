@@ -24,7 +24,6 @@ CONTAINS
     END INTERFACE
 
     INTEGER(KIND=8) :: mdlength,blocklength
-    INTEGER(KIND=MPI_OFFSET_KIND) :: initial_displacement
 
     !Outputs general block header as described in cfd_Write_Block_Header and then a single
     !string

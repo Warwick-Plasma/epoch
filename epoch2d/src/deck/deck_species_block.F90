@@ -20,9 +20,8 @@ CONTAINS
     CHARACTER(LEN=EntryLength) :: Part1
     INTEGER :: Part2
     INTEGER :: HandleSpeciesDeck
-    INTEGER :: loop,elementselected,partswitch
+    INTEGER :: partswitch
     LOGICAL :: Handled
-    REAL(num) :: mult
 
     HandleSpeciesDeck=ERR_NONE 
     IF (Value .EQ. blank) RETURN
@@ -190,7 +189,6 @@ CONTAINS
   FUNCTION CheckSpeciesBlock()
 
     INTEGER :: CheckSpeciesBlock
-    INTEGER :: iSpecies
 
     !Should do error checking but isn't really necessary at the moment
     CheckSpeciesBlock=ERR_NONE

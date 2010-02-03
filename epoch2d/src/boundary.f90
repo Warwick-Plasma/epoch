@@ -188,7 +188,7 @@ CONTAINS
 
     REAL(num),DIMENSION(-2:,-2:),INTENT(INOUT) :: array
     REAL(num),DIMENSION(:,:),ALLOCATABLE :: temp
-    INTEGER :: nxp,nyp,nzp
+    INTEGER :: nxp,nyp
 
     INTEGER,DIMENSION(-1:1,-1:1) :: Sizes,xStart,xEnd,yStart,yEnd,xshift,yshift
     INTEGER :: xs,xe,ys,ye,xf,yf

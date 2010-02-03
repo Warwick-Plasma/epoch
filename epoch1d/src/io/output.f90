@@ -57,7 +57,6 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: string
     CHARACTER(LEN=MaxStringLen) :: output
-    CHARACTER,DIMENSION(MaxStringLen) :: mask
     INTEGER :: len_s
 
     len_s=LEN(string)
@@ -80,7 +79,6 @@ CONTAINS
     INTEGER, INTENT(IN) :: blocktype,rank_write
     INTEGER(KIND=8),INTENT(IN) :: blocklength,blockmetadatalength
     INTEGER :: len_bn, len_bc
-    CHARACTER(len=MaxStringLen) :: output
 
     len_bn=LEN(blockname)
     len_bc=LEN(blockclass)

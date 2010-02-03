@@ -15,14 +15,7 @@ CONTAINS
 
   FUNCTION HandleICFieldsDeck(Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
-    CHARACTER(LEN=EntryLength) :: Part1
-    INTEGER :: Part2
     INTEGER :: HandleICFieldsDeck
-    INTEGER :: loop,elementselected,partswitch
-    LOGICAL :: Handled,Temp
-    REAL(num) :: conv_val
-    TYPE(primitivestack) :: output
-    INTEGER :: ix,iy,ERR
 
     HandleICFieldsDeck=ERR_NONE
     IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN

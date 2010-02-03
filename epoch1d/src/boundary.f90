@@ -121,10 +121,10 @@ CONTAINS
 
     REAL(num),DIMENSION(-2:),INTENT(INOUT) :: array
     REAL(num),DIMENSION(:),ALLOCATABLE :: temp
-    INTEGER :: nxp,nyp,nzp
+    INTEGER :: nxp
 
     INTEGER,DIMENSION(-1:1) :: Sizes,xStart,xEnd,xshift
-    INTEGER :: xs,xe,ys,ye,xf,yf
+    INTEGER :: xs,xe,xf
 
     nxp=nx+3
 

@@ -39,16 +39,6 @@ CONTAINS
        RETURN
     ENDIF
 
-!!$    IF (StrCmp(Element,"inflow_npart_per_cell")) THEN
-!!$       inflow_npart_per_cell=AsReal(Value,HandleWindowDeck)
-!!$       RETURN
-!!$    ENDIF
-!!$
-!!$    IF (StrCmp(Element,"inflow_number_density")) THEN
-!!$       inflow_number_density=AsReal(Value,HandleWindowDeck)
-!!$       RETURN
-!!$    ENDIF
-
     HandleWindowDeck=ERR_UNKNOWN_ELEMENT
 
   END FUNCTION HandleWindowDeck

@@ -165,7 +165,6 @@ CONTAINS
   !They're a bit ugly, but they seem to be the easiest way to do it without adding complexity to the code
   SUBROUTINE CheckCompulsoryBlocks(errcode_deck)
 
-    INTEGER :: index
     LOGICAL :: Problem_Found
     INTEGER,INTENT(INOUT) :: errcode_deck
 
@@ -250,7 +249,7 @@ CONTAINS
     integer :: pos=1,flip=1,s,f,elements=0,LUN
     LOGICAL :: IsComment
     TYPE(Entry), DIMENSION(2) :: DeckValues
-    CHARACTER(len=45+Data_Dir_Max_Length)::syscmd, DeckFilename, StatusFilename
+    CHARACTER(len=45+Data_Dir_Max_Length):: DeckFilename, StatusFilename
     LOGICAL :: Terminate =.FALSE., Exists
     INTEGER :: errcode_deck
     LOGICAL :: White_Space_Over
@@ -406,7 +405,6 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: Element
     CHARACTER(*),INTENT(IN) :: Value
     INTEGER,INTENT(INOUT) :: Errcode_deck
-    INTEGER :: Handled
     INTEGER :: State,rankcheck
     INTEGER, SAVE :: errcount
 

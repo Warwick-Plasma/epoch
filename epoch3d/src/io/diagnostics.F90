@@ -34,7 +34,6 @@ CONTAINS
     INTEGER(KIND=8) :: n_part_per_it=100000,npart_local,npart_dump_global
     INTEGER :: iSpecies,code
     INTEGER,DIMENSION(3) :: dims
-    TYPE(Distribution_Function_Block),POINTER :: Current
 
     dims=(/nx_global,ny_global,nz_global/)
 
@@ -257,8 +256,7 @@ CONTAINS
 
   SUBROUTINE set_dt        ! sets CFL limited step
 
-    REAL(num) :: dtx, dty, dtz, dt0
-    INTEGER :: ix, iy, iz
+    REAL(num) :: dtx, dty, dtz
 
     dtx=dx/c
     dty=dy/c
@@ -332,7 +330,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
 
@@ -377,7 +374,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
 
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
@@ -416,7 +412,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
 
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
@@ -537,7 +532,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
 
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily

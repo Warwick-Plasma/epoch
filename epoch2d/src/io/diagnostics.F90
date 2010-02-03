@@ -320,7 +320,6 @@ CONTAINS
   SUBROUTINE set_dt()        ! sets CFL limited step
 
     REAL(num) :: dtx,dty
-    INTEGER :: ix, iy
     dtx=dx/c
     dty=dy/c
     dt=dtx*dty/SQRT(dtx**2+dty**2)

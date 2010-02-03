@@ -60,7 +60,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
 
@@ -105,7 +104,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
 
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
@@ -144,7 +142,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
 
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
@@ -187,7 +184,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
 
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
@@ -225,7 +221,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
 
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily
@@ -265,7 +260,6 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(Particle),POINTER,SAVE :: Cur
     INTEGER(8) :: partcount
-    REAL(num) :: root
 
     TYPE(ParticleList),POINTER,SAVE :: CurrentList
     TYPE(ParticleFamily),POINTER,SAVE :: CurrentFamily

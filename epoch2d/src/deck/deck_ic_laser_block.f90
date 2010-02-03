@@ -20,14 +20,10 @@ CONTAINS
 
   FUNCTION HandleICLaserDeck(Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
-    CHARACTER(LEN=EntryLength) :: Part1
-    INTEGER :: Part2
     INTEGER :: HandleICLaserDeck
-    INTEGER :: loop,elementselected,partswitch
-    LOGICAL :: Handled,Temp
     REAL(num) :: dummy
     TYPE(primitivestack) :: output
-    INTEGER :: ix,iy,ERR
+    INTEGER :: ix,iy
 
     HandleICLaserDeck=ERR_NONE
     IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN

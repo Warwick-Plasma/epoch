@@ -185,7 +185,6 @@ CONTAINS
     INTEGER,INTENT(IN) :: nx_local
     INTEGER,INTENT(IN) :: cell_start_x_local
     INTEGER,DIMENSION(3) :: length,disp,type
-    INTEGER :: iPoint
     INTEGER :: Create_Field_Subtype
 
     !lengths=nx_local

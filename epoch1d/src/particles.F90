@@ -33,9 +33,6 @@ CONTAINS
     !The core of the PSC algorithm
     REAL(num),ALLOCATABLE,DIMENSION(:) :: jxh,jyh,jzh
 
-    !J_temp is used in the MPI
-    REAL(num),ALLOCATABLE,DIMENSION(:) :: J_temp
-
     !Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x,part_px,part_py,part_pz,part_q,part_m
     REAL(num) :: root,part_vx,part_vy,part_vz,part_weight
@@ -70,7 +67,7 @@ CONTAINS
     REAL(num),DIMENSION(-2:2) :: hx
 
     !Fields at particle location
-    REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part,e_part
+    REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part
 
     !P+ and P- from Page27 of manual
     REAL(num) :: pxp,pxm,pyp,pym,pzp,pzm
@@ -86,10 +83,10 @@ CONTAINS
     REAL(num) :: wx,wy,wz
 
     !Temporary variables
-    REAL(num) :: sum_local,sum_local_sqr,mean,jmx
-    INTEGER :: iSpecies,ixt,next_species
+    REAL(num) :: mean
+    INTEGER :: iSpecies
 
-    TYPE(Particle),POINTER :: Current,Next,New_Part
+    TYPE(Particle),POINTER :: Current,Next
 
     ALLOCATE(Xi0x(-3:3))
     ALLOCATE(Xi1x(-3:3))

@@ -55,8 +55,8 @@ CONTAINS
 
     INTEGER :: iSpecies
     REAL(num),DIMENSION(3,2) :: ranges
-    LOGICAL,DIMENSION(4) :: use_restrictions
-    REAL(num),DIMENSION(4,2) :: restrictions
+    LOGICAL,DIMENSION(5) :: use_restrictions
+    REAL(num),DIMENSION(5,2) :: restrictions
     INTEGER,DIMENSION(3) :: resolution=(/100,100,100/)
     TYPE(Distribution_Function_Block),POINTER :: Current
 
@@ -91,8 +91,8 @@ CONTAINS
     REAL(num),DIMENSION(3,2),INTENT(INOUT) :: range
     INTEGER,DIMENSION(3),INTENT(INOUT) :: resolution
     INTEGER,INTENT(IN) :: species
-    REAL(num),DIMENSION(4,2),INTENT(IN) :: restrictions
-    LOGICAL,DIMENSION(4),INTENT(IN) :: use_restrictions
+    REAL(num),DIMENSION(5,2),INTENT(IN) :: restrictions
+    LOGICAL,DIMENSION(5),INTENT(IN) :: use_restrictions
 
     REAL(num),DIMENSION(:,:,:),ALLOCATABLE :: Data, Data2
     REAL(num),DIMENSION(:),ALLOCATABLE :: Grid1,Grid2,Grid3
@@ -108,7 +108,6 @@ CONTAINS
     INTEGER :: color
     INTEGER :: comm_new, type_new
 
-    LOGICAL,DIMENSION(3) :: Use_x_this_dim
     LOGICAL,DIMENSION(3,4) :: Use_Direction
     LOGICAL,DIMENSION(3) :: Calc_Mod
     INTEGER,DIMENSION(3) :: P_Count
@@ -122,13 +121,11 @@ CONTAINS
     TYPE(Particle),POINTER :: Current
     CHARACTER(LEN=ENTRYLENGTH) :: Grid_Name, Norm_Grid_Name, Var_Name
     REAL(num),DIMENSION(3) :: stagger=0.0_num
-    INTEGER,DIMENSION(3) :: dims
-    LOGICAL :: Use_Current
     REAL(num),DIMENSION(4) :: Particle_Data
 
     REAL(num) :: Max_P_Conv
 
-    INTEGER :: ind,ix,iy,iz
+    INTEGER :: ind
 
     Use_x=.FALSE.
     Need_Reduce=.TRUE.
@@ -346,8 +343,8 @@ CONTAINS
     REAL(num),DIMENSION(2,2),INTENT(INOUT) :: range
     INTEGER,DIMENSION(2),INTENT(INOUT) :: resolution
     INTEGER,INTENT(IN) :: species
-    REAL(num),DIMENSION(4,2),INTENT(IN) :: restrictions
-    LOGICAL,DIMENSION(4),INTENT(IN) :: use_restrictions
+    REAL(num),DIMENSION(5,2),INTENT(IN) :: restrictions
+    LOGICAL,DIMENSION(5),INTENT(IN) :: use_restrictions
 
     REAL(num),DIMENSION(:,:),ALLOCATABLE :: Data, Data2
     REAL(num),DIMENSION(:),ALLOCATABLE :: Grid1,Grid2
@@ -363,7 +360,6 @@ CONTAINS
     INTEGER :: color
     INTEGER :: comm_new, type_new
 
-    LOGICAL,DIMENSION(2) :: Use_x_this_dim
     LOGICAL,DIMENSION(2,4) :: Use_Direction
     LOGICAL,DIMENSION(2) :: Calc_Mod
     INTEGER,DIMENSION(2) :: P_Count
@@ -377,12 +373,10 @@ CONTAINS
     TYPE(Particle),POINTER :: Current
     CHARACTER(LEN=ENTRYLENGTH) :: Grid_Name, Norm_Grid_Name, Var_Name
     REAL(num),DIMENSION(2) :: stagger=0.0_num
-    INTEGER,DIMENSION(2) :: dims
-    LOGICAL :: Use_Current
     REAL(num),DIMENSION(4) :: Particle_Data
     REAL(num) :: Max_P_Conv
 
-    INTEGER :: ind,ix,iy,iz
+    INTEGER :: ind
 
 
     Use_x=.FALSE.
@@ -596,7 +590,7 @@ CONTAINS
     INTEGER,DIMENSION(3),INTENT(IN) :: n_global
     INTEGER,DIMENSION(3),INTENT(IN) :: start
     INTEGER, DIMENSION(:),ALLOCATABLE :: lengths,starts
-    INTEGER :: iPoint,ix,iy,iz
+    INTEGER :: iPoint,iy,iz
     INTEGER :: Create_3D_Field_Subtype
     ALLOCATE(lengths(1:n_local(2) * n_local(3)),starts(1:n_local(2) * n_local(3)))
     lengths=n_local(1)
@@ -618,7 +612,7 @@ CONTAINS
     INTEGER,DIMENSION(2),INTENT(IN) :: n_global
     INTEGER,DIMENSION(2),INTENT(IN) :: start
     INTEGER, DIMENSION(:),ALLOCATABLE :: lengths,starts
-    INTEGER :: iPoint,ix,iy
+    INTEGER :: iPoint
     INTEGER :: Create_2D_Field_Subtype
     ALLOCATE(lengths(1:n_local(2)),starts(1:n_local(2)))
     lengths=n_local(1)

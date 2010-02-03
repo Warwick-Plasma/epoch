@@ -38,7 +38,7 @@ PROGRAM pic
   IMPLICIT NONE
 
   INTEGER :: iSpecies,i=0
-  REAL(num) :: walltime_current,dwalltime
+  REAL(num) :: walltime_current
   LOGICAL :: halt = .FALSE.
 
   CALL minimal_init !setup.f90

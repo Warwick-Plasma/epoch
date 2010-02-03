@@ -281,8 +281,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(INOUT) :: Data
     TYPE(particle), POINTER :: aParticle
-    INTEGER(kind=8) :: cpos, ct, npart_this_it, npart_left
-    TYPE(particle), POINTER :: Current
+    INTEGER(kind=8) :: cpos
 
     cpos=1
     Data(cpos)=aParticle%Part_Pos
@@ -312,8 +311,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(IN) :: Data
     TYPE(particle), POINTER :: aParticle
-    INTEGER(kind=8) :: cpos, ct, npart_this_it, npart_left
-    TYPE(particle), POINTER :: Current
+    INTEGER(kind=8) :: cpos
 
     cpos=1
     aParticle%Part_Pos=Data(cpos)
@@ -470,8 +468,7 @@ CONTAINS
     TYPE(ParticleList),INTENT(INOUT) :: PartList
     INTEGER, INTENT(IN) :: Src
     REAL(num), DIMENSION(:), ALLOCATABLE :: Data
-    INTEGER(kind=8) :: cpos=0, ipart, npart_this_it, npart_left,count
-    TYPE(ParticleList) :: PartListTemp
+    INTEGER(kind=8) :: npart_this_it, npart_left,count
 
     CALL Create_Empty_PartList(PartList)
 
@@ -512,10 +509,9 @@ CONTAINS
     TYPE(ParticleList),INTENT(INOUT) :: PartList_Send, PartList_Recv
     INTEGER, INTENT(IN) :: Dest, Src
     REAL(num), DIMENSION(:), ALLOCATABLE :: Data_Send, Data_Recv,Data_Temp
-    INTEGER(kind=8) :: cpos=0, ipart =0, npart_this_it
+    INTEGER(kind=8) :: cpos=0, ipart =0
     INTEGER(kind=8) :: npart_send, npart_recv
     TYPE(particle), POINTER :: Current
-    LOGICAL :: Test
 
     !This subroutine doesn't try to use memory efficient buffering, it sends all the particles at once
     !This should work for boundary calls, but don't try it for any other reason

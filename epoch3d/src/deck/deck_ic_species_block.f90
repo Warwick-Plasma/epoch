@@ -18,14 +18,7 @@ CONTAINS
   FUNCTION HandleICSpeciesDeck(Species_ID,Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
     INTEGER,INTENT(IN) :: Species_ID
-    CHARACTER(30) :: Part1
-    INTEGER :: Part2
     INTEGER :: HandleICSpeciesDeck
-    INTEGER :: loop,elementselected,partswitch
-    LOGICAL :: Handled,Temp
-    REAL(num) :: conv_val
-    TYPE(primitivestack) :: output
-    INTEGER :: ix,iy,ERR
 
     HandleICSpeciesDeck=ERR_NONE
     IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN

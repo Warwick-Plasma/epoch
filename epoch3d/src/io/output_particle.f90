@@ -116,9 +116,8 @@ CONTAINS
          LOGICAL,INTENT(IN) :: start
        END SUBROUTINE iterator
     END INTERFACE
-    INTEGER(8) :: blocklen,mdlen,npart_this_cycle,min_npart_this_cycle,npart_sent
+    INTEGER(8) :: blocklen,mdlen,npart_this_cycle,npart_sent
     INTEGER(4) :: idim
-    INTEGER(4) :: sizes(2)
     INTEGER(MPI_OFFSET_KIND) :: OffsetForMinMax
     REAL(num) :: mn,mx
     REAL(num),ALLOCATABLE,DIMENSION(:,:) :: MinMax
@@ -234,8 +233,6 @@ CONTAINS
     INTEGER(8), INTENT(IN) :: npart_global
     INTEGER(8) :: npart_local
     INTEGER(8) :: blocklen,mdlen
-    INTEGER(4) :: i
-    INTEGER(4) :: sizes(2)
     REAL(num) :: mn,mx
 
 
@@ -300,7 +297,7 @@ CONTAINS
     CHARACTER(len=*), INTENT(IN) :: name,class,meshname,meshclass
     INTEGER,INTENT(IN) :: Particle_Type
     INTEGER(8), INTENT(IN) :: npart_global,npart_per_iteration
-    INTEGER(8) :: npart_this_cycle,min_npart_this_cycle
+    INTEGER(8) :: npart_this_cycle
 
     REAL(num),ALLOCATABLE,DIMENSION(:) :: Data
     INTERFACE
@@ -311,10 +308,7 @@ CONTAINS
          LOGICAL,INTENT(IN) :: start
        END SUBROUTINE iterator
     END INTERFACE
-    INTEGER(8) :: npart_local
     INTEGER(8) :: blocklen,mdlen
-    INTEGER(4) :: i
-    INTEGER(4) :: sizes(2)
     REAL(num) :: mn,mx,mn_g,mx_g
     INTEGER(MPI_OFFSET_KIND) :: OffsetForMinMax
     LOGICAL :: start

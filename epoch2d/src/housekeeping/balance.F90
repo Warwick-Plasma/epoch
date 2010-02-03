@@ -24,7 +24,7 @@ CONTAINS
     INTEGER :: new_cell_x_start,new_cell_x_end,new_cell_y_start,new_cell_y_end
     REAL(num) :: balance_frac,balance_frac_x,balance_frac_y
     INTEGER(KIND=8) :: Max_x,Max_y,wk,Min_x,Min_y,npart_local
-    INTEGER :: iProc,iSpecies,iLaser
+    INTEGER :: iProc
     INTEGER, DIMENSION(2,2) :: Domain
 #ifdef PART_DEBUG
     TYPE(Particle),POINTER :: Current
@@ -189,7 +189,7 @@ CONTAINS
     !This subroutine redistributes the 2D field variables over the new processor layout
     !If using a 2D field of your own then se the Redistribute_Field subroutine to implement it
     !1D fields, you're on your own (have global copies and use those to repopulate?)
-    INTEGER :: nx_new,ny_new,iLaser
+    INTEGER :: nx_new,ny_new
     INTEGER,DIMENSION(2,2),INTENT(IN) :: new_domain
     REAL(num),DIMENSION(:,:), ALLOCATABLE :: temp
     REAL(num),DIMENSION(:), ALLOCATABLE :: temp1d
@@ -344,7 +344,7 @@ CONTAINS
     INTEGER,DIMENSION(2,2),INTENT(IN) :: domain
     REAL(num),DIMENSION(-2:,-2:),INTENT(IN) :: Field
     REAL(num),DIMENSION(-2:,-2:),INTENT(OUT) :: NewField
-    INTEGER :: nx_new,ny_new,ixd,iyd,izd
+    INTEGER :: nx_new,ny_new
     INTEGER :: subtype_write, subtype_read, fh
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset=0
     CHARACTER(LEN=9+Data_Dir_Max_Length+n_zeros) :: filename
@@ -515,7 +515,7 @@ CONTAINS
 
     TYPE(Particle),INTENT(IN) :: aParticle
     INTEGER :: GetParticleProcessor
-    INTEGER :: CurrentLoc, iproc,coords(2)
+    INTEGER :: iproc,coords(2)
     GetParticleProcessor = -1
     coords=-1
 

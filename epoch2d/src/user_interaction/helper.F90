@@ -197,17 +197,15 @@ CONTAINS
     TYPE(ParticleFamily), POINTER,INTENT(INOUT) :: SpeciesList
     LOGICAL,DIMENSION(-2:,-2:),INTENT(IN) :: LoadList
     TYPE(ParticleList),POINTER :: PartList
-    TYPE(particle),POINTER :: Current,PrevHead,Next
-    INTEGER :: curspecies
-    INTEGER(KIND=8) :: ipart,npart_per_cell,npart,ipart_total,ncell_per_part,iproc
-    INTEGER(KIND=8) :: num_valid_cells,temp,num_valid_cells_local,npart_this_species
+    TYPE(particle),POINTER :: Current,Next
+    INTEGER(KIND=8) :: ipart,npart_per_cell,ipart_total,ncell_per_part
+    INTEGER(KIND=8) :: num_valid_cells,num_valid_cells_local,npart_this_species
     INTEGER(KIND=8) :: num_new_particles,npart_left
     REAL(num) :: valid_cell_frac
-    REAL(dbl) :: frac, frac_to_pos,rpos
-    LOGICAL :: fullrand
+    REAL(dbl) :: rpos
     INTEGER :: upper_x, upper_y, lower_x, lower_y, cell_x,cell_y
-    REAL(num) :: cell_x_r,dcell_x,cell_frac_x
-    REAL(num) :: cell_y_r,dcell_y,cell_frac_y
+    REAL(num) :: cell_x_r,cell_frac_x
+    REAL(num) :: cell_y_r,cell_frac_y
     INTEGER(KIND=8) :: i
     INTEGER :: j
 
@@ -348,7 +346,6 @@ CONTAINS
     TYPE(ParticleList),POINTER :: PartList
     REAL(num) :: mass,temp_local
     REAL(num) :: cell_x_r,cell_frac_x,cell_y_r,cell_frac_y
-    REAL(num) :: part_weight
     REAL(num),DIMENSION(-2:2) :: gx, gy
     TYPE(particle),POINTER :: Current
     INTEGER :: cell_x,cell_y
@@ -408,16 +405,15 @@ CONTAINS
     REAL(num),INTENT(IN) :: min_density,max_density
     INTEGER, INTENT(INOUT) :: idum
     REAL(num) :: weight_local
-    REAL(num) :: cell_x_r,dcell_x,cell_frac_x
-    REAL(num) :: cell_y_r,dcell_y,cell_frac_y
+    REAL(num) :: cell_x_r,cell_frac_x
+    REAL(num) :: cell_y_r,cell_frac_y
     TYPE(particle),POINTER :: Current
     INTEGER :: cell_x,cell_y
     INTEGER(KIND=8) :: ipart
     REAL(num),DIMENSION(:,:),ALLOCATABLE :: Weight_Fn,Temp
     REAL(num),DIMENSION(-2:2) :: gx
     REAL(num),DIMENSION(-2:2) :: gy
-    REAL(num) :: Data,rpos
-    INTEGER :: Low, High, Point, OldPoint
+    REAL(num) :: Data
     TYPE(ParticleList),POINTER :: PartList
     INTEGER :: iSubx,iSuby
     REAL(num),DIMENSION(:,:),ALLOCATABLE :: Density
@@ -545,7 +541,6 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: idum
     REAL(num) :: MomentumFromTemperature
 
-    REAL(num) :: mean=0.0_num
     REAL(num) :: stdev
     REAL(num) :: rand1,rand2,w
 

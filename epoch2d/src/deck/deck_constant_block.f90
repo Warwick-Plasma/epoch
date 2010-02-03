@@ -14,7 +14,7 @@ CONTAINS
   FUNCTION HandleConstantDeck(Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
     INTEGER :: HandleConstantDeck
-    INTEGER :: ix,iy,ERR
+    INTEGER :: ix
     TYPE(Deck_Constant),DIMENSION(:),ALLOCATABLE :: Buffer
 
     HandleConstantDeck=ERR_NONE

@@ -74,7 +74,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: ndims
     INTEGER, INTENT(IN) :: sof
     INTEGER(KIND=8), INTENT(IN) :: npart_local,npart_per_it,npart_lglobal
-    INTEGER(KIND=8) :: npart_this_it,npart_remain,size_of_stencil
+    INTEGER(KIND=8) :: npart_this_it,npart_remain
     INTEGER :: Direction
     LOGICAL :: Start
     REAL(num),DIMENSION(:),ALLOCATABLE :: Data

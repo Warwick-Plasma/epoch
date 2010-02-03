@@ -267,7 +267,6 @@ CONTAINS
   SUBROUTINE set_dt        ! sets CFL limited step
 
     REAL(num) :: dtx
-    INTEGER :: ix, iy
 
 !!$    dtx=dx/(6.0_num * c)
 !!$    dty=dy/(6.0_num * c)

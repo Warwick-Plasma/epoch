@@ -10,16 +10,16 @@ CONTAINS
   SUBROUTINE calc_mass_density(DataArray,CurSpecies)
 
     !Contains the integer cell position of the particle in x,y,z
-    INTEGER :: Cell_x,Cell_y,Cell_z
+    INTEGER :: Cell_x,Cell_y
 
     !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_y,part_z,part_px,part_py,part_pz,part_q,part_m
+    REAL(num) :: part_x,part_y,part_px,part_py,part_pz,part_q,part_m
 
     !Contains the floating point version of the cell number (never actually used)
-    REAL(num) :: cell_x_r,cell_y_r,cell_z_r
+    REAL(num) :: cell_x_r,cell_y_r
 
     !The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x,cell_frac_y,cell_frac_z
+    REAL(num) :: cell_frac_x,cell_frac_y
 
     !The weight of a particle
     REAL(num) :: l_weight
@@ -102,16 +102,16 @@ CONTAINS
   SUBROUTINE calc_ekbar(DataArray,CurSpecies)
 
     !Contains the integer cell position of the particle in x,y,z
-    INTEGER :: Cell_x,Cell_y,Cell_z
+    INTEGER :: Cell_x,Cell_y
 
     !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_y,part_z,part_px,part_py,part_pz,part_q,part_m
+    REAL(num) :: part_x,part_y,part_px,part_py,part_pz,part_q,part_m
 
     !Contains the floating point version of the cell number (never actually used)
-    REAL(num) :: cell_x_r,cell_y_r,cell_z_r
+    REAL(num) :: cell_x_r,cell_y_r
 
     !The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x,cell_frac_y,cell_frac_z
+    REAL(num) :: cell_frac_x,cell_frac_y
 
     !The weight of a particle
     REAL(num) :: l_weight
@@ -209,16 +209,16 @@ CONTAINS
   SUBROUTINE calc_charge_density(DataArray,CurSpecies)
 
     !Contains the integer cell position of the particle in x,y,z
-    INTEGER :: Cell_x,Cell_y,Cell_z
+    INTEGER :: Cell_x,Cell_y
 
     !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_y,part_z,part_px,part_py,part_pz,part_q,part_m
+    REAL(num) :: part_x,part_y,part_px,part_py,part_pz,part_q,part_m
 
     !Contains the floating point version of the cell number (never actually used)
-    REAL(num) :: cell_x_r,cell_y_r,cell_z_r
+    REAL(num) :: cell_x_r,cell_y_r
 
     !The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x,cell_frac_y,cell_frac_z
+    REAL(num) :: cell_frac_x,cell_frac_y
 
     !The weight of a particle
     REAL(num) :: l_weight
@@ -303,16 +303,16 @@ CONTAINS
   SUBROUTINE calc_number_density(DataArray,CurSpecies)
 
     !Contains the integer cell position of the particle in x,y,z
-    INTEGER :: Cell_x,Cell_y,Cell_z
+    INTEGER :: Cell_x,Cell_y
 
     !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_y,part_z,part_px,part_py,part_pz,part_q,part_m
+    REAL(num) :: part_x,part_y,part_px,part_py,part_pz,part_q,part_m
 
     !Contains the floating point version of the cell number (never actually used)
-    REAL(num) :: cell_x_r,cell_y_r,cell_z_r
+    REAL(num) :: cell_x_r,cell_y_r
 
     !The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x,cell_frac_y,cell_frac_z
+    REAL(num) :: cell_frac_x,cell_frac_y
 
     !The weight of a particle
     REAL(num) :: l_weight
@@ -395,16 +395,16 @@ CONTAINS
   SUBROUTINE calc_temperature(DataArray,CurSpecies)
 
     !Contains the integer cell position of the particle in x,y,z
-    INTEGER :: Cell_x,Cell_y,Cell_z
+    INTEGER :: Cell_x,Cell_y
 
     !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_y,part_z,part_px,part_py,part_pz,part_q,part_m
+    REAL(num) :: part_x,part_y,part_px,part_py,part_pz,part_q,part_m
 
     !Contains the floating point version of the cell number (never actually used)
-    REAL(num) :: cell_x_r,cell_y_r,cell_z_r
+    REAL(num) :: cell_x_r,cell_y_r
 
     !The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x,cell_frac_y,cell_frac_z
+    REAL(num) :: cell_frac_x,cell_frac_y
 
     !The weight of a particle
     REAL(num) :: l_weight
@@ -415,7 +415,7 @@ CONTAINS
     REAL(num) :: Data
 
     REAL(num),DIMENSION(-2:,-2:),INTENT(INOUT) :: DataArray
-    REAL(num),DIMENSION(:,:),ALLOCATABLE ::  part_count, p_max, p_min, mass, sigma, mean
+    REAL(num),DIMENSION(:,:),ALLOCATABLE ::  part_count, mass, sigma, mean
     INTEGER,INTENT(IN) :: CurSpecies
 
     TYPE(Particle),POINTER :: Current
@@ -567,16 +567,16 @@ CONTAINS
      SUBROUTINE calc_on_grid_with_evaluator(DataArray,CurSpecies,evaluator)
 
        !Contains the integer cell position of the particle in x,y,z
-       INTEGER :: Cell_x,Cell_y,Cell_z
+       INTEGER :: Cell_x,Cell_y
 
        !Properties of the current particle. Copy out of particle arrays for speed
-       REAL(num) :: part_x,part_y,part_z,part_px,part_py,part_pz,part_q,part_m
+       REAL(num) :: part_x,part_y
 
        !Contains the floating point version of the cell number (never actually used)
-       REAL(num) :: cell_x_r,cell_y_r,cell_z_r
+       REAL(num) :: cell_x_r,cell_y_r
 
        !The fraction of a cell between the particle position and the cell boundary
-       REAL(num) :: cell_frac_x,cell_frac_y,cell_frac_z
+       REAL(num) :: cell_frac_x,cell_frac_y
 
        !The weight of a particle
        REAL(num) :: l_weight

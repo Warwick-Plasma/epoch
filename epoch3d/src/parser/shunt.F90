@@ -205,9 +205,6 @@ CONTAINS
 
     CHARACTER(len=500) :: current
     INTEGER :: Current_Type,CurrentPointer,i,Type,iPoint
-    INTEGER :: OpCode,OpCode_Last
-    REAL(num) :: val
-    CHARACTER(len=6) :: Operators="+-*\^%"
 
     TYPE(PrimitiveStack) :: stack
     TYPE(StackElement) :: Block,Block2
@@ -362,12 +359,9 @@ CONTAINS
 
     CHARACTER(len=500) :: current
     INTEGER :: Current_Type,CurrentPointer,i,Type,iPoint
-    INTEGER :: OpCode,OpCode_Last
-    REAL(num) :: val
-    CHARACTER(len=6) :: Operators="+-*\^%"
 
     TYPE(PrimitiveStack) :: stack
-    TYPE(StackElement) :: Block,Block2
+    TYPE(StackElement) :: Block
 
     stack%StackPoint=0
     last_block_type=PT_NULL

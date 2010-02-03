@@ -144,7 +144,6 @@ CONTAINS
   SUBROUTINE open_files
 
     CHARACTER(LEN=11+Data_Dir_Max_Length) :: file2
-    CHARACTER(LEN=7+Data_Dir_Max_Length) :: file3
     INTEGER :: Errcode
 
     IF (rank == 0) THEN
@@ -178,14 +177,12 @@ CONTAINS
     CHARACTER(LEN=20+Data_Dir_Max_Length) :: filename
     CHARACTER(Len=MaxStringLen) :: Name,Class,MeshName,MeshClass
     INTEGER :: Type,nd
-    INTEGER :: filehandle,sof
-    INTEGER(KIND=8) :: npart_l,npart_per_it=10000,npart_local,npart_test
+    INTEGER :: sof
+    INTEGER(KIND=8) :: npart_l,npart_per_it=10000
     REAL(num), DIMENSION(2) :: extents,stagger
     INTEGER,DIMENSION(1) :: dims
     REAL(KIND=8) :: time_d
     INTEGER :: snap,coord_type
-    LOGICAL,DIMENSION(3) :: PisV
-    REAL(num) :: v2
     TYPE(Particle), POINTER :: Current,Next
     LOGICAL :: Const_Weight
     INTEGER(KIND=8) :: npart

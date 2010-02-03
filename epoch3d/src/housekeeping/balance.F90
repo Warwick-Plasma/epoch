@@ -27,7 +27,7 @@ CONTAINS
     REAL(num) :: balance_frac,balance_frac_x,balance_frac_y,balance_frac_z
     INTEGER(KIND=8) :: Max_x,Max_y,wk,Min_x,Min_y,npart_local,Max_z,Min_z
     INTEGER(KIND=8) :: max_npart,min_npart
-    INTEGER :: iProc,iSpecies
+    INTEGER :: iProc
     INTEGER,DIMENSION(3,2) :: domain
 #ifdef PART_DEBUG
     TYPE(Particle),POINTER :: Current
@@ -394,8 +394,7 @@ CONTAINS
     INTEGER,DIMENSION(3,2),INTENT(IN) :: domain
     REAL(num),DIMENSION(-2:,-2:,-2:),INTENT(IN) :: Field
     REAL(num),DIMENSION(-2:,-2:,-2:),INTENT(OUT) :: NewField
-    INTEGER,DIMENSION(3,2) :: domain_old, domain_test, domain_recv
-    INTEGER :: nx_new,ny_new,nz_new,ixd,iyd,izd
+    INTEGER :: nx_new,ny_new,nz_new
     INTEGER :: subtype_write, subtype_read, fh
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset=0
     CHARACTER(LEN=9+Data_Dir_Max_Length+n_zeros) :: filename
@@ -638,7 +637,7 @@ CONTAINS
 
     TYPE(Particle),INTENT(IN) :: aParticle
     INTEGER :: GetParticleProcessor
-    INTEGER :: CurrentLoc, iproc,coords(3)
+    INTEGER :: iproc,coords(3)
     GetParticleProcessor = -1
     coords=-1
 

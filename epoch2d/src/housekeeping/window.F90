@@ -77,8 +77,8 @@ CONTAINS
     INTEGER :: iSpecies, iPart,i,iSuby
     REAL(num) :: rand
     INTEGER :: clock,idum
-    REAL(num) :: cell_x_r,dcell_x,cell_frac_x
-    REAL(num) :: cell_y_r,dcell_y,cell_frac_y
+    REAL(num) :: cell_x_r,cell_frac_x
+    REAL(num) :: cell_y_r,cell_frac_y
     INTEGER :: cell_x,cell_y
     REAL(num),DIMENSION(-1:1) :: gx
     REAL(num),DIMENSION(-1:1) :: gy

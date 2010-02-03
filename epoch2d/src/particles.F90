@@ -34,9 +34,6 @@ CONTAINS
     !The core of the PSC algorithm
     REAL(num),ALLOCATABLE,DIMENSION(:,:) :: jxh,jyh,jzh
 
-    !J_temp is used in the MPI
-    REAL(num),ALLOCATABLE,DIMENSION(:,:) :: J_temp
-
     !Timestep used in calculating current update
     !dt_j=dt for relativistic code, not for non-relativistic
     REAL(num) :: dt_j
@@ -71,7 +68,7 @@ CONTAINS
 	 REAL(num),DIMENSION(-2:2) :: hx, hy
 
     !Fields at particle location
-    REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part,e_part
+    REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part
 
     !P+ and P- from Boris1970
     REAL(num) :: pxp,pxm,pyp,pym,pzp,pzm
@@ -84,13 +81,13 @@ CONTAINS
 
     !Used by J update
     INTEGER :: xmin,xmax,ymin,ymax
-    REAL(num) :: wx,wy,wz,cell_y_r0
+    REAL(num) :: wx,wy,wz
 
     !Temporary variables
-    REAL(num) :: sum_local,sum_local_sqr,mean,jmx
-    INTEGER :: iSpecies,ixt,iyt,next_species
+    REAL(num) :: mean
+    INTEGER :: iSpecies
 
-    TYPE(Particle),POINTER :: Current,Next,New_Part
+    TYPE(Particle),POINTER :: Current,Next
 
     ALLOCATE(Xi0x(-3:3), Xi0y(-3:3))
     ALLOCATE(Xi1x(-3:3), Xi1y(-3:3))

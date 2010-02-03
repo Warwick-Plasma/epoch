@@ -38,7 +38,7 @@ CONTAINS
     TYPE(t_grid), INTENT(INOUT) :: grid
     INTEGER, INTENT(IN) :: its_max,boundary
     INTEGER :: nx_l,ny_l
-    INTEGER :: ix,iy,sweep,cycles,modlevel
+    INTEGER :: ix,iy,sweep,cycles
     REAL(num) :: lamdax,lamday
     REAL(num) :: w = 1.95_num
     REAL(num) :: sum_local,sum_global
@@ -140,7 +140,6 @@ CONTAINS
     INTEGER :: nx,ny
     INTEGER :: Tag=100,errcode
     INTEGER,DIMENSION(MPI_STATUS_SIZE) :: status
-    INTEGER :: rank
 
     nx=grid%nx
     ny=grid%ny
@@ -311,7 +310,7 @@ CONTAINS
 
   SUBROUTINE Allocate_SingleGrid(grid,level,dx,dy)
 
-    INTEGER :: nx_l,ny_l,ix,iy
+    INTEGER :: nx_l,ny_l
     TYPE(t_Grid), INTENT(INOUT) :: grid
     INTEGER, INTENT(IN) :: level
     REAL(num),INTENT(IN) :: dx,dy
@@ -388,7 +387,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), INTENT(inout) :: phi
     REAL(num), DIMENSION(:,:), INTENT(in) :: rho
     INTEGER, INTENT(IN) :: n_v_cycles,n_gs_cycles,n_c_cycles
-    INTEGER :: igrid,icyc,ix,iy
+    INTEGER :: igrid
     LOGICAL, INTENT(INOUT) :: force_converged
 
     IF (.NOT. ALLOCATED(grids)) THEN

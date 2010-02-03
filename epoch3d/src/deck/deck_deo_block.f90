@@ -15,7 +15,7 @@ CONTAINS
   FUNCTION HandleDEODeck(Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
     INTEGER :: HandleDEODeck
-    INTEGER :: ix,iy,ERR
+    INTEGER :: ix,ERR
     TYPE(Deferred_Execution_Object),DIMENSION(:),ALLOCATABLE :: Buffer
     TYPE(PrimitiveStack) :: Temp
 

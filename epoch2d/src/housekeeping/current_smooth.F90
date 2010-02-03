@@ -18,8 +18,7 @@ END SUBROUTINE Smooth_Current
 SUBROUTINE Smooth_Array(Array)
 	REAL(num),DIMENSION(-2:,-2:),INTENT(INOUT) :: Array
 	REAL(num),DIMENSION(:,:),ALLOCATABLE :: WkArray
-	REAL(num),DIMENSION(-2:2) :: Weight_Fn
-	INTEGER :: ix, iy, icyclex, icycley
+	INTEGER :: ix, iy
 		
 	ALLOCATE(WkArray(1:nx,1:ny))
 #ifdef HIGH_ORDER_SMOOTHING

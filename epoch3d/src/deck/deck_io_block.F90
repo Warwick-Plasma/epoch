@@ -105,8 +105,5 @@ CONTAINS
        ENDIF
     ENDDO
 
-!!$    IF (.NOT. IOBlockDone(26) .AND. rank .EQ. 0) PRINT *,"***WARNING*** You have selected not to output particle species information. This means that it is impossible to restart the code from these data dumps"
-!!$    IF (.NOT. IOBlockDone(25) .AND. rank .EQ. 0) PRINT *,"***WARNING*** You have selected not to output particle weight information. This means that it is impossible to restart the code from these data dumps"
-
   END FUNCTION CheckIOBlock
 END MODULE deck_io_block

@@ -54,8 +54,8 @@ CONTAINS
     INTEGER :: iSpecies, iPart, i, iSuby, iSubz
     REAL(num) :: rand
     INTEGER :: clock,idum
-    REAL(num) :: cell_y_r,dcell_y,cell_frac_y
-    REAL(num) :: cell_z_r,dcell_z,cell_frac_z
+    REAL(num) :: cell_y_r,cell_frac_y
+    REAL(num) :: cell_z_r,cell_frac_z
     INTEGER :: cell_y,cell_z
     REAL(num),DIMENSION(-1:1) :: gy
     REAL(num),DIMENSION(-1:1) :: gz

@@ -104,7 +104,6 @@ CONTAINS
     INTEGER,INTENT(IN) :: opcode,ix,iy
     INTEGER,INTENT(INOUT) :: err
     REAL(num) :: result
-    INTEGER :: errcode=0
 
     IF (opcode .GE. CONSTANT_CUSTOM_LOWBOUND) THEN
        !Check for custom constants

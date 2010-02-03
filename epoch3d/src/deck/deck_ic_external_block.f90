@@ -16,14 +16,7 @@ CONTAINS
   FUNCTION HandleICExternalSpeciesDeck(Species_ID,Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
     INTEGER,INTENT(IN) :: Species_ID
-    CHARACTER(LEN=EntryLength) :: Part1
-    INTEGER :: Part2
     INTEGER :: HandleICExternalSpeciesDeck
-    INTEGER :: loop,elementselected,partswitch
-    LOGICAL :: Handled,Temp
-    REAL(num) :: conv_val
-    TYPE(primitivestack) :: output
-    INTEGER :: ix,iy,ERR
 
     HandleICExternalSpeciesDeck=ERR_NONE
     IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
@@ -77,14 +70,7 @@ CONTAINS
 
   FUNCTION HandleICExternalFieldsDeck(Element,Value)
     CHARACTER(*),INTENT(IN) :: Element,Value
-    CHARACTER(LEN=EntryLength) :: Part1
-    INTEGER :: Part2
     INTEGER :: HandleICExternalFieldsDeck
-    INTEGER :: loop,elementselected,partswitch
-    LOGICAL :: Handled,Temp
-    REAL(num) :: conv_val
-    TYPE(primitivestack) :: output
-    INTEGER :: ix,iy,ERR
 
     HandleICExternalFieldsDeck=ERR_NONE
     IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN

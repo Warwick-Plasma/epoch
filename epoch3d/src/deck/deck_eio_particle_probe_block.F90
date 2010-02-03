@@ -25,7 +25,6 @@ CONTAINS
   SUBROUTINE Probe_Block_End
     !Check whether or not the probe is valid
     REAL(num),DIMENSION(3) :: alpha, beta
-    INTEGER :: iCorner, iDirection
 
     !The probe calculates the signed distance from a point to a plane using Hessian normal form
     alpha = working_probe%Corner(2,:)-working_probe%Corner(1,:)

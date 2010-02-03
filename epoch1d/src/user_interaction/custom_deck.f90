@@ -18,8 +18,6 @@ CONTAINS
 
     CHARACTER(len=entrylength),INTENT(IN)::blockname,Element,Value
     INTEGER :: HandleCustomBlock
-    TYPE(primitivestack) :: output
-    INTEGER :: ix
 
     !The following line must always be present
     HandleCustomBlock=ERR_UNKNOWN_BLOCK

@@ -71,14 +71,14 @@ CONTAINS
   FUNCTION AsInteger(StrIn,ERR)
     CHARACTER(*),INTENT(IN) :: StrIn
     INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: AsInteger,Value,f
+    INTEGER :: AsInteger
     AsInteger=NINT(AsReal(StrIn,ERR))
   END FUNCTION AsInteger
 
   FUNCTION AsLongInteger(StrIn,ERR)
     CHARACTER(*),INTENT(IN) :: StrIn
     INTEGER,INTENT(INOUT) :: ERR
-    INTEGER(KIND=8) :: AsLongInteger,Value,f
+    INTEGER(KIND=8) :: AsLongInteger
     AsLongInteger=NINT(AsReal(StrIn,ERR))
   END FUNCTION AsLongInteger
 
@@ -86,9 +86,7 @@ CONTAINS
   FUNCTION AsReal(StrIn,ERR)
     CHARACTER(*), INTENT(IN) :: StrIn
     INTEGER,INTENT(INOUT) :: ERR
-    INTEGER::f
     REAL(num) :: AsReal
-    REAL(num) :: Value
     TYPE(primitivestack) :: output
 
     output%stackpoint=0

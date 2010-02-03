@@ -108,9 +108,6 @@ CONTAINS
     INTEGER :: color
     INTEGER :: comm_new, type_new
 
-    LOGICAL,DIMENSION(3) :: Use_x_this_dim
-    LOGICAL,DIMENSION(3) :: Use_y_this_dim
-    LOGICAL,DIMENSION(3) :: Use_z_this_dim
     LOGICAL,DIMENSION(3,6) :: Use_Direction
     LOGICAL,DIMENSION(3) :: Calc_Mod
     INTEGER,DIMENSION(3) :: P_Count
@@ -123,8 +120,6 @@ CONTAINS
     TYPE(Particle),POINTER :: Current
     CHARACTER(LEN=ENTRYLENGTH) :: Grid_Name, Norm_Grid_Name, Var_Name
     REAL(num),DIMENSION(3) :: stagger=0.0_num
-    INTEGER,DIMENSION(3) :: dims
-    LOGICAL :: Use_Current
     REAL(num),DIMENSION(6) :: Particle_Data
 
     REAL(num) :: Max_P_Conv
@@ -394,9 +389,6 @@ CONTAINS
     INTEGER :: color
     INTEGER :: comm_new, type_new
 
-    LOGICAL,DIMENSION(2) :: Use_x_this_dim
-    LOGICAL,DIMENSION(2) :: Use_y_this_dim
-    LOGICAL,DIMENSION(2) :: Use_z_this_dim
     LOGICAL,DIMENSION(2,6) :: Use_Direction
     LOGICAL,DIMENSION(2) :: Calc_Mod
     INTEGER,DIMENSION(2) :: P_Count
@@ -409,8 +401,6 @@ CONTAINS
     TYPE(Particle),POINTER :: Current
     CHARACTER(LEN=ENTRYLENGTH) :: Grid_Name, Norm_Grid_Name, Var_Name
     REAL(num),DIMENSION(2) :: stagger=0.0_num
-    INTEGER,DIMENSION(2) :: dims
-    LOGICAL :: Use_Current
     REAL(num),DIMENSION(6) :: Particle_Data
     REAL(num) :: Max_P_Conv
 

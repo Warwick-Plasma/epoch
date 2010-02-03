@@ -20,7 +20,6 @@ CONTAINS
     INTEGER, INTENT(IN) :: opcode,ix
     INTEGER, INTENT(INOUT) :: errcode
     REAL(num) :: CustomFunction
-    REAL(num) :: Values(5)
 
     !Leave these lines in place. They cause the code to throw an error if
     !The opcode is unknown

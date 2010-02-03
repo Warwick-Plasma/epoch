@@ -31,10 +31,6 @@ CONTAINS
     !The core of the PSC algorithm
     REAL(num),ALLOCATABLE,DIMENSION(:,:,:) :: jxh,jyh,jzh
 
-    !temp is used in the MPI
-    REAL(num),ALLOCATABLE,DIMENSION(:,:,:) :: temp
-    REAL(num),ALLOCATABLE,DIMENSION(:,:,:,:) :: temp2
-
     !Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x,part_y,part_z,part_px,part_py,part_pz,part_q,part_m
     REAL(num) :: root,part_vx,part_vy,part_vz
@@ -47,7 +43,7 @@ CONTAINS
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: d_init, d_final
-    REAL(num) :: probe_temp,probe_energy
+    REAL(num) :: probe_energy
 #endif
 
     !Contains the floating point version of the cell number (never actually used)
@@ -60,7 +56,6 @@ CONTAINS
     !Eqn 4.77 would be written as
     !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     !Defined at the particle position
-    REAL(num) :: gmx,gmy,gmz,g0x,g0y,g0z,gpx,gpy,gpz
 
 	!Particle Weight factors as described in the manual (FIXREF)
  	REAL(num),DIMENSION(-2:2) :: gx, gy, gz
@@ -71,7 +66,7 @@ CONTAINS
  	REAL(num),DIMENSION(-2:2) :: hx, hy, hz
 
 	 !Fields at particle location
-	 REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part,e_part
+	 REAL(num) :: Ex_part,Ey_part,Ez_part,Bx_part,By_part,Bz_part
 
     !P+ and P- from Page27 of manual
     REAL(num) :: pxp,pxm,pyp,pym,pzp,pzm
@@ -84,11 +79,11 @@ CONTAINS
 
     !Used by J update
     INTEGER :: xmin,xmax,ymin,ymax,zmin,zmax
-    REAL(num) :: wx,wy,wz,cell_y_r0,third,part_weight
+    REAL(num) :: wx,wy,wz,third,part_weight
 
     !Temporary variables
-    REAL(num) :: sum_local,sum_local_sqr,mean,jmx
-    INTEGER :: ispecies, fail
+    REAL(num) :: mean
+    INTEGER :: ispecies
     INTEGER(KIND=8) :: ipart
 
     TYPE(particle),POINTER :: Current

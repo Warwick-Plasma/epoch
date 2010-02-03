@@ -90,8 +90,6 @@ CONTAINS
     TYPE(Laser_Block),INTENT(INOUT),POINTER :: list
     TYPE(Laser_Block),INTENT(IN),POINTER :: laser
     INTEGER,INTENT(IN) :: Direction
-    TYPE(Laser_Block),DIMENSION(:),ALLOCATABLE :: temp
-    INTEGER :: iLaser
     TYPE(Laser_Block),POINTER :: Current
 
     IF (ASSOCIATED(list)) THEN
@@ -121,7 +119,6 @@ CONTAINS
 
   SUBROUTINE Set_Laser_dt
 
-    INTEGER :: iLaser
     REAL(num) :: dt_local
     TYPE(Laser_Block),POINTER :: Current
 
@@ -162,7 +159,6 @@ CONTAINS
     REAL(num):: t_env
     REAL(num):: lx
     REAL(num),DIMENSION(:),ALLOCATABLE :: FPlus
-    INTEGER :: iLaser
     INTEGER :: err
 
     TYPE(Laser_Block),POINTER :: Current
@@ -220,7 +216,6 @@ CONTAINS
     REAL(num):: t_env
     REAL(num):: lx
     REAL(num),DIMENSION(:),ALLOCATABLE :: FMinus
-    INTEGER :: iLaser
     INTEGER :: err
 
     TYPE(Laser_Block),POINTER :: Current
@@ -276,7 +271,6 @@ CONTAINS
     REAL(num):: t_env
     REAL(num):: ly
     REAL(num),DIMENSION(:),ALLOCATABLE :: FPlus
-    INTEGER :: iLaser
     INTEGER :: err
 
     TYPE(Laser_Block),POINTER :: Current
@@ -333,7 +327,6 @@ CONTAINS
     REAL(num):: t_env
     REAL(num):: ly
     REAL(num),DIMENSION(:),ALLOCATABLE :: FPlus
-    INTEGER :: iLaser
     INTEGER :: err
 
     TYPE(Laser_Block),POINTER :: Current

@@ -11,16 +11,16 @@ MODULE Solve_Gauss
     SUBROUTINE Do_Gauss
 
       !Contains the integer cell position of the particle in x,y,z
-      INTEGER :: Cell_x,Cell_y,Cell_z
+      INTEGER :: Cell_x,Cell_y
 
       !Properties of the current particle. Copy out of particle arrays for speed
-      REAL(num) :: part_x,part_y,part_z,part_px,part_py,part_pz,part_q,part_m
+      REAL(num) :: part_x,part_y,part_px,part_py,part_pz,part_q,part_m
 
       !Contains the floating point version of the cell number (never actually used)
-      REAL(num) :: cell_x_r,cell_y_r,cell_z_r
+      REAL(num) :: cell_x_r,cell_y_r
 
       !The fraction of a cell between the particle position and the cell boundary
-      REAL(num) :: cell_frac_x,cell_frac_y,cell_frac_z
+      REAL(num) :: cell_frac_x,cell_frac_y
 
       !The weight of a particle
       REAL(num) :: l_weight

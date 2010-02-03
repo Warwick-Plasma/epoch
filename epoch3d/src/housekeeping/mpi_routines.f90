@@ -32,9 +32,7 @@ CONTAINS
     INTEGER,PARAMETER :: ndims = 3
     INTEGER :: dims(ndims), idim
     LOGICAL :: periods(ndims), reorder, op
-    INTEGER :: starts(ndims), sizes(ndims), subsizes(ndims), test_coords(ndims)
-    INTEGER :: iSpecies
-    INTEGER(KIND=8) :: npart_this_species,npart
+    INTEGER :: test_coords(ndims)
 
     IF (Comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(Comm,errcode)
 

@@ -30,7 +30,7 @@ CONTAINS
 
     INTEGER :: ndims, dims(1), idim
     LOGICAL :: periods(1), reorder, op
-    INTEGER :: starts(1), sizes(1), subsizes(1), test_coords(1)
+    INTEGER :: test_coords(1)
 
     ndims=1
 
@@ -73,7 +73,7 @@ CONTAINS
   SUBROUTINE mpi_initialise
 
     INTEGER :: iSpecies,iDim
-    INTEGER(KIND=8) :: npart_this_species,npart
+    INTEGER(KIND=8) :: npart_this_species
 
 
     CALL Setup_Communicator

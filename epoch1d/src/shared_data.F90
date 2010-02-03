@@ -323,8 +323,8 @@ MODULE shared_data
      REAL(num),DIMENSION(3,2) :: Ranges
      INTEGER,DIMENSION(3) :: Resolution
      LOGICAL,DIMENSION(:),ALLOCATABLE :: Use_Species
-     REAL(num),DIMENSION(4,2) :: Restrictions
-     LOGICAL,DIMENSION(4) :: Use_Restrictions
+     REAL(num),DIMENSION(5,2) :: Restrictions
+     LOGICAL,DIMENSION(5) :: Use_Restrictions
 
      !Pointer to next distribution function
      TYPE(Distribution_Function_Block),POINTER :: Next

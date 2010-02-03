@@ -19,9 +19,8 @@ CONTAINS
     CHARACTER(30) :: Part1
     INTEGER :: Part2
     INTEGER :: HandleSpeciesDeck
-    INTEGER :: loop,elementselected,partswitch
+    INTEGER :: partswitch
     LOGICAL :: Handled
-    REAL(num) :: mult
     CHARACTER(LEN=9) :: string
 
     HandleSpeciesDeck=ERR_NONE 

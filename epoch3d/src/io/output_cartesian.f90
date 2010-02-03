@@ -211,7 +211,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: distribution
     INTEGER, INTENT(IN),DIMENSION(3) :: dims
     REAL(num), INTENT(IN),DIMENSION(3) :: stagger
-    REAL(num) :: mn,mx,mn_global,mx_global,stx,sty,stz
+    REAL(num) :: mn,mx,mn_global,mx_global
     INTEGER(8) :: blocklen,mdlen,len_var
     INTEGER :: nx,ny,nz
 

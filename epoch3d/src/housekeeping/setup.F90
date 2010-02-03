@@ -111,7 +111,6 @@ CONTAINS
 
 
     CHARACTER(LEN=11+Data_Dir_Max_Length) :: file2
-    CHARACTER(LEN=7+Data_Dir_Max_Length) :: file3
 
     IF (rank == 0) THEN
        WRITE(file2, '(a,"/epoch3d.dat")') TRIM(data_dir)

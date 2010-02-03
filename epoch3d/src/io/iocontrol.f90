@@ -35,8 +35,6 @@ CONTAINS
 
   SUBROUTINE cfd_Close
 
-    INTEGER :: a
-
     !No open file
     IF (cfd_filehandle == -1) RETURN
 
