@@ -63,7 +63,7 @@ CONTAINS
              PRINT *,"Required boundary block element ",TRIM(ADJUSTL(boundary_block_name(index))), " absent. Please create this entry in the input deck"
              WRITE(40,*) ""
              WRITE(40,*) "***ERROR***"
-             WRITE(40,*) "Required boundary block element ",TRIM(ADJUSTL(boundary_block_name(index))), " absent. Please create this entry in the input deck"   
+             WRITE(40,*) "Required boundary block element ",TRIM(ADJUSTL(boundary_block_name(index))), " absent. Please create this entry in the input deck"
           ENDIF
           check_boundary_block = c_err_missing_elements
        ENDIF

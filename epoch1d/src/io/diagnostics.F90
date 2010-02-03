@@ -1,8 +1,8 @@
 MODULE diagnostics
 
-  USE shared_data 
+  USE shared_data
   USE calc_df
-  USE output_cartesian 
+  USE output_cartesian
   USE output_particle
   USE output_arb
   USE output
@@ -54,7 +54,7 @@ CONTAINS
        CALL MPI_ALLREDUCE(npart_local,npart_dump_global,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
        CALL create_subtypes(IAND(code,c_io_restartable) .NE. 0)
        !If the code is doing a restart dump then tell the iterators that this is a restart dump
-       IF (IAND(code,c_io_restartable) .NE. 0) THEN 
+       IF (IAND(code,c_io_restartable) .NE. 0) THEN
           iterator_settings%restart=.TRUE.
        ELSE
           iterator_settings%restart=.FALSE.
@@ -77,8 +77,8 @@ CONTAINS
           IF (.NOT. use_offset_grid) THEN
              CALL cfd_write_1d_cartesian_grid("Grid","Grid",x_global(1:nx_global),0)
           ELSE
-             CALL cfd_write_1d_cartesian_grid("Grid","Grid",x_offset_global(1:nx_global),0)      
-             CALL cfd_write_1d_cartesian_grid("Grid_Full","Grid",x_global(1:nx_global),0)          
+             CALL cfd_write_1d_cartesian_grid("Grid","Grid",x_offset_global(1:nx_global),0)
+             CALL cfd_write_1d_cartesian_grid("Grid_Full","Grid",x_global(1:nx_global),0)
           ENDIF
        ENDIF
        !(Variable_Name,Variable_Class,array,global_npart,Mesh_Name,Mesh_Class,MPI_TYPE describing data distribution)
@@ -276,7 +276,7 @@ CONTAINS
     dtx=dx/max_part_v
     dt=MIN(dt,dtx)
 #endif
-    dt=dt_multiplier * dt 
+    dt=dt_multiplier * dt
 
   END SUBROUTINE set_dt
 

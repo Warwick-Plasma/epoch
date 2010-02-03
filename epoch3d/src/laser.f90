@@ -51,10 +51,10 @@ CONTAINS
 !!$    ENDIF
 
     IF (direction == c_bd_left) THEN
-       CALL attach_laser_to_list(laser_left,laser,direction) 
+       CALL attach_laser_to_list(laser_left,laser,direction)
     ENDIF
     IF (direction == c_bd_right) THEN
-       CALL attach_laser_to_list(laser_right,laser,direction) 
+       CALL attach_laser_to_list(laser_right,laser,direction)
     ENDIF
     IF (direction == c_bd_up) THEN
        CALL attach_laser_to_list(laser_up,laser,direction)

@@ -51,14 +51,14 @@ CONTAINS
 
 #else
    DO ix=1,nx
-     	ex(ix)=ex(ix)&
-		-0.5_num*dt*jx(ix)/epsilon0
- 	ENDDO
+       ex(ix)=ex(ix)&
+    -0.5_num*dt*jx(ix)/epsilon0
+   ENDDO
 
    DO ix=1,nx
       ey(ix)=ey(ix)&
            -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small))&
-			  -0.5_num*dt*jy(ix)/epsilon0
+        -0.5_num*dt*jy(ix)/epsilon0
    ENDDO
 
    DO ix=1,nx
@@ -90,15 +90,15 @@ CONTAINS
             -cnx*(ey(ix+1)-ey(ix))
     ENDDO
 #else
-	DO ix=1,nx
-   	by(ix)=by(ix)&
-        	+cnx * SUM(diff_consts * ez(ix-small:ix+large))
-	ENDDO
-	
-	DO ix=1,nx
-   	bz(ix)=bz(ix)&
-        	-cnx * SUM(diff_consts * ey(ix-small:ix+large))
-	ENDDO
+  DO ix=1,nx
+     by(ix)=by(ix)&
+          +cnx * SUM(diff_consts * ez(ix-small:ix+large))
+  ENDDO
+
+  DO ix=1,nx
+     bz(ix)=bz(ix)&
+          -cnx * SUM(diff_consts * ey(ix-small:ix+large))
+  ENDDO
 #endif
 
     !Now have B field at t+dt/2. Do boundary conditions on B
@@ -141,15 +141,15 @@ CONTAINS
             -cnx*(ey(ix+1)-ey(ix))
     ENDDO
 #else
-	DO ix=1,nx
-		by(ix)=by(ix)&
-     		+cnx * SUM(diff_consts * ez(ix-small:ix+large))
-	ENDDO
+  DO ix=1,nx
+    by(ix)=by(ix)&
+         +cnx * SUM(diff_consts * ez(ix-small:ix+large))
+  ENDDO
 
-	DO ix=1,nx
-		bz(ix)=bz(ix)&
-     		-cnx * SUM(diff_consts * ey(ix-small:ix+large))
-	ENDDO
+  DO ix=1,nx
+    bz(ix)=bz(ix)&
+         -cnx * SUM(diff_consts * ey(ix-small:ix+large))
+  ENDDO
 #endif
 
 
@@ -182,22 +182,22 @@ CONTAINS
             -0.5*dt*jz(ix)/epsilon0
     ENDDO
 #else
-	DO ix=1,nx
-  		ex(ix)=ex(ix)&
-		-0.5_num*dt*jx(ix)/epsilon0
-	ENDDO
+  DO ix=1,nx
+      ex(ix)=ex(ix)&
+    -0.5_num*dt*jx(ix)/epsilon0
+  ENDDO
 
-	DO ix=1,nx
-   	ey(ix)=ey(ix)&
-        	-cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small))&
-		  	-0.5_num*dt*jy(ix)/epsilon0
-	ENDDO
+  DO ix=1,nx
+     ey(ix)=ey(ix)&
+          -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small))&
+        -0.5_num*dt*jy(ix)/epsilon0
+  ENDDO
 
-	DO ix=1,nx
-   	ez(ix)=ez(ix)&
-        	+cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small))&
-        	-0.5_num*dt*jz(ix)/epsilon0
-	ENDDO
+  DO ix=1,nx
+     ez(ix)=ez(ix)&
+          +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small))&
+          -0.5_num*dt*jz(ix)/epsilon0
+  ENDDO
 #endif
 
     CALL efield_bcs

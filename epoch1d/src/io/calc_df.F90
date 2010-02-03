@@ -72,12 +72,12 @@ CONTAINS
           l_weight=current%weight
 #endif
 
-          cell_x_r = part_x / dx 
+          cell_x_r = part_x / dx
           cell_x  = NINT(cell_x_r)
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
 
-		 	 CALL particle_to_grid(cell_frac_x,gx)
+        CALL particle_to_grid(cell_frac_x,gx)
              DO ix=-sf_order,sf_order
                 data=part_m * l_weight / (dx)
                 data_array(cell_x+ix) = data_array(cell_x+ix) + &
@@ -159,12 +159,12 @@ CONTAINS
           l_weight=current%weight
 #endif
 
-          cell_x_r = part_x / dx 
+          cell_x_r = part_x / dx
           cell_x  = NINT(cell_x_r)
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
 
-		 	 CALL particle_to_grid(cell_frac_x,gx)
+        CALL particle_to_grid(cell_frac_x,gx)
 
              DO ix=-sf_order,sf_order
                 data=part_q * l_weight / (dx)
@@ -343,7 +343,7 @@ CONTAINS
           l_weight=current%weight
 #endif
 
-          cell_x_r = part_x / dx 
+          cell_x_r = part_x / dx
           cell_x  = NINT(cell_x_r)
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
@@ -444,7 +444,7 @@ CONTAINS
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
 
-		 	 CALL particle_to_grid(cell_frac_x,gx)
+        CALL particle_to_grid(cell_frac_x,gx)
 
              DO ix=-sf_order,sf_order
                 data=SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
@@ -488,7 +488,7 @@ CONTAINS
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
 
-		 	 CALL particle_to_grid(cell_frac_x,gx)
+        CALL particle_to_grid(cell_frac_x,gx)
 
              DO ix=-sf_order,sf_order
                 data=SQRT(part_px**2+part_py**2+part_pz**2)
@@ -584,7 +584,7 @@ CONTAINS
              cell_frac_x = REAL(cell_x,num) - cell_x_r
              cell_x=cell_x+1
 
-		 	 	 CALL particle_to_grid(cell_frac_x,gx)
+           CALL particle_to_grid(cell_frac_x,gx)
 
                 DO ix=-sf_order,sf_order
                    data=evaluator(current,ispecies)

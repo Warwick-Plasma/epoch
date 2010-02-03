@@ -1,59 +1,65 @@
 begin:dist_fn
-	name=x_px
-	ndims=2
-	dumpmask=always
-	
-	direction1=dir_x
-	direction2=dir_px
 
-	#range is ignored for spatial coordinates
-	range1=1>1
-	range2=-4.0e-20>4.0e-20
-	
-	#resolution is ignored for spatial coordinates
-	resolution1=1
-	resolution2=1000
+  name=x_px
+  ndims=2
+  dumpmask=always
 
-	include_species_1=T
-	include_species_2=T
-	#include_species_3=F
+  direction1=dir_x
+  direction2=dir_px
+
+  #range is ignored for spatial coordinates
+  range1=1>1
+  range2=-4.0e-20>4.0e-20
+
+  #resolution is ignored for spatial coordinates
+  resolution1=1
+  resolution2=1000
+
+  include_species_1=T
+  include_species_2=T
+  #include_species_3=F
+
 end:dist_fn
 
 begin:dist_fn
-	name=x_px_py
-	ndims=3
-	dumpmask=never
-	
-	direction1=dir_x
-	direction2=dir_px
-	direction3=dir_py
 
-	#range is ignored for spatial coordinates
-	range1=1>1
-	range2=-3.0e-20>3.0e-20
-	range3=-3.0e-20>3.0e-20
-	
-	#resolution is ignored for spatial coordinates
-	resolution1=1
-	resolution2=100
-	resolution3=100
+  name=x_px_py
+  ndims=3
+  dumpmask=never
 
-	include_species_1=T
-	include_species_2=T
-	#include_species_3=T
+  direction1=dir_x
+  direction2=dir_px
+  direction3=dir_py
+
+  #range is ignored for spatial coordinates
+  range1=1>1
+  range2=-3.0e-20>3.0e-20
+  range3=-3.0e-20>3.0e-20
+
+  #resolution is ignored for spatial coordinates
+  resolution1=1
+  resolution2=100
+  resolution3=100
+
+  include_species_1=T
+  include_species_2=T
+  #include_species_3=T
+
 end:dist_fn
 
 begin:probe
-	x1=50.0e-6
-	x2=50.0e-6
-	
-	y1=-50.0e-6
-	y2=50.0e-6
 
-	probe_species=1
-	ek_min=0.0
-	ek_max=-1.0
-	name=electron_back_probe
+  x1=50.0e-6
+  x2=50.0e-6
 
-	dump=always
+  y1=-50.0e-6
+  y2=50.0e-6
+
+  probe_species=1
+  ek_min=0.0
+  ek_max=-1.0
+  name=electron_back_probe
+
+  dump=always
+
 end:probe

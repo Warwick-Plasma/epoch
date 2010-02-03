@@ -107,7 +107,7 @@ CONTAINS
 
     IF (opcode .GE. c_const_custom_lowbound) THEN
        !Check for custom constants
-       val = custom_constant(opcode,ix,err)    
+       val = custom_constant(opcode,ix,err)
        IF(IAND(err,c_err_unknown_element) == 0) CALL push_on_eval(val)
        RETURN
     ENDIF
@@ -140,7 +140,7 @@ CONTAINS
 
     IF (opcode .EQ. c_const_me) THEN
        CALL push_on_eval(m0)
-       RETURN 
+       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_eps0) THEN
@@ -181,7 +181,7 @@ CONTAINS
 
     IF (opcode .EQ. c_const_dx) THEN
        CALL push_on_eval(dx)
-       RETURN 
+       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_start_x) THEN
@@ -291,13 +291,13 @@ CONTAINS
     LOGICAL :: done
     REAL(num),DIMENSION(:),ALLOCATABLE :: var_length_values
     REAL(num) :: point
-	 REAL(num) :: t0
+   REAL(num) :: t0
 
 
     IF (opcode .EQ. c_func_abs) THEN
-	CALL get_values(1,values)
-	CALL push_on_eval(ABS(values(1)))
-	RETURN
+  CALL get_values(1,values)
+  CALL push_on_eval(ABS(values(1)))
+  RETURN
     ENDIF
     IF (opcode .EQ. c_func_sqrt) THEN
        CALL get_values(1,values)
@@ -457,23 +457,23 @@ CONTAINS
        RETURN
     ENDIF
 
-	IF (opcode .EQ. c_func_semigauss) THEN
-		 CALL get_values(4,values)
-	    !values are : time, maximum amplitude, amplitude at t=0, characteristic time width
-		 t0 = values(4) * SQRT(-LOG(values(3)/values(2)))
-		 IF (values(1) .LE. t0) THEN
-		 	CALL push_on_eval(values(2) * EXP(-((values(1)-t0)/values(4))**2))
-		 ELSE
-			CALL push_on_eval(values(2))
- 		 ENDIF
-		 RETURN
-	ENDIF
-	
-	IF (opcode .EQ. c_func_crit) THEN
-		CALL get_values(1,values)
-		CALL push_on_eval(values(1)**2 * m0 * epsilon0 / q0**2)
-		RETURN
-	ENDIF
+  IF (opcode .EQ. c_func_semigauss) THEN
+     CALL get_values(4,values)
+      !values are : time, maximum amplitude, amplitude at t=0, characteristic time width
+     t0 = values(4) * SQRT(-LOG(values(3)/values(2)))
+     IF (values(1) .LE. t0) THEN
+       CALL push_on_eval(values(2) * EXP(-((values(1)-t0)/values(4))**2))
+     ELSE
+      CALL push_on_eval(values(2))
+      ENDIF
+     RETURN
+  ENDIF
+
+  IF (opcode .EQ. c_func_crit) THEN
+    CALL get_values(1,values)
+    CALL push_on_eval(values(1)**2 * m0 * epsilon0 / q0**2)
+    RETURN
+  ENDIF
 
     !Check for custom functions
     val = custom_function(opcode,ix,err)

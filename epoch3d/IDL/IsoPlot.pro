@@ -273,7 +273,7 @@ PRO IsoPlot, volData, level, ViewPt=viewPt, Print=print, Win=win, $
   oWindow->Draw, oView    ; Draw isosurface on screen
 
   ; If /print keyword is set then send inital viewpoint to the printer/eps file
-  IF KEYWORD_SET(print) THEN BEGIN 
+  IF KEYWORD_SET(print) THEN BEGIN
     oPrint = OBJ_NEW('IDLgrPrinter')
     ; prnOK1 = DIALOG_PRINTERSETUP(oPrint) ; activate for more printer control
     ; IF prnOK1 EQ 1 THEN BEGIN  ; activate for more printer control
@@ -281,7 +281,7 @@ PRO IsoPlot, volData, level, ViewPt=viewPt, Print=print, Win=win, $
     prnOK2 = DIALOG_PRINTJOB(oPrint)
     IF prnOK2 EQ 1 THEN BEGIN
       oPrint->Draw, oView, VECTOR=0
-      oPrint->NewDocument 
+      oPrint->NewDocument
     ENDIF
     ; ENDIF ;activate for more printer control
   ENDIF

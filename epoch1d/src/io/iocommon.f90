@@ -28,7 +28,7 @@ MODULE iocommon
   INTEGER,PARAMETER :: header_offset_this_version = 6*4+3
   !This cannot be changed without a major revision
   !If you want to add more to every meshtype, tough luck
-  !You'll either have to tag it to every class or 
+  !You'll either have to tag it to every class or
   !Submit it for inclusion in the next major revision
   !(This shouldn't ever happen, meshtype covers too many things,
   !The only thing in common is that they include spatial information)
@@ -44,7 +44,7 @@ MODULE iocommon
 
   !current block info
   INTEGER(KIND=8) :: block_length,block_md_length
-  INTEGER(KIND=MPI_OFFSET_KIND) :: block_header_start,block_header_end 
+  INTEGER(KIND=MPI_OFFSET_KIND) :: block_header_start,block_header_end
 
 
 END MODULE iocommon

@@ -65,7 +65,7 @@ CONTAINS
     IF (elementselected .GT. n_var_special) dumpmask(elementselected-n_var_special)=as_real(value,handle_io_deck)
 
     !If setting dumpmask for particle probes then report if the code wasn't compiled for particle probes
-#ifndef PARTICLE_PROBES   
+#ifndef PARTICLE_PROBES
     IF (elementselected-n_var_special .EQ. 27) THEN
        handle_io_deck=c_err_pp_options_wrong
        extended_error_string="-DPARTICLE_PROBES"
@@ -88,7 +88,7 @@ CONTAINS
     !particle Positions
     dumpmask(1:5) = IOR(dumpmask(1:5),c_io_restartable)
     !Fields
-    dumpmask(9:14) = IOR(dumpmask(9:14),c_io_restartable) 
+    dumpmask(9:14) = IOR(dumpmask(9:14),c_io_restartable)
     !weight and species info
     dumpmask(24:25) = IOR(dumpmask(24:25),c_io_restartable)
 
@@ -99,7 +99,7 @@ CONTAINS
              PRINT *,"Required output block element ",TRIM(ADJUSTL(io_block_name(index))), " absent. Please create this entry in the input deck"
              WRITE(40,*) ""
              WRITE(40,*) "***ERROR***"
-             WRITE(40,*) "Required output block element ",TRIM(ADJUSTL(io_block_name(index))), " absent. Please create this entry in the input deck"   
+             WRITE(40,*) "Required output block element ",TRIM(ADJUSTL(io_block_name(index))), " absent. Please create this entry in the input deck"
           ENDIF
           check_io_block=c_err_missing_elements
        ENDIF

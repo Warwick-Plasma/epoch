@@ -24,7 +24,7 @@ CONTAINS
     !The weight of a particle
     REAL(num) :: l_weight
 
-	!particle weight factors as described in the manual (FIXREF)
+  !particle weight factors as described in the manual (FIXREF)
     REAL(num),DIMENSION(-2:2) :: gx,gy,gz
     !The data to be weighted onto the grid
     REAL(num) :: data
@@ -84,9 +84,9 @@ CONTAINS
           cell_frac_z = REAL(cell_z,num) - cell_z_r
           cell_z=cell_z+1
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
-			 CALL particle_to_grid(cell_frac_z,gz)			
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_z,gz)
 
           DO iz=-sf_order,sf_order
              DO iy=-sf_order,sf_order
@@ -309,9 +309,9 @@ CONTAINS
           cell_frac_z = REAL(cell_z,num) - cell_z_r
           cell_z=cell_z+1
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
-			 CALL particle_to_grid(cell_frac_z,gz)			
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_z,gz)
 
           DO iz=-sf_order,sf_order
              DO iy=-sf_order,sf_order
@@ -414,9 +414,9 @@ CONTAINS
           cell_frac_z = REAL(cell_z,num) - cell_z_r
           cell_z=cell_z+1
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
-			 CALL particle_to_grid(cell_frac_z,gz)			
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_z,gz)
 
           DO iz=-sf_order,sf_order
              DO iy=-sf_order,sf_order
@@ -521,10 +521,10 @@ CONTAINS
           cell_frac_z = REAL(cell_z,num) - cell_z_r
           cell_z=cell_z+1
 
- 			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
-			 CALL particle_to_grid(cell_frac_z,gz)
-			
+        CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_z,gz)
+
           DO iz=-sf_order,sf_order
              DO iy=-sf_order,sf_order
                 DO ix=-sf_order,sf_order

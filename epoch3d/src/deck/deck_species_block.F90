@@ -22,7 +22,7 @@ CONTAINS
     LOGICAL :: handled
     CHARACTER(len=9) :: string
 
-    handle_species_deck=c_err_none 
+    handle_species_deck=c_err_none
     IF (value .EQ. blank) RETURN
 
     !    PRINT *,"IN ",element,value

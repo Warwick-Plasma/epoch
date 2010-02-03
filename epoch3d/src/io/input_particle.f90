@@ -22,7 +22,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, coord_type, 1, MPI_INTEGER, cfd_status, cfd_errcode)
-    current_displacement = current_displacement +  soi 
+    current_displacement = current_displacement +  soi
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle,npart,1,MPI_INTEGER8,cfd_status,cfd_errcode)
     current_displacement = current_displacement + soi8

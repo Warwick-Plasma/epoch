@@ -93,7 +93,7 @@ CONTAINS
                 ENDDO
 
                 weight_local=particle_species(ispecies)%density/&
-						(REAL(particle_species(ispecies)%npart_per_cell,num)/(dx))
+            (REAL(particle_species(ispecies)%npart_per_cell,num)/(dx))
 #ifdef PER_PARTICLE_WEIGHT
                 current%weight=weight_local
 #endif

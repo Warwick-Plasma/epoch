@@ -398,7 +398,7 @@ CONTAINS
     len_var=SIZE(variable)
     nx=dims
     md_length = meshtype_header_offset + 1 * soi + 3 * num + 2 * max_string_len !1 INTs 3 REALs 2 strings
-    block_length = md_length + num * nx 
+    block_length = md_length + num * nx
 
     CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,default_rank)
     CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, num, default_rank)

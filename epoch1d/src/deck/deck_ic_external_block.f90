@@ -19,7 +19,7 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: element,value
     INTEGER,INTENT(IN) :: species_id
     INTEGER :: handle_ic_external_species_deck
-    INTEGER(KIND=MPI_OFFSET_KIND) :: offset =0 
+    INTEGER(KIND=MPI_OFFSET_KIND) :: offset =0
 
     handle_ic_external_species_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
@@ -45,7 +45,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element,"rho")) THEN
-       CALL load_single_array_from_data_file(value,initial_conditions(species_id)%rho,offset,handle_ic_external_species_deck)  
+       CALL load_single_array_from_data_file(value,initial_conditions(species_id)%rho,offset,handle_ic_external_species_deck)
        RETURN
     ENDIF
 
@@ -82,7 +82,7 @@ CONTAINS
   FUNCTION handle_ic_external_fields_deck(element,value)
     CHARACTER(*),INTENT(IN) :: element,value
     INTEGER :: handle_ic_external_fields_deck
-    INTEGER(KIND=MPI_OFFSET_KIND) :: offset =0 
+    INTEGER(KIND=MPI_OFFSET_KIND) :: offset =0
 
     handle_ic_external_fields_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN

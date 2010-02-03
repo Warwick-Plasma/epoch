@@ -22,7 +22,7 @@ CONTAINS
     INTEGER :: handle_species_deck
     LOGICAL :: handled
 
-    handle_species_deck=c_err_none 
+    handle_species_deck=c_err_none
     IF (value .EQ. blank) RETURN
     handle_species_deck=c_err_unknown_element
 

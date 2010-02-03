@@ -23,7 +23,7 @@ CONTAINS
 
     !The weight of a particle
     REAL(num) :: l_weight
-	!particle weight factors as described in the manual (FIXREF)
+  !particle weight factors as described in the manual (FIXREF)
     REAL(num),DIMENSION(-2:2) :: gx,gy
     !The data to be weighted onto the grid
     REAL(num) :: data
@@ -68,18 +68,18 @@ CONTAINS
           l_weight=current%weight
 #endif
 
-          cell_x_r = part_x / dx 
+          cell_x_r = part_x / dx
           cell_x  = NINT(cell_x_r)
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
 
-          cell_y_r = part_y / dy 
+          cell_y_r = part_y / dy
           cell_y  = NINT(cell_y_r)
           cell_frac_y = REAL(cell_y,num) - cell_y_r
           cell_y=cell_y+1
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
 
           DO iy=-sf_order,sf_order
              DO ix=-sf_order,sf_order
@@ -116,7 +116,7 @@ CONTAINS
     !The weight of a particle
     REAL(num) :: l_weight
 
-	!particle weight factors as described in the manual (FIXREF)
+  !particle weight factors as described in the manual (FIXREF)
     REAL(num),DIMENSION(-2:2) :: gx,gy
     !The data to be weighted onto the grid
     REAL(num) :: data
@@ -128,10 +128,10 @@ CONTAINS
     TYPE(particle),POINTER :: current
     INTEGER :: ispecies, spec_start,spec_end
 
-	 ALLOCATE(ct(-2:nx+3,-2:ny+3))
+   ALLOCATE(ct(-2:nx+3,-2:ny+3))
     data_array=0.0_num
-	 ct=0.0_num
-	
+   ct=0.0_num
+
 
     l_weight=weight
 
@@ -165,29 +165,29 @@ CONTAINS
           l_weight=current%weight
 #endif
 
-          cell_x_r = part_x / dx 
+          cell_x_r = part_x / dx
           cell_x  = NINT(cell_x_r)
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
 
-          cell_y_r = part_y / dy 
+          cell_y_r = part_y / dy
           cell_y  = NINT(cell_y_r)
           cell_frac_y = REAL(cell_y,num) - cell_y_r
           cell_y=cell_y+1
 
           IF (cell_y .LT. -2) PRINT *,cell_y,rank,part_y
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
 
           DO iy=-sf_order,sf_order
              DO ix=-sf_order,sf_order
                 data=SQRT(((part_px*l_weight)**2+(part_py*l_weight)**2+(part_pz*l_weight)**2)*c**2 &
-						+ (part_m*l_weight)**2*c**4) - (part_m*l_weight)*c**2
+            + (part_m*l_weight)**2*c**4) - (part_m*l_weight)*c**2
                 data_array(cell_x+ix,cell_y+iy) = data_array(cell_x+ix,cell_y+iy) + &
                      gx(ix) * gy(iy) * data
-	             ct(cell_x+ix,cell_y+iy) = ct(cell_x+ix,cell_y+iy) + &
-	                  gx(ix) * gy(iy) * l_weight
+               ct(cell_x+ix,cell_y+iy) = ct(cell_x+ix,cell_y+iy) + &
+                    gx(ix) * gy(iy) * l_weight
              ENDDO
           ENDDO
 
@@ -197,11 +197,11 @@ CONTAINS
 
 
     CALL processor_summation_bcs(data_array)
-	 CALL processor_summation_bcs(ct)
-	
-	 data_array = data_array / MAX(ct,c_non_zero)
+   CALL processor_summation_bcs(ct)
+
+   data_array = data_array / MAX(ct,c_non_zero)
     CALL field_zero_gradient(data_array,.TRUE.)
-	 DEALLOCATE(ct)
+   DEALLOCATE(ct)
 
   END SUBROUTINE calc_ekbar
 
@@ -223,7 +223,7 @@ CONTAINS
     !The weight of a particle
     REAL(num) :: l_weight
 
-	!particle weight factors as described in the manual (FIXREF)
+  !particle weight factors as described in the manual (FIXREF)
     REAL(num),DIMENSION(-2:2) :: gx,gy
     !The data to be weighted onto the grid
     REAL(num) :: data
@@ -268,18 +268,18 @@ CONTAINS
           l_weight=current%weight
 #endif
 
-          cell_x_r = part_x / dx 
+          cell_x_r = part_x / dx
           cell_x  = NINT(cell_x_r)
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
 
-          cell_y_r = part_y / dy 
+          cell_y_r = part_y / dy
           cell_y  = NINT(cell_y_r)
           cell_frac_y = REAL(cell_y,num) - cell_y_r
           cell_y=cell_y+1
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
 
           DO iy=-sf_order,sf_order
              DO ix=-sf_order,sf_order
@@ -317,7 +317,7 @@ CONTAINS
     !The weight of a particle
     REAL(num) :: l_weight
 
-	!particle weight factors as described in the manual (FIXREF)
+  !particle weight factors as described in the manual (FIXREF)
     REAL(num),DIMENSION(-2:2) :: gx,gy
     !The data to be weighted onto the grid
     REAL(num) :: data
@@ -362,19 +362,19 @@ CONTAINS
           l_weight=current%weight
 #endif
 
-          cell_x_r = part_x / dx 
+          cell_x_r = part_x / dx
           cell_x  = NINT(cell_x_r)
           cell_frac_x = REAL(cell_x,num) - cell_x_r
           cell_x=cell_x+1
 
-          cell_y_r = part_y / dy 
+          cell_y_r = part_y / dy
           cell_y  = NINT(cell_y_r)
           cell_frac_y = REAL(cell_y,num) - cell_y_r
           cell_y=cell_y+1
 
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
 
           DO iy=-sf_order,sf_order
              DO ix=-sf_order,sf_order
@@ -409,7 +409,7 @@ CONTAINS
     !The weight of a particle
     REAL(num) :: l_weight
 
-	!particle weight factors as described in the manual (FIXREF)
+  !particle weight factors as described in the manual (FIXREF)
     REAL(num),DIMENSION(-2:2) :: gx,gy
     !The data to be weighted onto the grid
     REAL(num) :: data
@@ -474,8 +474,8 @@ CONTAINS
           cell_frac_y = REAL(cell_y,num) - cell_y_r
           cell_y=cell_y+1
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
 
           DO iy=-sf_order,sf_order
              DO ix=-sf_order,sf_order
@@ -529,8 +529,8 @@ CONTAINS
           cell_frac_y = REAL(cell_y,num) - cell_y_r
           cell_y=cell_y+1
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
 
           DO iy=-sf_order,sf_order
              DO ix=-sf_order,sf_order
@@ -581,7 +581,7 @@ CONTAINS
        !The weight of a particle
        REAL(num) :: l_weight
 
-	!particle weight factors as described in the manual (FIXREF)
+  !particle weight factors as described in the manual (FIXREF)
        REAL(num),DIMENSION(-2:2) :: gx,gy
        !The data to be weighted onto the grid
        REAL(num) :: data
@@ -630,8 +630,8 @@ CONTAINS
              cell_frac_y = REAL(cell_y,num) - cell_y_r
              cell_y=cell_y+1
 
-			 CALL particle_to_grid(cell_frac_x,gx)
-			 CALL particle_to_grid(cell_frac_y,gy)
+       CALL particle_to_grid(cell_frac_x,gx)
+       CALL particle_to_grid(cell_frac_y,gy)
 
              DO iy=-sf_order,sf_order
                 DO ix=-sf_order,sf_order

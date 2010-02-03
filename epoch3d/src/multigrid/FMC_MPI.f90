@@ -120,7 +120,7 @@ CONTAINS
        IF (sum_global .LT. 1.0e-6_num) THEN
           grid%converged = .TRUE.
           EXIT
-       ELSE 
+       ELSE
        ENDIF
     ENDDO
 
@@ -169,7 +169,7 @@ CONTAINS
   SUBROUTINE restrict(hires,lores,grid_hi,grid_lo)
     !Restriction with full weighting
     REAL(num),DIMENSION(:,:),ALLOCATABLE, INTENT(INOUT)  :: hires
-    REAL(num),DIMENSION(:,:),ALLOCATABLE, INTENT(INOUT) :: lores    
+    REAL(num),DIMENSION(:,:),ALLOCATABLE, INTENT(INOUT) :: lores
     TYPE(t_grid), INTENT(IN) :: grid_hi,grid_lo
     INTEGER :: ix,iy,nx_h,ny_h,nx_l,ny_l
 
@@ -192,7 +192,7 @@ CONTAINS
   SUBROUTINE prolong(lores,hires,grid_lo,grid_hi,add)
     !Prolongation using inverse full weighting
     REAL(num),DIMENSION(:,:),ALLOCATABLE, INTENT(IN)  :: lores
-    REAL(num),DIMENSION(:,:),ALLOCATABLE, INTENT(INOUT) :: hires    
+    REAL(num),DIMENSION(:,:),ALLOCATABLE, INTENT(INOUT) :: hires
     TYPE(t_grid), INTENT(IN) :: grid_lo, grid_hi
     LOGICAL, INTENT(IN) :: add
     INTEGER :: nx_l,ny_l
@@ -300,7 +300,7 @@ CONTAINS
     grid%dx=dx*(2.0_num**level)
     grid%dy=dy*(2.0_num**level)
     grid%gridlevel=level+1
-    grid%converged=.FALSE.   
+    grid%converged=.FALSE.
 
     ALLOCATE(grid%phi(0:nx_l+1,0:ny_l+1),grid%rho(0:nx_l+1,0:ny_l+1))
     ALLOCATE(grid%resid(0:nx_l+1,0:ny_l+1))

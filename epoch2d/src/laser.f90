@@ -54,10 +54,10 @@ CONTAINS
     ENDIF
 
     IF (direction == c_bd_left) THEN
-       CALL attach_laser_to_list(laser_left,laser,direction) 
+       CALL attach_laser_to_list(laser_left,laser,direction)
     ENDIF
     IF (direction == c_bd_right) THEN
-       CALL attach_laser_to_list(laser_right,laser,direction) 
+       CALL attach_laser_to_list(laser_right,laser,direction)
     ENDIF
     IF (direction == c_bd_up) THEN
        CALL attach_laser_to_list(laser_up,laser,direction)
@@ -207,7 +207,7 @@ CONTAINS
          - 2.0_num * ey(1,1:ny) - (c - lx*c**2)*bz(1,1:ny) &
          + (dt / epsilon0) * jy(1,1:ny))
     DEALLOCATE(fplus)
-    
+
   END SUBROUTINE laser_bcs_left
 
 
@@ -262,7 +262,7 @@ CONTAINS
          - (dt / epsilon0) * jy(nx,1:ny))
 
     DEALLOCATE(f_minus)
- 
+
   END SUBROUTINE laser_bcs_right
 
 
@@ -390,7 +390,7 @@ CONTAINS
     bz(0,1:ny)=(1.0_num / (c + lx*c**2)) &
          * (-2.0_num * ey(1,1:ny) - (c - lx*c**2)*bz(1,1:ny) &
          + (dt / epsilon0) * jy(1,1:ny))
-    
+
   END SUBROUTINE outflow_bcs_left
 
   SUBROUTINE outflow_bcs_right

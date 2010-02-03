@@ -1,8 +1,8 @@
 MODULE diagnostics
 
-  USE shared_data 
+  USE shared_data
   USE calc_df
-  USE output_cartesian 
+  USE output_cartesian
   USE output_particle
   USE output_arb
   USE output
@@ -70,9 +70,9 @@ CONTAINS
              CALL cfd_write_3d_cartesian_grid("Grid","Grid",x_global(1:nx_global),y_global(1:ny_global),z_global(1:nz_global),0)
           ELSE
              CALL cfd_write_3d_cartesian_grid("Grid","Grid",x_offset_global(1:nx_global),y_offset_global(1:ny_global)&
-                  ,z_offset_global(1:nz_global),0)      
+                  ,z_offset_global(1:nz_global),0)
              CALL cfd_write_3d_cartesian_grid("Grid_Full","Grid",x_global(1:nx_global),y_global(1:ny_global)&
-                  ,z_global(1:nz_global),0)          
+                  ,z_global(1:nz_global),0)
           ENDIF
        ENDIF
 
@@ -262,9 +262,9 @@ CONTAINS
     dty=dy/c
     dtz=dz/c
     dt=MIN(dtx**2,dty**2,dtz**2)/SQRT(dtx**2+dty**2+dtz**2)
-	 IF (dt_plasma .NE. 0.0_num) dt=MIN(dt,dt_plasma)
+   IF (dt_plasma .NE. 0.0_num) dt=MIN(dt,dt_plasma)
     IF (dt_laser .NE. 0.0_num) dt=MIN(dt,dt_laser)
-    dt=dt_multiplier * dt 
+    dt=dt_multiplier * dt
 
   END SUBROUTINE set_dt
 

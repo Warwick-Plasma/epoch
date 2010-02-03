@@ -1,4 +1,4 @@
-MODULE setup 
+MODULE setup
   USE shared_data
   USE input_cartesian
   USE input_particle
@@ -71,34 +71,34 @@ CONTAINS
 
 
     DO iproc=0,nprocx-1
-       x_starts(iproc)=x_global(iproc*nx+1) 
-       x_ends(iproc)=x_global((iproc+1)*nx) 
+       x_starts(iproc)=x_global(iproc*nx+1)
+       x_ends(iproc)=x_global((iproc+1)*nx)
     ENDDO
     DO iproc=0,nprocy-1
-       y_starts(iproc)=y_global(iproc*ny+1) 
-       y_ends(iproc)=y_global((iproc+1)*ny) 
+       y_starts(iproc)=y_global(iproc*ny+1)
+       y_ends(iproc)=y_global((iproc+1)*ny)
     ENDDO
     DO iproc=0,nprocz-1
-       z_starts(iproc)=z_global(iproc*nz+1) 
+       z_starts(iproc)=z_global(iproc*nz+1)
        z_ends(iproc)=z_global((iproc+1)*nz)
     ENDDO
     x_start_local=x_starts(coordinates(3))
     x_end_local=x_ends(coordinates(3))
     y_start_local=y_starts(coordinates(2))
-    y_end_local=y_ends(coordinates(2))      
+    y_end_local=y_ends(coordinates(2))
     z_start_local=z_starts(coordinates(1))
     z_end_local=z_ends(coordinates(1))
 
     !Setup local grid
-    x(-1)=x_start_local-dx*2.0_num 
+    x(-1)=x_start_local-dx*2.0_num
     DO ix=0,nx+2
        x(ix)=x(ix-1)+dx
     ENDDO
-    y(-1)=y_start_local-dy*2.0_num 
+    y(-1)=y_start_local-dy*2.0_num
     DO iy=0,ny+2
        y(iy)=y(iy-1)+dy
     ENDDO
-    z(-1)=z_start_local-dz*2.0_num 
+    z(-1)=z_start_local-dz*2.0_num
     DO iz=0,nz+2
        z(iz)=z(iz-1)+dz
     ENDDO
@@ -300,7 +300,7 @@ CONTAINS
     INTEGER(KIND=8) :: ipart
     TYPE(particle),POINTER,SAVE :: cur
 
-    IF (start) THEN 
+    IF (start) THEN
        cur=>main_root%head
     ENDIF
     DO ipart=1,npart_this_it

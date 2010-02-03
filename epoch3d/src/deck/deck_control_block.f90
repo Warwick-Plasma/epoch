@@ -4,7 +4,7 @@ MODULE deck_control_block
   USE strings_advanced
 
   IMPLICIT NONE
-  SAVE 
+  SAVE
   INTEGER,PARAMETER :: control_block_elements =22
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done =.FALSE.
   CHARACTER(len=string_length),DIMENSION(control_block_elements) :: control_block_name = (/"nx","ny","nz","npart",&
@@ -111,7 +111,7 @@ CONTAINS
              PRINT *,"Required control block element ",TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"
              WRITE(40,*) ""
              WRITE(40,*) "***ERROR***"
-             WRITE(40,*) "Required control block element ",TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"             
+             WRITE(40,*) "Required control block element ",TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"
           ENDIF
           check_control_block=c_err_missing_elements
        ENDIF

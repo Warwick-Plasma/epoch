@@ -185,7 +185,7 @@ CONTAINS
 
     !Recalculate x_starts and y_starts so that rebalancing works next time
     DO iproc=0,nprocx-1
-       x_starts(iproc)=x_global(cell_x_start(iproc+1)) 
+       x_starts(iproc)=x_global(cell_x_start(iproc+1))
        x_ends(iproc)=x_global(cell_x_end(iproc+1))
     ENDDO
     !Same for y
@@ -687,7 +687,7 @@ CONTAINS
     INTEGER :: part_proc, iproc_recv,iproc_send,ispecies
 
 
-    ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))  
+    ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))
     DO ispecies=1,n_species
        current=>particle_species(ispecies)%attached_list%head
        DO iproc_send = 0, nproc-1
@@ -718,7 +718,7 @@ CONTAINS
        DO iproc_send = 0, nproc-1
           DO iproc_recv=0, nproc-1
              IF (iproc_send .NE. iproc_recv) THEN
-                IF (rank .EQ. iproc_send) THEN 
+                IF (rank .EQ. iproc_send) THEN
                    CALL partlist_send(pointers_send(iproc_recv),iproc_recv)
                    CALL destroy_partlist(pointers_send(iproc_recv))
                 ENDIF

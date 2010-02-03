@@ -4,13 +4,13 @@ MODULE deck_control_block
   USE strings_advanced
 
   IMPLICIT NONE
-  SAVE 
+  SAVE
   INTEGER,PARAMETER :: control_block_elements =17
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done =.FALSE.
   CHARACTER(len=string_length),DIMENSION(control_block_elements) :: control_block_name = (/"nx","ny","npart",&
        "nsteps","t_end","x_start","x_end","y_start","y_end",&
        "dt_multiplier","dlb","dlb_threshold","initial_conditions","icfile","restart_snapshot","neutral_background"&
-		 ,"smooth_currents"/)
+     ,"smooth_currents"/)
 
 CONTAINS
 
@@ -84,8 +84,8 @@ CONTAINS
 
     !npart is not a required variable
     control_block_done(3)=.TRUE.
-	 !Assume no current smoothing unless specified
-	 control_block_done(17)=.TRUE.
+   !Assume no current smoothing unless specified
+   control_block_done(17)=.TRUE.
 
     !If not using external load then don't need a file
     IF (IAND(ictype,c_ic_external) .EQ. 0) control_block_done(14)=.TRUE.
@@ -104,7 +104,7 @@ CONTAINS
              PRINT *,"Required control block element ",TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"
              WRITE(40,*) ""
              WRITE(40,*) "***ERROR***"
-             WRITE(40,*) "Required control block element ",TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"             
+             WRITE(40,*) "Required control block element ",TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"
           ENDIF
           check_control_block=c_err_missing_elements
        ENDIF

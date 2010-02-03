@@ -23,7 +23,7 @@ CONTAINS
     !Xi (space factor see page 38 in manual)
     REAL(num),ALLOCATABLE,DIMENSION(:) :: xi0x, xi0y,xi0z
     REAL(num),ALLOCATABLE,DIMENSION(:) :: xi1x, xi1y,xi1z
-    !J from a given particle, can be spread over up to 3 cells in 
+    !J from a given particle, can be spread over up to 3 cells in
     !Each direction due to parabolic weighting. We allocate 4 or 5
     !Cells because the position of the particle at t=t+1.5dt is not
     !known until later. This part of the algorithm could probably be
@@ -57,16 +57,16 @@ CONTAINS
     !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     !Defined at the particle position
 
-	!particle weight factors as described in the manual (FIXREF)
- 	REAL(num),DIMENSION(-2:2) :: gx, gy, gz
+  !particle weight factors as described in the manual (FIXREF)
+   REAL(num),DIMENSION(-2:2) :: gx, gy, gz
 
-	!particle weight factors as described in the manual (FIXREF)
- 	!Defined at the particle position - 0.5 grid cell in each direction
- 	!This is to deal with the grid stagger
- 	REAL(num),DIMENSION(-2:2) :: hx, hy, hz
+  !particle weight factors as described in the manual (FIXREF)
+   !Defined at the particle position - 0.5 grid cell in each direction
+   !This is to deal with the grid stagger
+   REAL(num),DIMENSION(-2:2) :: hx, hy, hz
 
-	 !Fields at particle location
-	 REAL(num) :: ex_part,ey_part,ez_part,bx_part,by_part,bz_part
+   !Fields at particle location
+   REAL(num) :: ex_part,ey_part,ez_part,bx_part,by_part,bz_part
 
     !P+ and P- from Page27 of manual
     REAL(num) :: pxp,pxm,pyp,pym,pzp,pzm
@@ -75,7 +75,7 @@ CONTAINS
     REAL(num) :: cmratio
 
     !Tau variables from Page27 of manual
-    REAL(num) :: tau,taux,tauy,tauz 
+    REAL(num) :: tau,taux,tauy,tauz
 
     !Used by J update
     INTEGER :: xmin,xmax,ymin,ymax,zmin,zmax
@@ -190,19 +190,19 @@ CONTAINS
           cell_frac_z = REAL(cell_z1,num) - cell_z_r
           cell_z1=cell_z1+1
 
-			!particle weight factors as described in the manual (FIXREF)
-			!These weight grid properties onto particles
- 			CALL grid_to_particle(cell_frac_x,gx)
- 			CALL grid_to_particle(cell_frac_y,gy)
- 			CALL grid_to_particle(cell_frac_z,gz)
+      !particle weight factors as described in the manual (FIXREF)
+      !These weight grid properties onto particles
+       CALL grid_to_particle(cell_frac_x,gx)
+       CALL grid_to_particle(cell_frac_y,gy)
+       CALL grid_to_particle(cell_frac_z,gz)
 
- 			!particle weight factors as described in the manual (FIXREF)
- 			!These wieght particle properties onto grid
- 			!This is used later to calculate J
+       !particle weight factors as described in the manual (FIXREF)
+       !These wieght particle properties onto grid
+       !This is used later to calculate J
 
-			CALL particle_to_grid(cell_frac_x,xi0x(-2:2))
-			CALL particle_to_grid(cell_frac_y,xi0y(-2:2))
-			CALL particle_to_grid(cell_frac_z,xi0z(-2:2))
+      CALL particle_to_grid(cell_frac_x,xi0x(-2:2))
+      CALL particle_to_grid(cell_frac_y,xi0y(-2:2))
+      CALL particle_to_grid(cell_frac_z,xi0z(-2:2))
 
           !Now redo shifted by half a cell due to grid stagger.
           !Use shifted version for ex in X, ey in Y, ez in Z
@@ -222,11 +222,11 @@ CONTAINS
           cell_frac_z = REAL(cell_z2,num) - cell_z_r
           cell_z2 = cell_z2 + 1
 
-			!particle weight factors as described in the manual (FIXREF)
-			!These weight grid properties onto particles
-			CALL grid_to_particle(cell_frac_x,hx)
-			CALL grid_to_particle(cell_frac_y,hy)
-			CALL grid_to_particle(cell_frac_z,hz)
+      !particle weight factors as described in the manual (FIXREF)
+      !These weight grid properties onto particles
+      CALL grid_to_particle(cell_frac_x,hx)
+      CALL grid_to_particle(cell_frac_y,hy)
+      CALL grid_to_particle(cell_frac_z,hz)
 
 
           ex_part=0.0_num
@@ -239,19 +239,19 @@ CONTAINS
           !These are the electric an magnetic fields interpolated to the
           !particle position. They have been checked and are correct.
           !Actually checking this is messy.
- 			DO ix=-sf_order,sf_order
-				DO iy=-sf_order,sf_order
-					DO iz=-sf_order,sf_order
-						ex_part=ex_part + hx(ix)*gy(iy)*gz(iz)*ex(cell_x2+ix,cell_y1+iy,cell_z1+iz)
-						ey_part=ey_part + gx(ix)*hy(iy)*gz(iz)*ey(cell_x1+ix,cell_y2+iy,cell_z1+iz)
-						ez_part=ez_part + gx(ix)*gy(iy)*gz(iz)*ez(cell_x1+ix,cell_y1+iy,cell_z1+iz)
+       DO ix=-sf_order,sf_order
+        DO iy=-sf_order,sf_order
+          DO iz=-sf_order,sf_order
+            ex_part=ex_part + hx(ix)*gy(iy)*gz(iz)*ex(cell_x2+ix,cell_y1+iy,cell_z1+iz)
+            ey_part=ey_part + gx(ix)*hy(iy)*gz(iz)*ey(cell_x1+ix,cell_y2+iy,cell_z1+iz)
+            ez_part=ez_part + gx(ix)*gy(iy)*gz(iz)*ez(cell_x1+ix,cell_y1+iy,cell_z1+iz)
 
-						bx_part=bx_part + gx(ix)*hy(iy)*hz(iz)*bx(cell_x1+ix,cell_y2+iy,cell_z2+iz)
-						by_part=by_part + hx(ix)*gy(iy)*hz(iz)*by(cell_x2+ix,cell_y1+iy,cell_z2+iz)
-						bz_part=bz_part + hx(ix)*hy(iy)*gz(iz)*bz(cell_x2+ix,cell_y2+iy,cell_z1+iz)
-					ENDDO
-				ENDDO
-			ENDDO
+            bx_part=bx_part + gx(ix)*hy(iy)*hz(iz)*bx(cell_x1+ix,cell_y2+iy,cell_z2+iz)
+            by_part=by_part + hx(ix)*gy(iy)*hz(iz)*by(cell_x2+ix,cell_y1+iy,cell_z2+iz)
+            bz_part=bz_part + hx(ix)*hy(iy)*gz(iz)*bz(cell_x2+ix,cell_y2+iy,cell_z1+iz)
+          ENDDO
+        ENDDO
+      ENDDO
 
           !update particle momenta using weighted fields
           cmratio = part_q * 0.5_num * dt
@@ -338,9 +338,9 @@ CONTAINS
              cell_frac_z = REAL(cell_z3,num) - cell_z_r
              cell_z3 = cell_z3 + 1
 
-				CALL particle_to_grid(cell_frac_x,xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
-				CALL particle_to_grid(cell_frac_y,xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
-				CALL particle_to_grid(cell_frac_z,xi1z(cell_z3-cell_z1-2:cell_z3-cell_z1+2))
+        CALL particle_to_grid(cell_frac_x,xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
+        CALL particle_to_grid(cell_frac_y,xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
+        CALL particle_to_grid(cell_frac_z,xi1z(cell_z3-cell_z1-2:cell_z3-cell_z1+2))
 
              !Now change Xi1* to be Xi1*-Xi0*. This makes the representation of the current update much simpler
              xi1x = xi1x - xi0x
@@ -423,7 +423,7 @@ CONTAINS
           ENDIF
 #endif
 #ifdef PARTICLE_PROBES
-          ! Compare the current particle with the parameters of any probes in the system. 
+          ! Compare the current particle with the parameters of any probes in the system.
           ! These particles are copied into a separate part of the output file.
 
           current_probe=>particle_species(ispecies)%attached_probes

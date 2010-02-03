@@ -1,7 +1,7 @@
 !****************************************************************
 ! All global variables defined here (cf F77 COMMON block).
 ! All the names in here are public provided the MODULE is USE'd
-!**************************************************************** 
+!****************************************************************
 
 
 MODULE constants
@@ -335,7 +335,7 @@ MODULE shared_data
 #ifdef PARTICLE_PROBES
   TYPE :: particle_probe
      REAL(num) :: probe_point
-	  LOGICAL :: left_to_right
+    LOGICAL :: left_to_right
      REAL(num) :: ek_min, ek_max
      CHARACTER(len=string_length) :: name
 
@@ -417,7 +417,7 @@ MODULE shared_data
   !---------------------------------------------------------------------------------------
   !domain and loadbalancing
   !---------------------------------------------------------------------------------------
-  LOGICAL :: dlb 
+  LOGICAL :: dlb
   REAL(num) :: dlb_threshold
   INTEGER(KIND=8), PARAMETER :: npart_per_it = 1000000
   REAL(num),DIMENSION(:),ALLOCATABLE :: x_global,y_global
@@ -431,10 +431,10 @@ MODULE shared_data
   ! file handling
   !---------------------------------------------------------------------------------------
   INTEGER :: subtype_field,subtype_particle_var,subtype_particle,subtype_particle_int
-  INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp 
+  INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every,restart_dump_every
   INTEGER, PARAMETER :: num_vars_to_dump = 29
-  INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask 
+  INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
   INTEGER :: output_file
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid

@@ -25,9 +25,9 @@ CONTAINS
           particle_species(ispecies)%temperature=initial_conditions(ispecies)%temp(nx,:,:)
        ENDIF
 #ifdef PER_PARTICLE_WEIGHT
-		       CALL setup_particle_density(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
+           CALL setup_particle_density(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
 #else
-		       CALL non_uniform_load_particles(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
+           CALL non_uniform_load_particles(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
 #endif
        CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,1),c_dir_x,part_family,initial_conditions(ispecies)%drift,idum)
        CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,2),c_dir_y,part_family,initial_conditions(ispecies)%drift,idum)
@@ -60,24 +60,24 @@ CONTAINS
 
   SUBROUTINE deallocate_ic
     INTEGER :: ispecies, ix, iy
-	 REAL(num) :: min_dt, omega, k_max
+   REAL(num) :: min_dt, omega, k_max
 
-	 min_dt=1000000.0_num
-	 k_max=2.0_num * pi / MIN(dx,dy)
-	 !Identify the plasma frequency (Bohm-Gross dispersion relation)
-	 !Note that this doesn't get strongly relativistic plasmas right
-	DO ispecies=1,n_species
-   	DO iy=1,ny
-      	DO ix=1,nx
-         	omega=SQRT((initial_conditions(ispecies)%rho(ix,iy) * q0**2)/(particle_species(ispecies)%mass * epsilon0) + &
-              	3.0_num * k_max**2 * kb * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:))/(particle_species(ispecies)%mass))
-         	IF (2.0_num * pi/omega .LT. min_dt) min_dt=2.0_num * pi /omega
-      	ENDDO
-   	ENDDO
-	ENDDO
-	CALL MPI_ALLREDUCE(min_dt,dt_plasma_frequency,1,mpireal,MPI_MIN,comm,errcode)
-	!Must resolve plasma frequency
-	dt_plasma_frequency=dt_plasma_frequency/2.0_num
+   min_dt=1000000.0_num
+   k_max=2.0_num * pi / MIN(dx,dy)
+   !Identify the plasma frequency (Bohm-Gross dispersion relation)
+   !Note that this doesn't get strongly relativistic plasmas right
+  DO ispecies=1,n_species
+     DO iy=1,ny
+        DO ix=1,nx
+           omega=SQRT((initial_conditions(ispecies)%rho(ix,iy) * q0**2)/(particle_species(ispecies)%mass * epsilon0) + &
+                3.0_num * k_max**2 * kb * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:))/(particle_species(ispecies)%mass))
+           IF (2.0_num * pi/omega .LT. min_dt) min_dt=2.0_num * pi /omega
+        ENDDO
+     ENDDO
+  ENDDO
+  CALL MPI_ALLREDUCE(min_dt,dt_plasma_frequency,1,mpireal,MPI_MIN,comm,errcode)
+  !Must resolve plasma frequency
+  dt_plasma_frequency=dt_plasma_frequency/2.0_num
 
     DO ispecies=1,n_species
        DEALLOCATE(initial_conditions(ispecies)%rho)
@@ -125,7 +125,7 @@ CONTAINS
     density_average=density_total_global/REAL(num_valid_cells_global,num)
 
     !Assume that a cell with the average density has the average number of particles per cell
-    !Now calculate the new minimum density 
+    !Now calculate the new minimum density
     minrho = density_average/REAL(npart_per_cell_average,num)
     !Set the particle weight
     weight = minrho * dx * dy
@@ -153,7 +153,7 @@ CONTAINS
           npart_per_cell = density(ix,iy)/density_average * REAL(npart_per_cell_average,num)
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-             !Even if particles have per particle charge and mass, assume that 
+             !Even if particles have per particle charge and mass, assume that
              !initially they all have the same charge and mass (user can easily over_ride)
              current%charge=species_list%charge
              current%mass=species_list%mass
@@ -269,7 +269,7 @@ CONTAINS
              IF (load_list(ix,iy)) THEN
                 DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-                   !Even if particles have per particle charge and mass, assume that 
+                   !Even if particles have per particle charge and mass, assume that
                    !initially they all have the same charge and mass (user can easily over_ride)
                    current%charge=species_list%charge
                    current%mass=species_list%mass
@@ -369,15 +369,15 @@ CONTAINS
        cell_frac_y = REAL(cell_y,num) - cell_y_r
        cell_y=cell_y+1
 
-		 CALL grid_to_particle(cell_frac_x,gx)
-		 CALL grid_to_particle(cell_frac_y,gy)
+     CALL grid_to_particle(cell_frac_x,gx)
+     CALL grid_to_particle(cell_frac_y,gy)
 
-		 temp_local=0.0_num
-		 DO ix=-sf_order,sf_order
-			DO iy=-sf_order,sf_order
-				temp_local=temp_local+gx(ix)*gy(iy)*temperature(cell_x+ix,cell_y+iy)
-			ENDDO
- 		 ENDDO
+     temp_local=0.0_num
+     DO ix=-sf_order,sf_order
+      DO iy=-sf_order,sf_order
+        temp_local=temp_local+gx(ix)*gy(iy)*temperature(cell_x+ix,cell_y+iy)
+      ENDDO
+      ENDDO
 
        IF (IAND(direction,c_dir_x) .NE. 0) current%part_p(1)=momentum_from_temperature(mass,temp_local,idum) + drift(1)
 
@@ -441,7 +441,7 @@ CONTAINS
     temp=0.0_num
 
     partlist=>part_family%attached_list
-    !If using per particle weighing then use the weight function to match the uniform pseudoparticle density to the 
+    !If using per particle weighing then use the weight function to match the uniform pseudoparticle density to the
     !Real particle density
     current=>partlist%head
     ipart=0
@@ -458,13 +458,13 @@ CONTAINS
        cell_frac_y = REAL(cell_y,num) - cell_y_r
        cell_y=cell_y+1
 
-		 CALL particle_to_grid(cell_frac_x,gx)
-		 CALL particle_to_grid(cell_frac_y,gy)
+     CALL particle_to_grid(cell_frac_x,gx)
+     CALL particle_to_grid(cell_frac_y,gy)
 
        data=1.0_num/(dx*dy) !Simply want to count particles per metre^2
        DO isuby=-sf_order,sf_order
           DO isubx=-sf_order,sf_order
-             weight_fn(cell_x+isubx,cell_y+isuby) = weight_fn(cell_x+isubx,cell_y+isuby) + & 
+             weight_fn(cell_x+isubx,cell_y+isuby) = weight_fn(cell_x+isubx,cell_y+isuby) + &
                   gx(isubx) * gy(isuby) * data
           ENDDO
        ENDDO
@@ -510,8 +510,8 @@ CONTAINS
        cell_frac_y = REAL(cell_y,num) - cell_y_r
        cell_y=cell_y+1
 
-		 CALL grid_to_particle(cell_frac_x,gx)
-		 CALL grid_to_particle(cell_frac_y,gy)
+     CALL grid_to_particle(cell_frac_x,gx)
+     CALL grid_to_particle(cell_frac_y,gy)
 
        weight_local=0.0_num
        DO isuby=-sf_order,sf_order
@@ -578,7 +578,7 @@ CONTAINS
     cdf=cdf/SUM(dist_fn)
 
     position=random(idum)
-	sample_dist_function=0.0_num
+  sample_dist_function=0.0_num
 
     start=1
     endpoint=n_points
@@ -611,7 +611,7 @@ CONTAINS
     k=idum/iq
 
     idum=ia*(idum-k*iq)-ir*k
-    IF (idum .LT. 0) THEN 
+    IF (idum .LT. 0) THEN
        idum=idum+im
     ENDIF
 

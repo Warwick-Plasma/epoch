@@ -1,4 +1,4 @@
-MODULE setup 
+MODULE setup
   USE shared_data
   USE input_cartesian
   USE input_particle
@@ -32,15 +32,15 @@ CONTAINS
 
     window_shift=0.0_num
     npart_global=-1
-	 smooth_currents=.FALSE.
-	
-	 ex=0.0_num
-	 ey=0.0_num
-	 ez=0.0_num
-	 bx=0.0_num
-	 by=0.0_num
-	 bz=0.0_num
-	
+   smooth_currents=.FALSE.
+
+   ex=0.0_num
+   ey=0.0_num
+   ez=0.0_num
+   bx=0.0_num
+   by=0.0_num
+   bz=0.0_num
+
 
     NULLIFY(laser_left)
     NULLIFY(laser_right)
@@ -73,17 +73,17 @@ CONTAINS
     ENDDO
 
     DO iproc=0,nprocx-1
-       x_starts(iproc)=x_global(iproc*nx+1) 
-       x_ends(iproc)=x_global((iproc+1)*nx) 
+       x_starts(iproc)=x_global(iproc*nx+1)
+       x_ends(iproc)=x_global((iproc+1)*nx)
     ENDDO
     DO iproc=0,nprocy-1
-       y_starts(iproc)=y_global(iproc*ny+1) 
-       y_ends(iproc)=y_global((iproc+1)*ny) 
+       y_starts(iproc)=y_global(iproc*ny+1)
+       y_ends(iproc)=y_global((iproc+1)*ny)
     ENDDO
     x_start_local=x_starts(coordinates(2))
     x_end_local=x_ends(coordinates(2))
     y_start_local=y_starts(coordinates(1))
-    y_end_local=y_ends(coordinates(1))      
+    y_end_local=y_ends(coordinates(1))
 
     !Setup local grid
     x(-1)=x_start_local-dx*2.0_num
@@ -96,18 +96,18 @@ CONTAINS
     ENDDO
 
     CALL set_initial_values
-	 CALL setup_data_averaging
+   CALL setup_data_averaging
 
   END SUBROUTINE after_control
 
   SUBROUTINE setup_data_averaging()
 
-	INTEGER :: ioutput
+  INTEGER :: ioutput
    DO ioutput = 1, num_vars_to_dump
-		IF(IAND(dumpmask(ioutput),c_io_averaged) .NE. 0) THEN
-			ALLOCATE(averaged_data(ioutput)%data(-2:nx+3,-2:ny+3))
-		ENDIF
-	ENDDO
+    IF(IAND(dumpmask(ioutput),c_io_averaged) .NE. 0) THEN
+      ALLOCATE(averaged_data(ioutput)%data(-2:nx+3,-2:ny+3))
+    ENDIF
+  ENDDO
 
   END SUBROUTINE setup_data_averaging
 
@@ -123,7 +123,7 @@ CONTAINS
        particle_species(ispecies)%count=-1
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
        particle_species(ispecies)%split=.FALSE.
-       particle_species(ispecies)%npart_max=0.0_num     
+       particle_species(ispecies)%npart_max=0.0_num
 #endif
 #ifdef PART_IONISE
        particle_species(ispecies)%ionise=.FALSE.
@@ -334,7 +334,7 @@ CONTAINS
     INTEGER(KIND=8) :: ipart
     TYPE(particle),POINTER,SAVE :: cur
 
-    IF (start) THEN 
+    IF (start) THEN
        cur=>main_root%head
     ENDIF
     DO ipart=1,npart_this_it

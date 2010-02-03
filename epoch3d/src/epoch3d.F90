@@ -1,9 +1,9 @@
 PROGRAM pic
 
-  !EPOCH3D is a Birdsall and Langdon type PIC code derived from the PSC written by Hartmut Ruhl. 
+  !EPOCH3D is a Birdsall and Langdon type PIC code derived from the PSC written by Hartmut Ruhl.
 
   !The particle pusher (particles.F90) and the field solver (fields.f90) are almost exact copies of the equivalent routines from PSC,
-  !modified slightly to allow interaction with the changed portions of the code and for readability. The MPI routines are exactly 
+  !modified slightly to allow interaction with the changed portions of the code and for readability. The MPI routines are exactly
   !equivalent to those in PSC, but are completely rewritten in a form which is easier to extend with arbitrary fields and particle properties.
   !The support code is entirely new and is not equivalent to PSC.
 
@@ -41,7 +41,7 @@ PROGRAM pic
   CALL welcome_message !welcome.f90
   CALL register_objects !custom.f90
   deck_state = c_ds_deck
-	!Ask for output directory name on rank 0
+  !Ask for output directory name on rank 0
   IF (rank .EQ. 0) THEN
      PRINT *,"Specify output directory"
      READ(*,*) data_dir
@@ -61,7 +61,7 @@ PROGRAM pic
 
   !restart flag is set
   IF (IAND(ictype,c_ic_restart) .NE. 0) THEN
-     CALL restart_data    !restart from data in file SAVE.data          
+     CALL restart_data    !restart from data in file SAVE.data
      IF (rank .EQ. 0) PRINT *,"Load from restart dump OK"
      output_file=restart_snapshot
   ELSE

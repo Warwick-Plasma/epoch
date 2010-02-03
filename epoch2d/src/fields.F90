@@ -166,7 +166,7 @@ CONTAINS
     cny=0.5_num*ly
 #ifndef ELECTROSTATIC
 #ifndef HIGH_ORDER_FIELDS
-    !bx 
+    !bx
     DO iy=1,ny
        DO ix=1,nx
           bx(ix,iy) = bx(ix,iy)&

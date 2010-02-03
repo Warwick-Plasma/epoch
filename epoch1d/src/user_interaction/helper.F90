@@ -25,9 +25,9 @@ CONTAINS
           particle_species(ispecies)%temperature=initial_conditions(ispecies)%temp(nx,:)
        ENDIF
 #ifdef PER_PARTICLE_WEIGHT
-		       CALL setup_particle_density(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
+           CALL setup_particle_density(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
 #else
-		       CALL non_uniform_load_particles(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
+           CALL non_uniform_load_particles(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
 #endif
        CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,1),c_dir_x,part_family,initial_conditions(ispecies)%drift,idum)
        CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,2),c_dir_y,part_family,initial_conditions(ispecies)%drift,idum)
@@ -121,7 +121,7 @@ CONTAINS
     density_average=density_total_global/REAL(num_valid_cells_global,num)
 
     !Assume that a cell with the average density has the average number of particles per cell
-    !Now calculate the new minimum density 
+    !Now calculate the new minimum density
     minrho = density_average/REAL(npart_per_cell_average,num)
     !Set the particle weight
     weight = minrho * dx
@@ -146,7 +146,7 @@ CONTAINS
           npart_per_cell = density(ix)/density_average * REAL(npart_per_cell_average,num)
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-             !Even if particles have per particle charge and mass, assume that 
+             !Even if particles have per particle charge and mass, assume that
              !initially they all have the same charge and mass (user can easily over_ride)
              current%charge=species_list%charge
              current%mass=species_list%mass
@@ -249,7 +249,7 @@ CONTAINS
              IF (load_list(ix)) THEN
                 DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-                   !Even if particles have per particle charge and mass, assume that 
+                   !Even if particles have per particle charge and mass, assume that
                    !initially they all have the same charge and mass (user can easily over_ride)
                    current%charge=species_list%charge
                    current%mass=species_list%mass
@@ -341,7 +341,7 @@ CONTAINS
        gpx=0.5_num * (0.5_num - cell_frac_x)**2
 
        temp_local=gmx*temperature(cell_x-1) + &
-			g0x*temperature(cell_x) + gpx*temperature(cell_x+1)
+      g0x*temperature(cell_x) + gpx*temperature(cell_x+1)
 
        IF (IAND(direction,c_dir_x) .NE. 0) current%part_p(1)=momentum_from_temperature(mass,temp_local,idum) + drift(1)
 
@@ -401,7 +401,7 @@ CONTAINS
     temp=0.0_num
 
     partlist=>part_family%attached_list
-    !If using per particle weighing then use the weight function to match the uniform pseudoparticle density to the 
+    !If using per particle weighing then use the weight function to match the uniform pseudoparticle density to the
     !Real particle density
     current=>partlist%head
     ipart=0
@@ -413,11 +413,11 @@ CONTAINS
        cell_frac_x = REAL(cell_x,num) - cell_x_r
        cell_x=cell_x+1
 
-		 CALL particle_to_grid(cell_frac_x,gx)
+     CALL particle_to_grid(cell_frac_x,gx)
 
        data=1.0_num/(dx) !Simply want to count particles per metre^2
           DO isubx=-sf_order,sf_order
-             weight_fn(cell_x+isubx) = weight_fn(cell_x+isubx) + & 
+             weight_fn(cell_x+isubx) = weight_fn(cell_x+isubx) + &
                   gx(isubx) * data
           ENDDO
        !weight_fn(cell_x) = weight_fn(cell_x) + data
@@ -452,7 +452,7 @@ CONTAINS
        cell_frac_x = REAL(cell_x,num) - cell_x_r
        cell_x=cell_x+1
 
-  	 	 CALL grid_to_particle(cell_frac_x,gx)
+        CALL grid_to_particle(cell_frac_x,gx)
 
        weight_local=0.0_num
           DO isubx=-sf_order,+sf_order
@@ -561,7 +561,7 @@ CONTAINS
     k=idum/iq
 
     idum=ia*(idum-k*iq)-ir*k
-    IF (idum .LT. 0) THEN 
+    IF (idum .LT. 0) THEN
        idum=idum+im
     ENDIF
 

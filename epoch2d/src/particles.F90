@@ -26,7 +26,7 @@ CONTAINS
     !Xi (space factor see page 38 in manual)
     REAL(num),ALLOCATABLE,DIMENSION(:) :: xi0x, xi0y
     REAL(num),ALLOCATABLE,DIMENSION(:) :: xi1x, xi1y
-    !J from a given particle, can be spread over up to 3 cells in 
+    !J from a given particle, can be spread over up to 3 cells in
     !Each direction due to parabolic weighting. We allocate 4 or 5
     !Cells because the position of the particle at t=t+1.5dt is not
     !known until later. This part of the algorithm could probably be
@@ -58,14 +58,14 @@ CONTAINS
     !The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x,cell_frac_y
 
-	!particle weight factors as described in the manual (FIXREF)
-	 REAL(num),DIMENSION(-2:2) :: gx, gy
+  !particle weight factors as described in the manual (FIXREF)
+   REAL(num),DIMENSION(-2:2) :: gx, gy
 
 
-	!particle weight factors as described in the manual (FIXREF)
+  !particle weight factors as described in the manual (FIXREF)
     !Defined at the particle position - 0.5 grid cell in each direction
     !This is to deal with the grid stagger
-	 REAL(num),DIMENSION(-2:2) :: hx, hy
+   REAL(num),DIMENSION(-2:2) :: hx, hy
 
     !Fields at particle location
     REAL(num) :: ex_part,ey_part,ez_part,bx_part,by_part,bz_part
@@ -77,7 +77,7 @@ CONTAINS
     REAL(num) :: cmratio
 
     !Tau variables from Boris1970
-    REAL(num) :: tau,taux,tauy,tauz 
+    REAL(num) :: tau,taux,tauy,tauz
 
     !Used by J update
     INTEGER :: xmin,xmax,ymin,ymax
@@ -184,17 +184,17 @@ CONTAINS
           cell_frac_y = REAL(cell_y1,num) - cell_y_r
           cell_y1=cell_y1+1
 
-			!particle weight factors as described in the manual (FIXREF)
-	      !These weight grid properties onto particles
-			 CALL grid_to_particle(cell_frac_x,gx)
-			 CALL grid_to_particle(cell_frac_y,gy)
+      !particle weight factors as described in the manual (FIXREF)
+        !These weight grid properties onto particles
+       CALL grid_to_particle(cell_frac_x,gx)
+       CALL grid_to_particle(cell_frac_y,gy)
 
-			 !particle weight factors as described in the manual (FIXREF)
+       !particle weight factors as described in the manual (FIXREF)
           !These wieght particle properties onto grid
           !This is used later to calculate J
 
-			CALL particle_to_grid(cell_frac_x,xi0x(-2:2))
-			CALL particle_to_grid(cell_frac_y,xi0y(-2:2))
+      CALL particle_to_grid(cell_frac_x,xi0x(-2:2))
+      CALL particle_to_grid(cell_frac_y,xi0y(-2:2))
 
           !Now redo shifted by half a cell due to grid stagger.
           !Use shifted version for ex in X, ey in Y, ez in Z
@@ -209,31 +209,31 @@ CONTAINS
           cell_frac_y = REAL(cell_y2,num) - cell_y_r
           cell_y2=cell_y2+1
 
-			 CALL grid_to_particle(cell_frac_x,hx)
-			 CALL grid_to_particle(cell_frac_y,hy)
+       CALL grid_to_particle(cell_frac_x,hx)
+       CALL grid_to_particle(cell_frac_y,hy)
 
           !These are the electric an magnetic fields interpolated to the
           !particle position. They have been checked and are correct.
           !Actually checking this is messy.
 
-			ex_part=0.0_num
-			ey_part=0.0_num
-			ez_part=0.0_num
-			bx_part=0.0_num
-			by_part=0.0_num
-			bz_part=0.0_num
-			
-			DO ix=-sf_order,sf_order
-				DO iy=-sf_order,sf_order
-					ex_part=ex_part + hx(ix)*gy(iy)*ex(cell_x2+ix,cell_y1+iy)
-					ey_part=ey_part + gx(ix)*hy(iy)*ey(cell_x1+ix,cell_y2+iy)
-					ez_part=ez_part + gx(ix)*gy(iy)*ez(cell_x1+ix,cell_y1+iy)
-					
-					bx_part=bx_part + gx(ix)*hy(iy)*bx(cell_x1+ix,cell_y2+iy)
-					by_part=by_part + hx(ix)*gy(iy)*by(cell_x2+ix,cell_y1+iy)
-					bz_part=bz_part + hx(ix)*hy(iy)*bz(cell_x2+ix,cell_y2+iy)
-				ENDDO
-			ENDDO
+      ex_part=0.0_num
+      ey_part=0.0_num
+      ez_part=0.0_num
+      bx_part=0.0_num
+      by_part=0.0_num
+      bz_part=0.0_num
+
+      DO ix=-sf_order,sf_order
+        DO iy=-sf_order,sf_order
+          ex_part=ex_part + hx(ix)*gy(iy)*ex(cell_x2+ix,cell_y1+iy)
+          ey_part=ey_part + gx(ix)*hy(iy)*ey(cell_x1+ix,cell_y2+iy)
+          ez_part=ez_part + gx(ix)*gy(iy)*ez(cell_x1+ix,cell_y1+iy)
+
+          bx_part=bx_part + gx(ix)*hy(iy)*bx(cell_x1+ix,cell_y2+iy)
+          by_part=by_part + hx(ix)*gy(iy)*by(cell_x2+ix,cell_y1+iy)
+          bz_part=bz_part + hx(ix)*hy(iy)*bz(cell_x2+ix,cell_y2+iy)
+        ENDDO
+      ENDDO
 
 
           !update particle momenta using weighted fields
@@ -324,8 +324,8 @@ CONTAINS
              cell_frac_y = REAL(cell_y3,num) - cell_y_r
              cell_y3=cell_y3+1
 
-			CALL particle_to_grid(cell_frac_x,xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
-			CALL particle_to_grid(cell_frac_y,xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
+      CALL particle_to_grid(cell_frac_x,xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
+      CALL particle_to_grid(cell_frac_y,xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
 
              !Now change Xi1* to be Xi1*-Xi0*. This makes the representation of the current update much simpler
              xi1x = xi1x - xi0x
@@ -372,7 +372,7 @@ CONTAINS
                         +1.0_num/3.0_num * xi1x(ix) * xi1y(iy)
 
                    !This is the bit that actually solves d(rho)/dt=-div(J)
-                   jxh(ix,iy)=jxh(ix-1,iy) - part_q * wx * 1.0_num/dt_j * part_weight/dy 
+                   jxh(ix,iy)=jxh(ix-1,iy) - part_q * wx * 1.0_num/dt_j * part_weight/dy
                    jyh(ix,iy)=jyh(ix,iy-1) - part_q * wy * 1.0_num/dt_j * part_weight/dx
                    jzh(ix,iy)=part_q * part_vz * wz * part_weight/(dx*dy)
 
@@ -389,7 +389,7 @@ CONTAINS
           ENDIF
 #endif
 #ifdef PARTICLE_PROBES
-          ! Compare the current particle with the parameters of any probes in the system. 
+          ! Compare the current particle with the parameters of any probes in the system.
           ! These particles are copied into a separate part of the output file.
 
           current_probe=>particle_species(ispecies)%attached_probes
@@ -486,7 +486,7 @@ CONTAINS
 
     CALL particle_bcs
 
-	 IF (smooth_currents) CALL smooth_current()
+   IF (smooth_currents) CALL smooth_current()
 
   END SUBROUTINE push_particles
 

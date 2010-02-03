@@ -2,7 +2,7 @@ MODULE dist_fn
 
   USE shared_data
   USE partlist
-  USE output_cartesian 
+  USE output_cartesian
   USE output
   USE iocontrol
   USE mpi_subtype_control
@@ -112,7 +112,7 @@ CONTAINS
     LOGICAL,DIMENSION(3) :: calc_mod
     INTEGER,DIMENSION(3) :: p_count
     INTEGER,DIMENSION(3) :: l_direction
-    REAL(num),DIMENSION(3) :: conv 
+    REAL(num),DIMENSION(3) :: conv
     INTEGER,DIMENSION(3) :: cell
     LOGICAL :: use_this
 
@@ -393,7 +393,7 @@ CONTAINS
     LOGICAL,DIMENSION(2) :: calc_mod
     INTEGER,DIMENSION(2) :: p_count
     INTEGER,DIMENSION(2) :: l_direction
-    REAL(num),DIMENSION(2) :: conv 
+    REAL(num),DIMENSION(2) :: conv
     INTEGER,DIMENSION(2) :: cell
     LOGICAL :: use_this
 

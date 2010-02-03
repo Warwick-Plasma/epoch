@@ -38,7 +38,7 @@ CONTAINS
     logo(:,10)=(/3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4/)
     logo(:,11)=(/2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2/)
     logo_string=" "
-    DO iy=1,logo_y*2+1 
+    DO iy=1,logo_y*2+1
        DO ix=1,logo_x
           logo_string(ix*2-1:ix*2-1)=logo_els(logo(ix,MAX(iy/2,1))+1)
           logo_string(ix*2:ix*2)=logo_els(logo(ix,MAX(iy/2,1))+1)
@@ -69,13 +69,13 @@ CONTAINS
     WRITE(*,*) "Field Debug information -DFIELD_DEBUG"
 #endif
 #ifdef SPLINE_FOUR
-	 WRITE(*,*) "Fourth order spline interpolation -DSPLINE_FOUR"
+   WRITE(*,*) "Fourth order spline interpolation -DSPLINE_FOUR"
 #endif
 #ifdef HIGH_ORDER_FIELDS
 #ifdef ORDER_SIX
-	 WRITE(*,*) "6th order improved field solver -DHIGH_ORDER_FIELDS -DORDER_SIX"
+   WRITE(*,*) "6th order improved field solver -DHIGH_ORDER_FIELDS -DORDER_SIX"
 #else
-	 WRITE(*,*) "4th order field solver -DHIGH_ORDER_FIELDS"
+   WRITE(*,*) "4th order field solver -DHIGH_ORDER_FIELDS"
 #endif
 #endif
 #ifdef PARTICLE_CELL_DIVISION

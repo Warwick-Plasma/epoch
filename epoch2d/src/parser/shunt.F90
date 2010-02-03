@@ -80,7 +80,7 @@ CONTAINS
     IF (work .NE. 0) THEN
        !block is a function
        block%ptype=c_pt_function
-       block%data=work 
+       block%data=work
        RETURN
     ENDIF
 
@@ -130,7 +130,7 @@ CONTAINS
     TYPE(primitive_stack),INTENT(INOUT) :: stack
 
     stack%stack_point=stack%stack_point+1
-    stack%data(stack%stack_point)=value   
+    stack%data(stack%stack_point)=value
 
   END SUBROUTINE push_to_stack
 

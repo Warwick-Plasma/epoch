@@ -213,7 +213,7 @@ CONTAINS
        RETURN
     ENDIF
 
-    IF (ASSOCIATED(head%tail)) THEN 
+    IF (ASSOCIATED(head%tail)) THEN
        head%tail%next=>tail%head
     ELSE
        head%head=>tail%head

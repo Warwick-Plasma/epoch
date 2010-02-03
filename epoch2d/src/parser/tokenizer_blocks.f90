@@ -101,7 +101,7 @@ CONTAINS
     IF (str_cmp(name,"dir_px")) as_constant=c_const_dir_px
     IF (str_cmp(name,"dir_py")) as_constant=c_const_dir_py
     IF (str_cmp(name,"dir_pz")) as_constant=c_const_dir_pz
-	 IF (str_cmp(name,"var")) as_constant=c_const_var
+   IF (str_cmp(name,"var")) as_constant=c_const_var
 
 
     !User submitted constant using "Register"
@@ -111,7 +111,7 @@ CONTAINS
 
     !Constants set up using the input deck
     DO i=1,n_deck_constants
-       IF (str_cmp(TRIM(name),TRIM(deck_constant_list(i)%name))) THEN 
+       IF (str_cmp(TRIM(name),TRIM(deck_constant_list(i)%name))) THEN
           as_constant=c_const_deck_lowbound + i
           RETURN
        ENDIF
@@ -127,7 +127,7 @@ CONTAINS
     as_deferred_execution_object=0
 
     DO i=1,n_deferred_execution_objects
-       IF (str_cmp(TRIM(name),TRIM(deferred_objects(i)%name))) THEN 
+       IF (str_cmp(TRIM(name),TRIM(deferred_objects(i)%name))) THEN
           as_deferred_execution_object=i
           RETURN
        ENDIF
@@ -169,8 +169,8 @@ CONTAINS
     IF (str_cmp(name,"by")) as_function=c_func_by
     IF (str_cmp(name,"bz")) as_function=c_func_bz
     IF (str_cmp(name,"gauss")) as_function=c_func_gauss
-	 IF (str_cmp(name,"semigauss")) as_function=c_func_semigauss
-	 IF (str_cmp(name,"critical")) as_function=c_func_crit
+   IF (str_cmp(name,"semigauss")) as_function=c_func_semigauss
+   IF (str_cmp(name,"critical")) as_function=c_func_crit
     IF (str_cmp(name,"abs")) as_function=c_func_abs
 
     DO i=1,n_new_func
@@ -201,7 +201,7 @@ CONTAINS
     IF (str_cmp(name,"*")) THEN
        as_operator=c_opcode_times
     ENDIF
-    IF (str_cmp(name,"/")) THEN 
+    IF (str_cmp(name,"/")) THEN
        as_operator=c_opcode_divide
     ENDIF
     IF (str_cmp(name,"^")) THEN

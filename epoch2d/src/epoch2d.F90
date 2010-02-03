@@ -1,9 +1,9 @@
 PROGRAM pic
 
-  !EPOCH2D is a Birdsall and Langdon type PIC code derived from the PSC written by Hartmut Ruhl. 
+  !EPOCH2D is a Birdsall and Langdon type PIC code derived from the PSC written by Hartmut Ruhl.
 
   !The particle pusher (particles.F90) and the field solver (fields.f90) are almost exact copies of the equivalent routines from PSC,
-  !modified slightly to allow interaction with the changed portions of the code and for readability. The MPI routines are exactly 
+  !modified slightly to allow interaction with the changed portions of the code and for readability. The MPI routines are exactly
   !equivalent to those in PSC, but are completely rewritten in a form which is easier to extend with arbitrary fields and particle properties.
   !The support code is entirely new and is not equivalent to PSC.
 
@@ -76,7 +76,7 @@ PROGRAM pic
 
   !restart flag is set
   IF (IAND(ictype,c_ic_restart) .NE. 0) THEN
-     CALL restart_data    !restart from data in file SAVE.data          
+     CALL restart_data    !restart from data in file SAVE.data
      IF (rank .EQ. 0) PRINT *,"Load from restart dump OK"
      output_file=restart_snapshot
   ELSE
@@ -143,9 +143,9 @@ PROGRAM pic
      IF ((i >= nsteps .AND. nsteps >=0) .OR. (time >= t_end) .OR. halt) EXIT
      i = i + 1
      CALL set_dt
-	!update e and b fields to the half timestep
+  !update e and b fields to the half timestep
      CALL update_eb_fields_half
-	!push the particles
+  !push the particles
      CALL push_particles
 #ifdef PARTICLE_CELL_DIVISION
      !After this line, the particles can be accessed on a cell by cell basis
@@ -157,7 +157,7 @@ PROGRAM pic
 #endif
      CALL reattach_particles_to_mainlist
 #endif
-	!update the electric and magnetic fields to the final values
+  !update the electric and magnetic fields to the final values
      CALL update_eb_fields_final
 #ifdef PART_IONISE
      CALL ionise_particles

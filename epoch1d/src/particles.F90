@@ -25,7 +25,7 @@ CONTAINS
     !Xi (space factor see page 38 in manual)
     REAL(num),ALLOCATABLE,DIMENSION(:) :: xi0x
     REAL(num),ALLOCATABLE,DIMENSION(:) :: xi1x
-    !J from a given particle, can be spread over up to 3 cells in 
+    !J from a given particle, can be spread over up to 3 cells in
     !Each direction due to parabolic weighting. We allocate 4 or 5
     !Cells because the position of the particle at t=t+1.5dt is not
     !known until later. This part of the algorithm could probably be
@@ -76,7 +76,7 @@ CONTAINS
     REAL(num) :: cmratio
 
     !Tau variables from Page27 of manual
-    REAL(num) :: tau,taux,tauy,tauz 
+    REAL(num) :: tau,taux,tauy,tauz
 
     !Used by J update
     INTEGER :: xmin,xmax
@@ -160,12 +160,12 @@ CONTAINS
           cell_x1=cell_x1+1
 
           !These are now the weighting factors correct for field weighting
-			 CALL grid_to_particle(cell_frac_x,gx)
+       CALL grid_to_particle(cell_frac_x,gx)
 
           !particle weighting factors in 1D
           !These wieght particle properties onto grid
           !This is used later to calculate J
-			CALL particle_to_grid(cell_frac_x,xi0x(-2:2))
+      CALL particle_to_grid(cell_frac_x,xi0x(-2:2))
 
           !Now redo shifted by half a cell due to grid stagger.
           !Use shifted version for ex in X, ey in Y, ez in Z
@@ -177,24 +177,24 @@ CONTAINS
 
           !Grid weighting factors in 3D (3D analogue of equation 4.77 page 25 of manual)
           !These weight grid properties onto particles
-			 CALL grid_to_particle(cell_frac_x,hx)
+       CALL grid_to_particle(cell_frac_x,hx)
 
-			 ex_part=0.0_num
-			 ey_part=0.0_num
-			 ez_part=0.0_num
-			 bx_part=0.0_num
-			 by_part=0.0_num
-			 bz_part=0.0_num
+       ex_part=0.0_num
+       ey_part=0.0_num
+       ez_part=0.0_num
+       bx_part=0.0_num
+       by_part=0.0_num
+       bz_part=0.0_num
 
-			 DO ix=-sf_order,sf_order
-				 ex_part=ex_part + hx(ix)*ex(cell_x2+ix)
-				 ey_part=ey_part + gx(ix)*ey(cell_x1+ix)
-				 ez_part=ez_part + gx(ix)*ez(cell_x1+ix)
-		
-				 bx_part=bx_part + gx(ix)*bx(cell_x1+ix)
-				 by_part=by_part + hx(ix)*by(cell_x2+ix)
-				 bz_part=bz_part + hx(ix)*bz(cell_x2+ix)
-			 ENDDO
+       DO ix=-sf_order,sf_order
+         ex_part=ex_part + hx(ix)*ex(cell_x2+ix)
+         ey_part=ey_part + gx(ix)*ey(cell_x1+ix)
+         ez_part=ez_part + gx(ix)*ez(cell_x1+ix)
+
+         bx_part=bx_part + gx(ix)*bx(cell_x1+ix)
+         by_part=by_part + hx(ix)*by(cell_x2+ix)
+         bz_part=bz_part + hx(ix)*bz(cell_x2+ix)
+       ENDDO
 
           !update particle momenta using weighted fields
           cmratio = part_q * 0.5_num * dt
@@ -260,7 +260,7 @@ CONTAINS
              cell_frac_x = REAL(cell_x3,num) - cell_x_r
              cell_x3=cell_x3+1
 
- 				 CALL particle_to_grid(cell_frac_x,xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
+          CALL particle_to_grid(cell_frac_x,xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
 
              !Now change Xi1* to be Xi1*-Xi0*. This makes the representation of the current update much simpler
              xi1x = xi1x - xi0x
@@ -290,7 +290,7 @@ CONTAINS
                 wz = xi0x(ix) + 0.5_num * xi1x(ix)
 
                 !This is the bit that actually solves d(rho)/dt=-div(J)
-                jxh(ix)=jxh(ix-1) - part_q * wx * 1.0_num/dt * part_weight 
+                jxh(ix)=jxh(ix-1) - part_q * wx * 1.0_num/dt * part_weight
                 jyh(ix)=part_q * part_vy * wy  * part_weight/dx
                 jzh(ix)=part_q * part_vz * wz  * part_weight/dx
 
@@ -306,7 +306,7 @@ CONTAINS
           ENDIF
 #endif
 #ifdef PARTICLE_PROBES
-          ! Compare the current particle with the parameters of any probes in the system. 
+          ! Compare the current particle with the parameters of any probes in the system.
           ! These particles are copied into a separate part of the output file.
 
           current_probe=>particle_species(ispecies)%attached_probes

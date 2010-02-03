@@ -14,7 +14,7 @@ CONTAINS
     !Minimal subroutine to skip past current block
     !Assumes that the file is at a point where the block header has been read
     !If it's at the start of a block call cfd_skip_block_header first
-    current_displacement = block_header_end + block_length 
+    current_displacement = block_header_end + block_length
   END SUBROUTINE cfd_skip_block
 
   SUBROUTINE cfd_skip_block_header

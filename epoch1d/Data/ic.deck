@@ -1,41 +1,49 @@
 begin:constant
-	omega=2.0*pi*c/(1.0e-6)
-	den_crit=critical(omega) #per cubic metre
-	scale=3.5e-6 #microns
-	den_max=500.0*den_crit
-	den_maxpoint=40.0e-6 #microns
-	den_contrast=1.0/5000.0
-	
-	t_wid=(10.0e-6)/c
-	amax=1.0
+
+  omega=2.0*pi*c/(1.0e-6)
+  den_crit=critical(omega) #per cubic metre
+  scale=3.5e-6 #microns
+  den_max=500.0*den_crit
+  den_maxpoint=40.0e-6 #microns
+  den_contrast=1.0/5000.0
+
+  t_wid=(10.0e-6)/c
+  amax=1.0
+
 end:constant
 
 begin:laser
-	direction=left
-        amp=3.222499e13     #1e20 W/cm^2
-        freq= omega  #red
-      	pol=0.0
-        phase=0.0
-		t_profile=semigauss(time,amax,0.1*amax,t_wid)
-        t_start=0.0
-		t_end=end
+
+  direction=left
+  amp=3.222499e13     #1e20 W/cm^2
+  freq= omega  #red
+  pol=0.0
+  phase=0.0
+  t_profile=semigauss(time,amax,0.1*amax,t_wid)
+  t_start=0.0
+  t_end=end
+
 end:laser
 
 #If you wanted to load the initial conditions from a file
 #Use this block
 #begin:species_external1
-#	rho=Data/ic_rho.dat
+#  rho=Data/ic_rho.dat
 #end:species_external1
 
 begin:species1
-	temp=0.0
-	rho=if((x lt den_maxpoint),den_max * exp((x-den_maxpoint)/scale),den_max)
-	minrho=den_contrast * den_maxpoint
+
+  temp=0.0
+  rho=if((x lt den_maxpoint),den_max * exp((x-den_maxpoint)/scale),den_max)
+  minrho=den_contrast * den_maxpoint
+
 end:species1
 
 begin:species2
-	rho=rho(1)#*0.5
-	temp_x=temp_x(1)
-	temp_y=temp_x(1)
-	minrho=den_contrast * den_maxpoint
+
+  rho=rho(1)#*0.5
+  temp_x=temp_x(1)
+  temp_y=temp_x(1)
+  minrho=den_contrast * den_maxpoint
+
 end:species2

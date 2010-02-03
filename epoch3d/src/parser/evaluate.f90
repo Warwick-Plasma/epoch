@@ -24,7 +24,7 @@ CONTAINS
 !!$       STOP
 !!$    ENDIF
 
-	IF (debug_mode .AND. ix== 0 .AND. iy==0 .AND. iz==0) CALL display_tokens(input_stack)
+  IF (debug_mode .AND. ix== 0 .AND. iy==0 .AND. iz==0) CALL display_tokens(input_stack)
 
     DO i=1,input_stack%stack_point
        block=input_stack%data(i)

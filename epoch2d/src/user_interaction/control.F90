@@ -49,7 +49,7 @@ CONTAINS
     ictype=c_ic_early_internal
     icfile%value="ic.deck"
     restart_snapshot=0
-    
+
     !Neutralising background
     neutral_background=.TRUE.
 
@@ -122,7 +122,7 @@ CONTAINS
     !c_io_never - Default value, never dump
     !c_io_always - dump at every output
     !c_io_full - dump at only full outputs
-    !c_io_species - When ORed with another value, tells the code to output 
+    !c_io_species - When ORed with another value, tells the code to output
     !             some additional per species information
 
     !The numbers for each variable are

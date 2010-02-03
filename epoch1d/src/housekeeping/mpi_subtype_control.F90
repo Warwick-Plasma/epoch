@@ -188,7 +188,7 @@ CONTAINS
     INTEGER :: create_field_subtype
 
     !lengths=nx_local
-	 !starts=cell_start_x_local-1
+   !starts=cell_start_x_local-1
 
     !CALL MPI_TYPE_INDEXED(1,lengths,starts,mpireal,create_field_subtype,errcode)
     !CALL MPI_TYPE_COMMIT(create_field_subtype,errcode)
@@ -204,7 +204,7 @@ types(2)=mpireal
 types(3)=MPI_UB
 CALL MPI_TYPE_STRUCT(3,length,disp,types,create_field_subtype,errcode)
 CALL MPI_TYPE_COMMIT(create_field_subtype,errcode)
- 
+
   END FUNCTION create_field_subtype
 
 END MODULE mpi_subtype_control

@@ -16,18 +16,18 @@ CONTAINS
     INTEGER :: ispecies
     INTEGER :: clock,idum
     TYPE(particle_family),POINTER :: part_family
-	REAL(num) :: maxrho_local,maxrho
-	
-	dt_plasma=1000000.0_num
+  REAL(num) :: maxrho_local,maxrho
+
+  dt_plasma=1000000.0_num
 
     CALL SYSTEM_CLOCK(clock)
     idum=-(clock+rank+1)
     DO ispecies=1,n_species
        part_family=>particle_species(ispecies)
-		 !Calculate the inverse plasma frequency for stability
-		 maxrho_local=MAXVAL(initial_conditions(ispecies)%rho)
-		 CALL MPI_ALLREDUCE(maxrho_local,maxrho,1,mpireal,MPI_MAX,comm,errcode)
-		 dt_plasma=MIN(dt_plasma,1.0_num/SQRT(maxrho*q0**2/(m0*epsilon0)))
+     !Calculate the inverse plasma frequency for stability
+     maxrho_local=MAXVAL(initial_conditions(ispecies)%rho)
+     CALL MPI_ALLREDUCE(maxrho_local,maxrho,1,mpireal,MPI_MAX,comm,errcode)
+     dt_plasma=MIN(dt_plasma,1.0_num/SQRT(maxrho*q0**2/(m0*epsilon0)))
 #ifdef PER_PARTICLE_WEIGHT
        CALL setup_particle_density(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
 #else
@@ -38,7 +38,7 @@ CONTAINS
        CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,:,3),c_dir_z,part_family,initial_conditions(ispecies)%drift,idum)
     ENDDO
 
-	IF (rank .EQ. 0) PRINT *,"Plasma characteristic timescale ",dt_plasma
+  IF (rank .EQ. 0) PRINT *,"Plasma characteristic timescale ",dt_plasma
   END SUBROUTINE auto_load
 
   SUBROUTINE allocate_ic()
@@ -95,17 +95,17 @@ CONTAINS
 
     num_valid_cells=0
     density_total=0.0_num
-	DO iz=1,nz
-    	DO iy=1,ny
-       	DO ix=1,nx
-          	IF (density(ix,iy,iz) .GE. minrho) THEN
-             	num_valid_cells=num_valid_cells+1
-             	density_total=density_total + density(ix,iy,iz)
-          	ENDIF	
-          	IF (density(ix,iy,iz) .GT. maxrho .AND. maxrho .GT. 0.0_num) density(ix,iy,iz) = maxrho
-       	ENDDO
-    	ENDDO
-	ENDDO
+  DO iz=1,nz
+      DO iy=1,ny
+         DO ix=1,nx
+            IF (density(ix,iy,iz) .GE. minrho) THEN
+               num_valid_cells=num_valid_cells+1
+               density_total=density_total + density(ix,iy,iz)
+            ENDIF
+            IF (density(ix,iy,iz) .GT. maxrho .AND. maxrho .GT. 0.0_num) density(ix,iy,iz) = maxrho
+         ENDDO
+      ENDDO
+  ENDDO
 
     CALL MPI_ALLREDUCE(num_valid_cells,num_valid_cells_global,1,MPI_INTEGER8,MPI_MAX,comm,errcode)
     npart_per_cell_average=species_list%count/num_valid_cells_global
@@ -115,7 +115,7 @@ CONTAINS
     density_average=density_total_global/REAL(num_valid_cells_global,num)
 
     !Assume that a cell with the average density has the average number of particles per cell
-    !Now calculate the new minimum density 
+    !Now calculate the new minimum density
     minrho = density_average/REAL(npart_per_cell_average,num)
     !Set the particle weight
     weight = minrho * dx * dy *dz
@@ -123,30 +123,30 @@ CONTAINS
     !Recalculate the number of valid cells and the summed density
     num_valid_cells=0
     density_total=0.0_num
-	DO iz=1,nz
-    	DO iy=1,ny
-       	DO ix=1,nx
-          	IF (density(ix,iy,iz) .GE. minrho) THEN
-             	num_valid_cells=num_valid_cells+1
-             	density_total=density_total + density(ix,iy,iz)
-          	ENDIF
-       	ENDDO
-    	ENDDO
-	ENDDO
+  DO iz=1,nz
+      DO iy=1,ny
+         DO ix=1,nx
+            IF (density(ix,iy,iz) .GE. minrho) THEN
+               num_valid_cells=num_valid_cells+1
+               density_total=density_total + density(ix,iy,iz)
+            ENDIF
+         ENDDO
+      ENDDO
+  ENDDO
 
     npart_this_proc_new=density_total/density_average * REAL(npart_per_cell_average,num)
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist,npart_this_proc_new)
     current=>partlist%head
-	DO iz=1,nz
-    	DO ix=1,nx
-       	DO iy=1,ny
-          	ipart=0
-          	npart_per_cell = density(ix,iy,iz)/density_average * REAL(npart_per_cell_average,num)
-          	DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
+  DO iz=1,nz
+      DO ix=1,nx
+         DO iy=1,ny
+            ipart=0
+            npart_per_cell = density(ix,iy,iz)/density_average * REAL(npart_per_cell_average,num)
+            DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-             !Even if particles have per particle charge and mass, assume that 
+             !Even if particles have per particle charge and mass, assume that
              !initially they all have the same charge and mass (user can easily over_ride)
              current%charge=species_list%charge
              current%mass=species_list%mass
@@ -165,7 +165,7 @@ CONTAINS
           ENDDO
        ENDDO
     ENDDO
-	ENDDO
+  ENDDO
 
     DO WHILE(ASSOCIATED(current))
        next=>current%next
@@ -252,7 +252,7 @@ CONTAINS
                 IF (load_list(ix,iy,iz)) THEN
                    DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-                      !Even if particles have per particle charge and mass, assume that 
+                      !Even if particles have per particle charge and mass, assume that
                       !initially they all have the same charge and mass (user can easily over_ride)
                       current%charge=species_list%charge
                       current%mass=species_list%mass
@@ -473,7 +473,7 @@ CONTAINS
     temp=0.0_num
 
     partlist=>part_family%attached_list
-    !If using per particle weighing then use the weight function to match the uniform pseudoparticle density to the 
+    !If using per particle weighing then use the weight function to match the uniform pseudoparticle density to the
     !Real particle density
     current=>partlist%head
     ipart=0
@@ -495,15 +495,15 @@ CONTAINS
        cell_frac_z = REAL(cell_z,num) - cell_z_r
        cell_z=cell_z+1
 
-		 CALL particle_to_grid(cell_frac_x,gx)
-		 CALL particle_to_grid(cell_frac_y,gy)
-		 CALL particle_to_grid(cell_frac_z,gz)
-			
+     CALL particle_to_grid(cell_frac_x,gx)
+     CALL particle_to_grid(cell_frac_y,gy)
+     CALL particle_to_grid(cell_frac_z,gz)
+
        data=1.0_num/(dx*dy*dz) !Simply want to count particles per metre^2
        DO isubz=-sf_order,sf_order
           DO isuby=-sf_order,sf_order
              DO isubx=-sf_order,sf_order
-                weight_fn(cell_x+isubx,cell_y+isuby,cell_z+isubz) = weight_fn(cell_x+isubx,cell_y+isuby,cell_z+isubz) + & 
+                weight_fn(cell_x+isubx,cell_y+isuby,cell_z+isubz) = weight_fn(cell_x+isubx,cell_y+isuby,cell_z+isubz) + &
                      gx(isubx) * gy(isuby) * gz(isubz) * data
              ENDDO
           ENDDO
@@ -548,9 +548,9 @@ CONTAINS
        cell_frac_z = REAL(cell_z,num) - cell_z_r
        cell_z=cell_z+1
 
-		 CALL grid_to_particle(cell_frac_x,gx)
-		 CALL grid_to_particle(cell_frac_y,gy)
-		 CALL grid_to_particle(cell_frac_z,gz)
+     CALL grid_to_particle(cell_frac_x,gx)
+     CALL grid_to_particle(cell_frac_y,gy)
+     CALL grid_to_particle(cell_frac_z,gz)
 
        weight_local=0.0_num
        DO isubz=-sf_order,+sf_order
@@ -622,7 +622,7 @@ FUNCTION sample_dist_function(axis,dist_fn,idum)
   cdf=cdf/SUM(dist_fn)
 
   position=random(idum)
-	sample_dist_function=0.0_num
+  sample_dist_function=0.0_num
 
   start=1
   endpoint=n_points
@@ -655,7 +655,7 @@ END FUNCTION sample_dist_function
     k=idum/iq
 
     idum=ia*(idum-k*iq)-ir*k
-    IF (idum .LT. 0) THEN 
+    IF (idum .LT. 0) THEN
        idum=idum+im
     ENDIF
 

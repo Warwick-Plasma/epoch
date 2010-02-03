@@ -38,7 +38,7 @@ CONTAINS
        current_displacement=3
        CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
            "native", MPI_INFO_NULL, cfd_errcode)
-       !Read in the basic file info. Should check version info, but this is version 1, so 
+       !Read in the basic file info. Should check version info, but this is version 1, so
        !Let's not worry about it
        CALL MPI_FILE_READ_ALL(cfd_filehandle, header_offset, 1, MPI_INTEGER, cfd_status, cfd_errcode)
        CALL MPI_FILE_READ_ALL(cfd_filehandle, block_header_size, 1, MPI_INTEGER, cfd_status, cfd_errcode)
@@ -93,7 +93,7 @@ CONTAINS
     CALL MPI_FILE_READ_ALL(cfd_filehandle,block_length,1,MPI_INTEGER8,cfd_status,cfd_errcode)
 
     !Skip past the header block
-    current_displacement = block_header_start + block_header_size 
+    current_displacement = block_header_start + block_header_size
 
     block_header_end = current_displacement
 
@@ -145,7 +145,7 @@ CONTAINS
 
     CALL cfd_skip_block_header()
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
-         "native", MPI_INFO_NULL,cfd_errcode)  
+         "native", MPI_INFO_NULL,cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, value, 1, mpireal, cfd_status, cfd_errcode)
     CALL cfd_skip_block()
 

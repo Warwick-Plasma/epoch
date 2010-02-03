@@ -119,7 +119,7 @@ CONTAINS
     lz=dt/dz
     cnz=0.5_num*lz
 
-    !bx 
+    !bx
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx

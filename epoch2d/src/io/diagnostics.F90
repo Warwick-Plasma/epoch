@@ -1,8 +1,8 @@
 MODULE diagnostics
 
-  USE shared_data 
+  USE shared_data
   USE calc_df
-  USE output_cartesian 
+  USE output_cartesian
   USE output_particle
   USE output_arb
   USE output
@@ -54,7 +54,7 @@ CONTAINS
        CALL MPI_ALLREDUCE(npart_local,npart_dump_global,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
        CALL create_subtypes(IAND(code,c_io_restartable) .NE. 0)
        !If the code is doing a restart dump then tell the iterators that this is a restart dump
-       IF (IAND(code,c_io_restartable) .NE. 0) THEN 
+       IF (IAND(code,c_io_restartable) .NE. 0) THEN
           iterator_settings%restart=.TRUE.
        ELSE
           iterator_settings%restart=.FALSE.
@@ -77,8 +77,8 @@ CONTAINS
           IF (.NOT. use_offset_grid) THEN
              CALL cfd_write_2d_cartesian_grid("Grid","Grid",x_global(1:nx_global),y_global(1:ny_global),0)
           ELSE
-             CALL cfd_write_2d_cartesian_grid("Grid","Grid",x_offset_global(1:nx_global),y_offset_global(1:ny_global),0)      
-             CALL cfd_write_2d_cartesian_grid("Grid_Full","Grid",x_global(1:nx_global),y_global(1:ny_global),0)          
+             CALL cfd_write_2d_cartesian_grid("Grid","Grid",x_offset_global(1:nx_global),y_offset_global(1:ny_global),0)
+             CALL cfd_write_2d_cartesian_grid("Grid_Full","Grid",x_global(1:nx_global),y_global(1:ny_global),0)
           ENDIF
        ENDIF
        !(Variable_Name,Variable_Class,array,global_npart,Mesh_Name,Mesh_Class,MPI_TYPE describing data distribution)
@@ -129,18 +129,18 @@ CONTAINS
        !Since these use species lookup tables, have to use the iterator functions
        !(Variable_Name,Variable_Class,Iterator_Function,global_npart,npart_per_iteration,Mesh_Name,Mesh_Class,MPI_TYPE describing data distribution)
        IF (IAND(dumpmask(18),code) .NE. 0)&
- 			CALL cfd_write_nd_particle_variable_with_iterator_all("Q","Particles",&
-			iterate_charge,npart_dump_global,n_part_per_it&
-			,"Particles","Part_Grid",subtype_particle_var)
+       CALL cfd_write_nd_particle_variable_with_iterator_all("Q","Particles",&
+      iterate_charge,npart_dump_global,n_part_per_it&
+      ,"Particles","Part_Grid",subtype_particle_var)
        IF (IAND(dumpmask(19),code) .NE. 0)&
- 			CALL cfd_write_nd_particle_variable_with_iterator_all("Mass","Particles",&
-			iterate_mass,npart_dump_global,n_part_per_it&
-			,"Particles","Part_Grid",subtype_particle_var)
+       CALL cfd_write_nd_particle_variable_with_iterator_all("Mass","Particles",&
+      iterate_mass,npart_dump_global,n_part_per_it&
+      ,"Particles","Part_Grid",subtype_particle_var)
 
        IF (IAND(dumpmask(20),code) .NE. 0) THEN
           IF (IAND(dumpmask(20),c_io_no_intrinsic) .EQ. 0) THEN
              CALL calc_ekbar(data,0)
-				CALL cfd_write_2d_cartesian_variable_parallel("EkBar","EkBar",dims,stagger,"Grid","Grid",data(1:nx,1:ny),subtype_field)
+        CALL cfd_write_2d_cartesian_variable_parallel("EkBar","EkBar",dims,stagger,"Grid","Grid",data(1:nx,1:ny),subtype_field)
           ENDIF
           IF (IAND(dumpmask(20),c_io_species) .NE. 0) THEN
              DO ispecies=1,n_species
@@ -155,7 +155,7 @@ CONTAINS
        IF (IAND(dumpmask(21),code) .NE. 0) THEN
           CALL calc_mass_density(data,0)
           IF (IAND(dumpmask(21),c_io_no_intrinsic) .EQ. 0) &
-				CALL cfd_write_2d_cartesian_variable_parallel("Mass_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx,1:ny),subtype_field)
+        CALL cfd_write_2d_cartesian_variable_parallel("Mass_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx,1:ny),subtype_field)
           IF (IAND(dumpmask(21),c_io_species) .NE. 0) THEN
              DO ispecies=1,n_species
                 CALL calc_mass_density(data,ispecies)
@@ -166,8 +166,8 @@ CONTAINS
        ENDIF
        IF (IAND(dumpmask(22),code) .NE. 0) THEN
           CALL calc_charge_density(data,0)
-  			 IF (IAND(dumpmask(22),c_io_no_intrinsic) .EQ. 0) &	
-          	CALL cfd_write_2d_cartesian_variable_parallel("Charge_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx,1:ny),subtype_field)
+         IF (IAND(dumpmask(22),c_io_no_intrinsic) .EQ. 0) &
+            CALL cfd_write_2d_cartesian_variable_parallel("Charge_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx,1:ny),subtype_field)
           IF (IAND(dumpmask(22),c_io_species) .NE. 0) THEN
              DO ispecies=1,n_species
                 CALL calc_charge_density(data,ispecies)
@@ -179,8 +179,8 @@ CONTAINS
 
        IF (IAND(dumpmask(23),code) .NE. 0) THEN
           CALL calc_number_density(data,0)
-			 IF (IAND(dumpmask(23),c_io_no_intrinsic) .EQ. 0) &
-          	CALL cfd_write_2d_cartesian_variable_parallel("Number_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx,1:ny),subtype_field)
+       IF (IAND(dumpmask(23),c_io_no_intrinsic) .EQ. 0) &
+            CALL cfd_write_2d_cartesian_variable_parallel("Number_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx,1:ny),subtype_field)
           IF (IAND(dumpmask(23),c_io_species) .NE. 0) THEN
              DO ispecies=1,n_species
                 CALL calc_number_density(data,ispecies)
@@ -248,7 +248,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: i
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
-	 INTEGER :: ioutput
+   INTEGER :: ioutput
 
     REAL(num), SAVE :: t1 = 0.0_num
 
@@ -260,11 +260,11 @@ CONTAINS
     print_arrays = .FALSE.
     last_call = .FALSE.
 
-	 DO ioutput = 1, num_vars_to_dump
-	 	IF (FLOOR((time - t1)/dt) .LE. averaged_data(ioutput)%average_over_iterations) THEN
-			CALL average_field(ioutput)
-		ENDIF
-	ENDDO
+   DO ioutput = 1, num_vars_to_dump
+     IF (FLOOR((time - t1)/dt) .LE. averaged_data(ioutput)%average_over_iterations) THEN
+      CALL average_field(ioutput)
+    ENDIF
+  ENDDO
 
     IF (time >= t1) THEN
        print_arrays = .TRUE.
@@ -279,42 +279,42 @@ CONTAINS
   END SUBROUTINE io_test
 
   SUBROUTINE average_field(ioutput)
-		INTEGER,INTENT(IN) :: ioutput
-		INTEGER :: count
-		
-		count=averaged_data(ioutput)%average_over_iterations
-			
-		SELECT CASE(ioutput)
-			CASE (9)
-				averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						ex/REAL(count,num)
-			CASE(10)
-					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						ey/REAL(count,num)
-			CASE(11)
-					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						ez/REAL(count,num)
-			CASE (12)
-				averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						bx/REAL(count,num)
-			CASE(13)
-					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						by/REAL(count,num)
-			CASE(14)
-					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						bz/REAL(count,num)
-			CASE (15)
-				averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						jx/REAL(count,num)
-			CASE(16)
-					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						jy/REAL(count,num)
-			CASE(17)
-					averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
-						jz/REAL(count,num)										
-			
-		END SELECT
-		
+    INTEGER,INTENT(IN) :: ioutput
+    INTEGER :: count
+
+    count=averaged_data(ioutput)%average_over_iterations
+
+    SELECT CASE(ioutput)
+      CASE (9)
+        averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            ex/REAL(count,num)
+      CASE(10)
+          averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            ey/REAL(count,num)
+      CASE(11)
+          averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            ez/REAL(count,num)
+      CASE (12)
+        averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            bx/REAL(count,num)
+      CASE(13)
+          averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            by/REAL(count,num)
+      CASE(14)
+          averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            bz/REAL(count,num)
+      CASE (15)
+        averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            jx/REAL(count,num)
+      CASE(16)
+          averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            jy/REAL(count,num)
+      CASE(17)
+          averaged_data(ioutput)%data=averaged_data(ioutput)%data + &
+            jz/REAL(count,num)
+
+    END SELECT
+
   END SUBROUTINE average_field
 
   SUBROUTINE set_dt()        ! sets CFL limited step
@@ -330,7 +330,7 @@ CONTAINS
     dty=dy/max_part_v
     dt=MIN(dt,dtx*dty/SQRT(dtx**2+dty**2))
 #endif
-    dt=dt_multiplier * dt 
+    dt=dt_multiplier * dt
 
   END SUBROUTINE set_dt
 

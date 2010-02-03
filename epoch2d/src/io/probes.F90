@@ -160,7 +160,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
        part_count=part_count+1
-       data(part_count) = cur%part_p(1) 
+       data(part_count) = cur%part_p(1)
        cur=>cur%next
     ENDDO
     n_points=part_count
@@ -182,7 +182,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
        part_count=part_count+1
-       data(part_count) = cur%part_p(2) 
+       data(part_count) = cur%part_p(2)
        cur=>cur%next
     ENDDO
 
@@ -205,7 +205,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
        part_count=part_count+1
-       data(part_count) = cur%part_p(3) 
+       data(part_count) = cur%part_p(3)
        cur=>cur%next
     ENDDO
 

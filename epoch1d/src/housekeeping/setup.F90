@@ -1,4 +1,4 @@
-MODULE setup 
+MODULE setup
   USE shared_data
   USE input_cartesian
   USE input_particle
@@ -30,7 +30,7 @@ CONTAINS
     dumpmask=0
     comm=MPI_COMM_NULL
 
-	 dt_plasma_frequency=0.0_num
+   dt_plasma_frequency=0.0_num
 
     window_shift=0.0_num
     npart_global=-1
@@ -57,12 +57,12 @@ CONTAINS
     ENDDO
 
     DO iproc=0,nprocx-1
-       x_starts(iproc)=x_global(iproc*nx+1) 
-       x_ends(iproc)=x_global((iproc+1)*nx) 
+       x_starts(iproc)=x_global(iproc*nx+1)
+       x_ends(iproc)=x_global((iproc+1)*nx)
     ENDDO
 
     x_start_local=x_starts(coordinates(1))
-    x_end_local=x_ends(coordinates(1))   
+    x_end_local=x_ends(coordinates(1))
 
     !Setup local grid
     x(-1)=x_start_local-dx*2.0_num !+ dx/2.0_num
@@ -86,7 +86,7 @@ CONTAINS
        particle_species(ispecies)%count=-1
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
        particle_species(ispecies)%split=.FALSE.
-       particle_species(ispecies)%npart_max=0.0_num     
+       particle_species(ispecies)%npart_max=0.0_num
 #endif
 #ifdef PART_IONISE
        particle_species(ispecies)%ionise=.FALSE.
@@ -309,7 +309,7 @@ CONTAINS
     INTEGER(KIND=8) :: ipart
     TYPE(particle),POINTER,SAVE :: cur
 
-    IF (start) THEN 
+    IF (start) THEN
        cur=>main_root%head
     ENDIF
     DO ipart=1,npart_this_it

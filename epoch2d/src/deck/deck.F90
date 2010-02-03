@@ -187,7 +187,7 @@ CONTAINS
     ENDIF
     errcode_deck=IOR(errcode_deck,check_custom_blocks())
 
-    problem_found =(IAND(errcode_deck,c_err_missing_elements) .NE. 0) 
+    problem_found =(IAND(errcode_deck,c_err_missing_elements) .NE. 0)
 
     IF (problem_found) THEN
        errcode_deck=IOR(errcode_deck,c_err_terminate)
@@ -266,7 +266,7 @@ CONTAINS
     !Make the whole filename by adding the data_dir to the filename
     deck_filename=TRIM(ADJUSTL(data_dir))// '/' // TRIM(ADJUSTL(filename))
 
-    !deck_state tells the code whether it's parsing the normal input deck 
+    !deck_state tells the code whether it's parsing the normal input deck
     !Or the initial conditions. You can add more states if you want.
     !Just search for deck_state
     IF (deck_state .EQ. c_ds_deck) THEN
@@ -294,7 +294,7 @@ CONTAINS
        INQUIRE(file=deck_filename,exist=exists)
        IF (.NOT. exists) THEN
           PRINT *,"***ERROR*** Input deck file ",deck_filename," does not exist. Create the file and rerun the code."
-          CALL MPI_ABORT(MPI_COMM_WORLD,errcode) 
+          CALL MPI_ABORT(MPI_COMM_WORLD,errcode)
        ENDIF
        !Get a free lun. Don't use a constant lun to allow for recursion
        lun=get_free_lun()
@@ -340,7 +340,7 @@ CONTAINS
              deck_values(2)%value=TRIM(ADJUSTL(deck_values(2)%value))
              CALL MPI_BCAST(1,1,MPI_INTEGER,0,MPI_COMM_WORLD,errcode)
              CALL MPI_BCAST(deck_values(1)%value,string_length,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)
-             CALL MPI_BCAST(deck_values(2)%value,string_length,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)             
+             CALL MPI_BCAST(deck_values(2)%value,string_length,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)
              CALL handle_deck_element(deck_values(1)%value,deck_values(2)%value,errcode_deck)
              deck_values(1)%value=""
              deck_values(2)%value=""
@@ -348,7 +348,7 @@ CONTAINS
              white_space_over=.FALSE.
           ENDIF
           IF (f .EQ. -1) THEN
-             CALL MPI_BCAST(0,1,MPI_INTEGER,0,MPI_COMM_WORLD,errcode)   
+             CALL MPI_BCAST(0,1,MPI_INTEGER,0,MPI_COMM_WORLD,errcode)
              CLOSE(lun)
              EXIT
           ENDIF
@@ -361,7 +361,7 @@ CONTAINS
           CALL MPI_BCAST(f,1,MPI_INTEGER,0,MPI_COMM_WORLD,errcode)
           IF (f .EQ. 0) EXIT
           CALL MPI_BCAST(deck_values(1)%value,string_length,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)
-          CALL MPI_BCAST(deck_values(2)%value,string_length,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)             
+          CALL MPI_BCAST(deck_values(2)%value,string_length,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)
           CALL handle_deck_element(deck_values(1)%value,deck_values(2)%value,errcode_deck)
           deck_values(1)%value=""
           deck_values(2)%value=""
@@ -450,7 +450,7 @@ CONTAINS
           WRITE(40,*),""
           WRITE(40,*),"Ending ",TRIM(ADJUSTL(value)), " block"
           WRITE(40,*),""
-          IF (err_count .NE. 0) THEN 
+          IF (err_count .NE. 0) THEN
              WRITE(40,*) "***WARNING*** block ",TRIM(ADJUSTL(value))," contains errors"
              WRITE(40,*) ""
           ENDIF

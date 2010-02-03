@@ -37,7 +37,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element,"rho")) THEN
-       CALL load_data_file(value,initial_conditions(species_id)%rho,handle_ic_external_species_deck)  
+       CALL load_data_file(value,initial_conditions(species_id)%rho,handle_ic_external_species_deck)
        RETURN
     ENDIF
 

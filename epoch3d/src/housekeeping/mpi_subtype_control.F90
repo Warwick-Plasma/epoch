@@ -126,7 +126,7 @@ CONTAINS
 
   !---------------------------------------------------------------------------------
   ! create_field_subtype - Creates a subtype representing the local processor
-  ! For any arbitrary arrangement of an array covering the entire spatial domain. 
+  ! For any arbitrary arrangement of an array covering the entire spatial domain.
   ! Only used directly during load balancing
   !---------------------------------------------------------------------------------
   FUNCTION create_field_subtype(nx_local,ny_local,nz_local,cell_start_x_local,cell_start_y_local,cell_start_z_local)

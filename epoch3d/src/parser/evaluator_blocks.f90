@@ -107,7 +107,7 @@ CONTAINS
 
     IF (opcode .GE. c_const_custom_lowbound) THEN
        !Check for custom constants
-       val = custom_constant(opcode,ix,iy,iz,err)    
+       val = custom_constant(opcode,ix,iy,iz,err)
        IF(IAND(err,c_err_unknown_element) == 0) CALL push_on_eval(val)
        RETURN
     ENDIF
@@ -140,7 +140,7 @@ CONTAINS
 
     IF (opcode .EQ. c_const_me) THEN
        CALL push_on_eval(m0)
-       RETURN 
+       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_eps0) THEN
@@ -185,17 +185,17 @@ CONTAINS
 
     IF (opcode .EQ. c_const_dx) THEN
        CALL push_on_eval(dx)
-       RETURN 
+       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_dy) THEN
        CALL push_on_eval(dy)
-       RETURN 
+       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_dz) THEN
        CALL push_on_eval(dz)
-       RETURN 
+       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_start_x) THEN
@@ -235,12 +235,12 @@ CONTAINS
 
     IF (opcode .EQ. c_const_iy) THEN
        CALL push_on_eval(REAL(iy,num))
-       RETURN 
+       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_iz) THEN
        CALL push_on_eval(REAL(iz,num))
-       RETURN 
+       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_time) THEN

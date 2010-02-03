@@ -22,7 +22,7 @@ CONTAINS
     handle_deo_deck=c_err_none
 
     IF (value .EQ. blank) RETURN
-	 temp%stack_point=0
+   temp%stack_point=0
     CALL tokenize(value,temp,err)
     IF (err .NE. c_err_none) THEN
        handle_deo_deck=err

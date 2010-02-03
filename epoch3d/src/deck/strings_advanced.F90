@@ -29,7 +29,7 @@ CONTAINS
        ENDIF
     ENDDO
 
-    IF (pos < 0) THEN 
+    IF (pos < 0) THEN
        err=IOR(err,c_err_bad_value)
        RETURN
     ENDIF
@@ -57,7 +57,7 @@ CONTAINS
        ENDIF
     ENDDO
 
-    IF (pos < 0) THEN 
+    IF (pos < 0) THEN
        err=IOR(err,c_err_bad_value)
        RETURN
     ENDIF
@@ -99,7 +99,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER,INTENT(INOUT) :: err
     INTEGER,DIMENSION(2),INTENT(IN) :: xrange, yrange,zrange
-    REAL(num),DIMENSION(1:,1:,1:),INTENT(OUT) :: data_out 
+    REAL(num),DIMENSION(1:,1:,1:),INTENT(OUT) :: data_out
     TYPE(primitive_stack) :: output
     INTEGER :: ix,iy,iz
 
