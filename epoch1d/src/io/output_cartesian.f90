@@ -382,7 +382,6 @@ CONTAINS
     INTEGER :: nx
     REAL(num) :: mn,mx,mn_global,mx_global
     INTEGER(8) :: blocklen,mdlen,len_var
-	 INTEGER(KIND=MPI_OFFSET_KIND) :: offset
 
     !*) VariableType (INTEGER(4)) All variable blocks contain this
     !These are specific to a cartesian variable

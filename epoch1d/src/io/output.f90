@@ -30,7 +30,6 @@ CONTAINS
     CALL MPI_BARRIER(cfd_comm,cfd_errcode)
     CALL MPI_FILE_OPEN(cfd_comm, TRIM(filename), cfd_mode, &
          MPI_INFO_NULL, cfd_filehandle, cfd_errcode)
-	 CALL MPI_FILE_SET_ATOMICITY(cfd_filehandle,0,cfd_errcode)
 
     !
 
