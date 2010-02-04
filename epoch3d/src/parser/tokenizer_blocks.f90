@@ -76,9 +76,12 @@ CONTAINS
     IF (str_cmp(name, "x"))  as_constant = c_const_x
     IF (str_cmp(name, "y"))  as_constant = c_const_y
     IF (str_cmp(name, "z"))  as_constant = c_const_z
-    IF (str_cmp(name, "lengthx") .OR. str_cmp(name, "length_x")) as_constant = c_const_lx
-    IF (str_cmp(name, "lengthy") .OR. str_cmp(name, "length_y")) as_constant = c_const_ly
-    IF (str_cmp(name, "lengthz") .OR. str_cmp(name, "length_z")) as_constant = c_const_lz
+    IF (str_cmp(name, "lengthx") .OR. str_cmp(name, "length_x")) &
+        as_constant = c_const_lx
+    IF (str_cmp(name, "lengthy") .OR. str_cmp(name, "length_y")) &
+        as_constant = c_const_ly
+    IF (str_cmp(name, "lengthz") .OR. str_cmp(name, "length_z")) &
+        as_constant = c_const_lz
     IF (str_cmp(name, "dx")) as_constant = c_const_dx
     IF (str_cmp(name, "dy")) as_constant = c_const_dy
     IF (str_cmp(name, "dy")) as_constant = c_const_dz
@@ -114,7 +117,8 @@ CONTAINS
 
     ! User submitted constant using "Register"
     DO i = 1, n_new_constant
-      IF (str_cmp(TRIM(name), TRIM(new_constant_name(i)%value))) as_constant = new_constant_code(i)
+      IF (str_cmp(TRIM(name), TRIM(new_constant_name(i)%value))) &
+          as_constant = new_constant_code(i)
     ENDDO
 
     ! Constants set up using the input deck
@@ -168,7 +172,8 @@ CONTAINS
     IF (str_cmp(name, "floor")) as_function = c_func_floor
     IF (str_cmp(name, "ceil"))  as_function = c_func_ceil
     IF (str_cmp(name, "nint"))  as_function = c_func_nint
-    IF (str_cmp(name, "rho") .OR. str_cmp(name, "number_density"))   as_function = c_func_rho
+    IF (str_cmp(name, "rho") .OR. str_cmp(name, "number_density")) &
+        as_function = c_func_rho
     IF (str_cmp(name, "temp_x"))  as_function = c_func_tempx
     IF (str_cmp(name, "temp_y"))  as_function = c_func_tempy
     IF (str_cmp(name, "temp_z"))  as_function = c_func_tempz
@@ -206,7 +211,9 @@ CONTAINS
       as_operator = c_opcode_plus
     ENDIF
     IF (str_cmp(name, "-"))  THEN
-      IF((last_block_type .EQ. c_pt_variable .OR. last_block_type .EQ. c_pt_constant) .OR. last_block_type .EQ. c_pt_parenthesis) THEN
+      IF ((last_block_type .EQ. c_pt_variable .OR. &
+          last_block_type .EQ. c_pt_constant) .OR. &
+          last_block_type .EQ. c_pt_parenthesis) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus

@@ -18,13 +18,17 @@ CONTAINS
     cfd_rank = cfd_rank_in
     cfd_mode = mode
 
-    cfd_writing = IOR(IAND(mode, MPI_MODE_RDWR), IAND(mode, MPI_MODE_WRONLY)) .NE. 0
-    cfd_reading = IOR(IAND(mode, MPI_MODE_RDWR), IAND(mode, MPI_MODE_RDONLY)) .NE. 0
+    cfd_writing = IOR(IAND(mode, MPI_MODE_RDWR), &
+        IAND(mode, MPI_MODE_WRONLY)) .NE. 0
+    cfd_reading = IOR(IAND(mode, MPI_MODE_RDWR), &
+        IAND(mode, MPI_MODE_RDONLY)) .NE. 0
 
     IF (IAND(mode, MPI_MODE_CREATE) .NE. 0) THEN
-      ! Creating a new file of the current version, so set the header offset to reflect current version
+      ! Creating a new file of the current version, so set the header offset
+      ! to reflect current version
       header_offset = header_offset_this_version
-      ! We are opening a file to be created, so use the destructive file opening command
+      ! We are opening a file to be created, so use the destructive file
+      ! opening command
       CALL cfd_open_clobber(filename)
     ELSE
       ! We're opening a file which already exists, so don't damage it
@@ -44,10 +48,14 @@ CONTAINS
     IF (cfd_writing) THEN
       ! Go to place where the empty value for nblocks is
       current_displacement = header_offset-4
-      CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+      CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
+          MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
-      IF (cfd_rank == default_rank) CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER, cfd_status, cfd_errcode)
+      IF (cfd_rank == default_rank) &
+          CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER, &
+              cfd_status, cfd_errcode)
     ENDIF
+
     CALL MPI_BARRIER(comm, cfd_errcode)
 
     CALL MPI_FILE_CLOSE(cfd_filehandle, cfd_errcode)

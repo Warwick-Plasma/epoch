@@ -31,34 +31,50 @@ CONTAINS
     ! Check whether or not the probe is valid
     REAL(num), DIMENSION(3) :: alpha, beta
 
-    ! The probe calculates the signed distance from a point to a plane using Hessian normal form
-    alpha = working_probe%corner(2, :)-working_probe%corner(1, :)
-    beta  = working_probe%corner(3, :)-working_probe%corner(1, :)
+    ! The probe calculates the signed distance from a point to a plane using
+    ! Hessian normal form
+    alpha = working_probe%corner(2,:)-working_probe%corner(1,:)
+    beta  = working_probe%corner(3,:)-working_probe%corner(1,:)
     ! alpha (cross) beta
-    working_probe%normal = (/alpha(2)*beta(3) - alpha(3)*beta(2), alpha(3)*beta(1) - alpha(1)*beta(3), alpha(1)*beta(2) - alpha(2)*beta(1)/)
+    working_probe%normal = (/alpha(2)*beta(3) - alpha(3)*beta(2), &
+        alpha(3)*beta(1) - alpha(1)*beta(3), &
+        alpha(1)*beta(2) - alpha(2)*beta(1)/)
     IF (SUM(ABS(working_probe%normal)) .EQ. 0) THEN
-      IF (rank .EQ. 0) PRINT*, "Points specified for the probe plane corners do not allow calculation of a normal to the plane. Probe ", TRIM(working_probe%name), " abandoned."
+      IF (rank .EQ. 0) PRINT*, "Points specified for the probe plane corners &
+          &do not allow calculation of a normal to the plane. Probe ", &
+          TRIM(working_probe%name), " abandoned."
       DEALLOCATE(working_probe)
       NULLIFY(working_probe)
       RETURN
     ENDIF
     ! Normalise the normal (look, it could be worse OK)
-    working_probe%normal = working_probe%normal/SQRT(SUM(working_probe%normal**2))
+    working_probe%normal = &
+        working_probe%normal/SQRT(SUM(working_probe%normal**2))
 
 !!$    DO iCorner = 1, 4
-!!$       DO iDirection = 1, 3
-!!$          IF (working_probe%corner(iCorner, iDirection) .LT. working_probe%Extents(iDirection, 1)) $               working_probe%Extents(iDirection, 1) = working_probe%corner(iCorner, iDirection)
-!!$          IF (working_probe%corner(iCorner, iDirection) .GT. working_probe%Extents(iDirection, 2)) $               working_probe%Extents(iDirection, 2) = working_probe%corner(iCorner, iDirection)
-!!$       ENDDO
+!!$      DO iDirection = 1, 3
+!!$        IF (working_probe%corner(iCorner, iDirection) .LT. &
+!!$            working_probe%Extents(iDirection, 1)) &
+!!$                working_probe%Extents(iDirection, 1) = &
+!!$                    working_probe%corner(iCorner, iDirection)
+!!$        IF (working_probe%corner(iCorner, iDirection) .GT. &
+!!$            working_probe%Extents(iDirection, 2)) &
+!!$                working_probe%Extents(iDirection, 2) = &
+!!$                    working_probe%corner(iCorner, iDirection)
+!!$      ENDDO
 !!$    ENDDO
 
 !!$    DO iDirection = 1, 3
-!!$       IF (working_probe%Extents(iDirection, 1) .GE. working_probe%Extents(iDirection, 2)) THEN
-!!$          IF (rank .EQ. 0) PRINT *, "Points specified for the probe plane corners collapse the probe plane to a lower DIMENSION. This is not currently supported. probe ", TRIM(working_probe%name), " abandoned."
-!!$          DEALLOCATE(working_probe)
-!!$          NULLIFY(working_probe)
-!!$          RETURN
-!!$       ENDIF
+!!$      IF (working_probe%Extents(iDirection, 1) .GE. &
+!!$          working_probe%Extents(iDirection, 2)) THEN
+!!$        IF (rank .EQ. 0) PRINT *, "Points specified for the probe plane &
+!!$            &corners collapse the probe plane to a lower DIMENSION. This &
+!!$            &is not currently supported. probe ", &
+!!$            TRIM(working_probe%name), " abandoned."
+!!$        DEALLOCATE(working_probe)
+!!$        NULLIFY(working_probe)
+!!$        RETURN
+!!$      ENDIF
 !!$    ENDDO
 
     CALL attach_probe(working_probe)
@@ -77,8 +93,8 @@ CONTAINS
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     ! get particle probe diagnostics (rolling total of all particles
-    ! which pass through a given region of real space (defined by the line between two
-    ! points in 2D).
+    ! which pass through a given region of real space (defined by the line
+    ! between two points in 2D).
     IF (str_cmp(element, "dump")) THEN
       working_probe%dump = as_integer(value, handle_probe_deck)
       RETURN
@@ -146,7 +162,9 @@ CONTAINS
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_probe%probe_species=>particle_species(ispecies)
         ELSE
-          IF (rank .EQ. 0) PRINT *, "Unable to attach probe to non existant species ", ispecies
+          IF (rank .EQ. 0) &
+              PRINT *, "Unable to attach probe to non existant species ", &
+                  ispecies
           handle_probe_deck = c_err_bad_value
         ENDIF
       ENDIF

@@ -82,9 +82,12 @@ CONTAINS
           use_restrictions = current%use_restrictions
 
           IF (current%ndims .EQ. 2) THEN
-            CALL general_2d_dist_fn(current%name, current%directions(1:2), ranges(1:2, :), resolution(1:2), ispecies, restrictions, use_restrictions)
+            CALL general_2d_dist_fn(current%name, current%directions(1:2), &
+                ranges(1:2,:), resolution(1:2), ispecies, restrictions, &
+                use_restrictions)
           ELSE
-            CALL general_3d_dist_fn(current%name, current%directions, ranges, resolution, ispecies, restrictions, use_restrictions)
+            CALL general_3d_dist_fn(current%name, current%directions, &
+                ranges, resolution, ispecies, restrictions, use_restrictions)
           ENDIF
           IF (current%store_ranges) current%ranges = ranges
         ENDDO
@@ -96,7 +99,8 @@ CONTAINS
 
 
 
-  SUBROUTINE general_3d_dist_fn(name, direction, range, resolution, species, restrictions, use_restrictions)
+  SUBROUTINE general_3d_dist_fn(name, direction, range, resolution, species, &
+      restrictions, use_restrictions)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER, DIMENSION(3), INTENT(IN) :: direction
@@ -106,7 +110,7 @@ CONTAINS
     REAL(num), DIMENSION(5, 2), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(5), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:, :, :), ALLOCATABLE :: DATA, data2
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: DATA, data2
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2, grid3
     LOGICAL, DIMENSION(3) :: parallel
     REAL(num), DIMENSION(3) :: dgrid
@@ -168,6 +172,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y)
         CYCLE
       ENDIF
+
       IF (direction(idim) .EQ. c_dir_y)  THEN
         use_y = .TRUE.
         resolution(idim) = ny
@@ -182,6 +187,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y)
         CYCLE
       ENDIF
+
       conv(idim) = c*m0
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
@@ -189,16 +195,19 @@ CONTAINS
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
+
       IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
         use_direction(idim, 3) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 3
       ENDIF
+
       IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
         use_direction(idim, 4) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 4
       ENDIF
+
       IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
         use_direction(idim, 5) = .TRUE.
         p_count(idim) = p_count(idim)+1
@@ -212,6 +221,7 @@ CONTAINS
     DO idim = 1, 3
       IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
     ENDDO
+
     ! Calculate ranges for directions where needed
     IF (calc_ranges) THEN
       DO idim = 1, 3
@@ -222,6 +232,7 @@ CONTAINS
       ENDDO
       current=>particle_species(species)%attached_list%head
       ind = 0
+
       DO WHILE(ASSOCIATED(current))
         particle_data(1:2) = current%part_pos
         particle_data(3:5) = current%part_p
@@ -229,7 +240,8 @@ CONTAINS
           IF (calc_range(idim)) THEN
             IF (calc_mod(idim)) THEN
               DO idir = 1, 5
-                IF (use_direction(idim, idir)) current_data = current_data+particle_data(idir)
+                IF (use_direction(idim, idir)) &
+                    current_data = current_data+particle_data(idir)
               ENDDO
               current_data = SQRT(current_data)
             ELSE
@@ -237,11 +249,16 @@ CONTAINS
             ENDIF
             use_this = .TRUE.
             DO idir = 1, 5
-              IF (use_restrictions(idir) .AND. (particle_data(idir) .LT. restrictions(idir, 1) .OR. particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
+              IF (use_restrictions(idir) .AND. &
+                  (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
+                  particle_data(idir) .GT. restrictions(idir, 2))) &
+                      use_this = .FALSE.
             ENDDO
             IF (use_this) THEN
-              IF (current_data .LT. RANGE(idim, 1)) RANGE(idim, 1) = current_data
-              IF (current_data .GT. RANGE(idim, 2)) RANGE(idim, 2) = current_data
+              IF (current_data .LT. RANGE(idim, 1)) &
+                  RANGE(idim, 1) = current_data
+              IF (current_data .GT. RANGE(idim, 2)) &
+                  RANGE(idim, 2) = current_data
             ENDIF
           ENDIF
         ENDDO
@@ -254,18 +271,22 @@ CONTAINS
     DO idim = 1, 3
       IF (.NOT. parallel(idim)) THEN
         ! If not parallel then this is a momentum DIMENSION
-        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, MPI_MIN, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, &
+            MPI_MIN, comm, errcode)
         RANGE(idim, 1) = temp_data
-        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, MPI_MAX, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, &
+            MPI_MAX, comm, errcode)
         RANGE(idim, 2) = temp_data
       ENDIF
-      ! Fix so that if distribution function is zero then it picks an arbitrary scale in that direction
+      ! Fix so that if distribution function is zero then it picks an
+      ! arbitrary scale in that direction
       IF (RANGE(idim, 1) .EQ. RANGE(idim, 2)) THEN
         RANGE(idim, 1) = -1.0_num
         RANGE(idim, 2) = 1.0_num
       ENDIF
       ! Calculate the maxmium range of a momentum direction
-      IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv .AND. .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
+      IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv .AND. &
+          .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
     ENDDO
 
     DO idim = 1, 3
@@ -274,8 +295,10 @@ CONTAINS
 
     ! Setup MPI
     IF (use_x .AND. use_y) need_reduce = .FALSE.
-    IF (.NOT. use_y) color = color+coordinates(2) ! If using x direction need to reduce only across all y
-    IF (.NOT. use_x) color = color+nprocx*coordinates(1) ! If using y direction need to reduce only across all x
+    ! If using x direction need to reduce only across all y
+    IF (.NOT. use_y) color = color+coordinates(2)
+    ! If using y direction need to reduce only across all x
+    IF (.NOT. use_x) color = color+nprocx*coordinates(1)
 
     IF (need_reduce) THEN
       CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
@@ -283,10 +306,12 @@ CONTAINS
       comm_new = MPI_COMM_NULL
     ENDIF
 
-    new_type = create_3d_field_subtype(resolution, global_resolution, start_local)
+    new_type = &
+        create_3d_field_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, 3
-      IF (.NOT. parallel(idim)) dgrid(idim) = (RANGE(idim, 2)-RANGE(idim, 1))/REAL(resolution(idim)-1, num)
+      IF (.NOT. parallel(idim)) dgrid(idim) = &
+          (RANGE(idim, 2)-RANGE(idim, 1))/REAL(resolution(idim)-1, num)
     ENDDO
     ALLOCATE(grid1(0:global_resolution(1)), grid2(0:global_resolution(2)))
     ALLOCATE(grid3(0:global_resolution(3)))
@@ -316,25 +341,30 @@ CONTAINS
       particle_data(3:5) = current%part_p
       use_this = .TRUE.
       DO idir = 1, 5
-        IF (use_restrictions(idir) .AND. (particle_data(idir) .LT. restrictions(idir, 1) .OR. particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
+        IF (use_restrictions(idir) .AND. &
+            (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
+            particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
       ENDDO
       IF (use_this) THEN
         DO idim = 1, 3
           IF (calc_mod(idim)) THEN
             DO idir = 1, 5
-              IF (use_direction(idim, idir)) current_data = current_data+particle_data(idir)
+              IF (use_direction(idim, idir)) &
+                  current_data = current_data+particle_data(idir)
             ENDDO
             current_data = SQRT(current_data)
           ELSE
             current_data = particle_data(l_direction(idim))
           ENDIF
           cell(idim) = NINT((current_data-RANGE(idim, 1))/dgrid(idim))+1
-          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) use_this = .FALSE.
+          IF (cell(idim) .LT. 1 .OR. &
+              cell(idim) .GT. resolution(idim)) use_this = .FALSE.
         ENDDO
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
-        IF (use_this) DATA(cell(1), cell(2), cell(3)) = DATA(cell(1), cell(2), cell(3))+part_weight ! * real_space_area
+        IF (use_this) DATA(cell(1), cell(2), cell(3)) = &
+            DATA(cell(1), cell(2), cell(3))+part_weight ! * real_space_area
       ENDIF
       current=>current%next
     ENDDO
@@ -342,24 +372,34 @@ CONTAINS
     IF (need_reduce) THEN
       ALLOCATE(data2(1:resolution(1), 1:resolution(2), 1:resolution(3)))
       data2 = 0.0_num
-      CALL MPI_ALLREDUCE(DATA, data2, resolution(1)*resolution(2)*resolution(3), mpireal, MPI_SUM, comm_new, errcode)
+      CALL MPI_ALLREDUCE(DATA, data2, &
+          resolution(1)*resolution(2)*resolution(3), mpireal, &
+          MPI_SUM, comm_new, errcode)
       DATA = data2
       DEALLOCATE(data2)
     ENDIF
 
     grid_name = "Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
-    norm_grid_name = "Norm_Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
+    norm_grid_name = &
+        "Norm_Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
     var_name = TRIM(name)//"_"//TRIM(particle_species(species)%name)
 
-    CALL cfd_write_3d_cartesian_grid(TRIM(grid_name), "Grid", grid1(1:global_resolution(1)), grid2(1:global_resolution(2)) , grid3(1:global_resolution(3)), 0)
+    CALL cfd_write_3d_cartesian_grid(TRIM(grid_name), "Grid", &
+        grid1(1:global_resolution(1)), grid2(1:global_resolution(2)), &
+        grid3(1:global_resolution(3)), 0)
     IF (use_offset_grid) THEN
       IF (parallel(1)) grid1 = grid1-RANGE(1, 1)
       IF (parallel(2)) grid2 = grid2-RANGE(2, 1)
       IF (parallel(3)) grid3 = grid3-RANGE(3, 1)
     ENDIF
-    CALL cfd_write_3d_cartesian_grid(TRIM(norm_grid_name), "Grid", grid1(1:global_resolution(1))/conv(1), grid2(1:global_resolution(2))/conv(2) , grid3(1:global_resolution(3))/conv(3), 0)
+    CALL cfd_write_3d_cartesian_grid(TRIM(norm_grid_name), "Grid", &
+        grid1(1:global_resolution(1))/conv(1), &
+        grid2(1:global_resolution(2))/conv(2), &
+        grid3(1:global_resolution(3))/conv(3), 0)
 
-    CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), "Grid" , DATA, new_type)
+    CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), &
+        "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), &
+        "Grid", DATA, new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
     IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
@@ -370,7 +410,8 @@ CONTAINS
 
 
 
-  SUBROUTINE general_2d_dist_fn(name, direction, range, resolution, species, restrictions, use_restrictions)
+  SUBROUTINE general_2d_dist_fn(name, direction, range, resolution, species, &
+      restrictions, use_restrictions)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER, DIMENSION(2), INTENT(IN) :: direction
@@ -380,7 +421,7 @@ CONTAINS
     REAL(num), DIMENSION(5, 2), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(5), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:, :), ALLOCATABLE :: DATA, data2
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: DATA, data2
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2
     LOGICAL, DIMENSION(2) :: parallel
     REAL(num), DIMENSION(2) :: dgrid
@@ -431,7 +472,7 @@ CONTAINS
         resolution(idim) = nx
         RANGE(idim, 1) = x_start_local
         RANGE(idim, 2) = x_end_local
-        ! IF (use_offset_grid) range(idim, :) = range(idim, :)-x_start
+        ! IF (use_offset_grid) range(idim,:) = range(idim,:)-x_start
         start_local(idim) = cell_x_start(coordinates(2)+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
@@ -441,12 +482,13 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y)
         CYCLE
       ENDIF
+
       IF (direction(idim) .EQ. c_dir_y)  THEN
         use_y = .TRUE.
         resolution(idim) = ny
         RANGE(idim, 1) = y_start_local
         RANGE(idim, 2) = y_end_local
-        ! IF (use_offset_grid) range(idim, :) = range(idim, :)-y_start
+        ! IF (use_offset_grid) range(idim,:) = range(idim,:)-y_start
         start_local(idim) = cell_y_start(coordinates(1)+1)
         global_resolution(idim) = ny_global
         dgrid(idim) = dy
@@ -456,6 +498,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y)
         CYCLE
       ENDIF
+
       conv(idim) = c*m0
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
@@ -463,16 +506,19 @@ CONTAINS
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
+
       IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
         use_direction(idim, 3) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 3
       ENDIF
+
       IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
         use_direction(idim, 4) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 4
       ENDIF
+
       IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
         use_direction(idim, 5) = .TRUE.
         p_count(idim) = p_count(idim)+1
@@ -503,7 +549,8 @@ CONTAINS
           IF (calc_range(idim)) THEN
             IF (calc_mod(idim)) THEN
               DO idir = 1, 5
-                IF (use_direction(idim, idir)) current_data = current_data+particle_data(idir)
+                IF (use_direction(idim, idir)) &
+                    current_data = current_data+particle_data(idir)
               ENDDO
               current_data = SQRT(current_data)
             ELSE
@@ -511,11 +558,16 @@ CONTAINS
             ENDIF
             use_this = .TRUE.
             DO idir = 1, 5
-              IF (use_restrictions(idir) .AND. (particle_data(idir) .LT. restrictions(idir, 1) .OR. particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
+              IF (use_restrictions(idir) .AND. &
+                  (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
+                  particle_data(idir) .GT. restrictions(idir, 2))) &
+                      use_this = .FALSE.
             ENDDO
             IF (use_this) THEN
-              IF (current_data .LT. RANGE(idim, 1)) RANGE(idim, 1) = current_data
-              IF (current_data .GT. RANGE(idim, 2)) RANGE(idim, 2) = current_data
+              IF (current_data .LT. RANGE(idim, 1)) &
+                  RANGE(idim, 1) = current_data
+              IF (current_data .GT. RANGE(idim, 2)) &
+                  RANGE(idim, 2) = current_data
             ENDIF
           ENDIF
         ENDDO
@@ -528,15 +580,19 @@ CONTAINS
     DO idim = 1, 2
       IF (.NOT. parallel(idim)) THEN
         ! If not parallel then this is a momentum DIMENSION
-        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, MPI_MIN, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, &
+            MPI_MIN, comm, errcode)
         RANGE(idim, 1) = temp_data
-        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, MPI_MAX, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, &
+            MPI_MAX, comm, errcode)
         RANGE(idim, 2) = temp_data
 
         ! Calculate the maxmium range of a momentum direction
-        IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv .AND. .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
+        IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv .AND. &
+            .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
       ENDIF
-      ! Fix so that if distribution function is zero then it picks an arbitrary scale in that direction
+      ! Fix so that if distribution function is zero then it picks an
+      ! arbitrary scale in that direction
       IF (RANGE(idim, 1) .EQ. RANGE(idim, 2)) THEN
         RANGE(idim, 1) = -1.0_num
         RANGE(idim, 2) = 1.0_num
@@ -549,8 +605,10 @@ CONTAINS
 
     ! Setup MPI
     IF (use_x .AND. use_y) need_reduce = .FALSE.
-    IF (.NOT. use_y) color = color+coordinates(2) ! If using x direction need to reduce only across all y
-    IF (.NOT. use_x) color = color+nprocx*coordinates(1) ! If using y direction need to reduce only across all x
+    ! If using x direction need to reduce only across all y
+    IF (.NOT. use_y) color = color+coordinates(2)
+    ! If using y direction need to reduce only across all x
+    IF (.NOT. use_x) color = color+nprocx*coordinates(1)
 
     IF (need_reduce) THEN
       CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
@@ -558,10 +616,12 @@ CONTAINS
       comm_new = MPI_COMM_NULL
     ENDIF
 
-    new_type = create_2d_field_subtype(resolution, global_resolution, start_local)
+    new_type = &
+        create_2d_field_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, 2
-      IF (.NOT. parallel(idim)) dgrid(idim) = (RANGE(idim, 2)-RANGE(idim, 1))/REAL(resolution(idim)-1, num)
+      IF (.NOT. parallel(idim)) dgrid(idim) = &
+          (RANGE(idim, 2)-RANGE(idim, 1))/REAL(resolution(idim)-1, num)
     ENDDO
     ALLOCATE(grid1(0:global_resolution(1)), grid2(0:global_resolution(2)))
 
@@ -585,25 +645,30 @@ CONTAINS
       particle_data(3:5) = current%part_p
       use_this = .TRUE.
       DO idir = 1, 5
-        IF (use_restrictions(idir) .AND. (particle_data(idir) .LT. restrictions(idir, 1) .OR. particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
+        IF (use_restrictions(idir) .AND. &
+            (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
+            particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
       ENDDO
       IF (use_this) THEN
         DO idim = 1, 2
           IF (calc_mod(idim)) THEN
             DO idir = 1, 5
-              IF (use_direction(idim, idir)) current_data = current_data+particle_data(idir)
+              IF (use_direction(idim, idir)) &
+                  current_data = current_data+particle_data(idir)
             ENDDO
             current_data = SQRT(current_data)
           ELSE
             current_data = particle_data(l_direction(idim))
           ENDIF
           cell(idim) = NINT((current_data-RANGE(idim, 1))/dgrid(idim))+1
-          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) use_this = .FALSE.
+          IF (cell(idim) .LT. 1 .OR. &
+              cell(idim) .GT. resolution(idim)) use_this = .FALSE.
         ENDDO
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
-        IF (use_this)DATA(cell(1), cell(2)) = DATA(cell(1), cell(2))+part_weight! *real_space_area
+        IF (use_this) &
+            DATA(cell(1), cell(2)) = DATA(cell(1), cell(2))+part_weight
       ENDIF
       current=>current%next
     ENDDO
@@ -611,23 +676,30 @@ CONTAINS
     IF (need_reduce) THEN
       ALLOCATE(data2(1:resolution(1), 1:resolution(2)))
       data2 = 0.0_num
-      CALL MPI_ALLREDUCE(DATA, data2, resolution(1)*resolution(2), mpireal, MPI_SUM, comm_new, errcode)
+      CALL MPI_ALLREDUCE(DATA, data2, resolution(1)*resolution(2), mpireal, &
+          MPI_SUM, comm_new, errcode)
       DATA = data2
       DEALLOCATE(data2)
     ENDIF
 
     grid_name = "Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
-    norm_grid_name = "Norm_Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
+    norm_grid_name = &
+        "Norm_Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
     var_name = TRIM(name)//"_"//TRIM(particle_species(species)%name)
 
-    CALL cfd_write_2d_cartesian_grid(TRIM(grid_name), "Grid", grid1(1:global_resolution(1)), grid2(1:global_resolution(2)) , 0)
+    CALL cfd_write_2d_cartesian_grid(TRIM(grid_name), "Grid", &
+        grid1(1:global_resolution(1)), grid2(1:global_resolution(2)), 0)
     IF (use_offset_grid) THEN
       IF (parallel(1)) grid1 = grid1-RANGE(1, 1)
       IF (parallel(2)) grid2 = grid2-RANGE(2, 1)
     ENDIF
-    CALL cfd_write_2d_cartesian_grid(TRIM(norm_grid_name), "Grid", grid1(1:global_resolution(1))/conv(1), grid2(1:global_resolution(2))/conv(2) , 0)
+    CALL cfd_write_2d_cartesian_grid(TRIM(norm_grid_name), "Grid", &
+        grid1(1:global_resolution(1))/conv(1), &
+        grid2(1:global_resolution(2))/conv(2), 0)
 
-    CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), "Grid" , DATA, new_type)
+    CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), &
+        "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), &
+        "Grid", DATA, new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
     IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
@@ -647,17 +719,20 @@ CONTAINS
     INTEGER :: ipoint
     INTEGER :: create_3d_field_subtype
 
-    ALLOCATE(lengths(1:n_local(2) * n_local(3)), starts(1:n_local(2) * n_local(3)))
+    ALLOCATE(lengths(1:n_local(2) * n_local(3)))
+    ALLOCATE(starts(1:n_local(2) * n_local(3)))
     lengths = n_local(1)
     ipoint = 0
     DO iz = 0, n_local(3)-1
       DO iy = 0, n_local(2)-1
         ipoint = ipoint+1
-        starts(ipoint) = (start(3)+iz-1) * n_global(1) * n_global(2) + (start(2)+iy-1) * n_global(1) + start(1) -1
+        starts(ipoint) = (start(3)+iz-1) * n_global(1) * n_global(2) + &
+            (start(2)+iy-1) * n_global(1) + start(1) -1
       ENDDO
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(n_local(2)*n_local(3), lengths, starts, mpireal, create_3d_field_subtype, errcode)
+    CALL MPI_TYPE_INDEXED(n_local(2)*n_local(3), lengths, starts, mpireal, &
+        create_3d_field_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_3d_field_subtype, errcode)
     DEALLOCATE(lengths, starts)
 
@@ -682,7 +757,8 @@ CONTAINS
       starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) -1
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(n_local(2), lengths, starts, mpireal, create_2d_field_subtype, errcode)
+    CALL MPI_TYPE_INDEXED(n_local(2), lengths, starts, mpireal, &
+        create_2d_field_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_2d_field_subtype, errcode)
     DEALLOCATE(lengths, starts)
 

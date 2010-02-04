@@ -11,10 +11,13 @@ CONTAINS
   SUBROUTINE update_eb_fields_half
 
 #ifndef ORDER_SIX
-    REAL(num), DIMENSION(4) :: diff_consts = (/1.0_num/24.0_num, -9.0_num/8.0_num, 9.0_num/8.0_num, -1.0_num/24.0_num/)
+    REAL(num), DIMENSION(4) :: diff_consts = (/1.0_num/24.0_num, &
+        -9.0_num/8.0_num, 9.0_num/8.0_num, -1.0_num/24.0_num/)
     INTEGER, PARAMETER :: large = 2, small = 1
 #else
-    REAL(num), DIMENSION(6) :: diff_consts = (/3.0_num/640.0_num, -25.0_num/384.0_num, 75.0_num/64.0_num, -75.0_num/64.0_num, 25.0_num/384.0_num, -3.0_num/640.0_num/)
+    REAL(num), DIMENSION(6) :: diff_consts = (/3.0_num/640.0_num, &
+        -25.0_num/384.0_num, 75.0_num/64.0_num, -75.0_num/64.0_num, &
+        25.0_num/384.0_num, -3.0_num/640.0_num/)
     INTEGER, PARAMETER :: large = 3, small = 2
 #endif
 
@@ -47,11 +50,13 @@ CONTAINS
     ENDDO
 
     DO ix = 1, nx
-      ey(ix) = ey(ix) -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) -0.5_num*dt*jy(ix)/epsilon0
+      ey(ix) = ey(ix) -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) - &
+          0.5_num*dt*jy(ix)/epsilon0
     ENDDO
 
     DO ix = 1, nx
-      ez(ix) = ez(ix) +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) -0.5_num*dt*jz(ix)/epsilon0
+      ez(ix) = ez(ix) +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) - &
+          0.5_num*dt*jz(ix)/epsilon0
     ENDDO
 #endif
 
@@ -96,10 +101,13 @@ CONTAINS
   SUBROUTINE update_eb_fields_final
 
 #ifndef ORDER_SIX
-    REAL(num), DIMENSION(4) :: diff_consts = (/1.0_num/24.0_num, -9.0_num/8.0_num, 9.0_num/8.0_num, -1.0_num/24.0_num/)
+    REAL(num), DIMENSION(4) :: diff_consts = (/1.0_num/24.0_num, &
+        -9.0_num/8.0_num, 9.0_num/8.0_num, -1.0_num/24.0_num/)
     INTEGER, PARAMETER :: large = 2, small = 1
 #else
-    REAL(num), DIMENSION(6) :: diff_consts = (/3.0_num/640.0_num, -25.0_num/384.0_num, 75.0_num/64.0_num, -75.0_num/64.0_num, 25.0_num/384.0_num, -3.0_num/640.0_num/)
+    REAL(num), DIMENSION(6) :: diff_consts = (/3.0_num/640.0_num, &
+        -25.0_num/384.0_num, 75.0_num/64.0_num, -75.0_num/64.0_num, &
+        25.0_num/384.0_num, -3.0_num/640.0_num/)
     INTEGER, PARAMETER :: large = 3, small = 2
 #endif
 
@@ -130,11 +138,15 @@ CONTAINS
 #endif
 
     CALL bfield_bcs(.FALSE.)
-    IF(xbc_left == c_bc_simple_laser .AND. left == MPI_PROC_NULL) CALL laser_bcs_left
-    IF(xbc_left == c_bc_simple_outflow .AND. left == MPI_PROC_NULL) CALL outflow_bcs_left
+    IF (xbc_left == c_bc_simple_laser .AND. left == MPI_PROC_NULL) &
+        CALL laser_bcs_left
+    IF (xbc_left == c_bc_simple_outflow .AND. left == MPI_PROC_NULL) &
+        CALL outflow_bcs_left
 
-    IF(xbc_right == c_bc_simple_laser .AND. right == MPI_PROC_NULL) CALL laser_bcs_right
-    IF(xbc_right == c_bc_simple_outflow .AND. right == MPI_PROC_NULL) CALL outflow_bcs_right
+    IF (xbc_right == c_bc_simple_laser .AND. right == MPI_PROC_NULL) &
+        CALL laser_bcs_right
+    IF (xbc_right == c_bc_simple_outflow .AND. right == MPI_PROC_NULL) &
+        CALL outflow_bcs_right
     CALL bfield_bcs(.TRUE.)
 
 #ifndef HIGH_ORDER_FIELDS
@@ -158,11 +170,13 @@ CONTAINS
     ENDDO
 
     DO ix = 1, nx
-      ey(ix) = ey(ix) -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) -0.5_num*dt*jy(ix)/epsilon0
+      ey(ix) = ey(ix) -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) - &
+          0.5_num*dt*jy(ix)/epsilon0
     ENDDO
 
     DO ix = 1, nx
-      ez(ix) = ez(ix) +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) -0.5_num*dt*jz(ix)/epsilon0
+      ez(ix) = ez(ix) +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) - &
+          0.5_num*dt*jz(ix)/epsilon0
     ENDDO
 #endif
 

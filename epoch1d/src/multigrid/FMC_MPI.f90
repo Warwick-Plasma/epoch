@@ -9,7 +9,7 @@ MODULE multigrid
 
   TYPE t_grid
     REAL(num), DIMENSION(:), ALLOCATABLE :: x, y
-    REAL(num), DIMENSION(:, :), ALLOCATABLE :: phi, rho, resid
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: phi, rho, resid
     REAL(num) :: dx, dy
     INTEGER :: nx, ny, gridlevel
     LOGICAL :: converged
@@ -96,8 +96,10 @@ CONTAINS
         DO iy = mny, mxy, ordy
           DO ix = mnx, mxx, ordx
             IF (MOD(ix+iy, 2) .EQ. sweep) THEN
-              grid%phi(ix, iy) = (1.0-w)* grid%phi(ix, iy) + w * ((-grid%rho(ix, iy)+lamdax*(grid%phi(ix-1, iy)+grid%phi(ix+1, iy)) +lamday*(grid%phi(ix, iy-1)+grid%phi(ix, iy+1)))/(2.0_num*(lamdax+lamday)))
-
+              grid%phi(ix, iy) = (1.0-w)* grid%phi(ix, iy) + &
+                  w * ((-grid%rho(ix, iy)+lamdax*(grid%phi(ix-1, iy)+&
+                  grid%phi(ix+1, iy)) +lamday*(grid%phi(ix, iy-1)+&
+                  grid%phi(ix, iy+1)))/(2.0_num*(lamdax+lamday)))
             ENDIF
           ENDDO
         ENDDO
@@ -106,13 +108,17 @@ CONTAINS
 
       DO iy = 1, ny_l
         DO ix = 1, nx_l
-          grid%resid(ix, iy) = grid%rho(ix, iy) - (lamdax*(grid%phi(ix-1, iy)-2.0_num*grid%phi(ix, iy)+grid%phi(ix+1, iy))+ lamday*(grid%phi(ix, iy-1)-2.0_num*grid%phi(ix, iy)+grid%phi(ix, iy+1)))
+          grid%resid(ix, iy) = grid%rho(ix, iy) - &
+              (lamdax*(grid%phi(ix-1, iy)-2.0_num*grid%phi(ix, iy)+&
+              grid%phi(ix+1, iy))+ lamday*(grid%phi(ix, iy-1)-&
+              2.0_num*grid%phi(ix, iy)+grid%phi(ix, iy+1)))
         ENDDO
       ENDDO
 
       sum_local = MAXVAL(ABS(grid%resid(1:nx_l, 1:ny_l)))
       sum_global = sum_local
-      IF (mpi_on) CALL MPI_ALLREDUCE(sum_local, sum_global, 1, mpireal, MPI_MAX, comm, errcode)
+      IF (mpi_on) CALL MPI_ALLREDUCE(sum_local, sum_global, 1, mpireal, &
+          MPI_MAX, comm, errcode)
       IF (sum_global .LT. 1.0e-6_num) THEN
         grid%converged = .TRUE.
         EXIT
@@ -135,26 +141,36 @@ CONTAINS
     nx = grid%nx
     ny = grid%ny
 
-    ! At the moment, only support zero potential boundaries, this is easy to improve, but not done yet
+    ! At the moment, only support zero potential boundaries, this is easy to
+    ! improve, but not done yet
     IF (grid%gridlevel .NE. 1 .AND. .NOT. grid%finest) THEN
       ! On all but finest grids, use clamped boundaries
-      IF (right == MPI_PROC_NULL) grid%phi(1:nx, ny+1)   = grid%phi(1:nx, ny) *0.0_num
-      IF (left == MPI_PROC_NULL)  grid%phi(1:nx, 0)      = grid%phi(1:nx, 1)  *0.0_num
-      IF (down == MPI_PROC_NULL) grid%phi(0, 1:ny)      = grid%phi(1, 1:ny)  *0.0_num
-      IF (up == MPI_PROC_NULL) grid%phi(nx+1, 1:ny)   = grid%phi(nx, 1:ny) *0.0_num
+      IF (right == MPI_PROC_NULL) &
+          grid%phi(1:nx, ny+1)   = grid%phi(1:nx, ny) *0.0_num
+      IF (left == MPI_PROC_NULL) &
+          grid%phi(1:nx, 0)      = grid%phi(1:nx, 1)  *0.0_num
+      IF (down == MPI_PROC_NULL) &
+          grid%phi(0, 1:ny)      = grid%phi(1, 1:ny)  *0.0_num
+      IF (up == MPI_PROC_NULL) &
+          grid%phi(nx+1, 1:ny)   = grid%phi(nx, 1:ny) *0.0_num
     ELSE
       ! On finest grid, use real boundaries
       IF (right == MPI_PROC_NULL) grid%phi(1:nx, ny+1)   = b_val(1)
-      IF (left == MPI_PROC_NULL) grid%phi(1:nx, 0)      = b_val(2)
-      IF (down == MPI_PROC_NULL) grid%phi(0, 1:ny)      = b_val(3)
-      IF (up == MPI_PROC_NULL) grid%phi(nx+1, 1:ny)   = b_val(4)
+      IF (left  == MPI_PROC_NULL) grid%phi(1:nx, 0)      = b_val(2)
+      IF (down  == MPI_PROC_NULL) grid%phi(0, 1:ny)      = b_val(3)
+      IF (up    == MPI_PROC_NULL) grid%phi(nx+1, 1:ny)   = b_val(4)
       ! Now do MPI
       IF (mpi_on) THEN
-        CALL MPI_SENDRECV(grid%phi(1:nx, ny), nx, mpireal, up, tag, grid%phi(1:nx, 0), nx, mpireal, down, tag, comm, status, errcode)
-        CALL MPI_SENDRECV(grid%phi(1:nx, 1), nx, mpireal, down, tag, grid%phi(1:nx, ny+1), nx, mpireal, up, tag, comm, status, errcode)
+        CALL MPI_SENDRECV(grid%phi(1:nx, ny), nx, mpireal, up, tag, &
+            grid%phi(1:nx, 0), nx, mpireal, down, tag, comm, status, errcode)
+        CALL MPI_SENDRECV(grid%phi(1:nx, 1), nx, mpireal, down, tag, &
+            grid%phi(1:nx, ny+1), nx, mpireal, up, tag, comm, status, errcode)
 
-        CALL MPI_SENDRECV(grid%phi(nx, 1:ny), ny, mpireal, right, tag, grid%phi(0, 1:ny), ny, mpireal, left, tag, comm, status, errcode)
-        CALL MPI_SENDRECV(grid%phi(1, 1:ny), ny, mpireal, left, tag, grid%phi(nx+1, 1:ny), ny, mpireal, right, tag, comm, status, errcode)
+        CALL MPI_SENDRECV(grid%phi(nx, 1:ny), ny, mpireal, right, tag, &
+            grid%phi(0, 1:ny), ny, mpireal, left, tag, comm, status, errcode)
+        CALL MPI_SENDRECV(grid%phi(1, 1:ny), ny, mpireal, left, tag, &
+            grid%phi(nx+1, 1:ny), ny, mpireal, right, tag, comm, &
+            status, errcode)
       ENDIF
     ENDIF
 
@@ -165,8 +181,8 @@ CONTAINS
   SUBROUTINE restrict(hires, lores, grid_hi, grid_lo)
 
     ! Restriction with full weighting
-    REAL(num), DIMENSION(:, :), ALLOCATABLE, INTENT(INOUT)  :: hires
-    REAL(num), DIMENSION(:, :), ALLOCATABLE, INTENT(INOUT) :: lores
+    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT)  :: hires
+    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT) :: lores
     TYPE(t_grid), INTENT(IN) :: grid_hi, grid_lo
     INTEGER :: ix, iy, nx_h, ny_h, nx_l, ny_l
 
@@ -177,7 +193,11 @@ CONTAINS
 
     DO ix = 1, nx_l
       DO iy = 1, ny_l
-        lores(ix, iy) = (4.0_num*hires(ix*2-1, iy*2-1) + 2.0_num * (hires(ix*2, iy*2-1)+hires(ix*2-2, iy*2-1) +hires(ix*2-1, iy*2)+hires(ix*2-1, iy*2-2)) +  (hires(ix*2, iy*2) + hires(ix*2, iy*2-2) + hires(ix*2-2, iy*2) + hires(ix*2-2, iy*2-2)))/16.0_num
+        lores(ix, iy) = (4.0_num*hires(ix*2-1, iy*2-1) + &
+            2.0_num * (hires(ix*2, iy*2-1)+hires(ix*2-2, iy*2-1) + &
+            hires(ix*2-1, iy*2)+hires(ix*2-1, iy*2-2)) + &
+            (hires(ix*2, iy*2) + hires(ix*2, iy*2-2) + hires(ix*2-2, iy*2) + &
+            hires(ix*2-2, iy*2-2)))/16.0_num
       ENDDO
     ENDDO
 
@@ -188,13 +208,13 @@ CONTAINS
   SUBROUTINE prolong(lores, hires, grid_lo, grid_hi, add)
 
     ! Prolongation using inverse full weighting
-    REAL(num), DIMENSION(:, :), ALLOCATABLE, INTENT(IN)  :: lores
-    REAL(num), DIMENSION(:, :), ALLOCATABLE, INTENT(INOUT) :: hires
+    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(IN)  :: lores
+    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT) :: hires
     TYPE(t_grid), INTENT(IN) :: grid_lo, grid_hi
     LOGICAL, INTENT(IN) :: add
     INTEGER :: nx_l, ny_l
     INTEGER :: ix, iy, nx_h, ny_h
-    REAL(num), DIMENSION(:, :), ALLOCATABLE :: temp
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
 
     nx_l = grid_lo%nx
     ny_l = grid_lo%ny
@@ -209,7 +229,8 @@ CONTAINS
         temp(2*ix-1, 2*iy-1) = lores(ix, iy)
         temp(2*ix, 2*iy-1)   = 0.5_num*(lores(ix, iy)+lores(ix+1, iy))
         temp(2*ix-1, 2*iy)   = 0.5_num*(lores(ix, iy)+lores(ix, iy+1))
-        temp(2*ix, 2*iy) = 0.25_num*(lores(ix, iy)+lores(ix+1, iy)+ lores(ix, iy+1)+lores(ix+1, iy+1))
+        temp(2*ix, 2*iy)    = 0.25_num*(lores(ix, iy)+lores(ix+1, iy)+ &
+            lores(ix, iy+1)+lores(ix+1, iy+1))
       ENDDO
     ENDDO
 
@@ -254,17 +275,20 @@ CONTAINS
       IF (.NOT. grid%converged) THEN
         ! Copy down
         grids(curlevel+1)%phi = 0.0_num
-        CALL restrict(grid%resid, grids(curlevel+1)%rho, grid, grids(curlevel+1))
+        CALL restrict(grid%resid, grids(curlevel+1)%rho, grid, &
+            grids(curlevel+1))
         ! Then recursively call this routine on the coarser grid
         CALL do_grid(grids(curlevel+1))
         ! Now, after that do prolongation to get back errors
-        CALL prolong(grids(curlevel+1)%phi, grid%phi, grids(curlevel+1), grid, .TRUE.)
+        CALL prolong(grids(curlevel+1)%phi, grid%phi, grids(curlevel+1), &
+            grid, .TRUE.)
         ! Now relax again
         CALL gauss_seidel(grid, nu, bound)
       ENDIF
     ELSE
       ! Are on coarsest grid so should solve directly.
-      ! I don't have a plugin LU decomp solver, so just do using a lot of gauss_seidel
+      ! I don't have a plugin LU decomp solver, so just do using a lot
+      ! of gauss_seidel
       grid%converged = .FALSE.
       CALL gauss_seidel(grid, mu, bound)
       ! Do nothing else on coarsest grid
@@ -312,7 +336,8 @@ CONTAINS
 
 
 
-  SUBROUTINE setup_multigrid(nx_local, ny_local, ngrid_local, dx_local, dy_local)
+  SUBROUTINE setup_multigrid(nx_local, ny_local, ngrid_local, dx_local, &
+      dy_local)
 
     INTEGER, INTENT(IN) :: nx_local, ny_local, ngrid_local
     REAL(num), INTENT(IN) :: dx_local, dy_local
@@ -369,10 +394,11 @@ CONTAINS
 
 
 
-  SUBROUTINE run_multigrid(phi, rho, n_v_cycles, n_gs_cycles, n_c_cycles, force_converged)
+  SUBROUTINE run_multigrid(phi, rho, n_v_cycles, n_gs_cycles, n_c_cycles, &
+      force_converged)
 
-    REAL(num), DIMENSION(:, :), INTENT(INOUT) :: phi
-    REAL(num), DIMENSION(:, :), INTENT(IN) :: rho
+    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: phi
+    REAL(num), DIMENSION(:,:), INTENT(IN) :: rho
     INTEGER, INTENT(IN) :: n_v_cycles, n_gs_cycles, n_c_cycles
     INTEGER :: igrid
     LOGICAL, INTENT(INOUT) :: force_converged
@@ -393,15 +419,18 @@ CONTAINS
     ! This is used to precondition the data
     grids(:)%finest = .TRUE.
     DO igrid = 1, ngrids-1
-      CALL restrict(grids(igrid)%phi, grids(igrid+1)%phi, grids(igrid), grids(igrid+1))
-      CALL restrict(grids(igrid)%rho, grids(igrid+1)%rho, grids(igrid), grids(igrid+1))
+      CALL restrict(grids(igrid)%phi, grids(igrid+1)%phi, grids(igrid), &
+          grids(igrid+1))
+      CALL restrict(grids(igrid)%rho, grids(igrid+1)%rho, grids(igrid), &
+          grids(igrid+1))
     ENDDO
 
     ! The use V_Cycles to move up towards the finest grid
     DO igrid = ngrids, 2, -1
       CALL v_cycle(igrid)
       grids(igrid)%finest = .FALSE.
-      CALL prolong(grids(igrid)%phi, grids(igrid-1)%phi, grids(igrid), grids(igrid-1), .FALSE.)
+      CALL prolong(grids(igrid)%phi, grids(igrid-1)%phi, grids(igrid), &
+          grids(igrid-1), .FALSE.)
     ENDDO
 
     ! Finally v_cycle on finest grid
@@ -413,7 +442,8 @@ CONTAINS
       CALL v_cycle(1)
     ENDIF
 
-    ! Should now check that convergence has gone as Cauchy Sequence, but implement later
+    ! Should now check that convergence has gone as Cauchy Sequence, but
+    ! implement later
 
     ! Copy the data back
     phi = grids(1)%phi(1:nx, 1:ny)

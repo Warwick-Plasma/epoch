@@ -86,7 +86,7 @@ CONTAINS
           cell_frac_x = REAL(cell_x, num) - cell_x_r
           cell_x = cell_x+1
 
-!!$                IF (cell_y .NE. iy) PRINT *, "BAD CELL"
+!!$          IF (cell_y .NE. iy) PRINT *, "BAD CELL"
 
           gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
           gx( 0) = 0.75_num - cell_frac_x**2
@@ -94,10 +94,13 @@ CONTAINS
 
           DO i = 1, 3
             temp_local = particle_species(ispecies)%temperature(i)
-            current%part_p(i) = momentum_from_temperature(particle_species(ispecies)%mass, temp_local, idum)
+            current%part_p(i) = &
+                momentum_from_temperature(particle_species(ispecies)%mass, &
+                temp_local, idum)
           ENDDO
 
-          weight_local = particle_species(ispecies)%density/ (REAL(particle_species(ispecies)%npart_per_cell, num)/(dx))
+          weight_local = particle_species(ispecies)%density / &
+                (REAL(particle_species(ispecies)%npart_per_cell, num)/(dx))
 #ifdef PER_PARTICLE_WEIGHT
           current%weight = weight_local
 #endif
@@ -105,7 +108,8 @@ CONTAINS
           current%processor = rank
           current%processor_at_t0 = rank
 #endif
-          CALL add_particle_to_partlist(particle_species(ispecies)%attached_list, current)
+          CALL add_particle_to_partlist(&
+              particle_species(ispecies)%attached_list, current)
         ENDDO
       ENDDO
     ENDIF
@@ -125,7 +129,8 @@ CONTAINS
         DO WHILE(ASSOCIATED(current))
           next=>current%next
           IF (current%part_pos .LT. x_start-0.5_num*dx) THEN
-            CALL remove_particle_from_partlist(particle_species(ispecies)%attached_list, current)
+            CALL remove_particle_from_partlist(&
+                particle_species(ispecies)%attached_list, current)
             DEALLOCATE(current)
           ENDIF
           current=>next

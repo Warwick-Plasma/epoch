@@ -10,10 +10,9 @@ MODULE custom_deck
 
 CONTAINS
 
-  ! -----------------------------------------------------------------------------
+  ! ---------------------------------------------------------------------------
   ! These functions contain the user input deck elements
-  ! -----------------------------------------------------------------------------
-
+  ! ---------------------------------------------------------------------------
   FUNCTION handle_custom_block(block_name, element, value)
 
     CHARACTER(LEN=string_length), INTENT(IN) :: block_name, element, value
@@ -30,10 +29,11 @@ CONTAINS
 
     INTEGER :: check_custom_blocks
 
-    ! This subroutine is to allow you to force the code to bomb out if an essential element
-    ! Of the input deck is missing. If you either don't want to check, are not extending the
-    ! Input deck, or all elements are set then set "check_custom_blocks = c_err_none". Otherwise
-    ! Set the return value to "check_custom_blocks = c_err_missing_elements".
+    ! This subroutine is to allow you to force the code to bomb out if an
+    ! essential element of the input deck is missing. If you either don't
+    ! want to check, are not extending the input deck, or all elements are
+    ! set then set "check_custom_blocks = c_err_none". Otherwise set the
+    ! return value to "check_custom_blocks = c_err_missing_elements".
 
     check_custom_blocks = c_err_none
 

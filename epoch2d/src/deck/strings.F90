@@ -99,11 +99,11 @@ CONTAINS
     LOGICAL :: as_logical
 
     as_logical = .FALSE.
-    IF(str_cmp(TRIM(ADJUSTL(str_in)), "T")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), "T")) THEN
       as_logical = .TRUE.
       RETURN
     ENDIF
-    IF(str_cmp(TRIM(ADJUSTL(str_in)), "F")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), "F")) THEN
       as_logical = .FALSE.
       RETURN
     ENDIF

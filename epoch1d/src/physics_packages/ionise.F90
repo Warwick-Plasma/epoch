@@ -30,7 +30,8 @@ CONTAINS
     DO ispecies = 1, n_species
       IF (.NOT. particle_species(ispecies)%ionise) CYCLE
       CALL calc_number_density(nd_low, ispecies)
-      CALL calc_number_density(nd_high, particle_species(ispecies)%ionise_to_species)
+      CALL calc_number_density(nd_high, &
+          particle_species(ispecies)%ionise_to_species)
       number_density = nd_low+nd_high
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
@@ -59,7 +60,8 @@ CONTAINS
         cell_frac_x = REAL(cell_x2, num) - cell_x_r
         cell_x2 = cell_x2+1
 
-        ! Grid weighting factors in 3D (3D analogue of equation 4.77 page 25 of manual)
+        ! Grid weighting factors in 3D (3D analogue of equation 4.77 page 25
+        ! of manual)
         ! These weight grid properties onto particles
         hx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
         hx( 0) = 0.75_num - cell_frac_x**2
@@ -81,15 +83,17 @@ CONTAINS
         ENDDO
         e_part = SQRT(ex_part**2+ey_part**2+ez_part**2)
 
-        ! This is a first attempt at using the 1 level Saha equation to calculate an
-        ! Ionisation fraction. This isn't really a very good model!
+        ! This is a first attempt at using the 1 level Saha equation to
+        ! calculate an ionisation fraction. This isn't really a very good model!
 
         e_photon = 0.5_num * epsilon0 * (e_part)**2 * dx
         t_eff = 2.0_num/3.0_num*e_photon/(kb*number_density_part*dx)
         IF (t_eff .GT. 1.0e-6_num) THEN
           lambda_db = SQRT(h_planck**2/(2.0_num*pi*m0*kb*t_eff))
-          saha_rhs = 2.0_num/lambda_db**3 * EXP(-particle_species(ispecies)%ionisation_energy/(kb*t_eff))
-          ion_frac = 0.5_num * (-saha_rhs + SQRT(saha_rhs**2+4.0_num*number_density_part*saha_rhs))
+          saha_rhs = 2.0_num/lambda_db**3 * &
+              EXP(-particle_species(ispecies)%ionisation_energy/(kb*t_eff))
+          ion_frac = 0.5_num * (-saha_rhs + &
+              SQRT(saha_rhs**2+4.0_num*number_density_part*saha_rhs))
           ion_frac = ion_frac/number_density_part
         ELSE
           ion_frac = 0.0_num
@@ -97,13 +101,15 @@ CONTAINS
         IF (ion_frac .GT. 1.0_num) ion_frac = 1.0_num
 
         rand = random(idum)
-        ! After all that, we now know the target ionisation fraction, so subtract the current fraction and ionise
+        ! After all that, we now know the target ionisation fraction, so
+        ! subtract the current fraction and ionise
         IF (rand .LT. (ion_frac-ndp_high/MAX(ndp_low, c_non_zero))) THEN
-!!$
 !!$          IF (e_part .GT. particle_species(ispecies)%Critical_Field) THEN
-          CALL remove_particle_from_partlist(particle_species(ispecies)%attached_list, current)
+          CALL remove_particle_from_partlist(&
+              particle_species(ispecies)%attached_list, current)
           next_species = particle_species(ispecies)%ionise_to_species
-          CALL add_particle_to_partlist(particle_species(next_species)%attached_list, current)
+          CALL add_particle_to_partlist(&
+              particle_species(next_species)%attached_list, current)
           next_species = particle_species(ispecies)%release_species
           IF (next_species .GT. 0) THEN
             ALLOCATE(new_part)
@@ -120,7 +126,8 @@ CONTAINS
             new_part%processor = rank
             new_part%processor_at_t0 = rank
 #endif
-            CALL add_particle_to_partlist(particle_species(next_species)%attached_list, new_part)
+            CALL add_particle_to_partlist(&
+                particle_species(next_species)%attached_list, new_part)
           ENDIF
         ENDIF
 

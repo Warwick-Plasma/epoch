@@ -42,14 +42,17 @@ CONTAINS
     handle_probe_deck = c_err_none
 
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+
     IF (str_cmp(element, "dump")) THEN
       working_probe%dump = as_integer(value, handle_probe_deck)
       RETURN
     ENDIF
+
     IF (str_cmp(element, "probe_point")) THEN
       working_probe%probe_point = as_real(value, handle_probe_deck)
       RETURN
     ENDIF
+
     IF (str_cmp(element, "left_to_right")) THEN
       working_probe%left_to_right = as_logical(value, handle_probe_deck)
       RETURN
@@ -61,7 +64,9 @@ CONTAINS
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_probe%probe_species=>particle_species(ispecies)
         ELSE
-          IF (rank .EQ. 0) PRINT *, "Unable to attach probe to non existant species ", ispecies
+          IF (rank .EQ. 0) &
+              PRINT *, "Unable to attach probe to non existant species ", &
+                  ispecies
           handle_probe_deck = c_err_bad_value
         ENDIF
       ENDIF

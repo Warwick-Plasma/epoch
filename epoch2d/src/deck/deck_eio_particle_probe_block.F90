@@ -30,7 +30,9 @@ CONTAINS
 
     ! Check whether or not the probe is valid
     IF (working_probe%vertex_bottom(2) == working_probe%vertex_top(2)) THEN
-      IF (rank .EQ. 0) PRINT*, "Probe y1 and y2 must be different. probe ", TRIM(working_probe%name), " abandoned."
+      IF (rank .EQ. 0) &
+          PRINT*, "Probe y1 and y2 must be different. probe ", &
+              TRIM(working_probe%name), " abandoned."
       DEALLOCATE(working_probe)
       NULLIFY(working_probe)
     ELSE
@@ -50,17 +52,19 @@ CONTAINS
 
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    ! get particle probe diagnostics (rolling total of all particles
-    ! which pass through a given region of real space (defined by the line between two
-    ! points in 2D).
+    ! get particle probe diagnostics (rolling total of all particles which
+    ! pass through a given region of real space (defined by the line between
+    ! two points in 2D).
     IF (str_cmp(element, "dump")) THEN
       working_probe%dump = as_integer(value, handle_probe_deck)
       RETURN
     ENDIF
+
     IF (str_cmp(element, "x1")) THEN
       working_probe%vertex_bottom(1) = as_real(value, handle_probe_deck)
       RETURN
     ENDIF
+
     IF (str_cmp(element, "y1")) THEN
       working_probe%vertex_bottom(2) = as_real(value, handle_probe_deck)
       RETURN
@@ -70,6 +74,7 @@ CONTAINS
       working_probe%vertex_top(1) = as_real(value, handle_probe_deck)
       RETURN
     ENDIF
+
     IF (str_cmp(element, "y2")) THEN
       working_probe%vertex_top(2) = as_real(value, handle_probe_deck)
       RETURN
@@ -81,7 +86,9 @@ CONTAINS
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_probe%probe_species=>particle_species(ispecies)
         ELSE
-          IF (rank .EQ. 0) PRINT *, "Unable to attach probe to non existant species ", ispecies
+          IF (rank .EQ. 0) &
+              PRINT *, "Unable to attach probe to non existant species ", &
+                  ispecies
           handle_probe_deck = c_err_bad_value
         ENDIF
       ENDIF

@@ -109,7 +109,7 @@ CONTAINS
     INTEGER :: ioutput
 
     DO ioutput = 1, num_vars_to_dump
-      IF(IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
+      IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
         ALLOCATE(averaged_data(ioutput)%data(-2:nx+3, -2:ny+3))
       ENDIF
     ENDDO
@@ -160,7 +160,9 @@ CONTAINS
       WRITE(file2, '(a, "/epoch2d.dat")') TRIM(data_dir)
       OPEN(unit=20, status='REPLACE', file=file2, iostat=errcode)
       IF (errcode .NE. 0) THEN
-        PRINT *, "***ERROR*** Cannot create epoch2d.dat output file. The most common cause of this problem is that the ouput directory does not exist"
+        PRINT *, "***ERROR*** Cannot create epoch2d.dat output file. The &
+            &most common cause of this problem is that the ouput directory &
+            &does not exist"
         CALL MPI_ABORT(comm, errcode)
       ENDIF
     END IF
@@ -204,7 +206,8 @@ CONTAINS
     CALL create_subtypes_for_load(npart)
 
     ! Create the filename for the last snapshot
-    WRITE(filename, '("nfs:", a, "/", i4.4, ".cfd")') TRIM(data_dir), restart_snapshot
+    WRITE(filename, '("nfs:", a, "/", i4.4, ".cfd")') &
+        TRIM(data_dir), restart_snapshot
     CALL cfd_open(filename, rank, comm, MPI_MODE_RDONLY)
     ! open the file
     nblocks = cfd_get_nblocks()
@@ -226,38 +229,68 @@ CONTAINS
         time = time_d
         IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time
       ENDIF
+
       SELECT CASE(block_type)
       CASE(c_type_mesh_variable)
         CALL cfd_get_common_meshtype_metadata_all(block_type, nd, sof)
         IF (sof .NE. num) THEN
-          IF (rank .EQ. 0) PRINT *, "Precision does not match, recompile code so that sizeof(real) = ", sof
+          IF (rank .EQ. 0) &
+              PRINT *, "Precision does not match, recompile code so &
+                  &that sizeof(real) = ", sof
           CALL MPI_ABORT(comm, errcode)
         ENDIF
 
         IF (nd .NE. c_dimension_2d .AND. nd .NE. c_dimension_irrelevant ) THEN
-          IF (rank .EQ. 0) PRINT *, "Dimensionality does not match, file is ", nd, "D"
+          IF (rank .EQ. 0) &
+              PRINT *, "Dimensionality does not match, file is ", nd, "D"
           CALL MPI_ABORT(comm, errcode)
         ENDIF
+
         SELECT CASE(block_type)
         CASE(c_var_cartesian)
           ! Grid variables
-          CALL cfd_get_nd_cartesian_variable_metadata_all(nd, dims, extents, stagger, mesh_name, mesh_class)
+          CALL cfd_get_nd_cartesian_variable_metadata_all(nd, dims, extents, &
+              stagger, mesh_name, mesh_class)
+
           IF (dims(1) .NE. nx_global) THEN
-            IF (rank .EQ. 0) PRINT *, "Number of gridpoints does not match, gridpoints in file is", dims(1)
+            IF (rank .EQ. 0) &
+                PRINT *, "Number of gridpoints does not match, gridpoints &
+                    &in file is", dims(1)
             CALL MPI_ABORT(comm, errcode)
           ENDIF
-          IF (str_cmp(name(1:2), "Ex")) CALL cfd_get_2d_cartesian_variable_parallel(ex(1:nx, 1:ny), subtype_field)
-          IF (str_cmp(name(1:2), "Ey")) CALL cfd_get_2d_cartesian_variable_parallel(ey(1:nx, 1:ny), subtype_field)
-          IF (str_cmp(name(1:2), "Ez")) CALL cfd_get_2d_cartesian_variable_parallel(ez(1:nx, 1:ny), subtype_field)
 
-          IF (str_cmp(name(1:2), "Bx")) CALL cfd_get_2d_cartesian_variable_parallel(bx(1:nx, 1:ny), subtype_field)
-          IF (str_cmp(name(1:2), "By")) CALL cfd_get_2d_cartesian_variable_parallel(by(1:nx, 1:ny), subtype_field)
-          IF (str_cmp(name(1:2), "Bz")) CALL cfd_get_2d_cartesian_variable_parallel(bz(1:nx, 1:ny), subtype_field)
+          IF (str_cmp(name(1:2), "Ex")) &
+              CALL cfd_get_2d_cartesian_variable_parallel(ex(1:nx, 1:ny), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Ey")) &
+              CALL cfd_get_2d_cartesian_variable_parallel(ey(1:nx, 1:ny), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Ez")) &
+              CALL cfd_get_2d_cartesian_variable_parallel(ez(1:nx, 1:ny), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Bx")) &
+              CALL cfd_get_2d_cartesian_variable_parallel(bx(1:nx, 1:ny), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "By")) &
+              CALL cfd_get_2d_cartesian_variable_parallel(by(1:nx, 1:ny), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Bz")) &
+              CALL cfd_get_2d_cartesian_variable_parallel(bz(1:nx, 1:ny), &
+                  subtype_field)
 
         CASE(c_var_particle)
-          CALL cfd_get_nd_particle_variable_metadata_all(npart_l, extents, mesh_name, mesh_class)
+          CALL cfd_get_nd_particle_variable_metadata_all(npart_l, extents, &
+              mesh_name, mesh_class)
+
           IF (npart_l .NE. npart_global) THEN
-            IF (rank .EQ. 0) PRINT *, "Number of particles does not match, changing npart to match", npart_l
+            IF (rank .EQ. 0) &
+                PRINT *, "Number of particles does not match, changing &
+                    &npart to match", npart_l
             npart = npart_l/nproc
             CALL create_subtypes_for_load(npart)
             CALL create_allocated_partlist(main_root, npart)
@@ -271,28 +304,48 @@ CONTAINS
             current=>main_root%head
             npart_global = npart_l
           ENDIF
+
           ! particle variables
-          IF (str_cmp(name(1:2), "Px")) CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, npart_per_it, subtype_particle_var, it_px)
-          IF (str_cmp(name(1:2), "Py")) CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, npart_per_it, subtype_particle_var, it_py)
-          IF (str_cmp(name(1:2), "Pz")) CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, npart_per_it, subtype_particle_var, it_pz)
+          IF (str_cmp(name(1:2), "Px")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_px)
+
+          IF (str_cmp(name(1:2), "Py")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_py)
+
+          IF (str_cmp(name(1:2), "Pz")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_pz)
+
 #ifdef PER_PARTICLE_WEIGHT
-          IF (str_cmp(name(1:6), "Weight")) CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, npart_per_it, subtype_particle_var, it_weight)
+          IF (str_cmp(name(1:6), "Weight")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_weight)
 #else
           IF (str_cmp(name(1:6), "Weight")) THEN
-            IF (rank .EQ. 0) PRINT *, "Cannot load dump file with per particle weight if the code is compiled without per particle weights. Code terminates"
+            IF (rank .EQ. 0) &
+                PRINT *, "Cannot load dump file with per particle weight &
+                    &if the code is compiled without per particle weights. &
+                    &Code terminates"
             CALL MPI_ABORT(comm, errcode)
           ENDIF
 #endif
-          IF (str_cmp(name(1:7), "Species")) CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, npart_per_it, subtype_particle_var, it_species)
+          IF (str_cmp(name(1:7), "Species")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_species)
         END SELECT
       CASE(c_type_mesh)
         CALL cfd_get_common_meshtype_metadata_all(block_type, nd, sof)
         IF (block_type .EQ. c_mesh_particle) THEN
-          CALL cfd_get_nd_particle_grid_metadata_all(nd, coord_type, npart_l, extents)
+          CALL cfd_get_nd_particle_grid_metadata_all(nd, coord_type, npart_l, &
+              extents)
           IF (npart_l .NE. npart_global) THEN
             npart = npart_l/nproc
             IF (npart * nproc .NE. npart_l) THEN
-              IF (rank .EQ. 0) PRINT *, "Cannot evenly subdivide particles over", nproc, "processors. Trying to fix"
+              IF (rank .EQ. 0) &
+                  PRINT *, "Cannot evenly subdivide particles over", nproc, &
+                      "processors. Trying to fix"
               IF (rank .LT. npart_l-(npart*nproc)) npart = npart+1
             ENDIF
             CALL create_subtypes_for_load(npart)
@@ -301,7 +354,9 @@ CONTAINS
             current=>main_root%head
             npart_global = npart_l
           ENDIF
-          CALL cfd_get_nd_particle_grid_parallel_with_iterator(nd, main_root%count, npart_l, npart_per_it, sof, subtype_particle_var, it_part)
+          CALL cfd_get_nd_particle_grid_parallel_with_iterator(nd, &
+              main_root%count, npart_l, npart_per_it, sof, &
+              subtype_particle_var, it_part)
         ENDIF
       CASE(c_type_constant)
         CALL cfd_get_real_constant(weight)
@@ -316,7 +371,8 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       next=>current%next
       CALL remove_particle_from_partlist(main_root, current)
-      CALL add_particle_to_partlist(particle_species(species_id(ipart))%attached_list, current)
+      CALL add_particle_to_partlist(&
+          particle_species(species_id(ipart))%attached_list, current)
       current=>next
       ipart = ipart+1
     ENDDO

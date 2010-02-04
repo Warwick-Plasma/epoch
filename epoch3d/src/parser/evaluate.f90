@@ -21,20 +21,25 @@ CONTAINS
 
     eval_stack%stack_point = 0
 !!$    IF (err .NE. c_err_none) THEN
-!!$       PRINT *, "STUPID", err
-!!$       STOP
+!!$      PRINT *, "STUPID", err
+!!$      STOP
 !!$    ENDIF
 
-    IF (debug_mode .AND. ix == 0 .AND. iy == 0 .AND. iz == 0) CALL display_tokens(input_stack)
+    IF (debug_mode .AND. ix == 0 .AND. iy == 0 .AND. iz == 0) &
+          CALL display_tokens(input_stack)
 
     DO i = 1, input_stack%stack_point
       BLOCK = input_stack%data(i)
       IF (block%ptype .EQ. c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
       ENDIF
-      IF (block%ptype .EQ. c_pt_operator) CALL do_operator(block%data, ix, iy, iz, err)
-      IF (block%ptype .EQ. c_pt_constant) CALL do_constant(block%data, ix, iy, iz, err)
-      IF (block%ptype .EQ. c_pt_function) CALL do_functions(block%data, ix, iy, iz, err)
+
+      IF (block%ptype .EQ. c_pt_operator) &
+          CALL do_operator(block%data, ix, iy, iz, err)
+      IF (block%ptype .EQ. c_pt_constant) &
+          CALL do_constant(block%data, ix, iy, iz, err)
+      IF (block%ptype .EQ. c_pt_function) &
+          CALL do_functions(block%data, ix, iy, iz, err)
       IF (err .NE. c_err_none) THEN
         PRINT *, "BAD block", err, block%ptype, i, block%data
         EXIT

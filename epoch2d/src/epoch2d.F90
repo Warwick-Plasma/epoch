@@ -1,13 +1,18 @@
 PROGRAM pic
 
-  ! EPOCH2D is a Birdsall and Langdon type PIC code derived from the PSC written by Hartmut Ruhl.
+  ! EPOCH2D is a Birdsall and Langdon type PIC code derived from the PSC
+  ! written by Hartmut Ruhl.
 
-  ! The particle pusher (particles.F90) and the field solver (fields.f90) are almost exact copies of the equivalent routines from PSC,
-  ! modified slightly to allow interaction with the changed portions of the code and for readability. The MPI routines are exactly
-  ! equivalent to those in PSC, but are completely rewritten in a form which is easier to extend with arbitrary fields and particle properties.
-  ! The support code is entirely new and is not equivalent to PSC.
+  ! The particle pusher (particles.F90) and the field solver (fields.f90) are
+  ! almost exact copies of the equivalent routines from PSC, modified slightly
+  ! to allow interaction with the changed portions of the code and for
+  ! readability. The MPI routines are exactly equivalent to those in PSC, but
+  ! are completely rewritten in a form which is easier to extend with arbitrary
+  ! fields and particle properties. The support code is entirely new and is not
+  ! equivalent to PSC.
 
-  ! EPOCH2D written by C.S.Brady, Centre for Fusion, Space and Astrophysics, University of Warwick, UK
+  ! EPOCH2D written by C.S.Brady, Centre for Fusion, Space and Astrophysics,
+  ! University of Warwick, UK
   ! PSC written by Hartmut Ruhl
 
   USE shared_data
@@ -59,7 +64,8 @@ PROGRAM pic
   CALL setup_boundaries_block
   CALL setup_species_block
   CALL setup_output_block
-  IF (rank .EQ. 0) PRINT *, "Control variables setup OK. Setting initial conditions"
+  IF (rank .EQ. 0) &
+      PRINT *, "Control variables setup OK. Setting initial conditions"
 #else
   CALL read_deck("input.deck", .TRUE.)
 #endif
@@ -170,36 +176,46 @@ PROGRAM pic
       ! .FALSE. this time to use load balancing threshold
       CALL balance_workload(.FALSE.)
     ENDIF
-    IF (move_window .AND. .NOT. window_started .AND. time .GE. window_start_time) THEN
+    IF (move_window .AND. .NOT. window_started .AND. &
+        time .GE. window_start_time) THEN
       xbc_left = xbc_left_after_move
       xbc_right = xbc_right_after_move
       CALL setup_particle_boundaries
       CALL setup_communicator
       window_started = .TRUE.
     ENDIF
+
     ! If we have a moving window then update the window position
     IF (move_window .AND. window_started) THEN
       window_shift_fraction = window_shift_fraction + dt*window_v_x/dx
       ! Allow for posibility of having jumped two cells at once
       IF (FLOOR(window_shift_fraction) .GE. 1.0_num) THEN
         IF (use_offset_grid) THEN
-          window_shift(1) = window_shift(1)+REAL(FLOOR(window_shift_fraction), num)*dx
+          window_shift(1) = &
+              window_shift(1) + REAL(FLOOR(window_shift_fraction), num)*dx
         ENDIF
         CALL shift_window
-        window_shift_fraction = window_shift_fraction-REAL(FLOOR(window_shift_fraction), num)
+        window_shift_fraction = &
+            window_shift_fraction - REAL(FLOOR(window_shift_fraction), num)
         CALL particle_bcs
       ENDIF
     ENDIF
-    ! This section ensures that the particle count for the particle_species objects is accurate
-    ! This makes some things easier, but increases communication
+
+    ! This section ensures that the particle count for the particle_species
+    ! objects is accurate. This makes some things easier, but increases
+    ! communication
 #ifdef PARTICLE_COUNT_UPDATE
     DO ispecies = 1, n_species
-      CALL MPI_ALLREDUCE(particle_species(ispecies)%attached_list%count, particle_species(ispecies)%count , 1, MPI_INTEGER8, MPI_SUM, comm, errcode)
+      CALL MPI_ALLREDUCE(particle_species(ispecies)%attached_list%count, &
+          particle_species(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
+          comm, errcode)
     ENDDO
 #endif
     IF (halt) EXIT
   END DO
-  IF (rank .EQ. 0) PRINT *, "Final runtime of core = ", MPI_WTIME(errcode)-walltime_current
+
+  IF (rank .EQ. 0) &
+      PRINT *, "Final runtime of core = ", MPI_WTIME(errcode)-walltime_current
 
   CALL output_routines(i)
 

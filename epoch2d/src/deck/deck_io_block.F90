@@ -11,7 +11,16 @@ MODULE deck_io_block
   INTEGER, PARAMETER :: n_var_special = 7
   INTEGER, PARAMETER :: io_block_elements = n_var_special+num_vars_to_dump
   LOGICAL, DIMENSION(io_block_elements)  :: io_block_done
-  CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name = (/"dt_snapshot", "full_dump_every", "restart_dump_every", "force_final_to_be_restartable", "use_offset_grid", "use_extended_io", "extended_io_file", "particles", "grid", "px", "py", "pz", "vx", "vy", "vz", "ex", "ey", "ez", "bx", "by", "bz", "jx", "jy", "jz", "charge", "mass", "ekbar", "mass_density", "charge_density", "number_density", "particle_weight", "species_id", "distribution_functions", "particle_probes", "temperature", "ejected_particles"/)
+  CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: &
+      io_block_name = (/"dt_snapshot", "full_dump_every", &
+          "restart_dump_every", "force_final_to_be_restartable", &
+          "use_offset_grid", "use_extended_io", "extended_io_file", &
+          "particles", "grid", "px", "py", "pz", "vx", "vy", "vz", &
+          "ex", "ey", "ez", "bx", "by", "bz", "jx", "jy", "jz", "charge", &
+          "mass", "ekbar", "mass_density", "charge_density", &
+          "number_density", "particle_weight", "species_id", &
+          "distribution_functions", "particle_probes", "temperature", &
+          "ejected_particles"/)
 
 CONTAINS
 
@@ -26,7 +35,7 @@ CONTAINS
     elementselected = 0
 
     DO loop = 1, io_block_elements
-      IF(str_cmp(element, TRIM(ADJUSTL(io_block_name(loop))))) THEN
+      IF (str_cmp(element, TRIM(ADJUSTL(io_block_name(loop))))) THEN
         elementselected = loop
         EXIT
       ENDIF
@@ -58,9 +67,11 @@ CONTAINS
     END SELECT
 
     IF (elementselected .LE. n_var_special) RETURN
-    IF (elementselected .GT. n_var_special) dumpmask(elementselected-n_var_special) = as_real(value, handle_io_deck)
+    IF (elementselected .GT. n_var_special) &
+        dumpmask(elementselected-n_var_special) = as_real(value, handle_io_deck)
 
-    ! If setting dumpmask for particle probes then report if the code wasn't compiled for particle probes
+    ! If setting dumpmask for particle probes then report if the code wasn't
+    ! compiled for particle probes
 #ifndef PARTICLE_PROBES
     IF (elementselected-n_var_special .EQ. 27) THEN
       handle_io_deck = c_err_pp_options_wrong
@@ -76,11 +87,13 @@ CONTAINS
 
     INTEGER :: check_io_block, index
 
-    ! Just assume that anything not included except for the compulsory elements is not wanted
+    ! Just assume that anything not included except for the compulsory
+    ! elements is not wanted
     check_io_block = c_err_none
 
     ! If not requesting extended io then don't check for extended_io_file
-    IF (.NOT. io_block_done(6) .OR. .NOT. use_extended_io) io_block_done(6:7) = .TRUE.
+    IF (.NOT. io_block_done(6) .OR. .NOT. use_extended_io) &
+        io_block_done(6:7) = .TRUE.
 
     ! particle Positions
     dumpmask(1:5) = IOR(dumpmask(1:5), c_io_restartable)
@@ -93,10 +106,14 @@ CONTAINS
       IF (.NOT. io_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
           PRINT *, "***ERROR***"
-          PRINT *, "Required output block element ", TRIM(ADJUSTL(io_block_name(index))), " absent. Please create this entry in the input deck"
+          PRINT *, "Required output block element ", &
+              TRIM(ADJUSTL(io_block_name(index))), &
+              " absent. Please create this entry in the input deck"
           WRITE(40, *) ""
           WRITE(40, *) "***ERROR***"
-          WRITE(40, *) "Required output block element ", TRIM(ADJUSTL(io_block_name(index))), " absent. Please create this entry in the input deck"
+          WRITE(40, *) "Required output block element ", &
+              TRIM(ADJUSTL(io_block_name(index))), &
+              " absent. Please create this entry in the input deck"
         ENDIF
         check_io_block = c_err_missing_elements
       ENDIF

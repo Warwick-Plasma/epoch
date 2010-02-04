@@ -16,7 +16,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r, cell_y_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -29,7 +30,7 @@ CONTAINS
     ! The data to be weighted onto the grid
     REAL(num) :: DATA
 
-    REAL(num), DIMENSION(-2:, -2:), INTENT(INOUT) :: data_array
+    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
@@ -85,7 +86,8 @@ CONTAINS
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
             DATA = part_m * l_weight / (dx*dy)
-            data_array(cell_x+ix, cell_y+iy) = data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+            data_array(cell_x+ix, cell_y+iy) = &
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
           ENDDO
         ENDDO
 
@@ -108,7 +110,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r, cell_y_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -122,8 +125,8 @@ CONTAINS
     ! The data to be weighted onto the grid
     REAL(num) :: DATA
 
-    REAL(num), DIMENSION(-2:, -2:), INTENT(INOUT) :: data_array
-    REAL(num), DIMENSION(:, :), ALLOCATABLE :: ct
+    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: ct
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
@@ -182,9 +185,13 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            DATA = SQRT(((part_px*l_weight)**2+(part_py*l_weight)**2+(part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) - (part_m*l_weight)*c**2
-            data_array(cell_x+ix, cell_y+iy) = data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
-            ct(cell_x+ix, cell_y+iy) = ct(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
+            DATA = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 + &
+                (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) - &
+                (part_m*l_weight)*c**2
+            data_array(cell_x+ix, cell_y+iy) = &
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+            ct(cell_x+ix, cell_y+iy) = &
+                ct(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
           ENDDO
         ENDDO
 
@@ -211,7 +218,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r, cell_y_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -225,7 +233,7 @@ CONTAINS
     ! The data to be weighted onto the grid
     REAL(num) :: DATA
 
-    REAL(num), DIMENSION(-2:, -2:), INTENT(INOUT) :: data_array
+    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
@@ -281,7 +289,8 @@ CONTAINS
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
             DATA = part_q * l_weight / (dx*dy)
-            data_array(cell_x+ix, cell_y+iy) = data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+            data_array(cell_x+ix, cell_y+iy) = &
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
           ENDDO
         ENDDO
 
@@ -304,7 +313,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r, cell_y_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -318,7 +328,7 @@ CONTAINS
     ! The data to be weighted onto the grid
     REAL(num) :: DATA
 
-    REAL(num), DIMENSION(-2:, -2:), INTENT(INOUT) :: data_array
+    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
@@ -374,7 +384,8 @@ CONTAINS
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
             DATA = 1.0_num * l_weight / (dx*dy)
-            data_array(cell_x+ix, cell_y+iy) = data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+            data_array(cell_x+ix, cell_y+iy) = &
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
           ENDDO
         ENDDO
         current=>current%next
@@ -396,7 +407,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r, cell_y_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -410,8 +422,8 @@ CONTAINS
     ! The data to be weighted onto the grid
     REAL(num) :: DATA
 
-    REAL(num), DIMENSION(-2:, -2:), INTENT(INOUT) :: data_array
-    REAL(num), DIMENSION(:, :), ALLOCATABLE ::  part_count, mass, sigma, mean
+    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
+    REAL(num), DIMENSION(:,:), ALLOCATABLE ::  part_count, mass, sigma, mean
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
@@ -476,13 +488,17 @@ CONTAINS
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
             DATA = SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
-!!$                IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
-            mean(cell_x+ix, cell_y+iy) = mean(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+!!$            IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
+!!$                data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
+            mean(cell_x+ix, cell_y+iy) = &
+                mean(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
             DATA = l_weight
-            part_count(cell_x+ix, cell_y+iy) = part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+            part_count(cell_x+ix, cell_y+iy) = &
+                part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
             DATA = part_m * l_weight
-            mass(cell_x+ix, cell_y+iy) = mass(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
-!!$                ENDIF
+            mass(cell_x+ix, cell_y+iy) = &
+                mass(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+!!$            ENDIF
           ENDDO
         ENDDO
         current=>current%next
@@ -528,10 +544,14 @@ CONTAINS
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
             DATA = SQRT(part_px**2+part_py**2+part_pz**2)
-!!$                IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
-            sigma(cell_x+ix, cell_y+iy) = sigma(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * (DATA-mean(cell_x+ix, cell_y+iy))**2
-            part_count(cell_x+ix, cell_y+iy) = part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy)
-!!$                ENDIF
+!!$            IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
+!!$                data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
+            sigma(cell_x+ix, cell_y+iy) = &
+                sigma(cell_x+ix, cell_y+iy) + &
+                gx(ix) * gy(iy) * (DATA-mean(cell_x+ix, cell_y+iy))**2
+            part_count(cell_x+ix, cell_y+iy) = &
+                part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy)
+!!$            ENDIF
           ENDDO
         ENDDO
         current=>current%next
@@ -564,7 +584,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r, cell_y_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -578,7 +599,7 @@ CONTAINS
     ! The data to be weighted onto the grid
     REAL(num) :: DATA
 
-    REAL(num), DIMENSION(-2:, -2:), INTENT(INOUT) :: data_array
+    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
@@ -628,7 +649,8 @@ CONTAINS
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
             DATA = evaluator(current, ispecies)
-            data_array(cell_x+ix, cell_y+iy) = data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+            data_array(cell_x+ix, cell_y+iy) = &
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
           ENDDO
         ENDDO
 

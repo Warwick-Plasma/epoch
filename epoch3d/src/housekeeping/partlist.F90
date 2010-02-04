@@ -152,21 +152,25 @@ CONTAINS
     test_ct = 0
 
     ! Empty list is OK
-    IF (.NOT. ASSOCIATED(partlist%head) .AND. .NOT. ASSOCIATED(partlist%tail)) THEN
+    IF (.NOT. ASSOCIATED(partlist%head) .AND. &
+        .NOT. ASSOCIATED(partlist%tail)) THEN
       test_partlist = 0
       RETURN
     ENDIF
 
     ! List with head or tail but not both is broken
-    IF (.NOT. ASSOCIATED(partlist%head) .OR. .NOT. ASSOCIATED(partlist%tail)) THEN
+    IF (.NOT. ASSOCIATED(partlist%head) .OR. &
+        .NOT. ASSOCIATED(partlist%tail)) THEN
       test_partlist = -1
       RETURN
     ENDIF
 
     ! Having head and tail elements which are not the end of a list are OK for
     ! unsafe partlists
-    IF (ASSOCIATED(partlist%head%prev) .AND. partlist%safe) test_partlist = IOR(test_partlist, 1)
-    IF (ASSOCIATED(partlist%tail%next) .AND. partlist%safe) test_partlist = IOR(test_partlist, 2)
+    IF (ASSOCIATED(partlist%head%prev) .AND. partlist%safe) &
+        test_partlist = IOR(test_partlist, 1)
+    IF (ASSOCIATED(partlist%tail%next) .AND. partlist%safe) &
+        test_partlist = IOR(test_partlist, 2)
 
     ! Since we don't KNOW that count is OK (that's what we're checking)
     ! Have to check both for end of list and for having reached the tail item
@@ -225,7 +229,8 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: head, tail
 
     IF (.NOT. head%safe .OR. .NOT. tail%safe) THEN
-      IF (rank .EQ. 0) PRINT *, "Unable to append partlists because one is not safe"
+      IF (rank .EQ. 0) &
+          PRINT *, "Unable to append partlists because one is not safe"
       RETURN
     ENDIF
 
@@ -258,7 +263,7 @@ CONTAINS
 
     ! Add particle count
     partlist%count = partlist%count+1
-    IF(.NOT. ASSOCIATED(partlist%tail)) THEN
+    IF (.NOT. ASSOCIATED(partlist%tail)) THEN
       ! partlist is empty
       partlist%head=>new_particle
       partlist%tail=>new_particle
@@ -283,8 +288,10 @@ CONTAINS
     ! BE CAREFUL if doing so, it can cause unexpected behaviour
 
     ! Check whether particle is head or tail of list and unlink
-    IF (ASSOCIATED(partlist%head, TARGET=a_particle)) partlist%head=>a_particle%next
-    IF (ASSOCIATED(partlist%tail, TARGET=a_particle)) partlist%tail=>a_particle%prev
+    IF (ASSOCIATED(partlist%head, TARGET=a_particle)) &
+        partlist%head=>a_particle%next
+    IF (ASSOCIATED(partlist%tail, TARGET=a_particle)) &
+        partlist%tail=>a_particle%prev
 
     ! Link particles on either side together
     IF (ASSOCIATED(a_particle%next)) a_particle%next%prev=>a_particle%prev
@@ -378,8 +385,10 @@ CONTAINS
     LOGICAL :: compare_particles
 
     compare_particles = .TRUE.
-    IF (MAXVAL(ABS(part1%part_pos-part2%part_pos)) .NE. 0.0_num  ) compare_particles = .FALSE.
-    IF (MAXVAL(ABS(part1%part_p - part2%part_p)) .NE. 0.0_num    ) compare_particles = .FALSE.
+    IF (MAXVAL(ABS(part1%part_pos-part2%part_pos)) .NE. 0.0_num) &
+        compare_particles = .FALSE.
+    IF (MAXVAL(ABS(part1%part_p - part2%part_p)) .NE. 0.0_num) &
+        compare_particles = .FALSE.
 
 #ifdef PER_PARTICLE_WEIGHT
     IF (part1%weight .NE. part2%weight) compare_particles = .FALSE.
@@ -411,7 +420,8 @@ CONTAINS
     test_packed_particles = .FALSE.
 
     IF (npart_in_data * nvar .NE. SIZE(DATA)) THEN
-      PRINT *, "Size of data array does not match specified on", rank, npart_in_data, SIZE(DATA)
+      PRINT *, "Size of data array does not match specified on", rank, &
+          npart_in_data, SIZE(DATA)
       RETURN
     ENDIF
     IF (partlist%count .NE. npart_in_data) THEN
@@ -453,7 +463,7 @@ CONTAINS
 
     ! This is a reduced memory footprint algorithm
     ! Try to fix later
-!!$    !Copy the data for the particles into a buffer
+!!$    ! Copy the data for the particles into a buffer
 !!$    ALLOCATE(data(1:npart_this_it*nvar))
 !!$    current=>partlist%head
 !!$    ct = 0
@@ -461,19 +471,20 @@ CONTAINS
 !!$    npart_left = partlist%count
 !!$    DO WHILE (npart_left .GT. 0)
 !!$
-!!$       !Copy the data into the buffer
-!!$       ct = 0
-!!$       DO ipart = 1, npart_this_it
-!!$          cpos = ct*nvar+1
-!!$          CALL pack_particle(data(cpos:cpos+nvar), current)
-!!$          current=>current%next
-!!$          ct = ct+1
-!!$       ENDDO
+!!$      ! Copy the data into the buffer
+!!$      ct = 0
+!!$      DO ipart = 1, npart_this_it
+!!$        cpos = ct*nvar+1
+!!$        CALL pack_particle(data(cpos:cpos+nvar), current)
+!!$        current=>current%next
+!!$        ct = ct+1
+!!$      ENDDO
 !!$
-!!$       !Send the data to the receiver
-!!$       CALL MPI_SEND(data, npart_this_it*nvar, mpireal, dest, tag, comm, errcode)
-!!$       npart_left = npart_left-npart_this_it
-!!$       npart_this_it = MIN(npart_left, npart_per_it)
+!!$      ! Send the data to the receiver
+!!$      CALL MPI_SEND(data, npart_this_it*nvar, mpireal, dest, tag, &
+!!$          comm, errcode)
+!!$      npart_left = npart_left-npart_this_it
+!!$      npart_this_it = MIN(npart_left, npart_per_it)
 !!$    ENDDO
 
     ALLOCATE(DATA(1:partlist%count*nvar))
@@ -511,19 +522,21 @@ CONTAINS
 
     ! This is a reduced memory footprint algorithm
     ! Try to fix later
-!!$    !Copy the data for the particles into a buffer
+!!$    ! Copy the data for the particles into a buffer
 !!$    ALLOCATE(data(1:npart_this_it*nvar))
 !!$    DO WHILE (npart_left .GT. 0)
-!!$       !Receive the actual data
-!!$       CALL MPI_RECV(data, npart_this_it*nvar, mpireal, src, tag, comm, status, errcode)
+!!$      ! Receive the actual data
+!!$      CALL MPI_RECV(data, npart_this_it*nvar, mpireal, src, tag, &
+!!$          comm, status, errcode)
 !!$
-!!$       !Copy to temporary partlist and then attach that partlist to the end of the main partlist
-!!$       CALL create_filled_partlist(PartListTemp, data, npart_this_it*nvar)
-!!$       CALL append_partlist(partlist, PartListTemp)
+!!$      ! Copy to temporary partlist and then attach that partlist to
+!!$      ! the end of the main partlist
+!!$      CALL create_filled_partlist(PartListTemp, data, npart_this_it*nvar)
+!!$      CALL append_partlist(partlist, PartListTemp)
 !!$
-!!$       !Reduce count for next iteration
-!!$       npart_left = npart_left-npart_this_it
-!!$       npart_this_it = MIN(npart_left, npart_per_it)
+!!$      ! Reduce count for next iteration
+!!$      npart_left = npart_left-npart_this_it
+!!$      npart_this_it = MIN(npart_left, npart_per_it)
 !!$    ENDDO
 
     ALLOCATE(DATA(1:count*nvar))
@@ -546,12 +559,14 @@ CONTAINS
     INTEGER(KIND=8) :: npart_send, npart_recv
     TYPE(particle), POINTER :: current
 
-    ! This subroutine doesn't try to use memory efficient buffering, it sends all the particles at once
-    ! This should work for boundary calls, but don't try it for any other reason
+    ! This subroutine doesn't try to use memory efficient buffering, it sends
+    ! all the particles at once. This should work for boundary calls, but
+    ! don't try it for any other reason
 
     npart_send = partlist_send%count
     npart_recv = 0
-    CALL MPI_SENDRECV(npart_send, 1, MPI_INTEGER, dest, tag, npart_recv, 1, MPI_INTEGER, src, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(npart_send, 1, MPI_INTEGER, dest, tag, npart_recv, 1, &
+        MPI_INTEGER, src, tag, comm, status, errcode)
 
     ! Copy the data for the particles into a buffer
     ALLOCATE(data_send(1:npart_send*nvar))
@@ -573,7 +588,8 @@ CONTAINS
     CALL destroy_partlist(partlist_send)
 
     ! Actual MPI commands
-    CALL MPI_SENDRECV(data_send, npart_send*nvar, mpireal, dest, tag, data_recv, npart_recv*nvar, mpireal, src, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(data_send, npart_send*nvar, mpireal, dest, tag, &
+        data_recv, npart_recv*nvar, mpireal, src, tag, comm, status, errcode)
 
     DEALLOCATE(data_send)
     CALL create_filled_partlist(partlist_recv, data_recv, npart_recv)

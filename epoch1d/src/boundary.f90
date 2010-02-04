@@ -11,7 +11,8 @@ CONTAINS
 
     any_open = .FALSE.
 
-    ! For some types of boundary, fields and particles are treated in different ways, deal with that here
+    ! For some types of boundary, fields and particles are treated in
+    ! different ways, deal with that here
     IF (xbc_right == c_bc_periodic) THEN
       xbc_right_particle = c_bc_periodic
       xbc_right_field = c_bc_periodic
@@ -21,7 +22,8 @@ CONTAINS
       xbc_left_field = c_bc_periodic
     ENDIF
 
-    ! For some types of boundary, fields and particles are treated in different ways, deal with that here
+    ! For some types of boundary, fields and particles are treated in
+    ! different ways, deal with that here
     IF (xbc_right == c_bc_other) THEN
       xbc_right_particle = c_bc_reflect
       xbc_right_field = c_bc_clamp
@@ -32,13 +34,14 @@ CONTAINS
     ENDIF
 
     ! laser boundaries reflect particles off a hard wall
-    IF (xbc_left == c_bc_simple_laser .OR. xbc_left == c_bc_simple_outflow) THEN
+    IF (xbc_left == c_bc_simple_laser .OR. &
+        xbc_left == c_bc_simple_outflow) THEN
       xbc_left_particle = c_bc_open
       xbc_left_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
-
-    IF (xbc_right == c_bc_simple_laser .OR. xbc_right == c_bc_simple_outflow) THEN
+    IF (xbc_right == c_bc_simple_laser .OR. &
+        xbc_right == c_bc_simple_outflow) THEN
       xbc_right_particle = c_bc_open
       xbc_right_field = c_bc_clamp
       any_open = .TRUE.
@@ -50,7 +53,8 @@ CONTAINS
 
 
 
-  ! Exchanges field values at processor boundaries and applies field boundary conditions
+  ! Exchanges field values at processor boundaries and applies field
+  ! boundary conditions
   SUBROUTINE field_bc(field)
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
@@ -66,8 +70,11 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local
 
-    CALL MPI_SENDRECV(field(1:3), 3, mpireal, left, tag, field(nx_local+1:nx_local+3), 3, mpireal, right, tag, comm, status, errcode)
-    CALL MPI_SENDRECV(field(nx_local-2:nx_local), 3, mpireal, right, tag, field(-2:0), 3, mpireal, left, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1:3), 3, mpireal, left, tag, &
+        field(nx_local+1:nx_local+3), 3, mpireal, right, tag, &
+        comm, status, errcode)
+    CALL MPI_SENDRECV(field(nx_local-2:nx_local), 3, mpireal, right, tag, &
+        field(-2:0), 3, mpireal, left, tag, comm, status, errcode)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -78,12 +85,14 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     LOGICAL, INTENT(IN) :: force
 
-    IF ((xbc_left_field == c_bc_zero_gradient .OR. force) .AND. left == MPI_PROC_NULL) THEN
+    IF ((xbc_left_field == c_bc_zero_gradient .OR. force) .AND. &
+        left == MPI_PROC_NULL) THEN
       field(0) = field(1)
       field(-1) = field(2)
     ENDIF
 
-    IF ((xbc_right_field == c_bc_zero_gradient .OR. force)  .AND. right == MPI_PROC_NULL) THEN
+    IF ((xbc_right_field == c_bc_zero_gradient .OR. force) .AND. &
+        right == MPI_PROC_NULL) THEN
       field(nx+1) = field(nx)
       field(nx+2) = field(nx-1)
     ENDIF
@@ -165,14 +174,16 @@ CONTAINS
 
     DO ix = -1, 1
       IF (ix == 0 ) CYCLE
-      ! Copy the starts into variables with shorter names, or this is HORRIFIC to read
+      ! Copy the starts into variables with shorter names, or this is
+      ! HORRIFIC to read
       xs = x_start(ix)
       xe = x_end(ix)
       xf = x_shift(ix)
       ALLOCATE(temp(xs:xe))
       temp = 0.0_num
       ! IF (neighbour(ix) .EQ. MPI_PROC_NULL) PRINT *, "BAD NEIGHBOUR", ix, iy
-      CALL MPI_SENDRECV(array(xs:xe), sizes(ix), mpireal, neighbour(ix), tag, temp, sizes(-ix), mpireal, neighbour(-ix), tag, comm, status, errcode)
+      CALL MPI_SENDRECV(array(xs:xe), sizes(ix), mpireal, neighbour(ix), tag, &
+          temp, sizes(-ix), mpireal, neighbour(-ix), tag, comm, status, errcode)
       array(xs+xf:xe+xf) = array(xs+xf:xe+xf) + temp
       DEALLOCATE(temp)
     ENDDO
@@ -253,26 +264,33 @@ CONTAINS
 
         ! These conditions apply if a particle has passed a physical boundary
         ! Not a processor boundary or a periodic boundary
-        IF (cur%part_pos .LE. x_start-dx/2.0_num .AND. left == MPI_PROC_NULL .AND. xbc_left_particle == c_bc_reflect) THEN
+        IF (cur%part_pos .LE. x_start-dx/2.0_num .AND. &
+            left == MPI_PROC_NULL .AND. &
+            xbc_left_particle == c_bc_reflect) THEN
           ! particle has crossed left boundary
           cur%part_pos =  2.0_num * (x_start-dx/2.0_num) - cur%part_pos
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
-        IF (cur%part_pos .GE. x_end+dx/2.0_num .AND. right == MPI_PROC_NULL .AND. xbc_right_particle == c_bc_reflect) THEN
+        IF (cur%part_pos .GE. x_end+dx/2.0_num .AND. &
+            right == MPI_PROC_NULL .AND. &
+            xbc_right_particle == c_bc_reflect) THEN
           ! particle has crossed right boundary
           cur%part_pos =  2.0_num *(x_end+dx/2.0_num) - cur%part_pos
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
 
         IF (cur%part_pos .LT. x_start_local - dx/2.0_num) xbd = -1
-        IF (cur%part_pos .GT. x_end_local + dx/2.0_num )   xbd = 1
+        IF (cur%part_pos .GT. x_end_local + dx/2.0_num )  xbd = 1
 
-        IF ((cur%part_pos .LT. x_start - dx/2.0_num) .AND. (xbc_left_particle == c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos .GT. x_end + dx/2.0_num) .AND. (xbc_right_particle == c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos .LT. x_start - dx/2.0_num) .AND. &
+            (xbc_left_particle == c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos .GT. x_end + dx/2.0_num) .AND. &
+            (xbc_right_particle == c_bc_open)) out_of_bounds = .TRUE.
 
         IF (ABS(xbd) .GT. 0) THEN
           ! particle has left box
-          CALL remove_particle_from_partlist(particle_species(ispecies)%attached_list, cur)
+          CALL remove_particle_from_partlist(&
+              particle_species(ispecies)%attached_list, cur)
           IF (.NOT. out_of_bounds) THEN
             CALL add_particle_to_partlist(send(xbd), cur)
           ELSE
@@ -293,17 +311,23 @@ CONTAINS
       DO ix = -1, 1
         IF (ABS(ix) .EQ. 0) CYCLE
         ixp = -ix
-        CALL partlist_sendrecv(send(ix), recv(ixp), neighbour(ix), neighbour(ixp))
-        CALL append_partlist(particle_species(ispecies)%attached_list, recv(ixp))
+        CALL partlist_sendrecv(send(ix), recv(ixp), neighbour(ix), &
+            neighbour(ixp))
+        CALL append_partlist(particle_species(ispecies)%attached_list, &
+            recv(ixp))
       ENDDO
 
-      ! Particles should only lie outside boundaries if the periodic boundaries are turned on
-      ! This now moves them to within the boundaries
+      ! Particles should only lie outside boundaries if the periodic boundaries
+      ! are turned on. This now moves them to within the boundaries
       cur=>particle_species(ispecies)%attached_list%head
       ct = 0
       DO WHILE(ASSOCIATED(cur))
-        IF(cur%part_pos .GT. x_end+dx/2.0_num .AND. xbc_left_particle == c_bc_periodic) cur%part_pos = cur%part_pos-length_x - dx
-        IF(cur%part_pos .LT. x_start-dx/2.0_num .AND. xbc_right_particle == c_bc_periodic) cur%part_pos = cur%part_pos+length_x + dx
+        IF (cur%part_pos .GT. x_end+dx/2.0_num .AND. &
+            xbc_left_particle == c_bc_periodic) &
+                cur%part_pos = cur%part_pos-length_x - dx
+        IF (cur%part_pos .LT. x_start-dx/2.0_num .AND. &
+            xbc_right_particle == c_bc_periodic) &
+                cur%part_pos = cur%part_pos+length_x + dx
         cur=>cur%next
       ENDDO
     ENDDO

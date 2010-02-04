@@ -44,7 +44,8 @@ CONTAINS
         CALL advance_particle_family(current_family, current_list, cur)
         IF (.NOT. ASSOCIATED(current_family)) EXIT
         ! If this species isn't to be dumped and this isn't a restart dump then
-        IF ((.NOT. current_family%dump) .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+        IF ((.NOT. current_family%dump) .AND. &
+            (.NOT. iterator_settings%restart)) NULLIFY(cur)
       ENDDO
     ENDDO
     n_points = part_count
@@ -129,7 +130,8 @@ CONTAINS
       DO WHILE (.NOT. ASSOCIATED(cur))
         CALL advance_particle_family(current_family, current_list, cur)
         IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+        IF ((.NOT. current_family%dump) .AND. &
+            (.NOT. iterator_settings%restart)) NULLIFY(cur)
       ENDDO
     ENDDO
     n_points = part_count
@@ -293,7 +295,8 @@ CONTAINS
       DO WHILE (.NOT. ASSOCIATED(cur))
         CALL advance_particle_family(current_family, current_list, cur)
         IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+        IF ((.NOT. current_family%dump) .AND. &
+            (.NOT. iterator_settings%restart)) NULLIFY(cur)
       ENDDO
     ENDDO
     n_points = part_count
@@ -331,7 +334,8 @@ CONTAINS
 #ifdef NEWTONIAN
           root = part_m
 #else
-          root = SQRT(part_m**2 + (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
+          root = SQRT(part_m**2 + &
+              (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
 #endif
           IF (root .NE. 0.0_num) root = 1.0_num/root
           DATA(part_count) = cur%part_p(1) * root
@@ -381,7 +385,8 @@ CONTAINS
 #ifdef NEWTONIAN
           root = part_m
 #else
-          root = SQRT(part_m**2 + (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
+          root = SQRT(part_m**2 + &
+              (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
 #endif
           IF (root .NE. 0.0_num) root = 1.0_num/root
           DATA(part_count) = cur%part_p(2) * root
@@ -430,7 +435,8 @@ CONTAINS
 #ifdef NEWTONIAN
           root = part_m
 #else
-          root = SQRT(part_m**2 + (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
+          root = SQRT(part_m**2 + &
+              (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
 #endif
           IF (root .NE. 0.0_num) root = 1.0_num/root
           DATA(part_count) = cur%part_p(3) * root
@@ -482,7 +488,8 @@ CONTAINS
       DO WHILE (.NOT. ASSOCIATED(cur))
         CALL advance_particle_family(current_family, current_list, cur)
         IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+        IF ((.NOT. current_family%dump) .AND. &
+            (.NOT. iterator_settings%restart)) NULLIFY(cur)
       ENDDO
     ENDDO
     n_points = part_count
@@ -520,7 +527,8 @@ CONTAINS
       DO WHILE (.NOT. ASSOCIATED(cur))
         CALL advance_particle_family(current_family, current_list, cur)
         IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+        IF ((.NOT. current_family%dump) .AND. &
+            (.NOT. iterator_settings%restart)) NULLIFY(cur)
       ENDDO
     ENDDO
     n_points = part_count
@@ -558,7 +566,8 @@ CONTAINS
       DO WHILE (.NOT. ASSOCIATED(cur))
         CALL advance_particle_family(current_family, current_list, cur)
         IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+        IF ((.NOT. current_family%dump) .AND. &
+            (.NOT. iterator_settings%restart)) NULLIFY(cur)
       ENDDO
     ENDDO
     n_points = part_count

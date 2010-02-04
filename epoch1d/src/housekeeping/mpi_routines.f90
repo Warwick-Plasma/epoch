@@ -13,7 +13,7 @@ CONTAINS
 
   SUBROUTINE mpi_minimal_init
 
-    INTEGER s
+    INTEGER :: s
 
     CALL MPI_INIT(errcode)
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nproc, errcode)
@@ -45,9 +45,11 @@ CONTAINS
     periods = .TRUE.
     reorder = .TRUE.
 
-    IF (xbc_left .NE. c_bc_periodic .OR. xbc_right .NE. c_bc_periodic) periods(1) = .FALSE.
+    IF (xbc_left .NE. c_bc_periodic .OR. &
+        xbc_right .NE. c_bc_periodic) periods(1) = .FALSE.
 
-    CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, comm, errcode)
+    CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
+        comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
     CALL MPI_CART_COORDS(comm, rank, 1, coordinates, errcode)
     CALL MPI_CART_SHIFT(comm, 0, 1, left, right, errcode)
@@ -61,10 +63,12 @@ CONTAINS
       test_coords(1) = test_coords(1)+ix
       op = .TRUE.
 
-      ! For some stupid reason MPI_CART_RANK returns an error rather than MPI_PROC_NULL
-      ! If the coords are out of range.
+      ! For some stupid reason MPI_CART_RANK returns an error rather than
+      ! MPI_PROC_NULL if the coords are out of range.
       DO idim = 1, ndims
-        IF ((test_coords(idim) .LT. 0 .OR. test_coords(idim) .GE. dims(idim)) .AND. .NOT. periods(idim)) op = .FALSE.
+        IF ((test_coords(idim) .LT. 0 .OR. &
+            test_coords(idim) .GE. dims(idim)) .AND. &
+            .NOT. periods(idim)) op = .FALSE.
       ENDDO
       IF (op) CALL MPI_CART_RANK(comm, test_coords, neighbour(ix), errcode)
     ENDDO
@@ -87,7 +91,8 @@ CONTAINS
 
 !!$    npart = npart_global/nproc
 !!$    IF (npart*nproc /= npart_global) THEN
-!!$       IF (rank .EQ.0) PRINT *, "Unable to divide particles at t = 0. Quitting."
+!!$       IF (rank .EQ. 0) &
+!!$           PRINT *, "Unable to divide particles at t = 0. Quitting."
 !!$       CALL MPI_ABORT(MPI_COMM_WORLD, errcode)
 !!$    ENDIF
 
@@ -119,11 +124,13 @@ CONTAINS
     DO ispecies = 1, n_species
       particle_species(ispecies)%id = ispecies
       npart_this_species = particle_species(ispecies)%count
-      NULLIFY(particle_species(ispecies)%attached_list%next, particle_species(ispecies)%attached_list%prev)
+      NULLIFY(particle_species(ispecies)%attached_list%next)
+      NULLIFY(particle_species(ispecies)%attached_list%prev)
       IF (restart .OR. IOR(ictype, c_ic_autoload) .NE. 0) THEN
         CALL create_empty_partlist(particle_species(ispecies)%attached_list)
       ELSE
-        CALL create_allocated_partlist(particle_species(ispecies)%attached_list, npart_this_species)
+        CALL create_allocated_partlist(&
+            particle_species(ispecies)%attached_list, npart_this_species)
       ENDIF
     ENDDO
 
@@ -137,14 +144,15 @@ CONTAINS
 
     INTEGER :: seconds, minutes, hours, total
 
-    IF(rank == 0) THEN
+    IF (rank == 0) THEN
       end_time = MPI_WTIME()
       total = INT(end_time - start_time)
       seconds = MOD(total, 60)
       minutes = MOD(total / 60, 60)
       hours = total / 3600
       WRITE(20, *)
-      WRITE(20, '("runtime = ", i4, "h ", i2, "m ", i2, "s on ", i4, " process elements.")') hours, minutes, seconds, nproc
+      WRITE(20, '("runtime = ", i4, "h ", i2, "m ", i2, "s on ", i4, &
+          &" process elements.")') hours, minutes, seconds, nproc
     END IF
 
     CALL MPI_BARRIER(comm, errcode)

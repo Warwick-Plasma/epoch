@@ -62,7 +62,7 @@ CONTAINS
       CALL get_values(2, values)
       comp = values(1) .LT. values(2)
       val = 0.0_num
-      IF(comp) val = 1.0_num
+      IF (comp) val = 1.0_num
       CALL push_on_eval(val)
       RETURN
     ENDIF
@@ -71,7 +71,7 @@ CONTAINS
       CALL get_values(2, values)
       comp = values(1) .GT. values(2)
       val = 0.0_num
-      IF(comp) val = 1.0_num
+      IF (comp) val = 1.0_num
       CALL push_on_eval(val)
       RETURN
     ENDIF
@@ -80,7 +80,7 @@ CONTAINS
       CALL get_values(2, values)
       comp = values(1) .EQ. values(2)
       val = 0.0_num
-      IF(comp) val = 1.0_num
+      IF (comp) val = 1.0_num
       CALL push_on_eval(val)
       RETURN
     ENDIF
@@ -116,11 +116,12 @@ CONTAINS
     IF (opcode .GE. c_const_custom_lowbound) THEN
       ! Check for custom constants
       val = custom_constant(opcode, ix, err)
-      IF(IAND(err, c_err_unknown_element) == 0) CALL push_on_eval(val)
+      IF (IAND(err, c_err_unknown_element) == 0) CALL push_on_eval(val)
       RETURN
     ENDIF
 
-    IF (opcode .GE. c_const_deck_lowbound .AND. opcode .LT. c_const_custom_lowbound) THEN
+    IF (opcode .GE. c_const_deck_lowbound .AND. &
+        opcode .LT. c_const_custom_lowbound) THEN
       val = deck_constant_list(opcode-c_const_deck_lowbound)%value
       CALL push_on_eval(val)
       RETURN
@@ -410,8 +411,12 @@ CONTAINS
       point = var_length_values(0)
 
       DO ipoint = 1, count-1
-        IF ( point .GE. var_length_values(ipoint*2-1) .AND. point .LE. var_length_values(ipoint*2+1)) THEN
-          val = (point-var_length_values(ipoint*2-1))/(var_length_values(ipoint*2+1)-var_length_values(ipoint*2-1)) * (var_length_values(ipoint*2+2) - var_length_values(ipoint*2)) + var_length_values(ipoint*2)
+        IF (point .GE. var_length_values(ipoint*2-1) .AND. &
+            point .LE. var_length_values(ipoint*2+1)) THEN
+          val = (point-var_length_values(ipoint*2-1)) / &
+              (var_length_values(ipoint*2+1)-var_length_values(ipoint*2-1)) * &
+              (var_length_values(ipoint*2+2) - var_length_values(ipoint*2)) + &
+              var_length_values(ipoint*2)
           done = .TRUE.
           CALL push_on_eval(val)
           EXIT
@@ -484,7 +489,8 @@ CONTAINS
 
     IF (opcode .EQ. c_func_semigauss) THEN
       CALL get_values(4, values)
-      ! values are : time, maximum amplitude, amplitude at t = 0, characteristic time width
+      ! values are : time, maximum amplitude, amplitude at t = 0,
+      ! characteristic time width
       t0 = values(4) * SQRT(-LOG(values(3)/values(2)))
       IF (values(1) .LE. t0) THEN
         CALL push_on_eval(values(2) * EXP(-((values(1)-t0)/values(4))**2))
@@ -502,7 +508,7 @@ CONTAINS
 
     ! Check for custom functions
     val = custom_function(opcode, ix, err)
-    IF(IAND(err, c_err_unknown_element) == 0) THEN
+    IF (IAND(err, c_err_unknown_element) == 0) THEN
       CALL push_on_eval(val)
     ENDIF
 

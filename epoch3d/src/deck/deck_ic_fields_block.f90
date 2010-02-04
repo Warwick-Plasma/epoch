@@ -22,31 +22,37 @@ CONTAINS
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, "ex")) THEN
-      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
+      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "ey")) THEN
-      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
+      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "ez")) THEN
-      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
+      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "bx")) THEN
-      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
+      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "by")) THEN
-      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
+      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
     ENDIF
 
     IF (str_cmp(element, "bz")) THEN
-      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
+      CALL evaluate_string_in_space(value, ex(-1:nx+2, -1:ny+2, -1:nz+2), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_fields_deck)
     ENDIF
 
   END FUNCTION handle_ic_fields_deck

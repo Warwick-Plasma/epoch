@@ -40,8 +40,11 @@ CONTAINS
       ENDIF
       RETURN
     ENDIF
+
     IF (working_block%ndims .EQ. -1) THEN
-      IF (rank .EQ. 0) PRINT *, "Must set number of dimensions before setting other distribution function properties."
+      IF (rank .EQ. 0) &
+          PRINT *, "Must set number of dimensions before setting other &
+              &distribution function properties."
       extended_error_string = "ndims"
       handle_eio_dist_fn_deck = c_err_required_element_not_set
       RETURN
@@ -56,42 +59,49 @@ CONTAINS
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(1) = .TRUE.
-      working_block%restrictions(1, :) = (/work1, work2/)
+      working_block%restrictions(1,:) = (/work1, work2/)
     ENDIF
+
     IF (str_cmp(element, "restrict_y")) THEN
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(2) = .TRUE.
-      working_block%restrictions(2, :) = (/work1, work2/)
+      working_block%restrictions(2,:) = (/work1, work2/)
     ENDIF
+
     IF (str_cmp(element, "restrict_px")) THEN
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(3) = .TRUE.
-      working_block%restrictions(3, :) = (/work1, work2/)
+      working_block%restrictions(3,:) = (/work1, work2/)
     ENDIF
+
     IF (str_cmp(element, "restrict_py")) THEN
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(4) = .TRUE.
-      working_block%restrictions(4, :) = (/work1, work2/)
+      working_block%restrictions(4,:) = (/work1, work2/)
     ENDIF
+
     IF (str_cmp(element, "restrict_pz")) THEN
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(5) = .TRUE.
-      working_block%restrictions(5, :) = (/work1, work2/)
+      working_block%restrictions(5,:) = (/work1, work2/)
     ENDIF
 
     CALL split_off_int(element, part1, part2, handle_eio_dist_fn_deck)
+
     IF (handle_eio_dist_fn_deck .NE. c_err_none) THEN
       handle_eio_dist_fn_deck = c_err_unknown_element
       RETURN
     ENDIF
+
     IF (str_cmp(part1, "direction")) THEN
       working_block%directions(part2) = as_real(value, handle_eio_dist_fn_deck)
       RETURN
     ENDIF
+
     IF (str_cmp(part1, "range")) THEN
       CALL split_range(TRIM(value), work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
@@ -99,17 +109,22 @@ CONTAINS
       working_block%ranges(part2, 2) = work2
       RETURN
     ENDIF
+
     IF (str_cmp(part1, "resolution")) THEN
-      working_block%resolution(part2) = as_integer(value, handle_eio_dist_fn_deck)
+      working_block%resolution(part2) = &
+          as_integer(value, handle_eio_dist_fn_deck)
       RETURN
     ENDIF
     IF (str_cmp(part1, "include_species_")) THEN
       IF (part2 .LT. 1 .OR. part2 .GT. n_species) THEN
-        IF (rank .EQ. 0) PRINT *, "Species ", part2, " does not exist, ignoring attempt to set output state."
+        IF (rank .EQ. 0) &
+            PRINT *, "Species ", part2, &
+                " does not exist, ignoring attempt to set output state."
         handle_eio_dist_fn_deck = c_err_none
         RETURN
       ENDIF
-      working_block%use_species(part2) = as_logical(value, handle_eio_dist_fn_deck)
+      working_block%use_species(part2) = &
+          as_logical(value, handle_eio_dist_fn_deck)
       RETURN
     ENDIF
 

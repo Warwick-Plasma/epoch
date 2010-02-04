@@ -101,7 +101,8 @@ CONTAINS
 
     ! User submitted constant using "Register"
     DO i = 1, n_new_constant
-      IF (str_cmp(TRIM(name), TRIM(new_constant_name(i)%value))) as_constant = new_constant_code(i)
+      IF (str_cmp(TRIM(name), TRIM(new_constant_name(i)%value))) &
+          as_constant = new_constant_code(i)
     ENDDO
 
     ! Constants set up using the input deck
@@ -157,7 +158,8 @@ CONTAINS
     IF (str_cmp(name, "floor")) as_function = c_func_floor
     IF (str_cmp(name, "ceil"))  as_function = c_func_ceil
     IF (str_cmp(name, "nint"))  as_function = c_func_nint
-    IF (str_cmp(name, "rho") .OR. str_cmp(name, "number_density"))   as_function = c_func_rho
+    IF (str_cmp(name, "rho") .OR. str_cmp(name, "number_density")) &
+        as_function = c_func_rho
     IF (str_cmp(name, "temp_x"))  as_function = c_func_tempx
     IF (str_cmp(name, "temp_y"))  as_function = c_func_tempy
     IF (str_cmp(name, "temp_z"))  as_function = c_func_tempz
@@ -196,7 +198,8 @@ CONTAINS
       as_operator = c_opcode_plus
     ENDIF
     IF (str_cmp(name, "-"))  THEN
-      IF((last_block_type .EQ. c_pt_variable .OR. last_block_type .EQ. c_pt_constant)) THEN
+      IF ((last_block_type .EQ. c_pt_variable .OR. &
+          last_block_type .EQ. c_pt_constant)) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus

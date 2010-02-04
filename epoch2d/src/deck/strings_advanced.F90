@@ -112,7 +112,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
     INTEGER, DIMENSION(2), INTENT(IN) :: xrange, yrange
-    REAL(num), DIMENSION(1:, 1:), INTENT(OUT) :: data_out
+    REAL(num), DIMENSION(1:,1:), INTENT(OUT) :: data_out
     TYPE(primitive_stack) :: output
     INTEGER :: ix, iy
 
@@ -121,7 +121,8 @@ CONTAINS
 
     DO iy = yrange(1), yrange(2)
       DO ix = xrange(1), xrange(2)
-        data_out(ix-xrange(1)+1, iy-yrange(1)+1) = evaluate_at_point(output, ix, iy, err)
+        data_out(ix-xrange(1)+1, iy-yrange(1)+1) = &
+            evaluate_at_point(output, ix, iy, err)
       ENDDO
     ENDDO
 

@@ -8,7 +8,11 @@ MODULE deck_control_block
   SAVE
   INTEGER, PARAMETER :: control_block_elements = 17
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
-  CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: control_block_name = (/"nx", "ny", "npart", "nsteps", "t_end", "x_start", "x_end", "y_start", "y_end", "dt_multiplier", "dlb", "dlb_threshold", "initial_conditions", "icfile", "restart_snapshot", "neutral_background" , "smooth_currents"/)
+  CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
+      control_block_name = (/"nx", "ny", "npart", "nsteps", "t_end", &
+          "x_start", "x_end", "y_start", "y_end", "dt_multiplier", "dlb", &
+          "dlb_threshold", "initial_conditions", "icfile", &
+          "restart_snapshot", "neutral_background", "smooth_currents"/)
 
 CONTAINS
 
@@ -22,7 +26,7 @@ CONTAINS
     elementselected = 0
 
     DO loop = 1, control_block_elements
-      IF(str_cmp(element, TRIM(ADJUSTL(control_block_name(loop))))) THEN
+      IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop))))) THEN
         elementselected = loop
         EXIT
       ENDIF
@@ -102,10 +106,14 @@ CONTAINS
       IF (.NOT. control_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
           PRINT *, "***ERROR***"
-          PRINT *, "Required control block element ", TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"
+          PRINT *, "Required control block element ", &
+              TRIM(ADJUSTL(control_block_name(index))), &
+              " absent. Please create this entry in the input deck"
           WRITE(40, *) ""
           WRITE(40, *) "***ERROR***"
-          WRITE(40, *) "Required control block element ", TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"
+          WRITE(40, *) "Required control block element ", &
+              TRIM(ADJUSTL(control_block_name(index))), &
+              " absent. Please create this entry in the input deck"
         ENDIF
         check_control_block = c_err_missing_elements
       ENDIF

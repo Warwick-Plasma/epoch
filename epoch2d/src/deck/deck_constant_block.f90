@@ -50,7 +50,8 @@ CONTAINS
     ENDIF
 
     ! Add the new value
-    deck_constant_list(n_deck_constants)%value = as_real(value, handle_constant_deck)
+    deck_constant_list(n_deck_constants)%value = &
+        as_real(value, handle_constant_deck)
     deck_constant_list(n_deck_constants)%name = element
 
   END FUNCTION handle_constant_deck

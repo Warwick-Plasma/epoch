@@ -63,7 +63,8 @@ CONTAINS
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF
-!!$    PRINT *, TRIM(str_in), " A ", TRIM(str_in(1:pos-1)), " B ", TRIM(str_in(pos+1:str_len))
+!!$    PRINT *, TRIM(str_in), " A ", TRIM(str_in(1:pos-1)), " B ", &
+!!$        TRIM(str_in(pos+1:str_len))
     real1 = as_real_simple(TRIM(str_in(1:pos-1)), err)
     real2 = as_real_simple(TRIM(str_in(pos+1:str_len)), err)
 

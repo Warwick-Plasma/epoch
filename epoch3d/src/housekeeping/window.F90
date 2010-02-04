@@ -47,7 +47,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:nx+3, -2:ny+3, -2:nz+3), INTENT(INOUT) :: field
 
-    field(-2:nx+2, :, :) = field(-1:nx+3, :, :)
+    field(-2:nx+2,:,:) = field(-1:nx+3,:,:)
     CALL field_bc(field)
 
   END SUBROUTINE shift_field
@@ -107,16 +107,23 @@ CONTAINS
                 temp_local = 0.0_num
                 DO isubz = -1, +1
                   DO isuby = -1, +1
-                    temp_local = temp_local+gy(isuby)*gz(isubz)*particle_species(ispecies)%window_temperature(cell_y+isuby, cell_z+isubz, i)
+                    temp_local = temp_local + &
+                        gy(isuby)*gz(isubz)*particle_species(ispecies)% &
+                        window_temperature(cell_y+isuby, cell_z+isubz, i)
                   ENDDO
                 ENDDO
-                current%part_p(i) = momentum_from_temperature(particle_species(ispecies)%mass, temp_local, idum)
+                current%part_p(i) = momentum_from_temperature(&
+                    particle_species(ispecies)%mass, temp_local, idum)
               ENDDO
 
               weight_local = 0.0_num
               DO isubz = -1, +1
                 DO isuby = -1, +1
-                  weight_local = weight_local+gy(isuby)*gz(isubz)*particle_species(ispecies)%window_density(cell_y+isuby, cell_z+isubz) /(REAL(particle_species(ispecies)%window_npart_per_cell, num)/(dx*dy*dz))
+                  weight_local = weight_local + &
+                        gy(isuby)*gz(isubz)*particle_species(ispecies)% &
+                        window_density(cell_y+isuby, cell_z+isubz) / &
+                        (REAL(particle_species(ispecies)%window_npart_per_cell,&
+                        num)/(dx*dy*dz))
                 ENDDO
               ENDDO
               current%weight = weight_local
@@ -125,7 +132,8 @@ CONTAINS
               current%processor = rank
               current%processor_at_t0 = rank
 #endif
-              CALL add_particle_to_partlist(particle_species(ispecies)%attached_list, current)
+              CALL add_particle_to_partlist(&
+                  particle_species(ispecies)%attached_list, current)
             ENDDO
           ENDDO
         ENDDO
@@ -147,7 +155,8 @@ CONTAINS
         DO WHILE(ASSOCIATED(current))
           next=>current%next
           IF (current%part_pos(1) .LT. x_start-0.5_num*dx) THEN
-            CALL remove_particle_from_partlist(particle_species(ispecies)%attached_list, current)
+            CALL remove_particle_from_partlist(&
+                particle_species(ispecies)%attached_list, current)
             DEALLOCATE(current)
           ENDIF
           current=>next

@@ -15,7 +15,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -102,7 +103,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -287,7 +289,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -377,7 +380,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r
 
     ! The fraction of a cell between the particle position and the cell boundary
@@ -490,10 +494,12 @@ CONTAINS
 
         DO ix = -sf_order, sf_order
           DATA = SQRT(part_px**2+part_py**2+part_pz**2)
-!!$                IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
-          sigma(cell_x+ix) = sigma(cell_x+ix) + gx(ix) * (DATA-mean(cell_x+ix))**2
+!!$       IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
+!!$           data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
+          sigma(cell_x+ix) = sigma(cell_x+ix) + &
+              gx(ix) * (DATA-mean(cell_x+ix))**2
           part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix)
-!!$                ENDIF
+!!$       ENDIF
         ENDDO
         current=>current%next
       ENDDO
@@ -508,7 +514,7 @@ CONTAINS
     data_array = sigma/(kb * MAX(mass, m0))
 
     DEALLOCATE(part_count, mean, mass, sigma)
-!!$    DEALLOCATE(p_min, p_max)
+!!$ DEALLOCATE(p_min, p_max)
 
     CALL field_bc(data_array)
     CALL field_zero_gradient(data_array, .TRUE.)
@@ -525,7 +531,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x
 
-    ! Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually
+    ! used)
     REAL(num) :: cell_x_r
 
     ! The fraction of a cell between the particle position and the cell boundary

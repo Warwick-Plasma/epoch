@@ -6,18 +6,32 @@ MODULE iocommon
 
   SAVE
 
-  INTEGER, PARAMETER :: c_type_scribble = -1, c_type_additional = 0, c_type_mesh = 1, c_type_mesh_variable = 2, c_type_snapshot = 3
-  INTEGER, PARAMETER :: c_type_stitched_vector = 4, c_type_stitched_magnitude = 5, c_type_constant = 6, c_type_arb_db = 7
+  INTEGER, PARAMETER :: c_type_scribble = -1
+  INTEGER, PARAMETER :: c_type_additional = 0
+  INTEGER, PARAMETER :: c_type_mesh = 1
+  INTEGER, PARAMETER :: c_type_mesh_variable = 2
+  INTEGER, PARAMETER :: c_type_snapshot = 3
+  INTEGER, PARAMETER :: c_type_stitched_vector = 4
+  INTEGER, PARAMETER :: c_type_stitched_magnitude = 5
+  INTEGER, PARAMETER :: c_type_constant = 6
+  INTEGER, PARAMETER :: c_type_arb_db = 7
   INTEGER, PARAMETER :: c_type_integerarray = 8
 
-  INTEGER, PARAMETER :: c_mesh_cartesian = 0, c_mesh_particle = 1
-  INTEGER, PARAMETER :: c_particle_cartesian = 0, c_particle_polar = 1, c_particle_cylindrical = 2
-  INTEGER, PARAMETER :: c_var_cartesian = 0, c_var_particle = 1
+  INTEGER, PARAMETER :: c_mesh_cartesian = 0
+  INTEGER, PARAMETER :: c_mesh_particle = 1
+  INTEGER, PARAMETER :: c_particle_cartesian = 0
+  INTEGER, PARAMETER :: c_particle_polar = 1
+  INTEGER, PARAMETER :: c_particle_cylindrical = 2
+  INTEGER, PARAMETER :: c_var_cartesian = 0
+  INTEGER, PARAMETER :: c_var_particle = 1
 
-  ! c_dimension_irrelevant is used where the dimensionality isn't needed, as with particle variables
-  ! Still keep dimensionality as a common quantity because other than this, they really are very
-  ! Alike
-  INTEGER, PARAMETER :: c_dimension_irrelevant = 0, c_dimension_1d = 1, c_dimension_2d = 2, c_dimension_3d = 3
+  ! c_dimension_irrelevant is used where the dimensionality isn't needed, as
+  ! with particle variables still keep dimensionality as a common quantity
+  ! because other than this, they really are very alike
+  INTEGER, PARAMETER :: c_dimension_irrelevant = 0
+  INTEGER, PARAMETER :: c_dimension_1d = 1
+  INTEGER, PARAMETER :: c_dimension_2d = 2
+  INTEGER, PARAMETER :: c_dimension_3d = 3
 
   INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement
   INTEGER :: cfd_filehandle = -1, cfd_rank, cfd_comm, nblocks

@@ -63,7 +63,8 @@ CONTAINS
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF
-!!$    PRINT *, TRIM(str_in), " A ", TRIM(str_in(1:pos-1)), " B ", TRIM(str_in(pos+1:str_len))
+!!$    PRINT *, TRIM(str_in), " A ", TRIM(str_in(1:pos-1)), " B ", &
+!!$        TRIM(str_in(pos+1:str_len))
     real1 = as_real_simple(TRIM(str_in(1:pos-1)), err)
     real2 = as_real_simple(TRIM(str_in(pos+1:str_len)), err)
 
@@ -108,12 +109,13 @@ CONTAINS
 
 
 
-  SUBROUTINE evaluate_string_in_space(str_in, data_out, xrange, yrange, zrange, err)
+  SUBROUTINE evaluate_string_in_space(str_in, data_out, xrange, yrange, &
+      zrange, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
     INTEGER, DIMENSION(2), INTENT(IN) :: xrange, yrange, zrange
-    REAL(num), DIMENSION(1:, 1:, 1:), INTENT(OUT) :: data_out
+    REAL(num), DIMENSION(1:,1:,1:), INTENT(OUT) :: data_out
     TYPE(primitive_stack) :: output
     INTEGER :: ix, iy, iz
 
@@ -123,7 +125,8 @@ CONTAINS
     DO iz = zrange(1), zrange(2)
       DO iy = yrange(1), yrange(2)
         DO ix = xrange(1), xrange(2)
-          data_out(ix-xrange(1)+1, iy-yrange(1)+1, iz-yrange(1)+1) = evaluate_at_point(output, ix, iy, iz, err)
+          data_out(ix-xrange(1)+1, iy-yrange(1)+1, iz-yrange(1)+1) = &
+              evaluate_at_point(output, ix, iy, iz, err)
         ENDDO
       ENDDO
     ENDDO

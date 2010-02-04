@@ -25,9 +25,12 @@ CONTAINS
       IF (block%ptype .EQ. c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
       ENDIF
-      IF (block%ptype .EQ. c_pt_operator) CALL do_operator(block%data, ix, iy, err)
-      IF (block%ptype .EQ. c_pt_constant) CALL do_constant(block%data, ix, iy, err)
-      IF (block%ptype .EQ. c_pt_function) CALL do_functions(block%data, ix, iy, err)
+      IF (block%ptype .EQ. c_pt_operator) &
+          CALL do_operator(block%data, ix, iy, err)
+      IF (block%ptype .EQ. c_pt_constant) &
+          CALL do_constant(block%data, ix, iy, err)
+      IF (block%ptype .EQ. c_pt_function) &
+          CALL do_functions(block%data, ix, iy, err)
       IF (err .NE. c_err_none) THEN
         PRINT *, "BAD block", err, block%ptype, i, block%data
         EXIT

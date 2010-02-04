@@ -10,7 +10,9 @@ MODULE deck_boundaries_block
 
   INTEGER, PARAMETER :: boundary_block_elements = 6
   LOGICAL, DIMENSION(boundary_block_elements)  :: boundary_block_done
-  CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: boundary_block_name = (/"xbc_left", "xbc_right", "ybc_up", "ybc_down", "zbc_back", "zbc_front"/)
+  CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
+      boundary_block_name = (/"xbc_left", "xbc_right", "ybc_up", "ybc_down", &
+          "zbc_back", "zbc_front"/)
 
 CONTAINS
 
@@ -25,7 +27,7 @@ CONTAINS
     elementselected = 0
 
     DO loop = 1, boundary_block_elements
-      IF(str_cmp(element, TRIM(ADJUSTL(boundary_block_name(loop))))) THEN
+      IF (str_cmp(element, TRIM(ADJUSTL(boundary_block_name(loop))))) THEN
         elementselected = loop
         EXIT
       ENDIF
@@ -69,10 +71,14 @@ CONTAINS
       IF (.NOT. boundary_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
           PRINT *, "***ERROR***"
-          PRINT *, "Required boundary block element ", TRIM(ADJUSTL(boundary_block_name(index))), " absent. Please create this entry in the input deck"
+          PRINT *, "Required boundary block element ", &
+              TRIM(ADJUSTL(boundary_block_name(index))), &
+              " absent. Please create this entry in the input deck"
           WRITE(40, *) ""
           WRITE(40, *) "***ERROR***"
-          WRITE(40, *) "Required boundary block element ", TRIM(ADJUSTL(boundary_block_name(index))), " absent. Please create this entry in the input deck"
+          WRITE(40, *) "Required boundary block element ", &
+              TRIM(ADJUSTL(boundary_block_name(index))), &
+              " absent. Please create this entry in the input deck"
         ENDIF
         check_boundary_block = c_err_missing_elements
       ENDIF
