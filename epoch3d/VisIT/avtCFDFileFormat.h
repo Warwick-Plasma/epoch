@@ -1,10 +1,11 @@
 /*****************************************************************************
 *
-* Copyright (c) 2000 - 2007, The Regents of the University of California
+* Copyright (c) 2000 - 2009, Lawrence Livermore National Security, LLC
 * Produced at the Lawrence Livermore National Laboratory
+* LLNL-CODE-400124
 * All rights reserved.
 *
-* This file is part of VisIt. For details, see http://www.llnl.gov/visit/. The
+* This file is  part of VisIt. For  details, see https://visit.llnl.gov/.  The
 * full copyright notice is contained in the file COPYRIGHT located at the root
 * of the VisIt distribution or at http://www.llnl.gov/visit/copyright.html.
 *
@@ -15,17 +16,17 @@
 *    this list of conditions and the disclaimer below.
 *  - Redistributions in binary form must reproduce the above copyright notice,
 *    this  list of  conditions  and  the  disclaimer (as noted below)  in  the
-*    documentation and/or materials provided with the distribution.
-*  - Neither the name of the UC/LLNL nor  the names of its contributors may be
-*    used to  endorse or  promote products derived from  this software without
+*    documentation and/or other materials provided with the distribution.
+*  - Neither the name of  the LLNS/LLNL nor the names of  its contributors may
+*    be used to endorse or promote products derived from this software without
 *    specific prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT  HOLDERS AND CONTRIBUTORS "AS IS"
 * AND ANY EXPRESS OR  IMPLIED WARRANTIES, INCLUDING,  BUT NOT  LIMITED TO, THE
 * IMPLIED WARRANTIES OF MERCHANTABILITY AND  FITNESS FOR A PARTICULAR  PURPOSE
-* ARE  DISCLAIMED.  IN  NO  EVENT  SHALL  THE  REGENTS  OF  THE  UNIVERSITY OF
-* CALIFORNIA, THE U.S.  DEPARTMENT  OF  ENERGY OR CONTRIBUTORS BE  LIABLE  FOR
-* ANY  DIRECT,  INDIRECT,  INCIDENTAL,  SPECIAL,  EXEMPLARY,  OR CONSEQUENTIAL
+* ARE  DISCLAIMED. IN  NO EVENT  SHALL LAWRENCE  LIVERMORE NATIONAL  SECURITY,
+* LLC, THE  U.S.  DEPARTMENT OF  ENERGY  OR  CONTRIBUTORS BE  LIABLE  FOR  ANY
+* DIRECT,  INDIRECT,   INCIDENTAL,   SPECIAL,   EXEMPLARY,  OR   CONSEQUENTIAL
 * DAMAGES (INCLUDING, BUT NOT  LIMITED TO, PROCUREMENT OF  SUBSTITUTE GOODS OR
 * SERVICES; LOSS OF  USE, DATA, OR PROFITS; OR  BUSINESS INTERRUPTION) HOWEVER
 * CAUSED  AND  ON  ANY  THEORY  OF  LIABILITY,  WHETHER  IN  CONTRACT,  STRICT
@@ -70,7 +71,7 @@ class avtCFDFileFormat : public avtSTMDFileFormat
     // information to information about block connectivity.
     //
     // virtual void      *GetAuxiliaryData(const char *var, int domain,
-    //                                     const char *type, void *args, 
+    //                                     const char *type, void *args,
     //                                     DestructorFunction &);
     //
 
@@ -78,14 +79,13 @@ class avtCFDFileFormat : public avtSTMDFileFormat
     // If you know the cycle number, overload this function.
     // Otherwise, VisIt will make up a reasonable one for you.
     //
-    virtual int         GetCycle(void) {return Handler.GetCycle();}
-    virtual double	GetTime(void)  {return Handler.GetTime();}
-    virtual bool        ReturnsValidCycle(void) {return true;}
-    virtual bool        ReturnsValidTime(void) {return true;}
-    //
+    virtual int         GetCycle(void) { return Handler.GetCycle(); }
+    virtual double      GetTime(void)  { return Handler.GetTime(); }
+    virtual bool        ReturnsValidCycle(void) { return true; }
+    virtual bool        ReturnsValidTime(void) { return true; }
 
     virtual const char    *GetType(void)   { return "CFD"; };
-    virtual void           FreeUpResources(void); 
+    virtual void           FreeUpResources(void);
 
     virtual vtkDataSet    *GetMesh(int, const char *);
     virtual vtkDataArray  *GetVar(int, const char *);
@@ -95,8 +95,7 @@ class avtCFDFileFormat : public avtSTMDFileFormat
     // DATA MEMBERS
 
     virtual void           PopulateDatabaseMetaData(avtDatabaseMetaData *);
-    BlockHandler Handler;
+    BlockHandler           Handler;
 };
-
 
 #endif

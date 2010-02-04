@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
- void GetCompositeName(char *Name,char *Class,char *&Composite);
+void GetCompositeName(char *Name, char *Class, char *&Composite);
 
 #endif

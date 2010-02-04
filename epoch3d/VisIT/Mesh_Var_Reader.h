@@ -5,7 +5,7 @@
 
 class Mesh_Var_Reader : public BlockReader
 {
- private:
+private:
 
     int VarType;
     int Dimensions;
@@ -20,25 +20,25 @@ class Mesh_Var_Reader : public BlockReader
     char *MeshName;
     char *MeshClass;
     Block *MeshBlock;
-    
- public:
- virtual vtkDataArray * GetVectorVar(int domain){return NULL;}
- virtual vtkDataArray * GetVar(int domain);
- virtual vtkDataSet * GetMesh(int domain);
- virtual void PopulateDatabaseMetaData(avtDatabaseMetaData *md);
- virtual bool Cache(){return true;}
 
- virtual InternalMetaData* GetInternalMetaData();
- virtual void DestroyInternalMetaData(InternalMetaData *md) {delete md;}
+public:
+    virtual vtkDataArray *GetVectorVar(int domain) { return NULL; }
+    virtual vtkDataArray *GetVar(int domain);
+    virtual vtkDataSet *GetMesh(int domain);
+    virtual void PopulateDatabaseMetaData(avtDatabaseMetaData *md);
+    virtual bool Cache() { return true; }
 
-    Mesh_Var_Reader(BlockHandler *Handler,ifstream *file,Block* Owner,int MaxStringLen,bool CacheOnly);
+    virtual InternalMetaData *GetInternalMetaData();
+    virtual void DestroyInternalMetaData(InternalMetaData *md) { delete md; }
+
+    Mesh_Var_Reader(BlockHandler *Handler, ifstream *file, Block *Owner,
+        int MaxStringLen, bool CacheOnly);
     ~Mesh_Var_Reader();
 };
 
 class Mesh_Variable_MetaData  : public InternalMetaData
 {
- public:
-
+public:
     int *Dims;
     void *Stagger;
     double *Extents;
