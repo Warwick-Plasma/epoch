@@ -6,9 +6,10 @@ MODULE solve_gauss
 
   IMPLICIT NONE
 
-  CONTAINS
+CONTAINS
 
-    SUBROUTINE do_gauss
-    END SUBROUTINE do_gauss
+  SUBROUTINE do_gauss
+
+  END SUBROUTINE do_gauss
 
 END MODULE solve_gauss

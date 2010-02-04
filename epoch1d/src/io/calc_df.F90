@@ -7,177 +7,176 @@ MODULE calc_df
 
 CONTAINS
 
-  SUBROUTINE calc_mass_density(data_array,current_species)
+  SUBROUTINE calc_mass_density(data_array, current_species)
 
-    !Contains the integer cell position of the particle in x,y,z
+    ! Contains the integer cell position of the particle in x, y, z
     INTEGER :: cell_x
 
-    !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_px,part_py,part_pz,part_q,part_m
+    ! Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
 
-    !Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually used)
     REAL(num) :: cell_x_r
 
-    !The fraction of a cell between the particle position and the cell boundary
+    ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x
 
-    !The weight of a particle
+    ! The weight of a particle
     REAL(num) :: l_weight
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    !Defined at the particle position
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
 
-    REAL(num),DIMENSION(-2:2) :: gx
-    !The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num), DIMENSION(-2:2) :: gx
+    ! The data to be weighted onto the grid
+    REAL(num) :: DATA
 
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-    INTEGER,INTENT(IN) :: current_species
+    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
 
-    TYPE(particle),POINTER :: current
-    INTEGER :: ispecies, spec_start,spec_end
+    TYPE(particle), POINTER :: current
+    INTEGER :: ispecies, spec_start, spec_end
 
-    data_array=0.0_num
+    data_array = 0.0_num
 
-    l_weight=weight
+    l_weight = weight
 
-    spec_start=current_species
-    spec_end=current_species
+    spec_start = current_species
+    spec_end = current_species
 
     IF (current_species .LE. 0) THEN
-       spec_start=1
-       spec_end=n_species
+      spec_start = 1
+      spec_end = n_species
     ENDIF
 
-    DO ispecies=spec_start,spec_end
-       current=>particle_species(ispecies)%attached_list%head
-       DO WHILE (ASSOCIATED(current))
+    DO ispecies = spec_start, spec_end
+      current=>particle_species(ispecies)%attached_list%head
+      DO WHILE (ASSOCIATED(current))
 
-          !Copy the particle properties out for speed
-          part_x  = current%part_pos - x_start_local
-          part_px = current%part_p(1)
-          part_py = current%part_p(2)
-          part_pz = current%part_p(3)
+        ! Copy the particle properties out for speed
+        part_x  = current%part_pos - x_start_local
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-          part_q  = current%charge
-          part_m  = current%mass
+        part_q  = current%charge
+        part_m  = current%mass
 #else
-          part_q  = particle_species(ispecies)%charge
-          part_m  = particle_species(ispecies)%mass
+        part_q  = particle_species(ispecies)%charge
+        part_m  = particle_species(ispecies)%mass
 #endif
 
 #ifdef PER_PARTICLE_WEIGHT
-          l_weight=current%weight
+        l_weight = current%weight
 #endif
 
-          cell_x_r = part_x / dx
-          cell_x  = NINT(cell_x_r)
-          cell_frac_x = REAL(cell_x,num) - cell_x_r
-          cell_x=cell_x+1
+        cell_x_r = part_x / dx
+        cell_x  = NINT(cell_x_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x+1
 
-        CALL particle_to_grid(cell_frac_x,gx)
-             DO ix=-sf_order,sf_order
-                data=part_m * l_weight / (dx)
-                data_array(cell_x+ix) = data_array(cell_x+ix) + &
-                     gx(ix) * data
-             ENDDO
+        CALL particle_to_grid(cell_frac_x, gx)
+        DO ix = -sf_order, sf_order
+          DATA = part_m * l_weight / (dx)
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * DATA
+        ENDDO
 
-          current=>current%next
-       ENDDO
+        current=>current%next
+      ENDDO
     ENDDO
 
-
     CALL processor_summation_bcs(data_array)
-    CALL field_zero_gradient(data_array,.TRUE.)
+    CALL field_zero_gradient(data_array, .TRUE.)
 
   END SUBROUTINE calc_mass_density
 
-  SUBROUTINE calc_charge_density(data_array,current_species)
 
-    !Contains the integer cell position of the particle in x,y,z
+
+  SUBROUTINE calc_charge_density(data_array, current_species)
+
+    ! Contains the integer cell position of the particle in x, y, z
     INTEGER :: cell_x
 
-    !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_px,part_py,part_pz,part_q,part_m
+    ! Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
 
-    !Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually used)
     REAL(num) :: cell_x_r
 
-    !The fraction of a cell between the particle position and the cell boundary
+    ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x
 
-    !The weight of a particle
+    ! The weight of a particle
     REAL(num) :: l_weight
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    !Defined at the particle position
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
 
-    REAL(num),DIMENSION(-2:2) :: gx
-    !The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num), DIMENSION(-2:2) :: gx
+    ! The data to be weighted onto the grid
+    REAL(num) :: DATA
 
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-    INTEGER,INTENT(IN) :: current_species
+    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
 
-    TYPE(particle),POINTER :: current
-    INTEGER :: ispecies, spec_start,spec_end
+    TYPE(particle), POINTER :: current
+    INTEGER :: ispecies, spec_start, spec_end
 
-    data_array=0.0_num
+    data_array = 0.0_num
 
-    l_weight=weight
+    l_weight = weight
 
-    spec_start=current_species
-    spec_end=current_species
+    spec_start = current_species
+    spec_end = current_species
 
     IF (current_species .LE. 0) THEN
-       spec_start=1
-       spec_end=n_species
+      spec_start = 1
+      spec_end = n_species
     ENDIF
 
-    DO ispecies=spec_start,spec_end
-       current=>particle_species(ispecies)%attached_list%head
-       DO WHILE (ASSOCIATED(current))
+    DO ispecies = spec_start, spec_end
+      current=>particle_species(ispecies)%attached_list%head
+      DO WHILE (ASSOCIATED(current))
 
-          !Copy the particle properties out for speed
-          part_x  = current%part_pos - x_start_local
-          part_px = current%part_p(1)
-          part_py = current%part_p(2)
-          part_pz = current%part_p(3)
+        ! Copy the particle properties out for speed
+        part_x  = current%part_pos - x_start_local
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-          part_q  = current%charge
-          part_m  = current%mass
+        part_q  = current%charge
+        part_m  = current%mass
 #else
-          part_q  = particle_species(ispecies)%charge
-          part_m  = particle_species(ispecies)%mass
+        part_q  = particle_species(ispecies)%charge
+        part_m  = particle_species(ispecies)%mass
 #endif
 
 #ifdef PER_PARTICLE_WEIGHT
-          l_weight=current%weight
+        l_weight = current%weight
 #endif
 
-          cell_x_r = part_x / dx
-          cell_x  = NINT(cell_x_r)
-          cell_frac_x = REAL(cell_x,num) - cell_x_r
-          cell_x=cell_x+1
+        cell_x_r = part_x / dx
+        cell_x  = NINT(cell_x_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x+1
 
-        CALL particle_to_grid(cell_frac_x,gx)
+        CALL particle_to_grid(cell_frac_x, gx)
 
-             DO ix=-sf_order,sf_order
-                data=part_q * l_weight / (dx)
-                data_array(cell_x+ix) = data_array(cell_x+ix) + &
-                     gx(ix) * data
-             ENDDO
+        DO ix = -sf_order, sf_order
+          DATA = part_q * l_weight / (dx)
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * DATA
+        ENDDO
 
-          current=>current%next
-       ENDDO
+        current=>current%next
+      ENDDO
     ENDDO
 
     CALL processor_summation_bcs(data_array)
-    CALL field_zero_gradient(data_array,.TRUE.)
+    CALL field_zero_gradient(data_array, .TRUE.)
 
   END SUBROUTINE calc_charge_density
 
@@ -278,342 +277,323 @@ CONTAINS
 
   END SUBROUTINE calc_ekbar
 
-  SUBROUTINE calc_number_density(data_array,current_species)
 
-    !Contains the integer cell position of the particle in x,y,z
+
+  SUBROUTINE calc_number_density(data_array, current_species)
+
+    ! Contains the integer cell position of the particle in x, y, z
     INTEGER :: cell_x
 
-    !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_px,part_py,part_pz,part_q,part_m
+    ! Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
 
-    !Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually used)
     REAL(num) :: cell_x_r
 
-    !The fraction of a cell between the particle position and the cell boundary
+    ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x
 
-    !The weight of a particle
+    ! The weight of a particle
     REAL(num) :: l_weight
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    !Defined at the particle position
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
 
-    REAL(num),DIMENSION(-2:2) :: gx
-    !The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num), DIMENSION(-2:2) :: gx
+    ! The data to be weighted onto the grid
+    REAL(num) :: DATA
 
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-    INTEGER,INTENT(IN) :: current_species
+    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
 
-    TYPE(particle),POINTER :: current
-    INTEGER :: ispecies, spec_start,spec_end
+    TYPE(particle), POINTER :: current
+    INTEGER :: ispecies, spec_start, spec_end
 
-    data_array=0.0_num
+    data_array = 0.0_num
 
-    l_weight=weight
+    l_weight = weight
 
-    spec_start=current_species
-    spec_end=current_species
+    spec_start = current_species
+    spec_end = current_species
 
     IF (current_species .LE. 0) THEN
-       spec_start=1
-       spec_end=n_species
+      spec_start = 1
+      spec_end = n_species
     ENDIF
 
-    DO ispecies=spec_start,spec_end
-       current=>particle_species(ispecies)%attached_list%head
-       DO WHILE (ASSOCIATED(current))
+    DO ispecies = spec_start, spec_end
+      current=>particle_species(ispecies)%attached_list%head
+      DO WHILE (ASSOCIATED(current))
 
-          !Copy the particle properties out for speed
-          part_x  = current%part_pos - x_start_local
-          part_px = current%part_p(1)
-          part_py = current%part_p(2)
-          part_pz = current%part_p(3)
+        ! Copy the particle properties out for speed
+        part_x  = current%part_pos - x_start_local
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-          part_q  = current%charge
-          part_m  = current%mass
+        part_q  = current%charge
+        part_m  = current%mass
 #else
-          part_q  = particle_species(ispecies)%charge
-          part_m  = particle_species(ispecies)%mass
+        part_q  = particle_species(ispecies)%charge
+        part_m  = particle_species(ispecies)%mass
 #endif
 
 #ifdef PER_PARTICLE_WEIGHT
-          l_weight=current%weight
+        l_weight = current%weight
 #endif
 
-          cell_x_r = part_x / dx
-          cell_x  = NINT(cell_x_r)
-          cell_frac_x = REAL(cell_x,num) - cell_x_r
-          cell_x=cell_x+1
+        cell_x_r = part_x / dx
+        cell_x  = NINT(cell_x_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x+1
 
-          gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-          gx( 0) = 0.75_num - ABS(cell_frac_x)**2
-          gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+        gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+        gx( 0) = 0.75_num - ABS(cell_frac_x)**2
+        gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
 
-             DO ix=-sf_order,sf_order
-                data=1.0_num * l_weight / (dx)
-                data_array(cell_x+ix) = data_array(cell_x+ix) + &
-                     gx(ix) * data
-             ENDDO
+        DO ix = -sf_order, sf_order
+          DATA = 1.0_num * l_weight / (dx)
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * DATA
+        ENDDO
 
-          current=>current%next
-       ENDDO
+        current=>current%next
+      ENDDO
     ENDDO
 
     CALL processor_summation_bcs(data_array)
-    CALL field_zero_gradient(data_array,.TRUE.)
+    CALL field_zero_gradient(data_array, .TRUE.)
 
   END SUBROUTINE calc_number_density
 
-  SUBROUTINE calc_temperature(data_array,current_species)
 
-    !Contains the integer cell position of the particle in x,y,z
+
+  SUBROUTINE calc_temperature(data_array, current_species)
+
+    ! Contains the integer cell position of the particle in x, y, z
     INTEGER :: cell_x
 
-    !Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x,part_px,part_py,part_pz,part_q,part_m
+    ! Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
 
-    !Contains the floating point version of the cell number (never actually used)
+    ! Contains the floating point version of the cell number (never actually used)
     REAL(num) :: cell_x_r
 
-    !The fraction of a cell between the particle position and the cell boundary
+    ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x
 
-    !The weight of a particle
+    ! The weight of a particle
     REAL(num) :: l_weight
 
-    !Weighting factors as Eqn 4.77 page 25 of manual
-    !Eqn 4.77 would be written as
-    !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    !Defined at the particle position
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
 
-    REAL(num),DIMENSION(-2:2) :: gx
-    !The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num), DIMENSION(-2:2) :: gx
+    ! The data to be weighted onto the grid
+    REAL(num) :: DATA
 
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-    REAL(num),DIMENSION(:),ALLOCATABLE ::  part_count, mass, sigma, mean
-    INTEGER,INTENT(IN) :: current_species
+    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
+    REAL(num), DIMENSION(:), ALLOCATABLE ::  part_count, mass, sigma, mean
+    INTEGER, INTENT(IN) :: current_species
 
-    TYPE(particle),POINTER :: current
-    INTEGER :: ispecies, spec_start,spec_end
+    TYPE(particle), POINTER :: current
+    INTEGER :: ispecies, spec_start, spec_end
 
-    data_array=0.0_num
+    data_array = 0.0_num
 
-    l_weight=weight
+    l_weight = weight
 
-    spec_start=current_species
-    spec_end=current_species
+    spec_start = current_species
+    spec_end = current_species
 
     IF (current_species .LE. 0) THEN
-       spec_start=1
-       spec_end=n_species
+      spec_start = 1
+      spec_end = n_species
     ENDIF
 
-    ALLOCATE(mean(-2:nx+3),part_count(-2:nx+3))
+    ALLOCATE(mean(-2:nx+3), part_count(-2:nx+3))
     ALLOCATE(mass(-2:nx+3), sigma(-2:nx+3))
-    data_array=0.0_num
-    mean=0.0_num
-    part_count=0.0_num
-    mass=0.0_num
-    sigma=0.0_num
+    data_array = 0.0_num
+    mean = 0.0_num
+    part_count = 0.0_num
+    mass = 0.0_num
+    sigma = 0.0_num
 
-
-    DO ispecies=spec_start,spec_end
-       current=>particle_species(ispecies)%attached_list%head
-       DO WHILE(ASSOCIATED(current))
-          part_x  = current%part_pos - x_start_local
-          part_px = current%part_p(1)
-          part_py = current%part_p(2)
-          part_pz = current%part_p(3)
+    DO ispecies = spec_start, spec_end
+      current=>particle_species(ispecies)%attached_list%head
+      DO WHILE(ASSOCIATED(current))
+        part_x  = current%part_pos - x_start_local
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-          part_q  = current%charge
-          part_m  = current%mass
+        part_q  = current%charge
+        part_m  = current%mass
 #else
-          part_q  = particle_species(ispecies)%charge
-          part_m  = particle_species(ispecies)%mass
+        part_q  = particle_species(ispecies)%charge
+        part_m  = particle_species(ispecies)%mass
 #endif
 #ifdef PER_PARTICLE_WEIGHT
-          l_weight=current%weight
+        l_weight = current%weight
 #endif
 
-          cell_x_r = part_x / dx !
-          cell_x  = NINT(cell_x_r)
-          cell_frac_x = REAL(cell_x,num) - cell_x_r
-          cell_x=cell_x+1
+        cell_x_r = part_x / dx !
+        cell_x  = NINT(cell_x_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x+1
 
-        CALL particle_to_grid(cell_frac_x,gx)
+        CALL particle_to_grid(cell_frac_x, gx)
 
-             DO ix=-sf_order,sf_order
-                data=SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
-                mean(cell_x+ix) = mean(cell_x+ix) + &
-                     gx(ix) * data
-                data=l_weight
-                part_count(cell_x+ix) = part_count(cell_x+ix) + &
-                     gx(ix) * data
-                data=part_m * l_weight
-                mass(cell_x+ix) = mass(cell_x+ix) + &
-                     gx(ix) * data
-             ENDDO
-          current=>current%next
-       ENDDO
+        DO ix = -sf_order, sf_order
+          DATA = SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
+          mean(cell_x+ix) = mean(cell_x+ix) + gx(ix) * DATA
+          DATA = l_weight
+          part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix) * DATA
+          DATA = part_m * l_weight
+          mass(cell_x+ix) = mass(cell_x+ix) + gx(ix) * DATA
+        ENDDO
+        current=>current%next
+      ENDDO
     ENDDO
 
     CALL processor_summation_bcs(mean)
-    CALL field_zero_gradient(mean,.TRUE.)
+    CALL field_zero_gradient(mean, .TRUE.)
     CALL processor_summation_bcs(part_count)
-    CALL field_zero_gradient(part_count,.TRUE.)
+    CALL field_zero_gradient(part_count, .TRUE.)
     CALL processor_summation_bcs(mass)
-    CALL field_zero_gradient(mass,.TRUE.)
+    CALL field_zero_gradient(mass, .TRUE.)
 
-    mean=mean/part_count
-    mass=mass/part_count
+    mean = mean/part_count
+    mass = mass/part_count
 
-    WHERE (part_count .LT. 1.0_num) mean=0.0_num
-    WHERE (part_count .LT. 1.0_num) mass=0.0_num
+    WHERE (part_count .LT. 1.0_num) mean = 0.0_num
+    WHERE (part_count .LT. 1.0_num) mass = 0.0_num
 
-    part_count=0.0_num
-    DO ispecies=spec_start,spec_end
-       current=>particle_species(ispecies)%attached_list%head
-       DO WHILE(ASSOCIATED(current))
-          part_x  = current%part_pos - x_start_local
-          part_px = current%part_p(1)
-          part_py = current%part_p(2)
-          part_pz = current%part_p(3)
+    part_count = 0.0_num
+    DO ispecies = spec_start, spec_end
+      current=>particle_species(ispecies)%attached_list%head
+      DO WHILE(ASSOCIATED(current))
+        part_x  = current%part_pos - x_start_local
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
 
-          cell_x_r = part_x / dx !
-          cell_x  = NINT(cell_x_r)
-          cell_frac_x = REAL(cell_x,num) - cell_x_r
-          cell_x=cell_x+1
+        cell_x_r = part_x / dx !
+        cell_x  = NINT(cell_x_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x+1
 
-        CALL particle_to_grid(cell_frac_x,gx)
+        CALL particle_to_grid(cell_frac_x, gx)
 
-             DO ix=-sf_order,sf_order
-                data=SQRT(part_px**2+part_py**2+part_pz**2)
-!!$                IF (data .GE. p_min(cell_x+ix,cell_y+iy) .AND. data .LE. p_max(cell_x+ix,cell_y+iy)) THEN
-                sigma(cell_x+ix) = sigma(cell_x+ix) + &
-                     gx(ix) * (data-mean(cell_x+ix))**2
-                part_count(cell_x+ix) = part_count(cell_x+ix) + &
-                     gx(ix)
+        DO ix = -sf_order, sf_order
+          DATA = SQRT(part_px**2+part_py**2+part_pz**2)
+!!$                IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
+          sigma(cell_x+ix) = sigma(cell_x+ix) + gx(ix) * (DATA-mean(cell_x+ix))**2
+          part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix)
 !!$                ENDIF
-             ENDDO
-          current=>current%next
-       ENDDO
+        ENDDO
+        current=>current%next
+      ENDDO
     ENDDO
     CALL processor_summation_bcs(sigma)
-    CALL field_zero_gradient(sigma,.TRUE.)
+    CALL field_zero_gradient(sigma, .TRUE.)
     CALL processor_summation_bcs(part_count)
-    CALL field_zero_gradient(part_count,.TRUE.)
-    sigma=sigma/MAX(part_count,0.1_num)
-    WHERE (part_count .LT. 1.0) sigma=0.0_num
+    CALL field_zero_gradient(part_count, .TRUE.)
+    sigma = sigma/MAX(part_count, 0.1_num)
+    WHERE (part_count .LT. 1.0) sigma = 0.0_num
 
-    data_array=sigma/(kb * MAX(mass,m0))
+    data_array = sigma/(kb * MAX(mass, m0))
 
-    DEALLOCATE(part_count,mean,mass,sigma)
-!!$    DEALLOCATE(p_min,p_max)
+    DEALLOCATE(part_count, mean, mass, sigma)
+!!$    DEALLOCATE(p_min, p_max)
 
     CALL field_bc(data_array)
-    CALL field_zero_gradient(data_array,.TRUE.)
+    CALL field_zero_gradient(data_array, .TRUE.)
 
   END SUBROUTINE calc_temperature
 
 
-     SUBROUTINE calc_on_grid_with_evaluator(data_array,current_species,evaluator)
 
-       !Contains the integer cell position of the particle in x,y,z
-       INTEGER :: cell_x
+  SUBROUTINE calc_on_grid_with_evaluator(data_array, current_species, evaluator)
 
-       !Properties of the current particle. Copy out of particle arrays for speed
-       REAL(num) :: part_x
+    ! Contains the integer cell position of the particle in x, y, z
+    INTEGER :: cell_x
 
-       !Contains the floating point version of the cell number (never actually used)
-       REAL(num) :: cell_x_r
+    ! Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_x
 
-       !The fraction of a cell between the particle position and the cell boundary
-       REAL(num) :: cell_frac_x
+    ! Contains the floating point version of the cell number (never actually used)
+    REAL(num) :: cell_x_r
 
-       !The weight of a particle
-       REAL(num) :: l_weight
+    ! The fraction of a cell between the particle position and the cell boundary
+    REAL(num) :: cell_frac_x
 
-       !Weighting factors as Eqn 4.77 page 25 of manual
-       !Eqn 4.77 would be written as
-       !F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-       !Defined at the particle position
+    ! The weight of a particle
+    REAL(num) :: l_weight
 
-       REAL(num),DIMENSION(-2:2) :: gx
-       !The data to be weighted onto the grid
-       REAL(num) :: data
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
 
-       REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-       INTEGER,INTENT(IN) :: current_species
+    REAL(num), DIMENSION(-2:2) :: gx
+    ! The data to be weighted onto the grid
+    REAL(num) :: DATA
 
-       TYPE(particle),POINTER :: current
-       INTEGER :: ispecies, spec_start,spec_end
+    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
 
-       INTERFACE
-          FUNCTION evaluator(a_particle,species_eval)
-            USE shared_data
-            TYPE(particle), POINTER :: a_particle
-            INTEGER,INTENT(IN) :: species_eval
-            REAL(num) :: evaluator
-          END FUNCTION evaluator
-       END INTERFACE
+    TYPE(particle), POINTER :: current
+    INTEGER :: ispecies, spec_start, spec_end
 
-       data_array=0.0_num
+    INTERFACE
+      FUNCTION evaluator(a_particle, species_eval)
+        USE shared_data
+        TYPE(particle), POINTER :: a_particle
+        INTEGER, INTENT(IN) :: species_eval
+        REAL(num) :: evaluator
+      END FUNCTION evaluator
+    END INTERFACE
 
-       l_weight=weight
+    data_array = 0.0_num
 
-       spec_start=current_species
-       spec_end=current_species
+    l_weight = weight
 
-       IF (current_species .LE. 0) THEN
-          spec_start=1
-          spec_end=n_species
-       ENDIF
+    spec_start = current_species
+    spec_end = current_species
 
-       DO ispecies=spec_start,spec_end
-          current=>particle_species(ispecies)%attached_list%head
-          DO WHILE (ASSOCIATED(current))
+    IF (current_species .LE. 0) THEN
+      spec_start = 1
+      spec_end = n_species
+    ENDIF
 
-             part_x  = current%part_pos - x_start_local
+    DO ispecies = spec_start, spec_end
+      current=>particle_species(ispecies)%attached_list%head
+      DO WHILE (ASSOCIATED(current))
+        part_x  = current%part_pos - x_start_local
 
-             cell_x_r = part_x / dx !
-             cell_x  = NINT(cell_x_r)
-             cell_frac_x = REAL(cell_x,num) - cell_x_r
-             cell_x=cell_x+1
+        cell_x_r = part_x / dx !
+        cell_x  = NINT(cell_x_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x+1
 
-           CALL particle_to_grid(cell_frac_x,gx)
+        CALL particle_to_grid(cell_frac_x, gx)
 
-                DO ix=-sf_order,sf_order
-                   data=evaluator(current,ispecies)
-                   data_array(cell_x+ix) = data_array(cell_x+ix) + &
-                        gx(ix) * data
-                ENDDO
+        DO ix = -sf_order, sf_order
+          DATA = evaluator(current, ispecies)
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * DATA
+        ENDDO
 
-             current=>current%next
-          ENDDO
-       ENDDO
+        current=>current%next
+      ENDDO
+    ENDDO
 
-       CALL processor_summation_bcs(data_array)
-       CALL field_zero_gradient(data_array,.TRUE.)
+    CALL processor_summation_bcs(data_array)
+    CALL field_zero_gradient(data_array, .TRUE.)
 
-     END SUBROUTINE calc_on_grid_with_evaluator
+  END SUBROUTINE calc_on_grid_with_evaluator
 
 END MODULE calc_df
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
