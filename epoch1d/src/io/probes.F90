@@ -1,4 +1,4 @@
-MODULE Probes
+MODULE probes
   USE shared_data
   USE partlist
   USE iocontrol
@@ -7,59 +7,59 @@ MODULE Probes
   USE balance
 
   SAVE
-  TYPE(ParticleList),POINTER,PRIVATE :: CurrentList
+  TYPE(particle_list),POINTER,PRIVATE :: current_list
 
 CONTAINS
 #ifndef PARTICLE_PROBES
-  SUBROUTINE Probe_dummy
-  END SUBROUTINE Probe_dummy
+  SUBROUTINE probe_dummy
+  END SUBROUTINE probe_dummy
 #else
-  SUBROUTINE Init_Probe(Probe)
+  SUBROUTINE init_probe(probe)
 
-    TYPE(Particle_Probe),POINTER :: Probe
+    TYPE(particle_probe),POINTER :: probe
 
-    NULLIFY(Probe%Next)
-    NULLIFY(Probe%probe_species)
-    CALL Create_Empty_PartList(Probe%sampled_particles)
+    NULLIFY(probe%next)
+    NULLIFY(probe%probe_species)
+    CALL create_empty_partlist(probe%sampled_particles)
 
-  END SUBROUTINE Init_Probe
+  END SUBROUTINE init_probe
 
-  SUBROUTINE Attach_Probe(Probe)
+  SUBROUTINE attach_probe(probe)
 
-    TYPE(Particle_Probe),POINTER :: Probe
-    TYPE(Particle_Probe),POINTER :: Current
+    TYPE(particle_probe),POINTER :: probe
+    TYPE(particle_probe),POINTER :: current
 
-    Current=>Probe%Probe_Species%AttachedProbes
-    IF (.NOT. ASSOCIATED(Current)) THEN
-       Probe%Probe_Species%AttachedProbes=>Probe
+    current=>probe%probe_species%attached_probes
+    IF (.NOT. ASSOCIATED(current)) THEN
+       probe%probe_species%attached_probes=>probe
        RETURN
     ENDIF
-    DO WHILE(ASSOCIATED(Current%Next))
-       Current=>Current%Next
+    DO WHILE(ASSOCIATED(current%next))
+       current=>current%next
     ENDDO
     !Now at the last element in the list
-    Current%Next=>Probe
+    current%next=>probe
 
-  END SUBROUTINE Attach_Probe
+  END SUBROUTINE attach_probe
 
-  SUBROUTINE Write_Probes(code)
+  SUBROUTINE write_probes(code)
     INTEGER,INTENT(IN) :: code
 
-    TYPE(Particle_Probe),POINTER :: Current_Probe
-    CHARACTER(LEN=ENTRYLENGTH) :: probe_name,temp_name
-    INTEGER :: iSpecies,subtype_probe_particle_var
+    TYPE(particle_probe),POINTER :: current_probe
+    CHARACTER(len=string_length) :: probe_name,temp_name
+    INTEGER :: ispecies,subtype_probe_particle_var
     INTEGER(KIND=8) :: npart_probe_local,npart_probe_global,npart_probe_per_it,npart_probe_per_it_local
 
-    DO ispecies=1,nSpecies
-       Current_probe=>ParticleSpecies(iSpecies)%AttachedProbes
-       DO WHILE(ASSOCIATED(Current_probe))
+    DO ispecies=1,n_species
+       current_probe=>particle_species(ispecies)%attached_probes
+       DO WHILE(ASSOCIATED(current_probe))
           !If don't dump this probe currently then just cycle
-          IF (IAND(Current_Probe%Dump,code) .EQ. 0) THEN
-             Current_Probe=>Current_Probe%Next
+          IF (IAND(current_probe%dump,code) .EQ. 0) THEN
+             current_probe=>current_probe%next
              CYCLE
           ENDIF
 
-          CurrentList=>Current_probe%Sampled_Particles
+          current_list=>current_probe%sampled_particles
 
           npart_probe_per_it_local = npart_per_it
           npart_probe_local = current_probe%sampled_particles%count
@@ -69,44 +69,44 @@ CONTAINS
           CALL MPI_ALLREDUCE(npart_probe_local,npart_probe_global,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
           CALL MPI_ALLREDUCE(npart_probe_per_it_local,npart_probe_per_it,1,MPI_INTEGER8,MPI_MIN,comm,errcode)
           IF(npart_probe_global .GT. 0) THEN
-             subtype_probe_particle_var=Create_Particle_Subtype(npart_probe_local)
+             subtype_probe_particle_var=create_particle_subtype(npart_probe_local)
 
              probe_name =  TRIM(ADJUSTL(current_probe%name))
 
-             !Dump particle Positions
-             CALL cfd_Write_nD_Particle_Grid_With_Iterator_All(TRIM(probe_name),&
-                  "Probe_Grid",Iterate_probe_Particles,2,npart_probe_local,npart_probe_global,npart_probe_per_it,&
+             !dump particle Positions
+             CALL cfd_write_nd_particle_grid_with_iterator_all(TRIM(probe_name),&
+                  "Probe_Grid",iterate_probe_particles,2,npart_probe_local,npart_probe_global,npart_probe_per_it,&
                   PARTICLE_CARTESIAN,subtype_probe_particle_var)
 
-             !Dump Px
-             WRITE(Temp_Name,'(a,"_Px")') TRIM(probe_name)
-             CALL cfd_Write_nD_Particle_Variable_With_Iterator_All(TRIM(temp_name),&
+             !dump Px
+             WRITE(temp_name,'(a,"_Px")') TRIM(probe_name)
+             CALL cfd_write_nd_particle_variable_with_iterator_all(TRIM(temp_name),&
                   TRIM(probe_name),iterate_probe_px,npart_probe_global,npart_probe_per_it,TRIM(probe_name),&
                   "Probe_Grid",subtype_probe_particle_var)
 
-             !Dump Py
-             WRITE(Temp_Name,'(a,"_Py")') TRIM(probe_name)
-             CALL cfd_Write_nD_Particle_Variable_With_Iterator_All(TRIM(temp_name),&
+             !dump Py
+             WRITE(temp_name,'(a,"_Py")') TRIM(probe_name)
+             CALL cfd_write_nd_particle_variable_with_iterator_all(TRIM(temp_name),&
                   TRIM(probe_name),iterate_probe_py,npart_probe_global,npart_probe_per_it,TRIM(probe_name),&
                   "Probe_Grid",subtype_probe_particle_var)
 
-             !Dump Pz
-             WRITE(Temp_Name,'(a,"_Pz")') TRIM(probe_name)
-             CALL cfd_Write_nD_Particle_Variable_With_Iterator_All(TRIM(temp_name),TRIM(probe_name)&
+             !dump Pz
+             WRITE(temp_name,'(a,"_Pz")') TRIM(probe_name)
+             CALL cfd_write_nd_particle_variable_with_iterator_all(TRIM(temp_name),TRIM(probe_name)&
                   ,iterate_probe_pz,npart_probe_global,npart_probe_per_it,TRIM(probe_name),"Probe_Grid",&
                   subtype_probe_particle_var)
 
-             !Dump particle weight function
-             WRITE(Temp_Name,'(a,"_weight")') TRIM(probe_name)
+             !dump particle weight function
+             WRITE(temp_name,'(a,"_weight")') TRIM(probe_name)
 #ifdef PER_PARTICLE_WEIGHT
-             CALL cfd_Write_nD_Particle_Variable_With_Iterator_All(TRIM(temp_name),TRIM(probe_name),iterate_probe_weight,&
+             CALL cfd_write_nd_particle_variable_with_iterator_all(TRIM(temp_name),TRIM(probe_name),iterate_probe_weight,&
                   npart_probe_global,npart_probe_per_it,TRIM(probe_name),"Probe_Grid",subtype_probe_particle_var)
 #else
-             CALL cfd_Write_Real_Constant(TRIM(temp_name),TRIM(probe_name),weight,0)
+             CALL cfd_write_real_constant(TRIM(temp_name),TRIM(probe_name),weight,0)
 #endif
 
-             CALL Destroy_PartList(current_probe%sampled_particles)
-             CALL MPI_TYPE_FREE(subtype_probe_particle_var,errcode)
+             CALL destroy_partlist(current_probe%sampled_particles)
+             CALL mpi_type_free(subtype_probe_particle_var,errcode)
           ENDIF
           current_probe=>current_probe%next
 
@@ -114,55 +114,55 @@ CONTAINS
 
        NULLIFY(current_probe)
     ENDDO
-  END SUBROUTINE Write_Probes
+  END SUBROUTINE write_probes
 
 
-  !Iterator for particle positions
-  SUBROUTINE Iterate_Probe_Particles(data,n_points,direction,start)
+  !iterator for particle positions
+  SUBROUTINE iterate_probe_particles(data,n_points,direction,start)
 
-    REAL(num),DIMENSION(:),INTENT(INOUT) :: Data
+    REAL(num),DIMENSION(:),INTENT(INOUT) :: data
     INTEGER(8),INTENT(INOUT) :: n_points
     LOGICAL,INTENT(IN) :: start
     INTEGER,INTENT(IN) :: direction
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
+    TYPE(particle),POINTER,SAVE :: cur
+    INTEGER(8) :: part_count
 
 
     IF (start)  THEN
-       cur => currentList%head
+       cur => current_list%head
     ENDIF
-    partcount=0
+    part_count=0
 
-    DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-       partcount=partcount+1
-       Data(partcount)=Cur%Part_Pos-Window_Shift
-       Cur=>Cur%Next
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+       part_count=part_count+1
+       data(part_count)=cur%part_pos-window_shift
+       cur=>cur%next
     ENDDO
 
-    n_points=partcount
+    n_points=part_count
 
   END SUBROUTINE iterate_probe_particles
 
-  !Iterator for particle momenta
+  !iterator for particle momenta
   SUBROUTINE iterate_probe_px(data,n_points,start)
 
     REAL(num),DIMENSION(:),INTENT(INOUT) :: data
     INTEGER(8),INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
+    TYPE(particle),POINTER,SAVE :: cur
+    INTEGER(8) :: part_count
 
     IF (start)  THEN
-       cur => currentList%head
+       cur => current_list%head
     ENDIF
-    partcount=0
+    part_count=0
 
-    DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-       partcount=partcount+1
-       data(partcount) = Cur%Part_p(1) 
-       Cur=>Cur%Next
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+       part_count=part_count+1
+       data(part_count) = cur%part_p(1) 
+       cur=>cur%next
     ENDDO
-    n_points=partcount
+    n_points=part_count
 
   END SUBROUTINE iterate_probe_px
 
@@ -171,21 +171,21 @@ CONTAINS
     REAL(num),DIMENSION(:),INTENT(INOUT) :: data
     INTEGER(8),INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
+    TYPE(particle),POINTER,SAVE :: cur
+    INTEGER(8) :: part_count
 
     IF (start)  THEN
-       cur => currentList%head
+       cur => current_list%head
     ENDIF
-    partcount=0
+    part_count=0
 
-    DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-       partcount=partcount+1
-       data(partcount) = Cur%Part_p(2) 
-       Cur=>Cur%Next
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+       part_count=part_count+1
+       data(part_count) = cur%part_p(2) 
+       cur=>cur%next
     ENDDO
 
-    n_points=partcount
+    n_points=part_count
 
   END SUBROUTINE iterate_probe_py
 
@@ -194,21 +194,21 @@ CONTAINS
     REAL(num),DIMENSION(:),INTENT(INOUT) :: data
     INTEGER(8),INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
+    TYPE(particle),POINTER,SAVE :: cur
+    INTEGER(8) :: part_count
 
     IF (start)  THEN
-       cur => currentList%head
+       cur => current_list%head
     ENDIF
-    partcount=0
+    part_count=0
 
-    DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-       partcount=partcount+1
-       data(partcount) = Cur%Part_p(3) 
-       Cur=>Cur%Next
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+       part_count=part_count+1
+       data(part_count) = cur%part_p(3) 
+       cur=>cur%next
     ENDDO
 
-    n_points=partcount
+    n_points=part_count
 
   END SUBROUTINE iterate_probe_pz
 #ifdef PER_PARTICLE_WEIGHT
@@ -217,24 +217,24 @@ CONTAINS
     REAL(num),DIMENSION(:),INTENT(INOUT) :: data
     INTEGER(8),INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
-    TYPE(Particle),POINTER,SAVE :: Cur
-    INTEGER(8) :: partcount
+    TYPE(particle),POINTER,SAVE :: cur
+    INTEGER(8) :: part_count
 
     IF (start)  THEN
-       cur => currentList%head
+       cur => current_list%head
     ENDIF
-    partcount=0
+    part_count=0
 
-    DO WHILE (ASSOCIATED(Cur) .AND. (partcount .LT. n_points))
-       partcount=partcount+1
-       data(partcount) = Cur%weight
-       Cur=>Cur%Next
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+       part_count=part_count+1
+       data(part_count) = cur%weight
+       cur=>cur%next
     ENDDO
 
-    n_points=partcount
+    n_points=part_count
 
   END SUBROUTINE iterate_probe_weight
 #endif
 #endif
 
-END MODULE Probes
+END MODULE probes

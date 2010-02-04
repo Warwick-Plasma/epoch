@@ -8,125 +8,125 @@ MODULE deck_species_block
 
   SAVE
 
-  INTEGER :: SpeciesLoaded
+  INTEGER :: species_loaded
 
 CONTAINS
 
 
 
-  FUNCTION HandleSpeciesDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    CHARACTER(30) :: Part1
-    INTEGER :: Part2
-    INTEGER :: HandleSpeciesDeck
+  FUNCTION handle_species_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    CHARACTER(len=string_length) :: part1
+    INTEGER :: part2
+    INTEGER :: handle_species_deck
     INTEGER :: partswitch
-    LOGICAL :: Handled
-    CHARACTER(LEN=9) :: string
+    LOGICAL :: handled
+    CHARACTER(len=9) :: string
 
-    HandleSpeciesDeck=ERR_NONE 
-    IF (Value .EQ. blank) RETURN
+    handle_species_deck=ERR_NONE 
+    IF (value .EQ. blank) RETURN
 
-    !    PRINT *,"IN ",Element,Value
+    !    PRINT *,"IN ",element,value
 
-    HandleSpeciesDeck=ERR_UNKNOWN_ELEMENT
+    handle_species_deck=ERR_UNKNOWN_ELEMENT
 
-    Handled=.FALSE.
-    IF (StrCmp(Element,"n_species")) THEN
-       nspecies=AsInteger(Value,HandleSpeciesDeck)
-       IF (nspecies .GT. 0) THEN
-          IF (Rank .EQ. 0) THEN
-             CALL IntegerAsString(nspecies,string)
+    handled=.FALSE.
+    IF (str_cmp(element,"n_species")) THEN
+       n_species=as_integer(value,handle_species_deck)
+       IF (n_species .GT. 0) THEN
+          IF (rank .EQ. 0) THEN
+             CALL integer_as_string(n_species,string)
              PRINT *,"Code running with ",TRIM(ADJUSTL(string))," species"
           ENDIF
-          ALLOCATE(ParticleSpecies(1:nspecies))
-          !ALLOCATE(Species_Name(1:nspecies))
+          ALLOCATE(particle_species(1:n_species))
+          !ALLOCATE(Species_Name(1:n_species))
        ENDIF
-       HandleSpeciesDeck=ERR_NONE
-       Handled=.TRUE.
+       handle_species_deck=ERR_NONE
+       handled=.TRUE.
     ENDIF
 
-    IF (nspecies .LE. 0) THEN
+    IF (n_species .LE. 0) THEN
        IF (rank .EQ. 0) THEN
           PRINT *,"Either invalid number of species specified or attempting to set species data before setting n_species"
        ENDIF
-       HandleSpeciesDeck=ERR_MISSING_ELEMENTS
+       handle_species_deck=ERR_MISSING_ELEMENTS
        RETURN
     ENDIF
-    IF (Handled) RETURN
+    IF (handled) RETURN
 
-    CALL SplitOffInt(Element,Part1,Part2,HandleSpeciesDeck)
+    CALL split_off_int(element,part1,part2,handle_species_deck)
 
-    IF (Part2 .LT. 1 .OR. Part2 .GT. nspecies) THEN
-       IF (Rank .EQ. 0) PRINT '("Ignoring attempt to set property ",a," for non existent species ",i2)',TRIM(ADJUSTL(Part1)),Part2
-       HandleSpeciesDeck=ERR_NONE
+    IF (part2 .LT. 1 .OR. part2 .GT. n_species) THEN
+       IF (rank .EQ. 0) PRINT '("Ignoring attempt to set property ",a," for non existent species ",i2)',TRIM(ADJUSTL(part1)),part2
+       handle_species_deck=ERR_NONE
        RETURN
     ENDIF
 
     partswitch=0
-    IF (StrCmp(Part1,"name")) THEN
-       ParticleSpecies(Part2)%Name = TRIM(Value)
+    IF (str_cmp(part1,"name")) THEN
+       particle_species(part2)%name = TRIM(value)
        IF (rank .EQ. 0) THEN
-          CALL IntegerAsString(part2,string)
-          PRINT *,"Name of species ",TRIM(ADJUSTL(string))," is ",TRIM(Value)
+          CALL integer_as_string(part2,string)
+          PRINT *,"Name of species ",TRIM(ADJUSTL(string))," is ",TRIM(value)
        ENDIF
-       HandleSpeciesDeck=ERR_NONE
+       handle_species_deck=ERR_NONE
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"mass")) THEN
-       HandleSpeciesDeck=ERR_NONE
-       ParticleSpecies(Part2)%Mass=AsReal(Value,HandleSpeciesDeck)*M0
+    IF (str_cmp(part1,"mass")) THEN
+       handle_species_deck=ERR_NONE
+       particle_species(part2)%mass=as_real(value,handle_species_deck)*m0
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"charge")) THEN
-       HandleSpeciesDeck=ERR_NONE
-       ParticleSpecies(Part2)%Charge=AsReal(Value,HandleSpeciesDeck)*Q0
+    IF (str_cmp(part1,"charge")) THEN
+       handle_species_deck=ERR_NONE
+       particle_species(part2)%charge=as_real(value,handle_species_deck)*q0
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"frac") .OR. StrCmp(Part1,"fraction")) THEN
+    IF (str_cmp(part1,"frac") .OR. str_cmp(part1,"fraction")) THEN
        IF (npart_global .GE. 0) THEN
-          ParticleSpecies(Part2)%Count=AsReal(Value,HandleSpeciesDeck)*npart_global
+          particle_species(part2)%count=as_real(value,handle_species_deck)*npart_global
        ELSE
-          Extended_Error_String="npart"
-          HandleSpeciesDeck=ERR_REQUIRED_ELEMENT_NOT_SET
+          extended_error_string="npart"
+          handle_species_deck=ERR_REQUIRED_ELEMENT_NOT_SET
        ENDIF
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"npart")) THEN
-       HandleSpeciesDeck=ERR_NONE
-       ParticleSpecies(Part2)%Count=AsLongInteger(Value,HandleSpeciesDeck)
+    IF (str_cmp(part1,"npart")) THEN
+       handle_species_deck=ERR_NONE
+       particle_species(part2)%count=as_long_integer(value,handle_species_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"dump")) THEN
-       HandleSpeciesDeck=ERR_NONE
-       ParticleSpecies(Part2)%Dump=AsLogical(Value,HandleSpeciesDeck)
+    IF (str_cmp(part1,"dump")) THEN
+       handle_species_deck=ERR_NONE
+       particle_species(part2)%dump=as_logical(value,handle_species_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"split")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"split")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-       ParticleSpecies(Part2)%Split=AsLogical(Value,HandleSpeciesDeck)
+       particle_species(part2)%split=as_logical(value,handle_species_deck)
 #endif
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"npart_max")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"npart_max")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-       ParticleSpecies(Part2)%nPart_Max=AsLongInteger(Value,HandleSpeciesDeck)
+       particle_species(part2)%npart_max=as_long_integer(value,handle_species_deck)
 #endif
        RETURN
     ENDIF
 
 
 
-  END FUNCTION HandleSpeciesDeck
+  END FUNCTION handle_species_deck
 
-  FUNCTION CheckSpeciesBlock()
+  FUNCTION check_species_block()
 
-    INTEGER :: CheckSpeciesBlock
+    INTEGER :: check_species_block
 
-    !Should do error checking but can't be bothered at the moment
-    CheckSpeciesBlock=ERR_NONE
+    !Should do error checking but isn't really necessary at the moment
+    check_species_block=ERR_NONE
 
-  END FUNCTION CheckSpeciesBlock
+  END FUNCTION check_species_block
 
 END MODULE deck_species_block

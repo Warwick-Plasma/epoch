@@ -12,118 +12,118 @@ MODULE deck_ic_laser_block
 
   SAVE
 
-  TYPE(Laser_Block),POINTER :: WorkingLaser
-  LOGICAL :: Direction_Set=.FALSE.
-  INTEGER :: Direction
+  TYPE(laser_block),POINTER :: working_laser
+  LOGICAL :: direction_set=.FALSE.
+  INTEGER :: direction
 
 CONTAINS
 
-  FUNCTION HandleICLaserDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER :: HandleICLaserDeck
+  FUNCTION handle_ic_laser_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER :: handle_ic_laser_deck
     REAL(num) :: dummy
 
-    HandleICLaserDeck=ERR_NONE
-    IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
+    handle_ic_laser_deck=ERR_NONE
+    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF(StrCmp(Element,"direction")) THEN
+    IF(str_cmp(element,"direction")) THEN
        !If the direction has already been set, simply ignore further calls to it
-       IF (Direction_Set) RETURN
-       Direction=AsDirection(Value,HandleICLaserDeck)
-       Direction_Set=.TRUE.
-       CALL Init_Laser(Direction,WorkingLaser)
+       IF (direction_set) RETURN
+       direction=as_direction(value,handle_ic_laser_deck)
+       direction_set=.TRUE.
+       CALL init_laser(direction,working_laser)
        RETURN
     ENDIF
 
-    IF (.NOT. Direction_Set) THEN
-       IF (Rank .EQ. 0) THEN
+    IF (.NOT. direction_set) THEN
+       IF (rank .EQ. 0) THEN
           PRINT *,"***ERROR*** Cannot set laser properties before direction is set"
           WRITE(40,*) "***ERROR*** Cannot set laser properties before direction is set"
        ENDIF
-       Extended_Error_String="direction"
-       HandleICLaserDeck=ERR_REQUIRED_ELEMENT_NOT_SET
+       extended_error_string="direction"
+       handle_ic_laser_deck=ERR_REQUIRED_ELEMENT_NOT_SET
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"amp")) THEN
-       WorkingLaser%Amp=AsReal(Value,HandleICLaserDeck)
+    IF (str_cmp(element,"amp")) THEN
+       working_laser%amp=as_real(value,handle_ic_laser_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"freq")) THEN
-       WorkingLaser%Freq=AsReal(Value,HandleICLaserDeck)
+    IF (str_cmp(element,"freq")) THEN
+       working_laser%freq=as_real(value,handle_ic_laser_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"phase")) THEN
-       workinglaser%phase=AsReal(Value,HandleICLaserDeck)
+    IF (str_cmp(element,"phase")) THEN
+       working_laser%phase=as_real(value,handle_ic_laser_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"t_start")) THEN
-       workinglaser%t_start=AsTime(Value,HandleICLaserDeck)
+    IF (str_cmp(element,"t_start")) THEN
+       working_laser%t_start=as_time(value,handle_ic_laser_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"t_end")) THEN
-       workinglaser%t_end=AsTime(Value,HandleICLaserDeck)
+    IF (str_cmp(element,"t_end")) THEN
+       working_laser%t_end=as_time(value,handle_ic_laser_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"t_profile")) THEN
-       WorkingLaser%UseTimeFunction=.TRUE.
-       WorkingLaser%TimeFunction%StackPoint=0
-       CALL Tokenize(Value,WorkingLaser%TimeFunction,HandleICLaserDeck)
-       !Evaluate it once to check that it's a valid block
-       dummy=Evaluate(WorkingLaser%TimeFunction,HandleICLaserDeck)
+    IF (str_cmp(element,"t_profile")) THEN
+       working_laser%use_time_function=.TRUE.
+       working_laser%time_function%stack_point=0
+       CALL tokenize(value,working_laser%time_function,handle_ic_laser_deck)
+       !evaluate it once to check that it's a valid block
+       dummy=evaluate(working_laser%time_function,handle_ic_laser_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"pol")) THEN
+    IF (str_cmp(element,"pol")) THEN
        !Convert from degrees to radians
-       WorkingLaser%pol=pi * AsReal(Value,HandleICLaserDeck)/180.0_num
+       working_laser%pol=pi * as_real(value,handle_ic_laser_deck)/180.0_num
        RETURN
     ENDIF
-    IF (StrCmp(Element,"id")) THEN
-       WorkingLaser%ID=AsInteger(Value,HandleICLaserDeck)
+    IF (str_cmp(element,"id")) THEN
+       working_laser%id=as_integer(value,handle_ic_laser_deck)
        RETURN
     ENDIF
-    HandleICLaserDeck=ERR_UNKNOWN_ELEMENT
+    handle_ic_laser_deck=ERR_UNKNOWN_ELEMENT
 
-  END FUNCTION HandleICLaserDeck
+  END FUNCTION handle_ic_laser_deck
 
-  FUNCTION CheckICLaserBlock()
+  FUNCTION check_ic_laser_block()
 
-    INTEGER :: CheckICLaserBlock
+    INTEGER :: check_ic_laser_block
 
     !Should do error checking but can't be bothered at the moment
-    CheckICLaserBlock=ERR_NONE
+    check_ic_laser_block=ERR_NONE
 
-  END FUNCTION CheckICLaserBlock
+  END FUNCTION check_ic_laser_block
 
-  SUBROUTINE Laser_Start
+  SUBROUTINE laser_start
     !Every new laser uses the internal time function
-    ALLOCATE(WorkingLaser)
-    WorkingLaser%UseTimeFunction=.FALSE.
-  END SUBROUTINE Laser_Start
+    ALLOCATE(working_laser)
+    working_laser%use_time_function=.FALSE.
+  END SUBROUTINE laser_start
 
-  SUBROUTINE Laser_End
-    CALL Attach_Laser(WorkingLaser)
-    Direction_Set=.FALSE.
-  END SUBROUTINE Laser_End
+  SUBROUTINE laser_end
+    CALL attach_laser(working_laser)
+    direction_set=.FALSE.
+  END SUBROUTINE laser_end
 
-  FUNCTION AsTime(Value,ERR)
+  FUNCTION as_time(value,err)
 
-    CHARACTER(LEN=*),INTENT(IN) :: Value
-    INTEGER,INTENT(INOUT) :: ERR
-    REAL(num) :: AsTime
+    CHARACTER(len=*),INTENT(IN) :: value
+    INTEGER,INTENT(INOUT) :: err
+    REAL(num) :: as_time
 
-    IF (StrCmp(Value,"start")) THEN
-       AsTime=0.0_num
+    IF (str_cmp(value,"start")) THEN
+       as_time=0.0_num
        RETURN
     ENDIF
 
-    IF (StrCmp(Value,"end")) THEN
-       AsTime=t_end
+    IF (str_cmp(value,"end")) THEN
+       as_time=t_end
        RETURN
     ENDIF
 
-    AsTime=AsReal(Value,ERR)
+    as_time=as_real(value,err)
 
-  END FUNCTION AsTime
+  END FUNCTION as_time
 
 END MODULE deck_ic_laser_block

@@ -10,108 +10,108 @@ MODULE strings_advanced
 
 CONTAINS
 
-  SUBROUTINE SplitOffInt(StrIn,StrOut,IntOut,ERR)
+  SUBROUTINE split_off_int(str_in,str_out,int_out,err)
 
-    CHARACTER(*),INTENT(IN) :: StrIn
-    CHARACTER(*),INTENT(OUT) :: StrOut
-    INTEGER,INTENT(OUT) :: IntOut
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: StrLen,Char,pos,C
+    CHARACTER(*),INTENT(IN) :: str_in
+    CHARACTER(*),INTENT(OUT) :: str_out
+    INTEGER,INTENT(OUT) :: int_out
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER :: str_len,char,pos,c
 
-    StrLen=Len(StrIn)
+    str_len=len(str_in)
     pos=-1
 
-    DO Char=1,StrLen
-       C=ICHAR(StrIn(Char:Char))
-       IF (C .GT. 47 .AND. C .LT. 58) THEN
-          pos=Char
+    DO char=1,str_len
+       c=ICHAR(str_in(char:char))
+       IF (c .GT. 47 .AND. c .LT. 58) THEN
+          pos=char
           EXIT
        ENDIF
     ENDDO
 
     IF (pos < 0) THEN 
-       ERR=IOR(ERR,ERR_BAD_VALUE)
+       err=IOR(err,ERR_BAD_VALUE)
        RETURN
     ENDIF
-    StrOut=StrIn(1:pos-1)
-    IntOut=AsIntegerSimple(StrIn(pos:StrLen),ERR)
+    str_out=str_in(1:pos-1)
+    int_out=as_integer_simple(str_in(pos:str_len),err)
 
-  END SUBROUTINE SplitOffInt
+  END SUBROUTINE split_off_int
 
-  SUBROUTINE SplitRange(StrIn,Real1,Real2,ERR)
+  SUBROUTINE split_range(str_in,real1,real2,err)
 
-    CHARACTER(*),INTENT(IN) :: StrIn
-    REAL(num),INTENT(OUT) :: Real1,Real2
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: StrLen,Char,pos,C
+    CHARACTER(*),INTENT(IN) :: str_in
+    REAL(num),INTENT(OUT) :: real1,real2
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER :: str_len,char,pos,c
 
-    StrLen=LEN(TRIM(StrIn))
+    str_len=len(TRIM(str_in))
     pos=-1
 
-    DO Char=1,StrLen
-       C=ICHAR(StrIn(Char:Char))
+    DO char=1,str_len
+       c=ICHAR(str_in(char:char))
        !Separate on a >
-       IF (C .EQ. 62) THEN
-          pos=Char
+       IF (c .EQ. 62) THEN
+          pos=char
           EXIT
        ENDIF
     ENDDO
 
     IF (pos < 0) THEN 
-       ERR=IOR(ERR,ERR_BAD_VALUE)
+       err=IOR(err,ERR_BAD_VALUE)
        RETURN
     ENDIF
-    Real1=AsRealSimple(TRIM(StrIn(1:pos-1)),ERR)
-    Real2=AsRealSimple(TRIM(StrIn(pos+1:StrLen)),ERR)
+    real1=as_real_simple(TRIM(str_in(1:pos-1)),err)
+    real2=as_real_simple(TRIM(str_in(pos+1:str_len)),err)
 
-  END SUBROUTINE SplitRange
-
-
-  FUNCTION AsInteger(StrIn,ERR)
-    CHARACTER(*),INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: AsInteger
-    AsInteger=NINT(AsReal(StrIn,ERR))
-  END FUNCTION AsInteger
-
-  FUNCTION AsLongInteger(StrIn,ERR)
-    CHARACTER(*),INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER(KIND=8) :: AsLongInteger
-    AsLongInteger=NINT(AsReal(StrIn,ERR))
-  END FUNCTION AsLongInteger
+  END SUBROUTINE split_range
 
 
-  FUNCTION AsReal(StrIn,ERR)
-    CHARACTER(*), INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    REAL(num) :: AsReal
-    TYPE(primitivestack) :: output
+  FUNCTION as_integer(str_in,err)
+    CHARACTER(*),INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER :: as_integer
+    as_integer=NINT(as_real(str_in,err))
+  END FUNCTION as_integer
 
-    output%stackpoint=0
-    CALL Tokenize(StrIn,output,ERR)
-    AsReal=Evaluate(output,ERR)
-  END FUNCTION AsReal
+  FUNCTION as_long_integer(str_in,err)
+    CHARACTER(*),INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER(KIND=8) :: as_long_integer
+    as_long_integer=NINT(as_real(str_in,err))
+  END FUNCTION as_long_integer
 
-  SUBROUTINE EvaluateStringInSpace(StrIn,DataOut,xrange,yrange,ERR)
 
-    CHARACTER(*), INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
+  FUNCTION as_real(str_in,err)
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    REAL(num) :: as_real
+    TYPE(primitive_stack) :: output
+
+    output%stack_point=0
+    CALL tokenize(str_in,output,err)
+    as_real=evaluate(output,err)
+  END FUNCTION as_real
+
+  SUBROUTINE evaluate_string_in_space(str_in,data_out,xrange,yrange,err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
     INTEGER,DIMENSION(2),INTENT(IN) :: xrange, yrange
-    REAL(num),DIMENSION(1:,1:),INTENT(OUT) :: DataOut 
-    TYPE(primitivestack) :: output
+    REAL(num),DIMENSION(1:,1:),INTENT(OUT) :: data_out 
+    TYPE(primitive_stack) :: output
     INTEGER :: ix,iy
 
-    output%stackpoint=0
-    CALL Tokenize(StrIn,output,ERR)
+    output%stack_point=0
+    CALL tokenize(str_in,output,err)
 
     DO iy=yrange(1),yrange(2)
        DO ix=xrange(1),xrange(2)
-          DataOut(ix-xrange(1)+1,iy-yrange(1)+1) = EvaluateAtPoint(output,ix,iy,ERR)
+          data_out(ix-xrange(1)+1,iy-yrange(1)+1) = evaluate_at_point(output,ix,iy,err)
        ENDDO
     ENDDO
 
-  END SUBROUTINE EvaluateStringInSpace
+  END SUBROUTINE evaluate_string_in_space
 
 
 END MODULE strings_advanced

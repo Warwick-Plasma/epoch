@@ -11,92 +11,95 @@ MODULE deck_ic_species_block
 
   SAVE
 
-  INTEGER :: SpeciesLoaded
+  INTEGER :: species_loaded
 
 CONTAINS
 
-  FUNCTION HandleICSpeciesDeck(Species_ID,Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER,INTENT(IN) :: Species_ID
-    INTEGER :: HandleICSpeciesDeck
+  FUNCTION handle_ic_species_deck(species_id,element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER,INTENT(IN) :: species_id
+    INTEGER :: handle_ic_species_deck
 
-    HandleICSpeciesDeck=ERR_NONE
-    IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
+    handle_ic_species_deck=ERR_NONE
+    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (Species_ID .LT. 0 .OR. Species_ID .GT. nspecies) THEN
+    IF (species_id .LT. 0 .OR. species_id .GT. n_species) THEN
        IF (rank .EQ. 0) PRINT *,"Attempting to set non-existent species initial conditions. Ignoring."
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"minrho")) THEN
-       InitialConditions(Species_ID)%MinRho=AsReal(Value,HandleICSpeciesDeck)
+    IF (str_cmp(element,"minrho")) THEN
+       initial_conditions(species_id)%minrho=as_real(value,handle_ic_species_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"maxrho")) THEN
-       InitialConditions(Species_ID)%MaxRho=AsReal(Value,HandleICSpeciesDeck)
+    IF (str_cmp(element,"maxrho")) THEN
+       initial_conditions(species_id)%maxrho=as_real(value,handle_ic_species_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"rho") .OR. StrCmp(Element,"number_density")) THEN
-       CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%rho(-2:nx+3,-2:ny+3),(/-2,nx+3/),(/-2,ny+3/),HandleICSpeciesDeck)
+    IF (str_cmp(element,"rho") .OR. str_cmp(element,"number_density")) THEN
+       CALL evaluate_string_in_space(value,initial_conditions(species_id)%rho(-2:nx+3,-2:ny+3),(/-2,nx+3/),(/-2,ny+3/),handle_ic_species_deck)
        RETURN
     ENDIF
 
-	IF (StrCmp(Element,"mass_density")) THEN
-   	CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%rho(-2:nx+3,-2:ny+3),(/-2,nx+3/),(/-2,ny+3/),HandleICSpeciesDeck)
-		InitialConditions(Species_ID)%rho=InitialConditions(Species_ID)%rho/ParticleSpecies(Species_ID)%mass
+	IF (str_cmp(element,"mass_density")) THEN
+   	CALL evaluate_string_in_space(value,initial_conditions(species_id)%rho(-2:nx+3,-2:ny+3),(/-2,nx+3/),(/-2,ny+3/),handle_ic_species_deck)
+		initial_conditions(species_id)%rho=initial_conditions(species_id)%rho/particle_species(species_id)%mass
    	RETURN
 	ENDIF
-	
-	IF (StrCmp(Element,"drift_x")) THEN
-		InitialConditions(Species_ID)%drift(1)=AsReal(Value,HandleICSpeciesDeck)
-		RETURN
-	ENDIF
-	
-	IF (StrCmp(Element,"drift_y")) THEN
-		InitialConditions(Species_ID)%drift(2)=AsReal(Value,HandleICSpeciesDeck)
-		RETURN
-	ENDIF
-	
-	IF (StrCmp(Element,"drift_z")) THEN
-		InitialConditions(Species_ID)%drift(3)=AsReal(Value,HandleICSpeciesDeck)
-		RETURN
-	ENDIF
 
-    IF (StrCmp(Element,"temp")) THEN
-       CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,1),(/-1,nx+2/),(/-1,ny+2/),HandleICSpeciesDeck)
-		 debug_mode=.false.
-       InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,2)=InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,1)
-       InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,3)=InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,1)
+    IF (str_cmp(element, "drift_x")) THEN
+      initial_conditions(species_id)%drift(1) = &
+          as_real(value, handle_ic_species_deck)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, "drift_y")) THEN
+      initial_conditions(species_id)%drift(2) = &
+          as_real(value, handle_ic_species_deck)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, "drift_z")) THEN
+      initial_conditions(species_id)%drift(3) = &
+          as_real(value, handle_ic_species_deck)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element,"temp")) THEN
+       CALL evaluate_string_in_space(value,initial_conditions(species_id)%temp(-1:nx+2,-1:ny+2,1),(/-1,nx+2/),(/-1,ny+2/),handle_ic_species_deck)
+		 debug_mode=.FALSE.
+       initial_conditions(species_id)%temp(-1:nx+2,-1:ny+2,2)=initial_conditions(species_id)%temp(-1:nx+2,-1:ny+2,1)
+       initial_conditions(species_id)%temp(-1:nx+2,-1:ny+2,3)=initial_conditions(species_id)%temp(-1:nx+2,-1:ny+2,1)
        RETURN
     ENDIF
 
 
-    IF (StrCmp(Element,"temp_x")) THEN
-       CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,1),(/-1,nx+2/),(/-1,ny+2/),HandleICSpeciesDeck)
+    IF (str_cmp(element,"temp_x")) THEN
+       CALL evaluate_string_in_space(value,initial_conditions(species_id)%temp(-1:nx+2,-1:ny+2,1),(/-1,nx+2/),(/-1,ny+2/),handle_ic_species_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"temp_y")) THEN
-       CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,2),(/-1,nx+2/),(/-1,ny+2/),HandleICSpeciesDeck)
+    IF (str_cmp(element,"temp_y")) THEN
+       CALL evaluate_string_in_space(value,initial_conditions(species_id)%temp(-1:nx+2,-1:ny+2,2),(/-1,nx+2/),(/-1,ny+2/),handle_ic_species_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"temp_z")) THEN
-       CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%temp(-1:nx+2,-1:ny+2,3),(/-1,nx+2/),(/-1,ny+2/),HandleICSpeciesDeck)
+    IF (str_cmp(element,"temp_z")) THEN
+       CALL evaluate_string_in_space(value,initial_conditions(species_id)%temp(-1:nx+2,-1:ny+2,3),(/-1,nx+2/),(/-1,ny+2/),handle_ic_species_deck)
        RETURN
     ENDIF
 
-  END FUNCTION HandleICSpeciesDeck
+  END FUNCTION handle_ic_species_deck
 
-  FUNCTION CheckICSpeciesBlock()
+  FUNCTION check_ic_species_block()
 
-    INTEGER :: CheckICSpeciesBlock
+    INTEGER :: check_ic_species_block
 
     !Should do error checking but can't be bothered at the moment
-    CheckICSpeciesBlock=ERR_NONE
+    check_ic_species_block=ERR_NONE
 
-  END FUNCTION CheckICSpeciesBlock
+  END FUNCTION check_ic_species_block
 
 END MODULE deck_ic_species_block

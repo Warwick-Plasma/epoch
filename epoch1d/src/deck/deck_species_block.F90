@@ -9,129 +9,129 @@ MODULE deck_species_block
 
   SAVE
 
-  INTEGER :: SpeciesLoaded
+  INTEGER :: species_loaded
 
 CONTAINS
 
 
 
-  FUNCTION HandleSpeciesDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    CHARACTER(LEN=EntryLength) :: Part1
-    INTEGER :: Part2
-    INTEGER :: HandleSpeciesDeck
+  FUNCTION handle_species_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    CHARACTER(len=string_length) :: part1
+    INTEGER :: part2
+    INTEGER :: handle_species_deck
     INTEGER :: partswitch
-    LOGICAL :: Handled
+    LOGICAL :: handled
 
-    HandleSpeciesDeck=ERR_NONE 
-    IF (Value .EQ. blank) RETURN
-    HandleSpeciesDeck=ERR_UNKNOWN_ELEMENT
+    handle_species_deck=ERR_NONE 
+    IF (value .EQ. blank) RETURN
+    handle_species_deck=ERR_UNKNOWN_ELEMENT
 
-    Handled=.FALSE.
-    IF (StrCmp(Element,"n_species")) THEN
-       nspecies=AsInteger(Value,HandleSpeciesDeck)
-       IF (nspecies .GT. 0) THEN
-          IF (Rank .EQ. 0) PRINT '("Code running with ",i2," species")',nspecies
-          CALL Setup_Species
+    handled=.FALSE.
+    IF (str_cmp(element,"n_species")) THEN
+       n_species=as_integer(value,handle_species_deck)
+       IF (n_species .GT. 0) THEN
+          IF (rank .EQ. 0) PRINT '("Code running with ",i2," species")',n_species
+          CALL setup_species
        ENDIF
-       HandleSpeciesDeck=ERR_NONE
-       Handled=.TRUE.
+       handle_species_deck=ERR_NONE
+       handled=.TRUE.
     ENDIF
 
-    IF (nspecies .LE. 0) THEN
+    IF (n_species .LE. 0) THEN
        IF (rank .EQ. 0) THEN
           PRINT *,"Invalid number of species specified"
        ENDIF
-       HandleSpeciesDeck=ERR_BAD_VALUE
+       handle_species_deck=ERR_BAD_VALUE
     ENDIF
 
-    IF (.NOT. ASSOCIATED(ParticleSpecies)) THEN
-       Extended_Error_String="n_species"
+    IF (.NOT. ASSOCIATED(particle_species)) THEN
+       extended_error_string="n_species"
        IF (rank .EQ. 0) THEN
           PRINT *,"Attempting to set species data before setting n_species"
        ENDIF
-       HandleSpeciesDeck=ERR_REQUIRED_ELEMENT_NOT_SET
+       handle_species_deck=ERR_REQUIRED_ELEMENT_NOT_SET
        RETURN
     ENDIF
-    IF (Handled) RETURN
+    IF (handled) RETURN
 
-    CALL SplitOffInt(Element,Part1,Part2,HandleSpeciesDeck)
+    CALL split_off_int(element,part1,part2,handle_species_deck)
 
-    IF (Part2 .LT. 1 .OR. Part2 .GT. nspecies) THEN
-       IF (Rank .EQ. 0) PRINT '("Ignoring attempt to set property ",a," for non existent species ",i2)',TRIM(ADJUSTL(Part1)),Part2
-       HandleSpeciesDeck=ERR_NONE
+    IF (part2 .LT. 1 .OR. part2 .GT. n_species) THEN
+       IF (rank .EQ. 0) PRINT '("Ignoring attempt to set property ",a," for non existent species ",i2)',TRIM(ADJUSTL(part1)),part2
+       handle_species_deck=ERR_NONE
        RETURN
     ENDIF
 
     partswitch=0
-    IF (StrCmp(Part1,"name")) THEN
-       ParticleSpecies(Part2)%Name = TRIM(Value)
-       IF (rank .EQ. 0) PRINT '("Name of species ",i2," is ",a)',Part2,TRIM(Value)
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"name")) THEN
+       particle_species(part2)%name = TRIM(value)
+       IF (rank .EQ. 0) PRINT '("Name of species ",i2," is ",a)',part2,TRIM(value)
+       handle_species_deck=ERR_NONE
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"mass")) THEN
-       HandleSpeciesDeck=ERR_NONE
-       ParticleSpecies(Part2)%Mass=AsReal(Value,HandleSpeciesDeck)*M0
+    IF (str_cmp(part1,"mass")) THEN
+       handle_species_deck=ERR_NONE
+       particle_species(part2)%mass=as_real(value,handle_species_deck)*m0
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"charge")) THEN
-       HandleSpeciesDeck=ERR_NONE
-       ParticleSpecies(Part2)%Charge=AsReal(Value,HandleSpeciesDeck)*Q0
+    IF (str_cmp(part1,"charge")) THEN
+       handle_species_deck=ERR_NONE
+       particle_species(part2)%charge=as_real(value,handle_species_deck)*q0
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"frac") .OR. StrCmp(Part1,"fraction")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"frac") .OR. str_cmp(part1,"fraction")) THEN
+       handle_species_deck=ERR_NONE
        IF (npart_global .GE. 0) THEN
-          ParticleSpecies(Part2)%Count=AsReal(Value,HandleSpeciesDeck)*npart_global
+          particle_species(part2)%count=as_real(value,handle_species_deck)*npart_global
        ELSE
-          Extended_Error_String="npart"
-          HandleSpeciesDeck=ERR_REQUIRED_ELEMENT_NOT_SET
+          extended_error_string="npart"
+          handle_species_deck=ERR_REQUIRED_ELEMENT_NOT_SET
        ENDIF
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"npart")) THEN
-       HandleSpeciesDeck=ERR_NONE
-       ParticleSpecies(Part2)%Count=AsLongInteger(Value,HandleSpeciesDeck)
+    IF (str_cmp(part1,"npart")) THEN
+       handle_species_deck=ERR_NONE
+       particle_species(part2)%count=as_long_integer(value,handle_species_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"dump")) THEN
-       HandleSpeciesDeck=ERR_NONE
-       ParticleSpecies(Part2)%Dump=AsLogical(Value,HandleSpeciesDeck)
+    IF (str_cmp(part1,"dump")) THEN
+       handle_species_deck=ERR_NONE
+       particle_species(part2)%dump=as_logical(value,handle_species_deck)
        RETURN
     ENDIF
     !*************************************************************
     !This section sets properties for tracer particles
     !*************************************************************
-    IF(StrCmp(Part1,"tracer")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF(str_cmp(part1,"tracer")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef TRACER_PARTICLES
-       ParticleSpecies(Part2)%Tracer=AsLogical(Value,HandleSpeciesDeck)
+       particle_species(part2)%tracer=as_logical(value,handle_species_deck)
 #else
-       HandleSpeciesDeck=ERR_PP_OPTIONS_WRONG
-       Extended_Error_String="-DTRACER_PARTICLES"
+       handle_species_deck=ERR_PP_OPTIONS_WRONG
+       extended_error_string="-DTRACER_PARTICLES"
 #endif
     ENDIF
     !*************************************************************
     !This section sets properties for particle splitting
     !*************************************************************
-    IF (StrCmp(Part1,"split")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"split")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-       ParticleSpecies(Part2)%Split=AsLogical(Value,HandleSpeciesDeck)
+       particle_species(part2)%split=as_logical(value,handle_species_deck)
 #else
-       HandleSpeciesDeck=ERR_PP_OPTIONS_WRONG
-       Extended_Error_String="-DSPLIT_PARTICLES_AFTER_PUSH"
+       handle_species_deck=ERR_PP_OPTIONS_WRONG
+       extended_error_string="-DSPLIT_PARTICLES_AFTER_PUSH"
 #endif
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"npart_max")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"npart_max")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-       ParticleSpecies(Part2)%nPart_Max=AsLongInteger(Value,HandleSpeciesDeck)
+       particle_species(part2)%npart_max=as_long_integer(value,handle_species_deck)
 #else
-       HandleSpeciesDeck=ERR_PP_OPTIONS_WRONG
-       Extended_Error_String="-DSPLIT_PARTICLES_AFTER_PUSH"
+       handle_species_deck=ERR_PP_OPTIONS_WRONG
+       extended_error_string="-DSPLIT_PARTICLES_AFTER_PUSH"
 #endif
        RETURN
     ENDIF
@@ -140,43 +140,43 @@ CONTAINS
     !*************************************************************
     !This section sets properties for ionisation
     !*************************************************************
-    IF (StrCmp(Part1,"ionise")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"ionise")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef PART_IONISE
-       ParticleSpecies(Part2)%ionise=AsLogical(Value,HandleSpeciesDeck)
+       particle_species(part2)%ionise=as_logical(value,handle_species_deck)
 #else
-       HandleSpeciesDeck=ERR_PP_OPTIONS_WRONG
-       Extended_Error_String="-DPART_IONISE"
+       handle_species_deck=ERR_PP_OPTIONS_WRONG
+       extended_error_string="-DPART_IONISE"
 #endif
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"ionise_to_species")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"ionise_to_species")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef PART_IONISE
-       ParticleSpecies(Part2)%ionise_to_species=AsInteger(Value,HandleSpeciesDeck)
+       particle_species(part2)%ionise_to_species=as_integer(value,handle_species_deck)
 #else
-       HandleSpeciesDeck=ERR_PP_OPTIONS_WRONG
-       Extended_Error_String="-DPART_IONISE"
+       handle_species_deck=ERR_PP_OPTIONS_WRONG
+       extended_error_string="-DPART_IONISE"
 #endif
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"release_species_on_ionise")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"release_species_on_ionise")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef PART_IONISE
-       ParticleSpecies(Part2)%release_species=AsInteger(Value,HandleSpeciesDeck)
+       particle_species(part2)%release_species=as_integer(value,handle_species_deck)
 #else
-       HandleSpeciesDeck=ERR_PP_OPTIONS_WRONG
-       Extended_Error_String="-DPART_IONISE"
+       handle_species_deck=ERR_PP_OPTIONS_WRONG
+       extended_error_string="-DPART_IONISE"
 #endif
        RETURN
     ENDIF
-    IF (StrCmp(Part1,"ionisation_energy")) THEN
-       HandleSpeciesDeck=ERR_NONE
+    IF (str_cmp(part1,"ionisation_energy")) THEN
+       handle_species_deck=ERR_NONE
 #ifdef PART_IONISE
-       ParticleSpecies(Part2)%ionisation_energy=AsReal(Value,HandleSpeciesDeck)
+       particle_species(part2)%ionisation_energy=as_real(value,handle_species_deck)
 #else
-       HandleSpeciesDeck=ERR_PP_OPTIONS_WRONG
-       Extended_Error_String="-DPART_IONISE"
+       handle_species_deck=ERR_PP_OPTIONS_WRONG
+       extended_error_string="-DPART_IONISE"
 #endif
        RETURN
     ENDIF
@@ -184,22 +184,15 @@ CONTAINS
 
 
 
-  END FUNCTION HandleSpeciesDeck
+  END FUNCTION handle_species_deck
 
-  FUNCTION CheckSpeciesBlock()
+  FUNCTION check_species_block()
 
-    INTEGER :: CheckSpeciesBlock
+    INTEGER :: check_species_block
 
-!!$    DO iSpecies=1,nSpecies
-!!$       IF (StrCmp(ParticleSpecies(iSpecies)%name,blank)) THEN
-!!$          CheckSpeciesBlock=ERR_MISSING_ELEMENTS
-!!$       ENDIF
-!!$    ENDDO
+    !Should do error checking but isn't really necessary at the moment
+    check_species_block=ERR_NONE
 
-    !Should do error checking but can't be bothered at the moment
-    CheckSpeciesBlock=ERR_NONE
-
-  END FUNCTION CheckSpeciesBlock
-
+  END FUNCTION check_species_block
 
 END MODULE deck_species_block

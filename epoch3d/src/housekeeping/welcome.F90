@@ -17,9 +17,9 @@ CONTAINS
     CHARACTER(LOGOX*2+1) :: LOGOSTRING
     CHARACTER,DIMENSION(5) :: LOGOELS
     INTEGER :: ix,iy
-    CHARACTER(LEN=8) :: Ver,Rev
+    CHARACTER(len=8) :: ver,rev
 
-    IF (rank .NE. 0) return
+    IF (rank .NE. 0) RETURN
 
     LOGOELS=(/' ','@'," "," "," "/)
 
@@ -46,9 +46,9 @@ CONTAINS
        WRITE(*,*),LOGOSTRING
     ENDDO
     WRITE(*,*) ""
-    CALL IntegerAsString(Version,Ver)
-    CALL IntegerAsString(Revision,Rev)
-    WRITE(*,*) "Welcome to EPOCH3D Version ",TRIM(Ver),".",TRIM(ADJUSTL(Rev)),"ALPHA"
+    CALL integer_as_string(version,ver)
+    CALL integer_as_string(revision,rev)
+    WRITE(*,*) "Welcome to EPOCH3D Version ",TRIM(ver),".",TRIM(ADJUSTL(rev)),"ALPHA"
     WRITE(*,*) ""
 
     CALL compiler_directives
@@ -108,9 +108,9 @@ CONTAINS
   END SUBROUTINE compiler_directives
 
   SUBROUTINE mpi_status
-    CHARACTER(LEN=8) :: String
+    CHARACTER(len=8) :: string
 
-    CALL IntegerAsString(nproc,String)
+    CALL integer_as_string(nproc,string)
 
     WRITE(*,*) "Code is running on ",TRIM(string)," processing elements"
     WRITE(*,*) ""

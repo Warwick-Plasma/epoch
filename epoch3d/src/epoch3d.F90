@@ -12,7 +12,7 @@ PROGRAM pic
 
   USE shared_data
   USE setup
-  USE initial_conditions
+  USE ic_module
   USE deck
   USE welcome
   USE diagnostics
@@ -39,72 +39,72 @@ PROGRAM pic
   CALL setup_partlists !partlist.f90
   CALL mpi_minimal_init !mpi_routines.f90
   CALL welcome_message !welcome.f90
-  CALL RegisterObjects !custom.f90
-  Deck_State = DS_DECK
+  CALL register_objects !custom.f90
+  deck_state = DS_DECK
 	!Ask for output directory name on rank 0
   IF (rank .EQ. 0) THEN
      PRINT *,"Specify output directory"
      READ(*,*) data_dir
   ENDIF
   CALL MPI_BCAST(data_dir,64,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)
-  CALL Read_Deck("input.deck",.TRUE.)
-  CALL Setup_Particle_Boundaries !boundary.f90
+  CALL read_deck("input.deck",.TRUE.)
+  CALL setup_particle_boundaries !boundary.f90
   CALL mpi_initialise !mpi_routines.f90
-  CALL After_Control !setup.f90
+  CALL after_control !setup.f90
   CALL open_files    !setup.f90
 
   !If the user has specified extended IO options then read the file
   IF (use_extended_io) THEN
-     Deck_State = DS_EIO
-     CALL Read_Deck(TRIM(extended_io_file),.TRUE.)
+     deck_state = DS_EIO
+     CALL read_deck(TRIM(extended_io_file),.TRUE.)
   ENDIF
 
-  !Restart flag is set
+  !restart flag is set
   IF (IAND(ictype,IC_RESTART) .NE. 0) THEN
-     CALL restart_data    !restart from data in file save.data          
+     CALL restart_data    !restart from data in file SAVE.data          
      IF (rank .EQ. 0) PRINT *,"Load from restart dump OK"
      output_file=restart_snapshot
   ELSE
      !Using autoloader
      IF (IOR(ictype,IC_AUTOLOAD) .NE. 0) THEN
-        CALL AllocateIC
+        CALL allocate_ic
      ENDIF
      !Early internal initialisation
      IF (IAND(ictype,IC_EARLY_INTERNAL) .NE. 0) THEN
-        CALL IC_Early  !define initial profiles
+        CALL ic_early  !define initial profiles
      ENDIF
      !External initialisation
      IF (IAND(ictype,IC_EXTERNAL) .NE. 0) THEN
-        Deck_State=DS_IC
-        CALL Read_Deck(icfile%value,.TRUE.)
+        deck_state=DS_IC
+        CALL read_deck(icfile%value,.TRUE.)
      ENDIF
      !Late internal initialisation
      IF (IAND(ictype,IC_LATE_INTERNAL) .NE. 0) THEN
-        CALL IC_Late    !define initial profiles
+        CALL ic_late    !define initial profiles
      ENDIF
-     !Autoload particles
+     !auto_load particles
      IF (IOR(ictype,IC_AUTOLOAD) .NE. 0) THEN
-        CALL Autoload
-        CALL DeallocateIC
+        CALL auto_load
+        CALL deallocate_ic
      ENDIF
      time = 0.0_num
      output_file=0
   END IF
 
-  CALL Distribute_Particles
-  IF (.NOT. Neutral_Background) CALL Do_Gauss
-  CALL Balance_Workload(.TRUE.)
+  CALL distribute_particles
+  IF (.NOT. neutral_background) CALL do_gauss
+  CALL balance_workload(.TRUE.)
 
   IF (IAND(ictype,IC_MANUAL) .NE. 0) THEN
-     CALL ManualLoad
-     CALL Distribute_Particles
-     !.TRUE. to override balance fraction check
-     CALL Balance_Workload(.TRUE.)
+     CALL manual_load
+     CALL distribute_particles
+     !.TRUE. to over_ride balance fraction check
+     CALL balance_workload(.TRUE.)
   ENDIF
 
-  CALL Particle_Bcs
-  CALL EField_BCS
-  CALL BField_BCS(.FALSE.)
+  CALL particle_bcs
+  CALL efield_bcs
+  CALL bfield_bcs(.FALSE.)
 
   CALL MPI_BARRIER(comm,errcode)
 
@@ -125,24 +125,24 @@ PROGRAM pic
      CALL push_particles
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
      !After this line, the particles can be accessed on a cell by cell basis
-     !Using the ParticleFamily%SecondaryList property
-     CALL Reorder_Particles_to_grid
+     !Using the particle_family%secondary_list property
+     CALL reorder_particles_to_grid
      !CALL Collisions  !An example, no collision operator yet
-     CALL Split_Particles !Early beta version of particle splitting operator
-     CALL Reattach_Particles_to_mainlist
+     CALL split_particles !Early beta version of particle splitting operator
+     CALL reattach_particles_to_mainlist
 #endif
      CALL update_eb_fields_final
      CALL output_routines(i)
      time=time+dt
-     IF (DLB) THEN
+     IF (dlb) THEN
         !.FALSE. this time to use load balancing threshold
-        CALL Balance_Workload(.FALSE.)
+        CALL balance_workload(.FALSE.)
      ENDIF
      IF (move_window .AND. .NOT. window_started .AND. time .GE. window_start_time) THEN
         xbc_left=xbc_left_after_move
         xbc_right=xbc_right_after_move
-        CALL Setup_Particle_Boundaries
-        CALL Setup_Communicator
+        CALL setup_particle_boundaries
+        CALL setup_communicator
         window_started=.TRUE.
      ENDIF
      !If we have a moving window then update the window position
@@ -151,18 +151,18 @@ PROGRAM pic
         !Allow for posibility of having jumped two cells at once
         IF (FLOOR(window_shift_fraction) .GE. 1.0_num) THEN
            IF (use_offset_grid) THEN
-              Window_shift(1)=Window_Shift(1)+REAL(FLOOR(window_shift_fraction),num)*dx
+              window_shift(1)=window_shift(1)+REAL(FLOOR(window_shift_fraction),num)*dx
            ENDIF
-           CALL Shift_Window
+           CALL shift_window
            window_shift_fraction=window_shift_fraction-REAL(FLOOR(window_shift_fraction),num)
-           CALL Particle_BCS
+           CALL particle_bcs
         ENDIF
      ENDIF
-     !This section ensures that the particle count for the ParticleSpecies objects is accurate
+     !This section ensures that the particle count for the particle_species objects is accurate
      !This makes some things easier, but increases communication
 #ifdef PARTICLE_COUNT_UPDATE
-     DO iSpecies=1,nSpecies
-        CALL MPI_ALLREDUCE(ParticleSpecies(iSpecies)%AttachedList%Count,ParticleSpecies(iSpecies)%Count&
+     DO ispecies=1,n_species
+        CALL MPI_ALLREDUCE(particle_species(ispecies)%attached_list%count,particle_species(ispecies)%count&
              ,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
      ENDDO
 #endif

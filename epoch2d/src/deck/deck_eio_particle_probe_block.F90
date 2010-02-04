@@ -6,95 +6,95 @@ MODULE deck_eio_particle_probe_block
 #ifndef PARTICLE_PROBES
 CONTAINS
 
-  SUBROUTINE Probe_Deck_Dummy
-  END SUBROUTINE Probe_Deck_Dummy
+  SUBROUTINE probe_deck_dummy
+  END SUBROUTINE probe_deck_dummy
 #else
 
   SAVE
-  TYPE(Particle_Probe),POINTER :: Working_Probe
+  TYPE(particle_probe),POINTER :: working_probe
 
 CONTAINS
 
-  SUBROUTINE Probe_Block_Start
+  SUBROUTINE probe_block_start
 
-    ALLOCATE(Working_Probe)
-    CALL Init_Probe(Working_Probe)
+    ALLOCATE(working_probe)
+    CALL init_probe(working_probe)
 
-  END SUBROUTINE Probe_Block_Start
+  END SUBROUTINE probe_block_start
 
-  SUBROUTINE Probe_Block_End
+  SUBROUTINE probe_block_end
     !Check whether or not the probe is valid
     IF (working_probe%vertex_bottom(2)==working_probe%vertex_top(2)) THEN
-       IF (rank .EQ. 0) PRINT*, "Probe y1 and y2 must be different. Probe ",TRIM(working_probe%name)," abandoned."
-       DEALLOCATE(Working_probe)
+       IF (rank .EQ. 0) PRINT*, "Probe y1 and y2 must be different. probe ",TRIM(working_probe%name)," abandoned."
+       DEALLOCATE(working_probe)
        NULLIFY(working_probe)
     ELSE
-       CALL Attach_Probe(Working_Probe)
+       CALL attach_probe(working_probe)
     ENDIF
 
-  END SUBROUTINE Probe_Block_End
+  END SUBROUTINE probe_block_end
 
-  FUNCTION HandleProbeDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER :: HandleProbeDeck, iSpecies
+  FUNCTION handle_probe_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER :: handle_probe_deck, ispecies
 
-    HandleProbeDeck=ERR_NONE
+    handle_probe_deck=ERR_NONE
 
-    IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
+    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     ! get particle probe diagnostics (rolling total of all particles
     ! which pass through a given region of real space (defined by the line between two
     ! points in 2D).
-    IF (StrCmp(Element,"dump")) THEN
-       working_probe%dump=AsInteger(Value,HandleProbeDeck)
+    IF (str_cmp(element,"dump")) THEN
+       working_probe%dump=as_integer(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"x1")) THEN
-       working_probe%vertex_bottom(1)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"x1")) THEN
+       working_probe%vertex_bottom(1)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"y1")) THEN
-       working_probe%vertex_bottom(2)=AsReal(Value,HandleProbeDeck)
-       RETURN
-    ENDIF
-
-    IF (StrCmp(Element,"x2")) THEN
-       working_probe%vertex_top(1)=AsReal(Value,HandleProbeDeck)
-       RETURN
-    ENDIF
-    IF (StrCmp(Element,"y2")) THEN
-       working_probe%vertex_top(2)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"y1")) THEN
+       working_probe%vertex_bottom(2)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"probe_species")) THEN
-       iSpecies=AsInteger(Value,HandleProbeDeck)
-       IF (HandleProbeDeck .EQ. ERR_NONE) THEN
-          IF (iSpecies .GT. 0 .AND. iSpecies .LE. nSpecies) THEN
-             working_probe%probe_species=>ParticleSpecies(iSpecies)
+    IF (str_cmp(element,"x2")) THEN
+       working_probe%vertex_top(1)=as_real(value,handle_probe_deck)
+       RETURN
+    ENDIF
+    IF (str_cmp(element,"y2")) THEN
+       working_probe%vertex_top(2)=as_real(value,handle_probe_deck)
+       RETURN
+    ENDIF
+
+    IF (str_cmp(element,"probe_species")) THEN
+       ispecies=as_integer(value,handle_probe_deck)
+       IF (handle_probe_deck .EQ. ERR_NONE) THEN
+          IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
+             working_probe%probe_species=>particle_species(ispecies)
           ELSE
-             IF (rank .EQ. 0) PRINT *,"Unable to attach probe to non existant species ",iSpecies
-             HandleProbeDeck=ERR_BAD_VALUE
+             IF (rank .EQ. 0) PRINT *,"Unable to attach probe to non existant species ",ispecies
+             handle_probe_deck=ERR_BAD_VALUE
           ENDIF
        ENDIF
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"ek_min")) THEN
-       working_probe%ek_min=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"ek_min")) THEN
+       working_probe%ek_min=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"ek_max")) THEN
-       working_probe%ek_max=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"ek_max")) THEN
+       working_probe%ek_max=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"name")) THEN
-       working_probe%name=TRIM(Value)
+    IF (str_cmp(element,"name")) THEN
+       working_probe%name=TRIM(value)
        RETURN
     ENDIF
-  END FUNCTION HandleProbeDeck
+  END FUNCTION handle_probe_deck
 
 #endif
 

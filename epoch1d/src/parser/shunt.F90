@@ -1,4 +1,4 @@
-MODULE Shunt
+MODULE shunt
 
   USE shared_parser_data
   USE shared_data
@@ -8,287 +8,284 @@ MODULE Shunt
 
   SAVE
 
-  TYPE(primitivestack):: dumper
+  TYPE(primitive_stack):: dumper
 
 CONTAINS
 
 
-  FUNCTION CharKind(Char)
+  FUNCTION char_kind(char)
 
-    CHARACTER,INTENT(IN) :: Char
+    CHARACTER,INTENT(IN) :: char
     INTEGER,PARAMETER :: NOPS=7
-    CHARACTER(len=NOPS) :: Operators="+-\/*^"
-    INTEGER :: CharKind,i
+    CHARACTER(len=NOPS) :: operators="+-\/*^"
+    INTEGER :: char_kind,i
     LOGICAL :: unary
 
-    CharKind=CHAR_UNKNOWN
+    char_kind=CHAR_UNKNOWN
 
     unary=(last_block_type .NE. PT_VARIABLE .AND. last_block_type .NE. PT_CONSTANT)
 
-    IF (Char .EQ. " " .OR. ICHAR(Char) .EQ. 32) CharKind=CHAR_SPACE
-    IF (Char >= "A" .AND. Char <= "z" .OR. Char .EQ. "_") CharKind=CHAR_ALPHA
-    IF (Char .EQ. "(" .OR. CHAR .EQ. ")" .OR. CHAR .EQ. ",") CharKind=CHAR_DELIMITER
+    IF (char .EQ. " " .OR. ICHAR(char) .EQ. 32) char_kind=CHAR_SPACE
+    IF (char >= "A" .AND. char <= "z" .OR. char .EQ. "_") char_kind=CHAR_ALPHA
+    IF (char .EQ. "(" .OR. char .EQ. ")" .OR. char .EQ. ",") char_kind=CHAR_DELIMITER
     DO i=1,NOPS
-       IF (Char .EQ. Operators(i:i)) CharKind=CHAR_OPCODE
+       IF (char .EQ. operators(i:i)) char_kind=CHAR_OPCODE
     ENDDO
-    !IF (Char >= "0" .AND. Char <= "9" .OR. Char .EQ. "." .OR. (Char .EQ. "-" .AND. unary)) CharKind=CHAR_NUMERIC
-  END FUNCTION CharKind
+  END FUNCTION char_kind
 
-  SUBROUTINE LoadBlock(name,block)
+  SUBROUTINE load_block(name,block)
 
     CHARACTER(len=*), INTENT(IN) :: name
-    TYPE(StackElement), INTENT(OUT) :: block
+    TYPE(stack_element), INTENT(OUT) :: block
     INTEGER :: work
-    REAL(num) :: Value
+    REAL(num) :: value
 
-    Block%type=PT_BAD
-    Block%Data=0
-    Block%NumericalData=0.0_num
+    block%ptype=PT_BAD
+    block%data=0
+    block%numerical_data=0.0_num
     work=0
 
-    IF (LEN(TRIM(name)) .EQ. 0) THEN
-       Block%Type=PT_NULL
-       Block%Data=0
-       Block%NumericalData=0.0_num
+    IF (len(TRIM(name)) .EQ. 0) THEN
+       block%ptype=PT_NULL
+       block%data=0
+       block%numerical_data=0.0_num
        RETURN
     ENDIF
 
-    work=AsConstant(name)
+    work=as_constant(name)
     IF (work .NE. 0) THEN
-       !Block is a named constant
-       Block%Type=PT_CONSTANT
-       Block%Data=work
+       !block is a named constant
+       block%ptype=PT_CONSTANT
+       block%data=work
        RETURN
     ENDIF
 
-    work=AsDeferredExecutionObject(name)
+    work=as_deferred_execution_object(name)
     IF (work .NE. 0) THEN
-       !Block is a deferred execution object
-       Block%Type=PT_DEFERRED_EXECUTION_OBJECT
-       Block%Data=work
+       !block is a deferred execution object
+       block%ptype=PT_DEFERRED_EXECUTION_OBJECT
+       block%data=work
        RETURN
     ENDIF
 
-    work=AsOperator(name)
+    work=as_operator(name)
     IF (work .NE. 0) THEN
-       !Block is an operator
-       Block%Type=PT_OPERATOR
-       Block%Data=work
+       !block is an operator
+       block%ptype=PT_OPERATOR
+       block%data=work
        RETURN
     ENDIF
 
-    work=AsFunction(name)
+    work=as_function(name)
     IF (work .NE. 0) THEN
-       !Block is a function
-       Block%Type=PT_FUNCTION
-       Block%Data=work 
+       !block is a function
+       block%ptype=PT_FUNCTION
+       block%data=work 
        RETURN
     ENDIF
 
-    work=AsParenthesis(name)
+    work=as_parenthesis(name)
     IF (work .NE. 0) THEN
-       !Block is a parenthesis
-       Block%Type=PT_PARENTHESIS
-       Block%Data=work
+       !block is a parenthesis
+       block%ptype=PT_PARENTHESIS
+       block%data=work
        RETURN
     ENDIF
 
-    IF (StrCmp(name,",")) THEN
-       Block%Type=PT_SEPARATOR
-       Block%Data=0
-       Block%NumericalData=0.0_num
+    IF (str_cmp(name,",")) THEN
+       block%ptype=PT_SEPARATOR
+       block%data=0
+       block%numerical_data=0.0_num
        RETURN
     ENDIF
 
-    Value=AsRealSimple(name,work)
+    value=as_real_simple(name,work)
     IF (IAND(work,ERR_BAD_VALUE) .EQ. 0) THEN
-       !Block is a simple variable
-       Block%Type=PT_VARIABLE
-       Block%Data=0
-       Block%NumericalData=Value
+       !block is a simple variable
+       block%ptype=PT_VARIABLE
+       block%data=0
+       block%numerical_data=value
     ENDIF
 
-  END SUBROUTINE LoadBlock
+  END SUBROUTINE load_block
 
-  FUNCTION AsParenthesis(name)
+  FUNCTION as_parenthesis(name)
     CHARACTER(len=*), INTENT(IN) :: name
-    INTEGER :: AsParenthesis
+    INTEGER :: as_parenthesis
 
-    AsParenthesis=0
+    as_parenthesis=0
 
-    IF (StrCmp(name,"(")) THEN
-       AsParenthesis=PAREN_LEFT_BRACKET
+    IF (str_cmp(name,"(")) THEN
+       as_parenthesis=PAREN_LEFT_BRACKET
     ENDIF
 
-    IF (StrCmp(name,")")) THEN
-       AsParenthesis=PAREN_RIGHT_BRACKET
+    IF (str_cmp(name,")")) THEN
+       as_parenthesis=PAREN_RIGHT_BRACKET
     ENDIF
-  END FUNCTION AsParenthesis
+  END FUNCTION as_parenthesis
 
-  SUBROUTINE PushToStack(Stack,Value)
+  SUBROUTINE push_to_stack(stack,value)
 
-    TYPE(StackElement),INTENT(IN) :: Value
-    TYPE(PrimitiveStack),INTENT(INOUT) :: Stack
+    TYPE(stack_element),INTENT(IN) :: value
+    TYPE(primitive_stack),INTENT(INOUT) :: stack
 
-    Stack%StackPoint=Stack%StackPoint+1
-    Stack%Data(Stack%StackPoint)=Value   
+    stack%stack_point=stack%stack_point+1
+    stack%data(stack%stack_point)=value   
 
-  END SUBROUTINE PushToStack
+  END SUBROUTINE push_to_stack
 
-  SUBROUTINE PopToStack(Stack1,Stack2)
+  SUBROUTINE pop_to_stack(stack1,stack2)
 
-    TYPE(PrimitiveStack),INTENT(INOUT) :: Stack1,Stack2
+    TYPE(primitive_stack),INTENT(INOUT) :: stack1,stack2
 
-    Stack2%StackPoint=Stack2%StackPoint+1
-    Stack2%Data(Stack2%StackPoint)=Stack1%Data(Stack1%StackPoint)
-    Stack1%StackPoint=Stack1%StackPoint-1
+    stack2%stack_point=stack2%stack_point+1
+    stack2%data(stack2%stack_point)=stack1%data(stack1%stack_point)
+    stack1%stack_point=stack1%stack_point-1
 
-  END SUBROUTINE PopToStack
+  END SUBROUTINE pop_to_stack
 
-  SUBROUTINE PopToNull(Stack)
+  SUBROUTINE pop_to_null(stack)
 
-    TYPE(PrimitiveStack),INTENT(INOUT) :: Stack
+    TYPE(primitive_stack),INTENT(INOUT) :: stack
 
-    Stack%StackPoint=Stack%StackPoint-1
+    stack%stack_point=stack%stack_point-1
 
-  END SUBROUTINE PopToNull
+  END SUBROUTINE pop_to_null
 
-  SUBROUTINE PopFromStack(Stack,Value)
+  SUBROUTINE pop_from_stack(stack,value)
 
-    TYPE(StackElement),INTENT(OUT) :: Value
-    TYPE(PrimitiveStack),INTENT(INOUT) :: Stack
+    TYPE(stack_element),INTENT(OUT) :: value
+    TYPE(primitive_stack),INTENT(INOUT) :: stack
 
-    Value=Stack%Data(Stack%StackPoint)
-    Stack%StackPoint=Stack%StackPoint-1
+    value=stack%data(stack%stack_point)
+    stack%stack_point=stack%stack_point-1
 
-  END SUBROUTINE PopFromStack
+  END SUBROUTINE pop_from_stack
 
 
-  SUBROUTINE Stack_Snoop(stack,value,offset)
+  SUBROUTINE stack_snoop(stack,value,offset)
 
-    TYPE(PrimitiveStack),INTENT(INOUT) :: Stack
-    TYPE(StackElement),INTENT(OUT) :: Value
+    TYPE(primitive_stack),INTENT(INOUT) :: stack
+    TYPE(stack_element),INTENT(OUT) :: value
     INTEGER,INTENT(IN) :: offset
 
-    IF (Stack%StackPoint-offset .LE. 0) THEN
-       PRINT *,"Unable to snoop stack",Stack%stackpoint
+    IF (stack%stack_point-offset .LE. 0) THEN
+       PRINT *,"Unable to snoop stack",stack%stack_point
        STOP
     ENDIF
 
-    Value=Stack%Data(Stack%StackPoint-offset)
+    value=stack%data(stack%stack_point-offset)
 
-  END SUBROUTINE Stack_Snoop
+  END SUBROUTINE stack_snoop
 
-  SUBROUTINE Tokenize(Expression,output,ERR)
+  SUBROUTINE tokenize(expression,output,err)
 
-    CHARACTER(len=*),INTENT(IN) :: Expression
-    TYPE(primitivestack), INTENT(INOUT) :: output
-    INTEGER,INTENT(INOUT) :: ERR
+    CHARACTER(len=*),INTENT(IN) :: expression
+    TYPE(primitive_stack), INTENT(INOUT) :: output
+    INTEGER,INTENT(INOUT) :: err
 
 #ifndef RPN_DECK
-    CALL Tokenize_Infix(Expression,output,ERR)
+    CALL tokenize_infix(expression,output,err)
 #else
-    CALL Tokenize_RPN(Expression,output,ERR)
+    CALL tokenize_rpn(expression,output,err)
 #endif
 
-  END SUBROUTINE Tokenize
+  END SUBROUTINE tokenize
 
-  SUBROUTINE Tokenize_Infix(Expression,output,ERR)
+  SUBROUTINE tokenize_infix(expression,output,err)
 
     !This subroutine tokenizes input in normal infix maths notation
     !It uses Dijkstra's shunting yard algorithm to convert to RPN
 
-    CHARACTER(len=*),INTENT(IN) :: Expression
-    TYPE(primitivestack), INTENT(INOUT) :: output
-    INTEGER,INTENT(INOUT) :: ERR
-    TYPE(Deferred_Execution_Object) :: DEO
+    CHARACTER(len=*),INTENT(IN) :: expression
+    TYPE(primitive_stack), INTENT(INOUT) :: output
+    INTEGER,INTENT(INOUT) :: err
+    TYPE(deferred_execution_object) :: deo
 
     CHARACTER(len=500) :: current
-    INTEGER :: Current_Type,CurrentPointer,i,Type,iPoint
+    INTEGER :: current_type,current_pointer,i,ptype,ipoint
 
-    TYPE(PrimitiveStack) :: stack
-    TYPE(StackElement) :: Block,Block2
+    TYPE(primitive_stack) :: stack
+    TYPE(stack_element) :: block,block2
 
-    stack%StackPoint=0
+    stack%stack_point=0
 
-    Current(:)=" "
-    Current(1:1)=Expression(1:1)
-    CurrentPointer=2
-    Current_Type=CharKind(Expression(1:1))
+    current(:)=" "
+    current(1:1)=expression(1:1)
+    current_pointer=2
+    current_type=char_kind(expression(1:1))
 
-    ERR=ERR_NONE
+    err=ERR_NONE
 
     last_block_type=PT_NULL
 
-    DO i=2,LEN(Expression)
-       Type=CharKind(Expression(i:i))
-       IF (Type .EQ. Current_Type .AND. .NOT. (Type .EQ. CHAR_DELIMITER)) THEN
-          Current(CurrentPointer:CurrentPointer) = Expression(i:i)
-          CurrentPointer=CurrentPointer+1
+    DO i=2,len(expression)
+       ptype=char_kind(expression(i:i))
+       IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. CHAR_DELIMITER)) THEN
+          current(current_pointer:current_pointer) = expression(i:i)
+          current_pointer=current_pointer+1
        ELSE
-          IF (ICHAR(Current(1:1)) .NE. 0) THEN
+          IF (ICHAR(current(1:1)) .NE. 0) THEN
              !Populate the block
-             CALL LoadBlock(Current,Block)
+             CALL load_block(current,block)
 #ifdef PARSER_DEBUG
-             Block%Text=TRIM(Current)
+             block%text=TRIM(current)
 #endif
-!!$             PRINT *,Block%Type,TRIM(Current)
-             IF (Block%Type .EQ. PT_BAD) THEN
+             IF (block%ptype .EQ. PT_BAD) THEN
                 IF (rank .EQ. 0) THEN
-                   PRINT *,"Unable to parse block with text ",TRIM(Current)
+                   PRINT *,"Unable to parse block with text ",TRIM(current)
                 ENDIF
-                Err=ERR_BAD_VALUE
+                err=ERR_BAD_VALUE
                 RETURN
              ENDIF
-             IF (Block%Type .EQ. PT_DEFERRED_EXECUTION_OBJECT) THEN
-                DEO=Deferred_Objects(Block%Data)
-                DO iPoint=1,DEO%Execution_Stream%stackpoint
-                   CALL PushToStack(output,DEO%Execution_Stream%Data(iPoint))
+             IF (block%ptype .EQ. PT_DEFERRED_EXECUTION_OBJECT) THEN
+                deo=deferred_objects(block%data)
+                DO ipoint=1,deo%execution_stream%stack_point
+                   CALL push_to_stack(output,deo%execution_stream%data(ipoint))
                 ENDDO
              ENDIF
 
-             IF (Block%Type .NE. PT_PARENTHESIS .AND. Block%Type .NE. PT_NULL) THEN
-                last_block_type=Block%Type
-!!$                IF (DEBUG_MODE) PRINT *,"Setting",Block%Type
+             IF (block%ptype .NE. PT_PARENTHESIS .AND. block%ptype .NE. PT_NULL) THEN
+                last_block_type=block%ptype
              ENDIF
 
-             IF (Block%Type .EQ. PT_VARIABLE .OR. Block%Type .EQ. PT_CONSTANT) THEN
-                CALL PushToStack(output,Block)
+             IF (block%ptype .EQ. PT_VARIABLE .OR. block%ptype .EQ. PT_CONSTANT) THEN
+                CALL push_to_stack(output,block)
              ENDIF
 
-             IF (Block%Type .EQ. PT_PARENTHESIS) THEN
-                IF (Block%Data .EQ. PAREN_LEFT_BRACKET) THEN
-                   CALL PushToStack(stack,block)
+             IF (block%ptype .EQ. PT_PARENTHESIS) THEN
+                IF (block%data .EQ. PAREN_LEFT_BRACKET) THEN
+                   CALL push_to_stack(stack,block)
                 ELSE
                    DO
-                      CALL Stack_Snoop(stack,block2,0)
-                      IF (block2%type .EQ. PT_PARENTHESIS .AND. block2%Data .EQ. PAREN_LEFT_BRACKET) THEN
-                         CALL PopToNull(stack)
+                      CALL stack_snoop(stack,block2,0)
+                      IF (block2%ptype .EQ. PT_PARENTHESIS .AND. block2%data .EQ. PAREN_LEFT_BRACKET) THEN
+                         CALL pop_to_null(stack)
                          !If stack isn't empty then check for function
-                         IF (stack%stackpoint .NE. 0) THEN
-                            CALL Stack_Snoop(stack,block2,0)
-                            IF (block2%Type .EQ. PT_FUNCTION) CALL PopToStack(stack,output)
+                         IF (stack%stack_point .NE. 0) THEN
+                            CALL stack_snoop(stack,block2,0)
+                            IF (block2%ptype .EQ. PT_FUNCTION) CALL pop_to_stack(stack,output)
                          ENDIF
                          EXIT
                       ELSE
-                         CALL PopToStack(stack,output)
+                         CALL pop_to_stack(stack,output)
                       ENDIF
                    ENDDO
                 ENDIF
              ENDIF
 
-             IF (Block%Type .EQ. PT_FUNCTION) THEN
+             IF (block%ptype .EQ. PT_FUNCTION) THEN
                 !Just push functions straight onto the stack
-                CALL PushToStack(stack,block)
+                CALL push_to_stack(stack,block)
              ENDIF
 
-             IF (Block%Type .EQ. PT_SEPARATOR) THEN
+             IF (block%ptype .EQ. PT_SEPARATOR) THEN
                 DO
-                   CALL Stack_Snoop(stack,block2,0)
-                   IF (block2%Type .NE. PT_PARENTHESIS) THEN
-                      CALL PopToStack(stack,output)
+                   CALL stack_snoop(stack,block2,0)
+                   IF (block2%ptype .NE. PT_PARENTHESIS) THEN
+                      CALL pop_to_stack(stack,output)
                    ELSE
-                      IF (block2%Data .NE. PAREN_LEFT_BRACKET) THEN
+                      IF (block2%data .NE. PAREN_LEFT_BRACKET) THEN
                          PRINT *,"Bad function expression"
                          STOP
                       ENDIF
@@ -297,35 +294,35 @@ CONTAINS
                 ENDDO
              ENDIF
 
-             IF (Block%Type .EQ. PT_OPERATOR) THEN
+             IF (block%ptype .EQ. PT_OPERATOR) THEN
                 DO
-                   IF(Stack%StackPoint .EQ. 0) THEN
-                      !Stack is empty, so just push operator onto stack and leave loop
-                      CALL PushToStack(stack,block)
+                   IF(stack%stack_point .EQ. 0) THEN
+                      !stack is empty, so just push operator onto stack and leave loop
+                      CALL push_to_stack(stack,block)
                       EXIT
                    ENDIF
-                   !Stack is not empty so check precedence etc.
-                   CALL Stack_Snoop(stack,block2,0)
-                   IF (block2%type .NE. PT_OPERATOR) THEN
+                   !stack is not empty so check precedence etc.
+                   CALL stack_snoop(stack,block2,0)
+                   IF (block2%ptype .NE. PT_OPERATOR) THEN
                       !Previous block is not an operator so push current operator to stack and leave loop
-                      CALL PushToStack(stack,block)
+                      CALL push_to_stack(stack,block)
                       EXIT
                    ELSE
-                      IF (OpCode_Assoc(Block%Data) .EQ. ASSOC_LA .OR. OpCode_Assoc(Block%Data) .EQ. ASSOC_A) THEN
+                      IF (opcode_assoc(block%data) .EQ. ASSOC_LA .OR. opcode_assoc(block%data) .EQ. ASSOC_A) THEN
                          !Operator is full associative or left associative
-                         IF (OpCode_Precedence(Block%Data) .LE. OpCode_Precedence(Block2%Data)) THEN
-                            CALL PopToStack(stack,output)
+                         IF (opcode_precedence(block%data) .LE. opcode_precedence(block2%data)) THEN
+                            CALL pop_to_stack(stack,output)
                             CYCLE
                          ELSE
-                            CALL PushToStack(stack,block)
+                            CALL push_to_stack(stack,block)
                             EXIT
                          ENDIF
                       ELSE
-                         IF (OpCode_Precedence(Block%Data) .LT. OpCode_Precedence(Block2%Data)) THEN
-                            CALL PopToStack(stack,output)
+                         IF (opcode_precedence(block%data) .LT. opcode_precedence(block2%data)) THEN
+                            CALL pop_to_stack(stack,output)
                             CYCLE
                          ELSE
-                            CALL PushToStack(stack,block)
+                            CALL push_to_stack(stack,block)
                             EXIT
                          ENDIF
                       ENDIF
@@ -334,108 +331,108 @@ CONTAINS
              ENDIF
 
           ENDIF
-          Current(:) =" "
-          CurrentPointer=2
-          Current(1:1) = Expression(i:i)
-          Current_Type=Type
+          current(:) =" "
+          current_pointer=2
+          current(1:1) = expression(i:i)
+          current_type=ptype
        ENDIF
     ENDDO
 
-    DO i=1,Stack%StackPoint
-       CALL PopToStack(Stack,output)
+    DO i=1,stack%stack_point
+       CALL pop_to_stack(stack,output)
     ENDDO
 
-  END SUBROUTINE Tokenize_Infix
+  END SUBROUTINE tokenize_infix
 
 
-  SUBROUTINE Tokenize_RPN(Expression,output,ERR)
+  SUBROUTINE tokenize_rpn(expression,output,err)
 
     !This routine tokenizes input which is already in Reverse Polish Notiation
 
-    CHARACTER(len=*),INTENT(IN) :: Expression
-    TYPE(primitivestack), INTENT(INOUT) :: output
-    TYPE(Deferred_Execution_Object) :: DEO
-    INTEGER,INTENT(INOUT) :: ERR
+    CHARACTER(len=*),INTENT(IN) :: expression
+    TYPE(primitive_stack), INTENT(INOUT) :: output
+    TYPE(deferred_execution_object) :: deo
+    INTEGER,INTENT(INOUT) :: err
 
     CHARACTER(len=500) :: current
-    INTEGER :: Current_Type,CurrentPointer,i,Type,iPoint
+    INTEGER :: current_type,current_pointer,i,ptype,ipoint
 
-    TYPE(PrimitiveStack) :: stack
-    TYPE(StackElement) :: Block
+    TYPE(primitive_stack) :: stack
+    TYPE(stack_element) :: block
 
-    stack%StackPoint=0
+    stack%stack_point=0
     last_block_type=PT_NULL
 
-    Current(:)=" "
-    Current(1:1)=Expression(1:1)
-    CurrentPointer=2
-    Current_Type=CharKind(Expression(1:1))
+    current(:)=" "
+    current(1:1)=expression(1:1)
+    current_pointer=2
+    current_type=char_kind(expression(1:1))
 
-    ERR=ERR_NONE
+    err=ERR_NONE
 
 
-    DO i=2,LEN(Expression)
-       Type=CharKind(Expression(i:i))
-       IF (Type .EQ. Current_Type .AND. .NOT. (Type .EQ. CHAR_DELIMITER)) THEN
-          Current(CurrentPointer:CurrentPointer) = Expression(i:i)
-          CurrentPointer=CurrentPointer+1
+    DO i=2,len(expression)
+       ptype=char_kind(expression(i:i))
+       IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. CHAR_DELIMITER)) THEN
+          current(current_pointer:current_pointer) = expression(i:i)
+          current_pointer=current_pointer+1
        ELSE
-          IF (ICHAR(Current(1:1)) .NE. 0) THEN
+          IF (ICHAR(current(1:1)) .NE. 0) THEN
              !Populate the block
-             CALL LoadBlock(Current,Block)
+             CALL load_block(current,block)
 #ifdef PARSER_DEBUG
-             Block%Text=TRIM(Current)
+             block%text=TRIM(current)
 #endif
-             PRINT *,Block%Type,TRIM(Current)
-             IF (Block%Type .EQ. PT_BAD) THEN
+             PRINT *,block%ptype,TRIM(current)
+             IF (block%ptype .EQ. PT_BAD) THEN
                 IF (rank .EQ. 0) THEN
-                   PRINT *,"Unable to parse block with text ",TRIM(Current)
+                   PRINT *,"Unable to parse block with text ",TRIM(current)
                 ENDIF
-                Err=ERR_BAD_VALUE
+                err=ERR_BAD_VALUE
                 RETURN
              ENDIF
-             IF (Block%Type .NE. PT_PARENTHESIS .AND. Block%Type .NE. PT_NULL) THEN
-                last_block_type=Block%Type
-                IF (DEBUG_MODE) PRINT *,"Setting",Block%Type,TRIM(Current)
+             IF (block%ptype .NE. PT_PARENTHESIS .AND. block%ptype .NE. PT_NULL) THEN
+                last_block_type=block%ptype
+                IF (debug_mode) PRINT *,"Setting",block%ptype,TRIM(current)
              ENDIF
-             IF (Block%Type .EQ. PT_DEFERRED_EXECUTION_OBJECT) THEN
-                DEO=Deferred_Objects(Block%Data)
-                DO iPoint=1,DEO%Execution_Stream%stackpoint
-                   CALL PushToStack(output,DEO%Execution_Stream%Data(iPoint))
+             IF (block%ptype .EQ. PT_DEFERRED_EXECUTION_OBJECT) THEN
+                deo=deferred_objects(block%data)
+                DO ipoint=1,deo%execution_stream%stack_point
+                   CALL push_to_stack(output,deo%execution_stream%data(ipoint))
                 ENDDO
                 CYCLE
-             ELSE IF (Block%Type .NE. PT_NULL) THEN
-                CALL PushToStack(output,Block)
+             ELSE IF (block%ptype .NE. PT_NULL) THEN
+                CALL push_to_stack(output,block)
              ENDIF
           ENDIF
-          Current(:) =" "
-          CurrentPointer=2
-          Current(1:1) = Expression(i:i)
-          Current_Type=Type
+          current(:) =" "
+          current_pointer=2
+          current(1:1) = expression(i:i)
+          current_type=ptype
        ENDIF
     ENDDO
 
-    DO i=1,Stack%StackPoint
-       CALL PopToStack(Stack,output)
+    DO i=1,stack%stack_point
+       CALL pop_to_stack(stack,output)
     ENDDO
 
-  END SUBROUTINE Tokenize_RPN
+  END SUBROUTINE tokenize_rpn
 
-  SUBROUTINE DisplayTokens(TokenList)
-    TYPE(primitivestack), INTENT(IN) :: TokenList
+  SUBROUTINE display_tokens(token_list)
+    TYPE(primitive_stack), INTENT(IN) :: token_list
     INTEGER :: i
     IF (rank .EQ. 0) THEN
-       DO i=1,TokenList%StackPoint
-          PRINT *,"Type",TokenList%Data(i)%Type
-          PRINT *,"Data",TokenList%Data(i)%Data
-          PRINT *,"NumData",TokenList%Data(i)%NumericalData
+       DO i=1,token_list%stack_point
+          PRINT *,"Type",token_list%data(i)%ptype
+          PRINT *,"Data",token_list%data(i)%data
+          PRINT *,"NumData",token_list%data(i)%numerical_data
 #ifdef PARSER_DEBUG
-          PRINT *,"Text :",TRIM(TokenList%Data(i)%Text)
+          PRINT *,"Text :",TRIM(token_list%data(i)%text)
 #endif
           PRINT *,"---------------"
        ENDDO
     ENDIF
 
-  END SUBROUTINE DisplayTokens
+  END SUBROUTINE display_tokens
 
-END MODULE Shunt
+END MODULE shunt

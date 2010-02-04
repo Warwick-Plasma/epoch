@@ -11,7 +11,7 @@ MODULE input_cartesian
 CONTAINS
 
   !Grid loading functions
-  SUBROUTINE cfd_Get_nD_Cartesian_Grid_MetaData_All(ndims,dims,extents)
+  SUBROUTINE cfd_get_nd_cartesian_grid_metadata_all(ndims,dims,extents)
 
     INTEGER,DIMENSION(:),INTENT(OUT) :: dims
     REAL(num),DIMENSION(:),INTENT(OUT) :: extents
@@ -20,25 +20,25 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER, cfd_status, cfd_errcode)
-    current_displacement = current_displacement + ndims * SoI 
+    current_displacement = current_displacement + ndims * soi 
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, extents, ndims*2, mpireal, cfd_status, cfd_errcode)
 
     !After this subroutine, all the metadata should be read in, so to make sure, just jump to known
-    !Start of Data
+    !start of data
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
 
-  END SUBROUTINE cfd_Get_nD_Cartesian_Grid_MetaData_All
+  END SUBROUTINE cfd_get_nd_cartesian_grid_metadata_all
 
-  SUBROUTINE cfd_Get_1D_Cartesian_Grid_All(x)
+  SUBROUTINE cfd_get_1d_cartesian_grid_all(x)
 
     REAL(num),DIMENSION(:),INTENT(INOUT) :: x
     INTEGER :: nx
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
     nx=SIZE(x)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
@@ -46,16 +46,16 @@ CONTAINS
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, x, nx, mpireal,cfd_status,cfd_errcode)
     !That should be it, so now skip to end of block
-    CALL cfd_Skip_Block
+    CALL cfd_skip_block
 
-  END SUBROUTINE cfd_Get_1D_Cartesian_Grid_All
+  END SUBROUTINE cfd_get_1d_cartesian_grid_all
 
-  SUBROUTINE cfd_Get_2D_Cartesian_Grid_All(x,y)
+  SUBROUTINE cfd_get_2d_cartesian_grid_all(x,y)
 
     REAL(num),DIMENSION(:),INTENT(INOUT) :: x,y
     INTEGER :: nx, ny
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
     nx=SIZE(x)
     ny=SIZE(y)
 
@@ -65,11 +65,11 @@ CONTAINS
     CALL MPI_FILE_READ_ALL(cfd_filehandle, x, nx, mpireal,cfd_status,cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, y, ny, mpireal,cfd_status,cfd_errcode)
     !That should be it, so now skip to end of block
-    CALL cfd_Skip_Block
+    CALL cfd_skip_block
 
-  END SUBROUTINE cfd_Get_2D_Cartesian_Grid_All
+  END SUBROUTINE cfd_get_2d_cartesian_grid_all
 
-  SUBROUTINE cfd_Get_3D_Cartesian_Grid_All(x,y,z)
+  SUBROUTINE cfd_get_3d_cartesian_grid_all(x,y,z)
 
     REAL(num),DIMENSION(:),INTENT(INOUT) :: x,y,z
     INTEGER :: nx,ny,nz
@@ -78,7 +78,7 @@ CONTAINS
     ny=SIZE(y)
     nz=SIZE(z)
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -87,30 +87,30 @@ CONTAINS
     CALL MPI_FILE_READ_ALL(cfd_filehandle, y, ny, mpireal,cfd_status,cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, z, nz, mpireal,cfd_status,cfd_errcode)
     !That should be it, so now skip to end of block
-    CALL cfd_Skip_Block
+    CALL cfd_skip_block
 
-  END SUBROUTINE cfd_Get_3D_Cartesian_Grid_All
+  END SUBROUTINE cfd_get_3d_cartesian_grid_all
 
 
-  !Variable loading functions
-  SUBROUTINE cfd_Get_nD_Cartesian_Variable_MetaData_All(ndims,dims,extents,stagger,meshname,meshclass)
+  !variable loading functions
+  SUBROUTINE cfd_get_nd_cartesian_variable_metadata_all(ndims,dims,extents,stagger,mesh_name,mesh_class)
 
     INTEGER,DIMENSION(:),INTENT(OUT) :: dims
     REAL(num),DIMENSION(:),INTENT(OUT) :: extents
     REAL(num),DIMENSION(:),INTENT(OUT) :: stagger
     INTEGER,INTENT(IN) :: ndims
-    CHARACTER(len=*),INTENT(INOUT) :: meshname,meshclass
-    CHARACTER(len=MaxStringLen) :: Meshname_file,meshclass_file
+    CHARACTER(len=*),INTENT(INOUT) :: mesh_name,mesh_class
+    CHARACTER(len=max_string_len) :: mesh_name_file,mesh_class_file
     INTEGER :: len_name,len_class
 
-    len_name=LEN(meshname)
-    len_class=LEN(meshclass)
+    len_name=len(mesh_name)
+    len_class=len(mesh_class)
 
     !this subroutine MUST be called after the call to Get_Common_Mesh_MetaData_All or it will break everything
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER, cfd_status, cfd_errcode)
-    current_displacement = current_displacement + ndims*SoI
+    current_displacement = current_displacement + ndims*soi
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -122,98 +122,98 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, Meshname_file, MaxStringLen, MPI_CHARACTER, cfd_status, cfd_errcode)
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, Meshclass_file, MaxStringLen, MPI_CHARACTER, cfd_status, cfd_errcode)
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, mesh_name_file, max_string_len, MPI_CHARACTER, cfd_status, cfd_errcode)
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, mesh_class_file, max_string_len, MPI_CHARACTER, cfd_status, cfd_errcode)
 
-    meshname=meshname_file(1:MIN(MaxStringLen,len_name))
-    meshclass=meshclass_file(1:MIN(MaxStringLen,len_class))
+    mesh_name=mesh_name_file(1:MIN(max_string_len,len_name))
+    mesh_class=mesh_class_file(1:MIN(max_string_len,len_class))
 
     !After this subroutine, all the metadata should be read in, so to make sure, just jump to known
-    !start of Data
+    !start of data
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
 
-  END SUBROUTINE cfd_Get_nD_Cartesian_Variable_MetaData_All
+  END SUBROUTINE cfd_get_nd_cartesian_variable_metadata_all
 
-  SUBROUTINE cfd_Get_1D_Cartesian_Variable_Parallel(variable,subtype)
+  SUBROUTINE cfd_get_1d_cartesian_variable_parallel(variable,subtype)
 
-    REAL(num),INTENT(IN),DIMENSION(:) :: Variable
+    REAL(num),INTENT(IN),DIMENSION(:) :: variable
     INTEGER,INTENT(IN) :: subtype
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, subtype,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, cfd_status, cfd_errcode)
 
-    CALL cfd_Skip_Block()
+    CALL cfd_skip_block()
 
-  END SUBROUTINE cfd_Get_1D_Cartesian_Variable_Parallel
+  END SUBROUTINE cfd_get_1d_cartesian_variable_parallel
 
-  SUBROUTINE cfd_Get_1D_Cartesian_Variable_All(variable)
+  SUBROUTINE cfd_get_1d_cartesian_variable_all(variable)
 
-    REAL(num),INTENT(IN),DIMENSION(:) :: Variable
+    REAL(num),INTENT(IN),DIMENSION(:) :: variable
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, cfd_status, cfd_errcode)
 
-    CALL cfd_Skip_Block()
+    CALL cfd_skip_block()
 
-  END SUBROUTINE cfd_Get_1D_Cartesian_Variable_All
+  END SUBROUTINE cfd_get_1d_cartesian_variable_all
 
-  SUBROUTINE cfd_Get_2D_Cartesian_Variable_Parallel(variable,subtype)
+  SUBROUTINE cfd_get_2d_cartesian_variable_parallel(variable,subtype)
 
-    REAL(num),INTENT(IN),DIMENSION(:,:) :: Variable
+    REAL(num),INTENT(IN),DIMENSION(:,:) :: variable
     INTEGER,INTENT(IN) :: subtype
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, subtype,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, cfd_status, cfd_errcode)
 
-    CALL cfd_Skip_Block()
+    CALL cfd_skip_block()
 
-  END SUBROUTINE cfd_Get_2D_Cartesian_Variable_Parallel
+  END SUBROUTINE cfd_get_2d_cartesian_variable_parallel
 
-  SUBROUTINE cfd_Get_2D_Cartesian_Variable_All(variable)
+  SUBROUTINE cfd_get_2d_cartesian_variable_all(variable)
 
-    REAL(num),INTENT(IN),DIMENSION(:,:) :: Variable
+    REAL(num),INTENT(IN),DIMENSION(:,:) :: variable
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, cfd_status, cfd_errcode)
 
-    CALL cfd_Skip_Block()
+    CALL cfd_skip_block()
 
-  END SUBROUTINE cfd_Get_2D_Cartesian_Variable_All
+  END SUBROUTINE cfd_get_2d_cartesian_variable_all
 
-  SUBROUTINE cfd_Get_3D_Cartesian_Variable_Parallel(variable,subtype)
+  SUBROUTINE cfd_get_3d_cartesian_variable_parallel(variable,subtype)
 
-    REAL(num),INTENT(IN),DIMENSION(:,:,:) :: Variable
+    REAL(num),INTENT(IN),DIMENSION(:,:,:) :: variable
     INTEGER,INTENT(IN) :: subtype
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, subtype,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, cfd_status, cfd_errcode)
 
-    CALL cfd_Skip_Block()
+    CALL cfd_skip_block()
 
-  END SUBROUTINE cfd_Get_3D_Cartesian_Variable_Parallel
+  END SUBROUTINE cfd_get_3d_cartesian_variable_parallel
 
-  SUBROUTINE cfd_Get_3D_Cartesian_Variable_All(variable)
+  SUBROUTINE cfd_get_3d_cartesian_variable_all(variable)
 
-    REAL(num),INTENT(IN),DIMENSION(:,:,:) :: Variable
+    REAL(num),INTENT(IN),DIMENSION(:,:,:) :: variable
 
-    CALL cfd_Skip_Block_MetaData()
+    CALL cfd_skip_block_metadata()
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, cfd_status, cfd_errcode)
 
-    CALL cfd_Skip_Block()
+    CALL cfd_skip_block()
 
-  END SUBROUTINE cfd_Get_3D_Cartesian_Variable_All
+  END SUBROUTINE cfd_get_3d_cartesian_variable_all
 
 END MODULE input_cartesian

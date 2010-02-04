@@ -1,18 +1,18 @@
-MODULE Shape_Functions
+MODULE shape_functions
 
 USE shared_data
 IMPLICIT NONE
 CONTAINS
 
 
-SUBROUTINE ParticleToGrid(cell_frac,output)
+SUBROUTINE particle_to_grid(cell_frac,output)
 	REAL(num),INTENT(IN) :: cell_frac
 	REAL(num),DIMENSION(-2:2),INTENT(INOUT) :: output
 	REAL(num),DIMENSION(-2:2) :: cfs
-	INTEGER :: iElement
+	INTEGER :: ielement
 	
-	DO iElement=-2,2
-		cfs(iElement)=(cell_frac+REAL(iElement,num))
+	DO ielement=-2,2
+		cfs(ielement)=(cell_frac+REAL(ielement,num))
 	ENDDO
 
 #ifdef SPLINE_FOUR
@@ -34,16 +34,16 @@ SUBROUTINE ParticleToGrid(cell_frac,output)
 	output(-2) = 0.0_num
 #endif
 
-END SUBROUTINE ParticleToGrid
+END SUBROUTINE particle_to_grid
 
-SUBROUTINE GridToParticle(cell_frac,output)
+SUBROUTINE grid_to_particle(cell_frac,output)
 	REAL(num),INTENT(IN) :: cell_frac
 	REAL(num),DIMENSION(-2:2),INTENT(INOUT) :: output
 	REAL(num),DIMENSION(-2:2) :: cfs
-	INTEGER :: iElement
+	INTEGER :: ielement
 	
-	DO iElement=-2,2
-		cfs(iElement)=(cell_frac+REAL(iElement,num))
+	DO ielement=-2,2
+		cfs(ielement)=(cell_frac+REAL(ielement,num))
 	ENDDO
 
 #ifdef SPLINE_FOUR	
@@ -66,6 +66,6 @@ SUBROUTINE GridToParticle(cell_frac,output)
 #endif
 	
 
-END SUBROUTINE GridToParticle
+END SUBROUTINE grid_to_particle
 
-END MODULE Shape_Functions
+END MODULE shape_functions

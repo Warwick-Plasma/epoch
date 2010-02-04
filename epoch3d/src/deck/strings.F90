@@ -6,188 +6,188 @@ MODULE strings
 
 CONTAINS
 
-  SUBROUTINE IntegerAsString(Integer,String)
+  SUBROUTINE integer_as_string(INTEGER,string)
 
-    INTEGER,INTENT(IN) :: Integer
-    CHARACTER(LEN=*),INTENT(OUT) :: String
+    INTEGER,INTENT(IN) :: INTEGER
+    CHARACTER(len=*),INTENT(OUT) :: string
 
     INTEGER :: n_nums
-    CHARACTER(LEN=9) :: numfmt
+    CHARACTER(len=9) :: numfmt
 
-    n_nums=1 + LOG10(REAL(Integer,num))
+    n_nums=1 + LOG10(REAL(INTEGER,num))
     WRITE(numfmt,'("(I",I6.6,")")') n_nums
-    WRITE(string,numfmt) Integer
+    WRITE(string,numfmt) INTEGER
 
-  END SUBROUTINE IntegerAsString
+  END SUBROUTINE integer_as_string
 
-  SUBROUTINE Integer8AsString(Integer,String)
+  SUBROUTINE integer8_as_string(INTEGER,string)
 
-    INTEGER(KIND=8),INTENT(IN) :: Integer
-    CHARACTER(LEN=*),INTENT(OUT) :: String
+    INTEGER(KIND=8),INTENT(IN) :: INTEGER
+    CHARACTER(len=*),INTENT(OUT) :: string
 
     INTEGER :: n_nums
-    CHARACTER(LEN=12) :: numfmt
+    CHARACTER(len=12) :: numfmt
 
-    n_nums=1 + LOG10(REAL(Integer,num))
+    n_nums=1 + LOG10(REAL(INTEGER,num))
     WRITE(numfmt,'("(I",I9.9,")")') n_nums
-    WRITE(string,numfmt) Integer
+    WRITE(string,numfmt) INTEGER
 
-  END SUBROUTINE Integer8AsString
+  END SUBROUTINE integer8_as_string
 
-  FUNCTION StrCmp(StrIn,StrTest)
+  FUNCTION str_cmp(str_in,str_test)
 
-    CHARACTER(*),INTENT(IN) ::  StrIn,StrTest
-    CHARACTER(LEN=EntryLength) :: StrTrim
-    LOGICAL :: StrCmp
+    CHARACTER(*),INTENT(IN) ::  str_in,str_test
+    CHARACTER(len=string_length) :: str_trim
+    LOGICAL :: str_cmp
 
-    StrTrim=TRIM(ADJUSTL(StrIn))
+    str_trim=TRIM(ADJUSTL(str_in))
 
-    IF (LEN(StrTest) .GT. LEN(StrTrim)) THEN
-       StrCmp=.FALSE.
-       return
+    IF (len(str_test) .GT. len(str_trim)) THEN
+       str_cmp=.FALSE.
+       RETURN
     ENDIF
 
-    IF (LEN(StrTest) .LT. EntryLength) THEN
-       IF (StrTrim(LEN(StrTest)+1:LEN(StrTest)+1) .NE. " ") THEN
-          StrCmp=.FALSE.
+    IF (len(str_test) .LT. string_length) THEN
+       IF (str_trim(len(str_test)+1:len(str_test)+1) .NE. " ") THEN
+          str_cmp=.FALSE.
           RETURN
        ENDIF
     ENDIF
 
-    StrCmp=(StrTrim(1:Len(StrTest)) == StrTest)
+    str_cmp=(str_trim(1:len(str_test)) == str_test)
 
-  END FUNCTION StrCmp
+  END FUNCTION str_cmp
 
-  FUNCTION AsRealSimple(StrIn,ERR)
-    CHARACTER(*), INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
+  FUNCTION as_real_simple(str_in,err)
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
     INTEGER::f
-    REAL(num) :: AsRealSimple
-    REAL(num) :: Value
+    REAL(num) :: as_real_simple
+    REAL(num) :: value
 
-    READ(unit=StrIn,fmt=*,iostat=f) Value
-    IF (f .NE. 0) ERR=IOR(ERR,ERR_BAD_VALUE)
-    AsRealSimple=Value
-  END FUNCTION AsRealSimple
+    READ(unit=str_in,fmt=*,iostat=f) value
+    IF (f .NE. 0) err=IOR(err,ERR_BAD_VALUE)
+    as_real_simple=value
+  END FUNCTION as_real_simple
 
-  FUNCTION AsIntegerSimple(StrIn,ERR)
-    CHARACTER(*),INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: AsIntegerSimple,Value,f
-    READ(unit=StrIn,fmt=*,iostat=f) value
-    IF (f .NE. 0) ERR=IOR(ERR,ERR_BAD_VALUE)
-    AsIntegerSimple=value
+  FUNCTION as_integer_simple(str_in,err)
+    CHARACTER(*),INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER :: as_integer_simple,value,f
+    READ(unit=str_in,fmt=*,iostat=f) value
+    IF (f .NE. 0) err=IOR(err,ERR_BAD_VALUE)
+    as_integer_simple=value
 
-  END FUNCTION AsIntegerSimple
+  END FUNCTION as_integer_simple
 
-  FUNCTION AsDirection(StrIn,ERR)
-    CHARACTER(*),INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: AsDirection
-    AsDirection=-1
+  FUNCTION as_direction(str_in,err)
+    CHARACTER(*),INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER :: as_direction
+    as_direction=-1
 
-    IF (StrCmp(StrIn,"left")) AsDirection=BD_LEFT
-    IF (StrCmp(StrIn,"right")) AsDirection=BD_RIGHT
-    IF (StrCmp(StrIn,"up")) AsDirection=BD_UP
-    IF (StrCmp(StrIn,"down")) AsDirection=BD_DOWN
+    IF (str_cmp(str_in,"left")) as_direction=BD_LEFT
+    IF (str_cmp(str_in,"right")) as_direction=BD_RIGHT
+    IF (str_cmp(str_in,"up")) as_direction=BD_UP
+    IF (str_cmp(str_in,"down")) as_direction=BD_DOWN
 
-    IF (AsDirection == -1) ERR=IOR(ERR,ERR_BAD_VALUE)
+    IF (as_direction == -1) err=IOR(err,ERR_BAD_VALUE)
 
-  END FUNCTION AsDirection
+  END FUNCTION as_direction
 
-  FUNCTION AsLogical(StrIn,ERR)
-    CHARACTER(*), INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    LOGICAL :: AsLogical
+  FUNCTION as_logical(str_in,err)
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    LOGICAL :: as_logical
 
-    AsLogical=.FALSE.
-    IF(StrCmp(TRIM(ADJUSTL(StrIn)),"T")) THEN
-       AsLogical=.TRUE.
+    as_logical=.FALSE.
+    IF(str_cmp(TRIM(ADJUSTL(str_in)),"T")) THEN
+       as_logical=.TRUE.
        RETURN
     ENDIF
-    IF(StrCmp(TRIM(ADJUSTL(StrIn)),"F")) THEN
-       AsLogical=.FALSE.
-       RETURN
-    ENDIF
-
-    ERR=IOR(ERR,ERR_BAD_VALUE)
-
-  END FUNCTION AsLogical
-
-  FUNCTION AsBC(StrIn,ERR)
-    CHARACTER(*), INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: AsBC
-
-    AsBC=-1
-
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"periodic")) THEN
-       AsBC=BC_PERIODIC
-       RETURN
-    ENDIF
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"simple_laser")) THEN
-       AsBC=BC_SIMPLE_LASER
-       RETURN
-    ENDIF
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"simple_outflow")) THEN
-       AsBC=BC_SIMPLE_OUTFLOW
-       RETURN
-    ENDIF
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"other")) THEN
-       AsBC=BC_OTHER
+    IF(str_cmp(TRIM(ADJUSTL(str_in)),"F")) THEN
+       as_logical=.FALSE.
        RETURN
     ENDIF
 
-    ERR=IOR(ERR,ERR_BAD_VALUE)
+    err=IOR(err,ERR_BAD_VALUE)
 
-  END FUNCTION AsBC
+  END FUNCTION as_logical
 
-  FUNCTION AsDumpParam(StrIn,ERR)
-    CHARACTER(*),INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: AsDumpParam
+  FUNCTION as_bc(str_in,err)
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER :: as_bc
 
-    AsDumpParam=-1
+    as_bc=-1
 
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"never")) THEN
-       AsDumpParam=IO_NEVER
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"periodic")) THEN
+       as_bc=BC_PERIODIC
        RETURN
     ENDIF
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"always")) THEN
-       AsDumpParam=IO_ALWAYS
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"simple_laser")) THEN
+       as_bc=BC_SIMPLE_LASER
        RETURN
     ENDIF
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"full")) THEN
-       AsDumpParam=IO_FULL
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"simple_outflow")) THEN
+       as_bc=BC_SIMPLE_OUTFLOW
        RETURN
     ENDIF
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"restart")) THEN
-       AsDumpParam=IO_RESTARTABLE
-       RETURN
-    ENDIF
-
-    ERR=IOR(ERR,ERR_BAD_VALUE)
-
-  END FUNCTION AsDumpParam
-
-  FUNCTION AsDomain(StrIn,ERR)
-    CHARACTER(*),INTENT(IN) :: StrIn
-    INTEGER,INTENT(INOUT) :: ERR
-    INTEGER :: AsDomain
-
-    AsDomain=-1
-
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"decomposed")) THEN
-       AsDomain=DO_DECOMPOSED
-       RETURN
-    ENDIF
-    IF (StrCmp(TRIM(ADJUSTL(StrIn)),"full")) THEN
-       AsDomain=DO_FULL
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"other")) THEN
+       as_bc=BC_OTHER
        RETURN
     ENDIF
 
-    ERR=IOR(ERR,ERR_BAD_VALUE)
-  END FUNCTION AsDomain
+    err=IOR(err,ERR_BAD_VALUE)
+
+  END FUNCTION as_bc
+
+  FUNCTION as_dump_param(str_in,err)
+    CHARACTER(*),INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER :: as_dump_param
+
+    as_dump_param=-1
+
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"never")) THEN
+       as_dump_param=IO_NEVER
+       RETURN
+    ENDIF
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"always")) THEN
+       as_dump_param=IO_ALWAYS
+       RETURN
+    ENDIF
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"full")) THEN
+       as_dump_param=IO_FULL
+       RETURN
+    ENDIF
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"restart")) THEN
+       as_dump_param=IO_RESTARTABLE
+       RETURN
+    ENDIF
+
+    err=IOR(err,ERR_BAD_VALUE)
+
+  END FUNCTION as_dump_param
+
+  FUNCTION as_domain(str_in,err)
+    CHARACTER(*),INTENT(IN) :: str_in
+    INTEGER,INTENT(INOUT) :: err
+    INTEGER :: as_domain
+
+    as_domain=-1
+
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"decomposed")) THEN
+       as_domain=DO_DECOMPOSED
+       RETURN
+    ENDIF
+    IF (str_cmp(TRIM(ADJUSTL(str_in)),"full")) THEN
+       as_domain=DO_FULL
+       RETURN
+    ENDIF
+
+    err=IOR(err,ERR_BAD_VALUE)
+  END FUNCTION as_domain
 
 
 END MODULE strings

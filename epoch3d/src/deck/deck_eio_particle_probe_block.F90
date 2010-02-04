@@ -6,35 +6,35 @@ MODULE deck_eio_particle_probe_block
 #ifndef PARTICLE_PROBES
 CONTAINS
 
-  SUBROUTINE Probe_Deck_Dummy
-  END SUBROUTINE Probe_Deck_Dummy
+  SUBROUTINE probe_deck_dummy
+  END SUBROUTINE probe_deck_dummy
 #else
 
   SAVE
-  TYPE(Particle_Probe),POINTER :: Working_Probe
+  TYPE(particle_probe),POINTER :: working_probe
 
 CONTAINS
 
-  SUBROUTINE Probe_Block_Start
+  SUBROUTINE probe_block_start
 
-    ALLOCATE(Working_Probe)
-    CALL Init_Probe(Working_Probe)
+    ALLOCATE(working_probe)
+    CALL init_probe(working_probe)
 
-  END SUBROUTINE Probe_Block_Start
+  END SUBROUTINE probe_block_start
 
-  SUBROUTINE Probe_Block_End
+  SUBROUTINE probe_block_end
     !Check whether or not the probe is valid
     REAL(num),DIMENSION(3) :: alpha, beta
 
     !The probe calculates the signed distance from a point to a plane using Hessian normal form
-    alpha = working_probe%Corner(2,:)-working_probe%Corner(1,:)
-    beta  = working_probe%Corner(3,:)-working_probe%Corner(1,:)
+    alpha = working_probe%corner(2,:)-working_probe%corner(1,:)
+    beta  = working_probe%corner(3,:)-working_probe%corner(1,:)
     !alpha (cross) beta
     working_probe%normal = (/alpha(2)*beta(3) - alpha(3)*beta(2), alpha(3)*beta(1) - alpha(1)*beta(3),&
          alpha(1)*beta(2) - alpha(2)*beta(1)/)
     IF (SUM(ABS(working_probe%normal)) .EQ. 0) THEN
        IF (rank .EQ. 0) PRINT*, "Points specified for the probe plane corners do not allow calculation of a normal to the plane. Probe ",TRIM(working_probe%name)," abandoned."
-       DEALLOCATE(Working_probe)
+       DEALLOCATE(working_probe)
        NULLIFY(working_probe)
        RETURN
     ENDIF
@@ -43,129 +43,129 @@ CONTAINS
 
 !!$    DO iCorner=1,4
 !!$       DO iDirection=1,3
-!!$          IF (working_Probe%Corner(iCorner,iDirection) .LT. working_Probe%Extents(iDirection,1))&
-!!$               working_probe%Extents(iDirection,1)=Working_Probe%Corner(iCorner,iDirection)
-!!$          IF (working_Probe%Corner(iCorner,iDirection) .GT. working_Probe%Extents(iDirection,2))&
-!!$               working_probe%Extents(iDirection,2)=Working_Probe%Corner(iCorner,iDirection)
+!!$          IF (working_probe%corner(iCorner,iDirection) .LT. working_probe%Extents(iDirection,1))&
+!!$               working_probe%Extents(iDirection,1)=working_probe%corner(iCorner,iDirection)
+!!$          IF (working_probe%corner(iCorner,iDirection) .GT. working_probe%Extents(iDirection,2))&
+!!$               working_probe%Extents(iDirection,2)=working_probe%corner(iCorner,iDirection)
 !!$       ENDDO
 !!$    ENDDO
 
 !!$    DO iDirection=1,3
 !!$       IF (working_probe%Extents(iDirection,1) .GE. working_probe%Extents(iDirection,2)) THEN
-!!$          IF (rank .EQ. 0) PRINT *,"Points specified for the probe plane corners collapse the probe plane to a lower dimension. This is not currently supported. Probe ",TRIM(working_probe%name)," abandoned."
-!!$          DEALLOCATE(Working_probe)
+!!$          IF (rank .EQ. 0) PRINT *,"Points specified for the probe plane corners collapse the probe plane to a lower dimension. This is not currently supported. probe ",TRIM(working_probe%name)," abandoned."
+!!$          DEALLOCATE(working_probe)
 !!$          NULLIFY(working_probe)
 !!$          RETURN
 !!$       ENDIF
 !!$    ENDDO
 
-    CALL Attach_Probe(Working_Probe)
+    CALL attach_probe(working_probe)
 
-  END SUBROUTINE Probe_Block_End
+  END SUBROUTINE probe_block_end
 
-  FUNCTION HandleProbeDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER :: HandleProbeDeck, iSpecies
+  FUNCTION handle_probe_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER :: handle_probe_deck, ispecies
 
-    HandleProbeDeck=ERR_NONE
+    handle_probe_deck=ERR_NONE
 
-    IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
+    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     ! get particle probe diagnostics (rolling total of all particles
     ! which pass through a given region of real space (defined by the line between two
     ! points in 2D).
-    IF (StrCmp(Element,"dump")) THEN
-       working_probe%dump=AsInteger(Value,HandleProbeDeck)
+    IF (str_cmp(element,"dump")) THEN
+       working_probe%dump=as_integer(value,handle_probe_deck)
        RETURN
     ENDIF
 
     !Top left
-    IF (StrCmp(Element,"x_tl")) THEN
-       working_probe%Corner(1,1)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"x_tl")) THEN
+       working_probe%corner(1,1)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"y_tl")) THEN
-       working_probe%Corner(1,2)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"y_tl")) THEN
+       working_probe%corner(1,2)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"z_tl")) THEN
-       working_probe%Corner(1,3)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"z_tl")) THEN
+       working_probe%corner(1,3)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
     !Bottom right
-    IF (StrCmp(Element,"x_br")) THEN
-       working_probe%Corner(2,1)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"x_br")) THEN
+       working_probe%corner(2,1)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"y_br")) THEN
-       working_probe%Corner(2,2)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"y_br")) THEN
+       working_probe%corner(2,2)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"z_br")) THEN
-       working_probe%Corner(2,3)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"z_br")) THEN
+       working_probe%corner(2,3)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
     !Top right
-    IF (StrCmp(Element,"x_tr")) THEN
-       working_probe%Corner(3,1)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"x_tr")) THEN
+       working_probe%corner(3,1)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"y_tr")) THEN
-       working_probe%Corner(3,2)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"y_tr")) THEN
+       working_probe%corner(3,2)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"z_tr")) THEN
-       working_probe%Corner(3,3)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"z_tr")) THEN
+       working_probe%corner(3,3)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
     !Bottom Left
-    IF (StrCmp(Element,"x_bl")) THEN
-       working_probe%Corner(4,1)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"x_bl")) THEN
+       working_probe%corner(4,1)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"y_bl")) THEN
-       working_probe%Corner(4,2)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"y_bl")) THEN
+       working_probe%corner(4,2)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
-    IF (StrCmp(Element,"z_bl")) THEN
-       working_probe%Corner(4,3)=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"z_bl")) THEN
+       working_probe%corner(4,3)=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"probe_species")) THEN
-       iSpecies=AsInteger(Value,HandleProbeDeck)
-       IF (HandleProbeDeck .EQ. ERR_NONE) THEN
-          IF (iSpecies .GT. 0 .AND. iSpecies .LE. nSpecies) THEN
-             working_probe%probe_species=>ParticleSpecies(iSpecies)
+    IF (str_cmp(element,"probe_species")) THEN
+       ispecies=as_integer(value,handle_probe_deck)
+       IF (handle_probe_deck .EQ. ERR_NONE) THEN
+          IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
+             working_probe%probe_species=>particle_species(ispecies)
           ELSE
-             IF (rank .EQ. 0) PRINT *,"Unable to attach probe to non existant species ",iSpecies
-             HandleProbeDeck=ERR_BAD_VALUE
+             IF (rank .EQ. 0) PRINT *,"Unable to attach probe to non existant species ",ispecies
+             handle_probe_deck=ERR_BAD_VALUE
           ENDIF
        ENDIF
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"ek_min")) THEN
-       working_probe%ek_min=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"ek_min")) THEN
+       working_probe%ek_min=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"ek_max")) THEN
-       working_probe%ek_max=AsReal(Value,HandleProbeDeck)
+    IF (str_cmp(element,"ek_max")) THEN
+       working_probe%ek_max=as_real(value,handle_probe_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"name")) THEN
-       working_probe%name=TRIM(Value)
+    IF (str_cmp(element,"name")) THEN
+       working_probe%name=TRIM(value)
        RETURN
     ENDIF
 
-    HandleProbeDeck = ERR_UNKNOWN_ELEMENT
+    handle_probe_deck = ERR_UNKNOWN_ELEMENT
 
-  END FUNCTION HandleProbeDeck
+  END FUNCTION handle_probe_deck
 
 #endif
 

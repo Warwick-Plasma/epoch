@@ -12,29 +12,29 @@ CONTAINS
   !This subroutine is used to wrap a block containing program specific data
   !Which there is no general way of allowing other programs to read
   !It permits the use of a single string to idenitify the program that wrote it
-  SUBROUTINE cfd_Get_Arb_Block(Reader)
+  SUBROUTINE cfd_get_arb_block(reader)
 
     INTERFACE
-       SUBROUTINE Reader(filehandle,current_displacement,Generator_Name)
+       SUBROUTINE reader(filehandle,current_displacement,generator_name)
          USE shared_data
          INTEGER,INTENT(IN) :: filehandle
          INTEGER(KIND=MPI_OFFSET_KIND),INTENT(IN) :: current_displacement
-         CHARACTER(LEN=*),INTENT(IN) :: Generator_Name
-       END SUBROUTINE Reader
+         CHARACTER(len=*),INTENT(IN) :: generator_name
+       END SUBROUTINE reader
     END INTERFACE
 
-    CHARACTER(Len=MaxStringLen) :: Gen_Name
+    CHARACTER(len=max_string_len) :: gen_name
 
-    CALL cfd_Skip_Block_Header
+    CALL cfd_skip_block_header
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, Gen_Name, MaxStringLen, MPI_CHARACTER, cfd_status, cfd_errcode)
-    current_displacement=current_displacement+MaxStringLen
-    CALL cfd_Skip_Block_Metadata
-    CALL Reader(cfd_filehandle,current_displacement,Gen_Name)
-    CALL cfd_Skip_Block
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, gen_name, max_string_len, MPI_CHARACTER, cfd_status, cfd_errcode)
+    current_displacement=current_displacement+max_string_len
+    CALL cfd_skip_block_metadata
+    CALL reader(cfd_filehandle,current_displacement,gen_name)
+    CALL cfd_skip_block
 
 
-  END SUBROUTINE cfd_Get_Arb_Block
+  END SUBROUTINE cfd_get_arb_block
 
 END MODULE input_arb

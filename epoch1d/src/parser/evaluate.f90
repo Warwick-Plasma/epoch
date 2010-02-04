@@ -8,46 +8,46 @@ MODULE evaluator
 
 CONTAINS
 
-  FUNCTION EvaluateAtPoint(inputstack,ix,ERR)
+  FUNCTION evaluate_at_point(inputstack,ix,err)
 
-    TYPE(primitivestack), INTENT(IN) :: inputstack
+    TYPE(primitive_stack), INTENT(IN) :: inputstack
     INTEGER,INTENT(IN) :: ix
-    INTEGER, INTENT(INOUT) :: ERR
-    REAL(num) :: EvaluateAtPoint
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: evaluate_at_point
     INTEGER :: i
-    TYPE(stackelement) :: block
+    TYPE(stack_element) :: block
 
-    EvalStack%StackPoint=0
-!!$    IF (ERR .NE. ERR_NONE) THEN
-!!$       PRINT *,"STUPID",ERR
+    eval_stack%stack_point=0
+!!$    IF (err .NE. ERR_NONE) THEN
+!!$       PRINT *,"STUPID",err
 !!$       STOP
 !!$    ENDIF
 
-    DO i=1,inputstack%stackpoint
-       block=inputstack%Data(i)
-       IF (block%Type .EQ. PT_VARIABLE) THEN
-          CALL PushOnEval(block%NumericalData)
+    DO i=1,inputstack%stack_point
+       block=inputstack%data(i)
+       IF (block%ptype .EQ. PT_VARIABLE) THEN
+          CALL push_on_eval(block%numerical_data)
        ENDIF
-       IF (block%Type .EQ. PT_OPERATOR) CALL DoOperator(block%Data,ix,err)
-       IF (block%Type .EQ. PT_CONSTANT) CALL DoConstant(block%Data,ix,err)
-       IF (block%Type .EQ. PT_FUNCTION) CALL DoFunctions(block%Data,ix,err)
+       IF (block%ptype .EQ. PT_OPERATOR) CALL do_operator(block%data,ix,err)
+       IF (block%ptype .EQ. PT_CONSTANT) CALL do_constant(block%data,ix,err)
+       IF (block%ptype .EQ. PT_FUNCTION) CALL do_functions(block%data,ix,err)
        IF (err .NE. ERR_NONE) THEN
-          PRINT *,"BAD block",err,Block%Type,i,Block%Data
+          PRINT *,"BAD block",err,block%ptype,i,block%data
           EXIT
        ENDIF
     ENDDO
-    IF (EvalStack%StackPoint .NE. 1) ERR=IAND(ERR,ERR_BAD_VALUE)
+    IF (eval_stack%stack_point .NE. 1) err=IAND(err,ERR_BAD_VALUE)
     !Just pop off final answer
-    EvaluateAtPoint=PopOffEval()
-  END FUNCTION EvaluateAtPoint
+    evaluate_at_point=pop_off_eval()
+  END FUNCTION evaluate_at_point
 
-  FUNCTION Evaluate(inputstack,ERR)
-    TYPE(primitivestack), INTENT(IN) :: inputstack
-    INTEGER, INTENT(INOUT) :: ERR
-    REAL(num) :: Evaluate
+  FUNCTION evaluate(inputstack,err)
+    TYPE(primitive_stack), INTENT(IN) :: inputstack
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: evaluate
 
-    Evaluate=EvaluateAtPoint(inputstack,0,ERR)
+    evaluate=evaluate_at_point(inputstack,0,err)
 
-  END FUNCTION Evaluate
+  END FUNCTION evaluate
 
   END MODULE evaluator

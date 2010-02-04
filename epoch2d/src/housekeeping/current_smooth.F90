@@ -1,4 +1,4 @@
-MODULE Current_Smooth
+MODULE current_smooth
 
 USE shared_data
 USE shape_functions
@@ -6,32 +6,32 @@ IMPLICIT NONE
 
 CONTAINS
 
-SUBROUTINE Smooth_Current()
+SUBROUTINE smooth_current()
 ! A very simple current smoothing routine
 	
-	CALL Smooth_Array(jx)
-	CALL Smooth_Array(jy)
-	CALL Smooth_Array(jz)
+	CALL smooth_array(jx)
+	CALL smooth_array(jy)
+	CALL smooth_array(jz)
 	
-END SUBROUTINE Smooth_Current
+END SUBROUTINE smooth_current
 
-SUBROUTINE Smooth_Array(Array)
-	REAL(num),DIMENSION(-2:,-2:),INTENT(INOUT) :: Array
-	REAL(num),DIMENSION(:,:),ALLOCATABLE :: WkArray
+SUBROUTINE smooth_array(array)
+	REAL(num),DIMENSION(-2:,-2:),INTENT(INOUT) :: array
+	REAL(num),DIMENSION(:,:),ALLOCATABLE :: wk_array
 	INTEGER :: ix, iy
 		
-	ALLOCATE(WkArray(1:nx,1:ny))
+	ALLOCATE(wk_array(1:nx,1:ny))
 #ifdef HIGH_ORDER_SMOOTHING
-	CALL ParticleToGrid(0.0_num,Weight_Fn)
+	CALL particle_to_grid(0.0_num,weight_fn)
 	
-	WkArray=0.0_num
+	wk_array=0.0_num
 
 	DO ix=1,nx
 		DO iy=1,ny
 			DO icyclex=-sf_order,sf_order
 				DO icycley=-sf_order,sf_order
-					WkArray(ix,iy) = WkArray(ix,iy) + Array(ix+icyclex,iy+icycley)&
-					 	* Weight_Fn(icyclex) * Weight_Fn(icycley)
+					wk_array(ix,iy) = wk_array(ix,iy) + array(ix+icyclex,iy+icycley)&
+					 	* weight_fn(icyclex) * weight_fn(icycley)
 				ENDDO
 			ENDDO
 		ENDDO
@@ -39,16 +39,16 @@ SUBROUTINE Smooth_Array(Array)
 #else
 	DO ix=1,nx
 		DO iy=1,ny
-			WkArray(ix,iy) = (Array(ix,iy) + Array(ix-1,iy)*0.25_num + &
-				Array(ix+1,iy)*0.25_num + Array(ix,iy-1) *0.25_num + &
-				Array(ix,iy+1)*0.25_num)*0.5_num
+			wk_array(ix,iy) = (array(ix,iy) + array(ix-1,iy)*0.25_num + &
+				array(ix+1,iy)*0.25_num + array(ix,iy-1) *0.25_num + &
+				array(ix,iy+1)*0.25_num)*0.5_num
 		ENDDO
 	ENDDO
 #endif
-	Array(1:nx,1:ny)=WkArray
+	array(1:nx,1:ny)=wk_array
 	
-	DEALLOCATE(WkArray)
+	DEALLOCATE(wk_array)
 	
-END SUBROUTINE Smooth_Array
+END SUBROUTINE smooth_array
 
-END MODULE Current_Smooth
+END MODULE current_smooth

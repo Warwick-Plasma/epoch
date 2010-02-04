@@ -1,4 +1,4 @@
-MODULE Control
+MODULE control
 
   USE shared_data
   USE setup
@@ -9,7 +9,7 @@ CONTAINS
   !****************************************************
   !Equivalent to "control" block in input deck
   !****************************************************
-  SUBROUTINE Setup_Control_Block
+  SUBROUTINE setup_control_block
 
     !Number of gridpoints in x direction
     nx_global = 256
@@ -42,11 +42,11 @@ CONTAINS
     !IC_MANUAL
     !IC_RESTART
     ictype=IC_EARLY_INTERNAL
-!!$    icfile%Value="ic.deck"
+!!$    icfile%value="ic.deck"
     restart_snapshot=0
     
     !Neutralising background
-    Neutral_Background=.TRUE.
+    neutral_background=.TRUE.
 
     !Setup the moving window
     move_window=.TRUE.
@@ -56,11 +56,11 @@ CONTAINS
     xbc_right_after_move=BC_SIMPLE_OUTFLOW
 
 
-  END SUBROUTINE Setup_Control_Block
+  END SUBROUTINE setup_control_block
   !****************************************************
   !Equivalent to "boundaries" block in input deck
   !****************************************************
-  SUBROUTINE Setup_Boundaries_Block
+  SUBROUTINE setup_boundaries_block
 
     !Boundary values, can be
     !BC_OTHER - Reflecting boundary, easily changed
@@ -71,35 +71,35 @@ CONTAINS
     xbc_left=BC_SIMPLE_LASER
     xbc_right=BC_SIMPLE_OUTFLOW
 
-  END SUBROUTINE Setup_Boundaries_Block
+  END SUBROUTINE setup_boundaries_block
   !****************************************************
   !Equivalent to "species" block in input deck
   !****************************************************
-  SUBROUTINE Setup_Species_Block
-    !Must set nSpecies before the call to Setup_Species
-    nSpecies=2
-    CALL Setup_Species
+  SUBROUTINE setup_species_block
+    !Must set n_species before the call to setup_species
+    n_species=2
+    CALL setup_species
 
-    !M0 is the mass of an electron
-    !Q0 is the charge of an electron
-    ParticleSpecies(1)%Name="Electron"
-    ParticleSpecies(1)%Mass=1.0_num*M0
-    ParticleSpecies(1)%Charge=-1.0_num*Q0
-    ParticleSpecies(1)%Count=0.5_num * npart_global
-    ParticleSpecies(1)%dump=.TRUE.
+    !m0 is the mass of an electron
+    !q0 is the charge of an electron
+    particle_species(1)%name="Electron"
+    particle_species(1)%mass=1.0_num*m0
+    particle_species(1)%charge=-1.0_num*q0
+    particle_species(1)%count=0.5_num * npart_global
+    particle_species(1)%dump=.TRUE.
 
-    ParticleSpecies(2)%Name="Ions"
-    ParticleSpecies(2)%Mass=1836.0_num*M0
-    ParticleSpecies(2)%Charge=1.0_num*Q0
-    ParticleSpecies(2)%Count=0.5_num * npart_global
-    ParticleSpecies(2)%dump=.TRUE.
+    particle_species(2)%name="Ions"
+    particle_species(2)%mass=1836.0_num*m0
+    particle_species(2)%charge=1.0_num*q0
+    particle_species(2)%count=0.5_num * npart_global
+    particle_species(2)%dump=.TRUE.
 
 
-  END SUBROUTINE Setup_Species_Block
+  END SUBROUTINE setup_species_block
   !****************************************************
   !Equivalent to "output" block in input deck
   !****************************************************
-  SUBROUTINE Setup_Output_Block
+  SUBROUTINE setup_output_block
 
     dt_snapshots=3.0e-14_num
     full_dump_every=1
@@ -108,56 +108,56 @@ CONTAINS
     use_offset_grid=.TRUE.
     use_extended_io=.FALSE.
 
-    DumpMask=IO_NEVER
+    dumpmask=IO_NEVER
 
-    !Dumpmask is a bitmasked variable which determines whether or not to
+    !dumpmask is a bitmasked variable which determines whether or not to
     !dump a given variable at a given type of output dump. The possible values are
     !IO_NEVER - Default value, never dump
-    !IO_ALWAYS - Dump at every output
-    !IO_FULL - Dump at only full outputs
+    !IO_ALWAYS - dump at every output
+    !IO_FULL - dump at only full outputs
     !IO_SPECIES - When ORed with another value, tells the code to output 
     !             some additional per species information
 
     !The numbers for each variable are
     !1   - The particle positions
     !2   - The cartesian grid
-    !3   - Particle px
-    !4   - Particle py
-    !5   - Particle Pz
-    !6   - Particle vx
-    !7   - Particle vy
-    !8   - Particle vz
-    !9   - Ex
-    !10  - Ey
-    !11  - Ez
-    !12  - Bx
-    !13  - By
-    !14  - Bz
-    !15  - Jx
-    !16  - Jy
-    !17  - Jz
-    !18  - Particle Charge
-    !19  - Particle Mass
+    !3   - particle px
+    !4   - particle py
+    !5   - particle Pz
+    !6   - particle vx
+    !7   - particle vy
+    !8   - particle vz
+    !9   - ex
+    !10  - ey
+    !11  - ez
+    !12  - bx
+    !13  - by
+    !14  - bz
+    !15  - jx
+    !16  - jy
+    !17  - jz
+    !18  - particle charge
+    !19  - particle mass
     !20  - Kinetic energy (on grid)
-    !21  - Mass density (Can have IO_SPECIES)
+    !21  - mass density (Can have IO_SPECIES)
     !22  - charge density (Can have IO_SPECIES)
     !23  - number density (Can have IO_SPECIES)
-    !24  - Particle weighting value
-    !25  - Particle species information
+    !24  - particle weighting value
+    !25  - particle species information
     !26  - Distribution functions
-    !27  - Particle Probes
-    !28  - Temperature
+    !27  - particle probes
+    !28  - temperature
     !29  - Ejected particles
 
-    DumpMask(2)=IO_ALWAYS
-    DumpMask(9:10)=IO_ALWAYS
-    DumpMask(14)=IO_ALWAYS
-    DumpMask(15:16)=IO_ALWAYS
-    DumpMask(20)=IO_ALWAYS
-    DumpMask(21)=IOR(IO_ALWAYS,IO_SPECIES)
-    DumpMask(22)=IO_ALWAYS
-    DumpMask(23)=IOR(IO_ALWAYS,IO_SPECIES)
+    dumpmask(2)=IO_ALWAYS
+    dumpmask(9:10)=IO_ALWAYS
+    dumpmask(14)=IO_ALWAYS
+    dumpmask(15:16)=IO_ALWAYS
+    dumpmask(20)=IO_ALWAYS
+    dumpmask(21)=IOR(IO_ALWAYS,IO_SPECIES)
+    dumpmask(22)=IO_ALWAYS
+    dumpmask(23)=IOR(IO_ALWAYS,IO_SPECIES)
 
-  END SUBROUTINE  Setup_Output_Block
+  END SUBROUTINE  setup_output_block
 
-END MODULE Control
+END MODULE control

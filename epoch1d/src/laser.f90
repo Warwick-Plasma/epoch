@@ -14,197 +14,197 @@ MODULE laser
 
 CONTAINS
 
-  SUBROUTINE Init_Laser(direction,laser)
+  SUBROUTINE init_laser(direction,laser)
     INTEGER,INTENT(IN) :: direction
-    TYPE(Laser_Block),INTENT(INOUT) :: laser
+    TYPE(laser_block),INTENT(INOUT) :: laser
 
-    Laser%Direction=Direction
-    NULLIFY(Laser%Next)
+    laser%direction=direction
+    NULLIFY(laser%next)
 
-  END SUBROUTINE Init_Laser
+  END SUBROUTINE init_laser
 
 
   !Subroutine to attach a created laser object to the correct boundary
-  SUBROUTINE Attach_laser(laser)
+  SUBROUTINE attach_laser(laser)
 
     INTEGER :: direction
-    TYPE(Laser_Block),POINTER,INTENT(INOUT) :: laser
+    TYPE(laser_block),POINTER,INTENT(INOUT) :: laser
 
     direction=laser%direction
 
     IF (direction == BD_LEFT) THEN
-       CALL Attach_Laser_To_List(Laser_Left,Laser,direction) 
+       CALL attach_laser_to_list(laser_left,laser,direction) 
     ENDIF
     IF (direction == BD_RIGHT) THEN
-       CALL Attach_Laser_To_List(Laser_Right,Laser,direction) 
+       CALL attach_laser_to_list(laser_right,laser,direction) 
     ENDIF
 
-  END SUBROUTINE Attach_laser
+  END SUBROUTINE attach_laser
 
-  FUNCTION Laser_Time_Profile(laser)
+  FUNCTION laser_time_profile(laser)
 
-    TYPE(Laser_Block),POINTER,INTENT(IN) :: laser
-    REAL(num) :: Laser_Time_Profile
+    TYPE(laser_block),POINTER,INTENT(IN) :: laser
+    REAL(num) :: laser_time_profile
     INTEGER :: err
 
     err=0
-    IF (Laser%UseTimeFunction) THEN
-       Laser_Time_Profile=evaluate(laser%TimeFunction,err)
+    IF (laser%use_time_function) THEN
+       laser_time_profile=evaluate(laser%time_function,err)
        RETURN
     ENDIF
 
-    Laser_Time_Profile=Custom_Laser_Time_Profile(laser)
+    laser_time_profile=custom_laser_time_profile(laser)
 
-  END FUNCTION Laser_Time_Profile
+  END FUNCTION laser_time_profile
 
   !Actually does the attaching of the laser to the correct list
-  SUBROUTINE Attach_Laser_To_List(list,laser,Direction)
+  SUBROUTINE attach_laser_to_list(list,laser,direction)
 
-    TYPE(Laser_Block),INTENT(INOUT),POINTER :: list
-    TYPE(Laser_Block),INTENT(IN),POINTER :: laser
-    INTEGER,INTENT(IN) :: Direction
-    TYPE(Laser_Block),POINTER :: Current
+    TYPE(laser_block),INTENT(INOUT),POINTER :: list
+    TYPE(laser_block),INTENT(IN),POINTER :: laser
+    INTEGER,INTENT(IN) :: direction
+    TYPE(laser_block),POINTER :: current
 
     IF (ASSOCIATED(list)) THEN
-       Current=>list
-       DO WHILE(ASSOCIATED(Current%Next))
-          Current=>Current%Next
+       current=>list
+       DO WHILE(ASSOCIATED(current%next))
+          current=>current%next
        ENDDO
-       Current%Next=>laser
+       current%next=>laser
     ELSE
        list=>laser
     ENDIF
 
-  END SUBROUTINE Attach_Laser_To_List
+  END SUBROUTINE attach_laser_to_list
 
-  SUBROUTINE Set_Laser_dt
+  SUBROUTINE set_laser_dt
 
     REAL(num) :: dt_local
-    TYPE(Laser_Block),POINTER :: Current
+    TYPE(laser_block),POINTER :: current
 
     dt_laser=1000000.0_num
-    Current=>Laser_Left
-    DO WHILE(ASSOCIATED(Current))
-       dt_local=2.0_num*pi/Current%Freq
+    current=>laser_left
+    DO WHILE(ASSOCIATED(current))
+       dt_local=2.0_num*pi/current%freq
        dt_laser=MIN(dt_laser,dt_local)
-       Current=>Current%Next
+       current=>current%next
     ENDDO
-    Current=>Laser_Right
-    DO WHILE(ASSOCIATED(Current))
-       dt_local=2.0_num*pi/Current%Freq
+    current=>laser_right
+    DO WHILE(ASSOCIATED(current))
+       dt_local=2.0_num*pi/current%freq
        dt_laser=MIN(dt_laser,dt_local)
-       Current=>Current%Next
+       current=>current%next
     ENDDO
 
     !Need at least two iterations per laser period
     !(Nyquist)
     dt_laser=dt_laser/2.0_num
 
-  END SUBROUTINE Set_Laser_dt
+  END SUBROUTINE set_laser_dt
 
-  !Laser boundary for the left boundary
+  !laser boundary for the left boundary
   SUBROUTINE laser_bcs_left
     REAL(num):: t_env
     REAL(num):: lx
-    REAL(num) :: FPlus
+    REAL(num) :: fplus
     INTEGER :: err
 
-    TYPE(Laser_Block),POINTER :: Current
+    TYPE(laser_block),POINTER :: current
 
     lx=dt/dx
-    FPlus=0.0_num
+    fplus=0.0_num
     err=0
-    Bx(0) =  0.0_num
+    bx(0) =  0.0_num
 
 
-    Current=>Laser_Left
-    DO WHILE(ASSOCIATED(Current))
-       !Evaluate the temporal evolution of the laser
-       IF (time .GE. Current%t_start .AND. time .LE. Current%t_end) THEN
-          t_env=Laser_Time_Profile(Current)
-          Fplus = Fplus + t_env * Current%Amp &
-               * SIN(Current%Freq*time + Current%Phase) * SIN(Current%Pol)&
-               *COS(Current%Angle)
+    current=>laser_left
+    DO WHILE(ASSOCIATED(current))
+       !evaluate the temporal evolution of the laser
+       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+          t_env=laser_time_profile(current)
+          fplus = fplus + t_env * current%amp &
+               * SIN(current%freq*time + current%phase) * SIN(current%pol)&
+               *COS(current%angle)
        ENDIF
-       Current=>Current%Next
+       current=>current%next
     ENDDO
 
     !Set the y magnetic field
-    By(-1:0)=(1.0_num / (C + lx*C**2)) &
-         * (-4.0_num * Fplus &
-         + 2.0_num * Ez(1) - (C - lx*C**2)*By(1) &
-         - (dt / epsilon0) * Jz(1))
+    by(-1:0)=(1.0_num / (c + lx*c**2)) &
+         * (-4.0_num * fplus &
+         + 2.0_num * ez(1) - (c - lx*c**2)*by(1) &
+         - (dt / epsilon0) * jz(1))
 
 
-    FPlus=0.0_num
-    Current=>Laser_Left
-    DO WHILE(ASSOCIATED(Current))
-       !Evaluate the temporal evolution of the laser
-       IF (time .GE. Current%t_start .AND. time .LE. Current%t_end) THEN
-          t_env=Laser_Time_Profile(Current)
-          Fplus = Fplus + t_env * Current%Amp &
-               * SIN(Current%Freq*time + Current%Phase) * COS(Current%Pol)
+    fplus=0.0_num
+    current=>laser_left
+    DO WHILE(ASSOCIATED(current))
+       !evaluate the temporal evolution of the laser
+       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+          t_env=laser_time_profile(current)
+          fplus = fplus + t_env * current%amp &
+               * SIN(current%freq*time + current%phase) * COS(current%pol)
        ENDIF
-       Current=>Current%Next
+       current=>current%next
     ENDDO
 
-    Bz(-1:0)=(1.0_num / (C + lx*C**2)) &
-         * (4.0_num * Fplus &
-         - 2.0_num * Ey(1) - (C - lx*C**2)*Bz(1) &
-         + (dt / epsilon0) * Jy(1))
+    bz(-1:0)=(1.0_num / (c + lx*c**2)) &
+         * (4.0_num * fplus &
+         - 2.0_num * ey(1) - (c - lx*c**2)*bz(1) &
+         + (dt / epsilon0) * jy(1))
     
   END SUBROUTINE laser_bcs_left
 
 
-  !Laser boundary for the right boundary
+  !laser boundary for the right boundary
   SUBROUTINE laser_bcs_right
     REAL(num):: t_env
     REAL(num):: lx
-    REAL(num):: FMinus
+    REAL(num):: f_minus
     INTEGER :: err
 
-    TYPE(Laser_Block),POINTER :: Current
+    TYPE(laser_block),POINTER :: current
 
     lx=dt/dx
 
-    FMinus=0.0_num
+    f_minus=0.0_num
     err=0
-    Bx(nx+1) =  0.0_num
+    bx(nx+1) =  0.0_num
 
-    Current=>Laser_Right
-    DO WHILE(ASSOCIATED(Current))
-       !Evaluate the temporal evolution of the laser
-       IF (time .GE. Current%t_start .AND. time .LE. Current%t_end) THEN
-          t_env=Laser_Time_Profile(Current)
-          Fminus = Fminus + t_env * Current%Amp &
-               * SIN(Current%Freq*time + Current%Phase) * SIN(Current%Pol)&
-               *COS(Current%Angle)
+    current=>laser_right
+    DO WHILE(ASSOCIATED(current))
+       !evaluate the temporal evolution of the laser
+       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+          t_env=laser_time_profile(current)
+          f_minus = f_minus + t_env * current%amp &
+               * SIN(current%freq*time + current%phase) * SIN(current%pol)&
+               *COS(current%angle)
        ENDIF
-       Current=>Current%Next
+       current=>current%next
     ENDDO
 
-    By(nx:nx+1)=(1.0_num / (C + lx*C**2)) &
-         * (4.0_num * Fminus &
-         - 2.0_num * Ez(nx) - (C - lx*C**2)*By(nx) &
-         + (dt / epsilon0) * Jz(nx))
+    by(nx:nx+1)=(1.0_num / (c + lx*c**2)) &
+         * (4.0_num * f_minus &
+         - 2.0_num * ez(nx) - (c - lx*c**2)*by(nx) &
+         + (dt / epsilon0) * jz(nx))
 
 
-    FMinus=0.0_num
-    Current=>Laser_Right
-    DO WHILE(ASSOCIATED(Current))
-       !Evaluate the temporal evolution of the laser
-       IF (time .GE. Current%t_start .AND. time .LE. Current%t_end) THEN
-          t_env=Laser_Time_Profile(Current)
-          Fminus = Fminus + t_env * Current%Amp * Current%Profile &
-               * SIN(Current%Freq*time + Current%Phase) * COS(Current%Pol)
+    f_minus=0.0_num
+    current=>laser_right
+    DO WHILE(ASSOCIATED(current))
+       !evaluate the temporal evolution of the laser
+       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+          t_env=laser_time_profile(current)
+          f_minus = f_minus + t_env * current%amp * current%profile &
+               * SIN(current%freq*time + current%phase) * COS(current%pol)
        ENDIF
-       Current=>Current%Next
+       current=>current%next
     ENDDO
 
-    Bz(nx:nx+1)=(1.0_num / (C + lx*C**2)) &
-         * (-4.0_num * Fminus &
-         + 2.0_num * Ey(nx) - (C - lx*C**2)*Bz(nx) &
-         - (dt / epsilon0) * Jy(nx))
+    bz(nx:nx+1)=(1.0_num / (c + lx*c**2)) &
+         * (-4.0_num * f_minus &
+         + 2.0_num * ey(nx) - (c - lx*c**2)*bz(nx) &
+         - (dt / epsilon0) * jy(nx))
 
   END SUBROUTINE laser_bcs_right
 
@@ -212,14 +212,14 @@ CONTAINS
     REAL(num):: lx
 
     lx=dt/dx
-    Bx(-1:0) =  0.0_num
+    bx(-1:0) =  0.0_num
     !Set the y magnetic field
-    By(-1:0)=(1.0_num / (C + lx*C**2)) &
-         * (2.0_num * Ez(1) - (C - lx*C**2)*By(1) &
-         - (dt / epsilon0) * Jz(1))
-    Bz(-1:0)=(1.0_num / (C + lx*C**2)) &
-         * (-2.0_num * Ey(1) - (C - lx*C**2)*Bz(1) &
-         + (dt / epsilon0) * Jy(1))
+    by(-1:0)=(1.0_num / (c + lx*c**2)) &
+         * (2.0_num * ez(1) - (c - lx*c**2)*by(1) &
+         - (dt / epsilon0) * jz(1))
+    bz(-1:0)=(1.0_num / (c + lx*c**2)) &
+         * (-2.0_num * ey(1) - (c - lx*c**2)*bz(1) &
+         + (dt / epsilon0) * jy(1))
     
   END SUBROUTINE outflow_bcs_left
 
@@ -227,14 +227,14 @@ CONTAINS
     REAL(num):: lx
 
     lx=dt/dx
-    Bx(nx) =  0.0_num
+    bx(nx) =  0.0_num
     !Set the y magnetic field
-    By(nx:nx+1)=(1.0_num / (C + lx*C**2)) &
-         * (- 2.0_num * Ez(nx) - (C - lx*C**2)*By(nx) &
-         + (dt / epsilon0) * Jz(nx))
-    Bz(nx:nx+1)=(1.0_num / (C + lx*C**2)) &
-         * (2.0_num * Ey(nx) - (C - lx*C**2)*Bz(nx) &
-         - (dt / epsilon0) * Jy(nx))
+    by(nx:nx+1)=(1.0_num / (c + lx*c**2)) &
+         * (- 2.0_num * ez(nx) - (c - lx*c**2)*by(nx) &
+         + (dt / epsilon0) * jz(nx))
+    bz(nx:nx+1)=(1.0_num / (c + lx*c**2)) &
+         * (2.0_num * ey(nx) - (c - lx*c**2)*bz(nx) &
+         - (dt / epsilon0) * jy(nx))
   END SUBROUTINE outflow_bcs_right
 
 

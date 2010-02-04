@@ -11,112 +11,112 @@ MODULE deck_ic_external_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset
 CONTAINS
 
-  SUBROUTINE Start_External
+  SUBROUTINE start_external
     offset=0
-  END SUBROUTINE Start_External
+  END SUBROUTINE start_external
 
-  FUNCTION HandleICExternalSpeciesDeck(Species_ID,Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER,INTENT(IN) :: Species_ID
-    INTEGER :: HandleICExternalSpeciesDeck
+  FUNCTION handle_ic_external_species_deck(species_id,element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER,INTENT(IN) :: species_id
+    INTEGER :: handle_ic_external_species_deck
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset =0 
 
-    HandleICExternalSpeciesDeck=ERR_NONE
-    IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
+    handle_ic_external_species_deck=ERR_NONE
+    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (StrCmp(Element,"offset")) THEN
-       offset=AsLongIntegerSimple(Value,HandleICExternalSpeciesDeck)
+    IF (str_cmp(element,"offset")) THEN
+       offset=as_long_integer_simple(value,handle_ic_external_species_deck)
        RETURN
     ENDIF
 
-    IF (Species_ID .LT. 0 .OR. Species_ID .GT. nspecies) THEN
+    IF (species_id .LT. 0 .OR. species_id .GT. n_species) THEN
        IF (rank .EQ. 0) PRINT *,"Attempting to set non-existent species initial conditions. Ignoring."
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"minrho")) THEN
-       InitialConditions(Species_ID)%MinRho=AsReal(Value,HandleICExternalSpeciesDeck)
+    IF (str_cmp(element,"minrho")) THEN
+       initial_conditions(species_id)%minrho=as_real(value,handle_ic_external_species_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"maxrho")) THEN
-       InitialConditions(Species_ID)%MaxRho=AsReal(Value,HandleICExternalSpeciesDeck)
+    IF (str_cmp(element,"maxrho")) THEN
+       initial_conditions(species_id)%maxrho=as_real(value,handle_ic_external_species_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"rho")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,InitialConditions(Species_ID)%Rho,offset,HandleICExternalSpeciesDeck)  
+    IF (str_cmp(element,"rho")) THEN
+       CALL load_single_array_from_data_file(value,initial_conditions(species_id)%rho,offset,handle_ic_external_species_deck)  
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"temp")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,InitialConditions(Species_ID)%Temp(:,1),offset&
-            ,HandleICExternalSpeciesDeck)
-       InitialConditions(Species_ID)%temp(-1:nx+2,2)=InitialConditions(Species_ID)%temp(-1:nx+2,1)
-       InitialConditions(Species_ID)%temp(-1:nx+2,3)=InitialConditions(Species_ID)%temp(-1:nx+2,1)
+    IF (str_cmp(element,"temp")) THEN
+       CALL load_single_array_from_data_file(value,initial_conditions(species_id)%temp(:,1),offset&
+            ,handle_ic_external_species_deck)
+       initial_conditions(species_id)%temp(-1:nx+2,2)=initial_conditions(species_id)%temp(-1:nx+2,1)
+       initial_conditions(species_id)%temp(-1:nx+2,3)=initial_conditions(species_id)%temp(-1:nx+2,1)
        RETURN
     ENDIF
 
 
-    IF (StrCmp(Element,"temp_x")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,InitialConditions(Species_ID)%Temp(:,1),offset&
-            ,HandleICExternalSpeciesDeck)
+    IF (str_cmp(element,"temp_x")) THEN
+       CALL load_single_array_from_data_file(value,initial_conditions(species_id)%temp(:,1),offset&
+            ,handle_ic_external_species_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"temp_y")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,InitialConditions(Species_ID)%Temp(:,2),offset&
-            ,HandleICExternalSpeciesDeck)
+    IF (str_cmp(element,"temp_y")) THEN
+       CALL load_single_array_from_data_file(value,initial_conditions(species_id)%temp(:,2),offset&
+            ,handle_ic_external_species_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"temp_z")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,InitialConditions(Species_ID)%Temp(:,3),offset&
-            ,HandleICExternalSpeciesDeck)
+    IF (str_cmp(element,"temp_z")) THEN
+       CALL load_single_array_from_data_file(value,initial_conditions(species_id)%temp(:,3),offset&
+            ,handle_ic_external_species_deck)
        RETURN
     ENDIF
-    HandleICExternalSpeciesDeck=ERR_UNKNOWN_ELEMENT
+    handle_ic_external_species_deck=ERR_UNKNOWN_ELEMENT
 
-  END FUNCTION HandleICExternalSpeciesDeck
+  END FUNCTION handle_ic_external_species_deck
 
-  FUNCTION HandleICExternalFieldsDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER :: HandleICExternalFieldsDeck
+  FUNCTION handle_ic_external_fields_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER :: handle_ic_external_fields_deck
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset =0 
 
-    HandleICExternalFieldsDeck=ERR_NONE
-    IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
+    handle_ic_external_fields_deck=ERR_NONE
+    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (StrCmp(Element,"ex")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,Ex,offset,HandleICExternalFieldsDeck)
+    IF (str_cmp(element,"ex")) THEN
+       CALL load_single_array_from_data_file(value,ex,offset,handle_ic_external_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"ey")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,Ey,offset,HandleICExternalFieldsDeck)
+    IF (str_cmp(element,"ey")) THEN
+       CALL load_single_array_from_data_file(value,ey,offset,handle_ic_external_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"ez")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,Ez,offset,HandleICExternalFieldsDeck)
+    IF (str_cmp(element,"ez")) THEN
+       CALL load_single_array_from_data_file(value,ez,offset,handle_ic_external_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"bx")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,Bx,offset,HandleICExternalFieldsDeck)
+    IF (str_cmp(element,"bx")) THEN
+       CALL load_single_array_from_data_file(value,bx,offset,handle_ic_external_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"by")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,By,offset,HandleICExternalFieldsDeck)
+    IF (str_cmp(element,"by")) THEN
+       CALL load_single_array_from_data_file(value,by,offset,handle_ic_external_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"bz")) THEN
-       CALL Load_Single_Array_From_Data_File(Value,Bz,offset,HandleICExternalFieldsDeck)
+    IF (str_cmp(element,"bz")) THEN
+       CALL load_single_array_from_data_file(value,bz,offset,handle_ic_external_fields_deck)
        RETURN
     ENDIF
 
-  END FUNCTION HandleICExternalFieldsDeck
+  END FUNCTION handle_ic_external_fields_deck
 
 END MODULE deck_ic_external_block

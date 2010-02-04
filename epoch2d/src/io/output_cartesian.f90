@@ -12,13 +12,13 @@ CONTAINS
   !Code to write a 1D Cartesian grid in serial from the node with rank {rank_write}
   !Serial operation, so no need to specify nx,ny
   !-------------------------------------------------------------------------------------------------------------------
-  SUBROUTINE cfd_Write_1D_Cartesian_Grid(name,class,x,rank_write)
+  SUBROUTINE cfd_write_1d_cartesian_grid(name,class,x,rank_write)
 
     REAL(num),DIMENSION(:),INTENT(IN) :: x
     CHARACTER(len=*), INTENT(IN) :: name, class
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(4) :: nx
-    INTEGER(8) :: blocklen,mdlen
+    INTEGER(8) :: block_length,md_length
 
     nx=SIZE(x)
 
@@ -31,13 +31,13 @@ CONTAINS
     !2 ) xmin REAL(num)
     !3 ) xmax REAL(num)
 
-    mdlen=MeshType_Header_Offset + 1 * SoI + 2 * num !1 ints, 2 reals + MeshType Header
-    blocklen=mdlen + nx*num
+    md_length=meshtype_header_offset + 1 * soi + 2 * num !1 ints, 2 reals + MeshType Header
+    block_length=md_length + nx*num
 
     !Now written header, write metadata
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH,blocklen,mdlen,rank_write)
+    CALL cfd_write_block_header(name,class,TYPE_MESH,block_length,md_length,rank_write)
 
-    CALL cfd_Write_MeshType_Header(MESH_CARTESIAN,DIMENSION_1D,num,rank_write)
+    CALL cfd_write_meshtype_header(MESH_CARTESIAN,DIMENSION_1D,num,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -45,7 +45,7 @@ CONTAINS
        CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 1 * SoI
+    current_displacement = current_displacement + 1 * soi
 
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
@@ -61,19 +61,19 @@ CONTAINS
 
     current_displacement = current_displacement + 2*num + nx * num
 
-  END SUBROUTINE cfd_Write_1D_Cartesian_Grid
+  END SUBROUTINE cfd_write_1d_cartesian_grid
 
   !-------------------------------------------------------------------------------------------------------------------
   !Code to write a 2D Cartesian grid in serial from the node with rank {rank_write}
   !Serial operation, so no need to specify nx,ny
   !-------------------------------------------------------------------------------------------------------------------
-  SUBROUTINE cfd_Write_2D_Cartesian_Grid(name,class,x,y,rank_write)
+  SUBROUTINE cfd_write_2d_cartesian_grid(name,class,x,y,rank_write)
 
     REAL(num),DIMENSION(:),INTENT(IN) :: x,y
     CHARACTER(len=*), INTENT(IN) :: name, class
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(4) :: nx,ny
-    INTEGER(8) :: blocklen,mdlen
+    INTEGER(8) :: block_length,md_length
 
     nx=SIZE(x)
     ny=SIZE(y)
@@ -90,13 +90,13 @@ CONTAINS
     !5 ) ymin REAL(num)
     !6 ) ymax REAL(num)
 
-    mdlen=MeshType_Header_Offset + 2 * SoI + 4 * num !2 ints, 6 reals + MeshType Header
-    blocklen=mdlen + (nx+ny)*num
+    md_length=meshtype_header_offset + 2 * soi + 4 * num !2 ints, 6 reals + MeshType Header
+    block_length=md_length + (nx+ny)*num
 
     !Now written header, write metadata
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH,blocklen,mdlen,rank_write)
+    CALL cfd_write_block_header(name,class,TYPE_MESH,block_length,md_length,rank_write)
 
-    CALL cfd_Write_MeshType_Header(MESH_CARTESIAN,DIMENSION_2D,num,rank_write)
+    CALL cfd_write_meshtype_header(MESH_CARTESIAN,DIMENSION_2D,num,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -105,7 +105,7 @@ CONTAINS
        CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 2 * SoI
+    current_displacement = current_displacement + 2 * soi
 
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
@@ -125,18 +125,18 @@ CONTAINS
 
     current_displacement = current_displacement + 4*num + (nx + ny)*num
 
-  END SUBROUTINE cfd_Write_2D_Cartesian_Grid
+  END SUBROUTINE cfd_write_2d_cartesian_grid
   !-------------------------------------------------------------------------------------------------------------------
   !Code to write a 3D Cartesian grid in serial from the node with rank {rank_write}
   !Serial operation, so no need to specify nx,ny,nz
   !-------------------------------------------------------------------------------------------------------------------
-  SUBROUTINE cfd_Write_3D_Cartesian_Grid(name,class,x,y,z,rank_write)
+  SUBROUTINE cfd_write_3d_cartesian_grid(name,class,x,y,z,rank_write)
 
     REAL(num),DIMENSION(:),INTENT(IN) :: x,y,z
     CHARACTER(len=*), INTENT(IN) :: name, class
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(4) :: nx,ny,nz
-    INTEGER(8) :: blocklen,mdlen
+    INTEGER(8) :: block_length,md_length
 
     nx=SIZE(x)
     ny=SIZE(y)
@@ -157,13 +157,13 @@ CONTAINS
     !9 ) zmin REAL(num)
     !10) zmax REAL(num)
 
-    mdlen=MeshType_Header_Offset + 3 * SoI + 6 * num !3 ints, 6 reals + MeshType Header
-    blocklen=mdlen + (nx+ny+nz)*num
+    md_length=meshtype_header_offset + 3 * soi + 6 * num !3 ints, 6 reals + MeshType Header
+    block_length=md_length + (nx+ny+nz)*num
 
     !Now written header, write metadata
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH,blocklen,mdlen,rank_write)
+    CALL cfd_write_block_header(name,class,TYPE_MESH,block_length,md_length,rank_write)
 
-    CALL cfd_Write_MeshType_Header(MESH_CARTESIAN,DIMENSION_3D,num,rank_write)
+    CALL cfd_write_meshtype_header(MESH_CARTESIAN,DIMENSION_3D,num,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -173,7 +173,7 @@ CONTAINS
        CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 3 * SoI
+    current_displacement = current_displacement + 3 * soi
 
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
@@ -197,22 +197,22 @@ CONTAINS
 
     current_displacement = current_displacement + 6*num + (nx + ny + nz)*num
 
-  END SUBROUTINE cfd_Write_3D_Cartesian_Grid
+  END SUBROUTINE cfd_write_3d_cartesian_grid
 
   !-------------------------------------------------------------------------------------------------------------------
   !Code to write a 3D Cartesian variable in parallel using the mpitype {distribution} for distribution of data
   !It's up to the coder to design the distribution
-  !Parallel operation, so need global nx,ny,nz
+  !parallel operation, so need global nx,ny,nz
   !-------------------------------------------------------------------------------------------------------------------
 
-  SUBROUTINE cfd_Write_3D_Cartesian_Variable_Parallel(name,class,dims,stagger,meshname,meshclass,variable,distribution)
-    CHARACTER(len=*), INTENT(IN) :: name, class,meshname,meshclass
+  SUBROUTINE cfd_write_3d_cartesian_variable_parallel(name,class,dims,stagger,mesh_name,mesh_class,variable,distribution)
+    CHARACTER(len=*), INTENT(IN) :: name, class,mesh_name,mesh_class
     REAL(num),DIMENSION(:,:,:),INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution
     INTEGER, INTENT(IN),DIMENSION(3) :: dims
     REAL(num), INTENT(IN),DIMENSION(3) :: stagger
     REAL(num) :: mn,mx,mn_global,mx_global
-    INTEGER(8) :: blocklen,mdlen,len_var
+    INTEGER(8) :: block_length,md_length,len_var
     INTEGER :: nx,ny,nz
 
 
@@ -228,8 +228,8 @@ CONTAINS
     !6 ) stz  REAL(num)
     !7 ) dmin REAL(num)
     !8 ) dmax REAL(num)
-    !9 ) Mesh CHARACTER(MaxStringLen)
-    !10) Class CHARACTER(MaxStringLen)
+    !9 ) Mesh CHARACTER(max_string_len)
+    !10) class CHARACTER(max_string_len)
 
     len_var=SIZE(variable)
     nx=dims(1)
@@ -237,12 +237,12 @@ CONTAINS
     nz=dims(3)
 
 
-    mdlen = MeshType_Header_Offset + 3 * SoI + 5 * num + 2 * MaxStringLen !3 INTs 5 REALs 2STRINGs
-    blocklen = mdlen + num * nx * ny * nz
+    md_length = meshtype_header_offset + 3 * soi + 5 * num + 2 * max_string_len !3 INTs 5 REALs 2STRINGs
+    block_length = md_length + num * nx * ny * nz
 
     !Write the common stuff
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH_VARIABLE,blocklen,mdlen,default_rank)
-    CALL cfd_Write_MeshType_Header(VAR_CARTESIAN,DIMENSION_3D,num,default_rank)
+    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(VAR_CARTESIAN,DIMENSION_3D,num,default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -251,7 +251,7 @@ CONTAINS
        CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, cfd_errcode)
        CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
-    current_displacement = current_displacement + 3 * SoI
+    current_displacement = current_displacement + 3 * soi
 
 
     !Set the file view
@@ -274,34 +274,34 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == default_rank) THEN
-       CALL cfd_Safe_Write_String(meshname)
-       CALL cfd_Safe_Write_String(meshclass)
+       CALL cfd_safe_write_string(mesh_name)
+       CALL cfd_safe_write_string(mesh_class)
     ENDIF
-    current_displacement = current_displacement + 2 * MaxStringLen
+    current_displacement = current_displacement + 2 * max_string_len
 
-    !Write the actual Data
+    !Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, distribution,&
          "native", MPI_INFO_NULL, cfd_errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, Variable, len_var , mpireal, cfd_status, cfd_errcode)
+    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var , mpireal, cfd_status, cfd_errcode)
     current_displacement = current_displacement + num*nx*ny*nz
 
-  END SUBROUTINE cfd_Write_3D_Cartesian_Variable_Parallel
+  END SUBROUTINE cfd_write_3d_cartesian_variable_parallel
 
   !-------------------------------------------------------------------------------------------------------------------
   !Code to write a 2D Cartesian variable in parallel using the mpitype {distribution} for distribution of data
   !It's up to the coder to design the distribution
-  !Parallel operation, so need global nx,ny
+  !parallel operation, so need global nx,ny
   !-------------------------------------------------------------------------------------------------------------------
 
-  SUBROUTINE cfd_Write_2D_Cartesian_Variable_Parallel(name,class,dims,stagger,meshname,meshclass,variable,distribution)
-    CHARACTER(len=*), INTENT(IN) :: name, class,meshname,meshclass
+  SUBROUTINE cfd_write_2d_cartesian_variable_parallel(name,class,dims,stagger,mesh_name,mesh_class,variable,distribution)
+    CHARACTER(len=*), INTENT(IN) :: name, class,mesh_name,mesh_class
     REAL(num),DIMENSION(:,:),INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution
     INTEGER, INTENT(IN),DIMENSION(2) :: dims
     REAL(num), INTENT(IN),DIMENSION(2) :: stagger
     INTEGER :: nx,ny
     REAL(num) :: mn,mx,mn_global,mx_global
-    INTEGER(8) :: blocklen,mdlen,len_var
+    INTEGER(8) :: block_length,md_length,len_var
 
     !*) VariableType (INTEGER(4)) All variable blocks contain this
     !These are specific to a cartesian variable
@@ -313,19 +313,19 @@ CONTAINS
     !4 ) sty  REAL(num)
     !5 ) dmin REAL(num)
     !6 ) dmax REAL(num)
-    !7 ) Mesh CHARACTER(MaxStringLen)
-    !8 ) Class CHARACTER(MaxStringLen)
+    !7 ) Mesh CHARACTER(max_string_len)
+    !8 ) class CHARACTER(max_string_len)
 
 
     len_var=SIZE(variable)
     nx=dims(1)
     ny=dims(2)
 
-    mdlen = MeshType_Header_Offset + 2 * SoI + 4 * num + 2 * MaxStringLen !3 INTs 2 REALs
-    blocklen = mdlen + num * nx * ny
+    md_length = meshtype_header_offset + 2 * soi + 4 * num + 2 * max_string_len !3 INTs 2 REALs
+    block_length = md_length + num * nx * ny
 
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH_VARIABLE,blocklen,mdlen,default_rank)
-    CALL cfd_Write_MeshType_Header(VAR_CARTESIAN, DIMENSION_2D, num, default_rank)
+    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(VAR_CARTESIAN, DIMENSION_2D, num, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -333,7 +333,7 @@ CONTAINS
        CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, cfd_errcode)
        CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
-    current_displacement = current_displacement + 2 * SoI
+    current_displacement = current_displacement + 2 * soi
 
     !Determine data ranges and write out
     mn=MINVAL(variable)
@@ -353,35 +353,35 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == default_rank) THEN
-       CALL cfd_Safe_Write_String(meshname)
-       CALL cfd_Safe_Write_String(meshclass)
+       CALL cfd_safe_write_string(mesh_name)
+       CALL cfd_safe_write_string(mesh_class)
     ENDIF
-    current_displacement = current_displacement + 2 * MaxStringLen
+    current_displacement = current_displacement + 2 * max_string_len
 
-    !Write the actual Data
+    !Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, distribution,&
          "native", MPI_INFO_NULL, cfd_errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, Variable, len_var , mpireal, cfd_status, cfd_errcode)
+    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var , mpireal, cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + num*nx*ny
 
-  END SUBROUTINE cfd_Write_2D_Cartesian_Variable_Parallel
+  END SUBROUTINE cfd_write_2d_cartesian_variable_parallel
 
   !-------------------------------------------------------------------------------------------------------------------
   !Code to write a 1D Cartesian variable in parallel using the mpitype {distribution} for distribution of data
   !It's up to the coder to design the distribution
-  !Parallel operation, so need global nx
+  !parallel operation, so need global nx
   !-------------------------------------------------------------------------------------------------------------------
 
-  SUBROUTINE cfd_Write_1D_Cartesian_Variable_Parallel(name,class,dims,stagger,meshname,meshclass,variable,distribution)
-    CHARACTER(len=*), INTENT(IN) :: name, class,meshname,meshclass
+  SUBROUTINE cfd_write_1d_cartesian_variable_parallel(name,class,dims,stagger,mesh_name,mesh_class,variable,distribution)
+    CHARACTER(len=*), INTENT(IN) :: name, class,mesh_name,mesh_class
     REAL(num),DIMENSION(:),INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution
     INTEGER, INTENT(IN) :: dims
     REAL(num), INTENT(IN) :: stagger
     INTEGER :: nx
     REAL(num) :: mn,mx,mn_global,mx_global
-    INTEGER(8) :: blocklen,mdlen,len_var
+    INTEGER(8) :: block_length,md_length,len_var
 
     !*) VariableType (INTEGER(4)) All variable blocks contain this
     !These are specific to a cartesian variable
@@ -391,24 +391,24 @@ CONTAINS
     !2 ) stx  REAL(num)
     !3 ) dmin REAL(num)
     !4 ) dmax REAL(num)
-    !5 ) Mesh CHARACTER(MaxStringLen)
-    !6 ) Class CHARACTER(MaxStringLen)
+    !5 ) Mesh CHARACTER(max_string_len)
+    !6 ) class CHARACTER(max_string_len)
 
 
     len_var=SIZE(variable)
     nx=dims
-    mdlen = MeshType_Header_Offset + 1 * SoI + 3 * num + 2 * MaxStringLen !1 INTs 3 REALs 2 Strings
-    blocklen = mdlen + num * nx 
+    md_length = meshtype_header_offset + 1 * soi + 3 * num + 2 * max_string_len !1 INTs 3 REALs 2 strings
+    block_length = md_length + num * nx 
 
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH_VARIABLE,blocklen,mdlen,default_rank)
-    CALL cfd_Write_MeshType_Header(VAR_CARTESIAN, DIMENSION_1D, num, default_rank)
+    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(VAR_CARTESIAN, DIMENSION_1D, num, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == default_rank) THEN
        CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
-    current_displacement = current_displacement + 1 * SoI
+    current_displacement = current_displacement + 1 * soi
 
     !Determine data ranges and write out
     mn=MINVAL(variable)
@@ -428,33 +428,33 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == default_rank) THEN
-       CALL cfd_Safe_Write_String(meshname)
-       CALL cfd_Safe_Write_String(meshclass)
+       CALL cfd_safe_write_string(mesh_name)
+       CALL cfd_safe_write_string(mesh_class)
     ENDIF
-    current_displacement = current_displacement + 2 * MaxStringLen
+    current_displacement = current_displacement + 2 * max_string_len
 
-    !Write the actual Data
+    !Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, distribution,&
          "native", MPI_INFO_NULL, cfd_errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, Variable, len_var , mpireal, cfd_status, cfd_errcode)
+    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var , mpireal, cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + num*nx
 
-  END SUBROUTINE cfd_Write_1D_Cartesian_Variable_Parallel
+  END SUBROUTINE cfd_write_1d_cartesian_variable_parallel
   !-------------------------------------------------------------------------------------------------------------------
   !Code to write a 1D Cartesian variable in serial using node with rank {rank_write} for writing
   !Serial operation, so no need for nx,ny
   !-------------------------------------------------------------------------------------------------------------------
 
-  SUBROUTINE cfd_Write_1D_Cartesian_Variable(name,class,stagger,meshname,meshclass,variable,rank_write)
-    CHARACTER(len=*), INTENT(IN) :: name, class,meshname,meshclass
+  SUBROUTINE cfd_write_1d_cartesian_variable(name,class,stagger,mesh_name,mesh_class,variable,rank_write)
+    CHARACTER(len=*), INTENT(IN) :: name, class,mesh_name,mesh_class
     REAL(num),DIMENSION(:),INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
     REAL(num), INTENT(IN),DIMENSION(1) :: stagger
     INTEGER :: nx
     REAL(num) :: mn,mx,mn_global,mx_global
     INTEGER,DIMENSION(1) :: dims
-    INTEGER(8) :: blocklen,mdlen,len_var
+    INTEGER(8) :: block_length,md_length,len_var
 
     !*) VariableType (INTEGER(4)) All variable blocks contain this
     !These are specific to a cartesian variable
@@ -464,18 +464,18 @@ CONTAINS
     !2 ) stx  REAL(num)
     !3 ) dmin REAL(num)
     !4 ) dmax REAL(num)
-    !5 ) Mesh CHARACTER(MaxStringLen)
-    !6 ) Class CHARACTER(MaxStringLen)
+    !5 ) Mesh CHARACTER(max_string_len)
+    !6 ) class CHARACTER(max_string_len)
     len_var=SIZE(variable)
     dims=SHAPE(variable)
 
     nx=dims(1)
 
-    mdlen = MeshType_Header_Offset + 1 * SoI + 3 * num + 2 * MaxStringLen !1 INTs 3 REALs
-    blocklen = mdlen + num * nx
+    md_length = meshtype_header_offset + 1 * soi + 3 * num + 2 * max_string_len !1 INTs 3 REALs
+    block_length = md_length + num * nx
 
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH_VARIABLE,blocklen,mdlen,rank_write)
-    CALL cfd_Write_MeshType_Header(VAR_CARTESIAN,DIMENSION_1D, num, rank_write)
+    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,rank_write)
+    CALL cfd_write_meshtype_header(VAR_CARTESIAN,DIMENSION_1D, num, rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -484,7 +484,7 @@ CONTAINS
     IF (cfd_rank == rank_write) THEN
        CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
-    current_displacement = current_displacement + 1 * SoI
+    current_displacement = current_displacement + 1 * soi
 
     !Determine data ranges and write out
     mn=MINVAL(variable)
@@ -503,35 +503,35 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == rank_write) THEN
-       CALL cfd_Safe_Write_String(meshname)
-       CALL cfd_Safe_Write_String(meshclass)
+       CALL cfd_safe_write_string(mesh_name)
+       CALL cfd_safe_write_string(mesh_class)
     ENDIF
 
-    current_displacement = current_displacement + 2 * MaxStringLen
+    current_displacement = current_displacement + 2 * max_string_len
 
-    !Write the actual Data
+    !Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == rank_write) &
-         CALL MPI_FILE_WRITE(cfd_filehandle, Variable, len_var , mpireal, cfd_status, cfd_errcode)
+         CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var , mpireal, cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + num*nx
 
-  END SUBROUTINE cfd_Write_1D_Cartesian_Variable
+  END SUBROUTINE cfd_write_1d_cartesian_variable
   !-------------------------------------------------------------------------------------------------------------------
   !Code to write a 2D Cartesian variable in serial using node with rank {rank_write} for writing
   !Serial operation, so no need for nx,ny
   !-------------------------------------------------------------------------------------------------------------------
 
-  SUBROUTINE cfd_Write_2D_Cartesian_Variable(name,class,stagger,meshname,meshclass,variable,rank_write)
-    CHARACTER(len=*), INTENT(IN) :: name, class,meshname,meshclass
+  SUBROUTINE cfd_write_2d_cartesian_variable(name,class,stagger,mesh_name,mesh_class,variable,rank_write)
+    CHARACTER(len=*), INTENT(IN) :: name, class,mesh_name,mesh_class
     REAL(num),DIMENSION(:,:),INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
     REAL(num), INTENT(IN),DIMENSION(2) :: stagger
     INTEGER :: nx,ny
     REAL(num) :: mn,mx,mn_global,mx_global
     INTEGER,DIMENSION(2) :: dims
-    INTEGER(8) :: blocklen,mdlen,len_var
+    INTEGER(8) :: block_length,md_length,len_var
 
     !*) VariableType (INTEGER(4)) All variable blocks contain this
     !These are specific to a cartesian variable
@@ -543,19 +543,19 @@ CONTAINS
     !4 ) sty  REAL(num)
     !5 ) dmin REAL(num)
     !6 ) dmax REAL(num)
-    !7 ) Mesh CHARACTER(MaxStringLen)
-    !8 ) Class CHARACTER(MaxStringLen)
+    !7 ) Mesh CHARACTER(max_string_len)
+    !8 ) class CHARACTER(max_string_len)
     len_var=SIZE(variable)
     dims=SHAPE(variable)
 
     nx=dims(1)
     ny=dims(2)
 
-    mdlen = MeshType_Header_Offset + 2 * SoI + 4 * num + 2 * MaxStringLen !2 INTs 4 REALs
-    blocklen = mdlen + num * nx * ny
+    md_length = meshtype_header_offset + 2 * soi + 4 * num + 2 * max_string_len !2 INTs 4 REALs
+    block_length = md_length + num * nx * ny
 
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH_VARIABLE,blocklen,mdlen,rank_write)
-    CALL cfd_Write_MeshType_Header(VAR_CARTESIAN,DIMENSION_2D, num, rank_write)
+    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,rank_write)
+    CALL cfd_write_meshtype_header(VAR_CARTESIAN,DIMENSION_2D, num, rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -565,7 +565,7 @@ CONTAINS
        CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, cfd_errcode)
        CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
-    current_displacement = current_displacement + 2 * SoI
+    current_displacement = current_displacement + 2 * soi
 
     !Determine data ranges and write out
     mn=MINVAL(variable)
@@ -584,35 +584,35 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == rank_write) THEN
-       CALL cfd_Safe_Write_String(meshname)
-       CALL cfd_Safe_Write_String(meshclass)
+       CALL cfd_safe_write_string(mesh_name)
+       CALL cfd_safe_write_string(mesh_class)
     ENDIF
 
-    current_displacement = current_displacement + 2 * MaxStringLen
+    current_displacement = current_displacement + 2 * max_string_len
 
-    !Write the actual Data
+    !Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == rank_write) &
-         CALL MPI_FILE_WRITE(cfd_filehandle, Variable, len_var , mpireal, cfd_status, cfd_errcode)
+         CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var , mpireal, cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + num*nx*ny
 
-  END SUBROUTINE cfd_Write_2D_Cartesian_Variable
+  END SUBROUTINE cfd_write_2d_cartesian_variable
   !-------------------------------------------------------------------------------------------------------------------
   !Code to write a 3D Cartesian variable in serial using node with rank {rank_write} for writing
   !Serial operation, so no need for nx,ny,nz
   !-------------------------------------------------------------------------------------------------------------------
 
-  SUBROUTINE cfd_Write_3D_Cartesian_Variable(name,class,stagger,meshname,meshclass,variable,rank_write)
-    CHARACTER(len=*), INTENT(IN) :: name, class,meshname,meshclass
+  SUBROUTINE cfd_write_3d_cartesian_variable(name,class,stagger,mesh_name,mesh_class,variable,rank_write)
+    CHARACTER(len=*), INTENT(IN) :: name, class,mesh_name,mesh_class
     REAL(num),DIMENSION(:,:,:),INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
     REAL(num), INTENT(IN),DIMENSION(3) :: stagger
     INTEGER :: nx,ny,nz
     INTEGER, DIMENSION(3) :: dims
     REAL(num) :: mn,mx,mn_global,mx_global
-    INTEGER(8) :: blocklen,mdlen,len_var
+    INTEGER(8) :: block_length,md_length,len_var
 
     !*) VariableType (INTEGER(4)) All variable blocks contain this
     !These are specific to a cartesian variable
@@ -626,8 +626,8 @@ CONTAINS
     !6 ) stz  REAL(num)
     !7 ) dmin REAL(num)
     !8 ) dmax REAL(num)
-    !9 ) Mesh CHARACTER(MaxStringLen)
-    !10) Class CHARACTER(MaxStringLen)
+    !9 ) Mesh CHARACTER(max_string_len)
+    !10) class CHARACTER(max_string_len)
 
     len_var=SIZE(variable)
     dims=SHAPE(variable)
@@ -636,11 +636,11 @@ CONTAINS
     ny=dims(2)
     nz=dims(3)
 
-    mdlen = MeshType_Header_Offset + 3 * SoI + 5 * num + 2 * MaxStringLen !3 INTs 5 REALs
-    blocklen = mdlen + num * nx * ny * nz
+    md_length = meshtype_header_offset + 3 * soi + 5 * num + 2 * max_string_len !3 INTs 5 REALs
+    block_length = md_length + num * nx * ny * nz
 
-    CALL cfd_Write_Block_Header(name,class,TYPE_MESH_VARIABLE,blocklen,mdlen,rank_write)
-    CALL cfd_Write_MeshType_Header(VAR_CARTESIAN,DIMENSION_3D,num,rank_write)
+    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,rank_write)
+    CALL cfd_write_meshtype_header(VAR_CARTESIAN,DIMENSION_3D,num,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -652,7 +652,7 @@ CONTAINS
        CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 3 * SoI
+    current_displacement = current_displacement + 3 * soi
 
     !Determine data ranges and write out
     mn=MINVAL(variable)
@@ -671,18 +671,18 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == rank_write) THEN
-       CALL cfd_Safe_Write_String(meshname)
-       CALL cfd_Safe_Write_String(meshclass)
+       CALL cfd_safe_write_string(mesh_name)
+       CALL cfd_safe_write_string(mesh_class)
     ENDIF
-    current_displacement = current_displacement + 2 * MaxStringLen
+    current_displacement = current_displacement + 2 * max_string_len
 
-    !Write the actual Data
+    !Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == rank_write) &
-         CALL MPI_FILE_WRITE(cfd_filehandle, Variable, len_var , mpireal, cfd_status, cfd_errcode)
+         CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var , mpireal, cfd_status, cfd_errcode)
     current_displacement = current_displacement + num*nx*ny*nz
 
-  END SUBROUTINE cfd_Write_3D_Cartesian_Variable
+  END SUBROUTINE cfd_write_3d_cartesian_variable
 
 END MODULE output_cartesian

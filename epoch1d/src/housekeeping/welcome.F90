@@ -17,7 +17,7 @@ CONTAINS
     CHARACTER,DIMENSION(5) :: LOGOELS
     INTEGER :: ix,iy
 
-    IF (rank .NE. 0) return
+    IF (rank .NE. 0) RETURN
 
     LOGOELS=(/' ','@'," "," "," "/)
 
@@ -44,7 +44,7 @@ CONTAINS
        WRITE(*,*),LOGOSTRING
     ENDDO
     WRITE(*,*) ""
-    WRITE(*,'("Welcome to EPOCH1D Version ",I1,".",I1)'),Version,Revision
+    WRITE(*,'("Welcome to EPOCH1D Version ",I1,".",I1)'),version,revision
     WRITE(*,*) ""
 
     CALL compiler_directives

@@ -9,7 +9,7 @@ MODULE partlist
 
 CONTAINS
 
-  SUBROUTINE Setup_PartLists
+  SUBROUTINE setup_partlists
 
     nvar=6
 
@@ -25,529 +25,529 @@ CONTAINS
     nvar=nvar+2
 #endif
 
-  END SUBROUTINE Setup_PartLists
+  END SUBROUTINE setup_partlists
 
-  SUBROUTINE Create_Empty_PartList(PartList)
+  SUBROUTINE create_empty_partlist(partlist)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
+    TYPE(particle_list),INTENT(INOUT) :: partlist
 
-    NULLIFY(PartList%Head)
-    NULLIFY(PartList%Tail)
-    PartList%Count=0
-    PartList%Safe=.TRUE.
+    NULLIFY(partlist%head)
+    NULLIFY(partlist%tail)
+    partlist%count=0
+    partlist%safe=.TRUE.
 
-  END SUBROUTINE Create_Empty_PartList
+  END SUBROUTINE create_empty_partlist
 
-  SUBROUTINE Create_Unsafe_PartList(PartList,aParticle,n_elements)
+  SUBROUTINE create_unsafe_partlist(partlist,a_particle,n_elements)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER :: aParticle
+    TYPE(particle_list),INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER :: a_particle
     INTEGER(KIND=8), INTENT(IN) :: n_elements
-    TYPE(Particle),POINTER :: Current
+    TYPE(particle),POINTER :: current
     INTEGER(KIND=8) :: ipart
 
-    CALL Create_Empty_PartList(PartList)
+    CALL create_empty_partlist(partlist)
 
-    PartList%Safe=.FALSE.
-    Current=>aParticle
+    partlist%safe=.FALSE.
+    current=>a_particle
     ipart=1
-    DO WHILE (ASSOCIATED(Current) .AND. ipart < n_elements)
+    DO WHILE (ASSOCIATED(current) .AND. ipart < n_elements)
        ipart=ipart+1
-       Current=>Current%Next
+       current=>current%next
     ENDDO
-    PartList%Head=>aParticle
-    PartList%Tail=>Current
-    PartList%Count=ipart
+    partlist%head=>a_particle
+    partlist%tail=>current
+    partlist%count=ipart
 
-  END SUBROUTINE Create_Unsafe_PartList
+  END SUBROUTINE create_unsafe_partlist
 
-  SUBROUTINE Create_Unsafe_PartList_By_Tail(PartList,Head,Tail)
+  SUBROUTINE create_unsafe_partlist_by_tail(partlist,head,tail)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER :: Head,Tail
-    TYPE(Particle), POINTER :: Current
+    TYPE(particle_list),INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER :: head,tail
+    TYPE(particle), POINTER :: current
     INTEGER(KIND=8) :: ipart
 
-    CALL Create_Empty_PartList(PartList)
+    CALL create_empty_partlist(partlist)
 
-    PartList%Safe=.FALSE.
-    PartList%Head=>Head
-    PartList%Tail=>Tail
+    partlist%safe=.FALSE.
+    partlist%head=>head
+    partlist%tail=>tail
 
-    Current=>Head
+    current=>head
     ipart=0
-    DO WHILE (ASSOCIATED(Current))
+    DO WHILE (ASSOCIATED(current))
        ipart=ipart+1
-       Current=>Current%Next
-       IF (ASSOCIATED(Current)) THEN
-          IF (ASSOCIATED(Current%Prev,TARGET=Tail)) EXIT
+       current=>current%next
+       IF (ASSOCIATED(current)) THEN
+          IF (ASSOCIATED(current%prev,TARGET=tail)) EXIT
        ENDIF
     ENDDO
 
-    PartList%Count=ipart
+    partlist%count=ipart
 
-  END SUBROUTINE Create_Unsafe_PartList_By_Tail
+  END SUBROUTINE create_unsafe_partlist_by_tail
 
-  SUBROUTINE Create_Allocated_PartList(PartList, n_elements)
+  SUBROUTINE create_allocated_partlist(partlist, n_elements)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
+    TYPE(particle_list),INTENT(INOUT) :: partlist
     INTEGER(8), INTENT(IN) :: n_elements
-    TYPE(Particle),POINTER :: NewParticle
+    TYPE(particle),POINTER :: new_particle
 
-    CALL Create_Empty_PartList(PartList)
+    CALL create_empty_partlist(partlist)
 
     DO ipart=0,n_elements-1
-       ALLOCATE(NewParticle)
-       CALL Add_Particle_To_PartList(PartList,NewParticle)
-       NULLIFY(NewParticle)
+       ALLOCATE(new_particle)
+       CALL add_particle_to_partlist(partlist,new_particle)
+       NULLIFY(new_particle)
     ENDDO
 
-  END SUBROUTINE Create_Allocated_PartList
+  END SUBROUTINE create_allocated_partlist
 
-  SUBROUTINE Create_Filled_PartList(PartList,DataIn,n_elements)
+  SUBROUTINE create_filled_partlist(partlist,data_in,n_elements)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
-    REAL(num),DIMENSION(:), INTENT(IN) :: DataIn
+    TYPE(particle_list),INTENT(INOUT) :: partlist
+    REAL(num),DIMENSION(:), INTENT(IN) :: data_in
     INTEGER(8), INTENT(IN) :: n_elements
-    TYPE(Particle), POINTER :: NewParticle
+    TYPE(particle), POINTER :: new_particle
 
     INTEGER(KIND=8) :: cpos=0
 
-    CALL Create_Empty_PartList(PartList)
+    CALL create_empty_partlist(partlist)
 
 
     DO ipart=0,n_elements-1
-       ALLOCATE(NewParticle)
-       NULLIFY(NewParticle%Prev,NewParticle%Next)
+       ALLOCATE(new_particle)
+       NULLIFY(new_particle%prev,new_particle%next)
        cpos=ipart*nvar+1
-       CALL UnPack_Particle(DataIn(cpos:cpos+nvar),NewParticle)
+       CALL unpack_particle(data_in(cpos:cpos+nvar),new_particle)
 #ifdef PART_DEBUG
-       NewParticle%Processor = Rank
+       new_particle%processor = rank
 #endif
-       CALL Add_Particle_To_PartList(PartList,NewParticle)
-       NULLIFY(NewParticle)
+       CALL add_particle_to_partlist(partlist,new_particle)
+       NULLIFY(new_particle)
     ENDDO
 
 
-  END SUBROUTINE Create_Filled_PartList
+  END SUBROUTINE create_filled_partlist
 
-  FUNCTION Test_PartList(PartList)
+  FUNCTION test_partlist(partlist)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER :: Current
-    INTEGER :: Test_PartList
-    INTEGER(KIND=8) :: TestCt
+    TYPE(particle_list),INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER :: current
+    INTEGER :: test_partlist
+    INTEGER(KIND=8) :: test_ct
 
-    Test_PartList=0
-    TestCt=0
+    test_partlist=0
+    test_ct=0
 
     !Empty list is OK
-    IF (.NOT. ASSOCIATED(PartList%Head) .AND. .NOT. ASSOCIATED(PartList%Tail)) THEN
-       Test_PartList=0
+    IF (.NOT. ASSOCIATED(partlist%head) .AND. .NOT. ASSOCIATED(partlist%tail)) THEN
+       test_partlist=0
        RETURN
     ENDIF
 
     !List with head or tail but not both is broken
-    IF (.NOT. ASSOCIATED(PartList%Head) .OR. .NOT. ASSOCIATED(PartList%Tail)) THEN
-       Test_PartList=-1
+    IF (.NOT. ASSOCIATED(partlist%head) .OR. .NOT. ASSOCIATED(partlist%tail)) THEN
+       test_partlist=-1
        RETURN
     ENDIF
 
     !Having head and tail elements which are not the end of a list are OK for
     !unsafe partlists
-    IF (ASSOCIATED(PartList%Head%Prev) .AND. PartList%Safe) Test_PartList=IOR(Test_PartList,1)
-    IF (ASSOCIATED(PartList%Tail%Next) .AND. PartList%Safe) Test_PartList=IOR(Test_PartList,2)
+    IF (ASSOCIATED(partlist%head%prev) .AND. partlist%safe) test_partlist=IOR(test_partlist,1)
+    IF (ASSOCIATED(partlist%tail%next) .AND. partlist%safe) test_partlist=IOR(test_partlist,2)
 
     !Since we don't KNOW that count is OK (that's what we're checking)
     !Have to check both for end of list and for having reached the tail item
-    Current=>PartList%Head
-    DO WHILE (ASSOCIATED(Current))
-       testct=testct+1
-       Current=>Current%Next
-       IF (ASSOCIATED(Current)) THEN
+    current=>partlist%head
+    DO WHILE (ASSOCIATED(current))
+       test_ct=test_ct+1
+       current=>current%next
+       IF (ASSOCIATED(current)) THEN
           !This tests if we've just jumped to the tail element
           !Allows testing of unsafe partlists
-          IF (ASSOCIATED(Current%Prev,TARGET=PartList%Tail)) EXIT
+          IF (ASSOCIATED(current%prev,TARGET=partlist%tail)) EXIT
        ENDIF
     ENDDO
 
-    IF (testct .NE. PartList%Count) Test_PartList=IOR(Test_PartList,4)
+    IF (test_ct .NE. partlist%count) test_partlist=IOR(test_partlist,4)
 
-  END FUNCTION Test_PartList
+  END FUNCTION test_partlist
 
-  SUBROUTINE Destroy_PartList(PartList)
+  SUBROUTINE destroy_partlist(partlist)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER :: NewParticle,Next
+    TYPE(particle_list),INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER :: new_particle,next
     INTEGER(KIND=8) :: ipart
 
     !Go through list and delete all the particles in the list
-    NewParticle=>PartList%Head
+    new_particle=>partlist%head
     ipart=0
-    DO WHILE (ipart < PartList%Count)
-       Next=>NewParticle%Next
-       DEALLOCATE(NewParticle)
-       NewParticle=>Next
+    DO WHILE (ipart < partlist%count)
+       next=>new_particle%next
+       DEALLOCATE(new_particle)
+       new_particle=>next
        ipart=ipart+1
     ENDDO
 
-    CALL Create_Empty_PartList(PartList)
+    CALL create_empty_partlist(partlist)
 
-  END SUBROUTINE Destroy_PartList
+  END SUBROUTINE destroy_partlist
 
-  SUBROUTINE Copy_PartList(PartList1,PartList2)
+  SUBROUTINE copy_partlist(partlist1,partlist2)
 
-    TYPE(ParticleList), INTENT(INOUT) :: PartList1, PartList2
+    TYPE(particle_list), INTENT(INOUT) :: partlist1, partlist2
 
-    PartList2%Head=>PartList1%Head
-    PartList2%Tail=>PartList2%Tail
+    partlist2%head=>partlist1%head
+    partlist2%tail=>partlist2%tail
 
-  END SUBROUTINE Copy_PartList
+  END SUBROUTINE copy_partlist
 
-  SUBROUTINE Append_PartList(Head,Tail)
+  SUBROUTINE append_partlist(head,tail)
 
-    TYPE(ParticleList), INTENT(INOUT) :: Head, Tail
+    TYPE(particle_list), INTENT(INOUT) :: head, tail
 
-    IF (.NOT. Head%Safe .OR. .NOT. Tail%Safe) THEN
+    IF (.NOT. head%safe .OR. .NOT. tail%safe) THEN
        IF (rank .EQ. 0) PRINT *,"Unable to append partlists because one is not safe"
        RETURN
     ENDIF
 
-    IF (ASSOCIATED(Head%Tail)) THEN 
-       Head%Tail%Next=>Tail%Head
+    IF (ASSOCIATED(head%tail)) THEN 
+       head%tail%next=>tail%head
     ELSE
-       Head%Head=>Tail%Head
+       head%head=>tail%head
     ENDIF
-    IF (ASSOCIATED(Tail%Head)) Tail%Head%Prev=>Head%Tail
-    IF (ASSOCIATED(Tail%Tail)) Head%Tail=>Tail%Tail
-    Head%Count=Head%Count+Tail%Count
+    IF (ASSOCIATED(tail%head)) tail%head%prev=>head%tail
+    IF (ASSOCIATED(tail%tail)) head%tail=>tail%tail
+    head%count=head%count+tail%count
 
-    CALL Create_Empty_PartList(Tail)
+    CALL create_empty_partlist(tail)
 
-  END SUBROUTINE Append_PartList
+  END SUBROUTINE append_partlist
 
-  SUBROUTINE Add_Particle_To_PartList(PartList,NewParticle)
+  SUBROUTINE add_particle_to_partlist(partlist,new_particle)
 
-    TYPE(ParticleList), INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER :: NewParticle
+    TYPE(particle_list), INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER :: new_particle
 
     !Note that this will work even if you are using an unsafe particle list
     !BE CAREFUL if doing so, it can cause unexpected behaviour
 
-    !if (!Particle) return;
-    IF (.NOT. ASSOCIATED(NewParticle)) RETURN
-    NULLIFY(NewParticle%Next,NewParticle%Prev)
+    !if (!particle) return;
+    IF (.NOT. ASSOCIATED(new_particle)) RETURN
+    NULLIFY(new_particle%next,new_particle%prev)
 
     !Add particle count
-    PartList%Count=PartList%Count+1
-    IF(.NOT. ASSOCIATED(PartList%Tail)) THEN
-       !Partlist is empty
-       PartList%Head=>NewParticle
-       PartList%Tail=>NewParticle
+    partlist%count=partlist%count+1
+    IF(.NOT. ASSOCIATED(partlist%tail)) THEN
+       !partlist is empty
+       partlist%head=>new_particle
+       partlist%tail=>new_particle
        RETURN
     ENDIF
 
-    PartList%Tail%Next=>NewParticle
-    NewParticle%Prev=>PartList%Tail
-    NULLIFY(NewParticle%Next)
-    PartList%Tail=>NewParticle
+    partlist%tail%next=>new_particle
+    new_particle%prev=>partlist%tail
+    NULLIFY(new_particle%next)
+    partlist%tail=>new_particle
 
-  END SUBROUTINE Add_Particle_To_PartList
+  END SUBROUTINE add_particle_to_partlist
 
-  SUBROUTINE Remove_Particle_From_PartList(PartList,aParticle)
+  SUBROUTINE remove_particle_from_partlist(partlist,a_particle)
 
-    TYPE(ParticleList), INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER :: aParticle
+    TYPE(particle_list), INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER :: a_particle
 
     !Note that this will work even if you are using an unsafe particle list
     !BE CAREFUL if doing so, it can cause unexpected behaviour
 
     !Check whether particle is head or tail of list and unlink
-    IF (ASSOCIATED(PartList%Head, TARGET=aParticle)) PartList%Head=>aParticle%Next
-    IF (ASSOCIATED(PartList%Tail, TARGET=aParticle)) PartList%Tail=>aParticle%Prev
+    IF (ASSOCIATED(partlist%head, TARGET=a_particle)) partlist%head=>a_particle%next
+    IF (ASSOCIATED(partlist%tail, TARGET=a_particle)) partlist%tail=>a_particle%prev
 
     !Link particles on either side together
-    IF (ASSOCIATED(aParticle%Next)) aParticle%Next%Prev=>aParticle%Prev
-    IF (ASSOCIATED(aParticle%Prev)) aParticle%Prev%Next=>aParticle%Next
+    IF (ASSOCIATED(a_particle%next)) a_particle%next%prev=>a_particle%prev
+    IF (ASSOCIATED(a_particle%prev)) a_particle%prev%next=>a_particle%next
 
-    NULLIFY(aParticle%Next,aParticle%Prev)
+    NULLIFY(a_particle%next,a_particle%prev)
 
     !Decrement counter
-    PartList%Count=PartList%Count-1
+    partlist%count=partlist%count-1
 
-  END SUBROUTINE Remove_Particle_From_PartList
+  END SUBROUTINE remove_particle_from_partlist
 
-  SUBROUTINE Pack_Particle(Data,aParticle)
+  SUBROUTINE pack_particle(data,a_particle)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: Data
-    TYPE(particle), POINTER :: aParticle
-    INTEGER(kind=8) :: cpos
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    TYPE(particle), POINTER :: a_particle
+    INTEGER(KIND=8) :: cpos
 
     cpos=1
-    Data(cpos:cpos+2)=aParticle%Part_Pos
+    data(cpos:cpos+2)=a_particle%part_pos
     cpos=cpos+3
-    Data(cpos:cpos+2)=aParticle%part_p
+    data(cpos:cpos+2)=a_particle%part_p
     cpos=cpos+3
 #ifdef PER_PARTICLE_WEIGHT
-    Data(cpos)=aParticle%weight
+    data(cpos)=a_particle%weight
     cpos=cpos+1
 #endif
 #ifdef PER_PARTICLE_CHARGEMASS
-    Data(cpos)=aParticle%charge
-    Data(cpos+1)=aParticle%mass
+    data(cpos)=a_particle%charge
+    data(cpos+1)=a_particle%mass
     cpos=cpos+2
 #endif
 #ifdef PART_DEBUG
-    Data(cpos)=REAL(aParticle%Processor,num)
-    Data(cpos+1)=REAL(aParticle%Processor_at_t0,num)
+    data(cpos)=REAL(a_particle%processor,num)
+    data(cpos+1)=REAL(a_particle%processor_at_t0,num)
     cpos=cpos+2
 #endif
 
-!!$    PRINT *,"In Pack",rank,aParticle%Part_Pos
+!!$    PRINT *,"In Pack",rank,a_particle%part_pos
 
-  END SUBROUTINE Pack_Particle
+  END SUBROUTINE pack_particle
 
-  SUBROUTINE Unpack_Particle(Data,aParticle)
+  SUBROUTINE unpack_particle(data,a_particle)
 
-    REAL(num), DIMENSION(:), INTENT(IN) :: Data
-    TYPE(particle), POINTER :: aParticle
-    INTEGER(kind=8) :: cpos
+    REAL(num), DIMENSION(:), INTENT(IN) :: data
+    TYPE(particle), POINTER :: a_particle
+    INTEGER(KIND=8) :: cpos
 
     cpos=1
-    aParticle%Part_Pos=Data(cpos:cpos+2)
+    a_particle%part_pos=data(cpos:cpos+2)
     cpos=cpos+3
-    aParticle%Part_P=Data(cpos:cpos+2)
+    a_particle%part_p=data(cpos:cpos+2)
     cpos=cpos+3
 #ifdef PER_PARTICLE_WEIGHT
-    aParticle%Weight=Data(cpos)
+    a_particle%weight=data(cpos)
     cpos=cpos+1
 #endif
 #ifdef PER_PARTICLE_CHARGEMASS
-    aParticle%Charge=Data(cpos)
-    aParticle%Mass=Data(cpos+1)
+    a_particle%charge=data(cpos)
+    a_particle%mass=data(cpos+1)
     cpos=cpos+2
 #endif
 #ifdef PART_DEBUG
-    aParticle%Processor=rank
-    aParticle%Processor_at_t0=NINT(Data(cpos+1))
+    a_particle%processor=rank
+    a_particle%processor_at_t0=NINT(data(cpos+1))
     cpos=cpos+2
 #endif
 
 
-  END SUBROUTINE Unpack_Particle
+  END SUBROUTINE unpack_particle
 
-  SUBROUTINE Display_Particle(aParticle)
+  SUBROUTINE display_particle(a_particle)
 
-    TYPE(particle),POINTER :: aParticle
+    TYPE(particle),POINTER :: a_particle
 
-    PRINT *,"Position",aParticle%Part_Pos
-    PRINT *,"Momentum",aParticle%Part_P
+    PRINT *,"Position",a_particle%part_pos
+    PRINT *,"Momentum",a_particle%part_p
 
-  END SUBROUTINE Display_Particle
+  END SUBROUTINE display_particle
 
-  FUNCTION Compare_Particles(Part1,Part2)
+  FUNCTION compare_particles(part1,part2)
 
-    TYPE(particle),POINTER :: Part1,Part2
-    LOGICAL :: Compare_Particles
+    TYPE(particle),POINTER :: part1,part2
+    LOGICAL :: compare_particles
 
-    Compare_Particles=.TRUE.
-    IF (MAXVAL(ABS(Part1%Part_Pos-Part2%Part_Pos)) .NE. 0.0_num  ) Compare_Particles=.FALSE.
-    IF (MAXVAL(ABS(Part1%Part_P - Part2%Part_P)) .NE. 0.0_num    ) Compare_Particles=.FALSE.
+    compare_particles=.TRUE.
+    IF (MAXVAL(ABS(part1%part_pos-part2%part_pos)) .NE. 0.0_num  ) compare_particles=.FALSE.
+    IF (MAXVAL(ABS(part1%part_p - part2%part_p)) .NE. 0.0_num    ) compare_particles=.FALSE.
 
 #ifdef PER_PARTICLE_WEIGHT
-    IF (Part1%Weight        .NE. Part2%Weight       ) Compare_Particles=.FALSE.
+    IF (part1%weight        .NE. part2%weight       ) compare_particles=.FALSE.
 #endif
 
 #ifdef PER_PARTICLE_CHARGEMASS
-    IF (Part1%Charge        .NE. Part2%Charge       ) Compare_Particles=.FALSE.
-    IF (Part1%Mass          .NE. Part2%Mass         ) Compare_Particles=.FALSE.
+    IF (part1%charge        .NE. part2%charge       ) compare_particles=.FALSE.
+    IF (part1%mass          .NE. part2%mass         ) compare_particles=.FALSE.
 #endif
 
-    IF (.NOT. Compare_Particles) THEN
-       CALL Display_Particle(Part1)
-       CALL Display_Particle(Part2)
+    IF (.NOT. compare_particles) THEN
+       CALL display_particle(part1)
+       CALL display_particle(part2)
     ENDIF
-  END FUNCTION Compare_Particles
+  END FUNCTION compare_particles
 
-  FUNCTION Test_Packed_Particles(PartList,Data,npart_in_data)
+  FUNCTION test_packed_particles(partlist,data,npart_in_data)
 
-    TYPE(ParticleList),INTENT(IN) :: PartList
-    REAL(num),DIMENSION(:), INTENT(IN) :: Data
+    TYPE(particle_list),INTENT(IN) :: partlist
+    REAL(num),DIMENSION(:), INTENT(IN) :: data
     INTEGER(KIND=8), INTENT(IN) :: npart_in_data
-    TYPE(particle),POINTER :: Current
-    TYPE(Particle),POINTER :: aParticle
-    LOGICAL :: Test_Packed_Particles
+    TYPE(particle),POINTER :: current
+    TYPE(particle),POINTER :: a_particle
+    LOGICAL :: test_packed_particles
 
-    Test_Packed_Particles=.FALSE.
+    test_packed_particles=.FALSE.
 
 
-    IF (npart_in_data * nvar .NE. SIZE(Data)) THEN
-       PRINT *,"Size of data array does not match specified on",rank,npart_in_data,SIZE(Data)
+    IF (npart_in_data * nvar .NE. SIZE(data)) THEN
+       PRINT *,"Size of data array does not match specified on",rank,npart_in_data,SIZE(data)
        RETURN
     ENDIF
-    IF (PartList%Count .NE. npart_in_data) THEN
+    IF (partlist%count .NE. npart_in_data) THEN
        PRINT *,"Size of data array does not match partlist on",rank
        RETURN
     ENDIF
 
-    ALLOCATE(aParticle)
+    ALLOCATE(a_particle)
 
-    Current=>PartList%Head
+    current=>partlist%head
     DO ipart=0,npart_in_data-1
-       CALL Unpack_Particle(Data(ipart*nvar+1:(ipart+1)*nvar),aParticle)
-       IF (.NOT. Compare_Particles(aParticle,Current)) THEN
+       CALL unpack_particle(data(ipart*nvar+1:(ipart+1)*nvar),a_particle)
+       IF (.NOT. compare_particles(a_particle,current)) THEN
           PRINT *,"BAD PARTICLE ",ipart,"on",rank
           RETURN
        ENDIF
-       Current=>Current%Next
+       current=>current%next
     ENDDO
 
-    DEALLOCATE(aParticle)
+    DEALLOCATE(a_particle)
 
-    Test_Packed_Particles=.TRUE.
+    test_packed_particles=.TRUE.
 
-  END FUNCTION Test_Packed_Particles
+  END FUNCTION test_packed_particles
 
 
-  SUBROUTINE PartList_Send(PartList,Dest)
+  SUBROUTINE partlist_send(partlist,dest)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
-    INTEGER, INTENT(IN) :: Dest
-    REAL(num), DIMENSION(:), ALLOCATABLE :: Data
-    INTEGER(kind=8) :: cpos=0, npart_this_it, npart_left, ipart
-    TYPE(particle), POINTER :: Current
+    TYPE(particle_list),INTENT(INOUT) :: partlist
+    INTEGER, INTENT(IN) :: dest
+    REAL(num), DIMENSION(:), ALLOCATABLE :: data
+    INTEGER(KIND=8) :: cpos=0, npart_this_it, npart_left, ipart
+    TYPE(particle), POINTER :: current
 
-    npart_left=PartList%Count
+    npart_left=partlist%count
     npart_this_it=MIN(npart_left, npart_per_it)
-    CALL MPI_SEND(PartList%Count, 1, MPI_INTEGER, Dest, tag, comm, errcode)
+    CALL MPI_SEND(partlist%count, 1, MPI_INTEGER, dest, tag, comm, errcode)
 
 
     !This is a reduced memory footprint algorithm
     !Try to fix later
 !!$    !Copy the data for the particles into a buffer
-!!$    ALLOCATE(Data(1:npart_this_it*nvar))
-!!$    Current=>PartList%Head
+!!$    ALLOCATE(data(1:npart_this_it*nvar))
+!!$    current=>partlist%head
 !!$    ct=0
 !!$
-!!$    npart_left=PartList%Count
+!!$    npart_left=partlist%count
 !!$    DO WHILE (npart_left .GT. 0)
 !!$
 !!$       !Copy the data into the buffer
 !!$       ct=0
 !!$       DO ipart=1,npart_this_it
 !!$          cpos=ct*nvar+1
-!!$          CALL Pack_Particle(Data(cpos:cpos+nvar),Current)
-!!$          Current=>Current%Next
+!!$          CALL pack_particle(data(cpos:cpos+nvar),current)
+!!$          current=>current%next
 !!$          ct=ct+1
 !!$       ENDDO
 !!$
 !!$       !Send the data to the receiver
-!!$       CALL MPI_SEND(Data, npart_this_it*nvar, mpireal, Dest, tag, comm, errcode)
+!!$       CALL MPI_SEND(data, npart_this_it*nvar, mpireal, dest, tag, comm, errcode)
 !!$       npart_left=npart_left-npart_this_it
 !!$       npart_this_it=MIN(npart_left, npart_per_it)
 !!$    ENDDO
 
-    ALLOCATE(Data(1:PartList%Count*nvar))
-    Data=0.0_num
-    Current=>PartList%Head
+    ALLOCATE(data(1:partlist%count*nvar))
+    data=0.0_num
+    current=>partlist%head
     ipart=0
-    DO WHILE (ipart < PartList%Count)
+    DO WHILE (ipart < partlist%count)
        cpos=ipart*nvar+1
-       CALL Pack_Particle(Data(cpos:cpos+nvar),Current)
+       CALL pack_particle(data(cpos:cpos+nvar),current)
        ipart=ipart+1
-       Current=>Current%Next
+       current=>current%next
     ENDDO
-    CALL MPI_SEND(Data, npart_left*nvar, mpireal, Dest, tag, comm, errcode)
+    CALL MPI_SEND(data, npart_left*nvar, mpireal, dest, tag, comm, errcode)
 
-    DEALLOCATE(Data)
+    DEALLOCATE(data)
 
-  END SUBROUTINE PartList_Send
+  END SUBROUTINE partlist_send
 
-  SUBROUTINE PartList_Recv(PartList,Src)
+  SUBROUTINE partlist_recv(partlist,src)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList
-    INTEGER, INTENT(IN) :: Src
-    REAL(num), DIMENSION(:), ALLOCATABLE :: Data
-    INTEGER(kind=8) :: npart_this_it, npart_left,count
+    TYPE(particle_list),INTENT(INOUT) :: partlist
+    INTEGER, INTENT(IN) :: src
+    REAL(num), DIMENSION(:), ALLOCATABLE :: data
+    INTEGER(KIND=8) :: npart_this_it, npart_left,count
 
-    CALL Create_Empty_PartList(PartList)
+    CALL create_empty_partlist(partlist)
 
-    Count=0
-    CALL MPI_RECV(Count, 1, MPI_INTEGER, Src, tag, comm, status, errcode)
+    count=0
+    CALL MPI_RECV(count, 1, MPI_INTEGER, src, tag, comm, status, errcode)
 
-    npart_left=Count
+    npart_left=count
     npart_this_it=MIN(npart_left, npart_per_it)
 
     !This is a reduced memory footprint algorithm
     !Try to fix later
 !!$    !Copy the data for the particles into a buffer
-!!$    ALLOCATE(Data(1:npart_this_it*nvar))
+!!$    ALLOCATE(data(1:npart_this_it*nvar))
 !!$    DO WHILE (npart_left .GT. 0)
 !!$       !Receive the actual data
-!!$       CALL MPI_RECV(Data, npart_this_it*nvar, mpireal, Src, tag, comm, status, errcode)
+!!$       CALL MPI_RECV(data, npart_this_it*nvar, mpireal, src, tag, comm, status, errcode)
 !!$
 !!$       !Copy to temporary partlist and then attach that partlist to the end of the main partlist
-!!$       CALL Create_Filled_PartList(PartListTemp,Data, npart_this_it*nvar)
-!!$       CALL Append_PartList(PartList,PartListTemp)
+!!$       CALL create_filled_partlist(PartListTemp,data, npart_this_it*nvar)
+!!$       CALL append_partlist(partlist,PartListTemp)
 !!$
 !!$       !Reduce count for next iteration
 !!$       npart_left=npart_left-npart_this_it
 !!$       npart_this_it=MIN(npart_left, npart_per_it)
 !!$    ENDDO
 
-    ALLOCATE(Data(1:Count*nvar))
-    Data=0.0_num
-    CALL MPI_RECV(Data, Count*nvar, mpireal, Src, tag, comm, status, errcode)
-    CALL Create_Filled_PartList(PartList, Data, Count)
+    ALLOCATE(data(1:count*nvar))
+    data=0.0_num
+    CALL MPI_RECV(data, count*nvar, mpireal, src, tag, comm, status, errcode)
+    CALL create_filled_partlist(partlist, data, count)
 
-    DEALLOCATE(Data)
+    DEALLOCATE(data)
 
-  END SUBROUTINE PartList_Recv
+  END SUBROUTINE partlist_recv
 
-  SUBROUTINE PartList_SendRecv(PartList_Send,PartList_Recv,Dest,Src)
+  SUBROUTINE partlist_sendrecv(partlist_send,partlist_recv,dest,src)
 
-    TYPE(ParticleList),INTENT(INOUT) :: PartList_Send, PartList_Recv
-    INTEGER, INTENT(IN) :: Dest, Src
-    REAL(num), DIMENSION(:), ALLOCATABLE :: Data_Send, Data_Recv,Data_Temp
-    INTEGER(kind=8) :: cpos=0, ipart =0
-    INTEGER(kind=8) :: npart_send, npart_recv
-    TYPE(particle), POINTER :: Current
+    TYPE(particle_list),INTENT(INOUT) :: partlist_send, partlist_recv
+    INTEGER, INTENT(IN) :: dest, src
+    REAL(num), DIMENSION(:), ALLOCATABLE :: data_send, data_recv,data_temp
+    INTEGER(KIND=8) :: cpos=0, ipart =0
+    INTEGER(KIND=8) :: npart_send, npart_recv
+    TYPE(particle), POINTER :: current
 
     !This subroutine doesn't try to use memory efficient buffering, it sends all the particles at once
     !This should work for boundary calls, but don't try it for any other reason
 
-    npart_send=PartList_Send%Count
+    npart_send=partlist_send%count
     npart_recv=0
-    CALL MPI_SENDRECV(npart_send, 1, MPI_INTEGER, Dest, tag, npart_recv, 1, MPI_INTEGER,&
-         Src, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(npart_send, 1, MPI_INTEGER, dest, tag, npart_recv, 1, MPI_INTEGER,&
+         src, tag, comm, status, errcode)
 
     !Copy the data for the particles into a buffer
-    ALLOCATE(Data_Send(1:npart_send*nvar))
-    ALLOCATE(Data_Recv(1:npart_recv*nvar))
-    ALLOCATE(Data_Temp(1:nvar))
+    ALLOCATE(data_send(1:npart_send*nvar))
+    ALLOCATE(data_recv(1:npart_recv*nvar))
+    ALLOCATE(data_temp(1:nvar))
 
     !Pack particles to send into buffer
-    Current=>PartList_Send%Head
+    current=>partlist_send%head
     ipart=0
-    DO WHILE (ipart < PartList_Send%Count)
+    DO WHILE (ipart < partlist_send%count)
        cpos=ipart*nvar+1
-       CALL Pack_Particle(Data_Temp,Current)
-       Data_Send(cpos:cpos+nvar-1)=Data_Temp
+       CALL pack_particle(data_temp,current)
+       data_send(cpos:cpos+nvar-1)=data_temp
        ipart=ipart+1
-       Current=>Current%Next
+       current=>current%next
     ENDDO
 
-    !No longer need the sending partlist, so destroy it to save some memory
-    CALL Destroy_PartList(PartList_Send)
+    !No longer need the sending partlist, so destroy it to SAVE some memory
+    CALL destroy_partlist(partlist_send)
 
     !Actual MPI commands
-    CALL MPI_SENDRECV(Data_Send, npart_send*nvar, mpireal, Dest, tag, Data_Recv, npart_recv*nvar, mpireal,&
-         Src, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(data_send, npart_send*nvar, mpireal, dest, tag, data_recv, npart_recv*nvar, mpireal,&
+         src, tag, comm, status, errcode)
 
-    DEALLOCATE(Data_Send)
-    CALL Create_Filled_PartList(PartList_Recv, Data_recv, npart_recv)
-    DEALLOCATE(Data_Recv)
+    DEALLOCATE(data_send)
+    CALL create_filled_partlist(partlist_recv, data_recv, npart_recv)
+    DEALLOCATE(data_recv)
 
-  END SUBROUTINE PartList_SendRecv
+  END SUBROUTINE partlist_sendrecv
 
 END MODULE partlist

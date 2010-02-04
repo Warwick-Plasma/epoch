@@ -1,4 +1,4 @@
-MODULE Custom_deck
+MODULE custom_deck
   USE shared_data
   USE strings
   USE strings_advanced
@@ -14,28 +14,28 @@ CONTAINS
   !These functions contain the user input deck elements
   !-----------------------------------------------------------------------------
 
-  FUNCTION HandleCustomBlock(blockname,Element,Value)
+  FUNCTION handle_custom_block(block_name,element,value)
 
-    CHARACTER(len=30),INTENT(IN)::blockname,Element,Value
-    INTEGER :: HandleCustomBlock
+    CHARACTER(len=string_length),INTENT(IN)::block_name,element,value
+    INTEGER :: handle_custom_block
 
     !The following line must always be present
-    HandleCustomBlock=ERR_UNKNOWN_BLOCK
+    handle_custom_block=ERR_UNKNOWN_BLOCK
 
-  END FUNCTION HandleCustomBlock
+  END FUNCTION handle_custom_block
 
 
-  FUNCTION CheckCustomBlocks()
+  FUNCTION check_custom_blocks()
 
-    INTEGER :: CheckCustomBlocks
+    INTEGER :: check_custom_blocks
 
     !This subroutine is to allow you to force the code to bomb out if an essential element
     !Of the input deck is missing. If you either don't want to check ,are not extending the
-    !Input deck, or all elements are set then set "CheckCustomBlocks = ERR_NONE". Otherwise
-    !Set the return value to "CheckCustomBlocks = ERR_MISSING_ELEMENTS".
+    !Input deck, or all elements are set then set "check_custom_blocks = ERR_NONE". Otherwise
+    !Set the return value to "check_custom_blocks = ERR_MISSING_ELEMENTS".
 
-    CheckCustomBlocks=ERR_NONE
+    check_custom_blocks=ERR_NONE
 
-  END FUNCTION CheckCustomBlocks
+  END FUNCTION check_custom_blocks
 
-END MODULE Custom_deck
+END MODULE custom_deck

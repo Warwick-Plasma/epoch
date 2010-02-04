@@ -7,54 +7,54 @@ MODULE deck_window_block
 
 CONTAINS
 
-  FUNCTION HandleWindowDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER :: HandleWindowDeck
+  FUNCTION handle_window_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER :: handle_window_deck
 
-    HandleWindowDeck=ERR_NONE
-    IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
+    handle_window_deck=ERR_NONE
+    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (StrCmp(Element,"move_window")) THEN
-       move_window=AsLogical(Value,HandleWindowDeck)
+    IF (str_cmp(element,"move_window")) THEN
+       move_window=as_logical(value,handle_window_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"window_v_x")) THEN
-       window_v_x=AsReal(Value,HandleWindowDeck)
+    IF (str_cmp(element,"window_v_x")) THEN
+       window_v_x=as_real(value,handle_window_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"window_start_time")) THEN
-       window_start_time=AsReal(Value,HandleWindowDeck)
+    IF (str_cmp(element,"window_start_time")) THEN
+       window_start_time=as_real(value,handle_window_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"xbc_left_after_move")) THEN
-       xbc_left_after_move=AsBC(Value,HandleWindowDeck)
+    IF (str_cmp(element,"xbc_left_after_move")) THEN
+       xbc_left_after_move=as_bc(value,handle_window_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"xbc_right_after_move")) THEN
-       xbc_right_after_move=AsBC(Value,HandleWindowDeck)
+    IF (str_cmp(element,"xbc_right_after_move")) THEN
+       xbc_right_after_move=as_bc(value,handle_window_deck)
        RETURN
     ENDIF
 
-    HandleWindowDeck=ERR_UNKNOWN_ELEMENT
+    handle_window_deck=ERR_UNKNOWN_ELEMENT
 
-  END FUNCTION HandleWindowDeck
+  END FUNCTION handle_window_deck
 
-  FUNCTION CheckWindowBlock()
+  FUNCTION check_window_block()
 
-    INTEGER :: CheckWindowBlock
+    INTEGER :: check_window_block
 
     !Should do error checking but can't be bothered at the moment
-    CheckWindowBlock=ERR_NONE
+    check_window_block=ERR_NONE
 
-  END FUNCTION CheckWindowBlock
+  END FUNCTION check_window_block
 
-  SUBROUTINE Window_Start
+  SUBROUTINE window_start
     xbc_left_after_move=xbc_left
     xbc_right_after_move=xbc_right
-  END SUBROUTINE Window_Start
+  END SUBROUTINE window_start
 
 END MODULE deck_window_block

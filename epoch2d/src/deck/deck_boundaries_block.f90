@@ -8,71 +8,71 @@ MODULE deck_boundaries_block
 
   SAVE
 
-  INTEGER,PARAMETER :: BoundaryBlockElements=4
-  LOGICAL, DIMENSION(BoundaryBlockElements)  :: BoundaryBlockDone
-  CHARACTER(len=EntryLength),DIMENSION(BoundaryBlockElements) :: BoundaryBlockName=(/"xbc_left","xbc_right","ybc_up","ybc_down"/)
+  INTEGER,PARAMETER :: boundary_block_elements=4
+  LOGICAL, DIMENSION(boundary_block_elements)  :: boundary_block_done
+  CHARACTER(len=string_length),DIMENSION(boundary_block_elements) :: boundary_block_name=(/"xbc_left","xbc_right","ybc_up","ybc_down"/)
 
 CONTAINS
 
 
 
-  FUNCTION HandleBoundaryDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER :: HandleBoundaryDeck
+  FUNCTION handle_boundary_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER :: handle_boundary_deck
     INTEGER :: loop,elementselected
 
-    HandleBoundaryDeck=ERR_UNKNOWN_ELEMENT
+    handle_boundary_deck=ERR_UNKNOWN_ELEMENT
 
     elementselected=0
 
-    DO loop=1,BoundaryBlockElements
-       IF(StrCmp(Element,TRIM(ADJUSTL(BoundaryBlockName(loop))))) THEN
+    DO loop=1,boundary_block_elements
+       IF(str_cmp(element,TRIM(ADJUSTL(boundary_block_name(loop))))) THEN
           elementselected=loop
           EXIT
        ENDIF
     ENDDO
 
     IF (elementselected .EQ. 0) RETURN
-    IF (BoundaryBlockDone(elementselected)) THEN
-       HandleBoundaryDeck=ERR_PRESET_ELEMENT
+    IF (boundary_block_done(elementselected)) THEN
+       handle_boundary_deck=ERR_PRESET_ELEMENT
        RETURN
     ENDIF
-    BoundaryBlockDone(elementselected)=.TRUE.
-    HandleBoundaryDeck=ERR_NONE
+    boundary_block_done(elementselected)=.TRUE.
+    handle_boundary_deck=ERR_NONE
 
     SELECT CASE (elementselected)
     CASE(1)
-       xbc_left=AsBC(Value,HandleBoundaryDeck)
+       xbc_left=as_bc(value,handle_boundary_deck)
     CASE(2)
-       xbc_right=AsBC(Value,HandleBoundaryDeck)
+       xbc_right=as_bc(value,handle_boundary_deck)
     CASE(3)
-       ybc_up=AsBC(Value,HandleBoundaryDeck)
+       ybc_up=as_bc(value,handle_boundary_deck)
     CASE(4)
-       ybc_down=AsBC(Value,HandleBoundaryDeck)
+       ybc_down=as_bc(value,handle_boundary_deck)
     END SELECT
 
-  END FUNCTION HandleBoundaryDeck
+  END FUNCTION handle_boundary_deck
 
-  FUNCTION CheckBoundaryBlock()
+  FUNCTION check_boundary_block()
 
-    INTEGER :: CheckBoundaryBlock
+    INTEGER :: check_boundary_block
     INTEGER :: index
 
-    CheckBoundaryBlock=ERR_NONE
+    check_boundary_block=ERR_NONE
 
-    DO index=1,BoundaryBlockElements
-       IF (.NOT. BoundaryBlockDone(index)) THEN
+    DO index=1,boundary_block_elements
+       IF (.NOT. boundary_block_done(index)) THEN
           IF (rank .EQ. 0) THEN
              PRINT *,"***ERROR***"
-             PRINT *,"Required boundary block element ",TRIM(ADJUSTL(BoundaryBlockName(index))), " absent. Please create this entry in the input deck"
+             PRINT *,"Required boundary block element ",TRIM(ADJUSTL(boundary_block_name(index))), " absent. Please create this entry in the input deck"
              WRITE(40,*) ""
              WRITE(40,*) "***ERROR***"
-             WRITE(40,*) "Required boundary block element ",TRIM(ADJUSTL(BoundaryBlockName(index))), " absent. Please create this entry in the input deck"   
+             WRITE(40,*) "Required boundary block element ",TRIM(ADJUSTL(boundary_block_name(index))), " absent. Please create this entry in the input deck"   
           ENDIF
-          CheckBoundaryBlock = ERR_MISSING_ELEMENTS
+          check_boundary_block = ERR_MISSING_ELEMENTS
        ENDIF
     ENDDO
 
-  END FUNCTION CheckBoundaryBlock
+  END FUNCTION check_boundary_block
 
 END MODULE deck_boundaries_block

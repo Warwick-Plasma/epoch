@@ -13,50 +13,50 @@ MODULE deck_ic_fields_block
 
 CONTAINS
 
-  FUNCTION HandleICFieldsDeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER :: HandleICFieldsDeck
+  FUNCTION handle_ic_fields_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER :: handle_ic_fields_deck
 
-    HandleICFieldsDeck=ERR_NONE
-    IF (Element .EQ. blank .OR. Value .EQ. blank) RETURN
+    handle_ic_fields_deck=ERR_NONE
+    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (StrCmp(Element,"ex")) THEN
-       CALL EvaluateStringInSpace(Value,Ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),HandleICFieldsDeck)
+    IF (str_cmp(element,"ex")) THEN
+       CALL evaluate_string_in_space(value,ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),handle_ic_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"ey")) THEN
-       CALL EvaluateStringInSpace(Value,Ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),HandleICFieldsDeck)
+    IF (str_cmp(element,"ey")) THEN
+       CALL evaluate_string_in_space(value,ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),handle_ic_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"ez")) THEN
-       CALL EvaluateStringInSpace(Value,Ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),HandleICFieldsDeck)
+    IF (str_cmp(element,"ez")) THEN
+       CALL evaluate_string_in_space(value,ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),handle_ic_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"bx")) THEN
-       CALL EvaluateStringInSpace(Value,Ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),HandleICFieldsDeck)
+    IF (str_cmp(element,"bx")) THEN
+       CALL evaluate_string_in_space(value,ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),handle_ic_fields_deck)
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"by")) THEN
-       CALL EvaluateStringInSpace(Value,Ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),HandleICFieldsDeck)
+    IF (str_cmp(element,"by")) THEN
+       CALL evaluate_string_in_space(value,ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),handle_ic_fields_deck)
     ENDIF
 
-    IF (StrCmp(Element,"bz")) THEN
-       CALL EvaluateStringInSpace(Value,Ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),HandleICFieldsDeck)
+    IF (str_cmp(element,"bz")) THEN
+       CALL evaluate_string_in_space(value,ex(-1:nx+2,-1:ny+2,-1:nz+2),(/-1,nx+2/),(/-1,ny+2/),(/-1,nz+2/),handle_ic_fields_deck)
     ENDIF
 
-  END FUNCTION HandleICFieldsDeck
+  END FUNCTION handle_ic_fields_deck
 
-  FUNCTION CheckICFieldsBlock()
+  FUNCTION check_ic_fields_block()
 
-    INTEGER :: CheckICFieldsBlock
+    INTEGER :: check_ic_fields_block
 
     !Should do error checking but can't be bothered at the moment
-    CheckICFieldsBlock=ERR_NONE
+    check_ic_fields_block=ERR_NONE
 
-  END FUNCTION CheckICFieldsBlock
+  END FUNCTION check_ic_fields_block
 
 END MODULE deck_ic_fields_block

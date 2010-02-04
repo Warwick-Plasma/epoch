@@ -21,9 +21,9 @@ MODULE iocommon
 
   INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement
   INTEGER :: cfd_filehandle=-1,cfd_rank,cfd_comm,nblocks
-  INTEGER,PARAMETER :: CFD_Version=1, CFD_Revision=0
+  INTEGER,PARAMETER :: cfd_version=1, cfd_revision=0
 
-  INTEGER :: MaxStringLen = 60, default_rank=0
+  INTEGER :: max_string_len = 60, default_rank=0
 
   INTEGER,PARAMETER :: header_offset_this_version = 6*4+3
   !This cannot be changed without a major revision
@@ -32,20 +32,20 @@ MODULE iocommon
   !Submit it for inclusion in the next major revision
   !(This shouldn't ever happen, meshtype covers too many things,
   !The only thing in common is that they include spatial information)
-  INTEGER,PARAMETER :: MeshType_Header_offset = 3 * 4
+  INTEGER,PARAMETER :: meshtype_header_offset = 3 * 4
 
-  INTEGER,PARAMETER :: SoI  = 4 !Size of integer
-  INTEGER,PARAMETER :: SoI8 = 8 !Size of long (normally 8 byte integer)
+  INTEGER,PARAMETER :: soi  = 4 !Size of INTEGER
+  INTEGER,PARAMETER :: soi8 = 8 !Size of long (normally 8 byte INTEGER)
 
   INTEGER  :: block_header_size, header_offset
 
   INTEGER :: cfd_errcode,cfd_status(MPI_STATUS_SIZE),cfd_mode
   LOGICAL :: cfd_writing, cfd_reading
 
-  !Current block info
-  INTEGER :: c_block_Type
-  INTEGER(kind=8) :: block_length,block_md_length
-  INTEGER(kind=MPI_OFFSET_KIND) :: block_header_start,block_header_end 
+  !current block info
+  INTEGER :: c_block_type
+  INTEGER(KIND=8) :: block_length,block_md_length
+  INTEGER(KIND=MPI_OFFSET_KIND) :: block_header_start,block_header_end 
 
 
 END MODULE iocommon

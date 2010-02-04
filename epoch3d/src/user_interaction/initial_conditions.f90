@@ -1,16 +1,19 @@
-MODULE initial_conditions
+MODULE ic_module
 
   USE shared_data
   USE strings
   USE shunt
   USE dist_fn
+  USE probes
   USE iocontrol
+  USE laser
+  USE helper
 
   IMPLICIT NONE
 
   PRIVATE
 
-  PUBLIC:: IC_Early,IC_Late,ManualLoad
+  PUBLIC:: ic_early,ic_late,manual_load
 
 
 CONTAINS
@@ -19,17 +22,17 @@ CONTAINS
   !This function contains the equilibrium
   !-----------------------------------------------------------------------------
 
-  SUBROUTINE IC_Early
-  END SUBROUTINE IC_Early
+  SUBROUTINE ic_early
+  END SUBROUTINE ic_early
 
 
 
-  SUBROUTINE IC_Late
-  END SUBROUTINE IC_Late
+  SUBROUTINE ic_late
+  END SUBROUTINE ic_late
 
 
 
-  SUBROUTINE ManualLoad
-  END SUBROUTINE ManualLoad
+  SUBROUTINE manual_load
+  END SUBROUTINE manual_load
 
-END MODULE initial_conditions
+END MODULE ic_module

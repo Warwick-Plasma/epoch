@@ -11,38 +11,38 @@ CONTAINS
   !This subroutine is used to wrap a block containing program specific data
   !Which there is no general way of allowing other programs to read
   !It permits the use of a single string to idenitify the program that wrote it
-  SUBROUTINE cfd_Write_Arb_Block(Name,Class,Generator_Desc,Data_Length,Writer)
+  SUBROUTINE cfd_write_arb_block(name,class,generator_desc,data_length,writer)
 
-    CHARACTER(Len=*),INTENT(IN) :: Name,Class,Generator_Desc
-    INTEGER(8),INTENT(IN) :: Data_Length
+    CHARACTER(len=*),INTENT(IN) :: name,class,generator_desc
+    INTEGER(8),INTENT(IN) :: data_length
     INTERFACE
-       SUBROUTINE Writer(filehandle,current_displacement)
+       SUBROUTINE writer(filehandle,current_displacement)
          USE shared_data
          INTEGER,INTENT(IN) :: filehandle
          INTEGER(KIND=MPI_OFFSET_KIND),INTENT(IN) :: current_displacement
-       END SUBROUTINE Writer
+       END SUBROUTINE writer
     END INTERFACE
 
-    INTEGER(KIND=8) :: mdlength,blocklength
+    INTEGER(KIND=8) :: md_length,block_length
 
-    !Outputs general block header as described in cfd_Write_Block_Header and then a single
+    !Outputs general block header as described in cfd_write_block_header and then a single
     !string
 
-    mdlength=1*MaxStringLen
-    blocklength=mdlength+Data_Length
+    md_length=1*max_string_len
+    block_length=md_length+data_length
 
-    CALL cfd_Write_Block_Header(name,class,TYPE_ARB_DB,blocklength,mdlength,default_rank)
+    CALL cfd_write_block_header(name,class,TYPE_ARB_DB,block_length,md_length,default_rank)
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == default_rank) THEN
-       CALL cfd_Safe_Write_String(Generator_Desc)
+       CALL cfd_safe_write_string(generator_desc)
     ENDIF
-    current_displacement=current_displacement+MaxStringLen
+    current_displacement=current_displacement+max_string_len
 
-    CALL Writer(cfd_filehandle,current_displacement)
-    current_displacement=current_displacement+Data_Length
+    CALL writer(cfd_filehandle,current_displacement)
+    current_displacement=current_displacement+data_length
 
 
-  END SUBROUTINE Cfd_Write_Arb_Block
+  END SUBROUTINE cfd_write_arb_block
 
 END MODULE output_arb

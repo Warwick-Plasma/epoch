@@ -3,33 +3,33 @@ MODULE stack
 
   IMPLICIT NONE
 
-  TYPE :: FloatStack
-     REAL(num),DIMENSION(1000) :: Stack
-     INTEGER :: StackPoint
-  END TYPE FloatStack
+  TYPE :: float_stack
+     REAL(num),DIMENSION(1000) :: stack
+     INTEGER :: stack_point
+  END TYPE float_stack
 
-  TYPE(FloatStack) :: EvalStack
+  TYPE(float_stack) :: eval_stack
 
 CONTAINS
 
-  SUBROUTINE PushOnEval(value)
+  SUBROUTINE push_on_eval(value)
 
     REAL(num),INTENT(IN) :: value
-    EvalStack%StackPoint=EvalStack%StackPoint+1
-    EvalStack%Stack(EvalStack%StackPoint)=value
+    eval_stack%stack_point=eval_stack%stack_point+1
+    eval_stack%stack(eval_stack%stack_point)=value
 
-  END SUBROUTINE PushOnEval
+  END SUBROUTINE push_on_eval
 
-  FUNCTION PopOffEval()
+  FUNCTION pop_off_eval()
 
-    REAL(num) :: PopOffEval
+    REAL(num) :: pop_off_eval
 
-    PopOffEval=EvalStack%Stack(EvalStack%StackPoint)
-    EvalStack%StackPoint=EvalStack%StackPoint-1
+    pop_off_eval=eval_stack%stack(eval_stack%stack_point)
+    eval_stack%stack_point=eval_stack%stack_point-1
 
-  END FUNCTION PopOffEval
+  END FUNCTION pop_off_eval
 
-  SUBROUTINE GetValues(count,values)
+  SUBROUTINE get_values(count,values)
 
     INTEGER,INTENT(IN) :: count
     REAL(num),DIMENSION(1:) :: values
@@ -37,9 +37,9 @@ CONTAINS
     INTEGER :: i
 
     DO i=1,count
-       values(count-i+1)=PopOffEval()
+       values(count-i+1)=pop_off_eval()
     ENDDO
-  END SUBROUTINE GetValues
+  END SUBROUTINE get_values
 
 
 END MODULE stack

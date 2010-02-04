@@ -13,56 +13,56 @@ INTEGER(KIND=8) :: npart_per_cell_min=5
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
 CONTAINS
 
-  SUBROUTINE Reorder_Particles_to_grid
+  SUBROUTINE reorder_particles_to_grid
 
-    INTEGER :: iSpecies,cellx,celly
-    TYPE(Particle),POINTER :: Current, Next
-    INTEGER(KIND=8) :: LocalCount
+    INTEGER :: ispecies,cell_x,cell_y
+    TYPE(particle),POINTER :: current, next
+    INTEGER(KIND=8) :: local_count
 
-    DO iSpecies=1,nSpecies
-       LocalCount=ParticleSpecies(iSpecies)%AttachedList%Count
-       CALL MPI_ALLREDUCE(LocalCount,ParticleSpecies(iSpecies)%GlobalCount,1,mpireal,MPI_SUM,comm,errcode)
-       ALLOCATE(ParticleSpecies(iSpecies)%SecondaryList(0:nx+1,0:ny+1))
+    DO ispecies=1,n_species
+       local_count=particle_species(ispecies)%attached_list%count
+       CALL MPI_ALLREDUCE(local_count,particle_species(ispecies)%global_count,1,mpireal,MPI_SUM,comm,errcode)
+       ALLOCATE(particle_species(ispecies)%secondary_list(0:nx+1,0:ny+1))
        DO iy=0,ny+1
           DO ix=0,nx+1
-             CALL Create_Empty_PartList(ParticleSpecies(iSpecies)%SecondaryList(ix,iy))
+             CALL create_empty_partlist(particle_species(ispecies)%secondary_list(ix,iy))
           ENDDO
        ENDDO
-       Current=>ParticleSpecies(iSpecies)%AttachedList%Head
-       DO WHILE(ASSOCIATED(Current))
-          Next=>Current%Next
-          cellx=INT((Current%Part_pos(1)-x_start_local)/dx)!+1
-          celly=INT((Current%Part_pos(2)-y_start_local)/dy)!+1
-          CALL Remove_Particle_From_PartList(ParticleSpecies(iSpecies)%AttachedList,Current)
-          CALL Add_Particle_To_PartList(ParticleSpecies(iSpecies)%SecondaryList(cellx,celly),Current)
-          Current=>Next
+       current=>particle_species(ispecies)%attached_list%head
+       DO WHILE(ASSOCIATED(current))
+          next=>current%next
+          cell_x=INT((current%part_pos(1)-x_start_local)/dx)!+1
+          cell_y=INT((current%part_pos(2)-y_start_local)/dy)!+1
+          CALL remove_particle_from_partlist(particle_species(ispecies)%attached_list,current)
+          CALL add_particle_to_partlist(particle_species(ispecies)%secondary_list(cell_x,cell_y),current)
+          current=>next
        ENDDO
     ENDDO
 
-  END SUBROUTINE Reorder_Particles_to_grid
+  END SUBROUTINE reorder_particles_to_grid
 
-  SUBROUTINE Reattach_Particles_to_mainlist
+  SUBROUTINE reattach_particles_to_mainlist
 
-    INTEGER :: iSpecies
+    INTEGER :: ispecies
 
-    DO iSpecies=1,nSpecies
+    DO ispecies=1,n_species
        DO iy=0,ny+1
           DO ix=0,nx+1
-             CALL Append_PartList(ParticleSpecies(iSpecies)%AttachedList,ParticleSpecies(iSpecies)%SecondaryList(ix,iy))
+             CALL append_partlist(particle_species(ispecies)%attached_list,particle_species(ispecies)%secondary_list(ix,iy))
           ENDDO
        ENDDO
-       DEALLOCATE(ParticleSpecies(iSpecies)%SecondaryList)
+       DEALLOCATE(particle_species(ispecies)%secondary_list)
     ENDDO
 
-    CALL Particle_bcs
+    CALL particle_bcs
 
-  END SUBROUTINE Reattach_Particles_to_mainlist
+  END SUBROUTINE reattach_particles_to_mainlist
 
   SUBROUTINE split_particles
 
-    INTEGER :: iSpecies
+    INTEGER :: ispecies
     INTEGER(KIND=8) :: count
-    TYPE(Particle),POINTER :: Current,New
+    TYPE(particle),POINTER :: current,new
     INTEGER :: clock,idum
     REAL(num) :: jitter_x,jitter_y
 
@@ -70,33 +70,33 @@ CONTAINS
     CALL SYSTEM_CLOCK(clock)
     idum=-(clock+rank)
 
-    DO iSpecies=1,nSpecies
-       IF (.NOT. ParticleSpecies(iSpecies)%Split) CYCLE
-       IF (ParticleSpecies(iSpecies)%nPart_Max .GT. 0 .AND. ParticleSpecies(iSpecies)%GlobalCount .GE. ParticleSpecies(iSpecies)%nPart_Max) CYCLE
+    DO ispecies=1,n_species
+       IF (.NOT. particle_species(ispecies)%split) CYCLE
+       IF (particle_species(ispecies)%npart_max .GT. 0 .AND. particle_species(ispecies)%global_count .GE. particle_species(ispecies)%npart_max) CYCLE
        DO iy=0,ny+1
           DO ix=0,nx+1
-             Count=ParticleSpecies(iSpecies)%SecondaryList(ix,iy)%Count
-             IF (Count .GT. 0 .AND. Count .LE. npart_per_cell_min) THEN
-                Current=>ParticleSpecies(iSpecies)%SecondaryList(ix,iy)%Head
-                DO WHILE(ASSOCIATED(Current) .AND. Count .LE. npart_per_cell_min .AND. Current%Weight .GE. 1.0_num)
-                   Count=ParticleSpecies(iSpecies)%SecondaryList(ix,iy)%Count
+             count=particle_species(ispecies)%secondary_list(ix,iy)%count
+             IF (count .GT. 0 .AND. count .LE. npart_per_cell_min) THEN
+                current=>particle_species(ispecies)%secondary_list(ix,iy)%head
+                DO WHILE(ASSOCIATED(current) .AND. count .LE. npart_per_cell_min .AND. current%weight .GE. 1.0_num)
+                   count=particle_species(ispecies)%secondary_list(ix,iy)%count
                    jitter_x=random(idum)*dx/2.0_num - dx/4.0_num
                    jitter_y=random(idum)*dy/2.0_num - dy/4.0_num
-                   Current%Weight=Current%Weight/2.0_num
-                   ALLOCATE(New)
-                   New=Current
-                   New%Part_Pos(1)=Current%Part_Pos(1)+jitter_x
-                   New%Part_Pos(2)=Current%Part_Pos(2)+jitter_y
-                   CALL Add_Particle_To_PartList(ParticleSpecies(iSpecies)%AttachedList,New)
+                   current%weight=current%weight/2.0_num
+                   ALLOCATE(new)
+                   new=current
+                   new%part_pos(1)=current%part_pos(1)+jitter_x
+                   new%part_pos(2)=current%part_pos(2)+jitter_y
+                   CALL add_particle_to_partlist(particle_species(ispecies)%attached_list,new)
 #ifdef PART_DEBUG
                    !If running with particle debugging, specify that this particle has been split
-                   New%Processor_At_T0=-1
+                   new%processor_at_t0=-1
 #endif
-                   NULLIFY(New)
+                   NULLIFY(new)
 
-                   Current%Part_Pos(1)=Current%Part_Pos(1)-jitter_x
-                   Current%Part_Pos(2)=Current%Part_Pos(2)-jitter_y
-                   Current=>Current%Next
+                   current%part_pos(1)=current%part_pos(1)-jitter_x
+                   current%part_pos(2)=current%part_pos(2)-jitter_y
+                   current=>current%next
                 ENDDO
              ENDIF
           ENDDO

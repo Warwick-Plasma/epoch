@@ -8,10 +8,10 @@ MODULE deck_io_block
 
   SAVE
 
-  INTEGER, PARAMETER :: N_Var_Special = 7
-  INTEGER,PARAMETER :: IOBlockElements=N_Var_Special+num_vars_to_dump
-  LOGICAL, DIMENSION(IOBlockElements)  :: IOBlockDone
-  CHARACTER(len=EntryLength),DIMENSION(IOBlockElements) :: IOBlockName=(/"dt_snapshot","full_dump_every","restart_dump_every","force_final_to_be_restartable","use_offset_grid","use_extended_io",&
+  INTEGER, PARAMETER :: n_var_special = 7
+  INTEGER,PARAMETER :: io_block_elements=n_var_special+num_vars_to_dump
+  LOGICAL, DIMENSION(io_block_elements)  :: io_block_done
+  CHARACTER(len=string_length),DIMENSION(io_block_elements) :: io_block_name=(/"dt_snapshot","full_dump_every","restart_dump_every","force_final_to_be_restartable","use_offset_grid","use_extended_io",&
        "extended_io_file","particles","grid","px","py","pz","vx","vy","vz",&
        "ex","ey","ez","bx","by","bz","jx","jy","jz","charge","mass",&
        "ekbar","mass_density","charge_density","number_density","particle_weight","species_id","distribution_functions","particle_probes","temperature"/)
@@ -20,90 +20,90 @@ CONTAINS
 
 
 
-  FUNCTION HandleIODeck(Element,Value)
-    CHARACTER(*),INTENT(IN) :: Element,Value
-    INTEGER :: HandleIODeck
+  FUNCTION handle_io_deck(element,value)
+    CHARACTER(*),INTENT(IN) :: element,value
+    INTEGER :: handle_io_deck
     INTEGER :: loop,elementselected
 
-    HandleIODeck=ERR_UNKNOWN_ELEMENT
+    handle_io_deck=ERR_UNKNOWN_ELEMENT
 
     elementselected=0
 
-    DO loop=1,IOBlockElements
-       IF(StrCmp(Element,TRIM(ADJUSTL(IOBlockName(loop))))) THEN
+    DO loop=1,io_block_elements
+       IF(str_cmp(element,TRIM(ADJUSTL(io_block_name(loop))))) THEN
           elementselected=loop
           EXIT
        ENDIF
     ENDDO
 
     IF (elementselected .EQ. 0) RETURN
-    IF (IOBlockDone(elementselected)) THEN
-       HandleIODeck=ERR_PRESET_ELEMENT
+    IF (io_block_done(elementselected)) THEN
+       handle_io_deck=ERR_PRESET_ELEMENT
        RETURN
     ENDIF
-    IOBlockDone(elementselected)=.TRUE.
-    HandleIODeck=ERR_NONE
+    io_block_done(elementselected)=.TRUE.
+    handle_io_deck=ERR_NONE
 
     SELECT CASE (elementselected)
     CASE(1)
-       dt_snapshots=AsReal(Value,HandleIODeck)
+       dt_snapshots=as_real(value,handle_io_deck)
     CASE(2)
-       full_dump_every=AsInteger(Value,HandleIODeck)
+       full_dump_every=as_integer(value,handle_io_deck)
     CASE(3)
-       restart_dump_every=AsInteger(Value,HandleIODeck)
+       restart_dump_every=as_integer(value,handle_io_deck)
     CASE(4)
-       force_final_to_be_restartable=AsLogical(Value,HandleIODeck)
+       force_final_to_be_restartable=as_logical(value,handle_io_deck)
     CASE(5)
-       use_offset_grid=AsLogical(Value,HandleIODeck)
+       use_offset_grid=as_logical(value,handle_io_deck)
     CASE(6)
-       use_extended_io=AsLogical(Value,HandleIODeck)
+       use_extended_io=as_logical(value,handle_io_deck)
     CASE(7)
-       extended_io_file=TRIM(Value)
+       extended_io_file=TRIM(value)
     END SELECT
 
-    IF (elementselected .LE. N_Var_Special) RETURN
-    IF (elementselected .GT. N_Var_Special) DumpMask(elementselected-N_Var_Special)=AsReal(Value,HandleIODeck)
+    IF (elementselected .LE. n_var_special) RETURN
+    IF (elementselected .GT. n_var_special) dumpmask(elementselected-n_var_special)=as_real(value,handle_io_deck)
 
     !If setting dumpmask for particle probes then report if the code wasn't compiled for particle probes
 #ifndef PARTICLE_PROBES   
-    IF (elementselected-N_Var_Special .EQ. 27) THEN
-       HandleIODeck=ERR_PP_OPTIONS_WRONG
-       Extended_Error_String="-DPARTICLE_PROBES"
+    IF (elementselected-n_var_special .EQ. 27) THEN
+       handle_io_deck=ERR_PP_OPTIONS_WRONG
+       extended_error_string="-DPARTICLE_PROBES"
     ENDIF
 #endif
 
-  END FUNCTION HandleIODeck
+  END FUNCTION handle_io_deck
 
 
-  FUNCTION CheckIOBlock()
+  FUNCTION check_io_block()
 
-    INTEGER :: CheckIOBlock,Index
+    INTEGER :: check_io_block,index
 
     !Just assume that anything not included except for the compulsory elements is not wanted
-    CheckIOBlock=ERR_NONE
+    check_io_block=ERR_NONE
 
     !If not requesting extended io then don't check for extended_io_file
-    IF (.NOT. IOBlockDone(6) .OR. .NOT. use_extended_io) IOBlockDone(6:7)=.TRUE.
+    IF (.NOT. io_block_done(6) .OR. .NOT. use_extended_io) io_block_done(6:7)=.TRUE.
 
-    !Particle Positions
-    DumpMask(1:5) = IOR(DumpMask(1:5),IO_RESTARTABLE)
+    !particle Positions
+    dumpmask(1:5) = IOR(dumpmask(1:5),IO_RESTARTABLE)
     !Fields
-    DumpMask(9:14) = IOR(DumpMask(9:14),IO_RESTARTABLE) 
-    !Weight and species info
-    DumpMask(24:25) = IOR(DumpMask(24:25),IO_RESTARTABLE)
+    dumpmask(9:14) = IOR(dumpmask(9:14),IO_RESTARTABLE) 
+    !weight and species info
+    dumpmask(24:25) = IOR(dumpmask(24:25),IO_RESTARTABLE)
 
-    DO index=1,N_Var_Special
-       IF (.NOT. IOBlockDone(index)) THEN
+    DO index=1,n_var_special
+       IF (.NOT. io_block_done(index)) THEN
           IF (rank .EQ. 0) THEN
              PRINT *,"***ERROR***"
-             PRINT *,"Required output block element ",TRIM(ADJUSTL(IOBlockName(index))), " absent. Please create this entry in the input deck"
+             PRINT *,"Required output block element ",TRIM(ADJUSTL(io_block_name(index))), " absent. Please create this entry in the input deck"
              WRITE(40,*) ""
              WRITE(40,*) "***ERROR***"
-             WRITE(40,*) "Required output block element ",TRIM(ADJUSTL(IOBlockName(index))), " absent. Please create this entry in the input deck"   
+             WRITE(40,*) "Required output block element ",TRIM(ADJUSTL(io_block_name(index))), " absent. Please create this entry in the input deck"   
           ENDIF
-          CheckIOBlock=ERR_MISSING_ELEMENTS
+          check_io_block=ERR_MISSING_ELEMENTS
        ENDIF
     ENDDO
 
-  END FUNCTION CheckIOBlock
+  END FUNCTION check_io_block
 END MODULE deck_io_block

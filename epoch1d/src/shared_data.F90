@@ -18,10 +18,10 @@ MODULE constants
 #define PART_IONISE
 #endif
   IMPLICIT NONE
-  INTEGER, PARAMETER :: num = KIND(1.D0)
-  INTEGER, PARAMETER :: dbl = KIND(1.D0)
+  INTEGER, PARAMETER :: num = KIND(1.d0)
+  INTEGER, PARAMETER :: dbl = KIND(1.d0)
   REAL(num), PARAMETER :: pi = 3.14159265358979323_num
-  REAL(num), PARAMETER :: none_zero = TINY(1.0_num)
+  REAL(num), PARAMETER :: NONE_ZERO = TINY(1.0_num)
   REAL(num), PARAMETER :: largest_number = HUGE(1.0_num)
 
   !Boundary type codes
@@ -31,7 +31,7 @@ MODULE constants
   !Boundary location codes
   INTEGER, PARAMETER :: BD_LEFT=1, BD_RIGHT=2, BD_UP=3, BD_DOWN=4, BD_FRONT=5, BC_BACK=6
 
-  INTEGER, PARAMETER :: Version = 1, Revision = 3
+  INTEGER, PARAMETER :: version = 1, revision = 3
 
   !Error codes
   INTEGER,PARAMETER ::ERR_NONE=0,ERR_UNKNOWN_BLOCK=1,ERR_UNKNOWN_ELEMENT=2
@@ -50,26 +50,26 @@ MODULE constants
 
   !IO codes
   INTEGER, PARAMETER :: IO_NEVER=0, IO_ALWAYS=1, IO_FULL=2, IO_RESTARTABLE=4, IO_SPECIES=8, IO_NO_INTRINSIC=16
-  !Domain codes
+  !domain codes
   INTEGER, PARAMETER :: DO_FULL=0,DO_DECOMPOSED=1
 
   !Load balance codes
   INTEGER,PARAMETER :: LB_X=1, LB_Y=2, LB_AUTO=4, LB_BOTH=LB_X+LB_Y
 
-  REAL(num),PARAMETER :: Q0 = 1.60217646e-19_num !C
-  REAL(num),PARAMETER :: M0 = 9.10938188e-31_num !kg
-  REAL(num),PARAMETER :: C  = 2.99792458e8_num   !ms^(-2)
+  REAL(num),PARAMETER :: q0 = 1.60217646e-19_num !c
+  REAL(num),PARAMETER :: m0 = 9.10938188e-31_num !kg
+  REAL(num),PARAMETER :: c  = 2.99792458e8_num   !ms^(-2)
   REAL(num),PARAMETER :: kb = 1.3806503e-23_num  !m^2kgs(-2)K^(-1)
   REAL(num),PARAMETER :: epsilon0 = 8.85418782e-12_num
-  REAL(num),PARAMETER :: mu0 = 1.0_num/(C**2*epsilon0)
+  REAL(num),PARAMETER :: mu0 = 1.0_num/(c**2*epsilon0)
   REAL(num),PARAMETER :: h_planck=6.626068e-34_num
-  REAL(num),PARAMETER :: ev = Q0 !J
+  REAL(num),PARAMETER :: ev = q0 !J
 
-  !Direction parameters
+  !direction parameters
   INTEGER, PARAMETER :: DIR_X=1, DIR_Y=2, DIR_Z=4, DIR_PX=8, DIR_PY=16, DIR_PZ=32
 
   !Length of a standard string
-  INTEGER,PARAMETER :: EntryLength=128
+  INTEGER,PARAMETER :: string_length=128
 
 END MODULE constants
 
@@ -84,7 +84,7 @@ MODULE shared_parser_data
 
   INTEGER,PARAMETER :: PRC_NOT_THIS_TYPE=0
 
-  !Block type constants
+  !block type constants
   INTEGER,PARAMETER :: PT_VARIABLE=1, PT_CONSTANT=2, PT_OPERATOR=3, PT_FUNCTION=4, PT_PARENTHESIS=5, PT_SEPARATOR=6, PT_CHARACTER=7
   INTEGER,PARAMETER :: PT_DEFERRED_EXECUTION_OBJECT=8
   INTEGER,PARAMETER :: PT_BAD=1024, PT_NULL=1025
@@ -139,38 +139,38 @@ MODULE shared_parser_data
   !Associativity constants
   INTEGER,PARAMETER :: ASSOC_A=1, ASSOC_LA=2, ASSOC_RA=3
 
-  INTEGER,PARAMETER :: Num_Ops=12
-  INTEGER, DIMENSION(Num_Ops), PARAMETER :: OPCODE_PRECEDENCE = (/1,1,2,2,5,5,1,1,1,2,2,5/)
-  INTEGER, DIMENSION(Num_Ops), PARAMETER :: OPCODE_ASSOC = (/ASSOC_A,ASSOC_LA,ASSOC_A,ASSOC_LA,ASSOC_LA,&
+  INTEGER,PARAMETER :: num_ops=12
+  INTEGER, DIMENSION(num_ops), PARAMETER :: opcode_precedence = (/1,1,2,2,5,5,1,1,1,2,2,5/)
+  INTEGER, DIMENSION(num_ops), PARAMETER :: opcode_assoc = (/ASSOC_A,ASSOC_LA,ASSOC_A,ASSOC_LA,ASSOC_LA,&
        ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_RA/)
 
-  INTEGER,PARAMETER :: StackSize=10000
+  INTEGER,PARAMETER :: stack_size=10000
 
-  TYPE :: StackElement
-     INTEGER :: type
-     INTEGER :: Data
-     REAL(num) :: NumericalData
-  END TYPE StackElement
+  TYPE :: stack_element
+     INTEGER :: ptype
+     INTEGER :: data
+     REAL(num) :: numerical_data
+  END TYPE stack_element
 
-  TYPE :: PrimitiveStack
-     TYPE(StackElement),DIMENSION(StackSize) :: Data
-     INTEGER :: StackPoint
-  END TYPE PrimitiveStack
+  TYPE :: primitive_stack
+     TYPE(stack_element),DIMENSION(stack_size) :: data
+     INTEGER :: stack_point
+  END TYPE primitive_stack
 
-  TYPE :: Deck_Constant
-     REAL(num) :: Value
-     CHARACTER(LEN=ENTRYLENGTH) :: Name
-  END TYPE Deck_Constant
+  TYPE :: deck_constant
+     REAL(num) :: value
+     CHARACTER(len=string_length) :: name
+  END TYPE deck_constant
 
-  TYPE :: Deferred_Execution_Object
-     CHARACTER(LEN=ENTRYLENGTH) :: Name
-     TYPE(PrimitiveStack) :: Execution_Stream
-  END TYPE Deferred_Execution_Object
+  TYPE :: deferred_execution_object
+     CHARACTER(len=string_length) :: name
+     TYPE(primitive_stack) :: execution_stream
+  END TYPE deferred_execution_object
 
-  INTEGER :: n_Deck_Constants=0
-  INTEGER :: n_Deferred_Execution_Objects=0
-  TYPE(Deck_Constant),DIMENSION(:),ALLOCATABLE :: Deck_Constant_List
-  TYPE(Deferred_Execution_Object),DIMENSION(:),ALLOCATABLE :: Deferred_Objects
+  INTEGER :: n_deck_constants=0
+  INTEGER :: n_deferred_execution_objects=0
+  TYPE(deck_constant),DIMENSION(:),ALLOCATABLE :: deck_constant_list
+  TYPE(deferred_execution_object),DIMENSION(:),ALLOCATABLE :: deferred_objects
 
 END MODULE shared_parser_data
 
@@ -181,14 +181,14 @@ MODULE shared_data
   IMPLICIT NONE
 
   !---------------------------------------------------------------------------------------
-  !String handling
+  !string handling
   !---------------------------------------------------------------------------------------
   INCLUDE 'mpif.h'
-  CHARACTER(LEN=EntryLength) :: Blank
-  TYPE :: Entry
-     CHARACTER(EntryLength) :: Value
-  END TYPE Entry
-  CHARACTER(LEN=EntryLength) :: Extended_Error_String
+  CHARACTER(len=string_length) :: blank
+  TYPE :: string_type
+     CHARACTER(string_length) :: value
+  END TYPE string_type
+  CHARACTER(len=string_length) :: extended_error_string
 
   !---------------------------------------------------------------------------------------
   !Particles
@@ -202,9 +202,9 @@ MODULE shared_data
   INTEGER,PARAMETER :: sf_order=1
 #endif
 
-  TYPE :: Particle
-     REAL(num), DIMENSION(3) :: Part_P
-     REAL(num) :: Part_pos
+  TYPE :: particle
+     REAL(num), DIMENSION(3) :: part_p
+     REAL(num) :: part_pos
 #ifdef PER_PARTICLE_WEIGHT
      REAL(num) :: weight
 #endif
@@ -212,57 +212,57 @@ MODULE shared_data
      REAL(num) :: charge
      REAL(num) :: mass
 #endif
-     TYPE(Particle),POINTER :: Next, Prev
+     TYPE(particle),POINTER :: next, prev
 #ifdef PART_DEBUG
-     INTEGER :: Processor
-     INTEGER :: Processor_at_t0
+     INTEGER :: processor
+     INTEGER :: processor_at_t0
 #endif
-  END TYPE Particle
+  END TYPE particle
 
   !Object representing a collection of particles
   !Used internally by the MPI particle transfer code
-  TYPE :: ParticleList
-     TYPE(Particle),POINTER :: Head
-     TYPE(Particle),POINTER :: Tail
-     INTEGER(KIND=8) :: Count
+  TYPE :: particle_list
+     TYPE(particle),POINTER :: head
+     TYPE(particle),POINTER :: tail
+     INTEGER(KIND=8) :: count
      !Pointer is safe if the particles in it are all unambiguously linked
-     LOGICAL :: Safe
+     LOGICAL :: safe
 
-     TYPE(ParticleList), POINTER :: Next, Prev
-  END TYPE ParticleList
+     TYPE(particle_list), POINTER :: next, prev
+  END TYPE particle_list
 
   !Object representing a particle species
-  TYPE :: ParticleFamily
+  TYPE :: particle_family
      !Core properties
-     CHARACTER(EntryLength) :: Name
-     TYPE(ParticleFamily),POINTER :: Next,Prev
-     INTEGER :: ID
-     LOGICAL :: Dump
+     CHARACTER(string_length) :: name
+     TYPE(particle_family),POINTER :: next,prev
+     INTEGER :: id
+     LOGICAL :: dump
 
-     REAL(num) :: Charge
-     REAL(num) :: Mass
-     INTEGER(KIND=8) :: Count
-     TYPE(ParticleList) :: AttachedList
+     REAL(num) :: charge
+     REAL(num) :: mass
+     INTEGER(KIND=8) :: count
+     TYPE(particle_list) :: attached_list
 
 #ifdef TRACER_PARTICLES
-     LOGICAL :: Tracer
+     LOGICAL :: tracer
 #endif
 
-     !Particle cell division
+     !particle cell division
 #ifdef PARTICLE_CELL_DIVISION
-     INTEGER(KIND=8) :: GlobalCount
-     LOGICAL :: Split
+     INTEGER(KIND=8) :: global_count
+     LOGICAL :: split
      INTEGER(KIND=8) :: npart_max
 #endif
      !Secondary list
 #ifdef USE_SECONDARY_LIST
-     TYPE(ParticleList),DIMENSION(:,:),POINTER :: SecondaryList
+     TYPE(particle_list),DIMENSION(:,:),POINTER :: secondary_list
 #endif
 
      !Injection of particles
      INTEGER(KIND=8) :: npart_per_cell
-     REAL(num) :: Density
-     REAL(num),DIMENSION(3) :: Temperature
+     REAL(num) :: density
+     REAL(num),DIMENSION(3) :: temperature
 
      !Species_ionisation
 #ifdef PART_IONISE
@@ -272,78 +272,78 @@ MODULE shared_data
      REAL(num) :: critical_field
      REAL(num) :: ionisation_energy
 #endif
-     !Attached Probes for this species
+     !Attached probes for this species
 #ifdef PARTICLE_PROBES
-     TYPE(Particle_Probe),POINTER :: AttachedProbes
+     TYPE(particle_probe),POINTER :: attached_probes
 #endif
-  END TYPE ParticleFamily
+  END TYPE particle_family
 
   !---------------------------------------------------------------------------------------
   !Initial conditions
   !---------------------------------------------------------------------------------------
   !Represents the initial conditions of a species
-  TYPE :: Initial_Condition_Block
+  TYPE :: initial_condition_block
 
-     REAL(num),DIMENSION(:),POINTER :: Rho
-     REAL(num),DIMENSION(:,:),POINTER :: Temp
-	  REAL(num),DIMENSION(3) :: drift
+     REAL(num),DIMENSION(:),POINTER :: rho
+     REAL(num),DIMENSION(:,:),POINTER :: temp
+     REAL(num),DIMENSION(3) :: drift
 
      REAL(num) :: minrho
      REAL(num) :: maxrho
 
-  END TYPE Initial_Condition_Block
+  END TYPE initial_condition_block
 
-  INTEGER :: Deck_State
-  TYPE(Initial_Condition_Block),DIMENSION(:),ALLOCATABLE :: InitialConditions
+  INTEGER :: deck_state
+  TYPE(initial_condition_block),DIMENSION(:),ALLOCATABLE :: initial_conditions
   INTEGER :: ictype
-  TYPE(Entry) :: icfile
+  TYPE(string_type) :: icfile
 
   !---------------------------------------------------------------------------------------
   !Extended IO information
   !---------------------------------------------------------------------------------------
   LOGICAL :: use_extended_io
-  CHARACTER(LEN=EntryLength) :: extended_io_file
+  CHARACTER(len=string_length) :: extended_io_file
   !Represents a 2 or 3D distribution
-  TYPE :: Distribution_Function_Block
+  TYPE :: distribution_function_block
 
-     CHARACTER(LEN=ENTRYLENGTH) :: Name
+     CHARACTER(len=string_length) :: name
 
      !The number of dimensions left
-     INTEGER :: nDims
+     INTEGER :: ndims
 
      !The dumpmask for the distribution function
-     INTEGER :: DumpMask
+     INTEGER :: dumpmask
 
      !Whether or not to store the range returned from the distribtution function code
      !This allows the code to store auto determined ranges(experimental)
-     LOGICAL :: Store_Ranges
+     LOGICAL :: store_ranges
 
      !The variables which define the ranges and resolutions of the distribution function
-     INTEGER,DIMENSION(3) :: Directions
-     REAL(num),DIMENSION(3,2) :: Ranges
-     INTEGER,DIMENSION(3) :: Resolution
-     LOGICAL,DIMENSION(:),ALLOCATABLE :: Use_Species
-     REAL(num),DIMENSION(5,2) :: Restrictions
-     LOGICAL,DIMENSION(5) :: Use_Restrictions
+     INTEGER,DIMENSION(3) :: directions
+     REAL(num),DIMENSION(3,2) :: ranges
+     INTEGER,DIMENSION(3) :: resolution
+     LOGICAL,DIMENSION(:),ALLOCATABLE :: use_species
+     REAL(num),DIMENSION(5,2) :: restrictions
+     LOGICAL,DIMENSION(5) :: use_restrictions
 
      !Pointer to next distribution function
-     TYPE(Distribution_Function_Block),POINTER :: Next
+     TYPE(distribution_function_block),POINTER :: next
 
-  END TYPE Distribution_Function_Block
-  TYPE(Distribution_Function_Block),POINTER :: Dist_Fns
+  END TYPE distribution_function_block
+  TYPE(distribution_function_block),POINTER :: dist_fns
 
 #ifdef PARTICLE_PROBES
-  TYPE :: Particle_Probe
+  TYPE :: particle_probe
      REAL(num) :: probe_point
-	  LOGICAL :: LeftToRight
+	  LOGICAL :: left_to_right
      REAL(num) :: ek_min, ek_max
-     CHARACTER(LEN=ENTRYLENGTH) :: Name
+     CHARACTER(len=string_length) :: name
 
-     TYPE(ParticleFamily), POINTER :: probe_species
-     TYPE(ParticleList) :: sampled_particles
-     TYPE(particle_probe),POINTER :: Next
-     INTEGER :: Dump
-  END TYPE Particle_Probe
+     TYPE(particle_family), POINTER :: probe_species
+     TYPE(particle_list) :: sampled_particles
+     TYPE(particle_probe),POINTER :: next
+     INTEGER :: dump
+  END TYPE particle_probe
 #endif
 
   !---------------------------------------------------------------------------------------
@@ -354,26 +354,26 @@ MODULE shared_data
 #ifdef NEWTONIAN
   !In a Newtonian code, can't guarantee that particles won't exceed lightspeed
   !Therefore record the fastest particle speed here
-  REAL(num) :: Max_Part_V
+  REAL(num) :: max_part_v
 #endif
   INTEGER :: nx
   INTEGER :: nx_global
   INTEGER(8) :: npart_global
   INTEGER :: nprocx
-  INTEGER :: nsteps,nspecies=-1
-  REAL(num), ALLOCATABLE, DIMENSION(:)     :: Ex,Ey,Ez,Bx,By,Bz,Jx,Jy,Jz
+  INTEGER :: nsteps,n_species=-1
+  REAL(num), ALLOCATABLE, DIMENSION(:)     :: ex,ey,ez,bx,by,bz,jx,jy,jz
   REAL(num), ALLOCATABLE, DIMENSION(:)     :: wk_array
 
-  TYPE(ParticleFamily),DIMENSION(:),POINTER :: ParticleSpecies
-  REAL(num), ALLOCATABLE, DIMENSION(:,:)   :: ekbar !Temperature per species
+  TYPE(particle_family),DIMENSION(:),POINTER :: particle_species
+  REAL(num), ALLOCATABLE, DIMENSION(:,:)   :: ekbar !temperature per species
   REAL(num), ALLOCATABLE, DIMENSION(:,:)   :: ekbar_sum,sum_sq,ct !Used to calculate temperature
 
   REAL(num), ALLOCATABLE, DIMENSION(:)   ::  x
 
   INTEGER,PARAMETER :: data_dir_max_length=64
-  CHARACTER(LEN=data_dir_max_length) :: data_dir
+  CHARACTER(len=data_dir_max_length) :: data_dir
 
-  LOGICAL :: Neutral_Background= .TRUE.
+  LOGICAL :: neutral_background= .TRUE.
 
   REAL(num) :: dt, t_end, time,dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_snapshots
@@ -383,7 +383,7 @@ MODULE shared_data
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight
 
-  LOGICAL :: save, restart,deckfile
+  LOGICAL :: SAVE, restart,deckfile
   INTEGER :: xbc_right, xbc_left
   INTEGER :: xbc_right_particle, xbc_left_particle
   INTEGER :: xbc_right_field, xbc_left_field
@@ -400,9 +400,9 @@ MODULE shared_data
   REAL(num) :: window_start_time
   INTEGER :: xbc_left_after_move
   INTEGER :: xbc_right_after_move
-  REAL(num) :: Window_Shift
-  LOGICAL :: AnyOpen
-  TYPE(ParticleList) :: Ejected_Particles
+  REAL(num) :: window_shift
+  LOGICAL :: any_open
+  TYPE(particle_list) :: ejected_particles
 
   !---------------------------------------------------------------------------------------
   ! MPI data
@@ -415,54 +415,54 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: start_each_rank,end_each_rank
 
   !---------------------------------------------------------------------------------------
-  !Domain and loadbalancing
+  !domain and loadbalancing
   !---------------------------------------------------------------------------------------
-  LOGICAL :: DLB 
-  REAL(num) :: DLB_Threshold
+  LOGICAL :: dlb 
+  REAL(num) :: dlb_threshold
   INTEGER(KIND=8), PARAMETER :: npart_per_it = 1000000
   REAL(num),DIMENSION(:),ALLOCATABLE :: x_global,y_global
   REAL(num),DIMENSION(:),ALLOCATABLE :: x_offset_global, y_offset_global
   !The location of the processors
   INTEGER,DIMENSION(:),ALLOCATABLE :: cell_x_start, cell_x_end
-  INTEGER :: Balance_Mode
-  LOGICAL :: DEBUG_MODE
+  INTEGER :: balance_mode
+  LOGICAL :: debug_mode
 
   !---------------------------------------------------------------------------------------
   ! file handling
   !---------------------------------------------------------------------------------------
   INTEGER :: subtype_field,subtype_particle_var,subtype_particle,subtype_particle_int
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp 
-  INTEGER :: Full_Dump_Every,Restart_Dump_Every
+  INTEGER :: full_dump_every,restart_dump_every
   INTEGER, PARAMETER :: num_vars_to_dump = 29
-  INTEGER, DIMENSION(num_vars_to_dump) :: DumpMask 
+  INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask 
   INTEGER :: output_file
   LOGICAL :: force_final_to_be_restartable
-  LOGICAL :: Use_Offset_Grid
+  LOGICAL :: use_offset_grid
   INTEGER :: n_zeros=4
 
   !---------------------------------------------------------------------------------------
-  !Laser boundaries
+  !laser boundaries
   !---------------------------------------------------------------------------------------
-  TYPE :: Laser_Block
+  TYPE :: laser_block
      !Boundary to which laser is attached
-     INTEGER :: Direction
-     !A unique ID number for the laser (not used directly by EPOCH)
+     INTEGER :: direction
+     !A unique id number for the laser (not used directly by EPOCH)
      !Only used if hard coding time profiles
-     INTEGER :: ID
-     REAL(num) :: Profile
-     REAL(num) :: Phase
+     INTEGER :: id
+     REAL(num) :: profile
+     REAL(num) :: phase
 
-     LOGICAL :: UseTimeFunction
-     TYPE(PrimitiveStack) :: TimeFunction
+     LOGICAL :: use_time_function
+     TYPE(primitive_stack) :: time_function
 
      REAL(num) :: amp=0.0_num,freq=1.0_num, k=1.0_num
      REAL(num) :: pol=0.0_num, angle=0.0_num
      REAL(num) :: t_start=0.0_num, t_end=0.0_num
 
-     TYPE(Laser_Block),POINTER :: Next
-  END TYPE Laser_Block
-  TYPE(Laser_Block),POINTER :: Laser_Left, Laser_Right
-  INTEGER :: n_Laser_Left, n_Laser_Right
+     TYPE(laser_block),POINTER :: next
+  END TYPE laser_block
+  TYPE(laser_block),POINTER :: laser_left, laser_right
+  INTEGER :: n_laser_left, n_laser_right
 
 END MODULE shared_data
 

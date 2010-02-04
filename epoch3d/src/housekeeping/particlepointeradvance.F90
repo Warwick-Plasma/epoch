@@ -1,4 +1,4 @@
-MODULE ParticlePointerAdvance
+MODULE particle_pointer_advance
   USE shared_data
 
   IMPLICIT NONE
@@ -7,63 +7,63 @@ MODULE ParticlePointerAdvance
 
 CONTAINS
 
-  SUBROUTINE Start_ParticleFamily(PartFamily,PartList,Part)
+  SUBROUTINE start_particle_family(part_family,partlist,part)
 
-    TYPE(ParticleFamily), POINTER, INTENT(INOUT) :: PartFamily
-    TYPE(ParticleList), POINTER, INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER, INTENT(INOUT) :: Part
+    TYPE(particle_family), POINTER, INTENT(INOUT) :: part_family
+    TYPE(particle_list), POINTER, INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER, INTENT(INOUT) :: part
 
-    PartFamily=>ParticleSpecies(1)
+    part_family=>particle_species(1)
 
-    IF (ASSOCIATED(PartFamily)) THEN
-       PartList=>PartFamily%AttachedList
-       IF (ASSOCIATED(PartList)) THEN
-          Part=>PartList%Head
+    IF (ASSOCIATED(part_family)) THEN
+       partlist=>part_family%attached_list
+       IF (ASSOCIATED(partlist)) THEN
+          part=>partlist%head
        ELSE
-          NULLIFY(Part)
+          NULLIFY(part)
        ENDIF
     ELSE
-       NULLIFY(PartList)
-       NULLIFY(Part)
+       NULLIFY(partlist)
+       NULLIFY(part)
     ENDIF
 
-  END SUBROUTINE Start_ParticleFamily
+  END SUBROUTINE start_particle_family
 
-  SUBROUTINE Advance_ParticleList(PartList,Part)
+  SUBROUTINE advance_particle_list(partlist,part)
 
-    TYPE(ParticleList), POINTER, INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER, INTENT(INOUT) :: Part
+    TYPE(particle_list), POINTER, INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER, INTENT(INOUT) :: part
 
-    PartList=>PartList%Next
-    IF (ASSOCIATED(PartList)) THEN
-       Part=>PartList%Head
+    partlist=>partlist%next
+    IF (ASSOCIATED(partlist)) THEN
+       part=>partlist%head
     ELSE
-       NULLIFY(Part)
+       NULLIFY(part)
     ENDIF
 
 
-  END SUBROUTINE Advance_ParticleList
+  END SUBROUTINE advance_particle_list
 
-  SUBROUTINE Advance_ParticleFamily(PartFamily,PartList,Part)
+  SUBROUTINE advance_particle_family(part_family,partlist,part)
 
-    TYPE(ParticleFamily), POINTER, INTENT(INOUT) :: PartFamily
-    TYPE(ParticleList), POINTER, INTENT(INOUT) :: PartList
-    TYPE(Particle), POINTER, INTENT(INOUT) :: Part
+    TYPE(particle_family), POINTER, INTENT(INOUT) :: part_family
+    TYPE(particle_list), POINTER, INTENT(INOUT) :: partlist
+    TYPE(particle), POINTER, INTENT(INOUT) :: part
 
-    PartFamily=>PartFamily%Next
-    IF (ASSOCIATED(PartFamily)) THEN
-       PartList=>PartFamily%AttachedList
+    part_family=>part_family%next
+    IF (ASSOCIATED(part_family)) THEN
+       partlist=>part_family%attached_list
     ELSE
-       NULLIFY(PartList)
+       NULLIFY(partlist)
     ENDIF
 
-    IF (ASSOCIATED(PartList)) THEN
-       Part=>PartList%Head
+    IF (ASSOCIATED(partlist)) THEN
+       part=>partlist%head
     ELSE
-       NULLIFY(Part)
+       NULLIFY(part)
     ENDIF
 
 
-  END SUBROUTINE Advance_ParticleFamily
+  END SUBROUTINE advance_particle_family
 
-END MODULE ParticlePointerAdvance
+END MODULE particle_pointer_advance

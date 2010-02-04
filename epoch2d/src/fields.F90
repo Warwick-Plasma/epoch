@@ -12,14 +12,14 @@ CONTAINS
     REAL(num) :: lx,cnx,ly,cny
     !Note minus sign
 #ifndef ORDER_SIX
-    REAL(num),DIMENSION(4) :: Diff_Consts&
+    REAL(num),DIMENSION(4) :: diff_consts&
          =(/1.0_num/24.0_num,-9.0_num/8.0_num,9.0_num/8.0_num,-1.0_num/24.0_num/)
-    INTEGER,PARAMETER :: Large=2, Small=1
+    INTEGER,PARAMETER :: large=2, small=1
 #else
-    REAL(num),DIMENSION(6) :: Diff_Consts&
+    REAL(num),DIMENSION(6) :: diff_consts&
          =(/3.0_num/640.0_num, -25.0_num/384.0_num, 75.0_num/64.0_num,&
          -75.0_num/64.0_num,25.0_num/384.0_num,-3.0_num/640.0_num/)
-    INTEGER,PARAMETER :: Large=3, Small=2
+    INTEGER,PARAMETER :: large=3, small=2
 #endif
 
 
@@ -29,115 +29,115 @@ CONTAINS
     ly=dt/dy
     cny=0.5_num*ly
 
-    !Update Ex to t=t0+dt/2
+    !Update ex to t=t0+dt/2
 #ifndef HIGH_ORDER_FIELDS
     DO iy=1,ny
        DO ix=1,nx
-          Ex(ix,iy)=Ex(ix,iy)&
+          ex(ix,iy)=ex(ix,iy)&
                +cny*(bz(ix,iy)-bz(ix,iy-1))*c**2&
-               -0.5_num*dt*Jx(ix,iy)/epsilon0
+               -0.5_num*dt*jx(ix,iy)/epsilon0
        ENDDO
     ENDDO
 
-    !Update Ey to t=t0+dt/2
+    !Update ey to t=t0+dt/2
     DO iy=1,ny
        DO ix=1,nx
-          Ey(ix,iy)=Ey(ix,iy)&
+          ey(ix,iy)=ey(ix,iy)&
                -cnx*(bz(ix,iy)-bz(ix-1,iy))*c**2&
-               -0.5_num*dt*Jy(ix,iy)/epsilon0
+               -0.5_num*dt*jy(ix,iy)/epsilon0
        ENDDO
     ENDDO
 
-    !Update Ez to t=t0+dt/2
+    !Update ez to t=t0+dt/2
     DO iy=1,ny
        DO ix=1,nx
-          Ez(ix,iy)=Ez(ix,iy)&
+          ez(ix,iy)=ez(ix,iy)&
                +cnx*(by(ix,iy)-by(ix-1,iy))*c**2&
                -cny*(bx(ix,iy)-bx(ix,iy-1))*c**2&
-               -0.5_num*dt*Jz(ix,iy)/epsilon0
+               -0.5_num*dt*jz(ix,iy)/epsilon0
        ENDDO
     ENDDO
 #else
     DO iy=1,ny
        DO ix=1,nx
-          Ex(ix,iy)=Ex(ix,iy)&
-               +cny*c**2 * SUM(Diff_Consts * Bz(ix,iy-Large:iy+Small))&
-               -0.5_num*dt*Jx(ix,iy)/epsilon0
+          ex(ix,iy)=ex(ix,iy)&
+               +cny*c**2 * SUM(diff_consts * bz(ix,iy-large:iy+small))&
+               -0.5_num*dt*jx(ix,iy)/epsilon0
        ENDDO
     ENDDO
     DO iy=1,ny
        DO ix=1,nx
-          Ey(ix,iy)=Ey(ix,iy)&
-               -cnx*c**2 * SUM(Diff_Consts * Bz(ix-Large:ix+Small,iy))&
-               -0.5_num*dt*Jy(ix,iy)/epsilon0
+          ey(ix,iy)=ey(ix,iy)&
+               -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small,iy))&
+               -0.5_num*dt*jy(ix,iy)/epsilon0
        ENDDO
     ENDDO
 
     DO iy=1,ny
        DO ix=1,nx
-          Ez(ix,iy)=Ez(ix,iy)&
-               +cnx*c**2 * SUM(Diff_Consts * By(ix-Large:ix+Small,iy))&
-               -cny*c**2 * SUM(Diff_Consts * Bx(ix,iy-Large:iy+Small))&
-               -0.5_num*dt*Jz(ix,iy)/epsilon0
+          ez(ix,iy)=ez(ix,iy)&
+               +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small,iy))&
+               -cny*c**2 * SUM(diff_consts * bx(ix,iy-large:iy+small))&
+               -0.5_num*dt*jz(ix,iy)/epsilon0
        ENDDO
     ENDDO
 #endif
 
     !Now have E(t+dt/2), do boundary conditions on E
 
-    CALL Efield_bcs
+    CALL efield_bcs
 #ifndef ELECTROSTATIC
     !Update B field to t+dt/2 using E(t+dt/2)
 #ifndef HIGH_ORDER_FIELDS
-    !Bx
+    !bx
     DO iy=1,ny
        DO ix=1,nx
-          Bx(ix,iy) = Bx(ix,iy)&
-               -cny*(Ez(ix,iy+1)-Ez(ix,iy))
+          bx(ix,iy) = bx(ix,iy)&
+               -cny*(ez(ix,iy+1)-ez(ix,iy))
        ENDDO
     ENDDO
 
 
-    !By
+    !by
     DO iy=1,ny
        DO ix=1,nx
-          By(ix,iy)=By(ix,iy)&
-               +cnx*(Ez(ix+1,iy)-Ez(ix,iy))
+          by(ix,iy)=by(ix,iy)&
+               +cnx*(ez(ix+1,iy)-ez(ix,iy))
        ENDDO
     ENDDO
 
-    !Bz
+    !bz
     DO iy=1,ny
        DO ix=1,nx
-          Bz(ix,iy)=Bz(ix,iy)&
-               -cnx*(Ey(ix+1,iy)-Ey(ix,iy))&
-               +cny*(Ex(ix,iy+1)-Ex(ix,iy))
+          bz(ix,iy)=bz(ix,iy)&
+               -cnx*(ey(ix+1,iy)-ey(ix,iy))&
+               +cny*(ex(ix,iy+1)-ex(ix,iy))
        ENDDO
     ENDDO
 #else
     DO iy=1,ny
        DO ix=1,nx
-          Bx(ix,iy)=Bx(ix,iy)&
-               -cny * SUM(Diff_Consts * Ez(ix,iy-Small:iy+Large))
+          bx(ix,iy)=bx(ix,iy)&
+               -cny * SUM(diff_consts * ez(ix,iy-small:iy+large))
        ENDDO
     ENDDO
     DO iy=1,ny
        DO ix=1,nx
-          By(ix,iy)=By(ix,iy)&
-               +cnx * SUM(Diff_Consts * Ez(ix-Small:ix+Large,iy))
+          by(ix,iy)=by(ix,iy)&
+               +cnx * SUM(diff_consts * ez(ix-small:ix+large,iy))
        ENDDO
     ENDDO
     DO iy=1,ny
        DO ix=1,nx
-          Bz(ix,iy)=Bz(ix,iy)&
-               -cnx * SUM(Diff_Consts * Ey(ix-Small:ix+Large,iy))&
-               +cny * SUM(Diff_Consts * Ex(ix,iy-Small:iy+Large))
+          bz(ix,iy)=bz(ix,iy)&
+               -cnx * SUM(diff_consts * ey(ix-small:ix+large,iy))&
+               +cny * SUM(diff_consts * ex(ix,iy-small:iy+large))
        ENDDO
     ENDDO
 #endif
 
     !Now have B field at t+dt/2. Do boundary conditions on B
-    CALL Bfield_bcs(.FALSE.)
+    CALL bfield_bcs(.FALSE.)
 #endif
     !Now have E&B fields at t=t+dt/2
     !Move to particle pusher
@@ -149,14 +149,14 @@ CONTAINS
     REAL(num) :: lx,cnx,ly,cny
 
 #ifndef ORDER_SIX
-    REAL(num),DIMENSION(4) :: Diff_Consts&
+    REAL(num),DIMENSION(4) :: diff_consts&
          =(/1.0_num/24.0_num,-9.0_num/8.0_num,9.0_num/8.0_num,-1.0_num/24.0_num/)
-    INTEGER,PARAMETER :: Large=2, Small=1
+    INTEGER,PARAMETER :: large=2, small=1
 #else
-    REAL(num),DIMENSION(6) :: Diff_Consts&
+    REAL(num),DIMENSION(6) :: diff_consts&
          =(/3.0_num/640.0_num, -25.0_num/384.0_num, 75.0_num/64.0_num,&
          -75.0_num/64.0_num,25.0_num/384.0_num,-3.0_num/640.0_num/)
-    INTEGER,PARAMETER :: Large=3, Small=2
+    INTEGER,PARAMETER :: large=3, small=2
 #endif
 
     lx=dt/dx
@@ -166,53 +166,53 @@ CONTAINS
     cny=0.5_num*ly
 #ifndef ELECTROSTATIC
 #ifndef HIGH_ORDER_FIELDS
-    !Bx 
+    !bx 
     DO iy=1,ny
        DO ix=1,nx
-          Bx(ix,iy) = Bx(ix,iy)&
-               -cny*(Ez(ix,iy+1)-Ez(ix,iy))
+          bx(ix,iy) = bx(ix,iy)&
+               -cny*(ez(ix,iy+1)-ez(ix,iy))
        ENDDO
     ENDDO
 
-    !By
+    !by
     DO iy=1,ny
        DO ix=1,nx
-          By(ix,iy)=By(ix,iy)&
-               +cnx*(Ez(ix+1,iy)-Ez(ix,iy))
+          by(ix,iy)=by(ix,iy)&
+               +cnx*(ez(ix+1,iy)-ez(ix,iy))
        ENDDO
     ENDDO
 
-    !Bz
+    !bz
     DO iy=1,ny
        DO ix=1,nx
-          Bz(ix,iy)=Bz(ix,iy)&
-               -cnx*(Ey(ix+1,iy)-Ey(ix,iy))&
-               +cny*(Ex(ix,iy+1)-Ex(ix,iy))
+          bz(ix,iy)=bz(ix,iy)&
+               -cnx*(ey(ix+1,iy)-ey(ix,iy))&
+               +cny*(ex(ix,iy+1)-ex(ix,iy))
        ENDDO
     ENDDO
 #else
     DO iy=1,ny
        DO ix=1,nx
-          Bx(ix,iy)=Bx(ix,iy)&
-               -cny * SUM(Diff_Consts * Ez(ix,iy-Small:iy+Large))
+          bx(ix,iy)=bx(ix,iy)&
+               -cny * SUM(diff_consts * ez(ix,iy-small:iy+large))
        ENDDO
     ENDDO
     DO iy=1,ny
        DO ix=1,nx
-          By(ix,iy)=By(ix,iy)&
-               +cnx * SUM(Diff_Consts * Ez(ix-Small:ix+Large,iy))
+          by(ix,iy)=by(ix,iy)&
+               +cnx * SUM(diff_consts * ez(ix-small:ix+large,iy))
        ENDDO
     ENDDO
     DO iy=1,ny
        DO ix=1,nx
-          Bz(ix,iy)=Bz(ix,iy)&
-               -cnx * SUM(Diff_Consts * Ey(ix-Small:ix+Large,iy))&
-               +cny * SUM(Diff_Consts * Ex(ix,iy-Small:iy+Large))
+          bz(ix,iy)=bz(ix,iy)&
+               -cnx * SUM(diff_consts * ey(ix-small:ix+large,iy))&
+               +cny * SUM(diff_consts * ex(ix,iy-small:iy+large))
        ENDDO
     ENDDO
 #endif
 
-    CALL BField_BCS(.FALSE.)
+    CALL bfield_bcs(.FALSE.)
     IF(xbc_left == BC_SIMPLE_LASER .AND. left == MPI_PROC_NULL) CALL laser_bcs_left
     IF(xbc_left == BC_SIMPLE_OUTFLOW .AND. left == MPI_PROC_NULL) CALL outflow_bcs_left
 
@@ -224,64 +224,64 @@ CONTAINS
 
     IF(ybc_down == BC_SIMPLE_LASER .AND. down == MPI_PROC_NULL) CALL laser_bcs_down
     IF(ybc_down == BC_SIMPLE_OUTFLOW .AND. down == MPI_PROC_NULL) CALL outflow_bcs_down
-    CALL BField_BCS(.TRUE.)
+    CALL bfield_bcs(.TRUE.)
 #endif
 #ifndef HIGH_ORDER_FIELDS
-    !Ex
+    !ex
     DO iy=1,ny
        DO ix=1,nx
-          Ex(ix,iy)=Ex(ix,iy)&
-               +cny*(Bz(ix,iy)-Bz(ix,iy-1)) * c**2&
-               -0.5*dt*Jx(ix,iy)/epsilon0
+          ex(ix,iy)=ex(ix,iy)&
+               +cny*(bz(ix,iy)-bz(ix,iy-1)) * c**2&
+               -0.5*dt*jx(ix,iy)/epsilon0
        ENDDO
     ENDDO
 
-    !Ey
+    !ey
     DO iy=1,ny
        DO ix=1,nx
-          Ey(ix,iy)=Ey(ix,iy)&
-               -cnx*(Bz(ix,iy)-Bz(ix-1,iy)) * c **2&
-               -0.5*dt*Jy(ix,iy)/epsilon0
+          ey(ix,iy)=ey(ix,iy)&
+               -cnx*(bz(ix,iy)-bz(ix-1,iy)) * c **2&
+               -0.5*dt*jy(ix,iy)/epsilon0
        ENDDO
     ENDDO
 
 
 
-    !Ez
+    !ez
     DO iy=1,ny
        DO ix=1,nx
-          Ez(ix,iy)=Ez(ix,iy)&
-               +cnx*(By(ix,iy)-By(ix-1,iy))*c**2&
-               -cny*(Bx(ix,iy)-Bx(ix,iy-1))*c**2&
-               -0.5*dt*Jz(ix,iy)/epsilon0
+          ez(ix,iy)=ez(ix,iy)&
+               +cnx*(by(ix,iy)-by(ix-1,iy))*c**2&
+               -cny*(bx(ix,iy)-bx(ix,iy-1))*c**2&
+               -0.5*dt*jz(ix,iy)/epsilon0
        ENDDO
     ENDDO
 #else
     DO iy=1,ny
        DO ix=1,nx
-          Ex(ix,iy)=Ex(ix,iy)&
-               +cny*c**2 * SUM(Diff_Consts * Bz(ix,iy-Large:iy+Small))&
-               -0.5*dt*Jx(ix,iy)/epsilon0
+          ex(ix,iy)=ex(ix,iy)&
+               +cny*c**2 * SUM(diff_consts * bz(ix,iy-large:iy+small))&
+               -0.5*dt*jx(ix,iy)/epsilon0
        ENDDO
     ENDDO
     DO iy=1,ny
        DO ix=1,nx
-          Ey(ix,iy)=Ey(ix,iy)&
-               -cnx*c**2 * SUM(Diff_Consts * Bz(ix-Large:ix+Small,iy))&
-               -0.5*dt*Jy(ix,iy)/epsilon0
+          ey(ix,iy)=ey(ix,iy)&
+               -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small,iy))&
+               -0.5*dt*jy(ix,iy)/epsilon0
        ENDDO
     ENDDO
     DO iy=1,ny
        DO ix=1,nx
-          Ez(ix,iy)=Ez(ix,iy)&
-               +cnx*c**2 * SUM(Diff_Consts * By(ix-Large:ix+Small,iy))&
-               -cny*c**2 * SUM(Diff_Consts * Bx(ix,iy-Large:iy+Small))&
-               -0.5_num*dt*Jz(ix,iy)/epsilon0
+          ez(ix,iy)=ez(ix,iy)&
+               +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small,iy))&
+               -cny*c**2 * SUM(diff_consts * bx(ix,iy-large:iy+small))&
+               -0.5_num*dt*jz(ix,iy)/epsilon0
        ENDDO
     ENDDO
 #endif
 
-    CALL Efield_bcs
+    CALL efield_bcs
 
   END SUBROUTINE update_eb_fields_final
 

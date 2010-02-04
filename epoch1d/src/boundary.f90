@@ -8,9 +8,9 @@ MODULE boundary
 
 CONTAINS
 
-  SUBROUTINE Setup_Particle_Boundaries
+  SUBROUTINE setup_particle_boundaries
 
-    AnyOpen=.FALSE.
+    any_open=.FALSE.
 
     !For some types of boundary, fields and particles are treated in different ways, deal with that here
     IF (xbc_right == BC_PERIODIC) THEN
@@ -32,282 +32,282 @@ CONTAINS
        xbc_left_field=BC_CLAMP
     ENDIF
 
-    !Laser boundaries reflect particles off a hard wall
+    !laser boundaries reflect particles off a hard wall
     IF (xbc_left == BC_SIMPLE_LASER .OR. xbc_left == BC_SIMPLE_OUTFLOW) THEN
        xbc_left_particle=BC_OPEN
        xbc_left_field=BC_CLAMP
-       AnyOpen=.TRUE.
+       any_open=.TRUE.
     ENDIF
 
     IF (xbc_right == BC_SIMPLE_LASER .OR. xbc_right == BC_SIMPLE_OUTFLOW) THEN
        xbc_right_particle=BC_OPEN
        xbc_right_field=BC_CLAMP
-       AnyOpen=.TRUE.
+       any_open=.TRUE.
     ENDIF
 
-    IF (AnyOpen) CALL Create_Empty_Partlist(Ejected_Particles)
+    IF (any_open) CALL create_empty_partlist(ejected_particles)
 
-  END SUBROUTINE Setup_Particle_Boundaries
+  END SUBROUTINE setup_particle_boundaries
 
   !Exchanges field values at processor boundaries and applies field boundary conditions
-  SUBROUTINE Field_BC(Field)
+  SUBROUTINE field_bc(field)
 
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: Field
+    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: field
 
-    CALL Do_Field_MPI_With_Lengths(Field,nx)
+    CALL do_field_mpi_with_lengths(field,nx)
 
-  END SUBROUTINE Field_BC
+  END SUBROUTINE field_bc
 
-  SUBROUTINE Do_Field_MPI_With_Lengths(Field,nx_local)
+  SUBROUTINE do_field_mpi_with_lengths(field,nx_local)
 
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: Field
+    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: field
     INTEGER,INTENT(IN) :: nx_local
 
-    CALL MPI_SENDRECV(Field(1:3),3,mpireal,left,tag,&
-         Field(nx_local+1:nx_local+3),3,mpireal,&
+    CALL MPI_SENDRECV(field(1:3),3,mpireal,left,tag,&
+         field(nx_local+1:nx_local+3),3,mpireal,&
          right,tag,comm,status,errcode)
-    CALL MPI_SENDRECV(Field(nx_local-2:nx_local),3,&
-         mpireal,right,tag,Field(-2:0),3,mpireal,&
+    CALL MPI_SENDRECV(field(nx_local-2:nx_local),3,&
+         mpireal,right,tag,field(-2:0),3,mpireal,&
          left,tag,comm,status,errcode)
 
-  END SUBROUTINE Do_Field_MPI_With_Lengths
+  END SUBROUTINE do_field_mpi_with_lengths
 
-  SUBROUTINE Field_Zero_Gradient(Field,Force)
+  SUBROUTINE field_zero_gradient(field,force)
 
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: Field
-    LOGICAL,INTENT(IN) :: Force
+    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: field
+    LOGICAL,INTENT(IN) :: force
 
 
-    IF ((xbc_left_field == BC_ZERO_GRADIENT .OR. Force) .AND. left == MPI_PROC_NULL) THEN
-       Field(0)=Field(1)
-       Field(-1)=Field(2)
+    IF ((xbc_left_field == BC_ZERO_GRADIENT .OR. force) .AND. left == MPI_PROC_NULL) THEN
+       field(0)=field(1)
+       field(-1)=field(2)
     ENDIF
 
-    IF ((xbc_right_field == BC_ZERO_GRADIENT .OR. Force)  .AND. right == MPI_PROC_NULL) THEN
-       Field(nx+1)=Field(nx)
-       Field(nx+2)=Field(nx-1)
+    IF ((xbc_right_field == BC_ZERO_GRADIENT .OR. force)  .AND. right == MPI_PROC_NULL) THEN
+       field(nx+1)=field(nx)
+       field(nx+2)=field(nx-1)
     ENDIF
 
-  END SUBROUTINE Field_Zero_Gradient
+  END SUBROUTINE field_zero_gradient
 
-  SUBROUTINE Field_Clamp_Zero(Field,Stagger)
+  SUBROUTINE field_clamp_zero(field,stagger)
 
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: Field
-    INTEGER,DIMENSION(1),INTENT(IN) :: Stagger
+    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: field
+    INTEGER,DIMENSION(1),INTENT(IN) :: stagger
 
 
     IF (xbc_left_field == BC_CLAMP .AND. left == MPI_PROC_NULL) THEN
        IF (stagger(1) .EQ. 1) THEN
-          Field(0)=0.0_num
-          Field(-1)=-Field(1)
+          field(0)=0.0_num
+          field(-1)=-field(1)
        ELSE
-          Field(0)=-Field(1)
-          Field(-1)=-Field(2)
+          field(0)=-field(1)
+          field(-1)=-field(2)
        ENDIF
     ENDIF
 
     IF (xbc_right_field == BC_CLAMP .AND. right == MPI_PROC_NULL) THEN
        IF (stagger(1) .EQ. 1) THEN
-          Field(nx)=0.0_num
+          field(nx)=0.0_num
        ELSE
-          Field(nx+1)=-Field(nx)
-          Field(nx+2)=-Field(nx-1)
+          field(nx+1)=-field(nx)
+          field(nx+2)=-field(nx-1)
        ENDIF
     ENDIF
 
-  END SUBROUTINE Field_Clamp_Zero
+  END SUBROUTINE field_clamp_zero
 
-  SUBROUTINE Processor_Summation_BCS(array)
+  SUBROUTINE processor_summation_bcs(array)
 
     REAL(num),DIMENSION(-2:),INTENT(INOUT) :: array
     REAL(num),DIMENSION(:),ALLOCATABLE :: temp
     INTEGER :: nxp
 
-    INTEGER,DIMENSION(-1:1) :: Sizes,xStart,xEnd,xshift
+    INTEGER,DIMENSION(-1:1) :: sizes,x_start,x_end,x_shift
     INTEGER :: xs,xe,xf
 
     nxp=nx+3
 
-    Sizes=0
-    xStart=0
-    xEnd=0
-    xshift=0
+    sizes=0
+    x_start=0
+    x_end=0
+    x_shift=0
 
        DO ix=-1,1
-          Sizes(ix)=1
+          sizes(ix)=1
           IF (ix == 0) THEN
-             Sizes(ix) = Sizes(ix) * (nx+6)
-             xStart(ix) = -2
-             xEnd(ix) = nx+3
+             sizes(ix) = sizes(ix) * (nx+6)
+             x_start(ix) = -2
+             x_end(ix) = nx+3
           ELSE IF (ix==1) THEN
-             Sizes(ix) = Sizes(ix) *3
-             xStart(ix) = nx+1
-             xEnd(ix) = nx+3
-             xShift(ix) = -nx
+             sizes(ix) = sizes(ix) *3
+             x_start(ix) = nx+1
+             x_end(ix) = nx+3
+             x_shift(ix) = -nx
           ELSE
-             Sizes(ix) = Sizes(ix) *3
-             xStart(ix) = -2
-             xEnd(ix) = 0
-             xShift(ix) = nx
+             sizes(ix) = sizes(ix) *3
+             x_start(ix) = -2
+             x_end(ix) = 0
+             x_shift(ix) = nx
           ENDIF
        ENDDO
 
 !!$    DO iy=-1,1
 !!$       DO ix=-1,1
-!!$          sizes(ix)=(xEnd(ix)-xStart(ix)+1)*(yEnd(ix)-yStart(ix)+1)
+!!$          sizes(ix)=(x_end(ix)-x_start(ix)+1)*(y_end(ix)-y_start(ix)+1)
 !!$       ENDDO
 !!$    ENDDO
 
-    !PRINT *,rank,ystart(0,1),yend(0,1),yshift(0,1)
+    !PRINT *,rank,y_start(0,1),y_end(0,1),y_shift(0,1)
 
        DO ix=-1,1
           IF (ix == 0 ) CYCLE
           !Copy the starts into variables with shorter names, or this is HORRIFIC to read
-          xs=xstart(ix)
-          xe=xend(ix)
-          xf=xshift(ix)
+          xs=x_start(ix)
+          xe=x_end(ix)
+          xf=x_shift(ix)
           ALLOCATE(temp(xs:xe))
           temp=0.0_num
           !IF (neighbour(ix) .EQ. MPI_PROC_NULL) PRINT *,"BAD NEIGHBOUR",ix,iy
-          CALL MPI_SENDRECV(Array(xs:xe),sizes(ix),mpireal,neighbour(ix),tag,temp,sizes(-ix),&
+          CALL MPI_SENDRECV(array(xs:xe),sizes(ix),mpireal,neighbour(ix),tag,temp,sizes(-ix),&
                mpireal,neighbour(-ix),tag,comm,status,errcode)
-          Array(xs+xf:xe+xf) = Array(xs+xf:xe+xf) + temp
+          array(xs+xf:xe+xf) = array(xs+xf:xe+xf) + temp
           DEALLOCATE(temp)
        ENDDO
 
-    CALL Field_BC(Array)
+    CALL field_bc(array)
 
-  END SUBROUTINE Processor_Summation_BCS
+  END SUBROUTINE processor_summation_bcs
 
-  SUBROUTINE Efield_bcs
+  SUBROUTINE efield_bcs
 
     !These are the MPI boundaries
-    CALL Field_BC(Ex)
-    CALL Field_BC(Ey)
-    CALL Field_BC(Ez)
+    CALL field_bc(ex)
+    CALL field_bc(ey)
+    CALL field_bc(ez)
 
     !These apply zero field boundary conditions on the edges
-    CALL Field_Clamp_Zero(Ex,(/1/))
-    CALL Field_Clamp_Zero(Ey,(/0/))
-    CALL Field_Clamp_Zero(Ez,(/0/))
+    CALL field_clamp_zero(ex,(/1/))
+    CALL field_clamp_zero(ey,(/0/))
+    CALL field_clamp_zero(ez,(/0/))
     !These apply zero field gradient boundary conditions on the edges
-    CALL Field_Zero_Gradient(Ex,.FALSE.)
-    CALL Field_Zero_Gradient(Ey,.FALSE.)
-    CALL Field_Zero_Gradient(Ez,.FALSE.)
+    CALL field_zero_gradient(ex,.FALSE.)
+    CALL field_zero_gradient(ey,.FALSE.)
+    CALL field_zero_gradient(ez,.FALSE.)
 
-  END SUBROUTINE Efield_bcs
+  END SUBROUTINE efield_bcs
 
-  SUBROUTINE Bfield_bcs(MPI_Only)
+  SUBROUTINE bfield_bcs(mpi_only)
 
-    LOGICAL, INTENT(IN) :: MPI_Only
+    LOGICAL, INTENT(IN) :: mpi_only
 
     !These are the MPI boundaries
-    CALL Field_BC(Bx)
-    CALL Field_BC(By)
-    CALL Field_BC(Bz)
+    CALL field_bc(bx)
+    CALL field_bc(by)
+    CALL field_bc(bz)
 
-    IF (.NOT. MPI_Only) THEN
+    IF (.NOT. mpi_only) THEN
        !These apply zero field boundary conditions on the edges
-       CALL Field_Clamp_Zero(Bx,(/0/))
-       CALL Field_Clamp_Zero(By,(/1/))
-       CALL Field_Clamp_Zero(Bz,(/1/))
+       CALL field_clamp_zero(bx,(/0/))
+       CALL field_clamp_zero(by,(/1/))
+       CALL field_clamp_zero(bz,(/1/))
        !These apply zero field boundary conditions on the edges
-       CALL Field_Zero_Gradient(Bx,.FALSE.)
-       CALL Field_Zero_Gradient(By,.FALSE.)
-       CALL Field_Zero_Gradient(Bz,.FALSE.)
+       CALL field_zero_gradient(bx,.FALSE.)
+       CALL field_zero_gradient(by,.FALSE.)
+       CALL field_zero_gradient(bz,.FALSE.)
     ENDIF
 
-  END SUBROUTINE Bfield_bcs
+  END SUBROUTINE bfield_bcs
 
-  SUBROUTINE Particle_bcs
+  SUBROUTINE particle_bcs
 
-    TYPE(particle),POINTER :: Cur,last_good,Next
-    TYPE(particlelist),DIMENSION(-1:1) :: send,recv
+    TYPE(particle),POINTER :: cur,last_good,next
+    TYPE(particle_list),DIMENSION(-1:1) :: send,recv
     INTEGER :: xbd,ixp
-    LOGICAL :: Out_Of_Bounds
+    LOGICAL :: out_of_bounds
     LOGICAL,DIMENSION(-1:1) :: done
-    INTEGER :: iSpecies
+    INTEGER :: ispecies
 
-    DO iSpecies=1,nspecies
-       Cur=>ParticleSpecies(iSpecies)%AttachedList%Head
+    DO ispecies=1,n_species
+       cur=>particle_species(ispecies)%attached_list%head
        NULLIFY(last_good)
 
 
           DO ix=-1,1
-             CALL Create_Empty_Partlist(send(ix))
-             CALL Create_Empty_Partlist(recv(ix))
+             CALL create_empty_partlist(send(ix))
+             CALL create_empty_partlist(recv(ix))
           ENDDO
 
-       DO WHILE (ASSOCIATED(Cur))
-          Out_Of_Bounds=.FALSE.
-          Next=>Cur%Next
+       DO WHILE (ASSOCIATED(cur))
+          out_of_bounds=.FALSE.
+          next=>cur%next
 
           xbd=0
 
           !These conditions apply if a particle has passed a physical boundary
           !Not a processor boundary or a periodic boundary
-          IF (Cur%Part_Pos .LE. x_start-dx/2.0_num .AND. left == MPI_PROC_NULL .AND. xbc_left_particle == BC_REFLECT) THEN
-             !Particle has crossed left boundary
+          IF (cur%part_pos .LE. x_start-dx/2.0_num .AND. left == MPI_PROC_NULL .AND. xbc_left_particle == BC_REFLECT) THEN
+             !particle has crossed left boundary
              cur%part_pos =  2.0_num * (x_start-dx/2.0_num) - cur%part_pos
-             Cur%part_p(1) = - Cur%part_p(1)
+             cur%part_p(1) = - cur%part_p(1)
           ENDIF
-          IF (Cur%Part_Pos .GE. x_end+dx/2.0_num .AND. right == MPI_PROC_NULL .AND. xbc_right_particle == BC_REFLECT) THEN
-             !Particle has crossed right boundary
-             Cur%part_pos =  2.0_num *(x_end+dx/2.0_num) - Cur%part_pos
-             Cur%part_p(1) = - Cur%part_p(1)
+          IF (cur%part_pos .GE. x_end+dx/2.0_num .AND. right == MPI_PROC_NULL .AND. xbc_right_particle == BC_REFLECT) THEN
+             !particle has crossed right boundary
+             cur%part_pos =  2.0_num *(x_end+dx/2.0_num) - cur%part_pos
+             cur%part_p(1) = - cur%part_p(1)
           ENDIF
 
-          IF (Cur%part_pos .LT. x_start_local - dx/2.0_num) xbd=-1
-          IF (Cur%part_pos .GT. x_end_local + dx/2.0_num )   xbd=1
+          IF (cur%part_pos .LT. x_start_local - dx/2.0_num) xbd=-1
+          IF (cur%part_pos .GT. x_end_local + dx/2.0_num )   xbd=1
 
-          IF ((Cur%part_pos .LT. x_start - dx/2.0_num) .AND. (xbc_left_particle == BC_OPEN)) out_of_bounds = .TRUE.
-          IF ((Cur%part_pos .GT. x_end + dx/2.0_num) .AND. (xbc_right_particle == BC_OPEN)) out_of_bounds = .TRUE.
+          IF ((cur%part_pos .LT. x_start - dx/2.0_num) .AND. (xbc_left_particle == BC_OPEN)) out_of_bounds = .TRUE.
+          IF ((cur%part_pos .GT. x_end + dx/2.0_num) .AND. (xbc_right_particle == BC_OPEN)) out_of_bounds = .TRUE.
 
           IF (ABS(xbd) .GT. 0) THEN
-             !Particle has left box
-             CALL Remove_Particle_From_PartList(ParticleSpecies(iSpecies)%AttachedList, Cur)
+             !particle has left box
+             CALL remove_particle_from_partlist(particle_species(ispecies)%attached_list, cur)
              IF (.NOT. out_of_bounds) THEN
-                CALL Add_Particle_To_PartList(send(xbd),Cur)
+                CALL add_particle_to_partlist(send(xbd),cur)
              ELSE
-                IF (DumpMask(29) .NE. IO_NEVER) THEN
-                   CALL Add_Particle_To_PartList(ejected_particles,Cur)
+                IF (dumpmask(29) .NE. IO_NEVER) THEN
+                   CALL add_particle_to_partlist(ejected_particles,cur)
                 ELSE
-                   DEALLOCATE(Cur)
+                   DEALLOCATE(cur)
                 ENDIF
              ENDIF
           ENDIF
 
           !Move to next particle
-          Cur=>Next
+          cur=>next
        ENDDO
 
 
 
        !swap Particles
-       Done=.FALSE.
+       done=.FALSE.
           DO ix=-1,1
              IF (ABS(ix) .EQ. 0) CYCLE
              ixp=-ix
-             CALL PartList_SendRecv(send(ix),recv(ixp),Neighbour(ix),Neighbour(ixp))
-             CALL Append_PartList(ParticleSpecies(ispecies)%AttachedList,recv(ixp))
+             CALL partlist_sendrecv(send(ix),recv(ixp),neighbour(ix),neighbour(ixp))
+             CALL append_partlist(particle_species(ispecies)%attached_list,recv(ixp))
        ENDDO
 
 
        !Particles should only lie outside boundaries if the periodic boundaries are turned on
        !This now moves them to within the boundaries
-       Cur=>ParticleSpecies(iSpecies)%AttachedList%Head
+       cur=>particle_species(ispecies)%attached_list%head
        ct=0
-       DO WHILE(ASSOCIATED(Cur))
-          IF(Cur%part_pos .GT. x_end+dx/2.0_num .AND. xbc_left_particle == BC_PERIODIC) &
-               Cur%part_pos=Cur%part_pos-length_x - dx
-          IF(Cur%part_pos .LT. x_start-dx/2.0_num .AND. xbc_right_particle == BC_PERIODIC) &
-               Cur%part_pos=Cur%part_pos+length_x + dx
-          Cur=>Cur%Next
+       DO WHILE(ASSOCIATED(cur))
+          IF(cur%part_pos .GT. x_end+dx/2.0_num .AND. xbc_left_particle == BC_PERIODIC) &
+               cur%part_pos=cur%part_pos-length_x - dx
+          IF(cur%part_pos .LT. x_start-dx/2.0_num .AND. xbc_right_particle == BC_PERIODIC) &
+               cur%part_pos=cur%part_pos+length_x + dx
+          cur=>cur%next
        ENDDO
     ENDDO
     !PRINT *,"Particle bcs_done",rank
 
-  END SUBROUTINE Particle_bcs
+  END SUBROUTINE particle_bcs
 
 
 END MODULE boundary

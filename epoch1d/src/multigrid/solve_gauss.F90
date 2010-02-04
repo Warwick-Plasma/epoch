@@ -1,4 +1,4 @@
-MODULE Solve_Gauss
+MODULE solve_gauss
 
   USE shared_data
   USE multigrid
@@ -8,9 +8,7 @@ MODULE Solve_Gauss
 
   CONTAINS
 
-    SUBROUTINE Do_Gauss
+    SUBROUTINE do_gauss
+    END SUBROUTINE do_gauss
 
- 
-    END SUBROUTINE Do_Gauss
-
-END MODULE Solve_Gauss
+END MODULE solve_gauss

@@ -19,22 +19,22 @@ CONTAINS
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, rank, errcode)
 
     IF (rank .EQ. 0) THEN
-       open(unit=10,file="./input.deck",iostat=s,status='OLD')
+       OPEN(unit=10,file="./input.deck",iostat=s,status='OLD')
        deckfile=(s .EQ. 0)
-       close(10)
+       CLOSE(10)
     ENDIF
 
   END SUBROUTINE mpi_minimal_init
 
 
-  SUBROUTINE Setup_Communicator
+  SUBROUTINE setup_communicator
 
     INTEGER,PARAMETER :: ndims = 3
     INTEGER :: dims(ndims), idim
     LOGICAL :: periods(ndims), reorder, op
     INTEGER :: test_coords(ndims)
 
-    IF (Comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(Comm,errcode)
+    IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm,errcode)
 
     IF (MAX(nprocx,1)*MAX(nprocy,1)*MAX(nprocz,1) .GT. nproc) THEN
        IF (rank .EQ. 0) PRINT *,"Unable to use requested processor subdivision. Using default division."
@@ -88,14 +88,14 @@ CONTAINS
     ENDDO
 
 
-  END SUBROUTINE Setup_Communicator
+  END SUBROUTINE setup_communicator
 
   SUBROUTINE mpi_initialise
 
-    INTEGER :: iSpecies,iDim
+    INTEGER :: ispecies,idim
     INTEGER(KIND=8) :: npart_this_species,npart
 
-    CALL Setup_Communicator
+    CALL setup_communicator
 
     nx=nx_global/nprocx
     ny=ny_global/nprocy
@@ -117,11 +117,11 @@ CONTAINS
     ALLOCATE(x(-2:nx+3),y(-2:ny+3),z(-2:nz+3))
     ALLOCATE(x_global(-2:nx_global+3),y_global(-2:ny_global+3),z_global(-2:nz_global+3))
     ALLOCATE(x_offset_global(-2:nx_global+3),y_offset_global(-2:ny_global+3),z_offset_global(-2:nz_global+3))
-    ALLOCATE(Ex(-2:nx+3,-2:ny+3,-2:nz+3),Ey(-2:nx+3,-2:ny+3,-2:nz+3),Ez(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(Bx(-2:nx+3,-2:ny+3,-2:nz+3),By(-2:nx+3,-2:ny+3,-2:nz+3),Bz(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(Jx(-2:nx+3,-2:ny+3,-2:nz+3),Jy(-2:nx+3,-2:ny+3,-2:nz+3),Jz(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(ekbar(1:nx,1:ny,1:nz,1:nspecies),ekbar_sum(-2:nx+3,-2:ny+3,-2:nz+3,1:nspecies))
-    ALLOCATE(ct(-2:nx+3,-2:ny+3,-2:nz+3,1:nspecies))
+    ALLOCATE(ex(-2:nx+3,-2:ny+3,-2:nz+3),ey(-2:nx+3,-2:ny+3,-2:nz+3),ez(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(bx(-2:nx+3,-2:ny+3,-2:nz+3),by(-2:nx+3,-2:ny+3,-2:nz+3),bz(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(jx(-2:nx+3,-2:ny+3,-2:nz+3),jy(-2:nx+3,-2:ny+3,-2:nz+3),jz(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(ekbar(1:nx,1:ny,1:nz,1:n_species),ekbar_sum(-2:nx+3,-2:ny+3,-2:nz+3,1:n_species))
+    ALLOCATE(ct(-2:nx+3,-2:ny+3,-2:nz+3,1:n_species))
 !!$    ALLOCATE(start_each_rank(0:nproc-1,1:3), end_each_rank(0:nproc-1,1:3))
     ALLOCATE(x_starts(0:nprocx-1),x_ends(0:nprocx-1))
     ALLOCATE(y_starts(0:nprocy-1),y_ends(0:nprocy-1))
@@ -130,37 +130,37 @@ CONTAINS
     ALLOCATE(cell_y_start(1:nprocy), cell_y_end(1:nprocy))
     ALLOCATE(cell_z_start(1:nprocz), cell_z_end(1:nprocz))
 
-    DO iDim=0,nprocx-1
-       cell_x_start(iDim+1)=nx*iDim+1
-       cell_x_end(iDim+1)=nx*(iDim+1)
+    DO idim=0,nprocx-1
+       cell_x_start(idim+1)=nx*idim+1
+       cell_x_end(idim+1)=nx*(idim+1)
     ENDDO
 
-    DO iDim=0,nprocy-1
-       cell_y_start(iDim+1)=ny*iDim+1
-       cell_y_end(iDim+1)=ny*(iDim+1)
+    DO idim=0,nprocy-1
+       cell_y_start(idim+1)=ny*idim+1
+       cell_y_end(idim+1)=ny*(idim+1)
     ENDDO
 
-    DO iDim=0,nprocz-1
-       cell_z_start(iDim+1)=nz*iDim+1
-       cell_z_end(iDim+1)=nz*(iDim+1)
+    DO idim=0,nprocz-1
+       cell_z_start(idim+1)=nz*idim+1
+       cell_z_end(idim+1)=nz*(idim+1)
     ENDDO
 
     !Setup the particle lists
-    NULLIFY(ParticleSpecies(1)%Prev,ParticleSpecies(nspecies)%Next)
-    DO iSpecies=1,nspecies-1
-       ParticleSpecies(iSpecies)%Next=>ParticleSpecies(iSpecies+1)
+    NULLIFY(particle_species(1)%prev,particle_species(n_species)%next)
+    DO ispecies=1,n_species-1
+       particle_species(ispecies)%next=>particle_species(ispecies+1)
     ENDDO
-    DO iSpecies=2,nspecies
-       ParticleSpecies(iSpecies)%Prev=>ParticleSpecies(iSpecies-1)
+    DO ispecies=2,n_species
+       particle_species(ispecies)%prev=>particle_species(ispecies-1)
     ENDDO
-    DO iSpecies=1,nSpecies
-       ParticleSpecies(iSpecies)%ID=iSpecies
-       npart_this_species=ParticleSpecies(iSpecies)%Count
-       NULLIFY(ParticleSpecies(iSpecies)%AttachedList%Next,ParticleSpecies(iSpecies)%AttachedList%Prev)
-       IF (Restart .OR. IOR(ictype,IC_AUTOLOAD) .NE. 0) THEN
-          CALL Create_Empty_PartList(ParticleSpecies(iSpecies)%AttachedList)
+    DO ispecies=1,n_species
+       particle_species(ispecies)%id=ispecies
+       npart_this_species=particle_species(ispecies)%count
+       NULLIFY(particle_species(ispecies)%attached_list%next,particle_species(ispecies)%attached_list%prev)
+       IF (restart .OR. IOR(ictype,IC_AUTOLOAD) .NE. 0) THEN
+          CALL create_empty_partlist(particle_species(ispecies)%attached_list)
        ELSE
-          CALL Create_Allocated_PartList(ParticleSpecies(iSpecies)%AttachedList, npart_this_species)
+          CALL create_allocated_partlist(particle_species(ispecies)%attached_list, npart_this_species)
        ENDIF
     ENDDO
 

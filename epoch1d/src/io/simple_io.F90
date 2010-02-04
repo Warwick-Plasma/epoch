@@ -15,28 +15,28 @@ CONTAINS
   !offset to specify where to start loading the requested variable from.
   !Returns errors in an input deck like fashion.
   !-----------------------------------------------------------------------
-  SUBROUTINE Load_Single_Array_From_Data_File(FileName,Array,offset,ERR)
-    CHARACTER(LEN=*),INTENT(IN) :: FileName
-    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: Array
+  SUBROUTINE load_single_array_from_data_file(filename,array,offset,err)
+    CHARACTER(len=*),INTENT(IN) :: filename
+    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: array
     INTEGER(KIND=MPI_OFFSET_KIND),INTENT(IN) :: offset
-    INTEGER,INTENT(INOUT) :: ERR
+    INTEGER,INTENT(INOUT) :: err
     INTEGER :: subtype, fh
 
-    CALL MPI_FILE_OPEN(comm,TRIM(Filename),MPI_MODE_RDONLY,MPI_INFO_NULL,fh,errcode)
+    CALL MPI_FILE_OPEN(comm,TRIM(filename),MPI_MODE_RDONLY,MPI_INFO_NULL,fh,errcode)
     IF (errcode .NE. 0) THEN
-       IF (rank .EQ. 0) PRINT *,"File ",TRIM(FileName), " does not exist."
-       ERR=IOR(ERR,ERR_BAD_VALUE)
+       IF (rank .EQ. 0) PRINT *,"file ",TRIM(filename), " does not exist."
+       err=IOR(err,ERR_BAD_VALUE)
        RETURN
     ENDIF
-    subtype = Create_Current_Field_Subtype()
+    subtype = create_current_field_subtype()
     CALL MPI_FILE_SET_VIEW(fh,offset,mpireal,subtype,"native",MPI_INFO_NULL,errcode)
-    CALL MPI_FILE_READ_ALL(fh,Array(1:nx),nx,mpireal,status,errcode)
+    CALL MPI_FILE_READ_ALL(fh,array(1:nx),nx,mpireal,status,errcode)
     CALL MPI_FILE_CLOSE(fh,errcode)
-    CALL MPI_TYPE_FREE(subtype,errcode)
+    CALL mpi_type_free(subtype,errcode)
 
-    CALL Field_BC(Array)
-    CALL Field_Zero_Gradient(Array,.TRUE.)
+    CALL field_bc(array)
+    CALL field_zero_gradient(array,.TRUE.)
 
-  END SUBROUTINE Load_Single_Array_From_Data_File
+  END SUBROUTINE load_single_array_from_data_file
 
 END MODULE simple_io

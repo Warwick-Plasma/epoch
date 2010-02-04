@@ -22,84 +22,84 @@ CONTAINS
     lz=dt/dz
     cnz=0.5_num*lz
 
-    !Update Ex to t=t0+dt/2
+    !Update ex to t=t0+dt/2
 
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Ex(ix,iy,iz)=Ex(ix,iy,iz)&
+             ex(ix,iy,iz)=ex(ix,iy,iz)&
                   +cny*(bz(ix,iy,iz)-bz(ix,iy-1,iz))*c**2&
                   -cnz*(by(ix,iy,iz)-by(ix,iy,iz-1))*c**2&
-                  -0.5_num*dt*Jx(ix,iy,iz)/epsilon0
+                  -0.5_num*dt*jx(ix,iy,iz)/epsilon0
           ENDDO
        ENDDO
     ENDDO
 
-    !Update Ey to t=t0+dt/2
+    !Update ey to t=t0+dt/2
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Ey(ix,iy,iz)=Ey(ix,iy,iz)&
+             ey(ix,iy,iz)=ey(ix,iy,iz)&
                   +cnz*(bx(ix,iy,iz)-bx(ix,iy,iz-1))*c**2&
                   -cnx*(bz(ix,iy,iz)-bz(ix-1,iy,iz))*c**2&
-                  -0.5_num*dt*Jy(ix,iy,iz)/epsilon0
+                  -0.5_num*dt*jy(ix,iy,iz)/epsilon0
           ENDDO
        ENDDO
     ENDDO
 
-    !Update Ez to t=t0+dt/2
+    !Update ez to t=t0+dt/2
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Ez(ix,iy,iz)=Ez(ix,iy,iz)&
+             ez(ix,iy,iz)=ez(ix,iy,iz)&
                   +cnx*(by(ix,iy,iz)-by(ix-1,iy,iz))*c**2&
                   -cny*(bx(ix,iy,iz)-bx(ix,iy-1,iz))*c**2&
-                  -0.5_num*dt*Jz(ix,iy,iz)/epsilon0
+                  -0.5_num*dt*jz(ix,iy,iz)/epsilon0
           ENDDO
        ENDDO
     ENDDO
 
     !Now have E(t+dt/2), do boundary conditions on E
 
-    CALL Efield_bcs
+    CALL efield_bcs
 
     !Update B field to t+dt/2 using E(t+dt/2)
 
-    !Bx
+    !bx
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Bx(ix,iy,iz) = Bx(ix,iy,iz)&
-                  +cnz*(Ey(ix,iy,iz+1)-Ey(ix,iy,iz))&
-                  -cny*(Ez(ix,iy+1,iz)-Ez(ix,iy,iz))
+             bx(ix,iy,iz) = bx(ix,iy,iz)&
+                  +cnz*(ey(ix,iy,iz+1)-ey(ix,iy,iz))&
+                  -cny*(ez(ix,iy+1,iz)-ez(ix,iy,iz))
           ENDDO
        ENDDO
     ENDDO
 
-    !By
+    !by
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             By(ix,iy,iz)=By(ix,iy,iz)&
-                  +cnx*(Ez(ix+1,iy,iz)-Ez(ix,iy,iz))&
-                  -cnz*(Ex(ix,iy,iz+1)-Ex(ix,iy,iz))
+             by(ix,iy,iz)=by(ix,iy,iz)&
+                  +cnx*(ez(ix+1,iy,iz)-ez(ix,iy,iz))&
+                  -cnz*(ex(ix,iy,iz+1)-ex(ix,iy,iz))
           ENDDO
        ENDDO
     ENDDO
 
-    !Bz
+    !bz
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Bz(ix,iy,iz)=Bz(ix,iy,iz)&
-                  -cnx*(Ey(ix+1,iy,iz)-Ey(ix,iy,iz))&
-                  +cny*(Ex(ix,iy+1,iz)-Ex(ix,iy,iz))
+             bz(ix,iy,iz)=bz(ix,iy,iz)&
+                  -cnx*(ey(ix+1,iy,iz)-ey(ix,iy,iz))&
+                  +cny*(ex(ix,iy+1,iz)-ex(ix,iy,iz))
           ENDDO
        ENDDO
     ENDDO
 
     !Now have B field at t+dt/2. Do boundary conditions on B
-    CALL Bfield_bcs(.FALSE.)
+    CALL bfield_bcs(.FALSE.)
 
     !Now have E&B fields at t=t+dt/2
     !Move to particle pusher
@@ -119,40 +119,40 @@ CONTAINS
     lz=dt/dz
     cnz=0.5_num*lz
 
-    !Bx 
+    !bx 
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Bx(ix,iy,iz) = Bx(ix,iy,iz)&
-                  +cnz*(Ey(ix,iy,iz+1)-Ey(ix,iy,iz))&
-                  -cny*(Ez(ix,iy+1,iz)-Ez(ix,iy,iz))
+             bx(ix,iy,iz) = bx(ix,iy,iz)&
+                  +cnz*(ey(ix,iy,iz+1)-ey(ix,iy,iz))&
+                  -cny*(ez(ix,iy+1,iz)-ez(ix,iy,iz))
           ENDDO
        ENDDO
     ENDDO
 
-    !By
+    !by
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             By(ix,iy,iz)=By(ix,iy,iz)&
-                  +cnx*(Ez(ix+1,iy,iz)-Ez(ix,iy,iz))&
-                  -cnz*(Ex(ix,iy,iz+1)-Ex(ix,iy,iz))
+             by(ix,iy,iz)=by(ix,iy,iz)&
+                  +cnx*(ez(ix+1,iy,iz)-ez(ix,iy,iz))&
+                  -cnz*(ex(ix,iy,iz+1)-ex(ix,iy,iz))
           ENDDO
        ENDDO
     ENDDO
 
-    !Bz
+    !bz
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Bz(ix,iy,iz)=Bz(ix,iy,iz)&
-                  -cnx*(Ey(ix+1,iy,iz)-Ey(ix,iy,iz))&
-                  +cny*(Ex(ix,iy+1,iz)-Ex(ix,iy,iz))
+             bz(ix,iy,iz)=bz(ix,iy,iz)&
+                  -cnx*(ey(ix+1,iy,iz)-ey(ix,iy,iz))&
+                  +cny*(ex(ix,iy+1,iz)-ex(ix,iy,iz))
           ENDDO
        ENDDO
     ENDDO
 
-    CALL BField_BCS(.FALSE.)
+    CALL bfield_bcs(.FALSE.)
     IF(xbc_left == BC_SIMPLE_LASER .AND. left == MPI_PROC_NULL) CALL laser_bcs_left
     IF(xbc_left == BC_SIMPLE_OUTFLOW .AND. left == MPI_PROC_NULL) CALL outflow_bcs_left
 
@@ -170,47 +170,47 @@ CONTAINS
 
     IF(zbc_front == BC_SIMPLE_LASER .AND. down == MPI_PROC_NULL) CALL laser_bcs_back
     IF(zbc_back == BC_SIMPLE_OUTFLOW .AND. down == MPI_PROC_NULL) CALL outflow_bcs_back
-    CALL BField_BCS(.TRUE.)
+    CALL bfield_bcs(.TRUE.)
 
-    !Ex
+    !ex
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Ex(ix,iy,iz)=Ex(ix,iy,iz)&
-                  +cny*(Bz(ix,iy,iz)-Bz(ix,iy-1,iz)) * c**2&
-                  -cnz*(By(ix,iy,iz)-By(ix,iy,iz-1)) * c**2&
-                  -0.5*dt*Jx(ix,iy,iz)/epsilon0
+             ex(ix,iy,iz)=ex(ix,iy,iz)&
+                  +cny*(bz(ix,iy,iz)-bz(ix,iy-1,iz)) * c**2&
+                  -cnz*(by(ix,iy,iz)-by(ix,iy,iz-1)) * c**2&
+                  -0.5*dt*jx(ix,iy,iz)/epsilon0
           ENDDO
        ENDDO
     ENDDO
 
-    !Ey
+    !ey
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Ey(ix,iy,iz)=Ey(ix,iy,iz)&
-                  +cnz*(Bx(ix,iy,iz)-Bx(ix,iy,iz-1)) * c **2&
-                  -cnx*(Bz(ix,iy,iz)-Bz(ix-1,iy,iz)) * c **2&
-                  -0.5*dt*Jy(ix,iy,iz)/epsilon0
+             ey(ix,iy,iz)=ey(ix,iy,iz)&
+                  +cnz*(bx(ix,iy,iz)-bx(ix,iy,iz-1)) * c **2&
+                  -cnx*(bz(ix,iy,iz)-bz(ix-1,iy,iz)) * c **2&
+                  -0.5*dt*jy(ix,iy,iz)/epsilon0
           ENDDO
        ENDDO
     ENDDO
 
 
 
-    !Ez
+    !ez
     DO iz=1,nz
        DO iy=1,ny
           DO ix=1,nx
-             Ez(ix,iy,iz)=Ez(ix,iy,iz)&
-                  +cnx*(By(ix,iy,iz)-By(ix-1,iy,iz))*c**2&
-                  -cny*(Bx(ix,iy,iz)-Bx(ix,iy-1,iz))*c**2&
-                  -0.5*dt*Jz(ix,iy,iz)/epsilon0
+             ez(ix,iy,iz)=ez(ix,iy,iz)&
+                  +cnx*(by(ix,iy,iz)-by(ix-1,iy,iz))*c**2&
+                  -cny*(bx(ix,iy,iz)-bx(ix,iy-1,iz))*c**2&
+                  -0.5*dt*jz(ix,iy,iz)/epsilon0
           ENDDO
        ENDDO
     ENDDO
 
-    CALL Efield_bcs
+    CALL efield_bcs
 
   END SUBROUTINE update_eb_fields_final
 

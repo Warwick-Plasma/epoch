@@ -8,14 +8,14 @@ MODULE window
   IMPLICIT NONE
 CONTAINS
 
-  SUBROUTINE Shift_Window
+  SUBROUTINE shift_window
 
-    INTEGER :: iWindow
+    INTEGER :: iwindow
 
     !Shift the window round one cell at a time.
     !Inefficient, but it works
-    DO iWindow=1,FLOOR(window_shift_fraction)
-       CALL Insert_Particles
+    DO iwindow=1,FLOOR(window_shift_fraction)
+       CALL insert_particles
        !Shift the box around
        x_starts=x_starts+dx
        x_start_local=x_start_local+dx
@@ -26,32 +26,32 @@ CONTAINS
        x_ends=x_ends+dx
        x_end_local=x_end_local+dx
        x_end=x_end+dx
-       CALL Remove_Particles
+       CALL remove_particles
 
        !Shift fields around
-       CALL Shift_Field(Ex)
-       CALL Shift_Field(Ey)
-       CALL Shift_Field(Ez)
+       CALL shift_field(ex)
+       CALL shift_field(ey)
+       CALL shift_field(ez)
 
-       CALL Shift_Field(Bx)
-       CALL Shift_Field(By)
-       CALL Shift_Field(Bz)
+       CALL shift_field(bx)
+       CALL shift_field(by)
+       CALL shift_field(bz)
     ENDDO
 
-  END SUBROUTINE Shift_Window
+  END SUBROUTINE shift_window
 
-  SUBROUTINE Shift_Field(Field)
+  SUBROUTINE shift_field(field)
 
-    REAL(num),DIMENSION(-2:nx+3,-2:ny+3,-2:nz+3),INTENT(INOUT) :: Field
-    Field(-2:nx+2,:,:)=Field(-1:nx+3,:,:)
-    CALL Field_BC(Field)
+    REAL(num),DIMENSION(-2:nx+3,-2:ny+3,-2:nz+3),INTENT(INOUT) :: field
+    field(-2:nx+2,:,:)=field(-1:nx+3,:,:)
+    CALL field_bc(field)
 
-  END SUBROUTINE Shift_Field
+  END SUBROUTINE shift_field
 
-  SUBROUTINE Insert_Particles
+  SUBROUTINE insert_particles
 
-    TYPE(Particle),POINTER :: Current
-    INTEGER :: iSpecies, iPart, i, iSuby, iSubz
+    TYPE(particle),POINTER :: current
+    INTEGER :: ispecies, ipart, i, isuby, isubz
     REAL(num) :: rand
     INTEGER :: clock,idum
     REAL(num) :: cell_y_r,cell_frac_y
@@ -67,24 +67,24 @@ CONTAINS
     IF (coordinates(3) .EQ. nprocx-1) THEN
        CALL SYSTEM_CLOCK(clock)
        idum=-(clock+rank+1)
-       DO iSpecies=1,nSpecies
+       DO ispecies=1,n_species
           DO iz=1,nz
              DO iy=1,ny
-                DO iPart=1,ParticleSpecies(iSpecies)%window_npart_per_cell
-                   ALLOCATE(Current)
-                   rand=RANDOM(idum)-0.5_num
-                   Current%Part_Pos(1)=x_end+dx + rand*dx
-                   rand=RANDOM(idum)-0.5_num
-                   Current%Part_Pos(2)=y(iy)+dy*rand
-                   rand=RANDOM(idum)-0.5_num
-                   Current%Part_Pos(3)=z(iz)+dz*rand
+                DO ipart=1,particle_species(ispecies)%window_npart_per_cell
+                   ALLOCATE(current)
+                   rand=random(idum)-0.5_num
+                   current%part_pos(1)=x_end+dx + rand*dx
+                   rand=random(idum)-0.5_num
+                   current%part_pos(2)=y(iy)+dy*rand
+                   rand=random(idum)-0.5_num
+                   current%part_pos(3)=z(iz)+dz*rand
 
-                   cell_y_r = (Current%Part_Pos(2)-y_start_local) / dy -0.5_num
+                   cell_y_r = (current%part_pos(2)-y_start_local) / dy -0.5_num
                    cell_y=NINT(cell_y_r)
                    cell_frac_y = REAL(cell_y,num) - cell_y_r
                    cell_y=cell_y+1
 
-                   cell_z_r = (Current%Part_Pos(3)-z_start_local) / dz -0.5_num
+                   cell_z_r = (current%part_pos(3)-z_start_local) / dz -0.5_num
                    cell_z=NINT(cell_z_r)
                    cell_frac_z = REAL(cell_z,num) - cell_z_r
                    cell_z=cell_z+1
@@ -99,55 +99,55 @@ CONTAINS
 
                    DO i=1,3
                       temp_local=0.0_num
-                      DO iSubz=-1,+1
-                         DO iSuby=-1,+1
-                            temp_local=temp_local+gy(iSuby)*gz(iSubz)*ParticleSpecies(iSpecies)%window_Temperature(cell_y+iSuby,cell_z+iSubz,i)
+                      DO isubz=-1,+1
+                         DO isuby=-1,+1
+                            temp_local=temp_local+gy(isuby)*gz(isubz)*particle_species(ispecies)%window_temperature(cell_y+isuby,cell_z+isubz,i)
                          ENDDO
                       ENDDO
-                      Current%Part_P(i)=MomentumFromTemperature(ParticleSpecies(iSpecies)%Mass,temp_local,idum)
+                      current%part_p(i)=momentum_from_temperature(particle_species(ispecies)%mass,temp_local,idum)
                    ENDDO
 
                    weight_local=0.0_num
-                   DO iSubz=-1,+1
-                      DO iSuby=-1,+1
-                         weight_local=weight_local+gy(iSuby)*gz(iSubz)*ParticleSpecies(iSpecies)%Window_Density(cell_y+iSuby,cell_z+iSubz)&
-                              /(REAL(ParticleSpecies(iSpecies)%window_npart_per_cell,num)/(dx*dy*dz))
+                   DO isubz=-1,+1
+                      DO isuby=-1,+1
+                         weight_local=weight_local+gy(isuby)*gz(isubz)*particle_species(ispecies)%window_density(cell_y+isuby,cell_z+isubz)&
+                              /(REAL(particle_species(ispecies)%window_npart_per_cell,num)/(dx*dy*dz))
                       ENDDO
                    ENDDO
-                   Current%Weight=weight_local
+                   current%weight=weight_local
 
 #ifdef PART_DEBUG
-                   Current%Processor=rank
-                   Current%Processor_at_t0=rank
+                   current%processor=rank
+                   current%processor_at_t0=rank
 #endif
-                   CALL Add_Particle_To_PartList(ParticleSpecies(iSpecies)%AttachedList,Current)
+                   CALL add_particle_to_partlist(particle_species(ispecies)%attached_list,current)
                 ENDDO
              ENDDO
           ENDDO
        ENDDO
     ENDIF
 
-  END SUBROUTINE Insert_Particles
+  END SUBROUTINE insert_particles
 
-  SUBROUTINE Remove_Particles
+  SUBROUTINE remove_particles
 
-    TYPE(Particle),POINTER :: Current, Next
-    INTEGER :: iSpecies
+    TYPE(particle),POINTER :: current, next
+    INTEGER :: ispecies
 
     IF (coordinates(2) .EQ. 0) THEN
-       DO iSpecies=1,nSpecies
-          Current=>ParticleSpecies(iSpecies)%AttachedList%Head
-          DO WHILE(ASSOCIATED(Current))
-             Next=>Current%Next
-             IF (Current%Part_Pos(1) .LT. x_start-0.5_num*dx) THEN
-                CALL Remove_Particle_From_PartList(ParticleSpecies(iSpecies)%AttachedList,Current)
-                DEALLOCATE(Current)
+       DO ispecies=1,n_species
+          current=>particle_species(ispecies)%attached_list%head
+          DO WHILE(ASSOCIATED(current))
+             next=>current%next
+             IF (current%part_pos(1) .LT. x_start-0.5_num*dx) THEN
+                CALL remove_particle_from_partlist(particle_species(ispecies)%attached_list,current)
+                DEALLOCATE(current)
              ENDIF
-             Current=>Next
+             current=>next
           ENDDO
        ENDDO
     ENDIF
 
-  END SUBROUTINE Remove_Particles
+  END SUBROUTINE remove_particles
 
 END MODULE window

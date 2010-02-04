@@ -10,94 +10,94 @@ MODULE mpi_subtype_control
 
 CONTAINS
   !---------------------------------------------------------------------------------
-  ! Get_Total_Local_Particles - Returns the number of particles on this
+  ! get_total_local_particles - Returns the number of particles on this
   ! processor.
   !---------------------------------------------------------------------------------
-  FUNCTION Get_Total_Local_Particles()
+  FUNCTION get_total_local_particles()
 
     !This subroutine describes the total number of particles on the current processor
     !It simply sums over every particle species
 
-    INTEGER(KIND=8) :: Get_Total_Local_Particles
-    INTEGER :: iSpecies
-    Get_Total_Local_Particles=0
-    DO iSpecies = 1,nspecies
-       Get_Total_Local_Particles=Get_Total_Local_Particles+ParticleSpecies(iSpecies)%AttachedList%Count
+    INTEGER(KIND=8) :: get_total_local_particles
+    INTEGER :: ispecies
+    get_total_local_particles=0
+    DO ispecies = 1,n_species
+       get_total_local_particles=get_total_local_particles+particle_species(ispecies)%attached_list%count
     ENDDO
 
-  END FUNCTION Get_Total_Local_Particles
+  END FUNCTION get_total_local_particles
 
   !---------------------------------------------------------------------------------
-  ! Get_Total_Local_Dumped_Particles - Returns the number of particles on this
+  ! get_total_local_dumped_particles - Returns the number of particles on this
   ! processor which should be written to disk. Parameter is whether this number should
   ! be calculated for a normal dump or a restart dump (all species are written at restart)
   !---------------------------------------------------------------------------------
-  FUNCTION Get_Total_Local_Dumped_Particles(Force_Restart)
+  FUNCTION get_total_local_dumped_particles(force_restart)
 
     !This subroutine describes the total number of particles on the current processor
-    !which are members of species with the Dump=T attribute in the input deck
-    !If FORCE_RESTART=.TRUE. then the subroutine simply counts all the particles
+    !which are members of species with the dump=T attribute in the input deck
+    !If force_restart=.TRUE. then the subroutine simply counts all the particles
 
-    LOGICAL,INTENT(IN) :: Force_Restart
-    INTEGER(KIND=8) :: Get_Total_Local_Dumped_Particles
-    INTEGER :: iSpecies
+    LOGICAL,INTENT(IN) :: force_restart
+    INTEGER(KIND=8) :: get_total_local_dumped_particles
+    INTEGER :: ispecies
 
-    Get_Total_Local_Dumped_Particles=0
-    DO iSpecies = 1,nspecies
-       IF (ParticleSpecies(iSpecies)%Dump .OR. Force_Restart) THEN
-          Get_Total_Local_Dumped_Particles=Get_Total_Local_Dumped_Particles+ParticleSpecies(iSpecies)%AttachedList%Count
+    get_total_local_dumped_particles=0
+    DO ispecies = 1,n_species
+       IF (particle_species(ispecies)%dump .OR. force_restart) THEN
+          get_total_local_dumped_particles=get_total_local_dumped_particles+particle_species(ispecies)%attached_list%count
        ENDIF
     ENDDO
 
-  END FUNCTION Get_Total_Local_Dumped_Particles
+  END FUNCTION get_total_local_dumped_particles
 
 
   !---------------------------------------------------------------------------------
   ! CreateSubtypes - Creates the subtypes used by the main output routines
   ! Run just before output takes place
   !---------------------------------------------------------------------------------
-  SUBROUTINE Create_Subtypes(Force_Restart)
+  SUBROUTINE create_subtypes(force_restart)
 
     !This subroutines creates the MPI types which represent the data for the field and
     !particles data. It is used when writing data
-    LOGICAL,INTENT(IN) :: Force_Restart
+    LOGICAL,INTENT(IN) :: force_restart
     INTEGER(KIND=8),DIMENSION(:),ALLOCATABLE :: npart_local
-    INTEGER :: n_dump_Species, iSpecies, index
+    INTEGER :: n_dump_species, ispecies, index
 
-    !Count the number of dumped particles of each species
+    !count the number of dumped particles of each species
     n_dump_species=0
-    DO iSpecies=1,nSpecies
-       IF (ParticleSpecies(iSpecies)%Dump) n_dump_species=n_dump_species+1
+    DO ispecies=1,n_species
+       IF (particle_species(ispecies)%dump) n_dump_species=n_dump_species+1
     ENDDO
 
     ALLOCATE(npart_local(1:n_dump_species))
     index=1
-    DO iSpecies=1,nSpecies
-       IF (ParticleSpecies(iSpecies)%Dump) THEN
-          npart_local(index)=ParticleSpecies(iSpecies)%AttachedList%Count
+    DO ispecies=1,n_species
+       IF (particle_species(ispecies)%dump) THEN
+          npart_local(index)=particle_species(ispecies)%attached_list%count
           index=index+1
        ENDIF
     ENDDO
 
     !Actually create the subtypes
-    subtype_field=Create_Current_Field_Subtype()
-    subtype_particle_var=Create_Ordered_Particle_Subtype(n_dump_species,npart_local)
+    subtype_field=create_current_field_subtype()
+    subtype_particle_var=create_ordered_particle_subtype(n_dump_species,npart_local)
 
-  END SUBROUTINE Create_Subtypes
+  END SUBROUTINE create_subtypes
   !---------------------------------------------------------------------------------
-  ! Create_Current_Field_Subtype - Creates the subtype corresponding to the current
+  ! create_current_field_subtype - Creates the subtype corresponding to the current
   ! load balanced geometry
   !---------------------------------------------------------------------------------
-  FUNCTION Create_Current_Field_Subtype()
-    INTEGER :: Create_Current_Field_Subtype
-    Create_Current_Field_Subtype=Create_Field_Subtype(nx,ny,cell_x_start(coordinates(2)+1),cell_y_start(coordinates(1)+1))
-  END FUNCTION Create_Current_Field_Subtype
+  FUNCTION create_current_field_subtype()
+    INTEGER :: create_current_field_subtype
+    create_current_field_subtype=create_field_subtype(nx,ny,cell_x_start(coordinates(2)+1),cell_y_start(coordinates(1)+1))
+  END FUNCTION create_current_field_subtype
 
   !---------------------------------------------------------------------------------
-  ! Create_Subtypes_For_Load - Creates subtypes when the code loads initial conditions
+  ! create_subtypes_for_load - Creates subtypes when the code loads initial conditions
   ! From a file
   !---------------------------------------------------------------------------------
-  SUBROUTINE Create_Subtypes_For_Load(npart_local)
+  SUBROUTINE create_subtypes_for_load(npart_local)
 
     !This subroutines creates the MPI types which represent the data for the field and
     !particles data. It is used when reading data. To this end, it takes npart_local
@@ -105,18 +105,18 @@ CONTAINS
 
     INTEGER(KIND=8),INTENT(IN) :: npart_local
 
-    subtype_field=Create_Current_Field_Subtype()
-    subtype_particle_var=Create_Particle_Subtype(npart_local)
+    subtype_field=create_current_field_subtype()
+    subtype_particle_var=create_particle_subtype(npart_local)
 
-  END SUBROUTINE Create_Subtypes_For_Load
+  END SUBROUTINE create_subtypes_for_load
 
   !---------------------------------------------------------------------------------
-  ! Create_Particle_Subtype - Creates a subtype representing the local particles
+  ! create_particle_subtype - Creates a subtype representing the local particles
   !---------------------------------------------------------------------------------
-  FUNCTION Create_Particle_Subtype(nPart_Local)
+  FUNCTION create_particle_subtype(npart_local)
 
-    INTEGER(KIND=8),INTENT(IN) :: nPart_Local
-    INTEGER :: Create_Particle_Subtype
+    INTEGER(KIND=8),INTENT(IN) :: npart_local
+    INTEGER :: create_particle_subtype
 
     INTEGER,DIMENSION(:),ALLOCATABLE :: lengths, starts
 
@@ -132,22 +132,22 @@ CONTAINS
        starts=starts+npart_each_rank(ix)
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(1,lengths,starts,mpireal,Create_Particle_Subtype,errcode)
-    CALL MPI_TYPE_COMMIT(Create_Particle_Subtype,errcode)
+    CALL MPI_TYPE_INDEXED(1,lengths,starts,mpireal,create_particle_subtype,errcode)
+    CALL MPI_TYPE_COMMIT(create_particle_subtype,errcode)
 
     DEALLOCATE(lengths,starts)
 
-  END FUNCTION Create_Particle_Subtype
+  END FUNCTION create_particle_subtype
 
   !---------------------------------------------------------------------------------
-  ! Create_Ordered_Particle_Subtype - Creates a subtype representing the local particles
+  ! create_ordered_particle_subtype - Creates a subtype representing the local particles
   !---------------------------------------------------------------------------------
-  FUNCTION Create_Ordered_Particle_Subtype(n_dump_species,npart_local)
+  FUNCTION create_ordered_particle_subtype(n_dump_species,npart_local)
 
-    INTEGER :: Create_Ordered_Particle_Subtype
+    INTEGER :: create_ordered_particle_subtype
     INTEGER,INTENT(IN) :: n_dump_species
     INTEGER(KIND=8),DIMENSION(n_dump_species),INTENT(IN) :: npart_local
-    INTEGER :: iSpecies
+    INTEGER :: ispecies
     INTEGER(KIND=8),DIMENSION(:,:),ALLOCATABLE :: npart_each_rank
     INTEGER,DIMENSION(:),ALLOCATABLE :: lengths, starts
 
@@ -160,33 +160,33 @@ CONTAINS
 
     ALLOCATE(lengths(n_dump_species),starts(n_dump_species))
     lengths=npart_local
-    DO iSpecies=1,n_dump_species
-       starts(iSpecies)=0
-       DO ix=1,iSpecies-1
-          starts(iSpecies)=starts(iSpecies)+SUM(npart_each_rank(ix,:),1)
+    DO ispecies=1,n_dump_species
+       starts(ispecies)=0
+       DO ix=1,ispecies-1
+          starts(ispecies)=starts(ispecies)+SUM(npart_each_rank(ix,:),1)
        ENDDO
        DO ix=1,rank
-          starts(iSpecies)=starts(iSpecies)+npart_each_rank(iSpecies,ix)
+          starts(ispecies)=starts(ispecies)+npart_each_rank(ispecies,ix)
        ENDDO
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(n_dump_species,lengths,starts,mpireal,Create_Ordered_Particle_Subtype,errcode)
-    CALL MPI_TYPE_COMMIT(Create_Ordered_Particle_Subtype,errcode)
+    CALL MPI_TYPE_INDEXED(n_dump_species,lengths,starts,mpireal,create_ordered_particle_subtype,errcode)
+    CALL MPI_TYPE_COMMIT(create_ordered_particle_subtype,errcode)
 
     DEALLOCATE(lengths,starts)
 
-  END FUNCTION Create_Ordered_Particle_Subtype
+  END FUNCTION create_ordered_particle_subtype
 
   !---------------------------------------------------------------------------------
-  ! Create_Field_Subtype - Creates a subtype representing the local processor
+  ! create_field_subtype - Creates a subtype representing the local processor
   ! For any arbitrary arrangement of the array. Only used directly during load balancing
   !---------------------------------------------------------------------------------
-  FUNCTION Create_Field_Subtype(nx_local,ny_local,cell_start_x_local,cell_start_y_local)
+  FUNCTION create_field_subtype(nx_local,ny_local,cell_start_x_local,cell_start_y_local)
     INTEGER,INTENT(IN) :: nx_local, ny_local
     INTEGER,INTENT(IN) :: cell_start_x_local, cell_start_y_local
     INTEGER, DIMENSION(:),ALLOCATABLE :: lengths,starts
-    INTEGER :: iPoint
-    INTEGER :: Create_Field_Subtype
+    INTEGER :: ipoint
+    INTEGER :: create_field_subtype
     ALLOCATE(lengths(1:ny_local),starts(1:ny_local))
     lengths=nx_local
     ipoint=0
@@ -196,9 +196,9 @@ CONTAINS
        starts(ipoint)=(cell_start_y_local+iy-1) * nx_global + cell_start_x_local -1
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(ny_local,lengths,starts,mpireal,Create_Field_Subtype,errcode)
-    CALL MPI_TYPE_COMMIT(Create_Field_Subtype,errcode)
+    CALL MPI_TYPE_INDEXED(ny_local,lengths,starts,mpireal,create_field_subtype,errcode)
+    CALL MPI_TYPE_COMMIT(create_field_subtype,errcode)
     DEALLOCATE(lengths,starts)
-  END FUNCTION Create_Field_Subtype
+  END FUNCTION create_field_subtype
 
 END MODULE mpi_subtype_control

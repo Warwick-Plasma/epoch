@@ -9,7 +9,7 @@ MODULE iocontrol
 
 CONTAINS
 
-  SUBROUTINE cfd_Open(filename,cfd_rank_in,cfd_comm_in,mode)
+  SUBROUTINE cfd_open(filename,cfd_rank_in,cfd_comm_in,mode)
 
     CHARACTER(len=*),INTENT(IN) :: filename
     INTEGER,INTENT(IN) ::cfd_comm_in,cfd_rank_in,mode
@@ -25,15 +25,15 @@ CONTAINS
       !Creating a new file of the current version, so set the header offset to reflect current version
       header_offset = header_offset_this_version
       !We are opening a file to be created, so use the destructive file opening command
-      CALL cfd_Open_Clobber(filename)
+      CALL cfd_open_clobber(filename)
     ELSE
       !We're opening a file which already exists, so don't damage it
-      CALL cfd_Open_Read(filename)
+      CALL cfd_open_read(filename)
     ENDIF
 
   END SUBROUTINE
 
-  SUBROUTINE cfd_Close
+  SUBROUTINE cfd_close
 
     !No open file
     IF (cfd_filehandle == -1) RETURN
@@ -46,7 +46,7 @@ CONTAINS
             "native", MPI_INFO_NULL, cfd_errcode)
 
        IF (cfd_rank == default_rank) &
-            CALL MPI_FILE_WRITE(cfd_filehandle,nBlocks,1,MPI_INTEGER,cfd_status,cfd_errcode)
+            CALL MPI_FILE_WRITE(cfd_filehandle,nblocks,1,MPI_INTEGER,cfd_status,cfd_errcode)
     ENDIF
     CALL MPI_BARRIER(comm,cfd_errcode)
 
@@ -55,29 +55,29 @@ CONTAINS
     !Set cfd_filehandle to -1 to show that the file is closed
     cfd_filehandle=-1
 
-  END SUBROUTINE cfd_Close
+  END SUBROUTINE cfd_close
 
-  SUBROUTINE cfd_Set_Max_String_Length(maxlen)
+  SUBROUTINE cfd_set_max_string_length(maxlen)
 
     INTEGER, INTENT(IN) :: maxlen
 
-    MaxStringLen=maxlen
+    max_string_len=maxlen
 
-  END SUBROUTINE cfd_Set_Max_String_Length
+  END SUBROUTINE cfd_set_max_string_length
 
-  SUBROUTINE cfd_Set_Default_Rank(rank_in)
+  SUBROUTINE cfd_set_default_rank(rank_in)
 
     INTEGER, INTENT(IN) :: rank_in
 
     default_rank=rank_in
 
-  END SUBROUTINE cfd_Set_Default_Rank
+  END SUBROUTINE cfd_set_default_rank
 
-  FUNCTION cfd_Get_nBlocks()
+  FUNCTION cfd_get_nblocks()
 
-    INTEGER :: cfd_Get_nBlocks
+    INTEGER :: cfd_get_nblocks
 
-    cfd_Get_nBlocks=nBlocks
+    cfd_get_nblocks=nblocks
 
   END FUNCTION
 

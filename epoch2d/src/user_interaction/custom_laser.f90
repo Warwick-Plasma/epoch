@@ -1,17 +1,17 @@
-MODULE Custom_Laser
+MODULE custom_laser
   USE shared_data
   IMPLICIT NONE
 
 CONTAINS
 
 
-  FUNCTION Custom_Laser_Time_Profile(laser)
+  FUNCTION custom_laser_time_profile(laser)
 
-    TYPE(Laser_Block),INTENT(IN) :: laser
-    REAL(num) :: Custom_Laser_Time_Profile
+    TYPE(laser_block),INTENT(IN) :: laser
+    REAL(num) :: custom_laser_time_profile
 
-    Custom_Laser_Time_Profile=1.0_num
+    custom_laser_time_profile=1.0_num
 
-  END FUNCTION Custom_Laser_Time_Profile
+  END FUNCTION custom_laser_time_profile
 
-END MODULE Custom_Laser
+END MODULE custom_laser
