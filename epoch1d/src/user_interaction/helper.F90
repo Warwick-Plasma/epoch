@@ -420,7 +420,7 @@ CONTAINS
     INTEGER(KIND=8) :: ipart
     REAL(num), DIMENSION(:), ALLOCATABLE :: weight_fn, temp
     REAL(num), DIMENSION(-2:2) :: gx
-    REAL(num) :: DATA
+    REAL(num) :: data
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: isubx
     REAL(num), DIMENSION(:), ALLOCATABLE :: density
@@ -466,9 +466,9 @@ CONTAINS
 
       CALL particle_to_grid(cell_frac_x, gx)
 
-      DATA = 1.0_num/(dx) ! Simply want to count particles per metre^2
+      data = 1.0_num/(dx) ! Simply want to count particles per metre^2
       DO isubx = -sf_order, sf_order
-        weight_fn(cell_x+isubx) = weight_fn(cell_x+isubx) + gx(isubx) * DATA
+        weight_fn(cell_x+isubx) = weight_fn(cell_x+isubx) + gx(isubx) * data
       ENDDO
       ! weight_fn(cell_x) = weight_fn(cell_x) + data
       current=>current%next

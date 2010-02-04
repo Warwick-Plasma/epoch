@@ -38,9 +38,9 @@ MODULE deck
 
 CONTAINS
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! These subroutines actually call the routines which read the deck blocks
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
 
   ! This subroutine is called when a new block is started
   ! If a block NEEDS to do something when it starts, then
@@ -236,9 +236,10 @@ CONTAINS
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! These subroutines are the in depth detail of how the parser works
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION get_free_lun()
 
     ! This subroutine simply cycles round until it finds a free lun between

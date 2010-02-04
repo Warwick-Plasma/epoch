@@ -267,7 +267,7 @@ MODULE shared_parser_data
 
   TYPE :: stack_element
     INTEGER :: ptype
-    INTEGER :: DATA
+    INTEGER :: data
     REAL(num) :: numerical_data
 #ifdef PARSER_DEBUG
     CHARACTER(LEN=string_length) :: text
@@ -275,7 +275,7 @@ MODULE shared_parser_data
   END TYPE stack_element
 
   TYPE :: primitive_stack
-    TYPE(stack_element), DIMENSION(stack_size) :: DATA
+    TYPE(stack_element), DIMENSION(stack_size) :: data
     INTEGER :: stack_point
   END TYPE primitive_stack
 
@@ -307,9 +307,9 @@ MODULE shared_data
   USE shared_parser_data
   IMPLICIT NONE
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! string handling
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   INCLUDE 'mpif.h'
   CHARACTER(LEN=string_length) :: blank
   TYPE :: string_type
@@ -317,9 +317,9 @@ MODULE shared_data
   END TYPE string_type
   CHARACTER(LEN=string_length) :: extended_error_string
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Particles
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
 
   ! The order for the spline interpolation used as a particle representation.
 #ifdef SPLINE_FOUR
@@ -405,9 +405,9 @@ MODULE shared_data
 #endif
   END TYPE particle_family
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Initial conditions
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Represents the initial conditions of a species
   TYPE :: initial_condition_block
     REAL(num), DIMENSION(:,:), POINTER :: rho
@@ -423,9 +423,9 @@ MODULE shared_data
   INTEGER :: ictype
   TYPE(string_type) :: icfile
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Extended IO information
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   LOGICAL :: use_extended_io
   CHARACTER(LEN=string_length) :: extended_io_file
   ! Represents a 2 or 3D distribution
@@ -470,9 +470,9 @@ MODULE shared_data
   END TYPE particle_probe
 #endif
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Core code
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   INTEGER :: mpireal = MPI_DOUBLE_PRECISION
 
 #ifdef NEWTONIAN
@@ -522,9 +522,9 @@ MODULE shared_data
   INTEGER :: restart_snapshot
   INTEGER(KIND=8) :: ix, iy, iz, ipart
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Moving window
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   LOGICAL :: move_window, inject_particles
   LOGICAL :: window_started
   REAL(num) :: window_shift_fraction
@@ -536,9 +536,9 @@ MODULE shared_data
   LOGICAL :: any_open
   TYPE(particle_list) :: ejected_particles
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! MPI data
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   INTEGER :: rank, left, right, up, down, coordinates(2), neighbour(-1:1, -1:1)
   INTEGER :: errcode, comm, tag, nproc, icycle_max = 1000000
   INTEGER :: status(MPI_STATUS_SIZE)
@@ -546,9 +546,9 @@ MODULE shared_data
   INTEGER(KIND=8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: start_each_rank, end_each_rank
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! domain and loadbalancing
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   LOGICAL :: dlb
   REAL(num) :: dlb_threshold
   INTEGER(KIND=8), PARAMETER :: npart_per_it = 1000000
@@ -561,9 +561,9 @@ MODULE shared_data
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! file handling
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   INTEGER :: subtype_field, subtype_particle_var
   INTEGER :: subtype_particle, subtype_particle_int
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
@@ -575,21 +575,21 @@ MODULE shared_data
   LOGICAL :: use_offset_grid
   INTEGER :: n_zeros = 4
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Time averaged IO
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   TYPE :: averaged_data_block
     INTEGER :: average_type = 0
-    REAL(num), DIMENSION(:,:), POINTER :: DATA
+    REAL(num), DIMENSION(:,:), POINTER :: data
     INTEGER :: average_over_iterations = -1
     REAL(num) :: average_over_real_time
     INTEGER :: number_of_iterations
   END TYPE averaged_data_block
   TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! laser boundaries
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   TYPE :: laser_block
     ! Boundary to which laser is attached
     INTEGER :: direction

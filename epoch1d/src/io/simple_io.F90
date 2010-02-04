@@ -8,13 +8,14 @@ MODULE simple_io
 
 CONTAINS
 
-  ! -----------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! This subroutine opens a file containing an array the size of the entire
   ! domain (1:nx_global, 1:ny_global) and splits it up onto each processor
   ! (-2:nx+3, -2:nx+3). If there are multiple variables in the file use
   ! offset to specify where to start loading the requested variable from.
   ! Returns errors in an input deck like fashion.
-  ! -----------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   SUBROUTINE load_single_array_from_data_file(filename, array, offset, err)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename

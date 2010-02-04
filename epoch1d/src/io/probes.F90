@@ -75,8 +75,8 @@ CONTAINS
         npart_probe_local = current_probe%sampled_particles%count
 
         IF (npart_probe_local .GT. 0) &
-            npart_probe_per_it_local = MIN(npart_probe_local, &
-                npart_probe_per_it_local)
+            npart_probe_per_it_local = &
+                MIN(npart_probe_local, npart_probe_per_it_local)
 
         CALL MPI_ALLREDUCE(npart_probe_local, npart_probe_global, 1, &
             MPI_INTEGER8, MPI_SUM, comm, errcode)
@@ -143,9 +143,9 @@ CONTAINS
 
 
   ! iterator for particle positions
-  SUBROUTINE iterate_probe_particles(DATA, n_points, direction, start)
+  SUBROUTINE iterate_probe_particles(data, n_points, direction, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
@@ -159,7 +159,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      DATA(part_count) = cur%part_pos-window_shift
+      data(part_count) = cur%part_pos-window_shift
       cur=>cur%next
     ENDDO
 
@@ -170,9 +170,9 @@ CONTAINS
 
 
   ! iterator for particle momenta
-  SUBROUTINE iterate_probe_px(DATA, n_points, start)
+  SUBROUTINE iterate_probe_px(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -185,7 +185,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      DATA(part_count) = cur%part_p(1)
+      data(part_count) = cur%part_p(1)
       cur=>cur%next
     ENDDO
     n_points = part_count
@@ -194,9 +194,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_probe_py(DATA, n_points, start)
+  SUBROUTINE iterate_probe_py(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -209,7 +209,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      DATA(part_count) = cur%part_p(2)
+      data(part_count) = cur%part_p(2)
       cur=>cur%next
     ENDDO
 
@@ -219,9 +219,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_probe_pz(DATA, n_points, start)
+  SUBROUTINE iterate_probe_pz(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -234,7 +234,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      DATA(part_count) = cur%part_p(3)
+      data(part_count) = cur%part_p(3)
       cur=>cur%next
     ENDDO
 
@@ -245,9 +245,9 @@ CONTAINS
 
 
 #ifdef PER_PARTICLE_WEIGHT
-  SUBROUTINE iterate_probe_weight(DATA, n_points, start)
+  SUBROUTINE iterate_probe_weight(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -260,7 +260,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      DATA(part_count) = cur%weight
+      data(part_count) = cur%weight
       cur=>cur%next
     ENDDO
 

@@ -111,7 +111,7 @@ CONTAINS
     REAL(num), DIMENSION(6, 2), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(6), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: DATA, data2
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: data, data2
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2, grid3
     LOGICAL, DIMENSION(3) :: parallel
     REAL(num), DIMENSION(3) :: dgrid
@@ -337,8 +337,8 @@ CONTAINS
       grid3(idir) = grid3(idir-1)+dgrid(3)
     ENDDO
 
-    ALLOCATE(DATA(1:resolution(1), 1:resolution(2), 1:resolution(3)))
-    DATA = 0.0_num
+    ALLOCATE(data(1:resolution(1), 1:resolution(2), 1:resolution(3)))
+    data = 0.0_num
 
     current=>particle_species(species)%attached_list%head
     DO WHILE(ASSOCIATED(current))
@@ -366,8 +366,8 @@ CONTAINS
               use_this = .FALSE.
         ENDDO
         IF (use_this) &
-            DATA(cell(1), cell(2), cell(3)) = &
-                DATA(cell(1), cell(2), cell(3))+current%weight
+            data(cell(1), cell(2), cell(3)) = &
+                data(cell(1), cell(2), cell(3))+current%weight
       ENDIF
       current=>current%next
     ENDDO
@@ -375,10 +375,10 @@ CONTAINS
     IF (need_reduce) THEN
       ALLOCATE(data2(1:resolution(1), 1:resolution(2), 1:resolution(3)))
       data2 = 0.0_num
-      CALL MPI_ALLREDUCE(DATA, data2, &
+      CALL MPI_ALLREDUCE(data, data2, &
           resolution(1)*resolution(2)*resolution(3), mpireal, &
           MPI_SUM, comm_new, errcode)
-      DATA = data2
+      data = data2
       DEALLOCATE(data2)
     ENDIF
 
@@ -398,11 +398,11 @@ CONTAINS
 
     CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
         global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
-        DATA, new_type)
+        data, new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
     IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
-    DEALLOCATE(DATA)
+    DEALLOCATE(data)
     DEALLOCATE(grid1, grid2, grid3)
 
   END SUBROUTINE general_3d_dist_fn
@@ -420,7 +420,7 @@ CONTAINS
     REAL(num), DIMENSION(6, 2), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(6), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: DATA, data2
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: data, data2
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2
     LOGICAL, DIMENSION(2) :: parallel
     REAL(num), DIMENSION(2) :: dgrid
@@ -630,8 +630,8 @@ CONTAINS
       comm_new = MPI_COMM_NULL
     ENDIF
 
-    new_type = create_2d_array_subtype(resolution, global_resolution, &
-        start_local)
+    new_type = &
+        create_2d_array_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, 2
       IF (.NOT. parallel(idim)) &
@@ -650,8 +650,8 @@ CONTAINS
       grid2(idir) = grid2(idir-1)+dgrid(2)
     ENDDO
 
-    ALLOCATE(DATA(1:resolution(1), 1:resolution(2)))
-    DATA = 0.0_num
+    ALLOCATE(data(1:resolution(1), 1:resolution(2)))
+    data = 0.0_num
 
     current=>particle_species(species)%attached_list%head
     DO WHILE(ASSOCIATED(current))
@@ -680,7 +680,7 @@ CONTAINS
         ENDDO
 
         IF (use_this) &
-            DATA(cell(1), cell(2)) = DATA(cell(1), cell(2))+current%weight
+            data(cell(1), cell(2)) = data(cell(1), cell(2))+current%weight
       ENDIF
       current=>current%next
     ENDDO
@@ -688,9 +688,9 @@ CONTAINS
     IF (need_reduce) THEN
       ALLOCATE(data2(1:resolution(1), 1:resolution(2)))
       data2 = 0.0_num
-      CALL MPI_ALLREDUCE(DATA, data2, resolution(1)*resolution(2), &
-          mpireal, MPI_SUM, comm_new, errcode)
-      DATA = data2
+      CALL MPI_ALLREDUCE(data, data2, resolution(1)*resolution(2), mpireal, &
+          MPI_SUM, comm_new, errcode)
+      data = data2
       DEALLOCATE(data2)
     ENDIF
 
@@ -707,12 +707,12 @@ CONTAINS
         grid2(1:global_resolution(2))/conv(2), 0)
 
     CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
-        global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
-        DATA, new_type)
+        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
+        new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
     IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
-    DEALLOCATE(DATA)
+    DEALLOCATE(data)
     DEALLOCATE(grid1, grid2)
 
   END SUBROUTINE general_2d_dist_fn

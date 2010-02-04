@@ -32,7 +32,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -80,8 +80,8 @@ CONTAINS
 
         CALL particle_to_grid(cell_frac_x, gx)
         DO ix = -sf_order, sf_order
-          DATA = part_m * l_weight / (dx)
-          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * DATA
+          data = part_m * l_weight / (dx)
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * data
         ENDDO
 
         current=>current%next
@@ -120,7 +120,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -169,8 +169,8 @@ CONTAINS
         CALL particle_to_grid(cell_frac_x, gx)
 
         DO ix = -sf_order, sf_order
-          DATA = part_q * l_weight / (dx)
-          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * DATA
+          data = part_q * l_weight / (dx)
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * data
         ENDDO
 
         current=>current%next
@@ -306,7 +306,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -357,8 +357,8 @@ CONTAINS
         gx( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
 
         DO ix = -sf_order, sf_order
-          DATA = 1.0_num * l_weight / (dx)
-          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * DATA
+          data = 1.0_num * l_weight / (dx)
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * data
         ENDDO
 
         current=>current%next
@@ -397,7 +397,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     REAL(num), DIMENSION(:), ALLOCATABLE ::  part_count, mass, sigma, mean
@@ -452,12 +452,12 @@ CONTAINS
         CALL particle_to_grid(cell_frac_x, gx)
 
         DO ix = -sf_order, sf_order
-          DATA = SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
-          mean(cell_x+ix) = mean(cell_x+ix) + gx(ix) * DATA
-          DATA = l_weight
-          part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix) * DATA
-          DATA = part_m * l_weight
-          mass(cell_x+ix) = mass(cell_x+ix) + gx(ix) * DATA
+          data = SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
+          mean(cell_x+ix) = mean(cell_x+ix) + gx(ix) * data
+          data = l_weight
+          part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix) * data
+          data = part_m * l_weight
+          mass(cell_x+ix) = mass(cell_x+ix) + gx(ix) * data
         ENDDO
         current=>current%next
       ENDDO
@@ -493,11 +493,11 @@ CONTAINS
         CALL particle_to_grid(cell_frac_x, gx)
 
         DO ix = -sf_order, sf_order
-          DATA = SQRT(part_px**2+part_py**2+part_pz**2)
+          data = SQRT(part_px**2+part_py**2+part_pz**2)
 !!$       IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
 !!$           data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
           sigma(cell_x+ix) = sigma(cell_x+ix) + &
-              gx(ix) * (DATA-mean(cell_x+ix))**2
+              gx(ix) * (data-mean(cell_x+ix))**2
           part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix)
 !!$       ENDIF
         ENDDO
@@ -548,7 +548,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -590,8 +590,8 @@ CONTAINS
         CALL particle_to_grid(cell_frac_x, gx)
 
         DO ix = -sf_order, sf_order
-          DATA = evaluator(current, ispecies)
-          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * DATA
+          data = evaluator(current, ispecies)
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * data
         ENDDO
 
         current=>current%next

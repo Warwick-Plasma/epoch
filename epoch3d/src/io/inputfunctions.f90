@@ -33,7 +33,7 @@ CONTAINS
 
     ! Minimal subroutine to skip straight to the start of the real data in
     ! the current block
-    current_displacement = block_header_end+block_md_length
+    current_displacement = block_header_end + block_md_length
 
   END SUBROUTINE cfd_skip_block_metadata
 

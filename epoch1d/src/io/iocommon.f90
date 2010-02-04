@@ -39,25 +39,25 @@ MODULE iocommon
 
   INTEGER :: max_string_len = 60, default_rank = 0
 
-  INTEGER, PARAMETER :: header_offset_this_version = 6*4+3
+  INTEGER, PARAMETER :: header_offset_this_version = 6 * 4 + 3
 
   ! This cannot be changed without a major revision
   ! If you want to add more to every meshtype, tough luck
   ! You'll either have to tag it to every class or
-  ! Submit it for inclusion in the next major revision
+  ! submit it for inclusion in the next major revision
   ! (This shouldn't ever happen, meshtype covers too many things,
   ! The only thing in common is that they include spatial information)
   INTEGER, PARAMETER :: meshtype_header_offset = 3 * 4
 
-  INTEGER, PARAMETER :: soi  = 4 ! Size of INTEGER
-  INTEGER, PARAMETER :: soi8 = 8 ! Size of long (normally 8 byte INTEGER)
+  INTEGER, PARAMETER :: soi  = 4 ! Size of integer
+  INTEGER, PARAMETER :: soi8 = 8 ! Size of long (normally 8 byte integer)
 
   INTEGER  :: block_header_size, header_offset
 
   INTEGER :: cfd_errcode, cfd_status(MPI_STATUS_SIZE), cfd_mode
   LOGICAL :: cfd_writing, cfd_reading
 
-  ! current block info
+  ! Current block info
   INTEGER(KIND=8) :: block_length, block_md_length
   INTEGER(KIND=MPI_OFFSET_KIND) :: block_header_start, block_header_end
 

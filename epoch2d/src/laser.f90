@@ -251,7 +251,7 @@ CONTAINS
         t_env = laser_time_profile(current)
         f_minus(1:ny) = f_minus(1:ny) + &
             t_env * current%amp * current%profile(1:ny) * &
-            SIN(current%freq*time + current%phase(1:ny)) * &
+            SIN(current%freq * time + current%phase(1:ny)) * &
             SIN(current%pol) * COS(current%angle)
       ENDIF
       current=>current%next

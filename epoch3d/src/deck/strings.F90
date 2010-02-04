@@ -38,6 +38,38 @@ CONTAINS
 
 
 
+  SUBROUTINE integer_as_string(INTEGER, string)
+
+    INTEGER, INTENT(IN) :: INTEGER
+    CHARACTER(LEN=*), INTENT(OUT) :: string
+
+    INTEGER :: n_nums
+    CHARACTER(LEN=9) :: numfmt
+
+    n_nums = 1 + LOG10(REAL(INTEGER, num))
+    WRITE(numfmt, '("(I", I6.6, ")")') n_nums
+    WRITE(string, numfmt) INTEGER
+
+  END SUBROUTINE integer_as_string
+
+
+
+  SUBROUTINE integer8_as_string(INTEGER, string)
+
+    INTEGER(KIND=8), INTENT(IN) :: INTEGER
+    CHARACTER(LEN=*), INTENT(OUT) :: string
+
+    INTEGER :: n_nums
+    CHARACTER(LEN=12) :: numfmt
+
+    n_nums = 1 + LOG10(REAL(INTEGER, num))
+    WRITE(numfmt, '("(I", I9.9, ")")') n_nums
+    WRITE(string, numfmt) INTEGER
+
+  END SUBROUTINE integer8_as_string
+
+
+
   FUNCTION str_cmp(str_in, str_test)
 
     CHARACTER(*), INTENT(IN) ::  str_in, str_test

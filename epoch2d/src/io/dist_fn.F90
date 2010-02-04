@@ -110,7 +110,7 @@ CONTAINS
     REAL(num), DIMENSION(5, 2), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(5), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: DATA, data2
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: data, data2
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2, grid3
     LOGICAL, DIMENSION(3) :: parallel
     REAL(num), DIMENSION(3) :: dgrid
@@ -331,8 +331,8 @@ CONTAINS
       grid3(idir) = grid3(idir-1)+dgrid(3)
     ENDDO
 
-    ALLOCATE(DATA(1:resolution(1), 1:resolution(2), 1:resolution(3)))
-    DATA = 0.0_num
+    ALLOCATE(data(1:resolution(1), 1:resolution(2), 1:resolution(3)))
+    data = 0.0_num
 
     current=>particle_species(species)%attached_list%head
     part_weight = weight
@@ -363,8 +363,8 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
-        IF (use_this) DATA(cell(1), cell(2), cell(3)) = &
-            DATA(cell(1), cell(2), cell(3))+part_weight ! * real_space_area
+        IF (use_this) data(cell(1), cell(2), cell(3)) = &
+            data(cell(1), cell(2), cell(3))+part_weight ! * real_space_area
       ENDIF
       current=>current%next
     ENDDO
@@ -372,17 +372,18 @@ CONTAINS
     IF (need_reduce) THEN
       ALLOCATE(data2(1:resolution(1), 1:resolution(2), 1:resolution(3)))
       data2 = 0.0_num
-      CALL MPI_ALLREDUCE(DATA, data2, &
+      CALL MPI_ALLREDUCE(data, data2, &
           resolution(1)*resolution(2)*resolution(3), mpireal, &
           MPI_SUM, comm_new, errcode)
-      DATA = data2
+      data = data2
       DEALLOCATE(data2)
     ENDIF
 
-    grid_name = "Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
-    norm_grid_name = &
-        "Norm_Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
-    var_name = TRIM(name)//"_"//TRIM(particle_species(species)%name)
+    grid_name = "Grid_" // TRIM(name) // "_" // &
+        TRIM(particle_species(species)%name)
+    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" // &
+        TRIM(particle_species(species)%name)
+    var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
     CALL cfd_write_3d_cartesian_grid(TRIM(grid_name), "Grid", &
         grid1(1:global_resolution(1)), grid2(1:global_resolution(2)), &
@@ -399,11 +400,11 @@ CONTAINS
 
     CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), &
         "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), &
-        "Grid", DATA, new_type)
+        "Grid", data, new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
     IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
-    DEALLOCATE(DATA)
+    DEALLOCATE(data)
     DEALLOCATE(grid1, grid2, grid3)
 
   END SUBROUTINE general_3d_dist_fn
@@ -421,7 +422,7 @@ CONTAINS
     REAL(num), DIMENSION(5, 2), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(5), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: DATA, data2
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: data, data2
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2
     LOGICAL, DIMENSION(2) :: parallel
     REAL(num), DIMENSION(2) :: dgrid
@@ -620,8 +621,9 @@ CONTAINS
         create_2d_field_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, 2
-      IF (.NOT. parallel(idim)) dgrid(idim) = &
-          (RANGE(idim, 2)-RANGE(idim, 1))/REAL(resolution(idim)-1, num)
+      IF (.NOT. parallel(idim)) &
+          dgrid(idim) = (RANGE(idim, 2)-RANGE(idim, 1)) / &
+              REAL(resolution(idim)-1, num)
     ENDDO
     ALLOCATE(grid1(0:global_resolution(1)), grid2(0:global_resolution(2)))
 
@@ -635,8 +637,8 @@ CONTAINS
       grid2(idir) = grid2(idir-1)+dgrid(2)
     ENDDO
 
-    ALLOCATE(DATA(1:resolution(1), 1:resolution(2)))
-    DATA = 0.0_num
+    ALLOCATE(data(1:resolution(1), 1:resolution(2)))
+    data = 0.0_num
 
     current=>particle_species(species)%attached_list%head
     part_weight = weight
@@ -661,14 +663,14 @@ CONTAINS
             current_data = particle_data(l_direction(idim))
           ENDIF
           cell(idim) = NINT((current_data-RANGE(idim, 1))/dgrid(idim))+1
-          IF (cell(idim) .LT. 1 .OR. &
-              cell(idim) .GT. resolution(idim)) use_this = .FALSE.
+          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
+              use_this = .FALSE.
         ENDDO
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
         IF (use_this) &
-            DATA(cell(1), cell(2)) = DATA(cell(1), cell(2))+part_weight
+            data(cell(1), cell(2)) = data(cell(1), cell(2))+part_weight
       ENDIF
       current=>current%next
     ENDDO
@@ -676,16 +678,17 @@ CONTAINS
     IF (need_reduce) THEN
       ALLOCATE(data2(1:resolution(1), 1:resolution(2)))
       data2 = 0.0_num
-      CALL MPI_ALLREDUCE(DATA, data2, resolution(1)*resolution(2), mpireal, &
+      CALL MPI_ALLREDUCE(data, data2, resolution(1)*resolution(2), mpireal, &
           MPI_SUM, comm_new, errcode)
-      DATA = data2
+      data = data2
       DEALLOCATE(data2)
     ENDIF
 
-    grid_name = "Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
-    norm_grid_name = &
-        "Norm_Grid_"//TRIM(name)//"_"//TRIM(particle_species(species)%name)
-    var_name = TRIM(name)//"_"//TRIM(particle_species(species)%name)
+    grid_name = "Grid_" // TRIM(name) // "_" // &
+        TRIM(particle_species(species)%name)
+    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" // &
+        TRIM(particle_species(species)%name)
+    var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
     CALL cfd_write_2d_cartesian_grid(TRIM(grid_name), "Grid", &
         grid1(1:global_resolution(1)), grid2(1:global_resolution(2)), 0)
@@ -697,13 +700,13 @@ CONTAINS
         grid1(1:global_resolution(1))/conv(1), &
         grid2(1:global_resolution(2))/conv(2), 0)
 
-    CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), &
-        "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), &
-        "Grid", DATA, new_type)
+    CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
+        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
+        new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
     IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
-    DEALLOCATE(DATA)
+    DEALLOCATE(data)
     DEALLOCATE(grid1, grid2)
 
   END SUBROUTINE general_2d_dist_fn

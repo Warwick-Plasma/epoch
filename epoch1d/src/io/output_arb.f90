@@ -30,21 +30,21 @@ CONTAINS
     ! Outputs general block header as described in cfd_write_block_header and
     ! then a single string
 
-    md_length = 1*max_string_len
-    block_length = md_length+data_length
+    md_length = 1 * max_string_len
+    block_length = md_length + data_length
 
     CALL cfd_write_block_header(name, class, c_type_arb_db, block_length, &
         md_length, default_rank)
+
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == default_rank) THEN
-      CALL cfd_safe_write_string(generator_desc)
-    ENDIF
-    current_displacement = current_displacement+max_string_len
+    IF (cfd_rank == default_rank) CALL cfd_safe_write_string(generator_desc)
+
+    current_displacement = current_displacement + max_string_len
 
     CALL writer(cfd_filehandle, current_displacement)
-    current_displacement = current_displacement+data_length
+    current_displacement = current_displacement + data_length
 
   END SUBROUTINE cfd_write_arb_block
 

@@ -17,7 +17,7 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     INTEGER, INTENT(IN) :: ndims
 
-    ! this subroutine MUST be called after the call to
+    ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
@@ -130,14 +130,15 @@ CONTAINS
     len_name = LEN(mesh_name)
     len_class = LEN(mesh_class)
 
-    ! this subroutine MUST be called after the call to
+    ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER, &
         cfd_status, cfd_errcode)
-    current_displacement = current_displacement + ndims*soi
+
+    current_displacement = current_displacement + ndims * soi
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
@@ -177,8 +178,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: subtype
 
     CALL cfd_skip_block_metadata()
+
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
+
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
         cfd_status, cfd_errcode)
 
@@ -193,8 +196,10 @@ CONTAINS
     REAL(num), INTENT(IN), DIMENSION(:) :: variable
 
     CALL cfd_skip_block_metadata()
+
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
         cfd_status, cfd_errcode)
 
@@ -210,8 +215,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: subtype
 
     CALL cfd_skip_block_metadata()
+
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
+
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
         cfd_status, cfd_errcode)
 
@@ -226,8 +233,10 @@ CONTAINS
     REAL(num), INTENT(IN), DIMENSION(:,:) :: variable
 
     CALL cfd_skip_block_metadata()
+
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
         cfd_status, cfd_errcode)
 
@@ -243,8 +252,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: subtype
 
     CALL cfd_skip_block_metadata()
+
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
+
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
         cfd_status, cfd_errcode)
 
@@ -259,8 +270,10 @@ CONTAINS
     REAL(num), INTENT(IN), DIMENSION(:,:,:) :: variable
 
     CALL cfd_skip_block_metadata()
+
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
         cfd_status, cfd_errcode)
 

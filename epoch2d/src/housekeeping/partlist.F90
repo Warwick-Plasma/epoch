@@ -306,29 +306,29 @@ CONTAINS
 
 
 
-  SUBROUTINE pack_particle(DATA, a_particle)
+  SUBROUTINE pack_particle(data, a_particle)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     TYPE(particle), POINTER :: a_particle
     INTEGER(KIND=8) :: cpos
 
     cpos = 1
-    DATA(cpos:cpos+1) = a_particle%part_pos
+    data(cpos:cpos+1) = a_particle%part_pos
     cpos = cpos+2
-    DATA(cpos:cpos+2) = a_particle%part_p
+    data(cpos:cpos+2) = a_particle%part_p
     cpos = cpos+3
 #ifdef PER_PARTICLE_WEIGHT
-    DATA(cpos) = a_particle%weight
+    data(cpos) = a_particle%weight
     cpos = cpos+1
 #endif
 #ifdef PER_PARTICLE_CHARGEMASS
-    DATA(cpos) = a_particle%charge
-    DATA(cpos+1) = a_particle%mass
+    data(cpos) = a_particle%charge
+    data(cpos+1) = a_particle%mass
     cpos = cpos+2
 #endif
 #ifdef PART_DEBUG
-    DATA(cpos) = REAL(a_particle%processor, num)
-    DATA(cpos+1) = REAL(a_particle%processor_at_t0, num)
+    data(cpos) = REAL(a_particle%processor, num)
+    data(cpos+1) = REAL(a_particle%processor_at_t0, num)
     cpos = cpos+2
 #endif
 
@@ -338,29 +338,29 @@ CONTAINS
 
 
 
-  SUBROUTINE unpack_particle(DATA, a_particle)
+  SUBROUTINE unpack_particle(data, a_particle)
 
-    REAL(num), DIMENSION(:), INTENT(IN) :: DATA
+    REAL(num), DIMENSION(:), INTENT(IN) :: data
     TYPE(particle), POINTER :: a_particle
     INTEGER(KIND=8) :: cpos
 
     cpos = 1
-    a_particle%part_pos = DATA(cpos:cpos+1)
+    a_particle%part_pos = data(cpos:cpos+1)
     cpos = cpos+2
-    a_particle%part_p = DATA(cpos:cpos+2)
+    a_particle%part_p = data(cpos:cpos+2)
     cpos = cpos+3
 #ifdef PER_PARTICLE_WEIGHT
-    a_particle%weight = DATA(cpos)
+    a_particle%weight = data(cpos)
     cpos = cpos+1
 #endif
 #ifdef PER_PARTICLE_CHARGEMASS
-    a_particle%charge = DATA(cpos)
-    a_particle%mass = DATA(cpos+1)
+    a_particle%charge = data(cpos)
+    a_particle%mass = data(cpos+1)
     cpos = cpos+2
 #endif
 #ifdef PART_DEBUG
     a_particle%processor = rank
-    a_particle%processor_at_t0 = NINT(DATA(cpos+1))
+    a_particle%processor_at_t0 = NINT(data(cpos+1))
     cpos = cpos+2
 #endif
 
@@ -408,10 +408,10 @@ CONTAINS
 
 
 
-  FUNCTION test_packed_particles(partlist, DATA, npart_in_data)
+  FUNCTION test_packed_particles(partlist, data, npart_in_data)
 
     TYPE(particle_list), INTENT(IN) :: partlist
-    REAL(num), DIMENSION(:), INTENT(IN) :: DATA
+    REAL(num), DIMENSION(:), INTENT(IN) :: data
     INTEGER(KIND=8), INTENT(IN) :: npart_in_data
     TYPE(particle), POINTER :: current
     TYPE(particle), POINTER :: a_particle
@@ -419,9 +419,9 @@ CONTAINS
 
     test_packed_particles = .FALSE.
 
-    IF (npart_in_data * nvar .NE. SIZE(DATA)) THEN
+    IF (npart_in_data * nvar .NE. SIZE(data)) THEN
       PRINT *, "Size of data array does not match specified on", &
-          rank, npart_in_data, SIZE(DATA)
+          rank, npart_in_data, SIZE(data)
       RETURN
     ENDIF
     IF (partlist%count .NE. npart_in_data) THEN
@@ -433,7 +433,7 @@ CONTAINS
 
     current=>partlist%head
     DO ipart = 0, npart_in_data-1
-      CALL unpack_particle(DATA(ipart*nvar+1:(ipart+1)*nvar), a_particle)
+      CALL unpack_particle(data(ipart*nvar+1:(ipart+1)*nvar), a_particle)
       IF (.NOT. compare_particles(a_particle, current)) THEN
         PRINT *, "BAD PARTICLE ", ipart, "on", rank
         RETURN
@@ -453,7 +453,7 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
-    REAL(num), DIMENSION(:), ALLOCATABLE :: DATA
+    REAL(num), DIMENSION(:), ALLOCATABLE :: data
     INTEGER(KIND=8) :: cpos = 0, npart_this_it, npart_left, ipart
     TYPE(particle), POINTER :: current
 
@@ -461,19 +461,19 @@ CONTAINS
     npart_this_it = MIN(npart_left, npart_per_it)
     CALL MPI_SEND(partlist%count, 1, MPI_INTEGER, dest, tag, comm, errcode)
 
-    ALLOCATE(DATA(1:partlist%count*nvar))
-    DATA = 0.0_num
+    ALLOCATE(data(1:partlist%count*nvar))
+    data = 0.0_num
     current=>partlist%head
     ipart = 0
     DO WHILE (ipart < partlist%count)
       cpos = ipart*nvar+1
-      CALL pack_particle(DATA(cpos:cpos+nvar), current)
+      CALL pack_particle(data(cpos:cpos+nvar), current)
       ipart = ipart+1
       current=>current%next
     ENDDO
-    CALL MPI_SEND(DATA, npart_left*nvar, mpireal, dest, tag, comm, errcode)
+    CALL MPI_SEND(data, npart_left*nvar, mpireal, dest, tag, comm, errcode)
 
-    DEALLOCATE(DATA)
+    DEALLOCATE(data)
 
   END SUBROUTINE partlist_send
 
@@ -483,7 +483,7 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: src
-    REAL(num), DIMENSION(:), ALLOCATABLE :: DATA
+    REAL(num), DIMENSION(:), ALLOCATABLE :: data
     INTEGER(KIND=8) :: npart_this_it, npart_left, count
 
     CALL create_empty_partlist(partlist)
@@ -494,12 +494,12 @@ CONTAINS
     npart_left = count
     npart_this_it = MIN(npart_left, npart_per_it)
 
-    ALLOCATE(DATA(1:count*nvar))
-    DATA = 0.0_num
-    CALL MPI_RECV(DATA, count*nvar, mpireal, src, tag, comm, status, errcode)
-    CALL create_filled_partlist(partlist, DATA, count)
+    ALLOCATE(data(1:count*nvar))
+    data = 0.0_num
+    CALL MPI_RECV(data, count*nvar, mpireal, src, tag, comm, status, errcode)
+    CALL create_filled_partlist(partlist, data, count)
 
-    DEALLOCATE(DATA)
+    DEALLOCATE(data)
 
   END SUBROUTINE partlist_recv
 

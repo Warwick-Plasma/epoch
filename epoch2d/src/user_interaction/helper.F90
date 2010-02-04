@@ -461,7 +461,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: weight_fn, temp
     REAL(num), DIMENSION(-2:2) :: gx
     REAL(num), DIMENSION(-2:2) :: gy
-    REAL(num) :: DATA
+    REAL(num) :: data
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: isubx, isuby
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: density
@@ -516,12 +516,12 @@ CONTAINS
       CALL particle_to_grid(cell_frac_x, gx)
       CALL particle_to_grid(cell_frac_y, gy)
 
-      DATA = 1.0_num/(dx*dy) ! Simply want to count particles per metre^2
+      data = 1.0_num/(dx*dy) ! Simply want to count particles per metre^2
       DO isuby = -sf_order, sf_order
         DO isubx = -sf_order, sf_order
           weight_fn(cell_x+isubx, cell_y+isuby) = &
               weight_fn(cell_x+isubx, cell_y+isuby) + &
-              gx(isubx) * gy(isuby) * DATA
+              gx(isubx) * gy(isuby) * data
         ENDDO
       ENDDO
 
@@ -558,12 +558,12 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart < partlist%count)
-      cell_x_r = (current%part_pos(1)-x_start_local) / dx ! -0.5_num
+      cell_x_r = (current%part_pos(1)-x_start_local) / dx ! - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      cell_y_r = (current%part_pos(2)-y_start_local) / dy ! -0.5_num
+      cell_y_r = (current%part_pos(2)-y_start_local) / dy ! - 0.5_num
       cell_y = NINT(cell_y_r)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
       cell_y = cell_y+1

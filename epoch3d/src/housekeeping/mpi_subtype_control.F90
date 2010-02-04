@@ -1,19 +1,20 @@
 MODULE mpi_subtype_control
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! This module contains the subroutines which create the subtypes used in
   ! IO
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
 
   USE shared_data
   IMPLICIT NONE
 
 CONTAINS
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! get_total_local_particles - Returns the number of particles on this
   ! processor.
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION get_total_local_particles()
 
     ! This subroutine describes the total number of particles on the current
@@ -32,12 +33,13 @@ CONTAINS
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! get_total_local_dumped_particles - Returns the number of particles on this
   ! processor which should be written to disk. Parameter is whether this number
   ! should be calculated for a normal dump or a restart dump (all species are
   ! written at restart)
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION get_total_local_dumped_particles(force_restart)
 
     ! This subroutine describes the total number of particles on the current
@@ -61,10 +63,11 @@ CONTAINS
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! CreateSubtypes - Creates the subtypes used by the main output routines
   ! Run just before output takes place
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   SUBROUTINE create_subtypes(force_restart)
 
     ! This subroutines creates the MPI types which represent the data for the
@@ -81,17 +84,18 @@ CONTAINS
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! create_current_field_subtype - Creates the subtype corresponding to the
   ! current load balanced geometry
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION create_current_field_subtype()
 
     INTEGER :: create_current_field_subtype
 
-    create_current_field_subtype = create_field_subtype(nx, ny, nz, &
-        cell_x_start(coordinates(3)+1), cell_y_start(coordinates(2)+1), &
-        cell_z_start(coordinates(1)+1))
+    create_current_field_subtype = &
+        create_field_subtype(nx, ny, nz, cell_x_start(coordinates(3)+1), &
+            cell_y_start(coordinates(2)+1), cell_z_start(coordinates(1)+1))
 
   END FUNCTION create_current_field_subtype
 
@@ -101,6 +105,7 @@ CONTAINS
   ! create_subtypes_for_load - Creates subtypes when the code loads initial
   ! conditions from a file
   !---------------------------------------------------------------------------
+
   SUBROUTINE create_subtypes_for_load(npart_local)
 
     ! This subroutines creates the MPI types which represent the data for the
@@ -116,9 +121,10 @@ CONTAINS
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! create_particle_subtype - Creates a subtype representing the local particles
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION create_particle_subtype(npart_local)
 
     INTEGER(KIND=8), INTENT(IN) :: npart_local
@@ -148,11 +154,12 @@ CONTAINS
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! create_field_subtype - Creates a subtype representing the local processor
   ! for any arbitrary arrangement of an array covering the entire spatial
   ! domain. Only used directly during load balancing
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION create_field_subtype(nx_local, ny_local, nz_local, &
       cell_start_x_local, cell_start_y_local, cell_start_z_local)
 
@@ -170,11 +177,12 @@ CONTAINS
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! create_3d_array_subtype - Creates a subtype representing the local fraction
   ! of a completely arbitrary 3D array. Does not assume anything about the
   ! domain at all.
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION create_3d_array_subtype(n_local, n_global, start)
 
     INTEGER, DIMENSION(3), INTENT(IN) :: n_local
@@ -205,11 +213,12 @@ CONTAINS
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! create_2d_array_subtype - Creates a subtype representing the local fraction
   ! of a completely arbitrary 2D array. Does not assume anything about the
   ! domain at all.
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION create_2d_array_subtype(n_local, n_global, start)
 
     INTEGER, DIMENSION(2), INTENT(IN) :: n_local

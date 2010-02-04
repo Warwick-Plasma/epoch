@@ -10,9 +10,10 @@ MODULE custom_deck
 
 CONTAINS
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! These functions contain the user input deck elements
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   FUNCTION handle_custom_block(block_name, element, value)
 
     CHARACTER(LEN=string_length), INTENT(IN) :: block_name, element, value

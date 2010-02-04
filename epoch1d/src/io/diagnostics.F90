@@ -27,7 +27,7 @@ CONTAINS
     LOGICAL :: print_arrays, last_call
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=50) :: temp_name
-    REAL(num), DIMENSION(:), ALLOCATABLE :: DATA
+    REAL(num), DIMENSION(:), ALLOCATABLE :: data
     REAL(num) :: stagger = 0.0_num
     INTEGER(KIND=8) :: n_part_per_it = 100000, npart_local, npart_dump_global
     INTEGER :: ispecies, code
@@ -67,7 +67,7 @@ CONTAINS
         iterator_settings%restart = .FALSE.
       ENDIF
 
-      ALLOCATE(DATA(-2:nx+3))
+      ALLOCATE(data(-2:nx+3))
 
       ! open the file
       ! (filename, rank_of_current_process, MPI_COMMUNICATOR (can be
@@ -212,49 +212,49 @@ CONTAINS
       ! Since you only dump after several particle updates it's actually
       ! quicker to
       IF (IAND(dumpmask(21), code) .NE. 0) THEN
-        CALL calc_mass_density(DATA, 0)
+        CALL calc_mass_density(data, 0)
         CALL cfd_write_1d_cartesian_variable_parallel("Mass_Density", &
-            "Derived", dims, stagger, "Grid", "Grid", DATA(1:nx), subtype_field)
+            "Derived", dims, stagger, "Grid", "Grid", data(1:nx), subtype_field)
         IF (IAND(dumpmask(21), c_io_species) .NE. 0) THEN
           DO ispecies = 1, n_species
-            CALL calc_mass_density(DATA, ispecies)
+            CALL calc_mass_density(data, ispecies)
             WRITE(temp_name, '("Mass_Density_", a)') &
                 TRIM(particle_species(ispecies)%name)
             CALL cfd_write_1d_cartesian_variable_parallel( &
                 TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, &
-                "Grid", "Grid", DATA(1:nx), subtype_field)
+                "Grid", "Grid", data(1:nx), subtype_field)
           ENDDO
         ENDIF
       ENDIF
 
       IF (IAND(dumpmask(22), code) .NE. 0) THEN
-        CALL calc_charge_density(DATA, 0)
+        CALL calc_charge_density(data, 0)
         CALL cfd_write_1d_cartesian_variable_parallel("Charge_Density", &
-            "Derived", dims, stagger, "Grid", "Grid", DATA(1:nx), subtype_field)
+            "Derived", dims, stagger, "Grid", "Grid", data(1:nx), subtype_field)
         IF (IAND(dumpmask(22), c_io_species) .NE. 0) THEN
           DO ispecies = 1, n_species
-            CALL calc_charge_density(DATA, ispecies)
+            CALL calc_charge_density(data, ispecies)
             WRITE(temp_name, '("Charge_Density_", a)') &
                 TRIM(particle_species(ispecies)%name)
             CALL cfd_write_1d_cartesian_variable_parallel( &
                 TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, &
-                "Grid", "Grid", DATA(1:nx), subtype_field)
+                "Grid", "Grid", data(1:nx), subtype_field)
           ENDDO
         ENDIF
       ENDIF
 
       IF (IAND(dumpmask(23), code) .NE. 0) THEN
-        CALL calc_number_density(DATA, 0)
+        CALL calc_number_density(data, 0)
         CALL cfd_write_1d_cartesian_variable_parallel("Number_Density", &
-            "Derived", dims, stagger, "Grid", "Grid", DATA(1:nx), subtype_field)
+            "Derived", dims, stagger, "Grid", "Grid", data(1:nx), subtype_field)
         IF (IAND(dumpmask(23), c_io_species) .NE. 0) THEN
           DO ispecies = 1, n_species
-            CALL calc_number_density(DATA, ispecies)
+            CALL calc_number_density(data, ispecies)
             WRITE(temp_name, '("Number_Density_", a)') &
                 TRIM(particle_species(ispecies)%name)
             CALL cfd_write_1d_cartesian_variable_parallel( &
                 TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, &
-                "Grid", "Grid", DATA(1:nx), subtype_field)
+                "Grid", "Grid", data(1:nx), subtype_field)
           ENDDO
         ENDIF
       ENDIF
@@ -276,9 +276,9 @@ CONTAINS
       ENDIF
 
 #ifdef FIELD_DEBUG
-      DATA = rank
+      data = rank
       CALL cfd_write_1d_cartesian_variable_parallel("Rank", "Processor", &
-            dims, stagger, "Grid", "Grid", DATA(1:nx), subtype_field)
+            dims, stagger, "Grid", "Grid", data(1:nx), subtype_field)
 #endif
 
       IF (IAND(dumpmask(26), code) .NE. 0) THEN
@@ -291,17 +291,17 @@ CONTAINS
 #endif
 
       IF (IAND(dumpmask(28), code) .NE. 0) THEN
-        CALL calc_temperature(DATA, 0)
+        CALL calc_temperature(data, 0)
         CALL cfd_write_1d_cartesian_variable_parallel("Temperature", &
-            "Derived", dims, stagger, "Grid", "Grid", DATA(1:nx), subtype_field)
+            "Derived", dims, stagger, "Grid", "Grid", data(1:nx), subtype_field)
         IF (IAND(dumpmask(28), c_io_species) .NE. 0) THEN
           DO ispecies = 1, n_species
-            CALL calc_temperature(DATA, ispecies)
+            CALL calc_temperature(data, ispecies)
             WRITE(temp_name, '("Temperature_", a)') &
                 TRIM(particle_species(ispecies)%name)
             CALL cfd_write_1d_cartesian_variable_parallel( &
                 TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, &
-                "Grid", "Grid", DATA(1:nx), subtype_field)
+                "Grid", "Grid", data(1:nx), subtype_field)
           ENDDO
         ENDIF
       ENDIF
@@ -316,7 +316,7 @@ CONTAINS
         CALL FLUSH(20)
       ENDIF
 
-      DEALLOCATE(DATA)
+      DEALLOCATE(data)
     ENDIF
 
   END SUBROUTINE output_routines

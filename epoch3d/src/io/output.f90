@@ -11,8 +11,9 @@ MODULE output
 
   PUBLIC :: cfd_open_clobber, cfd_write_block_header, cfd_write_meshtype_header
   PUBLIC :: cfd_safe_write_string, cfd_write_snapshot_data
-  PUBLIC :: cfd_write_stitched_vector, cfd_write_stitched_magnitude
-  PUBLIC :: cfd_write_real_constant, cfd_write_visit_expression
+  PUBLIC :: cfd_write_stitched_vector
+  PUBLIC :: cfd_write_stitched_magnitude, cfd_write_real_constant
+  PUBLIC :: cfd_write_visit_expression
 
 CONTAINS
 
@@ -56,7 +57,7 @@ CONTAINS
 
     ! Currently no blocks written
     nblocks = 0
-    ! current displacement is just the header
+    ! Current displacement is just the header
     current_displacement = header_offset
 
   END SUBROUTINE cfd_open_clobber
@@ -76,11 +77,13 @@ CONTAINS
     ! writing. You still have to advance the file pointer yourself on all nodes
 
     output(1:MIN(max_string_len, len_s)) = string(1:MIN(max_string_len, len_s))
+
     ! If this isn't the full string length then tag in a ACHAR(0) to help
     ! With C++ string handling
     IF (len_s+1 < max_string_len) output(len_s+1:max_string_len) = ACHAR(0)
-    CALL MPI_FILE_WRITE(cfd_filehandle, output, max_string_len, &
-        MPI_CHARACTER, cfd_status, cfd_errcode)
+
+    CALL MPI_FILE_WRITE(cfd_filehandle, output, max_string_len, MPI_CHARACTER, &
+        cfd_status, cfd_errcode)
 
   END SUBROUTINE cfd_safe_write_string
 
@@ -128,7 +131,7 @@ CONTAINS
 
     current_displacement = current_displacement + 2 * 8
 
-    nblocks = nblocks+1
+    nblocks = nblocks + 1
 
   END SUBROUTINE cfd_write_block_header
 
@@ -142,8 +145,8 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: meshtype, dim, rank_write, sof
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
+        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, meshtype, 1, MPI_INTEGER, &
@@ -171,8 +174,9 @@ CONTAINS
     CALL cfd_write_block_header("Snapshot", "Snapshot", c_type_snapshot, &
         md_length, md_length, rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
+        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, step, 1, MPI_INTEGER, &
             cfd_status, cfd_errcode)
@@ -182,6 +186,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, "native", MPI_INFO_NULL, &
         cfd_errcode)
+
     IF (cfd_rank == rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
             cfd_status, cfd_errcode)
@@ -212,14 +217,17 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
     ENDIF
+
     current_displacement = current_displacement + 2 * max_string_len
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
+        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, ndims, 1, MPI_INTEGER, &
             cfd_status, cfd_errcode)
@@ -228,13 +236,15 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       DO iloop = 1, ndims
         CALL cfd_safe_write_string(name(iloop))
         CALL cfd_safe_write_string(class(iloop))
       ENDDO
     ENDIF
-    current_displacement = current_displacement + 2 * ndims* max_string_len
+
+    current_displacement = current_displacement + 2 * ndims * max_string_len
 
   END SUBROUTINE cfd_write_stitched_vector
 
@@ -259,14 +269,17 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
     ENDIF
+
     current_displacement = current_displacement + 2 * max_string_len
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
+        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, ndims, 1, MPI_INTEGER, &
             cfd_status, cfd_errcode)
@@ -275,13 +288,15 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       DO iloop = 1, ndims
         CALL cfd_safe_write_string(name(iloop))
         CALL cfd_safe_write_string(class(iloop))
       ENDDO
     ENDIF
-    current_displacement = current_displacement + 2 * ndims* max_string_len
+
+    current_displacement = current_displacement + 2 * ndims * max_string_len
 
   END SUBROUTINE cfd_write_stitched_magnitude
 
@@ -298,12 +313,14 @@ CONTAINS
 
     CALL cfd_write_block_header(name, class, c_type_constant, md_length, &
         md_length, rank_write)
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        mpireal, mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
+        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, value, 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, value, 1, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + num
 
   END SUBROUTINE cfd_write_real_constant
@@ -319,10 +336,11 @@ CONTAINS
 
     md_length = 2 * soi
 
-    CALL cfd_write_block_header(name, class, c_type_integerarray, &
-        md_length, md_length, rank_write)
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL cfd_write_block_header(name, class, c_type_integerarray, md_length, &
+        md_length, rank_write)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
+        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       ! 1D
       CALL MPI_FILE_WRITE(cfd_filehandle, 1, 1, MPI_INTEGER, &
@@ -334,6 +352,7 @@ CONTAINS
       CALL MPI_FILE_WRITE(cfd_filehandle, values, SIZE(values), MPI_INTEGER, &
           cfd_status, cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + md_length
 
   END SUBROUTINE cfd_write_1d_integer_array

@@ -8,11 +8,12 @@ MODULE output_cartesian
 
 CONTAINS
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 1D Cartesian grid in serial from the node with
   ! rank {rank_write}
   ! Serial operation, so no need to specify nx, ny
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_1d_cartesian_grid(name, class, x, rank_write)
 
     REAL(num), DIMENSION(:), INTENT(IN) :: x
@@ -24,7 +25,7 @@ CONTAINS
     nx = SIZE(x)
 
     ! Metadata is
-    ! * ) MeshType (INTEGER(4)) All mesh blocks contain this
+    ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
     ! Specific to Cartesian Grid
@@ -32,9 +33,9 @@ CONTAINS
     ! 2 ) xmin REAL(num)
     ! 3 ) xmax REAL(num)
 
-    ! 1 ints, 2 reals + MeshType Header
+    ! 1 ints, 2 reals + meshtype Header
     md_length = meshtype_header_offset + 1 * soi + 2 * num
-    block_length = md_length + nx*num
+    block_length = md_length + nx * num
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
@@ -47,8 +48,8 @@ CONTAINS
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
 
     current_displacement = current_displacement + 1 * soi
@@ -57,27 +58,28 @@ CONTAINS
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(x), 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(x), 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(x), 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(x), 1, mpireal, cfd_status, &
+          cfd_errcode)
 
       ! Now write the real arrays
-      CALL MPI_FILE_WRITE(cfd_filehandle, x, nx, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, x, nx, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 2*num + nx * num
+    current_displacement = current_displacement + 2 * num + nx * num
 
   END SUBROUTINE cfd_write_1d_cartesian_grid
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 2D Cartesian grid in serial from the node with
   ! rank {rank_write}
   ! Serial operation, so no need to specify nx, ny
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_2d_cartesian_grid(name, class, x, y, rank_write)
 
     REAL(num), DIMENSION(:), INTENT(IN) :: x, y
@@ -90,7 +92,7 @@ CONTAINS
     ny = SIZE(y)
 
     ! Metadata is
-    ! * ) MeshType (INTEGER(4)) All mesh blocks contain this
+    ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
     ! Specific to Cartesian Grid
@@ -101,9 +103,9 @@ CONTAINS
     ! 5 ) ymin REAL(num)
     ! 6 ) ymax REAL(num)
 
-    ! 2 ints, 6 reals + MeshType Header
+    ! 2 ints, 6 reals + meshtype Header
     md_length = meshtype_header_offset + 2 * soi + 4 * num
-    block_length = md_length + (nx+ny)*num
+    block_length = md_length + (nx + ny) * num
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
@@ -116,10 +118,10 @@ CONTAINS
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
 
     current_displacement = current_displacement + 2 * soi
@@ -128,34 +130,35 @@ CONTAINS
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(x), 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(x), 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(x), 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(x), 1, mpireal, cfd_status, &
+          cfd_errcode)
 
-      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(y), 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(y), 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(y), 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(y), 1, mpireal, cfd_status, &
+          cfd_errcode)
 
       ! Now write the real arrays
-      CALL MPI_FILE_WRITE(cfd_filehandle, x, nx, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, y, ny, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, x, nx, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, y, ny, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 4*num + (nx + ny)*num
+    current_displacement = current_displacement + 4 * num + (nx + ny) * num
 
   END SUBROUTINE cfd_write_2d_cartesian_grid
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 3D Cartesian grid in serial from the node with
   ! rank {rank_write}
   ! Serial operation, so no need to specify nx, ny, nz
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_3d_cartesian_grid(name, class, x, y, z, rank_write)
 
     REAL(num), DIMENSION(:), INTENT(IN) :: x, y, z
@@ -169,7 +172,7 @@ CONTAINS
     nz = SIZE(z)
 
     ! Metadata is
-    ! * ) MeshType (INTEGER(4)) All mesh blocks contain this
+    ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
     ! Specific to Cartesian Grid
@@ -183,9 +186,9 @@ CONTAINS
     ! 9 ) zmin REAL(num)
     ! 10) zmax REAL(num)
 
-    ! 3 ints, 6 reals + MeshType Header
+    ! 3 ints, 6 reals + meshtype Header
     md_length = meshtype_header_offset + 3 * soi + 6 * num
-    block_length = md_length + (nx+ny+nz)*num
+    block_length = md_length + (nx + ny + nz) * num
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
@@ -198,12 +201,12 @@ CONTAINS
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
 
     current_displacement = current_displacement + 3 * soi
@@ -212,42 +215,43 @@ CONTAINS
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(x), 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(x), 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(x), 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(x), 1, mpireal, cfd_status, &
+          cfd_errcode)
 
-      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(y), 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(y), 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(y), 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(y), 1, mpireal, cfd_status, &
+          cfd_errcode)
 
-      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(z), 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(z), 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MINVAL(z), 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, MAXVAL(z), 1, mpireal, cfd_status, &
+          cfd_errcode)
 
       ! Now write the real arrays
-      CALL MPI_FILE_WRITE(cfd_filehandle, x, nx, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, y, ny, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, z, nz, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, x, nx, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, y, ny, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, z, nz, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 6*num + (nx + ny + nz)*num
+    current_displacement = current_displacement + 6 * num + (nx + ny + nz) * num
 
   END SUBROUTINE cfd_write_3d_cartesian_grid
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 3D Cartesian variable in parallel using the
   ! mpitype {distribution} for distribution of data
-  ! It's up to the coder to design the distribution
-  ! parallel operation, so need global nx, ny, nz
-  ! ---------------------------------------------------------------------------
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global nx, ny, nz
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_3d_cartesian_variable_parallel(name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution)
 
@@ -260,7 +264,7 @@ CONTAINS
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER :: nx, ny, nz
 
-    ! *) VariableType (INTEGER(4)) All variable blocks contain this
+    ! * ) VariableType (INTEGER(4)) All variable blocks contain this
     ! These are specific to a cartesian variable
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
@@ -294,13 +298,14 @@ CONTAINS
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 3 * soi
 
     ! Set the file view
@@ -317,22 +322,25 @@ CONTAINS
 
     IF (cfd_rank == default_rank) THEN
       ! Write out grid stagger
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 3, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 3, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 5 * num
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == default_rank) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
     ENDIF
+
     current_displacement = current_displacement + 2 * max_string_len
 
     ! Write the actual data
@@ -340,18 +348,20 @@ CONTAINS
         distribution, "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
         cfd_status, cfd_errcode)
-    current_displacement = current_displacement + num*nx*ny*nz
+
+    current_displacement = current_displacement + num * nx * ny * nz
 
   END SUBROUTINE cfd_write_3d_cartesian_variable_parallel
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 2D Cartesian variable in parallel using the
   ! mpitype {distribution} for distribution of data
-  ! It's up to the coder to design the distribution
-  ! parallel operation, so need global nx, ny
-  ! ---------------------------------------------------------------------------
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global nx, ny
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_2d_cartesian_variable_parallel(name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution)
 
@@ -364,7 +374,7 @@ CONTAINS
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
 
-    ! *) VariableType (INTEGER(4)) All variable blocks contain this
+    ! * ) VariableType (INTEGER(4)) All variable blocks contain this
     ! These are specific to a cartesian variable
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
@@ -394,11 +404,12 @@ CONTAINS
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 2 * soi
 
     ! Determine data ranges and write out
@@ -412,22 +423,25 @@ CONTAINS
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 2, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 2, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 4 * num
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == default_rank) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
     ENDIF
+
     current_displacement = current_displacement + 2 * max_string_len
 
     ! Write the actual data
@@ -436,18 +450,19 @@ CONTAINS
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
         cfd_status, cfd_errcode)
 
-    current_displacement = current_displacement + num*nx*ny
+    current_displacement = current_displacement + num * nx * ny
 
   END SUBROUTINE cfd_write_2d_cartesian_variable_parallel
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 1D Cartesian variable in parallel using the
   ! mpitype {distribution} for distribution of data
-  ! It's up to the coder to design the distribution
-  ! parallel operation, so need global nx
-  ! ---------------------------------------------------------------------------
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global nx
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_1d_cartesian_variable_parallel(name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution)
 
@@ -460,7 +475,7 @@ CONTAINS
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
 
-    ! *) VariableType (INTEGER(4)) All variable blocks contain this
+    ! * ) VariableType (INTEGER(4)) All variable blocks contain this
     ! These are specific to a cartesian variable
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
@@ -473,7 +488,7 @@ CONTAINS
 
     len_var = SIZE(variable)
     nx = dims
-    ! 1 INTs 3 REALs 2 strings
+    ! 1 INTs 3 REALs 2 Strings
     md_length = meshtype_header_offset + 1 * soi + 3 * num + 2 * max_string_len
     block_length = md_length + num * nx
 
@@ -486,9 +501,10 @@ CONTAINS
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 1 * soi
 
     ! Determine data ranges and write out
@@ -502,22 +518,25 @@ CONTAINS
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank == default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 3 * num
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == default_rank) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
     ENDIF
+
     current_displacement = current_displacement + 2 * max_string_len
 
     ! Write the actual data
@@ -526,17 +545,18 @@ CONTAINS
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
         cfd_status, cfd_errcode)
 
-    current_displacement = current_displacement + num*nx
+    current_displacement = current_displacement + num * nx
 
   END SUBROUTINE cfd_write_1d_cartesian_variable_parallel
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 1D Cartesian variable in serial using node with
   ! rank {rank_write} for writing
   ! Serial operation, so no need for nx, ny
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_1d_cartesian_variable(name, class, stagger, mesh_name, &
       mesh_class, variable, rank_write)
 
@@ -549,7 +569,7 @@ CONTAINS
     INTEGER, DIMENSION(1) :: dims
     INTEGER(8) :: block_length, md_length, len_var
 
-    ! *) VariableType (INTEGER(4)) All variable blocks contain this
+    ! * ) VariableType (INTEGER(4)) All variable blocks contain this
     ! These are specific to a cartesian variable
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
@@ -559,6 +579,7 @@ CONTAINS
     ! 4 ) dmax REAL(num)
     ! 5 ) Mesh CHARACTER(max_string_len)
     ! 6 ) class CHARACTER(max_string_len)
+
     len_var = SIZE(variable)
     dims = SHAPE(variable)
 
@@ -575,12 +596,13 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
-    ! This is the serial version remember
 
+    ! This is the serial version remember
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 1 * soi
 
     ! Determine data ranges and write out
@@ -589,19 +611,22 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 2, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 2, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 3 * num
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
@@ -612,22 +637,24 @@ CONTAINS
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var, mpireal, &
           cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + num*nx
+    current_displacement = current_displacement + num * nx
 
   END SUBROUTINE cfd_write_1d_cartesian_variable
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 2D Cartesian variable in serial using node with
   ! rank {rank_write} for writing
   ! Serial operation, so no need for nx, ny
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_2d_cartesian_variable(name, class, stagger, mesh_name, &
       mesh_class, variable, rank_write)
 
@@ -640,7 +667,7 @@ CONTAINS
     INTEGER, DIMENSION(2) :: dims
     INTEGER(8) :: block_length, md_length, len_var
 
-    ! *) VariableType (INTEGER(4)) All variable blocks contain this
+    ! * ) VariableType (INTEGER(4)) All variable blocks contain this
     ! These are specific to a cartesian variable
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
@@ -673,11 +700,12 @@ CONTAINS
 
     ! This is the serial version remember
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 2 * soi
 
     ! Determine data ranges and write out
@@ -686,19 +714,22 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 2, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 2, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 4 * num
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
@@ -709,22 +740,24 @@ CONTAINS
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var, mpireal, &
           cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + num*nx*ny
+    current_displacement = current_displacement + num * nx * ny
 
   END SUBROUTINE cfd_write_2d_cartesian_variable
 
 
 
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Code to write a 3D Cartesian variable in serial using node with
   ! rank {rank_write} for writing
   ! Serial operation, so no need for nx, ny, nz
-  ! ---------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
+
   SUBROUTINE cfd_write_3d_cartesian_variable(name, class, stagger, mesh_name, &
       mesh_class, variable, rank_write)
 
@@ -737,7 +770,7 @@ CONTAINS
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
 
-    ! *) VariableType (INTEGER(4)) All variable blocks contain this
+    ! * ) VariableType (INTEGER(4)) All variable blocks contain this
     ! These are specific to a cartesian variable
     ! * ) nd   INTEGER(4)
     ! * ) sof  INTEGER(4)
@@ -770,15 +803,15 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
-    ! This is the serial version remember
 
+    ! This is the serial version remember
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, &
+          cfd_errcode)
     ENDIF
 
     current_displacement = current_displacement + 3 * soi
@@ -789,33 +822,39 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 3, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, 3, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, cfd_status, &
+          cfd_errcode)
     ENDIF
+
     current_displacement = current_displacement + 5 * num
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
     ENDIF
+
     current_displacement = current_displacement + 2 * max_string_len
 
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank == rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var, mpireal, &
           cfd_status, cfd_errcode)
     ENDIF
-    current_displacement = current_displacement + num*nx*ny*nz
+
+    current_displacement = current_displacement + num * nx * ny * nz
 
   END SUBROUTINE cfd_write_3d_cartesian_variable
 

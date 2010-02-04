@@ -30,7 +30,7 @@ CONTAINS
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -94,10 +94,10 @@ CONTAINS
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              DATA = part_m * l_weight / (dx*dy*dz)
+              data = part_m * l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * DATA
+                  gx(ix) * gy(iy) * gz(iz) * data
             ENDDO
           ENDDO
         ENDDO
@@ -258,7 +258,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -323,10 +323,10 @@ CONTAINS
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              DATA = part_q * l_weight / (dx*dy*dz)
+              data = part_q * l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * DATA
+                  gx(ix) * gy(iy) * gz(iz) * data
             ENDDO
           ENDDO
         ENDDO
@@ -367,7 +367,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -432,10 +432,10 @@ CONTAINS
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              DATA = l_weight / (dx*dy*dz)
+              data = l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * DATA
+                  gx(ix) * gy(iy) * gz(iz) * data
             ENDDO
           ENDDO
         ENDDO
@@ -471,7 +471,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -545,10 +545,10 @@ CONTAINS
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              DATA = evaluator(current, ispecies)
+              data = evaluator(current, ispecies)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * DATA
+                  gx(ix) * gy(iy) * gz(iz) * data
             ENDDO
           ENDDO
         ENDDO

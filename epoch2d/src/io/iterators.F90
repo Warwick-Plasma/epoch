@@ -15,9 +15,9 @@ MODULE iterators
 CONTAINS
 
   ! iterator for particle positions
-  SUBROUTINE iterate_particles(DATA, n_points, direction, start)
+  SUBROUTINE iterate_particles(data, n_points, direction, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
@@ -34,7 +34,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-          DATA(part_count) = cur%part_pos(direction)-window_shift(direction)
+          data(part_count) = cur%part_pos(direction)-window_shift(direction)
           cur=>cur%next
         ENDDO
         IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -55,9 +55,9 @@ CONTAINS
 
 
   ! iterator for particle charge
-  SUBROUTINE iterate_charge(DATA, n_points, start)
+  SUBROUTINE iterate_charge(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -74,9 +74,9 @@ CONTAINS
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
 #ifdef PER_PARTICLE_CHARGEMASS
-          DATA(part_count) = cur%charge
+          data(part_count) = cur%charge
 #else
-          DATA(part_count) = current_family%charge
+          data(part_count) = current_family%charge
 #endif
           cur=>cur%next
         ENDDO
@@ -101,9 +101,9 @@ CONTAINS
   ! iterator for particle weight
   ! Only present if you are using the PER_PARTICLE_WEIGHT
   ! Precompiler option
-  SUBROUTINE iterate_weight(DATA, n_points, start)
+  SUBROUTINE iterate_weight(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -120,7 +120,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-          DATA(part_count) = cur%weight
+          data(part_count) = cur%weight
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -142,9 +142,9 @@ CONTAINS
 
 
   ! iterator for particle mass
-  SUBROUTINE iterate_mass(DATA, n_points, start)
+  SUBROUTINE iterate_mass(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -162,9 +162,9 @@ CONTAINS
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
 #ifdef PER_PARTICLE_CHARGEMASS
-          DATA(part_count) = cur%mass
+          data(part_count) = cur%mass
 #else
-          DATA(part_count) = current_family%mass
+          data(part_count) = current_family%mass
 #endif
           cur=>cur%next
         ENDDO
@@ -186,9 +186,9 @@ CONTAINS
 
 #ifdef PART_DEBUG
   ! iterator for particle processor
-  SUBROUTINE iterate_processor(DATA, n_points, start)
+  SUBROUTINE iterate_processor(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -205,7 +205,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-          DATA(part_count) = REAL(cur%processor, num)
+          data(part_count) = REAL(cur%processor, num)
           IF (cur%processor .GE. nproc) PRINT *, "Bad Processor"
           cur=>cur%next
         ENDDO
@@ -225,9 +225,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_processor0(DATA, n_points, start)
+  SUBROUTINE iterate_processor0(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -244,7 +244,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-          DATA(part_count) = REAL(cur%processor_at_t0, num)
+          data(part_count) = REAL(cur%processor_at_t0, num)
           IF (cur%processor .GE. nproc) PRINT *, "Bad Processor"
           cur=>cur%next
         ENDDO
@@ -266,9 +266,9 @@ CONTAINS
 
 
   ! iterator for particle processor
-  SUBROUTINE iterate_species(DATA, n_points, start)
+  SUBROUTINE iterate_species(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -285,7 +285,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-          DATA(part_count) = REAL(current_family%id, num)
+          data(part_count) = REAL(current_family%id, num)
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -306,9 +306,9 @@ CONTAINS
 
 
   ! iterator for particle velocities
-  SUBROUTINE iterate_vx(DATA, n_points, start)
+  SUBROUTINE iterate_vx(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -338,7 +338,7 @@ CONTAINS
               (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
 #endif
           IF (root .NE. 0.0_num) root = 1.0_num/root
-          DATA(part_count) = cur%part_p(1) * root
+          data(part_count) = cur%part_p(1) * root
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -357,9 +357,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_vy(DATA, n_points, start)
+  SUBROUTINE iterate_vy(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -389,7 +389,7 @@ CONTAINS
               (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
 #endif
           IF (root .NE. 0.0_num) root = 1.0_num/root
-          DATA(part_count) = cur%part_p(2) * root
+          data(part_count) = cur%part_p(2) * root
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -408,9 +408,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_vz(DATA, n_points, start)
+  SUBROUTINE iterate_vz(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -439,7 +439,7 @@ CONTAINS
               (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
 #endif
           IF (root .NE. 0.0_num) root = 1.0_num/root
-          DATA(part_count) = cur%part_p(3) * root
+          data(part_count) = cur%part_p(3) * root
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -459,9 +459,9 @@ CONTAINS
 
 
   ! iterator for particle momenta
-  SUBROUTINE iterate_px(DATA, n_points, start)
+  SUBROUTINE iterate_px(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -478,7 +478,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-          DATA(part_count) = cur%part_p(1)
+          data(part_count) = cur%part_p(1)
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -498,9 +498,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_py(DATA, n_points, start)
+  SUBROUTINE iterate_py(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -517,7 +517,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-          DATA(part_count) = cur%part_p(2)
+          data(part_count) = cur%part_p(2)
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -537,9 +537,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_pz(DATA, n_points, start)
+  SUBROUTINE iterate_pz(data, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: DATA
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -556,7 +556,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-          DATA(part_count) = cur%part_p(3)
+          data(part_count) = cur%part_p(3)
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one

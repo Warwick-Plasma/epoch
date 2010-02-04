@@ -27,6 +27,7 @@ CONTAINS
       ! Creating a new file of the current version, so set the header offset
       ! to reflect current version
       header_offset = header_offset_this_version
+
       ! We are opening a file to be created, so use the destructive file
       ! opening command
       CALL cfd_open_clobber(filename)
@@ -47,7 +48,7 @@ CONTAINS
     ! If writing
     IF (cfd_writing) THEN
       ! Go to place where the empty value for nblocks is
-      current_displacement = header_offset-4
+      current_displacement = header_offset - 4
       CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
           MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 

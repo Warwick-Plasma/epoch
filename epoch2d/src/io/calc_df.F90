@@ -28,7 +28,7 @@ CONTAINS
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -85,9 +85,9 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            DATA = part_m * l_weight / (dx*dy)
+            data = part_m * l_weight / (dx*dy)
             data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
           ENDDO
         ENDDO
 
@@ -123,7 +123,7 @@ CONTAINS
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: ct
@@ -185,11 +185,11 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            DATA = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 + &
+            data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 + &
                 (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) - &
                 (part_m*l_weight)*c**2
             data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
             ct(cell_x+ix, cell_y+iy) = &
                 ct(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
           ENDDO
@@ -231,7 +231,7 @@ CONTAINS
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -288,9 +288,9 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            DATA = part_q * l_weight / (dx*dy)
+            data = part_q * l_weight / (dx*dy)
             data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
           ENDDO
         ENDDO
 
@@ -326,7 +326,7 @@ CONTAINS
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -383,9 +383,9 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            DATA = 1.0_num * l_weight / (dx*dy)
+            data = 1.0_num * l_weight / (dx*dy)
             data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
           ENDDO
         ENDDO
         current=>current%next
@@ -420,7 +420,7 @@ CONTAINS
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     REAL(num), DIMENSION(:,:), ALLOCATABLE ::  part_count, mass, sigma, mean
@@ -487,17 +487,17 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            DATA = SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
+            data = SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
 !!$            IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
 !!$                data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
             mean(cell_x+ix, cell_y+iy) = &
-                mean(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
-            DATA = l_weight
+                mean(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
+            data = l_weight
             part_count(cell_x+ix, cell_y+iy) = &
-                part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
-            DATA = part_m * l_weight
+                part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
+            data = part_m * l_weight
             mass(cell_x+ix, cell_y+iy) = &
-                mass(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+                mass(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
 !!$            ENDIF
           ENDDO
         ENDDO
@@ -543,12 +543,12 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            DATA = SQRT(part_px**2+part_py**2+part_pz**2)
+            data = SQRT(part_px**2+part_py**2+part_pz**2)
 !!$            IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
 !!$                data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
             sigma(cell_x+ix, cell_y+iy) = &
                 sigma(cell_x+ix, cell_y+iy) + &
-                gx(ix) * gy(iy) * (DATA-mean(cell_x+ix, cell_y+iy))**2
+                gx(ix) * gy(iy) * (data-mean(cell_x+ix, cell_y+iy))**2
             part_count(cell_x+ix, cell_y+iy) = &
                 part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy)
 !!$            ENDIF
@@ -597,7 +597,7 @@ CONTAINS
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
-    REAL(num) :: DATA
+    REAL(num) :: data
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -648,9 +648,9 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            DATA = evaluator(current, ispecies)
+            data = evaluator(current, ispecies)
             data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * DATA
+                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
           ENDDO
         ENDDO
 
