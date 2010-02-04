@@ -1,7 +1,7 @@
 MODULE mpi_routines
 
-  USE shared_data
   USE partlist
+
   IMPLICIT NONE
 
   PRIVATE

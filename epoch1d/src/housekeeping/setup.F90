@@ -1,16 +1,13 @@
 MODULE setup
 
-  USE shared_data
+  !USE shared_data
   USE input_cartesian
   USE input_particle
-  USE input_arb
-  USE input
   USE iocontrol
-  USE input_functions
   USE strings
-  USE balance
   USE partlist
   USE mpi_subtype_control
+
   IMPLICIT NONE
 
   PRIVATE

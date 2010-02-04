@@ -1,9 +1,7 @@
 MODULE input
 
-  USE shared_data
   USE iocommon
   USE input_functions
-  USE input_cartesian
 
   IMPLICIT NONE
 

@@ -15,7 +15,6 @@ PROGRAM pic
   ! University of Warwick, UK
   ! PSC written by Hartmut Ruhl
 
-  USE shared_data
   USE setup
   USE ic_module
 #ifdef NO_DECK
@@ -37,7 +36,6 @@ PROGRAM pic
 #ifdef PART_IONISE
   USE ionise
 #endif
-  USE custom_deck
   USE window
 
   IMPLICIT NONE

@@ -1,11 +1,7 @@
 MODULE probes
 
-  USE shared_data
   USE partlist
-  USE iocontrol
   USE output_particle
-  USE output
-  USE balance
   USE mpi_subtype_control
 
   SAVE

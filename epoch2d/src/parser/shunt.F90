@@ -1,9 +1,7 @@
 MODULE shunt
 
-  USE shared_parser_data
-  USE shared_data
-  USE strings
   USE tokenizer_blocks
+
   IMPLICIT NONE
 
   SAVE

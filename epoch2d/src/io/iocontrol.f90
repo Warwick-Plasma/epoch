@@ -1,6 +1,5 @@
 MODULE iocontrol
 
-  USE shared_data
   USE iocommon
   USE input
   USE output

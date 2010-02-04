@@ -1,6 +1,5 @@
 MODULE output_particle
 
-  USE shared_data
   USE iocommon
   USE output
 

@@ -1,7 +1,7 @@
 MODULE custom_parser
 
   USE shared_data
-  USE tokenizer_blocks
+
   IMPLICIT NONE
 
 CONTAINS

@@ -6,6 +6,7 @@ MODULE mpi_subtype_control
   !----------------------------------------------------------------------------
 
   USE shared_data
+
   IMPLICIT NONE
 
 CONTAINS

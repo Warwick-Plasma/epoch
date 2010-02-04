@@ -1,17 +1,14 @@
 MODULE diagnostics
 
-  USE shared_data
   USE calc_df
   USE output_cartesian
   USE output_particle
-  USE output_arb
-  USE output
   USE iocontrol
-  USE balance
   USE dist_fn
   USE probes
-  USE iterators
   USE mpi_subtype_control
+  USE iterators
+  !USE particle_pointer_advance
 
   IMPLICIT NONE
 

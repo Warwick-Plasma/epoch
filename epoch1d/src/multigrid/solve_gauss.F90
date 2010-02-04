@@ -1,9 +1,5 @@
 MODULE solve_gauss
 
-  USE shared_data
-  USE multigrid
-  USE boundary
-
   IMPLICIT NONE
 
 CONTAINS

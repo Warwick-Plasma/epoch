@@ -1,8 +1,6 @@
 MODULE deck_boundaries_block
 
-  USE shared_data
   USE strings
-  USE strings_advanced
 
   IMPLICIT NONE
 

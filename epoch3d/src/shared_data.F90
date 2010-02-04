@@ -6,6 +6,7 @@
 MODULE constants
 
   IMPLICIT NONE
+
   INTEGER, PARAMETER :: num = KIND(1.d0)
   INTEGER, PARAMETER :: dbl = KIND(1.d0)
   REAL(num), PARAMETER :: pi = 3.14159265358979323_num
@@ -285,6 +286,7 @@ MODULE shared_data
 
   USE constants
   USE shared_parser_data
+
   IMPLICIT NONE
 
   !----------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 MODULE field
 
-  USE shared_data
   USE boundary
   USE laser
 

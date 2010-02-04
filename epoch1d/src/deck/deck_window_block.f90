@@ -1,6 +1,5 @@
 MODULE deck_window_block
 
-  USE shared_data
   USE strings_advanced
 
   IMPLICIT NONE

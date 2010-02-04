@@ -1,6 +1,5 @@
 MODULE output
 
-  USE shared_data
   USE iocommon
 
   IMPLICIT NONE

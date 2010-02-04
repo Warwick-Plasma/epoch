@@ -1,7 +1,5 @@
 MODULE deck_io_block
 
-  USE shared_data
-  USE strings
   USE strings_advanced
 
   IMPLICIT NONE

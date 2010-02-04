@@ -1,8 +1,5 @@
 MODULE window
 
-  USE shared_data
-  USE boundary
-  USE partlist
   USE helper
 
   IMPLICIT NONE

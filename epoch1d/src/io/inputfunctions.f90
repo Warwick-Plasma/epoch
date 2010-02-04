@@ -1,6 +1,5 @@
 MODULE input_functions
 
-  USE shared_data
   USE iocommon
 
   IMPLICIT NONE

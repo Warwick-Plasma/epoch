@@ -15,7 +15,6 @@ PROGRAM pic
   ! University of Warwick, UK
   ! PSC written by Hartmut Ruhl
 
-  USE shared_data
   USE setup
   USE ic_module
   USE deck
@@ -24,14 +23,11 @@ PROGRAM pic
   USE field
   USE particles
   USE mpi_routines
-  USE boundary
   USE balance
-  USE helper
   USE solve_gauss
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
   USE split_particle
 #endif
-  USE custom_deck
   USE window
 
   IMPLICIT NONE
@@ -39,6 +35,9 @@ PROGRAM pic
   INTEGER :: i = 0
   REAL(num) :: walltime_current
   LOGICAL :: halt = .FALSE.
+#ifdef PARTICLE_COUNT_UPDATE
+  INTEGER :: ispecies
+#endif
 
   CALL minimal_init ! setup.f90
   CALL setup_partlists ! partlist.f90

@@ -1,7 +1,7 @@
 MODULE iterators
 
-  USE shared_data
   USE particle_pointer_advance
+
   IMPLICIT NONE
 
   TYPE :: setting_block

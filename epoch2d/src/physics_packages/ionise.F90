@@ -1,9 +1,8 @@
 MODULE ionise
 
-  USE shared_data
-  USE partlist
   USE calc_df
   USE helper
+
   IMPLICIT NONE
 
 CONTAINS

@@ -1,8 +1,8 @@
 MODULE particles
 
-  USE shared_data
   USE boundary
   USE shape_functions
+  !USE current_smooth
 
   IMPLICIT NONE
 
@@ -44,6 +44,9 @@ CONTAINS
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: d_init, d_final
     REAL(num) :: probe_energy
+#endif
+#ifdef PER_PARTICLE_CHARGEMASS
+    TYPE(particle), POINTER, SAVE :: cur
 #endif
 
     ! Contains the floating point version of the cell number (never actually

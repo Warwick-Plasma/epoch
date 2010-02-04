@@ -1,7 +1,5 @@
 MODULE deck_species_block
 
-  USE shared_data
-  USE strings
   USE strings_advanced
   USE setup
 

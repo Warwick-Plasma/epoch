@@ -1,9 +1,7 @@
 MODULE deck
 
   ! Basic operations
-  USE shared_data
   USE strings
-  USE strings_advanced
   ! Deck internals
   USE deck_constant_block
   USE deck_deo_block

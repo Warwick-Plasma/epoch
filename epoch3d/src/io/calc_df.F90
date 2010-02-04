@@ -1,6 +1,5 @@
 MODULE calc_df
 
-  USE shared_data
   USE boundary
   USE shape_functions
 

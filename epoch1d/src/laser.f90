@@ -3,13 +3,9 @@ MODULE laser
   ! This module contributed by
   ! Dr. N. J. Sircombe
 
-  USE shared_data
-  USE partlist
-  USE shared_parser_data
   USE evaluator
-  USE shunt
   USE custom_laser
-  USE boundary
+
   IMPLICIT NONE
 
 CONTAINS

@@ -1,10 +1,8 @@
 MODULE evaluator_blocks
 
-  USE shared_parser_data
-  USE shared_data
-  USE strings
   USE custom_parser
   USE stack
+
   IMPLICIT NONE
 
 CONTAINS

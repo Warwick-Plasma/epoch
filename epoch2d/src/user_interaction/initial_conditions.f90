@@ -1,14 +1,5 @@
 MODULE ic_module
 
-  USE shared_data
-  USE strings
-  USE shunt
-  USE dist_fn
-  USE probes
-  USE iocontrol
-  USE laser
-  USE simple_io
-  USE helper
 
   IMPLICIT NONE
 

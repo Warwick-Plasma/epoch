@@ -1,10 +1,9 @@
 MODULE helper
 
-  USE shared_data
-  USE partlist
   USE boundary
-  USE strings
   USE shape_functions
+  USE strings
+
   IMPLICIT NONE
 
   SAVE

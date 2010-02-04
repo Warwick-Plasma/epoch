@@ -1,10 +1,8 @@
 MODULE dist_fn
 
-  USE shared_data
-  USE partlist
   USE output_cartesian
-  USE output
-  USE iocontrol
+  !USE mpi_subtype_control
+
   IMPLICIT NONE
 
 CONTAINS

@@ -1,9 +1,6 @@
 MODULE deck_constant_block
 
-  USE shared_data
-  USE shared_parser_data
   USE strings_advanced
-  USE strings
 
   IMPLICIT NONE
 

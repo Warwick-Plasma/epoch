@@ -1,7 +1,5 @@
 MODULE tokenizer_blocks
 
-  USE shared_parser_data
-  USE shared_data
   USE strings
 
   IMPLICIT NONE

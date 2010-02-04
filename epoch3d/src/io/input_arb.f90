@@ -1,9 +1,7 @@
 MODULE input_arb
 
-  USE shared_data
   USE iocommon
   USE input_functions
-  USE output
 
   IMPLICIT NONE
 

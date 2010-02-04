@@ -1,8 +1,6 @@
 MODULE evaluator
 
-  USE shared_parser_data
   USE stack
-  USE custom_parser
   USE evaluator_blocks
   USE shunt
 

@@ -1,8 +1,5 @@
 MODULE deck_deo_block
 
-  USE shared_data
-  USE shared_parser_data
-  USE strings_advanced
   USE strings
   USE shunt
 

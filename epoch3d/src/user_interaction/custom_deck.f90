@@ -1,11 +1,7 @@
 MODULE custom_deck
 
   USE shared_data
-  USE strings
-  USE strings_advanced
-  USE shunt
-  USE evaluator
-  USE shared_parser_data
+
   IMPLICIT NONE
 
 CONTAINS

@@ -1,6 +1,5 @@
 MODULE output_arb
 
-  USE shared_data
   USE iocommon
   USE output
 

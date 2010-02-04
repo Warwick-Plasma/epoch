@@ -1,6 +1,5 @@
 MODULE balance
 
-  USE shared_data
   USE partlist
   USE boundary
   USE mpi_subtype_control
@@ -29,6 +28,7 @@ CONTAINS
     INTEGER, DIMENSION(2) :: domain
 #ifdef PART_DEBUG
     TYPE(particle), POINTER :: current
+    INTEGER :: ispecies
 #endif
 
     ! On one processor do nothing to SAVE time

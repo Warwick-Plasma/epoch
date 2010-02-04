@@ -1,6 +1,5 @@
 MODULE deck_eio_dist_fn_block
 
-  USE shared_data
   USE strings_advanced
   USE dist_fn
 

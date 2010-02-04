@@ -1,6 +1,7 @@
 MODULE custom_laser
 
   USE shared_data
+
   IMPLICIT NONE
 
 CONTAINS

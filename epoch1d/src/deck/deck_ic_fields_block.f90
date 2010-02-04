@@ -1,11 +1,6 @@
 MODULE deck_ic_fields_block
 
-  USE shared_data
   USE strings_advanced
-  USE shared_parser_data
-  USE strings
-  USE shunt
-  USE evaluator
 
   IMPLICIT NONE
 

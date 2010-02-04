@@ -1,6 +1,5 @@
 MODULE simple_io
 
-  USE shared_data
   USE mpi_subtype_control
   USE boundary
 

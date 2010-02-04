@@ -15,7 +15,6 @@ PROGRAM pic
   ! University of Warwick, UK
   ! PSC written by Hartmut Ruhl
 
-  USE shared_data
   USE setup
   USE ic_module
 #ifdef NO_DECK
@@ -29,7 +28,6 @@ PROGRAM pic
   USE mpi_routines
   USE boundary
   USE balance
-  USE helper
   USE solve_gauss
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
   USE split_particle
@@ -37,7 +35,6 @@ PROGRAM pic
 #ifdef PART_IONISE
   USE ionise
 #endif
-  USE custom_deck
   USE window
 
   IMPLICIT NONE

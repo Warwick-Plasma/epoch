@@ -1,9 +1,5 @@
 MODULE split_particle
 
-  USE shared_data
-  USE partlist
-  USE helper
-  USE boundary
 
   IMPLICIT NONE
 

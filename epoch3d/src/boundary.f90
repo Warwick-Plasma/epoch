@@ -1,8 +1,7 @@
 MODULE boundary
 
-  USE shared_data
   USE partlist
-  USE shared_parser_data
+
   IMPLICIT NONE
 
 CONTAINS

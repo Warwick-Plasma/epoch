@@ -1,7 +1,7 @@
 MODULE current_smooth
 
-  USE shared_data
   USE shape_functions
+
   IMPLICIT NONE
 
 CONTAINS
@@ -23,6 +23,10 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: wk_array
     INTEGER :: ix, iy
+#ifdef HIGH_ORDER_SMOOTHING
+    INTEGER :: icyclex, icycley
+    REAL(num), DIMENSION(-2:2) :: weight_fn
+#endif
 
     ALLOCATE(wk_array(1:nx, 1:ny))
 #ifdef HIGH_ORDER_SMOOTHING

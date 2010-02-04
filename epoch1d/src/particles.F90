@@ -1,9 +1,8 @@
 MODULE particles
 
-  USE shared_data
   USE boundary
-  USE partlist
   USE shape_functions
+  !USE current_smooth
 
   IMPLICIT NONE
 

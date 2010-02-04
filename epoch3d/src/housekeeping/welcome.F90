@@ -1,6 +1,6 @@
 MODULE welcome
 
-  USE shared_data
+  !USE shared_data
   USE strings
 
   IMPLICIT NONE

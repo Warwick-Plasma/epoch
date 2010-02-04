@@ -1,11 +1,6 @@
 MODULE deck_ic_laser_block
 
-  USE shared_data
   USE strings_advanced
-  USE shared_parser_data
-  USE strings
-  USE shunt
-  USE evaluator
   USE laser
 
   IMPLICIT NONE

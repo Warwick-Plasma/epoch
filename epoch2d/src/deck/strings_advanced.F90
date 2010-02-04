@@ -1,8 +1,6 @@
 MODULE strings_advanced
 
-  USE strings
 
-  USE shared_parser_data
   USE shunt
   USE evaluator
 

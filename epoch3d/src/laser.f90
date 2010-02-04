@@ -1,12 +1,8 @@
 MODULE laser
 
-  USE shared_data
-  USE partlist
-  USE shared_parser_data
   USE evaluator
-  USE shunt
   USE custom_laser
-  USE boundary
+
   IMPLICIT NONE
 
 CONTAINS

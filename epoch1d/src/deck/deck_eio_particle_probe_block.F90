@@ -1,7 +1,6 @@
 MODULE deck_eio_particle_probe_block
 
   USE probes
-  USE shared_data
   USE strings_advanced
 
 #ifndef PARTICLE_PROBES
