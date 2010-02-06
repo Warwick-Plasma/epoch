@@ -53,6 +53,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: as_integer_simple, value, f
+
     READ(unit=str_in, fmt=*, iostat=f) value
     IF (f .NE. 0) err = IOR(err, c_err_bad_value)
     as_integer_simple = value
@@ -79,6 +80,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: as_direction
+
     as_direction = -1
 
     IF (str_cmp(str_in, "left")) as_direction = c_bd_left

@@ -149,9 +149,7 @@ PROGRAM pic
         (time .GE. t_end) .OR. halt) EXIT
     i = i + 1
     CALL set_dt
-    ! update e and b fields to the half timestep
     CALL update_eb_fields_half
-    ! push the particles
     CALL push_particles
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
     ! After this line, the particles can be accessed on a cell by cell basis
@@ -163,7 +161,6 @@ PROGRAM pic
 #endif
     CALL reattach_particles_to_mainlist
 #endif
-    ! update the electric and magnetic fields to the final values
     CALL update_eb_fields_final
 #ifdef PART_IONISE
     CALL ionise_particles

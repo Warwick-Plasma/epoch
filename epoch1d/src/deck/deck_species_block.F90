@@ -21,6 +21,7 @@ CONTAINS
 
     handle_species_deck = c_err_none
     IF (value .EQ. blank) RETURN
+
     handle_species_deck = c_err_unknown_element
 
     handled = .FALSE.
@@ -50,6 +51,7 @@ CONTAINS
       handle_species_deck = c_err_required_element_not_set
       RETURN
     ENDIF
+
     IF (handled) RETURN
 
     CALL split_off_int(element, part1, part2, handle_species_deck)
@@ -97,7 +99,7 @@ CONTAINS
     IF (str_cmp(part1, "npart")) THEN
       handle_species_deck = c_err_none
       particle_species(part2)%count = &
-            as_long_integer(value, handle_species_deck)
+          as_long_integer(value, handle_species_deck)
       RETURN
     ENDIF
 

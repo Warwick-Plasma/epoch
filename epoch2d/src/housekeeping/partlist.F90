@@ -421,8 +421,8 @@ CONTAINS
     test_packed_particles = .FALSE.
 
     IF (npart_in_data * nvar .NE. SIZE(data)) THEN
-      PRINT *, "Size of data array does not match specified on", &
-          rank, npart_in_data, SIZE(data)
+      PRINT *, "Size of data array does not match specified on", rank, &
+          npart_in_data, SIZE(data)
       RETURN
     ENDIF
     IF (partlist%count .NE. npart_in_data) THEN

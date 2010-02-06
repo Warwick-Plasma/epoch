@@ -106,9 +106,9 @@ deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o dist_fn.o iocontrol.o iterators.o \
   mpi_subtype_control.o output_cartesian.o output_particle.o probes.o
 dist_fn.o: dist_fn.F90 output_cartesian.o
-epoch1d.o: epoch1d.F90 balance.o boundary.o control.o deck.o diagnostics.o \
-  fields.o helper.o initial_conditions.o ionise.o mpi_routines.o particles.o \
-  setup.o solve_gauss.o split_particles.o welcome.o window.o
+epoch1d.o: epoch1d.F90 balance.o control.o deck.o diagnostics.o fields.o \
+  initial_conditions.o ionise.o mpi_routines.o particles.o setup.o \
+  solve_gauss.o split_particles.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.F90 boundary.o laser.o

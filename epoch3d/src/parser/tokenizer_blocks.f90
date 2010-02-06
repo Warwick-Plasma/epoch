@@ -155,6 +155,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER :: as_function
     INTEGER :: i
+
     as_function = c_prc_not_this_type
 
     IF (str_cmp(name, "sqrt")) as_function = c_func_sqrt

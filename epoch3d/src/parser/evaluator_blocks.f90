@@ -462,11 +462,11 @@ CONTAINS
       point = var_length_values(0)
 
       DO ipoint = 1, count-1
-        IF ( point .GE. var_length_values(ipoint*2-1) .AND. &
+        IF (point .GE. var_length_values(ipoint*2-1) .AND. &
             point .LE. var_length_values(ipoint*2+1)) THEN
-          val = (point-var_length_values(ipoint*2-1))/ &
-              (var_length_values(ipoint*2+1)-var_length_values(ipoint*2-1)) *  &
-              (var_length_values(ipoint*2+2) - var_length_values(ipoint*2)) +  &
+          val = (point-var_length_values(ipoint*2-1)) / &
+              (var_length_values(ipoint*2+1)-var_length_values(ipoint*2-1)) * &
+              (var_length_values(ipoint*2+2) - var_length_values(ipoint*2)) + &
               var_length_values(ipoint*2)
           done = .TRUE.
           CALL push_on_eval(val)

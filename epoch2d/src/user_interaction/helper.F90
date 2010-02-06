@@ -86,6 +86,7 @@ CONTAINS
 
     min_dt = 1000000.0_num
     k_max = 2.0_num * pi / MIN(dx, dy)
+
     ! Identify the plasma frequency (Bohm-Gross dispersion relation)
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
@@ -177,7 +178,7 @@ CONTAINS
     ENDDO
 
     npart_this_proc_new = &
-        density_total/density_average * REAL(npart_per_cell_average, num)
+        density_total / density_average * REAL(npart_per_cell_average, num)
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
@@ -185,13 +186,13 @@ CONTAINS
     DO ix = 1, nx
       DO iy = 1, ny
         ipart = 0
-        npart_per_cell = &
-            density(ix, iy)/density_average * REAL(npart_per_cell_average, num)
+        npart_per_cell = density(ix, iy) / density_average * &
+            REAL(npart_per_cell_average, num)
         DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-          ! Even if particles have per particle charge and mass, assume that
-          ! initially they all have the same charge and mass (user can easily
-          ! over_ride)
+          ! Even if particles have per particle charge and mass, assume
+          ! that initially they all have the same charge and mass (user
+          ! can easily over_ride)
           current%charge = species_list%charge
           current%mass = species_list%mass
 #endif
@@ -379,7 +380,7 @@ CONTAINS
 
 
 
-  !Subroutine to initialise a thermal particle distribution
+  ! Subroutine to initialise a thermal particle distribution
   SUBROUTINE setup_particle_temperature(temperature, direction, part_family, &
       drift, idum)
 
@@ -467,9 +468,11 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:,:), ALLOCATABLE :: density_map
 
-    ALLOCATE(density(-2:nx+3, -2:ny+3), density_map(-2:nx+3, -2:ny+3))
+    ALLOCATE(density(-2:nx+3, -2:ny+3))
+    ALLOCATE(density_map(-2:nx+3, -2:ny+3))
     density = 0.0_num
     density = density_in
+
     CALL field_bc(density)
 
     density_map = .FALSE.
@@ -490,14 +493,15 @@ CONTAINS
     CALL load_particles(part_family, density_map, idum)
     DEALLOCATE(density_map)
 
-    ALLOCATE(weight_fn(-2:nx+3, -2:ny+3), temp(-2:nx+3, -2:ny+3))
+    ALLOCATE(weight_fn(-2:nx+3, -2:ny+3))
+    ALLOCATE(temp(-2:nx+3, -2:ny+3))
     CALL MPI_BARRIER(comm, errcode)
     weight_fn = 0.0_num
     temp = 0.0_num
 
     partlist=>part_family%attached_list
-    ! If using per particle weighing then use the weight function to match
-    ! the uniform pseudoparticle density to the real particle density
+    ! If using per particle weighing then use the weight function to match the
+    ! uniform pseudoparticle density to the real particle density
     current=>partlist%head
     ipart = 0
     ! First loop converts number density into weight function
@@ -575,7 +579,7 @@ CONTAINS
       DO isuby = -sf_order, sf_order
         DO isubx = -sf_order, +sf_order
           weight_local = &
-              weight_local+gx(isubx)*gy(isuby)*&
+              weight_local + gx(isubx)*gy(isuby)* &
               weight_fn(cell_x+isubx, cell_y+isuby)
         ENDDO
       ENDDO

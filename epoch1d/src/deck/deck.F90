@@ -578,7 +578,7 @@ CONTAINS
             &will terminate."
         WRITE(40, *) "***ERROR*** value ", TRIM(value), " in element ", &
             &TRIM(element), " is invalid or could not be parsed. Code &
-            will terminate."
+            &will terminate."
         PRINT *, ""
         WRITE(40, *) ""
         errcode_deck = IOR(errcode_deck, c_err_terminate)

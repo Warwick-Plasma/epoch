@@ -36,11 +36,13 @@ CONTAINS
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
     WRITE(filename_desc, '("(''nfs:'', a, ''/'', i", i3.3, ".", i3.3, &
-        &"''.cfd'')")'), n_zeros, n_zeros
+        &", ''.cfd'')")'), n_zeros, n_zeros
     WRITE(filename, filename_desc) TRIM(data_dir), output_file
+
     IF (print_arrays) THEN
       ! Always dump the variables with the "Every" attribute
       code = c_io_always
+
       ! Only dump variables with the "FULL" attributre on full dump intervals
       IF (MOD(output_file, full_dump_every) .EQ. 0)  code = IOR(code, c_io_full)
       IF (MOD(output_file, restart_dump_every) .EQ. 0 .AND. &
@@ -48,16 +50,18 @@ CONTAINS
       IF (last_call .AND. force_final_to_be_restartable) &
           code = IOR(code, c_io_restartable)
 
-      npart_local = get_total_local_dumped_particles(&
-          IAND(code, c_io_restartable) .NE. 0)
+      npart_local = &
+          get_total_local_dumped_particles(IAND(code, c_io_restartable) .NE. 0)
+
       CALL MPI_ALLREDUCE(npart_local, npart_dump_global, 1, MPI_INTEGER8, &
           MPI_SUM, comm, errcode)
       CALL create_subtypes(IAND(code, c_io_restartable) .NE. 0)
+
       ALLOCATE(data(-2:nx+3, -2:ny+3, -2:nz+3))
+
       ! open the file
-      ! (filename, rank_of_current_process, MPI_COMMUNICATOR
-      ! (can be MPI_COMM_WORLD), MPI_FILE_MODE (passed straight to
-      ! MPI_FILE_OPEN))
+      ! (filename, rank_of_current_process, MPI_COMMUNICATOR (can be
+      ! MPI_COMM_WORLD), MPI_FILE_MODE (passed straight to MPI_FILE_OPEN))
       CALL cfd_open(filename, rank, comm, MPI_MODE_CREATE + MPI_MODE_WRONLY)
       ! Write the snapshot information
       ! If you prefer the VisIT cycles to display the dump number, change i
@@ -69,6 +73,7 @@ CONTAINS
               "Part_Grid", iterate_particles, 3, npart_local, &
               npart_dump_global, npart_per_it, c_particle_cartesian, &
               subtype_particle_var)
+
       ! Write the cartesian mesh
       ! (Mesh_Name, Mesh_Class, x_array, y_array, rank to write)
       IF (IAND(dumpmask(2), code) .NE. 0) THEN
@@ -169,7 +174,7 @@ CONTAINS
               "Particles", iterate_charge, npart_dump_global, n_part_per_it, &
               "Particles", "Part_Grid", subtype_particle_var)
       IF (IAND(dumpmask(19), code) .NE. 0) &
-          CALL cfd_write_nd_particle_variable_with_iterator_all("mass", &
+          CALL cfd_write_nd_particle_variable_with_iterator_all("Mass", &
               "Particles", iterate_mass, npart_dump_global, n_part_per_it, &
               "Particles", "Part_Grid", subtype_particle_var)
 
@@ -300,8 +305,8 @@ CONTAINS
 
       output_file = output_file + 1
       IF (rank .EQ. 0) THEN
-        WRITE(20, *) "Dumped data at", time, "at iteration", i, &
-            "for dump", output_file-1
+        WRITE(20, *) "Dumped data at", time, "at iteration", i, "for dump", &
+            output_file-1
         CALL FLUSH(20)
       ENDIF
 

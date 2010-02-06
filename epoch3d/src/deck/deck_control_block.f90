@@ -3,6 +3,7 @@ MODULE deck_control_block
   USE strings_advanced
 
   IMPLICIT NONE
+
   SAVE
   INTEGER, PARAMETER :: control_block_elements = 22
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
@@ -97,16 +98,20 @@ CONTAINS
 
     check_control_block = c_err_none
 
+    ! npart is not a required variable
+    control_block_done(4) = .TRUE.
+
     ! If not using external load then don't need a file
-    IF (IAND(ictype, c_ic_external) .EQ. 0) control_block_done(14) = .TRUE.
+    IF (IAND(ictype, c_ic_external) .EQ. 0) control_block_done(17) = .TRUE.
+
     ! If not using restart then don't need a restart number
-    IF (IAND(ictype, c_ic_restart)  .EQ. 0) control_block_done(15) = .TRUE.
+    IF (IAND(ictype, c_ic_restart)  .EQ. 0) control_block_done(18) = .TRUE.
+
+    ! The neutral background is still beta, so hide it if people don't want it
+    control_block_done(19) = .TRUE.
 
     ! Never need to set nproc so
     control_block_done(20:22) = .TRUE.
-
-    ! The neutral background is still beta, so hide it if people don't want it
-    control_block_done(16) = .TRUE.
 
     restart = IAND(ictype, c_ic_restart) .NE. 0
 

@@ -75,7 +75,8 @@ CONTAINS
     IF (str_cmp(name, "kev")) as_constant = c_const_kev
     IF (str_cmp(name, "mev")) as_constant = c_const_mev
     IF (str_cmp(name, "x"))  as_constant = c_const_x
-    IF (str_cmp(name, "lengthx")) as_constant = c_const_lx
+    IF (str_cmp(name, "lengthx") .OR. str_cmp(name, "length_x")) &
+        as_constant = c_const_lx
     IF (str_cmp(name, "dx")) as_constant = c_const_dx
     IF (str_cmp(name, "x_start")) as_constant = c_const_start_x
     IF (str_cmp(name, "y_start")) as_constant = c_const_start_y

@@ -1,6 +1,5 @@
 MODULE split_particle
 
-
   IMPLICIT NONE
 
   SAVE

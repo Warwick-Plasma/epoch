@@ -1,6 +1,5 @@
 MODULE ic_module
 
-
   IMPLICIT NONE
 
   PRIVATE

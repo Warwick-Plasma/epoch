@@ -84,8 +84,8 @@ CONTAINS
                 ranges(1:2,:), resolution(1:2), ispecies, restrictions, &
                 use_restrictions)
           ELSE
-            CALL general_3d_dist_fn(current%name, current%directions, &
-                ranges, resolution, ispecies, restrictions, use_restrictions)
+            CALL general_3d_dist_fn(current%name, current%directions, ranges, &
+                resolution, ispecies, restrictions, use_restrictions)
           ENDIF
           IF (current%store_ranges) current%ranges = ranges
         ENDDO
@@ -269,15 +269,15 @@ CONTAINS
     DO idim = 1, 3
       IF (.NOT. parallel(idim)) THEN
         ! If not parallel then this is a momentum DIMENSION
-        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, &
-            MPI_MIN, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, MPI_MIN, &
+            comm, errcode)
         RANGE(idim, 1) = temp_data
-        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, &
-            MPI_MAX, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, MPI_MAX, &
+            comm, errcode)
         RANGE(idim, 2) = temp_data
       ENDIF
-      ! Fix so that if distribution function is zero then it picks an
-      ! arbitrary scale in that direction
+      ! Fix so that if distribution function is zero then it picks an arbitrary
+      ! scale in that direction
       IF (RANGE(idim, 1) .EQ. RANGE(idim, 2)) THEN
         RANGE(idim, 1) = -1.0_num
         RANGE(idim, 2) = 1.0_num
@@ -309,7 +309,7 @@ CONTAINS
     ! Create grids
     DO idim = 1, 3
       IF (.NOT. parallel(idim)) dgrid(idim) = &
-          (RANGE(idim, 2)-RANGE(idim, 1))/REAL(resolution(idim)-1, num)
+          (RANGE(idim, 2) - RANGE(idim, 1)) / REAL(resolution(idim)-1, num)
     ENDDO
     ALLOCATE(grid1(0:global_resolution(1)), grid2(0:global_resolution(2)))
     ALLOCATE(grid3(0:global_resolution(3)))
@@ -355,14 +355,14 @@ CONTAINS
             current_data = particle_data(l_direction(idim))
           ENDIF
           cell(idim) = NINT((current_data-RANGE(idim, 1))/dgrid(idim))+1
-          IF (cell(idim) .LT. 1 .OR. &
-              cell(idim) .GT. resolution(idim)) use_this = .FALSE.
+          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
+              use_this = .FALSE.
         ENDDO
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
         IF (use_this) data(cell(1), cell(2), cell(3)) = &
-            data(cell(1), cell(2), cell(3))+part_weight ! * real_space_area
+            data(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
       ENDIF
       current=>current%next
     ENDDO
@@ -371,8 +371,8 @@ CONTAINS
       ALLOCATE(data2(1:resolution(1), 1:resolution(2), 1:resolution(3)))
       data2 = 0.0_num
       CALL MPI_ALLREDUCE(data, data2, &
-          resolution(1)*resolution(2)*resolution(3), mpireal, &
-          MPI_SUM, comm_new, errcode)
+          resolution(1)*resolution(2)*resolution(3), mpireal, MPI_SUM, &
+          comm_new, errcode)
       data = data2
       DEALLOCATE(data2)
     ENDIF
@@ -396,9 +396,9 @@ CONTAINS
         grid2(1:global_resolution(2))/conv(2), &
         grid3(1:global_resolution(3))/conv(3), 0)
 
-    CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), &
-        "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), &
-        "Grid", data, new_type)
+    CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
+        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
+        new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
     IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
@@ -453,6 +453,7 @@ CONTAINS
 
     use_x = .FALSE.
     use_y = .FALSE.
+
     need_reduce = .TRUE.
     color = 0
     global_resolution = resolution
@@ -579,19 +580,19 @@ CONTAINS
     DO idim = 1, 2
       IF (.NOT. parallel(idim)) THEN
         ! If not parallel then this is a momentum DIMENSION
-        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, &
-            MPI_MIN, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, MPI_MIN, &
+            comm, errcode)
         RANGE(idim, 1) = temp_data
-        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, &
-            MPI_MAX, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, MPI_MAX, &
+            comm, errcode)
         RANGE(idim, 2) = temp_data
 
         ! Calculate the maxmium range of a momentum direction
         IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv .AND. &
             .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
       ENDIF
-      ! Fix so that if distribution function is zero then it picks an
-      ! arbitrary scale in that direction
+      ! Fix so that if distribution function is zero then it picks an arbitrary
+      ! scale in that direction
       IF (RANGE(idim, 1) .EQ. RANGE(idim, 2)) THEN
         RANGE(idim, 1) = -1.0_num
         RANGE(idim, 2) = 1.0_num
@@ -664,11 +665,13 @@ CONTAINS
           IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
               use_this = .FALSE.
         ENDDO
+
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
         IF (use_this) &
-            data(cell(1), cell(2)) = data(cell(1), cell(2))+part_weight
+            data(cell(1), cell(2)) = data(cell(1), cell(2)) + &
+                part_weight
       ENDIF
       current=>current%next
     ENDDO
@@ -721,7 +724,7 @@ CONTAINS
     INTEGER :: create_3d_field_subtype
 
     ALLOCATE(lengths(1:n_local(2) * n_local(3)))
-    ALLOCATE(starts(1:n_local(2) * n_local(3)))
+    ALLOCATE(starts (1:n_local(2) * n_local(3)))
     lengths = n_local(1)
     ipoint = 0
     DO iz = 0, n_local(3)-1

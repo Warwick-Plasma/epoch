@@ -169,6 +169,7 @@ CONTAINS
         conv(idim) = length_x
         CYCLE
       ENDIF
+
       conv(idim) = c*m0
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
@@ -176,16 +177,19 @@ CONTAINS
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
+
       IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
         use_direction(idim, 2) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 2
       ENDIF
+
       IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
         use_direction(idim, 3) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 3
       ENDIF
+
       IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
         use_direction(idim, 4) = .TRUE.
         p_count(idim) = p_count(idim)+1
@@ -198,6 +202,7 @@ CONTAINS
     DO idim = 1, 3
       IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
     ENDDO
+
     ! Calculate ranges for directions where needed
     IF (calc_ranges) THEN
       DO idim = 1, 3
@@ -208,6 +213,7 @@ CONTAINS
       ENDDO
       current=>particle_species(species)%attached_list%head
       ind = 0
+
       DO WHILE(ASSOCIATED(current))
         particle_data(1) = current%part_pos
         particle_data(2:4) = current%part_p
@@ -227,7 +233,7 @@ CONTAINS
               IF (use_restrictions(idir) .AND. &
                   (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
                   particle_data(idir) .GT. restrictions(idir, 2))) &
-                  use_this = .FALSE.
+                      use_this = .FALSE.
             ENDDO
             IF (use_this) THEN
               IF (current_data .LT. RANGE(idim, 1)) &
@@ -253,8 +259,8 @@ CONTAINS
             comm, errcode)
         RANGE(idim, 2) = temp_data
       ENDIF
-      ! Fix so that if distribution function is zero then it picks an
-      ! arbitrary scale in that direction
+      ! Fix so that if distribution function is zero then it picks an arbitrary
+      ! scale in that direction
       IF (RANGE(idim, 1) .EQ. RANGE(idim, 2)) THEN
         RANGE(idim, 1) = -1.0_num
         RANGE(idim, 2) = 1.0_num
@@ -274,13 +280,12 @@ CONTAINS
     ! communicator
     comm_new = comm
 
-    new_type = create_3d_field_subtype(resolution, global_resolution, &
-        start_local)
+    new_type = &
+        create_3d_field_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, 3
-      IF (.NOT. parallel(idim)) &
-        dgrid(idim) = (RANGE(idim, 2)-RANGE(idim, 1)) / &
-            REAL(resolution(idim)-1, num)
+      IF (.NOT. parallel(idim)) dgrid(idim) = &
+          (RANGE(idim, 2) - RANGE(idim, 1)) / REAL(resolution(idim)-1, num)
     ENDDO
     ALLOCATE(grid1(0:global_resolution(1)), grid2(0:global_resolution(2)))
     ALLOCATE(grid3(0:global_resolution(3)))
@@ -325,13 +330,11 @@ CONTAINS
             current_data = particle_data(l_direction(idim))
           ENDIF
           cell(idim) = NINT((current_data-RANGE(idim, 1))/dgrid(idim))+1
-          IF (cell(idim) .LT. 1 .OR. &
-              cell(idim) .GT. resolution(idim)) use_this = .FALSE.
+          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
+              use_this = .FALSE.
         ENDDO
-        IF (use_this) &
-            data(cell(1), cell(2), cell(3)) = &
-                data(cell(1), cell(2), cell(3)) + &
-                current%weight * real_space_area
+        IF (use_this) data(cell(1), cell(2), cell(3)) = &
+            data(cell(1), cell(2), cell(3)) + current%weight * real_space_area
       ENDIF
       current=>current%next
     ENDDO
@@ -420,6 +423,7 @@ CONTAINS
     INTEGER :: ind
 
     use_x = .FALSE.
+
     need_reduce = .TRUE.
     color = 0
     global_resolution = resolution
@@ -448,6 +452,7 @@ CONTAINS
         conv(idim) = length_x
         CYCLE
       ENDIF
+
       conv(idim) = c*m0
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
@@ -455,16 +460,19 @@ CONTAINS
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
+
       IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
         use_direction(idim, 2) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 2
       ENDIF
+
       IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
         use_direction(idim, 3) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 3
       ENDIF
+
       IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
         use_direction(idim, 4) = .TRUE.
         p_count(idim) = p_count(idim)+1
@@ -506,7 +514,7 @@ CONTAINS
               IF (use_restrictions(idir) .AND. &
                   (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
                   particle_data(idir) .GT. restrictions(idir, 2))) &
-                  use_this = .FALSE.
+                      use_this = .FALSE.
             ENDDO
             IF (use_this) THEN
               IF (current_data .LT. RANGE(idim, 1)) &
@@ -536,8 +544,8 @@ CONTAINS
         IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv .AND. &
             .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
       ENDIF
-      ! Fix so that if distribution function is zero then it picks an
-      ! arbitrary scale in that direction
+      ! Fix so that if distribution function is zero then it picks an arbitrary
+      ! scale in that direction
       IF (RANGE(idim, 1) .EQ. RANGE(idim, 2)) THEN
         RANGE(idim, 1) = -1.0_num
         RANGE(idim, 2) = 1.0_num
@@ -553,8 +561,8 @@ CONTAINS
     ! In 1D don't need comm split since either fully parallel or fully reduced
     comm_new = comm
 
-    new_type = create_2d_field_subtype(resolution, global_resolution, &
-        start_local)
+    new_type = &
+        create_2d_field_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, 2
       IF (.NOT. parallel(idim)) &
@@ -598,8 +606,8 @@ CONTAINS
             current_data = particle_data(l_direction(idim))
           ENDIF
           cell(idim) = NINT((current_data-RANGE(idim, 1))/dgrid(idim))+1
-          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. &
-              resolution(idim)) use_this = .FALSE.
+          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
+              use_this = .FALSE.
         ENDDO
 
         IF (use_this) &
@@ -634,9 +642,9 @@ CONTAINS
         grid1(1:global_resolution(1))/conv(1), &
         grid2(1:global_resolution(2))/conv(2), 0)
 
-    CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), &
-        "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), &
-        "Grid", data, new_type)
+    CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
+        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
+        new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
 
     DEALLOCATE(data)
@@ -655,8 +663,8 @@ CONTAINS
     INTEGER :: ipoint, iy, iz
     INTEGER :: create_3d_field_subtype
 
-    ALLOCATE(lengths(1:n_local(2) * n_local(3)), &
-        starts(1:n_local(2) * n_local(3)))
+    ALLOCATE(lengths(1:n_local(2) * n_local(3)))
+    ALLOCATE(starts (1:n_local(2) * n_local(3)))
     lengths = n_local(1)
     ipoint = 0
     DO iz = 0, n_local(3)-1

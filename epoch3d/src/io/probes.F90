@@ -79,6 +79,7 @@ CONTAINS
             MPI_INTEGER8, MPI_SUM, comm, errcode)
         CALL MPI_ALLREDUCE(npart_probe_per_it_local, npart_probe_per_it, 1, &
             MPI_INTEGER8, MPI_MIN, comm, errcode)
+
         IF (npart_probe_global .GT. 0) THEN
           subtype_probe_particle_var = &
               create_particle_subtype(npart_probe_local)

@@ -36,11 +36,13 @@ CONTAINS
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
     WRITE(filename_desc, '("(''nfs:'', a, ''/'', i", i3.3, ".", i3.3, &
-        &"''.cfd'')")'), n_zeros, n_zeros
+        &", ''.cfd'')")'), n_zeros, n_zeros
     WRITE(filename, filename_desc) TRIM(data_dir), output_file
+
     IF (print_arrays) THEN
       ! Always dump the variables with the "Every" attribute
       code = c_io_always
+
       ! Only dump variables with the "FULL" attributre on full dump intervals
       IF (MOD(output_file, full_dump_every) .EQ. 0)  code = IOR(code, c_io_full)
       IF (MOD(output_file, restart_dump_every) .EQ. 0 .AND. &
@@ -54,6 +56,7 @@ CONTAINS
       CALL MPI_ALLREDUCE(npart_local, npart_dump_global, 1, MPI_INTEGER8, &
           MPI_SUM, comm, errcode)
       CALL create_subtypes(IAND(code, c_io_restartable) .NE. 0)
+
       ! If the code is doing a restart dump then tell the iterators that this
       ! is a restart dump
       IF (IAND(code, c_io_restartable) .NE. 0) THEN
@@ -63,14 +66,14 @@ CONTAINS
       ENDIF
 
       ALLOCATE(data(-2:nx+3, -2:ny+3))
+
       ! open the file
       ! (filename, rank_of_current_process, MPI_COMMUNICATOR (can be
       ! MPI_COMM_WORLD), MPI_FILE_MODE (passed straight to MPI_FILE_OPEN))
       CALL cfd_open(filename, rank, comm, MPI_MODE_CREATE + MPI_MODE_WRONLY)
       ! Write the snapshot information
-      ! If you prefer the VisIT cycles to display the dump number, change
-      ! i for output_file
-      ! (code_time, n_iterations, rank to write)
+      ! If you prefer the VisIT cycles to display the dump number, change i
+      ! for output_file (code_time, n_iterations, rank to write)
       CALL cfd_write_snapshot_data(time, i, 0)
 
       IF (IAND(dumpmask(1), code) .NE. 0) &
@@ -78,6 +81,7 @@ CONTAINS
               "Part_Grid", iterate_particles, 2, npart_local, &
               npart_dump_global, npart_per_it, c_particle_cartesian, &
               subtype_particle_var)
+
       ! Write the cartesian mesh
       ! (Mesh_Name, Mesh_Class, x_array, y_array, rank to write)
       IF (IAND(dumpmask(2), code) .NE. 0) THEN
@@ -91,6 +95,7 @@ CONTAINS
               x_global(1:nx_global), y_global(1:ny_global), 0)
         ENDIF
       ENDIF
+
       ! (Variable_Name, Variable_Class, array, global_npart, Mesh_Name,
       ! Mesh_Class, MPI_TYPE describing data distribution)
       IF (IAND(dumpmask(3), code) .NE. 0) &
@@ -201,6 +206,7 @@ CONTAINS
           ENDDO
         ENDIF
       ENDIF
+
       ! These are derived variables from the particles
       ! Since you only dump after several particle updates it's actually
       ! quicker to
@@ -221,6 +227,7 @@ CONTAINS
           ENDDO
         ENDIF
       ENDIF
+
       IF (IAND(dumpmask(22), code) .NE. 0) THEN
         CALL calc_charge_density(data, 0)
         IF (IAND(dumpmask(22), c_io_no_intrinsic) .EQ. 0) &
@@ -282,11 +289,13 @@ CONTAINS
       IF (IAND(dumpmask(26), code) .NE. 0) THEN
         CALL write_dist_fns(code)
       ENDIF
+
 #ifdef PARTICLE_PROBES
       IF (IAND(dumpmask(27), code) .NE. 0) THEN
         CALL write_probes(code)
       ENDIF
 #endif
+
       IF (IAND(dumpmask(28), code) .NE. 0) THEN
         CALL calc_temperature(data, 0)
         CALL cfd_write_2d_cartesian_variable_parallel("Temperature", &

@@ -1,7 +1,5 @@
 MODULE split_particle
 
-  USE helper
-
   IMPLICIT NONE
 
   SAVE

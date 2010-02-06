@@ -6,7 +6,7 @@ MODULE partlist
 
   SAVE
 
-  INTEGER :: nvar = 5
+  INTEGER :: nvar
 
 CONTAINS
 

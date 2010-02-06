@@ -446,7 +446,6 @@ CONTAINS
         current%processor = part_proc
 #endif
         IF (part_proc .NE. rank) THEN
-!!$          PRINT *, current%part_pos, part_proc
           CALL remove_particle_from_partlist(&
               particle_species(ispecies)%attached_list, current)
           CALL add_particle_to_partlist(pointers_send(part_proc), current)

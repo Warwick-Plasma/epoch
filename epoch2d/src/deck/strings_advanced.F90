@@ -31,6 +31,7 @@ CONTAINS
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF
+
     str_out = str_in(1:pos-1)
     int_out = as_integer_simple(str_in(pos:str_len), err)
 
@@ -61,6 +62,7 @@ CONTAINS
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF
+
     real1 = as_real_simple(TRIM(str_in(1:pos-1)), err)
     real2 = as_real_simple(TRIM(str_in(pos+1:str_len)), err)
 

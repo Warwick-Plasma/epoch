@@ -26,9 +26,8 @@ PROGRAM pic
   USE field
   USE particles
   USE mpi_routines
-  USE boundary
+  !USE boundary
   USE balance
-  USE helper
   USE solve_gauss
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
   USE split_particle

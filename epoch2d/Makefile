@@ -144,7 +144,7 @@ shared_data.o: shared_data.F90
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
 solve_gauss.o: solve_gauss.F90
-split_particles.o: split_particles.F90 helper.o
+split_particles.o: split_particles.F90
 stack.o: stack.f90 shared_data.o
 strings_advanced.o: strings_advanced.F90 evaluate.o shunt.o
 strings.o: strings.F90 shared_data.o

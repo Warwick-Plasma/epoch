@@ -1,6 +1,5 @@
 MODULE solve_gauss
 
-
   IMPLICIT NONE
 
 CONTAINS

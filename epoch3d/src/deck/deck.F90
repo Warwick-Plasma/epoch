@@ -520,8 +520,8 @@ CONTAINS
 
     IF (errcode_deck .EQ. c_err_none) THEN
       IF (rank .EQ. rank_check) &
-          WRITE(40, *), CHAR(9), "Element ", TRIM(ADJUSTL(element)), &
-              "=", TRIM(ADJUSTL(value)), " handled OK"
+          WRITE(40, *), CHAR(9), "Element ", TRIM(ADJUSTL(element)), "=", &
+              TRIM(ADJUSTL(value)), " handled OK"
       RETURN
     ENDIF
     ! Test for error conditions

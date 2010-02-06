@@ -35,9 +35,10 @@ CONTAINS
     CALL io_test(i, print_arrays, last_call)
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
-    WRITE(filename_desc, '("(''nfs:'', a, ''/'', i", &
-        & i3.3, ".", i3.3, ", ''.cfd'')")'), n_zeros, n_zeros
+    WRITE(filename_desc, '("(''nfs:'', a, ''/'', i", i3.3, ".", i3.3, &
+        &", ''.cfd'')")'), n_zeros, n_zeros
     WRITE(filename, filename_desc) TRIM(data_dir), output_file
+
     IF (print_arrays) THEN
       ! Always dump the variables with the "Every" attribute
       code = c_io_always
@@ -56,8 +57,8 @@ CONTAINS
           MPI_SUM, comm, errcode)
       CALL create_subtypes(IAND(code, c_io_restartable) .NE. 0)
 
-      ! If the code is doing a restart dump then tell the iterators that
-      ! this is a restart dump
+      ! If the code is doing a restart dump then tell the iterators that this
+      ! is a restart dump
       IF (IAND(code, c_io_restartable) .NE. 0) THEN
         iterator_settings%restart = .TRUE.
       ELSE
@@ -184,7 +185,7 @@ CONTAINS
               "Particles", iterate_charge, npart_dump_global, n_part_per_it, &
               "Particles", "Part_Grid", subtype_particle_var)
       IF (IAND(dumpmask(19), code) .NE. 0) &
-          CALL cfd_write_nd_particle_variable_with_iterator_all("mass", &
+          CALL cfd_write_nd_particle_variable_with_iterator_all("Mass", &
               "Particles", iterate_mass, npart_dump_global, n_part_per_it, &
               "Particles", "Part_Grid", subtype_particle_var)
 
@@ -275,12 +276,13 @@ CONTAINS
 #ifdef FIELD_DEBUG
       data = rank
       CALL cfd_write_1d_cartesian_variable_parallel("Rank", "Processor", &
-            dims, stagger, "Grid", "Grid", data(1:nx), subtype_field)
+          dims, stagger, "Grid", "Grid", data(1:nx), subtype_field)
 #endif
 
       IF (IAND(dumpmask(26), code) .NE. 0) THEN
         CALL write_dist_fns(code)
       ENDIF
+
 #ifdef PARTICLE_PROBES
       IF (IAND(dumpmask(27), code) .NE. 0) THEN
         CALL write_probes(code)
@@ -308,8 +310,8 @@ CONTAINS
 
       output_file = output_file + 1
       IF (rank .EQ. 0) THEN
-        WRITE(20, *) "Dumped data at", time, "at iteration", i, &
-            "for dump", output_file-1
+        WRITE(20, *) "Dumped data at", time, "at iteration", i, "for dump", &
+            output_file-1
         CALL FLUSH(20)
       ENDIF
 

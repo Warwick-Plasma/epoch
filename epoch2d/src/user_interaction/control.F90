@@ -127,8 +127,8 @@ CONTAINS
     dumpmask = c_io_never
 
     ! dumpmask is a bitmasked variable which determines whether or not to
-    ! dump a given variable at a given type of output dump. The possible
-    ! values are
+    ! dump a given variable at a given type of output dump.
+    ! The possible values are
     ! c_io_never - Default value, never dump
     ! c_io_always - dump at every output
     ! c_io_full - dump at only full outputs

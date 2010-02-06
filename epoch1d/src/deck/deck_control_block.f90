@@ -3,6 +3,7 @@ MODULE deck_control_block
   USE strings_advanced
 
   IMPLICIT NONE
+
   SAVE
   INTEGER, PARAMETER :: control_block_elements = 13
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
@@ -82,6 +83,7 @@ CONTAINS
 
     ! If not using external load then don't need a file
     IF (IAND(ictype, c_ic_external) .EQ. 0) control_block_done(11) = .TRUE.
+
     ! If not using restart then don't need a restart number
     IF (IAND(ictype, c_ic_restart)  .EQ. 0) control_block_done(12) = .TRUE.
 

@@ -76,8 +76,10 @@ CONTAINS
     IF (str_cmp(name, "mev")) as_constant = c_const_mev
     IF (str_cmp(name, "x"))  as_constant = c_const_x
     IF (str_cmp(name, "y"))  as_constant = c_const_y
-    IF (str_cmp(name, "lengthx")) as_constant = c_const_lx
-    IF (str_cmp(name, "lengthy")) as_constant = c_const_ly
+    IF (str_cmp(name, "lengthx") .OR. str_cmp(name, "length_x")) &
+        as_constant = c_const_lx
+    IF (str_cmp(name, "lengthy") .OR. str_cmp(name, "length_y")) &
+        as_constant = c_const_ly
     IF (str_cmp(name, "dx")) as_constant = c_const_dx
     IF (str_cmp(name, "dy")) as_constant = c_const_dy
     IF (str_cmp(name, "x_start")) as_constant = c_const_start_x
@@ -146,6 +148,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER :: as_function
     INTEGER :: i
+
     as_function = c_prc_not_this_type
 
     IF (str_cmp(name, "sqrt")) as_function = c_func_sqrt

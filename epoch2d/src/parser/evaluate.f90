@@ -24,6 +24,7 @@ CONTAINS
       IF (block%ptype .EQ. c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
       ENDIF
+
       IF (block%ptype .EQ. c_pt_operator) &
           CALL do_operator(block%data, ix, iy, err)
       IF (block%ptype .EQ. c_pt_constant) &

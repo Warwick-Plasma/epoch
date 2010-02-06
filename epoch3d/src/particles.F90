@@ -325,7 +325,7 @@ CONTAINS
 #endif
           ! Now advance to t+1.5dt to calculate current. This is detailed in
           ! the manual between pages 37 and 41. The version coded up looks
-          ! completely different to that in the manual, but is equivalent
+          ! completely different to that in the manual, but is equivalent.
           ! Use t+1.5 dt so that can update J to t+dt at 2nd order
           part_x = part_x + part_vx * dt/2.0_num
           part_y = part_y + part_vy * dt/2.0_num
@@ -361,6 +361,7 @@ CONTAINS
 
           ! Remember that due to CFL condition particle can never cross more
           ! than one gridcell in one timestep
+
           IF (cell_x3 .EQ. cell_x1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             xmin = -sf_order
@@ -453,9 +454,9 @@ CONTAINS
         DO WHILE(ASSOCIATED(current_probe))
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
-          probe_energy = (SQRT(1.0_num + &
-              (part_px**2 + part_py**2 + part_pz**2)/(part_m * c)**2) - &
-              1.0_num) * (part_m * c**2)
+          probe_energy = &
+              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) / &
+              (part_m * c)**2) - 1.0_num) * (part_m * c**2)
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN
@@ -483,10 +484,8 @@ CONTAINS
           ENDIF
           current_probe=> current_probe%next
         ENDDO
-
 #endif
         current=>current%next
-!!$
       ENDDO
     ENDDO
 

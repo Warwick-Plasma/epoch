@@ -249,9 +249,9 @@ CONTAINS
         IF (ICHAR(current(1:1)) .NE. 0) THEN
           ! Populate the block
           CALL load_block(current, BLOCK)
-!!$#ifdef PARSER_DEBUG
-!!$          block%text = TRIM(current)
-!!$#endif
+#ifdef PARSER_DEBUG
+          block%text = TRIM(current)
+#endif
           IF (block%ptype .EQ. c_pt_bad) THEN
             IF (rank .EQ. 0) THEN
               PRINT *, "Unable to parse block with text ", TRIM(current)
@@ -411,9 +411,9 @@ CONTAINS
         IF (ICHAR(current(1:1)) .NE. 0) THEN
           ! Populate the block
           CALL load_block(current, BLOCK)
-!!$#ifdef PARSER_DEBUG
-!!$          block%text = TRIM(current)
-!!$#endif
+#ifdef PARSER_DEBUG
+          block%text = TRIM(current)
+#endif
           PRINT *, block%ptype, TRIM(current)
           IF (block%ptype .EQ. c_pt_bad) THEN
             IF (rank .EQ. 0) THEN
@@ -462,9 +462,9 @@ CONTAINS
         PRINT *, "Type", token_list%data(i)%ptype
         PRINT *, "Data", token_list%data(i)%data
         PRINT *, "NumData", token_list%data(i)%numerical_data
-!!$#ifdef PARSER_DEBUG
-!!$        PRINT *, "Text :", TRIM(token_list%data(i)%text)
-!!$#endif
+#ifdef PARSER_DEBUG
+        PRINT *, "Text :", TRIM(token_list%data(i)%text)
+#endif
         PRINT *, "---------------"
       ENDDO
     ENDIF

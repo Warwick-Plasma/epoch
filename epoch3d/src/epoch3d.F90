@@ -32,12 +32,9 @@ PROGRAM pic
 
   IMPLICIT NONE
 
-  INTEGER :: i = 0
+  INTEGER :: ispecies, i = 0
   REAL(num) :: walltime_current
   LOGICAL :: halt = .FALSE.
-#ifdef PARTICLE_COUNT_UPDATE
-  INTEGER :: ispecies
-#endif
 
   CALL minimal_init ! setup.f90
   CALL setup_partlists ! partlist.f90
@@ -46,7 +43,6 @@ PROGRAM pic
   CALL register_objects ! custom.f90
 
   deck_state = c_ds_deck
-  ! Ask for output directory name on rank 0
   IF (rank .EQ. 0) THEN
     PRINT *, "Specify output directory"
     READ(*, *) data_dir

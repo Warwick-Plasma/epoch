@@ -93,11 +93,11 @@ CONTAINS
     IF (.NOT. io_block_done(6) .OR. .NOT. use_extended_io) &
         io_block_done(6:7) = .TRUE.
 
-    ! particle Positions
+    ! Particle Positions
     dumpmask(1:5) = IOR(dumpmask(1:5), c_io_restartable)
     ! Fields
     dumpmask(9:14) = IOR(dumpmask(9:14), c_io_restartable)
-    ! weight and species info
+    ! Weight and species info
     dumpmask(24:25) = IOR(dumpmask(24:25), c_io_restartable)
 
     DO index = 1, n_var_special

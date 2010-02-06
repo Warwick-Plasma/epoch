@@ -396,9 +396,9 @@ CONTAINS
         ENDIF
 #endif
 #ifdef PARTICLE_PROBES
-        ! Compare the current particle with the parameters of any probes in
-        ! the system. These particles are copied into a separate part of the
-        ! output file.
+        ! Compare the current particle with the parameters of any probes in the
+        ! system. These particles are copied into a separate part of the output
+        ! file.
 
         current_probe=>particle_species(ispecies)%attached_probes
 

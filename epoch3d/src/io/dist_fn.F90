@@ -84,8 +84,8 @@ CONTAINS
                 ranges(1:2,:), resolution(1:2), ispecies, restrictions, &
                 use_restrictions)
           ELSE
-            CALL general_3d_dist_fn(current%name, current%directions, &
-                ranges, resolution, ispecies, restrictions, use_restrictions)
+            CALL general_3d_dist_fn(current%name, current%directions, ranges, &
+                resolution, ispecies, restrictions, use_restrictions)
           ENDIF
           IF (current%store_ranges) current%ranges = ranges
         ENDDO
@@ -167,6 +167,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y, length_z)
         CYCLE
       ENDIF
+
       IF (direction(idim) .EQ. c_dir_y)  THEN
         use_y = .TRUE.
         resolution(idim) = ny
@@ -181,6 +182,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y, length_z)
         CYCLE
       ENDIF
+
       IF (direction(idim) .EQ. c_dir_z)  THEN
         use_z = .TRUE.
         resolution(idim) = ny
@@ -195,6 +197,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y, length_z)
         CYCLE
       ENDIF
+
       conv(idim) = c*m0
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
@@ -202,16 +205,19 @@ CONTAINS
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
+
       IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
         use_direction(idim, 4) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 4
       ENDIF
+
       IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
         use_direction(idim, 5) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 5
       ENDIF
+
       IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
         use_direction(idim, 6) = .TRUE.
         p_count(idim) = p_count(idim)+1
@@ -222,6 +228,7 @@ CONTAINS
     DO idim = 1, 3
       IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
     ENDDO
+
     ! Calculate ranges for directions where needed
     IF (calc_ranges) THEN
       DO idim = 1, 3
@@ -232,6 +239,7 @@ CONTAINS
       ENDDO
       current=>particle_species(species)%attached_list%head
       ind = 0
+
       DO WHILE(ASSOCIATED(current))
         particle_data(1:3) = current%part_pos
         particle_data(4:6) = current%part_p
@@ -308,13 +316,12 @@ CONTAINS
       comm_new = MPI_COMM_NULL
     ENDIF
 
-    new_type = create_3d_array_subtype(resolution, global_resolution, &
-        start_local)
+    new_type = &
+        create_3d_array_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, 3
-      IF (.NOT. parallel(idim)) &
-          dgrid(idim) = (RANGE(idim, 2) - &
-              RANGE(idim, 1))/REAL(resolution(idim)-1, num)
+      IF (.NOT. parallel(idim)) dgrid(idim) = &
+          (RANGE(idim, 2) - RANGE(idim, 1)) / REAL(resolution(idim)-1, num)
     ENDDO
     ALLOCATE(grid1(0:global_resolution(1)), grid2(0:global_resolution(2)))
     ALLOCATE(grid3(0:global_resolution(3)))
@@ -362,9 +369,8 @@ CONTAINS
           IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
               use_this = .FALSE.
         ENDDO
-        IF (use_this) &
-            data(cell(1), cell(2), cell(3)) = &
-                data(cell(1), cell(2), cell(3))+current%weight
+        IF (use_this) data(cell(1), cell(2), cell(3)) = &
+            data(cell(1), cell(2), cell(3)) + current%weight
       ENDIF
       current=>current%next
     ENDDO
@@ -373,8 +379,8 @@ CONTAINS
       ALLOCATE(data2(1:resolution(1), 1:resolution(2), 1:resolution(3)))
       data2 = 0.0_num
       CALL MPI_ALLREDUCE(data, data2, &
-          resolution(1)*resolution(2)*resolution(3), mpireal, &
-          MPI_SUM, comm_new, errcode)
+          resolution(1)*resolution(2)*resolution(3), mpireal, MPI_SUM, &
+          comm_new, errcode)
       data = data2
       DEALLOCATE(data2)
     ENDIF
@@ -394,8 +400,8 @@ CONTAINS
         grid3(1:global_resolution(3))/conv(3), 0)
 
     CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
-        global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
-        data, new_type)
+        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
+        new_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
     IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
@@ -463,7 +469,6 @@ CONTAINS
     l_direction = 0
 
     DO idim = 1, 2
-
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
@@ -479,6 +484,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y)
         CYCLE
       ENDIF
+
       IF (direction(idim) .EQ. c_dir_y)  THEN
         use_y = .TRUE.
         resolution(idim) = ny
@@ -494,6 +500,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y)
         CYCLE
       ENDIF
+
       IF (direction(idim) .EQ. c_dir_z)  THEN
         use_z = .TRUE.
         resolution(idim) = ny
@@ -508,6 +515,7 @@ CONTAINS
         conv(idim) = MAX(length_x, length_y, length_z)
         CYCLE
       ENDIF
+
       conv(idim) = c*m0
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
@@ -515,16 +523,19 @@ CONTAINS
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
+
       IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
         use_direction(idim, 4) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 4
       ENDIF
+
       IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
         use_direction(idim, 5) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 5
       ENDIF
+
       IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
         use_direction(idim, 6) = .TRUE.
         p_count(idim) = p_count(idim)+1
@@ -583,11 +594,11 @@ CONTAINS
     DO idim = 1, 2
       IF (.NOT. parallel(idim)) THEN
         ! If not parallel then this is a momentum DIMENSION
-        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, &
-            MPI_MIN, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 1), temp_data, 1, mpireal, MPI_MIN, &
+            comm, errcode)
         RANGE(idim, 1) = temp_data
-        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, &
-            MPI_MAX, comm, errcode)
+        CALL MPI_ALLREDUCE(RANGE(idim, 2), temp_data, 1, mpireal, MPI_MAX, &
+            comm, errcode)
         RANGE(idim, 2) = temp_data
 
         ! Calculate the maxmium range of a momentum direction
@@ -677,7 +688,8 @@ CONTAINS
         ENDDO
 
         IF (use_this) &
-            data(cell(1), cell(2)) = data(cell(1), cell(2))+current%weight
+            data(cell(1), cell(2)) = data(cell(1), cell(2)) + &
+                current%weight
       ENDIF
       current=>current%next
     ENDDO

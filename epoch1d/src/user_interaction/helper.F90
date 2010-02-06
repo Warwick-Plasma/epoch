@@ -36,12 +36,15 @@ CONTAINS
           part_family, initial_conditions(ispecies)%minrho, &
           initial_conditions(ispecies)%maxrho, idum)
 #endif
-      CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,1), &
-          c_dir_x, part_family, initial_conditions(ispecies)%drift, idum)
-      CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,2), &
-          c_dir_y, part_family, initial_conditions(ispecies)%drift, idum)
-      CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,3), &
-          c_dir_z, part_family, initial_conditions(ispecies)%drift, idum)
+      CALL setup_particle_temperature(&
+          initial_conditions(ispecies)%temp(:,1), c_dir_x, part_family, &
+          initial_conditions(ispecies)%drift, idum)
+      CALL setup_particle_temperature(&
+          initial_conditions(ispecies)%temp(:,2), c_dir_y, part_family, &
+          initial_conditions(ispecies)%drift, idum)
+      CALL setup_particle_temperature(&
+          initial_conditions(ispecies)%temp(:,3), c_dir_z, part_family, &
+          initial_conditions(ispecies)%drift, idum)
     ENDDO
 
   END SUBROUTINE auto_load
@@ -168,8 +171,8 @@ CONTAINS
       ENDIF
     ENDDO
 
-    npart_this_proc_new = density_total / density_average * &
-        REAL(npart_per_cell_average, num)
+    npart_this_proc_new = &
+        density_total / density_average * REAL(npart_per_cell_average, num)
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
@@ -180,9 +183,9 @@ CONTAINS
           REAL(npart_per_cell_average, num)
       DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-        ! Even if particles have per particle charge and mass, assume that
-        ! initially they all have the same charge and mass (user can easily
-        ! over_ride)
+        ! Even if particles have per particle charge and mass, assume
+        ! that initially they all have the same charge and mass (user
+        ! can easily over_ride)
         current%charge = species_list%charge
         current%mass = species_list%mass
 #endif
@@ -290,9 +293,9 @@ CONTAINS
         IF (load_list(ix)) THEN
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-            ! Even if particles have per particle charge and mass, assume that
-            ! initially they all have the same charge and mass (user can
-            ! easily over_ride)
+            ! Even if particles have per particle charge and mass, assume
+            ! that initially they all have the same charge and mass (user
+            ! can easily over_ride)
             current%charge = species_list%charge
             current%mass = species_list%mass
 #endif
@@ -347,11 +350,10 @@ CONTAINS
 
 
 
-!!$
-!!$  ! Subroutine to initialise a thermal particle distribution
-!!$  ! Assumes linear interpolation of temperature between cells
-  SUBROUTINE setup_particle_temperature(temperature, direction, &
-      part_family, drift, idum)
+  ! Subroutine to initialise a thermal particle distribution
+  ! Assumes linear interpolation of temperature between cells
+  SUBROUTINE setup_particle_temperature(temperature, direction, part_family, &
+      drift, idum)
 
     REAL(num), DIMENSION(-2:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
@@ -426,9 +428,11 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:), ALLOCATABLE :: density_map
 
-    ALLOCATE(density(-2:nx+3), density_map(-2:nx+3))
+    ALLOCATE(density(-2:nx+3))
+    ALLOCATE(density_map(-2:nx+3))
     density = 0.0_num
     density = density_in
+
     CALL field_bc(density)
 
     density_map = .FALSE.
@@ -446,14 +450,15 @@ CONTAINS
     CALL load_particles(part_family, density_map, idum)
     DEALLOCATE(density_map)
 
-    ALLOCATE(weight_fn(-2:nx+3), temp(-2:nx+3))
+    ALLOCATE(weight_fn(-2:nx+3))
+    ALLOCATE(temp(-2:nx+3))
     CALL MPI_BARRIER(comm, errcode)
     weight_fn = 0.0_num
     temp = 0.0_num
 
     partlist=>part_family%attached_list
-    ! If using per particle weighing then use the weight function to match
-    ! the uniform pseudoparticle density to the real particle density
+    ! If using per particle weighing then use the weight function to match the
+    ! uniform pseudoparticle density to the real particle density
     current=>partlist%head
     ipart = 0
     ! First loop converts number density into weight function
@@ -474,6 +479,7 @@ CONTAINS
       current=>current%next
       ipart = ipart+1
     ENDDO
+
     CALL processor_summation_bcs(weight_fn)
     IF (left  .EQ. MPI_PROC_NULL) weight_fn(0) = weight_fn(1)
     IF (right .EQ. MPI_PROC_NULL) weight_fn(nx) = weight_fn(nx-1)
@@ -486,6 +492,7 @@ CONTAINS
         weight_fn(ix) = 0.0_num
       ENDIF
     ENDDO
+
     IF (left  .EQ. MPI_PROC_NULL) weight_fn(0) = weight_fn(1)
     IF (right .EQ. MPI_PROC_NULL) weight_fn(nx) = weight_fn(nx-1)
     CALL field_zero_gradient(weight_fn, .TRUE.)
@@ -505,7 +512,8 @@ CONTAINS
 
       weight_local = 0.0_num
       DO isubx = -sf_order, +sf_order
-        weight_local = weight_local+gx(isubx)*weight_fn(cell_x+isubx)
+        weight_local = &
+            weight_local + gx(isubx)*weight_fn(cell_x+isubx)
       ENDDO
       current%weight = weight_local
       current=>current%next

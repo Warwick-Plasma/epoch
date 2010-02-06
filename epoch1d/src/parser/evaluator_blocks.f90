@@ -298,8 +298,7 @@ CONTAINS
     INTEGER :: count, ipoint
     LOGICAL :: done
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
-    REAL(num) :: point
-    REAL(num) :: t0
+    REAL(num) :: point, t0
 
     IF (opcode .EQ. c_func_abs) THEN
       CALL get_values(1, values)

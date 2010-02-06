@@ -55,7 +55,7 @@ CONTAINS
 
 
 
-  SUBROUTINE allocate_ic()
+  SUBROUTINE allocate_ic
 
     INTEGER :: ispecies
 
@@ -70,6 +70,7 @@ CONTAINS
       initial_conditions(ispecies)%maxrho = 0.0_num
       initial_conditions(ispecies)%drift = 0.0_num
     ENDDO
+
     ex = 0.0_num
     ey = 0.0_num
     ez = 0.0_num
@@ -82,7 +83,7 @@ CONTAINS
 
 
 
-  SUBROUTINE deallocate_ic()
+  SUBROUTINE deallocate_ic
 
     INTEGER :: ispecies
 
@@ -160,8 +161,8 @@ CONTAINS
       ENDDO
     ENDDO
 
-    npart_this_proc_new = density_total/density_average * &
-        REAL(npart_per_cell_average, num)
+    npart_this_proc_new = &
+        density_total / density_average * REAL(npart_per_cell_average, num)
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
@@ -170,13 +171,13 @@ CONTAINS
       DO ix = 1, nx
         DO iy = 1, ny
           ipart = 0
-          npart_per_cell = density(ix, iy, iz)/density_average * &
+          npart_per_cell = density(ix, iy, iz) / density_average * &
               REAL(npart_per_cell_average, num)
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
-            ! Even if particles have per particle charge and mass, assume that
-            ! initially they all have the same charge and mass (user can
-            ! easily over_ride)
+            ! Even if particles have per particle charge and mass, assume
+            ! that initially they all have the same charge and mass (user
+            ! can easily over_ride)
             current%charge = species_list%charge
             current%mass = species_list%mass
 #endif
@@ -242,9 +243,8 @@ CONTAINS
 
     npart_this_species = species_list%count
     IF (npart_this_species .LT. 0) THEN
-      IF (rank .EQ. 0) &
-          PRINT *, "Unable to continue, species ", TRIM(species_list%name), &
-              " has not had a number of particles set"
+      IF (rank .EQ. 0) PRINT *, "Unable to continue, species ", &
+          TRIM(species_list%name), " has not had a number of particles set"
       CALL MPI_ABORT(comm, errcode)
     ENDIF
     IF (npart_this_species .EQ. 0) RETURN
@@ -613,8 +613,8 @@ CONTAINS
       DO isubz = -sf_order, +sf_order
         DO isuby = -sf_order, +sf_order
           DO isubx = -sf_order, +sf_order
-            weight_local = weight_local+&
-                gx(isubx)*gy(isuby)*gz(isubz)*&
+            weight_local = &
+                weight_local + gx(isubx)*gy(isuby)*gz(isubz)* &
                 weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz)
           ENDDO
         ENDDO
