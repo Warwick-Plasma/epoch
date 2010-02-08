@@ -6,18 +6,18 @@ MODULE iocommon
 
   SAVE
 
-  INTEGER, PARAMETER :: TYPE_SCRIBBLE=-1, TYPE_ADDITIONAL=0, TYPE_MESH=1, TYPE_MESH_VARIABLE=2, TYPE_SNAPSHOT=3
-  INTEGER, PARAMETER :: TYPE_STITCHED_VECTOR=4, TYPE_STITCHED_MAGNITUDE=5, TYPE_CONSTANT=6, TYPE_ARB_DB=7
-  INTEGER, PARAMETER :: TYPE_INTEGERARRAY=8
+  INTEGER, PARAMETER :: c_type_scribble=-1, c_type_additional=0, c_type_mesh=1, c_type_mesh_variable=2, c_type_snapshot=3
+  INTEGER, PARAMETER :: c_type_stitched_vector=4, c_type_stitched_magnitude=5, c_type_constant=6, c_type_arb_db=7
+  INTEGER, PARAMETER :: c_type_integerarray=8
 
-  INTEGER, PARAMETER :: MESH_CARTESIAN=0, MESH_PARTICLE=1
-  INTEGER, PARAMETER :: PARTICLE_CARTESIAN=0, PARTICLE_POLAR=1 ,PARTICLE_CYLINDRICAL=2
-  INTEGER, PARAMETER :: VAR_CARTESIAN=0, VAR_PARTICLE=1
+  INTEGER, PARAMETER :: c_mesh_cartesian=0, c_mesh_particle=1
+  INTEGER, PARAMETER :: c_particle_cartesian=0, c_particle_polar=1 ,c_particle_cylindrical=2
+  INTEGER, PARAMETER :: c_var_cartesian=0, c_var_particle=1
 
-  !Dimension_Irrelevant is used where the dimensionality isn't needed, as with particle variables
+  !c_dimension_irrelevant is used where the dimensionality isn't needed, as with particle variables
   !Still keep dimensionality as a common quantity because other than this, they really are very
   !Alike
-  INTEGER, PARAMETER :: DIMENSION_IRRELEVANT=0, DIMENSION_1D=1, DIMENSION_2D=2, DIMENSION_3D=3
+  INTEGER, PARAMETER :: c_dimension_irrelevant=0, c_dimension_1d=1, c_dimension_2d=2, c_dimension_3d=3
 
   INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement
   INTEGER :: cfd_filehandle=-1,cfd_rank,cfd_comm,nblocks
@@ -43,7 +43,6 @@ MODULE iocommon
   LOGICAL :: cfd_writing, cfd_reading
 
   !current block info
-  INTEGER :: c_block_type
   INTEGER(KIND=8) :: block_length,block_md_length
   INTEGER(KIND=MPI_OFFSET_KIND) :: block_header_start,block_header_end 
 

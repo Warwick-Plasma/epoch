@@ -13,25 +13,25 @@ MODULE shunt
 CONTAINS
 
 
-  FUNCTION char_kind(char)
+  FUNCTION char_type(char)
 
     CHARACTER,INTENT(IN) :: char
-    INTEGER,PARAMETER :: NOPS=7
-    CHARACTER(len=NOPS) :: operators="+-\/*^"
-    INTEGER :: char_kind,i
+    INTEGER,PARAMETER :: c_nops=7
+    CHARACTER(len=c_nops) :: operators="+-\/*^"
+    INTEGER :: char_type,i
     LOGICAL :: unary
 
-    char_kind=CHAR_UNKNOWN
+    char_type=c_char_unknown
 
-    unary=(last_block_type .NE. PT_VARIABLE .AND. last_block_type .NE. PT_CONSTANT)
+    unary=(last_block_type .NE. c_pt_variable .AND. last_block_type .NE. c_pt_constant)
 
-    IF (char .EQ. " " .OR. ICHAR(char) .EQ. 32) char_kind=CHAR_SPACE
-    IF (char >= "A" .AND. char <= "z" .OR. char .EQ. "_") char_kind=CHAR_ALPHA
-    IF (char .EQ. "(" .OR. char .EQ. ")" .OR. char .EQ. ",") char_kind=CHAR_DELIMITER
-    DO i=1,NOPS
-       IF (char .EQ. operators(i:i)) char_kind=CHAR_OPCODE
+    IF (char .EQ. " " .OR. ICHAR(char) .EQ. 32) char_type=c_char_space
+    IF (char >= "A" .AND. char <= "z" .OR. char .EQ. "_") char_type=c_char_alpha
+    IF (char .EQ. "(" .OR. char .EQ. ")" .OR. char .EQ. ",") char_type=c_char_delimiter
+    DO i=1,c_nops
+       IF (char .EQ. operators(i:i)) char_type=c_char_opcode
     ENDDO
-  END FUNCTION char_kind
+  END FUNCTION char_type
 
   SUBROUTINE load_block(name,block)
 
@@ -40,13 +40,13 @@ CONTAINS
     INTEGER :: work
     REAL(num) :: value
 
-    block%ptype=PT_BAD
+    block%ptype=c_pt_bad
     block%data=0
     block%numerical_data=0.0_num
     work=0
 
     IF (len(TRIM(name)) .EQ. 0) THEN
-       block%ptype=PT_NULL
+       block%ptype=c_pt_null
        block%data=0
        block%numerical_data=0.0_num
        RETURN
@@ -55,7 +55,7 @@ CONTAINS
     work=as_constant(name)
     IF (work .NE. 0) THEN
        !block is a named constant
-       block%ptype=PT_CONSTANT
+       block%ptype=c_pt_constant
        block%data=work
        RETURN
     ENDIF
@@ -63,7 +63,7 @@ CONTAINS
     work=as_deferred_execution_object(name)
     IF (work .NE. 0) THEN
        !block is a deferred execution object
-       block%ptype=PT_DEFERRED_EXECUTION_OBJECT
+       block%ptype=c_pt_deferred_execution_object
        block%data=work
        RETURN
     ENDIF
@@ -71,7 +71,7 @@ CONTAINS
     work=as_operator(name)
     IF (work .NE. 0) THEN
        !block is an operator
-       block%ptype=PT_OPERATOR
+       block%ptype=c_pt_operator
        block%data=work
        RETURN
     ENDIF
@@ -79,7 +79,7 @@ CONTAINS
     work=as_function(name)
     IF (work .NE. 0) THEN
        !block is a function
-       block%ptype=PT_FUNCTION
+       block%ptype=c_pt_function
        block%data=work 
        RETURN
     ENDIF
@@ -87,22 +87,22 @@ CONTAINS
     work=as_parenthesis(name)
     IF (work .NE. 0) THEN
        !block is a parenthesis
-       block%ptype=PT_PARENTHESIS
+       block%ptype=c_pt_parenthesis
        block%data=work
        RETURN
     ENDIF
 
     IF (str_cmp(name,",")) THEN
-       block%ptype=PT_SEPARATOR
+       block%ptype=c_pt_separator
        block%data=0
        block%numerical_data=0.0_num
        RETURN
     ENDIF
 
     value=as_real_simple(name,work)
-    IF (IAND(work,ERR_BAD_VALUE) .EQ. 0) THEN
+    IF (IAND(work,c_err_bad_value) .EQ. 0) THEN
        !block is a simple variable
-       block%ptype=PT_VARIABLE
+       block%ptype=c_pt_variable
        block%data=0
        block%numerical_data=value
     ENDIF
@@ -116,11 +116,11 @@ CONTAINS
     as_parenthesis=0
 
     IF (str_cmp(name,"(")) THEN
-       as_parenthesis=PAREN_LEFT_BRACKET
+       as_parenthesis=c_paren_left_bracket
     ENDIF
 
     IF (str_cmp(name,")")) THEN
-       as_parenthesis=PAREN_RIGHT_BRACKET
+       as_parenthesis=c_paren_right_bracket
     ENDIF
   END FUNCTION as_parenthesis
 
@@ -213,15 +213,15 @@ CONTAINS
     current(:)=" "
     current(1:1)=expression(1:1)
     current_pointer=2
-    current_type=char_kind(expression(1:1))
+    current_type=char_type(expression(1:1))
 
-    err=ERR_NONE
+    err=c_err_none
 
-    last_block_type=PT_NULL
+    last_block_type=c_pt_null
 
     DO i=2,len(expression)
-       ptype=char_kind(expression(i:i))
-       IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. CHAR_DELIMITER)) THEN
+       ptype=char_type(expression(i:i))
+       IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. c_char_delimiter)) THEN
           current(current_pointer:current_pointer) = expression(i:i)
           current_pointer=current_pointer+1
        ELSE
@@ -231,40 +231,40 @@ CONTAINS
 #ifdef PARSER_DEBUG
              block%text=TRIM(current)
 #endif
-             IF (block%ptype .EQ. PT_BAD) THEN
+             IF (block%ptype .EQ. c_pt_bad) THEN
                 IF (rank .EQ. 0) THEN
                    PRINT *,"Unable to parse block with text ",TRIM(current)
                 ENDIF
-                err=ERR_BAD_VALUE
+                err=c_err_bad_value
                 RETURN
              ENDIF
-             IF (block%ptype .EQ. PT_DEFERRED_EXECUTION_OBJECT) THEN
+             IF (block%ptype .EQ. c_pt_deferred_execution_object) THEN
                 deo=deferred_objects(block%data)
                 DO ipoint=1,deo%execution_stream%stack_point
                    CALL push_to_stack(output,deo%execution_stream%data(ipoint))
                 ENDDO
              ENDIF
 
-             IF (block%ptype .NE. PT_PARENTHESIS .AND. block%ptype .NE. PT_NULL) THEN
+             IF (block%ptype .NE. c_pt_parenthesis .AND. block%ptype .NE. c_pt_null) THEN
                 last_block_type=block%ptype
              ENDIF
 
-             IF (block%ptype .EQ. PT_VARIABLE .OR. block%ptype .EQ. PT_CONSTANT) THEN
+             IF (block%ptype .EQ. c_pt_variable .OR. block%ptype .EQ. c_pt_constant) THEN
                 CALL push_to_stack(output,block)
              ENDIF
 
-             IF (block%ptype .EQ. PT_PARENTHESIS) THEN
-                IF (block%data .EQ. PAREN_LEFT_BRACKET) THEN
+             IF (block%ptype .EQ. c_pt_parenthesis) THEN
+                IF (block%data .EQ. c_paren_left_bracket) THEN
                    CALL push_to_stack(stack,block)
                 ELSE
                    DO
                       CALL stack_snoop(stack,block2,0)
-                      IF (block2%ptype .EQ. PT_PARENTHESIS .AND. block2%data .EQ. PAREN_LEFT_BRACKET) THEN
+                      IF (block2%ptype .EQ. c_pt_parenthesis .AND. block2%data .EQ. c_paren_left_bracket) THEN
                          CALL pop_to_null(stack)
                          !If stack isn't empty then check for function
                          IF (stack%stack_point .NE. 0) THEN
                             CALL stack_snoop(stack,block2,0)
-                            IF (block2%ptype .EQ. PT_FUNCTION) CALL pop_to_stack(stack,output)
+                            IF (block2%ptype .EQ. c_pt_function) CALL pop_to_stack(stack,output)
                          ENDIF
                          EXIT
                       ELSE
@@ -274,18 +274,18 @@ CONTAINS
                 ENDIF
              ENDIF
 
-             IF (block%ptype .EQ. PT_FUNCTION) THEN
+             IF (block%ptype .EQ. c_pt_function) THEN
                 !Just push functions straight onto the stack
                 CALL push_to_stack(stack,block)
              ENDIF
 
-             IF (block%ptype .EQ. PT_SEPARATOR) THEN
+             IF (block%ptype .EQ. c_pt_separator) THEN
                 DO
                    CALL stack_snoop(stack,block2,0)
-                   IF (block2%ptype .NE. PT_PARENTHESIS) THEN
+                   IF (block2%ptype .NE. c_pt_parenthesis) THEN
                       CALL pop_to_stack(stack,output)
                    ELSE
-                      IF (block2%data .NE. PAREN_LEFT_BRACKET) THEN
+                      IF (block2%data .NE. c_paren_left_bracket) THEN
                          PRINT *,"Bad function expression"
                          STOP
                       ENDIF
@@ -294,7 +294,7 @@ CONTAINS
                 ENDDO
              ENDIF
 
-             IF (block%ptype .EQ. PT_OPERATOR) THEN
+             IF (block%ptype .EQ. c_pt_operator) THEN
                 DO
                    IF(stack%stack_point .EQ. 0) THEN
                       !stack is empty, so just push operator onto stack and leave loop
@@ -303,12 +303,12 @@ CONTAINS
                    ENDIF
                    !stack is not empty so check precedence etc.
                    CALL stack_snoop(stack,block2,0)
-                   IF (block2%ptype .NE. PT_OPERATOR) THEN
+                   IF (block2%ptype .NE. c_pt_operator) THEN
                       !Previous block is not an operator so push current operator to stack and leave loop
                       CALL push_to_stack(stack,block)
                       EXIT
                    ELSE
-                      IF (opcode_assoc(block%data) .EQ. ASSOC_LA .OR. opcode_assoc(block%data) .EQ. ASSOC_A) THEN
+                      IF (opcode_assoc(block%data) .EQ. c_assoc_la .OR. opcode_assoc(block%data) .EQ. c_assoc_a) THEN
                          !Operator is full associative or left associative
                          IF (opcode_precedence(block%data) .LE. opcode_precedence(block2%data)) THEN
                             CALL pop_to_stack(stack,output)
@@ -361,19 +361,19 @@ CONTAINS
     TYPE(stack_element) :: block
 
     stack%stack_point=0
-    last_block_type=PT_NULL
+    last_block_type=c_pt_null
 
     current(:)=" "
     current(1:1)=expression(1:1)
     current_pointer=2
-    current_type=char_kind(expression(1:1))
+    current_type=char_type(expression(1:1))
 
-    err=ERR_NONE
+    err=c_err_none
 
 
     DO i=2,len(expression)
-       ptype=char_kind(expression(i:i))
-       IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. CHAR_DELIMITER)) THEN
+       ptype=char_type(expression(i:i))
+       IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. c_char_delimiter)) THEN
           current(current_pointer:current_pointer) = expression(i:i)
           current_pointer=current_pointer+1
        ELSE
@@ -384,24 +384,24 @@ CONTAINS
              block%text=TRIM(current)
 #endif
              PRINT *,block%ptype,TRIM(current)
-             IF (block%ptype .EQ. PT_BAD) THEN
+             IF (block%ptype .EQ. c_pt_bad) THEN
                 IF (rank .EQ. 0) THEN
                    PRINT *,"Unable to parse block with text ",TRIM(current)
                 ENDIF
-                err=ERR_BAD_VALUE
+                err=c_err_bad_value
                 RETURN
              ENDIF
-             IF (block%ptype .NE. PT_PARENTHESIS .AND. block%ptype .NE. PT_NULL) THEN
+             IF (block%ptype .NE. c_pt_parenthesis .AND. block%ptype .NE. c_pt_null) THEN
                 last_block_type=block%ptype
                 IF (debug_mode) PRINT *,"Setting",block%ptype,TRIM(current)
              ENDIF
-             IF (block%ptype .EQ. PT_DEFERRED_EXECUTION_OBJECT) THEN
+             IF (block%ptype .EQ. c_pt_deferred_execution_object) THEN
                 deo=deferred_objects(block%data)
                 DO ipoint=1,deo%execution_stream%stack_point
                    CALL push_to_stack(output,deo%execution_stream%data(ipoint))
                 ENDDO
                 CYCLE
-             ELSE IF (block%ptype .NE. PT_NULL) THEN
+             ELSE IF (block%ptype .NE. c_pt_null) THEN
                 CALL push_to_stack(output,block)
              ENDIF
           ENDIF

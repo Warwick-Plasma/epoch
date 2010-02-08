@@ -25,7 +25,7 @@ CONTAINS
     TYPE(primitive_stack) :: output
     INTEGER :: ix,iy,iz
 
-    handle_ic_laser_deck=ERR_NONE
+    handle_ic_laser_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF(str_cmp(element,"direction")) THEN
@@ -42,7 +42,7 @@ CONTAINS
           PRINT *,"***ERROR*** Cannot set laser properties before direction is set"
           WRITE(40,*) "***ERROR*** Cannot set laser properties before direction is set"
        ENDIF
-       handle_ic_laser_deck=ERR_REQUIRED_ELEMENT_NOT_SET
+       handle_ic_laser_deck=c_err_required_element_not_set
        RETURN
     ENDIF
 
@@ -58,19 +58,19 @@ CONTAINS
        working_laser%profile=0.0_num
        output%stack_point=0
        CALL tokenize(value,output,handle_ic_laser_deck)
-       IF (working_laser%direction .EQ. BD_LEFT .OR. working_laser%direction .EQ. BD_RIGHT) THEN
+       IF (working_laser%direction .EQ. c_bd_left .OR. working_laser%direction .EQ. c_bd_right) THEN
           DO iz=1,nz
              DO iy=1,ny
                 working_laser%profile(iy,iz) = evaluate_at_point(output,0,iy,iz,handle_ic_laser_deck)
              ENDDO
           ENDDO
-       ELSE IF (working_laser%direction .EQ. BD_UP .OR. working_laser%direction .EQ. BD_DOWN) THEN
+       ELSE IF (working_laser%direction .EQ. c_bd_up .OR. working_laser%direction .EQ. c_bd_down) THEN
           DO iz=1,nz
              DO ix=1,nx
                 working_laser%profile(ix,iz) = evaluate_at_point(output,ix,0,iz,handle_ic_laser_deck)
              ENDDO
           ENDDO
-       ELSE IF(working_laser%direction .EQ. BD_FRONT .OR. working_laser%direction .EQ. BD_BACK) THEN
+       ELSE IF(working_laser%direction .EQ. c_bd_front .OR. working_laser%direction .EQ. c_bd_back) THEN
           DO iy=1,ny
              DO ix=1,nx
                 working_laser%profile(ix,iy) = evaluate_at_point(output,ix,iy,0,handle_ic_laser_deck)
@@ -83,19 +83,19 @@ CONTAINS
        working_laser%phase=0.0_num
        output%stack_point=0
        CALL tokenize(value,output,handle_ic_laser_deck)
-       IF (working_laser%direction .EQ. BD_LEFT .OR. working_laser%direction .EQ. BD_RIGHT) THEN
+       IF (working_laser%direction .EQ. c_bd_left .OR. working_laser%direction .EQ. c_bd_right) THEN
           DO iz=1,nz
              DO iy=1,ny
                 working_laser%phase(iy,iz) = evaluate_at_point(output,0,iy,iz,handle_ic_laser_deck)
              ENDDO
           ENDDO
-       ELSE IF (working_laser%direction .EQ. BD_UP .OR. working_laser%direction .EQ. BD_DOWN) THEN
+       ELSE IF (working_laser%direction .EQ. c_bd_up .OR. working_laser%direction .EQ. c_bd_down) THEN
           DO iz=1,nz
              DO ix=1,nx
                 working_laser%phase(ix,iz) = evaluate_at_point(output,ix,0,iz,handle_ic_laser_deck)
              ENDDO
           ENDDO
-       ELSE IF(working_laser%direction .EQ. BD_FRONT .OR. working_laser%direction .EQ. BD_BACK) THEN
+       ELSE IF(working_laser%direction .EQ. c_bd_front .OR. working_laser%direction .EQ. c_bd_back) THEN
           DO iy=1,ny
              DO ix=1,nx
                 working_laser%phase(ix,iy) = evaluate_at_point(output,ix,iy,0,handle_ic_laser_deck)
@@ -129,7 +129,7 @@ CONTAINS
        working_laser%id=as_integer(value,handle_ic_laser_deck)
        RETURN
     ENDIF
-    handle_ic_laser_deck=ERR_UNKNOWN_ELEMENT
+    handle_ic_laser_deck=c_err_unknown_element
 
   END FUNCTION handle_ic_laser_deck
 
@@ -138,7 +138,7 @@ CONTAINS
     INTEGER :: check_ic_laser_block
 
     !Should do error checking but can't be bothered at the moment
-    check_ic_laser_block=ERR_NONE
+    check_ic_laser_block=c_err_none
 
   END FUNCTION check_ic_laser_block
 

@@ -1,6 +1,6 @@
 MODULE multigrid
 
-  USE MPI
+  USE mpi
 
   IMPLICIT NONE
 

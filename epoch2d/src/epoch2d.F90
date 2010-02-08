@@ -46,7 +46,7 @@ PROGRAM pic
   CALL mpi_minimal_init !mpi_routines.f90
   CALL welcome_message !welcome.f90
   CALL register_objects !custom.f90
-  deck_state = DS_DECK
+  deck_state = c_ds_deck
   IF (rank .EQ. 0) THEN
      PRINT *,"Specify output directory"
      READ(*,*) data_dir
@@ -70,35 +70,35 @@ PROGRAM pic
 
   !If the user has specified extended IO options then read the file
   IF (use_extended_io) THEN
-     deck_state = DS_EIO
+     deck_state = c_ds_eio
      CALL read_deck(TRIM(extended_io_file),.TRUE.)
   ENDIF
 
   !restart flag is set
-  IF (IAND(ictype,IC_RESTART) .NE. 0) THEN
+  IF (IAND(ictype,c_ic_restart) .NE. 0) THEN
      CALL restart_data    !restart from data in file SAVE.data          
      IF (rank .EQ. 0) PRINT *,"Load from restart dump OK"
      output_file=restart_snapshot
   ELSE
      !Using autoloader
-     IF (IOR(ictype,IC_AUTOLOAD) .NE. 0) THEN
+     IF (IOR(ictype,c_ic_autoload) .NE. 0) THEN
         CALL allocate_ic
      ENDIF
      !Early internal initialisation
-     IF (IAND(ictype,IC_EARLY_INTERNAL) .NE. 0) THEN
+     IF (IAND(ictype,c_ic_early_internal) .NE. 0) THEN
         CALL ic_early  !define initial profiles
      ENDIF
      !External initialisation
-     IF (IAND(ictype,IC_EXTERNAL) .NE. 0) THEN
-        deck_state=DS_IC
+     IF (IAND(ictype,c_ic_external) .NE. 0) THEN
+        deck_state=c_ds_ic
         CALL read_deck(icfile%value,.TRUE.)
      ENDIF
      !Late internal initialisation
-     IF (IAND(ictype,IC_LATE_INTERNAL) .NE. 0) THEN
+     IF (IAND(ictype,c_ic_late_internal) .NE. 0) THEN
         CALL ic_late    !define initial profiles
      ENDIF
      !auto_load particles
-     IF (IOR(ictype,IC_AUTOLOAD) .NE. 0) THEN
+     IF (IOR(ictype,c_ic_autoload) .NE. 0) THEN
         CALL auto_load
         CALL deallocate_ic
      ENDIF
@@ -110,7 +110,7 @@ PROGRAM pic
   IF (.NOT. neutral_background) CALL do_gauss
   CALL balance_workload(.TRUE.)
 
-  IF (IAND(ictype,IC_MANUAL) .NE. 0) THEN
+  IF (IAND(ictype,c_ic_manual) .NE. 0) THEN
      CALL manual_load
      CALL distribute_particles
      !.TRUE. to over_ride balance fraction check

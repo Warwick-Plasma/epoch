@@ -81,7 +81,7 @@ CONTAINS
     INTEGER :: handle_block
     INTEGER :: part2,val
 
-    handle_block=ERR_UNKNOWN_BLOCK
+    handle_block=c_err_unknown_block
     !Constants can be defined in any deck state, so put them here
     IF (str_cmp(block_name,"constant")) THEN
        handle_block=handle_constant_deck(block_element,block_value)
@@ -91,7 +91,7 @@ CONTAINS
        handle_block=handle_deo_deck(block_element,block_value)
        RETURN
     ENDIF
-    IF (deck_state .EQ. DS_DECK) THEN
+    IF (deck_state .EQ. c_ds_deck) THEN
        !Test for known blocks
        IF (str_cmp(block_name,"control"))  THEN
           handle_block=handle_control_deck(block_element,block_value)
@@ -113,7 +113,7 @@ CONTAINS
           handle_block=handle_window_deck(block_element,block_value)
           RETURN
        ENDIF
-    ELSE IF (deck_state .EQ. DS_IC) THEN
+    ELSE IF (deck_state .EQ. c_ds_ic) THEN
        !Initial conditions blocks go here
        IF (str_cmp(block_name,"fields")) THEN
           handle_block=handle_ic_fields_deck(block_element,block_value)
@@ -127,9 +127,9 @@ CONTAINS
           handle_block=handle_ic_laser_deck(block_element,block_value)
           RETURN
        ENDIF
-       val=ERR_NONE
+       val=c_err_none
        CALL split_off_int(block_name,part1,part2,val)
-       IF (val .EQ. ERR_NONE) THEN
+       IF (val .EQ. c_err_none) THEN
           IF (str_cmp(part1,"species")) THEN
              handle_block=handle_ic_species_deck(part2,block_element,block_value)
              RETURN
@@ -139,7 +139,7 @@ CONTAINS
              RETURN
           ENDIF
        ENDIF
-    ELSE IF (deck_state .EQ. DS_EIO) THEN
+    ELSE IF (deck_state .EQ. c_ds_eio) THEN
        IF (str_cmp(block_name,"dist_fn")) THEN
           handle_block=handle_eio_dist_fn_deck(block_element,block_value)
           RETURN
@@ -149,7 +149,7 @@ CONTAINS
           handle_block=handle_probe_deck(block_element,block_value)
           RETURN
 #else
-          handle_block=ERR_PP_OPTIONS_WRONG
+          handle_block=c_err_pp_options_wrong
           extended_error_string="-DPARTICLE_PROBES"
           RETURN
 #endif
@@ -172,25 +172,25 @@ CONTAINS
 
     problem_found=.FALSE.
 
-    errcode_deck=ERR_NONE
+    errcode_deck=c_err_none
 
-    IF (deck_state .EQ. DS_DECK) THEN
+    IF (deck_state .EQ. c_ds_deck) THEN
        errcode_deck=IOR(errcode_deck,check_control_block())
        errcode_deck=IOR(errcode_deck,check_boundary_block())
        errcode_deck=IOR(errcode_deck,check_species_block())
        errcode_deck=IOR(errcode_deck,check_io_block())
        errcode_deck=IOR(errcode_deck,check_window_block())
        errcode_deck=IOR(errcode_deck,check_custom_blocks())
-    ELSE IF (deck_state .EQ. DS_IC) THEN
+    ELSE IF (deck_state .EQ. c_ds_ic) THEN
        errcode_deck=IOR(errcode_deck,check_ic_fields_block())
        errcode_deck=IOR(errcode_deck,check_ic_species_block())
     ENDIF
     errcode_deck=IOR(errcode_deck,check_custom_blocks())
 
-    problem_found =(IAND(errcode_deck,ERR_MISSING_ELEMENTS) .NE. 0) 
+    problem_found =(IAND(errcode_deck,c_err_missing_elements) .NE. 0) 
 
     IF (problem_found) THEN
-       errcode_deck=IOR(errcode_deck,ERR_TERMINATE)
+       errcode_deck=IOR(errcode_deck,c_err_terminate)
        IF (rank .EQ. 0) THEN
           PRINT *,""
           PRINT *,"Not all required elements of input deck specified. Please fix input deck and rerun code"
@@ -199,11 +199,11 @@ CONTAINS
        ENDIF
     ELSE
        IF (rank .EQ. 0) THEN
-          IF (deck_state .EQ. DS_DECK) THEN
+          IF (deck_state .EQ. c_ds_deck) THEN
              PRINT *,"Input deck complete and valid. Attempting to set up equilibrium"
              PRINT *,""
              WRITE(40,*) "Input deck complete and valid."
-          ELSE IF (deck_state .EQ. DS_IC) THEN
+          ELSE IF (deck_state .EQ. c_ds_ic) THEN
              PRINT *,"Initial conditions complete and valid. Attempting to load particles"
              PRINT *,""
              WRITE(40,*) "Initial conditions complete and valid."
@@ -257,7 +257,7 @@ CONTAINS
     LOGICAL :: white_space_over
 
     !No error yet
-    errcode_deck=ERR_NONE
+    errcode_deck=c_err_none
     !Characteristic string which represents a "blank" string
     blank="BLANKBLANK"
 
@@ -269,11 +269,11 @@ CONTAINS
     !deck_state tells the code whether it's parsing the normal input deck 
     !Or the initial conditions. You can add more states if you want.
     !Just search for deck_state
-    IF (deck_state .EQ. DS_DECK) THEN
+    IF (deck_state .EQ. c_ds_deck) THEN
        status_filename=TRIM(ADJUSTL(data_dir))// '/' // "deck.status"
-    ELSE IF (deck_state .EQ. DS_IC) THEN
+    ELSE IF (deck_state .EQ. c_ds_ic) THEN
        status_filename=TRIM(ADJUSTL(data_dir))// '/' // "ic.status"
-    ELSE IF(deck_state .EQ. DS_EIO) THEN
+    ELSE IF(deck_state .EQ. c_ds_eio) THEN
        status_filename=TRIM(ADJUSTL(data_dir))// '/' // "eio.status"
     ENDIF
 
@@ -305,7 +305,7 @@ CONTAINS
        !Use non-advancing IO to pop characters off the deck file one at a time
        !Use basic token parsing to split into two substrings across an "=" or ":" symbol
        DO
-          errcode_deck=ERR_NONE
+          errcode_deck=c_err_none
           !Read a character
           !When you reach an EOL character iostat returns -2
           !When you reach an EOF iostat returns -1
@@ -352,12 +352,12 @@ CONTAINS
              CLOSE(lun)
              EXIT
           ENDIF
-          terminate=terminate .OR. IAND(errcode_deck,ERR_TERMINATE) .NE. 0
+          terminate=terminate .OR. IAND(errcode_deck,c_err_terminate) .NE. 0
           IF (terminate) EXIT
        ENDDO
     ELSE
        DO
-          errcode_deck=ERR_NONE
+          errcode_deck=c_err_none
           CALL MPI_BCAST(f,1,MPI_INTEGER,0,MPI_COMM_WORLD,errcode)
           IF (f .EQ. 0) EXIT
           CALL MPI_BCAST(deck_values(1)%value,string_length,MPI_CHARACTER,0,MPI_COMM_WORLD,errcode)
@@ -365,7 +365,7 @@ CONTAINS
           CALL handle_deck_element(deck_values(1)%value,deck_values(2)%value,errcode_deck)
           deck_values(1)%value=""
           deck_values(2)%value=""
-          terminate=terminate .OR. IAND(errcode_deck,ERR_TERMINATE) .NE. 0
+          terminate=terminate .OR. IAND(errcode_deck,c_err_terminate) .NE. 0
           IF (terminate) EXIT
        ENDDO
     ENDIF
@@ -378,7 +378,7 @@ CONTAINS
 
     !Don't check compulsory blocks if going to bomb anyway, just stinks up the output file
     IF (.NOT. terminate .AND. first_call) CALL check_compulsory_blocks(errcode_deck)
-    terminate=terminate .OR. IAND(errcode_deck,ERR_TERMINATE) .NE. 0
+    terminate=terminate .OR. IAND(errcode_deck,c_err_terminate) .NE. 0
     !Fatal error, cause code to bomb
     IF (terminate .AND. rank .EQ. 0) THEN
        PRINT *,""
@@ -407,15 +407,15 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: element
     CHARACTER(*),INTENT(IN) :: value
     INTEGER,INTENT(INOUT) :: errcode_deck
-    INTEGER :: state,rankcheck
+    INTEGER :: state,rank_check
     INTEGER, SAVE :: err_count
 
-    rankcheck=0
+    rank_check=0
     state=0
 
     IF (str_cmp(element,"import")) THEN
        invalid_block=.TRUE.
-       IF (rank .EQ. rankcheck) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*),""
           WRITE(40,*),"Importing ",TRIM(ADJUSTL(value)), " file"
           WRITE(40,*),""
@@ -426,27 +426,27 @@ CONTAINS
 
     IF (str_cmp(element,"begin")) THEN
        errcode_deck=handle_block(value,blank,blank)
-       invalid_block=IAND(errcode_deck,ERR_UNKNOWN_BLOCK) .NE. 0
+       invalid_block=IAND(errcode_deck,c_err_unknown_block) .NE. 0
        IF(invalid_block) THEN
-          IF (rank .EQ. rankcheck) THEN
+          IF (rank .EQ. rank_check) THEN
              PRINT *,char(9),"Unknown block ",TRIM(value)," in input deck, ignoring"
           ENDIF
        ENDIF
        CALL start_block(value)
        err_count=0
        current_block_name=value
-       IF (rank .EQ. rankcheck) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*),"Beginning ", TRIM(ADJUSTL(value)), " block"
           WRITE(40,*),""
        ENDIF
-       !Reset errcode_deck here because reporting ERR_UNKNOWN_ELEMENT is OK
-       errcode_deck=ERR_NONE
+       !Reset errcode_deck here because reporting c_err_unknown_element is OK
+       errcode_deck=c_err_none
        RETURN
     ENDIF
     IF (str_cmp(element,"end")) THEN
        CALL end_block(current_block_name)
        invalid_block=.TRUE.
-       IF (rank .EQ. rankcheck) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*),""
           WRITE(40,*),"Ending ",TRIM(ADJUSTL(value)), " block"
           WRITE(40,*),""
@@ -466,14 +466,14 @@ CONTAINS
        RETURN
     ENDIF
 
-    IF (errcode_deck==ERR_NONE) THEN
-       IF (rank .EQ. rankcheck) WRITE(40,*),char(9),"Element ", TRIM(ADJUSTL(element))," = ",TRIM(ADJUSTL(value)), " handled OK"
+    IF (errcode_deck==c_err_none) THEN
+       IF (rank .EQ. rank_check) WRITE(40,*),char(9),"Element ", TRIM(ADJUSTL(element))," = ",TRIM(ADJUSTL(value)), " handled OK"
        RETURN
     ENDIF
     !Test for error conditions
     !If an error is fatal then set terminate to .TRUE.
-    IF (IAND(errcode_deck,ERR_UNKNOWN_ELEMENT) /= 0) THEN
-       IF (rank .EQ. rankcheck) THEN
+    IF (IAND(errcode_deck,c_err_unknown_element) /= 0) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*) ""
           PRINT *,""
           PRINT *,"***WARNING*** Unrecognised element ",TRIM(element), " in input deck. Code will continue to run, but behaviour is undefined"
@@ -482,8 +482,8 @@ CONTAINS
           WRITE(40,*) ""
        ENDIF
     ENDIF
-    IF (IAND(errcode_deck,ERR_PRESET_ELEMENT) /= 0) THEN
-       IF (rank .EQ. rankcheck) THEN
+    IF (IAND(errcode_deck,c_err_preset_element) /= 0) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*) ""
           PRINT *,"***WARNING*** element ",TRIM(element), " is set multiple times in this deck. Code will continue using first value in deck"
           WRITE(40,*) "***WARNING*** element ",TRIM(element), " is set multiple times in this deck. Code will continue using first value in deck"
@@ -491,8 +491,8 @@ CONTAINS
           WRITE(40,*) ""
        ENDIF
     ENDIF
-    IF (IAND(errcode_deck, ERR_PRESET_ELEMENT_USE_LATER) /= 0) THEN
-       IF (rank .EQ. rankcheck) THEN
+    IF (IAND(errcode_deck, c_err_preset_element_use_later) /= 0) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*) ""
           PRINT *,""
           PRINT *,"***WARNING*** element ",TRIM(element), " is set multiple times in this deck. Code will continue using last value in deck"
@@ -501,19 +501,19 @@ CONTAINS
           WRITE(40,*) ""
        ENDIF
     ENDIF
-    IF (IAND(errcode_deck, ERR_BAD_VALUE) /= 0) THEN
-       IF (rank .EQ. rankcheck) THEN
+    IF (IAND(errcode_deck, c_err_bad_value) /= 0) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*) ""
           PRINT *,""
           PRINT *,"***ERROR*** value ",TRIM(value)," in element ",TRIM(element)," is invalid or could not be parsed. Code will terminate."
           WRITE(40,*) "***ERROR*** value ",TRIM(value)," in element ",TRIM(element)," is invalid or could not be parsed. Code will terminate."
           PRINT *,""
           WRITE(40,*) ""
-          errcode_deck=IOR(errcode_deck,ERR_TERMINATE)
+          errcode_deck=IOR(errcode_deck,c_err_terminate)
        ENDIF
     ENDIF
 !!$    IF (IAND(errcode_deck, ERR_BAD_VALUE_NO_TERMINATE) /= 0) THEN
-!!$       IF (rank .EQ. rankcheck) THEN
+!!$       IF (rank .EQ. rank_check) THEN
 !!$          WRITE(40,*) ""
 !!$          PRINT *,""
 !!$          PRINT *,"***ERROR*** value ",TRIM(value)," in non essential element ",TRIM(element)," is invalid or could not be parsed. Code will continue but behaviour is undefined."
@@ -522,19 +522,19 @@ CONTAINS
 !!$          WRITE(40,*) ""
 !!$       ENDIF
 !!$    ENDIF
-    IF (IAND(errcode_deck, ERR_REQUIRED_ELEMENT_NOT_SET) /= 0) THEN
-       IF (rank .EQ. rankcheck) THEN
+    IF (IAND(errcode_deck, c_err_required_element_not_set) /= 0) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*) ""
           PRINT *,""
           PRINT *,"***ERROR*** value ",TRIM(value)," in element ",TRIM(element)," cannot be set because a prerequisite element, ", TRIM(extended_error_string),",has not been set. Code will terminate"
           WRITE(40,*) "***ERROR*** value ",TRIM(value)," in element ",TRIM(element)," cannot be set because a prerequisite element, ", TRIM(extended_error_string),",has not been set. Code will terminate"
           PRINT *,""
           WRITE(40,*) ""
-          errcode_deck=IOR(errcode_deck,ERR_TERMINATE)
+          errcode_deck=IOR(errcode_deck,c_err_terminate)
        ENDIF
     ENDIF
-    IF (IAND(errcode_deck , ERR_PP_OPTIONS_WRONG) /= 0) THEN
-       IF (rank .EQ. rankcheck) THEN
+    IF (IAND(errcode_deck , c_err_pp_options_wrong) /= 0) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*) ""
           PRINT *,""
           PRINT *,"***ERROR*** The element ",TRIM(element)," of block ",TRIM(current_block_name)," cannot be set because the code has not been compiled with the correct preprocessor options.",&
@@ -545,15 +545,15 @@ CONTAINS
           WRITE(40,*) ""
        ENDIF
     ENDIF
-    IF (IAND(errcode_deck , ERR_OTHER) /= 0) THEN
-       IF (rank .EQ. rankcheck) THEN
+    IF (IAND(errcode_deck , c_err_other) /= 0) THEN
+       IF (rank .EQ. rank_check) THEN
           WRITE(40,*) ""
           PRINT *,""
           PRINT *,"***ERROR*** You have managed to find an impossible situation in this code. Good for you. Just because of that, code will terminate."
           WRITE(40,*) "***ERROR*** You have managed to find an impossible situation in this code. Good for you. Just because of that, code will terminate."
           PRINT *,""
           WRITE(40,*) ""
-          errcode_deck=IOR(errcode_deck,ERR_TERMINATE)
+          errcode_deck=IOR(errcode_deck,c_err_terminate)
        ENDIF
     ENDIF
 

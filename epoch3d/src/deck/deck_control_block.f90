@@ -18,7 +18,7 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: element,value
     INTEGER :: handle_control_deck
     INTEGER :: loop,elementselected
-    handle_control_deck=ERR_UNKNOWN_ELEMENT
+    handle_control_deck=c_err_unknown_element
 
     elementselected=0
 
@@ -31,11 +31,11 @@ CONTAINS
 
     IF (elementselected .EQ. 0) RETURN
     IF (control_block_done(elementselected)) THEN
-       handle_control_deck=ERR_PRESET_ELEMENT
+       handle_control_deck=c_err_preset_element
        RETURN
     ENDIF
     control_block_done(elementselected)=.TRUE.
-    handle_control_deck=ERR_NONE
+    handle_control_deck=c_err_none
 
     SELECT CASE (elementselected)
     CASE(1)
@@ -89,12 +89,12 @@ CONTAINS
   FUNCTION check_control_block()
     INTEGER :: check_control_block,index
 
-    check_control_block=ERR_NONE
+    check_control_block=c_err_none
 
     !If not using external load then don't need a file
-    IF (IAND(ictype,IC_EXTERNAL) .EQ. 0) control_block_done(14)=.TRUE.
+    IF (IAND(ictype,c_ic_external) .EQ. 0) control_block_done(14)=.TRUE.
     !If not using restart then don't need a restart number
-    IF (IAND(ictype,IC_RESTART)  .EQ. 0) control_block_done(15)=.TRUE.
+    IF (IAND(ictype,c_ic_restart)  .EQ. 0) control_block_done(15)=.TRUE.
 
     !Never need to set nproc so
     control_block_done(20:22)=.TRUE.
@@ -102,7 +102,7 @@ CONTAINS
     !The neutral background is still beta, so hide it if people don't want it
     control_block_done(16)=.TRUE.
 
-    restart=IAND(ictype,IC_RESTART) .NE. 0
+    restart=IAND(ictype,c_ic_restart) .NE. 0
 
     DO index=1,control_block_elements
        IF (.NOT. control_block_done(index)) THEN
@@ -113,7 +113,7 @@ CONTAINS
              WRITE(40,*) "***ERROR***"
              WRITE(40,*) "Required control block element ",TRIM(ADJUSTL(control_block_name(index))), " absent. Please create this entry in the input deck"             
           ENDIF
-          check_control_block=ERR_MISSING_ELEMENTS
+          check_control_block=c_err_missing_elements
        ENDIF
     ENDDO
   END FUNCTION check_control_block

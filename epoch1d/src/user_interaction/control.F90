@@ -36,12 +36,12 @@ CONTAINS
 
     !Initial conditions
     !Bitmask, combine with IOR (or addition)
-    !IC_EARLY_INTERNAL
-    !IC_EXTERNAL
-    !IC_LATE_INTERNAL
-    !IC_MANUAL
-    !IC_RESTART
-    ictype=IC_EARLY_INTERNAL
+    !c_ic_early_internal
+    !c_ic_external
+    !c_ic_late_internal
+    !c_ic_manual
+    !c_ic_restart
+    ictype=c_ic_early_internal
 !!$    icfile%value="ic.deck"
     restart_snapshot=0
     
@@ -52,8 +52,8 @@ CONTAINS
     move_window=.TRUE.
     window_v_x=2.8e8_num
     window_start_time=7.0e-13_num
-    xbc_left_after_move=BC_SIMPLE_OUTFLOW
-    xbc_right_after_move=BC_SIMPLE_OUTFLOW
+    xbc_left_after_move=c_bc_simple_outflow
+    xbc_right_after_move=c_bc_simple_outflow
 
 
   END SUBROUTINE setup_control_block
@@ -63,13 +63,13 @@ CONTAINS
   SUBROUTINE setup_boundaries_block
 
     !Boundary values, can be
-    !BC_OTHER - Reflecting boundary, easily changed
-    !BC_PERIODIC - Periodic boundary
-    !BC_SIMPLE_OUTFLOW - Outflow particle and wave boundary
-    !BC_SIMPLE_LASER - Outflow particle and wave boundary with superimposed
+    !c_bc_other - Reflecting boundary, easily changed
+    !c_bc_periodic - Periodic boundary
+    !c_bc_simple_outflow - Outflow particle and wave boundary
+    !c_bc_simple_laser - Outflow particle and wave boundary with superimposed
     ! inward propagating laser
-    xbc_left=BC_SIMPLE_LASER
-    xbc_right=BC_SIMPLE_OUTFLOW
+    xbc_left=c_bc_simple_laser
+    xbc_right=c_bc_simple_outflow
 
   END SUBROUTINE setup_boundaries_block
   !****************************************************
@@ -108,14 +108,14 @@ CONTAINS
     use_offset_grid=.TRUE.
     use_extended_io=.FALSE.
 
-    dumpmask=IO_NEVER
+    dumpmask=c_io_never
 
     !dumpmask is a bitmasked variable which determines whether or not to
     !dump a given variable at a given type of output dump. The possible values are
-    !IO_NEVER - Default value, never dump
-    !IO_ALWAYS - dump at every output
-    !IO_FULL - dump at only full outputs
-    !IO_SPECIES - When ORed with another value, tells the code to output 
+    !c_io_never - Default value, never dump
+    !c_io_always - dump at every output
+    !c_io_full - dump at only full outputs
+    !c_io_species - When ORed with another value, tells the code to output 
     !             some additional per species information
 
     !The numbers for each variable are
@@ -139,9 +139,9 @@ CONTAINS
     !18  - particle charge
     !19  - particle mass
     !20  - Kinetic energy (on grid)
-    !21  - mass density (Can have IO_SPECIES)
-    !22  - charge density (Can have IO_SPECIES)
-    !23  - number density (Can have IO_SPECIES)
+    !21  - mass density (Can have c_io_species)
+    !22  - charge density (Can have c_io_species)
+    !23  - number density (Can have c_io_species)
     !24  - particle weighting value
     !25  - particle species information
     !26  - Distribution functions
@@ -149,14 +149,14 @@ CONTAINS
     !28  - temperature
     !29  - Ejected particles
 
-    dumpmask(2)=IO_ALWAYS
-    dumpmask(9:10)=IO_ALWAYS
-    dumpmask(14)=IO_ALWAYS
-    dumpmask(15:16)=IO_ALWAYS
-    dumpmask(20)=IO_ALWAYS
-    dumpmask(21)=IOR(IO_ALWAYS,IO_SPECIES)
-    dumpmask(22)=IO_ALWAYS
-    dumpmask(23)=IOR(IO_ALWAYS,IO_SPECIES)
+    dumpmask(2)=c_io_always
+    dumpmask(9:10)=c_io_always
+    dumpmask(14)=c_io_always
+    dumpmask(15:16)=c_io_always
+    dumpmask(20)=c_io_always
+    dumpmask(21)=IOR(c_io_always,c_io_species)
+    dumpmask(22)=c_io_always
+    dumpmask(23)=IOR(c_io_always,c_io_species)
 
   END SUBROUTINE  setup_output_block
 

@@ -106,7 +106,7 @@ CONTAINS
     LOGICAL :: use_x,need_reduce
     INTEGER,DIMENSION(3) :: start_local,global_resolution
     INTEGER :: color
-    INTEGER :: comm_new, type_new
+    INTEGER :: comm_new, new_type
 
     LOGICAL,DIMENSION(3,4) :: use_direction
     LOGICAL,DIMENSION(3) :: calc_mod
@@ -143,7 +143,7 @@ CONTAINS
 
 
     DO idim=1,3
-       IF (direction(idim) .EQ. DIR_X) THEN
+       IF (direction(idim) .EQ. c_dir_x) THEN
           use_x=.TRUE.
           resolution(idim) = nx
           range(idim,1)=x_start_local
@@ -164,17 +164,17 @@ CONTAINS
           calc_range(idim) = .TRUE.
           calc_ranges=.TRUE.
        ENDIF
-       IF (IAND(direction(idim),DIR_PX) .NE. 0) THEN
+       IF (IAND(direction(idim),c_dir_px) .NE. 0) THEN
           use_direction(idim,2)=.TRUE.
           p_count(idim)=p_count(idim)+1
           l_direction(idim)=2
        ENDIF
-       IF (IAND(direction(idim),DIR_PY) .NE. 0) THEN
+       IF (IAND(direction(idim),c_dir_py) .NE. 0) THEN
           use_direction(idim,3)=.TRUE.
           p_count(idim)=p_count(idim)+1
           l_direction(idim)=3
        ENDIF
-       IF (IAND(direction(idim),DIR_PZ) .NE. 0) THEN
+       IF (IAND(direction(idim),c_dir_pz) .NE. 0) THEN
           use_direction(idim,4)=.TRUE.
           p_count(idim)=p_count(idim)+1
           l_direction(idim)=4
@@ -228,7 +228,7 @@ CONTAINS
     max_p_conv=-10.0_num
     DO idim=1,3
        IF (.NOT. parallel(idim)) THEN
-          !If not parallel then this is a momentum dimension
+          !If not parallel then this is a momentum DIMENSION
           CALL MPI_ALLREDUCE(range(idim,1),temp_data,1,mpireal,MPI_MIN,comm,errcode)
           range(idim,1)=temp_data
           CALL MPI_ALLREDUCE(range(idim,2),temp_data,1,mpireal,MPI_MAX,comm,errcode)
@@ -252,7 +252,7 @@ CONTAINS
     !In 1D, either fully parallel or fully reduced, no need for split communicator
     comm_new=comm
 
-    type_new=create_3d_field_subtype(resolution,global_resolution,start_local)
+    new_type=create_3d_field_subtype(resolution,global_resolution,start_local)
     !Create grids
     DO idim=1,3
        IF (.NOT. parallel(idim)) dgrid(idim)=(range(idim,2)-range(idim,1))/REAL(resolution(idim)-1,num)
@@ -328,8 +328,8 @@ CONTAINS
          ,grid3(1:global_resolution(3))/conv(3),0)
 
     CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name),"dist_fn",global_resolution,stagger,TRIM(norm_grid_name),"Grid"&
-         ,data,type_new)
-    CALL mpi_type_free(type_new,errcode)
+         ,data,new_type)
+    CALL MPI_TYPE_FREE(new_type,errcode)
 
     DEALLOCATE(data)
     DEALLOCATE(grid1,grid2,grid3)
@@ -358,7 +358,7 @@ CONTAINS
     LOGICAL :: use_x,need_reduce
     INTEGER,DIMENSION(2) :: start_local,global_resolution
     INTEGER :: color
-    INTEGER :: comm_new, type_new
+    INTEGER :: comm_new, new_type
 
     LOGICAL,DIMENSION(2,4) :: use_direction
     LOGICAL,DIMENSION(2) :: calc_mod
@@ -394,7 +394,7 @@ CONTAINS
 
 
     DO idim=1,2
-       IF (direction(idim) .EQ. DIR_X) THEN
+       IF (direction(idim) .EQ. c_dir_x) THEN
           use_x=.TRUE.
           resolution(idim) = nx
           range(idim,1)=x_start_local
@@ -416,17 +416,17 @@ CONTAINS
           calc_range(idim) = .TRUE.
           calc_ranges=.TRUE.
        ENDIF
-       IF (IAND(direction(idim),DIR_PX) .NE. 0) THEN
+       IF (IAND(direction(idim),c_dir_px) .NE. 0) THEN
           use_direction(idim,2)=.TRUE.
           p_count(idim)=p_count(idim)+1
           l_direction(idim)=2
        ENDIF
-       IF (IAND(direction(idim),DIR_PY) .NE. 0) THEN
+       IF (IAND(direction(idim),c_dir_py) .NE. 0) THEN
           use_direction(idim,3)=.TRUE.
           p_count(idim)=p_count(idim)+1
           l_direction(idim)=3
        ENDIF
-       IF (IAND(direction(idim),DIR_PZ) .NE. 0) THEN
+       IF (IAND(direction(idim),c_dir_pz) .NE. 0) THEN
           use_direction(idim,4)=.TRUE.
           p_count(idim)=p_count(idim)+1
           l_direction(idim)=4
@@ -480,7 +480,7 @@ CONTAINS
     max_p_conv=-10.0_num
     DO idim=1,2
        IF (.NOT. parallel(idim)) THEN
-          !If not parallel then this is a momentum dimension
+          !If not parallel then this is a momentum DIMENSION
           CALL MPI_ALLREDUCE(range(idim,1),temp_data,1,mpireal,MPI_MIN,comm,errcode)
           range(idim,1)=temp_data
           CALL MPI_ALLREDUCE(range(idim,2),temp_data,1,mpireal,MPI_MAX,comm,errcode)
@@ -506,7 +506,7 @@ CONTAINS
     !In 1D don't need comm split since either fully parallel or fully reduced
     comm_new=comm
 
-    type_new=create_2d_field_subtype(resolution,global_resolution,start_local)
+    new_type=create_2d_field_subtype(resolution,global_resolution,start_local)
     !Create grids
     DO idim=1,2
        IF (.NOT. parallel(idim)) dgrid(idim)=(range(idim,2)-range(idim,1))/REAL(resolution(idim)-1,num)
@@ -577,8 +577,8 @@ CONTAINS
          ,0)
 
     CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name),"dist_fn",global_resolution,stagger,TRIM(norm_grid_name),"Grid"&
-         ,data,type_new)
-    CALL mpi_type_free(type_new,errcode)
+         ,data,new_type)
+    CALL MPI_TYPE_FREE(new_type,errcode)
 
     DEALLOCATE(data)
     DEALLOCATE(grid1,grid2)

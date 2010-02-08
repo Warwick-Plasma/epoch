@@ -42,7 +42,7 @@ CONTAINS
     periods=.TRUE.
     reorder=.TRUE.
 
-    IF (xbc_left .NE. BC_PERIODIC .OR. xbc_right .NE. BC_PERIODIC) periods(1)=.FALSE.
+    IF (xbc_left .NE. c_bc_periodic .OR. xbc_right .NE. c_bc_periodic) periods(1)=.FALSE.
 
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods,  &
          reorder, comm, errcode)
@@ -120,7 +120,7 @@ CONTAINS
        particle_species(ispecies)%id=ispecies
        npart_this_species=particle_species(ispecies)%count
        NULLIFY(particle_species(ispecies)%attached_list%next,particle_species(ispecies)%attached_list%prev)
-       IF (restart .OR. IOR(ictype,IC_AUTOLOAD) .NE. 0) THEN
+       IF (restart .OR. IOR(ictype,c_ic_autoload) .NE. 0) THEN
           CALL create_empty_partlist(particle_species(ispecies)%attached_list)
        ELSE
           CALL create_allocated_partlist(particle_species(ispecies)%attached_list, npart_this_species)

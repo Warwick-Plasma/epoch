@@ -20,7 +20,7 @@ CONTAINS
     INTEGER :: handle_custom_block
 
     !The following line must always be present
-    handle_custom_block=ERR_UNKNOWN_BLOCK
+    handle_custom_block=c_err_unknown_block
 
   END FUNCTION handle_custom_block
 
@@ -31,10 +31,10 @@ CONTAINS
 
     !This subroutine is to allow you to force the code to bomb out if an essential element
     !Of the input deck is missing. If you either don't want to check ,are not extending the
-    !Input deck, or all elements are set then set "check_custom_blocks = ERR_NONE". Otherwise
-    !Set the return value to "check_custom_blocks = ERR_MISSING_ELEMENTS".
+    !Input deck, or all elements are set then set "check_custom_blocks = c_err_none". Otherwise
+    !Set the return value to "check_custom_blocks = c_err_missing_elements".
 
-    check_custom_blocks=ERR_NONE
+    check_custom_blocks=c_err_none
 
   END FUNCTION check_custom_blocks
 

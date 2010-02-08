@@ -2,7 +2,7 @@ MODULE input_cartesian
 
   USE shared_data
   USE iocommon
-  USE inputfunctions
+  USE input_functions
 
   IMPLICIT NONE
 

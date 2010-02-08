@@ -154,11 +154,11 @@ CONTAINS
 
 
     CALL bfield_bcs(.FALSE.)
-    IF(xbc_left == BC_SIMPLE_LASER .AND. left == MPI_PROC_NULL) CALL laser_bcs_left
-    IF(xbc_left == BC_SIMPLE_OUTFLOW .AND. left == MPI_PROC_NULL) CALL outflow_bcs_left
+    IF(xbc_left == c_bc_simple_laser .AND. left == MPI_PROC_NULL) CALL laser_bcs_left
+    IF(xbc_left == c_bc_simple_outflow .AND. left == MPI_PROC_NULL) CALL outflow_bcs_left
 
-    IF(xbc_right == BC_SIMPLE_LASER .AND. right == MPI_PROC_NULL) CALL laser_bcs_right
-    IF(xbc_right == BC_SIMPLE_OUTFLOW .AND. right == MPI_PROC_NULL) CALL outflow_bcs_right
+    IF(xbc_right == c_bc_simple_laser .AND. right == MPI_PROC_NULL) CALL laser_bcs_right
+    IF(xbc_right == c_bc_simple_outflow .AND. right == MPI_PROC_NULL) CALL outflow_bcs_right
     CALL bfield_bcs(.TRUE.)
 
 #ifndef HIGH_ORDER_FIELDS

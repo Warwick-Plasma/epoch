@@ -25,14 +25,14 @@ CONTAINS
     CALL MPI_FILE_OPEN(comm,TRIM(filename),MPI_MODE_RDONLY,MPI_INFO_NULL,fh,errcode)
     IF (errcode .NE. 0) THEN
        IF (rank .EQ. 0) PRINT *,"file ",TRIM(filename), " does not exist."
-       err=IOR(err,ERR_BAD_VALUE)
+       err=IOR(err,c_err_bad_value)
        RETURN
     ENDIF
     subtype = create_current_field_subtype()
     CALL MPI_FILE_SET_VIEW(fh,offset,mpireal,subtype,"native",MPI_INFO_NULL,errcode)
     CALL MPI_FILE_READ_ALL(fh,array(1:nx),nx,mpireal,status,errcode)
     CALL MPI_FILE_CLOSE(fh,errcode)
-    CALL mpi_type_free(subtype,errcode)
+    CALL MPI_TYPE_FREE(subtype,errcode)
 
     CALL field_bc(array)
     CALL field_zero_gradient(array,.TRUE.)

@@ -54,9 +54,9 @@ CONTAINS
     block_length=md_length + num*ndim*npart_global
 
     !Now written header, write metadata
-    CALL cfd_write_block_header(name,class,TYPE_MESH,block_length,md_length,default_rank)
+    CALL cfd_write_block_header(name,class,c_type_mesh,block_length,md_length,default_rank)
     disp0=current_displacement
-    CALL cfd_write_meshtype_header(MESH_PARTICLE,ndim,num,default_rank)
+    CALL cfd_write_meshtype_header(c_mesh_particle,ndim,num,default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -152,8 +152,8 @@ CONTAINS
     min_max=0.0_num
 
     !Now written header, write metadata
-    CALL cfd_write_block_header(name,class,TYPE_MESH,block_length,md_length,default_rank)
-    CALL cfd_write_meshtype_header(MESH_PARTICLE,ndims,num,default_rank)
+    CALL cfd_write_block_header(name,class,c_type_mesh,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(c_mesh_particle,ndims,num,default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -185,7 +185,7 @@ CONTAINS
     npart_sent=0
     DO idim=1,ndims
        CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, particle_type,&
-        "native", MPI_INFO_NULL, cfd_errcode)
+            "native", MPI_INFO_NULL, cfd_errcode)
        npart_this_cycle=npart_per_iteration
        start=.TRUE.
        DO
@@ -262,8 +262,8 @@ CONTAINS
     block_length=md_length + num*npart_global
 
     !Now written header, write metadata
-    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,default_rank)
-    CALL cfd_write_meshtype_header(VAR_PARTICLE,DIMENSION_IRRELEVANT,num,default_rank)
+    CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(c_var_particle,c_dimension_irrelevant,num,default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER8, MPI_INTEGER8,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -337,8 +337,8 @@ CONTAINS
     block_length=md_length + num*npart_global
 
     !Now written header, write metadata
-    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,default_rank)
-    CALL cfd_write_meshtype_header(VAR_PARTICLE,DIMENSION_IRRELEVANT,num,default_rank)
+    CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(c_var_particle,c_dimension_irrelevant,num,default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER8, MPI_INTEGER8,&
          "native", MPI_INFO_NULL,cfd_errcode)

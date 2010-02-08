@@ -23,7 +23,7 @@ CONTAINS
     INTEGER :: handle_ic_laser_deck
     REAL(num) :: dummy
 
-    handle_ic_laser_deck=ERR_NONE
+    handle_ic_laser_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF(str_cmp(element,"direction")) THEN
@@ -41,7 +41,7 @@ CONTAINS
           WRITE(40,*) "***ERROR*** Cannot set laser properties before direction is set"
        ENDIF
        extended_error_string="direction"
-       handle_ic_laser_deck=ERR_REQUIRED_ELEMENT_NOT_SET
+       handle_ic_laser_deck=c_err_required_element_not_set
        RETURN
     ENDIF
 
@@ -82,7 +82,7 @@ CONTAINS
        working_laser%id=as_integer(value,handle_ic_laser_deck)
        RETURN
     ENDIF
-    handle_ic_laser_deck=ERR_UNKNOWN_ELEMENT
+    handle_ic_laser_deck=c_err_unknown_element
 
   END FUNCTION handle_ic_laser_deck
 
@@ -91,7 +91,7 @@ CONTAINS
     INTEGER :: check_ic_laser_block
 
     !Should do error checking but can't be bothered at the moment
-    check_ic_laser_block=ERR_NONE
+    check_ic_laser_block=c_err_none
 
   END FUNCTION check_ic_laser_block
 

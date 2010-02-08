@@ -32,7 +32,7 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: element,value
     INTEGER :: handle_probe_deck, ispecies
 
-    handle_probe_deck=ERR_NONE
+    handle_probe_deck=c_err_none
 
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
     IF (str_cmp(element,"dump")) THEN
@@ -50,12 +50,12 @@ CONTAINS
 
     IF (str_cmp(element,"probe_species")) THEN
        ispecies=as_integer(value,handle_probe_deck)
-       IF (handle_probe_deck .EQ. ERR_NONE) THEN
+       IF (handle_probe_deck .EQ. c_err_none) THEN
           IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
              working_probe%probe_species=>particle_species(ispecies)
           ELSE
              IF (rank .EQ. 0) PRINT *,"Unable to attach probe to non existant species ",ispecies
-             handle_probe_deck=ERR_BAD_VALUE
+             handle_probe_deck=c_err_bad_value
           ENDIF
        ENDIF
        RETURN

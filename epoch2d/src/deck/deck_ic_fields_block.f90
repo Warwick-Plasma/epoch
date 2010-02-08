@@ -17,7 +17,7 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: element,value
     INTEGER :: handle_ic_fields_deck
 
-    handle_ic_fields_deck=ERR_NONE
+    handle_ic_fields_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element,"ex")) THEN
@@ -57,7 +57,7 @@ CONTAINS
     INTEGER :: check_ic_fields_block
 
     !Should do error checking but can't be bothered at the moment
-    check_ic_fields_block=ERR_NONE
+    check_ic_fields_block=c_err_none
 
   END FUNCTION check_ic_fields_block
 

@@ -21,8 +21,8 @@ CONTAINS
 
 
     !Xi (space factor see page 38 in manual)
-    REAL(num),ALLOCATABLE,DIMENSION(:) :: Xi0x, Xi0y,Xi0z
-    REAL(num),ALLOCATABLE,DIMENSION(:) :: Xi1x, Xi1y,Xi1z
+    REAL(num),ALLOCATABLE,DIMENSION(:) :: xi0x, xi0y,xi0z
+    REAL(num),ALLOCATABLE,DIMENSION(:) :: xi1x, xi1y,xi1z
     !J from a given particle, can be spread over up to 3 cells in 
     !Each direction due to parabolic weighting. We allocate 4 or 5
     !Cells because the position of the particle at t=t+1.5dt is not
@@ -88,8 +88,8 @@ CONTAINS
 
     TYPE(particle),POINTER :: current
 
-    ALLOCATE(Xi0x(-3:3), Xi0y(-3:3), Xi0z(-3:3))
-    ALLOCATE(Xi1x(-3:3), Xi1y(-3:3), Xi1z(-3:3))
+    ALLOCATE(xi0x(-3:3), xi0y(-3:3), xi0z(-3:3))
+    ALLOCATE(xi1x(-3:3), xi1y(-3:3), xi1z(-3:3))
 
     ALLOCATE(jxh(-4:3,-3:3,-3:3))
     ALLOCATE(jyh(-3:3,-4:3,-3:3))
@@ -113,12 +113,12 @@ CONTAINS
        current=>particle_species(ispecies)%attached_list%head
        DO ipart=1,particle_species(ispecies)%attached_list%count
           !Set the weighting functions to zero for each new particle
-          Xi0x=0.0_num
-          Xi1x=0.0_num
-          Xi0y=0.0_num
-          Xi1y=0.0_num
-          Xi0z=0.0_num
-          Xi1z=0.0_num
+          xi0x=0.0_num
+          xi1x=0.0_num
+          xi0y=0.0_num
+          xi1y=0.0_num
+          xi0z=0.0_num
+          xi1z=0.0_num
 
           !Copy the particle properties out for speed
           part_x  = current%part_pos(1) - x_start_local
@@ -200,9 +200,9 @@ CONTAINS
  			!These wieght particle properties onto grid
  			!This is used later to calculate J
 
-			CALL particle_to_grid(cell_frac_x,Xi0x(-2:2))
-			CALL particle_to_grid(cell_frac_y,Xi0y(-2:2))
-			CALL particle_to_grid(cell_frac_z,Xi0z(-2:2))
+			CALL particle_to_grid(cell_frac_x,xi0x(-2:2))
+			CALL particle_to_grid(cell_frac_y,xi0y(-2:2))
+			CALL particle_to_grid(cell_frac_z,xi0z(-2:2))
 
           !Now redo shifted by half a cell due to grid stagger.
           !Use shifted version for ex in X, ey in Y, ez in Z
@@ -338,14 +338,14 @@ CONTAINS
              cell_frac_z = REAL(cell_z3,num) - cell_z_r
              cell_z3 = cell_z3 + 1
 
-				CALL particle_to_grid(cell_frac_x,Xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
-				CALL particle_to_grid(cell_frac_y,Xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
-				CALL particle_to_grid(cell_frac_z,Xi1z(cell_z3-cell_z1-2:cell_z3-cell_z1+2))
+				CALL particle_to_grid(cell_frac_x,xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
+				CALL particle_to_grid(cell_frac_y,xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
+				CALL particle_to_grid(cell_frac_z,xi1z(cell_z3-cell_z1-2:cell_z3-cell_z1+2))
 
              !Now change Xi1* to be Xi1*-Xi0*. This makes the representation of the current update much simpler
-             Xi1x = Xi1x - Xi0x
-             Xi1y = Xi1y - Xi0y
-             Xi1z = Xi1z - Xi0z
+             xi1x = xi1x - xi0x
+             xi1y = xi1y - xi0y
+             xi1z = xi1z - xi0z
 
 
              !Remember that due to CFL condition particle can never cross more than one gridcell
@@ -391,18 +391,18 @@ CONTAINS
              DO iz=zmin,zmax
                 DO iy=ymin,ymax
                    DO ix=xmin,xmax
-                      wx = Xi1x(ix) * (Xi0y(iy) * Xi0z(iz) +&
-                           0.5_num * Xi1y(iy) * Xi0z(iz)+&
-                           0.5_num * Xi0y(iy) * Xi1z(iz)+&
-                           third * Xi1y(iy) * Xi1z(iz))
-                      wy = Xi1y(iy) * (Xi0x(ix) * Xi0z(iz) +&
-                           0.5_num * Xi1x(ix) * Xi0z(iz)+&
-                           0.5_num * Xi0x(ix) * Xi1z(iz)+&
-                           third * Xi1y(iy) * Xi1z(iz))
-                      wz = Xi1z(iz) * (Xi0y(iy) * Xi0x(ix) +&
-                           0.5_num * Xi1y(iy) * Xi0x(ix)+&
-                           0.5_num * Xi0y(iy) * Xi1x(ix)+&
-                           third * Xi1y(iy) * Xi1x(ix))
+                      wx = xi1x(ix) * (xi0y(iy) * xi0z(iz) +&
+                           0.5_num * xi1y(iy) * xi0z(iz)+&
+                           0.5_num * xi0y(iy) * xi1z(iz)+&
+                           third * xi1y(iy) * xi1z(iz))
+                      wy = xi1y(iy) * (xi0x(ix) * xi0z(iz) +&
+                           0.5_num * xi1x(ix) * xi0z(iz)+&
+                           0.5_num * xi0x(ix) * xi1z(iz)+&
+                           third * xi1y(iy) * xi1z(iz))
+                      wz = xi1z(iz) * (xi0y(iy) * xi0x(ix) +&
+                           0.5_num * xi1y(iy) * xi0x(ix)+&
+                           0.5_num * xi0y(iy) * xi1x(ix)+&
+                           third * xi1y(iy) * xi1x(ix))
 
                       !This is the bit that actually solves d(rho)/dt=-div(J)
                       jxh(ix,iy,iz)=jxh(ix-1,iy,iz) - part_q * wx * 1.0_num/dt * part_weight/(dy*dz)
@@ -484,12 +484,12 @@ CONTAINS
     ENDDO
 
 
-    DEALLOCATE(Xi0x)
-    DEALLOCATE(Xi1x)
-    DEALLOCATE(Xi0y)
-    DEALLOCATE(Xi1y)
-    DEALLOCATE(Xi0z)
-    DEALLOCATE(Xi1z)
+    DEALLOCATE(xi0x)
+    DEALLOCATE(xi1x)
+    DEALLOCATE(xi0y)
+    DEALLOCATE(xi1y)
+    DEALLOCATE(xi0z)
+    DEALLOCATE(xi1z)
     DEALLOCATE(jxh)
     DEALLOCATE(jyh)
     DEALLOCATE(jzh)

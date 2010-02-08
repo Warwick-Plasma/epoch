@@ -8,15 +8,15 @@ MODULE tokenizer_blocks
 
   SAVE
 
-  INTEGER,PARAMETER :: MAX_NEW_FUNC=256
+  INTEGER,PARAMETER :: c_max_new_func=256
   INTEGER :: n_new_func = 0
-  TYPE(string_type),DIMENSION(MAX_NEW_FUNC) :: new_func_name
-  INTEGER, DIMENSION(MAX_NEW_FUNC) :: new_func_code
+  TYPE(string_type),DIMENSION(c_max_new_func) :: new_func_name
+  INTEGER, DIMENSION(c_max_new_func) :: new_func_code
 
-  INTEGER,PARAMETER :: MAX_NEW_CONST=256
+  INTEGER,PARAMETER :: c_max_new_const=256
   INTEGER :: n_new_constant = 0
-  TYPE(string_type),DIMENSION(MAX_NEW_CONST) :: new_constant_name
-  INTEGER, DIMENSION(MAX_NEW_CONST) :: new_constant_code
+  TYPE(string_type),DIMENSION(c_max_new_const) :: new_constant_name
+  INTEGER, DIMENSION(c_max_new_const) :: new_constant_code
   INTEGER :: last_block_type
 
 CONTAINS
@@ -27,14 +27,14 @@ CONTAINS
     CHARACTER(len=*),INTENT(IN) :: name
     INTEGER :: register_function
 
-    IF (n_new_func .EQ. MAX_NEW_FUNC) THEN
+    IF (n_new_func .EQ. c_max_new_func) THEN
        register_function=-1
        RETURN
     ENDIF
     n_new_func=n_new_func+1
     new_func_name(n_new_func)%value=name
-    new_func_code(n_new_func)=FUNC_CUSTOM_LOWBOUND+n_new_func
-    register_function=FUNC_CUSTOM_LOWBOUND+n_new_func
+    new_func_code(n_new_func)=c_func_custom_lowbound+n_new_func
+    register_function=c_func_custom_lowbound+n_new_func
 
   END FUNCTION register_function
 
@@ -43,14 +43,14 @@ CONTAINS
     CHARACTER(len=*),INTENT(IN) :: name
     INTEGER :: register_constant
 
-    IF (n_new_constant .EQ. MAX_NEW_CONST) THEN
+    IF (n_new_constant .EQ. c_max_new_const) THEN
        register_constant=-1
        RETURN
     ENDIF
     n_new_constant=n_new_constant+1
     new_constant_name(n_new_constant)%value=name
-    new_constant_code(n_new_constant)=CONSTANT_CUSTOM_LOWBOUND+n_new_constant
-    register_constant=CONSTANT_CUSTOM_LOWBOUND+n_new_constant
+    new_constant_code(n_new_constant)=c_const_custom_lowbound+n_new_constant
+    register_constant=c_const_custom_lowbound+n_new_constant
 
   END FUNCTION register_constant
 
@@ -61,53 +61,53 @@ CONTAINS
     INTEGER :: as_constant
     INTEGER :: i
 
-    as_constant=PRC_NOT_THIS_TYPE
+    as_constant=c_prc_not_this_type
 
-    IF (str_cmp(name,"pi")) as_constant=CONST_PI
-    IF (str_cmp(name,"kb")) as_constant=CONST_KB
-    IF (str_cmp(name,"me")) as_constant=CONST_ME
-    IF (str_cmp(name,"qe")) as_constant=CONST_QE
-    IF (str_cmp(name,"c")) as_constant=CONST_C
-    IF (str_cmp(name,"epsilonnought")) as_constant=CONST_EPS0
-    IF (str_cmp(name,"munought"))      as_constant=CONST_MU0
-    IF (str_cmp(name,"x"))  as_constant=CONST_X
-    IF (str_cmp(name,"y"))  as_constant=CONST_Y
-    IF (str_cmp(name,"z"))  as_constant=CONST_Z
-    IF (str_cmp(name,"lengthx") .OR. str_cmp(name,"length_x")) as_constant=CONST_LX
-    IF (str_cmp(name,"lengthy") .OR. str_cmp(name,"length_y")) as_constant=CONST_LY
-    IF (str_cmp(name,"lengthz") .OR. str_cmp(name,"length_z")) as_constant=CONST_LZ
-    IF (str_cmp(name,"dx")) as_constant=CONST_DX
-    IF (str_cmp(name,"dy")) as_constant=CONST_DY
-    IF (str_cmp(name,"dy")) as_constant=CONST_DZ
-    IF (str_cmp(name,"x_start")) as_constant=CONST_START_X
-    IF (str_cmp(name,"y_start")) as_constant=CONST_START_Y
-    IF (str_cmp(name,"y_start")) as_constant=CONST_START_Z
-    IF (str_cmp(name,"x_end")) as_constant=CONST_END_X
-    IF (str_cmp(name,"y_end")) as_constant=CONST_END_Y
-    IF (str_cmp(name,"z_end")) as_constant=CONST_END_Z
-    IF (str_cmp(name,"ix")) as_constant=CONST_IX
-    IF (str_cmp(name,"iy")) as_constant=CONST_IY
-    IF (str_cmp(name,"iy")) as_constant=CONST_IZ
-    IF (str_cmp(name,"time")) as_constant=CONST_TIME
-    IF (str_cmp(name,"internal_early")) as_constant=CONST_AUTOEARLY
-    IF (str_cmp(name,"internal_late")) as_constant=CONST_AUTOLATE
-    IF (str_cmp(name,"external")) as_constant=CONST_EXTERNAL
-    IF (str_cmp(name,"manual"))   as_constant=CONST_MANUAL
-    IF (str_cmp(name,"restart"))  as_constant=CONST_RESTART
-    IF (str_cmp(name,"never")) as_constant=CONST_IO_NEVER
-    IF (str_cmp(name,"always")) as_constant=CONST_IO_ALWAYS
-    IF (str_cmp(name,"full")) as_constant=CONST_IO_FULL
-    IF (str_cmp(name,"restartable")) as_constant=CONST_IO_RESTARTABLE
-    IF (str_cmp(name,"species")) as_constant=CONST_IO_SPECIES
-    IF (str_cmp(name,"dir_x")) as_constant=CONST_DIR_X
-    IF (str_cmp(name,"dir_y")) as_constant=CONST_DIR_Y
-    IF (str_cmp(name,"dir_z")) as_constant=CONST_DIR_Z
-    IF (str_cmp(name,"dir_px")) as_constant=CONST_DIR_PX
-    IF (str_cmp(name,"dir_py")) as_constant=CONST_DIR_PY
-    IF (str_cmp(name,"dir_pz")) as_constant=CONST_DIR_PZ
-    IF (str_cmp(name,"r_xy")) as_constant=CONST_R_XY
-    IF (str_cmp(name,"r_yz")) as_constant=CONST_R_YZ
-    IF (str_cmp(name,"r_xz")) as_constant=CONST_R_XZ
+    IF (str_cmp(name,"pi")) as_constant=c_const_pi
+    IF (str_cmp(name,"kb")) as_constant=c_const_kb
+    IF (str_cmp(name,"me")) as_constant=c_const_me
+    IF (str_cmp(name,"qe")) as_constant=c_const_qe
+    IF (str_cmp(name,"c")) as_constant=c_const_c
+    IF (str_cmp(name,"epsilonnought")) as_constant=c_const_eps0
+    IF (str_cmp(name,"munought"))      as_constant=c_const_mu0
+    IF (str_cmp(name,"x"))  as_constant=c_const_x
+    IF (str_cmp(name,"y"))  as_constant=c_const_y
+    IF (str_cmp(name,"z"))  as_constant=c_const_z
+    IF (str_cmp(name,"lengthx") .OR. str_cmp(name,"length_x")) as_constant=c_const_lx
+    IF (str_cmp(name,"lengthy") .OR. str_cmp(name,"length_y")) as_constant=c_const_ly
+    IF (str_cmp(name,"lengthz") .OR. str_cmp(name,"length_z")) as_constant=c_const_lz
+    IF (str_cmp(name,"dx")) as_constant=c_const_dx
+    IF (str_cmp(name,"dy")) as_constant=c_const_dy
+    IF (str_cmp(name,"dy")) as_constant=c_const_dz
+    IF (str_cmp(name,"x_start")) as_constant=c_const_start_x
+    IF (str_cmp(name,"y_start")) as_constant=c_const_start_y
+    IF (str_cmp(name,"y_start")) as_constant=c_const_start_z
+    IF (str_cmp(name,"x_end")) as_constant=c_const_end_x
+    IF (str_cmp(name,"y_end")) as_constant=c_const_end_y
+    IF (str_cmp(name,"z_end")) as_constant=c_const_end_z
+    IF (str_cmp(name,"ix")) as_constant=c_const_ix
+    IF (str_cmp(name,"iy")) as_constant=c_const_iy
+    IF (str_cmp(name,"iy")) as_constant=c_const_iz
+    IF (str_cmp(name,"time")) as_constant=c_const_time
+    IF (str_cmp(name,"internal_early")) as_constant=c_const_autoearly
+    IF (str_cmp(name,"internal_late")) as_constant=c_const_autolate
+    IF (str_cmp(name,"external")) as_constant=c_const_external
+    IF (str_cmp(name,"manual"))   as_constant=c_const_manual
+    IF (str_cmp(name,"restart"))  as_constant=c_const_restart
+    IF (str_cmp(name,"never")) as_constant=c_const_io_never
+    IF (str_cmp(name,"always")) as_constant=c_const_io_always
+    IF (str_cmp(name,"full")) as_constant=c_const_io_full
+    IF (str_cmp(name,"restartable")) as_constant=c_const_io_restartable
+    IF (str_cmp(name,"species")) as_constant=c_const_io_species
+    IF (str_cmp(name,"dir_x")) as_constant=c_const_dir_x
+    IF (str_cmp(name,"dir_y")) as_constant=c_const_dir_y
+    IF (str_cmp(name,"dir_z")) as_constant=c_const_dir_z
+    IF (str_cmp(name,"dir_px")) as_constant=c_const_dir_px
+    IF (str_cmp(name,"dir_py")) as_constant=c_const_dir_py
+    IF (str_cmp(name,"dir_pz")) as_constant=c_const_dir_pz
+    IF (str_cmp(name,"r_xy")) as_constant=c_const_r_xy
+    IF (str_cmp(name,"r_yz")) as_constant=c_const_r_yz
+    IF (str_cmp(name,"r_xz")) as_constant=c_const_r_xz
 
 
     !User submitted constant using "Register"
@@ -118,7 +118,7 @@ CONTAINS
     !Constants set up using the input deck
     DO i=1,n_deck_constants
        IF (str_cmp(TRIM(name),TRIM(deck_constant_list(i)%name))) THEN 
-          as_constant=CONSTANT_DECK_LOWBOUND + i
+          as_constant=c_const_deck_lowbound + i
           RETURN
        ENDIF
     ENDDO
@@ -145,37 +145,37 @@ CONTAINS
     CHARACTER(len=*), INTENT(IN) :: name
     INTEGER :: as_function
     INTEGER :: i
-    as_function=PRC_NOT_THIS_TYPE
+    as_function=c_prc_not_this_type
 
-    IF (str_cmp(name,"sqrt")) as_function=FUNC_SQRT
-    IF (str_cmp(name,"sin"))   as_function=FUNC_SINE
-    IF (str_cmp(name,"cos"))   as_function=FUNC_COSINE
-    IF (str_cmp(name,"tan"))   as_function=FUNC_TAN
-    IF (str_cmp(name,"exp"))   as_function=FUNC_EXP
-    IF (str_cmp(name,"asin"))  as_function=FUNC_ARCSINE
-    IF (str_cmp(name,"acos"))  as_function=FUNC_ARCCOSINE
-    IF (str_cmp(name,"atan"))  as_function=FUNC_ARCTAN
-    IF (str_cmp(name,"-")) as_function=FUNC_NEG
-    IF (str_cmp(name,"if"))    as_function=FUNC_IF
-    IF (str_cmp(name,"floor")) as_function=FUNC_FLOOR
-    IF (str_cmp(name,"ceil"))  as_function=FUNC_CEIL
-    IF (str_cmp(name,"nint"))  as_function=FUNC_NINT
-    IF (str_cmp(name,"rho") .OR. str_cmp(name,"number_density"))   as_function=FUNC_RHO
-    IF (str_cmp(name,"temp_x"))  as_function=FUNC_TEMPX
-    IF (str_cmp(name,"temp_y"))  as_function=FUNC_TEMPY
-    IF (str_cmp(name,"temp_z"))  as_function=FUNC_TEMPZ
-    IF (str_cmp(name,"interpolate")) as_function=FUNC_INTERPOLATE
-    IF (str_cmp(name,"tanh")) as_function=FUNC_TANH
-    IF (str_cmp(name,"sinh")) as_function=FUNC_SINH
-    IF (str_cmp(name,"cosh")) as_function=FUNC_COSH
-    IF (str_cmp(name,"ex")) as_function=FUNC_EX
-    IF (str_cmp(name,"ey")) as_function=FUNC_EY
-    IF (str_cmp(name,"ez")) as_function=FUNC_EZ
-    IF (str_cmp(name,"bx")) as_function=FUNC_BX
-    IF (str_cmp(name,"by")) as_function=FUNC_BY
-    IF (str_cmp(name,"bz")) as_function=FUNC_BZ
-    IF (str_cmp(name,"gauss")) as_function=FUNC_GAUSS
-    IF (str_cmp(name,"abs")) as_function=FUNC_ABS
+    IF (str_cmp(name,"sqrt")) as_function=c_func_sqrt
+    IF (str_cmp(name,"sin"))   as_function=c_func_sine
+    IF (str_cmp(name,"cos"))   as_function=c_func_cosine
+    IF (str_cmp(name,"tan"))   as_function=c_func_tan
+    IF (str_cmp(name,"exp"))   as_function=c_func_exp
+    IF (str_cmp(name,"asin"))  as_function=c_func_arcsine
+    IF (str_cmp(name,"acos"))  as_function=c_func_arccosine
+    IF (str_cmp(name,"atan"))  as_function=c_func_arctan
+    IF (str_cmp(name,"-")) as_function=c_func_neg
+    IF (str_cmp(name,"if"))    as_function=c_func_if
+    IF (str_cmp(name,"floor")) as_function=c_func_floor
+    IF (str_cmp(name,"ceil"))  as_function=c_func_ceil
+    IF (str_cmp(name,"nint"))  as_function=c_func_nint
+    IF (str_cmp(name,"rho") .OR. str_cmp(name,"number_density"))   as_function=c_func_rho
+    IF (str_cmp(name,"temp_x"))  as_function=c_func_tempx
+    IF (str_cmp(name,"temp_y"))  as_function=c_func_tempy
+    IF (str_cmp(name,"temp_z"))  as_function=c_func_tempz
+    IF (str_cmp(name,"interpolate")) as_function=c_func_interpolate
+    IF (str_cmp(name,"tanh")) as_function=c_func_tanh
+    IF (str_cmp(name,"sinh")) as_function=c_func_sinh
+    IF (str_cmp(name,"cosh")) as_function=c_func_cosh
+    IF (str_cmp(name,"ex")) as_function=c_func_ex
+    IF (str_cmp(name,"ey")) as_function=c_func_ey
+    IF (str_cmp(name,"ez")) as_function=c_func_ez
+    IF (str_cmp(name,"bx")) as_function=c_func_bx
+    IF (str_cmp(name,"by")) as_function=c_func_by
+    IF (str_cmp(name,"bz")) as_function=c_func_bz
+    IF (str_cmp(name,"gauss")) as_function=c_func_gauss
+    IF (str_cmp(name,"abs")) as_function=c_func_abs
 
     DO i=1,n_new_func
        IF (str_cmp(TRIM(name),TRIM(new_func_name(i)%value))) THEN
@@ -190,36 +190,36 @@ CONTAINS
     CHARACTER(len=*), INTENT(IN) :: name
     INTEGER :: as_operator
 
-    as_operator=PRC_NOT_THIS_TYPE
+    as_operator=c_prc_not_this_type
 
     IF (str_cmp(name,"+")) THEN
-       as_operator=OPCODE_PLUS
+       as_operator=c_opcode_plus
     ENDIF
     IF (str_cmp(name,"-"))  THEN
-       IF((last_block_type .EQ. PT_VARIABLE .OR. last_block_type .EQ. PT_CONSTANT) .OR. &
-            last_block_type .EQ. PT_PARENTHESIS) THEN
-          as_operator=OPCODE_MINUS
+       IF((last_block_type .EQ. c_pt_variable .OR. last_block_type .EQ. c_pt_constant) .OR. &
+            last_block_type .EQ. c_pt_parenthesis) THEN
+          as_operator=c_opcode_minus
        ELSE
-          as_operator=OPCODE_UNARY_MINUS
+          as_operator=c_opcode_unary_minus
        ENDIF
     ENDIF
     IF (str_cmp(name,"*")) THEN
-       as_operator=OPCODE_TIMES
+       as_operator=c_opcode_times
     ENDIF
     IF (str_cmp(name,"/")) THEN 
-       as_operator=OPCODE_DIVIDE
+       as_operator=c_opcode_divide
     ENDIF
     IF (str_cmp(name,"^")) THEN
-       as_operator=OPCODE_POWER
+       as_operator=c_opcode_power
     ENDIF
     IF (str_cmp(name,"e")) THEN
-       as_operator=OPCODE_EXPO
+       as_operator=c_opcode_expo
     ENDIF
-    IF (str_cmp(name,"lt")) as_operator=OPCODE_LT
-    IF (str_cmp(name,"gt")) as_operator=OPCODE_GT
-    IF (str_cmp(name,"eq")) as_operator=OPCODE_EQ
-    IF (str_cmp(name,"and")) as_operator=OPCODE_AND
-    IF (str_cmp(name,"or"))  as_operator=OPCODE_OR
+    IF (str_cmp(name,"lt")) as_operator=c_opcode_lt
+    IF (str_cmp(name,"gt")) as_operator=c_opcode_gt
+    IF (str_cmp(name,"eq")) as_operator=c_opcode_eq
+    IF (str_cmp(name,"and")) as_operator=c_opcode_and
+    IF (str_cmp(name,"or"))  as_operator=c_opcode_or
 
   END FUNCTION as_operator
 

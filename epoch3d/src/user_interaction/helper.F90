@@ -15,7 +15,7 @@ CONTAINS
   SUBROUTINE auto_load
     INTEGER :: ispecies
     INTEGER :: clock,idum
-    TYPE(particle_family),POINTER :: part_fam
+    TYPE(particle_family),POINTER :: part_family
 	REAL(num) :: maxrho_local,maxrho
 	
 	dt_plasma=1000000.0_num
@@ -23,19 +23,19 @@ CONTAINS
     CALL SYSTEM_CLOCK(clock)
     idum=-(clock+rank+1)
     DO ispecies=1,n_species
-       part_fam=>particle_species(ispecies)
+       part_family=>particle_species(ispecies)
 		 !Calculate the inverse plasma frequency for stability
 		 maxrho_local=MAXVAL(initial_conditions(ispecies)%rho)
 		 CALL MPI_ALLREDUCE(maxrho_local,maxrho,1,mpireal,MPI_MAX,comm,errcode)
 		 dt_plasma=MIN(dt_plasma,1.0_num/SQRT(maxrho*q0**2/(m0*epsilon0)))
 #ifdef PER_PARTICLE_WEIGHT
-       CALL setup_particle_density(initial_conditions(ispecies)%rho,part_fam,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
+       CALL setup_particle_density(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
 #else
-       CALL non_uniform_load_particles(initial_conditions(ispecies)%rho,part_fam,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
+       CALL non_uniform_load_particles(initial_conditions(ispecies)%rho,part_family,initial_conditions(ispecies)%minrho,initial_conditions(ispecies)%maxrho,idum)
 #endif
-       CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,:,1),DIR_X,part_fam,initial_conditions(ispecies)%drift,idum)
-       CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,:,2),DIR_Y,part_fam,initial_conditions(ispecies)%drift,idum)
-       CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,:,3),DIR_Z,part_fam,initial_conditions(ispecies)%drift,idum)
+       CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,:,1),c_dir_x,part_family,initial_conditions(ispecies)%drift,idum)
+       CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,:,2),c_dir_y,part_family,initial_conditions(ispecies)%drift,idum)
+       CALL setup_particle_temperature(initial_conditions(ispecies)%temp(:,:,:,3),c_dir_z,part_family,initial_conditions(ispecies)%drift,idum)
     ENDDO
 
 	IF (rank .EQ. 0) PRINT *,"Plasma characteristic timescale ",dt_plasma
@@ -409,11 +409,11 @@ CONTAINS
             gpy * (gmx * temperature(cell_x-1,cell_y+1,cell_z+1) + g0x * &
             temperature(cell_x,cell_y+1,cell_z+1) + gpx * temperature(cell_x+1,cell_y+1,cell_z+1)))
 
-       IF (IAND(direction,DIR_X) .NE. 0) current%part_p(1)=momentum_from_temperature(mass,temp_local,idum) + drift(1)
+       IF (IAND(direction,c_dir_x) .NE. 0) current%part_p(1)=momentum_from_temperature(mass,temp_local,idum) + drift(1)
 
-       IF (IAND(direction,DIR_Y) .NE. 0) current%part_p(2)=momentum_from_temperature(mass,temp_local,idum) + drift(2)
+       IF (IAND(direction,c_dir_y) .NE. 0) current%part_p(2)=momentum_from_temperature(mass,temp_local,idum) + drift(2)
 
-       IF (IAND(direction,DIR_Z) .NE. 0) current%part_p(3)=momentum_from_temperature(mass,temp_local,idum) + drift(3)
+       IF (IAND(direction,c_dir_z) .NE. 0) current%part_p(3)=momentum_from_temperature(mass,temp_local,idum) + drift(3)
 
        current=>current%next
        ipart=ipart+1

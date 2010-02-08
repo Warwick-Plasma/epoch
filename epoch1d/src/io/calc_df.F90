@@ -7,7 +7,7 @@ MODULE calc_df
 
 CONTAINS
 
-  SUBROUTINE calc_mass_density(data_array,cur_species)
+  SUBROUTINE calc_mass_density(data_array,current_species)
 
     !Contains the integer cell position of the particle in x,y,z
     INTEGER :: cell_x
@@ -34,7 +34,7 @@ CONTAINS
     REAL(num) :: data
 
     REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-    INTEGER,INTENT(IN) :: cur_species
+    INTEGER,INTENT(IN) :: current_species
 
     TYPE(particle),POINTER :: current
     INTEGER :: ispecies, spec_start,spec_end
@@ -43,10 +43,10 @@ CONTAINS
 
     l_weight=weight
 
-    spec_start=cur_species
-    spec_end=cur_species
+    spec_start=current_species
+    spec_end=current_species
 
-    IF (cur_species .LE. 0) THEN
+    IF (current_species .LE. 0) THEN
        spec_start=1
        spec_end=n_species
     ENDIF
@@ -94,7 +94,7 @@ CONTAINS
 
   END SUBROUTINE calc_mass_density
 
-  SUBROUTINE calc_charge_density(data_array,cur_species)
+  SUBROUTINE calc_charge_density(data_array,current_species)
 
     !Contains the integer cell position of the particle in x,y,z
     INTEGER :: cell_x
@@ -121,7 +121,7 @@ CONTAINS
     REAL(num) :: data
 
     REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-    INTEGER,INTENT(IN) :: cur_species
+    INTEGER,INTENT(IN) :: current_species
 
     TYPE(particle),POINTER :: current
     INTEGER :: ispecies, spec_start,spec_end
@@ -130,10 +130,10 @@ CONTAINS
 
     l_weight=weight
 
-    spec_start=cur_species
-    spec_end=cur_species
+    spec_start=current_species
+    spec_end=current_species
 
-    IF (cur_species .LE. 0) THEN
+    IF (current_species .LE. 0) THEN
        spec_start=1
        spec_end=n_species
     ENDIF
@@ -271,14 +271,14 @@ CONTAINS
     CALL processor_summation_bcs(data_array)
     CALL processor_summation_bcs(ct)
 
-    data_array = data_array / MAX(ct, none_zero)
+    data_array = data_array / MAX(ct, c_non_zero)
     CALL field_zero_gradient(data_array, .TRUE.)
 
     DEALLOCATE(ct)
 
   END SUBROUTINE calc_ekbar
 
-  SUBROUTINE calc_number_density(data_array,cur_species)
+  SUBROUTINE calc_number_density(data_array,current_species)
 
     !Contains the integer cell position of the particle in x,y,z
     INTEGER :: cell_x
@@ -305,7 +305,7 @@ CONTAINS
     REAL(num) :: data
 
     REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-    INTEGER,INTENT(IN) :: cur_species
+    INTEGER,INTENT(IN) :: current_species
 
     TYPE(particle),POINTER :: current
     INTEGER :: ispecies, spec_start,spec_end
@@ -314,10 +314,10 @@ CONTAINS
 
     l_weight=weight
 
-    spec_start=cur_species
-    spec_end=cur_species
+    spec_start=current_species
+    spec_end=current_species
 
-    IF (cur_species .LE. 0) THEN
+    IF (current_species .LE. 0) THEN
        spec_start=1
        spec_end=n_species
     ENDIF
@@ -367,7 +367,7 @@ CONTAINS
 
   END SUBROUTINE calc_number_density
 
-  SUBROUTINE calc_temperature(data_array,cur_species)
+  SUBROUTINE calc_temperature(data_array,current_species)
 
     !Contains the integer cell position of the particle in x,y,z
     INTEGER :: cell_x
@@ -395,7 +395,7 @@ CONTAINS
 
     REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
     REAL(num),DIMENSION(:),ALLOCATABLE ::  part_count, mass, sigma, mean
-    INTEGER,INTENT(IN) :: cur_species
+    INTEGER,INTENT(IN) :: current_species
 
     TYPE(particle),POINTER :: current
     INTEGER :: ispecies, spec_start,spec_end
@@ -404,10 +404,10 @@ CONTAINS
 
     l_weight=weight
 
-    spec_start=cur_species
-    spec_end=cur_species
+    spec_start=current_species
+    spec_end=current_species
 
-    IF (cur_species .LE. 0) THEN
+    IF (current_species .LE. 0) THEN
        spec_start=1
        spec_end=n_species
     ENDIF
@@ -520,7 +520,7 @@ CONTAINS
   END SUBROUTINE calc_temperature
 
 
-     SUBROUTINE calc_on_grid_with_evaluator(data_array,cur_species,evaluator)
+     SUBROUTINE calc_on_grid_with_evaluator(data_array,current_species,evaluator)
 
        !Contains the integer cell position of the particle in x,y,z
        INTEGER :: cell_x
@@ -547,7 +547,7 @@ CONTAINS
        REAL(num) :: data
 
        REAL(num),DIMENSION(-2:),INTENT(INOUT) :: data_array
-       INTEGER,INTENT(IN) :: cur_species
+       INTEGER,INTENT(IN) :: current_species
 
        TYPE(particle),POINTER :: current
        INTEGER :: ispecies, spec_start,spec_end
@@ -565,10 +565,10 @@ CONTAINS
 
        l_weight=weight
 
-       spec_start=cur_species
-       spec_end=cur_species
+       spec_start=current_species
+       spec_end=current_species
 
-       IF (cur_species .LE. 0) THEN
+       IF (current_species .LE. 0) THEN
           spec_start=1
           spec_end=n_species
        ENDIF

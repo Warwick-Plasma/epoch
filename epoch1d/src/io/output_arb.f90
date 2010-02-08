@@ -31,7 +31,7 @@ CONTAINS
     md_length=1*max_string_len
     block_length=md_length+data_length
 
-    CALL cfd_write_block_header(name,class,TYPE_ARB_DB,block_length,md_length,default_rank)
+    CALL cfd_write_block_header(name,class,c_type_arb_db,block_length,md_length,default_rank)
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
     IF (cfd_rank == default_rank) THEN

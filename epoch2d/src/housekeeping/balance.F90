@@ -35,7 +35,7 @@ CONTAINS
 
     !This parameter allows selecting the mode of the autobalancing
     !Between leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
-    balance_mode=LB_BOTH
+    balance_mode=c_lb_both
 
     !count particles
     npart_local=get_total_local_particles()
@@ -57,7 +57,7 @@ CONTAINS
     ALLOCATE(starts_y(1:nprocy),ends_y(1:nprocy))
 
     !Sweep in X
-    IF (IAND(balance_mode,LB_X) .NE. 0 .OR. IAND(balance_mode,LB_AUTO) .NE. 0) THEN
+    IF (IAND(balance_mode,c_lb_x) .NE. 0 .OR. IAND(balance_mode,c_lb_auto) .NE. 0) THEN
        !Rebalancing in X
        ALLOCATE(density_x(0:nx_global+1))
        CALL get_density_in_x(density_x)
@@ -69,7 +69,7 @@ CONTAINS
     ENDIF
 
     !Sweep in Y
-    IF (IAND(balance_mode,LB_Y) .NE. 0 .OR. IAND(balance_mode,LB_AUTO) .NE. 0) THEN
+    IF (IAND(balance_mode,c_lb_y) .NE. 0 .OR. IAND(balance_mode,c_lb_auto) .NE. 0) THEN
        !Rebalancing in Y
        ALLOCATE(density_y(0:ny_global+1))
        CALL get_density_in_y(density_y)
@@ -83,7 +83,7 @@ CONTAINS
 
     !In the autobalancer then determine whether to balance in X or Y
     !Is this worth keeping?
-    IF (IAND(balance_mode,LB_AUTO) .NE. 0 ) THEN
+    IF (IAND(balance_mode,c_lb_auto) .NE. 0 ) THEN
 
        !Code is auto load balancing
        max_x=0
@@ -264,13 +264,13 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
        temp1d=0.0_num
        CALL redistribute_field_1d(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
-            ,cell_y_end(coordinates(1)+1),ny_global,current%profile,temp1d,DIR_X)
+            ,cell_y_end(coordinates(1)+1),ny_global,current%profile,temp1d,c_dir_x)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:ny_new+3))
        current%profile=temp1d
        temp1d=0.0_num
        CALL redistribute_field_1d(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
-            ,cell_y_end(coordinates(1)+1),ny_global,current%phase,temp1d,DIR_X)
+            ,cell_y_end(coordinates(1)+1),ny_global,current%phase,temp1d,c_dir_x)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:ny_new+3))
        current%phase=temp1d
@@ -281,13 +281,13 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
        temp1d=0.0_num
        CALL redistribute_field_1d(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
-            ,cell_y_end(coordinates(1)+1),ny_global,current%profile,temp1d,DIR_X)
+            ,cell_y_end(coordinates(1)+1),ny_global,current%profile,temp1d,c_dir_x)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:ny_new+3))
        current%profile=temp1d
        temp1d=0.0_num
        CALL redistribute_field_1d(new_domain(2,1),new_domain(2,2),cell_y_start(coordinates(1)+1)&
-            ,cell_y_end(coordinates(1)+1),ny_global,current%phase,temp1d,DIR_X)
+            ,cell_y_end(coordinates(1)+1),ny_global,current%phase,temp1d,c_dir_x)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:ny_new+3))
        current%phase=temp1d
@@ -301,13 +301,13 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
        temp1d=0.0_num
        CALL redistribute_field_1d(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
-            ,cell_x_end(coordinates(2)+1),nx_global,current%profile,temp1d,DIR_Y)
+            ,cell_x_end(coordinates(2)+1),nx_global,current%profile,temp1d,c_dir_y)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:nx_new+3))
        current%profile=temp1d
        temp1d=0.0_num
        CALL redistribute_field_1d(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
-            ,cell_x_end(coordinates(2)+1),nx_global,current%phase,temp1d,DIR_Y)
+            ,cell_x_end(coordinates(2)+1),nx_global,current%phase,temp1d,c_dir_y)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:nx_new+3))
        current%phase=temp1d
@@ -317,13 +317,13 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
        temp1d=0.0_num
        CALL redistribute_field_1d(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
-            ,cell_x_end(coordinates(2)+1),nx_global,current%profile,temp1d,DIR_Y)
+            ,cell_x_end(coordinates(2)+1),nx_global,current%profile,temp1d,c_dir_y)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:nx_new+3))
        current%profile=temp1d
        temp1d=0.0_num
        CALL redistribute_field_1d(new_domain(1,1),new_domain(1,2),cell_x_start(coordinates(2)+1)&
-            ,cell_x_end(coordinates(2)+1),nx_global,current%phase,temp1d,DIR_Y)
+            ,cell_x_end(coordinates(2)+1),nx_global,current%phase,temp1d,c_dir_y)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:nx_new+3))
        current%phase=temp1d
@@ -367,8 +367,8 @@ CONTAINS
     CALL MPI_FILE_CLOSE(fh,errcode)
     CALL MPI_BARRIER(comm,errcode)
 
-    CALL mpi_type_free(subtype_write,errcode)
-    CALL mpi_type_free(subtype_read,errcode)
+    CALL MPI_TYPE_FREE(subtype_write,errcode)
+    CALL MPI_TYPE_FREE(subtype_read,errcode)
 
     CALL do_field_mpi_with_lengths(new_field,nx_new,ny_new)
 
@@ -387,8 +387,8 @@ CONTAINS
     INTEGER :: new_comm, color
 
 
-    IF (IAND(direction,DIR_X) .EQ. 0) color=coordinates(1)
-    IF (IAND(direction,DIR_Y) .EQ. 0) color=coordinates(2)
+    IF (IAND(direction,c_dir_x) .EQ. 0) color=coordinates(1)
+    IF (IAND(direction,c_dir_y) .EQ. 0) color=coordinates(2)
 
     CALL MPI_COMM_SPLIT(comm,color,rank,new_comm,errcode)
 

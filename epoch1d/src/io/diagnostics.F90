@@ -43,18 +43,18 @@ CONTAINS
     WRITE(filename, filename_desc) TRIM(data_dir), output_file
     IF (print_arrays) THEN
        !Always dump the variables with the "Every" attribute
-       code=IO_ALWAYS
+       code=c_io_always
        !Only dump variables with the "FULL" attributre on full dump intervals
-       IF (MOD(output_file,full_dump_every) .EQ. 0)  code=IOR(code,IO_FULL)
-       IF (MOD(output_file,restart_dump_every) .EQ. 0 .AND. restart_dump_every .GT. -1) code=IOR(code,IO_RESTARTABLE)
-       IF (last_call .AND. force_final_to_be_restartable) code=IOR(code,IO_RESTARTABLE)
+       IF (MOD(output_file,full_dump_every) .EQ. 0)  code=IOR(code,c_io_full)
+       IF (MOD(output_file,restart_dump_every) .EQ. 0 .AND. restart_dump_every .GT. -1) code=IOR(code,c_io_restartable)
+       IF (last_call .AND. force_final_to_be_restartable) code=IOR(code,c_io_restartable)
 
-       npart_local=get_total_local_dumped_particles(IAND(code,IO_RESTARTABLE) .NE. 0)
+       npart_local=get_total_local_dumped_particles(IAND(code,c_io_restartable) .NE. 0)
 
        CALL MPI_ALLREDUCE(npart_local,npart_dump_global,1,MPI_INTEGER8,MPI_SUM,comm,errcode)
-       CALL create_subtypes(IAND(code,IO_RESTARTABLE) .NE. 0)
+       CALL create_subtypes(IAND(code,c_io_restartable) .NE. 0)
        !If the code is doing a restart dump then tell the iterators that this is a restart dump
-       IF (IAND(code,IO_RESTARTABLE) .NE. 0) THEN 
+       IF (IAND(code,c_io_restartable) .NE. 0) THEN 
           iterator_settings%restart=.TRUE.
        ELSE
           iterator_settings%restart=.FALSE.
@@ -70,7 +70,7 @@ CONTAINS
        CALL cfd_write_snapshot_data(time,i,0)
 
        IF (IAND(dumpmask(1),code) .NE. 0) CALL cfd_write_nd_particle_grid_with_iterator_all("Particles","Part_Grid",&
-            iterate_particles,1,npart_local,npart_dump_global,npart_per_it,PARTICLE_CARTESIAN,subtype_particle_var)
+            iterate_particles,1,npart_local,npart_dump_global,npart_per_it,c_particle_cartesian,subtype_particle_var)
        !Write the cartesian mesh
        !(Mesh_Name,Mesh_Class,x_array,y_array,rank to write)
        IF (IAND(dumpmask(2),code) .NE. 0) THEN
@@ -142,13 +142,12 @@ CONTAINS
              ENDDO
           ENDIF
        ENDIF
-
        !These are derived variables from the particles
        !Since you only dump after several particle updates it's actually quicker to
        IF (IAND(dumpmask(21),code) .NE. 0) THEN
           CALL calc_mass_density(data,0)
           CALL cfd_write_1d_cartesian_variable_parallel("Mass_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx),subtype_field)
-          IF (IAND(dumpmask(21),IO_SPECIES) .NE. 0) THEN
+          IF (IAND(dumpmask(21),c_io_species) .NE. 0) THEN
              DO ispecies=1,n_species
                 CALL calc_mass_density(data,ispecies)
                 WRITE(temp_name,'("Mass_Density_",a)') TRIM(particle_species(ispecies)%name)
@@ -159,7 +158,7 @@ CONTAINS
        IF (IAND(dumpmask(22),code) .NE. 0) THEN
           CALL calc_charge_density(data,0)
           CALL cfd_write_1d_cartesian_variable_parallel("Charge_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx),subtype_field)
-          IF (IAND(dumpmask(22),IO_SPECIES) .NE. 0) THEN
+          IF (IAND(dumpmask(22),c_io_species) .NE. 0) THEN
              DO ispecies=1,n_species
                 CALL calc_charge_density(data,ispecies)
                 WRITE(temp_name,'("Charge_Density_",a)') TRIM(particle_species(ispecies)%name)
@@ -171,7 +170,7 @@ CONTAINS
        IF (IAND(dumpmask(23),code) .NE. 0) THEN
           CALL calc_number_density(data,0)
           CALL cfd_write_1d_cartesian_variable_parallel("Number_Density","Derived",dims,stagger,"Grid","Grid",data(1:nx),subtype_field)
-          IF (IAND(dumpmask(23),IO_SPECIES) .NE. 0) THEN
+          IF (IAND(dumpmask(23),c_io_species) .NE. 0) THEN
              DO ispecies=1,n_species
                 CALL calc_number_density(data,ispecies)
                 WRITE(temp_name,'("Number_Density_",a)') TRIM(particle_species(ispecies)%name)
@@ -209,7 +208,7 @@ CONTAINS
        IF (IAND(dumpmask(28),code) .NE. 0) THEN
           CALL calc_temperature(data,0)
           CALL cfd_write_1d_cartesian_variable_parallel("Temperature","Derived",dims,stagger,"Grid","Grid",data(1:nx),subtype_field)
-          IF (IAND(dumpmask(28),IO_SPECIES) .NE. 0) THEN
+          IF (IAND(dumpmask(28),c_io_species) .NE. 0) THEN
              DO ispecies=1,n_species
                 CALL calc_temperature(data,ispecies)
                 WRITE(temp_name,'("Temperature_",a)') TRIM(particle_species(ispecies)%name)

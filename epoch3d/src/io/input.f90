@@ -3,7 +3,7 @@ MODULE input
 
   USE shared_data
   USE iocommon
-  USE inputfunctions
+  USE input_functions
   USE input_cartesian
 
   IMPLICIT NONE
@@ -61,11 +61,11 @@ CONTAINS
 
   END SUBROUTINE cfd_open_read
 
-  SUBROUTINE cfd_get_next_block_info_all(name,class,blocktype)
+  SUBROUTINE cfd_get_next_block_info_all(name,class,block_type)
 
     CHARACTER(len=*),INTENT(INOUT) :: name,class
     CHARACTER(len=max_string_len) :: name_l,class_l
-    INTEGER, INTENT(OUT) :: blocktype
+    INTEGER, INTENT(OUT) :: block_type
     INTEGER :: len_name,len_class
 
     len_name=len(name)
@@ -81,8 +81,7 @@ CONTAINS
     current_displacement = current_displacement + 2 * max_string_len
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, blocktype, 1, MPI_INTEGER, cfd_status, cfd_errcode)
-    c_block_type=blocktype
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, block_type, 1, MPI_INTEGER, cfd_status, cfd_errcode)
 
     name=name_l(1:MIN(len_name,max_string_len))
     class=class_l(1:MIN(len_class,max_string_len))

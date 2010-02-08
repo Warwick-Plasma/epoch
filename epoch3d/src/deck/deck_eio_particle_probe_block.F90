@@ -52,7 +52,7 @@ CONTAINS
 
 !!$    DO iDirection=1,3
 !!$       IF (working_probe%Extents(iDirection,1) .GE. working_probe%Extents(iDirection,2)) THEN
-!!$          IF (rank .EQ. 0) PRINT *,"Points specified for the probe plane corners collapse the probe plane to a lower dimension. This is not currently supported. probe ",TRIM(working_probe%name)," abandoned."
+!!$          IF (rank .EQ. 0) PRINT *,"Points specified for the probe plane corners collapse the probe plane to a lower DIMENSION. This is not currently supported. probe ",TRIM(working_probe%name)," abandoned."
 !!$          DEALLOCATE(working_probe)
 !!$          NULLIFY(working_probe)
 !!$          RETURN
@@ -67,7 +67,7 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: element,value
     INTEGER :: handle_probe_deck, ispecies
 
-    handle_probe_deck=ERR_NONE
+    handle_probe_deck=c_err_none
 
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
@@ -137,12 +137,12 @@ CONTAINS
 
     IF (str_cmp(element,"probe_species")) THEN
        ispecies=as_integer(value,handle_probe_deck)
-       IF (handle_probe_deck .EQ. ERR_NONE) THEN
+       IF (handle_probe_deck .EQ. c_err_none) THEN
           IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
              working_probe%probe_species=>particle_species(ispecies)
           ELSE
              IF (rank .EQ. 0) PRINT *,"Unable to attach probe to non existant species ",ispecies
-             handle_probe_deck=ERR_BAD_VALUE
+             handle_probe_deck=c_err_bad_value
           ENDIF
        ENDIF
        RETURN
@@ -163,7 +163,7 @@ CONTAINS
        RETURN
     ENDIF
 
-    handle_probe_deck = ERR_UNKNOWN_ELEMENT
+    handle_probe_deck = c_err_unknown_element
 
   END FUNCTION handle_probe_deck
 

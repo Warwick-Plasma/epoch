@@ -23,7 +23,7 @@ CONTAINS
     !Leave these lines in place. They cause the code to throw an error if
     !The opcode is unknown
     custom_function=0.0_num
-    errcode=IOR(errcode,ERR_UNKNOWN_ELEMENT)
+    errcode=IOR(errcode,c_err_unknown_element)
 
   END FUNCTION custom_function
 
@@ -38,7 +38,7 @@ CONTAINS
     !Leave these lines in place. They cause the code to throw an error if
     !The opcode is unknown
     custom_constant=0.0_num
-    errcode=IOR(errcode,ERR_UNKNOWN_ELEMENT)
+    errcode=IOR(errcode,c_err_unknown_element)
 
   END FUNCTION custom_constant
 

@@ -5,7 +5,7 @@ MODULE setup
   USE input_arb
   USE input
   USE iocontrol
-  USE inputfunctions
+  USE input_functions
   USE strings
   USE balance
   USE partlist
@@ -140,7 +140,7 @@ CONTAINS
 !!$
 !!$    CHARACTER(len=20+data_dir_max_length) :: filename
 !!$    CHARACTER(len=max_string_len) :: name,class,mesh_name,mesh_class
-!!$    INTEGER :: blocktype,nd
+!!$    INTEGER :: block_type,nd
 !!$    INTEGER :: filehandle,sof
 !!$    INTEGER(KIND=8) :: npart_l,npart_per_it=10000,npart_local,npart_test
 !!$    REAL(num), DIMENSION(2) :: extents,stagger
@@ -150,11 +150,11 @@ CONTAINS
 !!$    LOGICAL,DIMENSION(3) :: PisV
 !!$    REAL(num) :: v2
 !!$    TYPE(particle), POINTER :: current,next
-!!$    LOGICAL :: const_weight
+!!$    LOGICAL :: constant_weight
 !!$    INTEGER(KIND=8) :: npart
 !!$
 !!$    npart=npart_global/nproc
-!!$    const_weight=.FALSE.
+!!$    constant_weight=.FALSE.
 !!$    CALL CreateSubTypesForLoad(npart)
 !!$
 !!$    ! Create the filename for the last snapshot
@@ -173,27 +173,27 @@ CONTAINS
 !!$
 !!$    IF (rank .EQ. 0) PRINT *,"Input file contains",nblocks,"blocks"
 !!$    DO ix=1,nblocks
-!!$       CALL cfd_get_next_block_info_all(name,class,blocktype)
-!!$       !IF (rank .EQ. 0) PRINT *,"Loading block",ix,name,blocktype
-!!$       IF (blocktype .EQ. TYPE_SNAPSHOT) THEN
+!!$       CALL cfd_get_next_block_info_all(name,class,block_type)
+!!$       !IF (rank .EQ. 0) PRINT *,"Loading block",ix,name,block_type
+!!$       IF (block_type .EQ. c_type_snapshot) THEN
 !!$          CALL cfd_get_snapshot(time_d,snap)
 !!$          time=time_d
 !!$          IF (rank .EQ. 0) PRINT *,"Loading snapshot for time",time
 !!$       ENDIF
-!!$       SELECT CASE(blocktype)
-!!$       CASE(TYPE_MESH_VARIABLE)
-!!$          CALL cfd_get_common_meshtype_metadata_all(blocktype,nd,sof)
+!!$       SELECT CASE(block_type)
+!!$       CASE(c_type_mesh_variable)
+!!$          CALL cfd_get_common_meshtype_metadata_all(block_type,nd,sof)
 !!$          IF (sof .NE. num) THEN
 !!$             IF (rank .EQ. 0) PRINT *,"Precision does not match, recompile code so that sizeof(real) = ",sof
 !!$             CALL MPI_ABORT(comm,errcode)
 !!$          ENDIF
 !!$
-!!$          IF (nd .NE. DIMENSION_2D .AND. nd .NE. DIMENSION_IRRELEVANT ) THEN
+!!$          IF (nd .NE. c_dimension_2d .AND. nd .NE. c_dimension_irrelevant ) THEN
 !!$             IF (rank .EQ. 0) PRINT *,"Dimensionality does not match, file is ",nd,"D"
 !!$             CALL MPI_ABORT(comm,errcode)
 !!$          ENDIF
-!!$          SELECT CASE(blocktype)
-!!$          CASE(VAR_CARTESIAN)
+!!$          SELECT CASE(block_type)
+!!$          CASE(c_var_cartesian)
 !!$             !Grid variables
 !!$             CALL cfd_get_nd_cartesian_variable_metadata_all(nd,dims,extents,stagger,mesh_name,mesh_class)
 !!$             IF (dims(1) .NE. nx_global) THEN
@@ -208,7 +208,7 @@ CONTAINS
 !!$             IF (str_cmp(name(1:2),"By")) CALL cfd_get_2d_cartesian_variable_parallel(by(1:nx,1:ny),subtype_field)
 !!$             IF (str_cmp(name(1:2),"Bz")) CALL cfd_get_2d_cartesian_variable_parallel(bz(1:nx,1:ny),subtype_field)
 !!$
-!!$          CASE(VAR_PARTICLE)
+!!$          CASE(c_var_particle)
 !!$             CALL cfd_get_nd_particle_variable_metadata_all(npart_l,extents,mesh_name,mesh_class)
 !!$             IF (npart_l .NE. npart_global) THEN
 !!$                IF (rank .EQ. 0) PRINT *,"Number of particles does not match, changing npart to match",npart_l
@@ -239,9 +239,9 @@ CONTAINS
 !!$#endif
 !!$             IF (str_cmp(name(1:7),"Species")) CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart,npart_per_it,subtype_particle_var,it_species)
 !!$          END SELECT
-!!$       CASE(TYPE_MESH)
-!!$          CALL cfd_get_common_meshtype_metadata_all(blocktype,nd,sof)
-!!$          IF (blocktype .EQ. MESH_PARTICLE) THEN
+!!$       CASE(c_type_mesh)
+!!$          CALL cfd_get_common_meshtype_metadata_all(block_type,nd,sof)
+!!$          IF (block_type .EQ. c_mesh_particle) THEN
 !!$             CALL cfd_get_nd_particle_grid_metadata_all(nd,coord_type,npart_l,extents)
 !!$             IF (npart_l .NE. npart_global) THEN
 !!$                npart=npart_l/nproc
@@ -257,9 +257,9 @@ CONTAINS
 !!$             ENDIF
 !!$             CALL cfd_get_nd_particle_grid_parallel_with_iterator(nd,main_root%count,npart_l,npart_per_it,sof,subtype_particle_var,it_part)
 !!$          ENDIF
-!!$       CASE(TYPE_CONSTANT)
+!!$       CASE(c_type_constant)
 !!$          CALL cfd_get_real_constant(weight)
-!!$          const_weight=.TRUE.
+!!$          constant_weight=.TRUE.
 !!$       END SELECT
 !!$       CALL cfd_skip_block()
 !!$    ENDDO
@@ -279,7 +279,7 @@ CONTAINS
 !!$    DEALLOCATE(species_id)
 !!$
 !!$#ifdef PER_PARTICLE_WEIGHT
-!!$    IF (const_weight) THEN
+!!$    IF (constant_weight) THEN
 !!$       current=>main_root%head
 !!$       DO WHILE(ASSOCIATED(current))
 !!$          current%weight=weight

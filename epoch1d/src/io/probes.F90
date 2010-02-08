@@ -76,7 +76,7 @@ CONTAINS
              !dump particle Positions
              CALL cfd_write_nd_particle_grid_with_iterator_all(TRIM(probe_name),&
                   "Probe_Grid",iterate_probe_particles,2,npart_probe_local,npart_probe_global,npart_probe_per_it,&
-                  PARTICLE_CARTESIAN,subtype_probe_particle_var)
+                  c_particle_cartesian,subtype_probe_particle_var)
 
              !dump Px
              WRITE(temp_name,'(a,"_Px")') TRIM(probe_name)
@@ -106,7 +106,7 @@ CONTAINS
 #endif
 
              CALL destroy_partlist(current_probe%sampled_particles)
-             CALL mpi_type_free(subtype_probe_particle_var,errcode)
+             CALL MPI_TYPE_FREE(subtype_probe_particle_var,errcode)
           ENDIF
           current_probe=>current_probe%next
 

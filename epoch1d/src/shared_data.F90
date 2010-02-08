@@ -21,40 +21,40 @@ MODULE constants
   INTEGER, PARAMETER :: num = KIND(1.d0)
   INTEGER, PARAMETER :: dbl = KIND(1.d0)
   REAL(num), PARAMETER :: pi = 3.14159265358979323_num
-  REAL(num), PARAMETER :: NONE_ZERO = TINY(1.0_num)
+  REAL(num), PARAMETER :: c_non_zero = TINY(1.0_num)
   REAL(num), PARAMETER :: largest_number = HUGE(1.0_num)
 
   !Boundary type codes
-  INTEGER, PARAMETER :: BC_PERIODIC = 1, BC_OTHER = 2, BC_SIMPLE_LASER = 3, BC_SIMPLE_OUTFLOW = 4
-  INTEGER, PARAMETER :: BC_OPEN = 5, BC_DUMP=6, BC_ZERO_GRADIENT=7, BC_CLAMP=8, BC_REFLECT=9
+  INTEGER, PARAMETER :: c_bc_periodic = 1, c_bc_other = 2, c_bc_simple_laser = 3, c_bc_simple_outflow = 4
+  INTEGER, PARAMETER :: c_bc_open = 5, c_bc_dump=6, c_bc_zero_gradient=7, c_bc_clamp=8, c_bc_reflect=9
 
   !Boundary location codes
-  INTEGER, PARAMETER :: BD_LEFT=1, BD_RIGHT=2, BD_UP=3, BD_DOWN=4, BD_FRONT=5, BC_BACK=6
+  INTEGER, PARAMETER :: c_bd_left=1, c_bd_right=2, c_bd_up=3, c_bd_down=4, c_bd_front=5, c_bc_back=6
 
-  INTEGER, PARAMETER :: version = 1, revision = 3
+  INTEGER, PARAMETER :: c_version = 1, c_revision = 3
 
   !Error codes
-  INTEGER,PARAMETER ::ERR_NONE=0,ERR_UNKNOWN_BLOCK=1,ERR_UNKNOWN_ELEMENT=2
-  INTEGER,PARAMETER ::ERR_PRESET_ELEMENT=4,ERR_PRESET_ELEMENT_USE_LATER=8
-  INTEGER,PARAMETER ::ERR_BAD_VALUE=16,ERR_MISSING_ELEMENTS=32,ERR_TERMINATE=64
-  INTEGER,PARAMETER ::ERR_REQUIRED_ELEMENT_NOT_SET=128, ERR_PP_OPTIONS_WRONG=256
-  INTEGER,PARAMETER ::ERR_BAD_ARRAY_LENGTH=512
-  INTEGER,PARAMETER ::ERR_OTHER=2048
+  INTEGER,PARAMETER ::c_err_none=0,c_err_unknown_block=1,c_err_unknown_element=2
+  INTEGER,PARAMETER ::c_err_preset_element=4,c_err_preset_element_use_later=8
+  INTEGER,PARAMETER ::c_err_bad_value=16,c_err_missing_elements=32,c_err_terminate=64
+  INTEGER,PARAMETER ::c_err_required_element_not_set=128, c_err_pp_options_wrong=256
+  INTEGER,PARAMETER ::c_err_bad_array_length=512
+  INTEGER,PARAMETER ::c_err_other=2048
 
   !IC codes
   !This is a bitmask, remember that
-  INTEGER, PARAMETER :: IC_EARLY_INTERNAL=1, IC_LATE_INTERNAL=2,  IC_EXTERNAL=4, IC_MANUAL=8, IC_RESTART=16
-  INTEGER, PARAMETER :: IC_AUTOLOAD = IC_EARLY_INTERNAL + IC_LATE_INTERNAL + IC_EXTERNAL
+  INTEGER, PARAMETER :: c_ic_early_internal=1, c_ic_late_internal=2,  c_ic_external=4, c_ic_manual=8, c_ic_restart=16
+  INTEGER, PARAMETER :: c_ic_autoload = c_ic_early_internal + c_ic_late_internal + c_ic_external
 
-  INTEGER, PARAMETER :: DS_DECK=1, DS_IC=2, DS_EIO=3
+  INTEGER, PARAMETER :: c_ds_deck=1, c_ds_ic=2, c_ds_eio=3
 
   !IO codes
-  INTEGER, PARAMETER :: IO_NEVER=0, IO_ALWAYS=1, IO_FULL=2, IO_RESTARTABLE=4, IO_SPECIES=8, IO_NO_INTRINSIC=16
+  INTEGER, PARAMETER :: c_io_never=0, c_io_always=1, c_io_full=2, c_io_restartable=4, c_io_species=8, c_io_no_intrinsic=16
   !domain codes
-  INTEGER, PARAMETER :: DO_FULL=0,DO_DECOMPOSED=1
+  INTEGER, PARAMETER :: c_do_full=0,c_do_decomposed=1
 
   !Load balance codes
-  INTEGER,PARAMETER :: LB_X=1, LB_Y=2, LB_AUTO=4, LB_BOTH=LB_X+LB_Y
+  INTEGER,PARAMETER :: c_lb_x=1, c_lb_y=2, c_lb_auto=4, c_lb_both=c_lb_x+c_lb_y
 
   REAL(num),PARAMETER :: q0 = 1.60217646e-19_num !c
   REAL(num),PARAMETER :: m0 = 9.10938188e-31_num !kg
@@ -66,7 +66,7 @@ MODULE constants
   REAL(num),PARAMETER :: ev = q0 !J
 
   !direction parameters
-  INTEGER, PARAMETER :: DIR_X=1, DIR_Y=2, DIR_Z=4, DIR_PX=8, DIR_PY=16, DIR_PZ=32
+  INTEGER, PARAMETER :: c_dir_x=1, c_dir_y=2, c_dir_z=4, c_dir_px=8, c_dir_py=16, c_dir_pz=32
 
   !Length of a standard string
   INTEGER,PARAMETER :: string_length=128
@@ -79,70 +79,70 @@ MODULE shared_parser_data
 
   IMPLICIT NONE
 
-  INTEGER,PARAMETER :: CHAR_NUMERIC=1, CHAR_ALPHA=2, CHAR_DELIMITER=3, CHAR_SPACE = 4
-  INTEGER,PARAMETER :: CHAR_OPCODE=5,CHAR_UNKNOWN=1024
+  INTEGER,PARAMETER :: c_char_numeric=1, c_char_alpha=2, c_char_delimiter=3, c_char_space = 4
+  INTEGER,PARAMETER :: c_char_opcode=5,c_char_unknown=1024
 
-  INTEGER,PARAMETER :: PRC_NOT_THIS_TYPE=0
+  INTEGER,PARAMETER :: c_prc_not_this_type=0
 
   !block type constants
-  INTEGER,PARAMETER :: PT_VARIABLE=1, PT_CONSTANT=2, PT_OPERATOR=3, PT_FUNCTION=4, PT_PARENTHESIS=5, PT_SEPARATOR=6, PT_CHARACTER=7
-  INTEGER,PARAMETER :: PT_DEFERRED_EXECUTION_OBJECT=8
-  INTEGER,PARAMETER :: PT_BAD=1024, PT_NULL=1025
+  INTEGER,PARAMETER :: c_pt_variable=1, c_pt_constant=2, c_pt_operator=3, c_pt_function=4, c_pt_parenthesis=5, c_pt_separator=6, c_pt_character=7
+  INTEGER,PARAMETER :: c_pt_deferred_execution_object=8
+  INTEGER,PARAMETER :: c_pt_bad=1024, c_pt_null=1025
 
   !Opcode constants
-  INTEGER,PARAMETER :: OPCODE_PLUS=1, OPCODE_MINUS=2, OPCODE_TIMES=3
-  INTEGER,PARAMETER :: OPCODE_DIVIDE=4, OPCODE_POWER=5, OPCODE_EXPO=6
-  INTEGER,PARAMETER :: OPCODE_LT=7, OPCODE_GT=8, OPCODE_EQ=9
-  INTEGER,PARAMETER :: OPCODE_AND=10, OPCODE_OR=11, OPCODE_UNARY_MINUS=12
+  INTEGER,PARAMETER :: c_opcode_plus=1, c_opcode_minus=2, c_opcode_times=3
+  INTEGER,PARAMETER :: c_opcode_divide=4, c_opcode_power=5, c_opcode_expo=6
+  INTEGER,PARAMETER :: c_opcode_lt=7, c_opcode_gt=8, c_opcode_eq=9
+  INTEGER,PARAMETER :: c_opcode_and=10, c_opcode_or=11, c_opcode_unary_minus=12
 
-  INTEGER,PARAMETER :: PAREN_LEFT_BRACKET=1, PAREN_RIGHT_BRACKET=2
+  INTEGER,PARAMETER :: c_paren_left_bracket=1, c_paren_right_bracket=2
 
   !Actual constants
-  INTEGER,PARAMETER :: CONST_PI=1, CONST_KB=2, CONST_ME=3, CONST_QE=4
-  INTEGER,PARAMETER :: CONST_EPS0=5, CONST_MU0=6, CONST_C=7, CONST_EV=8
-  INTEGER,PARAMETER :: CONST_KEV=9, CONST_MEV=10
+  INTEGER,PARAMETER :: c_const_pi=1, c_const_kb=2, c_const_me=3, c_const_qe=4
+  INTEGER,PARAMETER :: c_const_eps0=5, c_const_mu0=6, c_const_c=7, c_const_ev=8
+  INTEGER,PARAMETER :: c_const_kev=9, c_const_mev=10
 
   !Constants refering to grid properties
-  INTEGER,PARAMETER :: CONST_X=25, CONST_Y=26, CONST_Z=27
-  INTEGER,PARAMETER :: CONST_LX=28, CONST_LY=29, CONST_LZ=30
-  INTEGER,PARAMETER :: CONST_DX=31, CONST_DY=32, CONST_DZ=33
-  INTEGER,PARAMETER :: CONST_START_X=34, CONST_START_Y=35, CONST_START_Z=36
-  INTEGER,PARAMETER :: CONST_END_X=37, CONST_END_Y=38, CONST_END_Z=39
-  INTEGER,PARAMETER :: CONST_IX=40, CONST_IY=41, CONST_IZ=42
-  INTEGER,PARAMETER :: CONST_TIME=43
+  INTEGER,PARAMETER :: c_const_x=25, c_const_y=26, c_const_z=27
+  INTEGER,PARAMETER :: c_const_lx=28, c_const_ly=29, c_const_lz=30
+  INTEGER,PARAMETER :: c_const_dx=31, c_const_dy=32, c_const_dz=33
+  INTEGER,PARAMETER :: c_const_start_x=34, c_const_start_y=35, c_const_start_z=36
+  INTEGER,PARAMETER :: c_const_end_x=37, c_const_end_y=38, c_const_end_z=39
+  INTEGER,PARAMETER :: c_const_ix=40, c_const_iy=41, c_const_iz=42
+  INTEGER,PARAMETER :: c_const_time=43
 
-  INTEGER,PARAMETER :: CONST_IO_NEVER=44, CONST_IO_ALWAYS=45, CONST_IO_FULL=46, CONST_IO_RESTARTABLE=47, CONST_IO_SPECIES=48
-  INTEGER,PARAMETER :: CONST_DIR_X=49, CONST_DIR_Y=50, CONST_DIR_Z=51, CONST_DIR_PX=52
-  INTEGER,PARAMETER :: CONST_DIR_PY=53, CONST_DIR_PZ=54
+  INTEGER,PARAMETER :: c_const_io_never=44, c_const_io_always=45, c_const_io_full=46, c_const_io_restartable=47, c_const_io_species=48
+  INTEGER,PARAMETER :: c_const_dir_x=49, c_const_dir_y=50, c_const_dir_z=51, c_const_dir_px=52
+  INTEGER,PARAMETER :: c_const_dir_py=53, c_const_dir_pz=54
 
   !Constants for initial conditions
-  INTEGER,PARAMETER :: CONST_AUTOEARLY=20, CONST_AUTOLATE=21, CONST_EXTERNAL=22
-  INTEGER,PARAMETER :: CONST_MANUAL=23, CONST_RESTART=24
+  INTEGER,PARAMETER :: c_const_autoearly=20, c_const_autolate=21, c_const_external=22
+  INTEGER,PARAMETER :: c_const_manual=23, c_const_restart=24
 
   !Custom constants
-  INTEGER,PARAMETER :: CONSTANT_DECK_LOWBOUND=4096
-  INTEGER,PARAMETER :: CONSTANT_CUSTOM_LOWBOUND=8192
+  INTEGER,PARAMETER :: c_const_deck_lowbound=4096
+  INTEGER,PARAMETER :: c_const_custom_lowbound=8192
 
-  INTEGER,PARAMETER :: FUNC_SINE=1, FUNC_COSINE=2, FUNC_TAN=3, FUNC_EXP=4
-  INTEGER,PARAMETER :: FUNC_ARCSINE=10, FUNC_ARCCOSINE=11, FUNC_ARCTAN=12
-  INTEGER,PARAMETER :: FUNC_NEG=13, FUNC_IF=14, FUNC_FLOOR=15, FUNC_CEIL=16
-  INTEGER,PARAMETER :: FUNC_NINT=17, FUNC_RHO=18, FUNC_TEMPX=19, FUNC_TEMPY=20
-  INTEGER,PARAMETER :: FUNC_TEMPZ=21, FUNC_INTERPOLATE=22, FUNC_TANH=23
-  INTEGER,PARAMETER :: FUNC_SINH=24, FUNC_COSH=25, FUNC_EX=26
-  INTEGER,PARAMETER :: FUNC_EY=27, FUNC_EZ=28, FUNC_BX=29
-  INTEGER,PARAMETER :: FUNC_BY=30, FUNC_BZ=31, FUNC_SQRT=32
-  INTEGER,PARAMETER :: FUNC_GAUSS=33, FUNC_SEMIGAUSS=34, FUNC_CRIT=35
-  INTEGER,PARAMETER :: FUNC_ABS=36
+  INTEGER,PARAMETER :: c_func_sine=1, c_func_cosine=2, c_func_tan=3, c_func_exp=4
+  INTEGER,PARAMETER :: c_func_arcsine=10, c_func_arccosine=11, c_func_arctan=12
+  INTEGER,PARAMETER :: c_func_neg=13, c_func_if=14, c_func_floor=15, c_func_ceil=16
+  INTEGER,PARAMETER :: c_func_nint=17, c_func_rho=18, c_func_tempx=19, c_func_tempy=20
+  INTEGER,PARAMETER :: c_func_tempz=21, c_func_interpolate=22, c_func_tanh=23
+  INTEGER,PARAMETER :: c_func_sinh=24, c_func_cosh=25, c_func_ex=26
+  INTEGER,PARAMETER :: c_func_ey=27, c_func_ez=28, c_func_bx=29
+  INTEGER,PARAMETER :: c_func_by=30, c_func_bz=31, c_func_sqrt=32
+  INTEGER,PARAMETER :: c_func_gauss=33, c_func_semigauss=34, c_func_crit=35
+  INTEGER,PARAMETER :: c_func_abs=36
 
-  INTEGER,PARAMETER :: FUNC_CUSTOM_LOWBOUND=4096
+  INTEGER,PARAMETER :: c_func_custom_lowbound=4096
 
   !Associativity constants
-  INTEGER,PARAMETER :: ASSOC_A=1, ASSOC_LA=2, ASSOC_RA=3
+  INTEGER,PARAMETER :: c_assoc_a=1, c_assoc_la=2, c_assoc_ra=3
 
   INTEGER,PARAMETER :: num_ops=12
   INTEGER, DIMENSION(num_ops), PARAMETER :: opcode_precedence = (/1,1,2,2,5,5,1,1,1,2,2,5/)
-  INTEGER, DIMENSION(num_ops), PARAMETER :: opcode_assoc = (/ASSOC_A,ASSOC_LA,ASSOC_A,ASSOC_LA,ASSOC_LA,&
-       ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_A,ASSOC_RA/)
+  INTEGER, DIMENSION(num_ops), PARAMETER :: opcode_assoc = (/c_assoc_a,c_assoc_la,c_assoc_a,c_assoc_la,c_assoc_la,&
+       c_assoc_a,c_assoc_a,c_assoc_a,c_assoc_a,c_assoc_a,c_assoc_a,c_assoc_ra/)
 
   INTEGER,PARAMETER :: stack_size=10000
 

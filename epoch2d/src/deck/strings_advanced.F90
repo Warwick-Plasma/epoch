@@ -30,7 +30,7 @@ CONTAINS
     ENDDO
 
     IF (pos < 0) THEN 
-       err=IOR(err,ERR_BAD_VALUE)
+       err=IOR(err,c_err_bad_value)
        RETURN
     ENDIF
     str_out=str_in(1:pos-1)
@@ -58,7 +58,7 @@ CONTAINS
     ENDDO
 
     IF (pos < 0) THEN 
-       err=IOR(err,ERR_BAD_VALUE)
+       err=IOR(err,c_err_bad_value)
        RETURN
     ENDIF
     real1=as_real_simple(TRIM(str_in(1:pos-1)),err)

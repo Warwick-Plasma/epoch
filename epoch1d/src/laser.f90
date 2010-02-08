@@ -32,10 +32,10 @@ CONTAINS
 
     direction=laser%direction
 
-    IF (direction == BD_LEFT) THEN
+    IF (direction == c_bd_left) THEN
        CALL attach_laser_to_list(laser_left,laser,direction) 
     ENDIF
-    IF (direction == BD_RIGHT) THEN
+    IF (direction == c_bd_right) THEN
        CALL attach_laser_to_list(laser_right,laser,direction) 
     ENDIF
 

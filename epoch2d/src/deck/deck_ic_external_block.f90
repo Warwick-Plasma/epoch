@@ -21,7 +21,7 @@ CONTAINS
     INTEGER :: handle_ic_external_species_deck
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset =0 
 
-    handle_ic_external_species_deck=ERR_NONE
+    handle_ic_external_species_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element,"offset")) THEN
@@ -75,7 +75,7 @@ CONTAINS
             ,handle_ic_external_species_deck)
        RETURN
     ENDIF
-    handle_ic_external_species_deck=ERR_UNKNOWN_ELEMENT
+    handle_ic_external_species_deck=c_err_unknown_element
 
   END FUNCTION handle_ic_external_species_deck
 
@@ -84,7 +84,7 @@ CONTAINS
     INTEGER :: handle_ic_external_fields_deck
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset =0 
 
-    handle_ic_external_fields_deck=ERR_NONE
+    handle_ic_external_fields_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element,"ex")) THEN

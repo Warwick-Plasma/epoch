@@ -1,5 +1,5 @@
 
-MODULE inputfunctions
+MODULE input_functions
 
   USE shared_data
   USE iocommon
@@ -27,4 +27,4 @@ CONTAINS
     current_displacement = block_header_end+block_md_length
   END SUBROUTINE cfd_skip_block_metadata
 
-END MODULE inputfunctions
+END MODULE input_functions

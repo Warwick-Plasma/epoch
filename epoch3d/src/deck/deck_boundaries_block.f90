@@ -21,7 +21,7 @@ CONTAINS
     INTEGER :: handle_boundary_deck
     INTEGER :: loop,elementselected
 
-    handle_boundary_deck=ERR_UNKNOWN_ELEMENT
+    handle_boundary_deck=c_err_unknown_element
 
     elementselected=0
 
@@ -34,11 +34,11 @@ CONTAINS
 
     IF (elementselected .EQ. 0) RETURN
     IF (boundary_block_done(elementselected)) THEN
-       handle_boundary_deck=ERR_PRESET_ELEMENT
+       handle_boundary_deck=c_err_preset_element
        RETURN
     ENDIF
     boundary_block_done(elementselected)=.TRUE.
-    handle_boundary_deck=ERR_NONE
+    handle_boundary_deck=c_err_none
 
     SELECT CASE (elementselected)
     CASE(1)
@@ -62,7 +62,7 @@ CONTAINS
     INTEGER :: check_boundary_block
     INTEGER :: index
 
-    check_boundary_block=ERR_NONE
+    check_boundary_block=c_err_none
 
     DO index=1,boundary_block_elements
        IF (.NOT. boundary_block_done(index)) THEN
@@ -73,7 +73,7 @@ CONTAINS
              WRITE(40,*) "***ERROR***"
              WRITE(40,*) "Required boundary block element ",TRIM(ADJUSTL(boundary_block_name(index))), " absent. Please create this entry in the input deck"   
           ENDIF
-          check_boundary_block = ERR_MISSING_ELEMENTS
+          check_boundary_block = c_err_missing_elements
        ENDIF
     ENDDO
 

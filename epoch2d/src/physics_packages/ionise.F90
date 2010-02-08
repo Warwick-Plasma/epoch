@@ -126,7 +126,7 @@ CONTAINS
 
           rand=random(idum)
           !After all that, we now know the target ionisation fraction, so subtract the current fraction and ionise
-          IF (rand .LT. (ion_frac-ndp_high/MAX(ndp_low,NONE_ZERO))) THEN
+          IF (rand .LT. (ion_frac-ndp_high/MAX(ndp_low,c_non_zero))) THEN
              CALL remove_particle_from_partlist(particle_species(ispecies)%attached_list,current)
              next_species=particle_species(ispecies)%ionise_to_species
              CALL add_particle_to_partlist(particle_species(next_species)%attached_list,current)

@@ -17,7 +17,7 @@ CONTAINS
     INTEGER :: ix
     TYPE(deck_constant),DIMENSION(:),ALLOCATABLE :: buffer
 
-    handle_constant_deck=ERR_NONE
+    handle_constant_deck=c_err_none
 
     IF (value .EQ. blank) RETURN
 

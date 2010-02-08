@@ -25,7 +25,7 @@ CONTAINS
     INTEGER :: handle_io_deck
     INTEGER :: loop,elementselected
 
-    handle_io_deck=ERR_UNKNOWN_ELEMENT
+    handle_io_deck=c_err_unknown_element
 
     elementselected=0
 
@@ -38,11 +38,11 @@ CONTAINS
 
     IF (elementselected .EQ. 0) RETURN
     IF (io_block_done(elementselected)) THEN
-       handle_io_deck=ERR_PRESET_ELEMENT
+       handle_io_deck=c_err_preset_element
        RETURN
     ENDIF
     io_block_done(elementselected)=.TRUE.
-    handle_io_deck=ERR_NONE
+    handle_io_deck=c_err_none
 
     SELECT CASE (elementselected)
     CASE(1)
@@ -67,7 +67,7 @@ CONTAINS
     !If setting dumpmask for particle probes then report if the code wasn't compiled for particle probes
 #ifndef PARTICLE_PROBES   
     IF (elementselected-n_var_special .EQ. 27) THEN
-       handle_io_deck=ERR_PP_OPTIONS_WRONG
+       handle_io_deck=c_err_pp_options_wrong
        extended_error_string="-DPARTICLE_PROBES"
     ENDIF
 #endif
@@ -80,17 +80,17 @@ CONTAINS
     INTEGER :: check_io_block,index
 
     !Just assume that anything not included except for the compulsory elements is not wanted
-    check_io_block=ERR_NONE
+    check_io_block=c_err_none
 
     !If not requesting extended io then don't check for extended_io_file
     IF (.NOT. io_block_done(6) .OR. .NOT. use_extended_io) io_block_done(6:7)=.TRUE.
 
     !particle Positions
-    dumpmask(1:5) = IOR(dumpmask(1:5),IO_RESTARTABLE)
+    dumpmask(1:5) = IOR(dumpmask(1:5),c_io_restartable)
     !Fields
-    dumpmask(9:14) = IOR(dumpmask(9:14),IO_RESTARTABLE) 
+    dumpmask(9:14) = IOR(dumpmask(9:14),c_io_restartable) 
     !weight and species info
-    dumpmask(24:25) = IOR(dumpmask(24:25),IO_RESTARTABLE)
+    dumpmask(24:25) = IOR(dumpmask(24:25),c_io_restartable)
 
     DO index=1,n_var_special
        IF (.NOT. io_block_done(index)) THEN
@@ -101,7 +101,7 @@ CONTAINS
              WRITE(40,*) "***ERROR***"
              WRITE(40,*) "Required output block element ",TRIM(ADJUSTL(io_block_name(index))), " absent. Please create this entry in the input deck"   
           ENDIF
-          check_io_block=ERR_MISSING_ELEMENTS
+          check_io_block=c_err_missing_elements
        ENDIF
     ENDDO
 

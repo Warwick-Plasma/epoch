@@ -11,7 +11,7 @@ CONTAINS
     CHARACTER(*),INTENT(IN) :: element,value
     INTEGER :: handle_window_deck
 
-    handle_window_deck=ERR_NONE
+    handle_window_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element,"move_window")) THEN
@@ -39,7 +39,7 @@ CONTAINS
        RETURN
     ENDIF
 
-    handle_window_deck=ERR_UNKNOWN_ELEMENT
+    handle_window_deck=c_err_unknown_element
 
   END FUNCTION handle_window_deck
 
@@ -48,7 +48,7 @@ CONTAINS
     INTEGER :: check_window_block
 
     !Should do error checking but can't be bothered at the moment
-    check_window_block=ERR_NONE
+    check_window_block=c_err_none
 
   END FUNCTION check_window_block
 

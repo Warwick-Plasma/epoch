@@ -35,9 +35,9 @@ CONTAINS
     block_length=md_length + nx*num
 
     !Now written header, write metadata
-    CALL cfd_write_block_header(name,class,TYPE_MESH,block_length,md_length,rank_write)
+    CALL cfd_write_block_header(name,class,c_type_mesh,block_length,md_length,rank_write)
 
-    CALL cfd_write_meshtype_header(MESH_CARTESIAN,DIMENSION_1D,num,rank_write)
+    CALL cfd_write_meshtype_header(c_mesh_cartesian,c_dimension_1d,num,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -94,9 +94,9 @@ CONTAINS
     block_length=md_length + (nx+ny)*num
 
     !Now written header, write metadata
-    CALL cfd_write_block_header(name,class,TYPE_MESH,block_length,md_length,rank_write)
+    CALL cfd_write_block_header(name,class,c_type_mesh,block_length,md_length,rank_write)
 
-    CALL cfd_write_meshtype_header(MESH_CARTESIAN,DIMENSION_2D,num,rank_write)
+    CALL cfd_write_meshtype_header(c_mesh_cartesian,c_dimension_2d,num,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -161,9 +161,9 @@ CONTAINS
     block_length=md_length + (nx+ny+nz)*num
 
     !Now written header, write metadata
-    CALL cfd_write_block_header(name,class,TYPE_MESH,block_length,md_length,rank_write)
+    CALL cfd_write_block_header(name,class,c_type_mesh,block_length,md_length,rank_write)
 
-    CALL cfd_write_meshtype_header(MESH_CARTESIAN,DIMENSION_3D,num,rank_write)
+    CALL cfd_write_meshtype_header(c_mesh_cartesian,c_dimension_3d,num,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -241,8 +241,8 @@ CONTAINS
     block_length = md_length + num * nx * ny * nz
 
     !Write the common stuff
-    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,default_rank)
-    CALL cfd_write_meshtype_header(VAR_CARTESIAN,DIMENSION_3D,num,default_rank)
+    CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(c_var_cartesian,c_dimension_3d,num,default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -324,8 +324,8 @@ CONTAINS
     md_length = meshtype_header_offset + 2 * soi + 4 * num + 2 * max_string_len !3 INTs 2 REALs
     block_length = md_length + num * nx * ny
 
-    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,default_rank)
-    CALL cfd_write_meshtype_header(VAR_CARTESIAN, DIMENSION_2D, num, default_rank)
+    CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_2d, num, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -400,8 +400,8 @@ CONTAINS
     md_length = meshtype_header_offset + 1 * soi + 3 * num + 2 * max_string_len !1 INTs 3 REALs 2 strings
     block_length = md_length + num * nx 
 
-    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,default_rank)
-    CALL cfd_write_meshtype_header(VAR_CARTESIAN, DIMENSION_1D, num, default_rank)
+    CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,default_rank)
+    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, num, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -474,8 +474,8 @@ CONTAINS
     md_length = meshtype_header_offset + 1 * soi + 3 * num + 2 * max_string_len !1 INTs 3 REALs
     block_length = md_length + num * nx
 
-    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,rank_write)
-    CALL cfd_write_meshtype_header(VAR_CARTESIAN,DIMENSION_1D, num, rank_write)
+    CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,rank_write)
+    CALL cfd_write_meshtype_header(c_var_cartesian,c_dimension_1d, num, rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -554,8 +554,8 @@ CONTAINS
     md_length = meshtype_header_offset + 2 * soi + 4 * num + 2 * max_string_len !2 INTs 4 REALs
     block_length = md_length + num * nx * ny
 
-    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,rank_write)
-    CALL cfd_write_meshtype_header(VAR_CARTESIAN,DIMENSION_2D, num, rank_write)
+    CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,rank_write)
+    CALL cfd_write_meshtype_header(c_var_cartesian,c_dimension_2d, num, rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -639,8 +639,8 @@ CONTAINS
     md_length = meshtype_header_offset + 3 * soi + 5 * num + 2 * max_string_len !3 INTs 5 REALs
     block_length = md_length + num * nx * ny * nz
 
-    CALL cfd_write_block_header(name,class,TYPE_MESH_VARIABLE,block_length,md_length,rank_write)
-    CALL cfd_write_meshtype_header(VAR_CARTESIAN,DIMENSION_3D,num,rank_write)
+    CALL cfd_write_block_header(name,class,c_type_mesh_variable,block_length,md_length,rank_write)
+    CALL cfd_write_meshtype_header(c_var_cartesian,c_dimension_3d,num,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL, cfd_errcode)

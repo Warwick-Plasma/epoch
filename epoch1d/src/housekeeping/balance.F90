@@ -35,7 +35,7 @@ CONTAINS
 
     !This parameter allows selecting the mode of the autobalancing
     !Between leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
-    balance_mode=LB_BOTH
+    balance_mode=c_lb_both
 
     !count particles
     npart_local=get_total_local_particles()
@@ -56,7 +56,7 @@ CONTAINS
     ALLOCATE(starts_x(1:nprocx),ends_x(1:nprocx))
 
     !Sweep in X
-    IF (IAND(balance_mode,LB_X) .NE. 0 .OR. IAND(balance_mode,LB_AUTO) .NE. 0) THEN
+    IF (IAND(balance_mode,c_lb_x) .NE. 0 .OR. IAND(balance_mode,c_lb_auto) .NE. 0) THEN
        !Rebalancing in X
        ALLOCATE(density_x(0:nx_global+1))
        CALL get_density_in_x(density_x)
@@ -232,8 +232,8 @@ CONTAINS
     CALL MPI_FILE_CLOSE(fh,errcode)
     CALL MPI_BARRIER(comm,errcode)
 
-    CALL mpi_type_free(subtype_write,errcode)
-    CALL mpi_type_free(subtype_read,errcode)
+    CALL MPI_TYPE_FREE(subtype_write,errcode)
+    CALL MPI_TYPE_FREE(subtype_read,errcode)
 
     CALL do_field_mpi_with_lengths(new_field,nx_new)
 

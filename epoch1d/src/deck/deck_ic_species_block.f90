@@ -20,7 +20,7 @@ CONTAINS
     INTEGER,INTENT(IN) :: species_id
     INTEGER :: handle_ic_species_deck
 
-    handle_ic_species_deck=ERR_NONE
+    handle_ic_species_deck=c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (species_id .LT. 0 .OR. species_id .GT. n_species) THEN
@@ -97,7 +97,7 @@ CONTAINS
     INTEGER :: check_ic_species_block
 
     !Should do error checking but can't be bothered at the moment
-    check_ic_species_block=ERR_NONE
+    check_ic_species_block=c_err_none
 
   END FUNCTION check_ic_species_block
 

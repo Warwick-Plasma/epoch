@@ -144,7 +144,7 @@ CONTAINS
 
     md_length = soi + num
 
-    CALL cfd_write_block_header("Snapshot","Snapshot",TYPE_SNAPSHOT,md_length,md_length,rank_write)
+    CALL cfd_write_block_header("Snapshot","Snapshot",c_type_snapshot,md_length,md_length,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)
@@ -175,7 +175,7 @@ CONTAINS
     md_length = 2 * max_string_len + soi
     block_length=md_length + ndims * 2 * max_string_len
 
-    CALL cfd_write_block_header(vector_name,vector_class,TYPE_STITCHED_VECTOR,block_length,md_length,rank_write)
+    CALL cfd_write_block_header(vector_name,vector_class,c_type_stitched_vector,block_length,md_length,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -217,7 +217,7 @@ CONTAINS
     md_length = 2 * max_string_len + soi
     block_length=md_length + ndims * 2 * max_string_len
 
-    CALL cfd_write_block_header(magn_name,magn_class,TYPE_STITCHED_MAGNITUDE,block_length,md_length,rank_write)
+    CALL cfd_write_block_header(magn_name,magn_class,c_type_stitched_magnitude,block_length,md_length,rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_CHARACTER, MPI_CHARACTER,&
          "native", MPI_INFO_NULL, cfd_errcode)
@@ -254,7 +254,7 @@ CONTAINS
 
     md_length=num
 
-    CALL cfd_write_block_header(name,class,TYPE_CONSTANT,md_length,md_length,rank_write)
+    CALL cfd_write_block_header(name,class,c_type_constant,md_length,md_length,rank_write)
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, mpireal,&
          "native", MPI_INFO_NULL,cfd_errcode)  
     IF (cfd_rank == rank_write) THEN
@@ -273,7 +273,7 @@ CONTAINS
 
     md_length=2 * soi
 
-    CALL cfd_write_block_header(name,class,TYPE_INTEGERARRAY,md_length,md_length,rank_write)
+    CALL cfd_write_block_header(name,class,c_type_integerarray,md_length,md_length,rank_write)
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, MPI_INTEGER,&
          "native", MPI_INFO_NULL,cfd_errcode)  
     IF (cfd_rank == rank_write) THEN

@@ -38,7 +38,7 @@ CONTAINS
 
     !This parameter allows selecting the mode of the autobalancing
     !Between leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
-    balance_mode=LB_ALL
+    balance_mode=c_lb_all
 
     !count particles
     npart_local=get_total_local_particles()
@@ -57,7 +57,7 @@ CONTAINS
     ALLOCATE(starts_z(1:nprocz),ends_z(1:nprocz))
 
     !Sweep in X
-    IF (IAND(balance_mode,LB_X) .NE. 0 .OR. IAND(balance_mode,LB_AUTO) .NE. 0) THEN
+    IF (IAND(balance_mode,c_lb_x) .NE. 0 .OR. IAND(balance_mode,c_lb_auto) .NE. 0) THEN
        !Rebalancing in X
        ALLOCATE(density_x(0:nx_global+1))
        CALL get_density_in_x(density_x)
@@ -69,7 +69,7 @@ CONTAINS
     ENDIF
 
     !Sweep in Y
-    IF (IAND(balance_mode,LB_Y) .NE. 0 .OR. IAND(balance_mode,LB_AUTO) .NE. 0) THEN
+    IF (IAND(balance_mode,c_lb_y) .NE. 0 .OR. IAND(balance_mode,c_lb_auto) .NE. 0) THEN
        !Rebalancing in Y
        ALLOCATE(density_y(0:ny_global+1))
        CALL get_density_in_y(density_y)
@@ -81,7 +81,7 @@ CONTAINS
     ENDIF
 
     !Sweep in Z
-    IF (IAND(balance_mode,LB_Z) .NE. 0 .OR. IAND(balance_mode,LB_AUTO) .NE. 0) THEN
+    IF (IAND(balance_mode,c_lb_z) .NE. 0 .OR. IAND(balance_mode,c_lb_auto) .NE. 0) THEN
        !Rebalancing in Z
        ALLOCATE(density_z(0:nz_global+1))
        CALL get_density_in_z(density_z)
@@ -95,7 +95,7 @@ CONTAINS
 
     !In the autobalancer then determine whether to balance in X or Y
     !Is this worth keeping?
-    IF (IAND(balance_mode,LB_AUTO) .NE. 0 ) THEN
+    IF (IAND(balance_mode,c_lb_auto) .NE. 0 ) THEN
 
        !Code is auto load balancing
        max_x=0
@@ -294,12 +294,12 @@ CONTAINS
     current=>laser_left
     DO WHILE(ASSOCIATED(current))
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_X,current%profile,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_x,current%profile,temp2d)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:ny_new+3,-2:nz_new+3))
        current%profile=temp2d
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_X,current%phase,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_x,current%phase,temp2d)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:ny_new+3,-2:nz_new+3))
        current%phase=temp2d
@@ -308,12 +308,12 @@ CONTAINS
     current=>laser_right
     DO WHILE(ASSOCIATED(current))
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_X,current%profile,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_x,current%profile,temp2d)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:ny_new+3,-2:nz_new+3))
        current%profile=temp2d
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_X,current%phase,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_x,current%phase,temp2d)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:ny_new+3,-2:nz_new+3))
        current%phase=temp2d
@@ -324,12 +324,12 @@ CONTAINS
     current=>laser_up
     DO WHILE(ASSOCIATED(current))
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_Y,current%profile,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_y,current%profile,temp2d)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:nx_new+3,-2:nz_new+3))
        current%profile=temp2d
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_Y,current%phase,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_y,current%phase,temp2d)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:nx_new+3,-2:nz_new+3))
        current%phase=temp2d
@@ -338,12 +338,12 @@ CONTAINS
     current=>laser_down
     DO WHILE(ASSOCIATED(current))
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_Y,current%profile,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_y,current%profile,temp2d)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:nx_new+3,-2:nz_new+3))
        current%profile=temp2d
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_Y,current%phase,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_y,current%phase,temp2d)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:nx_new+3,-2:nz_new+3))
        current%phase=temp2d
@@ -354,12 +354,12 @@ CONTAINS
     current=>laser_up
     DO WHILE(ASSOCIATED(current))
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_Z,current%profile,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_z,current%profile,temp2d)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:nx_new+3,-2:ny_new+3))
        current%profile=temp2d
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_Z,current%phase,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_z,current%phase,temp2d)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:nx_new+3,-2:ny_new+3))
        current%phase=temp2d
@@ -368,12 +368,12 @@ CONTAINS
     current=>laser_down
     DO WHILE(ASSOCIATED(current))
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_Z,current%profile,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_z,current%profile,temp2d)
        DEALLOCATE(current%profile)
        ALLOCATE(current%profile(-2:nx_new+3,-2:ny_new+3))
        current%profile=temp2d
        temp2d=0.0_num
-       CALL redistribute_field_2d(new_domain_2d,DIR_Z,current%phase,temp2d)
+       CALL redistribute_field_2d(new_domain_2d,c_dir_z,current%phase,temp2d)
        DEALLOCATE(current%phase)
        ALLOCATE(current%phase(-2:nx_new+3,-2:ny_new+3))
        current%phase=temp2d
@@ -419,8 +419,8 @@ CONTAINS
     CALL MPI_FILE_CLOSE(fh,errcode)
     CALL MPI_BARRIER(comm,errcode)
 
-    CALL mpi_type_free(subtype_write,errcode)
-    CALL mpi_type_free(subtype_read,errcode)
+    CALL MPI_TYPE_FREE(subtype_write,errcode)
+    CALL MPI_TYPE_FREE(subtype_read,errcode)
 
     CALL do_field_mpi_with_lengths(new_field,nx_new,ny_new,nz_new)
 
@@ -443,7 +443,7 @@ CONTAINS
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset=0
     CHARACTER(len=9+data_dir_max_length+n_zeros) :: filename
 
-    IF (direction .EQ. DIR_X) THEN
+    IF (direction .EQ. c_dir_x) THEN
        n1=ny
        n2=nz
        n1_global=ny_global
@@ -452,7 +452,7 @@ CONTAINS
        n2_start=cell_z_start(coordinates(1)+1)
     ENDIF
 
-    IF (direction .EQ. DIR_Y) THEN
+    IF (direction .EQ. c_dir_y) THEN
        n1=nx
        n2=nz
        n1_global=nx_global
@@ -461,7 +461,7 @@ CONTAINS
        n2_start=cell_z_start(coordinates(1)+1)
     ENDIF
 
-    IF (direction .EQ. DIR_Z) THEN
+    IF (direction .EQ. c_dir_z) THEN
        n1=nx
        n2=ny
        n1_global=nx_global
@@ -492,8 +492,8 @@ CONTAINS
     CALL MPI_FILE_CLOSE(fh,errcode)
     CALL MPI_BARRIER(comm,errcode)
 
-    CALL mpi_type_free(subtype_write,errcode)
-    CALL mpi_type_free(subtype_read,errcode)
+    CALL MPI_TYPE_FREE(subtype_write,errcode)
+    CALL MPI_TYPE_FREE(subtype_read,errcode)
 
   END SUBROUTINE redistribute_field_2d
 
