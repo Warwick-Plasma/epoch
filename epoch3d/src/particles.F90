@@ -93,12 +93,12 @@ CONTAINS
 
     TYPE(particle),POINTER :: Current
 
-    ALLOCATE(Xi0x(-2:2), Xi0y(-2:2), Xi0z(-2:2))
-    ALLOCATE(Xi1x(-2:2), Xi1y(-2:2), Xi1z(-2:2))
+    ALLOCATE(Xi0x(-3:3), Xi0y(-3:3), Xi0z(-3:3))
+    ALLOCATE(Xi1x(-3:3), Xi1y(-3:3), Xi1z(-3:3))
 
-    ALLOCATE(jxh(-3:2,-2:2,-2:2))
-    ALLOCATE(jyh(-2:2,-3:2,-2:2))
-    ALLOCATE(jzh(-2:2,-2:2,-3:2))
+    ALLOCATE(jxh(-4:3,-3:3,-3:3))
+    ALLOCATE(jyh(-3:3,-4:3,-3:3))
+    ALLOCATE(jzh(-3:3,-3:3,-4:3))
 
     Jx=0.0_num
     Jy=0.0_num
