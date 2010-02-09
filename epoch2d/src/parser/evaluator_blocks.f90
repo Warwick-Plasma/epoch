@@ -504,6 +504,12 @@ IF (opcode .EQ. FUNC_CRIT) THEN
 	RETURN
 ENDIF
 
+IF (opcode .EQ. FUNC_ABS) THEN
+	CALL GetValues(1,Values(1))
+	CALL PushOnEval(ABS(Values(1)))
+	RETURN
+ENDIF
+
     !Check for custom functions
     Result = CustomFunction(opcode,ix,iy,err)
     IF(IAND(err,ERR_UNKNOWN_ELEMENT) == 0) THEN

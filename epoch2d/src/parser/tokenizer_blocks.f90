@@ -169,8 +169,9 @@ CONTAINS
     IF (StrCmp(name,"by")) AsFunction=FUNC_BY
     IF (StrCmp(name,"bz")) AsFunction=FUNC_BZ
     IF (StrCmp(name,"gauss")) AsFunction=FUNC_GAUSS
-	 IF (StrCmp(name,"semigauss")) AsFunction=FUNC_SEMIGAUSS
-	 IF (StrCmp(name,"critical")) AsFunction=FUNC_CRIT
+    IF (StrCmp(name,"semigauss")) AsFunction=FUNC_SEMIGAUSS
+    IF (StrCmp(name,"critical")) AsFunction=FUNC_CRIT
+    IF (StrCmp(name,"abs")) AsFunction=FUNC_ABS
 
     DO i=1,n_new_func
        IF (StrCmp(TRIM(name),TRIM(new_func_name(i)%Value))) THEN
