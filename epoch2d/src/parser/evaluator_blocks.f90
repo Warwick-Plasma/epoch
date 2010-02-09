@@ -505,7 +505,7 @@ IF (opcode .EQ. FUNC_CRIT) THEN
 ENDIF
 
 IF (opcode .EQ. FUNC_ABS) THEN
-	CALL GetValues(1,Values(1))
+	CALL GetValues(1,Values)
 	CALL PushOnEval(ABS(Values(1)))
 	RETURN
 ENDIF
