@@ -148,7 +148,7 @@ CONTAINS
     IF (StrCmp(name,"floor")) AsFunction=FUNC_FLOOR
     IF (StrCmp(name,"ceil"))  AsFunction=FUNC_CEIL
     IF (StrCmp(name,"nint"))  AsFunction=FUNC_NINT
-    IF (StrCmp(name,"rho"))   AsFunction=FUNC_RHO
+    IF (StrCmp(name,"rho") .OR. StrCmp(name,"number_density"))   AsFunction=FUNC_RHO
     IF (StrCmp(name,"temp_x"))  AsFunction=FUNC_TEMPX
     IF (StrCmp(name,"temp_y"))  AsFunction=FUNC_TEMPY
     IF (StrCmp(name,"temp_z"))  AsFunction=FUNC_TEMPZ

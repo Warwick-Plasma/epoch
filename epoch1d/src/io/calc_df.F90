@@ -94,7 +94,6 @@ CONTAINS
 
   END SUBROUTINE calc_mass_density
 
-
   SUBROUTINE calc_charge_density(DataArray,CurSpecies)
 
     !Contains the integer cell position of the particle in x,y,z
@@ -182,7 +181,100 @@ CONTAINS
 
   END SUBROUTINE calc_charge_density
 
+SUBROUTINE calc_ekbar(DataArray,CurSpecies)
 
+    !Contains the integer cell position of the particle in x,y,z
+    INTEGER :: Cell_x,Cell_y
+
+    !Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_x,part_px,part_py,part_pz,part_q,part_m
+
+    !Contains the floating point version of the cell number (never actually used)
+    REAL(num) :: cell_x_r,cell_y_r,cell_z_r
+
+    !The fraction of a cell between the particle position and the cell boundary
+    REAL(num) :: cell_frac_x
+
+    !The weight of a particle
+    REAL(num) :: l_weight
+
+	!Particle Weight factors as described in the manual (FIXREF)
+    REAL(num),DIMENSION(-2:2) :: gx
+    !The data to be weighted onto the grid
+    REAL(num) :: Data
+
+    REAL(num),DIMENSION(-2:),INTENT(INOUT) :: DataArray
+    REAL(num),DIMENSION(:),ALLOCATABLE :: ct
+    INTEGER,INTENT(IN) :: CurSpecies
+
+    TYPE(Particle),POINTER :: Current
+    INTEGER :: iSpecies, spec_start,spec_end
+
+	 ALLOCATE(ct(-2:nx+3))
+    DataArray=0.0_num
+	 ct=0.0_num
+	
+
+    l_weight=weight
+
+    spec_start=CurSpecies
+    spec_end=CurSpecies
+
+    IF (CurSpecies .LE. 0) THEN
+       spec_start=1
+       spec_end=nSpecies
+    ENDIF
+
+    DO iSpecies=spec_start,spec_end
+       Current=>ParticleSpecies(iSpecies)%AttachedList%Head
+       DO WHILE (ASSOCIATED(Current))
+
+          !Copy the particle properties out for speed
+          part_x  = Current%Part_pos - x_start_local
+          part_px = Current%Part_P(1)
+          part_py = Current%Part_P(2)
+          part_pz = Current%Part_P(3)
+#ifdef PER_PARTICLE_CHARGEMASS
+          part_q  = Current%Charge
+          part_m  = Current%Mass
+#else
+          part_q  = ParticleSpecies(iSpecies)%Charge
+          part_m  = ParticleSpecies(iSpecies)%Mass
+#endif
+
+#ifdef PER_PARTICLE_WEIGHT
+          l_weight=Current%Weight
+#endif
+
+          cell_x_r = part_x / dx 
+          cell_x  = NINT(cell_x_r)
+          cell_frac_x = REAL(cell_x,num) - cell_x_r
+          cell_x=cell_x+1
+
+			 CALL ParticleToGrid(cell_frac_x,gx)
+
+             DO ix=-sf_order,sf_order
+                Data=SQRT(((part_px*l_weight)**2+(part_py*l_weight)**2+(part_pz*l_weight)**2)*c**2 &
+						+ (part_m*l_weight)**2*c**4) - (part_m*l_weight)*c**2
+                DataArray(cell_x+ix) = DataArray(cell_x+ix) + &
+                     gx(ix) * Data
+	             ct(cell_x+ix) = ct(cell_x+ix) + &
+	                  gx(ix) * l_weight
+             ENDDO
+
+          Current=>Current%Next
+       ENDDO
+    ENDDO
+
+
+    CALL Processor_Summation_BCS(DataArray)
+	 CALL Processor_Summation_BCS(ct)
+	
+	 DataArray = DataArray / MAX(ct,none_zero)
+    CALL Field_Zero_Gradient(DataArray,.TRUE.)
+	 DEALLOCATE(ct)
+
+	END SUBROUTINE calc_ekbar
 
   SUBROUTINE calc_number_density(DataArray,CurSpecies)
 

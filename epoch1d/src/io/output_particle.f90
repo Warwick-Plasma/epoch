@@ -120,9 +120,11 @@ CONTAINS
     INTEGER(4) :: idim
     INTEGER(4) :: sizes(2)
     INTEGER(MPI_OFFSET_KIND) :: OffsetForMinMax
+	 INTEGER(KIND=8) :: lb,extent
     REAL(num) :: mn,mx
     REAL(num),ALLOCATABLE,DIMENSION(:,:) :: MinMax
     LOGICAL :: start
+	 INTEGER :: mpi_Request
 
 
 
@@ -183,13 +185,15 @@ CONTAINS
     ALLOCATE(Data(1:npart_per_iteration))
     npart_sent=0
     DO idim=1,ndims
-       CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, Particle_Type,&
-            "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, Particle_Type,&
+        "native", MPI_INFO_NULL, cfd_errcode)
        npart_this_cycle=npart_per_iteration
        start=.TRUE.
        DO
           CALL Iterator(Data,npart_this_cycle,idim,start)
-          IF (npart_this_cycle <=0) EXIT
+          IF (npart_this_cycle <=0) THEN
+				EXIT
+		 	 ENDIF 
           IF (Start) THEN
              MinMax(idim,1)=MINVAL(Data(1:npart_this_cycle))
              MinMax(idim,2)=MAXVAL(Data(1:npart_this_cycle))
@@ -199,10 +203,11 @@ CONTAINS
           ENDIF
           start=.FALSE.
           npart_sent=npart_sent+npart_this_cycle
-          CALL MPI_FILE_WRITE(cfd_filehandle,Data,npart_this_cycle,mpireal,cfd_status,cfd_errcode)
+          CALL MPI_FILE_IWRITE(cfd_filehandle,Data,npart_this_cycle,mpireal,mpi_request,cfd_errcode)
        ENDDO
        current_displacement = current_displacement +  npart_global * num
     ENDDO
+	 CALL MPI_WAIT(mpi_request,cfd_status,cfd_errcode)
     DEALLOCATE(Data)
 
 
@@ -237,6 +242,7 @@ CONTAINS
     INTEGER(4) :: i
     INTEGER(4) :: sizes(2)
     REAL(num) :: mn,mx
+	 INTEGER :: mpi_request
 
 
     npart_local = SIZE(particles)
@@ -318,6 +324,7 @@ CONTAINS
     REAL(num) :: mn,mx,mn_g,mx_g
     INTEGER(MPI_OFFSET_KIND) :: OffsetForMinMax
     LOGICAL :: start
+	 INTEGER :: mpi_request
 
 
     !Metadata is
@@ -382,8 +389,9 @@ CONTAINS
        ENDIF
        start=.FALSE.
 
-       CALL MPI_FILE_WRITE(cfd_filehandle,Data,npart_this_cycle,mpireal,cfd_status,cfd_errcode)
+       CALL MPI_FILE_IWRITE(cfd_filehandle,Data,npart_this_cycle,mpireal,mpi_request,cfd_errcode)
     ENDDO
+	 CALL MPI_WAIT(mpi_request,cfd_status,cfd_errcode)
     DEALLOCATE(Data)
     current_displacement = current_displacement + npart_global * num
 
