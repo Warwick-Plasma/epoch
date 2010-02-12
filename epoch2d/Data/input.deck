@@ -3,21 +3,21 @@ begin:control
 
 	#global number of gridpoints
 	nx=400 #in x
-        ny=100 #in y
-        npart=16.0e5
+        ny=400 #in y
+        npart=16.0e3
 
 	#maximum number of iterations
 	#set to -1 to run until finished
         nsteps=-1
 
 	#final time of simulation
-        t_end=3.0e-13
+        t_end=50.0e-15
 
 	#size of domain
-	x_start=-75e-6
-	x_end=150e-6
-        y_start=-50e-6
-        y_end=50e-6
+	x_start=-10e-6
+	x_end=10e-6
+        y_start=-10e-6
+        y_end=10e-6
 	
 	#Don't know if this should be in the deck or not
 	dt_multiplier=0.8
@@ -40,8 +40,8 @@ begin:boundaries
 
 	xbc_left=simple_laser
 	xbc_right=simple_outflow
-	ybc_up=simple_outflow
-	ybc_down=simple_outflow
+	ybc_up=periodic
+	ybc_down=periodic
 
 end:boundaries
 
@@ -51,16 +51,17 @@ begin:species
 	#electrons
 	charge1=-1.0
 	mass1=1.0
-	frac1=0.5
+	frac1=0.33
 	name1=Electron
 	dump1=T
+	tracer1=T
 
-	#ions
-	charge2=1.0
-	mass2=1836.0
-	frac2=0.5
-	name2=Ions
+	charge2=22.0
+	mass2=1836.2*105.0
+	frac2=0.33
+	name2=palladium
 	dump2=T
+	tracer2=T
 
 end:species
 
@@ -72,7 +73,7 @@ begin:output
 	#Left hand edge of the window
 	use_offset_grid=F
 	#number of timesteps between output dumps
-	dt_snapshot=3.0e-14
+	dt_snapshot=1.0e-15
 	#Number of dt_snapshot between full dumps
         full_dump_every=10
 	restart_dump_every=-1

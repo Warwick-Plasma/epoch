@@ -292,6 +292,7 @@ MODULE shared_data
 
      REAL(num),DIMENSION(:,:),POINTER :: Rho
      REAL(num),DIMENSION(:,:,:),POINTER :: Temp
+	  REAL(num),DIMENSION(3) :: Drift
 
      REAL(num) :: minrho
      REAL(num) :: maxrho
