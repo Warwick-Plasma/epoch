@@ -279,6 +279,7 @@ CONTAINS
 #endif
           part_vx=part_px * root
           part_vy=part_py * root
+          part_vz=part_pz * root
 
 #ifdef NEWTONIAN
           IF (ABS(part_vx) .GT. max_part_v) max_part_v=ABS(part_vx)
