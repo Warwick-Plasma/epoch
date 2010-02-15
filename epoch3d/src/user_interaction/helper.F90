@@ -33,9 +33,12 @@ CONTAINS
 #else
        CALL NonUniformLoadParticles(InitialConditions(iSpecies)%Rho,Partfam,InitialConditions(iSpecies)%MinRho,InitialConditions(iSpecies)%MaxRho,idum)
 #endif
-       CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,1),DIR_X,PartFam,idum)
-       CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,2),DIR_Y,PartFam,idum)
-       CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,3),DIR_Z,PartFam,idum)
+       CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,1),DIR_X&
+			,PartFam,InitialConditions(iSpecies)%drift,idum)
+       CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,2),DIR_Y&
+			,PartFam,InitialConditions(iSpecies)%drift,idum)
+       CALL SetupParticleTemperature(InitialConditions(iSpecies)%Temp(:,:,:,3),DIR_Z&
+			,PartFam,InitialConditions(iSpecies)%drift,idum)
     ENDDO
 
 	IF (rank .EQ. 0) PRINT *,"Plasma characteristic timescale ",dt_plasma
@@ -53,6 +56,7 @@ CONTAINS
        InitialConditions(iSpecies)%Temp=0.0_num
        InitialConditions(iSpecies)%MinRho=0.0_num
        InitialConditions(iSpecies)%MaxRho=0.0_num
+		 InitialConditions(iSpecies)%drift=0.0_num
     ENDDO
     Ex=0.0_num
     Ey=0.0_num
@@ -330,11 +334,12 @@ CONTAINS
 !!$
 !!$  !Subroutine to initialise a thermal particle distribution
 !!$  !Assumes linear interpolation of temperature between cells
-  SUBROUTINE SetupParticleTemperature(Temperature,Direction,PartFamily,idum)
+  SUBROUTINE SetupParticleTemperature(Temperature,Direction,PartFamily,drift,idum)
 
     REAL(num),DIMENSION(-2:,-2:,-2:), INTENT(IN) :: Temperature
     INTEGER, INTENT(IN) :: Direction
     TYPE(ParticleFamily),POINTER,INTENT(INOUT) :: PartFamily
+	 REAL(num), DIMENSION(3), INTENT(IN) :: drift
     INTEGER, INTENT(INOUT) :: idum
     TYPE(ParticleList),POINTER :: PartList
     REAL(num) :: mass,temp_local
@@ -410,11 +415,14 @@ CONTAINS
             gpy * (gmx * Temperature(cell_x-1,cell_y+1,cell_z+1) + g0x * &
             Temperature(cell_x,cell_y+1,cell_z+1) + gpx * Temperature(cell_x+1,cell_y+1,cell_z+1)))
 
-       IF (IAND(Direction,DIR_X) .NE. 0) Current%Part_P(1)=MomentumFromTemperature(mass,temp_local,idum)
+       IF (IAND(Direction,DIR_X) .NE. 0) &
+			Current%Part_P(1)=MomentumFromTemperature(mass,temp_local,idum) + drift(1)
 
-       IF (IAND(Direction,DIR_Y) .NE. 0) Current%Part_P(2)=MomentumFromTemperature(mass,temp_local,idum)
+       IF (IAND(Direction,DIR_Y) .NE. 0) &
+			Current%Part_P(2)=MomentumFromTemperature(mass,temp_local,idum) + drift(2)
 
-       IF (IAND(Direction,DIR_Z) .NE. 0) Current%Part_P(3)=MomentumFromTemperature(mass,temp_local,idum)
+       IF (IAND(Direction,DIR_Z) .NE. 0) &
+			Current%Part_P(3)=MomentumFromTemperature(mass,temp_local,idum) + drift(3)
        Current=>Current%Next
        ipart=ipart+1
     ENDDO

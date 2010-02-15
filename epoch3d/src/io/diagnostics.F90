@@ -123,12 +123,19 @@ CONTAINS
        IF (IAND(DumpMask(18),code) .NE. 0) CALL cfd_Write_nD_Particle_Variable_With_Iterator_All("Q","Particles",iterate_charge,npart_dump_global,n_part_per_it,"Particles","Part_Grid",subtype_particle_var)
        IF (IAND(DumpMask(19),code) .NE. 0) CALL cfd_Write_nD_Particle_Variable_With_Iterator_All("mass","Particles",iterate_mass,npart_dump_global,n_part_per_it,"Particles","Part_Grid",subtype_particle_var)
 
-       IF (IAND(DumpMask(20),code) .NE. 0) THEN
-          DO iSpecies=1,nspecies
-             WRITE(Temp_Name,'("EkBar_",a)') TRIM(ParticleSpecies(iSpecies)%Name)
-             CALL cfd_Write_3D_Cartesian_Variable_Parallel(TRIM(ADJUSTL(Temp_Name)),"EkBar",Dims,Stagger,"Grid","Grid",ekbar(1:nx,1:ny,1:nz,iSpecies),subtype_field)
-          ENDDO
-       ENDIF
+ 		 IF (IAND(DumpMask(20),code) .NE. 0) THEN
+    		IF (IAND(DumpMask(20),IO_NO_INTRINSIC) .EQ. 0)  THEN
+    			CALL calc_ekbar(Data,0)
+				CALL cfd_Write_3D_Cartesian_Variable_Parallel("EkBar","EkBar",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny,1:nz),subtype_field)
+			ENDIF
+    		IF (IAND(DumpMask(20),IO_SPECIES) .NE. 0) THEN
+       	DO iSpecies=1,nspecies
+          	CALL calc_ekbar(Data,iSpecies)
+          	WRITE(Temp_Name,'("EkBar_",a)') TRIM(ParticleSpecies(iSpecies)%Name)
+          	CALL cfd_Write_3D_Cartesian_Variable_Parallel(TRIM(ADJUSTL(Temp_Name)),"EkBar",Dims,Stagger,"Grid","Grid",Data(1:nx,1:ny,1:nz),subtype_field)
+       	ENDDO
+ 		ENDIF
+	  ENDIF
        !These are derived variables from the particles
        !Since you only dump after several particle updates it's actually quicker to
        IF (IAND(DumpMask(21),code) .NE. 0) THEN

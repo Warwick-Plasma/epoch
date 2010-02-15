@@ -45,7 +45,7 @@ CONTAINS
        RETURN
     ENDIF
 
-    IF (StrCmp(Element,"rho")) THEN
+    IF (StrCmp(Element,"rho") .OR. StrCmp(Element,"number_density")) THEN
        CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%rho(-2:nx+3,-2:ny+3,-2:nz+3),(/-2,nx+3/),(/-2,ny+3/),(/-2,nz+3/),HandleICSpeciesDeck)
        RETURN
     ENDIF
@@ -53,6 +53,21 @@ CONTAINS
 	IF (StrCmp(Element,"mass_density")) THEN
 		CALL EvaluateStringInSpace(Value,InitialConditions(Species_ID)%rho(-2:nx+3,-2:ny+3,-2:nz+3),(/-2,nx+3/),(/-2,ny+3/),(/-2,nz+3/),HandleICSpeciesDeck)
 		InitialConditions(Species_ID)%rho=InitialConditions(Species_ID)%rho/ParticleSpecies(Species_ID)%mass
+		RETURN
+	ENDIF
+	
+	IF (StrCmp(Element,"drift_x")) THEN
+		InitialConditions(Species_ID)%drift(1)=AsReal(Value,HandleICSpeciesDeck)
+		RETURN
+	ENDIF
+
+	IF (StrCmp(Element,"drift_y")) THEN
+		InitialConditions(Species_ID)%drift(2)=AsReal(Value,HandleICSpeciesDeck)
+		RETURN
+	ENDIF
+
+	IF (StrCmp(Element,"drift_z")) THEN
+		InitialConditions(Species_ID)%drift(3)=AsReal(Value,HandleICSpeciesDeck)
 		RETURN
 	ENDIF
 
