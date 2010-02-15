@@ -1,7 +1,7 @@
 begin:constant
 	lambda=1.0e-6
 	omega=2.0*pi*c/lambda
-	den_max=0.00001*critical(omega)
+	den_max=10.0*critical(omega)
 	den_preplasma=1.0e18
 	len_scale=5.0e-6
 end:constant
