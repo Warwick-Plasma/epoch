@@ -1,3 +1,15 @@
+FUNCTION swapchr, instring, fromchar, tochar
+; Takes the string provided by instring and replaces all occurences of
+; the character fromchar with the character tochar
+ stringbytes = BYTE(instring)
+ frombytes = BYTE(fromchar)
+ occurences = WHERE(stringbytes EQ frombytes(0), nfound)
+ IF nfound EQ 0 THEN RETURN, instring
+ tobytes = BYTE(tochar)
+ stringbytes(occurences) = tobytes(0)
+ RETURN, STRING(stringbytes)
+END
+
 ;--------------------------------------------------------------------------
 FUNCTION CheckName,block_header,namelist,element_block
 ;Function to test whether a block name appears in a given namelist
@@ -6,7 +18,7 @@ IF (namelist[0] EQ "") THEN RETURN,1
 
 FOR i=0,N_ELEMENTS(namelist)-1 DO BEGIN
     name=STRUPCASE(STRTRIM(STRING(block_header.Name)))
-    class=STRUPCASE(STRTRIM(STRING(block_header.Class)))
+    class=swapchr(STRUPCASE(STRTRIM(STRING(block_header.Class))),' ','_')
     IF (namelist[i] EQ name || namelist[i] EQ class || namelist[i] EQ "EMPTY") THEN BEGIN
 	element_block[i]=1
 	IF (namelist[i] NE "EMPTY") THEN RETURN,1
@@ -56,6 +68,9 @@ ENDIF
 IF (test EQ TYPE_MESH_VARIABLE) THEN BEGIN
     IF (block_metadata.VarType EQ VAR_CARTESIAN) THEN BEGIN
         RETURN,STRTRIM(STRING(block_metadata.nd),2) + "D cartesian variable"
+    ENDIF
+    IF (block_metadata.VarType EQ VAR_PARTICLE) THEN BEGIN
+        RETURN,"particle variable"
     ENDIF
 ENDIF
 RETURN, "Unknown block"

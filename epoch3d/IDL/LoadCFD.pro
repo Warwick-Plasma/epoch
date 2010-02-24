@@ -78,7 +78,7 @@ FOR iBlock=0,fileheader.nblocks-1 DO BEGIN
         HandleBlock,fileheader,blockheader,f,offset,name_arr,/onlymd,md=md
         q=ReturnIDLUsable(blockheader,md)
         IF (q EQ 1) THEN BEGIN
-          PRINT,STRTRIM(STRING(vBlock+1),2),") ",STRTRIM(STRING(blockheader.Name),2)," : " + ReturnFriendlyTypeName(blockheader,md)
+          PRINT,STRTRIM(STRING(vBlock+1),2),") ",STRTRIM(STRING(blockheader.Name),2)," (" + swapchr(STRTRIM(STRING(blockheader.Class),2),' ','_') + ") : " + ReturnFriendlyTypeName(blockheader,md)
           vBlock=vBlock+1
         ENDIF
 	ELEMENT_BLOCK(*)=1
