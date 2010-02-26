@@ -1,4 +1,6 @@
 COMMON background, wkdir_global
+COMMON gdlset, gdl
+DEFSYSV, '!GDL', EXISTS=gdl
 
 wkdir_global = "Data"
 @ IDL/StartCFD.pro

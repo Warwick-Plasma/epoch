@@ -1,6 +1,15 @@
 FUNCTION readvar, handle, varstruct, offset
-  outvar = ASSOC(handle, varstruct, offset, /PACKED)
-  RETURN, outvar[0]
+  COMMON gdlset, gdl
+
+  IF (gdl) THEN BEGIN
+    outvar = varstruct
+    POINT_LUN, handle, offset
+    READU, handle, outvar
+    RETURN, outvar
+  ENDIF ELSE BEGIN
+    outvar = ASSOC(handle, varstruct, offset, /PACKED)
+    RETURN, outvar[0]
+  ENDELSE
 END
 
 ; --------------------------------------------------------------------------
