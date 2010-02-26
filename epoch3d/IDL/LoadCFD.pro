@@ -1,3 +1,10 @@
+FUNCTION readvar, handle, varstruct, offset
+  outvar = ASSOC(handle, varstruct, offset, /PACKED)
+  RETURN, outvar[0]
+END
+
+; --------------------------------------------------------------------------
+
 FUNCTION LoadCFDFile, filename, Variables=requestv, $
     request_classes=requestc, _extra=extra
 
@@ -29,11 +36,10 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
     element_block = 1
   ENDELSE
 
-  header = ASSOC(1, {cfd:BYTARR(3), headeroff:0L, blockheaderoff:0L, $
-      Version:0L, Revision:0L, MaxString:0L, nblocks:0L}, 0, /PACKED)
   CLOSE, 1
   OPENR, 1, filename
-  fileheader = header[0]
+  fileheader = readvar(1, {cfd:BYTARR(3), headeroff:0L, blockheaderoff:0L, $
+      Version:0L, Revision:0L, MaxString:0L, nblocks:0L}, 0)
 
   MaxStringLen = fileheader.MaxString
   offset = fileheader.headeroff
@@ -79,9 +85,9 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
 
   vBlock = 0
   FOR iBlock = 0, fileheader.nblocks-1 DO BEGIN
-    data = ASSOC(1, {Name:BYTARR(MaxStringLen), Class:BYTARR(MaxStringLen), $
-        Type:0L, BlockMDLen:0LL, BlockLen:0LL}, offset, /PACKED)
-    blockheader = data[0]
+    blockheader = readvar(1, {Name:BYTARR(MaxStringLen), $
+        Class:BYTARR(MaxStringLen), Type:0L, BlockMDLen:0LL, BlockLen:0LL}, $
+        offset)
 
     ; Read what we know of the block header, so skip the rest
     offset = offset + fileheader.blockheaderoff
@@ -156,8 +162,7 @@ PRO GetMesh, file_header, block_header, output_struct, offset, $
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
   COMMON ParticleCoords, PARTICLE_CARTESIAN
 
-  mesh = ASSOC(1, {MeshType:0L, nd:0L, sof:0L}, offset, /PACKED)
-  mesh_header = mesh[0]
+  mesh_header = readvar(1, {MeshType:0L, nd:0L, sof:0L}, offset)
 
   mdonly_f = 0
   IF (n_elements(onlymd) NE 0) THEN mdonly_f = 1
@@ -170,9 +175,8 @@ PRO GetMesh, file_header, block_header, output_struct, offset, $
 
     names = ["x", "y", "z", "a", "b", "c", "d", "e", "f"]
 
-    mesh = ASSOC(1, {MeshType:0L, nd:0L, sof:0L, $
-        npts:LONARR(mesh_header.nd)}, offset, /PACKED)
-    mesh_header = mesh[0]
+    mesh_header = readvar(1, {MeshType:0L, nd:0L, sof:0L, $
+        npts:LONARR(mesh_header.nd)}, offset)
 
     IF (mdonly_f NE 1) THEN BEGIN
       IF (mesh_header.sof EQ 4) THEN BEGIN
@@ -192,15 +196,13 @@ PRO GetMesh, file_header, block_header, output_struct, offset, $
     ENDIF
 
     IF(mdonly_f NE 1) THEN BEGIN
-      data = ASSOC(1, datastruct, offset + block_header.BlockMDLen, /PACKED)
-      d = data[0]
+      d = readvar(1, datastruct, offset + block_header.BlockMDLen)
       d = CREATE_STRUCT(d, mesh_header)
     ENDIF
   ENDIF ELSE IF (mesh_header.MeshType EQ MESH_PARTICLE AND $
       byname_f EQ 1) THEN BEGIN
-    mesh = ASSOC(1, {MeshType:0L, nd:0L, sof:0L, CoordType:0L, npart:0LL}, $
-        offset, /PACKED)
-    mesh_header = mesh[0]
+    mesh_header = readvar(1, {MeshType:0L, nd:0L, sof:0L, CoordType:0L, $
+        npart:0LL}, offset)
     IF (mdonly_f NE 1) THEN BEGIN
       IF (mesh_header.sof EQ 4) THEN $
           datastruct = CREATE_STRUCT("ParticlePositions", $
@@ -212,8 +214,7 @@ PRO GetMesh, file_header, block_header, output_struct, offset, $
       ;     "IDL support for particle meshes is very limited"
       ; PRINT, "The raw data has simply been loaded, and you will have to " + $
       ;     "decode it yourself"
-      data = ASSOC(1, datastruct, offset + block_header.BlockMDLen, /PACKED)
-      d = data[0]
+      d = readvar(1, datastruct, offset + block_header.BlockMDLen)
       d = CREATE_STRUCT("MetaData", mesh_header, d)
     ENDIF
   ENDIF
@@ -231,17 +232,15 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
     md=md, onlymd=onlymd
   COMMON VarTypes, VAR_CARTESIAN, VAR_PARTICLE
 
-  var = ASSOC(1, {VarType:0L, nd:0L, sof:0L}, offset, /PACKED)
-  var_header = var[0]
+  var_header = readvar(1, {VarType:0L, nd:0L, sof:0L}, offset)
   mdonly_f = 1
 
   IF (N_ELEMENTS(onlymd) EQ 0) THEN mdonly_f = 0
 
   IF (var_header.VarType EQ VAR_CARTESIAN) THEN BEGIN
     ; Read in the actual variable
-    var = ASSOC(1, {VarType:0L, nd:0L, sof:0L, npts:LONARR(var_header.nd)}, $
-        offset, /PACKED)
-    var_header = var[0]
+    var_header = readvar(1, {VarType:0L, nd:0L, sof:0L, $
+        npts:LONARR(var_header.nd)}, offset)
     IF (mdonly_f NE 1) THEN BEGIN
       IF (var_header.sof EQ 4) THEN $
           datastruct = CREATE_STRUCT(STRTRIM(STRING(block_header.name), 2), $
@@ -253,12 +252,10 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
 
     md = var_header
     IF (mdonly_f NE 1) THEN BEGIN
-      data = ASSOC(1, datastruct, offset + block_header.BlockMDLen, /PACKED)
-      d = data[0]
+      d = readvar(1, datastruct, offset + block_header.BlockMDLen)
     ENDIF
   ENDIF ELSE IF (var_header.VarType EQ VAR_PARTICLE) THEN BEGIN
-    var = ASSOC(1, {VarType:0L, nd:0L, sof:0L, npart:0LL}, offset, /PACKED)
-    var_header = var[0]
+    var_header = readvar(1, {VarType:0L, nd:0L, sof:0L, npart:0LL}, offset)
     IF (mdonly_f NE 1) THEN BEGIN
       IF (var_header.sof EQ 4) THEN $
           datastruct = CREATE_STRUCT(STRTRIM(STRING(block_header.name), 2), $
@@ -270,8 +267,7 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
 
     md = var_header
     IF (mdonly_f NE 1) THEN BEGIN
-      data = ASSOC(1, datastruct, offset + block_header.BlockMDLen, /PACKED)
-      d = data[0]
+      d = readvar(1, datastruct, offset + block_header.BlockMDLen)
     ENDIF
   ENDIF
 
@@ -285,8 +281,7 @@ END
 PRO GetSnapshot, file_header, block_header, output_struct, offset, $
     md=md, onlymd=onlymd
 
-  snap = ASSOC(1, {Snapshot:0L, Time:0D}, offset, /PACKED)
-  snap_header = snap[0]
+  snap_header = readvar(1, {Snapshot:0L, Time:0D}, offset)
 
   mdonly_f = 1
   IF (N_ELEMENTS(onlymd) EQ 0) THEN mdonly_f = 0
