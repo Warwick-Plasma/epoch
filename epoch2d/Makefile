@@ -1,17 +1,16 @@
 # Set the compiler flags
-
-FFLAGS = -O3 -fast
+FFLAGS = -O3 #-heap-arrays 0 -fast
 
 # Set some of the build parameters
 TARGET = epoch2d
 
-#uncomment this line to make each particle have an individual weight
+# Set pre-processor defines
 DEFINES = -DPER_PARTICLE_WEIGHT -DTRACER_PARTICLES
 
-#Copy this line onto the DEFINES line to turn on particle cell division
-#-DPARTICLE_CELL_DIVISION
-#Copy this line ont
-#-DPART_DEBUG -DFIELD_DEBUG
+# Copy this line onto the DEFINES line to turn on particle cell division
+# -DPARTICLE_CELL_DIVISION
+# Copy this line onto the DEFINES line to turn on debugging
+# -DPART_DEBUG -DFIELD_DEBUG
 # --------------------------------------------------
 # Shouldn't need to touch below here
 # --------------------------------------------------
@@ -48,7 +47,7 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/io:$(SRCDIR)/parser:$(SRCDIR)/houseke
 	$(FC) -c $(FFLAGS)  $(MODULEFLAG) $(OBJDIR) -o $(OBJDIR)/$@ $<
 
 %.o: %.F90
-	@mkdir -p $(BINDIR) $(OBJDIR) 
+	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS)  $(MODULEFLAG) $(OBJDIR) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
 $(FULLTARGET): $(OBJFILES)
@@ -69,7 +68,9 @@ visit:
 .PHONEY: visitclean
 visitclean:
 	@cd VisIT;make clean;rm -f .depend *.d
+
 # All the dependencies
+
 shared_data.o:shared_data.F90
 mpi_routines.o:mpi_routines.f90 shared_data.o partlist.o
 balance.o: balance.F90 shared_data.o partlist.o boundary.o mpi_subtype_control.o
