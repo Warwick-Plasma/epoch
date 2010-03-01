@@ -180,7 +180,6 @@ vtkDataArray *Stitched_Vector_Reader::GetVectorVar(int domain)
             SubBlocks[dimswing]->Block_MD_Length, ios::beg);
 
         long long nel_left = this->n_Elements;
-        float temp;
         while (nel_left >0) {
             int imax = min(nel_section, nel_left);
             file->read((char*)v, this->SizeOfFloat * imax);

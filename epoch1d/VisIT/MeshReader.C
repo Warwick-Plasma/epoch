@@ -33,7 +33,7 @@ MeshReader::MeshReader(BlockHandler *Handler, ifstream *file, Block *Owner,
 
         this->Extents = malloc(this->SizeOfFloat * this->Dimensions);
         file->read((char*)this->Extents, this->SizeOfFloat * this->Dimensions);
-    } else if (this->MeshType == MESH_PARTICLE) {
+    } else {
         file->read((char*)&this->Part_Coord_Type, sizeof(int));
         this->Dims = NULL;
         file->read((char*)&this->nPart, sizeof(long long));
@@ -78,11 +78,14 @@ void MeshReader::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
         int spatdim, topdim;
         avtMeshType mt;
         spatdim = this->Dimensions;
-        if (this->MeshType == MESH_CARTESIAN) mt = AVT_RECTILINEAR_MESH;
-        if (this->MeshType == MESH_PARTICLE)  mt = AVT_POINT_MESH;
 
-        if (this->MeshType == MESH_CARTESIAN) topdim = spatdim;
-        if (this->MeshType == MESH_PARTICLE) topdim = 0;
+        if (this->MeshType == MESH_CARTESIAN) {
+            mt = AVT_RECTILINEAR_MESH;
+            topdim = spatdim;
+        } else {
+            mt = AVT_POINT_MESH;
+            topdim = 0;
+        }
 
         avtMeshMetaData *mmd =
             new avtMeshMetaData(Composite, 1, 0, 0, 0, spatdim, topdim, mt);
@@ -167,9 +170,7 @@ vtkDataSet *MeshReader::GetMesh(int domain)
 
         debug1 << "About to return grid" << endl;
         return rgrid;
-    }
-
-    if (this->MeshType == MESH_PARTICLE) {
+    } else {
         if (this->Dimensions > 3) return NULL;
         vtkPoints *points = vtkPoints::New();
         points->SetNumberOfPoints(this->nPart);
@@ -293,8 +294,9 @@ InternalMetaData *MeshReader::GetInternalMetaData()
         for (int i = 0; i < this->Dimensions; i++) {
             MD->n_Elements *= this->Dims[i];
         }
+    } else {
+        MD->n_Elements = this->nPart;
     }
-    if (this->MeshType == MESH_PARTICLE) MD->n_Elements = this->nPart;
 
     MD->SizeOfFloat = this->SizeOfFloat;
     MD->Dimensions = this->Dimensions;

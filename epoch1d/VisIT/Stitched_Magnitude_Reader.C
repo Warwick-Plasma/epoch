@@ -171,7 +171,6 @@ vtkDataArray *Stitched_Magnitude_Reader::GetVar(int domain)
     void *v = malloc(this->SizeOfFloat*nel_section);
     void *pointdata = Data->GetVoidPointer(0);
     memset(pointdata, 0, this->n_Elements*this->SizeOfFloat);
-    void *pointnull = pointdata;
 
     if (this->SizeOfFloat == 4) {
         float *pointdat;
