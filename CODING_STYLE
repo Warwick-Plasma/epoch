@@ -1,0 +1,39 @@
+This codebase conforms to a single, consistent coding style which is
+outlined in the following text. New submissions will be rejected if they
+do not conform to this style.
+
+The most important rules are the following:
+
+All code must conform to the Fortran 95 standard (ISO/IEC 1539-1: 1997).
+
+All Fortran keywords and intrinsics are uppercase, user-defined
+function, subroutine and variable names are lowercase.
+ - One exception to this rule is the MPI libraries. For this, both constants
+   and routine names are uppercase.
+
+All function and subroutine blocks are separated by three blank lines.
+Within the rest of the code body there should never be more than one
+consecutive blank line.
+
+Indentation is two spaces. Continuation lines are indented by four spaces.
+Comments should follow the same indentation as code.
+
+All code lines must be 80 columns or less. This includes comments.
+
+A comma is always followed by a space with the exception of array indexing.
+
+The equals sign in assignments is always surrounded by whitespace.
+
+Lines must not contain trailing whitespace.
+
+Lines must not contain tab characters.
+
+Use 'ENDIF' and 'ENDDO' instead of 'END IF' and 'END DO'.
+
+Use F77-style binary operators instead of F90 ones. eg. use '.EQ.'
+instead of '=='.
+
+Variable names must not clash with Fortran keywords.
+
+For all other matters of coding style, try to match the style used throughout
+the rest of the code.
