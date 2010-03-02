@@ -79,7 +79,7 @@ CONTAINS
 
     ! If this isn't the full string length then tag in a ACHAR(0) to help
     ! With C++ string handling
-    IF (len_s+1 .LT. max_string_len) output(len_s+1:max_string_len) = ACHAR(0)
+    IF (len_s + 1 .LT. max_string_len) output(len_s+1:max_string_len) = ACHAR(0)
 
     CALL MPI_FILE_WRITE(cfd_filehandle, output, max_string_len, MPI_CHARACTER, &
         cfd_status, cfd_errcode)
@@ -111,6 +111,7 @@ CONTAINS
     ! Write the block type
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+
     IF (cfd_rank .EQ. rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, block_type, 1, MPI_INTEGER, &
             cfd_status, cfd_errcode)
@@ -253,7 +254,8 @@ CONTAINS
       mesh_class, name, class, rank_write)
 
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: name, class
-    CHARACTER(LEN=*), INTENT(IN) :: magn_name, magn_class, mesh_name, mesh_class
+    CHARACTER(LEN=*), INTENT(IN) :: magn_name, magn_class, mesh_name
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_class
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: ndims, md_length, block_length
     INTEGER :: iloop

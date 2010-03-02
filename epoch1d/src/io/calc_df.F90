@@ -250,7 +250,7 @@ CONTAINS
         l_weight = current%weight
 #endif
 
-        cell_x_r = part_x / dx 
+        cell_x_r = part_x / dx
         cell_x  = NINT(cell_x_r)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x+1

@@ -552,8 +552,7 @@ CONTAINS
 
   !----------------------------------------------------------------------------
   ! Code to write a 1D Cartesian variable in serial using node with
-  ! rank {rank_write} for writing
-  ! Serial operation, so no need for nx, ny
+  ! rank {rank_write} for writing serial operation, so no need for nx, ny
   !----------------------------------------------------------------------------
 
   SUBROUTINE cfd_write_1d_cartesian_variable(name, class, stagger, mesh_name, &
@@ -650,8 +649,7 @@ CONTAINS
 
   !----------------------------------------------------------------------------
   ! Code to write a 2D Cartesian variable in serial using node with
-  ! rank {rank_write} for writing
-  ! Serial operation, so no need for nx, ny
+  ! rank {rank_write} for writing serial operation, so no need for nx, ny
   !----------------------------------------------------------------------------
 
   SUBROUTINE cfd_write_2d_cartesian_variable(name, class, stagger, mesh_name, &
@@ -753,8 +751,7 @@ CONTAINS
 
   !----------------------------------------------------------------------------
   ! Code to write a 3D Cartesian variable in serial using node with
-  ! rank {rank_write} for writing
-  ! Serial operation, so no need for nx, ny, nz
+  ! rank {rank_write} for writing serial operation, so no need for nx, ny, nz
   !----------------------------------------------------------------------------
 
   SUBROUTINE cfd_write_3d_cartesian_variable(name, class, stagger, mesh_name, &

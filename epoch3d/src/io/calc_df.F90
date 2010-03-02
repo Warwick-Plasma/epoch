@@ -180,12 +180,12 @@ CONTAINS
         l_weight = current%weight
 #endif
 
-        cell_x_r = part_x / dx 
+        cell_x_r = part_x / dx
         cell_x = NINT(cell_x_r)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x+1
 
-        cell_y_r = part_y / dy 
+        cell_y_r = part_y / dy
         cell_y = NINT(cell_y_r)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
         cell_y = cell_y+1
