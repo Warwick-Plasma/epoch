@@ -55,7 +55,7 @@ CONTAINS
     partlist%safe = .FALSE.
     current=>a_particle
     ipart = 1
-    DO WHILE (ASSOCIATED(current) .AND. ipart < n_elements)
+    DO WHILE (ASSOCIATED(current) .AND. ipart .LT. n_elements)
       ipart = ipart+1
       current=>current%next
     ENDDO
@@ -200,7 +200,7 @@ CONTAINS
     ! Go through list and delete all the particles in the list
     new_particle=>partlist%head
     ipart = 0
-    DO WHILE (ipart < partlist%count)
+    DO WHILE (ipart .LT. partlist%count)
       next=>new_particle%next
       DEALLOCATE(new_particle)
       new_particle=>next
@@ -465,7 +465,7 @@ CONTAINS
     data = 0.0_num
     current=>partlist%head
     ipart = 0
-    DO WHILE (ipart < partlist%count)
+    DO WHILE (ipart .LT. partlist%count)
       cpos = ipart*nvar+1
       CALL pack_particle(data(cpos:cpos+nvar), current)
       ipart = ipart+1
@@ -531,7 +531,7 @@ CONTAINS
     ! Pack particles to send into buffer
     current=>partlist_send%head
     ipart = 0
-    DO WHILE (ipart < partlist_send%count)
+    DO WHILE (ipart .LT. partlist_send%count)
       cpos = ipart*nvar+1
       CALL pack_particle(data_temp, current)
       data_send(cpos:cpos+nvar-1) = data_temp

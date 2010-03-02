@@ -116,7 +116,7 @@ CONTAINS
     IF (opcode .GE. c_const_custom_lowbound) THEN
       ! Check for custom constants
       val = custom_constant(opcode, ix, iy, iz, err)
-      IF (IAND(err, c_err_unknown_element) == 0) CALL push_on_eval(val)
+      IF (IAND(err, c_err_unknown_element) .EQ. 0) CALL push_on_eval(val)
       RETURN
     ENDIF
 
@@ -548,7 +548,7 @@ CONTAINS
 
     ! Check for custom functions
     val = custom_function(opcode, ix, iy, iz, err)
-    IF (IAND(err, c_err_unknown_element) == 0) THEN
+    IF (IAND(err, c_err_unknown_element) .EQ. 0) THEN
       CALL push_on_eval(val)
     ENDIF
 

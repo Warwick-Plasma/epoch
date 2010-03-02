@@ -145,20 +145,20 @@ CONTAINS
     ! improve, but not done yet
     IF (grid%gridlevel .NE. 1 .AND. .NOT. grid%finest) THEN
       ! On all but finest grids, use clamped boundaries
-      IF (right == MPI_PROC_NULL) &
+      IF (right .EQ. MPI_PROC_NULL) &
           grid%phi(1:nx, ny+1)   = grid%phi(1:nx, ny) *0.0_num
-      IF (left == MPI_PROC_NULL) &
+      IF (left .EQ. MPI_PROC_NULL) &
           grid%phi(1:nx, 0)      = grid%phi(1:nx, 1)  *0.0_num
-      IF (down == MPI_PROC_NULL) &
+      IF (down .EQ. MPI_PROC_NULL) &
           grid%phi(0, 1:ny)      = grid%phi(1, 1:ny)  *0.0_num
-      IF (up == MPI_PROC_NULL) &
+      IF (up .EQ. MPI_PROC_NULL) &
           grid%phi(nx+1, 1:ny)   = grid%phi(nx, 1:ny) *0.0_num
     ELSE
       ! On finest grid, use real boundaries
-      IF (right == MPI_PROC_NULL) grid%phi(1:nx, ny+1)   = b_val(1)
-      IF (left  == MPI_PROC_NULL) grid%phi(1:nx, 0)      = b_val(2)
-      IF (down  == MPI_PROC_NULL) grid%phi(0, 1:ny)      = b_val(3)
-      IF (up    == MPI_PROC_NULL) grid%phi(nx+1, 1:ny)   = b_val(4)
+      IF (right .EQ. MPI_PROC_NULL) grid%phi(1:nx, ny+1)   = b_val(1)
+      IF (left  .EQ. MPI_PROC_NULL) grid%phi(1:nx, 0)      = b_val(2)
+      IF (down  .EQ. MPI_PROC_NULL) grid%phi(0, 1:ny)      = b_val(3)
+      IF (up    .EQ. MPI_PROC_NULL) grid%phi(nx+1, 1:ny)   = b_val(4)
       ! Now do MPI
       IF (mpi_on) THEN
         CALL MPI_SENDRECV(grid%phi(1:nx, ny), nx, mpireal, up, tag, &

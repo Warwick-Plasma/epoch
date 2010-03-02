@@ -330,12 +330,12 @@ CONTAINS
     print_arrays = .FALSE.
     last_call = .FALSE.
 
-    IF (time >= t1) THEN
+    IF (time .GE. t1) THEN
       print_arrays = .TRUE.
       t1 = t1 + dt_snapshots
     ENDIF
 
-    IF (time >= t_end .OR. i == nsteps) THEN
+    IF (time .GE. t_end .OR. i .EQ. nsteps) THEN
       last_call = .TRUE.
       print_arrays = .TRUE.
     ENDIF

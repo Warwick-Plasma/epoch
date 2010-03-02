@@ -26,7 +26,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    str_cmp = (str_trim(1:LEN(str_test)) == str_test)
+    str_cmp = (str_trim(1:LEN(str_test)) .EQ. str_test)
 
   END FUNCTION str_cmp
 
@@ -86,7 +86,7 @@ CONTAINS
     IF (str_cmp(str_in, "up")) as_direction = c_bd_up
     IF (str_cmp(str_in, "down")) as_direction = c_bd_down
 
-    IF (as_direction == -1) err = IOR(err, c_err_bad_value)
+    IF (as_direction .EQ. -1) err = IOR(err, c_err_bad_value)
 
   END FUNCTION as_direction
 

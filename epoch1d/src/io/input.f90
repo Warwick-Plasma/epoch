@@ -32,7 +32,7 @@ CONTAINS
         cfd_status, cfd_errcode)
 
     ! If this isn't "CFD" then this isn't a CFD file
-    IF (cfd /= "CFD") THEN
+    IF (cfd .NE. "CFD") THEN
       CALL MPI_FILE_CLOSE(cfd_filehandle, cfd_errcode)
       PRINT *, "The specified file is not a valid CFD file"
       CALL MPI_ABORT(cfd_comm, cfd_errcode)
@@ -64,12 +64,12 @@ CONTAINS
         cfd_status, cfd_errcode)
 
     IF (file_version .GT. cfd_version) THEN
-      IF (rank == default_rank) PRINT *, "Version number incompatible"
+      IF (rank .EQ. default_rank) PRINT *, "Version number incompatible"
       CALL MPI_ABORT(cfd_comm, cfd_errcode)
     ENDIF
 
     IF (file_revision .GT. cfd_revision) THEN
-      IF (rank == default_rank) &
+      IF (rank .EQ. default_rank) &
           PRINT *, "Revision number of file is too high. Writing disabled"
       cfd_writing = .FALSE.
     ENDIF

@@ -13,66 +13,66 @@ CONTAINS
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (xbc_right == c_bc_periodic) THEN
+    IF (xbc_right .EQ. c_bc_periodic) THEN
       xbc_right_particle = c_bc_periodic
       xbc_right_field = c_bc_periodic
     ENDIF
-    IF (xbc_left == c_bc_periodic) THEN
+    IF (xbc_left .EQ. c_bc_periodic) THEN
       xbc_left_particle = c_bc_periodic
       xbc_left_field = c_bc_periodic
     ENDIF
 
-    IF (ybc_up == c_bc_periodic) THEN
+    IF (ybc_up .EQ. c_bc_periodic) THEN
       ybc_up_particle = c_bc_periodic
       ybc_up_field = c_bc_periodic
     ENDIF
-    IF (ybc_down == c_bc_periodic) THEN
+    IF (ybc_down .EQ. c_bc_periodic) THEN
       ybc_down_particle = c_bc_periodic
       ybc_down_field = c_bc_periodic
     ENDIF
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (xbc_right == c_bc_other) THEN
+    IF (xbc_right .EQ. c_bc_other) THEN
       xbc_right_particle = c_bc_reflect
       xbc_right_field = c_bc_clamp
     ENDIF
-    IF (xbc_left == c_bc_other) THEN
+    IF (xbc_left .EQ. c_bc_other) THEN
       xbc_left_particle = c_bc_reflect
       xbc_left_field = c_bc_clamp
     ENDIF
 
-    IF (ybc_up == c_bc_other) THEN
+    IF (ybc_up .EQ. c_bc_other) THEN
       ybc_up_particle = c_bc_reflect
       ybc_up_field = c_bc_clamp
     ENDIF
-    IF (ybc_down == c_bc_other) THEN
+    IF (ybc_down .EQ. c_bc_other) THEN
       ybc_down_particle = c_bc_reflect
       ybc_down_field = c_bc_clamp
     ENDIF
 
     ! laser boundaries reflect particles off a hard wall
-    IF (xbc_left == c_bc_simple_laser .OR. &
-        xbc_left == c_bc_simple_outflow) THEN
+    IF (xbc_left .EQ. c_bc_simple_laser .OR. &
+        xbc_left .EQ. c_bc_simple_outflow) THEN
       xbc_left_particle = c_bc_open
       xbc_left_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
-    IF (xbc_right == c_bc_simple_laser .OR. &
-        xbc_right == c_bc_simple_outflow) THEN
+    IF (xbc_right .EQ. c_bc_simple_laser .OR. &
+        xbc_right .EQ. c_bc_simple_outflow) THEN
       xbc_right_particle = c_bc_open
       xbc_right_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
 
-    IF (ybc_up == c_bc_simple_laser .OR. &
-        ybc_up == c_bc_simple_outflow) THEN
+    IF (ybc_up .EQ. c_bc_simple_laser .OR. &
+        ybc_up .EQ. c_bc_simple_outflow) THEN
       ybc_up_particle = c_bc_open
       ybc_up_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
-    IF (ybc_down == c_bc_simple_laser .OR. &
-        ybc_down == c_bc_simple_outflow) THEN
+    IF (ybc_down .EQ. c_bc_simple_laser .OR. &
+        ybc_down .EQ. c_bc_simple_outflow) THEN
       ybc_down_particle = c_bc_open
       ybc_down_field = c_bc_clamp
       any_open = .TRUE.
@@ -124,26 +124,26 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
     LOGICAL, INTENT(IN) :: force
 
-    IF ((xbc_left_field == c_bc_zero_gradient .OR. force) .AND. &
-        left == MPI_PROC_NULL) THEN
+    IF ((xbc_left_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
+        left .EQ. MPI_PROC_NULL) THEN
       field(0,:) = field(1,:)
       field(-1,:) = field(2,:)
     ENDIF
 
-    IF ((xbc_right_field == c_bc_zero_gradient .OR. force) .AND. &
-        right == MPI_PROC_NULL) THEN
+    IF ((xbc_right_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
+        right .EQ. MPI_PROC_NULL) THEN
       field(nx+1,:) = field(nx,:)
       field(nx+2,:) = field(nx-1,:)
     ENDIF
 
-    IF ((ybc_down_field == c_bc_zero_gradient .OR. force) .AND. &
-        down == MPI_PROC_NULL) THEN
+    IF ((ybc_down_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
+        down .EQ. MPI_PROC_NULL) THEN
       field(:,0) = field(:,1)
       field(:,-1) = field(:,2)
     ENDIF
 
-    IF ((ybc_up_field == c_bc_zero_gradient .OR. force) .AND. &
-        up == MPI_PROC_NULL) THEN
+    IF ((ybc_up_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
+        up .EQ. MPI_PROC_NULL) THEN
       field(:,ny+1) = field(:,ny)
       field(:,ny+2) = field(:,ny-1)
     ENDIF
@@ -157,7 +157,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
     INTEGER, DIMENSION(2), INTENT(IN) :: stagger
 
-    IF (xbc_left_field == c_bc_clamp .AND. left == MPI_PROC_NULL) THEN
+    IF (xbc_left_field .EQ. c_bc_clamp .AND. left .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
         field(0,:) = 0.0_num
         field(-1,:) = -field(1,:)
@@ -167,7 +167,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (xbc_right_field == c_bc_clamp .AND. right == MPI_PROC_NULL) THEN
+    IF (xbc_right_field .EQ. c_bc_clamp .AND. right .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
         field(nx,:) = 0.0_num
       ELSE
@@ -176,7 +176,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (ybc_down_field == c_bc_clamp .AND. down == MPI_PROC_NULL) THEN
+    IF (ybc_down_field .EQ. c_bc_clamp .AND. down .EQ. MPI_PROC_NULL) THEN
       IF (stagger(2) .EQ. 1) THEN
         field(:,-1:0) = 0.0_num
       ELSE
@@ -185,7 +185,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (ybc_up_field == c_bc_clamp .AND. up == MPI_PROC_NULL) THEN
+    IF (ybc_up_field .EQ. c_bc_clamp .AND. up .EQ. MPI_PROC_NULL) THEN
       IF (stagger(2) .EQ. 1) THEN
         field(:,ny:ny+2) = 0.0_num
       ELSE
@@ -222,11 +222,11 @@ CONTAINS
     DO iy = -1, 1
       DO ix = -1, 1
         sizes(ix, iy) = 1
-        IF (ix == 0) THEN
+        IF (ix .EQ. 0) THEN
           sizes(ix, iy) = sizes(ix, iy) * (nx+6)
           x_start(ix, iy) = -2
           x_end(ix, iy) = nx+3
-        ELSE IF (ix == 1) THEN
+        ELSE IF (ix .EQ. 1) THEN
           sizes(ix, iy) = sizes(ix, iy) *3
           x_start(ix, iy) = nx+1
           x_end(ix, iy) = nx+3
@@ -237,11 +237,11 @@ CONTAINS
           x_end(ix, iy) = 0
           x_shift(ix, iy) = nx
         ENDIF
-        IF (iy == 0) THEN
+        IF (iy .EQ. 0) THEN
           sizes(ix, iy) = sizes(ix, iy) * (ny+6)
           y_start(ix, iy) = -2
           y_end(ix, iy) = ny+3
-        ELSE IF (iy == 1) THEN
+        ELSE IF (iy .EQ. 1) THEN
           sizes(ix, iy) = sizes(ix, iy) *3
           y_start(ix, iy) = ny+1
           y_end(ix, iy) = ny+3
@@ -257,7 +257,7 @@ CONTAINS
 
     DO iy = -1, 1
       DO ix = -1, 1
-        IF (ix == 0 .AND. iy == 0) CYCLE
+        IF (ix .EQ. 0 .AND. iy .EQ. 0) CYCLE
         IF (ABS(ix)+ABS(iy) .NE. 1) CYCLE
         ! Copy the starts into variables with shorter names, or this is
         ! HORRIFIC to read
@@ -360,32 +360,32 @@ CONTAINS
         ! These conditions apply if a particle has passed a physical boundary
         ! Not a processor boundary or a periodic boundary
         IF (cur%part_pos(1) .LE. x_start-dx/2.0_num .AND. &
-            left == MPI_PROC_NULL .AND. &
-            xbc_left_particle == c_bc_reflect) THEN
+            left .EQ. MPI_PROC_NULL .AND. &
+            xbc_left_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed left boundary
           cur%part_pos(1) =  2.0_num * (x_start-dx/2.0_num) - cur%part_pos(1)
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
 
         IF (cur%part_pos(1) .GE. x_end+dx/2.0_num .AND. &
-            right == MPI_PROC_NULL .AND. &
-            xbc_right_particle == c_bc_reflect) THEN
+            right .EQ. MPI_PROC_NULL .AND. &
+            xbc_right_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed right boundary
           cur%part_pos(1) =  2.0_num *(x_end+dx/2.0_num) - cur%part_pos(1)
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
 
         IF (cur%part_pos(2) .LE. y_start-dy/2.0_num .AND. &
-            down == MPI_PROC_NULL .AND. &
-            ybc_down_particle == c_bc_reflect) THEN
+            down .EQ. MPI_PROC_NULL .AND. &
+            ybc_down_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed bottom boundary
           cur%part_pos(2) =  2.0_num * (y_start-dy/2.0_num) - cur%part_pos(2)
           cur%part_p(2) = - cur%part_p(2)
         ENDIF
 
         IF (cur%part_pos(2) .GE. y_end+dy/2.0_num .AND. &
-            up == MPI_PROC_NULL .AND. &
-            ybc_up_particle == c_bc_reflect) THEN
+            up .EQ. MPI_PROC_NULL .AND. &
+            ybc_up_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed top boundary
           cur%part_pos(2) =  2.0_num * (y_end + dy/2.0_num) - cur%part_pos(2)
           cur%part_p(2) = - cur%part_p(2)
@@ -397,13 +397,13 @@ CONTAINS
         IF (cur%part_pos(2) .GT. y_end_local + dy/2.0_num)   ybd = 1
 
         IF ((cur%part_pos(1) .LT. x_start - dx/2.0_num) .AND. &
-            (xbc_left_particle == c_bc_open)) out_of_bounds = .TRUE.
+            (xbc_left_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
         IF ((cur%part_pos(1) .GT. x_end + dx/2.0_num) .AND. &
-            (xbc_right_particle == c_bc_open)) out_of_bounds = .TRUE.
+            (xbc_right_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
         IF ((cur%part_pos(2) .LT. y_start - dy/2.0_num) .AND. &
-            (ybc_down_particle == c_bc_open)) out_of_bounds = .TRUE.
+            (ybc_down_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
         IF ((cur%part_pos(2) .GT. y_end +dy/2.0_num) .AND. &
-            (ybc_up_particle == c_bc_open)) out_of_bounds = .TRUE.
+            (ybc_up_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
 
         IF (ABS(xbd) + ABS(ybd) .GT. 0) THEN
           ! particle has left box
@@ -444,16 +444,16 @@ CONTAINS
       ct = 0
       DO WHILE(ASSOCIATED(cur))
         IF (cur%part_pos(1) .GT. x_end+dx/2.0_num .AND. &
-            xbc_left_particle == c_bc_periodic) &
+            xbc_left_particle .EQ. c_bc_periodic) &
                 cur%part_pos(1) = cur%part_pos(1)-length_x - dx
         IF (cur%part_pos(1) .LT. x_start-dx/2.0_num .AND. &
-            xbc_right_particle == c_bc_periodic) &
+            xbc_right_particle .EQ. c_bc_periodic) &
                 cur%part_pos(1) = cur%part_pos(1)+length_x + dx
         IF (cur%part_pos(2) .GT. y_end+dy/2.0_num .AND. &
-            ybc_up_particle == c_bc_periodic) &
+            ybc_up_particle .EQ. c_bc_periodic) &
                 cur%part_pos(2) = cur%part_pos(2)-length_y - dy
         IF (cur%part_pos(2) .LT. y_start-dy/2.0_num .AND. &
-            ybc_down_particle == c_bc_periodic) &
+            ybc_down_particle .EQ. c_bc_periodic) &
                 cur%part_pos(2) = cur%part_pos(2)+length_y + dy
         cur=>cur%next
       ENDDO

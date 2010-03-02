@@ -146,7 +146,7 @@ CONTAINS
     CALL MPI_ALLREDUCE(num_valid_cells, num_valid_cells_global, 1, &
         MPI_INTEGER8, MPI_MAX, comm, errcode)
     npart_per_cell_average = species_list%count/num_valid_cells_global
-    IF (npart_per_cell_average == 0) npart_per_cell_average = 1
+    IF (npart_per_cell_average .EQ. 0) npart_per_cell_average = 1
 
     CALL MPI_ALLREDUCE(density_total, density_total_global, 1, mpireal, &
         MPI_SUM, comm, errcode)
@@ -369,7 +369,7 @@ CONTAINS
     partlist=>part_family%attached_list
     current=>partlist%head
     ipart = 0
-    DO WHILE(ipart < partlist%count)
+    DO WHILE(ipart .LT. partlist%count)
 #ifdef PER_PARTICLE_CHARGEMASS
       mass = current%mass
 #else
@@ -457,7 +457,7 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     ! First loop converts number density into weight function
-    DO WHILE(ipart < partlist%count)
+    DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
       cell_x_r = (current%part_pos-x_start_local) / dx - 0.5_num
       cell_x = NINT(cell_x_r)
@@ -495,7 +495,7 @@ CONTAINS
     ! Again assumes linear interpolation
     current=>partlist%head
     ipart = 0
-    DO WHILE(ipart < partlist%count)
+    DO WHILE(ipart .LT. partlist%count)
       cell_x_r = (current%part_pos-x_start_local) / dx -0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r

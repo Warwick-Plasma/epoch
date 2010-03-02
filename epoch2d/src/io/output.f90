@@ -25,14 +25,14 @@ CONTAINS
     block_header_size = max_string_len * 2 + 4 + 2 * 8
 
     ! Delete file and wait
-    IF (cfd_rank == default_rank) &
+    IF (cfd_rank .EQ. default_rank) &
         CALL MPI_FILE_DELETE(TRIM(filename), MPI_INFO_NULL, cfd_errcode)
 
     CALL MPI_BARRIER(cfd_comm, cfd_errcode)
     CALL MPI_FILE_OPEN(cfd_comm, TRIM(filename), cfd_mode, MPI_INFO_NULL, &
         cfd_filehandle, cfd_errcode)
 
-    IF (cfd_rank == default_rank) THEN
+    IF (cfd_rank .EQ. default_rank) THEN
       ! Write the header
       CALL MPI_FILE_WRITE(cfd_filehandle, "CFD", 3, MPI_CHARACTER, &
           cfd_status, cfd_errcode)
@@ -80,7 +80,7 @@ CONTAINS
 
     ! If this isn't the full string length then tag in a ACHAR(0) to help
     ! With C++ string handling
-    IF (len_s+1 < max_string_len) output(len_s+1:max_string_len) = ACHAR(0)
+    IF (len_s+1 .LT. max_string_len) output(len_s+1:max_string_len) = ACHAR(0)
 
     CALL MPI_FILE_WRITE(cfd_filehandle, output, max_string_len, MPI_CHARACTER, &
         cfd_status, cfd_errcode)
@@ -103,7 +103,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       CALL cfd_safe_write_string(block_name)
       CALL cfd_safe_write_string(block_class)
     ENDIF
@@ -112,7 +112,7 @@ CONTAINS
     ! Write the block type
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
-    IF (cfd_rank == rank_write) &
+    IF (cfd_rank .EQ. rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, block_type, 1, MPI_INTEGER, &
             cfd_status, cfd_errcode)
 
@@ -122,7 +122,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, block_md_length, 1, MPI_INTEGER8, &
           cfd_status, cfd_errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, block_length, 1, MPI_INTEGER8, &
@@ -148,7 +148,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, meshtype, 1, MPI_INTEGER, &
           cfd_status, cfd_errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, dim, 1, MPI_INTEGER, &
@@ -177,7 +177,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) &
+    IF (cfd_rank .EQ. rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, step, 1, MPI_INTEGER, &
             cfd_status, cfd_errcode)
 
@@ -187,7 +187,7 @@ CONTAINS
         MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, "native", MPI_INFO_NULL, &
         cfd_errcode)
 
-    IF (cfd_rank == rank_write) &
+    IF (cfd_rank .EQ. rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
             cfd_status, cfd_errcode)
 
@@ -218,7 +218,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
     ENDIF
@@ -228,7 +228,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) &
+    IF (cfd_rank .EQ. rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, ndims, 1, MPI_INTEGER, &
             cfd_status, cfd_errcode)
 
@@ -237,7 +237,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       DO iloop = 1, ndims
         CALL cfd_safe_write_string(name(iloop))
         CALL cfd_safe_write_string(class(iloop))
@@ -270,7 +270,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
       CALL cfd_safe_write_string(mesh_class)
     ENDIF
@@ -280,7 +280,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) &
+    IF (cfd_rank .EQ. rank_write) &
         CALL MPI_FILE_WRITE(cfd_filehandle, ndims, 1, MPI_INTEGER, &
             cfd_status, cfd_errcode)
 
@@ -289,7 +289,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       DO iloop = 1, ndims
         CALL cfd_safe_write_string(name(iloop))
         CALL cfd_safe_write_string(class(iloop))
@@ -316,7 +316,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, value, 1, mpireal, cfd_status, &
           cfd_errcode)
     ENDIF
@@ -341,7 +341,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
         MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == rank_write) THEN
+    IF (cfd_rank .EQ. rank_write) THEN
       ! 1D
       CALL MPI_FILE_WRITE(cfd_filehandle, 1, 1, MPI_INTEGER, &
           cfd_status, cfd_errcode)

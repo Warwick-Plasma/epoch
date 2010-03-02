@@ -48,26 +48,26 @@ CONTAINS
 
     direction = laser%direction
 
-    IF (laser%k == 0) laser%k = laser%freq
+    IF (laser%k .EQ. 0) laser%k = laser%freq
 
-    IF (direction == c_bd_left .OR. direction == c_bd_right) THEN
+    IF (direction .EQ. c_bd_left .OR. direction .EQ. c_bd_right) THEN
       laser%phase(1:ny) = laser%phase(1:ny) - &
           laser%k * (y(1:ny) * TAN(laser%angle))
-    ELSE IF (direction == c_bd_up .OR. direction == c_bd_down) THEN
+    ELSE IF (direction .EQ. c_bd_up .OR. direction .EQ. c_bd_down) THEN
       laser%phase(1:nx) = laser%phase(1:nx) - &
           laser%k * (x(1:nx) * TAN(laser%angle))
     ENDIF
 
-    IF (direction == c_bd_left) THEN
+    IF (direction .EQ. c_bd_left) THEN
       CALL attach_laser_to_list(laser_left, laser, direction)
     ENDIF
-    IF (direction == c_bd_right) THEN
+    IF (direction .EQ. c_bd_right) THEN
       CALL attach_laser_to_list(laser_right, laser, direction)
     ENDIF
-    IF (direction == c_bd_up) THEN
+    IF (direction .EQ. c_bd_up) THEN
       CALL attach_laser_to_list(laser_up, laser, direction)
     ENDIF
-    IF (direction == c_bd_down) THEN
+    IF (direction .EQ. c_bd_down) THEN
       CALL attach_laser_to_list(laser_down, laser, direction)
     ENDIF
 
@@ -120,9 +120,9 @@ CONTAINS
     REAL(num), DIMENSION(:), POINTER :: array
     INTEGER, INTENT(IN) :: direction
 
-    IF (direction == c_bd_left .OR. direction == c_bd_right) THEN
+    IF (direction .EQ. c_bd_left .OR. direction .EQ. c_bd_right) THEN
       ALLOCATE(array(-2:ny+3))
-    ELSE IF (direction == c_bd_up .OR. direction == c_bd_down) THEN
+    ELSE IF (direction .EQ. c_bd_up .OR. direction .EQ. c_bd_down) THEN
       ALLOCATE(array(-2:nx+3))
     ENDIF
 

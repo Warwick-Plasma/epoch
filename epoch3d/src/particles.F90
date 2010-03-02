@@ -358,43 +358,43 @@ CONTAINS
 
           ! Remember that due to CFL condition particle can never cross more
           ! than one gridcell in one timestep
-          IF (cell_x3 == cell_x1) THEN
+          IF (cell_x3 .EQ. cell_x1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             xmin = -sf_order
             xmax = +sf_order
-          ELSE IF (cell_x3 == cell_x1 - 1) THEN
+          ELSE IF (cell_x3 .EQ. cell_x1 - 1) THEN
             ! particle has moved one cell to left
             xmin = -sf_order-1
             xmax = +sf_order
-          ELSE IF (cell_x3 == cell_x1 + 1) THEN
+          ELSE IF (cell_x3 .EQ. cell_x1 + 1) THEN
             ! particle has moved one cell to right
             xmin = -sf_order
             xmax = +sf_order+1
           ENDIF
 
-          IF (cell_y3 == cell_y1) THEN
+          IF (cell_y3 .EQ. cell_y1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             ymin = -sf_order
             ymax = +sf_order
-          ELSE IF (cell_y3 == cell_y1 - 1) THEN
+          ELSE IF (cell_y3 .EQ. cell_y1 - 1) THEN
             ! particle has moved one cell to left
             ymin = -sf_order-1
             ymax = +sf_order
-          ELSE IF (cell_y3 == cell_y1 + 1) THEN
+          ELSE IF (cell_y3 .EQ. cell_y1 + 1) THEN
             ! particle has moved one cell to right
             ymin = -sf_order
             ymax = +sf_order+1
           ENDIF
 
-          IF (cell_z3 == cell_z1) THEN
+          IF (cell_z3 .EQ. cell_z1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             zmin = -sf_order
             zmax = +sf_order
-          ELSE IF (cell_z3 == cell_z1 - 1) THEN
+          ELSE IF (cell_z3 .EQ. cell_z1 - 1) THEN
             ! particle has moved one cell to left
             zmin = -sf_order-1
             zmax = +sf_order
-          ELSE IF (cell_z3 == cell_z1 + 1) THEN
+          ELSE IF (cell_z3 .EQ. cell_z1 + 1) THEN
             ! particle has moved one cell to right
             zmin = -sf_order
             zmax = +sf_order+1

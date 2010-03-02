@@ -29,7 +29,7 @@ CONTAINS
   SUBROUTINE probe_block_end
 
     ! Check whether or not the probe is valid
-    IF (working_probe%vertex_bottom(2) == working_probe%vertex_top(2)) THEN
+    IF (working_probe%vertex_bottom(2) .EQ. working_probe%vertex_top(2)) THEN
       IF (rank .EQ. 0) &
           PRINT*, "Probe y1 and y2 must be different. probe ", &
               TRIM(working_probe%name), " abandoned."

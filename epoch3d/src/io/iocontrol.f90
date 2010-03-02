@@ -43,7 +43,7 @@ CONTAINS
   SUBROUTINE cfd_close
 
     ! No open file
-    IF (cfd_filehandle == -1) RETURN
+    IF (cfd_filehandle .EQ. -1) RETURN
 
     ! If writing
     IF (cfd_writing) THEN
@@ -52,7 +52,7 @@ CONTAINS
       CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
           MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
 
-      IF (cfd_rank == default_rank) &
+      IF (cfd_rank .EQ. default_rank) &
           CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER, &
               cfd_status, cfd_errcode)
     ENDIF

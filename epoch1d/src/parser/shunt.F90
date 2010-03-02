@@ -26,7 +26,7 @@ CONTAINS
         last_block_type .NE. c_pt_constant)
 
     IF (char .EQ. " " .OR. ICHAR(char) .EQ. 32) char_type = c_char_space
-    IF (char >= "A" .AND. char <= "z" .OR. char .EQ. "_") &
+    IF (char .GE. "A" .AND. char .LE. "z" .OR. char .EQ. "_") &
         char_type = c_char_alpha
     IF (char .EQ. "(" .OR. char .EQ. ")" .OR. char .EQ. ",") &
         char_type = c_char_delimiter

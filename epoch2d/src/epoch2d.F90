@@ -148,7 +148,8 @@ PROGRAM pic
   walltime_current = MPI_WTIME(errcode)
 
   DO
-    IF ((i >= nsteps .AND. nsteps >= 0) .OR. (time >= t_end) .OR. halt) EXIT
+    IF ((i .GE. nsteps .AND. nsteps .GE. 0) .OR. &
+        (time .GE. t_end) .OR. halt) EXIT
     i = i + 1
     CALL set_dt
     ! update e and b fields to the half timestep

@@ -520,7 +520,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (errcode_deck == c_err_none) THEN
+    IF (errcode_deck .EQ. c_err_none) THEN
       IF (rank .EQ. rank_check) &
           WRITE(40, *), CHAR(9), "Element ", TRIM(ADJUSTL(element)), &
               "=", TRIM(ADJUSTL(value)), " handled OK"
@@ -528,7 +528,7 @@ CONTAINS
     ENDIF
     ! Test for error conditions
     ! If an error is fatal then set terminate to .TRUE.
-    IF (IAND(errcode_deck, c_err_unknown_element) /= 0) THEN
+    IF (IAND(errcode_deck, c_err_unknown_element) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
         WRITE(40, *) ""
         PRINT *, ""
@@ -542,7 +542,7 @@ CONTAINS
         WRITE(40, *) ""
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_preset_element) /= 0) THEN
+    IF (IAND(errcode_deck, c_err_preset_element) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
         WRITE(40, *) ""
         PRINT *, "***WARNING*** element ", TRIM(element), &
@@ -555,7 +555,7 @@ CONTAINS
         WRITE(40, *) ""
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_preset_element_use_later) /= 0) THEN
+    IF (IAND(errcode_deck, c_err_preset_element_use_later) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
         WRITE(40, *) ""
         PRINT *, ""
@@ -569,7 +569,7 @@ CONTAINS
         WRITE(40, *) ""
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_bad_value) /= 0) THEN
+    IF (IAND(errcode_deck, c_err_bad_value) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
         WRITE(40, *) ""
         PRINT *, ""
@@ -584,7 +584,7 @@ CONTAINS
         errcode_deck = IOR(errcode_deck, c_err_terminate)
       ENDIF
     ENDIF
-!!$    IF (IAND(errcode_deck, ERR_BAD_VALUE_NO_TERMINATE) /= 0) THEN
+!!$    IF (IAND(errcode_deck, ERR_BAD_VALUE_NO_TERMINATE) .NE. 0) THEN
 !!$       IF (rank .EQ. rank_check) THEN
 !!$          WRITE(40, *) ""
 !!$          PRINT *, ""
@@ -599,7 +599,7 @@ CONTAINS
 !!$          WRITE(40, *) ""
 !!$       ENDIF
 !!$    ENDIF
-    IF (IAND(errcode_deck, c_err_required_element_not_set) /= 0) THEN
+    IF (IAND(errcode_deck, c_err_required_element_not_set) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
         WRITE(40, *) ""
         PRINT *, ""
@@ -616,7 +616,7 @@ CONTAINS
         errcode_deck = IOR(errcode_deck, c_err_terminate)
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
+    IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
         WRITE(40, *) ""
         PRINT *, ""
@@ -634,7 +634,7 @@ CONTAINS
         WRITE(40, *) ""
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_other) /= 0) THEN
+    IF (IAND(errcode_deck, c_err_other) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
         WRITE(40, *) ""
         PRINT *, ""

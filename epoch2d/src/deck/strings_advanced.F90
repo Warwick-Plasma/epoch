@@ -29,7 +29,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (pos < 0) THEN
+    IF (pos .LT. 0) THEN
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF
@@ -59,7 +59,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (pos < 0) THEN
+    IF (pos .LT. 0) THEN
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF

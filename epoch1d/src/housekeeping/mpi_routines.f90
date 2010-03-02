@@ -90,7 +90,7 @@ CONTAINS
     subtype_particle = 0
 
 !!$    npart = npart_global/nproc
-!!$    IF (npart*nproc /= npart_global) THEN
+!!$    IF (npart*nproc .NE. npart_global) THEN
 !!$       IF (rank .EQ. 0) &
 !!$           PRINT *, "Unable to divide particles at t = 0. Quitting."
 !!$       CALL MPI_ABORT(MPI_COMM_WORLD, errcode)
@@ -144,7 +144,7 @@ CONTAINS
 
     INTEGER :: seconds, minutes, hours, total
 
-    IF (rank == 0) THEN
+    IF (rank .EQ. 0) THEN
       end_time = MPI_WTIME()
       total = INT(end_time - start_time)
       seconds = MOD(total, 60)

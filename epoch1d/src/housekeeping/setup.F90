@@ -117,7 +117,7 @@ CONTAINS
     CHARACTER(LEN=11+data_dir_max_length) :: file2
     INTEGER :: errcode
 
-    IF (rank == 0) THEN
+    IF (rank .EQ. 0) THEN
       WRITE(file2, '(a, "/epoch1d.dat")') TRIM(data_dir)
       OPEN(unit=20, status='REPLACE', file=file2, iostat=errcode)
       IF (errcode .NE. 0) THEN

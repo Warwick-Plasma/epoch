@@ -39,7 +39,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
 
-    IF (cfd_rank == default_rank) CALL cfd_safe_write_string(generator_desc)
+    IF (cfd_rank .EQ. default_rank) CALL cfd_safe_write_string(generator_desc)
 
     current_displacement = current_displacement + max_string_len
 

@@ -154,7 +154,7 @@ CONTAINS
 
     INTEGER :: seconds, minutes, hours, total
 
-    IF (rank == 0) THEN
+    IF (rank .EQ. 0) THEN
       end_time = MPI_WTIME()
       total = INT(end_time - start_time)
       seconds = MOD(total, 60)

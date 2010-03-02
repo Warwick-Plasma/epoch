@@ -115,7 +115,7 @@ CONTAINS
 
     CHARACTER(LEN=11+data_dir_max_length) :: file2
 
-    IF (rank == 0) THEN
+    IF (rank .EQ. 0) THEN
       WRITE(file2, '(a, "/epoch3d.dat")') TRIM(data_dir)
       OPEN(unit=20, status='REPLACE', file=file2)
 !!$      WRITE(file3, '(a, "/en.dat")') TRIM(data_dir)

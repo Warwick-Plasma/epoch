@@ -156,34 +156,34 @@ CONTAINS
     ENDDO
 
     CALL bfield_bcs(.FALSE.)
-    IF (xbc_left == c_bc_simple_laser .AND. left == MPI_PROC_NULL) &
+    IF (xbc_left .EQ. c_bc_simple_laser .AND. left .EQ. MPI_PROC_NULL) &
         CALL laser_bcs_left
-    IF (xbc_left == c_bc_simple_outflow .AND. left == MPI_PROC_NULL) &
+    IF (xbc_left .EQ. c_bc_simple_outflow .AND. left .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_left
 
-    IF (xbc_right == c_bc_simple_laser .AND. right == MPI_PROC_NULL) &
+    IF (xbc_right .EQ. c_bc_simple_laser .AND. right .EQ. MPI_PROC_NULL) &
         CALL laser_bcs_right
-    IF (xbc_right == c_bc_simple_outflow .AND. right == MPI_PROC_NULL) &
+    IF (xbc_right .EQ. c_bc_simple_outflow .AND. right .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_right
 
-    IF (ybc_up == c_bc_simple_laser .AND. up == MPI_PROC_NULL) &
+    IF (ybc_up .EQ. c_bc_simple_laser .AND. up .EQ. MPI_PROC_NULL) &
         CALL laser_bcs_up
-    IF (ybc_up == c_bc_simple_outflow .AND. up == MPI_PROC_NULL) &
+    IF (ybc_up .EQ. c_bc_simple_outflow .AND. up .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_up
 
-    IF (ybc_down == c_bc_simple_laser .AND. down == MPI_PROC_NULL) &
+    IF (ybc_down .EQ. c_bc_simple_laser .AND. down .EQ. MPI_PROC_NULL) &
         CALL laser_bcs_down
-    IF (ybc_down == c_bc_simple_outflow .AND. down == MPI_PROC_NULL) &
+    IF (ybc_down .EQ. c_bc_simple_outflow .AND. down .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_down
 
-    IF (zbc_front == c_bc_simple_laser .AND. up == MPI_PROC_NULL) &
+    IF (zbc_front .EQ. c_bc_simple_laser .AND. up .EQ. MPI_PROC_NULL) &
         CALL laser_bcs_front
-    IF (zbc_back == c_bc_simple_outflow .AND. up == MPI_PROC_NULL) &
+    IF (zbc_back .EQ. c_bc_simple_outflow .AND. up .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_front
 
-    IF (zbc_front == c_bc_simple_laser .AND. down == MPI_PROC_NULL) &
+    IF (zbc_front .EQ. c_bc_simple_laser .AND. down .EQ. MPI_PROC_NULL) &
         CALL laser_bcs_back
-    IF (zbc_back == c_bc_simple_outflow .AND. down == MPI_PROC_NULL) &
+    IF (zbc_back .EQ. c_bc_simple_outflow .AND. down .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_back
     CALL bfield_bcs(.TRUE.)
 
