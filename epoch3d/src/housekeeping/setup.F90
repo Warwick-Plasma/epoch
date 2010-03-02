@@ -120,7 +120,7 @@ CONTAINS
       OPEN(unit=20, status='REPLACE', file=file2)
 !!$      WRITE(file3, '(a, "/en.dat")') TRIM(data_dir)
 !!$      OPEN(unit=30, status='REPLACE', file=file3, form="binary")
-    END IF
+    ENDIF
 
   END SUBROUTINE open_files
 

@@ -335,7 +335,7 @@ CONTAINS
     IF (restart) THEN
       t1 = time
       restart = .FALSE.
-    END IF
+    ENDIF
 
     print_arrays = .FALSE.
     last_call = .FALSE.
@@ -350,12 +350,12 @@ CONTAINS
     IF (time >= t1) THEN
       print_arrays = .TRUE.
       t1 = t1 + dt_snapshots
-    END IF
+    ENDIF
 
     IF (time >= t_end .OR. i == nsteps) THEN
       last_call = .TRUE.
       print_arrays = .TRUE.
-    END IF
+    ENDIF
 
   END SUBROUTINE io_test
 

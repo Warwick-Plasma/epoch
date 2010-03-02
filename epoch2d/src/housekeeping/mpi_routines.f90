@@ -163,7 +163,7 @@ CONTAINS
       WRITE(20, *)
       WRITE(20, '("runtime = ", i4, "h ", i2, "m ", i2, "s on ", i4, &
           &" process elements.")') hours, minutes, seconds, nproc
-    END IF
+    ENDIF
 
     CALL MPI_BARRIER(comm, errcode)
 

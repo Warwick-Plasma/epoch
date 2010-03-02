@@ -165,7 +165,7 @@ CONTAINS
             &does not exist"
         CALL MPI_ABORT(comm, errcode)
       ENDIF
-    END IF
+    ENDIF
 
   END SUBROUTINE open_files
 

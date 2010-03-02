@@ -96,7 +96,7 @@ PROGRAM pic
     ENDIF
     time = 0.0_num
     output_file = 0
-  END IF
+  ENDIF
 
   CALL distribute_particles
   IF (.NOT. neutral_background) CALL do_gauss
@@ -182,7 +182,7 @@ PROGRAM pic
     ENDDO
 #endif
     IF (halt) EXIT
-  END DO
+  ENDDO
 
   IF (rank .EQ. 0) &
       PRINT *, "Final runtime of core = ", MPI_WTIME(errcode)-walltime_current
