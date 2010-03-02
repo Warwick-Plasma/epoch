@@ -23,7 +23,7 @@ PROGRAM pic
   USE deck
   USE welcome
   USE diagnostics
-  USE field
+  USE fields
   USE particles
   USE mpi_routines
   !USE boundary

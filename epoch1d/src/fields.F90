@@ -1,4 +1,4 @@
-MODULE field
+MODULE fields
 
   USE boundary
   USE laser
@@ -183,4 +183,4 @@ CONTAINS
 
   END SUBROUTINE update_eb_fields_final
 
-END MODULE field
+END MODULE fields
