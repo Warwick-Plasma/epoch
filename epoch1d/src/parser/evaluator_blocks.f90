@@ -300,12 +300,6 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
     REAL(num) :: point, t0
 
-    IF (opcode .EQ. c_func_abs) THEN
-      CALL get_values(1, values)
-      CALL push_on_eval(ABS(values(1)))
-      RETURN
-    ENDIF
-
     IF (opcode .EQ. c_func_sqrt) THEN
       CALL get_values(1, values)
       CALL push_on_eval(SQRT(values(1)))
@@ -500,6 +494,12 @@ CONTAINS
     IF (opcode .EQ. c_func_crit) THEN
       CALL get_values(1, values)
       CALL push_on_eval(values(1)**2 * m0 * epsilon0 / q0**2)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_abs) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(ABS(values(1)))
       RETURN
     ENDIF
 

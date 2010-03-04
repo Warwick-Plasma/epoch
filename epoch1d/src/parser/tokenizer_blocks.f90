@@ -143,7 +143,6 @@ CONTAINS
 
     as_function = c_prc_not_this_type
 
-    IF (str_cmp(name, "abs")) as_function = c_func_abs
     IF (str_cmp(name, "sqrt")) as_function = c_func_sqrt
     IF (str_cmp(name, "sin"))   as_function = c_func_sine
     IF (str_cmp(name, "cos"))   as_function = c_func_cosine
@@ -175,6 +174,7 @@ CONTAINS
     IF (str_cmp(name, "gauss")) as_function = c_func_gauss
     IF (str_cmp(name, "semigauss")) as_function = c_func_semigauss
     IF (str_cmp(name, "critical")) as_function = c_func_crit
+    IF (str_cmp(name, "abs")) as_function = c_func_abs
 
     DO i = 1, n_new_func
       IF (str_cmp(TRIM(name), TRIM(new_func_name(i)%value))) THEN
@@ -197,8 +197,8 @@ CONTAINS
       as_operator = c_opcode_plus
     ENDIF
     IF (str_cmp(name, "-"))  THEN
-      IF ((last_block_type .EQ. c_pt_variable .OR. &
-          last_block_type .EQ. c_pt_constant)) THEN
+      IF (last_block_type .EQ. c_pt_variable .OR. &
+          last_block_type .EQ. c_pt_constant) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus

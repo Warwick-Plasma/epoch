@@ -104,7 +104,6 @@ CONTAINS
     IF (str_cmp(name, "dir_px")) as_constant = c_const_dir_px
     IF (str_cmp(name, "dir_py")) as_constant = c_const_dir_py
     IF (str_cmp(name, "dir_pz")) as_constant = c_const_dir_pz
-    IF (str_cmp(name, "var")) as_constant = c_const_var
 
     ! User submitted constant using "Register"
     DO i = 1, n_new_constant
@@ -205,8 +204,8 @@ CONTAINS
       as_operator = c_opcode_plus
     ENDIF
     IF (str_cmp(name, "-"))  THEN
-      IF ((last_block_type .EQ. c_pt_variable .OR. &
-          last_block_type .EQ. c_pt_constant)) THEN
+      IF (last_block_type .EQ. c_pt_variable .OR. &
+          last_block_type .EQ. c_pt_constant) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus

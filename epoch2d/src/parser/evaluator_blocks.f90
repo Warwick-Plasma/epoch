@@ -315,11 +315,6 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (opcode .EQ. c_const_var) THEN
-      CALL push_on_eval(context_variable)
-      RETURN
-    ENDIF
-
   END SUBROUTINE do_constant
 
 

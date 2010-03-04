@@ -204,7 +204,6 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_px = 52
   INTEGER, PARAMETER :: c_const_dir_py = 53
   INTEGER, PARAMETER :: c_const_dir_pz = 54
-  INTEGER, PARAMETER :: c_const_var = 55
 
   ! Constants for initial conditions
   INTEGER, PARAMETER :: c_const_autoearly = 20
@@ -294,9 +293,6 @@ MODULE shared_parser_data
   INTEGER :: n_deferred_execution_objects = 0
   TYPE(deck_constant), DIMENSION(:), ALLOCATABLE :: deck_constant_list
   TYPE(deferred_execution_object), DIMENSION(:), ALLOCATABLE :: deferred_objects
-
-  ! A context dependant variable which is used in various places in the code
-  REAL(num) :: context_variable
 
 END MODULE shared_parser_data
 

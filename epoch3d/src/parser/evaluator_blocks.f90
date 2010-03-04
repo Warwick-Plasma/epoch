@@ -160,6 +160,21 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_ev) THEN
+      CALL push_on_eval(ev)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_kev) THEN
+      CALL push_on_eval(ev*1000.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_mev) THEN
+      CALL push_on_eval(ev*1.0e6_num)
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_const_lx) THEN
       CALL push_on_eval(length_x)
       RETURN
@@ -353,12 +368,12 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: opcode, ix, iy, iz
     INTEGER, INTENT(INOUT) :: err
-    REAL(num), DIMENSION(3) :: values
+    REAL(num), DIMENSION(4) :: values
     REAL(num) :: val
     INTEGER :: count, ipoint
     LOGICAL :: done
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
-    REAL(num) :: point
+    REAL(num) :: point, t0
 
     IF (opcode .EQ. c_func_sqrt) THEN
       CALL get_values(1, values)
@@ -535,6 +550,25 @@ CONTAINS
     IF (opcode .EQ. c_func_gauss) THEN
       CALL get_values(3, values)
       CALL push_on_eval(EXP(-((values(1)-values(2))/values(3))**2))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_semigauss) THEN
+      CALL get_values(4, values)
+      ! values are : time, maximum amplitude, amplitude at t = 0,
+      ! characteristic time width
+      t0 = values(4) * SQRT(-LOG(values(3)/values(2)))
+      IF (values(1) .LE. t0) THEN
+        CALL push_on_eval(values(2) * EXP(-((values(1)-t0)/values(4))**2))
+      ELSE
+        CALL push_on_eval(values(2))
+      ENDIF
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_crit) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(values(1)**2 * m0 * epsilon0 / q0**2)
       RETURN
     ENDIF
 

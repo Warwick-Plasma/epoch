@@ -86,6 +86,8 @@ MODULE constants
   REAL(num), PARAMETER :: kb = 1.3806503e-23_num  ! m^2kgs(-2)K^(-1)
   REAL(num), PARAMETER :: epsilon0 = 8.85418782e-12_num
   REAL(num), PARAMETER :: mu0 = 1.0_num/(c**2*epsilon0)
+  REAL(num), PARAMETER :: h_planck = 6.626068e-34_num
+  REAL(num), PARAMETER :: ev = q0 ! J
 
   ! direction parameters
   INTEGER, PARAMETER :: c_dir_x = 1
@@ -154,6 +156,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_eps0 = 5
   INTEGER, PARAMETER :: c_const_mu0 = 6
   INTEGER, PARAMETER :: c_const_c = 7
+  INTEGER, PARAMETER :: c_const_ev = 8
+  INTEGER, PARAMETER :: c_const_kev = 9
+  INTEGER, PARAMETER :: c_const_mev = 10
 
   ! Constants refering to grid properties
   INTEGER, PARAMETER :: c_const_x = 25
@@ -230,7 +235,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_func_bz = 31
   INTEGER, PARAMETER :: c_func_sqrt = 32
   INTEGER, PARAMETER :: c_func_gauss = 33
-  INTEGER, PARAMETER :: c_func_abs = 34
+  INTEGER, PARAMETER :: c_func_semigauss = 34
+  INTEGER, PARAMETER :: c_func_crit = 35
+  INTEGER, PARAMETER :: c_func_abs = 36
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
 

@@ -71,6 +71,9 @@ CONTAINS
     IF (str_cmp(name, "c")) as_constant = c_const_c
     IF (str_cmp(name, "epsilonnought")) as_constant = c_const_eps0
     IF (str_cmp(name, "munought"))      as_constant = c_const_mu0
+    IF (str_cmp(name, "ev")) as_constant = c_const_ev
+    IF (str_cmp(name, "kev")) as_constant = c_const_kev
+    IF (str_cmp(name, "mev")) as_constant = c_const_mev
     IF (str_cmp(name, "x"))  as_constant = c_const_x
     IF (str_cmp(name, "y"))  as_constant = c_const_y
     IF (str_cmp(name, "z"))  as_constant = c_const_z
@@ -85,13 +88,13 @@ CONTAINS
     IF (str_cmp(name, "dy")) as_constant = c_const_dz
     IF (str_cmp(name, "x_start")) as_constant = c_const_start_x
     IF (str_cmp(name, "y_start")) as_constant = c_const_start_y
-    IF (str_cmp(name, "y_start")) as_constant = c_const_start_z
+    IF (str_cmp(name, "z_start")) as_constant = c_const_start_z
     IF (str_cmp(name, "x_end")) as_constant = c_const_end_x
     IF (str_cmp(name, "y_end")) as_constant = c_const_end_y
     IF (str_cmp(name, "z_end")) as_constant = c_const_end_z
     IF (str_cmp(name, "ix")) as_constant = c_const_ix
     IF (str_cmp(name, "iy")) as_constant = c_const_iy
-    IF (str_cmp(name, "iy")) as_constant = c_const_iz
+    IF (str_cmp(name, "iz")) as_constant = c_const_iz
     IF (str_cmp(name, "time")) as_constant = c_const_time
     IF (str_cmp(name, "internal_early")) as_constant = c_const_autoearly
     IF (str_cmp(name, "internal_late")) as_constant = c_const_autolate
@@ -187,6 +190,8 @@ CONTAINS
     IF (str_cmp(name, "by")) as_function = c_func_by
     IF (str_cmp(name, "bz")) as_function = c_func_bz
     IF (str_cmp(name, "gauss")) as_function = c_func_gauss
+    IF (str_cmp(name, "semigauss")) as_function = c_func_semigauss
+    IF (str_cmp(name, "critical")) as_function = c_func_crit
     IF (str_cmp(name, "abs")) as_function = c_func_abs
 
     DO i = 1, n_new_func
@@ -210,9 +215,8 @@ CONTAINS
       as_operator = c_opcode_plus
     ENDIF
     IF (str_cmp(name, "-"))  THEN
-      IF ((last_block_type .EQ. c_pt_variable .OR. &
-          last_block_type .EQ. c_pt_constant) .OR. &
-          last_block_type .EQ. c_pt_parenthesis) THEN
+      IF (last_block_type .EQ. c_pt_variable .OR. &
+          last_block_type .EQ. c_pt_constant) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus
