@@ -607,6 +607,11 @@ CONTAINS
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
 
+    CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
+        cfd_errcode)
+    CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
+        cfd_errcode)
+
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
 
@@ -708,6 +713,11 @@ CONTAINS
     ! Determine data ranges and write out
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
+
+    CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
+        cfd_errcode)
+    CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
+        cfd_errcode)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
@@ -815,6 +825,11 @@ CONTAINS
     ! Determine data ranges and write out
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
+
+    CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
+        cfd_errcode)
+    CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
+        cfd_errcode)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
