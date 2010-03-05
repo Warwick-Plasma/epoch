@@ -8,11 +8,29 @@ MODULE deck_control_block
   INTEGER, PARAMETER :: control_block_elements = 22
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
-      control_block_name = (/"nx", "ny", "nz", "npart", "nsteps", "t_end", &
-          "x_start", "x_end", "y_start", "y_end", "z_start", "z_end", &
-          "dt_multiplier", "dlb", "dlb_threshold", "initial_conditions", &
-          "icfile", "restart_snapshot", "neutral_background", "nprocx", &
-          "nprocy", "nprocz"/)
+      control_block_name = (/ &
+          "nx                ", &
+          "ny                ", &
+          "nz                ", &
+          "npart             ", &
+          "nsteps            ", &
+          "t_end             ", &
+          "x_start           ", &
+          "x_end             ", &
+          "y_start           ", &
+          "y_end             ", &
+          "z_start           ", &
+          "z_end             ", &
+          "dt_multiplier     ", &
+          "dlb               ", &
+          "dlb_threshold     ", &
+          "initial_conditions", &
+          "icfile            ", &
+          "restart_snapshot  ", &
+          "neutral_background", &
+          "nprocx            ", &
+          "nprocy            ", &
+          "nprocz            " /)
 
 CONTAINS
 

@@ -386,8 +386,8 @@ MODULE shared_data
 
     ! Injection of particles
     INTEGER(KIND=8) :: npart_per_cell
-    REAL(num), DIMENSION(:), ALLOCATABLE :: density
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: temperature
+    REAL(num), DIMENSION(:), POINTER :: density
+    REAL(num), DIMENSION(:,:), POINTER :: temperature
 
     ! Species_ionisation
 #ifdef PART_IONISE
@@ -446,7 +446,7 @@ MODULE shared_data
     INTEGER, DIMENSION(3) :: directions
     REAL(num), DIMENSION(3, 2) :: ranges
     INTEGER, DIMENSION(3) :: resolution
-    LOGICAL, DIMENSION(:), ALLOCATABLE :: use_species
+    LOGICAL, DIMENSION(:), POINTER :: use_species
     REAL(num), DIMENSION(5, 2) :: restrictions
     LOGICAL, DIMENSION(5) :: use_restrictions
 

@@ -138,7 +138,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: ct
-    INTEGER, INTENT(IN) :: cur_species
+    INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, spec_start, spec_end
@@ -149,10 +149,10 @@ CONTAINS
 
     l_weight = weight
 
-    spec_start = cur_species
-    spec_end = cur_species
+    spec_start = current_species
+    spec_end = current_species
 
-    IF (cur_species .LE. 0) THEN
+    IF (current_species .LE. 0) THEN
       spec_start = 1
       spec_end = n_species
     ENDIF

@@ -26,7 +26,7 @@ CONTAINS
   SUBROUTINE attach_laser(laser)
 
     INTEGER :: direction
-    TYPE(laser_block), POINTER, INTENT(INOUT) :: laser
+    TYPE(laser_block), POINTER :: laser
 
     direction = laser%direction
 
@@ -43,7 +43,7 @@ CONTAINS
 
   FUNCTION laser_time_profile(laser)
 
-    TYPE(laser_block), POINTER, INTENT(IN) :: laser
+    TYPE(laser_block), POINTER :: laser
     REAL(num) :: laser_time_profile
     INTEGER :: err
 
@@ -62,8 +62,8 @@ CONTAINS
   ! Actually does the attaching of the laser to the correct list
   SUBROUTINE attach_laser_to_list(list, laser, direction)
 
-    TYPE(laser_block), INTENT(INOUT), POINTER :: list
-    TYPE(laser_block), INTENT(IN), POINTER :: laser
+    TYPE(laser_block), POINTER :: list
+    TYPE(laser_block), POINTER :: laser
     INTEGER, INTENT(IN) :: direction
     TYPE(laser_block), POINTER :: current
 

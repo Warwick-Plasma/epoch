@@ -222,7 +222,7 @@ CONTAINS
   SUBROUTINE load_particles(species_list, load_list, idum)
 
     INTEGER, INTENT(INOUT) :: idum
-    TYPE(particle_family), POINTER, INTENT(INOUT) :: species_list
+    TYPE(particle_family), POINTER :: species_list
     LOGICAL, DIMENSION(-2:), INTENT(IN) :: load_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
@@ -357,7 +357,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
-    TYPE(particle_family), POINTER, INTENT(INOUT) :: part_family
+    TYPE(particle_family), POINTER :: part_family
     REAL(num), DIMENSION(3), INTENT(IN) :: drift
     INTEGER, INTENT(INOUT) :: idum
     TYPE(particle_list), POINTER :: partlist
@@ -622,7 +622,7 @@ CONTAINS
 
     INTEGER :: k
 
-    idum = XOR(idum, mask)
+    idum = IEOR(idum, mask)
     k = idum/iq
 
     idum = ia*(idum-k*iq)-ir*k
@@ -631,7 +631,7 @@ CONTAINS
     ENDIF
 
     random = am*idum
-    idum = XOR(idum, mask)
+    idum = IEOR(idum, mask)
 
     IF (random .GT. max_rand) max_rand = random
 

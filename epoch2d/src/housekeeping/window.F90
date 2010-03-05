@@ -24,9 +24,9 @@ CONTAINS
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
-      IF (ALLOCATED(particle_species(ispecies)%density)) &
+      IF (ASSOCIATED(particle_species(ispecies)%density)) &
           DEALLOCATE(particle_species(ispecies)%density)
-      IF (ALLOCATED(particle_species(ispecies)%temperature)) &
+      IF (ASSOCIATED(particle_species(ispecies)%temperature)) &
           DEALLOCATE(particle_species(ispecies)%temperature)
     ENDDO
 

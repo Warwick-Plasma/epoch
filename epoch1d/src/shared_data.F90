@@ -442,7 +442,7 @@ MODULE shared_data
     INTEGER, DIMENSION(3) :: directions
     REAL(num), DIMENSION(3, 2) :: ranges
     INTEGER, DIMENSION(3) :: resolution
-    LOGICAL, DIMENSION(:), ALLOCATABLE :: use_species
+    LOGICAL, DIMENSION(:), POINTER :: use_species
     REAL(num), DIMENSION(5, 2) :: restrictions
     LOGICAL, DIMENSION(5) :: use_restrictions
 

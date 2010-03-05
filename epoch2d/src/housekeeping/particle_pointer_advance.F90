@@ -11,9 +11,9 @@ CONTAINS
 
   SUBROUTINE start_particle_family(part_family, partlist, part)
 
-    TYPE(particle_family), POINTER, INTENT(INOUT) :: part_family
-    TYPE(particle_list), POINTER, INTENT(INOUT) :: partlist
-    TYPE(particle), POINTER, INTENT(INOUT) :: part
+    TYPE(particle_family), POINTER :: part_family
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: part
 
     part_family=>particle_species(1)
 
@@ -35,8 +35,8 @@ CONTAINS
 
   SUBROUTINE advance_particle_list(partlist, part)
 
-    TYPE(particle_list), POINTER, INTENT(INOUT) :: partlist
-    TYPE(particle), POINTER, INTENT(INOUT) :: part
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: part
 
     partlist=>partlist%next
     IF (ASSOCIATED(partlist)) THEN
@@ -51,9 +51,9 @@ CONTAINS
 
   SUBROUTINE advance_particle_family(part_family, partlist, part)
 
-    TYPE(particle_family), POINTER, INTENT(INOUT) :: part_family
-    TYPE(particle_list), POINTER, INTENT(INOUT) :: partlist
-    TYPE(particle), POINTER, INTENT(INOUT) :: part
+    TYPE(particle_family), POINTER :: part_family
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: part
 
     part_family=>part_family%next
     IF (ASSOCIATED(part_family)) THEN

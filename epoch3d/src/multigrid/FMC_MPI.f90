@@ -8,8 +8,8 @@ MODULE multigrid
   INTEGER, PARAMETER :: num = KIND(1.d0)
 
   TYPE t_grid
-    REAL(num), DIMENSION(:), ALLOCATABLE :: x, y
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: phi, rho, resid
+    REAL(num), DIMENSION(:), POINTER :: x, y
+    REAL(num), DIMENSION(:,:), POINTER :: phi, rho, resid
     REAL(num) :: dx, dy
     INTEGER :: nx, ny, gridlevel
     LOGICAL :: converged
@@ -181,8 +181,8 @@ CONTAINS
   SUBROUTINE restrict(hires, lores, grid_hi, grid_lo)
 
     ! Restriction with full weighting
-    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT)  :: hires
-    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT) :: lores
+    REAL(num), DIMENSION(:,:), INTENT(INOUT)  :: hires
+    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: lores
     TYPE(t_grid), INTENT(IN) :: grid_hi, grid_lo
     INTEGER :: ix, iy, nx_h, ny_h, nx_l, ny_l
 
@@ -208,8 +208,8 @@ CONTAINS
   SUBROUTINE prolong(lores, hires, grid_lo, grid_hi, add)
 
     ! Prolongation using inverse full weighting
-    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(IN)  :: lores
-    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT) :: hires
+    REAL(num), DIMENSION(:,:), INTENT(IN)  :: lores
+    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: hires
     TYPE(t_grid), INTENT(IN) :: grid_lo, grid_hi
     LOGICAL, INTENT(IN) :: add
     INTEGER :: nx_l, ny_l

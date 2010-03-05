@@ -10,14 +10,42 @@ MODULE deck_io_block
   INTEGER, PARAMETER :: io_block_elements = n_var_special+num_vars_to_dump
   LOGICAL, DIMENSION(io_block_elements)  :: io_block_done
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: &
-      io_block_name = (/"dt_snapshot", "full_dump_every", &
-          "restart_dump_every", "force_final_to_be_restartable", &
-          "use_offset_grid", "use_extended_io", "extended_io_file", &
-          "particles", "grid", "px", "py", "pz", "vx", "vy", "vz", &
-          "ex", "ey", "ez", "bx", "by", "bz", "jx", "jy", "jz", "charge", &
-          "mass", "ekbar", "mass_density", "charge_density", &
-          "number_density", "particle_weight", "species_id", &
-          "distribution_functions", "particle_probes", "temperature"/)
+      io_block_name = (/ &
+          "dt_snapshot                  ", &
+          "full_dump_every              ", &
+          "restart_dump_every           ", &
+          "force_final_to_be_restartable", &
+          "use_offset_grid              ", &
+          "use_extended_io              ", &
+          "extended_io_file             ", &
+          "particles                    ", &
+          "grid                         ", &
+          "px                           ", &
+          "py                           ", &
+          "pz                           ", &
+          "vx                           ", &
+          "vy                           ", &
+          "vz                           ", &
+          "ex                           ", &
+          "ey                           ", &
+          "ez                           ", &
+          "bx                           ", &
+          "by                           ", &
+          "bz                           ", &
+          "jx                           ", &
+          "jy                           ", &
+          "jz                           ", &
+          "charge                       ", &
+          "mass                         ", &
+          "ekbar                        ", &
+          "mass_density                 ", &
+          "charge_density               ", &
+          "number_density               ", &
+          "particle_weight              ", &
+          "species_id                   ", &
+          "distribution_functions       ", &
+          "particle_probes              ", &
+          "temperature                  " /)
 
 CONTAINS
 
