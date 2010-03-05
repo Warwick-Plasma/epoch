@@ -157,7 +157,7 @@ CONTAINS
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_start_local
         part_y  = current%part_pos(2) - y_start_local
-        part_y  = current%part_pos(3) - z_start_local
+        part_z  = current%part_pos(3) - z_start_local
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
