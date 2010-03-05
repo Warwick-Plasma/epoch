@@ -20,7 +20,7 @@ CONTAINS
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_x
-    INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: starts_x, ends_x
+    INTEGER, DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
     INTEGER :: new_cell_x_start, new_cell_x_end
     REAL(num) :: balance_frac
     INTEGER(KIND=8) :: npart_local
@@ -355,7 +355,7 @@ CONTAINS
       ends = sz
     ENDIF
 
-    npart_per_proc_ideal = SUM(density)/nproc
+    npart_per_proc_ideal = INT(SUM(density) / nproc)
     partition = 2
     starts(1) = 1
     total = 0

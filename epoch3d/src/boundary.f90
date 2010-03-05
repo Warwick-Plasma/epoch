@@ -393,7 +393,8 @@ CONTAINS
 
     TYPE(particle), POINTER :: cur, next
     TYPE(particle_list), DIMENSION(-1:1, -1:1, -1:1) :: send, recv
-    INTEGER :: xbd, ybd, zbd, ixp, iyp, izp
+    INTEGER :: xbd, ybd, zbd
+    INTEGER(KIND=8) :: ixp, iyp, izp
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies
 

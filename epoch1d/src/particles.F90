@@ -278,7 +278,7 @@ CONTAINS
             ! particle has moved one cell to left
             xmin = -sf_order-1
             xmax = +sf_order
-          ELSE IF (cell_x3 .EQ. cell_x1 + 1) THEN
+          ELSE ! IF (cell_x3 .EQ. cell_x1 + 1) THEN
             ! particle has moved one cell to right
             xmin = -sf_order
             xmax = +sf_order+1

@@ -153,11 +153,15 @@ CONTAINS
     CALL MPI_ALLGATHER(npart_local, 1, MPI_INTEGER8, npart_each_rank, 1, &
         MPI_INTEGER8, comm, errcode)
 
+    ! This is a hack
+    ! If npart_local or npart_each_rank is bigger than an integer then it
+    ! will fail. It is extremely unlikely that this will ever happen so at
+    ! some point the datatypes for npart should change back to default integer
     ALLOCATE(lengths(1), starts(1))
-    lengths = npart_local
+    lengths = INT(npart_local)
     starts = 0
     DO ix = 1, rank
-      starts = starts+npart_each_rank(ix)
+      starts = starts + INT(npart_each_rank(ix))
     ENDDO
 
     CALL MPI_TYPE_INDEXED(1, lengths, starts, mpireal, &
@@ -191,15 +195,19 @@ CONTAINS
     CALL MPI_ALLGATHER(npart_local, n_dump_species, MPI_INTEGER8, &
         npart_each_rank, n_dump_species, MPI_INTEGER8, comm, errcode)
 
+    ! This is a hack
+    ! If npart_local or npart_each_rank is bigger than an integer then it
+    ! will fail. It is extremely unlikely that this will ever happen so at
+    ! some point the datatypes for npart should change back to default integer
     ALLOCATE(lengths(n_dump_species), starts(n_dump_species))
-    lengths = npart_local
+    lengths = INT(npart_local)
     DO ispecies = 1, n_dump_species
       starts(ispecies) = 0
       DO ix = 1, ispecies-1
-        starts(ispecies) = starts(ispecies)+SUM(npart_each_rank(ix,:), 1)
+        starts(ispecies) = starts(ispecies) + INT(SUM(npart_each_rank(ix,:), 1))
       ENDDO
       DO ix = 1, rank
-        starts(ispecies) = starts(ispecies)+npart_each_rank(ispecies, ix)
+        starts(ispecies) = starts(ispecies) + INT(npart_each_rank(ispecies, ix))
       ENDDO
     ENDDO
 

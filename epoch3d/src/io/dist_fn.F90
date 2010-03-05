@@ -141,6 +141,8 @@ CONTAINS
 
     use_x = .FALSE.
     use_y = .FALSE.
+    use_z = .FALSE.
+
     need_reduce = .TRUE.
     color = 0
     global_resolution = resolution
@@ -151,6 +153,7 @@ CONTAINS
     p_count = 0
     use_direction = .FALSE.
     l_direction = 0
+    current_data = 0.0_num
 
     DO idim = 1, 3
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -468,6 +471,7 @@ CONTAINS
     p_count = 0
     use_direction = .FALSE.
     l_direction = 0
+    current_data = 0.0_num
 
     DO idim = 1, 2
       IF (direction(idim) .EQ. c_dir_x) THEN

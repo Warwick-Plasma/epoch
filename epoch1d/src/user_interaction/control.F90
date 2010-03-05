@@ -92,13 +92,13 @@ CONTAINS
     particle_species(1)%name = "Electron"
     particle_species(1)%mass = 1.0_num*m0
     particle_species(1)%charge = -1.0_num*q0
-    particle_species(1)%count = 0.5_num * npart_global
+    particle_species(1)%count = npart_global / 2
     particle_species(1)%dump = .TRUE.
 
     particle_species(2)%name = "Ions"
     particle_species(2)%mass = 1836.0_num*m0
     particle_species(2)%charge = 1.0_num*q0
-    particle_species(2)%count = 0.5_num * npart_global
+    particle_species(2)%count = npart_global / 2
     particle_species(2)%dump = .TRUE.
 
   END SUBROUTINE setup_species_block

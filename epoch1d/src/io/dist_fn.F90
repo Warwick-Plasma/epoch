@@ -151,6 +151,7 @@ CONTAINS
     l_direction = 0
 
     real_space_area = 1.0_num
+    current_data = 0.0_num
 
     DO idim = 1, 3
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -432,6 +433,7 @@ CONTAINS
     use_direction = .FALSE.
     l_direction = 0
     real_space_area = 1.0_num
+    current_data = 0.0_num
 
     DO idim = 1, 2
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -689,7 +691,7 @@ CONTAINS
     INTEGER, DIMENSION(2), INTENT(IN) :: n_global
     INTEGER, DIMENSION(2), INTENT(IN) :: start
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-    INTEGER :: ipoint
+    INTEGER :: ipoint, iy
     INTEGER :: create_2d_field_subtype
 
     ALLOCATE(lengths(1:n_local(2)), starts(1:n_local(2)))
@@ -697,7 +699,7 @@ CONTAINS
     ipoint = 0
     DO iy = 0, n_local(2)-1
       ipoint = ipoint+1
-      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) -1
+      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) - 1
     ENDDO
 
     CALL MPI_TYPE_INDEXED(n_local(2), lengths, starts, mpireal, &

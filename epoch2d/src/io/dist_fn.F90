@@ -154,6 +154,7 @@ CONTAINS
     l_direction = 0
 
     real_space_area = 1.0_num
+    current_data = 0.0_num
 
     DO idim = 1, 3
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -466,6 +467,7 @@ CONTAINS
     use_direction = .FALSE.
     l_direction = 0
     real_space_area = 1.0_num
+    current_data = 0.0_num
 
     DO idim = 1, 2
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -723,7 +725,7 @@ CONTAINS
     INTEGER, DIMENSION(3), INTENT(IN) :: n_global
     INTEGER, DIMENSION(3), INTENT(IN) :: start
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-    INTEGER :: ipoint
+    INTEGER :: ipoint, iy, iz
     INTEGER :: create_3d_field_subtype
 
     ALLOCATE(lengths(1:n_local(2) * n_local(3)))
@@ -753,7 +755,7 @@ CONTAINS
     INTEGER, DIMENSION(2), INTENT(IN) :: n_global
     INTEGER, DIMENSION(2), INTENT(IN) :: start
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-    INTEGER :: ipoint
+    INTEGER :: ipoint, iy
     INTEGER :: create_2d_field_subtype
 
     ALLOCATE(lengths(1:n_local(2)), starts(1:n_local(2)))

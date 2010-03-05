@@ -138,11 +138,15 @@ CONTAINS
     CALL MPI_ALLGATHER(npart_local, 1, MPI_INTEGER8, npart_each_rank, 1, &
         MPI_INTEGER8, comm, errcode)
 
+    ! This is a hack
+    ! If npart_local or npart_each_rank is bigger than an integer then it
+    ! will fail. It is extremely unlikely that this will ever happen so at
+    ! some point the datatypes for npart should change back to default integer
     ALLOCATE(lengths(1), starts(1))
-    lengths = npart_local
+    lengths = INT(npart_local)
     starts = 0
     DO ix = 1, rank
-      starts = starts+npart_each_rank(ix)
+      starts = starts + INT(npart_each_rank(ix))
     ENDDO
 
     CALL MPI_TYPE_INDEXED(1, lengths, starts, mpireal, &
@@ -190,7 +194,7 @@ CONTAINS
     INTEGER, DIMENSION(3), INTENT(IN) :: n_global
     INTEGER, DIMENSION(3), INTENT(IN) :: start
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-    INTEGER :: ipoint
+    INTEGER :: ipoint, iy, iz
     INTEGER :: create_3d_array_subtype
 
     ALLOCATE(lengths(1:n_local(2) * n_local(3)))
@@ -226,7 +230,7 @@ CONTAINS
     INTEGER, DIMENSION(2), INTENT(IN) :: n_global
     INTEGER, DIMENSION(2), INTENT(IN) :: start
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-    INTEGER :: ipoint
+    INTEGER :: ipoint, iy
     INTEGER :: create_2d_array_subtype
 
     ALLOCATE(lengths(1:n_local(2)), starts(1:n_local(2)))
@@ -234,7 +238,7 @@ CONTAINS
     ipoint = 0
     DO iy = 0, n_local(2)-1
       ipoint = ipoint+1
-      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) -1
+      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) - 1
     ENDDO
 
     CALL MPI_TYPE_INDEXED(n_local(2), lengths, starts, mpireal, &

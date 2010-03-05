@@ -245,7 +245,7 @@ CONTAINS
     ! This subroutine simply cycles round until it finds a free lun between
     ! min_lun and max_lun
     INTEGER :: get_free_lun
-    INTEGER :: lun
+    INTEGER :: lun, ierr
     INTEGER, PARAMETER :: min_lun = 10, max_lun = 20
     LOGICAL :: is_open
 
@@ -260,7 +260,7 @@ CONTAINS
         IF (rank .EQ. 0) THEN
           PRINT *, "***FATAL ERROR*** unable to open lun for input deck read"
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode)
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
     ENDDO
 
@@ -280,7 +280,7 @@ CONTAINS
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=45+data_dir_max_length) :: deck_filename, status_filename
     LOGICAL :: terminate = .FALSE., exists
-    INTEGER :: errcode_deck
+    INTEGER :: errcode_deck, ierr
     LOGICAL :: white_space_over
 
     ! No error yet
@@ -289,6 +289,7 @@ CONTAINS
     blank = "BLANKBLANK"
 
     lun = 5
+    white_space_over = .FALSE.
 
     ! Make the whole filename by adding the data_dir to the filename
     deck_filename = TRIM(ADJUSTL(data_dir))// '/' // TRIM(ADJUSTL(filename))
@@ -323,7 +324,7 @@ CONTAINS
       IF (.NOT. exists) THEN
         PRINT *, "***ERROR*** Input deck file ", deck_filename, &
             " does not exist. Create the file and rerun the code."
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode)
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
 
       ! Get a free lun. Don't use a constant lun to allow for recursion
@@ -446,7 +447,7 @@ CONTAINS
 
     IF (first_call) CLOSE(40)
 
-    IF (terminate) CALL MPI_ABORT(MPI_COMM_WORLD, errcode)
+    IF (terminate) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
 
     CALL MPI_BARRIER(MPI_COMM_WORLD, errcode)
 

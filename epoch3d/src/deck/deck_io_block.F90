@@ -94,7 +94,8 @@ CONTAINS
 
     IF (elementselected .LE. n_var_special) RETURN
     IF (elementselected .GT. n_var_special) &
-        dumpmask(elementselected-n_var_special) = as_real(value, handle_io_deck)
+        dumpmask(elementselected-n_var_special) = &
+            as_integer(value, handle_io_deck)
 
     ! If setting dumpmask for particle probes then report if the code wasn't
     ! compiled for particle probes

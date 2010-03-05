@@ -35,6 +35,7 @@ CONTAINS
     INTEGER :: dims(ndims), idim
     LOGICAL :: periods(ndims), reorder, op
     INTEGER :: test_coords(ndims)
+    INTEGER :: ix, iy, iz
 
     IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm, errcode)
 
@@ -104,7 +105,7 @@ CONTAINS
 
   SUBROUTINE mpi_initialise
 
-    INTEGER :: ispecies, idim
+    INTEGER :: ispecies, idim, ierr
     INTEGER(KIND=8) :: npart_this_species, npart
 
     CALL setup_communicator
@@ -123,7 +124,7 @@ CONTAINS
     npart = npart_global/nproc
     IF (npart*nproc .NE. npart_global) THEN
       IF (rank .EQ. 0) PRINT *, "Unable to divide particles at t = 0. Quitting."
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode)
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     ENDIF
 
     ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))

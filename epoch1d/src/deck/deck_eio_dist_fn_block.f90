@@ -97,7 +97,8 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(part1, "direction")) THEN
-      working_block%directions(part2) = as_real(value, handle_eio_dist_fn_deck)
+      working_block%directions(part2) = &
+          as_integer(value, handle_eio_dist_fn_deck)
       RETURN
     ENDIF
 

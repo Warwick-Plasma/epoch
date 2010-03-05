@@ -34,6 +34,7 @@ CONTAINS
     INTEGER :: ndims, dims(2), idim
     LOGICAL :: periods(2), reorder, op
     INTEGER :: test_coords(2)
+    INTEGER :: ix, iy
 
     ndims = 2
 

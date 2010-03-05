@@ -88,7 +88,7 @@ CONTAINS
       handle_species_deck = c_err_none
       IF (npart_global .GE. 0) THEN
         particle_species(part2)%count = &
-            as_real(value, handle_species_deck)*npart_global
+            INT(as_real(value, handle_species_deck) * npart_global)
       ELSE
         extended_error_string = "npart"
         handle_species_deck = c_err_required_element_not_set

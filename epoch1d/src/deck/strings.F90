@@ -14,7 +14,7 @@ CONTAINS
     INTEGER :: n_nums
     CHARACTER(LEN=9) :: numfmt
 
-    n_nums = 1 + LOG10(REAL(int_in, num))
+    n_nums = 1 + INT(LOG10(REAL(int_in, num)))
     WRITE(numfmt, '("(I", I6.6, ")")') n_nums
     WRITE(string, numfmt) int_in
 
@@ -30,7 +30,7 @@ CONTAINS
     INTEGER :: n_nums
     CHARACTER(LEN=12) :: numfmt
 
-    n_nums = 1 + LOG10(REAL(int_in, num))
+    n_nums = 1 + INT(LOG10(REAL(int_in, num)))
     WRITE(numfmt, '("(I", I9.9, ")")') n_nums
     WRITE(string, numfmt) int_in
 

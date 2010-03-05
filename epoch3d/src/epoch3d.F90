@@ -121,7 +121,7 @@ PROGRAM pic
     IF (rank .EQ. 0) PRINT *, "Equilibrium set up OK, running code"
     CALL output_routines(i) ! diagnostics.f90
   ENDIF
-  walltime_current = MPI_WTIME(errcode)
+  walltime_current = MPI_WTIME()
 
   DO
     IF ((i .GE. nsteps .AND. nsteps .GE. 0) &
@@ -184,7 +184,7 @@ PROGRAM pic
   ENDDO
 
   IF (rank .EQ. 0) &
-      PRINT *, "Final runtime of core = ", MPI_WTIME(errcode)-walltime_current
+      PRINT *, "Final runtime of core = ", MPI_WTIME()-walltime_current
 
   CALL output_routines(i)
 

@@ -113,7 +113,7 @@ CONTAINS
   SUBROUTINE open_files
 
     CHARACTER(LEN=11+data_dir_max_length) :: file2
-    INTEGER :: errcode
+    INTEGER :: errcode, ierr
 
     IF (rank .EQ. 0) THEN
       WRITE(file2, '(a, "/epoch3d.dat")') TRIM(data_dir)
@@ -122,7 +122,7 @@ CONTAINS
         PRINT *, "***ERROR*** Cannot create epoch2d.dat output file. The &
             &most common cause of this problem is that the ouput directory &
             &does not exist"
-        CALL MPI_ABORT(comm, errcode)
+        CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
     ENDIF
 
@@ -166,7 +166,7 @@ CONTAINS
     REAL(num), DIMENSION(2) :: extents, stagger
     INTEGER, DIMENSION(1) :: dims
     REAL(KIND=8) :: time_d
-    INTEGER :: snap, coord_type
+    INTEGER :: snap, coord_type, ierr
     TYPE(particle), POINTER :: current, next
     LOGICAL :: constant_weight
     INTEGER(KIND=8) :: npart
@@ -207,13 +207,13 @@ CONTAINS
           IF (rank .EQ. 0) &
               PRINT *, "Precision does not match, recompile code so &
                   &that sizeof(REAL) = ", sof
-          CALL MPI_ABORT(comm, errcode)
+          CALL MPI_ABORT(comm, errcode, ierr)
         ENDIF
 
         IF (nd .NE. c_dimension_2d .AND. nd .NE. c_dimension_irrelevant ) THEN
           IF (rank .EQ. 0) &
               PRINT *, "Dimensionality does not match, file is ", nd, "D"
-          CALL MPI_ABORT(comm, errcode)
+          CALL MPI_ABORT(comm, errcode, ierr)
         ENDIF
 
         SELECT CASE(block_type)
@@ -226,7 +226,7 @@ CONTAINS
             IF (rank .EQ. 0) &
                 PRINT *, "Number of gridpoints does not match, gridpoints &
                     &in file is", dims(1)
-            CALL MPI_ABORT(comm, errcode)
+            CALL MPI_ABORT(comm, errcode, ierr)
           ENDIF
 
           IF (str_cmp(name(1:2), "Ex")) &
@@ -298,7 +298,7 @@ CONTAINS
                 PRINT *, "Cannot load dump file with per particle weight &
                     &if the code is compiled without per particle weights. &
                     &Code terminates"
-            CALL MPI_ABORT(comm, errcode)
+            CALL MPI_ABORT(comm, errcode, ierr)
           ENDIF
 #endif
           IF (str_cmp(name(1:7), "Species")) &

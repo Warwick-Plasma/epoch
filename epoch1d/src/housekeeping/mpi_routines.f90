@@ -33,7 +33,7 @@ CONTAINS
 
     INTEGER :: ndims, dims(1), idim
     LOGICAL :: periods(1), reorder, op
-    INTEGER :: test_coords(1)
+    INTEGER :: test_coords(1), ix
 
     ndims = 1
 
@@ -93,7 +93,7 @@ CONTAINS
 !!$    IF (npart*nproc .NE. npart_global) THEN
 !!$       IF (rank .EQ. 0) &
 !!$           PRINT *, "Unable to divide particles at t = 0. Quitting."
-!!$       CALL MPI_ABORT(MPI_COMM_WORLD, errcode)
+!!$       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
 !!$    ENDIF
 
     ALLOCATE(x(-2:nx+3))

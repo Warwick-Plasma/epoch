@@ -86,7 +86,7 @@ CONTAINS
     IF (str_cmp(part1, "frac") .OR. str_cmp(part1, "fraction")) THEN
       IF (npart_global .GE. 0) THEN
         particle_species(part2)%count = &
-            as_real(value, handle_species_deck)*npart_global
+            INT(as_real(value, handle_species_deck) * npart_global)
       ELSE
         extended_error_string = "npart"
         handle_species_deck = c_err_required_element_not_set

@@ -298,13 +298,13 @@ MODULE shared_data
 
   USE constants
   USE shared_parser_data
+  USE mpi
 
   IMPLICIT NONE
 
   !----------------------------------------------------------------------------
   ! string handling
   !----------------------------------------------------------------------------
-  INCLUDE 'mpif.h'
   CHARACTER(LEN=string_length) :: blank
   TYPE :: string_type
     CHARACTER(string_length) :: value

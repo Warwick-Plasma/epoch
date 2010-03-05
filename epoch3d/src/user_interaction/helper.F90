@@ -162,7 +162,7 @@ CONTAINS
     ENDDO
 
     npart_this_proc_new = &
-        density_total / density_average * REAL(npart_per_cell_average, num)
+        INT(density_total / density_average * REAL(npart_per_cell_average, num))
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
@@ -171,8 +171,8 @@ CONTAINS
       DO ix = 1, nx
         DO iy = 1, ny
           ipart = 0
-          npart_per_cell = density(ix, iy, iz) / density_average &
-              * REAL(npart_per_cell_average, num)
+          npart_per_cell = INT(density(ix, iy, iz) / density_average &
+              * REAL(npart_per_cell_average, num))
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
             ! Even if particles have per particle charge and mass, assume
@@ -236,7 +236,7 @@ CONTAINS
     REAL(num) :: cell_y_r
     REAL(num) :: cell_z_r
     INTEGER(KIND=8) :: i
-    INTEGER :: j
+    INTEGER :: j, ierr
     CHARACTER(LEN=15) :: string
 
     partlist=>species_list%attached_list
@@ -245,7 +245,7 @@ CONTAINS
     IF (npart_this_species .LT. 0) THEN
       IF (rank .EQ. 0) PRINT *, "Unable to continue, species ", &
           TRIM(species_list%name), " has not had a number of particles set"
-      CALL MPI_ABORT(comm, errcode)
+      CALL MPI_ABORT(comm, errcode, ierr)
     ENDIF
     IF (npart_this_species .EQ. 0) RETURN
     num_valid_cells_local = 0
@@ -621,7 +621,7 @@ CONTAINS
 #else
     IF (rank .EQ. 0) &
         PRINT *, "Autoloader only available when using per particle weighting"
-    CALL MPI_ABORT(comm, errcode)
+    CALL MPI_ABORT(comm, errcode, ierr)
 #endif
     DEALLOCATE(weight_fn)
     DEALLOCATE(density)

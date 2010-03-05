@@ -14,7 +14,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: filename
     CHARACTER(LEN=3) :: cfd
 
-    INTEGER :: file_version, file_revision
+    INTEGER :: file_version, file_revision, ierr
 
     CALL MPI_BARRIER(cfd_comm, cfd_errcode)
 
@@ -33,7 +33,7 @@ CONTAINS
     IF (cfd .NE. "CFD") THEN
       CALL MPI_FILE_CLOSE(cfd_filehandle, cfd_errcode)
       PRINT *, "The specified file is not a valid CFD file"
-      CALL MPI_ABORT(cfd_comm, cfd_errcode)
+      CALL MPI_ABORT(cfd_comm, cfd_errcode, ierr)
     ENDIF
 
     current_displacement = 3
@@ -63,7 +63,7 @@ CONTAINS
 
     IF (file_version .GT. cfd_version) THEN
       IF (rank .EQ. default_rank) PRINT *, "Version number incompatible"
-      CALL MPI_ABORT(cfd_comm, cfd_errcode)
+      CALL MPI_ABORT(cfd_comm, cfd_errcode, ierr)
     ENDIF
 
     IF (file_revision .GT. cfd_revision) THEN
