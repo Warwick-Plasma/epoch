@@ -558,7 +558,7 @@ MODULE shared_data
   INTEGER :: subtype_particle, subtype_particle_int
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
-  INTEGER, PARAMETER :: num_vars_to_dump = 28
+  INTEGER, PARAMETER :: num_vars_to_dump = 29
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
   INTEGER :: output_file
   LOGICAL :: force_final_to_be_restartable

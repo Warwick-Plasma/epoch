@@ -84,13 +84,29 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: as_integer_simple, value, f
+    INTEGER :: as_integer_simple, value
+    INTEGER :: f
 
     READ(unit=str_in, fmt=*, iostat=f) value
     IF (f .NE. 0) err = IOR(err, c_err_bad_value)
     as_integer_simple = value
 
   END FUNCTION as_integer_simple
+
+
+
+  FUNCTION as_long_integer_simple(str_in, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER(KIND=8) :: as_long_integer_simple, value
+    INTEGER :: f
+
+    READ(unit=str_in, fmt=*, iostat=f) value
+    IF (f .NE. 0) err = IOR(err, c_err_bad_value)
+    as_long_integer_simple = value
+
+  END FUNCTION as_long_integer_simple
 
 
 

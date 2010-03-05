@@ -45,7 +45,8 @@ MODULE deck_io_block
           "species_id                   ", &
           "distribution_functions       ", &
           "particle_probes              ", &
-          "temperature                  " /)
+          "temperature                  ", &
+          "ejected_particles            " /)
 
 CONTAINS
 

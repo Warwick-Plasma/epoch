@@ -2,8 +2,6 @@ MODULE deck_ic_external_block
 
   USE strings_advanced
   USE simple_io
-  !USE mpi_subtype_control
-  !USE boundary
 
   IMPLICIT NONE
 

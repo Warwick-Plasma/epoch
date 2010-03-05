@@ -6,6 +6,38 @@ MODULE strings
 
 CONTAINS
 
+  SUBROUTINE integer_as_string(int_in, string)
+
+    INTEGER, INTENT(IN) :: int_in
+    CHARACTER(LEN=*), INTENT(OUT) :: string
+
+    INTEGER :: n_nums
+    CHARACTER(LEN=9) :: numfmt
+
+    n_nums = 1 + LOG10(REAL(int_in, num))
+    WRITE(numfmt, '("(I", I6.6, ")")') n_nums
+    WRITE(string, numfmt) int_in
+
+  END SUBROUTINE integer_as_string
+
+
+
+  SUBROUTINE integer8_as_string(int_in, string)
+
+    INTEGER(KIND=8), INTENT(IN) :: int_in
+    CHARACTER(LEN=*), INTENT(OUT) :: string
+
+    INTEGER :: n_nums
+    CHARACTER(LEN=12) :: numfmt
+
+    n_nums = 1 + LOG10(REAL(int_in, num))
+    WRITE(numfmt, '("(I", I9.9, ")")') n_nums
+    WRITE(string, numfmt) int_in
+
+  END SUBROUTINE integer8_as_string
+
+
+
   FUNCTION str_cmp(str_in, str_test)
 
     CHARACTER(*), INTENT(IN) ::  str_in, str_test
@@ -52,7 +84,8 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: as_integer_simple, value, f
+    INTEGER :: as_integer_simple, value
+    INTEGER :: f
 
     READ(unit=str_in, fmt=*, iostat=f) value
     IF (f .NE. 0) err = IOR(err, c_err_bad_value)
@@ -68,6 +101,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER(KIND=8) :: as_long_integer_simple, value
     INTEGER :: f
+
     READ(unit=str_in, fmt=*, iostat=f) value
     IF (f .NE. 0) err = IOR(err, c_err_bad_value)
     as_long_integer_simple = value

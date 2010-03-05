@@ -2,7 +2,7 @@ MODULE helper
 
   USE boundary
   USE shape_functions
-  !USE strings
+  USE strings
 
   IMPLICIT NONE
 
@@ -247,6 +247,7 @@ CONTAINS
     REAL(num) :: cell_y_r
     INTEGER(KIND=8) :: i
     INTEGER :: j
+    CHARACTER(LEN=15) :: string
 
     upper_x = nx
     upper_y = ny
@@ -365,9 +366,10 @@ CONTAINS
         MPI_SUM, 0, comm, errcode)
     species_list%count = npart_this_species
     IF (rank .EQ. 0) THEN
-      PRINT *, "Loaded", npart_this_species, "particles of species ", &
+      CALL integer8_as_string(npart_this_species, string)
+      PRINT *, "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
           TRIM(species_list%name)
-      WRITE(20, *) "Loaded", npart_this_species, "particles of species ", &
+      WRITE(20, *) "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
           TRIM(species_list%name)
     ENDIF
     CALL particle_bcs

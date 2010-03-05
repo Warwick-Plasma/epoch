@@ -1,7 +1,6 @@
 MODULE welcome
 
-  USE shared_data
-  !USE strings
+  USE strings
 
   IMPLICIT NONE
 
@@ -17,6 +16,7 @@ CONTAINS
     CHARACTER(logo_x*2+1) :: logo_string
     CHARACTER, DIMENSION(5) :: logo_els
     INTEGER :: ix, iy
+    CHARACTER(LEN=8) :: ver, rev
 
     IF (rank .NE. 0) RETURN
 
@@ -58,11 +58,15 @@ CONTAINS
     ENDDO
 
     WRITE(*, *) ""
-    WRITE(*, '("Welcome to EPOCH1D Version ", I1, ".", I1)'), c_version, &
-        c_revision
+    CALL integer_as_string(c_version, ver)
+    CALL integer_as_string(c_revision, rev)
+    WRITE(*, *) "Welcome to EPOCH1D Version ", TRIM(ver), ".", &
+        TRIM(ADJUSTL(rev))
     WRITE(*, *) ""
 
     CALL compiler_directives
+    CALL mpi_status
+    WRITE(*, *) ""
 
   END SUBROUTINE welcome_message
 
@@ -120,5 +124,18 @@ CONTAINS
     WRITE(*, *) ""
 
   END SUBROUTINE compiler_directives
+
+
+
+  SUBROUTINE mpi_status
+
+    CHARACTER(LEN=8) :: string
+
+    CALL integer_as_string(nproc, string)
+
+    WRITE(*, *) "Code is running on ", TRIM(string), " processing elements"
+    WRITE(*, *) ""
+
+  END SUBROUTINE mpi_status
 
 END MODULE welcome

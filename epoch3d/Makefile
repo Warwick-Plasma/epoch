@@ -35,9 +35,9 @@ OBJFILES = balance.o boundary.o calc_df.o custom_deck.o custom_laser.o \
   input_functions.o input.o input_particle.o iocommon.o iocontrol.o laser.o \
   mpi_routines.o mpi_subtype_control.o output_arb.o output_cartesian.o \
   output.o output_particle.o particle_pointer_advance.o particles.o partlist.o \
-  probes.o setup.o shape_functions.o shared_data.o shunt.o solve_gauss.o \
-  split_particles.o stack.o strings_advanced.o strings.o tokenizer_blocks.o \
-  welcome.o window.o
+  probes.o setup.o shape_functions.o shared_data.o shunt.o simple_io.o \
+  solve_gauss.o split_particles.o stack.o strings_advanced.o strings.o \
+  tokenizer_blocks.o welcome.o window.o
 FULLTARGET = $(BINDIR)/$(TARGET)
 
 #vpath %.f90 $(SRCDIR)
@@ -89,8 +89,8 @@ deck_eio_dist_fn_block.o: deck_eio_dist_fn_block.f90 dist_fn.o \
   strings_advanced.o
 deck_eio_particle_probe_block.o: deck_eio_particle_probe_block.F90 probes.o \
   strings_advanced.o
-deck_ic_external_block.o: deck_ic_external_block.f90 boundary.o \
-  mpi_subtype_control.o strings_advanced.o
+deck_ic_external_block.o: deck_ic_external_block.f90 simple_io.o \
+  strings_advanced.o
 deck_ic_fields_block.o: deck_ic_fields_block.f90 strings_advanced.o
 deck_ic_laser_block.o: deck_ic_laser_block.f90 laser.o strings_advanced.o
 deck_ic_species_block.o: deck_ic_species_block.f90 strings_advanced.o
@@ -138,6 +138,7 @@ setup.o: setup.F90 input_cartesian.o input_particle.o iocontrol.o \
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90
 shunt.o: shunt.F90 tokenizer_blocks.o
+simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
 solve_gauss.o: solve_gauss.F90
 split_particles.o: split_particles.F90
 stack.o: stack.f90 shared_data.o

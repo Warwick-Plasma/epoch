@@ -113,7 +113,7 @@ evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.F90 boundary.o laser.o
 FMC_MPI.o: FMC_MPI.f90
-helper.o: helper.F90 boundary.o shape_functions.o
+helper.o: helper.F90 boundary.o shape_functions.o strings.o
 ic_module.o: ic_module.f90
 input_arb.o: input_arb.f90 input_functions.o iocommon.o shared_data.o
 input_cartesian.o: input_cartesian.f90 input_functions.o iocommon.o
@@ -147,5 +147,5 @@ stack.o: stack.f90 shared_data.o
 strings_advanced.o: strings_advanced.F90 evaluate.o shunt.o
 strings.o: strings.F90 shared_data.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
-welcome.o: welcome.F90 shared_data.o
+welcome.o: welcome.F90 strings.o
 window.o: window.F90 helper.o

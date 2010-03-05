@@ -1,6 +1,5 @@
 MODULE welcome
 
-  !USE shared_data
   USE strings
 
   IMPLICIT NONE
@@ -62,7 +61,7 @@ CONTAINS
     CALL integer_as_string(c_version, ver)
     CALL integer_as_string(c_revision, rev)
     WRITE(*, *) "Welcome to EPOCH3D Version ", TRIM(ver), ".", &
-        TRIM(ADJUSTL(rev)), "ALPHA"
+        TRIM(ADJUSTL(rev))
     WRITE(*, *) ""
 
     CALL compiler_directives
