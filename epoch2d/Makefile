@@ -11,6 +11,13 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DTRACER_PARTICLES
 # -DPARTICLE_CELL_DIVISION
 # Copy this line onto the DEFINES line to turn on debugging
 # -DPART_DEBUG -DFIELD_DEBUG
+
+MODULEFLAG = -module 
+# Uncomment for the g95 compiler
+#MODULEFLAG = -fmod=
+# Uncomment for the gfortran compiler
+#MODULEFLAG = -J
+
 # --------------------------------------------------
 # Shouldn't need to touch below here
 # --------------------------------------------------
@@ -18,11 +25,8 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DTRACER_PARTICLES
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
-MODULEFLAG = -module
-MACHINEFLAGS = $(COPSON) $(MHDCLUSTER)
-OPFLAGS = $(QMONO)
-FC = mpif90 $(MACHINEFLAGS) $(OPFLAGS) $(DEFINES)
-PREPROFLAGS = $(NONMPIIO)
+FC = mpif90
+PREPROFLAGS = $(DEFINES)
 
 OBJFILES = balance.o boundary.o calc_df.o control.o current_smooth.o \
   custom_deck.o custom_laser.o custom_parser.o deck_boundaries_block.o \
@@ -43,20 +47,20 @@ FULLTARGET = $(BINDIR)/$(TARGET)
 
 #vpath %.f90 $(SRCDIR)
 #vpath %.o $(OBJDIR)
-VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/io:$(SRCDIR)/parser:$(SRCDIR)/housekeeping:$(SRCDIR)/user_interaction/:$(SRCDIR)/multigrid:$(SRCDIR)/physics_packages:$(OBJDIR)
+VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/io:$(SRCDIR)/parser:$(SRCDIR)/housekeeping:$(SRCDIR)/user_interaction:$(SRCDIR)/multigrid:$(SRCDIR)/physics_packages:$(OBJDIR)
 
 # Rule to build the fortran files
 
 %.o: %.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -c $(FFLAGS)  $(MODULEFLAG) $(OBJDIR) -o $(OBJDIR)/$@ $<
+	$(FC) -c $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
 
 %.o: %.F90
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -c $(FFLAGS)  $(MODULEFLAG) $(OBJDIR) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
+	$(FC) -c $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
 $(FULLTARGET): $(OBJFILES)
-	$(FC) $(FFLAGS) $(MODULEFLAG) $(OBJDIR) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
+	$(FC) $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
 .PHONEY: clean
 clean:
