@@ -226,15 +226,15 @@ CONTAINS
     LOGICAL, DIMENSION(-2:,-2:,-2:), INTENT(IN) :: load_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
-    INTEGER(KIND=8) :: ipart, npart_per_cell, ipart_total, ncell_per_part
+    INTEGER(KIND=8) :: ipart, npart_per_cell
     INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_local
     INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
     REAL(num) :: valid_cell_frac
     REAL(dbl) :: rpos
     INTEGER :: cell_x, cell_y, cell_z
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
+    REAL(num) :: cell_x_r
+    REAL(num) :: cell_y_r
+    REAL(num) :: cell_z_r
     INTEGER(KIND=8) :: i
     INTEGER :: j
     CHARACTER(LEN=15) :: string
@@ -269,13 +269,11 @@ CONTAINS
     CALL create_allocated_partlist(partlist, num_new_particles)
 
     npart_per_cell = npart_this_species/num_valid_cells
-    ncell_per_part = num_valid_cells/npart_this_species
     species_list%window_npart_per_cell = npart_per_cell
     IF (species_list%window_npart_per_cell .EQ. 0) &
         species_list%window_npart_per_cell = 1
 
     ipart = 0
-    ipart_total = 0
     ix = 1
     iy = 1
 
@@ -328,17 +326,14 @@ CONTAINS
         current%part_pos(3) = rpos+z(1)
         cell_x_r = (current%part_pos(1)-x_start_local)/dx - 0.5_num
         cell_x = NINT(cell_x_r)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x+1
 
         cell_y_r = (current%part_pos(2)-y_start_local)/dy -0.5_num
         cell_y = NINT(cell_y_r)
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
         cell_y = cell_y+1
 
         cell_z_r = (current%part_pos(3)-z_start_local)/dz -0.5_num
         cell_z = NINT(cell_z_r)
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
         cell_z = cell_z+1
 
         IF (load_list(cell_x, cell_y, cell_z)) THEN

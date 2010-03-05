@@ -237,16 +237,11 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
-    INTEGER :: nxp, nyp, nzp
 
     INTEGER, DIMENSION(-1:1, -1:1, -1:1) :: sizes, x_start, x_end, x_shift
     INTEGER, DIMENSION(-1:1, -1:1, -1:1) :: y_start, y_end, y_shift
     INTEGER, DIMENSION(-1:1, -1:1, -1:1) :: z_start, z_end, z_shift
     INTEGER :: xs, xe, xf, ys, ye, yf, zs, ze, zf
-
-    nxp = nx+1
-    nyp = ny+1
-    nzp = nz+1
 
     sizes = 0
     x_start = 0
@@ -396,16 +391,14 @@ CONTAINS
 
   SUBROUTINE particle_bcs
 
-    TYPE(particle), POINTER :: cur, last_good, next
+    TYPE(particle), POINTER :: cur, next
     TYPE(particle_list), DIMENSION(-1:1, -1:1, -1:1) :: send, recv
     INTEGER :: xbd, ybd, zbd, ixp, iyp, izp
     LOGICAL :: out_of_bounds
-    LOGICAL, DIMENSION(-1:1, -1:1, -1:1) :: done
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
       cur=>particle_species(ispecies)%attached_list%head
-      NULLIFY(last_good)
 
       DO iz = -1, 1
         DO iy = -1, 1
@@ -514,7 +507,6 @@ CONTAINS
       ENDDO
 
       ! swap Particles
-      done = .FALSE.
       DO iz = -1, 1
         DO iy = -1, 1
           DO ix = -1, 1

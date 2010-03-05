@@ -32,9 +32,12 @@ PROGRAM pic
 
   IMPLICIT NONE
 
-  INTEGER :: ispecies, i = 0
+  INTEGER :: i = 0
   REAL(num) :: walltime_current
   LOGICAL :: halt = .FALSE.
+#ifdef PARTICLE_COUNT_UPDATE
+  INTEGER :: ispecies
+#endif
 
   CALL minimal_init ! setup.f90
   CALL setup_partlists ! partlist.f90

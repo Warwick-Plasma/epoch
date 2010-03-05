@@ -455,15 +455,16 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
     REAL(num), DIMENSION(:), ALLOCATABLE :: data
-    INTEGER(KIND=8) :: cpos = 0, npart_this_it, npart_left, ipart
+    INTEGER(KIND=8) :: cpos = 0, npart_left, ipart
+!!$    INTEGER(KIND=8) :: npart_this_it
     TYPE(particle), POINTER :: current
 
     npart_left = partlist%count
-    npart_this_it = MIN(npart_left, npart_per_it)
     CALL MPI_SEND(partlist%count, 1, MPI_INTEGER, dest, tag, comm, errcode)
 
     ! This is a reduced memory footprint algorithm
     ! Try to fix later
+!!$    npart_this_it = MIN(npart_left, npart_per_it)
 !!$    ! Copy the data for the particles into a buffer
 !!$    ALLOCATE(data(1:npart_this_it*nvar))
 !!$    current=>partlist%head
@@ -511,18 +512,18 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: src
     REAL(num), DIMENSION(:), ALLOCATABLE :: data
-    INTEGER(KIND=8) :: npart_this_it, npart_left, count
+    INTEGER(KIND=8) :: count
+!!$    INTEGER(KIND=8) :: npart_this_it, npart_left
 
     CALL create_empty_partlist(partlist)
 
     count = 0
     CALL MPI_RECV(count, 1, MPI_INTEGER, src, tag, comm, status, errcode)
 
-    npart_left = count
-    npart_this_it = MIN(npart_left, npart_per_it)
-
     ! This is a reduced memory footprint algorithm
     ! Try to fix later
+!!$    npart_left = count
+!!$    npart_this_it = MIN(npart_left, npart_per_it)
 !!$    ! Copy the data for the particles into a buffer
 !!$    ALLOCATE(data(1:npart_this_it*nvar))
 !!$    DO WHILE (npart_left .GT. 0)

@@ -5,7 +5,9 @@ MODULE probes
   USE mpi_subtype_control
 
   SAVE
+#ifdef PARTICLE_PROBES
   TYPE(particle_list), POINTER, PRIVATE :: current_list
+#endif
 
 CONTAINS
 

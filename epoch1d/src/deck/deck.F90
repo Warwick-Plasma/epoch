@@ -459,11 +459,10 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element
     CHARACTER(*), INTENT(IN) :: value
     INTEGER, INTENT(INOUT) :: errcode_deck
-    INTEGER :: state, rank_check
+    INTEGER :: rank_check
     INTEGER, SAVE :: err_count
 
     rank_check = 0
-    state = 0
 
     IF (str_cmp(element, "import")) THEN
       invalid_block = .TRUE.

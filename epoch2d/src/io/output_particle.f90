@@ -23,7 +23,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: particle_type
     INTEGER(8) :: npart_local
     INTEGER(8) :: block_length, md_length
-    INTEGER(4) :: ndim, i, disp0
+    INTEGER(4) :: ndim, i
     INTEGER(4) :: sizes(2)
     REAL(num) :: mn, mx
 
@@ -56,7 +56,6 @@ CONTAINS
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
         md_length, default_rank)
 
-    disp0 = current_displacement
     CALL cfd_write_meshtype_header(c_mesh_particle, ndim, num, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &

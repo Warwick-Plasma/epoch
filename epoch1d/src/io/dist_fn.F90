@@ -119,7 +119,6 @@ CONTAINS
 
     LOGICAL :: use_x, need_reduce
     INTEGER, DIMENSION(3) :: start_local, global_resolution
-    INTEGER :: color
     INTEGER :: comm_new, new_type
 
     LOGICAL, DIMENSION(3, 4) :: use_direction
@@ -142,7 +141,6 @@ CONTAINS
 
     use_x = .FALSE.
     need_reduce = .TRUE.
-    color = 0
     global_resolution = resolution
     parallel = .FALSE.
     start_local = 1
@@ -402,7 +400,6 @@ CONTAINS
 
     LOGICAL :: use_x, need_reduce
     INTEGER, DIMENSION(2) :: start_local, global_resolution
-    INTEGER :: color
     INTEGER :: comm_new, new_type
 
     LOGICAL, DIMENSION(2, 4) :: use_direction
@@ -425,7 +422,6 @@ CONTAINS
     use_x = .FALSE.
 
     need_reduce = .TRUE.
-    color = 0
     global_resolution = resolution
     parallel = .FALSE.
     start_local = 1

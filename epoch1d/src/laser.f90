@@ -114,13 +114,11 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lx
     REAL(num) :: fplus
-    INTEGER :: err
 
     TYPE(laser_block), POINTER :: current
 
     lx = dt/dx
     fplus = 0.0_num
-    err = 0
     bx(0) =  0.0_num
 
     current=>laser_left
@@ -166,14 +164,12 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lx
     REAL(num) :: f_minus
-    INTEGER :: err
 
     TYPE(laser_block), POINTER :: current
 
     lx = dt/dx
 
     f_minus = 0.0_num
-    err = 0
     bx(nx+1) =  0.0_num
 
     current=>laser_right

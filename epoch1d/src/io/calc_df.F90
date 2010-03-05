@@ -13,7 +13,7 @@ CONTAINS
     INTEGER :: cell_x
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_m
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -58,14 +58,9 @@ CONTAINS
 
         ! Copy the particle properties out for speed
         part_x  = current%part_pos - x_start_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q  = current%charge
         part_m  = current%mass
 #else
-        part_q  = particle_species(ispecies)%charge
         part_m  = particle_species(ispecies)%mass
 #endif
 
@@ -101,7 +96,7 @@ CONTAINS
     INTEGER :: cell_x
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_q
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -146,15 +141,10 @@ CONTAINS
 
         ! Copy the particle properties out for speed
         part_x  = current%part_pos - x_start_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
         part_q  = current%charge
-        part_m  = current%mass
 #else
         part_q  = particle_species(ispecies)%charge
-        part_m  = particle_species(ispecies)%mass
 #endif
 
 #ifdef PER_PARTICLE_WEIGHT
@@ -187,14 +177,14 @@ CONTAINS
   SUBROUTINE calc_ekbar(data_array, cur_species)
 
     ! Contains the integer cell position of the particle in x,y,z
-    INTEGER :: cell_x, cell_y
+    INTEGER :: cell_x
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_px, part_py, part_pz, part_m
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
-    REAL(num) :: cell_x_r, cell_y_r, cell_z_r
+    REAL(num) :: cell_x_r
 
     ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x
@@ -239,10 +229,8 @@ CONTAINS
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q  = current%charge
         part_m  = current%mass
 #else
-        part_q  = particle_species(ispecies)%charge
         part_m  = particle_species(ispecies)%mass
 #endif
 
@@ -287,7 +275,7 @@ CONTAINS
     INTEGER :: cell_x
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -332,16 +320,6 @@ CONTAINS
 
         ! Copy the particle properties out for speed
         part_x  = current%part_pos - x_start_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
-#ifdef PER_PARTICLE_CHARGEMASS
-        part_q  = current%charge
-        part_m  = current%mass
-#else
-        part_q  = particle_species(ispecies)%charge
-        part_m  = particle_species(ispecies)%mass
-#endif
 
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
@@ -378,7 +356,7 @@ CONTAINS
     INTEGER :: cell_x
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_px, part_py, part_pz, part_m
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -434,10 +412,8 @@ CONTAINS
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q  = current%charge
         part_m  = current%mass
 #else
-        part_q  = particle_species(ispecies)%charge
         part_m  = particle_species(ispecies)%mass
 #endif
 #ifdef PER_PARTICLE_WEIGHT
@@ -494,12 +470,9 @@ CONTAINS
 
         DO ix = -sf_order, sf_order
           data = SQRT(part_px**2+part_py**2+part_pz**2)
-!!$       IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
-!!$           data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
           sigma(cell_x+ix) = sigma(cell_x+ix) + &
               gx(ix) * (data-mean(cell_x+ix))**2
           part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix)
-!!$       ENDIF
         ENDDO
         current=>current%next
       ENDDO
@@ -538,9 +511,6 @@ CONTAINS
     ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x
 
-    ! The weight of a particle
-    REAL(num) :: l_weight
-
     ! Weighting factors as Eqn 4.77 page 25 of manual
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
@@ -566,8 +536,6 @@ CONTAINS
     END INTERFACE
 
     data_array = 0.0_num
-
-    l_weight = weight
 
     spec_start = current_species
     spec_end = current_species

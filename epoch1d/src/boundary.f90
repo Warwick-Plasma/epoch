@@ -132,12 +132,9 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-    INTEGER :: nxp
 
     INTEGER, DIMENSION(-1:1) :: sizes, x_start, x_end, x_shift
     INTEGER :: xs, xe, xf
-
-    nxp = nx+3
 
     sizes = 0
     x_start = 0
@@ -239,16 +236,14 @@ CONTAINS
 
   SUBROUTINE particle_bcs
 
-    TYPE(particle), POINTER :: cur, last_good, next
+    TYPE(particle), POINTER :: cur, next
     TYPE(particle_list), DIMENSION(-1:1) :: send, recv
     INTEGER :: xbd, ixp
     LOGICAL :: out_of_bounds
-    LOGICAL, DIMENSION(-1:1) :: done
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
       cur=>particle_species(ispecies)%attached_list%head
-      NULLIFY(last_good)
 
       DO ix = -1, 1
         CALL create_empty_partlist(send(ix))
@@ -306,7 +301,6 @@ CONTAINS
       ENDDO
 
       ! swap Particles
-      done = .FALSE.
       DO ix = -1, 1
         IF (ABS(ix) .EQ. 0) CYCLE
         ixp = -ix

@@ -184,10 +184,8 @@ CONTAINS
     REAL(num), DIMENSION(:,:), INTENT(INOUT)  :: hires
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: lores
     TYPE(t_grid), INTENT(IN) :: grid_hi, grid_lo
-    INTEGER :: ix, iy, nx_h, ny_h, nx_l, ny_l
+    INTEGER :: ix, iy, nx_l, ny_l
 
-    nx_h = grid_hi%nx
-    ny_h = grid_hi%ny
     nx_l = grid_hi%nx/2
     ny_l = grid_hi%ny/2
 

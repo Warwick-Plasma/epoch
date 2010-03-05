@@ -44,6 +44,7 @@ CONTAINS
 
     REAL(num), INTENT(IN) :: cell_frac
     REAL(num), DIMENSION(-2:2), INTENT(INOUT) :: output
+#ifdef SPLINE_FOUR
     REAL(num), DIMENSION(-2:2) :: cfs
     INTEGER :: ielement
 
@@ -51,7 +52,6 @@ CONTAINS
       cfs(ielement) = (cell_frac+REAL(ielement, num))
     ENDDO
 
-#ifdef SPLINE_FOUR
     output(-2) = 1.0_num/384.0_num * (5.0_num + 2.0_num * cfs(-2))**4
     output(-1) = 1.0_num/96.0_num * &
         (55.0_num - 4.0_num * cfs(-1)*(5.0_num + 2.0_num * cfs(-1) * &

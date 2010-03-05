@@ -176,14 +176,12 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lx
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: err
 
     TYPE(laser_block), POINTER :: current
 
     lx = dt/dx
     ALLOCATE(fplus(1:ny, 1:nz))
     fplus = 0.0_num
-    err = 0
     bx(0, 1:ny, 1:nz) =  0.0_num
 
     current=>laser_left
@@ -253,14 +251,12 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lx
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: f_minus
-    INTEGER :: err
 
     TYPE(laser_block), POINTER :: current
 
     lx = dt/dx
     ALLOCATE(f_minus(1:ny, 1:nz))
     f_minus = 0.0_num
-    err = 0
     bx(nx, 1:ny, 1:nz) =  0.0_num
 
     current=>laser_right
@@ -328,14 +324,12 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: ly
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: err
 
     TYPE(laser_block), POINTER :: current
 
     ly = dt/dy
     ALLOCATE(fplus(1:nx, 1:nz))
     fplus = 0.0_num
-    err = 0
     by(1:nx, -1, 1:nz) =  0.0_num
 
     current=>laser_down
@@ -404,14 +398,12 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: ly
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: err
 
     TYPE(laser_block), POINTER :: current
 
     ly = dt/dy
     ALLOCATE(fplus(1:nx, 1:nz))
     fplus = 0.0_num
-    err = 0
     by(1:nx, ny, 1:nz) =  0.0_num
 
     current=>laser_down
@@ -480,14 +472,12 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lz
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: err
 
     TYPE(laser_block), POINTER :: current
 
     lz = dt/dz
     ALLOCATE(fplus(1:nx, 1:ny))
     fplus = 0.0_num
-    err = 0
     by(1:nx, 1:ny, 0) =  0.0_num
 
     current=>laser_down
@@ -556,14 +546,12 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lz
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: err
 
     TYPE(laser_block), POINTER :: current
 
     lz = dt/dz
     ALLOCATE(fplus(1:nx, 1:ny))
     fplus = 0.0_num
-    err = 0
     by(1:nx, 1:ny, nz) =  0.0_num
 
     current=>laser_down

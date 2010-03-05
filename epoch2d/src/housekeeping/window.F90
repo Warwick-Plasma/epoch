@@ -88,10 +88,9 @@ CONTAINS
     INTEGER :: ispecies, ipart, i, isuby
     REAL(num) :: rand
     INTEGER :: clock, idum
-    REAL(num) :: cell_x_r, cell_frac_x
+    REAL(num) :: cell_x_r
     REAL(num) :: cell_y_r, cell_frac_y
     INTEGER :: cell_x, cell_y
-    REAL(num), DIMENSION(-1:1) :: gx
     REAL(num), DIMENSION(-1:1) :: gy
     REAL(num) :: weight_local, temp_local
 
@@ -113,7 +112,6 @@ CONTAINS
 
             cell_x_r = (current%part_pos(1)-x_start_local) / dx -0.5_num
             cell_x = NINT(cell_x_r)
-            cell_frac_x = REAL(cell_x, num) - cell_x_r
             cell_x = cell_x+1
 
             cell_y_r = (current%part_pos(2)-y_start_local) / dy -0.5_num
@@ -122,10 +120,6 @@ CONTAINS
             cell_y = cell_y+1
 
 !!$            IF (cell_y .NE. iy) PRINT *, "BAD CELL"
-
-            gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
-            gx( 0) = 0.75_num - cell_frac_x**2
-            gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
 
             gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
             gy( 0) = 0.75_num - cell_frac_y**2

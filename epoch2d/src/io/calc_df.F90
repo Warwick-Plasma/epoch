@@ -13,7 +13,7 @@ CONTAINS
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_y, part_m
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -54,14 +54,9 @@ CONTAINS
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_start_local
         part_y  = current%part_pos(2) - y_start_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q  = current%charge
         part_m  = current%mass
 #else
-        part_q  = particle_species(ispecies)%charge
         part_m  = particle_species(ispecies)%mass
 #endif
 
@@ -107,7 +102,7 @@ CONTAINS
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_m
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -156,10 +151,8 @@ CONTAINS
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q  = current%charge
         part_m  = current%mass
 #else
-        part_q  = particle_species(ispecies)%charge
         part_m  = particle_species(ispecies)%mass
 #endif
 
@@ -215,7 +208,7 @@ CONTAINS
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_y, part_q
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -257,15 +250,10 @@ CONTAINS
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_start_local
         part_y  = current%part_pos(2) - y_start_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
         part_q  = current%charge
-        part_m  = current%mass
 #else
         part_q  = particle_species(ispecies)%charge
-        part_m  = particle_species(ispecies)%mass
 #endif
 
 #ifdef PER_PARTICLE_WEIGHT
@@ -310,7 +298,7 @@ CONTAINS
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_y
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -352,16 +340,6 @@ CONTAINS
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_start_local
         part_y  = current%part_pos(2) - y_start_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
-#ifdef PER_PARTICLE_CHARGEMASS
-        part_q  = current%charge
-        part_m  = current%mass
-#else
-        part_q  = particle_species(ispecies)%charge
-        part_m  = particle_species(ispecies)%mass
-#endif
 
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
@@ -404,7 +382,7 @@ CONTAINS
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_m
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -461,10 +439,8 @@ CONTAINS
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q  = current%charge
         part_m  = current%mass
 #else
-        part_q  = particle_species(ispecies)%charge
         part_m  = particle_species(ispecies)%mass
 #endif
 #ifdef PER_PARTICLE_WEIGHT
@@ -590,9 +566,6 @@ CONTAINS
     ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x, cell_frac_y
 
-    ! The weight of a particle
-    REAL(num) :: l_weight
-
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
@@ -614,8 +587,6 @@ CONTAINS
     END INTERFACE
 
     data_array = 0.0_num
-
-    l_weight = weight
 
     spec_start = current_species
     spec_end = current_species

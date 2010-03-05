@@ -27,7 +27,7 @@ CONTAINS
     INTEGER :: new_cell_x_start, new_cell_x_end
     INTEGER :: new_cell_y_start, new_cell_y_end
     INTEGER :: new_cell_z_start, new_cell_z_end
-    REAL(num) :: balance_frac, balance_frac_x, balance_frac_y, balance_frac_z
+    REAL(num) :: balance_frac, balance_frac_x, balance_frac_y
     INTEGER(KIND=8) :: max_x, max_y, wk, min_x, min_y, npart_local, max_z, min_z
     INTEGER(KIND=8) :: max_npart, min_npart
     INTEGER :: iproc
@@ -132,7 +132,6 @@ CONTAINS
 
       balance_frac_x = REAL(min_x, num)/REAL(max_x, num)
       balance_frac_y = REAL(min_y, num)/REAL(max_y, num)
-      balance_frac_z = REAL(min_z, num)/REAL(max_z, num)
 
       IF (balance_frac_y .LT. balance_frac_x) THEN
         starts_y = cell_y_start
@@ -480,7 +479,6 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: new_field
     INTEGER :: n1, n2, n1_new, n2_new, n1_global, n2_global
-    INTEGER :: n1_start, n2_start
     INTEGER :: subtype_write, subtype_read, fh
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
@@ -490,8 +488,6 @@ CONTAINS
       n2 = nz
       n1_global = ny_global
       n2_global = nz_global
-      n1_start = cell_y_start(coordinates(2)+1)
-      n2_start = cell_z_start(coordinates(1)+1)
     ENDIF
 
     IF (direction .EQ. c_dir_y) THEN
@@ -499,8 +495,6 @@ CONTAINS
       n2 = nz
       n1_global = nx_global
       n2_global = nz_global
-      n1_start = cell_x_start(coordinates(3)+1)
-      n2_start = cell_z_start(coordinates(1)+1)
     ENDIF
 
     IF (direction .EQ. c_dir_z) THEN
@@ -508,8 +502,6 @@ CONTAINS
       n2 = ny
       n1_global = nx_global
       n2_global = ny_global
-      n1_start = cell_x_start(coordinates(3)+1)
-      n2_start = cell_y_start(coordinates(2)+1)
     ENDIF
 
     WRITE(filename, '(a, "/temp.dat")') TRIM(data_dir)

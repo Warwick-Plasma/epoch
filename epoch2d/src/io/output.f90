@@ -94,10 +94,6 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: block_name, block_class
     INTEGER, INTENT(IN) :: block_type, rank_write
     INTEGER(KIND=8), INTENT(IN) :: block_length, block_md_length
-    INTEGER :: len_bn, len_bc
-
-    len_bn = LEN(block_name)
-    len_bc = LEN(block_class)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)

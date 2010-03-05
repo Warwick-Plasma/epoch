@@ -17,7 +17,7 @@ MODULE setup
 
   SAVE
   TYPE(particle_list) :: main_root
-  INTEGER, DIMENSION(:), ALLOCATABLE :: species_id
+!!$  INTEGER, DIMENSION(:), ALLOCATABLE :: species_id
 
 CONTAINS
 
@@ -441,7 +441,7 @@ CONTAINS
 
     IF (start) ipart_total = 1
     DO ipart = 1, npart_this_it
-      species_id(ipart_total) = NINT(data(ipart))
+!!$      species_id(ipart_total) = NINT(data(ipart))
       ipart_total = ipart_total+1
     ENDDO
 

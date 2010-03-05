@@ -16,12 +16,8 @@ CONTAINS
     INTEGER, PARAMETER :: c_nops = 7
     CHARACTER(LEN=c_nops) :: operators = "+-\/*^"
     INTEGER :: char_type, i
-    LOGICAL :: unary
 
     char_type = c_char_unknown
-
-    unary = (last_block_type .NE. c_pt_variable .AND. &
-        last_block_type .NE. c_pt_constant)
 
     IF (char .EQ. " " .OR. ICHAR(char) .EQ. 32) char_type = c_char_space
     IF (char .GE. "A" .AND. char .LE. "z" .OR. char .EQ. "_") &

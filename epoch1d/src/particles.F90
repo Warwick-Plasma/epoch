@@ -36,14 +36,13 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
     REAL(num) :: root, part_vx, part_vy, part_vz, part_weight
-    INTEGER :: part_species
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifdef PARTICLE_PROBES
     REAL(num) :: init_part_x, final_part_x
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
-    REAL(num) :: probe_temp, probe_energy
+    REAL(num) :: probe_energy
 #endif
 
     ! Contains the floating point version of the cell number (never actually
@@ -124,7 +123,6 @@ CONTAINS
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
-        part_species = particle_species(ispecies)%id
         ! Use a lookup table for charge and mass to SAVE memory
         ! No reason not to do this (I think), check properly later
 #ifdef PER_PARTICLE_CHARGEMASS
