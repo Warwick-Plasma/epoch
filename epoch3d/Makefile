@@ -106,9 +106,9 @@ diagnostics.o: diagnostics.F90 calc_df.o dist_fn.o iocontrol.o \
   mpi_subtype_control.o output_cartesian.o output_particle.o \
   particle_pointer_advance.o probes.o
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o output_cartesian.o
-epoch3d.o: epoch3d.F90 balance.o deck.o diagnostics.o fields.o \
-  ic_module.o mpi_routines.o particles.o setup.o solve_gauss.o \
-  split_particles.o welcome.o window.o
+epoch3d.o: epoch3d.F90 balance.o deck.o diagnostics.o fields.o ic_module.o \
+  mpi_routines.o particles.o setup.o solve_gauss.o split_particles.o \
+  welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o shunt.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o
@@ -133,7 +133,8 @@ particle_pointer_advance.o: particle_pointer_advance.F90 shared_data.o
 particles.o: particles.F90 boundary.o shape_functions.o
 partlist.o: partlist.F90 shared_data.o
 probes.o: probes.F90 mpi_subtype_control.o output_particle.o partlist.o
-setup.o: setup.F90 shared_data.o
+setup.o: setup.F90 input_cartesian.o input_particle.o iocontrol.o \
+  mpi_subtype_control.o partlist.o strings.o
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90
 shunt.o: shunt.F90 tokenizer_blocks.o

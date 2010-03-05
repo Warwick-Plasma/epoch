@@ -1,6 +1,5 @@
 MODULE setup
 
-  !USE shared_data
   USE input_cartesian
   USE input_particle
   USE iocontrol
@@ -53,7 +52,7 @@ CONTAINS
     x_global(0) = x_start-dx
     DO ix = 1, nx_global+1
       x_global(ix) = x_global(ix-1)+dx
-      x_offset_global(ix) = x_global(ix) ! - x_start
+      x_offset_global(ix) = x_global(ix)
     ENDDO
 
     DO iproc = 0, nprocx-1
@@ -65,7 +64,7 @@ CONTAINS
     x_end_local = x_ends(coordinates(1))
 
     ! Setup local grid
-    x(-1) = x_start_local-dx*2.0_num ! + dx/2.0_num
+    x(-1) = x_start_local-dx*2.0_num
     DO ix = 0, nx+2
       x(ix) = x(ix-1)+dx
     ENDDO
@@ -123,8 +122,6 @@ CONTAINS
             &does not exist"
         CALL MPI_ABORT(comm, errcode)
       ENDIF
-!!$      WRITE(file3, '(a, "/en.dat")') TRIM(data_dir)
-!!$      OPEN(unit=30, status='REPLACE', file=file3, form="binary")
     ENDIF
 
   END SUBROUTINE open_files
@@ -134,7 +131,6 @@ CONTAINS
   SUBROUTINE close_files
 
     CLOSE(unit=20)
-    CLOSE(unit=30)
 
   END SUBROUTINE close_files
 

@@ -1,12 +1,11 @@
 MODULE setup
 
-  USE shared_data
-  !USE input_cartesian
-  !USE input_particle
-  !USE iocontrol
-  !USE strings
-  !USE partlist
-  !USE mpi_subtype_control
+  USE input_cartesian
+  USE input_particle
+  USE iocontrol
+  USE strings
+  USE partlist
+  USE mpi_subtype_control
 
   IMPLICIT NONE
 
@@ -17,7 +16,7 @@ MODULE setup
 
   SAVE
   TYPE(particle_list) :: main_root
-!!$  INTEGER, DIMENSION(:), ALLOCATABLE :: species_id
+  INTEGER, DIMENSION(:), ALLOCATABLE :: species_id
 
 CONTAINS
 
@@ -28,6 +27,7 @@ CONTAINS
     comm = MPI_COMM_NULL
 
     window_shift = 0.0_num
+    npart_global = -1
 
     NULLIFY(laser_left)
     NULLIFY(laser_right)
@@ -57,17 +57,17 @@ CONTAINS
     x_global(0) = x_start-dx
     DO ix = 1, nx_global+1
       x_global(ix) = x_global(ix-1)+dx
-      x_offset_global(ix) = x_global(ix) ! - x_start
+      x_offset_global(ix) = x_global(ix)
     ENDDO
     y_global(0) = y_start-dy
     DO iy = 1, ny_global+1
       y_global(iy) = y_global(iy-1)+dy
-      y_offset_global(iy) = y_global(iy) ! - y_start
+      y_offset_global(iy) = y_global(iy)
     ENDDO
     z_global(0) = z_start-dz
     DO iz = 1, nz_global+1
       z_global(iz) = z_global(iz-1)+dy
-      z_offset_global(iz) = z_global(iz) ! - z_start
+      z_offset_global(iz) = z_global(iz)
     ENDDO
 
     DO iproc = 0, nprocx-1
@@ -82,6 +82,7 @@ CONTAINS
       z_starts(iproc) = z_global(iproc*nz+1)
       z_ends(iproc) = z_global((iproc+1)*nz)
     ENDDO
+
     x_start_local = x_starts(coordinates(3))
     x_end_local = x_ends(coordinates(3))
     y_start_local = y_starts(coordinates(2))
@@ -112,12 +113,17 @@ CONTAINS
   SUBROUTINE open_files
 
     CHARACTER(LEN=11+data_dir_max_length) :: file2
+    INTEGER :: errcode
 
     IF (rank .EQ. 0) THEN
       WRITE(file2, '(a, "/epoch3d.dat")') TRIM(data_dir)
-      OPEN(unit=20, status='REPLACE', file=file2)
-!!$      WRITE(file3, '(a, "/en.dat")') TRIM(data_dir)
-!!$      OPEN(unit=30, status='REPLACE', file=file3, form="binary")
+      OPEN(unit=20, status='REPLACE', file=file2, iostat=errcode)
+      IF (errcode .NE. 0) THEN
+        PRINT *, "***ERROR*** Cannot create epoch2d.dat output file. The &
+            &most common cause of this problem is that the ouput directory &
+            &does not exist"
+        CALL MPI_ABORT(comm, errcode)
+      ENDIF
     ENDIF
 
   END SUBROUTINE open_files
@@ -127,7 +133,6 @@ CONTAINS
   SUBROUTINE close_files
 
     CLOSE(unit=20)
-    CLOSE(unit=30)
 
   END SUBROUTINE close_files
 
@@ -135,201 +140,224 @@ CONTAINS
 
   SUBROUTINE set_initial_values
 
+    ex = 0.0_num
+    ey = 0.0_num
+    ez = 0.0_num
+
+    bx = 0.0_num
+    by = 0.0_num
+    bz = 0.0_num
+
+    jx = 0.0_num
+    jy = 0.0_num
+    jz = 0.0_num
+
   END SUBROUTINE set_initial_values
 
 
 
   SUBROUTINE restart_data
 
-!!$
-!!$    CHARACTER(LEN=20+data_dir_max_length) :: filename
-!!$    CHARACTER(LEN=max_string_len) :: name, class, mesh_name, mesh_class
-!!$    INTEGER :: block_type, nd
-!!$    INTEGER :: filehandle, sof
-!!$    INTEGER(KIND=8) :: npart_l, npart_per_it = 10000, npart_local, npart_test
-!!$    REAL(num), DIMENSION(2) :: extents, stagger
-!!$    INTEGER, DIMENSION(1) :: dims
-!!$    REAL(KIND=8) :: time_d
-!!$    INTEGER :: snap, coord_type
-!!$    LOGICAL, DIMENSION(3) :: PisV
-!!$    REAL(num) :: v2
-!!$    TYPE(particle), POINTER :: current, next
-!!$    LOGICAL :: constant_weight
-!!$    INTEGER(KIND=8) :: npart
-!!$
-!!$    npart = npart_global/nproc
-!!$    constant_weight = .FALSE.
-!!$    CALL CreateSubTypesForLoad(npart)
-!!$
-!!$    ! Create the filename for the last snapshot
-!!$    WRITE(filename, '("nfs:", a, "/", i4.4, ".cfd")') TRIM(data_dir), &
-!!$        restart_snapshot
-!!$    CALL cfd_open(filename, rank, comm, MPI_MODE_RDONLY)
-!!$    ! open the file
-!!$    nblocks = cfd_get_nblocks()
-!!$
-!!$    ex = 0.0_num
-!!$    ey = 0.0_num
-!!$    ez = 0.0_num
-!!$
-!!$    bx = 0.0_num
-!!$    by = 0.0_num
-!!$    bz = 0.0_num
-!!$
-!!$    IF (rank .EQ. 0) PRINT *, "Input file contains", nblocks, "blocks"
-!!$    DO ix = 1, nblocks
-!!$      CALL cfd_get_next_block_info_all(name, class, block_type)
-!!$      ! IF (rank .EQ. 0) PRINT *, "Loading block", ix, name, block_type
-!!$      IF (block_type .EQ. c_type_snapshot) THEN
-!!$        CALL cfd_get_snapshot(time_d, snap)
-!!$        time = time_d
-!!$        IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time
-!!$      ENDIF
-!!$      SELECT CASE(block_type)
-!!$      CASE(c_type_mesh_variable)
-!!$        CALL cfd_get_common_meshtype_metadata_all(block_type, nd, sof)
-!!$        IF (sof .NE. num) THEN
-!!$          IF (rank .EQ. 0) &
-!!$              PRINT *, "Precision does not match, recompile code so that &
-!!$                  &sizeof(real) = ", sof
-!!$          CALL MPI_ABORT(comm, errcode)
-!!$        ENDIF
-!!$
-!!$        IF (nd .NE. c_dimension_2d .AND. &
-!!$            nd .NE. c_dimension_irrelevant ) THEN
-!!$          IF (rank .EQ. 0) &
-!!$              PRINT *, "Dimensionality does not match, file is ", nd, "D"
-!!$          CALL MPI_ABORT(comm, errcode)
-!!$        ENDIF
-!!$        SELECT CASE(block_type)
-!!$        CASE(c_var_cartesian)
-!!$          !Grid variables
-!!$          CALL cfd_get_nd_cartesian_variable_metadata_all(nd, dims, &
-!!$              extents, stagger, mesh_name, mesh_class)
-!!$          IF (dims(1) .NE. nx_global) THEN
-!!$            IF (rank .EQ. 0) &
-!!$                PRINT *, "Number of gridpoints does not match, gridpoints &
-!!$                    &in file is", dims(1)
-!!$            CALL MPI_ABORT(comm, errcode)
-!!$          ENDIF
-!!$          IF (str_cmp(name(1:2), "Ex")) &
-!!$              CALL cfd_get_2d_cartesian_variable_parallel(ex(1:nx, 1:ny), &
-!!$                  subtype_field)
-!!$          IF (str_cmp(name(1:2), "Ey")) &
-!!$              CALL cfd_get_2d_cartesian_variable_parallel(ey(1:nx, 1:ny), &
-!!$                  subtype_field)
-!!$          IF (str_cmp(name(1:2), "Ez")) &
-!!$              CALL cfd_get_2d_cartesian_variable_parallel(ez(1:nx, 1:ny), &
-!!$                  subtype_field)
-!!$
-!!$          IF (str_cmp(name(1:2), "Bx")) &
-!!$              CALL cfd_get_2d_cartesian_variable_parallel(bx(1:nx, 1:ny), &
-!!$                  subtype_field)
-!!$          IF (str_cmp(name(1:2), "By")) &
-!!$              CALL cfd_get_2d_cartesian_variable_parallel(by(1:nx, 1:ny), &
-!!$                  subtype_field)
-!!$          IF (str_cmp(name(1:2), "Bz")) &
-!!$              CALL cfd_get_2d_cartesian_variable_parallel(bz(1:nx, 1:ny), &
-!!$                  subtype_field)
-!!$
-!!$        CASE(c_var_particle)
-!!$          CALL cfd_get_nd_particle_variable_metadata_all(npart_l, extents, &
-!!$              mesh_name, mesh_class)
-!!$          IF (npart_l .NE. npart_global) THEN
-!!$            IF (rank .EQ. 0) PRINT *, "Number of particles does not match, &
-!!$                &changing npart to match", npart_l
-!!$            npart = npart_l/nproc
-!!$            CALL CreateSubTypesForLoad(npart)
-!!$            CALL create_allocated_partlist(main_root, npart)
-!!$            ALLOCATE(species_id(1:npart))
-!!$            current=>main_root%head
-!!$            DO ipart = 1, main_root%count
-!!$              current%part_p = 0.0_num
-!!$              current%part_pos = 0.0_num
-!!$              current=>current%next
-!!$            ENDDO
-!!$            current=>main_root%head
-!!$            npart_global = npart_l
-!!$          ENDIF
-!!$          !particle variables
-!!$          IF (str_cmp(name(1:2), "Px")) &
-!!$              CALL cfd_get_nd_particle_variable_parallel_with_iterator(&
-!!$                  npart, npart_per_it, subtype_particle_var, it_px)
-!!$          IF (str_cmp(name(1:2), "Py")) &
-!!$              CALL cfd_get_nd_particle_variable_parallel_with_iterator(&
-!!$                  npart, npart_per_it, subtype_particle_var, it_py)
-!!$          IF (str_cmp(name(1:2), "Pz")) &
-!!$              CALL cfd_get_nd_particle_variable_parallel_with_iterator(&
-!!$                  npart, npart_per_it, subtype_particle_var, it_pz)
-!!$#ifdef PER_PARTICLE_WEIGHT
-!!$          IF (str_cmp(name(1:6), "Weight")) &
-!!$              CALL cfd_get_nd_particle_variable_parallel_with_iterator(&
-!!$                  npart, npart_per_it, subtype_particle_var, it_weight)
-!!$#else
-!!$          IF (str_cmp(name(1:6), "Weight")) THEN
-!!$            IF (rank .EQ. 0) PRINT *, "Cannot load dump file with per &
-!!$                &particle weight if the code is compiled without per &
-!!$                &particle weights. Code terminates"
-!!$            CALL MPI_ABORT(comm, errcode)
-!!$          ENDIF
-!!$#endif
-!!$          IF (str_cmp(name(1:7), "Species")) &
-!!$              CALL cfd_get_nd_particle_variable_parallel_with_iterator(&
-!!$                  npart, npart_per_it, subtype_particle_var, it_species)
-!!$        END SELECT
-!!$      CASE(c_type_mesh)
-!!$        CALL cfd_get_common_meshtype_metadata_all(block_type, nd, sof)
-!!$        IF (block_type .EQ. c_mesh_particle) THEN
-!!$          CALL cfd_get_nd_particle_grid_metadata_all(nd, coord_type, &
-!!$              npart_l, extents)
-!!$          IF (npart_l .NE. npart_global) THEN
-!!$            npart = npart_l/nproc
-!!$            IF (npart * nproc .NE. npart_l) THEN
-!!$              IF (rank .EQ. 0) PRINT *, "Cannot evenly subdivide particles &
-!!$                  &over", nproc, "processors. Trying to fix"
-!!$              IF (rank .LT. npart_l-(npart*nproc)) npart = npart+1
-!!$            ENDIF
-!!$            CALL CreateSubTypesForLoad(npart)
-!!$            CALL create_allocated_partlist(main_root, npart)
-!!$            ALLOCATE(species_id(1:npart))
-!!$            current=>main_root%head
-!!$            npart_global = npart_l
-!!$          ENDIF
-!!$          CALL cfd_get_nd_particle_grid_parallel_with_iterator(nd, &
-!!$              main_root%count, npart_l, npart_per_it, sof, &
-!!$              subtype_particle_var, it_part)
-!!$        ENDIF
-!!$      CASE(c_type_constant)
-!!$        CALL cfd_get_real_constant(weight)
-!!$        constant_weight = .TRUE.
-!!$      END SELECT
-!!$      CALL cfd_skip_block()
-!!$    ENDDO
-!!$    CALL cfd_close()
-!!$
-!!$
-!!$    current=>main_root%head
-!!$    ipart = 1
-!!$    DO WHILE(ASSOCIATED(current))
-!!$       next=>current%next
-!!$       CALL remove_particle_from_partlist(main_root, current)
-!!$       CALL add_particle_to_partlist(&
-!!$           particle_species(species_id(ipart))%attached_list, current)
-!!$       current=>next
-!!$       ipart = ipart+1
-!!$    ENDDO
-!!$
-!!$    DEALLOCATE(species_id)
-!!$
-!!$#ifdef PER_PARTICLE_WEIGHT
-!!$    IF (constant_weight) THEN
-!!$       current=>main_root%head
-!!$       DO WHILE(ASSOCIATED(current))
-!!$          current%weight = weight
-!!$          current=>current%next
-!!$       ENDDO
-!!$    ENDIF
-!!$#endif
+    CHARACTER(LEN=20+data_dir_max_length) :: filename
+    CHARACTER(LEN=max_string_len) :: name, class, mesh_name, mesh_class
+    INTEGER :: block_type, nd
+    INTEGER :: sof
+    INTEGER(KIND=8) :: npart_l, npart_per_it = 10000
+    REAL(num), DIMENSION(2) :: extents, stagger
+    INTEGER, DIMENSION(1) :: dims
+    REAL(KIND=8) :: time_d
+    INTEGER :: snap, coord_type
+    TYPE(particle), POINTER :: current, next
+    LOGICAL :: constant_weight
+    INTEGER(KIND=8) :: npart
+
+    npart = npart_global/nproc
+    constant_weight = .FALSE.
+    CALL create_subtypes_for_load(npart)
+
+    ! Create the filename for the last snapshot
+    WRITE(filename, '("nfs:", a, "/", i4.4, ".cfd")') &
+        TRIM(data_dir), restart_snapshot
+    CALL cfd_open(filename, rank, comm, MPI_MODE_RDONLY)
+    ! open the file
+    nblocks = cfd_get_nblocks()
+
+    ex = 0.0_num
+    ey = 0.0_num
+    ez = 0.0_num
+
+    bx = 0.0_num
+    by = 0.0_num
+    bz = 0.0_num
+
+    IF (rank .EQ. 0) PRINT *, "Input file contains", nblocks, "blocks"
+    DO ix = 1, nblocks
+      CALL cfd_get_next_block_info_all(name, class, block_type)
+      ! IF (rank .EQ. 0) PRINT *, "Loading block", ix, name, block_type
+      IF (block_type .EQ. c_type_snapshot) THEN
+        CALL cfd_get_snapshot(time_d, snap)
+        time = time_d
+        IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time
+      ENDIF
+
+      SELECT CASE(block_type)
+      CASE(c_type_mesh_variable)
+        CALL cfd_get_common_meshtype_metadata_all(block_type, nd, sof)
+        IF (sof .NE. num) THEN
+          IF (rank .EQ. 0) &
+              PRINT *, "Precision does not match, recompile code so &
+                  &that sizeof(REAL) = ", sof
+          CALL MPI_ABORT(comm, errcode)
+        ENDIF
+
+        IF (nd .NE. c_dimension_2d .AND. nd .NE. c_dimension_irrelevant ) THEN
+          IF (rank .EQ. 0) &
+              PRINT *, "Dimensionality does not match, file is ", nd, "D"
+          CALL MPI_ABORT(comm, errcode)
+        ENDIF
+
+        SELECT CASE(block_type)
+        CASE(c_var_cartesian)
+          ! Grid variables
+          CALL cfd_get_nd_cartesian_variable_metadata_all(nd, dims, extents, &
+              stagger, mesh_name, mesh_class)
+
+          IF (dims(1) .NE. nx_global) THEN
+            IF (rank .EQ. 0) &
+                PRINT *, "Number of gridpoints does not match, gridpoints &
+                    &in file is", dims(1)
+            CALL MPI_ABORT(comm, errcode)
+          ENDIF
+
+          IF (str_cmp(name(1:2), "Ex")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(ex(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Ey")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(ey(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Ez")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(ez(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Bx")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(bx(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "By")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(by(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Bz")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(bz(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
+        CASE(c_var_particle)
+          CALL cfd_get_nd_particle_variable_metadata_all(npart_l, extents, &
+              mesh_name, mesh_class)
+
+          IF (npart_l .NE. npart_global) THEN
+            IF (rank .EQ. 0) &
+                PRINT *, "Number of particles does not match, changing &
+                    &npart to match", npart_l
+            npart = npart_l/nproc
+            CALL create_subtypes_for_load(npart)
+            CALL create_allocated_partlist(main_root, npart)
+            ALLOCATE(species_id(1:npart))
+            current=>main_root%head
+            DO ipart = 1, main_root%count
+              current%part_p = 0.0_num
+              current%part_pos = 0.0_num
+              current=>current%next
+            ENDDO
+            current=>main_root%head
+            npart_global = npart_l
+          ENDIF
+
+          ! particle variables
+          IF (str_cmp(name(1:2), "Px")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_px)
+
+          IF (str_cmp(name(1:2), "Py")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_py)
+
+          IF (str_cmp(name(1:2), "Pz")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_pz)
+
+#ifdef PER_PARTICLE_WEIGHT
+          IF (str_cmp(name(1:6), "Weight")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_weight)
+#else
+          IF (str_cmp(name(1:6), "Weight")) THEN
+            IF (rank .EQ. 0) &
+                PRINT *, "Cannot load dump file with per particle weight &
+                    &if the code is compiled without per particle weights. &
+                    &Code terminates"
+            CALL MPI_ABORT(comm, errcode)
+          ENDIF
+#endif
+          IF (str_cmp(name(1:7), "Species")) &
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
+                  npart_per_it, subtype_particle_var, it_species)
+        END SELECT
+      CASE(c_type_mesh)
+        CALL cfd_get_common_meshtype_metadata_all(block_type, nd, sof)
+        IF (block_type .EQ. c_mesh_particle) THEN
+          CALL cfd_get_nd_particle_grid_metadata_all(nd, coord_type, npart_l, &
+              extents)
+          IF (npart_l .NE. npart_global) THEN
+            npart = npart_l/nproc
+            IF (npart * nproc .NE. npart_l) THEN
+              IF (rank .EQ. 0) &
+                  PRINT *, "Cannot evenly subdivide particles over", nproc, &
+                      "processors. Trying to fix"
+              IF (rank .LT. npart_l-(npart*nproc)) npart = npart+1
+            ENDIF
+            CALL create_subtypes_for_load(npart)
+            CALL create_allocated_partlist(main_root, npart)
+            ALLOCATE(species_id(1:npart))
+            current=>main_root%head
+            npart_global = npart_l
+          ENDIF
+          CALL cfd_get_nd_particle_grid_parallel_with_iterator(nd, &
+              main_root%count, npart_l, npart_per_it, sof, &
+              subtype_particle_var, it_part)
+        ENDIF
+      CASE(c_type_constant)
+        CALL cfd_get_real_constant(weight)
+        constant_weight = .TRUE.
+      END SELECT
+      CALL cfd_skip_block()
+    ENDDO
+    CALL cfd_close()
+
+    current=>main_root%head
+    ipart = 1
+    DO WHILE(ASSOCIATED(current))
+      next=>current%next
+      CALL remove_particle_from_partlist(main_root, current)
+      CALL add_particle_to_partlist(&
+          particle_species(species_id(ipart))%attached_list, current)
+      current=>next
+      ipart = ipart+1
+    ENDDO
+
+    DEALLOCATE(species_id)
+
+#ifdef PER_PARTICLE_WEIGHT
+    IF (constant_weight) THEN
+      current=>main_root%head
+      DO WHILE(ASSOCIATED(current))
+        current%weight = weight
+        current=>current%next
+      ENDDO
+    ENDIF
+#endif
 
   END SUBROUTINE restart_data
 
@@ -441,7 +469,7 @@ CONTAINS
 
     IF (start) ipart_total = 1
     DO ipart = 1, npart_this_it
-!!$      species_id(ipart_total) = NINT(data(ipart))
+      species_id(ipart_total) = NINT(data(ipart))
       ipart_total = ipart_total+1
     ENDDO
 

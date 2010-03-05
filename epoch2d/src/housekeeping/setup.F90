@@ -1,6 +1,5 @@
 MODULE setup
 
-  !USE shared_data
   USE input_cartesian
   USE input_particle
   USE iocontrol
@@ -28,16 +27,11 @@ CONTAINS
     dumpmask = 0
     comm = MPI_COMM_NULL
 
+    dt_plasma_frequency = 0.0_num
+
     window_shift = 0.0_num
     npart_global = -1
     smooth_currents = .FALSE.
-
-    ex = 0.0_num
-    ey = 0.0_num
-    ez = 0.0_num
-    bx = 0.0_num
-    by = 0.0_num
-    bz = 0.0_num
 
     NULLIFY(laser_left)
     NULLIFY(laser_right)
@@ -79,6 +73,7 @@ CONTAINS
       y_starts(iproc) = y_global(iproc*ny+1)
       y_ends(iproc) = y_global((iproc+1)*ny)
     ENDDO
+
     x_start_local = x_starts(coordinates(2))
     x_end_local = x_ends(coordinates(2))
     y_start_local = y_starts(coordinates(1))
@@ -95,6 +90,7 @@ CONTAINS
     ENDDO
 
     CALL set_initial_values
+
     CALL setup_data_averaging
 
   END SUBROUTINE after_control
@@ -171,13 +167,24 @@ CONTAINS
   SUBROUTINE close_files
 
     CLOSE(unit=20)
-    CLOSE(unit=30)
 
   END SUBROUTINE close_files
 
 
 
   SUBROUTINE set_initial_values
+
+    ex = 0.0_num
+    ey = 0.0_num
+    ez = 0.0_num
+
+    bx = 0.0_num
+    by = 0.0_num
+    bz = 0.0_num
+
+    jx = 0.0_num
+    jy = 0.0_num
+    jz = 0.0_num
 
   END SUBROUTINE set_initial_values
 
@@ -257,27 +264,27 @@ CONTAINS
           ENDIF
 
           IF (str_cmp(name(1:2), "Ex")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(ex(1:nx, 1:ny), &
+              CALL cfd_get_2d_cartesian_variable_parallel(ex(1:nx,1:ny), &
                   subtype_field)
 
           IF (str_cmp(name(1:2), "Ey")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(ey(1:nx, 1:ny), &
+              CALL cfd_get_2d_cartesian_variable_parallel(ey(1:nx,1:ny), &
                   subtype_field)
 
           IF (str_cmp(name(1:2), "Ez")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(ez(1:nx, 1:ny), &
+              CALL cfd_get_2d_cartesian_variable_parallel(ez(1:nx,1:ny), &
                   subtype_field)
 
           IF (str_cmp(name(1:2), "Bx")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(bx(1:nx, 1:ny), &
+              CALL cfd_get_2d_cartesian_variable_parallel(bx(1:nx,1:ny), &
                   subtype_field)
 
           IF (str_cmp(name(1:2), "By")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(by(1:nx, 1:ny), &
+              CALL cfd_get_2d_cartesian_variable_parallel(by(1:nx,1:ny), &
                   subtype_field)
 
           IF (str_cmp(name(1:2), "Bz")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(bz(1:nx, 1:ny), &
+              CALL cfd_get_2d_cartesian_variable_parallel(bz(1:nx,1:ny), &
                   subtype_field)
 
         CASE(c_var_particle)
