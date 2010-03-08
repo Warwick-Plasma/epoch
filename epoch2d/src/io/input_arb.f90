@@ -1,6 +1,5 @@
 MODULE input_arb
 
-  USE iocommon
   USE input_functions
 
   IMPLICIT NONE

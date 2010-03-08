@@ -1,6 +1,5 @@
 MODULE input_particle
 
-  USE iocommon
   USE input_functions
 
   IMPLICIT NONE

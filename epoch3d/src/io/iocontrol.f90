@@ -1,6 +1,5 @@
 MODULE iocontrol
 
-  USE iocommon
   USE input
   USE output
 

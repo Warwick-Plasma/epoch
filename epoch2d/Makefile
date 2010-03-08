@@ -35,14 +35,13 @@ OBJFILES = balance.o boundary.o calc_df.o control.o current_smooth.o \
   deck_ic_external_block.o deck_ic_fields_block.o deck_ic_laser_block.o \
   deck_ic_species_block.o deck_io_block.o deck.o deck_species_block.o \
   deck_window_block.o diagnostics.o dist_fn.o epoch2d.o evaluate.o \
-  evaluator_blocks.o fields.o FMC_MPI.o helper.o ic_module.o \
-  input_arb.o input_cartesian.o input_functions.o input.o input_particle.o \
-  iocommon.o iocontrol.o ionise.o iterators.o laser.o mpi_routines.o \
-  mpi_subtype_control.o output_arb.o output_cartesian.o output.o \
-  output_particle.o particle_pointer_advance.o particles.o partlist.o probes.o \
-  setup.o shape_functions.o shared_data.o shunt.o simple_io.o solve_gauss.o \
-  split_particles.o stack.o strings_advanced.o strings.o tokenizer_blocks.o \
-  welcome.o window.o
+  evaluator_blocks.o fields.o helper.o ic_module.o input_cartesian.o \
+  input_functions.o input.o input_particle.o iocommon.o iocontrol.o ionise.o \
+  iterators.o laser.o mpi_routines.o mpi_subtype_control.o output_cartesian.o \
+  output.o output_particle.o particle_pointer_advance.o particles.o partlist.o \
+  probes.o setup.o shape_functions.o shared_data.o shunt.o simple_io.o \
+  solve_gauss.o split_particles.o stack.o strings_advanced.o strings.o \
+  tokenizer_blocks.o welcome.o window.o
 FULLTARGET = $(BINDIR)/$(TARGET)
 
 #vpath %.f90 $(SRCDIR)
@@ -118,22 +117,19 @@ epoch2d.o: epoch2d.F90 balance.o boundary.o control.o deck.o diagnostics.o \
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.F90 boundary.o laser.o
-FMC_MPI.o: FMC_MPI.f90
 helper.o: helper.F90 boundary.o shape_functions.o strings.o
 ic_module.o: ic_module.f90
-input_arb.o: input_arb.f90 input_functions.o iocommon.o shared_data.o
-input_cartesian.o: input_cartesian.f90 input_functions.o iocommon.o
+input_cartesian.o: input_cartesian.f90 input_functions.o
 input_functions.o: input_functions.f90 iocommon.o
-input.o: input.f90 input_functions.o iocommon.o
-input_particle.o: input_particle.f90 input_functions.o iocommon.o shared_data.o
+input.o: input.f90 input_functions.o
+input_particle.o: input_particle.f90 input_functions.o shared_data.o
 iocommon.o: iocommon.f90 shared_data.o
-iocontrol.o: iocontrol.f90 input.o iocommon.o output.o
+iocontrol.o: iocontrol.f90 input.o output.o
 ionise.o: ionise.F90 calc_df.o helper.o
 iterators.o: iterators.F90 particle_pointer_advance.o
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.f90 partlist.o
 mpi_subtype_control.o: mpi_subtype_control.F90 shared_data.o
-output_arb.o: output_arb.f90 iocommon.o output.o shared_data.o
 output_cartesian.o: output_cartesian.f90 iocommon.o output.o
 output.o: output.f90 iocommon.o
 output_particle.o: output_particle.f90 iocommon.o output.o shared_data.o

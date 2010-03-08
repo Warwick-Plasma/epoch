@@ -1,6 +1,5 @@
 MODULE input
 
-  USE iocommon
   USE input_functions
 
   IMPLICIT NONE

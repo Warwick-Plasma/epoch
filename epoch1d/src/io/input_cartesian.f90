@@ -1,6 +1,5 @@
 MODULE input_cartesian
 
-  USE iocommon
   USE input_functions
 
   IMPLICIT NONE
