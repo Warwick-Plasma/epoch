@@ -71,11 +71,11 @@ tidy:
 
 .PHONEY: visit
 visit:
-	@cd VisIT;xml2makefile -clobber cfd.xml;make
+	@cd ../VisIt;xml2makefile -clobber cfd.xml;make
 
 .PHONEY: visitclean
 visitclean:
-	@cd VisIT;make clean;rm -f .depend *.d
+	@cd ../VisIt;make clean;rm -f .depend *.d
 
 # All the dependencies
 
