@@ -40,13 +40,13 @@ OBJFILES = balance.o boundary.o calc_df.o control.o current_smooth.o \
   iterators.o laser.o mpi_routines.o mpi_subtype_control.o output_cartesian.o \
   output.o output_particle.o particle_pointer_advance.o particles.o partlist.o \
   probes.o setup.o shape_functions.o shared_data.o shunt.o simple_io.o \
-  solve_gauss.o split_particles.o stack.o strings_advanced.o strings.o \
-  tokenizer_blocks.o welcome.o window.o
+  split_particles.o stack.o strings_advanced.o strings.o tokenizer_blocks.o \
+  welcome.o window.o
 FULLTARGET = $(BINDIR)/$(TARGET)
 
 #vpath %.f90 $(SRCDIR)
 #vpath %.o $(OBJDIR)
-VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/io:$(SRCDIR)/parser:$(SRCDIR)/housekeeping:$(SRCDIR)/user_interaction:$(SRCDIR)/multigrid:$(SRCDIR)/physics_packages:$(OBJDIR)
+VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:$(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:$(OBJDIR)
 
 # Rule to build the fortran files
 
@@ -113,7 +113,7 @@ diagnostics.o: diagnostics.F90 calc_df.o dist_fn.o iocontrol.o iterators.o \
 dist_fn.o: dist_fn.F90 output_cartesian.o
 epoch2d.o: epoch2d.F90 balance.o boundary.o control.o deck.o diagnostics.o \
   fields.o ic_module.o ionise.o mpi_routines.o particles.o setup.o \
-  solve_gauss.o split_particles.o welcome.o window.o
+  split_particles.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.F90 boundary.o laser.o
@@ -143,7 +143,6 @@ shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
-solve_gauss.o: solve_gauss.F90
 split_particles.o: split_particles.F90
 stack.o: stack.f90 shared_data.o
 strings_advanced.o: strings_advanced.F90 evaluate.o shunt.o

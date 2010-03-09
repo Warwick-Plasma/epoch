@@ -28,7 +28,6 @@ PROGRAM pic
   USE mpi_routines
   USE boundary
   USE balance
-  USE solve_gauss
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
   USE split_particle
 #endif
@@ -100,7 +99,6 @@ PROGRAM pic
   ENDIF
 
   CALL distribute_particles
-  IF (.NOT. neutral_background) CALL do_gauss
   CALL balance_workload(.TRUE.)
 
   CALL manual_load

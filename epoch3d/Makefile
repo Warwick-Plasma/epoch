@@ -39,14 +39,13 @@ OBJFILES = balance.o boundary.o calc_df.o custom_deck.o custom_laser.o \
   input_particle.o iocommon.o iocontrol.o laser.o mpi_routines.o \
   mpi_subtype_control.o output_cartesian.o output.o output_particle.o \
   particle_pointer_advance.o particles.o partlist.o probes.o setup.o \
-  shape_functions.o shared_data.o shunt.o simple_io.o solve_gauss.o \
-  split_particles.o stack.o strings_advanced.o strings.o tokenizer_blocks.o \
-  welcome.o window.o
+  shape_functions.o shared_data.o shunt.o simple_io.o split_particles.o \
+  stack.o strings_advanced.o strings.o tokenizer_blocks.o welcome.o window.o
 FULLTARGET = $(BINDIR)/$(TARGET)
 
 #vpath %.f90 $(SRCDIR)
 #vpath %.o $(OBJDIR)
-VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/io:$(SRCDIR)/parser:$(SRCDIR)/housekeeping:$(SRCDIR)/user_interaction:$(SRCDIR)/multigrid:$(OBJDIR)
+VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:$(SRCDIR)/parser:$(SRCDIR)/user_interaction:$(OBJDIR)
 
 # Rule to build the fortran files
 
@@ -111,8 +110,7 @@ diagnostics.o: diagnostics.F90 calc_df.o dist_fn.o iocontrol.o \
   particle_pointer_advance.o probes.o
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o output_cartesian.o
 epoch3d.o: epoch3d.F90 balance.o deck.o diagnostics.o fields.o ic_module.o \
-  mpi_routines.o particles.o setup.o solve_gauss.o split_particles.o welcome.o \
-  window.o
+  mpi_routines.o particles.o setup.o split_particles.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o shunt.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o
@@ -140,7 +138,6 @@ shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
-solve_gauss.o: solve_gauss.F90
 split_particles.o: split_particles.F90
 stack.o: stack.f90 shared_data.o
 strings_advanced.o: strings_advanced.F90 evaluate.o shunt.o
