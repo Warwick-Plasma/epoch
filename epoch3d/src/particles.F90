@@ -153,8 +153,8 @@ CONTAINS
 #endif
         ! Calculate v(t+0.5dt) from p(t)
         ! See PSC manual page (25-27)
-        root = 1.0_num / &
-            SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+        root = 1.0_num &
+            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
         part_vx = part_px * root
         part_vy = part_py * root
         part_vz = part_pz * root
@@ -242,19 +242,19 @@ CONTAINS
         DO ix = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO iz = -sf_order, sf_order
-              ex_part = ex_part + &
-                  hx(ix)*gy(iy)*gz(iz)*ex(cell_x2+ix, cell_y1+iy, cell_z1+iz)
-              ey_part = ey_part + &
-                  gx(ix)*hy(iy)*gz(iz)*ey(cell_x1+ix, cell_y2+iy, cell_z1+iz)
-              ez_part = ez_part + &
-                  gx(ix)*gy(iy)*gz(iz)*ez(cell_x1+ix, cell_y1+iy, cell_z1+iz)
+              ex_part = ex_part &
+                  + hx(ix)*gy(iy)*gz(iz)*ex(cell_x2+ix, cell_y1+iy, cell_z1+iz)
+              ey_part = ey_part &
+                  + gx(ix)*hy(iy)*gz(iz)*ey(cell_x1+ix, cell_y2+iy, cell_z1+iz)
+              ez_part = ez_part &
+                  + gx(ix)*gy(iy)*gz(iz)*ez(cell_x1+ix, cell_y1+iy, cell_z1+iz)
 
-              bx_part = bx_part + &
-                  gx(ix)*hy(iy)*hz(iz)*bx(cell_x1+ix, cell_y2+iy, cell_z2+iz)
-              by_part = by_part + &
-                  hx(ix)*gy(iy)*hz(iz)*by(cell_x2+ix, cell_y1+iy, cell_z2+iz)
-              bz_part = bz_part + &
-                  hx(ix)*hy(iy)*gz(iz)*bz(cell_x2+ix, cell_y2+iy, cell_z1+iz)
+              bx_part = bx_part &
+                  + gx(ix)*hy(iy)*hz(iz)*bx(cell_x1+ix, cell_y2+iy, cell_z2+iz)
+              by_part = by_part &
+                  + hx(ix)*gy(iy)*hz(iz)*by(cell_x2+ix, cell_y1+iy, cell_z2+iz)
+              bz_part = bz_part &
+                  + hx(ix)*hy(iy)*gz(iz)*bz(cell_x2+ix, cell_y2+iy, cell_z1+iz)
             ENDDO
           ENDDO
         ENDDO
@@ -273,15 +273,15 @@ CONTAINS
         tauz = bz_part * root
 
         tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
-        pxp = ((1.0_num+taux*taux-tauy*tauy-tauz*tauz)*pxm + &
-            (2.0_num*taux*tauy+2.0_num*tauz)*pym + &
-            (2.0_num*taux*tauz-2.0_num*tauy)*pzm)*tau
-        pyp = ((2.0_num*taux*tauy-2.0_num*tauz)*pxm + &
-            (1.0_num-taux*taux+tauy*tauy-tauz*tauz)*pym + &
-            (2.0_num*tauy*tauz+2.0_num*taux)*pzm)*tau
-        pzp = ((2.0_num*taux*tauz+2.0_num*tauy)*pxm + &
-            (2.0_num*tauy*tauz-2.0_num*taux)*pym + &
-            (1.0_num-taux*taux-tauy*tauy+tauz*tauz)*pzm)*tau
+        pxp = ((1.0_num+taux*taux-tauy*tauy-tauz*tauz)*pxm &
+            + (2.0_num*taux*tauy+2.0_num*tauz)*pym &
+            + (2.0_num*taux*tauz-2.0_num*tauy)*pzm)*tau
+        pyp = ((2.0_num*taux*tauy-2.0_num*tauz)*pxm &
+            + (1.0_num-taux*taux+tauy*tauy-tauz*tauz)*pym &
+            + (2.0_num*tauy*tauz+2.0_num*taux)*pzm)*tau
+        pzp = ((2.0_num*taux*tauz+2.0_num*tauy)*pxm &
+            + (2.0_num*tauy*tauz-2.0_num*taux)*pym &
+            + (1.0_num-taux*taux-tauy*tauy+tauz*tauz)*pzm)*tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part
@@ -289,8 +289,8 @@ CONTAINS
         part_pz = pzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        root = 1.0_num / &
-            SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+        root = 1.0_num &
+            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
         part_vx = part_px * root
         part_vy = part_py * root
         part_vz = part_pz * root
@@ -410,23 +410,26 @@ CONTAINS
           DO iz = zmin, zmax
             DO iy = ymin, ymax
               DO ix = xmin, xmax
-                wx = xi1x(ix) * (xi0y(iy) * xi0z(iz) + &
-                    0.5_num * xi1y(iy) * xi0z(iz) + &
-                    0.5_num * xi0y(iy) * xi1z(iz) + third * xi1y(iy) * xi1z(iz))
-                wy = xi1y(iy) * (xi0x(ix) * xi0z(iz) + &
-                    0.5_num * xi1x(ix) * xi0z(iz) + &
-                    0.5_num * xi0x(ix) * xi1z(iz) + third * xi1y(iy) * xi1z(iz))
-                wz = xi1z(iz) * (xi0y(iy) * xi0x(ix) + &
-                    0.5_num * xi1y(iy) * xi0x(ix) + &
-                    0.5_num * xi0y(iy) * xi1x(ix) + third * xi1y(iy) * xi1x(ix))
+                wx = xi1x(ix) * (xi0y(iy) * xi0z(iz) &
+                    + 0.5_num * xi1y(iy) * xi0z(iz) &
+                    + 0.5_num * xi0y(iy) * xi1z(iz) &
+                    + third * xi1y(iy) * xi1z(iz))
+                wy = xi1y(iy) * (xi0x(ix) * xi0z(iz) &
+                    + 0.5_num * xi1x(ix) * xi0z(iz) &
+                    + 0.5_num * xi0x(ix) * xi1z(iz) &
+                    + third * xi1y(iy) * xi1z(iz))
+                wz = xi1z(iz) * (xi0y(iy) * xi0x(ix) &
+                    + 0.5_num * xi1y(iy) * xi0x(ix) &
+                    + 0.5_num * xi0y(iy) * xi1x(ix) &
+                    + third * xi1y(iy) * xi1x(ix))
 
                 ! This is the bit that actually solves d(rho)/dt = -div(J)
-                jxh(ix, iy, iz) = jxh(ix-1, iy, iz) - &
-                    part_q * wx * 1.0_num/dt * part_weight/(dy*dz)
-                jyh(ix, iy, iz) = jyh(ix, iy-1, iz) - &
-                    part_q * wy * 1.0_num/dt * part_weight/(dx*dz)
-                jzh(ix, iy, iz) = jzh(ix, iy, iz-1) - &
-                    part_q * wz * 1.0_num/dt * part_weight/(dx*dy)
+                jxh(ix, iy, iz) = jxh(ix-1, iy, iz) &
+                    - part_q * wx * 1.0_num/dt * part_weight/(dy*dz)
+                jyh(ix, iy, iz) = jyh(ix, iy-1, iz) &
+                    - part_q * wy * 1.0_num/dt * part_weight/(dx*dz)
+                jzh(ix, iy, iz) = jzh(ix, iy, iz-1) &
+                    - part_q * wz * 1.0_num/dt * part_weight/(dx*dy)
 
                 jx(cell_x1+ix, cell_y1+iy, cell_z1+iz) = &
                     jx(cell_x1+ix, cell_y1+iy, cell_z1+iz) + jxh(ix, iy, iz)
@@ -453,22 +456,22 @@ CONTAINS
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
           probe_energy = &
-              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) / &
-              (part_m * c)**2) - 1.0_num) * (part_m * c**2)
+              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) &
+              / (part_m * c)**2) - 1.0_num) * (part_m * c**2)
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN
-            IF ((probe_energy .LT. current_probe%ek_max) .OR. &
-                (current_probe%ek_max .LT. 0.0_num)) THEN
+            IF ((probe_energy .LT. current_probe%ek_max) &
+                .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
 
-              d_init = SUM(current_probe%normal * &
-                  (current_probe%corner(1,:) -&
-                  (/init_part_x, init_part_y, init_part_z/)))
-              d_final = SUM(current_probe%normal * &
-                  (current_probe%corner(1,:) - &
-                  (/final_part_x, final_part_y, final_part_z/)))
-              IF (SIGN(1.0_num, d_init)*SIGN(1.0_num, d_final) .LE. &
-                  0.0_num) THEN
+              d_init = SUM(current_probe%normal &
+                  * (current_probe%corner(1,:) &
+                  - (/init_part_x, init_part_y, init_part_z/)))
+              d_final = SUM(current_probe%normal &
+                  * (current_probe%corner(1,:) &
+                  - (/final_part_x, final_part_y, final_part_z/)))
+              IF (SIGN(1.0_num, d_init)*SIGN(1.0_num, d_final) &
+                  .LE. 0.0_num) THEN
                 ! this particle is wanted so copy it to the list associated
                 ! with this probe
                 ALLOCATE(particle_copy)

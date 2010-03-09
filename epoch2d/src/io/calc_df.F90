@@ -177,9 +177,9 @@ CONTAINS
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 + &
-                (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) - &
-                (part_m*l_weight)*c**2
+            data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 &
+                + (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) &
+                - (part_m*l_weight)*c**2
             data_array(cell_x+ix, cell_y+iy) = &
                 data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
             ct(cell_x+ix, cell_y+iy) = &
@@ -463,8 +463,8 @@ CONTAINS
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
             data = SQRT(part_px**2+part_py**2+part_pz**2) * l_weight
-!!$            IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
-!!$                data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
+!!$            IF (data .GE. p_min(cell_x+ix, cell_y+iy) &
+!!$                .AND. data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
             mean(cell_x+ix, cell_y+iy) = &
                 mean(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
             data = l_weight
@@ -519,11 +519,11 @@ CONTAINS
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
             data = SQRT(part_px**2+part_py**2+part_pz**2)
-!!$            IF (data .GE. p_min(cell_x+ix, cell_y+iy) .AND. &
-!!$                data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
+!!$            IF (data .GE. p_min(cell_x+ix, cell_y+iy) &
+!!$                .AND. data .LE. p_max(cell_x+ix, cell_y+iy)) THEN
             sigma(cell_x+ix, cell_y+iy) = &
-                sigma(cell_x+ix, cell_y+iy) + &
-                gx(ix) * gy(iy) * (data-mean(cell_x+ix, cell_y+iy))**2
+                sigma(cell_x+ix, cell_y+iy) &
+                + gx(ix) * gy(iy) * (data-mean(cell_x+ix, cell_y+iy))**2
             part_count(cell_x+ix, cell_y+iy) = &
                 part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy)
 !!$            ENDIF

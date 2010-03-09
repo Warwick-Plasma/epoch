@@ -247,9 +247,9 @@ CONTAINS
             ENDIF
             use_this = .TRUE.
             DO idir = 1, 5
-              IF (use_restrictions(idir) .AND. &
-                  (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
-                  particle_data(idir) .GT. restrictions(idir, 2))) &
+              IF (use_restrictions(idir) &
+                  .AND. (particle_data(idir) .LT. restrictions(idir, 1) &
+                  .OR. particle_data(idir) .GT. restrictions(idir, 2))) &
                       use_this = .FALSE.
             ENDDO
             IF (use_this) THEN
@@ -283,8 +283,8 @@ CONTAINS
         RANGE(idim, 2) = 1.0_num
       ENDIF
       ! Calculate the maxmium range of a momentum direction
-      IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv .AND. &
-          .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
+      IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv &
+          .AND. .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
     ENDDO
 
     DO idim = 1, 3
@@ -339,9 +339,10 @@ CONTAINS
       particle_data(3:5) = current%part_p
       use_this = .TRUE.
       DO idir = 1, 5
-        IF (use_restrictions(idir) .AND. &
-            (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
-            particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
+        IF (use_restrictions(idir) &
+            .AND. (particle_data(idir) .LT. restrictions(idir, 1) &
+            .OR. particle_data(idir) .GT. restrictions(idir, 2))) &
+                use_this = .FALSE.
       ENDDO
       IF (use_this) THEN
         DO idim = 1, 3
@@ -377,10 +378,10 @@ CONTAINS
       DEALLOCATE(data2)
     ENDIF
 
-    grid_name = "Grid_" // TRIM(name) // "_" // &
-        TRIM(particle_species(species)%name)
-    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" // &
-        TRIM(particle_species(species)%name)
+    grid_name = "Grid_" // TRIM(name) // "_" &
+        // TRIM(particle_species(species)%name)
+    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" &
+        // TRIM(particle_species(species)%name)
     var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
     CALL cfd_write_3d_cartesian_grid(TRIM(grid_name), "Grid", &
@@ -558,9 +559,9 @@ CONTAINS
             ENDIF
             use_this = .TRUE.
             DO idir = 1, 5
-              IF (use_restrictions(idir) .AND. &
-                  (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
-                  particle_data(idir) .GT. restrictions(idir, 2))) &
+              IF (use_restrictions(idir) &
+                  .AND. (particle_data(idir) .LT. restrictions(idir, 1) &
+                  .OR. particle_data(idir) .GT. restrictions(idir, 2))) &
                       use_this = .FALSE.
             ENDDO
             IF (use_this) THEN
@@ -588,8 +589,9 @@ CONTAINS
         RANGE(idim, 2) = temp_data
 
         ! Calculate the maxmium range of a momentum direction
-        IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv .AND. &
-            .NOT. parallel(idim)) max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
+        IF (RANGE(idim, 2)-RANGE(idim, 1) .GT. max_p_conv &
+            .AND. .NOT. parallel(idim)) &
+                max_p_conv = RANGE(idim, 2)-RANGE(idim, 1)
       ENDIF
       ! Fix so that if distribution function is zero then it picks an arbitrary
       ! scale in that direction
@@ -621,8 +623,8 @@ CONTAINS
     ! Create grids
     DO idim = 1, 2
       IF (.NOT. parallel(idim)) &
-          dgrid(idim) = (RANGE(idim, 2)-RANGE(idim, 1)) / &
-              REAL(resolution(idim)-1, num)
+          dgrid(idim) = (RANGE(idim, 2)-RANGE(idim, 1)) &
+              / REAL(resolution(idim)-1, num)
     ENDDO
     ALLOCATE(grid1(0:global_resolution(1)), grid2(0:global_resolution(2)))
 
@@ -646,9 +648,10 @@ CONTAINS
       particle_data(3:5) = current%part_p
       use_this = .TRUE.
       DO idir = 1, 5
-        IF (use_restrictions(idir) .AND. &
-            (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
-            particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
+        IF (use_restrictions(idir) &
+            .AND. (particle_data(idir) .LT. restrictions(idir, 1) &
+            .OR. particle_data(idir) .GT. restrictions(idir, 2))) &
+                use_this = .FALSE.
       ENDDO
       IF (use_this) THEN
         DO idim = 1, 2
@@ -670,8 +673,8 @@ CONTAINS
         part_weight = current%weight
 #endif
         IF (use_this) &
-            data(cell(1), cell(2)) = data(cell(1), cell(2)) + &
-                part_weight
+            data(cell(1), cell(2)) = data(cell(1), cell(2)) &
+                + part_weight
       ENDIF
       current=>current%next
     ENDDO
@@ -685,10 +688,10 @@ CONTAINS
       DEALLOCATE(data2)
     ENDIF
 
-    grid_name = "Grid_" // TRIM(name) // "_" // &
-        TRIM(particle_species(species)%name)
-    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" // &
-        TRIM(particle_species(species)%name)
+    grid_name = "Grid_" // TRIM(name) // "_" &
+        // TRIM(particle_species(species)%name)
+    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" &
+        // TRIM(particle_species(species)%name)
     var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
     CALL cfd_write_2d_cartesian_grid(TRIM(grid_name), "Grid", &
@@ -730,8 +733,8 @@ CONTAINS
     DO iz = 0, n_local(3)-1
       DO iy = 0, n_local(2)-1
         ipoint = ipoint+1
-        starts(ipoint) = (start(3)+iz-1) * n_global(1) * n_global(2) + &
-            (start(2)+iy-1) * n_global(1) + start(1) -1
+        starts(ipoint) = (start(3)+iz-1) * n_global(1) * n_global(2) &
+            + (start(2)+iy-1) * n_global(1) + start(1) - 1
       ENDDO
     ENDDO
 

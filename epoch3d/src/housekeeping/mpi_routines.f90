@@ -53,12 +53,12 @@ CONTAINS
     periods = .TRUE.
     reorder = .TRUE.
 
-    IF (xbc_left  .NE. c_bc_periodic .OR. &
-        xbc_right .NE. c_bc_periodic) periods(3) = .FALSE.
-    IF (ybc_down  .NE. c_bc_periodic .OR. &
-        ybc_up    .NE. c_bc_periodic) periods(2) = .FALSE.
-    IF (zbc_front .NE. c_bc_periodic .OR. &
-        zbc_back  .NE. c_bc_periodic) periods(1) = .FALSE.
+    IF (xbc_left  .NE. c_bc_periodic &
+        .OR. xbc_right .NE. c_bc_periodic) periods(3) = .FALSE.
+    IF (ybc_down  .NE. c_bc_periodic &
+        .OR. ybc_up    .NE. c_bc_periodic) periods(2) = .FALSE.
+    IF (zbc_front .NE. c_bc_periodic &
+        .OR. zbc_back  .NE. c_bc_periodic) periods(1) = .FALSE.
 
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)
@@ -87,9 +87,9 @@ CONTAINS
           ! For some stupid reason MPI_CART_RANK returns an error rather than
           ! MPI_PROC_NULL if the coords are out of range.
           DO idim = 1, ndims
-            IF ((test_coords(idim) .LT. 0 .OR. &
-                test_coords(idim) .GE. dims(idim)) .AND. &
-                .NOT. periods(idim)) op = .FALSE.
+            IF ((test_coords(idim) .LT. 0 &
+                .OR. test_coords(idim) .GE. dims(idim)) &
+                .AND. .NOT. periods(idim)) op = .FALSE.
           ENDDO
           IF (op) &
               CALL MPI_CART_RANK(comm, test_coords, neighbour(ix, iy, iz), &

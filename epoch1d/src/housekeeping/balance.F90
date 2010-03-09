@@ -51,8 +51,8 @@ CONTAINS
       ! Determine ratio of npart on between most loaded and least loaded
       ! processor. Maybe this can be replaced by and MPI_ALLREDUCE to
       ! find min/max?
-      balance_frac = REAL(MINVAL(npart_each_rank), num) / &
-          REAL(MAXVAL(npart_each_rank), num)
+      balance_frac = REAL(MINVAL(npart_each_rank), num) &
+          / REAL(MAXVAL(npart_each_rank), num)
       IF (balance_frac .GT. dlb_threshold) RETURN
       IF (rank .EQ. 0) PRINT *, "Load balancing with fraction", balance_frac
       DEALLOCATE(npart_each_rank)
@@ -61,8 +61,8 @@ CONTAINS
     ALLOCATE(starts_x(1:nprocx), ends_x(1:nprocx))
 
     ! Sweep in X
-    IF (IAND(balance_mode, c_lb_x) .NE. 0 .OR. &
-        IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+    IF (IAND(balance_mode, c_lb_x) .NE. 0 &
+        .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
       ! Rebalancing in X
       ALLOCATE(density_x(0:nx_global+1))
       CALL get_density_in_x(density_x)
@@ -361,9 +361,9 @@ CONTAINS
     total = 0
     DO idim = 1, sz
       IF (partition .GT. nproc) EXIT
-      IF (total .GE. npart_per_proc_ideal .OR. &
-          ABS(total + density(idim) -npart_per_proc_ideal) .GT. &
-          ABS(total-npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
+      IF (total .GE. npart_per_proc_ideal &
+          .OR. ABS(total + density(idim) -npart_per_proc_ideal) &
+          .GT. ABS(total-npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
         total = density(idim)
         starts(partition) = idim-1
         partition = partition+1
@@ -398,8 +398,8 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx-1
-      IF (a_particle%part_pos .GE. x_starts(iproc) - dx/2.0_num .AND. &
-          a_particle%part_pos .LE. x_ends(iproc) + dx/2.0_num) THEN
+      IF (a_particle%part_pos .GE. x_starts(iproc) - dx/2.0_num &
+          .AND. a_particle%part_pos .LE. x_ends(iproc) + dx/2.0_num) THEN
         coords(1) = iproc
         EXIT
       ENDIF

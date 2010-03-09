@@ -96,10 +96,10 @@ CONTAINS
         DO iy = mny, mxy, ordy
           DO ix = mnx, mxx, ordx
             IF (MOD(ix+iy, 2) .EQ. sweep) THEN
-              grid%phi(ix, iy) = (1.0-w)* grid%phi(ix, iy) + &
-                  w * ((-grid%rho(ix, iy)+lamdax*(grid%phi(ix-1, iy)+&
-                  grid%phi(ix+1, iy)) +lamday*(grid%phi(ix, iy-1)+&
-                  grid%phi(ix, iy+1)))/(2.0_num*(lamdax+lamday)))
+              grid%phi(ix, iy) = (1.0-w)* grid%phi(ix, iy) &
+                  + w * ((-grid%rho(ix, iy)+lamdax*(grid%phi(ix-1, iy) &
+                  + grid%phi(ix+1, iy)) +lamday*(grid%phi(ix, iy-1) &
+                  + grid%phi(ix, iy+1)))/(2.0_num*(lamdax+lamday)))
             ENDIF
           ENDDO
         ENDDO
@@ -108,10 +108,10 @@ CONTAINS
 
       DO iy = 1, ny_l
         DO ix = 1, nx_l
-          grid%resid(ix, iy) = grid%rho(ix, iy) - &
-              (lamdax*(grid%phi(ix-1, iy)-2.0_num*grid%phi(ix, iy)+&
-              grid%phi(ix+1, iy))+ lamday*(grid%phi(ix, iy-1)-&
-              2.0_num*grid%phi(ix, iy)+grid%phi(ix, iy+1)))
+          grid%resid(ix, iy) = grid%rho(ix, iy) &
+              - (lamdax*(grid%phi(ix-1, iy)-2.0_num*grid%phi(ix, iy) &
+              + grid%phi(ix+1, iy))+ lamday*(grid%phi(ix, iy-1) &
+              - 2.0_num*grid%phi(ix, iy)+grid%phi(ix, iy+1)))
         ENDDO
       ENDDO
 
@@ -191,11 +191,11 @@ CONTAINS
 
     DO ix = 1, nx_l
       DO iy = 1, ny_l
-        lores(ix, iy) = (4.0_num*hires(ix*2-1, iy*2-1) + &
-            2.0_num * (hires(ix*2, iy*2-1)+hires(ix*2-2, iy*2-1) + &
-            hires(ix*2-1, iy*2)+hires(ix*2-1, iy*2-2)) + &
-            (hires(ix*2, iy*2) + hires(ix*2, iy*2-2) + hires(ix*2-2, iy*2) + &
-            hires(ix*2-2, iy*2-2)))/16.0_num
+        lores(ix, iy) = (4.0_num*hires(ix*2-1, iy*2-1) &
+            + 2.0_num * (hires(ix*2, iy*2-1)+hires(ix*2-2, iy*2-1) &
+            + hires(ix*2-1, iy*2)+hires(ix*2-1, iy*2-2)) &
+            + (hires(ix*2, iy*2) + hires(ix*2, iy*2-2) + hires(ix*2-2, iy*2) &
+            + hires(ix*2-2, iy*2-2)))/16.0_num
       ENDDO
     ENDDO
 
@@ -225,10 +225,10 @@ CONTAINS
     DO ix = 1, nx_l
       DO iy = 1, ny_l
         temp(2*ix-1, 2*iy-1) = lores(ix, iy)
-        temp(2*ix, 2*iy-1)   = 0.5_num*(lores(ix, iy)+lores(ix+1, iy))
-        temp(2*ix-1, 2*iy)   = 0.5_num*(lores(ix, iy)+lores(ix, iy+1))
-        temp(2*ix, 2*iy)    = 0.25_num*(lores(ix, iy)+lores(ix+1, iy)+ &
-            lores(ix, iy+1)+lores(ix+1, iy+1))
+        temp(2*ix, 2*iy-1)   = 0.5_num *(lores(ix, iy)+lores(ix+1, iy))
+        temp(2*ix-1, 2*iy)   = 0.5_num *(lores(ix, iy)+lores(ix, iy+1))
+        temp(2*ix, 2*iy)     = 0.25_num*(lores(ix, iy)+lores(ix+1, iy) &
+            + lores(ix, iy+1)+lores(ix+1, iy+1))
       ENDDO
     ENDDO
 

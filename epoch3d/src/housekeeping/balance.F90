@@ -65,8 +65,8 @@ CONTAINS
     ALLOCATE(starts_z(1:nprocz), ends_z(1:nprocz))
 
     ! Sweep in X
-    IF (IAND(balance_mode, c_lb_x) .NE. 0 .OR. &
-        IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+    IF (IAND(balance_mode, c_lb_x) .NE. 0 &
+        .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
       ! Rebalancing in X
       ALLOCATE(density_x(0:nx_global+1))
       CALL get_density_in_x(density_x)
@@ -78,8 +78,8 @@ CONTAINS
     ENDIF
 
     ! Sweep in Y
-    IF (IAND(balance_mode, c_lb_y) .NE. 0 .OR. &
-        IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+    IF (IAND(balance_mode, c_lb_y) .NE. 0 &
+        .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
       ! Rebalancing in Y
       ALLOCATE(density_y(0:ny_global+1))
       CALL get_density_in_y(density_y)
@@ -91,8 +91,8 @@ CONTAINS
     ENDIF
 
     ! Sweep in Z
-    IF (IAND(balance_mode, c_lb_z) .NE. 0 .OR. &
-        IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+    IF (IAND(balance_mode, c_lb_z) .NE. 0 &
+        .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
       ! Rebalancing in Z
       ALLOCATE(density_z(0:nz_global+1))
       CALL get_density_in_z(density_z)
@@ -664,9 +664,9 @@ CONTAINS
     total = 0
     DO idim = 1, sz
       IF (partition .GT. nproc) EXIT
-      IF (total .GE. npart_per_proc_ideal .OR. &
-          ABS(total + density(idim) -npart_per_proc_ideal) .GT. &
-          ABS(total-npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
+      IF (total .GE. npart_per_proc_ideal &
+          .OR. ABS(total + density(idim) -npart_per_proc_ideal) &
+          .GT. ABS(total-npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
         total = density(idim)
         starts(partition) = idim-1
         partition = partition+1
@@ -701,23 +701,23 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx-1
-      IF (a_particle%part_pos(1) .GT. x_starts(iproc) - dx/2.0_num .AND. &
-          a_particle%part_pos(1) .LE. x_ends(iproc) + dx/2.0_num) THEN
+      IF (a_particle%part_pos(1) .GT. x_starts(iproc) - dx/2.0_num &
+          .AND. a_particle%part_pos(1) .LE. x_ends(iproc) + dx/2.0_num) THEN
         coords(3) = iproc
         EXIT
       ENDIF
     ENDDO
 
     DO iproc = 0, nprocy-1
-      IF (a_particle%part_pos(2) .GT. y_starts(iproc) - dy/2.0_num .AND. &
-          a_particle%part_pos(2) .LE. y_ends(iproc) + dy/2.0_num) THEN
+      IF (a_particle%part_pos(2) .GT. y_starts(iproc) - dy/2.0_num &
+          .AND. a_particle%part_pos(2) .LE. y_ends(iproc) + dy/2.0_num) THEN
         coords(2) = iproc
         EXIT
       ENDIF
     ENDDO
     DO iproc = 0, nprocz-1
-      IF (a_particle%part_pos(3) .GT. z_starts(iproc) - dz/2.0_num .AND. &
-          a_particle%part_pos(3) .LE. z_ends(iproc) + dz/2.0_num) THEN
+      IF (a_particle%part_pos(3) .GT. z_starts(iproc) - dz/2.0_num &
+          .AND. a_particle%part_pos(3) .LE. z_ends(iproc) + dz/2.0_num) THEN
         coords(1) = iproc
         EXIT
       ENDIF

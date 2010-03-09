@@ -128,8 +128,8 @@ CONTAINS
             DO i = 1, 3
               temp_local = 0.0_num
               DO isuby = -1, +1
-                temp_local = temp_local + gy(isuby) * &
-                    particle_species(ispecies)%temperature(cell_y+isuby, i)
+                temp_local = temp_local + gy(isuby) &
+                    * particle_species(ispecies)%temperature(cell_y+isuby, i)
               ENDDO
               current%part_p(i) = &
                   momentum_from_temperature(particle_species(ispecies)%mass, &
@@ -138,9 +138,10 @@ CONTAINS
 
             weight_local = 0.0_num
             DO isuby = -1, +1
-              weight_local = weight_local + gy(isuby) * &
-                  particle_species(ispecies)%density(cell_y+isuby)/&
-                  (REAL(particle_species(ispecies)%npart_per_cell, num)/(dx*dy))
+              weight_local = weight_local + gy(isuby) &
+                  * particle_species(ispecies)%density(cell_y+isuby) &
+                  / (REAL(particle_species(ispecies)%npart_per_cell, num) &
+                  / (dx*dy))
             ENDDO
 #ifdef PER_PARTICLE_WEIGHT
             current%weight = weight_local

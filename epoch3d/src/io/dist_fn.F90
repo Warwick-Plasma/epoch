@@ -256,9 +256,9 @@ CONTAINS
             ENDIF
             use_this = .TRUE.
             DO idir = 1, 6
-              IF (use_restrictions(idir) .AND. &
-                  (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
-                  particle_data(idir) .GT. restrictions(idir, 2))) &
+              IF (use_restrictions(idir) &
+                  .AND. (particle_data(idir) .LT. restrictions(idir, 1) &
+                  .OR. particle_data(idir) .GT. restrictions(idir, 2))) &
                       use_this = .FALSE.
             ENDDO
             IF (use_this) THEN
@@ -302,8 +302,8 @@ CONTAINS
 
     ! Setup MPI
     IF (use_x .AND. use_y .AND. use_z) need_reduce = .FALSE.
-    color = 1 ! coordinates(3) + nprocx * coordinates(2) + &
-              ! nprocx*nprocy*coordinates(1)
+    color = 1 ! coordinates(3) + nprocx * coordinates(2) &
+              ! + nprocx*nprocy*coordinates(1)
     IF (use_z) color = color+nprocx*nprocy*coordinates(1)
     ! If using x direction need to reduce only across all y
     IF (use_y) color = color+nprocx * coordinates(2)
@@ -350,9 +350,10 @@ CONTAINS
       particle_data(4:6) = current%part_p
       use_this = .TRUE.
       DO idir = 1, 6
-        IF (use_restrictions(idir) .AND. &
-            (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
-            particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
+        IF (use_restrictions(idir) &
+            .AND. (particle_data(idir) .LT. restrictions(idir, 1) &
+            .OR. particle_data(idir) .GT. restrictions(idir, 2))) &
+                use_this = .FALSE.
       ENDDO
       IF (use_this) THEN
         DO idim = 1, 3
@@ -385,10 +386,10 @@ CONTAINS
       DEALLOCATE(data2)
     ENDIF
 
-    grid_name = "Grid_" // TRIM(name) // "_" // &
-        TRIM(particle_species(species)%name)
-    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" // &
-        TRIM(particle_species(species)%name)
+    grid_name = "Grid_" // TRIM(name) // "_" &
+        // TRIM(particle_species(species)%name)
+    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" &
+        // TRIM(particle_species(species)%name)
     var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
     CALL cfd_write_3d_cartesian_grid(TRIM(grid_name), "Grid", &
@@ -572,9 +573,9 @@ CONTAINS
             ENDIF
             use_this = .TRUE.
             DO idir = 1, 6
-              IF (use_restrictions(idir) .AND. &
-                  (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
-                  particle_data(idir) .GT. restrictions(idir, 2))) &
+              IF (use_restrictions(idir) &
+                  .AND. (particle_data(idir) .LT. restrictions(idir, 1) &
+                  .OR. particle_data(idir) .GT. restrictions(idir, 2))) &
                       use_this = .FALSE.
             ENDDO
             IF (use_this) THEN
@@ -619,8 +620,8 @@ CONTAINS
 
     ! Setup MPI
     IF (use_x .AND. use_y .AND. use_z) need_reduce = .FALSE.
-    color = 1 ! coordinates(3) + nprocx * coordinates(2) + &
-              ! nprocx*nprocy*coordinates(1)
+    color = 1 ! coordinates(3) + nprocx * coordinates(2) &
+              ! + nprocx*nprocy*coordinates(1)
     IF (use_z) color = color+nprocx*nprocy*coordinates(1)
     ! If using x direction need to reduce only across all y
     IF (use_y) color = color+nprocx * coordinates(2)
@@ -643,8 +644,8 @@ CONTAINS
     ! Create grids
     DO idim = 1, 2
       IF (.NOT. parallel(idim)) &
-          dgrid(idim) = (RANGE(idim, 2)-RANGE(idim, 1)) / &
-              REAL(resolution(idim)-1, num)
+          dgrid(idim) = (RANGE(idim, 2)-RANGE(idim, 1)) &
+              / REAL(resolution(idim)-1, num)
     ENDDO
     ALLOCATE(grid1(0:global_resolution(1)), grid2(0:global_resolution(2)))
 
@@ -667,9 +668,10 @@ CONTAINS
       particle_data(4:6) = current%part_p
       use_this = .TRUE.
       DO idir = 1, 6
-        IF (use_restrictions(idir) .AND. &
-            (particle_data(idir) .LT. restrictions(idir, 1) .OR. &
-            particle_data(idir) .GT. restrictions(idir, 2))) use_this = .FALSE.
+        IF (use_restrictions(idir) &
+            .AND. (particle_data(idir) .LT. restrictions(idir, 1) &
+            .OR. particle_data(idir) .GT. restrictions(idir, 2))) &
+                use_this = .FALSE.
       ENDDO
       IF (use_this) THEN
         DO idim = 1, 2
@@ -688,8 +690,8 @@ CONTAINS
         ENDDO
 
         IF (use_this) &
-            data(cell(1), cell(2)) = data(cell(1), cell(2)) + &
-                current%weight
+            data(cell(1), cell(2)) = data(cell(1), cell(2)) &
+                + current%weight
       ENDIF
       current=>current%next
     ENDDO
@@ -703,10 +705,10 @@ CONTAINS
       DEALLOCATE(data2)
     ENDIF
 
-    grid_name = "Grid_" // TRIM(name) // "_" // &
-        TRIM(particle_species(species)%name)
-    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" // &
-        TRIM(particle_species(species)%name)
+    grid_name = "Grid_" // TRIM(name) // "_" &
+        // TRIM(particle_species(species)%name)
+    norm_grid_name = "Norm_Grid_" // TRIM(name) // "_" &
+        // TRIM(particle_species(species)%name)
     var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
     CALL cfd_write_2d_cartesian_grid(TRIM(grid_name), "Grid", &

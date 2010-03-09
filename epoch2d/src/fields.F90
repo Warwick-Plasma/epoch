@@ -32,50 +32,50 @@ CONTAINS
 #ifndef HIGH_ORDER_FIELDS
     DO iy = 1, ny
       DO ix = 1, nx
-        ex(ix, iy) = ex(ix, iy) + &
-            cny*(bz(ix, iy)-bz(ix, iy-1))*c**2 -0.5_num*dt*jx(ix, iy)/epsilon0
+        ex(ix, iy) = ex(ix, iy) &
+            + cny*(bz(ix, iy)-bz(ix, iy-1))*c**2 -0.5_num*dt*jx(ix, iy)/epsilon0
       ENDDO
     ENDDO
 
     ! Update ey to t = t0+dt/2
     DO iy = 1, ny
       DO ix = 1, nx
-        ey(ix, iy) = ey(ix, iy) - &
-            cnx*(bz(ix, iy)-bz(ix-1, iy))*c**2 -0.5_num*dt*jy(ix, iy)/epsilon0
+        ey(ix, iy) = ey(ix, iy) &
+            - cnx*(bz(ix, iy)-bz(ix-1, iy))*c**2 -0.5_num*dt*jy(ix, iy)/epsilon0
       ENDDO
     ENDDO
 
     ! Update ez to t = t0+dt/2
     DO iy = 1, ny
       DO ix = 1, nx
-        ez(ix, iy) = ez(ix, iy) + &
-            cnx*(by(ix, iy)-by(ix-1, iy))*c**2 - &
-            cny*(bx(ix, iy)-bx(ix, iy-1))*c**2 -0.5_num*dt*jz(ix, iy)/epsilon0
+        ez(ix, iy) = ez(ix, iy) &
+            + cnx*(by(ix, iy)-by(ix-1, iy))*c**2 &
+            - cny*(bx(ix, iy)-bx(ix, iy-1))*c**2 -0.5_num*dt*jz(ix, iy)/epsilon0
       ENDDO
     ENDDO
 #else
     DO iy = 1, ny
       DO ix = 1, nx
-        ex(ix, iy) = ex(ix, iy) + &
-            cny*c**2 * SUM(diff_consts * bz(ix, iy-large:iy+small)) - &
-            0.5_num*dt*jx(ix, iy)/epsilon0
+        ex(ix, iy) = ex(ix, iy) &
+            + cny*c**2 * SUM(diff_consts * bz(ix, iy-large:iy+small)) &
+            - 0.5_num*dt*jx(ix, iy)/epsilon0
       ENDDO
     ENDDO
 
     DO iy = 1, ny
       DO ix = 1, nx
-        ey(ix, iy) = ey(ix, iy) - &
-            cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small, iy)) - &
-            0.5_num*dt*jy(ix, iy)/epsilon0
+        ey(ix, iy) = ey(ix, iy) &
+            - cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small, iy)) &
+            - 0.5_num*dt*jy(ix, iy)/epsilon0
       ENDDO
     ENDDO
 
     DO iy = 1, ny
       DO ix = 1, nx
-        ez(ix, iy) = ez(ix, iy) + &
-            cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small, iy)) - &
-            cny*c**2 * SUM(diff_consts * bx(ix, iy-large:iy+small)) - &
-            0.5_num*dt*jz(ix, iy)/epsilon0
+        ez(ix, iy) = ez(ix, iy) &
+            + cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small, iy)) &
+            - cny*c**2 * SUM(diff_consts * bx(ix, iy-large:iy+small)) &
+            - 0.5_num*dt*jz(ix, iy)/epsilon0
       ENDDO
     ENDDO
 #endif
@@ -103,30 +103,30 @@ CONTAINS
     ! bz
     DO iy = 1, ny
       DO ix = 1, nx
-        bz(ix, iy) = bz(ix, iy) - &
-            cnx*(ey(ix+1, iy)-ey(ix, iy)) +cny*(ex(ix, iy+1)-ex(ix, iy))
+        bz(ix, iy) = bz(ix, iy) &
+            - cnx*(ey(ix+1, iy)-ey(ix, iy)) +cny*(ex(ix, iy+1)-ex(ix, iy))
       ENDDO
     ENDDO
 #else
     DO iy = 1, ny
       DO ix = 1, nx
-        bx(ix, iy) = bx(ix, iy) - &
-            cny * SUM(diff_consts * ez(ix, iy-small:iy+large))
+        bx(ix, iy) = bx(ix, iy) &
+            - cny * SUM(diff_consts * ez(ix, iy-small:iy+large))
       ENDDO
     ENDDO
 
     DO iy = 1, ny
       DO ix = 1, nx
-        by(ix, iy) = by(ix, iy) + &
-            cnx * SUM(diff_consts * ez(ix-small:ix+large, iy))
+        by(ix, iy) = by(ix, iy) &
+            + cnx * SUM(diff_consts * ez(ix-small:ix+large, iy))
       ENDDO
     ENDDO
 
     DO iy = 1, ny
       DO ix = 1, nx
-        bz(ix, iy) = bz(ix, iy) - &
-            cnx * SUM(diff_consts * ey(ix-small:ix+large, iy)) + &
-            cny * SUM(diff_consts * ex(ix, iy-small:iy+large))
+        bz(ix, iy) = bz(ix, iy) &
+            - cnx * SUM(diff_consts * ey(ix-small:ix+large, iy)) &
+            + cny * SUM(diff_consts * ex(ix, iy-small:iy+large))
       ENDDO
     ENDDO
 #endif
@@ -180,30 +180,30 @@ CONTAINS
     ! bz
     DO iy = 1, ny
       DO ix = 1, nx
-        bz(ix, iy) = bz(ix, iy) - &
-           cnx*(ey(ix+1, iy)-ey(ix, iy)) +cny*(ex(ix, iy+1)-ex(ix, iy))
+        bz(ix, iy) = bz(ix, iy) &
+           - cnx*(ey(ix+1, iy)-ey(ix, iy)) +cny*(ex(ix, iy+1)-ex(ix, iy))
       ENDDO
     ENDDO
 #else
     DO iy = 1, ny
       DO ix = 1, nx
-        bx(ix, iy) = bx(ix, iy) - &
-           cny * SUM(diff_consts * ez(ix, iy-small:iy+large))
+        bx(ix, iy) = bx(ix, iy) &
+           - cny * SUM(diff_consts * ez(ix, iy-small:iy+large))
       ENDDO
     ENDDO
 
     DO iy = 1, ny
       DO ix = 1, nx
-        by(ix, iy) = by(ix, iy) + &
-           cnx * SUM(diff_consts * ez(ix-small:ix+large, iy))
+        by(ix, iy) = by(ix, iy) &
+           + cnx * SUM(diff_consts * ez(ix-small:ix+large, iy))
       ENDDO
     ENDDO
 
     DO iy = 1, ny
       DO ix = 1, nx
-        bz(ix, iy) = bz(ix, iy) - &
-           cnx * SUM(diff_consts * ey(ix-small:ix+large, iy)) + &
-           cny * SUM(diff_consts * ex(ix, iy-small:iy+large))
+        bz(ix, iy) = bz(ix, iy) &
+           - cnx * SUM(diff_consts * ey(ix-small:ix+large, iy)) &
+           + cny * SUM(diff_consts * ex(ix, iy-small:iy+large))
       ENDDO
     ENDDO
 #endif
@@ -234,50 +234,50 @@ CONTAINS
     ! ex
     DO iy = 1, ny
       DO ix = 1, nx
-        ex(ix, iy) = ex(ix, iy) + &
-           cny*(bz(ix, iy)-bz(ix, iy-1)) * c**2 -0.5*dt*jx(ix, iy)/epsilon0
+        ex(ix, iy) = ex(ix, iy) &
+           + cny*(bz(ix, iy)-bz(ix, iy-1)) * c**2 -0.5*dt*jx(ix, iy)/epsilon0
       ENDDO
     ENDDO
 
     ! ey
     DO iy = 1, ny
       DO ix = 1, nx
-        ey(ix, iy) = ey(ix, iy) - &
-           cnx*(bz(ix, iy)-bz(ix-1, iy)) * c **2 -0.5*dt*jy(ix, iy)/epsilon0
+        ey(ix, iy) = ey(ix, iy) &
+           - cnx*(bz(ix, iy)-bz(ix-1, iy)) * c **2 -0.5*dt*jy(ix, iy)/epsilon0
       ENDDO
     ENDDO
 
     ! ez
     DO iy = 1, ny
       DO ix = 1, nx
-        ez(ix, iy) = ez(ix, iy) + &
-           cnx*(by(ix, iy)-by(ix-1, iy))*c**2 - &
-           cny*(bx(ix, iy)-bx(ix, iy-1))*c**2 -0.5*dt*jz(ix, iy)/epsilon0
+        ez(ix, iy) = ez(ix, iy) &
+           + cnx*(by(ix, iy)-by(ix-1, iy))*c**2 &
+           - cny*(bx(ix, iy)-bx(ix, iy-1))*c**2 -0.5*dt*jz(ix, iy)/epsilon0
       ENDDO
     ENDDO
 #else
     DO iy = 1, ny
       DO ix = 1, nx
-        ex(ix, iy) = ex(ix, iy) + &
-           cny*c**2 * SUM(diff_consts * bz(ix, iy-large:iy+small)) - &
-           0.5*dt*jx(ix, iy)/epsilon0
+        ex(ix, iy) = ex(ix, iy) &
+           + cny*c**2 * SUM(diff_consts * bz(ix, iy-large:iy+small)) &
+           - 0.5*dt*jx(ix, iy)/epsilon0
       ENDDO
     ENDDO
 
     DO iy = 1, ny
       DO ix = 1, nx
-        ey(ix, iy) = ey(ix, iy) - &
-           cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small, iy)) - &
-           0.5*dt*jy(ix, iy)/epsilon0
+        ey(ix, iy) = ey(ix, iy) &
+           - cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small, iy)) &
+           - 0.5*dt*jy(ix, iy)/epsilon0
       ENDDO
     ENDDO
 
     DO iy = 1, ny
       DO ix = 1, nx
-        ez(ix, iy) = ez(ix, iy) + &
-           cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small, iy)) - &
-           cny*c**2 * SUM(diff_consts * bx(ix, iy-large:iy+small)) - &
-           0.5_num*dt*jz(ix, iy)/epsilon0
+        ez(ix, iy) = ez(ix, iy) &
+           + cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small, iy)) &
+           - cny*c**2 * SUM(diff_consts * bx(ix, iy-large:iy+small)) &
+           - 0.5_num*dt*jz(ix, iy)/epsilon0
       ENDDO
     ENDDO
 #endif

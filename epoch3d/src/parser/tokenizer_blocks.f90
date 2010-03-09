@@ -215,8 +215,8 @@ CONTAINS
       as_operator = c_opcode_plus
     ENDIF
     IF (str_cmp(name, "-"))  THEN
-      IF (last_block_type .EQ. c_pt_variable .OR. &
-          last_block_type .EQ. c_pt_constant) THEN
+      IF (last_block_type .EQ. c_pt_variable &
+          .OR. last_block_type .EQ. c_pt_constant) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus

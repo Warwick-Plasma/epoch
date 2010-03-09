@@ -58,24 +58,24 @@ CONTAINS
       working_laser%profile = 0.0_num
       output%stack_point = 0
       CALL tokenize(value, output, handle_ic_laser_deck)
-      IF (working_laser%direction .EQ. c_bd_left .OR. &
-          working_laser%direction .EQ. c_bd_right) THEN
+      IF (working_laser%direction .EQ. c_bd_left &
+          .OR. working_laser%direction .EQ. c_bd_right) THEN
         DO iz = 1, nz
           DO iy = 1, ny
             working_laser%profile(iy, iz) = &
                 evaluate_at_point(output, 0, iy, iz, handle_ic_laser_deck)
           ENDDO
         ENDDO
-      ELSE IF (working_laser%direction .EQ. c_bd_up .OR. &
-          working_laser%direction .EQ. c_bd_down) THEN
+      ELSE IF (working_laser%direction .EQ. c_bd_up &
+          .OR. working_laser%direction .EQ. c_bd_down) THEN
         DO iz = 1, nz
           DO ix = 1, nx
             working_laser%profile(ix, iz) = &
                 evaluate_at_point(output, ix, 0, iz, handle_ic_laser_deck)
           ENDDO
         ENDDO
-      ELSE IF (working_laser%direction .EQ. c_bd_front .OR. &
-          working_laser%direction .EQ. c_bd_back) THEN
+      ELSE IF (working_laser%direction .EQ. c_bd_front &
+          .OR. working_laser%direction .EQ. c_bd_back) THEN
         DO iy = 1, ny
           DO ix = 1, nx
             working_laser%profile(ix, iy) = &
@@ -90,24 +90,24 @@ CONTAINS
       working_laser%phase = 0.0_num
       output%stack_point = 0
       CALL tokenize(value, output, handle_ic_laser_deck)
-      IF (working_laser%direction .EQ. c_bd_left .OR. &
-          working_laser%direction .EQ. c_bd_right) THEN
+      IF (working_laser%direction .EQ. c_bd_left &
+          .OR. working_laser%direction .EQ. c_bd_right) THEN
         DO iz = 1, nz
           DO iy = 1, ny
             working_laser%phase(iy, iz) = &
                 evaluate_at_point(output, 0, iy, iz, handle_ic_laser_deck)
           ENDDO
         ENDDO
-      ELSE IF (working_laser%direction .EQ. c_bd_up .OR. &
-          working_laser%direction .EQ. c_bd_down) THEN
+      ELSE IF (working_laser%direction .EQ. c_bd_up &
+          .OR. working_laser%direction .EQ. c_bd_down) THEN
         DO iz = 1, nz
           DO ix = 1, nx
             working_laser%phase(ix, iz) = &
                 evaluate_at_point(output, ix, 0, iz, handle_ic_laser_deck)
           ENDDO
         ENDDO
-      ELSE IF (working_laser%direction .EQ. c_bd_front .OR. &
-          working_laser%direction .EQ. c_bd_back) THEN
+      ELSE IF (working_laser%direction .EQ. c_bd_front &
+          .OR. working_laser%direction .EQ. c_bd_back) THEN
         DO iy = 1, ny
           DO ix = 1, nx
             working_laser%phase(ix, iy) = &

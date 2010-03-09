@@ -153,15 +153,15 @@ CONTAINS
     test_ct = 0
 
     ! Empty list is OK
-    IF (.NOT. ASSOCIATED(partlist%head) .AND. &
-        .NOT. ASSOCIATED(partlist%tail)) THEN
+    IF (.NOT. ASSOCIATED(partlist%head) &
+        .AND. .NOT. ASSOCIATED(partlist%tail)) THEN
       test_partlist = 0
       RETURN
     ENDIF
 
     ! List with head or tail but not both is broken
-    IF (.NOT. ASSOCIATED(partlist%head) .OR. &
-        .NOT. ASSOCIATED(partlist%tail)) THEN
+    IF (.NOT. ASSOCIATED(partlist%head) &
+        .OR. .NOT. ASSOCIATED(partlist%tail)) THEN
       test_partlist = -1
       RETURN
     ENDIF

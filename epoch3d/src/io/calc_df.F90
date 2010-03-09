@@ -89,8 +89,8 @@ CONTAINS
             DO ix = -sf_order, sf_order
               data = part_m * l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * data
+                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+                  + gx(ix) * gy(iy) * gz(iz) * data
             ENDDO
           ENDDO
         ENDDO
@@ -193,15 +193,15 @@ CONTAINS
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 + &
-                  (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) - &
-                  (part_m*l_weight)*c**2
+              data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 &
+                  + (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) &
+                  - (part_m*l_weight)*c**2
               data_array(cell_x+ix,cell_y+iy,cell_z+iz) = &
-                  data_array(cell_x+ix,cell_y+iy,cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * data
+                  data_array(cell_x+ix,cell_y+iy,cell_z+iz) &
+                  + gx(ix) * gy(iy) * gz(iz) * data
               ct(cell_x+ix,cell_y+iy,cell_z+iz) = &
-                  ct(cell_x+ix,cell_y+iy,cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * l_weight
+                  ct(cell_x+ix,cell_y+iy,cell_z+iz) &
+                  + gx(ix) * gy(iy) * gz(iz) * l_weight
             ENDDO
           ENDDO
         ENDDO
@@ -309,8 +309,8 @@ CONTAINS
             DO ix = -sf_order, sf_order
               data = part_q * l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * data
+                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+                  + gx(ix) * gy(iy) * gz(iz) * data
             ENDDO
           ENDDO
         ENDDO
@@ -407,8 +407,8 @@ CONTAINS
             DO ix = -sf_order, sf_order
               data = l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * data
+                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+                  + gx(ix) * gy(iy) * gz(iz) * data
             ENDDO
           ENDDO
         ENDDO
@@ -500,8 +500,8 @@ CONTAINS
             DO ix = -sf_order, sf_order
               data = evaluator(current, ispecies)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) + &
-                  gx(ix) * gy(iy) * gz(iz) * data
+                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+                  + gx(ix) * gy(iy) * gz(iz) * data
             ENDDO
           ENDDO
         ENDDO

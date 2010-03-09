@@ -126,17 +126,17 @@ CONTAINS
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
-        fplus = fplus + t_env * current%amp * &
-            SIN(current%freq*time + current%phase) * &
-            SIN(current%pol) * COS(current%angle)
+        fplus = fplus + t_env * current%amp &
+            * SIN(current%freq*time + current%phase) &
+            * SIN(current%pol) * COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
 
     ! Set the y magnetic field
-    by(-1:0) = (1.0_num / (c + lx*c**2)) * &
-        (-4.0_num * fplus + 2.0_num * ez(1) - (c - lx*c**2)*by(1) - &
-        (dt / epsilon0) * jz(1))
+    by(-1:0) = (1.0_num / (c + lx*c**2)) &
+        * (-4.0_num * fplus + 2.0_num * ez(1) - (c - lx*c**2)*by(1) &
+        - (dt / epsilon0) * jz(1))
 
     fplus = 0.0_num
     current=>laser_left
@@ -144,15 +144,15 @@ CONTAINS
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
-        fplus = fplus + t_env * current%amp * &
-            SIN(current%freq*time + current%phase) * COS(current%pol)
+        fplus = fplus + t_env * current%amp &
+            * SIN(current%freq*time + current%phase) * COS(current%pol)
       ENDIF
       current=>current%next
     ENDDO
 
-    bz(-1:0) = (1.0_num / (c + lx*c**2)) * &
-        (4.0_num * fplus - 2.0_num * ey(1) - (c - lx*c**2)*bz(1) + &
-        (dt / epsilon0) * jy(1))
+    bz(-1:0) = (1.0_num / (c + lx*c**2)) &
+        * (4.0_num * fplus - 2.0_num * ey(1) - (c - lx*c**2)*bz(1) &
+        + (dt / epsilon0) * jy(1))
 
   END SUBROUTINE laser_bcs_left
 
@@ -177,16 +177,16 @@ CONTAINS
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
-        f_minus = f_minus + t_env * current%amp * &
-            SIN(current%freq*time + current%phase) * &
-            SIN(current%pol) * COS(current%angle)
+        f_minus = f_minus + t_env * current%amp &
+            * SIN(current%freq*time + current%phase) &
+            * SIN(current%pol) * COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
 
-    by(nx:nx+1) = (1.0_num / (c + lx*c**2)) * &
-        (4.0_num * f_minus - 2.0_num * ez(nx) - (c - lx*c**2)*by(nx) + &
-        (dt / epsilon0) * jz(nx))
+    by(nx:nx+1) = (1.0_num / (c + lx*c**2)) &
+        * (4.0_num * f_minus - 2.0_num * ez(nx) - (c - lx*c**2)*by(nx) &
+        + (dt / epsilon0) * jz(nx))
 
     f_minus = 0.0_num
     current=>laser_right
@@ -194,15 +194,15 @@ CONTAINS
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
-        f_minus = f_minus + t_env * current%amp * current%profile * &
-            SIN(current%freq*time + current%phase) * COS(current%pol)
+        f_minus = f_minus + t_env * current%amp * current%profile &
+            * SIN(current%freq*time + current%phase) * COS(current%pol)
       ENDIF
       current=>current%next
     ENDDO
 
-    bz(nx:nx+1) = (1.0_num / (c + lx*c**2)) * &
-        (-4.0_num * f_minus + 2.0_num * ey(nx) - (c - lx*c**2)*bz(nx) - &
-        (dt / epsilon0) * jy(nx))
+    bz(nx:nx+1) = (1.0_num / (c + lx*c**2)) &
+        * (-4.0_num * f_minus + 2.0_num * ey(nx) - (c - lx*c**2)*bz(nx) &
+        - (dt / epsilon0) * jy(nx))
 
   END SUBROUTINE laser_bcs_right
 
@@ -215,10 +215,10 @@ CONTAINS
     lx = dt/dx
     bx(-1:0) =  0.0_num
     ! Set the y magnetic field
-    by(-1:0) = (1.0_num / (c + lx*c**2)) * &
-        (2.0_num * ez(1) - (c - lx*c**2)*by(1) - (dt / epsilon0) * jz(1))
-    bz(-1:0) = (1.0_num / (c + lx*c**2)) * &
-        (-2.0_num * ey(1) - (c - lx*c**2)*bz(1) + (dt / epsilon0) * jy(1))
+    by(-1:0) = (1.0_num / (c + lx*c**2)) &
+        * (2.0_num * ez(1) - (c - lx*c**2)*by(1) - (dt / epsilon0) * jz(1))
+    bz(-1:0) = (1.0_num / (c + lx*c**2)) &
+        * (-2.0_num * ey(1) - (c - lx*c**2)*bz(1) + (dt / epsilon0) * jy(1))
 
   END SUBROUTINE outflow_bcs_left
 
@@ -231,10 +231,10 @@ CONTAINS
     lx = dt/dx
     bx(nx) =  0.0_num
     ! Set the y magnetic field
-    by(nx:nx+1) = (1.0_num / (c + lx*c**2)) * &
-        (- 2.0_num * ez(nx) - (c - lx*c**2)*by(nx) + (dt / epsilon0) * jz(nx))
-    bz(nx:nx+1) = (1.0_num / (c + lx*c**2)) * &
-        (2.0_num * ey(nx) - (c - lx*c**2)*bz(nx) - (dt / epsilon0) * jy(nx))
+    by(nx:nx+1) = (1.0_num / (c + lx*c**2)) &
+        * (- 2.0_num * ez(nx) - (c - lx*c**2)*by(nx) + (dt / epsilon0) * jz(nx))
+    bz(nx:nx+1) = (1.0_num / (c + lx*c**2)) &
+        * (2.0_num * ey(nx) - (c - lx*c**2)*bz(nx) - (dt / epsilon0) * jy(nx))
 
   END SUBROUTINE outflow_bcs_right
 

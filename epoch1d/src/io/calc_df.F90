@@ -246,9 +246,9 @@ CONTAINS
         CALL particle_to_grid(cell_frac_x, gx)
 
         DO ix = -sf_order, sf_order
-          data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 + &
-              (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) - &
-              (part_m*l_weight)*c**2
+          data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 &
+              + (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) &
+              - (part_m*l_weight)*c**2
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * data
           ct(cell_x+ix) = ct(cell_x+ix) + gx(ix) * l_weight
         ENDDO
@@ -470,8 +470,8 @@ CONTAINS
 
         DO ix = -sf_order, sf_order
           data = SQRT(part_px**2+part_py**2+part_pz**2)
-          sigma(cell_x+ix) = sigma(cell_x+ix) + &
-              gx(ix) * (data-mean(cell_x+ix))**2
+          sigma(cell_x+ix) = sigma(cell_x+ix) &
+              + gx(ix) * (data-mean(cell_x+ix))**2
           part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix)
         ENDDO
         current=>current%next

@@ -77,17 +77,17 @@ CONTAINS
 
     DO ispecies = 1, n_species
       IF (.NOT. particle_species(ispecies)%split) CYCLE
-      IF (particle_species(ispecies)%npart_max .GT. 0 .AND. &
-          particle_species(ispecies)%global_count .GE. &
-          particle_species(ispecies)%npart_max) CYCLE
+      IF (particle_species(ispecies)%npart_max .GT. 0 &
+          .AND. particle_species(ispecies)%global_count &
+          .GE. particle_species(ispecies)%npart_max) CYCLE
 
       DO iy = 0, ny+1
         DO ix = 0, nx+1
           count = particle_species(ispecies)%secondary_list(ix, iy)%count
           IF (count .GT. 0 .AND. count .LE. npart_per_cell_min) THEN
             current=>particle_species(ispecies)%secondary_list(ix, iy)%head
-            DO WHILE(ASSOCIATED(current) .AND. &
-                count .LE. npart_per_cell_min .AND. current%weight .GE. 1.0_num)
+            DO WHILE(ASSOCIATED(current) .AND. count .LE. npart_per_cell_min &
+                .AND. current%weight .GE. 1.0_num)
               count = particle_species(ispecies)%secondary_list(ix, iy)%count
               jitter_x = random(idum)*dx/2.0_num - dx/4.0_num
               jitter_y = random(idum)*dy/2.0_num - dy/4.0_num

@@ -104,9 +104,9 @@ CONTAINS
                 temp_local = 0.0_num
                 DO isubz = -1, +1
                   DO isuby = -1, +1
-                    temp_local = temp_local + &
-                        gy(isuby)*gz(isubz)*particle_species(ispecies)% &
-                        window_temperature(cell_y+isuby, cell_z+isubz, i)
+                    temp_local = temp_local + gy(isuby) * gz(isubz) &
+                        * particle_species(ispecies) &
+                        %window_temperature(cell_y+isuby, cell_z+isubz, i)
                   ENDDO
                 ENDDO
                 current%part_p(i) = momentum_from_temperature(&
@@ -116,11 +116,11 @@ CONTAINS
               weight_local = 0.0_num
               DO isubz = -1, +1
                 DO isuby = -1, +1
-                  weight_local = weight_local + &
-                        gy(isuby)*gz(isubz)*particle_species(ispecies)% &
-                        window_density(cell_y+isuby, cell_z+isubz) / &
-                        (REAL(particle_species(ispecies)%window_npart_per_cell,&
-                        num)/(dx*dy*dz))
+                  weight_local = weight_local + gy(isuby) * gz(isubz) &
+                        * particle_species(ispecies) &
+                        %window_density(cell_y+isuby, cell_z+isubz) &
+                        / (REAL(particle_species(ispecies) &
+                        %window_npart_per_cell, num) / (dx*dy*dz))
                 ENDDO
               ENDDO
               current%weight = weight_local

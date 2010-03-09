@@ -237,8 +237,8 @@ CONTAINS
 
     DO i = 2, LEN(expression)
       ptype = char_type(expression(i:i))
-      IF (ptype .EQ. current_type .AND. &
-          .NOT. (ptype .EQ. c_char_delimiter)) THEN
+      IF (ptype .EQ. current_type &
+          .AND. .NOT. (ptype .EQ. c_char_delimiter)) THEN
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
       ELSE
@@ -262,13 +262,13 @@ CONTAINS
             ENDDO
           ENDIF
 
-          IF (block%ptype .NE. c_pt_parenthesis .AND. &
-              block%ptype .NE. c_pt_null) THEN
+          IF (block%ptype .NE. c_pt_parenthesis &
+              .AND. block%ptype .NE. c_pt_null) THEN
             last_block_type = block%ptype
           ENDIF
 
-          IF (block%ptype .EQ. c_pt_variable .OR. &
-              block%ptype .EQ. c_pt_constant) THEN
+          IF (block%ptype .EQ. c_pt_variable &
+              .OR. block%ptype .EQ. c_pt_constant) THEN
             CALL push_to_stack(output, BLOCK)
           ENDIF
 
@@ -278,8 +278,8 @@ CONTAINS
             ELSE
               DO
                 CALL stack_snoop(stack, block2, 0)
-                IF (block2%ptype .EQ. c_pt_parenthesis .AND. &
-                    block2%data .EQ. c_paren_left_bracket) THEN
+                IF (block2%ptype .EQ. c_pt_parenthesis &
+                    .AND. block2%data .EQ. c_paren_left_bracket) THEN
                   CALL pop_to_null(stack)
                   ! If stack isn't empty then check for function
                   IF (stack%stack_point .NE. 0) THEN
@@ -331,11 +331,11 @@ CONTAINS
                 CALL push_to_stack(stack, BLOCK)
                 EXIT
               ELSE
-                IF (opcode_assoc(block%data) .EQ. c_assoc_la .OR. &
-                    opcode_assoc(block%data) .EQ. c_assoc_a) THEN
+                IF (opcode_assoc(block%data) .EQ. c_assoc_la &
+                    .OR. opcode_assoc(block%data) .EQ. c_assoc_a) THEN
                   ! Operator is full associative or left associative
-                  IF (opcode_precedence(block%data) .LE. &
-                      opcode_precedence(block2%data)) THEN
+                  IF (opcode_precedence(block%data) &
+                      .LE. opcode_precedence(block2%data)) THEN
                     CALL pop_to_stack(stack, output)
                     CYCLE
                   ELSE
@@ -343,8 +343,8 @@ CONTAINS
                     EXIT
                   ENDIF
                 ELSE
-                  IF (opcode_precedence(block%data) .LT. &
-                      opcode_precedence(block2%data)) THEN
+                  IF (opcode_precedence(block%data) &
+                      .LT. opcode_precedence(block2%data)) THEN
                     CALL pop_to_stack(stack, output)
                     CYCLE
                   ELSE
@@ -399,8 +399,8 @@ CONTAINS
 
     DO i = 2, LEN(expression)
       ptype = char_type(expression(i:i))
-      IF (ptype .EQ. current_type .AND. &
-          .NOT. (ptype .EQ. c_char_delimiter)) THEN
+      IF (ptype .EQ. current_type &
+          .AND. .NOT. (ptype .EQ. c_char_delimiter)) THEN
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
       ELSE
@@ -418,8 +418,8 @@ CONTAINS
             err = c_err_bad_value
             RETURN
           ENDIF
-          IF (block%ptype .NE. c_pt_parenthesis .AND. &
-              block%ptype .NE. c_pt_null) THEN
+          IF (block%ptype .NE. c_pt_parenthesis &
+              .AND. block%ptype .NE. c_pt_null) THEN
             last_block_type = block%ptype
             IF (debug_mode) PRINT *, "Setting", block%ptype, TRIM(current)
           ENDIF

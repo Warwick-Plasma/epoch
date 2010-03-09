@@ -52,20 +52,20 @@ CONTAINS
 
 !!$    DO iCorner = 1, 4
 !!$      DO iDirection = 1, 3
-!!$        IF (working_probe%corner(iCorner, iDirection) .LT. &
-!!$            working_probe%Extents(iDirection, 1)) &
+!!$        IF (working_probe%corner(iCorner, iDirection) &
+!!$            .LT. working_probe%Extents(iDirection, 1)) &
 !!$                working_probe%Extents(iDirection, 1) = &
 !!$                    working_probe%corner(iCorner, iDirection)
-!!$        IF (working_probe%corner(iCorner, iDirection) .GT. &
-!!$            working_probe%Extents(iDirection, 2)) &
+!!$        IF (working_probe%corner(iCorner, iDirection) &
+!!$            .GT. working_probe%Extents(iDirection, 2)) &
 !!$                working_probe%Extents(iDirection, 2) = &
 !!$                    working_probe%corner(iCorner, iDirection)
 !!$      ENDDO
 !!$    ENDDO
 
 !!$    DO iDirection = 1, 3
-!!$      IF (working_probe%Extents(iDirection, 1) .GE. &
-!!$          working_probe%Extents(iDirection, 2)) THEN
+!!$      IF (working_probe%Extents(iDirection, 1) &
+!!$          .GE. working_probe%Extents(iDirection, 2)) THEN
 !!$        IF (rank .EQ. 0) PRINT *, "Points specified for the probe plane &
 !!$            &corners collapse the probe plane to a lower DIMENSION. This &
 !!$            &is not currently supported. probe ", &

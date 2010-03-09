@@ -49,13 +49,13 @@ CONTAINS
     ENDDO
 
     DO ix = 1, nx
-      ey(ix) = ey(ix) -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) - &
-          0.5_num*dt*jy(ix)/epsilon0
+      ey(ix) = ey(ix) -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) &
+          - 0.5_num*dt*jy(ix)/epsilon0
     ENDDO
 
     DO ix = 1, nx
-      ez(ix) = ez(ix) +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) - &
-          0.5_num*dt*jz(ix)/epsilon0
+      ez(ix) = ez(ix) +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) &
+          - 0.5_num*dt*jz(ix)/epsilon0
     ENDDO
 #endif
 
@@ -169,13 +169,13 @@ CONTAINS
     ENDDO
 
     DO ix = 1, nx
-      ey(ix) = ey(ix) -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) - &
-          0.5_num*dt*jy(ix)/epsilon0
+      ey(ix) = ey(ix) -cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) &
+          - 0.5_num*dt*jy(ix)/epsilon0
     ENDDO
 
     DO ix = 1, nx
-      ez(ix) = ez(ix) +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) - &
-          0.5_num*dt*jz(ix)/epsilon0
+      ez(ix) = ez(ix) +cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) &
+          - 0.5_num*dt*jz(ix)/epsilon0
     ENDDO
 #endif
 

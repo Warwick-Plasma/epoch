@@ -145,8 +145,8 @@ PROGRAM pic
   walltime_current = MPI_WTIME(errcode)
 
   DO
-    IF ((i .GE. nsteps .AND. nsteps .GE. 0) .OR. &
-        (time .GE. t_end) .OR. halt) EXIT
+    IF ((i .GE. nsteps .AND. nsteps .GE. 0) &
+        .OR. (time .GE. t_end) .OR. halt) EXIT
     i = i + 1
     CALL set_dt
     CALL update_eb_fields_half
@@ -171,8 +171,8 @@ PROGRAM pic
       ! .FALSE. this time to use load balancing threshold
       CALL balance_workload(.FALSE.)
     ENDIF
-    IF (move_window .AND. .NOT. window_started .AND. &
-        time .GE. window_start_time) THEN
+    IF (move_window .AND. .NOT. window_started &
+        .AND. time .GE. window_start_time) THEN
       xbc_left = xbc_left_after_move
       xbc_right = xbc_right_after_move
       CALL setup_particle_boundaries

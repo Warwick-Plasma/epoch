@@ -92,11 +92,11 @@ CONTAINS
     DO ispecies = 1, n_species
       DO iy = 1, ny
         DO ix = 1, nx
-          omega = SQRT((initial_conditions(ispecies)%rho(ix, iy) * q0**2) / &
-              (particle_species(ispecies)%mass * epsilon0) + &
-              3.0_num * k_max**2 * kb * &
-              MAXVAL(initial_conditions(ispecies)%temp(ix, iy,:)) / &
-              (particle_species(ispecies)%mass))
+          omega = SQRT((initial_conditions(ispecies)%rho(ix, iy) * q0**2) &
+              / (particle_species(ispecies)%mass * epsilon0) &
+              + 3.0_num * k_max**2 * kb &
+              * MAXVAL(initial_conditions(ispecies)%temp(ix, iy,:)) &
+              / (particle_species(ispecies)%mass))
           IF (2.0_num * pi/omega .LT. min_dt) min_dt = 2.0_num * pi /omega
         ENDDO
       ENDDO
@@ -186,8 +186,8 @@ CONTAINS
     DO ix = 1, nx
       DO iy = 1, ny
         ipart = 0
-        npart_per_cell = density(ix, iy) / density_average * &
-            REAL(npart_per_cell_average, num)
+        npart_per_cell = density(ix, iy) / density_average &
+            * REAL(npart_per_cell_average, num)
         DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
           ! Even if particles have per particle charge and mass, assume
@@ -479,8 +479,8 @@ CONTAINS
         IF (density(ix, iy) .GT. min_density) THEN
           density_map(ix, iy) = .TRUE.
         ENDIF
-        IF (density(ix, iy) .GT. max_density .AND. &
-            max_density .GT. 0.0_num) THEN
+        IF (density(ix, iy) .GT. max_density &
+            .AND. max_density .GT. 0.0_num) THEN
           density(ix, iy) = max_density
         ENDIF
       ENDDO
@@ -522,8 +522,8 @@ CONTAINS
       DO isuby = -sf_order, sf_order
         DO isubx = -sf_order, sf_order
           weight_fn(cell_x+isubx, cell_y+isuby) = &
-              weight_fn(cell_x+isubx, cell_y+isuby) + &
-              gx(isubx) * gy(isuby) * data
+              weight_fn(cell_x+isubx, cell_y+isuby) &
+              + gx(isubx) * gy(isuby) * data
         ENDDO
       ENDDO
 
@@ -577,8 +577,8 @@ CONTAINS
       DO isuby = -sf_order, sf_order
         DO isubx = -sf_order, +sf_order
           weight_local = &
-              weight_local + gx(isubx)*gy(isuby)* &
-              weight_fn(cell_x+isubx, cell_y+isuby)
+              weight_local + gx(isubx)*gy(isuby) &
+              * weight_fn(cell_x+isubx, cell_y+isuby)
         ENDDO
       ENDDO
       current%weight = weight_local
@@ -655,8 +655,8 @@ CONTAINS
       IF (cdf(current) .LE. position .AND. cdf(current+1) .GE. position) THEN
         d_cdf = cdf(current+1)-cdf(current)
         sample_dist_function = &
-            (axis(current)*(position-cdf(current))/d_cdf + &
-            axis(current+1)*(cdf(current+1)-position)/d_cdf)
+            (axis(current)*(position-cdf(current))/d_cdf &
+            + axis(current+1)*(cdf(current+1)-position)/d_cdf)
         EXIT
       ENDIF
     ENDDO

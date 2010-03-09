@@ -139,8 +139,8 @@ CONTAINS
 
         ! Calculate v(t+0.5dt) from p(t)
         ! See PSC manual page (25-27)
-        root = 1.0_num / &
-            SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+        root = 1.0_num &
+            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
         part_vx = part_px * root
         part_vy = part_py * root
         part_vz = part_pz * root
@@ -208,15 +208,15 @@ CONTAINS
         tauz = bz_part * root
 
         tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
-        pxp = ((1.0_num+taux*taux-tauy*tauy-tauz*tauz)*pxm + &
-            (2.0_num*taux*tauy+2.0_num*tauz)*pym + &
-            (2.0_num*taux*tauz-2.0_num*tauy)*pzm)*tau
-        pyp = ((2.0_num*taux*tauy-2.0_num*tauz)*pxm + &
-            (1.0_num-taux*taux+tauy*tauy-tauz*tauz)*pym + &
-            (2.0_num*tauy*tauz+2.0_num*taux)*pzm)*tau
-        pzp = ((2.0_num*taux*tauz+2.0_num*tauy)*pxm + &
-            (2.0_num*tauy*tauz-2.0_num*taux)*pym + &
-            (1.0_num-taux*taux-tauy*tauy+tauz*tauz)*pzm)*tau
+        pxp = ((1.0_num+taux*taux-tauy*tauy-tauz*tauz)*pxm &
+            + (2.0_num*taux*tauy+2.0_num*tauz)*pym &
+            + (2.0_num*taux*tauz-2.0_num*tauy)*pzm)*tau
+        pyp = ((2.0_num*taux*tauy-2.0_num*tauz)*pxm &
+            + (1.0_num-taux*taux+tauy*tauy-tauz*tauz)*pym &
+            + (2.0_num*tauy*tauz+2.0_num*taux)*pzm)*tau
+        pzp = ((2.0_num*taux*tauz+2.0_num*tauy)*pxm &
+            + (2.0_num*tauy*tauz-2.0_num*taux)*pym &
+            + (1.0_num-taux*taux-tauy*tauy+tauz*tauz)*pzm)*tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part
@@ -224,8 +224,8 @@ CONTAINS
         part_pz = pzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        root = 1.0_num / &
-            SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+        root = 1.0_num &
+            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
         part_vx = part_px * root
         part_vy = part_py * root
 
@@ -318,17 +318,17 @@ CONTAINS
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
           probe_energy = &
-              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) / &
-              (part_m * c)**2) - 1.0_num) * (part_m * c**2)
+              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) &
+              / (part_m * c)**2) - 1.0_num) * (part_m * c**2)
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN
-            IF ((probe_energy .LT. current_probe%ek_max) .OR. &
-                (current_probe%ek_max .LT. 0.0_num)) THEN
+            IF ((probe_energy .LT. current_probe%ek_max) &
+                .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
 
               IF (current_probe%left_to_right) THEN
-                IF (init_part_x .LT. current_probe%probe_point .AND. &
-                    final_part_x .GT. current_probe%probe_point) THEN
+                IF (init_part_x .LT. current_probe%probe_point &
+                    .AND. final_part_x .GT. current_probe%probe_point) THEN
                   ! this particle is wanted so copy it to the list associated
                   ! with this probe
                   ALLOCATE(particle_copy)
@@ -338,8 +338,8 @@ CONTAINS
                   NULLIFY(particle_copy)
                 ENDIF
               ELSE
-                IF (init_part_x .GT. current_probe%probe_point .AND. &
-                    final_part_x .LT. current_probe%probe_point) THEN
+                IF (init_part_x .GT. current_probe%probe_point &
+                    .AND. final_part_x .LT. current_probe%probe_point) THEN
                   ! this particle is wanted so copy it to the list associated
                   ! with this probe
                   ALLOCATE(particle_copy)

@@ -348,8 +348,8 @@ CONTAINS
         IF (.NOT. is_comment) THEN
           ! If the current character isn't a special character then just stick
           ! it in the buffer
-          IF (u1 .NE. '=' .AND. u1 .NE. CHAR(9) .AND. u1 .NE. ':' .AND. &
-              f .EQ. 0) THEN
+          IF (u1 .NE. '=' .AND. u1 .NE. CHAR(9) .AND. u1 .NE. ':' &
+              .AND. f .EQ. 0) THEN
             IF ((u1 .NE. ' ' .AND. u1 .NE. CHAR(32)) .OR. white_space_over) THEN
               deck_values(flip)%value(pos:pos) = u1
               pos = pos+1

@@ -27,10 +27,10 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          ex(ix, iy, iz) = ex(ix, iy, iz) + &
-              cny*(bz(ix, iy, iz)-bz(ix, iy-1, iz))*c**2 - &
-              cnz*(by(ix, iy, iz)-by(ix, iy, iz-1))*c**2 - &
-              0.5_num*dt*jx(ix, iy, iz)/epsilon0
+          ex(ix, iy, iz) = ex(ix, iy, iz) &
+              + cny*(bz(ix, iy, iz)-bz(ix, iy-1, iz))*c**2 &
+              - cnz*(by(ix, iy, iz)-by(ix, iy, iz-1))*c**2 &
+              - 0.5_num*dt*jx(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
     ENDDO
@@ -39,10 +39,10 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          ey(ix, iy, iz) = ey(ix, iy, iz) + &
-              cnz*(bx(ix, iy, iz)-bx(ix, iy, iz-1))*c**2 - &
-              cnx*(bz(ix, iy, iz)-bz(ix-1, iy, iz))*c**2 - &
-              0.5_num*dt*jy(ix, iy, iz)/epsilon0
+          ey(ix, iy, iz) = ey(ix, iy, iz) &
+              + cnz*(bx(ix, iy, iz)-bx(ix, iy, iz-1))*c**2 &
+              - cnx*(bz(ix, iy, iz)-bz(ix-1, iy, iz))*c**2 &
+              - 0.5_num*dt*jy(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
     ENDDO
@@ -51,10 +51,10 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          ez(ix, iy, iz) = ez(ix, iy, iz) + &
-              cnx*(by(ix, iy, iz)-by(ix-1, iy, iz))*c**2 - &
-              cny*(bx(ix, iy, iz)-bx(ix, iy-1, iz))*c**2 - &
-              0.5_num*dt*jz(ix, iy, iz)/epsilon0
+          ez(ix, iy, iz) = ez(ix, iy, iz) &
+              + cnx*(by(ix, iy, iz)-by(ix-1, iy, iz))*c**2 &
+              - cny*(bx(ix, iy, iz)-bx(ix, iy-1, iz))*c**2 &
+              - 0.5_num*dt*jz(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
     ENDDO
@@ -69,9 +69,9 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          bx(ix, iy, iz) = bx(ix, iy, iz) + &
-              cnz*(ey(ix, iy, iz+1)-ey(ix, iy, iz)) - &
-              cny*(ez(ix, iy+1, iz)-ez(ix, iy, iz))
+          bx(ix, iy, iz) = bx(ix, iy, iz) &
+              + cnz*(ey(ix, iy, iz+1)-ey(ix, iy, iz)) &
+              - cny*(ez(ix, iy+1, iz)-ez(ix, iy, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -80,9 +80,9 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          by(ix, iy, iz) = by(ix, iy, iz) + &
-              cnx*(ez(ix+1, iy, iz)-ez(ix, iy, iz)) - &
-              cnz*(ex(ix, iy, iz+1)-ex(ix, iy, iz))
+          by(ix, iy, iz) = by(ix, iy, iz) &
+              + cnx*(ez(ix+1, iy, iz)-ez(ix, iy, iz)) &
+              - cnz*(ex(ix, iy, iz+1)-ex(ix, iy, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -91,9 +91,9 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          bz(ix, iy, iz) = bz(ix, iy, iz) - &
-              cnx*(ey(ix+1, iy, iz)-ey(ix, iy, iz)) + &
-              cny*(ex(ix, iy+1, iz)-ex(ix, iy, iz))
+          bz(ix, iy, iz) = bz(ix, iy, iz) &
+              - cnx*(ey(ix+1, iy, iz)-ey(ix, iy, iz)) &
+              + cny*(ex(ix, iy+1, iz)-ex(ix, iy, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -125,9 +125,9 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          bx(ix, iy, iz) = bx(ix, iy, iz) + &
-              cnz*(ey(ix, iy, iz+1)-ey(ix, iy, iz)) - &
-              cny*(ez(ix, iy+1, iz)-ez(ix, iy, iz))
+          bx(ix, iy, iz) = bx(ix, iy, iz) &
+              + cnz*(ey(ix, iy, iz+1)-ey(ix, iy, iz)) &
+              - cny*(ez(ix, iy+1, iz)-ez(ix, iy, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -136,9 +136,9 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          by(ix, iy, iz) = by(ix, iy, iz) + &
-              cnx*(ez(ix+1, iy, iz)-ez(ix, iy, iz)) - &
-              cnz*(ex(ix, iy, iz+1)-ex(ix, iy, iz))
+          by(ix, iy, iz) = by(ix, iy, iz) &
+              + cnx*(ez(ix+1, iy, iz)-ez(ix, iy, iz)) &
+              - cnz*(ex(ix, iy, iz+1)-ex(ix, iy, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -147,9 +147,9 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          bz(ix, iy, iz) = bz(ix, iy, iz) - &
-              cnx*(ey(ix+1, iy, iz)-ey(ix, iy, iz)) + &
-              cny*(ex(ix, iy+1, iz)-ex(ix, iy, iz))
+          bz(ix, iy, iz) = bz(ix, iy, iz) &
+              - cnx*(ey(ix+1, iy, iz)-ey(ix, iy, iz)) &
+              + cny*(ex(ix, iy+1, iz)-ex(ix, iy, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -190,10 +190,10 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          ex(ix, iy, iz) = ex(ix, iy, iz) + &
-              cny*(bz(ix, iy, iz)-bz(ix, iy-1, iz)) * c**2 - &
-              cnz*(by(ix, iy, iz)-by(ix, iy, iz-1)) * c**2 - &
-              0.5*dt*jx(ix, iy, iz)/epsilon0
+          ex(ix, iy, iz) = ex(ix, iy, iz) &
+              + cny*(bz(ix, iy, iz)-bz(ix, iy-1, iz)) * c**2 &
+              - cnz*(by(ix, iy, iz)-by(ix, iy, iz-1)) * c**2 &
+              - 0.5*dt*jx(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
     ENDDO
@@ -202,10 +202,10 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          ey(ix, iy, iz) = ey(ix, iy, iz) + &
-              cnz*(bx(ix, iy, iz)-bx(ix, iy, iz-1)) * c**2 - &
-              cnx*(bz(ix, iy, iz)-bz(ix-1, iy, iz)) * c**2 - &
-              0.5*dt*jy(ix, iy, iz)/epsilon0
+          ey(ix, iy, iz) = ey(ix, iy, iz) &
+              + cnz*(bx(ix, iy, iz)-bx(ix, iy, iz-1)) * c**2 &
+              - cnx*(bz(ix, iy, iz)-bz(ix-1, iy, iz)) * c**2 &
+              - 0.5*dt*jy(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
     ENDDO
@@ -214,10 +214,10 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          ez(ix, iy, iz) = ez(ix, iy, iz) + &
-              cnx*(by(ix, iy, iz)-by(ix-1, iy, iz))*c**2 - &
-              cny*(bx(ix, iy, iz)-bx(ix, iy-1, iz))*c**2 - &
-              0.5*dt*jz(ix, iy, iz)/epsilon0
+          ez(ix, iy, iz) = ez(ix, iy, iz) &
+              + cnx*(by(ix, iy, iz)-by(ix-1, iy, iz))*c**2 &
+              - cny*(bx(ix, iy, iz)-bx(ix, iy-1, iz))*c**2 &
+              - 0.5*dt*jz(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
     ENDDO

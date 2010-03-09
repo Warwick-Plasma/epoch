@@ -91,11 +91,11 @@ CONTAINS
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
       DO ix = 1, nx
-        omega = SQRT((initial_conditions(ispecies)%rho(ix) * q0**2) / &
-            (particle_species(ispecies)%mass * epsilon0) + &
-            3.0_num * k_max**2 * kb * &
-            MAXVAL(initial_conditions(ispecies)%temp(ix,:)) / &
-            (particle_species(ispecies)%mass))
+        omega = SQRT((initial_conditions(ispecies)%rho(ix) * q0**2) &
+            / (particle_species(ispecies)%mass * epsilon0) &
+            + 3.0_num * k_max**2 * kb &
+            * MAXVAL(initial_conditions(ispecies)%temp(ix,:)) &
+            / (particle_species(ispecies)%mass))
         IF (2.0_num * pi/omega .LT. min_dt) min_dt = 2.0_num * pi /omega
       ENDDO
     ENDDO
@@ -179,8 +179,8 @@ CONTAINS
     current=>partlist%head
     DO ix = 1, nx
       ipart = 0
-      npart_per_cell = density(ix) / density_average * &
-          REAL(npart_per_cell_average, num)
+      npart_per_cell = density(ix) / density_average &
+          * REAL(npart_per_cell_average, num)
       DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
         ! Even if particles have per particle charge and mass, assume
@@ -387,8 +387,8 @@ CONTAINS
       g0x = 0.75_num - cell_frac_x**2
       gpx = 0.5_num * (0.5_num - cell_frac_x)**2
 
-      temp_local = gmx*temperature(cell_x-1) + &
-          g0x*temperature(cell_x) + gpx*temperature(cell_x+1)
+      temp_local = gmx*temperature(cell_x-1) &
+          + g0x*temperature(cell_x) + gpx*temperature(cell_x+1)
 
       IF (IAND(direction, c_dir_x) .NE. 0) current%part_p(1) = &
           momentum_from_temperature(mass, temp_local, idum) + drift(1)
@@ -598,8 +598,8 @@ CONTAINS
       IF (cdf(current) .LE. position .AND. cdf(current+1) .GE. position) THEN
         d_cdf = cdf(current+1)-cdf(current)
         sample_dist_function = &
-            (axis(current)*(position-cdf(current))/d_cdf + &
-            axis(current+1)*(cdf(current+1)-position)/d_cdf)
+            (axis(current)*(position-cdf(current))/d_cdf &
+            + axis(current+1)*(cdf(current+1)-position)/d_cdf)
         EXIT
       ENDIF
     ENDDO

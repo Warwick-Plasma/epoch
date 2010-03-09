@@ -45,8 +45,8 @@ CONTAINS
 
       ! Only dump variables with the "FULL" attributre on full dump intervals
       IF (MOD(output_file, full_dump_every) .EQ. 0)  code = IOR(code, c_io_full)
-      IF (MOD(output_file, restart_dump_every) .EQ. 0 .AND. &
-          restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
+      IF (MOD(output_file, restart_dump_every) .EQ. 0 &
+          .AND. restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
       IF (last_call .AND. force_final_to_be_restartable) &
           code = IOR(code, c_io_restartable)
 
@@ -347,8 +347,8 @@ CONTAINS
     last_call = .FALSE.
 
     DO ioutput = 1, num_vars_to_dump
-      IF (FLOOR((time - t1)/dt) .LE. &
-          averaged_data(ioutput)%average_over_iterations) THEN
+      IF (FLOOR((time - t1)/dt) &
+          .LE. averaged_data(ioutput)%average_over_iterations) THEN
         CALL average_field(ioutput)
       ENDIF
     ENDDO

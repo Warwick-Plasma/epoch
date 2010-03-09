@@ -26,8 +26,8 @@ CONTAINS
 
     get_total_local_particles = 0
     DO ispecies = 1, n_species
-      get_total_local_particles = get_total_local_particles + &
-          particle_species(ispecies)%attached_list%count
+      get_total_local_particles = get_total_local_particles &
+          + particle_species(ispecies)%attached_list%count
     ENDDO
 
   END FUNCTION get_total_local_particles
@@ -55,8 +55,8 @@ CONTAINS
     get_total_local_dumped_particles = 0
     DO ispecies = 1, n_species
       IF (particle_species(ispecies)%dump .OR. force_restart) THEN
-        get_total_local_dumped_particles = get_total_local_dumped_particles + &
-            particle_species(ispecies)%attached_list%count
+        get_total_local_dumped_particles = get_total_local_dumped_particles &
+            + particle_species(ispecies)%attached_list%count
       ENDIF
     ENDDO
 
@@ -200,8 +200,8 @@ CONTAINS
     DO iz = 0, n_local(3)-1
       DO iy = 0, n_local(2)-1
         ipoint = ipoint+1
-        starts(ipoint) = (start(3)+iz-1) * n_global(1) * n_global(2) + &
-            (start(2)+iy-1) * n_global(1) + start(1) -1
+        starts(ipoint) = (start(3)+iz-1) * n_global(1) * n_global(2) &
+            + (start(2)+iy-1) * n_global(1) + start(1) - 1
       ENDDO
     ENDDO
 

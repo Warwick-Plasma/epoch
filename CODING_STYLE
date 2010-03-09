@@ -35,5 +35,8 @@ instead of '=='.
 
 Variable names must not clash with Fortran keywords.
 
+If a line is split on an operator, the operator should appear at the
+beginning of the continuation line rather than at the end of the split line.
+
 For all other matters of coding style, try to match the style used throughout
 the rest of the code.

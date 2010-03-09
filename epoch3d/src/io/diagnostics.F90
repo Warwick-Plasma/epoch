@@ -45,8 +45,8 @@ CONTAINS
 
       ! Only dump variables with the "FULL" attributre on full dump intervals
       IF (MOD(output_file, full_dump_every) .EQ. 0)  code = IOR(code, c_io_full)
-      IF (MOD(output_file, restart_dump_every) .EQ. 0 .AND. &
-          restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
+      IF (MOD(output_file, restart_dump_every) .EQ. 0 &
+          .AND. restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
       IF (last_call .AND. force_final_to_be_restartable) &
           code = IOR(code, c_io_restartable)
 
@@ -698,8 +698,8 @@ CONTAINS
 #else
           part_m = current_family%mass
 #endif
-          root = SQRT(part_m**2 + &
-              (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
+          root = SQRT(part_m**2 &
+              + (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
           IF (root .NE. 0.0_num) root = 1.0_num/root
           data(part_count) = cur%part_p(1) * root
           cur=>cur%next
@@ -745,8 +745,8 @@ CONTAINS
 #else
           part_m = current_family%mass
 #endif
-          root = SQRT(part_m**2 + &
-              (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
+          root = SQRT(part_m**2 &
+              + (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
           IF (root .NE. 0.0_num) root = 1.0_num/root
           data(part_count) = cur%part_p(2) * root
           cur=>cur%next
@@ -791,8 +791,8 @@ CONTAINS
 #else
           part_m = current_family%mass
 #endif
-          root = SQRT(part_m**2 + &
-              (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
+          root = SQRT(part_m**2 &
+              + (cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)/c**2)
           IF (root .NE. 0.0_num) root = 1.0_num/root
           data(part_count) = cur%part_p(3) * root
           cur=>cur%next

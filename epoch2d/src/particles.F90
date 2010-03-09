@@ -151,8 +151,8 @@ CONTAINS
 #ifdef NEWTONIAN
         root = 1.0_num / part_m
 #else
-        root = 1.0_num / &
-            SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+        root = 1.0_num &
+            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
 #endif
         part_vx = part_px * root
         part_vy = part_py * root
@@ -248,15 +248,15 @@ CONTAINS
         tauz = bz_part * root
 
         tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
-        pxp = ((1.0_num+taux*taux-tauy*tauy-tauz*tauz)*pxm + &
-            (2.0_num*taux*tauy+2.0_num*tauz)*pym + &
-            (2.0_num*taux*tauz-2.0_num*tauy)*pzm)*tau
-        pyp = ((2.0_num*taux*tauy-2.0_num*tauz)*pxm + &
-            (1.0_num-taux*taux+tauy*tauy-tauz*tauz)*pym + &
-            (2.0_num*tauy*tauz+2.0_num*taux)*pzm)*tau
-        pzp = ((2.0_num*taux*tauz+2.0_num*tauy)*pxm + &
-            (2.0_num*tauy*tauz-2.0_num*taux)*pym + &
-            (1.0_num-taux*taux-tauy*tauy+tauz*tauz)*pzm)*tau
+        pxp = ((1.0_num+taux*taux-tauy*tauy-tauz*tauz)*pxm &
+            + (2.0_num*taux*tauy+2.0_num*tauz)*pym &
+            + (2.0_num*taux*tauz-2.0_num*tauy)*pzm)*tau
+        pyp = ((2.0_num*taux*tauy-2.0_num*tauz)*pxm &
+            + (1.0_num-taux*taux+tauy*tauy-tauz*tauz)*pym &
+            + (2.0_num*tauy*tauz+2.0_num*taux)*pzm)*tau
+        pzp = ((2.0_num*taux*tauz+2.0_num*tauy)*pxm &
+            + (2.0_num*tauy*tauz-2.0_num*taux)*pym &
+            + (1.0_num-taux*taux-tauy*tauy+tauz*tauz)*pzm)*tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part
@@ -267,8 +267,8 @@ CONTAINS
 #ifdef NEWTONIAN
         root = 1.0_num / part_m
 #else
-        root = 1.0_num / &
-            SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+        root = 1.0_num &
+            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
 #endif
         part_vx = part_px * root
         part_vy = part_py * root
@@ -371,9 +371,9 @@ CONTAINS
             DO ix = xmin, xmax
               wx = xi1x(ix) * (xi0y(iy) + 0.5_num * xi1y(iy))
               wy = xi1y(iy) * (xi0x(ix) + 0.5_num * xi1x(ix))
-              wz = xi0x(ix) * xi0y(iy) + 0.5_num*xi1x(ix)*xi0y(iy) + &
-                  0.5_num*xi0x(ix)*xi1y(iy) + &
-                  1.0_num/3.0_num * xi1x(ix) * xi1y(iy)
+              wz = xi0x(ix) * xi0y(iy) + 0.5_num*xi1x(ix)*xi0y(iy) &
+                  + 0.5_num*xi0x(ix)*xi1y(iy) &
+                  + 1.0_num/3.0_num * xi1x(ix) * xi1y(iy)
 
               ! This is the bit that actually solves d(rho)/dt = -div(J)
               jxh(ix, iy) = &
@@ -405,13 +405,13 @@ CONTAINS
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
           probe_energy = &
-              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) / &
-              (part_m * c)**2) - 1.0_num) * (part_m * c**2)
+              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) &
+              / (part_m * c)**2) - 1.0_num) * (part_m * c**2)
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN
-            IF ((probe_energy .LT. current_probe%ek_max) .OR. &
-                (current_probe%ek_max .LT. 0.0_num)) THEN
+            IF ((probe_energy .LT. current_probe%ek_max) &
+                .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
 
               ! probe lines are defined by two points. particles crossing the
               ! line are recorded assumes transit from left -> right. Put the
@@ -422,8 +422,8 @@ CONTAINS
               probe_x2 = current_probe%vertex_top(1)
               probe_y2 = current_probe%vertex_top(2)
 
-              probe_a = (probe_y1 * probe_x2 - probe_x1 * probe_y2) / &
-                  (probe_y1 - probe_y2)
+              probe_a = (probe_y1 * probe_x2 - probe_x1 * probe_y2) &
+                  / (probe_y1 - probe_y2)
               probe_b = (probe_x1 - probe_x2) / (probe_y1 - probe_y2)
 
               ! direction?
@@ -436,8 +436,8 @@ CONTAINS
                 final_part_y = probe_temp
               ENDIF
 
-              IF ((final_part_y .LT. MAX(probe_y1, probe_y2)) .AND. &
-                  (final_part_y .GT. MIN(probe_y1, probe_y2))) THEN
+              IF ((final_part_y .LT. MAX(probe_y1, probe_y2)) &
+                  .AND. (final_part_y .GT. MIN(probe_y1, probe_y2))) THEN
                 IF (init_part_x .LE. probe_a + probe_b * init_part_y) THEN
                   IF (final_part_x .GT. probe_a + probe_b * final_part_y) THEN
 
@@ -481,8 +481,8 @@ CONTAINS
     DO ispecies = 1, n_species
       DO iy = 1, ny
         DO ix = 1, nx
-          mean = ekbar_sum(ix, iy, ispecies) / &
-              MAX(ct(ix, iy, ispecies), c_non_zero)
+          mean = ekbar_sum(ix, iy, ispecies) &
+              / MAX(ct(ix, iy, ispecies), c_non_zero)
           ekbar(ix, iy, ispecies) = mean
         ENDDO
       ENDDO

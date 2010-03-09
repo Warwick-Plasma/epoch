@@ -171,8 +171,8 @@ CONTAINS
       DO ix = 1, nx
         DO iy = 1, ny
           ipart = 0
-          npart_per_cell = density(ix, iy, iz) / density_average * &
-              REAL(npart_per_cell_average, num)
+          npart_per_cell = density(ix, iy, iz) / density_average &
+              * REAL(npart_per_cell_average, num)
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGEMASS
             ! Even if particles have per particle charge and mass, assume
@@ -424,34 +424,34 @@ CONTAINS
       g0z = 0.75_num - cell_frac_z**2
       gpz = 0.5_num * (0.5_num - cell_frac_z)**2
 
-      temp_local = gmz * (gmy * (gmx * &
-          temperature(cell_x-1, cell_y-1, cell_z-1) + &
-          g0x * temperature(cell_x, cell_y-1, cell_z-1) + &
-          gpx * temperature(cell_x+1, cell_y-1, cell_z-1)) + &
-          g0y * (gmx * temperature(cell_x-1, cell_y, cell_z-1) + &
-          g0x * temperature(cell_x, cell_y, cell_z-1) + &
-          gpx * temperature(cell_x+1, cell_y, cell_z-1)) + &
-          gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z-1) + &
-          g0x * temperature(cell_x, cell_y+1, cell_z-1) + &
-          gpx * temperature(cell_x+1, cell_y+1, cell_z-1))) + &
-          g0z *(gmy * (gmx * temperature(cell_x-1, cell_y-1, cell_z  ) + &
-          g0x * temperature(cell_x, cell_y-1, cell_z  ) + &
-          gpx * temperature(cell_x+1, cell_y-1, cell_z  )) + &
-          g0y * (gmx * temperature(cell_x-1, cell_y, cell_z  ) + &
-          g0x * temperature(cell_x, cell_y, cell_z  ) + &
-          gpx * temperature(cell_x+1, cell_y, cell_z  )) + &
-          gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z  ) + &
-          g0x * temperature(cell_x, cell_y+1, cell_z  ) + &
-          gpx * temperature(cell_x+1, cell_y+1, cell_z  ))) + &
-          gpz *(gmy * (gmx * temperature(cell_x-1, cell_y-1, cell_z+1) + &
-          g0x * temperature(cell_x, cell_y-1, cell_z+1) + &
-          gpx * temperature(cell_x+1, cell_y-1, cell_z+1)) + &
-          g0y * (gmx * temperature(cell_x-1, cell_y, cell_z+1) + &
-          g0x * temperature(cell_x, cell_y, cell_z+1) + &
-          gpx * temperature(cell_x+1, cell_y, cell_z+1)) + &
-          gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z+1) + &
-          g0x * temperature(cell_x, cell_y+1, cell_z+1) + &
-          gpx * temperature(cell_x+1, cell_y+1, cell_z+1)))
+      temp_local = gmz * (gmy * (gmx &
+          * temperature(cell_x-1, cell_y-1, cell_z-1) &
+          + g0x * temperature(cell_x, cell_y-1, cell_z-1) &
+          + gpx * temperature(cell_x+1, cell_y-1, cell_z-1)) &
+          + g0y * (gmx * temperature(cell_x-1, cell_y, cell_z-1) &
+          + g0x * temperature(cell_x, cell_y, cell_z-1) &
+          + gpx * temperature(cell_x+1, cell_y, cell_z-1)) &
+          + gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z-1) &
+          + g0x * temperature(cell_x, cell_y+1, cell_z-1) &
+          + gpx * temperature(cell_x+1, cell_y+1, cell_z-1))) &
+          + g0z *(gmy * (gmx * temperature(cell_x-1, cell_y-1, cell_z  ) &
+          + g0x * temperature(cell_x, cell_y-1, cell_z  ) &
+          + gpx * temperature(cell_x+1, cell_y-1, cell_z  )) &
+          + g0y * (gmx * temperature(cell_x-1, cell_y, cell_z  ) &
+          + g0x * temperature(cell_x, cell_y, cell_z  ) &
+          + gpx * temperature(cell_x+1, cell_y, cell_z  )) &
+          + gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z  ) &
+          + g0x * temperature(cell_x, cell_y+1, cell_z  ) &
+          + gpx * temperature(cell_x+1, cell_y+1, cell_z  ))) &
+          + gpz *(gmy * (gmx * temperature(cell_x-1, cell_y-1, cell_z+1) &
+          + g0x * temperature(cell_x, cell_y-1, cell_z+1) &
+          + gpx * temperature(cell_x+1, cell_y-1, cell_z+1)) &
+          + g0y * (gmx * temperature(cell_x-1, cell_y, cell_z+1) &
+          + g0x * temperature(cell_x, cell_y, cell_z+1) &
+          + gpx * temperature(cell_x+1, cell_y, cell_z+1)) &
+          + gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z+1) &
+          + g0x * temperature(cell_x, cell_y+1, cell_z+1) &
+          + gpx * temperature(cell_x+1, cell_y+1, cell_z+1)))
 
       IF (IAND(direction, c_dir_x) .NE. 0) current%part_p(1) = &
           momentum_from_temperature(mass, temp_local, idum) + drift(1)
@@ -505,8 +505,8 @@ CONTAINS
           IF (density(ix, iy, iz) .GT. min_density) THEN
             density_map(ix, iy, iz) = .TRUE.
           ENDIF
-          IF (density(ix, iy, iz) .GT. max_density .AND. &
-              max_density .GT. 0.0_num) THEN
+          IF (density(ix, iy, iz) .GT. max_density &
+              .AND. max_density .GT. 0.0_num) THEN
             density(ix, iy, iz) = max_density
           ENDIF
         ENDDO
@@ -556,8 +556,8 @@ CONTAINS
         DO isuby = -sf_order, sf_order
           DO isubx = -sf_order, sf_order
             weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz) = &
-                weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz) + &
-                gx(isubx) * gy(isuby) * gz(isubz) * data
+                weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz) &
+                + gx(isubx) * gy(isuby) * gz(isubz) * data
           ENDDO
         ENDDO
       ENDDO
@@ -609,8 +609,8 @@ CONTAINS
         DO isuby = -sf_order, +sf_order
           DO isubx = -sf_order, +sf_order
             weight_local = &
-                weight_local + gx(isubx)*gy(isuby)*gz(isubz)* &
-                weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz)
+                weight_local + gx(isubx)*gy(isuby)*gz(isubz) &
+                * weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz)
           ENDDO
         ENDDO
       ENDDO
@@ -692,8 +692,8 @@ CONTAINS
       IF (cdf(current) .LE. position .AND. cdf(current+1) .GE. position) THEN
         d_cdf = cdf(current+1)-cdf(current)
         sample_dist_function = &
-            (axis(current)*(position-cdf(current))/d_cdf + &
-            axis(current+1)*(cdf(current+1)-position)/d_cdf)
+            (axis(current)*(position-cdf(current))/d_cdf &
+            + axis(current+1)*(cdf(current+1)-position)/d_cdf)
         EXIT
       ENDIF
     ENDDO

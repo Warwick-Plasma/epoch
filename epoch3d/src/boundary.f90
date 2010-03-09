@@ -69,40 +69,40 @@ CONTAINS
     ENDIF
 
     ! laser boundaries reflect particles off a hard wall
-    IF (xbc_left .EQ. c_bc_simple_laser .OR. &
-        xbc_left .EQ. c_bc_simple_outflow) THEN
+    IF (xbc_left .EQ. c_bc_simple_laser &
+        .OR. xbc_left .EQ. c_bc_simple_outflow) THEN
       xbc_left_particle = c_bc_open
       xbc_left_field = c_bc_zero_gradient
       any_open = .TRUE.
     ENDIF
-    IF (xbc_right .EQ. c_bc_simple_laser .OR. &
-        xbc_right .EQ. c_bc_simple_outflow) THEN
+    IF (xbc_right .EQ. c_bc_simple_laser &
+        .OR. xbc_right .EQ. c_bc_simple_outflow) THEN
       xbc_right_particle = c_bc_open
       xbc_left_field = c_bc_zero_gradient
       any_open = .TRUE.
     ENDIF
 
-    IF (ybc_up .EQ. c_bc_simple_laser .OR. &
-        ybc_up .EQ. c_bc_simple_outflow) THEN
+    IF (ybc_up .EQ. c_bc_simple_laser &
+        .OR. ybc_up .EQ. c_bc_simple_outflow) THEN
       ybc_up_particle = c_bc_open
       ybc_up_field = c_bc_zero_gradient
       any_open = .TRUE.
     ENDIF
-    IF (ybc_down .EQ. c_bc_simple_laser .OR. &
-        ybc_down .EQ. c_bc_simple_outflow) THEN
+    IF (ybc_down .EQ. c_bc_simple_laser &
+        .OR. ybc_down .EQ. c_bc_simple_outflow) THEN
       ybc_down_particle = c_bc_open
       ybc_down_field = c_bc_zero_gradient
       any_open = .TRUE.
     ENDIF
 
-    IF (zbc_front .EQ. c_bc_simple_laser .OR. &
-        zbc_front .EQ. c_bc_simple_outflow) THEN
+    IF (zbc_front .EQ. c_bc_simple_laser &
+        .OR. zbc_front .EQ. c_bc_simple_outflow) THEN
       zbc_front_particle = c_bc_open
       zbc_front_field = c_bc_zero_gradient
       any_open = .TRUE.
     ENDIF
-    IF (zbc_back .EQ. c_bc_simple_laser .OR. &
-        zbc_back .EQ. c_bc_simple_outflow) THEN
+    IF (zbc_back .EQ. c_bc_simple_laser &
+        .OR. zbc_back .EQ. c_bc_simple_outflow) THEN
       zbc_back_particle = c_bc_open
       zbc_back_field = c_bc_zero_gradient
       any_open = .TRUE.
@@ -167,33 +167,33 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
     LOGICAL, INTENT(IN) :: force
 
-    IF ((xbc_left_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
-        left .EQ. MPI_PROC_NULL) THEN
+    IF ((xbc_left_field .EQ. c_bc_zero_gradient .OR. force) &
+        .AND. left .EQ. MPI_PROC_NULL) THEN
       field(0,:,:) = field(1,:,:)
     ENDIF
 
-    IF ((xbc_right_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
-        right .EQ. MPI_PROC_NULL) THEN
+    IF ((xbc_right_field .EQ. c_bc_zero_gradient .OR. force) &
+        .AND. right .EQ. MPI_PROC_NULL) THEN
       field(nx+1,:,:) = field(nx,:,:)
     ENDIF
 
-    IF ((ybc_down_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
-        down .EQ. MPI_PROC_NULL) THEN
+    IF ((ybc_down_field .EQ. c_bc_zero_gradient .OR. force) &
+        .AND. down .EQ. MPI_PROC_NULL) THEN
       field(:,0,:) = field(:,1,:)
     ENDIF
 
-    IF ((ybc_up_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
-        up .EQ. MPI_PROC_NULL) THEN
+    IF ((ybc_up_field .EQ. c_bc_zero_gradient .OR. force) &
+        .AND. up .EQ. MPI_PROC_NULL) THEN
       field(:,ny+1,:) = field(:,ny,:)
     ENDIF
 
-    IF ((zbc_back_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
-        back .EQ. MPI_PROC_NULL) THEN
+    IF ((zbc_back_field .EQ. c_bc_zero_gradient .OR. force) &
+        .AND. back .EQ. MPI_PROC_NULL) THEN
       field(:,:,0) = field(:,:,1)
     ENDIF
 
-    IF ((zbc_front_field .EQ. c_bc_zero_gradient .OR. force) .AND. &
-        front .EQ. MPI_PROC_NULL) THEN
+    IF ((zbc_front_field .EQ. c_bc_zero_gradient .OR. force) &
+        .AND. front .EQ. MPI_PROC_NULL) THEN
       field(:,:,nz+1) = field(:,:,nz)
     ENDIF
 
@@ -419,33 +419,33 @@ CONTAINS
 
         ! These conditions apply if a particle has passed a physical boundary
         ! Not a processor boundary or a periodic boundary
-        IF (cur%part_pos(1) .LE. x_start-dx/2.0_num .AND. &
-            left .EQ. MPI_PROC_NULL .AND. &
-            xbc_left_particle .EQ. c_bc_reflect) THEN
+        IF (cur%part_pos(1) .LE. x_start-dx/2.0_num &
+            .AND. left .EQ. MPI_PROC_NULL &
+            .AND. xbc_left_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed left boundary
           cur%part_pos(1) =  2.0_num * (x_start-dx/2.0_num) - cur%part_pos(1)
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
 
-        IF (cur%part_pos(1) .GE. x_end+dx/2.0_num .AND. &
-            right .EQ. MPI_PROC_NULL .AND. &
-            xbc_right_particle .EQ. c_bc_reflect) THEN
+        IF (cur%part_pos(1) .GE. x_end+dx/2.0_num &
+            .AND. right .EQ. MPI_PROC_NULL &
+            .AND. xbc_right_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed right boundary
           cur%part_pos(1) =  2.0_num *(x_end+dx/2.0_num) - cur%part_pos(1)
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
 
-        IF (cur%part_pos(2) .LE. y_start-dy/2.0_num .AND. &
-            down .EQ. MPI_PROC_NULL .AND. &
-            ybc_down_particle .EQ. c_bc_reflect) THEN
+        IF (cur%part_pos(2) .LE. y_start-dy/2.0_num &
+            .AND. down .EQ. MPI_PROC_NULL &
+            .AND. ybc_down_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed bottom boundary
           cur%part_pos(2) =  2.0_num * (y_start-dy/2.0_num) - cur%part_pos(2)
           cur%part_p(2) = - cur%part_p(2)
         ENDIF
 
-        IF (cur%part_pos(2) .GE. y_end+dy/2.0_num .AND. &
-            up .EQ. MPI_PROC_NULL .AND. &
-            ybc_up_particle .EQ. c_bc_reflect) THEN
+        IF (cur%part_pos(2) .GE. y_end+dy/2.0_num &
+            .AND. up .EQ. MPI_PROC_NULL &
+            .AND. ybc_up_particle .EQ. c_bc_reflect) THEN
           ! PRINT *, "Reflecting"
           ! particle has crossed top boundary
           cur%part_pos(2) =  2.0_num * (y_end + dy/2.0_num) - cur%part_pos(2)
@@ -454,17 +454,17 @@ CONTAINS
           cur%part_p(2) = - cur%part_p(2)
         ENDIF
 
-        IF (cur%part_pos(3) .LT. z_start+dz/2.0_num .AND. &
-            back .EQ. MPI_PROC_NULL .AND. &
-            zbc_back_particle .EQ. c_bc_other) THEN
+        IF (cur%part_pos(3) .LT. z_start+dz/2.0_num &
+            .AND. back .EQ. MPI_PROC_NULL &
+            .AND. zbc_back_particle .EQ. c_bc_other) THEN
           ! particle has crossed back boundary
           cur%part_pos(3) =  2.0_num * (z_start-dz/2.0_num) - cur%part_pos(3)
           cur%part_p(3) = - cur%part_p(3)
         ENDIF
 
-        IF (cur%part_pos(3) .GT. z_end+dz/2.0_num .AND. &
-            front .EQ. MPI_PROC_NULL .AND. &
-            zbc_front_particle .EQ. c_bc_other) THEN
+        IF (cur%part_pos(3) .GT. z_end+dz/2.0_num &
+            .AND. front .EQ. MPI_PROC_NULL &
+            .AND. zbc_front_particle .EQ. c_bc_other) THEN
           ! particle has crossed front boundary
           cur%part_pos(3) =  2.0_num * (z_end + dz/2.0_num) - cur%part_pos(2)
           cur%part_p(3) = - cur%part_p(3)
@@ -477,18 +477,18 @@ CONTAINS
         IF (cur%part_pos(3) .LT. z_start_local - dz/2.0_num) zbd = -1
         IF (cur%part_pos(3) .GT. z_end_local + dz/2.0_num)   zbd = 1
 
-        IF ((cur%part_pos(1) .LT. x_start - dx/2.0_num) .AND. &
-            (xbc_left_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(1) .GT. x_end + dx/2.0_num) .AND. &
-            (xbc_right_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(2) .LT. y_start - dy/2.0_num) .AND. &
-            (ybc_down_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(2) .GT. y_end +dy/2.0_num) .AND. &
-            (ybc_up_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(3) .LT. z_start - dz/2.0_num) .AND. &
-            (zbc_back_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(3) .GT. z_end +dz/2.0_num) .AND. &
-            (zbc_front_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos(1) .LT. x_start - dx/2.0_num) &
+            .AND. (xbc_left_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos(1) .GT. x_end + dx/2.0_num) &
+            .AND. (xbc_right_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos(2) .LT. y_start - dy/2.0_num) &
+            .AND. (ybc_down_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos(2) .GT. y_end +dy/2.0_num) &
+            .AND. (ybc_up_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos(3) .LT. z_start - dz/2.0_num) &
+            .AND. (zbc_back_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos(3) .GT. z_end +dz/2.0_num) &
+            .AND. (zbc_front_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
 
         IF (ABS(xbd) + ABS(ybd) + ABS(zbd) .GT. 0) THEN
           ! particle has left box
@@ -527,23 +527,23 @@ CONTAINS
       cur=>particle_species(ispecies)%attached_list%head
       ct = 0
       DO WHILE(ASSOCIATED(cur))
-        IF (cur%part_pos(1) .GT. x_end+dx/2.0_num .AND. &
-            xbc_left_particle .EQ. c_bc_periodic) &
+        IF (cur%part_pos(1) .GT. x_end+dx/2.0_num &
+            .AND. xbc_left_particle .EQ. c_bc_periodic) &
                 cur%part_pos(1) = cur%part_pos(1)-length_x - dx
-        IF (cur%part_pos(1) .LT. x_start-dx/2.0_num .AND. &
-            xbc_right_particle .EQ. c_bc_periodic) &
+        IF (cur%part_pos(1) .LT. x_start-dx/2.0_num &
+            .AND. xbc_right_particle .EQ. c_bc_periodic) &
                 cur%part_pos(1) = cur%part_pos(1)+length_x + dx
-        IF (cur%part_pos(2) .GT. y_end+dy/2.0_num .AND. &
-            ybc_up_particle .EQ. c_bc_periodic) &
+        IF (cur%part_pos(2) .GT. y_end+dy/2.0_num &
+            .AND. ybc_up_particle .EQ. c_bc_periodic) &
                 cur%part_pos(2) = cur%part_pos(2)-length_y - dy
-        IF (cur%part_pos(2) .LT. y_start-dy/2.0_num .AND. &
-            ybc_down_particle .EQ. c_bc_periodic) &
+        IF (cur%part_pos(2) .LT. y_start-dy/2.0_num &
+            .AND. ybc_down_particle .EQ. c_bc_periodic) &
                 cur%part_pos(2) = cur%part_pos(2)+length_y + dy
-        IF (cur%part_pos(3) .GT. z_end+dz/2.0_num .AND. &
-            zbc_front_particle .EQ. c_bc_periodic) &
+        IF (cur%part_pos(3) .GT. z_end+dz/2.0_num &
+            .AND. zbc_front_particle .EQ. c_bc_periodic) &
                 cur%part_pos(3) = cur%part_pos(3)-length_z - dz
-        IF (cur%part_pos(3) .LT. z_start-dz/2.0_num .AND. &
-            zbc_back_particle .EQ. c_bc_periodic) &
+        IF (cur%part_pos(3) .LT. z_start-dz/2.0_num &
+            .AND. zbc_back_particle .EQ. c_bc_periodic) &
                 cur%part_pos(3) = cur%part_pos(3)+length_z + dz
         cur=>cur%next
       ENDDO

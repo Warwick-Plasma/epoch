@@ -117,10 +117,10 @@ CONTAINS
         t_eff = 2.0_num/3.0_num*e_photon/(kb*number_density_part*dx*dy)
         IF (t_eff .GT. 1.0e-6_num) THEN
           lambda_db = SQRT(h_planck**2/(2.0_num*pi*m0*kb*t_eff))
-          saha_rhs = 2.0_num/lambda_db**3 * &
-              EXP(-particle_species(ispecies)%ionisation_energy/(kb*t_eff))
-          ion_frac = 0.5_num * (-saha_rhs + &
-              SQRT(saha_rhs**2+4.0_num*number_density_part*saha_rhs))
+          saha_rhs = 2.0_num/lambda_db**3 &
+              * EXP(-particle_species(ispecies)%ionisation_energy/(kb*t_eff))
+          ion_frac = 0.5_num * (-saha_rhs &
+              + SQRT(saha_rhs**2+4.0_num*number_density_part*saha_rhs))
           ion_frac = ion_frac/number_density_part
         ELSE
           ion_frac = 0.0_num
