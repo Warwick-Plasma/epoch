@@ -5,7 +5,7 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 22
+  INTEGER, PARAMETER :: control_block_elements = 21
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -24,7 +24,6 @@ MODULE deck_control_block
           "dt_multiplier     ", &
           "dlb               ", &
           "dlb_threshold     ", &
-          "initial_conditions", &
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
@@ -91,18 +90,17 @@ CONTAINS
     CASE(15)
       dlb_threshold = as_real(value, handle_control_deck)
     CASE(16)
-      ictype = as_integer(value, handle_control_deck)
-    CASE(17)
       icfile%value = value(1:MIN(LEN(value), data_dir_max_length))
-    CASE(18)
+    CASE(17)
       restart_snapshot = as_integer(value, handle_control_deck)
-    CASE(19)
+      ic_from_restart = .TRUE.
+    CASE(18)
       neutral_background = as_logical(value, handle_control_deck)
-    CASE(20)
+    CASE(19)
       nprocx = as_integer(value, handle_control_deck)
-    CASE(21)
+    CASE(20)
       nprocy = as_integer(value, handle_control_deck)
-    CASE(22)
+    CASE(21)
       nprocz = as_integer(value, handle_control_deck)
     END SELECT
 
@@ -119,19 +117,17 @@ CONTAINS
     ! npart is not a required variable
     control_block_done(4) = .TRUE.
 
-    ! If not using external load then don't need a file
-    IF (IAND(ictype, c_ic_external) .EQ. 0) control_block_done(17) = .TRUE.
+    ! external input deck is optional
+    control_block_done(16) = .TRUE.
 
-    ! If not using restart then don't need a restart number
-    IF (IAND(ictype, c_ic_restart)  .EQ. 0) control_block_done(18) = .TRUE.
+    ! restart snapshot is optional
+    control_block_done(17) = .TRUE.
 
     ! The neutral background is still beta, so hide it if people don't want it
-    control_block_done(19) = .TRUE.
+    control_block_done(18) = .TRUE.
 
     ! Never need to set nproc so
-    control_block_done(20:22) = .TRUE.
-
-    restart = IAND(ictype, c_ic_restart) .NE. 0
+    control_block_done(19:21) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

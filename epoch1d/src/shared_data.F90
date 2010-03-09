@@ -60,16 +60,6 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_bad_array_length = 512
   INTEGER, PARAMETER :: c_err_other = 1024
 
-  ! IC codes
-  ! This is a bitmask, remember that
-  INTEGER, PARAMETER :: c_ic_early_internal = 1
-  INTEGER, PARAMETER :: c_ic_late_internal = 2
-  INTEGER, PARAMETER :: c_ic_external = 4
-  INTEGER, PARAMETER :: c_ic_manual = 8
-  INTEGER, PARAMETER :: c_ic_restart = 16
-  INTEGER, PARAMETER :: &
-      c_ic_autoload = c_ic_early_internal + c_ic_late_internal + c_ic_external
-
   INTEGER, PARAMETER :: c_ds_deck = 1
   INTEGER, PARAMETER :: c_ds_ic = 2
   INTEGER, PARAMETER :: c_ds_eio = 3
@@ -203,13 +193,6 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_px = 52
   INTEGER, PARAMETER :: c_const_dir_py = 53
   INTEGER, PARAMETER :: c_const_dir_pz = 54
-
-  ! Constants for initial conditions
-  INTEGER, PARAMETER :: c_const_autoearly = 20
-  INTEGER, PARAMETER :: c_const_autolate = 21
-  INTEGER, PARAMETER :: c_const_external = 22
-  INTEGER, PARAMETER :: c_const_manual = 23
-  INTEGER, PARAMETER :: c_const_restart = 24
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -414,7 +397,6 @@ MODULE shared_data
 
   INTEGER :: deck_state
   TYPE(initial_condition_block), DIMENSION(:), ALLOCATABLE :: initial_conditions
-  INTEGER :: ictype
   TYPE(string_type) :: icfile
 
   !----------------------------------------------------------------------------
@@ -504,7 +486,7 @@ MODULE shared_data
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight
 
-  LOGICAL :: SAVE, restart, deckfile
+  LOGICAL :: SAVE, ic_from_restart = .FALSE., deckfile
   INTEGER :: xbc_right, xbc_left
   INTEGER :: xbc_right_particle, xbc_left_particle
   INTEGER :: xbc_right_field, xbc_left_field

@@ -40,16 +40,8 @@ CONTAINS
     dlb = .FALSE.
     dlb_threshold = 1.0_num
 
-    ! Initial conditions
-    ! Bitmask, combine with IOR (or addition)
-    ! c_ic_early_internal
-    ! c_ic_external
-    ! c_ic_late_internal
-    ! c_ic_manual
-    ! c_ic_restart
-    ictype = c_ic_early_internal
-    icfile%value = "ic.deck"
-    restart_snapshot = 0
+!!$    icfile%value = "ic.deck"
+!!$    restart_snapshot = 0
 
     ! Neutralising background
     neutral_background = .TRUE.

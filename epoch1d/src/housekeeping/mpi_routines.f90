@@ -80,7 +80,6 @@ CONTAINS
   SUBROUTINE mpi_initialise
 
     INTEGER :: ispecies, idim
-    INTEGER(KIND=8) :: npart_this_species
 
     CALL setup_communicator
     nx = nx_global/nprocx
@@ -123,15 +122,9 @@ CONTAINS
     ENDDO
     DO ispecies = 1, n_species
       particle_species(ispecies)%id = ispecies
-      npart_this_species = particle_species(ispecies)%count
       NULLIFY(particle_species(ispecies)%attached_list%next)
       NULLIFY(particle_species(ispecies)%attached_list%prev)
-      IF (restart .OR. IOR(ictype, c_ic_autoload) .NE. 0) THEN
-        CALL create_empty_partlist(particle_species(ispecies)%attached_list)
-      ELSE
-        CALL create_allocated_partlist(&
-            particle_species(ispecies)%attached_list, npart_this_species)
-      ENDIF
+      CALL create_empty_partlist(particle_species(ispecies)%attached_list)
     ENDDO
 
     start_time = MPI_WTIME()

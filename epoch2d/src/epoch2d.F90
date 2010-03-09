@@ -80,33 +80,21 @@ PROGRAM pic
   ENDIF
 
   ! restart flag is set
-  IF (IAND(ictype, c_ic_restart) .NE. 0) THEN
+  IF (ic_from_restart) THEN
     CALL restart_data    ! restart from data in file SAVE.data
     IF (rank .EQ. 0) PRINT *, "Load from restart dump OK"
     output_file = restart_snapshot
   ELSE
     ! Using autoloader
-    IF (IOR(ictype, c_ic_autoload) .NE. 0) THEN
-      CALL allocate_ic
-    ENDIF
+    CALL allocate_ic
     ! Early internal initialisation
-    IF (IAND(ictype, c_ic_early_internal) .NE. 0) THEN
-      CALL ic_early  ! define initial profiles
-    ENDIF
+    CALL ic_early  ! define initial profiles
     ! External initialisation
-    IF (IAND(ictype, c_ic_external) .NE. 0) THEN
-      deck_state = c_ds_ic
-      CALL read_deck(icfile%value, .TRUE.)
-    ENDIF
-    ! Late internal initialisation
-    IF (IAND(ictype, c_ic_late_internal) .NE. 0) THEN
-      CALL ic_late    ! define initial profiles
-    ENDIF
+    deck_state = c_ds_ic
+    CALL read_deck(icfile%value, .TRUE.)
     ! auto_load particles
-    IF (IOR(ictype, c_ic_autoload) .NE. 0) THEN
-      CALL auto_load
-      CALL deallocate_ic
-    ENDIF
+    CALL auto_load
+    CALL deallocate_ic
     time = 0.0_num
     output_file = 0
   ENDIF
@@ -115,12 +103,10 @@ PROGRAM pic
   IF (.NOT. neutral_background) CALL do_gauss
   CALL balance_workload(.TRUE.)
 
-  IF (IAND(ictype, c_ic_manual) .NE. 0) THEN
-    CALL manual_load
-    CALL distribute_particles
-    ! .TRUE. to over_ride balance fraction check
-    CALL balance_workload(.TRUE.)
-  ENDIF
+  CALL manual_load
+  CALL distribute_particles
+  ! .TRUE. to over_ride balance fraction check
+  CALL balance_workload(.TRUE.)
 
   ! npart_global isn't really used anymore, just check where it is used
   IF (npart_global .LT. 0) THEN
@@ -134,7 +120,7 @@ PROGRAM pic
   CALL efield_bcs
   CALL bfield_bcs(.FALSE.)
 
-  IF (.NOT. restart) THEN
+  IF (.NOT. ic_from_restart) THEN
     CALL set_dt
     CALL update_eb_fields_half
     CALL push_particles

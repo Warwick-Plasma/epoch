@@ -83,11 +83,6 @@ CONTAINS
     IF (str_cmp(name, "x_end")) as_constant = c_const_end_x
     IF (str_cmp(name, "ix")) as_constant = c_const_ix
     IF (str_cmp(name, "time")) as_constant = c_const_time
-    IF (str_cmp(name, "internal_early")) as_constant = c_const_autoearly
-    IF (str_cmp(name, "internal_late")) as_constant = c_const_autolate
-    IF (str_cmp(name, "external")) as_constant = c_const_external
-    IF (str_cmp(name, "manual"))   as_constant = c_const_manual
-    IF (str_cmp(name, "restart"))  as_constant = c_const_restart
     IF (str_cmp(name, "never")) as_constant = c_const_io_never
     IF (str_cmp(name, "always")) as_constant = c_const_io_always
     IF (str_cmp(name, "full")) as_constant = c_const_io_full

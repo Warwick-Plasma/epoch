@@ -328,10 +328,11 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
 
     REAL(num), SAVE :: t1 = 0.0_num
+    LOGICAL, SAVE :: first = .TRUE.
 
-    IF (restart) THEN
-      t1 = time
-      restart = .FALSE.
+    IF (first) THEN
+      IF (ic_from_restart) t1 = time
+      first = .FALSE.
     ENDIF
 
     print_arrays = .FALSE.

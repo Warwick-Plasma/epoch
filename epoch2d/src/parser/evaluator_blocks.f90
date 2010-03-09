@@ -240,31 +240,6 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (opcode .EQ. c_const_autoearly) THEN
-      CALL push_on_eval(REAL(c_ic_early_internal, num))
-      RETURN
-    ENDIF
-
-    IF (opcode .EQ. c_const_autolate) THEN
-      CALL push_on_eval(REAL(c_ic_late_internal, num))
-      RETURN
-    ENDIF
-
-    IF (opcode .EQ. c_const_external) THEN
-      CALL push_on_eval(REAL(c_ic_external, num))
-      RETURN
-    ENDIF
-
-    IF (opcode .EQ. c_const_manual) THEN
-      CALL push_on_eval(REAL(c_ic_manual, num))
-      RETURN
-    ENDIF
-
-    IF (opcode .EQ. c_const_restart) THEN
-      CALL push_on_eval(REAL(c_ic_restart, num))
-      RETURN
-    ENDIF
-
     IF (opcode .EQ. c_const_io_never) THEN
       CALL push_on_eval(REAL(c_io_never, num))
       RETURN

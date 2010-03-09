@@ -5,7 +5,7 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 17
+  INTEGER, PARAMETER :: control_block_elements = 16
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -21,7 +21,6 @@ MODULE deck_control_block
           "dt_multiplier     ", &
           "dlb               ", &
           "dlb_threshold     ", &
-          "initial_conditions", &
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
@@ -79,14 +78,13 @@ CONTAINS
     CASE(12)
       dlb_threshold = as_real(value, handle_control_deck)
     CASE(13)
-      ictype = as_integer(value, handle_control_deck)
-    CASE(14)
       icfile%value = value(1:MIN(LEN(value), data_dir_max_length))
-    CASE(15)
+    CASE(14)
       restart_snapshot = as_integer(value, handle_control_deck)
-    CASE(16)
+      ic_from_restart = .TRUE.
+    CASE(15)
       neutral_background = as_logical(value, handle_control_deck)
-    CASE(17)
+    CASE(16)
       smooth_currents = as_logical(value, handle_control_deck)
     END SELECT
 
@@ -103,19 +101,17 @@ CONTAINS
     ! npart is not a required variable
     control_block_done(3) = .TRUE.
 
-    ! If not using external load then don't need a file
-    IF (IAND(ictype, c_ic_external) .EQ. 0) control_block_done(14) = .TRUE.
+    ! external input deck is optional
+    control_block_done(13) = .TRUE.
 
-    ! If not using restart then don't need a restart number
-    IF (IAND(ictype, c_ic_restart)  .EQ. 0) control_block_done(15) = .TRUE.
+    ! restart snapshot is optional
+    control_block_done(14) = .TRUE.
 
     ! The neutral background is still beta, so hide it if people don't want it
-    control_block_done(16) = .TRUE.
+    control_block_done(15) = .TRUE.
 
     ! Assume no current smoothing unless specified
-    control_block_done(17) = .TRUE.
-
-    restart = IAND(ictype, c_ic_restart) .NE. 0
+    control_block_done(16) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

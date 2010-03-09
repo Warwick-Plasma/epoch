@@ -4,7 +4,7 @@ MODULE ic_module
 
   PRIVATE
 
-  PUBLIC :: ic_early, ic_late, manual_load
+  PUBLIC :: ic_early, manual_load
 
 CONTAINS
 
@@ -15,12 +15,6 @@ CONTAINS
   SUBROUTINE ic_early
 
   END SUBROUTINE ic_early
-
-
-
-  SUBROUTINE ic_late
-
-  END SUBROUTINE ic_late
 
 
 

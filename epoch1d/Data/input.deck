@@ -21,9 +21,8 @@ begin:control
   dlb=F
   dlb_threshold=1.0
 
-  initial_conditions=external
   icfile=ic.deck
-  restart_snapshot=98
+  #restart_snapshot=98
 
   #Setting neutral_background to F makes the code solve
   #Poisson's equation for the initial electric field
