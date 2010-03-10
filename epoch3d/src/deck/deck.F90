@@ -163,7 +163,7 @@ CONTAINS
         handle_block = handle_probe_deck(block_element, block_value)
         RETURN
 #else
-        handle_block = c_err_pp_options_wrong
+        handle_block = handle_block + c_err_pp_options_wrong
         extended_error_string = "-DPARTICLE_PROBES"
         RETURN
 #endif
@@ -477,8 +477,23 @@ CONTAINS
     IF (str_cmp(element, "begin")) THEN
       errcode_deck = handle_block(value, blank, blank)
       invalid_block = IAND(errcode_deck, c_err_unknown_block) .NE. 0
-      IF (invalid_block) THEN
-        IF (rank .EQ. rank_check) THEN
+      IF (invalid_block .AND. rank .EQ. rank_check) THEN
+        IF(IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
+          PRINT *, ""
+          PRINT *, "***ERROR*** The block ", TRIM(value), &
+              " cannot be set because the code has not been compiled with " &
+              // "the correct preprocessor options.", &
+              "Code will continue, but to use selected features, please " &
+              // "recompile with ",TRIM(extended_error_string)," option"
+          PRINT *, ""
+          WRITE(40,*) ""
+          WRITE(40,*) "***ERROR*** The block ", TRIM(value), &
+              " cannot be set because the code has not been compiled with " &
+              // "the correct preprocessor options.", &
+              "Code will continue, but to use selected features, please " &
+              // "recompile with ",TRIM(extended_error_string)," option"
+          WRITE(40,*) ""
+        ELSE
           PRINT *, CHAR(9), "Unknown block ", TRIM(value), &
               " in input deck, ignoring"
         ENDIF

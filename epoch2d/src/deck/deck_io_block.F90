@@ -54,7 +54,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_io_deck
-    INTEGER :: loop, elementselected
+    INTEGER :: loop, elementselected, mask
 
     handle_io_deck = c_err_unknown_element
 
@@ -93,18 +93,20 @@ CONTAINS
     END SELECT
 
     IF (elementselected .LE. n_var_special) RETURN
-    IF (elementselected .GT. n_var_special) &
-        dumpmask(elementselected-n_var_special) = &
-            as_integer(value, handle_io_deck)
+
+    mask = as_integer(value, handle_io_deck)
 
     ! If setting dumpmask for particle probes then report if the code wasn't
     ! compiled for particle probes
 #ifndef PARTICLE_PROBES
-    IF (elementselected-n_var_special .EQ. 27) THEN
+    IF (elementselected-n_var_special .EQ. 27 .AND. mask .NE. c_io_never) THEN
       handle_io_deck = c_err_pp_options_wrong
       extended_error_string = "-DPARTICLE_PROBES"
+      mask = c_io_never
     ENDIF
 #endif
+
+    dumpmask(elementselected-n_var_special) = mask
 
   END FUNCTION handle_io_deck
 
