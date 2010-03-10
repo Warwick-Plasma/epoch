@@ -7,6 +7,7 @@ MODULE diagnostics
   USE dist_fn
   USE probes
   USE mpi_subtype_control
+  USE encoded_source
   !USE iterators
   USE particle_pointer_advance
 
@@ -299,6 +300,12 @@ CONTAINS
 !!$          ENDDO
 !!$        ENDIF
 !!$      ENDIF
+
+      IF (IAND(c_io_restartable, code) .NE. 0 &
+          .AND. LEN(source_code) .GT. 0) THEN
+        CALL cfd_write_character_constant("Code", "base64_packed_source_code", &
+            source_code, 0)
+      ENDIF
 
       ! CLOSE the file
       CALL cfd_close()

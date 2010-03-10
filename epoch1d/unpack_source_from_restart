@@ -1,0 +1,33 @@
+#! /bin/sh
+
+file=$1
+output=epoch.tgz
+
+if [ -e $output ]; then
+  echo 'ERROR: output file "'$output'" already exists. Please remove first.'
+  exit 1
+fi
+
+if [ ! -f $file ]; then
+  echo 'ERROR: restart dump "'$file'" does not exist'
+  exit 1
+fi
+
+byte=`grep -abo base64_packed_source_code $file | cut -f1 -d:`
+
+if [ -z $byte ]; then
+  echo 'ERROR: source code not found. Perhaps "'$file'" is not a restart dump.'
+  exit 1
+fi
+
+(echo begin-base64 664 epoch.tgz
+dd status=noxfer if=$file bs=1 skip=$((byte+80)) 2> /dev/null | fold
+echo
+echo ====) | uudecode
+
+if [ $? -eq 0 ]; then
+  echo 'Source code successfully unpacked into "'$output'"'
+else
+  echo 'ERROR occured while unpacking source code'
+  exit 1
+fi

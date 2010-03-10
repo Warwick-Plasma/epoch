@@ -1,0 +1,56 @@
+#! /bin/sh
+
+file=$1
+success=1
+
+shift
+
+dir=`dirname $file`
+tmp=$dir/tmp
+tmp2=$dir/tmp2
+
+[ -d $dir ] || mkdir $dir
+
+cat > $file <<EOF
+MODULE encoded_source
+
+  IMPLICIT NONE
+
+  CHARACTER(LEN=*), PARAMETER :: source_code = "" &
+EOF
+
+tar czf $tmp $*
+if [ $? -eq 0 ]; then
+  base64 $tmp > $tmp2
+  if [ $? -ne 0 ]; then
+    echo base64 failed. Trying mimencode.
+    mimencode $tmp -o $tmp2
+  fi
+  if [ $? -ne 0 ]; then
+    echo mimencode failed. Trying uuencode.
+    uuencode -m $tmp epoch.tgz > $tmp2
+    if [ $? -eq 0 ]; then
+      n=`cat $tmp2 | wc -l`
+      sed -n 2,$((n-1))p $tmp2 > $tmp
+      mv $tmp $tmp2
+    else
+      false
+    fi
+  fi
+  if [ $? -eq 0 ]; then
+    sed 's,^,    // ",; s,$," \&,' $tmp2 >> $file
+    success=0
+  fi
+fi
+
+cat >> $file <<EOF
+    // ""
+
+END MODULE encoded_source
+EOF
+
+rm -f $tmp $tmp2
+
+if [ $success -ne 0 ]; then
+  echo WARNING: failed to pack source code. Restart dumps will be produced without it.
+fi

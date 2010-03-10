@@ -28,19 +28,24 @@ BINDIR = bin
 FC = mpif90
 PREPROFLAGS = $(DEFINES)
 
-OBJFILES = balance.o boundary.o calc_df.o custom_deck.o custom_laser.o \
-  custom_parser.o deck_boundaries_block.o deck_constant_block.o \
-  deck_control_block.o deck_deo_block.o deck_eio_dist_fn_block.o \
-  deck_eio_particle_probe_block.o deck_ic_external_block.o \
-  deck_ic_fields_block.o deck_ic_laser_block.o deck_ic_species_block.o \
-  deck_io_block.o deck.o deck_species_block.o deck_window_block.o \
-  diagnostics.o dist_fn.o epoch3d.o evaluate.o evaluator_blocks.o fields.o \
-  helper.o ic_module.o input_cartesian.o input_functions.o input.o \
-  input_particle.o iocommon.o iocontrol.o laser.o mpi_routines.o \
-  mpi_subtype_control.o output_cartesian.o output.o output_particle.o \
-  particle_pointer_advance.o particles.o partlist.o probes.o setup.o \
-  shape_functions.o shared_data.o shunt.o simple_io.o split_particles.o \
-  stack.o strings_advanced.o strings.o tokenizer_blocks.o welcome.o window.o
+SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
+  custom_laser.f90 custom_parser.f90 deck_boundaries_block.f90 \
+  deck_constant_block.f90 deck_control_block.f90 deck_deo_block.f90 \
+  deck_eio_dist_fn_block.f90 deck_eio_particle_probe_block.F90 deck.F90 \
+  deck_ic_external_block.f90 deck_ic_fields_block.f90 deck_ic_laser_block.f90 \
+  deck_ic_species_block.f90 deck_io_block.F90 deck_species_block.F90 \
+  deck_window_block.f90 diagnostics.F90 dist_fn.F90 epoch3d.F90 evaluate.f90 \
+  evaluator_blocks.f90 fields.f90 helper.F90 ic_module.f90 input_cartesian.f90 \
+  input.f90 input_functions.f90 input_particle.f90 iocommon.f90 iocontrol.f90 \
+  laser.f90 mpi_routines.f90 mpi_subtype_control.F90 output_cartesian.f90 \
+  output.f90 output_particle.f90 particle_pointer_advance.F90 particles.F90 \
+  partlist.F90 probes.F90 setup.F90 shape_functions.F90 shared_data.F90 \
+  shunt.F90 simple_io.F90 split_particles.F90 stack.f90 strings_advanced.F90 \
+  strings.F90 tokenizer_blocks.f90 welcome.F90 window.F90
+
+OBJFILES := $(SRCFILES:.f90=.o)
+OBJFILES := $(OBJFILES:.F90=.o) encoded_source.o
+
 FULLTARGET = $(BINDIR)/$(TARGET)
 
 #vpath %.f90 $(SRCDIR)
@@ -59,6 +64,13 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:$(SRCDIR)/p
 
 $(FULLTARGET): $(OBJFILES)
 	$(FC) $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
+
+$(OBJDIR)/encoded_source.f90: $(SRCFILES) Makefile gen_src_module
+	./gen_src_module $@ $^
+
+encoded_source.o: $(OBJDIR)/encoded_source.f90
+	@mkdir -p $(BINDIR) $(OBJDIR)
+	$(FC) -c $(FFLAGS)  $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
 
 .PHONEY: clean
 clean:
@@ -105,8 +117,8 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_constant_block.o \
   deck_io_block.o deck_species_block.o deck_window_block.o strings.o
 deck_species_block.o: deck_species_block.F90 strings_advanced.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
-diagnostics.o: diagnostics.F90 calc_df.o dist_fn.o iocontrol.o \
-  mpi_subtype_control.o output_cartesian.o output_particle.o \
+diagnostics.o: diagnostics.F90 calc_df.o dist_fn.o encoded_source.o \
+  iocontrol.o mpi_subtype_control.o output_cartesian.o output_particle.o \
   particle_pointer_advance.o probes.o
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o output_cartesian.o
 epoch3d.o: epoch3d.F90 balance.o deck.o diagnostics.o fields.o ic_module.o \

@@ -13,6 +13,7 @@ MODULE output
   PUBLIC :: cfd_write_stitched_vector
   PUBLIC :: cfd_write_stitched_magnitude, cfd_write_real_constant
   PUBLIC :: cfd_write_visit_expression
+  PUBLIC :: cfd_write_character_constant
 
 CONTAINS
 
@@ -321,6 +322,31 @@ CONTAINS
     current_displacement = current_displacement + num
 
   END SUBROUTINE cfd_write_real_constant
+
+
+
+  SUBROUTINE cfd_write_character_constant(name, class, value, rank_write)
+
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
+    CHARACTER(LEN=*), INTENT(IN) :: value
+    INTEGER, INTENT(IN) :: rank_write
+    INTEGER(8) :: md_length
+
+    md_length = LEN(value)
+
+    CALL cfd_write_block_header(name, class, c_type_constant, md_length, &
+        md_length, rank_write)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
+        MPI_CHARACTER,  MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
+    IF (cfd_rank .EQ. rank_write) THEN
+      CALL MPI_FILE_WRITE(cfd_filehandle, value, md_length, MPI_CHARACTER, &
+          cfd_status, cfd_errcode)
+    ENDIF
+
+    current_displacement = current_displacement + md_length
+
+  END SUBROUTINE cfd_write_character_constant
 
 
 
