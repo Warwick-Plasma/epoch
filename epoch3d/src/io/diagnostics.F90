@@ -63,7 +63,7 @@ CONTAINS
       ! open the file
       ! (filename, rank_of_current_process, MPI_COMMUNICATOR (can be
       ! MPI_COMM_WORLD), MPI_FILE_MODE (passed straight to MPI_FILE_OPEN))
-      CALL cfd_open(filename, rank, comm, MPI_MODE_CREATE + MPI_MODE_WRONLY)
+      CALL cfd_open(filename, rank, comm, c_cfd_write, i, time, jobid)
       ! Write the snapshot information
       ! If you prefer the VisIt cycles to display the dump number, change i
       ! for output_file (code_time, n_iterations, rank to write)

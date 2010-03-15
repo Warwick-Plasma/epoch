@@ -69,6 +69,7 @@ PROGRAM pic
     IF (rank .EQ. 0) PRINT *, "Load from restart dump OK"
     output_file = restart_snapshot
   ELSE
+    CALL get_job_id(jobid)
     ! Using autoloader
     CALL allocate_ic
     ! Early internal initialisation

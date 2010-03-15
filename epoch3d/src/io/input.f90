@@ -14,6 +14,8 @@ CONTAINS
     CHARACTER(LEN=3) :: cfd
 
     INTEGER :: file_version, file_revision, ierr
+    INTEGER :: endianness, step
+    DOUBLE PRECISION :: time
 
     CALL MPI_BARRIER(cfd_comm, cfd_errcode)
 
@@ -58,6 +60,21 @@ CONTAINS
         cfd_status, cfd_errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, nblocks, 1, MPI_INTEGER, &
+        cfd_status, cfd_errcode)
+
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, endianness, 1, MPI_INTEGER, &
+        cfd_status, cfd_errcode)
+
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, cfd_jobid%start_seconds, 1, &
+        MPI_INTEGER, cfd_status, cfd_errcode)
+
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, cfd_jobid%start_milliseconds, 1, &
+        MPI_INTEGER, cfd_status, cfd_errcode)
+
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, step, 1, MPI_INTEGER, &
+        cfd_status, cfd_errcode)
+
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
         cfd_status, cfd_errcode)
 
     IF (file_version .GT. cfd_version) THEN

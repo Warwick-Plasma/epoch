@@ -179,6 +179,7 @@ CONTAINS
     CALL cfd_open(filename, rank, comm, MPI_MODE_RDONLY)
     ! open the file
     nblocks = cfd_get_nblocks()
+    jobid = cfd_get_jobid()
 
     ex = 0.0_num
     ey = 0.0_num

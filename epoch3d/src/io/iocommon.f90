@@ -1,10 +1,14 @@
 MODULE iocommon
 
   USE shared_data
+  USE job_info
 
   IMPLICIT NONE
 
   SAVE
+
+  INTEGER, PARAMETER :: c_cfd_read = 0
+  INTEGER, PARAMETER :: c_cfd_write = 1
 
   INTEGER, PARAMETER :: c_type_scribble = -1
   INTEGER, PARAMETER :: c_type_additional = 0
@@ -35,11 +39,11 @@ MODULE iocommon
 
   INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement
   INTEGER :: cfd_filehandle = -1, cfd_rank, cfd_comm, nblocks
-  INTEGER, PARAMETER :: cfd_version = 1, cfd_revision = 0
+  INTEGER, PARAMETER :: cfd_version = 1, cfd_revision = 1
 
   INTEGER :: max_string_len = 60, default_rank = 0
 
-  INTEGER, PARAMETER :: header_offset_this_version = 6 * 4 + 3
+  INTEGER, PARAMETER :: header_offset_this_version = 10 * 4 + 8 + 3
 
   ! This cannot be changed without a major revision
   ! If you want to add more to every meshtype, tough luck
@@ -55,10 +59,12 @@ MODULE iocommon
   INTEGER  :: block_header_size, header_offset
 
   INTEGER :: cfd_errcode, cfd_status(MPI_STATUS_SIZE), cfd_mode
-  LOGICAL :: cfd_writing, cfd_reading
+  LOGICAL :: cfd_writing
 
   ! Current block info
   INTEGER(KIND=8) :: block_length, block_md_length
   INTEGER(KIND=MPI_OFFSET_KIND) :: block_header_start, block_header_end
+
+  TYPE(jobid_type) :: cfd_jobid
 
 END MODULE iocommon

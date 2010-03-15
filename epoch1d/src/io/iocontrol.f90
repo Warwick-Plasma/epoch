@@ -7,29 +7,46 @@ MODULE iocontrol
 
 CONTAINS
 
-  SUBROUTINE cfd_open(filename, cfd_rank_in, cfd_comm_in, mode)
+  SUBROUTINE cfd_open(filename, cfd_rank_in, cfd_comm_in, mode, step, time, &
+      jobid)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER, INTENT(IN) :: cfd_comm_in, cfd_rank_in, mode
+    INTEGER, OPTIONAL, INTENT(IN) :: step
+    REAL(num), OPTIONAL, INTENT(IN) :: time
+    TYPE(jobid_type), OPTIONAL, INTENT(IN) :: jobid
+    INTEGER :: ostep = 0
+    DOUBLE PRECISION :: otime = 0
 
     cfd_comm = cfd_comm_in
     cfd_rank = cfd_rank_in
-    cfd_mode = mode
 
-    cfd_writing = IOR(IAND(mode, MPI_MODE_RDWR), &
-        IAND(mode, MPI_MODE_WRONLY)) .NE. 0
-    cfd_reading = IOR(IAND(mode, MPI_MODE_RDWR), &
-        IAND(mode, MPI_MODE_RDONLY)) .NE. 0
+    IF (mode .EQ. c_cfd_write) THEN
+      cfd_mode = MPI_MODE_CREATE + MPI_MODE_WRONLY
+      cfd_writing = .TRUE.
 
-    IF (IAND(mode, MPI_MODE_CREATE) .NE. 0) THEN
       ! Creating a new file of the current version, so set the header offset
       ! to reflect current version
       header_offset = header_offset_this_version
 
+      IF (PRESENT(step)) ostep = step
+
+      IF (PRESENT(time)) otime = DBLE(time)
+
+      IF (PRESENT(jobid)) THEN
+        cfd_jobid = jobid
+      ELSE
+        cfd_jobid%start_seconds = 0
+        cfd_jobid%start_milliseconds = 0
+      ENDIF
+
       ! We are opening a file to be created, so use the destructive file
       ! opening command
-      CALL cfd_open_clobber(filename)
+      CALL cfd_open_clobber(filename, ostep, otime)
     ELSE
+      cfd_mode = MPI_MODE_RDONLY
+      cfd_writing = .FALSE.
+
       ! We're opening a file which already exists, so don't damage it
       CALL cfd_open_read(filename)
     ENDIF
@@ -93,5 +110,15 @@ CONTAINS
     cfd_get_nblocks = nblocks
 
   END FUNCTION cfd_get_nblocks
+
+
+
+  FUNCTION cfd_get_jobid()
+
+    TYPE(jobid_type) :: cfd_get_jobid
+
+    cfd_get_jobid = cfd_jobid
+
+  END FUNCTION cfd_get_jobid
 
 END MODULE iocontrol

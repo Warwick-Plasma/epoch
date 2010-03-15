@@ -285,6 +285,7 @@ MODULE shared_data
 
   USE constants
   USE shared_parser_data
+  USE job_info
   USE mpi
 
   IMPLICIT NONE
@@ -592,5 +593,7 @@ MODULE shared_data
   TYPE(laser_block), POINTER :: laser_left, laser_right
   TYPE(laser_block), POINTER :: laser_up, laser_down
   INTEGER :: n_laser_left, n_laser_right, n_laser_up, n_laser_down
+
+  TYPE(jobid_type) :: jobid
 
 END MODULE shared_data

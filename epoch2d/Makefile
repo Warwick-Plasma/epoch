@@ -37,8 +37,8 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 control.F90 current_smooth.F90 \
   deck_window_block.f90 diagnostics.F90 dist_fn.F90 epoch2d.F90 evaluate.f90 \
   evaluator_blocks.f90 fields.F90 helper.F90 ic_module.f90 input_cartesian.f90 \
   input.f90 input_functions.f90 input_particle.f90 iocommon.f90 iocontrol.f90 \
-  ionise.F90 iterators.F90 laser.f90 mpi_routines.f90 mpi_subtype_control.F90 \
-  output_cartesian.f90 output.f90 output_particle.f90 \
+  ionise.F90 iterators.F90 job_info.f90 laser.f90 mpi_routines.f90 \
+  mpi_subtype_control.F90 output_cartesian.f90 output.f90 output_particle.f90 \
   particle_pointer_advance.F90 particles.F90 partlist.F90 probes.F90 setup.F90 \
   shape_functions.F90 shared_data.F90 shunt.F90 simple_io.F90 \
   split_particles.F90 stack.f90 strings_advanced.F90 strings.F90 \
@@ -136,10 +136,11 @@ input_cartesian.o: input_cartesian.f90 input_functions.o
 input_functions.o: input_functions.f90 iocommon.o
 input.o: input.f90 input_functions.o
 input_particle.o: input_particle.f90 input_functions.o shared_data.o
-iocommon.o: iocommon.f90 shared_data.o
+iocommon.o: iocommon.f90 job_info.o shared_data.o
 iocontrol.o: iocontrol.f90 input.o output.o
 ionise.o: ionise.F90 calc_df.o helper.o
 iterators.o: iterators.F90 particle_pointer_advance.o
+job_info.o: job_info.f90
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.f90 partlist.o
 mpi_subtype_control.o: mpi_subtype_control.F90 shared_data.o
@@ -153,7 +154,7 @@ probes.o: probes.F90 mpi_subtype_control.o output_particle.o partlist.o
 setup.o: setup.F90 input_cartesian.o input_particle.o iocontrol.o \
   mpi_subtype_control.o partlist.o strings.o
 shape_functions.o: shape_functions.F90 shared_data.o
-shared_data.o: shared_data.F90
+shared_data.o: shared_data.F90 job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
 split_particles.o: split_particles.F90

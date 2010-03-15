@@ -17,12 +17,15 @@ MODULE output
 
 CONTAINS
 
-  SUBROUTINE cfd_open_clobber(filename)
+  SUBROUTINE cfd_open_clobber(filename, step, time)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
+    INTEGER, INTENT(IN) :: step
+    DOUBLE PRECISION, INTENT(IN) :: time
+    INTEGER :: endianness
 
     ! Set the block header
-    block_header_size = max_string_len * 2 + 4 + 2 * 8
+    block_header_size = max_string_len * 2 + soi + 2 * soi8
 
     ! Delete file and wait
     IF (cfd_rank .EQ. default_rank) &
@@ -31,6 +34,11 @@ CONTAINS
     CALL MPI_BARRIER(cfd_comm, cfd_errcode)
     CALL MPI_FILE_OPEN(cfd_comm, TRIM(filename), cfd_mode, MPI_INFO_NULL, &
         cfd_filehandle, cfd_errcode)
+
+    endianness = 16911887
+
+    ! Currently no blocks written
+    nblocks = 0
 
     IF (cfd_rank .EQ. default_rank) THEN
       ! Write the header
@@ -49,14 +57,21 @@ CONTAINS
           cfd_status, cfd_errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, max_string_len, 1, MPI_INTEGER, &
           cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, endianness, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, cfd_jobid%start_seconds, 1, &
+          MPI_INTEGER, cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, cfd_jobid%start_milliseconds, 1, &
+          MPI_INTEGER, cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, step, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
 
-      ! This is where the nblocks variable will go, put a zero for now
-      CALL MPI_FILE_WRITE(cfd_filehandle, 0, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
           cfd_status, cfd_errcode)
     ENDIF
 
-    ! Currently no blocks written
-    nblocks = 0
     ! Current displacement is just the header
     current_displacement = header_offset
 
