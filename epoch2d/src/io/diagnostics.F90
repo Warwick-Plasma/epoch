@@ -348,7 +348,8 @@ CONTAINS
     last_call = .FALSE.
 
     DO ioutput = 1, num_vars_to_dump
-      IF (FLOOR((time - t1)/dt) &
+      IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0 &
+          .AND. FLOOR((time - t1)/dt) &
           .LE. averaged_data(ioutput)%average_over_iterations) THEN
         CALL average_field(ioutput)
       ENDIF
