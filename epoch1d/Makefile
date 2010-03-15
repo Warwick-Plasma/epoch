@@ -22,11 +22,15 @@ MODULEFLAG = -module
 # Shouldn't need to touch below here
 # --------------------------------------------------
 
+-include COMMIT
+
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
 FC = mpif90
-PREPROFLAGS = $(DEFINES)
+DATE := $(shell date +%s)
+MACHINE := $(shell uname -n)
+PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(MACHINE)"' -D_FLAGS='"$(FFLAGS)"'
 
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 control.F90 custom_deck.f90 \
   custom_laser.f90 custom_parser.f90 deck_boundaries_block.f90 \
@@ -42,7 +46,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 control.F90 custom_deck.f90 \
   particle_pointer_advance.F90 particles.F90 partlist.F90 probes.F90 setup.F90 \
   shape_functions.F90 shared_data.F90 shunt.F90 simple_io.F90 \
   split_particles.F90 stack.f90 strings_advanced.F90 strings.F90 \
-  tokenizer_blocks.f90 welcome.F90 window.F90
+  tokenizer_blocks.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o) encoded_source.o
@@ -57,25 +61,28 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:$(SRCDIR)/p
 
 %.o: %.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -c $(FFLAGS)  $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
+	$(FC) -c $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
 
 %.o: %.F90
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -c $(FFLAGS)  $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
+	$(FC) -c $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
 $(FULLTARGET): $(OBJFILES)
 	$(FC) $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
-$(OBJDIR)/encoded_source.f90: $(SRCFILES) Makefile gen_src_module
+$(OBJDIR)/encoded_source.f90: $(SRCFILES) Makefile gen_src_module COMMIT
 	./gen_src_module $@ $^
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS)  $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
 
+COMMIT: $(SRCFILES)
+	./gen_commit_string
+
 .PHONEY: clean
-clean:
-	@rm -rf *~ $(BINDIR) $(OBJDIR) *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
+clean: tidy
+	@rm -rf *~ $(BINDIR)
 
 .PHONEY: tidy
 tidy:
@@ -144,7 +151,7 @@ laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.f90 partlist.o
 mpi_subtype_control.o: mpi_subtype_control.F90 shared_data.o
 output_cartesian.o: output_cartesian.f90 iocommon.o output.o
-output.o: output.f90 iocommon.o
+output.o: output.f90 encoded_source.o iocommon.o version_data.o
 output_particle.o: output_particle.f90 iocommon.o output.o shared_data.o
 particle_pointer_advance.o: particle_pointer_advance.F90 shared_data.o
 particles.o: particles.F90 boundary.o shape_functions.o
@@ -161,5 +168,6 @@ stack.o: stack.f90 shared_data.o
 strings_advanced.o: strings_advanced.F90 evaluate.o shunt.o
 strings.o: strings.F90 shared_data.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
-welcome.o: welcome.F90 strings.o
+version_data.o: version_data.F90
+welcome.o: welcome.F90 strings.o version_data.o
 window.o: window.F90 helper.o

@@ -40,6 +40,8 @@ CONTAINS
 
     NULLIFY(dist_fns)
 
+    run_date = get_unix_time()
+
   END SUBROUTINE minimal_init
 
 

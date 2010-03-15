@@ -30,6 +30,7 @@ CONTAINS
     INTEGER(KIND=8) :: n_part_per_it = 100000, npart_local, npart_dump_global
     INTEGER :: ispecies, code
     INTEGER, DIMENSION(3) :: dims
+    INTEGER :: restart_flag
 
     dims = (/nx_global, ny_global, nz_global/)
 
@@ -58,12 +59,21 @@ CONTAINS
           MPI_SUM, comm, errcode)
       CALL create_subtypes(IAND(code, c_io_restartable) .NE. 0)
 
+      ! is a restart dump
+      IF (IAND(code, c_io_restartable) .NE. 0) THEN
+        restart_flag = 1
+      ELSE
+        restart_flag = 0
+      ENDIF
+
       ALLOCATE(data(-2:nx+3, -2:ny+3, -2:nz+3))
 
       ! open the file
       ! (filename, rank_of_current_process, MPI_COMMUNICATOR (can be
       ! MPI_COMM_WORLD), MPI_FILE_MODE (passed straight to MPI_FILE_OPEN))
       CALL cfd_open(filename, rank, comm, c_cfd_write, i, time, jobid)
+      CALL cfd_write_job_info(restart_flag, 0)
+
       ! Write the snapshot information
       ! If you prefer the VisIt cycles to display the dump number, change i
       ! for output_file (code_time, n_iterations, rank to write)
@@ -301,8 +311,7 @@ CONTAINS
 !!$        ENDIF
 !!$      ENDIF
 
-      IF (IAND(c_io_restartable, code) .NE. 0 &
-          .AND. LEN(source_code) .GT. 0) THEN
+      IF (restart_flag .EQ. 1 .AND. LEN(source_code) .GT. 0) THEN
         CALL cfd_write_character_constant("Code", "base64_packed_source_code", &
             source_code, 0)
       ENDIF

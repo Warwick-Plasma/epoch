@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Generate a COMMIT file containing a string which describes the
+# commit status of the current source tree.
+
+# The commit string has five parts. The first three come from git-describe
+# And correspond to tag, commits since tag and commit hash.
+# The fourth part is the subversion revision number and the fifth
+# part indicates wether there are uncommitted changes
+
+# If any of these fields is unavailable then the tag 'unknown' will be
+# used. If none of the tags are known then the COMMIT file is left untouched
+
+COMMIT_FILE=COMMIT
+
+LF='
+'
+
+state='clean'
+commit_string=""
+
+git show-ref > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+# in a git repo
+  gitdescribe=$(git describe HEAD 2>/dev/null)
+
+  if [ $? -ne 0 ]; then
+    always=$(git describe --always HEAD 2>/dev/null)
+    gitdescribe=unknown-unknown-g$always
+  fi
+
+  svnrev=$(git svn log -1 --oneline 2>/dev/null)
+  if [ $? -eq 0 ]; then
+    svnrev=$(echo $svnrev | cut -f1 -d' ' | cut -c2-)
+  else
+    svnrev=unknown
+  fi
+
+  git update-index -q --refresh
+  test -z "$(git diff-index --name-only HEAD --)" || state='dirty'
+
+  commit_string=$gitdescribe-$svnrev-$state
+else
+# not in a git repo
+  gitdescribe=unknown-unknown-unknown
+
+  svnrev=$(svn info 2>/dev/null | grep '^Last Changed Rev:')
+
+  if [ $? -eq 0 ]; then
+    svnrev=$(echo $svnrev | sed 's/Last Changed Rev: *//')
+
+    n=$(svn status 2>/dev/null | grep -v '?' | wc -l)
+    [ $n -ne 0 ] && state='dirty'
+
+    commit_string=$gitdescribe-$svnrev-$state
+  fi
+fi
+
+[ -z $commit_string ] && exit
+
+echo "COMMIT = $commit_string" > $COMMIT_FILE
+echo "COMMIT = $commit_string"

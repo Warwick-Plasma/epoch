@@ -44,8 +44,6 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_front = 5
   INTEGER, PARAMETER :: c_bd_back = 6
 
-  INTEGER, PARAMETER :: c_version = 1, c_revision = 3
-
   ! Error codes
   INTEGER, PARAMETER :: c_err_none = 0
   INTEGER, PARAMETER :: c_err_unknown_block = 1
@@ -98,6 +96,23 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_px = 8
   INTEGER, PARAMETER :: c_dir_py = 16
   INTEGER, PARAMETER :: c_dir_pz = 32
+
+  ! define flags
+  INTEGER, PARAMETER :: c_def_part_debug = 1
+  INTEGER, PARAMETER :: c_def_field_debug = 2
+  INTEGER, PARAMETER :: c_def_spline_four = 4
+  INTEGER, PARAMETER :: c_def_high_order_fields = 8
+  INTEGER, PARAMETER :: c_def_order_six = 16
+  INTEGER, PARAMETER :: c_def_split_particles_after_push = 32
+  INTEGER, PARAMETER :: c_def_per_particle_weight = 64
+  INTEGER, PARAMETER :: c_def_particle_count_update = 128
+  INTEGER, PARAMETER :: c_def_tracer_particles = 256
+  INTEGER, PARAMETER :: c_def_particle_probes = 512
+  INTEGER, PARAMETER :: c_def_per_particle_chargemass = 1024
+  INTEGER, PARAMETER :: c_def_part_ionise = 2048
+  INTEGER, PARAMETER :: c_def_no_deck = 4096
+  INTEGER, PARAMETER :: c_def_newtonian = 8192
+  INTEGER, PARAMETER :: c_def_high_order_smoothing = 16384
 
   ! Length of a standard string
   INTEGER, PARAMETER :: string_length = 128
@@ -595,5 +610,8 @@ MODULE shared_data
   INTEGER :: n_laser_left, n_laser_right, n_laser_up, n_laser_down
 
   TYPE(jobid_type) :: jobid
+
+  INTEGER :: run_date
+  INTEGER :: defines
 
 END MODULE shared_data

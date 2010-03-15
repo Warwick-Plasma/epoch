@@ -11,10 +11,14 @@ tmp2=$dir/tmp2
 
 [ -d $dir ] || mkdir $dir
 
+sha=`cat $* | sha1sum | cut -f1 -d' '`
+
 cat > $file <<EOF
 MODULE encoded_source
 
   IMPLICIT NONE
+
+  CHARACTER(LEN=*), PARAMETER :: sha1sum = "$sha"
 
   CHARACTER(LEN=*), PARAMETER :: source_code = "" &
 EOF

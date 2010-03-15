@@ -1,6 +1,7 @@
 MODULE welcome
 
   USE strings
+  USE version_data
 
   IMPLICIT NONE
 
@@ -77,16 +78,21 @@ CONTAINS
     WRITE(*, *) "The code was compiled with the following compile time options"
     WRITE(*, *) "*************************************************************"
 #ifdef PART_DEBUG
+    defines = IOR(defines, c_def_part_debug)
     WRITE(*, *) "Particle Debug information -DPART_DEBUG"
 #endif
 #ifdef FIELD_DEBUG
+    defines = IOR(defines, c_def_field_debug)
     WRITE(*, *) "Field Debug information -DFIELD_DEBUG"
 #endif
 #ifdef SPLINE_FOUR
+    defines = IOR(defines, c_def_spline_four)
     WRITE(*, *) "Fourth order spline interpolation -DSPLINE_FOUR"
 #endif
 #ifdef HIGH_ORDER_FIELDS
+    defines = IOR(defines, c_def_high_order_fields)
 #ifdef ORDER_SIX
+    defines = IOR(defines, c_def_order_six)
     WRITE(*, *) "6th order improved field solver -DHIGH_ORDER_FIELDS &
         &-DORDER_SIX"
 #else
@@ -94,30 +100,39 @@ CONTAINS
 #endif
 #endif
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
+    defines = IOR(defines, c_def_split_particles_after_push)
     WRITE(*, *) "Particle/cell ordering -DSPLIT_PARTICLES_AFTER_PUSH"
 #endif
 #ifdef PER_PARTICLE_WEIGHT
+    defines = IOR(defines, c_def_per_particle_weight)
     WRITE(*, *) "Per particle weighting -DPER_PARTICLE_WEIGHT"
 #endif
 #ifdef PARTICLE_COUNT_UPDATE
+    defines = IOR(defines, c_def_particle_count_update)
     WRITE(*, *) "Global particle counting -DPARTICLE_COUNT_UPDATE"
 #endif
 #ifdef TRACER_PARTICLES
+    defines = IOR(defines, c_def_tracer_particles)
     WRITE(*, *) "Tracer particle support -DTRACER_PARTICLES"
 #endif
 #ifdef PARTICLE_PROBES
+    defines = IOR(defines, c_def_particle_probes)
     WRITE(*, *) "Particle probe support -DPARTICLE_PROBES"
 #endif
 #ifdef PER_PARTICLE_CHARGEMASS
+    defines = IOR(defines, c_def_per_particle_chargemass)
     WRITE(*, *) "Per particle charge and mass -DPER_PARTICLE_CHARGEMASS"
 #endif
 #ifdef PART_IONISE
+    defines = IOR(defines, c_def_part_ionise)
     WRITE(*, *) "Particle ionisation model -DPART_IONISE"
 #endif
 #ifdef NO_DECK
+    defines = IOR(defines, c_def_no_deck)
     WRITE(*, *) "Deactivated input deck support -DNO_DECK"
 #endif
 #ifdef NEWTONIAN
+    defines = IOR(defines, c_def_newtonian)
     WRITE(*, *) "Newtonian dynamics (no relativity) -DNEWTONIAN"
 #endif
     WRITE(*, *) "*************************************************************"

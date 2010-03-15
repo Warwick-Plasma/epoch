@@ -46,6 +46,19 @@ MODULE job_info
 
 
 
+  FUNCTION get_unix_time()
+
+    INTEGER :: get_unix_time
+    INTEGER, DIMENSION(8) :: val
+
+    CALL DATE_AND_TIME(values = val)
+
+    get_unix_time = unix_seconds(val)
+
+  END FUNCTION get_unix_time
+
+
+
   SUBROUTINE get_job_id(jobid)
 
     TYPE(jobid_type), INTENT(OUT) :: jobid

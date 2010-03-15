@@ -20,6 +20,7 @@ MODULE iocommon
   INTEGER, PARAMETER :: c_type_constant = 6
   INTEGER, PARAMETER :: c_type_arb_db = 7
   INTEGER, PARAMETER :: c_type_integerarray = 8
+  INTEGER, PARAMETER :: c_type_info = 9
 
   INTEGER, PARAMETER :: c_mesh_cartesian = 0
   INTEGER, PARAMETER :: c_mesh_particle = 1

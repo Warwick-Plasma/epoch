@@ -1,6 +1,8 @@
 MODULE output
 
   USE iocommon
+  USE version_data
+  USE encoded_source
 
   IMPLICIT NONE
 
@@ -10,6 +12,7 @@ MODULE output
 
   PUBLIC :: cfd_open_clobber, cfd_write_block_header, cfd_write_meshtype_header
   PUBLIC :: cfd_safe_write_string, cfd_write_snapshot_data
+  PUBLIC :: cfd_write_job_info
   PUBLIC :: cfd_write_stitched_vector
   PUBLIC :: cfd_write_stitched_magnitude, cfd_write_real_constant
   PUBLIC :: cfd_write_visit_expression
@@ -86,6 +89,11 @@ CONTAINS
     INTEGER :: len_s
 
     len_s = LEN(string)
+
+    IF (max_string_len .LT. len_s) THEN
+      PRINT*, '***WARNING***'
+      PRINT*, 'Output string "' // string // '" has been truncated'
+    ENDIF
 
     ! This subroutine expects that the record marker is in place and that
     ! the view is set correctly. Call it only on the node which is doing the
@@ -206,6 +214,67 @@ CONTAINS
     current_displacement = current_displacement + 8
 
   END SUBROUTINE cfd_write_snapshot_data
+
+
+
+  SUBROUTINE cfd_write_job_info(restart_flag, rank_write)
+
+    INTEGER, INTENT(IN) :: rank_write, restart_flag
+    INTEGER(8) :: md_length
+    INTEGER :: io_date
+
+    io_date = get_unix_time()
+
+    md_length = 8 * soi + 4 * max_string_len
+
+    CALL cfd_write_block_header(c_code_name, "Job_info", c_type_info, &
+        md_length, md_length, rank_write)
+
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
+        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+
+    IF (cfd_rank .EQ. rank_write) THEN
+      CALL MPI_FILE_WRITE(cfd_filehandle, c_code_io_version, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, c_version, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, c_revision, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+    ENDIF
+
+    current_displacement = current_displacement + 3 * soi
+
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+
+    IF (cfd_rank .EQ. rank_write) THEN
+      CALL cfd_safe_write_string(c_commit_id)
+      CALL cfd_safe_write_string(sha1sum)
+      CALL cfd_safe_write_string(c_compile_machine)
+      CALL cfd_safe_write_string(c_compile_flags)
+    ENDIF
+
+    current_displacement = current_displacement + 4 * max_string_len
+
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
+        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+
+    IF (cfd_rank .EQ. rank_write) THEN
+      CALL MPI_FILE_WRITE(cfd_filehandle, defines, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, c_compile_date, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, run_date, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, io_date, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, restart_flag, 1, MPI_INTEGER, &
+          cfd_status, cfd_errcode)
+    ENDIF
+
+    current_displacement = current_displacement + 5 * soi
+
+  END SUBROUTINE cfd_write_job_info
 
 
 
