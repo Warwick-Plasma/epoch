@@ -128,7 +128,7 @@ CONTAINS
           CALL cfd_write_nd_particle_variable_with_iterator_all("Vz", &
               "Particles", iterate_vz, npart_dump_global, n_part_per_it, &
               "Particles", "Part_Grid", subtype_particle_var)
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
       CALL cfd_write_nd_particle_variable_with_iterator_all("Processor", &
           "Particles", iterate_processor, npart_dump_global, n_part_per_it, &
           "Particles", "Part_Grid", subtype_particle_var)

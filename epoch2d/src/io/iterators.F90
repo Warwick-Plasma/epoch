@@ -193,7 +193,7 @@ CONTAINS
 
 
 
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
   ! iterator for particle processor
   SUBROUTINE iterate_processor(data, n_points, start)
 

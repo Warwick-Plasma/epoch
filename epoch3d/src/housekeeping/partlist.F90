@@ -22,7 +22,7 @@ CONTAINS
     nvar = nvar+2
 #endif
 
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
     nvar = nvar+2
 #endif
 
@@ -131,7 +131,7 @@ CONTAINS
       NULLIFY(new_particle%prev, new_particle%next)
       cpos = ipart*nvar+1
       CALL unpack_particle(data_in(cpos:cpos+nvar), new_particle)
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
       new_particle%processor = rank
 #endif
       CALL add_particle_to_partlist(partlist, new_particle)
@@ -327,7 +327,7 @@ CONTAINS
     data(cpos+1) = a_particle%mass
     cpos = cpos+2
 #endif
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
     data(cpos) = REAL(a_particle%processor, num)
     data(cpos+1) = REAL(a_particle%processor_at_t0, num)
     cpos = cpos+2
@@ -359,7 +359,7 @@ CONTAINS
     a_particle%mass = data(cpos+1)
     cpos = cpos+2
 #endif
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
     a_particle%processor = rank
     a_particle%processor_at_t0 = NINT(data(cpos+1))
     cpos = cpos+2

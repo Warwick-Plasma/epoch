@@ -26,7 +26,7 @@ CONTAINS
     INTEGER(KIND=8) :: npart_local
     INTEGER :: iproc
     INTEGER, DIMENSION(2) :: domain
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
 #endif
@@ -117,7 +117,7 @@ CONTAINS
 
     ! If running with particle debugging then set the t = 0 processor if
     ! over_ride = true
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
     IF (over_ride) THEN
       DO ispecies = 1, n_species
         current=>particle_species(ispecies)%attached_list%head
@@ -442,7 +442,7 @@ CONTAINS
           CALL MPI_BARRIER(comm, errcode)
           STOP
         ENDIF
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
         current%processor = part_proc
 #endif
         IF (part_proc .NE. rank) THEN

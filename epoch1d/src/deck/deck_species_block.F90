@@ -153,47 +153,47 @@ CONTAINS
     ! *************************************************************
     IF (str_cmp(part1, "ionise")) THEN
       handle_species_deck = c_err_none
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
       particle_species(part2)%ionise = as_logical(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DPART_IONISE"
+      extended_error_string = "-DPARTICLE_IONISE"
 #endif
       RETURN
     ENDIF
 
     IF (str_cmp(part1, "ionise_to_species")) THEN
       handle_species_deck = c_err_none
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
       particle_species(part2)%ionise_to_species = &
           as_integer(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DPART_IONISE"
+      extended_error_string = "-DPARTICLE_IONISE"
 #endif
       RETURN
     ENDIF
 
     IF (str_cmp(part1, "release_species_on_ionise")) THEN
       handle_species_deck = c_err_none
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
       particle_species(part2)%release_species = &
           as_integer(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DPART_IONISE"
+      extended_error_string = "-DPARTICLE_IONISE"
 #endif
       RETURN
     ENDIF
 
     IF (str_cmp(part1, "ionisation_energy")) THEN
       handle_species_deck = c_err_none
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
       particle_species(part2)%ionisation_energy = &
           as_real(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DPART_IONISE"
+      extended_error_string = "-DPARTICLE_IONISE"
 #endif
       RETURN
     ENDIF

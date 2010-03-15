@@ -98,7 +98,7 @@ CONTAINS
               new%part_pos(2) = current%part_pos(2)+jitter_y
               CALL add_particle_to_partlist(&
                   particle_species(ispecies)%attached_list, NEW)
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
               ! If running with particle debugging, specify that this
               ! particle has been split
               new%processor_at_t0 = -1

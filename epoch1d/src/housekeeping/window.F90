@@ -95,7 +95,7 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
           current%weight = weight_local
 #endif
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
           current%processor = rank
           current%processor_at_t0 = rank
 #endif

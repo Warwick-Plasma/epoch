@@ -77,9 +77,9 @@ CONTAINS
 
     WRITE(*, *) "The code was compiled with the following compile time options"
     WRITE(*, *) "*************************************************************"
-#ifdef PART_DEBUG
-    defines = IOR(defines, c_def_part_debug)
-    WRITE(*, *) "Particle Debug information -DPART_DEBUG"
+#ifdef PARTICLE_DEBUG
+    defines = IOR(defines, c_def_particle_debug)
+    WRITE(*, *) "Particle Debug information -DPARTICLE_DEBUG"
 #endif
 #ifdef FIELD_DEBUG
     defines = IOR(defines, c_def_field_debug)
@@ -123,9 +123,9 @@ CONTAINS
     defines = IOR(defines, c_def_per_particle_chargemass)
     WRITE(*, *) "Per particle charge and mass -DPER_PARTICLE_CHARGEMASS"
 #endif
-#ifdef PART_IONISE
-    defines = IOR(defines, c_def_part_ionise)
-    WRITE(*, *) "Particle ionisation model -DPART_IONISE"
+#ifdef PARTICLE_IONISE
+    defines = IOR(defines, c_def_particle_ionise)
+    WRITE(*, *) "Particle ionisation model -DPARTICLE_IONISE"
 #endif
 #ifdef NO_DECK
     defines = IOR(defines, c_def_no_deck)

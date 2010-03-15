@@ -125,7 +125,7 @@ CONTAINS
               ENDDO
               current%weight = weight_local
 
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
               current%processor = rank
               current%processor_at_t0 = rank
 #endif

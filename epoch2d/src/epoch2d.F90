@@ -31,7 +31,7 @@ PROGRAM pic
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
   USE split_particle
 #endif
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
   USE ionise
 #endif
   USE window
@@ -147,7 +147,7 @@ PROGRAM pic
     CALL reattach_particles_to_mainlist
 #endif
     CALL update_eb_fields_final
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
     CALL ionise_particles
 #endif
     CALL output_routines(i)

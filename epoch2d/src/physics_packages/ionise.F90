@@ -9,7 +9,7 @@ CONTAINS
 
   SUBROUTINE ionise_particles
 
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
     INTEGER :: ispecies
     TYPE(particle), POINTER :: current, next, new_part
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
@@ -148,7 +148,7 @@ CONTAINS
             new_part%charge = particle_species(next_species)%charge
             new_part%mass = particle_species(next_species)%mass
 #endif
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
             new_part%processor = rank
             new_part%processor_at_t0 = rank
 #endif

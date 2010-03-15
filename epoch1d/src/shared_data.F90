@@ -4,19 +4,7 @@
 ! ****************************************************************
 
 MODULE constants
-  ! These tell the code to setup secondary particles lists for each particle
-  ! species
-#ifdef PART_IONISE
-#define USE_SECONDARY_LIST
-#endif
 
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
-#define USE_SECONDARY_LIST
-#endif
-
-#ifdef PART_IONISE_FULL
-#define PART_IONISE
-#endif
   IMPLICIT NONE
 
   INTEGER, PARAMETER :: num = KIND(1.d0)
@@ -97,7 +85,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_pz = 32
 
   ! define flags
-  INTEGER, PARAMETER :: c_def_part_debug = 1
+  INTEGER, PARAMETER :: c_def_particle_debug = 1
   INTEGER, PARAMETER :: c_def_field_debug = 2
   INTEGER, PARAMETER :: c_def_spline_four = 4
   INTEGER, PARAMETER :: c_def_high_order_fields = 8
@@ -108,7 +96,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_def_tracer_particles = 256
   INTEGER, PARAMETER :: c_def_particle_probes = 512
   INTEGER, PARAMETER :: c_def_per_particle_chargemass = 1024
-  INTEGER, PARAMETER :: c_def_part_ionise = 2048
+  INTEGER, PARAMETER :: c_def_particle_ionise = 2048
   INTEGER, PARAMETER :: c_def_no_deck = 4096
   INTEGER, PARAMETER :: c_def_newtonian = 8192
   INTEGER, PARAMETER :: c_def_high_order_smoothing = 16384
@@ -333,7 +321,7 @@ MODULE shared_data
     REAL(num) :: mass
 #endif
     TYPE(particle), POINTER :: next, prev
-#ifdef PART_DEBUG
+#ifdef PARTICLE_DEBUG
     INTEGER :: processor
     INTEGER :: processor_at_t0
 #endif
@@ -373,9 +361,7 @@ MODULE shared_data
     INTEGER(KIND=8) :: global_count
     LOGICAL :: split
     INTEGER(KIND=8) :: npart_max
-#endif
     ! Secondary list
-#ifdef USE_SECONDARY_LIST
     TYPE(particle_list), DIMENSION(:,:), POINTER :: secondary_list
 #endif
 
@@ -385,7 +371,7 @@ MODULE shared_data
     REAL(num), DIMENSION(3) :: temperature
 
     ! Species_ionisation
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
     LOGICAL :: ionise
     INTEGER :: ionise_to_species
     INTEGER :: release_species

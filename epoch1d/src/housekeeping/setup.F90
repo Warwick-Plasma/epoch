@@ -92,7 +92,7 @@ CONTAINS
       particle_species(ispecies)%split = .FALSE.
       particle_species(ispecies)%npart_max = 0.0_num
 #endif
-#ifdef PART_IONISE
+#ifdef PARTICLE_IONISE
       particle_species(ispecies)%ionise = .FALSE.
       particle_species(ispecies)%ionise_to_species = .FALSE.
       particle_species(ispecies)%release_species = -1
