@@ -6,7 +6,7 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 22
+  INTEGER, PARAMETER :: control_block_elements = 21
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -23,7 +23,6 @@ MODULE deck_control_block
           "z_start           ", &
           "z_end             ", &
           "dt_multiplier     ", &
-          "dlb               ", &
           "dlb_threshold     ", &
           "icfile            ", &
           "restart_snapshot  ", &
@@ -88,23 +87,22 @@ CONTAINS
     CASE(13)
       dt_multiplier = as_real(value, handle_control_deck)
     CASE(14)
-      dlb = as_logical(value, handle_control_deck)
-    CASE(15)
       dlb_threshold = as_real(value, handle_control_deck)
-    CASE(16)
+      dlb = .TRUE.
+    CASE(15)
       icfile%value = value(1:MIN(LEN(value), data_dir_max_length))
-    CASE(17)
+    CASE(16)
       restart_snapshot = as_integer(value, handle_control_deck)
       ic_from_restart = .TRUE.
-    CASE(18)
+    CASE(17)
       neutral_background = as_logical(value, handle_control_deck)
-    CASE(19)
+    CASE(18)
       nprocx = as_integer(value, handle_control_deck)
-    CASE(20)
+    CASE(19)
       nprocy = as_integer(value, handle_control_deck)
-    CASE(21)
+    CASE(20)
       nprocz = as_integer(value, handle_control_deck)
-    CASE(22)
+    CASE(21)
       field_order = as_integer(value, handle_control_deck)
       IF (field_order .NE. 2 .AND. field_order .NE. 4 &
           .AND. field_order .NE. 6) THEN
@@ -127,20 +125,23 @@ CONTAINS
     ! npart is not a required variable
     control_block_done(4) = .TRUE.
 
+    ! dlb threshold is optional
+    control_block_done(14) = .TRUE.
+
     ! external input deck is optional
-    control_block_done(16) = .TRUE.
+    control_block_done(15) = .TRUE.
 
     ! restart snapshot is optional
-    control_block_done(17) = .TRUE.
+    control_block_done(16) = .TRUE.
 
     ! The neutral background is still beta, so hide it if people don't want it
-    control_block_done(18) = .TRUE.
+    control_block_done(17) = .TRUE.
 
     ! Never need to set nproc so
-    control_block_done(19:21) = .TRUE.
+    control_block_done(18:20) = .TRUE.
 
     ! field_order is optional
-    control_block_done(22) = .TRUE.
+    control_block_done(21) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

@@ -6,7 +6,7 @@ MODULE deck_io_block
 
   SAVE
 
-  INTEGER, PARAMETER :: n_var_special = 7
+  INTEGER, PARAMETER :: n_var_special = 6
   INTEGER, PARAMETER :: io_block_elements = n_var_special+num_vars_to_dump
   LOGICAL, DIMENSION(io_block_elements)  :: io_block_done
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: &
@@ -16,7 +16,6 @@ MODULE deck_io_block
           "restart_dump_every           ", &
           "force_final_to_be_restartable", &
           "use_offset_grid              ", &
-          "use_extended_io              ", &
           "extended_io_file             ", &
           "particles                    ", &
           "grid                         ", &
@@ -87,9 +86,8 @@ CONTAINS
     CASE(5)
       use_offset_grid = as_logical(value, handle_io_deck)
     CASE(6)
-      use_extended_io = as_logical(value, handle_io_deck)
-    CASE(7)
       extended_io_file = TRIM(value)
+      use_extended_io = .TRUE.
     END SELECT
 
     IF (elementselected .LE. n_var_special) RETURN
@@ -120,9 +118,8 @@ CONTAINS
     ! elements is not wanted
     check_io_block = c_err_none
 
-    ! If not requesting extended io then don't check for extended_io_file
-    IF (.NOT. io_block_done(6) .OR. .NOT. use_extended_io) &
-        io_block_done(6:7) = .TRUE.
+    ! extended io file is optional
+    io_block_done(6) = .TRUE.
 
     ! Particle Positions
     dumpmask(1:5) = IOR(dumpmask(1:5), c_io_restartable)

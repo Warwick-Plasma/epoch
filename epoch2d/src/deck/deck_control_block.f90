@@ -6,7 +6,7 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 17
+  INTEGER, PARAMETER :: control_block_elements = 16
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -20,7 +20,6 @@ MODULE deck_control_block
           "y_start           ", &
           "y_end             ", &
           "dt_multiplier     ", &
-          "dlb               ", &
           "dlb_threshold     ", &
           "icfile            ", &
           "restart_snapshot  ", &
@@ -76,19 +75,18 @@ CONTAINS
     CASE(10)
       dt_multiplier = as_real(value, handle_control_deck)
     CASE(11)
-      dlb = as_logical(value, handle_control_deck)
-    CASE(12)
       dlb_threshold = as_real(value, handle_control_deck)
-    CASE(13)
+      dlb = .TRUE.
+    CASE(12)
       icfile%value = value(1:MIN(LEN(value), data_dir_max_length))
-    CASE(14)
+    CASE(13)
       restart_snapshot = as_integer(value, handle_control_deck)
       ic_from_restart = .TRUE.
-    CASE(15)
+    CASE(14)
       neutral_background = as_logical(value, handle_control_deck)
-    CASE(16)
+    CASE(15)
       smooth_currents = as_logical(value, handle_control_deck)
-    CASE(17)
+    CASE(16)
       field_order = as_integer(value, handle_control_deck)
       IF (field_order .NE. 2 .AND. field_order .NE. 4 &
           .AND. field_order .NE. 6) THEN
@@ -111,20 +109,23 @@ CONTAINS
     ! npart is not a required variable
     control_block_done(3) = .TRUE.
 
+    ! dlb threshold is optional
+    control_block_done(11) = .TRUE.
+
     ! external input deck is optional
-    control_block_done(13) = .TRUE.
+    control_block_done(12) = .TRUE.
 
     ! restart snapshot is optional
-    control_block_done(14) = .TRUE.
+    control_block_done(13) = .TRUE.
 
     ! The neutral background is still beta, so hide it if people don't want it
-    control_block_done(15) = .TRUE.
+    control_block_done(14) = .TRUE.
 
     ! Assume no current smoothing unless specified
-    control_block_done(16) = .TRUE.
+    control_block_done(15) = .TRUE.
 
     ! field_order is optional
-    control_block_done(17) = .TRUE.
+    control_block_done(16) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

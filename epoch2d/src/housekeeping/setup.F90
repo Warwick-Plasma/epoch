@@ -33,6 +33,8 @@ CONTAINS
     window_shift = 0.0_num
     npart_global = -1
     smooth_currents = .FALSE.
+    dlb = .FALSE.
+    use_extended_io = .FALSE.
 
     NULLIFY(laser_left)
     NULLIFY(laser_right)

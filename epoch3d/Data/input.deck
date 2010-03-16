@@ -24,8 +24,7 @@ begin:control
   #Don't know if this should be in the deck or not
   dt_multiplier=0.8
 
-  dlb=F
-  dlb_threshold=1.0
+  #dlb_threshold=1.0
 
   icfile=ic.deck
   #restart_snapshot=98
@@ -82,7 +81,6 @@ begin:output
   restart_dump_every=-1
   force_final_to_be_restartable=T
 
-  use_extended_io=T
   extended_io_file=io.deck
 
   #Properties at particle positions
