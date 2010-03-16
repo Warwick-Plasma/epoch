@@ -39,10 +39,11 @@ MODULE iocommon
   INTEGER, PARAMETER :: c_dimension_3d = 3
 
   INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement
-  INTEGER :: cfd_filehandle = -1, cfd_rank, cfd_comm, nblocks
-  INTEGER, PARAMETER :: cfd_version = 1, cfd_revision = 1
+  INTEGER :: cfd_filehandle = -1, cfd_rank, cfd_comm
+  INTEGER(4) :: nblocks
+  INTEGER(4), PARAMETER :: cfd_version = 1, cfd_revision = 1
 
-  INTEGER :: max_string_len = 60, default_rank = 0
+  INTEGER(4) :: max_string_len = 60, default_rank = 0
 
   INTEGER, PARAMETER :: header_offset_this_version = 10 * 4 + 8 + 3
 
@@ -57,13 +58,13 @@ MODULE iocommon
   INTEGER, PARAMETER :: soi  = 4 ! Size of integer
   INTEGER, PARAMETER :: soi8 = 8 ! Size of long (normally 8 byte integer)
 
-  INTEGER  :: block_header_size, header_offset
+  INTEGER(4) :: block_header_size, header_offset
 
   INTEGER :: cfd_errcode, cfd_status(MPI_STATUS_SIZE), cfd_mode
   LOGICAL :: cfd_writing
 
   ! Current block info
-  INTEGER(KIND=8) :: block_length, block_md_length
+  INTEGER(8) :: block_length, block_md_length
   INTEGER(KIND=MPI_OFFSET_KIND) :: block_header_start, block_header_end
 
   TYPE(jobid_type) :: cfd_jobid

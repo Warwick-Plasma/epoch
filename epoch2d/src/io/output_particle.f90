@@ -58,12 +58,12 @@ CONTAINS
 
     CALL cfd_write_meshtype_header(c_mesh_particle, ndim, num, default_rank)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, particle_coord_type, 1, MPI_INTEGER, &
-          cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, particle_coord_type, 1, &
+          MPI_INTEGER4, cfd_status, cfd_errcode)
     ENDIF
 
     current_displacement = current_displacement + 1 * soi
@@ -177,11 +177,11 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_mesh_particle, ndims, num, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, particle_coord_type, 1, &
-          MPI_INTEGER, cfd_status, cfd_errcode)
+          MPI_INTEGER4, cfd_status, cfd_errcode)
     ENDIF
 
     current_displacement = current_displacement + 1 * soi

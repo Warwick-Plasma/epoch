@@ -3,8 +3,8 @@ MODULE job_info
   IMPLICIT NONE
 
   TYPE :: jobid_type
-    INTEGER :: start_seconds
-    INTEGER :: start_milliseconds
+    INTEGER(4) :: start_seconds
+    INTEGER(4) :: start_milliseconds
   END TYPE jobid_type
 
   CONTAINS

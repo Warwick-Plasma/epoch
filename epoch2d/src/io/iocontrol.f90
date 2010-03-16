@@ -65,10 +65,10 @@ CONTAINS
       ! Go to place where the empty value for nblocks is
       current_displacement = header_offset - 4
       CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-          MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+          MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
       IF (cfd_rank .EQ. default_rank) &
-          CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER, &
+          CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER4, &
               cfd_status, cfd_errcode)
     ENDIF
 

@@ -12,16 +12,16 @@ CONTAINS
 
   SUBROUTINE cfd_get_nd_cartesian_grid_metadata_all(ndims, dims, extents)
 
-    INTEGER, DIMENSION(:), INTENT(OUT) :: dims
+    INTEGER(4), DIMENSION(:), INTENT(OUT) :: dims
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     INTEGER, INTENT(IN) :: ndims
 
     ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + ndims * soi
@@ -118,7 +118,7 @@ CONTAINS
   SUBROUTINE cfd_get_nd_cartesian_variable_metadata_all(ndims, dims, &
       extents, stagger, mesh_name, mesh_class)
 
-    INTEGER, DIMENSION(:), INTENT(OUT) :: dims
+    INTEGER(4), DIMENSION(:), INTENT(OUT) :: dims
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     REAL(num), DIMENSION(:), INTENT(OUT) :: stagger
     INTEGER, INTENT(IN) :: ndims
@@ -131,10 +131,10 @@ CONTAINS
 
     ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + ndims * soi

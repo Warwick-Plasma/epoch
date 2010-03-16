@@ -25,7 +25,7 @@ CONTAINS
       END SUBROUTINE writer
     END INTERFACE
 
-    INTEGER(KIND=8) :: md_length, block_length
+    INTEGER(8) :: md_length, block_length
 
     ! Outputs general block header as described in cfd_write_block_header and
     ! then a single string

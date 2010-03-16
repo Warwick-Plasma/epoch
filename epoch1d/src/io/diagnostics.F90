@@ -27,7 +27,7 @@ CONTAINS
     CHARACTER(LEN=50) :: temp_name
     REAL(num), DIMENSION(:), ALLOCATABLE :: data
     REAL(num) :: stagger = 0.0_num
-    INTEGER(KIND=8) :: n_part_per_it = 100000, npart_local, npart_dump_global
+    INTEGER(8) :: n_part_per_it = 100000, npart_local, npart_dump_global
     INTEGER :: ispecies, code
     INTEGER :: dims
     INTEGER :: restart_flag

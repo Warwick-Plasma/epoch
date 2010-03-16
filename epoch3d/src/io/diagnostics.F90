@@ -27,7 +27,7 @@ CONTAINS
     CHARACTER(LEN=50) :: temp_name
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: data
     REAL(num), DIMENSION(3) :: stagger = 0.0_num
-    INTEGER(KIND=8) :: n_part_per_it = 100000, npart_local, npart_dump_global
+    INTEGER(8) :: n_part_per_it = 100000, npart_local, npart_dump_global
     INTEGER :: ispecies, code
     INTEGER, DIMENSION(3) :: dims
     INTEGER :: restart_flag
@@ -390,9 +390,9 @@ CONTAINS
     INTEGER, INTENT(IN) :: filehandle
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: current_displacement
 
-!!$    CALL MPI_FILE_SET_VIEW(filehandle, current_displacement, MPI_INTEGER, &
+!!$    CALL MPI_FILE_SET_VIEW(filehandle, current_displacement, MPI_INTEGER4, &
 !!$        subtype_particle_int, "native", MPI_INFO_NULL, cfd_errcode)
-!!$    CALL MPI_FILE_WRITE_ALL(filehandle, Part_Species, npart, MPI_INTEGER, &
+!!$    CALL MPI_FILE_WRITE_ALL(filehandle, Part_Species, npart, MPI_INTEGER4, &
 !!$        status, errcode)
 
   END SUBROUTINE write_species

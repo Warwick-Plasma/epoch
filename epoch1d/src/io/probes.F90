@@ -56,8 +56,8 @@ CONTAINS
     TYPE(particle_probe), POINTER :: current_probe
     CHARACTER(LEN=string_length) :: probe_name, temp_name
     INTEGER :: ispecies, subtype_probe_particle_var
-    INTEGER(KIND=8) :: npart_probe_local, npart_probe_global
-    INTEGER(KIND=8) :: npart_probe_per_it, npart_probe_per_it_local
+    INTEGER(8) :: npart_probe_local, npart_probe_global
+    INTEGER(8) :: npart_probe_per_it, npart_probe_per_it_local
 
     DO ispecies = 1, n_species
       current_probe=>particle_species(ispecies)%attached_probes

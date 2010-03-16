@@ -43,11 +43,11 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_1d, num, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 
@@ -113,13 +113,13 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_2d, num, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 
@@ -196,15 +196,15 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_3d, num, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 
@@ -261,7 +261,7 @@ CONTAINS
     REAL(num), INTENT(IN), DIMENSION(3) :: stagger
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
-    INTEGER :: nx, ny, nz
+    INTEGER(4) :: nx, ny, nz
 
     ! * ) VariableType (INTEGER(4)) All variable blocks contain this
     ! These are specific to a cartesian variable
@@ -293,15 +293,15 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_3d, num, &
         default_rank)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 
@@ -369,7 +369,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: distribution
     INTEGER, INTENT(IN), DIMENSION(2) :: dims
     REAL(num), INTENT(IN), DIMENSION(2) :: stagger
-    INTEGER :: nx, ny
+    INTEGER(4) :: nx, ny
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
 
@@ -399,13 +399,13 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_2d, num, &
         default_rank)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 
@@ -470,7 +470,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: distribution
     INTEGER, INTENT(IN) :: dims
     REAL(num), INTENT(IN) :: stagger
-    INTEGER :: nx
+    INTEGER(4) :: nx
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
 
@@ -496,11 +496,11 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, num, &
         default_rank)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 
@@ -562,7 +562,7 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
     REAL(num), INTENT(IN), DIMENSION(1) :: stagger
-    INTEGER :: nx
+    INTEGER(4) :: nx
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER, DIMENSION(1) :: dims
     INTEGER(8) :: block_length, md_length, len_var
@@ -592,12 +592,12 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, num, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     ! This is the serial version remember
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 
@@ -664,7 +664,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
     REAL(num), INTENT(IN), DIMENSION(2) :: stagger
-    INTEGER :: nx, ny
+    INTEGER(4) :: nx, ny
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER, DIMENSION(2) :: dims
     INTEGER(8) :: block_length, md_length, len_var
@@ -697,14 +697,14 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_2d, num, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     ! This is the serial version remember
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 
@@ -771,7 +771,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
     REAL(num), INTENT(IN), DIMENSION(3) :: stagger
-    INTEGER :: nx, ny, nz
+    INTEGER(4) :: nx, ny, nz
     INTEGER, DIMENSION(3) :: dims
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
@@ -807,16 +807,16 @@ CONTAINS
     CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_3d, num, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     ! This is the serial version remember
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nx, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, ny, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER, cfd_status, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nz, 1, MPI_INTEGER4, cfd_status, &
           cfd_errcode)
     ENDIF
 

@@ -23,9 +23,9 @@ CONTAINS
   SUBROUTINE cfd_open_clobber(filename, step, time)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
-    INTEGER, INTENT(IN) :: step
+    INTEGER(4), INTENT(IN) :: step
     DOUBLE PRECISION, INTENT(IN) :: time
-    INTEGER :: endianness
+    INTEGER(4) :: endianness
 
     ! Set the block header
     block_header_size = max_string_len * 2 + soi + 2 * soi8
@@ -50,25 +50,25 @@ CONTAINS
 
       ! This goes next so that stuff can be added to the global header without
       ! breaking everything
-      CALL MPI_FILE_WRITE(cfd_filehandle, header_offset, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, header_offset, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, block_header_size, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, block_header_size, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, cfd_version, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, cfd_version, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, cfd_revision, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, cfd_revision, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, max_string_len, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, max_string_len, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, endianness, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, endianness, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, cfd_jobid%start_seconds, 1, &
-          MPI_INTEGER, cfd_status, cfd_errcode)
+          MPI_INTEGER4, cfd_status, cfd_errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, cfd_jobid%start_milliseconds, 1, &
-          MPI_INTEGER, cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, step, 1, MPI_INTEGER, &
+          MPI_INTEGER4, cfd_status, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, step, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
 
       CALL MPI_FILE_WRITE(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
@@ -116,8 +116,9 @@ CONTAINS
       block_length, block_md_length, rank_write)
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name, block_class
-    INTEGER, INTENT(IN) :: block_type, rank_write
-    INTEGER(KIND=8), INTENT(IN) :: block_length, block_md_length
+    INTEGER(4), INTENT(IN) :: block_type
+    INTEGER(8), INTENT(IN) :: block_length, block_md_length
+    INTEGER, INTENT(IN) :: rank_write
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
@@ -130,10 +131,10 @@ CONTAINS
 
     ! Write the block type
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER, MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) &
-        CALL MPI_FILE_WRITE(cfd_filehandle, block_type, 1, MPI_INTEGER, &
+        CALL MPI_FILE_WRITE(cfd_filehandle, block_type, 1, MPI_INTEGER4, &
             cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + 4
@@ -163,17 +164,18 @@ CONTAINS
     ! All have a common header, this is what writes that (although the content
     ! Of type will depend on what meshtype you're using)
 
-    INTEGER, INTENT(IN) :: meshtype, dim, rank_write, sof
+    INTEGER(4), INTENT(IN) :: meshtype, dim, sof
+    INTEGER, INTENT(IN) :: rank_write
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, meshtype, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, meshtype, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, dim, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, dim, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, sof, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, sof, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
     ENDIF
 
@@ -185,7 +187,8 @@ CONTAINS
 
   SUBROUTINE cfd_write_snapshot_data(time, step, rank_write)
 
-    INTEGER, INTENT(IN) :: rank_write, step
+    INTEGER(4), INTENT(IN) :: step
+    INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: md_length
     REAL(8), INTENT(IN) :: time
 
@@ -194,11 +197,11 @@ CONTAINS
     CALL cfd_write_block_header("Snapshot", "Snapshot", c_type_snapshot, &
         md_length, md_length, rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) &
-        CALL MPI_FILE_WRITE(cfd_filehandle, step, 1, MPI_INTEGER, &
+        CALL MPI_FILE_WRITE(cfd_filehandle, step, 1, MPI_INTEGER4, &
             cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + soi
@@ -219,9 +222,10 @@ CONTAINS
 
   SUBROUTINE cfd_write_job_info(restart_flag, rank_write)
 
-    INTEGER, INTENT(IN) :: rank_write, restart_flag
+    INTEGER(4), INTENT(IN) :: restart_flag
+    INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: md_length
-    INTEGER :: io_date
+    INTEGER(4) :: io_date
 
     io_date = get_unix_time()
 
@@ -230,15 +234,15 @@ CONTAINS
     CALL cfd_write_block_header(c_code_name, "Job_info", c_type_info, &
         md_length, md_length, rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, c_code_io_version, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, c_code_io_version, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, c_version, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, c_version, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, c_revision, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, c_revision, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
     ENDIF
 
@@ -256,19 +260,19 @@ CONTAINS
 
     current_displacement = current_displacement + 4 * max_string_len
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, defines, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, defines, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, c_compile_date, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, c_compile_date, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, run_date, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, run_date, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, io_date, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, io_date, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, restart_flag, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, restart_flag, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
     ENDIF
 
@@ -285,7 +289,8 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: vector_name, vector_class, mesh_name
     CHARACTER(LEN=*), INTENT(IN) :: mesh_class
     INTEGER, INTENT(IN) :: rank_write
-    INTEGER(8) :: ndims, md_length, block_length
+    INTEGER(8) :: md_length, block_length
+    INTEGER(4) :: ndims
     INTEGER :: iloop
 
     ndims = SIZE(name)
@@ -306,11 +311,11 @@ CONTAINS
 
     current_displacement = current_displacement + 2 * max_string_len
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) &
-        CALL MPI_FILE_WRITE(cfd_filehandle, ndims, 1, MPI_INTEGER, &
+        CALL MPI_FILE_WRITE(cfd_filehandle, ndims, 1, MPI_INTEGER4, &
             cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + soi
@@ -338,7 +343,8 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: magn_name, magn_class, mesh_name
     CHARACTER(LEN=*), INTENT(IN) :: mesh_class
     INTEGER, INTENT(IN) :: rank_write
-    INTEGER(8) :: ndims, md_length, block_length
+    INTEGER(8) :: md_length, block_length
+    INTEGER(4) :: ndims
     INTEGER :: iloop
 
     ndims = SIZE(name)
@@ -359,11 +365,11 @@ CONTAINS
 
     current_displacement = current_displacement + 2 * max_string_len
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) &
-        CALL MPI_FILE_WRITE(cfd_filehandle, ndims, 1, MPI_INTEGER, &
+        CALL MPI_FILE_WRITE(cfd_filehandle, ndims, 1, MPI_INTEGER4, &
             cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + soi
@@ -437,7 +443,7 @@ CONTAINS
   SUBROUTINE cfd_write_1d_integer_array(name, class, values, rank_write)
 
     CHARACTER(LEN=*), INTENT(IN) :: name, class
-    INTEGER, DIMENSION(:), INTENT(IN) :: values
+    INTEGER(4), DIMENSION(:), INTENT(IN) :: values
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: md_length
 
@@ -445,18 +451,18 @@ CONTAINS
 
     CALL cfd_write_block_header(name, class, c_type_integerarray, md_length, &
         md_length, rank_write)
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       ! 1D
-      CALL MPI_FILE_WRITE(cfd_filehandle, 1, 1, MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, 1, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
       ! Size of array
-      CALL MPI_FILE_WRITE(cfd_filehandle, 1, SIZE(values), MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, 1, SIZE(values), MPI_INTEGER4, &
           cfd_status, cfd_errcode)
       ! Actual array
-      CALL MPI_FILE_WRITE(cfd_filehandle, values, SIZE(values), MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, values, SIZE(values), MPI_INTEGER4, &
           cfd_status, cfd_errcode)
     ENDIF
 

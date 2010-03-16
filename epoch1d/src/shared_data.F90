@@ -572,7 +572,7 @@ MODULE shared_data
 
   TYPE(jobid_type) :: jobid
 
-  INTEGER :: run_date
-  INTEGER :: defines
+  INTEGER(4) :: run_date
+  INTEGER(4) :: defines
 
 END MODULE shared_data

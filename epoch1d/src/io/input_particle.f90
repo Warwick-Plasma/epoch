@@ -12,17 +12,17 @@ CONTAINS
   SUBROUTINE cfd_get_nd_particle_grid_metadata_all(ndims, coord_type, npart, &
       extents)
 
-    INTEGER, INTENT(OUT) :: coord_type
+    INTEGER(4), INTENT(OUT) :: coord_type
     INTEGER(8), INTENT(OUT) :: npart
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     INTEGER, INTENT(IN) :: ndims
 
     ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER, &
-        MPI_INTEGER, "native", MPI_INFO_NULL, cfd_errcode)
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, coord_type, 1, MPI_INTEGER, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, coord_type, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
 
     current_displacement = current_displacement +  soi
@@ -50,7 +50,7 @@ CONTAINS
   SUBROUTINE cfd_get_nd_particle_grid_all(ndims, npart, data)
 
     INTEGER, INTENT(IN) :: ndims
-    INTEGER(KIND=8), INTENT(IN) :: npart
+    INTEGER(8), INTENT(IN) :: npart
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
@@ -69,7 +69,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: ndims
     INTEGER, INTENT(IN) :: subtype
-    INTEGER(KIND=8), INTENT(IN) :: npart
+    INTEGER(8), INTENT(IN) :: npart
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
@@ -89,9 +89,9 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: subtype
     INTEGER, INTENT(IN) :: ndims
-    INTEGER, INTENT(IN) :: sof
-    INTEGER(KIND=8), INTENT(IN) :: npart_local, npart_per_it, npart_lglobal
-    INTEGER(KIND=8) :: npart_this_it, npart_remain
+    INTEGER(4), INTENT(IN) :: sof
+    INTEGER(8), INTENT(IN) :: npart_local, npart_per_it, npart_lglobal
+    INTEGER(8) :: npart_this_it, npart_remain
     INTEGER :: direction
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: data
@@ -185,7 +185,7 @@ CONTAINS
 
   SUBROUTINE cfd_get_nd_particle_variable_all(npart, data)
 
-    INTEGER(KIND=8), INTENT(IN) :: npart
+    INTEGER(8), INTENT(IN) :: npart
     REAL(num), DIMENSION(:), INTENT(INOUT) :: data
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
@@ -203,7 +203,7 @@ CONTAINS
   SUBROUTINE cfd_get_nd_particle_variable_parallel(npart_local, data, subtype)
 
     INTEGER, INTENT(IN) :: subtype
-    INTEGER(KIND=8), INTENT(IN) :: npart_local
+    INTEGER(8), INTENT(IN) :: npart_local
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
@@ -222,8 +222,8 @@ CONTAINS
       npart_per_it, subtype, iterator)
 
     INTEGER, INTENT(IN) :: subtype
-    INTEGER(KIND=8), INTENT(IN) :: npart_local, npart_per_it
-    INTEGER(KIND=8) :: npart_this_it, npart_remain
+    INTEGER(8), INTENT(IN) :: npart_local, npart_per_it
+    INTEGER(8) :: npart_this_it, npart_remain
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: data
 
