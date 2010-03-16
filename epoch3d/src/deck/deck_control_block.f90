@@ -1,11 +1,12 @@
 MODULE deck_control_block
 
   USE strings_advanced
+  USE fields
 
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 21
+  INTEGER, PARAMETER :: control_block_elements = 22
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -29,7 +30,8 @@ MODULE deck_control_block
           "neutral_background", &
           "nprocx            ", &
           "nprocy            ", &
-          "nprocz            " /)
+          "nprocz            ", &
+          "field_order       " /)
 
 CONTAINS
 
@@ -37,7 +39,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_control_deck
-    INTEGER :: loop, elementselected
+    INTEGER :: loop, elementselected, field_order
 
     handle_control_deck = c_err_unknown_element
 
@@ -102,6 +104,14 @@ CONTAINS
       nprocy = as_integer(value, handle_control_deck)
     CASE(21)
       nprocz = as_integer(value, handle_control_deck)
+    CASE(22)
+      field_order = as_integer(value, handle_control_deck)
+      IF (field_order .NE. 2 .AND. field_order .NE. 4 &
+          .AND. field_order .NE. 6) THEN
+        handle_control_deck = c_err_bad_value
+      ELSE
+        CALL set_field_order(field_order)
+      ENDIF
     END SELECT
 
   END FUNCTION handle_control_deck
@@ -128,6 +138,9 @@ CONTAINS
 
     ! Never need to set nproc so
     control_block_done(19:21) = .TRUE.
+
+    ! field_order is optional
+    control_block_done(22) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

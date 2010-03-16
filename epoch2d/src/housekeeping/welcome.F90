@@ -89,16 +89,6 @@ CONTAINS
     defines = IOR(defines, c_def_spline_four)
     WRITE(*, *) "Fourth order spline interpolation -DSPLINE_FOUR"
 #endif
-#ifdef HIGH_ORDER_FIELDS
-    defines = IOR(defines, c_def_high_order_fields)
-#ifdef ORDER_SIX
-    defines = IOR(defines, c_def_order_six)
-    WRITE(*, *) "6th order improved field solver -DHIGH_ORDER_FIELDS &
-        &-DORDER_SIX"
-#else
-    WRITE(*, *) "4th order field solver -DHIGH_ORDER_FIELDS"
-#endif
-#endif
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
     defines = IOR(defines, c_def_split_particles_after_push)
     WRITE(*, *) "Particle/cell ordering -DSPLIT_PARTICLES_AFTER_PUSH"

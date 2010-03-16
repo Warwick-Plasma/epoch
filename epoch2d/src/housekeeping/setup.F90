@@ -6,6 +6,7 @@ MODULE setup
   USE strings
   USE partlist
   USE mpi_subtype_control
+  USE fields
 
   IMPLICIT NONE
 
@@ -41,6 +42,8 @@ CONTAINS
     NULLIFY(dist_fns)
 
     run_date = get_unix_time()
+
+    CALL set_field_order(2)
 
   END SUBROUTINE minimal_init
 

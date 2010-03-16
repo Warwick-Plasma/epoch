@@ -1,11 +1,12 @@
 MODULE deck_control_block
 
   USE strings_advanced
+  USE fields
 
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 16
+  INTEGER, PARAMETER :: control_block_elements = 17
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -24,7 +25,8 @@ MODULE deck_control_block
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
-          "smooth_currents   " /)
+          "smooth_currents   ", &
+          "field_order       " /)
 
 CONTAINS
 
@@ -32,7 +34,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_control_deck
-    INTEGER :: loop, elementselected
+    INTEGER :: loop, elementselected, field_order
     handle_control_deck = c_err_unknown_element
 
     elementselected = 0
@@ -86,6 +88,14 @@ CONTAINS
       neutral_background = as_logical(value, handle_control_deck)
     CASE(16)
       smooth_currents = as_logical(value, handle_control_deck)
+    CASE(17)
+      field_order = as_integer(value, handle_control_deck)
+      IF (field_order .NE. 2 .AND. field_order .NE. 4 &
+          .AND. field_order .NE. 6) THEN
+        handle_control_deck = c_err_bad_value
+      ELSE
+        CALL set_field_order(field_order)
+      ENDIF
     END SELECT
 
   END FUNCTION handle_control_deck
@@ -112,6 +122,9 @@ CONTAINS
 
     ! Assume no current smoothing unless specified
     control_block_done(16) = .TRUE.
+
+    ! field_order is optional
+    control_block_done(17) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

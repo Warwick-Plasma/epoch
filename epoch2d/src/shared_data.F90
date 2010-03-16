@@ -89,18 +89,16 @@ MODULE constants
   INTEGER, PARAMETER :: c_def_particle_debug = 1
   INTEGER, PARAMETER :: c_def_field_debug = 2
   INTEGER, PARAMETER :: c_def_spline_four = 4
-  INTEGER, PARAMETER :: c_def_high_order_fields = 8
-  INTEGER, PARAMETER :: c_def_order_six = 16
-  INTEGER, PARAMETER :: c_def_split_particles_after_push = 32
-  INTEGER, PARAMETER :: c_def_per_particle_weight = 64
-  INTEGER, PARAMETER :: c_def_particle_count_update = 128
-  INTEGER, PARAMETER :: c_def_tracer_particles = 256
-  INTEGER, PARAMETER :: c_def_particle_probes = 512
-  INTEGER, PARAMETER :: c_def_per_particle_chargemass = 1024
-  INTEGER, PARAMETER :: c_def_particle_ionise = 2048
-  INTEGER, PARAMETER :: c_def_no_deck = 4096
-  INTEGER, PARAMETER :: c_def_newtonian = 8192
-  INTEGER, PARAMETER :: c_def_high_order_smoothing = 16384
+  INTEGER, PARAMETER :: c_def_split_particles_after_push = 8
+  INTEGER, PARAMETER :: c_def_per_particle_weight = 16
+  INTEGER, PARAMETER :: c_def_particle_count_update = 32
+  INTEGER, PARAMETER :: c_def_tracer_particles = 64
+  INTEGER, PARAMETER :: c_def_particle_probes = 128
+  INTEGER, PARAMETER :: c_def_per_particle_chargemass = 256
+  INTEGER, PARAMETER :: c_def_particle_ionise = 512
+  INTEGER, PARAMETER :: c_def_no_deck = 1024
+  INTEGER, PARAMETER :: c_def_newtonian = 2048
+  INTEGER, PARAMETER :: c_def_high_order_smoothing = 4096
 
   ! Length of a standard string
   INTEGER, PARAMETER :: string_length = 128

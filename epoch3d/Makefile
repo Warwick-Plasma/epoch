@@ -106,7 +106,7 @@ custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings.o
 deck_constant_block.o: deck_constant_block.f90 strings_advanced.o
-deck_control_block.o: deck_control_block.f90 strings_advanced.o
+deck_control_block.o: deck_control_block.f90 fields.o strings_advanced.o
 deck_deo_block.o: deck_deo_block.f90 shunt.o strings.o
 deck_eio_dist_fn_block.o: deck_eio_dist_fn_block.f90 dist_fn.o \
   strings_advanced.o
@@ -153,7 +153,7 @@ particle_pointer_advance.o: particle_pointer_advance.F90 shared_data.o
 particles.o: particles.F90 boundary.o shape_functions.o
 partlist.o: partlist.F90 shared_data.o
 probes.o: probes.F90 mpi_subtype_control.o output_particle.o partlist.o
-setup.o: setup.F90 input_cartesian.o input_particle.o iocontrol.o \
+setup.o: setup.F90 fields.o input_cartesian.o input_particle.o iocontrol.o \
   mpi_subtype_control.o partlist.o strings.o
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 job_info.o

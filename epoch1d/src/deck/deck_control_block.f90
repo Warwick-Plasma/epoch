@@ -1,11 +1,12 @@
 MODULE deck_control_block
 
   USE strings_advanced
+  USE fields
 
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 12
+  INTEGER, PARAMETER :: control_block_elements = 13
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -20,7 +21,8 @@ MODULE deck_control_block
           "dlb_threshold     ", &
           "icfile            ", &
           "restart_snapshot  ", &
-          "neutral_background" /)
+          "neutral_background", &
+          "field_order       " /)
 
 CONTAINS
 
@@ -28,7 +30,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_control_deck
-    INTEGER :: loop, elementselected
+    INTEGER :: loop, elementselected, field_order
     handle_control_deck = c_err_unknown_element
 
     elementselected = 0
@@ -74,6 +76,14 @@ CONTAINS
       ic_from_restart = .TRUE.
     CASE(12)
       neutral_background = as_logical(value, handle_control_deck)
+    CASE(13)
+      field_order = as_integer(value, handle_control_deck)
+      IF (field_order .NE. 2 .AND. field_order .NE. 4 &
+          .AND. field_order .NE. 6) THEN
+        handle_control_deck = c_err_bad_value
+      ELSE
+        CALL set_field_order(field_order)
+      ENDIF
     END SELECT
 
   END FUNCTION handle_control_deck
@@ -97,6 +107,9 @@ CONTAINS
 
     ! The neutral background is still beta, so hide it if people don't want it
     control_block_done(12) = .TRUE.
+
+    ! field_order is optional
+    control_block_done(13) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

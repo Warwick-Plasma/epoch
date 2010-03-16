@@ -39,7 +39,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 control.F90 current_smooth.F90 \
   deck_ic_external_block.f90 deck_ic_fields_block.f90 deck_ic_laser_block.f90 \
   deck_ic_species_block.f90 deck_io_block.F90 deck_species_block.F90 \
   deck_window_block.f90 diagnostics.F90 dist_fn.F90 epoch2d.F90 evaluate.f90 \
-  evaluator_blocks.f90 fields.F90 helper.F90 ic_module.f90 input_cartesian.f90 \
+  evaluator_blocks.f90 fields.f90 helper.F90 ic_module.f90 input_cartesian.f90 \
   input.f90 input_functions.f90 input_particle.f90 iocommon.f90 iocontrol.f90 \
   ionise.F90 iterators.F90 job_info.f90 laser.f90 mpi_routines.f90 \
   mpi_subtype_control.F90 output_cartesian.f90 output.f90 output_particle.f90 \
@@ -108,7 +108,7 @@ custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings.o
 deck_constant_block.o: deck_constant_block.f90 strings_advanced.o
-deck_control_block.o: deck_control_block.f90 strings_advanced.o
+deck_control_block.o: deck_control_block.f90 fields.o strings_advanced.o
 deck_deo_block.o: deck_deo_block.f90 shunt.o strings.o
 deck_eio_dist_fn_block.o: deck_eio_dist_fn_block.f90 dist_fn.o \
   strings_advanced.o
@@ -136,7 +136,7 @@ epoch2d.o: epoch2d.F90 balance.o boundary.o control.o deck.o diagnostics.o \
   split_particles.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
-fields.o: fields.F90 boundary.o laser.o
+fields.o: fields.f90 boundary.o laser.o
 helper.o: helper.F90 boundary.o shape_functions.o strings.o
 ic_module.o: ic_module.f90
 input_cartesian.o: input_cartesian.f90 input_functions.o
@@ -158,7 +158,7 @@ particle_pointer_advance.o: particle_pointer_advance.F90 shared_data.o
 particles.o: particles.F90 boundary.o current_smooth.o shape_functions.o
 partlist.o: partlist.F90 shared_data.o
 probes.o: probes.F90 mpi_subtype_control.o output_particle.o partlist.o
-setup.o: setup.F90 input_cartesian.o input_particle.o iocontrol.o \
+setup.o: setup.F90 fields.o input_cartesian.o input_particle.o iocontrol.o \
   mpi_subtype_control.o partlist.o strings.o
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 job_info.o
