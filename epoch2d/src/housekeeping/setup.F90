@@ -7,6 +7,7 @@ MODULE setup
   USE partlist
   USE mpi_subtype_control
   USE fields
+  USE version_data
 
   IMPLICIT NONE
 
@@ -165,6 +166,8 @@ CONTAINS
             &does not exist"
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
+      WRITE(20,*) ascii_header
+      WRITE(20,*)
     ENDIF
 
   END SUBROUTINE open_files

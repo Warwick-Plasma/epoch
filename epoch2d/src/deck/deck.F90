@@ -23,6 +23,7 @@ MODULE deck
 #endif
   ! Custom blocks
   USE custom_deck
+  USE version_data
 
   IMPLICIT NONE
 
@@ -330,7 +331,11 @@ CONTAINS
       ! Get a free lun. Don't use a constant lun to allow for recursion
       lun = get_free_lun()
       OPEN(unit=lun, file=TRIM(ADJUSTL(deck_filename)))
-      IF (first_call) OPEN(unit=40, file=status_filename)
+      IF (first_call) THEN
+        OPEN(unit=40, file=status_filename)
+        WRITE(40,*) ascii_header
+        WRITE(40,*)
+      ENDIF
       deck_values(1)%value = ""
       deck_values(2)%value = ""
 

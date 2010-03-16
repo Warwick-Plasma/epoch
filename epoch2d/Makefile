@@ -124,7 +124,8 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_constant_block.o \
   deck_control_block.o deck_deo_block.o deck_eio_dist_fn_block.o \
   deck_eio_particle_probe_block.o deck_ic_external_block.o \
   deck_ic_fields_block.o deck_ic_laser_block.o deck_ic_species_block.o \
-  deck_io_block.o deck_species_block.o deck_window_block.o strings.o
+  deck_io_block.o deck_species_block.o deck_window_block.o strings.o \
+  version_data.o
 deck_species_block.o: deck_species_block.F90 setup.o strings_advanced.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o dist_fn.o encoded_source.o \
@@ -159,7 +160,7 @@ particles.o: particles.F90 boundary.o current_smooth.o shape_functions.o
 partlist.o: partlist.F90 shared_data.o
 probes.o: probes.F90 mpi_subtype_control.o output_particle.o partlist.o
 setup.o: setup.F90 fields.o input_cartesian.o input_particle.o iocontrol.o \
-  mpi_subtype_control.o partlist.o strings.o
+  mpi_subtype_control.o partlist.o strings.o version_data.o
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o

@@ -329,8 +329,8 @@ CONTAINS
 
       output_file = output_file + 1
       IF (rank .EQ. 0) THEN
-        WRITE(20, *) "Dumped data at", time, "at iteration", i, "for dump", &
-            output_file-1
+        WRITE(20, '("Dumped data at", g22.14, " at iteration", i9, &
+            & " for dump", i9)') time, i, output_file-1
         CALL FLUSH(20)
       ENDIF
 

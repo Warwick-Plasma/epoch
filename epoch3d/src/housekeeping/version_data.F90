@@ -9,5 +9,7 @@ MODULE version_data
   CHARACTER(LEN=*), PARAMETER :: c_compile_machine = _MACHINE
   CHARACTER(LEN=*), PARAMETER :: c_compile_flags = _FLAGS
   INTEGER(4), PARAMETER :: c_compile_date = _DATE
+  CHARACTER(LEN=16) :: version_string
+  CHARACTER(LEN=70) :: ascii_header
 
 END MODULE version_data

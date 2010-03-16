@@ -17,7 +17,7 @@ CONTAINS
     CHARACTER(logo_x*2+1) :: logo_string
     CHARACTER, DIMENSION(5) :: logo_els
     INTEGER :: ix, iy
-    CHARACTER(LEN=8) :: ver, rev
+    CHARACTER(LEN=11) :: ver, rev
 
     IF (rank .NE. 0) RETURN
 
@@ -61,8 +61,13 @@ CONTAINS
     WRITE(*, *) ""
     CALL integer_as_string(c_version, ver)
     CALL integer_as_string(c_revision, rev)
-    WRITE(*, *) "Welcome to EPOCH2D Version ", TRIM(ver), ".", &
-        TRIM(ADJUSTL(rev))
+    version_string = TRIM(ver) // "." // TRIM(ADJUSTL(rev))
+    CALL integer_as_string(jobid%start_seconds, ver)
+    CALL integer_as_string(jobid%start_milliseconds, rev)
+    ascii_header = c_code_name // " v" // TRIM(version_string) // " " &
+        // c_commit_id // " " // TRIM(ver) // "." // TRIM(ADJUSTL(rev))
+    print*,ascii_header
+    WRITE(*, *) "Welcome to EPOCH2D Version ", version_string
     WRITE(*, *) ""
 
     CALL compiler_directives
