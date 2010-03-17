@@ -3,6 +3,9 @@
 file=$1
 success=1
 
+build_sha1=1
+embed_source=1
+
 shift
 
 dir=`dirname $file`
@@ -11,7 +14,49 @@ tmp2=$dir/tmp2
 
 [ -d $dir ] || mkdir $dir
 
-sha=`cat $* | sha1sum | cut -f1 -d' '`
+if [ "$1"x = "opt_dont_build_sha1"x ]; then
+  build_sha1=0
+  shift
+fi
+if [ "$1"x = "opt_dont_build_embedded_source"x ]; then
+  embed_source=0
+  shift
+fi
+
+if [ $build_sha1 -eq 1 ]; then
+  sha=`cat $* | sha1sum | cut -f1 -d' '`
+fi
+
+nlines=0
+line_end='""'
+
+if [ $embed_source -eq 1 ]; then
+  tar czf $tmp $*
+  if [ $? -eq 0 ]; then
+    base64 $tmp > $tmp2
+    if [ $? -ne 0 ]; then
+      echo base64 failed. Trying mimencode.
+      mimencode $tmp -o $tmp2
+    fi
+    if [ $? -ne 0 ]; then
+      echo mimencode failed. Trying uuencode.
+      uuencode -m $tmp epoch.tgz > $tmp2
+      if [ $? -eq 0 ]; then
+        n=`cat $tmp2 | wc -l`
+        sed -n 2,$((n-1))p $tmp2 > $tmp
+        mv $tmp $tmp2
+      else
+        false
+      fi
+    fi
+    if [ $? -eq 0 ]; then
+      nlines=`cat $tmp2 | wc -l`
+      nlines=$((nlines-1))
+      line_end='(/ &'
+      success=0
+    fi
+  fi
+fi
 
 cat > $file <<EOF
 MODULE encoded_source
@@ -20,35 +65,20 @@ MODULE encoded_source
 
   CHARACTER(LEN=*), PARAMETER :: sha1sum = "$sha"
 
-  CHARACTER(LEN=*), PARAMETER :: source_code = "" &
+  CHARACTER(LEN=*), DIMENSION($nlines), PARAMETER :: source_code = $line_end
 EOF
 
-tar czf $tmp $*
-if [ $? -eq 0 ]; then
-  base64 $tmp > $tmp2
-  if [ $? -ne 0 ]; then
-    echo base64 failed. Trying mimencode.
-    mimencode $tmp -o $tmp2
-  fi
-  if [ $? -ne 0 ]; then
-    echo mimencode failed. Trying uuencode.
-    uuencode -m $tmp epoch.tgz > $tmp2
-    if [ $? -eq 0 ]; then
-      n=`cat $tmp2 | wc -l`
-      sed -n 2,$((n-1))p $tmp2 > $tmp
-      mv $tmp $tmp2
-    else
-      false
-    fi
-  fi
-  if [ $? -eq 0 ]; then
-    sed 's,^,    // ",; s,$," \&,' $tmp2 >> $file
-    success=0
-  fi
+if [ -e $tmp2 ]; then
+  head -$((nlines-1)) $tmp2 | sed 's/^/      "/; s/$/", \&/' >> $file
+  head -$((nlines)) $tmp2 | tail -1 | sed 's/^/      "/; s/$/" \/)/' >> $file
+  echo "  CHARACTER(LEN=*), PARAMETER :: last_line = &" >> $file
+  tail -1 $tmp2 | sed 's/^/      "/; s/$/"/' >> $file
+else
+  echo '  CHARACTER(LEN=*), PARAMETER :: last_line = ""' >> $file
 fi
 
+
 cat >> $file <<EOF
-    // ""
 
 END MODULE encoded_source
 EOF

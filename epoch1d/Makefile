@@ -5,7 +5,7 @@ FFLAGS = -O3 #-heap-arrays 0 -fast
 TARGET = epoch1d
 
 # Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DSINGLE_DECK
+DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES
 
 # Copy this line onto the DEFINES line to turn on particle cell division
 # -DPARTICLE_CELL_DIVISION
@@ -17,6 +17,9 @@ MODULEFLAG = -module
 #MODULEFLAG = -fmod=
 # Uncomment for the gfortran compiler
 #MODULEFLAG = -J
+
+#BUILDOPT += opt_dont_build_sha1
+#BUILDOPT += opt_dont_build_embedded_source
 
 # --------------------------------------------------
 # Shouldn't need to touch below here
@@ -70,8 +73,10 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:$(SRCDIR)/p
 $(FULLTARGET): $(OBJFILES)
 	$(FC) $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
-$(OBJDIR)/encoded_source.f90: $(SRCFILES) Makefile gen_src_module COMMIT
-	./gen_src_module $@ COMMIT
+opt_dont_build_sha1: ;
+opt_dont_build_embedded_source: ;
+$(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) Makefile gen_src_module COMMIT
+	./gen_src_module $@ $^
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)

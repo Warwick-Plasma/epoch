@@ -312,8 +312,8 @@ CONTAINS
 !!$      ENDIF
 
       IF (restart_flag .EQ. 1 .AND. LEN(source_code) .GT. 0) THEN
-        CALL cfd_write_character_constant("Code", "base64_packed_source_code", &
-            source_code, 0)
+        CALL cfd_write_source_code("Code", "base64_packed_source_code", &
+            source_code, last_line, 0)
       ENDIF
 
       ! CLOSE the file
