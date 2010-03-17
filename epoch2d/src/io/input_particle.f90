@@ -12,18 +12,21 @@ CONTAINS
   SUBROUTINE cfd_get_nd_particle_grid_metadata_all(ndims, coord_type, npart, &
       extents)
 
-    INTEGER(4), INTENT(OUT) :: coord_type
+    INTEGER, INTENT(OUT) :: coord_type
     INTEGER(8), INTENT(OUT) :: npart
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     INTEGER, INTENT(IN) :: ndims
+    INTEGER(4) :: coord_type4
 
     ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, coord_type, 1, MPI_INTEGER4, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, coord_type4, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
+
+    coord_type = coord_type4
 
     current_displacement = current_displacement +  soi
 
@@ -89,7 +92,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: subtype
     INTEGER, INTENT(IN) :: ndims
-    INTEGER(4), INTENT(IN) :: sof
+    INTEGER, INTENT(IN) :: sof
     INTEGER(8), INTENT(IN) :: npart_local, npart_per_it, npart_lglobal
     INTEGER(8) :: npart_this_it, npart_remain
     INTEGER :: direction

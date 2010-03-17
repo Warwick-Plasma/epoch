@@ -24,12 +24,12 @@ CONTAINS
     INTEGER(8) :: npart_local
     INTEGER(8) :: block_length, md_length
     INTEGER(4) :: ndim, i
-    INTEGER(4) :: sizes(2)
+    INTEGER :: sizes(2)
     REAL(num) :: mn, mx
 
     sizes = SHAPE(particles)
     npart_local = sizes(2)
-    ndim = sizes(1)
+    ndim = INT(sizes(1),4)
 
     ! Metadata is
     ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
@@ -140,7 +140,7 @@ CONTAINS
     END INTERFACE
 
     INTEGER(8) :: block_length, md_length, npart_this_cycle, npart_sent
-    INTEGER(4) :: idim
+    INTEGER :: idim
     INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
     REAL(num) :: mn, mx
     REAL(num), ALLOCATABLE, DIMENSION(:,:) :: min_max

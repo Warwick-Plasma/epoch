@@ -90,9 +90,10 @@ CONTAINS
 
           ! dump particle Positions
           CALL cfd_write_nd_particle_grid_with_iterator_all(&
-              TRIM(probe_name), "Probe_Grid", iterate_probe_particles, 2, &
-              npart_probe_local, npart_probe_global, npart_probe_per_it, &
-              c_particle_cartesian, subtype_probe_particle_var)
+              TRIM(probe_name), "Probe_Grid", iterate_probe_particles, &
+              c_dimension_1d, npart_probe_local, npart_probe_global, &
+              npart_probe_per_it, c_particle_cartesian, &
+              subtype_probe_particle_var)
 
           ! dump Px
           WRITE(temp_name, '(a, "_Px")') TRIM(probe_name)

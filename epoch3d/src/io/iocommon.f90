@@ -10,40 +10,41 @@ MODULE iocommon
   INTEGER, PARAMETER :: c_cfd_read = 0
   INTEGER, PARAMETER :: c_cfd_write = 1
 
-  INTEGER, PARAMETER :: c_type_scribble = -1
-  INTEGER, PARAMETER :: c_type_additional = 0
-  INTEGER, PARAMETER :: c_type_mesh = 1
-  INTEGER, PARAMETER :: c_type_mesh_variable = 2
-  INTEGER, PARAMETER :: c_type_snapshot = 3
-  INTEGER, PARAMETER :: c_type_stitched_vector = 4
-  INTEGER, PARAMETER :: c_type_stitched_magnitude = 5
-  INTEGER, PARAMETER :: c_type_constant = 6
-  INTEGER, PARAMETER :: c_type_arb_db = 7
-  INTEGER, PARAMETER :: c_type_integerarray = 8
-  INTEGER, PARAMETER :: c_type_info = 9
+  INTEGER(4), PARAMETER :: c_type_scribble = -1
+  INTEGER(4), PARAMETER :: c_type_additional = 0
+  INTEGER(4), PARAMETER :: c_type_mesh = 1
+  INTEGER(4), PARAMETER :: c_type_mesh_variable = 2
+  INTEGER(4), PARAMETER :: c_type_snapshot = 3
+  INTEGER(4), PARAMETER :: c_type_stitched_vector = 4
+  INTEGER(4), PARAMETER :: c_type_stitched_magnitude = 5
+  INTEGER(4), PARAMETER :: c_type_constant = 6
+  INTEGER(4), PARAMETER :: c_type_arb_db = 7
+  INTEGER(4), PARAMETER :: c_type_integerarray = 8
+  INTEGER(4), PARAMETER :: c_type_info = 9
 
-  INTEGER, PARAMETER :: c_mesh_cartesian = 0
-  INTEGER, PARAMETER :: c_mesh_particle = 1
-  INTEGER, PARAMETER :: c_particle_cartesian = 0
-  INTEGER, PARAMETER :: c_particle_polar = 1
-  INTEGER, PARAMETER :: c_particle_cylindrical = 2
-  INTEGER, PARAMETER :: c_var_cartesian = 0
-  INTEGER, PARAMETER :: c_var_particle = 1
+  INTEGER(4), PARAMETER :: c_mesh_cartesian = 0
+  INTEGER(4), PARAMETER :: c_mesh_particle = 1
+  INTEGER(4), PARAMETER :: c_particle_cartesian = 0
+  INTEGER(4), PARAMETER :: c_particle_polar = 1
+  INTEGER(4), PARAMETER :: c_particle_cylindrical = 2
+  INTEGER(4), PARAMETER :: c_var_cartesian = 0
+  INTEGER(4), PARAMETER :: c_var_particle = 1
 
   ! c_dimension_irrelevant is used where the dimensionality isn't needed, as
   ! with particle variables still keep dimensionality as a common quantity
   ! because other than this, they really are very alike
-  INTEGER, PARAMETER :: c_dimension_irrelevant = 0
-  INTEGER, PARAMETER :: c_dimension_1d = 1
-  INTEGER, PARAMETER :: c_dimension_2d = 2
-  INTEGER, PARAMETER :: c_dimension_3d = 3
+  INTEGER(4), PARAMETER :: c_dimension_irrelevant = 0
+  INTEGER(4), PARAMETER :: c_dimension_1d = 1
+  INTEGER(4), PARAMETER :: c_dimension_2d = 2
+  INTEGER(4), PARAMETER :: c_dimension_3d = 3
 
   INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement
   INTEGER :: cfd_filehandle = -1, cfd_rank, cfd_comm
-  INTEGER(4) :: nblocks
+  INTEGER(4) :: cfd_nblocks
   INTEGER(4), PARAMETER :: cfd_version = 1, cfd_revision = 1
 
-  INTEGER(4) :: max_string_len = 60, default_rank = 0
+  INTEGER(4) :: max_string_len = 60
+  INTEGER :: default_rank = 0
 
   INTEGER, PARAMETER :: header_offset_this_version = 10 * 4 + 8 + 3
   INTEGER, PARAMETER :: nblocks_offset_this_version = 5 * 4 + 3
@@ -56,8 +57,8 @@ MODULE iocommon
   ! The only thing in common is that they include spatial information)
   INTEGER, PARAMETER :: meshtype_header_offset = 3 * 4
 
-  INTEGER, PARAMETER :: soi  = 4 ! Size of integer
-  INTEGER, PARAMETER :: soi8 = 8 ! Size of long (normally 8 byte integer)
+  INTEGER(4), PARAMETER :: soi  = 4 ! Size of integer
+  INTEGER(4), PARAMETER :: soi8 = 8 ! Size of long (normally 8 byte integer)
 
   INTEGER(4) :: block_header_size, header_offset
 

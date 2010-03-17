@@ -87,20 +87,20 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_en = 64
 
   ! define flags
-  INTEGER, PARAMETER :: c_def_particle_debug = 1
-  INTEGER, PARAMETER :: c_def_field_debug = 2
-  INTEGER, PARAMETER :: c_def_spline_four = 4
-  INTEGER, PARAMETER :: c_def_split_particles_after_push = 8
-  INTEGER, PARAMETER :: c_def_per_particle_weight = 16
-  INTEGER, PARAMETER :: c_def_particle_count_update = 32
-  INTEGER, PARAMETER :: c_def_tracer_particles = 64
-  INTEGER, PARAMETER :: c_def_particle_probes = 128
-  INTEGER, PARAMETER :: c_def_per_particle_chargemass = 256
-  INTEGER, PARAMETER :: c_def_particle_ionise = 512
-  INTEGER, PARAMETER :: c_def_no_deck = 1024
-  INTEGER, PARAMETER :: c_def_newtonian = 2048
-  INTEGER, PARAMETER :: c_def_high_order_smoothing = 4096
-  INTEGER, PARAMETER :: c_def_single_deck = 8192
+  INTEGER(4), PARAMETER :: c_def_particle_debug = 1
+  INTEGER(4), PARAMETER :: c_def_field_debug = 2
+  INTEGER(4), PARAMETER :: c_def_spline_four = 4
+  INTEGER(4), PARAMETER :: c_def_split_particles_after_push = 8
+  INTEGER(4), PARAMETER :: c_def_per_particle_weight = 16
+  INTEGER(4), PARAMETER :: c_def_particle_count_update = 32
+  INTEGER(4), PARAMETER :: c_def_tracer_particles = 64
+  INTEGER(4), PARAMETER :: c_def_particle_probes = 128
+  INTEGER(4), PARAMETER :: c_def_per_particle_chargemass = 256
+  INTEGER(4), PARAMETER :: c_def_particle_ionise = 512
+  INTEGER(4), PARAMETER :: c_def_no_deck = 1024
+  INTEGER(4), PARAMETER :: c_def_newtonian = 2048
+  INTEGER(4), PARAMETER :: c_def_high_order_smoothing = 4096
+  INTEGER(4), PARAMETER :: c_def_single_deck = 8192
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function

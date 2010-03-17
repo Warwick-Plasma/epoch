@@ -12,7 +12,7 @@ MODULE job_info
   FUNCTION unix_seconds(values)
 
     INTEGER, DIMENSION(8), INTENT(IN) :: values
-    INTEGER :: unix_seconds
+    INTEGER(4) :: unix_seconds
     INTEGER :: days, year, month, day, h, m, s
     INTEGER, PARAMETER, DIMENSION(12) :: days_since_new_year = (/ &
         0, &
@@ -40,7 +40,7 @@ MODULE job_info
     IF (MOD(year,400) .EQ. 0 .OR. &
         (MOD(year,4) .EQ. 0 .AND. MOD(year,100) .NE. 0)) days = days + 1
 
-    unix_seconds = (((days + day - 1)*24 + h)*60 + m)*60 + s
+    unix_seconds = INT((((days + day - 1)*24 + h)*60 + m)*60 + s,4)
 
   END FUNCTION unix_seconds
 
@@ -48,7 +48,7 @@ MODULE job_info
 
   FUNCTION get_unix_time()
 
-    INTEGER :: get_unix_time
+    INTEGER(4) :: get_unix_time
     INTEGER, DIMENSION(8) :: val
 
     CALL DATE_AND_TIME(values = val)
@@ -67,7 +67,7 @@ MODULE job_info
     CALL DATE_AND_TIME(values = val)
 
     jobid%start_seconds = unix_seconds(val)
-    jobid%start_milliseconds = val(8)
+    jobid%start_milliseconds = INT(val(8),4)
 
   END SUBROUTINE get_job_id
 

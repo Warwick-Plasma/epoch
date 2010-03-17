@@ -13,8 +13,9 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: filename
     CHARACTER(LEN=3) :: cfd
 
-    INTEGER(4) :: file_version, file_revision, ierr
+    INTEGER(4) :: file_version, file_revision
     INTEGER(4) :: endianness, step
+    INTEGER :: ierr
     DOUBLE PRECISION :: time
 
     CALL MPI_BARRIER(cfd_comm, cfd_errcode)
@@ -59,7 +60,7 @@ CONTAINS
     CALL MPI_FILE_READ_ALL(cfd_filehandle, max_string_len, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, nblocks, 1, MPI_INTEGER4, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, cfd_nblocks, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, endianness, 1, MPI_INTEGER4, &
@@ -98,7 +99,8 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(INOUT) :: name, class
     CHARACTER(LEN=max_string_len) :: name_l, class_l
-    INTEGER(4), INTENT(OUT) :: block_type
+    INTEGER, INTENT(OUT) :: block_type
+    INTEGER(4) :: block_type4
     INTEGER :: len_name, len_class
 
     len_name = LEN(name)
@@ -119,8 +121,10 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, block_type, 1, MPI_INTEGER4, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, block_type4, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
+
+    block_type = block_type4
 
     name = name_l(1:MIN(len_name, max_string_len))
     class = class_l(1:MIN(len_class, max_string_len))
@@ -150,7 +154,8 @@ CONTAINS
     ! in the same way). An integer type and a dimensionality, so just have one
     ! routine
 
-    INTEGER(4), INTENT(INOUT) :: meshtype, nd, sof
+    INTEGER, INTENT(INOUT) :: meshtype, nd, sof
+    INTEGER(4) :: meshtype4, nd4, sof4
 
     CALL cfd_skip_block_header()
 
@@ -158,14 +163,18 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, meshtype, 1, MPI_INTEGER4, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, meshtype4, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, nd, 1, MPI_INTEGER4, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, nd4, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, sof, 1, MPI_INTEGER4, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, sof4, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
+
+    meshtype = meshtype4
+    nd = nd4
+    sof = sof4
 
     current_displacement = current_displacement + 3 * soi
 
@@ -176,7 +185,8 @@ CONTAINS
   SUBROUTINE cfd_get_snapshot(time, snap)
 
     REAL(8), INTENT(OUT) :: time
-    INTEGER(4), INTENT(OUT) :: snap
+    INTEGER, INTENT(OUT) :: snap
+    INTEGER(4) :: snap4
 
     CALL cfd_skip_block_header()
 
@@ -184,8 +194,10 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, snap, 1, MPI_INTEGER4, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, snap4, 1, MPI_INTEGER4, &
         cfd_status, cfd_errcode)
+
+    snap = snap4
 
     current_displacement = current_displacement + soi
 

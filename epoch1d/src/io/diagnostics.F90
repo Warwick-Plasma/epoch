@@ -84,7 +84,7 @@ CONTAINS
 
       IF (IAND(dumpmask(1), code) .NE. 0) &
           CALL cfd_write_nd_particle_grid_with_iterator_all("Particles", &
-              "Part_Grid", iterate_particles, 1, npart_local, &
+              "Part_Grid", iterate_particles, c_dimension_1d, npart_local, &
               npart_dump_global, npart_per_it, c_particle_cartesian, &
               subtype_particle_var)
 

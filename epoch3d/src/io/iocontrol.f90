@@ -68,7 +68,7 @@ CONTAINS
           MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
       IF (cfd_rank .EQ. default_rank) &
-          CALL MPI_FILE_WRITE(cfd_filehandle, nblocks, 1, MPI_INTEGER4, &
+          CALL MPI_FILE_WRITE(cfd_filehandle, cfd_nblocks, 1, MPI_INTEGER4, &
               cfd_status, cfd_errcode)
     ENDIF
 
@@ -87,7 +87,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: maxlen
 
-    max_string_len = maxlen
+    max_string_len = INT(maxlen,4)
 
   END SUBROUTINE cfd_set_max_string_length
 
@@ -97,7 +97,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: rank_in
 
-    default_rank = rank_in
+    default_rank = INT(rank_in,4)
 
   END SUBROUTINE cfd_set_default_rank
 
@@ -107,7 +107,7 @@ CONTAINS
 
     INTEGER :: cfd_get_nblocks
 
-    cfd_get_nblocks = nblocks
+    cfd_get_nblocks = cfd_nblocks
 
   END FUNCTION cfd_get_nblocks
 

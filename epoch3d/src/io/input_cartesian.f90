@@ -12,7 +12,8 @@ CONTAINS
 
   SUBROUTINE cfd_get_nd_cartesian_grid_metadata_all(ndims, dims, extents)
 
-    INTEGER(4), DIMENSION(:), INTENT(OUT) :: dims
+    INTEGER, DIMENSION(:), INTENT(OUT) :: dims
+    INTEGER(4), DIMENSION(:), ALLOCATABLE :: dims4
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     INTEGER, INTENT(IN) :: ndims
 
@@ -21,8 +22,19 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+    IF (KIND(dims) .EQ. 4) THEN
+      CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER4, &
+          cfd_status, cfd_errcode)
+    ELSE
+      ALLOCATE(dims4(SIZE(dims)))
+
+      CALL MPI_FILE_READ_ALL(cfd_filehandle, dims4, ndims, MPI_INTEGER4, &
+          cfd_status, cfd_errcode)
+
+      dims = dims4
+
+      DEALLOCATE(dims4)
+    ENDIF
 
     current_displacement = current_displacement + ndims * soi
 
@@ -46,8 +58,9 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(INOUT) :: x
     INTEGER :: nx
 
-    CALL cfd_skip_block_metadata()
     nx = SIZE(x)
+
+    CALL cfd_skip_block_metadata()
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
@@ -67,9 +80,10 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(INOUT) :: x, y
     INTEGER :: nx, ny
 
-    CALL cfd_skip_block_metadata()
     nx = SIZE(x)
     ny = SIZE(y)
+
+    CALL cfd_skip_block_metadata()
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         mpireal, "native", MPI_INFO_NULL, cfd_errcode)
@@ -118,7 +132,8 @@ CONTAINS
   SUBROUTINE cfd_get_nd_cartesian_variable_metadata_all(ndims, dims, &
       extents, stagger, mesh_name, mesh_class)
 
-    INTEGER(4), DIMENSION(:), INTENT(OUT) :: dims
+    INTEGER, DIMENSION(:), INTENT(OUT) :: dims
+    INTEGER(4), DIMENSION(:), ALLOCATABLE :: dims4
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     REAL(num), DIMENSION(:), INTENT(OUT) :: stagger
     INTEGER, INTENT(IN) :: ndims
@@ -134,8 +149,19 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+    IF (KIND(dims) .EQ. 4) THEN
+      CALL MPI_FILE_READ_ALL(cfd_filehandle, dims, ndims, MPI_INTEGER4, &
+          cfd_status, cfd_errcode)
+    ELSE
+      ALLOCATE(dims4(SIZE(dims)))
+
+      CALL MPI_FILE_READ_ALL(cfd_filehandle, dims4, ndims, MPI_INTEGER4, &
+          cfd_status, cfd_errcode)
+
+      dims = dims4
+
+      DEALLOCATE(dims4)
+    ENDIF
 
     current_displacement = current_displacement + ndims * soi
 

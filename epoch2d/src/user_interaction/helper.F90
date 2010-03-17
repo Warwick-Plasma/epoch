@@ -368,7 +368,7 @@ CONTAINS
         MPI_SUM, 0, comm, errcode)
     species_list%count = npart_this_species
     IF (rank .EQ. 0) THEN
-      CALL integer8_as_string(npart_this_species, string)
+      CALL integer_as_string(npart_this_species, string)
       PRINT *, "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
           TRIM(species_list%name)
       WRITE(20, *) "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &

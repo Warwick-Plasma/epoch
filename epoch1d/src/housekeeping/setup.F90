@@ -174,7 +174,7 @@ CONTAINS
     REAL(num), DIMENSION(2) :: extents, stagger
     INTEGER, DIMENSION(1) :: dims
     REAL(KIND=8) :: time_d
-    INTEGER :: snap, coord_type, ierr
+    INTEGER :: snap, coord_type, ierr, nblocks
     TYPE(particle), POINTER :: current, next
     LOGICAL :: constant_weight
     INTEGER(KIND=8) :: npart

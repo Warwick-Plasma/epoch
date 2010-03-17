@@ -4,11 +4,17 @@ MODULE strings
 
   IMPLICIT NONE
 
+  PRIVATE :: integer4_as_string, integer8_as_string
+
+  INTERFACE integer_as_string
+    MODULE PROCEDURE integer4_as_string, integer8_as_string
+  END INTERFACE integer_as_string
+
 CONTAINS
 
-  SUBROUTINE integer_as_string(int_in, string)
+  SUBROUTINE integer4_as_string(int_in, string)
 
-    INTEGER, INTENT(IN) :: int_in
+    INTEGER(KIND=4), INTENT(IN) :: int_in
     CHARACTER(LEN=*), INTENT(OUT) :: string
 
     INTEGER :: n_nums
@@ -18,7 +24,7 @@ CONTAINS
     WRITE(numfmt, '("(I", I6.6, ")")') n_nums
     WRITE(string, numfmt) int_in
 
-  END SUBROUTINE integer_as_string
+  END SUBROUTINE integer4_as_string
 
 
 
