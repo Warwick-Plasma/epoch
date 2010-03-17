@@ -75,7 +75,7 @@ CONTAINS
       ! (filename, rank_of_current_process, MPI_COMMUNICATOR (can be
       ! MPI_COMM_WORLD), MPI_FILE_MODE (passed straight to MPI_FILE_OPEN))
       CALL cfd_open(filename, rank, comm, c_cfd_write, i, time, jobid)
-      CALL cfd_write_job_info(restart_flag, 0)
+      CALL cfd_write_job_info(restart_flag, sha1sum, 0)
 
       ! Write the snapshot information
       ! If you prefer the VisIt cycles to display the dump number, change i

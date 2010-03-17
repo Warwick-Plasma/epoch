@@ -156,7 +156,7 @@ job_info.o: job_info.f90
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.f90 partlist.o
 mpi_subtype_control.o: mpi_subtype_control.F90 shared_data.o
-output.o: output.f90 encoded_source.o iocommon.o version_data.o
+output.o: output.f90 iocommon.o version_data.o
 output_cartesian.o: output_cartesian.f90 iocommon.o output.o
 output_particle.o: output_particle.f90 iocommon.o output.o shared_data.o
 particle_pointer_advance.o: particle_pointer_advance.F90 shared_data.o

@@ -2,7 +2,6 @@ MODULE output
 
   USE iocommon
   USE version_data
-  USE encoded_source
 
   IMPLICIT NONE
 
@@ -219,9 +218,10 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_write_job_info(restart_flag, rank_write)
+  SUBROUTINE cfd_write_job_info(restart_flag, sha1sum, rank_write)
 
     INTEGER(4), INTENT(IN) :: restart_flag
+    CHARACTER(LEN=*), INTENT(IN) :: sha1sum
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: md_length
     INTEGER(4) :: io_date
