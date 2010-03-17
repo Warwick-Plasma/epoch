@@ -51,14 +51,14 @@ CONTAINS
 
     ! Update ey to t = t0+dt/2
     DO ix = 1, nx
-      ey(ix) = ey(ix) - cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) &
-          - 0.5_num*dt*jy(ix)/epsilon0
+      ey(ix) = ey(ix) - cnx*c**2 * SUM(diff_consts(1:field_order)&
+          * bz(ix-large:ix+small)) - 0.5_num*dt*jy(ix)/epsilon0
     ENDDO
 
     ! Update ez to t = t0+dt/2
     DO ix = 1, nx
-      ez(ix) = ez(ix) + cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) &
-          - 0.5_num*dt*jz(ix)/epsilon0
+      ez(ix) = ez(ix) + cnx*c**2 * SUM(diff_consts(1:field_order)&
+          * by(ix-large:ix+small)) - 0.5_num*dt*jz(ix)/epsilon0
     ENDDO
 
     ! Now have E(t+dt/2), do boundary conditions on E
@@ -71,12 +71,14 @@ CONTAINS
 
     ! by
     DO ix = 1, nx
-      by(ix) = by(ix) + cnx * SUM(diff_consts * ez(ix-small:ix+large))
+      by(ix) = by(ix) + cnx * SUM(diff_consts(1:field_order)& 
+          * ez(ix-small:ix+large))
     ENDDO
 
     ! bz
     DO ix = 1, nx
-      bz(ix) = bz(ix) - cnx * SUM(diff_consts * ey(ix-small:ix+large))
+      bz(ix) = bz(ix) - cnx * SUM(diff_consts(1:field_order)&
+          * ey(ix-small:ix+large))
     ENDDO
 
     ! Now have B field at t+dt/2. Do boundary conditions on B
@@ -100,12 +102,14 @@ CONTAINS
 
     ! by
     DO ix = 1, nx
-      by(ix) = by(ix) + cnx * SUM(diff_consts * ez(ix-small:ix+large))
+      by(ix) = by(ix) + cnx * SUM(diff_consts(1:field_order)&
+          * ez(ix-small:ix+large))
     ENDDO
 
     ! bz
     DO ix = 1, nx
-      bz(ix) = bz(ix) - cnx * SUM(diff_consts * ey(ix-small:ix+large))
+      bz(ix) = bz(ix) - cnx * SUM(diff_consts(1:field_order)&
+          * ey(ix-small:ix+large))
     ENDDO
 
     CALL bfield_bcs(.FALSE.)
@@ -129,14 +133,14 @@ CONTAINS
 
     ! ey
     DO ix = 1, nx
-      ey(ix) = ey(ix) - cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small)) &
-          - 0.5_num*dt*jy(ix)/epsilon0
+      ey(ix) = ey(ix) - cnx*c**2 * SUM(diff_consts(1:field_order)&
+          * bz(ix-large:ix+small)) - 0.5_num*dt*jy(ix)/epsilon0
     ENDDO
 
     ! ez
     DO ix = 1, nx
-      ez(ix) = ez(ix) + cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small)) &
-          - 0.5_num*dt*jz(ix)/epsilon0
+      ez(ix) = ez(ix) + cnx*c**2 * SUM(diff_consts(1:field_order)&
+          * by(ix-large:ix+small)) - 0.5_num*dt*jz(ix)/epsilon0
     ENDDO
 
     CALL efield_bcs

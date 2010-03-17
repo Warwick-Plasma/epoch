@@ -70,7 +70,6 @@ CONTAINS
           MPI_INTEGER4, cfd_status, cfd_errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, step, 1, MPI_INTEGER4, &
           cfd_status, cfd_errcode)
-
       CALL MPI_FILE_WRITE(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
           cfd_status, cfd_errcode)
     ENDIF

@@ -11,7 +11,7 @@ MODULE helper
 
 CONTAINS
 
-  SUBROUTINE auto_load
+  SUBROUTINE auto_load()
 
     INTEGER :: ispecies
     INTEGER :: clock, idum
@@ -38,20 +38,20 @@ CONTAINS
 #endif
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,1), c_dir_x, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,1), idum)
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,2), c_dir_y, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,2), idum)
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,3), c_dir_z, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,3), idum)
     ENDDO
 
   END SUBROUTINE auto_load
 
 
 
-  SUBROUTINE allocate_ic
+  SUBROUTINE allocate_ic()
 
     INTEGER :: ispecies
 
@@ -59,6 +59,7 @@ CONTAINS
     DO ispecies = 1, n_species
       ALLOCATE(initial_conditions(ispecies)%rho(-2:nx+3))
       ALLOCATE(initial_conditions(ispecies)%temp(-2:nx+3, 1:3))
+      ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3, 1:3))
 
       initial_conditions(ispecies)%rho = 1.0_num
       initial_conditions(ispecies)%temp = 0.0_num
@@ -79,7 +80,7 @@ CONTAINS
 
 
 
-  SUBROUTINE deallocate_ic
+  SUBROUTINE deallocate_ic()
 
     INTEGER :: ispecies
     REAL(num) :: min_dt, omega, k_max
@@ -108,6 +109,7 @@ CONTAINS
     DO ispecies = 1, n_species
       DEALLOCATE(initial_conditions(ispecies)%rho)
       DEALLOCATE(initial_conditions(ispecies)%temp)
+      DEALLOCATE(initial_conditions(ispecies)%drift)
     ENDDO
     DEALLOCATE(initial_conditions)
 
@@ -357,12 +359,12 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
     TYPE(particle_family), POINTER :: part_family
-    REAL(num), DIMENSION(3), INTENT(IN) :: drift
+    REAL(num), DIMENSION(-2:), INTENT(IN) :: drift
     INTEGER, INTENT(INOUT) :: idum
     TYPE(particle_list), POINTER :: partlist
-    REAL(num) :: mass, temp_local
+    REAL(num) :: mass, temp_local, drift_local
     REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: g0x, gpx, gmx
+    REAL(num), DIMENSION(-2:2) :: gx
     TYPE(particle), POINTER :: current
     INTEGER :: cell_x
     INTEGER(KIND=8) :: ipart
@@ -383,21 +385,22 @@ CONTAINS
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      gmx = 0.5_num * (0.5_num + cell_frac_x)**2
-      g0x = 0.75_num - cell_frac_x**2
-      gpx = 0.5_num * (0.5_num - cell_frac_x)**2
+      CALL particle_to_grid(cell_frac_x, gx)
 
-      temp_local = gmx*temperature(cell_x-1) &
-          + g0x*temperature(cell_x) + gpx*temperature(cell_x+1)
+      temp_local = gx(-1)*temperature(cell_x-1) &
+          + gx(0)*temperature(cell_x) + gx(1)*temperature(cell_x+1)
+
+      drift_local = gx(1)*drift(cell_x-1) &
+          + gx(0)*drift(cell_x) + gx(1)*drift(cell_x+1)
 
       IF (IAND(direction, c_dir_x) .NE. 0) current%part_p(1) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(1)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       IF (IAND(direction, c_dir_y) .NE. 0) current%part_p(2) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(2)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       IF (IAND(direction, c_dir_z) .NE. 0) current%part_p(3) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(3)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       current=>current%next
       ipart = ipart+1
@@ -474,7 +477,7 @@ CONTAINS
       DO isubx = -sf_order, sf_order
         weight_fn(cell_x+isubx) = weight_fn(cell_x+isubx) + gx(isubx) * data
       ENDDO
-      ! weight_fn(cell_x) = weight_fn(cell_x) + data
+
       current=>current%next
       ipart = ipart+1
     ENDDO
@@ -589,13 +592,6 @@ CONTAINS
     endpoint = n_points
     current = (start+endpoint)/2
 
-!!$   DO
-!!$      IF (cdf(current) .LT. position .AND. cdf(current+1) .GE. position) EXIT
-!!$      IF (cdf(current) .GT. position .AND. cdf(current-1) .LE. position) EXIT
-!!$      IF (cdf(current) .GT. position) endpoint = (start+endpoint)/2
-!!$      IF (cdf(current) .LT. position) start = (start+endpoint)/2
-!!$      current = (start+endpoint)/2
-!!$   ENDDO
     DO current = 1, n_points
       IF (cdf(current) .LE. position .AND. cdf(current+1) .GE. position) THEN
         d_cdf = cdf(current+1)-cdf(current)
@@ -606,7 +602,6 @@ CONTAINS
       ENDIF
     ENDDO
 
-!!$    sample_dist_function = axis(current)
     DEALLOCATE(cdf)
 
   END FUNCTION sample_dist_function

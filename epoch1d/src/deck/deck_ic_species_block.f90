@@ -52,20 +52,23 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "drift_x")) THEN
-      initial_conditions(species_id)%drift(1) = &
-          as_real(value, handle_ic_species_deck)
+      CALL evaluate_string_in_space(value, &
+          initial_conditions(species_id)%drift(-1:nx+2, 1), &
+          (/-1, nx+2/), handle_ic_species_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "drift_y")) THEN
-      initial_conditions(species_id)%drift(2) = &
-          as_real(value, handle_ic_species_deck)
+      CALL evaluate_string_in_space(value, &
+          initial_conditions(species_id)%drift(-1:nx+2, 2), &
+          (/-1, nx+2/), handle_ic_species_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "drift_z")) THEN
-      initial_conditions(species_id)%drift(3) = &
-          as_real(value, handle_ic_species_deck)
+      CALL evaluate_string_in_space(value, &
+          initial_conditions(species_id)%drift(-1:nx+2, 3), &
+          (/-1, nx+2/), handle_ic_species_deck)
       RETURN
     ENDIF
 

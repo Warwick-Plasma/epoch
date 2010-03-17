@@ -6,7 +6,7 @@ begin:control
 
   #maximum number of iterations
   #set to -1 to run until finished
-  nsteps=-1
+  nsteps=0
 
   #final time of simulation
   t_end=1.0e-12
@@ -108,3 +108,5 @@ begin:output
   particle_probes=never
 
 end:output
+import:ic.deck
+import:io.deck

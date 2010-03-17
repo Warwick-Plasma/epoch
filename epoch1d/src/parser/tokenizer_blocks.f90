@@ -79,7 +79,6 @@ CONTAINS
         as_constant = c_const_lx
     IF (str_cmp(name, "dx")) as_constant = c_const_dx
     IF (str_cmp(name, "x_start")) as_constant = c_const_start_x
-    IF (str_cmp(name, "y_start")) as_constant = c_const_start_y
     IF (str_cmp(name, "x_end")) as_constant = c_const_end_x
     IF (str_cmp(name, "ix")) as_constant = c_const_ix
     IF (str_cmp(name, "time")) as_constant = c_const_time
@@ -92,6 +91,8 @@ CONTAINS
     IF (str_cmp(name, "dir_px")) as_constant = c_const_dir_px
     IF (str_cmp(name, "dir_py")) as_constant = c_const_dir_py
     IF (str_cmp(name, "dir_pz")) as_constant = c_const_dir_pz
+    IF (str_cmp(name, "dir_en")) as_constant = c_const_dir_en
+    IF (str_cmp(name, "nx")) as_constant = c_const_nx
 
     ! User submitted constant using "Register"
     DO i = 1, n_new_constant

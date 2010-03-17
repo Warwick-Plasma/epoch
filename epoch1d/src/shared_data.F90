@@ -83,6 +83,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_px = 8
   INTEGER, PARAMETER :: c_dir_py = 16
   INTEGER, PARAMETER :: c_dir_pz = 32
+  INTEGER, PARAMETER :: c_dir_en = 64
 
   ! define flags
   INTEGER, PARAMETER :: c_def_particle_debug = 1
@@ -98,6 +99,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_def_no_deck = 1024
   INTEGER, PARAMETER :: c_def_newtonian = 2048
   INTEGER, PARAMETER :: c_def_high_order_smoothing = 4096
+  INTEGER, PARAMETER :: c_def_single_deck = 8192
+
+  ! constants defining the maximum number of dimensions and directions
+  ! in a distribution function
+  INTEGER, PARAMETER :: c_df_maxdirs = 5
+  INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! Length of a standard string
   INTEGER, PARAMETER :: string_length = 128
@@ -194,6 +201,8 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_px = 52
   INTEGER, PARAMETER :: c_const_dir_py = 53
   INTEGER, PARAMETER :: c_const_dir_pz = 54
+  INTEGER, PARAMETER :: c_const_dir_en = 55
+  INTEGER, PARAMETER :: c_const_nx = 56
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -389,7 +398,7 @@ MODULE shared_data
   TYPE :: initial_condition_block
     REAL(num), DIMENSION(:), POINTER :: rho
     REAL(num), DIMENSION(:,:), POINTER :: temp
-    REAL(num), DIMENSION(3) :: drift
+    REAL(num), DIMENSION(:,:), POINTER :: drift
 
     REAL(num) :: minrho
     REAL(num) :: maxrho

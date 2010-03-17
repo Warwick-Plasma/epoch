@@ -8,23 +8,21 @@ MODULE evaluator
 
 CONTAINS
 
-  FUNCTION evaluate_at_point(input_stack, ix, err)
+  SUBROUTINE evaluate_at_point_to_array(input_stack, ix, n_elements, array, err)
 
     TYPE(primitive_stack), INTENT(IN) :: input_stack
     INTEGER, INTENT(IN) :: ix
+		INTEGER, INTENT(IN) :: n_elements
+		REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     REAL(num) :: evaluate_at_point
     INTEGER :: i
-    TYPE(stack_element) :: BLOCK
+    TYPE(stack_element) :: block
 
     eval_stack%stack_point = 0
-!!$    IF (err .NE. c_err_none) THEN
-!!$      PRINT *, "STUPID", err
-!!$      STOP
-!!$    ENDIF
 
     DO i = 1, input_stack%stack_point
-      BLOCK = input_stack%data(i)
+      block = input_stack%data(i)
       IF (block%ptype .EQ. c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
       ENDIF
@@ -40,9 +38,24 @@ CONTAINS
         EXIT
       ENDIF
     ENDDO
-    IF (eval_stack%stack_point .NE. 1) err = IAND(err, c_err_bad_value)
-    ! Just pop off final answer
-    evaluate_at_point = pop_off_eval()
+    IF (eval_stack%stack_point .NE. n_elements) err = IAND(err, c_err_bad_value)
+		!Pop off the final answers
+		DO i=n_elements,1,-1
+			array(i) = pop_off_eval()
+		ENDDO
+		
+  END SUBROUTINE evaluate_at_point_to_array
+
+  FUNCTION evaluate_at_point(input_stack, ix, err)
+
+    TYPE(primitive_stack), INTENT(IN) :: input_stack
+    INTEGER, INTENT(IN) :: ix
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num), DIMENSION(1) :: array
+    REAL(num) :: evaluate_at_point
+
+    CALL evaluate_at_point_to_array(input_stack, ix, 1, array, err)
+    evaluate_at_point=array(1)
 
   END FUNCTION evaluate_at_point
 
