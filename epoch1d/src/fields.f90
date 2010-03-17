@@ -5,28 +5,28 @@ MODULE fields
 
   IMPLICIT NONE
 
-  REAL(num), DIMENSION(6) :: diff_consts
-  INTEGER :: large, small, field_order
+  REAL(num), DIMENSION(6) :: const
+  INTEGER :: large, small, order
 
 CONTAINS
 
-  SUBROUTINE set_field_order(order)
+  SUBROUTINE set_field_order(field_order)
 
-    INTEGER, INTENT(IN) :: order
+    INTEGER, INTENT(IN) :: field_order
 
-    field_order = order
+    order = field_order
 
     IF (field_order .EQ. 2) THEN
-      diff_consts(1:2) = (/ -1.0_num, 1.0_num /)
+      const(1:2) = (/ -1.0_num, 1.0_num /)
       large = 1
       small = 0
     ELSE IF (field_order .EQ. 4) THEN
-      diff_consts(1:4) = (/ 1.0_num/24.0_num, -9.0_num/8.0_num, &
+      const(1:4) = (/ 1.0_num/24.0_num, -9.0_num/8.0_num, &
           9.0_num/8.0_num, -1.0_num/24.0_num /)
       large = 2
       small = 1
     ELSE
-      diff_consts(1:6) = (/ 3.0_num/640.0_num, -25.0_num/384.0_num, &
+      const(1:6) = (/ 3.0_num/640.0_num, -25.0_num/384.0_num, &
           75.0_num/64.0_num, -75.0_num/64.0_num, 25.0_num/384.0_num, &
           -3.0_num/640.0_num /)
       large = 3
@@ -46,19 +46,22 @@ CONTAINS
 
     ! Update ex to t = t0+dt/2
     DO ix = 1, nx
-      ex(ix) = ex(ix) - 0.5_num*dt*jx(ix)/epsilon0
+      ex(ix) = ex(ix) &
+          - 0.5_num*dt*jx(ix)/epsilon0
     ENDDO
 
     ! Update ey to t = t0+dt/2
     DO ix = 1, nx
-      ey(ix) = ey(ix) - cnx*c**2 * SUM(diff_consts(1:field_order)&
-          * bz(ix-large:ix+small)) - 0.5_num*dt*jy(ix)/epsilon0
+      ey(ix) = ey(ix) &
+          - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small)) &
+          - 0.5_num*dt*jy(ix)/epsilon0
     ENDDO
 
     ! Update ez to t = t0+dt/2
     DO ix = 1, nx
-      ez(ix) = ez(ix) + cnx*c**2 * SUM(diff_consts(1:field_order)&
-          * by(ix-large:ix+small)) - 0.5_num*dt*jz(ix)/epsilon0
+      ez(ix) = ez(ix) &
+          + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small)) &
+          - 0.5_num*dt*jz(ix)/epsilon0
     ENDDO
 
     ! Now have E(t+dt/2), do boundary conditions on E
@@ -67,18 +70,18 @@ CONTAINS
 
     ! Update B field to t+dt/2 using E(t+dt/2)
 
-    ! bx unchanged in 1D
+    ! bx
 
     ! by
     DO ix = 1, nx
-      by(ix) = by(ix) + cnx * SUM(diff_consts(1:field_order)& 
-          * ez(ix-small:ix+large))
+      by(ix) = by(ix) &
+          + cnx * SUM(const(1:order) * ez(ix-small:ix+large))
     ENDDO
 
     ! bz
     DO ix = 1, nx
-      bz(ix) = bz(ix) - cnx * SUM(diff_consts(1:field_order)&
-          * ey(ix-small:ix+large))
+      bz(ix) = bz(ix) &
+          - cnx * SUM(const(1:order) * ey(ix-small:ix+large))
     ENDDO
 
     ! Now have B field at t+dt/2. Do boundary conditions on B
@@ -98,18 +101,18 @@ CONTAINS
     lx = dt/dx
     cnx = 0.5_num*lx
 
-    ! bx unchanged in 1D
+    ! bx
 
     ! by
     DO ix = 1, nx
-      by(ix) = by(ix) + cnx * SUM(diff_consts(1:field_order)&
-          * ez(ix-small:ix+large))
+      by(ix) = by(ix) &
+          + cnx * SUM(const(1:order) * ez(ix-small:ix+large))
     ENDDO
 
     ! bz
     DO ix = 1, nx
-      bz(ix) = bz(ix) - cnx * SUM(diff_consts(1:field_order)&
-          * ey(ix-small:ix+large))
+      bz(ix) = bz(ix) &
+          - cnx * SUM(const(1:order) * ey(ix-small:ix+large))
     ENDDO
 
     CALL bfield_bcs(.FALSE.)
@@ -128,19 +131,22 @@ CONTAINS
 
     ! ex
     DO ix = 1, nx
-      ex(ix) = ex(ix) - 0.5_num*dt*jx(ix)/epsilon0
+      ex(ix) = ex(ix) &
+          - 0.5*dt*jx(ix)/epsilon0
     ENDDO
 
     ! ey
     DO ix = 1, nx
-      ey(ix) = ey(ix) - cnx*c**2 * SUM(diff_consts(1:field_order)&
-          * bz(ix-large:ix+small)) - 0.5_num*dt*jy(ix)/epsilon0
+      ey(ix) = ey(ix) &
+          - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small)) &
+          - 0.5*dt*jy(ix)/epsilon0
     ENDDO
 
     ! ez
     DO ix = 1, nx
-      ez(ix) = ez(ix) + cnx*c**2 * SUM(diff_consts(1:field_order)&
-          * by(ix-large:ix+small)) - 0.5_num*dt*jz(ix)/epsilon0
+      ez(ix) = ez(ix) &
+          + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small)) &
+          - 0.5*dt*jz(ix)/epsilon0
     ENDDO
 
     CALL efield_bcs

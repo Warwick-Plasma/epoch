@@ -5,27 +5,28 @@ MODULE fields
 
   IMPLICIT NONE
 
-  REAL(num), DIMENSION(6) :: diff_consts
-  INTEGER :: large, small, field_order
+  REAL(num), DIMENSION(6) :: const
+  INTEGER :: large, small, order
+
 CONTAINS
 
-  SUBROUTINE set_field_order(order)
+  SUBROUTINE set_field_order(field_order)
 
-    INTEGER, INTENT(IN) :: order
+    INTEGER, INTENT(IN) :: field_order
 
-    field_order = order
+    order = field_order
 
     IF (field_order .EQ. 2) THEN
-      diff_consts(1:2) = (/ -1.0_num, 1.0_num /)
+      const(1:2) = (/ -1.0_num, 1.0_num /)
       large = 1
       small = 0
     ELSE IF (field_order .EQ. 4) THEN
-      diff_consts(1:4) = (/ 1.0_num/24.0_num, -9.0_num/8.0_num, &
+      const(1:4) = (/ 1.0_num/24.0_num, -9.0_num/8.0_num, &
           9.0_num/8.0_num, -1.0_num/24.0_num /)
       large = 2
       small = 1
     ELSE
-      diff_consts(1:6) = (/ 3.0_num/640.0_num, -25.0_num/384.0_num, &
+      const(1:6) = (/ 3.0_num/640.0_num, -25.0_num/384.0_num, &
           75.0_num/64.0_num, -75.0_num/64.0_num, 25.0_num/384.0_num, &
           -3.0_num/640.0_num /)
       large = 3
@@ -50,15 +51,12 @@ CONTAINS
     cnz = 0.5_num*lz
 
     ! Update ex to t = t0+dt/2
-
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
           ex(ix, iy, iz) = ex(ix, iy, iz) &
-              + cny*c**2 * SUM(diff_consts(1:field_order) &
-              * bz(ix, iy-large:iy+small, iz)) &
-              - cnz*c**2 * SUM(diff_consts(1:field_order) &
-              * by(ix, iy, iz-large:iz+small)) &
+              + cny*c**2 * SUM(const(1:order) * bz(ix, iy-large:iy+small, iz)) &
+              - cnz*c**2 * SUM(const(1:order) * by(ix, iy, iz-large:iz+small)) &
               - 0.5_num*dt*jx(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
@@ -69,10 +67,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           ey(ix, iy, iz) = ey(ix, iy, iz) &
-              + cnz*c**2 * SUM(diff_consts(1:field_order) &
-              * bx(ix, iy, iz-large:iz+small)) &
-              - cnx*c**2 * SUM(diff_consts(1:field_order) &
-              * bz(ix-large:ix+small, iy, iz)) &
+              + cnz*c**2 * SUM(const(1:order) * bx(ix, iy, iz-large:iz+small)) &
+              - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small, iy, iz)) &
               - 0.5_num*dt*jy(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
@@ -83,10 +79,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           ez(ix, iy, iz) = ez(ix, iy, iz) &
-              + cnx*c**2 * SUM(diff_consts(1:field_order) &
-              * by(ix-large:ix+small, iy, iz)) &
-              - cny*c**2 * SUM(diff_consts(1:field_order) &
-              * bx(ix, iy-large:iy+small, iz)) &
+              + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small, iy, iz)) &
+              - cny*c**2 * SUM(const(1:order) * bx(ix, iy-large:iy+small, iz)) &
               - 0.5_num*dt*jz(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
@@ -103,10 +97,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           bx(ix, iy, iz) = bx(ix, iy, iz) &
-              + cnz * SUM(diff_consts(1:field_order) &
-              * ey(ix, iy, iz-small:iz+large))&
-              - cny * SUM(diff_consts(1:field_order) &
-              * ez(ix, iy-small:iy+large, iz))
+              + cnz * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large)) &
+              - cny * SUM(const(1:order) * ez(ix, iy-small:iy+large, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -116,10 +108,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           by(ix, iy, iz) = by(ix, iy, iz) &
-              + cnx * SUM(diff_consts(1:field_order) &
-              * ez(ix-small:ix+large, iy, iz)) &
-              - cnz * SUM(diff_consts(1:field_order) &
-              * ex(ix, iy, iz-small:iz+large))
+              + cnx * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz)) &
+              - cnz * SUM(const(1:order) * ex(ix, iy, iz-small:iz+large))
         ENDDO
       ENDDO
     ENDDO
@@ -129,10 +119,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           bz(ix, iy, iz) = bz(ix, iy, iz) &
-              - cnx * SUM(diff_consts(1:field_order) &
-              * ey(ix-small:ix+large, iy, iz)) &
-              + cny * SUM(diff_consts(1:field_order)&
-              * ex(ix, iy-small:iy+large, iz))
+              - cnx * SUM(const(1:order) * ey(ix-small:ix+large, iy, iz)) &
+              + cny * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -165,10 +153,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           bx(ix, iy, iz) = bx(ix, iy, iz) &
-              + cnz * SUM(diff_consts(1:field_order) &
-              * ey(ix, iy, iz-small:iz+large))&
-              - cny * SUM(diff_consts(1:field_order) &
-              * ez(ix, iy-small:iy+large, iz))
+              + cnz * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large)) &
+              - cny * SUM(const(1:order) * ez(ix, iy-small:iy+large, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -178,10 +164,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           by(ix, iy, iz) = by(ix, iy, iz) &
-              + cnx * SUM(diff_consts(1:field_order) &
-              * ez(ix-small:ix+large, iy, iz)) &
-              - cnz * SUM(diff_consts(1:field_order) &
-              * ex(ix, iy, iz-small:iz+large))
+              + cnx * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz)) &
+              - cnz * SUM(const(1:order) * ex(ix, iy, iz-small:iz+large))
         ENDDO
       ENDDO
     ENDDO
@@ -191,10 +175,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           bz(ix, iy, iz) = bz(ix, iy, iz) &
-              - cnx * SUM(diff_consts(1:field_order) &
-              * ey(ix-small:ix+large, iy, iz)) &
-              + cny * SUM(diff_consts(1:field_order) &
-              * ex(ix, iy-small:iy+large, iz))
+              - cnx * SUM(const(1:order) * ey(ix-small:ix+large, iy, iz)) &
+              + cny * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -221,14 +203,14 @@ CONTAINS
     IF (ybc_down .EQ. c_bc_simple_outflow .AND. down .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_down
 
-    IF (zbc_front .EQ. c_bc_simple_laser .AND. up .EQ. MPI_PROC_NULL) &
+    IF (zbc_front .EQ. c_bc_simple_laser .AND. front .EQ. MPI_PROC_NULL) &
         CALL laser_bcs_front
-    IF (zbc_back .EQ. c_bc_simple_outflow .AND. up .EQ. MPI_PROC_NULL) &
+    IF (zbc_front .EQ. c_bc_simple_outflow .AND. front .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_front
 
-    IF (zbc_front .EQ. c_bc_simple_laser .AND. down .EQ. MPI_PROC_NULL) &
+    IF (zbc_back .EQ. c_bc_simple_laser .AND. back .EQ. MPI_PROC_NULL) &
         CALL laser_bcs_back
-    IF (zbc_back .EQ. c_bc_simple_outflow .AND. down .EQ. MPI_PROC_NULL) &
+    IF (zbc_back .EQ. c_bc_simple_outflow .AND. back .EQ. MPI_PROC_NULL) &
         CALL outflow_bcs_back
 
     CALL bfield_bcs(.TRUE.)
@@ -238,10 +220,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           ex(ix, iy, iz) = ex(ix, iy, iz) &
-              + cny*c**2 * SUM(diff_consts(1:field_order) &
-              * bz(ix, iy-large:iy+small, iz)) &
-              - cnz*c**2 * SUM(diff_consts(1:field_order) &
-              * by(ix, iy, iz-large:iz+small)) &
+              + cny*c**2 * SUM(const(1:order) * bz(ix, iy-large:iy+small, iz)) &
+              - cnz*c**2 * SUM(const(1:order) * by(ix, iy, iz-large:iz+small)) &
               - 0.5*dt*jx(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
@@ -252,10 +232,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           ey(ix, iy, iz) = ey(ix, iy, iz) &
-              + cnz*c**2 * SUM(diff_consts(1:field_order) &
-              * bx(ix, iy, iz-large:iz+small)) &
-              - cnx*c**2 * SUM(diff_consts(1:field_order) &
-              * bz(ix-large:ix+small, iy, iz)) &
+              + cnz*c**2 * SUM(const(1:order) * bx(ix, iy, iz-large:iz+small)) &
+              - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small, iy, iz)) &
               - 0.5*dt*jy(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
@@ -266,10 +244,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           ez(ix, iy, iz) = ez(ix, iy, iz) &
-              + cnx*c**2 * SUM(diff_consts(1:field_order) &
-              * by(ix-large:ix+small, iy, iz)) &
-              - cny*c**2 * SUM(diff_consts(1:field_order) &
-              * bx(ix, iy-large:iy+small, iz)) &
+              + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small, iy, iz)) &
+              - cny*c**2 * SUM(const(1:order) * bx(ix, iy-large:iy+small, iz)) &
               - 0.5*dt*jz(ix, iy, iz)/epsilon0
         ENDDO
       ENDDO
