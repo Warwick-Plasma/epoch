@@ -38,13 +38,13 @@ CONTAINS
 #endif
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,1), c_dir_x, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,:,1), idum)
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,2), c_dir_y, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,:,2), idum)
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,3), c_dir_z, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,:,3), idum)
     ENDDO
 
   END SUBROUTINE auto_load
@@ -58,7 +58,8 @@ CONTAINS
     ALLOCATE(initial_conditions(1:n_species))
     DO ispecies = 1, n_species
       ALLOCATE(initial_conditions(ispecies)%rho(-2:nx+3, -2:ny+3))
-      ALLOCATE(initial_conditions(ispecies)%temp(-2:nx+3, -2:nx+3, 1:3))
+      ALLOCATE(initial_conditions(ispecies)%temp(-2:nx+3, -2:ny+3, 1:3))
+      ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3, -2:ny+3, 1:3))
 
       initial_conditions(ispecies)%rho = 1.0_num
       initial_conditions(ispecies)%temp = 0.0_num
@@ -110,6 +111,7 @@ CONTAINS
     DO ispecies = 1, n_species
       DEALLOCATE(initial_conditions(ispecies)%rho)
       DEALLOCATE(initial_conditions(ispecies)%temp)
+			DEALLOCATE(initial_conditions(ispecies)%drift)
     ENDDO
     DEALLOCATE(initial_conditions)
 
@@ -385,10 +387,10 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
     TYPE(particle_family), POINTER :: part_family
-    REAL(num), DIMENSION(3), INTENT(IN) :: drift
+    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: drift
     INTEGER, INTENT(INOUT) :: idum
     TYPE(particle_list), POINTER :: partlist
-    REAL(num) :: mass, temp_local
+    REAL(num) :: mass, temp_local, drift_local
     REAL(num) :: cell_x_r, cell_frac_x, cell_y_r, cell_frac_y
     REAL(num), DIMENSION(-2:2) :: gx, gy
     TYPE(particle), POINTER :: current
@@ -420,21 +422,24 @@ CONTAINS
       CALL grid_to_particle(cell_frac_y, gy)
 
       temp_local = 0.0_num
+      drift_local = 0.0_num
       DO ix = -sf_order, sf_order
         DO iy = -sf_order, sf_order
           temp_local = &
               temp_local+gx(ix)*gy(iy)*temperature(cell_x+ix, cell_y+iy)
+          drift_local = &
+              drift_local+gx(ix)*gy(iy)*drift(cell_x+ix, cell_y+iy)
         ENDDO
       ENDDO
 
       IF (IAND(direction, c_dir_x) .NE. 0) current%part_p(1) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(1)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       IF (IAND(direction, c_dir_y) .NE. 0) current%part_p(2) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(2)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       IF (IAND(direction, c_dir_z) .NE. 0) current%part_p(3) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(3)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       current=>current%next
       ipart = ipart+1

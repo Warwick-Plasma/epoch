@@ -3,11 +3,11 @@ begin:control
   #global number of gridpoints
   nx=400 #in x
   ny=400 #in y
-  npart=16.0e3
+  npart=16.0e5
 
   #maximum number of iterations
   #set to -1 to run until finished
-  nsteps=-1
+  nsteps=0
 
   #final time of simulation
   t_end=50.0e-15
@@ -114,3 +114,7 @@ begin:output
   particle_probes=never
 
 end:output
+
+import:ic.deck
+import:io.deck
+

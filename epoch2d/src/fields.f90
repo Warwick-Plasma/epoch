@@ -52,7 +52,8 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         ex(ix, iy) = ex(ix, iy) &
-            + cny*c**2 * SUM(diff_consts * bz(ix, iy-large:iy+small)) &
+            + cny*c**2 * SUM(diff_consts(1:field_order)&
+            * bz(ix, iy-large:iy+small)) &
             - 0.5_num*dt*jx(ix, iy)/epsilon0
       ENDDO
     ENDDO
@@ -61,7 +62,8 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         ey(ix, iy) = ey(ix, iy) &
-            - cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small, iy)) &
+            - cnx*c**2 * SUM(diff_consts(1:field_order)&
+            * bz(ix-large:ix+small, iy)) &
             - 0.5_num*dt*jy(ix, iy)/epsilon0
       ENDDO
     ENDDO
@@ -70,8 +72,10 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         ez(ix, iy) = ez(ix, iy) &
-            + cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small, iy)) &
-            - cny*c**2 * SUM(diff_consts * bx(ix, iy-large:iy+small)) &
+            + cnx*c**2 * SUM(diff_consts(1:field_order)&
+            * by(ix-large:ix+small, iy)) &
+            - cny*c**2 * SUM(diff_consts(1:field_order)&
+            * bx(ix, iy-large:iy+small)) &
             - 0.5_num*dt*jz(ix, iy)/epsilon0
       ENDDO
     ENDDO
@@ -86,7 +90,8 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         bx(ix, iy) = bx(ix, iy) &
-            - cny * SUM(diff_consts * ez(ix, iy-small:iy+large))
+            - cny * SUM(diff_consts(1:field_order)&
+            * ez(ix, iy-small:iy+large))
       ENDDO
     ENDDO
 
@@ -94,7 +99,8 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         by(ix, iy) = by(ix, iy) &
-            + cnx * SUM(diff_consts * ez(ix-small:ix+large, iy))
+            + cnx * SUM(diff_consts(1:field_order)&
+            * ez(ix-small:ix+large, iy))
       ENDDO
     ENDDO
 
@@ -102,8 +108,10 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         bz(ix, iy) = bz(ix, iy) &
-            - cnx * SUM(diff_consts * ey(ix-small:ix+large, iy)) &
-            + cny * SUM(diff_consts * ex(ix, iy-small:iy+large))
+            - cnx * SUM(diff_consts(1:field_order)&
+            * ey(ix-small:ix+large, iy)) &
+            + cny * SUM(diff_consts(1:field_order)&
+            * ex(ix, iy-small:iy+large))
       ENDDO
     ENDDO
 
@@ -131,7 +139,8 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         bx(ix, iy) = bx(ix, iy) &
-           - cny * SUM(diff_consts * ez(ix, iy-small:iy+large))
+           - cny * SUM(diff_consts(1:field_order)&
+           * ez(ix, iy-small:iy+large))
       ENDDO
     ENDDO
 
@@ -139,7 +148,8 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         by(ix, iy) = by(ix, iy) &
-           + cnx * SUM(diff_consts * ez(ix-small:ix+large, iy))
+           + cnx * SUM(diff_consts(1:field_order)&
+           * ez(ix-small:ix+large, iy))
       ENDDO
     ENDDO
 
@@ -147,8 +157,10 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         bz(ix, iy) = bz(ix, iy) &
-           - cnx * SUM(diff_consts * ey(ix-small:ix+large, iy)) &
-           + cny * SUM(diff_consts * ex(ix, iy-small:iy+large))
+           - cnx * SUM(diff_consts(1:field_order)&
+           * ey(ix-small:ix+large, iy)) &
+           + cny * SUM(diff_consts(1:field_order)&
+           * ex(ix, iy-small:iy+large))
       ENDDO
     ENDDO
 
@@ -180,7 +192,8 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         ex(ix, iy) = ex(ix, iy) &
-           + cny*c**2 * SUM(diff_consts * bz(ix, iy-large:iy+small)) &
+           + cny*c**2 * SUM(diff_consts(1:field_order)&
+           * bz(ix, iy-large:iy+small)) &
            - 0.5*dt*jx(ix, iy)/epsilon0
       ENDDO
     ENDDO
@@ -189,7 +202,8 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         ey(ix, iy) = ey(ix, iy) &
-           - cnx*c**2 * SUM(diff_consts * bz(ix-large:ix+small, iy)) &
+           - cnx*c**2 * SUM(diff_consts(1:field_order)&
+           * bz(ix-large:ix+small, iy)) &
            - 0.5*dt*jy(ix, iy)/epsilon0
       ENDDO
     ENDDO
@@ -198,8 +212,10 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         ez(ix, iy) = ez(ix, iy) &
-           + cnx*c**2 * SUM(diff_consts * by(ix-large:ix+small, iy)) &
-           - cny*c**2 * SUM(diff_consts * bx(ix, iy-large:iy+small)) &
+           + cnx*c**2 * SUM(diff_consts(1:field_order)&
+           * by(ix-large:ix+small, iy)) &
+           - cny*c**2 * SUM(diff_consts(1:field_order)&
+           * bx(ix, iy-large:iy+small)) &
            - 0.5_num*dt*jz(ix, iy)/epsilon0
       ENDDO
     ENDDO

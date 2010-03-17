@@ -25,11 +25,13 @@ end:laser
 begin:species2
 
   rho=den_max
+  temp=1e6
 
 end:species2
 
 begin:species1
 
   rho=rho(2) * 22.0
+ temp=1e6
 
 end:species1

@@ -170,16 +170,14 @@ CONTAINS
         cell_frac_y = REAL(cell_y, num) - cell_y_r
         cell_y = cell_y+1
 
-        IF (cell_y .LT. -2) PRINT *, cell_y, rank, part_y
-
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
 
         DO iy = -sf_order, sf_order
           DO ix = -sf_order, sf_order
-            data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 &
-                + (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) &
-                - (part_m*l_weight)*c**2
+            data = (SQRT((part_px**2 + part_py**2 &
+                + part_pz**2)*c**2 + part_m**2*c**4) &
+                - part_m*c**2)*l_weight
             data_array(cell_x+ix, cell_y+iy) = &
                 data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * data
             ct(cell_x+ix, cell_y+iy) = &
@@ -194,7 +192,7 @@ CONTAINS
     CALL processor_summation_bcs(data_array)
     CALL processor_summation_bcs(ct)
 
-    data_array = data_array / MAX(ct, c_non_zero)
+!    data_array = data_array / MAX(ct, c_non_zero)
     CALL field_zero_gradient(data_array, .TRUE.)
     DEALLOCATE(ct)
 

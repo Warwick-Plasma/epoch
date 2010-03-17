@@ -84,6 +84,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_px = 8
   INTEGER, PARAMETER :: c_dir_py = 16
   INTEGER, PARAMETER :: c_dir_pz = 32
+  INTEGER, PARAMETER :: c_dir_en = 64
 
   ! define flags
   INTEGER, PARAMETER :: c_def_particle_debug = 1
@@ -99,6 +100,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_def_no_deck = 1024
   INTEGER, PARAMETER :: c_def_newtonian = 2048
   INTEGER, PARAMETER :: c_def_high_order_smoothing = 4096
+  INTEGER, PARAMETER :: c_def_single_deck = 8192
+
+  ! constants defining the maximum number of dimensions and directions
+  ! in a distribution function
+  INTEGER, PARAMETER :: c_df_maxdirs = 6
+  INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! Length of a standard string
   INTEGER, PARAMETER :: string_length = 128
@@ -195,6 +202,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_px = 52
   INTEGER, PARAMETER :: c_const_dir_py = 53
   INTEGER, PARAMETER :: c_const_dir_pz = 54
+  INTEGER, PARAMETER :: c_const_dir_en = 55
+  INTEGER, PARAMETER :: c_const_nx = 56
+  INTEGER, PARAMETER :: c_const_ny = 57
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -393,7 +403,7 @@ MODULE shared_data
   TYPE :: initial_condition_block
     REAL(num), DIMENSION(:,:), POINTER :: rho
     REAL(num), DIMENSION(:,:,:), POINTER :: temp
-    REAL(num), DIMENSION(3) :: drift
+    REAL(num), DIMENSION(:,:,:), POINTER :: drift
 
     REAL(num) :: minrho
     REAL(num) :: maxrho
@@ -425,12 +435,12 @@ MODULE shared_data
 
     ! The variables which define the ranges and resolutions of the
     ! distribution function
-    INTEGER, DIMENSION(3) :: directions
-    REAL(num), DIMENSION(3, 2) :: ranges
-    INTEGER, DIMENSION(3) :: resolution
+    INTEGER, DIMENSION(c_df_maxdims) :: directions
+    REAL(num), DIMENSION(c_df_maxdims, 2) :: ranges
+    INTEGER, DIMENSION(c_df_maxdims) :: resolution
     LOGICAL, DIMENSION(:), POINTER :: use_species
-    REAL(num), DIMENSION(5, 2) :: restrictions
-    LOGICAL, DIMENSION(5) :: use_restrictions
+    REAL(num), DIMENSION(c_df_maxdirs, 2) :: restrictions
+    LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
 
     ! Pointer to next distribution function
     TYPE(distribution_function_block), POINTER :: next

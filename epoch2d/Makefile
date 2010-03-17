@@ -1,11 +1,11 @@
 # Set the compiler flags
-FFLAGS = -O3 #-heap-arrays 0 -fast
+FFLAGS = -O3
 
 # Set some of the build parameters
 TARGET = epoch2d
 
 # Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DTRACER_PARTICLES
+DEFINES = -DPER_PARTICLE_WEIGHT -DTRACER_PARTICLES -DSINGLE_DECK
 
 # Copy this line onto the DEFINES line to turn on particle cell division
 # -DPARTICLE_CELL_DIVISION
@@ -71,7 +71,7 @@ $(FULLTARGET): $(OBJFILES)
 	$(FC) $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
 $(OBJDIR)/encoded_source.f90: $(SRCFILES) Makefile gen_src_module COMMIT
-	./gen_src_module $@ $^
+	./gen_src_module $@ COMMIT
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
