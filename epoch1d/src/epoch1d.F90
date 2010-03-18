@@ -72,14 +72,15 @@ PROGRAM pic
   CALL open_files    ! setup.f90
 
   ! If the user has specified extended IO options then read the file
-  IF (use_extended_io) THEN
-    deck_state = c_ds_eio
+  deck_state = c_ds_eio
 #ifdef SINGLE_DECK
-    CALL read_deck("input.deck", .TRUE.)
+	!If using a single input deck then always check for IO blocks
+  CALL read_deck("input.deck", .TRUE.)
 #else
+  IF (use_extended_io) THEN
     CALL read_deck(TRIM(extended_io_file), .TRUE.)
-#endif
   ENDIF
+#endif
 
   ! restart flag is set
   IF (ic_from_restart) THEN
