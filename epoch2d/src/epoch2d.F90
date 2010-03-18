@@ -74,14 +74,14 @@ PROGRAM pic
   IF (move_window) CALL allocate_window ! window.f90
 
   ! If the user has specified extended IO options then read the file
-  IF (use_extended_io) THEN
-    deck_state = c_ds_eio
+  deck_state = c_ds_eio
 #ifdef SINGLE_DECK
-    CALL read_deck("input.deck", .TRUE.)
+  CALL read_deck("input.deck", .TRUE.)
 #else
+  IF (use_extended_io) THEN
     CALL read_deck(TRIM(extended_io_file), .TRUE.)
-#endif
   ENDIF
+#endif
 
   ! restart flag is set
   IF (ic_from_restart) THEN

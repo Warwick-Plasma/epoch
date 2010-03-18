@@ -133,6 +133,9 @@ CONTAINS
     ENDDO
     DO ispecies = 1, n_species
       particle_species(ispecies)%id = ispecies
+#ifdef PARTICLE_PROBES
+      NULLIFY(particle_species(ispecies)%attached_probes)
+#endif
       NULLIFY(particle_species(ispecies)%attached_list%next)
       NULLIFY(particle_species(ispecies)%attached_list%prev)
       CALL create_empty_partlist(particle_species(ispecies)%attached_list)
