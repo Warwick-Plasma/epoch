@@ -13,8 +13,8 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(IN) :: input_stack
     INTEGER, INTENT(IN) :: ix, iy, iz
-		INTEGER, INTENT(IN) :: n_elements
-		REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(IN) :: n_elements
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     REAL(num) :: evaluate_at_point
     INTEGER :: i
@@ -40,11 +40,11 @@ CONTAINS
       ENDIF
     ENDDO
     IF (eval_stack%stack_point .NE. n_elements) err = IAND(err, c_err_bad_value)
-		!Pop off the final answers
-		DO i=n_elements,1,-1
-			array(i) = pop_off_eval()
-		ENDDO
-		
+    ! Pop off the final answers
+    DO i = n_elements,1,-1
+      array(i) = pop_off_eval()
+    ENDDO
+
   END SUBROUTINE evaluate_at_point_to_array
 
   FUNCTION evaluate_at_point(input_stack, ix, iy, iz, err)
@@ -56,7 +56,7 @@ CONTAINS
     REAL(num) :: evaluate_at_point
 
     CALL evaluate_at_point_to_array(input_stack, ix, iy, iz, 1, array, err)
-    evaluate_at_point=array(1)
+    evaluate_at_point = array(1)
 
   END FUNCTION evaluate_at_point
 

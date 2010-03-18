@@ -49,9 +49,9 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "irradiance")) THEN
-        working_laser%amp=SQRT(as_real(value,handle_ic_laser_deck)&
-            /(c*epsilon0/2.0_num))
-        RETURN
+      working_laser%amp = SQRT(as_real(value, handle_ic_laser_deck) &
+          / (c*epsilon0/2.0_num))
+      RETURN
     ENDIF
 
     IF (str_cmp(element, "freq")) THEN

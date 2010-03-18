@@ -31,11 +31,11 @@ CONTAINS
 
     IF (str_cmp(element, "ndims")) THEN
       work = as_integer(value, handle_eio_dist_fn_deck)
-      IF (work .GE. 1 .OR. work .LE. 3) THEN
+      IF (work .GE. 1 .AND. work .LE. 3) THEN
         working_block%ndims = work
       ELSE
-        IF (rank .EQ. 0) PRINT *,&
-           "Distribution functions can only be 1D, 2D or 3D"
+        IF (rank .EQ. 0) &
+            PRINT *, "Distribution functions can only be 1D, 2D or 3D"
         handle_eio_dist_fn_deck = c_err_bad_value
       ENDIF
       RETURN

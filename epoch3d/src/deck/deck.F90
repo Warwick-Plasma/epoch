@@ -48,19 +48,19 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name
 
-    IF (str_cmp(block_name, "laser") .AND. deck_state .EQ. c_ds_ic)&
+    IF (str_cmp(block_name, "laser") .AND. deck_state .EQ. c_ds_ic) &
         CALL laser_start
-    IF (str_cmp(block_name, "window") .AND. deck_state .EQ. c_ds_deck)&
+    IF (str_cmp(block_name, "window") .AND. deck_state .EQ. c_ds_deck) &
         CALL window_start
-    IF (str_cmp(block_name, "dist_fn") .AND. deck_state .EQ. c_ds_eio)&
+    IF (str_cmp(block_name, "dist_fn") .AND. deck_state .EQ. c_ds_eio) &
         CALL dist_fn_start
 #ifdef PARTICLE_PROBES
-    IF (str_cmp(block_name, "probe") .AND. deck_state .EQ. c_ds_eio)&
+    IF (str_cmp(block_name, "probe") .AND. deck_state .EQ. c_ds_eio) &
         CALL probe_block_start
 #endif
-    IF (str_cmp(block_name, "species_external") .AND. deck_state .EQ. c_ds_ic)&
+    IF (str_cmp(block_name, "species_external") .AND. deck_state .EQ. c_ds_ic) &
         CALL start_external
-    IF (str_cmp(block_name, "fields_external") .AND. deck_state .EQ. c_ds_ic)&
+    IF (str_cmp(block_name, "fields_external") .AND. deck_state .EQ. c_ds_ic) &
         CALL start_external
 
   END SUBROUTINE start_block
@@ -74,12 +74,12 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name
 
-    IF (str_cmp(block_name, "laser") .AND. deck_state .EQ. c_ds_ic)&
+    IF (str_cmp(block_name, "laser") .AND. deck_state .EQ. c_ds_ic) &
         CALL laser_end
-    IF (str_cmp(block_name, "dist_fn") .AND. deck_state .EQ. c_ds_eio)&
+    IF (str_cmp(block_name, "dist_fn") .AND. deck_state .EQ. c_ds_eio) &
         CALL dist_fn_end
 #ifdef PARTICLE_PROBES
-    IF (str_cmp(block_name, "probe") .AND. deck_state .EQ. c_ds_eio)&
+    IF (str_cmp(block_name, "probe") .AND. deck_state .EQ. c_ds_eio) &
         CALL probe_block_end
 #endif
 
@@ -108,8 +108,8 @@ CONTAINS
 
     ! Test for known blocks
     IF (str_cmp(block_name, "control"))  THEN
-       IF (deck_state .EQ. c_ds_deck) &
-           handle_block = handle_control_deck(block_element, block_value)
+      IF (deck_state .EQ. c_ds_deck) &
+          handle_block = handle_control_deck(block_element, block_value)
       RETURN
     ENDIF
 
@@ -168,7 +168,8 @@ CONTAINS
       IF (str_cmp(part1, "species_external")) THEN
         IF (deck_state .EQ. c_ds_ic) &
             handle_block = &
-                handle_ic_external_species_deck(part2, block_element, block_value)
+                handle_ic_external_species_deck(part2, block_element, &
+                    block_value)
         RETURN
       ENDIF
     ENDIF
@@ -184,7 +185,7 @@ CONTAINS
           handle_block = handle_probe_deck(block_element, block_value)
       RETURN
 #else
-      IF (deck_state .EQ. c_ds_eio)  THEN
+      IF (deck_state .EQ. c_ds_eio) THEN
         handle_block = IOR(handle_block, c_err_pp_options_wrong)
         extended_error_string = "-DPARTICLE_PROBES"
       ENDIF
@@ -505,7 +506,7 @@ CONTAINS
     IF (str_cmp(element, "begin")) THEN
       errcode_deck = handle_block(value, blank, blank)
       invalid_block = IAND(errcode_deck, c_err_unknown_block) .NE. 0
-      invalid_block = invalid_block .OR. IAND(errcode_deck,&
+      invalid_block = invalid_block .OR. IAND(errcode_deck, &
           c_err_pp_options_wrong) .NE. 0
       IF (invalid_block .AND. rank .EQ. rank_check) THEN
         IF(IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
@@ -525,7 +526,7 @@ CONTAINS
           WRITE(40,*) ""
         ELSE
           PRINT *, CHAR(9), "Unknown block ", TRIM(value), &
-              " in input deck, ignoring",deck_state
+              " in input deck, ignoring", deck_state
         ENDIF
       ENDIF
       CALL start_block(value)

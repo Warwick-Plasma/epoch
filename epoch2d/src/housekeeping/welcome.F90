@@ -84,7 +84,7 @@ CONTAINS
     WRITE(*, *) "*************************************************************"
 #ifdef SINGLE_DECK
     defines = IOR(defines, c_def_single_deck)
-		WRITE(*, *) "Single input deck support -DSINGLEDECK"
+    WRITE(*, *) "Single input deck support -DSINGLEDECK"
 #endif
 #ifdef PARTICLE_DEBUG
     defines = IOR(defines, c_def_particle_debug)

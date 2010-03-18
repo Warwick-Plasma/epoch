@@ -32,6 +32,6 @@ end:species2
 begin:species1
 
   rho=rho(2) * 22.0
- temp=1e6
+  temp=1e6
 
 end:species1

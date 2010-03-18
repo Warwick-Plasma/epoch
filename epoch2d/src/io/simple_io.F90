@@ -36,7 +36,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype, "native", &
         MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(fh, array(1:nx, 1:ny), nx*ny, mpireal, &
+    CALL MPI_FILE_READ_ALL(fh, array(1:nx,1:ny), nx*ny, mpireal, &
         status, errcode)
 
     CALL MPI_FILE_CLOSE(fh, errcode)

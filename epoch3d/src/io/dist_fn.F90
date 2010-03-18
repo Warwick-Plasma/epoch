@@ -91,8 +91,9 @@ CONTAINS
                 use_restrictions)
           ENDIF
           IF (current%ndims .EQ. 3) THEN
-            CALL general_3d_dist_fn(current%name, current%directions(1:3),&
-                ranges(1:3,:), resolution(1:3), ispecies, restrictions, use_restrictions)
+            CALL general_3d_dist_fn(current%name, current%directions(1:3), &
+                ranges(1:3,:), resolution(1:3), ispecies, restrictions, &
+                use_restrictions)
           ENDIF
           IF (current%store_ranges) current%ranges = ranges
         ENDDO
@@ -266,13 +267,13 @@ CONTAINS
         particle_data(1:3) = current%part_pos
         particle_data(4:6) = current%part_p
 #ifndef PER_PARTICLE_CHARGE_MASS
-        particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-             particle_species(species)%mass**2 * c**4)- &
-             particle_species(species)%mass * c**2
+        particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+            + particle_species(species)%mass**2 * c**4) &
+            - particle_species(species)%mass * c**2
 #else
-        particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-             current%mass**2 * c**4)- &
-             current%mass * c**2
+        particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+            + current%mass**2 * c**4) &
+            - current%mass * c**2
 #endif
         DO idim = 1, c_df_curdims
           IF (calc_range(idim)) THEN
@@ -380,13 +381,13 @@ CONTAINS
       particle_data(1:3) = current%part_pos
       particle_data(4:6) = current%part_p
 #ifndef PER_PARTICLE_CHARGE_MASS
-      particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-           particle_species(species)%mass**2 * c**4)- &
-           particle_species(species)%mass * c**2
+      particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+          + particle_species(species)%mass**2 * c**4) &
+          - particle_species(species)%mass * c**2
 #else
-      particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-           current%mass**2 * c**4)- &
-           current%mass * c**2
+      particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+          + current%mass**2 * c**4) &
+          - current%mass * c**2
 #endif
       use_this = .TRUE.
       DO idir = 1, c_df_maxdirs
@@ -623,13 +624,13 @@ CONTAINS
         particle_data(1:3) = current%part_pos
         particle_data(4:6) = current%part_p
 #ifndef PER_PARTICLE_CHARGE_MASS
-        particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-             particle_species(species)%mass**2 * c**4)- &
-             particle_species(species)%mass * c**2
+        particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+            + particle_species(species)%mass**2 * c**4) &
+            - particle_species(species)%mass * c**2
 #else
-        particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-             current%mass**2 * c**4)- &
-             current%mass * c**2
+        particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+            + current%mass**2 * c**4) &
+            - current%mass * c**2
 #endif
         DO idim = 1, c_df_curdims
           IF (calc_range(idim)) THEN
@@ -730,13 +731,13 @@ CONTAINS
       particle_data(1:3) = current%part_pos
       particle_data(4:6) = current%part_p
 #ifndef PER_PARTICLE_CHARGE_MASS
-      particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-           particle_species(species)%mass**2 * c**4)- &
-           particle_species(species)%mass * c**2
+      particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+          + particle_species(species)%mass**2 * c**4) &
+          - particle_species(species)%mass * c**2
 #else
-      particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-           current%mass**2 * c**4)- &
-           current%mass * c**2
+      particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+          + current%mass**2 * c**4) &
+          - current%mass * c**2
 #endif
       use_this = .TRUE.
       DO idir = 1, c_df_maxdirs
@@ -970,13 +971,13 @@ CONTAINS
         particle_data(1:3) = current%part_pos
         particle_data(4:6) = current%part_p
 #ifndef PER_PARTICLE_CHARGE_MASS
-        particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-             particle_species(species)%mass**2 * c**4)- &
-             particle_species(species)%mass * c**2
+        particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+            + particle_species(species)%mass**2 * c**4) &
+            - particle_species(species)%mass * c**2
 #else
-        particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-             current%mass**2 * c**4)- &
-             current%mass * c**2
+        particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+            + current%mass**2 * c**4) &
+            - current%mass * c**2
 #endif
         DO idim = 1, c_df_curdims
           IF (calc_range(idim)) THEN
@@ -1072,13 +1073,13 @@ CONTAINS
       particle_data(1:3) = current%part_pos
       particle_data(4:6) = current%part_p
 #ifndef PER_PARTICLE_CHARGE_MASS
-      particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-           particle_species(species)%mass**2 * c**4)- &
-           particle_species(species)%mass * c**2
+      particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+          + particle_species(species)%mass**2 * c**4) &
+          - particle_species(species)%mass * c**2
 #else
-      particle_data(7)=SQRT(SUM(current%part_p**2) * c**2 + &
-           current%mass**2 * c**4)- &
-           current%mass * c**2
+      particle_data(7) = SQRT(SUM(current%part_p**2) * c**2 &
+          + current%mass**2 * c**4) &
+          - current%mass * c**2
 #endif
       use_this = .TRUE.
       DO idir = 1, c_df_maxdirs
@@ -1204,26 +1205,27 @@ CONTAINS
 
 
 
-  FUNCTION create_1d_field_subtype(n_local,n_global,start)
+  FUNCTION create_1d_field_subtype(n_local, n_global, start)
 
     INTEGER, DIMENSION(1), INTENT(IN) :: n_local
     INTEGER, DIMENSION(1), INTENT(IN) :: n_global
     INTEGER, DIMENSION(1), INTENT(IN) :: start
-    INTEGER, DIMENSION(3) :: length,disp,type
+    INTEGER, DIMENSION(3) :: length, disp, type
     INTEGER :: create_1d_field_subtype
 
-    length(1)=1
-    length(2)=n_local(1)
-    length(3)=1
-    disp(1)=0
-    disp(2)=(start(1)-1) * num
-    disp(3)= n_global(1) * num
-    type(1)=MPI_LB
-    type(2)=mpireal
-    type(3)=MPI_UB
-    CALL MPI_TYPE_STRUCT(3,length,disp,type,create_1d_field_subtype,errcode)
-    CALL MPI_TYPE_COMMIT(create_1d_field_subtype,errcode)
+    length(1) = 1
+    length(2) = n_local(1)
+    length(3) = 1
+    disp(1) = 0
+    disp(2) = (start(1)-1) * num
+    disp(3) = n_global(1) * num
+    type(1) = MPI_LB
+    type(2) = mpireal
+    type(3) = MPI_UB
+    CALL MPI_TYPE_STRUCT(3, length, disp, type, create_1d_field_subtype, &
+        errcode)
+    CALL MPI_TYPE_COMMIT(create_1d_field_subtype, errcode)
 
-  END FUNCTION Create_1D_Field_Subtype
+  END FUNCTION create_1d_field_subtype
 
 END MODULE dist_fn

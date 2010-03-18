@@ -45,14 +45,14 @@ CONTAINS
     REAL(num), INTENT(OUT) :: real1, real2
     INTEGER, INTENT(INOUT) :: err
     TYPE(primitive_stack) :: output
-    REAL(num),DIMENSION(2) :: array
+    REAL(num), DIMENSION(2) :: array
 
     output%stack_point = 0
     CALL tokenize(str_in, output, err)
-    IF (err .EQ. c_err_none)&
-      CALL evaluate_at_point_to_array(output,0,0,2,array,err)
-    real1=array(1)
-    real2=array(2)
+    IF (err .EQ. c_err_none) &
+        CALL evaluate_at_point_to_array(output, 0, 0, 2, array, err)
+    real1 = array(1)
+    real2 = array(2)
 
   END SUBROUTINE split_range
 

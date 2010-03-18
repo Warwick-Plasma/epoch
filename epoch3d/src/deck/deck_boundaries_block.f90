@@ -7,10 +7,11 @@ MODULE deck_boundaries_block
   SAVE
 
   INTEGER, PARAMETER :: boundary_block_elements = 6
-  LOGICAL, DIMENSION(boundary_block_elements)  :: boundary_block_done
+  LOGICAL, DIMENSION(boundary_block_elements) :: boundary_block_done
   CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
-      boundary_block_name = (/ "xbc_left ", "xbc_right", "ybc_up   ", &
-          "ybc_down ", "zbc_back ", "zbc_front" /)
+      boundary_block_name = (/ &
+          "xbc_left ", "xbc_right", "ybc_up   ", "ybc_down ", &
+          "zbc_back ", "zbc_front" /)
 
 CONTAINS
 
