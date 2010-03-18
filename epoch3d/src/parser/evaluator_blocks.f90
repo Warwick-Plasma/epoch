@@ -320,6 +320,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_dir_en) THEN
+      CALL push_on_eval(REAL(c_dir_en, num))
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_const_r_xy) THEN
       CALL push_on_eval(SQRT(x(ix)**2+y(iy)**2))
       RETURN
@@ -332,6 +337,21 @@ CONTAINS
 
     IF (opcode .EQ. c_const_r_yz) THEN
       CALL push_on_eval(SQRT(y(iy)**2+z(iz)**2))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nx) THEN
+      CALL push_on_eval(REAL(nx_global, num))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_ny) THEN
+      CALL push_on_eval(REAL(ny_global, num))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nz) THEN
+      CALL push_on_eval(REAL(nz_global, num))
       RETURN
     ENDIF
 

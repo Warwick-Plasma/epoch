@@ -44,27 +44,15 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: str_in
     REAL(num), INTENT(OUT) :: real1, real2
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: str_len, char, pos, c
+    TYPE(primitive_stack) :: output
+    REAL(num),DIMENSION(2) :: array
 
-    str_len = LEN(TRIM(str_in))
-    pos = -1
-
-    DO char = 1, str_len
-      c = ICHAR(str_in(char:char))
-      ! Separate on a >
-      IF (c .EQ. 62) THEN
-        pos = char
-        EXIT
-      ENDIF
-    ENDDO
-
-    IF (pos .LT. 0) THEN
-      err = IOR(err, c_err_bad_value)
-      RETURN
-    ENDIF
-
-    real1 = as_real_simple(TRIM(str_in(1:pos-1)), err)
-    real2 = as_real_simple(TRIM(str_in(pos+1:str_len)), err)
+    output%stack_point = 0
+    CALL tokenize(str_in, output, err)
+    IF (err .EQ. c_err_none)&
+      CALL evaluate_at_point_to_array(output, 0, 0, 0, 2, array, err)
+    real1=array(1)
+    real2=array(2)
 
   END SUBROUTINE split_range
 

@@ -90,6 +90,7 @@ CONTAINS
     DO ispecies = 1, n_species
       DEALLOCATE(initial_conditions(ispecies)%rho)
       DEALLOCATE(initial_conditions(ispecies)%temp)
+!      DEALLOCATE(initial_conditions(ispecies)%drift)
     ENDDO
     DEALLOCATE(initial_conditions)
 

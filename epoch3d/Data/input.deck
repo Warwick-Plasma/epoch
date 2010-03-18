@@ -1,14 +1,14 @@
 begin:control
 
   #global number of gridpoints
-  nx=400 #in x
-  ny=200 #in y
-  nz=200 #in z
-  npart=400*200*200*32
+  nx=200 #in x
+  ny=100 #in y
+  nz=10 #in z
+  npart=200*100*5*10
 
   #maximum number of iterations
   #set to -1 to run until finished
-  nsteps=-1
+  nsteps=0
 
   #final time of simulation
   t_end=0.5e-12
@@ -18,8 +18,8 @@ begin:control
   x_end=100e-6
   y_start=-50e-6
   y_end=50e-6
-  z_start=-50e-6
-  z_end=50e-6
+  z_start=-5e-6
+  z_end=5e-6
 
   #Don't know if this should be in the deck or not
   dt_multiplier=0.8
@@ -118,3 +118,5 @@ begin:output
   particle_probes=never
 
 end:output
+import:ic.deck
+import:io.deck

@@ -58,8 +58,7 @@ begin:species1
   rho=if((x+tangle*y) gt 0.5*twid,0.5 - 0.5*(tanh((x+tangle*y-twid)/scale_b)), rho(1))
   rho=if(x lt -250.0e-6, 0.0, rho(1))
   rho=rho(1)*target_den
-  temp_x=10000000.0
-  temp_y=temp_x(1)
+  temp=1e7
   minrho=den_contrast * target_den
 
 end:species1
@@ -67,8 +66,7 @@ end:species1
 begin:species2
 
   rho=rho(1)#*0.5
-  temp_x=temp_x(1)
-  temp_y=temp_x(1)
+  temp=temp_x(1)
   minrho=den_contrast * target_den #* 0.5
 
 end:species2

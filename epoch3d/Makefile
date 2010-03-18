@@ -5,7 +5,7 @@ FFLAGS = -O3 #-heap-arrays 0 -fast
 TARGET = epoch3d
 
 # Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES -DPART_IONISE -DSPLINE_FOUR
+DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DSPLINE_FOUR -DSINGLE_DECK
 
 # Copy this line onto the DEFINES line to turn on particle cell division
 # -DPARTICLE_CELL_DIVISION
@@ -71,7 +71,7 @@ $(FULLTARGET): $(OBJFILES)
 	$(FC) $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
 $(OBJDIR)/encoded_source.f90: $(SRCFILES) Makefile gen_src_module COMMIT
-	./gen_src_module $@ $^
+	./gen_src_module $@ COMMIT
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)

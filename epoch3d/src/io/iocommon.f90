@@ -46,6 +46,7 @@ MODULE iocommon
   INTEGER(4) :: max_string_len = 60, default_rank = 0
 
   INTEGER, PARAMETER :: header_offset_this_version = 10 * 4 + 8 + 3
+  INTEGER, PARAMETER :: nblocks_offset_this_version = 5 * 4 + 3
 
   ! This cannot be changed without a major revision
   ! If you want to add more to every meshtype, tough luck

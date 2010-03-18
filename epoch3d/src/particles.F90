@@ -106,8 +106,6 @@ CONTAINS
     jyh = 0.0_num
     jzh = 0.0_num
 
-    ekbar_sum = 0.0_num
-    ct = 0.0_num
     third = 1.0_num/3.0_num
 
     ! RETURN
@@ -448,9 +446,7 @@ CONTAINS
         ! Compare the current particle with the parameters of any probes in the
         ! system. These particles are copied into a separate part of the output
         ! file.
-
         current_probe=>particle_species(ispecies)%attached_probes
-
         ! Cycle through probes
         DO WHILE(ASSOCIATED(current_probe))
           ! Note that this is the energy of a single REAL particle in the
@@ -493,26 +489,6 @@ CONTAINS
     CALL processor_summation_bcs(jx)
     CALL processor_summation_bcs(jy)
     CALL processor_summation_bcs(jz)
-
-    DO ispecies = 1, n_species
-      CALL processor_summation_bcs(ekbar_sum(:,:,:,ispecies))
-      CALL processor_summation_bcs(ct(:,:,:,ispecies))
-    ENDDO
-
-    DO ipart = 1, n_species
-      DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
-            IF (ct(ix, iy, iz, ipart) .GT. 0) THEN
-              mean = ekbar_sum(ix, iy, iz, ipart)/ct(ix, iy, iz, ipart)
-            ELSE
-              mean = 0.0_num
-            ENDIF
-            ekbar(ix, iy, iz, ipart) = mean
-          ENDDO
-        ENDDO
-      ENDDO
-    ENDDO
 
     DEALLOCATE(xi0x)
     DEALLOCATE(xi1x)

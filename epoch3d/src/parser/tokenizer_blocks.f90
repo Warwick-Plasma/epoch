@@ -107,9 +107,13 @@ CONTAINS
     IF (str_cmp(name, "dir_px")) as_constant = c_const_dir_px
     IF (str_cmp(name, "dir_py")) as_constant = c_const_dir_py
     IF (str_cmp(name, "dir_pz")) as_constant = c_const_dir_pz
+    IF (str_cmp(name, "dir_en")) as_constant = c_const_dir_en
     IF (str_cmp(name, "r_xy")) as_constant = c_const_r_xy
     IF (str_cmp(name, "r_yz")) as_constant = c_const_r_yz
     IF (str_cmp(name, "r_xz")) as_constant = c_const_r_xz
+    IF (str_cmp(name, "nx")) as_constant = c_const_nx
+    IF (str_cmp(name, "ny")) as_constant = c_const_ny
+    IF (str_cmp(name, "nz")) as_constant = c_const_nz
 
     ! User submitted constant using "Register"
     DO i = 1, n_new_constant

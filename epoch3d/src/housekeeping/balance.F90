@@ -723,7 +723,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE", coords, dz
+    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE", coords,z_ends
     IF (MINVAL(coords) .LT. 0) RETURN
     CALL MPI_CART_RANK(comm, coords, get_particle_processor, errcode)
     ! IF (get_particle_processor .NE. rank) PRINT *,

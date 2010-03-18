@@ -74,7 +74,7 @@ CONTAINS
     ENDDO
     z_global(0) = z_start-dz
     DO iz = 1, nz_global+1
-      z_global(iz) = z_global(iz-1)+dy
+      z_global(iz) = z_global(iz-1)+dz
       z_offset_global(iz) = z_global(iz)
     ENDDO
 
