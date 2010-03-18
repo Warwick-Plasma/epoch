@@ -8,6 +8,7 @@ MODULE diagnostics
   USE probes
   USE mpi_subtype_control
   USE encoded_source
+  USE deck
   !USE iterators
   USE particle_pointer_advance
 
@@ -312,6 +313,7 @@ CONTAINS
 !!$      ENDIF
 
       IF (restart_flag .EQ. 1 .AND. LEN(source_code) .GT. 0) THEN
+        CALL write_input_decks
         CALL cfd_write_source_code("Code", "base64_packed_source_code", &
             source_code, last_line, 0)
       ENDIF

@@ -1,7 +1,13 @@
 #! /bin/sh
 
 file=$1
-output=epoch.tgz
+dir=unpacked_source
+output=$dir/epoch.tgz
+
+if [ "$1"x = x -o "$2"x != x ]; then
+  echo "Usage: unpack_source_from_restart <restart_file>"
+  exit 1
+fi
 
 if [ -e $output ]; then
   echo 'ERROR: output file "'$output'" already exists. Please remove first.'
@@ -20,7 +26,9 @@ if [ -z $byte ]; then
   exit 1
 fi
 
-(echo begin-base64 664 epoch.tgz
+mkdir -p $dir > /dev/null 2>&1
+
+(echo begin-base64 664 $output
 dd status=noxfer if=$file bs=1 skip=$((byte+80)) 2> /dev/null | fold
 echo
 echo ====) | uudecode
@@ -29,5 +37,22 @@ if [ $? -eq 0 ]; then
   echo 'Source code successfully unpacked into "'$output'"'
 else
   echo 'ERROR occured while unpacking source code'
-  exit 1
 fi
+
+for i in `grep -abo Embedded_input_deck $file | cut -f1 -d:`; do
+  f=`dd status=noxfer if=$file bs=1 skip=$((i-60)) count=60 2>/dev/null | \
+      sed 's, *$,,'`
+
+  if [ "$f"x != x ]; then
+    err=0
+    mkdir -p $dir/`dirname $f`
+
+    nbytes=`od -t d8 --skip-bytes=$((i+64)) --read-bytes=8 $file | \
+        head -1 | awk '{print$2}'`
+
+    dd status=noxfer if=$file of=$dir/$f bs=1 skip=$((i+80)) count=$nbytes \
+        2>/dev/null
+
+    [ $? -eq 0 ] && echo 'Input deck successfully unpacked into "'$dir/$f'"'
+  fi
+done

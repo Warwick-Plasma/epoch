@@ -29,11 +29,21 @@ MODULE deck
 
   PRIVATE
 
-  PUBLIC :: read_deck
+  PUBLIC :: read_deck, write_input_decks
 
   SAVE
   CHARACTER(LEN=string_length) :: current_block_name
   LOGICAL :: invalid_block
+
+  INTEGER, PARAMETER :: buffer_size = 1024
+  TYPE :: file_buffer
+    CHARACTER(LEN=string_length) :: filename
+    CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: buffer
+    INTEGER :: pos, idx, length
+    TYPE(file_buffer), POINTER :: next
+  END TYPE file_buffer
+
+  TYPE(file_buffer), POINTER :: file_buffer_head
 
 CONTAINS
 
@@ -302,8 +312,11 @@ CONTAINS
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=45+data_dir_max_length) :: deck_filename, status_filename
     LOGICAL :: terminate = .FALSE., exists
-    INTEGER :: errcode_deck, ierr
+    INTEGER :: errcode_deck, ierr, i
     LOGICAL :: white_space_over
+    CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
+    TYPE(file_buffer), POINTER :: fbuf
+    LOGICAL :: already_parsed
 
     ! No error yet
     errcode_deck = c_err_none
@@ -312,6 +325,7 @@ CONTAINS
 
     lun = 5
     white_space_over = .FALSE.
+    already_parsed = .FALSE.
 
     ! Make the whole filename by adding the data_dir to the filename
     deck_filename = TRIM(ADJUSTL(data_dir))// '/' // TRIM(ADJUSTL(filename))
@@ -341,6 +355,31 @@ CONTAINS
     ! rank 0 reads the file and then passes it out to the other nodes using
     ! MPI_BCAST
     IF (rank .EQ. 0) THEN
+      IF (.NOT. ASSOCIATED(file_buffer_head)) THEN
+        ALLOCATE(file_buffer_head)
+        fbuf=>file_buffer_head
+      ELSE
+        fbuf=>file_buffer_head
+      ENDIF
+
+      DO WHILE (ASSOCIATED(fbuf%next))
+        fbuf=>fbuf%next
+        IF (fbuf%filename .EQ. deck_filename) THEN
+          already_parsed = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+      IF (.NOT. already_parsed) THEN
+        ALLOCATE(fbuf%next)
+        fbuf=>fbuf%next
+        fbuf%filename = deck_filename
+        fbuf%pos = 1
+        fbuf%idx = 1
+        fbuf%length = 1
+        NULLIFY(fbuf%next)
+        ALLOCATE(fbuf%buffer(fbuf%length))
+      ENDIF
+
       ! Check whether or not the input deck file requested exists
       INQUIRE(file=deck_filename, exist=exists)
       IF (.NOT. exists) THEN
@@ -369,6 +408,42 @@ CONTAINS
         ! When you reach an EOL character iostat returns -2
         ! When you reach an EOF iostat returns -1
         READ(lun, "(A1)", advance='no', size=s, iostat=f), u1
+
+        IF (.NOT. already_parsed) THEN
+          ! Store character in a buffer so that we can write the input deck
+          ! contents to a restart dump
+          IF (f .EQ. 0) THEN
+            fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = u1
+          ELSE IF (f .EQ. -2) THEN
+            fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(10)
+          ELSE
+            fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(0)
+            fbuf%pos = fbuf%pos - 1
+          ENDIF
+
+          ! If we reached the end of the character string then move to the next
+          ! element of the array
+          IF (fbuf%pos .EQ. buffer_size) THEN
+            ! If we reached the end of the array then allocate some more
+            IF (fbuf%idx .EQ. fbuf%length) THEN
+              ALLOCATE(tmp_buffer(fbuf%length))
+              DO i = 1,fbuf%length
+                tmp_buffer(i) = fbuf%buffer(i)
+              ENDDO
+              DEALLOCATE(fbuf%buffer)
+              ALLOCATE(fbuf%buffer(2*fbuf%length))
+              DO i = 1,fbuf%length
+                fbuf%buffer(i) = tmp_buffer(i)
+              ENDDO
+              DEALLOCATE(tmp_buffer)
+              fbuf%length = 2*fbuf%length
+            ENDIF
+            fbuf%pos = 1
+            fbuf%idx = fbuf%idx + 1
+          ELSE
+            fbuf%pos = fbuf%pos + 1
+          ENDIF
+        ENDIF
 
         ! If the character is a # then switch to comment mode
         IF (u1 .EQ. '#') is_comment = .TRUE.
@@ -697,5 +772,21 @@ CONTAINS
     err_count = err_count+1
 
   END SUBROUTINE handle_deck_element
+
+
+
+  SUBROUTINE write_input_decks
+
+    TYPE(file_buffer), POINTER :: fbuf
+
+    fbuf=>file_buffer_head
+    DO WHILE(ASSOCIATED(fbuf%next))
+      fbuf=>fbuf%next
+
+      CALL cfd_write_source_code(TRIM(fbuf%filename), "Embedded_input_deck", &
+          fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), 0)
+    ENDDO
+
+  END SUBROUTINE write_input_decks
 
 END MODULE deck
