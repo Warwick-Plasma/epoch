@@ -44,7 +44,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
   deck_window_block.f90 diagnostics.F90 dist_fn.F90 epoch3d.F90 evaluate.f90 \
   evaluator_blocks.f90 fields.f90 helper.F90 ic_module.f90 input.f90 \
   input_cartesian.f90 input_functions.f90 input_particle.f90 iocommon.f90 \
-  iocontrol.f90 job_info.f90 laser.f90 mpi_routines.f90 \
+  iocontrol.f90 job_info.f90 laser.f90 mpi_routines.F90 \
   mpi_subtype_control.F90 output.f90 output_cartesian.f90 output_particle.f90 \
   particle_pointer_advance.F90 particles.F90 partlist.F90 probes.F90 setup.F90 \
   shape_functions.F90 shared_data.F90 shunt.F90 simple_io.F90 \
@@ -150,7 +150,7 @@ iocommon.o: iocommon.f90 job_info.o shared_data.o
 iocontrol.o: iocontrol.f90 input.o output.o
 job_info.o: job_info.f90
 laser.o: laser.f90 custom_laser.o evaluate.o
-mpi_routines.o: mpi_routines.f90 partlist.o
+mpi_routines.o: mpi_routines.F90 partlist.o
 mpi_subtype_control.o: mpi_subtype_control.F90 shared_data.o
 output.o: output.f90 iocommon.o version_data.o
 output_cartesian.o: output_cartesian.f90 iocommon.o output.o
