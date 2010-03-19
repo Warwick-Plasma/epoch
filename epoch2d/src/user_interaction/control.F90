@@ -40,7 +40,6 @@ CONTAINS
     dlb = .FALSE.
     dlb_threshold = 1.0_num
 
-!!$    icfile%value = "ic.deck"
 !!$    restart_snapshot = 0
 
     ! Neutralising background
@@ -114,7 +113,6 @@ CONTAINS
     restart_dump_every = -1
     force_final_to_be_restartable = .TRUE.
     use_offset_grid = .TRUE.
-    use_extended_io = .FALSE.
 
     dumpmask = c_io_never
 

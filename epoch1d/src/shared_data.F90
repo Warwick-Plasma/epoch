@@ -99,7 +99,6 @@ MODULE constants
   INTEGER(4), PARAMETER :: c_def_no_deck = 1024
   INTEGER(4), PARAMETER :: c_def_newtonian = 2048
   INTEGER(4), PARAMETER :: c_def_high_order_smoothing = 4096
-  INTEGER(4), PARAMETER :: c_def_single_deck = 8192
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
@@ -406,13 +405,11 @@ MODULE shared_data
 
   INTEGER :: deck_state
   TYPE(initial_condition_block), DIMENSION(:), ALLOCATABLE :: initial_conditions
-  TYPE(string_type) :: icfile
 
   !----------------------------------------------------------------------------
   ! Extended IO information
   !----------------------------------------------------------------------------
-  LOGICAL :: use_extended_io
-  CHARACTER(LEN=string_length) :: extended_io_file
+
   ! Represents a 2 or 3D distribution
   TYPE :: distribution_function_block
     CHARACTER(LEN=string_length) :: name

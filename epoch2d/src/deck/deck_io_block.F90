@@ -53,7 +53,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_io_deck
-    INTEGER :: loop, elementselected, mask
+    INTEGER :: loop, elementselected, mask, ierr
 
     handle_io_deck = c_err_unknown_element
 
@@ -86,8 +86,13 @@ CONTAINS
     CASE(5)
       use_offset_grid = as_logical(value, handle_io_deck)
     CASE(6)
-      extended_io_file = TRIM(value)
-      use_extended_io = .TRUE.
+      WRITE(*, *) '***ERROR***'
+      WRITE(*, *) 'The "extended_io_file" option is no longer supported.'
+      WRITE(*, *) 'Please use the "import" directive instead'
+      WRITE(40,*) '***ERROR***'
+      WRITE(40,*) 'The "extended_io_file" option is no longer supported.'
+      WRITE(40,*) 'Please use the "import" directive instead'
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     END SELECT
 
     IF (elementselected .LE. n_var_special) RETURN
@@ -118,7 +123,7 @@ CONTAINS
     ! elements is not wanted
     check_io_block = c_err_none
 
-    ! extended io file is optional
+    ! extended io file no longer in use
     io_block_done(6) = .TRUE.
 
     ! Particle Positions

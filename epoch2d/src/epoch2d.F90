@@ -73,15 +73,9 @@ PROGRAM pic
 
   IF (move_window) CALL allocate_window ! window.f90
 
-  ! If the user has specified extended IO options then read the file
+  ! Read extended IO options
   deck_state = c_ds_eio
-#ifdef SINGLE_DECK
   CALL read_deck("input.deck", .TRUE.)
-#else
-  IF (use_extended_io) THEN
-    CALL read_deck(TRIM(extended_io_file), .TRUE.)
-  ENDIF
-#endif
 
   ! restart flag is set
   IF (ic_from_restart) THEN
@@ -95,11 +89,7 @@ PROGRAM pic
     CALL ic_early  ! define initial profiles
     ! External initialisation
     deck_state = c_ds_ic
-#ifdef SINGLE_DECK
     CALL read_deck("input.deck", .TRUE.)
-#else
-    CALL read_deck(icfile%value, .TRUE.)
-#endif
     ! auto_load particles
     CALL auto_load
     CALL deallocate_ic

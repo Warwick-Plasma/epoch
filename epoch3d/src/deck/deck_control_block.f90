@@ -38,7 +38,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_control_deck
-    INTEGER :: loop, elementselected, field_order
+    INTEGER :: loop, elementselected, field_order, ierr
 
     handle_control_deck = c_err_unknown_element
 
@@ -90,7 +90,13 @@ CONTAINS
       dlb_threshold = as_real(value, handle_control_deck)
       dlb = .TRUE.
     CASE(15)
-      icfile%value = value(1:MIN(LEN(value), data_dir_max_length))
+      WRITE(*, *) '***ERROR***'
+      WRITE(*, *) 'The "icfile" option is no longer supported.'
+      WRITE(*, *) 'Please use the "import" directive instead'
+      WRITE(40,*) '***ERROR***'
+      WRITE(40,*) 'The "icfile" option is no longer supported.'
+      WRITE(40,*) 'Please use the "import" directive instead'
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(16)
       restart_snapshot = as_integer(value, handle_control_deck)
       ic_from_restart = .TRUE.
@@ -128,7 +134,7 @@ CONTAINS
     ! dlb threshold is optional
     control_block_done(14) = .TRUE.
 
-    ! external input deck is optional
+    ! icfile no longer in use
     control_block_done(15) = .TRUE.
 
     ! restart snapshot is optional

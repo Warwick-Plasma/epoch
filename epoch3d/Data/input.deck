@@ -26,7 +26,6 @@ begin:control
 
   #dlb_threshold=1.0
 
-  icfile=ic.deck
   #restart_snapshot=98
 
   #Setting neutral_background to F makes the code solve
@@ -80,8 +79,6 @@ begin:output
   full_dump_every=10
   restart_dump_every=-1
   force_final_to_be_restartable=T
-
-  extended_io_file=io.deck
 
   #Properties at particle positions
   particles=never
