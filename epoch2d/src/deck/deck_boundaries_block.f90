@@ -64,15 +64,16 @@ CONTAINS
     DO index = 1, boundary_block_elements
       IF (.NOT. boundary_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
-          PRINT *, "***ERROR***"
-          PRINT *, "Required boundary block element ", &
-              TRIM(ADJUSTL(boundary_block_name(index))), &
-              " absent. Please create this entry in the input deck"
-          WRITE(40, *) ""
-          WRITE(40, *) "***ERROR***"
-          WRITE(40, *) "Required boundary block element ", &
-              TRIM(ADJUSTL(boundary_block_name(index))), &
-              " absent. Please create this entry in the input deck"
+          WRITE(*, *)
+          WRITE(*, *) '***ERROR***'
+          WRITE(*, *) 'Required boundary block element "' &
+              // TRIM(ADJUSTL(boundary_block_name(index))) // '" absent.'
+          WRITE(*, *) 'Please create this entry in the input deck'
+          WRITE(40,*)
+          WRITE(40,*) '***ERROR***'
+          WRITE(40,*) 'Required boundary block element "' &
+              // TRIM(ADJUSTL(boundary_block_name(index))) // '" absent.'
+          WRITE(40,*) 'Please create this entry in the input deck'
         ENDIF
         check_boundary_block = c_err_missing_elements
       ENDIF

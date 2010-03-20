@@ -126,9 +126,10 @@ CONTAINS
       WRITE(file2, '(a, "/epoch3d.dat")') TRIM(data_dir)
       OPEN(unit=20, status='REPLACE', file=file2, iostat=errcode)
       IF (errcode .NE. 0) THEN
-        PRINT *, "***ERROR*** Cannot create epoch2d.dat output file. The &
-            &most common cause of this problem is that the ouput directory &
-            &does not exist"
+        PRINT *, '***ERROR***'
+        PRINT *, 'Cannot create "epoch2d.dat" output file. The most common ' &
+            // 'cause of this problem '
+        PRINT *, 'is that the ouput directory does not exist'
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
       WRITE(20,*) ascii_header

@@ -241,25 +241,27 @@ CONTAINS
     IF (problem_found) THEN
       errcode_deck = IOR(errcode_deck, c_err_terminate)
       IF (rank .EQ. 0) THEN
-        PRINT *, ""
-        PRINT *, "Not all required elements of input deck specified. &
-            &Please fix input deck and rerun code"
-        WRITE(40, *) ""
-        WRITE(40, *) "Not all required elements of input deck specified. &
-            &Please fix input deck and rerun code"
+        WRITE(*, *)
+        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) 'Not all required elements of input deck specified.'
+        WRITE(*, *) 'Please fix input deck and rerun code'
+        WRITE(40,*)
+        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) 'Not all required elements of input deck specified.'
+        WRITE(40,*) 'Please fix input deck and rerun code'
       ENDIF
     ELSE
       IF (rank .EQ. 0) THEN
         IF (deck_state .EQ. c_ds_deck) THEN
-          PRINT *, "Input deck complete and valid. Attempting to set up &
-              &equilibrium"
-          PRINT *, ""
-          WRITE(40, *) "Input deck complete and valid."
+          WRITE(*, *) 'Input deck complete and valid. Attempting to set up ' &
+              // 'equilibrium'
+          WRITE(*, *)
+          WRITE(40,*) 'Input deck complete and valid.'
         ELSE IF (deck_state .EQ. c_ds_ic) THEN
-          PRINT *, "Initial conditions complete and valid. Attempting to &
-              &load particles"
-          PRINT *, ""
-          WRITE(40, *) "Initial conditions complete and valid."
+          WRITE(*, *) 'Initial conditions complete and valid. Attempting to ' &
+              // 'load particles'
+          WRITE(*, *)
+          WRITE(40,*) 'Initial conditions complete and valid.'
         ENDIF
       ENDIF
     ENDIF
@@ -290,7 +292,7 @@ CONTAINS
       lun = lun+1
       IF (lun .GT. max_lun) THEN
         IF (rank .EQ. 0) THEN
-          PRINT *, "***FATAL ERROR*** unable to open lun for input deck read"
+          WRITE(*,*) '***FATAL ERROR*** unable to open lun for input deck read'
         ENDIF
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
@@ -383,8 +385,9 @@ CONTAINS
       ! Check whether or not the input deck file requested exists
       INQUIRE(file=deck_filename, exist=exists)
       IF (.NOT. exists) THEN
-        PRINT *, "***ERROR*** Input deck file ", deck_filename, &
-            " does not exist. Create the file and rerun the code."
+        PRINT *, '***ERROR***'
+        PRINT *, 'Input deck file "' // deck_filename // '" does not exist.'
+        PRINT *, 'Create the file and rerun the code.'
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
 
@@ -530,20 +533,21 @@ CONTAINS
     terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
     ! Fatal error, cause code to bomb
     IF (terminate .AND. rank .EQ. 0) THEN
-      PRINT *, ""
-      WRITE(40, *) ""
-      PRINT *, '***FATAL ERROR*** The code cannot parse the input deck &
-          &sufficiently to run. Please read the output file "deck.status" in &
-          &the current directory to check for errors.'
-      WRITE(40, *) "***FATAL ERROR*** The code cannot parse the input deck &
-          &sufficiently to run. Please read this file and correct any errors &
-          &mentioned"
-      PRINT *, ""
-      PRINT *, ""
-      PRINT *, ""
-      PRINT *, ""
-      PRINT *, ""
-      PRINT *, ""
+      WRITE(*, *)
+      WRITE(*, *) '***FATAL ERROR***'
+      WRITE(*, *) 'The code cannot parse the input deck sufficiently to run.'
+      WRITE(*, *) 'Please read the output file "deck.status" to check for ' &
+          // 'errors.'
+      WRITE(40,*)
+      WRITE(40,*) '***FATAL ERROR***'
+      WRITE(40,*) 'The code cannot parse the input deck sufficiently to run.'
+      WRITE(40,*) 'Please read this file and correct any errors mentioned.'
+      PRINT *
+      PRINT *
+      PRINT *
+      PRINT *
+      PRINT *
+      PRINT *
     ENDIF
 
     IF (first_call) CLOSE(40)
@@ -570,9 +574,9 @@ CONTAINS
     IF (str_cmp(element, "import")) THEN
       invalid_block = .TRUE.
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *), ""
-        WRITE(40, *), "Importing ", TRIM(ADJUSTL(value)), " file"
-        WRITE(40, *), ""
+        WRITE(40,*)
+        WRITE(40,*) 'Importing "' // TRIM(ADJUSTL(value)) // '" file'
+        WRITE(40,*)
       ENDIF
       CALL read_deck(TRIM(ADJUSTL(value)), .FALSE.)
       RETURN
@@ -585,31 +589,36 @@ CONTAINS
           c_err_pp_options_wrong) .NE. 0
       IF (invalid_block .AND. rank .EQ. rank_check) THEN
         IF(IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
-          PRINT *, ""
-          PRINT *, "***ERROR*** The block ", TRIM(value), &
-              " cannot be set because the code has not been compiled with " &
-              // "the correct preprocessor options.", &
-              "Code will continue, but to use selected features, please " &
-              // "recompile with ",TRIM(extended_error_string)," option"
-          PRINT *, ""
-          WRITE(40,*) ""
-          WRITE(40,*) "***ERROR*** The block ", TRIM(value), &
-              " cannot be set because the code has not been compiled with " &
-              // "the correct preprocessor options.", &
-              "Code will continue, but to use selected features, please " &
-              // "recompile with ",TRIM(extended_error_string)," option"
-          WRITE(40,*) ""
+          WRITE(*, *)
+          WRITE(*, *) '***WARNING***'
+          WRITE(*, *) 'The block "' // TRIM(value) // '" cannot be set because'
+          WRITE(*, *) 'the code has not been compiled with the correct ' &
+              // 'preprocessor options.'
+          WRITE(*, *) 'Code will continue, but to use selected features, ' &
+              // 'please recompile with the'
+          WRITE(*, *) TRIM(extended_error_string) // ' option'
+          WRITE(*, *)
+          WRITE(40,*)
+          WRITE(40,*) '***WARNING***'
+          WRITE(40,*) 'The block "' // TRIM(value) // '" cannot be set because'
+          WRITE(40,*) 'the code has not been compiled with the correct ' &
+              // 'preprocessor options.'
+          WRITE(40,*) 'Code will continue, but to use selected features, ' &
+              // 'please recompile with the'
+          WRITE(40,*) TRIM(extended_error_string) // ' option'
+          WRITE(40,*)
         ELSE
-          PRINT *, CHAR(9), "Unknown block ", TRIM(value), &
-              " in input deck, ignoring", deck_state
+          WRITE(*, *) '***WARNING***'
+          WRITE(*, *) 'Unknown block "' // TRIM(value) // '" in input deck, ' &
+              // 'ignoring', deck_state
         ENDIF
       ENDIF
       CALL start_block(value)
       err_count = 0
       current_block_name = value
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *), "Beginning ", TRIM(ADJUSTL(value)), " block"
-        WRITE(40, *), ""
+        WRITE(40,*) 'Beginning "' // TRIM(ADJUSTL(value)) // '" block'
+        WRITE(40,*)
       ENDIF
       ! Reset errcode_deck here because reporting c_err_unknown_element is OK
       errcode_deck = c_err_none
@@ -619,13 +628,13 @@ CONTAINS
       CALL end_block(current_block_name)
       invalid_block = .TRUE.
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *), ""
-        WRITE(40, *), "Ending ", TRIM(ADJUSTL(value)), " block"
-        WRITE(40, *), ""
+        WRITE(40,*)
+        WRITE(40,*) 'Ending "' // TRIM(ADJUSTL(value)) // '" block'
+        WRITE(40,*)
         IF (err_count .NE. 0) THEN
-          WRITE(40, *) "***WARNING*** block ", TRIM(ADJUSTL(value)), &
-              " contains errors"
-          WRITE(40, *) ""
+          WRITE(40,*) '***WARNING***'
+          WRITE(40,*) 'block "' // TRIM(ADJUSTL(value)) // '" contains errors'
+          WRITE(40,*)
         ENDIF
       ENDIF
       RETURN
@@ -649,122 +658,131 @@ CONTAINS
     ! If an error is fatal then set terminate to .TRUE.
     IF (IAND(errcode_deck, c_err_unknown_element) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *) ""
-        PRINT *, ""
-        PRINT *, "***WARNING*** Unrecognised element ", TRIM(element), &
-            " in input deck. Code will continue to run, but behaviour &
-            &is undefined"
-        WRITE(40, *) "***WARNING*** Unrecognised element ", TRIM(element), &
-            " in input deck. Code will continue to run, but behaviour is &
-            &undefined"
-        PRINT *, ""
-        WRITE(40, *) ""
+        WRITE(*, *)
+        WRITE(*, *) '***WARNING***'
+        WRITE(*, *) 'Unrecognised element "' // TRIM(element) &
+            // '" in input deck.'
+        WRITE(*, *) 'Code will continue to run, but behaviour is undefined'
+        WRITE(*, *)
+        WRITE(40,*)
+        WRITE(40,*) '***WARNING***'
+        WRITE(40,*) 'Unrecognised element "' // TRIM(element) &
+            // '" in input deck.'
+        WRITE(40,*) 'Code will continue to run, but behaviour is undefined'
+        WRITE(40,*)
       ENDIF
     ENDIF
     IF (IAND(errcode_deck, c_err_preset_element) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *) ""
-        PRINT *, "***WARNING*** element ", TRIM(element), &
-            " is set multiple times in this deck. Code will continue using &
-            &first value in deck"
-        WRITE(40, *) "***WARNING*** element ", TRIM(element), &
-            " is set multiple times in this deck. Code will continue using &
-            &first value in deck"
-        PRINT *, ""
-        WRITE(40, *) ""
+        WRITE(*, *)
+        WRITE(*, *) '***WARNING***'
+        WRITE(*, *) 'element "' // TRIM(element) &
+            // '" is set multiple times in this deck.'
+        WRITE(*, *) 'Code will continue using first value in deck'
+        WRITE(*, *)
+        WRITE(40,*)
+        WRITE(40,*) '***WARNING***'
+        WRITE(40,*) 'element "' // TRIM(element) &
+            // '" is set multiple times in this deck.'
+        WRITE(40,*) 'Code will continue using first value in deck'
+        WRITE(40,*)
       ENDIF
     ENDIF
     IF (IAND(errcode_deck, c_err_preset_element_use_later) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *) ""
-        PRINT *, ""
-        PRINT *, "***WARNING*** element ", TRIM(element), &
-            &" is set multiple times in this deck. Code will continue using &
-            &last value in deck"
-        WRITE(40, *) "***WARNING*** element ", TRIM(element), &
-            &" is set multiple times in this deck. Code will continue using &
-            &last value in deck"
-        PRINT *, ""
-        WRITE(40, *) ""
+        WRITE(*, *)
+        WRITE(*, *) '***WARNING***'
+        WRITE(*, *) 'element "' // TRIM(element) &
+            // '" is set multiple times in this deck.'
+        WRITE(*, *) 'Code will continue using last value in deck'
+        WRITE(*, *)
+        WRITE(40,*)
+        WRITE(40,*) '***WARNING***'
+        WRITE(40,*) 'element "' // TRIM(element) &
+            // '" is set multiple times in this deck.'
+        WRITE(40,*) 'Code will continue using last value in deck'
+        WRITE(40,*)
       ENDIF
     ENDIF
     IF (IAND(errcode_deck, c_err_bad_value) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *) ""
-        PRINT *, ""
-        PRINT *, "***ERROR*** value ", TRIM(value), " in element ", &
-            TRIM(element), " is invalid or could not be parsed. Code &
-            &will terminate."
-        WRITE(40, *) "***ERROR*** value ", TRIM(value), " in element ", &
-            &TRIM(element), " is invalid or could not be parsed. Code &
-            &will terminate."
-        PRINT *, ""
-        WRITE(40, *) ""
+        WRITE(*, *)
+        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) 'value "' // TRIM(value) // '" in element "' &
+            // TRIM(element) // '" is'
+        WRITE(*, *) 'invalid or could not be parsed. Code will terminate.'
+        WRITE(*, *)
+        WRITE(40,*)
+        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) 'value "' // TRIM(value) // '" in element "' &
+            // TRIM(element) // '" is'
+        WRITE(40,*) 'invalid or could not be parsed. Code will terminate.'
+        WRITE(40,*)
         errcode_deck = IOR(errcode_deck, c_err_terminate)
       ENDIF
     ENDIF
-!!$    IF (IAND(errcode_deck, ERR_BAD_VALUE_NO_TERMINATE) .NE. 0) THEN
-!!$       IF (rank .EQ. rank_check) THEN
-!!$          WRITE(40, *) ""
-!!$          PRINT *, ""
-!!$          PRINT *, "***ERROR*** value ", TRIM(value), " in non essential &
-!!$              &element ", TRIM(element), " is invalid or could not be &
-!!$              &parsed. Code will continue but behaviour is undefined."
-!!$          WRITE(40, *) "***ERROR*** value ", TRIM(value), " in non &
-!!$              &essential element ", TRIM(element), " is invalid or &
-!!$              &could not be parsed. Code will continue but behaviour &
-!!$              &is undefined."
-!!$          PRINT *, ""
-!!$          WRITE(40, *) ""
-!!$       ENDIF
-!!$    ENDIF
+
     IF (IAND(errcode_deck, c_err_required_element_not_set) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *) ""
-        PRINT *, ""
-        PRINT *, "***ERROR*** value ", TRIM(value), " in element ", &
-            TRIM(element), " cannot be set because a prerequisite element, ", &
-            TRIM(extended_error_string), &
-            ", has not been set. Code will terminate"
-        WRITE(40, *) "***ERROR*** value ", TRIM(value), " in element ", &
-            TRIM(element), " cannot be set because a prerequisite element, ", &
-            TRIM(extended_error_string), &
-            ", has not been set. Code will terminate"
-        PRINT *, ""
-        WRITE(40, *) ""
+        WRITE(*, *)
+        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) 'value "' // TRIM(value) // '" in element "' &
+            // TRIM(element) // '" cannot be'
+        WRITE(*, *) 'set because a prerequisite element "' &
+            // TRIM(extended_error_string) // '" has'
+        WRITE(*, *) 'not been set. Code will terminate'
+        WRITE(*, *)
+        WRITE(40,*)
+        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) 'value "' // TRIM(value) // '" in element "' &
+            // TRIM(element) // '" cannot be'
+        WRITE(40,*) 'set because a prerequisite element "' &
+            // TRIM(extended_error_string) // '" has'
+        WRITE(40,*) 'not been set. Code will terminate'
+        WRITE(40,*)
         errcode_deck = IOR(errcode_deck, c_err_terminate)
       ENDIF
     ENDIF
     IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *) ""
-        PRINT *, ""
-        PRINT *, "***ERROR*** The element ", TRIM(element), " of block ", &
-            TRIM(current_block_name), " cannot be set because the code has &
-            &not been compiled with the correct preprocessor options.", &
-            &"Code will continue, but to use selected features, please &
-            &recompile with ", TRIM(extended_error_string), " option"
-        WRITE(40, *) "***ERROR*** The element ", TRIM(element), " of block ", &
-            TRIM(current_block_name), " cannot be set because the code has &
-            &not been compiled with the correct preprocessor options.", &
-            &"Code will continue, but to use selected features, please &
-            &recompile with ", TRIM(extended_error_string), " option"
-        PRINT *, ""
-        WRITE(40, *) ""
+        WRITE(*, *)
+        WRITE(*, *) '***WARNING***'
+        WRITE(*, *) 'The element "' // TRIM(element) // '" of block "' &
+            // TRIM(current_block_name) // '" cannot be set'
+        WRITE(*, *) 'because the code has not been compiled with the ' &
+            // 'correct preprocessor options.'
+        WRITE(*, *) 'Code will continue, but to use selected features, ' &
+            // 'please recompile with the'
+        WRITE(*, *) TRIM(extended_error_string) // ' option'
+        WRITE(*, *)
+        WRITE(40,*)
+        WRITE(40,*) '***WARNING***'
+        WRITE(40,*) 'The element "' // TRIM(element) // '" of block "' &
+            // TRIM(current_block_name) // '" cannot be set'
+        WRITE(40,*) 'because the code has not been compiled with the ' &
+            // 'correct preprocessor options.'
+        WRITE(40,*) 'Code will continue, but to use selected features, ' &
+            // 'please recompile with the'
+        WRITE(40,*) TRIM(extended_error_string) // ' option'
+        WRITE(40,*)
       ENDIF
     ENDIF
     IF (IAND(errcode_deck, c_err_other) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        WRITE(40, *) ""
-        PRINT *, ""
-        PRINT *, "***ERROR*** You have managed to find an impossible &
-            &situation in this code. Good for you. Just because of that, &
-            &code will terminate."
-        WRITE(40, *) "***ERROR*** You have managed to find an impossible &
-            &situation in this code. Good for you. Just because of that, &
-            &code will terminate."
-        PRINT *, ""
-        WRITE(40, *) ""
+        WRITE(*, *)
+        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) 'You have managed to find an impossible situation in ' &
+            // 'this code.'
+        WRITE(*, *) 'Good for you. Just because of that, the code will ' &
+            // 'terminate.'
+        WRITE(*, *)
+        WRITE(40,*)
+        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) 'You have managed to find an impossible situation in ' &
+            // 'this code.'
+        WRITE(40,*) 'Good for you. Just because of that, the code will ' &
+            // 'terminate.'
+        WRITE(40,*)
         errcode_deck = IOR(errcode_deck, c_err_terminate)
       ENDIF
     ENDIF

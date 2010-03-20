@@ -19,7 +19,7 @@ CONTAINS
     INTEGER :: handle_ic_laser_deck
     REAL(num) :: dummy
     TYPE(primitive_stack) :: output
-    INTEGER :: ix, iy
+    INTEGER :: ix, iy, ierr
 
     handle_ic_laser_deck = c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
@@ -35,10 +35,11 @@ CONTAINS
 
     IF (.NOT. direction_set) THEN
       IF (rank .EQ. 0) THEN
-        PRINT *, "***ERROR*** Cannot set laser properties before &
-            &direction is set"
-        WRITE(40, *) "***ERROR*** Cannot set laser properties before &
-            &direction is set"
+        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) 'Cannot set laser properties before direction is set'
+        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) 'Cannot set laser properties before direction is set'
+        CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
       extended_error_string = "direction"
       handle_ic_laser_deck = c_err_required_element_not_set
