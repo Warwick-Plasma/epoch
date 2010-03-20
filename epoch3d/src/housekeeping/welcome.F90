@@ -122,10 +122,6 @@ CONTAINS
     defines = IOR(defines, c_def_particle_ionise)
     WRITE(*, *) "Particle ionisation model -DPARTICLE_IONISE"
 #endif
-#ifdef NO_DECK
-    defines = IOR(defines, c_def_no_deck)
-    WRITE(*, *) "Deactivated input deck support -DNO_DECK"
-#endif
     WRITE(*, *) "*************************************************************"
     WRITE(*, *) ""
 

@@ -35,7 +35,7 @@ DATE := $(shell date +%s)
 MACHINE := $(shell uname -n)
 PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(MACHINE)"' -D_FLAGS='"$(FFLAGS)"'
 
-SRCFILES = balance.F90 boundary.f90 calc_df.F90 control.F90 current_smooth.F90 \
+SRCFILES = balance.F90 boundary.f90 calc_df.F90 current_smooth.F90 \
   custom_deck.f90 custom_laser.f90 custom_parser.f90 deck.F90 \
   deck_boundaries_block.f90 deck_constant_block.f90 deck_control_block.f90 \
   deck_deo_block.f90 deck_eio_dist_fn_block.f90 \
@@ -107,7 +107,6 @@ visitclean:
 balance.o: balance.F90 boundary.o mpi_subtype_control.o partlist.o
 boundary.o: boundary.f90 partlist.o
 calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
-control.o: control.F90 setup.o shared_data.o
 current_smooth.o: current_smooth.F90 shape_functions.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
@@ -138,9 +137,9 @@ diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o encoded_source.o \
   iocontrol.o iterators.o mpi_subtype_control.o output_cartesian.o \
   output_particle.o probes.o
 dist_fn.o: dist_fn.F90 output_cartesian.o
-epoch2d.o: epoch2d.F90 balance.o boundary.o control.o deck.o diagnostics.o \
-  fields.o ic_module.o ionise.o mpi_routines.o particles.o setup.o \
-  split_particles.o welcome.o window.o
+epoch2d.o: epoch2d.F90 balance.o boundary.o deck.o diagnostics.o fields.o \
+  ic_module.o ionise.o mpi_routines.o particles.o setup.o split_particles.o \
+  welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o

@@ -17,9 +17,6 @@ PROGRAM pic
 
   USE setup
   USE ic_module
-#ifdef NO_DECK
-  USE control
-#endif
   USE deck
   USE welcome
   USE diagnostics
@@ -56,16 +53,7 @@ PROGRAM pic
   ENDIF
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, MPI_COMM_WORLD, errcode)
-#ifdef NO_DECK
-  CALL setup_control_block
-  CALL setup_boundaries_block
-  CALL setup_species_block
-  CALL setup_output_block
-  IF (rank .EQ. 0) &
-      PRINT *, "Control variables setup OK. Setting initial conditions"
-#else
   CALL read_deck("input.deck", .TRUE.)
-#endif
   CALL setup_particle_boundaries ! boundary.f90
   CALL mpi_initialise ! mpi_routines.f90
   CALL after_control ! setup.f90
