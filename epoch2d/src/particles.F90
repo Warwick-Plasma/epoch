@@ -151,16 +151,12 @@ CONTAINS
 
         ! Calculate v(t+0.5dt) from p(t)
         ! See PSC manual page (25-27)
-        root = 1.0_num &
+        root = dto2 &
             / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2) * ic2)
 
-        part_vx = part_px * root
-        part_vy = part_py * root
-        part_vz = part_pz * root
-
         ! Move particles to half timestep position to first order
-        part_x = part_x + part_vx * dto2
-        part_y = part_y + part_vy * dto2
+        part_x = part_x + part_px * root
+        part_y = part_y + part_py * root
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
@@ -225,71 +221,71 @@ CONTAINS
         ! These are the electric an magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
-        ex_part = hx(-1) &
-            * (gy(-1) * ex(cell_x2-1,cell_y1-1) &
-            +  gy( 0) * ex(cell_x2-1,cell_y1  ) &
-            +  gy( 1) * ex(cell_x2-1,cell_y1+1)) + hx( 0) &
-            * (gy(-1) * ex(cell_x2,  cell_y1-1) &
-            +  gy( 0) * ex(cell_x2,  cell_y1  ) &
-            +  gy( 1) * ex(cell_x2,  cell_y1+1)) + hx( 1) &
-            * (gy(-1) * ex(cell_x2+1,cell_y1-1) &
-            +  gy( 0) * ex(cell_x2+1,cell_y1  ) &
-            +  gy( 1) * ex(cell_x2+1,cell_y1+1))
+        ex_part = gy(-1) &
+            * (hx(-1) * ex(cell_x2-1,cell_y1-1) &
+            +  hx( 0) * ex(cell_x2  ,cell_y1-1) &
+            +  hx( 1) * ex(cell_x2+1,cell_y1-1)) + gy( 0) &
+            * (hx(-1) * ex(cell_x2-1,cell_y1  ) &
+            +  hx( 0) * ex(cell_x2  ,cell_y1  ) &
+            +  hx( 1) * ex(cell_x2+1,cell_y1  )) + gy( 1) &
+            * (hx(-1) * ex(cell_x2-1,cell_y1+1) &
+            +  hx( 0) * ex(cell_x2  ,cell_y1+1) &
+            +  hx( 1) * ex(cell_x2+1,cell_y1+1))
 
-        ey_part = gx(-1) &
-            * (hy(-1) * ey(cell_x1-1,cell_y2-1) &
-            +  hy( 0) * ey(cell_x1-1,cell_y2  ) &
-            +  hy( 1) * ey(cell_x1-1,cell_y2+1)) + gx( 0) &
-            * (hy(-1) * ey(cell_x1,  cell_y2-1) &
-            +  hy( 0) * ey(cell_x1,  cell_y2  ) &
-            +  hy( 1) * ey(cell_x1,  cell_y2+1)) + gx( 1) &
-            * (hy(-1) * ey(cell_x1+1,cell_y2-1) &
-            +  hy( 0) * ey(cell_x1+1,cell_y2  ) &
-            +  hy( 1) * ey(cell_x1+1,cell_y2+1))
+        ey_part = hy(-1) &
+            * (gx(-1) * ey(cell_x1-1,cell_y2-1) &
+            +  gx( 0) * ey(cell_x1  ,cell_y2-1) &
+            +  gx( 1) * ey(cell_x1+1,cell_y2-1)) + hy( 0) &
+            * (gx(-1) * ey(cell_x1-1,cell_y2  ) &
+            +  gx( 0) * ey(cell_x1  ,cell_y2  ) &
+            +  gx( 1) * ey(cell_x1+1,cell_y2  )) + hy( 1) &
+            * (gx(-1) * ey(cell_x1-1,cell_y2+1) &
+            +  gx( 0) * ey(cell_x1  ,cell_y2+1) &
+            +  gx( 1) * ey(cell_x1+1,cell_y2+1))
 
-        ez_part = gx(-1) &
-            * (gy(-1) * ez(cell_x1-1,cell_y1-1) &
-            +  gy( 0) * ez(cell_x1-1,cell_y1  ) &
-            +  gy( 1) * ez(cell_x1-1,cell_y1+1)) + gx( 0) &
-            * (gy(-1) * ez(cell_x1,  cell_y1-1) &
-            +  gy( 0) * ez(cell_x1,  cell_y1  ) &
-            +  gy( 1) * ez(cell_x1,  cell_y1+1)) + gx( 1) &
-            * (gy(-1) * ez(cell_x1+1,cell_y1-1) &
-            +  gy( 0) * ez(cell_x1+1,cell_y1  ) &
-            +  gy( 1) * ez(cell_x1+1,cell_y1+1))
+        ez_part = gy(-1) &
+            * (gx(-1) * ez(cell_x1-1,cell_y1-1) &
+            +  gx( 0) * ez(cell_x1  ,cell_y1-1) &
+            +  gx( 1) * ez(cell_x1+1,cell_y1-1)) + gy( 0) &
+            * (gx(-1) * ez(cell_x1-1,cell_y1  ) &
+            +  gx( 0) * ez(cell_x1  ,cell_y1  ) &
+            +  gx( 1) * ez(cell_x1+1,cell_y1  )) + gy( 1) &
+            * (gx(-1) * ez(cell_x1-1,cell_y1+1) &
+            +  gx( 0) * ez(cell_x1  ,cell_y1+1) &
+            +  gx( 1) * ez(cell_x1+1,cell_y1+1))
 
-        bx_part = gx(-1) &
-            * (hy(-1) * bx(cell_x1-1,cell_y2-1) &
-            +  hy( 0) * bx(cell_x1-1,cell_y2  ) &
-            +  hy( 1) * bx(cell_x1-1,cell_y2+1)) + gx( 0) &
-            * (hy(-1) * bx(cell_x1,  cell_y2-1) &
-            +  hy( 0) * bx(cell_x1,  cell_y2  ) &
-            +  hy( 1) * bx(cell_x1,  cell_y2+1)) + gx( 1) &
-            * (hy(-1) * bx(cell_x1+1,cell_y2-1) &
-            +  hy( 0) * bx(cell_x1+1,cell_y2  ) &
-            +  hy( 1) * bx(cell_x1+1,cell_y2+1))
+        bx_part = hy(-1) &
+            * (gx(-1) * bx(cell_x1-1,cell_y2-1) &
+            +  gx( 0) * bx(cell_x1  ,cell_y2-1) &
+            +  gx( 1) * bx(cell_x1+1,cell_y2-1)) + hy( 0) &
+            * (gx(-1) * bx(cell_x1-1,cell_y2  ) &
+            +  gx( 0) * bx(cell_x1  ,cell_y2  ) &
+            +  gx( 1) * bx(cell_x1+1,cell_y2  )) + hy( 1) &
+            * (gx(-1) * bx(cell_x1-1,cell_y2+1) &
+            +  gx( 0) * bx(cell_x1  ,cell_y2+1) &
+            +  gx( 1) * bx(cell_x1+1,cell_y2+1))
 
-        by_part = hx(-1) &
-            * (gy(-1) * by(cell_x2-1,cell_y1-1) &
-            +  gy( 0) * by(cell_x2-1,cell_y1  ) &
-            +  gy( 1) * by(cell_x2-1,cell_y1+1)) + hx( 0) &
-            * (gy(-1) * by(cell_x2,  cell_y1-1) &
-            +  gy( 0) * by(cell_x2,  cell_y1  ) &
-            +  gy( 1) * by(cell_x2,  cell_y1+1)) + hx( 1) &
-            * (gy(-1) * by(cell_x2+1,cell_y1-1) &
-            +  gy( 0) * by(cell_x2+1,cell_y1  ) &
-            +  gy( 1) * by(cell_x2+1,cell_y1+1))
+        by_part = gy(-1) &
+            * (hx(-1) * by(cell_x2-1,cell_y1-1) &
+            +  hx( 0) * by(cell_x2  ,cell_y1-1) &
+            +  hx( 1) * by(cell_x2+1,cell_y1-1)) + gy( 0) &
+            * (hx(-1) * by(cell_x2-1,cell_y1  ) &
+            +  hx( 0) * by(cell_x2  ,cell_y1  ) &
+            +  hx( 1) * by(cell_x2+1,cell_y1  )) + gy( 1) &
+            * (hx(-1) * by(cell_x2-1,cell_y1+1) &
+            +  hx( 0) * by(cell_x2  ,cell_y1+1) &
+            +  hx( 1) * by(cell_x2+1,cell_y1+1))
 
-        bz_part = hx(-1) &
-            * (hy(-1) * bz(cell_x2-1,cell_y2-1) &
-            +  hy( 0) * bz(cell_x2-1,cell_y2  ) &
-            +  hy( 1) * bz(cell_x2-1,cell_y2+1)) + hx( 0) &
-            * (hy(-1) * bz(cell_x2,  cell_y2-1) &
-            +  hy( 0) * bz(cell_x2,  cell_y2  ) &
-            +  hy( 1) * bz(cell_x2,  cell_y2+1)) + hx( 1) &
-            * (hy(-1) * bz(cell_x2+1,cell_y2-1) &
-            +  hy( 0) * bz(cell_x2+1,cell_y2  ) &
-            +  hy( 1) * bz(cell_x2+1,cell_y2+1))
+        bz_part = hy(-1) &
+            * (hx(-1) * bz(cell_x2-1,cell_y2-1) &
+            +  hx( 0) * bz(cell_x2  ,cell_y2-1) &
+            +  hx( 1) * bz(cell_x2+1,cell_y2-1)) + hy( 0) &
+            * (hx(-1) * bz(cell_x2-1,cell_y2  ) &
+            +  hx( 0) * bz(cell_x2  ,cell_y2  ) &
+            +  hx( 1) * bz(cell_x2+1,cell_y2  )) + hy( 1) &
+            * (hx(-1) * bz(cell_x2-1,cell_y2+1) &
+            +  hx( 0) * bz(cell_x2  ,cell_y2+1) &
+            +  hx( 1) * bz(cell_x2+1,cell_y2+1))
 
         ! update particle momenta using weighted fields
         cmratio = part_q * 0.5_num * dt
@@ -329,8 +325,8 @@ CONTAINS
         part_vz = part_pz * root
 
         ! Move particles to end of time step at 2nd order accuracy
-        part_x = part_x + part_vx * dt/2.0_num
-        part_y = part_y + part_vy * dt/2.0_num
+        part_x = part_x + part_vx * dto2
+        part_y = part_y + part_vy * dto2
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
