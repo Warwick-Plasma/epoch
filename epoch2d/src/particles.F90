@@ -79,8 +79,8 @@ CONTAINS
     REAL(num) :: wx, wy, wz
 
     ! Temporary variables
-    REAL(num) :: mean
-    INTEGER :: ispecies
+    REAL(num) :: mean, idx, idy, idt, ic2, dto2, third
+    INTEGER :: ispecies, dcell
 
     TYPE(particle), POINTER :: current, next
 
@@ -90,6 +90,13 @@ CONTAINS
     ALLOCATE(jxh(-4:3, -3:3))
     ALLOCATE(jyh(-3:4, -4:3))
     ALLOCATE(jzh(-3:3, -3:3))
+
+    idx = 1.0_num / dx
+    idy = 1.0_num / dy
+    idt = 1.0_num / dt
+    ic2 = 1.0_num / c**2
+    dto2 = dt / 2.0_num
+    third = 1.0_num / 3.0_num
 
     jx = 0.0_num
     jy = 0.0_num
@@ -106,6 +113,10 @@ CONTAINS
 
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
+      !DEC$ IVDEP
+      !DEC$ VECTOR ALWAYS
+      !DEC$ NOPREFETCH current
+      !DEC$ NOPREFETCH next
       DO ipart = 1, particle_species(ispecies)%attached_list%count
         next=>current%next
 #ifdef PER_PARTICLE_WEIGHT
@@ -129,8 +140,8 @@ CONTAINS
         part_q = current%charge
         part_m = current%mass
 #else
-        part_q  = particle_species(ispecies)%charge
-        part_m  = particle_species(ispecies)%mass
+        part_q = particle_species(ispecies)%charge
+        part_m = particle_species(ispecies)%mass
 #endif
 
 #ifdef PARTICLE_PROBES
@@ -141,36 +152,45 @@ CONTAINS
         ! Calculate v(t+0.5dt) from p(t)
         ! See PSC manual page (25-27)
         root = 1.0_num &
-            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2) * ic2)
 
         part_vx = part_px * root
         part_vy = part_py * root
         part_vz = part_pz * root
 
         ! Move particles to half timestep position to first order
-        part_x = part_x + part_vx*dt/2.0_num
-        part_y = part_y + part_vy*dt/2.0_num
+        part_x = part_x + part_vx * dto2
+        part_y = part_y + part_vy * dto2
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
-        cell_x_r = part_x/dx
+        cell_x_r = part_x * idx
         ! Round cell position to nearest cell
+#ifdef OLD_STYLE
         cell_x1 = NINT(cell_x_r)
+#else
+        cell_x1 = FLOOR(cell_x_r + 0.5_num)
+#endif
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_x = REAL(cell_x1, num) - cell_x_r
-        cell_x1 = cell_x1+1
+        cell_x1 = cell_x1 + 1
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
-        cell_y_r = part_y/dy
+        cell_y_r = part_y * idy
         ! Round cell position to nearest cell
+#ifdef OLD_STYLE
         cell_y1 = NINT(cell_y_r)
+#else
+        cell_y1 = FLOOR(cell_y_r + 0.5_num)
+#endif
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_y = REAL(cell_y1, num) - cell_y_r
-        cell_y1 = cell_y1+1
+        cell_y1 = cell_y1 + 1
 
         ! particle weight factors as described in the manual (FIXREF)
         ! These weight grid properties onto particles
+#ifdef OLD_STYLE
         CALL grid_to_particle(cell_frac_x, gx)
         CALL grid_to_particle(cell_frac_y, gy)
 
@@ -180,22 +200,56 @@ CONTAINS
 
         CALL particle_to_grid(cell_frac_x, xi0x(-2:2))
         CALL particle_to_grid(cell_frac_y, xi0y(-2:2))
+#else
+        gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1))**2
+        gx(+0) = 0.75_num - ABS(cell_frac_x)**2
+        gx(+1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1))**2
 
+        gy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1))**2
+        gy(+0) = 0.75_num - ABS(cell_frac_y)**2
+        gy(+1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1))**2
+
+        xi0x(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
+        xi0x(+0) = 0.75_num - cell_frac_x**2
+        xi0x(+1) = 0.5_num * (0.5_num - cell_frac_x)**2
+
+        xi0y(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
+        xi0y(+0) = 0.75_num - cell_frac_y**2
+        xi0y(+1) = 0.5_num * (0.5_num - cell_frac_y)**2
+#endif
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
         ! And in Y&Z for bx, X&Z for by, X&Y for bz
-        cell_x_r = part_x/dx - 0.5_num
+        cell_x_r = part_x * idx - 0.5_num
+#ifdef OLD_STYLE
         cell_x2  = NINT(cell_x_r)
+#else
+        cell_x2  = FLOOR(cell_x_r + 0.5_num)
+#endif
         cell_frac_x = REAL(cell_x2, num) - cell_x_r
-        cell_x2 = cell_x2+1
+        cell_x2  = cell_x2 + 1
 
-        cell_y_r = part_y/dy - 0.5_num
+        cell_y_r = part_y * idy - 0.5_num
+#ifdef OLD_STYLE
         cell_y2  = NINT(cell_y_r)
+#else
+        cell_x2  = FLOOR(cell_y_r + 0.5_num)
+#endif
         cell_frac_y = REAL(cell_y2, num) - cell_y_r
-        cell_y2 = cell_y2+1
+        cell_y2  = cell_y2 + 1
 
+#ifdef OLD_STYLE
         CALL grid_to_particle(cell_frac_x, hx)
         CALL grid_to_particle(cell_frac_y, hy)
+#else
+        hx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1))**2
+        hx(+0) = 0.75_num - ABS(cell_frac_x)**2
+        hx(+1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1))**2
+
+        hy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1))**2
+        hy(+0) = 0.75_num - ABS(cell_frac_y)**2
+        hy(+1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1))**2
+#endif
 
         ex_part = 0.0_num
         ey_part = 0.0_num
@@ -204,9 +258,10 @@ CONTAINS
         by_part = 0.0_num
         bz_part = 0.0_num
 
-        ! These are the electric and magnetic fields interpolated to the
+        ! These are the electric an magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
+#ifdef OLD_STYLE
         DO ix = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             ex_part = ex_part + hx(ix)*gy(iy)*ex(cell_x2+ix, cell_y1+iy)
@@ -218,6 +273,73 @@ CONTAINS
             bz_part = bz_part + hx(ix)*hy(iy)*bz(cell_x2+ix, cell_y2+iy)
           ENDDO
         ENDDO
+#else
+        ex_part = hx(-1) &
+            * (gy(-1) * ex(cell_x2-1,cell_y1-1) &
+            +  gy( 0) * ex(cell_x2-1,cell_y1  ) &
+            +  gy( 1) * ex(cell_x2-1,cell_y1+1)) + hx( 0) &
+            * (gy(-1) * ex(cell_x2,  cell_y1-1) &
+            +  gy( 0) * ex(cell_x2,  cell_y1  ) &
+            +  gy( 1) * ex(cell_x2,  cell_y1+1)) + hx( 1) &
+            * (gy(-1) * ex(cell_x2+1,cell_y1-1) &
+            +  gy( 0) * ex(cell_x2+1,cell_y1  ) &
+            +  gy( 1) * ex(cell_x2+1,cell_y1+1))
+
+        ey_part = gx(-1) &
+            * (hy(-1) * ey(cell_x1-1,cell_y2-1) &
+            +  hy( 0) * ey(cell_x1-1,cell_y2  ) &
+            +  hy( 1) * ey(cell_x1-1,cell_y2+1)) + gx( 0) &
+            * (hy(-1) * ey(cell_x1,  cell_y2-1) &
+            +  hy( 0) * ey(cell_x1,  cell_y2  ) &
+            +  hy( 1) * ey(cell_x1,  cell_y2+1)) + gx( 1) &
+            * (hy(-1) * ey(cell_x1+1,cell_y2-1) &
+            +  hy( 0) * ey(cell_x1+1,cell_y2  ) &
+            +  hy( 1) * ey(cell_x1+1,cell_y2+1))
+
+        ez_part = gx(-1) &
+            * (gy(-1) * ez(cell_x1-1,cell_y1-1) &
+            +  gy( 0) * ez(cell_x1-1,cell_y1  ) &
+            +  gy( 1) * ez(cell_x1-1,cell_y1+1)) + gx( 0) &
+            * (gy(-1) * ez(cell_x1,  cell_y1-1) &
+            +  gy( 0) * ez(cell_x1,  cell_y1  ) &
+            +  gy( 1) * ez(cell_x1,  cell_y1+1)) + gx( 1) &
+            * (gy(-1) * ez(cell_x1+1,cell_y1-1) &
+            +  gy( 0) * ez(cell_x1+1,cell_y1  ) &
+            +  gy( 1) * ez(cell_x1+1,cell_y1+1))
+
+        bx_part = gx(-1) &
+            * (hy(-1) * bx(cell_x1-1,cell_y2-1) &
+            +  hy( 0) * bx(cell_x1-1,cell_y2  ) &
+            +  hy( 1) * bx(cell_x1-1,cell_y2+1)) + gx( 0) &
+            * (hy(-1) * bx(cell_x1,  cell_y2-1) &
+            +  hy( 0) * bx(cell_x1,  cell_y2  ) &
+            +  hy( 1) * bx(cell_x1,  cell_y2+1)) + gx( 1) &
+            * (hy(-1) * bx(cell_x1+1,cell_y2-1) &
+            +  hy( 0) * bx(cell_x1+1,cell_y2  ) &
+            +  hy( 1) * bx(cell_x1+1,cell_y2+1))
+
+        by_part = hx(-1) &
+            * (gy(-1) * by(cell_x2-1,cell_y1-1) &
+            +  gy( 0) * by(cell_x2-1,cell_y1  ) &
+            +  gy( 1) * by(cell_x2-1,cell_y1+1)) + hx( 0) &
+            * (gy(-1) * by(cell_x2,  cell_y1-1) &
+            +  gy( 0) * by(cell_x2,  cell_y1  ) &
+            +  gy( 1) * by(cell_x2,  cell_y1+1)) + hx( 1) &
+            * (gy(-1) * by(cell_x2+1,cell_y1-1) &
+            +  gy( 0) * by(cell_x2+1,cell_y1  ) &
+            +  gy( 1) * by(cell_x2+1,cell_y1+1))
+
+        bz_part = hx(-1) &
+            * (hy(-1) * bz(cell_x2-1,cell_y2-1) &
+            +  hy( 0) * bz(cell_x2-1,cell_y2  ) &
+            +  hy( 1) * bz(cell_x2-1,cell_y2+1)) + hx( 0) &
+            * (hy(-1) * bz(cell_x2,  cell_y2-1) &
+            +  hy( 0) * bz(cell_x2,  cell_y2  ) &
+            +  hy( 1) * bz(cell_x2,  cell_y2+1)) + hx( 1) &
+            * (hy(-1) * bz(cell_x2+1,cell_y2-1) &
+            +  hy( 0) * bz(cell_x2+1,cell_y2  ) &
+            +  hy( 1) * bz(cell_x2+1,cell_y2+1))
+#endif
 
         ! update particle momenta using weighted fields
         cmratio = part_q * 0.5_num * dt
@@ -226,22 +348,22 @@ CONTAINS
         pzm = part_pz + cmratio * ez_part
 
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
-        root = cmratio / SQRT(part_m**2 + (pxm**2 + pym**2 + pzm**2)/c**2)
+        root = cmratio / SQRT(part_m**2 + (pxm**2 + pym**2 + pzm**2) * ic2)
 
         taux = bx_part * root
         tauy = by_part * root
         tauz = bz_part * root
 
         tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
-        pxp = ((1.0_num+taux*taux-tauy*tauy-tauz*tauz)*pxm &
-            + (2.0_num*taux*tauy+2.0_num*tauz)*pym &
-            + (2.0_num*taux*tauz-2.0_num*tauy)*pzm)*tau
-        pyp = ((2.0_num*taux*tauy-2.0_num*tauz)*pxm &
-            + (1.0_num-taux*taux+tauy*tauy-tauz*tauz)*pym &
-            + (2.0_num*tauy*tauz+2.0_num*taux)*pzm)*tau
-        pzp = ((2.0_num*taux*tauz+2.0_num*tauy)*pxm &
-            + (2.0_num*tauy*tauz-2.0_num*taux)*pym &
-            + (1.0_num-taux*taux-tauy*tauy+tauz*tauz)*pzm)*tau
+        pxp = ((1.0_num + taux * taux - tauy * tauy - tauz * tauz) * pxm &
+            + (2.0_num * taux * tauy + 2.0_num * tauz) * pym &
+            + (2.0_num * taux * tauz - 2.0_num * tauy) * pzm) * tau
+        pyp = ((2.0_num * taux * tauy - 2.0_num * tauz) * pxm &
+            + (1.0_num - taux * taux + tauy * tauy - tauz * tauz) * pym &
+            + (2.0_num * tauy * tauz + 2.0_num * taux) * pzm) * tau
+        pzp = ((2.0_num * taux * tauz + 2.0_num * tauy) * pxm &
+            + (2.0_num * tauy * tauz - 2.0_num * taux) * pym &
+            + (1.0_num - taux * taux - tauy * tauy + tauz * tauz) * pzm) * tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part
@@ -250,7 +372,7 @@ CONTAINS
 
         ! Calculate particle velocity from particle momentum
         root = 1.0_num &
-            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2) * ic2)
 
         part_vx = part_px * root
         part_vy = part_py * root
@@ -262,11 +384,16 @@ CONTAINS
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
+#ifdef OLD_STYLE
         current%part_pos(1) = part_x + x_start_local
         current%part_pos(2) = part_y + y_start_local
         current%part_p  (1) = part_px
         current%part_p  (2) = part_py
         current%part_p  (3) = part_pz
+#else
+        current%part_pos = (/ part_x + x_start_local, part_y + y_start_local /)
+        current%part_p   = (/ part_px, part_py, part_pz /)
+#endif
 
 #ifdef PARTICLE_PROBES
         final_part_x = current%part_pos(1)
@@ -282,23 +409,43 @@ CONTAINS
           ! the manual between pages 37 and 41. The version coded up looks
           ! completely different to that in the manual, but is equivalent.
           ! Use t+1.5 dt so that can update J to t+dt at 2nd order
-          part_x = part_x + part_vx * dt/2.0_num
-          part_y = part_y + part_vy * dt/2.0_num
+          part_x = part_x + part_vx * dto2
+          part_y = part_y + part_vy * dto2
 
           cell_x_r = part_x / dx
+#ifdef OLD_STYLE
           cell_x3  = NINT(cell_x_r)
+#else
+          cell_x3  = FLOOR(cell_x_r + 0.5_num)
+#endif
           cell_frac_x = REAL(cell_x3, num) - cell_x_r
-          cell_x3 = cell_x3+1
+          cell_x3  = cell_x3 + 1
 
           cell_y_r = part_y / dy
+#ifdef OLD_STYLE
           cell_y3  = NINT(cell_y_r)
+#else
+          cell_y3  = FLOOR(cell_y_r + 0.5_num)
+#endif
           cell_frac_y = REAL(cell_y3, num) - cell_y_r
-          cell_y3 = cell_y3+1
+          cell_y3  = cell_y3 + 1
 
+#ifdef OLD_STYLE
           CALL particle_to_grid(cell_frac_x, &
               xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
           CALL particle_to_grid(cell_frac_y, &
               xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
+#else
+          dcell = cell_x3 - cell_x1
+          xi1x(dcell-1) = 0.5_num * (0.5_num + cell_frac_x)**2
+          xi1x(dcell  ) = 0.75_num - cell_frac_x**2
+          xi1x(dcell+1) = 0.5_num * (0.5_num - cell_frac_x)**2
+
+          dcell = cell_y3 - cell_y1
+          xi1y(dcell-1) = 0.5_num * (0.5_num + cell_frac_y)**2
+          xi1y(dcell  ) = 0.75_num - cell_frac_y**2
+          xi1y(dcell+1) = 0.5_num * (0.5_num - cell_frac_y)**2
+#endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
           ! the current update much simpler
@@ -308,33 +455,25 @@ CONTAINS
           ! Remember that due to CFL condition particle can never cross more
           ! than one gridcell in one timestep
 
-          IF (cell_x3 .EQ. cell_x1) THEN
-            ! particle is still in same cell at t+1.5dt as at t+0.5dt
-            xmin = -sf_order
-            xmax = sf_order
-          ELSE IF (cell_x3 .EQ. cell_x1 - 1) THEN
-            ! particle has moved one cell to left
-            xmin = -sf_order-1
-            xmax = sf_order
-          ELSE ! IF (cell_x3 .EQ. cell_x1 + 1) THEN
-            ! particle has moved one cell to right
-            xmin = -sf_order
-            xmax = sf_order+1
-          ENDIF
+          xmin = MIN(-sf_order, -sf_order + (cell_x3 - cell_x1))
+          xmax = MAX(sf_order, sf_order + (cell_x3 - cell_x1))
 
-          IF (cell_y3 .EQ. cell_y1) THEN
-            ! particle is still in same cell at t+1.5dt as at t+0.5dt
-            ymin = -sf_order
-            ymax = sf_order
-          ELSE IF (cell_y3 .EQ. cell_y1 - 1) THEN
-            ! particle has moved one cell to left
-            ymin = -sf_order-1
-            ymax = sf_order
-          ELSE ! IF (cell_y3 .EQ. cell_y1 + 1) THEN
-            ! particle has moved one cell to right
-            ymin = -sf_order
-            ymax = sf_order+1
-          ENDIF
+          ymin = MIN(-sf_order, -sf_order + (cell_y3 - cell_y1))
+          ymax = MAX(sf_order, sf_order + (cell_y3 - cell_y1))
+
+!!$          IF (cell_x3 .EQ. cell_x1) THEN
+!!$            ! particle is still in same cell at t+1.5dt as at t+0.5dt
+!!$            xmin = -sf_order
+!!$            xmax = sf_order
+!!$          ELSE IF (cell_x3 .EQ. cell_x1 - 1) THEN
+!!$            ! particle has moved one cell to left
+!!$            xmin = -sf_order-1
+!!$            xmax = sf_order
+!!$          ELSE ! IF (cell_x3 .EQ. cell_x1 + 1) THEN
+!!$            ! particle has moved one cell to right
+!!$            xmin = -sf_order
+!!$            xmax = sf_order+1
+!!$          ENDIF
 
           ! Set these to zero due to diffential inside loop
           jxh = 0.0_num
@@ -345,23 +484,23 @@ CONTAINS
             DO ix = xmin, xmax
               wx = xi1x(ix) * (xi0y(iy) + 0.5_num * xi1y(iy))
               wy = xi1y(iy) * (xi0x(ix) + 0.5_num * xi1x(ix))
-              wz = xi0x(ix) * xi0y(iy) + 0.5_num*xi1x(ix)*xi0y(iy) &
-                  + 0.5_num*xi0x(ix)*xi1y(iy) &
-                  + 1.0_num/3.0_num * xi1x(ix) * xi1y(iy)
+              wz = xi0x(ix) * xi0y(iy) + 0.5_num * xi1x(ix) * xi0y(iy) &
+                  + 0.5_num * xi0x(ix) * xi1y(iy) &
+                  + third * xi1x(ix) * xi1y(iy)
 
               ! This is the bit that actually solves d(rho)/dt = -div(J)
               jxh(ix, iy) = &
-                  jxh(ix-1, iy) - part_q * wx * 1.0_num/dt * part_weight/dy
+                  jxh(ix-1, iy) - part_q * wx * idt * part_weight * idy
               jyh(ix, iy) = &
-                  jyh(ix, iy-1) - part_q * wy * 1.0_num/dt * part_weight/dx
-              jzh(ix, iy) = part_q * part_vz * wz * part_weight/(dx*dy)
+                  jyh(ix, iy-1) - part_q * wy * idt * part_weight * idx
+              jzh(ix, iy) = part_q * part_vz * wz * part_weight * idx * idy
 
               jx(cell_x1+ix, cell_y1+iy) = &
-                  jx(cell_x1+ix, cell_y1+iy) +jxh(ix, iy)
+                  jx(cell_x1+ix, cell_y1+iy) + jxh(ix, iy)
               jy(cell_x1+ix, cell_y1+iy) = &
-                  jy(cell_x1+ix, cell_y1+iy) +jyh(ix, iy)
+                  jy(cell_x1+ix, cell_y1+iy) + jyh(ix, iy)
               jz(cell_x1+ix, cell_y1+iy) = &
-                  jz(cell_x1+ix, cell_y1+iy) +jzh(ix, iy)
+                  jz(cell_x1+ix, cell_y1+iy) + jzh(ix, iy)
             ENDDO
           ENDDO
 #ifdef TRACER_PARTICLES
