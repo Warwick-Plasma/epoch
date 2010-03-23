@@ -97,8 +97,7 @@ MODULE constants
   INTEGER(4), PARAMETER :: c_def_particle_probes = 128
   INTEGER(4), PARAMETER :: c_def_per_particle_chargemass = 256
   INTEGER(4), PARAMETER :: c_def_particle_ionise = 512
-  INTEGER(4), PARAMETER :: c_def_newtonian = 1024
-  INTEGER(4), PARAMETER :: c_def_high_order_smoothing = 2048
+  INTEGER(4), PARAMETER :: c_def_high_order_smoothing = 1024
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function

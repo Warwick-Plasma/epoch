@@ -122,10 +122,6 @@ CONTAINS
     defines = IOR(defines, c_def_particle_ionise)
     WRITE(*, *) "Particle ionisation model -DPARTICLE_IONISE"
 #endif
-#ifdef NEWTONIAN
-    defines = IOR(defines, c_def_newtonian)
-    WRITE(*, *) "Newtonian dynamics (no relativity) -DNEWTONIAN"
-#endif
 #ifdef HIGH_ORDER_SMOOTHING
     defines = IOR(defines, c_def_high_order_smoothing)
     WRITE(*, *) "High order current smoothing (matches particle &

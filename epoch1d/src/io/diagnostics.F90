@@ -376,10 +376,6 @@ CONTAINS
     ! dt = MIN(dtx**2, dty**2)/SQRT(dtx**2+dty**2)
     IF (dt_laser .NE. 0.0_num) dt = MIN(dt, dt_laser)
     IF (dt_plasma_frequency .NE. 0.0_num) dt = MIN(dt, dt_plasma_frequency)
-#ifdef NEWTONIAN
-    dtx = dx/max_part_v
-    dt = MIN(dt, dtx)
-#endif
     dt = dt_multiplier * dt
 
   END SUBROUTINE set_dt

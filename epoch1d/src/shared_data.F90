@@ -96,8 +96,7 @@ MODULE constants
   INTEGER(4), PARAMETER :: c_def_particle_probes = 128
   INTEGER(4), PARAMETER :: c_def_per_particle_chargemass = 256
   INTEGER(4), PARAMETER :: c_def_particle_ionise = 512
-  INTEGER(4), PARAMETER :: c_def_newtonian = 1024
-  INTEGER(4), PARAMETER :: c_def_high_order_smoothing = 2048
+  INTEGER(4), PARAMETER :: c_def_high_order_smoothing = 1024
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
@@ -457,11 +456,6 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   INTEGER :: mpireal = MPI_DOUBLE_PRECISION
 
-#ifdef NEWTONIAN
-  ! In a Newtonian code, can't guarantee that particles won't exceed lightspeed
-  ! Therefore record the fastest particle speed here
-  REAL(num) :: max_part_v
-#endif
   INTEGER :: nx
   INTEGER :: nx_global
   INTEGER(KIND=8) :: npart_global
