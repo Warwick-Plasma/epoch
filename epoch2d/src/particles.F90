@@ -166,11 +166,7 @@ CONTAINS
         ! Not in general an integer
         cell_x_r = part_x / dx
         ! Round cell position to nearest cell
-#ifdef OLD_STYLE
-        cell_x1 = NINT(cell_x_r)
-#else
         cell_x1 = FLOOR(cell_x_r + 0.5_num)
-#endif
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_x = REAL(cell_x1, num) - cell_x_r
         cell_x1 = cell_x1 + 1
@@ -179,28 +175,13 @@ CONTAINS
         ! Not in general an integer
         cell_y_r = part_y / dy
         ! Round cell position to nearest cell
-#ifdef OLD_STYLE
-        cell_y1 = NINT(cell_y_r)
-#else
         cell_y1 = FLOOR(cell_y_r + 0.5_num)
-#endif
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_y = REAL(cell_y1, num) - cell_y_r
         cell_y1 = cell_y1 + 1
 
         ! particle weight factors as described in the manual (FIXREF)
         ! These weight grid properties onto particles
-#ifdef OLD_STYLE
-        CALL grid_to_particle(cell_frac_x, gx)
-        CALL grid_to_particle(cell_frac_y, gy)
-
-        ! particle weight factors as described in the manual (FIXREF)
-        ! These wieght particle properties onto grid
-        ! This is used later to calculate J
-
-        CALL particle_to_grid(cell_frac_x, xi0x(-2:2))
-        CALL particle_to_grid(cell_frac_y, xi0y(-2:2))
-#else
         gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
         gx( 0) = 0.75_num - cell_frac_x**2
         gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
@@ -209,6 +190,9 @@ CONTAINS
         gy( 0) = 0.75_num - cell_frac_y**2
         gy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
 
+        ! particle weight factors as described in the manual (FIXREF)
+        ! These wieght particle properties onto grid
+        ! This is used later to calculate J
         xi0x(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
         xi0x( 0) = 0.75_num - ABS(cell_frac_x)**2
         xi0x( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
@@ -216,32 +200,20 @@ CONTAINS
         xi0y(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
         xi0y( 0) = 0.75_num - ABS(cell_frac_y)**2
         xi0y( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-#endif
+
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
         ! And in Y&Z for bx, X&Z for by, X&Y for bz
         cell_x_r = part_x * idx - 0.5_num
-#ifdef OLD_STYLE
-        cell_x2  = NINT(cell_x_r)
-#else
         cell_x2  = FLOOR(cell_x_r + 0.5_num)
-#endif
         cell_frac_x = REAL(cell_x2, num) - cell_x_r
         cell_x2  = cell_x2 + 1
 
         cell_y_r = part_y * idy - 0.5_num
-#ifdef OLD_STYLE
-        cell_y2  = NINT(cell_y_r)
-#else
-        cell_x2  = FLOOR(cell_y_r + 0.5_num)
-#endif
+        cell_y2  = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y2, num) - cell_y_r
         cell_y2  = cell_y2 + 1
 
-#ifdef OLD_STYLE
-        CALL grid_to_particle(cell_frac_x, hx)
-        CALL grid_to_particle(cell_frac_y, hy)
-#else
         hx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
         hx( 0) = 0.75_num - cell_frac_x**2
         hx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
@@ -249,31 +221,10 @@ CONTAINS
         hy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
         hy( 0) = 0.75_num - cell_frac_y**2
         hy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
-#endif
-
-        ex_part = 0.0_num
-        ey_part = 0.0_num
-        ez_part = 0.0_num
-        bx_part = 0.0_num
-        by_part = 0.0_num
-        bz_part = 0.0_num
 
         ! These are the electric an magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
-#ifdef OLD_STYLE
-        DO ix = -sf_order, sf_order
-          DO iy = -sf_order, sf_order
-            ex_part = ex_part + hx(ix)*gy(iy)*ex(cell_x2+ix, cell_y1+iy)
-            ey_part = ey_part + gx(ix)*hy(iy)*ey(cell_x1+ix, cell_y2+iy)
-            ez_part = ez_part + gx(ix)*gy(iy)*ez(cell_x1+ix, cell_y1+iy)
-
-            bx_part = bx_part + gx(ix)*hy(iy)*bx(cell_x1+ix, cell_y2+iy)
-            by_part = by_part + hx(ix)*gy(iy)*by(cell_x2+ix, cell_y1+iy)
-            bz_part = bz_part + hx(ix)*hy(iy)*bz(cell_x2+ix, cell_y2+iy)
-          ENDDO
-        ENDDO
-#else
         ex_part = hx(-1) &
             * (gy(-1) * ex(cell_x2-1,cell_y1-1) &
             +  gy( 0) * ex(cell_x2-1,cell_y1  ) &
@@ -339,7 +290,6 @@ CONTAINS
             * (hy(-1) * bz(cell_x2+1,cell_y2-1) &
             +  hy( 0) * bz(cell_x2+1,cell_y2  ) &
             +  hy( 1) * bz(cell_x2+1,cell_y2+1))
-#endif
 
         ! update particle momenta using weighted fields
         cmratio = part_q * 0.5_num * dt
@@ -384,16 +334,8 @@ CONTAINS
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
-#ifdef OLD_STYLE
-        current%part_pos(1) = part_x + x_start_local
-        current%part_pos(2) = part_y + y_start_local
-        current%part_p  (1) = part_px
-        current%part_p  (2) = part_py
-        current%part_p  (3) = part_pz
-#else
         current%part_pos = (/ part_x + x_start_local, part_y + y_start_local /)
         current%part_p   = (/ part_px, part_py, part_pz /)
-#endif
 
 #ifdef PARTICLE_PROBES
         final_part_x = current%part_pos(1)
@@ -413,29 +355,15 @@ CONTAINS
           part_y = part_y + part_vy * dto2
 
           cell_x_r = part_x / dx
-#ifdef OLD_STYLE
-          cell_x3  = NINT(cell_x_r)
-#else
           cell_x3  = FLOOR(cell_x_r + 0.5_num)
-#endif
           cell_frac_x = REAL(cell_x3, num) - cell_x_r
           cell_x3  = cell_x3 + 1
 
           cell_y_r = part_y / dy
-#ifdef OLD_STYLE
-          cell_y3  = NINT(cell_y_r)
-#else
           cell_y3  = FLOOR(cell_y_r + 0.5_num)
-#endif
           cell_frac_y = REAL(cell_y3, num) - cell_y_r
           cell_y3  = cell_y3 + 1
 
-#ifdef OLD_STYLE
-          CALL particle_to_grid(cell_frac_x, &
-              xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
-          CALL particle_to_grid(cell_frac_y, &
-              xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
-#else
           dcell = cell_x3 - cell_x1
           xi1x(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
           xi1x(dcell  ) = 0.75_num - ABS(cell_frac_x)**2
@@ -445,7 +373,6 @@ CONTAINS
           xi1y(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
           xi1y(dcell  ) = 0.75_num - ABS(cell_frac_y)**2
           xi1y(dcell+1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
-#endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
           ! the current update much simpler
