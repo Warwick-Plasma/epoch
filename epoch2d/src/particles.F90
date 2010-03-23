@@ -301,15 +301,16 @@ CONTAINS
         tauz = bz_part * root
 
         tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
-        pxp = ((1.0_num + taux * taux - tauy * tauy - tauz * tauz) * pxm &
-            + (2.0_num * taux * tauy + 2.0_num * tauz) * pym &
-            + (2.0_num * taux * tauz - 2.0_num * tauy) * pzm) * tau
-        pyp = ((2.0_num * taux * tauy - 2.0_num * tauz) * pxm &
-            + (1.0_num - taux * taux + tauy * tauy - tauz * tauz) * pym &
-            + (2.0_num * tauy * tauz + 2.0_num * taux) * pzm) * tau
-        pzp = ((2.0_num * taux * tauz + 2.0_num * tauy) * pxm &
-            + (2.0_num * tauy * tauz - 2.0_num * taux) * pym &
-            + (1.0_num - taux * taux - tauy * tauy + tauz * tauz) * pzm) * tau
+
+        pxp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pxm &
+            + 2.0_num * ((taux * tauy + tauz) * pym &
+            + (taux * tauz - tauy) * pzm)) * tau
+        pyp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pym &
+            + 2.0_num * ((taux * tauy - tauz) * pxm &
+            + (tauy * tauz + taux) * pzm)) * tau
+        pzp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pzm &
+            + 2.0_num * ((taux * tauz + tauy) * pxm &
+            + (tauy * tauz - taux) * pym)) * tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part
