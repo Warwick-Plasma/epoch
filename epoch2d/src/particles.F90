@@ -106,6 +106,9 @@ CONTAINS
     jyh = 0.0_num
     jzh = 0.0_num
 
+    xi0x = 0.0_num
+    xi0y = 0.0_num
+
     ekbar_sum = 0.0_num
     ct = 0.0_num
 
@@ -122,12 +125,6 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
-        ! Set the weighting functions to zero for each new particle
-        xi0x = 0.0_num
-        xi1x = 0.0_num
-        xi0y = 0.0_num
-        xi1y = 0.0_num
-
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_start_local
         part_y  = current%part_pos(2) - y_start_local
@@ -361,6 +358,9 @@ CONTAINS
           cell_frac_y = REAL(cell_y3, num) - cell_y_r
           cell_y3  = cell_y3 + 1
 
+          xi1x = 0.0_num
+          xi1y = 0.0_num
+
           dcell = cell_x3 - cell_x1
           xi1x(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
           xi1x(dcell  ) = 0.75_num - ABS(cell_frac_x)**2
@@ -379,11 +379,11 @@ CONTAINS
           ! Remember that due to CFL condition particle can never cross more
           ! than one gridcell in one timestep
 
-          xmin = MIN(-sf_order, -sf_order + (cell_x3 - cell_x1))
-          xmax = MAX(sf_order, sf_order + (cell_x3 - cell_x1))
+          xmin = -sf_order + (cell_x3 - cell_x1 - 1) / 2
+          xmax =  sf_order + (cell_x3 - cell_x1 + 1) / 2
 
-          ymin = MIN(-sf_order, -sf_order + (cell_y3 - cell_y1))
-          ymax = MAX(sf_order, sf_order + (cell_y3 - cell_y1))
+          ymin = -sf_order + (cell_y3 - cell_y1 - 1) / 2
+          ymax =  sf_order + (cell_y3 - cell_y1 + 1) / 2
 
 !!$          IF (cell_x3 .EQ. cell_x1) THEN
 !!$            ! particle is still in same cell at t+1.5dt as at t+0.5dt
