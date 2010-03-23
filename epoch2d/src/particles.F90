@@ -80,6 +80,7 @@ CONTAINS
 
     ! Temporary variables
     REAL(num) :: mean, idx, idy, idt, ic2, dto2, dtco2, third
+    REAL(num) :: idty, idtx, idxy, fcx, fcy, fcz, fjx, fjy, fjz
     INTEGER :: ispecies, dcell
 
     TYPE(particle), POINTER :: current, next
@@ -113,7 +114,14 @@ CONTAINS
     ekbar_sum = 0.0_num
     ct = 0.0_num
 
+    idty = idt * idy
+    idtx = idt * idx
+    idxy = idx * idy
+
     part_weight = weight
+    fcx = idty * part_weight
+    fcy = idtx * part_weight
+    fcz = idxy * part_weight
 
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
@@ -125,6 +133,9 @@ CONTAINS
         next=>current%next
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
+        fcx = idty * part_weight
+        fcy = idtx * part_weight
+        fcz = idxy * part_weight
 #endif
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_start_local
@@ -401,22 +412,22 @@ CONTAINS
           ! Set these to zero due to diffential inside loop
           jxh = 0.0_num
           jyh = 0.0_num
-          jzh = 0.0_num
+
+          fjx = fcx * part_q
+          fjy = fcy * part_q
+          fjz = fcz * part_q * part_vz
 
           DO iy = ymin, ymax
             DO ix = xmin, xmax
               wx = xi1x(ix) * (xi0y(iy) + 0.5_num * xi1y(iy))
               wy = xi1y(iy) * (xi0x(ix) + 0.5_num * xi1x(ix))
-              wz = xi0x(ix) * xi0y(iy) + 0.5_num * xi1x(ix) * xi0y(iy) &
-                  + 0.5_num * xi0x(ix) * xi1y(iy) &
-                  + third * xi1x(ix) * xi1y(iy)
+              wz = xi0x(ix) * (xi0y(iy) + 0.5_num * xi1y(iy)) &
+                  + xi1x(ix) * (third * xi1y(iy) + 0.5_num * xi0y(iy))
 
               ! This is the bit that actually solves d(rho)/dt = -div(J)
-              jxh(ix, iy) = &
-                  jxh(ix-1, iy) - part_q * wx * idt * part_weight * idy
-              jyh(ix, iy) = &
-                  jyh(ix, iy-1) - part_q * wy * idt * part_weight * idx
-              jzh(ix, iy) = part_q * part_vz * wz * part_weight * idx * idy
+              jxh(ix, iy) = jxh(ix-1, iy) - fjx * wx
+              jyh(ix, iy) = jyh(ix, iy-1) - fjy * wy
+              jzh(ix, iy) = fjz * wz
 
               jx(cell_x1+ix, cell_y1+iy) = &
                   jx(cell_x1+ix, cell_y1+iy) + jxh(ix, iy)
