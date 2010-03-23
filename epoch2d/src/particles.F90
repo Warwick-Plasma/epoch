@@ -164,7 +164,7 @@ CONTAINS
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
-        cell_x_r = part_x * idx
+        cell_x_r = part_x / dx
         ! Round cell position to nearest cell
 #ifdef OLD_STYLE
         cell_x1 = NINT(cell_x_r)
@@ -177,7 +177,7 @@ CONTAINS
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
-        cell_y_r = part_y * idy
+        cell_y_r = part_y / dy
         ! Round cell position to nearest cell
 #ifdef OLD_STYLE
         cell_y1 = NINT(cell_y_r)
@@ -201,21 +201,21 @@ CONTAINS
         CALL particle_to_grid(cell_frac_x, xi0x(-2:2))
         CALL particle_to_grid(cell_frac_y, xi0y(-2:2))
 #else
-        gx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1))**2
-        gx(+0) = 0.75_num - ABS(cell_frac_x)**2
-        gx(+1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1))**2
+        gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
+        gx( 0) = 0.75_num - cell_frac_x**2
+        gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
 
-        gy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1))**2
-        gy(+0) = 0.75_num - ABS(cell_frac_y)**2
-        gy(+1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1))**2
+        gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
+        gy( 0) = 0.75_num - cell_frac_y**2
+        gy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
 
-        xi0x(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
-        xi0x(+0) = 0.75_num - cell_frac_x**2
-        xi0x(+1) = 0.5_num * (0.5_num - cell_frac_x)**2
+        xi0x(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+        xi0x( 0) = 0.75_num - ABS(cell_frac_x)**2
+        xi0x( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
 
-        xi0y(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
-        xi0y(+0) = 0.75_num - cell_frac_y**2
-        xi0y(+1) = 0.5_num * (0.5_num - cell_frac_y)**2
+        xi0y(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
+        xi0y( 0) = 0.75_num - ABS(cell_frac_y)**2
+        xi0y( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
 #endif
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
@@ -242,13 +242,13 @@ CONTAINS
         CALL grid_to_particle(cell_frac_x, hx)
         CALL grid_to_particle(cell_frac_y, hy)
 #else
-        hx(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1))**2
-        hx(+0) = 0.75_num - ABS(cell_frac_x)**2
-        hx(+1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1))**2
+        hx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
+        hx( 0) = 0.75_num - cell_frac_x**2
+        hx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
 
-        hy(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1))**2
-        hy(+0) = 0.75_num - ABS(cell_frac_y)**2
-        hy(+1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1))**2
+        hy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
+        hy( 0) = 0.75_num - cell_frac_y**2
+        hy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
 #endif
 
         ex_part = 0.0_num
@@ -437,14 +437,14 @@ CONTAINS
               xi1y(cell_y3-cell_y1-2:cell_y3-cell_y1+2))
 #else
           dcell = cell_x3 - cell_x1
-          xi1x(dcell-1) = 0.5_num * (0.5_num + cell_frac_x)**2
-          xi1x(dcell  ) = 0.75_num - cell_frac_x**2
-          xi1x(dcell+1) = 0.5_num * (0.5_num - cell_frac_x)**2
+          xi1x(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+          xi1x(dcell  ) = 0.75_num - ABS(cell_frac_x)**2
+          xi1x(dcell+1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
 
           dcell = cell_y3 - cell_y1
-          xi1y(dcell-1) = 0.5_num * (0.5_num + cell_frac_y)**2
-          xi1y(dcell  ) = 0.75_num - cell_frac_y**2
-          xi1y(dcell+1) = 0.5_num * (0.5_num - cell_frac_y)**2
+          xi1y(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
+          xi1y(dcell  ) = 0.75_num - ABS(cell_frac_y)**2
+          xi1y(dcell+1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
 #endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
