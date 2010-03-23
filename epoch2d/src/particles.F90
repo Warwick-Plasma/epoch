@@ -32,7 +32,7 @@ CONTAINS
     REAL(num), ALLOCATABLE, DIMENSION(:,:) :: jxh, jyh, jzh
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_mc
     REAL(num) :: root, part_vx, part_vy, part_vz, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
@@ -79,7 +79,7 @@ CONTAINS
     REAL(num) :: wx, wy, wz
 
     ! Temporary variables
-    REAL(num) :: mean, idx, idy, idt, ic2, dto2, third
+    REAL(num) :: mean, idx, idy, idt, ic2, dto2, dtco2, third
     INTEGER :: ispecies, dcell
 
     TYPE(particle), POINTER :: current, next
@@ -96,6 +96,7 @@ CONTAINS
     idt = 1.0_num / dt
     ic2 = 1.0_num / c**2
     dto2 = dt / 2.0_num
+    dtco2 = c * dto2
     third = 1.0_num / 3.0_num
 
     jx = 0.0_num
@@ -134,11 +135,11 @@ CONTAINS
         ! Use a lookup table for charge and mass to SAVE memory
         ! No reason not to do this (I think), check properly later
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q = current%charge
-        part_m = current%mass
+        part_q  = current%charge
+        part_mc = c * current%mass
 #else
-        part_q = particle_species(ispecies)%charge
-        part_m = particle_species(ispecies)%mass
+        part_q  = particle_species(ispecies)%charge
+        part_mc = c * particle_species(ispecies)%mass
 #endif
 
 #ifdef PARTICLE_PROBES
@@ -148,8 +149,7 @@ CONTAINS
 
         ! Calculate v(t+0.5dt) from p(t)
         ! See PSC manual page (25-27)
-        root = dto2 &
-            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2) * ic2)
+        root = dtco2 / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
 
         ! Move particles to half timestep position to first order
         part_x = part_x + part_px * root
@@ -291,7 +291,7 @@ CONTAINS
         pzm = part_pz + cmratio * ez_part
 
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
-        root = cmratio / SQRT(part_m**2 + (pxm**2 + pym**2 + pzm**2) * ic2)
+        root = c * cmratio / SQRT(part_mc**2 + pxm**2 + pym**2 + pzm**2)
 
         taux = bx_part * root
         tauy = by_part * root
@@ -315,8 +315,7 @@ CONTAINS
         part_pz = pzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        root = 1.0_num &
-            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2) * ic2)
+        root = c / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
 
         part_vx = part_px * root
         part_vy = part_py * root
@@ -442,8 +441,8 @@ CONTAINS
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
           probe_energy = &
-              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) &
-              / (part_m * c)**2) - 1.0_num) * (part_m * c**2)
+              c * (SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2) &
+              - part_mc)
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN
