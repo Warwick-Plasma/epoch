@@ -425,13 +425,14 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: array
     CHARACTER(LEN=*), INTENT(IN) :: last
     INTEGER, INTENT(IN) :: rank_write
-    INTEGER(8) :: md_length, sz, len1, len2
+    INTEGER(8) :: md_length, sz, len1, len2, len3
     INTEGER :: i
 
     sz   = SIZE(array)
-    len1 = LEN(array)
-    len2 = LEN(last)
-    md_length = sz*len1 + len2
+    len1 = LEN(TRIM(class))
+    len2 = LEN(array)
+    len3 = LEN(last)
+    md_length = len1 + sz*len2 + len3
 
     CALL cfd_write_block_header(name, class, c_type_constant, md_length, &
         md_length, rank_write)
@@ -439,11 +440,13 @@ CONTAINS
         MPI_CHARACTER,  MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
+      CALL MPI_FILE_WRITE(cfd_filehandle, class, len1, &
+          MPI_CHARACTER, cfd_status, cfd_errcode)
       DO i = 1, sz
-        CALL MPI_FILE_WRITE(cfd_filehandle, array(i), len1, &
+        CALL MPI_FILE_WRITE(cfd_filehandle, array(i), len2, &
             MPI_CHARACTER, cfd_status, cfd_errcode)
       ENDDO
-      CALL MPI_FILE_WRITE(cfd_filehandle, last, len2, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, last, len3, &
           MPI_CHARACTER, cfd_status, cfd_errcode)
     ENDIF
 

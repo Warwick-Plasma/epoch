@@ -24,7 +24,14 @@ if [ "$1"x = "opt_dont_build_embedded_source"x ]; then
 fi
 
 if [ $build_sha1 -eq 1 ]; then
-  sha=`cat $* | sha1sum | cut -f1 -d' '`
+  sha=`cat $* | shasum | cut -f1 -d' '`
+  if [ "$sha"x = x ]; then
+    echo shasum failed. Trying sha1sum.
+    sha=`cat $* | sha1sum | cut -f1 -d' '`
+  fi
+  if [ "$sha"x = x ]; then
+    echo WARNING: unable to create valid sha1
+  fi
 fi
 
 nlines=0
