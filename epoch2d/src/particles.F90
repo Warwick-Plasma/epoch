@@ -79,18 +79,18 @@ CONTAINS
     REAL(num) :: wx, wy, wz
 
     ! Temporary variables
-    REAL(num) :: mean, idx, idy, idt, ic2, dto2, dtco2, third
+    REAL(num) :: mean, idx, idy, idt, ic2, dto2, dtco2, third, f1, f2
     REAL(num) :: idty, idtx, idxy, fcx, fcy, fcz, fjx, fjy, fjz
     INTEGER :: ispecies, dcell
 
     TYPE(particle), POINTER :: current, next
 
-    ALLOCATE(xi0x(-3:3), xi0y(-3:3))
-    ALLOCATE(xi1x(-3:3), xi1y(-3:3))
+    ALLOCATE(xi0x(-sf_order-1:sf_order+1), xi0y(-sf_order-1:sf_order+1))
+    ALLOCATE(xi1x(-sf_order-1:sf_order+1), xi1y(-sf_order-1:sf_order+1))
 
-    ALLOCATE(jxh(-4:3, -3:3))
-    ALLOCATE(jyh(-3:4, -4:3))
-    ALLOCATE(jzh(-3:3, -3:3))
+    ALLOCATE(jxh(-sf_order-2:sf_order+1, -sf_order-1:sf_order+1))
+    ALLOCATE(jyh(-sf_order-1:sf_order+1, -sf_order-2:sf_order+1))
+    ALLOCATE(jzh(-sf_order-1:sf_order+1, -sf_order-1:sf_order+1))
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
@@ -99,6 +99,11 @@ CONTAINS
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
     third = 1.0_num / 3.0_num
+#ifdef SPLINE_FOUR
+    ! interpolation coefficients
+    f1 = 1.0_num / 6.0_num
+    f2 = 1.0_num / 24.0_num
+#endif
 
     jx = 0.0_num
     jy = 0.0_num
@@ -186,6 +191,25 @@ CONTAINS
 
         ! particle weight factors as described in the manual (FIXREF)
         ! These weight grid properties onto particles
+#ifdef SPLINE_FOUR
+        gx(-2) = f2 * (1.5_num - cell_frac_x)**4
+        gx(-1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
+        gx( 0) = 0.25 * (115/48 + cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num))
+        gx( 1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
+        gx( 2) = f2 * (1.5_num + cell_frac_x)**4
+
+        gy(-2) = f2 * (1.5_num - cell_frac_y)**4
+        gy(-1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+            * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
+        gy( 0) = 0.25 * (115/48 + cell_frac_y**2 &
+            * (cell_frac_y**2 - 2.5_num))
+        gy( 1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+            * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
+        gy( 2) = f2 * (1.5_num + cell_frac_y)**4
+#else
         gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
         gx( 0) = 0.75_num - cell_frac_x**2
         gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
@@ -193,10 +217,30 @@ CONTAINS
         gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
         gy( 0) = 0.75_num - cell_frac_y**2
         gy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
+#endif
 
         ! particle weight factors as described in the manual (FIXREF)
         ! These wieght particle properties onto grid
         ! This is used later to calculate J
+#ifdef SPLINE_FOUR
+        xi0x(-2) = f2 * (1.5_num - cell_frac_x)**4
+        xi0x(-1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
+        xi0x( 0) = 0.25 * (115/48 + cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num))
+        xi0x( 1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
+        xi0x( 2) = f2 * (1.5_num + cell_frac_x)**4
+
+        xi0y(-2) = f2 * (1.5_num - cell_frac_y)**4
+        xi0y(-1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+            * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
+        xi0y( 0) = 0.25 * (115/48 + cell_frac_y**2 &
+            * (cell_frac_y**2 - 2.5_num))
+        xi0y( 1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+            * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
+        xi0y( 2) = f2 * (1.5_num + cell_frac_y)**4
+#else
         xi0x(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
         xi0x( 0) = 0.75_num - ABS(cell_frac_x)**2
         xi0x( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
@@ -204,6 +248,7 @@ CONTAINS
         xi0y(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
         xi0y( 0) = 0.75_num - ABS(cell_frac_y)**2
         xi0y( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+#endif
 
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
@@ -218,6 +263,25 @@ CONTAINS
         cell_frac_y = REAL(cell_y2, num) - cell_y_r
         cell_y2  = cell_y2 + 1
 
+#ifdef SPLINE_FOUR
+        hx(-2) = f2 * (1.5_num - cell_frac_x)**4
+        hx(-1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
+        hx( 0) = 0.25 * (115/48 + cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num))
+        hx( 1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
+        hx( 2) = f2 * (1.5_num + cell_frac_x)**4
+
+        hy(-2) = f2 * (1.5_num - cell_frac_y)**4
+        hy(-1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+            * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
+        hy( 0) = 0.25 * (115/48 + cell_frac_y**2 &
+            * (cell_frac_y**2 - 2.5_num))
+        hy( 1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+            * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
+        hy( 2) = f2 * (1.5_num + cell_frac_y)**4
+#else
         hx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
         hx( 0) = 0.75_num - cell_frac_x**2
         hx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
@@ -225,75 +289,240 @@ CONTAINS
         hy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
         hy( 0) = 0.75_num - cell_frac_y**2
         hy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
+#endif
 
         ! These are the electric an magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
-        ex_part = gy(-1) &
-            * (hx(-1) * ex(cell_x2-1,cell_y1-1) &
-            +  hx( 0) * ex(cell_x2  ,cell_y1-1) &
-            +  hx( 1) * ex(cell_x2+1,cell_y1-1)) + gy( 0) &
-            * (hx(-1) * ex(cell_x2-1,cell_y1  ) &
-            +  hx( 0) * ex(cell_x2  ,cell_y1  ) &
-            +  hx( 1) * ex(cell_x2+1,cell_y1  )) + gy( 1) &
-            * (hx(-1) * ex(cell_x2-1,cell_y1+1) &
-            +  hx( 0) * ex(cell_x2  ,cell_y1+1) &
-            +  hx( 1) * ex(cell_x2+1,cell_y1+1))
+#ifdef SPLINE_FOUR
+        ex_part = &
+              gy(-2) * (hx(-2) * ex(cell_x2-2,cell_y1-2) &
+                     +  hx(-1) * ex(cell_x2-1,cell_y1-2) &
+                     +  hx( 0) * ex(cell_x2  ,cell_y1-2) &
+                     +  hx( 1) * ex(cell_x2+1,cell_y1-2) &
+                     +  hx( 2) * ex(cell_x2+2,cell_y1-2)) &
+            + gy(-1) * (hx(-2) * ex(cell_x2-2,cell_y1-1) &
+                     +  hx(-1) * ex(cell_x2-1,cell_y1-1) &
+                     +  hx( 0) * ex(cell_x2  ,cell_y1-1) &
+                     +  hx( 1) * ex(cell_x2+1,cell_y1-1) &
+                     +  hx( 2) * ex(cell_x2+2,cell_y1-1)) &
+            + gy( 0) * (hx(-2) * ex(cell_x2-2,cell_y1  ) &
+                     +  hx(-1) * ex(cell_x2-1,cell_y1  ) &
+                     +  hx( 0) * ex(cell_x2  ,cell_y1  ) &
+                     +  hx( 1) * ex(cell_x2+1,cell_y1  ) &
+                     +  hx( 2) * ex(cell_x2+2,cell_y1  )) &
+            + gy( 1) * (hx(-2) * ex(cell_x2-2,cell_y1+1) &
+                     +  hx(-1) * ex(cell_x2-1,cell_y1+1) &
+                     +  hx( 0) * ex(cell_x2  ,cell_y1+1) &
+                     +  hx( 1) * ex(cell_x2+1,cell_y1+1) &
+                     +  hx( 2) * ex(cell_x2+2,cell_y1+1)) &
+            + gy( 2) * (hx(-2) * ex(cell_x2-2,cell_y1+2) &
+                     +  hx(-1) * ex(cell_x2-1,cell_y1+2) &
+                     +  hx( 0) * ex(cell_x2  ,cell_y1+2) &
+                     +  hx( 1) * ex(cell_x2+1,cell_y1+2) &
+                     +  hx( 2) * ex(cell_x2+2,cell_y1+2))
 
-        ey_part = hy(-1) &
-            * (gx(-1) * ey(cell_x1-1,cell_y2-1) &
-            +  gx( 0) * ey(cell_x1  ,cell_y2-1) &
-            +  gx( 1) * ey(cell_x1+1,cell_y2-1)) + hy( 0) &
-            * (gx(-1) * ey(cell_x1-1,cell_y2  ) &
-            +  gx( 0) * ey(cell_x1  ,cell_y2  ) &
-            +  gx( 1) * ey(cell_x1+1,cell_y2  )) + hy( 1) &
-            * (gx(-1) * ey(cell_x1-1,cell_y2+1) &
-            +  gx( 0) * ey(cell_x1  ,cell_y2+1) &
-            +  gx( 1) * ey(cell_x1+1,cell_y2+1))
+        ey_part = &
+              hy(-2) * (gx(-2) * ey(cell_x1-2,cell_y2-2) &
+                     +  gx(-1) * ey(cell_x1-1,cell_y2-2) &
+                     +  gx( 0) * ey(cell_x1  ,cell_y2-2) &
+                     +  gx( 1) * ey(cell_x1+1,cell_y2-2) &
+                     +  gx( 2) * ey(cell_x1+2,cell_y2-2)) &
+            + hy(-1) * (gx(-2) * ey(cell_x1-2,cell_y2-1) &
+                     +  gx(-1) * ey(cell_x1-1,cell_y2-1) &
+                     +  gx( 0) * ey(cell_x1  ,cell_y2-1) &
+                     +  gx( 1) * ey(cell_x1+1,cell_y2-1) &
+                     +  gx( 2) * ey(cell_x1+2,cell_y2-1)) &
+            + hy( 0) * (gx(-2) * ey(cell_x1-2,cell_y2  ) &
+                     +  gx(-1) * ey(cell_x1-1,cell_y2  ) &
+                     +  gx( 0) * ey(cell_x1  ,cell_y2  ) &
+                     +  gx( 1) * ey(cell_x1+1,cell_y2  ) &
+                     +  gx( 2) * ey(cell_x1+2,cell_y2  )) &
+            + hy( 1) * (gx(-2) * ey(cell_x1-2,cell_y2+1) &
+                     +  gx(-1) * ey(cell_x1-1,cell_y2+1) &
+                     +  gx( 0) * ey(cell_x1  ,cell_y2+1) &
+                     +  gx( 1) * ey(cell_x1+1,cell_y2+1) &
+                     +  gx( 2) * ey(cell_x1+2,cell_y2+1)) &
+            + hy( 2) * (gx(-2) * ey(cell_x1-2,cell_y2+2) &
+                     +  gx(-1) * ey(cell_x1-1,cell_y2+2) &
+                     +  gx( 0) * ey(cell_x1  ,cell_y2+2) &
+                     +  gx( 1) * ey(cell_x1+1,cell_y2+2) &
+                     +  gx( 2) * ey(cell_x1+2,cell_y2+2))
 
-        ez_part = gy(-1) &
-            * (gx(-1) * ez(cell_x1-1,cell_y1-1) &
-            +  gx( 0) * ez(cell_x1  ,cell_y1-1) &
-            +  gx( 1) * ez(cell_x1+1,cell_y1-1)) + gy( 0) &
-            * (gx(-1) * ez(cell_x1-1,cell_y1  ) &
-            +  gx( 0) * ez(cell_x1  ,cell_y1  ) &
-            +  gx( 1) * ez(cell_x1+1,cell_y1  )) + gy( 1) &
-            * (gx(-1) * ez(cell_x1-1,cell_y1+1) &
-            +  gx( 0) * ez(cell_x1  ,cell_y1+1) &
-            +  gx( 1) * ez(cell_x1+1,cell_y1+1))
+        ez_part = &
+              gy(-2) * (gx(-2) * ez(cell_x1-2,cell_y1-2) &
+                     +  gx(-1) * ez(cell_x1-1,cell_y1-2) &
+                     +  gx( 0) * ez(cell_x1  ,cell_y1-2) &
+                     +  gx( 1) * ez(cell_x1+1,cell_y1-2) &
+                     +  gx( 2) * ez(cell_x1+2,cell_y1-2)) &
+            + gy(-1) * (gx(-2) * ez(cell_x1-2,cell_y1-1) &
+                     +  gx(-1) * ez(cell_x1-1,cell_y1-1) &
+                     +  gx( 0) * ez(cell_x1  ,cell_y1-1) &
+                     +  gx( 1) * ez(cell_x1+1,cell_y1-1) &
+                     +  gx( 2) * ez(cell_x1+2,cell_y1-1)) &
+            + gy( 0) * (gx(-2) * ez(cell_x1-2,cell_y1  ) &
+                     +  gx(-1) * ez(cell_x1-1,cell_y1  ) &
+                     +  gx( 0) * ez(cell_x1  ,cell_y1  ) &
+                     +  gx( 1) * ez(cell_x1+1,cell_y1  ) &
+                     +  gx( 2) * ez(cell_x1+2,cell_y1  )) &
+            + gy( 1) * (gx(-2) * ez(cell_x1-2,cell_y1+1) &
+                     +  gx(-1) * ez(cell_x1-1,cell_y1+1) &
+                     +  gx( 0) * ez(cell_x1  ,cell_y1+1) &
+                     +  gx( 1) * ez(cell_x1+1,cell_y1+1) &
+                     +  gx( 2) * ez(cell_x1+2,cell_y1+1)) &
+            + gy( 2) * (gx(-2) * ez(cell_x1-2,cell_y1+2) &
+                     +  gx(-1) * ez(cell_x1-1,cell_y1+2) &
+                     +  gx( 0) * ez(cell_x1  ,cell_y1+2) &
+                     +  gx( 1) * ez(cell_x1+1,cell_y1+2) &
+                     +  gx( 2) * ez(cell_x1+2,cell_y1+2))
 
-        bx_part = hy(-1) &
-            * (gx(-1) * bx(cell_x1-1,cell_y2-1) &
-            +  gx( 0) * bx(cell_x1  ,cell_y2-1) &
-            +  gx( 1) * bx(cell_x1+1,cell_y2-1)) + hy( 0) &
-            * (gx(-1) * bx(cell_x1-1,cell_y2  ) &
-            +  gx( 0) * bx(cell_x1  ,cell_y2  ) &
-            +  gx( 1) * bx(cell_x1+1,cell_y2  )) + hy( 1) &
-            * (gx(-1) * bx(cell_x1-1,cell_y2+1) &
-            +  gx( 0) * bx(cell_x1  ,cell_y2+1) &
-            +  gx( 1) * bx(cell_x1+1,cell_y2+1))
+        bx_part = &
+              hy(-2) * (gx(-2) * bx(cell_x1-2,cell_y2-2) &
+                     +  gx(-1) * bx(cell_x1-1,cell_y2-2) &
+                     +  gx( 0) * bx(cell_x1  ,cell_y2-2) &
+                     +  gx( 1) * bx(cell_x1+1,cell_y2-2) &
+                     +  gx( 2) * bx(cell_x1+2,cell_y2-2)) &
+            + hy(-1) * (gx(-2) * bx(cell_x1-2,cell_y2-1) &
+                     +  gx(-1) * bx(cell_x1-1,cell_y2-1) &
+                     +  gx( 0) * bx(cell_x1  ,cell_y2-1) &
+                     +  gx( 1) * bx(cell_x1+1,cell_y2-1) &
+                     +  gx( 2) * bx(cell_x1+2,cell_y2-1)) &
+            + hy( 0) * (gx(-2) * bx(cell_x1-2,cell_y2  ) &
+                     +  gx(-1) * bx(cell_x1-1,cell_y2  ) &
+                     +  gx( 0) * bx(cell_x1  ,cell_y2  ) &
+                     +  gx( 1) * bx(cell_x1+1,cell_y2  ) &
+                     +  gx( 2) * bx(cell_x1+2,cell_y2  )) &
+            + hy( 1) * (gx(-2) * bx(cell_x1-2,cell_y2+1) &
+                     +  gx(-1) * bx(cell_x1-1,cell_y2+1) &
+                     +  gx( 0) * bx(cell_x1  ,cell_y2+1) &
+                     +  gx( 1) * bx(cell_x1+1,cell_y2+1) &
+                     +  gx( 2) * bx(cell_x1+2,cell_y2+1)) &
+            + hy( 2) * (gx(-2) * bx(cell_x1-2,cell_y2+2) &
+                     +  gx(-1) * bx(cell_x1-1,cell_y2+2) &
+                     +  gx( 0) * bx(cell_x1  ,cell_y2+2) &
+                     +  gx( 1) * bx(cell_x1+1,cell_y2+2) &
+                     +  gx( 2) * bx(cell_x1+2,cell_y2+2))
 
-        by_part = gy(-1) &
-            * (hx(-1) * by(cell_x2-1,cell_y1-1) &
-            +  hx( 0) * by(cell_x2  ,cell_y1-1) &
-            +  hx( 1) * by(cell_x2+1,cell_y1-1)) + gy( 0) &
-            * (hx(-1) * by(cell_x2-1,cell_y1  ) &
-            +  hx( 0) * by(cell_x2  ,cell_y1  ) &
-            +  hx( 1) * by(cell_x2+1,cell_y1  )) + gy( 1) &
-            * (hx(-1) * by(cell_x2-1,cell_y1+1) &
-            +  hx( 0) * by(cell_x2  ,cell_y1+1) &
-            +  hx( 1) * by(cell_x2+1,cell_y1+1))
+        by_part = &
+              gy(-2) * (hx(-2) * by(cell_x2-2,cell_y1-2) &
+                     +  hx(-1) * by(cell_x2-1,cell_y1-2) &
+                     +  hx( 0) * by(cell_x2  ,cell_y1-2) &
+                     +  hx( 1) * by(cell_x2+1,cell_y1-2) &
+                     +  hx( 2) * by(cell_x2+2,cell_y1-2)) &
+            + gy(-1) * (hx(-2) * by(cell_x2-2,cell_y1-1) &
+                     +  hx(-1) * by(cell_x2-1,cell_y1-1) &
+                     +  hx( 0) * by(cell_x2  ,cell_y1-1) &
+                     +  hx( 1) * by(cell_x2+1,cell_y1-1) &
+                     +  hx( 2) * by(cell_x2+2,cell_y1-1)) &
+            + gy( 0) * (hx(-2) * by(cell_x2-2,cell_y1  ) &
+                     +  hx(-1) * by(cell_x2-1,cell_y1  ) &
+                     +  hx( 0) * by(cell_x2  ,cell_y1  ) &
+                     +  hx( 1) * by(cell_x2+1,cell_y1  ) &
+                     +  hx( 2) * by(cell_x2+2,cell_y1  )) &
+            + gy( 1) * (hx(-2) * by(cell_x2-2,cell_y1+1) &
+                     +  hx(-1) * by(cell_x2-1,cell_y1+1) &
+                     +  hx( 0) * by(cell_x2  ,cell_y1+1) &
+                     +  hx( 1) * by(cell_x2+1,cell_y1+1) &
+                     +  hx( 2) * by(cell_x2+2,cell_y1+1)) &
+            + gy( 2) * (hx(-2) * by(cell_x2-2,cell_y1+2) &
+                     +  hx(-1) * by(cell_x2-1,cell_y1+2) &
+                     +  hx( 0) * by(cell_x2  ,cell_y1+2) &
+                     +  hx( 1) * by(cell_x2+1,cell_y1+2) &
+                     +  hx( 2) * by(cell_x2+2,cell_y1+2))
 
-        bz_part = hy(-1) &
-            * (hx(-1) * bz(cell_x2-1,cell_y2-1) &
-            +  hx( 0) * bz(cell_x2  ,cell_y2-1) &
-            +  hx( 1) * bz(cell_x2+1,cell_y2-1)) + hy( 0) &
-            * (hx(-1) * bz(cell_x2-1,cell_y2  ) &
-            +  hx( 0) * bz(cell_x2  ,cell_y2  ) &
-            +  hx( 1) * bz(cell_x2+1,cell_y2  )) + hy( 1) &
-            * (hx(-1) * bz(cell_x2-1,cell_y2+1) &
-            +  hx( 0) * bz(cell_x2  ,cell_y2+1) &
-            +  hx( 1) * bz(cell_x2+1,cell_y2+1))
+        bz_part = &
+              hy(-2) * (hx(-2) * bz(cell_x2-2,cell_y2-2) &
+                     +  hx(-1) * bz(cell_x2-1,cell_y2-2) &
+                     +  hx( 0) * bz(cell_x2  ,cell_y2-2) &
+                     +  hx( 1) * bz(cell_x2+1,cell_y2-2) &
+                     +  hx( 2) * bz(cell_x2+2,cell_y2-2)) &
+            + hy(-1) * (hx(-2) * bz(cell_x2-2,cell_y2-1) &
+                     +  hx(-1) * bz(cell_x2-1,cell_y2-1) &
+                     +  hx( 0) * bz(cell_x2  ,cell_y2-1) &
+                     +  hx( 1) * bz(cell_x2+1,cell_y2-1) &
+                     +  hx( 2) * bz(cell_x2+2,cell_y2-1)) &
+            + hy( 0) * (hx(-2) * bz(cell_x2-2,cell_y2  ) &
+                     +  hx(-1) * bz(cell_x2-1,cell_y2  ) &
+                     +  hx( 0) * bz(cell_x2  ,cell_y2  ) &
+                     +  hx( 1) * bz(cell_x2+1,cell_y2  ) &
+                     +  hx( 2) * bz(cell_x2+2,cell_y2  )) &
+            + hy( 1) * (hx(-2) * bz(cell_x2-2,cell_y2+1) &
+                     +  hx(-1) * bz(cell_x2-1,cell_y2+1) &
+                     +  hx( 0) * bz(cell_x2  ,cell_y2+1) &
+                     +  hx( 1) * bz(cell_x2+1,cell_y2+1) &
+                     +  hx( 2) * bz(cell_x2+2,cell_y2+1)) &
+            + hy( 2) * (hx(-2) * bz(cell_x2-2,cell_y2+2) &
+                     +  hx(-1) * bz(cell_x2-1,cell_y2+2) &
+                     +  hx( 0) * bz(cell_x2  ,cell_y2+2) &
+                     +  hx( 1) * bz(cell_x2+1,cell_y2+2) &
+                     +  hx( 2) * bz(cell_x2+2,cell_y2+2))
+#else
+        ex_part = &
+              gy(-1) * (hx(-1) * ex(cell_x2-1,cell_y1-1) &
+                     +  hx( 0) * ex(cell_x2  ,cell_y1-1) &
+                     +  hx( 1) * ex(cell_x2+1,cell_y1-1)) &
+            + gy( 0) * (hx(-1) * ex(cell_x2-1,cell_y1  ) &
+                     +  hx( 0) * ex(cell_x2  ,cell_y1  ) &
+                     +  hx( 1) * ex(cell_x2+1,cell_y1  )) &
+            + gy( 1) * (hx(-1) * ex(cell_x2-1,cell_y1+1) &
+                     +  hx( 0) * ex(cell_x2  ,cell_y1+1) &
+                     +  hx( 1) * ex(cell_x2+1,cell_y1+1))
+
+        ey_part = &
+              hy(-1) * (gx(-1) * ey(cell_x1-1,cell_y2-1) &
+                     +  gx( 0) * ey(cell_x1  ,cell_y2-1) &
+                     +  gx( 1) * ey(cell_x1+1,cell_y2-1)) &
+            + hy( 0) * (gx(-1) * ey(cell_x1-1,cell_y2  ) &
+                     +  gx( 0) * ey(cell_x1  ,cell_y2  ) &
+                     +  gx( 1) * ey(cell_x1+1,cell_y2  )) &
+            + hy( 1) * (gx(-1) * ey(cell_x1-1,cell_y2+1) &
+                     +  gx( 0) * ey(cell_x1  ,cell_y2+1) &
+                     +  gx( 1) * ey(cell_x1+1,cell_y2+1))
+
+        ez_part = &
+              gy(-1) * (gx(-1) * ez(cell_x1-1,cell_y1-1) &
+                     +  gx( 0) * ez(cell_x1  ,cell_y1-1) &
+                     +  gx( 1) * ez(cell_x1+1,cell_y1-1)) &
+            + gy( 0) * (gx(-1) * ez(cell_x1-1,cell_y1  ) &
+                     +  gx( 0) * ez(cell_x1  ,cell_y1  ) &
+                     +  gx( 1) * ez(cell_x1+1,cell_y1  )) &
+            + gy( 1) * (gx(-1) * ez(cell_x1-1,cell_y1+1) &
+                     +  gx( 0) * ez(cell_x1  ,cell_y1+1) &
+                     +  gx( 1) * ez(cell_x1+1,cell_y1+1))
+
+        bx_part = &
+              hy(-1) * (gx(-1) * bx(cell_x1-1,cell_y2-1) &
+                     +  gx( 0) * bx(cell_x1  ,cell_y2-1) &
+                     +  gx( 1) * bx(cell_x1+1,cell_y2-1)) &
+            + hy( 0) * (gx(-1) * bx(cell_x1-1,cell_y2  ) &
+                     +  gx( 0) * bx(cell_x1  ,cell_y2  ) &
+                     +  gx( 1) * bx(cell_x1+1,cell_y2  )) &
+            + hy( 1) * (gx(-1) * bx(cell_x1-1,cell_y2+1) &
+                     +  gx( 0) * bx(cell_x1  ,cell_y2+1) &
+                     +  gx( 1) * bx(cell_x1+1,cell_y2+1))
+
+        by_part = &
+              gy(-1) * (hx(-1) * by(cell_x2-1,cell_y1-1) &
+                     +  hx( 0) * by(cell_x2  ,cell_y1-1) &
+                     +  hx( 1) * by(cell_x2+1,cell_y1-1)) &
+            + gy( 0) * (hx(-1) * by(cell_x2-1,cell_y1  ) &
+                     +  hx( 0) * by(cell_x2  ,cell_y1  ) &
+                     +  hx( 1) * by(cell_x2+1,cell_y1  )) &
+            + gy( 1) * (hx(-1) * by(cell_x2-1,cell_y1+1) &
+                     +  hx( 0) * by(cell_x2  ,cell_y1+1) &
+                     +  hx( 1) * by(cell_x2+1,cell_y1+1))
+
+        bz_part = &
+              hy(-1) * (hx(-1) * bz(cell_x2-1,cell_y2-1) &
+                     +  hx( 0) * bz(cell_x2  ,cell_y2-1) &
+                     +  hx( 1) * bz(cell_x2+1,cell_y2-1)) &
+            + hy( 0) * (hx(-1) * bz(cell_x2-1,cell_y2  ) &
+                     +  hx( 0) * bz(cell_x2  ,cell_y2  ) &
+                     +  hx( 1) * bz(cell_x2+1,cell_y2  )) &
+            + hy( 1) * (hx(-1) * bz(cell_x2-1,cell_y2+1) &
+                     +  hx( 0) * bz(cell_x2  ,cell_y2+1) &
+                     +  hx( 1) * bz(cell_x2+1,cell_y2+1))
+#endif
 
         ! update particle momenta using weighted fields
         cmratio = part_q * 0.5_num * dt
@@ -371,6 +600,27 @@ CONTAINS
           xi1x = 0.0_num
           xi1y = 0.0_num
 
+#ifdef SPLINE_FOUR
+          dcell = cell_x3 - cell_x1
+          xi1x(dcell-2) = f2 * (1.5_num - cell_frac_x)**4
+          xi1x(dcell-1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+              * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
+          xi1x(dcell  ) = 0.25 * (115/48 + cell_frac_x**2 &
+              * (cell_frac_x**2 - 2.5_num))
+          xi1x(dcell+1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+              * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
+          xi1x(dcell+2) = f2 * (1.5_num + cell_frac_x)**4
+
+          dcell = cell_y3 - cell_y1
+          xi1y(dcell-2) = f2 * (1.5_num - cell_frac_y)**4
+          xi1y(dcell-1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+              * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
+          xi1y(dcell  ) = 0.25 * (115/48 + cell_frac_y**2 &
+              * (cell_frac_y**2 - 2.5_num))
+          xi1y(dcell+1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+              * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
+          xi1y(dcell+2) = f2 * (1.5_num + cell_frac_y)**4
+#else
           dcell = cell_x3 - cell_x1
           xi1x(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
           xi1x(dcell  ) = 0.75_num - ABS(cell_frac_x)**2
@@ -380,6 +630,7 @@ CONTAINS
           xi1y(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
           xi1y(dcell  ) = 0.75_num - ABS(cell_frac_y)**2
           xi1y(dcell+1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+#endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
           ! the current update much simpler
