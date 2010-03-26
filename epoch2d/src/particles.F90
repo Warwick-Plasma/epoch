@@ -79,7 +79,7 @@ CONTAINS
     REAL(num) :: wx, wy, wz
 
     ! Temporary variables
-    REAL(num) :: mean, idx, idy, idt, ic2, dto2, dtco2, third, f1, f2
+    REAL(num) :: mean, idx, idy, idt, dto2, dtco2, third, fac
     REAL(num) :: idty, idtx, idxy, fcx, fcy, fcz, fjx, fjy, fjz, dtfac
     INTEGER :: ispecies, dcell
 
@@ -95,18 +95,16 @@ CONTAINS
     idx = 1.0_num / dx
     idy = 1.0_num / dy
     idt = 1.0_num / dt
-    ic2 = 1.0_num / c**2
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
     third = 1.0_num / 3.0_num
 #ifdef SPLINE_FOUR
     ! interpolation coefficients
-    f1 = 1.0_num / 6.0_num
-    f2 = 1.0_num / 24.0_num
+    fac = 1.0_num / 24.0_num
 #else
-    f2 = 0.5_num
+    fac = 0.5_num
 #endif
-    dtfac = 0.5_num * dt * f2**2
+    dtfac = 0.5_num * dt * fac**2
 
     jx = 0.0_num
     jy = 0.0_num
@@ -122,9 +120,9 @@ CONTAINS
     ekbar_sum = 0.0_num
     ct = 0.0_num
 
-    idty = idt * idy
-    idtx = idt * idx
-    idxy = idx * idy
+    idty = idt * idy * fac**2
+    idtx = idt * idx * fac**2
+    idxy = idx * idy * fac**2
 
     part_weight = weight
     fcx = idty * part_weight
@@ -226,31 +224,31 @@ CONTAINS
         ! These wieght particle properties onto grid
         ! This is used later to calculate J
 #ifdef SPLINE_FOUR
-        xi0x(-2) = f2 * (1.5_num - cell_frac_x)**4
-        xi0x(-1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+        xi0x(-2) = (1.5_num - cell_frac_x)**4
+        xi0x(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
             * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-        xi0x( 0) = 0.25 * (115/48 + cell_frac_x**2 &
+        xi0x( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
             * (cell_frac_x**2 - 2.5_num))
-        xi0x( 1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+        xi0x( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
             * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-        xi0x( 2) = f2 * (1.5_num + cell_frac_x)**4
+        xi0x( 2) = (1.5_num + cell_frac_x)**4
 
-        xi0y(-2) = f2 * (1.5_num - cell_frac_y)**4
-        xi0y(-1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+        xi0y(-2) = (1.5_num - cell_frac_y)**4
+        xi0y(-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
             * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-        xi0y( 0) = 0.25 * (115/48 + cell_frac_y**2 &
+        xi0y( 0) = 6.0_num * (115/48 + cell_frac_y**2 &
             * (cell_frac_y**2 - 2.5_num))
-        xi0y( 1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+        xi0y( 1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
             * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-        xi0y( 2) = f2 * (1.5_num + cell_frac_y)**4
+        xi0y( 2) = (1.5_num + cell_frac_y)**4
 #else
-        xi0x(-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-        xi0x( 0) = 0.75_num - ABS(cell_frac_x)**2
-        xi0x( 1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+        xi0x(-1) = (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+        xi0x( 0) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
+        xi0x( 1) = (1.5_num - ABS(cell_frac_x + 1.0_num))**2
 
-        xi0y(-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-        xi0y( 0) = 0.75_num - ABS(cell_frac_y)**2
-        xi0y( 1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+        xi0y(-1) = (1.5_num - ABS(cell_frac_y - 1.0_num))**2
+        xi0y( 0) =  1.5_num - 2.0_num * ABS(cell_frac_y)**2
+        xi0y( 1) = (1.5_num - ABS(cell_frac_y + 1.0_num))**2
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -605,34 +603,34 @@ CONTAINS
 
 #ifdef SPLINE_FOUR
           dcell = cell_x3 - cell_x1
-          xi1x(dcell-2) = f2 * (1.5_num - cell_frac_x)**4
-          xi1x(dcell-1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+          xi1x(dcell-2) = (1.5_num - cell_frac_x)**4
+          xi1x(dcell-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
               * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-          xi1x(dcell  ) = 0.25 * (115/48 + cell_frac_x**2 &
+          xi1x(dcell  ) = 6.0_num * (115/48 + cell_frac_x**2 &
               * (cell_frac_x**2 - 2.5_num))
-          xi1x(dcell+1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+          xi1x(dcell+1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
               * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-          xi1x(dcell+2) = f2 * (1.5_num + cell_frac_x)**4
+          xi1x(dcell+2) = (1.5_num + cell_frac_x)**4
 
           dcell = cell_y3 - cell_y1
-          xi1y(dcell-2) = f2 * (1.5_num - cell_frac_y)**4
-          xi1y(dcell-1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+          xi1y(dcell-2) = (1.5_num - cell_frac_y)**4
+          xi1y(dcell-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
               * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-          xi1y(dcell  ) = 0.25 * (115/48 + cell_frac_y**2 &
+          xi1y(dcell  ) = 6.0_num * (115/48 + cell_frac_y**2 &
               * (cell_frac_y**2 - 2.5_num))
-          xi1y(dcell+1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+          xi1y(dcell+1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
               * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-          xi1y(dcell+2) = f2 * (1.5_num + cell_frac_y)**4
+          xi1y(dcell+2) = (1.5_num + cell_frac_y)**4
 #else
           dcell = cell_x3 - cell_x1
-          xi1x(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_x - 1.0_num))**2
-          xi1x(dcell  ) = 0.75_num - ABS(cell_frac_x)**2
-          xi1x(dcell+1) = 0.5_num * (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+          xi1x(dcell-1) = (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+          xi1x(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
+          xi1x(dcell+1) = (1.5_num - ABS(cell_frac_x + 1.0_num))**2
 
           dcell = cell_y3 - cell_y1
-          xi1y(dcell-1) = 0.5_num * (1.5_num - ABS(cell_frac_y - 1.0_num))**2
-          xi1y(dcell  ) = 0.75_num - ABS(cell_frac_y)**2
-          xi1y(dcell+1) = 0.5_num * (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+          xi1y(dcell-1) = (1.5_num - ABS(cell_frac_y - 1.0_num))**2
+          xi1y(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_y)**2
+          xi1y(dcell+1) = (1.5_num - ABS(cell_frac_y + 1.0_num))**2
 #endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
