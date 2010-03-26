@@ -32,7 +32,7 @@ CONTAINS
     REAL(num), ALLOCATABLE, DIMENSION(:) :: jxh, jyh, jzh
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_m
+    REAL(num) :: part_x, part_px, part_py, part_pz, part_q, part_mc
     REAL(num) :: root, part_vx, part_vy, part_vz, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
@@ -78,17 +78,33 @@ CONTAINS
     REAL(num) :: wx, wy, wz
 
     ! Temporary variables
-    REAL(num) :: mean
-    INTEGER :: ispecies
+    REAL(num) :: mean, idx, idt, dto2, dtco2, third, fac
+    REAL(num) :: idty, idtx, idxy, fcx, fcy, fcz, fjx, fjy, fjz, dtfac
+    INTEGER :: ispecies, dcell
 
     TYPE(particle), POINTER :: current, next
 
-    ALLOCATE(xi0x(-3:3))
-    ALLOCATE(xi1x(-3:3))
+    ALLOCATE(xi0x(-sf_order-1:sf_order+1))
+    ALLOCATE(xi1x(-sf_order-1:sf_order+1))
 
-    ALLOCATE(jxh(-4:3))
-    ALLOCATE(jyh(-3:3))
-    ALLOCATE(jzh(-3:3))
+    ALLOCATE(jxh(-sf_order-2:sf_order+1))
+    ALLOCATE(jyh(-sf_order-1:sf_order+1))
+    ALLOCATE(jzh(-sf_order-1:sf_order+1))
+
+    ! Temporary variables
+
+    idx = 1.0_num / dx
+    idt = 1.0_num / dt
+    dto2 = dt / 2.0_num
+    dtco2 = c * dto2
+    third = 1.0_num / 3.0_num
+#ifdef SPLINE_FOUR
+    ! interpolation coefficients
+    fac = 1.0_num / 24.0_num
+#else
+    fac = 0.5_num
+#endif
+    dtfac = 0.5_num * dt * fac**2
 
     jx = 0.0_num
     jy = 0.0_num
@@ -101,19 +117,27 @@ CONTAINS
     ekbar_sum = 0.0_num
     ct = 0.0_num
 
+    xi0x = 0.0_num
+
     part_weight = weight
+    fcx = idt * part_weight
+    fcy = idx * part_weight
+    fcz = idx * part_weight
 
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
+      !DEC$ IVDEP
+      !DEC$ VECTOR ALWAYS
+      !DEC$ NOPREFETCH current
+      !DEC$ NOPREFETCH next
       DO ipart = 1, particle_species(ispecies)%attached_list%count
         next=>current%next
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
+        fcx = idty * part_weight
+        fcy = idtx * part_weight
+        fcz = idxy * part_weight
 #endif
-        ! Set the weighting functions to zero for each new particle
-        xi0x = 0.0_num
-        xi1x = 0.0_num
-
         ! Copy the particle properties out for speed
         part_x  = current%part_pos - x_start_local
         part_px = current%part_p(1)
@@ -122,11 +146,11 @@ CONTAINS
         ! Use a lookup table for charge and mass to SAVE memory
         ! No reason not to do this (I think), check properly later
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q = current%charge
-        part_m = current%mass
+        part_q  = current%charge
+        part_mc = c * current%mass
 #else
         part_q  = particle_species(ispecies)%charge
-        part_m  = particle_species(ispecies)%mass
+        part_mc = c * particle_species(ispecies)%mass
 #endif
 
 #ifdef PARTICLE_PROBES
@@ -135,87 +159,179 @@ CONTAINS
 
         ! Calculate v(t+0.5dt) from p(t)
         ! See PSC manual page (25-27)
-        root = 1.0_num &
-            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
-        part_vx = part_px * root
-        part_vy = part_py * root
-        part_vz = part_pz * root
+        root = dtco2 / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
 
         ! Move particles to half timestep position to first order
-        part_x = part_x + part_vx*dt/2.0_num
+        part_x = part_x + part_px * root
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
-        cell_x_r = part_x/dx
+        cell_x_r = part_x / dx
         ! Round cell position to nearest cell
-        cell_x1 = NINT(cell_x_r)
+        cell_x1 = FLOOR(cell_x_r + 0.5_num)
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_x = REAL(cell_x1, num) - cell_x_r
-        cell_x1 = cell_x1+1
+        cell_x1 = cell_x1 + 1
 
         ! These are now the weighting factors correct for field weighting
-        CALL grid_to_particle(cell_frac_x, gx)
+#ifdef SPLINE_FOUR
+        gx(-2) = (1.5_num - cell_frac_x)**4
+        gx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
+        gx( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num))
+        gx( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
+        gx( 2) = (1.5_num + cell_frac_x)**4
+#else
+        gx(-1) = (0.5_num + cell_frac_x)**2
+        gx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
+        gx( 1) = (0.5_num - cell_frac_x)**2
+#endif
 
         ! particle weighting factors in 1D
         ! These wieght particle properties onto grid
         ! This is used later to calculate J
-        CALL particle_to_grid(cell_frac_x, xi0x(-2:2))
+#ifdef SPLINE_FOUR
+        xi0x(-2) = (1.5_num - cell_frac_x)**4
+        xi0x(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
+        xi0x( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num))
+        xi0x( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
+        xi0x( 2) = (1.5_num + cell_frac_x)**4
+#else
+        xi0x(-1) = (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+        xi0x( 0) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
+        xi0x( 1) = (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+#endif
 
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
         ! And in Y&Z for bx, X&Z for by, X&Y for bz
-        cell_x_r = part_x/dx - 0.5_num
-        cell_x2  = NINT(cell_x_r)
+        cell_x_r = part_x * idx - 0.5_num
+        cell_x2 = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x2, num) - cell_x_r
-        cell_x2 = cell_x2+1
+        cell_x2 = cell_x2 + 1
 
         ! Grid weighting factors in 3D (3D analogue of equation 4.77 page 25
         ! of manual). These weight grid properties onto particles
-        CALL grid_to_particle(cell_frac_x, hx)
-
-        ex_part = 0.0_num
-        ey_part = 0.0_num
-        ez_part = 0.0_num
-        bx_part = 0.0_num
-        by_part = 0.0_num
-        bz_part = 0.0_num
+#ifdef SPLINE_FOUR
+        hx(-2) = (1.5_num - cell_frac_x)**4
+        hx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
+        hx( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num))
+        hx( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
+        hx( 2) = (1.5_num + cell_frac_x)**4
+#else
+        hx(-1) = (0.5_num + cell_frac_x)**2
+        hx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
+        hx( 1) = (0.5_num - cell_frac_x)**2
+#endif
 
         ! These are the electric and magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
-        DO ix = -sf_order, sf_order
-          ex_part = ex_part + hx(ix)*ex(cell_x2+ix)
-          ey_part = ey_part + gx(ix)*ey(cell_x1+ix)
-          ez_part = ez_part + gx(ix)*ez(cell_x1+ix)
+#ifdef SPLINE_FOUR
+        ex_part = &
+              hx(-2) * ex(cell_x2-2) &
+            + hx(-1) * ex(cell_x2-1) &
+            + hx( 0) * ex(cell_x2  ) &
+            + hx( 1) * ex(cell_x2+1) &
+            + hx( 2) * ex(cell_x2+2)
 
-          bx_part = bx_part + gx(ix)*bx(cell_x1+ix)
-          by_part = by_part + hx(ix)*by(cell_x2+ix)
-          bz_part = bz_part + hx(ix)*bz(cell_x2+ix)
-        ENDDO
+        ey_part = &
+              gx(-2) * ey(cell_x1-2) &
+            + gx(-1) * ey(cell_x1-1) &
+            + gx( 0) * ey(cell_x1  ) &
+            + gx( 1) * ey(cell_x1+1) &
+            + gx( 2) * ey(cell_x1+2)
+
+        ez_part = &
+              gx(-2) * ez(cell_x1-2) &
+            + gx(-1) * ez(cell_x1-1) &
+            + gx( 0) * ez(cell_x1  ) &
+            + gx( 1) * ez(cell_x1+1) &
+            + gx( 2) * ez(cell_x1+2)
+
+        bx_part = &
+              gx(-2) * bx(cell_x1-2) &
+            + gx(-1) * bx(cell_x1-1) &
+            + gx( 0) * bx(cell_x1  ) &
+            + gx( 1) * bx(cell_x1+1) &
+            + gx( 2) * bx(cell_x1+2)
+
+        by_part = &
+              hx(-2) * by(cell_x2-2) &
+            + hx(-1) * by(cell_x2-1) &
+            + hx( 0) * by(cell_x2  ) &
+            + hx( 1) * by(cell_x2+1) &
+            + hx( 2) * by(cell_x2+2)
+
+        bz_part = &
+              hx(-2) * bz(cell_x2-2) &
+            + hx(-1) * bz(cell_x2-1) &
+            + hx( 0) * bz(cell_x2  ) &
+            + hx( 1) * bz(cell_x2+1) &
+            + hx( 2) * bz(cell_x2+2)
+#else
+        ex_part = &
+            + hx(-1) * ex(cell_x2-1) &
+            + hx( 0) * ex(cell_x2  ) &
+            + hx( 1) * ex(cell_x2+1)
+
+        ey_part = &
+            + gx(-1) * ey(cell_x1-1) &
+            + gx( 0) * ey(cell_x1  ) &
+            + gx( 1) * ey(cell_x1+1)
+
+        ez_part = &
+            + gx(-1) * ez(cell_x1-1) &
+            + gx( 0) * ez(cell_x1  ) &
+            + gx( 1) * ez(cell_x1+1)
+
+        bx_part = &
+            + gx(-1) * bx(cell_x1-1) &
+            + gx( 0) * bx(cell_x1  ) &
+            + gx( 1) * bx(cell_x1+1)
+
+        by_part = &
+            + hx(-1) * by(cell_x2-1) &
+            + hx( 0) * by(cell_x2  ) &
+            + hx( 1) * by(cell_x2+1)
+
+        bz_part = &
+            + hx(-1) * bz(cell_x2-1) &
+            + hx( 0) * bz(cell_x2  ) &
+            + hx( 1) * bz(cell_x2+1)
+#endif
 
         ! update particle momenta using weighted fields
-        cmratio = part_q * 0.5_num * dt
+        cmratio = part_q * dtfac
         pxm = part_px + cmratio * ex_part
         pym = part_py + cmratio * ey_part
         pzm = part_pz + cmratio * ez_part
 
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
+        root = c * cmratio / SQRT(part_mc**2 + pxm**2 + pym**2 + pzm**2)
 
-        root = cmratio / SQRT(part_m**2 + (pxm**2 + pym**2 + pzm**2)/c**2)
         taux = bx_part * root
         tauy = by_part * root
         tauz = bz_part * root
 
         tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
-        pxp = ((1.0_num+taux*taux-tauy*tauy-tauz*tauz)*pxm &
-            + (2.0_num*taux*tauy+2.0_num*tauz)*pym &
-            + (2.0_num*taux*tauz-2.0_num*tauy)*pzm)*tau
-        pyp = ((2.0_num*taux*tauy-2.0_num*tauz)*pxm &
-            + (1.0_num-taux*taux+tauy*tauy-tauz*tauz)*pym &
-            + (2.0_num*tauy*tauz+2.0_num*taux)*pzm)*tau
-        pzp = ((2.0_num*taux*tauz+2.0_num*tauy)*pxm &
-            + (2.0_num*tauy*tauz-2.0_num*taux)*pym &
-            + (1.0_num-taux*taux-tauy*tauy+tauz*tauz)*pzm)*tau
+        pxp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pxm &
+            + 2.0_num * ((taux * tauy + tauz) * pym &
+            + (taux * tauz - tauy) * pzm)) * tau
+        pyp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pym &
+            + 2.0_num * ((taux * tauy - tauz) * pxm &
+            + (tauy * tauz + taux) * pzm)) * tau
+        pzp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pzm &
+            + 2.0_num * ((taux * tauz + tauy) * pxm &
+            + (tauy * tauz - taux) * pym)) * tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part
@@ -223,20 +339,17 @@ CONTAINS
         part_pz = pzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        root = 1.0_num &
-            / SQRT(part_m**2 + (part_px**2 + part_py**2 + part_pz**2)/c**2)
+        root = c / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
         part_vx = part_px * root
         part_vy = part_py * root
 
         ! Move particles to end of time step at 2nd order accuracy
-        part_x = part_x + part_vx * dt/2.0_num
+        part_x = part_x + part_vx * dto2
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
         current%part_pos = part_x + x_start_local
-        current%part_p  (1) = part_px
-        current%part_p  (2) = part_py
-        current%part_p  (3) = part_pz
+        current%part_p   = (/ part_px, part_py, part_pz /)
 
 #ifdef PARTICLE_PROBES
         final_part_x = current%part_pos
@@ -252,15 +365,31 @@ CONTAINS
           ! the manual between pages 37 and 41. The version coded up looks
           ! completely different to that in the manual, but is equivalent.
           ! Use t+1.5 dt so that can update J to t+dt at 2nd order
-          part_x = part_x + part_vx * dt/2.0_num
+          part_x = part_x + part_vx * dto2
 
-          cell_x_r = part_x / dx
-          cell_x3  = NINT(cell_x_r)
+          cell_x_r = part_x * idx
+          cell_x3 = FLOOR(cell_x_r + 0.5_num)
           cell_frac_x = REAL(cell_x3, num) - cell_x_r
-          cell_x3 = cell_x3+1
+          cell_x3 = cell_x3 + 1
 
-          CALL particle_to_grid(cell_frac_x, &
-              xi1x(cell_x3-cell_x1-2:cell_x3-cell_x1+2))
+          xi1x = 0.0_num
+
+#ifdef SPLINE_FOUR
+          dcell = cell_x3 - cell_x1
+          xi1x(dcell-2) = (1.5_num - cell_frac_x)**4
+          xi1x(dcell-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+              * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
+          xi1x(dcell  ) = 6.0_num * (115/48 + cell_frac_x**2 &
+              * (cell_frac_x**2 - 2.5_num))
+          xi1x(dcell+1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+              * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
+          xi1x(dcell+2) = (1.5_num + cell_frac_x)**4
+#else
+          dcell = cell_x3 - cell_x1
+          xi1x(dcell-1) = (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+          xi1x(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
+          xi1x(dcell+1) = (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+#endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
           ! the current update much simpler
@@ -269,24 +398,17 @@ CONTAINS
           ! Remember that due to CFL condition particle can never cross more
           ! than one gridcell in one timestep
 
-          IF (cell_x3 .EQ. cell_x1) THEN
-            ! particle is still in same cell at t+1.5dt as at t+0.5dt
-            xmin = -sf_order
-            xmax = sf_order
-          ELSE IF (cell_x3 .EQ. cell_x1 - 1) THEN
-            ! particle has moved one cell to left
-            xmin = -sf_order-1
-            xmax = sf_order
-          ELSE ! IF (cell_x3 .EQ. cell_x1 + 1) THEN
-            ! particle has moved one cell to right
-            xmin = -sf_order
-            xmax = sf_order+1
-          ENDIF
+          xmin = -sf_order + (cell_x3 - cell_x1 - 1) / 2
+          xmax =  sf_order + (cell_x3 - cell_x1 + 1) / 2
 
           ! Set these to zero due to diffential inside loop
           jxh = 0.0_num
           jyh = 0.0_num
           jzh = 0.0_num
+
+          fjx = fcx * part_q
+          fjy = fcy * part_q * part_vy
+          fjz = fcz * part_q * part_vz
 
           DO ix = xmin, xmax
             wx = xi1x(ix)
@@ -294,13 +416,13 @@ CONTAINS
             wz = xi0x(ix) + 0.5_num * xi1x(ix)
 
             ! This is the bit that actually solves d(rho)/dt = -div(J)
-            jxh(ix) = jxh(ix-1) - part_q * wx * 1.0_num/dt * part_weight
-            jyh(ix) = part_q * part_vy * wy  * part_weight/dx
-            jzh(ix) = part_q * part_vz * wz  * part_weight/dx
+            jxh(ix) = jxh(ix-1) - fjx * wx
+            jyh(ix) = fjy * wy
+            jzh(ix) = fjz * wz
 
-            jx(cell_x1+ix) = jx(cell_x1+ix) +jxh(ix)
-            jy(cell_x1+ix) = jy(cell_x1+ix) +jyh(ix)
-            jz(cell_x1+ix) = jz(cell_x1+ix) +jzh(ix)
+            jx(cell_x1+ix) = jx(cell_x1+ix) + jxh(ix)
+            jy(cell_x1+ix) = jy(cell_x1+ix) + jyh(ix)
+            jz(cell_x1+ix) = jz(cell_x1+ix) + jzh(ix)
           ENDDO
 #ifdef TRACER_PARTICLES
         ENDIF
@@ -317,8 +439,8 @@ CONTAINS
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
           probe_energy = &
-              (SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2) &
-              / (part_m * c)**2) - 1.0_num) * (part_m * c**2)
+              c * (SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2) &
+              - part_mc)
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN
