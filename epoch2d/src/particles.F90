@@ -80,7 +80,7 @@ CONTAINS
 
     ! Temporary variables
     REAL(num) :: mean, idx, idy, idt, ic2, dto2, dtco2, third, f1, f2
-    REAL(num) :: idty, idtx, idxy, fcx, fcy, fcz, fjx, fjy, fjz
+    REAL(num) :: idty, idtx, idxy, fcx, fcy, fcz, fjx, fjy, fjz, dtfac
     INTEGER :: ispecies, dcell
 
     TYPE(particle), POINTER :: current, next
@@ -103,7 +103,10 @@ CONTAINS
     ! interpolation coefficients
     f1 = 1.0_num / 6.0_num
     f2 = 1.0_num / 24.0_num
+#else
+    f2 = 0.5_num
 #endif
+    dtfac = 0.5_num * dt * f2**2
 
     jx = 0.0_num
     jy = 0.0_num
@@ -192,31 +195,31 @@ CONTAINS
         ! particle weight factors as described in the manual (FIXREF)
         ! These weight grid properties onto particles
 #ifdef SPLINE_FOUR
-        gx(-2) = f2 * (1.5_num - cell_frac_x)**4
-        gx(-1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+        gx(-2) = (1.5_num - cell_frac_x)**4
+        gx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
             * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-        gx( 0) = 0.25 * (115/48 + cell_frac_x**2 &
+        gx( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
             * (cell_frac_x**2 - 2.5_num))
-        gx( 1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+        gx( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
             * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-        gx( 2) = f2 * (1.5_num + cell_frac_x)**4
+        gx( 2) = (1.5_num + cell_frac_x)**4
 
-        gy(-2) = f2 * (1.5_num - cell_frac_y)**4
-        gy(-1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+        gy(-2) = (1.5_num - cell_frac_y)**4
+        gy(-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
             * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-        gy( 0) = 0.25 * (115/48 + cell_frac_y**2 &
+        gy( 0) = 6.0_num * (115/48 + cell_frac_y**2 &
             * (cell_frac_y**2 - 2.5_num))
-        gy( 1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+        gy( 1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
             * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-        gy( 2) = f2 * (1.5_num + cell_frac_y)**4
+        gy( 2) = (1.5_num + cell_frac_y)**4
 #else
-        gx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
-        gx( 0) = 0.75_num - cell_frac_x**2
-        gx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
+        gx(-1) = (0.5_num + cell_frac_x)**2
+        gx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
+        gx( 1) = (0.5_num - cell_frac_x)**2
 
-        gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
-        gy( 0) = 0.75_num - cell_frac_y**2
-        gy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
+        gy(-1) = (0.5_num + cell_frac_y)**2
+        gy( 0) =  1.5_num - 2.0_num * cell_frac_y**2
+        gy( 1) = (0.5_num - cell_frac_y)**2
 #endif
 
         ! particle weight factors as described in the manual (FIXREF)
@@ -264,31 +267,31 @@ CONTAINS
         cell_y2  = cell_y2 + 1
 
 #ifdef SPLINE_FOUR
-        hx(-2) = f2 * (1.5_num - cell_frac_x)**4
-        hx(-1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+        hx(-2) = (1.5_num - cell_frac_x)**4
+        hx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
             * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-        hx( 0) = 0.25 * (115/48 + cell_frac_x**2 &
+        hx( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
             * (cell_frac_x**2 - 2.5_num))
-        hx( 1) = f1 * (1.1875_num + cell_frac_x * (cell_frac_x &
+        hx( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
             * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-        hx( 2) = f2 * (1.5_num + cell_frac_x)**4
+        hx( 2) = (1.5_num + cell_frac_x)**4
 
-        hy(-2) = f2 * (1.5_num - cell_frac_y)**4
-        hy(-1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+        hy(-2) = (1.5_num - cell_frac_y)**4
+        hy(-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
             * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-        hy( 0) = 0.25 * (115/48 + cell_frac_y**2 &
+        hy( 0) = 6.0_num * (115/48 + cell_frac_y**2 &
             * (cell_frac_y**2 - 2.5_num))
-        hy( 1) = f1 * (1.1875_num + cell_frac_y * (cell_frac_y &
+        hy( 1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
             * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-        hy( 2) = f2 * (1.5_num + cell_frac_y)**4
+        hy( 2) = (1.5_num + cell_frac_y)**4
 #else
-        hx(-1) = 0.5_num * (0.5_num + cell_frac_x)**2
-        hx( 0) = 0.75_num - cell_frac_x**2
-        hx( 1) = 0.5_num * (0.5_num - cell_frac_x)**2
+        hx(-1) = (0.5_num + cell_frac_x)**2
+        hx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
+        hx( 1) = (0.5_num - cell_frac_x)**2
 
-        hy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
-        hy( 0) = 0.75_num - cell_frac_y**2
-        hy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2
+        hy(-1) = (0.5_num + cell_frac_y)**2
+        hy( 0) =  1.5_num - 2.0_num * cell_frac_y**2
+        hy( 1) = (0.5_num - cell_frac_y)**2
 #endif
 
         ! These are the electric an magnetic fields interpolated to the
@@ -525,7 +528,7 @@ CONTAINS
 #endif
 
         ! update particle momenta using weighted fields
-        cmratio = part_q * 0.5_num * dt
+        cmratio = part_q * dtfac
         pxm = part_px + cmratio * ex_part
         pym = part_py + cmratio * ey_part
         pzm = part_pz + cmratio * ez_part
