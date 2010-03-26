@@ -23,7 +23,6 @@ PROGRAM pic
   USE fields
   USE particles
   USE mpi_routines
-  USE boundary
   USE balance
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
   USE split_particle

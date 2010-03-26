@@ -23,6 +23,7 @@ CONTAINS
     ! Xi (space factor see page 38 in manual)
     REAL(num), ALLOCATABLE, DIMENSION(:) :: xi0x, xi0y, xi0z
     REAL(num), ALLOCATABLE, DIMENSION(:) :: xi1x, xi1y, xi1z
+
     ! J from a given particle, can be spread over up to 3 cells in
     ! Each direction due to parabolic weighting. We allocate 4 or 5
     ! Cells because the position of the particle at t = t+1.5dt is not
@@ -44,9 +45,6 @@ CONTAINS
     REAL(num) :: d_init, d_final
     REAL(num) :: probe_energy
 #endif
-#ifdef PER_PARTICLE_CHARGEMASS
-    TYPE(particle), POINTER, SAVE :: cur
-#endif
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -59,11 +57,8 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-
-    ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
 
-    ! particle weight factors as described in the manual (FIXREF)
     ! Defined at the particle position - 0.5 grid cell in each direction
     ! This is to deal with the grid stagger
     REAL(num), DIMENSION(-2:2) :: hx, hy, hz
@@ -71,13 +66,13 @@ CONTAINS
     ! Fields at particle location
     REAL(num) :: ex_part, ey_part, ez_part, bx_part, by_part, bz_part
 
-    ! P+ and P- from Page27 of manual
+    ! P+ and P- from Boris1970, page27 of manual
     REAL(num) :: pxp, pxm, pyp, pym, pzp, pzm
 
     ! charge to mass ratio modified by normalisation
     REAL(num) :: cmratio
 
-    ! Tau variables from Page27 of manual
+    ! Tau variables from Boris1970, page27 of manual
     REAL(num) :: tau, taux, tauy, tauz
 
     ! Used by J update
@@ -131,8 +126,8 @@ CONTAINS
         ! Use a lookup table for charge and mass to SAVE memory
         ! No reason not to do this (I think), check properly later
 #ifdef PER_PARTICLE_CHARGEMASS
-        part_q = cur%charge
-        part_m = cur%mass
+        part_q = current%charge
+        part_m = current%mass
 #else
         part_q  = particle_species(ispecies)%charge
         part_m  = particle_species(ispecies)%mass
@@ -149,6 +144,7 @@ CONTAINS
         init_part_y = current%part_pos(2)
         init_part_z = current%part_pos(3)
 #endif
+
         ! Calculate v(t+0.5dt) from p(t)
         ! See PSC manual page (25-27)
         root = 1.0_num &
@@ -234,7 +230,7 @@ CONTAINS
         by_part = 0.0_num
         bz_part = 0.0_num
 
-        ! These are the electric an magnetic fields interpolated to the
+        ! These are the electric and magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
         DO ix = -sf_order, sf_order
@@ -298,8 +294,8 @@ CONTAINS
         part_y = part_y + part_vy * dt/2.0_num
         part_z = part_z + part_vz * dt/2.0_num
 
-        ! particle has now finished move to end of timestep, so copy back into
-        ! particle array
+        ! particle has now finished move to end of timestep, so copy back
+        ! into particle array
         current%part_pos(1) = part_x + x_start_local
         current%part_pos(2) = part_y + y_start_local
         current%part_pos(3) = part_z + z_start_local
@@ -361,43 +357,43 @@ CONTAINS
           IF (cell_x3 .EQ. cell_x1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             xmin = -sf_order
-            xmax = +sf_order
+            xmax = sf_order
           ELSE IF (cell_x3 .EQ. cell_x1 - 1) THEN
             ! particle has moved one cell to left
             xmin = -sf_order-1
-            xmax = +sf_order
+            xmax = sf_order
           ELSE ! IF (cell_x3 .EQ. cell_x1 + 1) THEN
             ! particle has moved one cell to right
             xmin = -sf_order
-            xmax = +sf_order+1
+            xmax = sf_order+1
           ENDIF
 
           IF (cell_y3 .EQ. cell_y1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             ymin = -sf_order
-            ymax = +sf_order
+            ymax = sf_order
           ELSE IF (cell_y3 .EQ. cell_y1 - 1) THEN
             ! particle has moved one cell to left
             ymin = -sf_order-1
-            ymax = +sf_order
+            ymax = sf_order
           ELSE ! IF (cell_y3 .EQ. cell_y1 + 1) THEN
             ! particle has moved one cell to right
             ymin = -sf_order
-            ymax = +sf_order+1
+            ymax = sf_order+1
           ENDIF
 
           IF (cell_z3 .EQ. cell_z1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             zmin = -sf_order
-            zmax = +sf_order
+            zmax = sf_order
           ELSE IF (cell_z3 .EQ. cell_z1 - 1) THEN
             ! particle has moved one cell to left
             zmin = -sf_order-1
-            zmax = +sf_order
+            zmax = sf_order
           ELSE ! IF (cell_z3 .EQ. cell_z1 + 1) THEN
             ! particle has moved one cell to right
             zmin = -sf_order
-            zmax = +sf_order+1
+            zmax = sf_order+1
           ENDIF
 
           ! Set these to zero due to diffential inside loop
@@ -446,7 +442,9 @@ CONTAINS
         ! Compare the current particle with the parameters of any probes in the
         ! system. These particles are copied into a separate part of the output
         ! file.
+
         current_probe=>particle_species(ispecies)%attached_probes
+
         ! Cycle through probes
         DO WHILE(ASSOCIATED(current_probe))
           ! Note that this is the energy of a single REAL particle in the

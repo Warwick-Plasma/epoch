@@ -11,7 +11,7 @@ MODULE helper
 
 CONTAINS
 
-  SUBROUTINE auto_load()
+  SUBROUTINE auto_load
 
     INTEGER :: ispecies
     INTEGER :: clock, idum
@@ -51,15 +51,15 @@ CONTAINS
 
 
 
-  SUBROUTINE allocate_ic()
+  SUBROUTINE allocate_ic
 
     INTEGER :: ispecies
 
     ALLOCATE(initial_conditions(1:n_species))
     DO ispecies = 1, n_species
-      ALLOCATE(initial_conditions(ispecies)%rho(-2:nx+3))
-      ALLOCATE(initial_conditions(ispecies)%temp(-2:nx+3, 1:3))
-      ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3, 1:3))
+      ALLOCATE(initial_conditions(ispecies)%rho  (-2:nx+3))
+      ALLOCATE(initial_conditions(ispecies)%temp (-2:nx+3,1:3))
+      ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3,1:3))
 
       initial_conditions(ispecies)%rho = 1.0_num
       initial_conditions(ispecies)%temp = 0.0_num
@@ -80,7 +80,7 @@ CONTAINS
 
 
 
-  SUBROUTINE deallocate_ic()
+  SUBROUTINE deallocate_ic
 
     INTEGER :: ispecies
     REAL(num) :: min_dt, omega, k_max
@@ -233,14 +233,14 @@ CONTAINS
     INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
     REAL(num) :: valid_cell_frac
     REAL(dbl) :: rpos
-    INTEGER :: upper_x, lower_x, cell_x
+    INTEGER :: lower_x, upper_x, cell_x
     REAL(num) :: cell_x_r
     INTEGER(KIND=8) :: i
     INTEGER :: j, ierr
     CHARACTER(LEN=15) :: string
 
-    upper_x = nx
     lower_x = 1
+    upper_x = nx
 
     IF (coordinates(1) .EQ. nprocx-1) upper_x = nx+1
     IF (coordinates(1) .EQ. 0) lower_x = 0
@@ -265,9 +265,11 @@ CONTAINS
 
     IF (num_valid_cells .EQ. 0) THEN
       IF (rank .EQ. 0) THEN
-        PRINT *, "Intial condition settings mean that there are no cells &
-            &where particles may validly be placed for at least one species. &
-            &Code terminates."
+        WRITE(*,*) '***ERROR***'
+        WRITE(*,*) 'Intial condition settings mean that there are no cells ' &
+            // 'where particles may'
+        WRITE(*,*) 'validly be placed for at least one species. Code will ' &
+            // 'now terminate.'
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
     ENDIF
@@ -318,6 +320,7 @@ CONTAINS
       DO j = 1, 200
         rpos = random(idum)*(x(nx)-x(1) + dx) - dx/2.0_num
         current%part_pos = rpos+x(1)
+
         cell_x_r = (current%part_pos-x_start_local)/dx - 0.5_num
         cell_x = NINT(cell_x_r)
         cell_x = cell_x+1
@@ -385,12 +388,11 @@ CONTAINS
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      CALL particle_to_grid(cell_frac_x, gx)
+      CALL grid_to_particle(cell_frac_x, gx)
 
       temp_local = gx(-1)*temperature(cell_x-1) &
           + gx(0)*temperature(cell_x) + gx(1)*temperature(cell_x+1)
-
-      drift_local = gx(1)*drift(cell_x-1) &
+      drift_local = gx(-1)*drift(cell_x-1) &
           + gx(0)*drift(cell_x) + gx(1)*drift(cell_x+1)
 
       IF (IAND(direction, c_dir_x) .NE. 0) current%part_p(1) = &
@@ -432,7 +434,6 @@ CONTAINS
 
     ALLOCATE(density(-2:nx+3))
     ALLOCATE(density_map(-2:nx+3))
-    density = 0.0_num
     density = density_in
 
     CALL field_bc(density)
@@ -505,7 +506,7 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-      cell_x_r = (current%part_pos-x_start_local) / dx -0.5_num
+      cell_x_r = (current%part_pos-x_start_local) / dx ! - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
@@ -546,7 +547,7 @@ CONTAINS
     ! It generates gaussian distributed random numbers
     ! The standard deviation (stdev) is related to temperature
 
-    stdev = SQRT(2.0_num * temperature*kb*mass)
+    stdev = SQRT(2.0_num*temperature*kb*mass)
 
     DO
       rand1 = random(idum)
@@ -577,8 +578,6 @@ CONTAINS
     INTEGER :: n_points, ipoint, start, endpoint, current
     REAL(num) :: sample_dist_function
 
-    sample_dist_function = 0.0_num
-
     n_points = SIZE(dist_fn)
     ALLOCATE(cdf(1:n_points))
     DO ipoint = 1, n_points
@@ -587,12 +586,13 @@ CONTAINS
     cdf = cdf/SUM(dist_fn)
 
     position = random(idum)
+    sample_dist_function = 0.0_num
 
     start = 1
     endpoint = n_points
     current = (start+endpoint)/2
 
-    DO current = 1, n_points
+    DO current = 1, n_points-1
       IF (cdf(current) .LE. position .AND. cdf(current+1) .GE. position) THEN
         d_cdf = cdf(current+1)-cdf(current)
         sample_dist_function = &

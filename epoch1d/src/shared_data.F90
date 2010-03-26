@@ -246,7 +246,7 @@ MODULE shared_parser_data
 
   INTEGER, PARAMETER :: num_ops = 12
   INTEGER, DIMENSION(num_ops), PARAMETER :: &
-      opcode_precedence = (/1, 1, 2, 2, 5, 5, 1, 1, 1, 2, 2, 5/)
+      opcode_precedence = (/1, 1, 2, 2, 3, 4, 1, 1, 1, 2, 2, 5/)
   INTEGER, DIMENSION(num_ops), PARAMETER :: &
       opcode_assoc = (/c_assoc_a, c_assoc_la, c_assoc_a, c_assoc_la, &
           c_assoc_la, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, &
@@ -425,12 +425,12 @@ MODULE shared_data
 
     ! The variables which define the ranges and resolutions of the
     ! distribution function
-    INTEGER, DIMENSION(3) :: directions
-    REAL(num), DIMENSION(3, 2) :: ranges
-    INTEGER, DIMENSION(3) :: resolution
+    INTEGER, DIMENSION(c_df_maxdims) :: directions
+    REAL(num), DIMENSION(c_df_maxdims, 2) :: ranges
+    INTEGER, DIMENSION(c_df_maxdims) :: resolution
     LOGICAL, DIMENSION(:), POINTER :: use_species
-    REAL(num), DIMENSION(5, 2) :: restrictions
-    LOGICAL, DIMENSION(5) :: use_restrictions
+    REAL(num), DIMENSION(c_df_maxdirs, 2) :: restrictions
+    LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
 
     ! Pointer to next distribution function
     TYPE(distribution_function_block), POINTER :: next
@@ -509,12 +509,12 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! MPI data
   !----------------------------------------------------------------------------
-  INTEGER :: rank, left, right, up, down, coordinates(1), neighbour(-1:1)
+  INTEGER :: rank, left, right
+  INTEGER :: coordinates(1), neighbour(-1:1)
   INTEGER :: errcode, comm, tag, nproc, icycle_max = 1000000
   INTEGER :: status(MPI_STATUS_SIZE)
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank, ny_each_rank
   INTEGER(KIND=8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
-  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: start_each_rank, end_each_rank
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing

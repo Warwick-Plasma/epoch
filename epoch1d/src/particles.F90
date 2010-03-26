@@ -10,8 +10,6 @@ CONTAINS
 
   SUBROUTINE push_particles
 
-    IMPLICIT NONE
-
     ! 2nd order accurate particle pusher using parabolic weighting
     ! on and off the grid. The calculation of J looks rather odd
     ! Since it works by solving d(rho)/dt = div(J) and doing a 1st order
@@ -39,7 +37,8 @@ CONTAINS
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifdef PARTICLE_PROBES
-    REAL(num) :: init_part_x, final_part_x
+    REAL(num) :: init_part_x
+    REAL(num) :: final_part_x
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: probe_energy
@@ -58,9 +57,6 @@ CONTAINS
     ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx
 
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * hmx + F(j) * h0x + F(j+1) * hpx
     ! Defined at the particle position - 0.5 grid cell in each direction
     ! This is to deal with the grid stagger
     REAL(num), DIMENSION(-2:2) :: hx
@@ -184,6 +180,9 @@ CONTAINS
         by_part = 0.0_num
         bz_part = 0.0_num
 
+        ! These are the electric and magnetic fields interpolated to the
+        ! particle position. They have been checked and are correct.
+        ! Actually checking this is messy.
         DO ix = -sf_order, sf_order
           ex_part = ex_part + hx(ix)*ex(cell_x2+ix)
           ey_part = ey_part + gx(ix)*ey(cell_x1+ix)
@@ -273,15 +272,15 @@ CONTAINS
           IF (cell_x3 .EQ. cell_x1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             xmin = -sf_order
-            xmax = +sf_order
+            xmax = sf_order
           ELSE IF (cell_x3 .EQ. cell_x1 - 1) THEN
             ! particle has moved one cell to left
             xmin = -sf_order-1
-            xmax = +sf_order
+            xmax = sf_order
           ELSE ! IF (cell_x3 .EQ. cell_x1 + 1) THEN
             ! particle has moved one cell to right
             xmin = -sf_order
-            xmax = +sf_order+1
+            xmax = sf_order+1
           ENDIF
 
           ! Set these to zero due to diffential inside loop

@@ -50,25 +50,28 @@ CONTAINS
           initial_conditions(species_id)%rho(-2:nx+3, -2:ny+3, -2:nz+3), &
           (/-2, nx+3/), (/-2, ny+3/), (/-2, nz+3/), handle_ic_species_deck)
       initial_conditions(species_id)%rho = &
-          initial_conditions(species_id)%rho/particle_species(species_id)%mass
+          initial_conditions(species_id)%rho / particle_species(species_id)%mass
       RETURN
     ENDIF
 
     IF (str_cmp(element, "drift_x")) THEN
-      initial_conditions(species_id)%drift(1) = &
-          as_real(value, handle_ic_species_deck)
+      CALL evaluate_string_in_space(value, &
+          initial_conditions(species_id)%drift(-1:nx+2, -1:ny+2, -1:nz+2, 1), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_species_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "drift_y")) THEN
-      initial_conditions(species_id)%drift(2) = &
-          as_real(value, handle_ic_species_deck)
+      CALL evaluate_string_in_space(value, &
+          initial_conditions(species_id)%drift(-1:nx+2, -1:ny+2, -1:nz+2, 2), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_species_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "drift_z")) THEN
-      initial_conditions(species_id)%drift(3) = &
-          as_real(value, handle_ic_species_deck)
+      CALL evaluate_string_in_space(value, &
+          initial_conditions(species_id)%drift(-1:nx+2, -1:ny+2, -1:nz+2, 3), &
+          (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_species_deck)
       RETURN
     ENDIF
 
@@ -76,6 +79,7 @@ CONTAINS
       CALL evaluate_string_in_space(value, &
           initial_conditions(species_id)%temp(-1:nx+2, -1:ny+2, -1:nz+2, 1), &
           (/-1, nx+2/), (/-1, ny+2/), (/-1, nz+2/), handle_ic_species_deck)
+      debug_mode = .FALSE.
       initial_conditions(species_id)%temp(-1:nx+2, -1:ny+2, -1:nz+2, 2) = &
           initial_conditions(species_id)%temp(-1:nx+2, -1:ny+2, -1:nz+2, 1)
       initial_conditions(species_id)%temp(-1:nx+2, -1:ny+2, -1:nz+2, 3) = &

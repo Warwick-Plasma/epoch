@@ -55,6 +55,8 @@ PROGRAM pic
   CALL after_control ! setup.f90
   CALL open_files    ! setup.f90
 
+  IF (move_window) CALL allocate_window ! window.f90
+
   ! Read extended IO options
   deck_state = c_ds_eio
   CALL read_deck("input.deck", .TRUE.)
@@ -87,11 +89,17 @@ PROGRAM pic
   ! .TRUE. to over_ride balance fraction check
   CALL balance_workload(.TRUE.)
 
+  ! npart_global isn't really used anymore, just check where it is used
+  IF (npart_global .LT. 0) THEN
+    npart_global = 0
+    DO ispecies = 1, n_species
+      npart_global = npart_global+particle_species(ispecies)%count
+    ENDDO
+  ENDIF
+
   CALL particle_bcs
   CALL efield_bcs
   CALL bfield_bcs(.FALSE.)
-
-  CALL MPI_BARRIER(comm, errcode) 
 
   IF (.NOT. ic_from_restart) THEN
     CALL set_dt
@@ -115,7 +123,9 @@ PROGRAM pic
     ! Using the particle_family%secondary_list property
     CALL reorder_particles_to_grid
     ! CALL Collisions  !An example, no collision operator yet
+#ifdef PER_PARTICLE_WEIGHT
     CALL split_particles ! Early beta version of particle splitting operator
+#endif
     CALL reattach_particles_to_mainlist
 #endif
     CALL update_eb_fields_final

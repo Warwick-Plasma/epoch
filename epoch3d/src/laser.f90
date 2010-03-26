@@ -1,5 +1,8 @@
 MODULE laser
 
+  ! This module contributed by
+  ! Dr. N. J. Sircombe
+
   USE evaluator
   USE custom_laser
 

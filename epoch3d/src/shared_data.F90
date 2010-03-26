@@ -379,9 +379,9 @@ MODULE shared_data
 #endif
 
     ! Injection of particles
-    INTEGER(KIND=8) :: window_npart_per_cell
-    REAL(num), DIMENSION(:,:), POINTER :: window_density
-    REAL(num), DIMENSION(:,:,:), POINTER :: window_temperature
+    INTEGER(KIND=8) :: npart_per_cell
+    REAL(num), DIMENSION(:,:), POINTER :: density
+    REAL(num), DIMENSION(:,:,:), POINTER :: temperature
 
     ! Species_ionisation
 #ifdef PARTICLE_IONISE
@@ -404,7 +404,7 @@ MODULE shared_data
   TYPE :: initial_condition_block
     REAL(num), DIMENSION(:,:,:), POINTER :: rho
     REAL(num), DIMENSION(:,:,:,:), POINTER :: temp
-    REAL(num), DIMENSION(3) :: drift
+    REAL(num), DIMENSION(:,:,:,:), POINTER :: drift
 
     REAL(num) :: minrho
     REAL(num) :: maxrho
@@ -432,6 +432,8 @@ MODULE shared_data
     ! ranges (experimental)
     LOGICAL :: store_ranges
 
+    ! The variables which define the ranges and resolutions of the
+    ! distribution function
     INTEGER, DIMENSION(c_df_maxdims) :: directions
     REAL(num), DIMENSION(c_df_maxdims, 2) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
@@ -439,6 +441,7 @@ MODULE shared_data
     REAL(num), DIMENSION(c_df_maxdirs, 2) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
 
+    ! Pointer to next distribution function
     TYPE(distribution_function_block), POINTER :: next
   END TYPE distribution_function_block
   TYPE(distribution_function_block), POINTER :: dist_fns
@@ -483,7 +486,7 @@ MODULE shared_data
 
   LOGICAL :: neutral_background = .TRUE.
 
-  REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma
+  REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_snapshots
   REAL(num) :: length_x, dx, x_start, x_end
   REAL(num) :: x_start_local, x_end_local, length_x_local
@@ -532,7 +535,6 @@ MODULE shared_data
   INTEGER :: status(MPI_STATUS_SIZE)
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank, ny_each_rank, nz_each_rank
   INTEGER(KIND=8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
-  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: start_each_rank, end_each_rank
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing

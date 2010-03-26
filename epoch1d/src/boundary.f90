@@ -69,11 +69,12 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local
 
-    CALL MPI_SENDRECV(field(1:3), 3, mpireal, left, tag, &
-        field(nx_local+1:nx_local+3), 3, mpireal, right, tag, &
-        comm, status, errcode)
-    CALL MPI_SENDRECV(field(nx_local-2:nx_local), 3, mpireal, right, tag, &
-        field(-2:0), 3, mpireal, left, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1:3), &
+        3, mpireal, left, tag, field(nx_local+1:nx_local+3), &
+        3, mpireal, right, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(nx_local-2:nx_local), &
+        3, mpireal, right, tag, field(-2:0), &
+        3, mpireal, left, tag, comm, status, errcode)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -86,8 +87,8 @@ CONTAINS
 
     IF ((xbc_left_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. left .EQ. MPI_PROC_NULL) THEN
-      field(0) = field(1)
       field(-1) = field(2)
+      field( 0) = field(1)
     ENDIF
 
     IF ((xbc_right_field .EQ. c_bc_zero_gradient .OR. force) &
@@ -107,17 +108,18 @@ CONTAINS
 
     IF (xbc_left_field .EQ. c_bc_clamp .AND. left .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
-        field(0) = 0.0_num
         field(-1) = -field(1)
+        field( 0) = 0.0_num
       ELSE
-        field(0) = -field(1)
         field(-1) = -field(2)
+        field( 0) = -field(1)
       ENDIF
     ENDIF
 
     IF (xbc_right_field .EQ. c_bc_clamp .AND. right .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
-        field(nx) = 0.0_num
+        field(nx  ) = 0.0_num
+        field(nx+1) = -field(nx-1)
       ELSE
         field(nx+1) = -field(nx)
         field(nx+2) = -field(nx-1)
@@ -148,36 +150,25 @@ CONTAINS
         x_start(ix) = -2
         x_end(ix) = nx+3
       ELSE IF (ix .EQ. 1) THEN
-        sizes(ix) = sizes(ix) *3
+        sizes(ix) = sizes(ix) * 3
         x_start(ix) = nx+1
         x_end(ix) = nx+3
         x_shift(ix) = -nx
       ELSE
-        sizes(ix) = sizes(ix) *3
+        sizes(ix) = sizes(ix) * 3
         x_start(ix) = -2
         x_end(ix) = 0
         x_shift(ix) = nx
       ENDIF
     ENDDO
 
-!!$    DO iy = -1, 1
-!!$       DO ix = -1, 1
-!!$          sizes(ix) = (x_end(ix)-x_start(ix)+1)*(y_end(ix)-y_start(ix)+1)
-!!$       ENDDO
-!!$    ENDDO
-
-    ! PRINT *, rank, y_start(0, 1), y_end(0, 1), y_shift(0, 1)
-
-    DO ix = -1, 1
-      IF (ix .EQ. 0 ) CYCLE
-      ! Copy the starts into variables with shorter names, or this is
-      ! HORRIFIC to read
+    DO ix = -1, 1, 2
       xs = x_start(ix)
       xe = x_end(ix)
       xf = x_shift(ix)
+
       ALLOCATE(temp(xs:xe))
       temp = 0.0_num
-      ! IF (neighbour(ix) .EQ. MPI_PROC_NULL) PRINT *, "BAD NEIGHBOUR", ix, iy
       CALL MPI_SENDRECV(array(xs:xe), sizes(ix), mpireal, neighbour(ix), tag, &
           temp, sizes(-ix), mpireal, neighbour(-ix), tag, comm, status, errcode)
       array(xs+xf:xe+xf) = array(xs+xf:xe+xf) + temp
@@ -201,6 +192,7 @@ CONTAINS
     CALL field_clamp_zero(ex, (/1/))
     CALL field_clamp_zero(ey, (/0/))
     CALL field_clamp_zero(ez, (/0/))
+
     ! These apply zero field gradient boundary conditions on the edges
     CALL field_zero_gradient(ex, .FALSE.)
     CALL field_zero_gradient(ey, .FALSE.)
@@ -266,6 +258,7 @@ CONTAINS
           cur%part_pos =  2.0_num * (x_start-dx/2.0_num) - cur%part_pos
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
+
         IF (cur%part_pos .GE. x_end+dx/2.0_num &
             .AND. right .EQ. MPI_PROC_NULL &
             .AND. xbc_right_particle .EQ. c_bc_reflect) THEN
@@ -325,7 +318,6 @@ CONTAINS
         cur=>cur%next
       ENDDO
     ENDDO
-    ! PRINT *, "Particle bcs_done", rank
 
   END SUBROUTINE particle_bcs
 

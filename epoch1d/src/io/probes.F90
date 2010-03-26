@@ -1,22 +1,15 @@
 MODULE probes
 
+#ifdef PARTICLE_PROBES
   USE partlist
   USE output_particle
   USE mpi_subtype_control
 
   SAVE
-#ifdef PARTICLE_PROBES
   TYPE(particle_list), POINTER, PRIVATE :: current_list
-#endif
 
 CONTAINS
 
-#ifndef PARTICLE_PROBES
-  SUBROUTINE probe_dummy
-
-  END SUBROUTINE probe_dummy
-
-#else
   SUBROUTINE init_probe(probe)
 
     TYPE(particle_probe), POINTER :: probe

@@ -56,8 +56,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_full = 2
   INTEGER, PARAMETER :: c_io_restartable = 4
   INTEGER, PARAMETER :: c_io_species = 8
-  INTEGER, PARAMETER :: c_io_averaged = 16
-  INTEGER, PARAMETER :: c_io_no_intrinsic = 32
+  INTEGER, PARAMETER :: c_io_no_intrinsic = 16
+  INTEGER, PARAMETER :: c_io_averaged = 32
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
   INTEGER, PARAMETER :: c_do_decomposed = 1
@@ -519,12 +519,12 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! MPI data
   !----------------------------------------------------------------------------
-  INTEGER :: rank, left, right, up, down, coordinates(2), neighbour(-1:1, -1:1)
+  INTEGER :: rank, left, right, up, down
+  INTEGER :: coordinates(2), neighbour(-1:1, -1:1)
   INTEGER :: errcode, comm, tag, nproc, icycle_max = 1000000
   INTEGER :: status(MPI_STATUS_SIZE)
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank, ny_each_rank
   INTEGER(KIND=8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
-  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: start_each_rank, end_each_rank
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing

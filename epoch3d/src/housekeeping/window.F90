@@ -6,6 +6,34 @@ MODULE window
 
 CONTAINS
 
+  SUBROUTINE allocate_window
+
+    INTEGER :: ispecies
+
+    DO ispecies = 1, n_species
+      ALLOCATE(particle_species(ispecies)%density(-2:ny+2, -2:nz+2))
+      ALLOCATE(particle_species(ispecies)%temperature(-2:ny+2, -2:nz+2, 1:3))
+    ENDDO
+
+  END SUBROUTINE allocate_window
+
+
+
+  SUBROUTINE deallocate_window
+
+    INTEGER :: ispecies
+
+    DO ispecies = 1, n_species
+      IF (ASSOCIATED(particle_species(ispecies)%density)) &
+          DEALLOCATE(particle_species(ispecies)%density)
+      IF (ASSOCIATED(particle_species(ispecies)%temperature)) &
+          DEALLOCATE(particle_species(ispecies)%temperature)
+    ENDDO
+
+  END SUBROUTINE deallocate_window
+
+
+
   SUBROUTINE shift_window
 
     INTEGER :: iwindow
@@ -42,7 +70,7 @@ CONTAINS
 
   SUBROUTINE shift_field(field)
 
-    REAL(num), DIMENSION(-2:nx+3, -2:ny+3, -2:nz+3), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(-2:nx+3,-2:ny+3,-2:nz+3), INTENT(INOUT) :: field
 
     field(-2:nx+2,:,:) = field(-1:nx+3,:,:)
     CALL field_bc(field)
@@ -62,7 +90,10 @@ CONTAINS
     INTEGER :: cell_y, cell_z
     REAL(num), DIMENSION(-1:1) :: gy
     REAL(num), DIMENSION(-1:1) :: gz
-    REAL(num) :: weight_local, temp_local
+    REAL(num) :: temp_local
+#ifdef PER_PARTICLE_WEIGHT
+    REAL(num) :: weight_local
+#endif
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -73,7 +104,7 @@ CONTAINS
       DO ispecies = 1, n_species
         DO iz = 1, nz
           DO iy = 1, ny
-            DO ipart = 1, particle_species(ispecies)%window_npart_per_cell
+            DO ipart = 1, particle_species(ispecies)%npart_per_cell
               ALLOCATE(current)
               rand = random(idum)-0.5_num
               current%part_pos(1) = x_end+dx + rand*dx
@@ -106,25 +137,27 @@ CONTAINS
                   DO isuby = -1, +1
                     temp_local = temp_local + gy(isuby) * gz(isubz) &
                         * particle_species(ispecies) &
-                        %window_temperature(cell_y+isuby, cell_z+isubz, i)
+                        %temperature(cell_y+isuby, cell_z+isubz, i)
                   ENDDO
                 ENDDO
-                current%part_p(i) = momentum_from_temperature(&
-                    particle_species(ispecies)%mass, temp_local, idum)
+                current%part_p(i) = &
+                    momentum_from_temperature(particle_species(ispecies)%mass, &
+                    temp_local, idum)
               ENDDO
 
+#ifdef PER_PARTICLE_WEIGHT
               weight_local = 0.0_num
               DO isubz = -1, +1
                 DO isuby = -1, +1
                   weight_local = weight_local + gy(isuby) * gz(isubz) &
                         * particle_species(ispecies) &
-                        %window_density(cell_y+isuby, cell_z+isubz) &
+                        %density(cell_y+isuby, cell_z+isubz) &
                         / (REAL(particle_species(ispecies) &
-                        %window_npart_per_cell, num) / (dx*dy*dz))
+                        %npart_per_cell, num) / (dx*dy*dz))
                 ENDDO
               ENDDO
               current%weight = weight_local
-
+#endif
 #ifdef PARTICLE_DEBUG
               current%processor = rank
               current%processor_at_t0 = rank

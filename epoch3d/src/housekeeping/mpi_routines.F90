@@ -39,10 +39,11 @@ CONTAINS
 
     IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm, errcode)
 
-    IF (MAX(nprocx, 1)*MAX(nprocy, 1)*MAX(nprocz, 1) .GT. nproc) THEN
-      IF (rank .EQ. 0) &
-          PRINT *, "Unable to use requested processor subdivision. Using &
-              &default division."
+    IF (MAX(nprocx,1) * MAX(nprocy,1) * MAX(nprocz,1) .GT. nproc) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT *, 'Unable to use requested processor subdivision. Using ' &
+            // 'default division.'
+      ENDIF
       nprocx = 0
       nprocy = 0
       nprocz = 0
@@ -58,8 +59,8 @@ CONTAINS
         .OR. xbc_right .NE. c_bc_periodic) periods(3) = .FALSE.
     IF (ybc_down  .NE. c_bc_periodic &
         .OR. ybc_up    .NE. c_bc_periodic) periods(2) = .FALSE.
-    IF (zbc_front .NE. c_bc_periodic &
-        .OR. zbc_back  .NE. c_bc_periodic) periods(1) = .FALSE.
+    IF (zbc_back .NE. c_bc_periodic &
+        .OR. zbc_front .NE. c_bc_periodic) periods(1) = .FALSE.
 
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)
@@ -72,6 +73,7 @@ CONTAINS
     nprocx = dims(3)
     nprocy = dims(2)
     nprocz = dims(1)
+
     IF (rank .EQ. 0) THEN
       PRINT *, "Processor subdivision is ", (/nprocx, nprocy, nprocz/)
     ENDIF
@@ -105,8 +107,7 @@ CONTAINS
 
   SUBROUTINE mpi_initialise
 
-    INTEGER :: ispecies, idim, ierr
-    INTEGER(KIND=8) :: npart
+    INTEGER :: ispecies, idim
 
     CALL setup_communicator
 
@@ -120,12 +121,6 @@ CONTAINS
     ALLOCATE(npart_each_rank(1:nproc))
     subtype_field = 0
     subtype_particle = 0
-
-    npart = npart_global/nproc
-    IF (npart*nproc .NE. npart_global) THEN
-      IF (rank .EQ. 0) PRINT *, "Unable to divide particles at t = 0. Quitting."
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
-    ENDIF
 
     ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))
     ALLOCATE(x_global(-2:nx_global+3))
@@ -146,7 +141,6 @@ CONTAINS
     ALLOCATE(ekbar(1:nx, 1:ny, 1:nz, 1:n_species))
     ALLOCATE(ekbar_sum(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
-!!$    ALLOCATE(start_each_rank(0:nproc-1, 1:3), end_each_rank(0:nproc-1, 1:3))
     ALLOCATE(x_starts(0:nprocx-1), x_ends(0:nprocx-1))
     ALLOCATE(y_starts(0:nprocy-1), y_ends(0:nprocy-1))
     ALLOCATE(z_starts(0:nprocz-1), z_ends(0:nprocz-1))

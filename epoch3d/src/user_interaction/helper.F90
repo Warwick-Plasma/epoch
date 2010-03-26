@@ -16,19 +16,17 @@ CONTAINS
     INTEGER :: ispecies
     INTEGER :: clock, idum
     TYPE(particle_family), POINTER :: part_family
-    REAL(num) :: maxrho_local, maxrho
-
-    dt_plasma = 1000000.0_num
 
     CALL SYSTEM_CLOCK(clock)
     idum = -(clock+rank+1)
     DO ispecies = 1, n_species
       part_family=>particle_species(ispecies)
-      ! Calculate the inverse plasma frequency for stability
-      maxrho_local = MAXVAL(initial_conditions(ispecies)%rho)
-      CALL MPI_ALLREDUCE(maxrho_local, maxrho, 1, mpireal, MPI_MAX, &
-          comm, errcode)
-      dt_plasma = MIN(dt_plasma, 1.0_num/SQRT(maxrho*q0**2/(m0*epsilon0)))
+      IF (move_window) THEN
+        particle_species(ispecies)%density = &
+            initial_conditions(ispecies)%rho(nx,:,:)
+        particle_species(ispecies)%temperature = &
+            initial_conditions(ispecies)%temp(nx,:,:,:)
+      ENDIF
 #ifdef PER_PARTICLE_WEIGHT
       CALL setup_particle_density(initial_conditions(ispecies)%rho, &
           part_family, initial_conditions(ispecies)%minrho, &
@@ -40,16 +38,14 @@ CONTAINS
 #endif
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,:,1), c_dir_x, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,:,:,1), idum)
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,:,2), c_dir_y, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,:,:,2), idum)
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,:,3), c_dir_z, part_family, &
-          initial_conditions(ispecies)%drift, idum)
+          initial_conditions(ispecies)%drift(:,:,:,3), idum)
     ENDDO
-
-    IF (rank .EQ. 0) PRINT *, "Plasma characteristic timescale ", dt_plasma
 
   END SUBROUTINE auto_load
 
@@ -61,10 +57,11 @@ CONTAINS
 
     ALLOCATE(initial_conditions(1:n_species))
     DO ispecies = 1, n_species
-      ALLOCATE(initial_conditions(ispecies)% rho(-2:nx+3,-2:ny+3,-2:nz+3))
-      ALLOCATE(initial_conditions(ispecies)%temp(-2:nx+3,-2:nx+3,-2:nz+3,1:3))
+      ALLOCATE(initial_conditions(ispecies)%rho  (-2:nx+3,-2:ny+3,-2:nz+3))
+      ALLOCATE(initial_conditions(ispecies)%temp (-2:nx+3,-2:ny+3,-2:nz+3,1:3))
+      ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3,-2:ny+3,-2:nz+3,1:3))
 
-      initial_conditions(ispecies)%rho = 0.0_num
+      initial_conditions(ispecies)%rho = 1.0_num
       initial_conditions(ispecies)%temp = 0.0_num
       initial_conditions(ispecies)%minrho = 0.0_num
       initial_conditions(ispecies)%maxrho = 0.0_num
@@ -85,12 +82,36 @@ CONTAINS
 
   SUBROUTINE deallocate_ic
 
-    INTEGER :: ispecies
+    INTEGER :: ispecies, ix, iy
+    REAL(num) :: min_dt, omega, k_max
+
+    min_dt = 1000000.0_num
+    k_max = 2.0_num * pi / MIN(dx, dy)
+
+    ! Identify the plasma frequency (Bohm-Gross dispersion relation)
+    ! Note that this doesn't get strongly relativistic plasmas right
+    DO ispecies = 1, n_species
+      DO iy = 1, ny
+        DO ix = 1, nx
+          omega = SQRT((initial_conditions(ispecies)%rho(ix, iy, iz) * q0**2) &
+              / (particle_species(ispecies)%mass * epsilon0) &
+              + 3.0_num * k_max**2 * kb &
+              * MAXVAL(initial_conditions(ispecies)%temp(ix, iy, iz,:)) &
+              / (particle_species(ispecies)%mass))
+          IF (2.0_num * pi/omega .LT. min_dt) min_dt = 2.0_num * pi /omega
+        ENDDO
+      ENDDO
+    ENDDO
+
+    CALL MPI_ALLREDUCE(min_dt, dt_plasma_frequency, 1, mpireal, MPI_MIN, &
+        comm, errcode)
+    ! Must resolve plasma frequency
+    dt_plasma_frequency = dt_plasma_frequency/2.0_num
 
     DO ispecies = 1, n_species
       DEALLOCATE(initial_conditions(ispecies)%rho)
       DEALLOCATE(initial_conditions(ispecies)%temp)
-!      DEALLOCATE(initial_conditions(ispecies)%drift)
+      DEALLOCATE(initial_conditions(ispecies)%drift)
     ENDDO
     DEALLOCATE(initial_conditions)
 
@@ -232,13 +253,29 @@ CONTAINS
     INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
     REAL(num) :: valid_cell_frac
     REAL(dbl) :: rpos
-    INTEGER :: cell_x, cell_y, cell_z
+    INTEGER :: lower_x, upper_x, cell_x
+    INTEGER :: lower_y, upper_y, cell_y
+    INTEGER :: lower_z, upper_z, cell_z
     REAL(num) :: cell_x_r
     REAL(num) :: cell_y_r
     REAL(num) :: cell_z_r
     INTEGER(KIND=8) :: i
     INTEGER :: j, ierr
     CHARACTER(LEN=15) :: string
+
+    lower_x = 1
+    lower_y = 1
+    lower_z = 1
+    upper_x = nx
+    upper_y = ny
+    upper_z = nz
+
+    IF (coordinates(3) .EQ. nprocx-1) upper_x = nx+1
+    IF (coordinates(3) .EQ. 0) lower_x = 0
+    IF (coordinates(2) .EQ. nprocy-1) upper_y = ny+1
+    IF (coordinates(2) .EQ. 0) lower_y = 0
+    IF (coordinates(1) .EQ. nprocz-1) upper_z = nz+1
+    IF (coordinates(1) .EQ. 0) lower_z = 0
 
     partlist=>species_list%attached_list
 
@@ -250,10 +287,10 @@ CONTAINS
     ENDIF
     IF (npart_this_species .EQ. 0) RETURN
     num_valid_cells_local = 0
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
-          IF (load_list(ix, iy, iz)) &
+    DO iz = lower_z, upper_z
+      DO iy = lower_y, upper_y
+        DO ix = lower_x, upper_x
+          IF (load_list(ix,iy,iz)) &
               num_valid_cells_local = num_valid_cells_local+1
         ENDDO
       ENDDO
@@ -263,6 +300,17 @@ CONTAINS
     CALL MPI_ALLREDUCE(num_valid_cells_local, num_valid_cells, 1, &
         MPI_INTEGER8, MPI_SUM, comm, errcode)
 
+    IF (num_valid_cells .EQ. 0) THEN
+      IF (rank .EQ. 0) THEN
+        WRITE(*,*) '***ERROR***'
+        WRITE(*,*) 'Intial condition settings mean that there are no cells ' &
+            // 'where particles may'
+        WRITE(*,*) 'validly be placed for at least one species. Code will ' &
+            // 'now terminate.'
+        CALL MPI_ABORT(comm, errcode, ierr)
+      ENDIF
+    ENDIF
+
     valid_cell_frac = &
         REAL(num_valid_cells_local, num)/REAL(num_valid_cells, num)
     num_new_particles = INT(npart_this_species*valid_cell_frac, KIND=8)
@@ -270,9 +318,8 @@ CONTAINS
     CALL create_allocated_partlist(partlist, num_new_particles)
 
     npart_per_cell = npart_this_species/num_valid_cells
-    species_list%window_npart_per_cell = npart_per_cell
-    IF (species_list%window_npart_per_cell .EQ. 0) &
-        species_list%window_npart_per_cell = 1
+    species_list%npart_per_cell = npart_per_cell
+    IF (species_list%npart_per_cell .EQ. 0) species_list%npart_per_cell = 1
 
     ipart = 0
     ix = 1
@@ -282,9 +329,9 @@ CONTAINS
     current=>partlist%head
     IF (npart_per_cell .GT. 0) THEN
 
-      DO ix = 1, nx
-        DO iy = 1, ny
-          DO iz = 1, nz
+      DO iz = lower_z, upper_z
+        DO iy = lower_y, upper_y
+          DO ix = lower_x, upper_x
             ipart = 0
             IF (load_list(ix, iy, iz)) THEN
               DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
@@ -325,15 +372,16 @@ CONTAINS
         current%part_pos(2) = rpos+y(1)
         rpos = random(idum)*(z(nz)-z(1) + dz) - dz/2.0_num
         current%part_pos(3) = rpos+z(1)
+
         cell_x_r = (current%part_pos(1)-x_start_local)/dx - 0.5_num
         cell_x = NINT(cell_x_r)
         cell_x = cell_x+1
 
-        cell_y_r = (current%part_pos(2)-y_start_local)/dy -0.5_num
+        cell_y_r = (current%part_pos(2)-y_start_local)/dy - 0.5_num
         cell_y = NINT(cell_y_r)
         cell_y = cell_y+1
 
-        cell_z_r = (current%part_pos(3)-z_start_local)/dz -0.5_num
+        cell_z_r = (current%part_pos(3)-z_start_local)/dz - 0.5_num
         cell_z = NINT(cell_z_r)
         cell_z = cell_z+1
 
@@ -360,6 +408,7 @@ CONTAINS
       WRITE(20, *) "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
           TRIM(species_list%name)
     ENDIF
+    CALL particle_bcs
 
   END SUBROUTINE load_particles
 
@@ -373,16 +422,14 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
     TYPE(particle_family), POINTER :: part_family
-    REAL(num), DIMENSION(3), INTENT(IN) :: drift
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: drift
     INTEGER, INTENT(INOUT) :: idum
     TYPE(particle_list), POINTER :: partlist
-    REAL(num) :: mass, temp_local
+    REAL(num) :: mass, temp_local, drift_local
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cell_z_r, cell_frac_z
-    REAL(num) :: g0x, gpx, gmx
-    REAL(num) :: g0y, gpy, gmy
-    REAL(num) :: g0z, gpz, gmz
+    REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     TYPE(particle), POINTER :: current
     INTEGER :: cell_x, cell_y, cell_z
     INTEGER(KIND=8) :: ipart
@@ -403,65 +450,39 @@ CONTAINS
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      cell_y_r = (current%part_pos(2)-y_start_local)/dy -0.5_num
+      cell_y_r = (current%part_pos(2)-y_start_local)/dy - 0.5_num
       cell_y = NINT(cell_y_r)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
       cell_y = cell_y+1
 
-      cell_z_r = (current%part_pos(3)-z_start_local)/dz -0.5_num
+      cell_z_r = (current%part_pos(3)-z_start_local)/dz - 0.5_num
       cell_z = NINT(cell_z_r)
       cell_frac_z = REAL(cell_z, num) - cell_z_r
       cell_z = cell_z+1
 
-      gmx = 0.5_num * (0.5_num + cell_frac_x)**2
-      g0x = 0.75_num - cell_frac_x**2
-      gpx = 0.5_num * (0.5_num - cell_frac_x)**2
+      CALL grid_to_particle(cell_frac_x, gx)
+      CALL grid_to_particle(cell_frac_y, gy)
+      CALL grid_to_particle(cell_frac_z, gz)
 
-      gmy = 0.5_num * (0.5_num + cell_frac_y)**2
-      g0y = 0.75_num - cell_frac_y**2
-      gpy = 0.5_num * (0.5_num - cell_frac_y)**2
-
-      gmz = 0.5_num * (0.5_num + cell_frac_z)**2
-      g0z = 0.75_num - cell_frac_z**2
-      gpz = 0.5_num * (0.5_num - cell_frac_z)**2
-
-      temp_local = gmz * (gmy * (gmx &
-          * temperature(cell_x-1, cell_y-1, cell_z-1) &
-          + g0x * temperature(cell_x, cell_y-1, cell_z-1) &
-          + gpx * temperature(cell_x+1, cell_y-1, cell_z-1)) &
-          + g0y * (gmx * temperature(cell_x-1, cell_y, cell_z-1) &
-          + g0x * temperature(cell_x, cell_y, cell_z-1) &
-          + gpx * temperature(cell_x+1, cell_y, cell_z-1)) &
-          + gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z-1) &
-          + g0x * temperature(cell_x, cell_y+1, cell_z-1) &
-          + gpx * temperature(cell_x+1, cell_y+1, cell_z-1))) &
-          + g0z *(gmy * (gmx * temperature(cell_x-1, cell_y-1, cell_z  ) &
-          + g0x * temperature(cell_x, cell_y-1, cell_z  ) &
-          + gpx * temperature(cell_x+1, cell_y-1, cell_z  )) &
-          + g0y * (gmx * temperature(cell_x-1, cell_y, cell_z  ) &
-          + g0x * temperature(cell_x, cell_y, cell_z  ) &
-          + gpx * temperature(cell_x+1, cell_y, cell_z  )) &
-          + gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z  ) &
-          + g0x * temperature(cell_x, cell_y+1, cell_z  ) &
-          + gpx * temperature(cell_x+1, cell_y+1, cell_z  ))) &
-          + gpz *(gmy * (gmx * temperature(cell_x-1, cell_y-1, cell_z+1) &
-          + g0x * temperature(cell_x, cell_y-1, cell_z+1) &
-          + gpx * temperature(cell_x+1, cell_y-1, cell_z+1)) &
-          + g0y * (gmx * temperature(cell_x-1, cell_y, cell_z+1) &
-          + g0x * temperature(cell_x, cell_y, cell_z+1) &
-          + gpx * temperature(cell_x+1, cell_y, cell_z+1)) &
-          + gpy * (gmx * temperature(cell_x-1, cell_y+1, cell_z+1) &
-          + g0x * temperature(cell_x, cell_y+1, cell_z+1) &
-          + gpx * temperature(cell_x+1, cell_y+1, cell_z+1)))
+      temp_local = 0.0_num
+      drift_local = 0.0_num
+      DO ix = -sf_order, sf_order
+        DO iy = -sf_order, sf_order
+          temp_local = temp_local &
+              + gx(ix)*gy(iy)*gz(iz)*temperature(cell_x+ix,cell_y+iy,cell_z+iz)
+          drift_local = drift_local &
+              + gx(ix)*gy(iy)*gz(iz)*drift(cell_x+ix,cell_y+iy,cell_z+iz)
+        ENDDO
+      ENDDO
 
       IF (IAND(direction, c_dir_x) .NE. 0) current%part_p(1) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(1)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       IF (IAND(direction, c_dir_y) .NE. 0) current%part_p(2) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(2)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       IF (IAND(direction, c_dir_z) .NE. 0) current%part_p(3) = &
-          momentum_from_temperature(mass, temp_local, idum) + drift(3)
+          momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       current=>current%next
       ipart = ipart+1
@@ -533,17 +554,17 @@ CONTAINS
     ! First loop converts number density into weight function
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
-      cell_x_r = (current%part_pos(1)-x_start_local) / dx ! - 0.5_num
+      cell_x_r = (current%part_pos(1)-x_start_local) / dx - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      cell_y_r = (current%part_pos(2)-y_start_local) / dy ! - 0.5_num
+      cell_y_r = (current%part_pos(2)-y_start_local) / dy - 0.5_num
       cell_y = NINT(cell_y_r)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
       cell_y = cell_y+1
 
-      cell_z_r = (current%part_pos(3)-z_start_local) / dz ! - 0.5_num
+      cell_z_r = (current%part_pos(3)-z_start_local) / dz - 0.5_num
       cell_z = NINT(cell_z_r)
       cell_frac_z = REAL(cell_z, num) - cell_z_r
       cell_z = cell_z+1
@@ -562,11 +583,20 @@ CONTAINS
           ENDDO
         ENDDO
       ENDDO
+
       current=>current%next
       ipart = ipart+1
     ENDDO
+
     CALL processor_summation_bcs(weight_fn)
+    IF (left  .EQ. MPI_PROC_NULL) weight_fn(0,:,:) = weight_fn(1,:,:)
+    IF (right .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
+    IF (down  .EQ. MPI_PROC_NULL) weight_fn(:,0,:) = weight_fn(:,1,:)
+    IF (up    .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
+    IF (back  .EQ. MPI_PROC_NULL) weight_fn(:,:,0) = weight_fn(:,:,1)
+    IF (front .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
     CALL field_zero_gradient(weight_fn, .TRUE.)
+
     DO iz = -2, nz+2
       DO iy = -2, ny+2
         DO ix = -2, nx+2
@@ -578,6 +608,13 @@ CONTAINS
         ENDDO
       ENDDO
     ENDDO
+
+    IF (left  .EQ. MPI_PROC_NULL) weight_fn(0,:,:) = weight_fn(1,:,:)
+    IF (right .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
+    IF (down  .EQ. MPI_PROC_NULL) weight_fn(:,0,:) = weight_fn(:,1,:)
+    IF (up    .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
+    IF (back  .EQ. MPI_PROC_NULL) weight_fn(:,:,0) = weight_fn(:,:,1)
+    IF (front .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
     CALL field_zero_gradient(weight_fn, .TRUE.)
 
     partlist=>part_family%attached_list
@@ -586,17 +623,17 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-      cell_x_r = (current%part_pos(1)-x_start_local) / dx -0.5_num
+      cell_x_r = (current%part_pos(1)-x_start_local) / dx ! - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      cell_y_r = (current%part_pos(2)-y_start_local) / dy -0.5_num
+      cell_y_r = (current%part_pos(2)-y_start_local) / dy ! - 0.5_num
       cell_y = NINT(cell_y_r)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
       cell_y = cell_y+1
 
-      cell_z_r = (current%part_pos(3)-z_start_local) / dz -0.5_num
+      cell_z_r = (current%part_pos(3)-z_start_local) / dz ! - 0.5_num
       cell_z = NINT(cell_z_r)
       cell_frac_z = REAL(cell_z, num) - cell_z_r
       cell_z = cell_z+1
@@ -644,7 +681,7 @@ CONTAINS
     ! It generates gaussian distributed random numbers
     ! The standard deviation (stdev) is related to temperature
 
-    stdev = SQRT(temperature*kb*mass)
+    stdev = SQRT(2.0_num*temperature*kb*mass)
 
     DO
       rand1 = random(idum)
@@ -698,6 +735,7 @@ CONTAINS
         EXIT
       ENDIF
     ENDDO
+
     DEALLOCATE(cdf)
 
   END FUNCTION sample_dist_function

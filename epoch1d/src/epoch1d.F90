@@ -23,7 +23,6 @@ PROGRAM pic
   USE fields
   USE particles
   USE mpi_routines
-  !USE boundary
   USE balance
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
   USE split_particle
@@ -125,7 +124,9 @@ PROGRAM pic
     ! Using the particle_family%secondary_list property
     CALL reorder_particles_to_grid
     ! CALL Collisions  !An example, no collision operator yet
+#ifdef PER_PARTICLE_WEIGHT
     CALL split_particles ! Early beta version of particle splitting operator
+#endif
     CALL reattach_particles_to_mainlist
 #endif
     CALL update_eb_fields_final

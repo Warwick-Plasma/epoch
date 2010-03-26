@@ -31,15 +31,23 @@ CONTAINS
 
   SUBROUTINE setup_communicator
 
-    INTEGER :: ndims, dims(2), idim
-    LOGICAL :: periods(2), reorder, op
-    INTEGER :: test_coords(2)
+    INTEGER, PARAMETER :: ndims = 2
+    INTEGER :: dims(ndims), idim
+    LOGICAL :: periods(ndims), reorder, op
+    INTEGER :: test_coords(ndims)
     INTEGER :: ix, iy
 
-    ndims = 2
-
     IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm, errcode)
-    ndims = 2
+
+    IF (MAX(nprocx,1) * MAX(nprocy,1) .GT. nproc) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT *, 'Unable to use requested processor subdivision. Using ' &
+            // 'default division.'
+      ENDIF
+      nprocx = 0
+      nprocy = 0
+    ENDIF
+
     dims = (/nprocy, nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
 
@@ -54,13 +62,16 @@ CONTAINS
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
-    CALL MPI_CART_COORDS(comm, rank, 2, coordinates, errcode)
+    CALL MPI_CART_COORDS(comm, rank, ndims, coordinates, errcode)
     CALL MPI_CART_SHIFT(comm, 1, 1, left, right, errcode)
     CALL MPI_CART_SHIFT(comm, 0, 1, down, up, errcode)
 
     nprocx = dims(2)
     nprocy = dims(1)
 
+    IF (rank .EQ. 0) THEN
+      PRINT *, "Processor subdivision is ", (/nprocx, nprocy/)
+    ENDIF
     neighbour = MPI_PROC_NULL
 
     DO iy = -1, 1
@@ -69,6 +80,7 @@ CONTAINS
         test_coords(1) = test_coords(1)+iy
         test_coords(2) = test_coords(2)+ix
         op = .TRUE.
+
         ! For some stupid reason MPI_CART_RANK returns an error rather than
         ! MPI_PROC_NULL if the coords are out of range.
         DO idim = 1, ndims
@@ -107,7 +119,6 @@ CONTAINS
     ALLOCATE(ekbar(1:nx, 1:ny, 1:n_species))
     ALLOCATE(ekbar_sum(-2:nx+3, -2:ny+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, -2:ny+3, 1:n_species))
-    ALLOCATE(start_each_rank(0:nproc-1, 1:2), end_each_rank(0:nproc-1, 1:2))
     ALLOCATE(x_starts(0:nprocx-1), x_ends(0:nprocx-1))
     ALLOCATE(y_starts(0:nprocy-1), y_ends(0:nprocy-1))
     ALLOCATE(cell_x_start(1:nprocx), cell_x_end(1:nprocx))

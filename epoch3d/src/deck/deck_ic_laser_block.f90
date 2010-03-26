@@ -41,6 +41,7 @@ CONTAINS
         WRITE(40,*) 'Cannot set laser properties before direction is set'
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
+      extended_error_string = "direction"
       handle_ic_laser_deck = c_err_required_element_not_set
       RETURN
     ENDIF

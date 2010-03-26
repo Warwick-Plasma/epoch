@@ -1141,7 +1141,7 @@ CONTAINS
     ipoint = 0
     DO iy = 0, n_local(2)-1
       ipoint = ipoint+1
-      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) -1
+      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) - 1
     ENDDO
 
     CALL MPI_TYPE_INDEXED(n_local(2), lengths, starts, mpireal, &

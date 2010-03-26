@@ -1,5 +1,6 @@
 MODULE probes
 
+#ifdef PARTICLE_PROBES
   USE partlist
   USE output_particle
   USE mpi_subtype_control
@@ -9,12 +10,6 @@ MODULE probes
 
 CONTAINS
 
-#ifndef PARTICLE_PROBES
-  SUBROUTINE probe_dummy
-
-  END SUBROUTINE probe_dummy
-
-#else
   SUBROUTINE init_probe(probe)
 
     TYPE(particle_probe), POINTER :: probe

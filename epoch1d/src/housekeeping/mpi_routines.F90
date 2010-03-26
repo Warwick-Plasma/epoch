@@ -31,14 +31,14 @@ CONTAINS
 
   SUBROUTINE setup_communicator
 
-    INTEGER :: ndims, dims(1), idim
-    LOGICAL :: periods(1), reorder, op
-    INTEGER :: test_coords(1), ix
-
-    ndims = 1
+    INTEGER, PARAMETER :: ndims = 1
+    INTEGER :: dims(ndims), idim
+    LOGICAL :: periods(ndims), reorder, op
+    INTEGER :: test_coords(ndims)
+    INTEGER :: ix
 
     IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm, errcode)
-    ndims = 1
+
     dims = (/nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
 
@@ -88,13 +88,6 @@ CONTAINS
     subtype_field = 0
     subtype_particle = 0
 
-!!$    npart = npart_global/nproc
-!!$    IF (npart*nproc .NE. npart_global) THEN
-!!$       IF (rank .EQ. 0) &
-!!$           PRINT *, "Unable to divide particles at t = 0. Quitting."
-!!$       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
-!!$    ENDIF
-
     ALLOCATE(x(-2:nx+3))
     ALLOCATE(x_global(-2:nx_global+3))
     ALLOCATE(x_offset_global(-2:nx_global+3))
@@ -103,7 +96,6 @@ CONTAINS
     ALLOCATE(jx(-2:nx+3), jy(-2:nx+3), jz(-2:nx+3))
     ALLOCATE(ekbar(1:nx, 1:n_species), ekbar_sum(-2:nx+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, 1:n_species))
-    ALLOCATE(start_each_rank(0:nproc-1, 1:2), end_each_rank(0:nproc-1, 1:2))
     ALLOCATE(x_starts(0:nprocx-1), x_ends(0:nprocx-1))
     ALLOCATE(cell_x_start(1:nprocx), cell_x_end(1:nprocx))
 

@@ -74,7 +74,8 @@ CONTAINS
 
   SUBROUTINE shift_field(field)
 
-    REAL(num), DIMENSION(-2:nx+3, -2:ny+3), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(-2:nx+3,-2:ny+3), INTENT(INOUT) :: field
+
     field(-2:nx+2,:) = field(-1:nx+3,:)
     CALL field_bc(field)
 
@@ -88,11 +89,13 @@ CONTAINS
     INTEGER :: ispecies, ipart, i, isuby
     REAL(num) :: rand
     INTEGER :: clock, idum
-    REAL(num) :: cell_x_r
     REAL(num) :: cell_y_r, cell_frac_y
-    INTEGER :: cell_x, cell_y
+    INTEGER :: cell_y
     REAL(num), DIMENSION(-1:1) :: gy
-    REAL(num) :: weight_local, temp_local
+    REAL(num) :: temp_local
+#ifdef PER_PARTICLE_WEIGHT
+    REAL(num) :: weight_local
+#endif
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -106,20 +109,13 @@ CONTAINS
             ALLOCATE(current)
             rand = random(idum)-0.5_num
             current%part_pos(1) = x_end+dx + rand*dx
-
             rand = random(idum)-0.5_num
             current%part_pos(2) = y(iy)+dy*rand
-
-            cell_x_r = (current%part_pos(1)-x_start_local) / dx -0.5_num
-            cell_x = NINT(cell_x_r)
-            cell_x = cell_x+1
 
             cell_y_r = (current%part_pos(2)-y_start_local) / dy -0.5_num
             cell_y = NINT(cell_y_r)
             cell_frac_y = REAL(cell_y, num) - cell_y_r
             cell_y = cell_y+1
-
-!!$            IF (cell_y .NE. iy) PRINT *, "BAD CELL"
 
             gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
             gy( 0) = 0.75_num - cell_frac_y**2
@@ -136,6 +132,7 @@ CONTAINS
                   temp_local, idum)
             ENDDO
 
+#ifdef PER_PARTICLE_WEIGHT
             weight_local = 0.0_num
             DO isuby = -1, +1
               weight_local = weight_local + gy(isuby) &
@@ -143,7 +140,6 @@ CONTAINS
                   / (REAL(particle_species(ispecies)%npart_per_cell, num) &
                   / (dx*dy))
             ENDDO
-#ifdef PER_PARTICLE_WEIGHT
             current%weight = weight_local
 #endif
 #ifdef PARTICLE_DEBUG

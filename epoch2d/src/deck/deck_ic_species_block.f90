@@ -50,7 +50,7 @@ CONTAINS
           initial_conditions(species_id)%rho(-2:nx+3, -2:ny+3), &
           (/-2, nx+3/), (/-2, ny+3/), handle_ic_species_deck)
       initial_conditions(species_id)%rho = &
-          initial_conditions(species_id)%rho/particle_species(species_id)%mass
+          initial_conditions(species_id)%rho / particle_species(species_id)%mass
       RETURN
     ENDIF
 

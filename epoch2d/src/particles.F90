@@ -10,8 +10,6 @@ CONTAINS
 
   SUBROUTINE push_particles
 
-    IMPLICIT NONE
-
     ! 2nd order accurate particle pusher using parabolic weighting
     ! on and off the grid. The calculation of J looks rather odd
     ! Since it works by solving d(rho)/dt = div(J) and doing a 1st order
@@ -24,6 +22,7 @@ CONTAINS
     ! Xi (space factor see page 38 in manual)
     REAL(num), ALLOCATABLE, DIMENSION(:) :: xi0x, xi0y
     REAL(num), ALLOCATABLE, DIMENSION(:) :: xi1x, xi1y
+
     ! J from a given particle, can be spread over up to 3 cells in
     ! Each direction due to parabolic weighting. We allocate 4 or 5
     ! Cells because the position of the particle at t = t+1.5dt is not
@@ -38,7 +37,8 @@ CONTAINS
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifdef PARTICLE_PROBES
-    REAL(num) :: init_part_x, init_part_y, final_part_x, final_part_y
+    REAL(num) :: init_part_x, init_part_y
+    REAL(num) :: final_part_x, final_part_y
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: probe_x1, probe_y1, probe_x2, probe_y2, probe_a, probe_b
@@ -52,10 +52,12 @@ CONTAINS
     ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x, cell_frac_y
 
-    ! particle weight factors as described in the manual (FIXREF)
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx, gy
 
-    ! particle weight factors as described in the manual (FIXREF)
     ! Defined at the particle position - 0.5 grid cell in each direction
     ! This is to deal with the grid stagger
     REAL(num), DIMENSION(-2:2) :: hx, hy
@@ -63,13 +65,13 @@ CONTAINS
     ! Fields at particle location
     REAL(num) :: ex_part, ey_part, ez_part, bx_part, by_part, bz_part
 
-    ! P+ and P- from Boris1970
+    ! P+ and P- from Boris1970, page27 of manual
     REAL(num) :: pxp, pxm, pyp, pym, pzp, pzm
 
     ! charge to mass ratio modified by normalisation
     REAL(num) :: cmratio
 
-    ! Tau variables from Boris1970
+    ! Tau variables from Boris1970, page27 of manual
     REAL(num) :: tau, taux, tauy, tauz
 
     ! Used by J update
@@ -195,10 +197,6 @@ CONTAINS
         CALL grid_to_particle(cell_frac_x, hx)
         CALL grid_to_particle(cell_frac_y, hy)
 
-        ! These are the electric an magnetic fields interpolated to the
-        ! particle position. They have been checked and are correct.
-        ! Actually checking this is messy.
-
         ex_part = 0.0_num
         ey_part = 0.0_num
         ez_part = 0.0_num
@@ -206,6 +204,9 @@ CONTAINS
         by_part = 0.0_num
         bz_part = 0.0_num
 
+        ! These are the electric and magnetic fields interpolated to the
+        ! particle position. They have been checked and are correct.
+        ! Actually checking this is messy.
         DO ix = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             ex_part = ex_part + hx(ix)*gy(iy)*ex(cell_x2+ix, cell_y1+iy)
@@ -277,7 +278,9 @@ CONTAINS
 #ifdef TRACER_PARTICLES
         IF (.NOT. particle_species(ispecies)%tracer) THEN
 #endif
-          ! Now advance to t+1.5dt to calculate current.
+          ! Now advance to t+1.5dt to calculate current. This is detailed in
+          ! the manual between pages 37 and 41. The version coded up looks
+          ! completely different to that in the manual, but is equivalent.
           ! Use t+1.5 dt so that can update J to t+dt at 2nd order
           part_x = part_x + part_vx * dt/2.0_num
           part_y = part_y + part_vy * dt/2.0_num
@@ -308,11 +311,11 @@ CONTAINS
           IF (cell_x3 .EQ. cell_x1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             xmin = -sf_order
-            xmax = +sf_order
+            xmax = sf_order
           ELSE IF (cell_x3 .EQ. cell_x1 - 1) THEN
             ! particle has moved one cell to left
             xmin = -sf_order-1
-            xmax = +sf_order
+            xmax = sf_order
           ELSE ! IF (cell_x3 .EQ. cell_x1 + 1) THEN
             ! particle has moved one cell to right
             xmin = -sf_order
@@ -322,15 +325,15 @@ CONTAINS
           IF (cell_y3 .EQ. cell_y1) THEN
             ! particle is still in same cell at t+1.5dt as at t+0.5dt
             ymin = -sf_order
-            ymax = +sf_order
+            ymax = sf_order
           ELSE IF (cell_y3 .EQ. cell_y1 - 1) THEN
             ! particle has moved one cell to left
             ymin = -sf_order-1
-            ymax = +sf_order
+            ymax = sf_order
           ELSE ! IF (cell_y3 .EQ. cell_y1 + 1) THEN
             ! particle has moved one cell to right
             ymin = -sf_order
-            ymax = +sf_order+1
+            ymax = sf_order+1
           ENDIF
 
           ! Set these to zero due to diffential inside loop

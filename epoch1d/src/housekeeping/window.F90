@@ -61,9 +61,10 @@ CONTAINS
     INTEGER :: ispecies, ipart, i
     REAL(num) :: rand
     INTEGER :: clock, idum
-    REAL(num) :: cell_x_r
-    INTEGER :: cell_x
-    REAL(num) :: weight_local, temp_local
+    REAL(num) :: temp_local
+#ifdef PER_PARTICLE_WEIGHT
+    REAL(num) :: weight_local
+#endif
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -77,12 +78,6 @@ CONTAINS
           rand = random(idum)-0.5_num
           current%part_pos = x_end+dx + rand*dx
 
-          cell_x_r = (current%part_pos-x_start_local) / dx -0.5_num
-          cell_x = NINT(cell_x_r)
-          cell_x = cell_x+1
-
-!!$          IF (cell_y .NE. iy) PRINT *, "BAD CELL"
-
           DO i = 1, 3
             temp_local = particle_species(ispecies)%temperature(i)
             current%part_p(i) = &
@@ -90,9 +85,9 @@ CONTAINS
                 temp_local, idum)
           ENDDO
 
+#ifdef PER_PARTICLE_WEIGHT
           weight_local = particle_species(ispecies)%density &
                 / (REAL(particle_species(ispecies)%npart_per_cell, num)/(dx))
-#ifdef PER_PARTICLE_WEIGHT
           current%weight = weight_local
 #endif
 #ifdef PARTICLE_DEBUG

@@ -100,19 +100,19 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local
 
-    CALL MPI_SENDRECV(field(1:3,:), 3*(ny_local+6), mpireal, left, tag, &
-        field(nx_local+1:nx_local+3,:), 3*(ny_local+6), mpireal, right, tag, &
-        comm, status, errcode)
-    CALL MPI_SENDRECV(field(nx_local-2:nx_local,:), 3*(ny_local+6), mpireal, &
-        right, tag, field(-2:0,:), 3*(ny_local+6), mpireal, left, tag, &
-        comm, status, errcode)
+    CALL MPI_SENDRECV(field(1:3,:), &
+        3*(ny_local+6), mpireal, left, tag, field(nx_local+1:nx_local+3,:), &
+        3*(ny_local+6), mpireal, right, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(nx_local-2:nx_local,:), &
+        3*(ny_local+6), mpireal, right, tag, field(-2:0,:), &
+        3*(ny_local+6), mpireal, left, tag, comm, status, errcode)
 
-    CALL MPI_SENDRECV(field(:,1:3), 3*(nx_local+6), mpireal, down, tag, &
-        field(:,ny_local+1:ny_local+3), 3*(nx_local+6), mpireal, up, tag, &
-        comm, status, errcode)
-    CALL MPI_SENDRECV(field(:,ny_local-2:ny_local), 3*(nx_local+6), mpireal, &
-        up, tag, field(:,-2:0), 3*(nx_local+6), mpireal, down, tag, &
-        comm, status, errcode)
+    CALL MPI_SENDRECV(field(:,1:3), &
+        3*(nx_local+6), mpireal, down, tag, field(:,ny_local+1:ny_local+3), &
+        3*(nx_local+6), mpireal, up, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(:,ny_local-2:ny_local), &
+        3*(nx_local+6), mpireal, up, tag, field(:,-2:0), &
+        3*(nx_local+6), mpireal, down, tag, comm, status, errcode)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -125,20 +125,20 @@ CONTAINS
 
     IF ((xbc_left_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. left .EQ. MPI_PROC_NULL) THEN
-      field(0,:) = field(1,:)
       field(-1,:) = field(2,:)
+      field( 0,:) = field(1,:)
     ENDIF
 
     IF ((xbc_right_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. right .EQ. MPI_PROC_NULL) THEN
-      field(nx+1,:) = field(nx,:)
+      field(nx+1,:) = field(nx,  :)
       field(nx+2,:) = field(nx-1,:)
     ENDIF
 
     IF ((ybc_down_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. down .EQ. MPI_PROC_NULL) THEN
-      field(:,0) = field(:,1)
       field(:,-1) = field(:,2)
+      field(:, 0) = field(:,1)
     ENDIF
 
     IF ((ybc_up_field .EQ. c_bc_zero_gradient .OR. force) &
@@ -158,35 +158,38 @@ CONTAINS
 
     IF (xbc_left_field .EQ. c_bc_clamp .AND. left .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
-        field(0,:) = 0.0_num
         field(-1,:) = -field(1,:)
+        field( 0,:) = 0.0_num
       ELSE
-        field(0,:) = -field(1,:)
         field(-1,:) = -field(2,:)
+        field( 0,:) = -field(1,:)
       ENDIF
     ENDIF
 
     IF (xbc_right_field .EQ. c_bc_clamp .AND. right .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
-        field(nx,:) = 0.0_num
+        field(nx,  :) = 0.0_num
+        field(nx+1,:) = -field(nx-1,:)
       ELSE
-        field(nx+1,:) = -field(nx,:)
+        field(nx+1,:) = -field(nx,  :)
         field(nx+2,:) = -field(nx-1,:)
       ENDIF
     ENDIF
 
     IF (ybc_down_field .EQ. c_bc_clamp .AND. down .EQ. MPI_PROC_NULL) THEN
       IF (stagger(2) .EQ. 1) THEN
-        field(:,-1:0) = 0.0_num
+        field(:,-1) = -field(:,1)
+        field(:, 0) = 0.0_num
       ELSE
-        field(:,0) = -field(:,1)
         field(:,-1) = -field(:,2)
+        field(:, 0) = -field(:,1)
       ENDIF
     ENDIF
 
     IF (ybc_up_field .EQ. c_bc_clamp .AND. up .EQ. MPI_PROC_NULL) THEN
       IF (stagger(2) .EQ. 1) THEN
-        field(:,ny:ny+2) = 0.0_num
+        field(:,ny  ) = 0.0_num
+        field(:,ny+1) = -field(:,ny-1)
       ELSE
         field(:,ny+1) = -field(:,ny)
         field(:,ny+2) = -field(:,ny-1)
@@ -222,12 +225,12 @@ CONTAINS
           x_start(ix, iy) = -2
           x_end(ix, iy) = nx+3
         ELSE IF (ix .EQ. 1) THEN
-          sizes(ix, iy) = sizes(ix, iy) *3
+          sizes(ix, iy) = sizes(ix, iy) * 3
           x_start(ix, iy) = nx+1
           x_end(ix, iy) = nx+3
           x_shift(ix, iy) = -nx
         ELSE
-          sizes(ix, iy) = sizes(ix, iy) *3
+          sizes(ix, iy) = sizes(ix, iy) * 3
           x_start(ix, iy) = -2
           x_end(ix, iy) = 0
           x_shift(ix, iy) = nx
@@ -237,12 +240,12 @@ CONTAINS
           y_start(ix, iy) = -2
           y_end(ix, iy) = ny+3
         ELSE IF (iy .EQ. 1) THEN
-          sizes(ix, iy) = sizes(ix, iy) *3
+          sizes(ix, iy) = sizes(ix, iy) * 3
           y_start(ix, iy) = ny+1
           y_end(ix, iy) = ny+3
           y_shift(ix, iy) = -ny
         ELSE
-          sizes(ix, iy) = sizes(ix, iy) *3
+          sizes(ix, iy) = sizes(ix, iy) * 3
           y_start(ix, iy) = -2
           y_end(ix, iy) = 0
           y_shift(ix, iy) = ny
@@ -254,18 +257,16 @@ CONTAINS
       DO ix = -1, 1
         IF (ix .EQ. 0 .AND. iy .EQ. 0) CYCLE
         IF (ABS(ix)+ABS(iy) .NE. 1) CYCLE
-        ! Copy the starts into variables with shorter names, or this is
-        ! HORRIFIC to read
+
         xs = x_start(ix, iy)
         ys = y_start(ix, iy)
         xe = x_end(ix, iy)
         ye = y_end(ix, iy)
         xf = x_shift(ix, iy)
         yf = y_shift(ix, iy)
+
         ALLOCATE(temp(xs:xe, ys:ye))
         temp = 0.0_num
-        ! IF (neighbour(ix, iy) .EQ. MPI_PROC_NULL) &
-        !     PRINT *, "BAD NEIGHBOUR", ix, iy
         CALL MPI_SENDRECV(array(xs:xe, ys:ye), sizes(ix, iy), mpireal, &
             neighbour(ix, iy), tag, temp, sizes(-ix, -iy), mpireal, &
             neighbour(-ix, -iy), tag, comm, status, errcode)

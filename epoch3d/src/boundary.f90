@@ -72,39 +72,39 @@ CONTAINS
     IF (xbc_left .EQ. c_bc_simple_laser &
         .OR. xbc_left .EQ. c_bc_simple_outflow) THEN
       xbc_left_particle = c_bc_open
-      xbc_left_field = c_bc_zero_gradient
+      xbc_left_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
     IF (xbc_right .EQ. c_bc_simple_laser &
         .OR. xbc_right .EQ. c_bc_simple_outflow) THEN
       xbc_right_particle = c_bc_open
-      xbc_left_field = c_bc_zero_gradient
+      xbc_right_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
 
     IF (ybc_up .EQ. c_bc_simple_laser &
         .OR. ybc_up .EQ. c_bc_simple_outflow) THEN
       ybc_up_particle = c_bc_open
-      ybc_up_field = c_bc_zero_gradient
+      ybc_up_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
     IF (ybc_down .EQ. c_bc_simple_laser &
         .OR. ybc_down .EQ. c_bc_simple_outflow) THEN
       ybc_down_particle = c_bc_open
-      ybc_down_field = c_bc_zero_gradient
+      ybc_down_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
 
     IF (zbc_front .EQ. c_bc_simple_laser &
         .OR. zbc_front .EQ. c_bc_simple_outflow) THEN
       zbc_front_particle = c_bc_open
-      zbc_front_field = c_bc_zero_gradient
+      zbc_front_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
     IF (zbc_back .EQ. c_bc_simple_laser &
         .OR. zbc_back .EQ. c_bc_simple_outflow) THEN
       zbc_back_particle = c_bc_open
-      zbc_back_field = c_bc_zero_gradient
+      zbc_back_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
 
@@ -133,30 +133,30 @@ CONTAINS
 
     CALL MPI_SENDRECV(field(1:3,:,:), &
         3*(ny_local+6)*(nz_local+6), mpireal, left, tag, &
-        field(nx_local+1:nx_local+3,:,:), 3*(ny_local+6)*(nz_local+6), &
-        mpireal, right, tag, comm, status, errcode)
+        field(nx_local+1:nx_local+3,:,:), &
+        3*(ny_local+6)*(nz_local+6), mpireal, right, tag, comm, status, errcode)
     CALL MPI_SENDRECV(field(nx_local-2:nx_local,:,:), &
         3*(ny_local+6)*(nz_local+6), mpireal, right, tag, &
-        field(-2:0,:,:), 3*(ny_local+6)*(nz_local+6), &
-        mpireal, left, tag, comm, status, errcode)
+        field(-2:0,:,:), &
+        3*(ny_local+6)*(nz_local+6), mpireal, left, tag, comm, status, errcode)
 
     CALL MPI_SENDRECV(field(:,1:3,:), &
         3*(nx_local+6)*(nz_local+6), mpireal, down, tag, &
-        field(:,ny_local+1:ny_local+3,:), 3*(nx_local+6)*(nz_local+6), &
-        mpireal, up, tag, comm, status, errcode)
+        field(:,ny_local+1:ny_local+3,:), &
+        3*(nx_local+6)*(nz_local+6), mpireal, up, tag, comm, status, errcode)
     CALL MPI_SENDRECV(field(:,ny_local-2:ny_local,:), &
         3*(nx_local+6)*(nz_local+6), mpireal, up, tag, &
-        field(:,-2:0,:), 3*(nx_local+6)*(nz_local+6), &
-        mpireal, down, tag, comm, status, errcode)
+        field(:,-2:0,:), &
+        3*(nx_local+6)*(nz_local+6), mpireal, down, tag, comm, status, errcode)
 
     CALL MPI_SENDRECV(field(:,:,1:3), &
         3*(nx_local+6)*(ny_local+6), mpireal, back, tag, &
-        field(:,:,nz_local+1:nz_local+3), 3*(nx_local+6)*(ny_local+6), &
-        mpireal, front, tag, comm, status, errcode)
+        field(:,:,nz_local+1:nz_local+3), &
+        3*(nx_local+6)*(ny_local+6), mpireal, front, tag, comm, status, errcode)
     CALL MPI_SENDRECV(field(:,:,nz_local-2:nz_local), &
         3*(nx_local+6)*(ny_local+6), mpireal, front, tag, &
-        field(:,:,-2:0), 3*(nx_local+6)*(ny_local+6), &
-        mpireal, back, tag, comm, status, errcode)
+        field(:,:,-2:0), &
+        3*(nx_local+6)*(ny_local+6), mpireal, back, tag, comm, status, errcode)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -169,64 +169,107 @@ CONTAINS
 
     IF ((xbc_left_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. left .EQ. MPI_PROC_NULL) THEN
-      field(0,:,:) = field(1,:,:)
+      field(-1,:,:) = field(2,:,:)
+      field( 0,:,:) = field(1,:,:)
     ENDIF
 
     IF ((xbc_right_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. right .EQ. MPI_PROC_NULL) THEN
       field(nx+1,:,:) = field(nx,:,:)
+      field(nx+2,:,:) = field(nx-1,:,:)
     ENDIF
 
     IF ((ybc_down_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. down .EQ. MPI_PROC_NULL) THEN
-      field(:,0,:) = field(:,1,:)
+      field(:,-1,:) = field(:,2,:)
+      field(:, 0,:) = field(:,1,:)
     ENDIF
 
     IF ((ybc_up_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. up .EQ. MPI_PROC_NULL) THEN
       field(:,ny+1,:) = field(:,ny,:)
+      field(:,ny+2,:) = field(:,ny-1,:)
     ENDIF
 
     IF ((zbc_back_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. back .EQ. MPI_PROC_NULL) THEN
-      field(:,:,0) = field(:,:,1)
+      field(:,:,-1) = field(:,:,2)
+      field(:,:, 0) = field(:,:,1)
     ENDIF
 
     IF ((zbc_front_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. front .EQ. MPI_PROC_NULL) THEN
       field(:,:,nz+1) = field(:,:,nz)
+      field(:,:,nz+2) = field(:,:,nz-1)
     ENDIF
 
   END SUBROUTINE field_zero_gradient
 
 
 
-  SUBROUTINE field_clamp_zero(field)
+  SUBROUTINE field_clamp_zero(field, stagger)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
+    INTEGER, DIMENSION(3), INTENT(IN) :: stagger
 
     IF (xbc_left_field .EQ. c_bc_clamp .AND. left .EQ. MPI_PROC_NULL) THEN
-      field(0,:,:) = 0.0_num
+      IF (stagger(1) .EQ. 1) THEN
+        field(-1,:,:) = -field(1,:,:)
+        field( 0,:,:) = 0.0_num
+      ELSE
+        field(-1,:,:) = -field(2,:,:)
+        field( 0,:,:) = -field(1,:,:)
+      ENDIF
     ENDIF
 
     IF (xbc_right_field .EQ. c_bc_clamp .AND. right .EQ. MPI_PROC_NULL) THEN
-      field(nx+1,:,:) = 0.0_num
+      IF (stagger(1) .EQ. 1) THEN
+        field(nx,  :,:) = 0.0_num
+        field(nx+1,:,:) = -field(nx-1,:,:)
+      ELSE
+        field(nx+1,:,:) = -field(nx,  :,:)
+        field(nx+2,:,:) = -field(nx-1,:,:)
+      ENDIF
     ENDIF
 
     IF (ybc_down_field .EQ. c_bc_clamp .AND. down .EQ. MPI_PROC_NULL) THEN
-      field(:,0,:) = 0.0_num
+      IF (stagger(2) .EQ. 1) THEN
+        field(:,-1,:) = -field(:,1,:)
+        field(:, 0,:) = 0.0_num
+      ELSE
+        field(:,-1,:) = -field(:,2,:)
+        field(:, 0,:) = -field(:,1,:)
+      ENDIF
     ENDIF
 
     IF (ybc_up_field .EQ. c_bc_clamp .AND. up .EQ. MPI_PROC_NULL) THEN
-      field(:,ny+1,:) = 0.0_num
+      IF (stagger(2) .EQ. 1) THEN
+        field(:,ny,  :) = 0.0_num
+        field(:,ny+1,:) = -field(:,ny-1,:)
+      ELSE
+        field(:,ny+1,:) = -field(:,ny,  :)
+        field(:,ny+2,:) = -field(:,ny-1,:)
+      ENDIF
     ENDIF
 
     IF (zbc_back_field .EQ. c_bc_clamp .AND. back .EQ. MPI_PROC_NULL) THEN
-      field(:,:,0) = 0.0_num
+      IF (stagger(3) .EQ. 1) THEN
+        field(:,:,-1) = -field(:,:,1)
+        field(:,:, 0) = 0.0_num
+      ELSE
+        field(:,:,-1) = -field(:,:,2)
+        field(:,:, 0) = -field(:,:,1)
+      ENDIF
     ENDIF
 
     IF (zbc_front_field .EQ. c_bc_clamp .AND. front .EQ. MPI_PROC_NULL) THEN
-      field(:,:,nz+1) = 0.0_num
+      IF (stagger(3) .EQ. 1) THEN
+        field(:,:,nz  ) = 0.0_num
+        field(:,:,nz+1) = -field(:,:,nz-1)
+      ELSE
+        field(:,:,nz+1) = -field(:,:,nz  )
+        field(:,:,nz+2) = -field(:,:,nz-1)
+      ENDIF
     ENDIF
 
   END SUBROUTINE field_clamp_zero
@@ -303,7 +346,6 @@ CONTAINS
             z_end(ix, iy, iz) = 0
             z_shift(ix, iy, iz) = nz
           ENDIF
-
         ENDDO
       ENDDO
     ENDDO
@@ -312,13 +354,8 @@ CONTAINS
       DO iy = -1, 1
         DO ix = -1, 1
           IF (ix .EQ. 0 .AND. iy .EQ. 0 .AND. iz .EQ. 0) CYCLE
-          IF (ABS(ix)+ABS(iy)+ABS(iz) .GT. 1) CYCLE
-!!$          IF (sizes(ix, iy, iz) .EQ. 0) THEN
-!!$            WRITE(rank+10, *) "Zero size", ix, iy, iz
-!!$            CYCLE
-!!$          ENDIF
-          ! Copy the starts into variables with shorter names, or this is
-          ! HORRIFIC to read
+          IF (ABS(ix)+ABS(iy)+ABS(iz) .NE. 1) CYCLE
+  
           xs = x_start(ix, iy, iz)
           ys = y_start(ix, iy, iz)
           zs = z_start(ix, iy, iz)
@@ -328,6 +365,7 @@ CONTAINS
           xf = x_shift(ix, iy, iz)
           yf = y_shift(ix, iy, iz)
           zf = z_shift(ix, iy, iz)
+  
           ALLOCATE(temp(xs:xe, ys:ye, zs:ze))
           temp = 0.0_num
           CALL MPI_SENDRECV(array(xs:xe, ys:ye, zs:ze), sizes(ix, iy, iz), &
@@ -339,6 +377,7 @@ CONTAINS
         ENDDO
       ENDDO
     ENDDO
+
     CALL field_bc(array)
 
   END SUBROUTINE processor_summation_bcs
@@ -353,9 +392,10 @@ CONTAINS
     CALL field_bc(ez)
 
     ! These apply zero field boundary conditions on the edges
-    CALL field_clamp_zero(ex)
-    CALL field_clamp_zero(ey)
-    CALL field_clamp_zero(ez)
+    CALL field_clamp_zero(ex, (/1, 0, 0/))
+    CALL field_clamp_zero(ey, (/0, 1, 0/))
+    CALL field_clamp_zero(ez, (/0, 0, 1/))
+
     ! These apply zero field gradient boundary conditions on the edges
     CALL field_zero_gradient(ex, .FALSE.)
     CALL field_zero_gradient(ey, .FALSE.)
@@ -376,9 +416,9 @@ CONTAINS
 
     IF (.NOT. mpi_only) THEN
       ! These apply zero field boundary conditions on the edges
-      CALL field_clamp_zero(bx)
-      CALL field_clamp_zero(by)
-      CALL field_clamp_zero(bz)
+      CALL field_clamp_zero(bx, (/0, 1, 1/))
+      CALL field_clamp_zero(by, (/1, 0, 1/))
+      CALL field_clamp_zero(bz, (/1, 1, 0/))
       ! These apply zero field boundary conditions on the edges
       CALL field_zero_gradient(bx, .FALSE.)
       CALL field_zero_gradient(by, .FALSE.)
@@ -447,11 +487,8 @@ CONTAINS
         IF (cur%part_pos(2) .GE. y_end+dy/2.0_num &
             .AND. up .EQ. MPI_PROC_NULL &
             .AND. ybc_up_particle .EQ. c_bc_reflect) THEN
-          ! PRINT *, "Reflecting"
           ! particle has crossed top boundary
           cur%part_pos(2) =  2.0_num * (y_end + dy/2.0_num) - cur%part_pos(2)
-          ! IF (cur%part_pos(2) .GT. y_end) &
-          !     WRITE(10+rank, *) "BAD PARTICLE HIGH Y"
           cur%part_p(2) = - cur%part_p(2)
         ENDIF
 
@@ -498,8 +535,11 @@ CONTAINS
           IF (.NOT. out_of_bounds) THEN
             CALL add_particle_to_partlist(send(xbd, ybd, zbd), cur)
           ELSE
-            ! CALL add_particle_to_partlist(ejected_particles, cur)
-            DEALLOCATE(cur)
+            IF (dumpmask(29) .NE. c_io_never) THEN
+              CALL add_particle_to_partlist(ejected_particles, cur)
+            ELSE
+              DEALLOCATE(cur)
+            ENDIF
           ENDIF
         ENDIF
 
@@ -549,7 +589,6 @@ CONTAINS
         cur=>cur%next
       ENDDO
     ENDDO
-    ! PRINT *, "Particle bcs_done", rank
 
   END SUBROUTINE particle_bcs
 
