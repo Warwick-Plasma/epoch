@@ -1,8 +1,22 @@
 #! /bin/sh
 
+# Shell script for unpacking source code and input decks from a
+# CFD restart dump
+
 file=$1
 dir=unpacked_source
 output=$dir/epoch.tgz
+tmp=$dir/.__TMP__
+
+getint() {
+    od -td4 -N4 -j$off $file | head -1 | awk '{print$2}'
+}
+
+getlong() {
+    od -tdL -N8 -j$off $file | head -1 | awk '{print$2}'
+}
+
+# Sanity checking
 
 if [ "$1"x = x -o "$2"x != x ]; then
   echo "Usage: unpack_source_from_restart <restart_file>"
@@ -19,40 +33,101 @@ if [ ! -f $file ]; then
   exit 1
 fi
 
-byte=`grep -abo base64_packed_source_code $file | cut -f1 -d:`
+str=`od -tc -N3 $file | head -1 | cut -c9- | tr -d ' '`
 
-if [ -z $byte ]; then
-  echo 'ERROR: source code not found. Perhaps "'$file'" is not a restart dump.'
+if [ "$str"x != "CFDx" ]; then
+  echo 'ERROR: "'$file'" is not a CFD file'
   exit 1
 fi
 
-mkdir -p $dir > /dev/null 2>&1
+# Read CFD header
 
-(echo begin-base64 664 $output
-dd status=noxfer if=$file bs=1 skip=$((byte+80)) 2> /dev/null | fold
-echo
-echo ====) | uudecode
+off=3
+header_len=$(getint); off=$((off+4))
+block_header_len=$(getint); off=$((off+4))
+version=$(getint); off=$((off+4))
+revision=$(getint); off=$((off+4))
+strlen=$(getint); off=$((off+4))
+nblocks=$(getint); off=$((off+4))
 
-if [ $? -eq 0 ]; then
-  echo 'Source code successfully unpacked into "'$output'"'
-else
-  echo 'ERROR occured while unpacking source code'
-fi
+# Read the blocks
 
-for i in `grep -abo Embedded_input_deck $file | cut -f1 -d:`; do
-  f=`dd status=noxfer if=$file bs=1 skip=$((i-60)) count=60 2>/dev/null | \
-      sed 's, *$,,'`
+mkdir -p $dir
 
-  if [ "$f"x != x ]; then
-    err=0
-    mkdir -p $dir/`dirname $f`
+block_off=$((header_len-block_header_len))
+block_length=0
 
-    nbytes=`od -t d8 --skip-bytes=$((i+64)) --read-bytes=8 $file | \
-        head -1 | awk '{print$2}'`
+i=0
+found=0
+while [ $i -lt $nblocks ]; do
+  i=$((i+1))
+  block_off=$((block_off+block_header_len+block_length))
+  off=$((block_off+2*strlen))
+  block_type=$(getint); off=$((off+4+8))
+  block_length=$(getlong)
 
-    dd status=noxfer if=$file of=$dir/$f bs=1 skip=$((i+80)) count=$nbytes \
-        2>/dev/null
+  # Only care about type_constant blocks
 
-    [ $? -eq 0 ] && echo 'Input deck successfully unpacked into "'$dir/$f'"'
+  if [ $block_type -eq 6 ]; then
+    rm -f $tmp
+    off=$((block_off+strlen))
+    dd if=$file of=$tmp bs=1 skip=$off count=$strlen > /dev/null 2>&1
+
+    [ $? -ne 0 ] && continue
+
+    # Is it an input deck?
+    grep -abo Embedded_input_deck $tmp > /dev/null 2>&1
+
+    if [ $? -eq 0 ]; then
+      found=1
+      off=$((block_off))
+      dd if=$file of=$tmp bs=1 skip=$off count=$strlen > /dev/null 2>&1
+      [ $? -ne 0 ] && continue
+
+      f=`sed 's, *$,,' $tmp`
+      d=`dirname $f`
+
+      mkdir -p $dir/$d
+      off=$((off+block_header_len))
+      dd if=$file of=$dir/$f bs=1 skip=$off count=$block_length > /dev/null 2>&1
+      if [ $? -ne 0 ]; then
+        echo 'WARNING: failed to unpack input deck "'"$dir/$f"'"'
+        continue
+      fi
+      echo 'Unpacked input deck into "'"$dir/$f"'"'
+    else
+    # Is it an embedded source code block?
+      grep -abo base64_packed_source_code $tmp > /dev/null 2>&1
+
+      [ $? -ne 0 ] && continue
+
+      found=1
+      off=$((block_off+block_header_len))
+      dd if=$file of=$tmp bs=1 skip=$off count=$block_length > /dev/null 2>&1
+
+      if [ $? -ne 0 ]; then
+        echo 'WARNING: failed to unpack source code'
+        continue
+      fi
+
+      (echo begin-base64 664 $output
+      fold $tmp
+      echo
+      echo ====) | uudecode
+
+      if [ $? -ne 0 ]; then
+        echo 'WARNING: failed to unpack source code'
+        continue
+      fi
+
+      echo 'Unpacked source code into "'"$output"'"'
+    fi
   fi
 done
+
+if [ $found -eq 0 ]; then
+  echo 'WARNING: no embedded source code found in "'"$file"'".'
+  echo 'Maybe it is not a restart dump?'
+fi
+
+rm -f $tmp
