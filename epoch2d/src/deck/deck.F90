@@ -37,13 +37,14 @@ MODULE deck
 
   INTEGER, PARAMETER :: buffer_size = 1024
   TYPE :: file_buffer
-    CHARACTER(LEN=string_length) :: filename
+    CHARACTER(LEN=45+data_dir_max_length) :: filename
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: buffer
     INTEGER :: pos, idx, length
     TYPE(file_buffer), POINTER :: next
   END TYPE file_buffer
 
   TYPE(file_buffer), POINTER :: file_buffer_head
+  INTEGER :: nbuffers = 0
 
 CONTAINS
 
@@ -360,6 +361,8 @@ CONTAINS
       IF (.NOT. ASSOCIATED(file_buffer_head)) THEN
         ALLOCATE(file_buffer_head)
         fbuf=>file_buffer_head
+        fbuf%filename = ""
+        NULLIFY(fbuf%next)
       ELSE
         fbuf=>file_buffer_head
       ENDIF
@@ -373,6 +376,7 @@ CONTAINS
       ENDDO
       IF (.NOT. already_parsed) THEN
         ALLOCATE(fbuf%next)
+        nbuffers = nbuffers + 1
         fbuf=>fbuf%next
         fbuf%filename = deck_filename
         fbuf%pos = 1
@@ -484,6 +488,7 @@ CONTAINS
           deck_values(1)%value = TRIM(ADJUSTL(deck_values(1)%value))
           deck_values(2)%value = TRIM(ADJUSTL(deck_values(2)%value))
           CALL MPI_BCAST(1, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+          CALL MPI_BCAST(nbuffers, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
           CALL MPI_BCAST(deck_values(1)%value, string_length, MPI_CHARACTER, &
               0, MPI_COMM_WORLD, errcode)
           CALL MPI_BCAST(deck_values(2)%value, string_length, MPI_CHARACTER, &
@@ -508,6 +513,7 @@ CONTAINS
         errcode_deck = c_err_none
         CALL MPI_BCAST(f, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
         IF (f .EQ. 0) EXIT
+          CALL MPI_BCAST(nbuffers, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
         CALL MPI_BCAST(deck_values(1)%value, string_length, MPI_CHARACTER, &
               0, MPI_COMM_WORLD, errcode)
         CALL MPI_BCAST(deck_values(2)%value, string_length, MPI_CHARACTER, &
@@ -796,14 +802,22 @@ CONTAINS
   SUBROUTINE write_input_decks
 
     TYPE(file_buffer), POINTER :: fbuf
+    CHARACTER(LEN=1) :: dummy1(1), dummy2
+    INTEGER :: i
 
-    fbuf=>file_buffer_head
-    DO WHILE(ASSOCIATED(fbuf%next))
-      fbuf=>fbuf%next
+    IF (rank .EQ. 0) THEN
+      fbuf=>file_buffer_head
+      DO i = 1,nbuffers
+        fbuf=>fbuf%next
 
-      CALL cfd_write_source_code(TRIM(fbuf%filename), "Embedded_input_deck", &
-          fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), 0)
-    ENDDO
+        CALL cfd_write_source_code(TRIM(fbuf%filename), "Embedded_input_deck", &
+            fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), 0)
+      ENDDO
+    ELSE
+      DO i = 1,nbuffers
+        CALL cfd_write_source_code("", "Embedded_input_deck", dummy1, dummy2, 0)
+      ENDDO
+    ENDIF
 
   END SUBROUTINE write_input_decks
 

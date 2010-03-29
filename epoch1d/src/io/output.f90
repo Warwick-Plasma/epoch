@@ -428,10 +428,14 @@ CONTAINS
     INTEGER(8) :: md_length, sz, len1, len2
     INTEGER :: i
 
-    sz   = SIZE(array)
-    len1 = LEN(array)
-    len2 = LEN(last)
-    md_length = sz*len1 + len2
+    IF (cfd_rank .EQ. rank_write) THEN
+      sz   = SIZE(array)
+      len1 = LEN(array)
+      len2 = LEN(last)
+      md_length = sz*len1 + len2
+    ENDIF
+
+    CALL MPI_BCAST(md_length, 1, MPI_INTEGER8, 0, cfd_comm, cfd_errcode)
 
     CALL cfd_write_block_header(name, class, c_type_constant, md_length, &
         md_length, rank_write)
