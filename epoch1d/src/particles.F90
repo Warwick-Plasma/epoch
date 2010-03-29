@@ -202,9 +202,9 @@ CONTAINS
             * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
         xi0x( 2) = (1.5_num + cell_frac_x)**4
 #else
-        xi0x(-1) = (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+        xi0x(-1) = (0.5_num + cell_frac_x)**2
         xi0x( 0) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
-        xi0x( 1) = (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+        xi0x( 1) = (0.5_num - cell_frac_x)**2
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -386,9 +386,9 @@ CONTAINS
           xi1x(dcell+2) = (1.5_num + cell_frac_x)**4
 #else
           dcell = cell_x3 - cell_x1
-          xi1x(dcell-1) = (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+          xi1x(dcell-1) = (0.5_num + cell_frac_x)**2
           xi1x(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
-          xi1x(dcell+1) = (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+          xi1x(dcell+1) = (0.5_num - cell_frac_x)**2
 #endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of

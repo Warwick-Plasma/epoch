@@ -284,17 +284,17 @@ CONTAINS
             * (1.5_num - cell_frac_z - cell_frac_z**2) + 2.75_num))
         xi0z( 2) = (1.5_num + cell_frac_z)**4
 #else
-        xi0x(-1) = (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+        xi0x(-1) = (0.5_num + cell_frac_x)**2
         xi0x( 0) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
-        xi0x( 1) = (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+        xi0x( 1) = (0.5_num - cell_frac_x)**2
 
-        xi0y(-1) = (1.5_num - ABS(cell_frac_y - 1.0_num))**2
+        xi0y(-1) = (0.5_num + cell_frac_y)**2
         xi0y( 0) =  1.5_num - 2.0_num * ABS(cell_frac_y)**2
-        xi0y( 1) = (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+        xi0y( 1) = (0.5_num - cell_frac_y)**2
 
-        xi0z(-1) = (1.5_num - ABS(cell_frac_z - 1.0_num))**2
+        xi0z(-1) = (0.5_num + cell_frac_z)**2
         xi0z( 0) =  1.5_num - 2.0_num * ABS(cell_frac_z)**2
-        xi0z( 1) = (1.5_num - ABS(cell_frac_z + 1.0_num))**2
+        xi0z( 1) = (0.5_num - cell_frac_z)**2
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -1417,19 +1417,19 @@ CONTAINS
           xi1z(dcell+2) = (1.5_num + cell_frac_z)**4
 #else
           dcell = cell_x3 - cell_x1
-          xi1x(dcell-1) = (1.5_num - ABS(cell_frac_x - 1.0_num))**2
+          xi1x(dcell-1) = (0.5_num + cell_frac_x)**2
           xi1x(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
-          xi1x(dcell+1) = (1.5_num - ABS(cell_frac_x + 1.0_num))**2
+          xi1x(dcell+1) = (0.5_num - cell_frac_x)**2
 
           dcell = cell_y3 - cell_y1
-          xi1y(dcell-1) = (1.5_num - ABS(cell_frac_y - 1.0_num))**2
+          xi1y(dcell-1) = (0.5_num + cell_frac_y)**2
           xi1y(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_y)**2
-          xi1y(dcell+1) = (1.5_num - ABS(cell_frac_y + 1.0_num))**2
+          xi1y(dcell+1) = (0.5_num - cell_frac_y)**2
 
           dcell = cell_z3 - cell_z1
-          xi1z(dcell-1) = (1.5_num - ABS(cell_frac_z - 1.0_num))**2
+          xi1z(dcell-1) = (0.5_num + cell_frac_z)**2
           xi1z(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_z)**2
-          xi1z(dcell+1) = (1.5_num - ABS(cell_frac_z + 1.0_num))**2
+          xi1z(dcell+1) = (0.5_num - cell_frac_z)**2
 #endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
