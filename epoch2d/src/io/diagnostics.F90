@@ -26,6 +26,7 @@ CONTAINS
     LOGICAL :: print_arrays, last_call
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=50) :: temp_name
+    CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: data
     REAL(num), DIMENSION(2) :: stagger = 0.0_num
     INTEGER(8) :: n_part_per_it = 100000, npart_local, npart_dump_global
@@ -331,8 +332,15 @@ CONTAINS
 
       output_file = output_file + 1
       IF (rank .EQ. 0) THEN
-        WRITE(20, '("Dumped data at", g22.14, " at iteration", i9, &
-            & " for dump", i9)') time, i, output_file-1
+        IF (IAND(code, c_io_restartable) .NE. 0) THEN
+          dump_type = "restart"
+        ELSE IF (IAND(code, c_io_full) .NE. 0) THEN
+          dump_type = "full"
+        ELSE
+          dump_type = "normal"
+        ENDIF
+        WRITE(20, '("Wrote ", a7, " dump number", i5, " at time", g20.12, &
+            & " and iteration", i7)') dump_type, output_file-1, time, i
         CALL FLUSH(20)
       ENDIF
 
