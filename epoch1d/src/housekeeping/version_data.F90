@@ -3,7 +3,7 @@ MODULE version_data
   IMPLICIT NONE
 
   CHARACTER(LEN=*), PARAMETER :: c_code_name = "EPOCH1D"
-  INTEGER(4), PARAMETER :: c_version = 1, c_revision = 3
+  INTEGER(4), PARAMETER :: c_version = 2, c_revision = 0
   INTEGER(4), PARAMETER :: c_code_io_version = 1
   CHARACTER(LEN=*), PARAMETER :: c_commit_id = _COMMIT
   CHARACTER(LEN=*), PARAMETER :: c_compile_machine = _MACHINE
