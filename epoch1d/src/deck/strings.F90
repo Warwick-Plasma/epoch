@@ -20,7 +20,11 @@ CONTAINS
     INTEGER :: n_nums
     CHARACTER(LEN=9) :: numfmt
 
-    n_nums = 1 + INT(LOG10(REAL(int_in, num)))
+    IF (int_in .EQ. 0) THEN
+      n_nums = 1
+    ELSE
+      n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
+    ENDIF
     WRITE(numfmt, '("(I", I6.6, ")")') n_nums
     WRITE(string, numfmt) int_in
 
@@ -36,7 +40,11 @@ CONTAINS
     INTEGER :: n_nums
     CHARACTER(LEN=12) :: numfmt
 
-    n_nums = 1 + INT(LOG10(REAL(int_in, num)))
+    IF (int_in .EQ. 0) THEN
+      n_nums = 1
+    ELSE
+      n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
+    ENDIF
     WRITE(numfmt, '("(I", I9.9, ")")') n_nums
     WRITE(string, numfmt) int_in
 
