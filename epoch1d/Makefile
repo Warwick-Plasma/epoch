@@ -85,21 +85,19 @@ encoded_source.o: $(OBJDIR)/encoded_source.f90
 COMMIT: $(SRCFILES)
 	./gen_commit_string
 
-.PHONEY: clean
 clean: tidy
 	@rm -rf *~ $(BINDIR)
 
-.PHONEY: tidy
 tidy:
 	@rm -rf $(OBJDIR) *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 
-.PHONEY: visit
 visit:
 	@cd ../VisIt;xml2makefile -clobber cfd.xml;make
 
-.PHONEY: visitclean
 visitclean:
 	@cd ../VisIt;make clean;rm -f .depend *.d
+
+.PHONY: clean tidy visit visitclean
 
 # All the dependencies
 

@@ -59,4 +59,3 @@ fi
 [ -z $commit_string ] && exit
 
 echo "COMMIT = $commit_string" > $COMMIT_FILE
-echo "COMMIT = $commit_string"
