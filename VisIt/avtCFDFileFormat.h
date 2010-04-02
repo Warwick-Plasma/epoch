@@ -46,6 +46,7 @@
 #include <avtSTMDFileFormat.h>
 
 #include <vector>
+#include <DebugStream.h>
 #include "BlockHandler.h"
 
 
@@ -79,10 +80,12 @@ class avtCFDFileFormat : public avtSTMDFileFormat
     // If you know the cycle number, overload this function.
     // Otherwise, VisIt will make up a reasonable one for you.
     //
-    virtual int         GetCycle(void) { return Handler.GetCycle(); }
-    virtual double      GetTime(void)  { return Handler.GetTime(); }
-    virtual bool        ReturnsValidCycle(void) { return true; }
-    virtual bool        ReturnsValidTime(void) { return true; }
+    int         GetCycle(void) { return Handler.GetCycle(); }
+    double      GetTime(void)  { return Handler.GetTime(); }
+    int                 GetCycleFromFilename(const char *f) const;
+    virtual bool        ReturnsValidCycle(void) const { return true; }
+    virtual bool        ReturnsValidTime(void) const { return true; }
+    virtual void        ActivateTimestep(void) { Handler.BuildBlockChains(); }
 
     virtual const char    *GetType(void)   { return "CFD"; };
     virtual void           FreeUpResources(void);

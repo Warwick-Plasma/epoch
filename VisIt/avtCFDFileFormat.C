@@ -72,7 +72,7 @@ using     std::string;
 avtCFDFileFormat::avtCFDFileFormat(const char *filename)
     : avtSTMDFileFormat(&filename, 1)
 {
-    //  printf("Creating Handler\n");
+    debug1 << "avtCFDFileFormat::avtCFDFileFormat:" << filename << endl;
     if (!this->Handler.Open(filename))
         EXCEPTION1(InvalidDBTypeException, "Database is invalid");
 }
@@ -95,6 +95,7 @@ avtCFDFileFormat::avtCFDFileFormat(const char *filename)
 void
 avtCFDFileFormat::FreeUpResources(void)
 {
+    debug1 << "avtCFDFileFormat::FreeUpResources" << endl;
     Handler.FreeUpResources();
 }
 
@@ -115,6 +116,7 @@ avtCFDFileFormat::FreeUpResources(void)
 void
 avtCFDFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
 {
+    debug1 << "avtCFDFileFormat::PopulateDatabaseMetaData" << endl;
     Handler.PopulateDatabaseMetaData(md);
 }
 
@@ -142,6 +144,7 @@ avtCFDFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
 vtkDataSet *
 avtCFDFileFormat::GetMesh(int domain, const char *meshname)
 {
+    debug1 << "avtCFDFileFormat::GetMesh:" << domain << "," << meshname << endl;
     vtkDataSet *Dat = Handler.GetMesh(domain, meshname);
     if (Dat) return Dat;
     EXCEPTION1(InvalidDBTypeException, "Database is invalid");
@@ -170,6 +173,7 @@ avtCFDFileFormat::GetMesh(int domain, const char *meshname)
 vtkDataArray *
 avtCFDFileFormat::GetVar(int domain, const char *varname)
 {
+    debug1 << "avtCFDFileFormat::GetVar:" << domain << "," << varname << endl;
     return Handler.GetVar(domain, varname);
 }
 
@@ -196,5 +200,29 @@ avtCFDFileFormat::GetVar(int domain, const char *varname)
 vtkDataArray *
 avtCFDFileFormat::GetVectorVar(int domain, const char *varname)
 {
+    debug1 << "avtCFDFileFormat::GetVectorVar:" << domain << ","
+           << varname << endl;
     return Handler.GetVectorVar(domain, varname);
+}
+
+
+// ****************************************************************************
+//  Method: avtCFDFileFormat::GetCycleFromFilename
+//
+//  Purpose:
+//      Gets the cycle number from the file name.
+//
+//  Arguments:
+//      f     The file name for which to return a cyle number
+//
+//  Programmer: Keith Bennett
+//  Creation:   Sat Apr 3, 2010
+//
+// ****************************************************************************
+
+int
+avtCFDFileFormat::GetCycleFromFilename(const char *f) const
+{
+    debug1 << "avtCFDFileFormat::GetCycleFromFilename:" << f << endl;
+    return Handler.GetCycle();
 }

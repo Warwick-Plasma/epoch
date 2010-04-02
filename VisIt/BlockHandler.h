@@ -37,6 +37,9 @@ protected:
     int MaxStringLen;
     int nBlocks;
     int File_Version, File_Revision;
+    int Endianness;
+    int JobID1;
+    int JobID2;
 
     // These are strictly data from blocks, but put them here since they're
     // Used a lot and can only meaningfully be present once
@@ -52,14 +55,16 @@ public:
     bool Open(const char *filename);
     void *GetAuxiliaryData(const char *var, int domain, const char *type,
         void *, DestructorFunction &df) { df = NULL; return NULL; }
-    int GetCycle(void) { return this->Cycle; }
+    int GetCycle(void) const { return this->Cycle; }
     double GetTime(void) { return this->Time; }
+    bool GetCycleAndTime(void);
 
     vtkDataArray *GetVectorVar(int domain, const char *varname);
     vtkDataArray *GetVar(int domain, const char *varname);
     vtkDataSet *GetMesh(int domain, const char *meshname);
     void PopulateDatabaseMetaData(avtDatabaseMetaData *md);
     void FreeUpResources() {;}
+    bool BuildBlockChains(void);
 
     BlockReader *GetBlockReader(Block *B, bool CacheTest);
 

@@ -4,6 +4,7 @@
 #include "Mesh_Var_Reader.h"
 #include "Stitched_Vector_Reader.h"
 #include "Stitched_Magnitude_Reader.h"
+#include <InvalidFilesException.h>
 
 
 // ****************************************************************************
@@ -11,7 +12,6 @@
 
 bool BlockHandler::Open(const char *filename)
 {
-
     if (serial_in.is_open()) serial_in.close();
     this->ClearBlockChain();
 
@@ -53,11 +53,61 @@ bool BlockHandler::Open(const char *filename)
     serial_in.read((char*)&this->MaxStringLen, sizeof(int));
     serial_in.read((char*)&this->nBlocks, sizeof(int));
 
+    serial_in.read((char*)&this->Endianness, sizeof(int));
+    if (Endianness == 0x0f0e0201 || Endianness == 0x02010f0e) {
+        debug1 << "Wrong endianness in CFD file \"" << filename << "\"." <<endl;
+        debug1 << "Please convert" << endl;
+        cerr << "Wrong endianness in CFD file \"" << filename << "\"." << endl;
+        cerr << "Please convert" << endl;
+        EXCEPTION1(InvalidFilesException,
+                   "Wrong endianness in CFD file. Please convert");
+        serial_in.close();
+        return false;
+    }
+
+    if (File_Revision > 0 || File_Version > 1) {
+        serial_in.read((char*)&this->JobID1, sizeof(int));
+        serial_in.read((char*)&this->JobID2, sizeof(int));
+        serial_in.read((char*)&this->Cycle, sizeof(int));
+        serial_in.read((char*)&this->Time, sizeof(double));
+    } else {
+        GetCycleAndTime();
+    }
+
     if (this->nBlocks <= 0) {
         debug1 << "Invalid file (File is empty)" << endl;
     }
 
     debug1 << "Block contains " << this->nBlocks << " blocks " << endl;
+    return true;
+}
+
+bool BlockHandler::GetCycleAndTime(void)
+{
+    long long offset = this->Header_Offset;
+    long long type_offset = offset;
+    long long block_length;
+    int type;
+
+    for (int i = 0; i < this->nBlocks; i++) {
+        type_offset = offset + 2*this->MaxStringLen;
+        serial_in.seekg(type_offset, ios::beg);
+        serial_in.read((char*)&type, sizeof(int));
+        serial_in.read((char*)&block_length, sizeof(long long));
+        serial_in.read((char*)&block_length, sizeof(long long));
+
+        if (type == TYPE_SNAPSHOT) {
+            serial_in.read((char*)&this->Cycle, sizeof(int));
+            serial_in.read((char*)&this->Time, sizeof(double));
+            return true;
+        }
+        offset += this->Block_Header_Size + block_length;
+    }
+    return false;
+}
+
+bool BlockHandler::BuildBlockChains(void)
+{
     debug1 << "Now building block chains" << endl;
 
     ClearBlockChain();
@@ -105,7 +155,6 @@ void BlockHandler::ClearBlockChain()
 
 Block *BlockHandler::AddBlockToChain(long long offset)
 {
-
     Block *B = new Block();
     // Already dealing with the block header here, so no need to keep
     // How to get to it
@@ -230,6 +279,10 @@ void BlockHandler::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     Block *B = this->HeadBlock;
     BlockReader *R = NULL;
     bool DestroyBlock;
+    char buf[32];
+
+    snprintf(buf, 32, "JobId: %d.%d", this->JobID1, this->JobID2);
+    md->SetDatabaseComment(buf);
 
     debug1 << "Populating Metadata" << endl;
 
