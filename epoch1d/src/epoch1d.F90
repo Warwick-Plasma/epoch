@@ -133,7 +133,6 @@ PROGRAM pic
 #ifdef PARTICLE_IONISE
     CALL ionise_particles
 #endif
-    CALL output_routines(i)
     time = time+dt
     IF (dlb) THEN
       ! .FALSE. this time to use load balancing threshold
@@ -175,12 +174,13 @@ PROGRAM pic
     ENDDO
 #endif
     IF (halt) EXIT
+    CALL output_routines(i)
   ENDDO
 
   IF (rank .EQ. 0) &
       PRINT *, "Final runtime of core = ", MPI_WTIME()-walltime_current
 
-  CALL output_routines(i)
+  IF (i .NE. nsteps) CALL output_routines(i)
 
   CALL close_files
   CALL MPI_FINALIZE(errcode)
