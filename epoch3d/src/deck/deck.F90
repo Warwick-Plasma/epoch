@@ -1,7 +1,7 @@
 MODULE deck
 
   ! Basic operations
-  USE cfd_output
+  USE cfd
   USE shared_data
   USE strings
   ! Deck internals

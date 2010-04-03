@@ -1,6 +1,6 @@
 MODULE dist_fn
 
-  USE cfd_output_cartesian
+  USE cfd
   USE mpi_subtype_control
   USE shared_data
 

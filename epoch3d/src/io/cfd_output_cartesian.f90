@@ -3,6 +3,7 @@ MODULE cfd_output_cartesian
   USE cfd_common
   USE cfd_output
   USE shared_data
+  USE mpi
 
   IMPLICIT NONE
 

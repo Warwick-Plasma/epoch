@@ -3,6 +3,7 @@ MODULE cfd_input
   USE cfd_common
   USE cfd_input_functions
   USE shared_data
+  USE mpi
 
   IMPLICIT NONE
 

@@ -1,12 +1,6 @@
 MODULE setup
 
-  USE cfd_common
-  USE cfd_control
-  USE cfd_input
-  USE cfd_input_cartesian
-  USE cfd_input_functions
-  USE cfd_input_particle
-  USE cfd_job_info
+  USE cfd
   USE encoded_source
   USE fields
   USE mpi_subtype_control

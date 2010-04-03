@@ -4,20 +4,11 @@ MODULE cfd_output
   USE cfd_job_info
   USE shared_data
   USE version_data
+  USE mpi
 
   IMPLICIT NONE
 
   SAVE
-
-  PRIVATE
-
-  PUBLIC :: cfd_open_clobber, cfd_write_block_header, cfd_write_meshtype_header
-  PUBLIC :: cfd_safe_write_string, cfd_write_snapshot_data
-  PUBLIC :: cfd_write_job_info
-  PUBLIC :: cfd_write_stitched_vector
-  PUBLIC :: cfd_write_stitched_magnitude, cfd_write_real_constant
-  PUBLIC :: cfd_write_visit_expression
-  PUBLIC :: cfd_write_source_code
 
 CONTAINS
 

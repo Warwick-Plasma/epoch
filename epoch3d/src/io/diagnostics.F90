@@ -1,10 +1,7 @@
 MODULE diagnostics
 
   USE calc_df
-  USE cfd_control
-  USE cfd_output
-  USE cfd_output_cartesian
-  USE cfd_output_particle
+  USE cfd
   USE deck
   USE dist_fn
   USE encoded_source

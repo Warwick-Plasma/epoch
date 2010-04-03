@@ -3,6 +3,7 @@ MODULE cfd_control
   USE cfd_common
   USE cfd_input
   USE cfd_output
+  USE mpi
 
   IMPLICIT NONE
 
