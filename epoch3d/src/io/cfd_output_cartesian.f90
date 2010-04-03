@@ -15,8 +15,9 @@ CONTAINS
   ! Serial operation, so no need to specify nx
   !----------------------------------------------------------------------------
 
-  SUBROUTINE cfd_write_1d_cartesian_grid(name, class, x, rank_write)
+  SUBROUTINE cfd_write_1d_cartesian_grid(h, name, class, x, rank_write)
 
+    TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     REAL(num), DIMENSION(:), INTENT(IN) :: x
     INTEGER, INTENT(IN) :: rank_write
@@ -41,42 +42,43 @@ CONTAINS
     ! - xmin  REAL(num)
     ! - xmax  REAL(num)
 
-    md_length = meshtype_header_offset + ndims * soi + 2 * ndims * sof
+    md_length = c_meshtype_header_offset + ndims * soi + 2 * ndims * sof
     block_length = md_length + len_var * sof
 
     ! Write header
-    CALL cfd_write_block_header(name, class, c_type_mesh, &
+    CALL cfd_write_block_header(h, name, class, c_type_mesh, &
         block_length, md_length, rank_write)
-    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_1d, sof, &
+    CALL cfd_write_meshtype_header(h, c_mesh_cartesian, c_dimension_1d, sof, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. rank_write) THEN
+    IF (h%rank .EQ. rank_write) THEN
       DO i = 1,ndims
-        CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
+        CALL MPI_FILE_WRITE(h%filehandle, dims4(i), 1, MPI_INTEGER4, &
             MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
-    current_displacement = current_displacement + ndims * soi
+    h%current_displacement = h%current_displacement + ndims * soi
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
+        h%mpireal, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, x(1), 1, mpireal, &
+    IF (h%rank .EQ. rank_write) THEN
+      CALL MPI_FILE_WRITE(h%filehandle, x(1), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, x(dims4(1)), 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, x(dims4(1)), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
 
       ! Now write the real arrays
-      CALL MPI_FILE_WRITE(cfd_filehandle, x, dims4(1), mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, x, dims4(1), h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    current_displacement = current_displacement + (2 * ndims + len_var) * sof
+    h%current_displacement = h%current_displacement &
+        + (2 * ndims + len_var) * sof
 
   END SUBROUTINE cfd_write_1d_cartesian_grid
 
@@ -88,8 +90,9 @@ CONTAINS
   ! Serial operation, so no need to specify nx, ny
   !----------------------------------------------------------------------------
 
-  SUBROUTINE cfd_write_2d_cartesian_grid(name, class, x, y, rank_write)
+  SUBROUTINE cfd_write_2d_cartesian_grid(h, name, class, x, y, rank_write)
 
+    TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     REAL(num), DIMENSION(:), INTENT(IN) :: x, y
     INTEGER, INTENT(IN) :: rank_write
@@ -118,49 +121,50 @@ CONTAINS
     ! - ymin  REAL(num)
     ! - ymax  REAL(num)
 
-    md_length = meshtype_header_offset + ndims * soi + 2 * ndims * sof
+    md_length = c_meshtype_header_offset + ndims * soi + 2 * ndims * sof
     block_length = md_length + len_var * sof
 
     ! Write header
-    CALL cfd_write_block_header(name, class, c_type_mesh, &
+    CALL cfd_write_block_header(h, name, class, c_type_mesh, &
         block_length, md_length, rank_write)
-    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_2d, sof, &
+    CALL cfd_write_meshtype_header(h, c_mesh_cartesian, c_dimension_2d, sof, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. rank_write) THEN
+    IF (h%rank .EQ. rank_write) THEN
       DO i = 1,ndims
-        CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
+        CALL MPI_FILE_WRITE(h%filehandle, dims4(i), 1, MPI_INTEGER4, &
             MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
-    current_displacement = current_displacement + ndims * soi
+    h%current_displacement = h%current_displacement + ndims * soi
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
+        h%mpireal, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, x(1), 1, mpireal, &
+    IF (h%rank .EQ. rank_write) THEN
+      CALL MPI_FILE_WRITE(h%filehandle, x(1), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, x(dims4(1)), 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, x(dims4(1)), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
 
-      CALL MPI_FILE_WRITE(cfd_filehandle, y(1), 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, y(1), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, y(dims4(2)), 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, y(dims4(2)), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
 
       ! Now write the real arrays
-      CALL MPI_FILE_WRITE(cfd_filehandle, x, dims4(1), mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, x, dims4(1), h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, y, dims4(2), mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, y, dims4(2), h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    current_displacement = current_displacement + (2 * ndims + len_var) * sof
+    h%current_displacement = h%current_displacement &
+        + (2 * ndims + len_var) * sof
 
   END SUBROUTINE cfd_write_2d_cartesian_grid
 
@@ -172,8 +176,9 @@ CONTAINS
   ! Serial operation, so no need to specify nx, ny, nz
   !----------------------------------------------------------------------------
 
-  SUBROUTINE cfd_write_3d_cartesian_grid(name, class, x, y, z, rank_write)
+  SUBROUTINE cfd_write_3d_cartesian_grid(h, name, class, x, y, z, rank_write)
 
+    TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     REAL(num), DIMENSION(:), INTENT(IN) :: x, y, z
     INTEGER, INTENT(IN) :: rank_write
@@ -206,56 +211,57 @@ CONTAINS
     ! - zmin  REAL(num)
     ! - zmax  REAL(num)
 
-    md_length = meshtype_header_offset + ndims * soi + 2 * ndims * sof
+    md_length = c_meshtype_header_offset + ndims * soi + 2 * ndims * sof
     block_length = md_length + len_var * sof
 
     ! Write header
-    CALL cfd_write_block_header(name, class, c_type_mesh, &
+    CALL cfd_write_block_header(h, name, class, c_type_mesh, &
         block_length, md_length, rank_write)
-    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_3d, sof, &
+    CALL cfd_write_meshtype_header(h, c_mesh_cartesian, c_dimension_3d, sof, &
         rank_write)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. rank_write) THEN
+    IF (h%rank .EQ. rank_write) THEN
       DO i = 1,ndims
-        CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
+        CALL MPI_FILE_WRITE(h%filehandle, dims4(i), 1, MPI_INTEGER4, &
             MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
-    current_displacement = current_displacement + ndims * soi
+    h%current_displacement = h%current_displacement + ndims * soi
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
+        h%mpireal, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. rank_write) THEN
-      CALL MPI_FILE_WRITE(cfd_filehandle, x(1), 1, mpireal, &
+    IF (h%rank .EQ. rank_write) THEN
+      CALL MPI_FILE_WRITE(h%filehandle, x(1), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, x(dims4(1)), 1, mpireal, &
-          MPI_STATUS_IGNORE, errcode)
-
-      CALL MPI_FILE_WRITE(cfd_filehandle, y(1), 1, mpireal, &
-          MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, y(dims4(2)), 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, x(dims4(1)), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
 
-      CALL MPI_FILE_WRITE(cfd_filehandle, z(1), 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, y(1), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, z(dims4(3)), 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, y(dims4(2)), 1, h%mpireal, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_WRITE(h%filehandle, z(1), 1, h%mpireal, &
+          MPI_STATUS_IGNORE, errcode)
+      CALL MPI_FILE_WRITE(h%filehandle, z(dims4(3)), 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
 
       ! Now write the real arrays
-      CALL MPI_FILE_WRITE(cfd_filehandle, x, dims4(1), mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, x, dims4(1), h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, y, dims4(2), mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, y, dims4(2), h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, z, dims4(3), mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, z, dims4(3), h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    current_displacement = current_displacement + (2 * ndims + len_var) * sof
+    h%current_displacement = h%current_displacement &
+        + (2 * ndims + len_var) * sof
 
   END SUBROUTINE cfd_write_3d_cartesian_grid
 
@@ -268,9 +274,10 @@ CONTAINS
   ! need global nx
   !----------------------------------------------------------------------------
 
-  SUBROUTINE cfd_write_1d_cartesian_variable_parallel(name, class, dims, &
+  SUBROUTINE cfd_write_1d_cartesian_variable_parallel(h, name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
+    TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     REAL(num), DIMENSION(:), INTENT(IN) :: stagger
@@ -301,69 +308,67 @@ CONTAINS
     ! - mesh  CHARACTER(max_string_len)
     ! - class CHARACTER(max_string_len)
 
-    md_length = meshtype_header_offset + ndims * soi + (ndims + 2) * sof &
-        + 2 * max_string_len
+    md_length = c_meshtype_header_offset + ndims * soi + (ndims + 2) * sof &
+        + 2 * h%max_string_len
     block_length = md_length + len_var * sof
 
     ! Write header
-    CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
-        block_length, md_length, default_rank)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, sof, &
-        default_rank)
+    CALL cfd_write_block_header(h, name, class, c_type_mesh_variable, &
+        block_length, md_length, h%default_rank)
+    CALL cfd_write_meshtype_header(h, c_var_cartesian, c_dimension_1d, sof, &
+        h%default_rank)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
+    IF (h%rank .EQ. h%default_rank) THEN
       DO i = 1,ndims
-        CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
+        CALL MPI_FILE_WRITE(h%filehandle, dims4(i), 1, MPI_INTEGER4, &
             MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
-    current_displacement = current_displacement + ndims * soi
+    h%current_displacement = h%current_displacement + ndims * soi
 
     ! Determine data ranges and write out
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
-    CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        errcode)
-    CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        errcode)
+    CALL MPI_ALLREDUCE(mn, mn_global, 1, h%mpireal, MPI_MIN, h%comm, errcode)
+    CALL MPI_ALLREDUCE(mx, mx_global, 1, h%mpireal, MPI_MAX, h%comm, errcode)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
+        h%mpireal, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
+    IF (h%rank .EQ. h%default_rank) THEN
       ! Write out grid stagger
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, stagger, ndims, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, mn_global, 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, mx_global, 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    current_displacement = current_displacement + (ndims + 2) * sof
+    h%current_displacement = h%current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
-      CALL cfd_safe_write_string(mesh_name)
-      CALL cfd_safe_write_string(mesh_class)
+    IF (h%rank .EQ. h%default_rank) THEN
+      CALL cfd_safe_write_string(h, mesh_name)
+      CALL cfd_safe_write_string(h, mesh_class)
     ENDIF
 
-    current_displacement = current_displacement + 2 * max_string_len
+    h%current_displacement = h%current_displacement + 2 * h%max_string_len
 
     ! Write the actual data
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, subarray, &
         distribution, "native", MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
+    CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
         MPI_STATUS_IGNORE, errcode)
 
-    current_displacement = current_displacement + len_var * sof
+    h%current_displacement = h%current_displacement + len_var * sof
 
   END SUBROUTINE cfd_write_1d_cartesian_variable_parallel
 
@@ -376,9 +381,10 @@ CONTAINS
   ! need global nx, ny
   !----------------------------------------------------------------------------
 
-  SUBROUTINE cfd_write_2d_cartesian_variable_parallel(name, class, dims, &
+  SUBROUTINE cfd_write_2d_cartesian_variable_parallel(h, name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
+    TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     REAL(num), DIMENSION(:), INTENT(IN) :: stagger
@@ -411,69 +417,67 @@ CONTAINS
     ! - mesh  CHARACTER(max_string_len)
     ! - class CHARACTER(max_string_len)
 
-    md_length = meshtype_header_offset + ndims * soi + (ndims + 2) * sof &
-        + 2 * max_string_len
+    md_length = c_meshtype_header_offset + ndims * soi + (ndims + 2) * sof &
+        + 2 * h%max_string_len
     block_length = md_length + len_var * sof
 
     ! Write header
-    CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
-        block_length, md_length, default_rank)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_2d, sof, &
-        default_rank)
+    CALL cfd_write_block_header(h, name, class, c_type_mesh_variable, &
+        block_length, md_length, h%default_rank)
+    CALL cfd_write_meshtype_header(h, c_var_cartesian, c_dimension_2d, sof, &
+        h%default_rank)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
+    IF (h%rank .EQ. h%default_rank) THEN
       DO i = 1,ndims
-        CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
+        CALL MPI_FILE_WRITE(h%filehandle, dims4(i), 1, MPI_INTEGER4, &
             MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
-    current_displacement = current_displacement + ndims * soi
+    h%current_displacement = h%current_displacement + ndims * soi
 
     ! Determine data ranges and write out
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
-    CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        errcode)
-    CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        errcode)
+    CALL MPI_ALLREDUCE(mn, mn_global, 1, h%mpireal, MPI_MIN, h%comm, errcode)
+    CALL MPI_ALLREDUCE(mx, mx_global, 1, h%mpireal, MPI_MAX, h%comm, errcode)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
+        h%mpireal, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
+    IF (h%rank .EQ. h%default_rank) THEN
       ! Write out grid stagger
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, stagger, ndims, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, mn_global, 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, mx_global, 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    current_displacement = current_displacement + (ndims + 2) * sof
+    h%current_displacement = h%current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
-      CALL cfd_safe_write_string(mesh_name)
-      CALL cfd_safe_write_string(mesh_class)
+    IF (h%rank .EQ. h%default_rank) THEN
+      CALL cfd_safe_write_string(h, mesh_name)
+      CALL cfd_safe_write_string(h, mesh_class)
     ENDIF
 
-    current_displacement = current_displacement + 2 * max_string_len
+    h%current_displacement = h%current_displacement + 2 * h%max_string_len
 
     ! Write the actual data
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, subarray, &
         distribution, "native", MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
+    CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
         MPI_STATUS_IGNORE, errcode)
 
-    current_displacement = current_displacement + len_var * sof
+    h%current_displacement = h%current_displacement + len_var * sof
 
   END SUBROUTINE cfd_write_2d_cartesian_variable_parallel
 
@@ -486,9 +490,10 @@ CONTAINS
   ! need global nx, ny, nz
   !----------------------------------------------------------------------------
 
-  SUBROUTINE cfd_write_3d_cartesian_variable_parallel(name, class, dims, &
+  SUBROUTINE cfd_write_3d_cartesian_variable_parallel(h, name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
+    TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     REAL(num), DIMENSION(:), INTENT(IN) :: stagger
@@ -523,69 +528,67 @@ CONTAINS
     ! - mesh  CHARACTER(max_string_len)
     ! - class CHARACTER(max_string_len)
 
-    md_length = meshtype_header_offset + ndims * soi + (ndims + 2) * sof &
-        + 2 * max_string_len
+    md_length = c_meshtype_header_offset + ndims * soi + (ndims + 2) * sof &
+        + 2 * h%max_string_len
     block_length = md_length + len_var * sof
 
     ! Write header
-    CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
-        block_length, md_length, default_rank)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_3d, sof, &
-        default_rank)
+    CALL cfd_write_block_header(h, name, class, c_type_mesh_variable, &
+        block_length, md_length, h%default_rank)
+    CALL cfd_write_meshtype_header(h, c_var_cartesian, c_dimension_3d, sof, &
+        h%default_rank)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
+    IF (h%rank .EQ. h%default_rank) THEN
       DO i = 1,ndims
-        CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
+        CALL MPI_FILE_WRITE(h%filehandle, dims4(i), 1, MPI_INTEGER4, &
             MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
-    current_displacement = current_displacement + ndims * soi
+    h%current_displacement = h%current_displacement + ndims * soi
 
     ! Determine data ranges and write out
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
-    CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        errcode)
-    CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        errcode)
+    CALL MPI_ALLREDUCE(mn, mn_global, 1, h%mpireal, MPI_MIN, h%comm, errcode)
+    CALL MPI_ALLREDUCE(mx, mx_global, 1, h%mpireal, MPI_MAX, h%comm, errcode)
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
+        h%mpireal, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
+    IF (h%rank .EQ. h%default_rank) THEN
       ! Write out grid stagger
-      CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, stagger, ndims, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, mn_global, 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
+      CALL MPI_FILE_WRITE(h%filehandle, mx_global, 1, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    current_displacement = current_displacement + (ndims + 2) * sof
+    h%current_displacement = h%current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
-    IF (cfd_rank .EQ. default_rank) THEN
-      CALL cfd_safe_write_string(mesh_name)
-      CALL cfd_safe_write_string(mesh_class)
+    IF (h%rank .EQ. h%default_rank) THEN
+      CALL cfd_safe_write_string(h, mesh_name)
+      CALL cfd_safe_write_string(h, mesh_class)
     ENDIF
 
-    current_displacement = current_displacement + 2 * max_string_len
+    h%current_displacement = h%current_displacement + 2 * h%max_string_len
 
     ! Write the actual data
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, subarray, &
         distribution, "native", MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
+    CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
         MPI_STATUS_IGNORE, errcode)
 
-    current_displacement = current_displacement + len_var * sof
+    h%current_displacement = h%current_displacement + len_var * sof
 
   END SUBROUTINE cfd_write_3d_cartesian_variable_parallel
 

@@ -7,6 +7,19 @@ MODULE cfd_common
 
   SAVE
 
+  TYPE :: cfd_file_handle
+    INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement, block_header_end
+    INTEGER(8) :: block_length, block_md_length
+    INTEGER(4) :: block_header_size, header_offset
+    INTEGER(4) :: max_string_len
+    INTEGER(4) :: nblocks
+    INTEGER :: comm, mode, rank
+    LOGICAL :: writing
+    INTEGER :: default_rank
+    INTEGER :: filehandle
+    INTEGER :: mpireal
+  END TYPE cfd_file_handle
+
   INTEGER, PARAMETER :: c_cfd_read = 0
   INTEGER, PARAMETER :: c_cfd_write = 1
 
@@ -38,16 +51,10 @@ MODULE cfd_common
   INTEGER(4), PARAMETER :: c_dimension_2d = 2
   INTEGER(4), PARAMETER :: c_dimension_3d = 3
 
-  INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement
-  INTEGER :: cfd_filehandle = -1, cfd_rank, cfd_comm
-  INTEGER(4) :: cfd_nblocks
   INTEGER(4), PARAMETER :: cfd_version = 1, cfd_revision = 1
 
-  INTEGER(4) :: max_string_len = 60
-  INTEGER :: default_rank = 0
-
-  INTEGER, PARAMETER :: header_offset_this_version = 10 * 4 + 8 + 3
-  INTEGER, PARAMETER :: nblocks_offset_this_version = 5 * 4 + 3
+  INTEGER, PARAMETER :: c_header_offset = 10 * 4 + 8 + 3
+  INTEGER, PARAMETER :: c_nblocks_offset = 5 * 4 + 3
 
   ! This cannot be changed without a major revision
   ! If you want to add more to every meshtype, tough luck
@@ -55,20 +62,11 @@ MODULE cfd_common
   ! submit it for inclusion in the next major revision
   ! (This shouldn't ever happen, meshtype covers too many things,
   ! The only thing in common is that they include spatial information)
-  INTEGER, PARAMETER :: meshtype_header_offset = 3 * 4
+  INTEGER, PARAMETER :: c_meshtype_header_offset = 3 * 4
 
   INTEGER(4), PARAMETER :: soi  = 4 ! Size of integer
   INTEGER(4), PARAMETER :: soi8 = 8 ! Size of long (normally 8 byte integer)
   INTEGER(8) :: sof
-
-  INTEGER(4) :: block_header_size, header_offset
-
-  INTEGER :: cfd_mode
-  LOGICAL :: cfd_writing
-
-  ! Current block info
-  INTEGER(8) :: block_length, block_md_length
-  INTEGER(KIND=MPI_OFFSET_KIND) :: block_header_start, block_header_end
 
   TYPE(jobid_type) :: cfd_jobid
 

@@ -429,7 +429,6 @@ CONTAINS
 
     CALL field_bc(density)
 
-    density_map = .FALSE.
     DO iz = -2, nz+3
       DO iy = -2, ny+3
         DO ix = -2, nx+3

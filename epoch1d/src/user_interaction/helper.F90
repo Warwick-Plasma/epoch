@@ -373,7 +373,6 @@ CONTAINS
 
     CALL field_bc(density)
 
-    density_map = .FALSE.
     DO ix = -2, nx+3
       IF (density(ix) .GE. minrho) THEN
         density_map(ix) = .TRUE.

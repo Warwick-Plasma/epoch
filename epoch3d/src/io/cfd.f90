@@ -15,6 +15,8 @@ MODULE cfd
 
   PRIVATE
 
+  PUBLIC :: cfd_file_handle
+
   PUBLIC :: c_cfd_read
   PUBLIC :: c_cfd_write
 
@@ -42,8 +44,6 @@ MODULE cfd
   PUBLIC :: c_dimension_1d
   PUBLIC :: c_dimension_2d
   PUBLIC :: c_dimension_3d
-
-  PUBLIC :: max_string_len
 
   PUBLIC :: cfd_open
   PUBLIC :: cfd_close

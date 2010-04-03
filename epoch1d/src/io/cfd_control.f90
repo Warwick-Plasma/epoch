@@ -9,9 +9,10 @@ MODULE cfd_control
 
 CONTAINS
 
-  SUBROUTINE cfd_open(filename, cfd_rank_in, cfd_comm_in, mode, step, time, &
-      jobid)
+  SUBROUTINE cfd_open(h, filename, cfd_rank_in, cfd_comm_in, mode, step, &
+      time, jobid)
 
+    TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER, INTENT(IN) :: cfd_rank_in, cfd_comm_in, mode
     INTEGER, OPTIONAL, INTENT(INOUT) :: step
@@ -21,18 +22,26 @@ CONTAINS
     INTEGER :: errcode, sof4, ostep = 0
     DOUBLE PRECISION :: otime = 0
 
-    cfd_comm = cfd_comm_in
-    cfd_rank = cfd_rank_in
     CALL MPI_SIZEOF(dummy, sof4, errcode)
     sof = sof4
+    h%default_rank = 0
+    h%filehandle = -1
+    h%max_string_len = 60
+
+    h%comm = cfd_comm_in
+    h%rank = cfd_rank_in
+
+    ! We currently only support files written at the same precision
+    ! as the 'num' kind
+    IF (num .EQ. KIND(1.D0)) THEN
+      h%mpireal = MPI_DOUBLE_PRECISION
+    ELSE
+      h%mpireal = MPI_REAL
+    ENDIF
 
     IF (mode .EQ. c_cfd_write) THEN
-      cfd_mode = MPI_MODE_CREATE + MPI_MODE_WRONLY
-      cfd_writing = .TRUE.
-
-      ! Creating a new file of the current version, so set the header offset
-      ! to reflect current version
-      header_offset = header_offset_this_version
+      h%mode = MPI_MODE_CREATE + MPI_MODE_WRONLY
+      h%writing = .TRUE.
 
       IF (PRESENT(step)) ostep = step
 
@@ -47,85 +56,89 @@ CONTAINS
 
       ! We are opening a file to be created, so use the destructive file
       ! opening command
-      CALL cfd_open_clobber(filename, ostep, otime)
+      CALL cfd_open_clobber(h, filename, ostep, otime)
     ELSE
-      cfd_mode = MPI_MODE_RDONLY
-      cfd_writing = .FALSE.
+      h%mode = MPI_MODE_RDONLY
+      h%writing = .FALSE.
 
       ! We're opening a file which already exists, so don't damage it
-      CALL cfd_open_read(filename, ostep, otime)
+      CALL cfd_open_read(h, filename, ostep, otime)
 
       IF (PRESENT(step)) step = ostep
       IF (PRESENT(time)) time = otime
-
     ENDIF
 
   END SUBROUTINE cfd_open
 
 
 
-  SUBROUTINE cfd_close
+  SUBROUTINE cfd_close(h)
 
+    TYPE(cfd_file_handle) :: h
     INTEGER :: errcode
 
     ! No open file
-    IF (cfd_filehandle .EQ. -1) RETURN
+    IF (h%filehandle .EQ. -1) RETURN
 
     ! If writing
-    IF (cfd_writing) THEN
+    IF (h%writing) THEN
       ! Go to place where the empty value for nblocks is
-      current_displacement = nblocks_offset_this_version
-      CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
+      h%current_displacement = c_nblocks_offset
+      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, &
           MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
-      IF (cfd_rank .EQ. default_rank) &
-          CALL MPI_FILE_WRITE(cfd_filehandle, cfd_nblocks, 1, MPI_INTEGER4, &
+      IF (h%rank .EQ. h%default_rank) &
+          CALL MPI_FILE_WRITE(h%filehandle, h%nblocks, 1, MPI_INTEGER4, &
               MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    CALL MPI_BARRIER(comm, errcode)
+    CALL MPI_BARRIER(h%comm, errcode)
 
-    CALL MPI_FILE_CLOSE(cfd_filehandle, errcode)
+    CALL MPI_FILE_CLOSE(h%filehandle, errcode)
 
     ! Set cfd_filehandle to -1 to show that the file is closed
-    cfd_filehandle = -1
+    h%filehandle = -1
 
   END SUBROUTINE cfd_close
 
 
 
-  SUBROUTINE cfd_set_max_string_length(maxlen)
+  SUBROUTINE cfd_set_max_string_length(h, maxlen)
 
+    TYPE(cfd_file_handle) :: h
     INTEGER, INTENT(IN) :: maxlen
 
-    max_string_len = INT(maxlen,4)
+    h%max_string_len = INT(maxlen,4)
 
   END SUBROUTINE cfd_set_max_string_length
 
 
 
-  SUBROUTINE cfd_set_default_rank(rank_in)
+  SUBROUTINE cfd_set_default_rank(h, rank_in)
 
+    TYPE(cfd_file_handle) :: h
     INTEGER, INTENT(IN) :: rank_in
 
-    default_rank = INT(rank_in,4)
+    h%default_rank = INT(rank_in,4)
 
   END SUBROUTINE cfd_set_default_rank
 
 
 
-  FUNCTION cfd_get_nblocks()
+  FUNCTION cfd_get_nblocks(h)
 
+    TYPE(cfd_file_handle) :: h
     INTEGER :: cfd_get_nblocks
 
-    cfd_get_nblocks = cfd_nblocks
+    cfd_get_nblocks = h%nblocks
 
   END FUNCTION cfd_get_nblocks
 
 
 
-  FUNCTION cfd_get_jobid()
+  FUNCTION cfd_get_jobid(h)
 
+    TYPE(cfd_file_handle) :: h
     TYPE(jobid_type) :: cfd_get_jobid
 
     cfd_get_jobid = cfd_jobid

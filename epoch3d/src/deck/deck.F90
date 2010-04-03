@@ -786,8 +786,9 @@ CONTAINS
 
 
 
-  SUBROUTINE write_input_decks
+  SUBROUTINE write_input_decks(handle)
 
+    TYPE(cfd_file_handle) :: handle
     TYPE(file_buffer), POINTER :: fbuf
     CHARACTER(LEN=1) :: dummy1(1), dummy2
     INTEGER :: i
@@ -797,12 +798,14 @@ CONTAINS
       DO i = 1,nbuffers
         fbuf=>fbuf%next
 
-        CALL cfd_write_source_code(TRIM(fbuf%filename), "Embedded_input_deck", &
-            fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), 0)
+        CALL cfd_write_source_code(handle, TRIM(fbuf%filename), &
+            "Embedded_input_deck", fbuf%buffer(1:fbuf%idx-1), &
+            fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), 0)
       ENDDO
     ELSE
       DO i = 1,nbuffers
-        CALL cfd_write_source_code("", "Embedded_input_deck", dummy1, dummy2, 0)
+        CALL cfd_write_source_code(handle, "", "Embedded_input_deck", dummy1, &
+            dummy2, 0)
       ENDDO
     ENDIF
 

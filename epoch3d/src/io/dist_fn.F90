@@ -58,8 +58,9 @@ CONTAINS
 
 
 
-  SUBROUTINE write_dist_fns(code)
+  SUBROUTINE write_dist_fns(cfd_handle, code)
 
+    TYPE(cfd_file_handle) :: cfd_handle
     INTEGER, INTENT(IN) :: code
 
     INTEGER :: ispecies
@@ -81,14 +82,17 @@ CONTAINS
           use_restrictions = current%use_restrictions
 
           IF (current%ndims .EQ. 1) THEN
-            CALL general_1d_dist_fn(current%name, current%directions, &
-                ranges, resolution, ispecies, restrictions, use_restrictions)
+            CALL general_1d_dist_fn(cfd_handle, current%name, &
+                current%directions, ranges, resolution, ispecies, &
+                restrictions, use_restrictions)
           ELSE IF (current%ndims .EQ. 2) THEN
-            CALL general_2d_dist_fn(current%name, current%directions, &
-                ranges, resolution, ispecies, restrictions, use_restrictions)
+            CALL general_2d_dist_fn(cfd_handle, current%name, &
+                current%directions, ranges, resolution, ispecies, &
+                restrictions, use_restrictions)
           ELSE IF (current%ndims .EQ. 3) THEN
-            CALL general_3d_dist_fn(current%name, current%directions, &
-                ranges, resolution, ispecies, restrictions, use_restrictions)
+            CALL general_3d_dist_fn(cfd_handle, current%name, &
+                current%directions, ranges, resolution, ispecies, &
+                restrictions, use_restrictions)
           ENDIF
         ENDDO
       ENDIF
@@ -99,9 +103,10 @@ CONTAINS
 
 
 
-  SUBROUTINE general_1d_dist_fn(name, direction, ranges, resolution, species, &
-      restrictions, use_restrictions)
+  SUBROUTINE general_1d_dist_fn(cfd_handle, name, direction, ranges, &
+      resolution, species, restrictions, use_restrictions)
 
+    TYPE(cfd_file_handle) :: cfd_handle
     INTEGER, PARAMETER :: c_df_curdims = 1
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER, DIMENSION(c_df_curdims), INTENT(IN) :: direction
@@ -420,12 +425,12 @@ CONTAINS
         // TRIM(particle_species(species)%name)
     var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
-    CALL cfd_write_1d_cartesian_grid(TRIM(grid_name), "Grid", &
+    CALL cfd_write_1d_cartesian_grid(cfd_handle, TRIM(grid_name), "Grid", &
         grid1, 0)
     IF (use_offset_grid) THEN
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
     ENDIF
-    CALL cfd_write_1d_cartesian_grid(TRIM(norm_grid_name), "Grid", &
+    CALL cfd_write_1d_cartesian_grid(cfd_handle, TRIM(norm_grid_name), "Grid", &
         grid1/conv(1), 0)
 
     DEALLOCATE(grid1)
@@ -436,9 +441,9 @@ CONTAINS
         mpireal, array_type, errcode)
     CALL MPI_TYPE_COMMIT(array_type, errcode)
 
-    CALL cfd_write_1d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
-        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
-        new_type, array_type)
+    CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, TRIM(var_name), &
+        "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
+        data, new_type, array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
@@ -449,9 +454,10 @@ CONTAINS
 
 
 
-  SUBROUTINE general_2d_dist_fn(name, direction, ranges, resolution, species, &
-      restrictions, use_restrictions)
+  SUBROUTINE general_2d_dist_fn(cfd_handle, name, direction, ranges, &
+      resolution, species, restrictions, use_restrictions)
 
+    TYPE(cfd_file_handle) :: cfd_handle
     INTEGER, PARAMETER :: c_df_curdims = 2
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER, DIMENSION(c_df_curdims), INTENT(IN) :: direction
@@ -775,13 +781,13 @@ CONTAINS
         // TRIM(particle_species(species)%name)
     var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
-    CALL cfd_write_2d_cartesian_grid(TRIM(grid_name), "Grid", &
+    CALL cfd_write_2d_cartesian_grid(cfd_handle, TRIM(grid_name), "Grid", &
         grid1, grid2, 0)
     IF (use_offset_grid) THEN
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
     ENDIF
-    CALL cfd_write_2d_cartesian_grid(TRIM(norm_grid_name), "Grid", &
+    CALL cfd_write_2d_cartesian_grid(cfd_handle, TRIM(norm_grid_name), "Grid", &
         grid1/conv(1), grid2/conv(2), 0)
 
     DEALLOCATE(grid1, grid2)
@@ -792,9 +798,9 @@ CONTAINS
         mpireal, array_type, errcode)
     CALL MPI_TYPE_COMMIT(array_type, errcode)
 
-    CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
-        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
-        new_type, array_type)
+    CALL cfd_write_2d_cartesian_variable_parallel(cfd_handle, TRIM(var_name), &
+        "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
+        data, new_type, array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
@@ -805,9 +811,10 @@ CONTAINS
 
 
 
-  SUBROUTINE general_3d_dist_fn(name, direction, ranges, resolution, species, &
-      restrictions, use_restrictions)
+  SUBROUTINE general_3d_dist_fn(cfd_handle, name, direction, ranges, &
+      resolution, species, restrictions, use_restrictions)
 
+    TYPE(cfd_file_handle) :: cfd_handle
     INTEGER, PARAMETER :: c_df_curdims = 3
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER, DIMENSION(c_df_curdims), INTENT(IN) :: direction
@@ -1136,14 +1143,14 @@ CONTAINS
         // TRIM(particle_species(species)%name)
     var_name = TRIM(name) // "_" // TRIM(particle_species(species)%name)
 
-    CALL cfd_write_3d_cartesian_grid(TRIM(grid_name), "Grid", &
+    CALL cfd_write_3d_cartesian_grid(cfd_handle, TRIM(grid_name), "Grid", &
         grid1, grid2, grid3, 0)
     IF (use_offset_grid) THEN
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
       IF (parallel(3)) grid3 = grid3 - ranges(1,3)
     ENDIF
-    CALL cfd_write_3d_cartesian_grid(TRIM(norm_grid_name), "Grid", &
+    CALL cfd_write_3d_cartesian_grid(cfd_handle, TRIM(norm_grid_name), "Grid", &
         grid1/conv(1), grid2/conv(2), grid3/conv(3), 0)
 
     DEALLOCATE(grid1, grid2, grid3)
@@ -1154,9 +1161,9 @@ CONTAINS
         mpireal, array_type, errcode)
     CALL MPI_TYPE_COMMIT(array_type, errcode)
 
-    CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
-        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
-        new_type, array_type)
+    CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, TRIM(var_name), &
+        "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
+        data, new_type, array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)

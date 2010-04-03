@@ -160,7 +160,7 @@ deck_species_block.o: deck_species_block.F90 setup.o simple_io.o \
   strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o cfd.o deck.o dist_fn.o iterators.o \
-  mpi_subtype_control.o probes.o shared_data.o $(ENCODED_SOURCE)
+  mpi_subtype_control.o probes.o shared_data.o version_data.o $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 cfd.o mpi_subtype_control.o shared_data.o
 epoch3d.o: epoch3d.F90 balance.o boundary.o cfd_job_info.o custom_parser.o \
   deck.o diagnostics.o fields.o helper.o ic_module.o ionise.o mpi_routines.o \

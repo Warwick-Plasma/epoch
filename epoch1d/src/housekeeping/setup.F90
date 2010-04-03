@@ -229,6 +229,7 @@ CONTAINS
 
     INTEGER, INTENT(OUT) :: snap
     CHARACTER(LEN=20+data_dir_max_length) :: filename
+    INTEGER, PARAMETER :: max_string_len = 60
     CHARACTER(LEN=max_string_len) :: name, class, mesh_name, mesh_class
     INTEGER :: block_type, nd
     INTEGER :: sof
@@ -240,6 +241,7 @@ CONTAINS
     TYPE(particle), POINTER :: current, next
     LOGICAL :: constant_weight
     INTEGER(KIND=8) :: npart, ipart, ix
+    TYPE(cfd_file_handle) :: cfd_handle
 
     npart_global = 0
     constant_weight = .FALSE.
@@ -247,14 +249,15 @@ CONTAINS
 
     ! Create the filename for the last snapshot
     WRITE(filename, '(a, "/", i4.4, ".cfd")') TRIM(data_dir), restart_snapshot
-    CALL cfd_open(filename, rank, comm, MPI_MODE_RDONLY, snap, time_d)
+    CALL cfd_open(cfd_handle, filename, rank, comm, MPI_MODE_RDONLY, snap, &
+        time_d)
     IF (snap .GE. 0) THEN
       time = time_d
       IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time
     ENDIF
     ! open the file
-    nblocks = cfd_get_nblocks()
-    jobid = cfd_get_jobid()
+    nblocks = cfd_get_nblocks(cfd_handle)
+    jobid = cfd_get_jobid(cfd_handle)
 
     ex = 0.0_num
     ey = 0.0_num
@@ -266,17 +269,18 @@ CONTAINS
 
     IF (rank .EQ. 0) PRINT *, "Input file contains", nblocks, "blocks"
     DO ix = 1, nblocks
-      CALL cfd_get_next_block_info_all(name, class, block_type)
+      CALL cfd_get_next_block_info_all(cfd_handle, name, class, block_type)
       ! IF (rank .EQ. 0) PRINT *, "Loading block", ix, name, block_type
       IF (block_type .EQ. c_type_snapshot .AND. snap .LT. 0) THEN
-        CALL cfd_get_snapshot(time_d, snap)
+        CALL cfd_get_snapshot(cfd_handle, time_d, snap)
         time = time_d
         IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time
       ENDIF
 
       SELECT CASE(block_type)
       CASE(c_type_mesh_variable)
-        CALL cfd_get_common_meshtype_metadata_all(block_type, nd, sof)
+        CALL cfd_get_common_meshtype_metadata_all(cfd_handle, block_type, nd, &
+            sof)
         IF (sof .NE. num) THEN
           IF (rank .EQ. 0) &
               PRINT *, "Precision does not match, recompile code so &
@@ -293,8 +297,8 @@ CONTAINS
         SELECT CASE(block_type)
         CASE(c_var_cartesian)
           ! Grid variables
-          CALL cfd_get_nd_cartesian_variable_metadata_all(nd, dims, extents, &
-              stagger, mesh_name, mesh_class)
+          CALL cfd_get_nd_cartesian_variable_metadata_all(cfd_handle, nd, &
+              dims, extents, stagger, mesh_name, mesh_class)
 
           IF (dims(1) .NE. nx_global) THEN
             IF (rank .EQ. 0) &
@@ -304,44 +308,44 @@ CONTAINS
           ENDIF
 
           IF (str_cmp(name, "Ex")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(ex, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, ex, &
+                  subtype_field, subarray_field)
 
           IF (str_cmp(name, "Ey")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(ey, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, ey, &
+                  subtype_field, subarray_field)
 
           IF (str_cmp(name, "Ez")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(ez, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, ez, &
+                  subtype_field, subarray_field)
 
           IF (str_cmp(name, "Bx")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(bx, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, bx, &
+                  subtype_field, subarray_field)
 
           IF (str_cmp(name, "By")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(by, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, by, &
+                  subtype_field, subarray_field)
 
           IF (str_cmp(name, "Bz")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(bz, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, bz, &
+                  subtype_field, subarray_field)
 
           IF (str_cmp(name, "Jx")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(jx, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, jx, &
+                  subtype_field, subarray_field)
 
           IF (str_cmp(name, "Jy")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(jy, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, jy, &
+                  subtype_field, subarray_field)
 
           IF (str_cmp(name, "Jz")) &
-              CALL cfd_get_1d_cartesian_variable_parallel(jz, subtype_field, &
-                  subarray_field)
+              CALL cfd_get_1d_cartesian_variable_parallel(cfd_handle, jz, &
+                  subtype_field, subarray_field)
 
         CASE(c_var_particle)
-          CALL cfd_get_nd_particle_variable_metadata_all(npart_l, extents, &
-              mesh_name, mesh_class)
+          CALL cfd_get_nd_particle_variable_metadata_all(cfd_handle, &
+              npart_l, extents, mesh_name, mesh_class)
 
           IF (npart_l .NE. npart_global) THEN
             IF (rank .EQ. 0) THEN
@@ -355,21 +359,22 @@ CONTAINS
 
           ! particle variables
           IF (str_cmp(name, "Px")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
-                  npart_per_it, subtype_particle_var, it_px)
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                  cfd_handle, npart, npart_per_it, subtype_particle_var, it_px)
 
           IF (str_cmp(name, "Py")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
-                  npart_per_it, subtype_particle_var, it_py)
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                  cfd_handle, npart, npart_per_it, subtype_particle_var, it_py)
 
           IF (str_cmp(name, "Pz")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
-                  npart_per_it, subtype_particle_var, it_pz)
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                  cfd_handle, npart, npart_per_it, subtype_particle_var, it_pz)
 
 #ifdef PER_PARTICLE_WEIGHT
           IF (str_cmp(name, "Weight")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
-                  npart_per_it, subtype_particle_var, it_weight)
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                  cfd_handle, npart, npart_per_it, subtype_particle_var, &
+                  it_weight)
 #else
           IF (str_cmp(name, "Weight")) THEN
             IF (rank .EQ. 0) &
@@ -377,17 +382,18 @@ CONTAINS
                     &if the code is compiled without per particle weights. &
                     &Code terminates"
             CALL MPI_ABORT(comm, errcode, ierr)
-          ENDIF
 #endif
           IF (str_cmp(name, "Species")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
-                  npart_per_it, subtype_particle_var, it_species)
+              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                  cfd_handle, npart, npart_per_it, subtype_particle_var, &
+                  it_species)
         END SELECT
       CASE(c_type_mesh)
-        CALL cfd_get_common_meshtype_metadata_all(block_type, nd, sof)
+        CALL cfd_get_common_meshtype_metadata_all(cfd_handle, block_type, nd, &
+            sof)
         IF (block_type .EQ. c_mesh_particle) THEN
-          CALL cfd_get_nd_particle_grid_metadata_all(nd, coord_type, npart_l, &
-              extents)
+          CALL cfd_get_nd_particle_grid_metadata_all(cfd_handle, nd, &
+              coord_type, npart_l, extents)
           IF (npart_l .NE. npart_global) THEN
             npart = npart_l/nproc
             IF (npart * nproc .NE. npart_l) THEN
@@ -402,17 +408,17 @@ CONTAINS
             current=>main_root%head
             npart_global = npart_l
           ENDIF
-          CALL cfd_get_nd_particle_grid_parallel_with_iterator(nd, &
+          CALL cfd_get_nd_particle_grid_parallel_with_iterator(cfd_handle, nd, &
               main_root%count, npart_l, npart_per_it, sof, &
               subtype_particle_var, it_part)
         ENDIF
       CASE(c_type_constant)
-        CALL cfd_get_real_constant(weight)
+        CALL cfd_get_real_constant(cfd_handle, weight)
         constant_weight = .TRUE.
       END SELECT
-      CALL cfd_skip_block()
+      CALL cfd_skip_block(cfd_handle)
     ENDDO
-    CALL cfd_close()
+    CALL cfd_close(cfd_handle)
 
     current=>main_root%head
     ipart = 1
