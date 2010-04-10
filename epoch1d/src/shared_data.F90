@@ -560,7 +560,7 @@ MODULE shared_data
     TYPE(primitive_stack) :: time_function
 
     REAL(num) :: amp = 0.0_num, freq = 1.0_num, k = 1.0_num
-    REAL(num) :: pol = 0.0_num, angle = 0.0_num
+    REAL(num) :: pol_angle = 0.0_num, angle = 0.0_num
     REAL(num) :: t_start = 0.0_num, t_end = 0.0_num
 
     TYPE(laser_block), POINTER :: next

@@ -190,7 +190,7 @@ CONTAINS
         fplus(1:ny) = fplus(1:ny) &
             + t_env * current%amp * current%profile(1:ny) &
             * SIN(current%freq*time + current%phase(1:ny)) &
-            * SIN(current%pol) * COS(current%angle)
+            * SIN(current%pol_angle) * COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -208,7 +208,8 @@ CONTAINS
         t_env = laser_time_profile(current)
         fplus(1:ny) = fplus(1:ny) &
             + t_env * current%amp * current%profile(1:ny) &
-            * SIN(current%freq*time + current%phase(1:ny)) * COS(current%pol)
+            * SIN(current%freq*time + current%phase(1:ny)) &
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -244,7 +245,7 @@ CONTAINS
         f_minus(1:ny) = f_minus(1:ny) &
             + t_env * current%amp * current%profile(1:ny) &
             * SIN(current%freq * time + current%phase(1:ny)) &
-            * SIN(current%pol) * COS(current%angle)
+            * SIN(current%pol_angle) * COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -261,7 +262,8 @@ CONTAINS
         t_env = laser_time_profile(current)
         f_minus(1:ny) = f_minus(1:ny) &
             + t_env * current%amp * current%profile(1:ny) &
-            * SIN(current%freq*time + current%phase(1:ny)) * COS(current%pol)
+            * SIN(current%freq*time + current%phase(1:ny)) &
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -298,7 +300,7 @@ CONTAINS
         fplus(1:nx) = fplus(1:nx) &
             + t_env * current%amp * current%profile(1:nx) &
             * SIN(current%freq*time + current%phase(1:nx)) &
-            * SIN(current%pol) * COS(current%angle)
+            * SIN(current%pol_angle) * COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -316,7 +318,8 @@ CONTAINS
         t_env = laser_time_profile(current)
         fplus(1:nx) = fplus(1:nx) &
             + t_env * current%amp * current%profile(1:nx) &
-            * SIN(current%freq*time + current%phase(1:nx)) * COS(current%pol)
+            * SIN(current%freq*time + current%phase(1:nx)) &
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -352,7 +355,7 @@ CONTAINS
         fplus(1:nx) = fplus(1:nx) &
             + t_env * current%amp * current%profile(1:nx) &
             * SIN(current%freq*time + current%phase(1:nx)) &
-            * SIN(current%pol) * COS(current%angle)
+            * SIN(current%pol_angle) * COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -370,7 +373,8 @@ CONTAINS
         t_env = laser_time_profile(current)
         fplus(1:nx) = fplus(1:nx) &
             + t_env * current%amp * current%profile(1:nx) &
-            * SIN(current%freq*time + current%phase(1:nx)) * COS(current%pol)
+            * SIN(current%freq*time + current%phase(1:nx)) &
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO

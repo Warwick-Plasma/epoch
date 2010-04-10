@@ -85,9 +85,15 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, "pol_angle")) THEN
+      working_laser%pol_angle = as_real(value, handle_ic_laser_deck)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, "pol")) THEN
       ! Convert from degrees to radians
-      working_laser%pol = pi * as_real(value, handle_ic_laser_deck)/180.0_num
+      working_laser%pol_angle = &
+          pi * as_real(value, handle_ic_laser_deck) / 180.0_num
       RETURN
     ENDIF
 

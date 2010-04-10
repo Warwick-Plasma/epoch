@@ -195,7 +195,7 @@ CONTAINS
         fplus(1:ny, 1:nz) = fplus(1:ny, 1:nz) &
             + t_env * current%amp * current%profile(1:ny, 1:nz) &
             * SIN(current%freq*time + current%phase(1:ny, 1:nz)) &
-            * SIN(current%pol) *COS(current%angle)
+            * SIN(current%pol_angle) *COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -214,7 +214,7 @@ CONTAINS
         fplus(1:ny, 1:nz) = fplus(1:ny, 1:nz) &
             + t_env * current%amp * current%profile(1:ny, 1:nz) &
             * SIN(current%freq*time + current%phase(1:ny, 1:nz)) &
-            * COS(current%pol)
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -270,7 +270,7 @@ CONTAINS
         f_minus(1:ny, 1:nz) = f_minus(1:ny, 1:nz) &
             + t_env * current%amp * current%profile(1:ny, 1:nz) &
             * SIN(current%freq*time + current%phase(1:ny, 1:nz)) &
-            * SIN(current%pol) *COS(current%angle)
+            * SIN(current%pol_angle) *COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -289,7 +289,7 @@ CONTAINS
         f_minus(1:ny, 1:nz) = f_minus(1:ny, 1:nz) &
             + t_env * current%amp * current%profile(1:ny, 1:nz) &
             * SIN(current%freq*time + current%phase(1:ny, 1:nz)) &
-            * COS(current%pol)
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -345,7 +345,7 @@ CONTAINS
         fplus(1:nx, 1:nz) = fplus(1:nx, 1:nz) &
             + t_env * current%amp * current%profile(1:nx, 1:nz) &
             * SIN(current%freq*time + current%phase(1:nx, 1:nz)) &
-            * SIN(current%pol) *COS(current%angle)
+            * SIN(current%pol_angle) *COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -364,7 +364,7 @@ CONTAINS
         fplus(1:nx, 1:nz) = fplus(1:nx, 1:nz) &
             + t_env * current%amp * current%profile(1:nx, 1:nz) &
             * SIN(current%freq*time + current%phase(1:nx, 1:nz)) &
-            * COS(current%pol)
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -419,7 +419,7 @@ CONTAINS
         fplus(1:nx, 1:nz) = fplus(1:nx, 1:nz) &
             + t_env * current%amp * current%profile(1:nx, 1:nz) &
             * SIN(current%freq*time + current%phase(1:nx, 1:nz)) &
-            * SIN(current%pol) *COS(current%angle)
+            * SIN(current%pol_angle) *COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -439,7 +439,7 @@ CONTAINS
         fplus(1:nx, 1:nz) = fplus(1:nx, 1:nz) &
             + t_env * current%amp * current%profile(1:nx, 1:nz) &
             * SIN(current%freq*time + current%phase(1:nx, 1:nz)) &
-            * COS(current%pol)
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -495,7 +495,7 @@ CONTAINS
         fplus(1:nx, 1:ny) = fplus(1:nx, 1:ny) &
             + t_env * current%amp * current%profile(1:nx, 1:ny) &
             * SIN(current%freq*time + current%phase(1:nx, 1:ny)) &
-            * SIN(current%pol) *COS(current%angle)
+            * SIN(current%pol_angle) *COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -514,7 +514,7 @@ CONTAINS
         fplus(1:nx, 1:ny) = fplus(1:nx, 1:ny) &
             + t_env * current%amp * current%profile(1:nx, 1:ny) &
             * SIN(current%freq*time + current%phase(1:nx, 1:ny)) &
-            * COS(current%pol)
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -569,7 +569,7 @@ CONTAINS
         fplus(1:nx, 1:ny) = fplus(1:nx, 1:ny) &
             + t_env * current%amp * current%profile(1:nx, 1:ny) &
             * SIN(current%freq*time + current%phase(1:nx, 1:ny)) &
-            * SIN(current%pol) *COS(current%angle)
+            * SIN(current%pol_angle) *COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -589,7 +589,7 @@ CONTAINS
         fplus(1:nx, 1:ny) = fplus(1:nx, 1:ny) &
             + t_env * current%amp * current%profile(1:nx, 1:ny) &
             * SIN(current%freq*time + current%phase(1:nx, 1:ny)) &
-            * COS(current%pol)
+            * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO

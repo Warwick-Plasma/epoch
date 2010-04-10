@@ -128,7 +128,7 @@ CONTAINS
         t_env = laser_time_profile(current)
         fplus = fplus + t_env * current%amp &
             * SIN(current%freq*time + current%phase) &
-            * SIN(current%pol) * COS(current%angle)
+            * SIN(current%pol_angle) * COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -145,7 +145,7 @@ CONTAINS
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
         fplus = fplus + t_env * current%amp &
-            * SIN(current%freq*time + current%phase) * COS(current%pol)
+            * SIN(current%freq*time + current%phase) * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -179,7 +179,7 @@ CONTAINS
         t_env = laser_time_profile(current)
         f_minus = f_minus + t_env * current%amp &
             * SIN(current%freq*time + current%phase) &
-            * SIN(current%pol) * COS(current%angle)
+            * SIN(current%pol_angle) * COS(current%angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -195,7 +195,7 @@ CONTAINS
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
         f_minus = f_minus + t_env * current%amp * current%profile &
-            * SIN(current%freq*time + current%phase) * COS(current%pol)
+            * SIN(current%freq*time + current%phase) * COS(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
