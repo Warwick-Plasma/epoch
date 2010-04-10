@@ -472,10 +472,11 @@ CONTAINS
     REAL(num), DIMENSION(-2:2) :: gx, gy
     REAL(num) :: data
     TYPE(particle_list), POINTER :: partlist
-    INTEGER :: isubx, isuby
+    INTEGER :: isubx, isuby, ierr
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:,:), ALLOCATABLE :: density_map
 
+#ifdef PER_PARTICLE_WEIGHT
     ALLOCATE(density(-2:nx+3, -2:ny+3))
     ALLOCATE(density_map(-2:nx+3, -2:ny+3))
     density = density_in
@@ -495,7 +496,6 @@ CONTAINS
       ENDDO
     ENDDO
 
-#ifdef PER_PARTICLE_WEIGHT
     ! Uniformly load particles in space
     CALL load_particles(part_family, density_map, idum)
     DEALLOCATE(density_map)
@@ -594,13 +594,14 @@ CONTAINS
       current=>current%next
       ipart = ipart+1
     ENDDO
+
+    DEALLOCATE(weight_fn)
+    DEALLOCATE(density)
 #else
     IF (rank .EQ. 0) &
         PRINT *, "Autoloader only available when using per particle weighting"
     CALL MPI_ABORT(comm, errcode, ierr)
 #endif
-    DEALLOCATE(weight_fn)
-    DEALLOCATE(density)
 
   END SUBROUTINE setup_particle_density
 
