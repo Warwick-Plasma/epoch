@@ -543,12 +543,12 @@ CONTAINS
         pxp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pxm &
             + 2.0_num * ((taux * tauy + tauz) * pym &
             + (taux * tauz - tauy) * pzm)) * tau
-        pyp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pym &
-            + 2.0_num * ((taux * tauy - tauz) * pxm &
-            + (tauy * tauz + taux) * pzm)) * tau
-        pzp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pzm &
-            + 2.0_num * ((taux * tauz + tauy) * pxm &
-            + (tauy * tauz - taux) * pym)) * tau
+        pyp = ((1.0_num - taux**2 + tauy**2 - tauz**2) * pym &
+            + 2.0_num * ((tauy * tauz + taux) * pzm &
+            + (tauy * taux - tauz) * pxm)) * tau
+        pzp = ((1.0_num - taux**2 - tauy**2 + tauz**2) * pzm &
+            + 2.0_num * ((tauz * taux + tauy) * pxm &
+            + (tauz * tauy - taux) * pym)) * tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part

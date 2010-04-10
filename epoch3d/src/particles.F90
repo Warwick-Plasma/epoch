@@ -109,7 +109,7 @@ CONTAINS
 #else
     fac = 0.5_num
 #endif
-    dtfac = 0.5_num * dt * fac**2
+    dtfac = 0.5_num * dt * fac**3
 
     jx = 0.0_num
     jy = 0.0_num
@@ -123,9 +123,9 @@ CONTAINS
     xi0y = 0.0_num
     xi0z = 0.0_num
 
-    idtyz = idt * idy * idz * fac**2
-    idtxz = idt * idx * idz * fac**2
-    idtxy = idt * idx * idy * fac**2
+    idtyz = idt * idy * idz * fac**3
+    idtxz = idt * idx * idz * fac**3
+    idtxy = idt * idx * idy * fac**3
 
     part_weight = weight
     fcx = idtyz * part_weight
@@ -134,10 +134,9 @@ CONTAINS
 
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
-      !DEC$ IVDEP
+      ! -- this option needs more testing -- DEC$ IVDEP
       !DEC$ VECTOR ALWAYS
       !DEC$ NOPREFETCH current
-      !DEC$ NOPREFETCH next
       DO ipart = 1, particle_species(ispecies)%attached_list%count
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
@@ -1317,12 +1316,12 @@ CONTAINS
         pxp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pxm &
             + 2.0_num * ((taux * tauy + tauz) * pym &
             + (taux * tauz - tauy) * pzm)) * tau
-        pyp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pym &
-            + 2.0_num * ((taux * tauy - tauz) * pxm &
-            + (tauy * tauz + taux) * pzm)) * tau
-        pzp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pzm &
-            + 2.0_num * ((taux * tauz + tauy) * pxm &
-            + (tauy * tauz - taux) * pym)) * tau
+        pyp = ((1.0_num - taux**2 + tauy**2 - tauz**2) * pym &
+            + 2.0_num * ((tauy * tauz + taux) * pzm &
+            + (tauy * taux - tauz) * pxm)) * tau
+        pzp = ((1.0_num - taux**2 - tauy**2 + tauz**2) * pzm &
+            + 2.0_num * ((tauz * taux + tauy) * pxm &
+            + (tauz * tauy - taux) * pym)) * tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part

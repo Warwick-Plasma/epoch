@@ -78,8 +78,8 @@ CONTAINS
     REAL(num) :: wx, wy, wz
 
     ! Temporary variables
-    REAL(num) :: mean, idx, idt, dto2, dtco2, third, fac
-    REAL(num) :: idty, idtx, idxy, fcx, fcy, fcz, fjx, fjy, fjz, dtfac
+    REAL(num) :: mean, idx, idt, dto2, dtco2, fac
+    REAL(num) :: fcx, fcy, fjx, fjy, fjz, dtfac, idtf, idxf
     INTEGER :: ispecies, dcell
 
     TYPE(particle), POINTER :: current, next
@@ -97,14 +97,13 @@ CONTAINS
     idt = 1.0_num / dt
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
-    third = 1.0_num / 3.0_num
 #ifdef SPLINE_FOUR
     ! interpolation coefficients
     fac = 1.0_num / 24.0_num
 #else
     fac = 0.5_num
 #endif
-    dtfac = 0.5_num * dt * fac**2
+    dtfac = 0.5_num * dt * fac
 
     jx = 0.0_num
     jy = 0.0_num
@@ -114,19 +113,21 @@ CONTAINS
     jyh = 0.0_num
     jzh = 0.0_num
 
+    xi0x = 0.0_num
+
     ekbar_sum = 0.0_num
     ct = 0.0_num
 
-    xi0x = 0.0_num
+    idtf = idt * fac
+    idxf = idx * fac
 
     part_weight = weight
-    fcx = idt * part_weight
-    fcy = idx * part_weight
-    fcz = idx * part_weight
+    fcx = idtf * part_weight
+    fcy = idxf * part_weight
 
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
-      !DEC$ IVDEP
+      ! -- this option needs more testing -- DEC$ IVDEP
       !DEC$ VECTOR ALWAYS
       !DEC$ NOPREFETCH current
       !DEC$ NOPREFETCH next
@@ -134,9 +135,8 @@ CONTAINS
         next=>current%next
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
-        fcx = idty * part_weight
-        fcy = idtx * part_weight
-        fcz = idxy * part_weight
+        fcx = idtf * part_weight
+        fcy = idxf * part_weight
 #endif
         ! Copy the particle properties out for speed
         part_x  = current%part_pos - x_start_local
@@ -323,15 +323,16 @@ CONTAINS
         tauz = bz_part * root
 
         tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
+
         pxp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pxm &
             + 2.0_num * ((taux * tauy + tauz) * pym &
             + (taux * tauz - tauy) * pzm)) * tau
-        pyp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pym &
-            + 2.0_num * ((taux * tauy - tauz) * pxm &
-            + (tauy * tauz + taux) * pzm)) * tau
-        pzp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pzm &
-            + 2.0_num * ((taux * tauz + tauy) * pxm &
-            + (tauy * tauz - taux) * pym)) * tau
+        pyp = ((1.0_num - taux**2 + tauy**2 - tauz**2) * pym &
+            + 2.0_num * ((tauy * tauz + taux) * pzm &
+            + (tauy * taux - tauz) * pxm)) * tau
+        pzp = ((1.0_num - taux**2 - tauy**2 + tauz**2) * pzm &
+            + 2.0_num * ((tauz * taux + tauy) * pxm &
+            + (tauz * tauy - taux) * pym)) * tau
 
         ! Rotation over, go to full timestep
         part_px = pxp + cmratio * ex_part
@@ -342,6 +343,7 @@ CONTAINS
         root = c / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
         part_vx = part_px * root
         part_vy = part_py * root
+        part_vz = part_pz * root
 
         ! Move particles to end of time step at 2nd order accuracy
         part_x = part_x + part_vx * dto2
@@ -408,7 +410,7 @@ CONTAINS
 
           fjx = fcx * part_q
           fjy = fcy * part_q * part_vy
-          fjz = fcz * part_q * part_vz
+          fjz = fcy * part_q * part_vz
 
           DO ix = xmin, xmax
             wx = xi1x(ix)
@@ -499,7 +501,7 @@ CONTAINS
     ekbar = 0.0_num
     DO ispecies = 1, n_species
       DO ix = 1, nx
-        mean = ekbar_sum(ix, ispecies)/MAX(ct(ix, ispecies), c_non_zero)
+        mean = ekbar_sum(ix, ispecies) / MAX(ct(ix, ispecies), c_non_zero)
         ekbar(ix, ispecies) = mean
       ENDDO
     ENDDO
