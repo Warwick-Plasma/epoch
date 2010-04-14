@@ -82,10 +82,10 @@ CONTAINS
         as_constant = c_const_ly
     IF (str_cmp(name, "dx")) as_constant = c_const_dx
     IF (str_cmp(name, "dy")) as_constant = c_const_dy
-    IF (str_cmp(name, "x_start")) as_constant = c_const_start_x
-    IF (str_cmp(name, "y_start")) as_constant = c_const_start_y
-    IF (str_cmp(name, "x_end")) as_constant = c_const_end_x
-    IF (str_cmp(name, "y_end")) as_constant = c_const_end_y
+    IF (str_cmp(name, "x_min")) as_constant = c_const_x_min
+    IF (str_cmp(name, "y_min")) as_constant = c_const_y_min
+    IF (str_cmp(name, "x_max")) as_constant = c_const_x_max
+    IF (str_cmp(name, "y_max")) as_constant = c_const_y_max
     IF (str_cmp(name, "ix")) as_constant = c_const_ix
     IF (str_cmp(name, "iy")) as_constant = c_const_iy
     IF (str_cmp(name, "time")) as_constant = c_const_time

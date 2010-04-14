@@ -16,6 +16,29 @@ MODULE deck_control_block
           "npart             ", &
           "nsteps            ", &
           "t_end             ", &
+          "x_min             ", &
+          "x_max             ", &
+          "y_min             ", &
+          "y_max             ", &
+          "z_min             ", &
+          "z_max             ", &
+          "dt_multiplier     ", &
+          "dlb_threshold     ", &
+          "icfile            ", &
+          "restart_snapshot  ", &
+          "neutral_background", &
+          "nprocx            ", &
+          "nprocy            ", &
+          "nprocz            ", &
+          "field_order       " /)
+  CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
+      alternate_name = (/ &
+          "nx                ", &
+          "ny                ", &
+          "nz                ", &
+          "npart             ", &
+          "nsteps            ", &
+          "t_end             ", &
           "x_start           ", &
           "x_end             ", &
           "y_start           ", &
@@ -45,7 +68,8 @@ CONTAINS
     elementselected = 0
 
     DO loop = 1, control_block_elements
-      IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop))))) THEN
+      IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop)))) &
+          .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
         elementselected = loop
         EXIT
       ENDIF
@@ -73,17 +97,17 @@ CONTAINS
     CASE(6)
       t_end = as_real(value, handle_control_deck)
     CASE(7)
-      x_start = as_real(value, handle_control_deck)
+      x_min = as_real(value, handle_control_deck)
     CASE(8)
-      x_end = as_real(value, handle_control_deck)
+      x_max = as_real(value, handle_control_deck)
     CASE(9)
-      y_start = as_real(value, handle_control_deck)
+      y_min = as_real(value, handle_control_deck)
     CASE(10)
-      y_end = as_real(value, handle_control_deck)
+      y_max = as_real(value, handle_control_deck)
     CASE(11)
-      z_start = as_real(value, handle_control_deck)
+      z_min = as_real(value, handle_control_deck)
     CASE(12)
-      z_end = as_real(value, handle_control_deck)
+      z_max = as_real(value, handle_control_deck)
     CASE(13)
       dt_multiplier = as_real(value, handle_control_deck)
     CASE(14)

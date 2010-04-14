@@ -10,7 +10,10 @@ MODULE deck_boundaries_block
   LOGICAL, DIMENSION(boundary_block_elements) :: boundary_block_done
   CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
       boundary_block_name = (/ &
-          "xbc_left ", "xbc_right", "ybc_up   ", "ybc_down " /)
+          "bc_x_min", "bc_x_max", "bc_y_min", "bc_y_max" /)
+  CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
+      alternate_name = (/ &
+          "xbc_left ", "xbc_right", "ybc_down ", "ybc_up   " /)
 
 CONTAINS
 
@@ -25,7 +28,8 @@ CONTAINS
     elementselected = 0
 
     DO loop = 1, boundary_block_elements
-      IF (str_cmp(element, TRIM(ADJUSTL(boundary_block_name(loop))))) THEN
+      IF (str_cmp(element, TRIM(ADJUSTL(boundary_block_name(loop)))) &
+          .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
         elementselected = loop
         EXIT
       ENDIF
@@ -41,13 +45,13 @@ CONTAINS
 
     SELECT CASE (elementselected)
     CASE(1)
-      xbc_left = as_bc(value, handle_boundary_deck)
+      bc_x_min = as_bc(value, handle_boundary_deck)
     CASE(2)
-      xbc_right = as_bc(value, handle_boundary_deck)
+      bc_x_max = as_bc(value, handle_boundary_deck)
     CASE(3)
-      ybc_up = as_bc(value, handle_boundary_deck)
+      bc_y_min = as_bc(value, handle_boundary_deck)
     CASE(4)
-      ybc_down = as_bc(value, handle_boundary_deck)
+      bc_y_max = as_bc(value, handle_boundary_deck)
     END SELECT
 
   END FUNCTION handle_boundary_deck

@@ -25,12 +25,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_reflect = 9
 
   ! Boundary location codes
-  INTEGER, PARAMETER :: c_bd_left = 1
-  INTEGER, PARAMETER :: c_bd_right = 2
-  INTEGER, PARAMETER :: c_bd_up = 3
-  INTEGER, PARAMETER :: c_bd_down = 4
-  INTEGER, PARAMETER :: c_bd_front = 5
-  INTEGER, PARAMETER :: c_bd_back = 6
+  INTEGER, PARAMETER :: c_bd_x_min = 1
+  INTEGER, PARAMETER :: c_bd_x_max = 2
+  INTEGER, PARAMETER :: c_bd_y_max = 3
+  INTEGER, PARAMETER :: c_bd_y_min = 4
+  INTEGER, PARAMETER :: c_bd_z_max = 5
+  INTEGER, PARAMETER :: c_bd_z_min = 6
 
   ! Error codes
   INTEGER, PARAMETER :: c_err_none = 0
@@ -177,12 +177,12 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dx = 31
   INTEGER, PARAMETER :: c_const_dy = 32
   INTEGER, PARAMETER :: c_const_dz = 33
-  INTEGER, PARAMETER :: c_const_start_x = 34
-  INTEGER, PARAMETER :: c_const_start_y = 35
-  INTEGER, PARAMETER :: c_const_start_z = 36
-  INTEGER, PARAMETER :: c_const_end_x = 37
-  INTEGER, PARAMETER :: c_const_end_y = 38
-  INTEGER, PARAMETER :: c_const_end_z = 39
+  INTEGER, PARAMETER :: c_const_x_min = 34
+  INTEGER, PARAMETER :: c_const_y_min = 35
+  INTEGER, PARAMETER :: c_const_z_min = 36
+  INTEGER, PARAMETER :: c_const_x_max = 37
+  INTEGER, PARAMETER :: c_const_y_max = 38
+  INTEGER, PARAMETER :: c_const_z_max = 39
   INTEGER, PARAMETER :: c_const_ix = 40
   INTEGER, PARAMETER :: c_const_iy = 41
   INTEGER, PARAMETER :: c_const_iz = 42
@@ -483,22 +483,22 @@ MODULE shared_data
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_snapshots
-  REAL(num) :: length_x, dx, x_start, x_end
-  REAL(num) :: x_start_local, x_end_local, length_x_local
-  REAL(num) :: length_y, dy, y_start, y_end
-  REAL(num) :: y_start_local, y_end_local, length_y_local
-  REAL(num), DIMENSION(:), ALLOCATABLE :: x_starts, x_ends
-  REAL(num), DIMENSION(:), ALLOCATABLE :: y_starts, y_ends
+  REAL(num) :: length_x, dx, x_min, x_max
+  REAL(num) :: x_min_local, x_max_local, length_x_local
+  REAL(num) :: length_y, dy, y_min, y_max
+  REAL(num) :: y_min_local, y_max_local, length_y_local
+  REAL(num), DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
+  REAL(num), DIMENSION(:), ALLOCATABLE :: starts_y, ends_y
 
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight
 
   LOGICAL :: SAVE, ic_from_restart = .FALSE., deckfile
-  INTEGER :: xbc_right, xbc_left, ybc_up, ybc_down
-  INTEGER :: xbc_right_particle, xbc_left_particle
-  INTEGER :: ybc_up_particle, ybc_down_particle
-  INTEGER :: xbc_right_field, xbc_left_field
-  INTEGER :: ybc_up_field, ybc_down_field
+  INTEGER :: bc_x_max, bc_x_min, bc_y_max, bc_y_min
+  INTEGER :: bc_x_max_particle, bc_x_min_particle
+  INTEGER :: bc_y_max_particle, bc_y_min_particle
+  INTEGER :: bc_x_max_field, bc_x_min_field
+  INTEGER :: bc_y_max_field, bc_y_min_field
   INTEGER :: restart_snapshot
   INTEGER(KIND=8) :: ix, iy, iz, ipart
 
@@ -510,8 +510,8 @@ MODULE shared_data
   REAL(num) :: window_shift_fraction
   REAL(num) :: window_v_x
   REAL(num) :: window_start_time
-  INTEGER :: xbc_left_after_move
-  INTEGER :: xbc_right_after_move
+  INTEGER :: bc_x_min_after_move
+  INTEGER :: bc_x_max_after_move
   REAL(num), DIMENSION(3) :: window_shift
   LOGICAL :: any_open
   TYPE(particle_list) :: ejected_particles
@@ -519,7 +519,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! MPI data
   !----------------------------------------------------------------------------
-  INTEGER :: rank, left, right, up, down
+  INTEGER :: rank, proc_x_min, proc_x_max, proc_y_min, proc_y_max
   INTEGER :: coordinates(2), neighbour(-1:1, -1:1)
   INTEGER :: errcode, comm, tag, nproc, icycle_max = 1000000
   INTEGER :: status(MPI_STATUS_SIZE)
@@ -536,8 +536,8 @@ MODULE shared_data
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_offset_global
   REAL(num), DIMENSION(:), ALLOCATABLE :: y_offset_global
   ! The location of the processors
-  INTEGER, DIMENSION(:), ALLOCATABLE :: cell_x_start, cell_x_end
-  INTEGER, DIMENSION(:), ALLOCATABLE :: cell_y_start, cell_y_end
+  INTEGER, DIMENSION(:), ALLOCATABLE :: cell_x_min, cell_x_max
+  INTEGER, DIMENSION(:), ALLOCATABLE :: cell_y_min, cell_y_max
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
 
@@ -572,7 +572,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   TYPE :: laser_block
     ! Boundary to which laser is attached
-    INTEGER :: direction
+    INTEGER :: boundary
     ! A unique id number for the laser (not used directly by EPOCH)
     ! Only used if hard coding time profiles
     INTEGER :: id
@@ -589,9 +589,9 @@ MODULE shared_data
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block
 
-  TYPE(laser_block), POINTER :: laser_left, laser_right
-  TYPE(laser_block), POINTER :: laser_up, laser_down
-  INTEGER :: n_laser_left, n_laser_right, n_laser_up, n_laser_down
+  TYPE(laser_block), POINTER :: laser_x_min, laser_x_max
+  TYPE(laser_block), POINTER :: laser_y_max, laser_y_min
+  INTEGER :: n_laser_x_min, n_laser_x_max, n_laser_y_max, n_laser_y_min
 
   TYPE(jobid_type) :: jobid
 

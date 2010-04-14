@@ -15,15 +15,15 @@ CONTAINS
     DO iwindow = 1, FLOOR(window_shift_fraction)
       CALL insert_particles
       ! Shift the box around
-      x_starts = x_starts+dx
-      x_start_local = x_start_local+dx
-      x_start = x_start+dx
+      starts_x = starts_x+dx
+      x_min_local = x_min_local+dx
+      x_min = x_min+dx
       x_global = x_global+dx
       x = x+dx
 
-      x_ends = x_ends+dx
-      x_end_local = x_end_local+dx
-      x_end = x_end+dx
+      ends_x = ends_x+dx
+      x_max_local = x_max_local+dx
+      x_max = x_max+dx
       CALL remove_particles
 
       ! Shift fields around
@@ -76,7 +76,7 @@ CONTAINS
         DO ipart = 1, particle_species(ispecies)%npart_per_cell
           ALLOCATE(current)
           rand = random(idum)-0.5_num
-          current%part_pos = x_end+dx + rand*dx
+          current%part_pos = x_max+dx + rand*dx
 
           DO i = 1, 3
             temp_local = particle_species(ispecies)%temperature(i)
@@ -114,7 +114,7 @@ CONTAINS
         current=>particle_species(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           next=>current%next
-          IF (current%part_pos .LT. x_start-0.5_num*dx) THEN
+          IF (current%part_pos .LT. x_min-0.5_num*dx) THEN
             CALL remove_particle_from_partlist(&
                 particle_species(ispecies)%attached_list, current)
             DEALLOCATE(current)

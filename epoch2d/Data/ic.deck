@@ -10,7 +10,7 @@ end:constant
 
 begin:laser
 
-  direction=left
+  boundary=x_min
   amp=1e13
   freq=omega
   pol=0.0

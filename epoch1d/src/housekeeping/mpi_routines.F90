@@ -45,14 +45,14 @@ CONTAINS
     periods = .TRUE.
     reorder = .TRUE.
 
-    IF (xbc_left .NE. c_bc_periodic &
-        .OR. xbc_right .NE. c_bc_periodic) periods(1) = .FALSE.
+    IF (bc_x_min .NE. c_bc_periodic &
+        .OR. bc_x_max .NE. c_bc_periodic) periods(1) = .FALSE.
 
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
     CALL MPI_CART_COORDS(comm, rank, 1, coordinates, errcode)
-    CALL MPI_CART_SHIFT(comm, 0, 1, left, right, errcode)
+    CALL MPI_CART_SHIFT(comm, 0, 1, proc_x_min, proc_x_max, errcode)
 
     nprocx = dims(1)
 
@@ -96,12 +96,12 @@ CONTAINS
     ALLOCATE(jx(-2:nx+3), jy(-2:nx+3), jz(-2:nx+3))
     ALLOCATE(ekbar(1:nx, 1:n_species), ekbar_sum(-2:nx+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, 1:n_species))
-    ALLOCATE(x_starts(0:nprocx-1), x_ends(0:nprocx-1))
-    ALLOCATE(cell_x_start(1:nprocx), cell_x_end(1:nprocx))
+    ALLOCATE(starts_x(0:nprocx-1), ends_x(0:nprocx-1))
+    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
 
     DO idim = 0, nprocx-1
-      cell_x_start(idim+1) = nx*idim+1
-      cell_x_end(idim+1) = nx*(idim+1)
+      cell_x_min(idim+1) = nx*idim+1
+      cell_x_max(idim+1) = nx*(idim+1)
     ENDDO
 
     ! Setup the particle lists

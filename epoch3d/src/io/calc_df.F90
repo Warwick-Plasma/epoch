@@ -52,9 +52,9 @@ CONTAINS
       DO WHILE (ASSOCIATED(current))
 
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_start_local
-        part_y  = current%part_pos(2) - y_start_local
-        part_z  = current%part_pos(3) - z_start_local
+        part_x  = current%part_pos(1) - x_min_local
+        part_y  = current%part_pos(2) - y_min_local
+        part_z  = current%part_pos(3) - z_min_local
 #ifdef PER_PARTICLE_CHARGEMASS
         part_m  = current%mass
 #else
@@ -155,9 +155,9 @@ CONTAINS
       DO WHILE (ASSOCIATED(current))
 
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_start_local
-        part_y  = current%part_pos(2) - y_start_local
-        part_z  = current%part_pos(3) - z_start_local
+        part_x  = current%part_pos(1) - x_min_local
+        part_y  = current%part_pos(2) - y_min_local
+        part_z  = current%part_pos(3) - z_min_local
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
@@ -272,9 +272,9 @@ CONTAINS
       DO WHILE (ASSOCIATED(current))
 
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_start_local
-        part_y  = current%part_pos(2) - y_start_local
-        part_z  = current%part_pos(3) - z_start_local
+        part_x  = current%part_pos(1) - x_min_local
+        part_y  = current%part_pos(2) - y_min_local
+        part_z  = current%part_pos(3) - z_min_local
 #ifdef PER_PARTICLE_CHARGEMASS
         part_q  = current%charge
 #else
@@ -375,9 +375,9 @@ CONTAINS
       DO WHILE (ASSOCIATED(current))
 
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_start_local
-        part_y  = current%part_pos(2) - y_start_local
-        part_z  = current%part_pos(3) - z_start_local
+        part_x  = current%part_pos(1) - x_min_local
+        part_y  = current%part_pos(2) - y_min_local
+        part_z  = current%part_pos(3) - z_min_local
 
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
@@ -472,9 +472,9 @@ CONTAINS
       DO WHILE (ASSOCIATED(current))
 
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_start_local
-        part_y  = current%part_pos(2) - y_start_local
-        part_z  = current%part_pos(3) - z_start_local
+        part_x  = current%part_pos(1) - x_min_local
+        part_y  = current%part_pos(2) - y_min_local
+        part_z  = current%part_pos(3) - z_min_local
 
         cell_x_r = part_x / dx
         cell_x  = NINT(cell_x_r)

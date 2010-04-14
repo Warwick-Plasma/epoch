@@ -141,8 +141,8 @@ PROGRAM pic
     ENDIF
     IF (move_window .AND. .NOT. window_started &
         .AND. time .GE. window_start_time) THEN
-      xbc_left = xbc_left_after_move
-      xbc_right = xbc_right_after_move
+      bc_x_min = bc_x_min_after_move
+      bc_x_max = bc_x_max_after_move
       CALL setup_particle_boundaries
       CALL setup_communicator
       window_started = .TRUE.

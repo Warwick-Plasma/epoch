@@ -169,9 +169,9 @@ CONTAINS
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
-        RANGE(idim, 1) = x_start_local
-        RANGE(idim, 2) = x_end_local
-        start_local(idim) = cell_x_start(coordinates(2)+1)
+        RANGE(idim, 1) = x_min_local
+        RANGE(idim, 2) = x_max_local
+        start_local(idim) = cell_x_min(coordinates(2)+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
         parallel(idim) = .TRUE.
@@ -184,9 +184,9 @@ CONTAINS
       IF (direction(idim) .EQ. c_dir_y)  THEN
         use_y = .TRUE.
         resolution(idim) = ny
-        RANGE(idim, 1) = y_start_local
-        RANGE(idim, 2) = y_end_local
-        start_local(idim) = cell_y_start(coordinates(1)+1)
+        RANGE(idim, 1) = y_min_local
+        RANGE(idim, 2) = y_max_local
+        start_local(idim) = cell_y_min(coordinates(1)+1)
         global_resolution(idim) = ny_global
         dgrid(idim) = dy
         parallel(idim) = .TRUE.
@@ -508,9 +508,9 @@ CONTAINS
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
-        RANGE(idim, 1) = x_start_local
-        RANGE(idim, 2) = x_end_local
-        start_local(idim) = cell_x_start(coordinates(2)+1)
+        RANGE(idim, 1) = x_min_local
+        RANGE(idim, 2) = x_max_local
+        start_local(idim) = cell_x_min(coordinates(2)+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
         parallel(idim) = .TRUE.
@@ -523,9 +523,9 @@ CONTAINS
       IF (direction(idim) .EQ. c_dir_y)  THEN
         use_y = .TRUE.
         resolution(idim) = ny
-        RANGE(idim, 1) = y_start_local
-        RANGE(idim, 2) = y_end_local
-        start_local(idim) = cell_y_start(coordinates(1)+1)
+        RANGE(idim, 1) = y_min_local
+        RANGE(idim, 2) = y_max_local
+        start_local(idim) = cell_y_min(coordinates(1)+1)
         global_resolution(idim) = ny_global
         dgrid(idim) = dy
         parallel(idim) = .TRUE.
@@ -838,9 +838,9 @@ CONTAINS
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
-        RANGE(idim, 1) = x_start_local
-        RANGE(idim, 2) = x_end_local
-        start_local(idim) = cell_x_start(coordinates(2)+1)
+        RANGE(idim, 1) = x_min_local
+        RANGE(idim, 2) = x_max_local
+        start_local(idim) = cell_x_min(coordinates(2)+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
         parallel(idim) = .TRUE.
@@ -853,9 +853,9 @@ CONTAINS
       IF (direction(idim) .EQ. c_dir_y)  THEN
         use_y = .TRUE.
         resolution(idim) = ny
-        RANGE(idim, 1) = y_start_local
-        RANGE(idim, 2) = y_end_local
-        start_local(idim) = cell_y_start(coordinates(1)+1)
+        RANGE(idim, 1) = y_min_local
+        RANGE(idim, 2) = y_max_local
+        start_local(idim) = cell_y_min(coordinates(1)+1)
         global_resolution(idim) = ny_global
         dgrid(idim) = dy
         parallel(idim) = .TRUE.

@@ -153,25 +153,25 @@ CONTAINS
 
     CALL bfield_bcs(.FALSE.)
 
-    IF (xbc_left .EQ. c_bc_simple_laser .AND. left .EQ. MPI_PROC_NULL) &
-        CALL laser_bcs_left
-    IF (xbc_left .EQ. c_bc_simple_outflow .AND. left .EQ. MPI_PROC_NULL) &
-        CALL outflow_bcs_left
+    IF (bc_x_min .EQ. c_bc_simple_laser .AND. proc_x_min .EQ. MPI_PROC_NULL) &
+        CALL laser_bcs_x_min
+    IF (bc_x_min .EQ. c_bc_simple_outflow .AND. proc_x_min .EQ. MPI_PROC_NULL) &
+        CALL outflow_bcs_x_min
 
-    IF (xbc_right .EQ. c_bc_simple_laser .AND. right .EQ. MPI_PROC_NULL) &
-        CALL laser_bcs_right
-    IF (xbc_right .EQ. c_bc_simple_outflow .AND. right .EQ. MPI_PROC_NULL) &
-        CALL outflow_bcs_right
+    IF (bc_x_max .EQ. c_bc_simple_laser .AND. proc_x_max .EQ. MPI_PROC_NULL) &
+        CALL laser_bcs_x_max
+    IF (bc_x_max .EQ. c_bc_simple_outflow .AND. proc_x_max .EQ. MPI_PROC_NULL) &
+        CALL outflow_bcs_x_max
 
-    IF (ybc_up .EQ. c_bc_simple_laser .AND. up .EQ. MPI_PROC_NULL) &
-        CALL laser_bcs_up
-    IF (ybc_up .EQ. c_bc_simple_outflow .AND. up .EQ. MPI_PROC_NULL) &
-        CALL outflow_bcs_up
+    IF (bc_y_max .EQ. c_bc_simple_laser .AND. proc_y_max .EQ. MPI_PROC_NULL) &
+        CALL laser_bcs_y_max
+    IF (bc_y_max .EQ. c_bc_simple_outflow .AND. proc_y_max .EQ. MPI_PROC_NULL) &
+        CALL outflow_bcs_y_max
 
-    IF (ybc_down .EQ. c_bc_simple_laser .AND. down .EQ. MPI_PROC_NULL) &
-        CALL laser_bcs_down
-    IF (ybc_down .EQ. c_bc_simple_outflow .AND. down .EQ. MPI_PROC_NULL) &
-        CALL outflow_bcs_down
+    IF (bc_y_min .EQ. c_bc_simple_laser .AND. proc_y_min .EQ. MPI_PROC_NULL) &
+        CALL laser_bcs_y_min
+    IF (bc_y_min .EQ. c_bc_simple_outflow .AND. proc_y_min .EQ. MPI_PROC_NULL) &
+        CALL outflow_bcs_y_min
 
     CALL bfield_bcs(.TRUE.)
 

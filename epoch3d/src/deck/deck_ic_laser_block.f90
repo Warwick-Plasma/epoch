@@ -8,8 +8,8 @@ MODULE deck_ic_laser_block
   SAVE
 
   TYPE(laser_block), POINTER :: working_laser
-  LOGICAL :: direction_set = .FALSE.
-  INTEGER :: direction
+  LOGICAL :: boundary_set = .FALSE.
+  INTEGER :: boundary
 
 CONTAINS
 
@@ -24,24 +24,29 @@ CONTAINS
     handle_ic_laser_deck = c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (str_cmp(element, "direction")) THEN
-      ! If the direction has already been set, simply ignore further calls to it
-      IF (direction_set) RETURN
-      direction = as_direction(value, handle_ic_laser_deck)
-      direction_set = .TRUE.
-      CALL init_laser(direction, working_laser)
+    IF (str_cmp(element, "boundary") .OR. str_cmp(element, "direction")) THEN
+      IF (str_cmp(element, "direction")) THEN
+        WRITE(*, *) '***WARNING***'
+        WRITE(*, *) 'Element "direction" in the block "laser" is deprecated.'
+        WRITE(*, *) 'Please use the element name "boundary" instead.'
+      ENDIF
+      ! If the boundary has already been set, simply ignore further calls to it
+      IF (boundary_set) RETURN
+      boundary = as_boundary(value, handle_ic_laser_deck)
+      boundary_set = .TRUE.
+      CALL init_laser(boundary, working_laser)
       RETURN
     ENDIF
 
-    IF (.NOT. direction_set) THEN
+    IF (.NOT. boundary_set) THEN
       IF (rank .EQ. 0) THEN
         WRITE(*, *) '***ERROR***'
-        WRITE(*, *) 'Cannot set laser properties before direction is set'
+        WRITE(*, *) 'Cannot set laser properties before boundary is set'
         WRITE(40,*) '***ERROR***'
-        WRITE(40,*) 'Cannot set laser properties before direction is set'
+        WRITE(40,*) 'Cannot set laser properties before boundary is set'
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
-      extended_error_string = "direction"
+      extended_error_string = "boundary"
       handle_ic_laser_deck = c_err_required_element_not_set
       RETURN
     ENDIF
@@ -66,24 +71,24 @@ CONTAINS
       working_laser%profile = 0.0_num
       output%stack_point = 0
       CALL tokenize(value, output, handle_ic_laser_deck)
-      IF (working_laser%direction .EQ. c_bd_left &
-          .OR. working_laser%direction .EQ. c_bd_right) THEN
+      IF (working_laser%boundary .EQ. c_bd_x_min &
+          .OR. working_laser%boundary .EQ. c_bd_x_max) THEN
         DO iz = 1, nz
           DO iy = 1, ny
             working_laser%profile(iy, iz) = &
                 evaluate_at_point(output, 0, iy, iz, handle_ic_laser_deck)
           ENDDO
         ENDDO
-      ELSE IF (working_laser%direction .EQ. c_bd_up &
-          .OR. working_laser%direction .EQ. c_bd_down) THEN
+      ELSE IF (working_laser%boundary .EQ. c_bd_y_max &
+          .OR. working_laser%boundary .EQ. c_bd_y_min) THEN
         DO iz = 1, nz
           DO ix = 1, nx
             working_laser%profile(ix, iz) = &
                 evaluate_at_point(output, ix, 0, iz, handle_ic_laser_deck)
           ENDDO
         ENDDO
-      ELSE IF (working_laser%direction .EQ. c_bd_front &
-          .OR. working_laser%direction .EQ. c_bd_back) THEN
+      ELSE IF (working_laser%boundary .EQ. c_bd_z_max &
+          .OR. working_laser%boundary .EQ. c_bd_z_min) THEN
         DO iy = 1, ny
           DO ix = 1, nx
             working_laser%profile(ix, iy) = &
@@ -98,24 +103,24 @@ CONTAINS
       working_laser%phase = 0.0_num
       output%stack_point = 0
       CALL tokenize(value, output, handle_ic_laser_deck)
-      IF (working_laser%direction .EQ. c_bd_left &
-          .OR. working_laser%direction .EQ. c_bd_right) THEN
+      IF (working_laser%boundary .EQ. c_bd_x_min &
+          .OR. working_laser%boundary .EQ. c_bd_x_max) THEN
         DO iz = 1, nz
           DO iy = 1, ny
             working_laser%phase(iy, iz) = &
                 evaluate_at_point(output, 0, iy, iz, handle_ic_laser_deck)
           ENDDO
         ENDDO
-      ELSE IF (working_laser%direction .EQ. c_bd_up &
-          .OR. working_laser%direction .EQ. c_bd_down) THEN
+      ELSE IF (working_laser%boundary .EQ. c_bd_y_max &
+          .OR. working_laser%boundary .EQ. c_bd_y_min) THEN
         DO iz = 1, nz
           DO ix = 1, nx
             working_laser%phase(ix, iz) = &
                 evaluate_at_point(output, ix, 0, iz, handle_ic_laser_deck)
           ENDDO
         ENDDO
-      ELSE IF (working_laser%direction .EQ. c_bd_front &
-          .OR. working_laser%direction .EQ. c_bd_back) THEN
+      ELSE IF (working_laser%boundary .EQ. c_bd_z_max &
+          .OR. working_laser%boundary .EQ. c_bd_z_min) THEN
         DO iy = 1, ny
           DO ix = 1, nx
             working_laser%phase(ix, iy) = &
@@ -192,7 +197,7 @@ CONTAINS
   SUBROUTINE laser_end
 
     CALL attach_laser(working_laser)
-    direction_set = .FALSE.
+    boundary_set = .FALSE.
 
   END SUBROUTINE laser_end
 

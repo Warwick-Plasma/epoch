@@ -8,8 +8,8 @@ MODULE deck_ic_laser_block
   SAVE
 
   TYPE(laser_block), POINTER :: working_laser
-  LOGICAL :: direction_set = .FALSE.
-  INTEGER :: direction
+  LOGICAL :: boundary_set = .FALSE.
+  INTEGER :: boundary
 
 CONTAINS
 
@@ -23,24 +23,29 @@ CONTAINS
     handle_ic_laser_deck = c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (str_cmp(element, "direction")) THEN
-      ! If the direction has already been set, simply ignore further calls to it
-      IF (direction_set) RETURN
-      direction = as_direction(value, handle_ic_laser_deck)
-      direction_set = .TRUE.
-      CALL init_laser(direction, working_laser)
+    IF (str_cmp(element, "boundary") .OR. str_cmp(element, "direction")) THEN
+      IF (str_cmp(element, "direction")) THEN
+        WRITE(*, *) '***WARNING***'
+        WRITE(*, *) 'Element "direction" in the block "laser" is deprecated.'
+        WRITE(*, *) 'Please use the element name "boundary" instead.'
+      ENDIF
+      ! If the boundary has already been set, simply ignore further calls to it
+      IF (boundary_set) RETURN
+      boundary = as_boundary(value, handle_ic_laser_deck)
+      boundary_set = .TRUE.
+      CALL init_laser(boundary, working_laser)
       RETURN
     ENDIF
 
-    IF (.NOT. direction_set) THEN
+    IF (.NOT. boundary_set) THEN
       IF (rank .EQ. 0) THEN
         WRITE(*, *) '***ERROR***'
-        WRITE(*, *) 'Cannot set laser properties before direction is set'
+        WRITE(*, *) 'Cannot set laser properties before boundary is set'
         WRITE(40,*) '***ERROR***'
-        WRITE(40,*) 'Cannot set laser properties before direction is set'
+        WRITE(40,*) 'Cannot set laser properties before boundary is set'
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
-      extended_error_string = "direction"
+      extended_error_string = "boundary"
       handle_ic_laser_deck = c_err_required_element_not_set
       RETURN
     ENDIF
@@ -132,7 +137,7 @@ CONTAINS
   SUBROUTINE laser_end
 
     CALL attach_laser(working_laser)
-    direction_set = .FALSE.
+    boundary_set = .FALSE.
 
   END SUBROUTINE laser_end
 

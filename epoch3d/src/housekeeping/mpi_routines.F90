@@ -55,20 +55,20 @@ CONTAINS
     periods = .TRUE.
     reorder = .TRUE.
 
-    IF (xbc_left  .NE. c_bc_periodic &
-        .OR. xbc_right .NE. c_bc_periodic) periods(3) = .FALSE.
-    IF (ybc_down  .NE. c_bc_periodic &
-        .OR. ybc_up    .NE. c_bc_periodic) periods(2) = .FALSE.
-    IF (zbc_back .NE. c_bc_periodic &
-        .OR. zbc_front .NE. c_bc_periodic) periods(1) = .FALSE.
+    IF (bc_x_min  .NE. c_bc_periodic &
+        .OR. bc_x_max .NE. c_bc_periodic) periods(3) = .FALSE.
+    IF (bc_y_min  .NE. c_bc_periodic &
+        .OR. bc_y_max    .NE. c_bc_periodic) periods(2) = .FALSE.
+    IF (bc_z_min .NE. c_bc_periodic &
+        .OR. bc_z_max .NE. c_bc_periodic) periods(1) = .FALSE.
 
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
     CALL MPI_CART_COORDS(comm, rank, ndims, coordinates, errcode)
-    CALL MPI_CART_SHIFT(comm, 2, 1, left, right, errcode)
-    CALL MPI_CART_SHIFT(comm, 1, 1, down, up, errcode)
-    CALL MPI_CART_SHIFT(comm, 0, 1, back, front, errcode)
+    CALL MPI_CART_SHIFT(comm, 2, 1, proc_x_min, proc_x_max, errcode)
+    CALL MPI_CART_SHIFT(comm, 1, 1, proc_y_min, proc_y_max, errcode)
+    CALL MPI_CART_SHIFT(comm, 0, 1, proc_z_min, proc_z_max, errcode)
 
     nprocx = dims(3)
     nprocy = dims(2)
@@ -141,26 +141,26 @@ CONTAINS
     ALLOCATE(ekbar(1:nx, 1:ny, 1:nz, 1:n_species))
     ALLOCATE(ekbar_sum(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
-    ALLOCATE(x_starts(0:nprocx-1), x_ends(0:nprocx-1))
-    ALLOCATE(y_starts(0:nprocy-1), y_ends(0:nprocy-1))
-    ALLOCATE(z_starts(0:nprocz-1), z_ends(0:nprocz-1))
-    ALLOCATE(cell_x_start(1:nprocx), cell_x_end(1:nprocx))
-    ALLOCATE(cell_y_start(1:nprocy), cell_y_end(1:nprocy))
-    ALLOCATE(cell_z_start(1:nprocz), cell_z_end(1:nprocz))
+    ALLOCATE(starts_x(0:nprocx-1), ends_x(0:nprocx-1))
+    ALLOCATE(starts_y(0:nprocy-1), ends_y(0:nprocy-1))
+    ALLOCATE(starts_z(0:nprocz-1), ends_z(0:nprocz-1))
+    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
+    ALLOCATE(cell_y_min(1:nprocy), cell_y_max(1:nprocy))
+    ALLOCATE(cell_z_min(1:nprocz), cell_z_max(1:nprocz))
 
     DO idim = 0, nprocx-1
-      cell_x_start(idim+1) = nx*idim+1
-      cell_x_end(idim+1) = nx*(idim+1)
+      cell_x_min(idim+1) = nx*idim+1
+      cell_x_max(idim+1) = nx*(idim+1)
     ENDDO
 
     DO idim = 0, nprocy-1
-      cell_y_start(idim+1) = ny*idim+1
-      cell_y_end(idim+1) = ny*(idim+1)
+      cell_y_min(idim+1) = ny*idim+1
+      cell_y_max(idim+1) = ny*(idim+1)
     ENDDO
 
     DO idim = 0, nprocz-1
-      cell_z_start(idim+1) = nz*idim+1
-      cell_z_end(idim+1) = nz*(idim+1)
+      cell_z_min(idim+1) = nz*idim+1
+      cell_z_max(idim+1) = nz*(idim+1)
     ENDDO
 
     ! Setup the particle lists

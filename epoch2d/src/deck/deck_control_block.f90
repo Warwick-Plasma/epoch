@@ -15,6 +15,24 @@ MODULE deck_control_block
           "npart             ", &
           "nsteps            ", &
           "t_end             ", &
+          "x_min             ", &
+          "x_max             ", &
+          "y_min             ", &
+          "y_max             ", &
+          "dt_multiplier     ", &
+          "dlb_threshold     ", &
+          "icfile            ", &
+          "restart_snapshot  ", &
+          "neutral_background", &
+          "smooth_currents   ", &
+          "field_order       " /)
+  CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
+      alternate_name = (/ &
+          "nx                ", &
+          "ny                ", &
+          "npart             ", &
+          "nsteps            ", &
+          "t_end             ", &
           "x_start           ", &
           "x_end             ", &
           "y_start           ", &
@@ -40,7 +58,8 @@ CONTAINS
     elementselected = 0
 
     DO loop = 1, control_block_elements
-      IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop))))) THEN
+      IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop)))) &
+          .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
         elementselected = loop
         EXIT
       ENDIF
@@ -66,13 +85,13 @@ CONTAINS
     CASE(5)
       t_end = as_real(value, handle_control_deck)
     CASE(6)
-      x_start = as_real(value, handle_control_deck)
+      x_min = as_real(value, handle_control_deck)
     CASE(7)
-      x_end = as_real(value, handle_control_deck)
+      x_max = as_real(value, handle_control_deck)
     CASE(8)
-      y_start = as_real(value, handle_control_deck)
+      y_min = as_real(value, handle_control_deck)
     CASE(9)
-      y_end = as_real(value, handle_control_deck)
+      y_max = as_real(value, handle_control_deck)
     CASE(10)
       dt_multiplier = as_real(value, handle_control_deck)
     CASE(11)

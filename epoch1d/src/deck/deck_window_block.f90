@@ -29,13 +29,13 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "xbc_left_after_move")) THEN
-      xbc_left_after_move = as_bc(value, handle_window_deck)
+    IF (str_cmp(element, "bc_x_min_after_move")) THEN
+      bc_x_min_after_move = as_bc(value, handle_window_deck)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "xbc_right_after_move")) THEN
-      xbc_right_after_move = as_bc(value, handle_window_deck)
+    IF (str_cmp(element, "bc_x_max_after_move")) THEN
+      bc_x_max_after_move = as_bc(value, handle_window_deck)
       RETURN
     ENDIF
 
@@ -58,8 +58,8 @@ CONTAINS
 
   SUBROUTINE window_start
 
-    xbc_left_after_move = xbc_left
-    xbc_right_after_move = xbc_right
+    bc_x_min_after_move = bc_x_min
+    bc_x_max_after_move = bc_x_max
 
   END SUBROUTINE window_start
 

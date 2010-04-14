@@ -34,12 +34,12 @@ CONTAINS
     npart_global = -1
     dlb = .FALSE.
 
-    NULLIFY(laser_left)
-    NULLIFY(laser_right)
-    NULLIFY(laser_up)
-    NULLIFY(laser_down)
-    NULLIFY(laser_front)
-    NULLIFY(laser_back)
+    NULLIFY(laser_x_min)
+    NULLIFY(laser_x_max)
+    NULLIFY(laser_y_max)
+    NULLIFY(laser_y_min)
+    NULLIFY(laser_z_max)
+    NULLIFY(laser_z_min)
 
     NULLIFY(dist_fns)
 
@@ -55,60 +55,60 @@ CONTAINS
 
     INTEGER :: iproc
 
-    length_x = x_end-x_start
+    length_x = x_max-x_min
     dx = length_x / REAL(nx_global-1, num)
-    length_y = y_end-y_start
+    length_y = y_max-y_min
     dy = length_y / REAL(ny_global-1, num)
-    length_z = z_end-z_start
+    length_z = z_max-z_min
     dz = length_z / REAL(nz_global-1, num)
 
     ! Setup global grid
-    x_global(0) = x_start-dx
+    x_global(0) = x_min-dx
     DO ix = 1, nx_global+1
       x_global(ix) = x_global(ix-1)+dx
       x_offset_global(ix) = x_global(ix)
     ENDDO
-    y_global(0) = y_start-dy
+    y_global(0) = y_min-dy
     DO iy = 1, ny_global+1
       y_global(iy) = y_global(iy-1)+dy
       y_offset_global(iy) = y_global(iy)
     ENDDO
-    z_global(0) = z_start-dz
+    z_global(0) = z_min-dz
     DO iz = 1, nz_global+1
       z_global(iz) = z_global(iz-1)+dz
       z_offset_global(iz) = z_global(iz)
     ENDDO
 
     DO iproc = 0, nprocx-1
-      x_starts(iproc) = x_global(iproc*nx+1)
-      x_ends(iproc) = x_global((iproc+1)*nx)
+      starts_x(iproc) = x_global(iproc*nx+1)
+      ends_x(iproc) = x_global((iproc+1)*nx)
     ENDDO
     DO iproc = 0, nprocy-1
-      y_starts(iproc) = y_global(iproc*ny+1)
-      y_ends(iproc) = y_global((iproc+1)*ny)
+      starts_y(iproc) = y_global(iproc*ny+1)
+      ends_y(iproc) = y_global((iproc+1)*ny)
     ENDDO
     DO iproc = 0, nprocz-1
-      z_starts(iproc) = z_global(iproc*nz+1)
-      z_ends(iproc) = z_global((iproc+1)*nz)
+      starts_z(iproc) = z_global(iproc*nz+1)
+      ends_z(iproc) = z_global((iproc+1)*nz)
     ENDDO
 
-    x_start_local = x_starts(coordinates(3))
-    x_end_local = x_ends(coordinates(3))
-    y_start_local = y_starts(coordinates(2))
-    y_end_local = y_ends(coordinates(2))
-    z_start_local = z_starts(coordinates(1))
-    z_end_local = z_ends(coordinates(1))
+    x_min_local = starts_x(coordinates(3))
+    x_max_local = ends_x(coordinates(3))
+    y_min_local = starts_y(coordinates(2))
+    y_max_local = ends_y(coordinates(2))
+    z_min_local = starts_z(coordinates(1))
+    z_max_local = ends_z(coordinates(1))
 
     ! Setup local grid
-    x(-1) = x_start_local-dx*2.0_num
+    x(-1) = x_min_local-dx*2.0_num
     DO ix = 0, nx+2
       x(ix) = x(ix-1)+dx
     ENDDO
-    y(-1) = y_start_local-dy*2.0_num
+    y(-1) = y_min_local-dy*2.0_num
     DO iy = 0, ny+2
       y(iy) = y(iy-1)+dy
     ENDDO
-    z(-1) = z_start_local-dz*2.0_num
+    z(-1) = z_min_local-dz*2.0_num
     DO iz = 0, nz+2
       z(iz) = z(iz-1)+dz
     ENDDO

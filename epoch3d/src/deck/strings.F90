@@ -124,22 +124,30 @@ CONTAINS
 
 
 
-  FUNCTION as_direction(str_in, err)
+  FUNCTION as_boundary(str_in, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: as_direction
+    INTEGER :: as_boundary
 
-    as_direction = -1
+    as_boundary = -1
 
-    IF (str_cmp(str_in, "left")) as_direction = c_bd_left
-    IF (str_cmp(str_in, "right")) as_direction = c_bd_right
-    IF (str_cmp(str_in, "up")) as_direction = c_bd_up
-    IF (str_cmp(str_in, "down")) as_direction = c_bd_down
+    IF (str_cmp(str_in, "left") &
+        .OR. str_cmp(str_in, "x_min")) as_boundary = c_bd_x_min
+    IF (str_cmp(str_in, "right") &
+        .OR. str_cmp(str_in, "x_max")) as_boundary = c_bd_x_max
+    IF (str_cmp(str_in, "down") &
+        .OR. str_cmp(str_in, "y_min")) as_boundary = c_bd_y_min
+    IF (str_cmp(str_in, "up") &
+        .OR. str_cmp(str_in, "y_max")) as_boundary = c_bd_y_max
+    IF (str_cmp(str_in, "back") &
+        .OR. str_cmp(str_in, "z_min")) as_boundary = c_bd_z_min
+    IF (str_cmp(str_in, "front") &
+        .OR. str_cmp(str_in, "z_max")) as_boundary = c_bd_z_max
 
-    IF (as_direction .EQ. -1) err = IOR(err, c_err_bad_value)
+    IF (as_boundary .EQ. -1) err = IOR(err, c_err_bad_value)
 
-  END FUNCTION as_direction
+  END FUNCTION as_boundary
 
 
 

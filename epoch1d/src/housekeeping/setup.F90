@@ -35,8 +35,8 @@ CONTAINS
     npart_global = -1
     dlb = .FALSE.
 
-    NULLIFY(laser_left)
-    NULLIFY(laser_right)
+    NULLIFY(laser_x_min)
+    NULLIFY(laser_x_max)
 
     NULLIFY(dist_fns)
 
@@ -52,26 +52,26 @@ CONTAINS
 
     INTEGER :: iproc
 
-    length_x = x_end-x_start
+    length_x = x_max-x_min
     dx = length_x / REAL(nx_global-1, num)
 
     ! Setup global grid
-    x_global(0) = x_start-dx
+    x_global(0) = x_min-dx
     DO ix = 1, nx_global+1
       x_global(ix) = x_global(ix-1)+dx
       x_offset_global(ix) = x_global(ix)
     ENDDO
 
     DO iproc = 0, nprocx-1
-      x_starts(iproc) = x_global(iproc*nx+1)
-      x_ends(iproc) = x_global((iproc+1)*nx)
+      starts_x(iproc) = x_global(iproc*nx+1)
+      ends_x(iproc) = x_global((iproc+1)*nx)
     ENDDO
 
-    x_start_local = x_starts(coordinates(1))
-    x_end_local = x_ends(coordinates(1))
+    x_min_local = starts_x(coordinates(1))
+    x_max_local = ends_x(coordinates(1))
 
     ! Setup local grid
-    x(-1) = x_start_local-dx*2.0_num
+    x(-1) = x_min_local-dx*2.0_num
     DO ix = 0, nx+2
       x(ix) = x(ix-1)+dx
     ENDDO

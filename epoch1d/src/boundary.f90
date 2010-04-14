@@ -12,37 +12,37 @@ CONTAINS
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (xbc_right .EQ. c_bc_periodic) THEN
-      xbc_right_particle = c_bc_periodic
-      xbc_right_field = c_bc_periodic
+    IF (bc_x_max .EQ. c_bc_periodic) THEN
+      bc_x_max_particle = c_bc_periodic
+      bc_x_max_field = c_bc_periodic
     ENDIF
-    IF (xbc_left .EQ. c_bc_periodic) THEN
-      xbc_left_particle = c_bc_periodic
-      xbc_left_field = c_bc_periodic
+    IF (bc_x_min .EQ. c_bc_periodic) THEN
+      bc_x_min_particle = c_bc_periodic
+      bc_x_min_field = c_bc_periodic
     ENDIF
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (xbc_right .EQ. c_bc_other) THEN
-      xbc_right_particle = c_bc_reflect
-      xbc_right_field = c_bc_clamp
+    IF (bc_x_max .EQ. c_bc_other) THEN
+      bc_x_max_particle = c_bc_reflect
+      bc_x_max_field = c_bc_clamp
     ENDIF
-    IF (xbc_left .EQ. c_bc_other) THEN
-      xbc_left_particle = c_bc_reflect
-      xbc_left_field = c_bc_clamp
+    IF (bc_x_min .EQ. c_bc_other) THEN
+      bc_x_min_particle = c_bc_reflect
+      bc_x_min_field = c_bc_clamp
     ENDIF
 
     ! laser boundaries reflect particles off a hard wall
-    IF (xbc_left .EQ. c_bc_simple_laser &
-        .OR. xbc_left .EQ. c_bc_simple_outflow) THEN
-      xbc_left_particle = c_bc_open
-      xbc_left_field = c_bc_clamp
+    IF (bc_x_min .EQ. c_bc_simple_laser &
+        .OR. bc_x_min .EQ. c_bc_simple_outflow) THEN
+      bc_x_min_particle = c_bc_open
+      bc_x_min_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
-    IF (xbc_right .EQ. c_bc_simple_laser &
-        .OR. xbc_right .EQ. c_bc_simple_outflow) THEN
-      xbc_right_particle = c_bc_open
-      xbc_right_field = c_bc_clamp
+    IF (bc_x_max .EQ. c_bc_simple_laser &
+        .OR. bc_x_max .EQ. c_bc_simple_outflow) THEN
+      bc_x_max_particle = c_bc_open
+      bc_x_max_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
 
@@ -70,11 +70,11 @@ CONTAINS
     INTEGER, INTENT(IN) :: nx_local
 
     CALL MPI_SENDRECV(field(1:3), &
-        3, mpireal, left, tag, field(nx_local+1:nx_local+3), &
-        3, mpireal, right, tag, comm, status, errcode)
+        3, mpireal, proc_x_min, tag, field(nx_local+1:nx_local+3), &
+        3, mpireal, proc_x_max, tag, comm, status, errcode)
     CALL MPI_SENDRECV(field(nx_local-2:nx_local), &
-        3, mpireal, right, tag, field(-2:0), &
-        3, mpireal, left, tag, comm, status, errcode)
+        3, mpireal, proc_x_max, tag, field(-2:0), &
+        3, mpireal, proc_x_min, tag, comm, status, errcode)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -85,14 +85,14 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     LOGICAL, INTENT(IN) :: force
 
-    IF ((xbc_left_field .EQ. c_bc_zero_gradient .OR. force) &
-        .AND. left .EQ. MPI_PROC_NULL) THEN
+    IF ((bc_x_min_field .EQ. c_bc_zero_gradient .OR. force) &
+        .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
       field(-1) = field(2)
       field( 0) = field(1)
     ENDIF
 
-    IF ((xbc_right_field .EQ. c_bc_zero_gradient .OR. force) &
-        .AND. right .EQ. MPI_PROC_NULL) THEN
+    IF ((bc_x_max_field .EQ. c_bc_zero_gradient .OR. force) &
+        .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
       field(nx+1) = field(nx)
       field(nx+2) = field(nx-1)
     ENDIF
@@ -106,7 +106,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, DIMENSION(1), INTENT(IN) :: stagger
 
-    IF (xbc_left_field .EQ. c_bc_clamp .AND. left .EQ. MPI_PROC_NULL) THEN
+    IF (bc_x_min_field .EQ. c_bc_clamp .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
         field(-1) = -field(1)
         field( 0) = 0.0_num
@@ -116,7 +116,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (xbc_right_field .EQ. c_bc_clamp .AND. right .EQ. MPI_PROC_NULL) THEN
+    IF (bc_x_max_field .EQ. c_bc_clamp .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
         field(nx  ) = 0.0_num
         field(nx+1) = -field(nx-1)
@@ -135,36 +135,36 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
 
-    INTEGER, DIMENSION(-1:1) :: sizes, x_start, x_end, x_shift
+    INTEGER, DIMENSION(-1:1) :: sizes, x_min, x_max, x_shift
     INTEGER :: xs, xe, xf
 
     sizes = 0
-    x_start = 0
-    x_end = 0
+    x_min = 0
+    x_max = 0
     x_shift = 0
 
     DO ix = -1, 1
       sizes(ix) = 1
       IF (ix .EQ. 0) THEN
         sizes(ix) = sizes(ix) * (nx+6)
-        x_start(ix) = -2
-        x_end(ix) = nx+3
+        x_min(ix) = -2
+        x_max(ix) = nx+3
       ELSE IF (ix .EQ. 1) THEN
         sizes(ix) = sizes(ix) * 3
-        x_start(ix) = nx+1
-        x_end(ix) = nx+3
+        x_min(ix) = nx+1
+        x_max(ix) = nx+3
         x_shift(ix) = -nx
       ELSE
         sizes(ix) = sizes(ix) * 3
-        x_start(ix) = -2
-        x_end(ix) = 0
+        x_min(ix) = -2
+        x_max(ix) = 0
         x_shift(ix) = nx
       ENDIF
     ENDDO
 
     DO ix = -1, 1, 2
-      xs = x_start(ix)
-      xe = x_end(ix)
+      xs = x_min(ix)
+      xe = x_max(ix)
       xf = x_shift(ix)
 
       ALLOCATE(temp(xs:xe))
@@ -251,29 +251,29 @@ CONTAINS
 
         ! These conditions apply if a particle has passed a physical boundary
         ! Not a processor boundary or a periodic boundary
-        IF (cur%part_pos .LE. x_start-dx/2.0_num &
-            .AND. left .EQ. MPI_PROC_NULL &
-            .AND. xbc_left_particle .EQ. c_bc_reflect) THEN
+        IF (cur%part_pos .LE. x_min-dx/2.0_num &
+            .AND. proc_x_min .EQ. MPI_PROC_NULL &
+            .AND. bc_x_min_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed left boundary
-          cur%part_pos =  2.0_num * (x_start-dx/2.0_num) - cur%part_pos
+          cur%part_pos =  2.0_num * (x_min-dx/2.0_num) - cur%part_pos
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
 
-        IF (cur%part_pos .GE. x_end+dx/2.0_num &
-            .AND. right .EQ. MPI_PROC_NULL &
-            .AND. xbc_right_particle .EQ. c_bc_reflect) THEN
+        IF (cur%part_pos .GE. x_max+dx/2.0_num &
+            .AND. proc_x_max .EQ. MPI_PROC_NULL &
+            .AND. bc_x_max_particle .EQ. c_bc_reflect) THEN
           ! particle has crossed right boundary
-          cur%part_pos =  2.0_num *(x_end+dx/2.0_num) - cur%part_pos
+          cur%part_pos =  2.0_num *(x_max+dx/2.0_num) - cur%part_pos
           cur%part_p(1) = - cur%part_p(1)
         ENDIF
 
-        IF (cur%part_pos .LT. x_start_local - dx/2.0_num) xbd = -1
-        IF (cur%part_pos .GT. x_end_local + dx/2.0_num )  xbd = 1
+        IF (cur%part_pos .LT. x_min_local - dx/2.0_num) xbd = -1
+        IF (cur%part_pos .GT. x_max_local + dx/2.0_num )  xbd = 1
 
-        IF ((cur%part_pos .LT. x_start - dx/2.0_num) &
-            .AND. (xbc_left_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos .GT. x_end + dx/2.0_num) &
-            .AND. (xbc_right_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos .LT. x_min - dx/2.0_num) &
+            .AND. (bc_x_min_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
+        IF ((cur%part_pos .GT. x_max + dx/2.0_num) &
+            .AND. (bc_x_max_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
 
         IF (ABS(xbd) .GT. 0) THEN
           ! particle has left box
@@ -309,11 +309,11 @@ CONTAINS
       cur=>particle_species(ispecies)%attached_list%head
       ct = 0
       DO WHILE(ASSOCIATED(cur))
-        IF (cur%part_pos .GT. x_end+dx/2.0_num &
-            .AND. xbc_left_particle .EQ. c_bc_periodic) &
+        IF (cur%part_pos .GT. x_max+dx/2.0_num &
+            .AND. bc_x_min_particle .EQ. c_bc_periodic) &
                 cur%part_pos = cur%part_pos-length_x - dx
-        IF (cur%part_pos .LT. x_start-dx/2.0_num &
-            .AND. xbc_right_particle .EQ. c_bc_periodic) &
+        IF (cur%part_pos .LT. x_min-dx/2.0_num &
+            .AND. bc_x_max_particle .EQ. c_bc_periodic) &
                 cur%part_pos = cur%part_pos+length_x + dx
         cur=>cur%next
       ENDDO

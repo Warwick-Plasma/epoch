@@ -78,8 +78,8 @@ CONTAINS
     IF (str_cmp(name, "lengthx") .OR. str_cmp(name, "length_x")) &
         as_constant = c_const_lx
     IF (str_cmp(name, "dx")) as_constant = c_const_dx
-    IF (str_cmp(name, "x_start")) as_constant = c_const_start_x
-    IF (str_cmp(name, "x_end")) as_constant = c_const_end_x
+    IF (str_cmp(name, "x_min")) as_constant = c_const_x_min
+    IF (str_cmp(name, "x_max")) as_constant = c_const_x_max
     IF (str_cmp(name, "ix")) as_constant = c_const_ix
     IF (str_cmp(name, "time")) as_constant = c_const_time
     IF (str_cmp(name, "never")) as_constant = c_const_io_never

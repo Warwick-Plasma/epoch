@@ -29,8 +29,8 @@ CONTAINS
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next=>current%next
-        cell_x = INT((current%part_pos(1)-x_start_local)/dx)! +1
-        cell_y = INT((current%part_pos(2)-y_start_local)/dy)! +1
+        cell_x = INT((current%part_pos(1)-x_min_local)/dx)! +1
+        cell_y = INT((current%part_pos(2)-y_min_local)/dy)! +1
         CALL remove_particle_from_partlist(&
             particle_species(ispecies)%attached_list, current)
         CALL add_particle_to_partlist(&

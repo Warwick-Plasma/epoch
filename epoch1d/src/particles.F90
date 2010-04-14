@@ -139,7 +139,7 @@ CONTAINS
         fcy = idxf * part_weight
 #endif
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos - x_start_local
+        part_x  = current%part_pos - x_min_local
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
@@ -350,7 +350,7 @@ CONTAINS
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
-        current%part_pos = part_x + x_start_local
+        current%part_pos = part_x + x_min_local
         current%part_p   = (/ part_px, part_py, part_pz /)
 
 #ifdef PARTICLE_PROBES

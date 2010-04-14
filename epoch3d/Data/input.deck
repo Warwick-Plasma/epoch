@@ -14,12 +14,12 @@ begin:control
   t_end=0.5e-12
 
   #size of domain
-  x_start=-50.0e-6
-  x_end=100e-6
-  y_start=-50e-6
-  y_end=50e-6
-  z_start=-5e-6
-  z_end=5e-6
+  x_min=-50.0e-6
+  x_max=100e-6
+  y_min=-50e-6
+  y_max=50e-6
+  z_min=-5e-6
+  z_max=5e-6
 
   #Don't know if this should be in the deck or not
   dt_multiplier=0.8
@@ -37,12 +37,12 @@ end:control
 
 begin:boundaries
 
-  xbc_left=simple_laser
-  xbc_right=simple_outflow
-  ybc_up=other
-  ybc_down=other
-  zbc_front=other
-  zbc_back=other
+  bc_x_min=simple_laser
+  bc_x_max=simple_outflow
+  bc_y_min=other
+  bc_y_max=other
+  bc_z_min=other
+  bc_z_max=other
 
 end:boundaries
 

@@ -321,7 +321,7 @@ CONTAINS
         rpos = random(idum)*(x(nx)-x(1) + dx) - dx/2.0_num
         current%part_pos = rpos+x(1)
 
-        cell_x_r = (current%part_pos-x_start_local)/dx - 0.5_num
+        cell_x_r = (current%part_pos-x_min_local)/dx - 0.5_num
         cell_x = NINT(cell_x_r)
         cell_x = cell_x+1
 
@@ -383,7 +383,7 @@ CONTAINS
 #endif
 
       ! Assume that temperature is cell centred
-      cell_x_r = (current%part_pos-x_start_local)/dx - 0.5_num
+      cell_x_r = (current%part_pos-x_min_local)/dx - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
@@ -467,7 +467,7 @@ CONTAINS
     ! First loop converts number density into weight function
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
-      cell_x_r = (current%part_pos-x_start_local) / dx - 0.5_num
+      cell_x_r = (current%part_pos-x_min_local) / dx - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
@@ -484,8 +484,8 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(weight_fn)
-    IF (left  .EQ. MPI_PROC_NULL) weight_fn(0) = weight_fn(1)
-    IF (right .EQ. MPI_PROC_NULL) weight_fn(nx) = weight_fn(nx-1)
+    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ) = weight_fn(1   )
+    IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx) = weight_fn(nx-1)
     CALL field_zero_gradient(weight_fn, .TRUE.)
 
     DO ix = -2, nx+2
@@ -496,8 +496,8 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (left  .EQ. MPI_PROC_NULL) weight_fn(0) = weight_fn(1)
-    IF (right .EQ. MPI_PROC_NULL) weight_fn(nx) = weight_fn(nx-1)
+    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ) = weight_fn(1   )
+    IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx) = weight_fn(nx-1)
     CALL field_zero_gradient(weight_fn, .TRUE.)
 
     partlist=>part_family%attached_list
@@ -506,7 +506,7 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-      cell_x_r = (current%part_pos-x_start_local) / dx ! - 0.5_num
+      cell_x_r = (current%part_pos-x_min_local) / dx ! - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1

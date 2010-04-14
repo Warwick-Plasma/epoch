@@ -205,23 +205,23 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (opcode .EQ. c_const_start_x) THEN
-      CALL push_on_eval(x_start)
+    IF (opcode .EQ. c_const_x_min) THEN
+      CALL push_on_eval(x_min)
       RETURN
     ENDIF
 
-    IF (opcode .EQ. c_const_start_y) THEN
-      CALL push_on_eval(y_start)
+    IF (opcode .EQ. c_const_y_min) THEN
+      CALL push_on_eval(y_min)
       RETURN
     ENDIF
 
-    IF (opcode .EQ. c_const_end_x) THEN
-      CALL push_on_eval(x_end)
+    IF (opcode .EQ. c_const_x_max) THEN
+      CALL push_on_eval(x_max)
       RETURN
     ENDIF
 
-    IF (opcode .EQ. c_const_end_y) THEN
-      CALL push_on_eval(y_end)
+    IF (opcode .EQ. c_const_y_max) THEN
+      CALL push_on_eval(y_max)
       RETURN
     ENDIF
 

@@ -95,8 +95,8 @@ CONTAINS
     INTEGER :: create_current_field_subtype
 
     create_current_field_subtype = &
-        create_field_subtype(nx, ny, nz, cell_x_start(coordinates(3)+1), &
-            cell_y_start(coordinates(2)+1), cell_z_start(coordinates(1)+1))
+        create_field_subtype(nx, ny, nz, cell_x_min(coordinates(3)+1), &
+            cell_y_min(coordinates(2)+1), cell_z_min(coordinates(1)+1))
 
   END FUNCTION create_current_field_subtype
 

@@ -21,7 +21,7 @@ CONTAINS
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_x
     INTEGER, DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
-    INTEGER :: new_cell_x_start, new_cell_x_end
+    INTEGER :: new_cell_x_min, new_cell_x_max
     REAL(num) :: balance_frac
     INTEGER(KIND=8) :: npart_local
     INTEGER :: iproc
@@ -69,31 +69,31 @@ CONTAINS
       CALL calculate_breaks(density_x, nprocx, starts_x, ends_x)
     ELSE
       ! Just keep the original lengths
-      starts_x = cell_x_start
-      ends_x = cell_x_end
+      starts_x = cell_x_min
+      ends_x = cell_x_max
     ENDIF
 
     ! Now need to calculate the start and end points for the new domain
     ! on the current processor
-    new_cell_x_start = starts_x(coordinates(1)+1)
-    new_cell_x_end = ends_x(coordinates(1)+1)
+    new_cell_x_min = starts_x(coordinates(1)+1)
+    new_cell_x_max = ends_x(coordinates(1)+1)
 
     ! Redeistribute the field variables
-    domain = (/new_cell_x_start, new_cell_x_end/)
+    domain = (/new_cell_x_min, new_cell_x_max/)
     CALL redistribute_fields(domain)
 
     ! Copy the new lengths into the permanent variables
-    cell_x_start = starts_x
-    cell_x_end = ends_x
+    cell_x_min = starts_x
+    cell_x_max = ends_x
 
     ! Set the new nx and ny
-    nx = new_cell_x_end-new_cell_x_start+1
+    nx = new_cell_x_max-new_cell_x_min+1
 
     ! Do X and Y arrays separatly because we already have global copies
     ! of X and Y
     DEALLOCATE(x)
     ALLOCATE(x(-2:nx+3))
-    x(0:nx+1) = x_global(new_cell_x_start-1:new_cell_x_end+1)
+    x(0:nx+1) = x_global(new_cell_x_min-1:new_cell_x_max+1)
 
     ! Reallocate the kinetic energy calculation
     DEALLOCATE(ekbar, ekbar_sum, ct)
@@ -101,16 +101,16 @@ CONTAINS
     ALLOCATE(ekbar_sum(-2:nx+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, 1:n_species))
 
-    ! Recalculate x_starts and y_starts so that rebalancing works next time
+    ! Recalculate starts_x and starts_y so that rebalancing works next time
     DO iproc = 0, nprocx-1
-      x_starts(iproc) = x_global(cell_x_start(iproc+1))
-      x_ends(iproc) = x_global(cell_x_end(iproc+1))
+      starts_x(iproc) = x_global(cell_x_min(iproc+1))
+      ends_x(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
 
     ! Set the lengths of the current domain so that the particle balancer
     ! works properly
-    x_start_local = x_starts(coordinates(1))
-    x_end_local = x_ends(coordinates(1))
+    x_min_local = starts_x(coordinates(1))
+    x_max_local = ends_x(coordinates(1))
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -254,26 +254,26 @@ CONTAINS
 
 
 
-!!$  SUBROUTINE redistribute_field(new_cell_x_start, new_cell_x_end, &
-!!$      new_cell_y_start, new_cell_y_end, field_in, field_out)
+!!$  SUBROUTINE redistribute_field(new_cell_x_min, new_cell_x_max, &
+!!$      new_cell_y_min, new_cell_y_max, field_in, field_out)
 
 !!$
 !!$    ! This subroutine redistributes the fields over the new processor layout
 !!$    ! The current version works by producing a global copy on each processor
 !!$    ! And then extracting the required part for the local processor.
 !!$    ! This is not in general a good idea
-!!$    INTEGER, INTENT(IN) :: new_cell_x_start, new_cell_x_end
-!!$    INTEGER, INTENT(IN) :: new_cell_y_start, new_cell_y_end
+!!$    INTEGER, INTENT(IN) :: new_cell_x_min, new_cell_x_max
+!!$    INTEGER, INTENT(IN) :: new_cell_y_min, new_cell_y_max
 !!$    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field_in
 !!$    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: field_out
 !!$    REAL(num), DIMENSION(:,:), ALLOCATABLE :: field_new, field_temp
 !!$    INTEGER :: nx_new, ny_new
 !!$    INTEGER :: comm_new, iproc, color
 !!$
-!!$    nx_new = new_cell_x_end-new_cell_x_start+1
-!!$    ny_new = new_cell_y_end-new_cell_y_start+1
+!!$    nx_new = new_cell_x_max-new_cell_x_min+1
+!!$    ny_new = new_cell_y_max-new_cell_y_min+1
 !!$
-!!$!    PRINT *, rank, new_cell_x_start, new_cell_y_start, " "
+!!$!    PRINT *, rank, new_cell_x_min, new_cell_y_min, " "
 !!$
 !!$    ! This is a horrible, horrible way of doing this, I MUST think of a
 !!$    ! better way
@@ -282,15 +282,15 @@ CONTAINS
 !!$    ALLOCATE(field_new(1:nx_global, 1:ny_global), &
 !!$        field_temp(1:nx_global, 1:ny_global))
 !!$    field_new = 0.0_num
-!!$    field_new(cell_x_start(coordinates(2)+1):cell_x_end(coordinates(2)+1), &
-!!$        cell_y_start(coordinates(1)+1):cell_y_end(coordinates(1)+1)) = &
+!!$    field_new(cell_x_min(coordinates(2)+1):cell_x_max(coordinates(2)+1), &
+!!$        cell_y_min(coordinates(1)+1):cell_y_max(coordinates(1)+1)) = &
 !!$        field_in(1:nx, 1:ny)
 !!$    CALL MPI_ALLREDUCE(field_new, field_temp, nx_global*ny_global, &
 !!$        mpireal, MPI_SUM, comm, errcode)
 !!$
 !!$    field_out(1:nx_new, 1:ny_new) = &
-!!$        field_temp(new_cell_x_start:new_cell_x_end, &
-!!$        new_cell_y_start:new_cell_y_end)
+!!$        field_temp(new_cell_x_min:new_cell_x_max, &
+!!$        new_cell_y_min:new_cell_y_max)
 !!$    DEALLOCATE(field_temp)
 !!$
 !!$    ! Call boundary conditions (this does not include any special BCS)
@@ -317,8 +317,8 @@ CONTAINS
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
-        ! Want global position, so not x_start, NOT x_start_local
-        part_x = current%part_pos-x_start
+        ! Want global position, so not x_min, NOT x_min_local
+        part_x = current%part_pos-x_min
         cell_x1 = NINT(part_x/dx)+1
         density(cell_x1) = density(cell_x1)+1
         current=>current%next
@@ -398,8 +398,8 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx-1
-      IF (a_particle%part_pos .GE. x_starts(iproc) - dx/2.0_num &
-          .AND. a_particle%part_pos .LE. x_ends(iproc) + dx/2.0_num) THEN
+      IF (a_particle%part_pos .GE. starts_x(iproc) - dx/2.0_num &
+          .AND. a_particle%part_pos .LE. ends_x(iproc) + dx/2.0_num) THEN
         coords(1) = iproc
         EXIT
       ENDIF

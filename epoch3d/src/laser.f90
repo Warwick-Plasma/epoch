@@ -10,15 +10,15 @@ MODULE laser
 
 CONTAINS
 
-  SUBROUTINE init_laser(direction, laser)
+  SUBROUTINE init_laser(boundary, laser)
 
-    INTEGER, INTENT(IN) :: direction
+    INTEGER, INTENT(IN) :: boundary
     TYPE(laser_block), INTENT(INOUT) :: laser
 
-    CALL allocate_with_direction(laser%profile, direction)
-    CALL allocate_with_direction(laser%phase, direction)
+    CALL allocate_with_boundary(laser%profile, boundary)
+    CALL allocate_with_boundary(laser%phase, boundary)
 
-    laser%direction = direction
+    laser%boundary = boundary
     NULLIFY(laser%next)
 
   END SUBROUTINE init_laser
@@ -39,38 +39,38 @@ CONTAINS
   ! Subroutine to attach a created laser object to the correct boundary
   SUBROUTINE attach_laser(laser)
 
-    INTEGER :: direction
+    INTEGER :: boundary
     TYPE(laser_block), POINTER :: laser
 
-    direction = laser%direction
+    boundary = laser%boundary
 
     IF (laser%k .EQ. 0) laser%k = laser%freq
 
-!!$    IF (direction .EQ. c_bd_left .OR. direction .EQ. c_bd_right) THEN
+!!$    IF (boundary .EQ. c_bd_x_min .OR. boundary .EQ. c_bd_x_max) THEN
 !!$      laser%phase(1:ny, 1:nz) = &
 !!$          laser%phase(1:ny) - laser%k * (y(1:ny) * TAN(laser%angle))
-!!$    ELSE IF (direction .EQ. c_bd_up .OR. direction .EQ. c_bd_down) THEN
+!!$    ELSE IF (boundary .EQ. c_bd_y_max .OR. boundary .EQ. c_bd_y_min) THEN
 !!$      laser%phase(1:nx, 1:nz) = &
 !!$          laser%phase(1:nx) - laser%k * (x(1:nx) * TAN(laser%angle))
 !!$    ENDIF
 
-    IF (direction .EQ. c_bd_left) THEN
-      CALL attach_laser_to_list(laser_left, laser, direction)
+    IF (boundary .EQ. c_bd_x_min) THEN
+      CALL attach_laser_to_list(laser_x_min, laser, boundary)
     ENDIF
-    IF (direction .EQ. c_bd_right) THEN
-      CALL attach_laser_to_list(laser_right, laser, direction)
+    IF (boundary .EQ. c_bd_x_max) THEN
+      CALL attach_laser_to_list(laser_x_max, laser, boundary)
     ENDIF
-    IF (direction .EQ. c_bd_up) THEN
-      CALL attach_laser_to_list(laser_up, laser, direction)
+    IF (boundary .EQ. c_bd_y_max) THEN
+      CALL attach_laser_to_list(laser_y_max, laser, boundary)
     ENDIF
-    IF (direction .EQ. c_bd_down) THEN
-      CALL attach_laser_to_list(laser_down, laser, direction)
+    IF (boundary .EQ. c_bd_y_min) THEN
+      CALL attach_laser_to_list(laser_y_min, laser, boundary)
     ENDIF
-    IF (direction .EQ. c_bd_front) THEN
-      CALL attach_laser_to_list(laser_front, laser, direction)
+    IF (boundary .EQ. c_bd_z_max) THEN
+      CALL attach_laser_to_list(laser_z_max, laser, boundary)
     ENDIF
-    IF (direction .EQ. c_bd_back) THEN
-      CALL attach_laser_to_list(laser_back, laser, direction)
+    IF (boundary .EQ. c_bd_z_min) THEN
+      CALL attach_laser_to_list(laser_z_min, laser, boundary)
     ENDIF
 
   END SUBROUTINE attach_laser
@@ -96,11 +96,11 @@ CONTAINS
 
 
   ! Actually does the attaching of the laser to the correct list
-  SUBROUTINE attach_laser_to_list(list, laser, direction)
+  SUBROUTINE attach_laser_to_list(list, laser, boundary)
 
     TYPE(laser_block), POINTER :: list
     TYPE(laser_block), POINTER :: laser
-    INTEGER, INTENT(IN) :: direction
+    INTEGER, INTENT(IN) :: boundary
     TYPE(laser_block), POINTER :: current
 
     IF (ASSOCIATED(list)) THEN
@@ -117,20 +117,20 @@ CONTAINS
 
 
 
-  SUBROUTINE allocate_with_direction(array, direction)
+  SUBROUTINE allocate_with_boundary(array, boundary)
 
     REAL(num), DIMENSION(:,:), POINTER :: array
-    INTEGER, INTENT(IN) :: direction
+    INTEGER, INTENT(IN) :: boundary
 
-    IF (direction .EQ. c_bd_left .OR. direction .EQ. c_bd_right) THEN
+    IF (boundary .EQ. c_bd_x_min .OR. boundary .EQ. c_bd_x_max) THEN
       ALLOCATE(array(-2:ny+3, -2:nz+3))
-    ELSE IF (direction .EQ. c_bd_up .OR. direction .EQ. c_bd_down) THEN
+    ELSE IF (boundary .EQ. c_bd_y_max .OR. boundary .EQ. c_bd_y_min) THEN
       ALLOCATE(array(-2:nx+3, -2:nz+3))
-    ELSE IF (direction .EQ. c_bd_front .OR. direction .EQ. c_bd_back) THEN
+    ELSE IF (boundary .EQ. c_bd_z_max .OR. boundary .EQ. c_bd_z_min) THEN
       ALLOCATE(array(-2:nx+3, -2:ny+2))
     ENDIF
 
-  END SUBROUTINE allocate_with_direction
+  END SUBROUTINE allocate_with_boundary
 
 
 
@@ -140,25 +140,25 @@ CONTAINS
     TYPE(laser_block), POINTER :: current
 
     dt_laser = 1000000.0_num
-    current=>laser_left
+    current=>laser_x_min
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num*pi/current%freq
       dt_laser = MIN(dt_laser, dt_local)
       current=>current%next
     ENDDO
-    current=>laser_right
+    current=>laser_x_max
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num*pi/current%freq
       dt_laser = MIN(dt_laser, dt_local)
       current=>current%next
     ENDDO
-    current=>laser_up
+    current=>laser_y_max
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num*pi/current%freq
       dt_laser = MIN(dt_laser, dt_local)
       current=>current%next
     ENDDO
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num*pi/current%freq
       dt_laser = MIN(dt_laser, dt_local)
@@ -174,7 +174,7 @@ CONTAINS
 
 
   ! laser boundary for the left boundary
-  SUBROUTINE laser_bcs_left
+  SUBROUTINE laser_bcs_x_min
 
     REAL(num) :: t_env
     REAL(num) :: lx
@@ -187,7 +187,7 @@ CONTAINS
     fplus = 0.0_num
     bx(0, 1:ny, 1:nz) =  0.0_num
 
-    current=>laser_left
+    current=>laser_x_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -206,7 +206,7 @@ CONTAINS
         - (c - lx*c**2)*by(0, 1:ny, 1:nz) - (dt / epsilon0) * jz(0, 1:ny, 1:nz))
 
     fplus = 0.0_num
-    current=>laser_left
+    current=>laser_x_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -225,11 +225,11 @@ CONTAINS
     DEALLOCATE(fplus)
     ! CALL bfield_bcs
 
-  END SUBROUTINE laser_bcs_left
+  END SUBROUTINE laser_bcs_x_min
 
 
 
-  SUBROUTINE outflow_bcs_left
+  SUBROUTINE outflow_bcs_x_min
 
     REAL(num) :: lx
 
@@ -244,12 +244,12 @@ CONTAINS
         + (dt / epsilon0) * jy(0, 1:ny, 1:nz))
     ! CALL bfield_bcs
 
-  END SUBROUTINE outflow_bcs_left
+  END SUBROUTINE outflow_bcs_x_min
 
 
 
   ! laser boundary for the right boundary
-  SUBROUTINE laser_bcs_right
+  SUBROUTINE laser_bcs_x_max
 
     REAL(num) :: t_env
     REAL(num) :: lx
@@ -262,7 +262,7 @@ CONTAINS
     f_minus = 0.0_num
     bx(nx, 1:ny, 1:nz) =  0.0_num
 
-    current=>laser_right
+    current=>laser_x_max
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -281,7 +281,7 @@ CONTAINS
         * jz(nx, 1:ny, 1:nz))
 
     f_minus = 0.0_num
-    current=>laser_right
+    current=>laser_x_max
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -301,11 +301,11 @@ CONTAINS
 
     DEALLOCATE(f_minus)
 
-  END SUBROUTINE laser_bcs_right
+  END SUBROUTINE laser_bcs_x_max
 
 
 
-  SUBROUTINE outflow_bcs_right
+  SUBROUTINE outflow_bcs_x_max
 
     REAL(num) :: lx
 
@@ -319,12 +319,12 @@ CONTAINS
         * (2.0_num * ey(nx, 1:ny, 1:nz) - (c - lx*c**2)*bz(nx, 1:ny, 1:nz) &
         - (dt / epsilon0) * jy(nx, 1:ny, 1:nz))
 
-  END SUBROUTINE outflow_bcs_right
+  END SUBROUTINE outflow_bcs_x_max
 
 
 
   ! laser boundary for the bottom boundary
-  SUBROUTINE laser_bcs_down
+  SUBROUTINE laser_bcs_y_min
 
     REAL(num) :: t_env
     REAL(num) :: ly
@@ -337,7 +337,7 @@ CONTAINS
     fplus = 0.0_num
     by(1:nx, -1, 1:nz) =  0.0_num
 
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -356,7 +356,7 @@ CONTAINS
         - (c - ly*c**2)*bx(1:nx, 0, 1:nz) - (dt / epsilon0) * jz(1:nx, 0, 1:nz))
 
     fplus = 0.0_num
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -375,11 +375,11 @@ CONTAINS
 
     DEALLOCATE(fplus)
 
-  END SUBROUTINE laser_bcs_down
+  END SUBROUTINE laser_bcs_y_min
 
 
 
-  SUBROUTINE outflow_bcs_down
+  SUBROUTINE outflow_bcs_y_min
 
     REAL(num) :: ly
 
@@ -393,12 +393,12 @@ CONTAINS
         * (2.0_num * ex(1:nx, 0, 1:nz) - (c - ly*c**2)*bz(1:nx, 0, 1:nz) &
         + (dt / epsilon0) * jx(1:nx, 0, 1:nz))
 
-  END SUBROUTINE outflow_bcs_down
+  END SUBROUTINE outflow_bcs_y_min
 
 
 
   ! laser boundary for the top boundary
-  SUBROUTINE laser_bcs_up
+  SUBROUTINE laser_bcs_y_max
 
     REAL(num) :: t_env
     REAL(num) :: ly
@@ -411,7 +411,7 @@ CONTAINS
     fplus = 0.0_num
     by(1:nx, ny, 1:nz) =  0.0_num
 
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -431,7 +431,7 @@ CONTAINS
         * jz(1:nx, ny, 1:nz))
 
     fplus = 0.0_num
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -451,11 +451,11 @@ CONTAINS
 
     DEALLOCATE(fplus)
 
-  END SUBROUTINE laser_bcs_up
+  END SUBROUTINE laser_bcs_y_max
 
 
 
-  SUBROUTINE outflow_bcs_up
+  SUBROUTINE outflow_bcs_y_max
 
     REAL(num) :: ly
 
@@ -469,12 +469,12 @@ CONTAINS
         * (-2.0_num * ex(1:nx, ny, 1:nz) - (c - ly*c**2)*bz(1:nx, ny, 1:nz) &
         + (dt / epsilon0) * jx(1:nx, ny, 1:nz))
 
-  END SUBROUTINE outflow_bcs_up
+  END SUBROUTINE outflow_bcs_y_max
 
 
 
   ! laser boundary for the back boundary
-  SUBROUTINE laser_bcs_back
+  SUBROUTINE laser_bcs_z_min
 
     REAL(num) :: t_env
     REAL(num) :: lz
@@ -487,7 +487,7 @@ CONTAINS
     fplus = 0.0_num
     by(1:nx, 1:ny, 0) =  0.0_num
 
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -506,7 +506,7 @@ CONTAINS
         - (c - lz*c**2)*bx(1:nx, 1:ny, 0) - (dt / epsilon0) * jz(1:nx, 1:ny, 0))
 
     fplus = 0.0_num
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -525,11 +525,11 @@ CONTAINS
 
     DEALLOCATE(fplus)
 
-  END SUBROUTINE laser_bcs_back
+  END SUBROUTINE laser_bcs_z_min
 
 
 
-  SUBROUTINE outflow_bcs_back
+  SUBROUTINE outflow_bcs_z_min
 
     REAL(num) :: lz
 
@@ -543,12 +543,12 @@ CONTAINS
         * (-2.0_num * ex(1:nx, 1:ny, 0) - (c - lz*c**2)*bz(1:nx, 1:ny, 0) &
         + (dt / epsilon0) * jx(1:nx, 1:ny, 0))
 
-  END SUBROUTINE outflow_bcs_back
+  END SUBROUTINE outflow_bcs_z_min
 
 
 
-  ! laser boundary for the back boundary
-  SUBROUTINE laser_bcs_front
+  ! laser boundary for the front boundary
+  SUBROUTINE laser_bcs_z_max
 
     REAL(num) :: t_env
     REAL(num) :: lz
@@ -561,7 +561,7 @@ CONTAINS
     fplus = 0.0_num
     by(1:nx, 1:ny, nz) =  0.0_num
 
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -581,7 +581,7 @@ CONTAINS
         * jz(1:nx, 1:ny, nz))
 
     fplus = 0.0_num
-    current=>laser_down
+    current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -601,11 +601,11 @@ CONTAINS
 
     DEALLOCATE(fplus)
 
-  END SUBROUTINE laser_bcs_front
+  END SUBROUTINE laser_bcs_z_max
 
 
 
-  SUBROUTINE outflow_bcs_front
+  SUBROUTINE outflow_bcs_z_max
 
     REAL(num) :: lz
 
@@ -619,6 +619,6 @@ CONTAINS
         * (-2.0_num * ex(1:nx, 1:ny, nz) - (c - lz*c**2)*bz(1:nx, 1:ny, nz) &
         + (dt / epsilon0) * jx(1:nx, 1:ny, nz))
 
-  END SUBROUTINE outflow_bcs_front
+  END SUBROUTINE outflow_bcs_z_max
 
 END MODULE laser

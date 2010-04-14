@@ -35,7 +35,7 @@ CONTAINS
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next=>current%next
-        part_x  = current%part_pos - x_start_local
+        part_x  = current%part_pos - x_min_local
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer

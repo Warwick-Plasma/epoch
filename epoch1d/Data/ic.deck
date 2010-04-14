@@ -14,7 +14,7 @@ end:constant
 
 begin:laser
 
-  direction=left
+  boundary=left
   amp=3.222499e13     #1e20 W/cm^2
   freq= omega  #red
   pol=0.0

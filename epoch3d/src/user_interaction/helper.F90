@@ -373,15 +373,15 @@ CONTAINS
         rpos = random(idum)*(z(nz)-z(1) + dz) - dz/2.0_num
         current%part_pos(3) = rpos+z(1)
 
-        cell_x_r = (current%part_pos(1)-x_start_local)/dx - 0.5_num
+        cell_x_r = (current%part_pos(1)-x_min_local)/dx - 0.5_num
         cell_x = NINT(cell_x_r)
         cell_x = cell_x+1
 
-        cell_y_r = (current%part_pos(2)-y_start_local)/dy - 0.5_num
+        cell_y_r = (current%part_pos(2)-y_min_local)/dy - 0.5_num
         cell_y = NINT(cell_y_r)
         cell_y = cell_y+1
 
-        cell_z_r = (current%part_pos(3)-z_start_local)/dz - 0.5_num
+        cell_z_r = (current%part_pos(3)-z_min_local)/dz - 0.5_num
         cell_z = NINT(cell_z_r)
         cell_z = cell_z+1
 
@@ -445,17 +445,17 @@ CONTAINS
 #endif
 
       ! Assume that temperature is cell centred
-      cell_x_r = (current%part_pos(1)-x_start_local)/dx - 0.5_num
+      cell_x_r = (current%part_pos(1)-x_min_local)/dx - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      cell_y_r = (current%part_pos(2)-y_start_local)/dy - 0.5_num
+      cell_y_r = (current%part_pos(2)-y_min_local)/dy - 0.5_num
       cell_y = NINT(cell_y_r)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
       cell_y = cell_y+1
 
-      cell_z_r = (current%part_pos(3)-z_start_local)/dz - 0.5_num
+      cell_z_r = (current%part_pos(3)-z_min_local)/dz - 0.5_num
       cell_z = NINT(cell_z_r)
       cell_frac_z = REAL(cell_z, num) - cell_z_r
       cell_z = cell_z+1
@@ -554,17 +554,17 @@ CONTAINS
     ! First loop converts number density into weight function
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
-      cell_x_r = (current%part_pos(1)-x_start_local) / dx - 0.5_num
+      cell_x_r = (current%part_pos(1)-x_min_local) / dx - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      cell_y_r = (current%part_pos(2)-y_start_local) / dy - 0.5_num
+      cell_y_r = (current%part_pos(2)-y_min_local) / dy - 0.5_num
       cell_y = NINT(cell_y_r)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
       cell_y = cell_y+1
 
-      cell_z_r = (current%part_pos(3)-z_start_local) / dz - 0.5_num
+      cell_z_r = (current%part_pos(3)-z_min_local) / dz - 0.5_num
       cell_z = NINT(cell_z_r)
       cell_frac_z = REAL(cell_z, num) - cell_z_r
       cell_z = cell_z+1
@@ -589,12 +589,12 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(weight_fn)
-    IF (left  .EQ. MPI_PROC_NULL) weight_fn(0,:,:) = weight_fn(1,:,:)
-    IF (right .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
-    IF (down  .EQ. MPI_PROC_NULL) weight_fn(:,0,:) = weight_fn(:,1,:)
-    IF (up    .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
-    IF (back  .EQ. MPI_PROC_NULL) weight_fn(:,:,0) = weight_fn(:,:,1)
-    IF (front .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
+    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0, :,:) = weight_fn(1,   :,:)
+    IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
+    IF (proc_y_min .EQ. MPI_PROC_NULL) weight_fn(:,0, :) = weight_fn(:,1,   :)
+    IF (proc_y_max .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
+    IF (proc_z_min .EQ. MPI_PROC_NULL) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
+    IF (proc_z_max .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
     CALL field_zero_gradient(weight_fn, .TRUE.)
 
     DO iz = -2, nz+2
@@ -609,12 +609,12 @@ CONTAINS
       ENDDO
     ENDDO
 
-    IF (left  .EQ. MPI_PROC_NULL) weight_fn(0,:,:) = weight_fn(1,:,:)
-    IF (right .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
-    IF (down  .EQ. MPI_PROC_NULL) weight_fn(:,0,:) = weight_fn(:,1,:)
-    IF (up    .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
-    IF (back  .EQ. MPI_PROC_NULL) weight_fn(:,:,0) = weight_fn(:,:,1)
-    IF (front .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
+    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0, :,:) = weight_fn(1,   :,:)
+    IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
+    IF (proc_y_min .EQ. MPI_PROC_NULL) weight_fn(:,0, :) = weight_fn(:,1,   :)
+    IF (proc_y_max .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
+    IF (proc_z_min .EQ. MPI_PROC_NULL) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
+    IF (proc_z_max .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
     CALL field_zero_gradient(weight_fn, .TRUE.)
 
     partlist=>part_family%attached_list
@@ -623,17 +623,17 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-      cell_x_r = (current%part_pos(1)-x_start_local) / dx ! - 0.5_num
+      cell_x_r = (current%part_pos(1)-x_min_local) / dx ! - 0.5_num
       cell_x = NINT(cell_x_r)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
       cell_x = cell_x+1
 
-      cell_y_r = (current%part_pos(2)-y_start_local) / dy ! - 0.5_num
+      cell_y_r = (current%part_pos(2)-y_min_local) / dy ! - 0.5_num
       cell_y = NINT(cell_y_r)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
       cell_y = cell_y+1
 
-      cell_z_r = (current%part_pos(3)-z_start_local) / dz ! - 0.5_num
+      cell_z_r = (current%part_pos(3)-z_min_local) / dz ! - 0.5_num
       cell_z = NINT(cell_z_r)
       cell_frac_z = REAL(cell_z, num) - cell_z_r
       cell_z = cell_z+1

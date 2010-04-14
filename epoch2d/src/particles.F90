@@ -144,8 +144,8 @@ CONTAINS
         fcz = idxy * part_weight
 #endif
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_start_local
-        part_y  = current%part_pos(2) - y_start_local
+        part_x  = current%part_pos(1) - x_min_local
+        part_y  = current%part_pos(2) - y_min_local
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
@@ -568,7 +568,7 @@ CONTAINS
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
-        current%part_pos = (/ part_x + x_start_local, part_y + y_start_local /)
+        current%part_pos = (/ part_x + x_min_local, part_y + y_min_local /)
         current%part_p   = (/ part_px, part_py, part_pz /)
 
 #ifdef PARTICLE_PROBES
@@ -715,7 +715,7 @@ CONTAINS
               ! probe lines are defined by two points. particles crossing the
               ! line are recorded assumes transit from left -> right. Put the
               ! top at the bottom and bottom at the top to catch
-              ! right-> left moving particles.
+              ! left -> right moving particles.
               probe_x1 = current_probe%vertex_bottom(1)
               probe_y1 = current_probe%vertex_bottom(2)
               probe_x2 = current_probe%vertex_top(1)
