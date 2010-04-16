@@ -8,6 +8,7 @@ MODULE setup
   USE mpi_subtype_control
   USE fields
   USE version_data
+  USE encoded_source
 
   IMPLICIT NONE
 
@@ -43,6 +44,8 @@ CONTAINS
     run_date = get_unix_time()
 
     CALL set_field_order(2)
+
+    CALL init_source_code()
 
   END SUBROUTINE minimal_init
 

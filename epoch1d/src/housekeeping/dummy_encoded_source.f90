@@ -4,7 +4,14 @@ MODULE encoded_source
 
   CHARACTER(LEN=*), PARAMETER :: sha1sum = ""
 
-  CHARACTER(LEN=*), DIMENSION(0), PARAMETER :: source_code = ""
   CHARACTER(LEN=*), PARAMETER :: last_line = ""
+
+  CHARACTER(LEN=76), DIMENSION(0) :: source_code
+
+CONTAINS
+
+  SUBROUTINE init_source_code()
+
+  END SUBROUTINE init_source_code
 
 END MODULE encoded_source

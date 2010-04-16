@@ -34,8 +34,9 @@ if [ $build_sha1 -eq 1 ]; then
   fi
 fi
 
+rm -f $tmp $tmp2
+
 nlines=0
-line_end='""'
 
 if [ $embed_source -eq 1 ]; then
   tar czf $tmp $*
@@ -44,22 +45,26 @@ if [ $embed_source -eq 1 ]; then
     if [ $? -ne 0 ]; then
       echo base64 failed. Trying mimencode.
       mimencode $tmp -o $tmp2
-    fi
-    if [ $? -ne 0 ]; then
-      echo mimencode failed. Trying uuencode.
-      uuencode -m $tmp epoch.tgz > $tmp2
-      if [ $? -eq 0 ]; then
-        n=`cat $tmp2 | wc -l`
-        sed -n 2,$((n-1))p $tmp2 > $tmp
-        mv $tmp $tmp2
-      else
-        false
+      if [ $? -ne 0 ]; then
+        echo mimencode failed. Trying uuencode.
+        uuencode -m $tmp epoch.tgz > $tmp2
+        if [ $? -eq 0 ]; then
+          n=`cat $tmp2 | wc -l`
+          sed -n 2,$((n-1))p $tmp2 > $tmp
+          mv $tmp $tmp2
+        else
+          false
+        fi
+        if [ $? -ne 0 ]; then
+          echo uuencode failed. Trying perl.
+          perl -MMIME::Base64 -ne \
+            'local($/)=undef;print encode_base64(<STDIN>)' < $tmp > $tmp2
+        fi
       fi
     fi
     if [ $? -eq 0 ]; then
       nlines=`cat $tmp2 | wc -l`
       nlines=$((nlines-1))
-      line_end='(/ &'
       success=0
     fi
   fi
@@ -72,25 +77,55 @@ MODULE encoded_source
 
   CHARACTER(LEN=*), PARAMETER :: sha1sum = "$sha"
 
-  CHARACTER(LEN=*), DIMENSION($nlines), PARAMETER :: source_code = $line_end
 EOF
 
-if [ -e $tmp2 ]; then
-  head -n $((nlines-1)) $tmp2 | sed 's/^/      "/; s/$/", \&/' >> $file
-  head -n $((nlines)) $tmp2 | tail -n 1 | sed 's/^/      "/; s/$/" \/)/' >> $file
+
+if [ $nlines -gt 0 ]; then
   echo "  CHARACTER(LEN=*), PARAMETER :: last_line = &" >> $file
   tail -n 1 $tmp2 | sed 's/^/      "/; s/$/"/' >> $file
-else
-  echo '  CHARACTER(LEN=*), PARAMETER :: last_line = ""' >> $file
-fi
-
 
 cat >> $file <<EOF
+
+  CHARACTER(LEN=76), DIMENSION($nlines) :: source_code
+
+CONTAINS
+
+  SUBROUTINE init_source_code()
+
+EOF
+
+IFS="
+"
+  i=1
+  for ln in `head -n $nlines $tmp2`; do
+    echo "    source_code($i) = \"$ln\"" >> $file
+    i=$((i+1))
+  done
+
+cat >> $file <<EOF
+
+  END SUBROUTINE init_source_code
 
 END MODULE encoded_source
 EOF
 
-rm -f $tmp $tmp2
+else
+cat >> $file <<EOF
+  CHARACTER(LEN=*), PARAMETER :: last_line = ""
+
+  CHARACTER(LEN=76), DIMENSION($nlines) :: source_code
+
+CONTAINS
+
+  SUBROUTINE init_source_code()
+
+  END SUBROUTINE init_source_code
+
+END MODULE encoded_source
+EOF
+fi
+
+#rm -f $tmp $tmp2
 
 if [ $success -ne 0 ]; then
   echo WARNING: failed to pack source code. Restart dumps will be produced without it.
