@@ -366,7 +366,7 @@ MODULE shared_data
     LOGICAL :: split
     INTEGER(KIND=8) :: npart_max
     ! Secondary list
-    TYPE(particle_list), DIMENSION(:,:), POINTER :: secondary_list
+    TYPE(particle_list), DIMENSION(:), POINTER :: secondary_list
 #endif
 
     ! Injection of particles

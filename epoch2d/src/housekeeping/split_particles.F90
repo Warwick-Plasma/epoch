@@ -1,5 +1,8 @@
 MODULE split_particle
 
+  USE shared_data
+  USE helper
+
   IMPLICIT NONE
 
   SAVE
@@ -7,6 +10,7 @@ MODULE split_particle
   INTEGER(KIND=8) :: npart_per_cell_min = 5
 
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
+
 CONTAINS
 
   SUBROUTINE reorder_particles_to_grid
