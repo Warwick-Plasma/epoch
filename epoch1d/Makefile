@@ -18,6 +18,10 @@ MODULEFLAG = -module
 # Uncomment for the gfortran compiler
 #MODULEFLAG = -J
 
+# If you are having trouble compiling the encoded_source module, try
+# uncommenting the following line.
+#ENCODED_SOURCE = dummy_encoded_source.o
+
 #BUILDOPT += opt_dont_build_sha1
 #BUILDOPT += opt_dont_build_embedded_source
 
@@ -33,7 +37,7 @@ BINDIR = bin
 FC = mpif90
 DATE := $(shell date +%s)
 MACHINE := $(shell uname -n)
-PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(MACHINE)"' -D_FLAGS='"$(FFLAGS)"'
+PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(MACHINE)"'
 
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
   custom_laser.f90 custom_parser.f90 deck.F90 deck_boundaries_block.f90 \
@@ -52,7 +56,10 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
   tokenizer_blocks.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
-OBJFILES := $(OBJFILES:.F90=.o) encoded_source.o
+OBJFILES := $(OBJFILES:.F90=.o)
+
+ENCODED_SOURCE ?= encoded_source.o
+OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)
 
 FULLTARGET = $(BINDIR)/$(TARGET)
 
@@ -129,9 +136,9 @@ deck_ic_species_block.o: deck_ic_species_block.f90 strings_advanced.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o
 deck_species_block.o: deck_species_block.F90 setup.o strings_advanced.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
-diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o encoded_source.o \
-  iocontrol.o iterators.o mpi_subtype_control.o output_cartesian.o \
-  output_particle.o probes.o
+diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iocontrol.o \
+  iterators.o mpi_subtype_control.o output_cartesian.o output_particle.o \
+  probes.o $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 output_cartesian.o
 epoch1d.o: epoch1d.F90 balance.o deck.o diagnostics.o fields.o ic_module.o \
   ionise.o mpi_routines.o particles.o setup.o split_particles.o welcome.o \

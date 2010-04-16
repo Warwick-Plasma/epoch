@@ -7,7 +7,7 @@ MODULE version_data
   INTEGER(4), PARAMETER :: c_code_io_version = 1
   CHARACTER(LEN=*), PARAMETER :: c_commit_id = _COMMIT
   CHARACTER(LEN=*), PARAMETER :: c_compile_machine = _MACHINE
-  CHARACTER(LEN=*), PARAMETER :: c_compile_flags = _FLAGS
+  CHARACTER(LEN=*), PARAMETER :: c_compile_flags = "unknown"
   INTEGER(4), PARAMETER :: c_compile_date = _DATE
   CHARACTER(LEN=16) :: version_string
   CHARACTER(LEN=70) :: ascii_header

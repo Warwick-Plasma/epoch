@@ -76,10 +76,10 @@ MODULE encoded_source
 EOF
 
 if [ -e $tmp2 ]; then
-  head -$((nlines-1)) $tmp2 | sed 's/^/      "/; s/$/", \&/' >> $file
-  head -$((nlines)) $tmp2 | tail -1 | sed 's/^/      "/; s/$/" \/)/' >> $file
+  head -n $((nlines-1)) $tmp2 | sed 's/^/      "/; s/$/", \&/' >> $file
+  head -n $((nlines)) $tmp2 | tail -n 1 | sed 's/^/      "/; s/$/" \/)/' >> $file
   echo "  CHARACTER(LEN=*), PARAMETER :: last_line = &" >> $file
-  tail -1 $tmp2 | sed 's/^/      "/; s/$/"/' >> $file
+  tail -n 1 $tmp2 | sed 's/^/      "/; s/$/"/' >> $file
 else
   echo '  CHARACTER(LEN=*), PARAMETER :: last_line = ""' >> $file
 fi
