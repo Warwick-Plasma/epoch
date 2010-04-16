@@ -5,7 +5,7 @@ FFLAGS = -O3 #-heap-arrays 0 -fast
 TARGET = epoch3d
 
 # Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DSPLINE_FOUR
+DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 
 # Copy this line onto the DEFINES line to turn on particle cell division
 # -DPARTICLE_CELL_DIVISION
