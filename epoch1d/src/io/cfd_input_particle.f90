@@ -1,6 +1,8 @@
-MODULE input_particle
+MODULE cfd_input_particle
 
-  USE input_functions
+  USE cfd_common
+  USE cfd_input_functions
+  USE shared_data
 
   IMPLICIT NONE
 
@@ -270,4 +272,4 @@ CONTAINS
 
   END SUBROUTINE cfd_get_nd_particle_variable_parallel_with_iterator
 
-END MODULE input_particle
+END MODULE cfd_input_particle

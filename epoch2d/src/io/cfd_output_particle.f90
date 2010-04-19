@@ -1,7 +1,8 @@
-MODULE output_particle
+MODULE cfd_output_particle
 
-  USE iocommon
-  USE output
+  USE cfd_common
+  USE cfd_output
+  USE shared_data
 
   IMPLICIT NONE
 
@@ -559,4 +560,4 @@ CONTAINS
 
   END SUBROUTINE cfd_write_nd_particle_variable_with_iterator_all
 
-END MODULE output_particle
+END MODULE cfd_output_particle

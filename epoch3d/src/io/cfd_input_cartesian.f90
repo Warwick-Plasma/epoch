@@ -1,6 +1,8 @@
-MODULE input_cartesian
+MODULE cfd_input_cartesian
 
-  USE input_functions
+  USE cfd_common
+  USE cfd_input_functions
+  USE shared_data
 
   IMPLICIT NONE
 
@@ -313,4 +315,4 @@ CONTAINS
 
   END SUBROUTINE cfd_get_3d_cartesian_variable_all
 
-END MODULE input_cartesian
+END MODULE cfd_input_cartesian

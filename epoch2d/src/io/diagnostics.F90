@@ -1,15 +1,16 @@
 MODULE diagnostics
 
   USE calc_df
-  USE output_cartesian
-  USE output_particle
-  USE iocontrol
-  USE dist_fn
-  USE probes
-  USE mpi_subtype_control
-  USE encoded_source
+  USE cfd_control
+  USE cfd_output
+  USE cfd_output_cartesian
+  USE cfd_output_particle
   USE deck
+  USE dist_fn
+  USE encoded_source
   USE iterators
+  USE mpi_subtype_control
+  USE probes
 
   IMPLICIT NONE
 

@@ -1,6 +1,8 @@
-MODULE input
+MODULE cfd_input
 
-  USE input_functions
+  USE cfd_common
+  USE cfd_input_functions
+  USE shared_data
 
   IMPLICIT NONE
 
@@ -236,4 +238,4 @@ CONTAINS
 
   END SUBROUTINE cfd_get_real_constant
 
-END MODULE input
+END MODULE cfd_input

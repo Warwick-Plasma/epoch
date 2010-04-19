@@ -1,7 +1,8 @@
-MODULE iocontrol
+MODULE cfd_control
 
-  USE input
-  USE output
+  USE cfd_common
+  USE cfd_input
+  USE cfd_output
 
   IMPLICIT NONE
 
@@ -130,4 +131,4 @@ CONTAINS
 
   END FUNCTION cfd_get_jobid
 
-END MODULE iocontrol
+END MODULE cfd_control

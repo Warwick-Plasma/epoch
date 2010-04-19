@@ -1,7 +1,8 @@
-MODULE output_cartesian
+MODULE cfd_output_cartesian
 
-  USE iocommon
-  USE output
+  USE cfd_common
+  USE cfd_output
+  USE shared_data
 
   IMPLICIT NONE
 
@@ -920,4 +921,4 @@ CONTAINS
 
   END SUBROUTINE cfd_write_3d_cartesian_variable
 
-END MODULE output_cartesian
+END MODULE cfd_output_cartesian

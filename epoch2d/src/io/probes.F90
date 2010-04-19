@@ -1,9 +1,9 @@
 MODULE probes
 
 #ifdef PARTICLE_PROBES
-  USE partlist
-  USE output_particle
+  USE cfd_output_particle
   USE mpi_subtype_control
+  USE partlist
 
   SAVE
   TYPE(particle_list), POINTER, PRIVATE :: current_list

@@ -1,6 +1,8 @@
-MODULE output
+MODULE cfd_output
 
-  USE iocommon
+  USE cfd_common
+  USE cfd_job_info
+  USE shared_data
   USE version_data
 
   IMPLICIT NONE
@@ -513,4 +515,4 @@ CONTAINS
 
   END SUBROUTINE cfd_write_visit_expression
 
-END MODULE output
+END MODULE cfd_output

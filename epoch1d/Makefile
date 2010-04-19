@@ -118,23 +118,28 @@ balance.o: balance.F90 boundary.o mpi_subtype_control.o partlist.o
 boundary.o: boundary.f90 deck_io_block.o particle_temperature.o partlist.o
 calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
 cfd_common.o: cfd_common.f90 cfd_job_info.o shared_data.o
-cfd_control.o: cfd_control.f90 cfd_input.o cfd_output.o
-cfd_input.o: cfd_input.f90 cfd_input_functions.o
-cfd_input_cartesian.o: cfd_input_cartesian.f90 cfd_input_functions.o
+cfd_control.o: cfd_control.f90 cfd_common.o cfd_input.o cfd_output.o
+cfd_input.o: cfd_input.f90 cfd_common.o cfd_input_functions.o shared_data.o
+cfd_input_cartesian.o: cfd_input_cartesian.f90 cfd_common.o \
+  cfd_input_functions.o shared_data.o
 cfd_input_functions.o: cfd_input_functions.f90 cfd_common.o
-cfd_input_particle.o: cfd_input_particle.f90 cfd_input_functions.o shared_data.o
+cfd_input_particle.o: cfd_input_particle.f90 cfd_common.o \
+  cfd_input_functions.o shared_data.o
 cfd_job_info.o: cfd_job_info.f90
-cfd_output.o: cfd_output.f90 cfd_common.o version_data.o
-cfd_output_cartesian.o: cfd_output_cartesian.f90 cfd_common.o cfd_output.o
+cfd_output.o: cfd_output.f90 cfd_common.o cfd_job_info.o shared_data.o \
+  version_data.o
+cfd_output_cartesian.o: cfd_output_cartesian.f90 cfd_common.o cfd_output.o \
+  shared_data.o
 cfd_output_particle.o: cfd_output_particle.f90 cfd_common.o cfd_output.o \
   shared_data.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o
-deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_constant_block.o \
-  deck_control_block.o deck_deo_block.o deck_eio_dist_fn_block.o \
-  deck_eio_particle_probe_block.o deck_ic_fields_block.o deck_ic_laser_block.o \
-  deck_io_block.o deck_species_block.o deck_window_block.o strings.o \
+deck.o: deck.F90 cfd_output.o custom_deck.o deck_boundaries_block.o \
+  deck_constant_block.o deck_control_block.o deck_deo_block.o \
+  deck_eio_dist_fn_block.o deck_eio_particle_probe_block.o \
+  deck_ic_fields_block.o deck_ic_laser_block.o deck_io_block.o \
+  deck_species_block.o deck_window_block.o shared_data.o strings.o \
   version_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings.o
 deck_constant_block.o: deck_constant_block.f90 strings_advanced.o
@@ -150,13 +155,14 @@ deck_io_block.o: deck_io_block.F90 strings_advanced.o
 deck_species_block.o: deck_species_block.F90 setup.o simple_io.o \
   strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
-diagnostics.o: diagnostics.F90 calc_df.o cfd_control.o cfd_output_cartesian.o \
-  cfd_output_particle.o deck.o dist_fn.o iterators.o mpi_subtype_control.o \
-  probes.o shared_data.o $(ENCODED_SOURCE)
-dist_fn.o: dist_fn.F90 cfd_output_cartesian.o mpi_subtype_control.o
-epoch1d.o: epoch1d.F90 balance.o deck.o diagnostics.o fields.o ic_module.o \
-  ionise.o mpi_routines.o particles.o setup.o split_particles.o welcome.o \
-  window.o
+diagnostics.o: diagnostics.F90 calc_df.o cfd_control.o cfd_output.o \
+  cfd_output_cartesian.o cfd_output_particle.o deck.o dist_fn.o iterators.o \
+  mpi_subtype_control.o probes.o shared_data.o $(ENCODED_SOURCE)
+dist_fn.o: dist_fn.F90 cfd_output_cartesian.o mpi_subtype_control.o \
+  shared_data.o
+epoch1d.o: epoch1d.F90 balance.o boundary.o cfd_job_info.o custom_parser.o \
+  deck.o diagnostics.o fields.o helper.o ic_module.o ionise.o mpi_routines.o \
+  particles.o setup.o split_particles.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o
@@ -172,9 +178,10 @@ particle_temperature.o: particle_temperature.F90 shape_functions.o
 particles.o: particles.F90 boundary.o shape_functions.o
 partlist.o: partlist.F90 shared_data.o
 probes.o: probes.F90 cfd_output_particle.o mpi_subtype_control.o partlist.o
-setup.o: setup.F90 cfd_control.o cfd_input_cartesian.o cfd_input_particle.o \
-  fields.o mpi_subtype_control.o partlist.o strings.o version_data.o \
-  $(ENCODED_SOURCE)
+setup.o: setup.F90 cfd_common.o cfd_control.o cfd_input.o \
+  cfd_input_cartesian.o cfd_input_functions.o cfd_input_particle.o \
+  cfd_job_info.o fields.o mpi_subtype_control.o partlist.o shared_data.o \
+  strings.o version_data.o $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 cfd_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o

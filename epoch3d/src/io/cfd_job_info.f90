@@ -1,4 +1,4 @@
-MODULE job_info
+MODULE cfd_job_info
 
   IMPLICIT NONE
 
@@ -71,4 +71,4 @@ MODULE job_info
 
   END SUBROUTINE get_job_id
 
-END MODULE job_info
+END MODULE cfd_job_info

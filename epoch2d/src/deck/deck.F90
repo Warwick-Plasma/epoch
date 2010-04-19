@@ -1,6 +1,8 @@
 MODULE deck
 
   ! Basic operations
+  USE cfd_output
+  USE shared_data
   USE strings
   ! Deck internals
   USE deck_constant_block
@@ -309,17 +311,19 @@ CONTAINS
     already_parsed = .FALSE.
 
     ! Make the whole filename by adding the data_dir to the filename
-    deck_filename = TRIM(ADJUSTL(data_dir))// '/' // TRIM(ADJUSTL(filename))
+    deck_filename = TRIM(ADJUSTL(data_dir)) // '/' // TRIM(ADJUSTL(filename))
 
     ! deck_state tells the code whether it's parsing the normal input deck
     ! Or the initial conditions. You can add more states if you want.
     ! Just search for deck_state
     IF (deck_state .EQ. c_ds_deck) THEN
-      status_filename = TRIM(ADJUSTL(data_dir))// '/' // "deck.status"
+      status_filename = TRIM(ADJUSTL(data_dir)) // '/deck.status'
     ELSE IF (deck_state .EQ. c_ds_ic) THEN
-      status_filename = TRIM(ADJUSTL(data_dir))// '/' // "ic.status"
+      status_filename = TRIM(ADJUSTL(data_dir)) // '/ic.status'
     ELSE IF (deck_state .EQ. c_ds_eio) THEN
-      status_filename = TRIM(ADJUSTL(data_dir))// '/' // "eio.status"
+      status_filename = TRIM(ADJUSTL(data_dir)) // '/eio.status'
+    ELSE
+      status_filename = TRIM(ADJUSTL(data_dir)) // '/input.status'
     ENDIF
 
     ! If this is the first time that this deck has been called then do some

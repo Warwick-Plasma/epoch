@@ -1,7 +1,7 @@
-MODULE iocommon
+MODULE cfd_common
 
+  USE cfd_job_info
   USE shared_data
-  USE job_info
 
   IMPLICIT NONE
 
@@ -72,4 +72,4 @@ MODULE iocommon
 
   TYPE(jobid_type) :: cfd_jobid
 
-END MODULE iocommon
+END MODULE cfd_common

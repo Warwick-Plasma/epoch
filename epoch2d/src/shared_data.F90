@@ -316,9 +316,9 @@ END MODULE shared_parser_data
 
 MODULE shared_data
 
+  USE cfd_job_info
   USE constants
   USE shared_parser_data
-  USE job_info
   USE mpi
 
   IMPLICIT NONE

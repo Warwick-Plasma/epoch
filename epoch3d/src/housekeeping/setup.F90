@@ -1,14 +1,19 @@
 MODULE setup
 
-  USE input_cartesian
-  USE input_particle
-  USE iocontrol
-  USE strings
-  USE partlist
-  USE mpi_subtype_control
-  USE fields
-  USE version_data
+  USE cfd_common
+  USE cfd_control
+  USE cfd_input
+  USE cfd_input_cartesian
+  USE cfd_input_functions
+  USE cfd_input_particle
+  USE cfd_job_info
   USE encoded_source
+  USE fields
+  USE mpi_subtype_control
+  USE partlist
+  USE shared_data
+  USE strings
+  USE version_data
 
   IMPLICIT NONE
 

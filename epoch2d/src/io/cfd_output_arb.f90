@@ -1,7 +1,7 @@
-MODULE output_arb
+MODULE cfd_output_arb
 
-  USE iocommon
-  USE output
+  USE cfd_common
+  USE cfd_output
 
   IMPLICIT NONE
 
@@ -48,4 +48,4 @@ CONTAINS
 
   END SUBROUTINE cfd_write_arb_block
 
-END MODULE output_arb
+END MODULE cfd_output_arb

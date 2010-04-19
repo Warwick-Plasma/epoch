@@ -1,6 +1,6 @@
-MODULE input_arb
+MODULE cfd_input_arb
 
-  USE input_functions
+  USE cfd_input_functions
 
   IMPLICIT NONE
 
@@ -37,4 +37,4 @@ CONTAINS
 
   END SUBROUTINE cfd_get_arb_block
 
-END MODULE input_arb
+END MODULE cfd_input_arb

@@ -1,6 +1,6 @@
-MODULE input_functions
+MODULE cfd_input_functions
 
-  USE iocommon
+  USE cfd_common
 
   IMPLICIT NONE
 
@@ -36,4 +36,4 @@ CONTAINS
 
   END SUBROUTINE cfd_skip_block_metadata
 
-END MODULE input_functions
+END MODULE cfd_input_functions

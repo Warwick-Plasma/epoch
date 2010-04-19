@@ -1,6 +1,8 @@
 MODULE deck
 
   ! Basic operations
+  USE cfd_output
+  USE shared_data
   USE strings
   ! Deck internals
   USE deck_constant_block
