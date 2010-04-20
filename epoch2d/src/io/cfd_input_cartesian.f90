@@ -221,25 +221,6 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_get_1d_cartesian_variable_all(variable)
-
-    REAL(num), DIMENSION(:), INTENT(IN) :: variable
-    INTEGER :: errcode
-
-    CALL cfd_skip_block_metadata()
-
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL cfd_skip_block()
-
-  END SUBROUTINE cfd_get_1d_cartesian_variable_all
-
-
-
   SUBROUTINE cfd_get_2d_cartesian_variable_parallel(variable, subtype, subarray)
 
     REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
@@ -260,25 +241,6 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_get_2d_cartesian_variable_all(variable)
-
-    REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
-    INTEGER :: errcode
-
-    CALL cfd_skip_block_metadata()
-
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL cfd_skip_block()
-
-  END SUBROUTINE cfd_get_2d_cartesian_variable_all
-
-
-
   SUBROUTINE cfd_get_3d_cartesian_variable_parallel(variable, subtype, subarray)
 
     REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
@@ -296,24 +258,5 @@ CONTAINS
     CALL cfd_skip_block()
 
   END SUBROUTINE cfd_get_3d_cartesian_variable_parallel
-
-
-
-  SUBROUTINE cfd_get_3d_cartesian_variable_all(variable)
-
-    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
-    INTEGER :: errcode
-
-    CALL cfd_skip_block_metadata()
-
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL cfd_skip_block()
-
-  END SUBROUTINE cfd_get_3d_cartesian_variable_all
 
 END MODULE cfd_input_cartesian

@@ -183,44 +183,6 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_write_snapshot_data(time, step, rank_write)
-
-    REAL(8), INTENT(IN) :: time
-    INTEGER, INTENT(IN) :: step, rank_write
-    INTEGER(8) :: md_length
-    INTEGER(4) :: step4
-    INTEGER :: errcode
-
-    md_length = soi + sof
-
-    CALL cfd_write_block_header("Snapshot", "Snapshot", c_type_snapshot, &
-        md_length, md_length, rank_write)
-
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
-
-    IF (cfd_rank .EQ. rank_write) THEN
-      step4 = INT(step, 4)
-      CALL MPI_FILE_WRITE(cfd_filehandle, step4, 1, MPI_INTEGER4, &
-          MPI_STATUS_IGNORE, errcode)
-    ENDIF
-
-    current_displacement = current_displacement + soi
-
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, "native", MPI_INFO_NULL, &
-        errcode)
-
-    IF (cfd_rank .EQ. rank_write) &
-        CALL MPI_FILE_WRITE(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
-            MPI_STATUS_IGNORE, errcode)
-
-    current_displacement = current_displacement + 8
-
-  END SUBROUTINE cfd_write_snapshot_data
-
-
-
   SUBROUTINE cfd_write_job_info(restart_flag, sha1sum, rank_write)
 
     INTEGER, INTENT(IN) :: restart_flag
@@ -493,17 +455,5 @@ CONTAINS
     current_displacement = current_displacement + md_length
 
   END SUBROUTINE cfd_write_1d_integer_array
-
-
-
-  SUBROUTINE cfd_write_visit_expression(expression_name, expression_class, &
-      expression)
-
-    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: expression_name
-    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: expression_class, expression
-
-    PRINT *, LEN(expression(1)), LEN(expression(2))
-
-  END SUBROUTINE cfd_write_visit_expression
 
 END MODULE cfd_output

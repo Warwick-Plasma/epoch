@@ -54,25 +54,6 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_get_nd_particle_grid_all(ndims, npart, data)
-
-    INTEGER, INTENT(IN) :: ndims
-    INTEGER(8), INTENT(IN) :: npart
-    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
-    INTEGER :: errcode
-
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, data, ndims * npart, mpireal, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL cfd_skip_block
-
-  END SUBROUTINE cfd_get_nd_particle_grid_all
-
-
-
   SUBROUTINE cfd_get_nd_particle_grid_parallel(ndims, npart, data, subtype)
 
     INTEGER, INTENT(IN) :: ndims
@@ -190,24 +171,6 @@ CONTAINS
     CALL cfd_skip_block_metadata()
 
   END SUBROUTINE cfd_get_nd_particle_variable_metadata_all
-
-
-
-  SUBROUTINE cfd_get_nd_particle_variable_all(npart, data)
-
-    INTEGER(8), INTENT(IN) :: npart
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
-    INTEGER :: errcode
-
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, data, npart, mpireal, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL cfd_skip_block
-
-  END SUBROUTINE cfd_get_nd_particle_variable_all
 
 
 

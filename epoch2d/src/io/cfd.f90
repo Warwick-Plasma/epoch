@@ -51,40 +51,26 @@ MODULE cfd
   PUBLIC :: cfd_set_default_rank
   PUBLIC :: cfd_get_nblocks
   PUBLIC :: cfd_get_jobid
-  !PUBLIC :: cfd_open_read
   PUBLIC :: cfd_get_next_block_info_all
   PUBLIC :: cfd_get_common_meshtype_metadata_all
   PUBLIC :: cfd_get_snapshot
   PUBLIC :: cfd_get_real_constant
-  !PUBLIC :: cfd_get_nd_cartesian_grid_metadata_all
   PUBLIC :: cfd_get_1d_cartesian_grid_all
   PUBLIC :: cfd_get_2d_cartesian_grid_all
   PUBLIC :: cfd_get_3d_cartesian_grid_all
+  PUBLIC :: cfd_get_nd_cartesian_grid_metadata_all
   PUBLIC :: cfd_get_nd_cartesian_variable_metadata_all
   PUBLIC :: cfd_get_1d_cartesian_variable_parallel
-  !PUBLIC :: cfd_get_1d_cartesian_variable_all
   PUBLIC :: cfd_get_2d_cartesian_variable_parallel
-  !PUBLIC :: cfd_get_2d_cartesian_variable_all
   PUBLIC :: cfd_get_3d_cartesian_variable_parallel
-  !PUBLIC :: cfd_get_3d_cartesian_variable_all
   PUBLIC :: cfd_skip_block
-  !PUBLIC :: cfd_skip_block_header
-  !PUBLIC :: cfd_skip_block_metadata
   PUBLIC :: cfd_get_nd_particle_grid_metadata_all
-  !PUBLIC :: cfd_get_nd_particle_grid_all
-  !PUBLIC :: cfd_get_nd_particle_grid_parallel
   PUBLIC :: cfd_get_nd_particle_grid_parallel_with_iterator
+  PUBLIC :: cfd_get_nd_particle_grid_parallel
   PUBLIC :: cfd_get_nd_particle_variable_metadata_all
-  !PUBLIC :: cfd_get_nd_particle_variable_all
-  !PUBLIC :: cfd_get_nd_particle_variable_parallel
+  PUBLIC :: cfd_get_nd_particle_variable_parallel
   PUBLIC :: cfd_get_nd_particle_variable_parallel_with_iterator
-  !PUBLIC :: cfd_open_clobber, cfd_write_block_header, cfd_write_meshtype_header
-  PUBLIC :: cfd_write_snapshot_data
-  !PUBLIC :: cfd_safe_write_string
   PUBLIC :: cfd_write_job_info
-  !PUBLIC :: cfd_write_stitched_vector
-  !PUBLIC :: cfd_write_stitched_magnitude, cfd_write_real_constant
-  !PUBLIC :: cfd_write_visit_expression
   PUBLIC :: cfd_write_source_code
   PUBLIC :: cfd_write_1d_cartesian_grid
   PUBLIC :: cfd_write_2d_cartesian_grid
@@ -92,12 +78,17 @@ MODULE cfd
   PUBLIC :: cfd_write_1d_cartesian_variable_parallel
   PUBLIC :: cfd_write_2d_cartesian_variable_parallel
   PUBLIC :: cfd_write_3d_cartesian_variable_parallel
-  !PUBLIC :: cfd_write_1d_cartesian_variable
-  !PUBLIC :: cfd_write_2d_cartesian_variable
-  !PUBLIC :: cfd_write_3d_cartesian_variable
-  !PUBLIC :: cfd_write_nd_particle_grid_all
   PUBLIC :: cfd_write_nd_particle_grid_with_iterator_all
-  !PUBLIC :: cfd_write_nd_particle_variable_all
   PUBLIC :: cfd_write_nd_particle_variable_with_iterator_all
+  PUBLIC :: cfd_write_stitched_vector
+  PUBLIC :: cfd_write_stitched_magnitude
+  PUBLIC :: cfd_write_real_constant
+  !PUBLIC :: cfd_open_read
+  !PUBLIC :: cfd_skip_block_header
+  !PUBLIC :: cfd_skip_block_metadata
+  !PUBLIC :: cfd_open_clobber
+  !PUBLIC :: cfd_write_block_header
+  !PUBLIC :: cfd_write_meshtype_header
+  !PUBLIC :: cfd_safe_write_string
 
 END MODULE cfd
