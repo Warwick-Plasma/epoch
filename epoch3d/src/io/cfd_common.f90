@@ -1,6 +1,7 @@
 MODULE cfd_common
 
   USE cfd_job_info
+  USE shared_data, ONLY: num
   USE mpi
 
   IMPLICIT NONE

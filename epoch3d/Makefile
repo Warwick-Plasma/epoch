@@ -121,21 +121,17 @@ calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
 cfd.o: cfd.f90 cfd_common.o cfd_control.o cfd_input.o cfd_input_cartesian.o \
   cfd_input_functions.o cfd_input_particle.o cfd_output.o \
   cfd_output_cartesian.o cfd_output_particle.o
-cfd_common.o: cfd_common.f90 cfd_job_info.o
+cfd_common.o: cfd_common.f90 cfd_job_info.o shared_data.o
 cfd_control.o: cfd_control.f90 cfd_common.o cfd_input.o cfd_output.o
-cfd_input.o: cfd_input.f90 cfd_common.o cfd_input_functions.o shared_data.o
+cfd_input.o: cfd_input.f90 cfd_common.o cfd_input_functions.o
 cfd_input_cartesian.o: cfd_input_cartesian.f90 cfd_common.o \
-  cfd_input_functions.o shared_data.o
+  cfd_input_functions.o
 cfd_input_functions.o: cfd_input_functions.f90 cfd_common.o
-cfd_input_particle.o: cfd_input_particle.f90 cfd_common.o \
-  cfd_input_functions.o shared_data.o
+cfd_input_particle.o: cfd_input_particle.f90 cfd_common.o cfd_input_functions.o
 cfd_job_info.o: cfd_job_info.f90
-cfd_output.o: cfd_output.f90 cfd_common.o cfd_job_info.o shared_data.o \
-  version_data.o
-cfd_output_cartesian.o: cfd_output_cartesian.f90 cfd_common.o cfd_output.o \
-  shared_data.o
-cfd_output_particle.o: cfd_output_particle.f90 cfd_common.o cfd_output.o \
-  shared_data.o
+cfd_output.o: cfd_output.f90 cfd_common.o cfd_job_info.o version_data.o
+cfd_output_cartesian.o: cfd_output_cartesian.f90 cfd_common.o cfd_output.o
+cfd_output_particle.o: cfd_output_particle.f90 cfd_common.o cfd_output.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o

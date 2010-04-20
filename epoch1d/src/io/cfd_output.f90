@@ -2,7 +2,6 @@ MODULE cfd_output
 
   USE cfd_common
   USE cfd_job_info
-  USE shared_data
   USE version_data
   USE mpi
 

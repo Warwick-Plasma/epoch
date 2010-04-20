@@ -2,7 +2,6 @@ MODULE cfd_input_particle
 
   USE cfd_common
   USE cfd_input_functions
-  USE shared_data
   USE mpi
 
   IMPLICIT NONE
@@ -91,7 +90,7 @@ CONTAINS
 
     INTERFACE
       SUBROUTINE iterator(data, npart_it, start, direction)
-        USE shared_data
+        USE cfd_common
         REAL(num), DIMENSION(:), INTENT(INOUT) :: data
         INTEGER(8), INTENT(INOUT) :: npart_it
         LOGICAL, INTENT(IN) :: start
@@ -211,7 +210,7 @@ CONTAINS
 
     INTERFACE
       SUBROUTINE iterator(data, npart_it, start)
-        USE shared_data
+        USE cfd_common
         REAL(num), DIMENSION(:), INTENT(INOUT) :: data
         INTEGER(8), INTENT(INOUT) :: npart_it
         LOGICAL, INTENT(IN) :: start
