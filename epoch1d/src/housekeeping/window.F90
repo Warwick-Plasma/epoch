@@ -15,13 +15,13 @@ CONTAINS
     DO iwindow = 1, FLOOR(window_shift_fraction)
       CALL insert_particles
       ! Shift the box around
-      starts_x = starts_x+dx
+      x_mins = x_mins+dx
       x_min_local = x_min_local+dx
       x_min = x_min+dx
       x_global = x_global+dx
       x = x+dx
 
-      ends_x = ends_x+dx
+      x_maxs = x_maxs+dx
       x_max_local = x_max_local+dx
       x_max = x_max+dx
       CALL remove_particles

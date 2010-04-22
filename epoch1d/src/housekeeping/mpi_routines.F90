@@ -96,7 +96,7 @@ CONTAINS
     ALLOCATE(jx(-2:nx+3), jy(-2:nx+3), jz(-2:nx+3))
     ALLOCATE(ekbar(1:nx, 1:n_species), ekbar_sum(-2:nx+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, 1:n_species))
-    ALLOCATE(starts_x(0:nprocx-1), ends_x(0:nprocx-1))
+    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
     ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
 
     DO idim = 0, nprocx-1

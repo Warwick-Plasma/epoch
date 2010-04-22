@@ -494,9 +494,9 @@ MODULE shared_data
   REAL(num) :: y_min_local, y_max_local, length_y_local
   REAL(num) :: length_z, dz, z_min, z_max
   REAL(num) :: z_min_local, z_max_local, length_z_local
-  REAL(num), DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
-  REAL(num), DIMENSION(:), ALLOCATABLE :: starts_y, ends_y
-  REAL(num), DIMENSION(:), ALLOCATABLE :: starts_z, ends_z
+  REAL(num), DIMENSION(:), ALLOCATABLE :: x_mins, x_maxs
+  REAL(num), DIMENSION(:), ALLOCATABLE :: y_mins, y_maxs
+  REAL(num), DIMENSION(:), ALLOCATABLE :: z_mins, z_maxs
 
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight
@@ -592,9 +592,11 @@ MODULE shared_data
   END TYPE laser_block
 
   TYPE(laser_block), POINTER :: laser_x_min, laser_x_max
-  TYPE(laser_block), POINTER :: laser_y_max, laser_y_min
-  TYPE(laser_block), POINTER :: laser_z_max, laser_z_min
-  INTEGER :: n_laser_x_min, n_laser_x_max, n_laser_y_max, n_laser_y_min
+  TYPE(laser_block), POINTER :: laser_y_min, laser_y_max
+  TYPE(laser_block), POINTER :: laser_z_min, laser_z_max
+  INTEGER :: n_laser_x_min, n_laser_x_max
+  INTEGER :: n_laser_y_min, n_laser_y_max
+  INTEGER :: n_laser_z_min, n_laser_z_max
 
   TYPE(jobid_type) :: jobid
 

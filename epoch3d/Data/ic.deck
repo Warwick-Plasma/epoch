@@ -33,7 +33,7 @@ end:deo
 
 begin:laser
 
-  boundary=left
+  boundary=x_min
   amp=3.88191e14       #1e20 W/cm^2
   profile=exp(spot)
   freq= 32.2831853e13   #red

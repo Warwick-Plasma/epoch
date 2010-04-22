@@ -66,12 +66,12 @@ CONTAINS
     ENDDO
 
     DO iproc = 0, nprocx-1
-      starts_x(iproc) = x_global(iproc*nx+1)
-      ends_x(iproc) = x_global((iproc+1)*nx)
+      x_mins(iproc) = x_global(iproc*nx+1)
+      x_maxs(iproc) = x_global((iproc+1)*nx)
     ENDDO
 
-    x_min_local = starts_x(coordinates(1))
-    x_max_local = ends_x(coordinates(1))
+    x_min_local = x_mins(coordinates(1))
+    x_max_local = x_maxs(coordinates(1))
 
     ! Setup local grid
     x(-1) = x_min_local-dx*2.0_num

@@ -132,18 +132,18 @@ CONTAINS
 
     as_boundary = -1
 
-    IF (str_cmp(str_in, "left") &
-        .OR. str_cmp(str_in, "x_min")) as_boundary = c_bd_x_min
-    IF (str_cmp(str_in, "right") &
-        .OR. str_cmp(str_in, "x_max")) as_boundary = c_bd_x_max
-    IF (str_cmp(str_in, "down") &
-        .OR. str_cmp(str_in, "y_min")) as_boundary = c_bd_y_min
-    IF (str_cmp(str_in, "up") &
-        .OR. str_cmp(str_in, "y_max")) as_boundary = c_bd_y_max
-    IF (str_cmp(str_in, "back") &
-        .OR. str_cmp(str_in, "z_min")) as_boundary = c_bd_z_min
-    IF (str_cmp(str_in, "front") &
-        .OR. str_cmp(str_in, "z_max")) as_boundary = c_bd_z_max
+    IF (str_cmp(str_in, "x_min" .OR. str_cmp(str_in, "left")) &
+        as_boundary = c_bd_x_min
+    IF (str_cmp(str_in, "x_max" .OR. str_cmp(str_in, "right")) &
+        as_boundary = c_bd_x_max
+    IF (str_cmp(str_in, "y_min" .OR. str_cmp(str_in, "down")) &
+        as_boundary = c_bd_y_min
+    IF (str_cmp(str_in, "y_max" .OR. str_cmp(str_in, "up")) &
+        as_boundary = c_bd_y_max
+    IF (str_cmp(str_in, "z_min" .OR. str_cmp(str_in, "back")) &
+        as_boundary = c_bd_z_min
+    IF (str_cmp(str_in, "z_max" .OR. str_cmp(str_in, "front")) &
+        as_boundary = c_bd_z_max
 
     IF (as_boundary .EQ. -1) err = IOR(err, c_err_bad_value)
 

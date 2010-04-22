@@ -29,12 +29,14 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "bc_x_min_after_move")) THEN
+    IF (str_cmp(element, "bc_x_min_after_move") &
+        .OR. str_cmp(element, "xbc_left_after_move")) THEN
       bc_x_min_after_move = as_bc(value, handle_window_deck)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "bc_x_max_after_move")) THEN
+    IF (str_cmp(element, "bc_x_max_after_move") &
+        .OR. str_cmp(element, "xbc_right_after_move")) THEN
       bc_x_max_after_move = as_bc(value, handle_window_deck)
       RETURN
     ENDIF

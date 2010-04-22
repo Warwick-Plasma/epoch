@@ -333,7 +333,7 @@ CONTAINS
 
 
 
-  ! laser boundary for the top boundary
+  ! laser boundary for the bottom boundary
   SUBROUTINE laser_bcs_y_max
 
     REAL(num) :: t_env

@@ -132,10 +132,10 @@ CONTAINS
 
     as_boundary = -1
 
-    IF (str_cmp(str_in, "left") &
-        .OR. str_cmp(str_in, "x_min")) as_boundary = c_bd_x_min
-    IF (str_cmp(str_in, "right") &
-        .OR. str_cmp(str_in, "x_max")) as_boundary = c_bd_x_max
+    IF (str_cmp(str_in, "x_min") .OR. str_cmp(str_in, "left")) &
+        as_boundary = c_bd_x_min
+    IF (str_cmp(str_in, "x_max") .OR. str_cmp(str_in, "right")) &
+        as_boundary = c_bd_x_max
 
     IF (as_boundary .EQ. -1) err = IOR(err, c_err_bad_value)
 

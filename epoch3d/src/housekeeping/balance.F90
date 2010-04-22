@@ -198,30 +198,30 @@ CONTAINS
     ALLOCATE(ekbar_sum(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
 
-    ! Recalculate starts_x and starts_y so that rebalancing works next time
+    ! Recalculate x_mins and y_mins so that rebalancing works next time
     DO iproc = 0, nprocx-1
-      starts_x(iproc) = x_global(cell_x_min(iproc+1))
-      ends_x(iproc) = x_global(cell_x_max(iproc+1))
+      x_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
     ! Same for y
     DO iproc = 0, nprocy-1
-      starts_y(iproc) = y_global(cell_y_min(iproc+1))
-      ends_y(iproc) = y_global(cell_y_max(iproc+1))
+      y_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
     ! Same for z
     DO iproc = 0, nprocz-1
-      starts_z(iproc) = z_global(cell_z_min(iproc+1))
-      ends_z(iproc) = z_global(cell_z_max(iproc+1))
+      z_mins(iproc) = z_global(cell_z_min(iproc+1))
+      z_maxs(iproc) = z_global(cell_z_max(iproc+1))
     ENDDO
 
     ! Set the lengths of the current domain so that the particle balancer
     ! works properly
-    x_min_local = starts_x(coordinates(3))
-    x_max_local = ends_x(coordinates(3))
-    y_min_local = starts_y(coordinates(2))
-    y_max_local = ends_y(coordinates(2))
-    z_min_local = starts_z(coordinates(1))
-    z_max_local = ends_z(coordinates(1))
+    x_min_local = x_mins(coordinates(3))
+    x_max_local = x_maxs(coordinates(3))
+    y_min_local = y_mins(coordinates(2))
+    y_max_local = y_maxs(coordinates(2))
+    z_min_local = z_mins(coordinates(1))
+    z_max_local = z_maxs(coordinates(1))
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -701,29 +701,29 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx-1
-      IF (a_particle%part_pos(1) .GT. starts_x(iproc) - dx/2.0_num &
-          .AND. a_particle%part_pos(1) .LE. ends_x(iproc) + dx/2.0_num) THEN
+      IF (a_particle%part_pos(1) .GT. x_mins(iproc) - dx/2.0_num &
+          .AND. a_particle%part_pos(1) .LE. x_maxs(iproc) + dx/2.0_num) THEN
         coords(3) = iproc
         EXIT
       ENDIF
     ENDDO
 
     DO iproc = 0, nprocy-1
-      IF (a_particle%part_pos(2) .GT. starts_y(iproc) - dy/2.0_num &
-          .AND. a_particle%part_pos(2) .LE. ends_y(iproc) + dy/2.0_num) THEN
+      IF (a_particle%part_pos(2) .GT. y_mins(iproc) - dy/2.0_num &
+          .AND. a_particle%part_pos(2) .LE. y_maxs(iproc) + dy/2.0_num) THEN
         coords(2) = iproc
         EXIT
       ENDIF
     ENDDO
     DO iproc = 0, nprocz-1
-      IF (a_particle%part_pos(3) .GT. starts_z(iproc) - dz/2.0_num &
-          .AND. a_particle%part_pos(3) .LE. ends_z(iproc) + dz/2.0_num) THEN
+      IF (a_particle%part_pos(3) .GT. z_mins(iproc) - dz/2.0_num &
+          .AND. a_particle%part_pos(3) .LE. z_maxs(iproc) + dz/2.0_num) THEN
         coords(1) = iproc
         EXIT
       ENDIF
     ENDDO
 
-    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE", coords,ends_z
+    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE", coords,z_maxs
     IF (MINVAL(coords) .LT. 0) RETURN
     CALL MPI_CART_RANK(comm, coords, get_particle_processor, errcode)
     ! IF (get_particle_processor .NE. rank) PRINT *,

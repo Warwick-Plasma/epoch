@@ -547,7 +547,7 @@ CONTAINS
 
 
 
-  ! laser boundary for the front boundary
+  ! laser boundary for the back boundary
   SUBROUTINE laser_bcs_z_max
 
     REAL(num) :: t_env

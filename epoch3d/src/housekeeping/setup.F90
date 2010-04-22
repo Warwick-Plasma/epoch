@@ -83,24 +83,24 @@ CONTAINS
     ENDDO
 
     DO iproc = 0, nprocx-1
-      starts_x(iproc) = x_global(iproc*nx+1)
-      ends_x(iproc) = x_global((iproc+1)*nx)
+      x_mins(iproc) = x_global(iproc*nx+1)
+      x_maxs(iproc) = x_global((iproc+1)*nx)
     ENDDO
     DO iproc = 0, nprocy-1
-      starts_y(iproc) = y_global(iproc*ny+1)
-      ends_y(iproc) = y_global((iproc+1)*ny)
+      y_mins(iproc) = y_global(iproc*ny+1)
+      y_maxs(iproc) = y_global((iproc+1)*ny)
     ENDDO
     DO iproc = 0, nprocz-1
-      starts_z(iproc) = z_global(iproc*nz+1)
-      ends_z(iproc) = z_global((iproc+1)*nz)
+      z_mins(iproc) = z_global(iproc*nz+1)
+      z_maxs(iproc) = z_global((iproc+1)*nz)
     ENDDO
 
-    x_min_local = starts_x(coordinates(3))
-    x_max_local = ends_x(coordinates(3))
-    y_min_local = starts_y(coordinates(2))
-    y_max_local = ends_y(coordinates(2))
-    z_min_local = starts_z(coordinates(1))
-    z_max_local = ends_z(coordinates(1))
+    x_min_local = x_mins(coordinates(3))
+    x_max_local = x_maxs(coordinates(3))
+    y_min_local = y_mins(coordinates(2))
+    y_max_local = y_maxs(coordinates(2))
+    z_min_local = z_mins(coordinates(1))
+    z_max_local = z_maxs(coordinates(1))
 
     ! Setup local grid
     x(-1) = x_min_local-dx*2.0_num

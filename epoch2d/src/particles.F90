@@ -715,7 +715,7 @@ CONTAINS
               ! probe lines are defined by two points. particles crossing the
               ! line are recorded assumes transit from left -> right. Put the
               ! top at the bottom and bottom at the top to catch
-              ! left -> right moving particles.
+              ! right-> left moving particles.
               probe_x1 = current_probe%vertex_bottom(1)
               probe_y1 = current_probe%vertex_bottom(2)
               probe_x2 = current_probe%vertex_top(1)

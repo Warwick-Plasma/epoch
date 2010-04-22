@@ -14,7 +14,7 @@ end:constant
 
 begin:laser
 
-  boundary=left
+  boundary=x_min
   amp=3.222499e13     #1e20 W/cm^2
   freq= omega  #red
   pol=0.0

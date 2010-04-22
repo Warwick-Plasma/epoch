@@ -101,16 +101,16 @@ CONTAINS
     ALLOCATE(ekbar_sum(-2:nx+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, 1:n_species))
 
-    ! Recalculate starts_x and starts_y so that rebalancing works next time
+    ! Recalculate x_mins and y_mins so that rebalancing works next time
     DO iproc = 0, nprocx-1
-      starts_x(iproc) = x_global(cell_x_min(iproc+1))
-      ends_x(iproc) = x_global(cell_x_max(iproc+1))
+      x_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
 
     ! Set the lengths of the current domain so that the particle balancer
     ! works properly
-    x_min_local = starts_x(coordinates(1))
-    x_max_local = ends_x(coordinates(1))
+    x_min_local = x_mins(coordinates(1))
+    x_max_local = x_maxs(coordinates(1))
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -398,8 +398,8 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx-1
-      IF (a_particle%part_pos .GE. starts_x(iproc) - dx/2.0_num &
-          .AND. a_particle%part_pos .LE. ends_x(iproc) + dx/2.0_num) THEN
+      IF (a_particle%part_pos .GE. x_mins(iproc) - dx/2.0_num &
+          .AND. a_particle%part_pos .LE. x_maxs(iproc) + dx/2.0_num) THEN
         coords(1) = iproc
         EXIT
       ENDIF

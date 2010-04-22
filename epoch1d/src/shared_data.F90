@@ -480,7 +480,7 @@ MODULE shared_data
   REAL(num) :: dt_snapshots
   REAL(num) :: length_x, dx, x_min, x_max
   REAL(num) :: x_min_local, x_max_local, length_x_local
-  REAL(num), DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
+  REAL(num), DIMENSION(:), ALLOCATABLE :: x_mins, x_maxs
 
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight

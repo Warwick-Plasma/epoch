@@ -119,8 +119,8 @@ CONTAINS
     ALLOCATE(ekbar(1:nx, 1:ny, 1:n_species))
     ALLOCATE(ekbar_sum(-2:nx+3, -2:ny+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, -2:ny+3, 1:n_species))
-    ALLOCATE(starts_x(0:nprocx-1), ends_x(0:nprocx-1))
-    ALLOCATE(starts_y(0:nprocy-1), ends_y(0:nprocy-1))
+    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
+    ALLOCATE(y_mins(0:nprocy-1), y_maxs(0:nprocy-1))
     ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
     ALLOCATE(cell_y_min(1:nprocy), cell_y_max(1:nprocy))
 
