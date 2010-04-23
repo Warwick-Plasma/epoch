@@ -147,7 +147,7 @@ evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o
 helper.o: helper.F90 boundary.o shape_functions.o strings.o
-ic_module.o: ic_module.f90
+ic_module.o: ic_module.f90 helper.o shared_data.o
 input.o: input.f90 input_functions.o
 input_cartesian.o: input_cartesian.f90 input_functions.o
 input_functions.o: input_functions.f90 iocommon.o
