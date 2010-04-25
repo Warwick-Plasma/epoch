@@ -90,9 +90,9 @@ CONTAINS
     defines = IOR(defines, c_def_field_debug)
     WRITE(*, *) "Field Debug information -DFIELD_DEBUG"
 #endif
-#ifdef SPLINE_FOUR
-    defines = IOR(defines, c_def_spline_four)
-    WRITE(*, *) "Fourth order spline interpolation -DSPLINE_FOUR"
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    defines = IOR(defines, c_def_particle_shape_bspline3)
+    WRITE(*, *) "Third order B-spline particle shape -DPARTICLE_SHAPE_BSPLINE3"
 #endif
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
     defines = IOR(defines, c_def_split_particles_after_push)

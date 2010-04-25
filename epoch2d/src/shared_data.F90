@@ -89,7 +89,7 @@ MODULE constants
   ! define flags
   INTEGER(4), PARAMETER :: c_def_particle_debug = 1
   INTEGER(4), PARAMETER :: c_def_field_debug = 2
-  INTEGER(4), PARAMETER :: c_def_spline_four = 4
+  INTEGER(4), PARAMETER :: c_def_particle_shape_bspline3 = 4
   INTEGER(4), PARAMETER :: c_def_split_particles_after_push = 8
   INTEGER(4), PARAMETER :: c_def_per_particle_weight = 16
   INTEGER(4), PARAMETER :: c_def_particle_count_update = 32
@@ -312,7 +312,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
 
   ! The order for the spline interpolation used as a particle representation.
-#ifdef SPLINE_FOUR
+#ifdef PARTICLE_SHAPE_BSPLINE3
   INTEGER, PARAMETER :: sf_order = 2
 #else
   INTEGER, PARAMETER :: sf_order = 1

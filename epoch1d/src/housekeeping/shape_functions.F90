@@ -13,7 +13,7 @@ CONTAINS
     REAL(num), PARAMETER :: fac1 = 1.0_num / 24.0_num
     REAL(num), PARAMETER :: fac2 = 1.0_num / 6.0_num
 
-#ifdef SPLINE_FOUR
+#ifdef PARTICLE_SHAPE_BSPLINE3
     output(-2) = fac1 * (0.5_num + cell_frac)**4
     output(-1) = fac2 * (1.1875_num + cell_frac * (2.75_num &
         + cell_frac * (1.5_num - cell_frac - cell_frac**2)))
@@ -41,7 +41,7 @@ CONTAINS
     REAL(num), PARAMETER :: fac1 = 1.0_num / 24.0_num
     REAL(num), PARAMETER :: fac2 = 1.0_num / 6.0_num
 
-#ifdef SPLINE_FOUR
+#ifdef PARTICLE_SHAPE_BSPLINE3
     output(-2) = fac1 * (0.5_num + cell_frac)**4
     output(-1) = fac2 * (1.1875_num + cell_frac * (2.75_num &
         + cell_frac * (1.5_num - cell_frac - cell_frac**2)))

@@ -107,7 +107,7 @@ CONTAINS
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
     ! particle weighting multiplication factor
-#ifdef SPLINE_FOUR
+#ifdef PARTICLE_SHAPE_BSPLINE3
     fac = 1.0_num / 24.0_num
 #else
     fac = 0.5_num
@@ -172,20 +172,10 @@ CONTAINS
         ! These weight grid properties onto particles
         ! Also used to weight particle properties onto grid, used later
         ! to calculate J
-#ifdef SPLINE_FOUR
-        cf2 = cell_frac_x**2
-        gx(-2) = (0.5_num + cell_frac_x)**4
-        gx(-1) = 4.75_num + 11.0_num * cell_frac_x &
-            + 4.0_num * cf2 * (1.5_num - cell_frac_x - cf2)
-        gx( 0) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
-        gx( 1) = 4.75_num - 11.0_num * cell_frac_x &
-            + 4.0_num * cf2 * (1.5_num + cell_frac_x - cf2)
-        gx( 2) = (0.5_num - cell_frac_x)**4
+#ifdef PARTICLE_SHAPE_BSPLINE3
+        INCLUDE 'include/bspline3/gx.inc'
 #else
-        cf2 = cell_frac_x**2
-        gx(-1) = 0.25_num + cf2 + cell_frac_x
-        gx( 0) = 1.5_num - 2.0_num * cf2
-        gx( 1) = 0.25_num + cf2 - cell_frac_x
+        INCLUDE 'include/triangle/gx.inc'
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -195,97 +185,20 @@ CONTAINS
         cell_frac_x = REAL(cell_x2, num) - cell_x_r + 0.5_num
         cell_x2 = cell_x2 + 1
 
-#ifdef SPLINE_FOUR
-        cf2 = cell_frac_x**2
-        hx(-2) = (0.5_num + cell_frac_x)**4
-        hx(-1) = 4.75_num + 11.0_num * cell_frac_x &
-            + 4.0_num * cf2 * (1.5_num - cell_frac_x - cf2)
-        hx( 0) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
-        hx( 1) = 4.75_num - 11.0_num * cell_frac_x &
-            + 4.0_num * cf2 * (1.5_num + cell_frac_x - cf2)
-        hx( 2) = (0.5_num - cell_frac_x)**4
+        dcellx = 0
+#ifdef PARTICLE_SHAPE_BSPLINE3
+        INCLUDE 'include/bspline3/hx_dcell.inc'
 #else
-        cf2 = cell_frac_x**2
-        hx(-1) = 0.25_num + cf2 + cell_frac_x
-        hx( 0) = 1.5_num - 2.0_num * cf2
-        hx( 1) = 0.25_num + cf2 - cell_frac_x
+        INCLUDE 'include/triangle/hx_dcell.inc'
 #endif
 
         ! These are the electric and magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
-#ifdef SPLINE_FOUR
-        ex_part = &
-              hx(-2) * ex(cell_x2-2) &
-            + hx(-1) * ex(cell_x2-1) &
-            + hx( 0) * ex(cell_x2  ) &
-            + hx( 1) * ex(cell_x2+1) &
-            + hx( 2) * ex(cell_x2+2)
-
-        ey_part = &
-              gx(-2) * ey(cell_x1-2) &
-            + gx(-1) * ey(cell_x1-1) &
-            + gx( 0) * ey(cell_x1  ) &
-            + gx( 1) * ey(cell_x1+1) &
-            + gx( 2) * ey(cell_x1+2)
-
-        ez_part = &
-              gx(-2) * ez(cell_x1-2) &
-            + gx(-1) * ez(cell_x1-1) &
-            + gx( 0) * ez(cell_x1  ) &
-            + gx( 1) * ez(cell_x1+1) &
-            + gx( 2) * ez(cell_x1+2)
-
-        bx_part = &
-              gx(-2) * bx(cell_x1-2) &
-            + gx(-1) * bx(cell_x1-1) &
-            + gx( 0) * bx(cell_x1  ) &
-            + gx( 1) * bx(cell_x1+1) &
-            + gx( 2) * bx(cell_x1+2)
-
-        by_part = &
-              hx(-2) * by(cell_x2-2) &
-            + hx(-1) * by(cell_x2-1) &
-            + hx( 0) * by(cell_x2  ) &
-            + hx( 1) * by(cell_x2+1) &
-            + hx( 2) * by(cell_x2+2)
-
-        bz_part = &
-              hx(-2) * bz(cell_x2-2) &
-            + hx(-1) * bz(cell_x2-1) &
-            + hx( 0) * bz(cell_x2  ) &
-            + hx( 1) * bz(cell_x2+1) &
-            + hx( 2) * bz(cell_x2+2)
+#ifdef PARTICLE_SHAPE_BSPLINE3
+        INCLUDE 'include/bspline3/eb_part.inc'
 #else
-        ex_part = &
-              hx(-1) * ex(cell_x2-1) &
-            + hx( 0) * ex(cell_x2  ) &
-            + hx( 1) * ex(cell_x2+1)
-
-        ey_part = &
-              gx(-1) * ey(cell_x1-1) &
-            + gx( 0) * ey(cell_x1  ) &
-            + gx( 1) * ey(cell_x1+1)
-
-        ez_part = &
-              gx(-1) * ez(cell_x1-1) &
-            + gx( 0) * ez(cell_x1  ) &
-            + gx( 1) * ez(cell_x1+1)
-
-        bx_part = &
-              gx(-1) * bx(cell_x1-1) &
-            + gx( 0) * bx(cell_x1  ) &
-            + gx( 1) * bx(cell_x1+1)
-
-        by_part = &
-              hx(-1) * by(cell_x2-1) &
-            + hx( 0) * by(cell_x2  ) &
-            + hx( 1) * by(cell_x2+1)
-
-        bz_part = &
-              hx(-1) * bz(cell_x2-1) &
-            + hx( 0) * bz(cell_x2  ) &
-            + hx( 1) * bz(cell_x2+1)
+        INCLUDE 'include/triangle/eb_part.inc'
 #endif
 
         ! update particle momenta using weighted fields
@@ -359,21 +272,10 @@ CONTAINS
           hx = 0.0_num
 
           dcellx = cell_x3 - cell_x1
-
-#ifdef SPLINE_FOUR
-          cf2 = cell_frac_x**2
-          hx(dcellx-2) = (0.5_num + cell_frac_x)**4
-          hx(dcellx-1) = 4.75_num + 11.0_num * cell_frac_x &
-              + 4.0_num * cf2 * (1.5_num - cell_frac_x - cf2)
-          hx(dcellx  ) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
-          hx(dcellx+1) = 4.75_num - 11.0_num * cell_frac_x &
-              + 4.0_num * cf2 * (1.5_num + cell_frac_x - cf2)
-          hx(dcellx+2) = (0.5_num - cell_frac_x)**4
+#ifdef PARTICLE_SHAPE_BSPLINE3
+          INCLUDE 'include/bspline3/hx_dcell.inc'
 #else
-          cf2 = cell_frac_x**2
-          hx(dcellx-1) = 0.25_num + cf2 + cell_frac_x
-          hx(dcellx  ) = 1.5_num - 2.0_num * cf2
-          hx(dcellx+1) = 0.25_num + cf2 - cell_frac_x
+          INCLUDE 'include/triangle/hx_dcell.inc'
 #endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of

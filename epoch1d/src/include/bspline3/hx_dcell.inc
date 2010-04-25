@@ -1,0 +1,8 @@
+        cf2 = cell_frac_x**2
+        hx(dcellx-2) = (0.5_num + cell_frac_x)**4
+        hx(dcellx-1) = 4.75_num + 11.0_num * cell_frac_x &
+            + 4.0_num * cf2 * (1.5_num - cell_frac_x - cf2)
+        hx(dcellx  ) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
+        hx(dcellx+1) = 4.75_num - 11.0_num * cell_frac_x &
+            + 4.0_num * cf2 * (1.5_num + cell_frac_x - cf2)
+        hx(dcellx+2) = (0.5_num - cell_frac_x)**4
