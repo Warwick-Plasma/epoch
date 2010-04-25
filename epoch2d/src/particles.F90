@@ -83,12 +83,13 @@ CONTAINS
 
     ! Temporary variables
     REAL(num) :: idx, idy
-    REAL(num) :: idty, idtx, idxy
+    REAL(num) :: idxy, idty, idtx
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
     REAL(num) :: root, mean, fac, dtfac, third, momentum, cf2
     REAL(num) :: delta_x, delta_y, part_vz
     INTEGER :: ispecies, dcellx, dcelly
+    INTEGER(KIND=8) :: ipart
 
     TYPE(particle), POINTER :: current, next
 
@@ -269,231 +270,231 @@ CONTAINS
 #ifdef SPLINE_FOUR
         ex_part = &
               gy(-2) * (hx(-2) * ex(cell_x2-2,cell_y1-2) &
-                     +  hx(-1) * ex(cell_x2-1,cell_y1-2) &
-                     +  hx( 0) * ex(cell_x2  ,cell_y1-2) &
-                     +  hx( 1) * ex(cell_x2+1,cell_y1-2) &
-                     +  hx( 2) * ex(cell_x2+2,cell_y1-2)) &
+            +           hx(-1) * ex(cell_x2-1,cell_y1-2) &
+            +           hx( 0) * ex(cell_x2  ,cell_y1-2) &
+            +           hx( 1) * ex(cell_x2+1,cell_y1-2) &
+            +           hx( 2) * ex(cell_x2+2,cell_y1-2)) &
             + gy(-1) * (hx(-2) * ex(cell_x2-2,cell_y1-1) &
-                     +  hx(-1) * ex(cell_x2-1,cell_y1-1) &
-                     +  hx( 0) * ex(cell_x2  ,cell_y1-1) &
-                     +  hx( 1) * ex(cell_x2+1,cell_y1-1) &
-                     +  hx( 2) * ex(cell_x2+2,cell_y1-1)) &
+            +           hx(-1) * ex(cell_x2-1,cell_y1-1) &
+            +           hx( 0) * ex(cell_x2  ,cell_y1-1) &
+            +           hx( 1) * ex(cell_x2+1,cell_y1-1) &
+            +           hx( 2) * ex(cell_x2+2,cell_y1-1)) &
             + gy( 0) * (hx(-2) * ex(cell_x2-2,cell_y1  ) &
-                     +  hx(-1) * ex(cell_x2-1,cell_y1  ) &
-                     +  hx( 0) * ex(cell_x2  ,cell_y1  ) &
-                     +  hx( 1) * ex(cell_x2+1,cell_y1  ) &
-                     +  hx( 2) * ex(cell_x2+2,cell_y1  )) &
+            +           hx(-1) * ex(cell_x2-1,cell_y1  ) &
+            +           hx( 0) * ex(cell_x2  ,cell_y1  ) &
+            +           hx( 1) * ex(cell_x2+1,cell_y1  ) &
+            +           hx( 2) * ex(cell_x2+2,cell_y1  )) &
             + gy( 1) * (hx(-2) * ex(cell_x2-2,cell_y1+1) &
-                     +  hx(-1) * ex(cell_x2-1,cell_y1+1) &
-                     +  hx( 0) * ex(cell_x2  ,cell_y1+1) &
-                     +  hx( 1) * ex(cell_x2+1,cell_y1+1) &
-                     +  hx( 2) * ex(cell_x2+2,cell_y1+1)) &
+            +           hx(-1) * ex(cell_x2-1,cell_y1+1) &
+            +           hx( 0) * ex(cell_x2  ,cell_y1+1) &
+            +           hx( 1) * ex(cell_x2+1,cell_y1+1) &
+            +           hx( 2) * ex(cell_x2+2,cell_y1+1)) &
             + gy( 2) * (hx(-2) * ex(cell_x2-2,cell_y1+2) &
-                     +  hx(-1) * ex(cell_x2-1,cell_y1+2) &
-                     +  hx( 0) * ex(cell_x2  ,cell_y1+2) &
-                     +  hx( 1) * ex(cell_x2+1,cell_y1+2) &
-                     +  hx( 2) * ex(cell_x2+2,cell_y1+2))
+            +           hx(-1) * ex(cell_x2-1,cell_y1+2) &
+            +           hx( 0) * ex(cell_x2  ,cell_y1+2) &
+            +           hx( 1) * ex(cell_x2+1,cell_y1+2) &
+            +           hx( 2) * ex(cell_x2+2,cell_y1+2))
 
         ey_part = &
               hy(-2) * (gx(-2) * ey(cell_x1-2,cell_y2-2) &
-                     +  gx(-1) * ey(cell_x1-1,cell_y2-2) &
-                     +  gx( 0) * ey(cell_x1  ,cell_y2-2) &
-                     +  gx( 1) * ey(cell_x1+1,cell_y2-2) &
-                     +  gx( 2) * ey(cell_x1+2,cell_y2-2)) &
+            +           gx(-1) * ey(cell_x1-1,cell_y2-2) &
+            +           gx( 0) * ey(cell_x1  ,cell_y2-2) &
+            +           gx( 1) * ey(cell_x1+1,cell_y2-2) &
+            +           gx( 2) * ey(cell_x1+2,cell_y2-2)) &
             + hy(-1) * (gx(-2) * ey(cell_x1-2,cell_y2-1) &
-                     +  gx(-1) * ey(cell_x1-1,cell_y2-1) &
-                     +  gx( 0) * ey(cell_x1  ,cell_y2-1) &
-                     +  gx( 1) * ey(cell_x1+1,cell_y2-1) &
-                     +  gx( 2) * ey(cell_x1+2,cell_y2-1)) &
+            +           gx(-1) * ey(cell_x1-1,cell_y2-1) &
+            +           gx( 0) * ey(cell_x1  ,cell_y2-1) &
+            +           gx( 1) * ey(cell_x1+1,cell_y2-1) &
+            +           gx( 2) * ey(cell_x1+2,cell_y2-1)) &
             + hy( 0) * (gx(-2) * ey(cell_x1-2,cell_y2  ) &
-                     +  gx(-1) * ey(cell_x1-1,cell_y2  ) &
-                     +  gx( 0) * ey(cell_x1  ,cell_y2  ) &
-                     +  gx( 1) * ey(cell_x1+1,cell_y2  ) &
-                     +  gx( 2) * ey(cell_x1+2,cell_y2  )) &
+            +           gx(-1) * ey(cell_x1-1,cell_y2  ) &
+            +           gx( 0) * ey(cell_x1  ,cell_y2  ) &
+            +           gx( 1) * ey(cell_x1+1,cell_y2  ) &
+            +           gx( 2) * ey(cell_x1+2,cell_y2  )) &
             + hy( 1) * (gx(-2) * ey(cell_x1-2,cell_y2+1) &
-                     +  gx(-1) * ey(cell_x1-1,cell_y2+1) &
-                     +  gx( 0) * ey(cell_x1  ,cell_y2+1) &
-                     +  gx( 1) * ey(cell_x1+1,cell_y2+1) &
-                     +  gx( 2) * ey(cell_x1+2,cell_y2+1)) &
+            +           gx(-1) * ey(cell_x1-1,cell_y2+1) &
+            +           gx( 0) * ey(cell_x1  ,cell_y2+1) &
+            +           gx( 1) * ey(cell_x1+1,cell_y2+1) &
+            +           gx( 2) * ey(cell_x1+2,cell_y2+1)) &
             + hy( 2) * (gx(-2) * ey(cell_x1-2,cell_y2+2) &
-                     +  gx(-1) * ey(cell_x1-1,cell_y2+2) &
-                     +  gx( 0) * ey(cell_x1  ,cell_y2+2) &
-                     +  gx( 1) * ey(cell_x1+1,cell_y2+2) &
-                     +  gx( 2) * ey(cell_x1+2,cell_y2+2))
+            +           gx(-1) * ey(cell_x1-1,cell_y2+2) &
+            +           gx( 0) * ey(cell_x1  ,cell_y2+2) &
+            +           gx( 1) * ey(cell_x1+1,cell_y2+2) &
+            +           gx( 2) * ey(cell_x1+2,cell_y2+2))
 
         ez_part = &
               gy(-2) * (gx(-2) * ez(cell_x1-2,cell_y1-2) &
-                     +  gx(-1) * ez(cell_x1-1,cell_y1-2) &
-                     +  gx( 0) * ez(cell_x1  ,cell_y1-2) &
-                     +  gx( 1) * ez(cell_x1+1,cell_y1-2) &
-                     +  gx( 2) * ez(cell_x1+2,cell_y1-2)) &
+            +           gx(-1) * ez(cell_x1-1,cell_y1-2) &
+            +           gx( 0) * ez(cell_x1  ,cell_y1-2) &
+            +           gx( 1) * ez(cell_x1+1,cell_y1-2) &
+            +           gx( 2) * ez(cell_x1+2,cell_y1-2)) &
             + gy(-1) * (gx(-2) * ez(cell_x1-2,cell_y1-1) &
-                     +  gx(-1) * ez(cell_x1-1,cell_y1-1) &
-                     +  gx( 0) * ez(cell_x1  ,cell_y1-1) &
-                     +  gx( 1) * ez(cell_x1+1,cell_y1-1) &
-                     +  gx( 2) * ez(cell_x1+2,cell_y1-1)) &
+            +           gx(-1) * ez(cell_x1-1,cell_y1-1) &
+            +           gx( 0) * ez(cell_x1  ,cell_y1-1) &
+            +           gx( 1) * ez(cell_x1+1,cell_y1-1) &
+            +           gx( 2) * ez(cell_x1+2,cell_y1-1)) &
             + gy( 0) * (gx(-2) * ez(cell_x1-2,cell_y1  ) &
-                     +  gx(-1) * ez(cell_x1-1,cell_y1  ) &
-                     +  gx( 0) * ez(cell_x1  ,cell_y1  ) &
-                     +  gx( 1) * ez(cell_x1+1,cell_y1  ) &
-                     +  gx( 2) * ez(cell_x1+2,cell_y1  )) &
+            +           gx(-1) * ez(cell_x1-1,cell_y1  ) &
+            +           gx( 0) * ez(cell_x1  ,cell_y1  ) &
+            +           gx( 1) * ez(cell_x1+1,cell_y1  ) &
+            +           gx( 2) * ez(cell_x1+2,cell_y1  )) &
             + gy( 1) * (gx(-2) * ez(cell_x1-2,cell_y1+1) &
-                     +  gx(-1) * ez(cell_x1-1,cell_y1+1) &
-                     +  gx( 0) * ez(cell_x1  ,cell_y1+1) &
-                     +  gx( 1) * ez(cell_x1+1,cell_y1+1) &
-                     +  gx( 2) * ez(cell_x1+2,cell_y1+1)) &
+            +           gx(-1) * ez(cell_x1-1,cell_y1+1) &
+            +           gx( 0) * ez(cell_x1  ,cell_y1+1) &
+            +           gx( 1) * ez(cell_x1+1,cell_y1+1) &
+            +           gx( 2) * ez(cell_x1+2,cell_y1+1)) &
             + gy( 2) * (gx(-2) * ez(cell_x1-2,cell_y1+2) &
-                     +  gx(-1) * ez(cell_x1-1,cell_y1+2) &
-                     +  gx( 0) * ez(cell_x1  ,cell_y1+2) &
-                     +  gx( 1) * ez(cell_x1+1,cell_y1+2) &
-                     +  gx( 2) * ez(cell_x1+2,cell_y1+2))
+            +           gx(-1) * ez(cell_x1-1,cell_y1+2) &
+            +           gx( 0) * ez(cell_x1  ,cell_y1+2) &
+            +           gx( 1) * ez(cell_x1+1,cell_y1+2) &
+            +           gx( 2) * ez(cell_x1+2,cell_y1+2))
 
         bx_part = &
               hy(-2) * (gx(-2) * bx(cell_x1-2,cell_y2-2) &
-                     +  gx(-1) * bx(cell_x1-1,cell_y2-2) &
-                     +  gx( 0) * bx(cell_x1  ,cell_y2-2) &
-                     +  gx( 1) * bx(cell_x1+1,cell_y2-2) &
-                     +  gx( 2) * bx(cell_x1+2,cell_y2-2)) &
+            +           gx(-1) * bx(cell_x1-1,cell_y2-2) &
+            +           gx( 0) * bx(cell_x1  ,cell_y2-2) &
+            +           gx( 1) * bx(cell_x1+1,cell_y2-2) &
+            +           gx( 2) * bx(cell_x1+2,cell_y2-2)) &
             + hy(-1) * (gx(-2) * bx(cell_x1-2,cell_y2-1) &
-                     +  gx(-1) * bx(cell_x1-1,cell_y2-1) &
-                     +  gx( 0) * bx(cell_x1  ,cell_y2-1) &
-                     +  gx( 1) * bx(cell_x1+1,cell_y2-1) &
-                     +  gx( 2) * bx(cell_x1+2,cell_y2-1)) &
+            +           gx(-1) * bx(cell_x1-1,cell_y2-1) &
+            +           gx( 0) * bx(cell_x1  ,cell_y2-1) &
+            +           gx( 1) * bx(cell_x1+1,cell_y2-1) &
+            +           gx( 2) * bx(cell_x1+2,cell_y2-1)) &
             + hy( 0) * (gx(-2) * bx(cell_x1-2,cell_y2  ) &
-                     +  gx(-1) * bx(cell_x1-1,cell_y2  ) &
-                     +  gx( 0) * bx(cell_x1  ,cell_y2  ) &
-                     +  gx( 1) * bx(cell_x1+1,cell_y2  ) &
-                     +  gx( 2) * bx(cell_x1+2,cell_y2  )) &
+            +           gx(-1) * bx(cell_x1-1,cell_y2  ) &
+            +           gx( 0) * bx(cell_x1  ,cell_y2  ) &
+            +           gx( 1) * bx(cell_x1+1,cell_y2  ) &
+            +           gx( 2) * bx(cell_x1+2,cell_y2  )) &
             + hy( 1) * (gx(-2) * bx(cell_x1-2,cell_y2+1) &
-                     +  gx(-1) * bx(cell_x1-1,cell_y2+1) &
-                     +  gx( 0) * bx(cell_x1  ,cell_y2+1) &
-                     +  gx( 1) * bx(cell_x1+1,cell_y2+1) &
-                     +  gx( 2) * bx(cell_x1+2,cell_y2+1)) &
+            +           gx(-1) * bx(cell_x1-1,cell_y2+1) &
+            +           gx( 0) * bx(cell_x1  ,cell_y2+1) &
+            +           gx( 1) * bx(cell_x1+1,cell_y2+1) &
+            +           gx( 2) * bx(cell_x1+2,cell_y2+1)) &
             + hy( 2) * (gx(-2) * bx(cell_x1-2,cell_y2+2) &
-                     +  gx(-1) * bx(cell_x1-1,cell_y2+2) &
-                     +  gx( 0) * bx(cell_x1  ,cell_y2+2) &
-                     +  gx( 1) * bx(cell_x1+1,cell_y2+2) &
-                     +  gx( 2) * bx(cell_x1+2,cell_y2+2))
+            +           gx(-1) * bx(cell_x1-1,cell_y2+2) &
+            +           gx( 0) * bx(cell_x1  ,cell_y2+2) &
+            +           gx( 1) * bx(cell_x1+1,cell_y2+2) &
+            +           gx( 2) * bx(cell_x1+2,cell_y2+2))
 
         by_part = &
               gy(-2) * (hx(-2) * by(cell_x2-2,cell_y1-2) &
-                     +  hx(-1) * by(cell_x2-1,cell_y1-2) &
-                     +  hx( 0) * by(cell_x2  ,cell_y1-2) &
-                     +  hx( 1) * by(cell_x2+1,cell_y1-2) &
-                     +  hx( 2) * by(cell_x2+2,cell_y1-2)) &
+            +           hx(-1) * by(cell_x2-1,cell_y1-2) &
+            +           hx( 0) * by(cell_x2  ,cell_y1-2) &
+            +           hx( 1) * by(cell_x2+1,cell_y1-2) &
+            +           hx( 2) * by(cell_x2+2,cell_y1-2)) &
             + gy(-1) * (hx(-2) * by(cell_x2-2,cell_y1-1) &
-                     +  hx(-1) * by(cell_x2-1,cell_y1-1) &
-                     +  hx( 0) * by(cell_x2  ,cell_y1-1) &
-                     +  hx( 1) * by(cell_x2+1,cell_y1-1) &
-                     +  hx( 2) * by(cell_x2+2,cell_y1-1)) &
+            +           hx(-1) * by(cell_x2-1,cell_y1-1) &
+            +           hx( 0) * by(cell_x2  ,cell_y1-1) &
+            +           hx( 1) * by(cell_x2+1,cell_y1-1) &
+            +           hx( 2) * by(cell_x2+2,cell_y1-1)) &
             + gy( 0) * (hx(-2) * by(cell_x2-2,cell_y1  ) &
-                     +  hx(-1) * by(cell_x2-1,cell_y1  ) &
-                     +  hx( 0) * by(cell_x2  ,cell_y1  ) &
-                     +  hx( 1) * by(cell_x2+1,cell_y1  ) &
-                     +  hx( 2) * by(cell_x2+2,cell_y1  )) &
+            +           hx(-1) * by(cell_x2-1,cell_y1  ) &
+            +           hx( 0) * by(cell_x2  ,cell_y1  ) &
+            +           hx( 1) * by(cell_x2+1,cell_y1  ) &
+            +           hx( 2) * by(cell_x2+2,cell_y1  )) &
             + gy( 1) * (hx(-2) * by(cell_x2-2,cell_y1+1) &
-                     +  hx(-1) * by(cell_x2-1,cell_y1+1) &
-                     +  hx( 0) * by(cell_x2  ,cell_y1+1) &
-                     +  hx( 1) * by(cell_x2+1,cell_y1+1) &
-                     +  hx( 2) * by(cell_x2+2,cell_y1+1)) &
+            +           hx(-1) * by(cell_x2-1,cell_y1+1) &
+            +           hx( 0) * by(cell_x2  ,cell_y1+1) &
+            +           hx( 1) * by(cell_x2+1,cell_y1+1) &
+            +           hx( 2) * by(cell_x2+2,cell_y1+1)) &
             + gy( 2) * (hx(-2) * by(cell_x2-2,cell_y1+2) &
-                     +  hx(-1) * by(cell_x2-1,cell_y1+2) &
-                     +  hx( 0) * by(cell_x2  ,cell_y1+2) &
-                     +  hx( 1) * by(cell_x2+1,cell_y1+2) &
-                     +  hx( 2) * by(cell_x2+2,cell_y1+2))
+            +           hx(-1) * by(cell_x2-1,cell_y1+2) &
+            +           hx( 0) * by(cell_x2  ,cell_y1+2) &
+            +           hx( 1) * by(cell_x2+1,cell_y1+2) &
+            +           hx( 2) * by(cell_x2+2,cell_y1+2))
 
         bz_part = &
               hy(-2) * (hx(-2) * bz(cell_x2-2,cell_y2-2) &
-                     +  hx(-1) * bz(cell_x2-1,cell_y2-2) &
-                     +  hx( 0) * bz(cell_x2  ,cell_y2-2) &
-                     +  hx( 1) * bz(cell_x2+1,cell_y2-2) &
-                     +  hx( 2) * bz(cell_x2+2,cell_y2-2)) &
+            +           hx(-1) * bz(cell_x2-1,cell_y2-2) &
+            +           hx( 0) * bz(cell_x2  ,cell_y2-2) &
+            +           hx( 1) * bz(cell_x2+1,cell_y2-2) &
+            +           hx( 2) * bz(cell_x2+2,cell_y2-2)) &
             + hy(-1) * (hx(-2) * bz(cell_x2-2,cell_y2-1) &
-                     +  hx(-1) * bz(cell_x2-1,cell_y2-1) &
-                     +  hx( 0) * bz(cell_x2  ,cell_y2-1) &
-                     +  hx( 1) * bz(cell_x2+1,cell_y2-1) &
-                     +  hx( 2) * bz(cell_x2+2,cell_y2-1)) &
+            +           hx(-1) * bz(cell_x2-1,cell_y2-1) &
+            +           hx( 0) * bz(cell_x2  ,cell_y2-1) &
+            +           hx( 1) * bz(cell_x2+1,cell_y2-1) &
+            +           hx( 2) * bz(cell_x2+2,cell_y2-1)) &
             + hy( 0) * (hx(-2) * bz(cell_x2-2,cell_y2  ) &
-                     +  hx(-1) * bz(cell_x2-1,cell_y2  ) &
-                     +  hx( 0) * bz(cell_x2  ,cell_y2  ) &
-                     +  hx( 1) * bz(cell_x2+1,cell_y2  ) &
-                     +  hx( 2) * bz(cell_x2+2,cell_y2  )) &
+            +           hx(-1) * bz(cell_x2-1,cell_y2  ) &
+            +           hx( 0) * bz(cell_x2  ,cell_y2  ) &
+            +           hx( 1) * bz(cell_x2+1,cell_y2  ) &
+            +           hx( 2) * bz(cell_x2+2,cell_y2  )) &
             + hy( 1) * (hx(-2) * bz(cell_x2-2,cell_y2+1) &
-                     +  hx(-1) * bz(cell_x2-1,cell_y2+1) &
-                     +  hx( 0) * bz(cell_x2  ,cell_y2+1) &
-                     +  hx( 1) * bz(cell_x2+1,cell_y2+1) &
-                     +  hx( 2) * bz(cell_x2+2,cell_y2+1)) &
+            +           hx(-1) * bz(cell_x2-1,cell_y2+1) &
+            +           hx( 0) * bz(cell_x2  ,cell_y2+1) &
+            +           hx( 1) * bz(cell_x2+1,cell_y2+1) &
+            +           hx( 2) * bz(cell_x2+2,cell_y2+1)) &
             + hy( 2) * (hx(-2) * bz(cell_x2-2,cell_y2+2) &
-                     +  hx(-1) * bz(cell_x2-1,cell_y2+2) &
-                     +  hx( 0) * bz(cell_x2  ,cell_y2+2) &
-                     +  hx( 1) * bz(cell_x2+1,cell_y2+2) &
-                     +  hx( 2) * bz(cell_x2+2,cell_y2+2))
+            +           hx(-1) * bz(cell_x2-1,cell_y2+2) &
+            +           hx( 0) * bz(cell_x2  ,cell_y2+2) &
+            +           hx( 1) * bz(cell_x2+1,cell_y2+2) &
+            +           hx( 2) * bz(cell_x2+2,cell_y2+2))
 #else
         ex_part = &
               gy(-1) * (hx(-1) * ex(cell_x2-1,cell_y1-1) &
-                     +  hx( 0) * ex(cell_x2  ,cell_y1-1) &
-                     +  hx( 1) * ex(cell_x2+1,cell_y1-1)) &
+            +           hx( 0) * ex(cell_x2  ,cell_y1-1) &
+            +           hx( 1) * ex(cell_x2+1,cell_y1-1)) &
             + gy( 0) * (hx(-1) * ex(cell_x2-1,cell_y1  ) &
-                     +  hx( 0) * ex(cell_x2  ,cell_y1  ) &
-                     +  hx( 1) * ex(cell_x2+1,cell_y1  )) &
+            +           hx( 0) * ex(cell_x2  ,cell_y1  ) &
+            +           hx( 1) * ex(cell_x2+1,cell_y1  )) &
             + gy( 1) * (hx(-1) * ex(cell_x2-1,cell_y1+1) &
-                     +  hx( 0) * ex(cell_x2  ,cell_y1+1) &
-                     +  hx( 1) * ex(cell_x2+1,cell_y1+1))
+            +           hx( 0) * ex(cell_x2  ,cell_y1+1) &
+            +           hx( 1) * ex(cell_x2+1,cell_y1+1))
 
         ey_part = &
               hy(-1) * (gx(-1) * ey(cell_x1-1,cell_y2-1) &
-                     +  gx( 0) * ey(cell_x1  ,cell_y2-1) &
-                     +  gx( 1) * ey(cell_x1+1,cell_y2-1)) &
+            +           gx( 0) * ey(cell_x1  ,cell_y2-1) &
+            +           gx( 1) * ey(cell_x1+1,cell_y2-1)) &
             + hy( 0) * (gx(-1) * ey(cell_x1-1,cell_y2  ) &
-                     +  gx( 0) * ey(cell_x1  ,cell_y2  ) &
-                     +  gx( 1) * ey(cell_x1+1,cell_y2  )) &
+            +           gx( 0) * ey(cell_x1  ,cell_y2  ) &
+            +           gx( 1) * ey(cell_x1+1,cell_y2  )) &
             + hy( 1) * (gx(-1) * ey(cell_x1-1,cell_y2+1) &
-                     +  gx( 0) * ey(cell_x1  ,cell_y2+1) &
-                     +  gx( 1) * ey(cell_x1+1,cell_y2+1))
+            +           gx( 0) * ey(cell_x1  ,cell_y2+1) &
+            +           gx( 1) * ey(cell_x1+1,cell_y2+1))
 
         ez_part = &
               gy(-1) * (gx(-1) * ez(cell_x1-1,cell_y1-1) &
-                     +  gx( 0) * ez(cell_x1  ,cell_y1-1) &
-                     +  gx( 1) * ez(cell_x1+1,cell_y1-1)) &
+            +           gx( 0) * ez(cell_x1  ,cell_y1-1) &
+            +           gx( 1) * ez(cell_x1+1,cell_y1-1)) &
             + gy( 0) * (gx(-1) * ez(cell_x1-1,cell_y1  ) &
-                     +  gx( 0) * ez(cell_x1  ,cell_y1  ) &
-                     +  gx( 1) * ez(cell_x1+1,cell_y1  )) &
+            +           gx( 0) * ez(cell_x1  ,cell_y1  ) &
+            +           gx( 1) * ez(cell_x1+1,cell_y1  )) &
             + gy( 1) * (gx(-1) * ez(cell_x1-1,cell_y1+1) &
-                     +  gx( 0) * ez(cell_x1  ,cell_y1+1) &
-                     +  gx( 1) * ez(cell_x1+1,cell_y1+1))
+            +           gx( 0) * ez(cell_x1  ,cell_y1+1) &
+            +           gx( 1) * ez(cell_x1+1,cell_y1+1))
 
         bx_part = &
               hy(-1) * (gx(-1) * bx(cell_x1-1,cell_y2-1) &
-                     +  gx( 0) * bx(cell_x1  ,cell_y2-1) &
-                     +  gx( 1) * bx(cell_x1+1,cell_y2-1)) &
+            +           gx( 0) * bx(cell_x1  ,cell_y2-1) &
+            +           gx( 1) * bx(cell_x1+1,cell_y2-1)) &
             + hy( 0) * (gx(-1) * bx(cell_x1-1,cell_y2  ) &
-                     +  gx( 0) * bx(cell_x1  ,cell_y2  ) &
-                     +  gx( 1) * bx(cell_x1+1,cell_y2  )) &
+            +           gx( 0) * bx(cell_x1  ,cell_y2  ) &
+            +           gx( 1) * bx(cell_x1+1,cell_y2  )) &
             + hy( 1) * (gx(-1) * bx(cell_x1-1,cell_y2+1) &
-                     +  gx( 0) * bx(cell_x1  ,cell_y2+1) &
-                     +  gx( 1) * bx(cell_x1+1,cell_y2+1))
+            +           gx( 0) * bx(cell_x1  ,cell_y2+1) &
+            +           gx( 1) * bx(cell_x1+1,cell_y2+1))
 
         by_part = &
               gy(-1) * (hx(-1) * by(cell_x2-1,cell_y1-1) &
-                     +  hx( 0) * by(cell_x2  ,cell_y1-1) &
-                     +  hx( 1) * by(cell_x2+1,cell_y1-1)) &
+            +           hx( 0) * by(cell_x2  ,cell_y1-1) &
+            +           hx( 1) * by(cell_x2+1,cell_y1-1)) &
             + gy( 0) * (hx(-1) * by(cell_x2-1,cell_y1  ) &
-                     +  hx( 0) * by(cell_x2  ,cell_y1  ) &
-                     +  hx( 1) * by(cell_x2+1,cell_y1  )) &
+            +           hx( 0) * by(cell_x2  ,cell_y1  ) &
+            +           hx( 1) * by(cell_x2+1,cell_y1  )) &
             + gy( 1) * (hx(-1) * by(cell_x2-1,cell_y1+1) &
-                     +  hx( 0) * by(cell_x2  ,cell_y1+1) &
-                     +  hx( 1) * by(cell_x2+1,cell_y1+1))
+            +           hx( 0) * by(cell_x2  ,cell_y1+1) &
+            +           hx( 1) * by(cell_x2+1,cell_y1+1))
 
         bz_part = &
               hy(-1) * (hx(-1) * bz(cell_x2-1,cell_y2-1) &
-                     +  hx( 0) * bz(cell_x2  ,cell_y2-1) &
-                     +  hx( 1) * bz(cell_x2+1,cell_y2-1)) &
+            +           hx( 0) * bz(cell_x2  ,cell_y2-1) &
+            +           hx( 1) * bz(cell_x2+1,cell_y2-1)) &
             + hy( 0) * (hx(-1) * bz(cell_x2-1,cell_y2  ) &
-                     +  hx( 0) * bz(cell_x2  ,cell_y2  ) &
-                     +  hx( 1) * bz(cell_x2+1,cell_y2  )) &
+            +           hx( 0) * bz(cell_x2  ,cell_y2  ) &
+            +           hx( 1) * bz(cell_x2+1,cell_y2  )) &
             + hy( 1) * (hx(-1) * bz(cell_x2-1,cell_y2+1) &
-                     +  hx( 0) * bz(cell_x2  ,cell_y2+1) &
-                     +  hx( 1) * bz(cell_x2+1,cell_y2+1))
+            +           hx( 0) * bz(cell_x2  ,cell_y2+1) &
+            +           hx( 1) * bz(cell_x2+1,cell_y2+1))
 #endif
 
         ! update particle momenta using weighted fields

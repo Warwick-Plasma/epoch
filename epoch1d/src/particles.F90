@@ -80,12 +80,13 @@ CONTAINS
 
     ! Temporary variables
     REAL(num) :: idx
-    REAL(num) :: idtf, idxf
+    REAL(num) :: idxf, idtf
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
     REAL(num) :: root, mean, fac, dtfac, momentum, cf2
     REAL(num) :: delta_x, part_vy, part_vz
     INTEGER :: ispecies, dcellx
+    INTEGER(KIND=8) :: ipart
 
     TYPE(particle), POINTER :: current, next
 
@@ -257,32 +258,32 @@ CONTAINS
             + hx( 2) * bz(cell_x2+2)
 #else
         ex_part = &
-            + hx(-1) * ex(cell_x2-1) &
+              hx(-1) * ex(cell_x2-1) &
             + hx( 0) * ex(cell_x2  ) &
             + hx( 1) * ex(cell_x2+1)
 
         ey_part = &
-            + gx(-1) * ey(cell_x1-1) &
+              gx(-1) * ey(cell_x1-1) &
             + gx( 0) * ey(cell_x1  ) &
             + gx( 1) * ey(cell_x1+1)
 
         ez_part = &
-            + gx(-1) * ez(cell_x1-1) &
+              gx(-1) * ez(cell_x1-1) &
             + gx( 0) * ez(cell_x1  ) &
             + gx( 1) * ez(cell_x1+1)
 
         bx_part = &
-            + gx(-1) * bx(cell_x1-1) &
+              gx(-1) * bx(cell_x1-1) &
             + gx( 0) * bx(cell_x1  ) &
             + gx( 1) * bx(cell_x1+1)
 
         by_part = &
-            + hx(-1) * by(cell_x2-1) &
+              hx(-1) * by(cell_x2-1) &
             + hx( 0) * by(cell_x2  ) &
             + hx( 1) * by(cell_x2+1)
 
         bz_part = &
-            + hx(-1) * bz(cell_x2-1) &
+              hx(-1) * bz(cell_x2-1) &
             + hx( 0) * bz(cell_x2  ) &
             + hx( 1) * bz(cell_x2+1)
 #endif
@@ -344,14 +345,13 @@ CONTAINS
 #ifdef TRACER_PARTICLES
         IF (.NOT. particle_species(ispecies)%tracer) THEN
 #endif
-
           ! Now advance to t+1.5dt to calculate current. This is detailed in
           ! the manual between pages 37 and 41. The version coded up looks
           ! completely different to that in the manual, but is equivalent.
           ! Use t+1.5 dt so that can update J to t+dt at 2nd order
           part_x = part_x + delta_x
 
-          cell_x_r = part_x * idx
+          cell_x_r = part_x / dx
           cell_x3 = FLOOR(cell_x_r + 0.5_num)
           cell_frac_x = REAL(cell_x3, num) - cell_x_r
           cell_x3 = cell_x3 + 1
@@ -388,8 +388,6 @@ CONTAINS
 
           ! Set these to zero due to diffential inside loop
           jxh = 0.0_num
-          jyh = 0.0_num
-          jzh = 0.0_num
 
           fjx = fcx * part_q
           fjy = fcy * part_q * part_vy
@@ -405,9 +403,12 @@ CONTAINS
             jyh(ix) = fjy * wy
             jzh(ix) = fjz * wz
 
-            jx(cell_x1+ix) = jx(cell_x1+ix) + jxh(ix)
-            jy(cell_x1+ix) = jy(cell_x1+ix) + jyh(ix)
-            jz(cell_x1+ix) = jz(cell_x1+ix) + jzh(ix)
+            jx(cell_x1+ix) = &
+                jx(cell_x1+ix) + jxh(ix)
+            jy(cell_x1+ix) = &
+                jy(cell_x1+ix) + jyh(ix)
+            jz(cell_x1+ix) = &
+                jz(cell_x1+ix) + jzh(ix)
           ENDDO
 #ifdef TRACER_PARTICLES
         ENDIF
