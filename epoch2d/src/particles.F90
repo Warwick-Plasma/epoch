@@ -17,11 +17,13 @@ CONTAINS
     ! This gives exact charge conservation on the grid
 
     ! Contains the integer cell position of the particle in x, y, z
-    INTEGER :: cell_x1, cell_x2, cell_x3, cell_y1, cell_y2, cell_y3
+    INTEGER :: cell_x1, cell_x2, cell_x3
+    INTEGER :: cell_y1, cell_y2, cell_y3
 
     ! Xi (space factor see page 38 in manual)
-    REAL(num), ALLOCATABLE, DIMENSION(:) :: xi0x, xi0y
-    REAL(num), ALLOCATABLE, DIMENSION(:) :: xi1x, xi1y
+    ! The code now uses gx and hx instead of xi0 and xi1
+
+    INTEGER, PARAMETER :: sf = sf_order
 
     ! J from a given particle, can be spread over up to 3 cells in
     ! Each direction due to parabolic weighting. We allocate 4 or 5
@@ -29,16 +31,20 @@ CONTAINS
     ! known until later. This part of the algorithm could probably be
     ! Improved, but at the moment, this is just a straight copy of
     ! The core of the PSC algorithm
-    REAL(num), ALLOCATABLE, DIMENSION(:,:) :: jxh, jyh, jzh
+    REAL(num), DIMENSION(-sf-2:sf+1,-sf-1:sf+1) :: jxh
+    REAL(num), DIMENSION(-sf-1:sf+1,-sf-2:sf+1) :: jyh
+    REAL(num), DIMENSION(-sf-1:sf+1,-sf-1:sf+1) :: jzh
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_px, part_py, part_pz, part_q, part_mc
-    REAL(num) :: root, part_vx, part_vy, part_vz, part_weight
+    REAL(num) :: part_x, part_y
+    REAL(num) :: part_px, part_py, part_pz
+    REAL(num) :: part_vx, part_vy, part_vz
+    REAL(num) :: part_q, part_mc, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifdef PARTICLE_PROBES
-    REAL(num) :: init_part_x, init_part_y
-    REAL(num) :: final_part_x, final_part_y
+    REAL(num) :: init_part_x, final_part_x
+    REAL(num) :: init_part_y, final_part_y
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: probe_x1, probe_y1, probe_x2, probe_y2, probe_a, probe_b
@@ -56,55 +62,35 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-    REAL(num), DIMENSION(-2:2) :: gx, gy
+    REAL(num), DIMENSION(-sf-1:sf+1) :: gx, gy
 
     ! Defined at the particle position - 0.5 grid cell in each direction
     ! This is to deal with the grid stagger
-    REAL(num), DIMENSION(-2:2) :: hx, hy
+    REAL(num), DIMENSION(-sf-1:sf+1) :: hx, hy
 
     ! Fields at particle location
     REAL(num) :: ex_part, ey_part, ez_part, bx_part, by_part, bz_part
 
-    ! P+ and P- from Boris1970, page27 of manual
+    ! P+, P- and Tau variables from Boris1970, page27 of manual
     REAL(num) :: pxp, pxm, pyp, pym, pzp, pzm
+    REAL(num) :: tau, taux, tauy, tauz
 
     ! charge to mass ratio modified by normalisation
     REAL(num) :: cmratio
-
-    ! Tau variables from Boris1970, page27 of manual
-    REAL(num) :: tau, taux, tauy, tauz
 
     ! Used by J update
     INTEGER :: xmin, xmax, ymin, ymax
     REAL(num) :: wx, wy, wz
 
     ! Temporary variables
-    REAL(num) :: mean, idx, idy, idt, dto2, dtco2, third, fac
-    REAL(num) :: idty, idtx, idxy, fcx, fcy, fcz, fjx, fjy, fjz, dtfac
-    INTEGER :: ispecies, dcell
+    REAL(num) :: idx, idy
+    REAL(num) :: idty, idtx, idxy
+    REAL(num) :: idt, dto2, dtco2
+    REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
+    REAL(num) :: root, mean, fac, dtfac, third
+    INTEGER :: ispecies, dcellx, dcelly
 
     TYPE(particle), POINTER :: current, next
-
-    ALLOCATE(xi0x(-sf_order-1:sf_order+1), xi0y(-sf_order-1:sf_order+1))
-    ALLOCATE(xi1x(-sf_order-1:sf_order+1), xi1y(-sf_order-1:sf_order+1))
-
-    ALLOCATE(jxh(-sf_order-2:sf_order+1, -sf_order-1:sf_order+1))
-    ALLOCATE(jyh(-sf_order-1:sf_order+1, -sf_order-2:sf_order+1))
-    ALLOCATE(jzh(-sf_order-1:sf_order+1, -sf_order-1:sf_order+1))
-
-    idx = 1.0_num / dx
-    idy = 1.0_num / dy
-    idt = 1.0_num / dt
-    dto2 = dt / 2.0_num
-    dtco2 = c * dto2
-    third = 1.0_num / 3.0_num
-#ifdef SPLINE_FOUR
-    ! interpolation coefficients
-    fac = 1.0_num / 24.0_num
-#else
-    fac = 0.5_num
-#endif
-    dtfac = 0.5_num * dt * fac**2
 
     jx = 0.0_num
     jy = 0.0_num
@@ -114,11 +100,24 @@ CONTAINS
     jyh = 0.0_num
     jzh = 0.0_num
 
-    xi0x = 0.0_num
-    xi0y = 0.0_num
+    gx = 0.0_num
+    gy = 0.0_num
 
-    ekbar_sum = 0.0_num
-    ct = 0.0_num
+    ! Unvarying multiplication factors
+
+    idx = 1.0_num / dx
+    idy = 1.0_num / dy
+    idt = 1.0_num / dt
+    dto2 = dt / 2.0_num
+    dtco2 = c * dto2
+    third = 1.0_num / 3.0_num
+    ! particle weighting multiplication factor
+#ifdef SPLINE_FOUR
+    fac = 1.0_num / 24.0_num
+#else
+    fac = 0.5_num
+#endif
+    dtfac = 0.5_num * dt * fac**2
 
     idty = idt * idy * fac**2
     idtx = idt * idx * fac**2
@@ -131,10 +130,13 @@ CONTAINS
 
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
-      !DEC$ IVDEP
+#ifndef PER_PARTICLE_CHARGEMASS
+      part_q  = particle_species(ispecies)%charge
+      part_mc = c * particle_species(ispecies)%mass
+#endif
+      ! -- this option needs more testing -- DEC$ IVDEP
       !DEC$ VECTOR ALWAYS
       !DEC$ NOPREFETCH current
-      !DEC$ NOPREFETCH next
       DO ipart = 1, particle_species(ispecies)%attached_list%count
         next=>current%next
 #ifdef PER_PARTICLE_WEIGHT
@@ -142,6 +144,10 @@ CONTAINS
         fcx = idty * part_weight
         fcy = idtx * part_weight
         fcz = idxy * part_weight
+#endif
+#ifdef PARTICLE_PROBES
+        init_part_x = current%part_pos(1)
+        init_part_y = current%part_pos(2)
 #endif
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
@@ -154,14 +160,6 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGEMASS
         part_q  = current%charge
         part_mc = c * current%mass
-#else
-        part_q  = particle_species(ispecies)%charge
-        part_mc = c * particle_species(ispecies)%mass
-#endif
-
-#ifdef PARTICLE_PROBES
-        init_part_x = current%part_pos(1)
-        init_part_y = current%part_pos(2)
 #endif
 
         ! Calculate v(t+0.5dt) from p(t)
@@ -190,8 +188,10 @@ CONTAINS
         cell_frac_y = REAL(cell_y1, num) - cell_y_r
         cell_y1 = cell_y1 + 1
 
-        ! particle weight factors as described in the manual (FIXREF)
+        ! Particle weight factors as described in the manual, page25
         ! These weight grid properties onto particles
+        ! Also used to weight particle properties onto grid, used later
+        ! to calculate J
 #ifdef SPLINE_FOUR
         gx(-2) = (1.5_num - cell_frac_x)**4
         gx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
@@ -220,49 +220,16 @@ CONTAINS
         gy( 1) = (0.5_num - cell_frac_y)**2
 #endif
 
-        ! particle weight factors as described in the manual (FIXREF)
-        ! These wieght particle properties onto grid
-        ! This is used later to calculate J
-#ifdef SPLINE_FOUR
-        xi0x(-2) = (1.5_num - cell_frac_x)**4
-        xi0x(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-        xi0x( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
-            * (cell_frac_x**2 - 2.5_num))
-        xi0x( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-        xi0x( 2) = (1.5_num + cell_frac_x)**4
-
-        xi0y(-2) = (1.5_num - cell_frac_y)**4
-        xi0y(-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
-            * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-        xi0y( 0) = 6.0_num * (115/48 + cell_frac_y**2 &
-            * (cell_frac_y**2 - 2.5_num))
-        xi0y( 1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
-            * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-        xi0y( 2) = (1.5_num + cell_frac_y)**4
-#else
-        xi0x(-1) = (0.5_num + cell_frac_x)**2
-        xi0x( 0) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
-        xi0x( 1) = (0.5_num - cell_frac_x)**2
-
-        xi0y(-1) = (0.5_num + cell_frac_y)**2
-        xi0y( 0) =  1.5_num - 2.0_num * ABS(cell_frac_y)**2
-        xi0y( 1) = (0.5_num - cell_frac_y)**2
-#endif
-
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
         ! And in Y&Z for bx, X&Z for by, X&Y for bz
-        cell_x_r = part_x * idx - 0.5_num
-        cell_x2  = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x2, num) - cell_x_r
-        cell_x2  = cell_x2 + 1
+        cell_x2 = FLOOR(cell_x_r)
+        cell_frac_x = REAL(cell_x2, num) - cell_x_r + 0.5_num
+        cell_x2 = cell_x2 + 1
 
-        cell_y_r = part_y * idy - 0.5_num
-        cell_y2  = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y2, num) - cell_y_r
-        cell_y2  = cell_y2 + 1
+        cell_y2 = FLOOR(cell_y_r)
+        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
+        cell_y2 = cell_y2 + 1
 
 #ifdef SPLINE_FOUR
         hx(-2) = (1.5_num - cell_frac_x)**4
@@ -292,7 +259,7 @@ CONTAINS
         hy( 1) = (0.5_num - cell_frac_y)**2
 #endif
 
-        ! These are the electric an magnetic fields interpolated to the
+        ! These are the electric and magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
 #ifdef SPLINE_FOUR
@@ -575,9 +542,11 @@ CONTAINS
         final_part_x = current%part_pos(1)
         final_part_y = current%part_pos(2)
 #endif
+        ! Original code calculates densities of electrons, ions and neutrals
+        ! here. This has been removed to reduce memory footprint
 
         ! If the code is compiled with tracer particle support then put in an
-        ! If statement so that the current is not calculated for this species
+        ! IF statement so that the current is not calculated for this species
 #ifdef TRACER_PARTICLES
         IF (.NOT. particle_species(ispecies)%tracer) THEN
 #endif
@@ -589,77 +558,62 @@ CONTAINS
           part_y = part_y + part_vy * dto2
 
           cell_x_r = part_x / dx
-          cell_x3  = FLOOR(cell_x_r + 0.5_num)
+          cell_x3 = FLOOR(cell_x_r + 0.5_num)
           cell_frac_x = REAL(cell_x3, num) - cell_x_r
-          cell_x3  = cell_x3 + 1
+          cell_x3 = cell_x3 + 1
 
           cell_y_r = part_y / dy
-          cell_y3  = FLOOR(cell_y_r + 0.5_num)
+          cell_y3 = FLOOR(cell_y_r + 0.5_num)
           cell_frac_y = REAL(cell_y3, num) - cell_y_r
-          cell_y3  = cell_y3 + 1
+          cell_y3 = cell_y3 + 1
 
-          xi1x = 0.0_num
-          xi1y = 0.0_num
+          hx = 0.0_num
+          hy = 0.0_num
+
+          dcellx = cell_x3 - cell_x1
+          dcelly = cell_y3 - cell_y1
 
 #ifdef SPLINE_FOUR
-          dcell = cell_x3 - cell_x1
-          xi1x(dcell-2) = (1.5_num - cell_frac_x)**4
-          xi1x(dcell-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+          hx(dcellx-2) = (1.5_num - cell_frac_x)**4
+          hx(dcellx-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
               * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-          xi1x(dcell  ) = 6.0_num * (115/48 + cell_frac_x**2 &
+          hx(dcellx  ) = 6.0_num * (115/48 + cell_frac_x**2 &
               * (cell_frac_x**2 - 2.5_num))
-          xi1x(dcell+1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
+          hx(dcellx+1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
               * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-          xi1x(dcell+2) = (1.5_num + cell_frac_x)**4
+          hx(dcellx+2) = (1.5_num + cell_frac_x)**4
 
-          dcell = cell_y3 - cell_y1
-          xi1y(dcell-2) = (1.5_num - cell_frac_y)**4
-          xi1y(dcell-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
+          hy(dcelly-2) = (1.5_num - cell_frac_y)**4
+          hy(dcelly-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
               * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-          xi1y(dcell  ) = 6.0_num * (115/48 + cell_frac_y**2 &
+          hy(dcelly  ) = 6.0_num * (115/48 + cell_frac_y**2 &
               * (cell_frac_y**2 - 2.5_num))
-          xi1y(dcell+1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
+          hy(dcelly+1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
               * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-          xi1y(dcell+2) = (1.5_num + cell_frac_y)**4
+          hy(dcelly+2) = (1.5_num + cell_frac_y)**4
 #else
-          dcell = cell_x3 - cell_x1
-          xi1x(dcell-1) = (0.5_num + cell_frac_x)**2
-          xi1x(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
-          xi1x(dcell+1) = (0.5_num - cell_frac_x)**2
+          hx(dcellx-1) = (0.5_num + cell_frac_x)**2
+          hx(dcellx  ) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
+          hx(dcellx+1) = (0.5_num - cell_frac_x)**2
 
-          dcell = cell_y3 - cell_y1
-          xi1y(dcell-1) = (0.5_num + cell_frac_y)**2
-          xi1y(dcell  ) =  1.5_num - 2.0_num * ABS(cell_frac_y)**2
-          xi1y(dcell+1) = (0.5_num - cell_frac_y)**2
+          hy(dcelly-1) = (0.5_num + cell_frac_y)**2
+          hy(dcelly  ) =  1.5_num - 2.0_num * ABS(cell_frac_y)**2
+          hy(dcelly+1) = (0.5_num - cell_frac_y)**2
 #endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
           ! the current update much simpler
-          xi1x = xi1x - xi0x
-          xi1y = xi1y - xi0y
+          hx = hx - gx
+          hy = hy - gy
 
           ! Remember that due to CFL condition particle can never cross more
           ! than one gridcell in one timestep
 
-          xmin = -sf_order + (cell_x3 - cell_x1 - 1) / 2
-          xmax =  sf_order + (cell_x3 - cell_x1 + 1) / 2
+          xmin = -sf_order + (dcellx - 1) / 2
+          xmax =  sf_order + (dcellx + 1) / 2
 
-          ymin = -sf_order + (cell_y3 - cell_y1 - 1) / 2
-          ymax =  sf_order + (cell_y3 - cell_y1 + 1) / 2
-
-!!$          IF (cell_x3 .EQ. cell_x1) THEN
-!!$            ! particle is still in same cell at t+1.5dt as at t+0.5dt
-!!$            xmin = -sf_order
-!!$            xmax = sf_order
-!!$          ELSE IF (cell_x3 .EQ. cell_x1 - 1) THEN
-!!$            ! particle has moved one cell to left
-!!$            xmin = -sf_order-1
-!!$            xmax = sf_order
-!!$          ELSE ! IF (cell_x3 .EQ. cell_x1 + 1) THEN
-!!$            ! particle has moved one cell to right
-!!$            xmin = -sf_order
-!!$            xmax = sf_order+1
-!!$          ENDIF
+          ymin = -sf_order + (dcelly - 1) / 2
+          ymax =  sf_order + (dcelly + 1) / 2
 
           ! Set these to zero due to diffential inside loop
           jxh = 0.0_num
@@ -671,10 +625,10 @@ CONTAINS
 
           DO iy = ymin, ymax
             DO ix = xmin, xmax
-              wx = xi1x(ix) * (xi0y(iy) + 0.5_num * xi1y(iy))
-              wy = xi1y(iy) * (xi0x(ix) + 0.5_num * xi1x(ix))
-              wz = xi0x(ix) * (xi0y(iy) + 0.5_num * xi1y(iy)) &
-                  + xi1x(ix) * (third * xi1y(iy) + 0.5_num * xi0y(iy))
+              wx = hx(ix) * (gy(iy) + 0.5_num * hy(iy))
+              wy = hy(iy) * (gx(ix) + 0.5_num * hx(ix))
+              wz = gx(ix) * (gy(iy) + 0.5_num * hy(iy)) &
+                  + hx(ix) * (third * hy(iy) + 0.5_num * gy(iy))
 
               ! This is the bit that actually solves d(rho)/dt = -div(J)
               jxh(ix, iy) = jxh(ix-1, iy) - fjx * wx
@@ -753,7 +707,7 @@ CONTAINS
               ENDIF
             ENDIF
           ENDIF
-          current_probe=> current_probe%next
+          current_probe=>current_probe%next
         ENDDO
 #endif
         current=>next
@@ -768,6 +722,8 @@ CONTAINS
     CALL processor_summation_bcs(jz)
     CALL field_bc(jz)
 
+    ekbar_sum = 0.0_num
+    ct = 0.0_num
     DO ispecies = 1, n_species
       CALL processor_summation_bcs(ekbar_sum(:,:,ispecies))
       CALL field_bc(ekbar_sum(:,:,ispecies))
@@ -786,14 +742,6 @@ CONTAINS
         ENDDO
       ENDDO
     ENDDO
-
-    DEALLOCATE(xi0x)
-    DEALLOCATE(xi1x)
-    DEALLOCATE(xi0y)
-    DEALLOCATE(xi1y)
-    DEALLOCATE(jxh)
-    DEALLOCATE(jyh)
-    DEALLOCATE(jzh)
 
     CALL particle_bcs
 
