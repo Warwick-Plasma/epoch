@@ -7,6 +7,9 @@ MODULE fields
 
   REAL(num), DIMENSION(6) :: const
   INTEGER :: large, small, order
+  REAL(num) :: hdt, fac
+  REAL(num) :: hdtx, hdty, hdtz
+  REAL(num) :: cnx, cny, cnz
 
 CONTAINS
 
@@ -26,9 +29,9 @@ CONTAINS
       large = 2
       small = 1
     ELSE
-      const(1:6) = (/ 3.0_num/640.0_num, -25.0_num/384.0_num, &
-          75.0_num/64.0_num, -75.0_num/64.0_num, 25.0_num/384.0_num, &
-          -3.0_num/640.0_num /)
+      const(1:6) = (/ -3.0_num/640.0_num, 25.0_num/384.0_num, &
+          -75.0_num/64.0_num, 75.0_num/64.0_num, -25.0_num/384.0_num, &
+          3.0_num/640.0_num /)
       large = 3
       small = 2
     ENDIF
@@ -39,24 +42,13 @@ CONTAINS
 
   SUBROUTINE update_e_field
 
-    REAL(num) :: lx, cnx, ly, cny, lz, cnz
-
-    lx = dt/dx
-    cnx = 0.5_num*lx
-
-    ly = dt/dy
-    cny = 0.5_num*ly
-
-    lz = dt/dz
-    cnz = 0.5_num*lz
-
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
           ex(ix, iy, iz) = ex(ix, iy, iz) &
-              + cny*c**2 * SUM(const(1:order) * bz(ix, iy-large:iy+small, iz)) &
-              - cnz*c**2 * SUM(const(1:order) * by(ix, iy, iz-large:iz+small)) &
-              - 0.5_num*dt*jx(ix, iy, iz)/epsilon0
+              + cny * SUM(const(1:order) * bz(ix, iy-large:iy+small, iz)) &
+              - cnz * SUM(const(1:order) * by(ix, iy, iz-large:iz+small)) &
+              - fac * jx(ix, iy, iz)
         ENDDO
       ENDDO
     ENDDO
@@ -65,9 +57,9 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           ey(ix, iy, iz) = ey(ix, iy, iz) &
-              + cnz*c**2 * SUM(const(1:order) * bx(ix, iy, iz-large:iz+small)) &
-              - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small, iy, iz)) &
-              - 0.5_num*dt*jy(ix, iy, iz)/epsilon0
+              + cnz * SUM(const(1:order) * bx(ix, iy, iz-large:iz+small)) &
+              - cnx * SUM(const(1:order) * bz(ix-large:ix+small, iy, iz)) &
+              - fac * jy(ix, iy, iz)
         ENDDO
       ENDDO
     ENDDO
@@ -76,9 +68,9 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           ez(ix, iy, iz) = ez(ix, iy, iz) &
-              + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small, iy, iz)) &
-              - cny*c**2 * SUM(const(1:order) * bx(ix, iy-large:iy+small, iz)) &
-              - 0.5_num*dt*jz(ix, iy, iz)/epsilon0
+              + cnx * SUM(const(1:order) * by(ix-large:ix+small, iy, iz)) &
+              - cny * SUM(const(1:order) * bx(ix, iy-large:iy+small, iz)) &
+              - fac * jz(ix, iy, iz)
         ENDDO
       ENDDO
     ENDDO
@@ -89,23 +81,12 @@ CONTAINS
 
   SUBROUTINE update_b_field
 
-    REAL(num) :: lx, cnx, ly, cny, lz, cnz
-
-    lx = dt/dx
-    cnx = 0.5_num*lx
-
-    ly = dt/dy
-    cny = 0.5_num*ly
-
-    lz = dt/dz
-    cnz = 0.5_num*lz
-
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
           bx(ix, iy, iz) = bx(ix, iy, iz) &
-              + cnz * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large)) &
-              - cny * SUM(const(1:order) * ez(ix, iy-small:iy+large, iz))
+              - hdty * SUM(const(1:order) * ez(ix, iy-small:iy+large, iz)) &
+              + hdtz * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large))
         ENDDO
       ENDDO
     ENDDO
@@ -114,8 +95,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           by(ix, iy, iz) = by(ix, iy, iz) &
-              + cnx * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz)) &
-              - cnz * SUM(const(1:order) * ex(ix, iy, iz-small:iz+large))
+              - hdtz * SUM(const(1:order) * ex(ix, iy, iz-small:iz+large)) &
+              + hdtx * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -124,8 +105,8 @@ CONTAINS
       DO iy = 1, ny
         DO ix = 1, nx
           bz(ix, iy, iz) = bz(ix, iy, iz) &
-              - cnx * SUM(const(1:order) * ey(ix-small:ix+large, iy, iz)) &
-              + cny * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz))
+              - hdtx * SUM(const(1:order) * ey(ix-small:ix+large, iy, iz)) &
+              + hdty * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz))
         ENDDO
       ENDDO
     ENDDO
@@ -135,6 +116,17 @@ CONTAINS
 
 
   SUBROUTINE update_eb_fields_half
+
+    hdt  = 0.5_num * dt
+    hdtx = hdt / dx
+    hdty = hdt / dy
+    hdtz = hdt / dz
+
+    cnx = hdtx * c**2
+    cny = hdty * c**2
+    cnz = hdtz * c**2
+
+    fac = hdt / epsilon0
 
     ! Update E field to t+dt/2
     CALL update_e_field

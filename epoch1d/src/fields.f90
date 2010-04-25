@@ -7,6 +7,9 @@ MODULE fields
 
   REAL(num), DIMENSION(6) :: const
   INTEGER :: large, small, order
+  REAL(num) :: hdt, fac
+  REAL(num) :: hdtx
+  REAL(num) :: cnx
 
 CONTAINS
 
@@ -26,9 +29,9 @@ CONTAINS
       large = 2
       small = 1
     ELSE
-      const(1:6) = (/ 3.0_num/640.0_num, -25.0_num/384.0_num, &
-          75.0_num/64.0_num, -75.0_num/64.0_num, 25.0_num/384.0_num, &
-          -3.0_num/640.0_num /)
+      const(1:6) = (/ -3.0_num/640.0_num, 25.0_num/384.0_num, &
+          -75.0_num/64.0_num, 75.0_num/64.0_num, -25.0_num/384.0_num, &
+          3.0_num/640.0_num /)
       large = 3
       small = 2
     ENDIF
@@ -39,26 +42,21 @@ CONTAINS
 
   SUBROUTINE update_e_field
 
-    REAL(num) :: lx, cnx
-
-    lx = dt/dx
-    cnx = 0.5_num*lx
-
     DO ix = 1, nx
       ex(ix) = ex(ix) &
-          - 0.5_num*dt*jx(ix)/epsilon0
+          - fac * jx(ix)
     ENDDO
 
     DO ix = 1, nx
       ey(ix) = ey(ix) &
-          - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small)) &
-          - 0.5_num*dt*jy(ix)/epsilon0
+          - cnx * SUM(const(1:order) * bz(ix-large:ix+small)) &
+          - fac * jy(ix)
     ENDDO
 
     DO ix = 1, nx
       ez(ix) = ez(ix) &
-          + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small)) &
-          - 0.5_num*dt*jz(ix)/epsilon0
+          + cnx * SUM(const(1:order) * by(ix-large:ix+small)) &
+          - fac * jz(ix)
     ENDDO
 
   END SUBROUTINE update_e_field
@@ -67,19 +65,14 @@ CONTAINS
 
   SUBROUTINE update_b_field
 
-    REAL(num) :: lx, cnx
-
-    lx = dt/dx
-    cnx = 0.5_num*lx
-
     DO ix = 1, nx
       by(ix) = by(ix) &
-          + cnx * SUM(const(1:order) * ez(ix-small:ix+large))
+          + hdtx * SUM(const(1:order) * ez(ix-small:ix+large))
     ENDDO
 
     DO ix = 1, nx
       bz(ix) = bz(ix) &
-          - cnx * SUM(const(1:order) * ey(ix-small:ix+large))
+          - hdtx * SUM(const(1:order) * ey(ix-small:ix+large))
     ENDDO
 
   END SUBROUTINE update_b_field
@@ -87,6 +80,13 @@ CONTAINS
 
 
   SUBROUTINE update_eb_fields_half
+
+    hdt  = 0.5_num * dt
+    hdtx = hdt / dx
+
+    cnx = hdtx * c**2
+
+    fac = hdt / epsilon0
 
     ! Update E field to t+dt/2
     CALL update_e_field
