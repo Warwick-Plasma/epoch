@@ -37,52 +37,65 @@ CONTAINS
 
 
 
-  SUBROUTINE update_eb_fields_half
+  SUBROUTINE update_e_field
 
     REAL(num) :: lx, cnx
 
     lx = dt/dx
     cnx = 0.5_num*lx
 
-    ! Update ex to t = t0+dt/2
     DO ix = 1, nx
       ex(ix) = ex(ix) &
           - 0.5_num*dt*jx(ix)/epsilon0
     ENDDO
 
-    ! Update ey to t = t0+dt/2
     DO ix = 1, nx
       ey(ix) = ey(ix) &
           - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small)) &
           - 0.5_num*dt*jy(ix)/epsilon0
     ENDDO
 
-    ! Update ez to t = t0+dt/2
     DO ix = 1, nx
       ez(ix) = ez(ix) &
           + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small)) &
           - 0.5_num*dt*jz(ix)/epsilon0
     ENDDO
 
-    ! Now have E(t+dt/2), do boundary conditions on E
+  END SUBROUTINE update_e_field
 
-    CALL efield_bcs
 
-    ! Update B field to t+dt/2 using E(t+dt/2)
 
-    ! bx
+  SUBROUTINE update_b_field
 
-    ! by
+    REAL(num) :: lx, cnx
+
+    lx = dt/dx
+    cnx = 0.5_num*lx
+
     DO ix = 1, nx
       by(ix) = by(ix) &
           + cnx * SUM(const(1:order) * ez(ix-small:ix+large))
     ENDDO
 
-    ! bz
     DO ix = 1, nx
       bz(ix) = bz(ix) &
           - cnx * SUM(const(1:order) * ey(ix-small:ix+large))
     ENDDO
+
+  END SUBROUTINE update_b_field
+
+
+
+  SUBROUTINE update_eb_fields_half
+
+    ! Update E field to t+dt/2
+    CALL update_e_field
+
+    ! Now have E(t+dt/2), do boundary conditions on E
+    CALL efield_bcs
+
+    ! Update B field to t+dt/2 using E(t+dt/2)
+    CALL update_b_field
 
     ! Now have B field at t+dt/2. Do boundary conditions on B
     CALL bfield_bcs(.FALSE.)
@@ -96,24 +109,7 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
-    REAL(num) :: lx, cnx
-
-    lx = dt/dx
-    cnx = 0.5_num*lx
-
-    ! bx
-
-    ! by
-    DO ix = 1, nx
-      by(ix) = by(ix) &
-          + cnx * SUM(const(1:order) * ez(ix-small:ix+large))
-    ENDDO
-
-    ! bz
-    DO ix = 1, nx
-      bz(ix) = bz(ix) &
-          - cnx * SUM(const(1:order) * ey(ix-small:ix+large))
-    ENDDO
+    CALL update_b_field
 
     CALL bfield_bcs(.FALSE.)
 
@@ -129,25 +125,7 @@ CONTAINS
 
     CALL bfield_bcs(.TRUE.)
 
-    ! ex
-    DO ix = 1, nx
-      ex(ix) = ex(ix) &
-          - 0.5*dt*jx(ix)/epsilon0
-    ENDDO
-
-    ! ey
-    DO ix = 1, nx
-      ey(ix) = ey(ix) &
-          - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small)) &
-          - 0.5*dt*jy(ix)/epsilon0
-    ENDDO
-
-    ! ez
-    DO ix = 1, nx
-      ez(ix) = ez(ix) &
-          + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small)) &
-          - 0.5*dt*jz(ix)/epsilon0
-    ENDDO
+    CALL update_e_field
 
     CALL efield_bcs
 

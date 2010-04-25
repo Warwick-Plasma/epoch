@@ -37,7 +37,7 @@ CONTAINS
 
 
 
-  SUBROUTINE update_eb_fields_half
+  SUBROUTINE update_e_field
 
     REAL(num) :: lx, cnx, ly, cny
 
@@ -47,7 +47,6 @@ CONTAINS
     ly = dt/dy
     cny = 0.5_num*ly
 
-    ! Update ex to t = t0+dt/2
     DO iy = 1, ny
       DO ix = 1, nx
         ex(ix, iy) = ex(ix, iy) &
@@ -56,7 +55,6 @@ CONTAINS
       ENDDO
     ENDDO
 
-    ! Update ey to t = t0+dt/2
     DO iy = 1, ny
       DO ix = 1, nx
         ey(ix, iy) = ey(ix, iy) &
@@ -65,7 +63,6 @@ CONTAINS
       ENDDO
     ENDDO
 
-    ! Update ez to t = t0+dt/2
     DO iy = 1, ny
       DO ix = 1, nx
         ez(ix, iy) = ez(ix, iy) &
@@ -75,13 +72,20 @@ CONTAINS
       ENDDO
     ENDDO
 
-    ! Now have E(t+dt/2), do boundary conditions on E
+  END SUBROUTINE update_e_field
 
-    CALL efield_bcs
 
-    ! Update B field to t+dt/2 using E(t+dt/2)
 
-    ! bx
+  SUBROUTINE update_b_field
+
+    REAL(num) :: lx, cnx, ly, cny
+
+    lx = dt/dx
+    cnx = 0.5_num*lx
+
+    ly = dt/dy
+    cny = 0.5_num*ly
+
     DO iy = 1, ny
       DO ix = 1, nx
         bx(ix, iy) = bx(ix, iy) &
@@ -89,7 +93,6 @@ CONTAINS
       ENDDO
     ENDDO
 
-    ! by
     DO iy = 1, ny
       DO ix = 1, nx
         by(ix, iy) = by(ix, iy) &
@@ -97,7 +100,6 @@ CONTAINS
       ENDDO
     ENDDO
 
-    ! bz
     DO iy = 1, ny
       DO ix = 1, nx
         bz(ix, iy) = bz(ix, iy) &
@@ -105,6 +107,21 @@ CONTAINS
             + cny * SUM(const(1:order) * ex(ix, iy-small:iy+large))
       ENDDO
     ENDDO
+
+  END SUBROUTINE update_b_field
+
+
+
+  SUBROUTINE update_eb_fields_half
+
+    ! Update E field to t+dt/2
+    CALL update_e_field
+
+    ! Now have E(t+dt/2), do boundary conditions on E
+    CALL efield_bcs
+
+    ! Update B field to t+dt/2 using E(t+dt/2)
+    CALL update_b_field
 
     ! Now have B field at t+dt/2. Do boundary conditions on B
     CALL bfield_bcs(.FALSE.)
@@ -118,38 +135,7 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
-    REAL(num) :: lx, cnx, ly, cny
-
-    lx = dt/dx
-    cnx = 0.5_num*lx
-
-    ly = dt/dy
-    cny = 0.5_num*ly
-
-    ! bx
-    DO iy = 1, ny
-      DO ix = 1, nx
-        bx(ix, iy) = bx(ix, iy) &
-            - cny * SUM(const(1:order) * ez(ix, iy-small:iy+large))
-      ENDDO
-    ENDDO
-
-    ! by
-    DO iy = 1, ny
-      DO ix = 1, nx
-        by(ix, iy) = by(ix, iy) &
-            + cnx * SUM(const(1:order) * ez(ix-small:ix+large, iy))
-      ENDDO
-    ENDDO
-
-    ! bz
-    DO iy = 1, ny
-      DO ix = 1, nx
-        bz(ix, iy) = bz(ix, iy) &
-            - cnx * SUM(const(1:order) * ey(ix-small:ix+large, iy)) &
-            + cny * SUM(const(1:order) * ex(ix, iy-small:iy+large))
-      ENDDO
-    ENDDO
+    CALL update_b_field
 
     CALL bfield_bcs(.FALSE.)
 
@@ -175,33 +161,7 @@ CONTAINS
 
     CALL bfield_bcs(.TRUE.)
 
-    ! ex
-    DO iy = 1, ny
-      DO ix = 1, nx
-        ex(ix, iy) = ex(ix, iy) &
-            + cny*c**2 * SUM(const(1:order) * bz(ix, iy-large:iy+small)) &
-            - 0.5*dt*jx(ix, iy)/epsilon0
-      ENDDO
-    ENDDO
-
-    ! ey
-    DO iy = 1, ny
-      DO ix = 1, nx
-        ey(ix, iy) = ey(ix, iy) &
-            - cnx*c**2 * SUM(const(1:order) * bz(ix-large:ix+small, iy)) &
-            - 0.5*dt*jy(ix, iy)/epsilon0
-      ENDDO
-    ENDDO
-
-    ! ez
-    DO iy = 1, ny
-      DO ix = 1, nx
-        ez(ix, iy) = ez(ix, iy) &
-            + cnx*c**2 * SUM(const(1:order) * by(ix-large:ix+small, iy)) &
-            - cny*c**2 * SUM(const(1:order) * bx(ix, iy-large:iy+small)) &
-            - 0.5*dt*jz(ix, iy)/epsilon0
-      ENDDO
-    ENDDO
+    CALL update_e_field
 
     CALL efield_bcs
 
