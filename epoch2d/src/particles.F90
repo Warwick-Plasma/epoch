@@ -38,7 +38,6 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y
     REAL(num) :: part_px, part_py, part_pz
-    REAL(num) :: part_vx, part_vy, part_vz
     REAL(num) :: part_q, part_mc, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
@@ -87,7 +86,8 @@ CONTAINS
     REAL(num) :: idty, idtx, idxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, mean, fac, dtfac, third
+    REAL(num) :: root, mean, fac, dtfac, third, momentum, cf2
+    REAL(num) :: delta_x, delta_y, part_vz
     INTEGER :: ispecies, dcellx, dcelly
 
     TYPE(particle), POINTER :: current, next
@@ -193,31 +193,33 @@ CONTAINS
         ! Also used to weight particle properties onto grid, used later
         ! to calculate J
 #ifdef SPLINE_FOUR
+        cf2 = cell_frac_x**2
         gx(-2) = (0.5_num + cell_frac_x)**4
-        gx(-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
-            + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
-        gx( 0) = 14.375_num + 6.0_num * cell_frac_x**2 &
-            * (cell_frac_x**2 - 2.5_num)
-        gx( 1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
-            - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+        gx(-1) = 4.75_num + 11.0_num * cell_frac_x &
+            + 4.0_num * cf2 * (1.5_num - cell_frac_x - cf2)
+        gx( 0) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
+        gx( 1) = 4.75_num - 11.0_num * cell_frac_x &
+            + 4.0_num * cf2 * (1.5_num + cell_frac_x - cf2)
         gx( 2) = (0.5_num - cell_frac_x)**4
 
+        cf2 = cell_frac_y**2
         gy(-2) = (0.5_num + cell_frac_y)**4
-        gy(-1) = 4.75_num + 4.0_num * cell_frac_y * (2.75_num &
-            + cell_frac_y * (1.5_num - cell_frac_y - cell_frac_y**2))
-        gy( 0) = 14.375_num + 6.0_num * cell_frac_y**2 &
-            * (cell_frac_y**2 - 2.5_num)
-        gy( 1) = 4.75_num - 4.0_num * cell_frac_y * (2.75_num &
-            - cell_frac_y * (1.5_num + cell_frac_y - cell_frac_y**2))
+        gy(-1) = 4.75_num + 11.0_num * cell_frac_y &
+            + 4.0_num * cf2 * (1.5_num - cell_frac_y - cf2)
+        gy( 0) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
+        gy( 1) = 4.75_num - 11.0_num * cell_frac_y &
+            + 4.0_num * cf2 * (1.5_num + cell_frac_y - cf2)
         gy( 2) = (0.5_num - cell_frac_y)**4
 #else
-        gx(-1) = (0.5_num + cell_frac_x)**2
-        gx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
-        gx( 1) = (0.5_num - cell_frac_x)**2
+        cf2 = cell_frac_x**2
+        gx(-1) = 0.25_num + cf2 + cell_frac_x
+        gx( 0) = 1.5_num - 2.0_num * cf2
+        gx( 1) = 0.25_num + cf2 - cell_frac_x
 
-        gy(-1) = (0.5_num + cell_frac_y)**2
-        gy( 0) =  1.5_num - 2.0_num * cell_frac_y**2
-        gy( 1) = (0.5_num - cell_frac_y)**2
+        cf2 = cell_frac_y**2
+        gy(-1) = 0.25_num + cf2 + cell_frac_y
+        gy( 0) = 1.5_num - 2.0_num * cf2
+        gy( 1) = 0.25_num + cf2 - cell_frac_y
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -232,31 +234,33 @@ CONTAINS
         cell_y2 = cell_y2 + 1
 
 #ifdef SPLINE_FOUR
+        cf2 = cell_frac_x**2
         hx(-2) = (0.5_num + cell_frac_x)**4
-        hx(-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
-            + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
-        hx( 0) = 14.375_num + 6.0_num * cell_frac_x**2 &
-            * (cell_frac_x**2 - 2.5_num)
-        hx( 1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
-            - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+        hx(-1) = 4.75_num + 11.0_num * cell_frac_x &
+            + 4.0_num * cf2 * (1.5_num - cell_frac_x - cf2)
+        hx( 0) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
+        hx( 1) = 4.75_num - 11.0_num * cell_frac_x &
+            + 4.0_num * cf2 * (1.5_num + cell_frac_x - cf2)
         hx( 2) = (0.5_num - cell_frac_x)**4
 
+        cf2 = cell_frac_y**2
         hy(-2) = (0.5_num + cell_frac_y)**4
-        hy(-1) = 4.75_num + 4.0_num * cell_frac_y * (2.75_num &
-            + cell_frac_y * (1.5_num - cell_frac_y - cell_frac_y**2))
-        hy( 0) = 14.375_num + 6.0_num * cell_frac_y**2 &
-            * (cell_frac_y**2 - 2.5_num)
-        hy( 1) = 4.75_num - 4.0_num * cell_frac_y * (2.75_num &
-            - cell_frac_y * (1.5_num + cell_frac_y - cell_frac_y**2))
+        hy(-1) = 4.75_num + 11.0_num * cell_frac_y &
+            + 4.0_num * cf2 * (1.5_num - cell_frac_y - cf2)
+        hy( 0) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
+        hy( 1) = 4.75_num - 11.0_num * cell_frac_y &
+            + 4.0_num * cf2 * (1.5_num + cell_frac_y - cf2)
         hy( 2) = (0.5_num - cell_frac_y)**4
 #else
-        hx(-1) = (0.5_num + cell_frac_x)**2
-        hx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
-        hx( 1) = (0.5_num - cell_frac_x)**2
+        cf2 = cell_frac_x**2
+        hx(-1) = 0.25_num + cf2 + cell_frac_x
+        hx( 0) = 1.5_num - 2.0_num * cf2
+        hx( 1) = 0.25_num + cf2 - cell_frac_x
 
-        hy(-1) = (0.5_num + cell_frac_y)**2
-        hy( 0) =  1.5_num - 2.0_num * cell_frac_y**2
-        hy( 1) = (0.5_num - cell_frac_y)**2
+        cf2 = cell_frac_y**2
+        hy(-1) = 0.25_num + cf2 + cell_frac_y
+        hy( 0) = 1.5_num - 2.0_num * cf2
+        hy( 1) = 0.25_num + cf2 - cell_frac_y
 #endif
 
         ! These are the electric and magnetic fields interpolated to the
@@ -523,15 +527,16 @@ CONTAINS
         part_pz = pzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        root = c / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
+        momentum = SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
+        root = c / momentum
 
-        part_vx = part_px * root
-        part_vy = part_py * root
+        delta_x = part_px * root * dto2
+        delta_y = part_py * root * dto2
         part_vz = part_pz * root
 
         ! Move particles to end of time step at 2nd order accuracy
-        part_x = part_x + part_vx * dto2
-        part_y = part_y + part_vy * dto2
+        part_x = part_x + delta_x
+        part_y = part_y + delta_y
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
@@ -554,8 +559,8 @@ CONTAINS
           ! the manual between pages 37 and 41. The version coded up looks
           ! completely different to that in the manual, but is equivalent.
           ! Use t+1.5 dt so that can update J to t+dt at 2nd order
-          part_x = part_x + part_vx * dto2
-          part_y = part_y + part_vy * dto2
+          part_x = part_x + delta_x
+          part_y = part_y + delta_y
 
           cell_x_r = part_x / dx
           cell_x3 = FLOOR(cell_x_r + 0.5_num)
@@ -574,31 +579,33 @@ CONTAINS
           dcelly = cell_y3 - cell_y1
 
 #ifdef SPLINE_FOUR
+          cf2 = cell_frac_x**2
           hx(dcellx-2) = (0.5_num + cell_frac_x)**4
-          hx(dcellx-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
-              + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
-          hx(dcellx  ) = 14.375_num + 6.0_num * cell_frac_x**2 &
-              * (cell_frac_x**2 - 2.5_num)
-          hx(dcellx+1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
-              - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+          hx(dcellx-1) = 4.75_num + 11.0_num * cell_frac_x &
+              + 4.0_num * cf2 * (1.5_num - cell_frac_x - cf2)
+          hx(dcellx  ) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
+          hx(dcellx+1) = 4.75_num - 11.0_num * cell_frac_x &
+              + 4.0_num * cf2 * (1.5_num + cell_frac_x - cf2)
           hx(dcellx+2) = (0.5_num - cell_frac_x)**4
 
+          cf2 = cell_frac_y**2
           hy(dcelly-2) = (0.5_num + cell_frac_y)**4
-          hy(dcelly-1) = 4.75_num + 4.0_num * cell_frac_y * (2.75_num &
-              + cell_frac_y * (1.5_num - cell_frac_y - cell_frac_y**2))
-          hy(dcelly  ) = 14.375_num + 6.0_num * cell_frac_y**2 &
-              * (cell_frac_y**2 - 2.5_num)
-          hy(dcelly+1) = 4.75_num - 4.0_num * cell_frac_y * (2.75_num &
-              - cell_frac_y * (1.5_num + cell_frac_y - cell_frac_y**2))
+          hy(dcelly-1) = 4.75_num + 11.0_num * cell_frac_y &
+              + 4.0_num * cf2 * (1.5_num - cell_frac_y - cf2)
+          hy(dcelly  ) = 14.375_num + 6.0_num * cf2 * (cf2 - 2.5_num)
+          hy(dcelly+1) = 4.75_num - 11.0_num * cell_frac_y &
+              + 4.0_num * cf2 * (1.5_num + cell_frac_y - cf2)
           hy(dcelly+2) = (0.5_num - cell_frac_y)**4
 #else
-          hx(dcellx-1) = (0.5_num + cell_frac_x)**2
-          hx(dcellx  ) =  1.5_num - 2.0_num * cell_frac_x**2
-          hx(dcellx+1) = (0.5_num - cell_frac_x)**2
+          cf2 = cell_frac_x**2
+          hx(dcellx-1) = 0.25_num + cf2 + cell_frac_x
+          hx(dcellx  ) = 1.5_num - 2.0_num * cf2
+          hx(dcellx+1) = 0.25_num + cf2 - cell_frac_x
 
-          hy(dcelly-1) = (0.5_num + cell_frac_y)**2
-          hy(dcelly  ) =  1.5_num - 2.0_num * cell_frac_y**2
-          hy(dcelly+1) = (0.5_num - cell_frac_y)**2
+          cf2 = cell_frac_y**2
+          hy(dcelly-1) = 0.25_num + cf2 + cell_frac_y
+          hy(dcelly  ) = 1.5_num - 2.0_num * cf2
+          hy(dcelly+1) = 0.25_num + cf2 - cell_frac_y
 #endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
@@ -657,9 +664,7 @@ CONTAINS
         DO WHILE(ASSOCIATED(current_probe))
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
-          probe_energy = &
-              c * (SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2) &
-              - part_mc)
+          probe_energy = c * (momentum - part_mc)
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN
