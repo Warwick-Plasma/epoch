@@ -319,7 +319,7 @@ CONTAINS
     LOGICAL :: white_space_over
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
     TYPE(file_buffer), POINTER :: fbuf
-    LOGICAL :: already_parsed
+    LOGICAL :: already_parsed, got_eor
 
     ! No error yet
     errcode_deck = c_err_none
@@ -412,16 +412,19 @@ CONTAINS
       DO
         errcode_deck = c_err_none
         ! Read a character
-        ! When you reach an EOL character iostat returns -2
-        ! When you reach an EOF iostat returns -1
-        READ(lun, "(A1)", advance='no', size=s, iostat=f), u1
+        ! For ordinary characters, f is zero
+        ! When an end of line character is read then got_eor is .TRUE.
+        ! When end of file is reached, f is negative and got_eor is .FALSE.
+        got_eor = .TRUE.
+        READ(lun, "(A1)", advance='no', size=s, iostat=f, eor=10), u1
+        got_eor = .FALSE.
 
-        IF (.NOT. already_parsed) THEN
+10      IF (.NOT. already_parsed) THEN
           ! Store character in a buffer so that we can write the input deck
           ! contents to a restart dump
           IF (f .EQ. 0) THEN
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = u1
-          ELSE IF (f .EQ. -2) THEN
+          ELSE IF (got_eor) THEN
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(10)
           ELSE
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(0)
@@ -476,12 +479,12 @@ CONTAINS
           ENDIF
         ENDIF
 
-        ! If f = -2 then you've reached the end of the line, so comment state
-        ! is definitely false
-        IF (f .EQ. -2) is_comment = .FALSE.
+        ! If got_eor is .TRUE. then you've reached the end of the line, so
+        ! comment state is definitely false
+        IF (got_eor) is_comment = .FALSE.
 
         ! If you've not read a blank line then
-        IF (f .EQ. -2 .AND. pos .GT. 1) THEN
+        IF (got_eor .AND. pos .GT. 1) THEN
           elements = elements+1
           flip = 1
           pos = 1
@@ -500,7 +503,7 @@ CONTAINS
           is_comment = .FALSE.
           white_space_over = .FALSE.
         ENDIF
-        IF (f .EQ. -1) THEN
+        IF (f .LT. 0 .AND. .NOT.got_eor) THEN
           CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
           CLOSE(lun)
           EXIT

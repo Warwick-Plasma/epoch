@@ -237,14 +237,13 @@ CONTAINS
 
         start = .FALSE.
         npart_sent = npart_sent + npart_this_cycle
-        CALL MPI_FILE_IWRITE(cfd_filehandle, data, npart_this_cycle, &
-            mpireal, mpi_request, cfd_errcode)
+        CALL MPI_FILE_WRITE(cfd_filehandle, data, npart_this_cycle, &
+            mpireal, cfd_status, cfd_errcode)
       ENDDO
 
       current_displacement = current_displacement +  npart_global * num
     ENDDO
 
-    CALL MPI_WAIT(mpi_request, cfd_status, cfd_errcode)
     DEALLOCATE(data)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, offset_for_min_max, mpireal, &
@@ -459,11 +458,10 @@ CONTAINS
       ENDIF
       start = .FALSE.
 
-      CALL MPI_FILE_IWRITE(cfd_filehandle, data, npart_this_cycle, mpireal, &
-          mpi_request, cfd_errcode)
+      CALL MPI_FILE_WRITE(cfd_filehandle, data, npart_this_cycle, mpireal, &
+          cfd_status, cfd_errcode)
     ENDDO
 
-    CALL MPI_WAIT(mpi_request, cfd_status, cfd_errcode)
     DEALLOCATE(data)
 
     current_displacement = current_displacement + npart_global * num

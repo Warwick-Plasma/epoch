@@ -110,10 +110,16 @@ while [ $i -lt $nblocks ]; do
         continue
       fi
 
-      (echo begin-base64 664 $output
-      fold $tmp
-      echo
-      echo ====) | uudecode
+      which uudecode > /dev/null 2>&1
+      if [ $? -eq 0 ]; then
+        (echo begin-base64 664 $output
+        fold $tmp
+        echo
+        echo ====) | uudecode
+      else
+        perl -MMIME::Base64 -0777 -ne \
+            'print decode_base64($_)' < $tmp > $output
+      fi
 
       if [ $? -ne 0 ]; then
         echo 'WARNING: failed to unpack source code'

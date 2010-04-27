@@ -57,8 +57,8 @@ if [ $embed_source -eq 1 ]; then
         fi
         if [ $? -ne 0 ]; then
           echo uuencode failed. Trying perl.
-          perl -MMIME::Base64 -ne \
-            'local($/)=undef;print encode_base64(<STDIN>)' < $tmp > $tmp2
+          perl -MMIME::Base64 -0777 -ne \
+            'print encode_base64($_)' < $tmp > $tmp2
         fi
       fi
     fi
@@ -125,7 +125,7 @@ END MODULE encoded_source
 EOF
 fi
 
-#rm -f $tmp $tmp2
+rm -f $tmp $tmp2
 
 if [ $success -ne 0 ]; then
   echo WARNING: failed to pack source code. Restart dumps will be produced without it.
