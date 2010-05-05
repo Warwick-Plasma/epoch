@@ -81,7 +81,7 @@ CONTAINS
 
 
           IF (current%ndims .EQ. 1) THEN
-            CALL general_1d_dist_fn(current%name, current%directions(1), &
+            CALL general_1d_dist_fn(current%name, current%directions(1:1), &
                 ranges(1,:), resolution(1), ispecies, restrictions, &
                 use_restrictions)
           ENDIF

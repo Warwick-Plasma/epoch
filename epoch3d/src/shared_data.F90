@@ -323,6 +323,8 @@ MODULE shared_data
 #endif
 
   ! Object representing a particle
+  ! If you add or remove from this section then you *must* update the
+  ! particle pack and unpack routines
   TYPE :: particle
     REAL(num), DIMENSION(3) :: part_p
     REAL(num), DIMENSION(3) :: part_pos

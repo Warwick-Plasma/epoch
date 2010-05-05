@@ -12,16 +12,13 @@ CONTAINS
 
   SUBROUTINE setup_partlists
 
-    nvar = 6
-
+    nvar = 3 + 3  ! 3d
 #ifdef PER_PARTICLE_WEIGHT
     nvar = nvar+1
 #endif
-
 #ifdef PER_PARTICLE_CHARGEMASS
     nvar = nvar+2
 #endif
-
 #ifdef PARTICLE_DEBUG
     nvar = nvar+2
 #endif
@@ -130,7 +127,7 @@ CONTAINS
       ALLOCATE(new_particle)
       NULLIFY(new_particle%prev, new_particle%next)
       cpos = ipart*nvar+1
-      CALL unpack_particle(data_in(cpos:cpos+nvar), new_particle)
+      CALL unpack_particle(data_in(cpos:cpos+nvar-1), new_particle)
 #ifdef PARTICLE_DEBUG
       new_particle%processor = rank
 #endif
@@ -495,7 +492,7 @@ CONTAINS
     ipart = 0
     DO WHILE (ipart .LT. partlist%count)
       cpos = ipart*nvar+1
-      CALL pack_particle(data(cpos:cpos+nvar), current)
+      CALL pack_particle(data(cpos:cpos+nvar-1), current)
       ipart = ipart+1
       current=>current%next
     ENDDO
