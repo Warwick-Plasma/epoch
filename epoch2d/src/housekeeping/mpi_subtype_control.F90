@@ -80,13 +80,15 @@ CONTAINS
     ! count the number of dumped particles of each species
     n_dump_species = 0
     DO ispecies = 1, n_species
-      IF (particle_species(ispecies)%dump) n_dump_species = n_dump_species+1
+      IF (particle_species(ispecies)%dump .OR. force_restart) THEN
+        n_dump_species = n_dump_species+1
+      ENDIF
     ENDDO
 
     ALLOCATE(npart_local(1:n_dump_species))
     index = 1
     DO ispecies = 1, n_species
-      IF (particle_species(ispecies)%dump) THEN
+      IF (particle_species(ispecies)%dump .OR. force_restart) THEN
         npart_local(index) = particle_species(ispecies)%attached_list%count
         index = index+1
       ENDIF
@@ -139,37 +141,17 @@ CONTAINS
 
 
   !----------------------------------------------------------------------------
-  ! create_particle_subtype - Creates a subtype representing the local particles
+  ! create_particle_subtype - Creates a subtype representing the local
+  ! particles
   !----------------------------------------------------------------------------
 
   FUNCTION create_particle_subtype(npart_local)
 
-    INTEGER(KIND=8), INTENT(IN) :: npart_local
     INTEGER :: create_particle_subtype
+    INTEGER(KIND=8), INTENT(IN) :: npart_local
 
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-
-    ! Create the subarray for the particles in this problem: subtype decribes
-    ! where this process's data fits into the global picture.
-    CALL MPI_ALLGATHER(npart_local, 1, MPI_INTEGER8, npart_each_rank, 1, &
-        MPI_INTEGER8, comm, errcode)
-
-    ! This is a hack
-    ! If npart_local or npart_each_rank is bigger than an integer then it
-    ! will fail. It is extremely unlikely that this will ever happen so at
-    ! some point the datatypes for npart should change back to default integer
-    ALLOCATE(lengths(1), starts(1))
-    lengths = INT(npart_local)
-    starts = 0
-    DO ix = 1, rank
-      starts = starts + INT(npart_each_rank(ix))
-    ENDDO
-
-    CALL MPI_TYPE_INDEXED(1, lengths, starts, mpireal, &
-        create_particle_subtype, errcode)
-    CALL MPI_TYPE_COMMIT(create_particle_subtype, errcode)
-
-    DEALLOCATE(lengths, starts)
+    create_particle_subtype = &
+        create_ordered_particle_subtype(1, (/npart_local/) )
 
   END FUNCTION create_particle_subtype
 
@@ -187,6 +169,7 @@ CONTAINS
     INTEGER(KIND=8), DIMENSION(n_dump_species), INTENT(IN) :: npart_local
     INTEGER :: ispecies
     INTEGER(KIND=8), DIMENSION(:,:), ALLOCATABLE :: npart_each_rank
+    INTEGER(KIND=8) :: particles_to_skip
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
 
     ALLOCATE(npart_each_rank(1:n_dump_species, 1:nproc))
@@ -201,14 +184,17 @@ CONTAINS
     ! will fail. It is extremely unlikely that this will ever happen so at
     ! some point the datatypes for npart should change back to default integer
     ALLOCATE(lengths(n_dump_species), starts(n_dump_species))
+
     lengths = INT(npart_local)
+    particles_to_skip = 0
+
     DO ispecies = 1, n_dump_species
-      starts(ispecies) = 0
-      DO ix = 1, ispecies-1
-        starts(ispecies) = starts(ispecies) + INT(SUM(npart_each_rank(ix,:), 1))
-      ENDDO
       DO ix = 1, rank
-        starts(ispecies) = starts(ispecies) + INT(npart_each_rank(ispecies, ix))
+        particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
+      ENDDO
+      starts(ispecies) = INT(particles_to_skip)
+      DO ix = rank+1, nproc
+        particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO
     ENDDO
 
@@ -224,34 +210,54 @@ CONTAINS
 
   !----------------------------------------------------------------------------
   ! create_field_subtype - Creates a subtype representing the local processor
-  ! for any arbitrary arrangement of the array. Only used directly during load
-  ! balancing
+  ! for any arbitrary arrangement of an array covering the entire spatial
+  ! domain. Only used directly during load balancing
   !----------------------------------------------------------------------------
 
   FUNCTION create_field_subtype(nx_local, ny_local, cell_start_x_local, &
       cell_start_y_local)
 
     INTEGER, INTENT(IN) :: nx_local, ny_local
-    INTEGER, INTENT(IN) :: cell_start_x_local, cell_start_y_local
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-    INTEGER :: ipoint, iy
+    INTEGER, INTENT(IN) :: cell_start_x_local
+    INTEGER, INTENT(IN) :: cell_start_y_local
     INTEGER :: create_field_subtype
 
-    ALLOCATE(lengths(1:ny_local), starts(1:ny_local))
-    lengths = nx_local
-    ipoint = 0
-
-    DO iy = 0, ny_local-1
-      ipoint = ipoint+1
-      starts(ipoint) = &
-          (cell_start_y_local+iy-1) * nx_global + cell_start_x_local - 1
-    ENDDO
-
-    CALL MPI_TYPE_INDEXED(ny_local, lengths, starts, mpireal, &
-        create_field_subtype, errcode)
-    CALL MPI_TYPE_COMMIT(create_field_subtype, errcode)
-    DEALLOCATE(lengths, starts)
+    create_field_subtype = create_2d_array_subtype( &
+        (/nx_local, ny_local/), (/nx_global, ny_global/), &
+        (/cell_start_x_local, cell_start_y_local/))
 
   END FUNCTION create_field_subtype
+
+
+
+  !----------------------------------------------------------------------------
+  ! create_2d_array_subtype - Creates a subtype representing the local fraction
+  ! of a completely arbitrary 2D array. Does not assume anything about the
+  ! domain at all.
+  !----------------------------------------------------------------------------
+
+  FUNCTION create_2d_array_subtype(n_local, n_global, start)
+
+    INTEGER, DIMENSION(2), INTENT(IN) :: n_local
+    INTEGER, DIMENSION(2), INTENT(IN) :: n_global
+    INTEGER, DIMENSION(2), INTENT(IN) :: start
+    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
+    INTEGER :: ipoint, iy
+    INTEGER :: create_2d_array_subtype
+
+    ALLOCATE(lengths(1:n_local(2)), starts(1:n_local(2)))
+    lengths = n_local(1)
+    ipoint = 0
+    DO iy = 0, n_local(2)-1
+      ipoint = ipoint+1
+      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) - 1
+    ENDDO
+
+    CALL MPI_TYPE_INDEXED(n_local(2), lengths, starts, mpireal, &
+        create_2d_array_subtype, errcode)
+    CALL MPI_TYPE_COMMIT(create_2d_array_subtype, errcode)
+    DEALLOCATE(lengths, starts)
+
+  END FUNCTION create_2d_array_subtype
 
 END MODULE mpi_subtype_control
