@@ -12,42 +12,42 @@ CONTAINS
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (bc_x_max .EQ. c_bc_periodic) THEN
-      bc_x_max_particle = c_bc_periodic
-      bc_x_max_field = c_bc_periodic
-    ENDIF
     IF (bc_x_min .EQ. c_bc_periodic) THEN
       bc_x_min_particle = c_bc_periodic
       bc_x_min_field = c_bc_periodic
     ENDIF
-
-    IF (bc_y_max .EQ. c_bc_periodic) THEN
-      bc_y_max_particle = c_bc_periodic
-      bc_y_max_field = c_bc_periodic
+    IF (bc_x_max .EQ. c_bc_periodic) THEN
+      bc_x_max_particle = c_bc_periodic
+      bc_x_max_field = c_bc_periodic
     ENDIF
+
     IF (bc_y_min .EQ. c_bc_periodic) THEN
       bc_y_min_particle = c_bc_periodic
       bc_y_min_field = c_bc_periodic
     ENDIF
+    IF (bc_y_max .EQ. c_bc_periodic) THEN
+      bc_y_max_particle = c_bc_periodic
+      bc_y_max_field = c_bc_periodic
+    ENDIF
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (bc_x_max .EQ. c_bc_other) THEN
-      bc_x_max_particle = c_bc_reflect
-      bc_x_max_field = c_bc_clamp
-    ENDIF
     IF (bc_x_min .EQ. c_bc_other) THEN
       bc_x_min_particle = c_bc_reflect
       bc_x_min_field = c_bc_clamp
     ENDIF
-
-    IF (bc_y_max .EQ. c_bc_other) THEN
-      bc_y_max_particle = c_bc_reflect
-      bc_y_max_field = c_bc_clamp
+    IF (bc_x_max .EQ. c_bc_other) THEN
+      bc_x_max_particle = c_bc_reflect
+      bc_x_max_field = c_bc_clamp
     ENDIF
+
     IF (bc_y_min .EQ. c_bc_other) THEN
       bc_y_min_particle = c_bc_reflect
       bc_y_min_field = c_bc_clamp
+    ENDIF
+    IF (bc_y_max .EQ. c_bc_other) THEN
+      bc_y_max_particle = c_bc_reflect
+      bc_y_max_field = c_bc_clamp
     ENDIF
 
     ! laser boundaries reflect particles off a hard wall
@@ -64,16 +64,16 @@ CONTAINS
       any_open = .TRUE.
     ENDIF
 
-    IF (bc_y_max .EQ. c_bc_simple_laser &
-        .OR. bc_y_max .EQ. c_bc_simple_outflow) THEN
-      bc_y_max_particle = c_bc_open
-      bc_y_max_field = c_bc_clamp
-      any_open = .TRUE.
-    ENDIF
     IF (bc_y_min .EQ. c_bc_simple_laser &
         .OR. bc_y_min .EQ. c_bc_simple_outflow) THEN
       bc_y_min_particle = c_bc_open
       bc_y_min_field = c_bc_clamp
+      any_open = .TRUE.
+    ENDIF
+    IF (bc_y_max .EQ. c_bc_simple_laser &
+        .OR. bc_y_max .EQ. c_bc_simple_outflow) THEN
+      bc_y_max_particle = c_bc_open
+      bc_y_max_field = c_bc_clamp
       any_open = .TRUE.
     ENDIF
 
@@ -391,9 +391,9 @@ CONTAINS
         ENDIF
 
         IF (cur%part_pos(1) .LT. x_min_local - dx/2.0_num) xbd = -1
-        IF (cur%part_pos(1) .GT. x_max_local + dx/2.0_num )  xbd = 1
+        IF (cur%part_pos(1) .GT. x_max_local + dx/2.0_num) xbd =  1
         IF (cur%part_pos(2) .LT. y_min_local - dy/2.0_num) ybd = -1
-        IF (cur%part_pos(2) .GT. y_max_local + dy/2.0_num)   ybd = 1
+        IF (cur%part_pos(2) .GT. y_max_local + dy/2.0_num) ybd =  1
 
         IF ((cur%part_pos(1) .LT. x_min - dx/2.0_num) &
             .AND. (bc_x_min_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
@@ -441,18 +441,16 @@ CONTAINS
       cur=>particle_species(ispecies)%attached_list%head
       ct = 0
       DO WHILE(ASSOCIATED(cur))
-        IF (cur%part_pos(1) .GT. x_max+dx/2.0_num &
-            .AND. bc_x_min_particle .EQ. c_bc_periodic) &
-                cur%part_pos(1) = cur%part_pos(1)-length_x - dx
-        IF (cur%part_pos(1) .LT. x_min-dx/2.0_num &
-            .AND. bc_x_max_particle .EQ. c_bc_periodic) &
-                cur%part_pos(1) = cur%part_pos(1)+length_x + dx
-        IF (cur%part_pos(2) .GT. y_max+dy/2.0_num &
-            .AND. bc_y_max_particle .EQ. c_bc_periodic) &
-                cur%part_pos(2) = cur%part_pos(2)-length_y - dy
-        IF (cur%part_pos(2) .LT. y_min-dy/2.0_num &
-            .AND. bc_y_min_particle .EQ. c_bc_periodic) &
-                cur%part_pos(2) = cur%part_pos(2)+length_y + dy
+        IF (cur%part_pos(1) .LT. x_min-dx/2.0_num) THEN
+          cur%part_pos(1) = cur%part_pos(1) + length_x + dx
+        ELSE IF (cur%part_pos(1) .GT. x_max+dx/2.0_num) THEN
+          cur%part_pos(1) = cur%part_pos(1) - length_x - dx
+        ENDIF
+        IF (cur%part_pos(2) .LT. y_min-dy/2.0_num) THEN
+          cur%part_pos(2) = cur%part_pos(2) + length_y + dy
+        ELSE IF (cur%part_pos(2) .GT. y_max+dy/2.0_num) THEN
+          cur%part_pos(2) = cur%part_pos(2) - length_y - dy
+        ENDIF
         cur=>cur%next
       ENDDO
     ENDDO

@@ -12,24 +12,24 @@ CONTAINS
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (bc_x_max .EQ. c_bc_periodic) THEN
-      bc_x_max_particle = c_bc_periodic
-      bc_x_max_field = c_bc_periodic
-    ENDIF
     IF (bc_x_min .EQ. c_bc_periodic) THEN
       bc_x_min_particle = c_bc_periodic
       bc_x_min_field = c_bc_periodic
     ENDIF
+    IF (bc_x_max .EQ. c_bc_periodic) THEN
+      bc_x_max_particle = c_bc_periodic
+      bc_x_max_field = c_bc_periodic
+    ENDIF
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (bc_x_max .EQ. c_bc_other) THEN
-      bc_x_max_particle = c_bc_reflect
-      bc_x_max_field = c_bc_clamp
-    ENDIF
     IF (bc_x_min .EQ. c_bc_other) THEN
       bc_x_min_particle = c_bc_reflect
       bc_x_min_field = c_bc_clamp
+    ENDIF
+    IF (bc_x_max .EQ. c_bc_other) THEN
+      bc_x_max_particle = c_bc_reflect
+      bc_x_max_field = c_bc_clamp
     ENDIF
 
     ! laser boundaries reflect particles off a hard wall
@@ -244,8 +244,9 @@ CONTAINS
       ENDDO
 
       DO WHILE (ASSOCIATED(cur))
-        out_of_bounds = .FALSE.
         next=>cur%next
+
+        out_of_bounds = .FALSE.
 
         xbd = 0
 
@@ -268,7 +269,7 @@ CONTAINS
         ENDIF
 
         IF (cur%part_pos .LT. x_min_local - dx/2.0_num) xbd = -1
-        IF (cur%part_pos .GT. x_max_local + dx/2.0_num )  xbd = 1
+        IF (cur%part_pos .GT. x_max_local + dx/2.0_num) xbd =  1
 
         IF ((cur%part_pos .LT. x_min - dx/2.0_num) &
             .AND. (bc_x_min_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
@@ -309,12 +310,11 @@ CONTAINS
       cur=>particle_species(ispecies)%attached_list%head
       ct = 0
       DO WHILE(ASSOCIATED(cur))
-        IF (cur%part_pos .GT. x_max+dx/2.0_num &
-            .AND. bc_x_min_particle .EQ. c_bc_periodic) &
-                cur%part_pos = cur%part_pos-length_x - dx
-        IF (cur%part_pos .LT. x_min-dx/2.0_num &
-            .AND. bc_x_max_particle .EQ. c_bc_periodic) &
-                cur%part_pos = cur%part_pos+length_x + dx
+        IF (cur%part_pos .LT. x_min-dx/2.0_num) THEN
+          cur%part_pos = cur%part_pos + length_x + dx
+        ELSE IF (cur%part_pos .GT. x_max+dx/2.0_num) THEN
+          cur%part_pos = cur%part_pos - length_x - dx
+        ENDIF
         cur=>cur%next
       ENDDO
     ENDDO
