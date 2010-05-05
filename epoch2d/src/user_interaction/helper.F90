@@ -244,23 +244,13 @@ CONTAINS
     INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
     REAL(num) :: valid_cell_frac
     REAL(dbl) :: rpos
-    INTEGER :: lower_x, upper_x, cell_x
-    INTEGER :: lower_y, upper_y, cell_y
+    INTEGER :: cell_x
+    INTEGER :: cell_y
     REAL(num) :: cell_x_r
     REAL(num) :: cell_y_r
     INTEGER(KIND=8) :: i
     INTEGER :: j, ierr
     CHARACTER(LEN=15) :: string
-
-    lower_x = 1
-    lower_y = 1
-    upper_x = nx
-    upper_y = ny
-
-    IF (coordinates(2) .EQ. nprocx-1) upper_x = nx+1
-    IF (coordinates(2) .EQ. 0) lower_x = 0
-    IF (coordinates(1) .EQ. nprocy-1) upper_y = ny+1
-    IF (coordinates(1) .EQ. 0) lower_y = 0
 
     partlist=>species_list%attached_list
 
@@ -272,8 +262,8 @@ CONTAINS
     ENDIF
     IF (npart_this_species .EQ. 0) RETURN
     num_valid_cells_local = 0
-    DO iy = lower_y, upper_y
-      DO ix = lower_x, upper_x
+    DO iy = 1, ny
+      DO ix = 1, nx
         IF (load_list(ix, iy)) num_valid_cells_local = num_valid_cells_local+1
       ENDDO
     ENDDO
@@ -303,16 +293,12 @@ CONTAINS
     species_list%npart_per_cell = npart_per_cell
     IF (species_list%npart_per_cell .EQ. 0) species_list%npart_per_cell = 1
 
-    ipart = 0
-    ix = 1
-    iy = 1
-
     npart_left = npart_this_species
     current=>partlist%head
     IF (npart_per_cell .GT. 0) THEN
 
-      DO iy = lower_y, upper_y
-        DO ix = lower_x, upper_x
+      DO iy = 1, ny
+        DO ix = 1, nx
           ipart = 0
           IF (load_list(ix, iy)) THEN
             DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)

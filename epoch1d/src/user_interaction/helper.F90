@@ -233,17 +233,11 @@ CONTAINS
     INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
     REAL(num) :: valid_cell_frac
     REAL(dbl) :: rpos
-    INTEGER :: lower_x, upper_x, cell_x
+    INTEGER :: cell_x
     REAL(num) :: cell_x_r
     INTEGER(KIND=8) :: i
     INTEGER :: j, ierr
     CHARACTER(LEN=15) :: string
-
-    lower_x = 1
-    upper_x = nx
-
-    IF (coordinates(1) .EQ. nprocx-1) upper_x = nx+1
-    IF (coordinates(1) .EQ. 0) lower_x = 0
 
     partlist=>species_list%attached_list
 
@@ -255,7 +249,7 @@ CONTAINS
     ENDIF
     IF (npart_this_species .EQ. 0) RETURN
     num_valid_cells_local = 0
-    DO ix = lower_x, upper_x
+    DO ix = 1, nx
       IF (load_list(ix)) num_valid_cells_local = num_valid_cells_local+1
     ENDDO
 
@@ -284,14 +278,11 @@ CONTAINS
     species_list%npart_per_cell = npart_per_cell
     IF (species_list%npart_per_cell .EQ. 0) species_list%npart_per_cell = 1
 
-    ipart = 0
-    ix = 1
-
     npart_left = npart_this_species
     current=>partlist%head
     IF (npart_per_cell .GT. 0) THEN
 
-      DO ix = lower_x, upper_x
+      DO ix = 1, nx
         ipart = 0
         IF (load_list(ix)) THEN
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
