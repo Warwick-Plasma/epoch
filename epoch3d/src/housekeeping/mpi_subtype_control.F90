@@ -170,7 +170,8 @@ CONTAINS
     INTEGER :: ispecies
     INTEGER(KIND=8), DIMENSION(:,:), ALLOCATABLE :: npart_each_rank
     INTEGER(KIND=8) :: particles_to_skip
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
+    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
 
     ALLOCATE(npart_each_rank(1:n_dump_species, 1:nproc))
 
@@ -179,12 +180,11 @@ CONTAINS
     CALL MPI_ALLGATHER(npart_local, n_dump_species, MPI_INTEGER8, &
         npart_each_rank, n_dump_species, MPI_INTEGER8, comm, errcode)
 
-    ! This is a hack
-    ! If npart_local or npart_each_rank is bigger than an integer then it
-    ! will fail. It is extremely unlikely that this will ever happen so at
-    ! some point the datatypes for npart should change back to default integer
-    ALLOCATE(lengths(n_dump_species), starts(n_dump_species))
+    ALLOCATE(lengths(n_dump_species), disp(n_dump_species))
 
+    ! If npart_local is bigger than an integer then the data will not
+    ! get written properly. This would require about 48GB per processor
+    ! so it is unlikely to be a problem any time soon.
     lengths = INT(npart_local)
     particles_to_skip = 0
 
@@ -192,17 +192,17 @@ CONTAINS
       DO ix = 1, rank
         particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO
-      starts(ispecies) = INT(particles_to_skip)
+      disp(ispecies) = particles_to_skip * num
       DO ix = rank+1, nproc
         particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(n_dump_species, lengths, starts, mpireal, &
+    CALL MPI_TYPE_CREATE_HINDEXED(n_dump_species, lengths, disp, mpireal, &
         create_ordered_particle_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_ordered_particle_subtype, errcode)
 
-    DEALLOCATE(lengths, starts)
+    DEALLOCATE(lengths, disp)
 
   END FUNCTION create_ordered_particle_subtype
 
@@ -242,22 +242,26 @@ CONTAINS
     INTEGER, DIMENSION(2), INTENT(IN) :: n_local
     INTEGER, DIMENSION(2), INTENT(IN) :: n_global
     INTEGER, DIMENSION(2), INTENT(IN) :: start
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
+    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
     INTEGER :: ipoint, iy
     INTEGER :: create_2d_array_subtype
 
-    ALLOCATE(lengths(1:n_local(2)), starts(1:n_local(2)))
+    ALLOCATE(lengths(1:n_local(2)), disp(1:n_local(2)))
+
     lengths = n_local(1)
     ipoint = 0
+
     DO iy = 0, n_local(2)-1
       ipoint = ipoint+1
-      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) - 1
+      disp(ipoint) = ((start(2)+iy-1) * n_global(1) + start(1) - 1) * num
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(n_local(2), lengths, starts, mpireal, &
+    CALL MPI_TYPE_CREATE_HINDEXED(n_local(2), lengths, disp, mpireal, &
         create_2d_array_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_2d_array_subtype, errcode)
-    DEALLOCATE(lengths, starts)
+
+    DEALLOCATE(lengths, disp)
 
   END FUNCTION create_2d_array_subtype
 
@@ -274,26 +278,30 @@ CONTAINS
     INTEGER, DIMENSION(3), INTENT(IN) :: n_local
     INTEGER, DIMENSION(3), INTENT(IN) :: n_global
     INTEGER, DIMENSION(3), INTENT(IN) :: start
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
+    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
     INTEGER :: ipoint, iy, iz
     INTEGER :: create_3d_array_subtype
 
     ALLOCATE(lengths(1:n_local(2) * n_local(3)))
-    ALLOCATE(starts(1:n_local(2) * n_local(3)))
+    ALLOCATE(disp(1:n_local(2) * n_local(3)))
+
     lengths = n_local(1)
     ipoint = 0
+
     DO iz = 0, n_local(3)-1
       DO iy = 0, n_local(2)-1
         ipoint = ipoint+1
-        starts(ipoint) = (start(3)+iz-1) * n_global(1) * n_global(2) &
-            + (start(2)+iy-1) * n_global(1) + start(1) - 1
+        disp(ipoint) = ((start(3)+iz-1) * n_global(1) * n_global(2) &
+            + (start(2)+iy-1) * n_global(1) + start(1) - 1) * num
       ENDDO
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(n_local(2)*n_local(3), lengths, starts, mpireal, &
-        create_3d_array_subtype, errcode)
+    CALL MPI_TYPE_CREATE_HINDEXED(n_local(2)*n_local(3), lengths, disp, &
+        mpireal, create_3d_array_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_3d_array_subtype, errcode)
-    DEALLOCATE(lengths, starts)
+
+    DEALLOCATE(lengths, disp)
 
   END FUNCTION create_3d_array_subtype
 

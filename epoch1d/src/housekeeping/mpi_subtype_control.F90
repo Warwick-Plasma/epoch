@@ -169,7 +169,8 @@ CONTAINS
     INTEGER :: ispecies
     INTEGER(KIND=8), DIMENSION(:,:), ALLOCATABLE :: npart_each_rank
     INTEGER(KIND=8) :: particles_to_skip
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
+    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
 
     ALLOCATE(npart_each_rank(1:n_dump_species, 1:nproc))
 
@@ -178,12 +179,11 @@ CONTAINS
     CALL MPI_ALLGATHER(npart_local, n_dump_species, MPI_INTEGER8, &
         npart_each_rank, n_dump_species, MPI_INTEGER8, comm, errcode)
 
-    ! This is a hack
-    ! If npart_local or npart_each_rank is bigger than an integer then it
-    ! will fail. It is extremely unlikely that this will ever happen so at
-    ! some point the datatypes for npart should change back to default integer
-    ALLOCATE(lengths(n_dump_species), starts(n_dump_species))
+    ALLOCATE(lengths(n_dump_species), disp(n_dump_species))
 
+    ! If npart_local is bigger than an integer then the data will not
+    ! get written properly. This would require about 48GB per processor
+    ! so it is unlikely to be a problem any time soon.
     lengths = INT(npart_local)
     particles_to_skip = 0
 
@@ -191,17 +191,17 @@ CONTAINS
       DO ix = 1, rank
         particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO
-      starts(ispecies) = INT(particles_to_skip)
+      disp(ispecies) = INT(particles_to_skip)
       DO ix = rank+1, nproc
         particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO
     ENDDO
 
-    CALL MPI_TYPE_INDEXED(n_dump_species, lengths, starts, mpireal, &
+    CALL MPI_TYPE_CREATE_HINDEXED(n_dump_species, lengths, disp, mpireal, &
         create_ordered_particle_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_ordered_particle_subtype, errcode)
 
-    DEALLOCATE(lengths, starts)
+    DEALLOCATE(lengths, disp)
 
   END FUNCTION create_ordered_particle_subtype
 
@@ -217,26 +217,15 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: nx_local
     INTEGER, INTENT(IN) :: cell_start_x_local
-    INTEGER, DIMENSION(3) :: length, disp, types
+    INTEGER, DIMENSION(1) :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(1) :: disp
     INTEGER :: create_field_subtype
 
-    ! lengths = nx_local
-    ! starts = cell_start_x_local-1
+    lengths = nx_local
+    disp = (cell_start_x_local - 1) * num
 
-    ! CALL MPI_TYPE_INDEXED(1, lengths, starts, mpireal, &
-    !     create_field_subtype, errcode)
-    ! CALL MPI_TYPE_COMMIT(create_field_subtype, errcode)
-
-    length(1) = 1
-    length(2) = nx
-    length(3) = 1
-    disp(1) = 0
-    disp(2) = (cell_start_x_local-1)*num
-    disp(3) = nx_global * num
-    types(1) = MPI_LB
-    types(2) = mpireal
-    types(3) = MPI_UB
-    CALL MPI_TYPE_STRUCT(3, length, disp, types, create_field_subtype, errcode)
+    CALL MPI_TYPE_CREATE_HINDEXED(1, lengths, disp, mpireal, &
+        create_field_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_field_subtype, errcode)
 
   END FUNCTION create_field_subtype
