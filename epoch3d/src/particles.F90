@@ -119,6 +119,8 @@ CONTAINS
     ! particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
     fac = 1.0_num / 24.0_num
+#elif  PARTICLE_SHAPE_TOPHAT
+    fac = 1.0_num
 #else
     fac = 0.5_num
 #endif
@@ -180,7 +182,15 @@ CONTAINS
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+        cell_y_r = part_y / dy - 0.5_num
+        cell_z_r = part_z / dz - 0.5_num
+#else
         cell_x_r = part_x / dx
+        cell_y_r = part_y / dy
+        cell_z_r = part_z / dz
+#endif
         ! Round cell position to nearest cell
         cell_x1 = FLOOR(cell_x_r + 0.5_num)
         ! Calculate fraction of cell between nearest cell boundary and particle
@@ -189,7 +199,6 @@ CONTAINS
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
-        cell_y_r = part_y / dy
         ! Round cell position to nearest cell
         cell_y1 = FLOOR(cell_y_r + 0.5_num)
         ! Calculate fraction of cell between nearest cell boundary and particle
@@ -198,7 +207,6 @@ CONTAINS
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
-        cell_z_r = part_z / dz
         ! Round cell position to nearest cell
         cell_z1 = FLOOR(cell_z_r + 0.5_num)
         ! Calculate fraction of cell between nearest cell boundary and particle
@@ -211,6 +219,8 @@ CONTAINS
         ! to calculate J
 #ifdef PARTICLE_SHAPE_BSPLINE3
         INCLUDE 'include/bspline3/gx.inc'
+#elif  PARTICLE_SHAPE_TOPHAT
+        INCLUDE 'include/tophat/gx.inc'
 #else
         INCLUDE 'include/triangle/gx.inc'
 #endif
@@ -235,6 +245,8 @@ CONTAINS
         dcellz = 0
 #ifdef PARTICLE_SHAPE_BSPLINE3
         INCLUDE 'include/bspline3/hx_dcell.inc'
+#elif  PARTICLE_SHAPE_TOPHAT
+        INCLUDE 'include/tophat/hx_dcell.inc'
 #else
         INCLUDE 'include/triangle/hx_dcell.inc'
 #endif
@@ -244,6 +256,8 @@ CONTAINS
         ! Actually checking this is messy.
 #ifdef PARTICLE_SHAPE_BSPLINE3
         INCLUDE 'include/bspline3/eb_part.inc'
+#elif  PARTICLE_SHAPE_TOPHAT
+        INCLUDE 'include/tophat/eb_part.inc'
 #else
         INCLUDE 'include/triangle/eb_part.inc'
 #endif
@@ -318,17 +332,23 @@ CONTAINS
           part_y = part_y + delta_y
           part_z = part_z + delta_z
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+          cell_x_r = part_x / dx - 0.5_num
+          cell_y_r = part_y / dy - 0.5_num
+          cell_z_r = part_z / dz - 0.5_num
+#else
           cell_x_r = part_x / dx
+          cell_y_r = part_y / dy
+          cell_z_r = part_z / dz
+#endif
           cell_x3 = FLOOR(cell_x_r + 0.5_num)
           cell_frac_x = REAL(cell_x3, num) - cell_x_r
           cell_x3 = cell_x3 + 1
 
-          cell_y_r = part_y / dy
           cell_y3 = FLOOR(cell_y_r + 0.5_num)
           cell_frac_y = REAL(cell_y3, num) - cell_y_r
           cell_y3 = cell_y3 + 1
 
-          cell_z_r = part_z / dz
           cell_z3 = FLOOR(cell_z_r + 0.5_num)
           cell_frac_z = REAL(cell_z3, num) - cell_z_r
           cell_z3 = cell_z3 + 1
@@ -342,6 +362,8 @@ CONTAINS
           dcellz = cell_z3 - cell_z1
 #ifdef PARTICLE_SHAPE_BSPLINE3
           INCLUDE 'include/bspline3/hx_dcell.inc'
+#elif  PARTICLE_SHAPE_TOPHAT
+          INCLUDE 'include/tophat/hx_dcell.inc'
 #else
           INCLUDE 'include/triangle/hx_dcell.inc'
 #endif

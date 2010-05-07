@@ -22,6 +22,12 @@ CONTAINS
     output( 1) = fac2 * (1.1875_num - cell_frac * (2.75_num &
         - cell_frac * (1.5_num + cell_frac - cell_frac**2)))
     output( 2) = fac1 * (0.5_num - cell_frac)**4
+#elif  PARTICLE_SHAPE_TOPHAT
+    output(-2) = 0.0_num
+    output(-1) = 0.0_num
+    output( 0) = 0.5_num + cell_frac
+    output( 1) = 0.5_num - cell_frac
+    output( 2) = 0.0_num
 #else
     output(-2) = 0.0_num
     output(-1) = 0.5_num * (0.5_num + cell_frac)**2
@@ -50,6 +56,12 @@ CONTAINS
     output( 1) = fac2 * (1.1875_num - cell_frac * (2.75_num &
         - cell_frac * (1.5_num + cell_frac - cell_frac**2)))
     output( 2) = fac1 * (0.5_num - cell_frac)**4
+#elif  PARTICLE_SHAPE_TOPHAT
+    output(-2) = 0.0_num
+    output(-1) = 0.0_num
+    output( 0) = 0.5_num + cell_frac
+    output( 1) = 0.5_num - cell_frac
+    output( 2) = 0.0_num
 #else
     output(-2) = 0.0_num
     output(-1) = 0.5_num * (0.5_num + cell_frac)**2

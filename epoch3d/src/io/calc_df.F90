@@ -70,17 +70,23 @@ CONTAINS
         fac = l_weight * idxyz
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+        cell_y_r = part_y / dy - 0.5_num
+        cell_z_r = part_z / dz - 0.5_num
+#else
         cell_x_r = part_x / dx
+        cell_y_r = part_y / dy
+        cell_z_r = part_z / dz
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
 
-        cell_y_r = part_y / dy
         cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
         cell_y = cell_y + 1
 
-        cell_z_r = part_z / dz
         cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
         cell_z = cell_z + 1
@@ -176,17 +182,23 @@ CONTAINS
         l_weight = current%weight
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+        cell_y_r = part_y / dy - 0.5_num
+        cell_z_r = part_z / dz - 0.5_num
+#else
         cell_x_r = part_x / dx
+        cell_y_r = part_y / dy
+        cell_z_r = part_z / dz
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
 
-        cell_y_r = part_y / dy
         cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
         cell_y = cell_y + 1
 
-        cell_z_r = part_z / dz
         cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
         cell_z = cell_z + 1
@@ -293,17 +305,23 @@ CONTAINS
         fac = l_weight * idxyz
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+        cell_y_r = part_y / dy - 0.5_num
+        cell_z_r = part_z / dz - 0.5_num
+#else
         cell_x_r = part_x / dx
+        cell_y_r = part_y / dy
+        cell_z_r = part_z / dz
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
 
-        cell_y_r = part_y / dy
         cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
         cell_y = cell_y + 1
 
-        cell_z_r = part_z / dz
         cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
         cell_z = cell_z + 1
@@ -395,17 +413,23 @@ CONTAINS
         wdata = l_weight * idxyz
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+        cell_y_r = part_y / dy - 0.5_num
+        cell_z_r = part_z / dz - 0.5_num
+#else
         cell_x_r = part_x / dx
+        cell_y_r = part_y / dy
+        cell_z_r = part_z / dz
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
 
-        cell_y_r = part_y / dy
         cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
         cell_y = cell_y + 1
 
-        cell_z_r = part_z / dz
         cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
         cell_z = cell_z + 1
@@ -487,17 +511,23 @@ CONTAINS
         part_y  = current%part_pos(2) - y_min_local
         part_z  = current%part_pos(3) - z_min_local
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+        cell_y_r = part_y / dy - 0.5_num
+        cell_z_r = part_z / dz - 0.5_num
+#else
         cell_x_r = part_x / dx
+        cell_y_r = part_y / dy
+        cell_z_r = part_z / dz
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
 
-        cell_y_r = part_y / dy
         cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
         cell_y = cell_y + 1
 
-        cell_z_r = part_z / dz
         cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
         cell_z = cell_z + 1

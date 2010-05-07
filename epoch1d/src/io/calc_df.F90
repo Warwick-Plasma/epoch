@@ -72,7 +72,11 @@ CONTAINS
         fac = l_weight * idx
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+#else
         cell_x_r = part_x / dx
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
@@ -160,7 +164,11 @@ CONTAINS
         fac = l_weight * idx
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+#else
         cell_x_r = part_x / dx
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
@@ -247,7 +255,11 @@ CONTAINS
         l_weight = current%weight
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+#else
         cell_x_r = part_x / dx
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
@@ -337,7 +349,11 @@ CONTAINS
         wdata = l_weight * idx
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+#else
         cell_x_r = part_x / dx
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
@@ -430,7 +446,11 @@ CONTAINS
         l_weight = current%weight
 #endif
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+#else
         cell_x_r = part_x / dx
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
@@ -470,7 +490,11 @@ CONTAINS
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+#else
         cell_x_r = part_x / dx
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1
@@ -560,7 +584,11 @@ CONTAINS
       DO WHILE (ASSOCIATED(current))
         part_x  = current%part_pos - x_min_local
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x / dx - 0.5_num
+#else
         cell_x_r = part_x / dx
+#endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
         cell_x = cell_x + 1

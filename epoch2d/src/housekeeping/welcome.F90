@@ -90,9 +90,17 @@ CONTAINS
     defines = IOR(defines, c_def_field_debug)
     WRITE(*, *) "Field Debug information -DFIELD_DEBUG"
 #endif
+#ifdef PARSER_DEBUG
+    defines = IOR(defines, c_def_parser_debug)
+    WRITE(*, *) "Particle Debug information -DPARSER_DEBUG"
+#endif
 #ifdef PARTICLE_SHAPE_BSPLINE3
     defines = IOR(defines, c_def_particle_shape_bspline3)
     WRITE(*, *) "Third order B-spline particle shape -DPARTICLE_SHAPE_BSPLINE3"
+#endif
+#ifdef PARTICLE_SHAPE_TOPHAT
+    defines = IOR(defines, c_def_particle_shape_tophat)
+    WRITE(*, *) "Top-hat particle shape -DPARTICLE_SHAPE_TOPHAT"
 #endif
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
     defines = IOR(defines, c_def_split_particles_after_push)
