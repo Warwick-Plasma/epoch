@@ -138,7 +138,7 @@ CONTAINS
 #endif
 #ifdef PARTICLE_IONISE
       particle_species(ispecies)%ionise = .FALSE.
-      particle_species(ispecies)%ionise_to_species = .FALSE.
+      particle_species(ispecies)%ionise_to_species = -1
       particle_species(ispecies)%release_species = -1
       particle_species(ispecies)%critical_field = 0.0_num
 #endif
