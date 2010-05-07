@@ -98,7 +98,7 @@ CONTAINS
               + 3.0_num * k_max**2 * kb &
               * MAXVAL(initial_conditions(ispecies)%temp(ix, iy,:)) &
               / (particle_species(ispecies)%mass))
-          IF (2.0_num * pi/omega .LT. min_dt) min_dt = 2.0_num * pi /omega
+          IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
         ENDDO
       ENDDO
     ENDDO
@@ -106,7 +106,7 @@ CONTAINS
     CALL MPI_ALLREDUCE(min_dt, dt_plasma_frequency, 1, mpireal, MPI_MIN, &
         comm, errcode)
     ! Must resolve plasma frequency
-    dt_plasma_frequency = dt_plasma_frequency/2.0_num
+    dt_plasma_frequency = dt_plasma_frequency / 2.0_num
 
     DO ispecies = 1, n_species
       DEALLOCATE(initial_conditions(ispecies)%rho)
@@ -144,7 +144,7 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         IF (density(ix, iy) .GE. minrho) THEN
-          num_valid_cells = num_valid_cells+1
+          num_valid_cells = num_valid_cells + 1
           density_total = density_total + density(ix, iy)
         ENDIF
         IF (density(ix, iy) .GT. maxrho .AND. maxrho .GT. 0.0_num) &
@@ -154,16 +154,16 @@ CONTAINS
 
     CALL MPI_ALLREDUCE(num_valid_cells, num_valid_cells_global, 1, &
         MPI_INTEGER8, MPI_MAX, comm, errcode)
-    npart_per_cell_average = species_list%count/num_valid_cells_global
+    npart_per_cell_average = species_list%count / num_valid_cells_global
     IF (npart_per_cell_average .EQ. 0) npart_per_cell_average = 1
 
     CALL MPI_ALLREDUCE(density_total, density_total_global, 1, mpireal, &
         MPI_SUM, comm, errcode)
-    density_average = density_total_global/REAL(num_valid_cells_global, num)
+    density_average = density_total_global / REAL(num_valid_cells_global, num)
 
     ! Assume that a cell with the average density has the average number of
     ! particles per cell. Now calculate the new minimum density
-    minrho = density_average/REAL(npart_per_cell_average, num)
+    minrho = density_average / REAL(npart_per_cell_average, num)
     ! Set the particle weight
     weight = minrho * dx * dy
 
@@ -173,7 +173,7 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         IF (density(ix, iy) .GE. minrho) THEN
-          num_valid_cells = num_valid_cells+1
+          num_valid_cells = num_valid_cells + 1
           density_total = density_total + density(ix, iy)
         ENDIF
       ENDDO
@@ -204,7 +204,7 @@ CONTAINS
           rpos = random(idum)-0.5_num
           rpos = (rpos*dy)+y(iy)
           current%part_pos(2) = rpos
-          ipart = ipart+1
+          ipart = ipart + 1
           current=>current%next
         ENDDO
       ENDDO
@@ -264,7 +264,7 @@ CONTAINS
     num_valid_cells_local = 0
     DO iy = 1, ny
       DO ix = 1, nx
-        IF (load_list(ix, iy)) num_valid_cells_local = num_valid_cells_local+1
+        IF (load_list(ix, iy)) num_valid_cells_local = num_valid_cells_local + 1
       ENDDO
     ENDDO
 
@@ -284,12 +284,12 @@ CONTAINS
     ENDIF
 
     valid_cell_frac = &
-        REAL(num_valid_cells_local, num)/REAL(num_valid_cells, num)
+        REAL(num_valid_cells_local, num) / REAL(num_valid_cells, num)
     num_new_particles = INT(npart_this_species*valid_cell_frac, KIND=8)
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, num_new_particles)
 
-    npart_per_cell = npart_this_species/num_valid_cells
+    npart_per_cell = npart_this_species / num_valid_cells
     species_list%npart_per_cell = npart_per_cell
     IF (species_list%npart_per_cell .EQ. 0) species_list%npart_per_cell = 1
 
@@ -315,7 +315,7 @@ CONTAINS
               rpos = random(idum)-0.5_num
               rpos = (rpos*dy)+y(iy)
               current%part_pos(2) = rpos
-              ipart = ipart+1
+              ipart = ipart + 1
               current=>current%next
               ! One particle sucessfully placed
               npart_left = npart_left-1
@@ -329,18 +329,18 @@ CONTAINS
     DO i = 1, npart_left*4
       IF (.NOT. ASSOCIATED(current)) EXIT
       DO j = 1, 200
-        rpos = random(idum)*(x(nx)-x(1) + dx) - dx/2.0_num
-        current%part_pos(1) = rpos+x(1)
-        rpos = random(idum)*(y(ny)-y(1) + dy) - dy/2.0_num
-        current%part_pos(2) = rpos+y(1)
+        rpos = random(idum) * (x(nx) - x(1) + dx) - dx / 2.0_num
+        current%part_pos(1) = rpos + x(1)
+        rpos = random(idum) * (y(ny) - y(1) + dy) - dy / 2.0_num
+        current%part_pos(2) = rpos + y(1)
 
-        cell_x_r = (current%part_pos(1)-x_min_local)/dx - 0.5_num
-        cell_x = NINT(cell_x_r)
-        cell_x = cell_x+1
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_x = cell_x + 1
 
-        cell_y_r = (current%part_pos(2)-y_min_local)/dy - 0.5_num
-        cell_y = NINT(cell_y_r)
-        cell_y = cell_y+1
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
+        cell_y = FLOOR(cell_y_r + 0.5_num)
+        cell_y = cell_y + 1
 
         IF (load_list(cell_x, cell_y)) THEN
           EXIT
@@ -400,15 +400,15 @@ CONTAINS
 #endif
 
       ! Assume that temperature is cell centred
-      cell_x_r = (current%part_pos(1)-x_min_local)/dx - 0.5_num
-      cell_x = NINT(cell_x_r)
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
+      cell_x = FLOOR(cell_x_r + 0.5_num)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x+1
+      cell_x = cell_x + 1
 
-      cell_y_r = (current%part_pos(2)-y_min_local)/dy - 0.5_num
-      cell_y = NINT(cell_y_r)
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
+      cell_y = FLOOR(cell_y_r + 0.5_num)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
-      cell_y = cell_y+1
+      cell_y = cell_y + 1
 
       CALL grid_to_particle(cell_frac_x, gx)
       CALL grid_to_particle(cell_frac_y, gy)
@@ -434,7 +434,7 @@ CONTAINS
           momentum_from_temperature(mass, temp_local, idum) + drift_local
 
       current=>current%next
-      ipart = ipart+1
+      ipart = ipart + 1
     ENDDO
 
   END SUBROUTINE setup_particle_temperature
@@ -456,7 +456,7 @@ CONTAINS
     INTEGER(KIND=8) :: ipart
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: weight_fn, temp
     REAL(num), DIMENSION(-2:2) :: gx, gy
-    REAL(num) :: data
+    REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: isubx, isuby, ierr
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: density
@@ -500,30 +500,30 @@ CONTAINS
     ! First loop converts number density into weight function
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
-      cell_x_r = (current%part_pos(1)-x_min_local) / dx - 0.5_num
-      cell_x = NINT(cell_x_r)
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
+      cell_x = FLOOR(cell_x_r + 0.5_num)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x+1
+      cell_x = cell_x + 1
 
-      cell_y_r = (current%part_pos(2)-y_min_local) / dy - 0.5_num
-      cell_y = NINT(cell_y_r)
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
+      cell_y = FLOOR(cell_y_r + 0.5_num)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
-      cell_y = cell_y+1
+      cell_y = cell_y + 1
 
       CALL particle_to_grid(cell_frac_x, gx)
       CALL particle_to_grid(cell_frac_y, gy)
 
-      data = 1.0_num/(dx*dy) ! Simply want to count particles per metre^2
+      wdata = 1.0_num / (dx*dy) ! Simply want to count particles per metre^2
       DO isuby = -sf_order, sf_order
         DO isubx = -sf_order, sf_order
           weight_fn(cell_x+isubx, cell_y+isuby) = &
               weight_fn(cell_x+isubx, cell_y+isuby) &
-              + gx(isubx) * gy(isuby) * data
+              + gx(isubx) * gy(isuby) * wdata
         ENDDO
       ENDDO
 
       current=>current%next
-      ipart = ipart+1
+      ipart = ipart + 1
     ENDDO
 
     CALL processor_summation_bcs(weight_fn)
@@ -536,7 +536,7 @@ CONTAINS
     DO iy = -2, ny+2
       DO ix = -2, nx+2
         IF (weight_fn(ix, iy) .GT. 0.0_num) THEN
-          weight_fn(ix, iy) = density(ix, iy)/weight_fn(ix, iy)
+          weight_fn(ix, iy) = density(ix, iy) / weight_fn(ix, iy)
         ELSE
           weight_fn(ix, iy) = 0.0_num
         ENDIF
@@ -555,15 +555,15 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-      cell_x_r = (current%part_pos(1)-x_min_local) / dx ! - 0.5_num
-      cell_x = NINT(cell_x_r)
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx ! - 0.5_num
+      cell_x = FLOOR(cell_x_r + 0.5_num)
       cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x+1
+      cell_x = cell_x + 1
 
-      cell_y_r = (current%part_pos(2)-y_min_local) / dy ! - 0.5_num
-      cell_y = NINT(cell_y_r)
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy ! - 0.5_num
+      cell_y = FLOOR(cell_y_r + 0.5_num)
       cell_frac_y = REAL(cell_y, num) - cell_y_r
-      cell_y = cell_y+1
+      cell_y = cell_y + 1
 
       CALL grid_to_particle(cell_frac_x, gx)
       CALL grid_to_particle(cell_frac_y, gy)
@@ -578,7 +578,7 @@ CONTAINS
       ENDDO
       current%weight = weight_local
       current=>current%next
-      ipart = ipart+1
+      ipart = ipart + 1
     ENDDO
 
     DEALLOCATE(weight_fn)
@@ -620,7 +620,7 @@ CONTAINS
       IF (w .LT. 1.0_num) EXIT
     ENDDO
 
-    w = SQRT((-2.0_num * LOG(w) )/w)
+    w = SQRT((-2.0_num * LOG(w)) / w)
 
     momentum_from_temperature = rand1 * w * stdev
 
@@ -642,21 +642,21 @@ CONTAINS
     DO ipoint = 1, n_points
       cdf(ipoint) = SUM(dist_fn(1:ipoint))
     ENDDO
-    cdf = cdf/SUM(dist_fn)
+    cdf = cdf / SUM(dist_fn)
 
     position = random(idum)
     sample_dist_function = 0.0_num
 
     start = 1
     endpoint = n_points
-    current = (start+endpoint)/2
+    current = (start+endpoint) / 2
 
     DO current = 1, n_points-1
       IF (cdf(current) .LE. position .AND. cdf(current+1) .GE. position) THEN
         d_cdf = cdf(current+1)-cdf(current)
         sample_dist_function = &
-            (axis(current)*(position-cdf(current))/d_cdf &
-            + axis(current+1)*(cdf(current+1)-position)/d_cdf)
+            (axis(current)*(position-cdf(current)) / d_cdf &
+            + axis(current+1)*(cdf(current+1)-position) / d_cdf)
         EXIT
       ENDIF
     ENDDO
@@ -673,12 +673,12 @@ CONTAINS
     REAL(num) :: random
     INTEGER, PARAMETER :: ia = 16807, im = 2147483647, iq = 127773
     INTEGER, PARAMETER :: ir = 2836, mask = 123459876
-    REAL(dbl), PARAMETER :: am = 1.0_dbl/2147483647.0_dbl
+    REAL(dbl), PARAMETER :: am = 1.0_dbl / 2147483647.0_dbl
 
     INTEGER :: k
 
     idum = IEOR(idum, mask)
-    k = idum/iq
+    k = idum / iq
 
     idum = ia*(idum-k*iq)-ir*k
     IF (idum .LT. 0) THEN

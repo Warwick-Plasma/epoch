@@ -106,23 +106,27 @@ CONTAINS
           DO iy = 1, ny
             DO ipart = 1, particle_species(ispecies)%npart_per_cell
               ALLOCATE(current)
-              rand = random(idum)-0.5_num
-              current%part_pos(1) = x_max+dx + rand*dx
-              rand = random(idum)-0.5_num
-              current%part_pos(2) = y(iy)+dy*rand
-              rand = random(idum)-0.5_num
-              current%part_pos(3) = z(iz)+dz*rand
+              rand = random(idum) - 0.5_num
+              current%part_pos(1) = x_max + dx + rand * dx
+              rand = random(idum) - 0.5_num
+              current%part_pos(2) = y(iy) + rand * dy
+              rand = random(idum) - 0.5_num
+              current%part_pos(3) = z(iz) + rand * dz
 
-              cell_y_r = (current%part_pos(2)-y_min_local) / dy -0.5_num
-              cell_y = NINT(cell_y_r)
+              cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
+              cell_y = FLOOR(cell_y_r + 0.5_num)
               cell_frac_y = REAL(cell_y, num) - cell_y_r
               cell_y = cell_y+1
 
-              cell_z_r = (current%part_pos(3)-z_min_local) / dz -0.5_num
-              cell_z = NINT(cell_z_r)
+              cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
+              cell_z = FLOOR(cell_z_r + 0.5_num)
               cell_frac_z = REAL(cell_z, num) - cell_z_r
               cell_z = cell_z+1
 
+              ! This uses the triangle shape function for particle weighting
+              ! regardless of what is used by the rest of the code.
+              ! All we are doing is injecting random noise so it shouldn't
+              ! matter what the weighting is.
               gy(-1) = 0.5_num * (0.5_num + cell_frac_y)**2
               gy( 0) = 0.75_num - cell_frac_y**2
               gy( 1) = 0.5_num * (0.5_num - cell_frac_y)**2

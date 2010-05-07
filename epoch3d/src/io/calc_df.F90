@@ -28,17 +28,21 @@ CONTAINS
     ! particle weight factors as described in the manual (FIXREF)
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     ! The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num) :: wdata
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, spec_start, spec_end
+    REAL(num) :: fac, idxyz
 
     data_array = 0.0_num
 
     l_weight = weight
+    idxyz = 1.0_num / dx / dy / dz
+    fac = weight / dx / dy / dz
+
     spec_start = current_species
     spec_end = current_species
 
@@ -49,6 +53,9 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
+#ifndef PER_PARTICLE_CHARGEMASS
+      part_m  = particle_species(ispecies)%mass
+#endif
       DO WHILE (ASSOCIATED(current))
 
         ! Copy the particle properties out for speed
@@ -57,40 +64,38 @@ CONTAINS
         part_z  = current%part_pos(3) - z_min_local
 #ifdef PER_PARTICLE_CHARGEMASS
         part_m  = current%mass
-#else
-        part_m  = particle_species(ispecies)%mass
 #endif
-
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
+        fac = l_weight * idxyz
 #endif
 
         cell_x_r = part_x / dx
-        cell_x  = NINT(cell_x_r)
+        cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x+1
+        cell_x = cell_x + 1
 
         cell_y_r = part_y / dy
-        cell_y  = NINT(cell_y_r)
+        cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y+1
+        cell_y = cell_y + 1
 
         cell_z_r = part_z / dz
-        cell_z  = NINT(cell_z_r)
+        cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z+1
+        cell_z = cell_z + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
+        wdata = part_m * fac
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              data = part_m * l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * data
+                  + gx(ix) * gy(iy) * gz(iz) * wdata
             ENDDO
           ENDDO
         ENDDO
@@ -127,7 +132,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
 
     ! The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num) :: wdata
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: ct
@@ -152,6 +157,9 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
+#ifndef PER_PARTICLE_CHARGEMASS
+      part_m  = particle_species(ispecies)%mass
+#endif
       DO WHILE (ASSOCIATED(current))
 
         ! Copy the particle properties out for speed
@@ -163,42 +171,38 @@ CONTAINS
         part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGEMASS
         part_m  = current%mass
-#else
-        part_m  = particle_species(ispecies)%mass
 #endif
-
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
 #endif
 
         cell_x_r = part_x / dx
-        cell_x = NINT(cell_x_r)
+        cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x+1
+        cell_x = cell_x + 1
 
         cell_y_r = part_y / dy
-        cell_y = NINT(cell_y_r)
+        cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y+1
+        cell_y = cell_y + 1
 
         cell_z_r = part_z / dz
-        cell_z = NINT(cell_z_r)
+        cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z+1
+        cell_z = cell_z + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
+        wdata = (SQRT(part_px**2 + part_py**2 + part_pz**2 + (part_m*c)**2) &
+          - part_m * c) * c * l_weight
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              data = SQRT(((part_px*l_weight)**2 + (part_py*l_weight)**2 &
-                  + (part_pz*l_weight)**2)*c**2 + (part_m*l_weight)**2*c**4) &
-                  - (part_m*l_weight)*c**2
               data_array(cell_x+ix,cell_y+iy,cell_z+iz) = &
                   data_array(cell_x+ix,cell_y+iy,cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * data
+                  + gx(ix) * gy(iy) * gz(iz) * wdata
               ct(cell_x+ix,cell_y+iy,cell_z+iz) = &
                   ct(cell_x+ix,cell_y+iy,cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * l_weight
@@ -247,17 +251,20 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     ! The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num) :: wdata
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, spec_start, spec_end
+    REAL(num) :: fac, idxyz
 
     data_array = 0.0_num
 
     l_weight = weight
+    idxyz = 1.0_num / dx / dy / dz
+    fac = weight / dx / dy / dz
 
     spec_start = current_species
     spec_end = current_species
@@ -269,6 +276,9 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
+#ifndef PER_PARTICLE_CHARGEMASS
+      part_q  = particle_species(ispecies)%charge
+#endif
       DO WHILE (ASSOCIATED(current))
 
         ! Copy the particle properties out for speed
@@ -277,40 +287,38 @@ CONTAINS
         part_z  = current%part_pos(3) - z_min_local
 #ifdef PER_PARTICLE_CHARGEMASS
         part_q  = current%charge
-#else
-        part_q  = particle_species(ispecies)%charge
 #endif
-
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
+        fac = l_weight * idxyz
 #endif
 
         cell_x_r = part_x / dx
-        cell_x  = NINT(cell_x_r)
+        cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x+1
+        cell_x = cell_x + 1
 
         cell_y_r = part_y / dy
-        cell_y  = NINT(cell_y_r)
+        cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y+1
+        cell_y = cell_y + 1
 
         cell_z_r = part_z / dz
-        cell_z  = NINT(cell_z_r)
+        cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z+1
+        cell_z = cell_z + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
+        wdata = part_q * fac
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              data = part_q * l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * data
+                  + gx(ix) * gy(iy) * gz(iz) * wdata
             ENDDO
           ENDDO
         ENDDO
@@ -350,17 +358,20 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     ! The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num) :: wdata
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, spec_start, spec_end
+    REAL(num) :: idxyz
 
     data_array = 0.0_num
 
     l_weight = weight
+    idxyz = 1.0_num / dx / dy / dz
+    wdata = weight / dx / dy / dz
 
     spec_start = current_species
     spec_end = current_species
@@ -381,22 +392,23 @@ CONTAINS
 
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
+        wdata = l_weight * idxyz
 #endif
 
         cell_x_r = part_x / dx
-        cell_x  = NINT(cell_x_r)
+        cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x+1
+        cell_x = cell_x + 1
 
         cell_y_r = part_y / dy
-        cell_y  = NINT(cell_y_r)
+        cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y+1
+        cell_y = cell_y + 1
 
         cell_z_r = part_z / dz
-        cell_z  = NINT(cell_z_r)
+        cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z+1
+        cell_z = cell_z + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
@@ -405,10 +417,9 @@ CONTAINS
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              data = l_weight / (dx*dy*dz)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * data
+                  + gx(ix) * gy(iy) * gz(iz) * wdata
             ENDDO
           ENDDO
         ENDDO
@@ -440,7 +451,7 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:2) :: gx, gy, gz
     ! The data to be weighted onto the grid
-    REAL(num) :: data
+    REAL(num) :: wdata
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -477,31 +488,31 @@ CONTAINS
         part_z  = current%part_pos(3) - z_min_local
 
         cell_x_r = part_x / dx
-        cell_x  = NINT(cell_x_r)
+        cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x+1
+        cell_x = cell_x + 1
 
         cell_y_r = part_y / dy
-        cell_y  = NINT(cell_y_r)
+        cell_y = FLOOR(cell_y_r + 0.5_num)
         cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y+1
+        cell_y = cell_y + 1
 
         cell_z_r = part_z / dz
-        cell_z  = NINT(cell_z_r)
+        cell_z = FLOOR(cell_z_r + 0.5_num)
         cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z+1
+        cell_z = cell_z + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
+        wdata = evaluator(current, ispecies)
         DO iz = -sf_order, sf_order
           DO iy = -sf_order, sf_order
             DO ix = -sf_order, sf_order
-              data = evaluator(current, ispecies)
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * data
+                  + gx(ix) * gy(iy) * gz(iz) * wdata
             ENDDO
           ENDDO
         ENDDO

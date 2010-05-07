@@ -75,8 +75,8 @@ CONTAINS
       DO ispecies = 1, n_species
         DO ipart = 1, particle_species(ispecies)%npart_per_cell
           ALLOCATE(current)
-          rand = random(idum)-0.5_num
-          current%part_pos = x_max+dx + rand*dx
+          rand = random(idum) - 0.5_num
+          current%part_pos = x_max + dx + rand * dx
 
           DO i = 1, 3
             temp_local = particle_species(ispecies)%temperature(i)
