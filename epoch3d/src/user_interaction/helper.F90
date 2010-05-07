@@ -466,12 +466,14 @@ CONTAINS
 
       temp_local = 0.0_num
       drift_local = 0.0_num
-      DO ix = -sf_order, sf_order
+      DO iz = -sf_order, sf_order
         DO iy = -sf_order, sf_order
-          temp_local = temp_local &
-              + gx(ix)*gy(iy)*gz(iz)*temperature(cell_x+ix,cell_y+iy,cell_z+iz)
-          drift_local = drift_local &
-              + gx(ix)*gy(iy)*gz(iz)*drift(cell_x+ix,cell_y+iy,cell_z+iz)
+          DO ix = -sf_order, sf_order
+            temp_local = temp_local + gx(ix) * gy(iy) * gz(iz) &
+                * temperature(cell_x+ix,cell_y+iy,cell_z+iz)
+            drift_local = drift_local + gx(ix) * gy(iy) * gz(iz) &
+                * drift(cell_x+ix,cell_y+iy,cell_z+iz)
+          ENDDO
         ENDDO
       ENDDO
 
