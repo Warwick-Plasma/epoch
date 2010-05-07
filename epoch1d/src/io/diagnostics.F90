@@ -40,7 +40,7 @@ CONTAINS
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
     WRITE(filename_desc, '("(''nfs:'', a, ''/'', i", i3.3, ".", i3.3, &
-        &", ''.cfd'')")'), n_zeros, n_zeros
+        &", ''.cfd'')")') n_zeros, n_zeros
     WRITE(filename, filename_desc) TRIM(data_dir), output_file
 
     IF (print_arrays) THEN

@@ -38,7 +38,7 @@ MODULE deck
   INTEGER, PARAMETER :: buffer_size = 1024
   TYPE :: file_buffer
     CHARACTER(LEN=45+data_dir_max_length) :: filename
-    CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: buffer
+    CHARACTER(LEN=buffer_size), DIMENSION(:), POINTER :: buffer
     INTEGER :: pos, idx, length
     TYPE(file_buffer), POINTER :: next
   END TYPE file_buffer
@@ -416,7 +416,7 @@ CONTAINS
         ! When an end of line character is read then got_eor is .TRUE.
         ! When end of file is reached, f is negative and got_eor is .FALSE.
         got_eor = .TRUE.
-        READ(lun, "(A1)", advance='no', size=s, iostat=f, eor=10), u1
+        READ(lun, "(A1)", advance='no', size=s, iostat=f, eor=10) u1
         got_eor = .FALSE.
 
 10      IF (.NOT. already_parsed) THEN
@@ -576,7 +576,6 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: errcode_deck
     INTEGER :: rank_check
     INTEGER, SAVE :: err_count
-    REAL(num) :: result
 
     rank_check = 0
 
@@ -659,7 +658,7 @@ CONTAINS
 
     IF (errcode_deck .EQ. c_err_none) THEN
       IF (rank .EQ. rank_check) &
-          WRITE(40, *), CHAR(9), "Element ", TRIM(ADJUSTL(element)), "=", &
+          WRITE(40, *) CHAR(9), "Element ", TRIM(ADJUSTL(element)), "=", &
               TRIM(ADJUSTL(value)), " handled OK"
       RETURN
     ENDIF

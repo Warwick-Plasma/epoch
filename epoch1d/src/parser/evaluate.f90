@@ -15,7 +15,6 @@ CONTAINS
     INTEGER, INTENT(IN) :: n_elements
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
-    REAL(num) :: evaluate_at_point
     INTEGER :: i
     TYPE(stack_element) :: block
 

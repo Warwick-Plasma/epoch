@@ -55,7 +55,7 @@ CONTAINS
         logo_string(ix*2-1:ix*2-1) = logo_els(logo(ix, MAX(iy/2, 1))+1)
         logo_string(ix*2:ix*2) = logo_els(logo(ix, MAX(iy/2, 1))+1)
       ENDDO
-      WRITE(*, *), logo_string
+      WRITE(*, *) logo_string
     ENDDO
 
     WRITE(*, *) ""

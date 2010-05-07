@@ -145,7 +145,6 @@ CONTAINS
     REAL(num) :: mn, mx
     REAL(num), ALLOCATABLE, DIMENSION(:,:) :: min_max
     LOGICAL :: start
-    INTEGER :: mpi_request
 
     ! Metadata is
     ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
@@ -211,7 +210,6 @@ CONTAINS
 
     ! Write the real data
 
-    start = .TRUE.
     ALLOCATE(data(1:npart_per_iteration))
     npart_sent = 0
 
@@ -382,7 +380,6 @@ CONTAINS
     REAL(num) :: mn, mx, mn_g, mx_g
     INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
     LOGICAL :: start
-    INTEGER :: mpi_request
 
     ! Metadata is
     ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
@@ -452,11 +449,11 @@ CONTAINS
       IF (start) THEN
         mn = MINVAL(data(1:npart_this_cycle))
         mx = MAXVAL(data(1:npart_this_cycle))
+        start = .FALSE.
       ELSE
         mn = MIN(mn, MINVAL(data(1:npart_this_cycle)))
         mx = MAX(mx, MAXVAL(data(1:npart_this_cycle)))
       ENDIF
-      start = .FALSE.
 
       CALL MPI_FILE_WRITE(cfd_filehandle, data, npart_this_cycle, mpireal, &
           cfd_status, cfd_errcode)
