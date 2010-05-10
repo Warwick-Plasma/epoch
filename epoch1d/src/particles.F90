@@ -172,14 +172,14 @@ CONTAINS
         ! Also used to weight particle properties onto grid, used later
         ! to calculate J
 #ifdef SPLINE_FOUR
-        gx(-2) = (1.5_num - cell_frac_x)**4
-        gx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-        gx( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
-            * (cell_frac_x**2 - 2.5_num))
-        gx( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-        gx( 2) = (1.5_num + cell_frac_x)**4
+        gx(-2) = (0.5_num + cell_frac_x)**4
+        gx(-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
+            + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
+        gx( 0) = 14.375_num + 6.0_num * cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num)
+        gx( 1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
+            - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+        gx( 2) = (0.5_num - cell_frac_x)**4
 #else
         gx(-1) = (0.5_num + cell_frac_x)**2
         gx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
@@ -194,14 +194,14 @@ CONTAINS
         cell_x2 = cell_x2 + 1
 
 #ifdef SPLINE_FOUR
-        hx(-2) = (1.5_num - cell_frac_x)**4
-        hx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-        hx( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
-            * (cell_frac_x**2 - 2.5_num))
-        hx( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-        hx( 2) = (1.5_num + cell_frac_x)**4
+        hx(-2) = (0.5_num + cell_frac_x)**4
+        hx(-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
+            + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
+        hx( 0) = 14.375_num + 6.0_num * cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num)
+        hx( 1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
+            - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+        hx( 2) = (0.5_num - cell_frac_x)**4
 #else
         hx(-1) = (0.5_num + cell_frac_x)**2
         hx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
@@ -358,17 +358,17 @@ CONTAINS
           dcellx = cell_x3 - cell_x1
 
 #ifdef SPLINE_FOUR
-          hx(dcellx-2) = (1.5_num - cell_frac_x)**4
-          hx(dcellx-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-              * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-          hx(dcellx  ) = 6.0_num * (115/48 + cell_frac_x**2 &
-              * (cell_frac_x**2 - 2.5_num))
-          hx(dcellx+1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-              * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-          hx(dcellx+2) = (1.5_num + cell_frac_x)**4
+          hx(dcellx-2) = (0.5_num + cell_frac_x)**4
+          hx(dcellx-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
+              + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
+          hx(dcellx  ) = 14.375_num + 6.0_num * cell_frac_x**2 &
+              * (cell_frac_x**2 - 2.5_num)
+          hx(dcellx+1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
+              - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+          hx(dcellx+2) = (0.5_num - cell_frac_x)**4
 #else
           hx(dcellx-1) = (0.5_num + cell_frac_x)**2
-          hx(dcellx  ) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
+          hx(dcellx  ) =  1.5_num - 2.0_num * cell_frac_x**2
           hx(dcellx+1) = (0.5_num - cell_frac_x)**2
 #endif
 

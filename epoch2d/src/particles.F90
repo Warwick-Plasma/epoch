@@ -193,23 +193,23 @@ CONTAINS
         ! Also used to weight particle properties onto grid, used later
         ! to calculate J
 #ifdef SPLINE_FOUR
-        gx(-2) = (1.5_num - cell_frac_x)**4
-        gx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-        gx( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
-            * (cell_frac_x**2 - 2.5_num))
-        gx( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-        gx( 2) = (1.5_num + cell_frac_x)**4
+        gx(-2) = (0.5_num + cell_frac_x)**4
+        gx(-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
+            + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
+        gx( 0) = 14.375_num + 6.0_num * cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num)
+        gx( 1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
+            - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+        gx( 2) = (0.5_num - cell_frac_x)**4
 
-        gy(-2) = (1.5_num - cell_frac_y)**4
-        gy(-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
-            * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-        gy( 0) = 6.0_num * (115/48 + cell_frac_y**2 &
-            * (cell_frac_y**2 - 2.5_num))
-        gy( 1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
-            * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-        gy( 2) = (1.5_num + cell_frac_y)**4
+        gy(-2) = (0.5_num + cell_frac_y)**4
+        gy(-1) = 4.75_num + 4.0_num * cell_frac_y * (2.75_num &
+            + cell_frac_y * (1.5_num - cell_frac_y - cell_frac_y**2))
+        gy( 0) = 14.375_num + 6.0_num * cell_frac_y**2 &
+            * (cell_frac_y**2 - 2.5_num)
+        gy( 1) = 4.75_num - 4.0_num * cell_frac_y * (2.75_num &
+            - cell_frac_y * (1.5_num + cell_frac_y - cell_frac_y**2))
+        gy( 2) = (0.5_num - cell_frac_y)**4
 #else
         gx(-1) = (0.5_num + cell_frac_x)**2
         gx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
@@ -232,23 +232,23 @@ CONTAINS
         cell_y2 = cell_y2 + 1
 
 #ifdef SPLINE_FOUR
-        hx(-2) = (1.5_num - cell_frac_x)**4
-        hx(-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-        hx( 0) = 6.0_num * (115/48 + cell_frac_x**2 &
-            * (cell_frac_x**2 - 2.5_num))
-        hx( 1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-            * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-        hx( 2) = (1.5_num + cell_frac_x)**4
+        hx(-2) = (0.5_num + cell_frac_x)**4
+        hx(-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
+            + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
+        hx( 0) = 14.375_num + 6.0_num * cell_frac_x**2 &
+            * (cell_frac_x**2 - 2.5_num)
+        hx( 1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
+            - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+        hx( 2) = (0.5_num - cell_frac_x)**4
 
-        hy(-2) = (1.5_num - cell_frac_y)**4
-        hy(-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
-            * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-        hy( 0) = 6.0_num * (115/48 + cell_frac_y**2 &
-            * (cell_frac_y**2 - 2.5_num))
-        hy( 1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
-            * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-        hy( 2) = (1.5_num + cell_frac_y)**4
+        hy(-2) = (0.5_num + cell_frac_y)**4
+        hy(-1) = 4.75_num + 4.0_num * cell_frac_y * (2.75_num &
+            + cell_frac_y * (1.5_num - cell_frac_y - cell_frac_y**2))
+        hy( 0) = 14.375_num + 6.0_num * cell_frac_y**2 &
+            * (cell_frac_y**2 - 2.5_num)
+        hy( 1) = 4.75_num - 4.0_num * cell_frac_y * (2.75_num &
+            - cell_frac_y * (1.5_num + cell_frac_y - cell_frac_y**2))
+        hy( 2) = (0.5_num - cell_frac_y)**4
 #else
         hx(-1) = (0.5_num + cell_frac_x)**2
         hx( 0) =  1.5_num - 2.0_num * cell_frac_x**2
@@ -574,30 +574,30 @@ CONTAINS
           dcelly = cell_y3 - cell_y1
 
 #ifdef SPLINE_FOUR
-          hx(dcellx-2) = (1.5_num - cell_frac_x)**4
-          hx(dcellx-1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-              * (1.5_num + cell_frac_x - cell_frac_x**2) - 2.75_num))
-          hx(dcellx  ) = 6.0_num * (115/48 + cell_frac_x**2 &
-              * (cell_frac_x**2 - 2.5_num))
-          hx(dcellx+1) = 4.0_num * (1.1875_num + cell_frac_x * (cell_frac_x &
-              * (1.5_num - cell_frac_x - cell_frac_x**2) + 2.75_num))
-          hx(dcellx+2) = (1.5_num + cell_frac_x)**4
+          hx(dcellx-2) = (0.5_num + cell_frac_x)**4
+          hx(dcellx-1) = 4.75_num + 4.0_num * cell_frac_x * (2.75_num &
+              + cell_frac_x * (1.5_num - cell_frac_x - cell_frac_x**2))
+          hx(dcellx  ) = 14.375_num + 6.0_num * cell_frac_x**2 &
+              * (cell_frac_x**2 - 2.5_num)
+          hx(dcellx+1) = 4.75_num - 4.0_num * cell_frac_x * (2.75_num &
+              - cell_frac_x * (1.5_num + cell_frac_x - cell_frac_x**2))
+          hx(dcellx+2) = (0.5_num - cell_frac_x)**4
 
-          hy(dcelly-2) = (1.5_num - cell_frac_y)**4
-          hy(dcelly-1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
-              * (1.5_num + cell_frac_y - cell_frac_y**2) - 2.75_num))
-          hy(dcelly  ) = 6.0_num * (115/48 + cell_frac_y**2 &
-              * (cell_frac_y**2 - 2.5_num))
-          hy(dcelly+1) = 4.0_num * (1.1875_num + cell_frac_y * (cell_frac_y &
-              * (1.5_num - cell_frac_y - cell_frac_y**2) + 2.75_num))
-          hy(dcelly+2) = (1.5_num + cell_frac_y)**4
+          hy(dcelly-2) = (0.5_num + cell_frac_y)**4
+          hy(dcelly-1) = 4.75_num + 4.0_num * cell_frac_y * (2.75_num &
+              + cell_frac_y * (1.5_num - cell_frac_y - cell_frac_y**2))
+          hy(dcelly  ) = 14.375_num + 6.0_num * cell_frac_y**2 &
+              * (cell_frac_y**2 - 2.5_num)
+          hy(dcelly+1) = 4.75_num - 4.0_num * cell_frac_y * (2.75_num &
+              - cell_frac_y * (1.5_num + cell_frac_y - cell_frac_y**2))
+          hy(dcelly+2) = (0.5_num - cell_frac_y)**4
 #else
           hx(dcellx-1) = (0.5_num + cell_frac_x)**2
-          hx(dcellx  ) =  1.5_num - 2.0_num * ABS(cell_frac_x)**2
+          hx(dcellx  ) =  1.5_num - 2.0_num * cell_frac_x**2
           hx(dcellx+1) = (0.5_num - cell_frac_x)**2
 
           hy(dcelly-1) = (0.5_num + cell_frac_y)**2
-          hy(dcelly  ) =  1.5_num - 2.0_num * ABS(cell_frac_y)**2
+          hy(dcelly  ) =  1.5_num - 2.0_num * cell_frac_y**2
           hy(dcelly+1) = (0.5_num - cell_frac_y)**2
 #endif
 
