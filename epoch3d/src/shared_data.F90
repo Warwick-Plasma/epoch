@@ -244,6 +244,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_func_semigauss = 34
   INTEGER, PARAMETER :: c_func_crit = 35
   INTEGER, PARAMETER :: c_func_abs = 36
+  INTEGER, PARAMETER :: c_func_loge = 37
+  INTEGER, PARAMETER :: c_func_log10 = 38
+  INTEGER, PARAMETER :: c_func_log_base = 39
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
 

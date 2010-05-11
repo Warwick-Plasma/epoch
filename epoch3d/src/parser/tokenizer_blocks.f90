@@ -198,6 +198,9 @@ CONTAINS
     IF (str_cmp(name, "semigauss")) as_function = c_func_semigauss
     IF (str_cmp(name, "critical")) as_function = c_func_crit
     IF (str_cmp(name, "abs")) as_function = c_func_abs
+    IF (str_cmp(name, "loge")) as_function = c_func_loge
+    IF (str_cmp(name, "log10")) as_function = c_func_log10
+    IF (str_cmp(name, "log_base")) as_function = c_func_log_base
 
     DO i = 1, n_new_func
       IF (str_cmp(TRIM(name), TRIM(new_func_name(i)%value))) THEN

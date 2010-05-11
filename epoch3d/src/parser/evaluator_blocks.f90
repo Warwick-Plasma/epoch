@@ -573,6 +573,24 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_func_loge) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(LOG(values(1)))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_log10) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(LOG10(values(1)))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_log_base) THEN
+      CALL get_values(2, values)
+      CALL push_on_eval(LOG(values(1))/LOG(values(2)))
+      RETURN
+    ENDIF
+
     ! Check for custom functions
     val = custom_function(opcode, ix, iy, iz, err)
     IF (IAND(err, c_err_unknown_element) .EQ. 0) THEN
