@@ -6,7 +6,7 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 16
+  INTEGER, PARAMETER :: control_block_elements = 18
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -25,7 +25,9 @@ MODULE deck_control_block
           "restart_snapshot  ", &
           "neutral_background", &
           "smooth_currents   ", &
-          "field_order       " /)
+          "field_order       ", &
+          "nprocx            ", &
+          "nprocy            " /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           "nx                ", &
@@ -43,7 +45,9 @@ MODULE deck_control_block
           "restart_snapshot  ", &
           "neutral_background", &
           "smooth_currents   ", &
-          "field_order       " /)
+          "field_order       ", &
+          "nprocx            ", &
+          "nprocy            " /)
 
 CONTAINS
 
@@ -120,6 +124,10 @@ CONTAINS
       ELSE
         CALL set_field_order(field_order)
       ENDIF
+    CASE(17)
+      nprocx = as_integer(value, handle_control_deck)
+    CASE(18)
+      nprocy = as_integer(value, handle_control_deck)
     END SELECT
 
   END FUNCTION handle_control_deck
@@ -152,6 +160,9 @@ CONTAINS
 
     ! field_order is optional
     control_block_done(16) = .TRUE.
+
+    ! nprocx/y is optional
+    control_block_done(17:18) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

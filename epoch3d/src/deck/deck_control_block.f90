@@ -27,10 +27,10 @@ MODULE deck_control_block
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
+          "field_order       ", &
           "nprocx            ", &
           "nprocy            ", &
-          "nprocz            ", &
-          "field_order       " /)
+          "nprocz            " /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           "nx                ", &
@@ -50,10 +50,10 @@ MODULE deck_control_block
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
+          "field_order       ", &
           "nprocx            ", &
           "nprocy            ", &
-          "nprocz            ", &
-          "field_order       " /)
+          "nprocz            " /)
 
 CONTAINS
 
@@ -127,12 +127,6 @@ CONTAINS
     CASE(17)
       neutral_background = as_logical(value, handle_control_deck)
     CASE(18)
-      nprocx = as_integer(value, handle_control_deck)
-    CASE(19)
-      nprocy = as_integer(value, handle_control_deck)
-    CASE(20)
-      nprocz = as_integer(value, handle_control_deck)
-    CASE(21)
       field_order = as_integer(value, handle_control_deck)
       IF (field_order .NE. 2 .AND. field_order .NE. 4 &
           .AND. field_order .NE. 6) THEN
@@ -140,6 +134,12 @@ CONTAINS
       ELSE
         CALL set_field_order(field_order)
       ENDIF
+    CASE(19)
+      nprocx = as_integer(value, handle_control_deck)
+    CASE(20)
+      nprocy = as_integer(value, handle_control_deck)
+    CASE(21)
+      nprocz = as_integer(value, handle_control_deck)
     END SELECT
 
   END FUNCTION handle_control_deck
@@ -167,11 +167,11 @@ CONTAINS
     ! The neutral background is still beta, so hide it if people don't want it
     control_block_done(17) = .TRUE.
 
-    ! Never need to set nproc so
-    control_block_done(18:20) = .TRUE.
-
     ! field_order is optional
-    control_block_done(21) = .TRUE.
+    control_block_done(18) = .TRUE.
+
+    ! nprocx/y/z is optional
+    control_block_done(19:21) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN
