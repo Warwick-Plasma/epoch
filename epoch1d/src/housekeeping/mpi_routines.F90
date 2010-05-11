@@ -80,11 +80,36 @@ CONTAINS
   SUBROUTINE mpi_initialise
 
     INTEGER :: ispecies, idim
+    INTEGER :: nx_big, nx_little
 
     CALL setup_communicator
-    nx = nx_global/nprocx
+    nx = nx_global / nprocx
 
-    ALLOCATE(nx_each_rank(1:nproc), npart_each_rank(1:nproc))
+    ! If the number of gridpoints cannot be exactly subdivided then fix
+    IF (nx * nprocx .NE. nx_global) THEN
+      nx_big = nx + 1
+      nx_little = nx_global - (nx + 1) * (nprocx - 1)
+      IF (coordinates(1) .NE. nprocx-1) THEN
+        nx = nx_big
+      ELSE
+        nx = nx_little
+      ENDIF
+    ELSE
+      nx_big = nx
+      nx_little = nx
+    ENDIF
+
+    ALLOCATE(npart_each_rank(1:nproc))
+    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
+    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
+
+    DO idim = 1, nprocx-1
+      cell_x_min(idim) = nx_big * (idim - 1) + 1
+      cell_x_max(idim) = nx_big * idim
+    ENDDO
+    cell_x_min(nprocx) = (nprocx - 1) * nx_big + 1
+    cell_x_max(nprocx) = (nprocx - 1) * nx_big + nx_little
+
     subtype_field = 0
     subtype_particle = 0
 
@@ -96,13 +121,6 @@ CONTAINS
     ALLOCATE(jx(-2:nx+3), jy(-2:nx+3), jz(-2:nx+3))
     ALLOCATE(ekbar(1:nx, 1:n_species), ekbar_sum(-2:nx+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, 1:n_species))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
-    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
-
-    DO idim = 0, nprocx-1
-      cell_x_min(idim+1) = nx*idim+1
-      cell_x_max(idim+1) = nx*(idim+1)
-    ENDDO
 
     ! Setup the particle lists
     NULLIFY(particle_species(1)%prev, particle_species(n_species)%next)

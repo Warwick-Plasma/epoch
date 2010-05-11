@@ -76,12 +76,12 @@ CONTAINS
     ENDDO
 
     DO iproc = 0, nprocx-1
-      x_mins(iproc) = x_global(iproc*nx+1)
-      x_maxs(iproc) = x_global((iproc+1)*nx)
+      x_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
     DO iproc = 0, nprocy-1
-      y_mins(iproc) = y_global(iproc*ny+1)
-      y_maxs(iproc) = y_global((iproc+1)*ny)
+      y_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
 
     x_min_local = x_mins(coordinates(2))

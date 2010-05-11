@@ -108,17 +108,85 @@ CONTAINS
   SUBROUTINE mpi_initialise
 
     INTEGER :: ispecies, idim
+    INTEGER :: nx_big, nx_little
+    INTEGER :: ny_big, ny_little
+    INTEGER :: nz_big, nz_little
 
     CALL setup_communicator
 
-    nx = nx_global/nprocx
-    ny = ny_global/nprocy
-    nz = nz_global/nprocz
+    nx = nx_global / nprocx
+    ny = ny_global / nprocy
+    nz = nz_global / nprocz
 
-    ALLOCATE(nx_each_rank(1:nproc))
-    ALLOCATE(ny_each_rank(1:nproc))
-    ALLOCATE(nz_each_rank(1:nproc))
+    ! If the number of gridpoints cannot be exactly subdivided then fix
+    IF (nx * nprocx .NE. nx_global) THEN
+      nx_big = nx + 1
+      nx_little = nx_global - (nx + 1) * (nprocx - 1)
+      IF (coordinates(3) .NE. nprocx-1) THEN
+        nx = nx_big
+      ELSE
+        nx = nx_little
+      ENDIF
+    ELSE
+      nx_big = nx
+      nx_little = nx
+    ENDIF
+
+    IF (ny * nprocy .NE. ny_global) THEN
+      ny_big = ny + 1
+      ny_little = ny_global - (ny + 1) * (nprocy - 1)
+      IF (coordinates(2) .NE. nprocy-1) THEN
+        ny = ny_big
+      ELSE
+        ny = ny_little
+      ENDIF
+    ELSE
+      ny_big = ny
+      ny_little = ny
+    ENDIF
+
+    IF (nz * nprocz .NE. nz_global) THEN
+      nz_big = nz + 1
+      nz_little = nz_global - (nz + 1) * (nprocz - 1)
+      IF (coordinates(1) .NE. nprocz-1) THEN
+        nz = nz_big
+      ELSE
+        nz = nz_little
+      ENDIF
+    ELSE
+      nz_big = nz
+      nz_little = nz
+    ENDIF
+
     ALLOCATE(npart_each_rank(1:nproc))
+    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
+    ALLOCATE(y_mins(0:nprocy-1), y_maxs(0:nprocy-1))
+    ALLOCATE(z_mins(0:nprocz-1), z_maxs(0:nprocz-1))
+    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
+    ALLOCATE(cell_y_min(1:nprocy), cell_y_max(1:nprocy))
+    ALLOCATE(cell_z_min(1:nprocz), cell_z_max(1:nprocz))
+
+    DO idim = 1, nprocx-1
+      cell_x_min(idim) = nx_big * (idim - 1) + 1
+      cell_x_max(idim) = nx_big * idim
+    ENDDO
+    cell_x_min(nprocx) = (nprocx - 1) * nx_big + 1
+    cell_x_max(nprocx) = (nprocx - 1) * nx_big + nx_little
+
+    DO idim = 1, nprocy-1
+      cell_y_min(idim) = ny_big * (idim - 1) + 1
+      cell_y_max(idim) = ny_big * idim
+    ENDDO
+    cell_y_min(nprocy) = (nprocy - 1) * ny_big + 1
+    cell_y_max(nprocy) = (nprocy - 1) * ny_big + ny_little
+
+    DO idim = 1, nprocz-1
+      cell_z_min(idim) = nz_big * (idim - 1) + 1
+      cell_z_max(idim) = nz_big * idim
+    ENDDO
+    cell_z_min(nprocz) = (nprocz - 1) * nz_big + 1
+    cell_z_max(nprocz) = (nprocz - 1) * nz_big + nz_little
+
     subtype_field = 0
     subtype_particle = 0
 
@@ -141,27 +209,6 @@ CONTAINS
     ALLOCATE(ekbar(1:nx, 1:ny, 1:nz, 1:n_species))
     ALLOCATE(ekbar_sum(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
     ALLOCATE(ct(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
-    ALLOCATE(y_mins(0:nprocy-1), y_maxs(0:nprocy-1))
-    ALLOCATE(z_mins(0:nprocz-1), z_maxs(0:nprocz-1))
-    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
-    ALLOCATE(cell_y_min(1:nprocy), cell_y_max(1:nprocy))
-    ALLOCATE(cell_z_min(1:nprocz), cell_z_max(1:nprocz))
-
-    DO idim = 0, nprocx-1
-      cell_x_min(idim+1) = nx*idim+1
-      cell_x_max(idim+1) = nx*(idim+1)
-    ENDDO
-
-    DO idim = 0, nprocy-1
-      cell_y_min(idim+1) = ny*idim+1
-      cell_y_max(idim+1) = ny*(idim+1)
-    ENDDO
-
-    DO idim = 0, nprocz-1
-      cell_z_min(idim+1) = nz*idim+1
-      cell_z_max(idim+1) = nz*(idim+1)
-    ENDDO
 
     ! Setup the particle lists
     NULLIFY(particle_species(1)%prev, particle_species(n_species)%next)

@@ -83,16 +83,16 @@ CONTAINS
     ENDDO
 
     DO iproc = 0, nprocx-1
-      x_mins(iproc) = x_global(iproc*nx+1)
-      x_maxs(iproc) = x_global((iproc+1)*nx)
+      x_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
     DO iproc = 0, nprocy-1
-      y_mins(iproc) = y_global(iproc*ny+1)
-      y_maxs(iproc) = y_global((iproc+1)*ny)
+      y_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
     DO iproc = 0, nprocz-1
-      z_mins(iproc) = z_global(iproc*nz+1)
-      z_maxs(iproc) = z_global((iproc+1)*nz)
+      z_mins(iproc) = z_global(cell_z_min(iproc+1))
+      z_maxs(iproc) = z_global(cell_z_max(iproc+1))
     ENDDO
 
     x_min_local = x_mins(coordinates(3))
