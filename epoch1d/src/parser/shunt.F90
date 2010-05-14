@@ -32,10 +32,10 @@ CONTAINS
 
 
 
-  SUBROUTINE load_block(name, BLOCK)
+  SUBROUTINE load_block(name, block)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
-    TYPE(stack_element), INTENT(OUT) :: BLOCK
+    TYPE(stack_element), INTENT(OUT) :: block
     INTEGER :: work
     REAL(num) :: value
 
@@ -222,7 +222,7 @@ CONTAINS
     INTEGER :: current_type, current_pointer, i, ptype, ipoint
 
     TYPE(primitive_stack) :: stack
-    TYPE(stack_element) :: BLOCK, block2
+    TYPE(stack_element) :: block, block2
 
     stack%stack_point = 0
 
@@ -244,7 +244,7 @@ CONTAINS
       ELSE
         IF (ICHAR(current(1:1)) .NE. 0) THEN
           ! Populate the block
-          CALL load_block(current, BLOCK)
+          CALL load_block(current, block)
 #ifdef PARSER_DEBUG
           block%text = TRIM(current)
 #endif
@@ -269,12 +269,12 @@ CONTAINS
 
           IF (block%ptype .EQ. c_pt_variable &
               .OR. block%ptype .EQ. c_pt_constant) THEN
-            CALL push_to_stack(output, BLOCK)
+            CALL push_to_stack(output, block)
           ENDIF
 
           IF (block%ptype .EQ. c_pt_parenthesis) THEN
             IF (block%data .EQ. c_paren_left_bracket) THEN
-              CALL push_to_stack(stack, BLOCK)
+              CALL push_to_stack(stack, block)
             ELSE
               DO
                 CALL stack_snoop(stack, block2, 0)
@@ -297,7 +297,7 @@ CONTAINS
 
           IF (block%ptype .EQ. c_pt_function) THEN
             ! Just push functions straight onto the stack
-            CALL push_to_stack(stack, BLOCK)
+            CALL push_to_stack(stack, block)
           ENDIF
 
           IF (block%ptype .EQ. c_pt_separator) THEN
@@ -320,7 +320,7 @@ CONTAINS
               IF (stack%stack_point .EQ. 0) THEN
                 ! stack is empty, so just push operator onto stack and
                 ! leave loop
-                CALL push_to_stack(stack, BLOCK)
+                CALL push_to_stack(stack, block)
                 EXIT
               ENDIF
               ! stack is not empty so check precedence etc.
@@ -328,7 +328,7 @@ CONTAINS
               IF (block2%ptype .NE. c_pt_operator) THEN
                 ! Previous block is not an operator so push current operator
                 ! to stack and leave loop
-                CALL push_to_stack(stack, BLOCK)
+                CALL push_to_stack(stack, block)
                 EXIT
               ELSE
                 IF (opcode_assoc(block%data) .EQ. c_assoc_la &
@@ -339,7 +339,7 @@ CONTAINS
                     CALL pop_to_stack(stack, output)
                     CYCLE
                   ELSE
-                    CALL push_to_stack(stack, BLOCK)
+                    CALL push_to_stack(stack, block)
                     EXIT
                   ENDIF
                 ELSE
@@ -348,7 +348,7 @@ CONTAINS
                     CALL pop_to_stack(stack, output)
                     CYCLE
                   ELSE
-                    CALL push_to_stack(stack, BLOCK)
+                    CALL push_to_stack(stack, block)
                     EXIT
                   ENDIF
                 ENDIF
@@ -385,7 +385,7 @@ CONTAINS
     INTEGER :: current_type, current_pointer, i, ptype, ipoint
 
     TYPE(primitive_stack) :: stack
-    TYPE(stack_element) :: BLOCK
+    TYPE(stack_element) :: block
 
     stack%stack_point = 0
     last_block_type = c_pt_null
@@ -406,7 +406,7 @@ CONTAINS
       ELSE
         IF (ICHAR(current(1:1)) .NE. 0) THEN
           ! Populate the block
-          CALL load_block(current, BLOCK)
+          CALL load_block(current, block)
 #ifdef PARSER_DEBUG
           block%text = TRIM(current)
 #endif
@@ -430,7 +430,7 @@ CONTAINS
             ENDDO
             CYCLE
           ELSE IF (block%ptype .NE. c_pt_null) THEN
-            CALL push_to_stack(output, BLOCK)
+            CALL push_to_stack(output, block)
           ENDIF
         ENDIF
         current(:) = " "

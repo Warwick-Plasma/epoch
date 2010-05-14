@@ -7,25 +7,24 @@ MODULE deck_species_block
 
   SAVE
 
-  INTEGER :: species_loaded
+  INTEGER :: species_loaded, species_id
 
 CONTAINS
 
-  FUNCTION handle_species_deck(element, value)
+  FUNCTION handle_species_deck(element_in, value)
 
-    CHARACTER(*), INTENT(IN) :: element, value
-    CHARACTER(LEN=string_length) :: part1
-    INTEGER :: part2
+    CHARACTER(*), INTENT(IN) :: element_in, value
+    CHARACTER(LEN=string_length) :: element
     INTEGER :: handle_species_deck
     LOGICAL :: handled
 
     handle_species_deck = c_err_none
-    IF (value .EQ. blank) RETURN
+    IF (value .EQ. blank .OR. element .EQ. blank) RETURN
 
     handle_species_deck = c_err_unknown_element
 
     handled = .FALSE.
-    IF (str_cmp(element, "n_species")) THEN
+    IF (str_cmp(element_in, "n_species")) THEN
       n_species = as_integer(value, handle_species_deck)
       IF (n_species .GT. 0) THEN
         IF (rank .EQ. 0) &
@@ -54,40 +53,43 @@ CONTAINS
 
     IF (handled) RETURN
 
-    CALL split_off_int(element, part1, part2, handle_species_deck)
+    CALL split_off_int(element_in, element, species_id, handle_species_deck)
 
-    IF (part2 .LT. 1 .OR. part2 .GT. n_species) THEN
+    IF (species_id .LT. 1 .OR. species_id .GT. n_species) THEN
       IF (rank .EQ. 0) &
           PRINT '("Ignoring attempt to set property ", a, &
-              &" for non existent species ", i2)', TRIM(ADJUSTL(part1)), part2
+              &" for non existent species ", i2)', TRIM(ADJUSTL(element)), &
+              species_id
       handle_species_deck = c_err_none
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "name")) THEN
-      particle_species(part2)%name = TRIM(value)
+    IF (str_cmp(element, "name")) THEN
+      particle_species(species_id)%name = TRIM(value)
       IF (rank .EQ. 0) &
-          PRINT '("Name of species ", i2, " is ", a)', part2, TRIM(value)
+          PRINT '("Name of species ", i3, " is ", a)', species_id, TRIM(value)
       handle_species_deck = c_err_none
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "mass")) THEN
+    IF (str_cmp(element, "mass")) THEN
       handle_species_deck = c_err_none
-      particle_species(part2)%mass = as_real(value, handle_species_deck)*m0
+      particle_species(species_id)%mass = &
+          as_real(value, handle_species_deck) * m0
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "charge")) THEN
+    IF (str_cmp(element, "charge")) THEN
       handle_species_deck = c_err_none
-      particle_species(part2)%charge = as_real(value, handle_species_deck)*q0
+      particle_species(species_id)%charge = &
+          as_real(value, handle_species_deck) * q0
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "frac") .OR. str_cmp(part1, "fraction")) THEN
+    IF (str_cmp(element, "frac") .OR. str_cmp(element, "fraction")) THEN
       handle_species_deck = c_err_none
       IF (npart_global .GE. 0) THEN
-        particle_species(part2)%count = &
+        particle_species(species_id)%count = &
             INT(as_real(value, handle_species_deck) * npart_global)
       ELSE
         extended_error_string = "npart"
@@ -96,26 +98,28 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "npart")) THEN
+    IF (str_cmp(element, "npart")) THEN
       handle_species_deck = c_err_none
-      particle_species(part2)%count = &
+      particle_species(species_id)%count = &
           as_long_integer(value, handle_species_deck)
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "dump")) THEN
+    IF (str_cmp(element, "dump")) THEN
       handle_species_deck = c_err_none
-      particle_species(part2)%dump = as_logical(value, handle_species_deck)
+      particle_species(species_id)%dump = &
+          as_logical(value, handle_species_deck)
       RETURN
     ENDIF
 
     ! *************************************************************
     ! This section sets properties for tracer particles
     ! *************************************************************
-    IF (str_cmp(part1, "tracer")) THEN
+    IF (str_cmp(element, "tracer")) THEN
       handle_species_deck = c_err_none
 #ifdef TRACER_PARTICLES
-      particle_species(part2)%tracer = as_logical(value, handle_species_deck)
+      particle_species(species_id)%tracer = &
+          as_logical(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
       extended_error_string = "-DTRACER_PARTICLES"
@@ -125,10 +129,11 @@ CONTAINS
     ! *************************************************************
     ! This section sets properties for particle splitting
     ! *************************************************************
-    IF (str_cmp(part1, "split")) THEN
+    IF (str_cmp(element, "split")) THEN
       handle_species_deck = c_err_none
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-      particle_species(part2)%split = as_logical(value, handle_species_deck)
+      particle_species(species_id)%split = &
+          as_logical(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
       extended_error_string = "-DSPLIT_PARTICLES_AFTER_PUSH"
@@ -136,10 +141,10 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "npart_max")) THEN
+    IF (str_cmp(element, "npart_max")) THEN
       handle_species_deck = c_err_none
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-      particle_species(part2)%npart_max = &
+      particle_species(species_id)%npart_max = &
           as_long_integer(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
@@ -151,10 +156,11 @@ CONTAINS
     ! *************************************************************
     ! This section sets properties for ionisation
     ! *************************************************************
-    IF (str_cmp(part1, "ionise")) THEN
+    IF (str_cmp(element, "ionise")) THEN
       handle_species_deck = c_err_none
 #ifdef PARTICLE_IONISE
-      particle_species(part2)%ionise = as_logical(value, handle_species_deck)
+      particle_species(species_id)%ionise = &
+          as_logical(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
       extended_error_string = "-DPARTICLE_IONISE"
@@ -162,10 +168,10 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "ionise_to_species")) THEN
+    IF (str_cmp(element, "ionise_to_species")) THEN
       handle_species_deck = c_err_none
 #ifdef PARTICLE_IONISE
-      particle_species(part2)%ionise_to_species = &
+      particle_species(species_id)%ionise_to_species = &
           as_integer(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
@@ -174,10 +180,10 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "release_species_on_ionise")) THEN
+    IF (str_cmp(element, "release_species_on_ionise")) THEN
       handle_species_deck = c_err_none
 #ifdef PARTICLE_IONISE
-      particle_species(part2)%release_species = &
+      particle_species(species_id)%release_species = &
           as_integer(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong
@@ -186,10 +192,10 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "ionisation_energy")) THEN
+    IF (str_cmp(element, "ionisation_energy")) THEN
       handle_species_deck = c_err_none
 #ifdef PARTICLE_IONISE
-      particle_species(part2)%ionisation_energy = &
+      particle_species(species_id)%ionisation_energy = &
           as_real(value, handle_species_deck)
 #else
       handle_species_deck = c_err_pp_options_wrong

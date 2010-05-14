@@ -7,29 +7,29 @@ MODULE dist_fn
 
 CONTAINS
 
-  SUBROUTINE attach_dist_fn(BLOCK)
+  SUBROUTINE attach_dist_fn(block)
 
-    TYPE(distribution_function_block), POINTER :: BLOCK
+    TYPE(distribution_function_block), POINTER :: block
     TYPE(distribution_function_block), POINTER :: current
 
     current=>dist_fns
     IF (.NOT. ASSOCIATED(current)) THEN
       ! This is the first distribution function to add
-      dist_fns=>BLOCK
+      dist_fns=>block
       RETURN
     ENDIF
     DO WHILE(ASSOCIATED(current%next))
       current=>current%next
     ENDDO
-    current%next=>BLOCK
+    current%next=>block
 
   END SUBROUTINE attach_dist_fn
 
 
 
-  SUBROUTINE setup_dist_fn(BLOCK)
+  SUBROUTINE setup_dist_fn(block)
 
-    TYPE(distribution_function_block), POINTER :: BLOCK
+    TYPE(distribution_function_block), POINTER :: block
 
     NULLIFY(block%next)
     ALLOCATE(block%use_species(1:n_species))
