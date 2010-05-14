@@ -15,7 +15,6 @@ MODULE deck
   USE deck_ic_laser_block
   USE deck_ic_species_block
   USE deck_ic_fields_block
-  USE deck_ic_external_block
   ! Extended IO Blocks
   USE deck_eio_dist_fn_block
 #ifdef PARTICLE_PROBES
@@ -59,20 +58,21 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name
 
-    IF (str_cmp(block_name, "laser") .AND. deck_state .EQ. c_ds_ic) &
-        CALL laser_start
-    IF (str_cmp(block_name, "window") .AND. deck_state .EQ. c_ds_deck) &
-        CALL window_start
-    IF (str_cmp(block_name, "dist_fn") .AND. deck_state .EQ. c_ds_eio) &
-        CALL dist_fn_start
+    IF (str_cmp(block_name, "laser")) THEN
+      IF (deck_state .EQ. c_ds_ic) CALL laser_start
+    ELSE IF (str_cmp(block_name, "window")) THEN
+      IF (deck_state .EQ. c_ds_deck) CALL window_start
+    ELSE IF (str_cmp(block_name, "dist_fn")) THEN
+      IF (deck_state .EQ. c_ds_eio) CALL dist_fn_start
 #ifdef PARTICLE_PROBES
-    IF (str_cmp(block_name, "probe") .AND. deck_state .EQ. c_ds_eio) &
-        CALL probe_block_start
+    ELSE IF (str_cmp(block_name, "probe")) THEN
+      IF (deck_state .EQ. c_ds_eio) CALL probe_block_start
 #endif
-    IF (str_cmp(block_name, "species_external") .AND. deck_state .EQ. c_ds_ic) &
-        CALL start_external
-    IF (str_cmp(block_name, "fields_external") .AND. deck_state .EQ. c_ds_ic) &
-        CALL start_external
+    ELSE IF (str_cmp(block_name, "fields")) THEN
+      IF (deck_state .EQ. c_ds_ic) CALL fields_start
+    ELSE IF (block_name(1:7) .EQ. "species") THEN
+      IF (deck_state .EQ. c_ds_ic) CALL species_start
+    ENDIF
 
   END SUBROUTINE start_block
 
@@ -85,14 +85,15 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name
 
-    IF (str_cmp(block_name, "laser") .AND. deck_state .EQ. c_ds_ic) &
-        CALL laser_end
-    IF (str_cmp(block_name, "dist_fn") .AND. deck_state .EQ. c_ds_eio) &
-        CALL dist_fn_end
+    IF (str_cmp(block_name, "laser")) THEN
+      IF (deck_state .EQ. c_ds_ic) CALL laser_end
+    ELSE IF (str_cmp(block_name, "dist_fn")) THEN
+      IF (deck_state .EQ. c_ds_eio) CALL dist_fn_end
 #ifdef PARTICLE_PROBES
-    IF (str_cmp(block_name, "probe") .AND. deck_state .EQ. c_ds_eio) &
-        CALL probe_block_end
+    ELSE IF (str_cmp(block_name, "probe")) THEN
+      IF (deck_state .EQ. c_ds_eio) CALL probe_block_end
 #endif
+    ENDIF
 
   END SUBROUTINE end_block
 
@@ -155,12 +156,6 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(block_name, "fields_external")) THEN
-      IF (deck_state .EQ. c_ds_ic) &
-          handle_block = handle_ic_fields_deck(block_element, block_value)
-      RETURN
-    ENDIF
-
     IF (str_cmp(block_name, "laser")) THEN
       IF (deck_state .EQ. c_ds_ic) &
           handle_block = handle_ic_laser_deck(block_element, block_value)
@@ -176,14 +171,8 @@ CONTAINS
                 handle_ic_species_deck(part2, block_element, block_value)
         RETURN
       ENDIF
-      IF (str_cmp(part1, "species_external")) THEN
-        IF (deck_state .EQ. c_ds_ic) &
-            handle_block = &
-                handle_ic_external_species_deck(part2, block_element, &
-                    block_value)
-        RETURN
-      ENDIF
     ENDIF
+
     IF (str_cmp(block_name, "dist_fn")) THEN
       IF (deck_state .EQ. c_ds_eio) &
           handle_block = handle_eio_dist_fn_deck(block_element, block_value)

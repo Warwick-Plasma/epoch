@@ -8,6 +8,43 @@ MODULE strings_advanced
 
 CONTAINS
 
+  SUBROUTINE get_filename(str_in, str_out, got_file, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    CHARACTER(*), INTENT(OUT) :: str_out
+    LOGICAL, INTENT(OUT) :: got_file
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: str_len, char, pos, delimiter, c
+
+    str_len = LEN(str_in)
+    pos = -1
+    got_file = .FALSE.
+
+    c = ICHAR(str_in(1:1))
+    IF (c .NE. 39 .AND. c .NE. 34) RETURN
+
+    delimiter = c
+
+    DO char = 2, str_len
+      c = ICHAR(str_in(char:char))
+      IF (c .EQ. delimiter) THEN
+        pos = char
+        EXIT
+      ENDIF
+    ENDDO
+
+    IF (pos .LT. 0) THEN
+      err = IOR(err, c_err_bad_value)
+      RETURN
+    ENDIF
+
+    got_file = .TRUE.
+    str_out = str_in(2:pos-1)
+
+  END SUBROUTINE get_filename
+
+
+
   SUBROUTINE split_off_int(str_in, str_out, int_out, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
