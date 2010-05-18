@@ -7,6 +7,17 @@ MODULE evaluator_blocks
 
 CONTAINS
 
+  SUBROUTINE do_species(opcode, ix, err)
+
+    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(INOUT) :: err
+
+    CALL push_on_eval(REAL(opcode, num))
+
+  END SUBROUTINE do_species
+
+
+
   SUBROUTINE do_operator(opcode, ix, err)
 
     INTEGER, INTENT(IN) :: opcode, ix

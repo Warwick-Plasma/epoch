@@ -90,6 +90,12 @@ CONTAINS
       working_block%restrictions(5,:) = (/work1, work2/)
     ENDIF
 
+    IF (str_cmp(element, "include_species")) THEN
+      part2 = as_integer(value, handle_eio_dist_fn_deck)
+      working_block%use_species(part2) = .TRUE.
+      RETURN
+    ENDIF
+
     CALL split_off_int(element, part1, part2, handle_eio_dist_fn_deck)
 
     IF (handle_eio_dist_fn_deck .NE. c_err_none) THEN
@@ -114,18 +120,6 @@ CONTAINS
     IF (str_cmp(part1, "resolution")) THEN
       working_block%resolution(part2) = &
           as_integer(value, handle_eio_dist_fn_deck)
-      RETURN
-    ENDIF
-    IF (str_cmp(part1, "include_species_")) THEN
-      IF (part2 .LT. 1 .OR. part2 .GT. n_species) THEN
-        IF (rank .EQ. 0) &
-            PRINT *, "Species ", part2, &
-                " does not exist, ignoring attempt to set output state."
-        handle_eio_dist_fn_deck = c_err_none
-        RETURN
-      ENDIF
-      working_block%use_species(part2) = &
-          as_logical(value, handle_eio_dist_fn_deck)
       RETURN
     ENDIF
 

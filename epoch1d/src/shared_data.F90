@@ -136,6 +136,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_pt_separator = 6
   INTEGER, PARAMETER :: c_pt_character = 7
   INTEGER, PARAMETER :: c_pt_deferred_execution_object = 8
+  INTEGER, PARAMETER :: c_pt_species = 9
   INTEGER, PARAMETER :: c_pt_bad = 1024
   INTEGER, PARAMETER :: c_pt_null = 1025
 

@@ -20,6 +20,8 @@ CONTAINS
     char_type = c_char_unknown
 
     IF (char .EQ. " " .OR. ICHAR(char) .EQ. 32) char_type = c_char_space
+    IF (char .GE. "0" .AND. char .LE. "9" .OR. char .EQ. ".") &
+        char_type = c_char_numeric
     IF (char .GE. "A" .AND. char .LE. "z" .OR. char .EQ. "_") &
         char_type = c_char_alpha
     IF (char .EQ. "(" .OR. char .EQ. ")" .OR. char .EQ. ",") &
@@ -87,6 +89,14 @@ CONTAINS
     IF (work .NE. 0) THEN
       ! block is a parenthesis
       block%ptype = c_pt_parenthesis
+      block%data = work
+      RETURN
+    ENDIF
+
+    work = as_species(name)
+    IF (work .NE. 0) THEN
+      ! block is a species name
+      block%ptype = c_pt_species
       block%data = work
       RETURN
     ENDIF
@@ -237,8 +247,12 @@ CONTAINS
 
     DO i = 2, LEN(expression)
       ptype = char_type(expression(i:i))
-      IF (ptype .EQ. current_type &
-          .AND. .NOT. (ptype .EQ. c_char_delimiter)) THEN
+      ! This is a bit of a hack.
+      ! Allow numbers to follow letters in an expression *except* in the
+      ! special case of a single "e" character, to allow 10.0e5, etc.
+      IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. c_char_delimiter) &
+        .OR. (ptype .EQ. c_char_numeric .AND. current_type .EQ. c_char_alpha &
+        .AND. .NOT. str_cmp(current, "e"))) THEN
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
       ELSE
@@ -268,7 +282,8 @@ CONTAINS
           ENDIF
 
           IF (block%ptype .EQ. c_pt_variable &
-              .OR. block%ptype .EQ. c_pt_constant) THEN
+              .OR. block%ptype .EQ. c_pt_constant &
+              .OR. block%ptype .EQ. c_pt_species) THEN
             CALL push_to_stack(output, block)
           ENDIF
 
@@ -399,8 +414,12 @@ CONTAINS
 
     DO i = 2, LEN(expression)
       ptype = char_type(expression(i:i))
-      IF (ptype .EQ. current_type &
-          .AND. .NOT. (ptype .EQ. c_char_delimiter)) THEN
+      ! This is a bit of a hack.
+      ! Allow numbers to follow letters in an expression *except* in the
+      ! special case of a single "e" character, to allow 10.0e5, etc.
+      IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. c_char_delimiter) &
+        .OR. (ptype .EQ. c_char_numeric .AND. current_type .EQ. c_char_alpha &
+        .AND. .NOT. str_cmp(current, "e"))) THEN
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
       ELSE

@@ -43,17 +43,17 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
   custom_laser.f90 custom_parser.f90 deck.F90 deck_boundaries_block.f90 \
   deck_constant_block.f90 deck_control_block.f90 deck_deo_block.f90 \
   deck_eio_dist_fn_block.f90 deck_eio_particle_probe_block.F90 \
-  deck_ic_fields_block.f90 deck_ic_laser_block.f90 deck_ic_species_block.f90 \
-  deck_io_block.F90 deck_species_block.F90 deck_window_block.f90 \
-  diagnostics.F90 dist_fn.F90 epoch3d.F90 evaluate.f90 evaluator_blocks.f90 \
-  fields.f90 helper.F90 ic_module.f90 input.f90 input_cartesian.f90 \
-  input_functions.f90 input_particle.f90 iocommon.f90 iocontrol.f90 ionise.F90 \
-  job_info.f90 laser.f90 mpi_routines.F90 mpi_subtype_control.F90 output.f90 \
+  deck_ic_fields_block.f90 deck_ic_laser_block.f90 deck_io_block.F90 \
+  deck_species_block.F90 deck_window_block.f90 diagnostics.F90 dist_fn.F90 \
+  epoch3d.F90 evaluate.f90 evaluator_blocks.f90 fields.f90 helper.F90 \
+  ic_module.f90 input.f90 input_cartesian.f90 input_functions.f90 \
+  input_particle.f90 iocommon.f90 iocontrol.f90 ionise.F90 job_info.f90 \
+  laser.f90 mpi_routines.F90 mpi_subtype_control.F90 output.f90 \
   output_cartesian.f90 output_particle.f90 particle_pointer_advance.F90 \
   particles.F90 partlist.F90 probes.F90 setup.F90 shape_functions.F90 \
   shared_data.F90 shunt.F90 simple_io.F90 split_particles.F90 stack.f90 \
-  strings.F90 strings_advanced.F90 tokenizer_blocks.f90 version_data.F90 \
-  welcome.F90 window.F90
+  strings.F90 strings_advanced.F90 tokenizer_blocks.f90 utilities.f90 \
+  version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -117,8 +117,8 @@ custom_parser.o: custom_parser.f90 shared_data.o
 deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_constant_block.o \
   deck_control_block.o deck_deo_block.o deck_eio_dist_fn_block.o \
   deck_eio_particle_probe_block.o deck_ic_fields_block.o deck_ic_laser_block.o \
-  deck_ic_species_block.o deck_io_block.o deck_species_block.o \
-  deck_window_block.o strings.o version_data.o
+  deck_io_block.o deck_species_block.o deck_window_block.o strings.o \
+  version_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings.o
 deck_constant_block.o: deck_constant_block.f90 strings_advanced.o
 deck_control_block.o: deck_control_block.f90 fields.o strings_advanced.o
@@ -129,10 +129,9 @@ deck_eio_particle_probe_block.o: deck_eio_particle_probe_block.F90 probes.o \
   strings_advanced.o
 deck_ic_fields_block.o: deck_ic_fields_block.f90 simple_io.o strings_advanced.o
 deck_ic_laser_block.o: deck_ic_laser_block.f90 laser.o strings_advanced.o
-deck_ic_species_block.o: deck_ic_species_block.f90 simple_io.o \
-  strings_advanced.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o
-deck_species_block.o: deck_species_block.F90 setup.o strings_advanced.o
+deck_species_block.o: deck_species_block.F90 setup.o simple_io.o \
+  strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iocontrol.o \
   mpi_subtype_control.o output_cartesian.o output_particle.o \
@@ -175,6 +174,7 @@ stack.o: stack.f90 shared_data.o
 strings.o: strings.F90 shared_data.o
 strings_advanced.o: strings_advanced.F90 evaluate.o shunt.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
+utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90
 welcome.o: welcome.F90 strings.o version_data.o
 window.o: window.F90 helper.o

@@ -40,48 +40,44 @@ end:boundaries
 
 begin:species
 
-  n_species=2
-
   #electrons
-  name1=Electron
-  charge1=-1.0
-  mass1=1.0
-  frac1=0.5
-  dump1=T
-
-  #ions
-  name2=Ion
-  charge2=1.0
-  mass2=1836.0
-  frac2=0.5
-  dump2=T
-
-end:species
-
-
-begin:species1
+  name=Electron
+  charge=-1.0
+  mass=1.0
+  frac=0.5
+  dump=T
 
   temp=1e7
   rho=if((x lt den_maxpoint),den_max * exp((x-den_maxpoint)/scale),den_max)
   minrho=den_contrast * den_maxpoint
 
-end:species1
+end:species
 
 
-begin:species2
+begin:species
 
-  rho=rho(1)#*0.5
-  temp=temp_x(1)
+  #ions
+  name=Ion
+  charge=1.0
+  mass=1836.0
+  frac=0.5
+  dump=T
+
+  rho=rho(Electron)#*0.5
+  temp=temp_x(Electron)
   minrho=den_contrast * den_maxpoint
 
-end:species2
+end:species
 
 
 #If you wanted to load the initial conditions from a file
 #Use this block
-#begin:species_external1
-#  rho=Data/ic_rho.dat
-#end:species_external1
+#begin:species
+#
+#  name=Electron
+#  rho='Data/ic_rho.dat'
+#
+#end:species
 
 
 begin:output
@@ -180,8 +176,8 @@ begin:dist_fn
   resolution1=1
   resolution2=1000
 
-  include_species_1=T
-  include_species_2=T
+  include_species:Electron
+  include_species:Ion
 
 end:dist_fn
 
@@ -200,8 +196,8 @@ begin:dist_fn
   #resolution is ignored for spatial coordinates
   resolution1=1000
 
-  include_species_1=T
-  include_species_2=T
+  include_species:Electron
+  include_species:Ion
 
 end:dist_fn
 
@@ -226,8 +222,8 @@ begin:dist_fn
   resolution2=100
   resolution3=100
 
-  include_species_1=T
-  include_species_2=T
+  include_species:Electron
+  include_species:Ion
 
 end:dist_fn
 

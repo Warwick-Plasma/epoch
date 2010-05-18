@@ -26,6 +26,8 @@ CONTAINS
         CALL push_on_eval(block%numerical_data)
       ENDIF
 
+      IF (block%ptype .EQ. c_pt_species) &
+          CALL do_species(block%data, ix, err)
       IF (block%ptype .EQ. c_pt_operator) &
           CALL do_operator(block%data, ix, err)
       IF (block%ptype .EQ. c_pt_constant) &
@@ -44,6 +46,8 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE evaluate_at_point_to_array
+
+
 
   FUNCTION evaluate_at_point(input_stack, ix, err)
 

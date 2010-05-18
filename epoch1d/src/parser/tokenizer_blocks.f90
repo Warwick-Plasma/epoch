@@ -56,6 +56,26 @@ CONTAINS
 
 
 
+  FUNCTION as_species(name)
+
+    CHARACTER(LEN=*), INTENT(IN) :: name
+    INTEGER :: as_species
+    INTEGER :: i
+
+    as_species = c_prc_not_this_type
+    IF (.NOT. ASSOCIATED(particle_species)) RETURN
+
+    DO i = 1, n_species
+      IF (str_cmp(name, particle_species(i)%name)) THEN
+        as_species = i
+        RETURN
+      ENDIF
+    ENDDO
+
+  END FUNCTION as_species
+
+
+
   FUNCTION as_constant(name)
 
     CHARACTER(LEN=*), INTENT(IN) :: name

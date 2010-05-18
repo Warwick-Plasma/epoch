@@ -13,7 +13,6 @@ MODULE deck
   USE deck_window_block
   ! Initial Condition Blocks
   USE deck_ic_laser_block
-  USE deck_ic_species_block
   USE deck_ic_fields_block
   ! Extended IO Blocks
   USE deck_eio_dist_fn_block
@@ -70,8 +69,8 @@ CONTAINS
 #endif
     ELSE IF (str_cmp(block_name, "fields")) THEN
       IF (deck_state .EQ. c_ds_ic) CALL fields_start
-    ELSE IF (block_name(1:7) .EQ. "species") THEN
-      IF (deck_state .EQ. c_ds_ic) CALL species_start
+    ELSE IF (str_cmp(block_name, "species")) THEN
+      CALL species_start
     ENDIF
 
   END SUBROUTINE start_block
@@ -89,6 +88,8 @@ CONTAINS
       IF (deck_state .EQ. c_ds_ic) CALL laser_end
     ELSE IF (str_cmp(block_name, "dist_fn")) THEN
       IF (deck_state .EQ. c_ds_eio) CALL dist_fn_end
+    ELSE IF (str_cmp(block_name, "species")) THEN
+      IF (deck_state .EQ. c_ds_deck) CALL species_end
 #ifdef PARTICLE_PROBES
     ELSE IF (str_cmp(block_name, "probe")) THEN
       IF (deck_state .EQ. c_ds_eio) CALL probe_block_end
@@ -132,8 +133,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(block_name, "species")) THEN
-      IF (deck_state .EQ. c_ds_deck) &
-          handle_block = handle_species_deck(block_element, block_value)
+      handle_block = handle_species_deck(block_element, block_value)
       RETURN
     ENDIF
 
@@ -160,17 +160,6 @@ CONTAINS
       IF (deck_state .EQ. c_ds_ic) &
           handle_block = handle_ic_laser_deck(block_element, block_value)
       RETURN
-    ENDIF
-
-    val = c_err_none
-    CALL split_off_int(block_name, part1, part2, val)
-    IF (val .EQ. c_err_none) THEN
-      IF (str_cmp(part1, "species")) THEN
-        IF (deck_state .EQ. c_ds_ic) &
-            handle_block = &
-                handle_ic_species_deck(part2, block_element, block_value)
-        RETURN
-      ENDIF
     ENDIF
 
     IF (str_cmp(block_name, "dist_fn")) THEN
@@ -222,7 +211,7 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, check_custom_blocks())
     ELSE IF (deck_state .EQ. c_ds_ic) THEN
       errcode_deck = IOR(errcode_deck, check_ic_fields_block())
-      errcode_deck = IOR(errcode_deck, check_ic_species_block())
+      errcode_deck = IOR(errcode_deck, check_species_block())
     ENDIF
     errcode_deck = IOR(errcode_deck, check_custom_blocks())
 
@@ -338,6 +327,7 @@ CONTAINS
     IF (first_call) THEN
       control_block_done = .FALSE.
       boundary_block_done = .FALSE.
+      CALL species_initialise
     ENDIF
 
     ! Is comment is a flag which tells the code when a # character has been
@@ -526,8 +516,10 @@ CONTAINS
 
     ! Don't check compulsory blocks if going to bomb anyway, just stinks up
     ! the output file
-    IF (.NOT. terminate .AND. first_call) &
-        CALL check_compulsory_blocks(errcode_deck)
+    IF (.NOT. terminate .AND. first_call) THEN
+      CALL check_compulsory_blocks(errcode_deck)
+      CALL species_finalise
+    ENDIF
     terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
     ! Fatal error, cause code to bomb
     IF (terminate .AND. rank .EQ. 0) THEN

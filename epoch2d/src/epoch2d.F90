@@ -45,13 +45,13 @@ PROGRAM pic
   CALL welcome_message ! welcome.f90
   CALL register_objects ! custom.f90
 
-  deck_state = c_ds_deck
   IF (rank .EQ. 0) THEN
     PRINT *, "Specify output directory"
     READ(*, *) data_dir
   ENDIF
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, MPI_COMM_WORLD, errcode)
+  deck_state = c_ds_deck
   CALL read_deck("input.deck", .TRUE.)
   CALL setup_particle_boundaries ! boundary.f90
   CALL mpi_initialise ! mpi_routines.f90
