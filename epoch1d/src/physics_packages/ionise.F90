@@ -13,14 +13,14 @@ CONTAINS
     INTEGER :: ispecies
     TYPE(particle), POINTER :: current, next, new_part
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
-    REAL(num), DIMENSION(-2:2) :: hx, gx
+    REAL(num), DIMENSION(-2:2) :: gx, hx
     REAL(num) :: ex_part, ey_part, ez_part, e_part2
     REAL(num) :: number_density_part, ndp_low, ndp_high
-    INTEGER :: cell_x1, cell_x2, ix, iy, next_species
+    INTEGER :: cell_x1, cell_x2, ix
     REAL(num), DIMENSION(:), ALLOCATABLE :: number_density, nd_low, nd_high
     REAL(num) :: lambda_db, e_photon, t_eff, saha_rhs, ion_frac, rand
     REAL(num) :: fac, tfac, lfac, cf2
-    INTEGER :: idum
+    INTEGER :: idum, next_species
     INTEGER, PARAMETER :: dcellx = 0
 
     idum = -1445
@@ -36,7 +36,8 @@ CONTAINS
     lfac = h_planck / SQRT(2.0_num * pi * m0 * kb)
 
     ALLOCATE(number_density(-2:nx+3))
-    ALLOCATE(nd_low(-2:nx+3), nd_high(-2:nx+3))
+    ALLOCATE(nd_low (-2:nx+3))
+    ALLOCATE(nd_high(-2:nx+3))
 
     DO ispecies = 1, n_species
       IF (.NOT. particle_species(ispecies)%ionise) CYCLE
@@ -97,11 +98,11 @@ CONTAINS
         ndp_high = 0.0_num
         DO ix = -1, 1
           ex_part = ex_part + hx(ix) * ex(cell_x2+ix)
-          ey_part = ey_part + gx(ix) * ex(cell_x1+ix)
-          ez_part = ez_part + gx(ix) * ex(cell_x1+ix)
+          ey_part = ey_part + gx(ix) * ey(cell_x1+ix)
+          ez_part = ez_part + gx(ix) * ez(cell_x1+ix)
           number_density_part = number_density_part &
               + gx(ix) * number_density(cell_x1+ix)
-          ndp_low = ndp_low &
+          ndp_low  = ndp_low &
               + gx(ix) * nd_low(cell_x1+ix)
           ndp_high = ndp_high &
               + gx(ix) * nd_high(cell_x1+ix)

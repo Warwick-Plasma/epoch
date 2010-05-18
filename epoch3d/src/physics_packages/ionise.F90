@@ -14,16 +14,18 @@ CONTAINS
     TYPE(particle), POINTER :: current, next, new_part
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
     REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y
-    REAL(num), DIMENSION(-2:2) :: gx, hx, gy, hy
+    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z
+    REAL(num), DIMENSION(-2:2) :: gx, hx, gy, hy, gz, hz
     REAL(num) :: ex_part, ey_part, ez_part, e_part2
     REAL(num) :: number_density_part, ndp_low, ndp_high
     INTEGER :: cell_x1, cell_x2, ix
     INTEGER :: cell_y1, cell_y2, iy
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: number_density, nd_low, nd_high
+    INTEGER :: cell_z1, cell_z2, iz
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: number_density, nd_low, nd_high
     REAL(num) :: lambda_db, e_photon, t_eff, saha_rhs, ion_frac, rand
     REAL(num) :: fac, tfac, lfac, cf2
     INTEGER :: idum, next_species
-    INTEGER, PARAMETER :: dcellx = 0, dcelly = 0
+    INTEGER, PARAMETER :: dcellx = 0, dcelly = 0, dcellz = 0
 
     idum = -1445
     rand = random(idum)
@@ -37,9 +39,9 @@ CONTAINS
     tfac = epsilon0 * fac**2 / kb / 3.0_num
     lfac = h_planck / SQRT(2.0_num * pi * m0 * kb)
 
-    ALLOCATE(number_density(-2:nx+3,-2:ny+3))
-    ALLOCATE(nd_low (-2:nx+3,-2:ny+3))
-    ALLOCATE(nd_high(-2:nx+3,-2:ny+3))
+    ALLOCATE(number_density(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(nd_low (-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(nd_high(-2:nx+3,-2:ny+3,-2:nz+3))
 
     DO ispecies = 1, n_species
       IF (.NOT. particle_species(ispecies)%ionise) CYCLE
@@ -52,15 +54,18 @@ CONTAINS
         next=>current%next
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
+        part_z  = current%part_pos(3) - z_min_local
 
         ! Work out number of grid cells in the particle is
         ! Not in general an integer
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = part_x / dx - 0.5_num
         cell_y_r = part_y / dy - 0.5_num
+        cell_z_r = part_z / dz - 0.5_num
 #else
         cell_x_r = part_x / dx
         cell_y_r = part_y / dy
+        cell_z_r = part_z / dz
 #endif
         ! Round cell position to nearest cell
         cell_x1 = FLOOR(cell_x_r + 0.5_num)
@@ -73,6 +78,12 @@ CONTAINS
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_y = REAL(cell_y1, num) - cell_y_r
         cell_y1 = cell_y1 + 1
+
+        ! Round cell position to nearest cell
+        cell_z1 = FLOOR(cell_z_r + 0.5_num)
+        ! Calculate fraction of cell between nearest cell boundary and particle
+        cell_frac_z = REAL(cell_z1, num) - cell_z_r
+        cell_z1 = cell_z1 + 1
 
         ! These are now the weighting factors correct for field weighting
 #ifdef PARTICLE_SHAPE_BSPLINE3
@@ -94,6 +105,10 @@ CONTAINS
         cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
         cell_y2 = cell_y2 + 1
 
+        cell_z2 = FLOOR(cell_z_r)
+        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
+        cell_z2 = cell_z2 + 1
+
         ! Grid weighting factors in 3D (3D analogue of equation 4.77 page 25
         ! of manual)
         ! These weight grid properties onto particles
@@ -111,17 +126,23 @@ CONTAINS
         number_density_part = 0.0_num
         ndp_low = 0.0_num
         ndp_high = 0.0_num
-        DO iy = -1, 1
-          DO ix = -1, 1
-            ex_part = ex_part + hx(ix) * gy(iy) * ex(cell_x2+ix, cell_y1+iy)
-            ey_part = ey_part + gx(ix) * hy(iy) * ey(cell_x1+ix, cell_y2+iy)
-            ez_part = ez_part + gx(ix) * gy(iy) * ez(cell_x1+ix, cell_y1+iy)
-            number_density_part = number_density_part &
-                + gx(ix) * gy(iy) * number_density(cell_x1+ix, cell_y1+iy)
-            ndp_low  = ndp_low &
-                + gx(ix) * gy(iy) * nd_low(cell_x1+ix, cell_y1+iy)
-            ndp_high = ndp_high &
-                + gx(ix) * gy(iy) * nd_high(cell_x1+ix, cell_y1+iy)
+        DO iz = -1, 1
+          DO iy = -1, 1
+            DO ix = -1, 1
+              ex_part = ex_part + hx(ix) * gy(iy) * gz(iz) &
+                  * ex(cell_x2+ix, cell_y1+iy, cell_z1+iz)
+              ey_part = ey_part + gx(ix) * hy(iy) * gz(iz) &
+                  * ey(cell_x1+ix, cell_y2+iy, cell_z1+iz)
+              ez_part = ez_part + gx(ix) * gy(iy) * hz(iz) &
+                  * ez(cell_x1+ix, cell_y1+iy, cell_z2+iz)
+              number_density_part = number_density_part &
+                  + gx(ix) * gy(iy) * gz(iz) &
+                  * number_density(cell_x1+ix, cell_y1+iy, cell_z1+iz)
+              ndp_low  = ndp_low  + gx(ix) * gy(iy) * gz(iz) &
+                  * nd_low(cell_x1+ix, cell_y1+iy, cell_z1+iz)
+              ndp_high = ndp_high + gx(ix) * gy(iy) * gz(iz) &
+                  * nd_high(cell_x1+ix, cell_y1+iy, cell_z1+iz)
+            ENDDO
           ENDDO
         ENDDO
         e_part2 = ex_part**2 + ey_part**2 + ez_part**2
@@ -130,9 +151,9 @@ CONTAINS
         ! This is a first attempt at using the 1 level Saha equation to
         ! calculate an ionisation fraction. This isn't really a very good model!
 
-        ! e_photon = 0.5_num * epsilon0 * fac**2 * e_part2 * dx * dy
+        ! e_photon = 0.5_num * epsilon0 * fac**2 * e_part2 * dx * dy * dz
         ! t_eff = 2.0_num / 3.0_num * e_photon &
-        !    / (kb * number_density_part * dx * dy)
+        !    / (kb * number_density_part * dx * dy * dz)
         t_eff = tfac * e_part2 / number_density_part
         IF (t_eff .GT. 1.0e-6_num) THEN
           lambda_db = lfac / SQRT(t_eff)

@@ -47,7 +47,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
   deck_io_block.F90 deck_species_block.F90 deck_window_block.f90 \
   diagnostics.F90 dist_fn.F90 epoch3d.F90 evaluate.f90 evaluator_blocks.f90 \
   fields.f90 helper.F90 ic_module.f90 input.f90 input_cartesian.f90 \
-  input_functions.f90 input_particle.f90 iocommon.f90 iocontrol.f90 \
+  input_functions.f90 input_particle.f90 iocommon.f90 iocontrol.f90 ionise.F90 \
   job_info.f90 laser.f90 mpi_routines.F90 mpi_subtype_control.F90 output.f90 \
   output_cartesian.f90 output_particle.f90 particle_pointer_advance.F90 \
   particles.F90 partlist.F90 probes.F90 setup.F90 shape_functions.F90 \
@@ -139,7 +139,8 @@ diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iocontrol.o \
   particle_pointer_advance.o probes.o $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 output_cartesian.o
 epoch3d.o: epoch3d.F90 balance.o deck.o diagnostics.o fields.o ic_module.o \
-  mpi_routines.o particles.o setup.o split_particles.o welcome.o window.o
+  ionise.o mpi_routines.o particles.o setup.o split_particles.o welcome.o \
+  window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o
@@ -151,6 +152,7 @@ input_functions.o: input_functions.f90 iocommon.o
 input_particle.o: input_particle.f90 input_functions.o shared_data.o
 iocommon.o: iocommon.f90 job_info.o shared_data.o
 iocontrol.o: iocontrol.f90 input.o output.o
+ionise.o: ionise.F90 calc_df.o helper.o
 job_info.o: job_info.f90
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 partlist.o
