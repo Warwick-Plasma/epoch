@@ -16,6 +16,7 @@ MODULE setup
 
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files
+  PUBLIC :: setup_species
 
   SAVE
   TYPE(particle_list) :: main_root
@@ -119,6 +120,39 @@ CONTAINS
     CALL set_initial_values
 
   END SUBROUTINE after_control
+
+
+
+  SUBROUTINE setup_species
+
+    INTEGER :: ispecies
+
+    ALLOCATE(particle_species(1:n_species))
+
+    DO ispecies = 1, n_species
+      particle_species(ispecies)%name = blank
+      particle_species(ispecies)%mass = -1.0_num
+      particle_species(ispecies)%dump = .TRUE.
+      particle_species(ispecies)%count = -1
+#ifdef SPLIT_PARTICLES_AFTER_PUSH
+      particle_species(ispecies)%split = .FALSE.
+      particle_species(ispecies)%npart_max = 0.0_num
+#endif
+#ifdef PARTICLE_IONISE
+      particle_species(ispecies)%ionise = .FALSE.
+      particle_species(ispecies)%ionise_to_species = -1
+      particle_species(ispecies)%release_species = -1
+      particle_species(ispecies)%critical_field = 0.0_num
+#endif
+#ifdef TRACER_PARTICLES
+      particle_species(ispecies)%tracer = .FALSE.
+#endif
+#ifdef PARTICLE_PROBES
+      NULLIFY(particle_species(ispecies)%attached_probes)
+#endif
+    ENDDO
+
+  END SUBROUTINE setup_species
 
 
 

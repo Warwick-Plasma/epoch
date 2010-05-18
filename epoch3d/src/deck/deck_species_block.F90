@@ -1,7 +1,7 @@
 MODULE deck_species_block
 
   USE strings_advanced
-  !USE setup
+  USE setup
 
   IMPLICIT NONE
 
@@ -18,7 +18,6 @@ CONTAINS
     INTEGER :: part2
     INTEGER :: handle_species_deck
     LOGICAL :: handled
-    CHARACTER(LEN=9) :: string
 
     handle_species_deck = c_err_none
     IF (value .EQ. blank) RETURN
@@ -29,12 +28,9 @@ CONTAINS
     IF (str_cmp(element, "n_species")) THEN
       n_species = as_integer(value, handle_species_deck)
       IF (n_species .GT. 0) THEN
-        IF (rank .EQ. 0) THEN
-          CALL integer_as_string(n_species, string)
-          PRINT *, "Code running with ", TRIM(ADJUSTL(string)), " species"
-        ENDIF
-        ALLOCATE(particle_species(1:n_species))
-        ! ALLOCATE(Species_Name(1:n_species))
+        IF (rank .EQ. 0) &
+            PRINT '("Code running with ", i2, " species")', n_species
+        CALL setup_species
       ENDIF
       handle_species_deck = c_err_none
       handled = .TRUE.
@@ -42,10 +38,17 @@ CONTAINS
 
     IF (n_species .LE. 0) THEN
       IF (rank .EQ. 0) THEN
-        PRINT *, "Either invalid number of species specified or attempting &
-            &to set species data before setting n_species"
+        PRINT *, "Invalid number of species specified"
       ENDIF
-      handle_species_deck = c_err_missing_elements
+      handle_species_deck = c_err_bad_value
+    ENDIF
+
+    IF (.NOT. ASSOCIATED(particle_species)) THEN
+      extended_error_string = "n_species"
+      IF (rank .EQ. 0) THEN
+        PRINT *, "Attempting to set species data before setting n_species"
+      ENDIF
+      handle_species_deck = c_err_required_element_not_set
       RETURN
     ENDIF
 
@@ -63,10 +66,8 @@ CONTAINS
 
     IF (str_cmp(part1, "name")) THEN
       particle_species(part2)%name = TRIM(value)
-      IF (rank .EQ. 0) THEN
-        CALL integer_as_string(part2, string)
-        PRINT *, "Name of species ", TRIM(ADJUSTL(string)), " is ", TRIM(value)
-      ENDIF
+      IF (rank .EQ. 0) &
+          PRINT '("Name of species ", i2, " is ", a)', part2, TRIM(value)
       handle_species_deck = c_err_none
       RETURN
     ENDIF
@@ -84,6 +85,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(part1, "frac") .OR. str_cmp(part1, "fraction")) THEN
+      handle_species_deck = c_err_none
       IF (npart_global .GE. 0) THEN
         particle_species(part2)%count = &
             INT(as_real(value, handle_species_deck) * npart_global)
@@ -107,10 +109,29 @@ CONTAINS
       RETURN
     ENDIF
 
+    ! *************************************************************
+    ! This section sets properties for tracer particles
+    ! *************************************************************
+    IF (str_cmp(part1, "tracer")) THEN
+      handle_species_deck = c_err_none
+#ifdef TRACER_PARTICLES
+      particle_species(part2)%tracer = as_logical(value, handle_species_deck)
+#else
+      handle_species_deck = c_err_pp_options_wrong
+      extended_error_string = "-DTRACER_PARTICLES"
+#endif
+    ENDIF
+
+    ! *************************************************************
+    ! This section sets properties for particle splitting
+    ! *************************************************************
     IF (str_cmp(part1, "split")) THEN
       handle_species_deck = c_err_none
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
       particle_species(part2)%split = as_logical(value, handle_species_deck)
+#else
+      handle_species_deck = c_err_pp_options_wrong
+      extended_error_string = "-DSPLIT_PARTICLES_AFTER_PUSH"
 #endif
       RETURN
     ENDIF
@@ -120,6 +141,9 @@ CONTAINS
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
       particle_species(part2)%npart_max = &
           as_long_integer(value, handle_species_deck)
+#else
+      handle_species_deck = c_err_pp_options_wrong
+      extended_error_string = "-DSPLIT_PARTICLES_AFTER_PUSH"
 #endif
       RETURN
     ENDIF

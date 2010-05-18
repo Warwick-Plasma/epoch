@@ -132,7 +132,7 @@ deck_ic_laser_block.o: deck_ic_laser_block.f90 laser.o strings_advanced.o
 deck_ic_species_block.o: deck_ic_species_block.f90 simple_io.o \
   strings_advanced.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o
-deck_species_block.o: deck_species_block.F90 strings_advanced.o
+deck_species_block.o: deck_species_block.F90 setup.o strings_advanced.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iocontrol.o \
   mpi_subtype_control.o output_cartesian.o output_particle.o \
