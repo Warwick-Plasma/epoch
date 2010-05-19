@@ -60,8 +60,8 @@ CONTAINS
 
   SUBROUTINE window_start
 
-    bc_x_min_after_move = bc_x_min
-    bc_x_max_after_move = bc_x_max
+    bc_x_min_after_move = bc_x_min_field
+    bc_x_max_after_move = bc_x_max_field
 
   END SUBROUTINE window_start
 

@@ -113,15 +113,21 @@ CONTAINS
 
     CALL bfield_bcs(.FALSE.)
 
-    IF (bc_x_min .EQ. c_bc_simple_laser .AND. proc_x_min .EQ. MPI_PROC_NULL) &
+    IF (proc_x_min .EQ. MPI_PROC_NULL) THEN
+      IF (bc_x_min_field .EQ. c_bc_simple_laser) THEN
         CALL laser_bcs_x_min
-    IF (bc_x_min .EQ. c_bc_simple_outflow .AND. proc_x_min .EQ. MPI_PROC_NULL) &
+      ELSE IF (bc_x_min_field .EQ. c_bc_simple_outflow) THEN
         CALL outflow_bcs_x_min
+      ENDIF
+    ENDIF
 
-    IF (bc_x_max .EQ. c_bc_simple_laser .AND. proc_x_max .EQ. MPI_PROC_NULL) &
+    IF (proc_x_max .EQ. MPI_PROC_NULL) THEN
+      IF (bc_x_max_field .EQ. c_bc_simple_laser) THEN
         CALL laser_bcs_x_max
-    IF (bc_x_max .EQ. c_bc_simple_outflow .AND. proc_x_max .EQ. MPI_PROC_NULL) &
+      ELSE IF (bc_x_max_field .EQ. c_bc_simple_outflow) THEN
         CALL outflow_bcs_x_max
+      ENDIF
+    ENDIF
 
     CALL bfield_bcs(.TRUE.)
 

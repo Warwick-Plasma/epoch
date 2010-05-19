@@ -181,16 +181,29 @@ CONTAINS
       as_bc = c_bc_periodic
       RETURN
     ENDIF
+
     IF (str_cmp(TRIM(ADJUSTL(str_in)), "simple_laser")) THEN
       as_bc = c_bc_simple_laser
       RETURN
     ENDIF
+
     IF (str_cmp(TRIM(ADJUSTL(str_in)), "simple_outflow")) THEN
       as_bc = c_bc_simple_outflow
       RETURN
     ENDIF
+
     IF (str_cmp(TRIM(ADJUSTL(str_in)), "other")) THEN
       as_bc = c_bc_other
+      RETURN
+    ENDIF
+
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), "reflect")) THEN
+      as_bc = c_bc_reflect
+      RETURN
+    ENDIF
+
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), "open")) THEN
+      as_bc = c_bc_open
       RETURN
     ENDIF
 

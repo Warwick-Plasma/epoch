@@ -13,6 +13,8 @@ MODULE constants
   REAL(num), PARAMETER :: c_non_zero = TINY(1.0_num)
   REAL(num), PARAMETER :: largest_number = HUGE(1.0_num)
 
+  INTEGER, PARAMETER :: c_ndims = 1
+
   ! Boundary type codes
   INTEGER, PARAMETER :: c_bc_periodic = 1
   INTEGER, PARAMETER :: c_bc_other = 2
@@ -494,9 +496,8 @@ MODULE shared_data
   REAL(num) :: weight
 
   LOGICAL :: SAVE, ic_from_restart = .FALSE., deckfile
-  INTEGER :: bc_x_max, bc_x_min
-  INTEGER :: bc_x_max_particle, bc_x_min_particle
-  INTEGER :: bc_x_max_field, bc_x_min_field
+  INTEGER :: bc_x_min_field, bc_x_max_field
+  INTEGER :: bc_x_min_particle, bc_x_max_particle
   INTEGER :: restart_snapshot
   INTEGER(KIND=8) :: ix, iy, iz, ipart
 
@@ -511,7 +512,6 @@ MODULE shared_data
   INTEGER :: bc_x_min_after_move
   INTEGER :: bc_x_max_after_move
   REAL(num) :: window_shift
-  LOGICAL :: any_open
   TYPE(particle_list) :: ejected_particles
 
   !----------------------------------------------------------------------------

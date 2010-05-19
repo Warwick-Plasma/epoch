@@ -6,14 +6,25 @@ MODULE deck_boundaries_block
 
   SAVE
 
-  INTEGER, PARAMETER :: boundary_block_elements = 2
+  INTEGER, PARAMETER :: boundary_block_nbase = 2 * c_ndims
+  INTEGER, PARAMETER :: boundary_block_elements = 3 * boundary_block_nbase
   LOGICAL, DIMENSION(boundary_block_elements) :: boundary_block_done
   CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
       boundary_block_name = (/ &
-          "bc_x_min", "bc_x_max" /)
+          "bc_x_min         ", &
+          "bc_x_max         ", &
+          "bc_x_min_field   ", &
+          "bc_x_max_field   ", &
+          "bc_x_min_particle", &
+          "bc_x_max_particle" /)
   CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
       alternate_name = (/ &
-          "xbc_left ", "xbc_right" /)
+          "xbc_left          ", &
+          "xbc_right         ", &
+          "xbc_left_field    ", &
+          "xbc_right_field   ", &
+          "xbc_left_particle ", &
+          "xbc_right_particle" /)
 
 CONTAINS
 
@@ -21,7 +32,8 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_boundary_deck
-    INTEGER :: loop, elementselected
+    INTEGER :: loop, elementselected, itmp
+    INTEGER, PARAMETER :: nbase = boundary_block_nbase
 
     handle_boundary_deck = c_err_unknown_element
 
@@ -43,11 +55,32 @@ CONTAINS
     boundary_block_done(elementselected) = .TRUE.
     handle_boundary_deck = c_err_none
 
+    IF (elementselected .LE. nbase) THEN
+      boundary_block_done(elementselected+  nbase) = .TRUE.
+      boundary_block_done(elementselected+2*nbase) = .TRUE.
+    ENDIF
+
     SELECT CASE (elementselected)
     CASE(1)
-      bc_x_min = as_bc(value, handle_boundary_deck)
+      itmp = as_bc(value, handle_boundary_deck)
+      bc_x_min_field = itmp
+      bc_x_min_particle = itmp
     CASE(2)
-      bc_x_max = as_bc(value, handle_boundary_deck)
+      itmp = as_bc(value, handle_boundary_deck)
+      bc_x_max_field = itmp
+      bc_x_max_particle = itmp
+    CASE(nbase+1)
+      bc_x_min_field = as_bc(value, handle_boundary_deck)
+      boundary_block_done(1)  = .TRUE.
+    CASE(nbase+2)
+      bc_x_max_field = as_bc(value, handle_boundary_deck)
+      boundary_block_done(2)  = .TRUE.
+    CASE(2*nbase+1)
+      bc_x_min_particle = as_bc(value, handle_boundary_deck)
+      boundary_block_done(1)  = .TRUE.
+    CASE(2*nbase+2)
+      bc_x_max_particle = as_bc(value, handle_boundary_deck)
+      boundary_block_done(2)  = .TRUE.
     END SELECT
 
   END FUNCTION handle_boundary_deck
@@ -58,8 +91,17 @@ CONTAINS
 
     INTEGER :: check_boundary_block
     INTEGER :: index
+    INTEGER, PARAMETER :: nbase = boundary_block_nbase
 
     check_boundary_block = c_err_none
+
+    DO index = 1, nbase
+      IF (.NOT.boundary_block_done(index+nbase) &
+          .AND. .NOT.boundary_block_done(index+2*nbase)) THEN
+        boundary_block_done(index+  nbase) = .TRUE.
+        boundary_block_done(index+2*nbase) = .TRUE.
+      ENDIF
+    ENDDO
 
     DO index = 1, boundary_block_elements
       IF (.NOT. boundary_block_done(index)) THEN

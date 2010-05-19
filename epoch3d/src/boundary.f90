@@ -8,107 +8,71 @@ CONTAINS
 
   SUBROUTINE setup_particle_boundaries
 
-    any_open = .FALSE.
-
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
-    IF (bc_x_min .EQ. c_bc_periodic) THEN
-      bc_x_min_particle = c_bc_periodic
-      bc_x_min_field = c_bc_periodic
-    ENDIF
-    IF (bc_x_max .EQ. c_bc_periodic) THEN
-      bc_x_max_particle = c_bc_periodic
-      bc_x_max_field = c_bc_periodic
-    ENDIF
 
-    IF (bc_y_min .EQ. c_bc_periodic) THEN
-      bc_y_min_particle = c_bc_periodic
-      bc_y_min_field = c_bc_periodic
-    ENDIF
-    IF (bc_y_max .EQ. c_bc_periodic) THEN
-      bc_y_max_particle = c_bc_periodic
-      bc_y_max_field = c_bc_periodic
-    ENDIF
+    IF (bc_x_min_particle .EQ. c_bc_other) bc_x_min_particle = c_bc_reflect
+    IF (bc_x_max_particle .EQ. c_bc_other) bc_x_max_particle = c_bc_reflect
+    IF (bc_y_min_particle .EQ. c_bc_other) bc_y_min_particle = c_bc_reflect
+    IF (bc_y_max_particle .EQ. c_bc_other) bc_y_max_particle = c_bc_reflect
+    IF (bc_z_min_particle .EQ. c_bc_other) bc_z_min_particle = c_bc_reflect
+    IF (bc_z_max_particle .EQ. c_bc_other) bc_z_max_particle = c_bc_reflect
 
-    IF (bc_z_min .EQ. c_bc_periodic) THEN
-      bc_z_min_particle = c_bc_periodic
-      bc_z_min_field = c_bc_periodic
-    ENDIF
-    IF (bc_z_max .EQ. c_bc_periodic) THEN
-      bc_z_max_particle = c_bc_periodic
-      bc_z_max_field = c_bc_periodic
-    ENDIF
+    IF (bc_x_min_field .EQ. c_bc_other) bc_x_min_field = c_bc_clamp
+    IF (bc_x_max_field .EQ. c_bc_other) bc_x_max_field = c_bc_clamp
+    IF (bc_y_min_field .EQ. c_bc_other) bc_y_min_field = c_bc_clamp
+    IF (bc_y_max_field .EQ. c_bc_other) bc_y_max_field = c_bc_clamp
+    IF (bc_z_min_field .EQ. c_bc_other) bc_z_min_field = c_bc_clamp
+    IF (bc_z_max_field .EQ. c_bc_other) bc_z_max_field = c_bc_clamp
 
-    ! For some types of boundary, fields and particles are treated in
-    ! different ways, deal with that here
-    IF (bc_x_min .EQ. c_bc_other) THEN
-      bc_x_min_particle = c_bc_reflect
-      bc_x_min_field = c_bc_clamp
-    ENDIF
-    IF (bc_x_max .EQ. c_bc_other) THEN
-      bc_x_max_particle = c_bc_reflect
-      bc_x_max_field = c_bc_clamp
-    ENDIF
+    ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
+    ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
+    ! can then be set separately. IN THE DECK, laser bcs are chosen either
+    ! by seting the main bcs OR by setting the field bcs to simple_laser
+    ! (or outflow).
 
-    IF (bc_y_min .EQ. c_bc_other) THEN
-      bc_y_min_particle = c_bc_reflect
-      bc_y_min_field = c_bc_clamp
-    ENDIF
-    IF (bc_y_max .EQ. c_bc_other) THEN
-      bc_y_max_particle = c_bc_reflect
-      bc_y_max_field = c_bc_clamp
-    ENDIF
+    ! Laser boundaries assume open particles unless otherwise specified.
+    IF (bc_x_min_particle .EQ. c_bc_simple_laser &
+        .OR. bc_x_min_particle .EQ. c_bc_simple_outflow) &
+            bc_x_min_particle = c_bc_open
+    IF (bc_x_max_particle .EQ. c_bc_simple_laser &
+        .OR. bc_x_max_particle .EQ. c_bc_simple_outflow) &
+            bc_x_max_particle = c_bc_open
+    IF (bc_y_min_particle .EQ. c_bc_simple_laser &
+        .OR. bc_y_min_particle .EQ. c_bc_simple_outflow) &
+            bc_y_min_particle = c_bc_open
+    IF (bc_y_max_particle .EQ. c_bc_simple_laser &
+        .OR. bc_y_max_particle .EQ. c_bc_simple_outflow) &
+            bc_y_max_particle = c_bc_open
+    IF (bc_z_min_particle .EQ. c_bc_simple_laser &
+        .OR. bc_z_min_particle .EQ. c_bc_simple_outflow) &
+            bc_z_min_particle = c_bc_open
+    IF (bc_z_max_particle .EQ. c_bc_simple_laser &
+        .OR. bc_z_max_particle .EQ. c_bc_simple_outflow) &
+            bc_z_max_particle = c_bc_open
 
-    IF (bc_z_min .EQ. c_bc_other) THEN
-      bc_z_min_particle = c_bc_reflect
-      bc_z_min_field = c_bc_clamp
-    ENDIF
-    IF (bc_z_max .EQ. c_bc_other) THEN
-      bc_z_max_particle = c_bc_reflect
-      bc_z_max_field = c_bc_clamp
-    ENDIF
+    ! Note: reflecting EM boundaries not yet implemented.
+    IF (bc_x_min_field .EQ. c_bc_reflect) bc_x_min_field = c_bc_clamp
+    IF (bc_x_max_field .EQ. c_bc_reflect) bc_x_max_field = c_bc_clamp
+    IF (bc_y_min_field .EQ. c_bc_reflect) bc_y_min_field = c_bc_clamp
+    IF (bc_y_max_field .EQ. c_bc_reflect) bc_y_max_field = c_bc_clamp
+    IF (bc_z_min_field .EQ. c_bc_reflect) bc_z_min_field = c_bc_clamp
+    IF (bc_z_max_field .EQ. c_bc_reflect) bc_z_max_field = c_bc_clamp
 
-    ! laser boundaries reflect particles off a hard wall
-    IF (bc_x_min .EQ. c_bc_simple_laser &
-        .OR. bc_x_min .EQ. c_bc_simple_outflow) THEN
-      bc_x_min_particle = c_bc_open
-      bc_x_min_field = c_bc_clamp
-      any_open = .TRUE.
-    ENDIF
-    IF (bc_x_max .EQ. c_bc_simple_laser &
-        .OR. bc_x_max .EQ. c_bc_simple_outflow) THEN
-      bc_x_max_particle = c_bc_open
-      bc_x_max_field = c_bc_clamp
-      any_open = .TRUE.
-    ENDIF
+    IF (bc_x_min_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
+    IF (bc_x_max_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
+    IF (bc_y_min_field .EQ. c_bc_open) bc_y_min_field = c_bc_simple_outflow
+    IF (bc_y_max_field .EQ. c_bc_open) bc_y_max_field = c_bc_simple_outflow
+    IF (bc_z_min_field .EQ. c_bc_open) bc_z_min_field = c_bc_simple_outflow
+    IF (bc_z_max_field .EQ. c_bc_open) bc_z_max_field = c_bc_simple_outflow
 
-    IF (bc_y_min .EQ. c_bc_simple_laser &
-        .OR. bc_y_min .EQ. c_bc_simple_outflow) THEN
-      bc_y_min_particle = c_bc_open
-      bc_y_min_field = c_bc_clamp
-      any_open = .TRUE.
-    ENDIF
-    IF (bc_y_max .EQ. c_bc_simple_laser &
-        .OR. bc_y_max .EQ. c_bc_simple_outflow) THEN
-      bc_y_max_particle = c_bc_open
-      bc_y_max_field = c_bc_clamp
-      any_open = .TRUE.
-    ENDIF
-
-    IF (bc_z_min .EQ. c_bc_simple_laser &
-        .OR. bc_z_min .EQ. c_bc_simple_outflow) THEN
-      bc_z_min_particle = c_bc_open
-      bc_z_min_field = c_bc_clamp
-      any_open = .TRUE.
-    ENDIF
-    IF (bc_z_max .EQ. c_bc_simple_laser &
-        .OR. bc_z_max .EQ. c_bc_simple_outflow) THEN
-      bc_z_max_particle = c_bc_open
-      bc_z_max_field = c_bc_clamp
-      any_open = .TRUE.
-    ENDIF
-
-    IF (any_open) CALL create_empty_partlist(ejected_particles)
+    IF (bc_x_min_particle .EQ. c_bc_open &
+        .OR. bc_x_max_particle .EQ. c_bc_open &
+        .OR. bc_y_min_particle .EQ. c_bc_open &
+        .OR. bc_y_max_particle .EQ. c_bc_open &
+        .OR. bc_z_min_particle .EQ. c_bc_open &
+        .OR. bc_z_max_particle .EQ. c_bc_open) &
+            CALL create_empty_partlist(ejected_particles)
 
   END SUBROUTINE setup_particle_boundaries
 
@@ -218,7 +182,12 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
     INTEGER, DIMENSION(3), INTENT(IN) :: stagger
 
-    IF (bc_x_min_field .EQ. c_bc_clamp .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
+    ! Use clamp when the laser is on.
+
+    IF ((bc_x_min_field .EQ. c_bc_clamp &
+        .OR. bc_x_min_field .EQ. c_bc_simple_laser &
+        .OR. bc_x_min_field .EQ. c_bc_simple_outflow) &
+        .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
         field(-1,:,:) = -field(1,:,:)
         field( 0,:,:) = 0.0_num
@@ -228,7 +197,10 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (bc_x_max_field .EQ. c_bc_clamp .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
+    IF ((bc_x_max_field .EQ. c_bc_clamp &
+        .OR. bc_x_max_field .EQ. c_bc_simple_laser &
+        .OR. bc_x_max_field .EQ. c_bc_simple_outflow) &
+        .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1) .EQ. 1) THEN
         field(nx,  :,:) = 0.0_num
         field(nx+1,:,:) = -field(nx-1,:,:)
@@ -238,7 +210,10 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (bc_y_min_field .EQ. c_bc_clamp .AND. proc_y_min .EQ. MPI_PROC_NULL) THEN
+    IF ((bc_y_min_field .EQ. c_bc_clamp &
+        .OR. bc_y_min_field .EQ. c_bc_simple_laser &
+        .OR. bc_y_min_field .EQ. c_bc_simple_outflow) &
+        .AND. proc_y_min .EQ. MPI_PROC_NULL) THEN
       IF (stagger(2) .EQ. 1) THEN
         field(:,-1,:) = -field(:,1,:)
         field(:, 0,:) = 0.0_num
@@ -248,7 +223,10 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (bc_y_max_field .EQ. c_bc_clamp .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
+    IF ((bc_y_max_field .EQ. c_bc_clamp &
+        .OR. bc_y_max_field .EQ. c_bc_simple_laser &
+        .OR. bc_y_max_field .EQ. c_bc_simple_outflow) &
+        .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
       IF (stagger(2) .EQ. 1) THEN
         field(:,ny,  :) = 0.0_num
         field(:,ny+1,:) = -field(:,ny-1,:)
@@ -258,7 +236,10 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (bc_z_min_field .EQ. c_bc_clamp .AND. proc_z_min .EQ. MPI_PROC_NULL) THEN
+    IF ((bc_z_min_field .EQ. c_bc_clamp &
+        .OR. bc_z_min_field .EQ. c_bc_simple_laser &
+        .OR. bc_z_min_field .EQ. c_bc_simple_outflow) &
+        .AND. proc_z_min .EQ. MPI_PROC_NULL) THEN
       IF (stagger(3) .EQ. 1) THEN
         field(:,:,-1) = -field(:,:,1)
         field(:,:, 0) = 0.0_num
@@ -268,7 +249,10 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (bc_z_max_field .EQ. c_bc_clamp .AND. proc_z_max .EQ. MPI_PROC_NULL) THEN
+    IF ((bc_z_max_field .EQ. c_bc_clamp &
+        .OR. bc_z_max_field .EQ. c_bc_simple_laser &
+        .OR. bc_z_max_field .EQ. c_bc_simple_outflow) &
+        .AND. proc_z_max .EQ. MPI_PROC_NULL) THEN
       IF (stagger(3) .EQ. 1) THEN
         field(:,:,nz  ) = 0.0_num
         field(:,:,nz+1) = -field(:,:,nz-1)
