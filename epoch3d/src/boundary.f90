@@ -434,6 +434,7 @@ CONTAINS
       DO iz = -1, 1
         DO iy = -1, 1
           DO ix = -1, 1
+            IF (ABS(ix) + ABS(iy) + ABS(iz) .EQ. 0) CYCLE
             CALL create_empty_partlist(send(ix, iy, iz))
             CALL create_empty_partlist(recv(ix, iy, iz))
           ENDDO
@@ -443,95 +444,118 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur))
         next=>cur%next
 
-        out_of_bounds = .FALSE.
-
         xbd = 0
         ybd = 0
         zbd = 0
+        out_of_bounds = .FALSE.
 
-        ! These conditions apply if a particle has passed a physical boundary
-        ! Not a processor boundary or a periodic boundary
-        IF (cur%part_pos(1) .LE. x_min-dx/2.0_num &
-            .AND. proc_x_min .EQ. MPI_PROC_NULL &
-            .AND. bc_x_min_particle .EQ. c_bc_reflect) THEN
-          ! particle has crossed left boundary
-          cur%part_pos(1) =  2.0_num * (x_min-dx/2.0_num) - cur%part_pos(1)
-          cur%part_p(1) = - cur%part_p(1)
-        ENDIF
-
-        IF (cur%part_pos(1) .GE. x_max+dx/2.0_num &
-            .AND. proc_x_max .EQ. MPI_PROC_NULL &
-            .AND. bc_x_max_particle .EQ. c_bc_reflect) THEN
-          ! particle has crossed right boundary
-          cur%part_pos(1) =  2.0_num *(x_max+dx/2.0_num) - cur%part_pos(1)
-          cur%part_p(1) = - cur%part_p(1)
-        ENDIF
-
-        IF (cur%part_pos(2) .LE. y_min-dy/2.0_num &
-            .AND. proc_y_min .EQ. MPI_PROC_NULL &
-            .AND. bc_y_min_particle .EQ. c_bc_reflect) THEN
-          ! particle has crossed bottom boundary
-          cur%part_pos(2) =  2.0_num * (y_min-dy/2.0_num) - cur%part_pos(2)
-          cur%part_p(2) = - cur%part_p(2)
-        ENDIF
-
-        IF (cur%part_pos(2) .GE. y_max+dy/2.0_num &
-            .AND. proc_y_max .EQ. MPI_PROC_NULL &
-            .AND. bc_y_max_particle .EQ. c_bc_reflect) THEN
-          ! particle has crossed top boundary
-          cur%part_pos(2) =  2.0_num * (y_max + dy/2.0_num) - cur%part_pos(2)
-          cur%part_p(2) = - cur%part_p(2)
-        ENDIF
-
-        IF (cur%part_pos(3) .LT. z_min+dz/2.0_num &
-            .AND. proc_z_min .EQ. MPI_PROC_NULL &
-            .AND. bc_z_min_particle .EQ. c_bc_other) THEN
-          ! particle has crossed back boundary
-          cur%part_pos(3) =  2.0_num * (z_min-dz/2.0_num) - cur%part_pos(3)
-          cur%part_p(3) = - cur%part_p(3)
-        ENDIF
-
-        IF (cur%part_pos(3) .GT. z_max+dz/2.0_num &
-            .AND. proc_z_max .EQ. MPI_PROC_NULL &
-            .AND. bc_z_max_particle .EQ. c_bc_other) THEN
-          ! particle has crossed front boundary
-          cur%part_pos(3) =  2.0_num * (z_max + dz/2.0_num) - cur%part_pos(2)
-          cur%part_p(3) = - cur%part_p(3)
-        ENDIF
-
-        IF (cur%part_pos(1) .LT. x_min_local - dx/2.0_num) xbd = -1
-        IF (cur%part_pos(1) .GT. x_max_local + dx/2.0_num) xbd =  1
-        IF (cur%part_pos(2) .LT. y_min_local - dy/2.0_num) ybd = -1
-        IF (cur%part_pos(2) .GT. y_max_local + dy/2.0_num) ybd =  1
-        IF (cur%part_pos(3) .LT. z_min_local - dz/2.0_num) zbd = -1
-        IF (cur%part_pos(3) .GT. z_max_local + dz/2.0_num) zbd =  1
-
-        IF ((cur%part_pos(1) .LT. x_min - dx/2.0_num) &
-            .AND. (bc_x_min_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(1) .GT. x_max + dx/2.0_num) &
-            .AND. (bc_x_max_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(2) .LT. y_min - dy/2.0_num) &
-            .AND. (bc_y_min_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(2) .GT. y_max +dy/2.0_num) &
-            .AND. (bc_y_max_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(3) .LT. z_min - dz/2.0_num) &
-            .AND. (bc_z_min_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-        IF ((cur%part_pos(3) .GT. z_max +dz/2.0_num) &
-            .AND. (bc_z_max_particle .EQ. c_bc_open)) out_of_bounds = .TRUE.
-
-        IF (ABS(xbd) + ABS(ybd) + ABS(zbd) .GT. 0) THEN
-          ! particle has left box
-          CALL remove_particle_from_partlist(&
-              particle_species(ispecies)%attached_list, cur)
-          IF (.NOT. out_of_bounds) THEN
-            CALL add_particle_to_partlist(send(xbd, ybd, zbd), cur)
-          ELSE
-            IF (dumpmask(29) .NE. c_io_never) THEN
-              CALL add_particle_to_partlist(ejected_particles, cur)
-            ELSE
-              DEALLOCATE(cur)
+        ! Particle has left this processor
+        IF (cur%part_pos(1) .LT. x_min_local - dx / 2.0_num) THEN
+          xbd = -1
+          ! Particle has left the system
+          IF (cur%part_pos(1) .LT. x_min - dx / 2.0_num) THEN
+            IF (bc_x_min_particle .EQ. c_bc_open) THEN
+              out_of_bounds = .TRUE.
+            ELSE IF (bc_x_min_particle .EQ. c_bc_reflect) THEN
+              cur%part_pos(1) = 2.0_num * x_min - dx - cur%part_pos(1)
+              cur%part_p(1) = -cur%part_p(1)
+            ELSE IF (bc_x_min_particle .EQ. c_bc_periodic) THEN
+              cur%part_pos(1) = cur%part_pos(1) + (length_x + dx)
             ENDIF
           ENDIF
+
+        ! Particle has left this processor
+        ELSE IF (cur%part_pos(1) .GE. x_max_local + dx / 2.0_num) THEN
+          xbd = 1
+          ! Particle has left the system
+          IF (cur%part_pos(1) .GE. x_max + dx / 2.0_num) THEN
+            IF (bc_x_max_particle .EQ. c_bc_open) THEN
+              out_of_bounds = .TRUE.
+            ELSE IF (bc_x_max_particle .EQ. c_bc_reflect) THEN
+              cur%part_pos(1) = 2.0_num * x_max + dx - cur%part_pos(1)
+              cur%part_p(1) = -cur%part_p(1)
+            ELSE IF (bc_x_max_particle .EQ. c_bc_periodic) THEN
+              cur%part_pos(1) = cur%part_pos(1) - (length_x + dx)
+            ENDIF
+          ENDIF
+        ENDIF
+
+        ! Particle has left this processor
+        IF (cur%part_pos(2) .LT. y_min_local - dy / 2.0_num) THEN
+          ybd = -1
+          ! Particle has left the system
+          IF (cur%part_pos(2) .LT. y_min - dy / 2.0_num) THEN
+            IF (bc_y_min_particle .EQ. c_bc_open) THEN
+              out_of_bounds = .TRUE.
+            ELSE IF (bc_y_min_particle .EQ. c_bc_reflect) THEN
+              cur%part_pos(2) = 2.0_num * y_min - dy - cur%part_pos(2)
+              cur%part_p(2) = -cur%part_p(2)
+            ELSE IF (bc_y_min_particle .EQ. c_bc_periodic) THEN
+              cur%part_pos(2) = cur%part_pos(2) + (length_y + dy)
+            ENDIF
+          ENDIF
+
+        ! Particle has left this processor
+        ELSE IF (cur%part_pos(2) .GE. y_max_local + dy / 2.0_num) THEN
+          ybd = 1
+          ! Particle has left the system
+          IF (cur%part_pos(2) .GE. y_max + dy / 2.0_num) THEN
+            IF (bc_y_max_particle .EQ. c_bc_open) THEN
+              out_of_bounds = .TRUE.
+            ELSE IF (bc_y_max_particle .EQ. c_bc_reflect) THEN
+              cur%part_pos(2) = 2.0_num * y_max + dy - cur%part_pos(2)
+              cur%part_p(2) = -cur%part_p(2)
+            ELSE IF (bc_y_max_particle .EQ. c_bc_periodic) THEN
+              cur%part_pos(2) = cur%part_pos(2) - (length_y + dy)
+            ENDIF
+          ENDIF
+        ENDIF
+
+        ! Particle has left this processor
+        IF (cur%part_pos(3) .LT. z_min_local - dz / 2.0_num) THEN
+          zbd = -1
+          ! Particle has left the system
+          IF (cur%part_pos(3) .LT. z_min - dz / 2.0_num) THEN
+            IF (bc_z_min_particle .EQ. c_bc_open) THEN
+              out_of_bounds = .TRUE.
+            ELSE IF (bc_z_min_particle .EQ. c_bc_reflect) THEN
+              cur%part_pos(3) = 2.0_num * z_min - dz - cur%part_pos(3)
+              cur%part_p(3) = -cur%part_p(3)
+            ELSE IF (bc_z_min_particle .EQ. c_bc_periodic) THEN
+              cur%part_pos(3) = cur%part_pos(3) + (length_z + dz)
+            ENDIF
+          ENDIF
+
+        ! Particle has left this processor
+        ELSE IF (cur%part_pos(3) .GE. z_max_local + dz / 2.0_num) THEN
+          zbd = 1
+          ! Particle has left the system
+          IF (cur%part_pos(3) .GE. z_max + dz / 2.0_num) THEN
+            IF (bc_z_max_particle .EQ. c_bc_open) THEN
+              out_of_bounds = .TRUE.
+            ELSE IF (bc_z_max_particle .EQ. c_bc_reflect) THEN
+              cur%part_pos(3) = 2.0_num * z_max + dz - cur%part_pos(3)
+              cur%part_p(3) = -cur%part_p(3)
+            ELSE IF (bc_z_max_particle .EQ. c_bc_periodic) THEN
+              cur%part_pos(3) = cur%part_pos(3) - (length_z + dz)
+            ENDIF
+          ENDIF
+        ENDIF
+
+        IF (out_of_bounds) THEN
+          ! Particle has gone forever
+          CALL remove_particle_from_partlist(&
+              particle_species(ispecies)%attached_list, cur)
+          IF (dumpmask(29) .NE. c_io_never) THEN
+            CALL add_particle_to_partlist(ejected_particles, cur)
+          ELSE
+            DEALLOCATE(cur)
+          ENDIF
+        ELSE IF (ABS(xbd) + ABS(ybd) + ABS(zbd) .GT. 0) THEN
+          ! Particle has left processor, send it to its neighbour
+          CALL remove_particle_from_partlist(&
+              particle_species(ispecies)%attached_list, cur)
+          CALL add_particle_to_partlist(send(xbd, ybd, zbd), cur)
         ENDIF
 
         ! Move to next particle
@@ -554,28 +578,16 @@ CONTAINS
         ENDDO
       ENDDO
 
-      ! Particles should only lie outside boundaries if the periodic boundaries
-      ! are turned on. This now moves them to within the boundaries
-      cur=>particle_species(ispecies)%attached_list%head
-      ct = 0
-      DO WHILE(ASSOCIATED(cur))
-        IF (cur%part_pos(1) .LT. x_min-dx/2.0_num) THEN
-          cur%part_pos(1) = cur%part_pos(1) + length_x + dx
-        ELSE IF (cur%part_pos(1) .GT. x_max+dx/2.0_num) THEN
-          cur%part_pos(1) = cur%part_pos(1) - length_x - dx
-        ENDIF
-        IF (cur%part_pos(2) .LT. y_min-dy/2.0_num) THEN
-          cur%part_pos(2) = cur%part_pos(2) + length_y + dy
-        ELSE IF (cur%part_pos(2) .GT. y_max+dy/2.0_num) THEN
-          cur%part_pos(2) = cur%part_pos(2) - length_y - dy
-        ENDIF
-        IF (cur%part_pos(3) .LT. z_min-dz/2.0_num) THEN
-          cur%part_pos(3) = cur%part_pos(3) + length_z + dz
-        ELSE IF (cur%part_pos(3) .GT. z_max+dz/2.0_num) THEN
-          cur%part_pos(3) = cur%part_pos(3) - length_z - dz
-        ENDIF
-        cur=>cur%next
+      DO iz = -1, 1
+        DO iy = -1, 1
+          DO ix = -1, 1
+            IF (ABS(ix) + ABS(iy) + ABS(iz) .EQ. 0) CYCLE
+            CALL destroy_partlist(send(ix, iy, iz))
+            CALL destroy_partlist(recv(ix, iy, iz))
+          ENDDO
+        ENDDO
       ENDDO
+
     ENDDO
 
   END SUBROUTINE particle_bcs

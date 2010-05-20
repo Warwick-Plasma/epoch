@@ -100,7 +100,7 @@ CONTAINS
     ! Only processors on the right need do anything
     IF (coordinates(3) .EQ. nprocx-1) THEN
       CALL SYSTEM_CLOCK(clock)
-      idum = -(clock+rank+1)
+      idum = -(clock + rank)
       DO ispecies = 1, n_species
         DO iz = 1, nz
           DO iy = 1, ny

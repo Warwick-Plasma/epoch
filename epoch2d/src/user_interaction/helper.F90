@@ -18,7 +18,7 @@ CONTAINS
     TYPE(particle_family), POINTER :: part_family
 
     CALL SYSTEM_CLOCK(clock)
-    idum = -(clock+rank+1)
+    idum = -(clock + rank)
     DO ispecies = 1, n_species
       part_family=>particle_species(ispecies)
       IF (move_window) THEN

@@ -77,7 +77,7 @@ CONTAINS
 
     ! Reseed random number generator
     CALL SYSTEM_CLOCK(clock)
-    idum = -(clock+rank)
+    idum = -(clock + rank)
 
     DO ispecies = 1, n_species
       IF (.NOT. particle_species(ispecies)%split) CYCLE

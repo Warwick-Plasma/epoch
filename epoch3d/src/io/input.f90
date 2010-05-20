@@ -205,7 +205,7 @@ CONTAINS
         MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, "native", &
         MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, time, 1, mpireal, &
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
         cfd_status, cfd_errcode)
 
     CALL cfd_skip_block()

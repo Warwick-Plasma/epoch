@@ -484,7 +484,7 @@ CONTAINS
       CALL MPI_FILE_WRITE(cfd_filehandle, 1, SIZE(values), MPI_INTEGER4, &
           cfd_status, cfd_errcode)
       ! Actual array
-      CALL MPI_FILE_WRITE(cfd_filehandle, values, SIZE(values), MPI_INTEGER, &
+      CALL MPI_FILE_WRITE(cfd_filehandle, values, SIZE(values), MPI_INTEGER4, &
           cfd_status, cfd_errcode)
     ENDIF
 
