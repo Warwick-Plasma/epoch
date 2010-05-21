@@ -57,29 +57,26 @@ CONTAINS
 
   SUBROUTINE after_control
 
-    INTEGER :: iproc
+    INTEGER :: iproc, ix_min, iy_min, iz_min
 
-    length_x = x_max-x_min
+    length_x = x_max - x_min
+    length_y = y_max - y_min
+    length_z = z_max - z_min
     dx = length_x / REAL(nx_global-1, num)
-    length_y = y_max-y_min
     dy = length_y / REAL(ny_global-1, num)
-    length_z = z_max-z_min
     dz = length_z / REAL(nz_global-1, num)
 
     ! Setup global grid
-    x_global(0) = x_min-dx
-    DO ix = 1, nx_global+1
-      x_global(ix) = x_global(ix-1)+dx
+    DO ix = -1, nx_global + 2
+      x_global(ix) = x_min + (ix - 1) * dx
       x_offset_global(ix) = x_global(ix)
     ENDDO
-    y_global(0) = y_min-dy
-    DO iy = 1, ny_global+1
-      y_global(iy) = y_global(iy-1)+dy
+    DO iy = -1, ny_global + 2
+      y_global(iy) = y_min + (iy - 1) * dy
       y_offset_global(iy) = y_global(iy)
     ENDDO
-    z_global(0) = z_min-dz
-    DO iz = 1, nz_global+1
-      z_global(iz) = z_global(iz-1)+dz
+    DO iz = -1, nz_global + 2
+      z_global(iz) = z_min + (iz - 1) * dz
       z_offset_global(iz) = z_global(iz)
     ENDDO
 
@@ -103,18 +100,19 @@ CONTAINS
     z_min_local = z_mins(coordinates(1))
     z_max_local = z_maxs(coordinates(1))
 
+    ix_min = cell_x_min(coordinates(3)+1)
+    iy_min = cell_y_min(coordinates(2)+1)
+    iz_min = cell_z_min(coordinates(1)+1)
+
     ! Setup local grid
-    x(-1) = x_min_local-dx*2.0_num
-    DO ix = 0, nx+2
-      x(ix) = x(ix-1)+dx
+    DO ix = -1, nx+2
+      x(ix) = x_global(ix_min+ix-1)
     ENDDO
-    y(-1) = y_min_local-dy*2.0_num
-    DO iy = 0, ny+2
-      y(iy) = y(iy-1)+dy
+    DO iy = -1, ny+2
+      y(iy) = y_global(iy_min+iy-1)
     ENDDO
-    z(-1) = z_min_local-dz*2.0_num
-    DO iz = 0, nz+2
-      z(iz) = z(iz-1)+dz
+    DO iz = -1, nz+2
+      z(iz) = z_global(iz_min+iz-1)
     ENDDO
 
     CALL set_initial_values
