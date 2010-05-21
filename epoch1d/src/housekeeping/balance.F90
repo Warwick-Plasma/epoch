@@ -73,13 +73,14 @@ CONTAINS
       ends_x = cell_x_max
     ENDIF
 
-    ! Now need to calculate the start and end points for the new domain
-    ! on the current processor
+    ! Now need to calculate the start and end points for the new domain on
+    ! the current processor
     new_cell_x_min = starts_x(coordinates(1)+1)
     new_cell_x_max = ends_x(coordinates(1)+1)
 
-    ! Redeistribute the field variables
     domain = (/new_cell_x_min, new_cell_x_max/)
+
+    ! Redistribute the field variables
     CALL redistribute_fields(domain)
 
     ! Copy the new lengths into the permanent variables
@@ -87,7 +88,7 @@ CONTAINS
     cell_x_max = ends_x
 
     ! Set the new nx and ny
-    nx = new_cell_x_max-new_cell_x_min+1
+    nx = new_cell_x_max - new_cell_x_min + 1
 
     ! Do X and Y arrays separatly because we already have global copies
     ! of X and Y
@@ -102,7 +103,7 @@ CONTAINS
     ALLOCATE(ct(-2:nx+3, 1:n_species))
 
     ! Recalculate x_mins and y_mins so that rebalancing works next time
-    DO iproc = 0, nprocx-1
+    DO iproc = 0, nprocx - 1
       x_mins(iproc) = x_global(cell_x_min(iproc+1))
       x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
@@ -139,11 +140,12 @@ CONTAINS
     ! processor layout. If using a 2D field of your own then set the
     ! redistribute_field subroutine to implement it. 1D fields, you're on
     ! your own (have global copies and use those to repopulate?)
+
     INTEGER :: nx_new
     INTEGER, DIMENSION(2), INTENT(IN) :: new_domain
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
 
-    nx_new = new_domain(2)-new_domain(1)+1
+    nx_new = new_domain(2) - new_domain(1) + 1
 
     ALLOCATE(temp(-2:nx_new+3))
 
@@ -226,7 +228,7 @@ CONTAINS
 
     WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
 
-    nx_new = domain(2)-domain(1)+1
+    nx_new = domain(2) - domain(1) + 1
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
         MPI_INFO_NULL, fh, errcode)
@@ -254,53 +256,6 @@ CONTAINS
 
 
 
-!!$  SUBROUTINE redistribute_field(new_cell_x_min, new_cell_x_max, &
-!!$      new_cell_y_min, new_cell_y_max, field_in, field_out)
-
-!!$
-!!$    ! This subroutine redistributes the fields over the new processor layout
-!!$    ! The current version works by producing a global copy on each processor
-!!$    ! And then extracting the required part for the local processor.
-!!$    ! This is not in general a good idea
-!!$    INTEGER, INTENT(IN) :: new_cell_x_min, new_cell_x_max
-!!$    INTEGER, INTENT(IN) :: new_cell_y_min, new_cell_y_max
-!!$    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field_in
-!!$    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: field_out
-!!$    REAL(num), DIMENSION(:,:), ALLOCATABLE :: field_new, field_temp
-!!$    INTEGER :: nx_new, ny_new
-!!$    INTEGER :: comm_new, iproc, color
-!!$
-!!$    nx_new = new_cell_x_max-new_cell_x_min+1
-!!$    ny_new = new_cell_y_max-new_cell_y_min+1
-!!$
-!!$!    PRINT *, rank, new_cell_x_min, new_cell_y_min, " "
-!!$
-!!$    ! This is a horrible, horrible way of doing this, I MUST think of a
-!!$    ! better way
-!!$
-!!$    ! Create a global copy of the whole array
-!!$    ALLOCATE(field_new(1:nx_global, 1:ny_global), &
-!!$        field_temp(1:nx_global, 1:ny_global))
-!!$    field_new = 0.0_num
-!!$    field_new(cell_x_min(coordinates(2)+1):cell_x_max(coordinates(2)+1), &
-!!$        cell_y_min(coordinates(1)+1):cell_y_max(coordinates(1)+1)) = &
-!!$        field_in(1:nx, 1:ny)
-!!$    CALL MPI_ALLREDUCE(field_new, field_temp, nx_global*ny_global, &
-!!$        mpireal, MPI_SUM, comm, errcode)
-!!$
-!!$    field_out(1:nx_new, 1:ny_new) = &
-!!$        field_temp(new_cell_x_min:new_cell_x_max, &
-!!$        new_cell_y_min:new_cell_y_max)
-!!$    DEALLOCATE(field_temp)
-!!$
-!!$    ! Call boundary conditions (this does not include any special BCS)
-!!$    CALL do_field_mpi_with_lengths(field_out, nx_new, ny_new)
-!!$
-
-!!$  END SUBROUTINE redistribute_field
-
-
-
   SUBROUTINE get_density_in_x(density)
 
     ! Calculate total particle density across the X direction
@@ -317,10 +272,10 @@ CONTAINS
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
-        ! Want global position, so not x_min, NOT x_min_local
-        part_x = current%part_pos-x_min
-        cell_x1 = NINT(part_x/dx)+1
-        density(cell_x1) = density(cell_x1)+1
+        ! Want global position, so x_min, NOT x_min_local
+        part_x = current%part_pos - x_min
+        cell_x1 = NINT(part_x / dx) + 1
+        density(cell_x1) = density(cell_x1) + 1
         current=>current%next
       ENDDO
     ENDDO
@@ -330,6 +285,7 @@ CONTAINS
     CALL MPI_ALLREDUCE(density, temp, nx_global+2, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
     density = temp
+
     DEALLOCATE(temp)
 
   END SUBROUTINE get_density_in_x
@@ -349,7 +305,7 @@ CONTAINS
     INTEGER :: npart_per_proc_ideal
 
     ! -2 because of ghost cells at each end
-    sz = SIZE(density)-2
+    sz = SIZE(density) - 2
     IF (nproc .EQ. 1) THEN
       starts = 1
       ends = sz
@@ -362,21 +318,21 @@ CONTAINS
     DO idim = 1, sz
       IF (partition .GT. nproc) EXIT
       IF (total .GE. npart_per_proc_ideal &
-          .OR. ABS(total + density(idim) -npart_per_proc_ideal) &
-          .GT. ABS(total-npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
+          .OR. ABS(total + density(idim) - npart_per_proc_ideal) &
+          .GT. ABS(total - npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
         total = density(idim)
-        starts(partition) = idim-1
-        partition = partition+1
+        starts(partition) = idim - 1
+        partition = partition + 1
         ! If you've reached the last processor, have already done the best
         ! you can, so just leave
       ELSE
-        total = total+density(idim)
+        total = total + density(idim)
       ENDIF
     ENDDO
 
     ends(nproc) = sz
-    DO idim = 1, nproc-1
-      ends(idim) = starts(idim+1)-1
+    DO idim = 1, nproc - 1
+      ends(idim) = starts(idim+1) - 1
     ENDDO
 
   END SUBROUTINE calculate_breaks
@@ -397,15 +353,15 @@ CONTAINS
     ! This could be replaced by a bisection method, but for the moment I
     ! just don't care
 
-    DO iproc = 0, nprocx-1
-      IF (a_particle%part_pos .GE. x_mins(iproc) - dx/2.0_num &
-          .AND. a_particle%part_pos .LE. x_maxs(iproc) + dx/2.0_num) THEN
+    DO iproc = 0, nprocx - 1
+      IF (a_particle%part_pos .GE. x_mins(iproc) - dx / 2.0_num &
+          .AND. a_particle%part_pos .LT. x_maxs(iproc) + dx / 2.0_num) THEN
         coords(1) = iproc
         EXIT
       ENDIF
     ENDDO
 
-    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE"
+    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE", coords
     IF (MINVAL(coords) .LT. 0) RETURN
     CALL MPI_CART_RANK(comm, coords, get_particle_processor, errcode)
     ! IF (get_particle_processor .NE. rank) PRINT *,
@@ -428,7 +384,7 @@ CONTAINS
     ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
-      DO iproc_send = 0, nproc-1
+      DO iproc_send = 0, nproc - 1
         CALL create_empty_partlist(pointers_send(iproc_send))
         CALL create_empty_partlist(pointers_recv(iproc_send))
       ENDDO
@@ -437,8 +393,7 @@ CONTAINS
         next=>current%next
         part_proc = get_particle_processor(current)
         IF (part_proc .LT. 0) THEN
-          PRINT *, "Unlocatable particle on processor", rank, &
-              current%part_pos, dx
+          PRINT *, "Unlocatable particle on processor", rank, current%part_pos
           CALL MPI_BARRIER(comm, errcode)
           STOP
         ENDIF
@@ -453,8 +408,8 @@ CONTAINS
         current=>next
       ENDDO
 
-      DO iproc_send = 0, nproc-1
-        DO iproc_recv = 0, nproc-1
+      DO iproc_send = 0, nproc - 1
+        DO iproc_recv = 0, nproc - 1
           IF (iproc_send .NE. iproc_recv) THEN
             IF (rank .EQ. iproc_send) THEN
               CALL partlist_send(pointers_send(iproc_recv), iproc_recv)
@@ -466,7 +421,7 @@ CONTAINS
         ENDDO
       ENDDO
 
-      DO iproc_recv = 0, nproc-1
+      DO iproc_recv = 0, nproc - 1
         CALL append_partlist(particle_species(ispecies)%attached_list, &
             pointers_recv(iproc_recv))
       ENDDO

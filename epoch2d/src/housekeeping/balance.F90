@@ -19,15 +19,17 @@ CONTAINS
 
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_x, density_y
+    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_x
+    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_y
     INTEGER, DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
     INTEGER, DIMENSION(:), ALLOCATABLE :: starts_y, ends_y
     INTEGER :: new_cell_x_min, new_cell_x_max
     INTEGER :: new_cell_y_min, new_cell_y_max
     REAL(num) :: balance_frac, balance_frac_x, balance_frac_y
-    INTEGER(KIND=8) :: max_x, max_y, wk, min_x, min_y, npart_local
+    INTEGER(KIND=8) :: min_x, max_x, min_y, max_y
+    INTEGER(KIND=8) :: npart_local, wk
     INTEGER :: iproc
-    INTEGER, DIMENSION(2, 2) :: domain
+    INTEGER, DIMENSION(2,2) :: domain
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
@@ -109,8 +111,8 @@ CONTAINS
         IF (wk .LT. min_y) min_y = wk
       ENDDO
 
-      balance_frac_x = REAL(min_x, num)/REAL(max_x, num)
-      balance_frac_y = REAL(min_y, num)/REAL(max_y, num)
+      balance_frac_x = REAL(min_x, num) / REAL(max_x, num)
+      balance_frac_y = REAL(min_y, num) / REAL(max_y, num)
 
       IF (balance_frac_y .LT. balance_frac_x) THEN
         starts_y = cell_y_min
@@ -130,9 +132,10 @@ CONTAINS
     new_cell_y_min = starts_y(coordinates(1)+1)
     new_cell_y_max = ends_y(coordinates(1)+1)
 
-    ! Redeistribute the field variables
     domain(1,:) = (/new_cell_x_min, new_cell_x_max/)
     domain(2,:) = (/new_cell_y_min, new_cell_y_max/)
+
+    ! Redistribute the field variables
     CALL redistribute_fields(domain)
 
     ! Copy the new lengths into the permanent variables
@@ -142,8 +145,8 @@ CONTAINS
     cell_y_max = ends_y
 
     ! Set the new nx and ny
-    nx = new_cell_x_max-new_cell_x_min+1
-    ny = new_cell_y_max-new_cell_y_min+1
+    nx = new_cell_x_max - new_cell_x_min + 1
+    ny = new_cell_y_max - new_cell_y_min + 1
 
     ! Do X and Y arrays separatly because we already have global copies
     ! of X and Y
@@ -159,12 +162,12 @@ CONTAINS
     ALLOCATE(ct(-2:nx+3, -2:ny+3, 1:n_species))
 
     ! Recalculate x_mins and y_mins so that rebalancing works next time
-    DO iproc = 0, nprocx-1
+    DO iproc = 0, nprocx - 1
       x_mins(iproc) = x_global(cell_x_min(iproc+1))
       x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
     ! Same for y
-    DO iproc = 0, nprocy-1
+    DO iproc = 0, nprocy - 1
       y_mins(iproc) = y_global(cell_y_min(iproc+1))
       y_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
@@ -203,14 +206,15 @@ CONTAINS
     ! processor layout. If using a 2D field of your own then set the
     ! redistribute_field subroutine to implement it. 1D fields, you're on
     ! your own (have global copies and use those to repopulate?)
+
     INTEGER :: nx_new, ny_new
-    INTEGER, DIMENSION(2, 2), INTENT(IN) :: new_domain
+    INTEGER, DIMENSION(2,2), INTENT(IN) :: new_domain
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp1d
     TYPE(laser_block), POINTER :: current
 
-    nx_new = new_domain(1, 2)-new_domain(1, 1)+1
-    ny_new = new_domain(2, 2)-new_domain(2, 1)+1
+    nx_new = new_domain(1,2) - new_domain(1,1) + 1
+    ny_new = new_domain(2,2) - new_domain(2,1) + 1
 
     ALLOCATE(temp(-2:nx_new+3, -2:ny_new+3))
 
@@ -275,14 +279,14 @@ CONTAINS
     current=>laser_x_min
     DO WHILE(ASSOCIATED(current))
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(2, 1), new_domain(2, 2), &
+      CALL redistribute_field_1d(new_domain(2,1), new_domain(2,2), &
           cell_y_min(coordinates(1)+1), cell_y_max(coordinates(1)+1), &
           ny_global, current%profile, temp1d, c_dir_x)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3))
       current%profile = temp1d
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(2, 1), new_domain(2, 2), &
+      CALL redistribute_field_1d(new_domain(2,1), new_domain(2,2), &
           cell_y_min(coordinates(1)+1), cell_y_max(coordinates(1)+1), &
           ny_global, current%phase, temp1d, c_dir_x)
       DEALLOCATE(current%phase)
@@ -295,14 +299,14 @@ CONTAINS
     current=>laser_x_max
     DO WHILE(ASSOCIATED(current))
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(2, 1), new_domain(2, 2), &
+      CALL redistribute_field_1d(new_domain(2,1), new_domain(2,2), &
           cell_y_min(coordinates(1)+1), cell_y_max(coordinates(1)+1), &
           ny_global, current%profile, temp1d, c_dir_x)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3))
       current%profile = temp1d
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(2, 1), new_domain(2, 2), &
+      CALL redistribute_field_1d(new_domain(2,1), new_domain(2,2), &
           cell_y_min(coordinates(1)+1), cell_y_max(coordinates(1)+1), &
           ny_global, current%phase, temp1d, c_dir_x)
       DEALLOCATE(current%phase)
@@ -318,14 +322,14 @@ CONTAINS
     current=>laser_y_max
     DO WHILE(ASSOCIATED(current))
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(1, 1), new_domain(1, 2), &
+      CALL redistribute_field_1d(new_domain(1,1), new_domain(1,2), &
           cell_x_min(coordinates(2)+1), cell_x_max(coordinates(2)+1), &
           nx_global, current%profile, temp1d, c_dir_y)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3))
       current%profile = temp1d
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(1, 1), new_domain(1, 2), &
+      CALL redistribute_field_1d(new_domain(1,1), new_domain(1,2), &
           cell_x_min(coordinates(2)+1), cell_x_max(coordinates(2)+1), &
           nx_global, current%phase, temp1d, c_dir_y)
       DEALLOCATE(current%phase)
@@ -337,14 +341,14 @@ CONTAINS
     current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(1, 1), new_domain(1, 2), &
+      CALL redistribute_field_1d(new_domain(1,1), new_domain(1,2), &
           cell_x_min(coordinates(2)+1), cell_x_max(coordinates(2)+1), &
           nx_global, current%profile, temp1d, c_dir_y)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3))
       current%profile = temp1d
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(1, 1), new_domain(1, 2), &
+      CALL redistribute_field_1d(new_domain(1,1), new_domain(1,2), &
           cell_x_min(coordinates(2)+1), cell_x_max(coordinates(2)+1), &
           nx_global, current%phase, temp1d, c_dir_y)
       DEALLOCATE(current%phase)
@@ -365,7 +369,7 @@ CONTAINS
     ! processor loads back in it's own part. This is better than the previous
     ! version where each processor produced it's own copy of the global array
     ! and then took its own subsection
-    INTEGER, DIMENSION(2, 2), INTENT(IN) :: domain
+    INTEGER, DIMENSION(2,2), INTENT(IN) :: domain
     REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: new_field
     INTEGER :: nx_new, ny_new
@@ -375,14 +379,14 @@ CONTAINS
 
     WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
 
-    nx_new = domain(1, 2)-domain(1, 1)+1
-    ny_new = domain(2, 2)-domain(2, 1)+1
+    nx_new = domain(1,2) - domain(1,1) + 1
+    ny_new = domain(2,2) - domain(2,1) + 1
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
         MPI_INFO_NULL, fh, errcode)
     subtype_write = create_current_field_subtype()
-    subtype_read  = create_field_subtype(nx_new, ny_new, domain(1, 1), &
-        domain(2, 1))
+    subtype_read  = create_field_subtype(nx_new, ny_new, domain(1,1), &
+        domain(2,1))
 
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, "native", &
         MPI_INFO_NULL, errcode)
@@ -426,8 +430,8 @@ CONTAINS
 
     CALL MPI_COMM_SPLIT(comm, color, rank, new_comm, errcode)
 
-    new_pts = new_end-new_start+1
-    old_pts = old_end-old_start+1
+    new_pts = new_end - new_start + 1
+    old_pts = old_end - old_start + 1
 
     ! Create a global copy of the whole array
     ALLOCATE(field_new(1:npts_global), field_temp(0:npts_global+1))
@@ -461,10 +465,10 @@ CONTAINS
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
-        ! Want global position, so not x_min, NOT x_min_local
-        part_x = current%part_pos(1)-x_min
-        cell_x1 = NINT(part_x/dx)+1
-        density(cell_x1) = density(cell_x1)+1
+        ! Want global position, so x_min, NOT x_min_local
+        part_x = current%part_pos(1) - x_min
+        cell_x1 = NINT(part_x / dx) + 1
+        density(cell_x1) = density(cell_x1) + 1
         current=>current%next
       ENDDO
     ENDDO
@@ -474,6 +478,7 @@ CONTAINS
     CALL MPI_ALLREDUCE(density, temp, nx_global+2, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
     density = temp
+
     DEALLOCATE(temp)
 
   END SUBROUTINE get_density_in_x
@@ -496,10 +501,10 @@ CONTAINS
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
-        ! Want global position, so not x_min, NOT x_min_local
-        part_y = current%part_pos(2)-y_min
-        cell_y1 = NINT(part_y/dy)+1
-        density(cell_y1) = density(cell_y1)+1
+        ! Want global position, so y_min, NOT y_min_local
+        part_y = current%part_pos(2) - y_min
+        cell_y1 = NINT(part_y / dy) + 1
+        density(cell_y1) = density(cell_y1) + 1
         current=>current%next
       ENDDO
     ENDDO
@@ -529,7 +534,7 @@ CONTAINS
     INTEGER :: npart_per_proc_ideal
 
     ! -2 because of ghost cells at each end
-    sz = SIZE(density)-2
+    sz = SIZE(density) - 2
     IF (nproc .EQ. 1) THEN
       starts = 1
       ends = sz
@@ -542,21 +547,21 @@ CONTAINS
     DO idim = 1, sz
       IF (partition .GT. nproc) EXIT
       IF (total .GE. npart_per_proc_ideal &
-          .OR. ABS(total + density(idim) -npart_per_proc_ideal) &
-          .GT. ABS(total-npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
+          .OR. ABS(total + density(idim) - npart_per_proc_ideal) &
+          .GT. ABS(total - npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
         total = density(idim)
-        starts(partition) = idim-1
-        partition = partition+1
+        starts(partition) = idim - 1
+        partition = partition + 1
         ! If you've reached the last processor, have already done the best
         ! you can, so just leave
       ELSE
-        total = total+density(idim)
+        total = total + density(idim)
       ENDIF
     ENDDO
 
     ends(nproc) = sz
-    DO idim = 1, nproc-1
-      ends(idim) = starts(idim+1)-1
+    DO idim = 1, nproc - 1
+      ends(idim) = starts(idim+1) - 1
     ENDDO
 
   END SUBROUTINE calculate_breaks
@@ -577,23 +582,23 @@ CONTAINS
     ! This could be replaced by a bisection method, but for the moment I
     ! just don't care
 
-    DO iproc = 0, nprocx-1
-      IF (a_particle%part_pos(1) .GE. x_mins(iproc) - dx/2.0_num &
-          .AND. a_particle%part_pos(1) .LE. x_maxs(iproc) + dx/2.0_num) THEN
+    DO iproc = 0, nprocx - 1
+      IF (a_particle%part_pos(1) .GE. x_mins(iproc) - dx / 2.0_num &
+          .AND. a_particle%part_pos(1) .LT. x_maxs(iproc) + dx / 2.0_num) THEN
         coords(2) = iproc
         EXIT
       ENDIF
     ENDDO
 
-    DO iproc = 0, nprocy-1
-      IF (a_particle%part_pos(2) .GE. y_mins(iproc) -dy/2.0_num &
-          .AND. a_particle%part_pos(2) .LE. y_maxs(iproc) + dy/2.0_num) THEN
+    DO iproc = 0, nprocy - 1
+      IF (a_particle%part_pos(2) .GE. y_mins(iproc) - dy / 2.0_num &
+          .AND. a_particle%part_pos(2) .LT. y_maxs(iproc) + dy / 2.0_num) THEN
         coords(1) = iproc
         EXIT
       ENDIF
     ENDDO
 
-    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE"
+    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE", coords
     IF (MINVAL(coords) .LT. 0) RETURN
     CALL MPI_CART_RANK(comm, coords, get_particle_processor, errcode)
     ! IF (get_particle_processor .NE. rank) PRINT *,
@@ -616,7 +621,7 @@ CONTAINS
     ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
-      DO iproc_send = 0, nproc-1
+      DO iproc_send = 0, nproc - 1
         CALL create_empty_partlist(pointers_send(iproc_send))
         CALL create_empty_partlist(pointers_recv(iproc_send))
       ENDDO
@@ -625,8 +630,7 @@ CONTAINS
         next=>current%next
         part_proc = get_particle_processor(current)
         IF (part_proc .LT. 0) THEN
-          PRINT *, "Unlocatable particle on processor", rank, &
-              current%part_pos, dx, dy
+          PRINT *, "Unlocatable particle on processor", rank, current%part_pos
           CALL MPI_BARRIER(comm, errcode)
           STOP
         ENDIF
@@ -641,8 +645,8 @@ CONTAINS
         current=>next
       ENDDO
 
-      DO iproc_send = 0, nproc-1
-        DO iproc_recv = 0, nproc-1
+      DO iproc_send = 0, nproc - 1
+        DO iproc_recv = 0, nproc - 1
           IF (iproc_send .NE. iproc_recv) THEN
             IF (rank .EQ. iproc_send) THEN
               CALL partlist_send(pointers_send(iproc_recv), iproc_recv)
@@ -654,7 +658,7 @@ CONTAINS
         ENDDO
       ENDDO
 
-      DO iproc_recv = 0, nproc-1
+      DO iproc_recv = 0, nproc - 1
         CALL append_partlist(particle_species(ispecies)%attached_list, &
             pointers_recv(iproc_recv))
       ENDDO
