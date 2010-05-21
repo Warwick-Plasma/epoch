@@ -279,16 +279,12 @@ CONTAINS
     current=>laser_x_min
     DO WHILE(ASSOCIATED(current))
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(2,1), new_domain(2,2), &
-          cell_y_min(coordinates(1)+1), cell_y_max(coordinates(1)+1), &
-          ny_global, current%profile, temp1d, c_dir_x)
+      CALL redistribute_field_1d(new_domain, c_dir_x, current%profile, temp1d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3))
       current%profile = temp1d
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(2,1), new_domain(2,2), &
-          cell_y_min(coordinates(1)+1), cell_y_max(coordinates(1)+1), &
-          ny_global, current%phase, temp1d, c_dir_x)
+      CALL redistribute_field_1d(new_domain, c_dir_x, current%phase, temp1d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:ny_new+3))
       current%phase = temp1d
@@ -299,16 +295,12 @@ CONTAINS
     current=>laser_x_max
     DO WHILE(ASSOCIATED(current))
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(2,1), new_domain(2,2), &
-          cell_y_min(coordinates(1)+1), cell_y_max(coordinates(1)+1), &
-          ny_global, current%profile, temp1d, c_dir_x)
+      CALL redistribute_field_1d(new_domain, c_dir_x, current%profile, temp1d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3))
       current%profile = temp1d
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(2,1), new_domain(2,2), &
-          cell_y_min(coordinates(1)+1), cell_y_max(coordinates(1)+1), &
-          ny_global, current%phase, temp1d, c_dir_x)
+      CALL redistribute_field_1d(new_domain, c_dir_x, current%phase, temp1d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:ny_new+3))
       current%phase = temp1d
@@ -322,16 +314,12 @@ CONTAINS
     current=>laser_y_max
     DO WHILE(ASSOCIATED(current))
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(1,1), new_domain(1,2), &
-          cell_x_min(coordinates(2)+1), cell_x_max(coordinates(2)+1), &
-          nx_global, current%profile, temp1d, c_dir_y)
+      CALL redistribute_field_1d(new_domain, c_dir_y, current%profile, temp1d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3))
       current%profile = temp1d
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(1,1), new_domain(1,2), &
-          cell_x_min(coordinates(2)+1), cell_x_max(coordinates(2)+1), &
-          nx_global, current%phase, temp1d, c_dir_y)
+      CALL redistribute_field_1d(new_domain, c_dir_y, current%phase, temp1d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3))
       current%phase = temp1d
@@ -341,16 +329,12 @@ CONTAINS
     current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(1,1), new_domain(1,2), &
-          cell_x_min(coordinates(2)+1), cell_x_max(coordinates(2)+1), &
-          nx_global, current%profile, temp1d, c_dir_y)
+      CALL redistribute_field_1d(new_domain, c_dir_y, current%profile, temp1d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3))
       current%profile = temp1d
       temp1d = 0.0_num
-      CALL redistribute_field_1d(new_domain(1,1), new_domain(1,2), &
-          cell_x_min(coordinates(2)+1), cell_x_max(coordinates(2)+1), &
-          nx_global, current%phase, temp1d, c_dir_y)
+      CALL redistribute_field_1d(new_domain, c_dir_y, current%phase, temp1d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3))
       current%phase = temp1d
@@ -384,6 +368,7 @@ CONTAINS
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
         MPI_INFO_NULL, fh, errcode)
+
     subtype_write = create_current_field_subtype()
     subtype_read  = create_field_subtype(nx_new, ny_new, domain(1,1), &
         domain(2,1))
@@ -396,7 +381,7 @@ CONTAINS
     CALL MPI_FILE_SEEK(fh, offset, MPI_SEEK_SET, errcode)
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, new_field(1:nx_new, 1:ny_new), nx_new*ny_new, &
+    CALL MPI_FILE_READ_ALL(fh, new_field(1:nx_new, 1:ny_new), nx_new * ny_new, &
         mpireal, status, errcode)
     CALL MPI_FILE_CLOSE(fh, errcode)
     CALL MPI_BARRIER(comm, errcode)
@@ -410,38 +395,66 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field_1d(new_start, new_end, old_start, old_end, &
-      npts_global, field_in, field_out, direction)
+  SUBROUTINE redistribute_field_1d(domain, direction, field_in, field_out)
 
     ! This subroutine redistributes a 1D field over the new processor layout
     ! The current version works by producing a global copy on each processor
     ! And then extracting the required part for the local processor.
     ! in 1D, this is probably OK
-    INTEGER, INTENT(IN) :: new_start, new_end, npts_global
-    INTEGER, INTENT(IN) :: old_start, old_end, direction
+    INTEGER, DIMENSION(2,2), INTENT(IN) :: domain
+    INTEGER, INTENT(IN) :: direction
     REAL(num), DIMENSION(-2:), INTENT(IN) :: field_in
     REAL(num), DIMENSION(-2:), INTENT(OUT) :: field_out
     REAL(num), DIMENSION(:), ALLOCATABLE :: field_new, field_temp
-    INTEGER :: new_pts, old_pts
-    INTEGER :: new_comm, color
+    INTEGER :: old_start, new_start
+    INTEGER :: old_pts, new_pts, dir
+    INTEGER :: npts_global, new_comm, color, coord, i
+    INTEGER :: ghost_start, ghost_end
 
-    IF (IAND(direction, c_dir_x) .EQ. 0) color = coordinates(1)
-    IF (IAND(direction, c_dir_y) .EQ. 0) color = coordinates(2)
+    ghost_start = 0
+    ghost_end = 0
+
+    IF (direction .EQ. c_dir_x) THEN
+      dir = 2
+      color = coordinates(dir)
+      coord = coordinates(1)
+      old_start = cell_y_min(coord+1)
+      old_pts = ny
+      npts_global = ny_global
+      IF (coord .EQ. nprocy-1) ghost_end = 3
+    ELSE
+      dir = 1
+      color = coordinates(dir)
+      coord = coordinates(2)
+      old_start = cell_x_min(coord+1)
+      old_pts = nx
+      npts_global = nx_global
+      IF (coord .EQ. nprocx-1) ghost_end = 3
+    ENDIF
+
+    IF (coord .EQ. 0) ghost_start = -3
+
+    new_start = domain(dir,1)
+    new_pts = domain(dir,2) - new_start
 
     CALL MPI_COMM_SPLIT(comm, color, rank, new_comm, errcode)
 
-    new_pts = new_end - new_start + 1
-    old_pts = old_end - old_start + 1
-
     ! Create a global copy of the whole array
-    ALLOCATE(field_new(1:npts_global), field_temp(0:npts_global+1))
+    ALLOCATE(field_new(-2:npts_global+3), field_temp(-2:npts_global+3))
+
     field_new = 0.0_num
-    field_new(old_start:old_end) = field_in(1:old_pts)
-    CALL MPI_ALLREDUCE(field_new, field_temp(1:npts_global), npts_global, &
+    DO i = 1 + ghost_start, old_pts + ghost_end
+      field_new(i+old_start-1) = field_in(i)
+    ENDDO
+
+    CALL MPI_ALLREDUCE(field_new, field_temp, npts_global+6, &
         mpireal, MPI_SUM, new_comm, errcode)
     DEALLOCATE(field_new)
 
-    field_out(0:new_pts+1) = field_temp(new_start-1:new_end+1)
+    DO i = -2, new_pts + 3
+      field_out(i) = field_temp(i+new_start-1)
+    ENDDO
+
     DEALLOCATE(field_temp)
     CALL MPI_COMM_FREE(new_comm, errcode)
 

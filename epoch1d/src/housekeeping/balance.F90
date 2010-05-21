@@ -232,6 +232,7 @@ CONTAINS
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
         MPI_INFO_NULL, fh, errcode)
+
     subtype_write = create_current_field_subtype()
     subtype_read  = create_field_subtype(nx_new, domain(1))
 

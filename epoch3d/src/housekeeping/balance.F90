@@ -254,7 +254,6 @@ CONTAINS
 
     INTEGER :: nx_new, ny_new, nz_new
     INTEGER, DIMENSION(3,2), INTENT(IN) :: new_domain
-    INTEGER, DIMENSION(2,2) :: new_domain_2d
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp2d
     TYPE(laser_block), POINTER :: current
@@ -308,18 +307,15 @@ CONTAINS
     DEALLOCATE(temp)
 
     ALLOCATE(temp2d(-2:ny_new+3, -2:nz_new+3))
-    new_domain_2d(1,:) = new_domain(2,:)
-    new_domain_2d(2,:) = new_domain(3,:)
     current=>laser_x_min
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_x, current%profile, &
-          temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_x, current%profile, temp2d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3, -2:nz_new+3))
       current%profile = temp2d
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_x, current%phase, temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_x, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:ny_new+3, -2:nz_new+3))
       current%phase = temp2d
@@ -329,31 +325,27 @@ CONTAINS
     current=>laser_x_max
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_x, current%profile, &
-          temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_x, current%profile, temp2d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3, -2:nz_new+3))
       current%profile = temp2d
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_x, current%phase, temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_x, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:ny_new+3, -2:nz_new+3))
       current%phase = temp2d
       current=>current%next
     ENDDO
 
-    new_domain_2d(1,:) = new_domain(1,:)
-    new_domain_2d(2,:) = new_domain(3,:)
     current=>laser_y_max
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_y, current%profile, &
-          temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_y, current%profile, temp2d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3, -2:nz_new+3))
       current%profile = temp2d
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_y, current%phase, temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_y, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3, -2:nz_new+3))
       current%phase = temp2d
@@ -363,31 +355,27 @@ CONTAINS
     current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_y, current%profile, &
-          temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_y, current%profile, temp2d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3, -2:nz_new+3))
       current%profile = temp2d
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_y, current%phase, temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_y, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3, -2:nz_new+3))
       current%phase = temp2d
       current=>current%next
     ENDDO
 
-    new_domain_2d(1,:) = new_domain(2,:)
-    new_domain_2d(2,:) = new_domain(3,:)
     current=>laser_y_max
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_z, current%profile, &
-          temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_z, current%profile, temp2d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3, -2:ny_new+3))
       current%profile = temp2d
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_z, current%phase, temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_z, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3, -2:ny_new+3))
       current%phase = temp2d
@@ -397,13 +385,12 @@ CONTAINS
     current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_z, current%profile, &
-          temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_z, current%profile, temp2d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3, -2:ny_new+3))
       current%profile = temp2d
       temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain_2d, c_dir_z, current%phase, temp2d)
+      CALL redistribute_field_2d(new_domain, c_dir_z, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3, -2:ny_new+3))
       current%phase = temp2d
@@ -431,7 +418,7 @@ CONTAINS
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
 
-    WRITE(filename, '(a, "/temp.dat")') TRIM(data_dir)
+    WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
 
     nx_new = domain(1,2) - domain(1,1) + 1
     ny_new = domain(2,2) - domain(2,1) + 1
@@ -439,6 +426,7 @@ CONTAINS
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
         MPI_INFO_NULL, fh, errcode)
+
     subtype_write = create_current_field_subtype()
     subtype_read  = create_field_subtype(nx_new, ny_new, nz_new, &
         domain(1,1), domain(2,1), domain(3,1))
@@ -471,48 +459,58 @@ CONTAINS
     ! The current version works by writing the field to a file and then each
     ! processor loads back in it's own part. This is better than the previous
     ! version where each processor produced it's own copy of the global array
-    ! and then took it's own subsection
-    INTEGER, DIMENSION(2,2), INTENT(IN) :: domain
+    ! and then took its own subsection
+    INTEGER, DIMENSION(3,2), INTENT(IN) :: domain
     INTEGER, INTENT(IN) :: direction
     REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: new_field
     INTEGER :: n1, n2, n1_new, n2_new, n1_global, n2_global
+    INTEGER :: n1_old_start, n2_old_start, n1_dir, n2_dir
     INTEGER :: subtype_write, subtype_read, fh
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
 
     IF (direction .EQ. c_dir_x) THEN
+      n1_dir = 2
+      n2_dir = 3
       n1 = ny
       n2 = nz
       n1_global = ny_global
       n2_global = nz_global
-    ENDIF
-
-    IF (direction .EQ. c_dir_y) THEN
+      n1_old_start = cell_y_min(coordinates(2)+1)
+      n2_old_start = cell_z_min(coordinates(1)+1)
+    ELSE IF (direction .EQ. c_dir_y) THEN
+      n1_dir = 1
+      n2_dir = 3
       n1 = nx
       n2 = nz
       n1_global = nx_global
       n2_global = nz_global
-    ENDIF
-
-    IF (direction .EQ. c_dir_z) THEN
+      n1_old_start = cell_x_min(coordinates(3)+1)
+      n2_old_start = cell_z_min(coordinates(1)+1)
+    ELSE
+      n1_dir = 1
+      n2_dir = 2
       n1 = nx
       n2 = ny
       n1_global = nx_global
       n2_global = ny_global
+      n1_old_start = cell_x_min(coordinates(3)+1)
+      n2_old_start = cell_y_min(coordinates(2)+1)
     ENDIF
 
-    WRITE(filename, '(a, "/temp.dat")') TRIM(data_dir)
+    WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
 
-    n1_new = domain(1,2) - domain(1,1) + 1
-    n2_new = domain(2,2) - domain(2,1) + 1
+    n1_new = domain(n1_dir,2) - domain(n1_dir,1) + 1
+    n2_new = domain(n2_dir,2) - domain(n2_dir,1) + 1
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
         MPI_INFO_NULL, fh, errcode)
+
     subtype_write = create_2d_array_subtype((/n1, n2/), &
-        (/n1_global, n2_global/), (/domain(1,1), domain(2,1)/))
+        (/n1_global, n2_global/), (/n1_old_start, n2_old_start/))
     subtype_read  = create_2d_array_subtype((/n1_new, n2_new/), &
-        (/n1_global, n2_global/), (/domain(1,1), domain(2,1)/))
+        (/n1_global, n2_global/), (/domain(n1_dir,1), domain(n2_dir,1)/))
 
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, "native", &
         MPI_INFO_NULL, errcode)
@@ -522,8 +520,8 @@ CONTAINS
     CALL MPI_FILE_SEEK(fh, offset, MPI_SEEK_SET, errcode)
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, new_field(1:n1_new, 1:n2_new), &
-        n1_new*n2_new, mpireal, status, errcode)
+    CALL MPI_FILE_READ_ALL(fh, new_field(1:n1_new, 1:n2_new), n1_new * n2_new, &
+        mpireal, status, errcode)
     CALL MPI_FILE_CLOSE(fh, errcode)
     CALL MPI_BARRIER(comm, errcode)
 

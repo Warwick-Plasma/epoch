@@ -1,6 +1,8 @@
 MODULE window
 
   USE helper
+  USE boundary
+  USE partlist
 
   IMPLICIT NONE
 
@@ -82,7 +84,7 @@ CONTAINS
             temp_local = particle_species(ispecies)%temperature(i)
             current%part_p(i) = &
                 momentum_from_temperature(particle_species(ispecies)%mass, &
-                temp_local, idum)
+                temp_local, 0.0_num, idum)
           ENDDO
 
 #ifdef PER_PARTICLE_WEIGHT

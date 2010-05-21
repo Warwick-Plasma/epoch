@@ -1,6 +1,7 @@
 MODULE boundary
 
   USE partlist
+  USE particle_temperature
 
   IMPLICIT NONE
 
