@@ -16,13 +16,16 @@ CONTAINS
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
     REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, hx, gy, hy
-    REAL(num) :: ex_part, ey_part, ez_part, e_part2
-    REAL(num) :: density_part, ndp_low, ndp_high
+    REAL(num) :: ex_part, ey_part, ez_part, e_part
+    REAL(num) :: number_at_part, delta_en, erat
     INTEGER :: cell_x1, cell_x2, ix
     INTEGER :: cell_y1, cell_y2, iy
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: density, nd_low, nd_high
-    REAL(num) :: lambda_db, e_photon, t_eff, saha_rhs, ion_frac, rand
-    REAL(num) :: fac, tfac, lfac, cf2
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: number_density
+    REAL(num) :: rand, mom_frac, ion_rate, ion_prob
+    ! Specific to Keldysh equation
+    REAL(num) :: e_norm, ion_en, prefactor
+    REAL(num) :: ion_fac, fac, cf2
+    REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
     INTEGER :: next_species
     INTEGER, PARAMETER :: dcellx = 0, dcelly = 0
 
@@ -34,12 +37,11 @@ CONTAINS
 #else
     fac = 0.5_num
 #endif
-    tfac = epsilon0 * fac**2 / kb / 3.0_num
-    lfac = h_planck / SQRT(2.0_num * pi * m0 * kb)
 
-    ALLOCATE(density(-2:nx+3,-2:ny+3))
-    ALLOCATE(nd_low (-2:nx+3,-2:ny+3))
-    ALLOCATE(nd_high(-2:nx+3,-2:ny+3))
+    ! This prefactor is specific to the Keldysh model of ionisation
+    prefactor = SQRT(6.0_num * pi) / (2.0_num)**(5.0_num/4.0_num) / 2.42e-17_num
+
+    ALLOCATE(number_density(-2:nx+3,-2:ny+3))
 
     ALLOCATE(append_lists(n_species))
     DO ispecies = 1, n_species
@@ -48,10 +50,10 @@ CONTAINS
 
     DO ispecies = 1, n_species
       IF (.NOT. species_list(ispecies)%ionise) CYCLE
-      CALL calc_number_density(nd_low, ispecies)
-      CALL calc_number_density(nd_high, &
-          species_list(ispecies)%ionise_to_species)
-      density = nd_low+nd_high
+      mom_frac = &
+          species_list(species_list(ispecies)%ionise_to_species)%mass
+      mom_frac = mom_frac / (mom_frac + species_list(ispecies)%mass)
+      CALL calc_number_density(number_density, ispecies)
 
       current=>species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
@@ -114,49 +116,57 @@ CONTAINS
         ex_part = 0.0_num
         ey_part = 0.0_num
         ez_part = 0.0_num
-        density_part = 0.0_num
-        ndp_low = 0.0_num
-        ndp_high = 0.0_num
+        number_at_part = 0.0_num
         DO iy = sf_min, sf_max
           DO ix = sf_min, sf_max
             ex_part = ex_part + hx(ix) * gy(iy) * ex(cell_x2+ix, cell_y1+iy)
             ey_part = ey_part + gx(ix) * hy(iy) * ey(cell_x1+ix, cell_y2+iy)
             ez_part = ez_part + gx(ix) * gy(iy) * ez(cell_x1+ix, cell_y1+iy)
-            density_part = density_part &
-                + gx(ix) * gy(iy) * density(cell_x1+ix, cell_y1+iy)
-            ndp_low  = ndp_low &
-                + gx(ix) * gy(iy) * nd_low(cell_x1+ix, cell_y1+iy)
-            ndp_high = ndp_high &
-                + gx(ix) * gy(iy) * nd_high(cell_x1+ix, cell_y1+iy)
+            number_at_part = number_at_part + dx * dy &
+                * gx(ix) * gy(iy) * number_density(cell_x1+ix, cell_y1+iy)
           ENDDO
         ENDDO
-        e_part2 = ex_part**2 + ey_part**2 + ez_part**2
-        density_part = fac * density_part
+        e_part = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2)
+        number_at_part = fac**2 * number_at_part
 
-        ! This is a first attempt at using the 1 level Saha equation to
-        ! calculate an ionisation fraction. This isn't really a very good model!
+        ! In this section need to calculate the ionisation rate
+        ! And store it in the variable "ion_rate".
+        ! The rest of the routine is general 
 
-        ! e_photon = 0.5_num * epsilon0 * fac**2 * e_part2 * dx * dy
-        ! t_eff = 2.0_num / 3.0_num * e_photon &
-        !    / (kb * density_part * dx * dy)
-        t_eff = tfac * e_part2 / density_part
-        IF (t_eff .GT. 1.0e-6_num) THEN
-          lambda_db = lfac / SQRT(t_eff)
-          saha_rhs = &
-              EXP(-species_list(ispecies)%ionisation_energy / kb / t_eff) &
-              / lambda_db**3
-          ion_frac = -saha_rhs &
-              + SQRT(saha_rhs**2 + 2.0_num * density_part * saha_rhs)
-          ion_frac = ion_frac / density_part
-          IF (ion_frac .GT. 1.0_num) ion_frac = 1.0_num
-        ELSE
-          ion_frac = 0.0_num
-        ENDIF
+        ! The code is supplied with a 
+        ! simple implementation of Keldysh equation
+        ! Keldysh (Zh. Eksp. Teor. Fiz. 47, 1945 (1964))
+        ! In English (Sov. Phys. JETP 20, 1307 (1965))
 
+        e_norm = e_part / 5.1401e11_num
+        ion_en = species_list(ispecies)%ionisation_energy &
+            / (27.211_num * ev)
+        ion_fac = e_norm / (2.0_num * ion_en)**1.5_num
+        ion_rate = prefactor * ion_en * SQRT(ion_fac) &
+            * EXP(-two_thirds / ion_fac)
+
+        ! End of ionisation rate calculation
+
+        ! Convert an ionisation rate to a probability
+        ion_prob = dt * ion_rate * current%weight / number_at_part
         rand = random()
-        ! After all that, we now know the target ionisation fraction, so
-        ! subtract the current fraction and ionise
-        IF (rand .LT. (ion_frac-ndp_high/MAX(ndp_low, c_non_zero))) THEN
+        ! After all that, we now know the target ionisation probability
+        ! So convert
+        IF (rand .LT. ion_prob) THEN
+          !delta_en = current%weight &
+          !    * species_list(ispecies)%ionisation_energy
+          !erat = SQRT(1.0_num - 2.0_num * delta_en &
+          !    / (e_part**2 * epsilon0 * dx * dy))
+          !DO iy = -1, 1
+          !  DO ix = -1, 1
+          !    ex(cell_x2+ix, cell_y1+iy) = &
+          !        erat * hx(ix) * gy(iy) * ex(cell_x2+ix, cell_y1+iy)
+          !    ey(cell_x1+ix, cell_y2+iy) = &
+          !        erat * gx(ix) * hy(iy) * ey(cell_x1+ix, cell_y2+iy)
+          !    ez(cell_x1+ix, cell_y1+iy) = &
+          !        erat * gx(ix) * gy(iy) * ez(cell_x1+ix, cell_y1+iy)
+          !  ENDDO
+          !ENDDO
           CALL remove_particle_from_partlist(&
               species_list(ispecies)%attached_list, current)
           next_species = species_list(ispecies)%ionise_to_species
@@ -170,7 +180,8 @@ CONTAINS
             new_part%weight = current%weight
 #endif
             new_part%part_pos = current%part_pos
-            new_part%part_p = current%part_p
+            new_part%part_p = current%part_p * mom_frac
+            current%part_p = current%part_p * (1.0_num - mom_frac)
 #ifdef PER_PARTICLE_CHARGE_MASS
             new_part%charge = species_list(next_species)%charge
             new_part%mass = species_list(next_species)%mass
@@ -192,8 +203,7 @@ CONTAINS
           append_lists(ispecies))
     ENDDO
 
-    DEALLOCATE(density, append_lists)
-    DEALLOCATE(nd_low, nd_high)
+    DEALLOCATE(number_density, append_lists)
 #endif
 
   END SUBROUTINE ionise_particles

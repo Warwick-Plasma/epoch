@@ -247,7 +247,6 @@ CONTAINS
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1
       species_list(ispecies)%release_species = -1
-      species_list(ispecies)%critical_field = 0.0_num
       species_list(ispecies)%ionisation_energy = 0.0_num
 #endif
 #ifdef TRACER_PARTICLES

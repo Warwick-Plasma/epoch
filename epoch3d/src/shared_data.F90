@@ -451,7 +451,6 @@ MODULE shared_data
     LOGICAL :: ionise
     INTEGER :: ionise_to_species
     INTEGER :: release_species
-    REAL(num) :: critical_field
     REAL(num) :: ionisation_energy
 #endif
     ! Attached probes for this species

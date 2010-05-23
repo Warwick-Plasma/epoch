@@ -15,6 +15,7 @@ MODULE deck_species_block
   PUBLIC :: species_block_handle_element, species_block_check
 
   INTEGER :: species_id, current_block
+  INTEGER :: n_secondary_species_in_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: species_names
   INTEGER, DIMENSION(:), POINTER :: species_blocks
@@ -79,6 +80,7 @@ CONTAINS
 
   SUBROUTINE species_block_start
 
+    n_secondary_species_in_block = 0
     current_block = current_block + 1
     got_name = .FALSE.
     IF (deck_state .EQ. c_ds_first) RETURN
@@ -92,7 +94,8 @@ CONTAINS
   SUBROUTINE species_block_end
 
     CHARACTER(LEN=8) :: id_string
-    INTEGER :: io
+    CHARACTER(LEN=string_length) :: name
+    INTEGER :: io, i, itmp, block_species_id
 
     IF (.NOT.got_name) THEN
       IF (rank .EQ. 0) THEN
@@ -107,6 +110,15 @@ CONTAINS
       check_block = c_err_missing_elements
     ENDIF
 
+    IF (deck_state .EQ. c_ds_first) THEN
+      block_species_id = n_species
+      DO i = 1, n_secondary_species_in_block
+        CALL integer_as_string(i, id_string)
+        name = TRIM(TRIM(species_names(block_species_id))//id_string)
+        itmp = species_number_from_name(name)
+      ENDDO
+    ENDIF
+
   END SUBROUTINE species_block_end
 
 
@@ -115,10 +127,13 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
+    TYPE(primitive_stack) :: stack
+    TYPE(particle_species), POINTER :: base_species, species
+    REAL(num), DIMENSION(:), POINTER :: dat
     REAL(num) :: dmin
     CHARACTER(LEN=string_length) :: filename
     LOGICAL :: got_file, dump
-    INTEGER :: io
+    INTEGER :: i, io
 
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
@@ -133,6 +148,20 @@ CONTAINS
       CALL grow_array(species_blocks, current_block)
       species_blocks(current_block) = species_number_from_name(value)
       RETURN
+    ENDIF
+
+    IF (str_cmp(element, "ionisation_energies")) THEN
+#ifdef PARTICLE_IONISE
+      IF (deck_state .EQ. c_ds_first) THEN
+        NULLIFY(dat)
+        stack%stack_point = 0
+        CALL tokenize(value, stack, errcode)
+        CALL evaluate_and_return_all(stack, 0, &
+            n_secondary_species_in_block, dat, errcode)
+        DEALLOCATE(dat)
+        RETURN
+      ENDIF
+#endif
     ENDIF
 
     IF (deck_state .EQ. c_ds_first) RETURN
@@ -223,35 +252,56 @@ CONTAINS
     ! *************************************************************
     ! This section sets properties for ionisation
     ! *************************************************************
-    IF (str_cmp(element, "ionise")) THEN
-#ifdef PARTICLE_IONISE
-      species_list(species_id)%ionise = as_logical(value, errcode)
-#else
-      IF (as_logical(value, errcode)) THEN
-        errcode = c_err_pp_options_wrong
-        extended_error_string = "-DPARTICLE_IONISE"
-      ENDIF
-#endif
-      RETURN
-    ENDIF
-
-    IF (str_cmp(element, "ionise_to_species")) THEN
-#ifdef PARTICLE_IONISE
-      species_list(species_id)%ionise_to_species = as_integer(value, errcode)
-#endif
-      RETURN
-    ENDIF
-
-    IF (str_cmp(element, "release_species_on_ionise")) THEN
+    IF (str_cmp(element, "ionisation_electron_species") &
+        .OR. str_cmp(element, "electron")) THEN
 #ifdef PARTICLE_IONISE
       species_list(species_id)%release_species = as_integer(value, errcode)
 #endif
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "ionisation_energy")) THEN
+    IF (str_cmp(element, "ionisation_energies")) THEN
 #ifdef PARTICLE_IONISE
-      species_list(species_id)%ionisation_energy = as_real(value, errcode)
+      IF (species_list(species_id)%release_species .LT. 0) THEN
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Attempting to set ionisation energies without', &
+                ' specifying electron species'
+          ENDDO
+        ENDIF
+        errcode = c_err_required_element_not_set
+        extended_error_string = "ionisation_electron_species"
+        RETURN
+      ENDIF
+
+      IF (species_list(species_id)%ionise) THEN
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Attempting to set ionisation energies twice for'
+            WRITE(io,*) 'species "' &
+                // TRIM(species_list(species_id)%name) // '"'
+          ENDDO
+        ENDIF
+        errcode = c_err_preset_element
+        RETURN
+      ENDIF
+
+      species_list(species_id)%ionise = .TRUE.
+      NULLIFY(dat)
+      stack%stack_point = 0
+      CALL tokenize(value, stack, errcode)
+      CALL evaluate_and_return_all(stack, 0, &
+          n_secondary_species_in_block, dat, errcode)
+
+      base_species=>species_list(species_id)
+      species=>species_list(species_id)
+
+      DO i = 1, n_secondary_species_in_block
+        CALL create_ion_subspecies(base_species, species, i, dat(i))
+      ENDDO
+      DEALLOCATE(dat)
 #endif
       RETURN
     ENDIF
@@ -357,8 +407,7 @@ CONTAINS
             initial_conditions(species_id)%temp(:,1)
       ENDIF
       debug_mode = .FALSE.
-      initial_conditions(species_id)%temp(:,2) = &
-          initial_conditions(species_id)%temp(:,1)
+      initial_conditions(species_id)%temp(:,2) = 0.0_num
       initial_conditions(species_id)%temp(:,3) = 0.0_num
       RETURN
     ENDIF
@@ -485,5 +534,47 @@ CONTAINS
     species_number_from_name = n_species
 
   END FUNCTION species_number_from_name
+
+
+
+#ifdef PARTICLE_IONISE
+  SUBROUTINE create_ion_subspecies(base_species, current_species, index, energy)
+
+    TYPE(particle_species), POINTER :: base_species, current_species
+    INTEGER, INTENT(IN) :: index
+    REAL(num), INTENT(IN) :: energy
+    TYPE(particle_species), POINTER :: working_species
+    INTEGER :: working_id, err
+    CHARACTER(LEN=string_length) :: name, indexstring
+
+    CALL integer_as_string(index, indexstring)
+    name = TRIM(TRIM(base_species%name)//indexstring)
+
+    working_id = as_integer(name, err)
+    working_species => species_list(working_id)
+
+    IF (rank .EQ. 0) THEN
+      PRINT '("Autocreated ionised form of ", a, " as species ", i3, &
+          & " named ", a)', TRIM(base_species%name), working_id, TRIM(name)
+    ENDIF
+
+    working_species%charge = current_species%charge &
+        - species_list(base_species%release_species)%charge
+    working_species%mass = current_species%mass &
+        - species_list(base_species%release_species)%mass
+    working_species%dumpmask = base_species%dumpmask
+    working_species%split = base_species%split
+    working_species%npart_max = base_species%npart_max
+    working_species%count = 0
+
+    current_species%ionise = .TRUE.
+    current_species%ionise_to_species = working_species%id
+    current_species%release_species = base_species%release_species
+    current_species%ionisation_energy = energy
+
+    current_species=>working_species
+
+  END SUBROUTINE create_ion_subspecies
+#endif
 
 END MODULE deck_species_block

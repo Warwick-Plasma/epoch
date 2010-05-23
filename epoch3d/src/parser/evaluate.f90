@@ -3,19 +3,15 @@ MODULE evaluator
   USE mpi
   USE stack
   USE evaluator_blocks
-  !USE shunt
 
   IMPLICIT NONE
 
 CONTAINS
 
-  SUBROUTINE evaluate_at_point_to_array(input_stack, ix, iy, iz, n_elements, &
-      array, err)
+  SUBROUTINE basic_evaluate(input_stack, ix, iy, iz, err)
 
     TYPE(primitive_stack), INTENT(IN) :: input_stack
     INTEGER, INTENT(IN) :: ix, iy, iz
-    INTEGER, INTENT(IN) :: n_elements
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i, ierr
     TYPE(stack_element) :: block
@@ -44,13 +40,57 @@ CONTAINS
         STOP
       ENDIF
     ENDDO
+
+  END SUBROUTINE basic_evaluate
+
+
+
+  SUBROUTINE evaluate_at_point_to_array(input_stack, ix, iy, iz, n_elements, &
+      array, err)
+
+    TYPE(primitive_stack), INTENT(IN) :: input_stack
+    INTEGER, INTENT(IN) :: ix, iy, iz
+    INTEGER, INTENT(IN) :: n_elements
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: i
+
+    CALL basic_evaluate(input_stack, ix, iy, iz, err)
+
     IF (eval_stack%stack_point .NE. n_elements) err = IOR(err, c_err_bad_value)
+
     ! Pop off the final answers
     DO i = MIN(eval_stack%stack_point,n_elements),1,-1
       array(i) = pop_off_eval()
     ENDDO
 
   END SUBROUTINE evaluate_at_point_to_array
+
+
+
+  SUBROUTINE evaluate_and_return_all(input_stack, ix, iy, iz, n_elements, &
+      array, err)
+
+    TYPE(primitive_stack), INTENT(IN) :: input_stack
+    INTEGER, INTENT(IN) :: ix, iy, iz
+    INTEGER, INTENT(OUT) :: n_elements
+    REAL(num), DIMENSION(:), POINTER :: array
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: i
+
+    IF (ASSOCIATED(array)) DEALLOCATE(array)
+
+    CALL basic_evaluate(input_stack, ix, iy, iz, err)
+
+    n_elements = eval_stack%stack_point
+    ALLOCATE(array(1:n_elements))
+
+    ! Pop off the final answers
+    DO i = n_elements,1,-1
+      array(i) = pop_off_eval()
+    ENDDO
+
+  END SUBROUTINE evaluate_and_return_all
 
 
 
