@@ -225,6 +225,7 @@ CONTAINS
     ENDDO
 
     ! No need to rebalance lasers in 1D, lasers are just a point!
+    ! Same goes for moving windows and thermal boundaries.
 
   END SUBROUTINE redistribute_fields
 

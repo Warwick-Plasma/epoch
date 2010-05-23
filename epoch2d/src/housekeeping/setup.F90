@@ -238,6 +238,10 @@ CONTAINS
       NULLIFY(species_list(ispecies)%temperature)
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
+      NULLIFY(species_list(ispecies)%ext_temp_x_min)
+      NULLIFY(species_list(ispecies)%ext_temp_x_max)
+      NULLIFY(species_list(ispecies)%ext_temp_y_min)
+      NULLIFY(species_list(ispecies)%ext_temp_y_max)
       NULLIFY(species_list(ispecies)%secondary_list)
 #ifdef PARTICLE_IONISE
       species_list(ispecies)%ionise = .FALSE.

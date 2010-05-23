@@ -314,7 +314,8 @@ CONTAINS
     INTEGER :: xbd
     INTEGER(KIND=8) :: ixp
     LOGICAL :: out_of_bounds
-    INTEGER :: ispecies, ix
+    INTEGER :: ispecies, i, ix
+    REAL(num) :: temp(3), temp_v
     REAL(num) :: part_pos
 
     DO ispecies = 1, n_species
@@ -341,6 +342,29 @@ CONTAINS
             IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_min - dx - part_pos
               cur%part_p(1) = -cur%part_p(1)
+            ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+              DO i = 1, 3
+                temp(i) = species_list(ispecies)%ext_temp_x_min(i)
+              ENDDO
+
+              ! x-direction
+              i = 1
+              cur%part_p(i) = ABS(momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num))
+
+              ! y-direction
+              i = 2
+              cur%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
+
+              ! z-direction
+              i = 3
+              cur%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
+
+              temp_v = cur%part_p(1) / species_list(ispecies)%mass
+              cur%part_pos = x_min - dx / 2.0_num + temp_v * dt
+
             ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
               xbd = -1
               cur%part_pos = part_pos + length_x
@@ -360,6 +384,29 @@ CONTAINS
             IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_max + dx - part_pos
               cur%part_p(1) = -cur%part_p(1)
+            ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+              DO i = 1, 3
+                temp(i) = species_list(ispecies)%ext_temp_x_max(i)
+              ENDDO
+
+              ! x-direction
+              i = 1
+              cur%part_p(i) = -ABS(momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num))
+
+              ! y-direction
+              i = 2
+              cur%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
+
+              ! z-direction
+              i = 3
+              cur%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
+
+              temp_v = cur%part_p(1) / species_list(ispecies)%mass
+              cur%part_pos = x_max + dx / 2.0_num + temp_v * dt
+
             ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
               xbd = 1
               cur%part_pos = part_pos - length_x

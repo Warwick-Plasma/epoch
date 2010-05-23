@@ -32,6 +32,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_clamp = 8
   INTEGER, PARAMETER :: c_bc_reflect = 9
   INTEGER, PARAMETER :: c_bc_conduct = 10
+  INTEGER, PARAMETER :: c_bc_thermal = 11
 
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
@@ -434,6 +435,9 @@ MODULE shared_data
     REAL(num) :: npart_per_cell
     REAL(num) :: density
     REAL(num), DIMENSION(3) :: temperature
+
+    ! Thermal boundaries
+    REAL(num), DIMENSION(:), POINTER :: ext_temp_x_min, ext_temp_x_max
 
     ! Species_ionisation
 #ifdef PARTICLE_IONISE

@@ -274,6 +274,25 @@ CONTAINS
       NULLIFY(species_list(ispecies)%attached_list%next)
       NULLIFY(species_list(ispecies)%attached_list%prev)
       CALL create_empty_partlist(species_list(ispecies)%attached_list)
+
+      IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+        ALLOCATE(species_list(ispecies)%ext_temp_x_min(-2:ny+3,-2:nz+3,1:3))
+      ENDIF
+      IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+        ALLOCATE(species_list(ispecies)%ext_temp_x_max(-2:ny+3,-2:nz+3,1:3))
+      ENDIF
+      IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
+        ALLOCATE(species_list(ispecies)%ext_temp_y_min(-2:nx+3,-2:nz+3,1:3))
+      ENDIF
+      IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
+        ALLOCATE(species_list(ispecies)%ext_temp_y_max(-2:nx+3,-2:nz+3,1:3))
+      ENDIF
+      IF (bc_particle(c_bd_z_min) .EQ. c_bc_thermal) THEN
+        ALLOCATE(species_list(ispecies)%ext_temp_z_min(-2:nx+3,-2:ny+3,1:3))
+      ENDIF
+      IF (bc_particle(c_bd_z_max) .EQ. c_bc_thermal) THEN
+        ALLOCATE(species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,1:3))
+      ENDIF
     ENDDO
 
     start_time = MPI_WTIME()

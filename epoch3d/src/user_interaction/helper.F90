@@ -16,6 +16,34 @@ CONTAINS
 
     DO ispecies = 1, n_species
       species=>species_list(ispecies)
+
+      ! Set temperature at boundary for thermal bcs.
+
+      IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+        species_list(ispecies)%ext_temp_x_min(-2:ny+3,-2:nz+3,1:3) = &
+            initial_conditions(ispecies)%temp(1,-2:ny+3,-2:nz+3,1:3)
+      ENDIF
+      IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+        species_list(ispecies)%ext_temp_x_max(-2:ny+3,-2:nz+3,1:3) = &
+            initial_conditions(ispecies)%temp(nx,-2:ny+3,-2:nz+3,1:3)
+      ENDIF
+      IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
+        species_list(ispecies)%ext_temp_y_min(-2:nx+3,-2:nz+3,1:3) = &
+            initial_conditions(ispecies)%temp(-2:nx+3,1,-2:nz+3,1:3)
+      ENDIF
+      IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
+        species_list(ispecies)%ext_temp_y_max(-2:nx+3,-2:nz+3,1:3) = &
+            initial_conditions(ispecies)%temp(-2:nx+3,ny,-2:nz+3,1:3)
+      ENDIF
+      IF (bc_particle(c_bd_z_min) .EQ. c_bc_thermal) THEN
+        species_list(ispecies)%ext_temp_z_min(-2:nx+3,-2:ny+3,1:3) = &
+            initial_conditions(ispecies)%temp(-2:nx+3,-2:ny+3,1,1:3)
+      ENDIF
+      IF (bc_particle(c_bd_z_max) .EQ. c_bc_thermal) THEN
+        species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,1:3) = &
+            initial_conditions(ispecies)%temp(-2:nx+3,-2:ny+3,nz,1:3)
+      ENDIF
+
 #ifdef PER_PARTICLE_WEIGHT
       CALL setup_particle_density(initial_conditions(ispecies)%density, &
           species, initial_conditions(ispecies)%density_min, &

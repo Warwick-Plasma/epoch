@@ -515,6 +515,132 @@ CONTAINS
 
     DEALLOCATE(temp1d)
 
+    ! Re-distribute moving windows and temperature boundaries
+    DO ispecies = 1, n_species
+
+      IF (move_window) THEN
+        ALLOCATE(temp1d(-2:ny_new+3))
+
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%density, temp1d)
+
+        DEALLOCATE(species_list(ispecies)%density)
+        ALLOCATE(species_list(ispecies)%density(-2:ny_new+3))
+
+        species_list(ispecies)%density = temp1d
+
+        DEALLOCATE(temp1d)
+
+        ALLOCATE(temp(-2:ny_new+3,3))
+
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%temperature(-2:ny+3,1), &
+            temp(-2:ny_new+3,1))
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%temperature(-2:ny+3,2), &
+            temp(-2:ny_new+3,2))
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%temperature(-2:ny+3,3), &
+            temp(-2:ny_new+3,3))
+
+        DEALLOCATE(species_list(ispecies)%temperature)
+        ALLOCATE(species_list(ispecies)%temperature(-2:ny_new+3,1:3))
+
+        species_list(ispecies)%temperature = temp
+
+        DEALLOCATE(temp)
+      ENDIF
+
+      IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+        ALLOCATE(temp(-2:ny_new+3,3))
+        temp = 0.0_num
+
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%ext_temp_x_min(-2:ny+3,1), &
+            temp(-2:ny_new+3,1))
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%ext_temp_x_min(-2:ny+3,2), &
+            temp(-2:ny_new+3,2))
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%ext_temp_x_min(-2:ny+3,3), &
+            temp(-2:ny_new+3,3))
+
+        DEALLOCATE(species_list(ispecies)%ext_temp_x_min)
+        ALLOCATE(species_list(ispecies)%ext_temp_x_min(-2:ny_new+3,3))
+
+        species_list(ispecies)%ext_temp_x_min = temp
+
+        DEALLOCATE(temp)
+      ENDIF
+
+      IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+        ALLOCATE(temp(-2:ny_new+3,3))
+        temp = 0.0_num
+
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%ext_temp_x_max(-2:ny+3,1), &
+            temp(-2:ny_new+3,1))
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%ext_temp_x_max(-2:ny+3,2), &
+            temp(-2:ny_new+3,2))
+        CALL redistribute_field_1d(new_domain, c_dir_x, &
+            species_list(ispecies)%ext_temp_x_max(-2:ny+3,3), &
+            temp(-2:ny_new+3,3))
+
+        DEALLOCATE(species_list(ispecies)%ext_temp_x_max)
+        ALLOCATE(species_list(ispecies)%ext_temp_x_max(-2:ny_new+3,3))
+
+        species_list(ispecies)%ext_temp_x_max = temp
+
+        DEALLOCATE(temp)
+      ENDIF
+
+      IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
+        ALLOCATE(temp(-2:nx_new+3,3))
+        temp = 0.0_num
+
+        CALL redistribute_field_1d(new_domain, c_dir_y, &
+            species_list(ispecies)%ext_temp_y_min(-2:nx+3,1), &
+            temp(-2:nx_new+3,1))
+        CALL redistribute_field_1d(new_domain, c_dir_y, &
+            species_list(ispecies)%ext_temp_y_min(-2:nx+3,2), &
+            temp(-2:nx_new+3,2))
+        CALL redistribute_field_1d(new_domain, c_dir_y, &
+            species_list(ispecies)%ext_temp_y_min(-2:nx+3,3), &
+            temp(-2:nx_new+3,3))
+
+        DEALLOCATE(species_list(ispecies)%ext_temp_y_min)
+        ALLOCATE(species_list(ispecies)%ext_temp_y_min(-2:nx_new+3,3))
+
+        species_list(ispecies)%ext_temp_y_min = temp
+
+        DEALLOCATE(temp)
+      ENDIF
+
+      IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
+        ALLOCATE(temp(-2:nx_new+3,3))
+        temp = 0.0_num
+
+        CALL redistribute_field_1d(new_domain, c_dir_y, &
+            species_list(ispecies)%ext_temp_y_max(-2:nx+3,1), &
+            temp(-2:nx_new+3,1))
+        CALL redistribute_field_1d(new_domain, c_dir_y, &
+            species_list(ispecies)%ext_temp_y_max(-2:nx+3,2), &
+            temp(-2:nx_new+3,2))
+        CALL redistribute_field_1d(new_domain, c_dir_y, &
+            species_list(ispecies)%ext_temp_y_max(-2:nx+3,3), &
+            temp(-2:nx_new+3,3))
+
+        DEALLOCATE(species_list(ispecies)%ext_temp_y_max)
+        ALLOCATE(species_list(ispecies)%ext_temp_y_max(-2:nx_new+3,3))
+
+        species_list(ispecies)%ext_temp_y_max = temp
+
+        DEALLOCATE(temp)
+      ENDIF
+
+    ENDDO
+
   END SUBROUTINE redistribute_fields
 
 

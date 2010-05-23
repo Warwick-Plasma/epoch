@@ -215,6 +215,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), "thermal")) THEN
+      as_bc = c_bc_thermal
+      RETURN
+    ENDIF
+
     err = IOR(err, c_err_bad_value)
 
   END FUNCTION as_bc
