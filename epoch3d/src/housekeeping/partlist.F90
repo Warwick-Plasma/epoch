@@ -583,7 +583,7 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    ! No longer need the sending partlist, so destroy it to SAVE some memory
+    ! No longer need the sending partlist, so destroy it to save some memory
     CALL destroy_partlist(partlist_send)
 
     ! Actual MPI commands

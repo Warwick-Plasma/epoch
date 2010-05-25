@@ -28,10 +28,10 @@ CONTAINS
     CHARACTER(LEN=50) :: temp_name
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: data
-    REAL(num), DIMENSION(2) :: stagger = 0.0_num
+    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER(8) :: n_part_per_it = 100000, npart_local, npart_dump_global
     INTEGER :: ispecies, code
-    INTEGER, DIMENSION(2) :: dims
+    INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: restart_flag
 
     dims = (/nx_global, ny_global/)
@@ -39,8 +39,8 @@ CONTAINS
     CALL io_test(i, print_arrays, last_call)
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
-    WRITE(filename_desc, '("(''nfs:'', a, ''/'', i", i3.3, ".", i3.3, &
-        &", ''.cfd'')")') n_zeros, n_zeros
+    WRITE(filename_desc, '("(a, ''/'', i", i3.3, ".", i3.3, ", ''.cfd'')")') &
+        n_zeros, n_zeros
     WRITE(filename, filename_desc) TRIM(data_dir), output_file
 
     IF (print_arrays) THEN
@@ -432,7 +432,7 @@ CONTAINS
 
 
 
-  SUBROUTINE set_dt()        ! sets CFL limited step
+  SUBROUTINE set_dt        ! sets CFL limited step
 
     REAL(num) :: dtx, dty
 

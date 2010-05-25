@@ -104,7 +104,7 @@ MODULE constants
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
-  INTEGER, PARAMETER :: c_df_maxdirs = 5
+  INTEGER, PARAMETER :: c_df_maxdirs = 4 + c_ndims
   INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! Length of a standard string
@@ -495,7 +495,7 @@ MODULE shared_data
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight
 
-  LOGICAL :: SAVE, ic_from_restart = .FALSE., deckfile
+  LOGICAL :: ic_from_restart = .FALSE., deckfile
   INTEGER :: bc_x_min_field, bc_x_max_field
   INTEGER :: bc_x_min_particle, bc_x_max_particle
   INTEGER :: restart_snapshot

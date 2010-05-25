@@ -31,7 +31,7 @@ CONTAINS
     INTEGER :: ispecies
 #endif
 
-    ! On one processor do nothing to SAVE time
+    ! On one processor do nothing to save time
     IF (nproc .EQ. 1) RETURN
 
     ! This parameter allows selecting the mode of the autobalancing between

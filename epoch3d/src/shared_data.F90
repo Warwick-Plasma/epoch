@@ -105,7 +105,7 @@ MODULE constants
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
-  INTEGER, PARAMETER :: c_df_maxdirs = 7
+  INTEGER, PARAMETER :: c_df_maxdirs = 4 + c_ndims
   INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! Length of a standard string
@@ -335,7 +335,7 @@ MODULE shared_data
   ! particle pack and unpack routines
   TYPE :: particle
     REAL(num), DIMENSION(3) :: part_p
-    REAL(num), DIMENSION(3) :: part_pos
+    REAL(num), DIMENSION(c_ndims) :: part_pos
 #ifdef PER_PARTICLE_WEIGHT
     REAL(num) :: weight
 #endif
@@ -511,7 +511,7 @@ MODULE shared_data
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight
 
-  LOGICAL :: SAVE, ic_from_restart = .FALSE., deckfile
+  LOGICAL :: ic_from_restart = .FALSE., deckfile
   INTEGER :: bc_x_min_field, bc_x_max_field
   INTEGER :: bc_y_min_field, bc_y_max_field
   INTEGER :: bc_z_min_field, bc_z_max_field
@@ -540,7 +540,7 @@ MODULE shared_data
   INTEGER :: rank, proc_x_min, proc_x_max
   INTEGER :: proc_y_min, proc_y_max
   INTEGER :: proc_z_min, proc_z_max
-  INTEGER :: coordinates(3), neighbour(-1:1, -1:1, -1:1)
+  INTEGER :: coordinates(c_ndims), neighbour(-1:1, -1:1, -1:1)
   INTEGER :: errcode, comm, tag, nproc, icycle_max = 1000000
   INTEGER :: status(MPI_STATUS_SIZE)
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank, ny_each_rank, nz_each_rank

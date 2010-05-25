@@ -164,7 +164,7 @@ CONTAINS
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
-        ! Use a lookup table for charge and mass to SAVE memory
+        ! Use a lookup table for charge and mass to save memory
         ! No reason not to do this (I think), check properly later
 #ifdef PER_PARTICLE_CHARGEMASS
         part_q  = current%charge

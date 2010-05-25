@@ -66,7 +66,7 @@ PROGRAM pic
 
   ! restart flag is set
   IF (ic_from_restart) THEN
-    CALL restart_data    ! restart from data in file SAVE.data
+    CALL restart_data    ! restart from data in file save.data
     IF (rank .EQ. 0) PRINT *, "Load from restart dump OK"
     output_file = restart_snapshot
   ELSE
