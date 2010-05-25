@@ -9,7 +9,7 @@ CONTAINS
 
   SUBROUTINE calc_mass_density(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x, y, z
+    ! Contains the integer cell position of the particle in x, y
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
@@ -24,7 +24,11 @@ CONTAINS
 
     ! The weight of a particle
     REAL(num) :: l_weight
-    ! particle weight factors as described in the manual (FIXREF)
+
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -34,13 +38,13 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, spec_start, spec_end
-    REAL(num) :: idxy, fac
+    REAL(num) :: fac, idxy
 
     data_array = 0.0_num
 
     l_weight = weight
     idxy = 1.0_num / dx / dy
-    fac = weight / dx / dy
+    fac  = weight  / dx / dy
 
     spec_start = current_species
     spec_end = current_species
@@ -56,7 +60,6 @@ CONTAINS
       part_m  = particle_species(ispecies)%mass
 #endif
       DO WHILE (ASSOCIATED(current))
-
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
@@ -107,7 +110,7 @@ CONTAINS
 
   SUBROUTINE calc_ekbar(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x, y, z
+    ! Contains the integer cell position of the particle in x, y
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
@@ -123,7 +126,10 @@ CONTAINS
     ! The weight of a particle
     REAL(num) :: l_weight
 
-    ! particle weight factors as described in the manual (FIXREF)
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -135,7 +141,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, spec_start, spec_end
 
-    ALLOCATE(ct(-2:nx+3, -2:ny+3))
+    ALLOCATE(ct(-2:nx+3,-2:ny+3))
     data_array = 0.0_num
     ct = 0.0_num
 
@@ -155,7 +161,6 @@ CONTAINS
       part_m  = particle_species(ispecies)%mass
 #endif
       DO WHILE (ASSOCIATED(current))
-
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
@@ -205,7 +210,9 @@ CONTAINS
     CALL processor_summation_bcs(data_array)
     CALL processor_summation_bcs(ct)
 
+    data_array = data_array / MAX(ct, c_non_zero)
     CALL field_zero_gradient(data_array, .TRUE.)
+
     DEALLOCATE(ct)
 
   END SUBROUTINE calc_ekbar
@@ -214,7 +221,7 @@ CONTAINS
 
   SUBROUTINE calc_charge_density(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x, y, z
+    ! Contains the integer cell position of the particle in x, y
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
@@ -230,7 +237,10 @@ CONTAINS
     ! The weight of a particle
     REAL(num) :: l_weight
 
-    ! particle weight factors as described in the manual (FIXREF)
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -240,13 +250,13 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, spec_start, spec_end
-    REAL(num) :: idxy, fac
+    REAL(num) :: fac, idxy
 
     data_array = 0.0_num
 
     l_weight = weight
     idxy = 1.0_num / dx / dy
-    fac = weight / dx / dy
+    fac  = weight  / dx / dy
 
     spec_start = current_species
     spec_end = current_species
@@ -262,7 +272,6 @@ CONTAINS
       part_q  = particle_species(ispecies)%charge
 #endif
       DO WHILE (ASSOCIATED(current))
-
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
@@ -313,7 +322,7 @@ CONTAINS
 
   SUBROUTINE calc_number_density(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x, y, z
+    ! Contains the integer cell position of the particle in x, y
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
@@ -329,7 +338,10 @@ CONTAINS
     ! The weight of a particle
     REAL(num) :: l_weight
 
-    ! particle weight factors as described in the manual (FIXREF)
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -344,8 +356,8 @@ CONTAINS
     data_array = 0.0_num
 
     l_weight = weight
-    idxy = 1.0_num / dx / dy
-    wdata = weight / dx / dy
+    idxy  = 1.0_num / dx / dy
+    wdata = weight  / dx / dy
 
     spec_start = current_species
     spec_end = current_species
@@ -358,7 +370,6 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
-
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
@@ -392,6 +403,7 @@ CONTAINS
                 data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
           ENDDO
         ENDDO
+
         current=>current%next
       ENDDO
     ENDDO
@@ -405,7 +417,7 @@ CONTAINS
 
   SUBROUTINE calc_temperature(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x, y, z
+    ! Contains the integer cell position of the particle in x, y
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
@@ -421,7 +433,10 @@ CONTAINS
     ! The weight of a particle
     REAL(num) :: l_weight
 
-    ! particle weight factors as described in the manual (FIXREF)
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
     REAL(num) :: wdata1, wdata2
@@ -445,8 +460,8 @@ CONTAINS
       spec_end = n_species
     ENDIF
 
-    ALLOCATE(mean(-2:nx+3, -2:ny+3), part_count(-2:nx+3, -2:ny+3))
-    ALLOCATE(mass(-2:nx+3, -2:ny+3), sigma(-2:nx+3, -2:ny+3))
+    ALLOCATE(mean(-2:nx+3,-2:ny+3), part_count(-2:nx+3,-2:ny+3))
+    ALLOCATE(mass(-2:nx+3,-2:ny+3), sigma(-2:nx+3,-2:ny+3))
     data_array = 0.0_num
     mean = 0.0_num
     part_count = 0.0_num
@@ -459,6 +474,7 @@ CONTAINS
       part_m  = particle_species(ispecies)%mass
 #endif
       DO WHILE(ASSOCIATED(current))
+        ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
         part_px = current%part_p(1)
@@ -522,6 +538,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
+        ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
         part_px = current%part_p(1)
@@ -581,7 +598,7 @@ CONTAINS
 
   SUBROUTINE calc_on_grid_with_evaluator(data_array, current_species, evaluator)
 
-    ! Contains the integer cell position of the particle in x, y, z
+    ! Contains the integer cell position of the particle in x, y
     INTEGER :: cell_x, cell_y
 
     ! Properties of the current particle. Copy out of particle arrays for speed
@@ -594,7 +611,10 @@ CONTAINS
     ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x, cell_frac_y
 
-    ! particle weight factors as described in the manual (FIXREF)
+    ! Weighting factors as Eqn 4.77 page 25 of manual
+    ! Eqn 4.77 would be written as
+    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
+    ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx, gy
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -627,7 +647,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
-
+        ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
 
