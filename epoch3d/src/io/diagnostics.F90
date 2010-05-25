@@ -71,14 +71,15 @@ CONTAINS
       ALLOCATE(data(-2:nx+3, -2:ny+3, -2:nz+3))
 
       ! open the file
-      ! (filename, rank_of_current_process, MPI_COMMUNICATOR (can be
-      ! MPI_COMM_WORLD), MPI_FILE_MODE (passed straight to MPI_FILE_OPEN))
+      ! (filename, rank of current process, MPI communicator (can be
+      ! MPI_COMM_WORLD), file mode (c_cfd_read or c_cfd_write),
+      ! cycle number, simulation time, job id)
       CALL cfd_open(filename, rank, comm, c_cfd_write, i, time, jobid)
       CALL cfd_write_job_info(restart_flag, sha1sum, 0)
 
       ! Write the snapshot information
       ! If you prefer the VisIt cycles to display the dump number, change i
-      ! for output_file (code_time, n_iterations, rank to write)
+      ! for output_file (code_time, n_iterations, rank used for writing)
       CALL cfd_write_snapshot_data(time, i, 0)
 
       IF (IAND(dumpmask(c_dump_part_grid), code) .NE. 0) &
@@ -88,7 +89,7 @@ CONTAINS
               subtype_particle_var)
 
       ! Write the cartesian mesh
-      ! (Mesh_Name, Mesh_Class, x_array, y_array, rank to write)
+      ! (mesh name, mesh class, x_array, y_array, rank used for writing)
       IF (IAND(dumpmask(c_dump_grid), code) .NE. 0) THEN
         IF (.NOT. use_offset_grid) THEN
           CALL cfd_write_3d_cartesian_grid("Grid", "Grid", &
@@ -104,8 +105,9 @@ CONTAINS
         ENDIF
       ENDIF
 
-      ! (Variable_Name, Variable_Class, array, global_npart, Mesh_Name,
-      ! Mesh_Class, MPI_TYPE describing data distribution)
+      ! (variable name, variable class, iterator function,
+      ! global number of particles, number of particles to write per iteration,
+      ! mesh name, mesh class, mpi type describing data distribution)
       IF (IAND(dumpmask(c_dump_part_species), code) .NE. 0) &
           CALL cfd_write_nd_particle_variable_with_iterator_all("Species", &
               "Particles", iterate_species, npart_dump_global, n_part_per_it, &
@@ -159,132 +161,33 @@ CONTAINS
           "Particles", "Part_Grid", subtype_particle_var)
 #endif
 
-      IF (IAND(dumpmask(c_dump_ex), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("Ex", &
-              "Electric Field", dims, stagger, "Grid", "Grid", &
-              ex(1:nx, 1:ny, 1:nz), subtype_field)
-      IF (IAND(dumpmask(c_dump_ey), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("Ey", &
-              "Electric Field", dims, stagger, "Grid", "Grid", &
-              ey(1:nx, 1:ny, 1:nz), subtype_field)
-      IF (IAND(dumpmask(c_dump_ez), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("Ez", &
-              "Electric Field", dims, stagger, "Grid", "Grid", &
-              ez(1:nx, 1:ny, 1:nz), subtype_field)
+      CALL write_field(c_dump_ex, code, 'Ex', 'Electric Field', ex)
+      CALL write_field(c_dump_ey, code, 'Ey', 'Electric Field', ey)
+      CALL write_field(c_dump_ez, code, 'Ez', 'Electric Field', ez)
 
-      IF (IAND(dumpmask(c_dump_bx), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("Bx", &
-              "Magnetic Field", dims, stagger, "Grid", "Grid", &
-              bx(1:nx, 1:ny, 1:nz), subtype_field)
-      IF (IAND(dumpmask(c_dump_by), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("By", &
-              "Magnetic Field", dims, stagger, "Grid", "Grid", &
-              by(1:nx, 1:ny, 1:nz), subtype_field)
-      IF (IAND(dumpmask(c_dump_bz), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("Bz", &
-              "Magnetic Field", dims, stagger, "Grid", "Grid", &
-              bz(1:nx, 1:ny, 1:nz), subtype_field)
+      CALL write_field(c_dump_bx, code, 'Bx', 'Magnetic Field', bx)
+      CALL write_field(c_dump_by, code, 'By', 'Magnetic Field', by)
+      CALL write_field(c_dump_bz, code, 'Bz', 'Magnetic Field', bz)
 
-      IF (IAND(dumpmask(c_dump_jx), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("Jx", &
-              "Current", dims, stagger, "Grid", "Grid", &
-              jx(1:nx, 1:ny, 1:nz), subtype_field)
-      IF (IAND(dumpmask(c_dump_jy), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("Jy", &
-              "Current", dims, stagger, "Grid", "Grid", &
-              jy(1:nx, 1:ny, 1:nz), subtype_field)
-      IF (IAND(dumpmask(c_dump_jz), code) .NE. 0) &
-          CALL cfd_write_3d_cartesian_variable_parallel("Jz", &
-              "Current", dims, stagger, "Grid", "Grid", &
-              jz(1:nx, 1:ny, 1:nz), subtype_field)
+      CALL write_field(c_dump_jx, code, 'Jx', 'Current', jx)
+      CALL write_field(c_dump_jy, code, 'Jy', 'Current', jy)
+      CALL write_field(c_dump_jz, code, 'Jz', 'Current', jz)
 
       ! These are derived variables from the particles
-      IF (IAND(dumpmask(c_dump_ekbar), code) .NE. 0) THEN
-        IF (IAND(dumpmask(c_dump_ekbar), c_io_no_intrinsic) .EQ. 0) THEN
-          CALL calc_ekbar(data, 0)
-          CALL cfd_write_3d_cartesian_variable_parallel("EkBar", "EkBar", &
-              dims, stagger, "Grid", "Grid", data(1:nx,1:ny,1:nz), &
-              subtype_field)
-        ENDIF
-        IF (IAND(dumpmask(c_dump_ekbar), c_io_species) .NE. 0) THEN
-          DO ispecies = 1, n_species
-            CALL calc_ekbar(data, ispecies)
-            WRITE(temp_name, '("EkBar_", a)') &
-                TRIM(particle_species(ispecies)%name)
-            CALL cfd_write_3d_cartesian_variable_parallel(&
-                TRIM(ADJUSTL(temp_name)), "EkBar", dims, stagger, "Grid", &
-                "Grid", data(1:nx, 1:ny, 1:nz), subtype_field)
-          ENDDO
-        ENDIF
-      ENDIF
+      CALL write_nspecies_field(c_dump_ekbar, code, 'EkBar', &
+          'EkBar', calc_ekbar, data)
 
-      IF (IAND(dumpmask(c_dump_mass_density), code) .NE. 0) THEN
-        CALL calc_mass_density(data, 0)
-        CALL cfd_write_3d_cartesian_variable_parallel("Mass_Density", &
-            "Derived", dims, stagger, "Grid", "Grid", data(1:nx, 1:ny, 1:nz), &
-            subtype_field)
-        IF (IAND(dumpmask(c_dump_mass_density), c_io_species) .NE. 0) THEN
-          DO ispecies = 1, n_species
-            CALL calc_mass_density(data, ispecies)
-            WRITE(temp_name, '("Mass_Density_", a)') &
-                TRIM(particle_species(ispecies)%name)
-            CALL cfd_write_3d_cartesian_variable_parallel(&
-                TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, "Grid", &
-                "Grid", data(1:nx, 1:ny, 1:nz), subtype_field)
-          ENDDO
-        ENDIF
-      ENDIF
+      CALL write_nspecies_field(c_dump_mass_density, code, 'Mass_density', &
+          'Derived', calc_mass_density, data)
 
-      IF (IAND(dumpmask(c_dump_charge_density), code) .NE. 0) THEN
-        CALL calc_charge_density(data, 0)
-        CALL cfd_write_3d_cartesian_variable_parallel("Charge_Density", &
-            "Derived", dims, stagger, "Grid", "Grid", data(1:nx, 1:ny, 1:nz), &
-            subtype_field)
-        IF (IAND(dumpmask(c_dump_charge_density), c_io_species) .NE. 0) THEN
-          DO ispecies = 1, n_species
-            CALL calc_charge_density(data, ispecies)
-            WRITE(temp_name, '("Charge_Density_", a)') &
-                TRIM(particle_species(ispecies)%name)
-            CALL cfd_write_3d_cartesian_variable_parallel(&
-                TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, "Grid", &
-                "Grid", data(1:nx, 1:ny, 1:nz), subtype_field)
-          ENDDO
-        ENDIF
-      ENDIF
+      CALL write_nspecies_field(c_dump_charge_density, code, 'Charge_density', &
+          'Derived', calc_charge_density, data)
 
-      IF (IAND(dumpmask(c_dump_number_density), code) .NE. 0) THEN
-        CALL calc_number_density(data, 0)
-        CALL cfd_write_3d_cartesian_variable_parallel("Number_Density", &
-            "Derived", dims, stagger, "Grid", "Grid", data(1:nx, 1:ny, 1:nz), &
-            subtype_field)
-        IF (IAND(dumpmask(c_dump_number_density), c_io_species) .NE. 0) THEN
-          DO ispecies = 1, n_species
-            CALL calc_number_density(data, ispecies)
-            WRITE(temp_name, '("Number_Density_", a)') &
-                TRIM(particle_species(ispecies)%name)
-            CALL cfd_write_3d_cartesian_variable_parallel(&
-                TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, "Grid", &
-                "Grid", data(1:nx, 1:ny, 1:nz), subtype_field)
-          ENDDO
-        ENDIF
-      ENDIF
+      CALL write_nspecies_field(c_dump_number_density, code, 'Number_density', &
+          'Derived', calc_number_density, data)
 
-      IF (IAND(dumpmask(c_dump_temperature), code) .NE. 0) THEN
-        CALL calc_temperature(data, 0)
-        CALL cfd_write_3d_cartesian_variable_parallel("Temperature", &
-            "Derived", dims, stagger, "Grid", "Grid", data(1:nx, 1:ny, 1:nz), &
-            subtype_field)
-        IF (IAND(dumpmask(c_dump_temperature), c_io_species) .NE. 0) THEN
-          DO ispecies = 1, n_species
-            CALL calc_temperature(data, ispecies)
-            WRITE(temp_name, '("Temperature_", a)') &
-                TRIM(particle_species(ispecies)%name)
-            CALL cfd_write_3d_cartesian_variable_parallel(&
-                TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, "Grid", &
-                "Grid", data(1:nx, 1:ny, 1:nz), subtype_field)
-          ENDDO
-        ENDIF
-      ENDIF
+      CALL write_nspecies_field(c_dump_temperature, code, 'Temperature', &
+          'Derived', calc_temperature, data)
 
 #ifdef FIELD_DEBUG
       data = rank
@@ -308,7 +211,7 @@ CONTAINS
             source_code, last_line, 0)
       ENDIF
 
-      ! CLOSE the file
+      ! close the file
       CALL cfd_close()
 
       output_file = output_file + 1
@@ -941,5 +844,72 @@ CONTAINS
     n_points = part_count
 
   END SUBROUTINE iterate_pz
+ 
+ 
+ 
+  SUBROUTINE write_field(id, code, name, class, array)
+
+    INTEGER, INTENT(IN) :: id, code
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
+    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: array
+    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
+    INTEGER, DIMENSION(c_ndims) :: dims
+
+    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+
+    dims = (/nx_global, ny_global, nz_global/)
+
+    ! (variable name, variable class, global grid dimensions,
+    ! grid stagger, mesh name, mesh class, variable,
+    ! mpi type describing data distribution)
+    CALL cfd_write_3d_cartesian_variable_parallel( &
+        TRIM(name), TRIM(class), dims, stagger, &
+        'Grid', 'Grid', array(1:nx,1:ny,1:nz), subtype_field)
+
+  END SUBROUTINE write_field
+
+
+
+  SUBROUTINE write_nspecies_field(id, code, name, class, func, data)
+
+    INTEGER, INTENT(IN) :: id, code
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
+    REAL(num), DIMENSION(:,:,:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
+    INTEGER, DIMENSION(c_ndims) :: dims
+    INTEGER :: ispecies
+    CHARACTER(LEN=50) :: temp_name
+
+    INTERFACE
+      SUBROUTINE func(data_array, current_species)
+        USE shared_data
+        REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
+        INTEGER, INTENT(IN) :: current_species
+      END SUBROUTINE func
+    END INTERFACE
+
+    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+
+    dims = (/nx_global, ny_global, nz_global/)
+
+    IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
+      CALL func(data, 0)
+      CALL cfd_write_3d_cartesian_variable_parallel( &
+          TRIM(name), TRIM(class), dims, stagger, &
+          'Grid', 'Grid', data(1:nx, 1:ny, 1:nz), subtype_field)
+    ENDIF
+
+    IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+      DO ispecies = 1, n_species
+        CALL func(data, ispecies)
+        WRITE(temp_name, '(a, "_", a)') TRIM(name), &
+            TRIM(particle_species(ispecies)%name)
+        CALL cfd_write_3d_cartesian_variable_parallel( &
+            TRIM(ADJUSTL(temp_name)), TRIM(class), dims, stagger, &
+            'Grid', 'Grid', data(1:nx, 1:ny, 1:nz), subtype_field)
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE write_nspecies_field
 
 END MODULE diagnostics
