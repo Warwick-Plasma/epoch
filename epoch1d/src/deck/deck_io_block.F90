@@ -174,6 +174,9 @@ CONTAINS
     dumpmask(c_dump_bx) = IOR(dumpmask(c_dump_bx), c_io_restartable)
     dumpmask(c_dump_by) = IOR(dumpmask(c_dump_by), c_io_restartable)
     dumpmask(c_dump_bz) = IOR(dumpmask(c_dump_bz), c_io_restartable)
+    dumpmask(c_dump_jx) = IOR(dumpmask(c_dump_jx), c_io_restartable)
+    dumpmask(c_dump_jy) = IOR(dumpmask(c_dump_jy), c_io_restartable)
+    dumpmask(c_dump_jz) = IOR(dumpmask(c_dump_jz), c_io_restartable)
 
     DO index = 1, n_var_special
       IF (.NOT. io_block_done(index)) THEN

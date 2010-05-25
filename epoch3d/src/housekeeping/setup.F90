@@ -300,6 +300,18 @@ CONTAINS
               CALL cfd_get_3d_cartesian_variable_parallel(bz(1:nx,1:ny,1:nz), &
                   subtype_field)
 
+          IF (str_cmp(name(1:2), "Jx")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(jx(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Jy")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(jy(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
+          IF (str_cmp(name(1:2), "Jz")) &
+              CALL cfd_get_3d_cartesian_variable_parallel(jz(1:nx,1:ny,1:nz), &
+                  subtype_field)
+
         CASE(c_var_particle)
           CALL cfd_get_nd_particle_variable_metadata_all(npart_l, extents, &
               mesh_name, mesh_class)
