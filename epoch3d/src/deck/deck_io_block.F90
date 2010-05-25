@@ -40,11 +40,11 @@ MODULE deck_io_block
           "mass_density                 ", &
           "charge_density               ", &
           "number_density               ", &
+          "temperature                  ", &
           "particle_weight              ", &
           "species_id                   ", &
           "distribution_functions       ", &
           "particle_probes              ", &
-          "temperature                  ", &
           "ejected_particles            " /)
 
 CONTAINS
@@ -53,7 +53,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_io_deck
-    INTEGER :: loop, elementselected, mask, ierr
+    INTEGER :: loop, elementselected, mask, mask_element, ierr
 
     handle_io_deck = c_err_unknown_element
 
@@ -98,18 +98,19 @@ CONTAINS
     IF (elementselected .LE. n_var_special) RETURN
 
     mask = as_integer(value, handle_io_deck)
+    mask_element = elementselected - n_var_special
 
     ! If setting dumpmask for particle probes then report if the code wasn't
     ! compiled for particle probes
 #ifndef PARTICLE_PROBES
-    IF (elementselected-n_var_special .EQ. 27 .AND. mask .NE. c_io_never) THEN
+    IF (mask_element .EQ. 28 .AND. mask .NE. c_io_never) THEN
       handle_io_deck = c_err_pp_options_wrong
       extended_error_string = "-DPARTICLE_PROBES"
       mask = c_io_never
     ENDIF
 #endif
 
-    dumpmask(elementselected-n_var_special) = mask
+    dumpmask(mask_element) = mask
 
   END FUNCTION handle_io_deck
 
@@ -131,7 +132,7 @@ CONTAINS
     ! Fields
     dumpmask(9:14) = IOR(dumpmask(9:14), c_io_restartable)
     ! Weight and species info
-    dumpmask(24:25) = IOR(dumpmask(24:25), c_io_restartable)
+    dumpmask(25:26) = IOR(dumpmask(25:26), c_io_restartable)
 
     DO index = 1, n_var_special
       IF (.NOT. io_block_done(index)) THEN

@@ -273,6 +273,23 @@ CONTAINS
       ENDIF
 
       IF (IAND(dumpmask(24), code) .NE. 0) THEN
+        CALL calc_temperature(data, 0)
+        CALL cfd_write_2d_cartesian_variable_parallel("Temperature", &
+            "Derived", dims, stagger, "Grid", "Grid", data(1:nx, 1:ny), &
+            subtype_field)
+        IF (IAND(dumpmask(24), c_io_species) .NE. 0) THEN
+          DO ispecies = 1, n_species
+            CALL calc_temperature(data, ispecies)
+            WRITE(temp_name, '("Temperature_", a)') &
+                TRIM(particle_species(ispecies)%name)
+            CALL cfd_write_2d_cartesian_variable_parallel(&
+                TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, "Grid", &
+                "Grid", data(1:nx, 1:ny), subtype_field)
+          ENDDO
+        ENDIF
+      ENDIF
+
+      IF (IAND(dumpmask(25), code) .NE. 0) THEN
 #ifdef PER_PARTICLE_WEIGHT
         CALL cfd_write_nd_particle_variable_with_iterator_all("Weight", &
             "Particles", iterate_weight, npart_dump_global, n_part_per_it, &
@@ -282,7 +299,7 @@ CONTAINS
 #endif
       ENDIF
 
-      IF (IAND(dumpmask(25), code) .NE. 0) THEN
+      IF (IAND(dumpmask(26), code) .NE. 0) THEN
         CALL cfd_write_nd_particle_variable_with_iterator_all("Species", &
             "Particles", iterate_species, npart_dump_global, n_part_per_it, &
             "Particles", "Part_Grid", subtype_particle_var)
@@ -294,32 +311,15 @@ CONTAINS
           dims, stagger, "Grid", "Grid", data(1:nx, 1:ny), subtype_field)
 #endif
 
-      IF (IAND(dumpmask(26), code) .NE. 0) THEN
+      IF (IAND(dumpmask(27), code) .NE. 0) THEN
         CALL write_dist_fns(code)
       ENDIF
 
 #ifdef PARTICLE_PROBES
-      IF (IAND(dumpmask(27), code) .NE. 0) THEN
+      IF (IAND(dumpmask(28), code) .NE. 0) THEN
         CALL write_probes(code)
       ENDIF
 #endif
-
-      IF (IAND(dumpmask(28), code) .NE. 0) THEN
-        CALL calc_temperature(data, 0)
-        CALL cfd_write_2d_cartesian_variable_parallel("Temperature", &
-            "Derived", dims, stagger, "Grid", "Grid", data(1:nx, 1:ny), &
-            subtype_field)
-        IF (IAND(dumpmask(28), c_io_species) .NE. 0) THEN
-          DO ispecies = 1, n_species
-            CALL calc_temperature(data, ispecies)
-            WRITE(temp_name, '("Temperature_", a)') &
-                TRIM(particle_species(ispecies)%name)
-            CALL cfd_write_2d_cartesian_variable_parallel(&
-                TRIM(ADJUSTL(temp_name)), "Derived", dims, stagger, "Grid", &
-                "Grid", data(1:nx, 1:ny), subtype_field)
-          ENDDO
-        ENDIF
-      ENDIF
 
       IF (restart_flag .EQ. 1 .AND. LEN(source_code) .GT. 0) THEN
         CALL write_input_decks
