@@ -351,6 +351,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_dir_gamma) THEN
+      CALL push_on_eval(REAL(c_dir_gamma,num))
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_const_nx) THEN
       CALL push_on_eval(REAL(nx_global, num))
       RETURN

@@ -139,6 +139,7 @@ CONTAINS
     INTEGER, DIMENSION(c_df_curdims) :: cell
     LOGICAL :: use_this
     REAL(num) :: real_space_area, part_weight
+    REAL(num) :: part_mass, part_mass_c, gamma_mass_c
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: grid_name, norm_grid_name, var_name
@@ -164,6 +165,8 @@ CONTAINS
 
     real_space_area = 1.0_num
     current_data = 0.0_num
+    part_mass = particle_species(species)%mass
+    part_mass_c = part_mass * c
 
     DO idim = 1, c_df_curdims
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -227,6 +230,12 @@ CONTAINS
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 6
       ENDIF
+
+      IF (IAND(direction(idim), c_dir_gamma) .NE. 0) THEN
+        use_direction(idim, 7) = .TRUE.
+        p_count(idim) = p_count(idim)+1
+        l_direction(idim) = 7
+      ENDIF
     ENDDO
 
     IF (.NOT. use_x) real_space_area = real_space_area*dx
@@ -250,15 +259,13 @@ CONTAINS
       DO WHILE(ASSOCIATED(current))
         particle_data(1:2) = current%part_pos
         particle_data(3:5) = current%part_p
-#ifndef PER_PARTICLE_CHARGE_MASS
-        particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-            + particle_species(species)%mass**2 * c**4) &
-            - particle_species(species)%mass * c**2
-#else
-        particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-            + current%mass**2 * c**4) &
-            - current%mass * c**2
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_mass = current%mass
+        part_mass_c = part_mass * c
 #endif
+        gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
+        particle_data(6) = c * (gamma_mass_c - part_mass_c)
+        particle_data(7) = gamma_mass_c / part_mass_c - 1.0_num
         DO idim = 1, c_df_curdims
           IF (calc_range(idim)) THEN
             IF (calc_mod(idim)) THEN
@@ -362,15 +369,13 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       particle_data(1:2) = current%part_pos
       particle_data(3:5) = current%part_p
-#ifndef PER_PARTICLE_CHARGE_MASS
-      particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-          + particle_species(species)%mass**2 * c**4) &
-          - particle_species(species)%mass * c**2
-#else
-      particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-          + current%mass**2 * c**4) &
-          - current%mass * c**2
+#ifdef PER_PARTICLE_CHARGE_MASS
+      part_mass = current%mass
+      part_mass_c = part_mass * c
 #endif
+      gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
+      particle_data(6) = c * (gamma_mass_c - part_mass_c)
+      particle_data(7) = gamma_mass_c / part_mass_c - 1.0_num
       use_this = .TRUE.
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &
@@ -478,6 +483,7 @@ CONTAINS
     INTEGER, DIMENSION(c_df_curdims) :: cell
     LOGICAL :: use_this
     REAL(num) :: real_space_area, part_weight
+    REAL(num) :: part_mass, part_mass_c, gamma_mass_c
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: grid_name, norm_grid_name, var_name
@@ -503,6 +509,8 @@ CONTAINS
 
     real_space_area = 1.0_num
     current_data = 0.0_num
+    part_mass = particle_species(species)%mass
+    part_mass_c = part_mass * c
 
     DO idim = 1, c_df_curdims
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -566,6 +574,12 @@ CONTAINS
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 6
       ENDIF
+
+      IF (IAND(direction(idim), c_dir_gamma) .NE. 0) THEN
+        use_direction(idim, 7) = .TRUE.
+        p_count(idim) = p_count(idim)+1
+        l_direction(idim) = 7
+      ENDIF
     ENDDO
 
     IF (.NOT. use_x) real_space_area = real_space_area*dx
@@ -589,15 +603,13 @@ CONTAINS
       DO WHILE(ASSOCIATED(current))
         particle_data(1:2) = current%part_pos
         particle_data(3:5) = current%part_p
-#ifndef PER_PARTICLE_CHARGE_MASS
-        particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-            + particle_species(species)%mass**2 * c**4) &
-            - particle_species(species)%mass * c**2
-#else
-        particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-            + current%mass**2 * c**4) &
-            - current%mass * c**2
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_mass = current%mass
+        part_mass_c = part_mass * c
 #endif
+        gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
+        particle_data(6) = c * (gamma_mass_c - part_mass_c)
+        particle_data(7) = gamma_mass_c / part_mass_c - 1.0_num
         DO idim = 1, c_df_curdims
           IF (calc_range(idim)) THEN
             IF (calc_mod(idim)) THEN
@@ -695,15 +707,13 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       particle_data(1:2) = current%part_pos
       particle_data(3:5) = current%part_p
-#ifndef PER_PARTICLE_CHARGE_MASS
-      particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-          + particle_species(species)%mass**2 * c**4) &
-          - particle_species(species)%mass * c**2
-#else
-      particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-          + current%mass**2 * c**4) &
-          - current%mass * c**2
+#ifdef PER_PARTICLE_CHARGE_MASS
+      part_mass = current%mass
+      part_mass_c = part_mass * c
 #endif
+      gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
+      particle_data(6) = c * (gamma_mass_c - part_mass_c)
+      particle_data(7) = gamma_mass_c / part_mass_c - 1.0_num
       use_this = .TRUE.
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &
@@ -808,6 +818,7 @@ CONTAINS
     INTEGER, DIMENSION(c_df_curdims) :: cell
     LOGICAL :: use_this
     REAL(num) :: real_space_area, part_weight
+    REAL(num) :: part_mass, part_mass_c, gamma_mass_c
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: grid_name, norm_grid_name, var_name
@@ -833,6 +844,8 @@ CONTAINS
 
     real_space_area = 1.0_num
     current_data = 0.0_num
+    part_mass = particle_species(species)%mass
+    part_mass_c = part_mass * c
 
     DO idim = 1, c_df_curdims
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -896,6 +909,12 @@ CONTAINS
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = 6
       ENDIF
+
+      IF (IAND(direction(idim), c_dir_gamma) .NE. 0) THEN
+        use_direction(idim, 7) = .TRUE.
+        p_count(idim) = p_count(idim)+1
+        l_direction(idim) = 7
+      ENDIF
     ENDDO
 
     IF (.NOT. use_x) real_space_area = real_space_area*dx
@@ -919,15 +938,13 @@ CONTAINS
       DO WHILE(ASSOCIATED(current))
         particle_data(1:2) = current%part_pos
         particle_data(3:5) = current%part_p
-#ifndef PER_PARTICLE_CHARGE_MASS
-        particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-            + particle_species(species)%mass**2 * c**4) &
-            - particle_species(species)%mass * c**2
-#else
-        particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-            + current%mass**2 * c**4) &
-            - current%mass * c**2
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_mass = current%mass
+        part_mass_c = part_mass * c
 #endif
+        gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
+        particle_data(6) = c * (gamma_mass_c - part_mass_c)
+        particle_data(7) = gamma_mass_c / part_mass_c - 1.0_num
         DO idim = 1, c_df_curdims
           IF (calc_range(idim)) THEN
             IF (calc_mod(idim)) THEN
@@ -1020,15 +1037,13 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       particle_data(1:2) = current%part_pos
       particle_data(3:5) = current%part_p
-#ifndef PER_PARTICLE_CHARGE_MASS
-      particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-          + particle_species(species)%mass**2 * c**4) &
-          - particle_species(species)%mass * c**2
-#else
-      particle_data(6) = SQRT(SUM(current%part_p**2) * c**2 &
-          + current%mass**2 * c**4) &
-          - current%mass * c**2
+#ifdef PER_PARTICLE_CHARGE_MASS
+      part_mass = current%mass
+      part_mass_c = part_mass * c
 #endif
+      gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
+      particle_data(6) = c * (gamma_mass_c - part_mass_c)
+      particle_data(7) = gamma_mass_c / part_mass_c - 1.0_num
       use_this = .TRUE.
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &

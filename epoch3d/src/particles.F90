@@ -88,7 +88,7 @@ CONTAINS
     REAL(num) :: idtxy, idtyz, idtxz
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, mean, fac, dtfac, third, momentum, cf2
+    REAL(num) :: root, mean, fac, dtfac, third, gamma_mass_c, cf2
     REAL(num) :: delta_x, delta_y, delta_z
     INTEGER :: ispecies, dcellx, dcelly, dcellz
     INTEGER(KIND=8) :: ipart
@@ -293,12 +293,12 @@ CONTAINS
         part_pz = pzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        momentum = SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
-        root = c / momentum
+        gamma_mass_c = SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
+        root = dtco2 / gamma_mass_c
 
-        delta_x = part_px * root * dto2
-        delta_y = part_py * root * dto2
-        delta_z = part_pz * root * dto2
+        delta_x = part_px * root
+        delta_y = part_py * root
+        delta_z = part_pz * root
 
         ! Move particles to end of time step at 2nd order accuracy
         part_x = part_x + delta_x
@@ -433,7 +433,7 @@ CONTAINS
         DO WHILE(ASSOCIATED(current_probe))
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
-          probe_energy = c * (momentum - part_mc)
+          probe_energy = c * (gamma_mass_c - part_mc)
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN

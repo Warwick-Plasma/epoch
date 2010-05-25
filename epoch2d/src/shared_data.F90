@@ -87,6 +87,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_py = 16
   INTEGER, PARAMETER :: c_dir_pz = 32
   INTEGER, PARAMETER :: c_dir_en = 64
+  INTEGER, PARAMETER :: c_dir_gamma = 128
 
   ! define flags
   INTEGER(4), PARAMETER :: c_def_particle_debug = 1
@@ -105,7 +106,7 @@ MODULE constants
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
-  INTEGER, PARAMETER :: c_df_maxdirs = 4 + c_ndims
+  INTEGER, PARAMETER :: c_df_maxdirs = 5 + c_ndims
   INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! Length of a standard string
@@ -205,8 +206,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_py = 53
   INTEGER, PARAMETER :: c_const_dir_pz = 54
   INTEGER, PARAMETER :: c_const_dir_en = 55
-  INTEGER, PARAMETER :: c_const_nx = 56
-  INTEGER, PARAMETER :: c_const_ny = 57
+  INTEGER, PARAMETER :: c_const_dir_gamma = 56
+  INTEGER, PARAMETER :: c_const_nx = 57
+  INTEGER, PARAMETER :: c_const_ny = 58
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
