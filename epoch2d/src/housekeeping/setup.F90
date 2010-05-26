@@ -156,18 +156,31 @@ CONTAINS
 
   SUBROUTINE setup_data_averaging()
 
-    INTEGER :: ioutput
+    INTEGER :: ioutput, n_species_local
+    REAL(num) :: min_av_time
 
+    dt_min_average = -1.0_num
+    IF (.NOT. any_average) RETURN
+
+    min_av_time = t_end
     DO ioutput = 1, num_vars_to_dump
       IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
-        ALLOCATE(averaged_data(ioutput)%data(-2:nx+3, -2:ny+3))
-        averaged_data(ioutput)%data = 0.0_num
-        averaged_data(ioutput)%average_type = 0
-        averaged_data(ioutput)%average_over_iterations = -1
-        averaged_data(ioutput)%average_over_real_time = 0.0_num
-        averaged_data(ioutput)%number_of_iterations = 0
+        averaged_data(ioutput)%average_over_real_time = average_time
+        min_av_time = &
+            MIN(min_av_time, averaged_data(ioutput)%average_over_real_time)
+        n_species_local = 1
+        IF (IAND(dumpmask(ioutput), c_io_species) .NE. 0) &
+            n_species_local = n_species + 1
+        ALLOCATE(averaged_data(ioutput)%array(-2:nx+3,-2:ny+3,n_species_local))
+        averaged_data(ioutput)%array = 0.0_num
+        averaged_data(ioutput)%real_time_after_average = 0.0_num
+      ELSE
+        dumpmask(ioutput) = IOR(dumpmask(ioutput), c_io_snapshot)
       ENDIF
     ENDDO
+
+    IF (min_cycles_per_average .GT. 0) &
+        dt_min_average = min_av_time / REAL(min_cycles_per_average, num)
 
   END SUBROUTINE setup_data_averaging
 

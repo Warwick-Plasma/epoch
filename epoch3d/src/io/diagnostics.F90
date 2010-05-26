@@ -81,7 +81,7 @@ CONTAINS
       restart_flag = 0
     ENDIF
 
-    ALLOCATE(data(-2:nx+3, -2:ny+3, -2:nz+3))
+    ALLOCATE(data(-2:nx+3,-2:ny+3,-2:nz+3))
 
     ! open the file
     ! (filename, rank of current process, MPI communicator (can be
@@ -263,6 +263,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: i
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
+    INTEGER :: ioutput
 
     REAL(num), SAVE :: t1 = 0.0_num
     LOGICAL, SAVE :: first = .TRUE.
@@ -274,6 +275,14 @@ CONTAINS
 
     print_arrays = .FALSE.
     last_call = .FALSE.
+
+    DO ioutput = 1, num_vars_to_dump
+      IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0 &
+          .AND. (time &
+          .GE. t1 - averaged_data(ioutput)%average_over_real_time)) THEN
+        CALL average_field(ioutput)
+      ENDIF
+    ENDDO
 
     IF (time .GE. t1) THEN
       print_arrays = .TRUE.
@@ -289,11 +298,99 @@ CONTAINS
 
 
 
+  SUBROUTINE average_field(ioutput)
+
+    INTEGER, INTENT(IN) :: ioutput
+    INTEGER :: n_species_local, ispecies
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
+
+    averaged_data(ioutput)%real_time_after_average = &
+        averaged_data(ioutput)%real_time_after_average + dt
+
+    n_species_local = 1
+    IF (IAND(dumpmask(ioutput), c_io_species) .NE. 0) &
+        n_species_local = n_species + 1
+
+    SELECT CASE(ioutput)
+    CASE(c_dump_ex)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + ex * dt
+    CASE(c_dump_ey)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + ey * dt
+    CASE(c_dump_ez)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + ez * dt
+    CASE(c_dump_bx)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + bx * dt
+    CASE(c_dump_by)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + by * dt
+    CASE(c_dump_bz)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + bz * dt
+    CASE(c_dump_jx)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + jx * dt
+    CASE(c_dump_jy)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + jy * dt
+    CASE(c_dump_jz)
+      averaged_data(ioutput)%array(:,:,:,1) = &
+          averaged_data(ioutput)%array(:,:,:,1) + jz * dt
+    CASE(c_dump_ekbar)
+      ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
+      DO ispecies = 1, n_species_local
+        CALL calc_ekbar(array, ispecies-1)
+        averaged_data(ioutput)%array(:,:,:,ispecies) = &
+            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+      ENDDO
+      DEALLOCATE(array)
+    CASE(c_dump_mass_density)
+      ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
+      DO ispecies = 1, n_species_local
+        CALL calc_mass_density(array, ispecies-1)
+        averaged_data(ioutput)%array(:,:,:,ispecies) = &
+            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+      ENDDO
+      DEALLOCATE(array)
+    CASE(c_dump_charge_density)
+      ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
+      DO ispecies = 1, n_species_local
+        CALL calc_charge_density(array, ispecies-1)
+        averaged_data(ioutput)%array(:,:,:,ispecies) = &
+            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+      ENDDO
+      DEALLOCATE(array)
+    CASE(c_dump_number_density)
+      ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
+      DO ispecies = 1, n_species_local
+        CALL calc_number_density(array, ispecies-1)
+        averaged_data(ioutput)%array(:,:,:,ispecies) = &
+            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+      ENDDO
+      DEALLOCATE(array)
+    CASE(c_dump_temperature)
+      ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
+      DO ispecies = 1, n_species_local
+        CALL calc_temperature(array, ispecies-1)
+        averaged_data(ioutput)%array(:,:,:,ispecies) = &
+            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+      ENDDO
+      DEALLOCATE(array)
+    END SELECT
+
+  END SUBROUTINE average_field
+
+
+
   SUBROUTINE set_dt        ! sets CFL limited step
 
     dt = dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
     IF (dt_plasma_frequency .NE. 0.0_num) dt = MIN(dt, dt_plasma_frequency)
     IF (dt_laser .NE. 0.0_num) dt = MIN(dt, dt_laser)
+    IF (dt_min_average .GT. 0.0_num) dt = MIN(dt, dt_min_average)
     dt = dt_multiplier * dt
 
   END SUBROUTINE set_dt
@@ -313,30 +410,51 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), INTENT(IN) :: array
     REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER, DIMENSION(c_ndims) :: dims
+    INTEGER :: should_dump
 
     IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
 
     dims = (/nx_global, ny_global, nz_global/)
 
+    ! Want the code to output unaveraged data if either restarting or
+    ! requested by the user
+    should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
+    should_dump = IOR(should_dump, NOT(c_io_averaged))
+
     ! (variable name, variable class, global grid dimensions,
     ! grid stagger, mesh name, mesh class, variable,
     ! mpi type describing data distribution)
-    CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, &
-        TRIM(name), TRIM(class), dims, stagger, &
-        'Grid', 'Grid', array, subtype_field, subarray_field)
+    IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
+      CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, &
+          TRIM(name), TRIM(class), dims, stagger, &
+          'Grid', 'Grid', array, subtype_field, subarray_field)
+    ENDIF
+
+    IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
+      averaged_data(id)%array = averaged_data(id)%array &
+          / averaged_data(id)%real_time_after_average
+
+      CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, &
+          TRIM(name) // '_averaged', TRIM(class), dims, stagger, &
+          'Grid', 'Grid', averaged_data(id)%array(:,:,:,1), &
+          subtype_field, subarray_field)
+
+      averaged_data(id)%real_time_after_average = 0.0_num
+      averaged_data(id)%array = 0.0_num
+    ENDIF
 
   END SUBROUTINE write_field
 
 
 
-  SUBROUTINE write_nspecies_field(id, code, name, class, func, data)
+  SUBROUTINE write_nspecies_field(id, code, name, class, func, array)
 
     INTEGER, INTENT(IN) :: id, code
     CHARACTER(LEN=*), INTENT(IN) :: name, class
-    REAL(num), DIMENSION(:,:,:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:,:,:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: ispecies
+    INTEGER :: ispecies, should_dump
     CHARACTER(LEN=50) :: temp_name
 
     INTERFACE
@@ -351,22 +469,56 @@ CONTAINS
 
     dims = (/nx_global, ny_global, nz_global/)
 
-    IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
-      CALL func(data, 0)
-      CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, &
-          TRIM(name), TRIM(class), dims, stagger, &
-          'Grid', 'Grid', data, subtype_field, subarray_field)
+    ! Want the code to output unaveraged data if either restarting or
+    ! requested by the user
+    should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
+    should_dump = IOR(should_dump, NOT(c_io_averaged))
+
+    IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
+      IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
+        CALL func(array, 0)
+        CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, &
+            TRIM(name), TRIM(class), dims, stagger, &
+            'Grid', 'Grid', array, subtype_field, subarray_field)
+      ENDIF
+
+      IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+        DO ispecies = 1, n_species
+          CALL func(array, ispecies)
+          WRITE(temp_name, '(a, "_", a)') TRIM(name), &
+              TRIM(particle_species(ispecies)%name)
+          CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, &
+              TRIM(ADJUSTL(temp_name)), TRIM(class), dims, stagger, &
+              'Grid', 'Grid', array, subtype_field, subarray_field)
+        ENDDO
+      ENDIF
     ENDIF
 
-    IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
-      DO ispecies = 1, n_species
-        CALL func(data, ispecies)
-        WRITE(temp_name, '(a, "_", a)') TRIM(name), &
-            TRIM(particle_species(ispecies)%name)
+    ! Write averaged data
+    IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
+      averaged_data(id)%array = averaged_data(id)%array &
+          / averaged_data(id)%real_time_after_average
+
+      IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
         CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, &
-            TRIM(ADJUSTL(temp_name)), TRIM(class), dims, stagger, &
-            'Grid', 'Grid', data, subtype_field, subarray_field)
-      ENDDO
+            TRIM(name) // '_averaged', TRIM(class), dims, stagger, &
+            'Grid', 'Grid', averaged_data(id)%array(:,:,:,1), &
+            subtype_field, subarray_field)
+      ENDIF
+
+      IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+        DO ispecies = 1, n_species
+          WRITE(temp_name, '(a, "_", a, "_averaged")') TRIM(name), &
+              TRIM(particle_species(ispecies)%name)
+          CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, &
+              TRIM(ADJUSTL(temp_name)), TRIM(class), dims, stagger, &
+              'Grid', 'Grid', averaged_data(id)%array(:,:,:,ispecies+1), &
+              subtype_field, subarray_field)
+        ENDDO
+      ENDIF
+
+      averaged_data(id)%real_time_after_average = 0.0_num
+      averaged_data(id)%array = 0.0_num
     ENDIF
 
   END SUBROUTINE write_nspecies_field

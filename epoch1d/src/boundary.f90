@@ -77,7 +77,7 @@ CONTAINS
 
 
   SUBROUTINE field_zero_gradient(field, stagger_type, boundary)
- 
+
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: stagger_type, boundary
 
@@ -94,7 +94,7 @@ CONTAINS
 
 
   SUBROUTINE field_clamp_zero(field, stagger_type, boundary)
- 
+
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: stagger_type, boundary
 

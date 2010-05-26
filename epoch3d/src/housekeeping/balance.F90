@@ -247,9 +247,11 @@ CONTAINS
 
     INTEGER :: nx_new, ny_new, nz_new
     INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
+    REAL(num), DIMENSION(:,:,:,:), ALLOCATABLE :: temp4d
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp2d
     TYPE(laser_block), POINTER :: current
+    INTEGER :: ispecies, index, n_species_local
 
     nx_new = new_domain(1,2) - new_domain(1,1) + 1
     ny_new = new_domain(2,2) - new_domain(2,1) + 1
@@ -312,6 +314,29 @@ CONTAINS
     jz = temp
 
     DEALLOCATE(temp)
+
+    DO index = 1, num_vars_to_dump
+      IF (.NOT. ASSOCIATED(averaged_data(index)%array)) CYCLE
+
+      n_species_local = 1
+      IF (IAND(dumpmask(index), c_io_species) .NE. 0) &
+          n_species_local = n_species + 1
+
+      ALLOCATE(temp4d(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3, 1:n_species_local))
+
+      DO ispecies = 1, n_species_local
+        CALL redistribute_field(new_domain, &
+            averaged_data(index)%array(:,:,:,ispecies), temp4d(:,:,:,ispecies))
+      ENDDO
+
+      DEALLOCATE(averaged_data(index)%array)
+      ALLOCATE(averaged_data(index)%array(-2:nx_new+3,-2:ny_new+3,-2:nz_new+3, &
+          n_species_local))
+
+      averaged_data(index)%array = temp4d
+
+      DEALLOCATE(temp4d)
+    ENDDO
 
     ALLOCATE(temp2d(-2:ny_new+3, -2:nz_new+3))
 

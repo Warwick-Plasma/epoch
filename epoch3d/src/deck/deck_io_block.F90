@@ -6,7 +6,7 @@ MODULE deck_io_block
 
   SAVE
 
-  INTEGER, PARAMETER :: n_var_special = 6
+  INTEGER, PARAMETER :: n_var_special = 8
   INTEGER, PARAMETER :: io_block_elements = n_var_special + num_vars_to_dump
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done = .FALSE.
   LOGICAL :: need_dt = .FALSE.
@@ -47,6 +47,8 @@ MODULE deck_io_block
           "force_final_to_be_restartable", & ! s4
           "use_offset_grid              ", & ! s5
           "extended_io_file             ", & ! s6
+          "averaging_period             ", & ! s7
+          "min_cycles_per_average       ", & ! s8
           "particles                    ", & ! 1
           "grid                         ", & ! 2
           "species_id                   ", & ! 3
@@ -126,6 +128,10 @@ CONTAINS
         WRITE(40,*) 'Please use the "import" directive instead'
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    CASE(7)
+      average_time = as_real(value, handle_io_deck)
+    CASE(8)
+      min_cycles_per_average = as_integer(value, handle_io_deck)
     END SELECT
 
     IF (elementselected .LE. n_var_special) RETURN
@@ -145,7 +151,7 @@ CONTAINS
     ENDIF
 #endif
 
-    ! Setting some flags like species
+    ! Setting some flags like species and average 
     ! wastes memory if the parameters make no sense. Do sanity checking.
 
     IF (IAND(mask, c_io_species) .NE. 0) THEN
@@ -167,6 +173,36 @@ CONTAINS
       ENDIF
     ENDIF
 
+    IF (IAND(mask, c_io_averaged) .NE. 0) THEN
+      bad = .TRUE.
+      ! Check for sensible averaged variables
+      IF (mask_element .EQ. c_dump_ex) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_ey) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_ez) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_bx) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_by) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_bz) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_jx) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_jy) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
+      IF (bad) THEN
+        IF (rank .EQ. 0) THEN
+          WRITE(*,*) '*** WARNING ***'
+          WRITE(*,*) 'Attempting to set average property for "' &
+              // TRIM(element) // '" which'
+          WRITE(*,*) 'does not support this property. Ignoring.'
+        ENDIF
+        mask = IAND(mask, NOT(c_io_averaged))
+      ELSE
+        any_average = .TRUE.
+      ENDIF
+    ENDIF
+
     dumpmask(mask_element) = mask
 
   END FUNCTION handle_io_deck
@@ -184,6 +220,18 @@ CONTAINS
     IF (.NOT. need_dt) io_block_done(1) = .TRUE.
     ! Other control parameters are optional
     io_block_done(2:6) = .TRUE.
+    ! Averaging info not compulsory unless averaged variable selected
+    IF (.NOT. any_average) io_block_done(7:8) = .TRUE.
+
+    IF (dt_snapshots .LT. average_time) THEN
+      IF (rank .EQ. 0) THEN
+        WRITE(*,*) '*** WARNING ***'
+        WRITE(*,*) 'Averaging time is longer than dt_snapshot, will set', &
+            ' dt_snapshot equal'
+        WRITE(*,*) 'to averaging time.'
+      ENDIF
+      dt_snapshots = average_time
+    ENDIF
 
     ! Particles
     dumpmask(c_dump_part_grid) = &

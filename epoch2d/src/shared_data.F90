@@ -61,6 +61,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_species = 8
   INTEGER, PARAMETER :: c_io_no_intrinsic = 16
   INTEGER, PARAMETER :: c_io_averaged = 32
+  INTEGER, PARAMETER :: c_io_snapshot = 64
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
   INTEGER, PARAMETER :: c_do_decomposed = 1
@@ -214,16 +215,18 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_io_full = 46
   INTEGER, PARAMETER :: c_const_io_restartable = 47
   INTEGER, PARAMETER :: c_const_io_species = 48
-  INTEGER, PARAMETER :: c_const_dir_x = 49
-  INTEGER, PARAMETER :: c_const_dir_y = 50
-  INTEGER, PARAMETER :: c_const_dir_z = 51
-  INTEGER, PARAMETER :: c_const_dir_px = 52
-  INTEGER, PARAMETER :: c_const_dir_py = 53
-  INTEGER, PARAMETER :: c_const_dir_pz = 54
-  INTEGER, PARAMETER :: c_const_dir_en = 55
-  INTEGER, PARAMETER :: c_const_dir_gamma_m1 = 56
-  INTEGER, PARAMETER :: c_const_nx = 57
-  INTEGER, PARAMETER :: c_const_ny = 58
+  INTEGER, PARAMETER :: c_const_io_average = 49
+  INTEGER, PARAMETER :: c_const_io_snapshot = 50
+  INTEGER, PARAMETER :: c_const_dir_x = 51
+  INTEGER, PARAMETER :: c_const_dir_y = 52
+  INTEGER, PARAMETER :: c_const_dir_z = 53
+  INTEGER, PARAMETER :: c_const_dir_px = 54
+  INTEGER, PARAMETER :: c_const_dir_py = 55
+  INTEGER, PARAMETER :: c_const_dir_pz = 56
+  INTEGER, PARAMETER :: c_const_dir_en = 57
+  INTEGER, PARAMETER :: c_const_dir_gamma_m1 = 58
+  INTEGER, PARAMETER :: c_const_nx = 59
+  INTEGER, PARAMETER :: c_const_ny = 60
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -510,7 +513,7 @@ MODULE shared_data
   LOGICAL :: use_random_seed = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
-  REAL(num) :: dt_snapshots
+  REAL(num) :: dt_snapshots, dt_min_average
   REAL(num) :: length_x, dx, x_min, x_max
   REAL(num) :: x_min_local, x_max_local, length_x_local
   REAL(num) :: length_y, dy, y_min, y_max
@@ -584,13 +587,14 @@ MODULE shared_data
   ! Time averaged IO
   !----------------------------------------------------------------------------
   TYPE averaged_data_block
-    INTEGER :: average_type
-    REAL(num), DIMENSION(:,:), POINTER :: data
-    INTEGER :: average_over_iterations
+    REAL(num), DIMENSION(:,:,:), POINTER :: array
     REAL(num) :: average_over_real_time
-    INTEGER :: number_of_iterations
+    REAL(num) :: real_time_after_average
   END TYPE averaged_data_block
   TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
+  INTEGER :: min_cycles_per_average = -1
+  LOGICAL :: any_average = .FALSE.
+  REAL(num) :: average_time = -1.0_num
 
   !----------------------------------------------------------------------------
   ! laser boundaries

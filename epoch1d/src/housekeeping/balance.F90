@@ -130,7 +130,9 @@ CONTAINS
 
     INTEGER :: nx_new
     INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp2d
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER :: ispecies, index, n_species_local
 
     nx_new = new_domain(1,2) - new_domain(1,1) + 1
 
@@ -191,6 +193,28 @@ CONTAINS
     jz = temp
 
     DEALLOCATE(temp)
+
+    DO index = 1, num_vars_to_dump
+      IF (.NOT. ASSOCIATED(averaged_data(index)%array)) CYCLE
+
+      n_species_local = 1
+      IF (IAND(dumpmask(index), c_io_species) .NE. 0) &
+          n_species_local = n_species + 1
+
+      ALLOCATE(temp2d(-2:nx_new+3, 1:n_species_local))
+
+      DO ispecies = 1, n_species_local
+        CALL redistribute_field(new_domain, &
+            averaged_data(index)%array(:,ispecies), temp2d(:,ispecies))
+      ENDDO
+
+      DEALLOCATE(averaged_data(index)%array)
+      ALLOCATE(averaged_data(index)%array(-2:nx_new+3, n_species_local))
+
+      averaged_data(index)%array = temp2d
+
+      DEALLOCATE(temp2d)
+    ENDDO
 
     ! No need to rebalance lasers in 1D, lasers are just a point!
 
