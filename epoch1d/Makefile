@@ -16,7 +16,7 @@ MODULEFLAG = -module
 # Uncomment for the g95 compiler
 #MODULEFLAG = -fmod=
 # Uncomment for the gfortran compiler
-#MODULEFLAG = -J
+#MODULEFLAG = -I/usr/include -Iobj -J
 
 # If you are having trouble compiling the encoded_source module, try
 # uncommenting the following line.
