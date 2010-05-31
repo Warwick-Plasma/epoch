@@ -37,19 +37,20 @@ CONTAINS
     ENDIF
 
     ! Allocate the new list
-    n_deck_constants = n_deck_constants+1
-    ALLOCATE(deck_constant_list(1:n_deck_constants))
+    ALLOCATE(deck_constant_list(1:n_deck_constants+1))
 
     ! If old list not empty then
-    IF (n_deck_constants .GT. 1) THEN
-      deck_constant_list(1:n_deck_constants-1) = buffer
+    IF (n_deck_constants .GE. 1) THEN
+      deck_constant_list(1:n_deck_constants) = buffer
       DEALLOCATE(buffer)
     ENDIF
 
     ! Add the new value
-    deck_constant_list(n_deck_constants)%value = &
+    deck_constant_list(n_deck_constants+1)%value = &
         as_real(value, handle_constant_deck)
-    deck_constant_list(n_deck_constants)%name = element
+    deck_constant_list(n_deck_constants+1)%name = element
+
+    n_deck_constants = n_deck_constants+1
 
   END FUNCTION handle_constant_deck
 
