@@ -19,12 +19,6 @@ CONTAINS
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nproc, errcode)
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, rank, errcode)
 
-    IF (rank .EQ. 0) THEN
-      OPEN(unit=10, file="./input.deck", iostat=s, status='OLD')
-      deckfile = (s .EQ. 0)
-      CLOSE(10)
-    ENDIF
-
   END SUBROUTINE mpi_minimal_init
 
 
@@ -212,9 +206,6 @@ CONTAINS
     ALLOCATE(jx(-2:nx+3, -2:ny+3, -2:nz+3))
     ALLOCATE(jy(-2:nx+3, -2:ny+3, -2:nz+3))
     ALLOCATE(jz(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(ekbar(1:nx, 1:ny, 1:nz, 1:n_species))
-    ALLOCATE(ekbar_sum(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
-    ALLOCATE(ct(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
 
     ! Setup the particle lists
     NULLIFY(particle_species(1)%prev, particle_species(n_species)%next)

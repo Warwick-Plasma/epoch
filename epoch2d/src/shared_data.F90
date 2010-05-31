@@ -435,11 +435,6 @@ MODULE shared_data
     ! The dumpmask for the distribution function
     INTEGER :: dumpmask
 
-    ! Whether or not to store the range returned from the distribution
-    ! function code. This allows the code to store auto determined
-    ! ranges (experimental)
-    LOGICAL :: store_ranges
-
     ! The variables which define the ranges and resolutions of the
     ! distribution function
     INTEGER, DIMENSION(c_df_maxdims) :: directions
@@ -482,9 +477,6 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: wk_array
 
   TYPE(particle_family), DIMENSION(:), POINTER :: particle_species
-  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: ekbar ! temperature per species
-  ! Used to calculate temperature
-  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: ekbar_sum, sum_sq, ct
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, y
 
@@ -505,7 +497,7 @@ MODULE shared_data
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight
 
-  LOGICAL :: ic_from_restart = .FALSE., deckfile
+  LOGICAL :: ic_from_restart = .FALSE.
   INTEGER :: bc_x_min_field, bc_x_max_field
   INTEGER :: bc_y_min_field, bc_y_max_field
   INTEGER :: bc_x_min_particle, bc_x_max_particle

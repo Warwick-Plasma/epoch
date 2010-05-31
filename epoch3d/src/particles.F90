@@ -474,29 +474,6 @@ CONTAINS
     CALL processor_summation_bcs(jz)
     CALL field_bc(jz)
 
-    ekbar_sum = 0.0_num
-    ct = 0.0_num
-    DO ispecies = 1, n_species
-      CALL processor_summation_bcs(ekbar_sum(:,:,:,ispecies))
-      CALL field_bc(ekbar_sum(:,:,:,ispecies))
-      CALL processor_summation_bcs(ct(:,:,:,ispecies))
-      CALL field_bc(ct(:,:,:,ispecies))
-    ENDDO
-
-    ! Calculate the mean kinetic energy for each species in space
-    ekbar = 0.0_num
-    DO ispecies = 1, n_species
-      DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
-            mean = ekbar_sum(ix, iy, iz, ispecies) &
-                / MAX(ct(ix, iy, iz, ispecies), c_non_zero)
-            ekbar(ix, iy, iz, ispecies) = mean
-          ENDDO
-        ENDDO
-      ENDDO
-    ENDDO
-
     CALL particle_bcs
 
   END SUBROUTINE push_particles

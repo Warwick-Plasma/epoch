@@ -192,12 +192,6 @@ CONTAINS
     jy = 0.0_num
     jz = 0.0_num
 
-    ! Reallocate the kinetic energy calculation
-    DEALLOCATE(ekbar, ekbar_sum, ct)
-    ALLOCATE(ekbar(1:nx, 1:ny, 1:nz, 1:n_species))
-    ALLOCATE(ekbar_sum(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
-    ALLOCATE(ct(-2:nx+3, -2:ny+3, -2:nz+3, 1:n_species))
-
     ! Recalculate x_mins and y_mins so that rebalancing works next time
     DO iproc = 0, nprocx - 1
       x_mins(iproc) = x_global(cell_x_min(iproc+1))

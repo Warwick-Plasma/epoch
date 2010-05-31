@@ -95,7 +95,6 @@ CONTAINS
                 ranges(1:3,:), resolution(1:3), ispecies, restrictions, &
                 use_restrictions)
           ENDIF
-          IF (current%store_ranges) current%ranges = ranges
         ENDDO
       ENDIF
       current=>current%next
