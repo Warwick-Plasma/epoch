@@ -609,4 +609,7 @@ MODULE shared_data
   INTEGER(4) :: run_date
   INTEGER(4) :: defines
 
+  REAL(num) :: walltime_start
+  INTEGER :: stdout_frequency
+
 END MODULE shared_data

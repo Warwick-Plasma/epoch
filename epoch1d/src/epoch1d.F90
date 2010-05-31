@@ -35,7 +35,6 @@ PROGRAM pic
   IMPLICIT NONE
 
   INTEGER :: ispecies, i = 0
-  REAL(num) :: walltime_current
   LOGICAL :: halt = .FALSE.
 
   CALL minimal_init ! setup.f90
@@ -108,9 +107,11 @@ PROGRAM pic
     CALL push_particles
     CALL update_eb_fields_final
     IF (rank .EQ. 0) PRINT *, "Equilibrium set up OK, running code"
+    walltime_start = MPI_WTIME()
     CALL output_routines(i) ! diagnostics.f90
+  ELSE
+    walltime_start = MPI_WTIME()
   ENDIF
-  walltime_current = MPI_WTIME()
 
   DO
     IF ((i .GE. nsteps .AND. nsteps .GE. 0) &
@@ -178,7 +179,7 @@ PROGRAM pic
   ENDDO
 
   IF (rank .EQ. 0) &
-      PRINT *, "Final runtime of core = ", MPI_WTIME()-walltime_current
+      PRINT *, "Final runtime of core = ", MPI_WTIME() - walltime_start
 
   IF (i .NE. nsteps) CALL output_routines(i)
 

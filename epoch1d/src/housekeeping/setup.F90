@@ -31,6 +31,7 @@ CONTAINS
     comm = MPI_COMM_NULL
 
     dt_plasma_frequency = 0.0_num
+    stdout_frequency = 0
 
     window_shift = 0.0_num
     npart_global = -1

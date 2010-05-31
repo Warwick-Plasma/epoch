@@ -6,7 +6,7 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 21
+  INTEGER, PARAMETER :: control_block_elements = 22
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -30,7 +30,8 @@ MODULE deck_control_block
           "field_order       ", &
           "nprocx            ", &
           "nprocy            ", &
-          "nprocz            " /)
+          "nprocz            ", &
+          "stdout_frequency  " /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           "nx                ", &
@@ -53,7 +54,8 @@ MODULE deck_control_block
           "field_order       ", &
           "nprocx            ", &
           "nprocy            ", &
-          "nprocz            " /)
+          "nprocz            ", &
+          "stdout_frequency  " /)
 
 CONTAINS
 
@@ -140,6 +142,8 @@ CONTAINS
       nprocy = as_integer(value, handle_control_deck)
     CASE(21)
       nprocz = as_integer(value, handle_control_deck)
+    CASE(22)
+      stdout_frequency = as_integer(value, handle_control_deck)
     END SELECT
 
   END FUNCTION handle_control_deck
@@ -172,6 +176,9 @@ CONTAINS
 
     ! nprocx/y/z is optional
     control_block_done(19:21) = .TRUE.
+
+    ! stdout_frequency is optional
+    control_block_done(22) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN
