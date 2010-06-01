@@ -14,12 +14,15 @@ CONTAINS
     INTEGER, INTENT(IN) :: cfd_comm_in, cfd_rank_in, mode
     INTEGER, OPTIONAL, INTENT(IN) :: step
     REAL(num), OPTIONAL, INTENT(IN) :: time
+    REAL(num) :: dummy = 1.0_num
     TYPE(jobid_type), OPTIONAL, INTENT(IN) :: jobid
-    INTEGER :: ostep = 0
+    INTEGER :: sof4, ostep = 0
     DOUBLE PRECISION :: otime = 0
 
     cfd_comm = cfd_comm_in
     cfd_rank = cfd_rank_in
+    CALL MPI_SIZEOF(dummy, sof4, errcode)
+    sof = sof4
 
     IF (mode .EQ. c_cfd_write) THEN
       cfd_mode = MPI_MODE_CREATE + MPI_MODE_WRONLY

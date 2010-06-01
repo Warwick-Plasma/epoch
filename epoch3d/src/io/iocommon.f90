@@ -59,6 +59,7 @@ MODULE iocommon
 
   INTEGER(4), PARAMETER :: soi  = 4 ! Size of integer
   INTEGER(4), PARAMETER :: soi8 = 8 ! Size of long (normally 8 byte integer)
+  INTEGER(8) :: sof
 
   INTEGER(4) :: block_header_size, header_offset
 

@@ -164,7 +164,8 @@ CONTAINS
     ! Of type will depend on what meshtype you're using)
 
     INTEGER(4), INTENT(IN) :: meshtype, dim
-    INTEGER, INTENT(IN) :: sof, rank_write
+    INTEGER(8), INTENT(IN) :: sof
+    INTEGER, INTENT(IN) :: rank_write
     INTEGER(4) :: sof4
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -193,7 +194,7 @@ CONTAINS
     REAL(8), INTENT(IN) :: time
     INTEGER(4) :: step4
 
-    md_length = soi + num
+    md_length = soi + sof
 
     CALL cfd_write_block_header("Snapshot", "Snapshot", c_type_snapshot, &
         md_length, md_length, rank_write)
@@ -401,7 +402,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: md_length
 
-    md_length = num
+    md_length = sof
 
     CALL cfd_write_block_header(name, class, c_type_constant, md_length, &
         md_length, rank_write)
@@ -413,7 +414,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + num
+    current_displacement = current_displacement + sof
 
   END SUBROUTINE cfd_write_real_constant
 

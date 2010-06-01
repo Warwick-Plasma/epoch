@@ -81,16 +81,16 @@ CONTAINS
     n_dump_species = 0
     DO ispecies = 1, n_species
       IF (particle_species(ispecies)%dump .OR. force_restart) THEN
-        n_dump_species = n_dump_species+1
+        n_dump_species = n_dump_species + 1
       ENDIF
     ENDDO
 
-    ALLOCATE(npart_local(1:n_dump_species))
+    ALLOCATE(npart_local(n_dump_species))
     index = 1
     DO ispecies = 1, n_species
       IF (particle_species(ispecies)%dump .OR. force_restart) THEN
         npart_local(index) = particle_species(ispecies)%attached_list%count
-        index = index+1
+        index = index + 1
       ENDIF
     ENDDO
 
@@ -169,11 +169,11 @@ CONTAINS
     INTEGER(KIND=8), DIMENSION(n_dump_species), INTENT(IN) :: npart_local
     INTEGER :: ispecies
     INTEGER(KIND=8), DIMENSION(:,:), ALLOCATABLE :: npart_each_rank
-    INTEGER(KIND=8) :: particles_to_skip
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, sz
 
-    ALLOCATE(npart_each_rank(1:n_dump_species, 1:nproc))
+    ALLOCATE(npart_each_rank(n_dump_species, nproc))
 
     ! Create the subarray for the particles in this problem: subtype decribes
     ! where this process's data fits into the global picture.
@@ -185,6 +185,7 @@ CONTAINS
     ! If npart_local is bigger than an integer then the data will not
     ! get written properly. This would require about 48GB per processor
     ! so it is unlikely to be a problem any time soon.
+    sz = realsize
     lengths = INT(npart_local)
     particles_to_skip = 0
 
@@ -192,7 +193,7 @@ CONTAINS
       DO ix = 1, rank
         particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO
-      disp(ispecies) = particles_to_skip * num
+      disp(ispecies) = particles_to_skip * sz
       DO ix = rank+1, nproc
         particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO
@@ -244,10 +245,12 @@ CONTAINS
     INTEGER, DIMENSION(1), INTENT(IN) :: start
     INTEGER, DIMENSION(1) :: lengths
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(1) :: disp
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: sz
     INTEGER :: create_1d_array_subtype
 
+    sz = realsize
     lengths = n_local(1)
-    disp(1) = (start(1) - 1) * num
+    disp(1) = (start(1) - 1) * sz
 
     CALL MPI_TYPE_CREATE_HINDEXED(1, lengths, disp, mpireal, &
         create_1d_array_subtype, errcode)
@@ -270,20 +273,22 @@ CONTAINS
     INTEGER, DIMENSION(2), INTENT(IN) :: start
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
-    INTEGER :: ipoint, iy
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: iy, sz
     INTEGER :: create_2d_array_subtype
+    INTEGER :: ipoint
 
-    ALLOCATE(lengths(1:n_local(2)), disp(1:n_local(2)))
+    ALLOCATE(lengths(n_local(2)), disp(n_local(2)))
 
+    sz = realsize
     lengths = n_local(1)
     ipoint = 0
 
-    DO iy = 0, n_local(2)-1
-      ipoint = ipoint+1
-      disp(ipoint) = ((start(2)+iy-1) * n_global(1) + start(1) - 1) * num
+    DO iy = -1, n_local(2)-2
+      ipoint = ipoint + 1
+      disp(ipoint) = ((start(2) + iy) * n_global(1) + start(1) - 1) * sz
     ENDDO
 
-    CALL MPI_TYPE_CREATE_HINDEXED(n_local(2), lengths, disp, mpireal, &
+    CALL MPI_TYPE_CREATE_HINDEXED(ipoint, lengths, disp, mpireal, &
         create_2d_array_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_2d_array_subtype, errcode)
 
@@ -306,25 +311,27 @@ CONTAINS
     INTEGER, DIMENSION(3), INTENT(IN) :: start
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
-    INTEGER :: ipoint, iy, iz
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: iy, iz, sz
     INTEGER :: create_3d_array_subtype
+    INTEGER :: ipoint
 
     ALLOCATE(lengths(1:n_local(2) * n_local(3)))
     ALLOCATE(disp(1:n_local(2) * n_local(3)))
 
+    sz = realsize
     lengths = n_local(1)
     ipoint = 0
 
-    DO iz = 0, n_local(3)-1
-      DO iy = 0, n_local(2)-1
-        ipoint = ipoint+1
-        disp(ipoint) = ((start(3)+iz-1) * n_global(1) * n_global(2) &
-            + (start(2)+iy-1) * n_global(1) + start(1) - 1) * num
+    DO iz = -1, n_local(3)-2
+      DO iy = -1, n_local(2)-2
+        ipoint = ipoint + 1
+        disp(ipoint) = (((start(3) + iz) * n_global(2) &
+            + start(2) + iy) * n_global(1) + start(1) - 1) * sz
       ENDDO
     ENDDO
 
-    CALL MPI_TYPE_CREATE_HINDEXED(n_local(2)*n_local(3), lengths, disp, &
-        mpireal, create_3d_array_subtype, errcode)
+    CALL MPI_TYPE_CREATE_HINDEXED(ipoint, lengths, disp, mpireal, &
+        create_3d_array_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_3d_array_subtype, errcode)
 
     DEALLOCATE(lengths, disp)

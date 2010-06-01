@@ -33,14 +33,14 @@ CONTAINS
     ! 3 ) xmax REAL(num)
 
     ! 1 INTs, 2 REALs + meshtype header
-    md_length = meshtype_header_offset + 1 * soi + 2 * num
-    block_length = md_length + nx * num
+    md_length = meshtype_header_offset + 1 * soi + 2 * sof
+    block_length = md_length + nx * sof
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
         md_length, rank_write)
 
-    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_1d, num, &
+    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_1d, sof, &
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -67,7 +67,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 2 * num + nx * num
+    current_displacement = current_displacement + (2 + nx) * sof
 
   END SUBROUTINE cfd_write_1d_cartesian_grid
 
@@ -103,14 +103,14 @@ CONTAINS
     ! 6 ) ymax REAL(num)
 
     ! 2 INTs, 4 REALs + meshtype header
-    md_length = meshtype_header_offset + 2 * soi + 4 * num
-    block_length = md_length + (nx + ny) * num
+    md_length = meshtype_header_offset + 2 * soi + 4 * sof
+    block_length = md_length + (nx + ny) * sof
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
         md_length, rank_write)
 
-    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_2d, num, &
+    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_2d, sof, &
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -146,7 +146,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 4 * num + (nx + ny) * num
+    current_displacement = current_displacement + (4 + nx + ny) * sof
 
   END SUBROUTINE cfd_write_2d_cartesian_grid
 
@@ -186,14 +186,14 @@ CONTAINS
     ! 9 ) zmax REAL(num)
 
     ! 3 INTs, 6 REALs + meshtype header
-    md_length = meshtype_header_offset + 3 * soi + 6 * num
-    block_length = md_length + (nx + ny + nz) * num
+    md_length = meshtype_header_offset + 3 * soi + 6 * sof
+    block_length = md_length + (nx + ny + nz) * sof
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
         md_length, rank_write)
 
-    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_3d, num, &
+    CALL cfd_write_meshtype_header(c_mesh_cartesian, c_dimension_3d, sof, &
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -238,7 +238,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 6 * num + (nx + ny + nz) * num
+    current_displacement = current_displacement + (6 + nx + ny + nz) * sof
 
   END SUBROUTINE cfd_write_3d_cartesian_grid
 
@@ -278,13 +278,13 @@ CONTAINS
     nx = INT(dims,4)
 
     ! 1 INTs 3 REALs 2 STRINGs
-    md_length = meshtype_header_offset + 1 * soi + 3 * num + 2 * max_string_len
-    block_length = md_length + num * nx
+    md_length = meshtype_header_offset + 1 * soi + 3 * sof + 2 * max_string_len
+    block_length = md_length + sof * nx
 
     ! Write the common stuff
     CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
         block_length, md_length, default_rank)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, num, &
+    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, sof, &
         default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -319,7 +319,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 3 * num
+    current_displacement = current_displacement + 3 * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
@@ -338,7 +338,7 @@ CONTAINS
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
         cfd_status, cfd_errcode)
 
-    current_displacement = current_displacement + num * nx
+    current_displacement = current_displacement + sof * nx
 
   END SUBROUTINE cfd_write_1d_cartesian_variable_parallel
 
@@ -381,13 +381,13 @@ CONTAINS
     ny = INT(dims(2),4)
 
     ! 2 INTs 4 REALs 2 STRINGs
-    md_length = meshtype_header_offset + 2 * soi + 4 * num + 2 * max_string_len
-    block_length = md_length + num * nx * ny
+    md_length = meshtype_header_offset + 2 * soi + 4 * sof + 2 * max_string_len
+    block_length = md_length + sof * nx * ny
 
     ! Write the common stuff
     CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
         block_length, md_length, default_rank)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_2d, num, &
+    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_2d, sof, &
         default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -424,7 +424,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 4 * num
+    current_displacement = current_displacement + 4 * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
@@ -443,7 +443,7 @@ CONTAINS
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
         cfd_status, cfd_errcode)
 
-    current_displacement = current_displacement + num * nx * ny
+    current_displacement = current_displacement + sof * nx * ny
 
   END SUBROUTINE cfd_write_2d_cartesian_variable_parallel
 
@@ -489,13 +489,13 @@ CONTAINS
     nz = INT(dims(3),4)
 
     ! 3 INTs 5 REALs 2 STRINGs
-    md_length = meshtype_header_offset + 3 * soi + 5 * num + 2 * max_string_len
-    block_length = md_length + num * nx * ny * nz
+    md_length = meshtype_header_offset + 3 * soi + 5 * sof + 2 * max_string_len
+    block_length = md_length + sof * nx * ny * nz
 
     ! Write the common stuff
     CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
         block_length, md_length, default_rank)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_3d, num, &
+    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_3d, sof, &
         default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -534,7 +534,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 5 * num
+    current_displacement = current_displacement + 5 * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
@@ -553,7 +553,7 @@ CONTAINS
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
         cfd_status, cfd_errcode)
 
-    current_displacement = current_displacement + num * nx * ny * nz
+    current_displacement = current_displacement + sof * nx * ny * nz
 
   END SUBROUTINE cfd_write_3d_cartesian_variable_parallel
 
@@ -594,12 +594,12 @@ CONTAINS
     nx = INT(dims(1),4)
 
     ! 1 INTs 3 REALs 2 STRINGs
-    md_length = meshtype_header_offset + 1 * soi + 3 * num + 2 * max_string_len
-    block_length = md_length + num * nx
+    md_length = meshtype_header_offset + 1 * soi + 3 * sof + 2 * max_string_len
+    block_length = md_length + sof * nx
 
     CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
         block_length, md_length, rank_write)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, num, &
+    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_1d, sof, &
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -634,7 +634,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 3 * num
+    current_displacement = current_displacement + 3 * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
@@ -656,7 +656,7 @@ CONTAINS
           cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + num * nx
+    current_displacement = current_displacement + sof * nx
 
   END SUBROUTINE cfd_write_1d_cartesian_variable
 
@@ -700,12 +700,12 @@ CONTAINS
     ny = INT(dims(2),4)
 
     ! 2 INTs 3 REALs 2 STRINGs
-    md_length = meshtype_header_offset + 2 * soi + 3 * num + 2 * max_string_len
-    block_length = md_length + num * nx * ny
+    md_length = meshtype_header_offset + 2 * soi + 3 * sof + 2 * max_string_len
+    block_length = md_length + sof * nx * ny
 
     CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
         block_length, md_length, rank_write)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_2d, num, &
+    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_2d, sof, &
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -742,7 +742,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 4 * num
+    current_displacement = current_displacement + 4 * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
@@ -764,7 +764,7 @@ CONTAINS
           cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + num * nx * ny
+    current_displacement = current_displacement + sof * nx * ny
 
   END SUBROUTINE cfd_write_2d_cartesian_variable
 
@@ -811,12 +811,12 @@ CONTAINS
     nz = INT(dims(3),4)
 
     ! 3 INTs 5 REALs 2 STRINGs
-    md_length = meshtype_header_offset + 3 * soi + 5 * num + 2 * max_string_len
-    block_length = md_length + num * nx * ny * nz
+    md_length = meshtype_header_offset + 3 * soi + 5 * sof + 2 * max_string_len
+    block_length = md_length + sof * nx * ny * nz
 
     CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
         block_length, md_length, rank_write)
-    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_3d, num, &
+    CALL cfd_write_meshtype_header(c_var_cartesian, c_dimension_3d, sof, &
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
@@ -855,7 +855,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 5 * num
+    current_displacement = current_displacement + 5 * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
@@ -877,7 +877,7 @@ CONTAINS
           cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + num * nx * ny * nz
+    current_displacement = current_displacement + sof * nx * ny * nz
 
   END SUBROUTINE cfd_write_3d_cartesian_variable
 

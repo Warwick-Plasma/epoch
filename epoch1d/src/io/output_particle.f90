@@ -49,14 +49,14 @@ CONTAINS
     ! n+1) dnmax REAL(num)
 
     ! 1 INT, 1 INT8, 2REAL per Dim
-    md_length = meshtype_header_offset + 1 * soi + 1 * soi8  + ndim * 2 * num
-    block_length = md_length + num * ndim * npart_global
+    md_length = meshtype_header_offset + 1 * soi + 1 * soi8  + ndim * 2 * sof
+    block_length = md_length + sof * ndim * npart_global
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
         md_length, default_rank)
 
-    CALL cfd_write_meshtype_header(c_mesh_particle, ndim, num, default_rank)
+    CALL cfd_write_meshtype_header(c_mesh_particle, ndim, sof, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
         MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
@@ -94,7 +94,7 @@ CONTAINS
             cfd_errcode)
       ENDIF
 
-      current_displacement = current_displacement + 2 * num
+      current_displacement = current_displacement + 2 * sof
     ENDDO
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
@@ -104,7 +104,7 @@ CONTAINS
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, particles, npart_local * ndim, &
         mpireal, cfd_status, cfd_errcode)
 
-    current_displacement = current_displacement + ndim * npart_global * num
+    current_displacement = current_displacement + ndim * npart_global * sof
 
   END SUBROUTINE cfd_write_nd_particle_grid_all
 
@@ -164,8 +164,8 @@ CONTAINS
     ! n+1) dnmax REAL(num)
 
     ! 1 INT, 1 INT8, 2REAL per Dim
-    md_length = meshtype_header_offset + 1 * soi + 1 * soi8  + ndims * 2 * num
-    block_length = md_length + num * ndims * npart_global
+    md_length = meshtype_header_offset + 1 * soi + 1 * soi8  + ndims * 2 * sof
+    block_length = md_length + sof * ndims * npart_global
 
     ALLOCATE(min_max(1:ndims, 1:2))
     min_max = 0.0_num
@@ -173,7 +173,7 @@ CONTAINS
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh, block_length, &
         md_length, default_rank)
-    CALL cfd_write_meshtype_header(c_mesh_particle, ndims, num, default_rank)
+    CALL cfd_write_meshtype_header(c_mesh_particle, ndims, sof, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
@@ -206,7 +206,7 @@ CONTAINS
           mpireal, cfd_status, cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 2 * ndims * num
+    current_displacement = current_displacement + 2 * ndims * sof
 
     ! Write the real data
 
@@ -239,7 +239,7 @@ CONTAINS
             mpireal, cfd_status, cfd_errcode)
       ENDDO
 
-      current_displacement = current_displacement +  npart_global * num
+      current_displacement = current_displacement +  npart_global * sof
     ENDDO
 
     DEALLOCATE(data)
@@ -299,14 +299,14 @@ CONTAINS
     ! 4 ) mesh   CHARACTER
     ! 5 ) mclass CHARACTER
 
-    md_length = meshtype_header_offset + 1 * soi8 + 2 * num + 2 * max_string_len
-    block_length = md_length + num * npart_global
+    md_length = meshtype_header_offset + 1 * soi8 + 2 * sof + 2 * max_string_len
+    block_length = md_length + sof * npart_global
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
         block_length, md_length, default_rank)
     CALL cfd_write_meshtype_header(c_var_particle, c_dimension_irrelevant, &
-        num, default_rank)
+        sof, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, cfd_errcode)
@@ -332,7 +332,7 @@ CONTAINS
           cfd_errcode)
     ENDIF
 
-    current_displacement = current_displacement + 2 * num
+    current_displacement = current_displacement + 2 * sof
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
@@ -351,7 +351,7 @@ CONTAINS
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, particles, npart_local, mpireal, &
         cfd_status, cfd_errcode)
 
-    current_displacement = current_displacement + npart_global * num
+    current_displacement = current_displacement + npart_global * sof
 
   END SUBROUTINE cfd_write_nd_particle_variable_all
 
@@ -392,14 +392,14 @@ CONTAINS
     ! 4 ) mesh   CHARACTER
     ! 5 ) mclass CHARACTER
 
-    md_length = meshtype_header_offset + 1 * soi8 + 2 * num + 2 * max_string_len
-    block_length = md_length + num * npart_global
+    md_length = meshtype_header_offset + 1 * soi8 + 2 * sof + 2 * max_string_len
+    block_length = md_length + sof * npart_global
 
     ! Now written header, write metadata
     CALL cfd_write_block_header(name, class, c_type_mesh_variable, &
         block_length, md_length, default_rank)
     CALL cfd_write_meshtype_header(c_var_particle, c_dimension_irrelevant, &
-        num, default_rank)
+        sof, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, cfd_errcode)
@@ -422,7 +422,7 @@ CONTAINS
     ENDIF
 
     offset_for_min_max = current_displacement
-    current_displacement = current_displacement + 2 * num
+    current_displacement = current_displacement + 2 * sof
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
@@ -461,7 +461,7 @@ CONTAINS
 
     DEALLOCATE(data)
 
-    current_displacement = current_displacement + npart_global * num
+    current_displacement = current_displacement + npart_global * sof
 
     CALL MPI_ALLREDUCE(mn, mn_g, 1, mpireal, MPI_MIN, cfd_comm, cfd_errcode)
     CALL MPI_ALLREDUCE(mx, mx_g, 1, mpireal, MPI_MAX, cfd_comm, cfd_errcode)

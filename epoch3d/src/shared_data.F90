@@ -473,6 +473,7 @@ MODULE shared_data
   ! Core code
   !----------------------------------------------------------------------------
   INTEGER :: mpireal = MPI_DOUBLE_PRECISION
+  INTEGER :: realsize
 
   INTEGER :: nx, ny, nz
   INTEGER :: nx_global, ny_global, nz_global

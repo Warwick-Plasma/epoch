@@ -26,9 +26,12 @@ CONTAINS
 
   SUBROUTINE minimal_init
 
+    REAL(num) :: dummy = 1.0_num
+
     IF (num .EQ. 4) mpireal = MPI_REAL
     dumpmask = 0
     comm = MPI_COMM_NULL
+    CALL MPI_SIZEOF(dummy, realsize, errcode)
 
     dt_plasma_frequency = 0.0_num
     stdout_frequency = 0
@@ -125,7 +128,7 @@ CONTAINS
 
     INTEGER :: ispecies
 
-    ALLOCATE(particle_species(1:n_species))
+    ALLOCATE(particle_species(n_species))
 
     DO ispecies = 1, n_species
       particle_species(ispecies)%name = blank
@@ -276,39 +279,39 @@ CONTAINS
             CALL MPI_ABORT(comm, errcode, ierr)
           ENDIF
 
-          IF (str_cmp(name(1:2), "Ex")) &
+          IF (str_cmp(name, "Ex")) &
               CALL cfd_get_2d_cartesian_variable_parallel(ex(1:nx,1:ny), &
                   subtype_field)
 
-          IF (str_cmp(name(1:2), "Ey")) &
+          IF (str_cmp(name, "Ey")) &
               CALL cfd_get_2d_cartesian_variable_parallel(ey(1:nx,1:ny), &
                   subtype_field)
 
-          IF (str_cmp(name(1:2), "Ez")) &
+          IF (str_cmp(name, "Ez")) &
               CALL cfd_get_2d_cartesian_variable_parallel(ez(1:nx,1:ny), &
                   subtype_field)
 
-          IF (str_cmp(name(1:2), "Bx")) &
+          IF (str_cmp(name, "Bx")) &
               CALL cfd_get_2d_cartesian_variable_parallel(bx(1:nx,1:ny), &
                   subtype_field)
 
-          IF (str_cmp(name(1:2), "By")) &
+          IF (str_cmp(name, "By")) &
               CALL cfd_get_2d_cartesian_variable_parallel(by(1:nx,1:ny), &
                   subtype_field)
 
-          IF (str_cmp(name(1:2), "Bz")) &
+          IF (str_cmp(name, "Bz")) &
               CALL cfd_get_2d_cartesian_variable_parallel(bz(1:nx,1:ny), &
                   subtype_field)
 
-          IF (str_cmp(name(1:2), "Jx")) &
+          IF (str_cmp(name, "Jx")) &
               CALL cfd_get_2d_cartesian_variable_parallel(jx(1:nx,1:ny), &
                   subtype_field)
 
-          IF (str_cmp(name(1:2), "Jy")) &
+          IF (str_cmp(name, "Jy")) &
               CALL cfd_get_2d_cartesian_variable_parallel(jy(1:nx,1:ny), &
                   subtype_field)
 
-          IF (str_cmp(name(1:2), "Jz")) &
+          IF (str_cmp(name, "Jz")) &
               CALL cfd_get_2d_cartesian_variable_parallel(jz(1:nx,1:ny), &
                   subtype_field)
 
@@ -323,7 +326,7 @@ CONTAINS
             npart = npart_l/nproc
             CALL create_subtypes_for_load(npart)
             CALL create_allocated_partlist(main_root, npart)
-            ALLOCATE(species_id(1:npart))
+            ALLOCATE(species_id(npart))
             current=>main_root%head
             DO ipart = 1, main_root%count
               current%part_p = 0.0_num
@@ -335,24 +338,24 @@ CONTAINS
           ENDIF
 
           ! particle variables
-          IF (str_cmp(name(1:2), "Px")) &
+          IF (str_cmp(name, "Px")) &
               CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
                   npart_per_it, subtype_particle_var, it_px)
 
-          IF (str_cmp(name(1:2), "Py")) &
+          IF (str_cmp(name, "Py")) &
               CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
                   npart_per_it, subtype_particle_var, it_py)
 
-          IF (str_cmp(name(1:2), "Pz")) &
+          IF (str_cmp(name, "Pz")) &
               CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
                   npart_per_it, subtype_particle_var, it_pz)
 
 #ifdef PER_PARTICLE_WEIGHT
-          IF (str_cmp(name(1:6), "Weight")) &
+          IF (str_cmp(name, "Weight")) &
               CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
                   npart_per_it, subtype_particle_var, it_weight)
 #else
-          IF (str_cmp(name(1:6), "Weight")) THEN
+          IF (str_cmp(name, "Weight")) THEN
             IF (rank .EQ. 0) &
                 PRINT *, "Cannot load dump file with per particle weight &
                     &if the code is compiled without per particle weights. &
@@ -360,7 +363,7 @@ CONTAINS
             CALL MPI_ABORT(comm, errcode, ierr)
           ENDIF
 #endif
-          IF (str_cmp(name(1:7), "Species")) &
+          IF (str_cmp(name, "Species")) &
               CALL cfd_get_nd_particle_variable_parallel_with_iterator(npart, &
                   npart_per_it, subtype_particle_var, it_species)
         END SELECT
@@ -379,7 +382,7 @@ CONTAINS
             ENDIF
             CALL create_subtypes_for_load(npart)
             CALL create_allocated_partlist(main_root, npart)
-            ALLOCATE(species_id(1:npart))
+            ALLOCATE(species_id(npart))
             current=>main_root%head
             npart_global = npart_l
           ENDIF
