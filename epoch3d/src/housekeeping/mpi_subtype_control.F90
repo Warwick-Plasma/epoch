@@ -232,6 +232,32 @@ CONTAINS
 
 
   !----------------------------------------------------------------------------
+  ! create_1d_array_subtype - Creates a subtype representing the local fraction
+  ! of a completely arbitrary 1D array. Does not assume anything about the
+  ! domain at all.
+  !----------------------------------------------------------------------------
+
+  FUNCTION create_1d_array_subtype(n_local, n_global, start)
+
+    INTEGER, DIMENSION(1), INTENT(IN) :: n_local
+    INTEGER, DIMENSION(1), INTENT(IN) :: n_global
+    INTEGER, DIMENSION(1), INTENT(IN) :: start
+    INTEGER, DIMENSION(1) :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(1) :: disp
+    INTEGER :: create_1d_array_subtype
+
+    lengths = n_local(1)
+    disp(1) = (start(1) - 1) * num
+
+    CALL MPI_TYPE_CREATE_HINDEXED(1, lengths, disp, mpireal, &
+        create_1d_array_subtype, errcode)
+    CALL MPI_TYPE_COMMIT(create_1d_array_subtype, errcode)
+
+  END FUNCTION create_1d_array_subtype
+
+
+
+  !----------------------------------------------------------------------------
   ! create_2d_array_subtype - Creates a subtype representing the local fraction
   ! of a completely arbitrary 2D array. Does not assume anything about the
   ! domain at all.

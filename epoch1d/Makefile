@@ -135,8 +135,8 @@ deck_species_block.o: deck_species_block.F90 setup.o simple_io.o \
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iocontrol.o \
   iterators.o mpi_subtype_control.o output_cartesian.o output_particle.o \
-  probes.o $(ENCODED_SOURCE)
-dist_fn.o: dist_fn.F90 output_cartesian.o
+  probes.o shared_data.o $(ENCODED_SOURCE)
+dist_fn.o: dist_fn.F90 mpi_subtype_control.o output_cartesian.o
 epoch1d.o: epoch1d.F90 balance.o deck.o diagnostics.o fields.o ic_module.o \
   ionise.o mpi_routines.o particles.o setup.o split_particles.o welcome.o \
   window.o

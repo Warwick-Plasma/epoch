@@ -112,8 +112,8 @@ CONTAINS
 
     INTEGER :: create_current_field_subtype
 
-    create_current_field_subtype = &
-        create_field_subtype(nx, cell_x_min(coordinates(1)+1))
+    create_current_field_subtype = create_1d_array_subtype( &
+        (/nx/), (/nx_global/), (/cell_x_min(coordinates(1)+1)/))
 
   END FUNCTION create_current_field_subtype
 
@@ -217,17 +217,113 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: nx_local
     INTEGER, INTENT(IN) :: cell_start_x_local
-    INTEGER, DIMENSION(1) :: lengths
-    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(1) :: disp
     INTEGER :: create_field_subtype
 
-    lengths = nx_local
-    disp = (cell_start_x_local - 1) * num
-
-    CALL MPI_TYPE_CREATE_HINDEXED(1, lengths, disp, mpireal, &
-        create_field_subtype, errcode)
-    CALL MPI_TYPE_COMMIT(create_field_subtype, errcode)
+    create_field_subtype = create_1d_array_subtype( &
+        (/nx_local/), (/nx_global/), (/cell_start_x_local/))
 
   END FUNCTION create_field_subtype
+
+
+
+  !----------------------------------------------------------------------------
+  ! create_1d_array_subtype - Creates a subtype representing the local fraction
+  ! of a completely arbitrary 1D array. Does not assume anything about the
+  ! domain at all.
+  !----------------------------------------------------------------------------
+
+  FUNCTION create_1d_array_subtype(n_local, n_global, start)
+
+    INTEGER, DIMENSION(1), INTENT(IN) :: n_local
+    INTEGER, DIMENSION(1), INTENT(IN) :: n_global
+    INTEGER, DIMENSION(1), INTENT(IN) :: start
+    INTEGER, DIMENSION(1) :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(1) :: disp
+    INTEGER :: create_1d_array_subtype
+
+    lengths = n_local(1)
+    disp(1) = (start(1) - 1) * num
+
+    CALL MPI_TYPE_CREATE_HINDEXED(1, lengths, disp, mpireal, &
+        create_1d_array_subtype, errcode)
+    CALL MPI_TYPE_COMMIT(create_1d_array_subtype, errcode)
+
+  END FUNCTION create_1d_array_subtype
+
+
+
+  !----------------------------------------------------------------------------
+  ! create_2d_array_subtype - Creates a subtype representing the local fraction
+  ! of a completely arbitrary 2D array. Does not assume anything about the
+  ! domain at all.
+  !----------------------------------------------------------------------------
+
+  FUNCTION create_2d_array_subtype(n_local, n_global, start)
+
+    INTEGER, DIMENSION(2), INTENT(IN) :: n_local
+    INTEGER, DIMENSION(2), INTENT(IN) :: n_global
+    INTEGER, DIMENSION(2), INTENT(IN) :: start
+    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
+    INTEGER :: ipoint, iy
+    INTEGER :: create_2d_array_subtype
+
+    ALLOCATE(lengths(1:n_local(2)), disp(1:n_local(2)))
+
+    lengths = n_local(1)
+    ipoint = 0
+
+    DO iy = 0, n_local(2)-1
+      ipoint = ipoint+1
+      disp(ipoint) = ((start(2)+iy-1) * n_global(1) + start(1) - 1) * num
+    ENDDO
+
+    CALL MPI_TYPE_CREATE_HINDEXED(n_local(2), lengths, disp, mpireal, &
+        create_2d_array_subtype, errcode)
+    CALL MPI_TYPE_COMMIT(create_2d_array_subtype, errcode)
+
+    DEALLOCATE(lengths, disp)
+
+  END FUNCTION create_2d_array_subtype
+
+
+
+  !----------------------------------------------------------------------------
+  ! create_3d_array_subtype - Creates a subtype representing the local fraction
+  ! of a completely arbitrary 3D array. Does not assume anything about the
+  ! domain at all.
+  !----------------------------------------------------------------------------
+
+  FUNCTION create_3d_array_subtype(n_local, n_global, start)
+
+    INTEGER, DIMENSION(3), INTENT(IN) :: n_local
+    INTEGER, DIMENSION(3), INTENT(IN) :: n_global
+    INTEGER, DIMENSION(3), INTENT(IN) :: start
+    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
+    INTEGER :: ipoint, iy, iz
+    INTEGER :: create_3d_array_subtype
+
+    ALLOCATE(lengths(1:n_local(2) * n_local(3)))
+    ALLOCATE(disp(1:n_local(2) * n_local(3)))
+
+    lengths = n_local(1)
+    ipoint = 0
+
+    DO iz = 0, n_local(3)-1
+      DO iy = 0, n_local(2)-1
+        ipoint = ipoint+1
+        disp(ipoint) = ((start(3)+iz-1) * n_global(1) * n_global(2) &
+            + (start(2)+iy-1) * n_global(1) + start(1) - 1) * num
+      ENDDO
+    ENDDO
+
+    CALL MPI_TYPE_CREATE_HINDEXED(n_local(2)*n_local(3), lengths, disp, &
+        mpireal, create_3d_array_subtype, errcode)
+    CALL MPI_TYPE_COMMIT(create_3d_array_subtype, errcode)
+
+    DEALLOCATE(lengths, disp)
+
+  END FUNCTION create_3d_array_subtype
 
 END MODULE mpi_subtype_control

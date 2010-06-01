@@ -1,7 +1,7 @@
 MODULE dist_fn
 
   USE output_cartesian
-  !USE mpi_subtype_control
+  USE mpi_subtype_control
 
   IMPLICIT NONE
 
@@ -306,7 +306,7 @@ CONTAINS
     IF (use_x) need_reduce = .FALSE.
 
     new_type = &
-        create_3d_field_subtype(resolution, global_resolution, start_local)
+        create_3d_array_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
@@ -620,7 +620,7 @@ CONTAINS
     IF (use_x) need_reduce = .FALSE.
 
     new_type = &
-        create_2d_field_subtype(resolution, global_resolution, start_local)
+        create_2d_array_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
@@ -925,7 +925,7 @@ CONTAINS
     IF (use_x) need_reduce = .FALSE.
 
     new_type = &
-        create_1d_field_subtype(resolution, global_resolution, start_local)
+        create_1d_array_subtype(resolution, global_resolution, start_local)
     ! Create grids
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
@@ -1017,86 +1017,5 @@ CONTAINS
     DEALLOCATE(grid1)
 
   END SUBROUTINE general_1d_dist_fn
-
-
-
-  FUNCTION create_3d_field_subtype(n_local, n_global, start)
-
-    INTEGER, DIMENSION(3), INTENT(IN) :: n_local
-    INTEGER, DIMENSION(3), INTENT(IN) :: n_global
-    INTEGER, DIMENSION(3), INTENT(IN) :: start
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-    INTEGER :: ipoint, iy, iz
-    INTEGER :: create_3d_field_subtype
-
-    ALLOCATE(lengths(1:n_local(2) * n_local(3)))
-    ALLOCATE(starts (1:n_local(2) * n_local(3)))
-    lengths = n_local(1)
-    ipoint = 0
-    DO iz = 0, n_local(3)-1
-      DO iy = 0, n_local(2)-1
-        ipoint = ipoint+1
-        starts(ipoint) = (start(3)+iz-1) * n_global(1) * n_global(2) &
-            + (start(2)+iy-1) * n_global(1) + start(1) - 1
-      ENDDO
-    ENDDO
-
-    CALL MPI_TYPE_INDEXED(n_local(2)*n_local(3), lengths, starts, mpireal, &
-        create_3d_field_subtype, errcode)
-    CALL MPI_TYPE_COMMIT(create_3d_field_subtype, errcode)
-    DEALLOCATE(lengths, starts)
-
-  END FUNCTION create_3d_field_subtype
-
-
-
-  FUNCTION create_2d_field_subtype(n_local, n_global, start)
-
-    INTEGER, DIMENSION(2), INTENT(IN) :: n_local
-    INTEGER, DIMENSION(2), INTENT(IN) :: n_global
-    INTEGER, DIMENSION(2), INTENT(IN) :: start
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths, starts
-    INTEGER :: ipoint, iy
-    INTEGER :: create_2d_field_subtype
-
-    ALLOCATE(lengths(1:n_local(2)), starts(1:n_local(2)))
-    lengths = n_local(1)
-    ipoint = 0
-    DO iy = 0, n_local(2)-1
-      ipoint = ipoint+1
-      starts(ipoint) = (start(2)+iy-1) * n_global(1) + start(1) - 1
-    ENDDO
-
-    CALL MPI_TYPE_INDEXED(n_local(2), lengths, starts, mpireal, &
-        create_2d_field_subtype, errcode)
-    CALL MPI_TYPE_COMMIT(create_2d_field_subtype, errcode)
-    DEALLOCATE(lengths, starts)
-
-  END FUNCTION create_2d_field_subtype
-
-
-
-  FUNCTION create_1d_field_subtype(n_local, n_global, start)
-
-    INTEGER, DIMENSION(1), INTENT(IN) :: n_local
-    INTEGER, DIMENSION(1), INTENT(IN) :: n_global
-    INTEGER, DIMENSION(1), INTENT(IN) :: start
-    INTEGER, DIMENSION(3) :: length, disp, type
-    INTEGER :: create_1d_field_subtype
-
-    length(1) = 1
-    length(2) = n_local(1)
-    length(3) = 1
-    disp(1) = 0
-    disp(2) = (start(1)-1) * num
-    disp(3) = n_global(1) * num
-    type(1) = MPI_LB
-    type(2) = mpireal
-    type(3) = MPI_UB
-    CALL MPI_TYPE_STRUCT(3, length, disp, type, create_1d_field_subtype, &
-        errcode)
-    CALL MPI_TYPE_COMMIT(create_1d_field_subtype, errcode)
-
-  END FUNCTION create_1d_field_subtype
 
 END MODULE dist_fn
