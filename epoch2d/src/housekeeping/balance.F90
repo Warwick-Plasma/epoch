@@ -352,6 +352,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: new_field
     INTEGER :: nx_new, ny_new
     INTEGER :: subtype_write, subtype_read, fh
+    INTEGER :: subarray_write, subarray_read
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
 
@@ -360,27 +361,30 @@ CONTAINS
     nx_new = domain(1,2) - domain(1,1) + 1
     ny_new = domain(2,2) - domain(2,1) + 1
 
-    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
-        MPI_INFO_NULL, fh, errcode)
+    subarray_write = create_field_subarray(nx, ny)
+    subtype_write  = create_current_field_subtype()
 
-    subtype_write = create_current_field_subtype()
+    subarray_read = create_field_subarray(nx_new, ny_new)
     subtype_read  = create_field_subtype(nx_new, ny_new, domain(1,1), &
         domain(2,1))
 
+    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
+        MPI_INFO_NULL, fh, errcode)
+
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(fh, field(1:nx, 1:ny), nx*ny, mpireal, &
-        status, errcode)
+    CALL MPI_FILE_WRITE_ALL(fh, field, 1, subarray_write, status, errcode)
     CALL MPI_BARRIER(comm, errcode)
     CALL MPI_FILE_SEEK(fh, offset, MPI_SEEK_SET, errcode)
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, new_field(1:nx_new, 1:ny_new), nx_new * ny_new, &
-        mpireal, status, errcode)
+    CALL MPI_FILE_READ_ALL(fh, new_field, 1, subarray_write, status, errcode)
     CALL MPI_FILE_CLOSE(fh, errcode)
     CALL MPI_BARRIER(comm, errcode)
 
+    CALL MPI_TYPE_FREE(subarray_write, errcode)
     CALL MPI_TYPE_FREE(subtype_write, errcode)
+    CALL MPI_TYPE_FREE(subarray_read, errcode)
     CALL MPI_TYPE_FREE(subtype_read, errcode)
 
     CALL do_field_mpi_with_lengths(new_field, nx_new, ny_new)

@@ -563,6 +563,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   INTEGER :: subtype_field, subtype_particle_var
   INTEGER :: subtype_particle, subtype_particle_int
+  INTEGER :: subarray_field
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
   INTEGER, PARAMETER :: num_vars_to_dump = 29

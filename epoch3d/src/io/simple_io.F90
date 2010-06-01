@@ -18,10 +18,10 @@ CONTAINS
   SUBROUTINE load_single_array_from_data_file(filename, array, offset, err)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:,:,:), INTENT(INOUT) :: array
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: subtype, fh
+    INTEGER :: subtype, subarray, fh
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
         MPI_INFO_NULL, fh, errcode)
@@ -33,11 +33,11 @@ CONTAINS
     ENDIF
 
     subtype = create_current_field_subtype()
+    subarray = create_current_field_subarray()
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype, "native", &
         MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(fh, array(1:nx,1:ny,1:nz), nx*ny*nz, mpireal, &
-        status, errcode)
+    CALL MPI_FILE_READ_ALL(fh, array, 1, subarray, status, errcode)
 
     CALL MPI_FILE_CLOSE(fh, errcode)
     CALL MPI_TYPE_FREE(subtype, errcode)

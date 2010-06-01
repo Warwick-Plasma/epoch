@@ -407,6 +407,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: field
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: new_field
     INTEGER :: nx_new, ny_new, nz_new
+    INTEGER :: subarray_write, subarray_read
     INTEGER :: subtype_write, subtype_read, fh
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
@@ -417,27 +418,30 @@ CONTAINS
     ny_new = domain(2,2) - domain(2,1) + 1
     nz_new = domain(3,2) - domain(3,1) + 1
 
-    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
-        MPI_INFO_NULL, fh, errcode)
+    subarray_write = create_current_field_subarray()
+    subtype_write  = create_current_field_subtype()
 
-    subtype_write = create_current_field_subtype()
+    subarray_read = create_field_subarray(nx_new, ny_new, nz_new)
     subtype_read  = create_field_subtype(nx_new, ny_new, nz_new, &
         domain(1,1), domain(2,1), domain(3,1))
 
+    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
+        MPI_INFO_NULL, fh, errcode)
+
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(fh, field(1:nx, 1:ny, 1:nz), nx*ny*nz, mpireal, &
-        status, errcode)
+    CALL MPI_FILE_WRITE_ALL(fh, field, 1, subarray_write, status, errcode)
     CALL MPI_BARRIER(comm, errcode)
     CALL MPI_FILE_SEEK(fh, offset, MPI_SEEK_SET, errcode)
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, new_field(1:nx_new, 1:ny_new, 1:nz_new), &
-        nx_new*ny_new*nz_new, mpireal, status, errcode)
+    CALL MPI_FILE_READ_ALL(fh, new_field, 1, subarray_read, status, errcode)
     CALL MPI_FILE_CLOSE(fh, errcode)
     CALL MPI_BARRIER(comm, errcode)
 
+    CALL MPI_TYPE_FREE(subarray_write, errcode)
     CALL MPI_TYPE_FREE(subtype_write, errcode)
+    CALL MPI_TYPE_FREE(subarray_read, errcode)
     CALL MPI_TYPE_FREE(subtype_read, errcode)
 
     CALL do_field_mpi_with_lengths(new_field, nx_new, ny_new, nz_new)
@@ -460,6 +464,7 @@ CONTAINS
     INTEGER :: n1, n2, n1_new, n2_new, n1_global, n2_global
     INTEGER :: n1_old_start, n2_old_start, n1_dir, n2_dir
     INTEGER :: subtype_write, subtype_read, fh
+    INTEGER :: subarray_write, subarray_read
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
 
@@ -497,29 +502,32 @@ CONTAINS
     n1_new = domain(n1_dir,2) - domain(n1_dir,1) + 1
     n2_new = domain(n2_dir,2) - domain(n2_dir,1) + 1
 
-    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
-        MPI_INFO_NULL, fh, errcode)
-
+    subarray_write = create_field_subarray(n1, n2)
     subtype_write = create_2d_array_subtype((/n1, n2/), &
         (/n1_global, n2_global/), (/n1_old_start, n2_old_start/))
+
+    subarray_read = create_field_subarray(n1_new, n2_new)
     subtype_read  = create_2d_array_subtype((/n1_new, n2_new/), &
         (/n1_global, n2_global/), (/domain(n1_dir,1), domain(n2_dir,1)/))
 
+    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
+        MPI_INFO_NULL, fh, errcode)
+
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(fh, field(1:n1, 1:n2), n1*n2, mpireal, &
-        status, errcode)
+    CALL MPI_FILE_WRITE_ALL(fh, field, 1, subarray_write, status, errcode)
     CALL MPI_BARRIER(comm, errcode)
     CALL MPI_FILE_SEEK(fh, offset, MPI_SEEK_SET, errcode)
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, new_field(1:n1_new, 1:n2_new), n1_new * n2_new, &
-        mpireal, status, errcode)
+    CALL MPI_FILE_READ_ALL(fh, new_field, 1, subarray_read, status, errcode)
     CALL MPI_FILE_CLOSE(fh, errcode)
     CALL MPI_BARRIER(comm, errcode)
 
     CALL MPI_TYPE_FREE(subtype_write, errcode)
     CALL MPI_TYPE_FREE(subtype_read, errcode)
+    CALL MPI_TYPE_FREE(subarray_write, errcode)
+    CALL MPI_TYPE_FREE(subarray_read, errcode)
 
   END SUBROUTINE redistribute_field_2d
 

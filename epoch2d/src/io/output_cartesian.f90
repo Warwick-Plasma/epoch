@@ -252,11 +252,11 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE cfd_write_1d_cartesian_variable_parallel(name, class, dims, &
-      stagger, mesh_name, mesh_class, variable, distribution)
+      stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
     CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
     REAL(num), DIMENSION(:), INTENT(IN) :: variable
-    INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER, INTENT(IN) :: dims
     REAL(num), INTENT(IN) :: stagger
     REAL(num) :: mn, mx, mn_global, mx_global
@@ -335,7 +335,7 @@ CONTAINS
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         distribution, "native", MPI_INFO_NULL, cfd_errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
+    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
         cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + sof * nx
@@ -352,11 +352,11 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE cfd_write_2d_cartesian_variable_parallel(name, class, dims, &
-      stagger, mesh_name, mesh_class, variable, distribution)
+      stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
     CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
     REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
-    INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER, INTENT(IN), DIMENSION(2) :: dims
     REAL(num), INTENT(IN), DIMENSION(2) :: stagger
     REAL(num) :: mn, mx, mn_global, mx_global
@@ -440,7 +440,7 @@ CONTAINS
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         distribution, "native", MPI_INFO_NULL, cfd_errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
+    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
         cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + sof * nx * ny
@@ -457,11 +457,11 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE cfd_write_3d_cartesian_variable_parallel(name, class, dims, &
-      stagger, mesh_name, mesh_class, variable, distribution)
+      stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
     CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
     REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
-    INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER, INTENT(IN), DIMENSION(3) :: dims
     REAL(num), INTENT(IN), DIMENSION(3) :: stagger
     REAL(num) :: mn, mx, mn_global, mx_global
@@ -550,7 +550,7 @@ CONTAINS
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         distribution, "native", MPI_INFO_NULL, cfd_errcode)
-    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, len_var, mpireal, &
+    CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
         cfd_status, cfd_errcode)
 
     current_displacement = current_displacement + sof * nx * ny * nz

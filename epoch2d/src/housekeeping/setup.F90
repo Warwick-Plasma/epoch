@@ -280,40 +280,40 @@ CONTAINS
           ENDIF
 
           IF (str_cmp(name, "Ex")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(ex(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(ex, subtype_field, &
+                  subarray_field)
 
           IF (str_cmp(name, "Ey")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(ey(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(ey, subtype_field, &
+                  subarray_field)
 
           IF (str_cmp(name, "Ez")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(ez(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(ez, subtype_field, &
+                  subarray_field)
 
           IF (str_cmp(name, "Bx")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(bx(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(bx, subtype_field, &
+                  subarray_field)
 
           IF (str_cmp(name, "By")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(by(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(by, subtype_field, &
+                  subarray_field)
 
           IF (str_cmp(name, "Bz")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(bz(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(bz, subtype_field, &
+                  subarray_field)
 
           IF (str_cmp(name, "Jx")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(jx(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(jx, subtype_field, &
+                  subarray_field)
 
           IF (str_cmp(name, "Jy")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(jy(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(jy, subtype_field, &
+                  subarray_field)
 
           IF (str_cmp(name, "Jz")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(jz(1:nx,1:ny), &
-                  subtype_field)
+              CALL cfd_get_2d_cartesian_variable_parallel(jz, subtype_field, &
+                  subarray_field)
 
         CASE(c_var_particle)
           CALL cfd_get_nd_particle_variable_metadata_all(npart_l, extents, &

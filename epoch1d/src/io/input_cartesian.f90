@@ -197,18 +197,18 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_get_1d_cartesian_variable_parallel(variable, subtype)
+  SUBROUTINE cfd_get_1d_cartesian_variable_parallel(variable, subtype, subarray)
 
     REAL(num), INTENT(IN), DIMENSION(:) :: variable
-    INTEGER, INTENT(IN) :: subtype
+    INTEGER, INTENT(IN) :: subtype, subarray
 
     CALL cfd_skip_block_metadata()
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
-        cfd_status, cfd_errcode)
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, 1, subarray, cfd_status, &
+        cfd_errcode)
 
     CALL cfd_skip_block()
 
@@ -234,18 +234,18 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_get_2d_cartesian_variable_parallel(variable, subtype)
+  SUBROUTINE cfd_get_2d_cartesian_variable_parallel(variable, subtype, subarray)
 
     REAL(num), INTENT(IN), DIMENSION(:,:) :: variable
-    INTEGER, INTENT(IN) :: subtype
+    INTEGER, INTENT(IN) :: subtype, subarray
 
     CALL cfd_skip_block_metadata()
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
-        cfd_status, cfd_errcode)
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, 1, subarray, cfd_status, &
+        cfd_errcode)
 
     CALL cfd_skip_block()
 
@@ -271,18 +271,18 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_get_3d_cartesian_variable_parallel(variable, subtype)
+  SUBROUTINE cfd_get_3d_cartesian_variable_parallel(variable, subtype, subarray)
 
     REAL(num), INTENT(IN), DIMENSION(:,:,:) :: variable
-    INTEGER, INTENT(IN) :: subtype
+    INTEGER, INTENT(IN) :: subtype, subarray
 
     CALL cfd_skip_block_metadata()
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
 
-    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, SIZE(variable), mpireal, &
-        cfd_status, cfd_errcode)
+    CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, 1, subarray, cfd_status, &
+        cfd_errcode)
 
     CALL cfd_skip_block()
 

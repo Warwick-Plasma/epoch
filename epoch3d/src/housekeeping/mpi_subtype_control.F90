@@ -98,6 +98,7 @@ CONTAINS
     subtype_field = create_current_field_subtype()
     subtype_particle_var = &
         create_ordered_particle_subtype(n_dump_species, npart_local)
+    subarray_field = create_current_field_subarray()
 
   END SUBROUTINE create_subtypes
 
@@ -121,6 +122,21 @@ CONTAINS
 
 
   !----------------------------------------------------------------------------
+  ! create_current_field_subarray - Creates the subarray corresponding to the
+  ! current load balanced geometry
+  !----------------------------------------------------------------------------
+
+  FUNCTION create_current_field_subarray()
+
+    INTEGER :: create_current_field_subarray
+
+    create_current_field_subarray = create_field_subarray(nx, ny, nz)
+
+  END FUNCTION create_current_field_subarray
+
+
+
+  !----------------------------------------------------------------------------
   ! create_subtypes_for_load - Creates subtypes when the code loads initial
   ! conditions from a file
   !----------------------------------------------------------------------------
@@ -135,6 +151,7 @@ CONTAINS
 
     subtype_field = create_current_field_subtype()
     subtype_particle_var = create_particle_subtype(npart_local)
+    subarray_field = create_current_field_subarray()
 
   END SUBROUTINE create_subtypes_for_load
 
@@ -315,8 +332,8 @@ CONTAINS
     INTEGER :: create_3d_array_subtype
     INTEGER :: ipoint
 
-    ALLOCATE(lengths(1:n_local(2) * n_local(3)))
-    ALLOCATE(disp(1:n_local(2) * n_local(3)))
+    ALLOCATE(lengths(n_local(2) * n_local(3)))
+    ALLOCATE(disp(n_local(2) * n_local(3)))
 
     sz = realsize
     lengths = n_local(1)
@@ -337,5 +354,37 @@ CONTAINS
     DEALLOCATE(lengths, disp)
 
   END FUNCTION create_3d_array_subtype
+
+
+
+  FUNCTION create_field_subarray(n1, n2, n3)
+
+    INTEGER, INTENT(IN) :: n1
+    INTEGER, INTENT(IN), OPTIONAL :: n2, n3
+    INTEGER, DIMENSION(3) :: subsizes, sizes, starts
+    INTEGER :: i, ndim, create_field_subarray
+
+    subsizes(1) = n1
+    ndim = 1
+    IF (PRESENT(n2)) THEN
+      subsizes(2) = n2
+      ndim = 2
+    ENDIF
+    IF (PRESENT(n3)) THEN
+      subsizes(3) = n3
+      ndim = 3
+    ENDIF
+
+    DO i = 1, ndim
+      starts(i) = 3
+      sizes(i) = subsizes(i) + 6
+    ENDDO
+
+    CALL MPI_TYPE_CREATE_SUBARRAY(ndim, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, mpireal, create_field_subarray, errcode)
+
+    CALL MPI_TYPE_COMMIT(create_field_subarray, errcode)
+
+  END FUNCTION create_field_subarray
 
 END MODULE mpi_subtype_control

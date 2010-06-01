@@ -126,7 +126,7 @@ CONTAINS
 
     LOGICAL :: use_x, need_reduce
     INTEGER, DIMENSION(c_df_curdims) :: start_local, global_resolution
-    INTEGER :: new_type
+    INTEGER :: new_type, array_type
 
     LOGICAL, DIMENSION(c_df_curdims, c_df_maxdirs) :: use_direction
     LOGICAL, DIMENSION(c_df_curdims) :: calc_mod
@@ -307,6 +307,9 @@ CONTAINS
 
     new_type = &
         create_3d_array_subtype(resolution, global_resolution, start_local)
+    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
+        mpireal, array_type, errcode)
+
     ! Create grids
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
@@ -407,8 +410,9 @@ CONTAINS
 
     CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
         global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
-        new_type)
+        new_type, array_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
+    CALL MPI_TYPE_FREE(array_type, errcode)
 
     DEALLOCATE(data)
     DEALLOCATE(grid1, grid2, grid3)
@@ -440,7 +444,7 @@ CONTAINS
 
     LOGICAL :: use_x, need_reduce
     INTEGER, DIMENSION(c_df_curdims) :: start_local, global_resolution
-    INTEGER :: new_type
+    INTEGER :: new_type, array_type
 
     LOGICAL, DIMENSION(c_df_curdims, c_df_maxdirs) :: use_direction
     LOGICAL, DIMENSION(c_df_curdims) :: calc_mod
@@ -621,6 +625,9 @@ CONTAINS
 
     new_type = &
         create_2d_array_subtype(resolution, global_resolution, start_local)
+    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2), &
+        mpireal, array_type, errcode)
+
     ! Create grids
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
@@ -712,8 +719,9 @@ CONTAINS
 
     CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
         global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
-        new_type)
+        new_type, array_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
+    CALL MPI_TYPE_FREE(array_type, errcode)
 
     DEALLOCATE(data)
     DEALLOCATE(grid1, grid2)
@@ -745,7 +753,7 @@ CONTAINS
 
     LOGICAL :: use_x, need_reduce
     INTEGER, DIMENSION(c_df_curdims) :: start_local, global_resolution
-    INTEGER :: new_type
+    INTEGER :: new_type, array_type
 
     LOGICAL, DIMENSION(c_df_curdims, c_df_maxdirs) :: use_direction
     LOGICAL, DIMENSION(c_df_curdims) :: calc_mod
@@ -926,6 +934,9 @@ CONTAINS
 
     new_type = &
         create_1d_array_subtype(resolution, global_resolution, start_local)
+    CALL MPI_TYPE_CONTIGUOUS(resolution(1), &
+        mpireal, array_type, errcode)
+
     ! Create grids
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
@@ -1010,8 +1021,9 @@ CONTAINS
 
     CALL cfd_write_1d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
         global_resolution(1), stagger(1), TRIM(norm_grid_name), "Grid", data, &
-        new_type)
+        new_type, array_type)
     CALL MPI_TYPE_FREE(new_type, errcode)
+    CALL MPI_TYPE_FREE(array_type, errcode)
 
     DEALLOCATE(data)
     DEALLOCATE(grid1)

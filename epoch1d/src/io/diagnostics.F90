@@ -199,7 +199,7 @@ CONTAINS
 #ifdef FIELD_DEBUG
     data = rank
     CALL cfd_write_1d_cartesian_variable_parallel("Rank", "Processor", &
-        dims, stagger, "Grid", "Grid", data(1:nx), subtype_field)
+        dims, stagger, "Grid", "Grid", data, subtype_field, subarray_field)
 #endif
 
     IF (IAND(dumpmask(c_dump_dist_fns), code) .NE. 0) THEN
@@ -309,7 +309,7 @@ CONTAINS
     ! mpi type describing data distribution)
     CALL cfd_write_1d_cartesian_variable_parallel( &
         TRIM(name), TRIM(class), dims, stagger, &
-        'Grid', 'Grid', array(1:nx), subtype_field)
+        'Grid', 'Grid', array, subtype_field, subarray_field)
 
   END SUBROUTINE write_field
 
@@ -341,7 +341,7 @@ CONTAINS
       CALL func(data, 0)
       CALL cfd_write_1d_cartesian_variable_parallel( &
           TRIM(name), TRIM(class), dims, stagger, &
-          'Grid', 'Grid', data(1:nx), subtype_field)
+          'Grid', 'Grid', data, subtype_field, subarray_field)
     ENDIF
 
     IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
@@ -351,7 +351,7 @@ CONTAINS
             TRIM(particle_species(ispecies)%name)
         CALL cfd_write_1d_cartesian_variable_parallel( &
             TRIM(ADJUSTL(temp_name)), TRIM(class), dims, stagger, &
-            'Grid', 'Grid', data(1:nx), subtype_field)
+            'Grid', 'Grid', data, subtype_field, subarray_field)
       ENDDO
     ENDIF
 
