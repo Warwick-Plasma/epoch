@@ -438,10 +438,10 @@ MODULE shared_data
     ! The variables which define the ranges and resolutions of the
     ! distribution function
     INTEGER, DIMENSION(c_df_maxdims) :: directions
-    REAL(num), DIMENSION(c_df_maxdims, 2) :: ranges
+    REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
     LOGICAL, DIMENSION(:), POINTER :: use_species
-    REAL(num), DIMENSION(c_df_maxdirs, 2) :: restrictions
+    REAL(num), DIMENSION(2,c_df_maxdirs) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
 
     ! Pointer to next distribution function

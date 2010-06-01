@@ -59,35 +59,35 @@ CONTAINS
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(1) = .TRUE.
-      working_block%restrictions(1,:) = (/work1, work2/)
+      working_block%restrictions(:,1) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, "restrict_y")) THEN
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(2) = .TRUE.
-      working_block%restrictions(2,:) = (/work1, work2/)
+      working_block%restrictions(:,2) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, "restrict_px")) THEN
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(3) = .TRUE.
-      working_block%restrictions(3,:) = (/work1, work2/)
+      working_block%restrictions(:,3) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, "restrict_py")) THEN
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(4) = .TRUE.
-      working_block%restrictions(4,:) = (/work1, work2/)
+      working_block%restrictions(:,4) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, "restrict_pz")) THEN
       CALL split_range(value, work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
       working_block%use_restrictions(5) = .TRUE.
-      working_block%restrictions(5,:) = (/work1, work2/)
+      working_block%restrictions(:,5) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, "include_species")) THEN
@@ -112,8 +112,8 @@ CONTAINS
     IF (str_cmp(part1, "range")) THEN
       CALL split_range(TRIM(value), work1, work2, handle_eio_dist_fn_deck)
       IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
-      working_block%ranges(part2, 1) = work1
-      working_block%ranges(part2, 2) = work2
+      working_block%ranges(1,part2) = work1
+      working_block%ranges(2,part2) = work2
       RETURN
     ENDIF
 
