@@ -34,7 +34,8 @@ CONTAINS
     ! If this isn't "CFD" then this isn't a CFD file
     IF (cfd .NE. "CFD") THEN
       CALL MPI_FILE_CLOSE(cfd_filehandle, cfd_errcode)
-      PRINT *, "The specified file is not a valid CFD file"
+      IF (rank .EQ. default_rank) &
+          PRINT *, "The specified file is not a valid CFD file"
       CALL MPI_ABORT(cfd_comm, cfd_errcode, ierr)
     ENDIF
 

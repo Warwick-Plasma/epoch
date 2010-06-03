@@ -115,12 +115,14 @@ CONTAINS
     CASE(5)
       use_offset_grid = as_logical(value, handle_io_deck)
     CASE(6)
-      WRITE(*, *) '***ERROR***'
-      WRITE(*, *) 'The "extended_io_file" option is no longer supported.'
-      WRITE(*, *) 'Please use the "import" directive instead'
-      WRITE(40,*) '***ERROR***'
-      WRITE(40,*) 'The "extended_io_file" option is no longer supported.'
-      WRITE(40,*) 'Please use the "import" directive instead'
+      IF (rank .EQ. 0) THEN
+        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) 'The "extended_io_file" option is no longer supported.'
+        WRITE(*, *) 'Please use the "import" directive instead'
+        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) 'The "extended_io_file" option is no longer supported.'
+        WRITE(40,*) 'Please use the "import" directive instead'
+      ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     END SELECT
 

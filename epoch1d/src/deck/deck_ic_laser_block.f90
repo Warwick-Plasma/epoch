@@ -24,7 +24,7 @@ CONTAINS
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, "boundary") .OR. str_cmp(element, "direction")) THEN
-      IF (str_cmp(element, "direction")) THEN
+      IF (str_cmp(element, "direction") .AND. rank .EQ. 0) THEN
         WRITE(*, *) '***WARNING***'
         WRITE(*, *) 'Element "direction" in the block "laser" is deprecated.'
         WRITE(*, *) 'Please use the element name "boundary" instead.'

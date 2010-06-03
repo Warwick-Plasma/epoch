@@ -88,12 +88,14 @@ CONTAINS
       dlb_threshold = as_real(value, handle_control_deck)
       dlb = .TRUE.
     CASE(9)
-      WRITE(*, *) '***ERROR***'
-      WRITE(*, *) 'The "icfile" option is no longer supported.'
-      WRITE(*, *) 'Please use the "import" directive instead'
-      WRITE(40,*) '***ERROR***'
-      WRITE(40,*) 'The "icfile" option is no longer supported.'
-      WRITE(40,*) 'Please use the "import" directive instead'
+      IF (rank .EQ. 0) THEN
+        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) 'The "icfile" option is no longer supported.'
+        WRITE(*, *) 'Please use the "import" directive instead'
+        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) 'The "icfile" option is no longer supported.'
+        WRITE(40,*) 'Please use the "import" directive instead'
+      ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(10)
       restart_snapshot = as_integer(value, handle_control_deck)

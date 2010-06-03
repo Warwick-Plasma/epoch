@@ -89,7 +89,7 @@ CONTAINS
 
     len_s = LEN(string)
 
-    IF (max_string_len .LT. len_s) THEN
+    IF (max_string_len .LT. len_s .AND. rank .EQ. default_rank) THEN
       PRINT*, '***WARNING***'
       PRINT*, 'Output string "' // string // '" has been truncated'
     ENDIF

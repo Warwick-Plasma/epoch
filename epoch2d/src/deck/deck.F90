@@ -367,7 +367,7 @@ CONTAINS
 
       ! Check whether or not the input deck file requested exists
       INQUIRE(file=deck_filename, exist=exists)
-      IF (.NOT. exists) THEN
+      IF (.NOT. exists .AND. rank .EQ. 0) THEN
         PRINT *, '***ERROR***'
         PRINT *, 'Input deck file "' // deck_filename // '" does not exist.'
         PRINT *, 'Create the file and rerun the code.'
@@ -377,7 +377,7 @@ CONTAINS
       ! Get a free lun. Don't use a constant lun to allow for recursion
       lun = get_free_lun()
       OPEN(unit=lun, file=TRIM(ADJUSTL(deck_filename)))
-      IF (first_call) THEN
+      IF (first_call .AND. rank .EQ. 0) THEN
         OPEN(unit=40, file=status_filename)
         WRITE(40,*) ascii_header
         WRITE(40,*)
