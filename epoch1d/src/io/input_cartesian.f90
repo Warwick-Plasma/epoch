@@ -204,7 +204,7 @@ CONTAINS
 
     CALL cfd_skip_block_metadata()
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, 1, subarray, cfd_status, &
@@ -241,7 +241,7 @@ CONTAINS
 
     CALL cfd_skip_block_metadata()
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, 1, subarray, cfd_status, &
@@ -278,7 +278,7 @@ CONTAINS
 
     CALL cfd_skip_block_metadata()
 
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, variable, 1, subarray, cfd_status, &

@@ -333,7 +333,7 @@ CONTAINS
     current_displacement = current_displacement + 2 * max_string_len
 
     ! Write the actual data
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
         distribution, "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
         cfd_status, cfd_errcode)
@@ -438,7 +438,7 @@ CONTAINS
     current_displacement = current_displacement + 2 * max_string_len
 
     ! Write the actual data
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
         distribution, "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
         cfd_status, cfd_errcode)
@@ -548,7 +548,7 @@ CONTAINS
     current_displacement = current_displacement + 2 * max_string_len
 
     ! Write the actual data
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
+    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
         distribution, "native", MPI_INFO_NULL, cfd_errcode)
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
         cfd_status, cfd_errcode)
