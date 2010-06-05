@@ -132,19 +132,19 @@ CONTAINS
 
 
 
-  SUBROUTINE evaluate_string_in_space(str_in, data_out, xrange, err)
+  SUBROUTINE evaluate_string_in_space(str_in, data_out, x1, x2, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
-    INTEGER, DIMENSION(2), INTENT(IN) :: xrange
+    INTEGER, INTENT(IN) :: x1, x2
     REAL(num), DIMENSION(1:), INTENT(OUT) :: data_out
     TYPE(primitive_stack) :: output
     INTEGER :: ix
 
     output%stack_point = 0
     CALL tokenize(str_in, output, err)
-    DO ix = xrange(1), xrange(2)
-      data_out(ix-xrange(1)+1) = evaluate_at_point(output, ix, err)
+    DO ix = x1, x2
+      data_out(ix-x1+1) = evaluate_at_point(output, ix, err)
     ENDDO
 
   END SUBROUTINE evaluate_string_in_space

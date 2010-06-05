@@ -291,12 +291,12 @@ CONTAINS
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_data_file(filename, &
-            initial_conditions(species_id)%rho, offset, &
+            initial_conditions(species_id)%rho(:,:,:), offset, &
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%rho(-2:nx+3,-2:ny+3,-2:nz+3), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%rho(:,:,:), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       RETURN
     ENDIF
@@ -305,12 +305,12 @@ CONTAINS
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_data_file(filename, &
-            initial_conditions(species_id)%rho, offset, &
+            initial_conditions(species_id)%rho(:,:,:), offset, &
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%rho(-2:nx+3,-2:ny+3,-2:nz+3), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%rho(:,:,:), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       initial_conditions(species_id)%rho = &
           initial_conditions(species_id)%rho / particle_species(species_id)%mass
@@ -325,8 +325,8 @@ CONTAINS
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%drift(-2:nx+3,-2:ny+3,-2:nz+3, 1), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%drift(:,:,:,1), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       RETURN
     ENDIF
@@ -339,8 +339,8 @@ CONTAINS
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%drift(-2:nx+3,-2:ny+3,-2:nz+3, 2), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%drift(:,:,:,2), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       RETURN
     ENDIF
@@ -353,8 +353,8 @@ CONTAINS
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%drift(-2:nx+3,-2:ny+3,-2:nz+3, 3), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%drift(:,:,:,3), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       RETURN
     ENDIF
@@ -367,8 +367,8 @@ CONTAINS
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3,-2:nz+3, 1), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%temp(:,:,:,1), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       debug_mode = .FALSE.
       initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3,-2:nz+3, 2) = &
@@ -386,8 +386,8 @@ CONTAINS
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3,-2:nz+3, 1), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%temp(:,:,:,1), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       RETURN
     ENDIF
@@ -400,8 +400,8 @@ CONTAINS
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3,-2:nz+3, 2), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%temp(:,:,:,2), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       RETURN
     ENDIF
@@ -414,8 +414,8 @@ CONTAINS
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3,-2:nz+3, 3), &
-            (/-2,nx+3/), (/-2,ny+3/), (/-2,nz+3/), handle_species_deck)
+            initial_conditions(species_id)%temp(:,:,:,3), &
+            -2, nx+3, -2, ny+3, -2, nz+3, handle_species_deck)
       ENDIF
       RETURN
     ENDIF

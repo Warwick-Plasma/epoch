@@ -41,8 +41,8 @@ CONTAINS
         CALL load_single_array_from_data_file(filename, ex, offset, &
             handle_ic_fields_deck)
       ELSE
-        CALL evaluate_string_in_space(value, ex(-1:nx+2), &
-            (/-1, nx+2/), handle_ic_fields_deck)
+        CALL evaluate_string_in_space(value, ex, &
+            -2, nx+3, handle_ic_fields_deck)
       ENDIF
       RETURN
     ENDIF
@@ -52,8 +52,8 @@ CONTAINS
         CALL load_single_array_from_data_file(filename, ey, offset, &
             handle_ic_fields_deck)
       ELSE
-        CALL evaluate_string_in_space(value, ey(-1:nx+2), &
-            (/-1, nx+2/), handle_ic_fields_deck)
+        CALL evaluate_string_in_space(value, ey, &
+            -2, nx+3, handle_ic_fields_deck)
       ENDIF
       RETURN
     ENDIF
@@ -63,8 +63,8 @@ CONTAINS
         CALL load_single_array_from_data_file(filename, ez, offset, &
             handle_ic_fields_deck)
       ELSE
-        CALL evaluate_string_in_space(value, ez(-1:nx+2), &
-            (/-1, nx+2/), handle_ic_fields_deck)
+        CALL evaluate_string_in_space(value, ez, &
+            -2, nx+3, handle_ic_fields_deck)
       ENDIF
       RETURN
     ENDIF
@@ -74,8 +74,8 @@ CONTAINS
         CALL load_single_array_from_data_file(filename, bx, offset, &
             handle_ic_fields_deck)
       ELSE
-        CALL evaluate_string_in_space(value, bx(-1:nx+2), &
-            (/-1, nx+2/), handle_ic_fields_deck)
+        CALL evaluate_string_in_space(value, bx, &
+            -2, nx+3, handle_ic_fields_deck)
       ENDIF
       RETURN
     ENDIF
@@ -85,8 +85,8 @@ CONTAINS
         CALL load_single_array_from_data_file(filename, by, offset, &
             handle_ic_fields_deck)
       ELSE
-        CALL evaluate_string_in_space(value, by(-1:nx+2), &
-            (/-1, nx+2/), handle_ic_fields_deck)
+        CALL evaluate_string_in_space(value, by, &
+            -2, nx+3, handle_ic_fields_deck)
       ENDIF
       RETURN
     ENDIF
@@ -96,8 +96,8 @@ CONTAINS
         CALL load_single_array_from_data_file(filename, bz, offset, &
             handle_ic_fields_deck)
       ELSE
-        CALL evaluate_string_in_space(value, bz(-1:nx+2), &
-            (/-1, nx+2/), handle_ic_fields_deck)
+        CALL evaluate_string_in_space(value, bz, &
+            -2, nx+3, handle_ic_fields_deck)
       ENDIF
       RETURN
     ENDIF

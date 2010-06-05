@@ -132,12 +132,12 @@ CONTAINS
 
 
 
-  SUBROUTINE evaluate_string_in_space(str_in, data_out, xrange, yrange, &
-      zrange, err)
+  SUBROUTINE evaluate_string_in_space(str_in, data_out, x1, x2, y1, y2, &
+      z1, z2, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
-    INTEGER, DIMENSION(2), INTENT(IN) :: xrange, yrange, zrange
+    INTEGER, INTENT(IN) :: x1, x2, y1, y2, z1, z2
     REAL(num), DIMENSION(1:,1:,1:), INTENT(OUT) :: data_out
     TYPE(primitive_stack) :: output
     INTEGER :: ix, iy, iz
@@ -145,10 +145,10 @@ CONTAINS
     output%stack_point = 0
     CALL tokenize(str_in, output, err)
 
-    DO iz = zrange(1), zrange(2)
-      DO iy = yrange(1), yrange(2)
-        DO ix = xrange(1), xrange(2)
-          data_out(ix-xrange(1)+1, iy-yrange(1)+1, iz-yrange(1)+1) = &
+    DO iz = z1, z2
+      DO iy = y1, y2
+        DO ix = x1, x2
+          data_out(ix-x1+1, iy-y1+1, iz-y1+1) = &
               evaluate_at_point(output, ix, iy, iz, err)
         ENDDO
       ENDDO
