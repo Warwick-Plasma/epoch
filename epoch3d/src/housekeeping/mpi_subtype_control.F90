@@ -162,13 +162,15 @@ CONTAINS
   ! particles
   !----------------------------------------------------------------------------
 
-  FUNCTION create_particle_subtype(npart_local)
+  FUNCTION create_particle_subtype(npart_in)
 
     INTEGER :: create_particle_subtype
-    INTEGER(KIND=8), INTENT(IN) :: npart_local
+    INTEGER(KIND=8), INTENT(IN) :: npart_in
+    INTEGER(KIND=8), DIMENSION(1) :: npart_local
 
-    create_particle_subtype = &
-        create_ordered_particle_subtype(1, (/npart_local/) )
+    npart_local = npart_in
+
+    create_particle_subtype = create_ordered_particle_subtype(1, npart_local)
 
   END FUNCTION create_particle_subtype
 
@@ -240,10 +242,13 @@ CONTAINS
     INTEGER, INTENT(IN) :: cell_start_y_local
     INTEGER, INTENT(IN) :: cell_start_z_local
     INTEGER :: create_field_subtype
+    INTEGER, DIMENSION(3) :: n_local, n_global, start
 
-    create_field_subtype = create_3d_array_subtype( &
-        (/nx_local, ny_local, nz_local/), (/nx_global, ny_global, nz_global/), &
-        (/cell_start_x_local, cell_start_y_local, cell_start_z_local/))
+    n_local = (/nx_local, ny_local, nz_local/)
+    n_global = (/nx_global, ny_global, nz_global/)
+    start = (/cell_start_x_local, cell_start_y_local, cell_start_z_local/)
+
+    create_field_subtype = create_3d_array_subtype(n_local, n_global, start)
 
   END FUNCTION create_field_subtype
 
