@@ -136,10 +136,10 @@ CONTAINS
 
 
 
-  SUBROUTINE field_clamp_zero(field, stagger)
+  SUBROUTINE field_clamp_zero(field, s1, s2)
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
-    INTEGER, DIMENSION(2), INTENT(IN) :: stagger
+    INTEGER, INTENT(IN) :: s1, s2
 
     ! Use clamp when the laser is on.
 
@@ -147,7 +147,7 @@ CONTAINS
         .OR. bc_x_min_field .EQ. c_bc_simple_laser &
         .OR. bc_x_min_field .EQ. c_bc_simple_outflow) &
         .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
-      IF (stagger(1) .EQ. 1) THEN
+      IF (s1 .EQ. 1) THEN
         field(-1,:) = -field(1,:)
         field( 0,:) = 0.0_num
       ELSE
@@ -160,7 +160,7 @@ CONTAINS
         .OR. bc_x_max_field .EQ. c_bc_simple_laser &
         .OR. bc_x_max_field .EQ. c_bc_simple_outflow) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
-      IF (stagger(1) .EQ. 1) THEN
+      IF (s1 .EQ. 1) THEN
         field(nx,  :) = 0.0_num
         field(nx+1,:) = -field(nx-1,:)
       ELSE
@@ -173,7 +173,7 @@ CONTAINS
         .OR. bc_y_min_field .EQ. c_bc_simple_laser &
         .OR. bc_y_min_field .EQ. c_bc_simple_outflow) &
         .AND. proc_y_min .EQ. MPI_PROC_NULL) THEN
-      IF (stagger(2) .EQ. 1) THEN
+      IF (s2 .EQ. 1) THEN
         field(:,-1) = -field(:,1)
         field(:, 0) = 0.0_num
       ELSE
@@ -186,7 +186,7 @@ CONTAINS
         .OR. bc_y_max_field .EQ. c_bc_simple_laser &
         .OR. bc_y_max_field .EQ. c_bc_simple_outflow) &
         .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
-      IF (stagger(2) .EQ. 1) THEN
+      IF (s2 .EQ. 1) THEN
         field(:,ny  ) = 0.0_num
         field(:,ny+1) = -field(:,ny-1)
       ELSE
@@ -288,9 +288,9 @@ CONTAINS
     CALL field_bc(ez)
 
     ! These apply zero field boundary conditions on the edges
-    CALL field_clamp_zero(ex, (/1, 0/))
-    CALL field_clamp_zero(ey, (/0, 1/))
-    CALL field_clamp_zero(ez, (/0, 0/))
+    CALL field_clamp_zero(ex, 1, 0)
+    CALL field_clamp_zero(ey, 0, 1)
+    CALL field_clamp_zero(ez, 0, 0)
 
     ! These apply zero field gradient boundary conditions on the edges
     CALL field_zero_gradient(ex, .FALSE.)
@@ -312,9 +312,9 @@ CONTAINS
 
     IF (.NOT. mpi_only) THEN
       ! These apply zero field boundary conditions on the edges
-      CALL field_clamp_zero(bx, (/0, 1/))
-      CALL field_clamp_zero(by, (/1, 0/))
-      CALL field_clamp_zero(bz, (/1, 1/))
+      CALL field_clamp_zero(bx, 0, 1)
+      CALL field_clamp_zero(by, 1, 0)
+      CALL field_clamp_zero(bz, 1, 1)
       ! These apply zero field boundary conditions on the edges
       CALL field_zero_gradient(bx, .FALSE.)
       CALL field_zero_gradient(by, .FALSE.)
