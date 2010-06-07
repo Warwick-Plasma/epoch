@@ -340,8 +340,8 @@ CONTAINS
     INTEGER :: create_3d_array_subtype
     INTEGER :: ipoint
 
-    ALLOCATE(lengths(1:n_local(2) * n_local(3)))
-    ALLOCATE(disp(1:n_local(2) * n_local(3)))
+    ALLOCATE(lengths(n_local(2) * n_local(3)))
+    ALLOCATE(disp(n_local(2) * n_local(3)))
 
     sz = realsize
     lengths = n_local(1)
