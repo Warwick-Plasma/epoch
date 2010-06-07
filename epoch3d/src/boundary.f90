@@ -96,39 +96,63 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local, nz_local
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER :: subarray
 
-    CALL MPI_SENDRECV(field(1:3,:,:), &
-        3*(ny_local+6)*(nz_local+6), mpireal, proc_x_min, tag, &
-        field(nx_local+1:nx_local+3,:,:), &
-        3*(ny_local+6)*(nz_local+6), mpireal, proc_x_max, tag, &
+    sizes(1) = nx_local + 6
+    sizes(2) = ny_local + 6
+    sizes(3) = nz_local + 6
+    subsizes(1) = 3
+    subsizes(2) = ny_local + 6
+    subsizes(3) = nz_local + 6
+    starts = 0
+
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
+    CALL MPI_TYPE_COMMIT(subarray, errcode)
+
+    CALL MPI_SENDRECV(field(1,-2,-2), 1, subarray, proc_x_min, tag, &
+        field(nx_local+1,-2,-2), 1, subarray, proc_x_max, tag, &
         comm, status, errcode)
-    CALL MPI_SENDRECV(field(nx_local-2:nx_local,:,:), &
-        3*(ny_local+6)*(nz_local+6), mpireal, proc_x_max, tag, &
-        field(-2:0,:,:), &
-        3*(ny_local+6)*(nz_local+6), mpireal, proc_x_min, tag, &
+    CALL MPI_SENDRECV(field(nx_local-2,-2,-2), 1, subarray, proc_x_max, tag, &
+        field(-2,-2,-2), 1, subarray, proc_x_min, tag, &
         comm, status, errcode)
 
-    CALL MPI_SENDRECV(field(:,1:3,:), &
-        3*(nx_local+6)*(nz_local+6), mpireal, proc_y_min, tag, &
-        field(:,ny_local+1:ny_local+3,:), &
-        3*(nx_local+6)*(nz_local+6), mpireal, proc_y_max, tag, &
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = nx_local + 6
+    subsizes(2) = 3
+    subsizes(3) = nz_local + 6
+
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
+    CALL MPI_TYPE_COMMIT(subarray, errcode)
+
+    CALL MPI_SENDRECV(field(-2,1,-2), 1, subarray, proc_y_min, tag, &
+        field(-2,ny_local+1,-2), 1, subarray, proc_y_max, tag, &
         comm, status, errcode)
-    CALL MPI_SENDRECV(field(:,ny_local-2:ny_local,:), &
-        3*(nx_local+6)*(nz_local+6), mpireal, proc_y_max, tag, &
-        field(:,-2:0,:), &
-        3*(nx_local+6)*(nz_local+6), mpireal, proc_y_min, tag, &
+    CALL MPI_SENDRECV(field(-2,ny_local-2,-2), 1, subarray, proc_y_max, tag, &
+        field(-2,-2,-2), 1, subarray, proc_y_min, tag, &
         comm, status, errcode)
 
-    CALL MPI_SENDRECV(field(:,:,1:3), &
-        3*(nx_local+6)*(ny_local+6), mpireal, proc_z_min, tag, &
-        field(:,:,nz_local+1:nz_local+3), &
-        3*(nx_local+6)*(ny_local+6), mpireal, proc_z_max, tag, &
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = nx_local + 6
+    subsizes(2) = ny_local + 6
+    subsizes(3) = 3
+
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
+    CALL MPI_TYPE_COMMIT(subarray, errcode)
+
+    CALL MPI_SENDRECV(field(-2,-2,1), 1, subarray, proc_z_min, tag, &
+        field(-2,-2,nz_local+1), 1, subarray, proc_z_max, tag, &
         comm, status, errcode)
-    CALL MPI_SENDRECV(field(:,:,nz_local-2:nz_local), &
-        3*(nx_local+6)*(ny_local+6), mpireal, proc_z_max, tag, &
-        field(:,:,-2:0), &
-        3*(nx_local+6)*(ny_local+6), mpireal, proc_z_min, tag, &
+    CALL MPI_SENDRECV(field(-2,-2,nz_local-2), 1, subarray, proc_z_max, tag, &
+        field(-2,-2,-2), 1, subarray, proc_z_min, tag, &
         comm, status, errcode)
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -272,103 +296,86 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER :: subx, suby, subz
 
-    INTEGER, DIMENSION(-1:1, -1:1, -1:1) :: sizes, x_min, x_max, x_shift
-    INTEGER, DIMENSION(-1:1, -1:1, -1:1) :: y_min, y_max, y_shift
-    INTEGER, DIMENSION(-1:1, -1:1, -1:1) :: z_min, z_max, z_shift
-    INTEGER :: xs, xe, xf, ys, ye, yf, zs, ze, zf
+    sizes(1) = nx + 6
+    sizes(2) = ny + 6
+    sizes(3) = nz + 6
+    subsizes(1) = 3
+    subsizes(2) = ny + 6
+    subsizes(3) = nz + 6
+    starts = 0
 
-    sizes = 0
-    x_min = 0
-    y_min = 0
-    z_min = 0
-    x_max = 0
-    y_max = 0
-    z_max = 0
-    x_shift = 0
-    y_shift = 0
-    z_shift = 0
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, mpireal, subx, errcode)
+    CALL MPI_TYPE_COMMIT(subx, errcode)
 
-    DO iz = -1, 1
-      DO iy = -1, 1
-        DO ix = -1, 1
-          sizes(ix, iy, iz) = 1
-          IF (ix .EQ. 0) THEN
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * (nx+6)
-            x_min(ix, iy, iz) = -2
-            x_max(ix, iy, iz) = nx+3
-          ELSE IF (ix .EQ. 1) THEN
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * 3
-            x_min(ix, iy, iz) = nx+1
-            x_max(ix, iy, iz) = nx+3
-            x_shift(ix, iy, iz) = -nx
-          ELSE
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * 3
-            x_min(ix, iy, iz) = -2
-            x_max(ix, iy, iz) = 0
-            x_shift(ix, iy, iz) = nx
-          ENDIF
-          IF (iy .EQ. 0) THEN
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * (ny+6)
-            y_min(ix, iy, iz) = -2
-            y_max(ix, iy, iz) = ny+3
-          ELSE IF (iy .EQ. 1) THEN
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * 3
-            y_min(ix, iy, iz) = ny+1
-            y_max(ix, iy, iz) = ny+3
-            y_shift(ix, iy, iz) = -ny
-          ELSE
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * 3
-            y_min(ix, iy, iz) = -2
-            y_max(ix, iy, iz) = 0
-            y_shift(ix, iy, iz) = ny
-          ENDIF
-          IF (iz .EQ. 0) THEN
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * (nz+6)
-            z_min(ix, iy, iz) = -2
-            z_max(ix, iy, iz) = nz+3
-          ELSE IF (iz .EQ. 1) THEN
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * 3
-            z_min(ix, iy, iz) = nz+1
-            z_max(ix, iy, iz) = nz+3
-            z_shift(ix, iy, iz) = -nz
-          ELSE
-            sizes(ix, iy, iz) = sizes(ix, iy, iz) * 3
-            z_min(ix, iy, iz) = -2
-            z_max(ix, iy, iz) = 0
-            z_shift(ix, iy, iz) = nz
-          ENDIF
-        ENDDO
-      ENDDO
-    ENDDO
+    subsizes(1) = nx + 6
+    subsizes(2) = 3
+    subsizes(3) = nz + 6
 
-    DO iz = -1, 1
-      DO iy = -1, 1
-        DO ix = -1, 1
-          IF (ix .EQ. 0 .AND. iy .EQ. 0 .AND. iz .EQ. 0) CYCLE
-          IF (ABS(ix)+ABS(iy)+ABS(iz) .NE. 1) CYCLE
-  
-          xs = x_min(ix, iy, iz)
-          ys = y_min(ix, iy, iz)
-          zs = z_min(ix, iy, iz)
-          xe = x_max(ix, iy, iz)
-          ye = y_max(ix, iy, iz)
-          ze = z_max(ix, iy, iz)
-          xf = x_shift(ix, iy, iz)
-          yf = y_shift(ix, iy, iz)
-          zf = z_shift(ix, iy, iz)
-  
-          ALLOCATE(temp(xs:xe, ys:ye, zs:ze))
-          temp = 0.0_num
-          CALL MPI_SENDRECV(array(xs:xe, ys:ye, zs:ze), sizes(ix, iy, iz), &
-              mpireal, neighbour(ix, iy, iz), tag, temp, sizes(-ix, -iy, -iz), &
-              mpireal, neighbour(-ix, -iy, -iz), tag, comm, status, errcode)
-          array(xs+xf:xe+xf, ys+yf:ye+yf, zs+zf:ze+zf) = &
-              array(xs+xf:xe+xf, ys+yf:ye+yf, zs+zf:ze+zf) + temp
-          DEALLOCATE(temp)
-        ENDDO
-      ENDDO
-    ENDDO
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, mpireal, suby, errcode)
+    CALL MPI_TYPE_COMMIT(suby, errcode)
+
+    subsizes(1) = nx + 6
+    subsizes(2) = ny + 6
+    subsizes(3) = 3
+
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, mpireal, subz, errcode)
+    CALL MPI_TYPE_COMMIT(subz, errcode)
+
+    ALLOCATE(temp(3, ny+6, nz+6))
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(-2,-2,-2), 1, subx, &
+        neighbour(-1,0,0), tag, temp, 1, subz, &
+        neighbour( 1,0,0), tag, comm, status, errcode)
+    array(-2+nx:nx,:,:) = array(-2+nx:nx,:,:) + temp
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(nx+1,-2,-2), 1, subx, &
+        neighbour( 1,0,0), tag, temp, 1, subz, &
+        neighbour(-1,0,0), tag, comm, status, errcode)
+    array(1:3,:,:) = array(1:3,:,:) + temp
+
+    DEALLOCATE(temp)
+    ALLOCATE(temp(nx+6, 3, nz+6))
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(-2,-2,-2), 1, suby, &
+        neighbour(0,-1,0), tag, temp, 1, subz, &
+        neighbour(0, 1,0), tag, comm, status, errcode)
+    array(:,-2+ny:ny,:) = array(:,-2+ny:ny,:) + temp
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(-2,ny+1,-2), 1, suby, &
+        neighbour(0, 1,0), tag, temp, 1, subz, &
+        neighbour(0,-1,0), tag, comm, status, errcode)
+    array(:,1:3,:) = array(:,1:3,:) + temp
+
+    DEALLOCATE(temp)
+    ALLOCATE(temp(nx+6, 3, nz+6))
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(-2,-2,-2), 1, subz, &
+        neighbour(0,0,-1), tag, temp, 1, subz, &
+        neighbour(0,0, 1), tag, comm, status, errcode)
+    array(:,:,-2+nz:nz) = array(:,:,-2+nz:nz) + temp
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(-2,-2,nz+1), 1, subz, &
+        neighbour(0,0, 1), tag, temp, 1, subz, &
+        neighbour(0,0,-1), tag, comm, status, errcode)
+    array(:,:,1:3) = array(:,:,1:3) + temp
+
+    DEALLOCATE(temp)
+
+    CALL MPI_TYPE_FREE(subx, errcode)
+    CALL MPI_TYPE_FREE(suby, errcode)
+    CALL MPI_TYPE_FREE(subz, errcode)
 
     CALL field_bc(array)
 

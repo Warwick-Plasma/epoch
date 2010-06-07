@@ -65,12 +65,12 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local
 
-    CALL MPI_SENDRECV(field(1:3), &
-        3, mpireal, proc_x_min, tag, field(nx_local+1:nx_local+3), &
-        3, mpireal, proc_x_max, tag, comm, status, errcode)
-    CALL MPI_SENDRECV(field(nx_local-2:nx_local), &
-        3, mpireal, proc_x_max, tag, field(-2:0), &
-        3, mpireal, proc_x_min, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1), 3, mpireal, proc_x_min, tag, &
+        field(nx_local+1), 3, mpireal, proc_x_max, tag, &
+        comm, status, errcode)
+    CALL MPI_SENDRECV(field(nx_local-2), 3, mpireal, proc_x_max, tag, &
+        field(-2), 3, mpireal, proc_x_min, tag, &
+        comm, status, errcode)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -139,45 +139,21 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
 
-    INTEGER, DIMENSION(-1:1) :: sizes, x_min, x_max, x_shift
-    INTEGER :: xs, xe, xf
+    ALLOCATE(temp(3))
 
-    sizes = 0
-    x_min = 0
-    x_max = 0
-    x_shift = 0
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(-2), 3, mpireal, &
+        neighbour(-1), tag, temp, 3, mpireal, &
+        neighbour( 1), tag, comm, status, errcode)
+    array(-2+nx:nx) = array(-2+nx:nx) + temp
 
-    DO ix = -1, 1
-      sizes(ix) = 1
-      IF (ix .EQ. 0) THEN
-        sizes(ix) = sizes(ix) * (nx+6)
-        x_min(ix) = -2
-        x_max(ix) = nx+3
-      ELSE IF (ix .EQ. 1) THEN
-        sizes(ix) = sizes(ix) * 3
-        x_min(ix) = nx+1
-        x_max(ix) = nx+3
-        x_shift(ix) = -nx
-      ELSE
-        sizes(ix) = sizes(ix) * 3
-        x_min(ix) = -2
-        x_max(ix) = 0
-        x_shift(ix) = nx
-      ENDIF
-    ENDDO
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(nx+1), 3, mpireal, &
+        neighbour( 1), tag, temp, 3, mpireal, &
+        neighbour(-1), tag, comm, status, errcode)
+    array(1:3) = array(1:3) + temp
 
-    DO ix = -1, 1, 2
-      xs = x_min(ix)
-      xe = x_max(ix)
-      xf = x_shift(ix)
-
-      ALLOCATE(temp(xs:xe))
-      temp = 0.0_num
-      CALL MPI_SENDRECV(array(xs:xe), sizes(ix), mpireal, neighbour(ix), tag, &
-          temp, sizes(-ix), mpireal, neighbour(-ix), tag, comm, status, errcode)
-      array(xs+xf:xe+xf) = array(xs+xf:xe+xf) + temp
-      DEALLOCATE(temp)
-    ENDDO
+    DEALLOCATE(temp)
 
     CALL field_bc(array)
 
