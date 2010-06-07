@@ -100,6 +100,8 @@ CONTAINS
         create_ordered_particle_subtype(n_dump_species, npart_local)
     subarray_field = create_current_field_subarray()
 
+    DEALLOCATE(npart_local)
+
   END SUBROUTINE create_subtypes
 
 

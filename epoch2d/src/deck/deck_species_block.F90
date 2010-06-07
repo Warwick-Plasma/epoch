@@ -183,6 +183,7 @@ CONTAINS
       handle_species_deck = c_err_pp_options_wrong
       extended_error_string = "-DTRACER_PARTICLES"
 #endif
+      RETURN
     ENDIF
 
     ! *************************************************************

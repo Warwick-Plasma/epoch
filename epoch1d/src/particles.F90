@@ -129,9 +129,7 @@ CONTAINS
       part_q  = particle_species(ispecies)%charge
       part_mc = c * particle_species(ispecies)%mass
 #endif
-      ! -- this option needs more testing -- DEC$ IVDEP
       !DEC$ VECTOR ALWAYS
-      !DEC$ NOPREFETCH current
       DO ipart = 1, particle_species(ispecies)%attached_list%count
         next=>current%next
 #ifdef PER_PARTICLE_WEIGHT
