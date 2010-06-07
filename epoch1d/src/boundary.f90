@@ -233,7 +233,7 @@ CONTAINS
         IF (cur%part_pos .LT. x_min_local - dx / 2.0_num) THEN
           xbd = -1
           ! Particle has left the system
-          IF (cur%part_pos .LT. x_min - dx / 2.0_num) THEN
+          IF (coordinates(c_ndims) .EQ. 0) THEN
             IF (bc_x_min_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_x_min_particle .EQ. c_bc_reflect) THEN
@@ -248,7 +248,7 @@ CONTAINS
         ELSE IF (cur%part_pos .GE. x_max_local + dx / 2.0_num) THEN
           xbd = 1
           ! Particle has left the system
-          IF (cur%part_pos .GE. x_max + dx / 2.0_num) THEN
+          IF (coordinates(c_ndims) .EQ. nprocx - 1) THEN
             IF (bc_x_max_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_x_max_particle .EQ. c_bc_reflect) THEN
