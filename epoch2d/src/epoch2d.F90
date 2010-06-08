@@ -83,9 +83,6 @@ PROGRAM pic
     output_file = 0
   ENDIF
 
-  CALL distribute_particles
-  CALL balance_workload(.TRUE.)
-
   CALL manual_load
   CALL distribute_particles
   ! .TRUE. to over_ride balance fraction check
