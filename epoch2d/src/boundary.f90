@@ -224,7 +224,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
 
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subx, suby
+    INTEGER :: subarray
 
     sizes(1) = nx + 6
     sizes(2) = ny + 6
@@ -233,49 +233,50 @@ CONTAINS
     starts = 0
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, mpireal, subx, errcode)
-    CALL MPI_TYPE_COMMIT(subx, errcode)
-
-    subsizes(1) = nx + 6
-    subsizes(2) = 3
-
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, mpireal, suby, errcode)
-    CALL MPI_TYPE_COMMIT(suby, errcode)
+        MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
+    CALL MPI_TYPE_COMMIT(subarray, errcode)
 
     ALLOCATE(temp(3, ny+6))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(-2,-2), 1, subx, &
-        neighbour(-1,0), tag, temp, 1, suby, &
+    CALL MPI_SENDRECV(array(-2,-2), 1, subarray, &
+        neighbour(-1,0), tag, temp, 3*(ny+6), mpireal, &
         neighbour( 1,0), tag, comm, status, errcode)
     array(-2+nx:nx,:) = array(-2+nx:nx,:) + temp
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(nx+1,-2), 1, subx, &
-        neighbour( 1,0), tag, temp, 1, suby, &
+    CALL MPI_SENDRECV(array(nx+1,-2), 1, subarray, &
+        neighbour( 1,0), tag, temp, 3*(ny+6), mpireal, &
         neighbour(-1,0), tag, comm, status, errcode)
     array(1:3,:) = array(1:3,:) + temp
 
     DEALLOCATE(temp)
+
+    subsizes(1) = nx + 6
+    subsizes(2) = 3
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
+    CALL MPI_TYPE_COMMIT(subarray, errcode)
+
     ALLOCATE(temp(nx+6, 3))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(-2,-2), 1, suby, &
-        neighbour(0,-1), tag, temp, 1, suby, &
+    CALL MPI_SENDRECV(array(-2,-2), 1, subarray, &
+        neighbour(0,-1), tag, temp, 3*(nx+6), mpireal, &
         neighbour(0, 1), tag, comm, status, errcode)
     array(:,-2+ny:ny) = array(:,-2+ny:ny) + temp
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(-2,ny+1), 1, suby, &
-        neighbour(0, 1), tag, temp, 1, suby, &
+    CALL MPI_SENDRECV(array(-2,ny+1), 1, subarray, &
+        neighbour(0, 1), tag, temp, 3*(nx+6), mpireal, &
         neighbour(0,-1), tag, comm, status, errcode)
     array(:,1:3) = array(:,1:3) + temp
 
     DEALLOCATE(temp)
 
-    CALL MPI_TYPE_FREE(subx, errcode)
-    CALL MPI_TYPE_FREE(suby, errcode)
+    CALL MPI_TYPE_FREE(subarray, errcode)
 
     CALL field_bc(array)
 
