@@ -962,14 +962,22 @@ CONTAINS
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_send
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_recv
     TYPE(particle), POINTER :: current, next
-    INTEGER :: part_proc, iproc_recv, iproc_send, ispecies, ierr
+    INTEGER :: part_proc, iproc, ispecies, i, oldrank, newrank, nodd, nevn, ierr
+    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: sendcounts, recvcounts
+    INTEGER, DIMENSION(:), ALLOCATABLE :: oddlist, evnlist
+
+    nodd = (nproc + 1) / 2
+    nevn = nproc / 2
 
     ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))
+    ALLOCATE(sendcounts(0:nproc-1), recvcounts(0:nproc-1))
+    ALLOCATE(oddlist(0:nodd-1), evnlist(0:nevn-1))
+
     DO ispecies = 1, n_species
       current=>species_list(ispecies)%attached_list%head
-      DO iproc_send = 0, nproc - 1
-        CALL create_empty_partlist(pointers_send(iproc_send))
-        CALL create_empty_partlist(pointers_recv(iproc_send))
+      DO iproc = 0, nproc - 1
+        CALL create_empty_partlist(pointers_send(iproc))
+        CALL create_empty_partlist(pointers_recv(iproc))
       ENDDO
 
       DO WHILE(ASSOCIATED(current))
@@ -991,25 +999,106 @@ CONTAINS
         current=>next
       ENDDO
 
-      DO iproc_send = 0, nproc - 1
-        DO iproc_recv = 0, nproc - 1
-          IF (iproc_send .NE. iproc_recv) THEN
-            IF (rank .EQ. iproc_send) THEN
-              CALL partlist_send(pointers_send(iproc_recv), iproc_recv)
-              CALL destroy_partlist(pointers_send(iproc_recv))
-            ENDIF
-            IF (rank .EQ. iproc_recv) &
-                CALL partlist_recv(pointers_recv(iproc_send), iproc_send)
-          ENDIF
-        ENDDO
+      DO iproc = 0, nproc - 1
+        sendcounts(iproc) = pointers_send(iproc)%count
       ENDDO
 
-      DO iproc_recv = 0, nproc - 1
+      ! Split the processors into odd and even lists.
+      ! Even processors send then receive, Odd processors vice-versa.
+      ! Next, on even processors split the even list in two and on
+      ! odd processors split the odd list in two.
+      ! Repeat until the list size is equal to one.
+
+      ! If the number of processors is not divisible by two then the
+      ! odd list has one extra entry.
+
+      nodd = (nproc + 1) / 2
+      nevn = nproc / 2
+      DO i = 0, nevn - 1
+        oddlist(i) = 2 * i
+        evnlist(i) = 2 * i + 1
+        IF (oddlist(i) .EQ. rank .OR. evnlist(i) .EQ. rank) THEN
+          newrank = i
+        ENDIF
+      ENDDO
+
+      IF (nodd .NE. nevn) oddlist(nodd-1) = nproc - 1
+
+      CALL MPI_ALLTOALL(sendcounts, 1, MPI_INTEGER8, recvcounts, 1, &
+          MPI_INTEGER8, comm, errcode)
+
+      oldrank = rank
+      DO WHILE(nevn .GT. 0)
+        IF (MOD(oldrank,2) .EQ. 0) THEN
+          oldrank = newrank
+          DO i = 0, nevn - 1
+            iproc = evnlist(i)
+            IF (sendcounts(iproc) .GT. 0) THEN
+              CALL partlist_send_nocount(pointers_send(iproc), iproc)
+              CALL destroy_partlist(pointers_send(iproc))
+            ENDIF
+          ENDDO
+
+          DO i = 0, nevn - 1
+            iproc = evnlist(i)
+            IF (iproc .GE. nproc) EXIT
+            IF (recvcounts(iproc) .GT. 0) THEN
+              CALL partlist_recv_nocount(pointers_recv(iproc), iproc, &
+                  recvcounts(iproc))
+            ENDIF
+          ENDDO
+
+          nevn = nodd / 2
+          nodd = (nodd + 1) / 2
+          DO i = 0, nevn - 1
+            oddlist(i) = oddlist(2*i)
+            evnlist(i) = oddlist(2*i+1)
+            IF (oddlist(i) .EQ. rank .OR. evnlist(i) .EQ. rank) THEN
+              newrank = i
+            ENDIF
+          ENDDO
+          IF (nodd .NE. nevn) oddlist(nodd-1) = oddlist(2*nodd-2)
+
+        ELSE
+          oldrank = newrank
+          DO i = 0, nodd - 1
+            iproc = oddlist(i)
+            IF (iproc .LT. 0) EXIT
+            IF (recvcounts(iproc) .GT. 0) THEN
+              CALL partlist_recv_nocount(pointers_recv(iproc), iproc, &
+                  recvcounts(iproc))
+            ENDIF
+          ENDDO
+
+          DO i = 0, nodd - 1
+            iproc = oddlist(i)
+            IF (iproc .LT. 0) EXIT
+            IF (sendcounts(iproc) .GT. 0) THEN
+              CALL partlist_send_nocount(pointers_send(iproc), iproc)
+              CALL destroy_partlist(pointers_send(iproc))
+            ENDIF
+          ENDDO
+
+          nodd = (nevn + 1) / 2
+          nevn = nevn / 2
+          DO i = 0, nevn - 1
+            oddlist(i) = evnlist(2*i)
+            evnlist(i) = evnlist(2*i+1)
+            IF (oddlist(i) .EQ. rank .OR. evnlist(i) .EQ. rank) THEN
+              newrank = i
+            ENDIF
+          ENDDO
+          IF (nodd .NE. nevn) oddlist(nodd-1) = evnlist(2*nodd-2)
+        ENDIF
+      ENDDO
+
+      DO iproc = 0, nproc - 1
         CALL append_partlist(species_list(ispecies)%attached_list, &
-            pointers_recv(iproc_recv))
+            pointers_recv(iproc))
       ENDDO
     ENDDO
 
+    DEALLOCATE(sendcounts, recvcounts, oddlist, evnlist)
     DEALLOCATE(pointers_send, pointers_recv)
 
   END SUBROUTINE distribute_particles

@@ -502,46 +502,15 @@ CONTAINS
 
 
 
-  SUBROUTINE partlist_send(partlist, dest)
+  SUBROUTINE partlist_send_nocount(partlist, dest)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(KIND=8) :: cpos = 0, npart_left, ipart, send_buf(2)
-!!$    INTEGER(KIND=8) :: npart_this_it
+    INTEGER(KIND=8) :: cpos = 0, npart_left, ipart
     TYPE(particle), POINTER :: current
 
-    send_buf(1) = partlist%count
-    send_buf(2) = partlist%id_update
-
-    CALL MPI_SEND(send_buf, 2, MPI_INTEGER8, dest, tag, comm, errcode)
-
-    ! This is a reduced memory footprint algorithm
-    ! Try to fix later
-!!$    npart_this_it = MIN(npart_left, npart_per_it)
-!!$    ! Copy the data for the particles into a buffer
-!!$    ALLOCATE(data(1:npart_this_it*nvar))
-!!$    current=>partlist%head
-!!$    ct = 0
-!!$
-!!$    npart_left = partlist%count
-!!$    DO WHILE (npart_left .GT. 0)
-!!$
-!!$      ! Copy the data into the buffer
-!!$      ct = 0
-!!$      DO ipart = 1, npart_this_it
-!!$        cpos = ct*nvar+1
-!!$        CALL pack_particle(data(cpos:cpos+nvar), current)
-!!$        current=>current%next
-!!$        ct = ct+1
-!!$      ENDDO
-!!$
-!!$      ! Send the data to the receiver
-!!$      CALL MPI_SEND(data, npart_this_it*nvar, mpireal, dest, tag, &
-!!$          comm, errcode)
-!!$      npart_left = npart_left-npart_this_it
-!!$      npart_this_it = MIN(npart_left, npart_per_it)
-!!$    ENDDO
+    npart_left = partlist%count
 
     ALLOCATE(array(1:partlist%count*nvar))
     array = 0.0_num
@@ -557,45 +526,35 @@ CONTAINS
 
     DEALLOCATE(array)
 
+  END SUBROUTINE partlist_send_nocount
+
+
+
+  SUBROUTINE partlist_send(partlist, dest)
+
+    TYPE(particle_list), INTENT(INOUT) :: partlist
+    INTEGER, INTENT(IN) :: dest
+    INTEGER(KIND=8) :: send_buf(2)
+
+    send_buf(1) = partlist%count
+    send_buf(2) = partlist%id_update
+
+    CALL MPI_SEND(send_buf, 2, MPI_INTEGER8, dest, tag, comm, errcode)
+
+    CALL partlist_send_nocount(partlist, dest)
+
   END SUBROUTINE partlist_send
 
 
 
-  SUBROUTINE partlist_recv(partlist, src)
+  SUBROUTINE partlist_recv_nocount(partlist, src, count)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: src
+    INTEGER(KIND=8), INTENT(IN) :: count
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(KIND=8) :: count, recv_buf(2)
-!!$    INTEGER(KIND=8) :: npart_this_it, npart_left
 
     CALL create_empty_partlist(partlist)
-
-    recv_buf = 0
-    CALL MPI_RECV(recv_buf, 2, MPI_INTEGER8, src, tag, comm, status, errcode)
-    count = recv_buf(1)
-    partlist%id_update = partlist%id_update + recv_buf(2)
-
-    ! This is a reduced memory footprint algorithm
-    ! Try to fix later
-!!$    npart_left = count
-!!$    npart_this_it = MIN(npart_left, npart_per_it)
-!!$    ! Copy the data for the particles into a buffer
-!!$    ALLOCATE(array(1:npart_this_it*nvar))
-!!$    DO WHILE (npart_left .GT. 0)
-!!$      ! Receive the actual data
-!!$      CALL MPI_RECV(array, npart_this_it*nvar, mpireal, src, tag, &
-!!$          comm, status, errcode)
-!!$
-!!$      ! Copy to temporary partlist and then attach that partlist to
-!!$      ! the end of the main partlist
-!!$      CALL create_filled_partlist(PartListTemp, array, npart_this_it*nvar)
-!!$      CALL append_partlist(partlist, PartListTemp)
-!!$
-!!$      ! Reduce count for next iteration
-!!$      npart_left = npart_left-npart_this_it
-!!$      npart_this_it = MIN(npart_left, npart_per_it)
-!!$    ENDDO
 
     ALLOCATE(array(1:count*nvar))
     array = 0.0_num
@@ -603,6 +562,23 @@ CONTAINS
     CALL create_filled_partlist(partlist, array, count)
 
     DEALLOCATE(array)
+
+  END SUBROUTINE partlist_recv_nocount
+
+
+
+  SUBROUTINE partlist_recv(partlist, src)
+
+    TYPE(particle_list), INTENT(INOUT) :: partlist
+    INTEGER, INTENT(IN) :: src
+    INTEGER(KIND=8) :: count, recv_buf(2)
+
+    recv_buf = 0
+    CALL MPI_RECV(recv_buf, 2, MPI_INTEGER8, src, tag, comm, status, errcode)
+    count = recv_buf(1)
+    partlist%id_update = partlist%id_update + recv_buf(2)
+
+    CALL partlist_recv_nocount(partlist, src, count)
 
   END SUBROUTINE partlist_recv
 

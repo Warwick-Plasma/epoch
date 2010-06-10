@@ -502,19 +502,15 @@ CONTAINS
 
 
 
-  SUBROUTINE partlist_send(partlist, dest)
+  SUBROUTINE partlist_send_nocount(partlist, dest)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(KIND=8) :: cpos = 0, npart_left, ipart, send_buf(2)
+    INTEGER(KIND=8) :: cpos = 0, npart_left, ipart
     TYPE(particle), POINTER :: current
 
     npart_left = partlist%count
-    send_buf(1) = partlist%count
-    send_buf(2) = partlist%id_update
-
-    CALL MPI_SEND(send_buf, 2, MPI_INTEGER8, dest, tag, comm, errcode)
 
     ALLOCATE(array(1:partlist%count*nvar))
     array = 0.0_num
@@ -530,23 +526,35 @@ CONTAINS
 
     DEALLOCATE(array)
 
+  END SUBROUTINE partlist_send_nocount
+
+
+
+  SUBROUTINE partlist_send(partlist, dest)
+
+    TYPE(particle_list), INTENT(INOUT) :: partlist
+    INTEGER, INTENT(IN) :: dest
+    INTEGER(KIND=8) :: send_buf(2)
+
+    send_buf(1) = partlist%count
+    send_buf(2) = partlist%id_update
+
+    CALL MPI_SEND(send_buf, 2, MPI_INTEGER8, dest, tag, comm, errcode)
+
+    CALL partlist_send_nocount(partlist, dest)
+
   END SUBROUTINE partlist_send
 
 
 
-  SUBROUTINE partlist_recv(partlist, src)
+  SUBROUTINE partlist_recv_nocount(partlist, src, count)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: src
+    INTEGER(KIND=8), INTENT(IN) :: count
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(KIND=8) :: count, recv_buf(2)
 
     CALL create_empty_partlist(partlist)
-
-    recv_buf = 0
-    CALL MPI_RECV(recv_buf, 2, MPI_INTEGER8, src, tag, comm, status, errcode)
-    count = recv_buf(1)
-    partlist%id_update = partlist%id_update + recv_buf(2)
 
     ALLOCATE(array(1:count*nvar))
     array = 0.0_num
@@ -554,6 +562,23 @@ CONTAINS
     CALL create_filled_partlist(partlist, array, count)
 
     DEALLOCATE(array)
+
+  END SUBROUTINE partlist_recv_nocount
+
+
+
+  SUBROUTINE partlist_recv(partlist, src)
+
+    TYPE(particle_list), INTENT(INOUT) :: partlist
+    INTEGER, INTENT(IN) :: src
+    INTEGER(KIND=8) :: count, recv_buf(2)
+
+    recv_buf = 0
+    CALL MPI_RECV(recv_buf, 2, MPI_INTEGER8, src, tag, comm, status, errcode)
+    count = recv_buf(1)
+    partlist%id_update = partlist%id_update + recv_buf(2)
+
+    CALL partlist_recv_nocount(partlist, src, count)
 
   END SUBROUTINE partlist_recv
 
