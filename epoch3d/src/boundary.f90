@@ -463,12 +463,14 @@ CONTAINS
           xbd = -1
           ! Particle has left the system
           IF (coordinates(c_ndims) .EQ. 0) THEN
+            xbd = 0
             IF (bc_x_min_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_x_min_particle .EQ. c_bc_reflect) THEN
               cur%part_pos(1) = 2.0_num * x_min - dx - cur%part_pos(1)
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_x_min_particle .EQ. c_bc_periodic) THEN
+              xbd = -1
               cur%part_pos(1) = cur%part_pos(1) + (length_x + dx)
             ENDIF
           ENDIF
@@ -478,12 +480,14 @@ CONTAINS
           xbd = 1
           ! Particle has left the system
           IF (coordinates(c_ndims) .EQ. nprocx - 1) THEN
+            xbd = 0
             IF (bc_x_max_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_x_max_particle .EQ. c_bc_reflect) THEN
               cur%part_pos(1) = 2.0_num * x_max + dx - cur%part_pos(1)
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_x_max_particle .EQ. c_bc_periodic) THEN
+              xbd = 1
               cur%part_pos(1) = cur%part_pos(1) - (length_x + dx)
             ENDIF
           ENDIF
@@ -494,12 +498,14 @@ CONTAINS
           ybd = -1
           ! Particle has left the system
           IF (coordinates(c_ndims-1) .EQ. 0) THEN
+            ybd = 0
             IF (bc_y_min_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_y_min_particle .EQ. c_bc_reflect) THEN
               cur%part_pos(2) = 2.0_num * y_min - dy - cur%part_pos(2)
               cur%part_p(2) = -cur%part_p(2)
             ELSE IF (bc_y_min_particle .EQ. c_bc_periodic) THEN
+              ybd = -1
               cur%part_pos(2) = cur%part_pos(2) + (length_y + dy)
             ENDIF
           ENDIF
@@ -509,12 +515,14 @@ CONTAINS
           ybd = 1
           ! Particle has left the system
           IF (coordinates(c_ndims-1) .EQ. nprocy - 1) THEN
+            ybd = 0
             IF (bc_y_max_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_y_max_particle .EQ. c_bc_reflect) THEN
               cur%part_pos(2) = 2.0_num * y_max + dy - cur%part_pos(2)
               cur%part_p(2) = -cur%part_p(2)
             ELSE IF (bc_y_max_particle .EQ. c_bc_periodic) THEN
+              ybd = 1
               cur%part_pos(2) = cur%part_pos(2) - (length_y + dy)
             ENDIF
           ENDIF
@@ -525,12 +533,14 @@ CONTAINS
           zbd = -1
           ! Particle has left the system
           IF (coordinates(c_ndims-2) .EQ. 0) THEN
+            zbd = 0
             IF (bc_z_min_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_z_min_particle .EQ. c_bc_reflect) THEN
               cur%part_pos(3) = 2.0_num * z_min - dz - cur%part_pos(3)
               cur%part_p(3) = -cur%part_p(3)
             ELSE IF (bc_z_min_particle .EQ. c_bc_periodic) THEN
+              zbd = -1
               cur%part_pos(3) = cur%part_pos(3) + (length_z + dz)
             ENDIF
           ENDIF
@@ -540,12 +550,14 @@ CONTAINS
           zbd = 1
           ! Particle has left the system
           IF (coordinates(c_ndims-2) .EQ. nprocz - 1) THEN
+            zbd = 0
             IF (bc_z_max_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_z_max_particle .EQ. c_bc_reflect) THEN
               cur%part_pos(3) = 2.0_num * z_max + dz - cur%part_pos(3)
               cur%part_p(3) = -cur%part_p(3)
             ELSE IF (bc_z_max_particle .EQ. c_bc_periodic) THEN
+              zbd = 1
               cur%part_pos(3) = cur%part_pos(3) - (length_z + dz)
             ENDIF
           ENDIF
