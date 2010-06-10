@@ -34,14 +34,19 @@ CONTAINS
   SUBROUTINE species_finalise
 
     INTEGER :: i
+    CHARACTER(LEN=8) :: string
 
     IF (deck_state .EQ. c_ds_deck) THEN
       CALL setup_species
       DO i = 1, n_species
         particle_species(i)%name = species_names(i)
-        IF (rank .EQ. 0) &
-            PRINT '("Name of species ", i3, " is ", a)', i, species_names(i)
+        IF (rank .EQ. 0) THEN
+          CALL integer_as_string(i, string)
+          PRINT*,'Name of species ', TRIM(ADJUSTL(string)), ' is ', &
+              TRIM(species_names(i))
+        ENDIF
       ENDDO
+      IF (rank .EQ. 0) PRINT*
       DEALLOCATE(species_names)
     ENDIF
     IF (deck_state .EQ. c_ds_ic .OR. ic_from_restart) THEN
