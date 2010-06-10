@@ -378,7 +378,7 @@ CONTAINS
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_send
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_recv
     TYPE(particle), POINTER :: current, next
-    INTEGER :: part_proc, iproc_recv, iproc_send, ispecies
+    INTEGER :: part_proc, iproc_recv, iproc_send, ispecies, ierr
 
     ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))
     DO ispecies = 1, n_species
@@ -393,7 +393,7 @@ CONTAINS
         part_proc = get_particle_processor(current)
         IF (part_proc .LT. 0) THEN
           PRINT *, "Unlocatable particle on processor", rank, current%part_pos
-          CALL MPI_BARRIER(comm, errcode)
+          CALL MPI_ABORT(comm, errcode, ierr)
           STOP
         ENDIF
 #ifdef PARTICLE_DEBUG
