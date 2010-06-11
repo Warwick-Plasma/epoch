@@ -8,15 +8,17 @@ MODULE input
 
 CONTAINS
 
-  SUBROUTINE cfd_open_read(filename)
+  SUBROUTINE cfd_open_read(filename, step, time)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
+    INTEGER(4), INTENT(OUT) :: step
+    DOUBLE PRECISION, INTENT(OUT) :: time
     CHARACTER(LEN=3) :: cfd
-
     INTEGER(4) :: file_version, file_revision
-    INTEGER(4) :: endianness, step
+    INTEGER(4) :: endianness
     INTEGER :: ierr
-    DOUBLE PRECISION :: time
+
+    step = -1
 
     CALL MPI_BARRIER(cfd_comm, cfd_errcode)
 

@@ -12,8 +12,8 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER, INTENT(IN) :: cfd_comm_in, cfd_rank_in, mode
-    INTEGER, OPTIONAL, INTENT(IN) :: step
-    REAL(num), OPTIONAL, INTENT(IN) :: time
+    INTEGER, OPTIONAL, INTENT(INOUT) :: step
+    REAL(num), OPTIONAL, INTENT(INOUT) :: time
     REAL(num) :: dummy = 1.0_num
     TYPE(jobid_type), OPTIONAL, INTENT(IN) :: jobid
     INTEGER :: sof4, ostep = 0
@@ -51,7 +51,11 @@ CONTAINS
       cfd_writing = .FALSE.
 
       ! We're opening a file which already exists, so don't damage it
-      CALL cfd_open_read(filename)
+      CALL cfd_open_read(filename, ostep, otime)
+
+      IF (PRESENT(step)) step = ostep
+      IF (PRESENT(time)) time = otime
+
     ENDIF
 
   END SUBROUTINE cfd_open

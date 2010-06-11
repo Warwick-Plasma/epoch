@@ -207,10 +207,15 @@ CONTAINS
     npart = npart_global/nproc
     constant_weight = .FALSE.
     CALL create_subtypes_for_load(npart)
+    snap = -1
 
     ! Create the filename for the last snapshot
     WRITE(filename, '(a, "/", i4.4, ".cfd")') TRIM(data_dir), restart_snapshot
-    CALL cfd_open(filename, rank, comm, MPI_MODE_RDONLY)
+    CALL cfd_open(filename, rank, comm, MPI_MODE_RDONLY, snap, time_d)
+    IF (snap .GE. 0) THEN
+      time = time_d
+      IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time
+    ENDIF
     ! open the file
     nblocks = cfd_get_nblocks()
     jobid = cfd_get_jobid()
@@ -227,7 +232,7 @@ CONTAINS
     DO ix = 1, nblocks
       CALL cfd_get_next_block_info_all(name, class, block_type)
       ! IF (rank .EQ. 0) PRINT *, "Loading block", ix, name, block_type
-      IF (block_type .EQ. c_type_snapshot) THEN
+      IF (block_type .EQ. c_type_snapshot .AND. snap .LT. 0) THEN
         CALL cfd_get_snapshot(time_d, snap)
         time = time_d
         IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time

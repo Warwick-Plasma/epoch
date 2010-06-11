@@ -22,7 +22,7 @@ CONTAINS
 
   SUBROUTINE output_routines(i)   ! i = step index
 
-    INTEGER, INTENT(IN) :: i
+    INTEGER, INTENT(INOUT) :: i
     LOGICAL :: print_arrays, last_call
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=50) :: temp_name
@@ -84,11 +84,6 @@ CONTAINS
     ! cycle number, simulation time, job id)
     CALL cfd_open(filename, rank, comm, c_cfd_write, i, time, jobid)
     CALL cfd_write_job_info(restart_flag, sha1sum, 0)
-
-    ! Write the snapshot information
-    ! If you prefer the VisIt cycles to display the dump number, change i
-    ! for output_file (code_time, n_iterations, rank to write)
-    CALL cfd_write_snapshot_data(time, i, 0)
 
     IF (IAND(dumpmask(c_dump_part_grid), code) .NE. 0) &
         CALL cfd_write_nd_particle_grid_with_iterator_all("Particles", &
