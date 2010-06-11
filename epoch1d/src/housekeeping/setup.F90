@@ -171,8 +171,9 @@ CONTAINS
 
 
 
-  SUBROUTINE restart_data
+  SUBROUTINE restart_data(snap)
 
+    INTEGER, INTENT(OUT) :: snap
     CHARACTER(LEN=20+data_dir_max_length) :: filename
     CHARACTER(LEN=max_string_len) :: name, class, mesh_name, mesh_class
     INTEGER :: block_type, nd
@@ -181,7 +182,7 @@ CONTAINS
     REAL(num), DIMENSION(2) :: extents, stagger
     INTEGER, DIMENSION(1) :: dims
     REAL(KIND=8) :: time_d
-    INTEGER :: snap, coord_type, ierr, nblocks
+    INTEGER :: coord_type, ierr, nblocks
     TYPE(particle), POINTER :: current, next
     LOGICAL :: constant_weight
     INTEGER(KIND=8) :: npart, ipart, ix

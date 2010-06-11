@@ -65,9 +65,9 @@ PROGRAM pic
 
   ! restart flag is set
   IF (ic_from_restart) THEN
-    CALL restart_data    ! restart from data in file save.data
+    CALL restart_data(i)    ! restart from data in file save.data
     IF (rank .EQ. 0) PRINT *, "Load from restart dump OK"
-    output_file = restart_snapshot
+    output_file = restart_snapshot + 1
   ELSE
     ! Using autoloader
     CALL allocate_ic
@@ -180,7 +180,7 @@ PROGRAM pic
   IF (rank .EQ. 0) &
       PRINT *, "Final runtime of core = ", MPI_WTIME() - walltime_start
 
-  IF (i .NE. nsteps) CALL output_routines(i)
+  IF (halt) CALL output_routines(i)
 
   CALL close_files
   CALL MPI_FINALIZE(errcode)
