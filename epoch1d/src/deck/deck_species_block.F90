@@ -49,7 +49,11 @@ CONTAINS
       IF (rank .EQ. 0) PRINT*
       DEALLOCATE(species_names)
     ENDIF
-    IF (deck_state .EQ. c_ds_ic .OR. ic_from_restart) THEN
+    ! Ugly hack.
+    ! Deallocate species_blocks after the last call to read_deck.
+    ! The last call depends on whether it is a restart dump or not.
+    IF ((ic_from_restart .AND. deck_state .EQ. c_ds_eio) &
+        .OR. deck_state .EQ. c_ds_ic) THEN
       DEALLOCATE(species_blocks)
     ENDIF
 
