@@ -66,7 +66,6 @@ CONTAINS
     CALL integer_as_string(jobid%start_milliseconds, rev)
     ascii_header = c_code_name // " v" // TRIM(version_string) // " " &
         // c_commit_id // " " // TRIM(ver) // "." // TRIM(ADJUSTL(rev))
-    print*,ascii_header
     WRITE(*, *) "Welcome to EPOCH2D Version ", version_string
     WRITE(*, *) ""
 

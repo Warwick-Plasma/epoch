@@ -277,6 +277,7 @@ CONTAINS
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3))
       current%profile = temp1d
+
       temp1d = 0.0_num
       CALL redistribute_field_1d(new_domain, c_dir_x, current%phase, temp1d)
       DEALLOCATE(current%phase)

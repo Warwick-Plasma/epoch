@@ -84,7 +84,6 @@ PROGRAM pic
   ENDIF
 
   CALL manual_load
-  CALL distribute_particles
   ! .TRUE. to over_ride balance fraction check
   CALL balance_workload(.TRUE.)
 

@@ -16,7 +16,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: n_elements
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i
+    INTEGER :: i, ierr
     TYPE(stack_element) :: block
 
     eval_stack%stack_point = 0
@@ -37,7 +37,8 @@ CONTAINS
           CALL do_functions(block%data, ix, iy, iz, err)
       IF (err .NE. c_err_none) THEN
         PRINT *, "BAD block", err, block%ptype, i, block%data
-        EXIT
+        CALL MPI_ABORT(comm, errcode, ierr)
+        STOP
       ENDIF
     ENDDO
     IF (eval_stack%stack_point .NE. n_elements) err = IAND(err, c_err_bad_value)
