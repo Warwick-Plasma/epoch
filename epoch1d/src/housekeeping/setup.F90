@@ -204,9 +204,8 @@ CONTAINS
     LOGICAL :: constant_weight
     INTEGER(KIND=8) :: npart, ipart, ix
 
-    npart = npart_global/nproc
+    npart_global = 0
     constant_weight = .FALSE.
-    CALL create_subtypes_for_load(npart)
     snap = -1
 
     ! Create the filename for the last snapshot
@@ -308,21 +307,13 @@ CONTAINS
               mesh_name, mesh_class)
 
           IF (npart_l .NE. npart_global) THEN
-            IF (rank .EQ. 0) &
-                PRINT *, "Number of particles does not match, changing &
-                    &npart to match", npart_l
-            npart = npart_l/nproc
-            CALL create_subtypes_for_load(npart)
-            CALL create_allocated_partlist(main_root, npart)
-            ALLOCATE(species_id(npart))
-            current=>main_root%head
-            DO ipart = 1, main_root%count
-              current%part_p = 0.0_num
-              current%part_pos = 0.0_num
-              current=>current%next
-            ENDDO
-            current=>main_root%head
-            npart_global = npart_l
+            IF (rank .EQ. 0) THEN
+              PRINT *, "*** ERROR ***"
+              PRINT *, "Malformed restart dump. Number of particle variables", &
+                  " does not match grid."
+            ENDIF
+            CALL MPI_ABORT(comm, errcode, ierr)
+            STOP
           ENDIF
 
           ! particle variables
