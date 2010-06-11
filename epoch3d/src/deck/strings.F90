@@ -56,23 +56,26 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) ::  str_in, str_test
     CHARACTER(LEN=string_length) :: str_trim
+    INTEGER :: test_len, in_len
     LOGICAL :: str_cmp
 
     str_trim = TRIM(ADJUSTL(str_in))
+    test_len = LEN(TRIM(str_test))
+    in_len = LEN(TRIM(str_trim))
 
-    IF (LEN(str_test) .GT. LEN(str_trim)) THEN
+    IF (test_len .GT. 0) THEN
+      IF (IACHAR(str_test(test_len:test_len)) .EQ. 0) test_len = test_len - 1
+    ENDIF
+    IF (in_len .GT. 0) THEN
+      IF (IACHAR(str_trim(in_len:in_len)) .EQ. 0) in_len = in_len - 1
+    ENDIF
+
+    IF (test_len .NE. in_len) THEN
       str_cmp = .FALSE.
       RETURN
     ENDIF
 
-    IF (LEN(str_test) .LT. string_length) THEN
-      IF (str_trim(LEN(str_test)+1:LEN(str_test)+1) .NE. " ") THEN
-        str_cmp = .FALSE.
-        RETURN
-      ENDIF
-    ENDIF
-
-    str_cmp = (str_trim(1:LEN(str_test)) .EQ. str_test)
+    str_cmp = (str_trim(1:test_len) .EQ. str_test(1:test_len))
 
   END FUNCTION str_cmp
 
