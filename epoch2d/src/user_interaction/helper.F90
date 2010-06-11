@@ -129,6 +129,7 @@ CONTAINS
     REAL(num) :: density_total, density_total_global, density_average
     INTEGER(KIND=8) :: npart_this_proc_new, ipart, npart_this_species
     REAL(num) :: rpos
+    INTEGER :: ix, iy
 
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
@@ -245,7 +246,7 @@ CONTAINS
     REAL(num) :: cell_x_r
     REAL(num) :: cell_y_r
     INTEGER(KIND=8) :: i
-    INTEGER :: j, ierr
+    INTEGER :: j, ierr, ix, iy
     CHARACTER(LEN=15) :: string
 
     npart_this_species = species_list%count
@@ -386,7 +387,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:2) :: gx, gy
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
-    INTEGER :: isubx, isuby, ierr
+    INTEGER :: isubx, isuby, ierr, ix, iy
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:,:), ALLOCATABLE :: density_map
 

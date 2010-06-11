@@ -42,6 +42,8 @@ CONTAINS
 
   SUBROUTINE update_e_field
 
+    INTEGER :: ix, iy
+
     DO iy = 1, ny
       DO ix = 1, nx
         ex(ix, iy) = ex(ix, iy) &
@@ -72,6 +74,8 @@ CONTAINS
 
 
   SUBROUTINE update_b_field
+
+    INTEGER :: ix, iy
 
     DO iy = 1, ny
       DO ix = 1, nx

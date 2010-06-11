@@ -37,7 +37,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, spec_start, spec_end
+    INTEGER :: ispecies, ix, iy, spec_start, spec_end
     REAL(num) :: fac, idxy
 
     data_array = 0.0_num
@@ -139,7 +139,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, spec_start, spec_end
+    INTEGER :: ispecies, ix, iy, spec_start, spec_end
 
     ALLOCATE(ct(-2:nx+3,-2:ny+3))
     data_array = 0.0_num
@@ -249,7 +249,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, spec_start, spec_end
+    INTEGER :: ispecies, ix, iy, spec_start, spec_end
     REAL(num) :: fac, idxy
 
     data_array = 0.0_num
@@ -350,7 +350,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, spec_start, spec_end
+    INTEGER :: ispecies, ix, iy, spec_start, spec_end
     REAL(num) :: idxy
 
     data_array = 0.0_num
@@ -446,7 +446,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, spec_start, spec_end
+    INTEGER :: ispecies, ix, iy, spec_start, spec_end
 
     data_array = 0.0_num
 
@@ -623,7 +623,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species
 
     TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, spec_start, spec_end
+    INTEGER :: ispecies, ix, iy, spec_start, spec_end
 
     INTERFACE
       FUNCTION evaluator(a_particle, species_eval)

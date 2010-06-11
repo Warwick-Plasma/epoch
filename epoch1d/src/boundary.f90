@@ -213,7 +213,7 @@ CONTAINS
     INTEGER :: xbd
     INTEGER(KIND=8) :: ixp
     LOGICAL :: out_of_bounds
-    INTEGER :: ispecies
+    INTEGER :: ispecies, ix
 
     DO ispecies = 1, n_species
       cur=>particle_species(ispecies)%attached_list%head

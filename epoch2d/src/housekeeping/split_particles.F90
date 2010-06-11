@@ -15,7 +15,8 @@ CONTAINS
 
   SUBROUTINE reorder_particles_to_grid
 
-    INTEGER :: ispecies, cell_x, cell_y
+    INTEGER :: ispecies, ix, iy
+    INTEGER :: cell_x, cell_y
     TYPE(particle), POINTER :: current, next
     INTEGER(KIND=8) :: local_count
 
@@ -49,7 +50,7 @@ CONTAINS
 
   SUBROUTINE reattach_particles_to_mainlist
 
-    INTEGER :: ispecies
+    INTEGER :: ispecies, ix, iy
 
     DO ispecies = 1, n_species
       DO iy = 0, ny+1
@@ -69,7 +70,7 @@ CONTAINS
 
   SUBROUTINE split_particles
 
-    INTEGER :: ispecies
+    INTEGER :: ispecies, ix, iy
     INTEGER(KIND=8) :: count
     TYPE(particle), POINTER :: current, NEW
     INTEGER :: clock, idum

@@ -336,7 +336,7 @@ CONTAINS
     INTEGER :: xbd, ybd
     INTEGER(KIND=8) :: ixp, iyp
     LOGICAL :: out_of_bounds
-    INTEGER :: ispecies
+    INTEGER :: ispecies, ix, iy
 
     DO ispecies = 1, n_species
       cur=>particle_species(ispecies)%attached_list%head

@@ -42,6 +42,8 @@ CONTAINS
 
   SUBROUTINE update_e_field
 
+    INTEGER :: ix, iy, iz
+
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
@@ -80,6 +82,8 @@ CONTAINS
 
 
   SUBROUTINE update_b_field
+
+    INTEGER :: ix, iy, iz
 
     DO iz = 1, nz
       DO iy = 1, ny

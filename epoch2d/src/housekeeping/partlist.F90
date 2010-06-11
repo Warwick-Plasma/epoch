@@ -12,7 +12,7 @@ CONTAINS
 
   SUBROUTINE setup_partlists
 
-    nvar = 3 + 2  ! 2d
+    nvar = 3 + c_ndims
 #ifdef PER_PARTICLE_WEIGHT
     nvar = nvar+1
 #endif
@@ -99,6 +99,7 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER(8), INTENT(IN) :: n_elements
     TYPE(particle), POINTER :: new_particle
+    INTEGER(KIND=8) :: ipart
 
     CALL create_empty_partlist(partlist)
 
@@ -118,8 +119,7 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(IN) :: data_in
     INTEGER(8), INTENT(IN) :: n_elements
     TYPE(particle), POINTER :: new_particle
-
-    INTEGER(KIND=8) :: cpos = 0
+    INTEGER(KIND=8) :: ipart, cpos = 0
 
     CALL create_empty_partlist(partlist)
 
@@ -311,8 +311,8 @@ CONTAINS
     INTEGER(KIND=8) :: cpos
 
     cpos = 1
-    data(cpos:cpos+1) = a_particle%part_pos
-    cpos = cpos+2
+    data(cpos:cpos+c_ndims-1) = a_particle%part_pos
+    cpos = cpos+c_ndims
     data(cpos:cpos+2) = a_particle%part_p
     cpos = cpos+3
 #ifdef PER_PARTICLE_WEIGHT
@@ -343,8 +343,8 @@ CONTAINS
     INTEGER(KIND=8) :: cpos
 
     cpos = 1
-    a_particle%part_pos = data(cpos:cpos+1)
-    cpos = cpos+2
+    a_particle%part_pos = data(cpos:cpos+c_ndims-1)
+    cpos = cpos+c_ndims
     a_particle%part_p = data(cpos:cpos+2)
     cpos = cpos+3
 #ifdef PER_PARTICLE_WEIGHT
@@ -414,6 +414,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle), POINTER :: a_particle
     LOGICAL :: test_packed_particles
+    INTEGER(KIND=8) :: ipart
 
     test_packed_particles = .FALSE.
 

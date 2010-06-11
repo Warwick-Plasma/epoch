@@ -85,7 +85,7 @@ CONTAINS
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
     REAL(num) :: root, mean, fac, dtfac, gamma_mass_c, cf2
     REAL(num) :: delta_x, part_vy, part_vz
-    INTEGER :: ispecies, dcellx
+    INTEGER :: ispecies, ix, dcellx
     INTEGER(KIND=8) :: ipart
 
     TYPE(particle), POINTER :: current, next

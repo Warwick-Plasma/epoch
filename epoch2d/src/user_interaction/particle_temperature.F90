@@ -26,6 +26,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER :: cell_x, cell_y
     INTEGER(KIND=8) :: ipart
+    INTEGER :: ix, iy
 
     partlist=>part_family%attached_list
     current=>partlist%head

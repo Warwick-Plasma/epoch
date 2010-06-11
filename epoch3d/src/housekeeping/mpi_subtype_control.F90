@@ -188,7 +188,7 @@ CONTAINS
     INTEGER :: create_ordered_particle_subtype
     INTEGER, INTENT(IN) :: n_dump_species
     INTEGER(KIND=8), DIMENSION(n_dump_species), INTENT(IN) :: npart_local
-    INTEGER :: ispecies
+    INTEGER :: ispecies, ix
     INTEGER(KIND=8), DIMENSION(:,:), ALLOCATABLE :: npart_each_rank
     INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp

@@ -494,7 +494,6 @@ MODULE shared_data
   INTEGER :: bc_x_min_field, bc_x_max_field
   INTEGER :: bc_x_min_particle, bc_x_max_particle
   INTEGER :: restart_snapshot
-  INTEGER(KIND=8) :: ix, iy, iz, ipart
 
   !----------------------------------------------------------------------------
   ! Moving window

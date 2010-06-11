@@ -42,6 +42,8 @@ CONTAINS
 
   SUBROUTINE update_e_field
 
+    INTEGER :: ix
+
     DO ix = 1, nx
       ex(ix) = ex(ix) &
           - fac * jx(ix)
@@ -64,6 +66,8 @@ CONTAINS
 
 
   SUBROUTINE update_b_field
+
+    INTEGER :: ix
 
     DO ix = 1, nx
       by(ix) = by(ix) &

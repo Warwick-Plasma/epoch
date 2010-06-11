@@ -57,7 +57,7 @@ CONTAINS
 
   SUBROUTINE after_control
 
-    INTEGER :: iproc, ix_min
+    INTEGER :: iproc, ix, ix_min
 
     length_x = x_max - x_min
     dx = length_x / REAL(nx_global-1, num)
@@ -184,7 +184,7 @@ CONTAINS
     INTEGER :: snap, coord_type, ierr, nblocks
     TYPE(particle), POINTER :: current, next
     LOGICAL :: constant_weight
-    INTEGER(KIND=8) :: npart
+    INTEGER(KIND=8) :: npart, ipart, ix
 
     npart = npart_global/nproc
     constant_weight = .FALSE.

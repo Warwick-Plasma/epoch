@@ -88,7 +88,7 @@ CONTAINS
   SUBROUTINE insert_particles
 
     TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, ipart, i, isuby
+    INTEGER :: ispecies, ipart, iy, i, isuby
     REAL(num) :: rand
     INTEGER :: clock, idum
     REAL(num) :: cell_y_r, cell_frac_y

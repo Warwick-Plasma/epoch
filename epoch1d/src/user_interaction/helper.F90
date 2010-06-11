@@ -78,7 +78,7 @@ CONTAINS
 
   SUBROUTINE deallocate_ic
 
-    INTEGER :: ispecies
+    INTEGER :: ispecies, ix
     REAL(num) :: min_dt, omega, k_max
 
     min_dt = 1000000.0_num
@@ -126,6 +126,7 @@ CONTAINS
     INTEGER(KIND=8) :: npart_per_cell
     REAL(num) :: density_total, density_total_global, density_average
     INTEGER(KIND=8) :: npart_this_proc_new, ipart, npart_this_species
+    INTEGER :: ix
     REAL(num) :: rpos
 
     TYPE(particle_list), POINTER :: partlist
@@ -232,7 +233,7 @@ CONTAINS
     INTEGER :: cell_x
     REAL(num) :: cell_x_r
     INTEGER(KIND=8) :: i
-    INTEGER :: j, ierr
+    INTEGER :: j, ierr, ix
     CHARACTER(LEN=15) :: string
 
     npart_this_species = species_list%count
@@ -359,7 +360,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:2) :: gx
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
-    INTEGER :: isubx, ierr
+    INTEGER :: isubx, ierr, ix
     REAL(num), DIMENSION(:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:), ALLOCATABLE :: density_map
 

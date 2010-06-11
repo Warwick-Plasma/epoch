@@ -61,7 +61,7 @@ CONTAINS
 
   SUBROUTINE after_control
 
-    INTEGER :: iproc, ix_min, iy_min, iz_min
+    INTEGER :: iproc, ix, iy, iz, ix_min, iy_min, iz_min
 
     length_x = x_max - x_min
     length_y = y_max - y_min
@@ -220,7 +220,7 @@ CONTAINS
     INTEGER :: snap, coord_type, ierr, nblocks
     TYPE(particle), POINTER :: current, next
     LOGICAL :: constant_weight
-    INTEGER(KIND=8) :: npart
+    INTEGER(KIND=8) :: npart, ipart, ix
 
     npart = npart_global/nproc
     constant_weight = .FALSE.
