@@ -160,17 +160,34 @@ CONTAINS
   SUBROUTINE open_files
 
     CHARACTER(LEN=11+data_dir_max_length) :: file2
+    CHARACTER(LEN=16) :: string
     INTEGER :: errcode, ierr
+    LOGICAL :: exists
 
     IF (rank .EQ. 0) THEN
       WRITE(file2, '(a, "/epoch2d.dat")') TRIM(data_dir)
-      OPEN(unit=20, status='REPLACE', file=file2, iostat=errcode)
+      IF (ic_from_restart) THEN
+        INQUIRE(file=file2, exist=exists)
+        IF (exists) THEN
+          OPEN(unit=20, status='OLD', access='APPEND', file=file2, &
+              iostat=errcode)
+        ELSE
+          OPEN(unit=20, status='NEW', file=file2, iostat=errcode)
+        ENDIF
+      ELSE
+        OPEN(unit=20, status='REPLACE', file=file2, iostat=errcode)
+      ENDIF
       IF (errcode .NE. 0) THEN
         PRINT *, '***ERROR***'
         PRINT *, 'Cannot create "epoch2d.dat" output file. The most common ' &
             // 'cause of this problem '
         PRINT *, 'is that the ouput directory does not exist'
         CALL MPI_ABORT(comm, errcode, ierr)
+      ENDIF
+      IF (ic_from_restart) THEN
+        CALL integer_as_string(restart_snapshot, string)
+        WRITE(20,*)
+        WRITE(20,*) 'Restarting from ', TRIM(string)
       ENDIF
       WRITE(20,*) ascii_header
       WRITE(20,*)
