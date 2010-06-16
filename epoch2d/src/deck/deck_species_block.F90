@@ -383,8 +383,7 @@ CONTAINS
       debug_mode = .FALSE.
       initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3, 2) = &
           initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3, 1)
-      initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3, 3) = &
-          initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3, 1)
+      initial_conditions(species_id)%temp(-2:nx+3,-2:ny+3, 3) = 0.0_num
       RETURN
     ENDIF
 

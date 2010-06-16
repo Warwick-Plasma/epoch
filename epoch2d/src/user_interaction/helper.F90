@@ -91,7 +91,7 @@ CONTAINS
         DO ix = 1, nx
           omega = SQRT((initial_conditions(ispecies)%rho(ix, iy) * q0**2) &
               / (particle_species(ispecies)%mass * epsilon0) &
-              + 3.0_num * k_max**2 * kb &
+              + 6.0_num * k_max**2 * kb &
               * MAXVAL(initial_conditions(ispecies)%temp(ix, iy,:)) &
               / (particle_species(ispecies)%mass))
           IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
