@@ -18,7 +18,6 @@ CONTAINS
     ! So cheat
 
     LOGICAL, INTENT(IN) :: over_ride
-!!$    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_x
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_y
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_z
@@ -28,9 +27,9 @@ CONTAINS
     INTEGER :: new_cell_x_min, new_cell_x_max
     INTEGER :: new_cell_y_min, new_cell_y_max
     INTEGER :: new_cell_z_min, new_cell_z_max
-    REAL(num) :: balance_frac, balance_frac_x, balance_frac_y
+    REAL(num) :: balance_frac, balance_frac_x, balance_frac_y, npart_av
     INTEGER(KIND=8) :: min_x, max_x, min_y, max_y, min_z, max_z
-    INTEGER(KIND=8) :: npart_local, wk, min_npart, max_npart
+    INTEGER(KIND=8) :: npart_local, sum_npart, max_npart, wk
     INTEGER :: iproc
     INTEGER, DIMENSION(3,2) :: domain
 #ifdef PARTICLE_DEBUG
@@ -53,9 +52,10 @@ CONTAINS
     IF (.NOT. over_ride) THEN
       CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
           comm, errcode)
-      CALL MPI_ALLREDUCE(npart_local, min_npart, 1, MPI_INTEGER8, MPI_MIN, &
+      CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
           comm, errcode)
-      balance_frac = REAL(min_npart, num) / REAL(max_npart, num)
+      npart_av = REAL(sum_npart, num) / nproc
+      balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
       IF (balance_frac .GT. dlb_threshold) RETURN
       IF (rank .EQ. 0) PRINT *, "Load balancing with fraction", balance_frac
     ENDIF

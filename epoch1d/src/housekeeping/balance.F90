@@ -18,12 +18,11 @@ CONTAINS
     ! So cheat
 
     LOGICAL, INTENT(IN) :: over_ride
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_x
     INTEGER, DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
     INTEGER :: new_cell_x_min, new_cell_x_max
-    REAL(num) :: balance_frac
-    INTEGER(KIND=8) :: npart_local
+    REAL(num) :: balance_frac, npart_av
+    INTEGER(KIND=8) :: npart_local, sum_npart, max_npart
     INTEGER :: iproc
     INTEGER, DIMENSION(2) :: domain
 #ifdef PARTICLE_DEBUG
@@ -44,18 +43,14 @@ CONTAINS
     ! The over_ride flag allows the code to force a load balancing sweep
     ! at t = 0
     IF (.NOT. over_ride) THEN
-      ALLOCATE(npart_each_rank(1:nproc))
-      ! Get npart for each rank
-      CALL MPI_ALLGATHER(npart_local, 1, MPI_INTEGER8, npart_each_rank, 1, &
-          MPI_INTEGER8, comm, errcode)
-      ! Determine ratio of npart on between most loaded and least loaded
-      ! processor. Maybe this can be replaced by and MPI_ALLREDUCE to
-      ! find min/max?
-      balance_frac = REAL(MINVAL(npart_each_rank), num) &
-          / REAL(MAXVAL(npart_each_rank), num)
+      CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
+          comm, errcode)
+      CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
+          comm, errcode)
+      npart_av = REAL(sum_npart, num) / nproc
+      balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
       IF (balance_frac .GT. dlb_threshold) RETURN
       IF (rank .EQ. 0) PRINT *, "Load balancing with fraction", balance_frac
-      DEALLOCATE(npart_each_rank)
     ENDIF
 
     ALLOCATE(starts_x(1:nprocx), ends_x(1:nprocx))
