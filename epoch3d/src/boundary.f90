@@ -390,6 +390,10 @@ CONTAINS
     CALL field_bc(ey)
     CALL field_bc(ez)
 
+    CALL field_clamp_zero(jx, 1, 0, 0)
+    CALL field_clamp_zero(jy, 0, 1, 0)
+    CALL field_clamp_zero(jz, 0, 0, 1)
+
     ! These apply zero field boundary conditions on the edges
     CALL field_clamp_zero(ex, 1, 0, 0)
     CALL field_clamp_zero(ey, 0, 1, 0)
