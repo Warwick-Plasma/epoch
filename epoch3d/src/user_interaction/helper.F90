@@ -91,14 +91,16 @@ CONTAINS
     ! Identify the plasma frequency (Bohm-Gross dispersion relation)
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
-      DO iy = 1, ny
-        DO ix = 1, nx
-          omega = SQRT((initial_conditions(ispecies)%rho(ix, iy, iz) * q0**2) &
-              / (particle_species(ispecies)%mass * epsilon0) &
-              + 3.0_num * k_max**2 * kb &
-              * MAXVAL(initial_conditions(ispecies)%temp(ix, iy, iz,:)) &
-              / (particle_species(ispecies)%mass))
-          IF (2.0_num * pi/omega .LT. min_dt) min_dt = 2.0_num * pi /omega
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            omega = SQRT((initial_conditions(ispecies)%rho(ix, iy, iz)*q0**2) &
+                / (particle_species(ispecies)%mass * epsilon0) &
+                + 3.0_num * k_max**2 * kb &
+                * MAXVAL(initial_conditions(ispecies)%temp(ix, iy, iz, :)) &
+                / (particle_species(ispecies)%mass))
+            IF (2.0_num * pi/omega .LT. min_dt) min_dt = 2.0_num * pi /omega
+          ENDDO
         ENDDO
       ENDDO
     ENDDO
