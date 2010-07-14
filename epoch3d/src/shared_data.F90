@@ -608,5 +608,7 @@ MODULE shared_data
 
   REAL(num) :: walltime_start
   INTEGER :: stdout_frequency
+  INTEGER(KIND=MPI_OFFSET_KIND), DIMENSION(:), ALLOCATABLE :: &
+      particle_file_lengths, particle_file_offsets
 
 END MODULE shared_data

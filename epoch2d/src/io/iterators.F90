@@ -32,6 +32,9 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -43,12 +46,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) &
-            .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -73,6 +72,9 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -84,12 +86,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) &
-            .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -117,6 +115,9 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -128,12 +129,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) &
-            .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -159,6 +156,9 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -170,12 +170,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) &
-            .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -199,6 +195,9 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -210,12 +209,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) &
-            .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -239,6 +234,9 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -250,12 +248,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF ((.NOT. current_family%dump) &
-            .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -281,6 +275,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF (.NOT. current_family%dump) NULLIFY(cur)
+
 #ifndef PER_PARTICLE_CHARGEMASS
       part_m = current_family%mass
 #endif
@@ -299,11 +295,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF (.NOT. current_family%dump) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -328,6 +321,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF (.NOT. current_family%dump) NULLIFY(cur)
+
 #ifndef PER_PARTICLE_CHARGEMASS
       part_m = current_family%mass
 #endif
@@ -346,11 +341,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF (.NOT. current_family%dump) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -375,6 +367,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF (.NOT. current_family%dump) NULLIFY(cur)
+
 #ifndef PER_PARTICLE_CHARGEMASS
       part_m = current_family%mass
 #endif
@@ -393,11 +387,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF (.NOT. current_family%dump) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -422,6 +413,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF (.NOT. current_family%dump) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -437,11 +430,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF (.NOT. current_family%dump) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -466,6 +456,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF (.NOT. current_family%dump) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -481,11 +473,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF (.NOT. current_family%dump) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -511,6 +500,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF (.NOT. current_family%dump) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -523,11 +514,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF (.NOT. current_family%dump) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -551,6 +539,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
+      IF (.NOT. current_family%dump) NULLIFY(cur)
+
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
@@ -563,11 +553,8 @@ CONTAINS
       ENDDO
 
       ! If the current particle_family is exhausted, then switch to the next one
-      DO WHILE (.NOT. ASSOCIATED(cur))
-        CALL advance_particle_family(current_family, current_list, cur)
-        IF (.NOT. ASSOCIATED(current_family)) EXIT
-        IF (.NOT. current_family%dump) NULLIFY(cur)
-      ENDDO
+      IF (.NOT. ASSOCIATED(cur)) &
+          CALL advance_particle_family(current_family, current_list, cur)
     ENDDO
     n_points = part_count
 

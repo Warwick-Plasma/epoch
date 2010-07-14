@@ -130,6 +130,8 @@ CONTAINS
     INTEGER :: ispecies
 
     ALLOCATE(particle_species(n_species))
+    ALLOCATE(particle_file_lengths(n_species))
+    ALLOCATE(particle_file_offsets(n_species))
 
     DO ispecies = 1, n_species
       particle_species(ispecies)%name = blank

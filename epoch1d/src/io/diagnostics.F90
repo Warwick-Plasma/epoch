@@ -91,7 +91,7 @@ CONTAINS
         CALL cfd_write_nd_particle_grid_with_iterator_all("Particles", &
             "Part_Grid", iterate_particles, c_dimension_1d, npart_local, &
             npart_dump_global, npart_per_it, c_particle_cartesian, &
-            subtype_particle_var)
+            particle_file_lengths, particle_file_offsets)
 
     ! Write the cartesian mesh
     ! (mesh name, mesh class, x_array, y_array, rank used for writing)
@@ -113,54 +113,64 @@ CONTAINS
     IF (IAND(dumpmask(c_dump_part_species), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Species", &
             "Particles", iterate_species, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
     IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) &
 #ifdef PER_PARTICLE_WEIGHT
         CALL cfd_write_nd_particle_variable_with_iterator_all("Weight", &
             "Particles", iterate_weight, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
 #else
         CALL cfd_write_real_constant("Weight", "Particles", weight, 0)
 #endif
     IF (IAND(dumpmask(c_dump_part_px), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Px", &
             "Particles", iterate_px, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
     IF (IAND(dumpmask(c_dump_part_py), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Py", &
             "Particles", iterate_py, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
     IF (IAND(dumpmask(c_dump_part_pz), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Pz", &
             "Particles", iterate_pz, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
     IF (IAND(dumpmask(c_dump_part_vx), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Vx", &
             "Particles", iterate_vx, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
     IF (IAND(dumpmask(c_dump_part_vy), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Vy", &
             "Particles", iterate_vy, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
     IF (IAND(dumpmask(c_dump_part_vz), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Vz", &
             "Particles", iterate_vz, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
     IF (IAND(dumpmask(c_dump_part_charge), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Q", &
             "Particles", iterate_charge, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
     IF (IAND(dumpmask(c_dump_part_mass), code) .NE. 0) &
         CALL cfd_write_nd_particle_variable_with_iterator_all("Mass", &
             "Particles", iterate_mass, npart_dump_global, npart_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
+            "Particles", "Part_Grid", particle_file_lengths, &
+            particle_file_offsets)
 #ifdef PARTICLE_DEBUG
     CALL cfd_write_nd_particle_variable_with_iterator_all("Processor", &
         "Particles", iterate_processor, npart_dump_global, npart_per_it, &
-        "Particles", "Part_Grid", subtype_particle_var)
+        "Particles", "Part_Grid", particle_file_lengths, particle_file_offsets)
     CALL cfd_write_nd_particle_variable_with_iterator_all("Processor_at_t0", &
         "Particles", iterate_processor0, npart_dump_global, npart_per_it, &
-        "Particles", "Part_Grid", subtype_particle_var)
+        "Particles", "Part_Grid", particle_file_lengths, particle_file_offsets)
 #endif
 
     CALL write_field(c_dump_ex, code, 'Ex', 'Electric Field', ex)

@@ -86,28 +86,28 @@ CONTAINS
               TRIM(probe_name), "Probe_Grid", iterate_probe_particles, &
               c_dimension_2d, npart_probe_local, npart_probe_global, &
               npart_probe_per_it, c_particle_cartesian, &
-              subtype_probe_particle_var)
+              particle_file_lengths, particle_file_offsets)
 
           ! dump Px
           WRITE(temp_name, '(a, "_Px")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(&
               TRIM(temp_name), TRIM(probe_name), iterate_probe_px, &
               npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
-              "Probe_Grid", subtype_probe_particle_var)
+              "Probe_Grid", particle_file_lengths, particle_file_offsets)
 
           ! dump Py
           WRITE(temp_name, '(a, "_Py")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(&
               TRIM(temp_name), TRIM(probe_name), iterate_probe_py, &
               npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
-              "Probe_Grid", subtype_probe_particle_var)
+              "Probe_Grid", particle_file_lengths, particle_file_offsets)
 
           ! dump Pz
           WRITE(temp_name, '(a, "_Pz")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(&
               TRIM(temp_name), TRIM(probe_name), iterate_probe_pz, &
               npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
-              "Probe_Grid", subtype_probe_particle_var)
+              "Probe_Grid", particle_file_lengths, particle_file_offsets)
 
           ! dump particle weight function
           WRITE(temp_name, '(a, "_weight")') TRIM(probe_name)
@@ -115,7 +115,7 @@ CONTAINS
           CALL cfd_write_nd_particle_variable_with_iterator_all(&
               TRIM(temp_name), TRIM(probe_name), iterate_probe_weight, &
               npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
-              "Probe_Grid", subtype_probe_particle_var)
+              "Probe_Grid", particle_file_lengths, particle_file_offsets)
 #else
           CALL cfd_write_real_constant(TRIM(temp_name), TRIM(probe_name), &
               weight, 0)

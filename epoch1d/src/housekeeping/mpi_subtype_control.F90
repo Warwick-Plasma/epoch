@@ -90,6 +90,7 @@ CONTAINS
     DO ispecies = 1, n_species
       IF (particle_species(ispecies)%dump .OR. force_restart) THEN
         npart_local(index) = particle_species(ispecies)%attached_list%count
+        particle_file_lengths(index) = npart_local(index)
         index = index + 1
       ENDIF
     ENDDO
@@ -219,6 +220,7 @@ CONTAINS
         particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO
       disp(ispecies) = particles_to_skip * sz
+      particle_file_offsets(ispecies) = particles_to_skip
       DO ix = rank+1, nproc
         particles_to_skip = particles_to_skip + npart_each_rank(ispecies,ix)
       ENDDO

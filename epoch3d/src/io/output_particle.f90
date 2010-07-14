@@ -113,7 +113,7 @@ CONTAINS
 
   SUBROUTINE cfd_write_nd_particle_grid_with_iterator_all(name, class, &
       iterator, ndims, npart_local, npart_global, npart_per_iteration, &
-      particle_coord_type, particle_type)
+      particle_coord_type, lengths, offsets)
 
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER(4), INTENT(IN) :: ndims
@@ -121,7 +121,8 @@ CONTAINS
     INTEGER(8), INTENT(IN) :: npart_global
     INTEGER(8), INTENT(IN) :: npart_per_iteration
     INTEGER(4), INTENT(IN) :: particle_coord_type
-    INTEGER, INTENT(IN) :: particle_type
+    INTEGER(8), DIMENSION(:), INTENT(IN) :: lengths
+    INTEGER(8), DIMENSION(:), INTENT(IN) :: offsets
 
     INTERFACE
       SUBROUTINE iterator(data, npart_it, direction, start)
@@ -135,7 +136,8 @@ CONTAINS
 
     INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
     INTEGER(8) :: block_length, md_length, npart_this_cycle
-    INTEGER :: idim
+    INTEGER(8) :: file_offset, nmax, nsec_left, nwrite_left, nelements, off
+    INTEGER :: idim, osec, sec
     LOGICAL :: start
     REAL(num) :: mn, mx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: gmn, gmx
@@ -215,10 +217,19 @@ CONTAINS
     DO idim = 1, ndims
       npart_this_cycle = npart_per_iteration
       start = .TRUE.
+      sec = 1
+      osec = 1
+      nsec_left = lengths(sec)
+      file_offset = current_displacement + offsets(sec) * num
 
       DO
         CALL iterator(data, npart_this_cycle, idim, start)
-        IF (npart_this_cycle .LE. 0) EXIT
+        CALL MPI_ALLREDUCE(npart_this_cycle, nmax, 1, MPI_INTEGER8, MPI_MAX, &
+            cfd_comm, cfd_errcode)
+        IF (nmax .LE. 0) EXIT
+
+        off = 1
+        nwrite_left = npart_this_cycle
 
         IF (start) THEN
           gmn(idim) = MINVAL(data(1:npart_this_cycle))
@@ -229,8 +240,34 @@ CONTAINS
           gmx(idim) = MAX(gmx(idim), MAXVAL(data(1:npart_this_cycle)))
         ENDIF
 
-        CALL MPI_FILE_WRITE(cfd_filehandle, data, npart_this_cycle, &
-            mpireal, cfd_status, cfd_errcode)
+        DO
+          IF (nwrite_left .LE. nsec_left) THEN
+            nelements = nwrite_left
+            nsec_left = nsec_left - nelements
+          ELSE
+            nelements = nsec_left
+            sec = sec + 1
+            nsec_left = lengths(sec)
+          ENDIF
+
+          CALL MPI_FILE_SET_VIEW(cfd_filehandle, file_offset, mpireal, &
+              mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+          CALL MPI_FILE_WRITE_ALL(cfd_filehandle, data(off), nelements, &
+              mpireal, cfd_status, cfd_errcode)
+
+          nwrite_left = nwrite_left - nelements
+          CALL MPI_ALLREDUCE(nwrite_left, nmax, 1, MPI_INTEGER8, MPI_MAX, &
+              cfd_comm, cfd_errcode)
+          IF (nmax .LE. 0) EXIT
+
+          IF (sec .NE. osec) THEN
+            file_offset = current_displacement + offsets(sec) * num
+          ELSE
+            file_offset = file_offset + nelements * num
+          ENDIF
+          off = off + nelements
+          osec = sec
+        ENDDO
       ENDDO
 
       current_displacement = current_displacement + npart_global * sof
@@ -355,13 +392,14 @@ CONTAINS
 
   SUBROUTINE cfd_write_nd_particle_variable_with_iterator_all(name, class, &
       iterator, npart_global, npart_per_iteration, mesh_name, mesh_class, &
-      particle_type)
+      lengths, offsets)
 
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER(8), INTENT(IN) :: npart_global
     INTEGER(8), INTENT(IN) :: npart_per_iteration
     CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
-    INTEGER, INTENT(IN) :: particle_type
+    INTEGER(8), DIMENSION(:), INTENT(IN) :: lengths
+    INTEGER(8), DIMENSION(:), INTENT(IN) :: offsets
 
     INTERFACE
       SUBROUTINE iterator(data, npart_it, start)
@@ -374,6 +412,8 @@ CONTAINS
 
     INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
     INTEGER(8) :: block_length, md_length, npart_this_cycle
+    INTEGER(8) :: file_offset, nmax, nsec_left, nwrite_left, nelements, off
+    INTEGER :: sec, osec
     LOGICAL :: start
     REAL(num) :: mn, mx, gmn, gmx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: data
@@ -441,13 +481,19 @@ CONTAINS
 
     npart_this_cycle = npart_per_iteration
     start = .TRUE.
-
-    CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        mpireal, particle_type, "native", MPI_INFO_NULL, cfd_errcode)
+    sec = 1
+    osec = 1
+    nsec_left = lengths(sec)
+    file_offset = current_displacement + offsets(sec) * num
 
     DO
       CALL iterator(data, npart_this_cycle, start)
-      IF (npart_this_cycle .LE. 0) EXIT
+      CALL MPI_ALLREDUCE(npart_this_cycle, nmax, 1, MPI_INTEGER8, MPI_MAX, &
+          cfd_comm, cfd_errcode)
+      IF (nmax .LE. 0) EXIT
+
+      off = 1
+      nwrite_left = npart_this_cycle
 
       IF (start) THEN
         gmn = MINVAL(data(1:npart_this_cycle))
@@ -458,8 +504,34 @@ CONTAINS
         gmx = MAX(gmx, MAXVAL(data(1:npart_this_cycle)))
       ENDIF
 
-      CALL MPI_FILE_WRITE(cfd_filehandle, data, npart_this_cycle, mpireal, &
-          cfd_status, cfd_errcode)
+      DO
+        IF (nwrite_left .LE. nsec_left) THEN
+          nelements = nwrite_left
+          nsec_left = nsec_left - nelements
+        ELSE
+          nelements = nsec_left
+          sec = sec + 1
+          nsec_left = lengths(sec)
+        ENDIF
+
+        CALL MPI_FILE_SET_VIEW(cfd_filehandle, file_offset, mpireal, &
+            mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        CALL MPI_FILE_WRITE_ALL(cfd_filehandle, data(off), nelements, &
+            mpireal, cfd_status, cfd_errcode)
+
+        nwrite_left = nwrite_left - nelements
+        CALL MPI_ALLREDUCE(nwrite_left, nmax, 1, MPI_INTEGER8, MPI_MAX, &
+            cfd_comm, cfd_errcode)
+        IF (nmax .LE. 0) EXIT
+
+        IF (sec .NE. osec) THEN
+          file_offset = current_displacement + offsets(sec) * num
+        ELSE
+          file_offset = file_offset + nelements * num
+        ENDIF
+        off = off + nelements
+        osec = sec
+      ENDDO
     ENDDO
 
     current_displacement = current_displacement + npart_global * sof
