@@ -230,7 +230,7 @@ CONTAINS
     CHARACTER(LEN=max_string_len) :: name, class, mesh_name, mesh_class
     INTEGER :: block_type, nd
     INTEGER :: sof
-    INTEGER(KIND=8) :: npart_l, npart_per_it = 10000
+    INTEGER(KIND=8) :: npart_l
     REAL(num), DIMENSION(2) :: extents, stagger
     INTEGER, DIMENSION(1) :: dims
     REAL(KIND=8) :: time_d
