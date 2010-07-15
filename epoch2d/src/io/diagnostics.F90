@@ -105,6 +105,18 @@ CONTAINS
 
       ! (Variable_Name, Variable_Class, array, global_npart, Mesh_Name,
       ! Mesh_Class, MPI_TYPE describing data distribution)
+      IF (IAND(dumpmask(c_dump_part_species), code) .NE. 0) &
+          CALL cfd_write_nd_particle_variable_with_iterator_all("Species", &
+              "Particles", iterate_species, npart_dump_global, n_part_per_it, &
+              "Particles", "Part_Grid", subtype_particle_var)
+      IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) &
+#ifdef PER_PARTICLE_WEIGHT
+          CALL cfd_write_nd_particle_variable_with_iterator_all("Weight", &
+              "Particles", iterate_weight, npart_dump_global, n_part_per_it, &
+              "Particles", "Part_Grid", subtype_particle_var)
+#else
+          CALL cfd_write_real_constant("Weight", "Particles", weight, 0)
+#endif
       IF (IAND(dumpmask(c_dump_part_px), code) .NE. 0) &
           CALL cfd_write_nd_particle_variable_with_iterator_all("Px", &
               "Particles", iterate_px, npart_dump_global, n_part_per_it, &
@@ -128,6 +140,14 @@ CONTAINS
       IF (IAND(dumpmask(c_dump_part_vz), code) .NE. 0) &
           CALL cfd_write_nd_particle_variable_with_iterator_all("Vz", &
               "Particles", iterate_vz, npart_dump_global, n_part_per_it, &
+              "Particles", "Part_Grid", subtype_particle_var)
+      IF (IAND(dumpmask(c_dump_part_charge), code) .NE. 0) &
+          CALL cfd_write_nd_particle_variable_with_iterator_all("Q", &
+              "Particles", iterate_charge, npart_dump_global, n_part_per_it, &
+              "Particles", "Part_Grid", subtype_particle_var)
+      IF (IAND(dumpmask(c_dump_part_mass), code) .NE. 0) &
+          CALL cfd_write_nd_particle_variable_with_iterator_all("Mass", &
+              "Particles", iterate_mass, npart_dump_global, n_part_per_it, &
               "Particles", "Part_Grid", subtype_particle_var)
 #ifdef PARTICLE_DEBUG
       CALL cfd_write_nd_particle_variable_with_iterator_all("Processor", &
@@ -183,19 +203,7 @@ CONTAINS
               "Current", dims, stagger, "Grid", "Grid", &
               jz(1:nx, 1:ny), subtype_field)
 
-      ! Since these use species lookup tables, have to use the iterator
-      ! functions (Variable_Name, Variable_Class, Iterator_Function,
-      ! global_npart, npart_per_iteration, Mesh_Name, Mesh_Class,
-      ! MPI_TYPE describing data distribution)
-      IF (IAND(dumpmask(c_dump_part_charge), code) .NE. 0) &
-          CALL cfd_write_nd_particle_variable_with_iterator_all("Q", &
-              "Particles", iterate_charge, npart_dump_global, n_part_per_it, &
-              "Particles", "Part_Grid", subtype_particle_var)
-      IF (IAND(dumpmask(c_dump_part_mass), code) .NE. 0) &
-          CALL cfd_write_nd_particle_variable_with_iterator_all("Mass", &
-              "Particles", iterate_mass, npart_dump_global, n_part_per_it, &
-              "Particles", "Part_Grid", subtype_particle_var)
-
+      ! These are derived variables from the particles
       IF (IAND(dumpmask(c_dump_ekbar), code) .NE. 0) THEN
         IF (IAND(dumpmask(c_dump_ekbar), c_io_no_intrinsic) .EQ. 0) THEN
           CALL calc_ekbar(data, 0)
@@ -214,9 +222,6 @@ CONTAINS
         ENDIF
       ENDIF
 
-      ! These are derived variables from the particles
-      ! Since you only dump after several particle updates it's actually
-      ! quicker to
       IF (IAND(dumpmask(c_dump_mass_density), code) .NE. 0) THEN
         CALL calc_mass_density(data, 0)
         IF (IAND(dumpmask(c_dump_mass_density), c_io_no_intrinsic) .EQ. 0) &
@@ -286,22 +291,6 @@ CONTAINS
                 "Grid", data(1:nx, 1:ny), subtype_field)
           ENDDO
         ENDIF
-      ENDIF
-
-      IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
-#ifdef PER_PARTICLE_WEIGHT
-        CALL cfd_write_nd_particle_variable_with_iterator_all("Weight", &
-            "Particles", iterate_weight, npart_dump_global, n_part_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
-#else
-        CALL cfd_write_real_constant("Weight", "Particles", weight, 0)
-#endif
-      ENDIF
-
-      IF (IAND(dumpmask(c_dump_part_species), code) .NE. 0) THEN
-        CALL cfd_write_nd_particle_variable_with_iterator_all("Species", &
-            "Particles", iterate_species, npart_dump_global, n_part_per_it, &
-            "Particles", "Part_Grid", subtype_particle_var)
       ENDIF
 
 #ifdef FIELD_DEBUG

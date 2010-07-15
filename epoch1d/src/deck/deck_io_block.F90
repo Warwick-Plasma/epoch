@@ -11,30 +11,30 @@ MODULE deck_io_block
   LOGICAL, DIMENSION(io_block_elements)  :: io_block_done
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
-  INTEGER, PARAMETER :: c_dump_part_px           = 3
-  INTEGER, PARAMETER :: c_dump_part_py           = 4
-  INTEGER, PARAMETER :: c_dump_part_pz           = 5
-  INTEGER, PARAMETER :: c_dump_part_vx           = 6
-  INTEGER, PARAMETER :: c_dump_part_vy           = 7
-  INTEGER, PARAMETER :: c_dump_part_vz           = 8
-  INTEGER, PARAMETER :: c_dump_ex                = 9
-  INTEGER, PARAMETER :: c_dump_ey                = 10
-  INTEGER, PARAMETER :: c_dump_ez                = 11
-  INTEGER, PARAMETER :: c_dump_bx                = 12
-  INTEGER, PARAMETER :: c_dump_by                = 13
-  INTEGER, PARAMETER :: c_dump_bz                = 14
-  INTEGER, PARAMETER :: c_dump_jx                = 15
-  INTEGER, PARAMETER :: c_dump_jy                = 16
-  INTEGER, PARAMETER :: c_dump_jz                = 17
-  INTEGER, PARAMETER :: c_dump_part_charge       = 18
-  INTEGER, PARAMETER :: c_dump_part_mass         = 19
-  INTEGER, PARAMETER :: c_dump_ekbar             = 20
-  INTEGER, PARAMETER :: c_dump_mass_density      = 21
-  INTEGER, PARAMETER :: c_dump_charge_density    = 22
-  INTEGER, PARAMETER :: c_dump_number_density    = 23
-  INTEGER, PARAMETER :: c_dump_temperature       = 24
-  INTEGER, PARAMETER :: c_dump_part_weight       = 25
-  INTEGER, PARAMETER :: c_dump_part_species      = 26
+  INTEGER, PARAMETER :: c_dump_part_species      = 3
+  INTEGER, PARAMETER :: c_dump_part_weight       = 4
+  INTEGER, PARAMETER :: c_dump_part_px           = 5
+  INTEGER, PARAMETER :: c_dump_part_py           = 6
+  INTEGER, PARAMETER :: c_dump_part_pz           = 7
+  INTEGER, PARAMETER :: c_dump_part_vx           = 8
+  INTEGER, PARAMETER :: c_dump_part_vy           = 9
+  INTEGER, PARAMETER :: c_dump_part_vz           = 10
+  INTEGER, PARAMETER :: c_dump_part_charge       = 11
+  INTEGER, PARAMETER :: c_dump_part_mass         = 12
+  INTEGER, PARAMETER :: c_dump_ex                = 13
+  INTEGER, PARAMETER :: c_dump_ey                = 14
+  INTEGER, PARAMETER :: c_dump_ez                = 15
+  INTEGER, PARAMETER :: c_dump_bx                = 16
+  INTEGER, PARAMETER :: c_dump_by                = 17
+  INTEGER, PARAMETER :: c_dump_bz                = 18
+  INTEGER, PARAMETER :: c_dump_jx                = 19
+  INTEGER, PARAMETER :: c_dump_jy                = 20
+  INTEGER, PARAMETER :: c_dump_jz                = 21
+  INTEGER, PARAMETER :: c_dump_ekbar             = 22
+  INTEGER, PARAMETER :: c_dump_mass_density      = 23
+  INTEGER, PARAMETER :: c_dump_charge_density    = 24
+  INTEGER, PARAMETER :: c_dump_number_density    = 25
+  INTEGER, PARAMETER :: c_dump_temperature       = 26
   INTEGER, PARAMETER :: c_dump_dist_fns          = 27
   INTEGER, PARAMETER :: c_dump_probes            = 28
   INTEGER, PARAMETER :: c_dump_ejected_particles = 29
@@ -48,30 +48,30 @@ MODULE deck_io_block
           "extended_io_file             ", & ! s6
           "particles                    ", & ! 1
           "grid                         ", & ! 2
-          "px                           ", & ! 3
-          "py                           ", & ! 4
-          "pz                           ", & ! 5
-          "vx                           ", & ! 6
-          "vy                           ", & ! 7
-          "vz                           ", & ! 8
-          "ex                           ", & ! 9
-          "ey                           ", & ! 10
-          "ez                           ", & ! 11
-          "bx                           ", & ! 12
-          "by                           ", & ! 13
-          "bz                           ", & ! 14
-          "jx                           ", & ! 15
-          "jy                           ", & ! 16
-          "jz                           ", & ! 17
-          "charge                       ", & ! 18
-          "mass                         ", & ! 19
-          "ekbar                        ", & ! 20
-          "mass_density                 ", & ! 21
-          "charge_density               ", & ! 22
-          "number_density               ", & ! 23
-          "temperature                  ", & ! 24
-          "particle_weight              ", & ! 25
-          "species_id                   ", & ! 26
+          "species_id                   ", & ! 3
+          "particle_weight              ", & ! 4
+          "px                           ", & ! 5
+          "py                           ", & ! 6
+          "pz                           ", & ! 7
+          "vx                           ", & ! 8
+          "vy                           ", & ! 9
+          "vz                           ", & ! 10
+          "charge                       ", & ! 11
+          "mass                         ", & ! 12
+          "ex                           ", & ! 13
+          "ey                           ", & ! 14
+          "ez                           ", & ! 15
+          "bx                           ", & ! 16
+          "by                           ", & ! 17
+          "bz                           ", & ! 18
+          "jx                           ", & ! 19
+          "jy                           ", & ! 20
+          "jz                           ", & ! 21
+          "ekbar                        ", & ! 22
+          "mass_density                 ", & ! 23
+          "charge_density               ", & ! 24
+          "number_density               ", & ! 25
+          "temperature                  ", & ! 26
           "distribution_functions       ", & ! 27
           "particle_probes              ", & ! 28
           "ejected_particles            " /) ! 29
