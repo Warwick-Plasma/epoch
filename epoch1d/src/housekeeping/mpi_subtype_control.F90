@@ -114,7 +114,7 @@ CONTAINS
   FUNCTION create_current_field_subtype()
 
     INTEGER :: create_current_field_subtype
-    INTEGER, DIMENSION(1) :: n_local, n_global, start
+    INTEGER, DIMENSION(c_ndims) :: n_local, n_global, start
 
     n_local = nx
     n_global = nx_global
@@ -176,7 +176,7 @@ CONTAINS
 
     npart_local = npart_in
 
-    create_particle_subtype = create_ordered_particle_subtype(1, npart_local) 
+    create_particle_subtype = create_ordered_particle_subtype(1, npart_local)
 
   END FUNCTION create_particle_subtype
 
@@ -245,7 +245,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nx_local
     INTEGER, INTENT(IN) :: cell_start_x_local
     INTEGER :: create_field_subtype
-    INTEGER, DIMENSION(1) :: n_local, n_global, start
+    INTEGER, DIMENSION(c_ndims) :: n_local, n_global, start
 
     n_local = nx_local
     n_global = nx_global

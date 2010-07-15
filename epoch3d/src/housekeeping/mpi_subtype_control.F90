@@ -244,7 +244,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: cell_start_y_local
     INTEGER, INTENT(IN) :: cell_start_z_local
     INTEGER :: create_field_subtype
-    INTEGER, DIMENSION(3) :: n_local, n_global, start
+    INTEGER, DIMENSION(c_ndims) :: n_local, n_global, start
 
     n_local = (/nx_local, ny_local, nz_local/)
     n_global = (/nx_global, ny_global, nz_global/)
