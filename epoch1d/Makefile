@@ -109,7 +109,7 @@ visitclean:
 # All the dependencies
 
 balance.o: balance.F90 boundary.o mpi_subtype_control.o partlist.o
-boundary.o: boundary.f90 particle_temperature.o partlist.o
+boundary.o: boundary.f90 deck_io_block.o particle_temperature.o partlist.o
 calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o

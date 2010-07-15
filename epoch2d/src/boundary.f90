@@ -2,6 +2,7 @@ MODULE boundary
 
   USE partlist
   USE particle_temperature
+  USE deck_io_block
 
   IMPLICIT NONE
 
@@ -417,7 +418,7 @@ CONTAINS
           ! Particle has gone forever
           CALL remove_particle_from_partlist(&
               particle_species(ispecies)%attached_list, cur)
-          IF (dumpmask(29) .NE. c_io_never) THEN
+          IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
             CALL add_particle_to_partlist(ejected_particles, cur)
           ELSE
             DEALLOCATE(cur)

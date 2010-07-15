@@ -9,43 +9,72 @@ MODULE deck_io_block
   INTEGER, PARAMETER :: n_var_special = 6
   INTEGER, PARAMETER :: io_block_elements = n_var_special+num_vars_to_dump
   LOGICAL, DIMENSION(io_block_elements)  :: io_block_done
+  INTEGER, PARAMETER :: c_dump_part_grid         = 1
+  INTEGER, PARAMETER :: c_dump_grid              = 2
+  INTEGER, PARAMETER :: c_dump_part_px           = 3
+  INTEGER, PARAMETER :: c_dump_part_py           = 4
+  INTEGER, PARAMETER :: c_dump_part_pz           = 5
+  INTEGER, PARAMETER :: c_dump_part_vx           = 6
+  INTEGER, PARAMETER :: c_dump_part_vy           = 7
+  INTEGER, PARAMETER :: c_dump_part_vz           = 8
+  INTEGER, PARAMETER :: c_dump_ex                = 9
+  INTEGER, PARAMETER :: c_dump_ey                = 10
+  INTEGER, PARAMETER :: c_dump_ez                = 11
+  INTEGER, PARAMETER :: c_dump_bx                = 12
+  INTEGER, PARAMETER :: c_dump_by                = 13
+  INTEGER, PARAMETER :: c_dump_bz                = 14
+  INTEGER, PARAMETER :: c_dump_jx                = 15
+  INTEGER, PARAMETER :: c_dump_jy                = 16
+  INTEGER, PARAMETER :: c_dump_jz                = 17
+  INTEGER, PARAMETER :: c_dump_part_charge       = 18
+  INTEGER, PARAMETER :: c_dump_part_mass         = 19
+  INTEGER, PARAMETER :: c_dump_ekbar             = 20
+  INTEGER, PARAMETER :: c_dump_mass_density      = 21
+  INTEGER, PARAMETER :: c_dump_charge_density    = 22
+  INTEGER, PARAMETER :: c_dump_number_density    = 23
+  INTEGER, PARAMETER :: c_dump_temperature       = 24
+  INTEGER, PARAMETER :: c_dump_part_weight       = 25
+  INTEGER, PARAMETER :: c_dump_part_species      = 26
+  INTEGER, PARAMETER :: c_dump_dist_fns          = 27
+  INTEGER, PARAMETER :: c_dump_probes            = 28
+  INTEGER, PARAMETER :: c_dump_ejected_particles = 29
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: &
       io_block_name = (/ &
-          "dt_snapshot                  ", &
-          "full_dump_every              ", &
-          "restart_dump_every           ", &
-          "force_final_to_be_restartable", &
-          "use_offset_grid              ", &
-          "extended_io_file             ", &
-          "particles                    ", &
-          "grid                         ", &
-          "px                           ", &
-          "py                           ", &
-          "pz                           ", &
-          "vx                           ", &
-          "vy                           ", &
-          "vz                           ", &
-          "ex                           ", &
-          "ey                           ", &
-          "ez                           ", &
-          "bx                           ", &
-          "by                           ", &
-          "bz                           ", &
-          "jx                           ", &
-          "jy                           ", &
-          "jz                           ", &
-          "charge                       ", &
-          "mass                         ", &
-          "ekbar                        ", &
-          "mass_density                 ", &
-          "charge_density               ", &
-          "number_density               ", &
-          "temperature                  ", &
-          "particle_weight              ", &
-          "species_id                   ", &
-          "distribution_functions       ", &
-          "particle_probes              ", &
-          "ejected_particles            " /)
+          "dt_snapshot                  ", & ! s1
+          "full_dump_every              ", & ! s2
+          "restart_dump_every           ", & ! s3
+          "force_final_to_be_restartable", & ! s4
+          "use_offset_grid              ", & ! s5
+          "extended_io_file             ", & ! s6
+          "particles                    ", & ! 1
+          "grid                         ", & ! 2
+          "px                           ", & ! 3
+          "py                           ", & ! 4
+          "pz                           ", & ! 5
+          "vx                           ", & ! 6
+          "vy                           ", & ! 7
+          "vz                           ", & ! 8
+          "ex                           ", & ! 9
+          "ey                           ", & ! 10
+          "ez                           ", & ! 11
+          "bx                           ", & ! 12
+          "by                           ", & ! 13
+          "bz                           ", & ! 14
+          "jx                           ", & ! 15
+          "jy                           ", & ! 16
+          "jz                           ", & ! 17
+          "charge                       ", & ! 18
+          "mass                         ", & ! 19
+          "ekbar                        ", & ! 20
+          "mass_density                 ", & ! 21
+          "charge_density               ", & ! 22
+          "number_density               ", & ! 23
+          "temperature                  ", & ! 24
+          "particle_weight              ", & ! 25
+          "species_id                   ", & ! 26
+          "distribution_functions       ", & ! 27
+          "particle_probes              ", & ! 28
+          "ejected_particles            " /) ! 29
 
 CONTAINS
 
@@ -103,7 +132,7 @@ CONTAINS
     ! If setting dumpmask for particle probes then report if the code wasn't
     ! compiled for particle probes
 #ifndef PARTICLE_PROBES
-    IF (mask_element .EQ. 28 .AND. mask .NE. c_io_never) THEN
+    IF (mask_element .EQ. c_dump_probes .AND. mask .NE. c_io_never) THEN
       handle_io_deck = c_err_pp_options_wrong
       extended_error_string = "-DPARTICLE_PROBES"
       mask = c_io_never
@@ -127,12 +156,24 @@ CONTAINS
     ! extended io file no longer in use
     io_block_done(6) = .TRUE.
 
-    ! Particle Positions
-    dumpmask(1:5) = IOR(dumpmask(1:5), c_io_restartable)
+    ! Particles
+    dumpmask(c_dump_part_grid) = &
+        IOR(dumpmask(c_dump_part_grid), c_io_restartable)
+    dumpmask(c_dump_part_species) = &
+        IOR(dumpmask(c_dump_part_species), c_io_restartable)
+    dumpmask(c_dump_part_weight) = &
+        IOR(dumpmask(c_dump_part_weight), c_io_restartable)
+    dumpmask(c_dump_part_px) = IOR(dumpmask(c_dump_part_px), c_io_restartable)
+    dumpmask(c_dump_part_py) = IOR(dumpmask(c_dump_part_py), c_io_restartable)
+    dumpmask(c_dump_part_pz) = IOR(dumpmask(c_dump_part_pz), c_io_restartable)
     ! Fields
-    dumpmask(9:14) = IOR(dumpmask(9:14), c_io_restartable)
-    ! Weight and species info
-    dumpmask(25:26) = IOR(dumpmask(25:26), c_io_restartable)
+    dumpmask(c_dump_grid) = IOR(dumpmask(c_dump_grid), c_io_restartable)
+    dumpmask(c_dump_ex) = IOR(dumpmask(c_dump_ex), c_io_restartable)
+    dumpmask(c_dump_ey) = IOR(dumpmask(c_dump_ey), c_io_restartable)
+    dumpmask(c_dump_ez) = IOR(dumpmask(c_dump_ez), c_io_restartable)
+    dumpmask(c_dump_bx) = IOR(dumpmask(c_dump_bx), c_io_restartable)
+    dumpmask(c_dump_by) = IOR(dumpmask(c_dump_by), c_io_restartable)
+    dumpmask(c_dump_bz) = IOR(dumpmask(c_dump_bz), c_io_restartable)
 
     DO index = 1, n_var_special
       IF (.NOT. io_block_done(index)) THEN
