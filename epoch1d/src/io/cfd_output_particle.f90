@@ -13,33 +13,30 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE cfd_write_nd_particle_grid_with_iterator_all(h, name, class, &
-      iterator, ndims, npart_local, npart_global, npart_per_iteration, &
-      particle_coord_type, lengths, offsets)
+      iterator, ndims, npart_global, npart_per_iteration, &
+      particle_coord_type, offset)
 
     TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER(4), INTENT(IN) :: ndims
-    INTEGER(8), INTENT(IN) :: npart_local
     INTEGER(8), INTENT(IN) :: npart_global
     INTEGER(8), INTENT(IN) :: npart_per_iteration
     INTEGER(4), INTENT(IN) :: particle_coord_type
-    INTEGER(8), DIMENSION(:), INTENT(IN) :: lengths
-    INTEGER(8), DIMENSION(:), INTENT(IN) :: offsets
+    INTEGER(8), INTENT(IN) :: offset
 
     INTERFACE
-      SUBROUTINE iterator(array, npart_it, direction, start)
+      SUBROUTINE iterator(array, npart_it, start, direction)
         USE cfd_common
         REAL(num), DIMENSION(:), INTENT(INOUT) :: array
         INTEGER(8), INTENT(INOUT) :: npart_it
-        INTEGER, INTENT(IN) :: direction
         LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN) :: direction
       END SUBROUTINE iterator
     END INTERFACE
 
     INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
-    INTEGER(8) :: block_length, md_length, npart_this_cycle
-    INTEGER(8) :: file_offset, nmax, nsec_left, nwrite_left, nelements, off
-    INTEGER :: idim, sec, osec, errcode
+    INTEGER(8) :: block_length, md_length, npart_this_cycle, file_offset, nmax
+    INTEGER :: errcode, idim
     LOGICAL :: start
     REAL(num) :: mn, mx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: gmn, gmx
@@ -61,6 +58,8 @@ CONTAINS
     ! .
     ! .
     ! .
+    ! - dnmin  REAL(num)
+    ! - dnmax  REAL(num)
 
     md_length = c_meshtype_header_offset + soi + soi8 + 2 * ndims * sof
     block_length = md_length + npart_global * ndims * sof
@@ -119,19 +118,13 @@ CONTAINS
     DO idim = 1, ndims
       npart_this_cycle = npart_per_iteration
       start = .TRUE.
-      sec = 1
-      osec = 1
-      nsec_left = lengths(sec)
-      file_offset = h%current_displacement + offsets(sec) * num
+      file_offset = h%current_displacement + offset * sof
 
       DO
-        CALL iterator(array, npart_this_cycle, idim, start)
+        CALL iterator(array, npart_this_cycle, start, idim)
         CALL MPI_ALLREDUCE(npart_this_cycle, nmax, 1, MPI_INTEGER8, MPI_MAX, &
             h%comm, errcode)
         IF (nmax .LE. 0) EXIT
-
-        off = 1
-        nwrite_left = npart_this_cycle
 
         IF (start) THEN
           gmn(idim) = MINVAL(array(1:npart_this_cycle))
@@ -142,36 +135,12 @@ CONTAINS
           gmx(idim) = MAX(gmx(idim), MAXVAL(array(1:npart_this_cycle)))
         ENDIF
 
-        DO
-          IF (nwrite_left .LE. nsec_left) THEN
-            nelements = nwrite_left
-            nsec_left = nsec_left - nelements
-          ELSE
-            nelements = nsec_left
-            sec = sec + 1
-            nsec_left = lengths(sec)
-          ENDIF
+        CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, h%mpireal, &
+            h%mpireal, "native", MPI_INFO_NULL, errcode)
+        CALL MPI_FILE_WRITE_ALL(h%filehandle, array, npart_this_cycle, &
+            h%mpireal, MPI_STATUS_IGNORE, errcode)
 
-          CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, h%mpireal, &
-              h%mpireal, "native", MPI_INFO_NULL, errcode)
-          CALL MPI_FILE_WRITE_ALL(h%filehandle, array(off), nelements, &
-              h%mpireal, MPI_STATUS_IGNORE, errcode)
-
-          nwrite_left = nwrite_left - nelements
-          CALL MPI_ALLREDUCE(nwrite_left, nmax, 1, MPI_INTEGER8, MPI_MAX, &
-              h%comm, errcode)
-
-          IF (sec .NE. osec) THEN
-            file_offset = h%current_displacement + offsets(sec) * num
-          ELSE
-            file_offset = file_offset + nelements * num
-          ENDIF
-
-          IF (nmax .LE. 0) EXIT
-
-          off = off + nelements
-          osec = sec
-        ENDDO
+        file_offset = file_offset + npart_this_cycle * sof
       ENDDO
 
       h%current_displacement = h%current_displacement + npart_global * sof
@@ -208,15 +177,14 @@ CONTAINS
 
   SUBROUTINE cfd_write_nd_particle_variable_with_iterator_all(h, name, class, &
       iterator, npart_global, npart_per_iteration, mesh_name, mesh_class, &
-      lengths, offsets)
+      offset)
 
     TYPE(cfd_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER(8), INTENT(IN) :: npart_global
     INTEGER(8), INTENT(IN) :: npart_per_iteration
     CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
-    INTEGER(8), DIMENSION(:), INTENT(IN) :: lengths
-    INTEGER(8), DIMENSION(:), INTENT(IN) :: offsets
+    INTEGER(8), INTENT(IN) :: offset
 
     INTERFACE
       SUBROUTINE iterator(array, npart_it, start)
@@ -228,9 +196,8 @@ CONTAINS
     END INTERFACE
 
     INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
-    INTEGER(8) :: block_length, md_length, npart_this_cycle
-    INTEGER(8) :: file_offset, nmax, nsec_left, nwrite_left, nelements, off
-    INTEGER :: sec, osec, errcode
+    INTEGER(8) :: block_length, md_length, npart_this_cycle, file_offset, nmax
+    INTEGER :: errcode
     LOGICAL :: start
     REAL(num) :: mn, mx, gmn, gmx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: array
@@ -300,19 +267,13 @@ CONTAINS
 
     npart_this_cycle = npart_per_iteration
     start = .TRUE.
-    sec = 1
-    osec = 1
-    nsec_left = lengths(sec)
-    file_offset = h%current_displacement + offsets(sec) * num
+    file_offset = h%current_displacement + offset * sof
 
     DO
       CALL iterator(array, npart_this_cycle, start)
       CALL MPI_ALLREDUCE(npart_this_cycle, nmax, 1, MPI_INTEGER8, MPI_MAX, &
           h%comm, errcode)
       IF (nmax .LE. 0) EXIT
-
-      off = 1
-      nwrite_left = npart_this_cycle
 
       IF (start) THEN
         gmn = MINVAL(array(1:npart_this_cycle))
@@ -323,36 +284,12 @@ CONTAINS
         gmx = MAX(gmx, MAXVAL(array(1:npart_this_cycle)))
       ENDIF
 
-      DO
-        IF (nwrite_left .LE. nsec_left) THEN
-          nelements = nwrite_left
-          nsec_left = nsec_left - nelements
-        ELSE
-          nelements = nsec_left
-          sec = sec + 1
-          nsec_left = lengths(sec)
-        ENDIF
+      CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, h%mpireal, &
+          h%mpireal, "native", MPI_INFO_NULL, errcode)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, array, npart_this_cycle, &
+          h%mpireal, MPI_STATUS_IGNORE, errcode)
 
-        CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, h%mpireal, &
-            h%mpireal, "native", MPI_INFO_NULL, errcode)
-        CALL MPI_FILE_WRITE_ALL(h%filehandle, array(off), nelements, &
-            h%mpireal, MPI_STATUS_IGNORE, errcode)
-
-        nwrite_left = nwrite_left - nelements
-        CALL MPI_ALLREDUCE(nwrite_left, nmax, 1, MPI_INTEGER8, MPI_MAX, &
-            h%comm, errcode)
-
-        IF (sec .NE. osec) THEN
-          file_offset = h%current_displacement + offsets(sec) * num
-        ELSE
-          file_offset = file_offset + nelements * num
-        ENDIF
-
-        IF (nmax .LE. 0) EXIT
-
-        off = off + nelements
-        osec = sec
-      ENDDO
+      file_offset = file_offset + npart_this_cycle * sof
     ENDDO
 
     h%current_displacement = h%current_displacement + npart_global * sof

@@ -57,9 +57,11 @@ CONTAINS
 
     TYPE(particle_probe), POINTER :: current_probe
     CHARACTER(LEN=string_length) :: probe_name, temp_name
-    INTEGER :: ispecies
-    INTEGER(8) :: npart_probe_local, npart_probe_global
-    INTEGER(KIND=MPI_OFFSET_KIND), DIMENSION(1) :: file_lengths, file_offsets
+    INTEGER :: ispecies, i
+    INTEGER(8) :: npart_probe_global, part_probe_offset
+    INTEGER(8), DIMENSION(:), ALLOCATABLE :: npart_probe_per_proc
+
+    ALLOCATE(npart_probe_per_proc(nproc))
 
     DO ispecies = 1, n_species
       current_probe=>particle_species(ispecies)%attached_probes
@@ -72,44 +74,44 @@ CONTAINS
 
         current_list=>current_probe%sampled_particles
 
-        npart_probe_local = current_probe%sampled_particles%count
+        CALL MPI_ALLGATHER(current_probe%sampled_particles%count, 1, &
+            MPI_INTEGER8, npart_probe_per_proc, 1, MPI_INTEGER8, comm, errcode)
 
-        CALL MPI_ALLREDUCE(npart_probe_local, npart_probe_global, 1, &
-            MPI_INTEGER8, MPI_SUM, comm, errcode)
+        npart_probe_global = 0
+        DO i = 1, nproc
+          IF (rank .EQ. i-1) part_probe_offset = npart_probe_global
+          npart_probe_global = npart_probe_global + npart_probe_per_proc(i)
+        ENDDO
 
         IF (npart_probe_global .GT. 0) THEN
-          file_lengths(1) = npart_probe_local
-          file_offsets(1) = create_particle_offset(npart_probe_local)
-
           probe_name =  TRIM(ADJUSTL(current_probe%name))
 
           ! dump particle Positions
           CALL cfd_write_nd_particle_grid_with_iterator_all(cfd_handle, &
-              TRIM(probe_name), "Probe_Grid", iterate_probe_particles, &
-              c_dimension_2d, npart_probe_local, npart_probe_global, &
-              npart_per_it, c_particle_cartesian, &
-              file_lengths, file_offsets)
+              TRIM(probe_name), 'Probe_Grid', iterate_probe_particles, &
+              c_dimension_2d, npart_probe_global, npart_per_it, &
+              c_particle_cartesian, part_probe_offset)
 
           ! dump Px
           WRITE(temp_name, '(a, "_Px")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
               TRIM(temp_name), TRIM(probe_name), iterate_probe_px, &
               npart_probe_global, npart_per_it, TRIM(probe_name), &
-              "Probe_Grid", file_lengths, file_offsets)
+              'Probe_Grid', part_probe_offset)
 
           ! dump Py
           WRITE(temp_name, '(a, "_Py")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
               TRIM(temp_name), TRIM(probe_name), iterate_probe_py, &
               npart_probe_global, npart_per_it, TRIM(probe_name), &
-              "Probe_Grid", file_lengths, file_offsets)
+              'Probe_Grid', part_probe_offset)
 
           ! dump Pz
           WRITE(temp_name, '(a, "_Pz")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
               TRIM(temp_name), TRIM(probe_name), iterate_probe_pz, &
               npart_probe_global, npart_per_it, TRIM(probe_name), &
-              "Probe_Grid", file_lengths, file_offsets)
+              'Probe_Grid', part_probe_offset)
 
           ! dump particle weight function
           WRITE(temp_name, '(a, "_weight")') TRIM(probe_name)
@@ -117,7 +119,7 @@ CONTAINS
           CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
               TRIM(temp_name), TRIM(probe_name), iterate_probe_weight, &
               npart_probe_global, npart_per_it, TRIM(probe_name), &
-              "Probe_Grid", file_lengths, file_offsets)
+              'Probe_Grid', part_probe_offset)
 #else
           CALL cfd_write_real_constant(cfd_handle, TRIM(temp_name), &
               TRIM(probe_name), weight, 0)
@@ -132,12 +134,14 @@ CONTAINS
       NULLIFY(current_probe)
     ENDDO
 
+    DEALLOCATE(npart_probe_per_proc)
+
   END SUBROUTINE write_probes
 
 
 
   ! iterator for particle positions
-  SUBROUTINE iterate_probe_particles(array, n_points, direction, start)
+  SUBROUTINE iterate_probe_particles(array, n_points, start, direction)
 
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(8), INTENT(INOUT) :: n_points
@@ -153,7 +157,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      array(part_count) = cur%part_pos(direction)-window_shift(direction)
+      array(part_count) = cur%part_pos(direction) - window_shift(direction)
       cur=>cur%next
     ENDDO
 

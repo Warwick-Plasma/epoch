@@ -18,6 +18,7 @@ MODULE diagnostics
   PUBLIC :: set_dt, output_routines, iterate_charge
 
   TYPE(cfd_file_handle) :: cfd_handle
+  INTEGER(KIND=8), ALLOCATABLE :: species_offset(:)
 
 CONTAINS
 
@@ -26,11 +27,10 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: i
     LOGICAL :: print_arrays, last_call
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
-    CHARACTER(LEN=50) :: temp_name
+    CHARACTER(LEN=c_max_string_length) :: temp_name
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
-    INTEGER(8) :: npart_local, npart_dump_global
     INTEGER :: ispecies, code
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: restart_flag
@@ -64,20 +64,12 @@ CONTAINS
     IF (last_call .AND. force_final_to_be_restartable) &
         code = IOR(code, c_io_restartable)
 
-    npart_local = &
-        get_total_local_dumped_particle(IAND(code, c_io_restartable) .NE. 0)
-
-    CALL MPI_ALLREDUCE(npart_local, npart_dump_global, 1, MPI_INTEGER8, &
-        MPI_SUM, comm, errcode)
     CALL create_subtypes(IAND(code, c_io_restartable) .NE. 0)
 
-    ! If the code is doing a restart dump then tell the iterators that this
-    ! is a restart dump
+    ! Set a restart_flag to pass to the file header
     IF (IAND(code, c_io_restartable) .NE. 0) THEN
-      iterator_settings%restart = .TRUE.
       restart_flag = 1
     ELSE
-      iterator_settings%restart = .FALSE.
       restart_flag = 0
     ENDIF
 
@@ -93,11 +85,7 @@ CONTAINS
         c_code_name, c_commit_id, sha1sum, c_compile_machine, &
         c_compile_flags, 0)
 
-    IF (IAND(dumpmask(c_dump_part_grid), code) .NE. 0) &
-        CALL cfd_write_nd_particle_grid_with_iterator_all(cfd_handle, &
-            "Particles", "Part_Grid", iterate_particles, c_dimension_2d, &
-            npart_local, npart_dump_global, npart_per_it, &
-            c_particle_cartesian, particle_file_lengths, particle_file_offsets)
+    CALL write_particle_grid(code)
 
     ! Write the cartesian mesh
     ! (mesh name, mesh class, x_array, y_array, rank used for writing)
@@ -113,73 +101,28 @@ CONTAINS
       ENDIF
     ENDIF
 
-    ! (variable name, variable class, iterator function,
-    ! global number of particles, number of particles to write per iteration,
-    ! mesh name, mesh class, mpi type describing data distribution)
-    IF (IAND(dumpmask(c_dump_part_species), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Species", "Particles", iterate_species, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
-    IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) &
 #ifdef PER_PARTICLE_WEIGHT
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Weight", "Particles", iterate_weight, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
+    CALL write_particle_variable(c_dump_part_weight, code, 'Weight', &
+        iterate_weight)
 #else
-        CALL cfd_write_real_constant(cfd_handle, "Weight", "Particles", &
-            weight, 0)
+    IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) &
+        CALL cfd_write_real_constant("Weight", "Particles", weight, 0)
 #endif
-    IF (IAND(dumpmask(c_dump_part_px), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Px", "Particles", iterate_px, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
-    IF (IAND(dumpmask(c_dump_part_py), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Py", "Particles", iterate_py, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
-    IF (IAND(dumpmask(c_dump_part_pz), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Pz", "Particles", iterate_pz, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
-    IF (IAND(dumpmask(c_dump_part_vx), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Vx", "Particles", iterate_vx, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
-    IF (IAND(dumpmask(c_dump_part_vy), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Vy", "Particles", iterate_vy, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
-    IF (IAND(dumpmask(c_dump_part_vz), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Vz", "Particles", iterate_vz, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
-    IF (IAND(dumpmask(c_dump_part_charge), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Q", "Particles", iterate_charge, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
-    IF (IAND(dumpmask(c_dump_part_mass), code) .NE. 0) &
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            "Mass", "Particles", iterate_mass, npart_dump_global, &
-            npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-            particle_file_offsets)
+    CALL write_particle_variable(c_dump_part_px, code, 'Px', iterate_px)
+    CALL write_particle_variable(c_dump_part_py, code, 'Py', iterate_py)
+    CALL write_particle_variable(c_dump_part_pz, code, 'Pz', iterate_pz)
+
+    CALL write_particle_variable(c_dump_part_vx, code, 'Vx', iterate_vx)
+    CALL write_particle_variable(c_dump_part_vy, code, 'Vy', iterate_vy)
+    CALL write_particle_variable(c_dump_part_vz, code, 'Vz', iterate_vz)
+
+    CALL write_particle_variable(c_dump_part_charge, code, 'Q', iterate_charge)
+    CALL write_particle_variable(c_dump_part_mass, code, 'Mass', iterate_mass)
 #ifdef PARTICLE_DEBUG
-    CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-        "Processor", "Particles", iterate_processor, npart_dump_global, &
-        npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-        particle_file_offsets)
-    CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-        "Processor_at_t0", "Particles", iterate_processor0, npart_dump_global, &
-        npart_per_it, "Particles", "Part_Grid", particle_file_lengths, &
-        particle_file_offsets)
+    CALL write_particle_variable(c_dump_part_grid, code, 'Processor', &
+        iterate_processor)
+    CALL write_particle_variable(c_dump_part_grid, code, 'Processor_at_t0', &
+        iterate_processor0)
 #endif
 
     CALL write_field(c_dump_ex, code, 'Ex', 'Electric Field', ex)
@@ -251,6 +194,7 @@ CONTAINS
     ENDIF
 
     DEALLOCATE(array)
+    IF (ALLOCATED(species_offset)) DEALLOCATE(species_offset)
     CALL free_subtypes()
 
   END SUBROUTINE output_routines
@@ -453,7 +397,7 @@ CONTAINS
     REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, should_dump
-    CHARACTER(LEN=50) :: temp_name
+    CHARACTER(LEN=c_max_string_length) :: temp_name
 
     INTERFACE
       SUBROUTINE func(data_array, current_species)
@@ -520,5 +464,99 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE write_nspecies_field
+
+
+
+  SUBROUTINE species_offset_init
+
+    INTEGER(KIND=8) :: species_count
+    INTEGER(KIND=8), ALLOCATABLE :: npart_species_per_proc(:)
+    INTEGER :: i, ispecies
+
+    IF (ALLOCATED(species_offset)) RETURN
+
+    ALLOCATE(npart_species_per_proc(nproc))
+    ALLOCATE(species_offset(n_species))
+    species_offset = 0
+
+    DO ispecies = 1, n_species
+      CALL MPI_ALLGATHER(particle_species(ispecies)%attached_list%count, 1, &
+          MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
+      species_count = 0
+      DO i = 1, nproc
+        IF (rank .EQ. i-1) species_offset(ispecies) = species_count
+        species_count = species_count + npart_species_per_proc(i)
+      ENDDO
+      particle_species(ispecies)%count = species_count
+    ENDDO
+
+    DEALLOCATE(npart_species_per_proc)
+
+  END SUBROUTINE species_offset_init
+
+
+
+  SUBROUTINE write_particle_grid(code)
+
+    INTEGER, INTENT(IN) :: code
+    INTEGER :: ispecies
+
+    IF (IAND(dumpmask(c_dump_part_grid), code) .EQ. 0) RETURN
+
+    CALL species_offset_init()
+
+    CALL start_particle_family_only(current_family)
+
+    DO ispecies = 1, n_species
+      IF (current_family%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        CALL cfd_write_nd_particle_grid_with_iterator_all(cfd_handle, &
+            'Particles_' // TRIM(current_family%name), 'Grid', &
+            iterate_particles, c_dimension_2d, &
+            particle_species(ispecies)%count, npart_per_it, &
+            c_particle_cartesian, species_offset(ispecies))
+      ENDIF
+
+      CALL advance_particle_family_only(current_family)
+    ENDDO
+
+  END SUBROUTINE write_particle_grid
+
+
+
+  SUBROUTINE write_particle_variable(id, code, name, iterator)
+
+    INTEGER, INTENT(IN) :: id, code
+    CHARACTER(LEN=*), INTENT(IN) :: name
+
+    INTERFACE
+      SUBROUTINE iterator(data, npart_it, start)
+        USE shared_data
+        REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+        INTEGER(8), INTENT(INOUT) :: npart_it
+        LOGICAL, INTENT(IN) :: start
+      END SUBROUTINE iterator
+    END INTERFACE
+
+    INTEGER :: ispecies
+
+    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+
+    CALL species_offset_init()
+
+    CALL start_particle_family_only(current_family)
+
+    DO ispecies = 1, n_species
+      IF (current_family%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
+            TRIM(name), 'Particles_' // TRIM(current_family%name), iterator, &
+            particle_species(ispecies)%count, npart_per_it, &
+            'Particles_' // TRIM(current_family%name), 'Grid', &
+            species_offset(ispecies))
+      ENDIF
+
+      CALL advance_particle_family_only(current_family)
+    ENDDO
+
+  END SUBROUTINE write_particle_variable
 
 END MODULE diagnostics

@@ -17,9 +17,7 @@ MODULE setup
   PUBLIC :: open_files, close_files
   PUBLIC :: setup_species
 
-  SAVE
-  TYPE(particle_list) :: main_root
-  INTEGER, DIMENSION(:), ALLOCATABLE :: species_id
+  TYPE(particle), POINTER, SAVE :: iterator_list
 
 CONTAINS
 
@@ -38,10 +36,11 @@ CONTAINS
       mpireal = MPI_REAL8
     ELSE
       IF (rank .EQ. 0) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'Cannot determine size of real'
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Cannot determine size of real'
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      STOP
     ENDIF
 
     dumpmask = 0
@@ -252,11 +251,12 @@ CONTAINS
         OPEN(unit=20, status='REPLACE', file=file2, iostat=errcode)
       ENDIF
       IF (errcode .NE. 0) THEN
-        PRINT *, '***ERROR***'
-        PRINT *, 'Cannot create "epoch2d.dat" output file. The most common ' &
+        PRINT*, '***ERROR***'
+        PRINT*, 'Cannot create "epoch2d.dat" output file. The most common ' &
             // 'cause of this problem '
-        PRINT *, 'is that the ouput directory does not exist'
+        PRINT*, 'is that the ouput directory does not exist'
         CALL MPI_ABORT(comm, errcode, ierr)
+        STOP
       ENDIF
       IF (ic_from_restart) THEN
         CALL integer_as_string(restart_snapshot, string)
@@ -297,23 +297,52 @@ CONTAINS
 
 
 
+  SUBROUTINE find_species_by_name(specname, species)
+
+    CHARACTER(LEN=*), INTENT(IN) :: specname
+    TYPE(particle_family), POINTER :: species
+    INTEGER :: ispecies, species_number, errcode, ierr
+
+    species_number = 0
+    DO ispecies = 1,n_species
+      IF (str_cmp(specname,particle_species(ispecies)%name)) THEN
+        species_number = ispecies
+        EXIT
+      ENDIF
+    ENDDO
+
+    IF (species_number .EQ. 0) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Particle species "', TRIM(specname),'" from restart dump ', &
+            'not found in input deck.'
+      ENDIF
+      CALL MPI_ABORT(comm, errcode, ierr)
+      STOP
+    ENDIF
+
+    species => particle_species(species_number)
+
+  END SUBROUTINE find_species_by_name
+
+
+
   SUBROUTINE restart_data(snap)
 
     INTEGER, INTENT(OUT) :: snap
     CHARACTER(LEN=20+data_dir_max_length) :: filename
-    INTEGER, PARAMETER :: max_string_len = 60
-    CHARACTER(LEN=max_string_len) :: name, class, mesh_name, mesh_class
-    INTEGER :: block_type, nd
-    INTEGER :: sof
-    INTEGER(KIND=8) :: npart_l
-    REAL(num), DIMENSION(2) :: extents, stagger
-    INTEGER, DIMENSION(1) :: dims
+    CHARACTER(LEN=c_max_string_length) :: str1, str2
+    CHARACTER(LEN=c_max_string_length) :: name, class, mesh_name, mesh_class
     REAL(KIND=8) :: time_d
-    INTEGER :: coord_type, ierr, nblocks
-    TYPE(particle), POINTER :: current, next
+    REAL(num), DIMENSION(2) :: extents, stagger
+    INTEGER :: coord_type, block_type, sof
+    INTEGER :: ierr, ii, i1, i2, iblock, nblocks, ndims
+    INTEGER(KIND=8) :: npart, npart_local
+    INTEGER, DIMENSION(4) :: dims
     LOGICAL :: constant_weight
-    INTEGER(KIND=8) :: npart, ipart, ix
     TYPE(cfd_file_handle) :: cfd_handle
+    TYPE(particle), POINTER :: current, next
+    TYPE(particle_family), POINTER :: species
 
     npart_global = 0
     constant_weight = .FALSE.
@@ -323,11 +352,12 @@ CONTAINS
     WRITE(filename, '(a, "/", i4.4, ".cfd")') TRIM(data_dir), restart_snapshot
     CALL cfd_open(cfd_handle, filename, rank, comm, MPI_MODE_RDONLY, snap, &
         time_d)
+
     IF (snap .GE. 0) THEN
       time = time_d
-      IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time
+      IF (rank .EQ. 0) PRINT*, 'Loading snapshot for time', time
     ENDIF
-    ! open the file
+
     nblocks = cfd_get_nblocks(cfd_handle)
     jobid = cfd_get_jobid(cfd_handle)
 
@@ -339,179 +369,226 @@ CONTAINS
     by = 0.0_num
     bz = 0.0_num
 
-    IF (rank .EQ. 0) PRINT *, "Input file contains", nblocks, "blocks"
-    DO ix = 1, nblocks
+    IF (rank .EQ. 0) PRINT*, 'Input file contains', nblocks, 'blocks'
+
+    DO iblock = 1, nblocks
       CALL cfd_get_next_block_info_all(cfd_handle, name, class, block_type)
-      ! IF (rank .EQ. 0) PRINT *, "Loading block", ix, name, block_type
+
+      ! IF (rank .EQ. 0) PRINT*, 'Loading block', iblock, name, block_type
       IF (block_type .EQ. c_type_snapshot .AND. snap .LT. 0) THEN
         CALL cfd_get_snapshot(cfd_handle, time_d, snap)
         time = time_d
-        IF (rank .EQ. 0) PRINT *, "Loading snapshot for time", time
+        IF (rank .EQ. 0) PRINT*, 'Loading snapshot for time', time
       ENDIF
 
       SELECT CASE(block_type)
-      CASE(c_type_mesh_variable)
-        CALL cfd_get_common_meshtype_metadata_all(cfd_handle, block_type, nd, &
-            sof)
-        IF (sof .NE. num) THEN
-          IF (rank .EQ. 0) &
-              PRINT *, "Precision does not match, recompile code so &
-                  &that sizeof(REAL) = ", sof
-          CALL MPI_ABORT(comm, errcode, ierr)
-        ENDIF
+      CASE(c_type_constant)
+        CALL cfd_get_real_constant(cfd_handle, weight)
+        constant_weight = .TRUE.
 
-        IF (nd .NE. c_dimension_2d .AND. nd .NE. c_dimension_irrelevant ) THEN
-          IF (rank .EQ. 0) &
-              PRINT *, "Dimensionality does not match, file is ", nd, "D"
-          CALL MPI_ABORT(comm, errcode, ierr)
-        ENDIF
+      CASE(c_type_mesh)
+        CALL cfd_get_common_meshtype_metadata_all(cfd_handle, block_type, &
+            ndims, sof)
+        IF (block_type .EQ. c_mesh_particle) THEN
+          CALL cfd_get_nd_particle_grid_metadata_all(cfd_handle, ndims, &
+              coord_type, npart, extents)
 
-        SELECT CASE(block_type)
-        CASE(c_var_cartesian)
-          ! Grid variables
-          CALL cfd_get_nd_cartesian_variable_metadata_all(cfd_handle, nd, &
-              dims, extents, stagger, mesh_name, mesh_class)
+          i2 = LEN_TRIM(name)
+          DO ii = 1,i2
+            i1 = ii
+            IF (name(ii:ii) .EQ. '_') EXIT
+          ENDDO
+          i1 = i1 + 1
 
-          IF (dims(1) .NE. nx_global) THEN
-            IF (rank .EQ. 0) &
-                PRINT *, "Number of gridpoints does not match, gridpoints &
-                    &in file is", dims(1)
-            CALL MPI_ABORT(comm, errcode, ierr)
-          ENDIF
+          CALL find_species_by_name(name(i1:i2), species)
 
-          IF (str_cmp(name, "Ex")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, ex, &
-                  subtype_field, subarray_field)
-
-          IF (str_cmp(name, "Ey")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, ey, &
-                  subtype_field, subarray_field)
-
-          IF (str_cmp(name, "Ez")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, ez, &
-                  subtype_field, subarray_field)
-
-          IF (str_cmp(name, "Bx")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, bx, &
-                  subtype_field, subarray_field)
-
-          IF (str_cmp(name, "By")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, by, &
-                  subtype_field, subarray_field)
-
-          IF (str_cmp(name, "Bz")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, bz, &
-                  subtype_field, subarray_field)
-
-          IF (str_cmp(name, "Jx")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, jx, &
-                  subtype_field, subarray_field)
-
-          IF (str_cmp(name, "Jy")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, jy, &
-                  subtype_field, subarray_field)
-
-          IF (str_cmp(name, "Jz")) &
-              CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, jz, &
-                  subtype_field, subarray_field)
-
-        CASE(c_var_particle)
-          CALL cfd_get_nd_particle_variable_metadata_all(cfd_handle, &
-              npart_l, extents, mesh_name, mesh_class)
-
-          IF (npart_l .NE. npart_global) THEN
+          IF (ASSOCIATED(species%attached_list%head)) THEN
             IF (rank .EQ. 0) THEN
-              PRINT *, "*** ERROR ***"
-              PRINT *, "Malformed restart dump. Number of particle variables", &
-                  " does not match grid."
+              PRINT*, '*** ERROR ***'
+              PRINT*, 'Duplicate meshes for species "', TRIM(name(i1:i2)),'"'
             ENDIF
             CALL MPI_ABORT(comm, errcode, ierr)
             STOP
           ENDIF
 
-          ! particle variables
-          IF (str_cmp(name, "Px")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
-                  cfd_handle, npart, npart_per_it, subtype_particle_var, it_px)
-
-          IF (str_cmp(name, "Py")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
-                  cfd_handle, npart, npart_per_it, subtype_particle_var, it_py)
-
-          IF (str_cmp(name, "Pz")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
-                  cfd_handle, npart, npart_per_it, subtype_particle_var, it_pz)
-
-#ifdef PER_PARTICLE_WEIGHT
-          IF (str_cmp(name, "Weight")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
-                  cfd_handle, npart, npart_per_it, subtype_particle_var, &
-                  it_weight)
-#else
-          IF (str_cmp(name, "Weight")) THEN
-            IF (rank .EQ. 0) &
-                PRINT *, "Cannot load dump file with per particle weight &
-                    &if the code is compiled without per particle weights. &
-                    &Code terminates"
-            CALL MPI_ABORT(comm, errcode, ierr)
-#endif
-          IF (str_cmp(name, "Species")) &
-              CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
-                  cfd_handle, npart, npart_per_it, subtype_particle_var, &
-                  it_species)
-        END SELECT
-      CASE(c_type_mesh)
-        CALL cfd_get_common_meshtype_metadata_all(cfd_handle, block_type, nd, &
-            sof)
-        IF (block_type .EQ. c_mesh_particle) THEN
-          CALL cfd_get_nd_particle_grid_metadata_all(cfd_handle, nd, &
-              coord_type, npart_l, extents)
-          IF (npart_l .NE. npart_global) THEN
-            npart = npart_l/nproc
-            IF (npart * nproc .NE. npart_l) THEN
-              IF (rank .EQ. 0) &
-                  PRINT *, "Cannot evenly subdivide particles over", nproc, &
-                      "processors. Trying to fix"
-              IF (rank .LT. npart_l-(npart*nproc)) npart = npart+1
+          npart_local = npart / nproc
+          IF (npart_local * nproc .NE. npart) THEN
+            IF (rank .EQ. 0) THEN
+              PRINT*, 'Cannot evenly subdivide particles over', nproc, &
+                  'processors. Trying to fix'
             ENDIF
-            CALL create_subtypes_for_load(npart)
-            CALL create_allocated_partlist(main_root, npart)
-            ALLOCATE(species_id(npart))
-            current=>main_root%head
-            npart_global = npart_l
+            IF (rank .LT. npart - npart_local * nproc) &
+                npart_local = npart_local + 1
           ENDIF
-          CALL cfd_get_nd_particle_grid_parallel_with_iterator(cfd_handle, nd, &
-              main_root%count, npart_l, npart_per_it, sof, &
+
+          CALL create_subtypes_for_load(npart_local)
+          CALL create_allocated_partlist(species%attached_list, npart_local)
+
+          iterator_list => species%attached_list%head
+          npart_global = npart_global + npart
+          species%count = npart
+
+          CALL cfd_get_nd_particle_grid_parallel_with_iterator(cfd_handle, &
+              ndims, npart_local, npart, npart_per_it, sof, &
               subtype_particle_var, it_part)
         ENDIF
-      CASE(c_type_constant)
-        CALL cfd_get_real_constant(cfd_handle, weight)
-        constant_weight = .TRUE.
+
+      CASE(c_type_mesh_variable)
+        CALL cfd_get_common_meshtype_metadata_all(cfd_handle, block_type, &
+            ndims, sof)
+
+        IF (sof .NE. num) THEN
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Precision does not match, recompile code so that ', &
+                'sizeof(REAL) = ', sof
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+        ENDIF
+
+        IF (ndims .NE. c_dimension_2d &
+            .AND. ndims .NE. c_dimension_irrelevant) THEN
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Dimensionality does not match, file is ', ndims, 'D'
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+        ENDIF
+
+        SELECT CASE(block_type)
+        CASE(c_var_cartesian)
+          ! Grid variables
+          CALL cfd_get_nd_cartesian_variable_metadata_all(cfd_handle, ndims, &
+              dims, extents, stagger, mesh_name, mesh_class)
+
+          IF (dims(1) .NE. nx_global .OR. dims(2) .NE. ny_global) THEN
+            IF (rank .EQ. 0) THEN
+              PRINT*, '*** ERROR ***'
+              PRINT*, 'Number of gridpoints in restart dump does not match', &
+                  ' the input deck.'
+              CALL integer_as_string(nx_global, str1)
+              CALL integer_as_string(ny_global, str2)
+              PRINT*, 'Input deck grid: ', TRIM(str1), ',', TRIM(str2)
+              CALL integer_as_string(dims(1), str1)
+              CALL integer_as_string(dims(2), str2)
+              PRINT*, 'Restart dump grid: ', TRIM(str1), ',', TRIM(str2)
+            ENDIF
+            CALL MPI_ABORT(comm, errcode, ierr)
+            STOP
+          ENDIF
+
+          IF (str_cmp(name, 'Ex')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, ex, &
+                subtype_field, subarray_field)
+
+          ELSE IF (str_cmp(name, 'Ey')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, ey, &
+                subtype_field, subarray_field)
+
+          ELSE IF (str_cmp(name, 'Ez')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, ez, &
+                subtype_field, subarray_field)
+
+          ELSE IF (str_cmp(name, 'Bx')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, bx, &
+                subtype_field, subarray_field)
+
+          ELSE IF (str_cmp(name, 'By')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, by, &
+                subtype_field, subarray_field)
+
+          ELSE IF (str_cmp(name, 'Bz')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, bz, &
+                subtype_field, subarray_field)
+
+          ELSE IF (str_cmp(name, 'Jx')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, jx, &
+                subtype_field, subarray_field)
+
+          ELSE IF (str_cmp(name, 'Jy')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, jy, &
+                subtype_field, subarray_field)
+
+          ELSE IF (str_cmp(name, 'Jz')) THEN
+            CALL cfd_get_2d_cartesian_variable_parallel(cfd_handle, jz, &
+                subtype_field, subarray_field)
+
+          ENDIF
+
+        CASE(c_var_particle)
+          CALL cfd_get_nd_particle_variable_metadata_all(cfd_handle, &
+              npart, extents, mesh_name, mesh_class)
+
+          i2 = LEN_TRIM(mesh_name)
+          DO ii = 1,i2
+            i1 = ii
+            IF (mesh_name(ii:ii) .EQ. '_') EXIT
+          ENDDO
+          i1 = i1 + 1
+
+          CALL find_species_by_name(mesh_name(i1:i2), species)
+
+          IF (npart .NE. species%count) THEN
+            IF (rank .EQ. 0) THEN
+              PRINT*, '*** ERROR ***'
+              PRINT*, 'Malformed restart dump. Number of particle variables', &
+                  ' does not match grid.'
+            ENDIF
+            CALL MPI_ABORT(comm, errcode, ierr)
+            STOP
+          ENDIF
+
+          iterator_list => species%attached_list%head
+          npart = species%attached_list%count
+
+          ! particle variables
+          IF (str_cmp(name, 'Px')) THEN
+            CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                cfd_handle, npart_local, npart_per_it, &
+                subtype_particle_var, it_px)
+
+          ELSE IF (str_cmp(name, 'Py')) THEN
+            CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                cfd_handle, npart_local, npart_per_it, &
+                subtype_particle_var, it_py)
+
+          ELSE IF (str_cmp(name, 'Pz')) THEN
+            CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                cfd_handle, npart_local, npart_per_it, &
+                subtype_particle_var, it_pz)
+
+          ELSE IF (str_cmp(name, 'Weight')) THEN
+#ifdef PER_PARTICLE_WEIGHT
+            CALL cfd_get_nd_particle_variable_parallel_with_iterator( &
+                cfd_handle, npart_local, npart_per_it, &
+                subtype_particle_var, it_weight)
+#else
+            IF (rank .EQ. 0) THEN
+              PRINT*, '*** ERROR ***'
+              PRINT*, 'Cannot load dump file with per particle weight.'
+              PRINT*, 'Please recompile with the -DPER_PARTICLE_WEIGHT option.'
+            ENDIF
+            CALL MPI_ABORT(comm, errcode, ierr)
+            STOP
+#endif
+          ENDIF
+        END SELECT
       END SELECT
       CALL cfd_skip_block(cfd_handle)
     ENDDO
     CALL cfd_close(cfd_handle)
     CALL free_subtypes_for_load()
 
-    current=>main_root%head
-    ipart = 1
-    DO WHILE(ASSOCIATED(current))
-      next=>current%next
-      CALL remove_particle_from_partlist(main_root, current)
-      CALL add_particle_to_partlist(&
-          particle_species(species_id(ipart))%attached_list, current)
-      current=>next
-      ipart = ipart+1
-    ENDDO
-
-    DEALLOCATE(species_id)
-
 #ifdef PER_PARTICLE_WEIGHT
     IF (constant_weight) THEN
-      current=>main_root%head
-      DO WHILE(ASSOCIATED(current))
-        current%weight = weight
-        current=>current%next
+      DO ii = 1,n_species
+        current => particle_species(ii)%attached_list%head
+        DO WHILE(ASSOCIATED(current))
+          current%weight = weight
+          current => current%next
+        ENDDO
       ENDDO
     ENDIF
 #endif
@@ -526,16 +603,14 @@ CONTAINS
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
-
     INTEGER(KIND=8) :: ipart
     TYPE(particle), POINTER, SAVE :: cur
 
-    IF (start) THEN
-      cur=>main_root%head
-    ENDIF
+    IF (start) cur => iterator_list
+
     DO ipart = 1, npart_this_it
       cur%part_pos(direction) = array(ipart)
-      cur=>cur%next
+      cur => cur%next
     ENDDO
 
   END SUBROUTINE it_part
@@ -548,12 +623,10 @@ CONTAINS
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
-    TYPE(particle), POINTER, SAVE :: cur
 
-    IF (start) cur=>main_root%head
     DO ipart = 1, npart_this_it
-      cur%part_p(1) = array(ipart)
-      cur=>cur%next
+      iterator_list%part_p(1) = array(ipart)
+      iterator_list => iterator_list%next
     ENDDO
 
   END SUBROUTINE it_px
@@ -566,12 +639,10 @@ CONTAINS
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
-    TYPE(particle), POINTER, SAVE :: cur
 
-    IF (start) cur=>main_root%head
     DO ipart = 1, npart_this_it
-      cur%part_p(2) = array(ipart)
-      cur=>cur%next
+      iterator_list%part_p(2) = array(ipart)
+      iterator_list => iterator_list%next
     ENDDO
 
   END SUBROUTINE it_py
@@ -584,12 +655,10 @@ CONTAINS
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
-    TYPE(particle), POINTER, SAVE :: cur
 
-    IF (start) cur=>main_root%head
     DO ipart = 1, npart_this_it
-      cur%part_p(3) = array(ipart)
-      cur=>cur%next
+      iterator_list%part_p(3) = array(ipart)
+      iterator_list => iterator_list%next
     ENDDO
 
   END SUBROUTINE it_pz
@@ -603,33 +672,13 @@ CONTAINS
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
-    TYPE(particle), POINTER, SAVE :: cur
 
-    IF (start) cur=>main_root%head
     DO ipart = 1, npart_this_it
-      cur%weight = array(ipart)
-      cur=>cur%next
+      iterator_list%weight = array(ipart)
+      iterator_list => iterator_list%next
     ENDDO
 
   END SUBROUTINE it_weight
 #endif
-
-
-
-  SUBROUTINE it_species(array, npart_this_it, start)
-
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
-    LOGICAL, INTENT(IN) :: start
-    INTEGER(KIND=8) :: ipart
-    INTEGER(KIND=8), SAVE :: ipart_total
-
-    IF (start) ipart_total = 1
-    DO ipart = 1, npart_this_it
-      species_id(ipart_total) = NINT(array(ipart))
-      ipart_total = ipart_total+1
-    ENDDO
-
-  END SUBROUTINE it_species
 
 END MODULE setup

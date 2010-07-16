@@ -155,7 +155,6 @@ CONTAINS
     cell_y_max(nprocy) = (nprocy - 1) * ny_big + ny_little
 
     subtype_field = 0
-    subtype_particle = 0
 
     ALLOCATE(x(-2:nx+3), y(-2:ny+3))
     ALLOCATE(x_global(-2:nx_global+3), y_global(-2:ny_global+3))

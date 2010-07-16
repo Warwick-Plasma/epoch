@@ -108,7 +108,6 @@ CONTAINS
     cell_x_max(nprocx) = (nprocx - 1) * nx_big + nx_little
 
     subtype_field = 0
-    subtype_particle = 0
 
     ALLOCATE(x(-2:nx+3))
     ALLOCATE(x_global(-2:nx_global+3))

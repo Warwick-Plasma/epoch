@@ -12,12 +12,12 @@ CONTAINS
 
   ! Grid loading functions
   SUBROUTINE cfd_get_nd_particle_grid_metadata_all(h, ndims, coord_type, &
-      npart, extents)
+      npart_global, extents)
 
     TYPE(cfd_file_handle) :: h
     INTEGER, INTENT(IN) :: ndims
     INTEGER, INTENT(OUT) :: coord_type
-    INTEGER(8), INTENT(OUT) :: npart
+    INTEGER(8), INTENT(OUT) :: npart_global
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     INTEGER(4) :: coord_type4
     INTEGER :: errcode
@@ -34,7 +34,7 @@ CONTAINS
 
     h%current_displacement = h%current_displacement +  soi
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, npart, 1, MPI_INTEGER8, &
+    CALL MPI_FILE_READ_ALL(h%filehandle, npart_global, 1, MPI_INTEGER8, &
         MPI_STATUS_IGNORE, errcode)
 
     h%current_displacement = h%current_displacement + soi8
@@ -76,11 +76,11 @@ CONTAINS
 
 
   SUBROUTINE cfd_get_nd_particle_grid_parallel_with_iterator(h, ndims, &
-      npart_local, npart_lglobal, npart_per_it, sof, subtype, iterator)
+      npart_local, npart_global, npart_per_it, sof, subtype, iterator)
 
     TYPE(cfd_file_handle) :: h
     INTEGER, INTENT(IN) :: ndims
-    INTEGER(8), INTENT(IN) :: npart_local, npart_lglobal, npart_per_it
+    INTEGER(8), INTENT(IN) :: npart_local, npart_global, npart_per_it
     INTEGER, INTENT(IN) :: sof
     INTEGER, INTENT(IN) :: subtype
     INTEGER(8) :: npart_this_it, npart_remain
@@ -121,7 +121,7 @@ CONTAINS
         npart_this_it = MIN(npart_remain, npart_per_it)
       ENDDO
 
-      h%current_displacement = h%current_displacement + npart_lglobal * sof
+      h%current_displacement = h%current_displacement + npart_global * sof
     ENDDO
 
     DEALLOCATE(array)
@@ -133,11 +133,11 @@ CONTAINS
 
 
   ! Grid loading functions
-  SUBROUTINE cfd_get_nd_particle_variable_metadata_all(h, npart, range, mesh, &
-      mesh_class)
+  SUBROUTINE cfd_get_nd_particle_variable_metadata_all(h, npart_global, &
+      range, mesh, mesh_class)
 
     TYPE(cfd_file_handle) :: h
-    INTEGER(8), INTENT(OUT) :: npart
+    INTEGER(8), INTENT(OUT) :: npart_global
     REAL(num), DIMENSION(2), INTENT(OUT) :: range
     CHARACTER(LEN=h%max_string_len), INTENT(OUT) :: mesh, mesh_class
     INTEGER :: errcode
@@ -145,7 +145,7 @@ CONTAINS
     ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, npart, 1, MPI_INTEGER8, &
+    CALL MPI_FILE_READ_ALL(h%filehandle, npart_global, 1, MPI_INTEGER8, &
         MPI_STATUS_IGNORE, errcode)
 
     h%current_displacement = h%current_displacement + soi8

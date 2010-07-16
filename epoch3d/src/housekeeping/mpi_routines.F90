@@ -193,7 +193,6 @@ CONTAINS
     cell_z_max(nprocz) = (nprocz - 1) * nz_big + nz_little
 
     subtype_field = 0
-    subtype_particle = 0
 
     ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))
     ALLOCATE(x_global(-2:nx_global+3))

@@ -4,94 +4,40 @@ MODULE iterators
 
   IMPLICIT NONE
 
-  TYPE :: setting_block
-    LOGICAL :: restart
-  END TYPE setting_block
-
   SAVE
 
-  TYPE(setting_block) :: iterator_settings
+  TYPE(particle_family), POINTER :: current_family
 
 CONTAINS
 
   ! iterator for particle positions
-  SUBROUTINE iterate_particles(array, n_points, direction, start)
+  SUBROUTINE iterate_particles(array, n_points, start, direction)
 
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(8), INTENT(INOUT) :: n_points
-    INTEGER, INTENT(IN) :: direction
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN) :: direction
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
-          array(part_count) = cur%part_pos - window_shift
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%part_pos - window_shift
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
   END SUBROUTINE iterate_particles
-
-
-
-  ! iterator for particle species
-  SUBROUTINE iterate_species(array, n_points, start)
-
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    TYPE(particle), POINTER, SAVE :: cur
-    TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
-    INTEGER(8) :: part_count
-
-    IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
-    ENDIF
-
-    part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
-          array(part_count) = REAL(current_family%id, num)
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
-      ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
-    ENDDO
-    n_points = part_count
-
-  END SUBROUTINE iterate_species
 
 
 
@@ -106,31 +52,21 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
-          array(part_count) = cur%weight
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%weight
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -147,31 +83,21 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
-          array(part_count) = cur%part_p(1)
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(1)
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -186,31 +112,21 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
-          array(part_count) = cur%part_p(2)
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(2)
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -225,31 +141,21 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
-          array(part_count) = cur%part_p(3)
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(3)
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -265,39 +171,29 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc2 = (current_family%mass * c)**2
+    part_mc2 = (current_family%mass * c)**2
 #endif
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          part_mc2 = (cur%mass * c)**2
+        part_mc2 = (cur%mass * c)**2
 #endif
-          gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
-          array(part_count) = cur%part_p(1) / gamma_mass
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+        gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
+        array(part_count) = cur%part_p(1) / gamma_mass
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -312,39 +208,29 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc2 = (current_family%mass * c)**2
+    part_mc2 = (current_family%mass * c)**2
 #endif
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          part_mc2 = (cur%mass * c)**2
+        part_mc2 = (cur%mass * c)**2
 #endif
-          gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
-          array(part_count) = cur%part_p(2) / gamma_mass
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+        gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
+        array(part_count) = cur%part_p(2) / gamma_mass
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -359,39 +245,29 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc2 = (current_family%mass * c)**2
+    part_mc2 = (current_family%mass * c)**2
 #endif
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          part_mc2 = (cur%mass * c)**2
+        part_mc2 = (cur%mass * c)**2
 #endif
-          gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
-          array(part_count) = cur%part_p(3) / gamma_mass
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+        gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
+        array(part_count) = cur%part_p(3) / gamma_mass
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -407,35 +283,25 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          array(part_count) = cur%charge
+        array(part_count) = cur%charge
 #else
-          array(part_count) = current_family%charge
+        array(part_count) = current_family%charge
 #endif
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -451,35 +317,25 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          array(part_count) = cur%mass
+        array(part_count) = cur%mass
 #else
-          array(part_count) = current_family%mass
+        array(part_count) = current_family%mass
 #endif
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -496,32 +352,22 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
-          array(part_count) = REAL(cur%processor, num)
-          IF (cur%processor .GE. nproc) PRINT *, "Bad Processor"
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = REAL(cur%processor, num)
+        IF (cur%processor .GE. nproc) PRINT *, "Bad Processor"
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 
@@ -536,32 +382,22 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
 
     IF (start)  THEN
-      CALL start_particle_family(current_family, current_list, cur)
+      CALL start_particle_list(current_family, current_list, cur)
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF ((.NOT. current_family%dump) &
-          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
-
-      DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count+1
-          array(part_count) = REAL(cur%processor_at_t0, num)
-          IF (cur%processor .GE. nproc) PRINT *, "Bad Processor"
-          cur=>cur%next
-        ENDDO
-        ! If the current partlist is exhausted, switch to the next one
-        IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = REAL(cur%processor_at_t0, num)
+        IF (cur%processor .GE. nproc) PRINT *, "Bad Processor"
+        cur=>cur%next
       ENDDO
-
-      ! If the current particle_family is exhausted, then switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) &
-          CALL advance_particle_family(current_family, current_list, cur)
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
     ENDDO
     n_points = part_count
 

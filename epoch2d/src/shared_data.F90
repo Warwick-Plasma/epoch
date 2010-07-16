@@ -507,6 +507,7 @@ MODULE shared_data
 
   INTEGER, PARAMETER :: data_dir_max_length = 64
   CHARACTER(LEN=data_dir_max_length) :: data_dir
+  INTEGER, PARAMETER :: c_max_string_length = 64
 
   LOGICAL :: neutral_background = .TRUE.
   LOGICAL :: use_random_seed = .FALSE.
@@ -571,7 +572,6 @@ MODULE shared_data
   ! file handling
   !----------------------------------------------------------------------------
   INTEGER :: subtype_field, subtype_particle_var
-  INTEGER :: subtype_particle, subtype_particle_int
   INTEGER :: subarray_field
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every

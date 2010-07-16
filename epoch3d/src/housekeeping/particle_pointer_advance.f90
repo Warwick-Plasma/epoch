@@ -17,6 +17,28 @@ CONTAINS
 
     part_family=>particle_species(1)
 
+    CALL start_particle_list(part_family, partlist, part)
+
+  END SUBROUTINE start_particle_family
+
+
+
+  SUBROUTINE start_particle_family_only(part_family)
+
+    TYPE(particle_family), POINTER :: part_family
+
+    part_family=>particle_species(1)
+
+  END SUBROUTINE start_particle_family_only
+
+
+
+  SUBROUTINE start_particle_list(part_family, partlist, part)
+
+    TYPE(particle_family), POINTER :: part_family
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: part
+
     IF (ASSOCIATED(part_family)) THEN
       partlist=>part_family%attached_list
       IF (ASSOCIATED(partlist)) THEN
@@ -29,7 +51,7 @@ CONTAINS
       NULLIFY(part)
     ENDIF
 
-  END SUBROUTINE start_particle_family
+  END SUBROUTINE start_particle_list
 
 
 
@@ -56,18 +78,18 @@ CONTAINS
     TYPE(particle), POINTER :: part
 
     part_family=>part_family%next
-    IF (ASSOCIATED(part_family)) THEN
-      partlist=>part_family%attached_list
-    ELSE
-      NULLIFY(partlist)
-    ENDIF
-
-    IF (ASSOCIATED(partlist)) THEN
-      part=>partlist%head
-    ELSE
-      NULLIFY(part)
-    ENDIF
+    CALL start_particle_list(part_family, partlist, part)
 
   END SUBROUTINE advance_particle_family
+
+
+
+  SUBROUTINE advance_particle_family_only(part_family)
+
+    TYPE(particle_family), POINTER :: part_family
+
+    part_family=>part_family%next
+
+  END SUBROUTINE advance_particle_family_only
 
 END MODULE particle_pointer_advance

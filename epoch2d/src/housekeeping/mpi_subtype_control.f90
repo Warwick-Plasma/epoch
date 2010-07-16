@@ -35,36 +35,6 @@ CONTAINS
 
 
   !----------------------------------------------------------------------------
-  ! get_total_local_dumped_particle - Returns the number of particles on this
-  ! processor which should be written to disk. Parameter is whether this number
-  ! should be calculated for a normal dump or a restart dump (all species are
-  ! written at restart)
-  !----------------------------------------------------------------------------
-
-  FUNCTION get_total_local_dumped_particle(force_restart)
-
-    ! This subroutine describes the total number of particles on the current
-    ! processor which are members of species with the dump = T attribute in
-    ! the input deck. If force_restart = .TRUE. then the subroutine simply
-    ! counts all the particles
-
-    LOGICAL, INTENT(IN) :: force_restart
-    INTEGER(KIND=8) :: get_total_local_dumped_particle
-    INTEGER :: ispecies
-
-    get_total_local_dumped_particle = 0
-    DO ispecies = 1, n_species
-      IF (particle_species(ispecies)%dump .OR. force_restart) THEN
-        get_total_local_dumped_particle = get_total_local_dumped_particle &
-            + particle_species(ispecies)%attached_list%count
-      ENDIF
-    ENDDO
-
-  END FUNCTION get_total_local_dumped_particle
-
-
-
-  !----------------------------------------------------------------------------
   ! CreateSubtypes - Creates the subtypes used by the main output routines
   ! Run just before output takes place
   !----------------------------------------------------------------------------

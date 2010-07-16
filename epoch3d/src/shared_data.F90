@@ -513,6 +513,7 @@ MODULE shared_data
 
   INTEGER, PARAMETER :: data_dir_max_length = 64
   CHARACTER(LEN=data_dir_max_length) :: data_dir
+  INTEGER, PARAMETER :: c_max_string_length = 64
 
   LOGICAL :: neutral_background = .TRUE.
   LOGICAL :: use_random_seed = .FALSE.

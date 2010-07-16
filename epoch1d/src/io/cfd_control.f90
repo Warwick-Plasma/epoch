@@ -23,7 +23,7 @@ CONTAINS
 
     h%default_rank = 0
     h%filehandle = -1
-    h%max_string_len = 60
+    h%max_string_len = 64
 
     h%comm = cfd_comm_in
     h%rank = cfd_rank_in
