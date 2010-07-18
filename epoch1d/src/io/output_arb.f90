@@ -37,7 +37,7 @@ CONTAINS
         md_length, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) CALL cfd_safe_write_string(generator_desc)
 

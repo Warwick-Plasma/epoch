@@ -16,74 +16,74 @@ CONTAINS
     CHARACTER(LEN=3) :: cfd
     INTEGER(4) :: file_version, file_revision
     INTEGER(4) :: endianness
-    INTEGER :: ierr
+    INTEGER :: errcode, ierr
 
     step = -1
 
-    CALL MPI_BARRIER(cfd_comm, cfd_errcode)
+    CALL MPI_BARRIER(cfd_comm, errcode)
 
     CALL MPI_FILE_OPEN(cfd_comm, TRIM(filename), cfd_mode, MPI_INFO_NULL, &
-        cfd_filehandle, cfd_errcode)
+        cfd_filehandle, errcode)
 
     current_displacement = 0
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     ! Read the header
     CALL MPI_FILE_READ_ALL(cfd_filehandle, cfd, 3, MPI_CHARACTER, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     ! If this isn't "CFD" then this isn't a CFD file
     IF (cfd .NE. "CFD") THEN
-      CALL MPI_FILE_CLOSE(cfd_filehandle, cfd_errcode)
+      CALL MPI_FILE_CLOSE(cfd_filehandle, errcode)
       IF (rank .EQ. default_rank) &
           PRINT *, "The specified file is not a valid CFD file"
-      CALL MPI_ABORT(cfd_comm, cfd_errcode, ierr)
+      CALL MPI_ABORT(cfd_comm, errcode, ierr)
     ENDIF
 
     current_displacement = 3
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     ! Read in the basic file info. Should check version info, but this is
     ! version 1, so let's not worry about it
     CALL MPI_FILE_READ_ALL(cfd_filehandle, header_offset, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, block_header_size, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, file_version, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, file_revision, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, max_string_len, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, cfd_nblocks, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, endianness, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, cfd_jobid%start_seconds, 1, &
-        MPI_INTEGER4, cfd_status, cfd_errcode)
+        MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, cfd_jobid%start_milliseconds, 1, &
-        MPI_INTEGER4, cfd_status, cfd_errcode)
+        MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, step, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     IF (file_version .GT. cfd_version) THEN
       IF (rank .EQ. default_rank) PRINT *, "Version number incompatible"
-      CALL MPI_ABORT(cfd_comm, cfd_errcode, ierr)
+      CALL MPI_ABORT(cfd_comm, errcode, ierr)
     ENDIF
 
     IF (file_revision .GT. cfd_revision) THEN
@@ -104,7 +104,7 @@ CONTAINS
     INTEGER, INTENT(OUT) :: block_type
     CHARACTER(LEN=max_string_len) :: name_l, class_l
     INTEGER(4) :: block_type4
-    INTEGER :: len_name, len_class
+    INTEGER :: len_name, len_class, errcode
 
     len_name = LEN(name)
     len_class = LEN(name)
@@ -112,20 +112,20 @@ CONTAINS
     block_header_start = current_displacement
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, name_l, max_string_len, &
-        MPI_CHARACTER, cfd_status, cfd_errcode)
+        MPI_CHARACTER, MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, class_l, max_string_len, &
-        MPI_CHARACTER, cfd_status, cfd_errcode)
+        MPI_CHARACTER, MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + 2 * max_string_len
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, block_type4, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     block_type = block_type4
 
@@ -134,13 +134,13 @@ CONTAINS
 
     current_displacement = current_displacement +  4
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, block_md_length, 1, &
-        MPI_INTEGER8, cfd_status, cfd_errcode)
+        MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, block_length, 1, &
-        MPI_INTEGER8, cfd_status, cfd_errcode)
+        MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
 
     ! Skip past the header block
     current_displacement = block_header_start + block_header_size
@@ -159,21 +159,22 @@ CONTAINS
 
     INTEGER, INTENT(INOUT) :: meshtype, nd, sof
     INTEGER(4) :: meshtype4, nd4, sof4
+    INTEGER :: errcode
 
     CALL cfd_skip_block_header()
 
     ! Now at start of metadata
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, meshtype4, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, nd4, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, sof4, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     meshtype = meshtype4
     nd = nd4
@@ -190,15 +191,16 @@ CONTAINS
     REAL(8), INTENT(OUT) :: time
     INTEGER, INTENT(OUT) :: snap
     INTEGER(4) :: snap4
+    INTEGER :: errcode
 
     CALL cfd_skip_block_header()
 
     ! Now at start of metadata
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, snap4, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     snap = snap4
 
@@ -206,10 +208,10 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
         MPI_DOUBLE_PRECISION, MPI_DOUBLE_PRECISION, "native", &
-        MPI_INFO_NULL, cfd_errcode)
+        MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, time, 1, MPI_DOUBLE_PRECISION, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL cfd_skip_block()
 
@@ -220,14 +222,15 @@ CONTAINS
   SUBROUTINE cfd_get_real_constant(value)
 
     REAL(num), INTENT(OUT) :: value
+    INTEGER :: errcode
 
     CALL cfd_skip_block_header()
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, value, 1, mpireal, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL cfd_skip_block()
 

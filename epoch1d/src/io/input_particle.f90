@@ -17,29 +17,30 @@ CONTAINS
     INTEGER(8), INTENT(OUT) :: npart
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     INTEGER(4) :: coord_type4
+    INTEGER :: errcode
 
     ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, coord_type4, 1, MPI_INTEGER4, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     coord_type = coord_type4
 
     current_displacement = current_displacement +  soi
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, npart, 1, MPI_INTEGER8, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + soi8
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, extents, ndims * 2, mpireal, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     ! After this subroutine, all the metadata should be read in, so to make
     ! sure, just jump to known start of data
@@ -55,12 +56,13 @@ CONTAINS
     INTEGER, INTENT(IN) :: ndims
     INTEGER(8), INTENT(IN) :: npart
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
+    INTEGER :: errcode
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, data, ndims * npart, mpireal, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL cfd_skip_block
 
@@ -74,12 +76,13 @@ CONTAINS
     INTEGER(8), INTENT(IN) :: npart
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
     INTEGER, INTENT(IN) :: subtype
+    INTEGER :: errcode
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        subtype, "native", MPI_INFO_NULL, cfd_errcode)
+        subtype, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, data, ndims * npart, mpireal, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL cfd_skip_block
 
@@ -95,7 +98,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: sof
     INTEGER, INTENT(IN) :: subtype
     INTEGER(8) :: npart_this_it, npart_remain
-    INTEGER :: direction
+    INTEGER :: direction, errcode
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: data
 
@@ -110,7 +113,7 @@ CONTAINS
     END INTERFACE
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        subtype, "native", MPI_INFO_NULL, cfd_errcode)
+        subtype, "native", MPI_INFO_NULL, errcode)
 
     ALLOCATE(data(1:npart_per_it))
 
@@ -120,11 +123,11 @@ CONTAINS
       npart_this_it = MIN(npart_remain, npart_per_it)
 
       CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-          subtype, "native", MPI_INFO_NULL, cfd_errcode)
+          subtype, "native", MPI_INFO_NULL, errcode)
 
       DO WHILE (npart_this_it .GT. 0)
         CALL MPI_FILE_READ(cfd_filehandle, data, npart_this_it, mpireal, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
 
         npart_remain = npart_remain - npart_this_it
         CALL iterator(data, npart_this_it, start, direction)
@@ -137,7 +140,7 @@ CONTAINS
 
     DEALLOCATE(data)
 
-    CALL MPI_BARRIER(cfd_comm, cfd_errcode)
+    CALL MPI_BARRIER(cfd_comm, errcode)
     CALL cfd_skip_block
 
   END SUBROUTINE cfd_get_nd_particle_grid_parallel_with_iterator
@@ -151,31 +154,32 @@ CONTAINS
     INTEGER(8), INTENT(OUT) :: npart
     REAL(num), DIMENSION(2), INTENT(OUT) :: range
     CHARACTER(LEN=max_string_len), INTENT(OUT) :: mesh, mesh_class
+    INTEGER :: errcode
 
     ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, npart, 1, MPI_INTEGER8, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + soi8
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, range, 2, mpireal, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + 2 * num
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, mesh, max_string_len, &
-        MPI_CHARACTER, cfd_status, cfd_errcode)
+        MPI_CHARACTER, MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, mesh_class, max_string_len, &
-        MPI_CHARACTER, cfd_status, cfd_errcode)
+        MPI_CHARACTER, MPI_STATUS_IGNORE, errcode)
 
     ! After this subroutine, all the metadata should be read in, so to make
     ! sure, just jump to known start of data
@@ -190,12 +194,13 @@ CONTAINS
 
     INTEGER(8), INTENT(IN) :: npart
     REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    INTEGER :: errcode
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, data, npart, mpireal, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL cfd_skip_block
 
@@ -208,12 +213,13 @@ CONTAINS
     INTEGER(8), INTENT(IN) :: npart_local
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
     INTEGER, INTENT(IN) :: subtype
+    INTEGER :: errcode
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        subtype, "native", MPI_INFO_NULL, cfd_errcode)
+        subtype, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, data, npart_local, mpireal, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     CALL cfd_skip_block
 
@@ -227,6 +233,7 @@ CONTAINS
     INTEGER(8), INTENT(IN) :: npart_local, npart_per_it
     INTEGER, INTENT(IN) :: subtype
     INTEGER(8) :: npart_this_it, npart_remain
+    INTEGER :: errcode
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: data
 
@@ -240,7 +247,7 @@ CONTAINS
     END INTERFACE
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        subtype, "native", MPI_INFO_NULL, cfd_errcode)
+        subtype, "native", MPI_INFO_NULL, errcode)
 
     start = .TRUE.
     ALLOCATE(data(1:npart_per_it))
@@ -250,14 +257,14 @@ CONTAINS
     DO WHILE (npart_this_it .GT. 0)
       npart_this_it = MIN(npart_remain, npart_per_it)
       CALL MPI_FILE_READ(cfd_filehandle, data, npart_this_it, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
 
       npart_remain = npart_remain - npart_this_it
       CALL iterator(data, npart_this_it, start)
       start = .FALSE.
     ENDDO
 
-    CALL MPI_BARRIER(cfd_comm, cfd_errcode)
+    CALL MPI_BARRIER(cfd_comm, errcode)
     DEALLOCATE(data)
     CALL cfd_skip_block
 

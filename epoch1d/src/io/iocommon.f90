@@ -63,7 +63,7 @@ MODULE iocommon
 
   INTEGER(4) :: block_header_size, header_offset
 
-  INTEGER :: cfd_errcode, cfd_status(MPI_STATUS_SIZE), cfd_mode
+  INTEGER :: cfd_mode
   LOGICAL :: cfd_writing
 
   ! Current block info

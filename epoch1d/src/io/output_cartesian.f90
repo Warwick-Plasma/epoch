@@ -21,7 +21,7 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 1
     INTEGER(4), DIMENSION(ndims) :: dims4
     INTEGER(8) :: block_length, md_length
-    INTEGER :: i, len_var
+    INTEGER :: i, len_var, errcode
 
     dims4(1) = INT(SIZE(x),4)
 
@@ -49,29 +49,29 @@ CONTAINS
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
     current_displacement = current_displacement + ndims * soi
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, x(1), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, x(dims4(1)), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
 
       ! Now write the real arrays
       CALL MPI_FILE_WRITE(cfd_filehandle, x, dims4(1), mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (2 * ndims + len_var) * sof
@@ -94,7 +94,7 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 2
     INTEGER(4), DIMENSION(ndims) :: dims4
     INTEGER(8) :: block_length, md_length
-    INTEGER :: i, len_var
+    INTEGER :: i, len_var, errcode
 
     dims4(1) = INT(SIZE(x),4)
     dims4(2) = INT(SIZE(y),4)
@@ -126,36 +126,36 @@ CONTAINS
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
     current_displacement = current_displacement + ndims * soi
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, x(1), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, x(dims4(1)), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
 
       CALL MPI_FILE_WRITE(cfd_filehandle, y(1), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, y(dims4(2)), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
 
       ! Now write the real arrays
       CALL MPI_FILE_WRITE(cfd_filehandle, x, dims4(1), mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, y, dims4(2), mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (2 * ndims + len_var) * sof
@@ -178,7 +178,7 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 3
     INTEGER(4), DIMENSION(ndims) :: dims4
     INTEGER(8) :: block_length, md_length
-    INTEGER :: i, len_var
+    INTEGER :: i, len_var, errcode
 
     dims4(1) = INT(SIZE(x),4)
     dims4(2) = INT(SIZE(y),4)
@@ -214,43 +214,43 @@ CONTAINS
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
     current_displacement = current_displacement + ndims * soi
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, x(1), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, x(dims4(1)), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
 
       CALL MPI_FILE_WRITE(cfd_filehandle, y(1), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, y(dims4(2)), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
 
       CALL MPI_FILE_WRITE(cfd_filehandle, z(1), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, z(dims4(3)), 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
 
       ! Now write the real arrays
       CALL MPI_FILE_WRITE(cfd_filehandle, x, dims4(1), mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, y, dims4(2), mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, z, dims4(3), mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (2 * ndims + len_var) * sof
@@ -279,7 +279,7 @@ CONTAINS
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER, PARAMETER :: ndims = 1
     INTEGER(4), DIMENSION(ndims) :: dims4
-    INTEGER :: i
+    INTEGER :: i, errcode
 
     len_var = 1
     DO i = 1,ndims
@@ -310,12 +310,12 @@ CONTAINS
         default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
@@ -325,28 +325,28 @@ CONTAINS
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
     CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        cfd_errcode)
+        errcode)
     CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        cfd_errcode)
+        errcode)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       ! Write out grid stagger
       CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL cfd_safe_write_string(mesh_name)
@@ -357,9 +357,9 @@ CONTAINS
 
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
-        distribution, "native", MPI_INFO_NULL, cfd_errcode)
+        distribution, "native", MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + len_var * sof
 
@@ -387,7 +387,7 @@ CONTAINS
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER, PARAMETER :: ndims = 2
     INTEGER(4), DIMENSION(ndims) :: dims4
-    INTEGER :: i
+    INTEGER :: i, errcode
 
     len_var = 1
     DO i = 1,ndims
@@ -420,12 +420,12 @@ CONTAINS
         default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
@@ -435,28 +435,28 @@ CONTAINS
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
     CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        cfd_errcode)
+        errcode)
     CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        cfd_errcode)
+        errcode)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       ! Write out grid stagger
       CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL cfd_safe_write_string(mesh_name)
@@ -467,9 +467,9 @@ CONTAINS
 
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
-        distribution, "native", MPI_INFO_NULL, cfd_errcode)
+        distribution, "native", MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + len_var * sof
 
@@ -497,7 +497,7 @@ CONTAINS
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER, PARAMETER :: ndims = 3
     INTEGER(4), DIMENSION(ndims) :: dims4
-    INTEGER :: i
+    INTEGER :: i, errcode
 
     len_var = 1
     DO i = 1,ndims
@@ -532,12 +532,12 @@ CONTAINS
         default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
@@ -547,28 +547,28 @@ CONTAINS
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
     CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        cfd_errcode)
+        errcode)
     CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        cfd_errcode)
+        errcode)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       ! Write out grid stagger
       CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL cfd_safe_write_string(mesh_name)
@@ -579,9 +579,9 @@ CONTAINS
 
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, subarray, &
-        distribution, "native", MPI_INFO_NULL, cfd_errcode)
+        distribution, "native", MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, variable, 1, subarray, &
-        cfd_status, cfd_errcode)
+        MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + len_var * sof
 
@@ -607,7 +607,7 @@ CONTAINS
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER, PARAMETER :: ndims = 1
     INTEGER(4), DIMENSION(ndims) :: dims4
-    INTEGER :: i
+    INTEGER :: i, errcode
 
     dims4 = SHAPE(variable)
     len_var = 1
@@ -638,12 +638,12 @@ CONTAINS
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
@@ -653,28 +653,28 @@ CONTAINS
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
     CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        cfd_errcode)
+        errcode)
     CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        cfd_errcode)
+        errcode)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       ! Write out grid stagger
       CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
@@ -685,11 +685,11 @@ CONTAINS
 
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + len_var * sof
@@ -716,7 +716,7 @@ CONTAINS
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER, PARAMETER :: ndims = 2
     INTEGER(4), DIMENSION(ndims) :: dims4
-    INTEGER :: i
+    INTEGER :: i, errcode
 
     dims4 = SHAPE(variable)
     len_var = 1
@@ -749,12 +749,12 @@ CONTAINS
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
@@ -764,28 +764,28 @@ CONTAINS
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
     CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        cfd_errcode)
+        errcode)
     CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        cfd_errcode)
+        errcode)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       ! Write out grid stagger
       CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
@@ -796,11 +796,11 @@ CONTAINS
 
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + len_var * sof
@@ -827,7 +827,7 @@ CONTAINS
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER, PARAMETER :: ndims = 3
     INTEGER(4), DIMENSION(ndims) :: dims4
-    INTEGER :: i
+    INTEGER :: i, errcode
 
     dims4 = SHAPE(variable)
     len_var = 1
@@ -862,12 +862,12 @@ CONTAINS
         rank_write)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, MPI_INTEGER4, &
-        MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       DO i = 1,ndims
         CALL MPI_FILE_WRITE(cfd_filehandle, dims4(i), 1, MPI_INTEGER4, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDDO
     ENDIF
 
@@ -877,28 +877,28 @@ CONTAINS
     mn = MINVAL(variable)
     mx = MAXVAL(variable)
     CALL MPI_ALLREDUCE(mn, mn_global, 1, mpireal, MPI_MIN, cfd_comm, &
-        cfd_errcode)
+        errcode)
     CALL MPI_ALLREDUCE(mx, mx_global, 1, mpireal, MPI_MAX, cfd_comm, &
-        cfd_errcode)
+        errcode)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       ! Write out grid stagger
       CALL MPI_FILE_WRITE(cfd_filehandle, stagger, ndims, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mn_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mx_global, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + (ndims + 2) * sof
 
     ! Write the mesh name and class
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL cfd_safe_write_string(mesh_name)
@@ -909,11 +909,11 @@ CONTAINS
 
     ! Write the actual data
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. rank_write) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, variable, len_var, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + len_var * sof

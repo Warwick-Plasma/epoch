@@ -37,7 +37,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(fh, offset, subarray, subtype, "native", &
         MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(fh, array, 1, subarray, status, errcode)
+    CALL MPI_FILE_READ_ALL(fh, array, 1, subarray, MPI_STATUS_IGNORE, errcode)
 
     CALL MPI_FILE_CLOSE(fh, errcode)
     CALL MPI_TYPE_FREE(subtype, errcode)

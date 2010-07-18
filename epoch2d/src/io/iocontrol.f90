@@ -16,7 +16,7 @@ CONTAINS
     REAL(num), OPTIONAL, INTENT(INOUT) :: time
     TYPE(jobid_type), OPTIONAL, INTENT(IN) :: jobid
     REAL(num) :: dummy = 1.0_num
-    INTEGER :: sof4, ostep = 0
+    INTEGER :: errcode, sof4, ostep = 0
     DOUBLE PRECISION :: otime = 0
 
     cfd_comm = cfd_comm_in
@@ -64,6 +64,8 @@ CONTAINS
 
   SUBROUTINE cfd_close
 
+    INTEGER :: errcode
+
     ! No open file
     IF (cfd_filehandle .EQ. -1) RETURN
 
@@ -72,16 +74,16 @@ CONTAINS
       ! Go to place where the empty value for nblocks is
       current_displacement = nblocks_offset_this_version
       CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-          MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+          MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
       IF (cfd_rank .EQ. default_rank) &
           CALL MPI_FILE_WRITE(cfd_filehandle, cfd_nblocks, 1, MPI_INTEGER4, &
-              cfd_status, cfd_errcode)
+              MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    CALL MPI_BARRIER(comm, cfd_errcode)
+    CALL MPI_BARRIER(comm, errcode)
 
-    CALL MPI_FILE_CLOSE(cfd_filehandle, cfd_errcode)
+    CALL MPI_FILE_CLOSE(cfd_filehandle, errcode)
 
     ! Set cfd_filehandle to -1 to show that the file is closed
     cfd_filehandle = -1

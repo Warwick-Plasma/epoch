@@ -25,10 +25,10 @@ CONTAINS
 
     CALL cfd_skip_block_header
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(cfd_filehandle, gen_name, max_string_len, &
-        MPI_CHARACTER, cfd_status, cfd_errcode)
+        MPI_CHARACTER, MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + max_string_len
     CALL cfd_skip_block_metadata

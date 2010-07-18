@@ -22,6 +22,7 @@ CONTAINS
     INTEGER(8) :: npart_local, block_length, md_length
     INTEGER(4) :: ndims, idim
     INTEGER :: sizes(2)
+    INTEGER :: errcode
     REAL(num) :: mn, mx
 
     IF (npart_global .LE. 0) RETURN
@@ -55,39 +56,39 @@ CONTAINS
         sof, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, particle_coord_type, 1, &
-          MPI_INTEGER4, cfd_status, cfd_errcode)
+          MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + soi
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, npart_global, 1, &
-          MPI_INTEGER8, cfd_status, cfd_errcode)
+          MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + soi8
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     DO idim = 1, ndims
       CALL MPI_ALLREDUCE(MINVAL(particles(:,idim)), mn, 1, mpireal, MPI_MIN, &
-          cfd_comm, cfd_errcode)
+          cfd_comm, errcode)
       CALL MPI_ALLREDUCE(MAXVAL(particles(:,idim)), mx, 1, mpireal, MPI_MAX, &
-          cfd_comm, cfd_errcode)
+          cfd_comm, errcode)
 
       IF (cfd_rank .EQ. default_rank) THEN
         CALL MPI_FILE_WRITE(cfd_filehandle, mn, 1, mpireal, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
         CALL MPI_FILE_WRITE(cfd_filehandle, mx, 1, mpireal, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDIF
 
       current_displacement = current_displacement + 2 * sof
@@ -96,10 +97,10 @@ CONTAINS
     ! Write the real data
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        particle_type, "native", MPI_INFO_NULL, cfd_errcode)
+        particle_type, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, particles, npart_local * ndims, &
-        mpireal, cfd_status, cfd_errcode)
+        mpireal, MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + npart_global * ndims * sof
 
@@ -137,7 +138,7 @@ CONTAINS
     INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
     INTEGER(8) :: block_length, md_length, npart_this_cycle
     INTEGER(8) :: file_offset, nmax, nsec_left, nwrite_left, nelements, off
-    INTEGER :: idim, osec, sec
+    INTEGER :: idim, sec, osec, errcode
     LOGICAL :: start
     REAL(num) :: mn, mx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: gmn, gmx
@@ -170,21 +171,21 @@ CONTAINS
         sof, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER4, MPI_INTEGER4, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, particle_coord_type, 1, &
-          MPI_INTEGER4, cfd_status, cfd_errcode)
+          MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + soi
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, npart_global, 1, &
-          MPI_INTEGER8, cfd_status, cfd_errcode)
+          MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + soi8
@@ -199,13 +200,13 @@ CONTAINS
     offset_for_min_max = current_displacement
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, gmn, ndims, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, gmx, ndims, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + 2 * ndims * sof
@@ -225,7 +226,7 @@ CONTAINS
       DO
         CALL iterator(data, npart_this_cycle, idim, start)
         CALL MPI_ALLREDUCE(npart_this_cycle, nmax, 1, MPI_INTEGER8, MPI_MAX, &
-            cfd_comm, cfd_errcode)
+            cfd_comm, errcode)
         IF (nmax .LE. 0) EXIT
 
         off = 1
@@ -251,13 +252,13 @@ CONTAINS
           ENDIF
 
           CALL MPI_FILE_SET_VIEW(cfd_filehandle, file_offset, mpireal, &
-              mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+              mpireal, "native", MPI_INFO_NULL, errcode)
           CALL MPI_FILE_WRITE_ALL(cfd_filehandle, data(off), nelements, &
-              mpireal, cfd_status, cfd_errcode)
+              mpireal, MPI_STATUS_IGNORE, errcode)
 
           nwrite_left = nwrite_left - nelements
           CALL MPI_ALLREDUCE(nwrite_left, nmax, 1, MPI_INTEGER8, MPI_MAX, &
-              cfd_comm, cfd_errcode)
+              cfd_comm, errcode)
           IF (nmax .LE. 0) EXIT
 
           IF (sec .NE. osec) THEN
@@ -276,19 +277,19 @@ CONTAINS
     DEALLOCATE(data)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, offset_for_min_max, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     DO idim = 1, ndims
       CALL MPI_ALLREDUCE(gmn(idim), mn, 1, mpireal, MPI_MIN, &
-          cfd_comm, cfd_errcode)
+          cfd_comm, errcode)
       CALL MPI_ALLREDUCE(gmx(idim), mx, 1, mpireal, MPI_MAX, &
-          cfd_comm, cfd_errcode)
+          cfd_comm, errcode)
 
       IF (cfd_rank .EQ. default_rank) THEN
         CALL MPI_FILE_WRITE(cfd_filehandle, mn, 1, mpireal, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
         CALL MPI_FILE_WRITE(cfd_filehandle, mx, 1, mpireal, &
-            cfd_status, cfd_errcode)
+            MPI_STATUS_IGNORE, errcode)
       ENDIF
     ENDDO
 
@@ -311,6 +312,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
     INTEGER, INTENT(IN) :: particle_type
     INTEGER(8) :: npart_local, block_length, md_length
+    INTEGER :: errcode
     REAL(num) :: mn, mx
 
     IF (npart_global .LE. 0) RETURN
@@ -338,34 +340,34 @@ CONTAINS
         sof, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, npart_global, 1, &
-          MPI_INTEGER8, cfd_status, cfd_errcode)
+          MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + soi8
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_ALLREDUCE(MINVAL(particles), mn, 1, mpireal, MPI_MIN, &
-        cfd_comm, cfd_errcode)
+        cfd_comm, errcode)
     CALL MPI_ALLREDUCE(MAXVAL(particles), mx, 1, mpireal, MPI_MAX, &
-        cfd_comm, cfd_errcode)
+        cfd_comm, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, mn, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mx, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + 2 * sof
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL cfd_safe_write_string(mesh_name)
@@ -377,10 +379,10 @@ CONTAINS
     ! Write the real data
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        particle_type, "native", MPI_INFO_NULL, cfd_errcode)
+        particle_type, "native", MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_WRITE_ALL(cfd_filehandle, particles, npart_local, &
-        mpireal, cfd_status, cfd_errcode)
+        mpireal, MPI_STATUS_IGNORE, errcode)
 
     current_displacement = current_displacement + npart_global * sof
 
@@ -415,7 +417,7 @@ CONTAINS
     INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
     INTEGER(8) :: block_length, md_length, npart_this_cycle
     INTEGER(8) :: file_offset, nmax, nsec_left, nwrite_left, nelements, off
-    INTEGER :: sec, osec
+    INTEGER :: sec, osec, errcode
     LOGICAL :: start
     REAL(num) :: mn, mx, gmn, gmx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: data
@@ -443,11 +445,11 @@ CONTAINS
         sof, default_rank)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_INTEGER8, MPI_INTEGER8, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, npart_global, 1, &
-          MPI_INTEGER8, cfd_status, cfd_errcode)
+          MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + soi8
@@ -458,19 +460,19 @@ CONTAINS
     offset_for_min_max = current_displacement
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, 0.0_num, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, 0.0_num, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     current_displacement = current_displacement + 2 * sof
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, &
-        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, cfd_errcode)
+        MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL cfd_safe_write_string(mesh_name)
@@ -493,7 +495,7 @@ CONTAINS
     DO
       CALL iterator(data, npart_this_cycle, start)
       CALL MPI_ALLREDUCE(npart_this_cycle, nmax, 1, MPI_INTEGER8, MPI_MAX, &
-          cfd_comm, cfd_errcode)
+          cfd_comm, errcode)
       IF (nmax .LE. 0) EXIT
 
       off = 1
@@ -519,13 +521,13 @@ CONTAINS
         ENDIF
 
         CALL MPI_FILE_SET_VIEW(cfd_filehandle, file_offset, mpireal, &
-            mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+            mpireal, "native", MPI_INFO_NULL, errcode)
         CALL MPI_FILE_WRITE_ALL(cfd_filehandle, data(off), nelements, &
-            mpireal, cfd_status, cfd_errcode)
+            mpireal, MPI_STATUS_IGNORE, errcode)
 
         nwrite_left = nwrite_left - nelements
         CALL MPI_ALLREDUCE(nwrite_left, nmax, 1, MPI_INTEGER8, MPI_MAX, &
-            cfd_comm, cfd_errcode)
+            cfd_comm, errcode)
         IF (nmax .LE. 0) EXIT
 
         IF (sec .NE. osec) THEN
@@ -543,16 +545,16 @@ CONTAINS
     DEALLOCATE(data)
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, offset_for_min_max, mpireal, &
-        mpireal, "native", MPI_INFO_NULL, cfd_errcode)
+        mpireal, "native", MPI_INFO_NULL, errcode)
 
-    CALL MPI_ALLREDUCE(gmn, mn, 1, mpireal, MPI_MIN, cfd_comm, cfd_errcode)
-    CALL MPI_ALLREDUCE(gmx, mx, 1, mpireal, MPI_MAX, cfd_comm, cfd_errcode)
+    CALL MPI_ALLREDUCE(gmn, mn, 1, mpireal, MPI_MIN, cfd_comm, errcode)
+    CALL MPI_ALLREDUCE(gmx, mx, 1, mpireal, MPI_MAX, cfd_comm, errcode)
 
     IF (cfd_rank .EQ. default_rank) THEN
       CALL MPI_FILE_WRITE(cfd_filehandle, mn, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
       CALL MPI_FILE_WRITE(cfd_filehandle, mx, 1, mpireal, &
-          cfd_status, cfd_errcode)
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
   END SUBROUTINE cfd_write_nd_particle_variable_with_iterator_all
