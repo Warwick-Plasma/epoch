@@ -11,11 +11,11 @@ CONTAINS
       jobid)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
-    INTEGER, INTENT(IN) :: cfd_comm_in, cfd_rank_in, mode
+    INTEGER, INTENT(IN) :: cfd_rank_in, cfd_comm_in, mode
     INTEGER, OPTIONAL, INTENT(INOUT) :: step
     REAL(num), OPTIONAL, INTENT(INOUT) :: time
-    REAL(num) :: dummy = 1.0_num
     TYPE(jobid_type), OPTIONAL, INTENT(IN) :: jobid
+    REAL(num) :: dummy = 1.0_num
     INTEGER :: sof4, ostep = 0
     DOUBLE PRECISION :: otime = 0
 

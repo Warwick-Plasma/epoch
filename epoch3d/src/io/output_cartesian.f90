@@ -15,8 +15,8 @@ CONTAINS
 
   SUBROUTINE cfd_write_1d_cartesian_grid(name, class, x, rank_write)
 
-    REAL(num), DIMENSION(:), INTENT(IN) :: x
     CHARACTER(LEN=*), INTENT(IN) :: name, class
+    REAL(num), DIMENSION(:), INTENT(IN) :: x
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(4) :: nx
     INTEGER(8) :: block_length, md_length
@@ -81,8 +81,8 @@ CONTAINS
 
   SUBROUTINE cfd_write_2d_cartesian_grid(name, class, x, y, rank_write)
 
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y
     CHARACTER(LEN=*), INTENT(IN) :: name, class
+    REAL(num), DIMENSION(:), INTENT(IN) :: x, y
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(4) :: nx, ny
     INTEGER(8) :: block_length, md_length
@@ -160,8 +160,8 @@ CONTAINS
 
   SUBROUTINE cfd_write_3d_cartesian_grid(name, class, x, y, z, rank_write)
 
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y, z
     CHARACTER(LEN=*), INTENT(IN) :: name, class
+    REAL(num), DIMENSION(:), INTENT(IN) :: x, y, z
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(4) :: nx, ny, nz
     INTEGER(8) :: block_length, md_length
@@ -254,11 +254,12 @@ CONTAINS
   SUBROUTINE cfd_write_1d_cartesian_variable_parallel(name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
-    CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
-    REAL(num), DIMENSION(:), INTENT(IN) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER, INTENT(IN) :: dims
     REAL(num), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
+    REAL(num), DIMENSION(:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER(4) :: nx
@@ -354,11 +355,12 @@ CONTAINS
   SUBROUTINE cfd_write_2d_cartesian_variable_parallel(name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
-    CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
-    REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER, INTENT(IN), DIMENSION(2) :: dims
     REAL(num), INTENT(IN), DIMENSION(2) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
+    REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER(4) :: nx, ny
@@ -459,11 +461,12 @@ CONTAINS
   SUBROUTINE cfd_write_3d_cartesian_variable_parallel(name, class, dims, &
       stagger, mesh_name, mesh_class, variable, distribution, subarray)
 
-    CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
-    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
     INTEGER, INTENT(IN), DIMENSION(3) :: dims
     REAL(num), INTENT(IN), DIMENSION(3) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
+    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
     REAL(num) :: mn, mx, mn_global, mx_global
     INTEGER(8) :: block_length, md_length, len_var
     INTEGER(4) :: nx, ny, nz
@@ -568,10 +571,11 @@ CONTAINS
   SUBROUTINE cfd_write_1d_cartesian_variable(name, class, stagger, mesh_name, &
       mesh_class, variable, rank_write)
 
-    CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
+    REAL(num), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
     REAL(num), DIMENSION(:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
-    REAL(num), INTENT(IN) :: stagger
     INTEGER(4) :: nx
     INTEGER, DIMENSION(1) :: dims
     REAL(num) :: mn, mx, mn_global, mx_global
@@ -671,10 +675,11 @@ CONTAINS
   SUBROUTINE cfd_write_2d_cartesian_variable(name, class, stagger, mesh_name, &
       mesh_class, variable, rank_write)
 
-    CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
+    REAL(num), INTENT(IN), DIMENSION(2) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
     REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
-    REAL(num), INTENT(IN), DIMENSION(2) :: stagger
     INTEGER(4) :: nx, ny
     INTEGER, DIMENSION(2) :: dims
     REAL(num) :: mn, mx, mn_global, mx_global
@@ -779,10 +784,11 @@ CONTAINS
   SUBROUTINE cfd_write_3d_cartesian_variable(name, class, stagger, mesh_name, &
       mesh_class, variable, rank_write)
 
-    CHARACTER(LEN=*), INTENT(IN) :: name, class, mesh_name, mesh_class
+    CHARACTER(LEN=*), INTENT(IN) :: name, class
+    REAL(num), INTENT(IN), DIMENSION(3) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
     REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: rank_write
-    REAL(num), INTENT(IN), DIMENSION(3) :: stagger
     INTEGER(4) :: nx, ny, nz
     INTEGER, DIMENSION(3) :: dims
     REAL(num) :: mn, mx, mn_global, mx_global

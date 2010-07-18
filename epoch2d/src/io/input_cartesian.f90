@@ -12,10 +12,10 @@ CONTAINS
 
   SUBROUTINE cfd_get_nd_cartesian_grid_metadata_all(ndims, dims, extents)
 
-    INTEGER, DIMENSION(:), INTENT(OUT) :: dims
-    INTEGER(4), DIMENSION(:), ALLOCATABLE :: dims4
-    REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     INTEGER, INTENT(IN) :: ndims
+    INTEGER, DIMENSION(:), INTENT(OUT) :: dims
+    REAL(num), DIMENSION(:), INTENT(OUT) :: extents
+    INTEGER(4), DIMENSION(:), ALLOCATABLE :: dims4
 
     ! This subroutine MUST be called after the call to
     ! get_common_mesh_metadata_all or it will break everything
@@ -132,13 +132,13 @@ CONTAINS
   SUBROUTINE cfd_get_nd_cartesian_variable_metadata_all(ndims, dims, &
       extents, stagger, mesh_name, mesh_class)
 
+    INTEGER, INTENT(IN) :: ndims
     INTEGER, DIMENSION(:), INTENT(OUT) :: dims
-    INTEGER(4), DIMENSION(:), ALLOCATABLE :: dims4
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
     REAL(num), DIMENSION(:), INTENT(OUT) :: stagger
-    INTEGER, INTENT(IN) :: ndims
     CHARACTER(LEN=*), INTENT(INOUT) :: mesh_name, mesh_class
     CHARACTER(LEN=max_string_len) :: mesh_name_file, mesh_class_file
+    INTEGER(4), DIMENSION(:), ALLOCATABLE :: dims4
     INTEGER :: len_name, len_class
 
     len_name = LEN(mesh_name)

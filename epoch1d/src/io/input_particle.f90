@@ -12,10 +12,10 @@ CONTAINS
   SUBROUTINE cfd_get_nd_particle_grid_metadata_all(ndims, coord_type, npart, &
       extents)
 
+    INTEGER, INTENT(IN) :: ndims
     INTEGER, INTENT(OUT) :: coord_type
     INTEGER(8), INTENT(OUT) :: npart
     REAL(num), DIMENSION(:), INTENT(OUT) :: extents
-    INTEGER, INTENT(IN) :: ndims
     INTEGER(4) :: coord_type4
 
     ! This subroutine MUST be called after the call to
@@ -71,9 +71,9 @@ CONTAINS
   SUBROUTINE cfd_get_nd_particle_grid_parallel(ndims, npart, data, subtype)
 
     INTEGER, INTENT(IN) :: ndims
-    INTEGER, INTENT(IN) :: subtype
     INTEGER(8), INTENT(IN) :: npart
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
+    INTEGER, INTENT(IN) :: subtype
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
@@ -90,10 +90,10 @@ CONTAINS
   SUBROUTINE cfd_get_nd_particle_grid_parallel_with_iterator(ndims, &
       npart_local, npart_lglobal, npart_per_it, sof, subtype, iterator)
 
-    INTEGER, INTENT(IN) :: subtype
     INTEGER, INTENT(IN) :: ndims
+    INTEGER(8), INTENT(IN) :: npart_local, npart_lglobal, npart_per_it
     INTEGER, INTENT(IN) :: sof
-    INTEGER(8), INTENT(IN) :: npart_local, npart_per_it, npart_lglobal
+    INTEGER, INTENT(IN) :: subtype
     INTEGER(8) :: npart_this_it, npart_remain
     INTEGER :: direction
     LOGICAL :: start
@@ -205,9 +205,9 @@ CONTAINS
 
   SUBROUTINE cfd_get_nd_particle_variable_parallel(npart_local, data, subtype)
 
-    INTEGER, INTENT(IN) :: subtype
     INTEGER(8), INTENT(IN) :: npart_local
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
+    INTEGER, INTENT(IN) :: subtype
 
     CALL MPI_FILE_SET_VIEW(cfd_filehandle, current_displacement, mpireal, &
         subtype, "native", MPI_INFO_NULL, cfd_errcode)
@@ -224,8 +224,8 @@ CONTAINS
   SUBROUTINE cfd_get_nd_particle_variable_parallel_with_iterator(npart_local, &
       npart_per_it, subtype, iterator)
 
-    INTEGER, INTENT(IN) :: subtype
     INTEGER(8), INTENT(IN) :: npart_local, npart_per_it
+    INTEGER, INTENT(IN) :: subtype
     INTEGER(8) :: npart_this_it, npart_remain
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: data

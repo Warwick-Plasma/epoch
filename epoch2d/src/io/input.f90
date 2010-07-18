@@ -101,8 +101,8 @@ CONTAINS
   SUBROUTINE cfd_get_next_block_info_all(name, class, block_type)
 
     CHARACTER(LEN=*), INTENT(INOUT) :: name, class
-    CHARACTER(LEN=max_string_len) :: name_l, class_l
     INTEGER, INTENT(OUT) :: block_type
+    CHARACTER(LEN=max_string_len) :: name_l, class_l
     INTEGER(4) :: block_type4
     INTEGER :: len_name, len_class
 

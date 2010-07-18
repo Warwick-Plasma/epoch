@@ -189,9 +189,9 @@ CONTAINS
 
   SUBROUTINE cfd_write_snapshot_data(time, step, rank_write)
 
+    REAL(8), INTENT(IN) :: time
     INTEGER, INTENT(IN) :: step, rank_write
     INTEGER(8) :: md_length
-    REAL(8), INTENT(IN) :: time
     INTEGER(4) :: step4
 
     md_length = soi + sof
@@ -226,8 +226,9 @@ CONTAINS
 
   SUBROUTINE cfd_write_job_info(restart_flag, sha1sum, rank_write)
 
-    INTEGER, INTENT(IN) :: restart_flag, rank_write
+    INTEGER, INTENT(IN) :: restart_flag
     CHARACTER(LEN=*), INTENT(IN) :: sha1sum
+    INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: md_length
     INTEGER(4) :: io_date, restart_flag4
 
@@ -290,9 +291,9 @@ CONTAINS
   SUBROUTINE cfd_write_stitched_vector(vector_name, vector_class, mesh_name, &
       mesh_class, name, class, rank_write)
 
+    CHARACTER(LEN=*), INTENT(IN) :: vector_name, vector_class
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: name, class
-    CHARACTER(LEN=*), INTENT(IN) :: vector_name, vector_class, mesh_name
-    CHARACTER(LEN=*), INTENT(IN) :: mesh_class
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: md_length, block_length
     INTEGER(4) :: ndims
@@ -344,9 +345,9 @@ CONTAINS
   SUBROUTINE cfd_write_stitched_magnitude(magn_name, magn_class, mesh_name, &
       mesh_class, name, class, rank_write)
 
+    CHARACTER(LEN=*), INTENT(IN) :: magn_name, magn_class
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_name, mesh_class
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: name, class
-    CHARACTER(LEN=*), INTENT(IN) :: magn_name, magn_class, mesh_name
-    CHARACTER(LEN=*), INTENT(IN) :: mesh_class
     INTEGER, INTENT(IN) :: rank_write
     INTEGER(8) :: md_length, block_length
     INTEGER(4) :: ndims
