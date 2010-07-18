@@ -31,21 +31,19 @@ CONTAINS
     ndims = INT(sizes(1),4)
 
     ! Metadata is
-    ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
-    ! * ) nd     INTEGER(4)
-    ! * ) sof    INTEGER(4)
+    ! - meshtype (INTEGER(4)) All mesh blocks contain this
+    ! - nd     INTEGER(4)
+    ! - sof    INTEGER(4)
     ! Specific to particle mesh
-    ! 1 ) ct     INTEGER(4)
-    ! 2 ) npart  INTEGER(8)
-    ! 3 ) d1min  REAL(num)
-    ! 4 ) d1max  REAL(num)
-    ! 5 ) d2min  REAL(num)
-    ! 6 ) d2max  REAL(num)
+    ! - ct     INTEGER(4)
+    ! - npart  INTEGER(8)
+    ! - d1min  REAL(num)
+    ! - d1max  REAL(num)
+    ! - d2min  REAL(num)
+    ! - d2max  REAL(num)
     ! .
     ! .
     ! .
-    ! n ) dnmin  REAL(num)
-    ! n+1) dnmax REAL(num)
 
     md_length = meshtype_header_offset + soi + soi8 + 2 * ndims * sof
     block_length = md_length + npart_global * ndims * sof
@@ -148,21 +146,19 @@ CONTAINS
     IF (npart_global .LE. 0) RETURN
 
     ! Metadata is
-    ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
-    ! * ) nd     INTEGER(4)
-    ! * ) sof    INTEGER(4)
+    ! - meshtype (INTEGER(4)) All mesh blocks contain this
+    ! - nd     INTEGER(4)
+    ! - sof    INTEGER(4)
     ! Specific to particle mesh
-    ! 1 ) ct     INTEGER(4)
-    ! 2 ) npart  INTEGER(8)
-    ! 3 ) d1min  REAL(num)
-    ! 4 ) d1max  REAL(num)
-    ! 5 ) d2min  REAL(num)
-    ! 6 ) d2max  REAL(num)
+    ! - ct     INTEGER(4)
+    ! - npart  INTEGER(8)
+    ! - d1min  REAL(num)
+    ! - d1max  REAL(num)
+    ! - d2min  REAL(num)
+    ! - d2max  REAL(num)
     ! .
     ! .
     ! .
-    ! n ) dnmin  REAL(num)
-    ! n+1) dnmax REAL(num)
 
     md_length = meshtype_header_offset + soi + soi8 + 2 * ndims * sof
     block_length = md_length + npart_global * ndims * sof
@@ -322,15 +318,15 @@ CONTAINS
     npart_local = SIZE(particles)
 
     ! Metadata is
-    ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
-    ! * ) nd     INTEGER(4)
-    ! * ) sof    INTEGER(4)
+    ! - meshtype (INTEGER(4)) All mesh blocks contain this
+    ! - nd     INTEGER(4)
+    ! - sof    INTEGER(4)
     ! Specific to particle variable
-    ! 1 ) npart  INTEGER(8)
-    ! 2 ) vmin   REAL(num)
-    ! 3 ) vmax   REAL(num)
-    ! 4 ) mesh   CHARACTER
-    ! 5 ) mclass CHARACTER
+    ! - npart  INTEGER(8)
+    ! - vmin   REAL(num)
+    ! - vmax   REAL(num)
+    ! - mesh   CHARACTER
+    ! - mclass CHARACTER
 
     md_length = meshtype_header_offset + soi8 + 2 * sof + 2 * max_string_len
     block_length = md_length + npart_global * sof
@@ -427,15 +423,15 @@ CONTAINS
     IF (npart_global .LE. 0) RETURN
 
     ! Metadata is
-    ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
-    ! * ) nd     INTEGER(4)
-    ! * ) sof    INTEGER(4)
+    ! - meshtype (INTEGER(4)) All mesh blocks contain this
+    ! - nd     INTEGER(4)
+    ! - sof    INTEGER(4)
     ! Specific to particle variable
-    ! 1 ) npart  INTEGER(8)
-    ! 2 ) vmin   REAL(num)
-    ! 3 ) vmax   REAL(num)
-    ! 4 ) mesh   CHARACTER
-    ! 5 ) mclass CHARACTER
+    ! - npart  INTEGER(8)
+    ! - vmin   REAL(num)
+    ! - vmax   REAL(num)
+    ! - mesh   CHARACTER
+    ! - mclass CHARACTER
 
     md_length = meshtype_header_offset + soi8 + 2 * sof + 2 * max_string_len
     block_length = md_length + npart_global * sof

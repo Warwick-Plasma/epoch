@@ -419,7 +419,7 @@ CONTAINS
     CALL MPI_TYPE_COMMIT(array_type, errcode)
 
     CALL cfd_write_1d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
-        global_resolution(1), stagger(1), TRIM(norm_grid_name), "Grid", data, &
+        global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
         new_type, array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)

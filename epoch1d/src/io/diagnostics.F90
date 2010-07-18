@@ -27,10 +27,10 @@ CONTAINS
     CHARACTER(LEN=50) :: temp_name
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:), ALLOCATABLE :: data
-    REAL(num) :: stagger = 0.0_num
+    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER(8) :: npart_local, npart_dump_global
     INTEGER :: ispecies, code
-    INTEGER :: dims
+    INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: restart_flag
 
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
@@ -43,7 +43,7 @@ CONTAINS
 
     IF (.NOT.print_arrays) RETURN
 
-    dims = nx_global
+    dims = (/nx_global/)
 
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
@@ -299,12 +299,12 @@ CONTAINS
     INTEGER, INTENT(IN) :: id, code
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     REAL(num), DIMENSION(:), INTENT(IN) :: array
-    REAL(num) :: stagger = 0.0_num
-    INTEGER :: dims
+    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
+    INTEGER, DIMENSION(c_ndims) :: dims
 
     IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
 
-    dims = nx_global
+    dims = (/nx_global/)
 
     ! (variable name, variable class, global grid dimensions,
     ! grid stagger, mesh name, mesh class, variable,
@@ -322,8 +322,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: id, code
     CHARACTER(LEN=*), INTENT(IN) :: name, class
     REAL(num), DIMENSION(:), INTENT(INOUT) :: data
-    REAL(num) :: stagger = 0.0_num
-    INTEGER :: dims
+    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
+    INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies
     CHARACTER(LEN=50) :: temp_name
 
@@ -337,7 +337,7 @@ CONTAINS
 
     IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
 
-    dims = nx_global
+    dims = (/nx_global/)
 
     IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
       CALL func(data, 0)
