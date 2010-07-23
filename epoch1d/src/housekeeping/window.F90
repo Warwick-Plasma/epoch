@@ -72,8 +72,10 @@ CONTAINS
 
     ! Only processors on the right need do anything
     IF (coordinates(1) .EQ. nprocx-1) THEN
-      CALL SYSTEM_CLOCK(clock)
+      clock = 9084263
+      IF (use_random_seed) CALL SYSTEM_CLOCK(clock)
       idum = -(clock + rank)
+
       DO ispecies = 1, n_species
         DO ipart = 1, particle_species(ispecies)%npart_per_cell
           ALLOCATE(current)

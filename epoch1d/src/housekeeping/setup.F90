@@ -39,6 +39,7 @@ CONTAINS
     window_shift = 0.0_num
     npart_global = -1
     dlb = .FALSE.
+    use_random_seed = .FALSE.
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)

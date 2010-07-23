@@ -6,7 +6,7 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 22
+  INTEGER, PARAMETER :: control_block_elements = 23
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -31,7 +31,8 @@ MODULE deck_control_block
           "nprocx            ", &
           "nprocy            ", &
           "nprocz            ", &
-          "stdout_frequency  " /)
+          "stdout_frequency  ", &
+          "use_random_seed   " /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           "nx                ", &
@@ -55,7 +56,8 @@ MODULE deck_control_block
           "nprocx            ", &
           "nprocy            ", &
           "nprocz            ", &
-          "stdout_frequency  " /)
+          "stdout_frequency  ", &
+          "use_random_seed   " /)
 
 CONTAINS
 
@@ -146,6 +148,8 @@ CONTAINS
       nprocz = as_integer(value, handle_control_deck)
     CASE(22)
       stdout_frequency = as_integer(value, handle_control_deck)
+    CASE(23)
+      use_random_seed = as_logical(value, handle_control_deck)
     END SELECT
 
   END FUNCTION handle_control_deck
@@ -181,6 +185,9 @@ CONTAINS
 
     ! stdout_frequency is optional
     control_block_done(22) = .TRUE.
+
+    ! use_random_seed is optional
+    control_block_done(23) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

@@ -40,6 +40,7 @@ CONTAINS
     npart_global = -1
     smooth_currents = .FALSE.
     dlb = .FALSE.
+    use_random_seed = .FALSE.
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)

@@ -490,6 +490,7 @@ MODULE shared_data
   CHARACTER(LEN=data_dir_max_length) :: data_dir
 
   LOGICAL :: neutral_background = .TRUE.
+  LOGICAL :: use_random_seed = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_snapshots

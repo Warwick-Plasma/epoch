@@ -82,7 +82,8 @@ CONTAINS
     REAL(num) :: jitter_x, jitter_y, jitter_z
 
     ! Reseed random number generator
-    CALL SYSTEM_CLOCK(clock)
+    clock = 1142780
+    IF (use_random_seed) CALL SYSTEM_CLOCK(clock)
     idum = -(clock + rank)
 
     DO ispecies = 1, n_species

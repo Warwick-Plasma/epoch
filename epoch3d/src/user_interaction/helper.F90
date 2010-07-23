@@ -13,8 +13,10 @@ CONTAINS
     INTEGER :: clock, idum
     TYPE(particle_family), POINTER :: species_list
 
-    CALL SYSTEM_CLOCK(clock)
+    clock = 7842432
+    IF (use_random_seed) CALL SYSTEM_CLOCK(clock)
     idum = -(clock + rank)
+
     DO ispecies = 1, n_species
       species_list=>particle_species(ispecies)
       IF (move_window) THEN
