@@ -220,6 +220,16 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), "cpml_laser")) THEN
+      as_bc = c_bc_cpml_laser
+      RETURN
+    ENDIF
+
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), "cpml_outflow")) THEN
+      as_bc = c_bc_cpml_outflow
+      RETURN
+    ENDIF
+
     err = IOR(err, c_err_bad_value)
 
   END FUNCTION as_bc

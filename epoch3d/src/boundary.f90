@@ -20,9 +20,12 @@ CONTAINS
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
+    cpml_boundaries = .FALSE.
     DO i = 1, 2*c_ndims
       IF (bc_particle(i) .EQ. c_bc_other) bc_particle(i) = c_bc_reflect
       IF (bc_field(i) .EQ. c_bc_other) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) .EQ. c_bc_cpml_laser &
+          .OR. bc_field(i) .EQ. c_bc_cpml_outflow) cpml_boundaries = .TRUE.
       IF (bc_field(i) .EQ. c_bc_simple_laser) add_laser(i) = .TRUE.
     ENDDO
 
@@ -35,7 +38,9 @@ CONTAINS
     ! Laser boundaries assume open particles unless otherwise specified.
     DO i = 1, 2*c_ndims
       IF (bc_particle(i) .EQ. c_bc_simple_laser &
-          .OR. bc_particle(i) .EQ. c_bc_simple_outflow) &
+          .OR. bc_particle(i) .EQ. c_bc_simple_outflow &
+          .OR. bc_particle(i) .EQ. c_bc_cpml_laser &
+          .OR. bc_particle(i) .EQ. c_bc_cpml_outflow) &
               bc_particle(i) = c_bc_open
     ENDDO
 
@@ -644,7 +649,19 @@ CONTAINS
         out_of_bounds = .FALSE.
 
         part_pos = cur%part_pos(1)
-        IF (.TRUE.) THEN
+        IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser &
+            .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
+          IF (x_min_boundary) THEN
+            ! Particle has left the system
+            IF (part_pos .LT. x_min + dx * (cpml_thickness - 0.5_num)) THEN
+              xbd = 0
+              out_of_bounds = .TRUE.
+            ENDIF
+          ELSE
+            ! Particle has left this processor
+            IF (part_pos .LT. x_min_local - dx / 2.0_num) xbd = -1
+          ENDIF
+        ELSE
           ! Particle has left this processor
           IF (part_pos .LT. x_min_local - dx / 2.0_num) THEN
             xbd = -1
@@ -715,7 +732,19 @@ CONTAINS
           ENDIF
         ENDIF
 
-        IF (.TRUE.) THEN
+        IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser &
+            .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
+          IF (x_max_boundary) THEN
+            ! Particle has left the system
+            IF (part_pos .GE. x_max - dx * (cpml_thickness - 0.5_num)) THEN
+              xbd = 0
+              out_of_bounds = .TRUE.
+            ENDIF
+          ELSE
+            ! Particle has left this processor
+            IF (part_pos .GE. x_max_local + dx / 2.0_num) xbd =  1
+          ENDIF
+        ELSE
           ! Particle has left this processor
           IF (part_pos .GE. x_max_local + dx / 2.0_num) THEN
             xbd = 1
@@ -787,7 +816,19 @@ CONTAINS
         ENDIF
 
         part_pos = cur%part_pos(2)
-        IF (.TRUE.) THEN
+        IF (bc_field(c_bd_y_min) .EQ. c_bc_cpml_laser &
+            .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
+          IF (y_min_boundary) THEN
+            ! Particle has left the system
+            IF (part_pos .LT. y_min + dy * (cpml_thickness - 0.5_num)) THEN
+              ybd = 0
+              out_of_bounds = .TRUE.
+            ENDIF
+          ELSE
+            ! Particle has left this processor
+            IF (part_pos .LT. y_min_local - dy / 2.0_num) ybd = -1
+          ENDIF
+        ELSE
           ! Particle has left this processor
           IF (part_pos .LT. y_min_local - dy / 2.0_num) THEN
             ybd = -1
@@ -858,7 +899,19 @@ CONTAINS
           ENDIF
         ENDIF
 
-        IF (.TRUE.) THEN
+        IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser &
+            .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
+          IF (y_max_boundary) THEN
+            ! Particle has left the system
+            IF (part_pos .GE. y_max - dy * (cpml_thickness - 0.5_num)) THEN
+              ybd = 0
+              out_of_bounds = .TRUE.
+            ENDIF
+          ELSE
+            ! Particle has left this processor
+            IF (part_pos .GE. y_max_local + dy / 2.0_num) ybd =  1
+          ENDIF
+        ELSE
           ! Particle has left this processor
           IF (part_pos .GE. y_max_local + dy / 2.0_num) THEN
             ybd = 1
@@ -930,7 +983,19 @@ CONTAINS
         ENDIF
 
         part_pos = cur%part_pos(3)
-        IF (.TRUE.) THEN
+        IF (bc_field(c_bd_z_min) .EQ. c_bc_cpml_laser &
+            .OR. bc_field(c_bd_z_min) .EQ. c_bc_cpml_outflow) THEN
+          IF (z_min_boundary) THEN
+            ! Particle has left the system
+            IF (part_pos .LT. z_min + dz * (cpml_thickness - 0.5_num)) THEN
+              zbd = 0
+              out_of_bounds = .TRUE.
+            ENDIF
+          ELSE
+            ! Particle has left this processor
+            IF (part_pos .LT. z_min_local - dz / 2.0_num) zbd = -1
+          ENDIF
+        ELSE
           ! Particle has left this processor
           IF (part_pos .LT. z_min_local - dz / 2.0_num) THEN
             zbd = -1
@@ -1001,7 +1066,19 @@ CONTAINS
           ENDIF
         ENDIF
 
-        IF (.TRUE.) THEN
+        IF (bc_field(c_bd_z_max) .EQ. c_bc_cpml_laser &
+            .OR. bc_field(c_bd_z_max) .EQ. c_bc_cpml_outflow) THEN
+          IF (z_max_boundary) THEN
+            ! Particle has left the system
+            IF (part_pos .GE. z_max - dz * (cpml_thickness - 0.5_num)) THEN
+              zbd = 0
+              out_of_bounds = .TRUE.
+            ENDIF
+          ELSE
+            ! Particle has left this processor
+            IF (part_pos .GE. z_max_local + dz / 2.0_num) zbd =  1
+          ENDIF
+        ELSE
           ! Particle has left this processor
           IF (part_pos .GE. z_max_local + dz / 2.0_num) THEN
             zbd = 1
@@ -1143,5 +1220,759 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE current_bcs
+
+
+
+  SUBROUTINE set_cpml_helpers
+
+    INTEGER :: ix, ix_glob
+    INTEGER :: iy, iy_glob
+    INTEGER :: iz, iz_glob
+    INTEGER, PARAMETER :: cpml_m = 3
+    INTEGER, PARAMETER :: cpml_ma = 1
+    REAL(num) :: x_pos, x_pos_m, x_pos_ma
+    REAL(num) :: y_pos, y_pos_m, y_pos_ma
+    REAL(num) :: z_pos, z_pos_m, z_pos_ma
+    REAL(num) :: sigma, kappa, acoeff, bcoeff, ccoeff
+
+    ALLOCATE(cpml_kappa_e_dx(-2:nx+3), cpml_kappa_b_dx(-2:nx+3))
+    ALLOCATE(cpml_e_acoeff_x(-2:nx+3), cpml_b_acoeff_x(-2:nx+3))
+    ALLOCATE(cpml_e_sigma_x(-2:nx+3), cpml_b_sigma_x(-2:nx+3))
+
+    ALLOCATE(cpml_kappa_e_dy(-2:ny+3), cpml_kappa_b_dy(-2:ny+3))
+    ALLOCATE(cpml_e_acoeff_y(-2:ny+3), cpml_b_acoeff_y(-2:ny+3))
+    ALLOCATE(cpml_e_sigma_y(-2:ny+3), cpml_b_sigma_y(-2:ny+3))
+
+    ALLOCATE(cpml_kappa_e_dz(-2:nz+3), cpml_kappa_b_dz(-2:nz+3))
+    ALLOCATE(cpml_e_acoeff_z(-2:nz+3), cpml_b_acoeff_z(-2:nz+3))
+    ALLOCATE(cpml_e_sigma_z(-2:nz+3), cpml_b_sigma_z(-2:nz+3))
+
+    cpml_kappa_e_dx = 1.0_num
+    cpml_kappa_b_dx = 1.0_num
+
+    cpml_e_acoeff_x = 0.0_num
+    cpml_e_sigma_x = 0.0_num
+    cpml_b_acoeff_x = 0.0_num
+    cpml_b_sigma_x = 0.0_num
+
+    cpml_kappa_e_dy = 1.0_num
+    cpml_kappa_b_dy = 1.0_num
+
+    cpml_e_acoeff_y = 0.0_num
+    cpml_e_sigma_y = 0.0_num
+    cpml_b_acoeff_y = 0.0_num
+    cpml_b_sigma_y = 0.0_num
+
+    cpml_kappa_e_dz = 1.0_num
+    cpml_kappa_b_dz = 1.0_num
+
+    cpml_e_acoeff_z = 0.0_num
+    cpml_e_sigma_z = 0.0_num
+    cpml_b_acoeff_z = 0.0_num
+    cpml_b_sigma_z = 0.0_num
+
+    cpml_sigma_max = cpml_sigma_max * c * 0.8_num * (cpml_m + 1.0_num) / dx
+
+    ! ============= x_min boundary =============
+
+    IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
+      cpml_x_min_start = nx+1
+      cpml_x_min_end = 0
+
+      IF (nx_global_min .LE. cpml_thickness) THEN
+        cpml_x_min = .TRUE.
+        cpml_x_min_start = 1 ! in local grid coordinates
+
+        ! The following distinction is necessary because, in principle, it is
+        ! possible for the local domain to lie completely within the boundary
+        ! layer.
+        IF (nx_global_max .GE. cpml_thickness) THEN
+          ! in local grid coordinates
+          ! global -> local: ixl = ixg - nx_global_min + 1
+          cpml_x_min_end = cpml_thickness - nx_global_min + 1
+        ELSE
+          cpml_x_min_end = nx ! in local grid coordinates
+        ENDIF
+
+        DO ix = cpml_x_min_start,cpml_x_min_end
+          ! runs from 1 to cpml_thickness in global coordinates
+          ! local -> global: ixg = ixl + nx_global_min - 1
+          ix_glob = ix + nx_global_min - 1
+
+          ! runs from 1.0 to nearly 0.0 (actually 0.0 at cpml_thickness+1)
+          x_pos = 1.0_num - REAL(ix_glob-1,num) / REAL(cpml_thickness,num)
+          x_pos_m = x_pos**cpml_m
+          x_pos_ma = (1.0_num - x_pos)**cpml_ma
+
+          cpml_kappa_e_dx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
+          cpml_e_sigma_x(ix) = cpml_sigma_max * x_pos_m
+          cpml_e_acoeff_x(ix) = cpml_a_max * x_pos_ma
+
+          ! runs from nearly 1.0 to nearly 0.0 on the half intervals
+          ! 1.0 at ix_glob=1-1/2 and 0.0 at ix_glob=cpml_thickness+1/2
+          x_pos = 1.0_num - (REAL(ix_glob,num) - 0.5_num) &
+              / REAL(cpml_thickness,num)
+          x_pos_m = x_pos**cpml_m
+          x_pos_ma = (1.0_num - x_pos)**cpml_ma
+
+          cpml_kappa_b_dx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
+          cpml_b_sigma_x(ix) = cpml_sigma_max * x_pos_m
+          cpml_b_acoeff_x(ix) = cpml_a_max * x_pos_ma
+        ENDDO
+      ENDIF
+
+      ! Ghost cells start at the edge of the CPML boundary
+      IF (nx_global_min .LE. cpml_thickness + ng + 1 &
+          .AND. nx_global_max .GE. cpml_thickness + ng + 1) THEN
+        cpml_x_min_laser = .TRUE.
+        cpml_x_min_laser_idx = cpml_thickness + ng - nx_global_min + 1
+      ENDIF
+    ENDIF
+
+    ! ============= x_max boundary =============
+
+    ! Same as x_min using the transformation ix -> nx_global - ix + 1
+    IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
+      cpml_x_max_start = nx+1
+      cpml_x_max_end = 0
+
+      IF (nx_global_max .GE. nx_global - cpml_thickness + 1) THEN
+        cpml_x_max = .TRUE.
+        cpml_x_max_end = nx ! in local grid coordinates
+
+        ! The following distinction is necessary because, in principle, it is
+        ! possible for the local domain to lie completely within the boundary
+        ! layer.
+        IF (nx_global_min .LE. nx_global - cpml_thickness + 1) THEN
+          ! in local grid coordinates
+          ! global -> local: ixl = ixg - nx_global_min + 1
+          cpml_x_max_start = nx_global - cpml_thickness + 1 - nx_global_min + 1
+        ELSE
+          cpml_x_max_start = 1 ! in local grid coordinates
+        ENDIF
+
+        DO ix = cpml_x_max_start,cpml_x_max_end
+          ! runs from cpml_thickness to 1 in global coordinates
+          ! local -> global: ixg = ixl + nx_global_min - 1
+          ix_glob = nx_global - (ix + nx_global_min - 1) + 1
+
+          ! runs from nearly 0.0 (actually 0.0 at cpml_thickness+1) to 1.0
+          x_pos = 1.0_num - REAL(ix_glob-1,num) / REAL(cpml_thickness,num)
+          x_pos_m = x_pos**cpml_m
+          x_pos_ma = (1.0_num - x_pos)**cpml_ma
+
+          cpml_kappa_b_dx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
+          cpml_b_sigma_x(ix) = cpml_sigma_max * x_pos_m
+          cpml_b_acoeff_x(ix) = cpml_a_max * x_pos_ma
+
+          ! runs from nearly 0.0 to nearly 1.0 on the half intervals
+          ! 0.0 at ix_glob=cpml_thickness+1/2 and 1.0 at ix_glob=1-1/2
+          x_pos = 1.0_num - (REAL(ix_glob,num) - 0.5_num) &
+              / REAL(cpml_thickness,num)
+          x_pos_m = x_pos**cpml_m
+          x_pos_ma = (1.0_num - x_pos)**cpml_ma
+
+          cpml_kappa_e_dx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
+          cpml_e_sigma_x(ix) = cpml_sigma_max * x_pos_m
+          cpml_e_acoeff_x(ix) = cpml_a_max * x_pos_ma
+        ENDDO
+      ENDIF
+
+      ! Ghost cells start at the edge of the CPML boundary
+      IF (nx_global_min .LE. nx_global - cpml_thickness - ng + 1 &
+          .AND. nx_global_max .GE. nx_global - cpml_thickness - ng + 1) THEN
+        cpml_x_max_laser = .TRUE.
+        cpml_x_max_laser_idx = &
+            nx_global - cpml_thickness - ng + 1 - nx_global_min + 1
+      ENDIF
+    ENDIF
+
+    ! ============= y_min boundary =============
+
+    IF (bc_field(c_bd_y_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
+      cpml_y_min_start = ny+1
+      cpml_y_min_end = 0
+
+      IF (ny_global_min .LE. cpml_thickness) THEN
+        cpml_y_min = .TRUE.
+        cpml_y_min_start = 1 ! in local grid coordinates
+
+        ! The following distinction is necessary because, in principle, it is
+        ! possible for the local domain to lie completely within the boundary
+        ! layer.
+        IF (ny_global_max .GE. cpml_thickness) THEN
+          ! in local grid coordinates
+          ! global -> local: iyl = iyg - ny_global_min + 1
+          cpml_y_min_end = cpml_thickness - ny_global_min + 1
+        ELSE
+          cpml_y_min_end = ny ! in local grid coordinates
+        ENDIF
+
+        DO iy = cpml_y_min_start,cpml_y_min_end
+          ! runs from 1 to cpml_thickness in global coordinates
+          ! local -> global: iyg = iyl + ny_global_min - 1
+          iy_glob = iy + ny_global_min - 1
+
+          ! runs from 1.0 to nearly 0.0 (actually 0.0 at cpml_thickness+1)
+          y_pos = 1.0_num - REAL(iy_glob-1,num) / REAL(cpml_thickness,num)
+          y_pos_m = y_pos**cpml_m
+          y_pos_ma = (1.0_num - y_pos)**cpml_ma
+
+          cpml_kappa_e_dy(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
+          cpml_e_sigma_y(iy) = cpml_sigma_max * y_pos_m
+          cpml_e_acoeff_y(iy) = cpml_a_max * y_pos_ma
+
+          ! runs from nearly 1.0 to nearly 0.0 on the half intervals
+          ! 1.0 at iy_glob=1-1/2 and 0.0 at iy_glob=cpml_thickness+1/2
+          y_pos = 1.0_num - (REAL(iy_glob,num) - 0.5_num) &
+              / REAL(cpml_thickness,num)
+          y_pos_m = y_pos**cpml_m
+          y_pos_ma = (1.0_num - y_pos)**cpml_ma
+
+          cpml_kappa_b_dy(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
+          cpml_b_sigma_y(iy) = cpml_sigma_max * y_pos_m
+          cpml_b_acoeff_y(iy) = cpml_a_max * y_pos_ma
+        ENDDO
+      ENDIF
+
+      ! Ghost cells start at the edge of the CPML boundary
+      IF (ny_global_min .LE. cpml_thickness + ng + 1 &
+          .AND. ny_global_max .GE. cpml_thickness + ng + 1) THEN
+        cpml_y_min_laser = .TRUE.
+        cpml_y_min_laser_idx = cpml_thickness + ng - ny_global_min + 1
+      ENDIF
+    ENDIF
+
+    ! ============= y_max boundary =============
+
+    ! Same as y_min using the transformation iy -> ny_global - iy + 1
+    IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
+      cpml_y_max_start = ny+1
+      cpml_y_max_end = 0
+
+      IF (ny_global_max .GE. ny_global - cpml_thickness + 1) THEN
+        cpml_y_max = .TRUE.
+        cpml_y_max_end = ny ! in local grid coordinates
+
+        ! The following distinction is necessary because, in principle, it is
+        ! possible for the local domain to lie completely within the boundary
+        ! layer.
+        IF (ny_global_min .LE. ny_global - cpml_thickness + 1) THEN
+          ! in local grid coordinates
+          ! global -> local: iyl = iyg - ny_global_min + 1
+          cpml_y_max_start = ny_global - cpml_thickness + 1 - ny_global_min + 1
+        ELSE
+          cpml_y_max_start = 1 ! in local grid coordinates
+        ENDIF
+
+        DO iy = cpml_y_max_start,cpml_y_max_end
+          ! runs from cpml_thickness to 1 in global coordinates
+          ! local -> global: iyg = iyl + ny_global_min - 1
+          iy_glob = ny_global - (iy + ny_global_min - 1) + 1
+
+          ! runs from nearly 0.0 (actually 0.0 at cpml_thickness+1) to 1.0
+          y_pos = 1.0_num - REAL(iy_glob-1,num) / REAL(cpml_thickness,num)
+          y_pos_m = y_pos**cpml_m
+          y_pos_ma = (1.0_num - y_pos)**cpml_ma
+
+          cpml_kappa_b_dy(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
+          cpml_b_sigma_y(iy) = cpml_sigma_max * y_pos_m
+          cpml_b_acoeff_y(iy) = cpml_a_max * y_pos_ma
+
+          ! runs from nearly 0.0 to nearly 1.0 on the half intervals
+          ! 0.0 at iy_glob=cpml_thickness+1/2 and 1.0 at iy_glob=1-1/2
+          y_pos = 1.0_num - (REAL(iy_glob,num) - 0.5_num) &
+              / REAL(cpml_thickness,num)
+          y_pos_m = y_pos**cpml_m
+          y_pos_ma = (1.0_num - y_pos)**cpml_ma
+
+          cpml_kappa_e_dy(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
+          cpml_e_sigma_y(iy) = cpml_sigma_max * y_pos_m
+          cpml_e_acoeff_y(iy) = cpml_a_max * y_pos_ma
+        ENDDO
+      ENDIF
+
+      ! Ghost cells start at the edge of the CPML boundary
+      IF (ny_global_min .LE. ny_global - cpml_thickness - ng + 1 &
+          .AND. ny_global_max .GE. ny_global - cpml_thickness - ng + 1) THEN
+        cpml_y_max_laser = .TRUE.
+        cpml_y_max_laser_idx = &
+            ny_global - cpml_thickness - ng + 1 - ny_global_min + 1
+      ENDIF
+    ENDIF
+
+    ! ============= z_min boundary =============
+
+    IF (bc_field(c_bd_z_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_min) .EQ. c_bc_cpml_outflow) THEN
+      cpml_z_min_start = nz+1
+      cpml_z_min_end = 0
+
+      IF (nz_global_min .LE. cpml_thickness) THEN
+        cpml_z_min = .TRUE.
+        cpml_z_min_start = 1 ! in local grid coordinates
+
+        ! The following distinction is necessary because, in principle, it is
+        ! possible for the local domain to lie completely within the boundary
+        ! layer.
+        IF (nz_global_max .GE. cpml_thickness) THEN
+          ! in local grid coordinates
+          ! global -> local: izl = izg - nz_global_min + 1
+          cpml_z_min_end = cpml_thickness - nz_global_min + 1
+        ELSE
+          cpml_z_min_end = nz ! in local grid coordinates
+        ENDIF
+
+        DO iz = cpml_z_min_start,cpml_z_min_end
+          ! runs from 1 to cpml_thickness in global coordinates
+          ! local -> global: izg = izl + nz_global_min - 1
+          iz_glob = iz + nz_global_min - 1
+
+          ! runs from 1.0 to nearly 0.0 (actually 0.0 at cpml_thickness+1)
+          z_pos = 1.0_num - REAL(iz_glob-1,num) / REAL(cpml_thickness,num)
+          z_pos_m = z_pos**cpml_m
+          z_pos_ma = (1.0_num - z_pos)**cpml_ma
+
+          cpml_kappa_e_dz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_e_sigma_z(iz) = cpml_sigma_max * z_pos_m
+          cpml_e_acoeff_z(iz) = cpml_a_max * z_pos_ma
+
+          ! runs from nearly 1.0 to nearly 0.0 on the half intervals
+          ! 1.0 at iz_glob=1-1/2 and 0.0 at iz_glob=cpml_thickness+1/2
+          z_pos = 1.0_num - (REAL(iz_glob,num) - 0.5_num) &
+              / REAL(cpml_thickness,num)
+          z_pos_m = z_pos**cpml_m
+          z_pos_ma = (1.0_num - z_pos)**cpml_ma
+
+          cpml_kappa_b_dz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_b_sigma_z(iz) = cpml_sigma_max * z_pos_m
+          cpml_b_acoeff_z(iz) = cpml_a_max * z_pos_ma
+        ENDDO
+      ENDIF
+
+      ! Ghost cells start at the edge of the CPML boundary
+      IF (nz_global_min .LE. cpml_thickness + ng + 1 &
+          .AND. nz_global_max .GE. cpml_thickness + ng + 1) THEN
+        cpml_z_min_laser = .TRUE.
+        cpml_z_min_laser_idx = cpml_thickness + ng - nz_global_min + 1
+      ENDIF
+    ENDIF
+
+    ! ============= z_max boundary =============
+
+    ! Same as z_min using the transformation iz -> nz_global - iz + 1
+    IF (bc_field(c_bd_z_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_max) .EQ. c_bc_cpml_outflow) THEN
+      cpml_z_max_start = nz+1
+      cpml_z_max_end = 0
+
+      IF (nz_global_max .GE. nz_global - cpml_thickness + 1) THEN
+        cpml_z_max = .TRUE.
+        cpml_z_max_end = nz ! in local grid coordinates
+
+        ! The following distinction is necessary because, in principle, it is
+        ! possible for the local domain to lie completely within the boundary
+        ! layer.
+        IF (nz_global_min .LE. nz_global - cpml_thickness + 1) THEN
+          ! in local grid coordinates
+          ! global -> local: izl = izg - nz_global_min + 1
+          cpml_z_max_start = nz_global - cpml_thickness + 1 - nz_global_min + 1
+        ELSE
+          cpml_z_max_start = 1 ! in local grid coordinates
+        ENDIF
+
+        DO iz = cpml_z_max_start,cpml_z_max_end
+          ! runs from cpml_thickness to 1 in global coordinates
+          ! local -> global: izg = izl + nz_global_min - 1
+          iz_glob = nz_global - (iz + nz_global_min - 1) + 1
+
+          ! runs from nearly 0.0 (actually 0.0 at cpml_thickness+1) to 1.0
+          z_pos = 1.0_num - REAL(iz_glob-1,num) / REAL(cpml_thickness,num)
+          z_pos_m = z_pos**cpml_m
+          z_pos_ma = (1.0_num - z_pos)**cpml_ma
+
+          cpml_kappa_b_dz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_b_sigma_z(iz) = cpml_sigma_max * z_pos_m
+          cpml_b_acoeff_z(iz) = cpml_a_max * z_pos_ma
+
+          ! runs from nearly 0.0 to nearly 1.0 on the half intervals
+          ! 0.0 at iz_glob=cpml_thickness+1/2 and 1.0 at iz_glob=1-1/2
+          z_pos = 1.0_num - (REAL(iz_glob,num) - 0.5_num) &
+              / REAL(cpml_thickness,num)
+          z_pos_m = z_pos**cpml_m
+          z_pos_ma = (1.0_num - z_pos)**cpml_ma
+
+          cpml_kappa_e_dz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_e_sigma_z(iz) = cpml_sigma_max * z_pos_m
+          cpml_e_acoeff_z(iz) = cpml_a_max * z_pos_ma
+        ENDDO
+      ENDIF
+
+      ! Ghost cells start at the edge of the CPML boundary
+      IF (nz_global_min .LE. nz_global - cpml_thickness - ng + 1 &
+          .AND. nz_global_max .GE. nz_global - cpml_thickness - ng + 1) THEN
+        cpml_z_max_laser = .TRUE.
+        cpml_z_max_laser_idx = &
+            nz_global - cpml_thickness - ng + 1 - nz_global_min + 1
+      ENDIF
+    ENDIF
+
+  END SUBROUTINE set_cpml_helpers
+
+
+
+  SUBROUTINE allocate_cpml_fields
+
+    ! I will ignore memory consumption issues and, for simplicity,
+    ! allocate the boundary fields throughout the whole simulation box.
+    ALLOCATE(cpml_e_psiyx(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_e_psizx(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_b_psiyx(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_b_psizx(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_e_psixy(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_e_psizy(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_b_psixy(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_b_psizy(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_e_psixz(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_e_psiyz(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_b_psixz(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_b_psiyz(-2:nx+3,-2:ny+3,-2:nz+3))
+
+    cpml_e_psiyx = 0.0_num
+    cpml_e_psizx = 0.0_num
+    cpml_b_psiyx = 0.0_num
+    cpml_b_psizx = 0.0_num
+
+    cpml_e_psixy = 0.0_num
+    cpml_e_psizy = 0.0_num
+    cpml_b_psixy = 0.0_num
+    cpml_b_psizy = 0.0_num
+
+    cpml_e_psixz = 0.0_num
+    cpml_e_psiyz = 0.0_num
+    cpml_b_psixz = 0.0_num
+    cpml_b_psiyz = 0.0_num
+
+  END SUBROUTINE allocate_cpml_fields
+
+
+
+  SUBROUTINE deallocate_cpml_helpers
+
+    DEALLOCATE(cpml_kappa_e_dx, cpml_kappa_b_dx)
+    DEALLOCATE(cpml_e_acoeff_x, cpml_b_acoeff_x)
+    DEALLOCATE(cpml_e_sigma_x, cpml_b_sigma_x)
+
+    DEALLOCATE(cpml_kappa_e_dy, cpml_kappa_b_dy)
+    DEALLOCATE(cpml_e_acoeff_y, cpml_b_acoeff_y)
+    DEALLOCATE(cpml_e_sigma_y, cpml_b_sigma_y)
+
+    DEALLOCATE(cpml_kappa_e_dz, cpml_kappa_b_dz)
+    DEALLOCATE(cpml_e_acoeff_z, cpml_b_acoeff_z)
+    DEALLOCATE(cpml_e_sigma_z, cpml_b_sigma_z)
+
+  END SUBROUTINE deallocate_cpml_helpers
+
+
+
+  SUBROUTINE cpml_advance_e_currents(tstep)
+
+    REAL(num), INTENT(IN) :: tstep
+    INTEGER :: ipos, ix, iy, iz
+    REAL(num) :: acoeff, bcoeff, ccoeff_d
+    REAL(num) :: kappa, sigma
+
+    ! ============= x_min boundary =============
+
+    IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
+      DO iz = 1,nz
+        DO iy = 1,ny
+          DO ipos = cpml_x_min_start,cpml_x_min_end
+            kappa = cpml_kappa_e_dx(ipos)
+            sigma = cpml_e_sigma_x(ipos)
+            acoeff = cpml_e_acoeff_x(ipos)
+            bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+            ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+                / (sigma + kappa * acoeff) / dx
+
+            cpml_e_psiyx(ipos,iy,iz) = bcoeff * cpml_e_psiyx(ipos,iy,iz) &
+                + ccoeff_d * (bz(ipos,iy,iz) - bz(ipos-1,iy,iz))
+            cpml_e_psizx(ipos,iy,iz) = bcoeff * cpml_e_psizx(ipos,iy,iz) &
+                + ccoeff_d * (by(ipos,iy,iz) - by(ipos-1,iy,iz))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= x_max boundary =============
+
+    IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
+      DO iz = 1,nz
+        DO iy = 1,ny
+          DO ipos = cpml_x_max_start,cpml_x_max_end
+            kappa = cpml_kappa_e_dx(ipos)
+            sigma = cpml_e_sigma_x(ipos)
+            acoeff = cpml_e_acoeff_x(ipos)
+            bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+            ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+                / (sigma + kappa * acoeff) / dx
+
+            cpml_e_psiyx(ipos,iy,iz) = bcoeff * cpml_e_psiyx(ipos,iy,iz) &
+                + ccoeff_d * (bz(ipos,iy,iz) - bz(ipos-1,iy,iz))
+            cpml_e_psizx(ipos,iy,iz) = bcoeff * cpml_e_psizx(ipos,iy,iz) &
+                + ccoeff_d * (by(ipos,iy,iz) - by(ipos-1,iy,iz))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= y_min boundary =============
+
+    IF (bc_field(c_bd_y_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
+      DO iz = 1,nz
+        DO ipos = cpml_y_min_start,cpml_y_min_end
+          kappa = cpml_kappa_e_dy(ipos)
+          sigma = cpml_e_sigma_y(ipos)
+          acoeff = cpml_e_acoeff_y(ipos)
+          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+              / (sigma + kappa * acoeff) / dy
+
+          DO ix = 1,nx
+            cpml_e_psixy(ix,ipos,iz) = bcoeff * cpml_e_psixy(ix,ipos,iz) &
+                + ccoeff_d * (bz(ix,ipos,iz) - bz(ix,ipos-1,iz))
+            cpml_e_psizy(ix,ipos,iz) = bcoeff * cpml_e_psizy(ix,ipos,iz) &
+                + ccoeff_d * (bx(ix,ipos,iz) - bx(ix,ipos-1,iz))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= y_max boundary =============
+
+    IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
+      DO iz = 1,nz
+        DO ipos = cpml_y_max_start,cpml_y_max_end
+          kappa = cpml_kappa_e_dy(ipos)
+          sigma = cpml_e_sigma_y(ipos)
+          acoeff = cpml_e_acoeff_y(ipos)
+          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+              / (sigma + kappa * acoeff) / dy
+
+          DO ix = 1,nx
+            cpml_e_psixy(ix,ipos,iz) = bcoeff * cpml_e_psixy(ix,ipos,iz) &
+                + ccoeff_d * (bz(ix,ipos,iz) - bz(ix,ipos-1,iz))
+            cpml_e_psizy(ix,ipos,iz) = bcoeff * cpml_e_psizy(ix,ipos,iz) &
+                + ccoeff_d * (bx(ix,ipos,iz) - bx(ix,ipos-1,iz))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= z_min boundary =============
+
+    IF (bc_field(c_bd_z_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_min) .EQ. c_bc_cpml_outflow) THEN
+      DO ipos = cpml_z_min_start,cpml_z_min_end
+        kappa = cpml_kappa_e_dz(ipos)
+        sigma = cpml_e_sigma_z(ipos)
+        acoeff = cpml_e_acoeff_z(ipos)
+        bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+        ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+            / (sigma + kappa * acoeff) / dz
+
+        DO iy = 1,ny
+          DO ix = 1,nx
+            cpml_e_psixz(ix,iy,ipos) = bcoeff * cpml_e_psixz(ix,iy,ipos) &
+                + ccoeff_d * (by(ix,iy,ipos) - by(ix,iy,ipos-1))
+            cpml_e_psiyz(ix,iy,ipos) = bcoeff * cpml_e_psiyz(ix,iy,ipos) &
+                + ccoeff_d * (bx(ix,iy,ipos) - bx(ix,iy,ipos-1))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= z_max boundary =============
+
+    IF (bc_field(c_bd_z_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_max) .EQ. c_bc_cpml_outflow) THEN
+      DO ipos = cpml_z_max_start,cpml_z_max_end
+        kappa = cpml_kappa_e_dz(ipos)
+        sigma = cpml_e_sigma_z(ipos)
+        acoeff = cpml_e_acoeff_z(ipos)
+        bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+        ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+            / (sigma + kappa * acoeff) / dz
+
+        DO iy = 1,ny
+          DO ix = 1,nx
+            cpml_e_psixz(ix,iy,ipos) = bcoeff * cpml_e_psixz(ix,iy,ipos) &
+                + ccoeff_d * (by(ix,iy,ipos) - by(ix,iy,ipos-1))
+            cpml_e_psiyz(ix,iy,ipos) = bcoeff * cpml_e_psiyz(ix,iy,ipos) &
+                + ccoeff_d * (bx(ix,iy,ipos) - bx(ix,iy,ipos-1))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE cpml_advance_e_currents
+
+
+
+  SUBROUTINE cpml_advance_b_currents(tstep)
+
+    REAL(num), INTENT(IN) :: tstep
+    INTEGER :: ipos, ix, iy, iz
+    REAL(num) :: acoeff, bcoeff, ccoeff_d
+    REAL(num) :: kappa, sigma
+
+    ! ============= x_min boundary =============
+
+    IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
+      DO iz = 1,nz
+        DO iy = 1,ny
+          DO ipos = cpml_x_min_start,cpml_x_min_end
+            kappa = cpml_kappa_b_dx(ipos)
+            sigma = cpml_b_sigma_x(ipos)
+            acoeff = cpml_b_acoeff_x(ipos)
+            bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+            ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+                / (sigma + kappa * acoeff) / dx
+
+            cpml_b_psiyx(ipos,iy,iz) = bcoeff * cpml_b_psiyx(ipos,iy,iz) &
+                + ccoeff_d * (ez(ipos+1,iy,iz) - ez(ipos,iy,iz))
+            cpml_b_psizx(ipos,iy,iz) = bcoeff * cpml_b_psizx(ipos,iy,iz) &
+                + ccoeff_d * (ey(ipos+1,iy,iz) - ey(ipos,iy,iz))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= x_max boundary =============
+
+    IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
+      DO iz = 1,nz
+        DO iy = 1,ny
+          DO ipos = cpml_x_max_start,cpml_x_max_end
+            kappa = cpml_kappa_b_dx(ipos)
+            sigma = cpml_b_sigma_x(ipos)
+            acoeff = cpml_b_acoeff_x(ipos)
+            bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+            ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+                / (sigma + kappa * acoeff) / dx
+
+            cpml_b_psiyx(ipos,iy,iz) = bcoeff * cpml_b_psiyx(ipos,iy,iz) &
+                + ccoeff_d * (ez(ipos+1,iy,iz) - ez(ipos,iy,iz))
+            cpml_b_psizx(ipos,iy,iz) = bcoeff * cpml_b_psizx(ipos,iy,iz) &
+                + ccoeff_d * (ey(ipos+1,iy,iz) - ey(ipos,iy,iz))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= y_min boundary =============
+
+    IF (bc_field(c_bd_y_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
+      DO iz = 1,nz
+        DO ipos = cpml_y_min_start,cpml_y_min_end
+          kappa = cpml_kappa_b_dy(ipos)
+          sigma = cpml_b_sigma_y(ipos)
+          acoeff = cpml_b_acoeff_y(ipos)
+          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+              / (sigma + kappa * acoeff) / dy
+
+          DO ix = 1,nx
+            cpml_b_psixy(ix,ipos,iz) = bcoeff * cpml_b_psixy(ix,ipos,iz) &
+                + ccoeff_d * (ez(ix,ipos+1,iz) - ez(ix,ipos,iz))
+            cpml_b_psizy(ix,ipos,iz) = bcoeff * cpml_b_psizy(ix,ipos,iz) &
+                + ccoeff_d * (ex(ix,ipos+1,iz) - ex(ix,ipos,iz))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= y_max boundary =============
+
+    IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
+      DO iz = 1,nz
+        DO ipos = cpml_y_max_start,cpml_y_max_end
+          kappa = cpml_kappa_b_dy(ipos)
+          sigma = cpml_b_sigma_y(ipos)
+          acoeff = cpml_b_acoeff_y(ipos)
+          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+              / (sigma + kappa * acoeff) / dy
+
+          DO ix = 1,nx
+            cpml_b_psixy(ix,ipos,iz) = bcoeff * cpml_b_psixy(ix,ipos,iz) &
+                + ccoeff_d * (ez(ix,ipos+1,iz) - ez(ix,ipos,iz))
+            cpml_b_psizy(ix,ipos,iz) = bcoeff * cpml_b_psizy(ix,ipos,iz) &
+                + ccoeff_d * (ex(ix,ipos+1,iz) - ex(ix,ipos,iz))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= z_min boundary =============
+
+    IF (bc_field(c_bd_z_min) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_min) .EQ. c_bc_cpml_outflow) THEN
+      DO ipos = cpml_z_min_start,cpml_z_min_end
+        kappa = cpml_kappa_b_dz(ipos)
+        sigma = cpml_b_sigma_z(ipos)
+        acoeff = cpml_b_acoeff_z(ipos)
+        bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+        ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+            / (sigma + kappa * acoeff) / dz
+
+        DO iy = 1,ny
+          DO ix = 1,nx
+            cpml_b_psixz(ix,iy,ipos) = bcoeff * cpml_b_psixz(ix,iy,ipos) &
+                + ccoeff_d * (ey(ix,iy,ipos+1) - ey(ix,iy,ipos))
+            cpml_b_psiyz(ix,iy,ipos) = bcoeff * cpml_b_psiyz(ix,iy,ipos) &
+                + ccoeff_d * (ex(ix,iy,ipos+1) - ex(ix,iy,ipos))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! ============= z_max boundary =============
+
+    IF (bc_field(c_bd_z_max) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_max) .EQ. c_bc_cpml_outflow) THEN
+      DO ipos = cpml_z_max_start,cpml_z_max_end
+        kappa = cpml_kappa_b_dz(ipos)
+        sigma = cpml_b_sigma_z(ipos)
+        acoeff = cpml_b_acoeff_z(ipos)
+        bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+        ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+            / (sigma + kappa * acoeff) / dz
+
+        DO iy = 1,ny
+          DO ix = 1,nx
+            cpml_b_psixz(ix,iy,ipos) = bcoeff * cpml_b_psixz(ix,iy,ipos) &
+                + ccoeff_d * (ey(ix,iy,ipos+1) - ey(ix,iy,ipos))
+            cpml_b_psiyz(ix,iy,ipos) = bcoeff * cpml_b_psiyz(ix,iy,ipos) &
+                + ccoeff_d * (ex(ix,iy,ipos+1) - ex(ix,iy,ipos))
+          ENDDO
+        ENDDO
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE cpml_advance_b_currents
 
 END MODULE boundary

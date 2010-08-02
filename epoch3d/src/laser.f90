@@ -191,11 +191,15 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: i
+    INTEGER :: laserpos, i
     TYPE(laser_block), POINTER :: current
 
     i = c_bd_x_min
 
+    laserpos = 1
+    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+      laserpos = cpml_x_min_laser_idx + 1
+    ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -205,7 +209,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fplus(1:ny, 1:nz))
-    bx(0, 1:ny, 1:nz) = bx_x_min(1:ny, 1:nz)
+    bx(laserpos-1, 1:ny, 1:nz) = bx_x_min(1:ny, 1:nz)
 
     fplus = 0.0_num
     IF (add_laser(i)) THEN
@@ -223,12 +227,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bz(0, 1:ny, 1:nz) = sum * ( 4.0_num * fplus &
+    bz(laserpos-1, 1:ny, 1:nz) = sum * ( 4.0_num * fplus &
         + 2.0_num * (ey_x_min(1:ny, 1:nz) + c * bz_x_min(1:ny, 1:nz)) &
-        - 2.0_num * ey(1, 1:ny, 1:nz) &
-        - lz * (bx(1, 1:ny, 1:nz) - bx(1, 1:ny, 0:nz-1)) &
-        + dt_eps * jy(1, 1:ny, 1:nz) &
-        + diff * bz(1, 1:ny, 1:nz))
+        - 2.0_num * ey(laserpos, 1:ny, 1:nz) &
+        - lz * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 1:ny, 0:nz-1)) &
+        + dt_eps * jy(laserpos, 1:ny, 1:nz) &
+        + diff * bz(laserpos, 1:ny, 1:nz))
 
     IF (add_laser(i)) THEN
       fplus = 0.0_num
@@ -246,12 +250,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    by(0, 1:ny, 1:nz) = sum * (-4.0_num * fplus &
+    by(laserpos-1, 1:ny, 1:nz) = sum * (-4.0_num * fplus &
         - 2.0_num * (ez_x_min(1:ny, 1:nz) - c * by_x_min(1:ny, 1:nz)) &
-        + 2.0_num * ez(1, 1:ny, 1:nz) &
-        - ly * (bx(1, 1:ny, 1:nz) - bx(1, 0:ny-1, 1:nz)) &
-        - dt_eps * jz(1, 1:ny, 1:nz) &
-        + diff * by(1, 1:ny, 1:nz))
+        + 2.0_num * ez(laserpos, 1:ny, 1:nz) &
+        - ly * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 0:ny-1, 1:nz)) &
+        - dt_eps * jz(laserpos, 1:ny, 1:nz) &
+        + diff * by(laserpos, 1:ny, 1:nz))
 
     DEALLOCATE(fplus)
 
@@ -264,11 +268,15 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fneg
-    INTEGER :: i
+    INTEGER :: laserpos, i
     TYPE(laser_block), POINTER :: current
 
     i = c_bd_x_max
 
+    laserpos = nx
+    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+      laserpos = cpml_x_max_laser_idx - 1
+    ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -278,7 +286,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fneg(1:ny, 1:nz))
-    bx(nx+1, 1:ny, 1:nz) = bx_x_max(1:ny, 1:nz)
+    bx(laserpos+1, 1:ny, 1:nz) = bx_x_max(1:ny, 1:nz)
 
     fneg = 0.0_num
     IF (add_laser(i)) THEN
@@ -296,12 +304,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bz(nx, 1:ny, 1:nz) = sum * (-4.0_num * fneg &
+    bz(laserpos, 1:ny, 1:nz) = sum * (-4.0_num * fneg &
         - 2.0_num * (ey_x_max(1:ny, 1:nz) - c * bz_x_max(1:ny, 1:nz)) &
-        + 2.0_num * ey(nx, 1:ny, 1:nz) &
-        + lz * (bx(nx, 1:ny, 1:nz) - bx(nx, 1:ny, 0:nz-1)) &
-        - dt_eps * jy(nx, 1:ny, 1:nz) &
-        + diff * bz(nx-1, 1:ny, 1:nz))
+        + 2.0_num * ey(laserpos, 1:ny, 1:nz) &
+        + lz * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 1:ny, 0:nz-1)) &
+        - dt_eps * jy(laserpos, 1:ny, 1:nz) &
+        + diff * bz(laserpos-1, 1:ny, 1:nz))
 
     IF (add_laser(i)) THEN
       fneg = 0.0_num
@@ -319,12 +327,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    by(nx, 1:ny, 1:nz) = sum * ( 4.0_num * fneg &
+    by(laserpos, 1:ny, 1:nz) = sum * ( 4.0_num * fneg &
         + 2.0_num * (ez_x_max(1:ny, 1:nz) + c * by_x_max(1:ny, 1:nz)) &
-        - 2.0_num * ez(nx, 1:ny, 1:nz) &
-        + ly * (bx(nx, 1:ny, 1:nz) - bx(nx, 0:ny-1, 1:nz)) &
-        + dt_eps * jz(nx, 1:ny, 1:nz) &
-        + diff * by(nx-1, 1:ny, 1:nz))
+        - 2.0_num * ez(laserpos, 1:ny, 1:nz) &
+        + ly * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 0:ny-1, 1:nz)) &
+        + dt_eps * jz(laserpos, 1:ny, 1:nz) &
+        + diff * by(laserpos-1, 1:ny, 1:nz))
 
     DEALLOCATE(fneg)
 
@@ -337,11 +345,15 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: i
+    INTEGER :: laserpos, i
     TYPE(laser_block), POINTER :: current
 
     i = c_bd_y_min
 
+    laserpos = 1
+    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+      laserpos = cpml_y_min_laser_idx + 1
+    ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -351,7 +363,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fplus(1:nx, 1:nz))
-    by(1:nx, 0, 1:nz) = by_y_min(1:nx, 1:nz)
+    by(1:nx, laserpos-1, 1:nz) = by_y_min(1:nx, 1:nz)
 
     fplus = 0.0_num
     IF (add_laser(i)) THEN
@@ -369,12 +381,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bx(1:nx, 0, 1:nz) = sum * ( 4.0_num * fplus &
+    bx(1:nx, laserpos-1, 1:nz) = sum * ( 4.0_num * fplus &
         + 2.0_num * (ez_y_min(1:nx, 1:nz) + c * bx_y_min(1:nx, 1:nz)) &
-        - 2.0_num * ez(1:nx, 1, 1:nz) &
-        - lx * (by(1:nx, 1, 1:nz) - by(0:nx-1, 1, 1:nz)) &
-        + dt_eps * jz(1:nx, 1, 1:nz) &
-        + diff * bx(1:nx, 1, 1:nz))
+        - 2.0_num * ez(1:nx, laserpos, 1:nz) &
+        - lx * (by(1:nx, laserpos, 1:nz) - by(0:nx-1, laserpos, 1:nz)) &
+        + dt_eps * jz(1:nx, laserpos, 1:nz) &
+        + diff * bx(1:nx, laserpos, 1:nz))
 
     IF (add_laser(i)) THEN
       fplus = 0.0_num
@@ -392,12 +404,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bz(1:nx, 0, 1:nz) = sum * (-4.0_num * fplus &
+    bz(1:nx, laserpos-1, 1:nz) = sum * (-4.0_num * fplus &
         - 2.0_num * (ex_y_min(1:nx, 1:nz) - c * bz_y_min(1:nx, 1:nz)) &
-        + 2.0_num * ex(1:nx, 1, 1:nz) &
-        - lz * (by(1:nx, 1, 1:nz) - by(1:nx, 1, 0:nz-1)) &
-        - dt_eps * jx(1:nx, 1, 1:nz) &
-        + diff * bz(1:nx, 1, 1:nz))
+        + 2.0_num * ex(1:nx, laserpos, 1:nz) &
+        - lz * (by(1:nx, laserpos, 1:nz) - by(1:nx, laserpos, 0:nz-1)) &
+        - dt_eps * jx(1:nx, laserpos, 1:nz) &
+        + diff * bz(1:nx, laserpos, 1:nz))
 
     DEALLOCATE(fplus)
 
@@ -410,11 +422,15 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fneg
-    INTEGER :: i
+    INTEGER :: laserpos, i
     TYPE(laser_block), POINTER :: current
 
     i = c_bd_y_max
 
+    laserpos = ny
+    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+      laserpos = cpml_y_max_laser_idx - 1
+    ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -424,7 +440,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fneg(1:nx, 1:nz))
-    by(1:nx, ny+1, 1:nz) = by_y_max(1:nx, 1:nz)
+    by(1:nx, laserpos+1, 1:nz) = by_y_max(1:nx, 1:nz)
 
     fneg = 0.0_num
     IF (add_laser(i)) THEN
@@ -442,12 +458,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bx(1:nx, ny, 1:nz) = sum * (-4.0_num * fneg &
+    bx(1:nx, laserpos, 1:nz) = sum * (-4.0_num * fneg &
         - 2.0_num * (ez_y_max(1:nx, 1:nz) - c * bx_y_max(1:nx, 1:nz)) &
-        + 2.0_num * ez(1:nx, ny, 1:nz) &
-        + lx * (by(1:nx, ny, 1:nz) - by(0:nx-1, ny, 1:nz)) &
-        - dt_eps * jz(1:nx, ny, 1:nz) &
-        + diff * bx(1:nx, ny-1, 1:nz))
+        + 2.0_num * ez(1:nx, laserpos, 1:nz) &
+        + lx * (by(1:nx, laserpos, 1:nz) - by(0:nx-1, laserpos, 1:nz)) &
+        - dt_eps * jz(1:nx, laserpos, 1:nz) &
+        + diff * bx(1:nx, laserpos-1, 1:nz))
 
     IF (add_laser(i)) THEN
       fneg = 0.0_num
@@ -465,12 +481,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bz(1:nx, ny, 1:nz) = sum * ( 4.0_num * fneg &
+    bz(1:nx, laserpos, 1:nz) = sum * ( 4.0_num * fneg &
         + 2.0_num * (ex_y_max(1:nx, 1:nz) + c * bz_y_max(1:nx, 1:nz)) &
-        - 2.0_num * ex(1:nx, ny, 1:nz) &
-        + lz * (by(1:nx, ny, 1:nz) - by(1:nx, ny, 0:nz-1)) &
-        + dt_eps * jx(1:nx, ny, 1:nz) &
-        + diff * bz(1:nx, ny-1, 1:nz))
+        - 2.0_num * ex(1:nx, laserpos, 1:nz) &
+        + lz * (by(1:nx, laserpos, 1:nz) - by(1:nx, laserpos, 0:nz-1)) &
+        + dt_eps * jx(1:nx, laserpos, 1:nz) &
+        + diff * bz(1:nx, laserpos-1, 1:nz))
 
     DEALLOCATE(fneg)
 
@@ -483,11 +499,15 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: i
+    INTEGER :: laserpos, i
     TYPE(laser_block), POINTER :: current
 
     i = c_bd_z_min
 
+    laserpos = 1
+    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+      laserpos = cpml_z_min_laser_idx + 1
+    ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -497,7 +517,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fplus(1:nx, 1:ny))
-    bz(1:nx, 1:ny, 0) = bz_z_min(1:nx, 1:ny)
+    bz(1:nx, 1:ny, laserpos-1) = bz_z_min(1:nx, 1:ny)
 
     fplus = 0.0_num
     IF (add_laser(i)) THEN
@@ -515,12 +535,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    by(1:nx, 1:ny, 0) = sum * ( 4.0_num * fplus &
+    by(1:nx, 1:ny, laserpos-1) = sum * ( 4.0_num * fplus &
         + 2.0_num * (ex_z_min(1:nx, 1:ny) + c * by_z_min(1:nx, 1:ny)) &
-        - 2.0_num * ex(1:nx, 1:ny, 1) &
-        - ly * (bz(1:nx, 1:ny, 1) - bz(1:nx, 0:ny-1, 1)) &
-        + dt_eps * jx(1:nx, 1:ny, 1) &
-        + diff * by(1:nx, 1:ny, 1))
+        - 2.0_num * ex(1:nx, 1:ny, laserpos) &
+        - ly * (bz(1:nx, 1:ny, laserpos) - bz(1:nx, 0:ny-1, laserpos)) &
+        + dt_eps * jx(1:nx, 1:ny, laserpos) &
+        + diff * by(1:nx, 1:ny, laserpos))
 
     IF (add_laser(i)) THEN
       fplus = 0.0_num
@@ -538,12 +558,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bx(1:nx, 1:ny, 0) = sum * (-4.0_num * fplus &
+    bx(1:nx, 1:ny, laserpos-1) = sum * (-4.0_num * fplus &
         - 2.0_num * (ey_z_min(1:nx, 1:ny) - c * bx_z_min(1:nx, 1:ny)) &
-        + 2.0_num * ey(1:nx, 1:ny, 1) &
-        - lx * (bz(1:nx, 1:ny, 1) - bz(0:nx-1, 1:ny, 1)) &
-        - dt_eps * jy(1:nx, 1:ny, 1) &
-        + diff * bx(1:nx, 1:ny, 1))
+        + 2.0_num * ey(1:nx, 1:ny, laserpos) &
+        - lx * (bz(1:nx, 1:ny, laserpos) - bz(0:nx-1, 1:ny, laserpos)) &
+        - dt_eps * jy(1:nx, 1:ny, laserpos) &
+        + diff * bx(1:nx, 1:ny, laserpos))
 
     DEALLOCATE(fplus)
 
@@ -556,11 +576,15 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: fneg
-    INTEGER :: i
+    INTEGER :: laserpos, i
     TYPE(laser_block), POINTER :: current
 
     i = c_bd_z_max
 
+    laserpos = nz
+    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+      laserpos = cpml_z_max_laser_idx - 1
+    ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -570,7 +594,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fneg(1:nx, 1:ny))
-    bz(1:nx, 1:ny, nz+1) = bz_z_max(1:nx, 1:ny)
+    bz(1:nx, 1:ny, laserpos+1) = bz_z_max(1:nx, 1:ny)
 
     fneg = 0.0_num
     IF (add_laser(i)) THEN
@@ -588,12 +612,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    by(1:nx, 1:ny, nz) = sum * (-4.0_num * fneg &
+    by(1:nx, 1:ny, laserpos) = sum * (-4.0_num * fneg &
         - 2.0_num * (ex_z_max(1:nx, 1:ny) - c * by_z_max(1:nx, 1:ny)) &
-        + 2.0_num * ex(1:nx, 1:ny, nz) &
-        + ly * (bz(1:nx, 1:ny, nz) - bz(1:nx, 0:ny-1, nz)) &
-        - dt_eps * jx(1:nx, 1:ny, nz) &
-        + diff * by(1:nx, 1:ny, nz-1))
+        + 2.0_num * ex(1:nx, 1:ny, laserpos) &
+        + ly * (bz(1:nx, 1:ny, laserpos) - bz(1:nx, 0:ny-1, laserpos)) &
+        - dt_eps * jx(1:nx, 1:ny, laserpos) &
+        + diff * by(1:nx, 1:ny, laserpos-1))
 
     IF (add_laser(i)) THEN
       fneg = 0.0_num
@@ -611,12 +635,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bx(1:nx, 1:ny, nz) = sum * ( 4.0_num * fneg &
+    bx(1:nx, 1:ny, laserpos) = sum * ( 4.0_num * fneg &
         + 2.0_num * (ey_z_max(1:nx, 1:ny) + c * bx_z_max(1:nx, 1:ny)) &
-        - 2.0_num * ey(1:nx, 1:ny, nz) &
-        + lx * (bz(1:nx, 1:ny, nz) - bz(0:nx-1, 1:ny, nz)) &
-        + dt_eps * jy(1:nx, 1:ny, nz) &
-        + diff * bx(1:nx, 1:ny, nz-1))
+        - 2.0_num * ey(1:nx, 1:ny, laserpos) &
+        + lx * (bz(1:nx, 1:ny, laserpos) - bz(0:nx-1, 1:ny, laserpos)) &
+        + dt_eps * jy(1:nx, 1:ny, laserpos) &
+        + diff * bx(1:nx, 1:ny, laserpos-1))
 
     DEALLOCATE(fneg)
 

@@ -19,6 +19,7 @@ CONTAINS
     order = field_order
     large = order / 2
     small = large - 1
+    ng = large
 
     IF (field_order .EQ. 2) THEN
       const(1:2) = (/ -1.0_num, 1.0_num /)
@@ -41,8 +42,55 @@ CONTAINS
   SUBROUTINE update_e_field
 
     INTEGER :: ix, iy, iz
+    REAL(num) :: cpml_x, cpml_y, cpml_z, j_extra = 0
 
-    IF (.TRUE.) THEN
+    IF (cpml_boundaries) THEN
+      cpml_x = cnx
+      cpml_y = cny
+      cpml_z = cnz
+
+      DO iz = 1, nz
+        cpml_z = cnz / cpml_kappa_e_dz(iz)
+        DO iy = 1, ny
+          cpml_y = cny / cpml_kappa_e_dy(iy)
+          DO ix = 1, nx
+            j_extra = (cpml_e_psixz(ix,iy,iz) - cpml_e_psixy(ix,iy,iz)) / mu0
+            ex(ix, iy, iz) = ex(ix, iy, iz) &
+                + cpml_y * SUM(const(1:order) * bz(ix, iy-large:iy+small, iz)) &
+                - cpml_z * SUM(const(1:order) * by(ix, iy, iz-large:iz+small)) &
+                - fac * (jx(ix, iy, iz) + j_extra)
+          ENDDO
+        ENDDO
+      ENDDO
+
+      DO iz = 1, nz
+        cpml_z = cnz / cpml_kappa_e_dz(iz)
+        DO iy = 1, ny
+          DO ix = 1, nx
+            cpml_x = cnx / cpml_kappa_e_dx(ix)
+            j_extra = (cpml_e_psiyx(ix,iy,iz) - cpml_e_psiyz(ix,iy,iz)) / mu0
+            ey(ix, iy, iz) = ey(ix, iy, iz) &
+                + cpml_z * SUM(const(1:order) * bx(ix, iy, iz-large:iz+small)) &
+                - cpml_x * SUM(const(1:order) * bz(ix-large:ix+small, iy, iz)) &
+                - fac * (jy(ix, iy, iz) + j_extra)
+          ENDDO
+        ENDDO
+      ENDDO
+
+      DO iz = 1, nz
+        DO iy = 1, ny
+          cpml_y = cny / cpml_kappa_e_dy(iy)
+          DO ix = 1, nx
+            cpml_x = cnx / cpml_kappa_e_dx(ix)
+            j_extra = (cpml_e_psizy(ix,iy,iz) - cpml_e_psizx(ix,iy,iz)) / mu0
+            ez(ix, iy, iz) = ez(ix, iy, iz) &
+                + cpml_x * SUM(const(1:order) * by(ix-large:ix+small, iy, iz)) &
+                - cpml_y * SUM(const(1:order) * bx(ix, iy-large:iy+small, iz)) &
+                - fac * (jz(ix, iy, iz) + j_extra)
+          ENDDO
+        ENDDO
+      ENDDO
+    ELSE
       DO iz = 1, nz
         DO iy = 1, ny
           DO ix = 1, nx
@@ -84,8 +132,55 @@ CONTAINS
   SUBROUTINE update_b_field
 
     INTEGER :: ix, iy, iz
+    REAL(num) :: cpml_x, cpml_y, cpml_z, j_extra = 0
 
-    IF (.TRUE.) THEN
+    IF (cpml_boundaries) THEN
+      cpml_x = hdtx
+      cpml_y = hdty
+      cpml_z = hdtz
+
+      DO iz = 1, nz
+        cpml_z = hdtz / cpml_kappa_b_dz(iz)
+        DO iy = 1, ny
+          cpml_y = hdty / cpml_kappa_b_dy(iy)
+          DO ix = 1, nx
+            j_extra = cpml_b_psixy(ix,iy,iz) - cpml_b_psixz(ix,iy,iz)
+            bx(ix, iy, iz) = bx(ix, iy, iz) &
+                - cpml_y * SUM(const(1:order) * ez(ix, iy-small:iy+large, iz)) &
+                + cpml_z * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large)) &
+                - hdt * j_extra
+          ENDDO
+        ENDDO
+      ENDDO
+
+      DO iz = 1, nz
+        cpml_z = hdtz / cpml_kappa_b_dz(iz)
+        DO iy = 1, ny
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_b_dx(ix)
+            j_extra = cpml_b_psiyz(ix,iy,iz) - cpml_b_psiyx(ix,iy,iz)
+            by(ix, iy, iz) = by(ix, iy, iz) &
+                - cpml_z * SUM(const(1:order) * ex(ix, iy, iz-small:iz+large)) &
+                + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz)) &
+                - hdt * j_extra
+          ENDDO
+        ENDDO
+      ENDDO
+
+      DO iz = 1, nz
+        DO iy = 1, ny
+          cpml_y = hdty / cpml_kappa_b_dy(iy)
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_b_dx(ix)
+            j_extra = cpml_b_psizx(ix,iy,iz) - cpml_b_psizy(ix,iy,iz)
+            bz(ix, iy, iz) = bz(ix, iy, iz) &
+                - cpml_x * SUM(const(1:order) * ey(ix-small:ix+large, iy, iz)) &
+                + cpml_y * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz)) &
+                - hdt * j_extra
+          ENDDO
+        ENDDO
+      ENDDO
+    ELSE
       DO iz = 1, nz
         DO iy = 1, ny
           DO ix = 1, nx
@@ -140,6 +235,8 @@ CONTAINS
     ! Now have E(t+dt/2), do boundary conditions on E
     CALL efield_bcs
 
+    IF (cpml_boundaries) CALL cpml_advance_b_currents(dt)
+
     ! Update B field to t+dt/2 using E(t+dt/2)
     CALL update_b_field
 
@@ -155,9 +252,13 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
+    INTEGER :: i
+
     CALL update_b_field
 
     CALL bfield_final_bcs
+
+    IF (cpml_boundaries) CALL cpml_advance_e_currents(dt)
 
     CALL update_e_field
 

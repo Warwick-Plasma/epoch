@@ -55,6 +55,10 @@ CONTAINS
     io_block_name(c_dump_ejected_particles) = 'ejected_particles'
     io_block_name(c_dump_ekflux           ) = 'ekflux'
     io_block_name(c_dump_poynt_flux       ) = 'poynt_flux'
+    io_block_name(c_dump_cpml_e_psiyx     ) = 'cpml_e_psiyx'
+    io_block_name(c_dump_cpml_e_psizx     ) = 'cpml_e_psizx'
+    io_block_name(c_dump_cpml_b_psiyx     ) = 'cpml_b_psiyx'
+    io_block_name(c_dump_cpml_b_psizx     ) = 'cpml_b_psizx'
 
     i = num_vars_to_dump
     io_block_name (i+1 ) = 'dt_snapshot'
@@ -337,6 +341,15 @@ CONTAINS
     dumpmask(c_dump_jx) = IOR(dumpmask(c_dump_jx), c_io_restartable)
     dumpmask(c_dump_jy) = IOR(dumpmask(c_dump_jy), c_io_restartable)
     dumpmask(c_dump_jz) = IOR(dumpmask(c_dump_jz), c_io_restartable)
+    ! CPML boundaries
+    dumpmask(c_dump_cpml_e_psiyx) = &
+        IOR(dumpmask(c_dump_cpml_e_psiyx), c_io_restartable)
+    dumpmask(c_dump_cpml_e_psizx) = &
+        IOR(dumpmask(c_dump_cpml_e_psizx), c_io_restartable)
+    dumpmask(c_dump_cpml_b_psiyx) = &
+        IOR(dumpmask(c_dump_cpml_b_psiyx), c_io_restartable)
+    dumpmask(c_dump_cpml_b_psizx) = &
+        IOR(dumpmask(c_dump_cpml_b_psizx), c_io_restartable)
 
   END FUNCTION io_block_check
 

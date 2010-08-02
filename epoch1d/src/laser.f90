@@ -123,18 +123,22 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, sum, diff, dt_eps
     REAL(num) :: fplus
-    INTEGER :: i
+    INTEGER :: laserpos, i
     TYPE(laser_block), POINTER :: current
 
     i = c_bd_x_min
 
+    laserpos = 1
+    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+      laserpos = cpml_x_min_laser_idx + 1
+    ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(0) = bx_x_min
+    bx(laserpos-1) = bx_x_min
 
     fplus = 0.0_num
     IF (add_laser(i)) THEN
@@ -151,11 +155,11 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bz(0) = sum * ( 4.0_num * fplus &
+    bz(laserpos-1) = sum * ( 4.0_num * fplus &
         + 2.0_num * (ey_x_min + c * bz_x_min) &
-        - 2.0_num * ey(1) &
-        + dt_eps * jy(1) &
-        + diff * bz(1))
+        - 2.0_num * ey(laserpos) &
+        + dt_eps * jy(laserpos) &
+        + diff * bz(laserpos))
 
     IF (add_laser(i)) THEN
       fplus = 0.0_num
@@ -172,11 +176,11 @@ CONTAINS
       ENDDO
     ENDIF
 
-    by(0) = sum * (-4.0_num * fplus &
+    by(laserpos-1) = sum * (-4.0_num * fplus &
         - 2.0_num * (ez_x_min - c * by_x_min) &
-        + 2.0_num * ez(1) &
-        - dt_eps * jz(1) &
-        + diff * by(1))
+        + 2.0_num * ez(laserpos) &
+        - dt_eps * jz(laserpos) &
+        + diff * by(laserpos))
 
   END SUBROUTINE outflow_bcs_x_min
 
@@ -187,18 +191,22 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, sum, diff, dt_eps
     REAL(num) :: fneg
-    INTEGER :: i
+    INTEGER :: laserpos, i
     TYPE(laser_block), POINTER :: current
 
     i = c_bd_x_max
 
+    laserpos = nx
+    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+      laserpos = cpml_x_max_laser_idx - 1
+    ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(nx+1) = bx_x_max
+    bx(laserpos+1) = bx_x_max
 
     fneg = 0.0_num
     IF (add_laser(i)) THEN
@@ -215,11 +223,11 @@ CONTAINS
       ENDDO
     ENDIF
 
-    bz(nx) = sum * (-4.0_num * fneg &
+    bz(laserpos) = sum * (-4.0_num * fneg &
         - 2.0_num * (ey_x_max - c * bz_x_max) &
-        + 2.0_num * ey(nx) &
-        - dt_eps * jy(nx) &
-        + diff * bz(nx-1))
+        + 2.0_num * ey(laserpos) &
+        - dt_eps * jy(laserpos) &
+        + diff * bz(laserpos-1))
 
     IF (add_laser(i)) THEN
       fneg = 0.0_num
@@ -236,11 +244,11 @@ CONTAINS
       ENDDO
     ENDIF
 
-    by(nx) = sum * ( 4.0_num * fneg &
+    by(laserpos) = sum * ( 4.0_num * fneg &
         + 2.0_num * (ez_x_max + c * by_x_max) &
-        - 2.0_num * ez(nx) &
-        + dt_eps * jz(nx) &
-        + diff * by(nx-1))
+        - 2.0_num * ez(laserpos) &
+        + dt_eps * jz(laserpos) &
+        + diff * by(laserpos-1))
 
   END SUBROUTINE outflow_bcs_x_max
 

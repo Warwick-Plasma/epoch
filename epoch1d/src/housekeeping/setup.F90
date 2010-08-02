@@ -55,6 +55,10 @@ CONTAINS
     dt_plasma_frequency = 0.0_num
     dt_multiplier = 0.95_num
     stdout_frequency = 0
+    cpml_thickness = 6
+    cpml_kappa_max = 20.0_num
+    cpml_a_max = 0.15_num
+    cpml_sigma_max = 0.7_num
 
     window_shift = 0.0_num
     npart_global = -1
@@ -154,6 +158,20 @@ CONTAINS
     CALL setup_data_averaging
     CALL setup_split_particles
     CALL setup_field_boundaries
+
+    IF (cpml_boundaries) THEN
+      CALL allocate_cpml_fields
+      CALL set_cpml_helpers
+    ELSE
+      cpml_thickness = 0
+      cpml_kappa_max = 1.0_num
+      cpml_a_max = 0.0_num
+      cpml_sigma_max = 0.0_num
+      dumpmask(c_dump_cpml_e_psiyx) = 0
+      dumpmask(c_dump_cpml_e_psizx) = 0
+      dumpmask(c_dump_cpml_b_psiyx) = 0
+      dumpmask(c_dump_cpml_b_psizx) = 0
+    ENDIF
 
   END SUBROUTINE after_deck_last
 
@@ -620,6 +638,22 @@ CONTAINS
 
         ELSE IF (str_cmp(block_id, 'jz')) THEN
           CALL sdf_read_plain_variable(sdf_handle, jz, &
+              subtype_field, subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'cpml_e_psiyx')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, cpml_e_psiyx, &
+              subtype_field, subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'cpml_e_psizx')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, cpml_e_psizx, &
+              subtype_field, subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'cpml_b_psiyx')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, cpml_b_psiyx, &
+              subtype_field, subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'cpml_b_psizx')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, cpml_b_psizx, &
               subtype_field, subarray_field)
 
         ENDIF

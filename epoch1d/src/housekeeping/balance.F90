@@ -196,6 +196,35 @@ CONTAINS
     ALLOCATE(jz(-2:nx_new+3))
     jz = temp
 
+    IF (cpml_boundaries) THEN
+      temp = 0.0_num
+      CALL redistribute_field(new_domain, cpml_e_psiyx, temp)
+      DEALLOCATE(cpml_e_psiyx)
+      ALLOCATE(cpml_e_psiyx(-2:nx_new+3))
+      cpml_e_psiyx = temp
+
+      temp = 0.0_num
+      CALL redistribute_field(new_domain, cpml_e_psizx, temp)
+      DEALLOCATE(cpml_e_psizx)
+      ALLOCATE(cpml_e_psizx(-2:nx_new+3))
+      cpml_e_psizx = temp
+
+      temp = 0.0_num
+      CALL redistribute_field(new_domain, cpml_b_psiyx, temp)
+      DEALLOCATE(cpml_b_psiyx)
+      ALLOCATE(cpml_b_psiyx(-2:nx_new+3))
+      cpml_b_psiyx = temp
+
+      temp = 0.0_num
+      CALL redistribute_field(new_domain, cpml_b_psizx, temp)
+      DEALLOCATE(cpml_b_psizx)
+      ALLOCATE(cpml_b_psizx(-2:nx_new+3))
+      cpml_b_psizx = temp
+
+      CALL deallocate_cpml_helpers
+      CALL set_cpml_helpers
+    ENDIF
+
     DEALLOCATE(temp)
 
     DO index = 1, num_vars_to_dump
@@ -217,7 +246,7 @@ CONTAINS
       ENDDO
 
       DEALLOCATE(averaged_data(index)%array)
-      ALLOCATE(averaged_data(index)%array(-2:nx_new+3, n_species_local))
+      ALLOCATE(averaged_data(index)%array(-2:nx_new+3,n_species_local))
 
       averaged_data(index)%array = temp2d
 

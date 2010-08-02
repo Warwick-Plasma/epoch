@@ -2,6 +2,7 @@ MODULE deck_boundaries_block
 
   USE mpi
   USE strings
+  USE strings_advanced
 
   IMPLICIT NONE
   SAVE
@@ -12,7 +13,7 @@ MODULE deck_boundaries_block
   PUBLIC :: boundary_block_handle_element, boundary_block_check
 
   INTEGER, PARAMETER :: boundary_block_nbase = 2 * c_ndims
-  INTEGER, PARAMETER :: boundary_block_elements = 3 * boundary_block_nbase
+  INTEGER, PARAMETER :: boundary_block_elements = 3 * boundary_block_nbase + 4
   LOGICAL, DIMENSION(boundary_block_elements) :: boundary_block_done
   CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
       boundary_block_name = (/ &
@@ -33,7 +34,11 @@ MODULE deck_boundaries_block
           "bc_y_min_particle", &
           "bc_y_max_particle", &
           "bc_z_min_particle", &
-          "bc_z_max_particle" /)
+          "bc_z_max_particle", &
+          "cpml_thickness   ", &
+          "cpml_kappa_max   ", &
+          "cpml_a_max       ", &
+          "cpml_sigma_max   " /)
   CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
       alternate_name = (/ &
           "xbc_left          ", &
@@ -53,7 +58,11 @@ MODULE deck_boundaries_block
           "ybc_down_particle ", &
           "ybc_up_particle   ", &
           "zbc_back_particle ", &
-          "zbc_front_particle" /)
+          "zbc_front_particle", &
+          "cpml_thickness    ", &
+          "cpml_kappa_max    ", &
+          "cpml_a_max        ", &
+          "cpml_sigma_max    " /)
 
 CONTAINS
 
@@ -107,6 +116,7 @@ CONTAINS
     ENDDO
 
     IF (elementselected .EQ. 0) RETURN
+
     IF (boundary_block_done(elementselected)) THEN
       errcode = c_err_preset_element
       RETURN
@@ -180,6 +190,14 @@ CONTAINS
     CASE(2*nbase+6)
       bc_particle(c_bd_z_max) = as_bc(value, errcode)
       boundary_block_done(6)  = .TRUE.
+    CASE(3*nbase+1)
+      cpml_thickness = as_integer(value, errcode)
+    CASE(3*nbase+2)
+      cpml_kappa_max = as_real(value, errcode)
+    CASE(3*nbase+3)
+      cpml_a_max = as_real(value, errcode)
+    CASE(3*nbase+4)
+      cpml_sigma_max = as_real(value, errcode)
     END SELECT
 
   END FUNCTION boundary_block_handle_element
@@ -203,7 +221,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    DO index = 1, boundary_block_elements
+    DO index = 1, boundary_block_elements - 4
       IF (.NOT. boundary_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
           DO io = stdout, du, du - stdout ! Print to stdout and to file

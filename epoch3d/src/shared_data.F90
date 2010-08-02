@@ -33,6 +33,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_reflect = 9
   INTEGER, PARAMETER :: c_bc_conduct = 10
   INTEGER, PARAMETER :: c_bc_thermal = 11
+  INTEGER, PARAMETER :: c_bc_cpml_laser = 12
+  INTEGER, PARAMETER :: c_bc_cpml_outflow = 13
 
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
@@ -519,13 +521,49 @@ MODULE shared_data
   END TYPE particle_probe
 #endif
 
+  INTEGER :: cpml_thickness
+  INTEGER :: cpml_x_min_start, cpml_x_min_end
+  INTEGER :: cpml_x_max_start, cpml_x_max_end
+  INTEGER :: cpml_y_min_start, cpml_y_min_end
+  INTEGER :: cpml_y_max_start, cpml_y_max_end
+  INTEGER :: cpml_z_min_start, cpml_z_min_end
+  INTEGER :: cpml_z_max_start, cpml_z_max_end
+  ! Indicate that we have a boundary on the current processor
+  LOGICAL :: cpml_x_min = .FALSE., cpml_x_max = .FALSE.
+  LOGICAL :: cpml_y_min = .FALSE., cpml_y_max = .FALSE.
+  LOGICAL :: cpml_z_min = .FALSE., cpml_z_max = .FALSE.
+  LOGICAL :: cpml_boundaries
+  ! Indicate that the laser injection is located on the current processor
+  LOGICAL :: cpml_x_min_laser = .FALSE., cpml_x_max_laser = .FALSE.
+  INTEGER :: cpml_x_min_laser_idx, cpml_x_max_laser_idx
+  LOGICAL :: cpml_y_min_laser = .FALSE., cpml_y_max_laser = .FALSE.
+  INTEGER :: cpml_y_min_laser_idx, cpml_y_max_laser_idx
+  LOGICAL :: cpml_z_min_laser = .FALSE., cpml_z_max_laser = .FALSE.
+  INTEGER :: cpml_z_min_laser_idx, cpml_z_max_laser_idx
+  REAL(num) :: cpml_kappa_max, cpml_a_max, cpml_sigma_max
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_kappa_e_dx, cpml_kappa_b_dx
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_kappa_e_dy, cpml_kappa_b_dy
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_kappa_e_dz, cpml_kappa_b_dz
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_e_acoeff_x, cpml_e_sigma_x
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_b_acoeff_x, cpml_b_sigma_x
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_e_acoeff_y, cpml_e_sigma_y
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_b_acoeff_y, cpml_b_sigma_y
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_e_acoeff_z, cpml_e_sigma_z
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_b_acoeff_z, cpml_b_sigma_z
+  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: cpml_e_psiyx, cpml_e_psizx
+  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: cpml_b_psiyx, cpml_b_psizx
+  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: cpml_e_psixy, cpml_e_psizy
+  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: cpml_b_psixy, cpml_b_psizy
+  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: cpml_e_psixz, cpml_e_psiyz
+  REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: cpml_b_psixz, cpml_b_psiyz
+
   !----------------------------------------------------------------------------
   ! Core code
   !----------------------------------------------------------------------------
   INTEGER :: mpireal = MPI_DOUBLE_PRECISION
   INTEGER :: realsize
 
-  INTEGER :: nx, ny, nz
+  INTEGER :: nx, ny, nz, ng
   INTEGER :: nx_global, ny_global, nz_global
   INTEGER(KIND=8) :: npart_global, particles_max_id
   INTEGER :: nprocx, nprocy, nprocz
@@ -675,10 +713,22 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_ejected_particles = 30
   INTEGER, PARAMETER :: c_dump_ekflux            = 31
   INTEGER, PARAMETER :: c_dump_poynt_flux        = 32
-  INTEGER, PARAMETER :: num_vars_to_dump         = 32
+  INTEGER, PARAMETER :: c_dump_cpml_e_psiyx      = 33
+  INTEGER, PARAMETER :: c_dump_cpml_e_psizx      = 34
+  INTEGER, PARAMETER :: c_dump_cpml_b_psiyx      = 35
+  INTEGER, PARAMETER :: c_dump_cpml_b_psizx      = 36
+  INTEGER, PARAMETER :: c_dump_cpml_e_psixy      = 37
+  INTEGER, PARAMETER :: c_dump_cpml_e_psizy      = 38
+  INTEGER, PARAMETER :: c_dump_cpml_b_psixy      = 39
+  INTEGER, PARAMETER :: c_dump_cpml_b_psizy      = 40
+  INTEGER, PARAMETER :: c_dump_cpml_e_psixz      = 41
+  INTEGER, PARAMETER :: c_dump_cpml_e_psiyz      = 42
+  INTEGER, PARAMETER :: c_dump_cpml_b_psixz      = 43
+  INTEGER, PARAMETER :: c_dump_cpml_b_psiyz      = 44
+  INTEGER, PARAMETER :: num_vars_to_dump         = 44
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
-  !----------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   ! Time averaged IO
   !----------------------------------------------------------------------------
   TYPE averaged_data_block

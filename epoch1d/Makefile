@@ -173,7 +173,7 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_constant_block.o \
   deck_io_block.o deck_laser_block.o deck_particle_probe_block.o \
   deck_species_block.o deck_window_block.o sdf.o shared_data.o strings.o \
   version_data.o
-deck_boundaries_block.o: deck_boundaries_block.f90 strings.o
+deck_boundaries_block.o: deck_boundaries_block.f90 strings.o strings_advanced.o
 deck_constant_block.o: deck_constant_block.f90 shunt.o strings.o
 deck_control_block.o: deck_control_block.f90 fields.o strings_advanced.o
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o

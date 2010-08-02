@@ -19,6 +19,7 @@ CONTAINS
     order = field_order
     large = order / 2
     small = large - 1
+    ng = large
 
     IF (field_order .EQ. 2) THEN
       const(1:2) = (/ -1.0_num, 1.0_num /)
@@ -41,8 +42,32 @@ CONTAINS
   SUBROUTINE update_e_field
 
     INTEGER :: ix
+    REAL(num) :: cpml_x, j_extra = 0
 
-    IF (.TRUE.) THEN
+    IF (cpml_boundaries) THEN
+      cpml_x = cnx
+
+      DO ix = 1, nx
+        ex(ix) = ex(ix) &
+            - fac * jx(ix)
+      ENDDO
+
+      DO ix = 1, nx
+        cpml_x = cnx / cpml_kappa_e_dx(ix)
+        j_extra = cpml_e_psiyx(ix) / mu0
+        ey(ix) = ey(ix) &
+            - cpml_x * SUM(const(1:order) * bz(ix-large:ix+small)) &
+            - fac * (jy(ix) + j_extra)
+      ENDDO
+
+      DO ix = 1, nx
+        cpml_x = cnx / cpml_kappa_e_dx(ix)
+        j_extra = -cpml_e_psizx(ix) / mu0
+        ez(ix) = ez(ix) &
+            + cpml_x * SUM(const(1:order) * by(ix-large:ix+small)) &
+            - fac * (jz(ix) + j_extra)
+      ENDDO
+    ELSE
       DO ix = 1, nx
         ex(ix) = ex(ix) &
             - fac * jx(ix)
@@ -68,8 +93,27 @@ CONTAINS
   SUBROUTINE update_b_field
 
     INTEGER :: ix
+    REAL(num) :: cpml_x, j_extra = 0
 
-    IF (.TRUE.) THEN
+    IF (cpml_boundaries) THEN
+      cpml_x = hdtx
+
+      DO ix = 1, nx
+        cpml_x = hdtx / cpml_kappa_b_dx(ix)
+        j_extra = -cpml_b_psiyx(ix)
+        by(ix) = by(ix) &
+            + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large)) &
+            - hdt * j_extra
+      ENDDO
+
+      DO ix = 1, nx
+        cpml_x = hdtx / cpml_kappa_b_dx(ix)
+        j_extra = cpml_b_psizx(ix)
+        bz(ix) = bz(ix) &
+            - cpml_x * SUM(const(1:order) * ey(ix-small:ix+large)) &
+            - hdt * j_extra
+      ENDDO
+    ELSE
       DO ix = 1, nx
         by(ix) = by(ix) &
             + hdtx * SUM(const(1:order) * ez(ix-small:ix+large))
@@ -100,6 +144,8 @@ CONTAINS
     ! Now have E(t+dt/2), do boundary conditions on E
     CALL efield_bcs
 
+    IF (cpml_boundaries) CALL cpml_advance_b_currents(dt)
+
     ! Update B field to t+dt/2 using E(t+dt/2)
     CALL update_b_field
 
@@ -115,9 +161,13 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
+    INTEGER :: i
+
     CALL update_b_field
 
     CALL bfield_final_bcs
+
+    IF (cpml_boundaries) CALL cpml_advance_e_currents(dt)
 
     CALL update_e_field
 

@@ -181,6 +181,15 @@ CONTAINS
     CALL write_field(c_dump_jz, code, 'jz', 'Current/Jz', 'A/m^2', &
         c_stagger_jz, jz)
 
+    CALL write_field(c_dump_cpml_e_psiyx, code, 'cpml_e_psiyx', 'CPML/Ey_x', &
+        'Amp', c_stagger_cell_centre, cpml_e_psiyx)
+    CALL write_field(c_dump_cpml_e_psizx, code, 'cpml_e_psizx', 'CPML/Ez_x', &
+        'Amp', c_stagger_cell_centre, cpml_e_psizx)
+    CALL write_field(c_dump_cpml_b_psiyx, code, 'cpml_b_psiyx', 'CPML/By_x', &
+        'Amp', c_stagger_cell_centre, cpml_b_psiyx)
+    CALL write_field(c_dump_cpml_b_psizx, code, 'cpml_b_psizx', 'CPML/Bz_x', &
+        'Amp', c_stagger_cell_centre, cpml_b_psizx)
+
     ! These are derived variables from the particles
     CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &
         'Derived/EkBar', 'J', c_stagger_cell_centre, &
