@@ -163,7 +163,7 @@ CONTAINS
         part_mc = c * current%mass
 #endif
 
-        ! Calculate v(t+0.5dt) from p(t)
+        ! Calculate v(t) from p(t)
         ! See PSC manual page (25-27)
         root = dtco2 / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
 
@@ -171,8 +171,8 @@ CONTAINS
         part_x = part_x + part_px * root
         part_y = part_y + part_py * root
 
-        ! Work out number of grid cells in the particle is
-        ! Not in general an integer
+        ! Work out the grid cell number for the particle.
+        ! Not an integer in general.
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = part_x / dx - 0.5_num
         cell_y_r = part_y / dy - 0.5_num
@@ -186,11 +186,7 @@ CONTAINS
         cell_frac_x = REAL(cell_x1, num) - cell_x_r
         cell_x1 = cell_x1 + 1
 
-        ! Work out number of grid cells in the particle is
-        ! Not in general an integer
-        ! Round cell position to nearest cell
         cell_y1 = FLOOR(cell_y_r + 0.5_num)
-        ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_y = REAL(cell_y1, num) - cell_y_r
         cell_y1 = cell_y1 + 1
 

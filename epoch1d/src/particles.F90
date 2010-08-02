@@ -152,15 +152,15 @@ CONTAINS
         part_mc = c * current%mass
 #endif
 
-        ! Calculate v(t+0.5dt) from p(t)
+        ! Calculate v(t) from p(t)
         ! See PSC manual page (25-27)
         root = dtco2 / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
 
         ! Move particles to half timestep position to first order
         part_x = part_x + part_px * root
 
-        ! Work out number of grid cells in the particle is
-        ! Not in general an integer
+        ! Work out the grid cell number for the particle.
+        ! Not an integer in general.
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = part_x / dx - 0.5_num
 #else

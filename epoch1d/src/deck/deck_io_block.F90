@@ -7,8 +7,8 @@ MODULE deck_io_block
   SAVE
 
   INTEGER, PARAMETER :: n_var_special = 6
-  INTEGER, PARAMETER :: io_block_elements = n_var_special+num_vars_to_dump
-  LOGICAL, DIMENSION(io_block_elements)  :: io_block_done
+  INTEGER, PARAMETER :: io_block_elements = n_var_special + num_vars_to_dump
+  LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
   INTEGER, PARAMETER :: c_dump_part_species      = 3

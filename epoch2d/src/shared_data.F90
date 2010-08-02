@@ -29,10 +29,10 @@ MODULE constants
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
   INTEGER, PARAMETER :: c_bd_x_max = 2
-  INTEGER, PARAMETER :: c_bd_y_max = 3
-  INTEGER, PARAMETER :: c_bd_y_min = 4
-  INTEGER, PARAMETER :: c_bd_z_max = 5
-  INTEGER, PARAMETER :: c_bd_z_min = 6
+  INTEGER, PARAMETER :: c_bd_y_min = 3
+  INTEGER, PARAMETER :: c_bd_y_max = 4
+  INTEGER, PARAMETER :: c_bd_z_min = 5
+  INTEGER, PARAMETER :: c_bd_z_max = 6
 
   ! Error codes
   INTEGER, PARAMETER :: c_err_none = 0
@@ -67,8 +67,8 @@ MODULE constants
   ! Load balance codes
   INTEGER, PARAMETER :: c_lb_x = 1
   INTEGER, PARAMETER :: c_lb_y = 2
-  INTEGER, PARAMETER :: c_lb_auto = 4
-  INTEGER, PARAMETER :: c_lb_both = c_lb_x+c_lb_y
+  INTEGER, PARAMETER :: c_lb_all = c_lb_x + c_lb_y
+  INTEGER, PARAMETER :: c_lb_auto = c_lb_all + 1
 
   REAL(num), PARAMETER :: q0 = 1.60217646e-19_num ! c
   REAL(num), PARAMETER :: m0 = 9.10938188e-31_num ! kg

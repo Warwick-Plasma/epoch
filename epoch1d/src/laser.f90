@@ -120,7 +120,6 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lx, sum, diff, dt_eps
     REAL(num) :: fplus
-
     TYPE(laser_block), POINTER :: current
 
     lx = c**2 * dt / dx
@@ -143,8 +142,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    by(0) = sum * (-4.0_num * fplus + 2.0_num * ez(1) &
-        - dt_eps * jz(1) - diff * by(1))
+    by(0) = sum * (-4.0_num * fplus &
+        + 2.0_num * ez(1) &
+        - dt_eps * jz(1) &
+        - diff * by(1))
 
     fplus = 0.0_num
     current=>laser_x_min
@@ -159,8 +160,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    bz(0) = sum * ( 4.0_num * fplus - 2.0_num * ey(1) &
-        + dt_eps * jy(1) - diff * bz(1))
+    bz(0) = sum * ( 4.0_num * fplus &
+        - 2.0_num * ey(1) &
+        + dt_eps * jy(1) &
+        - diff * bz(1))
 
   END SUBROUTINE laser_bcs_x_min
 
@@ -171,7 +174,6 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lx, sum, diff, dt_eps
     REAL(num) :: fneg
-
     TYPE(laser_block), POINTER :: current
 
     lx = c**2 * dt / dx
@@ -194,8 +196,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    by(nx) = sum * ( 4.0_num * fneg - 2.0_num * ez(nx) &
-        + dt_eps * jz(nx) - diff * by(nx-1))
+    by(nx) = sum * ( 4.0_num * fneg &
+        - 2.0_num * ez(nx) &
+        + dt_eps * jz(nx) &
+        - diff * by(nx-1))
 
     fneg = 0.0_num
     current=>laser_x_max
@@ -210,8 +214,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    bz(nx) = sum * (-4.0_num * fneg + 2.0_num * ey(nx) &
-        - dt_eps * jy(nx) - diff * bz(nx-1))
+    bz(nx) = sum * (-4.0_num * fneg &
+        + 2.0_num * ey(nx) &
+        - dt_eps * jy(nx) &
+        - diff * bz(nx-1))
 
   END SUBROUTINE laser_bcs_x_max
 

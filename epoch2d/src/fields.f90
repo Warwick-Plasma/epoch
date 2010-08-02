@@ -18,22 +18,18 @@ CONTAINS
     INTEGER, INTENT(IN) :: field_order
 
     order = field_order
+    large = order / 2
+    small = large - 1
 
     IF (field_order .EQ. 2) THEN
       const(1:2) = (/ -1.0_num, 1.0_num /)
-      large = 1
-      small = 0
     ELSE IF (field_order .EQ. 4) THEN
       const(1:4) = (/ 1.0_num/24.0_num, -9.0_num/8.0_num, &
           9.0_num/8.0_num, -1.0_num/24.0_num /)
-      large = 2
-      small = 1
     ELSE
       const(1:6) = (/ -3.0_num/640.0_num, 25.0_num/384.0_num, &
           -75.0_num/64.0_num, 75.0_num/64.0_num, -25.0_num/384.0_num, &
           3.0_num/640.0_num /)
-      large = 3
-      small = 2
     ENDIF
 
   END SUBROUTINE set_field_order

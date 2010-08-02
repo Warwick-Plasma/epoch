@@ -24,7 +24,7 @@ CONTAINS
     REAL(num) :: balance_frac, npart_av
     INTEGER(KIND=8) :: npart_local, sum_npart, max_npart
     INTEGER :: iproc
-    INTEGER, DIMENSION(2) :: domain
+    INTEGER, DIMENSION(c_ndims,2) :: domain
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
@@ -35,7 +35,7 @@ CONTAINS
 
     ! This parameter allows selecting the mode of the autobalancing between
     ! leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
-    balance_mode = c_lb_both
+    balance_mode = c_lb_all
 
     ! count particles
     npart_local = get_total_local_particles()
@@ -70,10 +70,10 @@ CONTAINS
 
     ! Now need to calculate the start and end points for the new domain on
     ! the current processor
-    new_cell_x_min = starts_x(coordinates(1)+1)
-    new_cell_x_max = ends_x(coordinates(1)+1)
+    new_cell_x_min = starts_x(coordinates(c_ndims)+1)
+    new_cell_x_max = ends_x(coordinates(c_ndims)+1)
 
-    domain = (/new_cell_x_min, new_cell_x_max/)
+    domain(1,:) = (/new_cell_x_min, new_cell_x_max/)
 
     ! Redistribute the field variables
     CALL redistribute_fields(domain)
@@ -82,16 +82,15 @@ CONTAINS
     cell_x_min = starts_x
     cell_x_max = ends_x
 
-    ! Set the new nx and ny
+    ! Set the new nx
     nx = new_cell_x_max - new_cell_x_min + 1
 
-    ! Do X and Y arrays separatly because we already have global copies
-    ! of X and Y
+    ! Do X arrays separately because we already have global copies
     DEALLOCATE(x)
     ALLOCATE(x(-2:nx+3))
     x(0:nx+1) = x_global(new_cell_x_min-1:new_cell_x_max+1)
 
-    ! Recalculate x_mins and y_mins so that rebalancing works next time
+    ! Recalculate x_mins and x_maxs so that rebalancing works next time
     DO iproc = 0, nprocx - 1
       x_mins(iproc) = x_global(cell_x_min(iproc+1))
       x_maxs(iproc) = x_global(cell_x_max(iproc+1))
@@ -99,8 +98,8 @@ CONTAINS
 
     ! Set the lengths of the current domain so that the particle balancer
     ! works properly
-    x_min_local = x_mins(coordinates(1))
-    x_max_local = x_maxs(coordinates(1))
+    x_min_local = x_mins(coordinates(c_ndims))
+    x_max_local = x_maxs(coordinates(c_ndims))
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -131,10 +130,10 @@ CONTAINS
     ! your own (have global copies and use those to repopulate?)
 
     INTEGER :: nx_new
-    INTEGER, DIMENSION(2), INTENT(IN) :: new_domain
+    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
 
-    nx_new = new_domain(2) - new_domain(1) + 1
+    nx_new = new_domain(1,2) - new_domain(1,1) + 1
 
     ALLOCATE(temp(-2:nx_new+3))
 
@@ -200,51 +199,57 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field(domain, field, new_field)
+  SUBROUTINE redistribute_field(domain, field_in, field_out)
 
-    ! This subroutine redistributes the fields over the new processor layout
-    ! The current version works by writing the field to a file and then each
-    ! processor loads back in it's own part. This is better than the previous
-    ! version where each processor produced it's own copy of the global array
-    ! and then took its own subsection
-    INTEGER, DIMENSION(2), INTENT(IN) :: domain
-    REAL(num), DIMENSION(-2:), INTENT(IN) :: field
-    REAL(num), DIMENSION(-2:), INTENT(OUT) :: new_field
-    INTEGER :: nx_new
-    INTEGER :: subarray_write, subarray_read
-    INTEGER :: subtype_write, subtype_read, fh
-    INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
-    CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
+    ! This subroutine redistributes a 1D field over the new processor layout
+    ! The current version works by producing a global copy on each processor
+    ! And then extracting the required part for the local processor.
+    ! in 1D, this is probably OK
+    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: domain
+    REAL(num), DIMENSION(-2:), INTENT(IN) :: field_in
+    REAL(num), DIMENSION(-2:), INTENT(OUT) :: field_out
+    REAL(num), DIMENSION(:), ALLOCATABLE :: field_new, field_temp
+    INTEGER :: old_start, new_start
+    INTEGER :: old_pts, new_pts, dir
+    INTEGER :: npts_global, new_comm, color, coord, i
+    INTEGER :: ghost_start, ghost_end
 
-    WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
+    ghost_start = 0
+    ghost_end = 0
 
-    nx_new = domain(2) - domain(1) + 1
+    dir = 1
+    color = coordinates(dir)
+    coord = coordinates(2)
+    old_start = cell_x_min(coord+1)
+    old_pts = nx
+    npts_global = nx_global
+    IF (coord .EQ. nprocx-1) ghost_end = 3
 
-    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
-        MPI_INFO_NULL, fh, errcode)
+    IF (coord .EQ. 0) ghost_start = -3
 
-    subarray_write = create_current_field_subarray()
-    subtype_write  = create_current_field_subtype()
+    new_start = domain(dir,1)
+    new_pts = domain(dir,2) - new_start
 
-    subarray_read = create_field_subarray(nx_new)
-    subtype_read  = create_field_subtype(nx_new, domain(1))
+    CALL MPI_COMM_SPLIT(comm, color, rank, new_comm, errcode)
 
-    CALL MPI_FILE_SET_VIEW(fh, offset, subarray_write, subtype_write, &
-        "native", MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(fh, field, 1, subarray_write, status, errcode)
+    ! Create a global copy of the whole array
+    ALLOCATE(field_new(-2:npts_global+3), field_temp(-2:npts_global+3))
 
-    CALL MPI_FILE_SET_VIEW(fh, offset, subarray_read, subtype_read, &
-        "native", MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, new_field, 1, subarray_read, status, errcode)
+    field_new = 0.0_num
+    DO i = 1 + ghost_start, old_pts + ghost_end
+      field_new(i+old_start-1) = field_in(i)
+    ENDDO
 
-    CALL MPI_FILE_CLOSE(fh, errcode)
+    CALL MPI_ALLREDUCE(field_new, field_temp, npts_global+6, &
+        mpireal, MPI_SUM, new_comm, errcode)
+    DEALLOCATE(field_new)
 
-    CALL MPI_TYPE_FREE(subarray_write, errcode)
-    CALL MPI_TYPE_FREE(subtype_write, errcode)
-    CALL MPI_TYPE_FREE(subarray_read, errcode)
-    CALL MPI_TYPE_FREE(subtype_read, errcode)
+    DO i = -2, new_pts + 3
+      field_out(i) = field_temp(i+new_start-1)
+    ENDDO
 
-    CALL do_field_mpi_with_lengths(new_field, nx_new)
+    DEALLOCATE(field_temp)
+    CALL MPI_COMM_FREE(new_comm, errcode)
 
   END SUBROUTINE redistribute_field
 
@@ -339,7 +344,7 @@ CONTAINS
 
     TYPE(particle), INTENT(IN) :: a_particle
     INTEGER :: get_particle_processor
-    INTEGER :: iproc, coords(1)
+    INTEGER :: iproc, coords(c_ndims)
 
     get_particle_processor = -1
     coords = -1
@@ -350,7 +355,7 @@ CONTAINS
     DO iproc = 0, nprocx - 1
       IF (a_particle%part_pos .GE. x_mins(iproc) - dx / 2.0_num &
           .AND. a_particle%part_pos .LT. x_maxs(iproc) + dx / 2.0_num) THEN
-        coords(1) = iproc
+        coords(c_ndims) = iproc
         EXIT
       ENDIF
     ENDDO

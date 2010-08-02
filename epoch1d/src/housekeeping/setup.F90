@@ -147,7 +147,7 @@ CONTAINS
       ENDIF
       IF (errcode .NE. 0) THEN
         PRINT *, '***ERROR***'
-        PRINT *, 'Cannot create "epoch2d.dat" output file. The most common ' &
+        PRINT *, 'Cannot create "epoch1d.dat" output file. The most common ' &
             // 'cause of this problem '
         PRINT *, 'is that the ouput directory does not exist'
         CALL MPI_ABORT(comm, errcode, ierr)
@@ -250,7 +250,7 @@ CONTAINS
           CALL MPI_ABORT(comm, errcode, ierr)
         ENDIF
 
-        IF (nd .NE. c_dimension_2d .AND. nd .NE. c_dimension_irrelevant ) THEN
+        IF (nd .NE. c_dimension_1d .AND. nd .NE. c_dimension_irrelevant ) THEN
           IF (rank .EQ. 0) &
               PRINT *, "Dimensionality does not match, file is ", nd, "D"
           CALL MPI_ABORT(comm, errcode, ierr)

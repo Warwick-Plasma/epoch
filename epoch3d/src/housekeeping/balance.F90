@@ -27,11 +27,12 @@ CONTAINS
     INTEGER :: new_cell_x_min, new_cell_x_max
     INTEGER :: new_cell_y_min, new_cell_y_max
     INTEGER :: new_cell_z_min, new_cell_z_max
-    REAL(num) :: balance_frac, balance_frac_x, balance_frac_y, npart_av
+    REAL(num) :: balance_frac, npart_av
+    REAL(num) :: balance_frac_x, balance_frac_y, balance_frac_z
     INTEGER(KIND=8) :: min_x, max_x, min_y, max_y, min_z, max_z
     INTEGER(KIND=8) :: npart_local, sum_npart, max_npart, wk
     INTEGER :: iproc
-    INTEGER, DIMENSION(3,2) :: domain
+    INTEGER, DIMENSION(c_ndims,2) :: domain
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
@@ -103,7 +104,7 @@ CONTAINS
       ends_z = cell_z_max
     ENDIF
 
-    ! In the autobalancer then determine whether to balance in X or Y
+    ! In the autobalancer then determine whether to balance in X, Y or Z
     ! Is this worth keeping?
     IF (IAND(balance_mode, c_lb_auto) .NE. 0 ) THEN
 
@@ -115,6 +116,7 @@ CONTAINS
         IF (wk .GT. max_x) max_x = wk
         IF (wk .LT. min_x) min_x = wk
       ENDDO
+
       max_y = 0
       min_y = npart_global
       DO iproc = 1, nprocy
@@ -122,6 +124,7 @@ CONTAINS
         IF (wk .GT. max_y) max_y = wk
         IF (wk .LT. min_y) min_y = wk
       ENDDO
+
       max_z = 0
       min_z = npart_global
       DO iproc = 1, nprocz
@@ -132,27 +135,38 @@ CONTAINS
 
       balance_frac_x = REAL(min_x, num) / REAL(max_x, num)
       balance_frac_y = REAL(min_y, num) / REAL(max_y, num)
+      balance_frac_z = REAL(min_z, num) / REAL(max_z, num)
 
-      IF (balance_frac_y .LT. balance_frac_x) THEN
-        starts_y = cell_y_min
-        ends_y = cell_y_max
+      IF (balance_frac_x .LT. balance_frac_y) THEN
+        IF (balance_frac_x .LT. balance_frac_z) THEN
+          starts_x = cell_x_min
+          ends_x = cell_x_max
+        ELSE
+          starts_z = cell_z_min
+          ends_z = cell_z_max
+        ENDIF
       ELSE
-        starts_x = cell_x_min
-        ends_x = cell_x_max
+        IF (balance_frac_y .LT. balance_frac_z) THEN
+          starts_y = cell_y_min
+          ends_y = cell_y_max
+        ELSE
+          starts_z = cell_z_min
+          ends_z = cell_z_max
+        ENDIF
       ENDIF
 
     ENDIF
 
     ! Now need to calculate the start and end points for the new domain on
     ! the current processor
-    new_cell_x_min = starts_x(coordinates(3)+1)
-    new_cell_x_max = ends_x(coordinates(3)+1)
+    new_cell_x_min = starts_x(coordinates(c_ndims)+1)
+    new_cell_x_max = ends_x(coordinates(c_ndims)+1)
 
-    new_cell_y_min = starts_y(coordinates(2)+1)
-    new_cell_y_max = ends_y(coordinates(2)+1)
+    new_cell_y_min = starts_y(coordinates(c_ndims-1)+1)
+    new_cell_y_max = ends_y(coordinates(c_ndims-1)+1)
 
-    new_cell_z_min = starts_z(coordinates(1)+1)
-    new_cell_z_max = ends_z(coordinates(1)+1)
+    new_cell_z_min = starts_z(coordinates(c_ndims-2)+1)
+    new_cell_z_max = ends_z(coordinates(c_ndims-2)+1)
 
     domain(1,:) = (/new_cell_x_min, new_cell_x_max/)
     domain(2,:) = (/new_cell_y_min, new_cell_y_max/)
@@ -169,30 +183,19 @@ CONTAINS
     cell_y_max = ends_y
     cell_z_max = ends_z
 
-    ! Set the new nx and ny
+    ! Set the new nx, ny, nz
     nx = new_cell_x_max - new_cell_x_min + 1
     ny = new_cell_y_max - new_cell_y_min + 1
     nz = new_cell_z_max - new_cell_z_min + 1
 
-    ! Do X and Y arrays separatly because we already have global copies
-    ! of X and Y
+    ! Do X, Y, Z arrays separately because we already have global copies
     DEALLOCATE(x, y, z)
     ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))
     x(0:nx+1) = x_global(new_cell_x_min-1:new_cell_x_max+1)
     y(0:ny+1) = y_global(new_cell_y_min-1:new_cell_y_max+1)
-    z(0:nz+1) = z_global(new_cell_z_min-1:new_cell_y_max+1)
+    z(0:nz+1) = z_global(new_cell_z_min-1:new_cell_z_max+1)
 
-    ! Reallocate Currents (don't need to keep current timestep values for
-    ! current so just reallocate)
-    DEALLOCATE(jx, jy, jz)
-    ALLOCATE(jx(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(jy(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(jz(-2:nx+3, -2:ny+3, -2:nz+3))
-    jx = 0.0_num
-    jy = 0.0_num
-    jz = 0.0_num
-
-    ! Recalculate x_mins and y_mins so that rebalancing works next time
+    ! Recalculate x_mins and x_maxs so that rebalancing works next time
     DO iproc = 0, nprocx - 1
       x_mins(iproc) = x_global(cell_x_min(iproc+1))
       x_maxs(iproc) = x_global(cell_x_max(iproc+1))
@@ -210,12 +213,12 @@ CONTAINS
 
     ! Set the lengths of the current domain so that the particle balancer
     ! works properly
-    x_min_local = x_mins(coordinates(3))
-    x_max_local = x_maxs(coordinates(3))
-    y_min_local = y_mins(coordinates(2))
-    y_max_local = y_maxs(coordinates(2))
-    z_min_local = z_mins(coordinates(1))
-    z_max_local = z_maxs(coordinates(1))
+    x_min_local = x_mins(coordinates(c_ndims))
+    x_max_local = x_maxs(coordinates(c_ndims))
+    y_min_local = y_mins(coordinates(c_ndims-1))
+    y_max_local = y_maxs(coordinates(c_ndims-1))
+    z_min_local = z_mins(coordinates(c_ndims-2))
+    z_max_local = z_maxs(coordinates(c_ndims-2))
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -246,7 +249,7 @@ CONTAINS
     ! your own (have global copies and use those to repopulate?)
 
     INTEGER :: nx_new, ny_new, nz_new
-    INTEGER, DIMENSION(3,2), INTENT(IN) :: new_domain
+    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp2d
     TYPE(laser_block), POINTER :: current
@@ -255,13 +258,8 @@ CONTAINS
     ny_new = new_domain(2,2) - new_domain(2,1) + 1
     nz_new = new_domain(3,2) - new_domain(3,1) + 1
 
-    ! domain is of form (direction, start/end)
-
-    ! This is used this way because some compilers (notably PGI)
-    ! Don't support the deallocation/reallocation of arrays when they
-    ! Are passed as parameters. This may change in future!
-
     ALLOCATE(temp(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3))
+
     temp = 0.0_num
     CALL redistribute_field(new_domain, ex, temp)
     DEALLOCATE(ex)
@@ -297,9 +295,29 @@ CONTAINS
     DEALLOCATE(bz)
     ALLOCATE(bz(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3))
     bz = temp
+
+    temp = 0.0_num
+    CALL redistribute_field(new_domain, jx, temp)
+    DEALLOCATE(jx)
+    ALLOCATE(jx(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3))
+    jx = temp
+
+    temp = 0.0_num
+    CALL redistribute_field(new_domain, jy, temp)
+    DEALLOCATE(jy)
+    ALLOCATE(jy(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3))
+    jy = temp
+
+    temp = 0.0_num
+    CALL redistribute_field(new_domain, jz, temp)
+    DEALLOCATE(jz)
+    ALLOCATE(jz(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3))
+    jz = temp
+
     DEALLOCATE(temp)
 
     ALLOCATE(temp2d(-2:ny_new+3, -2:nz_new+3))
+
     current=>laser_x_min
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
@@ -307,11 +325,13 @@ CONTAINS
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3, -2:nz_new+3))
       current%profile = temp2d
+
       temp2d = 0.0_num
       CALL redistribute_field_2d(new_domain, c_dir_x, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:ny_new+3, -2:nz_new+3))
       current%phase = temp2d
+
       current=>current%next
     ENDDO
 
@@ -322,11 +342,33 @@ CONTAINS
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:ny_new+3, -2:nz_new+3))
       current%profile = temp2d
+
       temp2d = 0.0_num
       CALL redistribute_field_2d(new_domain, c_dir_x, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:ny_new+3, -2:nz_new+3))
       current%phase = temp2d
+
+      current=>current%next
+    ENDDO
+
+    DEALLOCATE(temp2d)
+    ALLOCATE(temp2d(-2:nx_new+3, -2:nz_new+3))
+
+    current=>laser_y_min
+    DO WHILE(ASSOCIATED(current))
+      temp2d = 0.0_num
+      CALL redistribute_field_2d(new_domain, c_dir_y, current%profile, temp2d)
+      DEALLOCATE(current%profile)
+      ALLOCATE(current%profile(-2:nx_new+3, -2:nz_new+3))
+      current%profile = temp2d
+
+      temp2d = 0.0_num
+      CALL redistribute_field_2d(new_domain, c_dir_y, current%phase, temp2d)
+      DEALLOCATE(current%phase)
+      ALLOCATE(current%phase(-2:nx_new+3, -2:nz_new+3))
+      current%phase = temp2d
+
       current=>current%next
     ENDDO
 
@@ -337,56 +379,50 @@ CONTAINS
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3, -2:nz_new+3))
       current%profile = temp2d
+
       temp2d = 0.0_num
       CALL redistribute_field_2d(new_domain, c_dir_y, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3, -2:nz_new+3))
       current%phase = temp2d
+
       current=>current%next
     ENDDO
 
-    current=>laser_y_min
-    DO WHILE(ASSOCIATED(current))
-      temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain, c_dir_y, current%profile, temp2d)
-      DEALLOCATE(current%profile)
-      ALLOCATE(current%profile(-2:nx_new+3, -2:nz_new+3))
-      current%profile = temp2d
-      temp2d = 0.0_num
-      CALL redistribute_field_2d(new_domain, c_dir_y, current%phase, temp2d)
-      DEALLOCATE(current%phase)
-      ALLOCATE(current%phase(-2:nx_new+3, -2:nz_new+3))
-      current%phase = temp2d
-      current=>current%next
-    ENDDO
+    DEALLOCATE(temp2d)
+    ALLOCATE(temp2d(-2:nx_new+3, -2:ny_new+3))
 
-    current=>laser_y_max
+    current=>laser_z_min
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
       CALL redistribute_field_2d(new_domain, c_dir_z, current%profile, temp2d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3, -2:ny_new+3))
       current%profile = temp2d
+
       temp2d = 0.0_num
       CALL redistribute_field_2d(new_domain, c_dir_z, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3, -2:ny_new+3))
       current%phase = temp2d
+
       current=>current%next
     ENDDO
 
-    current=>laser_y_min
+    current=>laser_z_max
     DO WHILE(ASSOCIATED(current))
       temp2d = 0.0_num
       CALL redistribute_field_2d(new_domain, c_dir_z, current%profile, temp2d)
       DEALLOCATE(current%profile)
       ALLOCATE(current%profile(-2:nx_new+3, -2:ny_new+3))
       current%profile = temp2d
+
       temp2d = 0.0_num
       CALL redistribute_field_2d(new_domain, c_dir_z, current%phase, temp2d)
       DEALLOCATE(current%phase)
       ALLOCATE(current%phase(-2:nx_new+3, -2:ny_new+3))
       current%phase = temp2d
+
       current=>current%next
     ENDDO
 
@@ -396,16 +432,16 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field(domain, field, new_field)
+  SUBROUTINE redistribute_field(domain, field_in, field_out)
 
     ! This subroutine redistributes the fields over the new processor layout
     ! The current version works by writing the field to a file and then each
     ! processor loads back in it's own part. This is better than the previous
     ! version where each processor produced it's own copy of the global array
     ! and then took its own subsection
-    INTEGER, DIMENSION(3,2), INTENT(IN) :: domain
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: field
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: new_field
+    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: domain
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: field_in
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: field_out
     INTEGER :: nx_new, ny_new, nz_new
     INTEGER :: subarray_write, subarray_read
     INTEGER :: subtype_write, subtype_read, fh
@@ -430,11 +466,11 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(fh, offset, subarray_write, subtype_write, &
         "native", MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(fh, field, 1, subarray_write, status, errcode)
+    CALL MPI_FILE_WRITE_ALL(fh, field_in, 1, subarray_write, status, errcode)
 
     CALL MPI_FILE_SET_VIEW(fh, offset, subarray_read, subtype_read, &
         "native", MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, new_field, 1, subarray_read, status, errcode)
+    CALL MPI_FILE_READ_ALL(fh, field_out, 1, subarray_read, status, errcode)
 
     CALL MPI_FILE_CLOSE(fh, errcode)
 
@@ -443,23 +479,23 @@ CONTAINS
     CALL MPI_TYPE_FREE(subarray_read, errcode)
     CALL MPI_TYPE_FREE(subtype_read, errcode)
 
-    CALL do_field_mpi_with_lengths(new_field, nx_new, ny_new, nz_new)
+    CALL do_field_mpi_with_lengths(field_out, nx_new, ny_new, nz_new)
 
   END SUBROUTINE redistribute_field
 
 
 
-  SUBROUTINE redistribute_field_2d(domain, direction, field, new_field)
+  SUBROUTINE redistribute_field_2d(domain, direction, field_in, field_out)
 
     ! This subroutine redistributes the fields over the new processor layout
     ! The current version works by writing the field to a file and then each
     ! processor loads back in it's own part. This is better than the previous
     ! version where each processor produced it's own copy of the global array
     ! and then took its own subsection
-    INTEGER, DIMENSION(3,2), INTENT(IN) :: domain
+    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: domain
     INTEGER, INTENT(IN) :: direction
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field
-    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: new_field
+    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field_in
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: field_out
     INTEGER :: n1, n2, n1_new, n2_new, n1_global, n2_global
     INTEGER :: n1_old_start, n2_old_start, n1_dir, n2_dir
     INTEGER :: subtype_write, subtype_read, fh
@@ -474,8 +510,8 @@ CONTAINS
       n2 = nz
       n1_global = ny_global
       n2_global = nz_global
-      n1_old_start = cell_y_min(coordinates(2)+1)
-      n2_old_start = cell_z_min(coordinates(1)+1)
+      n1_old_start = cell_y_min(coordinates(c_ndims-1)+1)
+      n2_old_start = cell_z_min(coordinates(c_ndims-2)+1)
     ELSE IF (direction .EQ. c_dir_y) THEN
       n1_dir = 1
       n2_dir = 3
@@ -483,8 +519,8 @@ CONTAINS
       n2 = nz
       n1_global = nx_global
       n2_global = nz_global
-      n1_old_start = cell_x_min(coordinates(3)+1)
-      n2_old_start = cell_z_min(coordinates(1)+1)
+      n1_old_start = cell_x_min(coordinates(c_ndims)+1)
+      n2_old_start = cell_z_min(coordinates(c_ndims-2)+1)
     ELSE
       n1_dir = 1
       n2_dir = 2
@@ -492,8 +528,8 @@ CONTAINS
       n2 = ny
       n1_global = nx_global
       n2_global = ny_global
-      n1_old_start = cell_x_min(coordinates(3)+1)
-      n2_old_start = cell_y_min(coordinates(2)+1)
+      n1_old_start = cell_x_min(coordinates(c_ndims)+1)
+      n2_old_start = cell_y_min(coordinates(c_ndims-1)+1)
     ENDIF
 
     WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
@@ -514,11 +550,11 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(fh, field, 1, subarray_write, status, errcode)
+    CALL MPI_FILE_WRITE_ALL(fh, field_in, 1, subarray_write, status, errcode)
 
     CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, "native", &
         MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, new_field, 1, subarray_read, status, errcode)
+    CALL MPI_FILE_READ_ALL(fh, field_out, 1, subarray_read, status, errcode)
 
     CALL MPI_FILE_CLOSE(fh, errcode)
 
@@ -692,7 +728,7 @@ CONTAINS
 
     TYPE(particle), INTENT(IN) :: a_particle
     INTEGER :: get_particle_processor
-    INTEGER :: iproc, coords(3)
+    INTEGER :: iproc, coords(c_ndims)
 
     get_particle_processor = -1
     coords = -1
@@ -703,7 +739,7 @@ CONTAINS
     DO iproc = 0, nprocx - 1
       IF (a_particle%part_pos(1) .GE. x_mins(iproc) - dx / 2.0_num &
           .AND. a_particle%part_pos(1) .LT. x_maxs(iproc) + dx / 2.0_num) THEN
-        coords(3) = iproc
+        coords(c_ndims) = iproc
         EXIT
       ENDIF
     ENDDO
@@ -711,14 +747,15 @@ CONTAINS
     DO iproc = 0, nprocy - 1
       IF (a_particle%part_pos(2) .GE. y_mins(iproc) - dy / 2.0_num &
           .AND. a_particle%part_pos(2) .LT. y_maxs(iproc) + dy / 2.0_num) THEN
-        coords(2) = iproc
+        coords(c_ndims-1) = iproc
         EXIT
       ENDIF
     ENDDO
+
     DO iproc = 0, nprocz - 1
       IF (a_particle%part_pos(3) .GE. z_mins(iproc) - dz / 2.0_num &
           .AND. a_particle%part_pos(3) .LT. z_maxs(iproc) + dz / 2.0_num) THEN
-        coords(1) = iproc
+        coords(c_ndims-2) = iproc
         EXIT
       ENDIF
     ENDDO

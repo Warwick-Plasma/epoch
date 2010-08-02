@@ -41,17 +41,22 @@ CONTAINS
 
     INTEGER :: boundary
     TYPE(laser_block), POINTER :: laser
+    INTEGER :: ix, iy
 
     boundary = laser%boundary
 
     IF (laser%k .EQ. 0) laser%k = laser%freq
 
     IF (boundary .EQ. c_bd_x_min .OR. boundary .EQ. c_bd_x_max) THEN
-      laser%phase(1:ny) = laser%phase(1:ny) &
-          - laser%k * (y(1:ny) * TAN(laser%angle))
+      DO iy = 1, ny
+        laser%phase(iy) = laser%phase(iy) &
+            - laser%k * (y(iy) * TAN(laser%angle))
+      ENDDO
     ELSE IF (boundary .EQ. c_bd_y_min .OR. boundary .EQ. c_bd_y_max) THEN
-      laser%phase(1:nx) = laser%phase(1:nx) &
-          - laser%k * (x(1:nx) * TAN(laser%angle))
+      DO ix = 1, nx
+        laser%phase(ix) = laser%phase(ix) &
+            - laser%k * (x(ix) * TAN(laser%angle))
+      ENDDO
     ENDIF
 
     IF (boundary .EQ. c_bd_x_min) THEN
@@ -171,7 +176,6 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lx, sum, diff, dt_eps
     REAL(num), DIMENSION(:), ALLOCATABLE :: fplus
-
     TYPE(laser_block), POINTER :: current
 
     lx = c**2 * dt / dx
@@ -196,8 +200,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    by(0, 1:ny) = sum * (-4.0_num * fplus + 2.0_num * ez(1, 1:ny) &
-        - dt_eps * jz(1, 1:ny) - diff * by(1, 1:ny))
+    by(0, 1:ny) = sum * (-4.0_num * fplus &
+        + 2.0_num * ez(1, 1:ny) &
+        - dt_eps * jz(1, 1:ny) &
+        - diff * by(1, 1:ny))
 
     fplus = 0.0_num
     current=>laser_x_min
@@ -213,8 +219,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    bz(0, 1:ny) = sum * ( 4.0_num * fplus - 2.0_num * ey(1, 1:ny) &
-        + dt_eps * jy(1, 1:ny) - diff * bz(1, 1:ny))
+    bz(0, 1:ny) = sum * ( 4.0_num * fplus &
+        - 2.0_num * ey(1, 1:ny) &
+        + dt_eps * jy(1, 1:ny) &
+        - diff * bz(1, 1:ny))
 
     DEALLOCATE(fplus)
 
@@ -227,7 +235,6 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: lx, sum, diff, dt_eps
     REAL(num), DIMENSION(:), ALLOCATABLE :: fneg
-
     TYPE(laser_block), POINTER :: current
 
     lx = c**2 * dt / dx
@@ -252,8 +259,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    by(nx, 1:ny) = sum * ( 4.0_num * fneg - 2.0_num * ez(nx, 1:ny) &
-        + dt_eps * jz(nx, 1:ny) - diff * by(nx-1, 1:ny))
+    by(nx, 1:ny) = sum * ( 4.0_num * fneg &
+        - 2.0_num * ez(nx, 1:ny) &
+        + dt_eps * jz(nx, 1:ny) &
+        - diff * by(nx-1, 1:ny))
 
     fneg = 0.0_num
     current=>laser_x_max
@@ -269,8 +278,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    bz(nx, 1:ny) = sum * (-4.0_num * fneg + 2.0_num * ey(nx, 1:ny) &
-        - dt_eps * jy(nx, 1:ny) - diff * bz(nx-1, 1:ny))
+    bz(nx, 1:ny) = sum * (-4.0_num * fneg &
+        + 2.0_num * ey(nx, 1:ny) &
+        - dt_eps * jy(nx, 1:ny) &
+        - diff * bz(nx-1, 1:ny))
 
     DEALLOCATE(fneg)
 
@@ -283,7 +294,6 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: ly, sum, diff, dt_eps
     REAL(num), DIMENSION(:), ALLOCATABLE :: fplus
-
     TYPE(laser_block), POINTER :: current
 
     ly = c**2 * dt / dy
@@ -308,8 +318,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    bx(1:nx, 0) = sum * ( 4.0_num * fplus - 2.0_num * ez(1:nx, 1) &
-        + dt_eps * jz(1:nx, 1) - diff * bx(1:nx, 1))
+    bx(1:nx, 0) = sum * ( 4.0_num * fplus &
+        - 2.0_num * ez(1:nx, 1) &
+        + dt_eps * jz(1:nx, 1) &
+        - diff * bx(1:nx, 1))
 
     fplus = 0.0_num
     current=>laser_y_min
@@ -325,8 +337,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    bz(1:nx, 0) = sum * (-4.0_num * fplus + 2.0_num * ex(1:nx, 1) &
-        - dt_eps * jx(1:nx, 1) - diff * bz(1:nx, 1))
+    bz(1:nx, 0) = sum * (-4.0_num * fplus &
+        + 2.0_num * ex(1:nx, 1) &
+        - dt_eps * jx(1:nx, 1) &
+        - diff * bz(1:nx, 1))
 
     DEALLOCATE(fplus)
 
@@ -339,7 +353,6 @@ CONTAINS
     REAL(num) :: t_env
     REAL(num) :: ly, sum, diff, dt_eps
     REAL(num), DIMENSION(:), ALLOCATABLE :: fneg
-
     TYPE(laser_block), POINTER :: current
 
     ly = c**2 * dt / dy
@@ -364,8 +377,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    bx(1:nx, ny) = sum * (-4.0_num * fneg + 2.0_num * ez(1:nx, ny) &
-        - dt_eps * jz(1:nx, ny) - diff * bx(1:nx, ny-1))
+    bx(1:nx, ny) = sum * (-4.0_num * fneg &
+        + 2.0_num * ez(1:nx, ny) &
+        - dt_eps * jz(1:nx, ny) &
+        - diff * bx(1:nx, ny-1))
 
     fneg = 0.0_num
     current=>laser_y_max
@@ -381,8 +396,10 @@ CONTAINS
       current=>current%next
     ENDDO
 
-    bz(1:nx, ny) = sum * ( 4.0_num * fneg - 2.0_num * ex(1:nx, ny) &
-        + dt_eps * jx(1:nx, ny) - diff * bz(1:nx, ny-1))
+    bz(1:nx, ny) = sum * ( 4.0_num * fneg &
+        - 2.0_num * ex(1:nx, ny) &
+        + dt_eps * jx(1:nx, ny) &
+        - diff * bz(1:nx, ny-1))
 
     DEALLOCATE(fneg)
 
