@@ -62,7 +62,7 @@ CONTAINS
     IF (bc_z_max_field .EQ. c_bc_reflect) bc_z_max_field = c_bc_clamp
 
     IF (bc_x_min_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
-    IF (bc_x_max_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
+    IF (bc_x_max_field .EQ. c_bc_open) bc_x_max_field = c_bc_simple_outflow
     IF (bc_y_min_field .EQ. c_bc_open) bc_y_min_field = c_bc_simple_outflow
     IF (bc_y_max_field .EQ. c_bc_open) bc_y_max_field = c_bc_simple_outflow
     IF (bc_z_min_field .EQ. c_bc_open) bc_z_min_field = c_bc_simple_outflow
@@ -171,7 +171,7 @@ CONTAINS
 
     IF ((bc_x_max_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
-      field(nx+1,:,:) = field(nx,:,:)
+      field(nx+1,:,:) = field(nx  ,:,:)
       field(nx+2,:,:) = field(nx-1,:,:)
     ENDIF
 
@@ -183,7 +183,7 @@ CONTAINS
 
     IF ((bc_y_max_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
-      field(:,ny+1,:) = field(:,ny,:)
+      field(:,ny+1,:) = field(:,ny  ,:)
       field(:,ny+2,:) = field(:,ny-1,:)
     ENDIF
 
@@ -195,7 +195,7 @@ CONTAINS
 
     IF ((bc_z_max_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. proc_z_max .EQ. MPI_PROC_NULL) THEN
-      field(:,:,nz+1) = field(:,:,nz)
+      field(:,:,nz+1) = field(:,:,nz  )
       field(:,:,nz+2) = field(:,:,nz-1)
     ENDIF
 
@@ -228,10 +228,10 @@ CONTAINS
         .OR. bc_x_max_field .EQ. c_bc_simple_outflow) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
       IF (s1 .EQ. 1) THEN
-        field(nx,  :,:) = 0.0_num
+        field(nx  ,:,:) = 0.0_num
         field(nx+1,:,:) = -field(nx-1,:,:)
       ELSE
-        field(nx+1,:,:) = -field(nx,  :,:)
+        field(nx+1,:,:) = -field(nx  ,:,:)
         field(nx+2,:,:) = -field(nx-1,:,:)
       ENDIF
     ENDIF
@@ -254,10 +254,10 @@ CONTAINS
         .OR. bc_y_max_field .EQ. c_bc_simple_outflow) &
         .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
       IF (s2 .EQ. 1) THEN
-        field(:,ny,  :) = 0.0_num
+        field(:,ny  ,:) = 0.0_num
         field(:,ny+1,:) = -field(:,ny-1,:)
       ELSE
-        field(:,ny+1,:) = -field(:,ny,  :)
+        field(:,ny+1,:) = -field(:,ny  ,:)
         field(:,ny+2,:) = -field(:,ny-1,:)
       ENDIF
     ENDIF
@@ -360,6 +360,7 @@ CONTAINS
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
+
     ALLOCATE(temp(nx+6, ny+6, 3))
 
     temp = 0.0_num
@@ -435,7 +436,7 @@ CONTAINS
   SUBROUTINE particle_bcs
 
     TYPE(particle), POINTER :: cur, next
-    TYPE(particle_list), DIMENSION(-1:1, -1:1, -1:1) :: send, recv
+    TYPE(particle_list), DIMENSION(-1:1,-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd, zbd
     INTEGER(KIND=8) :: ixp, iyp, izp
     LOGICAL :: out_of_bounds

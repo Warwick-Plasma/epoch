@@ -50,7 +50,7 @@ CONTAINS
     IF (bc_y_max_field .EQ. c_bc_reflect) bc_y_max_field = c_bc_clamp
 
     IF (bc_x_min_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
-    IF (bc_x_max_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
+    IF (bc_x_max_field .EQ. c_bc_open) bc_x_max_field = c_bc_simple_outflow
     IF (bc_y_min_field .EQ. c_bc_open) bc_y_min_field = c_bc_simple_outflow
     IF (bc_y_max_field .EQ. c_bc_open) bc_y_max_field = c_bc_simple_outflow
 
@@ -135,7 +135,7 @@ CONTAINS
 
     IF ((bc_x_max_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
-      field(nx+1,:) = field(nx,  :)
+      field(nx+1,:) = field(nx  ,:)
       field(nx+2,:) = field(nx-1,:)
     ENDIF
 
@@ -147,7 +147,7 @@ CONTAINS
 
     IF ((bc_y_max_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
-      field(:,ny+1) = field(:,ny)
+      field(:,ny+1) = field(:,ny  )
       field(:,ny+2) = field(:,ny-1)
     ENDIF
 
@@ -180,10 +180,10 @@ CONTAINS
         .OR. bc_x_max_field .EQ. c_bc_simple_outflow) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
       IF (s1 .EQ. 1) THEN
-        field(nx,  :) = 0.0_num
+        field(nx  ,:) = 0.0_num
         field(nx+1,:) = -field(nx-1,:)
       ELSE
-        field(nx+1,:) = -field(nx,  :)
+        field(nx+1,:) = -field(nx  ,:)
         field(nx+2,:) = -field(nx-1,:)
       ENDIF
     ENDIF
@@ -209,7 +209,7 @@ CONTAINS
         field(:,ny  ) = 0.0_num
         field(:,ny+1) = -field(:,ny-1)
       ELSE
-        field(:,ny+1) = -field(:,ny)
+        field(:,ny+1) = -field(:,ny  )
         field(:,ny+2) = -field(:,ny-1)
       ENDIF
     ENDIF
@@ -222,7 +222,6 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
-
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
     INTEGER :: subarray
 
@@ -251,11 +250,11 @@ CONTAINS
     array(1:3,:) = array(1:3,:) + temp
 
     DEALLOCATE(temp)
+    CALL MPI_TYPE_FREE(subarray, errcode)
 
     subsizes(1) = nx + 6
     subsizes(2) = 3
 
-    CALL MPI_TYPE_FREE(subarray, errcode)
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
@@ -275,7 +274,6 @@ CONTAINS
     array(:,1:3) = array(:,1:3) + temp
 
     DEALLOCATE(temp)
-
     CALL MPI_TYPE_FREE(subarray, errcode)
 
     CALL field_bc(array)
@@ -336,7 +334,7 @@ CONTAINS
   SUBROUTINE particle_bcs
 
     TYPE(particle), POINTER :: cur, next
-    TYPE(particle_list), DIMENSION(-1:1, -1:1) :: send, recv
+    TYPE(particle_list), DIMENSION(-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd
     INTEGER(KIND=8) :: ixp, iyp
     LOGICAL :: out_of_bounds

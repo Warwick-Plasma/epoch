@@ -38,7 +38,7 @@ CONTAINS
     IF (bc_x_max_field .EQ. c_bc_reflect) bc_x_max_field = c_bc_clamp
 
     IF (bc_x_min_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
-    IF (bc_x_max_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
+    IF (bc_x_max_field .EQ. c_bc_open) bc_x_max_field = c_bc_simple_outflow
 
     IF (bc_x_min_particle .EQ. c_bc_open &
         .OR. bc_x_max_particle .EQ. c_bc_open) &
@@ -89,7 +89,7 @@ CONTAINS
 
     IF ((bc_x_max_field .EQ. c_bc_zero_gradient .OR. force) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
-      field(nx+1) = field(nx)
+      field(nx+1) = field(nx  )
       field(nx+2) = field(nx-1)
     ENDIF
 
@@ -125,7 +125,7 @@ CONTAINS
         field(nx  ) = 0.0_num
         field(nx+1) = -field(nx-1)
       ELSE
-        field(nx+1) = -field(nx)
+        field(nx+1) = -field(nx  )
         field(nx+2) = -field(nx-1)
       ENDIF
     ENDIF
@@ -137,9 +137,7 @@ CONTAINS
   SUBROUTINE processor_summation_bcs(array)
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: array
-    REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-
-    ALLOCATE(temp(3))
+    REAL(num), DIMENSION(3) :: temp
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(-2), 3, mpireal, &
@@ -152,8 +150,6 @@ CONTAINS
         neighbour( 1), tag, temp, 3, mpireal, &
         neighbour(-1), tag, comm, status, errcode)
     array(1:3) = array(1:3) + temp
-
-    DEALLOCATE(temp)
 
     CALL field_bc(array)
 
@@ -291,8 +287,8 @@ CONTAINS
       ! swap Particles
       DO ix = -1, 1, 2
         ixp = -ix
-        CALL partlist_sendrecv(send(ix), recv(ixp), neighbour(ix), &
-            neighbour(ixp))
+        CALL partlist_sendrecv(send(ix), recv(ixp), &
+            neighbour(ix), neighbour(ixp))
         CALL append_partlist(particle_species(ispecies)%attached_list, &
             recv(ixp))
       ENDDO
