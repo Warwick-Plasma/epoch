@@ -1,0 +1,171 @@
+13-08-2010 Changes for version 2.2
+
+ * The fields_external and species_external blocks have been removed.
+   This functionality is now obtained by passing the external filename
+   in single or double quotes. eg:
+
+     rho='rhodata.dat'
+
+   will load rho from the external file named 'rhodata.dat'.
+
+ * The input deck has been changed to handle one species per block.
+   The old species, speciesn and species_externaln blocks have been removed.
+
+   Introduced new species block. One species block for each species
+   containing both basic properties and initial conditions. Example:
+
+   begin:species
+
+     charge=0.0
+     mass=1836.2 * 4
+     frac=1.0
+     name=helium
+     dump=T
+
+     rho=if(x gt 0.5e-5 and x lt 2.5e-5,den_min*exp((x-0.5e-5)/scale),rho(helium))
+     rho=if(x gt 2.5e-5, den_max, rho(helium))
+     rho=if(x lt 0.5e-5, 0.0, rho(helium))
+     rho_min=den_min
+     temp=0
+
+   end:species
+
+   Note that previously defined species properties such as "rho" can now be
+   referred to using the species name.
+
+   Syntax for new species block is combined mixture of syntax for old species
+   block (without the affixed species numbers) and syntax for old speciesn
+   blocks.  If you need to go back and modify a species after creation
+   (initial conditions changes etc) then you can specify a new species block
+   with the same name.
+   For example:
+
+   begin:species
+
+     name=helium
+     rho=rho(helium) * 10.0
+
+   end:species
+
+   This will modify the "helium" species, leaving all species unchanged except
+   for "rho" which is made ten times bigger.
+
+   species_externaln blocks have been eliminated. To specify a property to be
+   initialised by the values in an external file you now just give the filename
+   in quotes. For example:
+
+   begin:species
+
+     name=helium
+     rho='data.dat'
+
+   end:species
+
+   Species used for calculating distribution function output diagnostics are
+   now specified by name rather than number. For example:
+
+   begin:dist_fn
+
+     include_species:helium
+
+   end:dist_fn
+
+   Changed the deck parser to allow names with trailing numbers.
+
+ * Allow separate particle and field boundary conditions.
+   These are specified using "bc_x_min_field", "bc_x_min_particle", etc.
+
+ * Added "reflect" and "open" boundary conditions to input deck
+
+ * Added "gamma" to the distribution functions.
+
+ * Allow the writing of timestep info to stdout.
+   This is enabled by specifying "stdout_frequency" in the input deck
+   control block. The info is written after every "stdout_frequency" number
+   of timesteps.
+
+ * Added log functions to the maths parser.
+   "loge" and "log10" take one argument and give the natural log and base10
+   log, respectively. "log_base" takes two arguments, the second being the
+   base to use for the logarithm.
+
+ * Added nprocx/y/z parameters to the input deck. These specify the number
+   of processors to use in the x/y/z directions.
+
+ * The example input.deck has been moved to the example_decks directory.
+
+ * The timestep data is now written to the CFD file header rather than
+   its own separate block. If you have a custom reader then you will need
+   to modify it to account for the change.
+   All users will need to recompile the VisIt reader plugin.
+
+ * Removed 'nfs:' from filenames. This allows EPOCH to work on a wider range
+   of filesystems.
+
+ * Removed partial writes in output_particle routines.
+   This avoids file locking which in turn fixes I/O on
+   most Lustre filesystems.
+
+ * Fixed coefficients for 6th order field derivatives.
+
+ * Fixed particle weight coefficients.
+
+ * Fix initial temperature distribution calculation.
+
+ * Fixed laser boundary conditions.
+
+ * Clamp currents to zero whenever E field is clamped.
+
+ * Don't load particles into ghost cells.
+
+ * Fixes to correctly restart from restart dumps.
+
+ * Fix compilation with older versions of gfortran.
+
+ * Fixed bug when writing arrays larger than 2GB.
+
+ * Added current to the restart dumps.
+
+ * Write all particle species into restart dumps and not only those which
+   have been asked for.
+
+ * Only write warning messages on rank 0
+
+ * Fixed some non-standard F90
+
+ * Various minor bugfixes
+
+ * More small optimisations to particle push.
+
+ * Made 1d,2d and 3d versions more consistent.
+
+ * Added top-hat particle weighting. Not fully tested.
+
+ * Allow grids which cannot be exactly divided across processes.
+
+
+16-04-2010 Changes for version 2.1
+
+ * Various minor bug fixes.
+
+ * VisIt reader changes.
+   Read endianness and other new CFD header items.
+   Improve startup speed.
+   Added more debug info.
+
+ * Fix bugs in the particle push discovered with the two-stream instability
+   problem.
+
+ * Fix compilation when PER_PARTICLE_WEIGHT is not used.
+
+ * Added pol_angle for specifying polarisation angle in radians.
+
+ * Use the names "x_min", "x_max", etc. instead of "left", "right"
+
+ * Made the building of encoded_source slightly more robust.
+
+ * Fixed up the encoded_source routines to comply with Fortran90's limit of
+   39 continuation lines.
+
+ * Dump files at end of timestep.
+
