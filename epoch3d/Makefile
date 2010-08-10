@@ -8,9 +8,9 @@ TARGET = epoch3d
 DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 
 # Copy this line onto the DEFINES line to turn on particle cell division
-# -DPARTICLE_CELL_DIVISION
+# -DSPLIT_PARTICLES_AFTER_PUSH
 # Copy this line onto the DEFINES line to turn on debugging
-# -DPART_DEBUG -DFIELD_DEBUG
+# -DPARTICLE_DEBUG -DFIELD_DEBUG
 
 MODULEFLAG = -module 
 # Uncomment for the g95 compiler
