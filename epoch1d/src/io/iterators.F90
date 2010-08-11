@@ -267,7 +267,7 @@ CONTAINS
     TYPE(particle_list), POINTER, SAVE :: current_list
     TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
-    REAL(num) :: part_m
+    REAL(num) :: part_mc, gamma_mass
 
     IF (start)  THEN
       CALL start_particle_family(current_family, current_list, cur)
@@ -278,16 +278,17 @@ CONTAINS
       IF (.NOT. current_family%dump) NULLIFY(cur)
 
 #ifndef PER_PARTICLE_CHARGEMASS
-      part_m = current_family%mass
+      part_mc = current_family%mass * c
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
 #ifdef PER_PARTICLE_CHARGEMASS
-          part_m = cur%mass
+          part_mc = cur%mass * c
 #endif
-          data(part_count) = cur%part_p(1) * c / SQRT(part_m**2 &
-              + cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)
+          gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
+              + cur%part_p(3)**2 + part_mc**2) / c
+          data(part_count) = cur%part_p(1) / gamma_mass
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -313,7 +314,7 @@ CONTAINS
     TYPE(particle_list), POINTER, SAVE :: current_list
     TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
-    REAL(num) :: part_m
+    REAL(num) :: part_mc, gamma_mass
 
     IF (start)  THEN
       CALL start_particle_family(current_family, current_list, cur)
@@ -324,16 +325,17 @@ CONTAINS
       IF (.NOT. current_family%dump) NULLIFY(cur)
 
 #ifndef PER_PARTICLE_CHARGEMASS
-      part_m = current_family%mass
+      part_mc = current_family%mass * c
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
 #ifdef PER_PARTICLE_CHARGEMASS
-          part_m = cur%mass
+          part_mc = cur%mass * c
 #endif
-          data(part_count) = cur%part_p(2) * c / SQRT(part_m**2 &
-              + cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)
+          gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
+              + cur%part_p(3)**2 + part_mc**2) / c
+          data(part_count) = cur%part_p(2) / gamma_mass
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
@@ -359,7 +361,7 @@ CONTAINS
     TYPE(particle_list), POINTER, SAVE :: current_list
     TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
-    REAL(num) :: part_m
+    REAL(num) :: part_mc, gamma_mass
 
     IF (start)  THEN
       CALL start_particle_family(current_family, current_list, cur)
@@ -370,16 +372,17 @@ CONTAINS
       IF (.NOT. current_family%dump) NULLIFY(cur)
 
 #ifndef PER_PARTICLE_CHARGEMASS
-      part_m = current_family%mass
+      part_mc = current_family%mass * c
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
 #ifdef PER_PARTICLE_CHARGEMASS
-          part_m = cur%mass
+          part_mc = cur%mass * c
 #endif
-          data(part_count) = cur%part_p(3) * c / SQRT(part_m**2 &
-              + cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2)
+          gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
+              + cur%part_p(3)**2 + part_mc**2) / c
+          data(part_count) = cur%part_p(3) / gamma_mass
           cur=>cur%next
         ENDDO
         ! If the current partlist is exhausted, switch to the next one
