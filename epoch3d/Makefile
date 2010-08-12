@@ -48,11 +48,11 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
   epoch3d.F90 evaluate.f90 evaluator_blocks.f90 fields.f90 helper.F90 \
   ic_module.f90 input.f90 input_cartesian.f90 input_functions.f90 \
   input_particle.f90 iocommon.f90 iocontrol.f90 ionise.F90 iterators.F90 \
-  job_info.f90 laser.f90 mpi_routines.F90 mpi_subtype_control.F90 output.f90 \
-  output_cartesian.f90 output_particle.f90 particle_pointer_advance.F90 \
+  job_info.f90 laser.f90 mpi_routines.F90 mpi_subtype_control.f90 output.f90 \
+  output_cartesian.f90 output_particle.f90 particle_pointer_advance.f90 \
   particle_temperature.F90 particles.F90 partlist.F90 probes.F90 setup.F90 \
-  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.F90 \
-  split_particles.F90 stack.f90 strings.F90 strings_advanced.F90 \
+  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
+  split_particles.F90 stack.f90 strings.f90 strings_advanced.f90 \
   tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
@@ -156,11 +156,11 @@ iterators.o: iterators.F90 particle_pointer_advance.o
 job_info.o: job_info.f90
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 partlist.o
-mpi_subtype_control.o: mpi_subtype_control.F90 shared_data.o
+mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 output.o: output.f90 iocommon.o version_data.o
 output_cartesian.o: output_cartesian.f90 iocommon.o output.o
 output_particle.o: output_particle.f90 iocommon.o output.o shared_data.o
-particle_pointer_advance.o: particle_pointer_advance.F90 shared_data.o
+particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 shape_functions.o
 particles.o: particles.F90 boundary.o shape_functions.o
 partlist.o: partlist.F90 shared_data.o
@@ -170,11 +170,11 @@ setup.o: setup.F90 fields.o input_cartesian.o input_particle.o iocontrol.o \
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o
-simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
+simple_io.o: simple_io.f90 boundary.o mpi_subtype_control.o
 split_particles.o: split_particles.F90 helper.o shared_data.o
 stack.o: stack.f90 shared_data.o
-strings.o: strings.F90 shared_data.o
-strings_advanced.o: strings_advanced.F90 evaluate.o shunt.o
+strings.o: strings.f90 shared_data.o
+strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90
