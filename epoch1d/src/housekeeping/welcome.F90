@@ -102,7 +102,7 @@ CONTAINS
     WRITE(*, *) "Top-hat particle shape -DPARTICLE_SHAPE_TOPHAT"
 #endif
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-    defines = IOR(defines, c_def_split_particles_after_push)
+    defines = IOR(defines, c_def_split_part_after_push)
     WRITE(*, *) "Particle/cell ordering -DSPLIT_PARTICLES_AFTER_PUSH"
 #endif
 #ifdef PER_PARTICLE_WEIGHT

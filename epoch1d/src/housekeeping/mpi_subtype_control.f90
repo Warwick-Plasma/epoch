@@ -35,13 +35,13 @@ CONTAINS
 
 
   !----------------------------------------------------------------------------
-  ! get_total_local_dumped_particles - Returns the number of particles on this
+  ! get_total_local_dumped_particle - Returns the number of particles on this
   ! processor which should be written to disk. Parameter is whether this number
   ! should be calculated for a normal dump or a restart dump (all species are
   ! written at restart)
   !----------------------------------------------------------------------------
 
-  FUNCTION get_total_local_dumped_particles(force_restart)
+  FUNCTION get_total_local_dumped_particle(force_restart)
 
     ! This subroutine describes the total number of particles on the current
     ! processor which are members of species with the dump = T attribute in
@@ -49,18 +49,18 @@ CONTAINS
     ! counts all the particles
 
     LOGICAL, INTENT(IN) :: force_restart
-    INTEGER(KIND=8) :: get_total_local_dumped_particles
+    INTEGER(KIND=8) :: get_total_local_dumped_particle
     INTEGER :: ispecies
 
-    get_total_local_dumped_particles = 0
+    get_total_local_dumped_particle = 0
     DO ispecies = 1, n_species
       IF (particle_species(ispecies)%dump .OR. force_restart) THEN
-        get_total_local_dumped_particles = get_total_local_dumped_particles &
+        get_total_local_dumped_particle = get_total_local_dumped_particle &
             + particle_species(ispecies)%attached_list%count
       ENDIF
     ENDDO
 
-  END FUNCTION get_total_local_dumped_particles
+  END FUNCTION get_total_local_dumped_particle
 
 
 

@@ -15,7 +15,7 @@ CONTAINS
   ! Returns errors in an input deck like fashion.
   !----------------------------------------------------------------------------
 
-  SUBROUTINE load_single_array_from_data_file(filename, array, offset, err)
+  SUBROUTINE load_single_array_from_file(filename, array, offset, err)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: array
@@ -45,6 +45,6 @@ CONTAINS
     CALL field_bc(array)
     CALL field_zero_gradient(array, .TRUE.)
 
-  END SUBROUTINE load_single_array_from_data_file
+  END SUBROUTINE load_single_array_from_file
 
 END MODULE simple_io

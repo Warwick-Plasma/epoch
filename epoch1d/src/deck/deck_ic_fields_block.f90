@@ -38,7 +38,7 @@ CONTAINS
 
     IF (str_cmp(element, "ex")) THEN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, ex, offset, &
+        CALL load_single_array_from_file(filename, ex, offset, &
             handle_ic_fields_deck)
       ELSE
         CALL evaluate_string_in_space(value, ex, &
@@ -49,7 +49,7 @@ CONTAINS
 
     IF (str_cmp(element, "ey")) THEN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, ey, offset, &
+        CALL load_single_array_from_file(filename, ey, offset, &
             handle_ic_fields_deck)
       ELSE
         CALL evaluate_string_in_space(value, ey, &
@@ -60,7 +60,7 @@ CONTAINS
 
     IF (str_cmp(element, "ez")) THEN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, ez, offset, &
+        CALL load_single_array_from_file(filename, ez, offset, &
             handle_ic_fields_deck)
       ELSE
         CALL evaluate_string_in_space(value, ez, &
@@ -71,7 +71,7 @@ CONTAINS
 
     IF (str_cmp(element, "bx")) THEN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, bx, offset, &
+        CALL load_single_array_from_file(filename, bx, offset, &
             handle_ic_fields_deck)
       ELSE
         CALL evaluate_string_in_space(value, bx, &
@@ -82,7 +82,7 @@ CONTAINS
 
     IF (str_cmp(element, "by")) THEN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, by, offset, &
+        CALL load_single_array_from_file(filename, by, offset, &
             handle_ic_fields_deck)
       ELSE
         CALL evaluate_string_in_space(value, by, &
@@ -93,7 +93,7 @@ CONTAINS
 
     IF (str_cmp(element, "bz")) THEN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, bz, offset, &
+        CALL load_single_array_from_file(filename, bz, offset, &
             handle_ic_fields_deck)
       ELSE
         CALL evaluate_string_in_space(value, bz, &

@@ -93,7 +93,7 @@ MODULE constants
   INTEGER(4), PARAMETER :: c_def_particle_debug = 1
   INTEGER(4), PARAMETER :: c_def_field_debug = 2
   INTEGER(4), PARAMETER :: c_def_particle_shape_bspline3 = 4
-  INTEGER(4), PARAMETER :: c_def_split_particles_after_push = 8
+  INTEGER(4), PARAMETER :: c_def_split_part_after_push = 8
   INTEGER(4), PARAMETER :: c_def_per_particle_weight = 16
   INTEGER(4), PARAMETER :: c_def_particle_count_update = 32
   INTEGER(4), PARAMETER :: c_def_tracer_particles = 64

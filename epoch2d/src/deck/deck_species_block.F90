@@ -300,7 +300,7 @@ CONTAINS
     IF (str_cmp(element, "rho") .OR. str_cmp(element, "number_density")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%rho(:,:), offset, &
             handle_species_deck)
       ELSE
@@ -314,7 +314,7 @@ CONTAINS
     IF (str_cmp(element, "mass_density")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%rho(:,:), offset, &
             handle_species_deck)
       ELSE
@@ -330,7 +330,7 @@ CONTAINS
     IF (str_cmp(element, "drift_x")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,:,1), offset, &
             handle_species_deck)
       ELSE
@@ -344,7 +344,7 @@ CONTAINS
     IF (str_cmp(element, "drift_y")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,:,2), offset, &
             handle_species_deck)
       ELSE
@@ -358,7 +358,7 @@ CONTAINS
     IF (str_cmp(element, "drift_z")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,:,3), offset, &
             handle_species_deck)
       ELSE
@@ -372,7 +372,7 @@ CONTAINS
     IF (str_cmp(element, "temp")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,:,1), offset, &
             handle_species_deck)
       ELSE
@@ -390,7 +390,7 @@ CONTAINS
     IF (str_cmp(element, "temp_x")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,:,1), offset, &
             handle_species_deck)
       ELSE
@@ -404,7 +404,7 @@ CONTAINS
     IF (str_cmp(element, "temp_y")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,:,2), offset, &
             handle_species_deck)
       ELSE
@@ -418,7 +418,7 @@ CONTAINS
     IF (str_cmp(element, "temp_z")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
-        CALL load_single_array_from_data_file(filename, &
+        CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,:,3), offset, &
             handle_species_deck)
       ELSE

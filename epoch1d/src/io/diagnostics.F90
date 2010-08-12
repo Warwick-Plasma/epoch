@@ -62,7 +62,7 @@ CONTAINS
         code = IOR(code, c_io_restartable)
 
     npart_local = &
-        get_total_local_dumped_particles(IAND(code, c_io_restartable) .NE. 0)
+        get_total_local_dumped_particle(IAND(code, c_io_restartable) .NE. 0)
 
     CALL MPI_ALLREDUCE(npart_local, npart_dump_global, 1, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
