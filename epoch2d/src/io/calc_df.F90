@@ -56,14 +56,14 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGEMASS
+#ifndef PER_PARTICLE_CHARGE_MASS
       part_m  = particle_species(ispecies)%mass
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
         part_m  = current%mass
 #endif
 #ifdef PER_PARTICLE_WEIGHT
@@ -157,7 +157,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGEMASS
+#ifndef PER_PARTICLE_CHARGE_MASS
       part_m  = particle_species(ispecies)%mass
 #endif
       DO WHILE (ASSOCIATED(current))
@@ -167,7 +167,7 @@ CONTAINS
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
         part_m  = current%mass
 #endif
 #ifdef PER_PARTICLE_WEIGHT
@@ -268,14 +268,14 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGEMASS
+#ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = particle_species(ispecies)%charge
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
         part_q  = current%charge
 #endif
 #ifdef PER_PARTICLE_WEIGHT
@@ -470,7 +470,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGEMASS
+#ifndef PER_PARTICLE_CHARGE_MASS
       part_m  = particle_species(ispecies)%mass
 #endif
       DO WHILE(ASSOCIATED(current))
@@ -480,7 +480,7 @@ CONTAINS
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
         part_m  = current%mass
 #endif
 #ifdef PER_PARTICLE_WEIGHT

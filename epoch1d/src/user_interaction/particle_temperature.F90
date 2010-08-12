@@ -31,7 +31,7 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
       mass = current%mass
 #else
       mass = part_family%mass

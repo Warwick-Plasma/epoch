@@ -16,7 +16,7 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
     nvar = nvar+1
 #endif
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
     nvar = nvar+2
 #endif
 #ifdef PARTICLE_DEBUG
@@ -319,7 +319,7 @@ CONTAINS
     data(cpos) = a_particle%weight
     cpos = cpos+1
 #endif
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
     data(cpos) = a_particle%charge
     data(cpos+1) = a_particle%mass
     cpos = cpos+2
@@ -351,7 +351,7 @@ CONTAINS
     a_particle%weight = data(cpos)
     cpos = cpos+1
 #endif
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
     a_particle%charge = data(cpos)
     a_particle%mass = data(cpos+1)
     cpos = cpos+2
@@ -392,7 +392,7 @@ CONTAINS
     IF (part1%weight .NE. part2%weight) compare_particles = .FALSE.
 #endif
 
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
     IF (part1%charge .NE. part2%charge) compare_particles = .FALSE.
     IF (part1%mass   .NE. part2%mass  ) compare_particles = .FALSE.
 #endif

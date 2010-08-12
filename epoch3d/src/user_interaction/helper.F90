@@ -196,7 +196,7 @@ CONTAINS
           npart_per_cell = INT(density(ix, iy, iz) / density_average &
               * REAL(npart_per_cell_average, num))
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
             ! Even if particles have per particle charge and mass, assume
             ! that initially they all have the same charge and mass (user
             ! can easily over_ride)
@@ -319,7 +319,7 @@ CONTAINS
             ipart = 0
             IF (load_list(ix, iy, iz)) THEN
               DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
                 ! Even if particles have per particle charge and mass, assume
                 ! that initially they all have the same charge and mass (user
                 ! can easily over_ride)

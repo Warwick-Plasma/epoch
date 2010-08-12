@@ -133,7 +133,7 @@ CONTAINS
 
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGEMASS
+#ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = particle_species(ispecies)%charge
       part_mc = c * particle_species(ispecies)%mass
 #endif
@@ -158,7 +158,7 @@ CONTAINS
         part_pz = current%part_p(3)
         ! Use a lookup table for charge and mass to save memory
         ! No reason not to do this (I think), check properly later
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
         part_q  = current%charge
         part_mc = c * current%mass
 #endif

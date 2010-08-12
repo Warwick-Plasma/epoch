@@ -277,13 +277,13 @@ CONTAINS
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
       IF (.NOT. current_family%dump) NULLIFY(cur)
 
-#ifndef PER_PARTICLE_CHARGEMASS
+#ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = current_family%mass * c
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = cur%mass * c
 #endif
           gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
@@ -324,13 +324,13 @@ CONTAINS
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
       IF (.NOT. current_family%dump) NULLIFY(cur)
 
-#ifndef PER_PARTICLE_CHARGEMASS
+#ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = current_family%mass * c
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = cur%mass * c
 #endif
           gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
@@ -371,13 +371,13 @@ CONTAINS
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
       IF (.NOT. current_family%dump) NULLIFY(cur)
 
-#ifndef PER_PARTICLE_CHARGEMASS
+#ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = current_family%mass * c
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = cur%mass * c
 #endif
           gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
@@ -421,7 +421,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
           data(part_count) = cur%charge
 #else
           data(part_count) = current_family%charge
@@ -464,7 +464,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
           data(part_count) = cur%mass
 #else
           data(part_count) = current_family%mass

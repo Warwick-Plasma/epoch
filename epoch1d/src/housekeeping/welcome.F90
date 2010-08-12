@@ -121,9 +121,9 @@ CONTAINS
     defines = IOR(defines, c_def_particle_probes)
     WRITE(*, *) "Particle probe support -DPARTICLE_PROBES"
 #endif
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
     defines = IOR(defines, c_def_per_particle_chargemass)
-    WRITE(*, *) "Per particle charge and mass -DPER_PARTICLE_CHARGEMASS"
+    WRITE(*, *) "Per particle charge and mass -DPER_PARTICLE_CHARGE_MASS"
 #endif
 #ifdef PARTICLE_IONISE
     defines = IOR(defines, c_def_particle_ionise)

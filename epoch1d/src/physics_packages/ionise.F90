@@ -147,7 +147,7 @@ CONTAINS
 #endif
             new_part%part_pos = current%part_pos
             new_part%part_p = current%part_p
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
             new_part%charge = particle_species(next_species)%charge
             new_part%mass = particle_species(next_species)%mass
 #endif

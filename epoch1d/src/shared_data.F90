@@ -335,7 +335,7 @@ MODULE shared_data
 #ifdef PER_PARTICLE_WEIGHT
     REAL(num) :: weight
 #endif
-#ifdef PER_PARTICLE_CHARGEMASS
+#ifdef PER_PARTICLE_CHARGE_MASS
     REAL(num) :: charge
     REAL(num) :: mass
 #endif
