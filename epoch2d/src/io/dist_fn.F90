@@ -145,7 +145,6 @@ CONTAINS
 
     use_x = .FALSE.
     use_y = .FALSE.
-    need_reduce = .TRUE.
     color = 0
     global_resolution = resolution
     parallel = .FALSE.
@@ -317,33 +316,10 @@ CONTAINS
       IF (.NOT. parallel(idim)) conv(idim) = max_p_conv
     ENDDO
 
-    ! Setup MPI
-    IF (use_x .AND. use_y) need_reduce = .FALSE.
-    ! If using x direction need to reduce across y
-    IF (use_x) color = color + coordinates(c_ndims)
-    ! If using y direction need to reduce across x
-    IF (use_y) color = color + nprocx * coordinates(c_ndims-1)
-
-    IF (need_reduce) THEN
-      CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
-    ELSE
-      comm_new = MPI_COMM_NULL
-    ENDIF
-
-    new_type = &
-        create_1d_array_subtype(resolution, global_resolution, start_local)
-    CALL MPI_TYPE_CONTIGUOUS(resolution(1), &
-        mpireal, array_type, errcode)
-
-    ! Create grids
+    ! Calculate grid spacing
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
-    ENDDO
-    ALLOCATE(grid1(global_resolution(1)))
-
-    DO idir = 1, global_resolution(1)
-      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
     ENDDO
 
     ALLOCATE(data(resolution(1)))
@@ -392,7 +368,16 @@ CONTAINS
       current=>current%next
     ENDDO
 
+    need_reduce = .TRUE.
+    IF (use_x .AND. use_y) need_reduce = .FALSE.
+
     IF (need_reduce) THEN
+      ! If using x direction need to reduce across y
+      IF (use_x) color = color + coordinates(c_ndims)
+      ! If using y direction need to reduce across x
+      IF (use_y) color = color + nprocx * coordinates(c_ndims-1)
+
+      CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
       ALLOCATE(data2(resolution(1)))
       data2 = 0.0_num
       CALL MPI_ALLREDUCE(data, data2, &
@@ -400,7 +385,15 @@ CONTAINS
           comm_new, errcode)
       data = data2
       DEALLOCATE(data2)
+      CALL MPI_COMM_FREE(comm_new, errcode)
     ENDIF
+
+    ! Create grids
+    ALLOCATE(grid1(global_resolution(1)))
+
+    DO idir = 1, global_resolution(1)
+      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
+    ENDDO
 
     grid_name = "Grid_" // TRIM(name) // "_" &
         // TRIM(particle_species(species)%name)
@@ -416,15 +409,22 @@ CONTAINS
     CALL cfd_write_1d_cartesian_grid(TRIM(norm_grid_name), "Grid", &
         grid1/conv(1), 0)
 
+    DEALLOCATE(grid1)
+
+    new_type = &
+        create_1d_array_subtype(resolution, global_resolution, start_local)
+    CALL MPI_TYPE_CONTIGUOUS(resolution(1), &
+        mpireal, array_type, errcode)
+    CALL MPI_TYPE_COMMIT(array_type, errcode)
+
     CALL cfd_write_1d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
         global_resolution(1), stagger(1), TRIM(norm_grid_name), "Grid", data, &
         new_type, array_type)
+
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
-    IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
     DEALLOCATE(data)
-    DEALLOCATE(grid1)
 
   END SUBROUTINE general_1d_dist_fn
 
@@ -477,7 +477,6 @@ CONTAINS
 
     use_x = .FALSE.
     use_y = .FALSE.
-    need_reduce = .TRUE.
     color = 0
     global_resolution = resolution
     parallel = .FALSE.
@@ -649,38 +648,10 @@ CONTAINS
       IF (.NOT. parallel(idim)) conv(idim) = max_p_conv
     ENDDO
 
-    ! Setup MPI
-    IF (use_x .AND. use_y) need_reduce = .FALSE.
-    ! If using x direction need to reduce across y
-    IF (use_x) color = color + coordinates(c_ndims)
-    ! If using y direction need to reduce across x
-    IF (use_y) color = color + nprocx * coordinates(c_ndims-1)
-
-    IF (need_reduce) THEN
-      CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
-    ELSE
-      comm_new = MPI_COMM_NULL
-    ENDIF
-
-    new_type = &
-        create_2d_array_subtype(resolution, global_resolution, start_local)
-    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2), &
-        mpireal, array_type, errcode)
-
-    ! Create grids
+    ! Calculate grid spacing
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
-    ENDDO
-    ALLOCATE(grid1(global_resolution(1)))
-    ALLOCATE(grid2(global_resolution(2)))
-
-    DO idir = 1, global_resolution(1)
-      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
-    ENDDO
-
-    DO idir = 1, global_resolution(2)
-      grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
     ENDDO
 
     ALLOCATE(data(resolution(1), resolution(2)))
@@ -729,7 +700,16 @@ CONTAINS
       current=>current%next
     ENDDO
 
+    need_reduce = .TRUE.
+    IF (use_x .AND. use_y) need_reduce = .FALSE.
+
     IF (need_reduce) THEN
+      ! If using x direction need to reduce across y
+      IF (use_x) color = color + coordinates(c_ndims)
+      ! If using y direction need to reduce across x
+      IF (use_y) color = color + nprocx * coordinates(c_ndims-1)
+
+      CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
       ALLOCATE(data2(resolution(1), resolution(2)))
       data2 = 0.0_num
       CALL MPI_ALLREDUCE(data, data2, &
@@ -737,7 +717,20 @@ CONTAINS
           comm_new, errcode)
       data = data2
       DEALLOCATE(data2)
+      CALL MPI_COMM_FREE(comm_new, errcode)
     ENDIF
+
+    ! Create grids
+    ALLOCATE(grid1(global_resolution(1)))
+    ALLOCATE(grid2(global_resolution(2)))
+
+    DO idir = 1, global_resolution(1)
+      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
+    ENDDO
+
+    DO idir = 1, global_resolution(2)
+      grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
+    ENDDO
 
     grid_name = "Grid_" // TRIM(name) // "_" &
         // TRIM(particle_species(species)%name)
@@ -754,15 +747,22 @@ CONTAINS
     CALL cfd_write_2d_cartesian_grid(TRIM(norm_grid_name), "Grid", &
         grid1/conv(1), grid2/conv(2), 0)
 
+    DEALLOCATE(grid1, grid2)
+
+    new_type = &
+        create_2d_array_subtype(resolution, global_resolution, start_local)
+    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2), &
+        mpireal, array_type, errcode)
+    CALL MPI_TYPE_COMMIT(array_type, errcode)
+
     CALL cfd_write_2d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
         global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
         new_type, array_type)
+
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
-    IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
     DEALLOCATE(data)
-    DEALLOCATE(grid1, grid2)
 
   END SUBROUTINE general_2d_dist_fn
 
@@ -815,7 +815,6 @@ CONTAINS
 
     use_x = .FALSE.
     use_y = .FALSE.
-    need_reduce = .TRUE.
     color = 0
     global_resolution = resolution
     parallel = .FALSE.
@@ -987,43 +986,10 @@ CONTAINS
       IF (.NOT. parallel(idim)) conv(idim) = max_p_conv
     ENDDO
 
-    ! Setup MPI
-    IF (use_x .AND. use_y) need_reduce = .FALSE.
-    ! If using x direction need to reduce across y
-    IF (use_x) color = color + coordinates(c_ndims)
-    ! If using y direction need to reduce across x
-    IF (use_y) color = color + nprocx * coordinates(c_ndims-1)
-
-    IF (need_reduce) THEN
-      CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
-    ELSE
-      comm_new = MPI_COMM_NULL
-    ENDIF
-
-    new_type = &
-        create_3d_array_subtype(resolution, global_resolution, start_local)
-    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
-        mpireal, array_type, errcode)
-
-    ! Create grids
+    ! Calculate grid spacing
     DO idim = 1, c_df_curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
-    ENDDO
-    ALLOCATE(grid1(global_resolution(1)))
-    ALLOCATE(grid2(global_resolution(2)))
-    ALLOCATE(grid3(global_resolution(3)))
-
-    DO idir = 1, global_resolution(1)
-      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
-    ENDDO
-
-    DO idir = 1, global_resolution(2)
-      grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
-    ENDDO
-
-    DO idir = 1, global_resolution(3)
-      grid3(idir) = ranges(1,3) + (idir - 1) * dgrid(3)
     ENDDO
 
     ALLOCATE(data(resolution(1), resolution(2), resolution(3)))
@@ -1072,7 +1038,16 @@ CONTAINS
       current=>current%next
     ENDDO
 
+    need_reduce = .TRUE.
+    IF (use_x .AND. use_y) need_reduce = .FALSE.
+
     IF (need_reduce) THEN
+      ! If using x direction need to reduce across y
+      IF (use_x) color = color + coordinates(c_ndims)
+      ! If using y direction need to reduce across x
+      IF (use_y) color = color + nprocx * coordinates(c_ndims-1)
+
+      CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
       ALLOCATE(data2(resolution(1), resolution(2), resolution(3)))
       data2 = 0.0_num
       CALL MPI_ALLREDUCE(data, data2, &
@@ -1080,7 +1055,25 @@ CONTAINS
           comm_new, errcode)
       data = data2
       DEALLOCATE(data2)
+      CALL MPI_COMM_FREE(comm_new, errcode)
     ENDIF
+
+    ! Create grids
+    ALLOCATE(grid1(global_resolution(1)))
+    ALLOCATE(grid2(global_resolution(2)))
+    ALLOCATE(grid3(global_resolution(3)))
+
+    DO idir = 1, global_resolution(1)
+      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
+    ENDDO
+
+    DO idir = 1, global_resolution(2)
+      grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
+    ENDDO
+
+    DO idir = 1, global_resolution(3)
+      grid3(idir) = ranges(1,3) + (idir - 1) * dgrid(3)
+    ENDDO
 
     grid_name = "Grid_" // TRIM(name) // "_" &
         // TRIM(particle_species(species)%name)
@@ -1098,15 +1091,22 @@ CONTAINS
     CALL cfd_write_3d_cartesian_grid(TRIM(norm_grid_name), "Grid", &
         grid1/conv(1), grid2/conv(2), grid3/conv(3), 0)
 
+    DEALLOCATE(grid1, grid2, grid3)
+
+    new_type = &
+        create_3d_array_subtype(resolution, global_resolution, start_local)
+    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
+        mpireal, array_type, errcode)
+    CALL MPI_TYPE_COMMIT(array_type, errcode)
+
     CALL cfd_write_3d_cartesian_variable_parallel(TRIM(var_name), "dist_fn", &
         global_resolution, stagger, TRIM(norm_grid_name), "Grid", data, &
         new_type, array_type)
+
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
-    IF (need_reduce) CALL MPI_COMM_FREE(comm_new, errcode)
 
     DEALLOCATE(data)
-    DEALLOCATE(grid1, grid2, grid3)
 
   END SUBROUTINE general_3d_dist_fn
 
