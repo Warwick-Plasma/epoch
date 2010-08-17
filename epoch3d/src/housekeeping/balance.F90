@@ -24,9 +24,6 @@ CONTAINS
     INTEGER, DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
     INTEGER, DIMENSION(:), ALLOCATABLE :: starts_y, ends_y
     INTEGER, DIMENSION(:), ALLOCATABLE :: starts_z, ends_z
-    INTEGER :: new_cell_x_min, new_cell_x_max
-    INTEGER :: new_cell_y_min, new_cell_y_max
-    INTEGER :: new_cell_z_min, new_cell_z_max
     REAL(num) :: balance_frac, npart_av
     REAL(num) :: balance_frac_x, balance_frac_y, balance_frac_z
     INTEGER(KIND=8) :: min_x, max_x, min_y, max_y, min_z, max_z
@@ -159,18 +156,18 @@ CONTAINS
 
     ! Now need to calculate the start and end points for the new domain on
     ! the current processor
-    new_cell_x_min = starts_x(coordinates(c_ndims)+1)
-    new_cell_x_max = ends_x(coordinates(c_ndims)+1)
+    nx_global_min = starts_x(coordinates(c_ndims)+1)
+    nx_global_max = ends_x(coordinates(c_ndims)+1)
 
-    new_cell_y_min = starts_y(coordinates(c_ndims-1)+1)
-    new_cell_y_max = ends_y(coordinates(c_ndims-1)+1)
+    ny_global_min = starts_y(coordinates(c_ndims-1)+1)
+    ny_global_max = ends_y(coordinates(c_ndims-1)+1)
 
-    new_cell_z_min = starts_z(coordinates(c_ndims-2)+1)
-    new_cell_z_max = ends_z(coordinates(c_ndims-2)+1)
+    nz_global_min = starts_z(coordinates(c_ndims-2)+1)
+    nz_global_max = ends_z(coordinates(c_ndims-2)+1)
 
-    domain(1,:) = (/new_cell_x_min, new_cell_x_max/)
-    domain(2,:) = (/new_cell_y_min, new_cell_y_max/)
-    domain(3,:) = (/new_cell_z_min, new_cell_z_max/)
+    domain(1,:) = (/nx_global_min, nx_global_max/)
+    domain(2,:) = (/ny_global_min, ny_global_max/)
+    domain(3,:) = (/nz_global_min, nz_global_max/)
 
     ! Redistribute the field variables
     CALL redistribute_fields(domain)
@@ -184,16 +181,16 @@ CONTAINS
     cell_z_max = ends_z
 
     ! Set the new nx, ny, nz
-    nx = new_cell_x_max - new_cell_x_min + 1
-    ny = new_cell_y_max - new_cell_y_min + 1
-    nz = new_cell_z_max - new_cell_z_min + 1
+    nx = nx_global_max - nx_global_min + 1
+    ny = ny_global_max - ny_global_min + 1
+    nz = nz_global_max - nz_global_min + 1
 
     ! Do X, Y, Z arrays separately because we already have global copies
     DEALLOCATE(x, y, z)
     ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))
-    x(0:nx+1) = x_global(new_cell_x_min-1:new_cell_x_max+1)
-    y(0:ny+1) = y_global(new_cell_y_min-1:new_cell_y_max+1)
-    z(0:nz+1) = z_global(new_cell_z_min-1:new_cell_z_max+1)
+    x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
+    y(-2:ny+3) = y_global(ny_global_min-3:ny_global_max+3)
+    z(-2:nz+3) = z_global(nz_global_min-3:nz_global_max+3)
 
     ! Recalculate x_mins and x_maxs so that rebalancing works next time
     DO iproc = 0, nprocx - 1

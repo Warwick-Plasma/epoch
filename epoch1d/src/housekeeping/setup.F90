@@ -58,7 +58,7 @@ CONTAINS
 
   SUBROUTINE after_control
 
-    INTEGER :: iproc, ix, ix_min
+    INTEGER :: iproc, ix
 
     length_x = x_max - x_min
     dx = length_x / REAL(nx_global-1, num)
@@ -74,14 +74,15 @@ CONTAINS
       x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
 
-    x_min_local = x_mins(coordinates(1))
-    x_max_local = x_maxs(coordinates(1))
+    x_min_local = x_mins(coordinates(c_ndims))
+    x_max_local = x_maxs(coordinates(c_ndims))
 
-    ix_min = cell_x_min(coordinates(1)+1)
+    nx_global_min = cell_x_min(coordinates(c_ndims)+1)
+    nx_global_max = cell_x_max(coordinates(c_ndims)+1)
 
     ! Setup local grid
-    DO ix = -1, nx+2
-      x(ix) = x_global(ix_min+ix-1)
+    DO ix = -2, nx + 3
+      x(ix) = x_global(nx_global_min+ix-1)
     ENDDO
 
     CALL set_initial_values

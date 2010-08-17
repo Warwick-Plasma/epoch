@@ -532,6 +532,7 @@ MODULE shared_data
   REAL(num), DIMENSION(:), ALLOCATABLE :: y_offset_global
   ! The location of the processors
   INTEGER, DIMENSION(:), ALLOCATABLE :: cell_x_min, cell_x_max
+  INTEGER :: nx_global_min, nx_global_max
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
 

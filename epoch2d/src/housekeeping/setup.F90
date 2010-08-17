@@ -61,7 +61,7 @@ CONTAINS
 
   SUBROUTINE after_control
 
-    INTEGER :: iproc, ix, iy, ix_min, iy_min
+    INTEGER :: iproc, ix, iy
 
     length_x = x_max - x_min
     length_y = y_max - y_min
@@ -87,20 +87,22 @@ CONTAINS
       y_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
 
-    x_min_local = x_mins(coordinates(2))
-    x_max_local = x_maxs(coordinates(2))
-    y_min_local = y_mins(coordinates(1))
-    y_max_local = y_maxs(coordinates(1))
+    x_min_local = x_mins(coordinates(c_ndims))
+    x_max_local = x_maxs(coordinates(c_ndims))
+    y_min_local = y_mins(coordinates(c_ndims-1))
+    y_max_local = y_maxs(coordinates(c_ndims-1))
 
-    ix_min = cell_x_min(coordinates(2)+1)
-    iy_min = cell_y_min(coordinates(1)+1)
+    nx_global_min = cell_x_min(coordinates(c_ndims)+1)
+    nx_global_max = cell_x_max(coordinates(c_ndims)+1)
+    ny_global_min = cell_y_min(coordinates(c_ndims-1)+1)
+    ny_global_max = cell_y_max(coordinates(c_ndims-1)+1)
 
     ! Setup local grid
-    DO ix = -1, nx+2
-      x(ix) = x_global(ix_min+ix-1)
+    DO ix = -2, nx + 3
+      x(ix) = x_global(nx_global_min+ix-1)
     ENDDO
-    DO iy = -1, ny+2
-      y(iy) = y_global(iy_min+iy-1)
+    DO iy = -2, ny + 3
+      y(iy) = y_global(ny_global_min+iy-1)
     ENDDO
 
     CALL set_initial_values
