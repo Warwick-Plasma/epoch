@@ -162,7 +162,8 @@ CONTAINS
     ALLOCATE(jx(-2:nx+3, -2:ny+3), jy(-2:nx+3, -2:ny+3), jz(-2:nx+3, -2:ny+3))
 
     ! Setup the particle lists
-    NULLIFY(particle_species(1)%prev, particle_species(n_species)%next)
+    IF (n_species .GT. 0) &
+        NULLIFY(particle_species(1)%prev, particle_species(n_species)%next)
     DO ispecies = 1, n_species-1
       particle_species(ispecies)%next=>particle_species(ispecies+1)
     ENDDO

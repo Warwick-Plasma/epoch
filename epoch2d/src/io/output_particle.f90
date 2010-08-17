@@ -24,6 +24,8 @@ CONTAINS
     INTEGER :: sizes(2)
     REAL(num) :: mn, mx
 
+    IF (npart_global .LE. 0) RETURN
+
     sizes = SHAPE(particles)
     npart_local = sizes(2)
     ndims = INT(sizes(1),4)
@@ -142,6 +144,8 @@ CONTAINS
     REAL(num) :: mn, mx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: gmn, gmx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: data
+
+    IF (npart_global .LE. 0) RETURN
 
     ! Metadata is
     ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
@@ -313,6 +317,8 @@ CONTAINS
     INTEGER(8) :: npart_local, block_length, md_length
     REAL(num) :: mn, mx
 
+    IF (npart_global .LE. 0) RETURN
+
     npart_local = SIZE(particles)
 
     ! Metadata is
@@ -417,6 +423,8 @@ CONTAINS
     LOGICAL :: start
     REAL(num) :: mn, mx, gmn, gmx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: data
+
+    IF (npart_global .LE. 0) RETURN
 
     ! Metadata is
     ! * ) meshtype (INTEGER(4)) All mesh blocks contain this
