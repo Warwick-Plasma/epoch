@@ -281,12 +281,7 @@ CONTAINS
 
   SUBROUTINE set_dt        ! sets CFL limited step
 
-    REAL(num) :: dtx, dty, dtz
-
-    dtx = dx/c
-    dty = dy/c
-    dtz = dz/c
-    dt = MIN(dtx**2, dty**2, dtz**2)/SQRT(dtx**2+dty**2+dtz**2)
+    dt = dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
     IF (dt_plasma_frequency .NE. 0.0_num) dt = MIN(dt, dt_plasma_frequency)
     IF (dt_laser .NE. 0.0_num) dt = MIN(dt, dt_laser)
     dt = dt_multiplier * dt
