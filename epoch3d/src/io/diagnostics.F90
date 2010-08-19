@@ -181,32 +181,32 @@ CONTAINS
     CALL write_field(c_dump_jz, code, 'jz', 'Current/Jz', 'A/m^2', &
         c_stagger_jz, jz)
 
-    CALL write_field(c_dump_cpml_e_psiyx, code, 'cpml_e_psiyx', 'CPML/Ey_x', &
-        'Amp', c_stagger_cell_centre, cpml_e_psiyx)
-    CALL write_field(c_dump_cpml_e_psizx, code, 'cpml_e_psizx', 'CPML/Ez_x', &
-        'Amp', c_stagger_cell_centre, cpml_e_psizx)
-    CALL write_field(c_dump_cpml_b_psiyx, code, 'cpml_b_psiyx', 'CPML/By_x', &
-        'Amp', c_stagger_cell_centre, cpml_b_psiyx)
-    CALL write_field(c_dump_cpml_b_psizx, code, 'cpml_b_psizx', 'CPML/Bz_x', &
-        'Amp', c_stagger_cell_centre, cpml_b_psizx)
+    CALL write_field(c_dump_cpml_psi_eyx, code, 'cpml_psi_eyx', 'CPML/Ey_x', &
+        'Amp', c_stagger_cell_centre, cpml_psi_eyx)
+    CALL write_field(c_dump_cpml_psi_ezx, code, 'cpml_psi_ezx', 'CPML/Ez_x', &
+        'Amp', c_stagger_cell_centre, cpml_psi_ezx)
+    CALL write_field(c_dump_cpml_psi_byx, code, 'cpml_psi_byx', 'CPML/By_x', &
+        'Amp', c_stagger_cell_centre, cpml_psi_byx)
+    CALL write_field(c_dump_cpml_psi_bzx, code, 'cpml_psi_bzx', 'CPML/Bz_x', &
+        'Amp', c_stagger_cell_centre, cpml_psi_bzx)
 
-    CALL write_field(c_dump_cpml_e_psixy, code, 'cpml_e_psixy', 'CPML/Ex_y', &
-        'Amp', c_stagger_cell_centre, cpml_e_psixy)
-    CALL write_field(c_dump_cpml_e_psizy, code, 'cpml_e_psizy', 'CPML/Ez_y', &
-        'Amp', c_stagger_cell_centre, cpml_e_psizy)
-    CALL write_field(c_dump_cpml_b_psixy, code, 'cpml_b_psixy', 'CPML/Bx_y', &
-        'Amp', c_stagger_cell_centre, cpml_b_psixy)
-    CALL write_field(c_dump_cpml_b_psizy, code, 'cpml_b_psizy', 'CPML/Bz_y', &
-        'Amp', c_stagger_cell_centre, cpml_b_psizy)
+    CALL write_field(c_dump_cpml_psi_exy, code, 'cpml_psi_exy', 'CPML/Ex_y', &
+        'Amp', c_stagger_cell_centre, cpml_psi_exy)
+    CALL write_field(c_dump_cpml_psi_ezy, code, 'cpml_psi_ezy', 'CPML/Ez_y', &
+        'Amp', c_stagger_cell_centre, cpml_psi_ezy)
+    CALL write_field(c_dump_cpml_psi_bxy, code, 'cpml_psi_bxy', 'CPML/Bx_y', &
+        'Amp', c_stagger_cell_centre, cpml_psi_bxy)
+    CALL write_field(c_dump_cpml_psi_bzy, code, 'cpml_psi_bzy', 'CPML/Bz_y', &
+        'Amp', c_stagger_cell_centre, cpml_psi_bzy)
 
-    CALL write_field(c_dump_cpml_e_psixz, code, 'cpml_e_psixz', 'CPML/Ex_z', &
-        'Amp', c_stagger_cell_centre, cpml_e_psixz)
-    CALL write_field(c_dump_cpml_e_psiyz, code, 'cpml_e_psiyz', 'CPML/Ey_z', &
-        'Amp', c_stagger_cell_centre, cpml_e_psiyz)
-    CALL write_field(c_dump_cpml_b_psixz, code, 'cpml_b_psixz', 'CPML/Bx_z', &
-        'Amp', c_stagger_cell_centre, cpml_b_psixz)
-    CALL write_field(c_dump_cpml_b_psiyz, code, 'cpml_b_psiyz', 'CPML/By_z', &
-        'Amp', c_stagger_cell_centre, cpml_b_psiyz)
+    CALL write_field(c_dump_cpml_psi_exz, code, 'cpml_psi_exz', 'CPML/Ex_z', &
+        'Amp', c_stagger_cell_centre, cpml_psi_exz)
+    CALL write_field(c_dump_cpml_psi_eyz, code, 'cpml_psi_eyz', 'CPML/Ey_z', &
+        'Amp', c_stagger_cell_centre, cpml_psi_eyz)
+    CALL write_field(c_dump_cpml_psi_bxz, code, 'cpml_psi_bxz', 'CPML/Bx_z', &
+        'Amp', c_stagger_cell_centre, cpml_psi_bxz)
+    CALL write_field(c_dump_cpml_psi_byz, code, 'cpml_psi_byz', 'CPML/By_z', &
+        'Amp', c_stagger_cell_centre, cpml_psi_byz)
 
     ! These are derived variables from the particles
     CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &

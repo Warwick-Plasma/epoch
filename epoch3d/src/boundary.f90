@@ -1236,41 +1236,41 @@ CONTAINS
     REAL(num) :: z_pos, z_pos_m, z_pos_ma
     REAL(num) :: sigma, kappa, acoeff, bcoeff, ccoeff
 
-    ALLOCATE(cpml_kappa_e_dx(-2:nx+3), cpml_kappa_b_dx(-2:nx+3))
-    ALLOCATE(cpml_e_acoeff_x(-2:nx+3), cpml_b_acoeff_x(-2:nx+3))
-    ALLOCATE(cpml_e_sigma_x(-2:nx+3), cpml_b_sigma_x(-2:nx+3))
+    ALLOCATE(cpml_kappa_ex(-2:nx+3), cpml_kappa_bx(-2:nx+3))
+    ALLOCATE(cpml_a_ex(-2:nx+3), cpml_a_bx(-2:nx+3))
+    ALLOCATE(cpml_sigma_ex(-2:nx+3), cpml_sigma_bx(-2:nx+3))
 
-    ALLOCATE(cpml_kappa_e_dy(-2:ny+3), cpml_kappa_b_dy(-2:ny+3))
-    ALLOCATE(cpml_e_acoeff_y(-2:ny+3), cpml_b_acoeff_y(-2:ny+3))
-    ALLOCATE(cpml_e_sigma_y(-2:ny+3), cpml_b_sigma_y(-2:ny+3))
+    ALLOCATE(cpml_kappa_ey(-2:ny+3), cpml_kappa_by(-2:ny+3))
+    ALLOCATE(cpml_a_ey(-2:ny+3), cpml_a_by(-2:ny+3))
+    ALLOCATE(cpml_sigma_ey(-2:ny+3), cpml_sigma_by(-2:ny+3))
 
-    ALLOCATE(cpml_kappa_e_dz(-2:nz+3), cpml_kappa_b_dz(-2:nz+3))
-    ALLOCATE(cpml_e_acoeff_z(-2:nz+3), cpml_b_acoeff_z(-2:nz+3))
-    ALLOCATE(cpml_e_sigma_z(-2:nz+3), cpml_b_sigma_z(-2:nz+3))
+    ALLOCATE(cpml_kappa_ez(-2:nz+3), cpml_kappa_bz(-2:nz+3))
+    ALLOCATE(cpml_a_ez(-2:nz+3), cpml_a_bz(-2:nz+3))
+    ALLOCATE(cpml_sigma_ez(-2:nz+3), cpml_sigma_bz(-2:nz+3))
 
-    cpml_kappa_e_dx = 1.0_num
-    cpml_kappa_b_dx = 1.0_num
+    cpml_kappa_ex = 1.0_num
+    cpml_kappa_bx = 1.0_num
 
-    cpml_e_acoeff_x = 0.0_num
-    cpml_e_sigma_x = 0.0_num
-    cpml_b_acoeff_x = 0.0_num
-    cpml_b_sigma_x = 0.0_num
+    cpml_a_ex = 0.0_num
+    cpml_sigma_ex = 0.0_num
+    cpml_a_bx = 0.0_num
+    cpml_sigma_bx = 0.0_num
 
-    cpml_kappa_e_dy = 1.0_num
-    cpml_kappa_b_dy = 1.0_num
+    cpml_kappa_ey = 1.0_num
+    cpml_kappa_by = 1.0_num
 
-    cpml_e_acoeff_y = 0.0_num
-    cpml_e_sigma_y = 0.0_num
-    cpml_b_acoeff_y = 0.0_num
-    cpml_b_sigma_y = 0.0_num
+    cpml_a_ey = 0.0_num
+    cpml_sigma_ey = 0.0_num
+    cpml_a_by = 0.0_num
+    cpml_sigma_by = 0.0_num
 
-    cpml_kappa_e_dz = 1.0_num
-    cpml_kappa_b_dz = 1.0_num
+    cpml_kappa_ez = 1.0_num
+    cpml_kappa_bz = 1.0_num
 
-    cpml_e_acoeff_z = 0.0_num
-    cpml_e_sigma_z = 0.0_num
-    cpml_b_acoeff_z = 0.0_num
-    cpml_b_sigma_z = 0.0_num
+    cpml_a_ez = 0.0_num
+    cpml_sigma_ez = 0.0_num
+    cpml_a_bz = 0.0_num
+    cpml_sigma_bz = 0.0_num
 
     cpml_sigma_max = cpml_sigma_max * c * 0.8_num * (cpml_m + 1.0_num) / dx
 
@@ -1307,9 +1307,9 @@ CONTAINS
           x_pos_m = x_pos**cpml_m
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
-          cpml_kappa_e_dx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_e_sigma_x(ix) = cpml_sigma_max * x_pos_m
-          cpml_e_acoeff_x(ix) = cpml_a_max * x_pos_ma
+          cpml_kappa_ex(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
+          cpml_sigma_ex(ix) = cpml_sigma_max * x_pos_m
+          cpml_a_ex(ix) = cpml_a_max * x_pos_ma
 
           ! runs from nearly 1.0 to nearly 0.0 on the half intervals
           ! 1.0 at ix_glob=1-1/2 and 0.0 at ix_glob=cpml_thickness+1/2
@@ -1318,9 +1318,9 @@ CONTAINS
           x_pos_m = x_pos**cpml_m
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
-          cpml_kappa_b_dx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_b_sigma_x(ix) = cpml_sigma_max * x_pos_m
-          cpml_b_acoeff_x(ix) = cpml_a_max * x_pos_ma
+          cpml_kappa_bx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
+          cpml_sigma_bx(ix) = cpml_sigma_max * x_pos_m
+          cpml_a_bx(ix) = cpml_a_max * x_pos_ma
         ENDDO
       ENDIF
 
@@ -1366,9 +1366,9 @@ CONTAINS
           x_pos_m = x_pos**cpml_m
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
-          cpml_kappa_b_dx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_b_sigma_x(ix) = cpml_sigma_max * x_pos_m
-          cpml_b_acoeff_x(ix) = cpml_a_max * x_pos_ma
+          cpml_kappa_ex(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
+          cpml_sigma_ex(ix) = cpml_sigma_max * x_pos_m
+          cpml_a_ex(ix) = cpml_a_max * x_pos_ma
 
           ! runs from nearly 0.0 to nearly 1.0 on the half intervals
           ! 0.0 at ix_glob=cpml_thickness+1/2 and 1.0 at ix_glob=1-1/2
@@ -1377,9 +1377,9 @@ CONTAINS
           x_pos_m = x_pos**cpml_m
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
-          cpml_kappa_e_dx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_e_sigma_x(ix) = cpml_sigma_max * x_pos_m
-          cpml_e_acoeff_x(ix) = cpml_a_max * x_pos_ma
+          cpml_kappa_bx(ix-1) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
+          cpml_sigma_bx(ix-1) = cpml_sigma_max * x_pos_m
+          cpml_a_bx(ix-1) = cpml_a_max * x_pos_ma
         ENDDO
       ENDIF
 
@@ -1425,9 +1425,9 @@ CONTAINS
           y_pos_m = y_pos**cpml_m
           y_pos_ma = (1.0_num - y_pos)**cpml_ma
 
-          cpml_kappa_e_dy(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
-          cpml_e_sigma_y(iy) = cpml_sigma_max * y_pos_m
-          cpml_e_acoeff_y(iy) = cpml_a_max * y_pos_ma
+          cpml_kappa_ey(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
+          cpml_sigma_ey(iy) = cpml_sigma_max * y_pos_m
+          cpml_a_ey(iy) = cpml_a_max * y_pos_ma
 
           ! runs from nearly 1.0 to nearly 0.0 on the half intervals
           ! 1.0 at iy_glob=1-1/2 and 0.0 at iy_glob=cpml_thickness+1/2
@@ -1436,9 +1436,9 @@ CONTAINS
           y_pos_m = y_pos**cpml_m
           y_pos_ma = (1.0_num - y_pos)**cpml_ma
 
-          cpml_kappa_b_dy(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
-          cpml_b_sigma_y(iy) = cpml_sigma_max * y_pos_m
-          cpml_b_acoeff_y(iy) = cpml_a_max * y_pos_ma
+          cpml_kappa_by(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
+          cpml_sigma_by(iy) = cpml_sigma_max * y_pos_m
+          cpml_a_by(iy) = cpml_a_max * y_pos_ma
         ENDDO
       ENDIF
 
@@ -1484,9 +1484,9 @@ CONTAINS
           y_pos_m = y_pos**cpml_m
           y_pos_ma = (1.0_num - y_pos)**cpml_ma
 
-          cpml_kappa_b_dy(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
-          cpml_b_sigma_y(iy) = cpml_sigma_max * y_pos_m
-          cpml_b_acoeff_y(iy) = cpml_a_max * y_pos_ma
+          cpml_kappa_ey(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
+          cpml_sigma_ey(iy) = cpml_sigma_max * y_pos_m
+          cpml_a_ey(iy) = cpml_a_max * y_pos_ma
 
           ! runs from nearly 0.0 to nearly 1.0 on the half intervals
           ! 0.0 at iy_glob=cpml_thickness+1/2 and 1.0 at iy_glob=1-1/2
@@ -1495,9 +1495,9 @@ CONTAINS
           y_pos_m = y_pos**cpml_m
           y_pos_ma = (1.0_num - y_pos)**cpml_ma
 
-          cpml_kappa_e_dy(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
-          cpml_e_sigma_y(iy) = cpml_sigma_max * y_pos_m
-          cpml_e_acoeff_y(iy) = cpml_a_max * y_pos_ma
+          cpml_kappa_by(iy-1) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
+          cpml_sigma_by(iy-1) = cpml_sigma_max * y_pos_m
+          cpml_a_by(iy-1) = cpml_a_max * y_pos_ma
         ENDDO
       ENDIF
 
@@ -1543,9 +1543,9 @@ CONTAINS
           z_pos_m = z_pos**cpml_m
           z_pos_ma = (1.0_num - z_pos)**cpml_ma
 
-          cpml_kappa_e_dz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
-          cpml_e_sigma_z(iz) = cpml_sigma_max * z_pos_m
-          cpml_e_acoeff_z(iz) = cpml_a_max * z_pos_ma
+          cpml_kappa_ez(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_sigma_ez(iz) = cpml_sigma_max * z_pos_m
+          cpml_a_ez(iz) = cpml_a_max * z_pos_ma
 
           ! runs from nearly 1.0 to nearly 0.0 on the half intervals
           ! 1.0 at iz_glob=1-1/2 and 0.0 at iz_glob=cpml_thickness+1/2
@@ -1554,9 +1554,9 @@ CONTAINS
           z_pos_m = z_pos**cpml_m
           z_pos_ma = (1.0_num - z_pos)**cpml_ma
 
-          cpml_kappa_b_dz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
-          cpml_b_sigma_z(iz) = cpml_sigma_max * z_pos_m
-          cpml_b_acoeff_z(iz) = cpml_a_max * z_pos_ma
+          cpml_kappa_bz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_sigma_bz(iz) = cpml_sigma_max * z_pos_m
+          cpml_a_bz(iz) = cpml_a_max * z_pos_ma
         ENDDO
       ENDIF
 
@@ -1602,9 +1602,9 @@ CONTAINS
           z_pos_m = z_pos**cpml_m
           z_pos_ma = (1.0_num - z_pos)**cpml_ma
 
-          cpml_kappa_b_dz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
-          cpml_b_sigma_z(iz) = cpml_sigma_max * z_pos_m
-          cpml_b_acoeff_z(iz) = cpml_a_max * z_pos_ma
+          cpml_kappa_ez(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_sigma_ez(iz) = cpml_sigma_max * z_pos_m
+          cpml_a_ez(iz) = cpml_a_max * z_pos_ma
 
           ! runs from nearly 0.0 to nearly 1.0 on the half intervals
           ! 0.0 at iz_glob=cpml_thickness+1/2 and 1.0 at iz_glob=1-1/2
@@ -1613,9 +1613,9 @@ CONTAINS
           z_pos_m = z_pos**cpml_m
           z_pos_ma = (1.0_num - z_pos)**cpml_ma
 
-          cpml_kappa_e_dz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
-          cpml_e_sigma_z(iz) = cpml_sigma_max * z_pos_m
-          cpml_e_acoeff_z(iz) = cpml_a_max * z_pos_ma
+          cpml_kappa_bz(iz-1) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_sigma_bz(iz-1) = cpml_sigma_max * z_pos_m
+          cpml_a_bz(iz-1) = cpml_a_max * z_pos_ma
         ENDDO
       ENDIF
 
@@ -1636,33 +1636,33 @@ CONTAINS
 
     ! I will ignore memory consumption issues and, for simplicity,
     ! allocate the boundary fields throughout the whole simulation box.
-    ALLOCATE(cpml_e_psiyx(-2:nx+3,-2:ny+3,-2:nz+3), &
-        cpml_e_psizx(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(cpml_b_psiyx(-2:nx+3,-2:ny+3,-2:nz+3), &
-        cpml_b_psizx(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(cpml_e_psixy(-2:nx+3,-2:ny+3,-2:nz+3), &
-        cpml_e_psizy(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(cpml_b_psixy(-2:nx+3,-2:ny+3,-2:nz+3), &
-        cpml_b_psizy(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(cpml_e_psixz(-2:nx+3,-2:ny+3,-2:nz+3), &
-        cpml_e_psiyz(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(cpml_b_psixz(-2:nx+3,-2:ny+3,-2:nz+3), &
-        cpml_b_psiyz(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_psi_eyx(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_psi_ezx(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_psi_byx(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_psi_bzx(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_psi_exy(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_psi_ezy(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_psi_bxy(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_psi_bzy(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_psi_exz(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_psi_eyz(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(cpml_psi_bxz(-2:nx+3,-2:ny+3,-2:nz+3), &
+        cpml_psi_byz(-2:nx+3,-2:ny+3,-2:nz+3))
 
-    cpml_e_psiyx = 0.0_num
-    cpml_e_psizx = 0.0_num
-    cpml_b_psiyx = 0.0_num
-    cpml_b_psizx = 0.0_num
+    cpml_psi_eyx = 0.0_num
+    cpml_psi_ezx = 0.0_num
+    cpml_psi_byx = 0.0_num
+    cpml_psi_bzx = 0.0_num
 
-    cpml_e_psixy = 0.0_num
-    cpml_e_psizy = 0.0_num
-    cpml_b_psixy = 0.0_num
-    cpml_b_psizy = 0.0_num
+    cpml_psi_exy = 0.0_num
+    cpml_psi_ezy = 0.0_num
+    cpml_psi_bxy = 0.0_num
+    cpml_psi_bzy = 0.0_num
 
-    cpml_e_psixz = 0.0_num
-    cpml_e_psiyz = 0.0_num
-    cpml_b_psixz = 0.0_num
-    cpml_b_psiyz = 0.0_num
+    cpml_psi_exz = 0.0_num
+    cpml_psi_eyz = 0.0_num
+    cpml_psi_bxz = 0.0_num
+    cpml_psi_byz = 0.0_num
 
   END SUBROUTINE allocate_cpml_fields
 
@@ -1670,17 +1670,17 @@ CONTAINS
 
   SUBROUTINE deallocate_cpml_helpers
 
-    DEALLOCATE(cpml_kappa_e_dx, cpml_kappa_b_dx)
-    DEALLOCATE(cpml_e_acoeff_x, cpml_b_acoeff_x)
-    DEALLOCATE(cpml_e_sigma_x, cpml_b_sigma_x)
+    DEALLOCATE(cpml_kappa_ex, cpml_kappa_bx)
+    DEALLOCATE(cpml_a_ex, cpml_a_bx)
+    DEALLOCATE(cpml_sigma_ex, cpml_sigma_bx)
 
-    DEALLOCATE(cpml_kappa_e_dy, cpml_kappa_b_dy)
-    DEALLOCATE(cpml_e_acoeff_y, cpml_b_acoeff_y)
-    DEALLOCATE(cpml_e_sigma_y, cpml_b_sigma_y)
+    DEALLOCATE(cpml_kappa_ey, cpml_kappa_by)
+    DEALLOCATE(cpml_a_ey, cpml_a_by)
+    DEALLOCATE(cpml_sigma_ey, cpml_sigma_by)
 
-    DEALLOCATE(cpml_kappa_e_dz, cpml_kappa_b_dz)
-    DEALLOCATE(cpml_e_acoeff_z, cpml_b_acoeff_z)
-    DEALLOCATE(cpml_e_sigma_z, cpml_b_sigma_z)
+    DEALLOCATE(cpml_kappa_ez, cpml_kappa_bz)
+    DEALLOCATE(cpml_a_ez, cpml_a_bz)
+    DEALLOCATE(cpml_sigma_ez, cpml_sigma_bz)
 
   END SUBROUTINE deallocate_cpml_helpers
 
@@ -1700,16 +1700,16 @@ CONTAINS
       DO iz = 1,nz
         DO iy = 1,ny
           DO ipos = cpml_x_min_start,cpml_x_min_end
-            kappa = cpml_kappa_e_dx(ipos)
-            sigma = cpml_e_sigma_x(ipos)
-            acoeff = cpml_e_acoeff_x(ipos)
+            kappa = cpml_kappa_ex(ipos)
+            sigma = cpml_sigma_ex(ipos)
+            acoeff = cpml_a_ex(ipos)
             bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
             ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
                 / (sigma + kappa * acoeff) / dx
 
-            cpml_e_psiyx(ipos,iy,iz) = bcoeff * cpml_e_psiyx(ipos,iy,iz) &
+            cpml_psi_eyx(ipos,iy,iz) = bcoeff * cpml_psi_eyx(ipos,iy,iz) &
                 + ccoeff_d * (bz(ipos,iy,iz) - bz(ipos-1,iy,iz))
-            cpml_e_psizx(ipos,iy,iz) = bcoeff * cpml_e_psizx(ipos,iy,iz) &
+            cpml_psi_ezx(ipos,iy,iz) = bcoeff * cpml_psi_ezx(ipos,iy,iz) &
                 + ccoeff_d * (by(ipos,iy,iz) - by(ipos-1,iy,iz))
           ENDDO
         ENDDO
@@ -1723,16 +1723,16 @@ CONTAINS
       DO iz = 1,nz
         DO iy = 1,ny
           DO ipos = cpml_x_max_start,cpml_x_max_end
-            kappa = cpml_kappa_e_dx(ipos)
-            sigma = cpml_e_sigma_x(ipos)
-            acoeff = cpml_e_acoeff_x(ipos)
+            kappa = cpml_kappa_ex(ipos)
+            sigma = cpml_sigma_ex(ipos)
+            acoeff = cpml_a_ex(ipos)
             bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
             ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
                 / (sigma + kappa * acoeff) / dx
 
-            cpml_e_psiyx(ipos,iy,iz) = bcoeff * cpml_e_psiyx(ipos,iy,iz) &
+            cpml_psi_eyx(ipos,iy,iz) = bcoeff * cpml_psi_eyx(ipos,iy,iz) &
                 + ccoeff_d * (bz(ipos,iy,iz) - bz(ipos-1,iy,iz))
-            cpml_e_psizx(ipos,iy,iz) = bcoeff * cpml_e_psizx(ipos,iy,iz) &
+            cpml_psi_ezx(ipos,iy,iz) = bcoeff * cpml_psi_ezx(ipos,iy,iz) &
                 + ccoeff_d * (by(ipos,iy,iz) - by(ipos-1,iy,iz))
           ENDDO
         ENDDO
@@ -1745,17 +1745,17 @@ CONTAINS
         .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
       DO iz = 1,nz
         DO ipos = cpml_y_min_start,cpml_y_min_end
-          kappa = cpml_kappa_e_dy(ipos)
-          sigma = cpml_e_sigma_y(ipos)
-          acoeff = cpml_e_acoeff_y(ipos)
+          kappa = cpml_kappa_ey(ipos)
+          sigma = cpml_sigma_ey(ipos)
+          acoeff = cpml_a_ey(ipos)
           bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
           ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
               / (sigma + kappa * acoeff) / dy
 
           DO ix = 1,nx
-            cpml_e_psixy(ix,ipos,iz) = bcoeff * cpml_e_psixy(ix,ipos,iz) &
+            cpml_psi_exy(ix,ipos,iz) = bcoeff * cpml_psi_exy(ix,ipos,iz) &
                 + ccoeff_d * (bz(ix,ipos,iz) - bz(ix,ipos-1,iz))
-            cpml_e_psizy(ix,ipos,iz) = bcoeff * cpml_e_psizy(ix,ipos,iz) &
+            cpml_psi_ezy(ix,ipos,iz) = bcoeff * cpml_psi_ezy(ix,ipos,iz) &
                 + ccoeff_d * (bx(ix,ipos,iz) - bx(ix,ipos-1,iz))
           ENDDO
         ENDDO
@@ -1768,17 +1768,17 @@ CONTAINS
         .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
       DO iz = 1,nz
         DO ipos = cpml_y_max_start,cpml_y_max_end
-          kappa = cpml_kappa_e_dy(ipos)
-          sigma = cpml_e_sigma_y(ipos)
-          acoeff = cpml_e_acoeff_y(ipos)
+          kappa = cpml_kappa_ey(ipos)
+          sigma = cpml_sigma_ey(ipos)
+          acoeff = cpml_a_ey(ipos)
           bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
           ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
               / (sigma + kappa * acoeff) / dy
 
           DO ix = 1,nx
-            cpml_e_psixy(ix,ipos,iz) = bcoeff * cpml_e_psixy(ix,ipos,iz) &
+            cpml_psi_exy(ix,ipos,iz) = bcoeff * cpml_psi_exy(ix,ipos,iz) &
                 + ccoeff_d * (bz(ix,ipos,iz) - bz(ix,ipos-1,iz))
-            cpml_e_psizy(ix,ipos,iz) = bcoeff * cpml_e_psizy(ix,ipos,iz) &
+            cpml_psi_ezy(ix,ipos,iz) = bcoeff * cpml_psi_ezy(ix,ipos,iz) &
                 + ccoeff_d * (bx(ix,ipos,iz) - bx(ix,ipos-1,iz))
           ENDDO
         ENDDO
@@ -1790,18 +1790,18 @@ CONTAINS
     IF (bc_field(c_bd_z_min) .EQ. c_bc_cpml_laser &
         .OR. bc_field(c_bd_z_min) .EQ. c_bc_cpml_outflow) THEN
       DO ipos = cpml_z_min_start,cpml_z_min_end
-        kappa = cpml_kappa_e_dz(ipos)
-        sigma = cpml_e_sigma_z(ipos)
-        acoeff = cpml_e_acoeff_z(ipos)
+        kappa = cpml_kappa_ez(ipos)
+        sigma = cpml_sigma_ez(ipos)
+        acoeff = cpml_a_ez(ipos)
         bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
         ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
             / (sigma + kappa * acoeff) / dz
 
         DO iy = 1,ny
           DO ix = 1,nx
-            cpml_e_psixz(ix,iy,ipos) = bcoeff * cpml_e_psixz(ix,iy,ipos) &
+            cpml_psi_exz(ix,iy,ipos) = bcoeff * cpml_psi_exz(ix,iy,ipos) &
                 + ccoeff_d * (by(ix,iy,ipos) - by(ix,iy,ipos-1))
-            cpml_e_psiyz(ix,iy,ipos) = bcoeff * cpml_e_psiyz(ix,iy,ipos) &
+            cpml_psi_eyz(ix,iy,ipos) = bcoeff * cpml_psi_eyz(ix,iy,ipos) &
                 + ccoeff_d * (bx(ix,iy,ipos) - bx(ix,iy,ipos-1))
           ENDDO
         ENDDO
@@ -1813,18 +1813,18 @@ CONTAINS
     IF (bc_field(c_bd_z_max) .EQ. c_bc_cpml_laser &
         .OR. bc_field(c_bd_z_max) .EQ. c_bc_cpml_outflow) THEN
       DO ipos = cpml_z_max_start,cpml_z_max_end
-        kappa = cpml_kappa_e_dz(ipos)
-        sigma = cpml_e_sigma_z(ipos)
-        acoeff = cpml_e_acoeff_z(ipos)
+        kappa = cpml_kappa_ez(ipos)
+        sigma = cpml_sigma_ez(ipos)
+        acoeff = cpml_a_ez(ipos)
         bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
         ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
             / (sigma + kappa * acoeff) / dz
 
         DO iy = 1,ny
           DO ix = 1,nx
-            cpml_e_psixz(ix,iy,ipos) = bcoeff * cpml_e_psixz(ix,iy,ipos) &
+            cpml_psi_exz(ix,iy,ipos) = bcoeff * cpml_psi_exz(ix,iy,ipos) &
                 + ccoeff_d * (by(ix,iy,ipos) - by(ix,iy,ipos-1))
-            cpml_e_psiyz(ix,iy,ipos) = bcoeff * cpml_e_psiyz(ix,iy,ipos) &
+            cpml_psi_eyz(ix,iy,ipos) = bcoeff * cpml_psi_eyz(ix,iy,ipos) &
                 + ccoeff_d * (bx(ix,iy,ipos) - bx(ix,iy,ipos-1))
           ENDDO
         ENDDO
@@ -1849,16 +1849,16 @@ CONTAINS
       DO iz = 1,nz
         DO iy = 1,ny
           DO ipos = cpml_x_min_start,cpml_x_min_end
-            kappa = cpml_kappa_b_dx(ipos)
-            sigma = cpml_b_sigma_x(ipos)
-            acoeff = cpml_b_acoeff_x(ipos)
+            kappa = cpml_kappa_bx(ipos)
+            sigma = cpml_sigma_bx(ipos)
+            acoeff = cpml_a_bx(ipos)
             bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
             ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
                 / (sigma + kappa * acoeff) / dx
 
-            cpml_b_psiyx(ipos,iy,iz) = bcoeff * cpml_b_psiyx(ipos,iy,iz) &
+            cpml_psi_byx(ipos,iy,iz) = bcoeff * cpml_psi_byx(ipos,iy,iz) &
                 + ccoeff_d * (ez(ipos+1,iy,iz) - ez(ipos,iy,iz))
-            cpml_b_psizx(ipos,iy,iz) = bcoeff * cpml_b_psizx(ipos,iy,iz) &
+            cpml_psi_bzx(ipos,iy,iz) = bcoeff * cpml_psi_bzx(ipos,iy,iz) &
                 + ccoeff_d * (ey(ipos+1,iy,iz) - ey(ipos,iy,iz))
           ENDDO
         ENDDO
@@ -1871,17 +1871,17 @@ CONTAINS
         .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
       DO iz = 1,nz
         DO iy = 1,ny
-          DO ipos = cpml_x_max_start,cpml_x_max_end
-            kappa = cpml_kappa_b_dx(ipos)
-            sigma = cpml_b_sigma_x(ipos)
-            acoeff = cpml_b_acoeff_x(ipos)
+          DO ipos = cpml_x_max_start-1,cpml_x_max_end-1
+            kappa = cpml_kappa_bx(ipos)
+            sigma = cpml_sigma_bx(ipos)
+            acoeff = cpml_a_bx(ipos)
             bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
             ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
                 / (sigma + kappa * acoeff) / dx
 
-            cpml_b_psiyx(ipos,iy,iz) = bcoeff * cpml_b_psiyx(ipos,iy,iz) &
+            cpml_psi_byx(ipos,iy,iz) = bcoeff * cpml_psi_byx(ipos,iy,iz) &
                 + ccoeff_d * (ez(ipos+1,iy,iz) - ez(ipos,iy,iz))
-            cpml_b_psizx(ipos,iy,iz) = bcoeff * cpml_b_psizx(ipos,iy,iz) &
+            cpml_psi_bzx(ipos,iy,iz) = bcoeff * cpml_psi_bzx(ipos,iy,iz) &
                 + ccoeff_d * (ey(ipos+1,iy,iz) - ey(ipos,iy,iz))
           ENDDO
         ENDDO
@@ -1894,17 +1894,17 @@ CONTAINS
         .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
       DO iz = 1,nz
         DO ipos = cpml_y_min_start,cpml_y_min_end
-          kappa = cpml_kappa_b_dy(ipos)
-          sigma = cpml_b_sigma_y(ipos)
-          acoeff = cpml_b_acoeff_y(ipos)
+          kappa = cpml_kappa_by(ipos)
+          sigma = cpml_sigma_by(ipos)
+          acoeff = cpml_a_by(ipos)
           bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
           ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
               / (sigma + kappa * acoeff) / dy
 
           DO ix = 1,nx
-            cpml_b_psixy(ix,ipos,iz) = bcoeff * cpml_b_psixy(ix,ipos,iz) &
+            cpml_psi_bxy(ix,ipos,iz) = bcoeff * cpml_psi_bxy(ix,ipos,iz) &
                 + ccoeff_d * (ez(ix,ipos+1,iz) - ez(ix,ipos,iz))
-            cpml_b_psizy(ix,ipos,iz) = bcoeff * cpml_b_psizy(ix,ipos,iz) &
+            cpml_psi_bzy(ix,ipos,iz) = bcoeff * cpml_psi_bzy(ix,ipos,iz) &
                 + ccoeff_d * (ex(ix,ipos+1,iz) - ex(ix,ipos,iz))
           ENDDO
         ENDDO
@@ -1916,18 +1916,18 @@ CONTAINS
     IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser &
         .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
       DO iz = 1,nz
-        DO ipos = cpml_y_max_start,cpml_y_max_end
-          kappa = cpml_kappa_b_dy(ipos)
-          sigma = cpml_b_sigma_y(ipos)
-          acoeff = cpml_b_acoeff_y(ipos)
+        DO ipos = cpml_y_max_start-1,cpml_y_max_end-1
+          kappa = cpml_kappa_by(ipos)
+          sigma = cpml_sigma_by(ipos)
+          acoeff = cpml_a_by(ipos)
           bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
           ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
               / (sigma + kappa * acoeff) / dy
 
           DO ix = 1,nx
-            cpml_b_psixy(ix,ipos,iz) = bcoeff * cpml_b_psixy(ix,ipos,iz) &
+            cpml_psi_bxy(ix,ipos,iz) = bcoeff * cpml_psi_bxy(ix,ipos,iz) &
                 + ccoeff_d * (ez(ix,ipos+1,iz) - ez(ix,ipos,iz))
-            cpml_b_psizy(ix,ipos,iz) = bcoeff * cpml_b_psizy(ix,ipos,iz) &
+            cpml_psi_bzy(ix,ipos,iz) = bcoeff * cpml_psi_bzy(ix,ipos,iz) &
                 + ccoeff_d * (ex(ix,ipos+1,iz) - ex(ix,ipos,iz))
           ENDDO
         ENDDO
@@ -1939,18 +1939,18 @@ CONTAINS
     IF (bc_field(c_bd_z_min) .EQ. c_bc_cpml_laser &
         .OR. bc_field(c_bd_z_min) .EQ. c_bc_cpml_outflow) THEN
       DO ipos = cpml_z_min_start,cpml_z_min_end
-        kappa = cpml_kappa_b_dz(ipos)
-        sigma = cpml_b_sigma_z(ipos)
-        acoeff = cpml_b_acoeff_z(ipos)
+        kappa = cpml_kappa_bz(ipos)
+        sigma = cpml_sigma_bz(ipos)
+        acoeff = cpml_a_bz(ipos)
         bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
         ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
             / (sigma + kappa * acoeff) / dz
 
         DO iy = 1,ny
           DO ix = 1,nx
-            cpml_b_psixz(ix,iy,ipos) = bcoeff * cpml_b_psixz(ix,iy,ipos) &
+            cpml_psi_bxz(ix,iy,ipos) = bcoeff * cpml_psi_bxz(ix,iy,ipos) &
                 + ccoeff_d * (ey(ix,iy,ipos+1) - ey(ix,iy,ipos))
-            cpml_b_psiyz(ix,iy,ipos) = bcoeff * cpml_b_psiyz(ix,iy,ipos) &
+            cpml_psi_byz(ix,iy,ipos) = bcoeff * cpml_psi_byz(ix,iy,ipos) &
                 + ccoeff_d * (ex(ix,iy,ipos+1) - ex(ix,iy,ipos))
           ENDDO
         ENDDO
@@ -1961,19 +1961,19 @@ CONTAINS
 
     IF (bc_field(c_bd_z_max) .EQ. c_bc_cpml_laser &
         .OR. bc_field(c_bd_z_max) .EQ. c_bc_cpml_outflow) THEN
-      DO ipos = cpml_z_max_start,cpml_z_max_end
-        kappa = cpml_kappa_b_dz(ipos)
-        sigma = cpml_b_sigma_z(ipos)
-        acoeff = cpml_b_acoeff_z(ipos)
+      DO ipos = cpml_z_max_start-1,cpml_z_max_end-1
+        kappa = cpml_kappa_bz(ipos)
+        sigma = cpml_sigma_bz(ipos)
+        acoeff = cpml_a_bz(ipos)
         bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
         ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
             / (sigma + kappa * acoeff) / dz
 
         DO iy = 1,ny
           DO ix = 1,nx
-            cpml_b_psixz(ix,iy,ipos) = bcoeff * cpml_b_psixz(ix,iy,ipos) &
+            cpml_psi_bxz(ix,iy,ipos) = bcoeff * cpml_psi_bxz(ix,iy,ipos) &
                 + ccoeff_d * (ey(ix,iy,ipos+1) - ey(ix,iy,ipos))
-            cpml_b_psiyz(ix,iy,ipos) = bcoeff * cpml_b_psiyz(ix,iy,ipos) &
+            cpml_psi_byz(ix,iy,ipos) = bcoeff * cpml_psi_byz(ix,iy,ipos) &
                 + ccoeff_d * (ex(ix,iy,ipos+1) - ex(ix,iy,ipos))
           ENDDO
         ENDDO

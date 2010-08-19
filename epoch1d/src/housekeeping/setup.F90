@@ -167,10 +167,10 @@ CONTAINS
       cpml_kappa_max = 1.0_num
       cpml_a_max = 0.0_num
       cpml_sigma_max = 0.0_num
-      dumpmask(c_dump_cpml_e_psiyx) = 0
-      dumpmask(c_dump_cpml_e_psizx) = 0
-      dumpmask(c_dump_cpml_b_psiyx) = 0
-      dumpmask(c_dump_cpml_b_psizx) = 0
+      dumpmask(c_dump_cpml_psi_eyx) = 0
+      dumpmask(c_dump_cpml_psi_ezx) = 0
+      dumpmask(c_dump_cpml_psi_byx) = 0
+      dumpmask(c_dump_cpml_psi_bzx) = 0
     ENDIF
 
   END SUBROUTINE after_deck_last
@@ -640,20 +640,20 @@ CONTAINS
           CALL sdf_read_plain_variable(sdf_handle, jz, &
               subtype_field, subarray_field)
 
-        ELSE IF (str_cmp(block_id, 'cpml_e_psiyx')) THEN
-          CALL sdf_read_plain_variable(sdf_handle, cpml_e_psiyx, &
+        ELSE IF (str_cmp(block_id, 'cpml_psi_eyx')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, cpml_psi_eyx, &
               subtype_field, subarray_field)
 
-        ELSE IF (str_cmp(block_id, 'cpml_e_psizx')) THEN
-          CALL sdf_read_plain_variable(sdf_handle, cpml_e_psizx, &
+        ELSE IF (str_cmp(block_id, 'cpml_psi_ezx')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, cpml_psi_ezx, &
               subtype_field, subarray_field)
 
-        ELSE IF (str_cmp(block_id, 'cpml_b_psiyx')) THEN
-          CALL sdf_read_plain_variable(sdf_handle, cpml_b_psiyx, &
+        ELSE IF (str_cmp(block_id, 'cpml_psi_byx')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, cpml_psi_byx, &
               subtype_field, subarray_field)
 
-        ELSE IF (str_cmp(block_id, 'cpml_b_psizx')) THEN
-          CALL sdf_read_plain_variable(sdf_handle, cpml_b_psizx, &
+        ELSE IF (str_cmp(block_id, 'cpml_psi_bzx')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, cpml_psi_bzx, &
               subtype_field, subarray_field)
 
         ENDIF

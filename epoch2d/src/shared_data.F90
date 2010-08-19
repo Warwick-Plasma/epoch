@@ -529,16 +529,16 @@ MODULE shared_data
   INTEGER :: cpml_x_min_laser_idx, cpml_x_max_laser_idx
   INTEGER :: cpml_y_min_laser_idx, cpml_y_max_laser_idx
   REAL(num) :: cpml_kappa_max, cpml_a_max, cpml_sigma_max
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_kappa_e_dx, cpml_kappa_b_dx
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_kappa_e_dy, cpml_kappa_b_dy
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_e_acoeff_x, cpml_e_sigma_x
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_b_acoeff_x, cpml_b_sigma_x
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_e_acoeff_y, cpml_e_sigma_y
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_b_acoeff_y, cpml_b_sigma_y
-  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: cpml_e_psiyx, cpml_e_psizx
-  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: cpml_b_psiyx, cpml_b_psizx
-  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: cpml_e_psixy, cpml_e_psizy
-  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: cpml_b_psixy, cpml_b_psizy
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_kappa_ex, cpml_kappa_bx
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_kappa_ey, cpml_kappa_by
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_a_ex, cpml_sigma_ex
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_a_bx, cpml_sigma_bx
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_a_ey, cpml_sigma_ey
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_a_by, cpml_sigma_by
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: cpml_psi_eyx, cpml_psi_ezx
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: cpml_psi_byx, cpml_psi_bzx
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: cpml_psi_exy, cpml_psi_ezy
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: cpml_psi_bxy, cpml_psi_bzy
 
   !----------------------------------------------------------------------------
   ! Core code
@@ -681,14 +681,14 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_ejected_particles = 30
   INTEGER, PARAMETER :: c_dump_ekflux            = 31
   INTEGER, PARAMETER :: c_dump_poynt_flux        = 32
-  INTEGER, PARAMETER :: c_dump_cpml_e_psiyx      = 33
-  INTEGER, PARAMETER :: c_dump_cpml_e_psizx      = 34
-  INTEGER, PARAMETER :: c_dump_cpml_b_psiyx      = 35
-  INTEGER, PARAMETER :: c_dump_cpml_b_psizx      = 36
-  INTEGER, PARAMETER :: c_dump_cpml_e_psixy      = 37
-  INTEGER, PARAMETER :: c_dump_cpml_e_psizy      = 38
-  INTEGER, PARAMETER :: c_dump_cpml_b_psixy      = 39
-  INTEGER, PARAMETER :: c_dump_cpml_b_psizy      = 40
+  INTEGER, PARAMETER :: c_dump_cpml_psi_eyx      = 33
+  INTEGER, PARAMETER :: c_dump_cpml_psi_ezx      = 34
+  INTEGER, PARAMETER :: c_dump_cpml_psi_byx      = 35
+  INTEGER, PARAMETER :: c_dump_cpml_psi_bzx      = 36
+  INTEGER, PARAMETER :: c_dump_cpml_psi_exy      = 37
+  INTEGER, PARAMETER :: c_dump_cpml_psi_ezy      = 38
+  INTEGER, PARAMETER :: c_dump_cpml_psi_bxy      = 39
+  INTEGER, PARAMETER :: c_dump_cpml_psi_bzy      = 40
   INTEGER, PARAMETER :: num_vars_to_dump         = 40
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 

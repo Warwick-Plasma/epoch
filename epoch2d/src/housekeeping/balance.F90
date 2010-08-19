@@ -269,52 +269,52 @@ CONTAINS
 
     IF (cpml_boundaries) THEN
       temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_e_psiyx, temp)
-      DEALLOCATE(cpml_e_psiyx)
-      ALLOCATE(cpml_e_psiyx(-2:nx_new+3, -2:ny_new+3))
-      cpml_e_psiyx = temp
+      CALL redistribute_field(new_domain, cpml_psi_eyx, temp)
+      DEALLOCATE(cpml_psi_eyx)
+      ALLOCATE(cpml_psi_eyx(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_eyx = temp
 
       temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_e_psizx, temp)
-      DEALLOCATE(cpml_e_psizx)
-      ALLOCATE(cpml_e_psizx(-2:nx_new+3, -2:ny_new+3))
-      cpml_e_psizx = temp
+      CALL redistribute_field(new_domain, cpml_psi_ezx, temp)
+      DEALLOCATE(cpml_psi_ezx)
+      ALLOCATE(cpml_psi_ezx(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_ezx = temp
 
       temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_b_psiyx, temp)
-      DEALLOCATE(cpml_b_psiyx)
-      ALLOCATE(cpml_b_psiyx(-2:nx_new+3, -2:ny_new+3))
-      cpml_b_psiyx = temp
+      CALL redistribute_field(new_domain, cpml_psi_byx, temp)
+      DEALLOCATE(cpml_psi_byx)
+      ALLOCATE(cpml_psi_byx(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_byx = temp
 
       temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_b_psizx, temp)
-      DEALLOCATE(cpml_b_psizx)
-      ALLOCATE(cpml_b_psizx(-2:nx_new+3, -2:ny_new+3))
-      cpml_b_psizx = temp
+      CALL redistribute_field(new_domain, cpml_psi_bzx, temp)
+      DEALLOCATE(cpml_psi_bzx)
+      ALLOCATE(cpml_psi_bzx(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_bzx = temp
 
       temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_e_psixy, temp)
-      DEALLOCATE(cpml_e_psixy)
-      ALLOCATE(cpml_e_psixy(-2:nx_new+3, -2:ny_new+3))
-      cpml_e_psixy = temp
+      CALL redistribute_field(new_domain, cpml_psi_exy, temp)
+      DEALLOCATE(cpml_psi_exy)
+      ALLOCATE(cpml_psi_exy(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_exy = temp
 
       temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_e_psizy, temp)
-      DEALLOCATE(cpml_e_psizy)
-      ALLOCATE(cpml_e_psizy(-2:nx_new+3, -2:ny_new+3))
-      cpml_e_psizy = temp
+      CALL redistribute_field(new_domain, cpml_psi_ezy, temp)
+      DEALLOCATE(cpml_psi_ezy)
+      ALLOCATE(cpml_psi_ezy(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_ezy = temp
 
       temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_b_psixy, temp)
-      DEALLOCATE(cpml_b_psixy)
-      ALLOCATE(cpml_b_psixy(-2:nx_new+3, -2:ny_new+3))
-      cpml_b_psixy = temp
+      CALL redistribute_field(new_domain, cpml_psi_bxy, temp)
+      DEALLOCATE(cpml_psi_bxy)
+      ALLOCATE(cpml_psi_bxy(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_bxy = temp
 
       temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_b_psizy, temp)
-      DEALLOCATE(cpml_b_psizy)
-      ALLOCATE(cpml_b_psizy(-2:nx_new+3, -2:ny_new+3))
-      cpml_b_psizy = temp
+      CALL redistribute_field(new_domain, cpml_psi_bzy, temp)
+      DEALLOCATE(cpml_psi_bzy)
+      ALLOCATE(cpml_psi_bzy(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_bzy = temp
 
       CALL deallocate_cpml_helpers
       CALL set_cpml_helpers

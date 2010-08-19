@@ -49,9 +49,9 @@ CONTAINS
       cpml_y = cny
 
       DO iy = 1, ny
-        cpml_y = cny / cpml_kappa_e_dy(iy)
+        cpml_y = cny / cpml_kappa_ey(iy)
         DO ix = 1, nx
-          j_extra = -cpml_e_psixy(ix,iy) / mu0
+          j_extra = -cpml_psi_exy(ix,iy) / mu0
           ex(ix, iy) = ex(ix, iy) &
               + cpml_y * SUM(const(1:order) * bz(ix, iy-large:iy+small)) &
               - fac * (jx(ix, iy) + j_extra)
@@ -60,8 +60,8 @@ CONTAINS
 
       DO iy = 1, ny
         DO ix = 1, nx
-          cpml_x = cnx / cpml_kappa_e_dx(ix)
-          j_extra = cpml_e_psiyx(ix,iy) / mu0
+          cpml_x = cnx / cpml_kappa_ex(ix)
+          j_extra = cpml_psi_eyx(ix,iy) / mu0
           ey(ix, iy) = ey(ix, iy) &
               - cpml_x * SUM(const(1:order) * bz(ix-large:ix+small, iy)) &
               - fac * (jy(ix, iy) + j_extra)
@@ -69,10 +69,10 @@ CONTAINS
       ENDDO
 
       DO iy = 1, ny
-        cpml_y = cny / cpml_kappa_e_dy(iy)
+        cpml_y = cny / cpml_kappa_ey(iy)
         DO ix = 1, nx
-          cpml_x = cnx / cpml_kappa_e_dx(ix)
-          j_extra = (cpml_e_psizy(ix,iy) - cpml_e_psizx(ix,iy)) / mu0
+          cpml_x = cnx / cpml_kappa_ex(ix)
+          j_extra = (cpml_psi_ezy(ix,iy) - cpml_psi_ezx(ix,iy)) / mu0
           ez(ix, iy) = ez(ix, iy) &
               + cpml_x * SUM(const(1:order) * by(ix-large:ix+small, iy)) &
               - cpml_y * SUM(const(1:order) * bx(ix, iy-large:iy+small)) &
@@ -120,9 +120,9 @@ CONTAINS
       cpml_y = hdty
 
       DO iy = 1, ny
-        cpml_y = hdty / cpml_kappa_b_dy(iy)
+        cpml_y = hdty / cpml_kappa_by(iy)
         DO ix = 1, nx
-          j_extra = cpml_b_psixy(ix,iy)
+          j_extra = cpml_psi_bxy(ix,iy)
           bx(ix, iy) = bx(ix, iy) &
               - cpml_y * SUM(const(1:order) * ez(ix, iy-small:iy+large)) &
               - hdt * j_extra
@@ -131,8 +131,8 @@ CONTAINS
 
       DO iy = 1, ny
         DO ix = 1, nx
-          cpml_x = hdtx / cpml_kappa_b_dx(ix)
-          j_extra = -cpml_b_psiyx(ix,iy)
+          cpml_x = hdtx / cpml_kappa_bx(ix)
+          j_extra = -cpml_psi_byx(ix,iy)
           by(ix, iy) = by(ix, iy) &
               + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large, iy)) &
               - hdt * j_extra
@@ -140,10 +140,10 @@ CONTAINS
       ENDDO
 
       DO iy = 1, ny
-        cpml_y = hdty / cpml_kappa_b_dy(iy)
+        cpml_y = hdty / cpml_kappa_by(iy)
         DO ix = 1, nx
-          cpml_x = hdtx / cpml_kappa_b_dx(ix)
-          j_extra = cpml_b_psizx(ix,iy) - cpml_b_psizy(ix,iy)
+          cpml_x = hdtx / cpml_kappa_bx(ix)
+          j_extra = cpml_psi_bzx(ix,iy) - cpml_psi_bzy(ix,iy)
           bz(ix, iy) = bz(ix, iy) &
               - cpml_x * SUM(const(1:order) * ey(ix-small:ix+large, iy)) &
               + cpml_y * SUM(const(1:order) * ex(ix, iy-small:iy+large)) &
