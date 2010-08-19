@@ -48,7 +48,8 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
   CLOSE, 1
   OPENR, 1, filename
   fileheader = readvar(1, {cfd:BYTARR(3), headeroff:0L, blockheaderoff:0L, $
-      Version:0L, Revision:0L, MaxString:0L, nblocks:0L}, 0)
+      Version:0L, Revision:0L, MaxString:0L, nblocks:0L, endianness:0L, $
+      start_sec:0L, start_millisec:0L, step:0L, time:0D}, 0)
 
   MaxStringLen = fileheader.MaxString
   offset = fileheader.headeroff
@@ -86,7 +87,11 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
 
   ; The file seems valid, spool through blocks
 
-  f = {filename: filename}
+  IF ((fileheader.version EQ 1) AND (fileheader.revision EQ 0)) THEN BEGIN
+    f = {filename: filename}
+  ENDIF ELSE BEGIN
+    f = {filename: filename, snapshot: fileheader.step, time: fileheader.time}
+  ENDELSE
 
   IF (N_ELEMENTS(requestv) NE 0) THEN BEGIN
     PRINT, "Available elements are "
