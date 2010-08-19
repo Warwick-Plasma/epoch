@@ -339,6 +339,7 @@ CONTAINS
     INTEGER(KIND=8) :: ixp, iyp
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, ix, iy
+    REAL(num) :: part_pos
 
     DO ispecies = 1, n_species
       cur=>particle_species(ispecies)%attached_list%head
@@ -358,8 +359,9 @@ CONTAINS
         ybd = 0
         out_of_bounds = .FALSE.
 
+        part_pos = cur%part_pos(1)
         ! Particle has left this processor
-        IF (cur%part_pos(1) .LT. x_min_local - dx / 2.0_num) THEN
+        IF (part_pos .LT. x_min_local - dx / 2.0_num) THEN
           xbd = -1
           ! Particle has left the system
           IF (coordinates(c_ndims) .EQ. 0) THEN
@@ -367,16 +369,17 @@ CONTAINS
             IF (bc_x_min_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_x_min_particle .EQ. c_bc_reflect) THEN
-              cur%part_pos(1) = 2.0_num * x_min - dx - cur%part_pos(1)
+              cur%part_pos(1) = 2.0_num * x_min - dx - part_pos
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_x_min_particle .EQ. c_bc_periodic) THEN
               xbd = -1
-              cur%part_pos(1) = cur%part_pos(1) + (length_x + dx)
+              cur%part_pos(1) = part_pos + (length_x + dx)
             ENDIF
           ENDIF
+        ENDIF
 
         ! Particle has left this processor
-        ELSE IF (cur%part_pos(1) .GE. x_max_local + dx / 2.0_num) THEN
+        IF (part_pos .GE. x_max_local + dx / 2.0_num) THEN
           xbd = 1
           ! Particle has left the system
           IF (coordinates(c_ndims) .EQ. nprocx - 1) THEN
@@ -384,17 +387,18 @@ CONTAINS
             IF (bc_x_max_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_x_max_particle .EQ. c_bc_reflect) THEN
-              cur%part_pos(1) = 2.0_num * x_max + dx - cur%part_pos(1)
+              cur%part_pos(1) = 2.0_num * x_max + dx - part_pos
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_x_max_particle .EQ. c_bc_periodic) THEN
               xbd = 1
-              cur%part_pos(1) = cur%part_pos(1) - (length_x + dx)
+              cur%part_pos(1) = part_pos - (length_x + dx)
             ENDIF
           ENDIF
         ENDIF
 
+        part_pos = cur%part_pos(2)
         ! Particle has left this processor
-        IF (cur%part_pos(2) .LT. y_min_local - dy / 2.0_num) THEN
+        IF (part_pos .LT. y_min_local - dy / 2.0_num) THEN
           ybd = -1
           ! Particle has left the system
           IF (coordinates(c_ndims-1) .EQ. 0) THEN
@@ -402,16 +406,17 @@ CONTAINS
             IF (bc_y_min_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_y_min_particle .EQ. c_bc_reflect) THEN
-              cur%part_pos(2) = 2.0_num * y_min - dy - cur%part_pos(2)
+              cur%part_pos(2) = 2.0_num * y_min - dy - part_pos
               cur%part_p(2) = -cur%part_p(2)
             ELSE IF (bc_y_min_particle .EQ. c_bc_periodic) THEN
               ybd = -1
-              cur%part_pos(2) = cur%part_pos(2) + (length_y + dy)
+              cur%part_pos(2) = part_pos + (length_y + dy)
             ENDIF
           ENDIF
+        ENDIF
 
         ! Particle has left this processor
-        ELSE IF (cur%part_pos(2) .GE. y_max_local + dy / 2.0_num) THEN
+        IF (part_pos .GE. y_max_local + dy / 2.0_num) THEN
           ybd = 1
           ! Particle has left the system
           IF (coordinates(c_ndims-1) .EQ. nprocy - 1) THEN
@@ -419,11 +424,11 @@ CONTAINS
             IF (bc_y_max_particle .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
             ELSE IF (bc_y_max_particle .EQ. c_bc_reflect) THEN
-              cur%part_pos(2) = 2.0_num * y_max + dy - cur%part_pos(2)
+              cur%part_pos(2) = 2.0_num * y_max + dy - part_pos
               cur%part_p(2) = -cur%part_p(2)
             ELSE IF (bc_y_max_particle .EQ. c_bc_periodic) THEN
               ybd = 1
-              cur%part_pos(2) = cur%part_pos(2) - (length_y + dy)
+              cur%part_pos(2) = part_pos - (length_y + dy)
             ENDIF
           ENDIF
         ENDIF
