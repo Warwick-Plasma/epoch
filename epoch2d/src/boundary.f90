@@ -503,227 +503,235 @@ CONTAINS
         out_of_bounds = .FALSE.
 
         part_pos = cur%part_pos(1)
-        ! Particle has left this processor
-        IF (part_pos .LT. x_min_local - dx / 2.0_num) THEN
-          xbd = -1
-          ! Particle has left the system
-          IF (x_min_boundary) THEN
-            xbd = 0
-            IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
-              cur%part_pos(1) = 2.0_num * x_min - dx - part_pos
-              cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
-              ! Always use the triangle particle weighting for simplicity
-              cell_y_r = (cur%part_pos(2) - y_min_local) / dy
-              cell_y = FLOOR(cell_y_r + 0.5_num)
-              cell_frac_y = REAL(cell_y, num) - cell_y_r
-              cell_y = cell_y + 1
+        IF (.TRUE.) THEN
+          ! Particle has left this processor
+          IF (part_pos .LT. x_min_local - dx / 2.0_num) THEN
+            xbd = -1
+            ! Particle has left the system
+            IF (x_min_boundary) THEN
+              xbd = 0
+              IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
+                cur%part_pos(1) = 2.0_num * x_min - dx - part_pos
+                cur%part_p(1) = -cur%part_p(1)
+              ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+                ! Always use the triangle particle weighting for simplicity
+                cell_y_r = (cur%part_pos(2) - y_min_local) / dy
+                cell_y = FLOOR(cell_y_r + 0.5_num)
+                cell_frac_y = REAL(cell_y, num) - cell_y_r
+                cell_y = cell_y + 1
 
-              cf2 = cell_frac_y**2
-              gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
-              gy( 0) = 0.75_num - cf2
-              gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
+                cf2 = cell_frac_y**2
+                gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
+                gy( 0) = 0.75_num - cf2
+                gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
 
-              DO i = 1, 3
-                temp(i) = 0.0_num
-                DO iy = -1, 1
-                  temp(i) = temp(i) + gy(iy) &
-                      * species_list(ispecies)%ext_temp_x_min(cell_y+iy, i)
+                DO i = 1, 3
+                  temp(i) = 0.0_num
+                  DO iy = -1, 1
+                    temp(i) = temp(i) + gy(iy) &
+                        * species_list(ispecies)%ext_temp_x_min(cell_y+iy, i)
+                  ENDDO
                 ENDDO
-              ENDDO
 
-              ! x-direction
-              i = 1
-              cur%part_p(i) = ABS(momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num))
+                ! x-direction
+                i = 1
+                cur%part_p(i) = ABS(momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num))
 
-              ! y-direction
-              i = 2
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! y-direction
+                i = 2
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! z-direction
-              i = 3
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! z-direction
+                i = 3
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              cur%part_pos(1) = 2.0_num * x_min - dx - part_pos
+                cur%part_pos(1) = 2.0_num * x_min - dx - part_pos
 
-            ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
-              xbd = -1
-              cur%part_pos(1) = part_pos + length_x
-            ELSE
-              ! Default to open boundary conditions - remove particle
-              out_of_bounds = .TRUE.
+              ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
+                xbd = -1
+                cur%part_pos(1) = part_pos + length_x
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
         ENDIF
 
-        ! Particle has left this processor
-        IF (part_pos .GE. x_max_local + dx / 2.0_num) THEN
-          xbd = 1
-          ! Particle has left the system
-          IF (x_max_boundary) THEN
-            xbd = 0
-            IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
-              cur%part_pos(1) = 2.0_num * x_max + dx - part_pos
-              cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
-              ! Always use the triangle particle weighting for simplicity
-              cell_y_r = (cur%part_pos(2) - y_min_local) / dy
-              cell_y = FLOOR(cell_y_r + 0.5_num)
-              cell_frac_y = REAL(cell_y, num) - cell_y_r
-              cell_y = cell_y + 1
+        IF (.TRUE.) THEN
+          ! Particle has left this processor
+          IF (part_pos .GE. x_max_local + dx / 2.0_num) THEN
+            xbd = 1
+            ! Particle has left the system
+            IF (x_max_boundary) THEN
+              xbd = 0
+              IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
+                cur%part_pos(1) = 2.0_num * x_max + dx - part_pos
+                cur%part_p(1) = -cur%part_p(1)
+              ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+                ! Always use the triangle particle weighting for simplicity
+                cell_y_r = (cur%part_pos(2) - y_min_local) / dy
+                cell_y = FLOOR(cell_y_r + 0.5_num)
+                cell_frac_y = REAL(cell_y, num) - cell_y_r
+                cell_y = cell_y + 1
 
-              cf2 = cell_frac_y**2
-              gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
-              gy( 0) = 0.75_num - cf2
-              gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
+                cf2 = cell_frac_y**2
+                gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
+                gy( 0) = 0.75_num - cf2
+                gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
 
-              DO i = 1, 3
-                temp(i) = 0.0_num
-                DO iy = -1, 1
-                  temp(i) = temp(i) + gy(iy) &
-                      * species_list(ispecies)%ext_temp_x_max(cell_y+iy, i)
+                DO i = 1, 3
+                  temp(i) = 0.0_num
+                  DO iy = -1, 1
+                    temp(i) = temp(i) + gy(iy) &
+                        * species_list(ispecies)%ext_temp_x_max(cell_y+iy, i)
+                  ENDDO
                 ENDDO
-              ENDDO
 
-              ! x-direction
-              i = 1
-              cur%part_p(i) = -ABS(momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num))
+                ! x-direction
+                i = 1
+                cur%part_p(i) = -ABS(momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num))
 
-              ! y-direction
-              i = 2
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! y-direction
+                i = 2
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! z-direction
-              i = 3
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! z-direction
+                i = 3
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              cur%part_pos(1) = 2.0_num * x_max + dx - part_pos
+                cur%part_pos(1) = 2.0_num * x_max + dx - part_pos
 
-            ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
-              xbd = 1
-              cur%part_pos(1) = part_pos - length_x
-            ELSE
-              ! Default to open boundary conditions - remove particle
-              out_of_bounds = .TRUE.
+              ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
+                xbd = 1
+                cur%part_pos(1) = part_pos - length_x
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
         ENDIF
 
         part_pos = cur%part_pos(2)
-        ! Particle has left this processor
-        IF (part_pos .LT. y_min_local - dy / 2.0_num) THEN
-          ybd = -1
-          ! Particle has left the system
-          IF (y_min_boundary) THEN
-            ybd = 0
-            IF (bc_particle(c_bd_y_min) .EQ. c_bc_reflect) THEN
-              cur%part_pos(2) = 2.0_num * y_min - dy - part_pos
-              cur%part_p(2) = -cur%part_p(2)
-            ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
-              ! Always use the triangle particle weighting for simplicity
-              cell_x_r = (cur%part_pos(1) - x_min_local) / dx
-              cell_x = FLOOR(cell_x_r + 0.5_num)
-              cell_frac_x = REAL(cell_x, num) - cell_x_r
-              cell_x = cell_x + 1
+        IF (.TRUE.) THEN
+          ! Particle has left this processor
+          IF (part_pos .LT. y_min_local - dy / 2.0_num) THEN
+            ybd = -1
+            ! Particle has left the system
+            IF (y_min_boundary) THEN
+              ybd = 0
+              IF (bc_particle(c_bd_y_min) .EQ. c_bc_reflect) THEN
+                cur%part_pos(2) = 2.0_num * y_min - dy - part_pos
+                cur%part_p(2) = -cur%part_p(2)
+              ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
+                ! Always use the triangle particle weighting for simplicity
+                cell_x_r = (cur%part_pos(1) - x_min_local) / dx
+                cell_x = FLOOR(cell_x_r + 0.5_num)
+                cell_frac_x = REAL(cell_x, num) - cell_x_r
+                cell_x = cell_x + 1
 
-              cf2 = cell_frac_x**2
-              gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
-              gx( 0) = 0.75_num - cf2
-              gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
+                cf2 = cell_frac_x**2
+                gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
+                gx( 0) = 0.75_num - cf2
+                gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
 
-              DO i = 1, 3
-                temp(i) = 0.0_num
-                DO ix = -1, 1
-                  temp(i) = temp(i) + gx(ix) &
-                      * species_list(ispecies)%ext_temp_y_min(cell_x+ix, i)
+                DO i = 1, 3
+                  temp(i) = 0.0_num
+                  DO ix = -1, 1
+                    temp(i) = temp(i) + gx(ix) &
+                        * species_list(ispecies)%ext_temp_y_min(cell_x+ix, i)
+                  ENDDO
                 ENDDO
-              ENDDO
 
-              ! x-direction
-              i = 1
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! x-direction
+                i = 1
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! y-direction
-              i = 2
-              cur%part_p(i) = ABS(momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num))
+                ! y-direction
+                i = 2
+                cur%part_p(i) = ABS(momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num))
 
-              ! z-direction
-              i = 3
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! z-direction
+                i = 3
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              cur%part_pos(2) = 2.0_num * y_min - dy - part_pos
+                cur%part_pos(2) = 2.0_num * y_min - dy - part_pos
 
-            ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_periodic) THEN
-              ybd = -1
-              cur%part_pos(2) = part_pos + length_y
-            ELSE
-              ! Default to open boundary conditions - remove particle
-              out_of_bounds = .TRUE.
+              ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_periodic) THEN
+                ybd = -1
+                cur%part_pos(2) = part_pos + length_y
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
         ENDIF
 
-        ! Particle has left this processor
-        IF (part_pos .GE. y_max_local + dy / 2.0_num) THEN
-          ybd = 1
-          ! Particle has left the system
-          IF (y_max_boundary) THEN
-            ybd = 0
-            IF (bc_particle(c_bd_y_max) .EQ. c_bc_reflect) THEN
-              cur%part_pos(2) = 2.0_num * y_max + dy - part_pos
-              cur%part_p(2) = -cur%part_p(2)
-            ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
-              ! Always use the triangle particle weighting for simplicity
-              cell_x_r = (cur%part_pos(1) - x_min_local) / dx
-              cell_x = FLOOR(cell_x_r + 0.5_num)
-              cell_frac_x = REAL(cell_x, num) - cell_x_r
-              cell_x = cell_x + 1
+        IF (.TRUE.) THEN
+          ! Particle has left this processor
+          IF (part_pos .GE. y_max_local + dy / 2.0_num) THEN
+            ybd = 1
+            ! Particle has left the system
+            IF (y_max_boundary) THEN
+              ybd = 0
+              IF (bc_particle(c_bd_y_max) .EQ. c_bc_reflect) THEN
+                cur%part_pos(2) = 2.0_num * y_max + dy - part_pos
+                cur%part_p(2) = -cur%part_p(2)
+              ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
+                ! Always use the triangle particle weighting for simplicity
+                cell_x_r = (cur%part_pos(1) - x_min_local) / dx
+                cell_x = FLOOR(cell_x_r + 0.5_num)
+                cell_frac_x = REAL(cell_x, num) - cell_x_r
+                cell_x = cell_x + 1
 
-              cf2 = cell_frac_x**2
-              gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
-              gx( 0) = 0.75_num - cf2
-              gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
+                cf2 = cell_frac_x**2
+                gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
+                gx( 0) = 0.75_num - cf2
+                gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
 
-              DO i = 1, 3
-                temp(i) = 0.0_num
-                DO ix = -1, 1
-                  temp(i) = temp(i) + gx(ix) &
-                      * species_list(ispecies)%ext_temp_y_max(cell_x+ix, i)
+                DO i = 1, 3
+                  temp(i) = 0.0_num
+                  DO ix = -1, 1
+                    temp(i) = temp(i) + gx(ix) &
+                        * species_list(ispecies)%ext_temp_y_max(cell_x+ix, i)
+                  ENDDO
                 ENDDO
-              ENDDO
 
-              ! x-direction
-              i = 1
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! x-direction
+                i = 1
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! y-direction
-              i = 2
-              cur%part_p(i) = -ABS(momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num))
+                ! y-direction
+                i = 2
+                cur%part_p(i) = -ABS(momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num))
 
-              ! z-direction
-              i = 3
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! z-direction
+                i = 3
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              cur%part_pos(2) = 2.0_num * y_max + dy - part_pos
+                cur%part_pos(2) = 2.0_num * y_max + dy - part_pos
 
-            ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_periodic) THEN
-              ybd = 1
-              cur%part_pos(2) = part_pos - length_y
-            ELSE
-              ! Default to open boundary conditions - remove particle
-              out_of_bounds = .TRUE.
+              ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_periodic) THEN
+                ybd = 1
+                cur%part_pos(2) = part_pos - length_y
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
         ENDIF

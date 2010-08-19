@@ -338,84 +338,88 @@ CONTAINS
         out_of_bounds = .FALSE.
 
         part_pos = cur%part_pos
-        ! Particle has left this processor
-        IF (part_pos .LT. x_min_local - dx / 2.0_num) THEN
-          xbd = -1
-          ! Particle has left the system
-          IF (x_min_boundary) THEN
-            xbd = 0
-            IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
-              cur%part_pos = 2.0_num * x_min - dx - part_pos
-              cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
-              DO i = 1, 3
-                temp(i) = species_list(ispecies)%ext_temp_x_min(i)
-              ENDDO
+        IF (.TRUE.) THEN
+          ! Particle has left this processor
+          IF (part_pos .LT. x_min_local - dx / 2.0_num) THEN
+            xbd = -1
+            ! Particle has left the system
+            IF (x_min_boundary) THEN
+              xbd = 0
+              IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
+                cur%part_pos = 2.0_num * x_min - dx - part_pos
+                cur%part_p(1) = -cur%part_p(1)
+              ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+                DO i = 1, 3
+                  temp(i) = species_list(ispecies)%ext_temp_x_min(i)
+                ENDDO
 
-              ! x-direction
-              i = 1
-              cur%part_p(i) = ABS(momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num))
+                ! x-direction
+                i = 1
+                cur%part_p(i) = ABS(momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num))
 
-              ! y-direction
-              i = 2
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! y-direction
+                i = 2
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! z-direction
-              i = 3
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! z-direction
+                i = 3
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              cur%part_pos = 2.0_num * x_min - dx - part_pos
+                cur%part_pos = 2.0_num * x_min - dx - part_pos
 
-            ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
-              xbd = -1
-              cur%part_pos = part_pos + length_x
-            ELSE
-              ! Default to open boundary conditions - remove particle
-              out_of_bounds = .TRUE.
+              ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
+                xbd = -1
+                cur%part_pos = part_pos + length_x
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
         ENDIF
 
-        ! Particle has left this processor
-        IF (part_pos .GE. x_max_local + dx / 2.0_num) THEN
-          xbd = 1
-          ! Particle has left the system
-          IF (x_max_boundary) THEN
-            xbd = 0
-            IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
-              cur%part_pos = 2.0_num * x_max + dx - part_pos
-              cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
-              DO i = 1, 3
-                temp(i) = species_list(ispecies)%ext_temp_x_max(i)
-              ENDDO
+        IF (.TRUE.) THEN
+          ! Particle has left this processor
+          IF (part_pos .GE. x_max_local + dx / 2.0_num) THEN
+            xbd = 1
+            ! Particle has left the system
+            IF (x_max_boundary) THEN
+              xbd = 0
+              IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
+                cur%part_pos = 2.0_num * x_max + dx - part_pos
+                cur%part_p(1) = -cur%part_p(1)
+              ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+                DO i = 1, 3
+                  temp(i) = species_list(ispecies)%ext_temp_x_max(i)
+                ENDDO
 
-              ! x-direction
-              i = 1
-              cur%part_p(i) = -ABS(momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num))
+                ! x-direction
+                i = 1
+                cur%part_p(i) = -ABS(momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num))
 
-              ! y-direction
-              i = 2
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! y-direction
+                i = 2
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! z-direction
-              i = 3
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! z-direction
+                i = 3
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              cur%part_pos = 2.0_num * x_max + dx - part_pos
+                cur%part_pos = 2.0_num * x_max + dx - part_pos
 
-            ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
-              xbd = 1
-              cur%part_pos = part_pos - length_x
-            ELSE
-              ! Default to open boundary conditions - remove particle
-              out_of_bounds = .TRUE.
+              ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
+                xbd = 1
+                cur%part_pos = part_pos - length_x
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
         ENDIF

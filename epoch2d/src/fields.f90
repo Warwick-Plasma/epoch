@@ -42,30 +42,32 @@ CONTAINS
 
     INTEGER :: ix, iy
 
-    DO iy = 1, ny
-      DO ix = 1, nx
-        ex(ix, iy) = ex(ix, iy) &
-            + cny * SUM(const(1:order) * bz(ix, iy-large:iy+small)) &
-            - fac * jx(ix, iy)
+    IF (.TRUE.) THEN
+      DO iy = 1, ny
+        DO ix = 1, nx
+          ex(ix, iy) = ex(ix, iy) &
+              + cny * SUM(const(1:order) * bz(ix, iy-large:iy+small)) &
+              - fac * jx(ix, iy)
+        ENDDO
       ENDDO
-    ENDDO
 
-    DO iy = 1, ny
-      DO ix = 1, nx
-        ey(ix, iy) = ey(ix, iy) &
-            - cnx * SUM(const(1:order) * bz(ix-large:ix+small, iy)) &
-            - fac * jy(ix, iy)
+      DO iy = 1, ny
+        DO ix = 1, nx
+          ey(ix, iy) = ey(ix, iy) &
+              - cnx * SUM(const(1:order) * bz(ix-large:ix+small, iy)) &
+              - fac * jy(ix, iy)
+        ENDDO
       ENDDO
-    ENDDO
 
-    DO iy = 1, ny
-      DO ix = 1, nx
-        ez(ix, iy) = ez(ix, iy) &
-            + cnx * SUM(const(1:order) * by(ix-large:ix+small, iy)) &
-            - cny * SUM(const(1:order) * bx(ix, iy-large:iy+small)) &
-            - fac * jz(ix, iy)
+      DO iy = 1, ny
+        DO ix = 1, nx
+          ez(ix, iy) = ez(ix, iy) &
+              + cnx * SUM(const(1:order) * by(ix-large:ix+small, iy)) &
+              - cny * SUM(const(1:order) * bx(ix, iy-large:iy+small)) &
+              - fac * jz(ix, iy)
+        ENDDO
       ENDDO
-    ENDDO
+    ENDIF
 
   END SUBROUTINE update_e_field
 
@@ -75,27 +77,29 @@ CONTAINS
 
     INTEGER :: ix, iy
 
-    DO iy = 1, ny
-      DO ix = 1, nx
-        bx(ix, iy) = bx(ix, iy) &
-            - hdty * SUM(const(1:order) * ez(ix, iy-small:iy+large))
+    IF (.TRUE.) THEN
+      DO iy = 1, ny
+        DO ix = 1, nx
+          bx(ix, iy) = bx(ix, iy) &
+              - hdty * SUM(const(1:order) * ez(ix, iy-small:iy+large))
+        ENDDO
       ENDDO
-    ENDDO
 
-    DO iy = 1, ny
-      DO ix = 1, nx
-        by(ix, iy) = by(ix, iy) &
-            + hdtx * SUM(const(1:order) * ez(ix-small:ix+large, iy))
+      DO iy = 1, ny
+        DO ix = 1, nx
+          by(ix, iy) = by(ix, iy) &
+              + hdtx * SUM(const(1:order) * ez(ix-small:ix+large, iy))
+        ENDDO
       ENDDO
-    ENDDO
 
-    DO iy = 1, ny
-      DO ix = 1, nx
-        bz(ix, iy) = bz(ix, iy) &
-            - hdtx * SUM(const(1:order) * ey(ix-small:ix+large, iy)) &
-            + hdty * SUM(const(1:order) * ex(ix, iy-small:iy+large))
+      DO iy = 1, ny
+        DO ix = 1, nx
+          bz(ix, iy) = bz(ix, iy) &
+              - hdtx * SUM(const(1:order) * ey(ix-small:ix+large, iy)) &
+              + hdty * SUM(const(1:order) * ex(ix, iy-small:iy+large))
+        ENDDO
       ENDDO
-    ENDDO
+    ENDIF
 
   END SUBROUTINE update_b_field
 

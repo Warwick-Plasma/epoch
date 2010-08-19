@@ -42,22 +42,24 @@ CONTAINS
 
     INTEGER :: ix
 
-    DO ix = 1, nx
-      ex(ix) = ex(ix) &
-          - fac * jx(ix)
-    ENDDO
+    IF (.TRUE.) THEN
+      DO ix = 1, nx
+        ex(ix) = ex(ix) &
+            - fac * jx(ix)
+      ENDDO
 
-    DO ix = 1, nx
-      ey(ix) = ey(ix) &
-          - cnx * SUM(const(1:order) * bz(ix-large:ix+small)) &
-          - fac * jy(ix)
-    ENDDO
+      DO ix = 1, nx
+        ey(ix) = ey(ix) &
+            - cnx * SUM(const(1:order) * bz(ix-large:ix+small)) &
+            - fac * jy(ix)
+      ENDDO
 
-    DO ix = 1, nx
-      ez(ix) = ez(ix) &
-          + cnx * SUM(const(1:order) * by(ix-large:ix+small)) &
-          - fac * jz(ix)
-    ENDDO
+      DO ix = 1, nx
+        ez(ix) = ez(ix) &
+            + cnx * SUM(const(1:order) * by(ix-large:ix+small)) &
+            - fac * jz(ix)
+      ENDDO
+    ENDIF
 
   END SUBROUTINE update_e_field
 
@@ -67,15 +69,17 @@ CONTAINS
 
     INTEGER :: ix
 
-    DO ix = 1, nx
-      by(ix) = by(ix) &
-          + hdtx * SUM(const(1:order) * ez(ix-small:ix+large))
-    ENDDO
+    IF (.TRUE.) THEN
+      DO ix = 1, nx
+        by(ix) = by(ix) &
+            + hdtx * SUM(const(1:order) * ez(ix-small:ix+large))
+      ENDDO
 
-    DO ix = 1, nx
-      bz(ix) = bz(ix) &
-          - hdtx * SUM(const(1:order) * ey(ix-small:ix+large))
-    ENDDO
+      DO ix = 1, nx
+        bz(ix) = bz(ix) &
+            - hdtx * SUM(const(1:order) * ey(ix-small:ix+large))
+      ENDDO
+    ENDIF
 
   END SUBROUTINE update_b_field
 

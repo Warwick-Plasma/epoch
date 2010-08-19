@@ -42,38 +42,40 @@ CONTAINS
 
     INTEGER :: ix, iy, iz
 
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
-          ex(ix, iy, iz) = ex(ix, iy, iz) &
-              + cny * SUM(const(1:order) * bz(ix, iy-large:iy+small, iz)) &
-              - cnz * SUM(const(1:order) * by(ix, iy, iz-large:iz+small)) &
-              - fac * jx(ix, iy, iz)
+    IF (.TRUE.) THEN
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            ex(ix, iy, iz) = ex(ix, iy, iz) &
+                + cny * SUM(const(1:order) * bz(ix, iy-large:iy+small, iz)) &
+                - cnz * SUM(const(1:order) * by(ix, iy, iz-large:iz+small)) &
+                - fac * jx(ix, iy, iz)
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
 
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
-          ey(ix, iy, iz) = ey(ix, iy, iz) &
-              + cnz * SUM(const(1:order) * bx(ix, iy, iz-large:iz+small)) &
-              - cnx * SUM(const(1:order) * bz(ix-large:ix+small, iy, iz)) &
-              - fac * jy(ix, iy, iz)
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            ey(ix, iy, iz) = ey(ix, iy, iz) &
+                + cnz * SUM(const(1:order) * bx(ix, iy, iz-large:iz+small)) &
+                - cnx * SUM(const(1:order) * bz(ix-large:ix+small, iy, iz)) &
+                - fac * jy(ix, iy, iz)
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
 
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
-          ez(ix, iy, iz) = ez(ix, iy, iz) &
-              + cnx * SUM(const(1:order) * by(ix-large:ix+small, iy, iz)) &
-              - cny * SUM(const(1:order) * bx(ix, iy-large:iy+small, iz)) &
-              - fac * jz(ix, iy, iz)
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            ez(ix, iy, iz) = ez(ix, iy, iz) &
+                + cnx * SUM(const(1:order) * by(ix-large:ix+small, iy, iz)) &
+                - cny * SUM(const(1:order) * bx(ix, iy-large:iy+small, iz)) &
+                - fac * jz(ix, iy, iz)
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
+    ENDIF
 
   END SUBROUTINE update_e_field
 
@@ -83,35 +85,37 @@ CONTAINS
 
     INTEGER :: ix, iy, iz
 
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
-          bx(ix, iy, iz) = bx(ix, iy, iz) &
-              - hdty * SUM(const(1:order) * ez(ix, iy-small:iy+large, iz)) &
-              + hdtz * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large))
+    IF (.TRUE.) THEN
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            bx(ix, iy, iz) = bx(ix, iy, iz) &
+                - hdty * SUM(const(1:order) * ez(ix, iy-small:iy+large, iz)) &
+                + hdtz * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large))
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
 
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
-          by(ix, iy, iz) = by(ix, iy, iz) &
-              - hdtz * SUM(const(1:order) * ex(ix, iy, iz-small:iz+large)) &
-              + hdtx * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz))
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            by(ix, iy, iz) = by(ix, iy, iz) &
+                - hdtz * SUM(const(1:order) * ex(ix, iy, iz-small:iz+large)) &
+                + hdtx * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz))
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
 
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
-          bz(ix, iy, iz) = bz(ix, iy, iz) &
-              - hdtx * SUM(const(1:order) * ey(ix-small:ix+large, iy, iz)) &
-              + hdty * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz))
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            bz(ix, iy, iz) = bz(ix, iy, iz) &
+                - hdtx * SUM(const(1:order) * ey(ix-small:ix+large, iy, iz)) &
+                + hdty * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz))
+          ENDDO
         ENDDO
       ENDDO
-    ENDDO
+    ENDIF
 
   END SUBROUTINE update_b_field
 
