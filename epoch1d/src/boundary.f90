@@ -593,7 +593,7 @@ CONTAINS
       IF (nx_global_min .LE. cpml_thickness + ng + 1 &
           .AND. nx_global_max .GE. cpml_thickness + ng + 1) THEN
         add_laser(i) = .TRUE.
-        cpml_x_min_laser_idx = cpml_thickness + ng - nx_global_min + 1
+        cpml_x_min_laser_idx = cpml_thickness + ng + 1 - nx_global_min
       ENDIF
     ENDIF
 
@@ -649,11 +649,11 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (nx_global_min .LE. nx_global - cpml_thickness - ng + 1 &
-          .AND. nx_global_max .GE. nx_global - cpml_thickness - ng + 1) THEN
+      IF (nx_global_min .LE. nx_global - cpml_thickness - ng + 2 &
+          .AND. nx_global_max .GE. nx_global - cpml_thickness - ng + 2) THEN
         add_laser(i) = .TRUE.
         cpml_x_max_laser_idx = &
-            nx_global - cpml_thickness - ng + 1 - nx_global_min + 1
+            nx_global - cpml_thickness - ng + 2 - nx_global_min
       ENDIF
     ENDIF
 

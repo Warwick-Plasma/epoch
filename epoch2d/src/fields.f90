@@ -189,13 +189,15 @@ CONTAINS
 
     fac = hdt / epsilon0
 
+    IF (cpml_boundaries) CALL cpml_advance_e_currents(0.5_num * dt)
+
     ! Update E field to t+dt/2
     CALL update_e_field
 
     ! Now have E(t+dt/2), do boundary conditions on E
     CALL efield_bcs
 
-    IF (cpml_boundaries) CALL cpml_advance_b_currents(dt)
+    IF (cpml_boundaries) CALL cpml_advance_b_currents(0.5_num * dt)
 
     ! Update B field to t+dt/2 using E(t+dt/2)
     CALL update_b_field
@@ -212,11 +214,13 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
+    IF (cpml_boundaries) CALL cpml_advance_b_currents(0.5_num * dt)
+
     CALL update_b_field
 
     CALL bfield_final_bcs
 
-    IF (cpml_boundaries) CALL cpml_advance_e_currents(dt)
+    IF (cpml_boundaries) CALL cpml_advance_e_currents(0.5_num * dt)
 
     CALL update_e_field
 
