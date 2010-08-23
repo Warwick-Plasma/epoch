@@ -135,9 +135,9 @@ CONTAINS
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
 
-    DO iproc = 0, nprocx-1
-      x_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
+    DO iproc = 1, nprocx
+      x_mins(iproc) = x_global(cell_x_min(iproc))
+      x_maxs(iproc) = x_global(cell_x_max(iproc))
     ENDDO
 
     x_min_local = x_mins(x_coords)

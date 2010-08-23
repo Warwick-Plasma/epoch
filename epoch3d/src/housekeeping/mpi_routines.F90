@@ -206,13 +206,13 @@ CONTAINS
       nzp = nprocz
     ENDIF
 
-    ALLOCATE(npart_each_rank(1:nproc))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
-    ALLOCATE(y_mins(0:nprocy-1), y_maxs(0:nprocy-1))
-    ALLOCATE(z_mins(0:nprocz-1), z_maxs(0:nprocz-1))
-    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
-    ALLOCATE(cell_y_min(1:nprocy), cell_y_max(1:nprocy))
-    ALLOCATE(cell_z_min(1:nprocz), cell_z_max(1:nprocz))
+    ALLOCATE(npart_each_rank(nproc))
+    ALLOCATE(x_mins(nprocx), x_maxs(nprocx))
+    ALLOCATE(y_mins(nprocy), y_maxs(nprocy))
+    ALLOCATE(z_mins(nprocz), z_maxs(nprocz))
+    ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
+    ALLOCATE(cell_y_min(nprocy), cell_y_max(nprocy))
+    ALLOCATE(cell_z_min(nprocz), cell_z_max(nprocz))
 
     DO idim = 1, nxp
       cell_x_min(idim) = (idim - 1) * nx0 + 1

@@ -106,9 +106,9 @@ CONTAINS
       nxp = nprocx
     ENDIF
 
-    ALLOCATE(npart_each_rank(1:nproc))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
-    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
+    ALLOCATE(npart_each_rank(nproc))
+    ALLOCATE(x_mins(nprocx), x_maxs(nprocx))
+    ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
 
     DO idim = 1, nxp
       cell_x_min(idim) = (idim - 1) * nx0 + 1

@@ -20,7 +20,7 @@ CONTAINS
 
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: load_x
-    INTEGER, DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
+    INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
     REAL(num) :: balance_frac, npart_av
     INTEGER(KIND=8) :: npart_local, sum_npart, max_npart
     INTEGER :: iproc
@@ -54,7 +54,7 @@ CONTAINS
       IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
 
-    ALLOCATE(starts_x(1:nprocx), ends_x(1:nprocx))
+    ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
 
     ! Sweep in X
     IF (IAND(balance_mode, c_lb_x) .NE. 0 &
@@ -62,11 +62,11 @@ CONTAINS
       ! Rebalancing in X
       ALLOCATE(load_x(nx_global))
       CALL get_load_in_x(load_x)
-      CALL calculate_breaks(load_x, nprocx, starts_x, ends_x)
+      CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
     ELSE
       ! Just keep the original lengths
-      starts_x = cell_x_min
-      ends_x = cell_x_max
+      new_cell_x_min = cell_x_min
+      new_cell_x_max = cell_x_max
     ENDIF
 
     IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
@@ -74,14 +74,14 @@ CONTAINS
     ! Now need to calculate the start and end points for the new domain on
     ! the current processor
 
-    domain(1,:) = (/starts_x(x_coords+1), ends_x(x_coords+1)/)
+    domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
 
     ! Redistribute the field variables
     CALL redistribute_fields(domain)
 
     ! Copy the new lengths into the permanent variables
-    cell_x_min = starts_x
-    cell_x_max = ends_x
+    cell_x_min = new_cell_x_min
+    cell_x_max = new_cell_x_max
 
     ! Set the new nx
     nx_global_min = cell_x_min(x_coords+1)
@@ -95,9 +95,9 @@ CONTAINS
     x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
 
     ! Recalculate x_mins and x_maxs so that rebalancing works next time
-    DO iproc = 0, nprocx - 1
-      x_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
+    DO iproc = 1, nprocx
+      x_mins(iproc) = x_global(cell_x_min(iproc))
+      x_maxs(iproc) = x_global(cell_x_max(iproc))
     ENDDO
 
     ! Set the lengths of the current domain so that the particle balancer
@@ -358,19 +358,19 @@ CONTAINS
 
 
 
-  SUBROUTINE calculate_breaks(load, nproc, starts, ends)
+  SUBROUTINE calculate_breaks(load, nproc, mins, maxs)
 
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
     INTEGER(KIND=8), INTENT(IN), DIMENSION(:) :: load
     INTEGER, INTENT(IN) :: nproc
-    INTEGER, DIMENSION(:), INTENT(OUT) :: starts, ends
+    INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old
     INTEGER(KIND=8) :: total, total_old, load_per_proc_ideal
 
     sz = SIZE(load)
-    ends = sz
+    maxs = sz
 
     load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, 8)
 
@@ -383,9 +383,9 @@ CONTAINS
         ! Pick the split that most closely matches the load
         IF (load_per_proc_ideal - total_old &
             .LT. total - load_per_proc_ideal) THEN
-          ends(proc) = idim - 1
+          maxs(proc) = idim - 1
         ELSE
-          ends(proc) = idim
+          maxs(proc) = idim
         ENDIF
         proc = proc + 1
         total = total - load_per_proc_ideal
@@ -397,25 +397,25 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc
-      IF (ends(proc) - old .LE. 0) THEN
-        ends(proc) = old + 1
+      IF (maxs(proc) - old .LE. 0) THEN
+        maxs(proc) = old + 1
       ENDIF
-      old = ends(proc)
+      old = maxs(proc)
     ENDDO
 
     ! Backwards
     old = sz + 1
     DO proc = nproc, 1, -1
-      IF (old - ends(proc) .LE. 0) THEN
-        ends(proc) = old - 1
+      IF (old - maxs(proc) .LE. 0) THEN
+        maxs(proc) = old - 1
       ENDIF
-      old = ends(proc)
+      old = maxs(proc)
     ENDDO
 
-    ! Set starts
-    starts(1) = 1
+    ! Set mins
+    mins(1) = 1
     DO proc = 2, nproc
-      starts(proc) = ends(proc-1) + 1
+      mins(proc) = maxs(proc-1) + 1
     ENDDO
 
   END SUBROUTINE calculate_breaks
@@ -436,10 +436,10 @@ CONTAINS
     ! This could be replaced by a bisection method, but for the moment I
     ! just don't care
 
-    DO iproc = 0, nprocx - 1
+    DO iproc = 1, nprocx
       IF (a_particle%part_pos .GE. x_mins(iproc) - dx / 2.0_num &
           .AND. a_particle%part_pos .LT. x_maxs(iproc) + dx / 2.0_num) THEN
-        coords(c_ndims) = iproc
+        coords(c_ndims) = iproc - 1
         EXIT
       ENDIF
     ENDDO

@@ -169,11 +169,11 @@ CONTAINS
       nyp = nprocy
     ENDIF
 
-    ALLOCATE(npart_each_rank(1:nproc))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
-    ALLOCATE(y_mins(0:nprocy-1), y_maxs(0:nprocy-1))
-    ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
-    ALLOCATE(cell_y_min(1:nprocy), cell_y_max(1:nprocy))
+    ALLOCATE(npart_each_rank(nproc))
+    ALLOCATE(x_mins(nprocx), x_maxs(nprocx))
+    ALLOCATE(y_mins(nprocy), y_maxs(nprocy))
+    ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
+    ALLOCATE(cell_y_min(nprocy), cell_y_max(nprocy))
 
     DO idim = 1, nxp
       cell_x_min(idim) = (idim - 1) * nx0 + 1
