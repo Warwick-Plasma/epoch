@@ -61,10 +61,17 @@ CONTAINS
     INTEGER :: iproc, ix
 
     length_x = x_max - x_min
-    dx = length_x / REAL(nx_global-1, num)
+    dx = length_x / REAL(nx_global, num)
+
+    ! Shift grid to cell centres.
+    ! At some point the grid may be redefined to be node centred.
+
+    x_min = x_min + dx / 2.0_num
+    x_max = x_max - dx / 2.0_num
+    length_x = x_max - x_min
 
     ! Setup global grid
-    DO ix = -1, nx_global + 2
+    DO ix = -2, nx_global + 3
       x_global(ix) = x_min + (ix - 1) * dx
       x_offset_global(ix) = x_global(ix)
     ENDDO

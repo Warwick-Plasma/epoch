@@ -67,20 +67,33 @@ CONTAINS
     length_x = x_max - x_min
     length_y = y_max - y_min
     length_z = z_max - z_min
-    dx = length_x / REAL(nx_global-1, num)
-    dy = length_y / REAL(ny_global-1, num)
-    dz = length_z / REAL(nz_global-1, num)
+    dx = length_x / REAL(nx_global, num)
+    dy = length_y / REAL(ny_global, num)
+    dz = length_z / REAL(nz_global, num)
+
+    ! Shift grid to cell centres.
+    ! At some point the grid may be redefined to be node centred.
+
+    x_min = x_min + dx / 2.0_num
+    x_max = x_max - dx / 2.0_num
+    y_min = y_min + dy / 2.0_num
+    y_max = y_max - dy / 2.0_num
+    z_min = z_min + dz / 2.0_num
+    z_max = z_max - dz / 2.0_num
+    length_x = x_max - x_min
+    length_y = y_max - y_min
+    length_z = z_max - z_min
 
     ! Setup global grid
-    DO ix = -1, nx_global + 2
+    DO ix = -2, nx_global + 3
       x_global(ix) = x_min + (ix - 1) * dx
       x_offset_global(ix) = x_global(ix)
     ENDDO
-    DO iy = -1, ny_global + 2
+    DO iy = -2, ny_global + 3
       y_global(iy) = y_min + (iy - 1) * dy
       y_offset_global(iy) = y_global(iy)
     ENDDO
-    DO iz = -1, nz_global + 2
+    DO iz = -2, nz_global + 3
       z_global(iz) = z_min + (iz - 1) * dz
       z_offset_global(iz) = z_global(iz)
     ENDDO
