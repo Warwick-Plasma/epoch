@@ -153,8 +153,8 @@ CONTAINS
     ! nprocx/y and npart are optional
     control_block_done(3*c_ndims+1:4*c_ndims+1) = .TRUE.
 
-    ! All entries after dt_multiplier are optional
-    control_block_done(4*c_ndims+5:) = .TRUE.
+    ! All entries after t_end are optional
+    control_block_done(4*c_ndims+4:) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

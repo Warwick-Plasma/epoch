@@ -34,6 +34,7 @@ CONTAINS
     CALL MPI_SIZEOF(dummy, realsize, errcode)
 
     dt_plasma_frequency = 0.0_num
+    dt_multiplier = 1.0_num
     stdout_frequency = 0
 
     window_shift = 0.0_num
@@ -41,6 +42,10 @@ CONTAINS
     smooth_currents = .FALSE.
     dlb = .FALSE.
     use_random_seed = .FALSE.
+    use_offset_grid = .FALSE.
+    force_final_to_be_restartable = .FALSE.
+    full_dump_every = -1
+    restart_dump_every = -1
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)

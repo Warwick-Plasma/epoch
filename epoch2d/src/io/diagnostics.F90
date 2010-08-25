@@ -55,7 +55,8 @@ CONTAINS
     code = c_io_always
 
     ! Only dump variables with the "FULL" attributre on full dump intervals
-    IF (MOD(output_file, full_dump_every) .EQ. 0)  code = IOR(code, c_io_full)
+    IF (MOD(output_file, full_dump_every) .EQ. 0 &
+        .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
     IF (MOD(output_file, restart_dump_every) .EQ. 0 &
         .AND. restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
     IF (last_call .AND. force_final_to_be_restartable) &

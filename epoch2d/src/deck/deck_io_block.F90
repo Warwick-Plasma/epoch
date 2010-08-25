@@ -8,7 +8,8 @@ MODULE deck_io_block
 
   INTEGER, PARAMETER :: n_var_special = 6
   INTEGER, PARAMETER :: io_block_elements = n_var_special + num_vars_to_dump
-  LOGICAL, DIMENSION(io_block_elements) :: io_block_done
+  LOGICAL, DIMENSION(io_block_elements) :: io_block_done = .FALSE.
+  LOGICAL :: need_dt = .FALSE.
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
   INTEGER, PARAMETER :: c_dump_part_species      = 3
@@ -129,6 +130,8 @@ CONTAINS
 
     IF (elementselected .LE. n_var_special) RETURN
 
+    need_dt = .TRUE.
+
     mask = as_integer(value, handle_io_deck)
     mask_element = elementselected - n_var_special
 
@@ -178,8 +181,9 @@ CONTAINS
     ! elements is not wanted
     check_io_block = c_err_none
 
-    ! extended io file no longer in use
-    io_block_done(6) = .TRUE.
+    IF (.NOT. need_dt) io_block_done(1) = .TRUE.
+    ! Other control parameters are optional
+    io_block_done(2:6) = .TRUE.
 
     ! Particles
     dumpmask(c_dump_part_grid) = &
