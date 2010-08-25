@@ -276,8 +276,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (opcode .EQ. c_const_dir_gamma) THEN
-      CALL push_on_eval(REAL(c_dir_gamma,num))
+    IF (opcode .EQ. c_const_dir_gamma_m1) THEN
+      CALL push_on_eval(REAL(c_dir_gamma_m1,num))
       RETURN
     ENDIF
 

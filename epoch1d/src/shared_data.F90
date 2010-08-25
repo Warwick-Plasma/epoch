@@ -85,7 +85,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_py = 16
   INTEGER, PARAMETER :: c_dir_pz = 32
   INTEGER, PARAMETER :: c_dir_en = 64
-  INTEGER, PARAMETER :: c_dir_gamma = 128
+  INTEGER, PARAMETER :: c_dir_gamma_m1 = 128
 
   ! define flags
   INTEGER(4), PARAMETER :: c_def_particle_debug = 1
@@ -204,7 +204,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_py = 53
   INTEGER, PARAMETER :: c_const_dir_pz = 54
   INTEGER, PARAMETER :: c_const_dir_en = 55
-  INTEGER, PARAMETER :: c_const_dir_gamma = 56
+  INTEGER, PARAMETER :: c_const_dir_gamma_m1 = 56
   INTEGER, PARAMETER :: c_const_nx = 57
 
   ! Custom constants

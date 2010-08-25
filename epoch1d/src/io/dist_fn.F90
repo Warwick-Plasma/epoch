@@ -205,7 +205,7 @@ CONTAINS
         l_direction(idim) = c_ndims+4
       ENDIF
 
-      IF (IAND(direction(idim), c_dir_gamma) .NE. 0) THEN
+      IF (IAND(direction(idim), c_dir_gamma_m1) .NE. 0) THEN
         use_direction(idim, c_ndims+5) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = c_ndims+5
@@ -511,7 +511,7 @@ CONTAINS
         l_direction(idim) = c_ndims+4
       ENDIF
 
-      IF (IAND(direction(idim), c_dir_gamma) .NE. 0) THEN
+      IF (IAND(direction(idim), c_dir_gamma_m1) .NE. 0) THEN
         use_direction(idim, c_ndims+5) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = c_ndims+5
@@ -823,7 +823,7 @@ CONTAINS
         l_direction(idim) = c_ndims+4
       ENDIF
 
-      IF (IAND(direction(idim), c_dir_gamma) .NE. 0) THEN
+      IF (IAND(direction(idim), c_dir_gamma_m1) .NE. 0) THEN
         use_direction(idim, c_ndims+5) = .TRUE.
         p_count(idim) = p_count(idim)+1
         l_direction(idim) = c_ndims+5

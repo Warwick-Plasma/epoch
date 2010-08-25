@@ -114,7 +114,7 @@ CONTAINS
     IF (str_cmp(name, "dir_py")) as_constant = c_const_dir_py
     IF (str_cmp(name, "dir_pz")) as_constant = c_const_dir_pz
     IF (str_cmp(name, "dir_en")) as_constant = c_const_dir_en
-    IF (str_cmp(name, "dir_gamma")) as_constant = c_const_dir_gamma
+    IF (str_cmp(name, "dir_gamma_m1")) as_constant = c_const_dir_gamma_m1
     IF (str_cmp(name, "nx")) as_constant = c_const_nx
 
     ! User submitted constant using "Register"
