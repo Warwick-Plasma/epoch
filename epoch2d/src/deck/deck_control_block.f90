@@ -6,52 +6,52 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 20
+  INTEGER, PARAMETER :: control_block_elements = 12 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           "nx                ", &
           "ny                ", &
-          "npart             ", &
-          "nsteps            ", &
-          "t_end             ", &
           "x_min             ", &
           "x_max             ", &
           "y_min             ", &
           "y_max             ", &
+          "nprocx            ", &
+          "nprocy            ", &
+          "npart             ", &
+          "nsteps            ", &
+          "t_end             ", &
           "dt_multiplier     ", &
           "dlb_threshold     ", &
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
-          "smooth_currents   ", &
           "field_order       ", &
-          "nprocx            ", &
-          "nprocy            ", &
           "stdout_frequency  ", &
-          "use_random_seed   " /)
+          "use_random_seed   ", &
+          "smooth_currents   " /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           "nx                ", &
           "ny                ", &
-          "npart             ", &
-          "nsteps            ", &
-          "t_end             ", &
           "x_start           ", &
           "x_end             ", &
           "y_start           ", &
           "y_end             ", &
+          "nprocx            ", &
+          "nprocy            ", &
+          "npart             ", &
+          "nsteps            ", &
+          "t_end             ", &
           "dt_multiplier     ", &
           "dlb_threshold     ", &
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
-          "smooth_currents   ", &
           "field_order       ", &
-          "nprocx            ", &
-          "nprocy            ", &
           "stdout_frequency  ", &
-          "use_random_seed   " /)
+          "use_random_seed   ", &
+          "smooth_currents   " /)
 
 CONTAINS
 
@@ -86,26 +86,30 @@ CONTAINS
       nx_global = as_integer(value, handle_control_deck)
     CASE(2)
       ny_global = as_integer(value, handle_control_deck)
-    CASE(3)
-      npart_global = as_long_integer(value, handle_control_deck)
-    CASE(4)
-      nsteps = as_integer(value, handle_control_deck)
-    CASE(5)
-      t_end = as_real(value, handle_control_deck)
-    CASE(6)
+    CASE(c_ndims+1)
       x_min = as_real(value, handle_control_deck)
-    CASE(7)
+    CASE(c_ndims+2)
       x_max = as_real(value, handle_control_deck)
-    CASE(8)
+    CASE(c_ndims+3)
       y_min = as_real(value, handle_control_deck)
-    CASE(9)
+    CASE(c_ndims+4)
       y_max = as_real(value, handle_control_deck)
-    CASE(10)
+    CASE(3*c_ndims+1)
+      nprocx = as_integer(value, handle_control_deck)
+    CASE(3*c_ndims+2)
+      nprocy = as_integer(value, handle_control_deck)
+    CASE(4*c_ndims+1)
+      npart_global = as_long_integer(value, handle_control_deck)
+    CASE(4*c_ndims+2)
+      nsteps = as_integer(value, handle_control_deck)
+    CASE(4*c_ndims+3)
+      t_end = as_real(value, handle_control_deck)
+    CASE(4*c_ndims+4)
       dt_multiplier = as_real(value, handle_control_deck)
-    CASE(11)
+    CASE(4*c_ndims+5)
       dlb_threshold = as_real(value, handle_control_deck)
       dlb = .TRUE.
-    CASE(12)
+    CASE(4*c_ndims+6)
       IF (rank .EQ. 0) THEN
         WRITE(*, *) '***ERROR***'
         WRITE(*, *) 'The "icfile" option is no longer supported.'
@@ -115,14 +119,12 @@ CONTAINS
         WRITE(40,*) 'Please use the "import" directive instead'
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
-    CASE(13)
+    CASE(4*c_ndims+7)
       restart_snapshot = as_integer(value, handle_control_deck)
       ic_from_restart = .TRUE.
-    CASE(14)
+    CASE(4*c_ndims+8)
       neutral_background = as_logical(value, handle_control_deck)
-    CASE(15)
-      smooth_currents = as_logical(value, handle_control_deck)
-    CASE(16)
+    CASE(4*c_ndims+9)
       field_order = as_integer(value, handle_control_deck)
       IF (field_order .NE. 2 .AND. field_order .NE. 4 &
           .AND. field_order .NE. 6) THEN
@@ -130,14 +132,12 @@ CONTAINS
       ELSE
         CALL set_field_order(field_order)
       ENDIF
-    CASE(17)
-      nprocx = as_integer(value, handle_control_deck)
-    CASE(18)
-      nprocy = as_integer(value, handle_control_deck)
-    CASE(19)
+    CASE(4*c_ndims+10)
       stdout_frequency = as_integer(value, handle_control_deck)
-    CASE(20)
+    CASE(4*c_ndims+11)
       use_random_seed = as_logical(value, handle_control_deck)
+    CASE(4*c_ndims+12)
+      smooth_currents = as_logical(value, handle_control_deck)
     END SELECT
 
   END FUNCTION handle_control_deck
@@ -150,35 +150,11 @@ CONTAINS
 
     check_control_block = c_err_none
 
-    ! npart is not a required variable
-    control_block_done(3) = .TRUE.
+    ! nprocx/y and npart are optional
+    control_block_done(3*c_ndims+1:4*c_ndims+1) = .TRUE.
 
-    ! dlb threshold is optional
-    control_block_done(11) = .TRUE.
-
-    ! icfile no longer in use
-    control_block_done(12) = .TRUE.
-
-    ! restart snapshot is optional
-    control_block_done(13) = .TRUE.
-
-    ! The neutral background is still beta, so hide it if people don't want it
-    control_block_done(14) = .TRUE.
-
-    ! Assume no current smoothing unless specified
-    control_block_done(15) = .TRUE.
-
-    ! field_order is optional
-    control_block_done(16) = .TRUE.
-
-    ! nprocx/y is optional
-    control_block_done(17:18) = .TRUE.
-
-    ! stdout_frequency is optional
-    control_block_done(19) = .TRUE.
-
-    ! use_random_seed is optional
-    control_block_done(20) = .TRUE.
+    ! All entries after dt_multiplier are optional
+    control_block_done(4*c_ndims+5:) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

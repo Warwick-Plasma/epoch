@@ -6,40 +6,40 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 15
+  INTEGER, PARAMETER :: control_block_elements = 11 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           "nx                ", &
+          "x_min             ", &
+          "x_max             ", &
+          "nprocx            ", &
           "npart             ", &
           "nsteps            ", &
           "t_end             ", &
-          "x_min             ", &
-          "x_max             ", &
           "dt_multiplier     ", &
           "dlb_threshold     ", &
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
           "field_order       ", &
-          "nprocx            ", &
           "stdout_frequency  ", &
           "use_random_seed   " /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           "nx                ", &
+          "x_start           ", &
+          "x_end             ", &
+          "nprocx            ", &
           "npart             ", &
           "nsteps            ", &
           "t_end             ", &
-          "x_start           ", &
-          "x_end             ", &
           "dt_multiplier     ", &
           "dlb_threshold     ", &
           "icfile            ", &
           "restart_snapshot  ", &
           "neutral_background", &
           "field_order       ", &
-          "nprocx            ", &
           "stdout_frequency  ", &
           "use_random_seed   " /)
 
@@ -74,22 +74,24 @@ CONTAINS
     SELECT CASE (elementselected)
     CASE(1)
       nx_global = as_integer(value, handle_control_deck)
-    CASE(2)
-      npart_global = as_long_integer(value, handle_control_deck)
-    CASE(3)
-      nsteps = as_integer(value, handle_control_deck)
-    CASE(4)
-      t_end = as_real(value, handle_control_deck)
-    CASE(5)
+    CASE(c_ndims+1)
       x_min = as_real(value, handle_control_deck)
-    CASE(6)
+    CASE(c_ndims+2)
       x_max = as_real(value, handle_control_deck)
-    CASE(7)
+    CASE(3*c_ndims+1)
+      nprocx = as_integer(value, handle_control_deck)
+    CASE(4*c_ndims+1)
+      npart_global = as_long_integer(value, handle_control_deck)
+    CASE(4*c_ndims+2)
+      nsteps = as_integer(value, handle_control_deck)
+    CASE(4*c_ndims+3)
+      t_end = as_real(value, handle_control_deck)
+    CASE(4*c_ndims+4)
       dt_multiplier = as_real(value, handle_control_deck)
-    CASE(8)
+    CASE(4*c_ndims+5)
       dlb_threshold = as_real(value, handle_control_deck)
       dlb = .TRUE.
-    CASE(9)
+    CASE(4*c_ndims+6)
       IF (rank .EQ. 0) THEN
         WRITE(*, *) '***ERROR***'
         WRITE(*, *) 'The "icfile" option is no longer supported.'
@@ -99,12 +101,12 @@ CONTAINS
         WRITE(40,*) 'Please use the "import" directive instead'
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
-    CASE(10)
+    CASE(4*c_ndims+7)
       restart_snapshot = as_integer(value, handle_control_deck)
       ic_from_restart = .TRUE.
-    CASE(11)
+    CASE(4*c_ndims+8)
       neutral_background = as_logical(value, handle_control_deck)
-    CASE(12)
+    CASE(4*c_ndims+9)
       field_order = as_integer(value, handle_control_deck)
       IF (field_order .NE. 2 .AND. field_order .NE. 4 &
           .AND. field_order .NE. 6) THEN
@@ -112,11 +114,9 @@ CONTAINS
       ELSE
         CALL set_field_order(field_order)
       ENDIF
-    CASE(13)
-      nprocx = as_integer(value, handle_control_deck)
-    CASE(14)
+    CASE(4*c_ndims+10)
       stdout_frequency = as_integer(value, handle_control_deck)
-    CASE(15)
+    CASE(4*c_ndims+11)
       use_random_seed = as_logical(value, handle_control_deck)
     END SELECT
 
@@ -130,32 +130,11 @@ CONTAINS
 
     check_control_block = c_err_none
 
-    ! npart is not a required variable
-    control_block_done(2) = .TRUE.
+    ! nprocx and npart are optional
+    control_block_done(3*c_ndims+1:4*c_ndims+1) = .TRUE.
 
-    ! dlb threshold is optional
-    control_block_done(8) = .TRUE.
-
-    ! icfile no longer in use
-    control_block_done(9) = .TRUE.
-
-    ! restart snapshot is optional
-    control_block_done(10) = .TRUE.
-
-    ! The neutral background is still beta, so hide it if people don't want it
-    control_block_done(11) = .TRUE.
-
-    ! field_order is optional
-    control_block_done(12) = .TRUE.
-
-    ! nprocx is optional
-    control_block_done(13) = .TRUE.
-
-    ! stdout_frequency is optional
-    control_block_done(14) = .TRUE.
-
-    ! use_random_seed is optional
-    control_block_done(15) = .TRUE.
+    ! All entries after dt_multiplier are optional
+    control_block_done(4*c_ndims+5:) = .TRUE.
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN
