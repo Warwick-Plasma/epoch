@@ -83,6 +83,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_io_deck
     INTEGER :: loop, elementselected, mask, mask_element, ierr
+    LOGICAL :: bad
 
     handle_io_deck = c_err_unknown_element
 
@@ -140,6 +141,28 @@ CONTAINS
       mask = c_io_never
     ENDIF
 #endif
+
+    ! Setting some flags like species
+    ! wastes memory if the parameters make no sense. Do sanity checking.
+
+    IF (IAND(mask, c_io_species) .NE. 0) THEN
+      bad = .TRUE.
+      ! Check for sensible per species variables
+      IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
+      IF (bad) THEN
+        IF (rank .EQ. 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Attempting to set per species property for "' &
+              // TRIM(element) // '" which'
+          PRINT*, 'does not support this property. Ignoring.'
+        ENDIF
+        mask = IAND(mask, NOT(c_io_species))
+      ENDIF
+    ENDIF
 
     dumpmask(mask_element) = mask
 
