@@ -2,4 +2,6 @@
 *.o
 CFD*Info.C
 CFD*Info.h
+CMake*
+*.cmake
 Makefile
