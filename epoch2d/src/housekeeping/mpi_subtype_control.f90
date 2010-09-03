@@ -241,7 +241,8 @@ CONTAINS
   FUNCTION create_field_subtype(nx_local, ny_local, cell_start_x_local, &
       cell_start_y_local)
 
-    INTEGER, INTENT(IN) :: nx_local, ny_local
+    INTEGER, INTENT(IN) :: nx_local
+    INTEGER, INTENT(IN) :: ny_local
     INTEGER, INTENT(IN) :: cell_start_x_local
     INTEGER, INTENT(IN) :: cell_start_y_local
     INTEGER :: create_field_subtype
@@ -268,16 +269,23 @@ CONTAINS
     INTEGER, DIMENSION(1), INTENT(IN) :: n_local
     INTEGER, DIMENSION(1), INTENT(IN) :: n_global
     INTEGER, DIMENSION(1), INTENT(IN) :: start
-    INTEGER, DIMENSION(1) :: lengths
-    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(1) :: disp
+    INTEGER, DIMENSION(3) :: lengths, types
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
     INTEGER(KIND=MPI_ADDRESS_KIND) :: sz
     INTEGER :: create_1d_array_subtype
 
     sz = realsize
-    lengths = n_local(1)
-    disp(1) = (start(1) - 1) * sz
+    lengths(1) = 1
+    lengths(2) = n_local(1)
+    lengths(3) = 1
+    disp(1) = 0
+    disp(2) = (start(1) - 1) * sz
+    disp(3) = n_global(1) * sz
+    types(1) = MPI_LB
+    types(2) = mpireal
+    types(3) = MPI_UB
 
-    CALL MPI_TYPE_CREATE_HINDEXED(1, lengths, disp, mpireal, &
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, &
         create_1d_array_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_1d_array_subtype, errcode)
 
@@ -367,31 +375,35 @@ CONTAINS
 
   FUNCTION create_field_subarray(n1, n2, n3)
 
+    INTEGER, PARAMETER :: ng = 3
     INTEGER, INTENT(IN) :: n1
     INTEGER, INTENT(IN), OPTIONAL :: n2, n3
-    INTEGER, DIMENSION(3) :: subsizes, sizes, starts
+    INTEGER, DIMENSION(3) :: n_local, n_global, start
     INTEGER :: i, ndim, create_field_subarray
 
-    subsizes(1) = n1
+    n_local(1) = n1
     ndim = 1
     IF (PRESENT(n2)) THEN
-      subsizes(2) = n2
+      n_local(2) = n2
       ndim = 2
     ENDIF
     IF (PRESENT(n3)) THEN
-      subsizes(3) = n3
+      n_local(3) = n3
       ndim = 3
     ENDIF
 
     DO i = 1, ndim
-      starts(i) = 3
-      sizes(i) = subsizes(i) + 6
+      start(i) = 1 + ng
+      n_global(i) = n_local(i) + 2 * ng
     ENDDO
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(ndim, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, mpireal, create_field_subarray, errcode)
-
-    CALL MPI_TYPE_COMMIT(create_field_subarray, errcode)
+    IF (PRESENT(n3)) THEN
+      create_field_subarray = create_3d_array_subtype(n_local, n_global, start)
+    ELSE IF (PRESENT(n2)) THEN
+      create_field_subarray = create_2d_array_subtype(n_local, n_global, start)
+    ELSE
+      create_field_subarray = create_1d_array_subtype(n_local, n_global, start)
+    ENDIF
 
   END FUNCTION create_field_subarray
 
