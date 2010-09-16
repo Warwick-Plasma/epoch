@@ -221,6 +221,7 @@ CONTAINS
       ENDDO
     ENDDO
 
+    create_ordered_particle_subtype = 0
     CALL MPI_TYPE_CREATE_HINDEXED(n_dump_species, lengths, disp, mpireal, &
         create_ordered_particle_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_ordered_particle_subtype, errcode)
@@ -281,6 +282,7 @@ CONTAINS
     types(2) = mpireal
     types(3) = MPI_UB
 
+    create_1d_array_subtype = 0
     CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, &
         create_1d_array_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_1d_array_subtype, errcode)
@@ -317,6 +319,7 @@ CONTAINS
       disp(ipoint) = ((start(2) + iy) * n_global(1) + start(1) - 1) * sz
     ENDDO
 
+    create_2d_array_subtype = 0
     CALL MPI_TYPE_CREATE_HINDEXED(ipoint, lengths, disp, mpireal, &
         create_2d_array_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_2d_array_subtype, errcode)
@@ -359,6 +362,7 @@ CONTAINS
       ENDDO
     ENDDO
 
+    create_3d_array_subtype = 0
     CALL MPI_TYPE_CREATE_HINDEXED(ipoint, lengths, disp, mpireal, &
         create_3d_array_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_3d_array_subtype, errcode)

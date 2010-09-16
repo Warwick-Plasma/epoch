@@ -234,6 +234,7 @@ CONTAINS
     IF (.NOT. use_y) real_space_area = real_space_area * dy
 
     DO idim = 1, c_df_curdims
+      calc_mod(idim) = .FALSE.
       IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
     ENDDO
 
@@ -566,6 +567,7 @@ CONTAINS
     IF (.NOT. use_y) real_space_area = real_space_area * dy
 
     DO idim = 1, c_df_curdims
+      calc_mod(idim) = .FALSE.
       IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
     ENDDO
 
@@ -904,6 +906,7 @@ CONTAINS
     IF (.NOT. use_y) real_space_area = real_space_area * dy
 
     DO idim = 1, c_df_curdims
+      calc_mod(idim) = .FALSE.
       IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
     ENDDO
 
