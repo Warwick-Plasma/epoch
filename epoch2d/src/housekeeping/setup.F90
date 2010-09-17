@@ -153,17 +153,27 @@ CONTAINS
     DO ispecies = 1, n_species
       particle_species(ispecies)%name = blank
       particle_species(ispecies)%mass = -1.0_num
+      particle_species(ispecies)%charge = 0.0_num
       particle_species(ispecies)%dump = .TRUE.
       particle_species(ispecies)%count = -1
+      particle_species(ispecies)%id = 0
+      particle_species(ispecies)%npart_per_cell = 0
+      NULLIFY(particle_species(ispecies)%density)
+      NULLIFY(particle_species(ispecies)%temperature)
+      NULLIFY(particle_species(ispecies)%next)
+      NULLIFY(particle_species(ispecies)%prev)
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
       particle_species(ispecies)%split = .FALSE.
-      particle_species(ispecies)%npart_max = 0.0_num
+      particle_species(ispecies)%npart_max = 0
+      particle_species(ispecies)%global_count = 0
+      NULLIFY(particle_species(ispecies)%secondary_list)
 #endif
 #ifdef PARTICLE_IONISE
       particle_species(ispecies)%ionise = .FALSE.
       particle_species(ispecies)%ionise_to_species = -1
       particle_species(ispecies)%release_species = -1
       particle_species(ispecies)%critical_field = 0.0_num
+      particle_species(ispecies)%ionisation_energy = 0.0_num
 #endif
 #ifdef TRACER_PARTICLES
       particle_species(ispecies)%tracer = .FALSE.
