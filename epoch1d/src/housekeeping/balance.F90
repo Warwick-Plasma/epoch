@@ -218,7 +218,7 @@ CONTAINS
 
     dir = 1
     color = coordinates(dir)
-    coord = coordinates(2)
+    coord = coordinates(1)
     old_start = cell_x_min(coord+1)
     old_pts = nx
     npts_global = nx_global
