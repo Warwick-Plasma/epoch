@@ -13,8 +13,8 @@ CONTAINS
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
-      ALLOCATE(particle_species(ispecies)%density(-2:ny+2, -2:nz+2))
-      ALLOCATE(particle_species(ispecies)%temperature(-2:ny+2, -2:nz+2, 1:3))
+      ALLOCATE(particle_species(ispecies)%density(-2:ny+3, -2:nz+3))
+      ALLOCATE(particle_species(ispecies)%temperature(-2:ny+3, -2:nz+3, 1:3))
     ENDDO
 
   END SUBROUTINE allocate_window

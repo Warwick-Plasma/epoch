@@ -13,8 +13,8 @@ CONTAINS
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
-      ALLOCATE(particle_species(ispecies)%density(-2:ny+2))
-      ALLOCATE(particle_species(ispecies)%temperature(-2:ny+2, 1:3))
+      ALLOCATE(particle_species(ispecies)%density(-2:ny+3))
+      ALLOCATE(particle_species(ispecies)%temperature(-2:ny+3, 1:3))
     ENDDO
 
   END SUBROUTINE allocate_window
@@ -114,7 +114,7 @@ CONTAINS
             rand = random(idum) - 0.5_num
             current%part_pos(1) = x_max + dx + rand * dx
             rand = random(idum) - 0.5_num
-            current%part_pos(2) = y(iy) + rand * dx
+            current%part_pos(2) = y(iy) + rand * dy
 
             cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
             cell_y = FLOOR(cell_y_r + 0.5_num)
