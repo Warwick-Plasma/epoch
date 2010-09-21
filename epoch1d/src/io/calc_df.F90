@@ -370,13 +370,17 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_temperature(data_array, current_species)
+  SUBROUTINE calc_temperature(sigma, current_species)
+
+    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: sigma
+    INTEGER, INTENT(IN) :: current_species
 
     ! Contains the integer cell position of the particle in x
     INTEGER :: cell_x
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_px, part_py, part_pz, part_m
+    REAL(num) :: part_x
+    REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -393,17 +397,11 @@ CONTAINS
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
     REAL(num), DIMENSION(-2:2) :: gx
-    ! The data to be weighted onto the grid
-    REAL(num) :: wdata1, wdata2
-
-    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
-    REAL(num), DIMENSION(:), ALLOCATABLE ::  part_count, mass, sigma, mean
-    INTEGER, INTENT(IN) :: current_species
+    REAL(num), DIMENSION(:), ALLOCATABLE :: part_count, meanx, meany, meanz
+    REAL(num) :: gf
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, spec_start, spec_end
-
-    data_array = 0.0_num
 
     l_weight = weight
 
@@ -415,31 +413,33 @@ CONTAINS
       spec_end = n_species
     ENDIF
 
-    ALLOCATE(mean(-2:nx+3), part_count(-2:nx+3))
-    ALLOCATE(mass(-2:nx+3), sigma(-2:nx+3))
-    data_array = 0.0_num
-    mean = 0.0_num
+    ALLOCATE(meanx(-2:nx+3))
+    ALLOCATE(meany(-2:nx+3))
+    ALLOCATE(meanz(-2:nx+3))
+    ALLOCATE(part_count(-2:nx+3))
+    meanx = 0.0_num
+    meany = 0.0_num
+    meanz = 0.0_num
     part_count = 0.0_num
-    mass = 0.0_num
     sigma = 0.0_num
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_m  = particle_species(ispecies)%mass
+      sqrt_part_m  = SQRT(particle_species(ispecies)%mass)
 #endif
       DO WHILE(ASSOCIATED(current))
-        ! Copy the particle properties out for speed
-        part_x  = current%part_pos - x_min_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGE_MASS
-        part_m  = current%mass
+        sqrt_part_m  = SQRT(current%mass)
 #endif
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
 #endif
+        ! Copy the particle properties out for speed
+        part_x   = current%part_pos - x_min_local
+        part_pmx = current%part_p(1) / sqrt_part_m
+        part_pmy = current%part_p(2) / sqrt_part_m
+        part_pmz = current%part_p(3) / sqrt_part_m
 
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = part_x / dx - 0.5_num
@@ -452,39 +452,43 @@ CONTAINS
 
         CALL particle_to_grid(cell_frac_x, gx)
 
-        wdata1 = SQRT(part_px**2 + part_py**2 + part_pz**2) * l_weight
-        wdata2 = part_m * l_weight
         DO ix = -sf_order, sf_order
-          mean(cell_x+ix) = mean(cell_x+ix) + gx(ix) * wdata1
-          part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix) * l_weight
-          mass(cell_x+ix) = mass(cell_x+ix) + gx(ix) * wdata2
+          gf = gx(ix) * l_weight
+          meanx(cell_x+ix) = meanx(cell_x+ix) + gf * part_pmx
+          meany(cell_x+ix) = meany(cell_x+ix) + gf * part_pmy
+          meanz(cell_x+ix) = meanz(cell_x+ix) + gf * part_pmz
+          part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         ENDDO
         current=>current%next
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(mean)
-    CALL field_zero_gradient(mean, .TRUE.)
+    CALL processor_summation_bcs(meanx)
+    CALL processor_summation_bcs(meany)
+    CALL processor_summation_bcs(meanz)
     CALL processor_summation_bcs(part_count)
-    CALL field_zero_gradient(part_count, .TRUE.)
-    CALL processor_summation_bcs(mass)
-    CALL field_zero_gradient(mass, .TRUE.)
 
-    mean = mean / part_count
-    mass = mass / part_count
+    part_count = MAX(part_count, 1.e-6_num)
 
-    WHERE (part_count .LT. 1.0_num) mean = 0.0_num
-    WHERE (part_count .LT. 1.0_num) mass = 0.0_num
+    meanx = meanx / part_count
+    meany = meany / part_count
+    meanz = meanz / part_count
 
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
+#ifndef PER_PARTICLE_CHARGE_MASS
+      sqrt_part_m  = SQRT(particle_species(ispecies)%mass)
+#endif
       DO WHILE(ASSOCIATED(current))
+#ifdef PER_PARTICLE_CHARGE_MASS
+        sqrt_part_m  = SQRT(current%mass)
+#endif
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos - x_min_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
+        part_x   = current%part_pos - x_min_local
+        part_pmx = current%part_p(1) / sqrt_part_m
+        part_pmy = current%part_p(2) / sqrt_part_m
+        part_pmz = current%part_p(3) / sqrt_part_m
 
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = part_x / dx - 0.5_num
@@ -497,30 +501,24 @@ CONTAINS
 
         CALL particle_to_grid(cell_frac_x, gx)
 
-        wdata1 = SQRT(part_px**2 + part_py**2 + part_pz**2)
         DO ix = -sf_order, sf_order
-          sigma(cell_x+ix) = sigma(cell_x+ix) &
-              + gx(ix) * (wdata1 - mean(cell_x+ix))**2
-          part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix)
+          gf = gx(ix)
+          sigma(cell_x+ix) = sigma(cell_x+ix) + gf &
+              * ((part_pmx - meanx(cell_x+ix))**2 &
+              + (part_pmy - meany(cell_x+ix))**2 &
+              + (part_pmz - meanz(cell_x+ix))**2)
+          part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         ENDDO
         current=>current%next
       ENDDO
     ENDDO
 
     CALL processor_summation_bcs(sigma)
-    CALL field_zero_gradient(sigma, .TRUE.)
     CALL processor_summation_bcs(part_count)
-    CALL field_zero_gradient(part_count, .TRUE.)
 
-    sigma = sigma / MAX(part_count, 0.1_num)
-    WHERE (part_count .LT. 1.0) sigma = 0.0_num
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb
 
-    data_array = sigma / (kb * MAX(mass, m0))
-
-    DEALLOCATE(part_count, mean, mass, sigma)
-
-    CALL field_bc(data_array)
-    CALL field_zero_gradient(data_array, .TRUE.)
+    DEALLOCATE(part_count, meanx, meany, meanz)
 
   END SUBROUTINE calc_temperature
 
