@@ -48,9 +48,10 @@ CONTAINS
 
     TYPE(particle_probe), POINTER :: current_probe
     CHARACTER(LEN=string_length) :: probe_name, temp_name
-    INTEGER :: ispecies, subtype_probe_particle_var
+    INTEGER :: ispecies
     INTEGER(8) :: npart_probe_local, npart_probe_global
     INTEGER(8) :: npart_probe_per_it, npart_probe_per_it_local
+    INTEGER(KIND=MPI_OFFSET_KIND), DIMENSION(1) :: file_lengths, file_offsets
 
     DO ispecies = 1, n_species
       current_probe=>particle_species(ispecies)%attached_probes
@@ -76,8 +77,8 @@ CONTAINS
             MPI_INTEGER8, MPI_MIN, comm, errcode)
 
         IF (npart_probe_global .GT. 0) THEN
-          subtype_probe_particle_var = &
-              create_particle_subtype(npart_probe_local)
+          file_lengths(1) = npart_probe_local
+          file_offsets(1) = create_particle_offset(npart_probe_local)
 
           probe_name =  TRIM(ADJUSTL(current_probe%name))
 
@@ -86,28 +87,28 @@ CONTAINS
               TRIM(probe_name), "Probe_Grid", iterate_probe_particles, &
               c_dimension_3d, npart_probe_local, npart_probe_global, &
               npart_probe_per_it, c_particle_cartesian, &
-              particle_file_lengths, particle_file_offsets)
+              file_lengths, file_offsets)
 
           ! dump Px
           WRITE(temp_name, '(a, "_Px")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(&
               TRIM(temp_name), TRIM(probe_name), iterate_probe_px, &
               npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
-              "Probe_Grid", particle_file_lengths, particle_file_offsets)
+              "Probe_Grid", file_lengths, file_offsets)
 
           ! dump Py
           WRITE(temp_name, '(a, "_Py")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(&
               TRIM(temp_name), TRIM(probe_name), iterate_probe_py, &
               npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
-              "Probe_Grid", particle_file_lengths, particle_file_offsets)
+              "Probe_Grid", file_lengths, file_offsets)
 
           ! dump Pz
           WRITE(temp_name, '(a, "_Pz")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(&
               TRIM(temp_name), TRIM(probe_name), iterate_probe_pz, &
               npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
-              "Probe_Grid", particle_file_lengths, particle_file_offsets)
+              "Probe_Grid", file_lengths, file_offsets)
 
           ! dump particle weight function
           WRITE(temp_name, '(a, "_weight")') TRIM(probe_name)
@@ -115,14 +116,13 @@ CONTAINS
           CALL cfd_write_nd_particle_variable_with_iterator_all(&
               TRIM(temp_name), TRIM(probe_name), iterate_probe_weight, &
               npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
-              "Probe_Grid", particle_file_lengths, particle_file_offsets)
+              "Probe_Grid", file_lengths, file_offsets)
 #else
           CALL cfd_write_real_constant(TRIM(temp_name), TRIM(probe_name), &
               weight, 0)
 #endif
 
           CALL destroy_partlist(current_probe%sampled_particles)
-          CALL MPI_TYPE_FREE(subtype_probe_particle_var, errcode)
         ENDIF
         current_probe=>current_probe%next
 

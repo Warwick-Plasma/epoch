@@ -226,9 +226,37 @@ CONTAINS
         create_ordered_particle_subtype, errcode)
     CALL MPI_TYPE_COMMIT(create_ordered_particle_subtype, errcode)
 
-    DEALLOCATE(lengths, disp)
+    DEALLOCATE(lengths, disp, npart_each_rank)
 
   END FUNCTION create_ordered_particle_subtype
+
+
+
+  !----------------------------------------------------------------------------
+  ! create_particle_offset - Creates offset representing the local particles
+  !----------------------------------------------------------------------------
+
+  FUNCTION create_particle_offset(npart_local)
+
+    INTEGER(KIND=8), INTENT(IN) :: npart_local
+    INTEGER(KIND=MPI_OFFSET_KIND) :: create_particle_offset
+    INTEGER :: ix
+    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
+
+    ALLOCATE(npart_each_rank(nproc))
+
+    CALL MPI_ALLGATHER(npart_local, 1, MPI_INTEGER8, &
+        npart_each_rank, 1, MPI_INTEGER8, comm, errcode)
+
+    create_particle_offset = 0
+
+    DO ix = 1, rank
+      create_particle_offset = create_particle_offset + npart_each_rank(ix)
+    ENDDO
+
+    DEALLOCATE(npart_each_rank)
+
+  END FUNCTION create_particle_offset
 
 
 
