@@ -205,6 +205,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), "conduct")) THEN
+      as_bc = c_bc_conduct
+      RETURN
+    ENDIF
+
     IF (str_cmp(TRIM(ADJUSTL(str_in)), "open")) THEN
       as_bc = c_bc_open
       RETURN

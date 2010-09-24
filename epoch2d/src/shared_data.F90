@@ -25,6 +25,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_zero_gradient = 7
   INTEGER, PARAMETER :: c_bc_clamp = 8
   INTEGER, PARAMETER :: c_bc_reflect = 9
+  INTEGER, PARAMETER :: c_bc_conduct = 10
 
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1

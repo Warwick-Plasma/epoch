@@ -245,6 +245,21 @@ CONTAINS
     CALL field_bc(ey)
     CALL field_bc(ez)
 
+    ! Perfectly conducting boundaries
+    DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
+      IF (bc_field(i) .EQ. c_bc_conduct) THEN
+        CALL field_clamp_zero(ey, c_stagger_ey, i)
+        CALL field_clamp_zero(ez, c_stagger_ez, i)
+      ENDIF
+    ENDDO
+
+    DO i = c_bd_y_min, c_bd_y_max, c_bd_y_max - c_bd_y_min
+      IF (bc_field(i) .EQ. c_bc_conduct) THEN
+        CALL field_clamp_zero(ex, c_stagger_ex, i)
+        CALL field_clamp_zero(ez, c_stagger_ez, i)
+      ENDIF
+    ENDDO
+
     DO i = 1, 2*c_ndims
       IF (bc_field(i) .EQ. c_bc_clamp &
           .OR. bc_field(i) .EQ. c_bc_simple_laser &
@@ -282,6 +297,23 @@ CONTAINS
     CALL field_bc(bz)
 
     IF (mpi_only) RETURN
+
+    ! Perfectly conducting boundaries
+    DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
+      IF (bc_field(i) .EQ. c_bc_conduct) THEN
+        CALL field_clamp_zero(bx, c_stagger_bx, i)
+        CALL field_zero_gradient(by, c_stagger_by, i)
+        CALL field_zero_gradient(bz, c_stagger_bz, i)
+      ENDIF
+    ENDDO
+
+    DO i = c_bd_y_min, c_bd_y_max, c_bd_y_max - c_bd_y_min
+      IF (bc_field(i) .EQ. c_bc_conduct) THEN
+        CALL field_clamp_zero(by, c_stagger_by, i)
+        CALL field_zero_gradient(bx, c_stagger_bx, i)
+        CALL field_zero_gradient(bz, c_stagger_bz, i)
+      ENDIF
+    ENDDO
 
     DO i = 1, 2*c_ndims
       ! These apply zero field boundary conditions on the edges
