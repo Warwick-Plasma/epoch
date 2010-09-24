@@ -43,7 +43,7 @@ CONTAINS
     CALL MPI_TYPE_FREE(subtype, errcode)
 
     CALL field_bc(array)
-    CALL field_zero_gradient(array, .TRUE.)
+    CALL field_zero_gradient(array, c_stagger_centre, .TRUE.)
 
   END SUBROUTINE load_single_array_from_file
 

@@ -158,9 +158,10 @@ CONTAINS
 
 
 
-  SUBROUTINE field_zero_gradient(field, force)
+  SUBROUTINE field_zero_gradient(field, stagger_type, force)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: stagger_type
     LOGICAL, INTENT(IN) :: force
 
     IF ((bc_x_min_field .EQ. c_bc_zero_gradient .OR. force) &
@@ -203,10 +204,10 @@ CONTAINS
 
 
 
-  SUBROUTINE field_clamp_zero(field, s1, s2, s3)
+  SUBROUTINE field_clamp_zero(field, stagger_type)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
-    INTEGER, INTENT(IN) :: s1, s2, s3
+    INTEGER, INTENT(IN) :: stagger_type
 
     ! Use clamp when the laser is on.
 
@@ -214,7 +215,7 @@ CONTAINS
         .OR. bc_x_min_field .EQ. c_bc_simple_laser &
         .OR. bc_x_min_field .EQ. c_bc_simple_outflow) &
         .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
-      IF (s1 .EQ. 1) THEN
+      IF (stagger(1,stagger_type) .EQ. 1) THEN
         field(-1,:,:) = -field(1,:,:)
         field( 0,:,:) = 0.0_num
       ELSE
@@ -227,7 +228,7 @@ CONTAINS
         .OR. bc_x_max_field .EQ. c_bc_simple_laser &
         .OR. bc_x_max_field .EQ. c_bc_simple_outflow) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
-      IF (s1 .EQ. 1) THEN
+      IF (stagger(1,stagger_type) .EQ. 1) THEN
         field(nx  ,:,:) = 0.0_num
         field(nx+1,:,:) = -field(nx-1,:,:)
       ELSE
@@ -240,7 +241,7 @@ CONTAINS
         .OR. bc_y_min_field .EQ. c_bc_simple_laser &
         .OR. bc_y_min_field .EQ. c_bc_simple_outflow) &
         .AND. proc_y_min .EQ. MPI_PROC_NULL) THEN
-      IF (s2 .EQ. 1) THEN
+      IF (stagger(2,stagger_type) .EQ. 1) THEN
         field(:,-1,:) = -field(:,1,:)
         field(:, 0,:) = 0.0_num
       ELSE
@@ -253,7 +254,7 @@ CONTAINS
         .OR. bc_y_max_field .EQ. c_bc_simple_laser &
         .OR. bc_y_max_field .EQ. c_bc_simple_outflow) &
         .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
-      IF (s2 .EQ. 1) THEN
+      IF (stagger(2,stagger_type) .EQ. 1) THEN
         field(:,ny  ,:) = 0.0_num
         field(:,ny+1,:) = -field(:,ny-1,:)
       ELSE
@@ -266,7 +267,7 @@ CONTAINS
         .OR. bc_z_min_field .EQ. c_bc_simple_laser &
         .OR. bc_z_min_field .EQ. c_bc_simple_outflow) &
         .AND. proc_z_min .EQ. MPI_PROC_NULL) THEN
-      IF (s3 .EQ. 1) THEN
+      IF (stagger(3,stagger_type) .EQ. 1) THEN
         field(:,:,-1) = -field(:,:,1)
         field(:,:, 0) = 0.0_num
       ELSE
@@ -279,7 +280,7 @@ CONTAINS
         .OR. bc_z_max_field .EQ. c_bc_simple_laser &
         .OR. bc_z_max_field .EQ. c_bc_simple_outflow) &
         .AND. proc_z_max .EQ. MPI_PROC_NULL) THEN
-      IF (s3 .EQ. 1) THEN
+      IF (stagger(3,stagger_type) .EQ. 1) THEN
         field(:,:,nz  ) = 0.0_num
         field(:,:,nz+1) = -field(:,:,nz-1)
       ELSE
@@ -391,19 +392,19 @@ CONTAINS
     CALL field_bc(ey)
     CALL field_bc(ez)
 
-    CALL field_clamp_zero(jx, 1, 0, 0)
-    CALL field_clamp_zero(jy, 0, 1, 0)
-    CALL field_clamp_zero(jz, 0, 0, 1)
+    CALL field_clamp_zero(jx, c_stagger_jx)
+    CALL field_clamp_zero(jy, c_stagger_jy)
+    CALL field_clamp_zero(jz, c_stagger_jz)
 
     ! These apply zero field boundary conditions on the edges
-    CALL field_clamp_zero(ex, 1, 0, 0)
-    CALL field_clamp_zero(ey, 0, 1, 0)
-    CALL field_clamp_zero(ez, 0, 0, 1)
+    CALL field_clamp_zero(ex, c_stagger_ex)
+    CALL field_clamp_zero(ey, c_stagger_ey)
+    CALL field_clamp_zero(ez, c_stagger_ez)
 
     ! These apply zero field gradient boundary conditions on the edges
-    CALL field_zero_gradient(ex, .FALSE.)
-    CALL field_zero_gradient(ey, .FALSE.)
-    CALL field_zero_gradient(ez, .FALSE.)
+    CALL field_zero_gradient(ex, c_stagger_ex, .FALSE.)
+    CALL field_zero_gradient(ey, c_stagger_ey, .FALSE.)
+    CALL field_zero_gradient(ez, c_stagger_ez, .FALSE.)
 
   END SUBROUTINE efield_bcs
 
@@ -418,16 +419,17 @@ CONTAINS
     CALL field_bc(by)
     CALL field_bc(bz)
 
-    IF (.NOT. mpi_only) THEN
-      ! These apply zero field boundary conditions on the edges
-      CALL field_clamp_zero(bx, 0, 1, 1)
-      CALL field_clamp_zero(by, 1, 0, 1)
-      CALL field_clamp_zero(bz, 1, 1, 0)
-      ! These apply zero field boundary conditions on the edges
-      CALL field_zero_gradient(bx, .FALSE.)
-      CALL field_zero_gradient(by, .FALSE.)
-      CALL field_zero_gradient(bz, .FALSE.)
-    ENDIF
+    IF (mpi_only) RETURN
+
+    ! These apply zero field boundary conditions on the edges
+    CALL field_clamp_zero(bx, c_stagger_bx)
+    CALL field_clamp_zero(by, c_stagger_by)
+    CALL field_clamp_zero(bz, c_stagger_bz)
+
+    ! These apply zero field boundary conditions on the edges
+    CALL field_zero_gradient(bx, c_stagger_bx, .FALSE.)
+    CALL field_zero_gradient(by, c_stagger_by, .FALSE.)
+    CALL field_zero_gradient(bz, c_stagger_bz, .FALSE.)
 
   END SUBROUTINE bfield_bcs
 

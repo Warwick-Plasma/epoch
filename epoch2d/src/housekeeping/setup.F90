@@ -60,6 +60,18 @@ CONTAINS
 
     CALL init_source_code()
 
+    stagger(1:3,c_stagger_ex:c_stagger_ey) = 0
+    stagger(1,c_stagger_ex) = 1
+    stagger(2,c_stagger_ey) = 1
+    stagger(3,c_stagger_ez) = 1
+
+    stagger(1:3,c_stagger_bx:c_stagger_by) = 1
+    stagger(1,c_stagger_bx) = 0
+    stagger(2,c_stagger_by) = 0
+    stagger(3,c_stagger_bz) = 0
+
+    stagger(1:3,c_stagger_centre:c_stagger_centre) = 0
+
   END SUBROUTINE minimal_init
 
 

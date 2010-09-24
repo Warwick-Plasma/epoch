@@ -508,7 +508,7 @@ CONTAINS
     IF (proc_y_max .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
     IF (proc_z_min .EQ. MPI_PROC_NULL) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
     IF (proc_z_max .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
-    CALL field_zero_gradient(weight_fn, .TRUE.)
+    CALL field_zero_gradient(weight_fn, c_stagger_centre, .TRUE.)
 
     DO iz = -2, nz+2
       DO iy = -2, ny+2
@@ -528,7 +528,7 @@ CONTAINS
     IF (proc_y_max .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
     IF (proc_z_min .EQ. MPI_PROC_NULL) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
     IF (proc_z_max .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
-    CALL field_zero_gradient(weight_fn, .TRUE.)
+    CALL field_zero_gradient(weight_fn, c_stagger_centre, .TRUE.)
 
     partlist=>species_list%attached_list
     ! Second loop actually assigns weights to particles

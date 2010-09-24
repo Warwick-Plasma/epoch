@@ -109,6 +109,20 @@ MODULE constants
   INTEGER, PARAMETER :: c_df_maxdirs = 5 + c_ndims
   INTEGER, PARAMETER :: c_df_maxdims = 3
 
+  ! Stagger types
+  INTEGER, PARAMETER :: c_stagger_ex = 1
+  INTEGER, PARAMETER :: c_stagger_ey = 2
+  INTEGER, PARAMETER :: c_stagger_ez = 3
+  INTEGER, PARAMETER :: c_stagger_bx = 4
+  INTEGER, PARAMETER :: c_stagger_by = 5
+  INTEGER, PARAMETER :: c_stagger_bz = 6
+  INTEGER, PARAMETER :: c_stagger_centre = 7
+  INTEGER, PARAMETER :: c_stagger_node = 8
+  INTEGER, PARAMETER :: c_stagger_max = c_stagger_node
+  INTEGER, PARAMETER :: c_stagger_jx = c_stagger_ex
+  INTEGER, PARAMETER :: c_stagger_jy = c_stagger_ey
+  INTEGER, PARAMETER :: c_stagger_jz = c_stagger_ez
+
   ! Length of a standard string
   INTEGER, PARAMETER :: string_length = 128
 
@@ -609,5 +623,7 @@ MODULE shared_data
   INTEGER :: stdout_frequency
   INTEGER(KIND=MPI_OFFSET_KIND), DIMENSION(:), ALLOCATABLE :: &
       particle_file_lengths, particle_file_offsets
+
+  INTEGER, DIMENSION(3,c_stagger_max) :: stagger
 
 END MODULE shared_data
