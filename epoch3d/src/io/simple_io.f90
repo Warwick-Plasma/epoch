@@ -21,7 +21,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), INTENT(INOUT) :: array
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: subtype, subarray, fh
+    INTEGER :: subtype, subarray, fh, i
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
         MPI_INFO_NULL, fh, errcode)
@@ -43,7 +43,9 @@ CONTAINS
     CALL MPI_TYPE_FREE(subtype, errcode)
 
     CALL field_bc(array)
-    CALL field_zero_gradient(array, c_stagger_centre, .TRUE.)
+    DO i = 1, 2*c_ndims
+      CALL field_zero_gradient(array, c_stagger_centre, i)
+    ENDDO
 
   END SUBROUTINE load_single_array_from_file
 

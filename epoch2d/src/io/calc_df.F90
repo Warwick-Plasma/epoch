@@ -102,7 +102,9 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
-    CALL field_zero_gradient(data_array, c_stagger_centre, .TRUE.)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    ENDDO
 
   END SUBROUTINE calc_mass_density
 
@@ -211,7 +213,9 @@ CONTAINS
     CALL processor_summation_bcs(ct)
 
     data_array = data_array / MAX(ct, c_non_zero)
-    CALL field_zero_gradient(data_array, c_stagger_centre, .TRUE.)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    ENDDO
 
     DEALLOCATE(ct)
 
@@ -314,7 +318,9 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
-    CALL field_zero_gradient(data_array, c_stagger_centre, .TRUE.)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    ENDDO
 
   END SUBROUTINE calc_charge_density
 
@@ -409,7 +415,9 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
-    CALL field_zero_gradient(data_array, c_stagger_centre, .TRUE.)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    ENDDO
 
   END SUBROUTINE calc_number_density
 
@@ -681,7 +689,9 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
-    CALL field_zero_gradient(data_array, c_stagger_centre, .TRUE.)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    ENDDO
 
   END SUBROUTINE calc_on_grid_with_evaluator
 

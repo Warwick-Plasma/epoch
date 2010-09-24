@@ -423,7 +423,9 @@ CONTAINS
     CALL processor_summation_bcs(weight_fn)
     IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ) = weight_fn(1   )
     IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx) = weight_fn(nx-1)
-    CALL field_zero_gradient(weight_fn, c_stagger_centre, .TRUE.)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
+    ENDDO
 
     DO ix = -2, nx+2
       IF (weight_fn(ix) .GT. 0.0_num) THEN
@@ -435,7 +437,9 @@ CONTAINS
 
     IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ) = weight_fn(1   )
     IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx) = weight_fn(nx-1)
-    CALL field_zero_gradient(weight_fn, c_stagger_centre, .TRUE.)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
+    ENDDO
 
     partlist=>species_list%attached_list
     ! Second loop actually assigns weights to particles
