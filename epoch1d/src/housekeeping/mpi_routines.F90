@@ -39,10 +39,11 @@ CONTAINS
     periods = .TRUE.
     reorder = .TRUE.
 
-    IF (bc_x_min_field .NE. c_bc_periodic &
-        .OR. bc_x_max_field .NE. c_bc_periodic &
-        .OR. bc_x_min_particle .NE. c_bc_periodic &
-        .OR. bc_x_max_particle .NE. c_bc_periodic) periods(1) = .FALSE.
+    IF (bc_field(c_bd_x_min) .NE. c_bc_periodic &
+        .OR. bc_field(c_bd_x_max) .NE. c_bc_periodic &
+        .OR. bc_particle(c_bd_x_min) .NE. c_bc_periodic &
+        .OR. bc_particle(c_bd_x_max) .NE. c_bc_periodic) &
+            periods(c_ndims) = .FALSE.
 
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)

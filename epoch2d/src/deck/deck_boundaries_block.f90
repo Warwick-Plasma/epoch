@@ -75,43 +75,43 @@ CONTAINS
     SELECT CASE (elementselected)
     CASE(1)
       itmp = as_bc(value, handle_boundary_deck)
-      bc_x_min_field = itmp
-      bc_x_min_particle = itmp
+      bc_field(c_bd_x_min) = itmp
+      bc_particle(c_bd_x_min) = itmp
     CASE(2)
       itmp = as_bc(value, handle_boundary_deck)
-      bc_x_max_field = itmp
-      bc_x_max_particle = itmp
+      bc_field(c_bd_x_max) = itmp
+      bc_particle(c_bd_x_max) = itmp
     CASE(3)
       itmp = as_bc(value, handle_boundary_deck)
-      bc_y_min_field = itmp
-      bc_y_min_particle = itmp
+      bc_field(c_bd_y_min) = itmp
+      bc_particle(c_bd_y_min) = itmp
     CASE(4)
       itmp = as_bc(value, handle_boundary_deck)
-      bc_y_max_field = itmp
-      bc_y_max_particle = itmp
+      bc_field(c_bd_y_max) = itmp
+      bc_particle(c_bd_y_max) = itmp
     CASE(nbase+1)
-      bc_x_min_field = as_bc(value, handle_boundary_deck)
+      bc_field(c_bd_x_min) = as_bc(value, handle_boundary_deck)
       boundary_block_done(1)  = .TRUE.
     CASE(nbase+2)
-      bc_x_max_field = as_bc(value, handle_boundary_deck)
+      bc_field(c_bd_x_max) = as_bc(value, handle_boundary_deck)
       boundary_block_done(2)  = .TRUE.
     CASE(nbase+3)
-      bc_y_min_field = as_bc(value, handle_boundary_deck)
+      bc_field(c_bd_y_min) = as_bc(value, handle_boundary_deck)
       boundary_block_done(3)  = .TRUE.
     CASE(nbase+4)
-      bc_y_max_field = as_bc(value, handle_boundary_deck)
+      bc_field(c_bd_y_max) = as_bc(value, handle_boundary_deck)
       boundary_block_done(4)  = .TRUE.
     CASE(2*nbase+1)
-      bc_x_min_particle = as_bc(value, handle_boundary_deck)
+      bc_particle(c_bd_x_min) = as_bc(value, handle_boundary_deck)
       boundary_block_done(1)  = .TRUE.
     CASE(2*nbase+2)
-      bc_x_max_particle = as_bc(value, handle_boundary_deck)
+      bc_particle(c_bd_x_max) = as_bc(value, handle_boundary_deck)
       boundary_block_done(2)  = .TRUE.
     CASE(2*nbase+3)
-      bc_y_min_particle = as_bc(value, handle_boundary_deck)
+      bc_particle(c_bd_y_min) = as_bc(value, handle_boundary_deck)
       boundary_block_done(3)  = .TRUE.
     CASE(2*nbase+4)
-      bc_y_max_particle = as_bc(value, handle_boundary_deck)
+      bc_particle(c_bd_y_max) = as_bc(value, handle_boundary_deck)
       boundary_block_done(4)  = .TRUE.
     END SELECT
 

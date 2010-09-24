@@ -508,8 +508,7 @@ MODULE shared_data
   REAL(num) :: weight
 
   LOGICAL :: ic_from_restart = .FALSE.
-  INTEGER :: bc_x_min_field, bc_x_max_field
-  INTEGER :: bc_x_min_particle, bc_x_max_particle
+  INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_snapshot
 
   !----------------------------------------------------------------------------

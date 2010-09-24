@@ -10,14 +10,16 @@ CONTAINS
 
   SUBROUTINE setup_particle_boundaries
 
+    INTEGER :: i
+    LOGICAL :: particle_open
+
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
-    IF (bc_x_min_particle .EQ. c_bc_other) bc_x_min_particle = c_bc_reflect
-    IF (bc_x_max_particle .EQ. c_bc_other) bc_x_max_particle = c_bc_reflect
-
-    IF (bc_x_min_field .EQ. c_bc_other) bc_x_min_field = c_bc_clamp
-    IF (bc_x_max_field .EQ. c_bc_other) bc_x_max_field = c_bc_clamp
+    DO i = 1, 2*c_ndims
+      IF (bc_particle(i) .EQ. c_bc_other) bc_particle(i) = c_bc_reflect
+      IF (bc_field(i) .EQ. c_bc_other) bc_field(i) = c_bc_clamp
+    ENDDO
 
     ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
     ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
@@ -26,23 +28,21 @@ CONTAINS
     ! (or outflow).
 
     ! Laser boundaries assume open particles unless otherwise specified.
-    IF (bc_x_min_particle .EQ. c_bc_simple_laser &
-        .OR. bc_x_min_particle .EQ. c_bc_simple_outflow) &
-            bc_x_min_particle = c_bc_open
-    IF (bc_x_max_particle .EQ. c_bc_simple_laser &
-        .OR. bc_x_max_particle .EQ. c_bc_simple_outflow) &
-            bc_x_max_particle = c_bc_open
+    particle_open = .FALSE.
+    DO i = 1, 2*c_ndims
+      IF (bc_particle(i) .EQ. c_bc_simple_laser &
+          .OR. bc_particle(i) .EQ. c_bc_simple_outflow) &
+              bc_particle(i) = c_bc_open
+      IF (bc_particle(i) .EQ. c_bc_open) particle_open = .TRUE.
+    ENDDO
 
     ! Note: reflecting EM boundaries not yet implemented.
-    IF (bc_x_min_field .EQ. c_bc_reflect) bc_x_min_field = c_bc_clamp
-    IF (bc_x_max_field .EQ. c_bc_reflect) bc_x_max_field = c_bc_clamp
+    DO i = 1, 2*c_ndims
+      IF (bc_field(i) .EQ. c_bc_reflect) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) .EQ. c_bc_open) bc_field(i) = c_bc_simple_outflow
+    ENDDO
 
-    IF (bc_x_min_field .EQ. c_bc_open) bc_x_min_field = c_bc_simple_outflow
-    IF (bc_x_max_field .EQ. c_bc_open) bc_x_max_field = c_bc_simple_outflow
-
-    IF (bc_x_min_particle .EQ. c_bc_open &
-        .OR. bc_x_max_particle .EQ. c_bc_open) &
-            CALL create_empty_partlist(ejected_particles)
+    IF (particle_open) CALL create_empty_partlist(ejected_particles)
 
   END SUBROUTINE setup_particle_boundaries
 
@@ -82,13 +82,13 @@ CONTAINS
     INTEGER, INTENT(IN) :: stagger_type
     LOGICAL, INTENT(IN) :: force
 
-    IF ((bc_x_min_field .EQ. c_bc_zero_gradient .OR. force) &
+    IF ((bc_field(c_bd_x_min) .EQ. c_bc_zero_gradient .OR. force) &
         .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
       field(-1) = field(2)
       field( 0) = field(1)
     ENDIF
 
-    IF ((bc_x_max_field .EQ. c_bc_zero_gradient .OR. force) &
+    IF ((bc_field(c_bd_x_max) .EQ. c_bc_zero_gradient .OR. force) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
       field(nx+1) = field(nx  )
       field(nx+2) = field(nx-1)
@@ -105,9 +105,9 @@ CONTAINS
 
     ! Use clamp when the laser is on.
 
-    IF ((bc_x_min_field .EQ. c_bc_clamp &
-        .OR. bc_x_min_field .EQ. c_bc_simple_laser &
-        .OR. bc_x_min_field .EQ. c_bc_simple_outflow) &
+    IF ((bc_field(c_bd_x_min) .EQ. c_bc_clamp &
+        .OR. bc_field(c_bd_x_min) .EQ. c_bc_simple_laser &
+        .OR. bc_field(c_bd_x_min) .EQ. c_bc_simple_outflow) &
         .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1,stagger_type) .EQ. 1) THEN
         field(-1) = -field(1)
@@ -118,9 +118,9 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF ((bc_x_max_field .EQ. c_bc_clamp &
-        .OR. bc_x_max_field .EQ. c_bc_simple_laser &
-        .OR. bc_x_max_field .EQ. c_bc_simple_outflow) &
+    IF ((bc_field(c_bd_x_max) .EQ. c_bc_clamp &
+        .OR. bc_field(c_bd_x_max) .EQ. c_bc_simple_laser &
+        .OR. bc_field(c_bd_x_max) .EQ. c_bc_simple_outflow) &
         .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
       IF (stagger(1,stagger_type) .EQ. 1) THEN
         field(nx  ) = 0.0_num
@@ -239,12 +239,12 @@ CONTAINS
           ! Particle has left the system
           IF (coordinates(c_ndims) .EQ. 0) THEN
             xbd = 0
-            IF (bc_x_min_particle .EQ. c_bc_open) THEN
+            IF (bc_particle(c_bd_x_min) .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
-            ELSE IF (bc_x_min_particle .EQ. c_bc_reflect) THEN
+            ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_min - dx - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_x_min_particle .EQ. c_bc_periodic) THEN
+            ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
               xbd = -1
               cur%part_pos = part_pos + (length_x + dx)
             ENDIF
@@ -257,12 +257,12 @@ CONTAINS
           ! Particle has left the system
           IF (coordinates(c_ndims) .EQ. nprocx - 1) THEN
             xbd = 0
-            IF (bc_x_max_particle .EQ. c_bc_open) THEN
+            IF (bc_particle(c_bd_x_max) .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
-            ELSE IF (bc_x_max_particle .EQ. c_bc_reflect) THEN
+            ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_max + dx - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_x_max_particle .EQ. c_bc_periodic) THEN
+            ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
               xbd = 1
               cur%part_pos = part_pos - (length_x + dx)
             ENDIF
