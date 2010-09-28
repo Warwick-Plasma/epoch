@@ -1,3 +1,48 @@
+28-09-2010 Changes for version 2.3
+
+ * Added optional "use_random_seed" flag.
+   If this boolean flag is set to true in the control block of the
+   input deck then the pseudorandom number generation used for
+   particle placement will be seed using the system time. Otherwise
+   a predefined seed will be used, ensuring that results are exactly
+   reproducible.
+
+ * Allow the code to run with no particle species.
+
+ * Updated VisIt reader for VisIt 2.x
+
+ * Define x_min, x_max, etc. at grid boundaries.
+   The old version defined these values at cell centres which
+   meant that the domain ran from x_min-dx/2 to x_max+dx/2.
+   For most users this is unexpected behaviour.
+   The current fix also allows the code to run when nx=1.
+
+ * Made more input deck elements optional.
+
+ * Fix bug in creation of 1D MPI subtypes.
+   This is actually a bug in the OpenMPI romio implementation. It
+   was fixed in OpenMPI v1.4.2. This change is a work around for
+   the older versions.
+
+ * Fixed moving window bugs.
+
+ * Changed the random number generation algorithm.
+
+ * Fixed temperature diagnostics
+
+ * Fixed particle probe output.
+   This was broken as a result of the file locking patch.
+
+ * Added perfectly conducting boundaries.
+   These are specified using "bc_x_min=conduct" in the input deck.
+   They set the E-parallel and B-perpendicular to zero and the
+   gradient of B-parallel to zero in the perpendicular direction.
+   Particles reflect off the boundary.
+
+ * Changed the CFD routines to make them easier to use in other codebases.
+
+ * Added CFD reader for Matlab.
+
 13-08-2010 Changes for version 2.2
 
  * The fields_external and species_external blocks have been removed.
