@@ -373,7 +373,8 @@ CONTAINS
       INQUIRE(file=deck_filename, exist=exists)
       IF (.NOT. exists .AND. rank .EQ. 0) THEN
         PRINT *, '***ERROR***'
-        PRINT *, 'Input deck file "' // deck_filename // '" does not exist.'
+        PRINT *, 'Input deck file "' // TRIM(deck_filename) &
+            // '" does not exist.'
         PRINT *, 'Create the file and rerun the code.'
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
