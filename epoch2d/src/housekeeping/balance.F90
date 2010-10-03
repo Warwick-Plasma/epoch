@@ -433,7 +433,7 @@ CONTAINS
     IF (coord .EQ. 0) ghost_start = -3
 
     new_start = domain(dir,1)
-    new_pts = domain(dir,2) - new_start
+    new_pts = domain(dir,2) - new_start + 1
 
     CALL MPI_COMM_SPLIT(comm, color, rank, new_comm, errcode)
 

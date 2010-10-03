@@ -217,7 +217,7 @@ CONTAINS
     ghost_end = 0
 
     dir = 1
-    color = coordinates(dir)
+    color = 1
     coord = coordinates(1)
     old_start = cell_x_min(coord+1)
     old_pts = nx
@@ -227,7 +227,7 @@ CONTAINS
     IF (coord .EQ. 0) ghost_start = -3
 
     new_start = domain(dir,1)
-    new_pts = domain(dir,2) - new_start
+    new_pts = domain(dir,2) - new_start + 1
 
     CALL MPI_COMM_SPLIT(comm, color, rank, new_comm, errcode)
 
