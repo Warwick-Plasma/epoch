@@ -18,12 +18,9 @@ CONTAINS
     INTEGER, OPTIONAL, INTENT(INOUT) :: step
     REAL(num), OPTIONAL, INTENT(INOUT) :: time
     TYPE(jobid_type), OPTIONAL, INTENT(IN) :: jobid
-    REAL(num) :: dummy = 1.0_num
-    INTEGER :: errcode, sof4, ostep = 0
+    INTEGER :: errcode, ierr, ostep = 0
     DOUBLE PRECISION :: otime = 0
 
-    CALL MPI_SIZEOF(dummy, sof4, errcode)
-    sof = sof4
     h%default_rank = 0
     h%filehandle = -1
     h%max_string_len = 60
@@ -33,10 +30,19 @@ CONTAINS
 
     ! We currently only support files written at the same precision
     ! as the 'num' kind
-    IF (num .EQ. KIND(1.D0)) THEN
+    IF (num .EQ. KIND(1.0)) THEN
+      ! Should use MPI_SIZEOF() but this breaks on scalimpi
+      sof = 4
+      h%mpireal = MPI_REAL
+    ELSE IF (num .EQ. KIND(1.D0)) THEN
+      sof = 8
       h%mpireal = MPI_DOUBLE_PRECISION
     ELSE
-      h%mpireal = MPI_REAL
+      IF (h%rank .EQ. h%default_rank) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'Error writing CFD output file - unknown datatype'
+      ENDIF
+      CALL MPI_ABORT(h%comm, errcode, ierr)
     ENDIF
 
     IF (mode .EQ. c_cfd_write) THEN

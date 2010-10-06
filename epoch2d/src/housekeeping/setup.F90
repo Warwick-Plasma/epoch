@@ -25,12 +25,27 @@ CONTAINS
 
   SUBROUTINE minimal_init
 
-    REAL(num) :: dummy = 1.0_num
+    INTEGER, PARAMETER :: r4  = SELECTED_REAL_KIND(r=30)
+    INTEGER, PARAMETER :: r8  = SELECTED_REAL_KIND(r=300)
+    INTEGER :: ierr
 
-    IF (num .EQ. 4) mpireal = MPI_REAL
+    IF (num .EQ. r4) THEN
+      ! Should use MPI_SIZEOF() but this breaks on scalimpi
+      realsize = 4
+      mpireal = MPI_REAL4
+    ELSE IF (num .EQ. r8) THEN
+      realsize = 8
+      mpireal = MPI_REAL8
+    ELSE
+      IF (rank .EQ. 0) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'Cannot determine size of real'
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
+
     dumpmask = 0
     comm = MPI_COMM_NULL
-    CALL MPI_SIZEOF(dummy, realsize, errcode)
 
     dt_plasma_frequency = 0.0_num
     dt_multiplier = 1.0_num
