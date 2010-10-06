@@ -347,7 +347,7 @@ CONTAINS
           CALL MPI_ABORT(comm, errcode, ierr)
         ENDIF
 
-        IF (nd .NE. c_dimension_2d .AND. nd .NE. c_dimension_irrelevant ) THEN
+        IF (nd .NE. c_dimension_3d .AND. nd .NE. c_dimension_irrelevant ) THEN
           IF (rank .EQ. 0) &
               PRINT *, "Dimensionality does not match, file is ", nd, "D"
           CALL MPI_ABORT(comm, errcode, ierr)
