@@ -9,7 +9,7 @@ MODULE cfd_common
   SAVE
 
   TYPE :: cfd_file_handle
-    INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement, block_header_end
+    INTEGER(KIND=MPI_OFFSET_KIND) :: current_displacement, block_start
     INTEGER(8) :: block_length, block_md_length
     INTEGER(4) :: block_header_size, header_offset
     INTEGER(4) :: max_string_len

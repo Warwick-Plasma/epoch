@@ -110,7 +110,7 @@ CONTAINS
     len_name = LEN(name)
     len_class = LEN(name)
 
-    block_header_start = h%current_displacement
+    h%block_start = h%current_displacement
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, &
         MPI_CHARACTER, MPI_CHARACTER, "native", MPI_INFO_NULL, errcode)
@@ -144,9 +144,7 @@ CONTAINS
         MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
 
     ! Skip past the header block
-    h%current_displacement = block_header_start + h%block_header_size
-
-    h%block_header_end = h%current_displacement
+    CALL cfd_skip_block_header(h)
 
   END SUBROUTINE cfd_get_next_block_info_all
 
