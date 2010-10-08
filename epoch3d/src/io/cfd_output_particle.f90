@@ -160,13 +160,15 @@ CONTAINS
           nwrite_left = nwrite_left - nelements
           CALL MPI_ALLREDUCE(nwrite_left, nmax, 1, MPI_INTEGER8, MPI_MAX, &
               h%comm, errcode)
-          IF (nmax .LE. 0) EXIT
 
           IF (sec .NE. osec) THEN
             file_offset = h%current_displacement + offsets(sec) * num
           ELSE
             file_offset = file_offset + nelements * num
           ENDIF
+
+          IF (nmax .LE. 0) EXIT
+
           off = off + nelements
           osec = sec
         ENDDO
@@ -339,13 +341,15 @@ CONTAINS
         nwrite_left = nwrite_left - nelements
         CALL MPI_ALLREDUCE(nwrite_left, nmax, 1, MPI_INTEGER8, MPI_MAX, &
             h%comm, errcode)
-        IF (nmax .LE. 0) EXIT
 
         IF (sec .NE. osec) THEN
           file_offset = h%current_displacement + offsets(sec) * num
         ELSE
           file_offset = file_offset + nelements * num
         ENDIF
+
+        IF (nmax .LE. 0) EXIT
+
         off = off + nelements
         osec = sec
       ENDDO

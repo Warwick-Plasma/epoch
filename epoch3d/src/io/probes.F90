@@ -53,7 +53,6 @@ CONTAINS
     CHARACTER(LEN=string_length) :: probe_name, temp_name
     INTEGER :: ispecies
     INTEGER(8) :: npart_probe_local, npart_probe_global
-    INTEGER(8) :: npart_probe_per_it, npart_probe_per_it_local
     INTEGER(KIND=MPI_OFFSET_KIND), DIMENSION(1) :: file_lengths, file_offsets
 
     DO ispecies = 1, n_species
@@ -67,17 +66,10 @@ CONTAINS
 
         current_list=>current_probe%sampled_particles
 
-        npart_probe_per_it_local = npart_per_it
         npart_probe_local = current_probe%sampled_particles%count
-
-        IF (npart_probe_local .GT. 0) &
-            npart_probe_per_it_local = &
-                MIN(npart_probe_local, npart_probe_per_it_local)
 
         CALL MPI_ALLREDUCE(npart_probe_local, npart_probe_global, 1, &
             MPI_INTEGER8, MPI_SUM, comm, errcode)
-        CALL MPI_ALLREDUCE(npart_probe_per_it_local, npart_probe_per_it, 1, &
-            MPI_INTEGER8, MPI_MIN, comm, errcode)
 
         IF (npart_probe_global .GT. 0) THEN
           file_lengths(1) = npart_probe_local
@@ -89,28 +81,28 @@ CONTAINS
           CALL cfd_write_nd_particle_grid_with_iterator_all(cfd_handle, &
               TRIM(probe_name), "Probe_Grid", iterate_probe_particles, &
               c_dimension_3d, npart_probe_local, npart_probe_global, &
-              npart_probe_per_it, c_particle_cartesian, &
+              npart_per_it, c_particle_cartesian, &
               file_lengths, file_offsets)
 
           ! dump Px
           WRITE(temp_name, '(a, "_Px")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
               TRIM(temp_name), TRIM(probe_name), iterate_probe_px, &
-              npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
+              npart_probe_global, npart_per_it, TRIM(probe_name), &
               "Probe_Grid", file_lengths, file_offsets)
 
           ! dump Py
           WRITE(temp_name, '(a, "_Py")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
               TRIM(temp_name), TRIM(probe_name), iterate_probe_py, &
-              npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
+              npart_probe_global, npart_per_it, TRIM(probe_name), &
               "Probe_Grid", file_lengths, file_offsets)
 
           ! dump Pz
           WRITE(temp_name, '(a, "_Pz")') TRIM(probe_name)
           CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
               TRIM(temp_name), TRIM(probe_name), iterate_probe_pz, &
-              npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
+              npart_probe_global, npart_per_it, TRIM(probe_name), &
               "Probe_Grid", file_lengths, file_offsets)
 
           ! dump particle weight function
@@ -118,7 +110,7 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
           CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
               TRIM(temp_name), TRIM(probe_name), iterate_probe_weight, &
-              npart_probe_global, npart_probe_per_it, TRIM(probe_name), &
+              npart_probe_global, npart_per_it, TRIM(probe_name), &
               "Probe_Grid", file_lengths, file_offsets)
 #else
           CALL cfd_write_real_constant(cfd_handle, TRIM(temp_name), &
