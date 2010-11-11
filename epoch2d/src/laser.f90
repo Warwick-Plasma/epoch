@@ -120,8 +120,10 @@ CONTAINS
 
     IF (boundary .EQ. c_bd_x_min .OR. boundary .EQ. c_bd_x_max) THEN
       ALLOCATE(array(-2:ny+3))
+      array = 0.0_num
     ELSE IF (boundary .EQ. c_bd_y_min .OR. boundary .EQ. c_bd_y_max) THEN
       ALLOCATE(array(-2:nx+3))
+      array = 0.0_num
     ENDIF
 
   END SUBROUTINE allocate_with_boundary

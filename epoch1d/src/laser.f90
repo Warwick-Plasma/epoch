@@ -16,6 +16,7 @@ CONTAINS
     TYPE(laser_block), INTENT(INOUT) :: laser
 
     laser%boundary = boundary
+    laser%phase = 0.0_num
     NULLIFY(laser%next)
 
   END SUBROUTINE init_laser

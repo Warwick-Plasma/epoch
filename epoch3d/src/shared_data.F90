@@ -596,14 +596,14 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   TYPE :: laser_block
     ! Boundary to which laser is attached
-    INTEGER :: boundary
+    INTEGER :: boundary = 0
     ! A unique id number for the laser (not used directly by EPOCH)
     ! Only used if hard coding time profiles
-    INTEGER :: id
+    INTEGER :: id = 0
     REAL(num), DIMENSION(:,:), POINTER :: profile
     REAL(num), DIMENSION(:,:), POINTER :: phase
 
-    LOGICAL :: use_time_function
+    LOGICAL :: use_time_function = .FALSE.
     TYPE(primitive_stack) :: time_function
 
     REAL(num) :: amp = 0.0_num, freq = 1.0_num, k = 1.0_num
