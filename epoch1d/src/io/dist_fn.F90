@@ -28,18 +28,23 @@ CONTAINS
 
 
 
-  SUBROUTINE setup_dist_fn(block)
+  SUBROUTINE init_dist_fn(block)
 
     TYPE(distribution_function_block), POINTER :: block
 
+    block%name = blank
+    block%ndims = -1
+    block%dumpmask = 0
+    block%directions = 0
+    block%ranges = 1.0_num
+    block%resolution = 0
+    block%restrictions = 0.0_num
+    block%use_restrictions = .FALSE.
     NULLIFY(block%next)
     ALLOCATE(block%use_species(n_species))
     block%use_species = .FALSE.
-    block%ranges = 1.0_num
-    block%use_restrictions = .FALSE.
-    block%ndims = -1
 
-  END SUBROUTINE setup_dist_fn
+  END SUBROUTINE init_dist_fn
 
 
 

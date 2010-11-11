@@ -281,7 +281,7 @@ MODULE shared_parser_data
 
   INTEGER, PARAMETER :: stack_size = 10000
 
-  TYPE :: stack_element
+  TYPE stack_element
     INTEGER :: ptype
     INTEGER :: data
     REAL(num) :: numerical_data
@@ -290,17 +290,17 @@ MODULE shared_parser_data
 #endif
   END TYPE stack_element
 
-  TYPE :: primitive_stack
+  TYPE primitive_stack
     TYPE(stack_element), DIMENSION(stack_size) :: data
     INTEGER :: stack_point
   END TYPE primitive_stack
 
-  TYPE :: deck_constant
+  TYPE deck_constant
     REAL(num) :: value
     CHARACTER(LEN=string_length) :: name
   END TYPE deck_constant
 
-  TYPE :: deferred_execution_object
+  TYPE deferred_execution_object
     CHARACTER(LEN=string_length) :: name
     TYPE(primitive_stack) :: execution_stream
   END TYPE deferred_execution_object
@@ -327,7 +327,7 @@ MODULE shared_data
   ! string handling
   !----------------------------------------------------------------------------
   CHARACTER(LEN=string_length) :: blank
-  TYPE :: string_type
+  TYPE string_type
     CHARACTER(string_length) :: value
   END TYPE string_type
   CHARACTER(LEN=string_length) :: extended_error_string
@@ -351,7 +351,7 @@ MODULE shared_data
   ! Object representing a particle
   ! If you add or remove from this section then you *must* update the
   ! particle pack and unpack routines
-  TYPE :: particle
+  TYPE particle
     REAL(num), DIMENSION(3) :: part_p
     REAL(num), DIMENSION(c_ndims) :: part_pos
 #ifdef PER_PARTICLE_WEIGHT
@@ -370,7 +370,7 @@ MODULE shared_data
 
   ! Object representing a collection of particles
   ! Used internally by the MPI particle transfer code
-  TYPE :: particle_list
+  TYPE particle_list
     TYPE(particle), POINTER :: head
     TYPE(particle), POINTER :: tail
     INTEGER(KIND=8) :: count
@@ -381,7 +381,7 @@ MODULE shared_data
   END TYPE particle_list
 
   ! Object representing a particle species
-  TYPE :: particle_family
+  TYPE particle_family
     ! Core properties
     CHARACTER(string_length) :: name
     TYPE(particle_family), POINTER :: next, prev
@@ -430,7 +430,7 @@ MODULE shared_data
   ! Initial conditions
   !----------------------------------------------------------------------------
   ! Represents the initial conditions of a species
-  TYPE :: initial_condition_block
+  TYPE initial_condition_block
     REAL(num), DIMENSION(:,:), POINTER :: rho
     REAL(num), DIMENSION(:,:,:), POINTER :: temp
     REAL(num), DIMENSION(:,:,:), POINTER :: drift
@@ -447,7 +447,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
 
   ! Represents a 2 or 3D distribution
-  TYPE :: distribution_function_block
+  TYPE distribution_function_block
     CHARACTER(LEN=string_length) :: name
 
     ! The number of dimensions left
@@ -471,7 +471,7 @@ MODULE shared_data
   TYPE(distribution_function_block), POINTER :: dist_fns
 
 #ifdef PARTICLE_PROBES
-  TYPE :: particle_probe
+  TYPE particle_probe
     REAL(num), DIMENSION(2) :: vertex_top, vertex_bottom
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
@@ -582,10 +582,10 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Time averaged IO
   !----------------------------------------------------------------------------
-  TYPE :: averaged_data_block
-    INTEGER :: average_type = 0
+  TYPE averaged_data_block
+    INTEGER :: average_type
     REAL(num), DIMENSION(:,:), POINTER :: data
-    INTEGER :: average_over_iterations = -1
+    INTEGER :: average_over_iterations
     REAL(num) :: average_over_real_time
     INTEGER :: number_of_iterations
   END TYPE averaged_data_block
@@ -594,21 +594,19 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! laser boundaries
   !----------------------------------------------------------------------------
-  TYPE :: laser_block
+  TYPE laser_block
     ! Boundary to which laser is attached
-    INTEGER :: boundary = 0
+    INTEGER :: boundary
     ! A unique id number for the laser (not used directly by EPOCH)
     ! Only used if hard coding time profiles
-    INTEGER :: id = 0
+    INTEGER :: id
     REAL(num), DIMENSION(:), POINTER :: profile
     REAL(num), DIMENSION(:), POINTER :: phase
 
-    LOGICAL :: use_time_function = .FALSE.
+    LOGICAL :: use_time_function
     TYPE(primitive_stack) :: time_function
 
-    REAL(num) :: amp = 0.0_num, freq = 1.0_num, k = 1.0_num
-    REAL(num) :: pol_angle = 0.0_num, angle = 0.0_num
-    REAL(num) :: t_start = 0.0_num, t_end = 0.0_num
+    REAL(num) :: amp, freq, k, pol_angle, angle, t_start, t_end
 
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block

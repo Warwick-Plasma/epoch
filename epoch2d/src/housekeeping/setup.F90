@@ -190,6 +190,11 @@ CONTAINS
     DO ioutput = 1, num_vars_to_dump
       IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
         ALLOCATE(averaged_data(ioutput)%data(-2:nx+3, -2:ny+3))
+        averaged_data(ioutput)%data = 0.0_num
+        averaged_data(ioutput)%average_type = 0
+        averaged_data(ioutput)%average_over_iterations = -1
+        averaged_data(ioutput)%average_over_real_time = 0.0_num
+        averaged_data(ioutput)%number_of_iterations = 0
       ENDIF
     ENDDO
 

@@ -16,6 +16,12 @@ CONTAINS
 
     TYPE(particle_probe), POINTER :: probe
 
+    probe%vertex_top = 0.0_num
+    probe%vertex_bottom = 0.0_num
+    probe%ek_min = 0.0_num
+    probe%ek_max = 0.0_num
+    probe%name = blank
+    probe%dump = 0
     NULLIFY(probe%next)
     NULLIFY(probe%probe_species)
     CALL create_empty_partlist(probe%sampled_particles)

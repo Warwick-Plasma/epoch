@@ -64,7 +64,7 @@ CONTAINS
 
     INTEGER :: ispecies, ix
     INTEGER(KIND=8) :: count
-    TYPE(particle), POINTER :: current, NEW
+    TYPE(particle), POINTER :: current, new_particle
     INTEGER :: clock, idum
     REAL(num) :: jitter_x
 
@@ -88,17 +88,17 @@ CONTAINS
             count = particle_species(ispecies)%secondary_list(ix)%count
             jitter_x = random(idum)*dx/2.0_num - dx/4.0_num
             current%weight = current%weight/2.0_num
-            ALLOCATE(NEW)
-            NEW = current
-            new%part_pos = current%part_pos+jitter_x
+            ALLOCATE(new_particle)
+            new_particle = current
+            new_particle%part_pos = current%part_pos+jitter_x
             CALL add_particle_to_partlist(&
-                particle_species(ispecies)%attached_list, NEW)
+                particle_species(ispecies)%attached_list, new_particle)
 #ifdef PARTICLE_DEBUG
             ! If running with particle debugging, specify that this
             ! particle has been split
-            new%processor_at_t0 = -1
+            new_particle%processor_at_t0 = -1
 #endif
-            NULLIFY(NEW)
+            NULLIFY(new_particle)
 
             current%part_pos = current%part_pos-jitter_x
             current=>current%next

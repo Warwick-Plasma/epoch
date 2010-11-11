@@ -33,16 +33,16 @@ CONTAINS
     IF (n_deck_constants .GT. 0) THEN
       ALLOCATE(buffer(1:n_deck_constants))
       buffer = deck_constant_list
+
+      ! Allocate the new list
       DEALLOCATE(deck_constant_list)
-    ENDIF
+      ALLOCATE(deck_constant_list(1:n_deck_constants+1))
 
-    ! Allocate the new list
-    ALLOCATE(deck_constant_list(1:n_deck_constants+1))
-
-    ! If old list not empty then
-    IF (n_deck_constants .GE. 1) THEN
       deck_constant_list(1:n_deck_constants) = buffer
       DEALLOCATE(buffer)
+    ELSE
+      ! Allocate the new list
+      ALLOCATE(deck_constant_list(1:n_deck_constants+1))
     ENDIF
 
     ! Add the new value

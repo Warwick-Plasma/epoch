@@ -61,9 +61,9 @@ CONTAINS
 
       initial_conditions(ispecies)%rho = 1.0_num
       initial_conditions(ispecies)%temp = 0.0_num
+      initial_conditions(ispecies)%drift = 0.0_num
       initial_conditions(ispecies)%minrho = 0.0_num
       initial_conditions(ispecies)%maxrho = 0.0_num
-      initial_conditions(ispecies)%drift = 0.0_num
     ENDDO
 
     ex = 0.0_num

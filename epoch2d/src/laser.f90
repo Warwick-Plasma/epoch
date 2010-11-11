@@ -15,11 +15,22 @@ CONTAINS
     INTEGER, INTENT(IN) :: boundary
     TYPE(laser_block), INTENT(INOUT) :: laser
 
+    laser%boundary = boundary
+    laser%id = -1
+    laser%use_time_function = .FALSE.
+    laser%amp = 0.0_num
+    laser%freq = 1.0_num
+    laser%k = 1.0_num
+    laser%pol_angle = 0.0_num
+    laser%angle = 0.0_num
+    laser%t_start = 0.0_num
+    laser%t_end = 0.0_num
+    NULLIFY(laser%profile)
+    NULLIFY(laser%phase)
+    NULLIFY(laser%next)
+
     CALL allocate_with_boundary(laser%profile, boundary)
     CALL allocate_with_boundary(laser%phase, boundary)
-
-    laser%boundary = boundary
-    NULLIFY(laser%next)
 
   END SUBROUTINE init_laser
 

@@ -105,6 +105,7 @@ CONTAINS
 
     DO ipart = 0, n_elements-1
       ALLOCATE(new_particle)
+      CALL init_particle(new_particle)
       CALL add_particle_to_partlist(partlist, new_particle)
       NULLIFY(new_particle)
     ENDDO
@@ -125,7 +126,6 @@ CONTAINS
 
     DO ipart = 0, n_elements-1
       ALLOCATE(new_particle)
-      NULLIFY(new_particle%prev, new_particle%next)
       cpos = ipart*nvar+1
       CALL unpack_particle(data_in(cpos:cpos+nvar-1), new_particle)
 #ifdef PARTICLE_DEBUG
@@ -363,6 +363,28 @@ CONTAINS
 #endif
 
   END SUBROUTINE unpack_particle
+
+
+
+  SUBROUTINE init_particle(new_particle)
+
+    TYPE(particle), POINTER, INTENT(INOUT) :: new_particle
+
+    new_particle%part_p = 0.0_num
+    new_particle%part_pos = 0.0_num
+#ifdef PER_PARTICLE_WEIGHT
+    new_particle%weight = 0.0_num
+#endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+    new_particle%charge = 0.0_num
+    new_particle%mass = 0.0_num
+#endif
+#ifdef PARTICLE_DEBUG
+    new_particle%processor = 0
+    new_particle%processor_at_t0 = 0
+#endif
+
+  END SUBROUTINE init_particle
 
 
 

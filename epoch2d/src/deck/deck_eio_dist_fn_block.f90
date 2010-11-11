@@ -144,7 +144,7 @@ CONTAINS
 
     ! Every new laser uses the internal time function
     ALLOCATE(working_block)
-    CALL setup_dist_fn(working_block)
+    CALL init_dist_fn(working_block)
 
   END SUBROUTINE dist_fn_start
 
