@@ -701,7 +701,7 @@ CONTAINS
           .OR. ABS(total + density(idim) - npart_per_proc_ideal) &
           .GT. ABS(total - npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
         total = density(idim)
-        starts(partition) = idim - 1
+        starts(partition) = idim
         partition = partition + 1
         ! If you've reached the last processor, have already done the best
         ! you can, so just leave
