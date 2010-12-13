@@ -28,7 +28,7 @@ CONTAINS
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=50) :: temp_name
     CHARACTER(LEN=8) :: dump_type
-    REAL(num), DIMENSION(:), ALLOCATABLE :: data
+    REAL(num), DIMENSION(:), ALLOCATABLE :: array
     REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER(8) :: npart_local, npart_dump_global
     INTEGER :: ispecies, code
@@ -81,7 +81,7 @@ CONTAINS
       restart_flag = 0
     ENDIF
 
-    ALLOCATE(data(-2:nx+3))
+    ALLOCATE(array(-2:nx+3))
 
     ! open the file
     ! (filename, rank of current process, MPI communicator (can be
@@ -196,24 +196,24 @@ CONTAINS
 
     ! These are derived variables from the particles
     CALL write_nspecies_field(c_dump_ekbar, code, &
-        'EkBar', 'EkBar', calc_ekbar, data)
+        'EkBar', 'EkBar', calc_ekbar, array)
 
     CALL write_nspecies_field(c_dump_mass_density, code, &
-        'Mass_density', 'Derived', calc_mass_density, data)
+        'Mass_density', 'Derived', calc_mass_density, array)
 
     CALL write_nspecies_field(c_dump_charge_density, code, &
-        'Charge_density', 'Derived', calc_charge_density, data)
+        'Charge_density', 'Derived', calc_charge_density, array)
 
     CALL write_nspecies_field(c_dump_number_density, code, &
-        'Number_density', 'Derived', calc_number_density, data)
+        'Number_density', 'Derived', calc_number_density, array)
 
     CALL write_nspecies_field(c_dump_temperature, code, &
-        'Temperature', 'Derived', calc_temperature, data)
+        'Temperature', 'Derived', calc_temperature, array)
 
 #ifdef FIELD_DEBUG
-    data = rank
+    array = rank
     CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, "Rank", &
-        "Processor", dims, stagger, "Grid", "Grid", data, subtype_field, &
+        "Processor", dims, stagger, "Grid", "Grid", array, subtype_field, &
         subarray_field)
 #endif
 
@@ -250,7 +250,7 @@ CONTAINS
       CALL FLUSH(20)
     ENDIF
 
-    DEALLOCATE(data)
+    DEALLOCATE(array)
 
   END SUBROUTINE output_routines
 

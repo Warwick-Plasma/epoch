@@ -541,9 +541,9 @@ CONTAINS
 
 
 
-  SUBROUTINE it_part(data, npart_this_it, start, direction)
+  SUBROUTINE it_part(array, npart_this_it, start, direction)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
@@ -555,7 +555,7 @@ CONTAINS
       cur=>main_root%head
     ENDIF
     DO ipart = 1, npart_this_it
-      cur%part_pos(direction) = data(ipart)
+      cur%part_pos(direction) = array(ipart)
       cur=>cur%next
     ENDDO
 
@@ -563,9 +563,9 @@ CONTAINS
 
 
 
-  SUBROUTINE it_px(data, npart_this_it, start)
+  SUBROUTINE it_px(array, npart_this_it, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
@@ -573,7 +573,7 @@ CONTAINS
 
     IF (start) cur=>main_root%head
     DO ipart = 1, npart_this_it
-      cur%part_p(1) = data(ipart)
+      cur%part_p(1) = array(ipart)
       cur=>cur%next
     ENDDO
 
@@ -581,9 +581,9 @@ CONTAINS
 
 
 
-  SUBROUTINE it_py(data, npart_this_it, start)
+  SUBROUTINE it_py(array, npart_this_it, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
@@ -591,7 +591,7 @@ CONTAINS
 
     IF (start) cur=>main_root%head
     DO ipart = 1, npart_this_it
-      cur%part_p(2) = data(ipart)
+      cur%part_p(2) = array(ipart)
       cur=>cur%next
     ENDDO
 
@@ -599,9 +599,9 @@ CONTAINS
 
 
 
-  SUBROUTINE it_pz(data, npart_this_it, start)
+  SUBROUTINE it_pz(array, npart_this_it, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
@@ -609,7 +609,7 @@ CONTAINS
 
     IF (start) cur=>main_root%head
     DO ipart = 1, npart_this_it
-      cur%part_p(3) = data(ipart)
+      cur%part_p(3) = array(ipart)
       cur=>cur%next
     ENDDO
 
@@ -618,9 +618,9 @@ CONTAINS
 
 
 #ifdef PER_PARTICLE_WEIGHT
-  SUBROUTINE it_weight(data, npart_this_it, start)
+  SUBROUTINE it_weight(array, npart_this_it, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
@@ -628,7 +628,7 @@ CONTAINS
 
     IF (start) cur=>main_root%head
     DO ipart = 1, npart_this_it
-      cur%weight = data(ipart)
+      cur%weight = array(ipart)
       cur=>cur%next
     ENDDO
 
@@ -637,9 +637,9 @@ CONTAINS
 
 
 
-  SUBROUTINE it_species(data, npart_this_it, start)
+  SUBROUTINE it_species(array, npart_this_it, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(KIND=8), INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER(KIND=8) :: ipart
@@ -647,7 +647,7 @@ CONTAINS
 
     IF (start) ipart_total = 1
     DO ipart = 1, npart_this_it
-      species_id(ipart_total) = NINT(data(ipart))
+      species_id(ipart_total) = NINT(array(ipart))
       ipart_total = ipart_total+1
     ENDDO
 

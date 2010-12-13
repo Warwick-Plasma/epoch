@@ -137,9 +137,9 @@ CONTAINS
 
 
   ! iterator for particle positions
-  SUBROUTINE iterate_probe_particles(data, n_points, direction, start)
+  SUBROUTINE iterate_probe_particles(array, n_points, direction, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
@@ -153,7 +153,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      data(part_count) = cur%part_pos-window_shift
+      array(part_count) = cur%part_pos-window_shift
       cur=>cur%next
     ENDDO
 
@@ -164,9 +164,9 @@ CONTAINS
 
 
   ! iterator for particle momenta
-  SUBROUTINE iterate_probe_px(data, n_points, start)
+  SUBROUTINE iterate_probe_px(array, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -179,7 +179,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      data(part_count) = cur%part_p(1)
+      array(part_count) = cur%part_p(1)
       cur=>cur%next
     ENDDO
     n_points = part_count
@@ -188,9 +188,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_probe_py(data, n_points, start)
+  SUBROUTINE iterate_probe_py(array, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -203,7 +203,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      data(part_count) = cur%part_p(2)
+      array(part_count) = cur%part_p(2)
       cur=>cur%next
     ENDDO
 
@@ -213,9 +213,9 @@ CONTAINS
 
 
 
-  SUBROUTINE iterate_probe_pz(data, n_points, start)
+  SUBROUTINE iterate_probe_pz(array, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -228,7 +228,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      data(part_count) = cur%part_p(3)
+      array(part_count) = cur%part_p(3)
       cur=>cur%next
     ENDDO
 
@@ -239,9 +239,9 @@ CONTAINS
 
 
 #ifdef PER_PARTICLE_WEIGHT
-  SUBROUTINE iterate_probe_weight(data, n_points, start)
+  SUBROUTINE iterate_probe_weight(array, n_points, start)
 
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(8), INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -254,7 +254,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
-      data(part_count) = cur%weight
+      array(part_count) = cur%weight
       cur=>cur%next
     ENDDO
 

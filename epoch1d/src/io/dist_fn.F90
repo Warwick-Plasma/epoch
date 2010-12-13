@@ -121,7 +121,7 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:), ALLOCATABLE :: data, data2
+    REAL(num), DIMENSION(:), ALLOCATABLE :: array, array_tmp
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1
     LOGICAL, DIMENSION(c_df_curdims) :: parallel
     REAL(num), DIMENSION(c_df_curdims) :: dgrid
@@ -315,8 +315,8 @@ CONTAINS
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
     ENDDO
 
-    ALLOCATE(data(resolution(1)))
-    data = 0.0_num
+    ALLOCATE(array(resolution(1)))
+    array = 0.0_num
 
     current=>particle_species(species)%attached_list%head
     part_weight = weight
@@ -355,8 +355,8 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
-        IF (use_this) data(cell(1)) = &
-            data(cell(1)) + part_weight ! * real_space_area
+        IF (use_this) array(cell(1)) = &
+            array(cell(1)) + part_weight ! * real_space_area
       ENDIF
       current=>current%next
     ENDDO
@@ -365,13 +365,13 @@ CONTAINS
     IF (use_x) need_reduce = .FALSE.
 
     IF (need_reduce) THEN
-      ALLOCATE(data2(resolution(1)))
-      data2 = 0.0_num
-      CALL MPI_ALLREDUCE(data, data2, &
+      ALLOCATE(array_tmp(resolution(1)))
+      array_tmp = 0.0_num
+      CALL MPI_ALLREDUCE(array, array_tmp, &
           resolution(1), mpireal, MPI_SUM, &
           comm, errcode)
-      data = data2
-      DEALLOCATE(data2)
+      array = array_tmp
+      DEALLOCATE(array_tmp)
     ENDIF
 
     ! Create grids
@@ -405,12 +405,12 @@ CONTAINS
 
     CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, TRIM(var_name), &
         "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
-        data, new_type, array_type)
+        array, new_type, array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
 
-    DEALLOCATE(data)
+    DEALLOCATE(array)
 
   END SUBROUTINE general_1d_dist_fn
 
@@ -429,7 +429,7 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: data, data2
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: array, array_tmp
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2
     LOGICAL, DIMENSION(c_df_curdims) :: parallel
     REAL(num), DIMENSION(c_df_curdims) :: dgrid
@@ -623,8 +623,8 @@ CONTAINS
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
     ENDDO
 
-    ALLOCATE(data(resolution(1), resolution(2)))
-    data = 0.0_num
+    ALLOCATE(array(resolution(1), resolution(2)))
+    array = 0.0_num
 
     current=>particle_species(species)%attached_list%head
     part_weight = weight
@@ -663,8 +663,8 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
-        IF (use_this) data(cell(1), cell(2)) = &
-            data(cell(1), cell(2)) + part_weight ! * real_space_area
+        IF (use_this) array(cell(1), cell(2)) = &
+            array(cell(1), cell(2)) + part_weight ! * real_space_area
       ENDIF
       current=>current%next
     ENDDO
@@ -673,13 +673,13 @@ CONTAINS
     IF (use_x) need_reduce = .FALSE.
 
     IF (need_reduce) THEN
-      ALLOCATE(data2(resolution(1), resolution(2)))
-      data2 = 0.0_num
-      CALL MPI_ALLREDUCE(data, data2, &
+      ALLOCATE(array_tmp(resolution(1), resolution(2)))
+      array_tmp = 0.0_num
+      CALL MPI_ALLREDUCE(array, array_tmp, &
           resolution(1)*resolution(2), mpireal, MPI_SUM, &
           comm, errcode)
-      data = data2
-      DEALLOCATE(data2)
+      array = array_tmp
+      DEALLOCATE(array_tmp)
     ENDIF
 
     ! Create grids
@@ -719,12 +719,12 @@ CONTAINS
 
     CALL cfd_write_2d_cartesian_variable_parallel(cfd_handle, TRIM(var_name), &
         "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
-        data, new_type, array_type)
+        array, new_type, array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
 
-    DEALLOCATE(data)
+    DEALLOCATE(array)
 
   END SUBROUTINE general_2d_dist_fn
 
@@ -743,7 +743,7 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
 
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: data, data2
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array, array_tmp
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2, grid3
     LOGICAL, DIMENSION(c_df_curdims) :: parallel
     REAL(num), DIMENSION(c_df_curdims) :: dgrid
@@ -937,8 +937,8 @@ CONTAINS
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
     ENDDO
 
-    ALLOCATE(data(resolution(1), resolution(2), resolution(3)))
-    data = 0.0_num
+    ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
+    array = 0.0_num
 
     current=>particle_species(species)%attached_list%head
     part_weight = weight
@@ -977,8 +977,8 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
 #endif
-        IF (use_this) data(cell(1), cell(2), cell(3)) = &
-            data(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
+        IF (use_this) array(cell(1), cell(2), cell(3)) = &
+            array(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
       ENDIF
       current=>current%next
     ENDDO
@@ -987,13 +987,13 @@ CONTAINS
     IF (use_x) need_reduce = .FALSE.
 
     IF (need_reduce) THEN
-      ALLOCATE(data2(resolution(1), resolution(2), resolution(3)))
-      data2 = 0.0_num
-      CALL MPI_ALLREDUCE(data, data2, &
+      ALLOCATE(array_tmp(resolution(1), resolution(2), resolution(3)))
+      array_tmp = 0.0_num
+      CALL MPI_ALLREDUCE(array, array_tmp, &
           resolution(1)*resolution(2)*resolution(3), mpireal, MPI_SUM, &
           comm, errcode)
-      data = data2
-      DEALLOCATE(data2)
+      array = array_tmp
+      DEALLOCATE(array_tmp)
     ENDIF
 
     ! Create grids
@@ -1039,12 +1039,12 @@ CONTAINS
 
     CALL cfd_write_3d_cartesian_variable_parallel(cfd_handle, TRIM(var_name), &
         "dist_fn", global_resolution, stagger, TRIM(norm_grid_name), "Grid", &
-        data, new_type, array_type)
+        array, new_type, array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
 
-    DEALLOCATE(data)
+    DEALLOCATE(array)
 
   END SUBROUTINE general_3d_dist_fn
 

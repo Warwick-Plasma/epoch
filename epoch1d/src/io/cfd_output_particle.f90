@@ -27,9 +27,9 @@ CONTAINS
     INTEGER(8), DIMENSION(:), INTENT(IN) :: offsets
 
     INTERFACE
-      SUBROUTINE iterator(data, npart_it, direction, start)
+      SUBROUTINE iterator(array, npart_it, direction, start)
         USE cfd_common
-        REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+        REAL(num), DIMENSION(:), INTENT(INOUT) :: array
         INTEGER(8), INTENT(INOUT) :: npart_it
         INTEGER, INTENT(IN) :: direction
         LOGICAL, INTENT(IN) :: start
@@ -43,7 +43,7 @@ CONTAINS
     LOGICAL :: start
     REAL(num) :: mn, mx
     REAL(num), ALLOCATABLE, DIMENSION(:) :: gmn, gmx
-    REAL(num), ALLOCATABLE, DIMENSION(:) :: data
+    REAL(num), ALLOCATABLE, DIMENSION(:) :: array
 
     IF (npart_global .LE. 0) RETURN
 
@@ -114,7 +114,7 @@ CONTAINS
 
     ! Write the real data
 
-    ALLOCATE(data(1:npart_per_iteration))
+    ALLOCATE(array(1:npart_per_iteration))
 
     DO idim = 1, ndims
       npart_this_cycle = npart_per_iteration
@@ -125,7 +125,7 @@ CONTAINS
       file_offset = h%current_displacement + offsets(sec) * num
 
       DO
-        CALL iterator(data, npart_this_cycle, idim, start)
+        CALL iterator(array, npart_this_cycle, idim, start)
         CALL MPI_ALLREDUCE(npart_this_cycle, nmax, 1, MPI_INTEGER8, MPI_MAX, &
             h%comm, errcode)
         IF (nmax .LE. 0) EXIT
@@ -134,12 +134,12 @@ CONTAINS
         nwrite_left = npart_this_cycle
 
         IF (start) THEN
-          gmn(idim) = MINVAL(data(1:npart_this_cycle))
-          gmx(idim) = MAXVAL(data(1:npart_this_cycle))
+          gmn(idim) = MINVAL(array(1:npart_this_cycle))
+          gmx(idim) = MAXVAL(array(1:npart_this_cycle))
           start = .FALSE.
         ELSE
-          gmn(idim) = MIN(gmn(idim), MINVAL(data(1:npart_this_cycle)))
-          gmx(idim) = MAX(gmx(idim), MAXVAL(data(1:npart_this_cycle)))
+          gmn(idim) = MIN(gmn(idim), MINVAL(array(1:npart_this_cycle)))
+          gmx(idim) = MAX(gmx(idim), MAXVAL(array(1:npart_this_cycle)))
         ENDIF
 
         DO
@@ -154,7 +154,7 @@ CONTAINS
 
           CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, h%mpireal, &
               h%mpireal, "native", MPI_INFO_NULL, errcode)
-          CALL MPI_FILE_WRITE_ALL(h%filehandle, data(off), nelements, &
+          CALL MPI_FILE_WRITE_ALL(h%filehandle, array(off), nelements, &
               h%mpireal, MPI_STATUS_IGNORE, errcode)
 
           nwrite_left = nwrite_left - nelements
@@ -177,7 +177,7 @@ CONTAINS
       h%current_displacement = h%current_displacement + npart_global * sof
     ENDDO
 
-    DEALLOCATE(data)
+    DEALLOCATE(array)
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, offset_for_min_max, h%mpireal, &
         h%mpireal, "native", MPI_INFO_NULL, errcode)
@@ -219,9 +219,9 @@ CONTAINS
     INTEGER(8), DIMENSION(:), INTENT(IN) :: offsets
 
     INTERFACE
-      SUBROUTINE iterator(data, npart_it, start)
+      SUBROUTINE iterator(array, npart_it, start)
         USE cfd_common
-        REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+        REAL(num), DIMENSION(:), INTENT(INOUT) :: array
         INTEGER(8), INTENT(INOUT) :: npart_it
         LOGICAL, INTENT(IN) :: start
       END SUBROUTINE iterator
@@ -233,7 +233,7 @@ CONTAINS
     INTEGER :: sec, osec, errcode
     LOGICAL :: start
     REAL(num) :: mn, mx, gmn, gmx
-    REAL(num), ALLOCATABLE, DIMENSION(:) :: data
+    REAL(num), ALLOCATABLE, DIMENSION(:) :: array
 
     IF (npart_global .LE. 0) RETURN
 
@@ -296,7 +296,7 @@ CONTAINS
 
     ! Write the real data
 
-    ALLOCATE(data(1:npart_per_iteration))
+    ALLOCATE(array(1:npart_per_iteration))
 
     npart_this_cycle = npart_per_iteration
     start = .TRUE.
@@ -306,7 +306,7 @@ CONTAINS
     file_offset = h%current_displacement + offsets(sec) * num
 
     DO
-      CALL iterator(data, npart_this_cycle, start)
+      CALL iterator(array, npart_this_cycle, start)
       CALL MPI_ALLREDUCE(npart_this_cycle, nmax, 1, MPI_INTEGER8, MPI_MAX, &
           h%comm, errcode)
       IF (nmax .LE. 0) EXIT
@@ -315,12 +315,12 @@ CONTAINS
       nwrite_left = npart_this_cycle
 
       IF (start) THEN
-        gmn = MINVAL(data(1:npart_this_cycle))
-        gmx = MAXVAL(data(1:npart_this_cycle))
+        gmn = MINVAL(array(1:npart_this_cycle))
+        gmx = MAXVAL(array(1:npart_this_cycle))
         start = .FALSE.
       ELSE
-        gmn = MIN(gmn, MINVAL(data(1:npart_this_cycle)))
-        gmx = MAX(gmx, MAXVAL(data(1:npart_this_cycle)))
+        gmn = MIN(gmn, MINVAL(array(1:npart_this_cycle)))
+        gmx = MAX(gmx, MAXVAL(array(1:npart_this_cycle)))
       ENDIF
 
       DO
@@ -335,7 +335,7 @@ CONTAINS
 
         CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, h%mpireal, &
             h%mpireal, "native", MPI_INFO_NULL, errcode)
-        CALL MPI_FILE_WRITE_ALL(h%filehandle, data(off), nelements, &
+        CALL MPI_FILE_WRITE_ALL(h%filehandle, array(off), nelements, &
             h%mpireal, MPI_STATUS_IGNORE, errcode)
 
         nwrite_left = nwrite_left - nelements
@@ -357,7 +357,7 @@ CONTAINS
 
     h%current_displacement = h%current_displacement + npart_global * sof
 
-    DEALLOCATE(data)
+    DEALLOCATE(array)
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, offset_for_min_max, h%mpireal, &
         h%mpireal, "native", MPI_INFO_NULL, errcode)

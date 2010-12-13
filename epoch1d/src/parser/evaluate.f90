@@ -21,21 +21,23 @@ CONTAINS
     eval_stack%stack_point = 0
 
     DO i = 1, input_stack%stack_point
-      block = input_stack%data(i)
+      block = input_stack%entries(i)
       IF (block%ptype .EQ. c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
       ENDIF
 
-      IF (block%ptype .EQ. c_pt_species) &
-          CALL do_species(block%data, ix, err)
-      IF (block%ptype .EQ. c_pt_operator) &
-          CALL do_operator(block%data, ix, err)
-      IF (block%ptype .EQ. c_pt_constant) &
-          CALL do_constant(block%data, ix, err)
-      IF (block%ptype .EQ. c_pt_function) &
-          CALL do_functions(block%data, ix, err)
+      IF (block%ptype .EQ. c_pt_species) THEN
+        CALL do_species(block%value, ix, err)
+      ELSE IF (block%ptype .EQ. c_pt_operator) THEN
+        CALL do_operator(block%value, ix, err)
+      ELSE IF (block%ptype .EQ. c_pt_constant) THEN
+        CALL do_constant(block%value, ix, err)
+      ELSE IF (block%ptype .EQ. c_pt_function) THEN
+        CALL do_functions(block%value, ix, err)
+      ENDIF
+
       IF (err .NE. c_err_none) THEN
-        PRINT *, "BAD block", err, block%ptype, i, block%data
+        PRINT *, "BAD block", err, block%ptype, i, block%value
         CALL MPI_ABORT(comm, errcode, ierr)
         STOP
       ENDIF

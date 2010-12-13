@@ -54,19 +54,19 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_get_nd_particle_grid_parallel(h, ndims, npart, data, subtype)
+  SUBROUTINE cfd_get_nd_particle_grid_parallel(h, ndims, npart, array, subtype)
 
     TYPE(cfd_file_handle) :: h
     INTEGER, INTENT(IN) :: ndims
     INTEGER(8), INTENT(IN) :: npart
-    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN) :: subtype
     INTEGER :: errcode
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
         subtype, "native", MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, data, ndims * npart, h%mpireal, &
+    CALL MPI_FILE_READ_ALL(h%filehandle, array, ndims * npart, h%mpireal, &
         MPI_STATUS_IGNORE, errcode)
 
     CALL cfd_skip_block(h)
@@ -86,12 +86,12 @@ CONTAINS
     INTEGER(8) :: npart_this_it, npart_remain
     INTEGER :: direction, errcode
     LOGICAL :: start
-    REAL(num), DIMENSION(:), ALLOCATABLE :: data
+    REAL(num), DIMENSION(:), ALLOCATABLE :: array
 
     INTERFACE
-      SUBROUTINE iterator(data, npart_it, start, direction)
+      SUBROUTINE iterator(array, npart_it, start, direction)
         USE cfd_common
-        REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+        REAL(num), DIMENSION(:), INTENT(INOUT) :: array
         INTEGER(8), INTENT(INOUT) :: npart_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN) :: direction
@@ -101,7 +101,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
         subtype, "native", MPI_INFO_NULL, errcode)
 
-    ALLOCATE(data(1:npart_per_it))
+    ALLOCATE(array(1:npart_per_it))
 
     DO direction = 1, ndims
       start = .TRUE.
@@ -112,11 +112,11 @@ CONTAINS
           h%mpireal, subtype, "native", MPI_INFO_NULL, errcode)
 
       DO WHILE (npart_this_it .GT. 0)
-        CALL MPI_FILE_READ(h%filehandle, data, npart_this_it, h%mpireal, &
+        CALL MPI_FILE_READ(h%filehandle, array, npart_this_it, h%mpireal, &
             MPI_STATUS_IGNORE, errcode)
 
         npart_remain = npart_remain - npart_this_it
-        CALL iterator(data, npart_this_it, start, direction)
+        CALL iterator(array, npart_this_it, start, direction)
         start = .FALSE.
         npart_this_it = MIN(npart_remain, npart_per_it)
       ENDDO
@@ -124,7 +124,7 @@ CONTAINS
       h%current_displacement = h%current_displacement + npart_lglobal * sof
     ENDDO
 
-    DEALLOCATE(data)
+    DEALLOCATE(array)
 
     CALL cfd_skip_block(h)
 
@@ -176,19 +176,19 @@ CONTAINS
 
 
 
-  SUBROUTINE cfd_get_nd_particle_variable_parallel(h, npart_local, data, &
+  SUBROUTINE cfd_get_nd_particle_variable_parallel(h, npart_local, array, &
       subtype)
 
     TYPE(cfd_file_handle) :: h
     INTEGER(8), INTENT(IN) :: npart_local
-    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: data
+    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN) :: subtype
     INTEGER :: errcode
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_displacement, h%mpireal, &
         subtype, "native", MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, data, npart_local, h%mpireal, &
+    CALL MPI_FILE_READ_ALL(h%filehandle, array, npart_local, h%mpireal, &
         MPI_STATUS_IGNORE, errcode)
 
     CALL cfd_skip_block(h)
@@ -206,12 +206,12 @@ CONTAINS
     INTEGER(8) :: npart_this_it, npart_remain
     INTEGER :: errcode
     LOGICAL :: start
-    REAL(num), DIMENSION(:), ALLOCATABLE :: data
+    REAL(num), DIMENSION(:), ALLOCATABLE :: array
 
     INTERFACE
-      SUBROUTINE iterator(data, npart_it, start)
+      SUBROUTINE iterator(array, npart_it, start)
         USE cfd_common
-        REAL(num), DIMENSION(:), INTENT(INOUT) :: data
+        REAL(num), DIMENSION(:), INTENT(INOUT) :: array
         INTEGER(8), INTENT(INOUT) :: npart_it
         LOGICAL, INTENT(IN) :: start
       END SUBROUTINE iterator
@@ -221,21 +221,21 @@ CONTAINS
         subtype, "native", MPI_INFO_NULL, errcode)
 
     start = .TRUE.
-    ALLOCATE(data(1:npart_per_it))
+    ALLOCATE(array(1:npart_per_it))
     npart_remain = npart_local
     npart_this_it = MIN(npart_remain, npart_per_it)
 
     DO WHILE (npart_this_it .GT. 0)
       npart_this_it = MIN(npart_remain, npart_per_it)
-      CALL MPI_FILE_READ(h%filehandle, data, npart_this_it, h%mpireal, &
+      CALL MPI_FILE_READ(h%filehandle, array, npart_this_it, h%mpireal, &
           MPI_STATUS_IGNORE, errcode)
 
       npart_remain = npart_remain - npart_this_it
-      CALL iterator(data, npart_this_it, start)
+      CALL iterator(array, npart_this_it, start)
       start = .FALSE.
     ENDDO
 
-    DEALLOCATE(data)
+    DEALLOCATE(array)
     CALL cfd_skip_block(h)
 
   END SUBROUTINE cfd_get_nd_particle_variable_parallel_with_iterator

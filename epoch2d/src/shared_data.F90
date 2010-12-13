@@ -287,7 +287,7 @@ MODULE shared_parser_data
 
   TYPE stack_element
     INTEGER :: ptype
-    INTEGER :: data
+    INTEGER :: value
     REAL(num) :: numerical_data
 #ifdef PARSER_DEBUG
     CHARACTER(LEN=string_length) :: text
@@ -295,7 +295,7 @@ MODULE shared_parser_data
   END TYPE stack_element
 
   TYPE primitive_stack
-    TYPE(stack_element), DIMENSION(stack_size) :: data
+    TYPE(stack_element), DIMENSION(stack_size) :: entries
     INTEGER :: stack_point
   END TYPE primitive_stack
 
