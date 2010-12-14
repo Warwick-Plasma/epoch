@@ -5,6 +5,8 @@
 
 MODULE constants
 
+  USE sdf
+
   IMPLICIT NONE
 
   INTEGER, PARAMETER :: num = KIND(1.d0)
@@ -111,15 +113,14 @@ MODULE constants
   INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! Stagger types
-  INTEGER, PARAMETER :: c_stagger_ex = 1
-  INTEGER, PARAMETER :: c_stagger_ey = 2
-  INTEGER, PARAMETER :: c_stagger_ez = 3
-  INTEGER, PARAMETER :: c_stagger_bx = 4
-  INTEGER, PARAMETER :: c_stagger_by = 5
-  INTEGER, PARAMETER :: c_stagger_bz = 6
-  INTEGER, PARAMETER :: c_stagger_centre = 7
-  INTEGER, PARAMETER :: c_stagger_node = 8
-  INTEGER, PARAMETER :: c_stagger_max = c_stagger_node
+  INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
+  INTEGER, PARAMETER :: c_stagger_ey = c_stagger_face_y
+  INTEGER, PARAMETER :: c_stagger_ez = c_stagger_face_z
+  INTEGER, PARAMETER :: c_stagger_bx = c_stagger_edge_x
+  INTEGER, PARAMETER :: c_stagger_by = c_stagger_edge_y
+  INTEGER, PARAMETER :: c_stagger_bz = c_stagger_edge_z
+  INTEGER, PARAMETER :: c_stagger_centre = c_stagger_cell_centre
+  INTEGER, PARAMETER :: c_stagger_max = c_stagger_vertex
   INTEGER, PARAMETER :: c_stagger_jx = c_stagger_ex
   INTEGER, PARAMETER :: c_stagger_jy = c_stagger_ey
   INTEGER, PARAMETER :: c_stagger_jz = c_stagger_ez
@@ -318,7 +319,7 @@ END MODULE shared_parser_data
 
 MODULE shared_data
 
-  USE cfd_job_info
+  USE sdf_job_info
   USE constants
   USE shared_parser_data
   USE mpi
@@ -543,7 +544,7 @@ MODULE shared_data
   INTEGER :: coordinates(1), neighbour(-1:1)
   INTEGER :: errcode, comm, tag, nproc, icycle_max = 1000000
   INTEGER :: status(MPI_STATUS_SIZE)
-  INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank, ny_each_rank
+  INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank
   INTEGER(KIND=8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
 
   !----------------------------------------------------------------------------
@@ -552,9 +553,9 @@ MODULE shared_data
   LOGICAL :: dlb
   REAL(num) :: dlb_threshold
   INTEGER(KIND=8), PARAMETER :: npart_per_it = 1000000
-  REAL(num), DIMENSION(:), ALLOCATABLE :: x_global, y_global
-  REAL(num), DIMENSION(:), ALLOCATABLE :: x_offset_global
-  REAL(num), DIMENSION(:), ALLOCATABLE :: y_offset_global
+  REAL(num), DIMENSION(:), ALLOCATABLE :: x_global
+  REAL(num), DIMENSION(:), ALLOCATABLE :: xb_global
+  REAL(num), DIMENSION(:), ALLOCATABLE :: xb_offset_global
   ! The location of the processors
   INTEGER, DIMENSION(:), ALLOCATABLE :: cell_x_min, cell_x_max
   INTEGER :: nx_global_min, nx_global_max
@@ -615,13 +616,13 @@ MODULE shared_data
   TYPE(jobid_type) :: jobid
 
   INTEGER(4) :: run_date
-  INTEGER(4) :: defines
+  INTEGER(8) :: defines
 
   REAL(num) :: walltime_start
   INTEGER :: stdout_frequency
   INTEGER(KIND=MPI_OFFSET_KIND), DIMENSION(:), ALLOCATABLE :: &
       particle_file_lengths, particle_file_offsets
 
-  INTEGER, DIMENSION(3,c_stagger_max) :: stagger
+  INTEGER, DIMENSION(3,0:c_stagger_max) :: stagger
 
 END MODULE shared_data

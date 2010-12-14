@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # Shell script for unpacking source code and input decks from a
-# CFD restart dump
+# SDF restart dump
 
 file=$1
 dir=unpacked_source
@@ -13,7 +13,9 @@ getint() {
 }
 
 getlong() {
-    od -tdL -N8 -j$off $file | head -1 | awk '{print$2}'
+    n1=`od -td4 -N4 -j$off $file | head -1 | awk '{print$2}'`
+    n2=`od -td4 -N4 -j$((off+4)) $file | head -1 | awk '{print$2}'`
+    echo $((n1 + n2 * 4294967296))
 }
 
 # Sanity checking
@@ -33,45 +35,44 @@ if [ ! -f $file ]; then
   exit 1
 fi
 
-str=`od -tc -N3 $file | head -1 | cut -c9- | tr -d ' '`
+str=`od -tc -N4 $file | head -1 | cut -c9- | tr -d ' '`
 
-if [ "$str"x != "CFDx" ]; then
-  echo 'ERROR: "'$file'" is not a CFD file'
+if [ "$str"x != "SDF1x" ]; then
+  echo 'ERROR: "'$file'" is not a SDF file'
   exit 1
 fi
 
-# Read CFD header
+# Read SDF header
 
-off=3
-header_len=$(getint); off=$((off+4))
-block_header_len=$(getint); off=$((off+4))
+off=8
 version=$(getint); off=$((off+4))
-revision=$(getint); off=$((off+4))
-strlen=$(getint); off=$((off+4))
-nblocks=$(getint); off=$((off+4))
+revision=$(getint)
+off=48; first_block_location=$(getlong)
+off=68; nblocks=$(getint)
+off=96; string_length=$(getint)
 
 # Read the blocks
 
 mkdir -p $dir
 
-block_off=$((header_len-block_header_len))
-block_length=0
+next_block=$first_block_location
 
 i=0
 found=0
 while [ $i -lt $nblocks ]; do
   i=$((i+1))
-  block_off=$((block_off+block_header_len+block_length))
-  off=$((block_off+2*strlen))
-  block_type=$(getint); off=$((off+4+8))
-  block_length=$(getlong)
+  block_off=$next_block
+  off=$block_off; next_block=$(getlong)
+  off=$((block_off+8)); data_location=$(getlong)
+  off=$((block_off+48)); data_length=$(getlong)
+  off=$((block_off+56)); block_type=$(getint)
 
-  # Only care about type_constant blocks
+  # Only care about type_source blocks
 
-  if [ $block_type -eq 6 ]; then
+  if [ $block_type -eq 8 ]; then
     rm -f $tmp
-    off=$((block_off+strlen))
-    dd if=$file of=$tmp bs=1 skip=$off count=$strlen > /dev/null 2>&1
+    off=$((block_off+68)) # block_name location
+    dd if=$file of=$tmp bs=1 skip=$off count=$string_length > /dev/null 2>&1
 
     [ $? -ne 0 ] && continue
 
@@ -80,16 +81,16 @@ while [ $i -lt $nblocks ]; do
 
     if [ $? -eq 0 ]; then
       found=1
-      off=$((block_off))
-      dd if=$file of=$tmp bs=1 skip=$off count=$strlen > /dev/null 2>&1
+      off=$((block_off+16)) # block_id location
+      dd if=$file of=$tmp bs=1 skip=$off count=32 > /dev/null 2>&1
       [ $? -ne 0 ] && continue
 
       f=`sed 's, *$,,' $tmp`
       d=`dirname $f`
 
       mkdir -p $dir/$d
-      off=$((off+block_header_len))
-      dd if=$file of=$dir/$f bs=1 skip=$off count=$block_length > /dev/null 2>&1
+      off=$data_location
+      dd if=$file of=$dir/$f bs=1 skip=$off count=$data_length > /dev/null 2>&1
       if [ $? -ne 0 ]; then
         echo 'WARNING: failed to unpack input deck "'"$dir/$f"'"'
         continue
@@ -102,8 +103,8 @@ while [ $i -lt $nblocks ]; do
       [ $? -ne 0 ] && continue
 
       found=1
-      off=$((block_off+block_header_len))
-      dd if=$file of=$tmp bs=1 skip=$off count=$block_length > /dev/null 2>&1
+      off=$data_location
+      dd if=$file of=$tmp bs=1 skip=$off count=$data_length > /dev/null 2>&1
 
       if [ $? -ne 0 ]; then
         echo 'WARNING: failed to unpack source code'
@@ -115,7 +116,7 @@ while [ $i -lt $nblocks ]; do
         (echo begin-base64 664 $output
         fold $tmp
         echo
-        echo ====) | uudecode
+        echo ====) | uudecode -o $output
       else
         perl -MMIME::Base64 -0777 -ne \
             'print decode_base64($_)' < $tmp > $output

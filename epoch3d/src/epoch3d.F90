@@ -17,7 +17,7 @@ PROGRAM pic
 
   USE balance
   USE boundary
-  USE cfd_job_info
+  USE sdf_job_info
   USE custom_parser
   USE deck
   USE diagnostics

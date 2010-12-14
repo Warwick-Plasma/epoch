@@ -1,7 +1,7 @@
 MODULE probes
 
 #ifdef PARTICLE_PROBES
-  USE cfd
+  USE sdf
   USE mpi_subtype_control
   USE partlist
 
@@ -50,9 +50,9 @@ CONTAINS
 
 
 
-  SUBROUTINE write_probes(cfd_handle, code)
+  SUBROUTINE write_probes(sdf_handle, code)
 
-    TYPE(cfd_file_handle) :: cfd_handle
+    TYPE(sdf_file_handle) :: sdf_handle
     INTEGER, INTENT(IN) :: code
 
     TYPE(particle_probe), POINTER :: current_probe
@@ -87,42 +87,37 @@ CONTAINS
           probe_name =  TRIM(ADJUSTL(current_probe%name))
 
           ! dump particle Positions
-          CALL cfd_write_nd_particle_grid_with_iterator_all(cfd_handle, &
-              TRIM(probe_name), 'Probe_Grid', iterate_probe_particles, &
-              c_dimension_1d, npart_probe_global, npart_per_it, &
-              c_particle_cartesian, part_probe_offset)
+          CALL sdf_write_point_mesh(sdf_handle, TRIM(probe_name), &
+              'Grid/Probe/' // TRIM(probe_name), npart_probe_global, &
+              c_dimension_1d, iterate_probe_particles, part_probe_offset)
 
           ! dump Px
-          WRITE(temp_name, '(a, "_Px")') TRIM(probe_name)
-          CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-              TRIM(temp_name), TRIM(probe_name), iterate_probe_px, &
-              npart_probe_global, npart_per_it, TRIM(probe_name), &
-              'Probe_Grid', part_probe_offset)
+          WRITE(temp_name, '(a, "/Px")') TRIM(probe_name)
+          CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
+              TRIM(temp_name), 'Pa', npart_probe_global, TRIM(probe_name), &
+              iterate_probe_px, part_probe_offset)
 
           ! dump Py
-          WRITE(temp_name, '(a, "_Py")') TRIM(probe_name)
-          CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-              TRIM(temp_name), TRIM(probe_name), iterate_probe_py, &
-              npart_probe_global, npart_per_it, TRIM(probe_name), &
-              'Probe_Grid', part_probe_offset)
+          WRITE(temp_name, '(a, "/Py")') TRIM(probe_name)
+          CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
+              TRIM(temp_name), 'Pa', npart_probe_global, TRIM(probe_name), &
+              iterate_probe_py, part_probe_offset)
 
           ! dump Pz
-          WRITE(temp_name, '(a, "_Pz")') TRIM(probe_name)
-          CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-              TRIM(temp_name), TRIM(probe_name), iterate_probe_pz, &
-              npart_probe_global, npart_per_it, TRIM(probe_name), &
-              'Probe_Grid', part_probe_offset)
+          WRITE(temp_name, '(a, "/Pz")') TRIM(probe_name)
+          CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
+              TRIM(temp_name), 'Pa', npart_probe_global, TRIM(probe_name), &
+              iterate_probe_pz, part_probe_offset)
 
           ! dump particle weight function
-          WRITE(temp_name, '(a, "_weight")') TRIM(probe_name)
+          WRITE(temp_name, '(a, "/weight")') TRIM(probe_name)
 #ifdef PER_PARTICLE_WEIGHT
-          CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-              TRIM(temp_name), TRIM(probe_name), iterate_probe_weight, &
-              npart_probe_global, npart_per_it, TRIM(probe_name), &
-              'Probe_Grid', part_probe_offset)
+          CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
+              TRIM(temp_name), 'kg', npart_probe_global, TRIM(probe_name), &
+              iterate_probe_weight, part_probe_offset)
 #else
-          CALL cfd_write_real_constant(cfd_handle, TRIM(temp_name), &
-              TRIM(probe_name), weight, 0)
+          CALL sdf_write_srl(sdf_handle, TRIM(temp_name), TRIM(probe_name), &
+              weight)
 #endif
 
           CALL destroy_partlist(current_probe%sampled_particles)
@@ -141,14 +136,15 @@ CONTAINS
 
 
   ! iterator for particle positions
-  SUBROUTINE iterate_probe_particles(array, n_points, start, direction)
+  FUNCTION iterate_probe_particles(array, n_points, start, direction)
 
+    REAL(num) :: iterate_probe_particles
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
     TYPE(particle), POINTER, SAVE :: cur
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       cur=> current_list%head
@@ -163,18 +159,21 @@ CONTAINS
 
     n_points = part_count
 
-  END SUBROUTINE iterate_probe_particles
+    iterate_probe_particles = 0
+
+  END FUNCTION iterate_probe_particles
 
 
 
   ! iterator for particle momenta
-  SUBROUTINE iterate_probe_px(array, n_points, start)
+  FUNCTION iterate_probe_px(array, n_points, start)
 
+    REAL(num) :: iterate_probe_px
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       cur=> current_list%head
@@ -188,17 +187,20 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_probe_px
+    iterate_probe_px = 0
+
+  END FUNCTION iterate_probe_px
 
 
 
-  SUBROUTINE iterate_probe_py(array, n_points, start)
+  FUNCTION iterate_probe_py(array, n_points, start)
 
+    REAL(num) :: iterate_probe_py
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       cur=> current_list%head
@@ -213,17 +215,20 @@ CONTAINS
 
     n_points = part_count
 
-  END SUBROUTINE iterate_probe_py
+    iterate_probe_py = 0
+
+  END FUNCTION iterate_probe_py
 
 
 
-  SUBROUTINE iterate_probe_pz(array, n_points, start)
+  FUNCTION iterate_probe_pz(array, n_points, start)
 
+    REAL(num) :: iterate_probe_pz
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       cur=> current_list%head
@@ -238,18 +243,21 @@ CONTAINS
 
     n_points = part_count
 
-  END SUBROUTINE iterate_probe_pz
+    iterate_probe_pz = 0
+
+  END FUNCTION iterate_probe_pz
 
 
 
 #ifdef PER_PARTICLE_WEIGHT
-  SUBROUTINE iterate_probe_weight(array, n_points, start)
+  FUNCTION iterate_probe_weight(array, n_points, start)
 
+    REAL(num) :: iterate_probe_weight
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       cur=> current_list%head
@@ -264,7 +272,9 @@ CONTAINS
 
     n_points = part_count
 
-  END SUBROUTINE iterate_probe_weight
+    iterate_probe_weight = 0
+
+  END FUNCTION iterate_probe_weight
 #endif
 #endif
 

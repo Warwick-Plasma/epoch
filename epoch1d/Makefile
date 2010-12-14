@@ -39,23 +39,22 @@ DATE := $(shell date +%s)
 MACHINE := $(shell uname -n)
 PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(MACHINE)"'
 
-SRCFILES = balance.F90 boundary.f90 calc_df.F90 cfd.f90 cfd_common.f90 \
-  cfd_control.f90 cfd_input.f90 cfd_input_cartesian.f90 \
-  cfd_input_functions.f90 cfd_input_particle.f90 cfd_job_info.f90 \
-  cfd_output.f90 cfd_output_cartesian.f90 cfd_output_particle.f90 \
-  custom_deck.f90 custom_laser.f90 custom_parser.f90 deck.F90 \
-  deck_boundaries_block.f90 deck_constant_block.f90 deck_control_block.f90 \
-  deck_deo_block.f90 deck_eio_dist_fn_block.f90 \
-  deck_eio_particle_probe_block.F90 deck_ic_fields_block.f90 \
-  deck_ic_laser_block.f90 deck_io_block.F90 deck_species_block.F90 \
-  deck_window_block.f90 diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.f90 \
-  evaluator_blocks.f90 fields.f90 helper.F90 ic_module.f90 ionise.F90 \
-  iterators.F90 laser.f90 mpi_routines.F90 mpi_subtype_control.f90 \
-  particle_pointer_advance.f90 particle_temperature.F90 particles.F90 \
-  partlist.F90 probes.F90 setup.F90 shape_functions.F90 shared_data.F90 \
-  shunt.F90 simple_io.f90 split_particles.F90 stack.f90 strings.f90 \
-  strings_advanced.f90 tokenizer_blocks.f90 utilities.f90 version_data.F90 \
-  welcome.F90 window.F90
+SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
+  custom_laser.f90 custom_parser.f90 deck.F90 deck_boundaries_block.f90 \
+  deck_constant_block.f90 deck_control_block.f90 deck_deo_block.f90 \
+  deck_eio_dist_fn_block.f90 deck_eio_particle_probe_block.F90 \
+  deck_ic_fields_block.f90 deck_ic_laser_block.f90 deck_io_block.F90 \
+  deck_species_block.F90 deck_window_block.f90 diagnostics.F90 dist_fn.F90 \
+  epoch1d.F90 evaluate.f90 evaluator_blocks.f90 fields.f90 helper.F90 \
+  ic_module.f90 ionise.F90 iterators.F90 laser.f90 mpi_routines.F90 \
+  mpi_subtype_control.f90 particle_pointer_advance.f90 \
+  particle_temperature.F90 particles.F90 partlist.F90 probes.F90 sdf.f90 \
+  sdf_common.f90 sdf_control.f90 sdf_input.f90 sdf_input_cartesian.f90 \
+  sdf_input_point.f90 sdf_input_util.f90 sdf_job_info.f90 sdf_output.f90 \
+  sdf_output_cartesian.f90 sdf_output_point.f90 sdf_output_util.f90 setup.F90 \
+  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
+  split_particles.F90 stack.f90 strings.f90 strings_advanced.f90 \
+  tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -118,29 +117,14 @@ visitclean:
 balance.o: balance.F90 boundary.o mpi_subtype_control.o partlist.o
 boundary.o: boundary.f90 deck_io_block.o particle_temperature.o partlist.o
 calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
-cfd.o: cfd.f90 cfd_common.o cfd_control.o cfd_input.o cfd_input_cartesian.o \
-  cfd_input_functions.o cfd_input_particle.o cfd_output.o \
-  cfd_output_cartesian.o cfd_output_particle.o
-cfd_common.o: cfd_common.f90 cfd_job_info.o shared_data.o
-cfd_control.o: cfd_control.f90 cfd_common.o cfd_input.o cfd_output.o
-cfd_input.o: cfd_input.f90 cfd_common.o cfd_input_functions.o
-cfd_input_cartesian.o: cfd_input_cartesian.f90 cfd_common.o \
-  cfd_input_functions.o
-cfd_input_functions.o: cfd_input_functions.f90 cfd_common.o
-cfd_input_particle.o: cfd_input_particle.f90 cfd_common.o cfd_input_functions.o
-cfd_job_info.o: cfd_job_info.f90
-cfd_output.o: cfd_output.f90 cfd_common.o cfd_job_info.o version_data.o
-cfd_output_cartesian.o: cfd_output_cartesian.f90 cfd_common.o cfd_output.o
-cfd_output_particle.o: cfd_output_particle.f90 cfd_common.o cfd_output.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o
-deck.o: deck.F90 cfd.o custom_deck.o deck_boundaries_block.o \
-  deck_constant_block.o deck_control_block.o deck_deo_block.o \
-  deck_eio_dist_fn_block.o deck_eio_particle_probe_block.o \
-  deck_ic_fields_block.o deck_ic_laser_block.o deck_io_block.o \
-  deck_species_block.o deck_window_block.o shared_data.o strings.o \
-  version_data.o
+deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_constant_block.o \
+  deck_control_block.o deck_deo_block.o deck_eio_dist_fn_block.o \
+  deck_eio_particle_probe_block.o deck_ic_fields_block.o deck_ic_laser_block.o \
+  deck_io_block.o deck_species_block.o deck_window_block.o sdf.o shared_data.o \
+  strings.o version_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings.o
 deck_constant_block.o: deck_constant_block.f90 strings_advanced.o
 deck_control_block.o: deck_control_block.f90 fields.o strings_advanced.o
@@ -155,12 +139,13 @@ deck_io_block.o: deck_io_block.F90 strings_advanced.o
 deck_species_block.o: deck_species_block.F90 setup.o simple_io.o \
   strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
-diagnostics.o: diagnostics.F90 calc_df.o cfd.o deck.o dist_fn.o iterators.o \
-  mpi_subtype_control.o probes.o shared_data.o version_data.o $(ENCODED_SOURCE)
-dist_fn.o: dist_fn.F90 cfd.o mpi_subtype_control.o shared_data.o
-epoch1d.o: epoch1d.F90 balance.o boundary.o cfd_job_info.o custom_parser.o \
-  deck.o diagnostics.o fields.o helper.o ic_module.o ionise.o mpi_routines.o \
-  particles.o setup.o split_particles.o welcome.o window.o
+diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o \
+  mpi_subtype_control.o probes.o sdf.o shared_data.o version_data.o \
+  $(ENCODED_SOURCE)
+dist_fn.o: dist_fn.F90 mpi_subtype_control.o sdf.o shared_data.o
+epoch1d.o: epoch1d.F90 balance.o boundary.o custom_parser.o deck.o \
+  diagnostics.o fields.o helper.o ic_module.o ionise.o mpi_routines.o \
+  particles.o sdf_job_info.o setup.o split_particles.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o
@@ -175,11 +160,28 @@ particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 shape_functions.o
 particles.o: particles.F90 boundary.o shape_functions.o
 partlist.o: partlist.F90 shared_data.o
-probes.o: probes.F90 cfd.o mpi_subtype_control.o partlist.o
-setup.o: setup.F90 cfd.o fields.o mpi_subtype_control.o partlist.o \
+probes.o: probes.F90 mpi_subtype_control.o partlist.o sdf.o
+sdf.o: sdf.f90 sdf_common.o sdf_control.o sdf_input.o sdf_input_cartesian.o \
+  sdf_input_point.o sdf_input_util.o sdf_output.o sdf_output_cartesian.o \
+  sdf_output_point.o sdf_output_util.o
+sdf_common.o: sdf_common.f90 sdf_job_info.o
+sdf_control.o: sdf_control.f90 sdf_common.o sdf_input.o sdf_output.o \
+  sdf_output_util.o
+sdf_input.o: sdf_input.f90 sdf_common.o
+sdf_input_cartesian.o: sdf_input_cartesian.f90 sdf_common.o sdf_input.o
+sdf_input_point.o: sdf_input_point.f90 sdf_common.o sdf_input.o
+sdf_input_util.o: sdf_input_util.f90 sdf_input.o sdf_input_cartesian.o \
+  sdf_input_point.o
+sdf_job_info.o: sdf_job_info.f90
+sdf_output.o: sdf_output.f90 sdf_common.o
+sdf_output_cartesian.o: sdf_output_cartesian.f90 sdf_common.o sdf_output.o
+sdf_output_point.o: sdf_output_point.f90 sdf_common.o sdf_output.o
+sdf_output_util.o: sdf_output_util.f90 sdf_output.o sdf_output_cartesian.o \
+  sdf_output_point.o
+setup.o: setup.F90 fields.o mpi_subtype_control.o partlist.o sdf.o \
   shared_data.o strings.o version_data.o $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
-shared_data.o: shared_data.F90 cfd_job_info.o
+shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.f90 boundary.o mpi_subtype_control.o
 split_particles.o: split_particles.F90 helper.o shared_data.o

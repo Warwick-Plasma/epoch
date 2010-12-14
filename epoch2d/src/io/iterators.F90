@@ -11,15 +11,16 @@ MODULE iterators
 CONTAINS
 
   ! iterator for particle positions
-  SUBROUTINE iterate_particles(array, n_points, start, direction)
+  FUNCTION iterate_particles(array, n_points, start, direction)
 
+    REAL(num) :: iterate_particles
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -37,7 +38,9 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_particles
+    iterate_particles = 0
+
+  END FUNCTION iterate_particles
 
 
 
@@ -45,14 +48,15 @@ CONTAINS
   ! iterator for particle weight
   ! Only present if you are using the PER_PARTICLE_WEIGHT
   ! Precompiler option
-  SUBROUTINE iterate_weight(array, n_points, start)
+  FUNCTION iterate_weight(array, n_points, start)
 
+    REAL(num) :: iterate_weight
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -70,20 +74,23 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_weight
+    iterate_weight = 0
+
+  END FUNCTION iterate_weight
 #endif
 
 
 
   ! iterator for particle momenta
-  SUBROUTINE iterate_px(array, n_points, start)
+  FUNCTION iterate_px(array, n_points, start)
 
+    REAL(num) :: iterate_px
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -101,18 +108,21 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_px
+    iterate_px = 0
+
+  END FUNCTION iterate_px
 
 
 
-  SUBROUTINE iterate_py(array, n_points, start)
+  FUNCTION iterate_py(array, n_points, start)
 
+    REAL(num) :: iterate_py
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -130,18 +140,21 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_py
+    iterate_py = 0
+
+  END FUNCTION iterate_py
 
 
 
-  SUBROUTINE iterate_pz(array, n_points, start)
+  FUNCTION iterate_pz(array, n_points, start)
 
+    REAL(num) :: iterate_pz
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -159,19 +172,22 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_pz
+    iterate_pz = 0
+
+  END FUNCTION iterate_pz
 
 
 
   ! iterator for particle velocities
-  SUBROUTINE iterate_vx(array, n_points, start)
+  FUNCTION iterate_vx(array, n_points, start)
 
+    REAL(num) :: iterate_vx
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
@@ -197,18 +213,21 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_vx
+    iterate_vx = 0
+
+  END FUNCTION iterate_vx
 
 
 
-  SUBROUTINE iterate_vy(array, n_points, start)
+  FUNCTION iterate_vy(array, n_points, start)
 
+    REAL(num) :: iterate_vy
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
@@ -234,18 +253,21 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_vy
+    iterate_vy = 0
+
+  END FUNCTION iterate_vy
 
 
 
-  SUBROUTINE iterate_vz(array, n_points, start)
+  FUNCTION iterate_vz(array, n_points, start)
 
+    REAL(num) :: iterate_vz
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
@@ -271,19 +293,22 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_vz
+    iterate_vz = 0
+
+  END FUNCTION iterate_vz
 
 
 
   ! iterator for particle charge
-  SUBROUTINE iterate_charge(array, n_points, start)
+  FUNCTION iterate_charge(array, n_points, start)
 
+    REAL(num) :: iterate_charge
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -305,19 +330,22 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_charge
+    iterate_charge = 0
+
+  END FUNCTION iterate_charge
 
 
 
   ! iterator for particle mass
-  SUBROUTINE iterate_mass(array, n_points, start)
+  FUNCTION iterate_mass(array, n_points, start)
 
+    REAL(num) :: iterate_mass
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -339,20 +367,23 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_mass
+    iterate_mass = 0
+
+  END FUNCTION iterate_mass
 
 
 
 #ifdef PARTICLE_DEBUG
   ! iterator for particle processor
-  SUBROUTINE iterate_processor(array, n_points, start)
+  FUNCTION iterate_processor(array, n_points, start)
 
+    REAL(num) :: iterate_processor
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -371,18 +402,21 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_processor
+    iterate_processor = 0
+
+  END FUNCTION iterate_processor
 
 
 
-  SUBROUTINE iterate_processor0(array, n_points, start)
+  FUNCTION iterate_processor0(array, n_points, start)
 
+    REAL(num) :: iterate_processor0
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    INTEGER(8), INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
-    INTEGER(8) :: part_count
+    INTEGER :: part_count
 
     IF (start)  THEN
       CALL start_particle_list(current_family, current_list, cur)
@@ -401,7 +435,9 @@ CONTAINS
     ENDDO
     n_points = part_count
 
-  END SUBROUTINE iterate_processor0
+    iterate_processor0 = 0
+
+  END FUNCTION iterate_processor0
 #endif
 
 END MODULE iterators

@@ -1,7 +1,7 @@
 MODULE diagnostics
 
   USE calc_df
-  USE cfd
+  USE sdf
   USE deck
   USE dist_fn
   USE encoded_source
@@ -17,7 +17,7 @@ MODULE diagnostics
 
   PUBLIC :: set_dt, output_routines, iterate_charge
 
-  TYPE(cfd_file_handle) :: cfd_handle
+  TYPE(sdf_file_handle) :: sdf_handle
   INTEGER(KIND=8), ALLOCATABLE :: species_offset(:)
 
 CONTAINS
@@ -30,10 +30,9 @@ CONTAINS
     CHARACTER(LEN=c_max_string_length) :: temp_name
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER :: ispecies, code
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: restart_flag
+    LOGICAL :: restart_flag
 
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
         .AND. MOD(i, stdout_frequency) .EQ. 0) THEN
@@ -49,7 +48,7 @@ CONTAINS
 
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
-    WRITE(filename_desc, '("(a, ''/'', i", i3.3, ".", i3.3, ", ''.cfd'')")') &
+    WRITE(filename_desc, '("(a, ''/'', i", i3.3, ".", i3.3, ", ''.sdf'')")') &
         n_zeros, n_zeros
     WRITE(filename, filename_desc) TRIM(data_dir), output_file
 
@@ -68,36 +67,33 @@ CONTAINS
 
     ! Set a restart_flag to pass to the file header
     IF (IAND(code, c_io_restartable) .NE. 0) THEN
-      restart_flag = 1
+      restart_flag = .TRUE.
     ELSE
-      restart_flag = 0
+      restart_flag = .FALSE.
     ENDIF
 
     ALLOCATE(array(-2:nx+3))
 
     ! open the file
-    ! (filename, rank of current process, MPI communicator (can be
-    ! MPI_COMM_WORLD), file mode (c_cfd_read or c_cfd_write),
-    ! cycle number, simulation time, job id)
-    CALL cfd_open(cfd_handle, filename, rank, comm, c_cfd_write, i, time, jobid)
-    CALL cfd_write_job_info(cfd_handle, c_code_io_version, c_version, &
-        c_revision, defines, c_compile_date, run_date, restart_flag, &
-        c_code_name, c_commit_id, sha1sum, c_compile_machine, &
-        c_compile_flags, 0)
+    CALL sdf_open(sdf_handle, filename, rank, comm, c_sdf_write)
+    CALL sdf_write_header(sdf_handle, 'Epoch1d', 1, i, time, restart_flag, &
+        jobid)
+    CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_commit_id, &
+        sha1sum, c_compile_machine, c_compile_flags, defines, c_compile_date, &
+        run_date)
 
     CALL write_particle_grid(code)
 
     ! Write the cartesian mesh
-    ! (mesh name, mesh class, x_array, y_array, rank used for writing)
     IF (IAND(dumpmask(c_dump_grid), code) .NE. 0) THEN
       IF (.NOT. use_offset_grid) THEN
-        CALL cfd_write_1d_cartesian_grid(cfd_handle, "Grid", "Grid", &
-            x_global(1:nx_global), 0)
+        CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
+            xb_global)
       ELSE
-        CALL cfd_write_1d_cartesian_grid(cfd_handle, "Grid", "Grid", &
-            x_offset_global(1:nx_global), 0)
-        CALL cfd_write_1d_cartesian_grid(cfd_handle, "Grid_Full", "Grid", &
-            x_global(1:nx_global), 0)
+        CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
+            xb_offset_global)
+        CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid_full', &
+            'Grid/Grid_Full', xb_global)
       ENDIF
     ENDIF
 
@@ -106,7 +102,7 @@ CONTAINS
         iterate_weight)
 #else
     IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) &
-        CALL cfd_write_real_constant("Weight", "Particles", weight, 0)
+        CALL sdf_write_srl(sdf_handle, 'weight', 'Particles/Weight', weight)
 #endif
     CALL write_particle_variable(c_dump_part_px, code, 'Px', iterate_px)
     CALL write_particle_variable(c_dump_part_py, code, 'Py', iterate_py)
@@ -125,59 +121,73 @@ CONTAINS
         iterate_processor0)
 #endif
 
-    CALL write_field(c_dump_ex, code, 'Ex', 'Electric Field', ex)
-    CALL write_field(c_dump_ey, code, 'Ey', 'Electric Field', ey)
-    CALL write_field(c_dump_ez, code, 'Ez', 'Electric Field', ez)
+    CALL write_field(c_dump_ex, code, 'ex', 'Electric Field/Ex', 'Volt/m', &
+        c_stagger_ex, ex)
+    CALL write_field(c_dump_ey, code, 'ey', 'Electric Field/Ey', 'Volt/m', &
+        c_stagger_ey, ey)
+    CALL write_field(c_dump_ez, code, 'ez', 'Electric Field/Ez', 'Volt/m', &
+        c_stagger_ez, ez)
 
-    CALL write_field(c_dump_bx, code, 'Bx', 'Magnetic Field', bx)
-    CALL write_field(c_dump_by, code, 'By', 'Magnetic Field', by)
-    CALL write_field(c_dump_bz, code, 'Bz', 'Magnetic Field', bz)
+    CALL write_field(c_dump_bx, code, 'bx', 'Magnetic Field/Bx', 'Tesla', &
+        c_stagger_bx, bx)
+    CALL write_field(c_dump_by, code, 'by', 'Magnetic Field/By', 'Tesla', &
+        c_stagger_by, by)
+    CALL write_field(c_dump_bz, code, 'bz', 'Magnetic Field/Bz', 'Tesla', &
+        c_stagger_bz, bz)
 
-    CALL write_field(c_dump_jx, code, 'Jx', 'Current', jx)
-    CALL write_field(c_dump_jy, code, 'Jy', 'Current', jy)
-    CALL write_field(c_dump_jz, code, 'Jz', 'Current', jz)
+    CALL write_field(c_dump_jx, code, 'jx', 'Current/Jx', 'Amp', &
+        c_stagger_jx, jx)
+    CALL write_field(c_dump_jy, code, 'jy', 'Current/Jy', 'Amp', &
+        c_stagger_jy, jy)
+    CALL write_field(c_dump_jz, code, 'jz', 'Current/Jz', 'Amp', &
+        c_stagger_jz, jz)
 
     ! These are derived variables from the particles
-    CALL write_nspecies_field(c_dump_ekbar, code, &
-        'EkBar', 'EkBar', calc_ekbar, array)
+    CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &
+        'Derived/EkBar', '?', c_stagger_cell_centre, &
+        calc_ekbar, array)
 
-    CALL write_nspecies_field(c_dump_mass_density, code, &
-        'Mass_density', 'Derived', calc_mass_density, array)
+    CALL write_nspecies_field(c_dump_mass_density, code, 'mass_density', &
+        'Derived/Mass_Density', '?', c_stagger_cell_centre, &
+        calc_mass_density, array)
 
-    CALL write_nspecies_field(c_dump_charge_density, code, &
-        'Charge_density', 'Derived', calc_charge_density, array)
+    CALL write_nspecies_field(c_dump_charge_density, code, 'charge_density', &
+        'Derived/Charge_Density', '?', c_stagger_cell_centre, &
+        calc_charge_density, array)
 
-    CALL write_nspecies_field(c_dump_number_density, code, &
-        'Number_density', 'Derived', calc_number_density, array)
+    CALL write_nspecies_field(c_dump_number_density, code, 'number_density', &
+        'Derived/Number_Density', '?', c_stagger_cell_centre, &
+        calc_number_density, array)
 
-    CALL write_nspecies_field(c_dump_temperature, code, &
-        'Temperature', 'Derived', calc_temperature, array)
+    CALL write_nspecies_field(c_dump_temperature, code, 'temperature', &
+        'Derived/Temperature', '?', c_stagger_cell_centre, &
+        calc_temperature, array)
 
 #ifdef FIELD_DEBUG
     array = rank
-    CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, "Rank", &
-        "Processor", dims, stagger, "Grid", "Grid", array, subtype_field, &
+    CALL sdf_write_plain_variable(sdf_handle, 'rank', 'Processor/Rank', '', &
+        dims, c_stagger_cell_centre, 'grid', array, subtype_field, &
         subarray_field)
 #endif
 
     IF (IAND(dumpmask(c_dump_dist_fns), code) .NE. 0) THEN
-      CALL write_dist_fns(cfd_handle, code)
+      CALL write_dist_fns(sdf_handle, code)
     ENDIF
 
 #ifdef PARTICLE_PROBES
     IF (IAND(dumpmask(c_dump_probes), code) .NE. 0) THEN
-      CALL write_probes(cfd_handle, code)
+      CALL write_probes(sdf_handle, code)
     ENDIF
 #endif
 
-    IF (restart_flag .EQ. 1 .AND. LEN(source_code) .GT. 0) THEN
-      CALL write_input_decks(cfd_handle)
-      CALL cfd_write_source_code(cfd_handle, "Code", &
+    IF (restart_flag .AND. LEN(source_code) .GT. 0) THEN
+      CALL write_input_decks(sdf_handle)
+      CALL sdf_write_source_code(sdf_handle, "Code", &
           "base64_packed_source_code", source_code, last_line, 0)
     ENDIF
 
     ! close the file
-    CALL cfd_close(cfd_handle)
+    CALL sdf_close(sdf_handle)
 
     output_file = output_file + 1
     IF (rank .EQ. 0) THEN
@@ -345,12 +355,12 @@ CONTAINS
 
 
 
-  SUBROUTINE write_field(id, code, name, class, array)
+  SUBROUTINE write_field(id, code, block_id, name, units, stagger, array)
 
     INTEGER, INTENT(IN) :: id, code
-    CHARACTER(LEN=*), INTENT(IN) :: name, class
+    CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
+    INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:), INTENT(IN) :: array
-    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: should_dump
 
@@ -363,23 +373,21 @@ CONTAINS
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
 
-    ! (variable name, variable class, global grid dimensions,
-    ! grid stagger, mesh name, mesh class, variable,
-    ! mpi type describing data distribution)
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
-      CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, &
-          TRIM(name), TRIM(class), dims, stagger, &
-          'Grid', 'Grid', array, subtype_field, subarray_field)
+      CALL sdf_write_plain_variable(sdf_handle, &
+          TRIM(block_id), TRIM(name), &
+          TRIM(units), dims, stagger, 'grid', &
+          array, subtype_field, subarray_field)
     ENDIF
 
     IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
       averaged_data(id)%array = averaged_data(id)%array &
           / averaged_data(id)%real_time_after_average
 
-      CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, &
-          TRIM(name) // '_averaged', TRIM(class), dims, stagger, &
-          'Grid', 'Grid', averaged_data(id)%array(:,1), &
-          subtype_field, subarray_field)
+      CALL sdf_write_plain_variable(sdf_handle, &
+          TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
+          TRIM(units), dims, stagger, 'grid', &
+          averaged_data(id)%array(:,1), subtype_field, subarray_field)
 
       averaged_data(id)%real_time_after_average = 0.0_num
       averaged_data(id)%array = 0.0_num
@@ -389,15 +397,16 @@ CONTAINS
 
 
 
-  SUBROUTINE write_nspecies_field(id, code, name, class, func, array)
+  SUBROUTINE write_nspecies_field(id, code, block_id, name, units, stagger, &
+      func, array)
 
     INTEGER, INTENT(IN) :: id, code
-    CHARACTER(LEN=*), INTENT(IN) :: name, class
+    CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
+    INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
-    REAL(num), DIMENSION(c_ndims) :: stagger = 0.0_num
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, should_dump
-    CHARACTER(LEN=c_max_string_length) :: temp_name
+    CHARACTER(LEN=c_max_string_length) :: temp_block_id, temp_name
 
     INTERFACE
       SUBROUTINE func(data_array, current_species)
@@ -419,19 +428,23 @@ CONTAINS
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
       IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
         CALL func(array, 0)
-        CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, &
-            TRIM(name), TRIM(class), dims, stagger, &
-            'Grid', 'Grid', array, subtype_field, subarray_field)
+        CALL sdf_write_plain_variable(sdf_handle, &
+            TRIM(block_id), TRIM(name), &
+            TRIM(units), dims, stagger, 'grid', &
+            array, subtype_field, subarray_field)
       ENDIF
 
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
         DO ispecies = 1, n_species
           CALL func(array, ispecies)
+          WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
+              TRIM(particle_species(ispecies)%name)
           WRITE(temp_name, '(a, "_", a)') TRIM(name), &
               TRIM(particle_species(ispecies)%name)
-          CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, &
-              TRIM(ADJUSTL(temp_name)), TRIM(class), dims, stagger, &
-              'Grid', 'Grid', array, subtype_field, subarray_field)
+          CALL sdf_write_plain_variable(sdf_handle, &
+              TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
+              TRIM(units), dims, stagger, 'grid', &
+              array, subtype_field, subarray_field)
         ENDDO
       ENDIF
     ENDIF
@@ -442,19 +455,22 @@ CONTAINS
           / averaged_data(id)%real_time_after_average
 
       IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
-        CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, &
-            TRIM(name) // '_averaged', TRIM(class), dims, stagger, &
-            'Grid', 'Grid', averaged_data(id)%array(:,1), &
-            subtype_field, subarray_field)
+        CALL sdf_write_plain_variable(sdf_handle, &
+            TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
+            TRIM(units), dims, stagger, 'grid', &
+            averaged_data(id)%array(:,1), subtype_field, subarray_field)
       ENDIF
 
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
         DO ispecies = 1, n_species
+          WRITE(temp_block_id, '(a, "_", a, "_averaged")') TRIM(block_id), &
+              TRIM(particle_species(ispecies)%name)
           WRITE(temp_name, '(a, "_", a, "_averaged")') TRIM(name), &
               TRIM(particle_species(ispecies)%name)
-          CALL cfd_write_1d_cartesian_variable_parallel(cfd_handle, &
-              TRIM(ADJUSTL(temp_name)), TRIM(class), dims, stagger, &
-              'Grid', 'Grid', averaged_data(id)%array(:,ispecies+1), &
+          CALL sdf_write_plain_variable(sdf_handle, &
+              TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
+              TRIM(units), dims, stagger, 'grid', &
+              averaged_data(id)%array(:,ispecies+1), &
               subtype_field, subarray_field)
         ENDDO
       ENDIF
@@ -470,7 +486,7 @@ CONTAINS
   SUBROUTINE species_offset_init
 
     INTEGER(KIND=8) :: species_count
-    INTEGER(KIND=8), ALLOCATABLE :: npart_species_per_proc(:)
+    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_species_per_proc
     INTEGER :: i, ispecies
 
     IF (ALLOCATED(species_offset)) RETURN
@@ -509,11 +525,11 @@ CONTAINS
 
     DO ispecies = 1, n_species
       IF (current_family%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
-        CALL cfd_write_nd_particle_grid_with_iterator_all(cfd_handle, &
-            'Particles_' // TRIM(current_family%name), 'Grid', &
-            iterate_particles, c_dimension_1d, &
-            particle_species(ispecies)%count, npart_per_it, &
-            c_particle_cartesian, species_offset(ispecies))
+        CALL sdf_write_point_mesh(sdf_handle, &
+            'grid/' // TRIM(current_family%name), &
+            'Grid/Point/' // TRIM(current_family%name), &
+            particle_species(ispecies)%count, c_dimension_1d, &
+            iterate_particles, species_offset(ispecies))
       ENDIF
 
       CALL advance_particle_family_only(current_family)
@@ -529,12 +545,13 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: name
 
     INTERFACE
-      SUBROUTINE iterator(data, npart_it, start)
+      FUNCTION iterator(array, npart_it, start)
         USE shared_data
-        REAL(num), DIMENSION(:), INTENT(INOUT) :: data
-        INTEGER(8), INTENT(INOUT) :: npart_it
+        REAL(num) :: iterator
+        REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER, INTENT(INOUT) :: npart_it
         LOGICAL, INTENT(IN) :: start
-      END SUBROUTINE iterator
+      END FUNCTION iterator
     END INTERFACE
 
     INTEGER :: ispecies
@@ -547,11 +564,13 @@ CONTAINS
 
     DO ispecies = 1, n_species
       IF (current_family%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
-        CALL cfd_write_nd_particle_variable_with_iterator_all(cfd_handle, &
-            TRIM(name), 'Particles_' // TRIM(current_family%name), iterator, &
-            particle_species(ispecies)%count, npart_per_it, &
-            'Particles_' // TRIM(current_family%name), 'Grid', &
-            species_offset(ispecies))
+        CALL sdf_write_point_variable(sdf_handle, &
+            TRIM(name) // '/' // TRIM(current_family%name), &
+            'Particles/' // TRIM(current_family%name) // '/' // &
+            TRIM(name), '', &
+            particle_species(ispecies)%count, &
+            'grid/' // TRIM(current_family%name), &
+            iterator, species_offset(ispecies))
       ENDIF
 
       CALL advance_particle_family_only(current_family)

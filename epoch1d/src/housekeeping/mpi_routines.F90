@@ -111,7 +111,8 @@ CONTAINS
 
     ALLOCATE(x(-2:nx+3))
     ALLOCATE(x_global(-2:nx_global+3))
-    ALLOCATE(x_offset_global(-2:nx_global+3))
+    ALLOCATE(xb_global(nx_global+1))
+    ALLOCATE(xb_offset_global(nx_global+1))
     ALLOCATE(ex(-2:nx+3), ey(-2:nx+3), ez(-2:nx+3))
     ALLOCATE(bx(-2:nx+3), by(-2:nx+3), bz(-2:nx+3))
     ALLOCATE(jx(-2:nx+3), jy(-2:nx+3), jz(-2:nx+3))

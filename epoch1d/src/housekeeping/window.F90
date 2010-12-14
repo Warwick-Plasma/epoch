@@ -21,6 +21,7 @@ CONTAINS
       x_min_local = x_min_local+dx
       x_min = x_min+dx
       x_global = x_global+dx
+      xb_global = xb_global+dx
       x = x+dx
 
       x_maxs = x_maxs+dx
