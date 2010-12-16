@@ -100,15 +100,11 @@ tidy:
 	@rm -rf $(OBJDIR) *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 
 visit:
-	@cd ../VisIt; xml2makefile -clobber cfd.xml; make
-
-visit2:
-	@cd ../VisIt; xml2info -clobber cfd2.xml; \
-	  xml2cmake -clobber cfd2.xml; cmake .; make
+	@cd ../VisIt; ./build sdf
 
 visitclean:
 	@cd ../VisIt; make clean; \
-	  rm -rf .depend *.d CFD*Info.C CFD*Info.h CMake* cmake* Makefile
+	  rm -rf .depend *.d *Info.C *Info.h CMake* cmake* Makefile
 
 .PHONY: clean tidy visit visitclean
 

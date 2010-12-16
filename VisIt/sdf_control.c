@@ -1,0 +1,480 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "sdf_common.h"
+
+#ifdef PARALLEL
+#include <mpi.h>
+#endif
+
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#define ABS(a) (((a) > 0) ? (a) : (-(a)))
+
+int sdf_indent = 0;
+
+sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm)
+{
+    sdf_file_t *h;
+    int ret;
+
+    // Create filehandle
+    h = malloc(sizeof(*h));
+    memset(h, 0, sizeof(*h));
+
+#ifdef SDF_DEBUG
+    h->dbg_count = DBG_CHUNK;
+    h->dbg = h->dbg_buf = malloc(h->dbg_count);
+#endif
+    h->string_length = 64;
+
+    h->comm = comm;
+    h->rank = rank;
+
+    h->done_header = 0;
+
+#ifdef PARALLEL
+    ret = MPI_File_open(h->comm, (char*)filename, MPI_MODE_RDONLY,
+        MPI_INFO_NULL, &h->filehandle);
+    if (ret) h->filehandle = 0;
+#else
+    h->filehandle = fopen(filename, "r");
+#endif
+    if (!h->filehandle) {
+        free(h);
+        h = NULL;
+        return h;
+    }
+
+    ret = sdf_read_header(h);
+    if (ret) h = NULL;
+
+    return h;
+}
+
+
+#define FREE_ARRAY(value) do { \
+    if (value) { \
+        int i; \
+        for (i = 0; i < b->ndims; i++) \
+            free(value[i]); \
+        free(value); \
+    }} while(0)
+
+
+static int sdf_free_block_data(sdf_block_t *b)
+{
+    int i;
+
+    if (!b) return 1;
+
+    if (b->grids) {
+        for (i = 0; i < b->ndims; i++) if (b->grids[i]) free(b->grids[i]);
+        free(b->grids);
+    }
+    if (b->data) free(b->data);
+    b->grids = NULL;
+    b->data = NULL;
+    b->done_data = 0;
+
+    return 0;
+}
+
+
+static int sdf_free_block(sdf_block_t *b)
+{
+    if (!b) return 1;
+
+    if (b->id) free(b->id);
+    if (b->units) free(b->units);
+    if (b->mesh_id) free(b->mesh_id);
+    if (b->material_id) free(b->material_id);
+    if (b->name) free(b->name);
+    if (b->material_name) free(b->material_name);
+    if (b->dims_in) free(b->dims_in);
+    if (b->dim_mults) free(b->dim_mults);
+    if (b->extents) free(b->extents);
+    FREE_ARRAY(b->variable_ids);
+    FREE_ARRAY(b->material_names);
+    sdf_free_block_data(b);
+
+    free(b);
+    b = NULL;
+
+    return 0;
+}
+
+
+
+int sdf_free_blocklist_data(sdf_file_t *h)
+{
+    sdf_block_t *b, *next;
+    int i;
+
+    if (!h || !h->filehandle) return 1;
+
+    // Destroy blocklist
+    if (h->blocklist) {
+        b = h->blocklist;
+        for (i=0; i < h->nblocks; i++) {
+            next = b->next_block;
+            sdf_free_block_data(b);
+            b = next;
+        }
+    }
+
+    return 0;
+}
+
+
+
+static int sdf_free_handle(sdf_file_t *h)
+{
+    sdf_block_t *b, *next;
+    int i;
+
+    if (!h || !h->filehandle) return 1;
+
+    // Destroy blocklist
+    if (h->blocklist) {
+        b = h->blocklist;
+        for (i=0; i < h->nblocks; i++) {
+            next = b->next_block;
+            sdf_free_block(b);
+            b = next;
+        }
+        h->blocklist = NULL;
+    }
+    // Destroy handle
+    if (h->buffer) free(h->buffer);
+    if (h->code_name) free(h->code_name);
+    h->filehandle = 0;
+    free(h);
+    h = NULL;
+
+    return 0;
+}
+
+
+
+int sdf_close(sdf_file_t *h)
+{
+    // No open file
+    if (!h || !h->filehandle) return 1;
+
+#ifdef PARALLEL
+    MPI_Barrier(h->comm);
+
+    MPI_File_close(&h->filehandle);
+#else
+    fclose(h->filehandle);
+#endif
+
+    // Destroy filehandle
+    sdf_free_handle(h);
+
+    return 0;
+}
+
+
+
+sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id)
+{
+    sdf_block_t *current, *b;
+    int i, len;
+
+    if (!h || !h->blocklist)
+        return NULL;
+
+    current = h->blocklist;
+    len = strlen(id) + 1;
+    for (i=0; i < h->nblocks; i++) {
+        b = current;
+        if (memcmp(id, b->id, len) == 0) return b;
+        current = b->next_block;
+    }
+
+    return NULL;
+}
+
+
+
+sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name)
+{
+    sdf_block_t *current, *b;
+    int i, len;
+
+    if (!h || !h->blocklist)
+        return NULL;
+
+    current = h->blocklist;
+    len = strlen(name) + 1;
+    for (i=0; i < h->nblocks; i++) {
+        b = current;
+        if (memcmp(name, b->name, len) == 0) return b;
+        current = b->next_block;
+    }
+
+    return NULL;
+}
+
+
+
+int sdf_set_rank_master(sdf_file_t *h, int rank)
+{
+    if (h)
+        h->rank_master = rank;
+    else
+        return -1;
+
+    return 0;
+}
+
+
+
+int sdf_read_nblocks(sdf_file_t *h)
+{
+    if (h)
+        return h->nblocks;
+    else
+        return -1;
+}
+
+
+
+int sdf_set_ncpus(sdf_file_t *h, int ncpus)
+{
+    if (!h) return -1;
+
+    h->ncpus = ncpus;
+    return 0;
+}
+
+
+
+/*
+int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
+{
+    if (h && jobid)
+        memcpy(jobid, &h->jobid, sizeof(jobid));
+    else
+        return -1;
+
+    return 0;
+}
+*/
+
+
+
+static int factor2d(int ncpus, int *dims, int *cpu_split)
+{
+    const int ndims = 2;
+    int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
+    int i, j, ii, jj, n, cpus, maxcpus, grid, split_big;
+    float gridav, deviation, mindeviation;
+
+    cpus = 1;
+    gridav = 1;
+    for (i=0; i < ndims; i++) {
+        dmin[i] = MIN(ncpus, dims[i]);
+        cpus = cpus * dmin[i];
+        gridav = gridav * dims[i];
+    }
+    mindeviation = gridav;
+    gridav = gridav / ncpus;
+
+    maxcpus = MIN(ncpus,cpus);
+
+    for (j=0; j < dmin[1]; j++) {
+        cpu_split_tmp[1] = dmin[1]-j;
+    for (i=0; i < dmin[0]; i++) {
+        cpu_split_tmp[0] = dmin[0]-i;
+
+        cpus = 1;
+        for (n=0; n < ndims; n++)
+            cpus = cpus * cpu_split_tmp[n];
+
+        if (cpus != maxcpus) continue;
+
+        for (n=0; n < ndims; n++) {
+            npoint_min[n] = dims[n] / cpu_split_tmp[n];
+            split_big = dims[n] - cpu_split_tmp[n] * npoint_min[n];
+            grids[n][0] = npoint_min[n];
+            grids[n][1] = npoint_min[n] + 1;
+            if (cpu_split_tmp[n] == split_big) grids[n][0] = 0;
+            if (split_big == 0) grids[n][1] = 0;
+        }
+
+        for (ii=0; ii < 2; ii++) {
+        for (jj=0; jj < 2; jj++) {
+            grid = grids[0][ii] * grids[1][jj];
+            deviation = ABS(grid-gridav);
+            if (deviation < mindeviation) {
+              mindeviation = deviation;
+              for (n=0; n < ndims; n++)
+                  cpu_split[n] = cpu_split_tmp[n];
+            }
+        }}
+    }}
+
+    return 0;
+}
+
+
+
+static int factor3d(int ncpus, int *dims, int *cpu_split)
+{
+    const int ndims = 3;
+    int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
+    int i, j, k, ii, jj, kk, n, cpus, maxcpus, grid, split_big;
+    float gridav, deviation, mindeviation;
+
+    cpus = 1;
+    gridav = 1;
+    for (i=0; i < ndims; i++) {
+        dmin[i] = MIN(ncpus, dims[i]);
+        cpus = cpus * dmin[i];
+        gridav = gridav * dims[i];
+    }
+    mindeviation = gridav;
+    gridav = gridav / ncpus;
+
+    maxcpus = MIN(ncpus,cpus);
+
+    for (k=0; k < dmin[2]; k++) {
+        cpu_split_tmp[2] = dmin[2]-k;
+    for (j=0; j < dmin[1]; j++) {
+        cpu_split_tmp[1] = dmin[1]-j;
+    for (i=0; i < dmin[0]; i++) {
+        cpu_split_tmp[0] = dmin[0]-i;
+
+        cpus = 1;
+        for (n=0; n < ndims; n++)
+            cpus = cpus * cpu_split_tmp[n];
+
+        if (cpus != maxcpus) continue;
+
+        for (n=0; n < ndims; n++) {
+            npoint_min[n] = dims[n] / cpu_split_tmp[n];
+            split_big = dims[n] - cpu_split_tmp[n] * npoint_min[n];
+            grids[n][0] = npoint_min[n];
+            grids[n][1] = npoint_min[n] + 1;
+            if (cpu_split_tmp[n] == split_big) grids[n][0] = 0;
+            if (split_big == 0) grids[n][1] = 0;
+        }
+
+        for (ii=0; ii < 2; ii++) {
+        for (jj=0; jj < 2; jj++) {
+        for (kk=0; kk < 2; kk++) {
+            grid = grids[0][ii] * grids[1][jj] * grids[2][kk];
+            deviation = ABS(grid-gridav);
+            if (deviation < mindeviation) {
+              mindeviation = deviation;
+              for (n=0; n < ndims; n++)
+                  cpu_split[n] = cpu_split_tmp[n];
+            }
+        }}}
+    }}}
+
+    return 0;
+}
+
+
+
+int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
+{
+    sdf_block_t *b = h->current_block;
+    int n;
+#ifdef PARALLEL
+    int npoint_min, split_big, coords, div;
+
+    if (b->stagger != SDF_STAGGER_CELL_CENTRE)
+        for (n = 0; n < b->ndims; n++) b->dims[n]--;
+
+    memset(start, 0, 3*sizeof(int));
+
+    div = 1;
+    for (n = 0; n < b->ndims; n++) {
+        coords = (rank / div) % b->cpu_split[n];
+        div = div * b->cpu_split[n];
+        npoint_min = b->dims[n] / b->cpu_split[n];
+        split_big = b->dims[n] - b->cpu_split[n] * npoint_min;
+        if (coords >= split_big) {
+            start[n] = split_big * (npoint_min + 1)
+                + (coords - split_big) * npoint_min;
+            local[n] = npoint_min;
+        } else {
+            start[n] = coords * (npoint_min + 1);
+            local[n] = npoint_min + 1;
+        }
+    }
+
+    if (b->stagger != SDF_STAGGER_CELL_CENTRE) {
+        for (n = 0; n < b->ndims; n++) {
+            b->dims[n]++;
+            local[n]++;
+        }
+    }
+#else
+    memset(start, 0, 3*sizeof(int));
+    for (n=0; n < b->ndims; n++) local[n] = b->dims[n];
+#endif
+    for (n=b->ndims; n < 3; n++) local[n] = 1;
+
+    return 0;
+}
+
+
+
+int sdf_factor(sdf_file_t *h, int *start)
+{
+    sdf_block_t *b = h->current_block;
+#ifdef PARALLEL
+    int n, periods[3] = {0, 0, 0};
+
+    if (b->stagger != SDF_STAGGER_CELL_CENTRE)
+        for (n = 0; n < b->ndims; n++) b->dims[n]--;
+
+    if (b->ndims == 2)
+        factor2d(h->ncpus, b->dims, b->cpu_split);
+    else
+        factor3d(h->ncpus, b->dims, b->cpu_split);
+
+    if (b->stagger != SDF_STAGGER_CELL_CENTRE)
+        for (n = 0; n < b->ndims; n++) b->dims[n]++;
+
+    MPI_Cart_create(h->comm, b->ndims, b->cpu_split, periods, 1, &b->cart_comm);
+    MPI_Comm_rank(b->cart_comm, &b->cart_rank);
+    MPI_Cart_coords(b->cart_comm, b->cart_rank, b->ndims, b->coordinates);
+    for (n = 0; n < b->ndims; n++)
+        MPI_Cart_shift(b->cart_comm, 0, 1, &b->proc_min[n], &b->proc_max[n]);
+
+#endif
+
+    sdf_get_domain_extents(h, h->rank, start, b->local_dims);
+
+    return 0;
+}
+
+
+
+int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
+{
+    sdf_block_t *b = h->current_block;
+
+    if (h->use_float && b->datatype == SDF_DATATYPE_REAL8) {
+        int i;
+        float *r4;
+        double *old_var, *r8;
+        r8 = old_var = *var_in;
+        r4 = *var_in = malloc(count * sizeof(float));
+        for (i=0; i < count; i++)
+            *r4++ = (float)(*r8++);
+        free(old_var);
+        b->datatype_out = SDF_DATATYPE_REAL4;
+#ifdef PARALLEL
+        b->mpitype_out = MPI_FLOAT;
+#endif
+    }
+    return 0;
+}

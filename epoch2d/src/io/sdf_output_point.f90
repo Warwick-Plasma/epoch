@@ -140,6 +140,8 @@ CONTAINS
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
+    IF (npoint_global .LE. 0) RETURN
+
     CALL sdf_get_next_block(h)
     b => h%current_block
 
@@ -149,8 +151,6 @@ CONTAINS
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
     b%npoints = npoint_global
-
-    IF (npoint_global .LE. 0) RETURN
 
     gmn(1) = REAL(MINVAL(x),r8)
     gmx(1) = REAL(MAXVAL(x),r8)
@@ -216,6 +216,8 @@ CONTAINS
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
+    IF (npoint_global .LE. 0) RETURN
+
     CALL sdf_get_next_block(h)
     b => h%current_block
 
@@ -225,8 +227,6 @@ CONTAINS
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
     b%npoints = npoint_global
-
-    IF (npoint_global .LE. 0) RETURN
 
     gmn(1) = REAL(MINVAL(x),r8)
     gmx(1) = REAL(MAXVAL(x),r8)
@@ -305,6 +305,8 @@ CONTAINS
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
+    IF (npoint_global .LE. 0) RETURN
+
     CALL sdf_get_next_block(h)
     b => h%current_block
 
@@ -314,8 +316,6 @@ CONTAINS
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
     b%npoints = npoint_global
-
-    IF (npoint_global .LE. 0) RETURN
 
     gmn(1) = REAL(MINVAL(x),r8)
     gmx(1) = REAL(MAXVAL(x),r8)
@@ -478,6 +478,8 @@ CONTAINS
     TYPE(sdf_block_type), POINTER :: b
     REAL(num) :: ret
 
+    IF (npoint_global .LE. 0) RETURN
+
     CALL sdf_get_next_block(h)
     b => h%current_block
 
@@ -487,8 +489,6 @@ CONTAINS
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
     b%npoints = npoint_global
-
-    IF (npoint_global .LE. 0) RETURN
 
     gmn = 0.d0
     gmx = 0.d0
@@ -641,6 +641,8 @@ CONTAINS
     INTEGER :: errcode, npoint_max, npoint_rem, i
     TYPE(sdf_block_type), POINTER :: b
 
+    IF (npoint_global .LE. 0) RETURN
+
     CALL sdf_get_next_block(h)
     b => h%current_block
 
@@ -649,8 +651,6 @@ CONTAINS
     b%mpitype = h%mpitype_real
     b%ndims = 1
     b%npoints = npoint_global
-
-    IF (npoint_global .LE. 0) RETURN
 
     ! Write header
 
@@ -718,6 +718,8 @@ CONTAINS
     INTEGER :: errcode, npoint_max, npoint_rem, i
     TYPE(sdf_block_type), POINTER :: b
 
+    IF (npoint_global .LE. 0) RETURN
+
     CALL sdf_get_next_block(h)
     b => h%current_block
 
@@ -726,8 +728,6 @@ CONTAINS
     b%mpitype = h%mpitype_integer
     b%ndims = 1
     b%npoints = npoint_global
-
-    IF (npoint_global .LE. 0) RETURN
 
     ! Write header
 
@@ -813,6 +813,8 @@ CONTAINS
     TYPE(sdf_block_type), POINTER :: b
     REAL(num) :: ret
 
+    IF (npoint_global .LE. 0) RETURN
+
     CALL sdf_get_next_block(h)
     b => h%current_block
 
@@ -822,8 +824,6 @@ CONTAINS
     b%blocktype = c_blocktype_point_variable
     b%ndims = 1
     b%npoints = npoint_global
-
-    IF (npoint_global .LE. 0) RETURN
 
     ! Write header
 

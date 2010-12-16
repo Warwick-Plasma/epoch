@@ -1,26 +1,33 @@
 #! /bin/sh
 
+formats="$1"
+[ "$formats"x = x ] && formats="sdf cfd"
+
 version=`visit -version 2>&1|sed 's,.* \([0-9]*\).*,\1,'`
 
 if [ "$version"x != x ]; then
-  xml2info -clobber cfd${version}.xml
-  rm -rf CMake* cmake* Makefile
+  for fmt in $formats; do
+    xml2info -clobber ${fmt}${version}.xml
+    rm -rf CMake* cmake* Makefile
 
-  if [ $version -eq 1 ]; then
-    xml2makefile -clobber cfd${version}.xml
-    if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
-      sed 's,\(^CXXFLAGS.*\),\1 -m32\
+    if [ $version -eq 1 ]; then
+      xml2makefile -clobber ${fmt}${version}.xml
+      if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
+        sed 's,\(^CXXFLAGS.*\),\1 -m32\
 CFLAGS=$(CFLAGSORIG) -m32\
 PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32,' Makefile > .Makefile.tmp
-      \mv -f .Makefile.tmp Makefile
+        \mv -f .Makefile.tmp Makefile
+      fi
+    else
+      xml2cmake -clobber ${fmt}${version}.xml
+      cmake -DCMAKE_BUILD_TYPE=Debug .
     fi
-  else
-    xml2cmake -clobber cfd${version}.xml
-    cmake -DCMAKE_BUILD_TYPE=Debug .
-  fi
 
-  make clean
-  make
+    make clean
+    make
+  done
 else
   echo "Unable to build. Please add visit to your \$PATH"
 fi
+
+mpicc -DPARALLEL -DSDF_DEBUG_ALL -g -o sdf2ascii *c

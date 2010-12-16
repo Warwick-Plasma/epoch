@@ -5,3 +5,5 @@
 CMake*
 cmake*
 Makefile
+sdf2ascii
+*.dSYM
