@@ -12,6 +12,12 @@ FUNCTION getdata, snapshot, wkdir=wkdir, _EXTRA=extra
   ENDIF
 
   file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".cfd")')
+  info = FILE_INFO(file)
 
-  RETURN, LoadCFDFile(file, _EXTRA=extra)
+  IF info.exists EQ 1 THEN BEGIN
+    RETURN, LoadCFDFile(file, _EXTRA=extra)
+  ENDIF ELSE BEGIN
+    file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".sdf")')
+    RETURN, LoadSDFFile(file, _EXTRA=extra)
+  ENDELSE
 END

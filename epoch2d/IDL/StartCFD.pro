@@ -1,5 +1,7 @@
 .r IDL/cfdhelp.pro
+.r IDL/SDFHelp.pro
 .r IDL/LoadCFD.pro
+.r IDL/LoadSDF.pro
 .r IDL/CFDPlots.pro
 
 device, true_color=24
