@@ -59,10 +59,10 @@ CONTAINS
       RETURN
     ENDIF
 
-    work = as_deferred_execution_object(name)
+    work = as_deck_constant(name)
     IF (work .NE. 0) THEN
-      ! block is a deferred execution object
-      block%ptype = c_pt_deferred_execution_object
+      ! block is a deck constant
+      block%ptype = c_pt_deck_constant
       block%value = work
       RETURN
     ENDIF
@@ -282,7 +282,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: expression
     TYPE(primitive_stack), INTENT(INOUT) :: output
     INTEGER, INTENT(INOUT) :: err
-    TYPE(deferred_execution_object) :: deo
+    TYPE(deck_constant) :: const
 
     CHARACTER(LEN=500) :: current
     INTEGER :: current_type, current_pointer, i, ptype, ipoint
@@ -326,10 +326,10 @@ CONTAINS
             CALL deallocate_stack(stack)
             RETURN
           ENDIF
-          IF (block%ptype .EQ. c_pt_deferred_execution_object) THEN
-            deo = deferred_objects(block%value)
-            DO ipoint = 1, deo%execution_stream%stack_point
-              CALL push_to_stack(output, deo%execution_stream%entries(ipoint))
+          IF (block%ptype .EQ. c_pt_deck_constant) THEN
+            const = deck_constant_list(block%value)
+            DO ipoint = 1, const%execution_stream%stack_point
+              CALL push_to_stack(output, const%execution_stream%entries(ipoint))
             ENDDO
           ENDIF
 
@@ -451,7 +451,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: expression
     TYPE(primitive_stack), INTENT(INOUT) :: output
-    TYPE(deferred_execution_object) :: deo
+    TYPE(deck_constant) :: const
     INTEGER, INTENT(INOUT) :: err
 
     CHARACTER(LEN=500) :: current
@@ -502,10 +502,10 @@ CONTAINS
             last_block_type = block%ptype
             IF (debug_mode) PRINT *, "Setting", block%ptype, TRIM(current)
           ENDIF
-          IF (block%ptype .EQ. c_pt_deferred_execution_object) THEN
-            deo = deferred_objects(block%value)
-            DO ipoint = 1, deo%execution_stream%stack_point
-              CALL push_to_stack(output, deo%execution_stream%entries(ipoint))
+          IF (block%ptype .EQ. c_pt_deck_constant) THEN
+            const = deck_constant_list(block%value)
+            DO ipoint = 1, const%execution_stream%stack_point
+              CALL push_to_stack(output, const%execution_stream%entries(ipoint))
             ENDDO
             CYCLE
           ELSE IF (block%ptype .NE. c_pt_null) THEN

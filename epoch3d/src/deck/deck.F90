@@ -6,7 +6,6 @@ MODULE deck
   USE strings
   ! Deck internals
   USE deck_constant_block
-  USE deck_deo_block
   ! Deck Blocks
   USE deck_control_block
   USE deck_boundaries_block
@@ -111,13 +110,14 @@ CONTAINS
 
     handle_block = c_err_none
     ! Constants can be defined in any deck state, so put them here
-    IF (str_cmp(block_name, "constant")) THEN
+    IF (str_cmp(block_name, "constant") &
+            .OR. str_cmp(block_name, "deo")) THEN
+      IF (rank .EQ. 0 .AND. str_cmp(block_name, "deo")) THEN
+        WRITE(*,*) '*** WARNING ***'
+        WRITE(*,*) 'The block name "deo" is deprecated.'
+        WRITE(*,*) 'Please use the block name "constant" instead.'
+      ENDIF
       handle_block = handle_constant_deck(block_element, block_value)
-      RETURN
-    ENDIF
-
-    IF (str_cmp(block_name, "deo")) THEN
-      handle_block = handle_deo_deck(block_element, block_value)
       RETURN
     ENDIF
 

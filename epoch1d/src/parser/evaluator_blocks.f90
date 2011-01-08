@@ -129,13 +129,6 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (opcode .GE. c_const_deck_lowbound &
-        .AND. opcode .LT. c_const_custom_lowbound) THEN
-      val = deck_constant_list(opcode-c_const_deck_lowbound)%value
-      CALL push_on_eval(val)
-      RETURN
-    ENDIF
-
     IF (opcode .EQ. c_const_pi) THEN
       CALL push_on_eval(pi)
       RETURN

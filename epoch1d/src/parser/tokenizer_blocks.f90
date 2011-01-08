@@ -127,34 +127,26 @@ CONTAINS
           as_constant = new_constant_code(i)
     ENDDO
 
-    ! Constants set up using the input deck
-    DO i = 1, n_deck_constants
-      IF (str_cmp(TRIM(name), TRIM(deck_constant_list(i)%name))) THEN
-        as_constant = c_const_deck_lowbound + i
-        RETURN
-      ENDIF
-    ENDDO
-
   END FUNCTION as_constant
 
 
 
-  FUNCTION as_deferred_execution_object(name)
+  FUNCTION as_deck_constant(name)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
-    INTEGER :: as_deferred_execution_object
+    INTEGER :: as_deck_constant
     INTEGER :: i
 
-    as_deferred_execution_object = 0
+    as_deck_constant = 0
 
-    DO i = 1, n_deferred_execution_objects
-      IF (str_cmp(TRIM(name), TRIM(deferred_objects(i)%name))) THEN
-        as_deferred_execution_object = i
+    DO i = 1, n_deck_constants
+      IF (str_cmp(TRIM(name), TRIM(deck_constant_list(i)%name))) THEN
+        as_deck_constant = i
         RETURN
       ENDIF
     ENDDO
 
-  END FUNCTION as_deferred_execution_object
+  END FUNCTION as_deck_constant
 
 
 

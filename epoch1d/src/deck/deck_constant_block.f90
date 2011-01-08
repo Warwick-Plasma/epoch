@@ -1,6 +1,7 @@
 MODULE deck_constant_block
 
-  USE strings_advanced
+  USE strings
+  USE shunt
 
   IMPLICIT NONE
 
@@ -12,17 +13,26 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_constant_deck
-    INTEGER :: ix
+    INTEGER :: ix, err
     TYPE(deck_constant), DIMENSION(:), ALLOCATABLE :: buffer
+    TYPE(primitive_stack) :: temp
 
     handle_constant_deck = c_err_none
 
     IF (value .EQ. blank) RETURN
 
+    CALL initialise_stack(temp)
+    CALL tokenize(value, temp, err)
+    IF (err .NE. c_err_none) THEN
+      handle_constant_deck = err
+      CALL deallocate_stack(temp)
+      RETURN
+    ENDIF
+
     ! First check whether constant already exists
     DO ix = 1, n_deck_constants
       IF (str_cmp(TRIM(element), TRIM(deck_constant_list(ix)%name))) THEN
-        deck_constant_list(ix)%value = as_real(value, handle_constant_deck)
+        deck_constant_list(ix)%execution_stream = temp
         RETURN
       ENDIF
     ENDDO
@@ -46,11 +56,10 @@ CONTAINS
     ENDIF
 
     ! Add the new value
-    deck_constant_list(n_deck_constants+1)%value = &
-        as_real(value, handle_constant_deck)
+    deck_constant_list(n_deck_constants+1)%execution_stream = temp
     deck_constant_list(n_deck_constants+1)%name = element
 
-    n_deck_constants = n_deck_constants+1
+    n_deck_constants = n_deck_constants + 1
 
   END FUNCTION handle_constant_deck
 

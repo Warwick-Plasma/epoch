@@ -157,7 +157,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_pt_parenthesis = 5
   INTEGER, PARAMETER :: c_pt_separator = 6
   INTEGER, PARAMETER :: c_pt_character = 7
-  INTEGER, PARAMETER :: c_pt_deferred_execution_object = 8
+  INTEGER, PARAMETER :: c_pt_deck_constant = 8
   INTEGER, PARAMETER :: c_pt_species = 9
   INTEGER, PARAMETER :: c_pt_bad = 1024
   INTEGER, PARAMETER :: c_pt_null = 1025
@@ -305,19 +305,12 @@ MODULE shared_parser_data
   END TYPE primitive_stack
 
   TYPE deck_constant
-    REAL(num) :: value
-    CHARACTER(LEN=string_length) :: name
-  END TYPE deck_constant
-
-  TYPE deferred_execution_object
     CHARACTER(LEN=string_length) :: name
     TYPE(primitive_stack) :: execution_stream
-  END TYPE deferred_execution_object
+  END TYPE deck_constant
 
   INTEGER :: n_deck_constants = 0
-  INTEGER :: n_deferred_execution_objects = 0
   TYPE(deck_constant), DIMENSION(:), ALLOCATABLE :: deck_constant_list
-  TYPE(deferred_execution_object), DIMENSION(:), ALLOCATABLE :: deferred_objects
 
 END MODULE shared_parser_data
 
