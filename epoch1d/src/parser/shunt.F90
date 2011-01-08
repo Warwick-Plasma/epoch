@@ -6,8 +6,6 @@ MODULE shunt
 
   SAVE
 
-  TYPE(primitive_stack) :: dumper
-
 CONTAINS
 
   FUNCTION char_type(char)
@@ -139,12 +137,61 @@ CONTAINS
 
 
 
+  SUBROUTINE initialise_stack(stack)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: stack
+
+    stack%stack_point = 0
+
+    stack%stack_size = 1
+    ALLOCATE(stack%entries(stack%stack_size))
+    stack%init = .TRUE.
+
+  END SUBROUTINE initialise_stack
+
+
+
+  SUBROUTINE deallocate_stack(stack)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: stack
+
+    IF (.NOT.stack%init .AND. rank .EQ. 0) THEN
+      PRINT*,'*** WARNING ***'
+      PRINT*,'deallocate_stack not initialised'
+    ENDIF
+
+    stack%stack_point = 0
+    stack%stack_size = 0
+    IF (stack%init) DEALLOCATE(stack%entries)
+    stack%init = .FALSE.
+
+  END SUBROUTINE deallocate_stack
+
+
+
   SUBROUTINE push_to_stack(stack, value)
 
     TYPE(stack_element), INTENT(IN) :: value
     TYPE(primitive_stack), INTENT(INOUT) :: stack
+    TYPE(stack_element), POINTER :: old_buffer(:)
+    INTEGER :: old_size
 
-    stack%stack_point = stack%stack_point+1
+    stack%stack_point = stack%stack_point + 1
+
+    IF (.NOT.stack%init .AND. rank .EQ. 0) THEN
+      PRINT*,'*** WARNING ***'
+      PRINT*,'push_to_stack not initialised'
+    ENDIF
+
+    IF (stack%stack_point .GT. stack%stack_size) THEN
+      old_size = stack%stack_size
+      stack%stack_size = 2 * stack%stack_size
+      old_buffer => stack%entries
+      ALLOCATE(stack%entries(stack%stack_size))
+      stack%entries(1:old_size) = old_buffer(1:old_size)
+      DEALLOCATE(old_buffer)
+    ENDIF
+
     stack%entries(stack%stack_point) = value
 
   END SUBROUTINE push_to_stack
@@ -155,9 +202,8 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: stack1, stack2
 
-    stack2%stack_point = stack2%stack_point+1
-    stack2%entries(stack2%stack_point) = stack1%entries(stack1%stack_point)
-    stack1%stack_point = stack1%stack_point-1
+    CALL push_to_stack(stack2, stack1%entries(stack1%stack_point))
+    stack1%stack_point = stack1%stack_point - 1
 
   END SUBROUTINE pop_to_stack
 
@@ -167,7 +213,12 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: stack
 
-    stack%stack_point = stack%stack_point-1
+    IF (.NOT.stack%init .AND. rank .EQ. 0) THEN
+      PRINT*,'*** WARNING ***'
+      PRINT*,'pop_to_null not initialised'
+    ENDIF
+
+    stack%stack_point = stack%stack_point - 1
 
   END SUBROUTINE pop_to_null
 
@@ -178,8 +229,13 @@ CONTAINS
     TYPE(stack_element), INTENT(OUT) :: value
     TYPE(primitive_stack), INTENT(INOUT) :: stack
 
+    IF (.NOT.stack%init .AND. rank .EQ. 0) THEN
+      PRINT*,'*** WARNING ***'
+      PRINT*,'pop_from_stack not initialised'
+    ENDIF
+
     value = stack%entries(stack%stack_point)
-    stack%stack_point = stack%stack_point-1
+    stack%stack_point = stack%stack_point - 1
 
   END SUBROUTINE pop_from_stack
 
@@ -234,7 +290,7 @@ CONTAINS
     TYPE(primitive_stack) :: stack
     TYPE(stack_element) :: block, block2
 
-    stack%stack_point = 0
+    CALL initialise_stack(stack)
 
     current(:) = " "
     current(1:1) = expression(1:1)
@@ -267,6 +323,7 @@ CONTAINS
               PRINT *, "Unable to parse block with text ", TRIM(current)
             ENDIF
             err = c_err_bad_value
+            CALL deallocate_stack(stack)
             RETURN
           ENDIF
           IF (block%ptype .EQ. c_pt_deferred_execution_object) THEN
@@ -382,6 +439,7 @@ CONTAINS
     DO i = 1, stack%stack_point
       CALL pop_to_stack(stack, output)
     ENDDO
+    CALL deallocate_stack(stack)
 
   END SUBROUTINE tokenize_infix
 
@@ -402,8 +460,7 @@ CONTAINS
     TYPE(primitive_stack) :: stack
     TYPE(stack_element) :: block
 
-    stack%stack_point = 0
-    last_block_type = c_pt_null
+    CALL initialise_stack(stack)
 
     current(:) = " "
     current(1:1) = expression(1:1)
@@ -411,6 +468,8 @@ CONTAINS
     current_type = char_type(expression(1:1))
 
     err = c_err_none
+
+    last_block_type = c_pt_null
 
     DO i = 2, LEN(expression)
       ptype = char_type(expression(i:i))
@@ -435,6 +494,7 @@ CONTAINS
               PRINT *, "Unable to parse block with text ", TRIM(current)
             ENDIF
             err = c_err_bad_value
+            CALL deallocate_stack(stack)
             RETURN
           ENDIF
           IF (block%ptype .NE. c_pt_parenthesis &
@@ -462,6 +522,7 @@ CONTAINS
     DO i = 1, stack%stack_point
       CALL pop_to_stack(stack, output)
     ENDDO
+    CALL deallocate_stack(stack)
 
   END SUBROUTINE tokenize_rpn
 

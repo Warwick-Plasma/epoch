@@ -69,7 +69,7 @@ CONTAINS
 
     IF (str_cmp(element, "profile")) THEN
       working_laser%profile = 0.0_num
-      output%stack_point = 0
+      CALL initialise_stack(output)
       CALL tokenize(value, output, handle_ic_laser_deck)
       IF (working_laser%boundary .EQ. c_bd_x_min &
           .OR. working_laser%boundary .EQ. c_bd_x_max) THEN
@@ -84,12 +84,13 @@ CONTAINS
               evaluate_at_point(output, ix, 0, handle_ic_laser_deck)
         ENDDO
       ENDIF
+      CALL deallocate_stack(output)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "phase")) THEN
       working_laser%phase = 0.0_num
-      output%stack_point = 0
+      CALL initialise_stack(output)
       CALL tokenize(value, output, handle_ic_laser_deck)
       IF (working_laser%boundary .EQ. c_bd_x_min &
           .OR. working_laser%boundary .EQ. c_bd_x_max) THEN
@@ -104,6 +105,7 @@ CONTAINS
               evaluate_at_point(output, ix, 0, handle_ic_laser_deck)
         ENDDO
       ENDIF
+      CALL deallocate_stack(output)
       RETURN
     ENDIF
 
@@ -119,7 +121,7 @@ CONTAINS
 
     IF (str_cmp(element, "t_profile")) THEN
       working_laser%use_time_function = .TRUE.
-      working_laser%time_function%stack_point = 0
+      CALL initialise_stack(working_laser%time_function)
       CALL tokenize(value, working_laser%time_function, handle_ic_laser_deck)
       ! evaluate it once to check that it's a valid block
       dummy = evaluate(working_laser%time_function, handle_ic_laser_deck)

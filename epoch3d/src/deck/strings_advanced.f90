@@ -84,12 +84,13 @@ CONTAINS
     TYPE(primitive_stack) :: output
     REAL(num), DIMENSION(2) :: array
 
-    output%stack_point = 0
+    CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
     IF (err .EQ. c_err_none) &
         CALL evaluate_at_point_to_array(output, 0, 0, 0, 2, array, err)
     real1 = array(1)
     real2 = array(2)
+    CALL deallocate_stack(output)
 
   END SUBROUTINE split_range
 
@@ -124,9 +125,10 @@ CONTAINS
     REAL(num) :: as_real
     TYPE(primitive_stack) :: output
 
-    output%stack_point = 0
+    CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
     as_real = evaluate(output, err)
+    CALL deallocate_stack(output)
 
   END FUNCTION as_real
 
@@ -142,7 +144,7 @@ CONTAINS
     TYPE(primitive_stack) :: output
     INTEGER :: ix, iy, iz
 
-    output%stack_point = 0
+    CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
 
     DO iz = z1, z2
@@ -153,6 +155,7 @@ CONTAINS
         ENDDO
       ENDDO
     ENDDO
+    CALL deallocate_stack(output)
 
   END SUBROUTINE evaluate_string_in_space
 

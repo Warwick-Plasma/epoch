@@ -83,7 +83,7 @@ CONTAINS
 
     IF (str_cmp(element, "t_profile")) THEN
       working_laser%use_time_function = .TRUE.
-      working_laser%time_function%stack_point = 0
+      CALL initialise_stack(working_laser%time_function)
       CALL tokenize(value, working_laser%time_function, handle_ic_laser_deck)
       ! evaluate it once to check that it's a valid block
       dummy = evaluate(working_laser%time_function, handle_ic_laser_deck)

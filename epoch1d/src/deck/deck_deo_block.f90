@@ -21,10 +21,11 @@ CONTAINS
 
     IF (value .EQ. blank) RETURN
 
-    temp%stack_point = 0
+    CALL initialise_stack(temp)
     CALL tokenize(value, temp, err)
     IF (err .NE. c_err_none) THEN
       handle_deo_deck = err
+      CALL deallocate_stack(temp)
       RETURN
     ENDIF
 
@@ -42,22 +43,23 @@ CONTAINS
     IF (n_deferred_execution_objects .GT. 0) THEN
       ALLOCATE(buffer(1:n_deferred_execution_objects))
       buffer = deferred_objects
+
+      ! Allocate the new list
       DEALLOCATE(deferred_objects)
-    ENDIF
+      ALLOCATE(deferred_objects(1:n_deferred_execution_objects+1))
 
-    ! Allocate the new list
-    n_deferred_execution_objects = n_deferred_execution_objects+1
-    ALLOCATE(deferred_objects(1:n_deferred_execution_objects))
-
-    ! If old list not empty then
-    IF (n_deferred_execution_objects .GT. 1) THEN
-      deferred_objects(1:n_deferred_execution_objects-1) = buffer
+      deferred_objects(1:n_deferred_execution_objects) = buffer
       DEALLOCATE(buffer)
+    ELSE
+      ! Allocate the new list
+      ALLOCATE(deferred_objects(1:n_deferred_execution_objects+1))
     ENDIF
 
     ! Add the new value
     deferred_objects(n_deferred_execution_objects)%execution_stream = temp
     deferred_objects(n_deferred_execution_objects)%name = element
+
+    n_deferred_execution_objects = n_deferred_execution_objects + 1
 
   END FUNCTION handle_deo_deck
 

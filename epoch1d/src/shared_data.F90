@@ -282,8 +282,6 @@ MODULE shared_parser_data
           c_assoc_la, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, &
           c_assoc_a, c_assoc_ra/)
 
-  INTEGER, PARAMETER :: stack_size = 10000
-
   TYPE stack_element
     INTEGER :: ptype
     INTEGER :: value
@@ -294,8 +292,9 @@ MODULE shared_parser_data
   END TYPE stack_element
 
   TYPE primitive_stack
-    TYPE(stack_element), DIMENSION(stack_size) :: entries
-    INTEGER :: stack_point
+    TYPE(stack_element), POINTER :: entries(:)
+    INTEGER :: stack_point, stack_size
+    LOGICAL :: init = .FALSE.
   END TYPE primitive_stack
 
   TYPE deck_constant
