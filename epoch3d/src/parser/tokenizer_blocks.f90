@@ -89,8 +89,10 @@ CONTAINS
     IF (str_cmp(name, "me")) as_constant = c_const_me
     IF (str_cmp(name, "qe")) as_constant = c_const_qe
     IF (str_cmp(name, "c")) as_constant = c_const_c
-    IF (str_cmp(name, "epsilonnought")) as_constant = c_const_eps0
-    IF (str_cmp(name, "munought"))      as_constant = c_const_mu0
+    IF (str_cmp(name, "eps0") .OR. str_cmp(name, "epsilon0") &
+        .OR. str_cmp(name, "epsilonnought")) as_constant = c_const_eps0
+    IF (str_cmp(name, "mu0") &
+        .OR. str_cmp(name, "munought")) as_constant = c_const_mu0
     IF (str_cmp(name, "ev")) as_constant = c_const_ev
     IF (str_cmp(name, "kev")) as_constant = c_const_kev
     IF (str_cmp(name, "mev")) as_constant = c_const_mev
