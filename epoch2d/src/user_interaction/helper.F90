@@ -245,10 +245,8 @@ CONTAINS
     REAL(dbl) :: rpos
     INTEGER :: cell_x
     INTEGER :: cell_y
-    REAL(num) :: cell_x_r
-    REAL(num) :: cell_y_r
     INTEGER(KIND=8) :: i
-    INTEGER :: j, ierr, ix, iy
+    INTEGER :: j, ierr, ix, iy, icount, ipos
     CHARACTER(LEN=15) :: string
 
     npart_this_species = species_list%count
@@ -310,12 +308,8 @@ CONTAINS
               current%charge = species_list%charge
               current%mass = species_list%mass
 #endif
-              rpos = random(idum) - 0.5_num
-              rpos = rpos * dx + x(ix)
-              current%part_pos(1) = rpos
-              rpos = random(idum) - 0.5_num
-              rpos = rpos * dy + y(iy)
-              current%part_pos(2) = rpos
+              current%part_pos(1) = (random(idum) - 0.5_num) * dx + x(ix)
+              current%part_pos(2) = (random(idum) - 0.5_num) * dy + y(iy)
               ipart = ipart + 1
               current=>current%next
               ! One particle sucessfully placed
@@ -327,27 +321,46 @@ CONTAINS
 
     ENDIF
 
-    DO i = 1, npart_left*4
+    ! Randomly place remaining particles into valid cells
+    ipart = npart_left
+    DO i = 1, ipart
       IF (.NOT. ASSOCIATED(current)) EXIT
-      DO j = 1, 200
-        rpos = random(idum) * (x(nx) - x(1) + dx) - dx / 2.0_num
-        current%part_pos(1) = rpos + x(1)
-        rpos = random(idum) * (y(ny) - y(1) + dy) - dy / 2.0_num
-        current%part_pos(2) = rpos + y(1)
+      DO j = 1, 10000
+        rpos = random(idum) * (x(nx) - x(1) + dx)
+        current%part_pos(1) = rpos + x(1) - 0.5_num * dx
+        cell_x = FLOOR(rpos / dx) + 1
 
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_x = cell_x + 1
-
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_y = cell_y + 1
+        rpos = random(idum) * (y(ny) - y(1) + dy)
+        current%part_pos(2) = rpos + y(1) - 0.5_num * dy
+        cell_y = FLOOR(rpos / dy) + 1
 
         IF (load_list(cell_x, cell_y)) THEN
+          npart_left = npart_left - 1
           EXIT
         ENDIF
       ENDDO
       current=>current%next
+    ENDDO
+
+    ! Last ditch effort at placing particles
+    DO i = 1, npart_left
+      ipos = random(idum) * num_valid_cells_local
+      icount = 0
+outer:DO iy = 1, ny
+        DO ix = 1, nx
+          IF (load_list(ix, iy)) icount = icount + 1
+          IF (icount .EQ. ipos) THEN
+            cell_x = ix
+            cell_y = iy
+            EXIT outer
+          ENDIF
+        ENDDO
+      ENDDO outer
+
+      rpos = random(idum)
+      current%part_pos(1) = x(cell_x) + (rpos - 0.5_num) * dx
+      rpos = random(idum)
+      current%part_pos(2) = y(cell_y) + (rpos - 0.5_num) * dy
     ENDDO
 
     DO WHILE(ASSOCIATED(current))
@@ -385,11 +398,11 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER :: cell_x, cell_y
     INTEGER(KIND=8) :: ipart
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: weight_fn, temp
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: weight_fn
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
-    INTEGER :: isubx, isuby, ierr, ix, iy
+    INTEGER :: ix, iy, i, j, isubx, isuby, ierr
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:,:), ALLOCATABLE :: density_map
 
@@ -397,15 +410,27 @@ CONTAINS
     ALLOCATE(density(-2:nx+3, -2:ny+3))
     ALLOCATE(density_map(-2:nx+3, -2:ny+3))
     density = density_in
+    density_map = .FALSE.
 
     CALL field_bc(density)
 
     DO iy = -2, ny+3
       DO ix = -2, nx+3
-        IF (density(ix, iy) .GE. minrho) THEN
-          density_map(ix, iy) = .TRUE.
-        ELSE IF (density(ix, iy) .GT. maxrho .AND. maxrho .GT. 0.0_num) THEN
+        IF (density(ix, iy) .GT. maxrho .AND. maxrho .GT. 0.0_num) THEN
           density(ix, iy) = maxrho
+        ENDIF
+      ENDDO
+    ENDDO
+
+    DO iy = 1, ny
+      DO ix = 1, nx
+        IF (density(ix, iy) .GE. minrho) THEN
+          ! Ensure that cells next to a discontinuity have some particles
+          DO j = -1, 1
+            DO i = -1, 1
+              density_map(ix+i, iy+j) = .TRUE.
+            ENDDO
+          ENDDO
         ENDIF
       ENDDO
     ENDDO
@@ -415,10 +440,8 @@ CONTAINS
     DEALLOCATE(density_map)
 
     ALLOCATE(weight_fn(-2:nx+3, -2:ny+3))
-    ALLOCATE(temp(-2:nx+3, -2:ny+3))
     CALL MPI_BARRIER(comm, errcode)
     weight_fn = 0.0_num
-    temp = 0.0_num
 
     partlist=>species_list%attached_list
     ! If using per particle weighing then use the weight function to match the
@@ -429,29 +452,24 @@ CONTAINS
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
 #ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 1.0_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 1.0_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
 #else
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
 #endif
-      cell_x = FLOOR(cell_x_r + 0.5_num)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x + 1
-
-      cell_y = FLOOR(cell_y_r + 0.5_num)
-      cell_frac_y = REAL(cell_y, num) - cell_y_r
-      cell_y = cell_y + 1
+      cell_x = FLOOR(cell_x_r)
+      cell_y = FLOOR(cell_y_r)
+      cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+      cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
 
       CALL particle_to_grid(cell_frac_x, gx)
       CALL particle_to_grid(cell_frac_y, gy)
 
-      wdata = 1.0_num / (dx*dy) ! Simply want to count particles per metre^2
       DO isuby = sf_min, sf_max
         DO isubx = sf_min, sf_max
           weight_fn(cell_x+isubx, cell_y+isuby) = &
-              weight_fn(cell_x+isubx, cell_y+isuby) &
-              + gx(isubx) * gy(isuby) * wdata
+              weight_fn(cell_x+isubx, cell_y+isuby) + gx(isubx) * gy(isuby)
         ENDDO
       ENDDO
 
@@ -468,15 +486,17 @@ CONTAINS
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
     ENDDO
 
-    DO iy = -2, ny+2
-      DO ix = -2, nx+2
+    wdata = dx * dy
+    DO iy = -2, ny+3
+      DO ix = -2, nx+3
         IF (weight_fn(ix, iy) .GT. 0.0_num) THEN
-          weight_fn(ix, iy) = density(ix, iy) / weight_fn(ix, iy)
+          weight_fn(ix, iy) = wdata * density(ix, iy) / weight_fn(ix, iy)
         ELSE
           weight_fn(ix, iy) = 0.0_num
         ENDIF
       ENDDO
     ENDDO
+    DEALLOCATE(density)
 
     IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0, :) = weight_fn(1,   :)
     IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx,:) = weight_fn(nx-1,:)
@@ -493,19 +513,16 @@ CONTAINS
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
 #ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num ! - 0.5_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num ! - 0.5_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
 #else
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx ! - 0.5_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy ! - 0.5_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
 #endif
-      cell_x = FLOOR(cell_x_r + 0.5_num)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x + 1
-
-      cell_y = FLOOR(cell_y_r + 0.5_num)
-      cell_frac_y = REAL(cell_y, num) - cell_y_r
-      cell_y = cell_y + 1
+      cell_x = FLOOR(cell_x_r)
+      cell_y = FLOOR(cell_y_r)
+      cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+      cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
 
       CALL grid_to_particle(cell_frac_x, gx)
       CALL grid_to_particle(cell_frac_y, gy)
@@ -513,18 +530,17 @@ CONTAINS
       weight_local = 0.0_num
       DO isuby = sf_min, sf_max
         DO isubx = sf_min, sf_max
-          weight_local = &
-              weight_local + gx(isubx)*gy(isuby) &
+          weight_local = weight_local + gx(isubx) * gy(isuby) &
               * weight_fn(cell_x+isubx, cell_y+isuby)
         ENDDO
       ENDDO
       current%weight = weight_local
+
       current=>current%next
       ipart = ipart + 1
     ENDDO
 
     DEALLOCATE(weight_fn)
-    DEALLOCATE(density)
 #else
     IF (rank .EQ. 0) &
         PRINT *, "Autoloader only available when using per particle weighting"
