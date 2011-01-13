@@ -12,6 +12,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:2), INTENT(INOUT) :: output
     REAL(num), PARAMETER :: fac1 = 1.0_num / 24.0_num
     REAL(num), PARAMETER :: fac2 = 1.0_num / 6.0_num
+    REAL(num) :: cf2
 
 #ifdef PARTICLE_SHAPE_BSPLINE3
     output(-2) = fac1 * (0.5_num + cell_frac)**4
@@ -23,17 +24,13 @@ CONTAINS
         - cell_frac * (1.5_num + cell_frac - cell_frac**2)))
     output( 2) = fac1 * (0.5_num - cell_frac)**4
 #elif  PARTICLE_SHAPE_TOPHAT
-    output(-2) = 0.0_num
-    output(-1) = 0.0_num
     output( 0) = 0.5_num + cell_frac
     output( 1) = 0.5_num - cell_frac
-    output( 2) = 0.0_num
 #else
-    output(-2) = 0.0_num
-    output(-1) = 0.5_num * (0.5_num + cell_frac)**2
-    output( 0) = 0.75_num - cell_frac**2
-    output( 1) = 0.5_num * (0.5_num - cell_frac)**2
-    output( 2) = 0.0_num
+    cf2 = cell_frac**2
+    output(-1) = 0.5_num * (0.25_num + cf2 + cell_frac)
+    output( 0) = 0.75_num - cf2
+    output( 1) = 0.5_num * (0.25_num + cf2 - cell_frac)
 #endif
 
   END SUBROUTINE particle_to_grid
@@ -46,6 +43,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:2), INTENT(INOUT) :: output
     REAL(num), PARAMETER :: fac1 = 1.0_num / 24.0_num
     REAL(num), PARAMETER :: fac2 = 1.0_num / 6.0_num
+    REAL(num) :: cf2
 
 #ifdef PARTICLE_SHAPE_BSPLINE3
     output(-2) = fac1 * (0.5_num + cell_frac)**4
@@ -57,17 +55,13 @@ CONTAINS
         - cell_frac * (1.5_num + cell_frac - cell_frac**2)))
     output( 2) = fac1 * (0.5_num - cell_frac)**4
 #elif  PARTICLE_SHAPE_TOPHAT
-    output(-2) = 0.0_num
-    output(-1) = 0.0_num
     output( 0) = 0.5_num + cell_frac
     output( 1) = 0.5_num - cell_frac
-    output( 2) = 0.0_num
 #else
-    output(-2) = 0.0_num
-    output(-1) = 0.5_num * (0.5_num + cell_frac)**2
-    output( 0) = 0.75_num - cell_frac**2
-    output( 1) = 0.5_num * (0.5_num - cell_frac)**2
-    output( 2) = 0.0_num
+    cf2 = cell_frac**2
+    output(-1) = 0.5_num * (0.25_num + cf2 + cell_frac)
+    output( 0) = 0.75_num - cf2
+    output( 1) = 0.5_num * (0.25_num + cf2 - cell_frac)
 #endif
 
   END SUBROUTINE grid_to_particle
