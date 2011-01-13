@@ -21,7 +21,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     REAL(num) :: mass, temp_local, drift_local
     REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num), DIMENSION(-2:2) :: gx
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx
     TYPE(particle), POINTER :: current
     INTEGER :: cell_x
     INTEGER(KIND=8) :: ipart
@@ -51,7 +51,7 @@ CONTAINS
 
       temp_local = 0.0_num
       drift_local = 0.0_num
-      DO ix = -sf_order, sf_order
+      DO ix = sf_min, sf_max
         temp_local = temp_local + gx(ix) * temperature(cell_x+ix)
         drift_local = drift_local + gx(ix) * drift(cell_x+ix)
       ENDDO

@@ -29,7 +29,7 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-    REAL(num), DIMENSION(-2:2) :: gx, gy, gz
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
 
@@ -98,9 +98,9 @@ CONTAINS
         CALL particle_to_grid(cell_frac_z, gz)
 
         wdata = part_m * fac
-        DO iz = -sf_order, sf_order
-          DO iy = -sf_order, sf_order
-            DO ix = -sf_order, sf_order
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * wdata
@@ -143,7 +143,7 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-    REAL(num), DIMENSION(-2:2) :: gx, gy, gz
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
 
@@ -215,9 +215,9 @@ CONTAINS
 
         wdata = (SQRT(part_px**2 + part_py**2 + part_pz**2 + (part_m*c)**2) &
           - part_m * c) * c * l_weight
-        DO iz = -sf_order, sf_order
-          DO iy = -sf_order, sf_order
-            DO ix = -sf_order, sf_order
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
               data_array(cell_x+ix,cell_y+iy,cell_z+iz) = &
                   data_array(cell_x+ix,cell_y+iy,cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * wdata
@@ -268,7 +268,7 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-    REAL(num), DIMENSION(-2:2) :: gx, gy, gz
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
 
@@ -337,9 +337,9 @@ CONTAINS
         CALL particle_to_grid(cell_frac_z, gz)
 
         wdata = part_q * fac
-        DO iz = -sf_order, sf_order
-          DO iy = -sf_order, sf_order
-            DO ix = -sf_order, sf_order
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * wdata
@@ -382,7 +382,7 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-    REAL(num), DIMENSION(-2:2) :: gx, gy, gz
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
 
@@ -445,9 +445,9 @@ CONTAINS
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
-        DO iz = -sf_order, sf_order
-          DO iy = -sf_order, sf_order
-            DO ix = -sf_order, sf_order
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * wdata
@@ -494,7 +494,7 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-    REAL(num), DIMENSION(-2:2) :: gx, gy, gz
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: part_count, meanx, meany, meanz
     REAL(num) :: gf
 
@@ -566,9 +566,9 @@ CONTAINS
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
-        DO iz = -sf_order, sf_order
-          DO iy = -sf_order, sf_order
-            DO ix = -sf_order, sf_order
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
               gf = gx(ix) * gy(iy) * gz(iz) * l_weight
               meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
@@ -639,9 +639,9 @@ CONTAINS
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
-        DO iz = -sf_order, sf_order
-          DO iy = -sf_order, sf_order
-            DO ix = -sf_order, sf_order
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
               gf = gx(ix) * gy(iy) * gz(iz)
               sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf &
@@ -687,7 +687,7 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-    REAL(num), DIMENSION(-2:2) :: gx, gy, gz
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
 
@@ -750,9 +750,9 @@ CONTAINS
         CALL particle_to_grid(cell_frac_z, gz)
 
         wdata = evaluator(current, ispecies)
-        DO iz = -sf_order, sf_order
-          DO iy = -sf_order, sf_order
-            DO ix = -sf_order, sf_order
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * wdata

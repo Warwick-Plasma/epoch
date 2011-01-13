@@ -13,7 +13,7 @@ CONTAINS
     INTEGER :: ispecies
     TYPE(particle), POINTER :: current, next, new_part
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
-    REAL(num), DIMENSION(-2:2) :: gx, hx
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, hx
     REAL(num) :: ex_part, ey_part, ez_part, e_part2
     REAL(num) :: number_density_part, ndp_low, ndp_high
     INTEGER :: cell_x1, cell_x2, ix
@@ -96,7 +96,7 @@ CONTAINS
         number_density_part = 0.0_num
         ndp_low = 0.0_num
         ndp_high = 0.0_num
-        DO ix = -1, 1
+        DO ix = sf_min, sf_max
           ex_part = ex_part + hx(ix) * ex(cell_x2+ix)
           ey_part = ey_part + gx(ix) * ey(cell_x1+ix)
           ez_part = ez_part + gx(ix) * ez(cell_x1+ix)

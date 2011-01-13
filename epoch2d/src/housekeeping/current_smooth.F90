@@ -25,7 +25,7 @@ CONTAINS
     INTEGER :: ix, iy
 #ifdef HIGH_ORDER_SMOOTHING
     INTEGER :: icyclex, icycley
-    REAL(num), DIMENSION(-2:2) :: weight_fn
+    REAL(num), DIMENSION(sf_min:sf_max) :: weight_fn
 #endif
 
     ALLOCATE(wk_array(1:nx, 1:ny))
@@ -36,8 +36,8 @@ CONTAINS
 
     DO ix = 1, nx
       DO iy = 1, ny
-        DO icyclex = -sf_order, sf_order
-          DO icycley = -sf_order, sf_order
+        DO icyclex = sf_min, sf_max
+          DO icycley = sf_min, sf_max
             wk_array(ix, iy) = wk_array(ix, iy) &
                 + array(ix+icyclex, iy+icycley) * weight_fn(icyclex) &
                 * weight_fn(icycley)

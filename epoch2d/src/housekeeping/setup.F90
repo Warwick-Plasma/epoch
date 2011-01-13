@@ -15,7 +15,7 @@ MODULE setup
 
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files
-  PUBLIC :: setup_species
+  PUBLIC :: setup_species, sanity_check
 
   SAVE
   TYPE(particle_list) :: main_root
@@ -154,6 +154,35 @@ CONTAINS
 
 
 
+  SUBROUTINE sanity_check()
+
+    INTEGER :: i
+    LOGICAL :: error
+
+    IF (rank .EQ. 0) THEN
+      error = .FALSE.
+      DO i = 1, n_species
+        IF (particle_species(i)%mass .LT. 0) THEN
+          PRINT*,'*** ERROR ***'
+          PRINT*,'No mass specified for particle species "', &
+              TRIM(particle_species(i)%name),'"'
+          error = .TRUE.
+        ENDIF
+        IF (.NOT. particle_species(i)%charge_set) THEN
+          PRINT*,'*** ERROR ***'
+          PRINT*,'No charge specified for particle species "', &
+              TRIM(particle_species(i)%name),'"'
+          error = .TRUE.
+        ENDIF
+      ENDDO
+
+      IF (error) CALL MPI_ABORT(comm, i, i)
+    ENDIF
+
+  END SUBROUTINE sanity_check
+
+
+
   SUBROUTINE setup_data_averaging()
 
     INTEGER :: ioutput
@@ -180,6 +209,7 @@ CONTAINS
       particle_species(ispecies)%name = blank
       particle_species(ispecies)%mass = -1.0_num
       particle_species(ispecies)%charge = 0.0_num
+      particle_species(ispecies)%charge_set = .FALSE.
       particle_species(ispecies)%dump = .TRUE.
       particle_species(ispecies)%count = -1
       particle_species(ispecies)%id = 0

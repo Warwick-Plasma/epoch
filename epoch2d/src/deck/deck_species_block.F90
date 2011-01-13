@@ -151,6 +151,7 @@ CONTAINS
       IF (deck_state .NE. c_ds_eio) RETURN
       particle_species(species_id)%charge = &
           as_real(value, handle_species_deck) * q0
+      particle_species(species_id)%charge_set = .TRUE.
       RETURN
     ENDIF
 

@@ -1,80 +1,80 @@
 begin:control
 
   #global number of gridpoints
-  nx=400 #in x
-  ny=400 #in y
-  npart=16.0e5
+  nx = 400 #in x
+  ny = 400 #in y
+  npart = 16.0e5
 
   #maximum number of iterations
   #set to -1 to run until finished
-  nsteps=0
+  nsteps = 0
 
   #final time of simulation
-  t_end=50.0e-15
+  t_end = 50.0e-15
 
   #size of domain
-  x_min=-10e-6
-  x_max=10e-6
-  y_min=-10e-6
-  y_max=10e-6
+  x_min = -10e-6
+  x_max = 10e-6
+  y_min = -10e-6
+  y_max = 10e-6
 
   #Don't know if this should be in the deck or not
-  dt_multiplier=0.8
+  dt_multiplier = 0.8
 
-  #dlb_threshold=1.0
+  #dlb_threshold = 1.0
 
-  #restart_snapshot=98
+  #restart_snapshot = 98
 
   #Setting neutral_background to F makes the code solve
   #Poisson's equation for the initial electric field
   #Setting it to T makes the initial electric field 0
-  neutral_background=T
+  neutral_background = T
 
 end:control
 
 
 begin:boundaries
 
-  bc_x_min=simple_laser
-  bc_x_max=simple_outflow
-  bc_y_min=periodic
-  bc_y_max=periodic
+  bc_x_min = simple_laser
+  bc_x_max = simple_outflow
+  bc_y_min = periodic
+  bc_y_max = periodic
 
 end:boundaries
 
 
 begin:species
 
-  name=Electron
-  charge=-1.0
-  mass=1.0
-  frac=0.5
-  dump=T
-  tracer=T
+  name = Electron
+  charge = -1.0
+  mass = 1.0
+  frac = 0.5
+  dump = T
+  tracer = T
 
 end:species
 
 
 begin:species
 
-  name=Palladium
-  charge=22.0
-  mass=1836.2*105.0
-  frac=0.5
-  dump=T
-  tracer=T
+  name = Palladium
+  charge = 22.0
+  mass = 1836.2*105.0
+  frac = 0.5
+  dump = T
+  tracer = T
 
-  rho=den_max
-  temp=1e6
+  rho = den_max
+  temp = 1e6
 
 end:species
 
 
 begin:species
 
-  name=Electron
-  rho=rho(Palladium) * 22.0
-  temp=1e6
+  name = Electron
+  rho = rho(Palladium) * 22.0
+  temp = 1e6
 
 end:species
 
@@ -84,93 +84,93 @@ begin:output
   #If use_offset_grid is true then the code dumps a
   #grid which displays positions relative to the
   #Left hand edge of the window
-  use_offset_grid=F
+  use_offset_grid = F
   #number of timesteps between output dumps
-  dt_snapshot=1.0e-15
+  dt_snapshot = 1.0e-15
   #Number of dt_snapshot between full dumps
-  full_dump_every=10
-  restart_dump_every=-1
-  force_final_to_be_restartable=T
+  full_dump_every = 10
+  restart_dump_every = -1
+  force_final_to_be_restartable = T
 
   #Properties at particle positions
-  particles=full
-  px=never
-  py=never
-  pz=never
-  vx=never
-  vy=never
-  vz=never
-  charge=never
-  mass=never
-  particle_weight=full
-  species_id=never
+  particles = full
+  px = never
+  py = never
+  pz = never
+  vx = never
+  vy = never
+  vz = never
+  charge = never
+  mass = never
+  particle_weight = full
+  species_id = never
 
   #Properties on grid
-  grid=always
-  ex=always
-  ey=always
-  ez=always
-  bx=always
-  by=always
-  bz=always
-  jx=always
-  jy=always
-  jz=never
-  ekbar=always
-  mass_density=never + species
-  charge_density=always
-  number_density=always + species
-  temperature=always+species
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  bx = always
+  by = always
+  bz = always
+  jx = always
+  jy = always
+  jz = never
+  ekbar = always
+  mass_density = never + species
+  charge_density = always
+  number_density = always + species
+  temperature = always+species
 
   #extended io
-  distribution_functions=always
-  particle_probes=never
+  distribution_functions = always
+  particle_probes = never
 
 end:output
 
 
 begin:constant
 
-  lambda=1.0e-6
-  omega=2.0*pi*c/lambda
-  den_max=10.0*critical(omega)
-  den_preplasma=1.0e18
-  len_scale=5.0e-6
+  lambda = 1.0e-6
+  omega = 2.0*pi*c/lambda
+  den_max = 10.0*critical(omega)
+  den_preplasma = 1.0e18
+  len_scale = 5.0e-6
 
 end:constant
 
 
 begin:laser
 
-  boundary=x_min
-  amp=1e13
-  freq=omega
-  pol=0.0
-  phase=0.0
-  t_profile=1.0
-  t_start=start
-  t_end=end
-  profile=y/(2.5e-6) * gauss(y,0.0,2.5e-6)
+  boundary = x_min
+  amp = 1e13
+  freq = omega
+  pol = 0.0
+  phase = 0.0
+  t_profile = 1.0
+  t_start = start
+  t_end = end
+  profile = y/(2.5e-6) * gauss(y,0.0,2.5e-6)
 
 end:laser
 
 
 begin:dist_fn
 
-  name=x_en
-  ndims=2
-  dumpmask=always
+  name = x_en
+  ndims = 2
+  dumpmask = always
 
-  direction1=dir_x
-  direction2=dir_en
+  direction1 = dir_x
+  direction2 = dir_en
 
   #range is ignored for spatial coordinates
-  range1=(1,1)
-  range2=(0,10*kev)
+  range1 = (1,1)
+  range2 = (0,10*kev)
 
   #resolution is ignored for spatial coordinates
-  resolution1=1
-  resolution2=100
+  resolution1 = 1
+  resolution2 = 100
 
   include_species:Electron
   include_species:Palladium
@@ -180,17 +180,17 @@ end:dist_fn
 
 begin:dist_fn
 
-  name=en
-  ndims=1
-  dumpmask=always
+  name = en
+  ndims = 1
+  dumpmask = always
 
-  direction1=dir_en
+  direction1 = dir_en
 
   #range is ignored for spatial coordinates
-  range1=(0,2.0*kev)
+  range1 = (0,2.0*kev)
 
   #resolution is ignored for spatial coordinates
-  resolution1=100
+  resolution1 = 100
 
   include_species:Electron
   include_species:Palladium
@@ -200,23 +200,23 @@ end:dist_fn
 
 begin:dist_fn
 
-  name=x_px_py
-  ndims=3
-  dumpmask=never
+  name = x_px_py
+  ndims = 3
+  dumpmask = never
 
-  direction1=dir_x
-  direction2=dir_px
-  direction3=dir_py
+  direction1 = dir_x
+  direction2 = dir_px
+  direction3 = dir_py
 
   #range is ignored for spatial coordinates
-  range1=(1,1)
-  range2=(-3.0e-20,3.0e-20)
-  range3=(-3.0e-20,3.0e-20)
+  range1 = (1,1)
+  range2 = (-3.0e-20,3.0e-20)
+  range3 = (-3.0e-20,3.0e-20)
 
   #resolution is ignored for spatial coordinates
-  resolution1=1
-  resolution2=100
-  resolution3=100
+  resolution1 = 1
+  resolution2 = 100
+  resolution3 = 100
 
   include_species:Electron
   include_species:Palladium
@@ -226,17 +226,17 @@ end:dist_fn
 
 begin:probe
 
-  x1=50.0e-6
-  x2=50.0e-6
+  x1 = 50.0e-6
+  x2 = 50.0e-6
 
-  y1=-50.0e-6
-  y2=50.0e-6
+  y1 = -50.0e-6
+  y2 = 50.0e-6
 
-  probe_species=1
-  ek_min=0.0
-  ek_max=-1.0
-  name=electron_back_probe
+  probe_species = 1
+  ek_min = 0.0
+  ek_max = -1.0
+  name = electron_back_probe
 
-  dump=always
+  dump = always
 
 end:probe

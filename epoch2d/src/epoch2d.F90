@@ -99,6 +99,8 @@ PROGRAM pic
     ENDDO
   ENDIF
 
+  CALL sanity_check
+
   CALL particle_bcs
   CALL efield_bcs
   CALL bfield_bcs(.FALSE.)

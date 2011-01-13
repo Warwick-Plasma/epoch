@@ -9,7 +9,7 @@ CONTAINS
   SUBROUTINE particle_to_grid(cell_frac, output)
 
     REAL(num), INTENT(IN) :: cell_frac
-    REAL(num), DIMENSION(-2:2), INTENT(INOUT) :: output
+    REAL(num), DIMENSION(sf_min:sf_max), INTENT(INOUT) :: output
     REAL(num), PARAMETER :: fac1 = 1.0_num / 24.0_num
     REAL(num), PARAMETER :: fac2 = 1.0_num / 6.0_num
     REAL(num) :: cf2
@@ -40,7 +40,7 @@ CONTAINS
   SUBROUTINE grid_to_particle(cell_frac, output)
 
     REAL(num), INTENT(IN) :: cell_frac
-    REAL(num), DIMENSION(-2:2), INTENT(INOUT) :: output
+    REAL(num), DIMENSION(sf_min:sf_max), INTENT(INOUT) :: output
     REAL(num), PARAMETER :: fac1 = 1.0_num / 24.0_num
     REAL(num), PARAMETER :: fac2 = 1.0_num / 6.0_num
     REAL(num) :: cf2

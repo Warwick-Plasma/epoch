@@ -338,9 +338,14 @@ MODULE shared_data
 
   ! The order for the spline interpolation used as a particle representation.
 #ifdef PARTICLE_SHAPE_BSPLINE3
-  INTEGER, PARAMETER :: sf_order = 2
+  INTEGER, PARAMETER :: sf_min = -2
+  INTEGER, PARAMETER :: sf_max =  2
+#elif  PARTICLE_SHAPE_TOPHAT
+  INTEGER, PARAMETER :: sf_min =  0
+  INTEGER, PARAMETER :: sf_max =  1
 #else
-  INTEGER, PARAMETER :: sf_order = 1
+  INTEGER, PARAMETER :: sf_min = -1
+  INTEGER, PARAMETER :: sf_max =  1
 #endif
 
   ! Object representing a particle
@@ -387,6 +392,7 @@ MODULE shared_data
     REAL(num) :: mass
     INTEGER(KIND=8) :: count
     TYPE(particle_list) :: attached_list
+    LOGICAL :: charge_set
 
 #ifdef TRACER_PARTICLES
     LOGICAL :: tracer

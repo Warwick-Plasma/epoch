@@ -24,17 +24,16 @@ CONTAINS
     ! Xi (space factor see page 38 in manual)
     ! The code now uses gx and hx instead of xi0 and xi1
 
-    INTEGER, PARAMETER :: sf = sf_order
-
     ! J from a given particle, can be spread over up to 3 cells in
     ! Each direction due to parabolic weighting. We allocate 4 or 5
     ! Cells because the position of the particle at t = t+1.5dt is not
     ! known until later. This part of the algorithm could probably be
     ! Improved, but at the moment, this is just a straight copy of
     ! The core of the PSC algorithm
-    REAL(num), DIMENSION(-sf-2:sf+1,-sf-1:sf+1,-sf-1:sf+1) :: jxh
-    REAL(num), DIMENSION(-sf-1:sf+1,-sf-2:sf+1,-sf-1:sf+1) :: jyh
-    REAL(num), DIMENSION(-sf-1:sf+1,-sf-1:sf+1,-sf-2:sf+1) :: jzh
+    INTEGER, PARAMETER :: sf0 = sf_min, sf1 = sf_max
+    REAL(num), DIMENSION(sf0-2:sf1+1,sf0-1:sf1+1,sf0-1:sf1+1) :: jxh
+    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-2:sf1+1,sf0-1:sf1+1) :: jyh
+    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-1:sf1+1,sf0-2:sf1+1) :: jzh
 
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_z
@@ -63,11 +62,11 @@ CONTAINS
     ! Eqn 4.77 would be written as
     ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
     ! Defined at the particle position
-    REAL(num), DIMENSION(-sf-1:sf+1) :: gx, gy, gz
+    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: gx, gy, gz
 
     ! Defined at the particle position - 0.5 grid cell in each direction
     ! This is to deal with the grid stagger
-    REAL(num), DIMENSION(-sf-1:sf+1) :: hx, hy, hz
+    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: hx, hy, hz
 
     ! Fields at particle location
     REAL(num) :: ex_part, ey_part, ez_part, bx_part, by_part, bz_part
@@ -367,14 +366,14 @@ CONTAINS
           ! Remember that due to CFL condition particle can never cross more
           ! than one gridcell in one timestep
 
-          xmin = -sf_order + (dcellx - 1) / 2
-          xmax =  sf_order + (dcellx + 1) / 2
+          xmin = sf_min + (dcellx - 1) / 2
+          xmax = sf_max + (dcellx + 1) / 2
 
-          ymin = -sf_order + (dcelly - 1) / 2
-          ymax =  sf_order + (dcelly + 1) / 2
+          ymin = sf_min + (dcelly - 1) / 2
+          ymax = sf_max + (dcelly + 1) / 2
 
-          zmin = -sf_order + (dcellz - 1) / 2
-          zmax =  sf_order + (dcellz + 1) / 2
+          zmin = sf_min + (dcellz - 1) / 2
+          zmax = sf_max + (dcellz + 1) / 2
 
           ! Set these to zero due to diffential inside loop
           jxh = 0.0_num

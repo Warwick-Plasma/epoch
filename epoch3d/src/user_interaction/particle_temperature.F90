@@ -23,7 +23,7 @@ CONTAINS
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cell_z_r, cell_frac_z
-    REAL(num), DIMENSION(-2:2) :: gx, gy, gz
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     TYPE(particle), POINTER :: current
     INTEGER :: cell_x, cell_y, cell_z
     INTEGER(KIND=8) :: ipart
@@ -67,9 +67,9 @@ CONTAINS
 
       temp_local = 0.0_num
       drift_local = 0.0_num
-      DO iz = -sf_order, sf_order
-        DO iy = -sf_order, sf_order
-          DO ix = -sf_order, sf_order
+      DO iz = sf_min, sf_max
+        DO iy = sf_min, sf_max
+          DO ix = sf_min, sf_max
             temp_local = temp_local + gx(ix) * gy(iy) * gz(iz) &
                 * temperature(cell_x+ix, cell_y+iy, cell_z+iz)
             drift_local = drift_local + gx(ix) * gy(iy) * gz(iz) &

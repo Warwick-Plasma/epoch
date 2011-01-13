@@ -386,7 +386,7 @@ CONTAINS
     INTEGER :: cell_x, cell_y
     INTEGER(KIND=8) :: ipart
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: weight_fn, temp
-    REAL(num), DIMENSION(-2:2) :: gx, gy
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: isubx, isuby, ierr, ix, iy
@@ -447,8 +447,8 @@ CONTAINS
       CALL particle_to_grid(cell_frac_y, gy)
 
       wdata = 1.0_num / (dx*dy) ! Simply want to count particles per metre^2
-      DO isuby = -sf_order, sf_order
-        DO isubx = -sf_order, sf_order
+      DO isuby = sf_min, sf_max
+        DO isubx = sf_min, sf_max
           weight_fn(cell_x+isubx, cell_y+isuby) = &
               weight_fn(cell_x+isubx, cell_y+isuby) &
               + gx(isubx) * gy(isuby) * wdata
@@ -511,8 +511,8 @@ CONTAINS
       CALL grid_to_particle(cell_frac_y, gy)
 
       weight_local = 0.0_num
-      DO isuby = -sf_order, sf_order
-        DO isubx = -sf_order, +sf_order
+      DO isuby = sf_min, sf_max
+        DO isubx = sf_min, sf_max
           weight_local = &
               weight_local + gx(isubx)*gy(isuby) &
               * weight_fn(cell_x+isubx, cell_y+isuby)
