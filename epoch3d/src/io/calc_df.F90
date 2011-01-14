@@ -13,7 +13,7 @@ CONTAINS
     INTEGER :: cell_x, cell_y, cell_z
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_z, part_m
+    REAL(num) :: part_m
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -21,9 +21,6 @@ CONTAINS
 
     ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x, cell_frac_y, cell_frac_z
-
-    ! The weight of a particle
-    REAL(num) :: l_weight
 
     ! Weighting factors as Eqn 4.77 page 25 of manual
     ! Eqn 4.77 would be written as
@@ -38,13 +35,12 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
-    REAL(num) :: fac, idxyz
+    REAL(num) :: fac, idx
 
     data_array = 0.0_num
 
-    l_weight = weight
-    idxyz = 1.0_num / dx / dy / dz
-    fac   = weight  / dx / dy / dz
+    idx = 1.0_num / dx / dy / dz
+    fac = weight  / dx / dy / dz
 
     spec_start = current_species
     spec_end = current_species
@@ -61,37 +57,28 @@ CONTAINS
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_min_local
-        part_y  = current%part_pos(2) - y_min_local
-        part_z  = current%part_pos(3) - z_min_local
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_m  = current%mass
 #endif
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
-        fac = l_weight * idxyz
+        fac = current%weight * idx
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
 #endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x + 1
-
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y + 1
-
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z + 1
+        cell_x = FLOOR(cell_x_r)
+        cell_y = FLOOR(cell_y_r)
+        cell_z = FLOOR(cell_z_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
+        cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
@@ -123,11 +110,11 @@ CONTAINS
 
   SUBROUTINE calc_ekbar(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x,y,z
+    ! Contains the integer cell position of the particle in x, y, z
     INTEGER :: cell_x, cell_y, cell_z
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_z, part_px, part_py, part_pz, part_m
+    REAL(num) :: part_px, part_py, part_pz, part_mc
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -137,7 +124,7 @@ CONTAINS
     REAL(num) :: cell_frac_x, cell_frac_y, cell_frac_z
 
     ! The weight of a particle
-    REAL(num) :: l_weight
+    REAL(num) :: l_weight, l_weightc
 
     ! Weighting factors as Eqn 4.77 page 25 of manual
     ! Eqn 4.77 would be written as
@@ -159,6 +146,7 @@ CONTAINS
     ct = 0.0_num
 
     l_weight = weight
+    l_weightc = c * weight
 
     spec_start = current_species
     spec_end = current_species
@@ -171,58 +159,51 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_m  = particle_species(ispecies)%mass
+      part_mc = c * particle_species(ispecies)%mass
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_min_local
-        part_y  = current%part_pos(2) - y_min_local
-        part_z  = current%part_pos(3) - z_min_local
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGE_MASS
-        part_m  = current%mass
+        part_mc = c * current%mass
 #endif
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
+        l_weightc = c * current%weight
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
 #endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x + 1
-
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y + 1
-
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z + 1
+        cell_x = FLOOR(cell_x_r)
+        cell_y = FLOOR(cell_y_r)
+        cell_z = FLOOR(cell_z_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
+        cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
-        wdata = (SQRT(part_px**2 + part_py**2 + part_pz**2 + (part_m*c)**2) &
-          - part_m * c) * c * l_weight
+        wdata = (SQRT(part_px**2 + part_py**2 + part_pz**2 + part_mc**2) &
+          - part_mc) * l_weightc
         DO iz = sf_min, sf_max
           DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
-              data_array(cell_x+ix,cell_y+iy,cell_z+iz) = &
-                  data_array(cell_x+ix,cell_y+iy,cell_z+iz) &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * wdata
-              ct(cell_x+ix,cell_y+iy,cell_z+iz) = &
-                  ct(cell_x+ix,cell_y+iy,cell_z+iz) &
+              ct(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  ct(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * l_weight
             ENDDO
           ENDDO
@@ -252,7 +233,7 @@ CONTAINS
     INTEGER :: cell_x, cell_y, cell_z
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_z, part_q
+    REAL(num) :: part_q
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -260,9 +241,6 @@ CONTAINS
 
     ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x, cell_frac_y, cell_frac_z
-
-    ! The weight of a particle
-    REAL(num) :: l_weight
 
     ! Weighting factors as Eqn 4.77 page 25 of manual
     ! Eqn 4.77 would be written as
@@ -277,13 +255,12 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
-    REAL(num) :: fac, idxyz
+    REAL(num) :: fac, idx
 
     data_array = 0.0_num
 
-    l_weight = weight
-    idxyz = 1.0_num / dx / dy / dz
-    fac   = weight  / dx / dy / dz
+    idx = 1.0_num / dx / dy / dz
+    fac = weight  / dx / dy / dz
 
     spec_start = current_species
     spec_end = current_species
@@ -300,37 +277,28 @@ CONTAINS
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_min_local
-        part_y  = current%part_pos(2) - y_min_local
-        part_z  = current%part_pos(3) - z_min_local
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_q  = current%charge
 #endif
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
-        fac = l_weight * idxyz
+        fac = current%weight * idx
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
 #endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x + 1
-
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y + 1
-
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z + 1
+        cell_x = FLOOR(cell_x_r)
+        cell_y = FLOOR(cell_y_r)
+        cell_z = FLOOR(cell_z_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
+        cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
@@ -365,18 +333,12 @@ CONTAINS
     ! Contains the integer cell position of the particle in x, y, z
     INTEGER :: cell_x, cell_y, cell_z
 
-    ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_z
-
     ! Contains the floating point version of the cell number (never actually
     ! used)
     REAL(num) :: cell_x_r, cell_y_r, cell_z_r
 
     ! The fraction of a cell between the particle position and the cell boundary
     REAL(num) :: cell_frac_x, cell_frac_y, cell_frac_z
-
-    ! The weight of a particle
-    REAL(num) :: l_weight
 
     ! Weighting factors as Eqn 4.77 page 25 of manual
     ! Eqn 4.77 would be written as
@@ -391,12 +353,11 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
-    REAL(num) :: idxyz
+    REAL(num) :: idx
 
     data_array = 0.0_num
 
-    l_weight = weight
-    idxyz = 1.0_num / dx / dy / dz
+    idx   = 1.0_num / dx / dy / dz
     wdata = weight  / dx / dy / dz
 
     spec_start = current_species
@@ -410,36 +371,25 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
-        ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_min_local
-        part_y  = current%part_pos(2) - y_min_local
-        part_z  = current%part_pos(3) - z_min_local
-
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
-        wdata = l_weight * idxyz
+        fac = current%weight * idx
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
 #endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x + 1
-
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y + 1
-
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z + 1
+        cell_x = FLOOR(cell_x_r)
+        cell_y = FLOOR(cell_y_r)
+        cell_z = FLOOR(cell_z_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
+        cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
@@ -477,7 +427,6 @@ CONTAINS
     INTEGER :: cell_x, cell_y, cell_z
 
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_z
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
 
     ! Contains the floating point version of the cell number (never actually
@@ -534,33 +483,25 @@ CONTAINS
         l_weight = current%weight
 #endif
         ! Copy the particle properties out for speed
-        part_x   = current%part_pos(1) - x_min_local
-        part_y   = current%part_pos(2) - y_min_local
-        part_z   = current%part_pos(3) - z_min_local
         part_pmx = current%part_p(1) / sqrt_part_m
         part_pmy = current%part_p(2) / sqrt_part_m
         part_pmz = current%part_p(3) / sqrt_part_m
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
 #endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x + 1
-
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y + 1
-
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z + 1
+        cell_x = FLOOR(cell_x_r)
+        cell_y = FLOOR(cell_y_r)
+        cell_z = FLOOR(cell_z_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
+        cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
@@ -607,33 +548,25 @@ CONTAINS
         sqrt_part_m  = SQRT(current%mass)
 #endif
         ! Copy the particle properties out for speed
-        part_x   = current%part_pos(1) - x_min_local
-        part_y   = current%part_pos(2) - y_min_local
-        part_z   = current%part_pos(3) - z_min_local
         part_pmx = current%part_p(1) / sqrt_part_m
         part_pmy = current%part_p(2) / sqrt_part_m
         part_pmz = current%part_p(3) / sqrt_part_m
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
 #endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x + 1
-
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y + 1
-
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z + 1
+        cell_x = FLOOR(cell_x_r)
+        cell_y = FLOOR(cell_y_r)
+        cell_z = FLOOR(cell_z_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
+        cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
@@ -672,9 +605,6 @@ CONTAINS
 
     ! Contains the integer cell position of the particle in x, y, z
     INTEGER :: cell_x, cell_y, cell_z
-
-    ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, part_y, part_z
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
@@ -719,31 +649,21 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
-        ! Copy the particle properties out for speed
-        part_x  = current%part_pos(1) - x_min_local
-        part_y  = current%part_pos(2) - y_min_local
-        part_z  = current%part_pos(3) - z_min_local
-
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
 #endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_x = cell_x + 1
-
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_y = cell_y + 1
-
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_z = cell_z + 1
+        cell_x = FLOOR(cell_x_r)
+        cell_y = FLOOR(cell_y_r)
+        cell_z = FLOOR(cell_z_r)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
+        cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
 
         CALL particle_to_grid(cell_frac_x, gx)
         CALL particle_to_grid(cell_frac_y, gy)
