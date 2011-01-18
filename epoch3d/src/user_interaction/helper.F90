@@ -248,6 +248,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: idum
     TYPE(particle_family), POINTER :: species_list
     LOGICAL, DIMENSION(-2:,-2:,-2:), INTENT(IN) :: load_list
+    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
     INTEGER(KIND=8) :: ipart, npart_per_cell
@@ -258,8 +259,8 @@ CONTAINS
     INTEGER :: cell_x
     INTEGER :: cell_y
     INTEGER :: cell_z
-    INTEGER(KIND=8) :: i
-    INTEGER :: j, ierr, ix, iy, iz, ipos, icount
+    INTEGER(KIND=8) :: i, ipos, icount
+    INTEGER :: ierr, ix, iy, iz
     CHARACTER(LEN=15) :: string
 
     npart_this_species = species_list%count
@@ -308,6 +309,7 @@ CONTAINS
     species_list%npart_per_cell = npart_per_cell
     IF (species_list%npart_per_cell .EQ. 0) species_list%npart_per_cell = 1
 
+    ! Randomly place npart_per_cell particles into each valid cell
     npart_left = num_new_particles
     current=>partlist%head
     IF (npart_per_cell .GT. 0) THEN
@@ -340,66 +342,60 @@ CONTAINS
 
     ENDIF
 
-    ! Randomly place remaining particles into valid cells
-    ipart = npart_left
-    DO i = 1, ipart
-      IF (.NOT. ASSOCIATED(current)) EXIT
-      DO j = 1, 10000
-        rpos = random(idum) * (x(nx) - x(1) + dx)
-        current%part_pos(1) = rpos + x(1) - 0.5_num * dx
-        cell_x = FLOOR(rpos / dx) + 1
+    ! When num_new_particles does not equal npart_per_cell * num_valid_cells
+    ! there will be particles left over that didn't get placed.
+    ! The following loop randomly place remaining particles into valid cells.
+    IF (npart_left .GT. 0) THEN
+      ALLOCATE(valid_cell_list(num_valid_cells_local))
 
-        rpos = random(idum) * (y(ny) - y(1) + dy)
-        current%part_pos(2) = rpos + y(1) - 0.5_num * dy
-        cell_y = FLOOR(rpos / dy) + 1
-
-        rpos = random(idum) * (z(nz) - z(1) + dz)
-        current%part_pos(3) = rpos + z(1) - 0.5_num * dz
-        cell_z = FLOOR(rpos / dz) + 1
-
-        IF (load_list(cell_x, cell_y, cell_z)) THEN
-          npart_left = npart_left - 1
-          EXIT
-        ENDIF
-      ENDDO
-      current=>current%next
-    ENDDO
-
-    ! Last ditch effort at placing particles
-    DO i = 1, npart_left
-      ipos = random(idum) * num_valid_cells_local
-      icount = 0
-outer:DO iz = 1, nz
+      ipos = 0
+      DO iz = 1, nz
         DO iy = 1, ny
           DO ix = 1, nx
-            IF (load_list(ix, iy, iz)) icount = icount + 1
-            IF (icount .EQ. ipos) THEN
-              cell_x = ix
-              cell_y = iy
-              cell_z = iz
-              EXIT outer
+            IF (load_list(ix,iy,iz)) THEN
+              ipos = ipos + 1
+              valid_cell_list(ipos) = ix - 1 + nx * (iy - 1 + ny * (iz - 1))
             ENDIF
           ENDDO
         ENDDO
-      ENDDO outer
+      ENDDO
 
-      rpos = random(idum)
-      current%part_pos(1) = x(cell_x) + (rpos - 0.5_num) * dx
-      rpos = random(idum)
-      current%part_pos(2) = y(cell_y) + (rpos - 0.5_num) * dy
-      rpos = random(idum)
-      current%part_pos(3) = z(cell_z) + (rpos - 0.5_num) * dz
-    ENDDO
+      DO i = 1, npart_left
+        ipos = INT(random(idum) * (num_valid_cells_local - 1)) + 1
+        ipos = valid_cell_list(ipos)
 
+        cell_z = ipos / (nx * ny)
+        ipos = ipos - (nx * ny) * cell_z
+        cell_z = cell_z + 1
+
+        cell_y = ipos / nx
+        ipos = ipos - nx * cell_y
+        cell_y = cell_y + 1
+
+        cell_x = ipos + 1
+
+        current%part_pos(1) = x(cell_x) + (random(idum) - 0.5_num) * dx
+        current%part_pos(2) = y(cell_y) + (random(idum) - 0.5_num) * dy
+        current%part_pos(3) = z(cell_z) + (random(idum) - 0.5_num) * dz
+        current=>current%next
+      ENDDO
+
+      DEALLOCATE(valid_cell_list)
+    ENDIF
+
+    ! Remove any unplaced particles from the list. This should never be
+    ! called if the above routines worked correctly.,
     DO WHILE(ASSOCIATED(current))
       next=>current%next
       CALL remove_particle_from_partlist(partlist, current)
       DEALLOCATE(current)
       current=>next
     ENDDO
-    CALL MPI_REDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
-        MPI_SUM, 0, comm, errcode)
+
+    CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
+        MPI_SUM, comm, errcode)
     species_list%count = npart_this_species
+
     IF (rank .EQ. 0) THEN
       CALL integer_as_string(npart_this_species, string)
       PRINT *, "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
@@ -407,6 +403,7 @@ outer:DO iz = 1, nz
       WRITE(20, *) "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
           TRIM(species_list%name)
     ENDIF
+
     CALL particle_bcs
 
   END SUBROUTINE load_particles
@@ -446,25 +443,11 @@ outer:DO iz = 1, nz
     DO iz = -2, nz+3
       DO iy = -2, ny+3
         DO ix = -2, nx+3
-          IF (density(ix, iy, iz) .GT. maxrho .AND. maxrho .GT. 0.0_num) THEN
-            density(ix, iy, iz) = maxrho
-          ENDIF
-        ENDDO
-      ENDDO
-    ENDDO
-
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
           IF (density(ix, iy, iz) .GE. minrho) THEN
-            ! Ensure that cells next to a discontinuity have some particles
-            DO k = -1, 1
-              DO j = -1, 1
-                DO i = -1, 1
-                  density_map(ix+i, iy+j, iz+k) = .TRUE.
-                ENDDO
-              ENDDO
-            ENDDO
+            density_map(ix, iy, iz) = .TRUE.
+          ELSE IF (density(ix, iy, iz) .GT. maxrho &
+              .AND. maxrho .GT. 0.0_num) THEN
+            density(ix, iy, iz) = maxrho
           ENDIF
         ENDDO
       ENDDO
@@ -472,7 +455,6 @@ outer:DO iz = 1, nz
 
     ! Uniformly load particles in space
     CALL load_particles(species_list, density_map, idum)
-    DEALLOCATE(density_map)
 
     ALLOCATE(weight_fn(-2:nx+3, -2:ny+3, -2:nz+3))
     CALL MPI_BARRIER(comm, errcode)
@@ -507,10 +489,30 @@ outer:DO iz = 1, nz
       CALL particle_to_grid(cell_frac_z, gz)
 
       DO isubz = sf_min, sf_max
+        i = cell_x
+        j = cell_y
+        k = cell_z + isubz
+#ifdef PARTICLE_SHAPE_TOPHAT
+        IF (.NOT. density_map(i,j,k)) k = cell_z + 1 - isubz
+#else
+        IF (.NOT. density_map(i,j,k)) k = cell_z - isubz / 2
+#endif
         DO isuby = sf_min, sf_max
+          i = cell_x
+          j = cell_y + isuby
+#ifdef PARTICLE_SHAPE_TOPHAT
+          IF (.NOT. density_map(i,j,k)) j = cell_y + 1 - isuby
+#else
+          IF (.NOT. density_map(i,j,k)) j = cell_y - isuby / 2
+#endif
           DO isubx = sf_min, sf_max
-            weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz) = &
-                weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz) &
+            i = cell_x + isubx
+#ifdef PARTICLE_SHAPE_TOPHAT
+            IF (.NOT. density_map(i,j,k)) i = cell_x + 1 - isubx
+#else
+            IF (.NOT. density_map(i,j,k)) i = cell_x - isubx / 2
+#endif
+            weight_fn(i,j,k) = weight_fn(i,j,k) &
                 + gx(isubx) * gy(isuby) * gz(isubz)
           ENDDO
         ENDDO
@@ -519,6 +521,7 @@ outer:DO iz = 1, nz
       current=>current%next
       ipart = ipart + 1
     ENDDO
+    DEALLOCATE(density_map)
 
     CALL processor_summation_bcs(weight_fn)
     IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0, :,:) = weight_fn(1,   :,:)

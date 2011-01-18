@@ -225,6 +225,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: idum
     TYPE(particle_family), POINTER :: species_list
     LOGICAL, DIMENSION(-2:), INTENT(IN) :: load_list
+    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
     INTEGER(KIND=8) :: ipart, npart_per_cell
@@ -233,8 +234,8 @@ CONTAINS
     REAL(num) :: valid_cell_frac
     REAL(dbl) :: rpos
     INTEGER :: cell_x
-    INTEGER(KIND=8) :: i
-    INTEGER :: j, ierr, ix, ipos, icount
+    INTEGER(KIND=8) :: i, ipos, icount
+    INTEGER :: ierr, ix
     CHARACTER(LEN=15) :: string
 
     npart_this_species = species_list%count
@@ -278,6 +279,7 @@ CONTAINS
     species_list%npart_per_cell = npart_per_cell
     IF (species_list%npart_per_cell .EQ. 0) species_list%npart_per_cell = 1
 
+    ! Randomly place npart_per_cell particles into each valid cell
     npart_left = num_new_particles
     current=>partlist%head
     IF (npart_per_cell .GT. 0) THEN
@@ -304,48 +306,45 @@ CONTAINS
 
     ENDIF
 
-    ! Randomly place remaining particles into valid cells
-    ipart = npart_left
-    DO i = 1, ipart
-      IF (.NOT. ASSOCIATED(current)) EXIT
-      DO j = 1, 10000
-        rpos = random(idum) * (x(nx) - x(1) + dx)
-        current%part_pos = rpos + x(1) - 0.5_num * dx
-        cell_x = FLOOR(rpos / dx) + 1
+    ! When num_new_particles does not equal npart_per_cell * num_valid_cells
+    ! there will be particles left over that didn't get placed.
+    ! The following loop randomly place remaining particles into valid cells.
+    IF (npart_left .GT. 0) THEN
+      ALLOCATE(valid_cell_list(num_valid_cells_local))
 
-        IF (load_list(cell_x)) THEN
-          npart_left = npart_left - 1
-          EXIT
-        ENDIF
-      ENDDO
-      current=>current%next
-    ENDDO
-
-    ! Last ditch effort at placing particles
-    DO i = 1, npart_left
-      ipos = random(idum) * num_valid_cells_local
-      icount = 0
+      ipos = 0
       DO ix = 1, nx
-        IF (load_list(ix)) icount = icount + 1
-        IF (icount .EQ. ipos) THEN
-          cell_x = ix
-          EXIT
+        IF (load_list(ix)) THEN
+          ipos = ipos + 1
+          valid_cell_list(ipos) = ix
         ENDIF
       ENDDO
 
-      rpos = random(idum)
-      current%part_pos = x(cell_x) + (rpos - 0.5_num) * dx
-    ENDDO
+      DO i = 1, npart_left
+        ipos = INT(random(idum) * (num_valid_cells_local - 1)) + 1
 
+        cell_x = valid_cell_list(ipos)
+
+        current%part_pos = x(cell_x) + (random(idum) - 0.5_num) * dx
+        current=>current%next
+      ENDDO
+
+      DEALLOCATE(valid_cell_list)
+    ENDIF
+
+    ! Remove any unplaced particles from the list. This should never be
+    ! called if the above routines worked correctly.,
     DO WHILE(ASSOCIATED(current))
       next=>current%next
       CALL remove_particle_from_partlist(partlist, current)
       DEALLOCATE(current)
       current=>next
     ENDDO
-    CALL MPI_REDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
-        MPI_SUM, 0, comm, errcode)
+
+    CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
+        MPI_SUM, comm, errcode)
     species_list%count = npart_this_species
+
     IF (rank .EQ. 0) THEN
       CALL integer_as_string(npart_this_species, string)
       PRINT *, "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
@@ -353,6 +352,7 @@ CONTAINS
       WRITE(20, *) "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
           TRIM(species_list%name)
     ENDIF
+
     CALL particle_bcs
 
   END SUBROUTINE load_particles
@@ -388,23 +388,15 @@ CONTAINS
     CALL field_bc(density)
 
     DO ix = -2, nx+3
-      IF (density(ix) .GT. maxrho .AND. maxrho .GT. 0.0_num) THEN
-        density(ix) = maxrho
-      ENDIF
-    ENDDO
-
-    DO ix = 1, nx
       IF (density(ix) .GE. minrho) THEN
-        ! Ensure that cells next to a discontinuity have some particles
-        DO i = -1, 1
-          density_map(ix+i) = .TRUE.
-        ENDDO
+        density_map(ix) = .TRUE.
+      ELSE IF (density(ix) .GT. maxrho .AND. maxrho .GT. 0.0_num) THEN
+        density(ix) = maxrho
       ENDIF
     ENDDO
 
     ! Uniformly load particles in space
     CALL load_particles(species_list, density_map, idum)
-    DEALLOCATE(density_map)
 
     ALLOCATE(weight_fn(-2:nx+3))
     CALL MPI_BARRIER(comm, errcode)
@@ -429,12 +421,19 @@ CONTAINS
       CALL particle_to_grid(cell_frac_x, gx)
 
       DO isubx = sf_min, sf_max
-        weight_fn(cell_x+isubx) = weight_fn(cell_x+isubx) + gx(isubx)
+        i = cell_x + isubx
+#ifdef PARTICLE_SHAPE_TOPHAT
+        IF (.NOT. density_map(i)) i = cell_x + 1 - isubx
+#else
+        IF (.NOT. density_map(i)) i = cell_x - isubx / 2
+#endif
+        weight_fn(i) = weight_fn(i) + gx(isubx)
       ENDDO
 
       current=>current%next
       ipart = ipart + 1
     ENDDO
+    DEALLOCATE(density_map)
 
     CALL processor_summation_bcs(weight_fn)
     IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ) = weight_fn(1   )
