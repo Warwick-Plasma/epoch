@@ -347,7 +347,7 @@ CONTAINS
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
 #ifdef PER_PARTICLE_WEIGHT
-        fac = current%weight * idx
+        wdata = current%weight * idx
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
