@@ -11,7 +11,6 @@ MODULE constants
 
   INTEGER, PARAMETER :: num = KIND(1.d0)
   INTEGER, PARAMETER :: dbl = KIND(1.d0)
-  REAL(num), PARAMETER :: pi = 3.14159265358979323_num
   REAL(num), PARAMETER :: c_non_zero = TINY(1.0_num)
   REAL(num), PARAMETER :: largest_number = HUGE(1.0_num)
 
@@ -73,13 +72,15 @@ MODULE constants
   INTEGER, PARAMETER :: c_lb_all = c_lb_x
   INTEGER, PARAMETER :: c_lb_auto = c_lb_all + 1
 
-  REAL(num), PARAMETER :: q0 = 1.60217646e-19_num ! c
-  REAL(num), PARAMETER :: m0 = 9.10938188e-31_num ! kg
-  REAL(num), PARAMETER :: c  = 2.99792458e8_num   ! ms^(-2)
-  REAL(num), PARAMETER :: kb = 1.3806503e-23_num  ! m^2kgs(-2)K^(-1)
-  REAL(num), PARAMETER :: epsilon0 = 8.85418782e-12_num
-  REAL(num), PARAMETER :: mu0 = 1.0_num/(c**2*epsilon0)
-  REAL(num), PARAMETER :: h_planck = 6.626068e-34_num
+  ! Taken from http://physics.nist.gov/cuu/Constants
+  REAL(num), PARAMETER :: pi = 3.141592653589793238462643383279502884_num
+  REAL(num), PARAMETER :: q0 = 1.602176487e-19_num ! C (+/- 4e-27)
+  REAL(num), PARAMETER :: m0 = 9.10938215e-31_num ! kg (+/- 4.5e-38)
+  REAL(num), PARAMETER :: c  = 2.99792458e8_num   ! m/s^2 (exact)
+  REAL(num), PARAMETER :: kb = 1.3806504e-23_num  ! J/K (+/- 2.4e-29)
+  REAL(num), PARAMETER :: mu0 = 4.e-7_num * pi ! N/A^2 (exact)
+  REAL(num), PARAMETER :: epsilon0 = 1.0_num / mu0 / c**2 ! F/m (exact)
+  REAL(num), PARAMETER :: h_planck = 6.62606896e-34_num ! J s (+/- 3.3e-41)
   REAL(num), PARAMETER :: ev = q0 ! J
 
   ! direction parameters

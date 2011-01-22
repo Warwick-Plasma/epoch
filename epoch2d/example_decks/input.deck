@@ -18,9 +18,7 @@ begin:control
   y_min = -10e-6
   y_max = 10e-6
 
-  #Don't know if this should be in the deck or not
-  dt_multiplier = 0.8
-
+  #dt_multiplier = 0.9
   #dlb_threshold = 1.0
 
   #restart_snapshot = 98
