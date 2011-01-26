@@ -292,7 +292,7 @@ CONTAINS
     species_list%npart_per_cell = npart_per_cell
     IF (species_list%npart_per_cell .EQ. 0) species_list%npart_per_cell = 1
 
-    npart_left = npart_this_species
+    npart_left = num_new_particles
     current=>partlist%head
     IF (npart_per_cell .GT. 0) THEN
 
