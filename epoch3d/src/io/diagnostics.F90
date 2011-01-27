@@ -180,9 +180,9 @@ CONTAINS
     ENDIF
 #endif
 
-    IF (restart_flag .AND. LEN(source_code) .GT. 0) THEN
+    IF (restart_flag .AND. SIZE(source_code) .GT. 0) THEN
       CALL write_input_decks(sdf_handle)
-      CALL sdf_write_source_code(sdf_handle, "Code", &
+      CALL sdf_write_source_code(sdf_handle, "code", &
           "base64_packed_source_code", source_code, last_line, 0)
     ENDIF
 
@@ -565,7 +565,7 @@ CONTAINS
     DO ispecies = 1, n_species
       IF (current_family%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
         CALL sdf_write_point_variable(sdf_handle, &
-            TRIM(name) // '/' // TRIM(current_family%name), &
+            lowercase(TRIM(name) // '/' // TRIM(current_family%name)), &
             'Particles/' // TRIM(current_family%name) // '/' // &
             TRIM(name), '', &
             particle_species(ispecies)%count, &
@@ -577,5 +577,24 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE write_particle_variable
+
+
+
+  FUNCTION lowercase(string_in) RESULT(string_out)
+
+    CHARACTER(LEN=*), PARAMETER :: lwr = 'abcdefghijklmnopqrstuvwxyz'
+    CHARACTER(LEN=*), PARAMETER :: upr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    CHARACTER(LEN=*), INTENT(IN) :: string_in
+    CHARACTER(LEN=LEN(string_in)) :: string_out
+    INTEGER :: i, idx
+
+    string_out = string_in
+
+    DO i = 1, LEN(string_out)
+      idx = INDEX(upr, string_out(i:i))
+      IF (idx .NE. 0) string_out(i:i) = lwr(idx:idx)
+    ENDDO
+
+  END FUNCTION lowercase
 
 END MODULE diagnostics

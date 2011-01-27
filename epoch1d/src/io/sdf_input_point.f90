@@ -242,7 +242,7 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_local
     INTEGER, INTENT(IN) :: distribution
     INTEGER(i8) :: npoint_remain
-    INTEGER :: direction, errcode, npoint_this_it
+    INTEGER :: direction, errcode, npoint_per_it, npoint_this_it
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
     REAL(num) :: ret
@@ -272,12 +272,13 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    ALLOCATE(array(1:npoint_per_iteration))
+    npoint_per_it = MIN(npoint_local, npoint_per_iteration)
+    ALLOCATE(array(1:npoint_per_it))
 
     DO direction = 1, b%ndims
       start = .TRUE.
       npoint_remain = npoint_local
-      npoint_this_it = MIN(npoint_remain, npoint_per_iteration)
+      npoint_this_it = MIN(npoint_remain, npoint_per_it)
 
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, &
           b%mpitype, distribution, "native", MPI_INFO_NULL, errcode)
@@ -289,7 +290,7 @@ CONTAINS
         npoint_remain = npoint_remain - npoint_this_it
         ret = iterator(array, npoint_this_it, start, direction)
         start = .FALSE.
-        npoint_this_it = MIN(npoint_remain, npoint_per_iteration)
+        npoint_this_it = MIN(npoint_remain, npoint_per_it)
       ENDDO
 
       h%current_location = h%current_location + b%npoints * h%sof
@@ -359,7 +360,7 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_local
     INTEGER, INTENT(IN) :: distribution
     INTEGER(i8) :: npoint_remain
-    INTEGER :: errcode, npoint_this_it
+    INTEGER :: errcode, npoint_per_it, npoint_this_it
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
     REAL(num) :: ret
@@ -392,12 +393,13 @@ CONTAINS
         b%mpitype, distribution, "native", MPI_INFO_NULL, errcode)
 
     start = .TRUE.
-    ALLOCATE(array(1:npoint_per_iteration))
+    npoint_per_it = MIN(npoint_local, npoint_per_iteration)
+    ALLOCATE(array(1:npoint_per_it))
     npoint_remain = npoint_local
-    npoint_this_it = MIN(npoint_remain, npoint_per_iteration)
+    npoint_this_it = MIN(npoint_remain, npoint_per_it)
 
     DO WHILE (npoint_this_it .GT. 0)
-      npoint_this_it = MIN(npoint_remain, npoint_per_iteration)
+      npoint_this_it = MIN(npoint_remain, npoint_per_it)
       CALL MPI_FILE_READ(h%filehandle, array, npoint_this_it, b%mpitype, &
           MPI_STATUS_IGNORE, errcode)
 

@@ -321,7 +321,7 @@ CONTAINS
 
     DO i = 1, LEN(string_out)
       idx = INDEX(upr, string_out(i:i))
-      IF (idx .NE. 0) string_out(i:i) = lwr(i:i)
+      IF (idx .NE. 0) string_out(i:i) = lwr(idx:idx)
     ENDDO
 
   END FUNCTION sdf_string_lowercase

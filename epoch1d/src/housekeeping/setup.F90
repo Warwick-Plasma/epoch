@@ -280,15 +280,17 @@ CONTAINS
 
 
 
-  SUBROUTINE find_species_by_name(specname, species)
+  SUBROUTINE find_species_by_name(specname, species_number)
 
     CHARACTER(LEN=*), INTENT(IN) :: specname
-    TYPE(particle_family), POINTER :: species
-    INTEGER :: ispecies, species_number, errcode, ierr
+    INTEGER, INTENT(OUT) :: species_number
+    INTEGER :: ispecies, errcode, ierr, i1, i2
+
+    CALL strip_species_name(specname, i1, i2)
 
     species_number = 0
     DO ispecies = 1,n_species
-      IF (str_cmp(specname,particle_species(ispecies)%name)) THEN
+      IF (str_cmp(specname(i1:i2), particle_species(ispecies)%name)) THEN
         species_number = ispecies
         EXIT
       ENDIF
@@ -297,16 +299,30 @@ CONTAINS
     IF (species_number .EQ. 0) THEN
       IF (rank .EQ. 0) THEN
         PRINT*, '*** ERROR ***'
-        PRINT*, 'Particle species "', TRIM(specname),'" from restart dump ', &
+        PRINT*, 'Particle species "', specname(i1:i2),'" from restart dump ', &
             'not found in input deck.'
       ENDIF
       CALL MPI_ABORT(comm, errcode, ierr)
       STOP
     ENDIF
 
-    species => particle_species(species_number)
-
   END SUBROUTINE find_species_by_name
+
+
+
+  SUBROUTINE strip_species_name(name, i1, i2)
+
+    CHARACTER(LEN=*), INTENT(IN) :: name
+    INTEGER, INTENT(OUT) :: i1, i2
+    INTEGER :: ii
+
+    i2 = LEN_TRIM(name)
+    DO ii = i2, 1, -1
+      IF (name(ii:ii) .EQ. '/') RETURN
+      i1 = ii
+    ENDDO
+
+  END SUBROUTINE strip_species_name
 
 
 
@@ -316,14 +332,15 @@ CONTAINS
     CHARACTER(LEN=20+data_dir_max_length) :: filename
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1
     CHARACTER(LEN=c_max_string_length) :: name
-    INTEGER :: geometry, blocktype, datatype, code_io_version
-    INTEGER :: ierr, ii, i1, i2, iblock, nblocks, ndims
+    INTEGER :: geometry, blocktype, datatype, code_io_version, ispecies
+    INTEGER :: ierr, ii, i1, i2, iblock, nblocks, ndims, found_species
     INTEGER(KIND=8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims
     LOGICAL :: constant_weight, restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle), POINTER :: current
     TYPE(particle_family), POINTER :: species
+    INTEGER, POINTER :: species_subtypes(:)
 
     npart_global = 0
     constant_weight = .FALSE.
@@ -372,6 +389,55 @@ CONTAINS
 
     CALL sdf_read_blocklist(sdf_handle)
 
+    ! Scan file for particle species and allocate storage
+    found_species = 0
+    DO iblock = 1, nblocks
+      CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
+          ndims, datatype)
+
+      IF (blocktype .EQ. c_blocktype_point_mesh) THEN
+        CALL sdf_read_point_mesh_info(sdf_handle, npart)
+
+        CALL find_species_by_name(name, ispecies)
+        species => particle_species(ispecies)
+
+        IF (ASSOCIATED(species%attached_list%head)) THEN
+          IF (rank .EQ. 0) THEN
+            CALL strip_species_name(name, i1, i2)
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Duplicate meshes for species "', name(i1:i2),'"'
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+        ENDIF
+
+        npart_local = npart / nproc
+        IF (npart_local * nproc .NE. npart) THEN
+          IF (rank .LT. npart - npart_local * nproc) &
+              npart_local = npart_local + 1
+        ENDIF
+
+        CALL create_allocated_partlist(species%attached_list, npart_local)
+
+        npart_global = npart_global + npart
+        species%count = npart
+        found_species = found_species + 1
+      ENDIF
+    ENDDO
+
+    IF (found_species .NE. n_species) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Number of species in restart dump does not match input.deck'
+      ENDIF
+      CALL MPI_ABORT(comm, errcode, ierr)
+      STOP
+    ENDIF
+
+    CALL create_subtypes_for_load(species_subtypes)
+
+    CALL sdf_seek_start(sdf_handle)
+
     DO iblock = 1, nblocks
       CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
           ndims, datatype)
@@ -380,7 +446,6 @@ CONTAINS
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'weight')) THEN
           CALL sdf_read_srl(sdf_handle, weight)
-          constant_weight = .TRUE.
         ENDIF
       !CASE(c_blocktype_plain_mesh)
         !CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims)
@@ -389,43 +454,14 @@ CONTAINS
       CASE(c_blocktype_point_mesh)
         CALL sdf_read_point_mesh_info(sdf_handle, npart)
 
-        i2 = LEN_TRIM(name)
-        DO ii = 1,i2
-          i1 = ii
-          IF (name(ii:ii) .EQ. '/') EXIT
-        ENDDO
-        i1 = i1 + 1
+        CALL find_species_by_name(name, ispecies)
+        species => particle_species(ispecies)
 
-        CALL find_species_by_name(name(i1:i2), species)
-
-        IF (ASSOCIATED(species%attached_list%head)) THEN
-          IF (rank .EQ. 0) THEN
-            PRINT*, '*** ERROR ***'
-            PRINT*, 'Duplicate meshes for species "', TRIM(name(i1:i2)),'"'
-          ENDIF
-          CALL MPI_ABORT(comm, errcode, ierr)
-          STOP
-        ENDIF
-
-        npart_local = npart / nproc
-        IF (npart_local * nproc .NE. npart) THEN
-          IF (rank .EQ. 0) THEN
-            PRINT*, 'Cannot evenly subdivide particles over', nproc, &
-                'processors. Trying to fix'
-          ENDIF
-          IF (rank .LT. npart - npart_local * nproc) &
-              npart_local = npart_local + 1
-        ENDIF
-
-        CALL create_subtypes_for_load(npart_local)
-        CALL create_allocated_partlist(species%attached_list, npart_local)
-
+        npart_local = species%attached_list%count
         iterator_list => species%attached_list%head
-        npart_global = npart_global + npart
-        species%count = npart
 
         CALL sdf_read_point_mesh(sdf_handle, npart_local, &
-            subtype_particle_var, it_part)
+            species_subtypes(ispecies), it_part)
 
       CASE(c_blocktype_plain_variable)
         CALL sdf_read_plain_variable_info(sdf_handle, dims)
@@ -485,14 +521,8 @@ CONTAINS
       CASE(c_blocktype_point_variable)
         CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id)
 
-        i2 = LEN_TRIM(mesh_id)
-        DO ii = 1,i2
-          i1 = ii
-          IF (mesh_id(ii:ii) .EQ. '/') EXIT
-        ENDDO
-        i1 = i1 + 1
-
-        CALL find_species_by_name(mesh_id(i1:i2), species)
+        CALL find_species_by_name(mesh_id, ispecies)
+        species => particle_species(ispecies)
 
         IF (npart .NE. species%count) THEN
           IF (rank .EQ. 0) THEN
@@ -505,24 +535,24 @@ CONTAINS
         ENDIF
 
         iterator_list => species%attached_list%head
-        npart = species%attached_list%count
+        npart_local = species%attached_list%count
 
-        IF (str_cmp(block_id, 'px')) THEN
+        IF (block_id(1:3) .EQ. 'px/') THEN
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
-              subtype_particle_var, it_px)
+              species_subtypes(ispecies), it_px)
 
-        ELSE IF (str_cmp(block_id, 'py')) THEN
+        ELSE IF (block_id(1:3) .EQ. 'py/') THEN
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
-              subtype_particle_var, it_py)
+              species_subtypes(ispecies), it_py)
 
-        ELSE IF (str_cmp(block_id, 'pz')) THEN
+        ELSE IF (block_id(1:3) .EQ. 'pz/') THEN
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
-              subtype_particle_var, it_pz)
+              species_subtypes(ispecies), it_pz)
 
-        ELSE IF (str_cmp(block_id, 'weight')) THEN
+        ELSE IF (block_id(1:7) .EQ. 'weight/') THEN
 #ifdef PER_PARTICLE_WEIGHT
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
-              subtype_particle_var, it_weight)
+              species_subtypes(ispecies), it_weight)
 #else
           IF (rank .EQ. 0) THEN
             PRINT*, '*** ERROR ***'
@@ -537,7 +567,7 @@ CONTAINS
     ENDDO
 
     CALL sdf_close(sdf_handle)
-    CALL free_subtypes_for_load()
+    CALL free_subtypes_for_load(species_subtypes)
 
 #ifdef PER_PARTICLE_WEIGHT
     IF (constant_weight) THEN

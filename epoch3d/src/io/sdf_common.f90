@@ -176,6 +176,16 @@ CONTAINS
 
 
 
+  SUBROUTINE sdf_seek_start(h)
+
+    TYPE(sdf_file_handle) :: h
+
+    h%current_block => h%blocklist
+
+  END SUBROUTINE sdf_seek_start
+
+
+
   FUNCTION sdf_find_block(h, b, block_id) RESULT(found)
 
     TYPE(sdf_file_handle) :: h
@@ -234,8 +244,12 @@ CONTAINS
     len1 = LEN_TRIM(s1)
     len2 = LEN(s2)
     olen = MIN(len1,len2)
-    s2(olen:len2) = ACHAR(0)
-    s2(1:olen) = s1(1:olen)
+    IF (olen .GT. 0) THEN
+      s2(olen:len2) = ACHAR(0)
+      s2(1:olen) = s1(1:olen)
+    ELSE
+      s2(1:1) = ACHAR(0)
+    ENDIF
 
   END SUBROUTINE safe_copy_string
 

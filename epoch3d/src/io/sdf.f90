@@ -71,6 +71,7 @@ MODULE sdf
   PUBLIC :: sdf_close
   PUBLIC :: sdf_set_string_length
   PUBLIC :: sdf_set_default_rank
+  PUBLIC :: sdf_seek_start
   PUBLIC :: sdf_read_header
   PUBLIC :: sdf_read_blocklist
   PUBLIC :: sdf_read_nblocks
