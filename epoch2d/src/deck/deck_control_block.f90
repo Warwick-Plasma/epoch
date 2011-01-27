@@ -173,6 +173,19 @@ CONTAINS
       ENDIF
     ENDDO
 
+    IF (.NOT. neutral_background) THEN
+      IF (rank .EQ. 0) THEN
+        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) 'The option "neutral_background=F" is not supported', &
+            ' in this version of EPOCH.'
+        WRITE(40,*)
+        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) 'The option "neutral_background=F" is not supported', &
+            ' in this version of EPOCH.'
+      ENDIF
+      check_control_block = c_err_terminate
+    ENDIF
+
   END FUNCTION check_control_block
 
 END MODULE deck_control_block

@@ -26,11 +26,6 @@ begin:control
 
   #restart_snapshot=98
 
-  #Setting neutral_background to F makes the code solve
-  #Poisson's equation for the initial electric field
-  #Setting it to T makes the initial electric field 0
-  neutral_background=T
-
 end:control
 
 
