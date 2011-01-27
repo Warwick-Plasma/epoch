@@ -60,7 +60,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: block_name
 
     IF (str_cmp(block_name, "laser")) THEN
-      IF (deck_state .EQ. c_ds_ic) CALL laser_start
+      IF (deck_state .EQ. c_ds_eio) CALL laser_start
     ELSE IF (str_cmp(block_name, "window")) THEN
       IF (deck_state .EQ. c_ds_deck) CALL window_start
     ELSE IF (str_cmp(block_name, "dist_fn")) THEN
@@ -87,7 +87,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: block_name
 
     IF (str_cmp(block_name, "laser")) THEN
-      IF (deck_state .EQ. c_ds_ic) CALL laser_end
+      IF (deck_state .EQ. c_ds_eio) CALL laser_end
     ELSE IF (str_cmp(block_name, "dist_fn")) THEN
       IF (deck_state .EQ. c_ds_eio) CALL dist_fn_end
     ELSE IF (str_cmp(block_name, "species")) THEN
@@ -159,7 +159,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(block_name, "laser")) THEN
-      IF (deck_state .EQ. c_ds_ic) &
+      IF (deck_state .EQ. c_ds_eio) &
           handle_block = handle_ic_laser_deck(block_element, block_value)
       RETURN
     ENDIF
