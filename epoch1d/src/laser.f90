@@ -22,10 +22,10 @@ CONTAINS
     laser%omega = 1.0_num
     laser%pol_angle = 0.0_num
     laser%t_start = 0.0_num
-    laser%t_end = 0.0_num
+    laser%t_end = t_end
     NULLIFY(laser%next)
 
-    laser%profile = 0.0_num
+    laser%profile = 1.0_num
     laser%phase = 0.0_num
 
   END SUBROUTINE init_laser
@@ -126,29 +126,11 @@ CONTAINS
     TYPE(laser_block), POINTER :: current
 
     lx = c**2 * dt / dx
-    sum = 1.0_num / (c + lx)
-    diff = c - lx
+    sum = 1.0_num / (lx + c)
+    diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(0) =  0.0_num
-
-    fplus = 0.0_num
-    current=>laser_x_min
-    DO WHILE(ASSOCIATED(current))
-      ! evaluate the temporal evolution of the laser
-      IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-        t_env = laser_time_profile(current)
-        fplus = fplus + t_env * current%amp * current%profile &
-            * SIN(current%omega * time + current%phase) &
-            * SIN(current%pol_angle)
-      ENDIF
-      current=>current%next
-    ENDDO
-
-    by(0) = sum * (-4.0_num * fplus &
-        + 2.0_num * ez(1) &
-        - dt_eps * jz(1) &
-        - diff * by(1))
+    bx(0) = 0.0_num
 
     fplus = 0.0_num
     current=>laser_x_min
@@ -166,7 +148,25 @@ CONTAINS
     bz(0) = sum * ( 4.0_num * fplus &
         - 2.0_num * ey(1) &
         + dt_eps * jy(1) &
-        - diff * bz(1))
+        + diff * bz(1))
+
+    fplus = 0.0_num
+    current=>laser_x_min
+    DO WHILE(ASSOCIATED(current))
+      ! evaluate the temporal evolution of the laser
+      IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+        t_env = laser_time_profile(current)
+        fplus = fplus + t_env * current%amp * current%profile &
+            * SIN(current%omega * time + current%phase) &
+            * SIN(current%pol_angle)
+      ENDIF
+      current=>current%next
+    ENDDO
+
+    by(0) = sum * (-4.0_num * fplus &
+        + 2.0_num * ez(1) &
+        - dt_eps * jz(1) &
+        + diff * by(1))
 
   END SUBROUTINE laser_bcs_x_min
 
@@ -180,29 +180,11 @@ CONTAINS
     TYPE(laser_block), POINTER :: current
 
     lx = c**2 * dt / dx
-    sum = 1.0_num / (c + lx)
-    diff = c - lx
+    sum = 1.0_num / (lx + c)
+    diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(nx+1) =  0.0_num
-
-    fneg = 0.0_num
-    current=>laser_x_max
-    DO WHILE(ASSOCIATED(current))
-      ! evaluate the temporal evolution of the laser
-      IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-        t_env = laser_time_profile(current)
-        fneg = fneg + t_env * current%amp * current%profile &
-            * SIN(current%omega * time + current%phase) &
-            * SIN(current%pol_angle)
-      ENDIF
-      current=>current%next
-    ENDDO
-
-    by(nx) = sum * ( 4.0_num * fneg &
-        - 2.0_num * ez(nx) &
-        + dt_eps * jz(nx) &
-        - diff * by(nx-1))
+    bx(nx+1) = 0.0_num
 
     fneg = 0.0_num
     current=>laser_x_max
@@ -220,7 +202,25 @@ CONTAINS
     bz(nx) = sum * (-4.0_num * fneg &
         + 2.0_num * ey(nx) &
         - dt_eps * jy(nx) &
-        - diff * bz(nx-1))
+        + diff * bz(nx-1))
+
+    fneg = 0.0_num
+    current=>laser_x_max
+    DO WHILE(ASSOCIATED(current))
+      ! evaluate the temporal evolution of the laser
+      IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+        t_env = laser_time_profile(current)
+        fneg = fneg + t_env * current%amp * current%profile &
+            * SIN(current%omega * time + current%phase) &
+            * SIN(current%pol_angle)
+      ENDIF
+      current=>current%next
+    ENDDO
+
+    by(nx) = sum * ( 4.0_num * fneg &
+        - 2.0_num * ez(nx) &
+        + dt_eps * jz(nx) &
+        + diff * by(nx-1))
 
   END SUBROUTINE laser_bcs_x_max
 
@@ -231,15 +231,15 @@ CONTAINS
     REAL(num) :: lx, sum, diff, dt_eps
 
     lx = c**2 * dt / dx
-    sum = 1.0_num / (c + lx)
-    diff = c - lx
+    sum = 1.0_num / (lx + c)
+    diff = lx - c
     dt_eps = dt / epsilon0
 
     bx(0) = 0.0_num
-    by(0) = sum * ( 2.0_num * ez(1) &
-        - dt_eps * jz(1) - diff * by(1))
     bz(0) = sum * (-2.0_num * ey(1) &
-        + dt_eps * jy(1) - diff * bz(1))
+        + dt_eps * jy(1) + diff * bz(1))
+    by(0) = sum * ( 2.0_num * ez(1) &
+        - dt_eps * jz(1) + diff * by(1))
 
   END SUBROUTINE outflow_bcs_x_min
 
@@ -250,15 +250,15 @@ CONTAINS
     REAL(num) :: lx, sum, diff, dt_eps
 
     lx = c**2 * dt / dx
-    sum = 1.0_num / (c + lx)
-    diff = c - lx
+    sum = 1.0_num / (lx + c)
+    diff = lx - c
     dt_eps = dt / epsilon0
 
     bx(nx+1) = 0.0_num
-    by(nx) = sum * (-2.0_num * ez(nx) &
-        + dt_eps * jz(nx) - diff * by(nx-1))
     bz(nx) = sum * ( 2.0_num * ey(nx) &
-        - dt_eps * jy(nx) - diff * bz(nx-1))
+        - dt_eps * jy(nx) + diff * bz(nx-1))
+    by(nx) = sum * (-2.0_num * ez(nx) &
+        + dt_eps * jz(nx) + diff * by(nx-1))
 
   END SUBROUTINE outflow_bcs_x_max
 
