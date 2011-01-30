@@ -1,33 +1,67 @@
 # Set the compiler flags
 FFLAGS = -O3 #-heap-arrays 0 -fast
 
-# Set some of the build parameters
-TARGET = epoch2d
-
-# Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
-
-# Copy this line onto the DEFINES line to turn on particle cell division
-# -DSPLIT_PARTICLES_AFTER_PUSH
-# Copy this line onto the DEFINES line to turn on debugging
-# -DPARTICLE_DEBUG -DFIELD_DEBUG
-
+# The default MODULEFLAG is set for the Intel and PGI compilers
 MODULEFLAG = -module 
 # Uncomment for the g95 compiler
 #MODULEFLAG = -fmod=
 # Uncomment for the gfortran compiler
 #MODULEFLAG = -I/usr/include -Iobj -J
 
-# If you are having trouble compiling the encoded_source module, try
-# uncommenting the following line.
+# Set some of the build parameters
+TARGET = epoch2d
+
+# Set pre-processor defines
+DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
+
+# The following are a list of pre-processor defines which can be added to
+# the above line modifying the code behaviour at compile time.
+
+# Allow each pseudoparticle to represent a different number of real particles.
+# -DPER_PARTICLE_WEIGHT
+
+# Specify charge and mass per particle rather than per species.
+# -DPER_PARTICLE_CHARGE_MASS
+
+# Turn on particle cell division. Required for collisions.
+# -DSPLIT_PARTICLES_AFTER_PUSH
+
+# Turn on debugging.
+# -DFIELD_DEBUG -DPARSER_DEBUG -DPARTICLE_DEBUG
+
+# Turn on particle ionisation model. (Beta).
+# -DPARTICLE_IONISE
+
+# Keep global particle counts up to date.
+# -DPARTICLE_COUNT_UPDATE
+
+# Enable particles which behave like normal particles but do not affect
+# the field, current or each other.
+# -DTRACER_PARTICLES
+
+# Include diagnostics which gather information on particles which cross a
+# plane in the simulation.
+# -DPARTICLE_PROBES
+
+# Use second order particle weighting (default is third order).
+# -DPARTICLE_SHAPE_TOPHAT
+
+# Use fifth order particle weighting (default is third order).
+# -DPARTICLE_SHAPE_BSPLINE3
+
+# If you are having trouble compiling the encoded_source module or
+# don't want embedded source code in restart dumps, uncommenting the
+# following line.
 #ENCODED_SOURCE = dummy_encoded_source.o
 
-#BUILDOPT += opt_dont_build_sha1
-#BUILDOPT += opt_dont_build_embedded_source
+
 
 # --------------------------------------------------
 # Shouldn't need to touch below here
 # --------------------------------------------------
+
+#BUILDOPT += opt_dont_build_sha1
+#BUILDOPT += opt_dont_build_embedded_source
 
 -include COMMIT
 
