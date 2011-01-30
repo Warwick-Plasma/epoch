@@ -1,3 +1,0 @@
-#!/bin/bash
-mkdir $2
-cp $1/*.deck $2/.

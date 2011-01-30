@@ -83,15 +83,16 @@ $(FULLTARGET): $(OBJFILES)
 
 opt_dont_build_sha1: ;
 opt_dont_build_embedded_source: ;
-$(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) Makefile gen_src_module COMMIT
-	./gen_src_module $@ $^
+$(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(SRCDIR)/include \
+  $(SRCDIR)/gen_src_module $(SRCDIR)/gen_commit_string Makefile COMMIT
+	./$(SRCDIR)/gen_src_module $@ $^
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS)  $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
 
 COMMIT: $(SRCFILES)
-	./gen_commit_string
+	./$(SRCDIR)/gen_commit_string
 
 clean: tidy
 	@rm -rf *~ $(BINDIR)
