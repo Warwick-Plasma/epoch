@@ -41,11 +41,11 @@ PROGRAM pic
   INTEGER :: ispecies, i = 0
   LOGICAL :: halt = .FALSE.
 
-  CALL minimal_init ! setup.f90
-  CALL setup_partlists ! partlist.f90
   CALL mpi_minimal_init ! mpi_routines.f90
+  CALL minimal_init     ! setup.f90
+  CALL setup_partlists  ! partlist.f90
   CALL get_job_id(jobid)
-  CALL welcome_message ! welcome.f90
+  CALL welcome_message  ! welcome.f90
   CALL register_objects ! custom.f90
 
   IF (rank .EQ. 0) THEN

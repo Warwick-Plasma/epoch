@@ -5,6 +5,7 @@ MODULE mpi_subtype_control
   ! IO
   !----------------------------------------------------------------------------
 
+  USE mpi
   USE shared_data
 
   IMPLICIT NONE

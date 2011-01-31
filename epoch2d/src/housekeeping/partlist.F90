@@ -1,5 +1,6 @@
 MODULE partlist
 
+  USE mpi
   USE shared_data
 
   IMPLICIT NONE

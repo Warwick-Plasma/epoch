@@ -1,5 +1,6 @@
 MODULE setup
 
+  USE mpi
   USE sdf
   USE encoded_source
   USE fields
