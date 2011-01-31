@@ -713,8 +713,8 @@ CONTAINS
             // TRIM(element) // '" is'
         WRITE(40,*) 'invalid or could not be parsed. Code will terminate.'
         WRITE(40,*)
-        errcode_deck = IOR(errcode_deck, c_err_terminate)
       ENDIF
+      errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
 
     IF (IAND(errcode_deck, c_err_required_element_not_set) .NE. 0) THEN
@@ -735,8 +735,8 @@ CONTAINS
             // TRIM(extended_error_string) // '" has'
         WRITE(40,*) 'not been set. Code will terminate'
         WRITE(40,*)
-        errcode_deck = IOR(errcode_deck, c_err_terminate)
       ENDIF
+      errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
     IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
@@ -778,8 +778,8 @@ CONTAINS
         WRITE(40,*) 'Good for you. Just because of that, the code will ' &
             // 'terminate.'
         WRITE(40,*)
-        errcode_deck = IOR(errcode_deck, c_err_terminate)
       ENDIF
+      errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
 
     err_count = err_count+1
