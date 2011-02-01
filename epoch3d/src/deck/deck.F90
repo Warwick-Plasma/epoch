@@ -214,6 +214,7 @@ CONTAINS
     ELSE IF (deck_state .EQ. c_ds_ic) THEN
       errcode_deck = IOR(errcode_deck, check_ic_fields_block())
       errcode_deck = IOR(errcode_deck, check_species_block())
+      errcode_deck = IOR(errcode_deck, check_ic_laser_block())
     ENDIF
     errcode_deck = IOR(errcode_deck, check_custom_blocks())
 

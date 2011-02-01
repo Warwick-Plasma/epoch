@@ -137,9 +137,45 @@ CONTAINS
   FUNCTION check_ic_laser_block()
 
     INTEGER :: check_ic_laser_block
+    TYPE(laser_block), POINTER :: current
+    INTEGER :: error
 
-    ! Should do error checking but can't be bothered at the moment
     check_ic_laser_block = c_err_none
+
+    error = 0
+    current=>laser_x_min
+    DO WHILE(ASSOCIATED(current))
+      IF (current%omega .LT. 0.0_num) error = IOR(error, 1)
+      IF (current%amp .LT. 0.0_num) error = IOR(error, 2)
+      current=>current%next
+    ENDDO
+
+    current=>laser_x_max
+    DO WHILE(ASSOCIATED(current))
+      IF (current%omega .LT. 0.0_num) error = IOR(error, 1)
+      IF (current%amp .LT. 0.0_num) error = IOR(error, 2)
+      current=>current%next
+    ENDDO
+
+    IF (IAND(error,1) .NE. 0) THEN
+      IF (rank .EQ. 0) THEN
+        WRITE(*, *) '*** ERROR ***'
+        WRITE(*, *) 'Must define a "lambda" or "omega" for every laser.'
+        WRITE(40,*) '*** ERROR ***'
+        WRITE(40,*) 'Must define a "lambda" or "omega" for every laser.'
+      ENDIF
+      check_ic_laser_block = c_err_missing_elements
+    ENDIF
+
+    IF (IAND(error,2) .NE. 0) THEN
+      IF (rank .EQ. 0) THEN
+        WRITE(*, *) '*** ERROR ***'
+        WRITE(*, *) 'Must define an "amp" or "irradiance" for every laser.'
+        WRITE(40,*) '*** ERROR ***'
+        WRITE(40,*) 'Must define an "amp" or "irradiance" for every laser.'
+      ENDIF
+      check_ic_laser_block = c_err_missing_elements
+    ENDIF
 
   END FUNCTION check_ic_laser_block
 

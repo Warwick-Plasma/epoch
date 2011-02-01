@@ -18,8 +18,8 @@ CONTAINS
     laser%boundary = boundary
     laser%id = -1
     laser%use_time_function = .FALSE.
-    laser%amp = 0.0_num
-    laser%omega = 1.0_num
+    laser%amp = -1.0_num
+    laser%omega = -1.0_num
     laser%pol_angle = 0.0_num
     laser%t_start = 0.0_num
     laser%t_end = t_end
