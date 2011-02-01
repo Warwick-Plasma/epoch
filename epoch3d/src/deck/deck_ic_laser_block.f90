@@ -62,8 +62,24 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "freq")) THEN
-      working_laser%freq = as_real(value, handle_ic_laser_deck)
+    IF (str_cmp(element, "omega") .OR. str_cmp(element, "freq")) THEN
+      IF (rank .EQ. 0 .AND. str_cmp(element, "freq")) THEN
+        WRITE(*,*) '*** WARNING ***'
+        WRITE(*,*) 'Element "freq" in the block "laser" is deprecated.'
+        WRITE(*,*) 'Please use the element name "omega" instead.'
+      ENDIF
+      working_laser%omega = as_real(value, handle_ic_laser_deck)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, "frequency")) THEN
+      working_laser%omega = 2.0_num * pi * as_real(value, handle_ic_laser_deck)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, "lambda")) THEN
+      working_laser%omega = &
+          2.0_num * pi * c / as_real(value, handle_ic_laser_deck)
       RETURN
     ENDIF
 

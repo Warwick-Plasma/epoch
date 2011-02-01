@@ -618,7 +618,7 @@ MODULE shared_data
     LOGICAL :: use_time_function
     TYPE(primitive_stack) :: time_function
 
-    REAL(num) :: amp, freq, k, pol_angle, angle, t_start, t_end
+    REAL(num) :: amp, omega, k, pol_angle, angle, t_start, t_end
 
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block
