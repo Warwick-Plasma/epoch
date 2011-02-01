@@ -174,7 +174,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, errcode, intn
+    INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
@@ -236,7 +236,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, errcode, intn
+    INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
@@ -304,7 +304,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, errcode, intn
+    INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)

@@ -11,13 +11,7 @@ CONTAINS
   SUBROUTINE sdf_read_blocklist(h)
 
     TYPE(sdf_file_handle) :: h
-    INTEGER :: i, step, code_io_version, blocktype, ndims, datatype
-    REAL(num) :: time
-    CHARACTER(LEN=c_id_length) :: code_name, id
-    CHARACTER(LEN=512) :: name
-    LOGICAL :: restart, other_domains
-    TYPE(sdf_block_type), POINTER :: b
-    INTEGER :: errcode, buflen
+    INTEGER :: errcode, buflen, i
 
     NULLIFY(h%current_block)
     IF (.NOT. h%done_header) CALL sdf_read_header(h)

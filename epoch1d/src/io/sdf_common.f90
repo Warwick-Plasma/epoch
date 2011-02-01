@@ -28,7 +28,7 @@ MODULE sdf_common
   TYPE sdf_block_type
     REAL(r8), DIMENSION(2*c_maxdims) :: extents
     REAL(r8) :: mult
-    REAL(r8), DIMENSION(:), ALLOCATABLE :: dim_mults
+    REAL(r8), DIMENSION(:), POINTER :: dim_mults
     INTEGER(KIND=MPI_OFFSET_KIND) :: block_start
     INTEGER(i8) :: next_block_location, data_location
     INTEGER(i8) :: nelements, npoints, data_length, info_length
@@ -37,10 +37,10 @@ MODULE sdf_common
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     CHARACTER(LEN=1) :: const_value(16)
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
-    CHARACTER(LEN=c_id_length), ALLOCATABLE :: variable_ids(:)
-    CHARACTER(LEN=c_id_length), ALLOCATABLE :: dim_labels(:), dim_units(:)
+    CHARACTER(LEN=c_id_length), POINTER :: variable_ids(:)
+    CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
     CHARACTER(LEN=c_max_string_length) :: name, material_name
-    CHARACTER(LEN=c_max_string_length), ALLOCATABLE :: material_names(:)
+    CHARACTER(LEN=c_max_string_length), POINTER :: material_names(:)
     LOGICAL :: done_header, done_info, done_data
     TYPE(sdf_run_type), POINTER :: run
     TYPE(sdf_block_type), POINTER :: next_block
@@ -58,7 +58,7 @@ MODULE sdf_common
     INTEGER(i4) :: mpitype_real, mpitype_integer
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     LOGICAL :: done_header, restart_flag, other_domains, writing
-    CHARACTER(LEN=1), ALLOCATABLE :: buffer(:)
+    CHARACTER(LEN=1), POINTER :: buffer(:)
     CHARACTER(LEN=c_id_length) :: code_name
     TYPE(jobid_type) :: jobid
     TYPE(sdf_block_type), POINTER :: blocklist, current_block

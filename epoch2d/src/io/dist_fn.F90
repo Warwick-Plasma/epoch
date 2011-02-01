@@ -148,7 +148,6 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: var_name
-    REAL(num), DIMENSION(c_df_curdims) :: stagger = 0.0_num
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
 
     REAL(num) :: max_p_conv
@@ -479,7 +478,6 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: var_name
-    REAL(num), DIMENSION(c_df_curdims) :: stagger = 0.0_num
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
 
     REAL(num) :: max_p_conv
@@ -816,7 +814,6 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: var_name
-    REAL(num), DIMENSION(c_df_curdims) :: stagger = 0.0_num
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
 
     REAL(num) :: max_p_conv

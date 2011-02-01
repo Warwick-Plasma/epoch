@@ -105,9 +105,7 @@ CONTAINS
   FUNCTION handle_block(block_name, block_element, block_value)
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name, block_element, block_value
-    CHARACTER(LEN=string_length) :: part1
     INTEGER :: handle_block
-    INTEGER :: part2, val
 
     handle_block = c_err_none
     ! Constants can be defined in any deck state, so put them here

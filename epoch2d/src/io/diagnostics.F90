@@ -10,6 +10,7 @@ MODULE diagnostics
   USE probes
   USE shared_data
   USE version_data
+  USE setup
 
   IMPLICIT NONE
 
@@ -27,10 +28,9 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: i
     LOGICAL :: print_arrays, last_call
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
-    CHARACTER(LEN=c_max_string_length) :: temp_name
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
-    INTEGER :: ispecies, code
+    INTEGER :: code
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag
 
@@ -198,9 +198,9 @@ CONTAINS
       ELSE
         dump_type = "normal"
       ENDIF
-      WRITE(20, '("Wrote ", a7, " dump number", i5, " at time", g20.12, &
+      WRITE(stat_unit, '("Wrote ", a7, " dump number", i5, " at time", g20.12, &
           & " and iteration", i7)') dump_type, output_file-1, time, i
-      CALL FLUSH(20)
+      CALL flush_stat_file()
     ENDIF
 
     DEALLOCATE(array)

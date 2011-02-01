@@ -15,10 +15,11 @@ MODULE setup
   PRIVATE
 
   PUBLIC :: after_control, minimal_init, restart_data
-  PUBLIC :: open_files, close_files
+  PUBLIC :: open_files, close_files, flush_stat_file
   PUBLIC :: setup_species
 
   TYPE(particle), POINTER, SAVE :: iterator_list
+  CHARACTER(LEN=11+data_dir_max_length), SAVE :: stat_file
 
 CONTAINS
 
@@ -269,23 +270,22 @@ CONTAINS
 
   SUBROUTINE open_files
 
-    CHARACTER(LEN=11+data_dir_max_length) :: file2
     CHARACTER(LEN=16) :: string
     INTEGER :: errcode, ierr
     LOGICAL :: exists
 
     IF (rank .EQ. 0) THEN
-      WRITE(file2, '(a, "/epoch3d.dat")') TRIM(data_dir)
+      WRITE(stat_file, '(a, "/epoch3d.dat")') TRIM(data_dir)
       IF (ic_from_restart) THEN
-        INQUIRE(file=file2, exist=exists)
+        INQUIRE(file=stat_file, exist=exists)
         IF (exists) THEN
-          OPEN(unit=20, status='OLD', access='APPEND', file=file2, &
-              iostat=errcode)
+          OPEN(unit=stat_unit, status='OLD', position='APPEND', &
+              file=stat_file, iostat=errcode)
         ELSE
-          OPEN(unit=20, status='NEW', file=file2, iostat=errcode)
+          OPEN(unit=stat_unit, status='NEW', file=stat_file, iostat=errcode)
         ENDIF
       ELSE
-        OPEN(unit=20, status='REPLACE', file=file2, iostat=errcode)
+        OPEN(unit=stat_unit, status='REPLACE', file=stat_file, iostat=errcode)
       ENDIF
       IF (errcode .NE. 0) THEN
         PRINT*, '***ERROR***'
@@ -297,20 +297,34 @@ CONTAINS
       ENDIF
       IF (ic_from_restart) THEN
         CALL integer_as_string(restart_snapshot, string)
-        WRITE(20,*)
-        WRITE(20,*) 'Restarting from ', TRIM(string)
+        WRITE(stat_unit,*)
+        WRITE(stat_unit,*) 'Restarting from ', TRIM(string)
       ENDIF
-      WRITE(20,*) ascii_header
-      WRITE(20,*)
+      WRITE(stat_unit,*) ascii_header
+      WRITE(stat_unit,*)
     ENDIF
 
   END SUBROUTINE open_files
 
 
 
+  SUBROUTINE flush_stat_file
+
+    INTEGER :: errcode
+
+    IF (rank .EQ. 0) THEN
+      CLOSE(unit=stat_unit)
+      OPEN(unit=stat_unit, status='OLD', position='APPEND', &
+          file=stat_file, iostat=errcode)
+    ENDIF
+
+  END SUBROUTINE flush_stat_file
+
+
+
   SUBROUTINE close_files
 
-    CLOSE(unit=20)
+    IF (rank .EQ. 0) CLOSE(unit=stat_unit)
 
   END SUBROUTINE close_files
 
@@ -386,7 +400,7 @@ CONTAINS
     CHARACTER(LEN=20+data_dir_max_length) :: filename
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2, str3
     CHARACTER(LEN=c_max_string_length) :: name
-    INTEGER :: geometry, blocktype, datatype, code_io_version, ispecies
+    INTEGER :: blocktype, datatype, code_io_version, ispecies
     INTEGER :: ierr, ii, i1, i2, iblock, nblocks, ndims, found_species
     INTEGER(KIND=8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims

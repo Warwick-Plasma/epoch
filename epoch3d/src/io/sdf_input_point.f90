@@ -26,7 +26,7 @@ CONTAINS
   SUBROUTINE sdf_info_init(h)
 
     TYPE(sdf_file_handle) :: h
-    INTEGER :: errcode, ierr
+    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (.NOT.ASSOCIATED(h%current_block)) THEN
@@ -40,7 +40,7 @@ CONTAINS
     b => h%current_block
     h%current_location = b%block_start + h%block_header_length
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -241,7 +241,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(IN) :: npoint_local
     INTEGER, INTENT(IN) :: distribution
-    INTEGER(i8) :: npoint_remain
+    INTEGER(i8) :: npoint_remain, npoint_per_it8, npoint_this_it8
     INTEGER :: direction, errcode, npoint_per_it, npoint_this_it
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
@@ -272,13 +272,15 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    npoint_per_it = MIN(npoint_local, npoint_per_iteration)
+    npoint_per_it8 = MIN(npoint_local, npoint_per_iteration)
+    npoint_per_it  = INT(npoint_per_it8)
     ALLOCATE(array(1:npoint_per_it))
 
     DO direction = 1, b%ndims
       start = .TRUE.
       npoint_remain = npoint_local
-      npoint_this_it = MIN(npoint_remain, npoint_per_it)
+      npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
+      npoint_this_it  = INT(npoint_this_it8)
 
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, &
           b%mpitype, distribution, "native", MPI_INFO_NULL, errcode)
@@ -287,10 +289,11 @@ CONTAINS
         CALL MPI_FILE_READ(h%filehandle, array, npoint_this_it, b%mpitype, &
             MPI_STATUS_IGNORE, errcode)
 
-        npoint_remain = npoint_remain - npoint_this_it
+        npoint_remain = npoint_remain - npoint_this_it8
         ret = iterator(array, npoint_this_it, start, direction)
         start = .FALSE.
-        npoint_this_it = MIN(npoint_remain, npoint_per_it)
+        npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
+        npoint_this_it  = INT(npoint_this_it8)
       ENDDO
 
       h%current_location = h%current_location + b%npoints * h%sof
@@ -359,7 +362,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(IN) :: npoint_local
     INTEGER, INTENT(IN) :: distribution
-    INTEGER(i8) :: npoint_remain
+    INTEGER(i8) :: npoint_remain, npoint_per_it8, npoint_this_it8
     INTEGER :: errcode, npoint_per_it, npoint_this_it
     LOGICAL :: start
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
@@ -393,17 +396,20 @@ CONTAINS
         b%mpitype, distribution, "native", MPI_INFO_NULL, errcode)
 
     start = .TRUE.
-    npoint_per_it = MIN(npoint_local, npoint_per_iteration)
+    npoint_per_it8 = MIN(npoint_local, npoint_per_iteration)
+    npoint_per_it  = INT(npoint_per_it8)
     ALLOCATE(array(1:npoint_per_it))
     npoint_remain = npoint_local
-    npoint_this_it = MIN(npoint_remain, npoint_per_it)
+    npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
+    npoint_this_it  = INT(npoint_this_it8)
 
     DO WHILE (npoint_this_it .GT. 0)
-      npoint_this_it = MIN(npoint_remain, npoint_per_it)
+      npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
+      npoint_this_it  = INT(npoint_this_it8)
       CALL MPI_FILE_READ(h%filehandle, array, npoint_this_it, b%mpitype, &
           MPI_STATUS_IGNORE, errcode)
 
-      npoint_remain = npoint_remain - npoint_this_it
+      npoint_remain = npoint_remain - npoint_this_it8
       ret = iterator(array, npoint_this_it, start)
       start = .FALSE.
     ENDDO

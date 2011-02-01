@@ -231,10 +231,10 @@ CONTAINS
         MPI_SUM, 0, comm, errcode)
     species_list%count = npart_this_species
     IF (rank .EQ. 0) THEN
-      PRINT *, "Loaded", npart_this_species, "particles of species ", &
-          TRIM(species_list%name)
-      WRITE(20, *) "Loaded", npart_this_species, "particles of species ", &
-          TRIM(species_list%name)
+      WRITE(*, *) "Loaded", npart_this_species, &
+          "particles of species ", TRIM(species_list%name)
+      WRITE(stat_unit, *) "Loaded", npart_this_species, &
+          "particles of species ", TRIM(species_list%name)
     ENDIF
     CALL particle_bcs
 
@@ -255,11 +255,10 @@ CONTAINS
     INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_local
     INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
     REAL(num) :: valid_cell_frac
-    REAL(dbl) :: rpos
     INTEGER :: cell_x
     INTEGER :: cell_y
     INTEGER :: cell_z
-    INTEGER(KIND=8) :: i, ipos, icount
+    INTEGER(KIND=8) :: i, ipos
     INTEGER :: ierr, ix, iy, iz
     CHARACTER(LEN=15) :: string
 
@@ -398,10 +397,10 @@ CONTAINS
 
     IF (rank .EQ. 0) THEN
       CALL integer_as_string(npart_this_species, string)
-      PRINT *, "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
-          TRIM(species_list%name)
-      WRITE(20, *) "Loaded ", TRIM(ADJUSTL(string)), " particles of species ", &
-          TRIM(species_list%name)
+      WRITE(*, *) "Loaded ", TRIM(ADJUSTL(string)), &
+          " particles of species ", TRIM(species_list%name)
+      WRITE(stat_unit, *) "Loaded ", TRIM(ADJUSTL(string)), &
+          " particles of species ", TRIM(species_list%name)
     ENDIF
 
     CALL particle_bcs
@@ -428,7 +427,7 @@ CONTAINS
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
-    INTEGER :: ix, iy, iz, i, j, k, isubx, isuby, isubz, ierr
+    INTEGER :: ix, iy, iz, i, j, k, isubx, isuby, isubz
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:,:,:), ALLOCATABLE :: density_map
 
@@ -604,7 +603,7 @@ CONTAINS
 #else
     IF (rank .EQ. 0) &
         PRINT *, "Autoloader only available when using per particle weighting"
-    CALL MPI_ABORT(comm, errcode, ierr)
+    CALL MPI_ABORT(comm, errcode, ix)
 #endif
 
   END SUBROUTINE setup_particle_density

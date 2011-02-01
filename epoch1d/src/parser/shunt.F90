@@ -11,22 +11,25 @@ CONTAINS
   FUNCTION char_type(char)
 
     CHARACTER, INTENT(IN) :: char
-    INTEGER, PARAMETER :: c_nops = 7
-    CHARACTER(LEN=c_nops) :: operators = "+-\/*^"
-    INTEGER :: char_type, i
+    INTEGER :: char_type
 
     char_type = c_char_unknown
 
-    IF (char .EQ. " " .OR. ICHAR(char) .EQ. 32) char_type = c_char_space
-    IF (char .GE. "0" .AND. char .LE. "9" .OR. char .EQ. ".") &
-        char_type = c_char_numeric
-    IF (char .GE. "A" .AND. char .LE. "z" .OR. char .EQ. "_") &
-        char_type = c_char_alpha
-    IF (char .EQ. "(" .OR. char .EQ. ")" .OR. char .EQ. ",") &
-        char_type = c_char_delimiter
-    DO i = 1, c_nops
-      IF (char .EQ. operators(i:i)) char_type = c_char_opcode
-    ENDDO
+    ! 32 is the ASCII code for sp
+    IF (char .EQ. ' ' .OR. ICHAR(char) .EQ. 32) THEN
+      char_type = c_char_space
+    ELSEIF (char .GE. '0' .AND. char .LE. '9' .OR. char .EQ. '.') THEN
+      char_type = c_char_numeric
+    ELSEIF ((char .GE. 'A' .AND. char .LE. 'Z') &
+        .OR. (char .GE. 'a' .AND. char .LE. 'z') .OR. char .EQ. '_') THEN
+      char_type = c_char_alpha
+    ELSEIF (char .EQ. '(' .OR. char .EQ. ')' .OR. char .EQ. ',') THEN
+      char_type = c_char_delimiter
+    ! 92 is the ASCII code for backslash
+    ELSEIF (char .EQ. '+' .OR. char .EQ. '-' .OR. ICHAR(char) .EQ. 92 &
+        .OR. char .EQ. '/' .OR. char .EQ. '*' .OR. char .EQ. '^') THEN
+      char_type = c_char_opcode
+    ENDIF
 
   END FUNCTION char_type
 

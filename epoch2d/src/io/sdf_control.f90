@@ -90,8 +90,6 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER :: errcode
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset
-    INTEGER :: etype, filetype
-    CHARACTER(LEN=512) :: datarep
 
     ! No open file
     IF (h%filehandle .EQ. -1) RETURN
@@ -125,7 +123,7 @@ CONTAINS
     h%filehandle = -1
     h%done_header = .FALSE.
     CALL sdf_destroy_blocklist(h)
-    IF (ALLOCATED(h%buffer)) DEALLOCATE(h%buffer)
+    IF (ASSOCIATED(h%buffer)) DEALLOCATE(h%buffer)
 
   END SUBROUTINE sdf_close
 
@@ -137,11 +135,11 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(b)) RETURN
 
-    IF (ALLOCATED(b%dim_mults)) DEALLOCATE(b%dim_mults)
-    IF (ALLOCATED(b%dim_labels)) DEALLOCATE(b%dim_labels)
-    IF (ALLOCATED(b%dim_units)) DEALLOCATE(b%dim_units)
-    IF (ALLOCATED(b%variable_ids)) DEALLOCATE(b%variable_ids)
-    IF (ALLOCATED(b%material_names)) DEALLOCATE(b%material_names)
+    IF (ASSOCIATED(b%dim_mults)) DEALLOCATE(b%dim_mults)
+    IF (ASSOCIATED(b%dim_labels)) DEALLOCATE(b%dim_labels)
+    IF (ASSOCIATED(b%dim_units)) DEALLOCATE(b%dim_units)
+    IF (ASSOCIATED(b%variable_ids)) DEALLOCATE(b%variable_ids)
+    IF (ASSOCIATED(b%material_names)) DEALLOCATE(b%material_names)
     IF (ASSOCIATED(b%run)) DEALLOCATE(b%run)
     DEALLOCATE(b)
 

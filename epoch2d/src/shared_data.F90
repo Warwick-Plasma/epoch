@@ -95,19 +95,19 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_gamma_m1 = 128
 
   ! define flags
-  INTEGER(4), PARAMETER :: c_def_particle_debug = 1
-  INTEGER(4), PARAMETER :: c_def_field_debug = 2
-  INTEGER(4), PARAMETER :: c_def_particle_shape_bspline3 = 4
-  INTEGER(4), PARAMETER :: c_def_split_part_after_push = 8
-  INTEGER(4), PARAMETER :: c_def_per_particle_weight = 16
-  INTEGER(4), PARAMETER :: c_def_particle_count_update = 32
-  INTEGER(4), PARAMETER :: c_def_tracer_particles = 64
-  INTEGER(4), PARAMETER :: c_def_particle_probes = 128
-  INTEGER(4), PARAMETER :: c_def_per_particle_chargemass = 256
-  INTEGER(4), PARAMETER :: c_def_particle_ionise = 512
-  INTEGER(4), PARAMETER :: c_def_high_order_smoothing = 1024
-  INTEGER(4), PARAMETER :: c_def_particle_shape_tophat = 2048
-  INTEGER(4), PARAMETER :: c_def_parser_debug = 4096
+  INTEGER(8), PARAMETER :: c_def_particle_debug = 1
+  INTEGER(8), PARAMETER :: c_def_field_debug = 2
+  INTEGER(8), PARAMETER :: c_def_particle_shape_bspline3 = 4
+  INTEGER(8), PARAMETER :: c_def_split_part_after_push = 8
+  INTEGER(8), PARAMETER :: c_def_per_particle_weight = 16
+  INTEGER(8), PARAMETER :: c_def_particle_count_update = 32
+  INTEGER(8), PARAMETER :: c_def_tracer_particles = 64
+  INTEGER(8), PARAMETER :: c_def_particle_probes = 128
+  INTEGER(8), PARAMETER :: c_def_per_particle_chargemass = 256
+  INTEGER(8), PARAMETER :: c_def_particle_ionise = 512
+  INTEGER(8), PARAMETER :: c_def_high_order_smoothing = 1024
+  INTEGER(8), PARAMETER :: c_def_particle_shape_tophat = 2048
+  INTEGER(8), PARAMETER :: c_def_parser_debug = 4096
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
@@ -129,6 +129,8 @@ MODULE constants
 
   ! Length of a standard string
   INTEGER, PARAMETER :: string_length = 128
+
+  INTEGER, PARAMETER :: stat_unit = 20
 
 END MODULE constants
 

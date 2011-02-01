@@ -87,7 +87,7 @@ CONTAINS
     REAL(num) :: idtxy, idtyz, idtxz
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, mean, fac, dtfac, third, gamma_mass_c, cf2
+    REAL(num) :: root, fac, dtfac, third, gamma_mass_c, cf2
     REAL(num) :: delta_x, delta_y, delta_z
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
     INTEGER(KIND=8) :: ipart

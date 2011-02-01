@@ -208,7 +208,6 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     b => h%current_block
@@ -441,7 +440,6 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: defines
     INTEGER(i4), INTENT(IN) :: compile_date, run_date
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
@@ -806,7 +804,6 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     REAL(num), INTENT(IN) :: value
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
@@ -834,7 +831,6 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     INTEGER, INTENT(IN) :: value
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
@@ -862,7 +858,6 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     LOGICAL, INTENT(IN) :: value
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: errcode
     CHARACTER(LEN=1) :: cvalue
     TYPE(sdf_block_type), POINTER :: b
 

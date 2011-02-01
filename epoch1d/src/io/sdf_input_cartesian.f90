@@ -41,7 +41,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+    IF (.NOT. ASSOCIATED(h%current_block)) THEN
       IF (h%rank .EQ. h%rank_master) THEN
         PRINT*,'*** ERROR ***'
         PRINT*,'SDF block header has not been read. Ignoring call.'
@@ -52,7 +52,7 @@ CONTAINS
     b => h%current_block
     h%current_location = b%block_start + h%block_header_length
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF

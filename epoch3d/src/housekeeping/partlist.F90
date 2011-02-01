@@ -369,7 +369,7 @@ CONTAINS
 
   SUBROUTINE init_particle(new_particle)
 
-    TYPE(particle), POINTER, INTENT(INOUT) :: new_particle
+    TYPE(particle), POINTER :: new_particle
 
     new_particle%part_p = 0.0_num
     new_particle%part_pos = 0.0_num

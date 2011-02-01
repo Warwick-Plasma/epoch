@@ -79,7 +79,6 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: idum
     REAL(num) :: momentum_from_temperature
 
-    INTEGER :: i
     REAL(num) :: stdev
     REAL(num) :: rand1, rand2, w
     REAL(num), SAVE :: val

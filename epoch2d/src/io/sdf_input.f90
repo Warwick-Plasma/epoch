@@ -92,7 +92,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: code_name
     INTEGER, INTENT(OUT), OPTIONAL :: code_io_version
     LOGICAL, INTENT(OUT), OPTIONAL :: restart_flag, other_domains
-    INTEGER :: errcode, ierr
+    INTEGER :: errcode
 
     IF (h%done_header) THEN
       IF (h%rank .EQ. h%rank_master) THEN
@@ -115,7 +115,7 @@ CONTAINS
     CALL MPI_BCAST(h%buffer, c_header_length, MPI_CHARACTER, h%rank_master, &
         h%comm, errcode)
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -125,6 +125,7 @@ CONTAINS
     CALL read_header(h)
 
     DEALLOCATE(h%buffer)
+    NULLIFY(h%buffer)
 
     IF (h%file_revision .GT. sdf_revision) THEN
       IF (h%rank .EQ. h%rank_master) &
@@ -299,7 +300,7 @@ CONTAINS
 
     CALL read_block_header(h)
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -369,7 +370,7 @@ CONTAINS
 
     CALL read_block_header(h)
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -466,7 +467,7 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:), INTENT(OUT), OPTIONAL :: dims
-    INTEGER :: errcode, i, ierr
+    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (.NOT. ASSOCIATED(h%current_block)) THEN
@@ -482,7 +483,7 @@ CONTAINS
 
     CALL read_block_header(h)
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -755,7 +756,7 @@ CONTAINS
 
     CALL read_block_header(h)
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -800,7 +801,7 @@ CONTAINS
 
     CALL read_block_header(h)
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -851,7 +852,7 @@ CONTAINS
 
     CALL read_block_header(h)
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -899,7 +900,7 @@ CONTAINS
 
     CALL read_block_header(h)
 
-    IF (.NOT. ALLOCATED(h%buffer)) THEN
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
           MPI_BYTE, "native", MPI_INFO_NULL, errcode)
     ENDIF
@@ -944,7 +945,7 @@ CONTAINS
     INTEGER(i4), INTENT(OUT) :: value
     INTEGER :: i, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       value = TRANSFER(h%buffer(i:i+n-1), value)
     ELSE
@@ -965,7 +966,7 @@ CONTAINS
     INTEGER(i8), INTENT(OUT) :: value
     INTEGER :: i, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       value = TRANSFER(h%buffer(i:i+n-1), value)
     ELSE
@@ -986,7 +987,7 @@ CONTAINS
     REAL(r4), INTENT(OUT) :: value
     INTEGER :: i, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       value = TRANSFER(h%buffer(i:i+n-1), value)
     ELSE
@@ -1007,7 +1008,7 @@ CONTAINS
     REAL(r8), INTENT(OUT) :: value
     INTEGER :: i, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       value = TRANSFER(h%buffer(i:i+n-1), value)
     ELSE
@@ -1029,7 +1030,7 @@ CONTAINS
     CHARACTER(LEN=1) :: cvalue
     INTEGER :: i, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       cvalue = TRANSFER(h%buffer(i:i+n-1), cvalue)
     ELSE
@@ -1058,7 +1059,7 @@ CONTAINS
 
     idx = 1
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1,n
         value(j:j) = h%buffer(i+j-1)
@@ -1114,7 +1115,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nentries
     INTEGER :: i, j, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1, nentries
         value(j) = TRANSFER(h%buffer(i:i+n-1), value(1))
@@ -1139,7 +1140,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nentries
     INTEGER :: i, j, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1, nentries
         value(j) = TRANSFER(h%buffer(i:i+n-1), value(1))
@@ -1164,7 +1165,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nentries
     INTEGER :: i, j, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1, nentries
         value(j) = TRANSFER(h%buffer(i:i+n-1), value(1))
@@ -1189,7 +1190,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nentries
     INTEGER :: i, j, errcode
 
-    IF (ALLOCATED(h%buffer)) THEN
+    IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1, nentries
         value(j) = TRANSFER(h%buffer(i:i+n-1), value(1))
