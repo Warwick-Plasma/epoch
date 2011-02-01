@@ -84,16 +84,14 @@ PROGRAM pic
   ENDIF
 
   CALL manual_load
-  ! .TRUE. to over_ride balance fraction check
-  CALL balance_workload(.TRUE.)
 
-  ! npart_global isn't really used anymore, just check where it is used
-  IF (npart_global .LT. 0) THEN
-    npart_global = 0
-    DO ispecies = 1, n_species
-      npart_global = npart_global+particle_species(ispecies)%count
-    ENDDO
-  ENDIF
+  npart_global = 0
+  DO ispecies = 1, n_species
+    npart_global = npart_global + particle_species(ispecies)%count
+  ENDDO
+
+  ! .TRUE. to over_ride balance fraction check
+  IF (npart_global .GT. 0) CALL balance_workload(.TRUE.)
 
   CALL particle_bcs
   CALL efield_bcs

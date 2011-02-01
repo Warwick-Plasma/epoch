@@ -48,6 +48,7 @@ CONTAINS
     IF (.NOT. over_ride) THEN
       CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
           comm, errcode)
+      IF (max_npart .LE. 0) RETURN
       CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
           comm, errcode)
       npart_av = REAL(sum_npart, num) / nproc

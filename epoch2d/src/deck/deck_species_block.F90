@@ -165,8 +165,7 @@ CONTAINS
         particle_species(species_id)%count = &
             INT(as_real(value, handle_species_deck) * npart_global)
       ELSE
-        extended_error_string = "npart"
-        handle_species_deck = c_err_required_element_not_set
+        particle_species(species_id)%count = 0
       ENDIF
       RETURN
     ENDIF

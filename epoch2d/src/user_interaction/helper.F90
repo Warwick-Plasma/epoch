@@ -215,8 +215,8 @@ CONTAINS
       DEALLOCATE(current)
       current=>next
     ENDDO
-    CALL MPI_REDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
-        MPI_SUM, 0, comm, errcode)
+    CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
+        MPI_SUM, comm, errcode)
     species_list%count = npart_this_species
     IF (rank .EQ. 0) THEN
       WRITE(*, *) "Loaded", npart_this_species, &
