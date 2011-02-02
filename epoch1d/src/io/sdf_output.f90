@@ -40,7 +40,7 @@ CONTAINS
 
     IF (h%done_header) THEN
       IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** Warning ***'
+        PRINT*,'*** WARNING ***'
         PRINT*,'SDF header already written. Ignoring extra call.'
       ENDIF
       RETURN
@@ -217,7 +217,7 @@ CONTAINS
 
     IF (.NOT. h%done_header) THEN
       IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** Warning ***'
+        PRINT*,'*** WARNING ***'
         PRINT*,'SDF header not yet written. Ignoring write call.'
       ENDIF
       RETURN
@@ -225,7 +225,7 @@ CONTAINS
 
     IF (b%done_header) THEN
       IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** Warning ***'
+        PRINT*,'*** WARNING ***'
         PRINT*,'SDF block header already written. Ignoring extra call.'
       ENDIF
       RETURN
@@ -256,7 +256,7 @@ CONTAINS
     len_s = LEN(TRIM(string))
 
     IF (len_s .GT. length .AND. h%rank .EQ. h%rank_master) THEN
-      PRINT*, '***WARNING***'
+      PRINT*, '*** WARNING ***'
       PRINT*, 'Output string "' // string // '" has been truncated'
     ENDIF
 

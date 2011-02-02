@@ -111,10 +111,10 @@ CONTAINS
       dlb = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) '*** ERROR ***'
         WRITE(*, *) 'The "icfile" option is no longer supported.'
         WRITE(*, *) 'Please use the "import" directive instead'
-        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) '*** ERROR ***'
         WRITE(40,*) 'The "icfile" option is no longer supported.'
         WRITE(40,*) 'Please use the "import" directive instead'
       ENDIF
@@ -159,12 +159,12 @@ CONTAINS
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
-          PRINT *, "***ERROR***"
+          PRINT *, "*** ERROR ***"
           PRINT *, "Required control block element ", &
               TRIM(ADJUSTL(control_block_name(index))), &
               " absent. Please create this entry in the input deck"
           WRITE(40, *) ""
-          WRITE(40, *) "***ERROR***"
+          WRITE(40, *) "*** ERROR ***"
           WRITE(40, *) "Required control block element ", &
               TRIM(ADJUSTL(control_block_name(index))), &
               " absent. Please create this entry in the input deck"
@@ -175,11 +175,11 @@ CONTAINS
 
     IF (.NOT. neutral_background) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) '*** ERROR ***'
         WRITE(*, *) 'The option "neutral_background=F" is not supported', &
             ' in this version of EPOCH.'
         WRITE(40,*)
-        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) '*** ERROR ***'
         WRITE(40,*) 'The option "neutral_background=F" is not supported', &
             ' in this version of EPOCH.'
       ENDIF

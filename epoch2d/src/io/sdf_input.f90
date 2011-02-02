@@ -96,7 +96,7 @@ CONTAINS
 
     IF (h%done_header) THEN
       IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** Warning ***'
+        PRINT*,'*** WARNING ***'
         PRINT*,'SDF header already read. Ignoring extra call.'
       ENDIF
       RETURN
@@ -154,7 +154,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%current_block)) THEN
       IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** Warning ***'
+        PRINT*,'*** WARNING ***'
         PRINT*,'SDF block not initialised. Ignoring call.'
       ENDIF
       RETURN

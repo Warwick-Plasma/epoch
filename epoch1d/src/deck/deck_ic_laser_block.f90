@@ -25,7 +25,7 @@ CONTAINS
 
     IF (str_cmp(element, "boundary") .OR. str_cmp(element, "direction")) THEN
       IF (str_cmp(element, "direction") .AND. rank .EQ. 0) THEN
-        WRITE(*, *) '***WARNING***'
+        WRITE(*, *) '*** WARNING ***'
         WRITE(*, *) 'Element "direction" in the block "laser" is deprecated.'
         WRITE(*, *) 'Please use the element name "boundary" instead.'
       ENDIF
@@ -39,9 +39,9 @@ CONTAINS
 
     IF (.NOT. boundary_set) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) '*** ERROR ***'
         WRITE(*, *) 'Cannot set laser properties before boundary is set'
-        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) '*** ERROR ***'
         WRITE(40,*) 'Cannot set laser properties before boundary is set'
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF

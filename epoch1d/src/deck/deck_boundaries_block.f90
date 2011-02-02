@@ -107,12 +107,12 @@ CONTAINS
       IF (.NOT. boundary_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
           WRITE(*, *)
-          WRITE(*, *) '***ERROR***'
+          WRITE(*, *) '*** ERROR ***'
           WRITE(*, *) 'Required boundary block element "' &
               // TRIM(ADJUSTL(boundary_block_name(index))) // '" absent.'
           WRITE(*, *) 'Please create this entry in the input deck'
           WRITE(40,*)
-          WRITE(40,*) '***ERROR***'
+          WRITE(40,*) '*** ERROR ***'
           WRITE(40,*) 'Required boundary block element "' &
               // TRIM(ADJUSTL(boundary_block_name(index))) // '" absent.'
           WRITE(40,*) 'Please create this entry in the input deck'

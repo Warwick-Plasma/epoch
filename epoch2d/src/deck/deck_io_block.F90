@@ -121,10 +121,10 @@ CONTAINS
       use_offset_grid = as_logical(value, handle_io_deck)
     CASE(6)
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '***ERROR***'
+        WRITE(*, *) '*** ERROR ***'
         WRITE(*, *) 'The "extended_io_file" option is no longer supported.'
         WRITE(*, *) 'Please use the "import" directive instead'
-        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) '*** ERROR ***'
         WRITE(40,*) 'The "extended_io_file" option is no longer supported.'
         WRITE(40,*) 'Please use the "import" directive instead'
       ENDIF
@@ -259,12 +259,12 @@ CONTAINS
     DO index = 1, n_var_special
       IF (.NOT. io_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
-          PRINT *, "***ERROR***"
+          PRINT *, "*** ERROR ***"
           PRINT *, "Required output block element ", &
               TRIM(ADJUSTL(io_block_name(index))), &
               " absent. Please create this entry in the input deck"
           WRITE(40, *) ""
-          WRITE(40, *) "***ERROR***"
+          WRITE(40, *) "*** ERROR ***"
           WRITE(40, *) "Required output block element ", &
               TRIM(ADJUSTL(io_block_name(index))), &
               " absent. Please create this entry in the input deck"

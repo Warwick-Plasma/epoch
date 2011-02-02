@@ -257,7 +257,7 @@ CONTAINS
 
     IF (num_valid_cells .EQ. 0) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*,*) '***ERROR***'
+        WRITE(*,*) '*** ERROR ***'
         WRITE(*,*) 'Intial condition settings mean that there are no cells ' &
             // 'where particles may'
         WRITE(*,*) 'validly be placed for at least one species. Code will ' &

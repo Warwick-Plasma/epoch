@@ -262,7 +262,7 @@ CONTAINS
         OPEN(unit=stat_unit, status='REPLACE', file=stat_file, iostat=errcode)
       ENDIF
       IF (errcode .NE. 0) THEN
-        PRINT*, '***ERROR***'
+        PRINT*, '*** ERROR ***'
         PRINT*, 'Cannot create "epoch2d.dat" output file. The most common ' &
             // 'cause of this problem '
         PRINT*, 'is that the ouput directory does not exist'

@@ -84,10 +84,10 @@ CONTAINS
     IF (.NOT.got_name) THEN
       IF (rank .EQ. 0) THEN
         CALL integer_as_string(current_block, id_string)
-        PRINT*, '***ERROR***'
+        PRINT*, '*** ERROR ***'
         PRINT*, 'Species block number ' // TRIM(id_string) &
             // ' has no "name" element.'
-        WRITE(40,*) '***ERROR***'
+        WRITE(40,*) '*** ERROR ***'
         WRITE(40,*) 'Species block number ' // TRIM(id_string) &
             // ' has no "name" element.'
       ENDIF
