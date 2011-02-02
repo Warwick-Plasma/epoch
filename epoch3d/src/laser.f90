@@ -20,9 +20,7 @@ CONTAINS
     laser%use_time_function = .FALSE.
     laser%amp = 0.0_num
     laser%omega = 1.0_num
-    laser%k = 1.0_num
     laser%pol_angle = 0.0_num
-    laser%angle = 0.0_num
     laser%t_start = 0.0_num
     laser%t_end = 0.0_num
     NULLIFY(laser%profile)
@@ -52,47 +50,21 @@ CONTAINS
 
     INTEGER :: boundary
     TYPE(laser_block), POINTER :: laser
-    INTEGER :: ix, iy, iz
 
     boundary = laser%boundary
 
-    IF (laser%k .EQ. 0) laser%k = laser%omega
-
-    IF (boundary .EQ. c_bd_x_min .OR. boundary .EQ. c_bd_x_max) THEN
-      DO iz = 1, nz
-        DO iy = 1, ny
-          laser%phase(iy, iz) = laser%phase(iy, iz) &
-              - laser%k * (y(iy) * z(iz) * TAN(laser%angle))
-        ENDDO
-      ENDDO
-    ELSE IF (boundary .EQ. c_bd_y_min .OR. boundary .EQ. c_bd_y_max) THEN
-      DO iz = 1, nz
-        DO ix = 1, nx
-          laser%phase(ix, iz) = laser%phase(ix, iz) &
-              - laser%k * (x(ix) * z(iz) * TAN(laser%angle))
-        ENDDO
-      ENDDO
-    ELSE IF (boundary .EQ. c_bd_z_min .OR. boundary .EQ. c_bd_z_max) THEN
-      DO iy = 1, ny
-        DO ix = 1, nx
-          laser%phase(ix, iy) = laser%phase(ix, iy) &
-              - laser%k * (x(ix) * y(iy) * TAN(laser%angle))
-        ENDDO
-      ENDDO
-    ENDIF
-
     IF (boundary .EQ. c_bd_x_min) THEN
-      CALL attach_laser_to_list(laser_x_min, laser, boundary)
+      CALL attach_laser_to_list(laser_x_min, laser)
     ELSE IF (boundary .EQ. c_bd_x_max) THEN
-      CALL attach_laser_to_list(laser_x_max, laser, boundary)
+      CALL attach_laser_to_list(laser_x_max, laser)
     ELSE IF (boundary .EQ. c_bd_y_min) THEN
-      CALL attach_laser_to_list(laser_y_min, laser, boundary)
+      CALL attach_laser_to_list(laser_y_min, laser)
     ELSE IF (boundary .EQ. c_bd_y_max) THEN
-      CALL attach_laser_to_list(laser_y_max, laser, boundary)
+      CALL attach_laser_to_list(laser_y_max, laser)
     ELSE IF (boundary .EQ. c_bd_z_min) THEN
-      CALL attach_laser_to_list(laser_z_min, laser, boundary)
+      CALL attach_laser_to_list(laser_z_min, laser)
     ELSE IF (boundary .EQ. c_bd_z_max) THEN
-      CALL attach_laser_to_list(laser_z_max, laser, boundary)
+      CALL attach_laser_to_list(laser_z_max, laser)
     ENDIF
 
   END SUBROUTINE attach_laser
@@ -118,11 +90,10 @@ CONTAINS
 
 
   ! Actually does the attaching of the laser to the correct list
-  SUBROUTINE attach_laser_to_list(list, laser, boundary)
+  SUBROUTINE attach_laser_to_list(list, laser)
 
     TYPE(laser_block), POINTER :: list
     TYPE(laser_block), POINTER :: laser
-    INTEGER, INTENT(IN) :: boundary
     TYPE(laser_block), POINTER :: current
 
     IF (ASSOCIATED(list)) THEN
@@ -240,7 +211,7 @@ CONTAINS
         fplus(1:ny, 1:nz) = fplus(1:ny, 1:nz) &
             + t_env * current%amp * current%profile(1:ny, 1:nz) &
             * SIN(current%omega * time + current%phase(1:ny, 1:nz)) &
-            * SIN(current%pol_angle) * COS(current%angle)
+            * SIN(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -299,7 +270,7 @@ CONTAINS
         fneg(1:ny, 1:nz) = fneg(1:ny, 1:nz) &
             + t_env * current%amp * current%profile(1:ny, 1:nz) &
             * SIN(current%omega * time + current%phase(1:ny, 1:nz)) &
-            * SIN(current%pol_angle) * COS(current%angle)
+            * SIN(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -358,7 +329,7 @@ CONTAINS
         fplus(1:nx, 1:nz) = fplus(1:nx, 1:nz) &
             + t_env * current%amp * current%profile(1:nx, 1:nz) &
             * SIN(current%omega * time + current%phase(1:nx, 1:nz)) &
-            * SIN(current%pol_angle) * COS(current%angle)
+            * SIN(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -417,7 +388,7 @@ CONTAINS
         fneg(1:nx, 1:nz) = fneg(1:nx, 1:nz) &
             + t_env * current%amp * current%profile(1:nx, 1:nz) &
             * SIN(current%omega * time + current%phase(1:nx, 1:nz)) &
-            * SIN(current%pol_angle) * COS(current%angle)
+            * SIN(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -476,7 +447,7 @@ CONTAINS
         fplus(1:nx, 1:ny) = fplus(1:nx, 1:ny) &
             + t_env * current%amp * current%profile(1:nx, 1:ny) &
             * SIN(current%omega * time + current%phase(1:nx, 1:ny)) &
-            * SIN(current%pol_angle) * COS(current%angle)
+            * SIN(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -535,7 +506,7 @@ CONTAINS
         fneg(1:nx, 1:ny) = fneg(1:nx, 1:ny) &
             + t_env * current%amp * current%profile(1:nx, 1:ny) &
             * SIN(current%omega * time + current%phase(1:nx, 1:ny)) &
-            * SIN(current%pol_angle) * COS(current%angle)
+            * SIN(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO

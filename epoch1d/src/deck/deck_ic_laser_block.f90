@@ -82,6 +82,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, "profile")) THEN
+      working_laser%profile = as_real(value, handle_ic_laser_deck)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, "phase")) THEN
       working_laser%phase = as_real(value, handle_ic_laser_deck)
       RETURN

@@ -20,11 +20,11 @@ CONTAINS
     laser%use_time_function = .FALSE.
     laser%amp = 0.0_num
     laser%omega = 1.0_num
-    laser%k = 1.0_num
     laser%pol_angle = 0.0_num
-    laser%angle = 0.0_num
     laser%t_start = 0.0_num
     laser%t_end = 0.0_num
+    NULLIFY(laser%next)
+
     laser%profile = 0.0_num
     laser%phase = 0.0_num
 
@@ -40,16 +40,10 @@ CONTAINS
 
     boundary = laser%boundary
 
-    IF (laser%k .EQ. 0) laser%k = laser%omega
-
-    IF (boundary .EQ. c_bd_x_min .OR. boundary .EQ. c_bd_x_max) THEN
-      laser%phase = laser%phase - laser%k * TAN(laser%angle)
-    ENDIF
-
     IF (boundary .EQ. c_bd_x_min) THEN
-      CALL attach_laser_to_list(laser_x_min, laser, boundary)
+      CALL attach_laser_to_list(laser_x_min, laser)
     ELSE IF (boundary .EQ. c_bd_x_max) THEN
-      CALL attach_laser_to_list(laser_x_max, laser, boundary)
+      CALL attach_laser_to_list(laser_x_max, laser)
     ENDIF
 
   END SUBROUTINE attach_laser
@@ -75,11 +69,10 @@ CONTAINS
 
 
   ! Actually does the attaching of the laser to the correct list
-  SUBROUTINE attach_laser_to_list(list, laser, boundary)
+  SUBROUTINE attach_laser_to_list(list, laser)
 
     TYPE(laser_block), POINTER :: list
     TYPE(laser_block), POINTER :: laser
-    INTEGER, INTENT(IN) :: boundary
     TYPE(laser_block), POINTER :: current
 
     IF (ASSOCIATED(list)) THEN
@@ -145,9 +138,9 @@ CONTAINS
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
-        fplus = fplus + t_env * current%amp &
+        fplus = fplus + t_env * current%amp * current%profile &
             * SIN(current%omega * time + current%phase) &
-            * SIN(current%pol_angle) * COS(current%angle)
+            * SIN(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -163,7 +156,7 @@ CONTAINS
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
-        fplus = fplus + t_env * current%amp &
+        fplus = fplus + t_env * current%amp * current%profile &
             * SIN(current%omega * time + current%phase) &
             * COS(current%pol_angle)
       ENDIF
@@ -199,9 +192,9 @@ CONTAINS
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
-        fneg = fneg + t_env * current%amp &
+        fneg = fneg + t_env * current%amp * current%profile &
             * SIN(current%omega * time + current%phase) &
-            * SIN(current%pol_angle) * COS(current%angle)
+            * SIN(current%pol_angle)
       ENDIF
       current=>current%next
     ENDDO
@@ -217,7 +210,7 @@ CONTAINS
       ! evaluate the temporal evolution of the laser
       IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
         t_env = laser_time_profile(current)
-        fneg = fneg + t_env * current%amp &
+        fneg = fneg + t_env * current%amp * current%profile &
             * SIN(current%omega * time + current%phase) &
             * COS(current%pol_angle)
       ENDIF
