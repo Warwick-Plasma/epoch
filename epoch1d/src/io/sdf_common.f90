@@ -156,11 +156,13 @@ CONTAINS
         RETURN
       ELSE
         ALLOCATE(h%current_block%next_block)
+        CALL initialise_block_type(h%current_block%next_block)
         next => h%current_block%next_block
         next%block_start = h%current_block%next_block_location
       ENDIF
     ELSE
       ALLOCATE(h%blocklist)
+      CALL initialise_block_type(h%blocklist)
       next => h%blocklist
       next%block_start = h%summary_location
     ENDIF
@@ -252,5 +254,71 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE safe_copy_string
+
+
+
+  SUBROUTINE initialise_block_type(var)
+
+    TYPE(sdf_block_type) :: var
+
+    NULLIFY(var%dim_mults)
+    NULLIFY(var%variable_ids)
+    NULLIFY(var%dim_labels)
+    NULLIFY(var%dim_units)
+    NULLIFY(var%material_names)
+    NULLIFY(var%run)
+    NULLIFY(var%next_block)
+    var%done_header = .FALSE.
+    var%done_info = .FALSE.
+    var%done_data = .FALSE.
+
+  END SUBROUTINE initialise_block_type
+
+
+
+  SUBROUTINE deallocate_block_type(var)
+
+    TYPE(sdf_block_type) :: var
+
+    IF (ASSOCIATED(var%dim_mults)) DEALLOCATE(var%dim_mults)
+    IF (ASSOCIATED(var%variable_ids)) DEALLOCATE(var%variable_ids)
+    IF (ASSOCIATED(var%dim_labels)) DEALLOCATE(var%dim_labels)
+    IF (ASSOCIATED(var%dim_units)) DEALLOCATE(var%dim_units)
+    IF (ASSOCIATED(var%material_names)) DEALLOCATE(var%material_names)
+
+    CALL initialise_block_type(var)
+
+  END SUBROUTINE deallocate_block_type
+
+
+
+  SUBROUTINE initialise_file_handle(var)
+
+    TYPE(sdf_file_handle) :: var
+
+    NULLIFY(var%buffer)
+    NULLIFY(var%blocklist)
+    NULLIFY(var%current_block)
+    ! Set filehandle to -1 to show that the file is closed
+    var%filehandle = -1
+    var%string_length = c_max_string_length
+    var%done_header = .FALSE.
+    var%restart_flag = .FALSE.
+    var%other_domains = .FALSE.
+    var%writing = .FALSE.
+
+  END SUBROUTINE initialise_file_handle
+
+
+
+  SUBROUTINE deallocate_file_handle(var)
+
+    TYPE(sdf_file_handle) :: var
+
+    IF (ASSOCIATED(var%buffer)) DEALLOCATE(var%buffer)
+
+    CALL initialise_file_handle(var)
+
+  END SUBROUTINE deallocate_file_handle
 
 END MODULE sdf_common

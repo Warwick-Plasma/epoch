@@ -17,11 +17,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: sdf_rank_in, sdf_comm_in, mode
     INTEGER :: errcode, ierr
 
+    CALL initialise_file_handle(h)
     CALL sdf_set_default_rank(h, 0)
-    h%filehandle = -1
-    h%string_length = c_max_string_length
-    NULLIFY(h%blocklist)
-    NULLIFY(h%current_block)
 
     h%comm = sdf_comm_in
     h%rank = sdf_rank_in
@@ -76,8 +73,6 @@ CONTAINS
       h%mode = MPI_MODE_RDONLY
     ENDIF
 
-    h%done_header = .FALSE.
-
     CALL MPI_FILE_OPEN(h%comm, TRIM(filename), h%mode, MPI_INFO_NULL, &
         h%filehandle, errcode)
 
@@ -119,11 +114,8 @@ CONTAINS
 
     CALL MPI_FILE_CLOSE(h%filehandle, errcode)
 
-    ! Set sdf_filehandle to -1 to show that the file is closed
-    h%filehandle = -1
-    h%done_header = .FALSE.
     CALL sdf_destroy_blocklist(h)
-    IF (ASSOCIATED(h%buffer)) DEALLOCATE(h%buffer)
+    CALL deallocate_file_handle(h)
 
   END SUBROUTINE sdf_close
 
@@ -135,12 +127,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(b)) RETURN
 
-    IF (ASSOCIATED(b%dim_mults)) DEALLOCATE(b%dim_mults)
-    IF (ASSOCIATED(b%dim_labels)) DEALLOCATE(b%dim_labels)
-    IF (ASSOCIATED(b%dim_units)) DEALLOCATE(b%dim_units)
-    IF (ASSOCIATED(b%variable_ids)) DEALLOCATE(b%variable_ids)
-    IF (ASSOCIATED(b%material_names)) DEALLOCATE(b%material_names)
-    IF (ASSOCIATED(b%run)) DEALLOCATE(b%run)
+    CALL deallocate_block_type(b)
     DEALLOCATE(b)
 
   END SUBROUTINE sdf_destroy_block
