@@ -13,6 +13,7 @@ MODULE deck_species_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: species_names
   INTEGER, DIMENSION(:), POINTER :: species_blocks
+  LOGICAL, DIMENSION(:), ALLOCATABLE :: species_charge_set
   LOGICAL :: got_name
   INTEGER :: check_block = c_err_none
 
@@ -38,6 +39,8 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_deck) THEN
       CALL setup_species
+      ALLOCATE(species_charge_set(n_species))
+      species_charge_set = .FALSE.
       DO i = 1, n_species
         particle_species(i)%name = species_names(i)
         IF (rank .EQ. 0) THEN
@@ -55,6 +58,7 @@ CONTAINS
     IF ((ic_from_restart .AND. deck_state .EQ. c_ds_eio) &
         .OR. deck_state .EQ. c_ds_ic) THEN
       DEALLOCATE(species_blocks)
+      DEALLOCATE(species_charge_set)
     ENDIF
 
   END SUBROUTINE species_finalise
@@ -151,6 +155,7 @@ CONTAINS
       IF (deck_state .NE. c_ds_eio) RETURN
       particle_species(species_id)%charge = &
           as_real(value, handle_species_deck) * q0
+      species_charge_set(species_id) = .TRUE.
       RETURN
     ENDIF
 
@@ -439,8 +444,36 @@ CONTAINS
   FUNCTION check_species_block()
 
     INTEGER :: check_species_block
+    INTEGER :: i
 
     check_species_block = check_block
+
+    IF (deck_state .NE. c_ds_ic) RETURN
+
+    DO i = 1, n_species
+      IF (particle_species(i)%mass .LT. 0) THEN
+        IF (rank .EQ. 0) THEN
+          WRITE(*,*) '*** ERROR ***'
+          WRITE(*,*) 'No mass specified for particle species "', &
+              TRIM(particle_species(i)%name),'"'
+          WRITE(40,*) '*** ERROR ***'
+          WRITE(40,*) 'No mass specified for particle species "', &
+              TRIM(particle_species(i)%name),'"'
+        ENDIF
+        check_species_block = c_err_missing_elements
+      ENDIF
+      IF (.NOT. species_charge_set(i)) THEN
+        IF (rank .EQ. 0) THEN
+          WRITE(*,*) '*** ERROR ***'
+          WRITE(*,*) 'No charge specified for particle species "', &
+              TRIM(particle_species(i)%name),'"'
+          WRITE(40,*) '*** ERROR ***'
+          WRITE(40,*) 'No charge specified for particle species "', &
+              TRIM(particle_species(i)%name),'"'
+        ENDIF
+        check_species_block = c_err_missing_elements
+      ENDIF
+    ENDDO
 
   END FUNCTION check_species_block
 

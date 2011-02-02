@@ -396,7 +396,6 @@ MODULE shared_data
     REAL(num) :: mass
     INTEGER(KIND=8) :: count
     TYPE(particle_list) :: attached_list
-    LOGICAL :: charge_set
 
 #ifdef TRACER_PARTICLES
     LOGICAL :: tracer

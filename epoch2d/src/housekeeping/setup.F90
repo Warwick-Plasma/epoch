@@ -198,7 +198,6 @@ CONTAINS
       particle_species(ispecies)%name = blank
       particle_species(ispecies)%mass = -1.0_num
       particle_species(ispecies)%charge = 0.0_num
-      particle_species(ispecies)%charge_set = .FALSE.
       particle_species(ispecies)%dump = .TRUE.
       particle_species(ispecies)%count = -1
       particle_species(ispecies)%id = 0
