@@ -478,6 +478,27 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_func_tempx_ev) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(ev / kb &
+          * initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 1))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_tempy_ev) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(ev / kb &
+          * initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 2))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_tempz_ev) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(ev / kb &
+          * initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 3))
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_func_interpolate) THEN
       CALL get_values(1, values)
       count = NINT(values(1))

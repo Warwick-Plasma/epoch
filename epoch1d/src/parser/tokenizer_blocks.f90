@@ -173,9 +173,15 @@ CONTAINS
     IF (str_cmp(name, "nint"))  as_function = c_func_nint
     IF (str_cmp(name, "rho") .OR. str_cmp(name, "number_density")) &
         as_function = c_func_rho
-    IF (str_cmp(name, "temp_x"))  as_function = c_func_tempx
-    IF (str_cmp(name, "temp_y"))  as_function = c_func_tempy
-    IF (str_cmp(name, "temp_z"))  as_function = c_func_tempz
+    IF (str_cmp(name, "temp_x") .OR. str_cmp(name, "temp_x_k")) &
+        as_function = c_func_tempx
+    IF (str_cmp(name, "temp_y") .OR. str_cmp(name, "temp_y_k")) &
+        as_function = c_func_tempy
+    IF (str_cmp(name, "temp_z") .OR. str_cmp(name, "temp_z_k")) &
+        as_function = c_func_tempz
+    IF (str_cmp(name, "temp_x_ev"))  as_function = c_func_tempx_ev
+    IF (str_cmp(name, "temp_y_ev"))  as_function = c_func_tempy_ev
+    IF (str_cmp(name, "temp_z_ev"))  as_function = c_func_tempz_ev
     IF (str_cmp(name, "interpolate")) as_function = c_func_interpolate
     IF (str_cmp(name, "tanh")) as_function = c_func_tanh
     IF (str_cmp(name, "sinh")) as_function = c_func_sinh

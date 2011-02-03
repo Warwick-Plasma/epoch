@@ -373,7 +373,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "temp")) THEN
+    IF (str_cmp(element, "temp") .OR. str_cmp(element, "temp_k") &
+        .OR. str_cmp(element, "temp_ev")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
@@ -383,14 +384,19 @@ CONTAINS
         CALL evaluate_string_in_space(value, &
             initial_conditions(species_id)%temp(:,1), &
             -2, nx+3, handle_species_deck)
+      ENDIF
+      IF (str_cmp(element, "temp_ev")) THEN
+        initial_conditions(species_id)%temp(:,1) = ev / kb * &
+            initial_conditions(species_id)%temp(:,1)
       ENDIF
       debug_mode = .FALSE.
-      initial_conditions(species_id)%temp(-2:nx+3, 2) = 0.0_num
-      initial_conditions(species_id)%temp(-2:nx+3, 3) = 0.0_num
+      initial_conditions(species_id)%temp(:,2) = 0.0_num
+      initial_conditions(species_id)%temp(:,3) = 0.0_num
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "temp_x")) THEN
+    IF (str_cmp(element, "temp_x") .OR. str_cmp(element, "temp_x_k") &
+        .OR. str_cmp(element, "temp_x_ev")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
@@ -401,10 +407,15 @@ CONTAINS
             initial_conditions(species_id)%temp(:,1), &
             -2, nx+3, handle_species_deck)
       ENDIF
+      IF (str_cmp(element, "temp_x_ev")) THEN
+        initial_conditions(species_id)%temp(:,1) = ev / kb * &
+            initial_conditions(species_id)%temp(:,1)
+      ENDIF
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "temp_y")) THEN
+    IF (str_cmp(element, "temp_y") .OR. str_cmp(element, "temp_y_k") &
+        .OR. str_cmp(element, "temp_y_ev")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
@@ -415,10 +426,15 @@ CONTAINS
             initial_conditions(species_id)%temp(:,2), &
             -2, nx+3, handle_species_deck)
       ENDIF
+      IF (str_cmp(element, "temp_y_ev")) THEN
+        initial_conditions(species_id)%temp(:,2) = ev / kb * &
+            initial_conditions(species_id)%temp(:,2)
+      ENDIF
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "temp_z")) THEN
+    IF (str_cmp(element, "temp_z") .OR. str_cmp(element, "temp_z_k") &
+        .OR. str_cmp(element, "temp_z_ev")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
@@ -428,6 +444,10 @@ CONTAINS
         CALL evaluate_string_in_space(value, &
             initial_conditions(species_id)%temp(:,3), &
             -2, nx+3, handle_species_deck)
+      ENDIF
+      IF (str_cmp(element, "temp_z_ev")) THEN
+        initial_conditions(species_id)%temp(:,3) = ev / kb * &
+            initial_conditions(species_id)%temp(:,3)
       ENDIF
       RETURN
     ENDIF
