@@ -179,6 +179,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_micron) THEN
+      CALL push_on_eval(1.0e-6_num)
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_const_lx) THEN
       CALL push_on_eval(length_x)
       RETURN

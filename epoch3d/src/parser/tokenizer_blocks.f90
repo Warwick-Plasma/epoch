@@ -96,6 +96,7 @@ CONTAINS
     IF (str_cmp(name, "ev")) as_constant = c_const_ev
     IF (str_cmp(name, "kev")) as_constant = c_const_kev
     IF (str_cmp(name, "mev")) as_constant = c_const_mev
+    IF (str_cmp(name, "micron")) as_constant = c_const_micron
     IF (str_cmp(name, "x"))  as_constant = c_const_x
     IF (str_cmp(name, "y"))  as_constant = c_const_y
     IF (str_cmp(name, "z"))  as_constant = c_const_z
