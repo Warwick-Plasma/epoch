@@ -1,7 +1,7 @@
 *.d
 *.o
-CFD*Info.C
-CFD*Info.h
+*PluginInfo.C
+*PluginInfo.h
 CMake*
-*.cmake
+cmake*
 Makefile

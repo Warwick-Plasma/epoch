@@ -1,0 +1,26 @@
+#! /bin/sh
+
+version=`visit -version 2>&1|sed 's,.* \([0-9]*\).*,\1,'`
+
+if [ "$version"x != x ]; then
+  xml2info -clobber cfd${version}.xml
+  rm -rf CMake* cmake* Makefile
+
+  if [ $version -eq 1 ]; then
+    xml2makefile -clobber cfd${version}.xml
+    if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
+      sed 's,\(^CXXFLAGS.*\),\1 -m32\
+CFLAGS=$(CFLAGSORIG) -m32\
+PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32,' Makefile > .Makefile.tmp
+      \mv -f .Makefile.tmp Makefile
+    fi
+  else
+    xml2cmake -clobber cfd${version}.xml
+    cmake -DCMAKE_BUILD_TYPE=Debug .
+  fi
+
+  make clean
+  make
+else
+  echo "Unable to build. Please add visit to your \$PATH"
+fi
