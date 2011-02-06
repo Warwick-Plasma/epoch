@@ -7,10 +7,9 @@ MODULE deck_io_block
 
   SAVE
 
-  INTEGER, PARAMETER :: n_var_special = 8
+  INTEGER, PARAMETER :: n_var_special = 9
   INTEGER, PARAMETER :: io_block_elements = n_var_special + num_vars_to_dump
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done = .FALSE.
-  LOGICAL :: need_dt = .FALSE.
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
   INTEGER, PARAMETER :: c_dump_part_species      = 3
@@ -50,6 +49,7 @@ MODULE deck_io_block
           "extended_io_file             ", & ! s6
           "averaging_period             ", & ! s7
           "min_cycles_per_average       ", & ! s8
+          "nstep_snapshot               ", & ! s9
           "particles                    ", & ! 1
           "grid                         ", & ! 2
           "species_id                   ", & ! 3
@@ -132,11 +132,11 @@ CONTAINS
       average_time = as_real(value, handle_io_deck)
     CASE(8)
       min_cycles_per_average = as_integer(value, handle_io_deck)
+    CASE(9)
+      nstep_snapshots = as_integer(value, handle_io_deck)
     END SELECT
 
     IF (elementselected .LE. n_var_special) RETURN
-
-    need_dt = .TRUE.
 
     mask = as_integer(value, handle_io_deck)
     mask_element = elementselected - n_var_special
@@ -221,9 +221,9 @@ CONTAINS
     ! elements is not wanted
     check_io_block = c_err_none
 
-    IF (.NOT. need_dt) io_block_done(1) = .TRUE.
     ! Other control parameters are optional
-    io_block_done(2:6) = .TRUE.
+    io_block_done(1:6) = .TRUE.
+    io_block_done(9:n_var_special) = .TRUE.
     ! Averaging info not compulsory unless averaged variable selected
     IF (.NOT. any_average) io_block_done(7:8) = .TRUE.
 

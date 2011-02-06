@@ -62,6 +62,8 @@ CONTAINS
     force_final_to_be_restartable = .FALSE.
     full_dump_every = -1
     restart_dump_every = -1
+    dt_snapshots = HUGE(1.0_num)
+    nstep_snapshots = HUGE(1)
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)

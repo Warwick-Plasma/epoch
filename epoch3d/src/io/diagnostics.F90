@@ -217,6 +217,7 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
     INTEGER :: ioutput
 
+    INTEGER, SAVE :: nstep = 0
     REAL(num), SAVE :: t1 = 0.0_num
     LOGICAL, SAVE :: first = .TRUE.
 
@@ -239,6 +240,11 @@ CONTAINS
     IF (time .GE. t1) THEN
       print_arrays = .TRUE.
       t1 = t1 + dt_snapshots
+    ENDIF
+
+    IF (i .GE. nstep) THEN
+      print_arrays = .TRUE.
+      nstep = nstep + nstep_snapshots
     ENDIF
 
     IF (time .GE. t_end .OR. i .EQ. nsteps) THEN

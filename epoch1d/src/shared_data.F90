@@ -519,6 +519,7 @@ MODULE shared_data
   REAL(num) :: length_x, dx, x_min, x_max
   REAL(num) :: x_min_local, x_max_local, length_x_local
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_mins, x_maxs
+  INTEGER :: nstep_snapshots
 
   REAL(num) :: total_ohmic_heating = 0.0_num
   REAL(num) :: weight
