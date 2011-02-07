@@ -132,6 +132,12 @@ CONTAINS
     ! nprocx and npart are optional
     control_block_done(3*c_ndims+1:4*c_ndims+1) = .TRUE.
 
+    ! Only one of nsteps or t_end need be specified
+    IF (control_block_done(4*c_ndims+2)) &
+        control_block_done(4*c_ndims+3) = .TRUE.
+    IF (control_block_done(4*c_ndims+3)) &
+        control_block_done(4*c_ndims+2) = .TRUE.
+
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
 

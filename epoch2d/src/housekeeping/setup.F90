@@ -51,7 +51,7 @@ CONTAINS
     comm = MPI_COMM_NULL
 
     dt_plasma_frequency = 0.0_num
-    dt_multiplier = 1.0_num
+    dt_multiplier = 0.95_num
     stdout_frequency = 0
 
     window_shift = 0.0_num
@@ -67,6 +67,8 @@ CONTAINS
     restart_dump_every = -1
     dt_snapshots = HUGE(1.0_num)
     nstep_snapshots = HUGE(1)
+    nsteps = -1
+    t_end = HUGE(1.0_num)
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
