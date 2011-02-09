@@ -267,7 +267,7 @@ CONTAINS
     TYPE(particle_list), POINTER, SAVE :: current_list
     TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
-    REAL(num) :: part_mc, gamma_mass
+    REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
       CALL start_particle_family(current_family, current_list, cur)
@@ -275,19 +275,19 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF (.NOT. current_family%dump) NULLIFY(cur)
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
 
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc = current_family%mass * c
+      part_mc2 = (current_family%mass * c)**2
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          part_mc = cur%mass * c
+          part_mc2 = (cur%mass * c)**2
 #endif
-          gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
-              + cur%part_p(3)**2 + part_mc**2) / c
+          gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
           data(part_count) = cur%part_p(1) / gamma_mass
           cur=>cur%next
         ENDDO
@@ -314,7 +314,7 @@ CONTAINS
     TYPE(particle_list), POINTER, SAVE :: current_list
     TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
-    REAL(num) :: part_mc, gamma_mass
+    REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
       CALL start_particle_family(current_family, current_list, cur)
@@ -322,19 +322,19 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF (.NOT. current_family%dump) NULLIFY(cur)
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
 
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc = current_family%mass * c
+      part_mc2 = (current_family%mass * c)**2
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          part_mc = cur%mass * c
+          part_mc2 = (cur%mass * c)**2
 #endif
-          gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
-              + cur%part_p(3)**2 + part_mc**2) / c
+          gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
           data(part_count) = cur%part_p(2) / gamma_mass
           cur=>cur%next
         ENDDO
@@ -361,7 +361,7 @@ CONTAINS
     TYPE(particle_list), POINTER, SAVE :: current_list
     TYPE(particle_family), POINTER, SAVE :: current_family
     INTEGER(8) :: part_count
-    REAL(num) :: part_mc, gamma_mass
+    REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
       CALL start_particle_family(current_family, current_list, cur)
@@ -369,19 +369,19 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF (.NOT. current_family%dump) NULLIFY(cur)
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
 
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc = current_family%mass * c
+      part_mc2 = (current_family%mass * c)**2
 #endif
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count+1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          part_mc = cur%mass * c
+          part_mc2 = (cur%mass * c)**2
 #endif
-          gamma_mass = SQRT(cur%part_p(1)**2 + cur%part_p(2)**2 &
-              + cur%part_p(3)**2 + part_mc**2) / c
+          gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
           data(part_count) = cur%part_p(3) / gamma_mass
           cur=>cur%next
         ENDDO
@@ -416,7 +416,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF (.NOT. current_family%dump) NULLIFY(cur)
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
 
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
@@ -459,7 +460,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF (.NOT. current_family%dump) NULLIFY(cur)
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
 
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
@@ -503,7 +505,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF (.NOT. current_family%dump) NULLIFY(cur)
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
 
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
@@ -542,7 +545,8 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_family) .AND. (part_count .LT. n_points))
-      IF (.NOT. current_family%dump) NULLIFY(cur)
+      IF ((.NOT. current_family%dump) &
+          .AND. (.NOT. iterator_settings%restart)) NULLIFY(cur)
 
       DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
