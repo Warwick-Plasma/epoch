@@ -296,7 +296,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
     REAL(num) :: val
-    INTEGER :: count, ipoint
+    INTEGER :: count, ipoint, n
     LOGICAL :: done
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
     REAL(num) :: point, t0
@@ -489,6 +489,13 @@ CONTAINS
       ELSE
         CALL push_on_eval(values(2))
       ENDIF
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_supergauss) THEN
+      CALL get_values(4, values)
+      n = values(4)
+      CALL push_on_eval(EXP(-ABS(((values(1)-values(2))/values(3)))**n))
       RETURN
     ENDIF
 

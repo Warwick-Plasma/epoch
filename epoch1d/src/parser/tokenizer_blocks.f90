@@ -194,6 +194,7 @@ CONTAINS
     IF (str_cmp(name, "bz")) as_function = c_func_bz
     IF (str_cmp(name, "gauss")) as_function = c_func_gauss
     IF (str_cmp(name, "semigauss")) as_function = c_func_semigauss
+    IF (str_cmp(name, "supergauss")) as_function = c_func_supergauss
     IF (str_cmp(name, "critical")) as_function = c_func_crit
     IF (str_cmp(name, "abs")) as_function = c_func_abs
     IF (str_cmp(name, "loge")) as_function = c_func_loge

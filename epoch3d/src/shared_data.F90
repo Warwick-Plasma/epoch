@@ -267,6 +267,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_func_loge = 37
   INTEGER, PARAMETER :: c_func_log10 = 38
   INTEGER, PARAMETER :: c_func_log_base = 39
+  INTEGER, PARAMETER :: c_func_supergauss = 40
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
 
