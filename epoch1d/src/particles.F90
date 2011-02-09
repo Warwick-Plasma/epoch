@@ -42,6 +42,7 @@ CONTAINS
     REAL(num) :: init_part_x, final_part_x
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
+    REAL(num) :: d_init, d_final
     REAL(num) :: probe_energy
 #endif
 
@@ -347,28 +348,19 @@ CONTAINS
             IF ((probe_energy .LT. current_probe%ek_max) &
                 .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
 
-              IF (current_probe%left_to_right) THEN
-                IF (init_part_x .LT. current_probe%probe_point &
-                    .AND. final_part_x .GT. current_probe%probe_point) THEN
-                  ! this particle is wanted so copy it to the list associated
-                  ! with this probe
-                  ALLOCATE(particle_copy)
-                  particle_copy = current
-                  CALL add_particle_to_partlist(&
-                      current_probe%sampled_particles, particle_copy)
-                  NULLIFY(particle_copy)
-                ENDIF
-              ELSE
-                IF (init_part_x .GT. current_probe%probe_point &
-                    .AND. final_part_x .LT. current_probe%probe_point) THEN
-                  ! this particle is wanted so copy it to the list associated
-                  ! with this probe
-                  ALLOCATE(particle_copy)
-                  particle_copy = current
-                  CALL add_particle_to_partlist(&
-                      current_probe%sampled_particles, particle_copy)
-                  NULLIFY(particle_copy)
-                ENDIF
+              d_init  = current_probe%normal &
+                  * (current_probe%point - init_part_x)
+              d_final = current_probe%normal &
+                  * (current_probe%point - final_part_x)
+              IF (SIGN(1.0_num, d_init) * SIGN(1.0_num, d_final) &
+                  .LE. 0.0_num) THEN
+                ! this particle is wanted so copy it to the list associated
+                ! with this probe
+                ALLOCATE(particle_copy)
+                particle_copy = current
+                CALL add_particle_to_partlist(current_probe%sampled_particles, &
+                    particle_copy)
+                NULLIFY(particle_copy)
               ENDIF
 
             ENDIF

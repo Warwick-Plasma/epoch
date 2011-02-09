@@ -44,8 +44,8 @@ CONTAINS
     REAL(num) :: init_part_y, final_part_y
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
-    REAL(num) :: probe_x1, probe_y1, probe_x2, probe_y2, probe_a, probe_b
-    REAL(num) :: probe_temp, probe_energy
+    REAL(num) :: d_init, d_final
+    REAL(num) :: probe_energy
 #endif
 
     ! Contains the floating point version of the cell number (never actually
@@ -389,45 +389,21 @@ CONTAINS
             IF ((probe_energy .LT. current_probe%ek_max) &
                 .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
 
-              ! probe lines are defined by two points. particles crossing the
-              ! line are recorded assumes transit from left -> right. Put the
-              ! top at the bottom and bottom at the top to catch
-              ! right-> left moving particles.
-              probe_x1 = current_probe%vertex_bottom(1)
-              probe_y1 = current_probe%vertex_bottom(2)
-              probe_x2 = current_probe%vertex_top(1)
-              probe_y2 = current_probe%vertex_top(2)
-
-              probe_a = (probe_y1 * probe_x2 - probe_x1 * probe_y2) &
-                  / (probe_y1 - probe_y2)
-              probe_b = (probe_x1 - probe_x2) / (probe_y1 - probe_y2)
-
-              ! direction?
-              IF (probe_y2 .LT. probe_y1) THEN
-                probe_temp = init_part_x
-                init_part_x = final_part_x
-                final_part_x = probe_temp
-                probe_temp = init_part_y
-                init_part_y = final_part_y
-                final_part_y = probe_temp
+              d_init  = SUM(current_probe%normal * (current_probe%point &
+                  - (/init_part_x, init_part_y/)))
+              d_final = SUM(current_probe%normal * (current_probe%point &
+                  - (/final_part_x, final_part_y/)))
+              IF (SIGN(1.0_num, d_init) * SIGN(1.0_num, d_final) &
+                  .LE. 0.0_num) THEN
+                ! this particle is wanted so copy it to the list associated
+                ! with this probe
+                ALLOCATE(particle_copy)
+                particle_copy = current
+                CALL add_particle_to_partlist(current_probe%sampled_particles, &
+                    particle_copy)
+                NULLIFY(particle_copy)
               ENDIF
 
-              IF ((final_part_y .LT. MAX(probe_y1, probe_y2)) &
-                  .AND. (final_part_y .GT. MIN(probe_y1, probe_y2))) THEN
-                IF (init_part_x .LE. probe_a + probe_b * init_part_y) THEN
-                  IF (final_part_x .GT. probe_a + probe_b * final_part_y) THEN
-
-                    ! this particle is wanted so copy it to the list associated
-                    ! with this probe
-                    ALLOCATE(particle_copy)
-                    particle_copy = current
-                    CALL add_particle_to_partlist(&
-                        current_probe%sampled_particles, particle_copy)
-                    NULLIFY(particle_copy)
-
-                  ENDIF
-                ENDIF
-              ENDIF
             ENDIF
           ENDIF
           current_probe=>current_probe%next

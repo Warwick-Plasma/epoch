@@ -477,8 +477,10 @@ MODULE shared_data
 
 #ifdef PARTICLE_PROBES
   TYPE particle_probe
-    REAL(num) :: probe_point
-    LOGICAL :: left_to_right
+    ! Arbitrary point on the plane
+    REAL(num) :: point
+    ! The normal to the plane
+    REAL(num) :: normal
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
 

@@ -16,8 +16,8 @@ CONTAINS
 
     TYPE(particle_probe), POINTER :: probe
 
-    probe%probe_point = 0.0_num
-    probe%left_to_right = .FALSE.
+    probe%point = 0.0_num
+    probe%normal = 0.0_num
     probe%ek_min = 0.0_num
     probe%ek_max = 0.0_num
     probe%name = blank

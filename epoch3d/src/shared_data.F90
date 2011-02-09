@@ -484,10 +484,10 @@ MODULE shared_data
 
 #ifdef PARTICLE_PROBES
   TYPE particle_probe
-    ! The corner points
-    REAL(num), DIMENSION(4, 3) :: corner
+    ! Arbitrary point on the plane
+    REAL(num), DIMENSION(c_ndims) :: point
     ! The normal to the plane
-    REAL(num), DIMENSION(3) :: normal
+    REAL(num), DIMENSION(c_ndims) :: normal
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
 

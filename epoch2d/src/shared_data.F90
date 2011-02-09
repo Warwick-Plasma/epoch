@@ -479,7 +479,10 @@ MODULE shared_data
 
 #ifdef PARTICLE_PROBES
   TYPE particle_probe
-    REAL(num), DIMENSION(2) :: vertex_top, vertex_bottom
+    ! Arbitrary point on the plane
+    REAL(num), DIMENSION(c_ndims) :: point
+    ! The normal to the plane
+    REAL(num), DIMENSION(c_ndims) :: normal
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
 

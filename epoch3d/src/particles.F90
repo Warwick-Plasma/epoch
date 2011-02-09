@@ -429,13 +429,11 @@ CONTAINS
             IF ((probe_energy .LT. current_probe%ek_max) &
                 .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
 
-              d_init = SUM(current_probe%normal &
-                  * (current_probe%corner(1,:) &
+              d_init  = SUM(current_probe%normal * (current_probe%point &
                   - (/init_part_x, init_part_y, init_part_z/)))
-              d_final = SUM(current_probe%normal &
-                  * (current_probe%corner(1,:) &
+              d_final = SUM(current_probe%normal * (current_probe%point &
                   - (/final_part_x, final_part_y, final_part_z/)))
-              IF (SIGN(1.0_num, d_init)*SIGN(1.0_num, d_final) &
+              IF (SIGN(1.0_num, d_init) * SIGN(1.0_num, d_final) &
                   .LE. 0.0_num) THEN
                 ! this particle is wanted so copy it to the list associated
                 ! with this probe

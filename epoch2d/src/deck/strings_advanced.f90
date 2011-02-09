@@ -96,6 +96,25 @@ CONTAINS
 
 
 
+  SUBROUTINE get_vector(str_in, array, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: err
+    TYPE(primitive_stack) :: output
+    INTEGER :: ndim
+
+    ndim = SIZE(array)
+    CALL initialise_stack(output)
+    CALL tokenize(str_in, output, err)
+    IF (err .EQ. c_err_none) &
+        CALL evaluate_at_point_to_array(output, 0, 0, ndim, array, err)
+    CALL deallocate_stack(output)
+
+  END SUBROUTINE get_vector
+
+
+
   FUNCTION as_integer(str_in, err)
 
     CHARACTER(*), INTENT(IN) :: str_in

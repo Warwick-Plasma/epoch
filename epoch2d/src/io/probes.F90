@@ -16,8 +16,8 @@ CONTAINS
 
     TYPE(particle_probe), POINTER :: probe
 
-    probe%vertex_top = 0.0_num
-    probe%vertex_bottom = 0.0_num
+    probe%point = 0.0_num
+    probe%normal = 0.0_num
     probe%ek_min = 0.0_num
     probe%ek_max = 0.0_num
     probe%name = blank

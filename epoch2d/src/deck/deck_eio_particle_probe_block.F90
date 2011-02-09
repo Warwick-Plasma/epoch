@@ -13,6 +13,8 @@ CONTAINS
 #else
   SAVE
   TYPE(particle_probe), POINTER :: working_probe
+  REAL(num) :: point2(c_ndims)
+  LOGICAL :: got_point, got_normal, got_x
 
 CONTAINS
 
@@ -20,6 +22,9 @@ CONTAINS
 
     ALLOCATE(working_probe)
     CALL init_probe(working_probe)
+    got_point = .FALSE.
+    got_normal = .FALSE.
+    got_x = .FALSE.
 
   END SUBROUTINE probe_block_start
 
@@ -27,14 +32,52 @@ CONTAINS
 
   SUBROUTINE probe_block_end
 
-    ! Check whether or not the probe is valid
-    IF (working_probe%vertex_bottom(2) .EQ. working_probe%vertex_top(2)) THEN
-      IF (rank .EQ. 0) &
-          PRINT*, "Probe y1 and y2 must be different. probe ", &
-              TRIM(working_probe%name), " abandoned."
+    LOGICAL :: discard
+    REAL(num), DIMENSION(c_ndims) :: r1
+
+    discard = .FALSE.
+    IF (got_point) THEN
+      IF (rank .EQ. 0) THEN
+        IF (got_x) THEN
+          DO io = stdout,du,du-stdout ! Print to stdout and to file
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Both "x1", etc. and "point" were used in probe block.'
+            WRITE(io,*) 'Only "point" and "normal" will be used.'
+          ENDDO
+        ENDIF
+      ENDIF
+      IF (.NOT. got_normal) discard = .TRUE.
+    ELSE
+      IF (.NOT.got_x) THEN
+        discard = .TRUE.
+      ELSE
+        ! Old style configuration supplied. Need to calculate the normal.
+        ! The probe calculates the signed distance from a point to a plane
+        ! using Hessian normal form
+        r1 = point2 - working_probe%point
+        ! r1 (cross) z
+        working_probe%normal = (/ r1(2), -r1(1) /)
+
+        IF (SUM(ABS(working_probe%normal)) .EQ. 0) discard = .TRUE.
+      ENDIF
+    ENDIF
+
+    IF (discard) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout,du,du-stdout ! Print to stdout and to file
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Position not fully specified for distribution ', &
+            'function. It will be discarded.'
+        ENDDO
+      ENDIF
+
       DEALLOCATE(working_probe)
       NULLIFY(working_probe)
     ELSE
+      ! Normalise the normal. Not really necessary but doesn't hurt.
+      working_probe%normal = &
+          working_probe%normal / SQRT(SUM(working_probe%normal**2))
+
       CALL attach_probe(working_probe)
     ENDIF
 
@@ -52,30 +95,46 @@ CONTAINS
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     ! get particle probe diagnostics (rolling total of all particles which
-    ! pass through a given region of real space (defined by the line between
-    ! two points in 2D).
+    ! pass through a given region of real space (defined by a point on a plane
+    ! and the normal to that plane.
     IF (str_cmp(element, "dump")) THEN
       working_probe%dump = as_integer(value, handle_probe_deck)
       RETURN
     ENDIF
 
+    IF (str_cmp(element, "point")) THEN
+      got_point = .TRUE.
+      CALL get_vector(value, working_probe%point, handle_probe_deck)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, "normal")) THEN
+      got_normal = .TRUE.
+      CALL get_vector(value, working_probe%normal, handle_probe_deck)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, "x1")) THEN
-      working_probe%vertex_bottom(1) = as_real(value, handle_probe_deck)
+      got_x = .TRUE.
+      working_probe%point(1) = as_real(value, handle_probe_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "y1")) THEN
-      working_probe%vertex_bottom(2) = as_real(value, handle_probe_deck)
+      got_x = .TRUE.
+      working_probe%point(2) = as_real(value, handle_probe_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "x2")) THEN
-      working_probe%vertex_top(1) = as_real(value, handle_probe_deck)
+      got_x = .TRUE.
+      point2(1) = as_real(value, handle_probe_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "y2")) THEN
-      working_probe%vertex_top(2) = as_real(value, handle_probe_deck)
+      got_x = .TRUE.
+      point2(2) = as_real(value, handle_probe_deck)
       RETURN
     ENDIF
 
@@ -112,6 +171,8 @@ CONTAINS
       working_probe%name = TRIM(value)
       RETURN
     ENDIF
+
+    handle_probe_deck = c_err_unknown_element
 
   END FUNCTION handle_probe_deck
 #endif
