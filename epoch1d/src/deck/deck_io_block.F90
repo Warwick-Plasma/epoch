@@ -86,7 +86,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_io_deck
-    INTEGER :: loop, elementselected, mask, mask_element, ierr
+    INTEGER :: loop, elementselected, mask, mask_element, ierr, io
     LOGICAL :: bad
 
     handle_io_deck = c_err_unknown_element
@@ -121,12 +121,11 @@ CONTAINS
       use_offset_grid = as_logical(value, handle_io_deck)
     CASE(6)
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '*** ERROR ***'
-        WRITE(*, *) 'The "extended_io_file" option is no longer supported.'
-        WRITE(*, *) 'Please use the "import" directive instead'
-        WRITE(40,*) '*** ERROR ***'
-        WRITE(40,*) 'The "extended_io_file" option is no longer supported.'
-        WRITE(40,*) 'Please use the "import" directive instead'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The "extended_io_file" option is no longer supported.'
+          WRITE(io,*) 'Please use the "import" directive instead'
+        ENDDO
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(7)
@@ -165,10 +164,12 @@ CONTAINS
       IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
       IF (bad) THEN
         IF (rank .EQ. 0) THEN
-          PRINT*, '*** WARNING ***'
-          PRINT*, 'Attempting to set per species property for "' &
-              // TRIM(element) // '" which'
-          PRINT*, 'does not support this property. Ignoring.'
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Attempting to set per species property for "' &
+                // TRIM(element) // '" which'
+            WRITE(io,*) 'does not support this property. Ignoring.'
+          ENDDO
         ENDIF
         mask = IAND(mask, NOT(c_io_species))
       ENDIF
@@ -193,10 +194,12 @@ CONTAINS
       IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
       IF (bad) THEN
         IF (rank .EQ. 0) THEN
-          WRITE(*,*) '*** WARNING ***'
-          WRITE(*,*) 'Attempting to set average property for "' &
-              // TRIM(element) // '" which'
-          WRITE(*,*) 'does not support this property. Ignoring.'
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Attempting to set average property for "' &
+                // TRIM(element) // '" which'
+            WRITE(io,*) 'does not support this property. Ignoring.'
+          ENDDO
         ENDIF
         mask = IAND(mask, NOT(c_io_averaged))
       ELSE
@@ -212,7 +215,7 @@ CONTAINS
 
   FUNCTION check_io_block()
 
-    INTEGER :: check_io_block, index
+    INTEGER :: check_io_block, index, io
 
     ! Just assume that anything not included except for the compulsory
     ! elements is not wanted
@@ -226,10 +229,12 @@ CONTAINS
 
     IF (dt_snapshots .LT. average_time) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*,*) '*** WARNING ***'
-        WRITE(*,*) 'Averaging time is longer than dt_snapshot, will set', &
-            ' dt_snapshot equal'
-        WRITE(*,*) 'to averaging time.'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Averaging time is longer than dt_snapshot, will set', &
+              ' dt_snapshot equal'
+          WRITE(io,*) 'to averaging time.'
+        ENDDO
       ENDIF
       dt_snapshots = average_time
     ENDIF
@@ -259,15 +264,13 @@ CONTAINS
     DO index = 1, n_var_special
       IF (.NOT. io_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
-          PRINT *, "*** ERROR ***"
-          PRINT *, "Required output block element ", &
-              TRIM(ADJUSTL(io_block_name(index))), &
-              " absent. Please create this entry in the input deck"
-          WRITE(40, *) ""
-          WRITE(40, *) "*** ERROR ***"
-          WRITE(40, *) "Required output block element ", &
-              TRIM(ADJUSTL(io_block_name(index))), &
-              " absent. Please create this entry in the input deck"
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*)
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Required output block element ', &
+                TRIM(ADJUSTL(io_block_name(index))), &
+                ' absent. Please create this entry in the input deck'
+          ENDDO
         ENDIF
         check_io_block = c_err_missing_elements
       ENDIF

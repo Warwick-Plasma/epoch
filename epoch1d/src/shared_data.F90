@@ -16,6 +16,10 @@ MODULE constants
 
   INTEGER, PARAMETER :: c_ndims = 1
 
+  ! File unit for deck parser diagnostic output
+  INTEGER, PARAMETER :: du = 40
+  INTEGER, PARAMETER :: stdout = 6
+
   ! Boundary type codes
   INTEGER, PARAMETER :: c_bc_periodic = 1
   INTEGER, PARAMETER :: c_bc_other = 2

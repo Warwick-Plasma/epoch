@@ -80,16 +80,16 @@ CONTAINS
   SUBROUTINE species_end
 
     CHARACTER(LEN=8) :: id_string
+    INTEGER :: io
 
     IF (.NOT.got_name) THEN
       IF (rank .EQ. 0) THEN
         CALL integer_as_string(current_block, id_string)
-        PRINT*, '*** ERROR ***'
-        PRINT*, 'Species block number ' // TRIM(id_string) &
-            // ' has no "name" element.'
-        WRITE(40,*) '*** ERROR ***'
-        WRITE(40,*) 'Species block number ' // TRIM(id_string) &
-            // ' has no "name" element.'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Species block number ', TRIM(id_string), &
+              ' has no "name" element.'
+        ENDDO
       ENDIF
 
       check_block = c_err_missing_elements
@@ -462,7 +462,7 @@ CONTAINS
   FUNCTION check_species_block()
 
     INTEGER :: check_species_block
-    INTEGER :: i
+    INTEGER :: i, io
 
     check_species_block = check_block
 
@@ -471,23 +471,21 @@ CONTAINS
     DO i = 1, n_species
       IF (particle_species(i)%mass .LT. 0) THEN
         IF (rank .EQ. 0) THEN
-          WRITE(*,*) '*** ERROR ***'
-          WRITE(*,*) 'No mass specified for particle species "', &
-              TRIM(particle_species(i)%name),'"'
-          WRITE(40,*) '*** ERROR ***'
-          WRITE(40,*) 'No mass specified for particle species "', &
-              TRIM(particle_species(i)%name),'"'
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'No mass specified for particle species "', &
+                TRIM(particle_species(i)%name),'"'
+          ENDDO
         ENDIF
         check_species_block = c_err_missing_elements
       ENDIF
       IF (.NOT. species_charge_set(i)) THEN
         IF (rank .EQ. 0) THEN
-          WRITE(*,*) '*** ERROR ***'
-          WRITE(*,*) 'No charge specified for particle species "', &
-              TRIM(particle_species(i)%name),'"'
-          WRITE(40,*) '*** ERROR ***'
-          WRITE(40,*) 'No charge specified for particle species "', &
-              TRIM(particle_species(i)%name),'"'
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'No charge specified for particle species "', &
+                TRIM(particle_species(i)%name),'"'
+          ENDDO
         ENDIF
         check_species_block = c_err_missing_elements
       ENDIF

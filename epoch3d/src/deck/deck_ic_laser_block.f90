@@ -19,16 +19,18 @@ CONTAINS
     INTEGER :: handle_ic_laser_deck
     REAL(num) :: dummy
     TYPE(primitive_stack) :: output
-    INTEGER :: ix, iy, iz, ierr
+    INTEGER :: ix, iy, iz, ierr, io
 
     handle_ic_laser_deck = c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, "boundary") .OR. str_cmp(element, "direction")) THEN
-      IF (str_cmp(element, "direction") .AND. rank .EQ. 0) THEN
-        WRITE(*, *) '*** WARNING ***'
-        WRITE(*, *) 'Element "direction" in the block "laser" is deprecated.'
-        WRITE(*, *) 'Please use the element name "boundary" instead.'
+      IF (rank .EQ. 0 .AND. str_cmp(element, "direction")) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Element "direction" in the block "laser" is deprecated.'
+          WRITE(io,*) 'Please use the element name "boundary" instead.'
+        ENDDO
       ENDIF
       ! If the boundary has already been set, simply ignore further calls to it
       IF (boundary_set) RETURN
@@ -40,10 +42,10 @@ CONTAINS
 
     IF (.NOT. boundary_set) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '*** ERROR ***'
-        WRITE(*, *) 'Cannot set laser properties before boundary is set'
-        WRITE(40,*) '*** ERROR ***'
-        WRITE(40,*) 'Cannot set laser properties before boundary is set'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Cannot set laser properties before boundary is set'
+        ENDDO
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
       extended_error_string = "boundary"
@@ -64,9 +66,11 @@ CONTAINS
 
     IF (str_cmp(element, "omega") .OR. str_cmp(element, "freq")) THEN
       IF (rank .EQ. 0 .AND. str_cmp(element, "freq")) THEN
-        WRITE(*,*) '*** WARNING ***'
-        WRITE(*,*) 'Element "freq" in the block "laser" is deprecated.'
-        WRITE(*,*) 'Please use the element name "omega" instead.'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Element "freq" in the block "laser" is deprecated.'
+          WRITE(io,*) 'Please use the element name "omega" instead.'
+        ENDDO
       ENDIF
       working_laser%omega = as_real(value, handle_ic_laser_deck)
       RETURN
@@ -195,7 +199,7 @@ CONTAINS
 
     INTEGER :: check_ic_laser_block
     TYPE(laser_block), POINTER :: current
-    INTEGER :: error
+    INTEGER :: error, io
 
     check_ic_laser_block = c_err_none
 
@@ -244,20 +248,20 @@ CONTAINS
 
     IF (IAND(error,1) .NE. 0) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '*** ERROR ***'
-        WRITE(*, *) 'Must define a "lambda" or "omega" for every laser.'
-        WRITE(40,*) '*** ERROR ***'
-        WRITE(40,*) 'Must define a "lambda" or "omega" for every laser.'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Must define a "lambda" or "omega" for every laser.'
+        ENDDO
       ENDIF
       check_ic_laser_block = c_err_missing_elements
     ENDIF
 
     IF (IAND(error,2) .NE. 0) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '*** ERROR ***'
-        WRITE(*, *) 'Must define an "amp" or "irradiance" for every laser.'
-        WRITE(40,*) '*** ERROR ***'
-        WRITE(40,*) 'Must define an "amp" or "irradiance" for every laser.'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Must define an "amp" or "irradiance" for every laser.'
+        ENDDO
       ENDIF
       check_ic_laser_block = c_err_missing_elements
     ENDIF

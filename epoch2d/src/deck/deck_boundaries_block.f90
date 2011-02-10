@@ -122,7 +122,7 @@ CONTAINS
   FUNCTION check_boundary_block()
 
     INTEGER :: check_boundary_block
-    INTEGER :: index
+    INTEGER :: index, io
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
 
     check_boundary_block = c_err_none
@@ -138,16 +138,13 @@ CONTAINS
     DO index = 1, boundary_block_elements
       IF (.NOT. boundary_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
-          WRITE(*, *)
-          WRITE(*, *) '*** ERROR ***'
-          WRITE(*, *) 'Required boundary block element "' &
-              // TRIM(ADJUSTL(boundary_block_name(index))) // '" absent.'
-          WRITE(*, *) 'Please create this entry in the input deck'
-          WRITE(40,*)
-          WRITE(40,*) '*** ERROR ***'
-          WRITE(40,*) 'Required boundary block element "' &
-              // TRIM(ADJUSTL(boundary_block_name(index))) // '" absent.'
-          WRITE(40,*) 'Please create this entry in the input deck'
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*)
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Required boundary block element "' &
+                // TRIM(ADJUSTL(boundary_block_name(index))) // '" absent.'
+            WRITE(io,*) 'Please create this entry in the input deck'
+          ENDDO
         ENDIF
         check_boundary_block = c_err_missing_elements
       ENDIF

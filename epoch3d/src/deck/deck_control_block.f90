@@ -65,7 +65,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_control_deck
-    INTEGER :: loop, elementselected, field_order, ierr
+    INTEGER :: loop, elementselected, field_order, ierr, io
 
     handle_control_deck = c_err_unknown_element
 
@@ -125,12 +125,11 @@ CONTAINS
       dlb = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '*** ERROR ***'
-        WRITE(*, *) 'The "icfile" option is no longer supported.'
-        WRITE(*, *) 'Please use the "import" directive instead'
-        WRITE(40,*) '*** ERROR ***'
-        WRITE(40,*) 'The "icfile" option is no longer supported.'
-        WRITE(40,*) 'Please use the "import" directive instead'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The "icfile" option is no longer supported.'
+          WRITE(io,*) 'Please use the "import" directive instead'
+        ENDDO
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(4*c_ndims+7)
@@ -158,7 +157,7 @@ CONTAINS
 
   FUNCTION check_control_block()
 
-    INTEGER :: check_control_block, index
+    INTEGER :: check_control_block, index, io
 
     check_control_block = c_err_none
 
@@ -171,15 +170,13 @@ CONTAINS
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
-          PRINT *, "*** ERROR ***"
-          PRINT *, "Required control block element ", &
-              TRIM(ADJUSTL(control_block_name(index))), &
-              " absent. Please create this entry in the input deck"
-          WRITE(40, *) ""
-          WRITE(40, *) "*** ERROR ***"
-          WRITE(40, *) "Required control block element ", &
-              TRIM(ADJUSTL(control_block_name(index))), &
-              " absent. Please create this entry in the input deck"
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*)
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Required control block element ', &
+                TRIM(ADJUSTL(control_block_name(index))), &
+                ' absent. Please create this entry in the input deck'
+          ENDDO
         ENDIF
         check_control_block = c_err_missing_elements
       ENDIF
@@ -187,13 +184,12 @@ CONTAINS
 
     IF (.NOT. neutral_background) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*, *) '*** ERROR ***'
-        WRITE(*, *) 'The option "neutral_background=F" is not supported', &
-            ' in this version of EPOCH.'
-        WRITE(40,*)
-        WRITE(40,*) '*** ERROR ***'
-        WRITE(40,*) 'The option "neutral_background=F" is not supported', &
-            ' in this version of EPOCH.'
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The option "neutral_background=F" is not supported', &
+              ' in this version of EPOCH.'
+        ENDDO
       ENDIF
       check_control_block = c_err_terminate
     ENDIF
