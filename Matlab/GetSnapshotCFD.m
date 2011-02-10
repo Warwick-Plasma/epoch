@@ -1,4 +1,4 @@
-function q = GetSnapshot(fid, length_block_metadata, length_block);
+function q = GetSnapshotCFD(fid, length_block_metadata, length_block);
 
 q.Snapshot = fread(fid, 1, 'int32');
 q.Time = fread(fid, 1, 'float64');

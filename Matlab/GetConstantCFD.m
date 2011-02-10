@@ -1,4 +1,4 @@
-function constant = GetConstant(fid, length_block_metadata, length_block);
+function constant = GetConstantCFD(fid, length_block_metadata, length_block);
 
 constant = fread(fid, 1, 'float64');
 

@@ -72,17 +72,17 @@ for c = 1:num_blocks
     blockknown = 0;
     if block_type == TYPE_SNAPSHOT
         if (version(1) == 1 && version(2) == 0)
-            q.(tag) = GetSnapshot(fid, length_block_metadata, length_block);
+            q.(tag) = GetSnapshotCFD(fid, length_block_metadata, length_block);
             blockknown = 1;
         end
     elseif block_type == TYPE_CONSTANT
-        q.(tag) = GetConstant(fid, length_block_metadata, length_block);
+        q.(tag) = GetConstantCFD(fid, length_block_metadata, length_block);
         blockknown = 1;
     elseif block_type == TYPE_MESH_VARIABLE
-        q.(tag) = GetMeshVariable(fid, length_block_metadata, length_block);
+        q.(tag) = GetMeshVariableCFD(fid, length_block_metadata, length_block);
         blockknown = 1;
     elseif block_type == TYPE_MESH
-        q.(tag) = GetMesh(fid, length_block_metadata, length_block);
+        q.(tag) = GetMeshCFD(fid, length_block_metadata, length_block);
         blockknown = 1;
     end
 

@@ -1,4 +1,4 @@
-function q = GetMesh(fid, length_block_metadata, length_block);
+function q = GetMeshCFD(fid, length_block_metadata, length_block);
 
 MESH_CARTESIAN = 0;
 MESH_PARTICLE = 1;
@@ -8,10 +8,10 @@ ndims = fread(fid, 1, 'int32');
 sof = fread(fid, 1, 'int32');
 
 if type == MESH_CARTESIAN
-    q = GetCartesianMesh(fid, length_block_metadata - 12, ...
+    q = GetCartesianMeshCFD(fid, length_block_metadata - 12, ...
         length_block - 12, ndims, sof);
 elseif type == MESH_PARTICLE
-    q = GetParticleMesh(fid, length_block_metadata - 12, ...
+    q = GetParticleMeshCFD(fid, length_block_metadata - 12, ...
         length_block - 12, ndims, sof);
 else
     fseek(fid, length_block - 12, 'cof');
