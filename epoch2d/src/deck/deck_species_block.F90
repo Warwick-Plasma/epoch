@@ -193,8 +193,10 @@ CONTAINS
       particle_species(species_id)%tracer = &
           as_logical(value, handle_species_deck)
 #else
-      handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DTRACER_PARTICLES"
+      IF (as_logical(value, handle_species_deck)) THEN
+        handle_species_deck = c_err_pp_options_wrong
+        extended_error_string = "-DTRACER_PARTICLES"
+      ENDIF
 #endif
       RETURN
     ENDIF
@@ -208,8 +210,10 @@ CONTAINS
       particle_species(species_id)%split = &
           as_logical(value, handle_species_deck)
 #else
-      handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DSPLIT_PARTICLES_AFTER_PUSH"
+      IF (as_logical(value, handle_species_deck)) THEN
+        handle_species_deck = c_err_pp_options_wrong
+        extended_error_string = "-DSPLIT_PARTICLES_AFTER_PUSH"
+      ENDIF
 #endif
       RETURN
     ENDIF
@@ -219,9 +223,6 @@ CONTAINS
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
       particle_species(species_id)%npart_max = &
           as_long_integer(value, handle_species_deck)
-#else
-      handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DSPLIT_PARTICLES_AFTER_PUSH"
 #endif
       RETURN
     ENDIF
@@ -235,8 +236,10 @@ CONTAINS
       particle_species(species_id)%ionise = &
           as_logical(value, handle_species_deck)
 #else
-      handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DPARTICLE_IONISE"
+      IF (as_logical(value, handle_species_deck)) THEN
+        handle_species_deck = c_err_pp_options_wrong
+        extended_error_string = "-DPARTICLE_IONISE"
+      ENDIF
 #endif
       RETURN
     ENDIF
@@ -246,9 +249,6 @@ CONTAINS
 #ifdef PARTICLE_IONISE
       particle_species(species_id)%ionise_to_species = &
           as_integer(value, handle_species_deck)
-#else
-      handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DPARTICLE_IONISE"
 #endif
       RETURN
     ENDIF
@@ -258,9 +258,6 @@ CONTAINS
 #ifdef PARTICLE_IONISE
       particle_species(species_id)%release_species = &
           as_integer(value, handle_species_deck)
-#else
-      handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DPARTICLE_IONISE"
 #endif
       RETURN
     ENDIF
@@ -270,9 +267,6 @@ CONTAINS
 #ifdef PARTICLE_IONISE
       particle_species(species_id)%ionisation_energy = &
           as_real(value, handle_species_deck)
-#else
-      handle_species_deck = c_err_pp_options_wrong
-      extended_error_string = "-DPARTICLE_IONISE"
 #endif
       RETURN
     ENDIF
