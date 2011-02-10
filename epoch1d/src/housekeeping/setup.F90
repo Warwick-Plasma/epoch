@@ -59,6 +59,8 @@ CONTAINS
     use_random_seed = .FALSE.
     use_offset_grid = .FALSE.
     force_final_to_be_restartable = .FALSE.
+    dump_source_code = .TRUE.
+    dump_input_decks = .TRUE.
     full_dump_every = -1
     restart_dump_every = -1
     dt_snapshots = HUGE(1.0_num)

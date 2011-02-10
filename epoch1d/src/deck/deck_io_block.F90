@@ -7,7 +7,7 @@ MODULE deck_io_block
 
   SAVE
 
-  INTEGER, PARAMETER :: n_var_special = 9
+  INTEGER, PARAMETER :: n_var_special = 11
   INTEGER, PARAMETER :: io_block_elements = n_var_special + num_vars_to_dump
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done = .FALSE.
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
@@ -50,6 +50,8 @@ MODULE deck_io_block
           "averaging_period             ", & ! s7
           "min_cycles_per_average       ", & ! s8
           "nstep_snapshot               ", & ! s9
+          "dump_source_code             ", & ! s10
+          "dump_input_decks             ", & ! s11
           "particles                    ", & ! 1
           "grid                         ", & ! 2
           "species_id                   ", & ! 3
@@ -134,6 +136,10 @@ CONTAINS
       min_cycles_per_average = as_integer(value, handle_io_deck)
     CASE(9)
       nstep_snapshots = as_integer(value, handle_io_deck)
+    CASE(10)
+      dump_source_code = as_logical(value, handle_io_deck)
+    CASE(11)
+      dump_input_decks = as_logical(value, handle_io_deck)
     END SELECT
 
     IF (elementselected .LE. n_var_special) RETURN

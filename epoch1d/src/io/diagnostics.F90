@@ -180,10 +180,11 @@ CONTAINS
     ENDIF
 #endif
 
-    IF (restart_flag .AND. SIZE(source_code) .GT. 0) THEN
-      CALL write_input_decks(sdf_handle)
-      CALL sdf_write_source_code(sdf_handle, "code", &
-          "base64_packed_source_code", source_code, last_line, 0)
+    IF (restart_flag) THEN
+      IF (dump_input_decks) CALL write_input_decks(sdf_handle)
+      IF (dump_source_code .AND. SIZE(source_code) .GT. 0) &
+          CALL sdf_write_source_code(sdf_handle, "code", &
+              "base64_packed_source_code", source_code, last_line, 0)
     ENDIF
 
     ! close the file

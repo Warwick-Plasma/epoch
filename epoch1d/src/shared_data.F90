@@ -576,7 +576,7 @@ MODULE shared_data
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
   INTEGER :: output_file
   LOGICAL :: force_final_to_be_restartable
-  LOGICAL :: use_offset_grid
+  LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
   INTEGER :: n_zeros = 4
 
   !----------------------------------------------------------------------------
