@@ -18,7 +18,7 @@ CONTAINS
 
     CHARACTER(LEN=string_length) :: part1
     INTEGER :: part2
-    INTEGER :: work
+    INTEGER :: work, io
     REAL(num) :: work1, work2
 
     handle_eio_dist_fn_deck = c_err_none
@@ -34,17 +34,26 @@ CONTAINS
       IF (work .GE. 1 .AND. work .LE. 3) THEN
         working_block%ndims = work
       ELSE
-        IF (rank .EQ. 0) &
-            PRINT *, "Distribution functions can only be 1D, 2D or 3D"
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Distribution functions can only be 1D, 2D or 3D'
+          ENDDO
+        ENDIF
         handle_eio_dist_fn_deck = c_err_bad_value
       ENDIF
       RETURN
     ENDIF
 
     IF (working_block%ndims .EQ. -1) THEN
-      IF (rank .EQ. 0) &
-          PRINT *, "Must set number of dimensions before setting other &
-              &distribution function properties."
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Must set number of dimensions before setting other', &
+              ' distribution'
+          WRITE(io,*) 'function properties.'
+        ENDDO
+      ENDIF
       extended_error_string = "ndims"
       handle_eio_dist_fn_deck = c_err_required_element_not_set
       RETURN

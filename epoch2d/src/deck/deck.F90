@@ -105,16 +105,20 @@ CONTAINS
   FUNCTION handle_block(block_name, block_element, block_value)
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name, block_element, block_value
-    INTEGER :: handle_block
+    INTEGER :: handle_block, io
+    LOGICAL, SAVE :: deo_warn = .TRUE.
 
     handle_block = c_err_none
     ! Constants can be defined in any deck state, so put them here
     IF (str_cmp(block_name, "constant") &
             .OR. str_cmp(block_name, "deo")) THEN
-      IF (rank .EQ. 0 .AND. str_cmp(block_name, "deo")) THEN
-        WRITE(*,*) '*** WARNING ***'
-        WRITE(*,*) 'The block name "deo" is deprecated.'
-        WRITE(*,*) 'Please use the block name "constant" instead.'
+      IF (rank .EQ. 0 .AND. str_cmp(block_name, "deo") .AND. deo_warn) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'The block name "deo" is deprecated.'
+          WRITE(io,*) 'Please use the block name "constant" instead.'
+        ENDDO
+        deo_warn = .FALSE.
       ENDIF
       handle_block = handle_constant_deck(block_element, block_value)
       RETURN
@@ -294,7 +298,7 @@ CONTAINS
     INTEGER :: pos = 1, flip = 1, s, f, elements = 0, lun
     LOGICAL :: is_comment
     TYPE(string_type), DIMENSION(2) :: deck_values
-    CHARACTER(LEN=45+data_dir_max_length) :: deck_filename, status_filename
+    CHARACTER(LEN=64+data_dir_max_length) :: deck_filename, status_filename
     LOGICAL :: terminate = .FALSE., exists
     INTEGER :: errcode_deck, ierr, i, io
     LOGICAL :: white_space_over
@@ -317,15 +321,6 @@ CONTAINS
     ! deck_state tells the code whether it's parsing the normal input deck
     ! Or the initial conditions. You can add more states if you want.
     ! Just search for deck_state
-    IF (deck_state .EQ. c_ds_deck) THEN
-      status_filename = TRIM(ADJUSTL(data_dir)) // '/deck.status'
-    ELSE IF (deck_state .EQ. c_ds_ic) THEN
-      status_filename = TRIM(ADJUSTL(data_dir)) // '/ic.status'
-    ELSE IF (deck_state .EQ. c_ds_eio) THEN
-      status_filename = TRIM(ADJUSTL(data_dir)) // '/eio.status'
-    ELSE
-      status_filename = TRIM(ADJUSTL(data_dir)) // '/input.status'
-    ENDIF
 
     ! If this is the first time that this deck has been called then do some
     ! housekeeping. Put any initialisation code that is needed in here
@@ -338,6 +333,8 @@ CONTAINS
     ! Is comment is a flag which tells the code when a # character has been
     ! found and everything beyond it is a comment
     is_comment = .FALSE.
+
+    status_filename = TRIM(ADJUSTL(data_dir)) // '/deck.status'
 
     ! rank 0 reads the file and then passes it out to the other nodes using
     ! MPI_BCAST
@@ -384,8 +381,17 @@ CONTAINS
       lun = get_free_lun()
       OPEN(unit=lun, file=TRIM(ADJUSTL(deck_filename)))
       IF (first_call .AND. rank .EQ. 0) THEN
-        OPEN(unit=du, file=status_filename)
-        WRITE(du,*) ascii_header
+        ! Create a new file on first pass, otherwise append
+        IF (deck_state .EQ. c_ds_deck) THEN
+          OPEN(unit=du, status='REPLACE', file=status_filename, iostat=errcode)
+          WRITE(du,*) ascii_header
+          WRITE(du,*)
+        ELSE
+          OPEN(unit=du, status='OLD', position='APPEND', file=status_filename, &
+              iostat=errcode)
+        ENDIF
+
+        WRITE(du,'(a,i3)') 'Deck state:', deck_state
         WRITE(du,*)
       ENDIF
       deck_values(1)%value = ""

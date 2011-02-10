@@ -40,6 +40,7 @@ PROGRAM pic
 
   INTEGER :: ispecies, i = 0
   LOGICAL :: halt = .FALSE.
+  CHARACTER(LEN=64) :: deck_file = 'input.deck'
 
   CALL mpi_minimal_init ! mpi_routines.f90
   CALL minimal_init     ! setup.f90
@@ -55,7 +56,7 @@ PROGRAM pic
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, MPI_COMM_WORLD, errcode)
   deck_state = c_ds_deck
-  CALL read_deck("input.deck", .TRUE.)
+  CALL read_deck(deck_file, .TRUE.)
   CALL setup_particle_boundaries ! boundary.f90
   CALL mpi_initialise ! mpi_routines.f90
   CALL after_control ! setup.f90
@@ -63,7 +64,7 @@ PROGRAM pic
 
   ! Read extended IO options
   deck_state = c_ds_eio
-  CALL read_deck("input.deck", .TRUE.)
+  CALL read_deck(deck_file, .TRUE.)
 
   ! restart flag is set
   IF (ic_from_restart) THEN
@@ -75,7 +76,7 @@ PROGRAM pic
     CALL allocate_ic
     ! External initialisation
     deck_state = c_ds_ic
-    CALL read_deck("input.deck", .TRUE.)
+    CALL read_deck(deck_file, .TRUE.)
     ! auto_load particles
     CALL auto_load
     CALL deallocate_ic

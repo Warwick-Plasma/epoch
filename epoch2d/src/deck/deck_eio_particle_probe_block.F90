@@ -45,7 +45,7 @@ CONTAINS
   FUNCTION handle_probe_deck(element, value)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: handle_probe_deck, ispecies
+    INTEGER :: handle_probe_deck, ispecies, io
 
     handle_probe_deck = c_err_none
 
@@ -85,9 +85,13 @@ CONTAINS
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_probe%probe_species=>particle_species(ispecies)
         ELSE
-          IF (rank .EQ. 0) &
-              PRINT *, "Unable to attach probe to non existant species ", &
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Unable to attach probe to non existant species ', &
                   ispecies
+            ENDDO
+          ENDIF
           handle_probe_deck = c_err_bad_value
         ENDIF
       ENDIF
