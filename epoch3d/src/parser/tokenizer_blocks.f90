@@ -197,7 +197,7 @@ CONTAINS
     IF (str_cmp(name, "floor")) as_function = c_func_floor
     IF (str_cmp(name, "ceil"))  as_function = c_func_ceil
     IF (str_cmp(name, "nint"))  as_function = c_func_nint
-    IF (str_cmp(name, "rho") .OR. str_cmp(name, "number_density")) &
+    IF (str_cmp(name, "density") .OR. str_cmp(name, "rho")) &
         as_function = c_func_rho
     IF (str_cmp(name, "temp_x") .OR. str_cmp(name, "temp_x_k")) &
         as_function = c_func_tempx

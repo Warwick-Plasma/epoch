@@ -21,18 +21,18 @@ CONTAINS
       species_list=>particle_species(ispecies)
       IF (move_window) THEN
         particle_species(ispecies)%density = &
-            initial_conditions(ispecies)%rho(nx,:,:)
+            initial_conditions(ispecies)%density(nx,:,:)
         particle_species(ispecies)%temperature = &
             initial_conditions(ispecies)%temp(nx,:,:,:)
       ENDIF
 #ifdef PER_PARTICLE_WEIGHT
-      CALL setup_particle_density(initial_conditions(ispecies)%rho, &
-          species_list, initial_conditions(ispecies)%minrho, &
-          initial_conditions(ispecies)%maxrho, idum)
+      CALL setup_particle_density(initial_conditions(ispecies)%density, &
+          species_list, initial_conditions(ispecies)%density_min, &
+          initial_conditions(ispecies)%density_max, idum)
 #else
-      CALL non_uniform_load_particles(initial_conditions(ispecies)%rho, &
-          species_list, initial_conditions(ispecies)%minrho, &
-          initial_conditions(ispecies)%maxrho, idum)
+      CALL non_uniform_load_particles(initial_conditions(ispecies)%density, &
+          species_list, initial_conditions(ispecies)%density_min, &
+          initial_conditions(ispecies)%density_max, idum)
 #endif
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,:,1), c_dir_x, species_list, &
@@ -55,15 +55,15 @@ CONTAINS
 
     ALLOCATE(initial_conditions(1:n_species))
     DO ispecies = 1, n_species
-      ALLOCATE(initial_conditions(ispecies)%rho  (-2:nx+3,-2:ny+3,-2:nz+3))
+      ALLOCATE(initial_conditions(ispecies)%density(-2:nx+3,-2:ny+3,-2:nz+3))
       ALLOCATE(initial_conditions(ispecies)%temp (-2:nx+3,-2:ny+3,-2:nz+3,1:3))
       ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3,-2:ny+3,-2:nz+3,1:3))
 
-      initial_conditions(ispecies)%rho = 1.0_num
+      initial_conditions(ispecies)%density = 1.0_num
       initial_conditions(ispecies)%temp = 0.0_num
       initial_conditions(ispecies)%drift = 0.0_num
-      initial_conditions(ispecies)%minrho = 0.0_num
-      initial_conditions(ispecies)%maxrho = 0.0_num
+      initial_conditions(ispecies)%density_min = 0.0_num
+      initial_conditions(ispecies)%density_max = 0.0_num
     ENDDO
 
     ex = 0.0_num
@@ -92,7 +92,8 @@ CONTAINS
       DO iz = 1, nz
         DO iy = 1, ny
           DO ix = 1, nx
-            omega = SQRT((initial_conditions(ispecies)%rho(ix, iy, iz)*q0**2) &
+            omega = &
+                SQRT((initial_conditions(ispecies)%density(ix, iy, iz)*q0**2) &
                 / (particle_species(ispecies)%mass * epsilon0) &
                 + 6.0_num * k_max**2 * kb &
                 * MAXVAL(initial_conditions(ispecies)%temp(ix, iy, iz,:)) &
@@ -109,7 +110,7 @@ CONTAINS
     dt_plasma_frequency = dt_plasma_frequency / 2.0_num
 
     DO ispecies = 1, n_species
-      DEALLOCATE(initial_conditions(ispecies)%rho)
+      DEALLOCATE(initial_conditions(ispecies)%density)
       DEALLOCATE(initial_conditions(ispecies)%temp)
       DEALLOCATE(initial_conditions(ispecies)%drift)
     ENDDO
@@ -119,12 +120,12 @@ CONTAINS
 
 
 
-  SUBROUTINE non_uniform_load_particles(density, species_list, minrho, &
-      maxrho, idum)
+  SUBROUTINE non_uniform_load_particles(density, species_list, density_min, &
+      density_max, idum)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: density
     TYPE(particle_family), POINTER :: species_list
-    REAL(num), INTENT(INOUT) :: minrho, maxrho
+    REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER, INTENT(INOUT) :: idum
 
     INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
@@ -145,12 +146,12 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          IF (density(ix, iy, iz) .GE. minrho) THEN
+          IF (density(ix, iy, iz) .GE. density_min) THEN
             num_valid_cells = num_valid_cells + 1
             density_total = density_total + density(ix, iy, iz)
-          ELSE IF (density(ix, iy, iz) .GT. maxrho &
-              .AND. maxrho .GT. 0.0_num) THEN
-            density(ix, iy, iz) = maxrho
+          ELSE IF (density(ix, iy, iz) .GT. density_max &
+              .AND. density_max .GT. 0.0_num) THEN
+            density(ix, iy, iz) = density_max
           ENDIF
         ENDDO
       ENDDO
@@ -167,9 +168,9 @@ CONTAINS
 
     ! Assume that a cell with the average density has the average number of
     ! particles per cell. Now calculate the new minimum density
-    minrho = density_average / REAL(npart_per_cell_average, num)
+    density_min = density_average / REAL(npart_per_cell_average, num)
     ! Set the particle weight
-    weight = minrho * dx * dy * dz
+    weight = density_min * dx * dy * dz
 
     ! Recalculate the number of valid cells and the summed density
     num_valid_cells = 0
@@ -177,7 +178,7 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          IF (density(ix, iy, iz) .GE. minrho) THEN
+          IF (density(ix, iy, iz) .GE. density_min) THEN
             num_valid_cells = num_valid_cells + 1
             density_total = density_total + density(ix, iy, iz)
           ENDIF
@@ -409,12 +410,12 @@ CONTAINS
 
 
 
-  SUBROUTINE setup_particle_density(density_in, species_list, minrho, &
-      maxrho, idum)
+  SUBROUTINE setup_particle_density(density_in, species_list, density_min, &
+      density_max, idum)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: density_in
     TYPE(particle_family), POINTER :: species_list
-    REAL(num), INTENT(IN) :: minrho, maxrho
+    REAL(num), INTENT(IN) :: density_min, density_max
     INTEGER, INTENT(INOUT) :: idum
     REAL(num) :: weight_local
     REAL(num) :: cell_x_r, cell_frac_x
@@ -442,11 +443,11 @@ CONTAINS
     DO iz = -2, nz+3
       DO iy = -2, ny+3
         DO ix = -2, nx+3
-          IF (density(ix, iy, iz) .GE. minrho) THEN
+          IF (density(ix, iy, iz) .GE. density_min) THEN
             density_map(ix, iy, iz) = .TRUE.
-          ELSE IF (density(ix, iy, iz) .GT. maxrho &
-              .AND. maxrho .GT. 0.0_num) THEN
-            density(ix, iy, iz) = maxrho
+          ELSE IF (density(ix, iy, iz) .GT. density_max &
+              .AND. density_max .GT. 0.0_num) THEN
+            density(ix, iy, iz) = density_max
           ENDIF
         ENDDO
       ENDDO

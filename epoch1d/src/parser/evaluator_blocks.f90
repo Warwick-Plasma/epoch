@@ -376,7 +376,7 @@ CONTAINS
 
     IF (opcode .EQ. c_func_rho) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%rho(ix))
+      CALL push_on_eval(initial_conditions(NINT(values(1)))%density(ix))
       RETURN
     ENDIF
 

@@ -436,12 +436,12 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Represents the initial conditions of a species
   TYPE initial_condition_block
-    REAL(num), DIMENSION(:), POINTER :: rho
+    REAL(num), DIMENSION(:), POINTER :: density
     REAL(num), DIMENSION(:,:), POINTER :: temp
     REAL(num), DIMENSION(:,:), POINTER :: drift
 
-    REAL(num) :: minrho
-    REAL(num) :: maxrho
+    REAL(num) :: density_min
+    REAL(num) :: density_max
   END TYPE initial_condition_block
 
   INTEGER :: deck_state

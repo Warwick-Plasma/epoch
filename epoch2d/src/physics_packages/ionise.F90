@@ -16,10 +16,10 @@ CONTAINS
     REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, hx, gy, hy
     REAL(num) :: ex_part, ey_part, ez_part, e_part2
-    REAL(num) :: number_density_part, ndp_low, ndp_high
+    REAL(num) :: density_part, ndp_low, ndp_high
     INTEGER :: cell_x1, cell_x2, ix
     INTEGER :: cell_y1, cell_y2, iy
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: number_density, nd_low, nd_high
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: density, nd_low, nd_high
     REAL(num) :: lambda_db, e_photon, t_eff, saha_rhs, ion_frac, rand
     REAL(num) :: fac, tfac, lfac, cf2
     INTEGER :: idum, next_species
@@ -37,7 +37,7 @@ CONTAINS
     tfac = epsilon0 * fac**2 / kb / 3.0_num
     lfac = h_planck / SQRT(2.0_num * pi * m0 * kb)
 
-    ALLOCATE(number_density(-2:nx+3,-2:ny+3))
+    ALLOCATE(density(-2:nx+3,-2:ny+3))
     ALLOCATE(nd_low (-2:nx+3,-2:ny+3))
     ALLOCATE(nd_high(-2:nx+3,-2:ny+3))
 
@@ -46,7 +46,7 @@ CONTAINS
       CALL calc_number_density(nd_low, ispecies)
       CALL calc_number_density(nd_high, &
           particle_species(ispecies)%ionise_to_species)
-      number_density = nd_low+nd_high
+      density = nd_low+nd_high
       current=>particle_species(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next=>current%next
@@ -108,7 +108,7 @@ CONTAINS
         ex_part = 0.0_num
         ey_part = 0.0_num
         ez_part = 0.0_num
-        number_density_part = 0.0_num
+        density_part = 0.0_num
         ndp_low = 0.0_num
         ndp_high = 0.0_num
         DO iy = sf_min, sf_max
@@ -116,8 +116,8 @@ CONTAINS
             ex_part = ex_part + hx(ix) * gy(iy) * ex(cell_x2+ix, cell_y1+iy)
             ey_part = ey_part + gx(ix) * hy(iy) * ey(cell_x1+ix, cell_y2+iy)
             ez_part = ez_part + gx(ix) * gy(iy) * ez(cell_x1+ix, cell_y1+iy)
-            number_density_part = number_density_part &
-                + gx(ix) * gy(iy) * number_density(cell_x1+ix, cell_y1+iy)
+            density_part = density_part &
+                + gx(ix) * gy(iy) * density(cell_x1+ix, cell_y1+iy)
             ndp_low  = ndp_low &
                 + gx(ix) * gy(iy) * nd_low(cell_x1+ix, cell_y1+iy)
             ndp_high = ndp_high &
@@ -125,23 +125,23 @@ CONTAINS
           ENDDO
         ENDDO
         e_part2 = ex_part**2 + ey_part**2 + ez_part**2
-        number_density_part = fac * number_density_part
+        density_part = fac * density_part
 
         ! This is a first attempt at using the 1 level Saha equation to
         ! calculate an ionisation fraction. This isn't really a very good model!
 
         ! e_photon = 0.5_num * epsilon0 * fac**2 * e_part2 * dx * dy
         ! t_eff = 2.0_num / 3.0_num * e_photon &
-        !    / (kb * number_density_part * dx * dy)
-        t_eff = tfac * e_part2 / number_density_part
+        !    / (kb * density_part * dx * dy)
+        t_eff = tfac * e_part2 / density_part
         IF (t_eff .GT. 1.0e-6_num) THEN
           lambda_db = lfac / SQRT(t_eff)
           saha_rhs = &
               EXP(-particle_species(ispecies)%ionisation_energy / kb / t_eff) &
               / lambda_db**3
           ion_frac = -saha_rhs &
-              + SQRT(saha_rhs**2 + 2.0_num * number_density_part * saha_rhs)
-          ion_frac = ion_frac / number_density_part
+              + SQRT(saha_rhs**2 + 2.0_num * density_part * saha_rhs)
+          ion_frac = ion_frac / density_part
           IF (ion_frac .GT. 1.0_num) ion_frac = 1.0_num
         ELSE
           ion_frac = 0.0_num
@@ -182,7 +182,7 @@ CONTAINS
 
     ENDDO
 
-    DEALLOCATE(number_density)
+    DEALLOCATE(density)
     DEALLOCATE(nd_low, nd_high)
 #endif
 

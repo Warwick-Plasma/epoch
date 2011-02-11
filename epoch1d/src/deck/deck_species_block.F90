@@ -279,31 +279,31 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "minrho")) THEN
+    IF (str_cmp(element, "density_min") .OR. str_cmp(element, "minrho")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
-      initial_conditions(species_id)%minrho = &
+      initial_conditions(species_id)%density_min = &
           as_real(value, handle_species_deck)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "maxrho")) THEN
+    IF (str_cmp(element, "density_max") .OR. str_cmp(element, "maxrho")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
-      initial_conditions(species_id)%maxrho = &
+      initial_conditions(species_id)%density_max = &
           as_real(value, handle_species_deck)
       RETURN
     ENDIF
 
     CALL get_filename(value, filename, got_file, handle_species_deck)
 
-    IF (str_cmp(element, "rho") .OR. str_cmp(element, "number_density")) THEN
+    IF (str_cmp(element, "density") .OR. str_cmp(element, "rho")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%rho(:), offset, &
+            initial_conditions(species_id)%density(:), offset, &
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%rho(:), &
+            initial_conditions(species_id)%density(:), &
             -2, nx+3, handle_species_deck)
       ENDIF
       RETURN
@@ -313,15 +313,16 @@ CONTAINS
       IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%rho(:), offset, &
+            initial_conditions(species_id)%density(:), offset, &
             handle_species_deck)
       ELSE
         CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%rho(:), &
+            initial_conditions(species_id)%density(:), &
             -2, nx+3, handle_species_deck)
       ENDIF
-      initial_conditions(species_id)%rho = &
-          initial_conditions(species_id)%rho / particle_species(species_id)%mass
+      initial_conditions(species_id)%density = &
+          initial_conditions(species_id)%density &
+              / particle_species(species_id)%mass
       RETURN
     ENDIF
 
