@@ -78,13 +78,7 @@ CONTAINS
     INTEGER :: ispecies, ix, iy, iz
     INTEGER(KIND=8) :: count
     TYPE(particle), POINTER :: current, new_particle
-    INTEGER :: clock, idum
     REAL(num) :: jitter_x, jitter_y, jitter_z
-
-    ! Reseed random number generator
-    clock = 1142780
-    IF (use_random_seed) CALL SYSTEM_CLOCK(clock)
-    idum = -(clock + rank)
 
     DO ispecies = 1, n_species
       IF (.NOT. particle_species(ispecies)%split) CYCLE
@@ -102,9 +96,9 @@ CONTAINS
                   .AND. current%weight .GE. 1.0_num)
                 count = &
                     particle_species(ispecies)%secondary_list(ix,iy,iz)%count
-                jitter_x = random(idum)*dx/2.0_num - dx/4.0_num
-                jitter_y = random(idum)*dy/2.0_num - dy/4.0_num
-                jitter_z = random(idum)*dz/2.0_num - dz/4.0_num
+                jitter_x = random()*dx/2.0_num - dx/4.0_num
+                jitter_y = random()*dy/2.0_num - dy/4.0_num
+                jitter_z = random()*dz/2.0_num - dz/4.0_num
                 current%weight = current%weight/2.0_num
                 ALLOCATE(new_particle)
                 new_particle = current

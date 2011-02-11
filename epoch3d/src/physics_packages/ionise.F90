@@ -24,11 +24,10 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: density, nd_low, nd_high
     REAL(num) :: lambda_db, e_photon, t_eff, saha_rhs, ion_frac, rand
     REAL(num) :: fac, tfac, lfac, cf2
-    INTEGER :: idum, next_species
+    INTEGER :: next_species
     INTEGER, PARAMETER :: dcellx = 0, dcelly = 0, dcellz = 0
 
-    idum = -1445
-    rand = random(idum)
+    rand = random()
 #ifdef PARTICLE_SHAPE_BSPLINE3
     fac = 1.0_num / 24.0_num
 #elif  PARTICLE_SHAPE_TOPHAT
@@ -167,7 +166,7 @@ CONTAINS
           ion_frac = 0.0_num
         ENDIF
 
-        rand = random(idum)
+        rand = random()
         ! After all that, we now know the target ionisation fraction, so
         ! subtract the current fraction and ionise
         IF (rand .LT. (ion_frac-ndp_high/MAX(ndp_low, c_non_zero))) THEN

@@ -283,6 +283,8 @@ CONTAINS
 
   SUBROUTINE set_initial_values
 
+    INTEGER :: clock
+
     ex = 0.0_num
     ey = 0.0_num
     ez = 0.0_num
@@ -294,6 +296,11 @@ CONTAINS
     jx = 0.0_num
     jy = 0.0_num
     jz = 0.0_num
+
+    ! Set up random number seed
+    clock = 7842432
+    IF (use_random_seed) CALL SYSTEM_CLOCK(clock)
+    seed = -(clock + rank)
 
   END SUBROUTINE set_initial_values
 

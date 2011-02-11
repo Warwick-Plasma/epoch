@@ -10,12 +10,7 @@ CONTAINS
   SUBROUTINE auto_load
 
     INTEGER :: ispecies
-    INTEGER :: clock, idum
     TYPE(particle_family), POINTER :: species_list
-
-    clock = 7842432
-    IF (use_random_seed) CALL SYSTEM_CLOCK(clock)
-    idum = -(clock + rank)
 
     DO ispecies = 1, n_species
       species_list=>particle_species(ispecies)
@@ -28,21 +23,21 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
       CALL setup_particle_density(initial_conditions(ispecies)%density, &
           species_list, initial_conditions(ispecies)%density_min, &
-          initial_conditions(ispecies)%density_max, idum)
+          initial_conditions(ispecies)%density_max)
 #else
       CALL non_uniform_load_particles(initial_conditions(ispecies)%density, &
           species_list, initial_conditions(ispecies)%density_min, &
-          initial_conditions(ispecies)%density_max, idum)
+          initial_conditions(ispecies)%density_max)
 #endif
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,:,1), c_dir_x, species_list, &
-          initial_conditions(ispecies)%drift(:,:,:,1), idum)
+          initial_conditions(ispecies)%drift(:,:,:,1))
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,:,2), c_dir_y, species_list, &
-          initial_conditions(ispecies)%drift(:,:,:,2), idum)
+          initial_conditions(ispecies)%drift(:,:,:,2))
       CALL setup_particle_temperature(&
           initial_conditions(ispecies)%temp(:,:,:,3), c_dir_z, species_list, &
-          initial_conditions(ispecies)%drift(:,:,:,3), idum)
+          initial_conditions(ispecies)%drift(:,:,:,3))
     ENDDO
 
   END SUBROUTINE auto_load
@@ -121,13 +116,11 @@ CONTAINS
 
 
   SUBROUTINE non_uniform_load_particles(density, species_list, density_min, &
-      density_max, idum)
+      density_max)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: density
     TYPE(particle_family), POINTER :: species_list
     REAL(num), INTENT(INOUT) :: density_min, density_max
-    INTEGER, INTENT(INOUT) :: idum
-
     INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
     INTEGER(KIND=8) :: npart_per_cell_average
     INTEGER(KIND=8) :: npart_per_cell
@@ -206,13 +199,13 @@ CONTAINS
             current%charge = species_list%charge
             current%mass = species_list%mass
 #endif
-            rpos = random(idum) - 0.5_num
+            rpos = random() - 0.5_num
             rpos = (rpos * dx) + x(ix)
             current%part_pos(1) = rpos
-            rpos = random(idum) - 0.5_num
+            rpos = random() - 0.5_num
             rpos = (rpos * dy) + y(iy)
             current%part_pos(2) = rpos
-            rpos = random(idum) - 0.5_num
+            rpos = random() - 0.5_num
             rpos = (rpos * dz) + z(iz)
             current%part_pos(3) = rpos
             ipart = ipart + 1
@@ -244,9 +237,8 @@ CONTAINS
 
 
   ! This subroutine automatically loads a uniform density of pseudoparticles
-  SUBROUTINE load_particles(species_list, load_list, idum)
+  SUBROUTINE load_particles(species_list, load_list)
 
-    INTEGER, INTENT(INOUT) :: idum
     TYPE(particle_family), POINTER :: species_list
     LOGICAL, DIMENSION(-2:,-2:,-2:), INTENT(IN) :: load_list
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
@@ -327,9 +319,9 @@ CONTAINS
                 current%charge = species_list%charge
                 current%mass = species_list%mass
 #endif
-                current%part_pos(1) = (random(idum) - 0.5_num) * dx + x(ix)
-                current%part_pos(2) = (random(idum) - 0.5_num) * dy + y(iy)
-                current%part_pos(3) = (random(idum) - 0.5_num) * dz + z(iz)
+                current%part_pos(1) = (random() - 0.5_num) * dx + x(ix)
+                current%part_pos(2) = (random() - 0.5_num) * dy + y(iy)
+                current%part_pos(3) = (random() - 0.5_num) * dz + z(iz)
                 ipart = ipart + 1
                 current=>current%next
                 ! One particle sucessfully placed
@@ -361,7 +353,7 @@ CONTAINS
       ENDDO
 
       DO i = 1, npart_left
-        ipos = INT(random(idum) * (num_valid_cells_local - 1)) + 1
+        ipos = INT(random() * (num_valid_cells_local - 1)) + 1
         ipos = valid_cell_list(ipos)
 
         cell_z = ipos / (nx * ny)
@@ -374,9 +366,9 @@ CONTAINS
 
         cell_x = ipos + 1
 
-        current%part_pos(1) = x(cell_x) + (random(idum) - 0.5_num) * dx
-        current%part_pos(2) = y(cell_y) + (random(idum) - 0.5_num) * dy
-        current%part_pos(3) = z(cell_z) + (random(idum) - 0.5_num) * dz
+        current%part_pos(1) = x(cell_x) + (random() - 0.5_num) * dx
+        current%part_pos(2) = y(cell_y) + (random() - 0.5_num) * dy
+        current%part_pos(3) = z(cell_z) + (random() - 0.5_num) * dz
         current=>current%next
       ENDDO
 
@@ -411,12 +403,11 @@ CONTAINS
 
 
   SUBROUTINE setup_particle_density(density_in, species_list, density_min, &
-      density_max, idum)
+      density_max)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: density_in
     TYPE(particle_family), POINTER :: species_list
     REAL(num), INTENT(IN) :: density_min, density_max
-    INTEGER, INTENT(INOUT) :: idum
     REAL(num) :: weight_local
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
@@ -454,7 +445,7 @@ CONTAINS
     ENDDO
 
     ! Uniformly load particles in space
-    CALL load_particles(species_list, density_map, idum)
+    CALL load_particles(species_list, density_map)
 
     ALLOCATE(weight_fn(-2:nx+3, -2:ny+3, -2:nz+3))
     CALL MPI_BARRIER(comm, errcode)
@@ -611,10 +602,9 @@ CONTAINS
 
 
 
-  FUNCTION sample_dist_function(axis, dist_fn, idum)
+  FUNCTION sample_dist_function(axis, dist_fn)
 
     REAL(num), DIMENSION(:), INTENT(IN) :: axis, dist_fn
-    INTEGER, INTENT(INOUT) :: idum
     REAL(num), DIMENSION(:), ALLOCATABLE :: cdf
     REAL(num) :: position, d_cdf
     INTEGER :: n_points, ipoint, start, endpoint, current
@@ -627,7 +617,7 @@ CONTAINS
     ENDDO
     cdf = cdf / SUM(dist_fn)
 
-    position = random(idum)
+    position = random()
     sample_dist_function = 0.0_num
 
     start = 1

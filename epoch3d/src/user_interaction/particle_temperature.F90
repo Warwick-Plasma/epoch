@@ -11,13 +11,12 @@ CONTAINS
   ! Subroutine to initialise a thermal particle distribution
   ! Assumes linear interpolation of temperature between cells
   SUBROUTINE setup_particle_temperature(temperature, direction, part_family, &
-      drift, idum)
+      drift)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
     TYPE(particle_family), POINTER :: part_family
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: drift
-    INTEGER, INTENT(INOUT) :: idum
     TYPE(particle_list), POINTER :: partlist
     REAL(num) :: mass, temp_local, drift_local
     REAL(num) :: cell_x_r, cell_frac_x
@@ -79,13 +78,13 @@ CONTAINS
       ENDDO
 
       IF (IAND(direction, c_dir_x) .NE. 0) current%part_p(1) = &
-          momentum_from_temperature(mass, temp_local, drift_local, idum)
+          momentum_from_temperature(mass, temp_local, drift_local)
 
       IF (IAND(direction, c_dir_y) .NE. 0) current%part_p(2) = &
-          momentum_from_temperature(mass, temp_local, drift_local, idum)
+          momentum_from_temperature(mass, temp_local, drift_local)
 
       IF (IAND(direction, c_dir_z) .NE. 0) current%part_p(3) = &
-          momentum_from_temperature(mass, temp_local, drift_local, idum)
+          momentum_from_temperature(mass, temp_local, drift_local)
 
       current=>current%next
       ipart = ipart + 1
@@ -95,10 +94,9 @@ CONTAINS
 
 
 
-  FUNCTION momentum_from_temperature(mass, temperature, drift, idum)
+  FUNCTION momentum_from_temperature(mass, temperature, drift)
 
     REAL(num), INTENT(IN) :: mass, temperature, drift
-    INTEGER, INTENT(INOUT) :: idum
     REAL(num) :: momentum_from_temperature
 
     REAL(num) :: stdev
@@ -118,8 +116,8 @@ CONTAINS
       stdev = SQRT(temperature * kb * mass)
 
       DO
-        rand1 = random(idum)
-        rand2 = random(idum)
+        rand1 = random()
+        rand2 = random()
 
         rand1 = 2.0_num * rand1 - 1.0_num
         rand2 = 2.0_num * rand2 - 1.0_num
@@ -139,9 +137,8 @@ CONTAINS
 
 
 
-  FUNCTION old_random(idum)
+  FUNCTION old_random()
 
-    INTEGER, INTENT(INOUT) :: idum
     REAL(num) :: old_random
     INTEGER, PARAMETER :: ia = 16807, im = 2147483647, iq = 127773
     INTEGER, PARAMETER :: ir = 2836, mask = 123459876
@@ -149,16 +146,16 @@ CONTAINS
 
     INTEGER :: k
 
-    idum = IEOR(idum, mask)
-    k = idum / iq
+    seed = IEOR(seed, mask)
+    k = seed / iq
 
-    idum = ia*(idum-k*iq)-ir*k
-    IF (idum .LT. 0) THEN
-      idum = idum+im
+    seed = ia*(seed-k*iq)-ir*k
+    IF (seed .LT. 0) THEN
+      seed = seed+im
     ENDIF
 
-    old_random = am*idum
-    idum = IEOR(idum, mask)
+    old_random = am*seed
+    seed = IEOR(seed, mask)
 
     IF (old_random .GT. max_rand) max_rand = old_random
 
@@ -166,19 +163,20 @@ CONTAINS
 
 
 
-  FUNCTION random(idum)
+  FUNCTION random()
+    ! Random number generator taken from "ran3" in numerical recipies.
+    ! Generates a number between 0.0 and 1.0 (including 0 and 1).
 
-    INTEGER :: idum
     REAL :: random
     INTEGER, PARAMETER :: mbig = 1000000000, mseed = 161803398, mz = 0
-    REAL(dbl), PARAMETER :: fac = 1.d0/mbig
+    REAL(dbl), PARAMETER :: fac = 1.d0 / mbig
     INTEGER :: i, ii, k, mj, mk
     INTEGER, SAVE :: iff = 0, ma(55)
     INTEGER, SAVE :: inext, inextp
 
-    IF (idum .LT. 0 .OR. iff .EQ. 0) THEN
+    IF (seed .LT. 0 .OR. iff .EQ. 0) THEN
       iff = 1
-      mj = ABS(mseed - ABS(idum))
+      mj = ABS(mseed - ABS(seed))
       ma(55) = mj
       mk = 1
       DO i = 1,54
@@ -198,7 +196,7 @@ CONTAINS
 
       inext = 0
       inextp = 31
-      idum = 1
+      seed = 1
     ENDIF
 
     inext = inext + 1

@@ -639,5 +639,6 @@ MODULE shared_data
       particle_file_lengths, particle_file_offsets
 
   INTEGER, DIMENSION(3,0:c_stagger_max) :: stagger
+  INTEGER :: seed
 
 END MODULE shared_data

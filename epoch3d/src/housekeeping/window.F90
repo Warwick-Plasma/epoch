@@ -87,7 +87,6 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ipart, iy, iz, i, isuby, isubz
     REAL(num) :: rand
-    INTEGER :: clock, idum
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cell_z_r, cell_frac_z
     INTEGER :: cell_y, cell_z
@@ -102,20 +101,16 @@ CONTAINS
 
     ! Only processors on the right need do anything
     IF (coordinates(3) .EQ. nprocx-1) THEN
-      clock = 9084263
-      IF (use_random_seed) CALL SYSTEM_CLOCK(clock)
-      idum = -(clock + rank)
-
       DO ispecies = 1, n_species
         DO iz = 1, nz
           DO iy = 1, ny
             DO ipart = 1, particle_species(ispecies)%npart_per_cell
               ALLOCATE(current)
-              rand = random(idum) - 0.5_num
+              rand = random() - 0.5_num
               current%part_pos(1) = x_max + dx + rand * dx
-              rand = random(idum) - 0.5_num
+              rand = random() - 0.5_num
               current%part_pos(2) = y(iy) + rand * dy
-              rand = random(idum) - 0.5_num
+              rand = random() - 0.5_num
               current%part_pos(3) = z(iz) + rand * dz
 
               cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
@@ -151,7 +146,7 @@ CONTAINS
                 ENDDO
                 current%part_p(i) = &
                     momentum_from_temperature(particle_species(ispecies)%mass, &
-                    temp_local, 0.0_num, idum)
+                    temp_local, 0.0_num)
               ENDDO
 
 #ifdef PER_PARTICLE_WEIGHT
