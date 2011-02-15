@@ -175,12 +175,11 @@ CONTAINS
 
     INTEGER(KIND=8), INTENT(IN) :: npart_in
     INTEGER(KIND=8), DIMENSION(1) :: npart_local
-    INTEGER :: i
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
-    INTEGER, DIMENSION(1) :: lengths
-    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(1) :: disp
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip
-    INTEGER :: subtype
+    INTEGER, DIMENSION(3) :: lengths, types
+    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, total_particles
+    INTEGER :: i, subtype
 
     npart_local = npart_in
 
@@ -191,22 +190,34 @@ CONTAINS
     CALL MPI_ALLGATHER(npart_local, 1, MPI_INTEGER8, &
         npart_each_rank, 1, MPI_INTEGER8, comm, errcode)
 
-    ! If npart_local is bigger than an integer then the data will not
-    ! get written properly. This would require about 48GB per processor
-    ! so it is unlikely to be a problem any time soon.
-
     particles_to_skip = 0
     DO i = 1, rank
       particles_to_skip = particles_to_skip + npart_each_rank(i)
     ENDDO
-    disp = particles_to_skip * realsize
-    lengths = INT(npart_local)
 
-    subtype = 0
-    CALL MPI_TYPE_CREATE_HINDEXED(1, lengths, disp, mpireal, subtype, errcode)
-    CALL MPI_TYPE_COMMIT(subtype, errcode)
+    total_particles = particles_to_skip
+    DO i = rank+1, nproc
+      total_particles = total_particles + npart_each_rank(i)
+    ENDDO
 
     DEALLOCATE(npart_each_rank)
+
+    ! If npart_in is bigger than an integer then the data will not
+    ! get written/read properly. This would require about 48GB per processor
+    ! so it is unlikely to be a problem any time soon.
+    lengths(1) = 1
+    lengths(2) = INT(npart_in)
+    lengths(3) = 1
+    disp(1) = 0
+    disp(2) = particles_to_skip * realsize
+    disp(3) = total_particles * realsize
+    types(1) = MPI_LB
+    types(2) = mpireal
+    types(3) = MPI_UB
+
+    subtype = 0
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, subtype, errcode)
+    CALL MPI_TYPE_COMMIT(subtype, errcode)
 
   END FUNCTION create_particle_subtype
 
@@ -287,31 +298,33 @@ CONTAINS
   ! domain at all.
   !----------------------------------------------------------------------------
 
-  FUNCTION create_1d_array_subtype(n_local, n_global, start)
+  FUNCTION create_1d_array_subtype(n_local, n_global, start) RESULT(vec1d_sub)
 
     INTEGER, DIMENSION(1), INTENT(IN) :: n_local
     INTEGER, DIMENSION(1), INTENT(IN) :: n_global
     INTEGER, DIMENSION(1), INTENT(IN) :: start
     INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: sz
-    INTEGER :: create_1d_array_subtype
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(1), sz
+    INTEGER :: vec1d, vec1d_sub
+
+    vec1d = MPI_DATATYPE_NULL
+    CALL MPI_TYPE_CONTIGUOUS(n_local(1), mpireal, vec1d, errcode)
 
     sz = realsize
-    lengths(1) = 1
-    lengths(2) = n_local(1)
-    lengths(3) = 1
+    starts = start - 1
+    lengths = 1
+
     disp(1) = 0
-    disp(2) = (start(1) - 1) * sz
-    disp(3) = n_global(1) * sz
+    disp(2) = sz * starts(1)
+    disp(3) = sz * n_global(1)
     types(1) = MPI_LB
-    types(2) = mpireal
+    types(2) = vec1d
     types(3) = MPI_UB
 
-    create_1d_array_subtype = 0
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, &
-        create_1d_array_subtype, errcode)
-    CALL MPI_TYPE_COMMIT(create_1d_array_subtype, errcode)
+    vec1d_sub = MPI_DATATYPE_NULL
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec1d_sub, errcode)
+
+    CALL MPI_TYPE_COMMIT(vec1d_sub, errcode)
 
   END FUNCTION create_1d_array_subtype
 
@@ -323,34 +336,34 @@ CONTAINS
   ! domain at all.
   !----------------------------------------------------------------------------
 
-  FUNCTION create_2d_array_subtype(n_local, n_global, start)
+  FUNCTION create_2d_array_subtype(n_local, n_global, start) RESULT(vec2d_sub)
 
     INTEGER, DIMENSION(2), INTENT(IN) :: n_local
     INTEGER, DIMENSION(2), INTENT(IN) :: n_global
     INTEGER, DIMENSION(2), INTENT(IN) :: start
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
-    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: iy, sz
-    INTEGER :: create_2d_array_subtype
-    INTEGER :: ipoint
+    INTEGER, DIMENSION(3) :: lengths, types
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(2), sz
+    INTEGER :: vec2d, vec2d_sub
 
-    ALLOCATE(lengths(n_local(2)), disp(n_local(2)))
+    vec2d = MPI_DATATYPE_NULL
+    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), mpireal, &
+        vec2d, errcode)
 
     sz = realsize
-    lengths = n_local(1)
-    ipoint = 0
+    starts = start - 1
+    lengths = 1
 
-    DO iy = -1, n_local(2)-2
-      ipoint = ipoint + 1
-      disp(ipoint) = ((start(2) + iy) * n_global(1) + start(1) - 1) * sz
-    ENDDO
+    disp(1) = 0
+    disp(2) = sz * (starts(1) + n_global(1) * starts(2))
+    disp(3) = sz * n_global(1) * n_global(2)
+    types(1) = MPI_LB
+    types(2) = vec2d
+    types(3) = MPI_UB
 
-    create_2d_array_subtype = 0
-    CALL MPI_TYPE_CREATE_HINDEXED(ipoint, lengths, disp, mpireal, &
-        create_2d_array_subtype, errcode)
-    CALL MPI_TYPE_COMMIT(create_2d_array_subtype, errcode)
+    vec2d_sub = MPI_DATATYPE_NULL
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec2d_sub, errcode)
 
-    DEALLOCATE(lengths, disp)
+    CALL MPI_TYPE_COMMIT(vec2d_sub, errcode)
 
   END FUNCTION create_2d_array_subtype
 
@@ -362,38 +375,48 @@ CONTAINS
   ! domain at all.
   !----------------------------------------------------------------------------
 
-  FUNCTION create_3d_array_subtype(n_local, n_global, start)
+  FUNCTION create_3d_array_subtype(n_local, n_global, start) RESULT(vec3d_sub)
 
     INTEGER, DIMENSION(3), INTENT(IN) :: n_local
     INTEGER, DIMENSION(3), INTENT(IN) :: n_global
     INTEGER, DIMENSION(3), INTENT(IN) :: start
-    INTEGER, DIMENSION(:), ALLOCATABLE :: lengths
-    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(:), ALLOCATABLE :: disp
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: iy, iz, sz
-    INTEGER :: create_3d_array_subtype
-    INTEGER :: ipoint
+    INTEGER, DIMENSION(3) :: lengths, types
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(3), sz
+    INTEGER :: vec2d, vec2d_sub
+    INTEGER :: vec3d, vec3d_sub
 
-    ALLOCATE(lengths(n_local(2) * n_local(3)))
-    ALLOCATE(disp(n_local(2) * n_local(3)))
+    vec2d = MPI_DATATYPE_NULL
+    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), mpireal, &
+        vec2d, errcode)
 
     sz = realsize
-    lengths = n_local(1)
-    ipoint = 0
+    starts = start - 1
+    lengths = 1
 
-    DO iz = -1, n_local(3)-2
-      DO iy = -1, n_local(2)-2
-        ipoint = ipoint + 1
-        disp(ipoint) = (((start(3) + iz) * n_global(2) &
-            + start(2) + iy) * n_global(1) + start(1) - 1) * sz
-      ENDDO
-    ENDDO
+    disp(1) = 0
+    disp(2) = sz * (starts(1) + n_global(1) * starts(2))
+    disp(3) = sz * n_global(1) * n_global(2)
+    types(1) = MPI_LB
+    types(2) = vec2d
+    types(3) = MPI_UB
 
-    create_3d_array_subtype = 0
-    CALL MPI_TYPE_CREATE_HINDEXED(ipoint, lengths, disp, mpireal, &
-        create_3d_array_subtype, errcode)
-    CALL MPI_TYPE_COMMIT(create_3d_array_subtype, errcode)
+    vec2d_sub = MPI_DATATYPE_NULL
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec2d_sub, errcode)
 
-    DEALLOCATE(lengths, disp)
+    vec3d = MPI_DATATYPE_NULL
+    CALL MPI_TYPE_CONTIGUOUS(n_local(3), vec2d_sub, vec3d, errcode)
+
+    disp(1) = 0
+    disp(2) = sz * n_global(1) * n_global(2) * starts(3)
+    disp(3) = sz * n_global(1) * n_global(2) * n_global(3)
+    types(1) = MPI_LB
+    types(2) = vec3d
+    types(3) = MPI_UB
+
+    vec3d_sub = MPI_DATATYPE_NULL
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec3d_sub, errcode)
+
+    CALL MPI_TYPE_COMMIT(vec3d_sub, errcode)
 
   END FUNCTION create_3d_array_subtype
 
