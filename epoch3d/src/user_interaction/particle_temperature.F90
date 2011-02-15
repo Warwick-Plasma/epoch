@@ -39,25 +39,20 @@ CONTAINS
 
       ! Assume that temperature is cell centred
 #ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 1.0_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 1.0_num
-      cell_z_r = (current%part_pos(3) - z_min_local) / dz - 1.0_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
+      cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
 #else
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-      cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
+      cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
 #endif
-      cell_x = FLOOR(cell_x_r + 0.5_num)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x + 1
-
-      cell_y = FLOOR(cell_y_r + 0.5_num)
-      cell_frac_y = REAL(cell_y, num) - cell_y_r
-      cell_y = cell_y + 1
-
-      cell_z = FLOOR(cell_z_r + 0.5_num)
-      cell_frac_z = REAL(cell_z, num) - cell_z_r
-      cell_z = cell_z + 1
+      cell_x = FLOOR(cell_x_r)
+      cell_y = FLOOR(cell_y_r)
+      cell_z = FLOOR(cell_z_r)
+      cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+      cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
+      cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
 
       CALL grid_to_particle(cell_frac_x, gx)
       CALL grid_to_particle(cell_frac_y, gy)
