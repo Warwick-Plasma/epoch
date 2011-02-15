@@ -251,6 +251,7 @@ CONTAINS
     ENDIF
 
     DEALLOCATE(array)
+    CALL free_subtypes()
 
   END SUBROUTINE output_routines
 

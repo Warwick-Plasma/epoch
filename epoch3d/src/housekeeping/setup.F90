@@ -513,6 +513,7 @@ CONTAINS
       CALL cfd_skip_block(cfd_handle)
     ENDDO
     CALL cfd_close(cfd_handle)
+    CALL free_subtypes_for_load()
 
     current=>main_root%head
     ipart = 1

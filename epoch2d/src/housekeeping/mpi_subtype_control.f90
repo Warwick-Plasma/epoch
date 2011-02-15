@@ -108,6 +108,20 @@ CONTAINS
 
 
   !----------------------------------------------------------------------------
+  ! Frees the subtypes created by create_subtypes
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE free_subtypes
+
+    CALL MPI_TYPE_FREE(subtype_field, errcode)
+    CALL MPI_TYPE_FREE(subtype_particle_var, errcode)
+    CALL MPI_TYPE_FREE(subarray_field, errcode)
+
+  END SUBROUTINE free_subtypes
+
+
+
+  !----------------------------------------------------------------------------
   ! create_current_field_subtype - Creates the subtype corresponding to the
   ! current load balanced geometry
   !----------------------------------------------------------------------------
@@ -157,6 +171,20 @@ CONTAINS
     subarray_field = create_current_field_subarray()
 
   END SUBROUTINE create_subtypes_for_load
+
+
+
+  !----------------------------------------------------------------------------
+  ! free_subtypes_for_load - Frees subtypes created by create_subtypes_for_load
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE free_subtypes_for_load()
+
+    CALL MPI_TYPE_FREE(subtype_field, errcode)
+    CALL MPI_TYPE_FREE(subtype_particle_var, errcode)
+    CALL MPI_TYPE_FREE(subarray_field, errcode)
+
+  END SUBROUTINE free_subtypes_for_load
 
 
 
