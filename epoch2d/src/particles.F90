@@ -418,14 +418,7 @@ CONTAINS
       ENDDO
     ENDDO
 
-    ! domain is decomposed. Just add currents at edges
-    CALL processor_summation_bcs(jx)
-    CALL field_bc(jx)
-    CALL processor_summation_bcs(jy)
-    CALL field_bc(jy)
-    CALL processor_summation_bcs(jz)
-    CALL field_bc(jz)
-
+    CALL current_bcs
     CALL particle_bcs
 
     IF (smooth_currents) CALL smooth_current()

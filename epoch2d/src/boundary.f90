@@ -172,12 +172,13 @@ CONTAINS
 
 
 
-  SUBROUTINE processor_summation_bcs(array)
+  SUBROUTINE processor_summation_bcs(array, flip_direction)
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: array
+    INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray
+    INTEGER :: subarray, sgn
 
     sizes(1) = nx + 6
     sizes(2) = ny + 6
@@ -192,16 +193,44 @@ CONTAINS
     ALLOCATE(temp(3, ny+6))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(-2,-2), 1, subarray, &
-        neighbour(-1,0), tag, temp, 3*(ny+6), mpireal, &
-        neighbour( 1,0), tag, comm, status, errcode)
-    array(-2+nx:nx,:) = array(-2+nx:nx,:) + temp
-
-    temp = 0.0_num
     CALL MPI_SENDRECV(array(nx+1,-2), 1, subarray, &
         neighbour( 1,0), tag, temp, 3*(ny+6), mpireal, &
         neighbour(-1,0), tag, comm, status, errcode)
-    array(1:3,:) = array(1:3,:) + temp
+
+    ! Deal with reflecting boundaries differently
+    IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect &
+        .AND. coordinates(c_ndims) .EQ. 0) THEN
+      sgn = 1
+      IF (PRESENT(flip_direction)) THEN
+        ! Currents get reversed in the direction of the boundary
+        IF (flip_direction .EQ. c_dir_x) sgn = -1
+      ENDIF
+      array(1,:) = array(1,:) + sgn * array( 0,:)
+      array(2,:) = array(2,:) + sgn * array(-1,:)
+      array(3,:) = array(3,:) + sgn * array(-2,:)
+    ELSE
+      array(1:3,:) = array(1:3,:) + temp
+    ENDIF
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(-2,-2), 1, subarray, &
+        neighbour(-1,0), tag, temp, 3*(ny+6), mpireal, &
+        neighbour( 1,0), tag, comm, status, errcode)
+
+    ! Deal with reflecting boundaries differently
+    IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect &
+        .AND. coordinates(c_ndims) .EQ. nprocx - 1) THEN
+      sgn = 1
+      IF (PRESENT(flip_direction)) THEN
+        ! Currents get reversed in the direction of the boundary
+        IF (flip_direction .EQ. c_dir_x) sgn = -1
+      ENDIF
+      array(nx-2,:) = array(nx-2,:) + sgn * array(nx+3,:)
+      array(nx-1,:) = array(nx-1,:) + sgn * array(nx+2,:)
+      array(nx  ,:) = array(nx  ,:) + sgn * array(nx+1,:)
+    ELSE
+      array(nx-2:nx,:) = array(nx-2:nx,:) + temp
+    ENDIF
 
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
@@ -216,16 +245,44 @@ CONTAINS
     ALLOCATE(temp(nx+6, 3))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(-2,-2), 1, subarray, &
-        neighbour(0,-1), tag, temp, 3*(nx+6), mpireal, &
-        neighbour(0, 1), tag, comm, status, errcode)
-    array(:,-2+ny:ny) = array(:,-2+ny:ny) + temp
-
-    temp = 0.0_num
     CALL MPI_SENDRECV(array(-2,ny+1), 1, subarray, &
         neighbour(0, 1), tag, temp, 3*(nx+6), mpireal, &
         neighbour(0,-1), tag, comm, status, errcode)
-    array(:,1:3) = array(:,1:3) + temp
+
+    ! Deal with reflecting boundaries differently
+    IF (bc_particle(c_bd_y_min) .EQ. c_bc_reflect &
+        .AND. coordinates(c_ndims-1) .EQ. 0) THEN
+      sgn = 1
+      IF (PRESENT(flip_direction)) THEN
+        ! Currents get reversed in the direction of the boundary
+        IF (flip_direction .EQ. c_dir_y) sgn = -1
+      ENDIF
+      array(:,1) = array(:,1) + sgn * array(:, 0)
+      array(:,2) = array(:,2) + sgn * array(:,-1)
+      array(:,3) = array(:,3) + sgn * array(:,-2)
+    ELSE
+      array(:,1:3) = array(:,1:3) + temp
+    ENDIF
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(-2,-2), 1, subarray, &
+        neighbour(0,-1), tag, temp, 3*(nx+6), mpireal, &
+        neighbour(0, 1), tag, comm, status, errcode)
+
+    ! Deal with reflecting boundaries differently
+    IF (bc_particle(c_bd_y_max) .EQ. c_bc_reflect &
+        .AND. coordinates(c_ndims-1) .EQ. nprocy - 1) THEN
+      sgn = 1
+      IF (PRESENT(flip_direction)) THEN
+        ! Currents get reversed in the direction of the boundary
+        IF (flip_direction .EQ. c_dir_y) sgn = -1
+      ENDIF
+      array(:,ny-2) = array(:,ny-2) + sgn * array(:,ny+3)
+      array(:,ny-1) = array(:,ny-1) + sgn * array(:,ny+2)
+      array(:,ny  ) = array(:,ny  ) + sgn * array(:,ny+1)
+    ELSE
+      array(:,ny-2:ny) = array(:,ny-2:ny) + temp
+    ENDIF
 
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
@@ -264,10 +321,6 @@ CONTAINS
       IF (bc_field(i) .EQ. c_bc_clamp &
           .OR. bc_field(i) .EQ. c_bc_simple_laser &
           .OR. bc_field(i) .EQ. c_bc_simple_outflow) THEN
-        CALL field_clamp_zero(jx, c_stagger_jx, i)
-        CALL field_clamp_zero(jy, c_stagger_jy, i)
-        CALL field_clamp_zero(jz, c_stagger_jz, i)
-
         ! These apply zero field boundary conditions on the edges
         CALL field_clamp_zero(ex, c_stagger_ex, i)
         CALL field_clamp_zero(ey, c_stagger_ey, i)
@@ -483,5 +536,26 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE particle_bcs
+
+
+
+  SUBROUTINE current_bcs
+
+    INTEGER :: i
+
+    ! domain is decomposed. Just add currents at edges
+    CALL processor_summation_bcs(jx, c_dir_x)
+    CALL processor_summation_bcs(jy, c_dir_y)
+    CALL processor_summation_bcs(jz, c_dir_z)
+
+    DO i = 1, 2*c_ndims
+      IF (bc_particle(i) .EQ. c_bc_reflect) THEN
+        CALL field_clamp_zero(jx, c_stagger_jx, i)
+        CALL field_clamp_zero(jy, c_stagger_jy, i)
+        CALL field_clamp_zero(jz, c_stagger_jz, i)
+      ENDIF
+    ENDDO
+
+  END SUBROUTINE current_bcs
 
 END MODULE boundary

@@ -43,20 +43,20 @@ CONTAINS
     dims = (/nprocy, nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
 
-    periods = .TRUE.
+    periods = .FALSE.
     reorder = .TRUE.
 
-    IF (bc_field(c_bd_x_min) .NE. c_bc_periodic &
-        .OR. bc_field(c_bd_x_max) .NE. c_bc_periodic &
-        .OR. bc_particle(c_bd_x_min) .NE. c_bc_periodic &
-        .OR. bc_particle(c_bd_x_max) .NE. c_bc_periodic) &
-            periods(c_ndims) = .FALSE.
+    ! Set boundary to be periodic if *any* boundary condition requires it.
+    ! Once there are per-species boundary conditions then this will be true
+    ! if any of the species are periodic
 
-    IF (bc_field(c_bd_y_min) .NE. c_bc_periodic &
-        .OR. bc_field(c_bd_y_max) .NE. c_bc_periodic &
-        .OR. bc_particle(c_bd_y_min) .NE. c_bc_periodic &
-        .OR. bc_particle(c_bd_y_max) .NE. c_bc_periodic) &
-            periods(c_ndims-1) = .FALSE.
+    IF (bc_field(c_bd_x_min) .EQ. c_bc_periodic &
+        .OR. bc_particle(c_bd_x_min) .EQ. c_bc_periodic) &
+            periods(c_ndims) = .TRUE.
+
+    IF (bc_field(c_bd_y_min) .EQ. c_bc_periodic &
+        .OR. bc_particle(c_bd_y_min) .EQ. c_bc_periodic) &
+            periods(c_ndims-1) = .TRUE.
 
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)
@@ -87,8 +87,7 @@ CONTAINS
               .OR. test_coords(idim) .GE. dims(idim)) &
               .AND. .NOT. periods(idim)) op = .FALSE.
         ENDDO
-        IF (op) &
-            CALL MPI_CART_RANK(comm, test_coords, neighbour(ix, iy), errcode)
+        IF (op) CALL MPI_CART_RANK(comm, test_coords, neighbour(ix,iy), errcode)
       ENDDO
     ENDDO
 

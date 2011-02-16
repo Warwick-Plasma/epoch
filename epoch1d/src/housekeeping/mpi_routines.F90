@@ -34,14 +34,16 @@ CONTAINS
     dims = (/nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
 
-    periods = .TRUE.
+    periods = .FALSE.
     reorder = .TRUE.
 
-    IF (bc_field(c_bd_x_min) .NE. c_bc_periodic &
-        .OR. bc_field(c_bd_x_max) .NE. c_bc_periodic &
-        .OR. bc_particle(c_bd_x_min) .NE. c_bc_periodic &
-        .OR. bc_particle(c_bd_x_max) .NE. c_bc_periodic) &
-            periods(c_ndims) = .FALSE.
+    ! Set boundary to be periodic if *any* boundary condition requires it.
+    ! Once there are per-species boundary conditions then this will be true
+    ! if any of the species are periodic
+
+    IF (bc_field(c_bd_x_min) .EQ. c_bc_periodic &
+        .OR. bc_particle(c_bd_x_min) .EQ. c_bc_periodic) &
+            periods(c_ndims) = .TRUE.
 
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)
