@@ -124,6 +124,7 @@ CONTAINS
     INTEGER :: check_boundary_block
     INTEGER :: index, io
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
+    LOGICAL :: error
 
     check_boundary_block = c_err_none
 
@@ -149,6 +150,31 @@ CONTAINS
         check_boundary_block = c_err_missing_elements
       ENDIF
     ENDDO
+
+    ! Sanity check on periodic boundaries
+    error = .FALSE.
+    DO index = 1, c_ndims
+      IF (bc_field(2*index-1) .EQ. c_bc_periodic &
+          .AND. bc_field(2*index) .NE. c_bc_periodic) error = .TRUE.
+      IF (bc_field(2*index-1) .NE. c_bc_periodic &
+          .AND. bc_field(2*index) .EQ. c_bc_periodic) error = .TRUE.
+      IF (bc_particle(2*index-1) .EQ. c_bc_periodic &
+          .AND. bc_particle(2*index) .NE. c_bc_periodic) error = .TRUE.
+      IF (bc_particle(2*index-1) .NE. c_bc_periodic &
+          .AND. bc_particle(2*index) .EQ. c_bc_periodic) error = .TRUE.
+    ENDDO
+
+    IF (error) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Periodic boundaries must be specified on both sides', &
+              ' of the domain.'
+        ENDDO
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
+    ENDIF
 
   END FUNCTION check_boundary_block
 
