@@ -7,19 +7,9 @@ MODULE ic_module
 
   PRIVATE
 
-  PUBLIC :: ic_early, manual_load
+  PUBLIC :: manual_load
 
 CONTAINS
-
-  !----------------------------------------------------------------------------
-  ! This function contains the equilibrium
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE ic_early
-
-  END SUBROUTINE ic_early
-
-
 
   SUBROUTINE manual_load
 

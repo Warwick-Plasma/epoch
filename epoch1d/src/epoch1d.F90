@@ -73,8 +73,6 @@ PROGRAM pic
   ELSE
     ! Using autoloader
     CALL allocate_ic
-    ! Early internal initialisation
-    CALL ic_early  ! define initial profiles
     ! External initialisation
     deck_state = c_ds_ic
     CALL read_deck("input.deck", .TRUE.)
