@@ -37,8 +37,8 @@ CONTAINS
 
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_z
-    REAL(num) :: part_px, part_py, part_pz
-    REAL(num) :: part_q, part_mc, part_weight
+    REAL(num) :: part_ux, part_uy, part_uz
+    REAL(num) :: part_q, part_mc, part_mc2, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifdef PARTICLE_PROBES
@@ -72,11 +72,11 @@ CONTAINS
     REAL(num) :: ex_part, ey_part, ez_part, bx_part, by_part, bz_part
 
     ! P+, P- and Tau variables from Boris1970, page27 of manual
-    REAL(num) :: pxp, pxm, pyp, pym, pzp, pzm
+    REAL(num) :: uxp, uxm, uyp, uym, uzp, uzm
     REAL(num) :: tau, taux, tauy, tauz
 
     ! charge to mass ratio modified by normalisation
-    REAL(num) :: cmratio
+    REAL(num) :: cmratio, ccmratio
 
     ! Used by J update
     INTEGER :: xmin, xmax, ymin, ymax, zmin, zmax
@@ -84,10 +84,10 @@ CONTAINS
 
     ! Temporary variables
     REAL(num) :: idx, idy, idz
-    REAL(num) :: idtxy, idtyz, idtxz
+    REAL(num) :: idtyz, idtxz, idtxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, fac, dtfac, third, gamma_mass_c, cf2
+    REAL(num) :: root, fac, dtfac, third, gamma, cf2
     REAL(num) :: delta_x, delta_y, delta_z
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
     INTEGER(KIND=8) :: ipart
@@ -139,6 +139,11 @@ CONTAINS
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = particle_species(ispecies)%charge
       part_mc = c * particle_species(ispecies)%mass
+      cmratio = part_q * dtfac / part_mc
+      ccmratio = c * cmratio
+#ifdef PARTICLE_PROBES
+      part_mc2 = c * part_mc
+#endif
 #endif
       !DEC$ VECTOR ALWAYS
       DO ipart = 1, particle_species(ispecies)%attached_list%count
@@ -154,28 +159,31 @@ CONTAINS
         init_part_y = current%part_pos(2)
         init_part_z = current%part_pos(3)
 #endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_q  = current%charge
+        part_mc = c * current%mass
+        cmratio = part_q * dtfac / part_mc
+        ccmratio = c * cmratio
+#ifdef PARTICLE_PROBES
+        part_mc2 = c * part_mc
+#endif
+#endif
         ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
         part_z  = current%part_pos(3) - z_min_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
-        ! Use a lookup table for charge and mass to save memory
-        ! No reason not to do this (I think), check properly later
-#ifdef PER_PARTICLE_CHARGE_MASS
-        part_q  = current%charge
-        part_mc = c * current%mass
-#endif
+        part_ux = current%part_p(1) / part_mc
+        part_uy = current%part_p(2) / part_mc
+        part_uz = current%part_p(3) / part_mc
 
         ! Calculate v(t) from p(t)
         ! See PSC manual page (25-27)
-        root = dtco2 / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
+        root = dtco2 / SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
 
         ! Move particles to half timestep position to first order
-        part_x = part_x + part_px * root
-        part_y = part_y + part_py * root
-        part_z = part_z + part_pz * root
+        part_x = part_x + part_ux * root
+        part_y = part_y + part_uy * root
+        part_z = part_z + part_uz * root
 
         ! Work out the grid cell number for the particle.
         ! Not an integer in general.
@@ -252,13 +260,12 @@ CONTAINS
 #endif
 
         ! update particle momenta using weighted fields
-        cmratio = part_q * dtfac
-        pxm = part_px + cmratio * ex_part
-        pym = part_py + cmratio * ey_part
-        pzm = part_pz + cmratio * ez_part
+        uxm = part_ux + cmratio * ex_part
+        uym = part_uy + cmratio * ey_part
+        uzm = part_uz + cmratio * ez_part
 
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
-        root = c * cmratio / SQRT(part_mc**2 + pxm**2 + pym**2 + pzm**2)
+        root = ccmratio / SQRT(uxm**2 + uym**2 + uzm**2 + 1.0_num)
 
         taux = bx_part * root
         tauy = by_part * root
@@ -266,28 +273,28 @@ CONTAINS
 
         tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
 
-        pxp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * pxm &
-            + 2.0_num * ((taux * tauy + tauz) * pym &
-            + (taux * tauz - tauy) * pzm)) * tau
-        pyp = ((1.0_num - taux**2 + tauy**2 - tauz**2) * pym &
-            + 2.0_num * ((tauy * tauz + taux) * pzm &
-            + (tauy * taux - tauz) * pxm)) * tau
-        pzp = ((1.0_num - taux**2 - tauy**2 + tauz**2) * pzm &
-            + 2.0_num * ((tauz * taux + tauy) * pxm &
-            + (tauz * tauy - taux) * pym)) * tau
+        uxp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * uxm &
+            + 2.0_num * ((taux * tauy + tauz) * uym &
+            + (taux * tauz - tauy) * uzm)) * tau
+        uyp = ((1.0_num - taux**2 + tauy**2 - tauz**2) * uym &
+            + 2.0_num * ((tauy * tauz + taux) * uzm &
+            + (tauy * taux - tauz) * uxm)) * tau
+        uzp = ((1.0_num - taux**2 - tauy**2 + tauz**2) * uzm &
+            + 2.0_num * ((tauz * taux + tauy) * uxm &
+            + (tauz * tauy - taux) * uym)) * tau
 
         ! Rotation over, go to full timestep
-        part_px = pxp + cmratio * ex_part
-        part_py = pyp + cmratio * ey_part
-        part_pz = pzp + cmratio * ez_part
+        part_ux = uxp + cmratio * ex_part
+        part_uy = uyp + cmratio * ey_part
+        part_uz = uzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        gamma_mass_c = SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
-        root = dtco2 / gamma_mass_c
+        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        root = dtco2 / gamma
 
-        delta_x = part_px * root
-        delta_y = part_py * root
-        delta_z = part_pz * root
+        delta_x = part_ux * root
+        delta_y = part_uy * root
+        delta_z = part_uz * root
 
         ! Move particles to end of time step at 2nd order accuracy
         part_x = part_x + delta_x
@@ -298,7 +305,7 @@ CONTAINS
         ! into particle array
         current%part_pos = (/ part_x + x_min_local, &
             part_y + y_min_local, part_z + z_min_local /)
-        current%part_p   = (/ part_px, part_py, part_pz /)
+        current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
 #ifdef PARTICLE_PROBES
         final_part_x = current%part_pos(1)
@@ -422,7 +429,7 @@ CONTAINS
         DO WHILE(ASSOCIATED(current_probe))
           ! Note that this is the energy of a single REAL particle in the
           ! pseudoparticle, NOT the energy of the pseudoparticle
-          probe_energy = c * (gamma_mass_c - part_mc)
+          probe_energy = (gamma - 1.0_num) * part_mc2
 
           ! right energy? (in J)
           IF (probe_energy .GT. current_probe%ek_min) THEN
@@ -462,6 +469,8 @@ CONTAINS
     CALL field_bc(jz)
 
     CALL particle_bcs
+
+    !IF (smooth_currents) CALL smooth_current()
 
   END SUBROUTINE push_particles
 
