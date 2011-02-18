@@ -94,12 +94,13 @@ CONTAINS
     ! It generates gaussian distributed random numbers
     ! The standard deviation (stdev) is related to temperature
 
+    stdev = SQRT(temperature * kb * mass)
+
     IF (cached) THEN
       cached = .FALSE.
-      momentum_from_temperature = val
+      momentum_from_temperature = val * stdev + drift
     ELSE
       cached = .TRUE.
-      stdev = SQRT(temperature * kb * mass)
 
       DO
         rand1 = random()
@@ -116,7 +117,7 @@ CONTAINS
       w = SQRT((-2.0_num * LOG(w)) / w)
 
       momentum_from_temperature = rand1 * w * stdev + drift
-      val = rand2 * w * stdev + drift
+      val = rand2 * w
     ENDIF
 
   END FUNCTION momentum_from_temperature
