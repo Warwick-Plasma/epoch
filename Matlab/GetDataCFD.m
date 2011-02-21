@@ -63,7 +63,8 @@ for c = 1:num_blocks
     length_block_metadata = fread(fid, 1, 'int64');
     length_block = fread(fid, 1, 'int64');
 
-    tag = regexprep(name, '\^', 'pow');
+    tag = deblank(name);
+    tag = regexprep(tag, '\^', 'pow');
     tag = regexprep(tag, ' ', '_');
     tag = regexprep(tag, '/', '_');
     tag = regexprep(tag, '\W', '');
