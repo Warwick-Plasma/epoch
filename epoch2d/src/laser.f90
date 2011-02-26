@@ -169,11 +169,13 @@ CONTAINS
   SUBROUTINE laser_bcs_x_min
 
     REAL(num) :: t_env
-    REAL(num) :: lx, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, ly, sum, diff, dt_eps
     REAL(num), DIMENSION(:), ALLOCATABLE :: fplus
     TYPE(laser_block), POINTER :: current
 
-    lx = c**2 * dt / dx
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
+    ly = dtc2 / dy
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
@@ -216,6 +218,7 @@ CONTAINS
 
     by(0, 1:ny) = sum * (-4.0_num * fplus &
         + 2.0_num * ez(1, 1:ny) &
+        - ly * (bx(1, 1:ny+1) - bx(1, 0:ny)) &
         - dt_eps * jz(1, 1:ny) &
         + diff * by(1, 1:ny))
 
@@ -228,11 +231,13 @@ CONTAINS
   SUBROUTINE laser_bcs_x_max
 
     REAL(num) :: t_env
-    REAL(num) :: lx, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, ly, sum, diff, dt_eps
     REAL(num), DIMENSION(:), ALLOCATABLE :: fneg
     TYPE(laser_block), POINTER :: current
 
-    lx = c**2 * dt / dx
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
+    ly = dtc2 / dy
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
@@ -275,6 +280,7 @@ CONTAINS
 
     by(nx, 1:ny) = sum * ( 4.0_num * fneg &
         - 2.0_num * ez(nx, 1:ny) &
+        + ly * (bx(nx, 1:ny+1) - bx(nx, 0:ny)) &
         + dt_eps * jz(nx, 1:ny) &
         + diff * by(nx-1, 1:ny))
 
@@ -287,11 +293,13 @@ CONTAINS
   SUBROUTINE laser_bcs_y_min
 
     REAL(num) :: t_env
-    REAL(num) :: ly, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, ly, sum, diff, dt_eps
     REAL(num), DIMENSION(:), ALLOCATABLE :: fplus
     TYPE(laser_block), POINTER :: current
 
-    ly = c**2 * dt / dy
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
+    ly = dtc2 / dy
     sum = 1.0_num / (ly + c)
     diff = ly - c
     dt_eps = dt / epsilon0
@@ -315,6 +323,7 @@ CONTAINS
 
     bx(1:nx, 0) = sum * ( 4.0_num * fplus &
         - 2.0_num * ez(1:nx, 1) &
+        - lx * (by(1:nx+1, 1) - by(0:nx, 1)) &
         + dt_eps * jz(1:nx, 1) &
         + diff * bx(1:nx, 1))
 
@@ -346,11 +355,13 @@ CONTAINS
   SUBROUTINE laser_bcs_y_max
 
     REAL(num) :: t_env
-    REAL(num) :: ly, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, ly, sum, diff, dt_eps
     REAL(num), DIMENSION(:), ALLOCATABLE :: fneg
     TYPE(laser_block), POINTER :: current
 
-    ly = c**2 * dt / dy
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
+    ly = dtc2 / dy
     sum = 1.0_num / (ly + c)
     diff = ly - c
     dt_eps = dt / epsilon0
@@ -374,6 +385,7 @@ CONTAINS
 
     bx(1:nx, ny) = sum * (-4.0_num * fneg &
         + 2.0_num * ez(1:nx, ny) &
+        + lx * (by(1:nx+1, ny) - by(0:nx, ny)) &
         - dt_eps * jz(1:nx, ny) &
         + diff * bx(1:nx, ny-1))
 
@@ -404,9 +416,11 @@ CONTAINS
 
   SUBROUTINE outflow_bcs_x_min
 
-    REAL(num) :: lx, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, ly, sum, diff, dt_eps
 
-    lx = c**2 * dt / dx
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
+    ly = dtc2 / dy
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
@@ -415,6 +429,7 @@ CONTAINS
     bz(0, 1:ny) = sum * (-2.0_num * ey(1, 1:ny) &
         + dt_eps * jy(1, 1:ny) + diff * bz(1, 1:ny))
     by(0, 1:ny) = sum * ( 2.0_num * ez(1, 1:ny) &
+        - ly * (bx(1, 1:ny+1) - bx(1, 0:ny)) &
         - dt_eps * jz(1, 1:ny) + diff * by(1, 1:ny))
 
   END SUBROUTINE outflow_bcs_x_min
@@ -423,9 +438,11 @@ CONTAINS
 
   SUBROUTINE outflow_bcs_x_max
 
-    REAL(num) :: lx, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, ly, sum, diff, dt_eps
 
-    lx = c**2 * dt / dx
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
+    ly = dtc2 / dy
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
@@ -434,6 +451,7 @@ CONTAINS
     bz(nx, 1:ny) = sum * ( 2.0_num * ey(nx, 1:ny) &
         - dt_eps * jy(nx, 1:ny) + diff * bz(nx-1, 1:ny))
     by(nx, 1:ny) = sum * (-2.0_num * ez(nx, 1:ny) &
+        + ly * (bx(nx, 1:ny+1) - bx(nx, 0:ny)) &
         + dt_eps * jz(nx, 1:ny) + diff * by(nx-1, 1:ny))
 
   END SUBROUTINE outflow_bcs_x_max
@@ -442,15 +460,18 @@ CONTAINS
 
   SUBROUTINE outflow_bcs_y_min
 
-    REAL(num) :: ly, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, ly, sum, diff, dt_eps
 
-    ly = c**2 * dt / dy
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
+    ly = dtc2 / dy
     sum = 1.0_num / (ly + c)
     diff = ly - c
     dt_eps = dt / epsilon0
 
     by(1:nx, 0) = 0.0_num
     bx(1:nx, 0) = sum * (-2.0_num * ez(1:nx, 1) &
+        - lx * (by(1:nx+1, 1) - by(0:nx, 1)) &
         + dt_eps * jz(1:nx, 1) + diff * bx(1:nx, 1))
     bz(1:nx, 0) = sum * ( 2.0_num * ex(1:nx, 1) &
         - dt_eps * jx(1:nx, 1) + diff * bz(1:nx, 1))
@@ -461,15 +482,18 @@ CONTAINS
 
   SUBROUTINE outflow_bcs_y_max
 
-    REAL(num) :: ly, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, ly, sum, diff, dt_eps
 
-    ly = c**2 * dt / dy
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
+    ly = dtc2 / dy
     sum = 1.0_num / (ly + c)
     diff = ly - c
     dt_eps = dt / epsilon0
 
     by(1:nx, ny+1) = 0.0_num
     bx(1:nx, ny) = sum * ( 2.0_num * ez(1:nx, ny) &
+        + lx * (by(1:nx+1, ny) - by(0:nx, ny)) &
         - dt_eps * jz(1:nx, ny) + diff * bx(1:nx, ny-1))
     bz(1:nx, ny) = sum * (-2.0_num * ex(1:nx, ny) &
         + dt_eps * jx(1:nx, ny) + diff * bz(1:nx, ny-1))

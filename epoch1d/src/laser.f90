@@ -121,11 +121,12 @@ CONTAINS
   SUBROUTINE laser_bcs_x_min
 
     REAL(num) :: t_env
-    REAL(num) :: lx, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, sum, diff, dt_eps
     REAL(num) :: fplus
     TYPE(laser_block), POINTER :: current
 
-    lx = c**2 * dt / dx
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
@@ -175,11 +176,12 @@ CONTAINS
   SUBROUTINE laser_bcs_x_max
 
     REAL(num) :: t_env
-    REAL(num) :: lx, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, sum, diff, dt_eps
     REAL(num) :: fneg
     TYPE(laser_block), POINTER :: current
 
-    lx = c**2 * dt / dx
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
@@ -228,9 +230,10 @@ CONTAINS
 
   SUBROUTINE outflow_bcs_x_min
 
-    REAL(num) :: lx, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, sum, diff, dt_eps
 
-    lx = c**2 * dt / dx
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
@@ -247,9 +250,10 @@ CONTAINS
 
   SUBROUTINE outflow_bcs_x_max
 
-    REAL(num) :: lx, sum, diff, dt_eps
+    REAL(num) :: dtc2, lx, sum, diff, dt_eps
 
-    lx = c**2 * dt / dx
+    dtc2 = dt * c**2
+    lx = dtc2 / dx
     sum = 1.0_num / (lx + c)
     diff = lx - c
     dt_eps = dt / epsilon0
