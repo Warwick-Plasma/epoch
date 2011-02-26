@@ -86,7 +86,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 custom_deck.f90 \
   sdf_control.f90 sdf_input.f90 sdf_input_cartesian.f90 sdf_input_point.f90 \
   sdf_input_util.f90 sdf_job_info.f90 sdf_output.f90 sdf_output_cartesian.f90 \
   sdf_output_point.f90 sdf_output_util.f90 setup.F90 shape_functions.F90 \
-  shared_data.F90 shunt.F90 simple_io.f90 split_particles.F90 stack.f90 \
+  shared_data.F90 shunt.F90 simple_io.f90 split_particle.F90 stack.f90 \
   strings.f90 strings_advanced.f90 tokenizer_blocks.f90 utilities.f90 \
   version_data.F90 welcome.F90 window.F90
 
@@ -175,13 +175,13 @@ diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o \
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o sdf.o shared_data.o
 epoch1d.o: epoch1d.F90 balance.o boundary.o custom_parser.o deck.o \
   diagnostics.o fields.o helper.o ic_module.o ionise.o mpi_routines.o \
-  particles.o sdf_job_info.o setup.o split_particles.o welcome.o window.o
+  particles.o sdf_job_info.o setup.o split_particle.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o
 helper.o: helper.F90 boundary.o random_generator.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
-ionise.o: ionise.F90 calc_df.o split_particles.o
+ionise.o: ionise.F90 calc_df.o split_particle.o
 iterators.o: iterators.F90 particle_pointer_advance.o
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 partlist.o
@@ -217,7 +217,7 @@ shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.f90 boundary.o mpi_subtype_control.o
-split_particles.o: split_particles.F90 boundary.o partlist.o random_generator.o
+split_particle.o: split_particle.F90 boundary.o partlist.o random_generator.o
 stack.o: stack.f90 shared_data.o
 strings.o: strings.f90 shared_data.o
 strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
