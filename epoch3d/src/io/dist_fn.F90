@@ -156,6 +156,7 @@ CONTAINS
 
     use_x = .FALSE.
     use_y = .FALSE.
+    use_z = .FALSE.
     color = 0
     global_resolution = resolution
     parallel = .FALSE.
@@ -507,6 +508,7 @@ CONTAINS
 
     use_x = .FALSE.
     use_y = .FALSE.
+    use_z = .FALSE.
     color = 0
     global_resolution = resolution
     parallel = .FALSE.
@@ -864,6 +866,7 @@ CONTAINS
 
     use_x = .FALSE.
     use_y = .FALSE.
+    use_z = .FALSE.
     color = 0
     global_resolution = resolution
     parallel = .FALSE.

@@ -169,7 +169,7 @@ CONTAINS
     DO iz = z1, z2
       DO iy = y1, y2
         DO ix = x1, x2
-          data_out(ix-x1+1, iy-y1+1, iz-y1+1) = &
+          data_out(ix-x1+1, iy-y1+1, iz-z1+1) = &
               evaluate_at_point(output, ix, iy, iz, err)
         ENDDO
       ENDDO

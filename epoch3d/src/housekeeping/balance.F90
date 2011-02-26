@@ -519,8 +519,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: direction
     REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field_in
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: field_out
-    INTEGER :: n1, n2, n1_new, n2_new, n1_global, n2_global
-    INTEGER :: n1_old_start, n2_old_start, n1_dir, n2_dir
+    INTEGER, DIMENSION(2) :: n, n_new, n_global, n_old_start, n_start
+    INTEGER :: n1_dir, n2_dir
     INTEGER :: subtype_write, subtype_read, fh
     INTEGER :: subarray_write, subarray_read
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
@@ -529,44 +529,44 @@ CONTAINS
     IF (direction .EQ. c_dir_x) THEN
       n1_dir = 2
       n2_dir = 3
-      n1 = ny
-      n2 = nz
-      n1_global = ny_global
-      n2_global = nz_global
-      n1_old_start = cell_y_min(coordinates(c_ndims-1)+1)
-      n2_old_start = cell_z_min(coordinates(c_ndims-2)+1)
+      n(1) = ny
+      n(2) = nz
+      n_global(1) = ny_global
+      n_global(2) = nz_global
+      n_old_start(1) = cell_y_min(coordinates(c_ndims-1)+1)
+      n_old_start(2) = cell_z_min(coordinates(c_ndims-2)+1)
     ELSE IF (direction .EQ. c_dir_y) THEN
       n1_dir = 1
       n2_dir = 3
-      n1 = nx
-      n2 = nz
-      n1_global = nx_global
-      n2_global = nz_global
-      n1_old_start = cell_x_min(coordinates(c_ndims)+1)
-      n2_old_start = cell_z_min(coordinates(c_ndims-2)+1)
+      n(1) = nx
+      n(2) = nz
+      n_global(1) = nx_global
+      n_global(2) = nz_global
+      n_old_start(1) = cell_x_min(coordinates(c_ndims)+1)
+      n_old_start(2) = cell_z_min(coordinates(c_ndims-2)+1)
     ELSE
       n1_dir = 1
       n2_dir = 2
-      n1 = nx
-      n2 = ny
-      n1_global = nx_global
-      n2_global = ny_global
-      n1_old_start = cell_x_min(coordinates(c_ndims)+1)
-      n2_old_start = cell_y_min(coordinates(c_ndims-1)+1)
+      n(1) = nx
+      n(2) = ny
+      n_global(1) = nx_global
+      n_global(2) = ny_global
+      n_old_start(1) = cell_x_min(coordinates(c_ndims)+1)
+      n_old_start(2) = cell_y_min(coordinates(c_ndims-1)+1)
     ENDIF
 
     WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
 
-    n1_new = domain(n1_dir,2) - domain(n1_dir,1) + 1
-    n2_new = domain(n2_dir,2) - domain(n2_dir,1) + 1
+    n_new(1) = domain(n1_dir,2) - domain(n1_dir,1) + 1
+    n_new(2) = domain(n2_dir,2) - domain(n2_dir,1) + 1
+    n_start(1) = domain(n1_dir,1)
+    n_start(2) = domain(n2_dir,1)
 
-    subarray_write = create_field_subarray(n1, n2)
-    subtype_write = create_2d_array_subtype((/n1, n2/), &
-        (/n1_global, n2_global/), (/n1_old_start, n2_old_start/))
+    subarray_write = create_field_subarray(n(1), n(2))
+    subtype_write = create_2d_array_subtype(n, n_global, n_old_start)
 
-    subarray_read = create_field_subarray(n1_new, n2_new)
-    subtype_read  = create_2d_array_subtype((/n1_new, n2_new/), &
-        (/n1_global, n2_global/), (/domain(n1_dir,1), domain(n2_dir,1)/))
+    subarray_read = create_field_subarray(n_new(1), n_new(2))
+    subtype_read = create_2d_array_subtype(n_new, n_global, n_start)
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
         MPI_INFO_NULL, fh, errcode)
