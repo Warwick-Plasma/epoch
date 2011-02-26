@@ -1,6 +1,7 @@
 MODULE helper
 
   USE boundary
+  USE random_generator
   USE strings
 
   IMPLICIT NONE

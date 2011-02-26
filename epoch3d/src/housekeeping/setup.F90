@@ -9,6 +9,7 @@ MODULE setup
   USE shared_data
   USE strings
   USE version_data
+  USE random_generator
 
   IMPLICIT NONE
 
@@ -336,7 +337,7 @@ CONTAINS
 
   SUBROUTINE set_initial_values
 
-    INTEGER :: clock
+    INTEGER :: seed
 
     ex = 0.0_num
     ey = 0.0_num
@@ -351,9 +352,11 @@ CONTAINS
     jz = 0.0_num
 
     ! Set up random number seed
-    clock = 7842432
-    IF (use_random_seed) CALL SYSTEM_CLOCK(clock)
-    seed = -(clock + rank)
+    seed = 7842432
+    IF (use_random_seed) CALL SYSTEM_CLOCK(seed)
+    seed = seed + rank
+
+    CALL random_init(seed)
 
   END SUBROUTINE set_initial_values
 

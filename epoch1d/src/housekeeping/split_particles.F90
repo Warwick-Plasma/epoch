@@ -1,7 +1,8 @@
 MODULE split_particle
 
-  USE shared_data
-  USE helper
+  USE boundary
+  USE partlist
+  USE random_generator
 
   IMPLICIT NONE
 

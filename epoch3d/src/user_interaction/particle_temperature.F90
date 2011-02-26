@@ -1,10 +1,9 @@
 MODULE particle_temperature
 
+  USE random_generator
   USE shape_functions
 
   IMPLICIT NONE
-
-  REAL(num), SAVE :: max_rand
 
 CONTAINS
 
@@ -134,83 +133,5 @@ CONTAINS
     ENDIF
 
   END FUNCTION momentum_from_temperature
-
-
-
-  FUNCTION old_random()
-
-    REAL(num) :: old_random
-    INTEGER, PARAMETER :: ia = 16807, im = 2147483647, iq = 127773
-    INTEGER, PARAMETER :: ir = 2836, mask = 123459876
-    REAL(dbl), PARAMETER :: am = 1.0_dbl / 2147483647.0_dbl
-
-    INTEGER :: k
-
-    seed = IEOR(seed, mask)
-    k = seed / iq
-
-    seed = ia*(seed-k*iq)-ir*k
-    IF (seed .LT. 0) THEN
-      seed = seed+im
-    ENDIF
-
-    old_random = am*seed
-    seed = IEOR(seed, mask)
-
-    IF (old_random .GT. max_rand) max_rand = old_random
-
-  END FUNCTION old_random
-
-
-
-  FUNCTION random()
-    ! Random number generator taken from "ran3" in numerical recipies.
-    ! Generates a number between 0.0 and 1.0 (including 0 and 1).
-
-    REAL :: random
-    INTEGER, PARAMETER :: mbig = 1000000000, mseed = 161803398, mz = 0
-    REAL(dbl), PARAMETER :: fac = 1.d0 / mbig
-    INTEGER :: i, ii, k, mj, mk
-    INTEGER, SAVE :: iff = 0, ma(55)
-    INTEGER, SAVE :: inext, inextp
-
-    IF (seed .LT. 0 .OR. iff .EQ. 0) THEN
-      iff = 1
-      mj = ABS(mseed - ABS(seed))
-      ma(55) = mj
-      mk = 1
-      DO i = 1,54
-        ii = mod(21 * i, 55)
-        ma(ii) = mk
-        mk = mj - mk
-        IF (mk .LT. mz) mk = mk + mbig
-        mj = ma(ii)
-      ENDDO
-
-      DO k = 1,4
-        DO i = 1,55
-          ma(i) = ma(i) - ma(1 + MOD(i + 30, 55))
-          IF (ma(i) .LT. mz) ma(i) = ma(i) + mbig
-        ENDDO
-      ENDDO
-
-      inext = 0
-      inextp = 31
-      seed = 1
-    ENDIF
-
-    inext = inext + 1
-    IF (inext .EQ. 56) inext = 1
-    inextp = inextp + 1
-    IF (inextp .EQ. 56) inextp = 1
-    mj = ma(inext) - ma(inextp)
-    IF (mj .LT. mz) mj = mj + mbig
-    ma(inext) = mj
-
-    random = mj * fac
-
-    IF (random .GT. max_rand) max_rand = random
-
-  END FUNCTION random
 
 END MODULE particle_temperature

@@ -1,8 +1,8 @@
 MODULE window
 
-  USE helper
   USE boundary
   USE partlist
+  USE particle_temperature
 
   IMPLICIT NONE
 

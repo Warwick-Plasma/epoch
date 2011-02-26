@@ -1,7 +1,7 @@
 MODULE ionise
 
   USE calc_df
-  USE helper
+  USE split_particle
 
   IMPLICIT NONE
 

@@ -82,13 +82,14 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 current_smooth.F90 \
   epoch2d.F90 evaluate.f90 evaluator_blocks.f90 fields.f90 helper.F90 \
   ic_module.f90 ionise.F90 iterators.F90 laser.f90 mpi_routines.F90 \
   mpi_subtype_control.f90 particle_pointer_advance.f90 \
-  particle_temperature.F90 particles.F90 partlist.F90 probes.F90 sdf.f90 \
-  sdf_common.f90 sdf_control.f90 sdf_input.f90 sdf_input_cartesian.f90 \
-  sdf_input_point.f90 sdf_input_util.f90 sdf_job_info.f90 sdf_output.f90 \
-  sdf_output_cartesian.f90 sdf_output_point.f90 sdf_output_util.f90 setup.F90 \
-  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
-  split_particles.F90 stack.f90 strings.f90 strings_advanced.f90 \
-  tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
+  particle_temperature.F90 particles.F90 partlist.F90 probes.F90 \
+  random_generator.f90 sdf.f90 sdf_common.f90 sdf_control.f90 sdf_input.f90 \
+  sdf_input_cartesian.f90 sdf_input_point.f90 sdf_input_util.f90 \
+  sdf_job_info.f90 sdf_output.f90 sdf_output_cartesian.f90 \
+  sdf_output_point.f90 sdf_output_util.f90 setup.F90 shape_functions.F90 \
+  shared_data.F90 shunt.F90 simple_io.f90 split_particles.F90 stack.f90 \
+  strings.f90 strings_advanced.f90 tokenizer_blocks.f90 utilities.f90 \
+  version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -180,18 +181,20 @@ epoch2d.o: epoch2d.F90 balance.o boundary.o custom_parser.o deck.o \
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o laser.o
-helper.o: helper.F90 boundary.o strings.o
+helper.o: helper.F90 boundary.o random_generator.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
-ionise.o: ionise.F90 calc_df.o helper.o
+ionise.o: ionise.F90 calc_df.o split_particles.o
 iterators.o: iterators.F90 particle_pointer_advance.o
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 partlist.o
 mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
-particle_temperature.o: particle_temperature.F90 shape_functions.o
+particle_temperature.o: particle_temperature.F90 random_generator.o \
+  shape_functions.o
 particles.o: particles.F90 boundary.o current_smooth.o shape_functions.o
 partlist.o: partlist.F90 shared_data.o
 probes.o: probes.F90 mpi_subtype_control.o partlist.o sdf.o
+random_generator.o: random_generator.f90
 sdf.o: sdf.f90 sdf_common.o sdf_control.o sdf_input.o sdf_input_cartesian.o \
   sdf_input_point.o sdf_input_util.o sdf_output.o sdf_output_cartesian.o \
   sdf_output_point.o sdf_output_util.o
@@ -209,13 +212,14 @@ sdf_output_cartesian.o: sdf_output_cartesian.f90 sdf_common.o sdf_output.o
 sdf_output_point.o: sdf_output_point.f90 sdf_common.o sdf_output.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output.o sdf_output_cartesian.o \
   sdf_output_point.o
-setup.o: setup.F90 fields.o mpi_subtype_control.o partlist.o sdf.o \
-  shared_data.o strings.o version_data.o $(ENCODED_SOURCE)
+setup.o: setup.F90 fields.o mpi_subtype_control.o partlist.o \
+  random_generator.o sdf.o shared_data.o strings.o version_data.o \
+  $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.f90 boundary.o mpi_subtype_control.o
-split_particles.o: split_particles.F90 helper.o shared_data.o
+split_particles.o: split_particles.F90 boundary.o partlist.o random_generator.o
 stack.o: stack.f90 shared_data.o
 strings.o: strings.f90 shared_data.o
 strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
@@ -223,4 +227,4 @@ tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90
 welcome.o: welcome.F90 strings.o version_data.o
-window.o: window.F90 boundary.o helper.o partlist.o
+window.o: window.F90 boundary.o particle_temperature.o partlist.o
