@@ -168,8 +168,13 @@ CONTAINS
 
     real_space_area = 1.0_num
     current_data = 0.0_num
+#ifndef PER_PARTICLE_CHARGE_MASS
     part_mass = particle_species(species)%mass
     part_mass_c = part_mass * c
+#endif
+#ifndef PER_PARTICLE_WEIGHT
+    part_weight = particle_species(species)%weight
+#endif
 
     DO idim = 1, c_df_curdims
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -353,7 +358,6 @@ CONTAINS
     array = 0.0_num
 
     current=>particle_species(species)%attached_list%head
-    part_weight = weight
     DO WHILE(ASSOCIATED(current))
       particle_data(1:c_ndims) = current%part_pos
       particle_data(c_ndims+1:c_ndims+3) = current%part_p
@@ -515,8 +519,13 @@ CONTAINS
 
     real_space_area = 1.0_num
     current_data = 0.0_num
+#ifndef PER_PARTICLE_CHARGE_MASS
     part_mass = particle_species(species)%mass
     part_mass_c = part_mass * c
+#endif
+#ifndef PER_PARTICLE_WEIGHT
+    part_weight = particle_species(species)%weight
+#endif
 
     DO idim = 1, c_df_curdims
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -700,7 +709,6 @@ CONTAINS
     array = 0.0_num
 
     current=>particle_species(species)%attached_list%head
-    part_weight = weight
     DO WHILE(ASSOCIATED(current))
       particle_data(1:c_ndims) = current%part_pos
       particle_data(c_ndims+1:c_ndims+3) = current%part_p
@@ -868,8 +876,13 @@ CONTAINS
 
     real_space_area = 1.0_num
     current_data = 0.0_num
+#ifndef PER_PARTICLE_CHARGE_MASS
     part_mass = particle_species(species)%mass
     part_mass_c = part_mass * c
+#endif
+#ifndef PER_PARTICLE_WEIGHT
+    part_weight = particle_species(species)%weight
+#endif
 
     DO idim = 1, c_df_curdims
       IF (direction(idim) .EQ. c_dir_x) THEN
@@ -1053,7 +1066,6 @@ CONTAINS
     array = 0.0_num
 
     current=>particle_species(species)%attached_list%head
-    part_weight = weight
     DO WHILE(ASSOCIATED(current))
       particle_data(1:c_ndims) = current%part_pos
       particle_data(c_ndims+1:c_ndims+3) = current%part_p

@@ -417,17 +417,16 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2, str3
     CHARACTER(LEN=c_max_string_length) :: name
     INTEGER :: blocktype, datatype, code_io_version, ispecies
-    INTEGER :: ierr, ii, i1, i2, iblock, nblocks, ndims, found_species
+    INTEGER :: ierr, i1, i2, iblock, nblocks, ndims, found_species
     INTEGER(KIND=8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims
-    LOGICAL :: constant_weight, restart_flag
+    LOGICAL :: restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle), POINTER :: current
     TYPE(particle_family), POINTER :: species
     INTEGER, POINTER :: species_subtypes(:)
 
     npart_global = 0
-    constant_weight = .FALSE.
     snap = -1
 
     ! Create the filename for the last snapshot
@@ -528,8 +527,9 @@ CONTAINS
 
       SELECT CASE(blocktype)
       CASE(c_blocktype_constant)
-        IF (str_cmp(block_id, 'weight')) THEN
-          CALL sdf_read_srl(sdf_handle, weight)
+        IF (block_id(1:7) .EQ. 'weight/') THEN
+          CALL find_species_by_name(block_id, ispecies)
+          CALL sdf_read_srl(sdf_handle, particle_species(ispecies)%weight)
         ENDIF
       !CASE(c_blocktype_plain_mesh)
         !CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims)
@@ -659,18 +659,6 @@ CONTAINS
 
     CALL sdf_close(sdf_handle)
     CALL free_subtypes_for_load(species_subtypes)
-
-#ifdef PER_PARTICLE_WEIGHT
-    IF (constant_weight) THEN
-      DO ii = 1,n_species
-        current => particle_species(ii)%attached_list%head
-        DO WHILE(ASSOCIATED(current))
-          current%weight = weight
-          current => current%next
-        ENDDO
-      ENDDO
-    ENDIF
-#endif
 
   END SUBROUTINE restart_data
 

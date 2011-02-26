@@ -396,6 +396,7 @@ MODULE shared_data
 
     REAL(num) :: charge
     REAL(num) :: mass
+    REAL(num) :: weight
     INTEGER(KIND=8) :: count
     TYPE(particle_list) :: attached_list
 
@@ -524,7 +525,6 @@ MODULE shared_data
   INTEGER :: nstep_snapshots
 
   REAL(num) :: total_ohmic_heating = 0.0_num
-  REAL(num) :: weight
 
   LOGICAL :: ic_from_restart = .FALSE.
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle

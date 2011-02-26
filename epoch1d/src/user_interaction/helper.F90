@@ -128,6 +128,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
 
+#ifndef PER_PARTICLE_WEIGHT
     partlist=>species_list%attached_list
 
     num_valid_cells = 0
@@ -154,8 +155,6 @@ CONTAINS
     ! Assume that a cell with the average density has the average number of
     ! particles per cell. Now calculate the new minimum density
     density_min = density_average / REAL(npart_per_cell_average, num)
-    ! Set the particle weight
-    weight = density_min * dx
 
     ! Recalculate the number of valid cells and the summed density
     num_valid_cells = 0
@@ -201,7 +200,10 @@ CONTAINS
     ENDDO
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
+
     species_list%count = npart_this_species
+    species_list%weight = density_total_global * dx / npart_this_species
+
     IF (rank .EQ. 0) THEN
       WRITE(*, *) "Loaded", npart_this_species, &
           "particles of species ", TRIM(species_list%name)
@@ -209,6 +211,13 @@ CONTAINS
           "particles of species ", TRIM(species_list%name)
     ENDIF
     CALL particle_bcs
+#else
+    IF (rank .EQ. 0) THEN
+      WRITE(*,*) 'non_uniform_load_particles() only available when using', &
+          ' per species weighting'
+    ENDIF
+    CALL MPI_ABORT(comm, errcode, errcode)
+#endif
 
   END SUBROUTINE non_uniform_load_particles
 
@@ -479,9 +488,11 @@ CONTAINS
 
     DEALLOCATE(weight_fn)
 #else
-    IF (rank .EQ. 0) &
-        PRINT *, "Autoloader only available when using per particle weighting"
-    CALL MPI_ABORT(comm, errcode, ix)
+    IF (rank .EQ. 0) THEN
+      WRITE(*,*) 'setup_particle_density() only available when using', &
+          ' per species weighting'
+    ENDIF
+    CALL MPI_ABORT(comm, errcode, errcode)
 #endif
 
   END SUBROUTINE setup_particle_density

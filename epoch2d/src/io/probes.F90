@@ -117,7 +117,7 @@ CONTAINS
               iterate_probe_weight, part_probe_offset)
 #else
           CALL sdf_write_srl(sdf_handle, TRIM(temp_name), TRIM(probe_name), &
-              weight)
+              particle_species(ispecies)%weight)
 #endif
 
           CALL destroy_partlist(current_probe%sampled_particles)

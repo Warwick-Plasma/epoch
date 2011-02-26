@@ -119,12 +119,13 @@ CONTAINS
     idtf = idt * fac
     idxf = idx * fac
 
-    part_weight = weight
-    fcx = idtf * part_weight
-    fcy = idxf * part_weight
-
     DO ispecies = 1, n_species
       current=>particle_species(ispecies)%attached_list%head
+#ifndef PER_PARTICLE_WEIGHT
+      part_weight = particle_species(ispecies)%weight
+      fcx = idtf * part_weight
+      fcy = idxf * part_weight
+#endif
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = particle_species(ispecies)%charge
       part_mc = c * particle_species(ispecies)%mass

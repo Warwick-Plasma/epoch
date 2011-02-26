@@ -30,9 +30,10 @@ CONTAINS
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
-    INTEGER :: code
+    INTEGER :: code, ispecies
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag
+    TYPE(particle_family), POINTER :: species
 
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
         .AND. MOD(i, stdout_frequency) .EQ. 0) THEN
@@ -101,8 +102,15 @@ CONTAINS
     CALL write_particle_variable(c_dump_part_weight, code, 'Weight', &
         iterate_weight)
 #else
-    IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) &
-        CALL sdf_write_srl(sdf_handle, 'weight', 'Particles/Weight', weight)
+    IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
+      DO ispecies = 1, n_species
+        species => particle_species(ispecies)
+        IF (species%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
+              'Particles/Weight/' // TRIM(species%name), species%weight)
+        ENDIF
+      ENDDO
+    ENDIF
 #endif
     CALL write_particle_variable(c_dump_part_px, code, 'Px', iterate_px)
     CALL write_particle_variable(c_dump_part_py, code, 'Py', iterate_py)

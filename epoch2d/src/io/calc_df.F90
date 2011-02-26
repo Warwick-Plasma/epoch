@@ -40,7 +40,6 @@ CONTAINS
     data_array = 0.0_num
 
     idx = 1.0_num / dx / dy
-    fac = weight  / dx / dy
 
     spec_start = current_species
     spec_end = current_species
@@ -54,6 +53,9 @@ CONTAINS
       current=>particle_species(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_m  = particle_species(ispecies)%mass
+#endif
+#ifndef PER_PARTICLE_WEIGHT
+      fac = particle_species(ispecies)%weight * idx
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
@@ -137,9 +139,6 @@ CONTAINS
     data_array = 0.0_num
     ct = 0.0_num
 
-    l_weight = weight
-    l_weightc = c * weight
-
     spec_start = current_species
     spec_end = current_species
 
@@ -153,6 +152,10 @@ CONTAINS
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = c * particle_species(ispecies)%mass
 #endif
+#ifndef PER_PARTICLE_WEIGHT
+      l_weight = particle_species(ispecies)%weight
+      l_weightc = c * l_weight
+#endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
         part_px = current%part_p(1)
@@ -163,7 +166,7 @@ CONTAINS
 #endif
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
-        l_weightc = c * current%weight
+        l_weightc = c * l_weight
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
@@ -243,7 +246,6 @@ CONTAINS
     data_array = 0.0_num
 
     idx = 1.0_num / dx / dy
-    fac = weight  / dx / dy
 
     spec_start = current_species
     spec_end = current_species
@@ -257,6 +259,9 @@ CONTAINS
       current=>particle_species(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = particle_species(ispecies)%charge
+#endif
+#ifndef PER_PARTICLE_WEIGHT
+      fac = particle_species(ispecies)%weight * idx
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
@@ -333,7 +338,6 @@ CONTAINS
     data_array = 0.0_num
 
     idx   = 1.0_num / dx / dy
-    wdata = weight  / dx / dy
 
     spec_start = current_species
     spec_end = current_species
@@ -345,6 +349,9 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       current=>particle_species(ispecies)%attached_list%head
+#ifndef PER_PARTICLE_WEIGHT
+      wdata = particle_species(ispecies)%weight * idx
+#endif
       DO WHILE (ASSOCIATED(current))
 #ifdef PER_PARTICLE_WEIGHT
         wdata = current%weight * idx
@@ -417,8 +424,6 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
 
-    l_weight = weight
-
     spec_start = current_species
     spec_end = current_species
 
@@ -441,6 +446,9 @@ CONTAINS
       current=>particle_species(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       sqrt_part_m  = SQRT(particle_species(ispecies)%mass)
+#endif
+#ifndef PER_PARTICLE_WEIGHT
+      l_weight = particle_species(ispecies)%weight
 #endif
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
