@@ -200,17 +200,17 @@ CONTAINS
     ENDIF
 
     IF (opcode .EQ. c_const_x) THEN
-      CALL push_on_eval(x(ix)+dx/2.0_num)
+      CALL push_on_eval(x(ix))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_y) THEN
-      CALL push_on_eval(y(iy)+dy/2.0_num)
+      CALL push_on_eval(y(iy))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_z) THEN
-      CALL push_on_eval(z(iz)+dz/2.0_num)
+      CALL push_on_eval(z(iz))
       RETURN
     ENDIF
 
@@ -345,17 +345,17 @@ CONTAINS
     ENDIF
 
     IF (opcode .EQ. c_const_r_xy) THEN
-      CALL push_on_eval(SQRT(x(ix)**2+y(iy)**2))
+      CALL push_on_eval(SQRT(x(ix)**2 + y(iy)**2))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_xz) THEN
-      CALL push_on_eval(SQRT(x(ix)**2+z(iz)**2))
+      CALL push_on_eval(SQRT(x(ix)**2 + z(iz)**2))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_yz) THEN
-      CALL push_on_eval(SQRT(y(iy)**2+z(iz)**2))
+      CALL push_on_eval(SQRT(y(iy)**2 + z(iz)**2))
       RETURN
     ENDIF
 

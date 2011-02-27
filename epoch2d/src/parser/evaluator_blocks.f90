@@ -195,12 +195,12 @@ CONTAINS
     ENDIF
 
     IF (opcode .EQ. c_const_x) THEN
-      CALL push_on_eval(x(ix)+dx/2.0_num)
+      CALL push_on_eval(x(ix))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_y) THEN
-      CALL push_on_eval(y(iy)+dy/2.0_num)
+      CALL push_on_eval(y(iy))
       RETURN
     ENDIF
 
