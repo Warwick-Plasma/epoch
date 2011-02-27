@@ -120,8 +120,8 @@ CONTAINS
     TYPE(particle_family), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
-    INTEGER(KIND=8) :: npart_per_cell_average
     INTEGER(KIND=8) :: npart_per_cell
+    REAL(num) :: npart_per_cell_average
     REAL(num) :: density_total, density_total_global, density_average
     INTEGER(KIND=8) :: npart_this_proc_new, ipart, npart_this_species
     INTEGER :: ix, iy
@@ -136,7 +136,8 @@ CONTAINS
     density_total = 0.0_num
     DO iy = 1, ny
       DO ix = 1, nx
-        IF (density(ix, iy) .GE. density_min) THEN
+        IF (density(ix, iy) .GE. density_min &
+            .AND. density_min .GT. 0.0_num) THEN
           num_valid_cells = num_valid_cells + 1
           density_total = density_total + density(ix, iy)
         ELSE IF (density(ix, iy) .GT. density_max &
@@ -148,31 +149,23 @@ CONTAINS
 
     CALL MPI_ALLREDUCE(num_valid_cells, num_valid_cells_global, 1, &
         MPI_INTEGER8, MPI_MAX, comm, errcode)
-    npart_per_cell_average = species%count / num_valid_cells_global
-    IF (npart_per_cell_average .EQ. 0) npart_per_cell_average = 1
+    npart_per_cell_average = REAL(species%count, num) &
+        / REAL(num_valid_cells_global, num)
+
+    IF (npart_per_cell_average .LE. 0) RETURN
 
     CALL MPI_ALLREDUCE(density_total, density_total_global, 1, mpireal, &
         MPI_SUM, comm, errcode)
     density_average = density_total_global / REAL(num_valid_cells_global, num)
 
-    ! Assume that a cell with the average density has the average number of
-    ! particles per cell. Now calculate the new minimum density
-    density_min = density_average / REAL(npart_per_cell_average, num)
-
-    ! Recalculate the number of valid cells and the summed density
-    num_valid_cells = 0
-    density_total = 0.0_num
+    npart_this_proc_new = 0
     DO iy = 1, ny
       DO ix = 1, nx
-        IF (density(ix, iy) .GE. density_min) THEN
-          num_valid_cells = num_valid_cells + 1
-          density_total = density_total + density(ix, iy)
-        ENDIF
+        npart_per_cell = NINT(density(ix, iy) / density_average &
+            * npart_per_cell_average)
+        npart_this_proc_new = npart_this_proc_new + npart_per_cell
       ENDDO
     ENDDO
-
-    npart_this_proc_new = &
-        INT(density_total / density_average * REAL(npart_per_cell_average, num))
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
@@ -181,8 +174,8 @@ CONTAINS
     current=>partlist%head
     DO iy = 1, ny
       DO ix = 1, nx
-        npart_per_cell = INT(density(ix, iy) / density_average &
-            * REAL(npart_per_cell_average, num))
+        npart_per_cell = NINT(density(ix, iy) / density_average &
+            * npart_per_cell_average)
 
         ipart = 0
         DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
@@ -293,7 +286,7 @@ CONTAINS
 
     valid_cell_frac = &
         REAL(num_valid_cells_local, num) / REAL(num_valid_cells, num)
-    num_new_particles = INT(npart_this_species*valid_cell_frac, KIND=8)
+    num_new_particles = NINT(npart_this_species*valid_cell_frac, KIND=8)
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, num_new_particles)
@@ -427,7 +420,8 @@ CONTAINS
 
     DO iy = -2, ny+3
       DO ix = -2, nx+3
-        IF (density(ix, iy) .GE. density_min) THEN
+        IF (density(ix, iy) .GE. density_min &
+            .AND. density_min .GT. 0.0_num) THEN
           density_map(ix, iy) = .TRUE.
         ELSE IF (density(ix, iy) .GT. density_max &
             .AND. density_max .GT. 0.0_num) THEN
