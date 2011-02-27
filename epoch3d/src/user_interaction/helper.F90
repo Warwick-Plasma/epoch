@@ -11,10 +11,10 @@ CONTAINS
   SUBROUTINE auto_load
 
     INTEGER :: ispecies
-    TYPE(particle_family), POINTER :: species_list
+    TYPE(particle_family), POINTER :: species
 
     DO ispecies = 1, n_species
-      species_list=>particle_species(ispecies)
+      species=>particle_species(ispecies)
       IF (move_window) THEN
         particle_species(ispecies)%density = &
             initial_conditions(ispecies)%density(nx,:,:)
@@ -23,21 +23,21 @@ CONTAINS
       ENDIF
 #ifdef PER_PARTICLE_WEIGHT
       CALL setup_particle_density(initial_conditions(ispecies)%density, &
-          species_list, initial_conditions(ispecies)%density_min, &
+          species, initial_conditions(ispecies)%density_min, &
           initial_conditions(ispecies)%density_max)
 #else
       CALL non_uniform_load_particles(initial_conditions(ispecies)%density, &
-          species_list, initial_conditions(ispecies)%density_min, &
+          species, initial_conditions(ispecies)%density_min, &
           initial_conditions(ispecies)%density_max)
 #endif
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,1), c_dir_x, species_list, &
+          initial_conditions(ispecies)%temp(:,:,:,1), c_dir_x, species, &
           initial_conditions(ispecies)%drift(:,:,:,1))
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,2), c_dir_y, species_list, &
+          initial_conditions(ispecies)%temp(:,:,:,2), c_dir_y, species, &
           initial_conditions(ispecies)%drift(:,:,:,2))
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,3), c_dir_z, species_list, &
+          initial_conditions(ispecies)%temp(:,:,:,3), c_dir_z, species, &
           initial_conditions(ispecies)%drift(:,:,:,3))
     ENDDO
 
@@ -116,25 +116,24 @@ CONTAINS
 
 
 
-  SUBROUTINE non_uniform_load_particles(density, species_list, density_min, &
+  SUBROUTINE non_uniform_load_particles(density, species, density_min, &
       density_max)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: density
-    TYPE(particle_family), POINTER :: species_list
+    TYPE(particle_family), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
     INTEGER(KIND=8) :: npart_per_cell_average
     INTEGER(KIND=8) :: npart_per_cell
     REAL(num) :: density_total, density_total_global, density_average
     INTEGER(KIND=8) :: npart_this_proc_new, ipart, npart_this_species
-    REAL(num) :: rpos
     INTEGER :: ix, iy, iz
-
+    CHARACTER(LEN=15) :: string
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
 
 #ifndef PER_PARTICLE_WEIGHT
-    partlist=>species_list%attached_list
+    partlist=>species%attached_list
 
     num_valid_cells = 0
     density_total = 0.0_num
@@ -154,7 +153,7 @@ CONTAINS
 
     CALL MPI_ALLREDUCE(num_valid_cells, num_valid_cells_global, 1, &
         MPI_INTEGER8, MPI_MAX, comm, errcode)
-    npart_per_cell_average = species_list%count / num_valid_cells_global
+    npart_per_cell_average = species%count / num_valid_cells_global
     IF (npart_per_cell_average .EQ. 0) npart_per_cell_average = 1
 
     CALL MPI_ALLREDUCE(density_total, density_total_global, 1, mpireal, &
@@ -184,30 +183,28 @@ CONTAINS
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
+
+    ! Randomly place npart_per_cell particles into each valid cell
     current=>partlist%head
     DO iz = 1, nz
-      DO ix = 1, nx
-        DO iy = 1, ny
-          ipart = 0
+      DO iy = 1, ny
+        DO ix = 1, nx
           npart_per_cell = INT(density(ix, iy, iz) / density_average &
               * REAL(npart_per_cell_average, num))
+
+          ipart = 0
           DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGE_MASS
             ! Even if particles have per particle charge and mass, assume
             ! that initially they all have the same charge and mass (user
             ! can easily over_ride)
-            current%charge = species_list%charge
-            current%mass = species_list%mass
+            current%charge = species%charge
+            current%mass = species%mass
 #endif
-            rpos = random() - 0.5_num
-            rpos = (rpos * dx) + x(ix)
-            current%part_pos(1) = rpos
-            rpos = random() - 0.5_num
-            rpos = (rpos * dy) + y(iy)
-            current%part_pos(2) = rpos
-            rpos = random() - 0.5_num
-            rpos = (rpos * dz) + z(iz)
-            current%part_pos(3) = rpos
+            current%part_pos(1) = x(ix) + (random() - 0.5_num) * dx
+            current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
+            current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
+
             ipart = ipart + 1
             current=>current%next
           ENDDO
@@ -215,25 +212,29 @@ CONTAINS
       ENDDO
     ENDDO
 
+    ! Remove any unplaced particles from the list. This should never be
+    ! called if the above routines worked correctly.
     DO WHILE(ASSOCIATED(current))
       next=>current%next
       CALL remove_particle_from_partlist(partlist, current)
       DEALLOCATE(current)
       current=>next
     ENDDO
+
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
 
-    species_list%count = npart_this_species
-    species_list%weight = density_total_global * dx * dy * dz &
-        / npart_this_species
+    species%count = npart_this_species
+    species%weight = density_total_global * dx * dy * dz / npart_this_species
 
     IF (rank .EQ. 0) THEN
-      WRITE(*, *) "Loaded", npart_this_species, &
-          "particles of species ", TRIM(species_list%name)
-      WRITE(stat_unit, *) "Loaded", npart_this_species, &
-          "particles of species ", TRIM(species_list%name)
+      CALL integer_as_string(npart_this_species, string)
+      WRITE(*,*) 'Loaded ', TRIM(ADJUSTL(string)), &
+          ' particles of species ', TRIM(species%name)
+      WRITE(stat_unit,*) 'Loaded ', TRIM(ADJUSTL(string)), &
+          ' particles of species ', TRIM(species%name)
     ENDIF
+
     CALL particle_bcs
 #else
     IF (rank .EQ. 0) THEN
@@ -248,9 +249,9 @@ CONTAINS
 
 
   ! This subroutine automatically loads a uniform density of pseudoparticles
-  SUBROUTINE load_particles(species_list, load_list)
+  SUBROUTINE load_particles(species, load_list)
 
-    TYPE(particle_family), POINTER :: species_list
+    TYPE(particle_family), POINTER :: species
     LOGICAL, DIMENSION(-2:,-2:,-2:), INTENT(IN) :: load_list
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
@@ -266,10 +267,12 @@ CONTAINS
     INTEGER :: ierr, ix, iy, iz
     CHARACTER(LEN=15) :: string
 
-    npart_this_species = species_list%count
+    npart_this_species = species%count
     IF (npart_this_species .LT. 0) THEN
-      IF (rank .EQ. 0) PRINT *, "Unable to continue, species ", &
-          TRIM(species_list%name), " has not had a number of particles set"
+      IF (rank .EQ. 0) THEN
+        WRITE(*,*) 'Unable to continue, species ', &
+          TRIM(species%name), ' has not had a number of particles set'
+      ENDIF
       CALL MPI_ABORT(comm, errcode, ierr)
     ELSE IF (npart_this_species .EQ. 0) THEN
       RETURN
@@ -279,7 +282,7 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          IF (load_list(ix,iy,iz)) &
+          IF (load_list(ix, iy, iz)) &
               num_valid_cells_local = num_valid_cells_local + 1
         ENDDO
       ENDDO
@@ -300,17 +303,18 @@ CONTAINS
       ENDIF
     ENDIF
 
-    partlist=>species_list%attached_list
+    partlist=>species%attached_list
 
     valid_cell_frac = &
         REAL(num_valid_cells_local, num) / REAL(num_valid_cells, num)
     num_new_particles = INT(npart_this_species*valid_cell_frac, KIND=8)
+
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, num_new_particles)
 
     npart_per_cell = npart_this_species / num_valid_cells
-    species_list%npart_per_cell = npart_per_cell
-    IF (species_list%npart_per_cell .EQ. 0) species_list%npart_per_cell = 1
+    species%npart_per_cell = npart_per_cell
+    IF (species%npart_per_cell .EQ. 0) species%npart_per_cell = 1
 
     ! Randomly place npart_per_cell particles into each valid cell
     npart_left = num_new_particles
@@ -320,25 +324,27 @@ CONTAINS
       DO iz = 1, nz
         DO iy = 1, ny
           DO ix = 1, nx
+            IF (.NOT. load_list(ix, iy, iz)) CYCLE
+
             ipart = 0
-            IF (load_list(ix, iy, iz)) THEN
-              DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
+            DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGE_MASS
-                ! Even if particles have per particle charge and mass, assume
-                ! that initially they all have the same charge and mass (user
-                ! can easily over_ride)
-                current%charge = species_list%charge
-                current%mass = species_list%mass
+              ! Even if particles have per particle charge and mass, assume
+              ! that initially they all have the same charge and mass (user
+              ! can easily over_ride)
+              current%charge = species%charge
+              current%mass = species%mass
 #endif
-                current%part_pos(1) = (random() - 0.5_num) * dx + x(ix)
-                current%part_pos(2) = (random() - 0.5_num) * dy + y(iy)
-                current%part_pos(3) = (random() - 0.5_num) * dz + z(iz)
-                ipart = ipart + 1
-                current=>current%next
-                ! One particle sucessfully placed
-                npart_left = npart_left - 1
-              ENDDO
-            ENDIF
+              current%part_pos(1) = x(ix) + (random() - 0.5_num) * dx
+              current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
+              current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
+
+              ipart = ipart + 1
+              current=>current%next
+
+              ! One particle sucessfully placed
+              npart_left = npart_left - 1
+            ENDDO
           ENDDO
         ENDDO
       ENDDO
@@ -380,6 +386,7 @@ CONTAINS
         current%part_pos(1) = x(cell_x) + (random() - 0.5_num) * dx
         current%part_pos(2) = y(cell_y) + (random() - 0.5_num) * dy
         current%part_pos(3) = z(cell_z) + (random() - 0.5_num) * dz
+
         current=>current%next
       ENDDO
 
@@ -387,7 +394,7 @@ CONTAINS
     ENDIF
 
     ! Remove any unplaced particles from the list. This should never be
-    ! called if the above routines worked correctly.,
+    ! called if the above routines worked correctly.
     DO WHILE(ASSOCIATED(current))
       next=>current%next
       CALL remove_particle_from_partlist(partlist, current)
@@ -397,14 +404,15 @@ CONTAINS
 
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
-    species_list%count = npart_this_species
+
+    species%count = npart_this_species
 
     IF (rank .EQ. 0) THEN
       CALL integer_as_string(npart_this_species, string)
-      WRITE(*, *) "Loaded ", TRIM(ADJUSTL(string)), &
-          " particles of species ", TRIM(species_list%name)
-      WRITE(stat_unit, *) "Loaded ", TRIM(ADJUSTL(string)), &
-          " particles of species ", TRIM(species_list%name)
+      WRITE(*,*) 'Loaded ', TRIM(ADJUSTL(string)), &
+          ' particles of species ', TRIM(species%name)
+      WRITE(stat_unit,*) 'Loaded ', TRIM(ADJUSTL(string)), &
+          ' particles of species ', TRIM(species%name)
     ENDIF
 
     CALL particle_bcs
@@ -413,11 +421,11 @@ CONTAINS
 
 
 
-  SUBROUTINE setup_particle_density(density_in, species_list, density_min, &
+  SUBROUTINE setup_particle_density(density_in, species, density_min, &
       density_max)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: density_in
-    TYPE(particle_family), POINTER :: species_list
+    TYPE(particle_family), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
     REAL(num) :: weight_local
     REAL(num) :: cell_x_r, cell_frac_x
@@ -435,8 +443,8 @@ CONTAINS
     LOGICAL, DIMENSION(:,:,:), ALLOCATABLE :: density_map
 
 #ifdef PER_PARTICLE_WEIGHT
-    ALLOCATE(density(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(density_map(-2:nx+3, -2:ny+3, -2:nz+3))
+    ALLOCATE(density(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(density_map(-2:nx+3,-2:ny+3,-2:nz+3))
     density = density_in
     density_map = .FALSE.
 
@@ -456,13 +464,13 @@ CONTAINS
     ENDDO
 
     ! Uniformly load particles in space
-    CALL load_particles(species_list, density_map)
+    CALL load_particles(species, density_map)
 
-    ALLOCATE(weight_fn(-2:nx+3, -2:ny+3, -2:nz+3))
+    ALLOCATE(weight_fn(-2:nx+3,-2:ny+3,-2:nz+3))
     CALL MPI_BARRIER(comm, errcode)
     weight_fn = 0.0_num
 
-    partlist=>species_list%attached_list
+    partlist=>species%attached_list
     ! If using per particle weighing then use the weight function to match the
     ! uniform pseudoparticle density to the real particle density
     current=>partlist%head
@@ -526,9 +534,9 @@ CONTAINS
     DEALLOCATE(density_map)
 
     CALL processor_summation_bcs(weight_fn)
-    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0, :,:) = weight_fn(1,   :,:)
+    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ,:,:) = weight_fn(1   ,:,:)
     IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
-    IF (proc_y_min .EQ. MPI_PROC_NULL) weight_fn(:,0, :) = weight_fn(:,1,   :)
+    IF (proc_y_min .EQ. MPI_PROC_NULL) weight_fn(:,0 ,:) = weight_fn(:,1   ,:)
     IF (proc_y_max .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
     IF (proc_z_min .EQ. MPI_PROC_NULL) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
     IF (proc_z_max .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
@@ -551,9 +559,9 @@ CONTAINS
     ENDDO
     DEALLOCATE(density)
 
-    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0, :,:) = weight_fn(1,   :,:)
+    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ,:,:) = weight_fn(1   ,:,:)
     IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
-    IF (proc_y_min .EQ. MPI_PROC_NULL) weight_fn(:,0, :) = weight_fn(:,1,   :)
+    IF (proc_y_min .EQ. MPI_PROC_NULL) weight_fn(:,0 ,:) = weight_fn(:,1   ,:)
     IF (proc_y_max .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
     IF (proc_z_min .EQ. MPI_PROC_NULL) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
     IF (proc_z_max .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
@@ -561,7 +569,7 @@ CONTAINS
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
     ENDDO
 
-    partlist=>species_list%attached_list
+    partlist=>species%attached_list
     ! Second loop actually assigns weights to particles
     ! Again assumes linear interpolation
     current=>partlist%head
@@ -606,7 +614,7 @@ CONTAINS
 #else
     IF (rank .EQ. 0) THEN
       WRITE(*,*) 'setup_particle_density() only available when using', &
-          ' per species weighting'
+          ' per particle weighting'
     ENDIF
     CALL MPI_ABORT(comm, errcode, errcode)
 #endif

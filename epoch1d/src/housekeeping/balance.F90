@@ -384,8 +384,10 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (MINVAL(coords) .LT. 0) PRINT *, "UNLOCATABLE PARTICLE", coords
-    IF (MINVAL(coords) .LT. 0) RETURN
+    IF (MINVAL(coords) .LT. 0) THEN
+      WRITE(*,*) 'UNLOCATABLE PARTICLE', coords
+      RETURN
+    ENDIF
     CALL MPI_CART_RANK(comm, coords, get_particle_processor, errcode)
     ! IF (get_particle_processor .NE. rank) PRINT *,
 
@@ -396,8 +398,8 @@ CONTAINS
   ! This subroutine is used to rearrange particles over processors
   SUBROUTINE distribute_particles
 
-    ! This subroutine actually moves particles which are on the wrong processor
-    ! And moves then to the correct processor.
+    ! This subroutine moves particles which are on the wrong processor
+    ! to the correct processor.
 
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_send
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_recv
