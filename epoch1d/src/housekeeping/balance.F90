@@ -109,7 +109,7 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
     IF (over_ride) THEN
       DO ispecies = 1, n_species
-        current=>particle_species(ispecies)%attached_list%head
+        current=>species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           current%processor_at_t0 = rank
           current=>current%next
@@ -293,7 +293,7 @@ CONTAINS
     density = 0.0_num
 
     DO ispecies = 1, n_species
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_min, NOT x_min_local
         part_x = current%part_pos - x_min
@@ -408,7 +408,7 @@ CONTAINS
 
     ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))
     DO ispecies = 1, n_species
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
       DO iproc_send = 0, nproc - 1
         CALL create_empty_partlist(pointers_send(iproc_send))
         CALL create_empty_partlist(pointers_recv(iproc_send))
@@ -427,7 +427,7 @@ CONTAINS
 #endif
         IF (part_proc .NE. rank) THEN
           CALL remove_particle_from_partlist(&
-              particle_species(ispecies)%attached_list, current)
+              species_list(ispecies)%attached_list, current)
           CALL add_particle_to_partlist(pointers_send(part_proc), current)
         ENDIF
         current=>next
@@ -447,7 +447,7 @@ CONTAINS
       ENDDO
 
       DO iproc_recv = 0, nproc - 1
-        CALL append_partlist(particle_species(ispecies)%attached_list, &
+        CALL append_partlist(species_list(ispecies)%attached_list, &
             pointers_recv(iproc_recv))
       ENDDO
     ENDDO

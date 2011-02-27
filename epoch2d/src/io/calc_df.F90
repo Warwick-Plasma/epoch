@@ -50,12 +50,12 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_m  = particle_species(ispecies)%mass
+      part_m  = species_list(ispecies)%mass
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-      fac = particle_species(ispecies)%weight * idx
+      fac = species_list(ispecies)%weight * idx
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
@@ -148,12 +148,12 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc = c * particle_species(ispecies)%mass
+      part_mc = c * species_list(ispecies)%mass
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-      l_weight = particle_species(ispecies)%weight
+      l_weight = species_list(ispecies)%weight
       l_weightc = c * l_weight
 #endif
       DO WHILE (ASSOCIATED(current))
@@ -256,12 +256,12 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_q  = particle_species(ispecies)%charge
+      part_q  = species_list(ispecies)%charge
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-      fac = particle_species(ispecies)%weight * idx
+      fac = species_list(ispecies)%weight * idx
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
@@ -348,9 +348,9 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_WEIGHT
-      wdata = particle_species(ispecies)%weight * idx
+      wdata = species_list(ispecies)%weight * idx
 #endif
       DO WHILE (ASSOCIATED(current))
 #ifdef PER_PARTICLE_WEIGHT
@@ -443,12 +443,12 @@ CONTAINS
     sigma = 0.0_num
 
     DO ispecies = spec_start, spec_end
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      sqrt_part_m  = SQRT(particle_species(ispecies)%mass)
+      sqrt_part_m  = SQRT(species_list(ispecies)%mass)
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-      l_weight = particle_species(ispecies)%weight
+      l_weight = species_list(ispecies)%weight
 #endif
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -507,9 +507,9 @@ CONTAINS
 
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      sqrt_part_m  = SQRT(particle_species(ispecies)%mass)
+      sqrt_part_m  = SQRT(species_list(ispecies)%mass)
 #endif
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -608,7 +608,7 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num

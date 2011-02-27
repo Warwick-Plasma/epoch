@@ -64,7 +64,7 @@ CONTAINS
     ALLOCATE(npart_probe_per_proc(nproc))
 
     DO ispecies = 1, n_species
-      current_probe=>particle_species(ispecies)%attached_probes
+      current_probe=>species_list(ispecies)%attached_probes
       DO WHILE(ASSOCIATED(current_probe))
         ! If don't dump this probe currently then just cycle
         IF (IAND(current_probe%dump, code) .EQ. 0) THEN
@@ -117,7 +117,7 @@ CONTAINS
               iterate_probe_weight, part_probe_offset)
 #else
           CALL sdf_write_srl(sdf_handle, TRIM(temp_name), TRIM(probe_name), &
-              particle_species(ispecies)%weight)
+              species_list(ispecies)%weight)
 #endif
 
           CALL destroy_partlist(current_probe%sampled_particles)

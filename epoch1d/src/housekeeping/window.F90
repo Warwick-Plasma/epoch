@@ -73,21 +73,21 @@ CONTAINS
     ! Only processors on the right need do anything
     IF (coordinates(1) .EQ. nprocx-1) THEN
       DO ispecies = 1, n_species
-        DO ipart = 1, particle_species(ispecies)%npart_per_cell
+        DO ipart = 1, species_list(ispecies)%npart_per_cell
           ALLOCATE(current)
           rand = random() - 0.5_num
           current%part_pos = x_max + dx + rand * dx
 
           DO i = 1, 3
-            temp_local = particle_species(ispecies)%temperature(i)
+            temp_local = species_list(ispecies)%temperature(i)
             current%part_p(i) = &
-                momentum_from_temperature(particle_species(ispecies)%mass, &
+                momentum_from_temperature(species_list(ispecies)%mass, &
                 temp_local, 0.0_num)
           ENDDO
 
 #ifdef PER_PARTICLE_WEIGHT
-          weight_local = particle_species(ispecies)%density &
-                / (REAL(particle_species(ispecies)%npart_per_cell, num)/(dx))
+          weight_local = species_list(ispecies)%density &
+                / (REAL(species_list(ispecies)%npart_per_cell, num)/(dx))
           current%weight = weight_local
 #endif
 #ifdef PARTICLE_DEBUG
@@ -95,7 +95,7 @@ CONTAINS
           current%processor_at_t0 = rank
 #endif
           CALL add_particle_to_partlist(&
-              particle_species(ispecies)%attached_list, current)
+              species_list(ispecies)%attached_list, current)
         ENDDO
       ENDDO
     ENDIF
@@ -111,12 +111,12 @@ CONTAINS
 
     IF (coordinates(1) .EQ. 0) THEN
       DO ispecies = 1, n_species
-        current=>particle_species(ispecies)%attached_list%head
+        current=>species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           next=>current%next
           IF (current%part_pos .LT. x_min-0.5_num*dx) THEN
             CALL remove_particle_from_partlist(&
-                particle_species(ispecies)%attached_list, current)
+                species_list(ispecies)%attached_list, current)
             DEALLOCATE(current)
           ENDIF
           current=>next

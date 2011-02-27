@@ -28,7 +28,7 @@ CONTAINS
     get_total_local_particles = 0
     DO ispecies = 1, n_species
       get_total_local_particles = get_total_local_particles &
-          + particle_species(ispecies)%attached_list%count
+          + species_list(ispecies)%attached_list%count
     ENDDO
 
   END FUNCTION get_total_local_particles
@@ -51,7 +51,7 @@ CONTAINS
     ! count the number of dumped particles of each species
     n_dump_species = 0
     DO ispecies = 1, n_species
-      IF (particle_species(ispecies)%dump .OR. force_restart) THEN
+      IF (species_list(ispecies)%dump .OR. force_restart) THEN
         n_dump_species = n_dump_species + 1
       ENDIF
     ENDDO
@@ -59,8 +59,8 @@ CONTAINS
     ALLOCATE(npart_local(n_dump_species))
     index = 1
     DO ispecies = 1, n_species
-      IF (particle_species(ispecies)%dump .OR. force_restart) THEN
-        npart_local(index) = particle_species(ispecies)%attached_list%count
+      IF (species_list(ispecies)%dump .OR. force_restart) THEN
+        npart_local(index) = species_list(ispecies)%attached_list%count
         particle_file_lengths(index) = npart_local(index)
         index = index + 1
       ENDIF
@@ -140,7 +140,7 @@ CONTAINS
     ALLOCATE(species_subtypes(n_species))
     DO i = 1,n_species
       species_subtypes(i) = &
-          create_particle_subtype(particle_species(i)%attached_list%count)
+          create_particle_subtype(species_list(i)%attached_list%count)
     ENDDO
 
   END SUBROUTINE create_subtypes_for_load

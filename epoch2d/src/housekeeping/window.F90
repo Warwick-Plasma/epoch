@@ -13,8 +13,8 @@ CONTAINS
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
-      ALLOCATE(particle_species(ispecies)%density(-2:ny+3))
-      ALLOCATE(particle_species(ispecies)%temperature(-2:ny+3, 1:3))
+      ALLOCATE(species_list(ispecies)%density(-2:ny+3))
+      ALLOCATE(species_list(ispecies)%temperature(-2:ny+3, 1:3))
     ENDDO
 
   END SUBROUTINE allocate_window
@@ -26,10 +26,10 @@ CONTAINS
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
-      IF (ASSOCIATED(particle_species(ispecies)%density)) &
-          DEALLOCATE(particle_species(ispecies)%density)
-      IF (ASSOCIATED(particle_species(ispecies)%temperature)) &
-          DEALLOCATE(particle_species(ispecies)%temperature)
+      IF (ASSOCIATED(species_list(ispecies)%density)) &
+          DEALLOCATE(species_list(ispecies)%density)
+      IF (ASSOCIATED(species_list(ispecies)%temperature)) &
+          DEALLOCATE(species_list(ispecies)%temperature)
     ENDDO
 
   END SUBROUTINE deallocate_window
@@ -105,7 +105,7 @@ CONTAINS
     IF (coordinates(2) .EQ. nprocx-1) THEN
       DO ispecies = 1, n_species
         DO iy = 1, ny
-          DO ipart = 1, particle_species(ispecies)%npart_per_cell
+          DO ipart = 1, species_list(ispecies)%npart_per_cell
             ALLOCATE(current)
             rand = random() - 0.5_num
             current%part_pos(1) = x_max + dx + rand * dx
@@ -129,10 +129,10 @@ CONTAINS
               temp_local = 0.0_num
               DO isuby = -1, +1
                 temp_local = temp_local + gy(isuby) &
-                    * particle_species(ispecies)%temperature(cell_y+isuby, i)
+                    * species_list(ispecies)%temperature(cell_y+isuby, i)
               ENDDO
               current%part_p(i) = &
-                  momentum_from_temperature(particle_species(ispecies)%mass, &
+                  momentum_from_temperature(species_list(ispecies)%mass, &
                   temp_local, 0.0_num)
             ENDDO
 
@@ -140,8 +140,8 @@ CONTAINS
             weight_local = 0.0_num
             DO isuby = -1, +1
               weight_local = weight_local + gy(isuby) &
-                  * particle_species(ispecies)%density(cell_y+isuby) &
-                  / (REAL(particle_species(ispecies)%npart_per_cell, num) &
+                  * species_list(ispecies)%density(cell_y+isuby) &
+                  / (REAL(species_list(ispecies)%npart_per_cell, num) &
                   / (dx*dy))
             ENDDO
             current%weight = weight_local
@@ -151,7 +151,7 @@ CONTAINS
             current%processor_at_t0 = rank
 #endif
             CALL add_particle_to_partlist(&
-                particle_species(ispecies)%attached_list, current)
+                species_list(ispecies)%attached_list, current)
           ENDDO
         ENDDO
       ENDDO
@@ -168,12 +168,12 @@ CONTAINS
 
     IF (coordinates(2) .EQ. 0) THEN
       DO ispecies = 1, n_species
-        current=>particle_species(ispecies)%attached_list%head
+        current=>species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           next=>current%next
           IF (current%part_pos(1) .LT. x_min-0.5_num*dx) THEN
             CALL remove_particle_from_partlist(&
-                particle_species(ispecies)%attached_list, current)
+                species_list(ispecies)%attached_list, current)
             DEALLOCATE(current)
           ENDIF
           current=>next

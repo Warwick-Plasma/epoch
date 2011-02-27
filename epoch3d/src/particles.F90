@@ -130,16 +130,16 @@ CONTAINS
     idtxy = idt * idx * idy * fac**3
 
     DO ispecies = 1, n_species
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_WEIGHT
-      part_weight = particle_species(ispecies)%weight
+      part_weight = species_list(ispecies)%weight
       fcx = idtyz * part_weight
       fcy = idtxz * part_weight
       fcz = idtxy * part_weight
 #endif
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_q  = particle_species(ispecies)%charge
-      part_mc = c * particle_species(ispecies)%mass
+      part_q  = species_list(ispecies)%charge
+      part_mc = c * species_list(ispecies)%mass
       cmratio = part_q * dtfac / part_mc
       ccmratio = c * cmratio
 #ifdef PARTICLE_PROBES
@@ -147,7 +147,7 @@ CONTAINS
 #endif
 #endif
       !DEC$ VECTOR ALWAYS
-      DO ipart = 1, particle_species(ispecies)%attached_list%count
+      DO ipart = 1, species_list(ispecies)%attached_list%count
         next=>current%next
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
@@ -319,7 +319,7 @@ CONTAINS
         ! If the code is compiled with tracer particle support then put in an
         ! IF statement so that the current is not calculated for this species
 #ifdef TRACER_PARTICLES
-        IF (.NOT. particle_species(ispecies)%tracer) THEN
+        IF (.NOT. species_list(ispecies)%tracer) THEN
 #endif
           ! Now advance to t+1.5dt to calculate current. This is detailed in
           ! the manual between pages 37 and 41. The version coded up looks
@@ -424,7 +424,7 @@ CONTAINS
         ! system. These particles are copied into a separate part of the output
         ! file.
 
-        current_probe=>particle_species(ispecies)%attached_probes
+        current_probe=>species_list(ispecies)%attached_probes
 
         ! Cycle through probes
         DO WHILE(ASSOCIATED(current_probe))

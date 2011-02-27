@@ -11,14 +11,14 @@ CONTAINS
   SUBROUTINE auto_load
 
     INTEGER :: ispecies
-    TYPE(particle_family), POINTER :: species
+    TYPE(particle_species), POINTER :: species
 
     DO ispecies = 1, n_species
-      species=>particle_species(ispecies)
+      species=>species_list(ispecies)
       IF (move_window) THEN
-        particle_species(ispecies)%density = &
+        species_list(ispecies)%density = &
             initial_conditions(ispecies)%density(nx,:,:)
-        particle_species(ispecies)%temperature = &
+        species_list(ispecies)%temperature = &
             initial_conditions(ispecies)%temp(nx,:,:,:)
       ENDIF
 #ifdef PER_PARTICLE_WEIGHT
@@ -90,10 +90,10 @@ CONTAINS
           DO ix = 1, nx
             omega = &
                 SQRT((initial_conditions(ispecies)%density(ix, iy, iz)*q0**2) &
-                / (particle_species(ispecies)%mass * epsilon0) &
+                / (species_list(ispecies)%mass * epsilon0) &
                 + 6.0_num * k_max**2 * kb &
                 * MAXVAL(initial_conditions(ispecies)%temp(ix, iy, iz,:)) &
-                / (particle_species(ispecies)%mass))
+                / (species_list(ispecies)%mass))
             IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
           ENDDO
         ENDDO
@@ -120,7 +120,7 @@ CONTAINS
       density_max)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: density
-    TYPE(particle_family), POINTER :: species
+    TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
     INTEGER(KIND=8) :: npart_per_cell
@@ -244,7 +244,7 @@ CONTAINS
   ! This subroutine automatically loads a uniform density of pseudoparticles
   SUBROUTINE load_particles(species, load_list)
 
-    TYPE(particle_family), POINTER :: species
+    TYPE(particle_species), POINTER :: species
     LOGICAL, DIMENSION(-2:,-2:,-2:), INTENT(IN) :: load_list
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
@@ -418,7 +418,7 @@ CONTAINS
       density_max)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: density_in
-    TYPE(particle_family), POINTER :: species
+    TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
     REAL(num) :: weight_local
     REAL(num) :: cell_x_r, cell_frac_x

@@ -6,7 +6,7 @@ MODULE iterators
 
   SAVE
 
-  TYPE(particle_family), POINTER :: current_family
+  TYPE(particle_species), POINTER :: current_species
 
 CONTAINS
 
@@ -23,7 +23,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
@@ -59,7 +59,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
@@ -93,7 +93,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
@@ -125,7 +125,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
@@ -157,7 +157,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
@@ -191,12 +191,12 @@ CONTAINS
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
 #ifndef PER_PARTICLE_CHARGE_MASS
-    part_mc2 = (current_family%mass * c)**2
+    part_mc2 = (current_species%mass * c)**2
 #endif
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
@@ -231,12 +231,12 @@ CONTAINS
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
 #ifndef PER_PARTICLE_CHARGE_MASS
-    part_mc2 = (current_family%mass * c)**2
+    part_mc2 = (current_species%mass * c)**2
 #endif
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
@@ -271,12 +271,12 @@ CONTAINS
     REAL(num) :: part_mc2, gamma_mass
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
 #ifndef PER_PARTICLE_CHARGE_MASS
-    part_mc2 = (current_family%mass * c)**2
+    part_mc2 = (current_species%mass * c)**2
 #endif
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
@@ -311,7 +311,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
@@ -321,7 +321,7 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGE_MASS
         array(part_count) = cur%charge
 #else
-        array(part_count) = current_family%charge
+        array(part_count) = current_species%charge
 #endif
         cur=>cur%next
       ENDDO
@@ -348,7 +348,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
@@ -358,7 +358,7 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGE_MASS
         array(part_count) = cur%mass
 #else
-        array(part_count) = current_family%mass
+        array(part_count) = current_species%mass
 #endif
         cur=>cur%next
       ENDDO
@@ -386,7 +386,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
@@ -419,7 +419,7 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      CALL start_particle_list(current_family, current_list, cur)
+      CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0

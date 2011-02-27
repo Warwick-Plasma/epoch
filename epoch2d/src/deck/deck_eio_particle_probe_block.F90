@@ -142,7 +142,7 @@ CONTAINS
       ispecies = as_integer(value, handle_probe_deck)
       IF (handle_probe_deck .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
-          working_probe%probe_species=>particle_species(ispecies)
+          working_probe%probe_species=>species_list(ispecies)
         ELSE
           IF (rank .EQ. 0) THEN
             DO io = stdout, du, du - stdout ! Print to stdout and to file

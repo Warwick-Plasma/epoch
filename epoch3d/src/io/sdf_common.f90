@@ -83,7 +83,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_stitched_material = 10
   INTEGER(i4), PARAMETER :: c_blocktype_stitched_matvar = 11
   INTEGER(i4), PARAMETER :: c_blocktype_stitched_species = 12
-  INTEGER(i4), PARAMETER :: c_blocktype_family = 13
+  INTEGER(i4), PARAMETER :: c_blocktype_species = 13
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1

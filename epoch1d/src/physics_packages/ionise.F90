@@ -39,12 +39,12 @@ CONTAINS
     ALLOCATE(nd_high(-2:nx+3))
 
     DO ispecies = 1, n_species
-      IF (.NOT. particle_species(ispecies)%ionise) CYCLE
+      IF (.NOT. species_list(ispecies)%ionise) CYCLE
       CALL calc_number_density(nd_low, ispecies)
       CALL calc_number_density(nd_high, &
-          particle_species(ispecies)%ionise_to_species)
+          species_list(ispecies)%ionise_to_species)
       density = nd_low+nd_high
-      current=>particle_species(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next=>current%next
         part_x  = current%part_pos - x_min_local
@@ -116,7 +116,7 @@ CONTAINS
         IF (t_eff .GT. 1.0e-6_num) THEN
           lambda_db = lfac / SQRT(t_eff)
           saha_rhs = &
-              EXP(-particle_species(ispecies)%ionisation_energy / kb / t_eff) &
+              EXP(-species_list(ispecies)%ionisation_energy / kb / t_eff) &
               / lambda_db**3
           ion_frac = -saha_rhs &
               + SQRT(saha_rhs**2 + 2.0_num * density_part * saha_rhs)
@@ -131,11 +131,11 @@ CONTAINS
         ! subtract the current fraction and ionise
         IF (rand .LT. (ion_frac-ndp_high/MAX(ndp_low, c_non_zero))) THEN
           CALL remove_particle_from_partlist(&
-              particle_species(ispecies)%attached_list, current)
-          next_species = particle_species(ispecies)%ionise_to_species
+              species_list(ispecies)%attached_list, current)
+          next_species = species_list(ispecies)%ionise_to_species
           CALL add_particle_to_partlist(&
-              particle_species(next_species)%attached_list, current)
-          next_species = particle_species(ispecies)%release_species
+              species_list(next_species)%attached_list, current)
+          next_species = species_list(ispecies)%release_species
           IF (next_species .GT. 0) THEN
             ALLOCATE(new_part)
 #ifdef PER_PARTICLE_WEIGHT
@@ -144,15 +144,15 @@ CONTAINS
             new_part%part_pos = current%part_pos
             new_part%part_p = current%part_p
 #ifdef PER_PARTICLE_CHARGE_MASS
-            new_part%charge = particle_species(next_species)%charge
-            new_part%mass = particle_species(next_species)%mass
+            new_part%charge = species_list(next_species)%charge
+            new_part%mass = species_list(next_species)%mass
 #endif
 #ifdef PARTICLE_DEBUG
             new_part%processor = rank
             new_part%processor_at_t0 = rank
 #endif
             CALL add_particle_to_partlist(&
-                particle_species(next_species)%attached_list, new_part)
+                species_list(next_species)%attached_list, new_part)
           ENDIF
         ENDIF
 

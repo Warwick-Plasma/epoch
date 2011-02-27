@@ -163,21 +163,21 @@ CONTAINS
 
     ! Setup the particle lists
     IF (n_species .GT. 0) &
-        NULLIFY(particle_species(1)%prev, particle_species(n_species)%next)
+        NULLIFY(species_list(1)%prev, species_list(n_species)%next)
     DO ispecies = 1, n_species-1
-      particle_species(ispecies)%next=>particle_species(ispecies+1)
+      species_list(ispecies)%next=>species_list(ispecies+1)
     ENDDO
     DO ispecies = 2, n_species
-      particle_species(ispecies)%prev=>particle_species(ispecies-1)
+      species_list(ispecies)%prev=>species_list(ispecies-1)
     ENDDO
     DO ispecies = 1, n_species
-      particle_species(ispecies)%id = ispecies
+      species_list(ispecies)%id = ispecies
 #ifdef PARTICLE_PROBES
-      NULLIFY(particle_species(ispecies)%attached_probes)
+      NULLIFY(species_list(ispecies)%attached_probes)
 #endif
-      NULLIFY(particle_species(ispecies)%attached_list%next)
-      NULLIFY(particle_species(ispecies)%attached_list%prev)
-      CALL create_empty_partlist(particle_species(ispecies)%attached_list)
+      NULLIFY(species_list(ispecies)%attached_list%next)
+      NULLIFY(species_list(ispecies)%attached_list%prev)
+      CALL create_empty_partlist(species_list(ispecies)%attached_list)
     ENDDO
 
     start_time = MPI_WTIME()

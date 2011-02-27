@@ -33,7 +33,7 @@ CONTAINS
     INTEGER :: code, ispecies
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag
-    TYPE(particle_family), POINTER :: species
+    TYPE(particle_species), POINTER :: species
 
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
         .AND. MOD(i, stdout_frequency) .EQ. 0) THEN
@@ -104,7 +104,7 @@ CONTAINS
 #else
     IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
       DO ispecies = 1, n_species
-        species => particle_species(ispecies)
+        species => species_list(ispecies)
         IF (species%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
           CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
               'Particles/Weight/' // TRIM(species%name), species%weight)
@@ -453,9 +453,9 @@ CONTAINS
         DO ispecies = 1, n_species
           CALL func(array, ispecies)
           WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
-              TRIM(particle_species(ispecies)%name)
+              TRIM(species_list(ispecies)%name)
           WRITE(temp_name, '(a, "_", a)') TRIM(name), &
-              TRIM(particle_species(ispecies)%name)
+              TRIM(species_list(ispecies)%name)
           CALL sdf_write_plain_variable(sdf_handle, &
               TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
               TRIM(units), dims, stagger, 'grid', &
@@ -479,9 +479,9 @@ CONTAINS
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
         DO ispecies = 1, n_species
           WRITE(temp_block_id, '(a, "_", a, "_averaged")') TRIM(block_id), &
-              TRIM(particle_species(ispecies)%name)
+              TRIM(species_list(ispecies)%name)
           WRITE(temp_name, '(a, "_", a, "_averaged")') TRIM(name), &
-              TRIM(particle_species(ispecies)%name)
+              TRIM(species_list(ispecies)%name)
           CALL sdf_write_plain_variable(sdf_handle, &
               TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
               TRIM(units), dims, stagger, 'grid', &
@@ -511,14 +511,14 @@ CONTAINS
     species_offset = 0
 
     DO ispecies = 1, n_species
-      CALL MPI_ALLGATHER(particle_species(ispecies)%attached_list%count, 1, &
+      CALL MPI_ALLGATHER(species_list(ispecies)%attached_list%count, 1, &
           MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
       species_count = 0
       DO i = 1, nproc
         IF (rank .EQ. i-1) species_offset(ispecies) = species_count
         species_count = species_count + npart_species_per_proc(i)
       ENDDO
-      particle_species(ispecies)%count = species_count
+      species_list(ispecies)%count = species_count
     ENDDO
 
     DEALLOCATE(npart_species_per_proc)
@@ -536,18 +536,18 @@ CONTAINS
 
     CALL species_offset_init()
 
-    CALL start_particle_family_only(current_family)
+    CALL start_particle_species_only(current_species)
 
     DO ispecies = 1, n_species
-      IF (current_family%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+      IF (current_species%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
         CALL sdf_write_point_mesh(sdf_handle, &
-            'grid/' // TRIM(current_family%name), &
-            'Grid/Point/' // TRIM(current_family%name), &
-            particle_species(ispecies)%count, c_dimension_3d, &
+            'grid/' // TRIM(current_species%name), &
+            'Grid/Point/' // TRIM(current_species%name), &
+            species_list(ispecies)%count, c_dimension_3d, &
             iterate_particles, species_offset(ispecies))
       ENDIF
 
-      CALL advance_particle_family_only(current_family)
+      CALL advance_particle_species_only(current_species)
     ENDDO
 
   END SUBROUTINE write_particle_grid
@@ -575,20 +575,20 @@ CONTAINS
 
     CALL species_offset_init()
 
-    CALL start_particle_family_only(current_family)
+    CALL start_particle_species_only(current_species)
 
     DO ispecies = 1, n_species
-      IF (current_family%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+      IF (current_species%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
         CALL sdf_write_point_variable(sdf_handle, &
-            lowercase(TRIM(name) // '/' // TRIM(current_family%name)), &
-            'Particles/' // TRIM(current_family%name) // '/' // &
+            lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
+            'Particles/' // TRIM(current_species%name) // '/' // &
             TRIM(name), '', &
-            particle_species(ispecies)%count, &
-            'grid/' // TRIM(current_family%name), &
+            species_list(ispecies)%count, &
+            'grid/' // TRIM(current_species%name), &
             iterator, species_offset(ispecies))
       ENDIF
 
-      CALL advance_particle_family_only(current_family)
+      CALL advance_particle_species_only(current_species)
     ENDDO
 
   END SUBROUTINE write_particle_variable

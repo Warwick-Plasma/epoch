@@ -63,10 +63,10 @@ CONTAINS
     INTEGER :: i
 
     as_species = c_prc_not_this_type
-    IF (.NOT. ASSOCIATED(particle_species)) RETURN
+    IF (.NOT. ASSOCIATED(species_list)) RETURN
 
     DO i = 1, n_species
-      IF (str_cmp(name, particle_species(i)%name)) THEN
+      IF (str_cmp(name, species_list(i)%name)) THEN
         as_species = i
         RETURN
       ENDIF

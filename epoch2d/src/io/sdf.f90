@@ -36,7 +36,7 @@ MODULE sdf
   PUBLIC :: c_blocktype_stitched_material
   PUBLIC :: c_blocktype_stitched_matvar
   PUBLIC :: c_blocktype_stitched_species
-  PUBLIC :: c_blocktype_family
+  PUBLIC :: c_blocktype_species
 
   PUBLIC :: c_datatype_null
   PUBLIC :: c_datatype_integer4

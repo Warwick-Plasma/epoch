@@ -90,7 +90,7 @@ PROGRAM pic
 
   npart_global = 0
   DO ispecies = 1, n_species
-    npart_global = npart_global + particle_species(ispecies)%count
+    npart_global = npart_global + species_list(ispecies)%count
   ENDDO
 
   ! .TRUE. to over_ride balance fraction check
@@ -121,7 +121,7 @@ PROGRAM pic
     CALL push_particles
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
     ! After this line, the particles can be accessed on a cell by cell basis
-    ! Using the particle_family%secondary_list property
+    ! Using the particle_species%secondary_list property
     CALL reorder_particles_to_grid
     ! CALL Collisions  !An example, no collision operator yet
 #ifdef PER_PARTICLE_WEIGHT
@@ -163,13 +163,13 @@ PROGRAM pic
       ENDIF
     ENDIF
 
-    ! This section ensures that the particle count for the particle_species
+    ! This section ensures that the particle count for the species_list
     ! objects is accurate. This makes some things easier, but increases
     ! communication
 #ifdef PARTICLE_COUNT_UPDATE
     DO ispecies = 1, n_species
-      CALL MPI_ALLREDUCE(particle_species(ispecies)%attached_list%count, &
-          particle_species(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
+      CALL MPI_ALLREDUCE(species_list(ispecies)%attached_list%count, &
+          species_list(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
           comm, errcode)
     ENDDO
 #endif

@@ -170,11 +170,11 @@ CONTAINS
     real_space_area = 1.0_num
     current_data = 0.0_num
 #ifndef PER_PARTICLE_CHARGE_MASS
-    part_mass = particle_species(species)%mass
+    part_mass = species_list(species)%mass
     part_mass_c = part_mass * c
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-    part_weight = particle_species(species)%weight
+    part_weight = species_list(species)%weight
 #endif
 
     DO idim = 1, c_df_curdims
@@ -278,7 +278,7 @@ CONTAINS
           ranges(2,idim) = -1.0e6_num
         ENDIF
       ENDDO
-      current=>particle_species(species)%attached_list%head
+      current=>species_list(species)%attached_list%head
       ind = 0
 
       DO WHILE(ASSOCIATED(current))
@@ -358,7 +358,7 @@ CONTAINS
     ALLOCATE(array(resolution(1)))
     array = 0.0_num
 
-    current=>particle_species(species)%attached_list%head
+    current=>species_list(species)%attached_list%head
     DO WHILE(ASSOCIATED(current))
       particle_data(1:c_ndims) = current%part_pos
       particle_data(c_ndims+1:c_ndims+3) = current%part_p
@@ -429,7 +429,7 @@ CONTAINS
       grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
     ENDDO
 
-    var_name = TRIM(name) // '/' // TRIM(particle_species(species)%name)
+    var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
 
     CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
         'Grid/' // TRIM(var_name), grid1)
@@ -522,11 +522,11 @@ CONTAINS
     real_space_area = 1.0_num
     current_data = 0.0_num
 #ifndef PER_PARTICLE_CHARGE_MASS
-    part_mass = particle_species(species)%mass
+    part_mass = species_list(species)%mass
     part_mass_c = part_mass * c
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-    part_weight = particle_species(species)%weight
+    part_weight = species_list(species)%weight
 #endif
 
     DO idim = 1, c_df_curdims
@@ -630,7 +630,7 @@ CONTAINS
           ranges(2,idim) = -1.0e6_num
         ENDIF
       ENDDO
-      current=>particle_species(species)%attached_list%head
+      current=>species_list(species)%attached_list%head
       ind = 0
 
       DO WHILE(ASSOCIATED(current))
@@ -710,7 +710,7 @@ CONTAINS
     ALLOCATE(array(resolution(1), resolution(2)))
     array = 0.0_num
 
-    current=>particle_species(species)%attached_list%head
+    current=>species_list(species)%attached_list%head
     DO WHILE(ASSOCIATED(current))
       particle_data(1:c_ndims) = current%part_pos
       particle_data(c_ndims+1:c_ndims+3) = current%part_p
@@ -786,7 +786,7 @@ CONTAINS
       grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
     ENDDO
 
-    var_name = TRIM(name) // '/' // TRIM(particle_species(species)%name)
+    var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
 
     CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
         'Grid/' // TRIM(var_name), grid1, grid2)
@@ -880,11 +880,11 @@ CONTAINS
     real_space_area = 1.0_num
     current_data = 0.0_num
 #ifndef PER_PARTICLE_CHARGE_MASS
-    part_mass = particle_species(species)%mass
+    part_mass = species_list(species)%mass
     part_mass_c = part_mass * c
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-    part_weight = particle_species(species)%weight
+    part_weight = species_list(species)%weight
 #endif
 
     DO idim = 1, c_df_curdims
@@ -988,7 +988,7 @@ CONTAINS
           ranges(2,idim) = -1.0e6_num
         ENDIF
       ENDDO
-      current=>particle_species(species)%attached_list%head
+      current=>species_list(species)%attached_list%head
       ind = 0
 
       DO WHILE(ASSOCIATED(current))
@@ -1068,7 +1068,7 @@ CONTAINS
     ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
     array = 0.0_num
 
-    current=>particle_species(species)%attached_list%head
+    current=>species_list(species)%attached_list%head
     DO WHILE(ASSOCIATED(current))
       particle_data(1:c_ndims) = current%part_pos
       particle_data(c_ndims+1:c_ndims+3) = current%part_p
@@ -1149,7 +1149,7 @@ CONTAINS
       grid3(idir) = ranges(1,3) + (idir - 1) * dgrid(3)
     ENDDO
 
-    var_name = TRIM(name) // '/' // TRIM(particle_species(species)%name)
+    var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
 
     CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
         'Grid/' // TRIM(var_name), grid1, grid2, grid3)

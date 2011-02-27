@@ -42,7 +42,7 @@ CONTAINS
       ALLOCATE(species_charge_set(n_species))
       species_charge_set = .FALSE.
       DO i = 1, n_species
-        particle_species(i)%name = species_names(i)
+        species_list(i)%name = species_names(i)
         IF (rank .EQ. 0) THEN
           CALL integer_as_string(i, string)
           PRINT*,'Name of species ', TRIM(ADJUSTL(string)), ' is ', &
@@ -146,14 +146,14 @@ CONTAINS
 
     IF (str_cmp(element, "mass")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
-      particle_species(species_id)%mass = &
+      species_list(species_id)%mass = &
           as_real(value, handle_species_deck) * m0
       RETURN
     ENDIF
 
     IF (str_cmp(element, "charge")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
-      particle_species(species_id)%charge = &
+      species_list(species_id)%charge = &
           as_real(value, handle_species_deck) * q0
       species_charge_set(species_id) = .TRUE.
       RETURN
@@ -162,24 +162,24 @@ CONTAINS
     IF (str_cmp(element, "frac") .OR. str_cmp(element, "fraction")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
       IF (npart_global .GE. 0) THEN
-        particle_species(species_id)%count = &
+        species_list(species_id)%count = &
             INT(as_real(value, handle_species_deck) * npart_global)
       ELSE
-        particle_species(species_id)%count = 0
+        species_list(species_id)%count = 0
       ENDIF
       RETURN
     ENDIF
 
     IF (str_cmp(element, "npart")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
-      particle_species(species_id)%count = &
+      species_list(species_id)%count = &
           as_long_integer(value, handle_species_deck)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "dump")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
-      particle_species(species_id)%dump = &
+      species_list(species_id)%dump = &
           as_logical(value, handle_species_deck)
       RETURN
     ENDIF
@@ -190,7 +190,7 @@ CONTAINS
     IF (str_cmp(element, "tracer")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef TRACER_PARTICLES
-      particle_species(species_id)%tracer = &
+      species_list(species_id)%tracer = &
           as_logical(value, handle_species_deck)
 #else
       IF (as_logical(value, handle_species_deck)) THEN
@@ -207,7 +207,7 @@ CONTAINS
     IF (str_cmp(element, "split")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-      particle_species(species_id)%split = &
+      species_list(species_id)%split = &
           as_logical(value, handle_species_deck)
 #else
       IF (as_logical(value, handle_species_deck)) THEN
@@ -221,7 +221,7 @@ CONTAINS
     IF (str_cmp(element, "npart_max")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
-      particle_species(species_id)%npart_max = &
+      species_list(species_id)%npart_max = &
           as_long_integer(value, handle_species_deck)
 #endif
       RETURN
@@ -233,7 +233,7 @@ CONTAINS
     IF (str_cmp(element, "ionise")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef PARTICLE_IONISE
-      particle_species(species_id)%ionise = &
+      species_list(species_id)%ionise = &
           as_logical(value, handle_species_deck)
 #else
       IF (as_logical(value, handle_species_deck)) THEN
@@ -247,7 +247,7 @@ CONTAINS
     IF (str_cmp(element, "ionise_to_species")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef PARTICLE_IONISE
-      particle_species(species_id)%ionise_to_species = &
+      species_list(species_id)%ionise_to_species = &
           as_integer(value, handle_species_deck)
 #endif
       RETURN
@@ -256,7 +256,7 @@ CONTAINS
     IF (str_cmp(element, "release_species_on_ionise")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef PARTICLE_IONISE
-      particle_species(species_id)%release_species = &
+      species_list(species_id)%release_species = &
           as_integer(value, handle_species_deck)
 #endif
       RETURN
@@ -265,7 +265,7 @@ CONTAINS
     IF (str_cmp(element, "ionisation_energy")) THEN
       IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef PARTICLE_IONISE
-      particle_species(species_id)%ionisation_energy = &
+      species_list(species_id)%ionisation_energy = &
           as_real(value, handle_species_deck)
 #endif
       RETURN
@@ -322,7 +322,7 @@ CONTAINS
       ENDIF
       initial_conditions(species_id)%density = &
           initial_conditions(species_id)%density &
-              / particle_species(species_id)%mass
+              / species_list(species_id)%mass
       RETURN
     ENDIF
 
@@ -465,12 +465,12 @@ CONTAINS
     IF (deck_state .NE. c_ds_ic) RETURN
 
     DO i = 1, n_species
-      IF (particle_species(i)%mass .LT. 0) THEN
+      IF (species_list(i)%mass .LT. 0) THEN
         IF (rank .EQ. 0) THEN
           DO io = stdout, du, du - stdout ! Print to stdout and to file
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'No mass specified for particle species "', &
-                TRIM(particle_species(i)%name),'"'
+                TRIM(species_list(i)%name),'"'
           ENDDO
         ENDIF
         check_species_block = c_err_missing_elements
@@ -480,7 +480,7 @@ CONTAINS
           DO io = stdout, du, du - stdout ! Print to stdout and to file
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'No charge specified for particle species "', &
-                TRIM(particle_species(i)%name),'"'
+                TRIM(species_list(i)%name),'"'
           ENDDO
         ENDIF
         check_species_block = c_err_missing_elements

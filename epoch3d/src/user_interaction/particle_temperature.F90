@@ -9,12 +9,12 @@ CONTAINS
 
   ! Subroutine to initialise a thermal particle distribution
   ! Assumes linear interpolation of temperature between cells
-  SUBROUTINE setup_particle_temperature(temperature, direction, part_family, &
+  SUBROUTINE setup_particle_temperature(temperature, direction, part_species, &
       drift)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
-    TYPE(particle_family), POINTER :: part_family
+    TYPE(particle_species), POINTER :: part_species
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: drift
     TYPE(particle_list), POINTER :: partlist
     REAL(num) :: mass, temp_local, drift_local
@@ -27,14 +27,14 @@ CONTAINS
     INTEGER(KIND=8) :: ipart
     INTEGER :: ix, iy, iz
 
-    partlist=>part_family%attached_list
+    partlist=>part_species%attached_list
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
 #ifdef PER_PARTICLE_CHARGE_MASS
       mass = current%mass
 #else
-      mass = part_family%mass
+      mass = part_species%mass
 #endif
 
       ! Assume that temperature is cell centred

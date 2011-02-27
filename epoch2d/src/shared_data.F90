@@ -389,10 +389,10 @@ MODULE shared_data
   END TYPE particle_list
 
   ! Object representing a particle species
-  TYPE particle_family
+  TYPE particle_species
     ! Core properties
     CHARACTER(string_length) :: name
-    TYPE(particle_family), POINTER :: next, prev
+    TYPE(particle_species), POINTER :: next, prev
     INTEGER :: id
     LOGICAL :: dump
 
@@ -432,7 +432,7 @@ MODULE shared_data
 #ifdef PARTICLE_PROBES
     TYPE(particle_probe), POINTER :: attached_probes
 #endif
-  END TYPE particle_family
+  END TYPE particle_species
 
   !----------------------------------------------------------------------------
   ! Initial conditions
@@ -487,7 +487,7 @@ MODULE shared_data
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
 
-    TYPE(particle_family), POINTER :: probe_species
+    TYPE(particle_species), POINTER :: probe_species
     TYPE(particle_list) :: sampled_particles
     TYPE(particle_probe), POINTER :: next
     INTEGER :: dump
@@ -509,7 +509,7 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: wk_array
 
-  TYPE(particle_family), DIMENSION(:), POINTER :: particle_species
+  TYPE(particle_species), DIMENSION(:), POINTER :: species_list
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, y
 

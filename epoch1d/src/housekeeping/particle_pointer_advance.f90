@@ -5,42 +5,42 @@ MODULE particle_pointer_advance
   IMPLICIT NONE
 
   SAVE
-  TYPE(particle_family), POINTER :: current_head
+  TYPE(particle_species), POINTER :: current_head
 
 CONTAINS
 
-  SUBROUTINE start_particle_family(part_family, partlist, part)
+  SUBROUTINE start_particle_species(part_species, partlist, part)
 
-    TYPE(particle_family), POINTER :: part_family
+    TYPE(particle_species), POINTER :: part_species
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: part
 
-    part_family=>particle_species(1)
+    part_species=>species_list(1)
 
-    CALL start_particle_list(part_family, partlist, part)
+    CALL start_particle_list(part_species, partlist, part)
 
-  END SUBROUTINE start_particle_family
-
-
-
-  SUBROUTINE start_particle_family_only(part_family)
-
-    TYPE(particle_family), POINTER :: part_family
-
-    part_family=>particle_species(1)
-
-  END SUBROUTINE start_particle_family_only
+  END SUBROUTINE start_particle_species
 
 
 
-  SUBROUTINE start_particle_list(part_family, partlist, part)
+  SUBROUTINE start_particle_species_only(part_species)
 
-    TYPE(particle_family), POINTER :: part_family
+    TYPE(particle_species), POINTER :: part_species
+
+    part_species=>species_list(1)
+
+  END SUBROUTINE start_particle_species_only
+
+
+
+  SUBROUTINE start_particle_list(part_species, partlist, part)
+
+    TYPE(particle_species), POINTER :: part_species
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: part
 
-    IF (ASSOCIATED(part_family)) THEN
-      partlist=>part_family%attached_list
+    IF (ASSOCIATED(part_species)) THEN
+      partlist=>part_species%attached_list
       IF (ASSOCIATED(partlist)) THEN
         part=>partlist%head
       ELSE
@@ -71,25 +71,25 @@ CONTAINS
 
 
 
-  SUBROUTINE advance_particle_family(part_family, partlist, part)
+  SUBROUTINE advance_particle_species(part_species, partlist, part)
 
-    TYPE(particle_family), POINTER :: part_family
+    TYPE(particle_species), POINTER :: part_species
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: part
 
-    part_family=>part_family%next
-    CALL start_particle_list(part_family, partlist, part)
+    part_species=>part_species%next
+    CALL start_particle_list(part_species, partlist, part)
 
-  END SUBROUTINE advance_particle_family
+  END SUBROUTINE advance_particle_species
 
 
 
-  SUBROUTINE advance_particle_family_only(part_family)
+  SUBROUTINE advance_particle_species_only(part_species)
 
-    TYPE(particle_family), POINTER :: part_family
+    TYPE(particle_species), POINTER :: part_species
 
-    part_family=>part_family%next
+    part_species=>part_species%next
 
-  END SUBROUTINE advance_particle_family_only
+  END SUBROUTINE advance_particle_species_only
 
 END MODULE particle_pointer_advance

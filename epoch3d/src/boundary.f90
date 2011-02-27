@@ -516,7 +516,7 @@ CONTAINS
     REAL(num) :: part_pos
 
     DO ispecies = 1, n_species
-      cur=>particle_species(ispecies)%attached_list%head
+      cur=>species_list(ispecies)%attached_list%head
 
       DO iz = -1, 1
         DO iy = -1, 1
@@ -650,7 +650,7 @@ CONTAINS
         IF (out_of_bounds) THEN
           ! Particle has gone forever
           CALL remove_particle_from_partlist(&
-              particle_species(ispecies)%attached_list, cur)
+              species_list(ispecies)%attached_list, cur)
           IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
             CALL add_particle_to_partlist(ejected_particles, cur)
           ELSE
@@ -659,7 +659,7 @@ CONTAINS
         ELSE IF (ABS(xbd) + ABS(ybd) + ABS(zbd) .GT. 0) THEN
           ! Particle has left processor, send it to its neighbour
           CALL remove_particle_from_partlist(&
-              particle_species(ispecies)%attached_list, cur)
+              species_list(ispecies)%attached_list, cur)
           CALL add_particle_to_partlist(send(xbd, ybd, zbd), cur)
         ENDIF
 
@@ -677,7 +677,7 @@ CONTAINS
             izp = -iz
             CALL partlist_sendrecv(send(ix, iy, iz), recv(ixp, iyp, izp), &
                 neighbour(ix, iy, iz), neighbour(ixp, iyp, izp))
-            CALL append_partlist(particle_species(ispecies)%attached_list, &
+            CALL append_partlist(species_list(ispecies)%attached_list, &
                 recv(ixp, iyp, izp))
           ENDDO
         ENDDO
