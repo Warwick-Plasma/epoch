@@ -1,3 +1,130 @@
+25-02-2011 Changes for version 3.0
+
+Syntax changes:
+
+ * Added "eps0", "epsilon0" and "mu0" constants. These can now be used in
+   place of "epsilonnaught", etc.
+
+ * Renamed "freq" to "omega". Added "lambda".
+   Renamed both the input deck parameter and the name used in the
+   deck. Print a warning if "freq" is used in the deck.
+   Added "frequency" for specifying non-angular frequency.
+   Added "lambda" for specifying the laser wavelength in a vacuum.
+
+ * Made particle probe parameters consistent.
+   Previous versions had differing ways of specifying probes in
+   the input deck for each of epoch{1,2,3}d. They also had different
+   implementations in the code for testing if a particle had crossed
+   a probe.
+   They are now consistent. They are all specified using
+   a point in the plane and the normal vector to the plane. Particles
+   are recorded if they cross the plane in the direction of the normal
+   vector.
+   The points and normals are given using the following syntax:
+     point = (1,2.5,3)
+     normal = (0.5,1,0)
+
+   In 1d, both the above and scalar form are accepted:
+     point = 2.5
+     normal = 1
+
+ * Renamed "rho", "minrho", etc. to "density", "density_min", etc.
+
+ * There is now no distinction between the "constant" block and the "deo"
+   block. The "deo" block is now deprecated and will be removed at some
+   point.
+
+ * Removed the (currently unused) neutral_background option.
+
+Syntax additions:
+
+ * Added "supergauss" function to the maths parser.
+   This is identical to the existing "gauss" function except that
+   it accepts a fourth parameter which is the power to raise the
+   argument to.
+
+ * Added "profile" to epoch1d lasers in the deck for consistency.
+
+ * Added temp_{x,y,z}_ev for specifying temperature in elecronvolts.
+
+ * Added "micron" constant. This is to help readability of units given in
+   microns. eg. "lambda = 1.06 * micron"
+
+ * Added "nstep_snapshot" entry to the output block of input.decks
+   This allows a user to specify the number of timesteps between
+   output dumps as well as the simulation time between dumps.
+   Both can be specified and they will both be tested for.
+   Also made "dt_snapshot" an optional parameter.
+   If "dt_snapshot" is not specified then it is not tested for.
+   If "nstep_snapshot" is not specified then it is not tested for.
+
+ * Added "dump_source_code" and "dump_input_decks" options.
+   These are logical flags which control whether or not source code
+   and input decks are written to restart dumps.
+
+Additions and changes:
+
+ * Improved initial particle loading algorithm.
+   There are difficulties in smoothly assigning particle weights when
+   using per-particle weights and the density profile is discontinuous.
+   To fix this isssue the weight assignments in vacuum cells are now
+   reflected back into the non-vacuum area.
+
+ * Write per-species particle data
+
+ * Dump output to the new SDF format.
+
+ * Added SDF VisIt, IDL and MatLab readers.
+
+ * Use a less memory-hungry stack implementation.
+
+ * Adjusted polarization angle and defaults for lasers.
+   The polarization angle for a laser is now measured in a systematic
+   way with respect to the right-hand triad of propagation direction,
+   electric and magnetic fields. The previous version was somewhat random.
+   If the laser is on x_min then the default E field is in the y-direction
+   and the B field is the z-direction. The polarization angle is measured
+   clockwise about the x-axis with zero along the y-axis.
+   Similarly, for propagation directions:
+    y_min: angle about y-axis, zero along z-axis
+    z_min: angle about z-axis, zero along x-axis
+    x_max: angle anti-clockwise about x-axis, zero along y-axis
+    y_max: angle anti-clockwise about y-axis, zero along z-axis
+    z_max: angle anti-clockwise about z-axis, zero along x-axis
+
+   Also set new default values for lasers. The default end time is t_end
+   and the default profile is 1.0.
+
+ * Moved unnecessary files out of epochXd directories.
+   Also added the missing "include" directory to the source code
+   which gets packed by gen_src_module.
+
+ * Added comments to the Makefile
+
+ * Check that laser frequency and amplitude have been specified.
+
+ * Allow the code to still run if npart equals zero.
+
+ * Improved consistency of warning messages.
+
+ * Added constants for status file unit numbers.
+
+ * Only write deck parser diagnostics to one file.
+
+ * Only report missing options if they have been requested.
+
+ * Added a globally shared seed number for random number generation.
+
+ * Replaced random number generator with a better algorithm.
+
+ * Added default values for "nsteps", "t_end" and "dt_multiplier".
+
+ * Normalise particle momentum before doing the push.
+   This increases the accuracy of calculations and allows the code to
+   run in single precision.
+
+ * Various bugfixes
+
 28-09-2010 Changes for version 2.3
 
  * Added optional "use_random_seed" flag.
