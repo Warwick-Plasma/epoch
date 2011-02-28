@@ -32,7 +32,7 @@ begin:constant
   xi = 3.0e-6 - th
   xo = 3.0e-6 + th
   r = sqrt(y^2)
-end:deo
+end:constant
 
 
 begin:species
