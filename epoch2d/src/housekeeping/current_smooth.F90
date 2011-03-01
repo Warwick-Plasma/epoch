@@ -24,33 +24,34 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: wk_array
     INTEGER :: ix, iy
 #ifdef HIGH_ORDER_SMOOTHING
-    INTEGER :: icyclex, icycley
+    INTEGER :: isubx, isuby
     REAL(num), DIMENSION(sf_min:sf_max) :: weight_fn
+    REAL(num) :: val, wf
 #endif
 
     ALLOCATE(wk_array(1:nx, 1:ny))
+
 #ifdef HIGH_ORDER_SMOOTHING
     CALL particle_to_grid(0.0_num, weight_fn)
 
-    wk_array = 0.0_num
-
-    DO ix = 1, nx
-      DO iy = 1, ny
-        DO icyclex = sf_min, sf_max
-          DO icycley = sf_min, sf_max
-            wk_array(ix, iy) = wk_array(ix, iy) &
-                + array(ix+icyclex, iy+icycley) * weight_fn(icyclex) &
-                * weight_fn(icycley)
+    DO iy = 1, ny
+      DO ix = 1, nx
+        val = 0.0_num
+        DO isuby = sf_min, sf_max
+          wf = weight_fn(isuby)
+          DO isubx = sf_min, sf_max
+            val = val + array(ix+isubx, iy+isubx) * weight_fn(isubx) * wf
           ENDDO
         ENDDO
+        wk_array(ix, iy) = val
       ENDDO
     ENDDO
 #else
-    DO ix = 1, nx
-      DO iy = 1, ny
-        wk_array(ix, iy) = (array(ix, iy) + array(ix-1, iy)*0.25_num &
-            + array(ix+1, iy)*0.25_num + array(ix, iy-1) *0.25_num &
-            + array(ix, iy+1)*0.25_num)*0.5_num
+    DO iy = 1, ny
+      DO ix = 1, nx
+        wk_array(ix, iy) = (4.0_num * array(ix, iy) &
+            + array(ix-1, iy) + array(ix+1, iy) &
+            + array(ix, iy-1) + array(ix, iy+1)) * 0.125_num
       ENDDO
     ENDDO
 #endif

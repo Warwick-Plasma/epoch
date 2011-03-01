@@ -507,7 +507,6 @@ MODULE shared_data
   INTEGER :: nsteps, n_species = -1
   LOGICAL :: smooth_currents
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
-  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: wk_array
 
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
 

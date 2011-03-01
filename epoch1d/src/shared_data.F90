@@ -503,6 +503,7 @@ MODULE shared_data
   INTEGER(KIND=8) :: npart_global
   INTEGER :: nprocx
   INTEGER :: nsteps, n_species = -1
+  LOGICAL :: smooth_currents
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
   REAL(num), ALLOCATABLE, DIMENSION(:) :: wk_array
 

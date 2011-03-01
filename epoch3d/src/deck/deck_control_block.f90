@@ -6,7 +6,7 @@ MODULE deck_control_block
   IMPLICIT NONE
 
   SAVE
-  INTEGER, PARAMETER :: control_block_elements = 11 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 12 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -32,7 +32,8 @@ MODULE deck_control_block
           "neutral_background", &
           "field_order       ", &
           "stdout_frequency  ", &
-          "use_random_seed   " /)
+          "use_random_seed   ", &
+          "smooth_currents   " /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           "nx                ", &
@@ -57,7 +58,8 @@ MODULE deck_control_block
           "neutral_background", &
           "field_order       ", &
           "stdout_frequency  ", &
-          "use_random_seed   " /)
+          "use_random_seed   ", &
+          "smooth_currents   " /)
 
 CONTAINS
 
@@ -149,6 +151,8 @@ CONTAINS
       stdout_frequency = as_integer(value, handle_control_deck)
     CASE(4*c_ndims+11)
       use_random_seed = as_logical(value, handle_control_deck)
+    CASE(4*c_ndims+12)
+      smooth_currents = as_logical(value, handle_control_deck)
     END SELECT
 
   END FUNCTION handle_control_deck

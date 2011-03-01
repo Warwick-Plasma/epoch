@@ -2,7 +2,7 @@ MODULE particles
 
   USE boundary
   USE shape_functions
-  !USE current_smooth
+  USE current_smooth
 
   IMPLICIT NONE
 
@@ -381,7 +381,7 @@ CONTAINS
     CALL current_bcs
     CALL particle_bcs
 
-    !IF (smooth_currents) CALL smooth_current()
+    IF (smooth_currents) CALL smooth_current()
 
   END SUBROUTINE push_particles
 
