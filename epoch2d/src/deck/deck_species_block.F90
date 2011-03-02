@@ -124,6 +124,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_species_deck
+    REAL(num) :: dmin
     CHARACTER(LEN=string_length) :: filename
     LOGICAL :: got_file
 
@@ -281,8 +282,9 @@ CONTAINS
 
     IF (str_cmp(element, "density_min") .OR. str_cmp(element, "minrho")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
-      initial_conditions(species_id)%density_min = &
-          as_real(value, handle_species_deck)
+      dmin = as_real(value, handle_species_deck)
+      IF (dmin .EQ. 0.0_num) dmin = -1.0_num
+      initial_conditions(species_id)%density_min = dmin
       RETURN
     ENDIF
 

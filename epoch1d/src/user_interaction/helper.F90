@@ -58,8 +58,8 @@ CONTAINS
       initial_conditions(ispecies)%density = 1.0_num
       initial_conditions(ispecies)%temp = 0.0_num
       initial_conditions(ispecies)%drift = 0.0_num
-      initial_conditions(ispecies)%density_min = 0.0_num
-      initial_conditions(ispecies)%density_max = 0.0_num
+      initial_conditions(ispecies)%density_min = -1.0_num
+      initial_conditions(ispecies)%density_max = HUGE(1.0_num)
     ENDDO
 
     ex = 0.0_num
@@ -133,12 +133,10 @@ CONTAINS
     num_valid_cells = 0
     density_total = 0.0_num
     DO ix = 1, nx
-      IF (density(ix) .GE. density_min &
-          .AND. density_min .GT. 0.0_num) THEN
+      IF (density(ix) .GE. density_min) THEN
         num_valid_cells = num_valid_cells + 1
         density_total = density_total + density(ix)
-      ELSE IF (density(ix) .GT. density_max &
-          .AND. density_max .GT. 0.0_num) THEN
+      ELSE IF (density(ix) .GT. density_max) THEN
         density(ix) = density_max
       ENDIF
     ENDDO
@@ -396,11 +394,9 @@ CONTAINS
     CALL field_bc(density)
 
     DO ix = -2, nx+3
-      IF (density(ix) .GE. density_min &
-          .AND. density_min .GT. 0.0_num) THEN
+      IF (density(ix) .GE. density_min) THEN
         density_map(ix) = .TRUE.
-      ELSE IF (density(ix) .GT. density_max &
-          .AND. density_max .GT. 0.0_num) THEN
+      ELSE IF (density(ix) .GT. density_max) THEN
         density(ix) = density_max
       ENDIF
     ENDDO
