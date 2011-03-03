@@ -630,5 +630,6 @@ MODULE shared_data
       particle_file_lengths, particle_file_offsets
 
   INTEGER, DIMENSION(3,0:c_stagger_max) :: stagger
+  INTEGER(KIND=8) :: push_per_field = 5
 
 END MODULE shared_data

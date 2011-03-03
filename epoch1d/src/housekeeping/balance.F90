@@ -18,7 +18,7 @@ CONTAINS
     ! So cheat
 
     LOGICAL, INTENT(IN) :: over_ride
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: density_x
+    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: load_x
     INTEGER, DIMENSION(:), ALLOCATABLE :: starts_x, ends_x
     REAL(num) :: balance_frac, npart_av
     INTEGER(KIND=8) :: npart_local, sum_npart, max_npart
@@ -59,14 +59,16 @@ CONTAINS
     IF (IAND(balance_mode, c_lb_x) .NE. 0 &
         .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
       ! Rebalancing in X
-      ALLOCATE(density_x(0:nx_global+1))
-      CALL get_density_in_x(density_x)
-      CALL calculate_breaks(density_x, nprocx, starts_x, ends_x)
+      ALLOCATE(load_x(nx_global))
+      CALL get_load_in_x(load_x)
+      CALL calculate_breaks(load_x, nprocx, starts_x, ends_x)
     ELSE
       ! Just keep the original lengths
       starts_x = cell_x_min
       ends_x = cell_x_max
     ENDIF
+
+    IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
 
     ! Now need to calculate the start and end points for the new domain on
     ! the current processor
@@ -279,83 +281,106 @@ CONTAINS
 
 
 
-  SUBROUTINE get_density_in_x(density)
+  SUBROUTINE get_load_in_x(load)
 
-    ! Calculate total particle density across the X direction
-    ! Summed in the Y direction
+    ! Calculate total load across the X direction
 
-    INTEGER(KIND=8), DIMENSION(:), INTENT(INOUT) :: density
+    INTEGER(KIND=8), DIMENSION(:), INTENT(OUT) :: load
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: temp
     TYPE(particle), POINTER :: current
-    REAL(num) :: part_x
-    INTEGER :: cell_x1, ispecies
+    INTEGER :: cell, ispecies, sz
 
-    density = 0.0_num
+    load = 0
 
     DO ispecies = 1, n_species
       current=>species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_min, NOT x_min_local
-        part_x = current%part_pos - x_min
-        cell_x1 = NINT(part_x / dx) + 1
-        density(cell_x1) = density(cell_x1) + 1
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell = FLOOR((current%part_pos - x_min) / dx) + 1
+#else
+        cell = FLOOR((current%part_pos - x_min) / dx + 1.5_num)
+#endif
+        load(cell) = load(cell) + 1
         current=>current%next
       ENDDO
     ENDDO
 
     ! Now have local densities, so add using MPI
-    ALLOCATE(temp(0:nx_global+1))
-    CALL MPI_ALLREDUCE(density, temp, nx_global+2, MPI_INTEGER8, &
-        MPI_SUM, comm, errcode)
-    density = temp
+    sz = SIZE(load)
+    ALLOCATE(temp(sz))
+    CALL MPI_ALLREDUCE(load, temp, sz, MPI_INTEGER8, MPI_SUM, comm, errcode)
+
+    ! Adjust the load of pushing one particle relative to the load
+    ! of updating one field cell, then add on the field load.
+    ! The push_per_field factor will be updated automatically in future.
+    load = push_per_field * temp + 1
 
     DEALLOCATE(temp)
 
-  END SUBROUTINE get_density_in_x
+  END SUBROUTINE get_load_in_x
 
 
 
-  SUBROUTINE calculate_breaks(density, nproc, starts, ends)
+  SUBROUTINE calculate_breaks(load, nproc, starts, ends)
 
-    ! This subroutine calculates the places in a given density profile to split
+    ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(KIND=8), INTENT(IN), DIMENSION(:) :: density
+    INTEGER(KIND=8), INTENT(IN), DIMENSION(:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: starts, ends
-    INTEGER :: sz, idim, partition
-    INTEGER(KIND=8) :: total
-    INTEGER :: npart_per_proc_ideal
+    INTEGER :: sz, idim, partition, proc, old, shift
+    INTEGER(KIND=8) :: total, total_old
+    INTEGER :: load_per_proc_ideal
 
-    ! -2 because of ghost cells at each end
-    sz = SIZE(density) - 2
-    IF (nproc .EQ. 1) THEN
-      starts = 1
-      ends = sz
-    ENDIF
+    sz = SIZE(load)
+    ends = sz
 
-    npart_per_proc_ideal = INT(SUM(density) / nproc)
-    partition = 2
-    starts(1) = 1
+    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc)
+
+    proc = 1
     total = 0
     DO idim = 1, sz
-      IF (partition .GT. nproc) EXIT
-      IF (total .GE. npart_per_proc_ideal &
-          .OR. ABS(total + density(idim) - npart_per_proc_ideal) &
-          .GT. ABS(total - npart_per_proc_ideal)  .OR. idim .EQ. sz) THEN
-        total = density(idim)
-        starts(partition) = idim
-        partition = partition + 1
-        ! If you've reached the last processor, have already done the best
-        ! you can, so just leave
-      ELSE
-        total = total + density(idim)
+      total_old = total
+      total = total + load(idim)
+      IF (total .GE. load_per_proc_ideal) THEN
+        ! Pick the split that most closely matches the load
+        IF (load_per_proc_ideal - total_old &
+            .LT. total - load_per_proc_ideal) THEN
+          ends(proc) = idim - 1
+        ELSE
+          ends(proc) = idim
+        ENDIF
+        proc = proc + 1
+        total = total - load_per_proc_ideal
+        IF (proc .EQ. nproc) EXIT
       ENDIF
     ENDDO
 
-    ends(nproc) = sz
-    DO idim = 1, nproc - 1
-      ends(idim) = starts(idim+1) - 1
+    ! Sanity check. Must be one cell of separation between each endpoint.
+    ! Forwards (unnecessary?)
+    !old = 0
+    !DO proc = 1, nproc
+    !  IF (ends(proc) - old .LE. 0) THEN
+    !    ends(proc) = old + 1
+    !  ENDIF
+    !  old = ends(proc)
+    !ENDDO
+
+    ! Backwards
+    old = sz + 1
+    DO proc = nproc, 1, -1
+      IF (old - ends(proc) .LE. 0) THEN
+        ends(proc) = old - 1
+      ENDIF
+      old = ends(proc)
+    ENDDO
+
+    ! Set starts
+    starts(1) = 1
+    DO proc = 2, nproc
+      starts(proc) = ends(proc-1) + 1
     ENDDO
 
   END SUBROUTINE calculate_breaks
