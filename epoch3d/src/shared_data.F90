@@ -598,14 +598,43 @@ MODULE shared_data
   INTEGER :: subtype_field, subarray_field
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
-  INTEGER, PARAMETER :: num_vars_to_dump = 29
-  INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
   INTEGER :: output_file
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
   INTEGER :: n_zeros = 4
   REAL(num) :: dt_snapshot, time_next = 0.0_num
   INTEGER :: nstep_snapshot, nstep_next = 0
+  INTEGER, PARAMETER :: c_dump_part_grid         = 1
+  INTEGER, PARAMETER :: c_dump_grid              = 2
+  INTEGER, PARAMETER :: c_dump_part_species      = 3
+  INTEGER, PARAMETER :: c_dump_part_weight       = 4
+  INTEGER, PARAMETER :: c_dump_part_px           = 5
+  INTEGER, PARAMETER :: c_dump_part_py           = 6
+  INTEGER, PARAMETER :: c_dump_part_pz           = 7
+  INTEGER, PARAMETER :: c_dump_part_vx           = 8
+  INTEGER, PARAMETER :: c_dump_part_vy           = 9
+  INTEGER, PARAMETER :: c_dump_part_vz           = 10
+  INTEGER, PARAMETER :: c_dump_part_charge       = 11
+  INTEGER, PARAMETER :: c_dump_part_mass         = 12
+  INTEGER, PARAMETER :: c_dump_ex                = 13
+  INTEGER, PARAMETER :: c_dump_ey                = 14
+  INTEGER, PARAMETER :: c_dump_ez                = 15
+  INTEGER, PARAMETER :: c_dump_bx                = 16
+  INTEGER, PARAMETER :: c_dump_by                = 17
+  INTEGER, PARAMETER :: c_dump_bz                = 18
+  INTEGER, PARAMETER :: c_dump_jx                = 19
+  INTEGER, PARAMETER :: c_dump_jy                = 20
+  INTEGER, PARAMETER :: c_dump_jz                = 21
+  INTEGER, PARAMETER :: c_dump_ekbar             = 22
+  INTEGER, PARAMETER :: c_dump_mass_density      = 23
+  INTEGER, PARAMETER :: c_dump_charge_density    = 24
+  INTEGER, PARAMETER :: c_dump_number_density    = 25
+  INTEGER, PARAMETER :: c_dump_temperature       = 26
+  INTEGER, PARAMETER :: c_dump_dist_fns          = 27
+  INTEGER, PARAMETER :: c_dump_probes            = 28
+  INTEGER, PARAMETER :: c_dump_ejected_particles = 29
+  INTEGER, PARAMETER :: num_vars_to_dump         = 29
+  INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
   ! Time averaged IO

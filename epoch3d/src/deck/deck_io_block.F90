@@ -7,84 +7,58 @@ MODULE deck_io_block
 
   SAVE
 
-  INTEGER, PARAMETER :: n_var_special = 11
-  INTEGER, PARAMETER :: io_block_elements = n_var_special + num_vars_to_dump
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 11
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done = .FALSE.
-  INTEGER, PARAMETER :: c_dump_part_grid         = 1
-  INTEGER, PARAMETER :: c_dump_grid              = 2
-  INTEGER, PARAMETER :: c_dump_part_species      = 3
-  INTEGER, PARAMETER :: c_dump_part_weight       = 4
-  INTEGER, PARAMETER :: c_dump_part_px           = 5
-  INTEGER, PARAMETER :: c_dump_part_py           = 6
-  INTEGER, PARAMETER :: c_dump_part_pz           = 7
-  INTEGER, PARAMETER :: c_dump_part_vx           = 8
-  INTEGER, PARAMETER :: c_dump_part_vy           = 9
-  INTEGER, PARAMETER :: c_dump_part_vz           = 10
-  INTEGER, PARAMETER :: c_dump_part_charge       = 11
-  INTEGER, PARAMETER :: c_dump_part_mass         = 12
-  INTEGER, PARAMETER :: c_dump_ex                = 13
-  INTEGER, PARAMETER :: c_dump_ey                = 14
-  INTEGER, PARAMETER :: c_dump_ez                = 15
-  INTEGER, PARAMETER :: c_dump_bx                = 16
-  INTEGER, PARAMETER :: c_dump_by                = 17
-  INTEGER, PARAMETER :: c_dump_bz                = 18
-  INTEGER, PARAMETER :: c_dump_jx                = 19
-  INTEGER, PARAMETER :: c_dump_jy                = 20
-  INTEGER, PARAMETER :: c_dump_jz                = 21
-  INTEGER, PARAMETER :: c_dump_ekbar             = 22
-  INTEGER, PARAMETER :: c_dump_mass_density      = 23
-  INTEGER, PARAMETER :: c_dump_charge_density    = 24
-  INTEGER, PARAMETER :: c_dump_number_density    = 25
-  INTEGER, PARAMETER :: c_dump_temperature       = 26
-  INTEGER, PARAMETER :: c_dump_dist_fns          = 27
-  INTEGER, PARAMETER :: c_dump_probes            = 28
-  INTEGER, PARAMETER :: c_dump_ejected_particles = 29
-  CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: &
-      io_block_name = (/ &
-          "dt_snapshot                  ", & ! s1
-          "full_dump_every              ", & ! s2
-          "restart_dump_every           ", & ! s3
-          "force_final_to_be_restartable", & ! s4
-          "use_offset_grid              ", & ! s5
-          "extended_io_file             ", & ! s6
-          "averaging_period             ", & ! s7
-          "min_cycles_per_average       ", & ! s8
-          "nstep_snapshot               ", & ! s9
-          "dump_source_code             ", & ! s10
-          "dump_input_decks             ", & ! s11
-          "particles                    ", & ! 1
-          "grid                         ", & ! 2
-          "species_id                   ", & ! 3
-          "particle_weight              ", & ! 4
-          "px                           ", & ! 5
-          "py                           ", & ! 6
-          "pz                           ", & ! 7
-          "vx                           ", & ! 8
-          "vy                           ", & ! 9
-          "vz                           ", & ! 10
-          "charge                       ", & ! 11
-          "mass                         ", & ! 12
-          "ex                           ", & ! 13
-          "ey                           ", & ! 14
-          "ez                           ", & ! 15
-          "bx                           ", & ! 16
-          "by                           ", & ! 17
-          "bz                           ", & ! 18
-          "jx                           ", & ! 19
-          "jy                           ", & ! 20
-          "jz                           ", & ! 21
-          "ekbar                        ", & ! 22
-          "mass_density                 ", & ! 23
-          "charge_density               ", & ! 24
-          "number_density               ", & ! 25
-          "temperature                  ", & ! 26
-          "distribution_functions       ", & ! 27
-          "particle_probes              ", & ! 28
-          "ejected_particles            " /) ! 29
+  CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
 
 CONTAINS
 
   SUBROUTINE io_deck_initialise
+
+    INTEGER :: i
+
+    io_block_name(c_dump_part_grid        ) = 'particles'
+    io_block_name(c_dump_grid             ) = 'grid'
+    io_block_name(c_dump_part_species     ) = 'species_id'
+    io_block_name(c_dump_part_weight      ) = 'particle_weight'
+    io_block_name(c_dump_part_px          ) = 'px'
+    io_block_name(c_dump_part_py          ) = 'py'
+    io_block_name(c_dump_part_pz          ) = 'pz'
+    io_block_name(c_dump_part_vx          ) = 'vx'
+    io_block_name(c_dump_part_vy          ) = 'vy'
+    io_block_name(c_dump_part_vz          ) = 'vz'
+    io_block_name(c_dump_part_charge      ) = 'charge'
+    io_block_name(c_dump_part_mass        ) = 'mass'
+    io_block_name(c_dump_ex               ) = 'ex'
+    io_block_name(c_dump_ey               ) = 'ey'
+    io_block_name(c_dump_ez               ) = 'ez'
+    io_block_name(c_dump_bx               ) = 'bx'
+    io_block_name(c_dump_by               ) = 'by'
+    io_block_name(c_dump_bz               ) = 'bz'
+    io_block_name(c_dump_jx               ) = 'jx'
+    io_block_name(c_dump_jy               ) = 'jy'
+    io_block_name(c_dump_jz               ) = 'jz'
+    io_block_name(c_dump_ekbar            ) = 'ekbar'
+    io_block_name(c_dump_mass_density     ) = 'mass_density'
+    io_block_name(c_dump_charge_density   ) = 'charge_density'
+    io_block_name(c_dump_number_density   ) = 'number_density'
+    io_block_name(c_dump_temperature      ) = 'temperature'
+    io_block_name(c_dump_dist_fns         ) = 'distribution_functions'
+    io_block_name(c_dump_probes           ) = 'particle_probes'
+    io_block_name(c_dump_ejected_particles) = 'ejected_particles'
+
+    i = num_vars_to_dump
+    io_block_name(i+1 ) = 'dt_snapshot'
+    io_block_name(i+2 ) = 'full_dump_every'
+    io_block_name(i+3 ) = 'restart_dump_every'
+    io_block_name(i+4 ) = 'force_final_to_be_restartable'
+    io_block_name(i+5 ) = 'use_offset_grid'
+    io_block_name(i+6 ) = 'extended_io_file'
+    io_block_name(i+7 ) = 'averaging_period'
+    io_block_name(i+8 ) = 'min_cycles_per_average'
+    io_block_name(i+9 ) = 'nstep_snapshot'
+    io_block_name(i+10) = 'dump_source_code'
+    io_block_name(i+11) = 'dump_input_decks'
 
   END SUBROUTINE io_deck_initialise
 
@@ -134,7 +108,7 @@ CONTAINS
     io_block_done(elementselected) = .TRUE.
     errcode = c_err_none
 
-    SELECT CASE (elementselected)
+    SELECT CASE (elementselected-num_vars_to_dump)
     CASE(1)
       dt_snapshot = as_real(value, errcode)
       IF (dt_snapshot .LT. 0.0_num) dt_snapshot = 0.0_num
@@ -168,10 +142,10 @@ CONTAINS
       dump_input_decks = as_logical(value, errcode)
     END SELECT
 
-    IF (elementselected .LE. n_var_special) RETURN
+    IF (elementselected .GT. num_vars_to_dump) RETURN
 
     mask = as_integer(value, errcode)
-    mask_element = elementselected - n_var_special
+    mask_element = elementselected
 
     ! If setting dumpmask for particle probes then report if the code wasn't
     ! compiled for particle probes
@@ -247,17 +221,33 @@ CONTAINS
 
   FUNCTION io_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, index, io
+    INTEGER :: errcode, index, io, i
 
     ! Just assume that anything not included except for the compulsory
     ! elements is not wanted
     errcode = c_err_none
 
     ! Other control parameters are optional
-    io_block_done(1:6) = .TRUE.
-    io_block_done(9:n_var_special) = .TRUE.
+    i = num_vars_to_dump
+    io_block_done(i+1:i+6) = .TRUE.
+    io_block_done(i+9:io_block_elements) = .TRUE.
     ! Averaging info not compulsory unless averaged variable selected
-    IF (.NOT. any_average) io_block_done(7:8) = .TRUE.
+    IF (.NOT. any_average) io_block_done(i+7:i+8) = .TRUE.
+
+    DO index = i+7, i+8
+      IF (.NOT. io_block_done(index)) THEN
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*)
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Required output block element ', &
+                TRIM(ADJUSTL(io_block_name(index))), &
+                ' absent. Please create this entry in the input deck'
+          ENDDO
+        ENDIF
+        errcode = c_err_missing_elements
+      ENDIF
+    ENDDO
 
     IF (dt_snapshot .LT. average_time) THEN
       IF (rank .EQ. 0) THEN
@@ -292,21 +282,6 @@ CONTAINS
     dumpmask(c_dump_jx) = IOR(dumpmask(c_dump_jx), c_io_restartable)
     dumpmask(c_dump_jy) = IOR(dumpmask(c_dump_jy), c_io_restartable)
     dumpmask(c_dump_jz) = IOR(dumpmask(c_dump_jz), c_io_restartable)
-
-    DO index = 1, n_var_special
-      IF (.NOT. io_block_done(index)) THEN
-        IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*)
-            WRITE(io,*) '*** ERROR ***'
-            WRITE(io,*) 'Required output block element ', &
-                TRIM(ADJUSTL(io_block_name(index))), &
-                ' absent. Please create this entry in the input deck'
-          ENDDO
-        ENDIF
-        errcode = c_err_missing_elements
-      ENDIF
-    ENDDO
 
   END FUNCTION io_block_check
 

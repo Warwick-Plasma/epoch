@@ -337,6 +337,7 @@ CONTAINS
       control_block_done = .FALSE.
       boundary_block_done = .FALSE.
       CALL species_deck_initialise
+      CALL io_deck_initialise
     ENDIF
 
     ! Is comment is a flag which tells the code when a # character has been
