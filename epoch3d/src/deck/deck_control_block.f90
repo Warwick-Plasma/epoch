@@ -7,7 +7,7 @@ MODULE deck_control_block
 
   SAVE
   INTEGER, PARAMETER :: control_block_elements = 12 + 4 * c_ndims
-  LOGICAL, DIMENSION(control_block_elements) :: control_block_done = .FALSE.
+  LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           "nx                ", &
@@ -65,6 +65,9 @@ CONTAINS
 
   SUBROUTINE control_deck_initialise
 
+    IF (deck_state .NE. c_ds_first) RETURN
+    control_block_done = .FALSE.
+
   END SUBROUTINE control_deck_initialise
 
 
@@ -92,6 +95,9 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
     INTEGER :: loop, elementselected, field_order, ierr, io
+
+    errcode = c_err_none
+    IF (deck_state .NE. c_ds_first) RETURN
 
     errcode = c_err_unknown_element
 

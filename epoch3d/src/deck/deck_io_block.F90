@@ -8,7 +8,7 @@ MODULE deck_io_block
   SAVE
 
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 11
-  LOGICAL, DIMENSION(io_block_elements) :: io_block_done = .FALSE.
+  LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
 
 CONTAINS
@@ -72,6 +72,8 @@ CONTAINS
 
   SUBROUTINE io_block_start
 
+    io_block_done = .FALSE.
+
   END SUBROUTINE io_block_start
 
 
@@ -88,6 +90,9 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: loop, elementselected, mask, mask_element, ierr, io
     LOGICAL :: bad
+
+    errcode = c_err_none
+    IF (deck_state .EQ. c_ds_first) RETURN
 
     errcode = c_err_unknown_element
 

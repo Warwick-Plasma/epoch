@@ -45,6 +45,7 @@ CONTAINS
     LOGICAL :: got_file
 
     errcode = c_err_none
+    IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, "offset")) THEN

@@ -55,9 +55,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_other = 1024
   INTEGER, PARAMETER :: c_err_warn_bad_value = 2048
 
-  INTEGER, PARAMETER :: c_ds_deck = 1
-  INTEGER, PARAMETER :: c_ds_ic = 2
-  INTEGER, PARAMETER :: c_ds_eio = 3
+  INTEGER, PARAMETER :: c_ds_first = 1
+  INTEGER, PARAMETER :: c_ds_last = 2
 
   ! IO codes
   INTEGER, PARAMETER :: c_io_never = 0

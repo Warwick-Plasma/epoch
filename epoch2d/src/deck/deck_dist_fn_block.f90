@@ -25,6 +25,8 @@ CONTAINS
 
   SUBROUTINE dist_fn_block_start
 
+    IF (deck_state .EQ. c_ds_first) RETURN
+
     ! Every new laser uses the internal time function
     ALLOCATE(working_block)
     CALL init_dist_fn(working_block)
@@ -34,6 +36,8 @@ CONTAINS
 
 
   SUBROUTINE dist_fn_block_end
+
+    IF (deck_state .EQ. c_ds_first) RETURN
 
     CALL attach_dist_fn(working_block)
 
@@ -52,6 +56,7 @@ CONTAINS
     REAL(num) :: work1, work2
 
     errcode = c_err_none
+    IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, "name")) THEN

@@ -54,6 +54,9 @@ CONTAINS
 
   SUBROUTINE boundary_deck_initialise
 
+    IF (deck_state .NE. c_ds_first) RETURN
+    boundary_block_done = .FALSE.
+
   END SUBROUTINE boundary_deck_initialise
 
 
@@ -82,6 +85,9 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: loop, elementselected, itmp
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
+
+    errcode = c_err_none
+    IF (deck_state .NE. c_ds_first) RETURN
 
     errcode = c_err_unknown_element
 

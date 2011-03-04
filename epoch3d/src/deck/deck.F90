@@ -59,20 +59,28 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name
 
-    IF (str_cmp(block_name, "laser")) THEN
-      IF (deck_state .EQ. c_ds_eio) CALL laser_block_start
-    ELSE IF (str_cmp(block_name, "window")) THEN
-      IF (deck_state .EQ. c_ds_deck) CALL window_block_start
-    ELSE IF (str_cmp(block_name, "dist_fn")) THEN
-      IF (deck_state .EQ. c_ds_eio) CALL dist_fn_block_start
+    IF (str_cmp(block_name, 'boundaries')) THEN
+      CALL boundary_block_start
+    ELSE IF (str_cmp(block_name, 'constant')) THEN
+      CALL constant_block_start
+    ELSE IF (str_cmp(block_name, 'control')) THEN
+      CALL control_block_start
+    ELSE IF (str_cmp(block_name, 'dist_fn')) THEN
+      CALL dist_fn_block_start
+    ELSE IF (str_cmp(block_name, 'fields')) THEN
+      CALL fields_block_start
+    ELSE IF (str_cmp(block_name, 'output')) THEN
+      CALL io_block_start
+    ELSE IF (str_cmp(block_name, 'laser')) THEN
+      CALL laser_block_start
 #ifdef PARTICLE_PROBES
-    ELSE IF (str_cmp(block_name, "probe")) THEN
-      IF (deck_state .EQ. c_ds_eio) CALL probe_block_start
+    ELSE IF (str_cmp(block_name, 'probe')) THEN
+      CALL probe_block_start
 #endif
-    ELSE IF (str_cmp(block_name, "fields")) THEN
-      IF (deck_state .EQ. c_ds_ic) CALL fields_block_start
-    ELSE IF (str_cmp(block_name, "species")) THEN
+    ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_start
+    ELSE IF (str_cmp(block_name, 'window')) THEN
+      CALL window_block_start
     ENDIF
 
   END SUBROUTINE start_block
@@ -86,16 +94,28 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name
 
-    IF (str_cmp(block_name, "laser")) THEN
-      IF (deck_state .EQ. c_ds_eio) CALL laser_block_end
-    ELSE IF (str_cmp(block_name, "dist_fn")) THEN
-      IF (deck_state .EQ. c_ds_eio) CALL dist_fn_block_end
-    ELSE IF (str_cmp(block_name, "species")) THEN
-      IF (deck_state .EQ. c_ds_deck) CALL species_block_end
+    IF (str_cmp(block_name, 'boundaries')) THEN
+      CALL boundary_block_end
+    ELSE IF (str_cmp(block_name, 'constant')) THEN
+      CALL constant_block_end
+    ELSE IF (str_cmp(block_name, 'control')) THEN
+      CALL control_block_end
+    ELSE IF (str_cmp(block_name, 'dist_fn')) THEN
+      CALL dist_fn_block_end
+    ELSE IF (str_cmp(block_name, 'fields')) THEN
+      CALL fields_block_end
+    ELSE IF (str_cmp(block_name, 'output')) THEN
+      CALL io_block_end
+    ELSE IF (str_cmp(block_name, 'laser')) THEN
+      CALL laser_block_end
 #ifdef PARTICLE_PROBES
-    ELSE IF (str_cmp(block_name, "probe")) THEN
-      IF (deck_state .EQ. c_ds_eio) CALL probe_block_end
+    ELSE IF (str_cmp(block_name, 'probe')) THEN
+      CALL probe_block_end
 #endif
+    ELSE IF (str_cmp(block_name, 'species')) THEN
+      CALL species_block_end
+    ELSE IF (str_cmp(block_name, 'window')) THEN
+      CALL window_block_end
     ENDIF
 
   END SUBROUTINE end_block
@@ -125,74 +145,41 @@ CONTAINS
     ENDIF
 
     ! Test for known blocks
-    IF (str_cmp(block_name, "control"))  THEN
-      IF (deck_state .EQ. c_ds_deck) THEN
-        handle_block = control_block_handle_element(block_element, block_value)
-      ENDIF
+    IF (str_cmp(block_name, 'boundaries')) THEN
+      handle_block = boundary_block_handle_element(block_element, block_value)
       RETURN
-    ENDIF
-
-    IF (str_cmp(block_name, "boundaries")) THEN
-      IF (deck_state .EQ. c_ds_deck) THEN
-        handle_block = boundary_block_handle_element(block_element, block_value)
-      ENDIF
+    ELSE IF (str_cmp(block_name, 'constant')) THEN
+      handle_block = constant_block_handle_element(block_element, block_value)
       RETURN
-    ENDIF
-
-    IF (str_cmp(block_name, "species")) THEN
+    ELSE IF (str_cmp(block_name, 'control')) THEN
+      handle_block = control_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'dist_fn')) THEN
+      handle_block = dist_fn_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'fields')) THEN
+      handle_block = fields_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'output')) THEN
+      handle_block = io_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'laser')) THEN
+      handle_block = laser_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'probe')) THEN
+#ifdef PARTICLE_PROBES
+      handle_block = probe_block_handle_element(block_element, block_value)
+#else
+      handle_block = IOR(handle_block, c_err_pp_options_wrong)
+      extended_error_string = "-DPARTICLE_PROBES"
+#endif
+      RETURN
+    ELSE IF (str_cmp(block_name, 'species')) THEN
       handle_block = species_block_handle_element(block_element, block_value)
       RETURN
-    ENDIF
-
-    IF (str_cmp(block_name, "output")) THEN
-      IF (deck_state .EQ. c_ds_deck) THEN
-        handle_block = io_block_handle_element(block_element, block_value)
-      ENDIF
+    ELSE IF (str_cmp(block_name, 'window')) THEN
+      handle_block = window_block_handle_element(block_element, block_value)
       RETURN
-    ENDIF
-
-    IF (str_cmp(block_name, "window")) THEN
-      IF (deck_state .EQ. c_ds_deck) THEN
-        handle_block = window_block_handle_element(block_element, block_value)
-      ENDIF
-      RETURN
-    ENDIF
-
-    ! Initial conditions blocks go here
-    IF (str_cmp(block_name, "fields")) THEN
-      IF (deck_state .EQ. c_ds_ic) THEN
-        handle_block = fields_block_handle_element(block_element, block_value)
-      ENDIF
-      RETURN
-    ENDIF
-
-    IF (str_cmp(block_name, "laser")) THEN
-      IF (deck_state .EQ. c_ds_eio) THEN
-        handle_block = laser_block_handle_element(block_element, block_value)
-      ENDIF
-      RETURN
-    ENDIF
-
-    IF (str_cmp(block_name, "dist_fn")) THEN
-      IF (deck_state .EQ. c_ds_eio) THEN
-        handle_block = dist_fn_block_handle_element(block_element, block_value)
-      ENDIF
-      RETURN
-    ENDIF
-
-    IF (str_cmp(block_name, "probe")) THEN
-#ifdef PARTICLE_PROBES
-      IF (deck_state .EQ. c_ds_eio) THEN
-        handle_block = probe_block_handle_element(block_element, block_value)
-      ENDIF
-      RETURN
-#else
-      IF (deck_state .EQ. c_ds_eio) THEN
-        handle_block = IOR(handle_block, c_err_pp_options_wrong)
-        extended_error_string = "-DPARTICLE_PROBES"
-      ENDIF
-      RETURN
-#endif
     ENDIF
 
     handle_block = c_err_unknown_block
@@ -213,22 +200,25 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: errcode_deck
     INTEGER :: io
 
+    IF (deck_state .EQ. c_ds_first) RETURN
+
     problem_found = .FALSE.
 
     errcode_deck = c_err_none
 
-    IF (deck_state .EQ. c_ds_deck) THEN
-      errcode_deck = IOR(errcode_deck, control_block_check())
-      errcode_deck = IOR(errcode_deck, boundary_block_check())
-      errcode_deck = IOR(errcode_deck, species_block_check())
-      errcode_deck = IOR(errcode_deck, io_block_check())
-      errcode_deck = IOR(errcode_deck, window_block_check())
-      errcode_deck = IOR(errcode_deck, custom_blocks_check())
-    ELSE IF (deck_state .EQ. c_ds_ic) THEN
-      errcode_deck = IOR(errcode_deck, fields_block_check())
-      errcode_deck = IOR(errcode_deck, species_block_check())
-      errcode_deck = IOR(errcode_deck, laser_block_check())
-    ENDIF
+    errcode_deck = IOR(errcode_deck, boundary_block_check())
+    errcode_deck = IOR(errcode_deck, constant_block_check())
+    errcode_deck = IOR(errcode_deck, control_block_check())
+    errcode_deck = IOR(errcode_deck, dist_fn_block_check())
+    errcode_deck = IOR(errcode_deck, fields_block_check())
+    errcode_deck = IOR(errcode_deck, io_block_check())
+    errcode_deck = IOR(errcode_deck, laser_block_check())
+#ifdef PARTICLE_PROBES
+    errcode_deck = IOR(errcode_deck, probe_block_check())
+#endif
+    errcode_deck = IOR(errcode_deck, species_block_check())
+    errcode_deck = IOR(errcode_deck, window_block_check())
+
     errcode_deck = IOR(errcode_deck, custom_blocks_check())
 
     problem_found = (IAND(errcode_deck, c_err_missing_elements) .NE. 0)
@@ -245,19 +235,11 @@ CONTAINS
       ENDIF
     ELSE
       IF (rank .EQ. 0) THEN
-        IF (deck_state .EQ. c_ds_deck) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*) 'Initial deck complete and valid. Attempting' &
-              // ' to set up equilibrium'
-            WRITE(io,*)
-          ENDDO
-        ELSE IF (deck_state .EQ. c_ds_ic) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*) 'Initial conditions complete and valid. Attempting' &
-              // ' to load particles'
-            WRITE(io,*)
-          ENDDO
-        ENDIF
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) 'Initial conditions complete and valid. Attempting' &
+            // ' to load particles'
+          WRITE(io,*)
+        ENDDO
       ENDIF
     ENDIF
 
@@ -299,10 +281,11 @@ CONTAINS
 
 
 
-  RECURSIVE SUBROUTINE read_deck(filename, first_call)
+  RECURSIVE SUBROUTINE read_deck(filename, first_call, deck_state_in)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
     LOGICAL, INTENT(IN) :: first_call
+    INTEGER, INTENT(IN) :: deck_state_in
     CHARACTER :: u1
     INTEGER :: pos = 1, flip = 1, s, f, elements = 0, lun
     LOGICAL :: is_comment
@@ -315,6 +298,7 @@ CONTAINS
     TYPE(file_buffer), POINTER :: fbuf
     LOGICAL :: already_parsed, got_eor
 
+    deck_state = deck_state_in
     ! No error yet
     errcode_deck = c_err_none
     ! Characteristic string which represents a "blank" string
@@ -334,10 +318,18 @@ CONTAINS
     ! If this is the first time that this deck has been called then do some
     ! housekeeping. Put any initialisation code that is needed in here
     IF (first_call) THEN
-      control_block_done = .FALSE.
-      boundary_block_done = .FALSE.
-      CALL species_deck_initialise
+      CALL boundary_deck_initialise
+      CALL constant_deck_initialise
+      CALL control_deck_initialise
+      CALL dist_fn_deck_initialise
+      CALL fields_deck_initialise
       CALL io_deck_initialise
+      CALL laser_deck_initialise
+#ifdef PARTICLE_PROBES
+      CALL probe_deck_initialise
+#endif
+      CALL species_deck_initialise
+      CALL window_deck_initialise
     ENDIF
 
     ! Is comment is a flag which tells the code when a # character has been
@@ -392,7 +384,7 @@ CONTAINS
       OPEN(unit=lun, file=TRIM(ADJUSTL(deck_filename)))
       IF (first_call .AND. rank .EQ. 0) THEN
         ! Create a new file on first pass, otherwise append
-        IF (deck_state .EQ. c_ds_deck) THEN
+        IF (deck_state .EQ. c_ds_first) THEN
           OPEN(unit=du, status='REPLACE', file=status_filename, iostat=errcode)
           WRITE(du,*) ascii_header
           WRITE(du,*)
@@ -540,7 +532,18 @@ CONTAINS
     ! the output file
     IF (.NOT. terminate .AND. first_call) THEN
       CALL check_compulsory_blocks(errcode_deck)
+      CALL boundary_deck_finalise
+      CALL constant_deck_finalise
+      CALL control_deck_finalise
+      CALL dist_fn_deck_finalise
+      CALL fields_deck_finalise
+      CALL io_deck_finalise
+      CALL laser_deck_finalise
+#ifdef PARTICLE_PROBES
+      CALL probe_deck_finalise
+#endif
       CALL species_deck_finalise
+      CALL window_deck_finalise
     ENDIF
     terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
     ! Fatal error, cause code to bomb
@@ -582,7 +585,7 @@ CONTAINS
         WRITE(du,*) 'Importing "' // TRIM(ADJUSTL(value)) // '" file'
         WRITE(du,*)
       ENDIF
-      CALL read_deck(TRIM(ADJUSTL(value)), .FALSE.)
+      CALL read_deck(TRIM(ADJUSTL(value)), .FALSE., deck_state)
       RETURN
     ENDIF
 

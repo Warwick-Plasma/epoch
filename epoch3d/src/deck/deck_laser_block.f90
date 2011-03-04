@@ -27,6 +27,8 @@ CONTAINS
 
   SUBROUTINE laser_block_start
 
+    IF (deck_state .EQ. c_ds_first) RETURN
+
     ! Every new laser uses the internal time function
     ALLOCATE(working_laser)
     working_laser%use_time_function = .FALSE.
@@ -36,6 +38,8 @@ CONTAINS
 
 
   SUBROUTINE laser_block_end
+
+    IF (deck_state .EQ. c_ds_first) RETURN
 
     CALL attach_laser(working_laser)
     boundary_set = .FALSE.
@@ -53,6 +57,7 @@ CONTAINS
     INTEGER :: ix, iy, iz, ierr, io
 
     errcode = c_err_none
+    IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, "boundary") .OR. str_cmp(element, "direction")) THEN

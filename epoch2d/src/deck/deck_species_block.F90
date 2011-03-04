@@ -22,7 +22,7 @@ CONTAINS
   SUBROUTINE species_deck_initialise
 
     current_block = 0
-    IF (deck_state .EQ. c_ds_deck) THEN
+    IF (deck_state .EQ. c_ds_first) THEN
       n_species = 0
       ALLOCATE(species_names(4))
       ALLOCATE(species_blocks(4))
@@ -37,7 +37,7 @@ CONTAINS
     INTEGER :: i
     CHARACTER(LEN=8) :: string
 
-    IF (deck_state .EQ. c_ds_deck) THEN
+    IF (deck_state .EQ. c_ds_first) THEN
       CALL setup_species
       ALLOCATE(species_charge_set(n_species))
       species_charge_set = .FALSE.
@@ -51,12 +51,7 @@ CONTAINS
       ENDDO
       IF (rank .EQ. 0) PRINT*
       DEALLOCATE(species_names)
-    ENDIF
-    ! Ugly hack.
-    ! Deallocate species_blocks after the last call to read_deck.
-    ! The last call depends on whether it is a restart dump or not.
-    IF ((ic_from_restart .AND. deck_state .EQ. c_ds_eio) &
-        .OR. deck_state .EQ. c_ds_ic) THEN
+    ELSE
       DEALLOCATE(species_blocks)
       DEALLOCATE(species_charge_set)
     ENDIF
@@ -69,7 +64,7 @@ CONTAINS
 
     current_block = current_block + 1
     got_name = .FALSE.
-    IF (deck_state .EQ. c_ds_deck) RETURN
+    IF (deck_state .EQ. c_ds_first) RETURN
     species_id = species_blocks(current_block)
     offset = 0
 
@@ -111,35 +106,31 @@ CONTAINS
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
 
     IF (str_cmp(element, "name")) THEN
-      IF (deck_state .NE. c_ds_deck) RETURN
       IF (got_name) THEN
         errcode = c_err_preset_element
         RETURN
       ENDIF
+      got_name = .TRUE.
+      IF (deck_state .NE. c_ds_first) RETURN
       CALL grow_array(species_blocks, current_block)
       species_blocks(current_block) = species_number_from_name(value)
-      got_name = .TRUE.
       RETURN
     ENDIF
 
-    IF (deck_state .EQ. c_ds_deck) RETURN
+    IF (deck_state .EQ. c_ds_first) RETURN
 
     IF (str_cmp(element, "mass")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
-      species_list(species_id)%mass = &
-          as_real(value, errcode) * m0
+      species_list(species_id)%mass = as_real(value, errcode) * m0
       RETURN
     ENDIF
 
     IF (str_cmp(element, "charge")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
       species_list(species_id)%charge = as_real(value, errcode) * q0
       species_charge_set(species_id) = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, "frac") .OR. str_cmp(element, "fraction")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
       IF (npart_global .GE. 0) THEN
         species_list(species_id)%count = &
             INT(as_real(value, errcode) * npart_global)
@@ -150,13 +141,11 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "npart")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
       species_list(species_id)%count = as_long_integer(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "dump")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
       species_list(species_id)%dump = as_logical(value, errcode)
       RETURN
     ENDIF
@@ -165,7 +154,6 @@ CONTAINS
     ! This section sets properties for tracer particles
     ! *************************************************************
     IF (str_cmp(element, "tracer")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef TRACER_PARTICLES
       species_list(species_id)%tracer = as_logical(value, errcode)
 #else
@@ -181,7 +169,6 @@ CONTAINS
     ! This section sets properties for particle splitting
     ! *************************************************************
     IF (str_cmp(element, "split")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
       species_list(species_id)%split = as_logical(value, errcode)
 #else
@@ -194,7 +181,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "npart_max")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef SPLIT_PARTICLES_AFTER_PUSH
       species_list(species_id)%npart_max = as_long_integer(value, errcode)
 #endif
@@ -205,7 +191,6 @@ CONTAINS
     ! This section sets properties for ionisation
     ! *************************************************************
     IF (str_cmp(element, "ionise")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef PARTICLE_IONISE
       species_list(species_id)%ionise = as_logical(value, errcode)
 #else
@@ -218,7 +203,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "ionise_to_species")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef PARTICLE_IONISE
       species_list(species_id)%ionise_to_species = as_integer(value, errcode)
 #endif
@@ -226,7 +210,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "release_species_on_ionise")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef PARTICLE_IONISE
       species_list(species_id)%release_species = as_integer(value, errcode)
 #endif
@@ -234,7 +217,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "ionisation_energy")) THEN
-      IF (deck_state .NE. c_ds_eio) RETURN
 #ifdef PARTICLE_IONISE
       species_list(species_id)%ionisation_energy = as_real(value, errcode)
 #endif
@@ -244,13 +226,11 @@ CONTAINS
     ! Initial conditions
 
     IF (str_cmp(element, "offset")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       offset = as_long_integer_simple(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "density_min") .OR. str_cmp(element, "minrho")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       dmin = as_real(value, errcode)
       IF (dmin .LE. 0.0_num) dmin = EPSILON(1.0_num)
       initial_conditions(species_id)%density_min = dmin
@@ -258,7 +238,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "density_max") .OR. str_cmp(element, "maxrho")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       initial_conditions(species_id)%density_max = as_real(value, errcode)
       RETURN
     ENDIF
@@ -266,7 +245,6 @@ CONTAINS
     CALL get_filename(value, filename, got_file, errcode)
 
     IF (str_cmp(element, "density") .OR. str_cmp(element, "rho")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%density(:,:), offset, errcode)
@@ -279,7 +257,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "mass_density")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%density(:,:), offset, errcode)
@@ -295,7 +272,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "drift_x")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,:,1), offset, errcode)
@@ -308,7 +284,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "drift_y")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,:,2), offset, errcode)
@@ -321,7 +296,6 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "drift_z")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,:,3), offset, errcode)
@@ -335,7 +309,6 @@ CONTAINS
 
     IF (str_cmp(element, "temp") .OR. str_cmp(element, "temp_k") &
         .OR. str_cmp(element, "temp_ev")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,:,1), offset, errcode)
@@ -357,7 +330,6 @@ CONTAINS
 
     IF (str_cmp(element, "temp_x") .OR. str_cmp(element, "temp_x_k") &
         .OR. str_cmp(element, "temp_x_ev")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,:,1), offset, errcode)
@@ -375,7 +347,6 @@ CONTAINS
 
     IF (str_cmp(element, "temp_y") .OR. str_cmp(element, "temp_y_k") &
         .OR. str_cmp(element, "temp_y_ev")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,:,2), offset, errcode)
@@ -393,7 +364,6 @@ CONTAINS
 
     IF (str_cmp(element, "temp_z") .OR. str_cmp(element, "temp_z_k") &
         .OR. str_cmp(element, "temp_z_ev")) THEN
-      IF (deck_state .NE. c_ds_ic) RETURN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,:,3), offset, errcode)
@@ -422,7 +392,7 @@ CONTAINS
 
     errcode = check_block
 
-    IF (deck_state .NE. c_ds_ic) RETURN
+    IF (deck_state .EQ. c_ds_first) RETURN
 
     DO i = 1, n_species
       IF (species_list(i)%mass .LT. 0) THEN

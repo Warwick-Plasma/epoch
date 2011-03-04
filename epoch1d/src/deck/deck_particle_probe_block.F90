@@ -31,6 +31,8 @@ CONTAINS
 
   SUBROUTINE probe_block_start
 
+    IF (deck_state .EQ. c_ds_first) RETURN
+
     ALLOCATE(working_probe)
     CALL init_probe(working_probe)
     got_point = .FALSE.
@@ -43,6 +45,8 @@ CONTAINS
   SUBROUTINE probe_block_end
 
     LOGICAL :: discard
+
+    IF (deck_state .EQ. c_ds_first) RETURN
 
     discard = .FALSE.
     IF (.NOT. got_point) discard = .TRUE.
@@ -76,7 +80,7 @@ CONTAINS
     INTEGER :: errcode, ispecies, io
 
     errcode = c_err_none
-
+    IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     ! get particle probe diagnostics (rolling total of all particles which

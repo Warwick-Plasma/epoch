@@ -55,8 +55,7 @@ PROGRAM pic
   ENDIF
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, MPI_COMM_WORLD, errcode)
-  deck_state = c_ds_deck
-  CALL read_deck(deck_file, .TRUE.)
+  CALL read_deck(deck_file, .TRUE., c_ds_first)
   CALL setup_particle_boundaries ! boundary.f90
   CALL mpi_initialise ! mpi_routines.f90
   CALL after_control ! setup.f90
@@ -64,21 +63,20 @@ PROGRAM pic
 
   IF (move_window) CALL allocate_window ! window.f90
 
-  ! Read extended IO options
-  deck_state = c_ds_eio
-  CALL read_deck(deck_file, .TRUE.)
-
   ! restart flag is set
   IF (ic_from_restart) THEN
+    ! Re-scan the input deck for items which require allocated memory
+    CALL read_deck(deck_file, .TRUE., c_ds_last)
+    CALL after_deck_last
     CALL restart_data(i)    ! restart from data in file save.data
     IF (rank .EQ. 0) PRINT *, "Load from restart dump OK"
     output_file = restart_snapshot + 1
   ELSE
     ! Using autoloader
     CALL allocate_ic
-    ! External initialisation
-    deck_state = c_ds_ic
-    CALL read_deck(deck_file, .TRUE.)
+    ! Re-scan the input deck for items which require allocated memory
+    CALL read_deck(deck_file, .TRUE., c_ds_last)
+    CALL after_deck_last
     ! auto_load particles
     CALL auto_load
     time = 0.0_num

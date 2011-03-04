@@ -17,7 +17,7 @@ MODULE setup
 
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files, flush_stat_file
-  PUBLIC :: setup_species
+  PUBLIC :: setup_species, after_deck_last
 
   TYPE(particle), POINTER, SAVE :: iterator_list
   CHARACTER(LEN=11+data_dir_max_length), SAVE :: stat_file
@@ -166,9 +166,15 @@ CONTAINS
 
     CALL set_initial_values
 
+  END SUBROUTINE after_control
+
+
+
+  SUBROUTINE after_deck_last
+
     CALL setup_data_averaging
 
-  END SUBROUTINE after_control
+  END SUBROUTINE after_deck_last
 
 
 
