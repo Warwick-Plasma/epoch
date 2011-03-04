@@ -18,6 +18,18 @@ CONTAINS
 
 CONTAINS
 
+  SUBROUTINE probe_deck_initialise
+
+  END SUBROUTINE probe_deck_initialise
+
+
+
+  SUBROUTINE probe_deck_finalise
+
+  END SUBROUTINE probe_deck_finalise
+
+
+
   SUBROUTINE probe_block_start
 
     ALLOCATE(working_probe)
@@ -87,12 +99,12 @@ CONTAINS
 
 
 
-  FUNCTION handle_probe_deck(element, value)
+  FUNCTION probe_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: handle_probe_deck, ispecies, io
+    INTEGER :: errcode, ispecies, io
 
-    handle_probe_deck = c_err_none
+    errcode = c_err_none
 
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
@@ -100,76 +112,76 @@ CONTAINS
     ! pass through a given region of real space (defined by a point on a plane
     ! and the normal to that plane.
     IF (str_cmp(element, "dump")) THEN
-      working_probe%dump = as_integer(value, handle_probe_deck)
+      working_probe%dump = as_integer(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "point")) THEN
       got_point = .TRUE.
-      CALL get_vector(value, working_probe%point, handle_probe_deck)
+      CALL get_vector(value, working_probe%point, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "normal")) THEN
       got_normal = .TRUE.
-      CALL get_vector(value, working_probe%normal, handle_probe_deck)
+      CALL get_vector(value, working_probe%normal, errcode)
       RETURN
     ENDIF
 
     ! Top left
     IF (str_cmp(element, "x_tl")) THEN
       got_x = .TRUE.
-      working_probe%point(1) = as_real(value, handle_probe_deck)
+      working_probe%point(1) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, "y_tl")) THEN
       got_x = .TRUE.
-      working_probe%point(2) = as_real(value, handle_probe_deck)
+      working_probe%point(2) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, "z_tl")) THEN
       got_x = .TRUE.
-      working_probe%point(3) = as_real(value, handle_probe_deck)
+      working_probe%point(3) = as_real(value, errcode)
       RETURN
     ENDIF
 
     ! Bottom right
     IF (str_cmp(element, "x_br")) THEN
       got_x = .TRUE.
-      point2(1) = as_real(value, handle_probe_deck)
+      point2(1) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, "y_br")) THEN
       got_x = .TRUE.
-      point2(2) = as_real(value, handle_probe_deck)
+      point2(2) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, "z_br")) THEN
       got_x = .TRUE.
-      point2(3) = as_real(value, handle_probe_deck)
+      point2(3) = as_real(value, errcode)
       RETURN
     ENDIF
 
     ! Top right
     IF (str_cmp(element, "x_tr")) THEN
       got_x = .TRUE.
-      point3(1) = as_real(value, handle_probe_deck)
+      point3(1) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, "y_tr")) THEN
       got_x = .TRUE.
-      point3(2) = as_real(value, handle_probe_deck)
+      point3(2) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, "z_tr")) THEN
       got_x = .TRUE.
-      point3(3) = as_real(value, handle_probe_deck)
+      point3(3) = as_real(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "probe_species")) THEN
-      ispecies = as_integer(value, handle_probe_deck)
-      IF (handle_probe_deck .EQ. c_err_none) THEN
+      ispecies = as_integer(value, errcode)
+      IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_probe%probe_species=>species_list(ispecies)
         ELSE
@@ -180,19 +192,19 @@ CONTAINS
                   ispecies
             ENDDO
           ENDIF
-          handle_probe_deck = c_err_bad_value
+          errcode = c_err_bad_value
         ENDIF
       ENDIF
       RETURN
     ENDIF
 
     IF (str_cmp(element, "ek_min")) THEN
-      working_probe%ek_min = as_real(value, handle_probe_deck)
+      working_probe%ek_min = as_real(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "ek_max")) THEN
-      working_probe%ek_max = as_real(value, handle_probe_deck)
+      working_probe%ek_max = as_real(value, errcode)
       RETURN
     ENDIF
 
@@ -201,9 +213,18 @@ CONTAINS
       RETURN
     ENDIF
 
-    handle_probe_deck = c_err_unknown_element
+    errcode = c_err_unknown_element
 
-  END FUNCTION handle_probe_deck
+  END FUNCTION probe_block_handle_element
+
+
+
+  FUNCTION probe_block_check() RESULT(errcode)
+
+    INTEGER :: errcode
+    errcode = c_err_none
+
+  END FUNCTION probe_block_check
 #endif
 
 END MODULE deck_particle_probe_block

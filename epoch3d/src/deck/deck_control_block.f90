@@ -63,13 +63,37 @@ MODULE deck_control_block
 
 CONTAINS
 
-  FUNCTION handle_control_deck(element, value)
+  SUBROUTINE control_deck_initialise
+
+  END SUBROUTINE control_deck_initialise
+
+
+
+  SUBROUTINE control_deck_finalise
+
+  END SUBROUTINE control_deck_finalise
+
+
+
+  SUBROUTINE control_block_start
+
+  END SUBROUTINE control_block_start
+
+
+
+  SUBROUTINE control_block_end
+
+  END SUBROUTINE control_block_end
+
+
+
+  FUNCTION control_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: handle_control_deck
+    INTEGER :: errcode
     INTEGER :: loop, elementselected, field_order, ierr, io
 
-    handle_control_deck = c_err_unknown_element
+    errcode = c_err_unknown_element
 
     elementselected = 0
 
@@ -83,47 +107,47 @@ CONTAINS
 
     IF (elementselected .EQ. 0) RETURN
     IF (control_block_done(elementselected)) THEN
-      handle_control_deck = c_err_preset_element
+      errcode = c_err_preset_element
       RETURN
     ENDIF
     control_block_done(elementselected) = .TRUE.
-    handle_control_deck = c_err_none
+    errcode = c_err_none
 
     SELECT CASE (elementselected)
     CASE(1)
-      nx_global = as_integer(value, handle_control_deck)
+      nx_global = as_integer(value, errcode)
     CASE(2)
-      ny_global = as_integer(value, handle_control_deck)
+      ny_global = as_integer(value, errcode)
     CASE(3)
-      nz_global = as_integer(value, handle_control_deck)
+      nz_global = as_integer(value, errcode)
     CASE(c_ndims+1)
-      x_min = as_real(value, handle_control_deck)
+      x_min = as_real(value, errcode)
     CASE(c_ndims+2)
-      x_max = as_real(value, handle_control_deck)
+      x_max = as_real(value, errcode)
     CASE(c_ndims+3)
-      y_min = as_real(value, handle_control_deck)
+      y_min = as_real(value, errcode)
     CASE(c_ndims+4)
-      y_max = as_real(value, handle_control_deck)
+      y_max = as_real(value, errcode)
     CASE(c_ndims+5)
-      z_min = as_real(value, handle_control_deck)
+      z_min = as_real(value, errcode)
     CASE(c_ndims+6)
-      z_max = as_real(value, handle_control_deck)
+      z_max = as_real(value, errcode)
     CASE(3*c_ndims+1)
-      nprocx = as_integer(value, handle_control_deck)
+      nprocx = as_integer(value, errcode)
     CASE(3*c_ndims+2)
-      nprocy = as_integer(value, handle_control_deck)
+      nprocy = as_integer(value, errcode)
     CASE(3*c_ndims+3)
-      nprocz = as_integer(value, handle_control_deck)
+      nprocz = as_integer(value, errcode)
     CASE(4*c_ndims+1)
-      npart_global = as_long_integer(value, handle_control_deck)
+      npart_global = as_long_integer(value, errcode)
     CASE(4*c_ndims+2)
-      nsteps = as_integer(value, handle_control_deck)
+      nsteps = as_integer(value, errcode)
     CASE(4*c_ndims+3)
-      t_end = as_real(value, handle_control_deck)
+      t_end = as_real(value, errcode)
     CASE(4*c_ndims+4)
-      dt_multiplier = as_real(value, handle_control_deck)
+      dt_multiplier = as_real(value, errcode)
     CASE(4*c_ndims+5)
-      dlb_threshold = as_real(value, handle_control_deck)
+      dlb_threshold = as_real(value, errcode)
       dlb = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank .EQ. 0) THEN
@@ -135,35 +159,35 @@ CONTAINS
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(4*c_ndims+7)
-      restart_snapshot = as_integer(value, handle_control_deck)
+      restart_snapshot = as_integer(value, errcode)
       ic_from_restart = .TRUE.
     CASE(4*c_ndims+8)
-      neutral_background = as_logical(value, handle_control_deck)
+      neutral_background = as_logical(value, errcode)
     CASE(4*c_ndims+9)
-      field_order = as_integer(value, handle_control_deck)
+      field_order = as_integer(value, errcode)
       IF (field_order .NE. 2 .AND. field_order .NE. 4 &
           .AND. field_order .NE. 6) THEN
-        handle_control_deck = c_err_bad_value
+        errcode = c_err_bad_value
       ELSE
         CALL set_field_order(field_order)
       ENDIF
     CASE(4*c_ndims+10)
-      stdout_frequency = as_integer(value, handle_control_deck)
+      stdout_frequency = as_integer(value, errcode)
     CASE(4*c_ndims+11)
-      use_random_seed = as_logical(value, handle_control_deck)
+      use_random_seed = as_logical(value, errcode)
     CASE(4*c_ndims+12)
-      smooth_currents = as_logical(value, handle_control_deck)
+      smooth_currents = as_logical(value, errcode)
     END SELECT
 
-  END FUNCTION handle_control_deck
+  END FUNCTION control_block_handle_element
 
 
 
-  FUNCTION check_control_block()
+  FUNCTION control_block_check() RESULT(errcode)
 
-    INTEGER :: check_control_block, index, io
+    INTEGER :: errcode, index, io
 
-    check_control_block = c_err_none
+    errcode = c_err_none
 
     ! nprocx/y/z and npart are optional
     control_block_done(3*c_ndims+1:4*c_ndims+1) = .TRUE.
@@ -188,7 +212,7 @@ CONTAINS
                 ' absent. Please create this entry in the input deck'
           ENDDO
         ENDIF
-        check_control_block = c_err_missing_elements
+        errcode = c_err_missing_elements
       ENDIF
     ENDDO
 
@@ -201,9 +225,9 @@ CONTAINS
               ' in this version of EPOCH.'
         ENDDO
       ENDIF
-      check_control_block = c_err_terminate
+      errcode = c_err_terminate
     ENDIF
 
-  END FUNCTION check_control_block
+  END FUNCTION control_block_check
 
 END MODULE deck_control_block

@@ -84,14 +84,38 @@ MODULE deck_io_block
 
 CONTAINS
 
-  FUNCTION handle_io_deck(element, value)
+  SUBROUTINE io_deck_initialise
+
+  END SUBROUTINE io_deck_initialise
+
+
+
+  SUBROUTINE io_deck_finalise
+
+  END SUBROUTINE io_deck_finalise
+
+
+
+  SUBROUTINE io_block_start
+
+  END SUBROUTINE io_block_start
+
+
+
+  SUBROUTINE io_block_end
+
+  END SUBROUTINE io_block_end
+
+
+
+  FUNCTION io_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: handle_io_deck
+    INTEGER :: errcode
     INTEGER :: loop, elementselected, mask, mask_element, ierr, io
     LOGICAL :: bad
 
-    handle_io_deck = c_err_unknown_element
+    errcode = c_err_unknown_element
 
     elementselected = 0
 
@@ -104,24 +128,24 @@ CONTAINS
 
     IF (elementselected .EQ. 0) RETURN
     IF (io_block_done(elementselected)) THEN
-      handle_io_deck = c_err_preset_element
+      errcode = c_err_preset_element
       RETURN
     ENDIF
     io_block_done(elementselected) = .TRUE.
-    handle_io_deck = c_err_none
+    errcode = c_err_none
 
     SELECT CASE (elementselected)
     CASE(1)
-      dt_snapshot = as_real(value, handle_io_deck)
+      dt_snapshot = as_real(value, errcode)
       IF (dt_snapshot .LT. 0.0_num) dt_snapshot = 0.0_num
     CASE(2)
-      full_dump_every = as_integer(value, handle_io_deck)
+      full_dump_every = as_integer(value, errcode)
     CASE(3)
-      restart_dump_every = as_integer(value, handle_io_deck)
+      restart_dump_every = as_integer(value, errcode)
     CASE(4)
-      force_final_to_be_restartable = as_logical(value, handle_io_deck)
+      force_final_to_be_restartable = as_logical(value, errcode)
     CASE(5)
-      use_offset_grid = as_logical(value, handle_io_deck)
+      use_offset_grid = as_logical(value, errcode)
     CASE(6)
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
@@ -132,28 +156,28 @@ CONTAINS
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(7)
-      average_time = as_real(value, handle_io_deck)
+      average_time = as_real(value, errcode)
     CASE(8)
-      min_cycles_per_average = as_integer(value, handle_io_deck)
+      min_cycles_per_average = as_integer(value, errcode)
     CASE(9)
-      nstep_snapshot = as_integer(value, handle_io_deck)
+      nstep_snapshot = as_integer(value, errcode)
       IF (nstep_snapshot .LT. 0) nstep_snapshot = 0
     CASE(10)
-      dump_source_code = as_logical(value, handle_io_deck)
+      dump_source_code = as_logical(value, errcode)
     CASE(11)
-      dump_input_decks = as_logical(value, handle_io_deck)
+      dump_input_decks = as_logical(value, errcode)
     END SELECT
 
     IF (elementselected .LE. n_var_special) RETURN
 
-    mask = as_integer(value, handle_io_deck)
+    mask = as_integer(value, errcode)
     mask_element = elementselected - n_var_special
 
     ! If setting dumpmask for particle probes then report if the code wasn't
     ! compiled for particle probes
 #ifndef PARTICLE_PROBES
     IF (mask_element .EQ. c_dump_probes .AND. mask .NE. c_io_never) THEN
-      handle_io_deck = c_err_pp_options_wrong
+      errcode = c_err_pp_options_wrong
       extended_error_string = "-DPARTICLE_PROBES"
       mask = c_io_never
     ENDIF
@@ -217,17 +241,17 @@ CONTAINS
 
     dumpmask(mask_element) = mask
 
-  END FUNCTION handle_io_deck
+  END FUNCTION io_block_handle_element
 
 
 
-  FUNCTION check_io_block()
+  FUNCTION io_block_check() RESULT(errcode)
 
-    INTEGER :: check_io_block, index, io
+    INTEGER :: errcode, index, io
 
     ! Just assume that anything not included except for the compulsory
     ! elements is not wanted
-    check_io_block = c_err_none
+    errcode = c_err_none
 
     ! Other control parameters are optional
     io_block_done(1:6) = .TRUE.
@@ -280,10 +304,10 @@ CONTAINS
                 ' absent. Please create this entry in the input deck'
           ENDDO
         ENDIF
-        check_io_block = c_err_missing_elements
+        errcode = c_err_missing_elements
       ENDIF
     ENDDO
 
-  END FUNCTION check_io_block
+  END FUNCTION io_block_check
 
 END MODULE deck_io_block

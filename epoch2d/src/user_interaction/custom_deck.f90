@@ -10,30 +10,31 @@ CONTAINS
   ! These functions contain the user input deck elements
   !----------------------------------------------------------------------------
 
-  FUNCTION handle_custom_block(block_name, element, value)
+  FUNCTION custom_blocks_handle_element(block_name, element, value) &
+      RESULT(errcode)
 
     CHARACTER(LEN=string_length), INTENT(IN) :: block_name, element, value
-    INTEGER :: handle_custom_block
+    INTEGER :: errcode
 
     ! The following line must always be present
-    handle_custom_block = c_err_unknown_block
+    errcode = c_err_unknown_block
 
-  END FUNCTION handle_custom_block
+  END FUNCTION custom_blocks_handle_element
 
 
 
-  FUNCTION check_custom_blocks()
+  FUNCTION custom_blocks_check() RESULT(errcode)
 
-    INTEGER :: check_custom_blocks
+    INTEGER :: errcode
 
     ! This subroutine is to allow you to force the code to bomb out if an
     ! essential element of the input deck is missing. If you either don't
     ! want to check, are not extending the input deck, or all elements are
-    ! set then set "check_custom_blocks = c_err_none". Otherwise set the
-    ! return value to "check_custom_blocks = c_err_missing_elements".
+    ! set then set "errcode = c_err_none". Otherwise set the
+    ! return value to "errcode = c_err_missing_elements".
 
-    check_custom_blocks = c_err_none
+    errcode = c_err_none
 
-  END FUNCTION check_custom_blocks
+  END FUNCTION custom_blocks_check
 
 END MODULE custom_deck

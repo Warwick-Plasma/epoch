@@ -9,23 +9,46 @@ MODULE deck_constant_block
 
 CONTAINS
 
-  FUNCTION handle_constant_deck(element, value)
+  SUBROUTINE constant_deck_initialise
+
+  END SUBROUTINE constant_deck_initialise
+
+
+
+  SUBROUTINE constant_deck_finalise
+
+  END SUBROUTINE constant_deck_finalise
+
+
+
+  SUBROUTINE constant_block_start
+
+  END SUBROUTINE constant_block_start
+
+
+
+  SUBROUTINE constant_block_end
+
+  END SUBROUTINE constant_block_end
+
+
+
+  FUNCTION constant_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: handle_constant_deck
-    INTEGER :: ix, io, err
+    INTEGER :: errcode
+    INTEGER :: ix, io
     TYPE(deck_constant), DIMENSION(:), ALLOCATABLE :: buffer
     TYPE(primitive_stack) :: temp
     TYPE(stack_element) :: block
 
-    handle_constant_deck = c_err_none
+    errcode = c_err_none
 
     IF (value .EQ. blank) RETURN
 
     CALL initialise_stack(temp)
-    CALL tokenize(value, temp, err)
-    IF (err .NE. c_err_none) THEN
-      handle_constant_deck = err
+    CALL tokenize(value, temp, errcode)
+    IF (errcode .NE. c_err_none) THEN
       CALL deallocate_stack(temp)
       RETURN
     ENDIF
@@ -76,6 +99,15 @@ CONTAINS
 
     n_deck_constants = n_deck_constants + 1
 
-  END FUNCTION handle_constant_deck
+  END FUNCTION constant_block_handle_element
+
+
+
+  FUNCTION constant_block_check() RESULT(errcode)
+
+    INTEGER :: errcode
+    errcode = c_err_none
+
+  END FUNCTION constant_block_check
 
 END MODULE deck_constant_block

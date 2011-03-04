@@ -6,63 +6,79 @@ MODULE deck_window_block
 
 CONTAINS
 
-  FUNCTION handle_window_deck(element, value)
+  SUBROUTINE window_deck_initialise
+
+  END SUBROUTINE window_deck_initialise
+
+
+
+  SUBROUTINE window_deck_finalise
+
+  END SUBROUTINE window_deck_finalise
+
+
+
+  SUBROUTINE window_block_start
+
+    bc_x_min_after_move = bc_field(c_bd_x_min)
+    bc_x_max_after_move = bc_field(c_bd_x_max)
+
+  END SUBROUTINE window_block_start
+
+
+
+  SUBROUTINE window_block_end
+
+  END SUBROUTINE window_block_end
+
+
+
+  FUNCTION window_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: handle_window_deck
+    INTEGER :: errcode
 
-    handle_window_deck = c_err_none
+    errcode = c_err_none
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, "move_window")) THEN
-      move_window = as_logical(value, handle_window_deck)
+      move_window = as_logical(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "window_v_x")) THEN
-      window_v_x = as_real(value, handle_window_deck)
+      window_v_x = as_real(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "window_start_time")) THEN
-      window_start_time = as_real(value, handle_window_deck)
+      window_start_time = as_real(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "bc_x_min_after_move") &
         .OR. str_cmp(element, "xbc_left_after_move")) THEN
-      bc_x_min_after_move = as_bc(value, handle_window_deck)
+      bc_x_min_after_move = as_bc(value, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, "bc_x_max_after_move") &
         .OR. str_cmp(element, "xbc_right_after_move")) THEN
-      bc_x_max_after_move = as_bc(value, handle_window_deck)
+      bc_x_max_after_move = as_bc(value, errcode)
       RETURN
     ENDIF
 
-    handle_window_deck = c_err_unknown_element
+    errcode = c_err_unknown_element
 
-  END FUNCTION handle_window_deck
-
-
-
-  FUNCTION check_window_block()
-
-    INTEGER :: check_window_block
-
-    ! Should do error checking but can't be bothered at the moment
-    check_window_block = c_err_none
-
-  END FUNCTION check_window_block
+  END FUNCTION window_block_handle_element
 
 
 
-  SUBROUTINE window_start
+  FUNCTION window_block_check() RESULT(errcode)
 
-    bc_x_min_after_move = bc_field(c_bd_x_min)
-    bc_x_max_after_move = bc_field(c_bd_x_max)
+    INTEGER :: errcode
+    errcode = c_err_none
 
-  END SUBROUTINE window_start
+  END FUNCTION window_block_check
 
 END MODULE deck_window_block

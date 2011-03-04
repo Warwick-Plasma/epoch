@@ -40,14 +40,38 @@ MODULE deck_boundaries_block
 
 CONTAINS
 
-  FUNCTION handle_boundary_deck(element, value)
+  SUBROUTINE boundary_deck_initialise
+
+  END SUBROUTINE boundary_deck_initialise
+
+
+
+  SUBROUTINE boundary_deck_finalise
+
+  END SUBROUTINE boundary_deck_finalise
+
+
+
+  SUBROUTINE boundary_block_start
+
+  END SUBROUTINE boundary_block_start
+
+
+
+  SUBROUTINE boundary_block_end
+
+  END SUBROUTINE boundary_block_end
+
+
+
+  FUNCTION boundary_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: handle_boundary_deck
+    INTEGER :: errcode
     INTEGER :: loop, elementselected, itmp
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
 
-    handle_boundary_deck = c_err_unknown_element
+    errcode = c_err_unknown_element
 
     elementselected = 0
 
@@ -61,11 +85,11 @@ CONTAINS
 
     IF (elementselected .EQ. 0) RETURN
     IF (boundary_block_done(elementselected)) THEN
-      handle_boundary_deck = c_err_preset_element
+      errcode = c_err_preset_element
       RETURN
     ENDIF
     boundary_block_done(elementselected) = .TRUE.
-    handle_boundary_deck = c_err_none
+    errcode = c_err_none
 
     IF (elementselected .LE. nbase) THEN
       boundary_block_done(elementselected+  nbase) = .TRUE.
@@ -74,59 +98,59 @@ CONTAINS
 
     SELECT CASE (elementselected)
     CASE(1)
-      itmp = as_bc(value, handle_boundary_deck)
+      itmp = as_bc(value, errcode)
       bc_field(c_bd_x_min) = itmp
       bc_particle(c_bd_x_min) = itmp
     CASE(2)
-      itmp = as_bc(value, handle_boundary_deck)
+      itmp = as_bc(value, errcode)
       bc_field(c_bd_x_max) = itmp
       bc_particle(c_bd_x_max) = itmp
     CASE(3)
-      itmp = as_bc(value, handle_boundary_deck)
+      itmp = as_bc(value, errcode)
       bc_field(c_bd_y_min) = itmp
       bc_particle(c_bd_y_min) = itmp
     CASE(4)
-      itmp = as_bc(value, handle_boundary_deck)
+      itmp = as_bc(value, errcode)
       bc_field(c_bd_y_max) = itmp
       bc_particle(c_bd_y_max) = itmp
     CASE(nbase+1)
-      bc_field(c_bd_x_min) = as_bc(value, handle_boundary_deck)
+      bc_field(c_bd_x_min) = as_bc(value, errcode)
       boundary_block_done(1)  = .TRUE.
     CASE(nbase+2)
-      bc_field(c_bd_x_max) = as_bc(value, handle_boundary_deck)
+      bc_field(c_bd_x_max) = as_bc(value, errcode)
       boundary_block_done(2)  = .TRUE.
     CASE(nbase+3)
-      bc_field(c_bd_y_min) = as_bc(value, handle_boundary_deck)
+      bc_field(c_bd_y_min) = as_bc(value, errcode)
       boundary_block_done(3)  = .TRUE.
     CASE(nbase+4)
-      bc_field(c_bd_y_max) = as_bc(value, handle_boundary_deck)
+      bc_field(c_bd_y_max) = as_bc(value, errcode)
       boundary_block_done(4)  = .TRUE.
     CASE(2*nbase+1)
-      bc_particle(c_bd_x_min) = as_bc(value, handle_boundary_deck)
+      bc_particle(c_bd_x_min) = as_bc(value, errcode)
       boundary_block_done(1)  = .TRUE.
     CASE(2*nbase+2)
-      bc_particle(c_bd_x_max) = as_bc(value, handle_boundary_deck)
+      bc_particle(c_bd_x_max) = as_bc(value, errcode)
       boundary_block_done(2)  = .TRUE.
     CASE(2*nbase+3)
-      bc_particle(c_bd_y_min) = as_bc(value, handle_boundary_deck)
+      bc_particle(c_bd_y_min) = as_bc(value, errcode)
       boundary_block_done(3)  = .TRUE.
     CASE(2*nbase+4)
-      bc_particle(c_bd_y_max) = as_bc(value, handle_boundary_deck)
+      bc_particle(c_bd_y_max) = as_bc(value, errcode)
       boundary_block_done(4)  = .TRUE.
     END SELECT
 
-  END FUNCTION handle_boundary_deck
+  END FUNCTION boundary_block_handle_element
 
 
 
-  FUNCTION check_boundary_block()
+  FUNCTION boundary_block_check() RESULT(errcode)
 
-    INTEGER :: check_boundary_block
+    INTEGER :: errcode
     INTEGER :: index, io
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
     LOGICAL :: error
 
-    check_boundary_block = c_err_none
+    errcode = c_err_none
 
     DO index = 1, nbase
       IF (.NOT.boundary_block_done(index+nbase) &
@@ -147,7 +171,7 @@ CONTAINS
             WRITE(io,*) 'Please create this entry in the input deck'
           ENDDO
         ENDIF
-        check_boundary_block = c_err_missing_elements
+        errcode = c_err_missing_elements
       ENDIF
     ENDDO
 
@@ -176,6 +200,6 @@ CONTAINS
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
     ENDIF
 
-  END FUNCTION check_boundary_block
+  END FUNCTION boundary_block_check
 
 END MODULE deck_boundaries_block
