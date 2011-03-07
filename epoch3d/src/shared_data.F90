@@ -526,7 +526,7 @@ MODULE shared_data
   LOGICAL :: use_random_seed = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
-  REAL(num) :: dt_snapshots, dt_min_average
+  REAL(num) :: dt_snapshot, dt_min_average
   REAL(num) :: length_x, dx, x_min, x_max
   REAL(num) :: x_min_local, x_max_local, length_x_local
   REAL(num) :: length_y, dy, y_min, y_max
@@ -536,7 +536,7 @@ MODULE shared_data
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_mins, x_maxs
   REAL(num), DIMENSION(:), ALLOCATABLE :: y_mins, y_maxs
   REAL(num), DIMENSION(:), ALLOCATABLE :: z_mins, z_maxs
-  INTEGER :: nstep_snapshots
+  INTEGER :: nstep_snapshot
 
   REAL(num) :: total_ohmic_heating = 0.0_num
 
@@ -611,8 +611,8 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   TYPE averaged_data_block
     REAL(num), DIMENSION(:,:,:,:), POINTER :: array
-    REAL(num) :: average_over_real_time
-    REAL(num) :: real_time_after_average
+    REAL(num) :: time_period
+    REAL(num) :: real_time
   END TYPE averaged_data_block
   TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
   INTEGER :: min_cycles_per_average = -1

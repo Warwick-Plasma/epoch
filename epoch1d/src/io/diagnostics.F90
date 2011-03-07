@@ -226,12 +226,12 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
     INTEGER :: ioutput
 
-    INTEGER, SAVE :: nstep = 0
-    REAL(num), SAVE :: t1 = 0.0_num
+    INTEGER, SAVE :: nstep_next = 0
+    REAL(num), SAVE :: time_next = 0.0_num
     LOGICAL, SAVE :: first = .TRUE.
 
     IF (first) THEN
-      IF (ic_from_restart) t1 = time
+      IF (ic_from_restart) time_next = time
       first = .FALSE.
     ENDIF
 
@@ -240,20 +240,19 @@ CONTAINS
 
     DO ioutput = 1, num_vars_to_dump
       IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0 &
-          .AND. (time &
-          .GE. t1 - averaged_data(ioutput)%average_over_real_time)) THEN
+          .AND. (time .GE. time_next - averaged_data(ioutput)%time_period)) THEN
         CALL average_field(ioutput)
       ENDIF
     ENDDO
 
-    IF (time .GE. t1) THEN
+    IF (time .GE. time_next) THEN
       print_arrays = .TRUE.
-      t1 = t1 + dt_snapshots
+      time_next = time_next + dt_snapshot
     ENDIF
 
-    IF (i .GE. nstep) THEN
+    IF (i .GE. nstep_next) THEN
       print_arrays = .TRUE.
-      nstep = nstep + nstep_snapshots
+      nstep_next = nstep_next + nstep_snapshot
     ENDIF
 
     IF (time .GE. t_end .OR. i .EQ. nsteps) THEN
@@ -271,8 +270,7 @@ CONTAINS
     INTEGER :: n_species_local, ispecies
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
 
-    averaged_data(ioutput)%real_time_after_average = &
-        averaged_data(ioutput)%real_time_after_average + dt
+    averaged_data(ioutput)%real_time = averaged_data(ioutput)%real_time + dt
 
     n_species_local = 1
     IF (IAND(dumpmask(ioutput), c_io_species) .NE. 0) &
@@ -397,14 +395,14 @@ CONTAINS
 
     IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
       averaged_data(id)%array = averaged_data(id)%array &
-          / averaged_data(id)%real_time_after_average
+          / averaged_data(id)%real_time
 
       CALL sdf_write_plain_variable(sdf_handle, &
           TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
           TRIM(units), dims, stagger, 'grid', &
           averaged_data(id)%array(:,1), subtype_field, subarray_field)
 
-      averaged_data(id)%real_time_after_average = 0.0_num
+      averaged_data(id)%real_time = 0.0_num
       averaged_data(id)%array = 0.0_num
     ENDIF
 
@@ -467,7 +465,7 @@ CONTAINS
     ! Write averaged data
     IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
       averaged_data(id)%array = averaged_data(id)%array &
-          / averaged_data(id)%real_time_after_average
+          / averaged_data(id)%real_time
 
       IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
         CALL sdf_write_plain_variable(sdf_handle, &
@@ -490,7 +488,7 @@ CONTAINS
         ENDDO
       ENDIF
 
-      averaged_data(id)%real_time_after_average = 0.0_num
+      averaged_data(id)%real_time = 0.0_num
       averaged_data(id)%array = 0.0_num
     ENDIF
 

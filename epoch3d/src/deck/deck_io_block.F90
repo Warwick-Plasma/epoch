@@ -112,7 +112,7 @@ CONTAINS
 
     SELECT CASE (elementselected)
     CASE(1)
-      dt_snapshots = as_real(value, handle_io_deck)
+      dt_snapshot = as_real(value, handle_io_deck)
     CASE(2)
       full_dump_every = as_integer(value, handle_io_deck)
     CASE(3)
@@ -135,7 +135,7 @@ CONTAINS
     CASE(8)
       min_cycles_per_average = as_integer(value, handle_io_deck)
     CASE(9)
-      nstep_snapshots = as_integer(value, handle_io_deck)
+      nstep_snapshot = as_integer(value, handle_io_deck)
     CASE(10)
       dump_source_code = as_logical(value, handle_io_deck)
     CASE(11)
@@ -233,7 +233,7 @@ CONTAINS
     ! Averaging info not compulsory unless averaged variable selected
     IF (.NOT. any_average) io_block_done(7:8) = .TRUE.
 
-    IF (dt_snapshots .LT. average_time) THEN
+    IF (dt_snapshot .LT. average_time) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
@@ -242,7 +242,7 @@ CONTAINS
           WRITE(io,*) 'to averaging time.'
         ENDDO
       ENDIF
-      dt_snapshots = average_time
+      dt_snapshot = average_time
     ENDIF
 
     ! Particles

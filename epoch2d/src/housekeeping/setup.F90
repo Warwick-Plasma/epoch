@@ -65,8 +65,8 @@ CONTAINS
     dump_input_decks = .TRUE.
     full_dump_every = -1
     restart_dump_every = -1
-    dt_snapshots = HUGE(1.0_num)
-    nstep_snapshots = HUGE(1)
+    dt_snapshot = HUGE(1.0_num)
+    nstep_snapshot = HUGE(1)
     nsteps = -1
     t_end = HUGE(1.0_num)
 
@@ -183,15 +183,14 @@ CONTAINS
     min_av_time = t_end
     DO ioutput = 1, num_vars_to_dump
       IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
-        averaged_data(ioutput)%average_over_real_time = average_time
-        min_av_time = &
-            MIN(min_av_time, averaged_data(ioutput)%average_over_real_time)
+        averaged_data(ioutput)%time_period = average_time
+        min_av_time = MIN(min_av_time, averaged_data(ioutput)%time_period)
         n_species_local = 1
         IF (IAND(dumpmask(ioutput), c_io_species) .NE. 0) &
             n_species_local = n_species + 1
         ALLOCATE(averaged_data(ioutput)%array(-2:nx+3,-2:ny+3,n_species_local))
         averaged_data(ioutput)%array = 0.0_num
-        averaged_data(ioutput)%real_time_after_average = 0.0_num
+        averaged_data(ioutput)%real_time = 0.0_num
       ELSE
         dumpmask(ioutput) = IOR(dumpmask(ioutput), c_io_snapshot)
       ENDIF
