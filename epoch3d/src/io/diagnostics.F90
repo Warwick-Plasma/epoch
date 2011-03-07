@@ -229,6 +229,7 @@ CONTAINS
     INTEGER, SAVE :: nstep_next = 0
     REAL(num), SAVE :: time_next = 0.0_num
     LOGICAL, SAVE :: first = .TRUE.
+    REAL(num) :: t0, t1, time_first
 
     IF (first) THEN
       IF (ic_from_restart) time_next = time
@@ -238,10 +239,24 @@ CONTAINS
     print_arrays = .FALSE.
     last_call = .FALSE.
 
+    ! Work out the time that the next dump will occur based on the
+    ! current timestep
+    t0 = t_end
+    t1 = t_end
+    IF (dt_snapshot .GE. 0.0_num) t0 = time_next
+    IF (nstep_snapshot .GE. 0) t1 = time + dt * (nstep_next - i)
+
+    IF (t0 .LT. t1) THEN
+      time_first  = t0
+    ELSE
+      time_first  = t1
+    ENDIF
+
     DO ioutput = 1, num_vars_to_dump
-      IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0 &
-          .AND. (time .GE. time_next - averaged_data(ioutput)%time_period)) THEN
-        CALL average_field(ioutput)
+      IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
+        IF (time .GE. time_first - averaged_data(ioutput)%time_period) THEN
+          CALL average_field(ioutput)
+        ENDIF
       ENDIF
     ENDDO
 
