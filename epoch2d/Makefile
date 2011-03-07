@@ -94,6 +94,12 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 current_smooth.F90 \
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
 
+INCLUDES = $(SRCDIR)/include/bspline3/eb_part.inc \
+  $(SRCDIR)/include/bspline3/gx.inc $(SRCDIR)/include/bspline3/hx_dcell.inc \
+  $(SRCDIR)/include/tophat/eb_part.inc $(SRCDIR)/include/tophat/gx.inc \
+  $(SRCDIR)/include/tophat/hx_dcell.inc $(SRCDIR)/include/triangle/eb_part.inc \
+  $(SRCDIR)/include/triangle/gx.inc $(SRCDIR)/include/triangle/hx_dcell.inc
+
 ENCODED_SOURCE ?= encoded_source.o
 OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)
 
@@ -118,13 +124,13 @@ $(FULLTARGET): $(OBJFILES)
 
 opt_dont_build_sha1: ;
 opt_dont_build_embedded_source: ;
-$(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(SRCDIR)/include \
+$(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(INCLUDES) \
   $(SRCDIR)/gen_src_module $(SRCDIR)/gen_commit_string Makefile COMMIT
 	./$(SRCDIR)/gen_src_module $@ $^
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -c $(FFLAGS)  $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
+	$(FC) -c $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
 
 COMMIT: $(SRCFILES)
 	./$(SRCDIR)/gen_commit_string
