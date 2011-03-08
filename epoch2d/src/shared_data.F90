@@ -591,8 +591,8 @@ MODULE shared_data
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
   INTEGER :: n_zeros = 4
-  REAL(num) :: dt_snapshot
-  INTEGER :: nstep_snapshot
+  REAL(num) :: dt_snapshot, time_next = 0.0_num
+  INTEGER :: nstep_snapshot, nstep_next = 0
 
   !----------------------------------------------------------------------------
   ! Time averaged IO

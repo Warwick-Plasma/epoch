@@ -113,6 +113,7 @@ CONTAINS
     SELECT CASE (elementselected)
     CASE(1)
       dt_snapshot = as_real(value, handle_io_deck)
+      IF (dt_snapshot .LT. 0.0_num) dt_snapshot = 0.0_num
     CASE(2)
       full_dump_every = as_integer(value, handle_io_deck)
     CASE(3)
@@ -136,6 +137,7 @@ CONTAINS
       min_cycles_per_average = as_integer(value, handle_io_deck)
     CASE(9)
       nstep_snapshot = as_integer(value, handle_io_deck)
+      IF (nstep_snapshot .LT. 0) nstep_snapshot = 0
     CASE(10)
       dump_source_code = as_logical(value, handle_io_deck)
     CASE(11)

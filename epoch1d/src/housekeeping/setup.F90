@@ -65,8 +65,8 @@ CONTAINS
     dump_input_decks = .TRUE.
     full_dump_every = -1
     restart_dump_every = -1
-    dt_snapshot = HUGE(1.0_num)
-    nstep_snapshot = HUGE(1)
+    dt_snapshot = -1.0_num
+    nstep_snapshot = -1
     nsteps = -1
     t_end = HUGE(1.0_num)
 
@@ -382,6 +382,17 @@ CONTAINS
 
     CALL sdf_read_header(sdf_handle, snap, time, code_name, code_io_version, &
         restart_flag)
+
+    IF (dt_snapshot .GT. 0.0_num) THEN
+      time_next = time + dt_snapshot
+    ELSE
+      time_next = time
+    ENDIF
+    IF (nstep_snapshot .GT. 0) THEN
+      nstep_next = snap + nstep_snapshot
+    ELSE
+      nstep_next = snap
+    ENDIF
 
     IF (.NOT. restart_flag) THEN
       IF (rank .EQ. 0) THEN

@@ -225,16 +225,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: i
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
     INTEGER :: ioutput
-
-    INTEGER, SAVE :: nstep_next = 0
-    REAL(num), SAVE :: time_next = 0.0_num
-    LOGICAL, SAVE :: first = .TRUE.
     REAL(num) :: t0, t1, time_first
-
-    IF (first) THEN
-      IF (ic_from_restart) time_next = time
-      first = .FALSE.
-    ENDIF
 
     print_arrays = .FALSE.
     last_call = .FALSE.
@@ -260,14 +251,14 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (time .GE. time_next) THEN
+    IF (dt_snapshot .GE. 0.0_num .AND. time .GE. time_next) THEN
       print_arrays = .TRUE.
       time_next = time_next + dt_snapshot
-    ENDIF
-
-    IF (i .GE. nstep_next) THEN
+      IF (nstep_snapshot .GE. 0) nstep_next = i + nstep_snapshot
+    ELSE IF (nstep_snapshot .GE. 0 .AND. i .GE. nstep_next) THEN
       print_arrays = .TRUE.
       nstep_next = nstep_next + nstep_snapshot
+      IF (dt_snapshot .GE. 0.0_num) time_next = time + dt_snapshot
     ENDIF
 
     IF (time .GE. t_end .OR. i .EQ. nsteps) THEN
