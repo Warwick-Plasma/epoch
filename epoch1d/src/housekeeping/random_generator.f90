@@ -21,8 +21,8 @@ CONTAINS
 
     x = 69069 * x + 1327217885
 
-    a2 = y
-    b2 = 13
+    a1 = y
+    b1 = 13
     a2 = IEOR(a1, ISHFT(a1, b1))
     b2 = -17
     a3 = IEOR(a2, ISHFT(a2, b2))
