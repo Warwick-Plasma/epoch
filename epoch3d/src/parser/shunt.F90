@@ -324,6 +324,7 @@ CONTAINS
           IF (block%ptype .EQ. c_pt_bad) THEN
             IF (rank .EQ. 0) THEN
               PRINT *, "Unable to parse block with text ", TRIM(current)
+              CALL check_deprecated(current)
             ENDIF
             err = c_err_bad_value
             CALL deallocate_stack(stack)

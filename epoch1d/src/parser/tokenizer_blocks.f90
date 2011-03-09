@@ -251,4 +251,18 @@ CONTAINS
 
   END FUNCTION as_operator
 
+
+
+  SUBROUTINE check_deprecated(name)
+
+    CHARACTER(LEN=*), INTENT(IN) :: name
+
+    IF (str_cmp(name, "ln")) THEN
+      WRITE(*,*) '"' // TRIM(name) // '" is deprecated.'
+      WRITE(*,*) 'Use "loge" instead.'
+      RETURN
+    ENDIF
+
+  END SUBROUTINE check_deprecated
+
 END MODULE tokenizer_blocks
