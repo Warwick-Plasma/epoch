@@ -1,0 +1,181 @@
+begin:constant
+  points = 512
+  part = 32
+
+  las_lambda = 1.0e-6
+  las_omega = 2.0 * pi * c / las_lambda
+  las_time = 2.0 * pi / las_omega
+
+  n_crit = critical(las_omega)
+
+  rhomax = 0.8 * n_crit
+
+  scale_x = 20e-6
+
+  las_scale_y = 8.0e-6
+
+  x_start = -4e-6
+
+  # Gaussian Beam stuff
+  w0 = las_scale_y
+  rayleigh_range = pi * w0^2 / las_lambda
+  wz = w0 * sqrt(1+(x_start/rayleigh_range)^2)
+  radius_of_curvature = x_start * (1.0+(rayleigh_range/x_start)^2)
+end:constant
+
+
+begin:control
+  nx = 1024
+  ny = 512
+
+  # final time of simulation
+  t_end = 0.4e-12
+
+  # size of domain
+  x_min = x_start
+  x_end = scale_x + 20e-6
+
+  y_min = -20e-6
+  y_max = -y_min
+
+  stdout_frequency = 10
+end:control
+
+
+begin:laser
+  boundary = x_min
+  irradiance = 1.0e20 # W/m^2
+  omega = las_omega
+  t_profile = if (time lt 2*las_time, gauss(time,2*las_time,2*las_time), 1)
+  profile = (1.0 + 0.05*sin(32.0*pi*y/lengthy)) * gauss(y,0,las_scale_y)
+end:laser
+
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = simple_outflow
+  bc_y_min = periodic
+  bc_y_max = periodic
+end:boundaries
+
+
+begin:species
+  # protons
+  name = hydrogen
+  charge = 1.0
+  mass = 1836.2
+  npart = points * points * part
+
+  density = rhomax * (exp(x/scale_x) - 1) / (exp(1) - 1)
+  density = if(x lt 0, 0.0, density(hydrogen))
+  density = if(density(hydrogen) gt rhomax, rhomax, density(hydrogen))
+  density = if(x gt 75e-6, 0.0, density(hydrogen))
+  #density = density(hydrogen) * (0.8 + 0.2 * gauss(y,0,0.5*las_scale_y))
+  density_min = 0.0001 * n_crit
+  density_max = 1.2 * n_crit
+
+  dump = T
+  #temp_ev = 40
+end:species
+
+
+begin:species
+  # electron
+  name = electron
+  charge = -1.0
+  mass = 1.0
+  npart = points * points * part
+
+  density = density(hydrogen)
+  density_min = 0.0001 * n_crit
+  density_max = n_crit
+
+  #temp_ev = 10^3
+  dump = T
+end:species
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = 0.5e-14
+  # Number of snapshots between full dumps
+  full_dump_every = 10
+  restart_dump_every = -1
+  force_final_to_be_restartable = F
+
+  # Properties on grid
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  bx = always
+  by = always
+  bz = always
+  jx = always
+  jy = always
+  jz = always
+  ekbar = always + species
+  mass_density = never + species
+  charge_density = always # + average + snapshot
+  number_density = always + species
+  temperature = never + species
+
+  # extended io
+  distribution_functions = always
+end:output
+
+
+begin:dist_fn
+  name = en
+  ndims = 1
+  dumpmask = always
+
+  direction1 = dir_en
+
+  range1 = (0,50*kev)
+
+  resolution1 = 5000
+
+  include_species:electron
+end:dist_fn
+
+
+begin:dist_fn
+  name = x_en
+  ndims = 2
+  dumpmask = always
+
+  direction1 = dir_x
+  direction2 = dir_en
+
+  # range is ignored for spatial coordinates
+  range1 = (1,1)
+  range2 = (0,50*kev)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 1
+  resolution2 = 1500
+
+  include_species:electron
+end:dist_fn
+
+
+begin:dist_fn
+  name = x_px
+  ndims = 2
+  dumpmask = always
+
+  direction1 = dir_x
+  direction2 = dir_px
+
+  # range is ignored for spatial coordinates
+  range1 = (1,1)
+  range2 = (-5e-23,5e-23)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 1
+  resolution2 = 1500
+
+  include_species:electron
+end:dist_fn
+

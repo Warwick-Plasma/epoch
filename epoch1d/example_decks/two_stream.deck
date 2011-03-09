@@ -33,7 +33,7 @@ begin:species
   dump = T
   temp_x = temp
   drift_x = drift_p
-  rho = dens
+  density = dens
 end:species
 
 
@@ -46,7 +46,7 @@ begin:species
   dump = T
   temp_x = temp
   drift_x = -drift_p
-  rho = dens
+  density = dens
 end:species
 
 

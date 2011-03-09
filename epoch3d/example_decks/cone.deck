@@ -45,9 +45,9 @@ begin:species
   charge = 1.0
   mass = 1836.2
   frac = 0.5
-  rho = if((r gt ri) and (r lt ro), den_cone, 0.0)
-  rho = if((x gt xi) and (x lt xo) and (r lt ri), den_cone, rho(proton))
-  rho = if(x gt xo, 0.0, rho(proton))
+  density = if((r gt ri) and (r lt ro), den_cone, 0.0)
+  density = if((x gt xi) and (x lt xo) and (r lt ri), den_cone, density(proton))
+  density = if(x gt xo, 0.0, density(proton))
   dump = T
 end:species
 
@@ -57,7 +57,7 @@ begin:species
   charge = -1.0
   mass = 1.0
   frac = 0.5
-  rho = rho(proton)
+  density = density(proton)
   dump = T
 end:species
 
