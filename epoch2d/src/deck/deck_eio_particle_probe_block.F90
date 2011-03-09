@@ -1,4 +1,4 @@
-MODULE deck_eio_particle_probe_block
+MODULE deck_particle_probe_block
 
   USE probes
   USE strings_advanced
@@ -177,4 +177,4 @@ CONTAINS
   END FUNCTION handle_probe_deck
 #endif
 
-END MODULE deck_eio_particle_probe_block
+END MODULE deck_particle_probe_block

@@ -14,12 +14,12 @@ MODULE deck
   USE deck_io_block
   USE deck_window_block
   ! Initial Condition Blocks
-  USE deck_ic_laser_block
-  USE deck_ic_fields_block
+  USE deck_laser_block
+  USE deck_fields_block
   ! Extended IO Blocks
-  USE deck_eio_dist_fn_block
+  USE deck_dist_fn_block
 #ifdef PARTICLE_PROBES
-  USE deck_eio_particle_probe_block
+  USE deck_particle_probe_block
 #endif
   ! Custom blocks
   USE custom_deck
@@ -157,19 +157,19 @@ CONTAINS
     ! Initial conditions blocks go here
     IF (str_cmp(block_name, "fields")) THEN
       IF (deck_state .EQ. c_ds_ic) &
-          handle_block = handle_ic_fields_deck(block_element, block_value)
+          handle_block = handle_fields_deck(block_element, block_value)
       RETURN
     ENDIF
 
     IF (str_cmp(block_name, "laser")) THEN
       IF (deck_state .EQ. c_ds_eio) &
-          handle_block = handle_ic_laser_deck(block_element, block_value)
+          handle_block = handle_laser_deck(block_element, block_value)
       RETURN
     ENDIF
 
     IF (str_cmp(block_name, "dist_fn")) THEN
       IF (deck_state .EQ. c_ds_eio) &
-          handle_block = handle_eio_dist_fn_deck(block_element, block_value)
+          handle_block = handle_dist_fn_deck(block_element, block_value)
       RETURN
     ENDIF
 
@@ -216,9 +216,9 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, check_window_block())
       errcode_deck = IOR(errcode_deck, check_custom_blocks())
     ELSE IF (deck_state .EQ. c_ds_ic) THEN
-      errcode_deck = IOR(errcode_deck, check_ic_fields_block())
+      errcode_deck = IOR(errcode_deck, check_fields_block())
       errcode_deck = IOR(errcode_deck, check_species_block())
-      errcode_deck = IOR(errcode_deck, check_ic_laser_block())
+      errcode_deck = IOR(errcode_deck, check_laser_block())
     ENDIF
     errcode_deck = IOR(errcode_deck, check_custom_blocks())
 
