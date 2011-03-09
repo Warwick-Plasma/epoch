@@ -81,12 +81,12 @@ PROGRAM pic
     CALL read_deck(deck_file, .TRUE.)
     ! auto_load particles
     CALL auto_load
-    CALL deallocate_ic
     time = 0.0_num
     output_file = 0
   ENDIF
 
   CALL manual_load
+  IF (.NOT. ic_from_restart) CALL deallocate_ic
 
   npart_global = 0
   DO ispecies = 1, n_species
