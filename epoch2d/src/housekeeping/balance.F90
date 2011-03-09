@@ -696,6 +696,21 @@ CONTAINS
 
     ENDDO
 
+#ifdef COLLISIONS
+    ! No need to redistribute since these are only used as local variables
+    DEALLOCATE(coll_part_count)
+    ALLOCATE(coll_part_count(-2:nx_new+3, -2:ny_new+3))
+
+    DEALLOCATE(coll_meanx)
+    ALLOCATE(coll_meanx(-2:nx_new+3, -2:ny_new+3))
+
+    DEALLOCATE(coll_meany)
+    ALLOCATE(coll_meany(-2:nx_new+3, -2:ny_new+3))
+
+    DEALLOCATE(coll_meanz)
+    ALLOCATE(coll_meanz(-2:nx_new+3, -2:ny_new+3))
+#endif
+
   END SUBROUTINE redistribute_fields
 
 

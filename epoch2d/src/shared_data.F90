@@ -394,6 +394,9 @@ MODULE shared_data
 #elif PARTICLE_ID
     INTEGER(KIND=8) :: id
 #endif
+#ifdef COLLISIONS_TEST
+    INTEGER :: coll_count
+#endif
   END TYPE particle
 
   ! Object representing a collection of particles
@@ -595,6 +598,24 @@ MODULE shared_data
   LOGICAL :: ic_from_restart = .FALSE.
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_snapshot
+
+#ifdef COLLISIONS
+  TYPE particle_sort_element
+    TYPE(particle), POINTER :: particle
+    REAL(num) :: sort_index
+  END TYPE particle_sort_element
+
+  TYPE(particle_sort_element), POINTER, DIMENSION(:) :: coll_sort_array
+  INTEGER :: coll_sort_array_size = 0
+
+  LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
+  REAL(num) :: coulomb_log
+  LOGICAL :: coulomb_log_auto
+
+  REAL(num), DIMENSION(:,:), ALLOCATABLE :: coll_part_count, coll_meanx, &
+        coll_meany, coll_meanz
+#endif
 
   !----------------------------------------------------------------------------
   ! Moving window

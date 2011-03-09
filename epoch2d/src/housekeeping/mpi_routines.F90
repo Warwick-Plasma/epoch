@@ -235,6 +235,12 @@ CONTAINS
       ENDIF
     ENDDO
 
+#ifdef COLLISIONS
+    ALLOCATE(coll_part_count(-2:nx+3, -2:ny+3))
+    ALLOCATE(coll_meanx(-2:nx+3, -2:ny+3))
+    ALLOCATE(coll_meany(-2:nx+3, -2:ny+3))
+    ALLOCATE(coll_meanz(-2:nx+3, -2:ny+3))
+#endif
     start_time = MPI_WTIME()
 
   END SUBROUTINE mpi_initialise

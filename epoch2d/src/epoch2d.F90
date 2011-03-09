@@ -34,12 +34,21 @@ PROGRAM pic
 #ifdef PARTICLE_IONISE
   USE ionise
 #endif
+#ifdef COLLISIONS
+  USE collisions
+#endif
 
   IMPLICIT NONE
 
   INTEGER :: ispecies, step = 0
   LOGICAL :: halt = .FALSE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
+
+#ifdef COLLISIONS_TEST
+  ! used for testing
+  CALL test_collisions
+  STOP
+#endif
 
   CALL mpi_minimal_init ! mpi_routines.f90
   CALL minimal_init     ! setup.f90
@@ -59,6 +68,9 @@ PROGRAM pic
   CALL mpi_initialise  ! mpi_routines.f90
   CALL after_control   ! setup.f90
   CALL open_files      ! setup.f90
+#ifdef COLLISIONS
+  CALL init_collision_matrix ! window.f90
+#endif
 
   ! restart flag is set
   IF (ic_from_restart) THEN
@@ -114,6 +126,10 @@ PROGRAM pic
       ! After this line, the particles can be accessed on a cell by cell basis
       ! Using the particle_species%secondary_list property
       CALL reorder_particles_to_grid
+
+#ifdef COLLISIONS
+      CALL particle_collisions  ! call collision operator
+#endif
 
       CALL split_particles ! Early beta version of particle splitting operator
 
