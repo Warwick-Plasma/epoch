@@ -120,7 +120,13 @@ CONTAINS
 
     IF (str_cmp(part1, "range")) THEN
       CALL split_range(TRIM(value), work1, work2, handle_eio_dist_fn_deck)
-      IF (handle_eio_dist_fn_deck .NE. c_err_none) RETURN
+      IF (IAND(handle_eio_dist_fn_deck, c_err_bad_value) .NE. 0) THEN
+        handle_eio_dist_fn_deck = &
+            IAND(handle_eio_dist_fn_deck, NOT(c_err_bad_value))
+        handle_eio_dist_fn_deck = &
+            IOR(handle_eio_dist_fn_deck, c_err_warn_bad_value)
+        RETURN
+      ENDIF
       working_block%ranges(1,part2) = work1
       working_block%ranges(2,part2) = work2
       RETURN

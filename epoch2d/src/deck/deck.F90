@@ -624,7 +624,7 @@ CONTAINS
         WRITE(du,*)
         IF (err_count .NE. 0) THEN
           WRITE(du,*) '*** WARNING ***'
-          WRITE(du,*) 'block "' // TRIM(ADJUSTL(value)) // '" contains errors'
+          WRITE(du,*) 'Block "' // TRIM(ADJUSTL(value)) // '" contains errors'
           WRITE(du,*)
         ENDIF
       ENDIF
@@ -664,7 +664,7 @@ CONTAINS
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'element "' // TRIM(element) &
+          WRITE(io,*) 'Element "' // TRIM(element) &
               // '" is set multiple times in this deck.'
           WRITE(io,*) 'Code will continue using first value in deck'
           WRITE(io,*)
@@ -676,7 +676,7 @@ CONTAINS
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'element "' // TRIM(element) &
+          WRITE(io,*) 'Element "' // TRIM(element) &
               // '" is set multiple times in this deck.'
           WRITE(io,*) 'Code will continue using last value in deck'
           WRITE(io,*)
@@ -688,7 +688,7 @@ CONTAINS
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'value "' // TRIM(value) // '" in element "' &
+          WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
               // TRIM(element) // '" is'
           WRITE(io,*) 'invalid or could not be parsed. Code will terminate.'
           WRITE(io,*)
@@ -696,13 +696,26 @@ CONTAINS
       ENDIF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
+    IF (IAND(errcode_deck, c_err_warn_bad_value) .NE. 0) THEN
+      IF (rank .EQ. rank_check) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
+              // TRIM(element) // '" is'
+          WRITE(io,*) 'invalid or could not be parsed. Code will use', &
+              ' default value.'
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+    ENDIF
 
     IF (IAND(errcode_deck, c_err_required_element_not_set) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'value "' // TRIM(value) // '" in element "' &
+          WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
               // TRIM(element) // '" cannot be'
           WRITE(io,*) 'set because a prerequisite element "' &
               // TRIM(extended_error_string) // '" has'

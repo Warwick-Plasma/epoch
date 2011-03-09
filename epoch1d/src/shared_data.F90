@@ -53,6 +53,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_pp_options_wrong = 256
   INTEGER, PARAMETER :: c_err_bad_array_length = 512
   INTEGER, PARAMETER :: c_err_other = 1024
+  INTEGER, PARAMETER :: c_err_warn_bad_value = 2048
 
   INTEGER, PARAMETER :: c_ds_deck = 1
   INTEGER, PARAMETER :: c_ds_ic = 2

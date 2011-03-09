@@ -43,9 +43,9 @@ CONTAINS
         STOP
       ENDIF
     ENDDO
-    IF (eval_stack%stack_point .NE. n_elements) err = IAND(err, c_err_bad_value)
+    IF (eval_stack%stack_point .NE. n_elements) err = IOR(err, c_err_bad_value)
     ! Pop off the final answers
-    DO i = n_elements,1,-1
+    DO i = MIN(eval_stack%stack_point,n_elements),1,-1
       array(i) = pop_off_eval()
     ENDDO
 
