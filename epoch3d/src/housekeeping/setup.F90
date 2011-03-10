@@ -345,7 +345,7 @@ CONTAINS
 
   SUBROUTINE set_initial_values
 
-    INTEGER :: seed
+    INTEGER :: seed, i
 
     ex = 0.0_num
     ey = 0.0_num
@@ -365,6 +365,13 @@ CONTAINS
     seed = seed + rank
 
     CALL random_init(seed)
+
+    DO i = 1, 2*c_ndims
+      IF (bc_particle(i) .EQ. c_bc_open) THEN
+        CALL create_empty_partlist(ejected_particles)
+        EXIT
+      ENDIF
+    ENDDO
 
   END SUBROUTINE set_initial_values
 

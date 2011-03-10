@@ -534,8 +534,6 @@ MODULE shared_data
   ! Moving window
   !----------------------------------------------------------------------------
   LOGICAL :: move_window, inject_particles
-  LOGICAL :: window_started
-  REAL(num) :: window_shift_fraction
   REAL(num) :: window_v_x
   REAL(num) :: window_start_time
   INTEGER :: bc_x_min_after_move

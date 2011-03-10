@@ -57,9 +57,10 @@ PROGRAM pic
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, MPI_COMM_WORLD, errcode)
   CALL read_deck(deck_file, .TRUE., c_ds_first)
   CALL setup_particle_boundaries ! boundary.f90
-  CALL mpi_initialise ! mpi_routines.f90
-  CALL after_control ! setup.f90
-  CALL open_files    ! setup.f90
+  CALL mpi_initialise  ! mpi_routines.f90
+  CALL after_control   ! setup.f90
+  CALL open_files      ! setup.f90
+  CALL allocate_window ! window.f90
 
   ! restart flag is set
   IF (ic_from_restart) THEN
@@ -134,30 +135,8 @@ PROGRAM pic
       ! .FALSE. this time to use load balancing threshold
       CALL balance_workload(.FALSE.)
     ENDIF
-    IF (move_window .AND. .NOT. window_started &
-        .AND. time .GE. window_start_time) THEN
-      bc_field(c_bd_x_min) = bc_x_min_after_move
-      bc_field(c_bd_x_max) = bc_x_max_after_move
-      CALL setup_particle_boundaries
-      CALL setup_communicator
-      window_started = .TRUE.
-    ENDIF
 
-    ! If we have a moving window then update the window position
-    IF (move_window .AND. window_started) THEN
-      window_shift_fraction = window_shift_fraction + dt*window_v_x/dx
-      ! Allow for posibility of having jumped two cells at once
-      IF (FLOOR(window_shift_fraction) .GE. 1.0_num) THEN
-        IF (use_offset_grid) THEN
-          window_shift = &
-              window_shift + REAL(FLOOR(window_shift_fraction), num)*dx
-        ENDIF
-        CALL shift_window
-        window_shift_fraction = &
-            window_shift_fraction - REAL(FLOOR(window_shift_fraction), num)
-        CALL particle_bcs
-      ENDIF
-    ENDIF
+    CALL moving_window
 
     ! This section ensures that the particle count for the species_list
     ! objects is accurate. This makes some things easier, but increases

@@ -42,6 +42,7 @@ CONTAINS
     ! if any of the species are periodic
 
     IF (bc_field(c_bd_x_min) .EQ. c_bc_periodic &
+        .OR. bc_x_min_after_move .EQ. c_bc_periodic &
         .OR. bc_particle(c_bd_x_min) .EQ. c_bc_periodic) &
             periods(c_ndims) = .TRUE.
 

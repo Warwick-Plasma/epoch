@@ -11,7 +11,6 @@ CONTAINS
   SUBROUTINE setup_particle_boundaries
 
     INTEGER :: i
-    LOGICAL :: particle_open
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
@@ -28,12 +27,10 @@ CONTAINS
     ! (or outflow).
 
     ! Laser boundaries assume open particles unless otherwise specified.
-    particle_open = .FALSE.
     DO i = 1, 2*c_ndims
       IF (bc_particle(i) .EQ. c_bc_simple_laser &
           .OR. bc_particle(i) .EQ. c_bc_simple_outflow) &
               bc_particle(i) = c_bc_open
-      IF (bc_particle(i) .EQ. c_bc_open) particle_open = .TRUE.
     ENDDO
 
     ! Note: reflecting EM boundaries not yet implemented.
@@ -41,8 +38,6 @@ CONTAINS
       IF (bc_field(i) .EQ. c_bc_reflect) bc_field(i) = c_bc_clamp
       IF (bc_field(i) .EQ. c_bc_open) bc_field(i) = c_bc_simple_outflow
     ENDDO
-
-    IF (particle_open) CALL create_empty_partlist(ejected_particles)
 
   END SUBROUTINE setup_particle_boundaries
 
