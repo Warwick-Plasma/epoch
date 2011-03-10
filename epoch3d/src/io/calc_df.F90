@@ -18,11 +18,7 @@ CONTAINS
     REAL(num) :: fac, idx
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
-    INTEGER :: cell_x, cell_y, cell_z
+#include "particle_head.inc"
 
     data_array = 0.0_num
 
@@ -56,28 +52,7 @@ CONTAINS
         fac = current%weight * idx
 #endif
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-        cell_z = cell_z + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
-        CALL particle_to_grid(cell_frac_z, gz)
+#include "particle_to_grid.inc"
 
         wdata = part_m * fac
         DO iz = sf_min, sf_max
@@ -117,11 +92,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
-    INTEGER :: cell_x, cell_y, cell_z
+#include "particle_head.inc"
 
     ALLOCATE(wt(-2:nx+3,-2:ny+3,-2:nz+3))
     data_array = 0.0_num
@@ -170,28 +141,7 @@ CONTAINS
         part_uy = current%part_p(2) / part_mc
         part_uz = current%part_p(3) / part_mc
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-        cell_z = cell_z + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
-        CALL particle_to_grid(cell_frac_z, gz)
+#include "particle_to_grid.inc"
 
         gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
         wdata = (gamma - 1.0_num) * fac
@@ -240,11 +190,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
-    INTEGER :: cell_x, cell_y, cell_z
+#include "particle_head.inc"
 
     ALLOCATE(wt(-2:nx+3,-2:ny+3,-2:nz+3))
     data_array = 0.0_num
@@ -297,28 +243,7 @@ CONTAINS
         part_uy = current%part_p(2) / part_mc
         part_uz = current%part_p(3) / part_mc
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-        cell_z = cell_z + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
-        CALL particle_to_grid(cell_frac_z, gz)
+#include "particle_to_grid.inc"
 
         gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
         ek = (gamma - 1.0_num) * fac
@@ -448,11 +373,7 @@ CONTAINS
     REAL(num) :: fac, idx
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
-    INTEGER :: cell_x, cell_y, cell_z
+#include "particle_head.inc"
 
     data_array = 0.0_num
 
@@ -486,28 +407,7 @@ CONTAINS
         fac = current%weight * idx
 #endif
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-        cell_z = cell_z + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
-        CALL particle_to_grid(cell_frac_z, gz)
+#include "particle_to_grid.inc"
 
         wdata = part_q * fac
         DO iz = sf_min, sf_max
@@ -542,11 +442,7 @@ CONTAINS
     REAL(num) :: idx
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
-    INTEGER :: cell_x, cell_y, cell_z
+#include "particle_head.inc"
 
     data_array = 0.0_num
 
@@ -573,28 +469,7 @@ CONTAINS
         wdata = current%weight * idx
 #endif
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-        cell_z = cell_z + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
-        CALL particle_to_grid(cell_frac_z, gz)
+#include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max
           DO iy = sf_min, sf_max
@@ -631,11 +506,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: part_count, meanx, meany, meanz
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
-    INTEGER :: cell_x, cell_y, cell_z
+#include "particle_head.inc"
 
     spec_start = current_species
     spec_end = current_species
@@ -678,28 +549,7 @@ CONTAINS
         part_pmy = current%part_p(2) / sqrt_part_m
         part_pmz = current%part_p(3) / sqrt_part_m
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-        cell_z = cell_z + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
-        CALL particle_to_grid(cell_frac_z, gz)
+#include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max
           DO iy = sf_min, sf_max
@@ -749,28 +599,7 @@ CONTAINS
         part_pmy = current%part_p(2) / sqrt_part_m
         part_pmz = current%part_p(3) / sqrt_part_m
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-        cell_z = cell_z + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
-        CALL particle_to_grid(cell_frac_z, gz)
+#include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max
           DO iy = sf_min, sf_max
@@ -809,11 +638,7 @@ CONTAINS
     REAL(num) :: wdata
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
-    INTEGER :: cell_x, cell_y, cell_z
+#include "particle_head.inc"
 
     INTERFACE
       FUNCTION evaluator(a_particle, species_eval)
@@ -840,28 +665,7 @@ CONTAINS
 #endif
       current=>species_list(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_z = FLOOR(cell_z_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_frac_z = REAL(cell_z, num) - cell_z_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-        cell_z = cell_z + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
-        CALL particle_to_grid(cell_frac_z, gz)
+#include "particle_to_grid.inc"
 
         wdata = evaluator(current, ispecies)
         DO iz = sf_min, sf_max

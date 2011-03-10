@@ -403,10 +403,7 @@ CONTAINS
     INTEGER :: ix, iy, i, j, isubx, isuby
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:,:), ALLOCATABLE :: density_map
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    INTEGER :: cell_x, cell_y
+#include "particle_head.inc"
 
 #ifdef PER_PARTICLE_WEIGHT
     ALLOCATE(density(-2:nx+3,-2:ny+3))
@@ -442,22 +439,7 @@ CONTAINS
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-#else
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy
-#endif
-      cell_x = FLOOR(cell_x_r + 0.5_num)
-      cell_y = FLOOR(cell_y_r + 0.5_num)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_frac_y = REAL(cell_y, num) - cell_y_r
-      cell_x = cell_x + 1
-      cell_y = cell_y + 1
-
-      CALL particle_to_grid(cell_frac_x, gx)
-      CALL particle_to_grid(cell_frac_y, gy)
+#include "particle_to_grid.inc"
 
       DO isuby = sf_min, sf_max
         j = cell_y + isuby
@@ -525,22 +507,7 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-#ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-#else
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy
-#endif
-      cell_x = FLOOR(cell_x_r + 0.5_num)
-      cell_y = FLOOR(cell_y_r + 0.5_num)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_frac_y = REAL(cell_y, num) - cell_y_r
-      cell_x = cell_x + 1
-      cell_y = cell_y + 1
-
-      CALL particle_to_grid(cell_frac_x, gx)
-      CALL particle_to_grid(cell_frac_y, gy)
+#include "particle_to_grid.inc"
 
       weight_local = 0.0_num
       DO isuby = sf_min, sf_max

@@ -21,9 +21,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER(KIND=8) :: ipart
     INTEGER :: ix
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
-    REAL(num) :: cell_x_r, cell_frac_x
-    INTEGER :: cell_x
+#include "particle_head.inc"
 
     partlist=>part_species%attached_list
     current=>partlist%head
@@ -36,16 +34,7 @@ CONTAINS
 #endif
 
       ! Assume that temperature is cell centred
-#ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
-#else
-      cell_x_r = (current%part_pos - x_min_local) / dx
-#endif
-      cell_x = FLOOR(cell_x_r + 0.5_num)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x + 1
-
-      CALL particle_to_grid(cell_frac_x, gx)
+#include "particle_to_grid.inc"
 
       temp_local = 0.0_num
       drift_local = 0.0_num

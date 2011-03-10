@@ -381,9 +381,7 @@ CONTAINS
     INTEGER :: ix, i, isubx
     REAL(num), DIMENSION(:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:), ALLOCATABLE :: density_map
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
-    REAL(num) :: cell_x_r, cell_frac_x
-    INTEGER :: cell_x
+#include "particle_head.inc"
 
 #ifdef PER_PARTICLE_WEIGHT
     ALLOCATE(density(-2:nx+3))
@@ -417,16 +415,7 @@ CONTAINS
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
-#else
-      cell_x_r = (current%part_pos - x_min_local) / dx
-#endif
-      cell_x = FLOOR(cell_x_r + 0.5_num)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x + 1
-
-      CALL particle_to_grid(cell_frac_x, gx)
+#include "particle_to_grid.inc"
 
       DO isubx = sf_min, sf_max
         i = cell_x + isubx
@@ -476,16 +465,7 @@ CONTAINS
     current=>partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-#ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
-#else
-      cell_x_r = (current%part_pos - x_min_local) / dx
-#endif
-      cell_x = FLOOR(cell_x_r + 0.5_num)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r
-      cell_x = cell_x + 1
-
-      CALL particle_to_grid(cell_frac_x, gx)
+#include "particle_to_grid.inc"
 
       weight_local = 0.0_num
       DO isubx = sf_min, sf_max
