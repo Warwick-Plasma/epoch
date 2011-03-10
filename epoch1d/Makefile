@@ -68,10 +68,11 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
+INCDIR = $(SRCDIR)/include
 FC = mpif90
 DATE := $(shell date +%s)
 MACHINE := $(shell uname -n)
-PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(MACHINE)"'
+PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(MACHINE)"' -I$(INCDIR)
 
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 current_smooth.F90 \
   custom_deck.f90 custom_laser.f90 custom_parser.f90 deck.F90 \
@@ -93,11 +94,11 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 current_smooth.F90 \
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
 
-INCLUDES = $(SRCDIR)/include/bspline3/eb_part.inc \
-  $(SRCDIR)/include/bspline3/gx.inc $(SRCDIR)/include/bspline3/hx_dcell.inc \
-  $(SRCDIR)/include/tophat/eb_part.inc $(SRCDIR)/include/tophat/gx.inc \
-  $(SRCDIR)/include/tophat/hx_dcell.inc $(SRCDIR)/include/triangle/eb_part.inc \
-  $(SRCDIR)/include/triangle/gx.inc $(SRCDIR)/include/triangle/hx_dcell.inc
+INCLUDES = $(INCDIR)/bspline3/eb_part.inc $(INCDIR)/bspline3/gx.inc \
+  $(INCDIR)/bspline3/hx_dcell.inc $(INCDIR)/tophat/eb_part.inc \
+  $(INCDIR)/tophat/gx.inc $(INCDIR)/tophat/hx_dcell.inc \
+  $(INCDIR)/triangle/eb_part.inc $(INCDIR)/triangle/gx.inc \
+  $(INCDIR)/triangle/hx_dcell.inc
 
 ENCODED_SOURCE ?= encoded_source.o
 OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)

@@ -9,33 +9,18 @@ CONTAINS
 
   SUBROUTINE calc_mass_density(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x
-    INTEGER :: cell_x
-
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_m
-
-    ! Contains the floating point version of the cell number (never actually
-    ! used)
-    REAL(num) :: cell_x_r
-
-    ! The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x
-
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    ! Defined at the particle position
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
-
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, spec_start, spec_end
     REAL(num) :: fac, idx
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx
+    REAL(num) :: cell_x_r, cell_frac_x
+    INTEGER :: cell_x
 
     data_array = 0.0_num
 
@@ -67,12 +52,13 @@ CONTAINS
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.0_num
+        cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
 #else
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.5_num
+        cell_x_r = (current%part_pos - x_min_local) / dx
 #endif
-        cell_x = FLOOR(cell_x_r)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
 
@@ -96,36 +82,20 @@ CONTAINS
 
   SUBROUTINE calc_ekbar(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x
-    INTEGER :: cell_x
-
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_px, part_py, part_pz, part_mc
-
-    ! Contains the floating point version of the cell number (never actually
-    ! used)
-    REAL(num) :: cell_x_r
-
-    ! The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x
-
     ! The weight of a particle
     REAL(num) :: l_weight, l_weightc
-
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    ! Defined at the particle position
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     REAL(num), DIMENSION(:), ALLOCATABLE :: ct
     INTEGER, INTENT(IN) :: current_species
-
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, spec_start, spec_end
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx
+    REAL(num) :: cell_x_r, cell_frac_x
+    INTEGER :: cell_x
 
     ALLOCATE(ct(-2:nx+3))
     data_array = 0.0_num
@@ -162,12 +132,13 @@ CONTAINS
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.0_num
+        cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
 #else
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.5_num
+        cell_x_r = (current%part_pos - x_min_local) / dx
 #endif
-        cell_x = FLOOR(cell_x_r)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
 
@@ -198,33 +169,18 @@ CONTAINS
 
   SUBROUTINE calc_charge_density(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x
-    INTEGER :: cell_x
-
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_q
-
-    ! Contains the floating point version of the cell number (never actually
-    ! used)
-    REAL(num) :: cell_x_r
-
-    ! The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x
-
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    ! Defined at the particle position
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
-
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, spec_start, spec_end
     REAL(num) :: fac, idx
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx
+    REAL(num) :: cell_x_r, cell_frac_x
+    INTEGER :: cell_x
 
     data_array = 0.0_num
 
@@ -256,12 +212,13 @@ CONTAINS
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.0_num
+        cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
 #else
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.5_num
+        cell_x_r = (current%part_pos - x_min_local) / dx
 #endif
-        cell_x = FLOOR(cell_x_r)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
 
@@ -285,30 +242,16 @@ CONTAINS
 
   SUBROUTINE calc_number_density(data_array, current_species)
 
-    ! Contains the integer cell position of the particle in x
-    INTEGER :: cell_x
-
-    ! Contains the floating point version of the cell number (never actually
-    ! used)
-    REAL(num) :: cell_x_r
-
-    ! The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x
-
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    ! Defined at the particle position
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
-
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, spec_start, spec_end
     REAL(num) :: idx
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx
+    REAL(num) :: cell_x_r, cell_frac_x
+    INTEGER :: cell_x
 
     data_array = 0.0_num
 
@@ -333,12 +276,13 @@ CONTAINS
 #endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.0_num
+        cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
 #else
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.5_num
+        cell_x_r = (current%part_pos - x_min_local) / dx
 #endif
-        cell_x = FLOOR(cell_x_r)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
 
@@ -363,33 +307,17 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: sigma
     INTEGER, INTENT(IN) :: current_species
-
-    ! Contains the integer cell position of the particle in x
-    INTEGER :: cell_x
-
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
-
-    ! Contains the floating point version of the cell number (never actually
-    ! used)
-    REAL(num) :: cell_x_r
-
-    ! The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x
-
     ! The weight of a particle
     REAL(num) :: l_weight
-
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    ! Defined at the particle position
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
     REAL(num), DIMENSION(:), ALLOCATABLE :: part_count, meanx, meany, meanz
     REAL(num) :: gf
-
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, spec_start, spec_end
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx
+    REAL(num) :: cell_x_r, cell_frac_x
+    INTEGER :: cell_x
 
     spec_start = current_species
     spec_end = current_species
@@ -430,12 +358,13 @@ CONTAINS
         part_pmz = current%part_p(3) / sqrt_part_m
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.0_num
+        cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
 #else
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.5_num
+        cell_x_r = (current%part_pos - x_min_local) / dx
 #endif
-        cell_x = FLOOR(cell_x_r)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
 
@@ -477,12 +406,13 @@ CONTAINS
         part_pmz = current%part_p(3) / sqrt_part_m
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.0_num
+        cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
 #else
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.5_num
+        cell_x_r = (current%part_pos - x_min_local) / dx
 #endif
-        cell_x = FLOOR(cell_x_r)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
 
@@ -511,29 +441,15 @@ CONTAINS
 
   SUBROUTINE calc_on_grid_with_evaluator(data_array, current_species, evaluator)
 
-    ! Contains the integer cell position of the particle in x
-    INTEGER :: cell_x
-
-    ! Contains the floating point version of the cell number (never actually
-    ! used)
-    REAL(num) :: cell_x_r
-
-    ! The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x
-
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    ! Defined at the particle position
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
-
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, spec_start, spec_end
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx
+    REAL(num) :: cell_x_r, cell_frac_x
+    INTEGER :: cell_x
 
     INTERFACE
       FUNCTION evaluator(a_particle, species_eval)
@@ -558,12 +474,13 @@ CONTAINS
       current=>species_list(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.0_num
+        cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
 #else
-        cell_x_r = (current%part_pos - x_min_local) / dx + 1.5_num
+        cell_x_r = (current%part_pos - x_min_local) / dx
 #endif
-        cell_x = FLOOR(cell_x_r)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_x = cell_x + 1
 
         CALL particle_to_grid(cell_frac_x, gx)
 

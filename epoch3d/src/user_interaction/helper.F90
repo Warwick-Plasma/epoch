@@ -419,19 +419,19 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
     REAL(num) :: weight_local
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    REAL(num) :: cell_z_r, cell_frac_z
     TYPE(particle), POINTER :: current
-    INTEGER :: cell_x, cell_y, cell_z
     INTEGER(KIND=8) :: ipart
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: weight_fn
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, iy, iz, i, j, k, isubx, isuby, isubz
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: density
     LOGICAL, DIMENSION(:,:,:), ALLOCATABLE :: density_map
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
+    REAL(num) :: cell_x_r, cell_frac_x
+    REAL(num) :: cell_y_r, cell_frac_y
+    REAL(num) :: cell_z_r, cell_frac_z
+    INTEGER :: cell_x, cell_y, cell_z
 
 #ifdef PER_PARTICLE_WEIGHT
     ALLOCATE(density(-2:nx+3,-2:ny+3,-2:nz+3))
@@ -468,21 +468,25 @@ CONTAINS
     ! First loop converts number density into weight function
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
+
 #ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
-      cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
+      cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
 #else
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
-      cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy
+      cell_z_r = (current%part_pos(3) - z_min_local) / dz
 #endif
-      cell_x = FLOOR(cell_x_r)
-      cell_y = FLOOR(cell_y_r)
-      cell_z = FLOOR(cell_z_r)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
-      cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
-      cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
+      cell_x = FLOOR(cell_x_r + 0.5_num)
+      cell_y = FLOOR(cell_y_r + 0.5_num)
+      cell_z = FLOOR(cell_z_r + 0.5_num)
+      cell_frac_x = REAL(cell_x, num) - cell_x_r
+      cell_frac_y = REAL(cell_y, num) - cell_y_r
+      cell_frac_z = REAL(cell_z, num) - cell_z_r
+      cell_x = cell_x + 1
+      cell_y = cell_y + 1
+      cell_z = cell_z + 1
 
       CALL particle_to_grid(cell_frac_x, gx)
       CALL particle_to_grid(cell_frac_y, gy)
@@ -578,24 +582,27 @@ CONTAINS
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
 #ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.0_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.0_num
-      cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.0_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
+      cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
 #else
-      cell_x_r = (current%part_pos(1) - x_min_local) / dx + 1.5_num
-      cell_y_r = (current%part_pos(2) - y_min_local) / dy + 1.5_num
-      cell_z_r = (current%part_pos(3) - z_min_local) / dz + 1.5_num
+      cell_x_r = (current%part_pos(1) - x_min_local) / dx
+      cell_y_r = (current%part_pos(2) - y_min_local) / dy
+      cell_z_r = (current%part_pos(3) - z_min_local) / dz
 #endif
-      cell_x = FLOOR(cell_x_r)
-      cell_y = FLOOR(cell_y_r)
-      cell_z = FLOOR(cell_z_r)
-      cell_frac_x = REAL(cell_x, num) - cell_x_r + 0.5_num
-      cell_frac_y = REAL(cell_y, num) - cell_y_r + 0.5_num
-      cell_frac_z = REAL(cell_z, num) - cell_z_r + 0.5_num
+      cell_x = FLOOR(cell_x_r + 0.5_num)
+      cell_y = FLOOR(cell_y_r + 0.5_num)
+      cell_z = FLOOR(cell_z_r + 0.5_num)
+      cell_frac_x = REAL(cell_x, num) - cell_x_r
+      cell_frac_y = REAL(cell_y, num) - cell_y_r
+      cell_frac_z = REAL(cell_z, num) - cell_z_r
+      cell_x = cell_x + 1
+      cell_y = cell_y + 1
+      cell_z = cell_z + 1
 
-      CALL grid_to_particle(cell_frac_x, gx)
-      CALL grid_to_particle(cell_frac_y, gy)
-      CALL grid_to_particle(cell_frac_z, gz)
+      CALL particle_to_grid(cell_frac_x, gx)
+      CALL particle_to_grid(cell_frac_y, gy)
+      CALL particle_to_grid(cell_frac_z, gz)
 
       weight_local = 0.0_num
       DO isubz = sf_min, sf_max
