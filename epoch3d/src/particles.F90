@@ -38,7 +38,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_z
     REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: part_q, part_mc, part_mc2, part_weight
+    REAL(num) :: part_q, part_mc, ipart_mc, part_mc2, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifdef PARTICLE_PROBES
@@ -73,7 +73,7 @@ CONTAINS
 
     ! P+, P- and Tau variables from Boris1970, page27 of manual
     REAL(num) :: uxp, uxm, uyp, uym, uzp, uzm
-    REAL(num) :: tau, taux, tauy, tauz
+    REAL(num) :: tau, taux, tauy, tauz, taux2, tauy2, tauz2
 
     ! charge to mass ratio modified by normalisation
     REAL(num) :: cmratio, ccmratio
@@ -91,6 +91,12 @@ CONTAINS
     REAL(num) :: delta_x, delta_y, delta_z
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
     INTEGER(KIND=8) :: ipart
+#ifdef PARTICLE_PROBES
+    LOGICAL :: probes_for_species
+#endif
+#ifdef TRACER_PARTICLES
+    LOGICAL :: not_tracer_species
+#endif
 
     TYPE(particle), POINTER :: current, next
 
@@ -130,7 +136,15 @@ CONTAINS
     idtxy = idt * idx * idy * fac**3
 
     DO ispecies = 1, n_species
-      current=>species_list(ispecies)%attached_list%head
+      current => species_list(ispecies)%attached_list%head
+#ifdef PARTICLE_PROBES
+      current_probe => species_list(ispecies)%attached_probes
+      probes_for_species = ASSOCIATED(current_probe)
+#endif
+#ifdef TRACER_PARTICLES
+      not_tracer_species = .NOT. species_list(ispecies)%tracer
+#endif
+
 #ifndef PER_PARTICLE_WEIGHT
       part_weight = species_list(ispecies)%weight
       fcx = idtyz * part_weight
@@ -138,9 +152,10 @@ CONTAINS
       fcz = idtxy * part_weight
 #endif
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_q  = species_list(ispecies)%charge
-      part_mc = c * species_list(ispecies)%mass
-      cmratio = part_q * dtfac / part_mc
+      part_q   = species_list(ispecies)%charge
+      part_mc  = c * species_list(ispecies)%mass
+      ipart_mc = 1.0_num / part_mc
+      cmratio  = part_q * dtfac * ipart_mc
       ccmratio = c * cmratio
 #ifdef PARTICLE_PROBES
       part_mc2 = c * part_mc
@@ -161,9 +176,10 @@ CONTAINS
         init_part_z = current%part_pos(3)
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
-        part_q  = current%charge
-        part_mc = c * current%mass
-        cmratio = part_q * dtfac / part_mc
+        part_q   = current%charge
+        part_mc  = c * current%mass
+        ipart_mc = 1.0_num / part_mc
+        cmratio  = part_q * dtfac * ipart_mc
         ccmratio = c * cmratio
 #ifdef PARTICLE_PROBES
         part_mc2 = c * part_mc
@@ -173,9 +189,9 @@ CONTAINS
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
         part_z  = current%part_pos(3) - z_min_local
-        part_ux = current%part_p(1) / part_mc
-        part_uy = current%part_p(2) / part_mc
-        part_uz = current%part_p(3) / part_mc
+        part_ux = current%part_p(1) * ipart_mc
+        part_uy = current%part_p(2) * ipart_mc
+        part_uz = current%part_p(3) * ipart_mc
 
         ! Calculate v(t) from p(t)
         ! See PSC manual page (25-27)
@@ -189,13 +205,13 @@ CONTAINS
         ! Work out the grid cell number for the particle.
         ! Not an integer in general.
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = part_x * idx - 0.5_num
+        cell_y_r = part_y * idy - 0.5_num
+        cell_z_r = part_z * idz - 0.5_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = part_x * idx
+        cell_y_r = part_y * idy
+        cell_z_r = part_z * idz
 #endif
         ! Round cell position to nearest cell
         cell_x1 = FLOOR(cell_x_r + 0.5_num)
@@ -272,15 +288,19 @@ CONTAINS
         tauy = by_part * root
         tauz = bz_part * root
 
-        tau = 1.0_num / (1.0_num + taux**2 + tauy**2 + tauz**2)
+        taux2 = taux**2
+        tauy2 = tauy**2
+        tauz2 = tauz**2
 
-        uxp = ((1.0_num + taux**2 - tauy**2 - tauz**2) * uxm &
+        tau = 1.0_num / (1.0_num + taux2 + tauy2 + tauz2)
+
+        uxp = ((1.0_num + taux2 - tauy2 - tauz2) * uxm &
             + 2.0_num * ((taux * tauy + tauz) * uym &
             + (taux * tauz - tauy) * uzm)) * tau
-        uyp = ((1.0_num - taux**2 + tauy**2 - tauz**2) * uym &
+        uyp = ((1.0_num - taux2 + tauy2 - tauz2) * uym &
             + 2.0_num * ((tauy * tauz + taux) * uzm &
             + (tauy * taux - tauz) * uxm)) * tau
-        uzp = ((1.0_num - taux**2 - tauy**2 + tauz**2) * uzm &
+        uzp = ((1.0_num - taux2 - tauy2 + tauz2) * uzm &
             + 2.0_num * ((tauz * taux + tauy) * uxm &
             + (tauz * tauy - taux) * uym)) * tau
 
@@ -319,7 +339,7 @@ CONTAINS
         ! If the code is compiled with tracer particle support then put in an
         ! IF statement so that the current is not calculated for this species
 #ifdef TRACER_PARTICLES
-        IF (.NOT. species_list(ispecies)%tracer) THEN
+        IF (not_tracer_species) THEN
 #endif
           ! Now advance to t+1.5dt to calculate current. This is detailed in
           ! the manual between pages 37 and 41. The version coded up looks
@@ -330,13 +350,13 @@ CONTAINS
           part_z = part_z + delta_z
 
 #ifdef PARTICLE_SHAPE_TOPHAT
-          cell_x_r = part_x / dx - 0.5_num
-          cell_y_r = part_y / dy - 0.5_num
-          cell_z_r = part_z / dz - 0.5_num
+          cell_x_r = part_x * idx - 0.5_num
+          cell_y_r = part_y * idy - 0.5_num
+          cell_z_r = part_z * idz - 0.5_num
 #else
-          cell_x_r = part_x / dx
-          cell_y_r = part_y / dy
-          cell_z_r = part_z / dz
+          cell_x_r = part_x * idx
+          cell_y_r = part_y * idy
+          cell_z_r = part_z * idz
 #endif
           cell_x3 = FLOOR(cell_x_r + 0.5_num)
           cell_frac_x = REAL(cell_x3, num) - cell_x_r
@@ -420,42 +440,44 @@ CONTAINS
         ENDIF
 #endif
 #ifdef PARTICLE_PROBES
-        ! Compare the current particle with the parameters of any probes in the
-        ! system. These particles are copied into a separate part of the output
-        ! file.
+        IF (probes_for_species) THEN
+          ! Compare the current particle with the parameters of any probes in
+          ! the system. These particles are copied into a separate part of the
+          ! output file.
 
-        current_probe=>species_list(ispecies)%attached_probes
+          current_probe => species_list(ispecies)%attached_probes
 
-        ! Cycle through probes
-        DO WHILE(ASSOCIATED(current_probe))
-          ! Note that this is the energy of a single REAL particle in the
-          ! pseudoparticle, NOT the energy of the pseudoparticle
-          probe_energy = (gamma - 1.0_num) * part_mc2
+          ! Cycle through probes
+          DO WHILE(ASSOCIATED(current_probe))
+            ! Note that this is the energy of a single REAL particle in the
+            ! pseudoparticle, NOT the energy of the pseudoparticle
+            probe_energy = (gamma - 1.0_num) * part_mc2
 
-          ! right energy? (in J)
-          IF (probe_energy .GT. current_probe%ek_min) THEN
-            IF ((probe_energy .LT. current_probe%ek_max) &
-                .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
+            ! right energy? (in J)
+            IF (probe_energy .GT. current_probe%ek_min) THEN
+              IF ((probe_energy .LT. current_probe%ek_max) &
+                  .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
 
-              d_init  = SUM(current_probe%normal * (current_probe%point &
-                  - (/init_part_x, init_part_y, init_part_z/)))
-              d_final = SUM(current_probe%normal * (current_probe%point &
-                  - (/final_part_x, final_part_y, final_part_z/)))
-              IF (SIGN(1.0_num, d_init) * SIGN(1.0_num, d_final) &
-                  .LE. 0.0_num) THEN
-                ! this particle is wanted so copy it to the list associated
-                ! with this probe
-                ALLOCATE(particle_copy)
-                particle_copy = current
-                CALL add_particle_to_partlist(current_probe%sampled_particles, &
-                    particle_copy)
-                NULLIFY(particle_copy)
+                d_init  = SUM(current_probe%normal * (current_probe%point &
+                    - (/init_part_x, init_part_y, init_part_z/)))
+                d_final = SUM(current_probe%normal * (current_probe%point &
+                    - (/final_part_x, final_part_y, final_part_z/)))
+                IF (SIGN(1.0_num, d_init) * SIGN(1.0_num, d_final) &
+                    .LE. 0.0_num) THEN
+                  ! this particle is wanted so copy it to the list associated
+                  ! with this probe
+                  ALLOCATE(particle_copy)
+                  particle_copy = current
+                  CALL add_particle_to_partlist(&
+                      current_probe%sampled_particles, particle_copy)
+                  NULLIFY(particle_copy)
+                ENDIF
+
               ENDIF
-
             ENDIF
-          ENDIF
-          current_probe=>current_probe%next
-        ENDDO
+            current_probe => current_probe%next
+          ENDDO
+        ENDIF
 #endif
         current=>next
       ENDDO
