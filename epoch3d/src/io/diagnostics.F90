@@ -212,25 +212,57 @@ CONTAINS
     ! close the file
     CALL sdf_close(sdf_handle)
 
-    output_file = output_file + 1
     IF (rank .EQ. 0) THEN
+      dump_type = 'normal'
+      CALL append_filename(dump_type, output_file)
       IF (IAND(code, c_io_restartable) .NE. 0) THEN
-        dump_type = "restart"
-      ELSE IF (IAND(code, c_io_full) .NE. 0) THEN
-        dump_type = "full"
-      ELSE
-        dump_type = "normal"
+        dump_type = 'restart'
+        CALL append_filename(dump_type, output_file)
+      ENDIF
+      IF (IAND(code, c_io_full) .NE. 0) THEN
+        dump_type = 'full'
+        CALL append_filename(dump_type, output_file)
       ENDIF
       WRITE(stat_unit, '("Wrote ", a7, " dump number", i5, " at time", g20.12, &
-          & " and iteration", i7)') dump_type, output_file-1, time, i
+          & " and iteration", i7)') dump_type, output_file, time, i
       CALL flush_stat_file()
     ENDIF
+
+    output_file = output_file + 1
 
     DEALLOCATE(array)
     IF (ALLOCATED(species_offset)) DEALLOCATE(species_offset)
     CALL free_subtypes()
 
   END SUBROUTINE output_routines
+
+
+
+  SUBROUTINE append_filename(listname, output_file)
+    ! This routine updates a list of each output type (eg. full, dump, normal)
+    ! that can be passed to VisIt to filter the output.
+
+    CHARACTER(LEN=*), INTENT(IN) :: listname
+    INTEGER, INTENT(IN) :: output_file
+    CHARACTER(LEN=data_dir_max_length+64) :: listfile, filename_desc
+    INTEGER :: ierr
+    LOGICAL :: exists
+
+    WRITE(filename_desc, '("(i", i3.3, ".", i3.3, ", ''.sdf'')")') &
+        n_zeros, n_zeros
+    listfile = TRIM(data_dir) // '/' // TRIM(listname) // '.visit'
+
+    INQUIRE(file=listfile, exist=exists)
+    IF (exists) THEN
+      OPEN(unit=lu, status='OLD', position='APPEND', file=listfile, iostat=ierr)
+    ELSE
+      OPEN(unit=lu, status='NEW', file=listfile, iostat=errcode)
+    ENDIF
+
+    WRITE(lu,filename_desc) output_file
+    CLOSE(lu)
+
+  END SUBROUTINE append_filename
 
 
 

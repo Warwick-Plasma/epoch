@@ -291,6 +291,7 @@ CONTAINS
     LOGICAL :: is_comment
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=64+data_dir_max_length) :: deck_filename, status_filename
+    CHARACTER(LEN=64+data_dir_max_length) :: list_filename
     LOGICAL :: terminate = .FALSE., exists
     INTEGER :: errcode_deck, ierr, i, io
     LOGICAL :: white_space_over
@@ -395,6 +396,17 @@ CONTAINS
 
         WRITE(du,'(a,i3)') 'Deck state:', deck_state
         WRITE(du,*)
+
+        ! Remove any left-over VisIt file lists
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/full.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/normal.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/restart.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
       ENDIF
       deck_values(1)%value = ""
       deck_values(2)%value = ""

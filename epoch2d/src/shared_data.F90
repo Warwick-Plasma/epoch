@@ -18,6 +18,7 @@ MODULE constants
 
   ! File unit for deck parser diagnostic output
   INTEGER, PARAMETER :: du = 40
+  INTEGER, PARAMETER :: lu = 41
   INTEGER, PARAMETER :: stdout = 6
 
   ! Boundary type codes
