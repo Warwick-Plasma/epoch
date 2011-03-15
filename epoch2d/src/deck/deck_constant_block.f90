@@ -13,9 +13,10 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: handle_constant_deck
-    INTEGER :: ix, err
+    INTEGER :: ix, io, err
     TYPE(deck_constant), DIMENSION(:), ALLOCATABLE :: buffer
     TYPE(primitive_stack) :: temp
+    TYPE(stack_element) :: block
 
     handle_constant_deck = c_err_none
 
@@ -38,6 +39,20 @@ CONTAINS
     ENDDO
 
     ! If we're here then then named constant doesn't yet exist, so create it
+
+    ! First issue a warning message if the name overrides a built-in one
+    CALL load_block(element, block)
+    IF (block%ptype .NE. c_pt_bad .AND. block%ptype .NE. c_pt_null) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'The constant block variable "' // TRIM(element) &
+              // '" conflicts with a'
+          WRITE(io,*) 'built-in constant name. It will be ignored.'
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+    ENDIF
 
     ! Take a copy of the old list
     IF (n_deck_constants .GT. 0) THEN
