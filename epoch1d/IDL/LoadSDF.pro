@@ -199,9 +199,15 @@ PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md
   labels = STRARR(ndims)
   units = STRARR(ndims)
   FOR iDim = 0, ndims-1 DO BEGIN
-    labels[iDim] = STRTRIM(STRING(mesh_header.labels[iDim * id_length]))
-    units[iDim] = STRTRIM(STRING(mesh_header.units[iDim * id_length]))
+    n0 = iDim * id_length
+    n1 = n0 + id_length - 1
+    labels[iDim] = STRTRIM(STRING(mesh_header.labels[n0:n1]))
+    units[iDim] = STRTRIM(STRING(mesh_header.units[n0:n1]))
   ENDFOR
+  labelstr = labels
+  labels[0] = 'X'
+  IF (ndims GT 1) THEN labels[1] = 'Y'
+  IF (ndims GT 2) THEN labels[2] = 'Z'
 
   CASE block_header.datatype OF
     SDF_Datatypes.REAL4: BEGIN
@@ -222,7 +228,7 @@ PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md
 
   offset = block_header.data_location
   d = readvar(1, datastruct, offset)
-  d = CREATE_STRUCT(d, 'LABELS', labels)
+  d = CREATE_STRUCT(d, 'LABELS', labelstr)
   d = CREATE_STRUCT(d, 'UNITS', units)
   d = CREATE_STRUCT(d, 'NPTS', mesh_header.dims)
 
@@ -264,9 +270,15 @@ PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md
   labels = STRARR(ndims)
   units = STRARR(ndims)
   FOR iDim = 0, ndims-1 DO BEGIN
-    labels[iDim] = STRTRIM(STRING(mesh_header.labels[iDim * id_length]))
-    units[iDim] = STRTRIM(STRING(mesh_header.units[iDim * id_length]))
+    n0 = iDim * id_length
+    n1 = n0 + id_length - 1
+    labels[iDim] = STRTRIM(STRING(mesh_header.labels[n0:n1]))
+    units[iDim] = STRTRIM(STRING(mesh_header.units[n0:n1]))
   ENDFOR
+  labelstr = labels
+  labels[0] = 'X'
+  IF (ndims GT 1) THEN labels[1] = 'Y'
+  IF (ndims GT 2) THEN labels[2] = 'Z'
 
   CASE block_header.datatype OF
     SDF_Datatypes.REAL4: BEGIN
@@ -287,7 +299,7 @@ PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md
 
   offset = block_header.data_location
   d = readvar(1, datastruct, offset)
-  d = CREATE_STRUCT(d, 'LABELS', labels)
+  d = CREATE_STRUCT(d, 'LABELS', labelstr)
   d = CREATE_STRUCT(d, 'UNITS', units)
   d = CREATE_STRUCT(d, 'NPART', mesh_header.npoints)
 
