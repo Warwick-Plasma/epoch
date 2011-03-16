@@ -237,7 +237,7 @@ CONTAINS
         part_mc  = current%mass * c
         part_mc2 = part_mc * c
 #endif
-        gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
+        gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
 
         particle_data(1:c_ndims) = current%part_pos
         particle_data(c_dir_px:c_dir_pz) = current%part_p
@@ -304,7 +304,7 @@ CONTAINS
       part_mc  = current%mass * c
       part_mc2 = part_mc * c
 #endif
-      gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
+      gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
 
       particle_data(1:c_ndims) = current%part_pos
       particle_data(c_dir_px:c_dir_pz) = current%part_p
