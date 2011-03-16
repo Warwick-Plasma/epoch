@@ -245,8 +245,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 md->Add(cmd);
                 //continue;
             } else {
-                std::string varname(b->name);
-                std::string mesh_name(mesh->name);
+                avtScalarMetaData *smd = new avtScalarMetaData();
                 avtCentering cent;
                 // For the time being, most data is plotted as zon-centred
                 // This will probably change in the future.
@@ -254,7 +253,14 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                     cent = AVT_NODECENT;
 	        else
                     cent = AVT_ZONECENT;
-		AddScalarVarToMetaData(md, varname, mesh_name, cent);
+                smd->name = b->name;
+                smd->meshName = mesh->name;
+                smd->centering = cent;
+                smd->hasDataExtents = false;
+                smd->treatAsASCII = false;
+                smd->hasUnits = true;
+                smd->units = b->units;
+                md->Add(smd);
             }
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
             sdf_block_t *material = sdf_find_block_by_id(h, b->material_id);

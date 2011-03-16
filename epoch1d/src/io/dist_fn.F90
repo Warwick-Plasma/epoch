@@ -130,6 +130,7 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: var_name
+    CHARACTER(LEN=8), DIMENSION(c_df_maxdirs) :: labels, units
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
     REAL(num) :: max_p_conv
 
@@ -153,15 +154,6 @@ CONTAINS
 #endif
 
     DO idim = 1, curdims
-      IF (direction(idim) .LE. 0 .OR. direction(idim) .GT. c_dir_gamma_m1) THEN
-        IF (rank .EQ. 0) THEN
-          WRITE(*,*) '*** WARNING ***'
-          WRITE(*,*) 'Unable to write dist_fn. Ignoring.'
-        ENDIF
-        errcode = 1
-        RETURN
-      ENDIF
-
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
@@ -170,6 +162,8 @@ CONTAINS
         start_local(idim) = cell_x_min(coordinates(c_ndims)+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
+        labels(idim) = 'X'
+        units(idim)  = 'm'
         CYCLE
 
       ENDIF
@@ -182,6 +176,35 @@ CONTAINS
       ENDIF
       parallel(idim) = .FALSE.
 
+      IF (direction(idim) .EQ. c_dir_px) THEN
+        labels(idim) = 'Px'
+        units(idim)  = 'm/s'
+
+      ELSE IF (direction(idim) .EQ. c_dir_py) THEN
+        labels(idim) = 'Py'
+        units(idim)  = 'm/s'
+
+      ELSE IF (direction(idim) .EQ. c_dir_pz) THEN
+        labels(idim) = 'Pz'
+        units(idim)  = 'm/s'
+
+      ELSE IF (direction(idim) .EQ. c_dir_en) THEN
+        labels(idim) = 'en'
+        units(idim)  = 'J'
+
+      ELSE IF (direction(idim) .EQ. c_dir_gamma_m1) THEN
+        labels(idim) = 'gamma-1'
+        units(idim)  = ''
+
+      ELSE
+        IF (rank .EQ. 0) THEN
+          WRITE(*,*) '*** WARNING ***'
+          WRITE(*,*) 'Unable to write dist_fn. Ignoring.'
+        ENDIF
+        errcode = 1
+        RETURN
+
+      ENDIF
     ENDDO
 
     ! Calculate range for directions where needed
@@ -336,15 +359,15 @@ CONTAINS
       IF (curdims .EQ. 1) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
-            grid1)
+            grid1, labels, units)
       ELSE IF (curdims .EQ. 2) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
-            grid1, grid2)
+            grid1, grid2, labels, units)
       ELSE IF (curdims .EQ. 3) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
-            grid1, grid2, grid3)
+            grid1, grid2, grid3, labels, units)
       ENDIF
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
@@ -353,19 +376,19 @@ CONTAINS
 
     IF (curdims .EQ. 1) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-          'Grid/' // TRIM(var_name), grid1)
+          'Grid/' // TRIM(var_name), grid1, labels, units)
       DEALLOCATE(grid1)
       new_type = &
           create_1d_array_subtype(resolution, global_resolution, start_local)
     ELSE IF (curdims .EQ. 2) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-          'Grid/' // TRIM(var_name), grid1, grid2)
+          'Grid/' // TRIM(var_name), grid1, grid2, labels, units)
       DEALLOCATE(grid1, grid2)
       new_type = &
           create_2d_array_subtype(resolution, global_resolution, start_local)
     ELSE IF (curdims .EQ. 3) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-          'Grid/' // TRIM(var_name), grid1, grid2, grid3)
+          'Grid/' // TRIM(var_name), grid1, grid2, grid3, labels, units)
       DEALLOCATE(grid1, grid2, grid3)
       new_type = &
           create_3d_array_subtype(resolution, global_resolution, start_local)
@@ -376,7 +399,7 @@ CONTAINS
     CALL MPI_TYPE_COMMIT(array_type, errcode)
 
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
-        'dist_fn/' // TRIM(var_name), '?', global_resolution, &
+        'dist_fn/' // TRIM(var_name), 'npart/cell', global_resolution, &
         c_stagger_vertex, 'grid/' // TRIM(var_name), array, new_type, &
         array_type)
 
