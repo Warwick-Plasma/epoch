@@ -127,7 +127,7 @@ CONTAINS
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
     INTEGER, DIMENSION(c_df_maxdims) :: cell
     LOGICAL :: use_this
-    REAL(num) :: part_weight, part_mass, part_mass_c, gamma_mass_c
+    REAL(num) :: part_weight, part_mc, part_mc2, gamma_m1
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: var_name
@@ -148,8 +148,8 @@ CONTAINS
 
     current_data = 0.0_num
 #ifndef PER_PARTICLE_CHARGE_MASS
-    part_mass = species_list(species)%mass
-    part_mass_c = part_mass * c
+    part_mc  = species_list(species)%mass * c
+    part_mc2 = part_mc * c
 #endif
 #ifndef PER_PARTICLE_WEIGHT
     part_weight = species_list(species)%weight
@@ -209,15 +209,15 @@ CONTAINS
 
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
-        part_mass = current%mass
-        part_mass_c = part_mass * c
+        part_mc  = current%mass * c
+        part_mc2 = part_mc * c
 #endif
-        gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
+        gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
 
         particle_data(1:c_ndims) = current%part_pos
         particle_data(c_dir_px:c_dir_pz) = current%part_p
-        particle_data(c_dir_en) = c * (gamma_mass_c - part_mass_c)
-        particle_data(c_dir_gamma_m1) = gamma_mass_c / part_mass_c - 1.0_num
+        particle_data(c_dir_en) = gamma_m1 * part_mc2
+        particle_data(c_dir_gamma_m1) = gamma_m1
 
         DO idim = 1, curdims
           IF (calc_range(idim)) THEN
@@ -276,15 +276,15 @@ CONTAINS
     current=>species_list(species)%attached_list%head
     DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
-      part_mass = current%mass
-      part_mass_c = part_mass * c
+      part_mc  = current%mass * c
+      part_mc2 = part_mc * c
 #endif
-      gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
+      gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
 
       particle_data(1:c_ndims) = current%part_pos
       particle_data(c_dir_px:c_dir_pz) = current%part_p
-      particle_data(c_dir_en) = c * (gamma_mass_c - part_mass_c)
-      particle_data(c_dir_gamma_m1) = gamma_mass_c / part_mass_c - 1.0_num
+      particle_data(c_dir_en) = gamma_m1 * part_mc2
+      particle_data(c_dir_gamma_m1) = gamma_m1
 
       use_this = .TRUE.
       DO idir = 1, c_df_maxdirs
