@@ -387,13 +387,14 @@ CONTAINS
 
     var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
 
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-        'Grid/' // TRIM(var_name), grid1)
     IF (use_offset_grid) THEN
+      CALL sdf_write_srl_plain_mesh(sdf_handle, &
+          'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), grid1)
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
     ENDIF
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'norm_grid/' // TRIM(var_name), &
-        'Grid/Norm_' // TRIM(var_name), grid1/conv(1))
+
+    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
+        'Grid/' // TRIM(var_name), grid1)
 
     DEALLOCATE(grid1)
 
@@ -405,8 +406,8 @@ CONTAINS
 
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
         'dist_fn/' // TRIM(var_name), '?', global_resolution, &
-        c_stagger_vertex, 'norm_grid/' // TRIM(var_name), array, &
-        new_type, array_type)
+        c_stagger_vertex, 'grid/' // TRIM(var_name), array, new_type, &
+        array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
@@ -700,14 +701,16 @@ CONTAINS
 
     var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
 
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-        'Grid/' // TRIM(var_name), grid1, grid2)
     IF (use_offset_grid) THEN
+      CALL sdf_write_srl_plain_mesh(sdf_handle, &
+          'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
+          grid1, grid2)
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
     ENDIF
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'norm_grid/' // TRIM(var_name), &
-        'Grid/Norm_' // TRIM(var_name), grid1/conv(1), grid2/conv(2))
+
+    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
+        'Grid/' // TRIM(var_name), grid1, grid2)
 
     DEALLOCATE(grid1, grid2)
 
@@ -719,8 +722,8 @@ CONTAINS
 
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
         'dist_fn/' // TRIM(var_name), '?', global_resolution, &
-        c_stagger_vertex, 'norm_grid/' // TRIM(var_name), array, &
-        new_type, array_type)
+        c_stagger_vertex, 'grid/' // TRIM(var_name), array, new_type, &
+        array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
@@ -1019,16 +1022,17 @@ CONTAINS
 
     var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
 
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-        'Grid/' // TRIM(var_name), grid1, grid2, grid3)
     IF (use_offset_grid) THEN
+      CALL sdf_write_srl_plain_mesh(sdf_handle, &
+          'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
+          grid1, grid2, grid3)
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
       IF (parallel(3)) grid3 = grid3 - ranges(1,3)
     ENDIF
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'norm_grid/' // TRIM(var_name), &
-        'Grid/Norm_' // TRIM(var_name), grid1/conv(1), grid2/conv(2), &
-        grid3/conv(3))
+
+    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
+        'Grid/' // TRIM(var_name), grid1, grid2, grid3)
 
     DEALLOCATE(grid1, grid2, grid3)
 
@@ -1040,8 +1044,8 @@ CONTAINS
 
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
         'dist_fn/' // TRIM(var_name), '?', global_resolution, &
-        c_stagger_vertex, 'norm_grid/' // TRIM(var_name), array, &
-        new_type, array_type)
+        c_stagger_vertex, 'grid/' // TRIM(var_name), array, new_type, &
+        array_type)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
