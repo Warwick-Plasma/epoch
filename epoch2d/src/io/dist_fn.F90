@@ -125,21 +125,14 @@ CONTAINS
 
     REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
-    LOGICAL, DIMENSION(c_df_maxdims) :: calc_mod
-    INTEGER, DIMENSION(c_df_maxdims) :: p_count
-    REAL(num), DIMENSION(c_df_maxdims) :: conv
     INTEGER, DIMENSION(c_df_maxdims) :: cell
     LOGICAL :: use_this
-    REAL(num) :: real_space_area, part_weight
-    REAL(num) :: part_mass, part_mass_c, gamma_mass_c
+    REAL(num) :: part_weight, part_mass, part_mass_c, gamma_mass_c
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: var_name
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
-
     REAL(num) :: max_p_conv
-
-    INTEGER :: ind
 
     errcode = 0
     use_x = .FALSE.
@@ -148,13 +141,11 @@ CONTAINS
     ranges = ranges_in
     resolution = resolution_in
     global_resolution = resolution
-    parallel = .FALSE.
+    parallel = .TRUE.
     start_local = 1
     calc_range = .FALSE.
     calc_ranges = .FALSE.
-    p_count = 0
 
-    real_space_area = 1.0_num
     current_data = 0.0_num
 #ifndef PER_PARTICLE_CHARGE_MASS
     part_mass = species_list(species)%mass
@@ -182,8 +173,6 @@ CONTAINS
         start_local(idim) = cell_x_min(coordinates(c_ndims)+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
-        parallel(idim) = .TRUE.
-        conv(idim) = MAX(length_x, length_y)
         CYCLE
 
       ELSE IF (direction(idim) .EQ. c_dir_y) THEN
@@ -194,29 +183,18 @@ CONTAINS
         start_local(idim) = cell_y_min(coordinates(c_ndims-1)+1)
         global_resolution(idim) = ny_global
         dgrid(idim) = dy
-        parallel(idim) = .TRUE.
-        conv(idim) = MAX(length_x, length_y)
         CYCLE
 
       ENDIF
 
-      conv(idim) = c*m0
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
       IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
+      parallel(idim) = .FALSE.
 
-      p_count(idim) = p_count(idim) + 1
-    ENDDO
-
-    IF (.NOT. use_x) real_space_area = real_space_area * dx
-    IF (.NOT. use_y) real_space_area = real_space_area * dy
-
-    DO idim = 1, curdims
-      calc_mod(idim) = .FALSE.
-      IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
     ENDDO
 
     ! Calculate range for directions where needed
@@ -228,7 +206,6 @@ CONTAINS
         ENDIF
       ENDDO
       current=>species_list(species)%attached_list%head
-      ind = 0
 
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -244,15 +221,7 @@ CONTAINS
 
         DO idim = 1, curdims
           IF (calc_range(idim)) THEN
-            IF (calc_mod(idim)) THEN
-              DO idir = 1, c_df_maxdirs
-                IF (direction(idim) .EQ. idir) &
-                    current_data = current_data + particle_data(idir)**2
-              ENDDO
-              current_data = SQRT(current_data)
-            ELSE
-              current_data = particle_data(direction(idim))
-            ENDIF
+            current_data = particle_data(direction(idim))
             use_this = .TRUE.
             DO idir = 1, c_df_maxdirs
               IF (use_restrictions(idir) &
@@ -268,7 +237,6 @@ CONTAINS
             ENDIF
           ENDIF
         ENDDO
-        ind = ind + 1
         current=>current%next
       ENDDO
     ENDIF
@@ -294,10 +262,6 @@ CONTAINS
       IF (ranges(2,idim) - ranges(1,idim) .GT. max_p_conv &
           .AND. .NOT. parallel(idim)) &
               max_p_conv = ranges(2,idim) - ranges(1,idim)
-    ENDDO
-
-    DO idim = 1, curdims
-      IF (.NOT. parallel(idim)) conv(idim) = max_p_conv
     ENDDO
 
     ! Calculate grid spacing
@@ -332,15 +296,7 @@ CONTAINS
       IF (use_this) THEN
         cell = 1
         DO idim = 1, curdims
-          IF (calc_mod(idim)) THEN
-            DO idir = 1, c_df_maxdirs
-              IF (direction(idim) .EQ. idir) &
-                  current_data = current_data + particle_data(idir)**2
-            ENDDO
-            current_data = SQRT(current_data)
-          ELSE
-            current_data = particle_data(direction(idim))
-          ENDIF
+          current_data = particle_data(direction(idim))
           cell(idim) = NINT((current_data - ranges(1,idim)) / dgrid(idim)) + 1
           IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
               use_this = .FALSE.
