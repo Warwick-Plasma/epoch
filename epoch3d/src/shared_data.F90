@@ -93,12 +93,12 @@ MODULE constants
   ! direction parameters
   INTEGER, PARAMETER :: c_dir_x = 1
   INTEGER, PARAMETER :: c_dir_y = 2
-  INTEGER, PARAMETER :: c_dir_z = 4
-  INTEGER, PARAMETER :: c_dir_px = 8
-  INTEGER, PARAMETER :: c_dir_py = 16
-  INTEGER, PARAMETER :: c_dir_pz = 32
-  INTEGER, PARAMETER :: c_dir_en = 64
-  INTEGER, PARAMETER :: c_dir_gamma_m1 = 128
+  INTEGER, PARAMETER :: c_dir_z = 3
+  INTEGER, PARAMETER :: c_dir_px = c_ndims + 1
+  INTEGER, PARAMETER :: c_dir_py = c_ndims + 2
+  INTEGER, PARAMETER :: c_dir_pz = c_ndims + 3
+  INTEGER, PARAMETER :: c_dir_en = c_ndims + 4
+  INTEGER, PARAMETER :: c_dir_gamma_m1 = c_ndims + 5
 
   ! define flags
   INTEGER(8), PARAMETER :: c_def_particle_debug = 1

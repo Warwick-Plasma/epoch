@@ -53,13 +53,13 @@ CONTAINS
         drift_local = drift_local + gx(ix) * drift(cell_x+ix)
       ENDDO
 
-      IF (IAND(direction, c_dir_x) .NE. 0) current%part_p(1) = &
+      IF (direction .EQ. c_dir_x) current%part_p(1) = &
           momentum_from_temperature(mass, temp_local, drift_local)
 
-      IF (IAND(direction, c_dir_y) .NE. 0) current%part_p(2) = &
+      IF (direction .EQ. c_dir_y) current%part_p(2) = &
           momentum_from_temperature(mass, temp_local, drift_local)
 
-      IF (IAND(direction, c_dir_z) .NE. 0) current%part_p(3) = &
+      IF (direction .EQ. c_dir_z) current%part_p(3) = &
           momentum_from_temperature(mass, temp_local, drift_local)
 
       current=>current%next

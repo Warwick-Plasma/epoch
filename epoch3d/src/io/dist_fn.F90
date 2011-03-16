@@ -69,7 +69,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: sdf_handle
     INTEGER, INTENT(IN) :: code
 
-    INTEGER :: ispecies
+    INTEGER :: ispecies, errcode
     TYPE(distribution_function_block), POINTER :: current
 
     ! Write the distribution functions
@@ -81,7 +81,11 @@ CONTAINS
 
           CALL general_dist_fn(sdf_handle, current%name, current%directions, &
               current%ranges, current%resolution, ispecies, &
-              current%restrictions, current%use_restrictions, current%ndims)
+              current%restrictions, current%use_restrictions, current%ndims, &
+              errcode)
+
+          ! If there was an error writing the dist_fn then ignore it in future
+          IF (errcode .NE. 0) current%dumpmask = 0
         ENDDO
       ENDIF
       current=>current%next
@@ -92,7 +96,7 @@ CONTAINS
 
 
   SUBROUTINE general_dist_fn(sdf_handle, name, direction, ranges_in, &
-      resolution_in, species, restrictions, use_restrictions, curdims)
+      resolution_in, species, restrictions, use_restrictions, curdims, errcode)
 
     TYPE(sdf_file_handle) :: sdf_handle
     CHARACTER(LEN=*), INTENT(IN) :: name
@@ -103,6 +107,7 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
     INTEGER, INTENT(IN) :: curdims
+    INTEGER, INTENT(OUT) :: errcode
 
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array, array_tmp
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2, grid3
@@ -120,10 +125,8 @@ CONTAINS
 
     REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
-    LOGICAL, DIMENSION(c_df_maxdims, c_df_maxdirs) :: use_direction
     LOGICAL, DIMENSION(c_df_maxdims) :: calc_mod
     INTEGER, DIMENSION(c_df_maxdims) :: p_count
-    INTEGER, DIMENSION(c_df_maxdims) :: l_direction
     REAL(num), DIMENSION(c_df_maxdims) :: conv
     INTEGER, DIMENSION(c_df_maxdims) :: cell
     LOGICAL :: use_this
@@ -138,6 +141,7 @@ CONTAINS
 
     INTEGER :: ind
 
+    errcode = 0
     use_x = .FALSE.
     use_y = .FALSE.
     use_z = .FALSE.
@@ -150,8 +154,6 @@ CONTAINS
     calc_range = .FALSE.
     calc_ranges = .FALSE.
     p_count = 0
-    use_direction = .FALSE.
-    l_direction = 0
 
     real_space_area = 1.0_num
     current_data = 0.0_num
@@ -164,6 +166,15 @@ CONTAINS
 #endif
 
     DO idim = 1, curdims
+      IF (direction(idim) .LE. 0 .OR. direction(idim) .GT. c_dir_gamma_m1) THEN
+        IF (rank .EQ. 0) THEN
+          WRITE(*,*) '*** WARNING ***'
+          WRITE(*,*) 'Unable to write dist_fn. Ignoring.'
+        ENDIF
+        errcode = 1
+        RETURN
+      ENDIF
+
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
@@ -173,8 +184,6 @@ CONTAINS
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
         parallel(idim) = .TRUE.
-        use_direction(idim,1) = .TRUE.
-        l_direction(idim) = 1
         conv(idim) = MAX(length_x, length_y, length_z)
         CYCLE
 
@@ -187,8 +196,6 @@ CONTAINS
         global_resolution(idim) = ny_global
         dgrid(idim) = dy
         parallel(idim) = .TRUE.
-        use_direction(idim,2) = .TRUE.
-        l_direction(idim) = 2
         conv(idim) = MAX(length_x, length_y, length_z)
         CYCLE
 
@@ -201,8 +208,6 @@ CONTAINS
         global_resolution(idim) = nz_global
         dgrid(idim) = dz
         parallel(idim) = .TRUE.
-        use_direction(idim,3) = .TRUE.
-        l_direction(idim) = 3
         conv(idim) = MAX(length_x, length_y, length_z)
         CYCLE
 
@@ -216,35 +221,7 @@ CONTAINS
         calc_ranges = .TRUE.
       ENDIF
 
-      IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
-        use_direction(idim, c_ndims+1) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+1
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
-        use_direction(idim, c_ndims+2) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+2
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
-        use_direction(idim, c_ndims+3) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+3
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_en) .NE. 0) THEN
-        use_direction(idim, c_ndims+4) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+4
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_gamma_m1) .NE. 0) THEN
-        use_direction(idim, c_ndims+5) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+5
-      ENDIF
+      p_count(idim) = p_count(idim) + 1
     ENDDO
 
     IF (.NOT. use_x) real_space_area = real_space_area * dx
@@ -268,25 +245,27 @@ CONTAINS
       ind = 0
 
       DO WHILE(ASSOCIATED(current))
-        particle_data(1:c_ndims) = current%part_pos
-        particle_data(c_ndims+1:c_ndims+3) = current%part_p
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mass = current%mass
         part_mass_c = part_mass * c
 #endif
         gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
-        particle_data(c_ndims+4) = c * (gamma_mass_c - part_mass_c)
-        particle_data(c_ndims+5) = gamma_mass_c / part_mass_c - 1.0_num
+
+        particle_data(1:c_ndims) = current%part_pos
+        particle_data(c_dir_px:c_dir_pz) = current%part_p
+        particle_data(c_dir_en) = c * (gamma_mass_c - part_mass_c)
+        particle_data(c_dir_gamma_m1) = gamma_mass_c / part_mass_c - 1.0_num
+
         DO idim = 1, curdims
           IF (calc_range(idim)) THEN
             IF (calc_mod(idim)) THEN
               DO idir = 1, c_df_maxdirs
-                IF (use_direction(idim, idir)) &
+                IF (direction(idim) .EQ. idir) &
                     current_data = current_data + particle_data(idir)**2
               ENDDO
               current_data = SQRT(current_data)
             ELSE
-              current_data = particle_data(l_direction(idim))
+              current_data = particle_data(direction(idim))
             ENDIF
             use_this = .TRUE.
             DO idir = 1, c_df_maxdirs
@@ -346,15 +325,17 @@ CONTAINS
 
     current=>species_list(species)%attached_list%head
     DO WHILE(ASSOCIATED(current))
-      particle_data(1:c_ndims) = current%part_pos
-      particle_data(c_ndims+1:c_ndims+3) = current%part_p
 #ifdef PER_PARTICLE_CHARGE_MASS
       part_mass = current%mass
       part_mass_c = part_mass * c
 #endif
       gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
-      particle_data(c_ndims+4) = c * (gamma_mass_c - part_mass_c)
-      particle_data(c_ndims+5) = gamma_mass_c / part_mass_c - 1.0_num
+
+      particle_data(1:c_ndims) = current%part_pos
+      particle_data(c_dir_px:c_dir_pz) = current%part_p
+      particle_data(c_dir_en) = c * (gamma_mass_c - part_mass_c)
+      particle_data(c_dir_gamma_m1) = gamma_mass_c / part_mass_c - 1.0_num
+
       use_this = .TRUE.
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &
@@ -367,12 +348,12 @@ CONTAINS
         DO idim = 1, curdims
           IF (calc_mod(idim)) THEN
             DO idir = 1, c_df_maxdirs
-              IF (use_direction(idim, idir)) &
+              IF (direction(idim) .EQ. idir) &
                   current_data = current_data + particle_data(idir)**2
             ENDDO
             current_data = SQRT(current_data)
           ELSE
-            current_data = particle_data(l_direction(idim))
+            current_data = particle_data(direction(idim))
           ENDIF
           cell(idim) = NINT((current_data - ranges(1,idim)) / dgrid(idim)) + 1
           IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
