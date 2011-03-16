@@ -38,7 +38,7 @@ CONTAINS
     block%dumpmask = 0
     block%directions = 0
     block%ranges = 1.0_num
-    block%resolution = 0
+    block%resolution = 1
     block%restrictions = 0.0_num
     block%use_restrictions = .FALSE.
     NULLIFY(block%next)
@@ -70,10 +70,6 @@ CONTAINS
     INTEGER, INTENT(IN) :: code
 
     INTEGER :: ispecies
-    REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
-    LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
-    REAL(num), DIMENSION(2,c_df_maxdirs) :: restrictions
-    INTEGER, DIMENSION(c_df_maxdims) :: resolution = (/100, 100, 100/)
     TYPE(distribution_function_block), POINTER :: current
 
     ! Write the distribution functions
@@ -82,24 +78,10 @@ CONTAINS
       IF (IAND(current%dumpmask, code) .NE. 0) THEN
         DO ispecies = 1, n_species
           IF (.NOT. current%use_species(ispecies)) CYCLE
-          ranges = current%ranges
-          resolution = current%resolution
-          restrictions = current%restrictions
-          use_restrictions = current%use_restrictions
 
-          IF (current%ndims .EQ. 1) THEN
-            CALL general_1d_dist_fn(sdf_handle, current%name, &
-                current%directions, ranges, resolution, ispecies, &
-                restrictions, use_restrictions)
-          ELSE IF (current%ndims .EQ. 2) THEN
-            CALL general_2d_dist_fn(sdf_handle, current%name, &
-                current%directions, ranges, resolution, ispecies, &
-                restrictions, use_restrictions)
-          ELSE IF (current%ndims .EQ. 3) THEN
-            CALL general_3d_dist_fn(sdf_handle, current%name, &
-                current%directions, ranges, resolution, ispecies, &
-                restrictions, use_restrictions)
-          ENDIF
+          CALL general_dist_fn(sdf_handle, current%name, current%directions, &
+              current%ranges, current%resolution, ispecies, &
+              current%restrictions, current%use_restrictions, current%ndims)
         ENDDO
       ENDIF
       current=>current%next
@@ -109,663 +91,40 @@ CONTAINS
 
 
 
-  SUBROUTINE general_1d_dist_fn(sdf_handle, name, direction, ranges, &
-      resolution, species, restrictions, use_restrictions)
+  SUBROUTINE general_dist_fn(sdf_handle, name, direction, ranges_in, &
+      resolution_in, species, restrictions, use_restrictions, curdims)
 
     TYPE(sdf_file_handle) :: sdf_handle
-    INTEGER, PARAMETER :: c_df_curdims = 1
     CHARACTER(LEN=*), INTENT(IN) :: name
-    INTEGER, DIMENSION(c_df_curdims), INTENT(IN) :: direction
-    REAL(num), DIMENSION(2,c_df_curdims), INTENT(INOUT) :: ranges
-    INTEGER, DIMENSION(c_df_curdims), INTENT(INOUT) :: resolution
+    INTEGER, DIMENSION(c_df_maxdims), INTENT(IN) :: direction
+    REAL(num), DIMENSION(2,c_df_maxdims), INTENT(IN) :: ranges_in
+    INTEGER, DIMENSION(c_df_maxdims), INTENT(IN) :: resolution_in
     INTEGER, INTENT(IN) :: species
     REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
-
-    REAL(num), DIMENSION(:), ALLOCATABLE :: array, array_tmp
-    REAL(num), DIMENSION(:), ALLOCATABLE :: grid1
-    LOGICAL, DIMENSION(c_df_curdims) :: parallel
-    REAL(num), DIMENSION(c_df_curdims) :: dgrid
-    REAL(num) :: current_data, temp_data
-    INTEGER :: idim, idir
-    LOGICAL, DIMENSION(c_df_curdims) :: calc_range
-    LOGICAL :: calc_ranges
-
-    LOGICAL :: use_x, need_reduce
-    INTEGER, DIMENSION(c_df_curdims) :: start_local, global_resolution
-    INTEGER :: new_type, array_type
-
-    LOGICAL, DIMENSION(c_df_curdims, c_df_maxdirs) :: use_direction
-    LOGICAL, DIMENSION(c_df_curdims) :: calc_mod
-    INTEGER, DIMENSION(c_df_curdims) :: p_count
-    INTEGER, DIMENSION(c_df_curdims) :: l_direction
-    REAL(num), DIMENSION(c_df_curdims) :: conv
-    INTEGER, DIMENSION(c_df_curdims) :: cell
-    LOGICAL :: use_this
-    REAL(num) :: real_space_area, part_weight
-    REAL(num) :: part_mass, part_mass_c, gamma_mass_c
-
-    TYPE(particle), POINTER :: current
-    CHARACTER(LEN=string_length) :: var_name
-    REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
-
-    REAL(num) :: max_p_conv
-
-    INTEGER :: ind
-
-    use_x = .FALSE.
-    global_resolution = resolution
-    parallel = .FALSE.
-    start_local = 1
-    calc_range = .FALSE.
-    calc_ranges = .FALSE.
-    p_count = 0
-    use_direction = .FALSE.
-    l_direction = 0
-
-    real_space_area = 1.0_num
-    current_data = 0.0_num
-#ifndef PER_PARTICLE_CHARGE_MASS
-    part_mass = species_list(species)%mass
-    part_mass_c = part_mass * c
-#endif
-#ifndef PER_PARTICLE_WEIGHT
-    part_weight = species_list(species)%weight
-#endif
-
-    DO idim = 1, c_df_curdims
-      IF (direction(idim) .EQ. c_dir_x) THEN
-        use_x = .TRUE.
-        resolution(idim) = nx
-        ranges(1,idim) = x_min_local
-        ranges(2,idim) = x_max_local
-        start_local(idim) = cell_x_min(rank+1)
-        global_resolution(idim) = nx_global
-        dgrid(idim) = dx
-        parallel(idim) = .TRUE.
-        use_direction(idim,1) = .TRUE.
-        l_direction(idim) = 1
-        conv(idim) = length_x
-        CYCLE
-      ENDIF
-
-      conv(idim) = c*m0
-      ! If we're here then this must be a momentum space direction
-      ! So determine which momentum space directions are needed
-      IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
-        calc_range(idim) = .TRUE.
-        calc_ranges = .TRUE.
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
-        use_direction(idim, c_ndims+1) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+1
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
-        use_direction(idim, c_ndims+2) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+2
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
-        use_direction(idim, c_ndims+3) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+3
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_en) .NE. 0) THEN
-        use_direction(idim, c_ndims+4) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+4
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_gamma_m1) .NE. 0) THEN
-        use_direction(idim, c_ndims+5) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+5
-      ENDIF
-    ENDDO
-
-    IF (.NOT. use_x) real_space_area = real_space_area * dx
-
-    DO idim = 1, c_df_curdims
-      calc_mod(idim) = .FALSE.
-      IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
-    ENDDO
-
-    ! Calculate range for directions where needed
-    IF (calc_ranges) THEN
-      DO idim = 1, c_df_curdims
-        IF (calc_range(idim)) THEN
-          ranges(1,idim) = 1.0e6_num
-          ranges(2,idim) = -1.0e6_num
-        ENDIF
-      ENDDO
-      current=>species_list(species)%attached_list%head
-      ind = 0
-
-      DO WHILE(ASSOCIATED(current))
-        particle_data(1:c_ndims) = current%part_pos
-        particle_data(c_ndims+1:c_ndims+3) = current%part_p
-#ifdef PER_PARTICLE_CHARGE_MASS
-        part_mass = current%mass
-        part_mass_c = part_mass * c
-#endif
-        gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
-        particle_data(c_ndims+4) = c * (gamma_mass_c - part_mass_c)
-        particle_data(c_ndims+5) = gamma_mass_c / part_mass_c - 1.0_num
-        DO idim = 1, c_df_curdims
-          IF (calc_range(idim)) THEN
-            IF (calc_mod(idim)) THEN
-              DO idir = 1, c_df_maxdirs
-                IF (use_direction(idim, idir)) &
-                    current_data = current_data + particle_data(idir)**2
-              ENDDO
-              current_data = SQRT(current_data)
-            ELSE
-              current_data = particle_data(l_direction(idim))
-            ENDIF
-            use_this = .TRUE.
-            DO idir = 1, c_df_maxdirs
-              IF (use_restrictions(idir) &
-                  .AND. (particle_data(idir) .LT. restrictions(1,idir) &
-                  .OR. particle_data(idir) .GT. restrictions(2,idir))) &
-                      use_this = .FALSE.
-            ENDDO
-            IF (use_this) THEN
-              IF (current_data .LT. ranges(1,idim)) &
-                  ranges(1,idim) = current_data
-              IF (current_data .GT. ranges(2,idim)) &
-                  ranges(2,idim) = current_data
-            ENDIF
-          ENDIF
-        ENDDO
-        ind = ind + 1
-        current=>current%next
-      ENDDO
-    ENDIF
-
-    max_p_conv = -10.0_num
-    DO idim = 1, c_df_curdims
-      IF (.NOT. parallel(idim)) THEN
-        ! If not parallel then this is a momentum dimension
-        CALL MPI_ALLREDUCE(ranges(1,idim), temp_data, 1, mpireal, MPI_MIN, &
-            comm, errcode)
-        ranges(1,idim) = temp_data
-        CALL MPI_ALLREDUCE(ranges(2,idim), temp_data, 1, mpireal, MPI_MAX, &
-            comm, errcode)
-        ranges(2,idim) = temp_data
-      ENDIF
-      ! Fix so that if distribution function is zero then it picks an arbitrary
-      ! scale in that direction
-      IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
-        ranges(1,idim) = -1.0_num
-        ranges(2,idim) = 1.0_num
-      ENDIF
-      ! Calculate the maximum range of a momentum direction
-      IF (ranges(2,idim) - ranges(1,idim) .GT. max_p_conv &
-          .AND. .NOT. parallel(idim)) &
-              max_p_conv = ranges(2,idim) - ranges(1,idim)
-    ENDDO
-
-    DO idim = 1, c_df_curdims
-      IF (.NOT. parallel(idim)) conv(idim) = max_p_conv
-    ENDDO
-
-    ! Calculate grid spacing
-    DO idim = 1, c_df_curdims
-      IF (.NOT. parallel(idim)) dgrid(idim) = &
-          (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
-    ENDDO
-
-    ALLOCATE(array(resolution(1)))
-    array = 0.0_num
-
-    current=>species_list(species)%attached_list%head
-    DO WHILE(ASSOCIATED(current))
-      particle_data(1:c_ndims) = current%part_pos
-      particle_data(c_ndims+1:c_ndims+3) = current%part_p
-#ifdef PER_PARTICLE_CHARGE_MASS
-      part_mass = current%mass
-      part_mass_c = part_mass * c
-#endif
-      gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
-      particle_data(c_ndims+4) = c * (gamma_mass_c - part_mass_c)
-      particle_data(c_ndims+5) = gamma_mass_c / part_mass_c - 1.0_num
-      use_this = .TRUE.
-      DO idir = 1, c_df_maxdirs
-        IF (use_restrictions(idir) &
-            .AND. (particle_data(idir) .LT. restrictions(1,idir) &
-            .OR. particle_data(idir) .GT. restrictions(2,idir))) &
-                use_this = .FALSE.
-      ENDDO
-      IF (use_this) THEN
-        DO idim = 1, c_df_curdims
-          IF (calc_mod(idim)) THEN
-            DO idir = 1, c_df_maxdirs
-              IF (use_direction(idim, idir)) &
-                  current_data = current_data + particle_data(idir)**2
-            ENDDO
-            current_data = SQRT(current_data)
-          ELSE
-            current_data = particle_data(l_direction(idim))
-          ENDIF
-          cell(idim) = NINT((current_data - ranges(1,idim)) / dgrid(idim)) + 1
-          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
-              use_this = .FALSE.
-        ENDDO
-#ifdef PER_PARTICLE_WEIGHT
-        part_weight = current%weight
-#endif
-        IF (use_this) array(cell(1)) = &
-            array(cell(1)) + part_weight ! * real_space_area
-      ENDIF
-      current=>current%next
-    ENDDO
-
-    need_reduce = .TRUE.
-    IF (use_x) need_reduce = .FALSE.
-
-    IF (need_reduce) THEN
-      ALLOCATE(array_tmp(resolution(1)))
-      array_tmp = 0.0_num
-      CALL MPI_ALLREDUCE(array, array_tmp, &
-          resolution(1), mpireal, MPI_SUM, &
-          comm, errcode)
-      array = array_tmp
-      DEALLOCATE(array_tmp)
-    ENDIF
-
-    ! Create grids
-    ALLOCATE(grid1(global_resolution(1)))
-
-    DO idir = 1, global_resolution(1)
-      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
-    ENDDO
-
-    var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
-
-    IF (use_offset_grid) THEN
-      CALL sdf_write_srl_plain_mesh(sdf_handle, &
-          'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), grid1)
-      IF (parallel(1)) grid1 = grid1 - ranges(1,1)
-    ENDIF
-
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-        'Grid/' // TRIM(var_name), grid1)
-
-    DEALLOCATE(grid1)
-
-    new_type = &
-        create_1d_array_subtype(resolution, global_resolution, start_local)
-    CALL MPI_TYPE_CONTIGUOUS(resolution(1), &
-        mpireal, array_type, errcode)
-    CALL MPI_TYPE_COMMIT(array_type, errcode)
-
-    CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
-        'dist_fn/' // TRIM(var_name), '?', global_resolution, &
-        c_stagger_vertex, 'grid/' // TRIM(var_name), array, new_type, &
-        array_type)
-
-    CALL MPI_TYPE_FREE(new_type, errcode)
-    CALL MPI_TYPE_FREE(array_type, errcode)
-
-    DEALLOCATE(array)
-
-  END SUBROUTINE general_1d_dist_fn
-
-
-
-  SUBROUTINE general_2d_dist_fn(sdf_handle, name, direction, ranges, &
-      resolution, species, restrictions, use_restrictions)
-
-    TYPE(sdf_file_handle) :: sdf_handle
-    INTEGER, PARAMETER :: c_df_curdims = 2
-    CHARACTER(LEN=*), INTENT(IN) :: name
-    INTEGER, DIMENSION(c_df_curdims), INTENT(IN) :: direction
-    REAL(num), DIMENSION(2,c_df_curdims), INTENT(INOUT) :: ranges
-    INTEGER, DIMENSION(c_df_curdims), INTENT(INOUT) :: resolution
-    INTEGER, INTENT(IN) :: species
-    REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
-    LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
-
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: array, array_tmp
-    REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2
-    LOGICAL, DIMENSION(c_df_curdims) :: parallel
-    REAL(num), DIMENSION(c_df_curdims) :: dgrid
-    REAL(num) :: current_data, temp_data
-    INTEGER :: idim, idir
-    LOGICAL, DIMENSION(c_df_curdims) :: calc_range
-    LOGICAL :: calc_ranges
-
-    LOGICAL :: use_x, need_reduce
-    INTEGER, DIMENSION(c_df_curdims) :: start_local, global_resolution
-    INTEGER :: new_type, array_type
-
-    LOGICAL, DIMENSION(c_df_curdims, c_df_maxdirs) :: use_direction
-    LOGICAL, DIMENSION(c_df_curdims) :: calc_mod
-    INTEGER, DIMENSION(c_df_curdims) :: p_count
-    INTEGER, DIMENSION(c_df_curdims) :: l_direction
-    REAL(num), DIMENSION(c_df_curdims) :: conv
-    INTEGER, DIMENSION(c_df_curdims) :: cell
-    LOGICAL :: use_this
-    REAL(num) :: real_space_area, part_weight
-    REAL(num) :: part_mass, part_mass_c, gamma_mass_c
-
-    TYPE(particle), POINTER :: current
-    CHARACTER(LEN=string_length) :: var_name
-    REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
-
-    REAL(num) :: max_p_conv
-
-    INTEGER :: ind
-
-    use_x = .FALSE.
-    global_resolution = resolution
-    parallel = .FALSE.
-    start_local = 1
-    calc_range = .FALSE.
-    calc_ranges = .FALSE.
-    p_count = 0
-    use_direction = .FALSE.
-    l_direction = 0
-
-    real_space_area = 1.0_num
-    current_data = 0.0_num
-#ifndef PER_PARTICLE_CHARGE_MASS
-    part_mass = species_list(species)%mass
-    part_mass_c = part_mass * c
-#endif
-#ifndef PER_PARTICLE_WEIGHT
-    part_weight = species_list(species)%weight
-#endif
-
-    DO idim = 1, c_df_curdims
-      IF (direction(idim) .EQ. c_dir_x) THEN
-        use_x = .TRUE.
-        resolution(idim) = nx
-        ranges(1,idim) = x_min_local
-        ranges(2,idim) = x_max_local
-        start_local(idim) = cell_x_min(rank+1)
-        global_resolution(idim) = nx_global
-        dgrid(idim) = dx
-        parallel(idim) = .TRUE.
-        use_direction(idim,1) = .TRUE.
-        l_direction(idim) = 1
-        conv(idim) = length_x
-        CYCLE
-      ENDIF
-
-      conv(idim) = c*m0
-      ! If we're here then this must be a momentum space direction
-      ! So determine which momentum space directions are needed
-      IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
-        calc_range(idim) = .TRUE.
-        calc_ranges = .TRUE.
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_px) .NE. 0) THEN
-        use_direction(idim, c_ndims+1) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+1
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_py) .NE. 0) THEN
-        use_direction(idim, c_ndims+2) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+2
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_pz) .NE. 0) THEN
-        use_direction(idim, c_ndims+3) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+3
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_en) .NE. 0) THEN
-        use_direction(idim, c_ndims+4) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+4
-      ENDIF
-
-      IF (IAND(direction(idim), c_dir_gamma_m1) .NE. 0) THEN
-        use_direction(idim, c_ndims+5) = .TRUE.
-        p_count(idim) = p_count(idim)+1
-        l_direction(idim) = c_ndims+5
-      ENDIF
-    ENDDO
-
-    IF (.NOT. use_x) real_space_area = real_space_area * dx
-
-    DO idim = 1, c_df_curdims
-      calc_mod(idim) = .FALSE.
-      IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
-    ENDDO
-
-    ! Calculate range for directions where needed
-    IF (calc_ranges) THEN
-      DO idim = 1, c_df_curdims
-        IF (calc_range(idim)) THEN
-          ranges(1,idim) = 1.0e6_num
-          ranges(2,idim) = -1.0e6_num
-        ENDIF
-      ENDDO
-      current=>species_list(species)%attached_list%head
-      ind = 0
-
-      DO WHILE(ASSOCIATED(current))
-        particle_data(1:c_ndims) = current%part_pos
-        particle_data(c_ndims+1:c_ndims+3) = current%part_p
-#ifdef PER_PARTICLE_CHARGE_MASS
-        part_mass = current%mass
-        part_mass_c = part_mass * c
-#endif
-        gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
-        particle_data(c_ndims+4) = c * (gamma_mass_c - part_mass_c)
-        particle_data(c_ndims+5) = gamma_mass_c / part_mass_c - 1.0_num
-        DO idim = 1, c_df_curdims
-          IF (calc_range(idim)) THEN
-            IF (calc_mod(idim)) THEN
-              DO idir = 1, c_df_maxdirs
-                IF (use_direction(idim, idir)) &
-                    current_data = current_data + particle_data(idir)**2
-              ENDDO
-              current_data = SQRT(current_data)
-            ELSE
-              current_data = particle_data(l_direction(idim))
-            ENDIF
-            use_this = .TRUE.
-            DO idir = 1, c_df_maxdirs
-              IF (use_restrictions(idir) &
-                  .AND. (particle_data(idir) .LT. restrictions(1,idir) &
-                  .OR. particle_data(idir) .GT. restrictions(2,idir))) &
-                      use_this = .FALSE.
-            ENDDO
-            IF (use_this) THEN
-              IF (current_data .LT. ranges(1,idim)) &
-                  ranges(1,idim) = current_data
-              IF (current_data .GT. ranges(2,idim)) &
-                  ranges(2,idim) = current_data
-            ENDIF
-          ENDIF
-        ENDDO
-        ind = ind + 1
-        current=>current%next
-      ENDDO
-    ENDIF
-
-    max_p_conv = -10.0_num
-    DO idim = 1, c_df_curdims
-      IF (.NOT. parallel(idim)) THEN
-        ! If not parallel then this is a momentum dimension
-        CALL MPI_ALLREDUCE(ranges(1,idim), temp_data, 1, mpireal, MPI_MIN, &
-            comm, errcode)
-        ranges(1,idim) = temp_data
-        CALL MPI_ALLREDUCE(ranges(2,idim), temp_data, 1, mpireal, MPI_MAX, &
-            comm, errcode)
-        ranges(2,idim) = temp_data
-      ENDIF
-      ! Fix so that if distribution function is zero then it picks an arbitrary
-      ! scale in that direction
-      IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
-        ranges(1,idim) = -1.0_num
-        ranges(2,idim) = 1.0_num
-      ENDIF
-      ! Calculate the maximum range of a momentum direction
-      IF (ranges(2,idim) - ranges(1,idim) .GT. max_p_conv &
-          .AND. .NOT. parallel(idim)) &
-              max_p_conv = ranges(2,idim) - ranges(1,idim)
-    ENDDO
-
-    DO idim = 1, c_df_curdims
-      IF (.NOT. parallel(idim)) conv(idim) = max_p_conv
-    ENDDO
-
-    ! Calculate grid spacing
-    DO idim = 1, c_df_curdims
-      IF (.NOT. parallel(idim)) dgrid(idim) = &
-          (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
-    ENDDO
-
-    ALLOCATE(array(resolution(1), resolution(2)))
-    array = 0.0_num
-
-    current=>species_list(species)%attached_list%head
-    DO WHILE(ASSOCIATED(current))
-      particle_data(1:c_ndims) = current%part_pos
-      particle_data(c_ndims+1:c_ndims+3) = current%part_p
-#ifdef PER_PARTICLE_CHARGE_MASS
-      part_mass = current%mass
-      part_mass_c = part_mass * c
-#endif
-      gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
-      particle_data(c_ndims+4) = c * (gamma_mass_c - part_mass_c)
-      particle_data(c_ndims+5) = gamma_mass_c / part_mass_c - 1.0_num
-      use_this = .TRUE.
-      DO idir = 1, c_df_maxdirs
-        IF (use_restrictions(idir) &
-            .AND. (particle_data(idir) .LT. restrictions(1,idir) &
-            .OR. particle_data(idir) .GT. restrictions(2,idir))) &
-                use_this = .FALSE.
-      ENDDO
-      IF (use_this) THEN
-        DO idim = 1, c_df_curdims
-          IF (calc_mod(idim)) THEN
-            DO idir = 1, c_df_maxdirs
-              IF (use_direction(idim, idir)) &
-                  current_data = current_data + particle_data(idir)**2
-            ENDDO
-            current_data = SQRT(current_data)
-          ELSE
-            current_data = particle_data(l_direction(idim))
-          ENDIF
-          cell(idim) = NINT((current_data - ranges(1,idim)) / dgrid(idim)) + 1
-          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
-              use_this = .FALSE.
-        ENDDO
-#ifdef PER_PARTICLE_WEIGHT
-        part_weight = current%weight
-#endif
-        IF (use_this) array(cell(1), cell(2)) = &
-            array(cell(1), cell(2)) + part_weight ! * real_space_area
-      ENDIF
-      current=>current%next
-    ENDDO
-
-    need_reduce = .TRUE.
-    IF (use_x) need_reduce = .FALSE.
-
-    IF (need_reduce) THEN
-      ALLOCATE(array_tmp(resolution(1), resolution(2)))
-      array_tmp = 0.0_num
-      CALL MPI_ALLREDUCE(array, array_tmp, &
-          resolution(1)*resolution(2), mpireal, MPI_SUM, &
-          comm, errcode)
-      array = array_tmp
-      DEALLOCATE(array_tmp)
-    ENDIF
-
-    ! Create grids
-    ALLOCATE(grid1(global_resolution(1)))
-    ALLOCATE(grid2(global_resolution(2)))
-
-    DO idir = 1, global_resolution(1)
-      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
-    ENDDO
-
-    DO idir = 1, global_resolution(2)
-      grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
-    ENDDO
-
-    var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
-
-    IF (use_offset_grid) THEN
-      CALL sdf_write_srl_plain_mesh(sdf_handle, &
-          'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
-          grid1, grid2)
-      IF (parallel(1)) grid1 = grid1 - ranges(1,1)
-      IF (parallel(2)) grid2 = grid2 - ranges(1,2)
-    ENDIF
-
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-        'Grid/' // TRIM(var_name), grid1, grid2)
-
-    DEALLOCATE(grid1, grid2)
-
-    new_type = &
-        create_2d_array_subtype(resolution, global_resolution, start_local)
-    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2), &
-        mpireal, array_type, errcode)
-    CALL MPI_TYPE_COMMIT(array_type, errcode)
-
-    CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
-        'dist_fn/' // TRIM(var_name), '?', global_resolution, &
-        c_stagger_vertex, 'grid/' // TRIM(var_name), array, new_type, &
-        array_type)
-
-    CALL MPI_TYPE_FREE(new_type, errcode)
-    CALL MPI_TYPE_FREE(array_type, errcode)
-
-    DEALLOCATE(array)
-
-  END SUBROUTINE general_2d_dist_fn
-
-
-
-  SUBROUTINE general_3d_dist_fn(sdf_handle, name, direction, ranges, &
-      resolution, species, restrictions, use_restrictions)
-
-    TYPE(sdf_file_handle) :: sdf_handle
-    INTEGER, PARAMETER :: c_df_curdims = 3
-    CHARACTER(LEN=*), INTENT(IN) :: name
-    INTEGER, DIMENSION(c_df_curdims), INTENT(IN) :: direction
-    REAL(num), DIMENSION(2,c_df_curdims), INTENT(INOUT) :: ranges
-    INTEGER, DIMENSION(c_df_curdims), INTENT(INOUT) :: resolution
-    INTEGER, INTENT(IN) :: species
-    REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
-    LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
+    INTEGER, INTENT(IN) :: curdims
 
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array, array_tmp
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2, grid3
-    LOGICAL, DIMENSION(c_df_curdims) :: parallel
-    REAL(num), DIMENSION(c_df_curdims) :: dgrid
+    LOGICAL, DIMENSION(c_df_maxdims) :: parallel
+    REAL(num), DIMENSION(c_df_maxdims) :: dgrid
     REAL(num) :: current_data, temp_data
     INTEGER :: idim, idir
-    LOGICAL, DIMENSION(c_df_curdims) :: calc_range
+    LOGICAL, DIMENSION(c_df_maxdims) :: calc_range
     LOGICAL :: calc_ranges
 
     LOGICAL :: use_x, need_reduce
-    INTEGER, DIMENSION(c_df_curdims) :: start_local, global_resolution
+    INTEGER, DIMENSION(c_df_maxdims) :: start_local, global_resolution
     INTEGER :: new_type, array_type
 
-    LOGICAL, DIMENSION(c_df_curdims, c_df_maxdirs) :: use_direction
-    LOGICAL, DIMENSION(c_df_curdims) :: calc_mod
-    INTEGER, DIMENSION(c_df_curdims) :: p_count
-    INTEGER, DIMENSION(c_df_curdims) :: l_direction
-    REAL(num), DIMENSION(c_df_curdims) :: conv
-    INTEGER, DIMENSION(c_df_curdims) :: cell
+    REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
+    INTEGER, DIMENSION(c_df_maxdims) :: resolution
+    LOGICAL, DIMENSION(c_df_maxdims, c_df_maxdirs) :: use_direction
+    LOGICAL, DIMENSION(c_df_maxdims) :: calc_mod
+    INTEGER, DIMENSION(c_df_maxdims) :: p_count
+    INTEGER, DIMENSION(c_df_maxdims) :: l_direction
+    REAL(num), DIMENSION(c_df_maxdims) :: conv
+    INTEGER, DIMENSION(c_df_maxdims) :: cell
     LOGICAL :: use_this
     REAL(num) :: real_space_area, part_weight
     REAL(num) :: part_mass, part_mass_c, gamma_mass_c
@@ -779,6 +138,8 @@ CONTAINS
     INTEGER :: ind
 
     use_x = .FALSE.
+    ranges = ranges_in
+    resolution = resolution_in
     global_resolution = resolution
     parallel = .FALSE.
     start_local = 1
@@ -798,13 +159,13 @@ CONTAINS
     part_weight = species_list(species)%weight
 #endif
 
-    DO idim = 1, c_df_curdims
+    DO idim = 1, curdims
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
         ranges(1,idim) = x_min_local
         ranges(2,idim) = x_max_local
-        start_local(idim) = cell_x_min(rank+1)
+        start_local(idim) = cell_x_min(coordinates(c_ndims)+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
         parallel(idim) = .TRUE.
@@ -812,6 +173,7 @@ CONTAINS
         l_direction(idim) = 1
         conv(idim) = length_x
         CYCLE
+
       ENDIF
 
       conv(idim) = c*m0
@@ -855,14 +217,14 @@ CONTAINS
 
     IF (.NOT. use_x) real_space_area = real_space_area * dx
 
-    DO idim = 1, c_df_curdims
+    DO idim = 1, curdims
       calc_mod(idim) = .FALSE.
       IF (p_count(idim) .GT. 1) calc_mod(idim) = .TRUE.
     ENDDO
 
     ! Calculate range for directions where needed
     IF (calc_ranges) THEN
-      DO idim = 1, c_df_curdims
+      DO idim = 1, curdims
         IF (calc_range(idim)) THEN
           ranges(1,idim) = 1.0e6_num
           ranges(2,idim) = -1.0e6_num
@@ -881,7 +243,7 @@ CONTAINS
         gamma_mass_c = SQRT(SUM(current%part_p**2) + part_mass_c**2)
         particle_data(c_ndims+4) = c * (gamma_mass_c - part_mass_c)
         particle_data(c_ndims+5) = gamma_mass_c / part_mass_c - 1.0_num
-        DO idim = 1, c_df_curdims
+        DO idim = 1, curdims
           IF (calc_range(idim)) THEN
             IF (calc_mod(idim)) THEN
               DO idir = 1, c_df_maxdirs
@@ -913,7 +275,7 @@ CONTAINS
     ENDIF
 
     max_p_conv = -10.0_num
-    DO idim = 1, c_df_curdims
+    DO idim = 1, curdims
       IF (.NOT. parallel(idim)) THEN
         ! If not parallel then this is a momentum dimension
         CALL MPI_ALLREDUCE(ranges(1,idim), temp_data, 1, mpireal, MPI_MIN, &
@@ -935,12 +297,12 @@ CONTAINS
               max_p_conv = ranges(2,idim) - ranges(1,idim)
     ENDDO
 
-    DO idim = 1, c_df_curdims
+    DO idim = 1, curdims
       IF (.NOT. parallel(idim)) conv(idim) = max_p_conv
     ENDDO
 
     ! Calculate grid spacing
-    DO idim = 1, c_df_curdims
+    DO idim = 1, curdims
       IF (.NOT. parallel(idim)) dgrid(idim) = &
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
     ENDDO
@@ -967,7 +329,8 @@ CONTAINS
                 use_this = .FALSE.
       ENDDO
       IF (use_this) THEN
-        DO idim = 1, c_df_curdims
+        cell = 1
+        DO idim = 1, curdims
           IF (calc_mod(idim)) THEN
             DO idir = 1, c_df_maxdirs
               IF (use_direction(idim, idir)) &
@@ -1005,39 +368,65 @@ CONTAINS
 
     ! Create grids
     ALLOCATE(grid1(global_resolution(1)))
-    ALLOCATE(grid2(global_resolution(2)))
-    ALLOCATE(grid3(global_resolution(3)))
-
     DO idir = 1, global_resolution(1)
       grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
     ENDDO
 
-    DO idir = 1, global_resolution(2)
-      grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
-    ENDDO
+    IF (curdims .GE. 2) THEN
+      ALLOCATE(grid2(global_resolution(2)))
+      DO idir = 1, global_resolution(2)
+        grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
+      ENDDO
+    ENDIF
 
-    DO idir = 1, global_resolution(3)
-      grid3(idir) = ranges(1,3) + (idir - 1) * dgrid(3)
-    ENDDO
+    IF (curdims .GE. 3) THEN
+      ALLOCATE(grid3(global_resolution(3)))
+      DO idir = 1, global_resolution(3)
+        grid3(idir) = ranges(1,3) + (idir - 1) * dgrid(3)
+      ENDDO
+    ENDIF
 
     var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
 
     IF (use_offset_grid) THEN
-      CALL sdf_write_srl_plain_mesh(sdf_handle, &
-          'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
-          grid1, grid2, grid3)
+      IF (curdims .EQ. 1) THEN
+        CALL sdf_write_srl_plain_mesh(sdf_handle, &
+            'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
+            grid1)
+      ELSE IF (curdims .EQ. 2) THEN
+        CALL sdf_write_srl_plain_mesh(sdf_handle, &
+            'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
+            grid1, grid2)
+      ELSE IF (curdims .EQ. 3) THEN
+        CALL sdf_write_srl_plain_mesh(sdf_handle, &
+            'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
+            grid1, grid2, grid3)
+      ENDIF
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
       IF (parallel(3)) grid3 = grid3 - ranges(1,3)
     ENDIF
 
-    CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-        'Grid/' // TRIM(var_name), grid1, grid2, grid3)
+    IF (curdims .EQ. 1) THEN
+      CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
+          'Grid/' // TRIM(var_name), grid1)
+      DEALLOCATE(grid1)
+      new_type = &
+          create_1d_array_subtype(resolution, global_resolution, start_local)
+    ELSE IF (curdims .EQ. 2) THEN
+      CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
+          'Grid/' // TRIM(var_name), grid1, grid2)
+      DEALLOCATE(grid1, grid2)
+      new_type = &
+          create_2d_array_subtype(resolution, global_resolution, start_local)
+    ELSE IF (curdims .EQ. 3) THEN
+      CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
+          'Grid/' // TRIM(var_name), grid1, grid2, grid3)
+      DEALLOCATE(grid1, grid2, grid3)
+      new_type = &
+          create_3d_array_subtype(resolution, global_resolution, start_local)
+    ENDIF
 
-    DEALLOCATE(grid1, grid2, grid3)
-
-    new_type = &
-        create_3d_array_subtype(resolution, global_resolution, start_local)
     CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
         mpireal, array_type, errcode)
     CALL MPI_TYPE_COMMIT(array_type, errcode)
@@ -1052,6 +441,6 @@ CONTAINS
 
     DEALLOCATE(array)
 
-  END SUBROUTINE general_3d_dist_fn
+  END SUBROUTINE general_dist_fn
 
 END MODULE dist_fn
