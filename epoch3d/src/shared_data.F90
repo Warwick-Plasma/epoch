@@ -630,7 +630,9 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_dist_fns          = 27
   INTEGER, PARAMETER :: c_dump_probes            = 28
   INTEGER, PARAMETER :: c_dump_ejected_particles = 29
-  INTEGER, PARAMETER :: num_vars_to_dump         = 29
+  INTEGER, PARAMETER :: c_dump_ekflux            = 30
+  INTEGER, PARAMETER :: c_dump_poynt_flux        = 31
+  INTEGER, PARAMETER :: num_vars_to_dump         = 31
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------

@@ -226,6 +226,203 @@ CONTAINS
 
 
 
+  SUBROUTINE calc_ekflux(data_array, current_species, direction)
+
+    ! Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_ux, part_uy, part_uz, part_mc
+    REAL(num) :: part_vx, part_vy, part_vz
+    ! The weight of a particle
+    REAL(num) :: l_weight
+    ! The data to be weighted onto the grid
+    REAL(num) :: wdata, fac, gamma, idx
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species, direction
+    TYPE(particle), POINTER :: current
+    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
+    REAL(num) :: cell_x_r, cell_frac_x
+    REAL(num) :: cell_y_r, cell_frac_y
+    REAL(num) :: cell_z_r, cell_frac_z
+    INTEGER :: cell_x, cell_y, cell_z
+
+    data_array = 0.0_num
+    idx = 1.0_num / dx / dy / dz
+
+    spec_start = current_species
+    spec_end = current_species
+
+    IF (current_species .LE. 0) THEN
+      spec_start = 1
+      spec_end = n_species
+    ENDIF
+
+    DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
+      current => species_list(ispecies)%attached_list%head
+#ifndef PER_PARTICLE_CHARGE_MASS
+      part_mc = c * species_list(ispecies)%mass
+#ifndef PER_PARTICLE_WEIGHT
+      l_weight = species_list(ispecies)%weight
+#endif
+      fac = l_weight * part_mc * c * idx
+#else
+#ifndef PER_PARTICLE_WEIGHT
+      l_weight = species_list(ispecies)%weight
+      fac = l_weight * part_mc * c * idx
+#endif
+#endif
+      DO WHILE (ASSOCIATED(current))
+        ! Copy the particle properties out for speed
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_mc = c * current%mass
+#ifdef PER_PARTICLE_WEIGHT
+        l_weight = current%weight
+#endif
+        fac = l_weight * part_mc * c * idx
+#else
+#ifdef PER_PARTICLE_WEIGHT
+        l_weight = current%weight
+        fac = l_weight * part_mc * c * idx
+#endif
+#endif
+        part_ux = current%part_p(1) / part_mc
+        part_uy = current%part_p(2) / part_mc
+        part_uz = current%part_p(3) / part_mc
+
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
+#else
+        cell_x_r = (current%part_pos(1) - x_min_local) / dx
+        cell_y_r = (current%part_pos(2) - y_min_local) / dy
+        cell_z_r = (current%part_pos(3) - z_min_local) / dz
+#endif
+        cell_x = FLOOR(cell_x_r + 0.5_num)
+        cell_y = FLOOR(cell_y_r + 0.5_num)
+        cell_z = FLOOR(cell_z_r + 0.5_num)
+        cell_frac_x = REAL(cell_x, num) - cell_x_r
+        cell_frac_y = REAL(cell_y, num) - cell_y_r
+        cell_frac_z = REAL(cell_z, num) - cell_z_r
+        cell_x = cell_x + 1
+        cell_y = cell_y + 1
+        cell_z = cell_z + 1
+
+        CALL particle_to_grid(cell_frac_x, gx)
+        CALL particle_to_grid(cell_frac_y, gy)
+        CALL particle_to_grid(cell_frac_z, gz)
+
+        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+
+        SELECT CASE(direction)
+        CASE(-c_dir_x)
+          ! negative flux in x
+          part_vx = part_ux * c / gamma
+          wdata = (1.0_num - gamma) * fac * MIN(part_vx, 0.0_num)
+        CASE( c_dir_x)
+          ! positive flux in x
+          part_vx = part_ux * c / gamma
+          wdata = (gamma - 1.0_num) * fac * MAX(part_vx, 0.0_num)
+        CASE(-c_dir_y)
+          ! negative flux in y
+          part_vy = part_uy * c / gamma
+          wdata = (1.0_num - gamma) * fac * MIN(part_vy, 0.0_num)
+        CASE( c_dir_y)
+          ! positive flux in y
+          part_vy = part_uy * c / gamma
+          wdata = (gamma - 1.0_num) * fac * MAX(part_vy, 0.0_num)
+        CASE(-c_dir_z)
+          ! negative flux in z
+          part_vz = part_uz * c / gamma
+          wdata = (1.0_num - gamma) * fac * MIN(part_vz, 0.0_num)
+        CASE( c_dir_z)
+          ! positive flux in z
+          part_vz = part_uz * c / gamma
+          wdata = (gamma - 1.0_num) * fac * MAX(part_vz, 0.0_num)
+        END SELECT
+
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+                  + gx(ix) * gy(iy) * gz(iz) * wdata
+            ENDDO
+          ENDDO
+        ENDDO
+
+        current => current%next
+      ENDDO
+    ENDDO
+
+    CALL processor_summation_bcs(data_array)
+
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    ENDDO
+
+  END SUBROUTINE calc_ekflux
+
+
+
+  SUBROUTINE calc_poynt_flux(data_array, dummy, direction)
+
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: dummy, direction
+    INTEGER :: ix, iy, iz
+    REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
+
+    SELECT CASE(direction)
+    CASE(c_dir_x)
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            ey_cc = 0.5_num  * (ey(ix  , iy-1, iz  ) + ey(ix, iy, iz))
+            ez_cc = 0.5_num  * (ez(ix  , iy  , iz-1) + ez(ix, iy, iz))
+            by_cc = 0.25_num * (by(ix-1, iy  , iz-1) + by(ix  , iy  , iz-1) &
+                             +  by(ix-1, iy  , iz  ) + by(ix  , iy  , iz  ))
+            bz_cc = 0.25_num * (bz(ix-1, iy-1, iz  ) + bz(ix  , iy-1, iz  ) &
+                             +  bz(ix-1, iy  , iz  ) + bz(ix  , iy  , iz  ))
+            data_array(ix,iy,iz) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
+          ENDDO
+        ENDDO
+      ENDDO
+    CASE(c_dir_y)
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            ex_cc = 0.5_num  * (ex(ix-1, iy  , iz  ) + ex(ix, iy, iz))
+            ez_cc = 0.5_num  * (ez(ix  , iy  , iz-1) + ez(ix, iy, iz))
+            bx_cc = 0.25_num * (bx(ix  , iy-1, iz-1) + bx(ix  , iy  , iz-1) &
+                             +  bx(ix  , iy-1, iz  ) + bx(ix  , iy  , iz  ))
+            bz_cc = 0.25_num * (bz(ix-1, iy-1, iz  ) + bz(ix  , iy-1, iz  ) &
+                             +  bz(ix-1, iy  , iz  ) + bz(ix  , iy  , iz  ))
+            data_array(ix,iy,iz) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
+          ENDDO
+        ENDDO
+      ENDDO
+    CASE(c_dir_z)
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ix = 1, nx
+            ex_cc = 0.5_num  * (ex(ix-1, iy  , iz  ) + ex(ix, iy, iz))
+            ey_cc = 0.5_num  * (ey(ix  , iy-1, iz  ) + ey(ix, iy, iz))
+            bx_cc = 0.25_num * (bx(ix  , iy-1, iz-1) + bx(ix  , iy  , iz-1) &
+                             +  bx(ix  , iy-1, iz  ) + bx(ix  , iy  , iz  ))
+            by_cc = 0.25_num * (by(ix-1, iy  , iz-1) + by(ix  , iy  , iz-1) &
+                             +  by(ix-1, iy  , iz  ) + by(ix  , iy  , iz  ))
+            data_array(ix,iy,iz) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
+          ENDDO
+        ENDDO
+      ENDDO
+    END SELECT
+
+  END SUBROUTINE calc_poynt_flux
+
+
+
   SUBROUTINE calc_charge_density(data_array, current_species)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array

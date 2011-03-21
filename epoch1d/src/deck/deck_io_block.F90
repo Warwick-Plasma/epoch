@@ -46,6 +46,8 @@ CONTAINS
     io_block_name(c_dump_dist_fns         ) = 'distribution_functions'
     io_block_name(c_dump_probes           ) = 'particle_probes'
     io_block_name(c_dump_ejected_particles) = 'ejected_particles'
+    io_block_name(c_dump_ekflux           ) = 'ekflux'
+    io_block_name(c_dump_poynt_flux       ) = 'poynt_flux'
 
     i = num_vars_to_dump
     io_block_name(i+1 ) = 'dt_snapshot'
@@ -169,6 +171,7 @@ CONTAINS
       bad = .TRUE.
       ! Check for sensible per species variables
       IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
+      IF (mask_element .EQ. c_dump_ekflux) bad = .FALSE.
       IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
       IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
       IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.

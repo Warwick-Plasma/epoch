@@ -35,6 +35,12 @@ CONTAINS
     LOGICAL :: restart_flag
     TYPE(particle_species), POINTER :: species
 
+    CHARACTER(LEN=5), DIMENSION(6) :: dir_tags = &
+        (/'x_max', 'y_max', 'z_max', 'x_min', 'y_min', 'z_min'/)
+    INTEGER, DIMENSION(6) :: fluxdir = &
+        (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
+    CHARACTER(LEN=1), DIMENSION(3) :: dim_tags = (/'x', 'y', 'z'/)
+
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
         .AND. MOD(i, stdout_frequency) .EQ. 0) THEN
       WRITE(*, '("Time", g20.12, " and iteration", i7, " after ", &
@@ -170,6 +176,14 @@ CONTAINS
     CALL write_nspecies_field(c_dump_temperature, code, 'temperature', &
         'Derived/Temperature', '?', c_stagger_cell_centre, &
         calc_temperature, array)
+
+    CALL write_nspecies_flux(c_dump_ekflux, code, 'ekflux', &
+        'Derived/EkFlux', '?', c_stagger_cell_centre, &
+        calc_ekflux, array, fluxdir, dir_tags)
+
+    CALL write_nspecies_flux(c_dump_poynt_flux, code, 'poynt_flux', &
+        'Derived/Poynting Flux', '?', c_stagger_cell_centre, &
+        calc_poynt_flux, array, fluxdir(1:3), dim_tags)
 
 #ifdef FIELD_DEBUG
     array = rank
@@ -499,6 +513,76 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE write_nspecies_field
+
+
+
+  SUBROUTINE write_nspecies_flux(id, code, block_id, name, units, stagger, &
+      func, array, fluxdir, dir_tags)
+
+    INTEGER, INTENT(IN) :: id, code
+    CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
+    INTEGER, INTENT(IN) :: stagger
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, DIMENSION(:), INTENT(IN) :: fluxdir
+    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
+    INTEGER, DIMENSION(c_ndims) :: dims
+    INTEGER :: ispecies, should_dump, ndirs, idir
+    CHARACTER(LEN=c_max_string_length) :: temp_block_id, temp_name
+
+    INTERFACE
+      SUBROUTINE func(data_array, current_species, direction)
+        USE shared_data
+        REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
+        INTEGER, INTENT(IN) :: current_species, direction
+      END SUBROUTINE func
+    END INTERFACE
+
+    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+
+    ndirs = SIZE(fluxdir)
+    dims = (/nx_global/)
+
+    ! Want the code to output unaveraged data if either restarting or
+    ! requested by the user
+    should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
+    should_dump = IOR(should_dump, NOT(c_io_averaged))
+
+    IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
+      IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
+        DO idir = 1, ndirs
+          CALL func(array, 0, fluxdir(idir))
+          WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
+              TRIM(dir_tags(idir))
+          WRITE(temp_name, '(a, "_", a)') TRIM(name), &
+              TRIM(dir_tags(idir))
+          CALL sdf_write_plain_variable(sdf_handle, &
+              TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
+              TRIM(units), dims, stagger, 'grid', &
+              array, subtype_field, subarray_field)
+        ENDDO
+      ENDIF
+
+      IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+        DO ispecies = 1, n_species
+#ifdef TRACER_PARTICLES
+          IF (species_list(ispecies)%tracer) CYCLE
+#endif
+          DO idir = 1, ndirs
+            CALL func(array, ispecies, fluxdir(idir))
+            WRITE(temp_block_id, '(a, "_", a, "_", a)') TRIM(block_id), &
+                TRIM(species_list(ispecies)%name), TRIM(dir_tags(idir))
+            WRITE(temp_name, '(a, "_", a, "_", a)') TRIM(name), &
+                TRIM(species_list(ispecies)%name), TRIM(dir_tags(idir))
+            CALL sdf_write_plain_variable(sdf_handle, &
+                TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
+                TRIM(units), dims, stagger, 'grid', &
+                array, subtype_field, subarray_field)
+          ENDDO
+        ENDDO
+      ENDIF
+    ENDIF
+
+  END SUBROUTINE write_nspecies_flux
 
 
 
