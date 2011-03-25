@@ -3,13 +3,8 @@
     <Extensions>
       sdf
     </Extensions>
-    <Files components="M">
-      sdf_control.c
-      sdf_input.c
-      sdf_input_cartesian.c
-      sdf_input_point.c
-    </Files>
-    <Files components="E">
+    <Files components="M,E">
+      avtSDFFileFormat.C
       sdf_control.c
       sdf_input.c
       sdf_input_cartesian.c

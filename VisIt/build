@@ -8,13 +8,13 @@ version=`visit -version 2>&1|sed 's,.* \([0-9]*\).*,\1,'`
 if [ "$version"x != x ]; then
   for fmt in $formats; do
     xml2info -clobber ${fmt}${version}.xml
-    rm -rf CMake* cmake* Makefile
+    rm -f CMake* cmake* Makefile
 
     if [ $version -eq 1 ]; then
       xml2makefile -clobber ${fmt}${version}.xml
       if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
-        sed 's,\(^CXXFLAGS.*\),\1 -m32\
-CFLAGS=$(CFLAGSORIG) -m32\
+        sed 's,\(^CXXFLAGS.*\),\1 -m32 -g\
+CFLAGS=$(CFLAGSORIG) -m32 -g\
 PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32,' Makefile > .Makefile.tmp
         \mv -f .Makefile.tmp Makefile
       fi

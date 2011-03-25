@@ -103,14 +103,11 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
     memcpy(this->filename, filename, strlen(filename)+1);
     gotMetadata = false;
     h = NULL;
-    use_float = 0;
-    intVector bools = readOpts->GetOptBools();
 
-    for (int i = 0; i < readOpts->GetNumberOfOptions(); i++) {
-        std::string name = readOpts->GetName(i);
-        if (name == "Read double variables as floats to save memory")
-            use_float = bools[i];
-    }
+    use_float = 0;
+    if (readOpts &&
+        readOpts->GetBool("Read double variables as floats to save memory"))
+            use_float = 1;
 
     if (!h) {
         h = sdf_open(filename, rank, comm);
