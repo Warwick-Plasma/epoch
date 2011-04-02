@@ -18,8 +18,8 @@ CONTAINS
 
     probe%point = 0.0_num
     probe%normal = 0.0_num
-    probe%ek_min = 0.0_num
-    probe%ek_max = 0.0_num
+    probe%ek_min = -HUGE(1.0_num)
+    probe%ek_max =  HUGE(1.0_num)
     probe%name = blank
     probe%dump = 0
     NULLIFY(probe%next)

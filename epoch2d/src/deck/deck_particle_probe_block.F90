@@ -180,6 +180,7 @@ CONTAINS
 
     IF (str_cmp(element, "ek_max")) THEN
       working_probe%ek_max = as_real(value, errcode)
+      IF (working_probe%ek_max .LT. 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
     ENDIF
 

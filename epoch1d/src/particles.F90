@@ -372,8 +372,7 @@ CONTAINS
 
             ! right energy? (in J)
             IF (probe_energy .GT. current_probe%ek_min) THEN
-              IF ((probe_energy .LT. current_probe%ek_max) &
-                  .OR. (current_probe%ek_max .LT. 0.0_num)) THEN
+              IF (probe_energy .LT. current_probe%ek_max) THEN
 
                 d_init  = current_probe%normal &
                     * (current_probe%point - init_part_x)
