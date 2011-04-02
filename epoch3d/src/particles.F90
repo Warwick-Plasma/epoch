@@ -462,8 +462,7 @@ CONTAINS
                     - (/init_part_x, init_part_y, init_part_z/)))
                 d_final = SUM(current_probe%normal * (current_probe%point &
                     - (/final_part_x, final_part_y, final_part_z/)))
-                IF (SIGN(1.0_num, d_init) * SIGN(1.0_num, d_final) &
-                    .LE. 0.0_num) THEN
+                IF (d_final .LT. 0.0_num .AND. d_init .GE. 0.0_num) THEN
                   ! this particle is wanted so copy it to the list associated
                   ! with this probe
                   ALLOCATE(particle_copy)
