@@ -11,13 +11,13 @@ static inline int sdf_get_next_block(sdf_file_t *h)
     if (h->blocklist) {
         if (!h->current_block)
             h->current_block = h->blocklist;
-        else if (h->current_block->next_block)
-            h->current_block = h->current_block->next_block;
+        else if (h->current_block->next)
+            h->current_block = h->current_block->next;
         else {
             sdf_block_t *block = malloc(sizeof(sdf_block_t));
             memset(block, 0, sizeof(sdf_block_t));
             block->block_start = h->current_block->next_block_location;
-            h->current_block->next_block = block;
+            h->current_block->next = block;
             h->current_block = block;
         }
     } else {
@@ -229,6 +229,7 @@ int sdf_read_next_block_header(sdf_file_t *h)
         break;
     }
     b->datatype_out = b->datatype;
+    b->type_size_out = b->type_size;
 #ifdef PARALLEL
     switch (b->datatype) {
     case(SDF_DATATYPE_REAL4):

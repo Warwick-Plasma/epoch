@@ -359,7 +359,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             AddSpeciesToMetaData(md, b->name, mesh->name, mat->name,
                 mnames.size(), nspec, specnames);
         }
-        h->current_block = b->next_block;
+        h->current_block = b->next;
     }
 
     md->SetFormatCanDoDomainDecomposition(true);
@@ -445,19 +445,19 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         sdf_read_point_mesh(h);
         vtkPoints *points  = vtkPoints::New();
         vtkUnstructuredGrid *ugrid = vtkUnstructuredGrid::New();
-        points->SetNumberOfPoints(b->npoints);
-        ugrid->Allocate(b->npoints);
+        points->SetNumberOfPoints(b->nlocal);
+        ugrid->Allocate(b->nlocal);
         ugrid->SetPoints(points);
         float *x = (float *)b->grids[0];
         float *y = (float *)b->grids[1];
         if (b->ndims > 2) {
             float *z = (float *)b->grids[2];
-            for (vtkIdType i=0; i < b->npoints; i++) {
+            for (vtkIdType i=0; i < b->nlocal; i++) {
                 points->SetPoint(i, x[i], y[i], z[i]);
                 ugrid->InsertNextCell(VTK_VERTEX, 1, &i);
             }
         } else {
-            for (vtkIdType i=0; i < b->npoints; i++) {
+            for (vtkIdType i=0; i < b->nlocal; i++) {
                 points->SetPoint(i, x[i], y[i], 0.0);
                 ugrid->InsertNextCell(VTK_VERTEX, 1, &i);
             }
@@ -531,7 +531,7 @@ avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
 {
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
 
-    int npoints;
+    int nlocal;
 
     h->current_block = mesh;
 
@@ -539,12 +539,12 @@ avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
         sdf_read_point_mesh(h);
         h->current_block = b;
         sdf_read_point_variable(h);
-        npoints = b->npoints;
+        nlocal = b->nlocal;
     } else {
         sdf_read_plain_mesh(h);
         h->current_block = b;
         sdf_read_plain_variable(h);
-        npoints = b->dims[0];
+        nlocal = b->dims[0];
     }
 
     //
@@ -554,15 +554,15 @@ avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
     float *x = (float*)mesh->grids[0];
     float *y = (float*)b->data;
 
-    pts->SetNumberOfPoints(npoints);
-    for (int i = 0 ; i < npoints; i++)
+    pts->SetNumberOfPoints(nlocal);
+    for (int i = 0 ; i < nlocal; i++)
         pts->SetPoint(i, x[i], y[i], 0.0);
 
     //
     // Connect the points up with line segments.
     //
     vtkCellArray *line = vtkCellArray::New();
-    for (int i = 1 ; i < npoints; i++) {
+    for (int i = 1 ; i < nlocal; i++) {
         line->InsertNextCell(2);
         line->InsertCellPoint(i - 1);
         line->InsertCellPoint(i);
@@ -609,34 +609,11 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
 
     sdf_block_t *b = sdf_find_block_by_name(h, varname);
     if (!b) EXCEPTION1(InvalidVariableException, varname);
+
+    debug1 << "found block:" << b->id << " for var:" << varname <<
+              " type " << b->blocktype << endl;
+
     h->current_block = b;
-
-    debug1 << "found block:" << b->id << " for var:" << varname << " type " << b->blocktype << endl;
-
-    if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
-        sdf_read_point_variable(h);
-        vtkDataArray *rv;
-        if (b->datatype_out == SDF_DATATYPE_INTEGER4)
-            rv = vtkIntArray::New();
-        else if (b->datatype_out == SDF_DATATYPE_REAL4)
-            rv = vtkFloatArray::New();
-        else if (b->datatype_out == SDF_DATATYPE_REAL8)
-            rv = vtkDoubleArray::New();
-
-        rv->SetVoidArray(b->data, b->npoints, 1);
-
-#ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
-#endif
-        return rv;
-    }
-
-    sdf_read_plain_variable(h);
-
-    int ndims = b->ndims;
-    b->nzones = 1;
-    for (int i = 0; i < ndims; i++) b->nzones *= b->local_dims[i];
-    debug1 << "nzones: " << b->nzones << endl;
 
     vtkDataArray *rv;
     if (b->datatype_out == SDF_DATATYPE_INTEGER4)
@@ -646,7 +623,12 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
     else if (b->datatype_out == SDF_DATATYPE_REAL8)
         rv = vtkDoubleArray::New();
 
-    rv->SetVoidArray(b->data, b->nzones, 1);
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
+        sdf_read_plain_variable(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
+        sdf_read_point_variable(h);
+
+    rv->SetVoidArray(b->data, b->nlocal, 1);
 
     SetUpDomainConnectivity();
 
@@ -839,17 +821,16 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
 
     sdf_block_t *v = vfm_blocks[0];
     int ndims = v->ndims;
-    int nzones = 1;
-    for (int i = 0; i < ndims; i++) nzones *= v->local_dims[i];
+    int nlocal = v->nlocal;
 
-    int *material_list = new int[nzones];
+    int *material_list = new int[nlocal];
     int mixed_size = 0;
     int *mat_numbers = new int[nm];
     for (int n = 0; n < nm; n++) mat_numbers[n] = n + 1;
 
     // Fill in the pure cell array and find the size of the mixed cell arrays
     float *vfm;
-    for (int i = 0; i < nzones; i++) {
+    for (int i = 0; i < nlocal; i++) {
         int material_number = 0, nmats = 0;
         float vf;
         // Find number of materials for this cell
@@ -877,7 +858,7 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
     int mix_index = 1;
 
     // Fill in the mixed cell arrays
-    for (int i = 0; i < nzones; i++) {
+    for (int i = 0; i < nlocal; i++) {
         // Skip pure cells
         if (material_list[i] >= 0) continue;
 

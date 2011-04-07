@@ -136,6 +136,7 @@ static const char *sdf_stagger_c[] = {
 #endif
 
 typedef struct sdf_block sdf_block_t;
+typedef struct sdf_file sdf_file_t;
 
 struct sdf_block {
 #ifdef PARALLEL
@@ -149,9 +150,9 @@ struct sdf_block {
     uint64_t next_block_location, data_location;
     uint64_t nelements, npoints, data_length, info_length;
     uint32_t ndims, geometry, datatype, blocktype;
-    uint32_t type_size, stagger, datatype_out;
+    uint32_t type_size, stagger, datatype_out, type_size_out;
     uint32_t *dims_in;
-    int dims[3], local_dims[3], nm, nzones;
+    int dims[3], local_dims[3], nm, nlocal;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
     char *name, *material_name;
@@ -159,10 +160,10 @@ struct sdf_block {
     char **variable_ids, **material_names;
     char done_header, done_info, done_data;
     void **grids, *data;
-    sdf_block_t *next_block;
+    sdf_block_t *next;
 };
 
-typedef struct sdf_file {
+struct sdf_file {
 #ifdef PARALLEL
     MPI_File filehandle;
     MPI_Offset current_location;
@@ -185,7 +186,7 @@ typedef struct sdf_file {
     char *dbg, *dbg_buf;
     size_t dbg_count;
 #endif
-} sdf_file_t;
+};
 
 sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm);
 int sdf_close(sdf_file_t *h);

@@ -55,7 +55,7 @@ int main(int argc, char **argv)
         } else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
             sdf_read_point_variable(h);
         }
-        h->current_block = b->next_block;
+        h->current_block = b->next;
 #ifdef SDF_DEBUG
         printf("%s\n", h->dbg_buf); h->dbg = h->dbg_buf;
 #endif

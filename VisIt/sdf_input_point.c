@@ -149,13 +149,13 @@ static int sdf_read_array(sdf_file_t *h, void **var_in, int count)
 int sdf_read_point_mesh(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
-    int local_npoints, local_start;
+    int local_start;
     int n;
 
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_point_mesh_info(h);
 
-    sdf_point_factor(h, &local_npoints, &local_start);
+    sdf_point_factor(h, &b->nlocal, &local_start);
 
     h->current_location = b->data_location;
 
@@ -164,18 +164,18 @@ int sdf_read_point_mesh(sdf_file_t *h)
     sdf_indent = 0;
     SDF_DPRNT("\n");
     SDF_DPRNT("b->name: %s ", b->name);
-    for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",local_npoints);
+    for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nlocal);
     SDF_DPRNT("\n");
     sdf_indent = 2;
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) { 
-            sdf_create_1d_distribution(h, b->npoints, local_npoints,
+            sdf_create_1d_distribution(h, b->npoints, b->nlocal,
                     local_start);
-            sdf_read_array(h, &b->grids[n], local_npoints);
+            sdf_read_array(h, &b->grids[n], b->nlocal);
             sdf_free_distribution(h);
-            sdf_convert_array_to_float(h, &b->grids[n], local_npoints);
+            sdf_convert_array_to_float(h, &b->grids[n], b->nlocal);
             SDF_DPRNT("%s: ", b->dim_labels[n]);
-            SDF_DPRNTar(b->grids[n], local_npoints);
+            SDF_DPRNTar(b->grids[n], b->nlocal);
             h->current_location = h->current_location
                     + b->type_size * b->npoints;
         }
@@ -213,28 +213,28 @@ int sdf_point_factor(sdf_file_t *h, int *local_npoints, int *local_start)
 int sdf_read_point_variable(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
-    int local_npoints, local_start;
+    int local_start;
     int n;
 
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_blocklist(h);
 
-    sdf_point_factor(h, &local_npoints, &local_start);
+    sdf_point_factor(h, &b->nlocal, &local_start);
 
     h->current_location = b->data_location;
 
-    sdf_create_1d_distribution(h, b->npoints, local_npoints, local_start);
-    sdf_read_array(h, &b->data, local_npoints);
+    sdf_create_1d_distribution(h, b->npoints, b->nlocal, local_start);
+    sdf_read_array(h, &b->data, b->nlocal);
     sdf_free_distribution(h);
-    sdf_convert_array_to_float(h, &b->data, local_npoints);
+    sdf_convert_array_to_float(h, &b->data, b->nlocal);
     h->current_location = h->current_location + b->type_size * b->npoints;
 
     sdf_indent = 0;
     SDF_DPRNT("\n");
     SDF_DPRNT("b->name: %s ", b->name);
-    for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",local_npoints);
+    for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nlocal);
     SDF_DPRNT("\n  ");
-    SDF_DPRNTar(b->data, local_npoints);
+    SDF_DPRNTar(b->data, b->nlocal);
 
     b->done_data = 1;
 

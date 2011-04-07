@@ -117,7 +117,7 @@ int sdf_free_blocklist_data(sdf_file_t *h)
     if (h->blocklist) {
         b = h->blocklist;
         for (i=0; i < h->nblocks; i++) {
-            next = b->next_block;
+            next = b->next;
             sdf_free_block_data(b);
             b = next;
         }
@@ -139,7 +139,7 @@ static int sdf_free_handle(sdf_file_t *h)
     if (h->blocklist) {
         b = h->blocklist;
         for (i=0; i < h->nblocks; i++) {
-            next = b->next_block;
+            next = b->next;
             sdf_free_block(b);
             b = next;
         }
@@ -191,7 +191,7 @@ sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id)
     for (i=0; i < h->nblocks; i++) {
         b = current;
         if (memcmp(id, b->id, len) == 0) return b;
-        current = b->next_block;
+        current = b->next;
     }
 
     return NULL;
@@ -212,7 +212,7 @@ sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name)
     for (i=0; i < h->nblocks; i++) {
         b = current;
         if (memcmp(name, b->name, len) == 0) return b;
-        current = b->next_block;
+        current = b->next;
     }
 
     return NULL;
@@ -429,11 +429,14 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
 int sdf_factor(sdf_file_t *h, int *start)
 {
     sdf_block_t *b = h->current_block;
+    int n;
 #ifdef PARALLEL
-    int n, periods[3] = {0, 0, 0};
+    int periods[3] = {0, 0, 0};
 
     if (b->stagger != SDF_STAGGER_CELL_CENTRE)
         for (n = 0; n < b->ndims; n++) b->dims[n]--;
+
+    for (n = 0; n < b->ndims; n++) if (b->dims[n] < 1) b->dims[n] = 1;
 
     if (b->ndims == 2)
         factor2d(h->ncpus, b->dims, b->cpu_split);
@@ -452,6 +455,8 @@ int sdf_factor(sdf_file_t *h, int *start)
 #endif
 
     sdf_get_domain_extents(h, h->rank, start, b->local_dims);
+    b->nlocal = 1;
+    for (n = 0; n < b->ndims; n++) b->npoints *= b->local_dims[n];
 
     return 0;
 }
@@ -472,6 +477,7 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
             *r4++ = (float)(*r8++);
         free(old_var);
         b->datatype_out = SDF_DATATYPE_REAL4;
+        b->type_size_out = 4;
 #ifdef PARALLEL
         b->mpitype_out = MPI_FLOAT;
 #endif
