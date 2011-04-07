@@ -1,7 +1,7 @@
 #! /bin/sh
 
 formats="$1"
-[ "$formats"x = x ] && formats="sdf cfd"
+[ "$formats"x = x ] && formats="SDF CFD"
 
 version=`visit -version 2>&1|sed 's,.* \([0-9]*\).*,\1,'`
 

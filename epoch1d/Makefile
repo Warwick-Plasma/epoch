@@ -142,7 +142,7 @@ tidy:
 	@rm -rf $(OBJDIR) *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 
 visit:
-	@cd ../VisIt; ./build sdf
+	@cd ../VisIt; ./build SDF
 
 visitclean:
 	@cd ../VisIt; make clean; \
