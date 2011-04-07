@@ -580,6 +580,54 @@ avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
 
 
 // ****************************************************************************
+//  Method: avtSDFFileFormat::GetArray
+//
+//  Purpose:
+//      Helper function for GetVar. Fills in the blocklist data for the
+//      requested variable.
+//
+//  Arguments:
+//      domain     The index of the domain.  If there are NDomains, this
+//                 value is guaranteed to be between 0 and NDomains-1,
+//                 regardless of block origin.
+//      varname    The name of the variable requested.
+//
+//  Programmer: Keith Bennett
+//  Creation:   Fri Oct 29 15:31:09 PST 2010
+//
+// ****************************************************************************
+
+sdf_block_t *
+avtSDFFileFormat::GetArray(int domain, const char *varname)
+{
+    debug1 << "avtSDFFileFormat::GetArray(domain:" << domain << ", varname:"
+           << varname << ") " << this << endl;
+
+    ncpus = PAR_Size();
+    sdf_set_ncpus(h, ncpus);
+
+    sdf_block_t *b = sdf_find_block_by_name(h, varname);
+    if (!b) return NULL;
+
+    debug1 << "found block:" << b->id << " for var:" << varname <<
+              " type " << b->blocktype << endl;
+
+    if (b->data) return b;
+    h->current_block = b;
+
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
+        sdf_read_plain_variable(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
+        sdf_read_point_variable(h);
+
+#ifdef SDF_DEBUG
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+#endif
+    return b;
+}
+
+
+// ****************************************************************************
 //  Method: avtSDFFileFormat::GetVar
 //
 //  Purpose:
@@ -604,16 +652,8 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
     debug1 << "avtSDFFileFormat::GetVar(domain:" << domain << ", varname:"
            << varname << ") " << this << endl;
 
-    ncpus = PAR_Size();
-    sdf_set_ncpus(h, ncpus);
-
-    sdf_block_t *b = sdf_find_block_by_name(h, varname);
+    sdf_block_t *b = GetArray(domain, varname);
     if (!b) EXCEPTION1(InvalidVariableException, varname);
-
-    debug1 << "found block:" << b->id << " for var:" << varname <<
-              " type " << b->blocktype << endl;
-
-    h->current_block = b;
 
     vtkDataArray *rv;
     if (b->datatype_out == SDF_DATATYPE_INTEGER4)
@@ -622,11 +662,6 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
         rv = vtkFloatArray::New();
     else if (b->datatype_out == SDF_DATATYPE_REAL8)
         rv = vtkDoubleArray::New();
-
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
-        sdf_read_plain_variable(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
-        sdf_read_point_variable(h);
 
     rv->SetVoidArray(b->data, b->nlocal, 1);
 
