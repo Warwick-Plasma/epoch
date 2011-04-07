@@ -225,7 +225,27 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             }
             md->Add(mmd);
         } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
-                b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
+                b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE ||
+                b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
+
+            sdf_block_t *var = b;
+            if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
+                // First scan the blocklist to check that the variables exist
+
+                sdf_block_t *material = sdf_find_block_by_id(h, b->material_id);
+                if (!material) continue;
+
+                var = NULL;
+                for (int i = 0; i < b->ndims; i++) {
+                    var = sdf_find_block_by_id(h, material->variable_ids[i]);
+                    if (!var) break;
+                    var = sdf_find_block_by_id(h, b->variable_ids[i]);
+                    if (!var) break;
+                }
+                if (!var) continue;
+            }
+
+            // Now fill the metadata for a 1d or nd scalar variable
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             if (!mesh) continue;
 
@@ -233,12 +253,11 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 avtCurveMetaData *cmd = new avtCurveMetaData(b->name);
                 cmd->originalName = b->name;
                 cmd->validVariable = true;
-                cmd->yUnits = b->units;
+                cmd->yUnits = var->units;
                 cmd->xUnits = mesh->dim_units[0];
                 cmd->xLabel = mesh->dim_labels[0];
                 cmd->hasDataExtents = false;
                 //cmd->meshName = mesh->name;
-                //debug1 << "var " << b->name << " mesh " << mesh->name << endl;
                 md->Add(cmd);
                 //continue;
             } else {
@@ -246,7 +265,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 avtCentering cent;
                 // For the time being, most data is plotted as zon-centred
                 // This will probably change in the future.
-                if (b->stagger == SDF_STAGGER_VERTEX)
+                if (var->stagger == SDF_STAGGER_VERTEX)
                     cent = AVT_NODECENT;
 	        else
                     cent = AVT_ZONECENT;
@@ -256,35 +275,9 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 smd->hasDataExtents = false;
                 smd->treatAsASCII = false;
                 smd->hasUnits = true;
-                smd->units = b->units;
+                smd->units = var->units;
                 md->Add(smd);
             }
-        } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
-            sdf_block_t *material = sdf_find_block_by_id(h, b->material_id);
-            if (!material) continue;
-
-            std::string definition;
-            sdf_block_t *vfm, *matvar;
-            bool done = false;
-            for (int i = 0; i < b->ndims; i++) {
-                vfm = sdf_find_block_by_id(h, material->variable_ids[i]);
-                if (!vfm) continue;
-                matvar = sdf_find_block_by_id(h, b->variable_ids[i]);
-                if (!matvar) continue;
-                if (done) definition.append("+");
-                definition.append("<");
-                definition.append(vfm->name);
-                definition.append(">*<");
-                definition.append(matvar->name);
-                definition.append(">");
-                done = true;
-            }
-
-            Expression expr;
-            expr.SetName(b->name);
-            expr.SetDefinition(definition);
-            expr.SetType(Expression::ScalarMeshVar);
-            md->AddExpression(&expr);
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR) {
             std::string definition;
             definition.append("{");
@@ -615,10 +608,52 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     if (b->data) return b;
     h->current_block = b;
 
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE) {
         sdf_read_plain_variable(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
+    } else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
         sdf_read_point_variable(h);
+    } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
+        sdf_block_t *material = sdf_find_block_by_id(h, b->material_id);
+        if (!material) return NULL;
+
+        sdf_block_t *vfm, *var;
+        for (int i = 0; i < b->ndims; i++) {
+            // Fill in stitched components which are not already cached
+            vfm = sdf_find_block_by_id(h, material->variable_ids[i]);
+            if (!vfm->data) GetArray(domain, vfm->name);
+
+            var = sdf_find_block_by_id(h, b->variable_ids[i]);
+            if (!var->data) GetArray(domain, var->name);
+
+            // Allocate stitched variable data if required
+            if (!b->data) {
+                b->nlocal = var->nlocal;
+                b->type_size_out = var->type_size_out;
+                b->datatype_out = var->datatype_out;
+                memcpy(b->local_dims, var->local_dims, var->ndims*sizeof(int));
+                b->data = calloc(b->nlocal, b->type_size_out);
+            }
+
+            // Calculate stitched total
+            if (b->datatype_out == SDF_DATATYPE_REAL4) {
+                float *ptr  = (float *)b->data;
+                float *vfmp = (float *)vfm->data;
+                float *varp = (float *)var->data;
+                for (int j = 0; j < b->nlocal; j++) {
+                    *ptr += (*vfmp) * (*varp);
+                    ptr++; vfmp++; varp++;
+                }
+            } else {
+                double *ptr  = (double *)b->data;
+                double *vfmp = (double *)vfm->data;
+                double *varp = (double *)var->data;
+                for (int j = 0; j < b->nlocal; j++) {
+                    *ptr += (*vfmp) * (*varp);
+                    ptr++; vfmp++; varp++;
+                }
+            }
+        }
+    }
 
 #ifdef SDF_DEBUG
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
