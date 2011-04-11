@@ -1,5 +1,6 @@
 MODULE sdf
 
+  USE mpi
   USE sdf_common
   USE sdf_control
   USE sdf_input
@@ -10,7 +11,6 @@ MODULE sdf
   USE sdf_output_cartesian
   USE sdf_output_point
   USE sdf_output_util
-  USE mpi
 
   IMPLICIT NONE
 
@@ -37,6 +37,8 @@ MODULE sdf
   PUBLIC :: c_blocktype_stitched_matvar
   PUBLIC :: c_blocktype_stitched_species
   PUBLIC :: c_blocktype_species
+  PUBLIC :: c_blocktype_plain_derived
+  PUBLIC :: c_blocktype_point_derived
 
   PUBLIC :: c_datatype_null
   PUBLIC :: c_datatype_integer4

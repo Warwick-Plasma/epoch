@@ -181,6 +181,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     h->use_float = use_float;
     debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
     sdf_read_blocklist(h);
+    sdf_add_derived_blocks(h);
 
     gotMetadata = true;
 
@@ -226,6 +227,8 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             md->Add(mmd);
         } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
                 b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE ||
+                b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED ||
+                b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED ||
                 b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
 
             sdf_block_t *var = b;
@@ -653,6 +656,26 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
                 }
             }
         }
+    } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED ||
+               b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
+        sdf_block_t *var;
+        for (int i = 0; i < b->ndims; i++) {
+            // Fill in derived components which are not already cached
+            var = sdf_find_block_by_id(h, b->variable_ids[i]);
+            if (!var->data) GetArray(domain, var->name);
+        }
+
+        // Allocate derived variable data if required
+        if (!b->data) {
+            b->nlocal = var->nlocal;
+            b->type_size_out = var->type_size_out;
+            b->datatype_out = var->datatype_out;
+            memcpy(b->local_dims, var->local_dims, var->ndims*sizeof(int));
+            b->data = calloc(b->nlocal, b->type_size_out);
+        }
+
+        // Execute callback to fill in the derived variable
+        if (b->populate_data) b->populate_data(h, b);
     }
 
 #ifdef SDF_DEBUG

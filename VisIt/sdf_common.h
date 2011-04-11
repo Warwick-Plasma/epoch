@@ -42,7 +42,9 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_STITCHED_MATERIAL,
     SDF_BLOCKTYPE_STITCHED_MATVAR,
     SDF_BLOCKTYPE_STITCHED_SPECIES,
-    SDF_BLOCKTYPE_FAMILY,
+    SDF_BLOCKTYPE_SPECIES,
+    SDF_BLOCKTYPE_PLAIN_DERIVED,
+    SDF_BLOCKTYPE_POINT_DERIVED,
 };
 
 static const char *sdf_blocktype_c[] = {
@@ -59,7 +61,9 @@ static const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_STITCHED_MATERIAL",
     "SDF_BLOCKTYPE_STITCHED_MATVAR",
     "SDF_BLOCKTYPE_STITCHED_SPECIES",
-    "SDF_BLOCKTYPE_FAMILY",
+    "SDF_BLOCKTYPE_SPECIES",
+    "SDF_BLOCKTYPE_PLAIN_DERIVED",
+    "SDF_BLOCKTYPE_POINT_DERIVED",
 };
 
 enum sdf_geometry {
@@ -161,6 +165,7 @@ struct sdf_block {
     char done_header, done_info, done_data;
     void **grids, *data;
     sdf_block_t *next;
+    sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
 };
 
 struct sdf_file {
@@ -224,6 +229,7 @@ int sdf_read_point_variable_info(sdf_file_t *h);
 int sdf_read_point_mesh(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
 
+int sdf_add_derived_blocks(sdf_file_t *h);
 
 #ifdef SDF_DEBUG
   #define DBG_CHUNK 256

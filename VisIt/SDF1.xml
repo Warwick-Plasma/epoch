@@ -9,6 +9,7 @@
       sdf_input.c
       sdf_input_cartesian.c
       sdf_input_point.c
+      sdf_derived.c
     </Files>
     <Attribute name="" purpose="" persistent="true" keyframe="true" exportAPI="" exportInclude="">
     </Attribute>
