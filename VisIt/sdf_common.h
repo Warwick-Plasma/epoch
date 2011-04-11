@@ -418,6 +418,21 @@ int sdf_add_derived_blocks(sdf_file_t *h);
 #define SDF_READ_ENTRY_ARRAY_STRING(value, length) \
         SDF_READ_ENTRY_ARRAY_STRINGLEN(value, length, h->string_length)
 
+#define SDF_SET_ENTRY_STRINGLEN(value, strvalue, length) do { \
+        if (!(value)) value = malloc(h->string_length); \
+        strncpy((value), (strvalue), (length)); \
+    } while (0)
+
+#define SDF_SET_ENTRY_ID(value, strvalue) do { \
+        SDF_SET_ENTRY_STRINGLEN(value, strvalue, SDF_ID_LENGTH); \
+        SDF_DPRNT(#value ": %s\n", (value)); \
+    } while (0)
+
+#define SDF_SET_ENTRY_STRING(value, strvalue) do { \
+        SDF_SET_ENTRY_STRINGLEN(value, strvalue, h->string_length); \
+        SDF_DPRNT(#value ": %s\n", (value)); \
+    } while (0)
+
 #ifdef __cplusplus
 }
 #endif
