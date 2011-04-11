@@ -79,7 +79,7 @@ int sdf_read_header(sdf_file_t *h)
 {
     int buflen;
 
-    sdf_indent = 0;
+    h->indent = 0;
 
     if (h->done_header) return 1;
 
@@ -181,7 +181,7 @@ int sdf_read_next_block_header(sdf_file_t *h)
         return 0;
     }
 
-    sdf_indent = 2;
+    h->indent = 2;
     SDF_DPRNT("\n");
 
     h->current_location = b->block_start;
@@ -267,7 +267,7 @@ int sdf_read_block_info(sdf_file_t *h)
     b = h->current_block;
     if (b->done_info) return 0;
 
-    sdf_indent += 2;
+    h->indent += 2;
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
         ret = sdf_read_plain_mesh_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)

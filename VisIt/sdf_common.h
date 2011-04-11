@@ -177,7 +177,7 @@ struct sdf_file {
     uint32_t block_header_length, string_length, nblocks;
     uint32_t file_version, file_revision, code_io_version, step;
     comm_t comm;
-    int rank, ncpus, ndomains, rank_master;
+    int rank, ncpus, ndomains, rank_master, indent;
     char *buffer;
     char done_header, restart_flag, other_domains, use_float;
     char *code_name;
@@ -224,7 +224,6 @@ int sdf_read_point_variable_info(sdf_file_t *h);
 int sdf_read_point_mesh(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
 
-extern int sdf_indent;
 
 #ifdef SDF_DEBUG
   #define DBG_CHUNK 256
@@ -244,14 +243,14 @@ extern int sdf_indent;
     }} while (0)
 
   #define SDF_DPRNT(...) do { \
-        int _a; for (_a=0; _a<sdf_indent; _a++) SDF_PRNT(" "); \
+        int _a; for (_a=0; _a<h->indent; _a++) SDF_PRNT(" "); \
         SDF_PRNT(__VA_ARGS__); \
     } while (0)
 
   #define SDF_DPRNTa(a,f,len) SDF_RANK0 { \
             int _b, _c; \
             for (_b=0; _b<len; _b++) { \
-                for (_c=0; _c<sdf_indent; _c++) SDF_PRNT(" "); \
+                for (_c=0; _c<h->indent; _c++) SDF_PRNT(" "); \
                 SDF_PRNT(#a "[%i]: %" #f "\n", _b, a[_b]); \
             } \
         }

@@ -188,12 +188,12 @@ int sdf_read_plain_mesh(sdf_file_t *h)
 
     if (!b->grids) b->grids = calloc(3, sizeof(float*));
 
-    sdf_indent = 0;
+    h->indent = 0;
     SDF_DPRNT("\n");
     SDF_DPRNT("b->name: %s ", b->name);
     for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
     SDF_DPRNT("\n");
-    sdf_indent = 2;
+    h->indent = 2;
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) { 
             sdf_create_1d_distribution(h, b->dims[n], b->local_dims[n],
@@ -236,7 +236,7 @@ int sdf_read_plain_variable(sdf_file_t *h)
 
     sdf_free_distribution(h);
 
-    sdf_indent = 0;
+    h->indent = 0;
     SDF_DPRNT("\n");
     SDF_DPRNT("b->name: %s ", b->name);
     for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);

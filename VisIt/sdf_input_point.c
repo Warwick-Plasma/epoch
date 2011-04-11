@@ -161,12 +161,12 @@ int sdf_read_point_mesh(sdf_file_t *h)
 
     if (!b->grids) b->grids = calloc(b->ndims, sizeof(float*));
 
-    sdf_indent = 0;
+    h->indent = 0;
     SDF_DPRNT("\n");
     SDF_DPRNT("b->name: %s ", b->name);
     for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nlocal);
     SDF_DPRNT("\n");
-    sdf_indent = 2;
+    h->indent = 2;
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) { 
             sdf_create_1d_distribution(h, b->npoints, b->nlocal,
@@ -229,7 +229,7 @@ int sdf_read_point_variable(sdf_file_t *h)
     sdf_convert_array_to_float(h, &b->data, b->nlocal);
     h->current_location = h->current_location + b->type_size * b->npoints;
 
-    sdf_indent = 0;
+    h->indent = 0;
     SDF_DPRNT("\n");
     SDF_DPRNT("b->name: %s ", b->name);
     for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nlocal);

@@ -11,7 +11,6 @@
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define ABS(a) (((a) > 0) ? (a) : (-(a)))
 
-int sdf_indent = 0;
 
 sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm)
 {
@@ -27,6 +26,7 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm)
     h->dbg = h->dbg_buf = malloc(h->dbg_count);
 #endif
     h->string_length = 64;
+    h->indent = 0;
 
     h->comm = comm;
     h->rank = rank;
