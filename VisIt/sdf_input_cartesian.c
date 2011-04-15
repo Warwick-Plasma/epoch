@@ -134,6 +134,9 @@ static int sdf_plain_mesh_datatype(sdf_file_t *h)
 #endif
     for (n=b->ndims; n < 3; n++) b->local_dims[n] = 1;
 
+    b->nlocal = 1;
+    for (n=0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
+
     return 0;
 }
 
@@ -219,20 +222,17 @@ int sdf_read_plain_mesh(sdf_file_t *h)
 int sdf_read_plain_variable(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
-    int n, count;
+    int n;
 
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_variable_info(h);
 
     sdf_plain_mesh_datatype(h);
 
-    count = 1;
-    for (n=0; n<b->ndims; n++) count = count * b->local_dims[n];
-
     h->current_location = b->data_location;
 
-    sdf_read_array(h, &b->data, count);
-    sdf_convert_array_to_float(h, &b->data, count);
+    sdf_read_array(h, &b->data, b->nlocal);
+    sdf_convert_array_to_float(h, &b->data, b->nlocal);
 
     sdf_free_distribution(h);
 
@@ -241,7 +241,7 @@ int sdf_read_plain_variable(sdf_file_t *h)
     SDF_DPRNT("b->name: %s ", b->name);
     for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
     SDF_DPRNT("\n  ");
-    SDF_DPRNTar(b->data, count);
+    SDF_DPRNTar(b->data, b->nlocal);
 
     b->done_data = 1;
 

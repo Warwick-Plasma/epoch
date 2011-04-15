@@ -456,7 +456,7 @@ int sdf_factor(sdf_file_t *h, int *start)
 
     sdf_get_domain_extents(h, h->rank, start, b->local_dims);
     b->nlocal = 1;
-    for (n = 0; n < b->ndims; n++) b->npoints *= b->local_dims[n];
+    for (n = 0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
 
     return 0;
 }
