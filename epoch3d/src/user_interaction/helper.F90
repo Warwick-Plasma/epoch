@@ -140,8 +140,7 @@ CONTAINS
     DO iz = 1, nz
       DO iy = 1, ny
         DO ix = 1, nx
-          IF (density(ix,iy,iz) .GE. density_min &
-              .AND. density(ix,iy,iz) .GT. 0.0_num) THEN
+          IF (density(ix,iy,iz) .GE. density_min) THEN
             num_valid_cells = num_valid_cells + 1
             density_total = density_total + density(ix,iy,iz)
           ELSE IF (density(ix,iy,iz) .GT. density_max) THEN
@@ -445,8 +444,7 @@ CONTAINS
     DO iz = -2, nz+3
       DO iy = -2, ny+3
         DO ix = -2, nx+3
-          IF (density(ix,iy,iz) .GE. density_min &
-              .AND. density(ix,iy,iz) .GT. 0.0_num) THEN
+          IF (density(ix,iy,iz) .GE. density_min) THEN
             density_map(ix,iy,iz) = .TRUE.
           ELSE IF (density(ix,iy,iz) .GT. density_max) THEN
             density(ix,iy,iz) = density_max
