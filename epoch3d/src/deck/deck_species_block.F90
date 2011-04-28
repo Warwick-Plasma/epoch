@@ -283,7 +283,7 @@ CONTAINS
     IF (str_cmp(element, "density_min") .OR. str_cmp(element, "minrho")) THEN
       IF (deck_state .NE. c_ds_ic) RETURN
       dmin = as_real(value, handle_species_deck)
-      IF (dmin .EQ. 0.0_num) dmin = -1.0_num
+      IF (dmin .LE. 0.0_num) dmin = EPSILON(1.0_num)
       initial_conditions(species_id)%density_min = dmin
       RETURN
     ENDIF

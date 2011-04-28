@@ -58,7 +58,7 @@ CONTAINS
       initial_conditions(ispecies)%density = 1.0_num
       initial_conditions(ispecies)%temp = 0.0_num
       initial_conditions(ispecies)%drift = 0.0_num
-      initial_conditions(ispecies)%density_min = -1.0_num
+      initial_conditions(ispecies)%density_min = EPSILON(1.0_num)
       initial_conditions(ispecies)%density_max = HUGE(1.0_num)
     ENDDO
 
