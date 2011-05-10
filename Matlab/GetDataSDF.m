@@ -146,38 +146,38 @@ for n = 1:nblocks
         case 1
           q.(s{1}) = b.var;
           if got
-              q.(s{1}).grid = grid
-              q.(s{1}).grid.name = gname
+              q.(s{1}).grid = grid;
+              q.(s{1}).grid.name = gname;
           end
         case 2
           q.(s{1}).(s{2}) = b.var;
           if got
-              q.(s{1}).(s{2}).grid = grid
-              q.(s{1}).(s{2}).grid.name = gname
+              q.(s{1}).(s{2}).grid = grid;
+              q.(s{1}).(s{2}).grid.name = gname;
           end
         case 3
           q.(s{1}).(s{2}).(s{3}) = b.var;
           if got
-              q.(s{1}).(s{2}).(s{3}).grid = grid
-              q.(s{1}).(s{2}).(s{3}).grid.name = gname
+              q.(s{1}).(s{2}).(s{3}).grid = grid;
+              q.(s{1}).(s{2}).(s{3}).grid.name = gname;
           end
         case 4
           q.(s{1}).(s{2}).(s{3}).(s{4}) = b.var;
           if got
-              q.(s{1}).(s{2}).(s{3}).(s{4}).grid = grid
-              q.(s{1}).(s{2}).(s{3}).(s{4}).grid.name = gname
+              q.(s{1}).(s{2}).(s{3}).(s{4}).grid = grid;
+              q.(s{1}).(s{2}).(s{3}).(s{4}).grid.name = gname;
           end
         case 5
           q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}) = b.var;
           if got
-              q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).grid = grid
-              q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).grid.name = gname
+              q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).grid = grid;
+              q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).grid.name = gname;
           end
         case 6
           q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).(s{6}) = b.var;
           if got
-              q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).(s{6}).grid = grid
-              q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).(s{6}).grid.name = gname
+              q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).(s{6}).grid = grid;
+              q.(s{1}).(s{2}).(s{3}).(s{4}).(s{5}).(s{6}).grid.name = gname;
           end
       end
     end

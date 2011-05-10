@@ -23,6 +23,12 @@ elseif block.datatype == h.DATATYPE.REAL8
     typestring = 'double';
 end
 
+nelements = 0;
+for n=1:block.ndims
+    nelements = nelements + npart;
+end
+typesize = block.data_length / nelements;
+
 offset = block.data_location;
 
 tags = ['x' 'y' 'z' 'a' 'b' 'c' 'd' 'e' 'f' 'g' 'h' 'i' 'j' 'k' 'l' 'm' 'n'];
@@ -32,5 +38,5 @@ for n=1:block.ndims
             {typestring [npart] tagname}, 'Offset', offset, ...
             'Repeat', 1, 'Writable', false);
     q.(tagname) = block.map.data.(tagname);
-    offset = offset + npart;
+    offset = offset + typesize * npart;
 end

@@ -23,6 +23,12 @@ elseif block.datatype == h.DATATYPE.REAL8
     typestring = 'double';
 end
 
+nelements = 0;
+for n=1:block.ndims
+    nelements = nelements + npts(n);
+end
+typesize = block.data_length / nelements;
+
 %fseek(h.fid, block.data_location, 'bof');
 offset = block.data_location;
 
@@ -33,5 +39,5 @@ for n=1:block.ndims
             {typestring [npts(n)] tagname}, 'Offset', offset, ...
             'Repeat', 1, 'Writable', false);
     q.(tagname) = block.map.data.(tagname);
-    offset = offset + npts(n);
+    offset = offset + typesize * npts(n);
 end
