@@ -41,14 +41,22 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, $
 
   id_length = SDF_Common.ID_LENGTH
 
-  CLOSE, 1
-  OPENR, 1, filename
-  file_header = readvar(1, {sdf:BYTARR(4), endianness:0L, version:0L, $
+  header_struct = {sdf:BYTARR(4), endianness:0L, version:0L, $
       revision:0L, code_name:BYTARR(id_length), first_block_location:0LL, $
       summary_location:0LL, summary_size:0L, nblocks:0L, $
       block_header_length:0L, step:0L, time:0D, jobid1:0L, jobid2:0L, $
       string_length:0L, code_io_version:0L, restart_flag:BYTARR(1), $
-      subdomain_file:BYTARR(1)}, 0)
+      subdomain_file:BYTARR(1)}
+
+  CLOSE, 1
+  OPENR, 1, filename
+  file_header = readvar(1, header_struct, 0)
+
+  IF (file_header.endianness NE 16911887) THEN BEGIN
+    CLOSE, 1
+    OPENR, 1, filename, /SWAP_ENDIAN
+    file_header = readvar(1, header_struct, 0)
+  ENDIF
 
   ; Whole load of boring tests
 
