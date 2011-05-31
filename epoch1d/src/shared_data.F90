@@ -217,24 +217,27 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_ix = 40
   INTEGER, PARAMETER :: c_const_iy = 41
   INTEGER, PARAMETER :: c_const_iz = 42
-  INTEGER, PARAMETER :: c_const_time = 43
+  INTEGER, PARAMETER :: c_const_nx = 43
+  INTEGER, PARAMETER :: c_const_ny = 44
+  INTEGER, PARAMETER :: c_const_nz = 45
+  INTEGER, PARAMETER :: c_const_time = 46
 
-  INTEGER, PARAMETER :: c_const_io_never = 44
-  INTEGER, PARAMETER :: c_const_io_always = 45
-  INTEGER, PARAMETER :: c_const_io_full = 46
-  INTEGER, PARAMETER :: c_const_io_restartable = 47
-  INTEGER, PARAMETER :: c_const_io_species = 48
-  INTEGER, PARAMETER :: c_const_io_average = 49
-  INTEGER, PARAMETER :: c_const_io_snapshot = 50
-  INTEGER, PARAMETER :: c_const_dir_x = 51
-  INTEGER, PARAMETER :: c_const_dir_y = 52
-  INTEGER, PARAMETER :: c_const_dir_z = 53
-  INTEGER, PARAMETER :: c_const_dir_px = 54
-  INTEGER, PARAMETER :: c_const_dir_py = 55
-  INTEGER, PARAMETER :: c_const_dir_pz = 56
-  INTEGER, PARAMETER :: c_const_dir_en = 57
-  INTEGER, PARAMETER :: c_const_dir_gamma_m1 = 58
-  INTEGER, PARAMETER :: c_const_nx = 59
+  INTEGER, PARAMETER :: c_const_io_never = 60
+  INTEGER, PARAMETER :: c_const_io_always = 61
+  INTEGER, PARAMETER :: c_const_io_full = 62
+  INTEGER, PARAMETER :: c_const_io_restartable = 63
+  INTEGER, PARAMETER :: c_const_io_species = 64
+  INTEGER, PARAMETER :: c_const_io_average = 65
+  INTEGER, PARAMETER :: c_const_io_snapshot = 66
+
+  INTEGER, PARAMETER :: c_const_dir_x = 80
+  INTEGER, PARAMETER :: c_const_dir_y = 81
+  INTEGER, PARAMETER :: c_const_dir_z = 82
+  INTEGER, PARAMETER :: c_const_dir_px = 83
+  INTEGER, PARAMETER :: c_const_dir_py = 84
+  INTEGER, PARAMETER :: c_const_dir_pz = 85
+  INTEGER, PARAMETER :: c_const_dir_en = 86
+  INTEGER, PARAMETER :: c_const_dir_gamma_m1 = 87
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
