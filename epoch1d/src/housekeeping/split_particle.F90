@@ -34,7 +34,7 @@ CONTAINS
       DO WHILE(ASSOCIATED(current))
         next=>current%next
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x = FLOOR((current%part_pos - x_min_local) / dx + 1.0_num)
+        cell_x = FLOOR((current%part_pos - x_min_local) / dx) + 1
 #else
         cell_x = FLOOR((current%part_pos - x_min_local) / dx + 1.5_num)
 #endif

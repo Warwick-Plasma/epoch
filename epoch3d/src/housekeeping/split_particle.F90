@@ -38,9 +38,9 @@ CONTAINS
       DO WHILE(ASSOCIATED(current))
         next=>current%next
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x = FLOOR((current%part_pos(1) - x_min_local) / dx + 1.0_num)
-        cell_y = FLOOR((current%part_pos(2) - y_min_local) / dy + 1.0_num)
-        cell_z = FLOOR((current%part_pos(3) - z_min_local) / dz + 1.0_num)
+        cell_x = FLOOR((current%part_pos(1) - x_min_local) / dx) + 1
+        cell_y = FLOOR((current%part_pos(2) - y_min_local) / dy) + 1
+        cell_z = FLOOR((current%part_pos(3) - z_min_local) / dz) + 1
 #else
         cell_x = FLOOR((current%part_pos(1) - x_min_local) / dx + 1.5_num)
         cell_y = FLOOR((current%part_pos(2) - y_min_local) / dy + 1.5_num)
