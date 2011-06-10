@@ -133,8 +133,7 @@ CONTAINS
         neighbour(-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect &
-        .AND. coordinates(c_ndims) .EQ. 0) THEN
+    IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect .AND. x_min_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -153,8 +152,7 @@ CONTAINS
         neighbour( 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect &
-        .AND. coordinates(c_ndims) .EQ. nprocx - 1) THEN
+    IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect .AND. x_max_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -284,7 +282,7 @@ CONTAINS
         IF (part_pos .LT. x_min_local - dx / 2.0_num) THEN
           xbd = -1
           ! Particle has left the system
-          IF (coordinates(c_ndims) .EQ. 0) THEN
+          IF (x_min_boundary) THEN
             xbd = 0
             IF (bc_particle(c_bd_x_min) .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.
@@ -302,7 +300,7 @@ CONTAINS
         IF (part_pos .GE. x_max_local + dx / 2.0_num) THEN
           xbd = 1
           ! Particle has left the system
-          IF (coordinates(c_ndims) .EQ. nprocx - 1) THEN
+          IF (x_max_boundary) THEN
             xbd = 0
             IF (bc_particle(c_bd_x_max) .EQ. c_bc_open) THEN
               out_of_bounds = .TRUE.

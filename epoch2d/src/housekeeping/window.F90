@@ -102,7 +102,7 @@ CONTAINS
     ! This subroutine injects particles at the right hand edge of the box
 
     ! Only processors on the right need do anything
-    IF (coordinates(2) .EQ. nprocx-1) THEN
+    IF (x_max_boundary) THEN
       DO ispecies = 1, n_species
         DO iy = 1, ny
           DO ipart = 1, species_list(ispecies)%npart_per_cell
@@ -166,7 +166,7 @@ CONTAINS
     TYPE(particle), POINTER :: current, next
     INTEGER :: ispecies
 
-    IF (coordinates(2) .EQ. 0) THEN
+    IF (x_min_boundary) THEN
       DO ispecies = 1, n_species
         current=>species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))

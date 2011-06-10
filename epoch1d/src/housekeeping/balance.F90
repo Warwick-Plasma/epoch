@@ -72,8 +72,8 @@ CONTAINS
 
     ! Now need to calculate the start and end points for the new domain on
     ! the current processor
-    nx_global_min = starts_x(coordinates(c_ndims)+1)
-    nx_global_max = ends_x(coordinates(c_ndims)+1)
+    nx_global_min = starts_x(x_coords+1)
+    nx_global_max = ends_x(x_coords+1)
 
     domain(1,:) = (/nx_global_min, nx_global_max/)
 
@@ -100,8 +100,8 @@ CONTAINS
 
     ! Set the lengths of the current domain so that the particle balancer
     ! works properly
-    x_min_local = x_mins(coordinates(c_ndims))
-    x_max_local = x_maxs(coordinates(c_ndims))
+    x_min_local = x_mins(x_coords)
+    x_max_local = x_maxs(x_coords)
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -245,11 +245,11 @@ CONTAINS
 
     dir = 1
     color = 1
-    coord = coordinates(1)
-    old_start = cell_x_min(coord+1)
+    coord = x_coords
+    old_start = cell_x_min(x_coords+1)
     old_pts = nx
     npts_global = nx_global
-    IF (coord .EQ. nprocx-1) ghost_end = 3
+    IF (x_max_boundary) ghost_end = 3
 
     IF (coord .EQ. 0) ghost_start = -3
 

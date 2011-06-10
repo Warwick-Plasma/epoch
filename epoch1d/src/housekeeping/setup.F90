@@ -127,11 +127,11 @@ CONTAINS
       x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
 
-    x_min_local = x_mins(coordinates(c_ndims))
-    x_max_local = x_maxs(coordinates(c_ndims))
+    x_min_local = x_mins(x_coords)
+    x_max_local = x_maxs(x_coords)
 
-    nx_global_min = cell_x_min(coordinates(c_ndims)+1)
-    nx_global_max = cell_x_max(coordinates(c_ndims)+1)
+    nx_global_min = cell_x_min(x_coords+1)
+    nx_global_max = cell_x_max(x_coords+1)
 
     ! Setup local grid
     DO ix = -2, nx + 3

@@ -53,8 +53,13 @@ CONTAINS
 
     nprocx = dims(1)
 
-    neighbour = MPI_PROC_NULL
+    x_coords = coordinates(c_ndims)
+    x_min_boundary = .FALSE.
+    x_max_boundary = .FALSE.
+    IF (x_coords .EQ. 0) x_min_boundary = .TRUE.
+    IF (x_coords .EQ. nprocx - 1) x_max_boundary = .TRUE.
 
+    neighbour = MPI_PROC_NULL
     DO ix = -1, 1
       test_coords = coordinates
       test_coords(1) = test_coords(1)+ix
@@ -86,10 +91,10 @@ CONTAINS
     IF (nx * nprocx .NE. nx_global) THEN
       nx_big = nx + 1
       nx_little = nx_global - (nx + 1) * (nprocx - 1)
-      IF (coordinates(1) .NE. nprocx-1) THEN
-        nx = nx_big
-      ELSE
+      IF (x_max_boundary) THEN
         nx = nx_little
+      ELSE
+        nx = nx_big
       ENDIF
     ELSE
       nx_big = nx

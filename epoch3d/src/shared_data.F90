@@ -560,14 +560,17 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! MPI data
   !----------------------------------------------------------------------------
-  INTEGER :: rank, proc_x_min, proc_x_max
-  INTEGER :: proc_y_min, proc_y_max
-  INTEGER :: proc_z_min, proc_z_max
   INTEGER :: coordinates(c_ndims), neighbour(-1:1, -1:1, -1:1)
-  INTEGER :: errcode, comm, tag, nproc, icycle_max = 1000000
+  INTEGER :: x_coords, proc_x_min, proc_x_max
+  INTEGER :: y_coords, proc_y_min, proc_y_max
+  INTEGER :: z_coords, proc_z_min, proc_z_max
+  INTEGER :: errcode, comm, tag, nproc, rank
   INTEGER :: status(MPI_STATUS_SIZE)
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank, ny_each_rank, nz_each_rank
   INTEGER(KIND=8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
+  LOGICAL :: x_min_boundary, x_max_boundary
+  LOGICAL :: y_min_boundary, y_max_boundary
+  LOGICAL :: z_min_boundary, z_max_boundary
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing

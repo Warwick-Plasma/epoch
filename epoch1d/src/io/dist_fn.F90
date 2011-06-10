@@ -159,7 +159,7 @@ CONTAINS
         resolution(idim) = nx
         ranges(1,idim) = x_min_local
         ranges(2,idim) = x_max_local
-        start_local(idim) = cell_x_min(coordinates(c_ndims)+1)
+        start_local(idim) = cell_x_min(x_coords+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
         labels(idim) = 'X'

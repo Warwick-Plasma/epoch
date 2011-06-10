@@ -78,8 +78,26 @@ CONTAINS
     IF (rank .EQ. 0) THEN
       PRINT *, "Processor subdivision is ", (/nprocx, nprocy, nprocz/)
     ENDIF
-    neighbour = MPI_PROC_NULL
 
+    x_coords = coordinates(c_ndims)
+    x_min_boundary = .FALSE.
+    x_max_boundary = .FALSE.
+    IF (x_coords .EQ. 0) x_min_boundary = .TRUE.
+    IF (x_coords .EQ. nprocx - 1) x_max_boundary = .TRUE.
+
+    y_coords = coordinates(c_ndims-1)
+    y_min_boundary = .FALSE.
+    y_max_boundary = .FALSE.
+    IF (y_coords .EQ. 0) y_min_boundary = .TRUE.
+    IF (y_coords .EQ. nprocy - 1) y_max_boundary = .TRUE.
+
+    z_coords = coordinates(c_ndims-2)
+    z_min_boundary = .FALSE.
+    z_max_boundary = .FALSE.
+    IF (z_coords .EQ. 0) z_min_boundary = .TRUE.
+    IF (z_coords .EQ. nprocz - 1) z_max_boundary = .TRUE.
+
+    neighbour = MPI_PROC_NULL
     DO iz = -1, 1
       DO iy = -1, 1
         DO ix = -1, 1
@@ -123,10 +141,10 @@ CONTAINS
     IF (nx * nprocx .NE. nx_global) THEN
       nx_big = nx + 1
       nx_little = nx_global - (nx + 1) * (nprocx - 1)
-      IF (coordinates(3) .NE. nprocx-1) THEN
-        nx = nx_big
-      ELSE
+      IF (x_max_boundary) THEN
         nx = nx_little
+      ELSE
+        nx = nx_big
       ENDIF
     ELSE
       nx_big = nx
@@ -136,10 +154,10 @@ CONTAINS
     IF (ny * nprocy .NE. ny_global) THEN
       ny_big = ny + 1
       ny_little = ny_global - (ny + 1) * (nprocy - 1)
-      IF (coordinates(2) .NE. nprocy-1) THEN
-        ny = ny_big
-      ELSE
+      IF (y_max_boundary) THEN
         ny = ny_little
+      ELSE
+        ny = ny_big
       ENDIF
     ELSE
       ny_big = ny
@@ -149,10 +167,10 @@ CONTAINS
     IF (nz * nprocz .NE. nz_global) THEN
       nz_big = nz + 1
       nz_little = nz_global - (nz + 1) * (nprocz - 1)
-      IF (coordinates(1) .NE. nprocz-1) THEN
-        nz = nz_big
-      ELSE
+      IF (z_max_boundary) THEN
         nz = nz_little
+      ELSE
+        nz = nz_big
       ENDIF
     ELSE
       nz_big = nz

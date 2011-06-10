@@ -548,12 +548,13 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! MPI data
   !----------------------------------------------------------------------------
-  INTEGER :: rank, proc_x_min, proc_x_max
-  INTEGER :: coordinates(1), neighbour(-1:1)
-  INTEGER :: errcode, comm, tag, nproc, icycle_max = 1000000
+  INTEGER :: coordinates(c_ndims), neighbour(-1:1)
+  INTEGER :: x_coords, proc_x_min, proc_x_max
+  INTEGER :: errcode, comm, tag, nproc, rank
   INTEGER :: status(MPI_STATUS_SIZE)
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank
   INTEGER(KIND=8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
+  LOGICAL :: x_min_boundary, x_max_boundary
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing

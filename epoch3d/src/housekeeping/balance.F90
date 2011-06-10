@@ -161,14 +161,14 @@ CONTAINS
 
     ! Now need to calculate the start and end points for the new domain on
     ! the current processor
-    nx_global_min = starts_x(coordinates(c_ndims)+1)
-    nx_global_max = ends_x(coordinates(c_ndims)+1)
+    nx_global_min = starts_x(x_coords+1)
+    nx_global_max = ends_x(x_coords+1)
 
-    ny_global_min = starts_y(coordinates(c_ndims-1)+1)
-    ny_global_max = ends_y(coordinates(c_ndims-1)+1)
+    ny_global_min = starts_y(y_coords+1)
+    ny_global_max = ends_y(y_coords+1)
 
-    nz_global_min = starts_z(coordinates(c_ndims-2)+1)
-    nz_global_max = ends_z(coordinates(c_ndims-2)+1)
+    nz_global_min = starts_z(z_coords+1)
+    nz_global_max = ends_z(z_coords+1)
 
     domain(1,:) = (/nx_global_min, nx_global_max/)
     domain(2,:) = (/ny_global_min, ny_global_max/)
@@ -215,12 +215,12 @@ CONTAINS
 
     ! Set the lengths of the current domain so that the particle balancer
     ! works properly
-    x_min_local = x_mins(coordinates(c_ndims))
-    x_max_local = x_maxs(coordinates(c_ndims))
-    y_min_local = y_mins(coordinates(c_ndims-1))
-    y_max_local = y_maxs(coordinates(c_ndims-1))
-    z_min_local = z_mins(coordinates(c_ndims-2))
-    z_max_local = z_maxs(coordinates(c_ndims-2))
+    x_min_local = x_mins(x_coords)
+    x_max_local = x_maxs(x_coords)
+    y_min_local = y_mins(y_coords)
+    y_max_local = y_maxs(y_coords)
+    z_min_local = z_mins(z_coords)
+    z_max_local = z_maxs(z_coords)
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -537,8 +537,8 @@ CONTAINS
       n(2) = nz
       n_global(1) = ny_global
       n_global(2) = nz_global
-      n_old_start(1) = cell_y_min(coordinates(c_ndims-1)+1)
-      n_old_start(2) = cell_z_min(coordinates(c_ndims-2)+1)
+      n_old_start(1) = cell_y_min(y_coords+1)
+      n_old_start(2) = cell_z_min(z_coords+1)
     ELSE IF (direction .EQ. c_dir_y) THEN
       n1_dir = 1
       n2_dir = 3
@@ -546,8 +546,8 @@ CONTAINS
       n(2) = nz
       n_global(1) = nx_global
       n_global(2) = nz_global
-      n_old_start(1) = cell_x_min(coordinates(c_ndims)+1)
-      n_old_start(2) = cell_z_min(coordinates(c_ndims-2)+1)
+      n_old_start(1) = cell_x_min(x_coords+1)
+      n_old_start(2) = cell_z_min(z_coords+1)
     ELSE
       n1_dir = 1
       n2_dir = 2
@@ -555,8 +555,8 @@ CONTAINS
       n(2) = ny
       n_global(1) = nx_global
       n_global(2) = ny_global
-      n_old_start(1) = cell_x_min(coordinates(c_ndims)+1)
-      n_old_start(2) = cell_y_min(coordinates(c_ndims-1)+1)
+      n_old_start(1) = cell_x_min(x_coords+1)
+      n_old_start(2) = cell_y_min(y_coords+1)
     ENDIF
 
     WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)

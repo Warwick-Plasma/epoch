@@ -162,7 +162,7 @@ CONTAINS
         resolution(idim) = nx
         ranges(1,idim) = x_min_local
         ranges(2,idim) = x_max_local
-        start_local(idim) = cell_x_min(coordinates(c_ndims)+1)
+        start_local(idim) = cell_x_min(x_coords+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
         labels(idim) = 'X'
@@ -174,7 +174,7 @@ CONTAINS
         resolution(idim) = ny
         ranges(1,idim) = y_min_local
         ranges(2,idim) = y_max_local
-        start_local(idim) = cell_y_min(coordinates(c_ndims-1)+1)
+        start_local(idim) = cell_y_min(y_coords+1)
         global_resolution(idim) = ny_global
         dgrid(idim) = dy
         labels(idim) = 'Y'
@@ -340,9 +340,9 @@ CONTAINS
 
     IF (need_reduce) THEN
       ! If using x direction need to reduce across y
-      IF (use_x) color = color + coordinates(c_ndims)
+      IF (use_x) color = color + x_coords
       ! If using y direction need to reduce across x
-      IF (use_y) color = color + nprocx * coordinates(c_ndims-1)
+      IF (use_y) color = color + nprocx * y_coords
 
       CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
       ALLOCATE(array_tmp(resolution(1), resolution(2), resolution(3)))

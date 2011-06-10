@@ -165,19 +165,19 @@ CONTAINS
       z_maxs(iproc) = z_global(cell_z_max(iproc+1))
     ENDDO
 
-    x_min_local = x_mins(coordinates(c_ndims))
-    x_max_local = x_maxs(coordinates(c_ndims))
-    y_min_local = y_mins(coordinates(c_ndims-1))
-    y_max_local = y_maxs(coordinates(c_ndims-1))
-    z_min_local = z_mins(coordinates(c_ndims-2))
-    z_max_local = z_maxs(coordinates(c_ndims-2))
+    x_min_local = x_mins(x_coords)
+    x_max_local = x_maxs(x_coords)
+    y_min_local = y_mins(y_coords)
+    y_max_local = y_maxs(y_coords)
+    z_min_local = z_mins(z_coords)
+    z_max_local = z_maxs(z_coords)
 
-    nx_global_min = cell_x_min(coordinates(c_ndims)+1)
-    nx_global_max = cell_x_max(coordinates(c_ndims)+1)
-    ny_global_min = cell_y_min(coordinates(c_ndims-1)+1)
-    ny_global_max = cell_y_max(coordinates(c_ndims-1)+1)
-    nz_global_min = cell_z_min(coordinates(c_ndims-2)+1)
-    nz_global_max = cell_z_max(coordinates(c_ndims-2)+1)
+    nx_global_min = cell_x_min(x_coords+1)
+    nx_global_max = cell_x_max(x_coords+1)
+    ny_global_min = cell_y_min(y_coords+1)
+    ny_global_max = cell_y_max(y_coords+1)
+    nz_global_min = cell_z_min(z_coords+1)
+    nz_global_max = cell_z_max(z_coords+1)
 
     ! Setup local grid
     DO ix = -2, nx + 3
