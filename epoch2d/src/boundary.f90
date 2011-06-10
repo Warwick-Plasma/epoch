@@ -839,7 +839,7 @@ CONTAINS
           ! Particle has gone forever
           CALL remove_particle_from_partlist(&
               species_list(ispecies)%attached_list, cur)
-          IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
+          IF (track_ejected_particles) THEN
             CALL add_particle_to_partlist(&
                 ejected_list(ispecies)%attached_list, cur)
           ELSE

@@ -11,16 +11,23 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 13
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 15
+  INTEGER :: block_number, full_io_block, restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
+  LOGICAL, PRIVATE :: got_name, got_default
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
+  CHARACTER(LEN=string_length) :: name
+  TYPE(io_block_type), POINTER :: io_block
 
 CONTAINS
 
   SUBROUTINE io_deck_initialise
 
     INTEGER :: i
+
+    block_number = 0
+    IF (deck_state .NE. c_ds_first) RETURN
 
     alternate_name = ''
     io_block_name(c_dump_part_grid        ) = 'particles'
@@ -85,9 +92,15 @@ CONTAINS
     io_block_name (i+11) = 'dump_input_decks'
     io_block_name (i+12) = 'dump_first'
     io_block_name (i+13) = 'dump_last'
+    io_block_name (i+14) = 'restartable'
+    io_block_name (i+15) = 'name'
 
     dump_first = .FALSE.
     dump_last  = .FALSE.
+    track_ejected_particles = .FALSE.
+    averaged_var_block = 0
+    got_default = .FALSE.
+    n_io_blocks = 0
 
   END SUBROUTINE io_deck_initialise
 
@@ -95,22 +108,32 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
-    INTEGER :: io
+    INTEGER :: i, io
 
-    IF (dt_average .GT. t_end) THEN
-      IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
-          WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'Averaging time is longer than t_end, will set', &
-              ' averaging time equal'
-          WRITE(io,*) 'to t_end.'
+    n_io_blocks = block_number
+
+    IF (n_io_blocks .GT. 0) THEN
+      IF (deck_state .EQ. c_ds_first) THEN
+        ALLOCATE(io_block_list(n_io_blocks))
+        DO i = 1, n_io_blocks
+          CALL init_io_block(io_block_list(i))
+        ENDDO
+      ELSE
+        DO i = 1, n_io_blocks
+          IF (io_block_list(i)%dt_average .GT. t_end) THEN
+            IF (rank .EQ. 0) THEN
+              DO io = stdout, du, du - stdout ! Print to stdout and to file
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,*) 'Averaging time is longer than t_end, will set', &
+                    ' averaging time equal'
+                WRITE(io,*) 'to t_end.'
+              ENDDO
+            ENDIF
+            io_block_list(i)%dt_average = t_end
+          ENDIF
         ENDDO
       ENDIF
-      dt_average = t_end
     ENDIF
-    dumpmask(c_dump_jx) = IOR(dumpmask(c_dump_jx), c_io_field)
-    dumpmask(c_dump_jy) = IOR(dumpmask(c_dump_jy), c_io_field)
-    dumpmask(c_dump_jz) = IOR(dumpmask(c_dump_jz), c_io_field)
 
   END SUBROUTINE io_deck_finalise
 
@@ -121,12 +144,50 @@ CONTAINS
     io_block_done = .FALSE.
     dump_first = .TRUE.
     dump_last  = .TRUE.
+    got_name = .FALSE.
+    block_number = block_number + 1
+    IF (deck_state .NE. c_ds_first .AND. block_number .GT. 0) THEN
+      io_block => io_block_list(block_number)
+    ENDIF
 
   END SUBROUTINE io_block_start
 
 
 
   SUBROUTINE io_block_end
+
+    INTEGER :: io, ierr
+    CHARACTER(LEN=c_max_string_length) :: list_filename
+
+    IF (deck_state .EQ. c_ds_first) RETURN
+
+    IF (io_block%dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
+      track_ejected_particles = .TRUE.
+    ENDIF
+    IF (.NOT. got_name) THEN
+      IF (got_default) THEN
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Cannot have multiple unnamed blocks.'
+          ENDDO
+        ENDIF
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      ENDIF
+      io_block%name = 'normal'
+      got_default = .TRUE.
+    ENDIF
+
+    ! Delete any existing visit file lists
+    IF (rank .EQ. 0) THEN
+      list_filename = TRIM(ADJUSTL(data_dir)) // '/' &
+          // TRIM(io_block%name) // '.visit'
+      OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+      CLOSE(unit=lu, status='DELETE')
+    ENDIF
+    io_block%dumpmask(c_dump_jx) = IOR(io_block%dumpmask(c_dump_jx), c_io_field)
+    io_block%dumpmask(c_dump_jy) = IOR(io_block%dumpmask(c_dump_jy), c_io_field)
+    io_block%dumpmask(c_dump_jz) = IOR(io_block%dumpmask(c_dump_jz), c_io_field)
 
   END SUBROUTINE io_block_end
 
@@ -157,6 +218,7 @@ CONTAINS
     ENDDO
 
     IF (elementselected .EQ. 0) RETURN
+
     IF (io_block_done(elementselected)) THEN
       errcode = c_err_preset_element
       RETURN
@@ -166,8 +228,8 @@ CONTAINS
 
     SELECT CASE (elementselected-num_vars_to_dump)
     CASE(1)
-      dt_snapshot = as_real(value, errcode)
-      IF (dt_snapshot .LT. 0.0_num) dt_snapshot = 0.0_num
+      io_block%dt_snapshot = as_real(value, errcode)
+      IF (io_block%dt_snapshot .LT. 0.0_num) io_block%dt_snapshot = 0.0_num
     CASE(2)
       full_dump_every = as_integer(value, errcode)
       IF (full_dump_every .EQ. 0) full_dump_every = 1
@@ -188,12 +250,12 @@ CONTAINS
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(7)
-      dt_average = as_real(value, errcode)
+      io_block%dt_average = as_real(value, errcode)
     CASE(8)
-      nstep_average = as_integer(value, errcode)
+      io_block%nstep_average = as_integer(value, errcode)
     CASE(9)
-      nstep_snapshot = as_integer(value, errcode)
-      IF (nstep_snapshot .LT. 0) nstep_snapshot = 0
+      io_block%nstep_snapshot = as_integer(value, errcode)
+      IF (io_block%nstep_snapshot .LT. 0) io_block%nstep_snapshot = 0
     CASE(10)
       dump_source_code = as_logical(value, errcode)
     CASE(11)
@@ -202,6 +264,11 @@ CONTAINS
       dump_first = as_logical(value, errcode)
     CASE(13)
       dump_last = as_logical(value, errcode)
+    CASE(14)
+      io_block%restart = as_logical(value, errcode)
+    CASE(15)
+      io_block%name = value
+      got_name = .TRUE.
     END SELECT
 
     IF (elementselected .GT. num_vars_to_dump) RETURN
@@ -302,16 +369,21 @@ CONTAINS
           mask = IAND(mask, NOT(c_io_averaged))
         ELSE
           any_average = .TRUE.
+          io_block%any_average = .TRUE.
           IF (IAND(mask, c_io_average_single) .NE. 0 .AND. num .NE. r4) THEN
             averaged_data(mask_element)%dump_single = .TRUE.
           ENDIF
+          IF (averaged_var_block(mask_element) .NE. 0) THEN
+            PRINT*,'error ',mask_element,block_number
+          ENDIF
+          averaged_var_block(mask_element) = block_number
         ENDIF
       ENDIF
 
       IF (is .EQ. 1) THEN
-        dumpmask(mask_element) = mask
+        io_block%dumpmask(mask_element) = mask
       ELSE
-        subset_list(subset)%dumpmask(mask_element) = mask
+        subset_list(subset)%dumpmask(block_number,mask_element) = mask
       ENDIF
     ENDDO
 
@@ -349,7 +421,7 @@ CONTAINS
       errcode = c_err_missing_elements
     ENDIF
 
-    IF (dt_average .GT. dt_snapshot) THEN
+    IF (io_block%dt_average .GT. io_block%dt_snapshot) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
@@ -358,56 +430,93 @@ CONTAINS
           WRITE(io,*) 'to dt_snapshot.'
         ENDDO
       ENDIF
-      dt_average = dt_snapshot
+      io_block%dt_average = io_block%dt_snapshot
     ENDIF
 
     ! Particles
-    dumpmask(c_dump_part_grid) = &
-        IOR(dumpmask(c_dump_part_grid), c_io_restartable)
-    dumpmask(c_dump_part_species) = &
-        IOR(dumpmask(c_dump_part_species), c_io_restartable)
-    dumpmask(c_dump_part_weight) = &
-        IOR(dumpmask(c_dump_part_weight), c_io_restartable)
-    dumpmask(c_dump_part_px) = IOR(dumpmask(c_dump_part_px), c_io_restartable)
-    dumpmask(c_dump_part_py) = IOR(dumpmask(c_dump_part_py), c_io_restartable)
-    dumpmask(c_dump_part_pz) = IOR(dumpmask(c_dump_part_pz), c_io_restartable)
+    io_block%dumpmask(c_dump_part_grid) = &
+        IOR(io_block%dumpmask(c_dump_part_grid), c_io_restartable)
+    io_block%dumpmask(c_dump_part_species) = &
+        IOR(io_block%dumpmask(c_dump_part_species), c_io_restartable)
+    io_block%dumpmask(c_dump_part_weight) = &
+        IOR(io_block%dumpmask(c_dump_part_weight), c_io_restartable)
+    io_block%dumpmask(c_dump_part_px) = &
+        IOR(io_block%dumpmask(c_dump_part_px), c_io_restartable)
+    io_block%dumpmask(c_dump_part_py) = &
+        IOR(io_block%dumpmask(c_dump_part_py), c_io_restartable)
+    io_block%dumpmask(c_dump_part_pz) = &
+        IOR(io_block%dumpmask(c_dump_part_pz), c_io_restartable)
     ! Fields
-    dumpmask(c_dump_grid) = IOR(dumpmask(c_dump_grid), c_io_restartable)
-    dumpmask(c_dump_ex) = IOR(dumpmask(c_dump_ex), c_io_restartable)
-    dumpmask(c_dump_ey) = IOR(dumpmask(c_dump_ey), c_io_restartable)
-    dumpmask(c_dump_ez) = IOR(dumpmask(c_dump_ez), c_io_restartable)
-    dumpmask(c_dump_bx) = IOR(dumpmask(c_dump_bx), c_io_restartable)
-    dumpmask(c_dump_by) = IOR(dumpmask(c_dump_by), c_io_restartable)
-    dumpmask(c_dump_bz) = IOR(dumpmask(c_dump_bz), c_io_restartable)
-    dumpmask(c_dump_jx) = IOR(dumpmask(c_dump_jx), c_io_restartable)
-    dumpmask(c_dump_jy) = IOR(dumpmask(c_dump_jy), c_io_restartable)
-    dumpmask(c_dump_jz) = IOR(dumpmask(c_dump_jz), c_io_restartable)
+    io_block%dumpmask(c_dump_grid) = &
+        IOR(io_block%dumpmask(c_dump_grid), c_io_restartable)
+    io_block%dumpmask(c_dump_ex) = &
+        IOR(io_block%dumpmask(c_dump_ex), c_io_restartable)
+    io_block%dumpmask(c_dump_ey) = &
+        IOR(io_block%dumpmask(c_dump_ey), c_io_restartable)
+    io_block%dumpmask(c_dump_ez) = &
+        IOR(io_block%dumpmask(c_dump_ez), c_io_restartable)
+    io_block%dumpmask(c_dump_bx) = &
+        IOR(io_block%dumpmask(c_dump_bx), c_io_restartable)
+    io_block%dumpmask(c_dump_by) = &
+        IOR(io_block%dumpmask(c_dump_by), c_io_restartable)
+    io_block%dumpmask(c_dump_bz) = &
+        IOR(io_block%dumpmask(c_dump_bz), c_io_restartable)
+    io_block%dumpmask(c_dump_jx) = &
+        IOR(io_block%dumpmask(c_dump_jx), c_io_restartable)
+    io_block%dumpmask(c_dump_jy) = &
+        IOR(io_block%dumpmask(c_dump_jy), c_io_restartable)
+    io_block%dumpmask(c_dump_jz) = &
+        IOR(io_block%dumpmask(c_dump_jz), c_io_restartable)
     ! CPML boundaries
-    dumpmask(c_dump_cpml_psi_eyx) = &
-        IOR(dumpmask(c_dump_cpml_psi_eyx), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_ezx) = &
-        IOR(dumpmask(c_dump_cpml_psi_ezx), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_byx) = &
-        IOR(dumpmask(c_dump_cpml_psi_byx), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_bzx) = &
-        IOR(dumpmask(c_dump_cpml_psi_bzx), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_exy) = &
-        IOR(dumpmask(c_dump_cpml_psi_exy), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_ezy) = &
-        IOR(dumpmask(c_dump_cpml_psi_ezy), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_bxy) = &
-        IOR(dumpmask(c_dump_cpml_psi_bxy), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_bzy) = &
-        IOR(dumpmask(c_dump_cpml_psi_bzy), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_exz) = &
-        IOR(dumpmask(c_dump_cpml_psi_exz), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_eyz) = &
-        IOR(dumpmask(c_dump_cpml_psi_eyz), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_bxz) = &
-        IOR(dumpmask(c_dump_cpml_psi_bxz), c_io_restartable)
-    dumpmask(c_dump_cpml_psi_byz) = &
-        IOR(dumpmask(c_dump_cpml_psi_byz), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_eyx) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_eyx), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_ezx) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_ezx), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_byx) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_byx), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_bzx) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_bzx), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_exy) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_exy), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_ezy) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_ezy), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_bxy) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_bxy), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_bzy) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_bzy), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_exz) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_exz), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_eyz) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_eyz), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_bxz) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_bxz), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_byz) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_byz), c_io_restartable)
 
   END FUNCTION io_block_check
+
+
+
+  SUBROUTINE init_io_block(io_block)
+
+    TYPE(io_block_type) :: io_block
+
+    io_block%name = ''
+    io_block%dt_snapshot = -1.0_num
+    io_block%time_next = 0.0_num
+    io_block%time_first = 0.0_num
+    io_block%dt_average = -1.0_num
+    io_block%dt_min_average = -1.0_num
+    io_block%average_time = -1.0_num
+    io_block%nstep_snapshot = -1
+    io_block%nstep_next = 0
+    io_block%nstep_first = 0
+    io_block%nstep_average = -1
+    io_block%restart = .FALSE.
+    io_block%dump = .FALSE.
+    io_block%any_average = .FALSE.
+    io_block%dumpmask = 0
+
+  END SUBROUTINE init_io_block
 
 END MODULE deck_io_block

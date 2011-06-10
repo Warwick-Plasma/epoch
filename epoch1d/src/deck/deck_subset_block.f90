@@ -338,6 +338,7 @@ CONTAINS
       subset_list(i)%mass_min   = -HUGE(1.0_num)
       subset_list(i)%mass_max   =  HUGE(1.0_num)
       subset_list(i)%mask = c_io_always
+      ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_never
     ENDDO
 

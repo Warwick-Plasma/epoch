@@ -579,8 +579,6 @@ MODULE shared_data
   LOGICAL :: force_final_to_be_restartable, dump_first, dump_last
   LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
   INTEGER :: n_zeros = 4
-  REAL(num) :: dt_snapshot, time_next = 0.0_num
-  INTEGER :: nstep_snapshot, nstep_next = 0
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
   INTEGER, PARAMETER :: c_dump_part_species      = 3
@@ -621,6 +619,20 @@ MODULE shared_data
   INTEGER, PARAMETER :: num_vars_to_dump         = 37
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
+  TYPE io_block_type
+    CHARACTER(LEN=string_length) :: name
+    REAL(num) :: dt_snapshot, time_next, time_first
+    REAL(num) :: dt_average, dt_min_average, average_time
+    INTEGER :: nstep_snapshot, nstep_next, nstep_first, nstep_average
+    LOGICAL :: restart, dump, any_average
+    INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
+  END TYPE io_block_type
+
+  TYPE(io_block_type), POINTER :: io_block_list(:)
+  INTEGER :: n_io_blocks
+  LOGICAL :: track_ejected_particles
+  INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
+
   !----------------------------------------------------------------------------
   ! Extended IO information
   !----------------------------------------------------------------------------
@@ -655,7 +667,7 @@ MODULE shared_data
 
     ! The dumpmask for the subset
     INTEGER :: mask
-    INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
+    INTEGER, DIMENSION(:,:), POINTER :: dumpmask
     LOGICAL, DIMENSION(:), POINTER :: use_species
     LOGICAL :: use_gamma, use_gamma_min, use_gamma_max, use_random
     LOGICAL :: use_x_min, use_x_max
@@ -846,10 +858,7 @@ MODULE shared_data
     LOGICAL :: started, dump_single
   END TYPE averaged_data_block
   TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
-  INTEGER :: nstep_average = -1
   LOGICAL :: any_average = .FALSE.
-  REAL(num) :: dt_average = -1.0_num
-  REAL(num) :: average_time = -1.0_num
 
   !----------------------------------------------------------------------------
   ! laser boundaries

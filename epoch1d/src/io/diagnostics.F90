@@ -26,6 +26,7 @@ MODULE diagnostics
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
 
 CONTAINS
 
@@ -34,9 +35,9 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: step
     LOGICAL :: print_arrays, first_call, last_call
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
-    CHARACTER(LEN=8) :: dump_type
+    CHARACTER(LEN=c_max_string_length) :: dump_type
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER :: code, i
+    INTEGER :: code, i, io
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag, convert
 #ifndef PER_PARTICLE_WEIGHT
@@ -108,10 +109,12 @@ CONTAINS
     CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
         dt_plasma_frequency)
 
+    iomask = iodumpmask(1,:)
+
     ! Write the cartesian mesh
-    IF (IAND(dumpmask(c_dump_grid), code) .NE. 0) THEN
-      convert = (IAND(dumpmask(c_dump_grid), c_io_dump_single) .NE. 0 &
-          .AND. IAND(dumpmask(c_dump_grid), c_io_restartable) .EQ. 0)
+    IF (IAND(iomask(c_dump_grid), code) .NE. 0) THEN
+      convert = (IAND(iomask(c_dump_grid), c_io_dump_single) .NE. 0 &
+          .AND. IAND(iomask(c_dump_grid), c_io_restartable) .EQ. 0)
       IF (.NOT. use_offset_grid) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
             xb_global, convert)
@@ -160,15 +163,11 @@ CONTAINS
         subarray_field)
 #endif
 
-    iomask = dumpmask
-
     DO isubset = 1, n_subsets + 1
       done_species_offset_init = .FALSE.
       done_subset_init = .FALSE.
-      IF (isubset .GT. 1) THEN
-        iomask = subset_list(isubset-1)%dumpmask
-        io_list => io_list_data
-      ENDIF
+      IF (isubset .GT. 1) io_list => io_list_data
+      iomask = iodumpmask(isubset,:)
 
       CALL write_particle_grid(code)
 
@@ -271,13 +270,14 @@ CONTAINS
     ENDDO
 
     io_list => species_list
+    iomask = iodumpmask(1,:)
 
-    IF (IAND(dumpmask(c_dump_dist_fns), code) .NE. 0) THEN
+    IF (IAND(iomask(c_dump_dist_fns), code) .NE. 0) THEN
       CALL write_dist_fns(sdf_handle, code)
     ENDIF
 
 #ifdef PARTICLE_PROBES
-    IF (IAND(dumpmask(c_dump_probes), code) .NE. 0) THEN
+    IF (IAND(iomask(c_dump_probes), code) .NE. 0) THEN
       CALL write_probes(sdf_handle, code)
     ENDIF
 #endif
@@ -309,8 +309,12 @@ CONTAINS
     CALL sdf_close(sdf_handle)
 
     IF (rank .EQ. 0) THEN
-      dump_type = 'normal'
-      CALL append_filename(dump_type, output_file)
+      DO io = 1, n_io_blocks
+        IF (io_block_list(io)%dump) THEN
+          dump_type = TRIM(io_block_list(io)%name)
+          CALL append_filename(dump_type, output_file)
+        ENDIF
+      ENDDO
       IF (IAND(code, c_io_restartable) .NE. 0) THEN
         dump_type = 'restart'
         CALL append_filename(dump_type, output_file)
@@ -373,36 +377,63 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: step
     LOGICAL, INTENT(OUT) :: print_arrays, first_call, last_call
-    INTEGER :: id
+    INTEGER :: id, io, is
     REAL(num) :: t0, t1, time_first, av_time_first
     LOGICAL, SAVE :: first = .TRUE.
+
+    IF (.NOT.ALLOCATED(iodumpmask)) &
+        ALLOCATE(iodumpmask(n_subsets+1,num_vars_to_dump))
 
     print_arrays = .FALSE.
     first_call = first
     last_call = .FALSE.
+    iomask = c_io_never
+    iodumpmask = c_io_never
 
-    ! Work out the time that the next dump will occur based on the
-    ! current timestep
-    t0 = HUGE(1.0_num)
-    t1 = HUGE(1.0_num)
-    IF (dt_snapshot .GE. 0.0_num) t0 = time_next
-    IF (nstep_snapshot .GE. 0) t1 = time + dt * (nstep_next - step)
+    DO io = 1, n_io_blocks
+      io_block_list(io)%dump = .FALSE.
 
-    IF (t0 .LT. t1) THEN
-      ! Next I/O dump based on dt_snapshot
-      time_first = t0
-      IF (dt_snapshot .GT. 0 .AND. time .GE. time_next) THEN
-        time_next  = time_next + dt_snapshot
-        print_arrays = .TRUE.
+      ! Work out the time that the next dump will occur based on the
+      ! current timestep
+      t0 = HUGE(1.0_num)
+      t1 = HUGE(1.0_num)
+      IF (io_block_list(io)%dt_snapshot .GE. 0.0_num) &
+          t0 = io_block_list(io)%time_next
+      IF (io_block_list(io)%nstep_snapshot .GE. 0) &
+          t1 = time + dt * (io_block_list(io)%nstep_next - step)
+
+      IF (t0 .LT. t1) THEN
+        ! Next I/O dump based on dt_snapshot
+        time_first = t0
+        IF (io_block_list(io)%dt_snapshot .GT. 0 &
+            .AND. time .GE. io_block_list(io)%time_next) THEN
+          io_block_list(io)%time_next  = &
+              io_block_list(io)%time_next + io_block_list(io)%dt_snapshot
+          print_arrays = .TRUE.
+          iomask = IOR(iomask, io_block_list(io)%dumpmask)
+          DO is = 1, n_subsets
+            iodumpmask(1+is,:) = &
+                IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
+          ENDDO
+          io_block_list(io)%dump = .TRUE.
+        ENDIF
+      ELSE
+        ! Next I/O dump based on nstep_snapshot
+        time_first = t1
+        IF (io_block_list(io)%nstep_snapshot .GT. 0 &
+            .AND. step .GE. io_block_list(io)%nstep_next) THEN
+          io_block_list(io)%nstep_next = &
+              io_block_list(io)%nstep_next + io_block_list(io)%nstep_snapshot
+          print_arrays = .TRUE.
+          iomask = IOR(iomask, io_block_list(io)%dumpmask)
+          DO is = 1, n_subsets
+            iodumpmask(1+is,:) = &
+                IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
+          ENDDO
+          io_block_list(io)%dump = .TRUE.
+        ENDIF
       ENDIF
-    ELSE
-      ! Next I/O dump based on nstep_snapshot
-      time_first = t1
-      IF (nstep_snapshot .GT. 0 .AND. step .GE. nstep_next) THEN
-        nstep_next = nstep_next + nstep_snapshot
-        print_arrays = .TRUE.
-      ENDIF
-    ENDIF
+    ENDDO
 
     IF (dt * nsteps .LT. time_first) THEN
       av_time_first = dt * nsteps
@@ -411,8 +442,9 @@ CONTAINS
     ENDIF
 
     DO id = 1, num_vars_to_dump
-      IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
-        IF (time .GE. av_time_first - average_time) THEN
+      io = averaged_var_block(id)
+      IF (io .GT. 0) THEN
+        IF (time .GE. av_time_first - io_block_list(io)%average_time) THEN
           CALL average_field(id, averaged_data(id))
         ENDIF
       ENDIF
@@ -426,7 +458,12 @@ CONTAINS
     IF ((time .GE. t_end .OR. step .EQ. nsteps) .AND. dump_last) THEN
       last_call = .TRUE.
       print_arrays = .TRUE.
+      DO io = 1, n_io_blocks
+        io_block_list(io)%dump = .TRUE.
+      ENDDO
     ENDIF
+
+    iodumpmask(1,:) = iomask
 
   END SUBROUTINE io_test
 
@@ -444,10 +481,8 @@ CONTAINS
 
     species_sum = 0
     n_species_local = 0
-    IF (IAND(dumpmask(ioutput), c_io_no_sum) .EQ. 0) &
-        species_sum = 1
-    IF (IAND(dumpmask(ioutput), c_io_species) .NE. 0) &
-        n_species_local = n_species
+    IF (IAND(iomask(ioutput), c_io_no_sum) .EQ. 0) species_sum = 1
+    IF (IAND(iomask(ioutput), c_io_species) .NE. 0) n_species_local = n_species
 
     n_species_local = n_species_local + species_sum
 
@@ -592,7 +627,7 @@ CONTAINS
     INTEGER :: should_dump, subtype, subarray
     LOGICAL :: convert
 
-    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+    IF (IAND(iomask(id), code) .EQ. 0) RETURN
 
     dims = (/nx_global/)
 
@@ -600,8 +635,8 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
-    convert = (IAND(dumpmask(id), c_io_dump_single) .NE. 0 &
-        .AND. IAND(dumpmask(id), c_io_restartable) .EQ. 0)
+    convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+        .AND. IAND(iomask(id), c_io_restartable) .EQ. 0)
 
     IF (convert) THEN
       subtype  = subtype_field_r4
@@ -611,13 +646,13 @@ CONTAINS
       subarray = subarray_field
     ENDIF
 
-    IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
+    IF (IAND(iomask(id), should_dump) .NE. 0) THEN
       CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id), &
           TRIM(name), TRIM(units), dims, stagger, 'grid', array, &
           subtype, subarray, convert)
     ENDIF
 
-    IF (IAND(dumpmask(id), c_io_averaged) .NE. 0 &
+    IF (IAND(iomask(id), c_io_averaged) .NE. 0 &
         .AND. averaged_data(id)%started) THEN
       IF (averaged_data(id)%dump_single) THEN
         averaged_data(id)%r4array = averaged_data(id)%r4array &
@@ -1194,7 +1229,7 @@ CONTAINS
       npart_global = npart_global + species_count
     ENDDO
 
-    IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never &
+    IF (track_ejected_particles &
         .AND. .NOT.ALLOCATED(ejected_offset)) THEN
       ALLOCATE(ejected_offset(n_species))
       ejected_offset = 0

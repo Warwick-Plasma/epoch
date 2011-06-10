@@ -158,7 +158,7 @@ CONTAINS
       DEALLOCATE(species_charge_set)
       DEALLOCATE(species_blocks)
 
-      IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
+      IF (track_ejected_particles) THEN
         ALLOCATE(ejected_list(n_species))
         ejected_list = species_list
         DO i = 1, n_species

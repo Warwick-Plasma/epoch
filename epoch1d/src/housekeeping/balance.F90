@@ -141,7 +141,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp_sum
     REAL(r4), DIMENSION(:,:), ALLOCATABLE :: r4temp_sum
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-    INTEGER :: ispecies, index, nspec_local
+    INTEGER :: i, ispecies, index, nspec_local, mask
 
     nx_new = new_domain(1,2) - new_domain(1,1) + 1
 
@@ -182,10 +182,14 @@ CONTAINS
     DEALLOCATE(temp)
 
     DO index = 1, num_vars_to_dump
+      i = averaged_var_block(index)
+      IF (i .EQ. 0) CYCLE
+
+      mask = io_block_list(averaged_var_block(index))%dumpmask(index)
       nspec_local = 0
-      IF (IAND(dumpmask(index), c_io_no_sum) .EQ. 0) &
+      IF (IAND(mask, c_io_no_sum) .EQ. 0) &
           nspec_local = 1
-      IF (IAND(dumpmask(index), c_io_species) .NE. 0) &
+      IF (IAND(mask, c_io_species) .NE. 0) &
           nspec_local = nspec_local + n_species
 
       IF (nspec_local .LE. 0) CYCLE

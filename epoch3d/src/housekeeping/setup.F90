@@ -50,7 +50,6 @@ CONTAINS
       STOP
     ENDIF
 
-    dumpmask = 0
     comm = MPI_COMM_NULL
 
     dt_plasma_frequency = 0.0_num
@@ -75,8 +74,6 @@ CONTAINS
     dump_input_decks = .TRUE.
     full_dump_every = -1
     restart_dump_every = -1
-    dt_snapshot = -1.0_num
-    nstep_snapshot = -1
     nsteps = -1
     t_end = HUGE(1.0_num)
     particles_max_id = 0
@@ -89,6 +86,7 @@ CONTAINS
     NULLIFY(laser_z_min)
 
     NULLIFY(dist_fns)
+    NULLIFY(io_block_list)
 
     run_date = get_unix_time()
 
@@ -219,6 +217,8 @@ CONTAINS
 
   SUBROUTINE after_deck_last
 
+    INTEGER :: i
+
     CALL setup_data_averaging
     CALL setup_split_particles
     CALL setup_field_boundaries
@@ -232,18 +232,20 @@ CONTAINS
       cpml_kappa_max = 1.0_num
       cpml_a_max = 0.0_num
       cpml_sigma_max = 0.0_num
-      dumpmask(c_dump_cpml_psi_eyx) = 0
-      dumpmask(c_dump_cpml_psi_ezx) = 0
-      dumpmask(c_dump_cpml_psi_byx) = 0
-      dumpmask(c_dump_cpml_psi_bzx) = 0
-      dumpmask(c_dump_cpml_psi_exy) = 0
-      dumpmask(c_dump_cpml_psi_ezy) = 0
-      dumpmask(c_dump_cpml_psi_bxy) = 0
-      dumpmask(c_dump_cpml_psi_bzy) = 0
-      dumpmask(c_dump_cpml_psi_exz) = 0
-      dumpmask(c_dump_cpml_psi_eyz) = 0
-      dumpmask(c_dump_cpml_psi_bxz) = 0
-      dumpmask(c_dump_cpml_psi_byz) = 0
+      DO i = 1, n_io_blocks
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_eyx) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_ezx) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_byx) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bzx) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_exy) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_ezy) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bxy) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bzy) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_exz) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_eyz) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bxz) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_byz) = 0
+      ENDDO
     ENDIF
 
   END SUBROUTINE after_deck_last
@@ -252,17 +254,36 @@ CONTAINS
 
   SUBROUTINE setup_data_averaging()
 
-    INTEGER :: io, nspec_local
+    INTEGER :: io, ib, nspec_local, nstep_average, mask
+    REAL(num) :: dt_average
 
-    dt_min_average = -1.0_num
     IF (.NOT. any_average) RETURN
 
+    DO io = 1, n_io_blocks
+      IF (io_block_list(io)%any_average) THEN
+        dt_min_average = t_end
+      ELSE
+        dt_min_average = -1.0_num
+      ENDIF
+    ENDDO
+
     DO io = 1, num_vars_to_dump
-      IF (IAND(dumpmask(io), c_io_averaged) .NE. 0) THEN
+      ib = averaged_var_block(io)
+      IF (ib .NE. 0) THEN
+        dt_average  = io_block_list(ib)%dt_average
+        nstep_average = io_block_list(ib)%nstep_average
+
+        IF (nstep_average .GT. 0 .AND. dt_average .GT. 0) THEN
+          io_block_list(ib)%dt_min_average = &
+              MIN(io_block_list(ib)%dt_min_average, &
+              dt_average / REAL(nstep_average, num))
+        ENDIF
+
+        mask = io_block_list(ib)%dumpmask(io)
         nspec_local = 0
-        IF (IAND(dumpmask(io), c_io_no_sum) .EQ. 0) &
+        IF (IAND(mask, c_io_no_sum) .EQ. 0) &
             nspec_local = 1
-        IF (IAND(dumpmask(io), c_io_species) .NE. 0) &
+        IF (IAND(mask, c_io_species) .NE. 0) &
             nspec_local = nspec_local + n_species
 
         IF (nspec_local .LE. 0) CYCLE
@@ -276,14 +297,11 @@ CONTAINS
               %array(-2:nx+3,-2:ny+3,-2:nz+3,nspec_local))
           averaged_data(io)%array = 0.0_num
         ENDIF
+
         averaged_data(io)%real_time = 0.0_num
         averaged_data(io)%started = .FALSE.
       ENDIF
     ENDDO
-
-    IF (nstep_average .GT. 0 .AND. dt_average .GT. 0) THEN
-      dt_min_average = dt_average / REAL(nstep_average, num)
-    ENDIF
 
   END SUBROUTINE setup_data_averaging
 
@@ -581,6 +599,8 @@ CONTAINS
 
   SUBROUTINE set_dt        ! sets CFL limited step
 
+    INTEGER :: io
+
     CALL set_plasma_frequency_dt
     CALL set_laser_dt
 
@@ -591,19 +611,25 @@ CONTAINS
 
     IF (.NOT. any_average) RETURN
 
-    average_time = MAX(dt_average, dt * nstep_average)
+    DO io = 1, n_io_blocks
+      IF (.NOT. io_block_list(io)%any_average) CYCLE
 
-    IF (dt_min_average .GT. 0 .AND. dt_min_average .LT. dt) THEN
-      IF (rank .EQ. 0) THEN
-        PRINT*,'*** WARNING ***'
-        PRINT*,'Time step is too small to satisfy "nstep_average"'
-        PRINT*,'Averaging will occur over fewer time steps than specified'
-        PRINT*,'Set "dt_multiplier" less than ', &
-            dt_multiplier * dt_min_average / dt, &
-            ' to fix this'
+      io_block_list(io)%average_time = MAX(io_block_list(io)%dt_average, &
+          dt * io_block_list(io)%nstep_average)
+
+      IF (io_block_list(io)%dt_min_average .GT. 0 &
+          .AND. io_block_list(io)%dt_min_average .LT. dt) THEN
+        IF (rank .EQ. 0) THEN
+          PRINT*,'*** WARNING ***'
+          PRINT*,'Time step is too small to satisfy "nstep_average"'
+          PRINT*,'Averaging will occur over fewer time steps than specified'
+          PRINT*,'Set "dt_multiplier" less than ', &
+              dt_multiplier * io_block_list(io)%dt_min_average / dt, &
+              ' to fix this'
+        ENDIF
+        io_block_list(io)%dt_min_average = -1
       ENDIF
-      dt_min_average = -1
-    ENDIF
+    ENDDO
 
   END SUBROUTINE set_dt
 
@@ -652,7 +678,7 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2, str3
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: ierr, i1, i2, iblock, nblocks, ndims, found_species
+    INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, found_species
     INTEGER(i8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims
     LOGICAL :: restart_flag
@@ -674,16 +700,18 @@ CONTAINS
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)
 
-    IF (dt_snapshot .GT. 0.0_num) THEN
-      time_next = time + dt_snapshot
-    ELSE
-      time_next = time
-    ENDIF
-    IF (nstep_snapshot .GT. 0) THEN
-      nstep_next = step + nstep_snapshot
-    ELSE
-      nstep_next = step
-    ENDIF
+    DO i = 1, n_io_blocks
+      IF (io_block_list(i)%dt_snapshot .GT. 0.0_num) THEN
+        io_block_list(i)%time_next = time + io_block_list(i)%dt_snapshot
+      ELSE
+        io_block_list(i)%time_next = time
+      ENDIF
+      IF (io_block_list(i)%nstep_snapshot .GT. 0) THEN
+        io_block_list(i)%nstep_next = step + io_block_list(i)%nstep_snapshot
+      ELSE
+        io_block_list(i)%nstep_next = step
+      ENDIF
+    ENDDO
 
     IF (.NOT. restart_flag) THEN
       IF (rank .EQ. 0) THEN
