@@ -81,10 +81,12 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: stagger_type, boundary
 
-    IF (boundary .EQ. c_bd_x_min .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
+    IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
+
+    IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
       field(-1) = field(2)
       field( 0) = field(1)
-    ELSE IF (boundary .EQ. c_bd_x_max .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
       field(nx+1) = field(nx  )
       field(nx+2) = field(nx-1)
     ENDIF
@@ -98,7 +100,9 @@ CONTAINS
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: stagger_type, boundary
 
-    IF (boundary .EQ. c_bd_x_min .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
+    IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
+
+    IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(1,stagger_type) .EQ. 1) THEN
         field(-1) = -field(1)
         field( 0) = 0.0_num
@@ -106,7 +110,7 @@ CONTAINS
         field(-1) = -field(2)
         field( 0) = -field(1)
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_x_max .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
       IF (stagger(1,stagger_type) .EQ. 1) THEN
         field(nx  ) = 0.0_num
         field(nx+1) = -field(nx-1)

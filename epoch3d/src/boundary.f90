@@ -131,22 +131,24 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: stagger_type, boundary
 
-    IF (boundary .EQ. c_bd_x_min .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
+    IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
+
+    IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
       field(-1,:,:) = field(2,:,:)
       field( 0,:,:) = field(1,:,:)
-    ELSE IF (boundary .EQ. c_bd_x_max .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
       field(nx+1,:,:) = field(nx  ,:,:)
       field(nx+2,:,:) = field(nx-1,:,:)
-    ELSE IF (boundary .EQ. c_bd_y_min .AND. proc_y_min .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_y_min .AND. y_min_boundary) THEN
       field(:,-1,:) = field(:,2,:)
       field(:, 0,:) = field(:,1,:)
-    ELSE IF (boundary .EQ. c_bd_y_max .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_y_max .AND. y_max_boundary) THEN
       field(:,ny+1,:) = field(:,ny  ,:)
       field(:,ny+2,:) = field(:,ny-1,:)
-    ELSE IF (boundary .EQ. c_bd_z_min .AND. proc_z_min .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_z_min .AND. z_min_boundary) THEN
       field(:,:,-1) = field(:,:,2)
       field(:,:, 0) = field(:,:,1)
-    ELSE IF (boundary .EQ. c_bd_z_max .AND. proc_z_max .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_z_max .AND. z_max_boundary) THEN
       field(:,:,nz+1) = field(:,:,nz  )
       field(:,:,nz+2) = field(:,:,nz-1)
     ENDIF
@@ -162,7 +164,9 @@ CONTAINS
 
     ! Use clamp when the laser is on.
 
-    IF (boundary .EQ. c_bd_x_min .AND. proc_x_min .EQ. MPI_PROC_NULL) THEN
+    IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
+
+    IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(1,stagger_type) .EQ. 1) THEN
         field(-1,:,:) = -field(1,:,:)
         field( 0,:,:) = 0.0_num
@@ -170,7 +174,7 @@ CONTAINS
         field(-1,:,:) = -field(2,:,:)
         field( 0,:,:) = -field(1,:,:)
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_x_max .AND. proc_x_max .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
       IF (stagger(1,stagger_type) .EQ. 1) THEN
         field(nx  ,:,:) = 0.0_num
         field(nx+1,:,:) = -field(nx-1,:,:)
@@ -178,7 +182,7 @@ CONTAINS
         field(nx+1,:,:) = -field(nx  ,:,:)
         field(nx+2,:,:) = -field(nx-1,:,:)
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_y_min .AND. proc_y_min .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(2,stagger_type) .EQ. 1) THEN
         field(:,-1,:) = -field(:,1,:)
         field(:, 0,:) = 0.0_num
@@ -186,7 +190,7 @@ CONTAINS
         field(:,-1,:) = -field(:,2,:)
         field(:, 0,:) = -field(:,1,:)
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_y_max .AND. proc_y_max .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_y_max .AND. y_max_boundary) THEN
       IF (stagger(2,stagger_type) .EQ. 1) THEN
         field(:,ny  ,:) = 0.0_num
         field(:,ny+1,:) = -field(:,ny-1,:)
@@ -194,7 +198,7 @@ CONTAINS
         field(:,ny+1,:) = -field(:,ny  ,:)
         field(:,ny+2,:) = -field(:,ny-1,:)
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_z_min .AND. proc_z_min .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_z_min .AND. z_min_boundary) THEN
       IF (stagger(3,stagger_type) .EQ. 1) THEN
         field(:,:,-1) = -field(:,:,1)
         field(:,:, 0) = 0.0_num
@@ -202,7 +206,7 @@ CONTAINS
         field(:,:,-1) = -field(:,:,2)
         field(:,:, 0) = -field(:,:,1)
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_z_max .AND. proc_z_max .EQ. MPI_PROC_NULL) THEN
+    ELSE IF (boundary .EQ. c_bd_z_max .AND. z_max_boundary) THEN
       IF (stagger(3,stagger_type) .EQ. 1) THEN
         field(:,:,nz  ) = 0.0_num
         field(:,:,nz+1) = -field(:,:,nz-1)

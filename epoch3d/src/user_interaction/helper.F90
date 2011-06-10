@@ -524,12 +524,18 @@ CONTAINS
     DEALLOCATE(density_map)
 
     CALL processor_summation_bcs(weight_fn)
-    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ,:,:) = weight_fn(1   ,:,:)
-    IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
-    IF (proc_y_min .EQ. MPI_PROC_NULL) weight_fn(:,0 ,:) = weight_fn(:,1   ,:)
-    IF (proc_y_max .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
-    IF (proc_z_min .EQ. MPI_PROC_NULL) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
-    IF (proc_z_max .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
+    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
+      IF (x_min_boundary) weight_fn(0 ,:,:) = weight_fn(1   ,:,:)
+      IF (x_max_boundary) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
+    ENDIF
+    IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic) THEN
+      IF (y_min_boundary) weight_fn(:,0 ,:) = weight_fn(:,1   ,:)
+      IF (y_max_boundary) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
+    ENDIF
+    IF (bc_particle(c_bd_z_min) .NE. c_bc_periodic) THEN
+      IF (z_min_boundary) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
+      IF (z_max_boundary) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
+    ENDIF
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
     ENDDO
@@ -549,12 +555,18 @@ CONTAINS
     ENDDO
     DEALLOCATE(density)
 
-    IF (proc_x_min .EQ. MPI_PROC_NULL) weight_fn(0 ,:,:) = weight_fn(1   ,:,:)
-    IF (proc_x_max .EQ. MPI_PROC_NULL) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
-    IF (proc_y_min .EQ. MPI_PROC_NULL) weight_fn(:,0 ,:) = weight_fn(:,1   ,:)
-    IF (proc_y_max .EQ. MPI_PROC_NULL) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
-    IF (proc_z_min .EQ. MPI_PROC_NULL) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
-    IF (proc_z_max .EQ. MPI_PROC_NULL) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
+    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
+      IF (x_min_boundary) weight_fn(0 ,:,:) = weight_fn(1   ,:,:)
+      IF (x_max_boundary) weight_fn(nx,:,:) = weight_fn(nx-1,:,:)
+    ENDIF
+    IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic) THEN
+      IF (y_min_boundary) weight_fn(:,0 ,:) = weight_fn(:,1   ,:)
+      IF (y_max_boundary) weight_fn(:,ny,:) = weight_fn(:,ny-1,:)
+    ENDIF
+    IF (bc_particle(c_bd_z_min) .NE. c_bc_periodic) THEN
+      IF (z_min_boundary) weight_fn(:,:,0 ) = weight_fn(:,:,1   )
+      IF (z_max_boundary) weight_fn(:,:,nz) = weight_fn(:,:,nz-1)
+    ENDIF
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
     ENDDO
