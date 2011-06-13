@@ -1,3 +1,136 @@
+13-06-2011 Changes for version 3.1
+
+Syntax changes:
+
+ * Added synonyms for averaging block parameters.
+   Two new names have been added to improve consistency with
+   the rest of the output block.
+   "dt_average" can be used in place of "averaging_period".
+   "nstep_average" can be used in place of "min_cycles_per_average".
+
+ * Added "intensity" synonym for "irradiance".
+   Also added missing *_w_cm2 specifiers for both.
+
+ * Use "dumpmask" for probes and particle species.
+   Changed the input deck syntax to be consistent with other
+   output blocks. "dumpmask" has the same meaning for probes and
+   species as it does for distribution functions and output blocks.
+
+ * Implemented "no_sum" dumpmask parameter.
+   By default derived particle variables are summed over all
+   species. If the "species" dumpmask parameter is given then
+   output is also generated on a per-species basis.
+   Adding "no_sum" to the dumpmask prevents the output
+   of the variable summed over all species.
+
+Additions and changes:
+
+ * Added current smoothing routine to 1d and 3d versions.
+
+ * Issue a warning, not an error on dist_fn range.
+   In dist_fn blocks the range for spatial coordinates is never
+   used. Therefore the deck parser may as well allow the entry to
+   have invalid values.
+
+ * Tidied up example_decks and added new ones.
+
+ * Issue a warning when deck constants conflict with built-in ones.
+
+ * Changes to the behaviour of data averaging.
+   If "dt_average" is longer than "dt_snapshot" then dt_average
+   will be set equal to dt_snapshot rather than vice-versa.
+   Also, if the timestep is too large to satisfy "nstep_average"
+   then a warning will be printed rather than adjusting the timestep.
+
+ * Removed the normalised grids from dist_fn output.
+
+ * Added labels and units to dist_fn output.
+   Also added support for units in the VisIt plugin.
+
+ * Updated IDL reader to handle labels correctly.
+
+ * Detect file endianness in the IDL reader.
+
+ * Updated the load balancing routine.
+   This change takes into account the workload of the field solver
+   as well as the particle push. It also does a slightly better job
+   of dividing the work amongst processors.
+   Will hopefully prove a little more robust.
+
+ * Print a helpful message for deprecated deck strings.
+
+ * Simplified deck parsing process.
+   The input deck is now only parsed twice. The first time
+   it is called with deck_state set to "c_ds_first" and this pass
+   deals with anything that does not require pre-allocated memory.
+   On the second pass, deck_state is set to "c_ds_last" and this
+   deals with entries that could not be parsed in the first sweep.
+
+ * More particle push optimisations.
+
+ * Added particle heat flux and Poynting flux diagnostics
+
+ * Output a list of each type of output dump for VisIt.
+   The VisIt visualisation tool will accept a list of files
+   which belong together and make these available for plotting.
+   Since "normal", "full" and "restart" dumps each contain different
+   data, it is useful to have a list for each type.
+   This may also be useful for the other plotting libraries in future.
+
+Bugfixes:
+
+ * Fixed typo in cone.deck examples.
+
+ * Fixed serious bug in particle loading routines.
+   A typo in the routine for testing valid cells meant that no
+   particles would get loaded.
+
+ * Fixed bug in maths parser for minus signs.
+   Deck constants are now identified using a new block type
+   constant "c_pt_deck_constant". This needs to be checked for
+   when deciding whether a minus sign is a unary or binary minus.
+
+ * Fixed a typo in the random number generator.
+
+ * Don't deallocate initial conditions until after manual_load.
+
+ * Use thermal particles in the "ramp.deck" example.
+
+ * Fix for calculating gamma-1 in dist_fn routines.
+
+ * Bugfixes for the MatLab reader.
+   There was a bug in setting up grid variables in MatLab which
+   has now been fixed.
+   It has also been changed to reduce the amount of output it
+   produces.
+
+ * Fixed typo in the restart dump reading routines.
+
+ * Use negative values to test for output.
+   The previous version uses HUGE() values for dt_snapshot and
+   nstep_snapshot by default. This can lead to overflow.
+
+ * Ignore cells of zero density in the autoloader.
+
+ * Fix long integer definitions in the maths parser.
+
+ * Start accumulating averaged variables at the correct time.
+   Since an output file can now be triggered by either "dt_snapshot"
+   or "nstep_snapshot", we need to test which one is due to occur
+   next and start accumulating an average in time for this.
+
+ * Make particle probes directional.
+   This change fixes particle probes so that they only track
+   particles which cross the plane in the direction corresponding
+   to the normal direction.
+
+ * Change default kinetic energy limits for probes.
+   Particle probes only track particles whose kinetic energy
+   falls within the specified range ek_min to ek_max. This fix
+   changes the default such that particles of any energy are tracked.
+
+ * Various other tidying and bugfixing
+
 25-02-2011 Changes for version 3.0
 
 Syntax changes:
