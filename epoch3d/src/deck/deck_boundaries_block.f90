@@ -3,8 +3,12 @@ MODULE deck_boundaries_block
   USE strings
 
   IMPLICIT NONE
-
   SAVE
+
+  PRIVATE
+  PUBLIC :: boundary_deck_initialise, boundary_deck_finalise
+  PUBLIC :: boundary_block_start, boundary_block_end
+  PUBLIC :: boundary_block_handle_element, boundary_block_check
 
   INTEGER, PARAMETER :: boundary_block_nbase = 2 * c_ndims
   INTEGER, PARAMETER :: boundary_block_elements = 3 * boundary_block_nbase

@@ -4,8 +4,12 @@ MODULE deck_io_block
   USE strings_advanced
 
   IMPLICIT NONE
-
   SAVE
+
+  PRIVATE
+  PUBLIC :: io_deck_initialise, io_deck_finalise
+  PUBLIC :: io_block_start, io_block_end
+  PUBLIC :: io_block_handle_element, io_block_check
 
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 11
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done

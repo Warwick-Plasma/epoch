@@ -4,8 +4,13 @@ MODULE deck_control_block
   USE fields
 
   IMPLICIT NONE
-
   SAVE
+
+  PRIVATE
+  PUBLIC :: control_deck_initialise, control_deck_finalise
+  PUBLIC :: control_block_start, control_block_end
+  PUBLIC :: control_block_handle_element, control_block_check
+
   INTEGER, PARAMETER :: control_block_elements = 12 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &

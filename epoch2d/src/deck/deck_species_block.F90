@@ -6,8 +6,12 @@ MODULE deck_species_block
   USE utilities
 
   IMPLICIT NONE
-
   SAVE
+
+  PRIVATE
+  PUBLIC :: species_deck_initialise, species_deck_finalise
+  PUBLIC :: species_block_start, species_block_end
+  PUBLIC :: species_block_handle_element, species_block_check
 
   INTEGER :: species_id, current_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0

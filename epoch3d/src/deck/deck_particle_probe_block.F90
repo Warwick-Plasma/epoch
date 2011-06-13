@@ -12,6 +12,12 @@ CONTAINS
 
 #else
   SAVE
+
+  PRIVATE
+  PUBLIC :: probe_deck_initialise, probe_deck_finalise
+  PUBLIC :: probe_block_start, probe_block_end
+  PUBLIC :: probe_block_handle_element, probe_block_check
+
   TYPE(particle_probe), POINTER :: working_probe
   REAL(num) :: point2(c_ndims), point3(c_ndims)
   LOGICAL :: got_point, got_normal, got_x

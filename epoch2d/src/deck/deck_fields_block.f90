@@ -4,8 +4,13 @@ MODULE deck_fields_block
   USE simple_io
 
   IMPLICIT NONE
-
   SAVE
+
+  PRIVATE
+  PUBLIC :: fields_deck_initialise, fields_deck_finalise
+  PUBLIC :: fields_block_start, fields_block_end
+  PUBLIC :: fields_block_handle_element, fields_block_check
+
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset
 
 CONTAINS

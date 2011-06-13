@@ -4,6 +4,11 @@ MODULE deck_window_block
 
   IMPLICIT NONE
 
+  PRIVATE
+  PUBLIC :: window_deck_initialise, window_deck_finalise
+  PUBLIC :: window_block_start, window_block_end
+  PUBLIC :: window_block_handle_element, window_block_check
+
 CONTAINS
 
   SUBROUTINE window_deck_initialise

@@ -4,8 +4,12 @@ MODULE deck_constant_block
   USE shunt
 
   IMPLICIT NONE
-
   SAVE
+
+  PRIVATE
+  PUBLIC :: constant_deck_initialise, constant_deck_finalise
+  PUBLIC :: constant_block_start, constant_block_end
+  PUBLIC :: constant_block_handle_element, constant_block_check
 
 CONTAINS
 

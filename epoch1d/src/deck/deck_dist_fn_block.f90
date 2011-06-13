@@ -4,8 +4,12 @@ MODULE deck_dist_fn_block
   USE dist_fn
 
   IMPLICIT NONE
-
   SAVE
+
+  PRIVATE
+  PUBLIC :: dist_fn_deck_initialise, dist_fn_deck_finalise
+  PUBLIC :: dist_fn_block_start, dist_fn_block_end
+  PUBLIC :: dist_fn_block_handle_element, dist_fn_block_check
 
   TYPE(distribution_function_block), POINTER :: working_block
 

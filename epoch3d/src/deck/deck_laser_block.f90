@@ -4,8 +4,12 @@ MODULE deck_laser_block
   USE laser
 
   IMPLICIT NONE
-
   SAVE
+
+  PRIVATE
+  PUBLIC :: laser_deck_initialise, laser_deck_finalise
+  PUBLIC :: laser_block_start, laser_block_end
+  PUBLIC :: laser_block_handle_element, laser_block_check
 
   TYPE(laser_block), POINTER :: working_laser
   LOGICAL :: boundary_set = .FALSE.
