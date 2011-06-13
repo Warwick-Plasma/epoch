@@ -14,6 +14,7 @@ MODULE deck_io_block
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 11
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
+  CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
 
 CONTAINS
 
@@ -21,6 +22,7 @@ CONTAINS
 
     INTEGER :: i
 
+    alternate_name = ''
     io_block_name(c_dump_part_grid        ) = 'particles'
     io_block_name(c_dump_grid             ) = 'grid'
     io_block_name(c_dump_part_species     ) = 'species_id'
@@ -54,17 +56,19 @@ CONTAINS
     io_block_name(c_dump_poynt_flux       ) = 'poynt_flux'
 
     i = num_vars_to_dump
-    io_block_name(i+1 ) = 'dt_snapshot'
-    io_block_name(i+2 ) = 'full_dump_every'
-    io_block_name(i+3 ) = 'restart_dump_every'
-    io_block_name(i+4 ) = 'force_final_to_be_restartable'
-    io_block_name(i+5 ) = 'use_offset_grid'
-    io_block_name(i+6 ) = 'extended_io_file'
-    io_block_name(i+7 ) = 'averaging_period'
-    io_block_name(i+8 ) = 'min_cycles_per_average'
-    io_block_name(i+9 ) = 'nstep_snapshot'
-    io_block_name(i+10) = 'dump_source_code'
-    io_block_name(i+11) = 'dump_input_decks'
+    io_block_name (i+1 ) = 'dt_snapshot'
+    io_block_name (i+2 ) = 'full_dump_every'
+    io_block_name (i+3 ) = 'restart_dump_every'
+    io_block_name (i+4 ) = 'force_final_to_be_restartable'
+    io_block_name (i+5 ) = 'use_offset_grid'
+    io_block_name (i+6 ) = 'extended_io_file'
+    io_block_name (i+7 ) = 'dt_average'
+    alternate_name(i+7 ) = 'averaging_period'
+    io_block_name (i+8 ) = 'nstep_average'
+    alternate_name(i+8 ) = 'min_cycles_per_average'
+    io_block_name (i+9 ) = 'nstep_snapshot'
+    io_block_name (i+10) = 'dump_source_code'
+    io_block_name (i+11) = 'dump_input_decks'
 
   END SUBROUTINE io_deck_initialise
 
@@ -105,7 +109,8 @@ CONTAINS
     elementselected = 0
 
     DO loop = 1, io_block_elements
-      IF (str_cmp(element, TRIM(ADJUSTL(io_block_name(loop))))) THEN
+      IF (str_cmp(element, TRIM(ADJUSTL(io_block_name(loop)))) &
+          .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
         elementselected = loop
         EXIT
       ENDIF
@@ -141,9 +146,9 @@ CONTAINS
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(7)
-      average_time = as_real(value, errcode)
+      dt_average = as_real(value, errcode)
     CASE(8)
-      min_cycles_per_average = as_integer(value, errcode)
+      nstep_average = as_integer(value, errcode)
     CASE(9)
       nstep_snapshot = as_integer(value, errcode)
       IF (nstep_snapshot .LT. 0) nstep_snapshot = 0
@@ -261,7 +266,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (dt_snapshot .LT. average_time) THEN
+    IF (dt_snapshot .LT. dt_average) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
@@ -270,7 +275,7 @@ CONTAINS
           WRITE(io,*) 'to averaging time.'
         ENDDO
       ENDIF
-      dt_snapshot = average_time
+      dt_snapshot = dt_average
     ENDIF
 
     ! Particles

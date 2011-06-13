@@ -189,7 +189,7 @@ CONTAINS
     min_av_time = t_end
     DO ioutput = 1, num_vars_to_dump
       IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
-        averaged_data(ioutput)%time_period = average_time
+        averaged_data(ioutput)%time_period = dt_average
         min_av_time = MIN(min_av_time, averaged_data(ioutput)%time_period)
         n_species_local = 1
         IF (IAND(dumpmask(ioutput), c_io_species) .NE. 0) &
@@ -202,8 +202,8 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (min_cycles_per_average .GT. 0) &
-        dt_min_average = min_av_time / REAL(min_cycles_per_average, num)
+    IF (nstep_average .GT. 0) &
+        dt_min_average = min_av_time / REAL(nstep_average, num)
 
   END SUBROUTINE setup_data_averaging
 

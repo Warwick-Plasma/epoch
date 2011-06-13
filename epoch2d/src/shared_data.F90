@@ -634,9 +634,9 @@ MODULE shared_data
     REAL(num) :: real_time
   END TYPE averaged_data_block
   TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
-  INTEGER :: min_cycles_per_average = -1
+  INTEGER :: nstep_average = -1
   LOGICAL :: any_average = .FALSE.
-  REAL(num) :: average_time = -1.0_num
+  REAL(num) :: dt_average = -1.0_num
 
   !----------------------------------------------------------------------------
   ! laser boundaries
