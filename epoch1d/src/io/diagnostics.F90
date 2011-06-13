@@ -238,7 +238,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: i
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
-    INTEGER :: ioutput
+    INTEGER :: id
     REAL(num) :: t0, t1, time_first
 
     print_arrays = .FALSE.
@@ -252,28 +252,30 @@ CONTAINS
     IF (nstep_snapshot .GE. 0) t1 = time + dt * (nstep_next - i)
 
     IF (t0 .LT. t1) THEN
-      time_first  = t0
+      ! Next I/O dump based on dt_snapshot
+      time_first = t0
+      IF (time .GE. time_next) THEN
+        time_next  = time_next + dt_snapshot
+        nstep_next = i + nstep_snapshot
+        print_arrays = .TRUE.
+      ENDIF
     ELSE
-      time_first  = t1
+      ! Next I/O dump based on nstep_snapshot
+      time_first = t1
+      IF (i .GE. nstep_next) THEN
+        time_next  = time + dt_snapshot
+        nstep_next = nstep_next + nstep_snapshot
+        print_arrays = .TRUE.
+      ENDIF
     ENDIF
 
-    DO ioutput = 1, num_vars_to_dump
-      IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
-        IF (time .GE. time_first - averaged_data(ioutput)%time_period) THEN
-          CALL average_field(ioutput)
+    DO id = 1, num_vars_to_dump
+      IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
+        IF (time .GE. time_first - averaged_data(id)%time_period) THEN
+          CALL average_field(id)
         ENDIF
       ENDIF
     ENDDO
-
-    IF (dt_snapshot .GE. 0.0_num .AND. time .GE. time_next) THEN
-      print_arrays = .TRUE.
-      time_next = time_next + dt_snapshot
-      IF (nstep_snapshot .GE. 0) nstep_next = i + nstep_snapshot
-    ELSE IF (nstep_snapshot .GE. 0 .AND. i .GE. nstep_next) THEN
-      print_arrays = .TRUE.
-      nstep_next = nstep_next + nstep_snapshot
-      IF (dt_snapshot .GE. 0.0_num) time_next = time + dt_snapshot
-    ENDIF
 
     IF (time .GE. t_end .OR. i .EQ. nsteps) THEN
       last_call = .TRUE.
