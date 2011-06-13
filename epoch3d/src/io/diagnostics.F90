@@ -303,7 +303,7 @@ CONTAINS
 
     DO id = 1, num_vars_to_dump
       IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
-        IF (time .GE. time_first - averaged_data(id)%time_period) THEN
+        IF (time .GE. time_first - average_time) THEN
           CALL average_field(id)
         ENDIF
       ENDIF
@@ -409,8 +409,25 @@ CONTAINS
     dt = dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
     IF (dt_plasma_frequency .NE. 0.0_num) dt = MIN(dt, dt_plasma_frequency)
     IF (dt_laser .NE. 0.0_num) dt = MIN(dt, dt_laser)
-    IF (dt_min_average .GT. 0.0_num) dt = MIN(dt, dt_min_average)
     dt = dt_multiplier * dt
+
+    IF (.NOT. any_average) RETURN
+
+    average_time = MAX(dt_average, dt * nstep_average)
+
+    IF (dt_min_average .GT. 0) THEN
+      IF (dt_min_average .LT. dt) THEN
+        IF (rank .EQ. 0) THEN
+          PRINT*,'*** WARNING ***'
+          PRINT*,'Time step is too small to satisfy "nstep_average"'
+          PRINT*,'Averaging will occur over fewer time steps than specified'
+          PRINT*,'Set "dt_multiplier" less than ', &
+              dt_multiplier * dt_min_average / dt, &
+              ' to fix this'
+        ENDIF
+        dt_min_average = -1
+      ENDIF
+    ENDIF
 
   END SUBROUTINE set_dt
 

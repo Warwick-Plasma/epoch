@@ -76,6 +76,20 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
+    INTEGER :: io
+
+    IF (dt_average .GT. t_end) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Averaging time is longer than t_end, will set', &
+              ' averaging time equal'
+          WRITE(io,*) 'to t_end.'
+        ENDDO
+      ENDIF
+      dt_average = t_end
+    ENDIF
+
   END SUBROUTINE io_deck_finalise
 
 
@@ -266,16 +280,16 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (dt_snapshot .LT. dt_average) THEN
+    IF (dt_average .GT. dt_snapshot) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Averaging time is longer than dt_snapshot, will set', &
-              ' dt_snapshot equal'
-          WRITE(io,*) 'to averaging time.'
+              ' averaging time equal'
+          WRITE(io,*) 'to dt_snapshot.'
         ENDDO
       ENDIF
-      dt_snapshot = dt_average
+      dt_average = dt_snapshot
     ENDIF
 
     ! Particles

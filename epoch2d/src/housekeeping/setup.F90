@@ -180,30 +180,25 @@ CONTAINS
 
   SUBROUTINE setup_data_averaging()
 
-    INTEGER :: ioutput, n_species_local
-    REAL(num) :: min_av_time
+    INTEGER :: io, nspec_local
 
     dt_min_average = -1.0_num
     IF (.NOT. any_average) RETURN
 
-    min_av_time = t_end
-    DO ioutput = 1, num_vars_to_dump
-      IF (IAND(dumpmask(ioutput), c_io_averaged) .NE. 0) THEN
-        averaged_data(ioutput)%time_period = dt_average
-        min_av_time = MIN(min_av_time, averaged_data(ioutput)%time_period)
-        n_species_local = 1
-        IF (IAND(dumpmask(ioutput), c_io_species) .NE. 0) &
-            n_species_local = n_species + 1
-        ALLOCATE(averaged_data(ioutput)%array(-2:nx+3,-2:ny+3,n_species_local))
-        averaged_data(ioutput)%array = 0.0_num
-        averaged_data(ioutput)%real_time = 0.0_num
-      ELSE
-        dumpmask(ioutput) = IOR(dumpmask(ioutput), c_io_snapshot)
+    DO io = 1, num_vars_to_dump
+      IF (IAND(dumpmask(io), c_io_averaged) .NE. 0) THEN
+        nspec_local = 1
+        IF (IAND(dumpmask(io), c_io_species) .NE. 0) &
+            nspec_local = n_species + 1
+        ALLOCATE(averaged_data(io)%array(-2:nx+3,-2:ny+3,nspec_local))
+        averaged_data(io)%array = 0.0_num
+        averaged_data(io)%real_time = 0.0_num
       ENDIF
     ENDDO
 
-    IF (nstep_average .GT. 0) &
-        dt_min_average = min_av_time / REAL(nstep_average, num)
+    IF (nstep_average .GT. 0 .AND. dt_average .GT. 0) THEN
+      dt_min_average = dt_average / REAL(nstep_average, num)
+    ENDIF
 
   END SUBROUTINE setup_data_averaging
 
