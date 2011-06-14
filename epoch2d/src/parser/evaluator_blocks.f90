@@ -274,6 +274,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_io_no_sum) THEN
+      CALL push_on_eval(REAL(c_io_no_sum, num))
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_const_io_average) THEN
       CALL push_on_eval(REAL(c_io_averaged, num))
       RETURN

@@ -190,7 +190,8 @@ CONTAINS
     ! Setting some flags like species and average 
     ! wastes memory if the parameters make no sense. Do sanity checking.
 
-    IF (IAND(mask, c_io_species) .NE. 0) THEN
+    IF (IAND(mask, c_io_species) .NE. 0 &
+        .OR. IAND(mask, c_io_no_sum) .EQ. 0) THEN
       bad = .TRUE.
       ! Check for sensible per species variables
       IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
@@ -200,7 +201,7 @@ CONTAINS
       IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
       IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
       IF (bad) THEN
-        IF (rank .EQ. 0) THEN
+        IF (rank .EQ. 0 .AND. IAND(mask, c_io_species) .NE. 0) THEN
           DO io = stdout, du, du - stdout ! Print to stdout and to file
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'Attempting to set per species property for "' &
@@ -209,6 +210,7 @@ CONTAINS
           ENDDO
         ENDIF
         mask = IAND(mask, NOT(c_io_species))
+        mask = IOR(mask, c_io_no_sum)
       ENDIF
     ENDIF
 

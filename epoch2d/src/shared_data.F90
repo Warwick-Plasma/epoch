@@ -65,9 +65,10 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_full = 2
   INTEGER, PARAMETER :: c_io_restartable = 4
   INTEGER, PARAMETER :: c_io_species = 8
-  INTEGER, PARAMETER :: c_io_no_intrinsic = 16
+  INTEGER, PARAMETER :: c_io_no_sum = 16
   INTEGER, PARAMETER :: c_io_averaged = 32
   INTEGER, PARAMETER :: c_io_snapshot = 64
+
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
   INTEGER, PARAMETER :: c_do_decomposed = 1
@@ -228,8 +229,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_io_full = 62
   INTEGER, PARAMETER :: c_const_io_restartable = 63
   INTEGER, PARAMETER :: c_const_io_species = 64
-  INTEGER, PARAMETER :: c_const_io_average = 65
-  INTEGER, PARAMETER :: c_const_io_snapshot = 66
+  INTEGER, PARAMETER :: c_const_io_no_sum = 65
+  INTEGER, PARAMETER :: c_const_io_average = 66
+  INTEGER, PARAMETER :: c_const_io_snapshot = 67
 
   INTEGER, PARAMETER :: c_const_dir_x = 80
   INTEGER, PARAMETER :: c_const_dir_y = 81

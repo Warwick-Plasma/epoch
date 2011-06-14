@@ -323,9 +323,11 @@ CONTAINS
     DO index = 1, num_vars_to_dump
       IF (.NOT. ASSOCIATED(averaged_data(index)%array)) CYCLE
 
-      n_species_local = 1
+      n_species_local = 0
+      IF (IAND(dumpmask(index), c_io_no_sum) .EQ. 0) &
+          n_species_local = 1
       IF (IAND(dumpmask(index), c_io_species) .NE. 0) &
-          n_species_local = n_species + 1
+          n_species_local = n_species_local + n_species
 
       ALLOCATE(temp4d(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3, 1:n_species_local))
 

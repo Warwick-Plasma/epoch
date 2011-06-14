@@ -132,6 +132,7 @@ CONTAINS
     IF (str_cmp(name, "average")) as_constant = c_const_io_average
     IF (str_cmp(name, "snapshot")) as_constant = c_const_io_snapshot
     IF (str_cmp(name, "species")) as_constant = c_const_io_species
+    IF (str_cmp(name, "no_sum")) as_constant = c_const_io_no_sum
     IF (str_cmp(name, "dir_x")) as_constant = c_const_dir_x
     IF (str_cmp(name, "dir_y")) as_constant = c_const_dir_y
     IF (str_cmp(name, "dir_z")) as_constant = c_const_dir_z

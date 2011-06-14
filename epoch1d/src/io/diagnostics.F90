@@ -322,14 +322,19 @@ CONTAINS
   SUBROUTINE average_field(ioutput)
 
     INTEGER, INTENT(IN) :: ioutput
-    INTEGER :: n_species_local, ispecies
+    INTEGER :: n_species_local, ispecies, species_sum
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
 
     averaged_data(ioutput)%real_time = averaged_data(ioutput)%real_time + dt
 
-    n_species_local = 1
+    species_sum = 0
+    n_species_local = 0
+    IF (IAND(dumpmask(ioutput), c_io_no_sum) .EQ. 0) &
+        species_sum = 1
     IF (IAND(dumpmask(ioutput), c_io_species) .NE. 0) &
-        n_species_local = n_species + 1
+        n_species_local = n_species
+
+    n_species_local = n_species_local + species_sum
 
     SELECT CASE(ioutput)
     CASE(c_dump_ex)
@@ -362,7 +367,7 @@ CONTAINS
     CASE(c_dump_ekbar)
       ALLOCATE(array(-2:nx+3))
       DO ispecies = 1, n_species_local
-        CALL calc_ekbar(array, ispecies-1)
+        CALL calc_ekbar(array, ispecies-species_sum)
         averaged_data(ioutput)%array(:,ispecies) = &
             averaged_data(ioutput)%array(:,ispecies) + array * dt
       ENDDO
@@ -370,7 +375,7 @@ CONTAINS
     CASE(c_dump_mass_density)
       ALLOCATE(array(-2:nx+3))
       DO ispecies = 1, n_species_local
-        CALL calc_mass_density(array, ispecies-1)
+        CALL calc_mass_density(array, ispecies-species_sum)
         averaged_data(ioutput)%array(:,ispecies) = &
             averaged_data(ioutput)%array(:,ispecies) + array * dt
       ENDDO
@@ -378,7 +383,7 @@ CONTAINS
     CASE(c_dump_charge_density)
       ALLOCATE(array(-2:nx+3))
       DO ispecies = 1, n_species_local
-        CALL calc_charge_density(array, ispecies-1)
+        CALL calc_charge_density(array, ispecies-species_sum)
         averaged_data(ioutput)%array(:,ispecies) = &
             averaged_data(ioutput)%array(:,ispecies) + array * dt
       ENDDO
@@ -386,7 +391,7 @@ CONTAINS
     CASE(c_dump_number_density)
       ALLOCATE(array(-2:nx+3))
       DO ispecies = 1, n_species_local
-        CALL calc_number_density(array, ispecies-1)
+        CALL calc_number_density(array, ispecies-species_sum)
         averaged_data(ioutput)%array(:,ispecies) = &
             averaged_data(ioutput)%array(:,ispecies) + array * dt
       ENDDO
@@ -394,7 +399,7 @@ CONTAINS
     CASE(c_dump_temperature)
       ALLOCATE(array(-2:nx+3))
       DO ispecies = 1, n_species_local
-        CALL calc_temperature(array, ispecies-1)
+        CALL calc_temperature(array, ispecies-species_sum)
         averaged_data(ioutput)%array(:,ispecies) = &
             averaged_data(ioutput)%array(:,ispecies) + array * dt
       ENDDO
@@ -490,7 +495,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: ispecies, should_dump
+    INTEGER :: ispecies, should_dump, species_sum
     CHARACTER(LEN=c_max_string_length) :: temp_block_id, temp_name
 
     INTERFACE
@@ -511,7 +516,7 @@ CONTAINS
     should_dump = IOR(should_dump, NOT(c_io_averaged))
 
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
-      IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
+      IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
         CALL func(array, 0)
         CALL sdf_write_plain_variable(sdf_handle, &
             TRIM(ADJUSTL(block_id)), TRIM(ADJUSTL(name)), &
@@ -542,7 +547,9 @@ CONTAINS
       averaged_data(id)%array = averaged_data(id)%array &
           / averaged_data(id)%real_time
 
-      IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
+      species_sum = 0
+      IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
+        species_sum = 1
         CALL sdf_write_plain_variable(sdf_handle, &
             TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
             TRIM(units), dims, stagger, 'grid', &
@@ -558,7 +565,7 @@ CONTAINS
           CALL sdf_write_plain_variable(sdf_handle, &
               TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
               TRIM(units), dims, stagger, 'grid', &
-              averaged_data(id)%array(:,ispecies+1), &
+              averaged_data(id)%array(:,ispecies+species_sum), &
               subtype_field, subarray_field)
         ENDDO
       ENDIF
@@ -603,7 +610,7 @@ CONTAINS
     should_dump = IOR(should_dump, NOT(c_io_averaged))
 
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
-      IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
+      IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
         DO idir = 1, ndirs
           WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
               TRIM(dir_tags(idir))

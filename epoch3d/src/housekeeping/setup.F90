@@ -213,9 +213,11 @@ CONTAINS
 
     DO io = 1, num_vars_to_dump
       IF (IAND(dumpmask(io), c_io_averaged) .NE. 0) THEN
-        nspec_local = 1
+        nspec_local = 0
+        IF (IAND(dumpmask(io), c_io_no_sum) .EQ. 0) &
+            nspec_local = 1
         IF (IAND(dumpmask(io), c_io_species) .NE. 0) &
-            nspec_local = n_species + 1
+            nspec_local = nspec_local + n_species
         ALLOCATE(averaged_data(io)%array(-2:nx+3,-2:ny+3,-2:nz+3,nspec_local))
         averaged_data(io)%array = 0.0_num
         averaged_data(io)%real_time = 0.0_num
