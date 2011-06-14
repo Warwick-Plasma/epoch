@@ -48,7 +48,6 @@ begin:species
   density = if((r gt ri) and (r lt ro), den_cone, 0.0)
   density = if((x gt xi) and (x lt xo) and (r lt ri), den_cone, density(proton))
   density = if(x gt xo, 0.0, density(proton))
-  dump = T
 end:species
 
 
@@ -58,7 +57,6 @@ begin:species
   mass = 1.0
   frac = 0.5
   density = density(proton)
-  dump = T
 end:species
 
 
@@ -93,7 +91,6 @@ end:output
 begin:dist_fn
   name = x_px
   ndims = 2
-  dumpmask = always
 
   direction1 = dir_x
   direction2 = dir_px

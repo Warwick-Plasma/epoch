@@ -401,7 +401,7 @@ MODULE shared_data
     CHARACTER(string_length) :: name
     TYPE(particle_species), POINTER :: next, prev
     INTEGER :: id
-    LOGICAL :: dump
+    INTEGER :: dumpmask
 
     REAL(num) :: charge
     REAL(num) :: mass

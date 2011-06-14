@@ -190,7 +190,7 @@ CONTAINS
       species_list(ispecies)%name = blank
       species_list(ispecies)%mass = -1.0_num
       species_list(ispecies)%charge = 0.0_num
-      species_list(ispecies)%dump = .TRUE.
+      species_list(ispecies)%dumpmask = c_io_always
       species_list(ispecies)%count = -1
       species_list(ispecies)%id = 0
       species_list(ispecies)%npart_per_cell = 0

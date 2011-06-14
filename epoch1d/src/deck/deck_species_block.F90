@@ -104,7 +104,7 @@ CONTAINS
     INTEGER :: errcode
     REAL(num) :: dmin
     CHARACTER(LEN=string_length) :: filename
-    LOGICAL :: got_file
+    LOGICAL :: got_file, dump
 
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
@@ -150,7 +150,17 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "dump")) THEN
-      species_list(species_id)%dump = as_logical(value, errcode)
+      dump = as_logical(value, errcode)
+      IF (dump) THEN
+        species_list(species_id)%dumpmask = c_io_always
+      ELSE
+        species_list(species_id)%dumpmask = c_io_never
+      ENDIF
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, "dumpmask")) THEN
+      species_list(species_id)%dumpmask = as_integer(value, errcode)
       RETURN
     ENDIF
 

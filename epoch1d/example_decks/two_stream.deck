@@ -30,7 +30,6 @@ begin:species
   charge = -1
   mass = 1.0
   frac = 0.5
-  dump = T
   temp_x = temp
   drift_x = drift_p
   density = dens
@@ -43,7 +42,6 @@ begin:species
   charge = -1
   mass = 1.0
   frac = 0.5
-  dump = T
   temp_x = temp
   drift_x = -drift_p
   density = dens
@@ -83,7 +81,6 @@ end:output
 begin:dist_fn
   name = x_px
   ndims = 2
-  dumpmask = always
 
   direction1 = dir_x
   direction2 = dir_px

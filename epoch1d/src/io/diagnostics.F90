@@ -70,7 +70,7 @@ CONTAINS
     IF (last_call .AND. force_final_to_be_restartable) &
         code = IOR(code, c_io_restartable)
 
-    CALL create_subtypes(IAND(code, c_io_restartable) .NE. 0)
+    CALL create_subtypes(code)
 
     ! Set a restart_flag to pass to the file header
     IF (IAND(code, c_io_restartable) .NE. 0) THEN
@@ -111,7 +111,8 @@ CONTAINS
     IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
       DO ispecies = 1, n_species
         species => species_list(ispecies)
-        IF (species%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        IF (IAND(species%dumpmask, code) .NE. 0 &
+            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
           CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
               'Particles/Weight/' // TRIM(species%name), species%weight)
         ENDIF
@@ -683,7 +684,8 @@ CONTAINS
     CALL start_particle_species_only(current_species)
 
     DO ispecies = 1, n_species
-      IF (current_species%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+      IF (IAND(current_species%dumpmask, code) .NE. 0 &
+          .OR. IAND(code, c_io_restartable) .NE. 0) THEN
         CALL sdf_write_point_mesh(sdf_handle, &
             'grid/' // TRIM(current_species%name), &
             'Grid/Point/' // TRIM(current_species%name), &
@@ -722,7 +724,8 @@ CONTAINS
     CALL start_particle_species_only(current_species)
 
     DO ispecies = 1, n_species
-      IF (current_species%dump .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+      IF (IAND(current_species%dumpmask, code) .NE. 0 &
+          .OR. IAND(code, c_io_restartable) .NE. 0) THEN
         CALL sdf_write_point_variable(sdf_handle, &
             lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
             'Particles/' // TRIM(current_species%name) // '/' // &

@@ -40,18 +40,19 @@ CONTAINS
   ! Run just before output takes place
   !----------------------------------------------------------------------------
 
-  SUBROUTINE create_subtypes(force_restart)
+  SUBROUTINE create_subtypes(dump_code)
 
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when writing data
-    LOGICAL, INTENT(IN) :: force_restart
+    INTEGER, INTENT(IN) :: dump_code
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_local
     INTEGER :: n_dump_species, ispecies, index
 
     ! count the number of dumped particles of each species
     n_dump_species = 0
     DO ispecies = 1, n_species
-      IF (species_list(ispecies)%dump .OR. force_restart) THEN
+      IF (IAND(species_list(ispecies)%dumpmask, dump_code) .NE. 0 &
+          .OR. IAND(dump_code, c_io_restartable) .NE. 0) THEN
         n_dump_species = n_dump_species + 1
       ENDIF
     ENDDO
@@ -59,7 +60,8 @@ CONTAINS
     ALLOCATE(npart_local(n_dump_species))
     index = 1
     DO ispecies = 1, n_species
-      IF (species_list(ispecies)%dump .OR. force_restart) THEN
+      IF (IAND(species_list(ispecies)%dumpmask, dump_code) .NE. 0 &
+          .OR. IAND(dump_code, c_io_restartable) .NE. 0) THEN
         npart_local(index) = species_list(ispecies)%attached_list%count
         particle_file_lengths(index) = npart_local(index)
         index = index + 1

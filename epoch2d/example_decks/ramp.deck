@@ -75,7 +75,6 @@ begin:species
   density_max = 1.2 * n_crit
 
   temp_ev = 40
-  dump = T
 end:species
 
 
@@ -90,7 +89,6 @@ begin:species
   density_min = 0.0001 * n_crit
   density_max = n_crit
 
-  dump = T
   temp_ev = 10^3
 end:species
 
@@ -128,7 +126,6 @@ end:output
 begin:dist_fn
   name = en
   ndims = 1
-  dumpmask = always
 
   direction1 = dir_en
 
@@ -143,7 +140,6 @@ end:dist_fn
 begin:dist_fn
   name = x_en
   ndims = 2
-  dumpmask = always
 
   direction1 = dir_x
   direction2 = dir_en
@@ -163,7 +159,6 @@ end:dist_fn
 begin:dist_fn
   name = x_px
   ndims = 2
-  dumpmask = always
 
   direction1 = dir_x
   direction2 = dir_px

@@ -31,7 +31,6 @@ begin:species
   temp_x = temp
   density = dens + 0.8*dens * sin(2*pi*x/lengthx)
   density_min = 0.0
-  dump = T
 end:species
 
 
@@ -42,7 +41,6 @@ begin:species
   frac = 0.5
   temp_x = temp_x(electrons)
   density = density(electrons)
-  dump = T
 end:species
 
 
@@ -80,7 +78,6 @@ end:output
 begin:dist_fn
   name = x_px
   ndims = 2
-  dumpmask = always
 
   direction1 = dir_x
   direction2 = dir_px
