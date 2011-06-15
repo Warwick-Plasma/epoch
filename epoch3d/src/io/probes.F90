@@ -21,7 +21,7 @@ CONTAINS
     probe%ek_min = -HUGE(1.0_num)
     probe%ek_max =  HUGE(1.0_num)
     probe%name = blank
-    probe%dumpmask = 0
+    probe%dumpmask = c_io_always
     NULLIFY(probe%next)
     NULLIFY(probe%probe_species)
     CALL create_empty_partlist(probe%sampled_particles)

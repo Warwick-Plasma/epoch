@@ -35,7 +35,7 @@ CONTAINS
 
     block%name = blank
     block%ndims = -1
-    block%dumpmask = 0
+    block%dumpmask = c_io_always
     block%directions = 0
     block%ranges = 1.0_num
     block%resolution = 1
@@ -85,7 +85,7 @@ CONTAINS
               errcode)
 
           ! If there was an error writing the dist_fn then ignore it in future
-          IF (errcode .NE. 0) current%dumpmask = 0
+          IF (errcode .NE. 0) current%dumpmask = c_io_never
         ENDDO
       ENDIF
       current=>current%next
