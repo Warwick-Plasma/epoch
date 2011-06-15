@@ -492,7 +492,7 @@ MODULE shared_data
     TYPE(particle_species), POINTER :: probe_species
     TYPE(particle_list) :: sampled_particles
     TYPE(particle_probe), POINTER :: next
-    INTEGER :: dump
+    INTEGER :: dumpmask
   END TYPE particle_probe
 #endif
 

@@ -21,7 +21,7 @@ CONTAINS
     probe%ek_min = -HUGE(1.0_num)
     probe%ek_max =  HUGE(1.0_num)
     probe%name = blank
-    probe%dump = 0
+    probe%dumpmask = 0
     NULLIFY(probe%next)
     NULLIFY(probe%probe_species)
     CALL create_empty_partlist(probe%sampled_particles)
@@ -67,7 +67,7 @@ CONTAINS
       current_probe=>species_list(ispecies)%attached_probes
       DO WHILE(ASSOCIATED(current_probe))
         ! If don't dump this probe currently then just cycle
-        IF (IAND(current_probe%dump, code) .EQ. 0) THEN
+        IF (IAND(current_probe%dumpmask, code) .EQ. 0) THEN
           current_probe=>current_probe%next
           CYCLE
         ENDIF

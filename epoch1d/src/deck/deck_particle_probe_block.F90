@@ -92,8 +92,8 @@ CONTAINS
     ! get particle probe diagnostics (rolling total of all particles which
     ! pass through a given region of real space (defined by a point on a plane
     ! and the normal to that plane.
-    IF (str_cmp(element, "dump")) THEN
-      working_probe%dump = as_integer(value, errcode)
+    IF (str_cmp(element, "dumpmask") .OR. str_cmp(element, "dump")) THEN
+      working_probe%dumpmask = as_integer(value, errcode)
       RETURN
     ENDIF
 
