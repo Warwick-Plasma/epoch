@@ -36,6 +36,9 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_m  = species_list(ispecies)%mass
@@ -121,6 +124,9 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = c * species_list(ispecies)%mass
@@ -217,6 +223,9 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = species_list(ispecies)%charge
@@ -298,6 +307,9 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_WEIGHT
       wdata = species_list(ispecies)%weight * idx
@@ -380,6 +392,9 @@ CONTAINS
     sigma = 0.0_num
 
     DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       sqrt_part_m  = SQRT(species_list(ispecies)%mass)
@@ -446,6 +461,9 @@ CONTAINS
 
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       sqrt_part_m  = SQRT(species_list(ispecies)%mass)
@@ -536,6 +554,9 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
       current=>species_list(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
 #ifdef PARTICLE_SHAPE_TOPHAT
