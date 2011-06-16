@@ -326,15 +326,14 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: filename
     LOGICAL, INTENT(IN) :: first_call
     INTEGER, INTENT(IN) :: deck_state_in
-    CHARACTER :: u1
+    CHARACTER :: u0, u1
     INTEGER :: pos = 1, flip = 1, s, f, elements = 0, lun
     LOGICAL :: is_comment
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=64+data_dir_max_length) :: deck_filename, status_filename
     CHARACTER(LEN=64+data_dir_max_length) :: list_filename
     LOGICAL :: terminate = .FALSE., exists
-    INTEGER :: errcode_deck, ierr, i, io
-    LOGICAL :: white_space_over
+    INTEGER :: errcode_deck, ierr, i, io, rank_check
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
     TYPE(file_buffer), POINTER :: fbuf
     LOGICAL :: already_parsed, got_eor, got_eof
@@ -346,8 +345,9 @@ CONTAINS
     blank = "BLANKBLANK"
 
     lun = 5
-    white_space_over = .FALSE.
+    rank_check = 0
     already_parsed = .FALSE.
+    u0 = ' '
 
     ! Make the whole filename by adding the data_dir to the filename
     deck_filename = TRIM(ADJUSTL(data_dir)) // '/' // TRIM(ADJUSTL(filename))
@@ -505,12 +505,12 @@ CONTAINS
         IF (.NOT. is_comment) THEN
           ! If the current character isn't a special character then just stick
           ! it in the buffer
-          IF (u1 .NE. '=' .AND. u1 .NE. CHAR(9) .AND. u1 .NE. ':' &
+          IF (u1 .NE. '=' .AND. u1 .NE. ACHAR(9) .AND. u1 .NE. ':' &
               .AND. f .EQ. 0) THEN
-            IF ((u1 .NE. ' ' .AND. u1 .NE. CHAR(32)) .OR. white_space_over) THEN
+            IF ((u1 .NE. ' ' .AND. u1 .NE. ACHAR(32)) .OR. u0 .NE. ' ') THEN
               deck_values(flip)%value(pos:pos) = u1
               pos = pos+1
-              white_space_over = .TRUE.
+              u0 = u1
             ENDIF
           ENDIF
 
@@ -544,7 +544,7 @@ CONTAINS
           deck_values(1)%value = ""
           deck_values(2)%value = ""
           is_comment = .FALSE.
-          white_space_over = .FALSE.
+          u0 = ' '
         ENDIF
         IF (got_eof) THEN
           CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
@@ -691,7 +691,7 @@ CONTAINS
 
     IF (errcode_deck .EQ. c_err_none) THEN
       IF (rank .EQ. rank_check) &
-          WRITE(du, *) CHAR(9), "Element ", TRIM(ADJUSTL(element)), "=", &
+          WRITE(du, *) ACHAR(9), "Element ", TRIM(ADJUSTL(element)), "=", &
               TRIM(ADJUSTL(value)), " handled OK"
       RETURN
     ENDIF
