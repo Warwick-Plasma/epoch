@@ -23,7 +23,8 @@ CONTAINS
     probe%name = blank
     probe%dumpmask = c_io_always
     NULLIFY(probe%next)
-    NULLIFY(probe%probe_species)
+    ALLOCATE(probe%use_species(n_species))
+    probe%use_species = .FALSE.
     CALL create_empty_partlist(probe%sampled_particles)
 
   END SUBROUTINE init_probe
@@ -34,17 +35,22 @@ CONTAINS
 
     TYPE(particle_probe), POINTER :: probe
     TYPE(particle_probe), POINTER :: current
+    INTEGER :: i
 
-    current=>probe%probe_species%attached_probes
-    IF (.NOT. ASSOCIATED(current)) THEN
-      probe%probe_species%attached_probes=>probe
-      RETURN
-    ENDIF
-    DO WHILE(ASSOCIATED(current%next))
-      current=>current%next
+    DO i = 1, n_species
+      IF (.NOT. probe%use_species(i)) CYCLE
+
+      current => species_list(i)%attached_probes
+      IF (.NOT. ASSOCIATED(current)) THEN
+        species_list(i)%attached_probes => probe
+        CYCLE
+      ENDIF
+      DO WHILE(ASSOCIATED(current%next))
+        current => current%next
+      ENDDO
+      ! Now at the last element in the list
+      current%next => probe
     ENDDO
-    ! Now at the last element in the list
-    current%next=>probe
 
   END SUBROUTINE attach_probe
 

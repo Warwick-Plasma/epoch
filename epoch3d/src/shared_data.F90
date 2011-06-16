@@ -496,7 +496,7 @@ MODULE shared_data
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
 
-    TYPE(particle_species), POINTER :: probe_species
+    LOGICAL, DIMENSION(:), POINTER :: use_species
     TYPE(particle_list) :: sampled_particles
     TYPE(particle_probe), POINTER :: next
     INTEGER :: dumpmask

@@ -120,11 +120,12 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "probe_species")) THEN
+    IF (str_cmp(element, "include_species") &
+        .OR. str_cmp(element, "probe_species")) THEN
       ispecies = as_integer(value, errcode)
       IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
-          working_probe%probe_species=>species_list(ispecies)
+          working_probe%use_species(ispecies) = .TRUE.
         ELSE
           IF (rank .EQ. 0) THEN
             DO io = stdout, du, du - stdout ! Print to stdout and to file

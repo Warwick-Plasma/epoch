@@ -55,7 +55,7 @@ CONTAINS
     INTEGER :: errcode
 
     CHARACTER(LEN=string_length) :: part1
-    INTEGER :: part2
+    INTEGER :: part2, ispecies
     INTEGER :: work, io
     REAL(num) :: work1, work2
 
@@ -139,8 +139,21 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "include_species")) THEN
-      part2 = as_integer(value, errcode)
-      working_block%use_species(part2) = .TRUE.
+      ispecies = as_integer(value, errcode)
+      IF (errcode .EQ. c_err_none) THEN
+        IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
+          working_block%use_species(ispecies) = .TRUE.
+        ELSE
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Unable to apply dist_fn to non existant species ', &
+                  ispecies
+            ENDDO
+          ENDIF
+          errcode = c_err_bad_value
+        ENDIF
+      ENDIF
       RETURN
     ENDIF
 
