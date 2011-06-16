@@ -328,7 +328,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: deck_state_in
     CHARACTER :: u0, u1
     INTEGER :: pos = 1, flip = 1, s, f, elements = 0, lun
-    LOGICAL :: is_comment
+    LOGICAL :: ignore, continuation
+    LOGICAL, SAVE :: warn = .TRUE.
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=64+data_dir_max_length) :: deck_filename, status_filename
     CHARACTER(LEN=64+data_dir_max_length) :: list_filename
@@ -360,9 +361,10 @@ CONTAINS
     ! housekeeping. Put any initialisation code that is needed in here
     IF (first_call) CALL deck_initialise
 
-    ! Is comment is a flag which tells the code when a # character has been
-    ! found and everything beyond it is a comment
-    is_comment = .FALSE.
+    ! Flag which tells the code when a # or \ character has been
+    ! found and everything beyond it is to be ignored
+    ignore = .FALSE.
+    continuation = .FALSE.
 
 #ifdef NO_IO
     status_filename = '/dev/null'
@@ -498,11 +500,31 @@ CONTAINS
           ENDIF
         ENDIF
 
-        ! If the character is a # then switch to comment mode
-        IF (u1 .EQ. '#') is_comment = .TRUE.
+        IF (continuation .AND. warn) THEN
+          IF (u1 .NE. ' ' .AND. u1 .NE. ACHAR(9)) THEN
+            IF (rank .EQ. rank_check) THEN
+              DO io = stdout, du, du - stdout ! Print to stdout and to file
+                WRITE(io,*)
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,*) 'Extra characters after continuation line in', &
+                    ' input deck.'
+                WRITE(io,*)
+              ENDDO
+            ENDIF
+            warn = .FALSE.
+          ENDIF
+        ENDIF
+
+        ! If the character is a # or \ then ignore the rest of the line
+        IF (u1 .EQ. '#') THEN
+          ignore = .TRUE.
+        ELSE IF (u1 .EQ. '\') THEN
+          ignore = .TRUE.
+          continuation = .TRUE.
+        ENDIF
 
         ! If not in comment mode then use the character
-        IF (.NOT. is_comment) THEN
+        IF (.NOT. ignore) THEN
           ! If the current character isn't a special character then just stick
           ! it in the buffer
           IF (u1 .NE. '=' .AND. u1 .NE. ACHAR(9) .AND. u1 .NE. ':' &
@@ -523,8 +545,15 @@ CONTAINS
         ENDIF
 
         ! If got_eor is .TRUE. then you've reached the end of the line, so
-        ! comment state is definitely false
-        IF (got_eor) is_comment = .FALSE.
+        ! reset comment and continuation states
+        IF (got_eor) THEN
+          ignore = .FALSE.
+          IF (continuation) THEN
+            got_eor = .FALSE.
+            f = 0
+          ENDIF
+          continuation = .FALSE.
+        ENDIF
 
         ! If you've not read a blank line then
         IF (got_eor .AND. pos .GT. 1) THEN
@@ -543,7 +572,8 @@ CONTAINS
               errcode_deck)
           deck_values(1)%value = ""
           deck_values(2)%value = ""
-          is_comment = .FALSE.
+          ignore = .FALSE.
+          continuation = .FALSE.
           u0 = ' '
         ENDIF
         IF (got_eof) THEN
