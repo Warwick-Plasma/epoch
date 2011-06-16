@@ -14,7 +14,7 @@ CONTAINS
   FUNCTION iterate_particles(array, n_points, start, direction)
 
     REAL(num) :: iterate_particles
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
@@ -51,7 +51,7 @@ CONTAINS
   FUNCTION iterate_weight(array, n_points, start)
 
     REAL(num) :: iterate_weight
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -85,7 +85,7 @@ CONTAINS
   FUNCTION iterate_px(array, n_points, start)
 
     REAL(num) :: iterate_px
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -117,7 +117,7 @@ CONTAINS
   FUNCTION iterate_py(array, n_points, start)
 
     REAL(num) :: iterate_py
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -149,7 +149,7 @@ CONTAINS
   FUNCTION iterate_pz(array, n_points, start)
 
     REAL(num) :: iterate_pz
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -182,7 +182,7 @@ CONTAINS
   FUNCTION iterate_vx(array, n_points, start)
 
     REAL(num) :: iterate_vx
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -222,7 +222,7 @@ CONTAINS
   FUNCTION iterate_vy(array, n_points, start)
 
     REAL(num) :: iterate_vy
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -262,7 +262,7 @@ CONTAINS
   FUNCTION iterate_vz(array, n_points, start)
 
     REAL(num) :: iterate_vz
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -303,7 +303,7 @@ CONTAINS
   FUNCTION iterate_charge(array, n_points, start)
 
     REAL(num) :: iterate_charge
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -340,7 +340,7 @@ CONTAINS
   FUNCTION iterate_mass(array, n_points, start)
 
     REAL(num) :: iterate_mass
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -378,7 +378,7 @@ CONTAINS
   FUNCTION iterate_processor(array, n_points, start)
 
     REAL(num) :: iterate_processor
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -411,7 +411,7 @@ CONTAINS
   FUNCTION iterate_processor0(array, n_points, start)
 
     REAL(num) :: iterate_processor0
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur

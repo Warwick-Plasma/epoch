@@ -139,7 +139,7 @@ CONTAINS
   FUNCTION iterate_probe_particles(array, n_points, start, direction)
 
     REAL(num) :: iterate_probe_particles
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
@@ -169,7 +169,7 @@ CONTAINS
   FUNCTION iterate_probe_px(array, n_points, start)
 
     REAL(num) :: iterate_probe_px
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -196,7 +196,7 @@ CONTAINS
   FUNCTION iterate_probe_py(array, n_points, start)
 
     REAL(num) :: iterate_probe_py
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -224,7 +224,7 @@ CONTAINS
   FUNCTION iterate_probe_pz(array, n_points, start)
 
     REAL(num) :: iterate_probe_pz
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
@@ -253,7 +253,7 @@ CONTAINS
   FUNCTION iterate_probe_weight(array, n_points, start)
 
     REAL(num) :: iterate_probe_weight
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur

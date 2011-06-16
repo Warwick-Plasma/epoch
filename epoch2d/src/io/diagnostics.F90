@@ -422,7 +422,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: id, code
     CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
     INTEGER, INTENT(IN) :: stagger
-    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:,:), INTENT(OUT) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, should_dump
     CHARACTER(LEN=c_max_string_length) :: temp_block_id, temp_name
@@ -430,7 +430,7 @@ CONTAINS
     INTERFACE
       SUBROUTINE func(data_array, current_species)
         USE shared_data
-        REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: data_array
+        REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species
       END SUBROUTINE func
     END INTERFACE
@@ -567,7 +567,7 @@ CONTAINS
       FUNCTION iterator(array, npart_it, start)
         USE shared_data
         REAL(num) :: iterator
-        REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+        REAL(num), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npart_it
         LOGICAL, INTENT(IN) :: start
       END FUNCTION iterator

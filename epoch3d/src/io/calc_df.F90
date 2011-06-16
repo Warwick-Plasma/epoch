@@ -9,15 +9,15 @@ CONTAINS
 
   SUBROUTINE calc_mass_density(data_array, current_species)
 
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_m
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     REAL(num) :: fac, idx
+    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
@@ -105,17 +105,17 @@ CONTAINS
 
   SUBROUTINE calc_ekbar(data_array, current_species)
 
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_px, part_py, part_pz, part_mc
     ! The weight of a particle
     REAL(num) :: l_weight, l_weightc
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: ct
-    INTEGER, INTENT(IN) :: current_species
-    TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
@@ -217,15 +217,15 @@ CONTAINS
 
   SUBROUTINE calc_charge_density(data_array, current_species)
 
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_q
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     REAL(num) :: fac, idx
+    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
@@ -313,13 +313,13 @@ CONTAINS
 
   SUBROUTINE calc_number_density(data_array, current_species)
 
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    TYPE(particle), POINTER :: current
-    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     REAL(num) :: idx
+    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
@@ -399,16 +399,16 @@ CONTAINS
 
   SUBROUTINE calc_temperature(sigma, current_species)
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: sigma
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: sigma
     INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
     ! The weight of a particle
     REAL(num) :: l_weight
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: part_count, meanx, meany, meanz
     REAL(num) :: gf
-    TYPE(particle), POINTER :: current
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: part_count, meanx, meany, meanz
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
@@ -571,7 +571,7 @@ CONTAINS
     CALL processor_summation_bcs(sigma)
     CALL processor_summation_bcs(part_count)
 
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / c_ndims
 
     DEALLOCATE(part_count, meanx, meany, meanz)
 
@@ -581,12 +581,12 @@ CONTAINS
 
   SUBROUTINE calc_on_grid_with_evaluator(data_array, current_species, evaluator)
 
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    TYPE(particle), POINTER :: current
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
