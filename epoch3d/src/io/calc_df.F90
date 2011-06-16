@@ -228,25 +228,31 @@ CONTAINS
 
   SUBROUTINE calc_ekflux(data_array, current_species, direction)
 
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species, direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc
-    REAL(num) :: part_vx, part_vy, part_vz
     ! The weight of a particle
     REAL(num) :: l_weight
     ! The data to be weighted onto the grid
-    REAL(num) :: wdata, fac, gamma, idx
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species, direction
-    TYPE(particle), POINTER :: current
+    REAL(num) :: wdata
+    REAL(num) :: fac, gamma, ek, part_flux, xfac, yfac, zfac
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cell_z_r, cell_frac_z
     INTEGER :: cell_x, cell_y, cell_z
 
+    ALLOCATE(wt(-2:nx+3,-2:ny+3,-2:nz+3))
     data_array = 0.0_num
-    idx = 1.0_num / dx / dy / dz
+    wt = 0.0_num
+
+    xfac = c * dy * dz
+    yfac = c * dx * dz
+    zfac = c * dx * dy
 
     spec_start = current_species
     spec_end = current_species
@@ -260,17 +266,17 @@ CONTAINS
 #ifdef TRACER_PARTICLES
       IF (species_list(ispecies)%tracer) CYCLE
 #endif
-      current => species_list(ispecies)%attached_list%head
+      current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = c * species_list(ispecies)%mass
 #ifndef PER_PARTICLE_WEIGHT
       l_weight = species_list(ispecies)%weight
 #endif
-      fac = l_weight * part_mc * c * idx
+      fac = part_mc * l_weight * c
 #else
 #ifndef PER_PARTICLE_WEIGHT
       l_weight = species_list(ispecies)%weight
-      fac = l_weight * part_mc * c * idx
+      fac = part_mc * l_weight * c
 #endif
 #endif
       DO WHILE (ASSOCIATED(current))
@@ -280,11 +286,11 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
 #endif
-        fac = l_weight * part_mc * c * idx
+        fac = part_mc * l_weight * c
 #else
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
-        fac = l_weight * part_mc * c * idx
+        fac = part_mc * l_weight * c
 #endif
 #endif
         part_ux = current%part_p(1) / part_mc
@@ -315,32 +321,33 @@ CONTAINS
         CALL particle_to_grid(cell_frac_z, gz)
 
         gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        ek = (gamma - 1.0_num) * fac
 
         SELECT CASE(direction)
         CASE(-c_dir_x)
           ! negative flux in x
-          part_vx = part_ux * c / gamma
-          wdata = (1.0_num - gamma) * fac * MIN(part_vx, 0.0_num)
+          part_flux = xfac * part_ux / gamma
+          wdata = -ek * MIN(part_flux, 0.0_num)
         CASE( c_dir_x)
           ! positive flux in x
-          part_vx = part_ux * c / gamma
-          wdata = (gamma - 1.0_num) * fac * MAX(part_vx, 0.0_num)
+          part_flux = xfac * part_ux / gamma
+          wdata =  ek * MAX(part_flux, 0.0_num)
         CASE(-c_dir_y)
           ! negative flux in y
-          part_vy = part_uy * c / gamma
-          wdata = (1.0_num - gamma) * fac * MIN(part_vy, 0.0_num)
+          part_flux = yfac * part_uy / gamma
+          wdata = -ek * MIN(part_flux, 0.0_num)
         CASE( c_dir_y)
           ! positive flux in y
-          part_vy = part_uy * c / gamma
-          wdata = (gamma - 1.0_num) * fac * MAX(part_vy, 0.0_num)
+          part_flux = yfac * part_uy / gamma
+          wdata =  ek * MAX(part_flux, 0.0_num)
         CASE(-c_dir_z)
           ! negative flux in z
-          part_vz = part_uz * c / gamma
-          wdata = (1.0_num - gamma) * fac * MIN(part_vz, 0.0_num)
+          part_flux = zfac * part_uz / gamma
+          wdata = -ek * MIN(part_flux, 0.0_num)
         CASE( c_dir_z)
           ! positive flux in z
-          part_vz = part_uz * c / gamma
-          wdata = (gamma - 1.0_num) * fac * MAX(part_vz, 0.0_num)
+          part_flux = zfac * part_uz / gamma
+          wdata =  ek * MAX(part_flux, 0.0_num)
         END SELECT
 
         DO iz = sf_min, sf_max
@@ -349,28 +356,35 @@ CONTAINS
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * wdata
+              wt(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  wt(cell_x+ix, cell_y+iy, cell_z+iz) &
+                  + gx(ix) * gy(iy) * gz(iz) * l_weight
             ENDDO
           ENDDO
         ENDDO
 
-        current => current%next
+        current=>current%next
       ENDDO
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL processor_summation_bcs(wt)
 
+    data_array = data_array / MAX(wt, c_non_zero)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
+
+    DEALLOCATE(wt)
 
   END SUBROUTINE calc_ekflux
 
 
 
-  SUBROUTINE calc_poynt_flux(data_array, dummy, direction)
+  SUBROUTINE calc_poynt_flux(data_array, current_species, direction)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: dummy, direction
+    INTEGER, INTENT(IN) :: current_species, direction
     INTEGER :: ix, iy, iz
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
 

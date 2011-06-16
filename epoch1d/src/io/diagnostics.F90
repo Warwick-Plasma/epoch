@@ -35,11 +35,11 @@ CONTAINS
     LOGICAL :: restart_flag
     TYPE(particle_species), POINTER :: species
 
-    CHARACTER(LEN=5), DIMENSION(6) :: dir_tags = &
-        (/'x_max', 'y_max', 'z_max', 'x_min', 'y_min', 'z_min'/)
-    INTEGER, DIMENSION(6) :: fluxdir = &
-        (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
     CHARACTER(LEN=1), DIMENSION(3) :: dim_tags = (/'x', 'y', 'z'/)
+    CHARACTER(LEN=2), DIMENSION(6) :: dir_tags = &
+        (/'x-', 'x+', 'y-', 'y+', 'z-', 'z+'/)
+    INTEGER, DIMENSION(6) :: fluxdir = &
+        (/-c_dir_x, c_dir_x, -c_dir_y, c_dir_y, -c_dir_z, c_dir_z/)
 
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
         .AND. MOD(i, stdout_frequency) .EQ. 0) THEN
@@ -462,18 +462,21 @@ CONTAINS
       IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
         CALL func(array, 0)
         CALL sdf_write_plain_variable(sdf_handle, &
-            TRIM(block_id), TRIM(name), &
+            TRIM(ADJUSTL(block_id)), TRIM(ADJUSTL(name)), &
             TRIM(units), dims, stagger, 'grid', &
             array, subtype_field, subarray_field)
       ENDIF
 
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
         DO ispecies = 1, n_species
-          CALL func(array, ispecies)
+#ifdef TRACER_PARTICLES
+          IF (species_list(ispecies)%tracer) CYCLE
+#endif
           WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
               TRIM(species_list(ispecies)%name)
           WRITE(temp_name, '(a, "_", a)') TRIM(name), &
               TRIM(species_list(ispecies)%name)
+          CALL func(array, ispecies)
           CALL sdf_write_plain_variable(sdf_handle, &
               TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
               TRIM(units), dims, stagger, 'grid', &
@@ -550,11 +553,11 @@ CONTAINS
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
       IF (IAND(dumpmask(id), c_io_no_intrinsic) .EQ. 0) THEN
         DO idir = 1, ndirs
-          CALL func(array, 0, fluxdir(idir))
           WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
               TRIM(dir_tags(idir))
           WRITE(temp_name, '(a, "_", a)') TRIM(name), &
               TRIM(dir_tags(idir))
+          CALL func(array, 0, fluxdir(idir))
           CALL sdf_write_plain_variable(sdf_handle, &
               TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
               TRIM(units), dims, stagger, 'grid', &
@@ -568,11 +571,11 @@ CONTAINS
           IF (species_list(ispecies)%tracer) CYCLE
 #endif
           DO idir = 1, ndirs
-            CALL func(array, ispecies, fluxdir(idir))
             WRITE(temp_block_id, '(a, "_", a, "_", a)') TRIM(block_id), &
                 TRIM(species_list(ispecies)%name), TRIM(dir_tags(idir))
             WRITE(temp_name, '(a, "_", a, "_", a)') TRIM(name), &
                 TRIM(species_list(ispecies)%name), TRIM(dir_tags(idir))
+            CALL func(array, ispecies, fluxdir(idir))
             CALL sdf_write_plain_variable(sdf_handle, &
                 TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
                 TRIM(units), dims, stagger, 'grid', &
@@ -581,6 +584,8 @@ CONTAINS
         ENDDO
       ENDIF
     ENDIF
+
+    ! Flux variables not currently averaged
 
   END SUBROUTINE write_nspecies_flux
 
