@@ -108,12 +108,13 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_px, part_py, part_pz, part_mc
+    REAL(num) :: part_ux, part_uy, part_uz, part_mc
     ! The weight of a particle
-    REAL(num) :: l_weight, l_weightc
+    REAL(num) :: l_weight
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: ct
+    REAL(num) :: fac, gamma
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
@@ -122,9 +123,9 @@ CONTAINS
     REAL(num) :: cell_z_r, cell_frac_z
     INTEGER :: cell_x, cell_y, cell_z
 
-    ALLOCATE(ct(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(wt(-2:nx+3,-2:ny+3,-2:nz+3))
     data_array = 0.0_num
-    ct = 0.0_num
+    wt = 0.0_num
 
     spec_start = current_species
     spec_end = current_species
@@ -141,23 +142,33 @@ CONTAINS
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = c * species_list(ispecies)%mass
-#endif
 #ifndef PER_PARTICLE_WEIGHT
       l_weight = species_list(ispecies)%weight
-      l_weightc = c * l_weight
+#endif
+      fac = part_mc * l_weight * c
+#else
+#ifndef PER_PARTICLE_WEIGHT
+      l_weight = species_list(ispecies)%weight
+      fac = part_mc * l_weight * c
+#endif
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc = c * current%mass
-#endif
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
-        l_weightc = c * l_weight
 #endif
+        fac = part_mc * l_weight * c
+#else
+#ifdef PER_PARTICLE_WEIGHT
+        l_weight = current%weight
+        fac = part_mc * l_weight * c
+#endif
+#endif
+        part_ux = current%part_p(1) / part_mc
+        part_uy = current%part_p(2) / part_mc
+        part_uz = current%part_p(3) / part_mc
 
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
@@ -182,16 +193,16 @@ CONTAINS
         CALL particle_to_grid(cell_frac_y, gy)
         CALL particle_to_grid(cell_frac_z, gz)
 
-        wdata = (SQRT(part_px**2 + part_py**2 + part_pz**2 + part_mc**2) &
-          - part_mc) * l_weightc
+        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        wdata = (gamma - 1.0_num) * fac
         DO iz = sf_min, sf_max
           DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
               data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
                   data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * wdata
-              ct(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  ct(cell_x+ix, cell_y+iy, cell_z+iz) &
+              wt(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  wt(cell_x+ix, cell_y+iy, cell_z+iz) &
                   + gx(ix) * gy(iy) * gz(iz) * l_weight
             ENDDO
           ENDDO
@@ -202,14 +213,14 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
-    CALL processor_summation_bcs(ct)
+    CALL processor_summation_bcs(wt)
 
-    data_array = data_array / MAX(ct, c_non_zero)
+    data_array = data_array / MAX(wt, c_non_zero)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
 
-    DEALLOCATE(ct)
+    DEALLOCATE(wt)
 
   END SUBROUTINE calc_ekbar
 
