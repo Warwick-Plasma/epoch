@@ -517,6 +517,7 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
 
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
+  TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, y
 
@@ -552,7 +553,6 @@ MODULE shared_data
   INTEGER :: bc_x_min_after_move
   INTEGER :: bc_x_max_after_move
   REAL(num), DIMENSION(3) :: window_shift
-  TYPE(particle_list) :: ejected_particles
 
   !----------------------------------------------------------------------------
   ! MPI data

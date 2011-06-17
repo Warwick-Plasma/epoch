@@ -516,7 +516,8 @@ CONTAINS
           CALL remove_particle_from_partlist(&
               species_list(ispecies)%attached_list, cur)
           IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
-            CALL add_particle_to_partlist(ejected_particles, cur)
+            CALL add_particle_to_partlist(&
+                ejected_list(ispecies)%attached_list, cur)
           ELSE
             DEALLOCATE(cur)
           ENDIF

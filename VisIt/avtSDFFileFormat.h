@@ -91,7 +91,8 @@ class avtSDFFileFormat : public avtSTMDFileFormat
     virtual vtkDataArray  *GetVectorVar(int, const char *);
 
     virtual void           ActivateTimestep(void);
-    //virtual bool          HasInvariantMetaData(void) const { return false; };
+    virtual bool          HasInvariantMetaData(void) const { return false; };
+    virtual bool          HasInvariantSIL(void) const      { return false; };
     virtual void           SetUpDomainConnectivity(void);
     int         GetCycle(void) { return h->step; }
     double      GetTime(void) { return h->time; }

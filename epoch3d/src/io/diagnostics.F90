@@ -20,6 +20,8 @@ MODULE diagnostics
 
   TYPE(sdf_file_handle) :: sdf_handle
   INTEGER(KIND=8), ALLOCATABLE :: species_offset(:)
+  INTEGER(KIND=8), ALLOCATABLE :: ejected_offset(:)
+  LOGICAL :: reset_ejected
 
 CONTAINS
 
@@ -30,7 +32,7 @@ CONTAINS
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
-    INTEGER :: code
+    INTEGER :: code, i
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag
 #ifndef PER_PARTICLE_WEIGHT
@@ -85,6 +87,7 @@ CONTAINS
     ELSE
       restart_flag = .FALSE.
     ENDIF
+    reset_ejected = .FALSE.
 
     ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
 
@@ -240,7 +243,14 @@ CONTAINS
 
     DEALLOCATE(array)
     IF (ALLOCATED(species_offset)) DEALLOCATE(species_offset)
+    IF (ALLOCATED(ejected_offset)) DEALLOCATE(ejected_offset)
     CALL free_subtypes()
+
+    IF (reset_ejected) THEN
+      DO i = 1, n_species
+        CALL destroy_partlist(ejected_list(i)%attached_list)
+      ENDDO
+    ENDIF
 
   END SUBROUTINE output_routines
 
@@ -680,6 +690,23 @@ CONTAINS
       species_list(ispecies)%count = species_count
     ENDDO
 
+    IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
+      ALLOCATE(ejected_offset(n_species))
+      ejected_offset = 0
+
+      DO ispecies = 1, n_species
+        CALL MPI_ALLGATHER(ejected_list(ispecies)%attached_list%count, 1, &
+            MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, &
+            errcode)
+        species_count = 0
+        DO i = 1, nproc
+          IF (rank .EQ. i-1) ejected_offset(ispecies) = species_count
+          species_count = species_count + npart_species_per_proc(i)
+        ENDDO
+        ejected_list(ispecies)%count = species_count
+      ENDDO
+    ENDIF
+
     DEALLOCATE(npart_species_per_proc)
 
   END SUBROUTINE species_offset_init
@@ -689,34 +716,49 @@ CONTAINS
   SUBROUTINE write_particle_grid(code)
 
     INTEGER, INTENT(IN) :: code
-    INTEGER :: ispecies
+    INTEGER :: ispecies, id
 
-    IF (IAND(dumpmask(c_dump_part_grid), code) .EQ. 0) RETURN
+    id = c_dump_part_grid
+    IF (IAND(dumpmask(id), code) .NE. 0) THEN
+      CALL species_offset_init()
 
-    CALL species_offset_init()
+      CALL start_particle_species_only(current_species)
 
-    CALL start_particle_species_only(current_species)
+      DO ispecies = 1, n_species
+        IF (IAND(current_species%dumpmask, code) .NE. 0 &
+            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL sdf_write_point_mesh(sdf_handle, &
+              'grid/' // TRIM(current_species%name), &
+              'Grid/Point/' // TRIM(current_species%name), &
+              species_list(ispecies)%count, c_dimension_3d, &
+              iterate_particles, species_offset(ispecies))
+        ENDIF
 
-    DO ispecies = 1, n_species
-      IF (IAND(current_species%dumpmask, code) .NE. 0 &
-          .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        CALL advance_particle_species_only(current_species)
+      ENDDO
+    ENDIF
+
+    id = c_dump_ejected_particles
+    IF (IAND(dumpmask(id), code) .NE. 0) THEN
+      reset_ejected = .TRUE.
+
+      DO ispecies = 1, n_species
+        current_species => ejected_list(ispecies)
         CALL sdf_write_point_mesh(sdf_handle, &
             'grid/' // TRIM(current_species%name), &
             'Grid/Point/' // TRIM(current_species%name), &
-            species_list(ispecies)%count, c_dimension_3d, &
-            iterate_particles, species_offset(ispecies))
-      ENDIF
-
-      CALL advance_particle_species_only(current_species)
-    ENDDO
+            ejected_list(ispecies)%count, c_dimension_3d, &
+            iterate_particles, ejected_offset(ispecies))
+      ENDDO
+    ENDIF
 
   END SUBROUTINE write_particle_grid
 
 
 
-  SUBROUTINE write_particle_variable(id, code, name, iterator)
+  SUBROUTINE write_particle_variable(id_in, code, name, iterator)
 
-    INTEGER, INTENT(IN) :: id, code
+    INTEGER, INTENT(IN) :: id_in, code
     CHARACTER(LEN=*), INTENT(IN) :: name
 
     INTERFACE
@@ -729,28 +771,45 @@ CONTAINS
       END FUNCTION iterator
     END INTERFACE
 
-    INTEGER :: ispecies
+    INTEGER :: ispecies, id
 
-    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+    id = id_in
+    IF (IAND(dumpmask(id), code) .NE. 0) THEN
+      CALL species_offset_init()
 
-    CALL species_offset_init()
+      CALL start_particle_species_only(current_species)
 
-    CALL start_particle_species_only(current_species)
+      DO ispecies = 1, n_species
+        IF (IAND(current_species%dumpmask, code) .NE. 0 &
+            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL sdf_write_point_variable(sdf_handle, &
+              lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
+              'Particles/' // TRIM(current_species%name) // '/' // &
+              TRIM(name), '', &
+              species_list(ispecies)%count, &
+              'grid/' // TRIM(current_species%name), &
+              iterator, species_offset(ispecies))
+        ENDIF
 
-    DO ispecies = 1, n_species
-      IF (IAND(current_species%dumpmask, code) .NE. 0 &
-          .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        CALL advance_particle_species_only(current_species)
+      ENDDO
+    ENDIF
+
+    id = c_dump_ejected_particles
+    IF (IAND(dumpmask(id), code) .NE. 0) THEN
+      reset_ejected = .TRUE.
+
+      DO ispecies = 1, n_species
+        current_species => ejected_list(ispecies)
         CALL sdf_write_point_variable(sdf_handle, &
             lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
             'Particles/' // TRIM(current_species%name) // '/' // &
             TRIM(name), '', &
-            species_list(ispecies)%count, &
+            ejected_list(ispecies)%count, &
             'grid/' // TRIM(current_species%name), &
-            iterator, species_offset(ispecies))
-      ENDIF
-
-      CALL advance_particle_species_only(current_species)
-    ENDDO
+            iterator, ejected_offset(ispecies))
+      ENDDO
+    ENDIF
 
   END SUBROUTINE write_particle_variable
 

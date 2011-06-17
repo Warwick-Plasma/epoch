@@ -45,6 +45,7 @@ CONTAINS
       CALL setup_species
       ALLOCATE(species_charge_set(n_species))
       species_charge_set = .FALSE.
+
       DO i = 1, n_species
         species_list(i)%name = species_names(i)
         IF (rank .EQ. 0) THEN
@@ -58,6 +59,17 @@ CONTAINS
     ELSE
       DEALLOCATE(species_blocks)
       DEALLOCATE(species_charge_set)
+
+      IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
+        ALLOCATE(ejected_list(n_species))
+        ejected_list = species_list
+        DO i = 1, n_species
+          ejected_list(i)%count = 0
+          ejected_list(i)%name = &
+              'ejected_' // TRIM(ADJUSTL(species_list(i)%name))
+          CALL create_empty_partlist(ejected_list(i)%attached_list)
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE species_deck_finalise
