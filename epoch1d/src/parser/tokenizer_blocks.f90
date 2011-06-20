@@ -84,6 +84,7 @@ CONTAINS
 
     as_constant = c_prc_not_this_type
 
+    ! Numeric constants
     IF (str_cmp(name, "pi")) as_constant = c_const_pi
     IF (str_cmp(name, "kb")) as_constant = c_const_kb
     IF (str_cmp(name, "me")) as_constant = c_const_me
@@ -103,16 +104,19 @@ CONTAINS
     IF (str_cmp(name, "pico")) as_constant = c_const_pico
     IF (str_cmp(name, "femto")) as_constant = c_const_femto
     IF (str_cmp(name, "atto")) as_constant = c_const_atto
+    IF (str_cmp(name, "time")) as_constant = c_const_time
     IF (str_cmp(name, "x"))  as_constant = c_const_x
-    IF (str_cmp(name, "lengthx") .OR. str_cmp(name, "length_x")) &
-        as_constant = c_const_lx
+    IF (str_cmp(name, "ix")) as_constant = c_const_ix
+    IF (str_cmp(name, "nx")) as_constant = c_const_nx
     IF (str_cmp(name, "dx")) as_constant = c_const_dx
     IF (str_cmp(name, "x_min") .OR. str_cmp(name, "x_start")) &
         as_constant = c_const_x_min
     IF (str_cmp(name, "x_max") .OR. str_cmp(name, "x_end")) &
         as_constant = c_const_x_max
-    IF (str_cmp(name, "ix")) as_constant = c_const_ix
-    IF (str_cmp(name, "time")) as_constant = c_const_time
+    IF (str_cmp(name, "lengthx") .OR. str_cmp(name, "length_x")) &
+        as_constant = c_const_lx
+
+    ! Dumpmask constants
     IF (str_cmp(name, "never")) as_constant = c_const_io_never
     IF (str_cmp(name, "always")) as_constant = c_const_io_always
     IF (str_cmp(name, "full")) as_constant = c_const_io_full
@@ -121,13 +125,14 @@ CONTAINS
     IF (str_cmp(name, "snapshot")) as_constant = c_const_io_snapshot
     IF (str_cmp(name, "species")) as_constant = c_const_io_species
     IF (str_cmp(name, "no_sum")) as_constant = c_const_io_no_sum
+
+    ! Distribution function constants
     IF (str_cmp(name, "dir_x")) as_constant = c_const_dir_x
     IF (str_cmp(name, "dir_px")) as_constant = c_const_dir_px
     IF (str_cmp(name, "dir_py")) as_constant = c_const_dir_py
     IF (str_cmp(name, "dir_pz")) as_constant = c_const_dir_pz
     IF (str_cmp(name, "dir_en")) as_constant = c_const_dir_en
     IF (str_cmp(name, "dir_gamma_m1")) as_constant = c_const_dir_gamma_m1
-    IF (str_cmp(name, "nx")) as_constant = c_const_nx
 
     ! User submitted constant using "Register"
     DO i = 1, n_new_constant
@@ -166,19 +171,31 @@ CONTAINS
 
     as_function = c_prc_not_this_type
 
-    IF (str_cmp(name, "sqrt")) as_function = c_func_sqrt
-    IF (str_cmp(name, "sin"))   as_function = c_func_sine
-    IF (str_cmp(name, "cos"))   as_function = c_func_cosine
-    IF (str_cmp(name, "tan"))   as_function = c_func_tan
-    IF (str_cmp(name, "exp"))   as_function = c_func_exp
-    IF (str_cmp(name, "asin"))  as_function = c_func_arcsine
-    IF (str_cmp(name, "acos"))  as_function = c_func_arccosine
-    IF (str_cmp(name, "atan"))  as_function = c_func_arctan
-    IF (str_cmp(name, "-")) as_function = c_func_neg
-    IF (str_cmp(name, "if"))    as_function = c_func_if
+    IF (str_cmp(name, "-"))     as_function = c_func_neg
+    IF (str_cmp(name, "abs"))   as_function = c_func_abs
     IF (str_cmp(name, "floor")) as_function = c_func_floor
     IF (str_cmp(name, "ceil"))  as_function = c_func_ceil
     IF (str_cmp(name, "nint"))  as_function = c_func_nint
+    IF (str_cmp(name, "sqrt"))  as_function = c_func_sqrt
+    IF (str_cmp(name, "sin"))   as_function = c_func_sine
+    IF (str_cmp(name, "cos"))   as_function = c_func_cosine
+    IF (str_cmp(name, "tan"))   as_function = c_func_tan
+    IF (str_cmp(name, "asin"))  as_function = c_func_arcsine
+    IF (str_cmp(name, "acos"))  as_function = c_func_arccosine
+    IF (str_cmp(name, "atan"))  as_function = c_func_arctan
+    IF (str_cmp(name, "sinh"))  as_function = c_func_sinh
+    IF (str_cmp(name, "cosh"))  as_function = c_func_cosh
+    IF (str_cmp(name, "tanh"))  as_function = c_func_tanh
+    IF (str_cmp(name, "exp"))   as_function = c_func_exp
+    IF (str_cmp(name, "loge"))  as_function = c_func_loge
+    IF (str_cmp(name, "log10")) as_function = c_func_log10
+    IF (str_cmp(name, "log_base")) as_function = c_func_log_base
+    IF (str_cmp(name, "gauss")) as_function = c_func_gauss
+    IF (str_cmp(name, "semigauss")) as_function = c_func_semigauss
+    IF (str_cmp(name, "supergauss")) as_function = c_func_supergauss
+    IF (str_cmp(name, "interpolate")) as_function = c_func_interpolate
+    IF (str_cmp(name, "if")) as_function = c_func_if
+
     IF (str_cmp(name, "density") .OR. str_cmp(name, "rho")) &
         as_function = c_func_rho
     IF (str_cmp(name, "temp_x") .OR. str_cmp(name, "temp_x_k")) &
@@ -187,27 +204,16 @@ CONTAINS
         as_function = c_func_tempy
     IF (str_cmp(name, "temp_z") .OR. str_cmp(name, "temp_z_k")) &
         as_function = c_func_tempz
-    IF (str_cmp(name, "temp_x_ev"))  as_function = c_func_tempx_ev
-    IF (str_cmp(name, "temp_y_ev"))  as_function = c_func_tempy_ev
-    IF (str_cmp(name, "temp_z_ev"))  as_function = c_func_tempz_ev
-    IF (str_cmp(name, "interpolate")) as_function = c_func_interpolate
-    IF (str_cmp(name, "tanh")) as_function = c_func_tanh
-    IF (str_cmp(name, "sinh")) as_function = c_func_sinh
-    IF (str_cmp(name, "cosh")) as_function = c_func_cosh
+    IF (str_cmp(name, "temp_x_ev")) as_function = c_func_tempx_ev
+    IF (str_cmp(name, "temp_y_ev")) as_function = c_func_tempy_ev
+    IF (str_cmp(name, "temp_z_ev")) as_function = c_func_tempz_ev
     IF (str_cmp(name, "ex")) as_function = c_func_ex
     IF (str_cmp(name, "ey")) as_function = c_func_ey
     IF (str_cmp(name, "ez")) as_function = c_func_ez
     IF (str_cmp(name, "bx")) as_function = c_func_bx
     IF (str_cmp(name, "by")) as_function = c_func_by
     IF (str_cmp(name, "bz")) as_function = c_func_bz
-    IF (str_cmp(name, "gauss")) as_function = c_func_gauss
-    IF (str_cmp(name, "semigauss")) as_function = c_func_semigauss
-    IF (str_cmp(name, "supergauss")) as_function = c_func_supergauss
     IF (str_cmp(name, "critical")) as_function = c_func_crit
-    IF (str_cmp(name, "abs")) as_function = c_func_abs
-    IF (str_cmp(name, "loge")) as_function = c_func_loge
-    IF (str_cmp(name, "log10")) as_function = c_func_log10
-    IF (str_cmp(name, "log_base")) as_function = c_func_log_base
 
     DO i = 1, n_new_func
       IF (str_cmp(TRIM(name), TRIM(new_func_name(i)%value))) THEN
