@@ -105,6 +105,7 @@ CONTAINS
     REAL(num) :: dmin
     CHARACTER(LEN=string_length) :: filename
     LOGICAL :: got_file, dump
+    INTEGER :: io
 
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
@@ -125,6 +126,15 @@ CONTAINS
 
     IF (str_cmp(element, "mass")) THEN
       species_list(species_id)%mass = as_real(value, errcode) * m0
+      IF (species_list(species_id)%mass .LT. 0) THEN
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Particle species cannot have negative mass.'
+          ENDDO
+        ENDIF
+        errcode = c_err_bad_value
+      ENDIF
       RETURN
     ENDIF
 
