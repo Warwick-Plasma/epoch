@@ -52,6 +52,46 @@ CONTAINS
   ! These subroutines actually call the routines which read the deck blocks
   !----------------------------------------------------------------------------
 
+  SUBROUTINE deck_initialise
+
+    CALL boundary_deck_initialise
+    CALL constant_deck_initialise
+    CALL control_deck_initialise
+    CALL dist_fn_deck_initialise
+    CALL fields_deck_initialise
+    CALL io_deck_initialise
+    CALL laser_deck_initialise
+#ifdef PARTICLE_PROBES
+    CALL probe_deck_initialise
+#endif
+    CALL species_deck_initialise
+    CALL window_deck_initialise
+
+  END SUBROUTINE deck_initialise
+
+
+
+  SUBROUTINE deck_finalise(errcode_deck)
+
+    INTEGER, INTENT(INOUT) :: errcode_deck
+
+    CALL check_compulsory_blocks(errcode_deck)
+    CALL boundary_deck_finalise
+    CALL constant_deck_finalise
+    CALL control_deck_finalise
+    CALL dist_fn_deck_finalise
+    CALL fields_deck_finalise
+    CALL io_deck_finalise
+    CALL laser_deck_finalise
+#ifdef PARTICLE_PROBES
+    CALL probe_deck_finalise
+#endif
+    CALL species_deck_finalise
+    CALL window_deck_finalise
+
+  END SUBROUTINE deck_finalise
+
+
   ! This subroutine is called when a new block is started
   ! If a block NEEDS to do something when it starts, then
   ! The revelevant subroutine should be called here
@@ -318,20 +358,7 @@ CONTAINS
 
     ! If this is the first time that this deck has been called then do some
     ! housekeeping. Put any initialisation code that is needed in here
-    IF (first_call) THEN
-      CALL boundary_deck_initialise
-      CALL constant_deck_initialise
-      CALL control_deck_initialise
-      CALL dist_fn_deck_initialise
-      CALL fields_deck_initialise
-      CALL io_deck_initialise
-      CALL laser_deck_initialise
-#ifdef PARTICLE_PROBES
-      CALL probe_deck_initialise
-#endif
-      CALL species_deck_initialise
-      CALL window_deck_initialise
-    ENDIF
+    IF (first_call) CALL deck_initialise
 
     ! Is comment is a flag which tells the code when a # character has been
     ! found and everything beyond it is a comment
@@ -542,21 +569,8 @@ CONTAINS
 
     ! Don't check compulsory blocks if going to bomb anyway, just stinks up
     ! the output file
-    IF (.NOT. terminate .AND. first_call) THEN
-      CALL check_compulsory_blocks(errcode_deck)
-      CALL boundary_deck_finalise
-      CALL constant_deck_finalise
-      CALL control_deck_finalise
-      CALL dist_fn_deck_finalise
-      CALL fields_deck_finalise
-      CALL io_deck_finalise
-      CALL laser_deck_finalise
-#ifdef PARTICLE_PROBES
-      CALL probe_deck_finalise
-#endif
-      CALL species_deck_finalise
-      CALL window_deck_finalise
-    ENDIF
+    IF (.NOT. terminate .AND. first_call) CALL check_compulsory_blocks
+
     terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
     ! Fatal error, cause code to bomb
     IF (terminate .AND. rank .EQ. 0) THEN
