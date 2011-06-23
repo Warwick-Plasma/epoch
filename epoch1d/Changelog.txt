@@ -1,4 +1,4 @@
-13-06-2011 Changes for version 3.1
+23-06-2011 Changes for version 3.1
 
 Syntax changes:
 
