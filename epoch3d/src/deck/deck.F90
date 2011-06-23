@@ -569,7 +569,7 @@ CONTAINS
 
     ! Don't check compulsory blocks if going to bomb anyway, just stinks up
     ! the output file
-    IF (.NOT. terminate .AND. first_call) CALL check_compulsory_blocks
+    IF (.NOT. terminate .AND. first_call) CALL deck_finalise(errcode_deck)
 
     terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
     ! Fatal error, cause code to bomb
