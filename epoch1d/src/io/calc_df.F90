@@ -7,6 +7,25 @@ MODULE calc_df
 
 CONTAINS
 
+  SUBROUTINE calc_boundary(data_array)
+
+    REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
+
+    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic .AND. x_min_boundary) THEN
+      data_array(1) = data_array(1) + data_array( 0)
+      data_array(2) = data_array(2) + data_array(-1)
+      data_array(3) = data_array(3) + data_array(-2)
+    ENDIF
+    IF (bc_particle(c_bd_x_max) .NE. c_bc_periodic .AND. x_max_boundary) THEN
+      data_array(nx-2) = data_array(nx-2) + data_array(nx+3)
+      data_array(nx-1) = data_array(nx-1) + data_array(nx+2)
+      data_array(nx  ) = data_array(nx  ) + data_array(nx+1)
+    ENDIF
+
+  END SUBROUTINE calc_boundary
+
+
+
   SUBROUTINE calc_mass_density(data_array, current_species)
 
     REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
@@ -64,6 +83,7 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -149,7 +169,9 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     CALL processor_summation_bcs(wt)
+    CALL calc_boundary(wt)
 
     data_array = data_array / MAX(wt, c_non_zero)
     DO ix = 1, 2*c_ndims
@@ -271,7 +293,9 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     CALL processor_summation_bcs(wt)
+    CALL calc_boundary(wt)
 
     data_array = data_array / MAX(wt, c_non_zero)
     DO ix = 1, 2*c_ndims
@@ -379,6 +403,7 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -434,6 +459,7 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO

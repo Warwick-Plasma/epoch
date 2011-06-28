@@ -7,6 +7,45 @@ MODULE calc_df
 
 CONTAINS
 
+  SUBROUTINE calc_boundary(data_array)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER :: i, j
+
+    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic .AND. x_min_boundary) THEN
+      DO j = -2, ny+3
+        data_array(1,j) = data_array(1,j) + data_array( 0,j)
+        data_array(2,j) = data_array(2,j) + data_array(-1,j)
+        data_array(3,j) = data_array(3,j) + data_array(-2,j)
+      ENDDO
+    ENDIF
+    IF (bc_particle(c_bd_x_max) .NE. c_bc_periodic .AND. x_max_boundary) THEN
+      DO j = -2, ny+3
+        data_array(nx-2,j) = data_array(nx-2,j) + data_array(nx+3,j)
+        data_array(nx-1,j) = data_array(nx-1,j) + data_array(nx+2,j)
+        data_array(nx  ,j) = data_array(nx  ,j) + data_array(nx+1,j)
+      ENDDO
+    ENDIF
+
+    IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic .AND. y_min_boundary) THEN
+      DO i = -2, nx+3
+        data_array(i,1) = data_array(i,1) + data_array(i, 0)
+        data_array(i,2) = data_array(i,2) + data_array(i,-1)
+        data_array(i,3) = data_array(i,3) + data_array(i,-2)
+      ENDDO
+    ENDIF
+    IF (bc_particle(c_bd_y_max) .NE. c_bc_periodic .AND. y_max_boundary) THEN
+      DO i = -2, nx+3
+        data_array(i,ny-2) = data_array(i,ny-2) + data_array(i,ny+3)
+        data_array(i,ny-1) = data_array(i,ny-1) + data_array(i,ny+2)
+        data_array(i,ny  ) = data_array(i,ny  ) + data_array(i,ny+1)
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE calc_boundary
+
+
+
   SUBROUTINE calc_mass_density(data_array, current_species)
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
@@ -67,6 +106,7 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -156,7 +196,9 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     CALL processor_summation_bcs(wt)
+    CALL calc_boundary(wt)
 
     data_array = data_array / MAX(wt, c_non_zero)
     DO ix = 1, 2*c_ndims
@@ -282,7 +324,9 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     CALL processor_summation_bcs(wt)
+    CALL calc_boundary(wt)
 
     data_array = data_array / MAX(wt, c_non_zero)
     DO ix = 1, 2*c_ndims
@@ -401,6 +445,7 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -459,6 +504,7 @@ CONTAINS
     ENDDO
 
     CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO

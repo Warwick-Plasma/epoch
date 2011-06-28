@@ -437,9 +437,9 @@ CONTAINS
 
     CALL field_bc(density)
 
-    DO iz = -2, nz+3
-      DO iy = -2, ny+3
-        DO ix = -2, nx+3
+    DO iz = 1, nz
+      DO iy = 1, ny
+        DO ix = 1, nx
           IF (density(ix,iy,iz) .GE. density_min) THEN
             density_map(ix,iy,iz) = .TRUE.
           ELSE IF (density(ix,iy,iz) .GT. density_max) THEN

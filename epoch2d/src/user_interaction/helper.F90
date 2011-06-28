@@ -413,8 +413,8 @@ CONTAINS
 
     CALL field_bc(density)
 
-    DO iy = -2, ny+3
-      DO ix = -2, nx+3
+    DO iy = 1, ny
+      DO ix = 1, nx
         IF (density(ix,iy) .GE. density_min) THEN
           density_map(ix,iy) = .TRUE.
         ELSE IF (density(ix,iy) .GT. density_max) THEN
@@ -466,12 +466,12 @@ CONTAINS
 
     CALL processor_summation_bcs(weight_fn)
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
-      IF (x_min_boundary) weight_fn(0 ,:) = weight_fn(1   ,:)
-      IF (x_max_boundary) weight_fn(nx,:) = weight_fn(nx-1,:)
+      IF (x_min_boundary) weight_fn(0   ,:) = weight_fn(1 ,:)
+      IF (x_max_boundary) weight_fn(nx+1,:) = weight_fn(nx,:)
     ENDIF
     IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic) THEN
-      IF (y_min_boundary) weight_fn(:,0 ) = weight_fn(:,1   )
-      IF (y_max_boundary) weight_fn(:,ny) = weight_fn(:,ny-1)
+      IF (y_min_boundary) weight_fn(:,0   ) = weight_fn(:,1 )
+      IF (y_max_boundary) weight_fn(:,ny+1) = weight_fn(:,ny)
     ENDIF
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
@@ -490,12 +490,12 @@ CONTAINS
     DEALLOCATE(density)
 
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
-      IF (x_min_boundary) weight_fn(0 ,:) = weight_fn(1   ,:)
-      IF (x_max_boundary) weight_fn(nx,:) = weight_fn(nx-1,:)
+      IF (x_min_boundary) weight_fn(0   ,:) = weight_fn(1 ,:)
+      IF (x_max_boundary) weight_fn(nx+1,:) = weight_fn(nx,:)
     ENDIF
     IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic) THEN
-      IF (y_min_boundary) weight_fn(:,0 ) = weight_fn(:,1   )
-      IF (y_max_boundary) weight_fn(:,ny) = weight_fn(:,ny-1)
+      IF (y_min_boundary) weight_fn(:,0   ) = weight_fn(:,1 )
+      IF (y_max_boundary) weight_fn(:,ny+1) = weight_fn(:,ny)
     ENDIF
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)

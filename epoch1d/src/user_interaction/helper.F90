@@ -391,7 +391,7 @@ CONTAINS
 
     CALL field_bc(density)
 
-    DO ix = -2, nx+3
+    DO ix = 1, nx
       IF (density(ix) .GE. density_min) THEN
         density_map(ix) = .TRUE.
       ELSE IF (density(ix) .GT. density_max) THEN
