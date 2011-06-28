@@ -80,8 +80,18 @@ CONTAINS
   SUBROUTINE shift_field(field)
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
+    INTEGER :: i
 
-    field(-2:nx+2) = field(-1:nx+3)
+    ! Interpolate the field into the first ghost cell
+    IF (x_max_boundary) THEN
+      field(nx+1) = 2.0_num * field(nx) - field(nx-1)
+    ENDIF
+
+    ! Shift field to the left by one cell
+    DO i = -2, nx+2
+      field(i) = field(i+1)
+    ENDDO
+
     CALL field_bc(field)
 
   END SUBROUTINE shift_field

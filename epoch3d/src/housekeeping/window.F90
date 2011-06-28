@@ -95,8 +95,26 @@ CONTAINS
   SUBROUTINE shift_field(field)
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
+    INTEGER :: i, j, k
 
-    field(-2:nx+2,:,:) = field(-1:nx+3,:,:)
+    ! Interpolate the field into the first ghost cell
+    IF (x_max_boundary) THEN
+      DO k = -2, nz+3
+        DO j = -2, ny+3
+          field(nx+1,j,k) = 2.0_num * field(nx,j,k) - field(nx-1,j,k)
+        ENDDO
+      ENDDO
+    ENDIF
+
+    ! Shift field to the left by one cell
+    DO k = -2, nz+3
+      DO j = -2, ny+3
+        DO i = -2, nx+2
+          field(i,j,k) = field(i+1,j,k)
+        ENDDO
+      ENDDO
+    ENDDO
+
     CALL field_bc(field)
 
   END SUBROUTINE shift_field
