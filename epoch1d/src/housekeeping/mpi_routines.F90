@@ -86,7 +86,11 @@ CONTAINS
     INTEGER :: ispecies, idim
     INTEGER :: nx0, nxp
 
+    IF (.NOT.cpml_boundaries) cpml_thickness = 0
+
     CALL setup_communicator
+
+    nx_global = nx_global + 2 * cpml_thickness
 
     nx0 = nx_global / nprocx
 

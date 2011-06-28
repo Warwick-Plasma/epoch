@@ -113,7 +113,7 @@ CONTAINS
     REAL(num) :: xb_min
 
     length_x = x_max - x_min
-    dx = length_x / REAL(nx_global, num)
+    dx = length_x / REAL(nx_global-2*cpml_thickness, num)
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
@@ -124,10 +124,10 @@ CONTAINS
 
     ! Setup global grid
     DO ix = -2, nx_global + 3
-      x_global(ix) = x_min + (ix - 1) * dx
+      x_global(ix) = x_min + (ix - 1 - cpml_thickness) * dx
     ENDDO
     DO ix = 1, nx_global + 1
-      xb_global(ix) = xb_min + (ix - 1) * dx
+      xb_global(ix) = xb_min + (ix - 1 - cpml_thickness) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
 

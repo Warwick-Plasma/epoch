@@ -116,8 +116,8 @@ CONTAINS
 
     length_x = x_max - x_min
     length_y = y_max - y_min
-    dx = length_x / REAL(nx_global, num)
-    dy = length_y / REAL(ny_global, num)
+    dx = length_x / REAL(nx_global-2*cpml_thickness, num)
+    dy = length_y / REAL(ny_global-2*cpml_thickness, num)
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
@@ -131,17 +131,17 @@ CONTAINS
 
     ! Setup global grid
     DO ix = -2, nx_global + 3
-      x_global(ix) = x_min + (ix - 1) * dx
+      x_global(ix) = x_min + (ix - 1 - cpml_thickness) * dx
     ENDDO
     DO ix = 1, nx_global + 1
-      xb_global(ix) = xb_min + (ix - 1) * dx
+      xb_global(ix) = xb_min + (ix - 1 - cpml_thickness) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
     DO iy = -2, ny_global + 3
-      y_global(iy) = y_min + (iy - 1) * dy
+      y_global(iy) = y_min + (iy - 1 - cpml_thickness) * dy
     ENDDO
     DO iy = 1, ny_global + 1
-      yb_global(iy) = yb_min + (iy - 1) * dy
+      yb_global(iy) = yb_min + (iy - 1 - cpml_thickness) * dy
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
 

@@ -166,7 +166,13 @@ CONTAINS
     INTEGER :: ny0, nyp
     INTEGER :: nz0, nzp
 
+    IF (.NOT.cpml_boundaries) cpml_thickness = 0
+
     CALL setup_communicator
+
+    nx_global = nx_global + 2 * cpml_thickness
+    ny_global = ny_global + 2 * cpml_thickness
+    nz_global = nz_global + 2 * cpml_thickness
 
     nx0 = nx_global / nprocx
     ny0 = ny_global / nprocy
