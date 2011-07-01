@@ -279,8 +279,8 @@ CONTAINS
 
     ! Work out the time that the next dump will occur based on the
     ! current timestep
-    t0 = t_end
-    t1 = t_end
+    t0 = HUGE(1.0_num)
+    t1 = HUGE(1.0_num)
     IF (dt_snapshot .GE. 0.0_num) t0 = time_next
     IF (nstep_snapshot .GE. 0) t1 = time + dt * (nstep_next - i)
 
