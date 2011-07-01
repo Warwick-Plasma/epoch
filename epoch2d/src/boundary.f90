@@ -366,17 +366,19 @@ CONTAINS
     ENDDO
 
     DO i = 1, 2*c_ndims
+      ! These apply zero field boundary conditions on the edges
       IF (bc_field(i) .EQ. c_bc_clamp &
           .OR. bc_field(i) .EQ. c_bc_simple_laser &
           .OR. bc_field(i) .EQ. c_bc_simple_outflow) THEN
-        ! These apply zero field boundary conditions on the edges
         CALL field_clamp_zero(ex, c_stagger_ex, i)
         CALL field_clamp_zero(ey, c_stagger_ey, i)
         CALL field_clamp_zero(ez, c_stagger_ez, i)
       ENDIF
 
-      ! These apply zero field gradient boundary conditions on the edges
-      IF (bc_field(i) .EQ. c_bc_zero_gradient) THEN
+      ! These apply zero gradient boundary conditions on the edges
+      IF (bc_field(i) .EQ. c_bc_zero_gradient &
+          .OR. bc_field(i) .EQ. c_bc_cpml_laser &
+          .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
         CALL field_zero_gradient(ex, c_stagger_ex, i)
         CALL field_zero_gradient(ey, c_stagger_ey, i)
         CALL field_zero_gradient(ez, c_stagger_ez, i)
@@ -426,8 +428,10 @@ CONTAINS
         CALL field_clamp_zero(bz, c_stagger_bz, i)
       ENDIF
 
-      ! These apply zero field boundary conditions on the edges
-      IF (bc_field(i) .EQ. c_bc_zero_gradient) THEN
+      ! These apply zero gradient boundary conditions on the edges
+      IF (bc_field(i) .EQ. c_bc_zero_gradient &
+          .OR. bc_field(i) .EQ. c_bc_cpml_laser &
+          .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
         CALL field_zero_gradient(bx, c_stagger_bx, i)
         CALL field_zero_gradient(by, c_stagger_by, i)
         CALL field_zero_gradient(bz, c_stagger_bz, i)
