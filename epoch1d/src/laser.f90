@@ -130,7 +130,7 @@ CONTAINS
 
     laserpos = 1
     IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
-      laserpos = cpml_x_min_laser_idx + 1
+      laserpos = cpml_x_min_laser_idx
     ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
@@ -198,7 +198,7 @@ CONTAINS
 
     laserpos = nx
     IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
-      laserpos = cpml_x_max_laser_idx - 1
+      laserpos = cpml_x_max_laser_idx
     ENDIF
     dtc2 = dt * c**2
     lx = dtc2 / dx
