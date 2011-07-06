@@ -287,7 +287,7 @@ CONTAINS
     IF (t0 .LT. t1) THEN
       ! Next I/O dump based on dt_snapshot
       time_first = t0
-      IF (time .GE. time_next) THEN
+      IF (dt_snapshot .GT. 0 .AND. time .GE. time_next) THEN
         time_next  = time_next + dt_snapshot
         nstep_next = i + nstep_snapshot
         print_arrays = .TRUE.
@@ -295,7 +295,7 @@ CONTAINS
     ELSE
       ! Next I/O dump based on nstep_snapshot
       time_first = t1
-      IF (i .GE. nstep_next) THEN
+      IF (nstep_snapshot .GT. 0 .AND. i .GE. nstep_next) THEN
         time_next  = time + dt_snapshot
         nstep_next = nstep_next + nstep_snapshot
         print_arrays = .TRUE.
