@@ -9,6 +9,7 @@ embed_source=1
 shift
 
 dir=`dirname $file`
+shafile=$dir/SHA1_SUM
 tmp=$dir/tmp
 tmp2=$dir/tmp2
 
@@ -32,6 +33,20 @@ if [ $build_sha1 -eq 1 ]; then
   if [ "$sha"x = x ]; then
     echo WARNING: unable to create valid sha1
   fi
+fi
+
+# Only generate new embedded source code if sha1 has changed
+oldsha=`cat $shafile 2>/dev/null`
+if [ "$oldsha"x = "$sha"x ]; then
+  # sha is the same
+  if [ $embed_source -eq 1 ]; then
+    [ -f "$file" ] && embed_source=0
+  fi
+  rm -f $tmp $tmp2
+  exit
+else
+  # sha has changed
+  echo "$sha" > $shafile
 fi
 
 rm -f $tmp $tmp2
