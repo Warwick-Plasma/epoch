@@ -437,8 +437,9 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
             || b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
         return GetCurve(domain, b);
 
+    sdf_read_data(h);
+
     if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
-        sdf_read_point_mesh(h);
         vtkPoints *points  = vtkPoints::New();
         vtkUnstructuredGrid *ugrid = vtkUnstructuredGrid::New();
         points->SetNumberOfPoints(b->nlocal);
@@ -465,8 +466,6 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
 #endif
         return ugrid;
     }
-
-    sdf_read_plain_mesh(h);
 
     vtkDataArray *xx, *yy, *zz;
 
@@ -530,16 +529,14 @@ avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
     int nlocal;
 
     h->current_block = mesh;
+    sdf_read_data(h);
+
+    h->current_block = b;
+    sdf_read_data(h);
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
-        sdf_read_point_mesh(h);
-        h->current_block = b;
-        sdf_read_point_variable(h);
         nlocal = b->nlocal;
     } else {
-        sdf_read_plain_mesh(h);
-        h->current_block = b;
-        sdf_read_plain_variable(h);
         nlocal = b->dims[0];
     }
 
@@ -611,10 +608,9 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     if (b->data) return b;
     h->current_block = b;
 
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE) {
-        sdf_read_plain_variable(h);
-    } else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
-        sdf_read_point_variable(h);
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
+            b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE) {
+        sdf_read_data(h);
     } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
         sdf_block_t *material = sdf_find_block_by_id(h, b->material_id);
         if (!material) return NULL;
@@ -906,7 +902,7 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
         vfm_blocks[i] = sdf_find_block_by_id(h, var_id);
         if (!vfm_blocks[i]) EXCEPTION1(InvalidVariableException, var_id);
         h->current_block = vfm_blocks[i];
-        sdf_read_plain_variable(h);
+        sdf_read_data(h);
     }
 #ifdef SDF_DEBUG
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
@@ -1079,7 +1075,7 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
         vfm_block = sdf_find_block_by_id(h, var_id);
         if (!vfm_block) EXCEPTION1(InvalidVariableException, var_id);
         h->current_block = vfm_block;
-        sdf_read_plain_variable(h);
+        sdf_read_data(h);
         vfm_ptrs[i] = (float*)vfm_block->data;
     }
 

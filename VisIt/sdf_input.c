@@ -22,6 +22,11 @@
     b->done_info = 1; } while(0)
 
 
+int sdf_read_array_info(sdf_file_t *h);
+int sdf_read_run_info(sdf_file_t *h);
+int sdf_read_array(sdf_file_t *h);
+
+
 static inline int sdf_get_next_block(sdf_file_t *h)
 {
     if (h->blocklist) {
@@ -277,6 +282,28 @@ int sdf_read_next_block_header(sdf_file_t *h)
 
 
 
+int sdf_read_data(sdf_file_t *h)
+{
+    sdf_block_t *b;
+
+    b = h->current_block;
+
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
+        return sdf_read_plain_mesh(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
+        return sdf_read_point_mesh(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
+        return sdf_read_plain_variable(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
+        return sdf_read_point_variable(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_ARRAY)
+        return sdf_read_array(h);
+
+    return 1;
+}
+
+
+
 int sdf_read_block_info(sdf_file_t *h)
 {
     sdf_block_t *b;
@@ -297,12 +324,10 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_point_variable_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_CONSTANT)
         ret = sdf_read_constant(h);
-/*
     else if (b->blocktype == SDF_BLOCKTYPE_ARRAY)
         ret = sdf_read_array_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO)
         ret = sdf_read_run_info(h);
-*/
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR)
         ret = sdf_read_stitched_tensor(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL)
@@ -479,6 +504,140 @@ int sdf_read_constant(sdf_file_t *h)
 
     b->stagger = SDF_STAGGER_VERTEX;
     h->current_location = b->block_start + b->info_length;
+
+    return 0;
+}
+
+
+
+static int sdf_array_datatype(sdf_file_t *h)
+{
+    sdf_block_t *b = h->current_block;
+    int n;
+
+#ifdef PARALLEL
+    int local_start[SDF_MAXDIMS], sizes[SDF_MAXDIMS];
+    for (n=0; n < b->ndims; n++) sizes[n] = b->dims[n];
+
+    sdf_factor(h, local_start);
+
+    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, local_start,
+        MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
+    MPI_Type_commit(&b->distribution);
+#else
+    for (n=0; n < b->ndims; n++) b->local_dims[n] = b->dims[n];
+#endif
+    for (n=b->ndims; n < 3; n++) b->local_dims[n] = 1;
+
+    b->nlocal = 1;
+    for (n=0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
+
+    return 0;
+}
+
+
+
+int sdf_read_run_info(sdf_file_t *h)
+{
+    sdf_block_t *b;
+    int version, revision, compdate, rundate, iodate;
+    uint64_t defines;
+    char *str = NULL;
+
+    // Metadata is
+    // - version   INTEGER(i4)
+    // - revision  INTEGER(i4)
+    // - commit_id CHARACTER(string_length)
+    // - sha1sum   CHARACTER(string_length)
+    // - compmac   CHARACTER(string_length)
+    // - compflag  CHARACTER(string_length)
+    // - defines   INTEGER(i8)
+    // - compdate  INTEGER(i4)
+    // - rundate   INTEGER(i4)
+    // - iodate    INTEGER(i4)
+
+    SDF_COMMON_INFO();
+    SDF_READ_ENTRY_INT4(version);
+    SDF_READ_ENTRY_INT4(revision);
+    SDF_READ_ENTRY_STRING(str);
+    str = NULL;
+    SDF_READ_ENTRY_STRING(str);
+    str = NULL;
+    SDF_READ_ENTRY_STRING(str);
+    str = NULL;
+    SDF_READ_ENTRY_STRING(str);
+    str = NULL;
+    SDF_READ_ENTRY_INT8(defines);
+    SDF_READ_ENTRY_INT4(compdate);
+    SDF_READ_ENTRY_INT4(rundate);
+    SDF_READ_ENTRY_INT4(iodate);
+
+/*
+    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
+    b->nlocal = 1;
+    for (i = 0; i < b->ndims; i++) {
+        b->dims[i] = b->dims_in[i];
+        b->local_dims[i] = b->dims_in[i];
+        b->nlocal *= b->dims[i];
+    }
+*/
+
+    h->current_location = b->block_start + b->info_length;
+
+    return 0;
+}
+
+
+
+int sdf_read_array_info(sdf_file_t *h)
+{
+    sdf_block_t *b;
+    int i;
+
+    // Metadata is
+    // - dims      INTEGER(i4), DIMENSION(ndims)
+
+    SDF_COMMON_INFO();
+
+    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
+    b->nlocal = 1;
+    for (i = 0; i < b->ndims; i++) {
+        b->dims[i] = b->dims_in[i];
+        b->local_dims[i] = b->dims_in[i];
+        b->nlocal *= b->dims[i];
+    }
+
+    h->current_location = b->block_start + b->info_length;
+
+    return 0;
+}
+
+
+
+int sdf_read_array(sdf_file_t *h)
+{
+    sdf_block_t *b = h->current_block;
+    int n;
+
+    if (b->done_data) return 0;
+    if (!b->done_info) sdf_read_array_info(h);
+
+    h->current_location = b->data_location;
+
+    n = b->type_size * b->nlocal;
+    if (b->data) free(b->data);
+    b->data = malloc(n);
+    sdf_seek(h);
+    sdf_read_bytes(h, b->data, n);
+
+    h->indent = 0;
+    SDF_DPRNT("\n");
+    SDF_DPRNT("b->name: %s ", b->name);
+    for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
+    SDF_DPRNT("\n  ");
+    SDF_DPRNTar(b->data, b->nlocal);
+
+    b->done_data = 1;
 
     return 0;
 }

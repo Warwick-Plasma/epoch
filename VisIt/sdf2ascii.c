@@ -11,7 +11,7 @@
 int main(int argc, char **argv)
 {
     struct stat statbuf;
-    int i, err;
+    int i, j, err;
     sdf_file_t *h;
     sdf_block_t *b;
     int rank = 0, size = 1;
@@ -41,29 +41,35 @@ int main(int argc, char **argv)
 
     sdf_read_blocklist(h);
 #ifdef SDF_DEBUG
-    printf("%s\n", h->dbg_buf); h->dbg = h->dbg_buf;
+    printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     b = h->current_block = h->blocklist;
     for (i=0; i<h->nblocks; i++) {
         b = h->current_block;
+        sdf_read_data(h);
         if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
-            sdf_read_plain_mesh(h);
-        } else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
-            sdf_read_point_mesh(h);
-        } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE) {
-            sdf_read_plain_variable(h);
-        } else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
-            sdf_read_point_variable(h);
+            if (b->datatype_out == SDF_DATATYPE_REAL8) {
+                int n, j;
+                double *arr;
+                for (n=0; n<b->ndims; n++) {
+                    printf("r8 ");
+                    arr = b->grids[n];
+                    for (j=0; j<b->dims[n]; j++)
+                        printf(" %g", *arr++);
+                    printf("\n");
+                }
+            }
         }
         h->current_block = b->next;
 #ifdef SDF_DEBUG
-        printf("%s\n", h->dbg_buf); h->dbg = h->dbg_buf;
+        printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     }
 #ifdef SDF_DEBUG
-    printf("%s\n", h->dbg_buf); h->dbg = h->dbg_buf;
+    printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     sdf_close(h);
+    printf("\n");
 
 #ifdef PARALLEL
     MPI_Finalize();

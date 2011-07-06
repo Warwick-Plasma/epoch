@@ -230,6 +230,8 @@ int sdf_read_point_mesh_info(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
 int sdf_read_point_variable_info(sdf_file_t *h);
 
+int sdf_read_data(sdf_file_t *h);
+
 int sdf_add_derived_blocks(sdf_file_t *h);
 
 #ifdef SDF_DEBUG
