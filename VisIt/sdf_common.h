@@ -175,7 +175,7 @@ struct sdf_file {
     MPI_Offset current_location;
 #else
     FILE *filehandle;
-    off_t current_location;
+    uint64_t current_location;
 #endif
     double time;
     uint64_t first_block_location, summary_location, start_location, soi, sof;
@@ -188,13 +188,14 @@ struct sdf_file {
     char done_header, restart_flag, other_domains, use_float;
     char *code_name;
     sdf_block_t *blocklist, *current_block;
+    void *mmap;
 #ifdef SDF_DEBUG
     char *dbg, *dbg_buf;
     size_t dbg_count;
 #endif
 };
 
-sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm);
+sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap);
 int sdf_close(sdf_file_t *h);
 sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id);
 sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name);

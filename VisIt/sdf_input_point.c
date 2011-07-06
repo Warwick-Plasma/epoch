@@ -133,6 +133,11 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
     sdf_block_t *b = h->current_block;
     char **var = (char **)var_in;
 
+    if (h->mmap) {
+        *var = h->mmap + h->current_location;
+        return 0;
+    }
+
     if (*var) free(*var);
     *var = malloc(count * b->type_size);
 #ifdef PARALLEL

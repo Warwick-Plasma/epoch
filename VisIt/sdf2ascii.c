@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     MPI_Comm_size(comm, &size);
 #endif
 
-    h = sdf_open(argv[1], rank, comm);
+    h = sdf_open(argv[1], rank, comm, 1);
     if (!h) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);
         return 1;

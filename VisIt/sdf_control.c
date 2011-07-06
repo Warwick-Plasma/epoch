@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include "sdf_common.h"
 
 #ifdef PARALLEL
@@ -12,7 +13,7 @@
 #define ABS(a) (((a) > 0) ? (a) : (-(a)))
 
 
-sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm)
+sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
 {
     sdf_file_t *h;
     int ret;
@@ -47,8 +48,22 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm)
         return h;
     }
 
+    if (use_mmap)
+        h->mmap = "";
+    else
+        h->mmap = NULL;
+
     ret = sdf_read_header(h);
-    if (ret) h = NULL;
+    if (ret) {
+        h = NULL;
+        return h;
+    }
+
+#ifndef PARALLEL
+    if (h->mmap)
+        h->mmap = mmap(NULL, h->summary_location, PROT_READ, MAP_SHARED,
+            fileno(h->filehandle), 0);
+#endif
 
     return h;
 }
@@ -63,17 +78,18 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm)
     }} while(0)
 
 
-static int sdf_free_block_data(sdf_block_t *b)
+static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 {
     int i;
 
     if (!b) return 1;
 
     if (b->grids) {
-        for (i = 0; i < b->ndims; i++) if (b->grids[i]) free(b->grids[i]);
+        if (!h->mmap)
+            for (i = 0; i < b->ndims; i++) if (b->grids[i]) free(b->grids[i]);
         free(b->grids);
     }
-    if (b->data) free(b->data);
+    if (!h->mmap && b->data) free(b->data);
     b->grids = NULL;
     b->data = NULL;
     b->done_data = 0;
@@ -82,7 +98,7 @@ static int sdf_free_block_data(sdf_block_t *b)
 }
 
 
-static int sdf_free_block(sdf_block_t *b)
+static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
 {
     if (!b) return 1;
 
@@ -97,7 +113,7 @@ static int sdf_free_block(sdf_block_t *b)
     if (b->extents) free(b->extents);
     FREE_ARRAY(b->variable_ids);
     FREE_ARRAY(b->material_names);
-    sdf_free_block_data(b);
+    sdf_free_block_data(h, b);
 
     free(b);
     b = NULL;
@@ -119,7 +135,7 @@ int sdf_free_blocklist_data(sdf_file_t *h)
         b = h->blocklist;
         for (i=0; i < h->nblocks; i++) {
             next = b->next;
-            sdf_free_block_data(b);
+            sdf_free_block_data(h, b);
             b = next;
         }
     }
@@ -141,7 +157,7 @@ static int sdf_free_handle(sdf_file_t *h)
         b = h->blocklist;
         for (i=0; i < h->nblocks; i++) {
             next = b->next;
-            sdf_free_block(b);
+            sdf_free_block(h, b);
             b = next;
         }
         h->blocklist = NULL;
@@ -476,7 +492,7 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
         r4 = *var_in = malloc(count * sizeof(float));
         for (i=0; i < count; i++)
             *r4++ = (float)(*r8++);
-        free(old_var);
+        if (!h->mmap) free(old_var);
         b->datatype_out = SDF_DATATYPE_REAL4;
         b->type_size_out = 4;
 #ifdef PARALLEL

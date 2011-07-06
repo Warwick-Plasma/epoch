@@ -110,7 +110,7 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
             use_float = 1;
 
     if (!h) {
-        h = sdf_open(filename, rank, comm);
+        h = sdf_open(filename, rank, comm, 0);
         sdf_read_header(h);
     }
 }
@@ -176,7 +176,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     // CODE TO ADD A MESH
     //
 
-    if (!h) h = sdf_open(filename, rank, comm);
+    if (!h) h = sdf_open(filename, rank, comm, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
     h->use_float = use_float;
     debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
@@ -817,7 +817,7 @@ avtSDFFileFormat::ActivateTimestep(void)
     ncpus = PAR_Size();
     debug1 << rank << " " << ncpus << " " << comm << " f:" << filename << endl;
 
-    if (!h) h = sdf_open(filename, rank, comm);
+    if (!h) h = sdf_open(filename, rank, comm, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
     h->use_float = use_float;
     sdf_read_blocklist(h);

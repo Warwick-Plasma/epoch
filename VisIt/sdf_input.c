@@ -625,10 +625,14 @@ int sdf_read_array(sdf_file_t *h)
     h->current_location = b->data_location;
 
     n = b->type_size * b->nlocal;
-    if (b->data) free(b->data);
-    b->data = malloc(n);
-    sdf_seek(h);
-    sdf_read_bytes(h, b->data, n);
+    if (h->mmap) {
+        b->data = h->mmap + h->current_location;
+    } else {
+        if (b->data) free(b->data);
+        b->data = malloc(n);
+        sdf_seek(h);
+        sdf_read_bytes(h, b->data, n);
+    }
 
     h->indent = 0;
     SDF_DPRNT("\n");
