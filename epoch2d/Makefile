@@ -49,6 +49,9 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 # Use fifth order particle weighting (default is third order).
 # -DPARTICLE_SHAPE_BSPLINE3
 
+# Don't generate any output at all. Useful for benchmarking.
+# -DNO_IO
+
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncommenting the
 # following line.

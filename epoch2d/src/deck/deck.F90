@@ -364,7 +364,11 @@ CONTAINS
     ! found and everything beyond it is a comment
     is_comment = .FALSE.
 
+#ifdef NO_IO
+    status_filename = '/dev/null'
+#else
     status_filename = TRIM(ADJUSTL(data_dir)) // '/deck.status'
+#endif
 
     ! rank 0 reads the file and then passes it out to the other nodes using
     ! MPI_BCAST

@@ -258,7 +258,11 @@ CONTAINS
     LOGICAL :: exists
 
     IF (rank .EQ. 0) THEN
+#ifdef NO_IO
+      stat_file = '/dev/null'
+#else
       WRITE(stat_file, '(a, "/epoch2d.dat")') TRIM(data_dir)
+#endif
       IF (ic_from_restart) THEN
         INQUIRE(file=stat_file, exist=exists)
         IF (exists) THEN

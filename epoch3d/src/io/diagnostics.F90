@@ -41,6 +41,10 @@ CONTAINS
     INTEGER, DIMENSION(6) :: fluxdir = &
         (/-c_dir_x, c_dir_x, -c_dir_y, c_dir_y, -c_dir_z, c_dir_z/)
 
+#ifdef NO_IO
+    RETURN
+#endif
+
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
         .AND. MOD(i, stdout_frequency) .EQ. 0) THEN
       WRITE(*, '("Time", g20.12, " and iteration", i7, " after ", &
