@@ -30,4 +30,7 @@ else
   echo "Unable to build. Please add visit to your \$PATH"
 fi
 
-mpicc -DPARALLEL -DSDF_DEBUG_ALL -g -o sdf2ascii *c
+if [ "$fmt"x = "SDF"x ]; then
+  mpicc -DPARALLEL -DSDF_DEBUG_ALL -g -o sdf2ascii sdf2ascii.c sdf_control.c \
+      sdf_input.c sdf_input_cartesian.c sdf_input_point.c
+fi
