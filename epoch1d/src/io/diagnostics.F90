@@ -310,7 +310,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (time .GE. t_end .OR. i .EQ. nsteps) THEN
+    IF ((time .GE. t_end .OR. i .EQ. nsteps) .AND. dump_last) THEN
       last_call = .TRUE.
       print_arrays = .TRUE.
     ENDIF
