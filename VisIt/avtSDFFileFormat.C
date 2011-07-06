@@ -1085,7 +1085,8 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
 
     int nelements = vfm_block->nelements;
     int ndims = vfm_block->ndims;
-    int *dims = vfm_block->dims;
+    int dims[ndims];
+    for (int i = 0; i < ndims; i++) dims[i] = vfm_block->dims[i];
 
     float *specmf = new float[nspec * nelements];
     int *speclist = new int[nelements];

@@ -21,6 +21,9 @@
     b->done_info = 1; } while(0)
 
 
+int sdf_point_factor(sdf_file_t *h, int *local_npoints, int *local_start);
+
+
 int sdf_read_point_mesh_info(sdf_file_t *h)
 {
     sdf_block_t *b;
@@ -48,6 +51,7 @@ int sdf_read_point_mesh_info(sdf_file_t *h)
     SDF_READ_ENTRY_ARRAY_REAL8(b->extents, 2*b->ndims);
 
     SDF_READ_ENTRY_INT8(b->npoints);
+    for (i = 0; i < b->ndims; i++) b->dims[i] = b->npoints;
 
     b->stagger = SDF_STAGGER_VERTEX;
     h->current_location = b->block_start + b->info_length;
@@ -60,7 +64,6 @@ int sdf_read_point_mesh_info(sdf_file_t *h)
 int sdf_read_point_variable_info(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int i;
 
     // Metadata is
     // - mult      REAL(r8)
@@ -77,6 +80,7 @@ int sdf_read_point_variable_info(sdf_file_t *h)
     SDF_READ_ENTRY_ID(b->mesh_id);
 
     SDF_READ_ENTRY_INT8(b->npoints);
+    b->dims[0] = b->npoints;
 
     h->current_location = b->block_start + b->info_length;
 
@@ -124,7 +128,7 @@ static int sdf_free_distribution(sdf_file_t *h)
 
 
 
-static int sdf_read_array(sdf_file_t *h, void **var_in, int count)
+static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
 {
     sdf_block_t *b = h->current_block;
     char **var = (char **)var_in;
@@ -171,7 +175,7 @@ int sdf_read_point_mesh(sdf_file_t *h)
         if (b->ndims > n) { 
             sdf_create_1d_distribution(h, b->npoints, b->nlocal,
                     local_start);
-            sdf_read_array(h, &b->grids[n], b->nlocal);
+            sdf_helper_read_array(h, &b->grids[n], b->nlocal);
             sdf_free_distribution(h);
             sdf_convert_array_to_float(h, &b->grids[n], b->nlocal);
             SDF_DPRNT("%s: ", b->dim_labels[n]);
@@ -224,7 +228,7 @@ int sdf_read_point_variable(sdf_file_t *h)
     h->current_location = b->data_location;
 
     sdf_create_1d_distribution(h, b->npoints, b->nlocal, local_start);
-    sdf_read_array(h, &b->data, b->nlocal);
+    sdf_helper_read_array(h, &b->data, b->nlocal);
     sdf_free_distribution(h);
     sdf_convert_array_to_float(h, &b->data, b->nlocal);
     h->current_location = h->current_location + b->type_size * b->npoints;

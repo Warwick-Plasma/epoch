@@ -58,7 +58,7 @@ int sdf_read_plain_mesh_info(sdf_file_t *h)
 
 
 
-int sdf_read_variable_info(sdf_file_t *h)
+int sdf_read_plain_variable_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
@@ -120,13 +120,15 @@ static int sdf_create_1d_distribution(sdf_file_t *h, int global, int local,
 static int sdf_plain_mesh_datatype(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
-    int local_start[SDF_MAXDIMS];
     int n;
 
 #ifdef PARALLEL
+    int local_start[SDF_MAXDIMS], sizes[SDF_MAXDIMS];
+    for (n=0; n < b->ndims; n++) sizes[n] = b->dims[n];
+
     sdf_factor(h, local_start);
 
-    MPI_Type_create_subarray(b->ndims, b->dims, b->local_dims, local_start,
+    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, local_start,
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 #else
@@ -154,7 +156,7 @@ static int sdf_free_distribution(sdf_file_t *h)
 
 
 
-static int sdf_read_array(sdf_file_t *h, void **var_in, int count)
+static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
 {
     sdf_block_t *b = h->current_block;
     char **var = (char **)var_in;
@@ -201,7 +203,7 @@ int sdf_read_plain_mesh(sdf_file_t *h)
         if (b->ndims > n) { 
             sdf_create_1d_distribution(h, b->dims[n], b->local_dims[n],
                     local_start[n]);
-            sdf_read_array(h, &b->grids[n], b->local_dims[n]);
+            sdf_helper_read_array(h, &b->grids[n], b->local_dims[n]);
             sdf_free_distribution(h);
             sdf_convert_array_to_float(h, &b->grids[n], b->local_dims[n]);
             SDF_DPRNT("%s: ", b->dim_labels[n]);
@@ -225,13 +227,13 @@ int sdf_read_plain_variable(sdf_file_t *h)
     int n;
 
     if (b->done_data) return 0;
-    if (!b->done_info) sdf_read_variable_info(h);
+    if (!b->done_info) sdf_read_plain_variable_info(h);
 
     sdf_plain_mesh_datatype(h);
 
     h->current_location = b->data_location;
 
-    sdf_read_array(h, &b->data, b->nlocal);
+    sdf_helper_read_array(h, &b->data, b->nlocal);
     sdf_convert_array_to_float(h, &b->data, b->nlocal);
 
     sdf_free_distribution(h);

@@ -156,7 +156,8 @@ struct sdf_block {
     uint32_t ndims, geometry, datatype, blocktype;
     uint32_t type_size, stagger, datatype_out, type_size_out;
     uint32_t *dims_in;
-    int dims[3], local_dims[3], nm, nlocal;
+    uint64_t dims[3];
+    int local_dims[3], nm, nlocal;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
     char *name, *material_name;
@@ -219,15 +220,15 @@ int sdf_read_stitched_matvar(sdf_file_t *h);
 int sdf_read_stitched_species(sdf_file_t *h);
 int sdf_read_constant(sdf_file_t *h);
 
-int sdf_read_plain_mesh_info(sdf_file_t *h);
-int sdf_read_variable_info(sdf_file_t *h);
 int sdf_read_plain_mesh(sdf_file_t *h);
+int sdf_read_plain_mesh_info(sdf_file_t *h);
 int sdf_read_plain_variable(sdf_file_t *h);
+int sdf_read_plain_variable_info(sdf_file_t *h);
 
-int sdf_read_point_mesh_info(sdf_file_t *h);
-int sdf_read_point_variable_info(sdf_file_t *h);
 int sdf_read_point_mesh(sdf_file_t *h);
+int sdf_read_point_mesh_info(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
+int sdf_read_point_variable_info(sdf_file_t *h);
 
 int sdf_add_derived_blocks(sdf_file_t *h);
 

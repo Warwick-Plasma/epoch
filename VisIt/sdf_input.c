@@ -6,6 +6,22 @@
 #include <mpi.h>
 #endif
 
+
+#define SDF_COMMON_INFO() do { \
+    if (!h->current_block || !h->current_block->done_header) { \
+      if (h->rank == h->rank_master) { \
+        fprintf(stderr, "*** ERROR ***\n"); \
+        fprintf(stderr, "SDF block header has not been read." \
+                " Ignoring call.\n"); \
+      } \
+      return 1; \
+    } \
+    b = h->current_block; \
+    if (b->done_info) return 0; \
+    h->current_location = b->block_start + h->block_header_length; \
+    b->done_info = 1; } while(0)
+
+
 static inline int sdf_get_next_block(sdf_file_t *h)
 {
     if (h->blocklist) {
@@ -53,6 +69,7 @@ int sdf_seek(sdf_file_t *h)
 }
 
 
+
 int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen)
 {
 #ifdef PARALLEL
@@ -73,6 +90,7 @@ int sdf_broadcast(sdf_file_t *h, void *buf, int size)
     return 0;
 #endif
 }
+
 
 
 int sdf_read_header(sdf_file_t *h)
@@ -258,6 +276,7 @@ int sdf_read_next_block_header(sdf_file_t *h)
 }
 
 
+
 int sdf_read_block_info(sdf_file_t *h)
 {
     sdf_block_t *b;
@@ -273,7 +292,7 @@ int sdf_read_block_info(sdf_file_t *h)
     else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
         ret = sdf_read_point_mesh_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
-        ret = sdf_read_variable_info(h);
+        ret = sdf_read_plain_variable_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
         ret = sdf_read_point_variable_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_CONSTANT)
@@ -335,26 +354,11 @@ int sdf_read_blocklist(sdf_file_t *h)
     return 0;
 }
 
-#define SDF_COMMON_INFO() do { \
-    if (!h->current_block || !h->current_block->done_header) { \
-      if (h->rank == h->rank_master) { \
-        fprintf(stderr, "*** ERROR ***\n"); \
-        fprintf(stderr, "SDF block header has not been read." \
-                " Ignoring call.\n"); \
-      } \
-      return 1; \
-    } \
-    b = h->current_block; \
-    if (b->done_info) return 0; \
-    h->current_location = b->block_start + h->block_header_length; \
-    b->done_info = 1; } while(0)
-
 
 
 int sdf_read_stitched_tensor(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int i;
 
     SDF_COMMON_INFO();
 
@@ -379,7 +383,6 @@ int sdf_read_stitched_tensor(sdf_file_t *h)
 int sdf_read_stitched_material(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int i;
 
     SDF_COMMON_INFO();
 
@@ -407,7 +410,6 @@ int sdf_read_stitched_material(sdf_file_t *h)
 int sdf_read_stitched_matvar(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int i;
 
     SDF_COMMON_INFO();
 
@@ -435,7 +437,6 @@ int sdf_read_stitched_matvar(sdf_file_t *h)
 int sdf_read_stitched_species(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int i;
 
     SDF_COMMON_INFO();
 

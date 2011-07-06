@@ -28,16 +28,17 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm)
     h->string_length = 64;
     h->indent = 0;
 
-    h->comm = comm;
-    h->rank = rank;
-
     h->done_header = 0;
+    h->ncpus = 1;
 
 #ifdef PARALLEL
+    h->comm = comm;
+    h->rank = rank;
     ret = MPI_File_open(h->comm, (char*)filename, MPI_MODE_RDONLY,
         MPI_INFO_NULL, &h->filehandle);
     if (ret) h->filehandle = 0;
 #else
+    h->rank = 0;
     h->filehandle = fopen(filename, "r");
 #endif
     if (!h->filehandle) {
@@ -183,7 +184,7 @@ sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id)
     sdf_block_t *current, *b;
     int i, len;
 
-    if (!h || !h->blocklist)
+    if (!h || !h->blocklist || !id)
         return NULL;
 
     current = h->blocklist;
@@ -266,7 +267,7 @@ int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
 
 
 
-static int factor2d(int ncpus, int *dims, int *cpu_split)
+static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
 {
     const int ndims = 2;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
@@ -322,7 +323,7 @@ static int factor2d(int ncpus, int *dims, int *cpu_split)
 
 
 
-static int factor3d(int ncpus, int *dims, int *cpu_split)
+static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
 {
     const int ndims = 3;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
