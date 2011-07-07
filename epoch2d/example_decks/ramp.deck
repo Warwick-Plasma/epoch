@@ -44,7 +44,7 @@ end:control
 
 begin:laser
   boundary = x_min
-  irradiance = 1.0e20 # W/m^2
+  intensity_w_cm2 = 1.0e16
   omega = las_omega
   t_profile = if (time lt 2*las_time, gauss(time,2*las_time,2*las_time), 1)
   profile = (1.0 + 0.05*sin(32.0*pi*y/lengthy)) * gauss(y,0,las_scale_y)

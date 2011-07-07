@@ -31,7 +31,7 @@ end:constant
 
 begin:laser
   boundary = x_min
-  irradiance = 1.0e19
+  intensity_w_cm2 = 1.0e15
   lambda = lambda0 * cos(theta)
   phase = -2.0 * pi * y * sin(theta) / lambda0
   # pol_angle = 0 # pi / 2.0

@@ -107,7 +107,7 @@ CONTAINS
     IF (str_cmp(element, "irradiance_w_cm2") &
         .OR. str_cmp(element, "intensity_w_cm2")) THEN
       working_laser%amp = SQRT(as_real(value, errcode) &
-          / (c*epsilon0/2.0_num)) / 10.d4
+          / (c*epsilon0/2.0_num)) * 100_num 
       RETURN
     ENDIF
 

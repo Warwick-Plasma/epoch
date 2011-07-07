@@ -1,24 +1,24 @@
 begin:control
-  nx=200
+  nx = 200
 
-  #final time of simulation
+  # final time of simulation
   t_end = 16e-15
 
-  #size of domain
+  # size of domain
   x_min = -4e-6
   x_max = -x_min
 end:control
 
 
 begin:boundaries
-  bc_x_min=simple_laser
-  bc_x_max=open
+  bc_x_min = simple_laser
+  bc_x_max = open
 end:boundaries
 
 
 begin:laser
   boundary = x_min
-  irradiance = 1.0e19
+  intensity_w_cm2 = 1.0e15
   lambda = 1.e-6
   t_profile = gauss(time,4e-15,4e-15)
   t_end = 14e-15
@@ -26,9 +26,9 @@ end:laser
 
 
 begin:output
-  dt_snapshot=8e-15
+  dt_snapshot = 8e-15
 
-  #Properties on grid
-  grid=always
-  ey=always
+  # Properties on grid
+  grid = always
+  ey = always
 end:output

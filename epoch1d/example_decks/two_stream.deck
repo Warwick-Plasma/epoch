@@ -2,10 +2,10 @@ begin:control
   nx = 400
   npart = 3200
 
-  #final time of simulation
+  # final time of simulation
   t_end = 1.5e-1
 
-  #size of domain
+  # size of domain
   x_min = 0
   x_max = 5.0e5
 end:control
