@@ -2,10 +2,10 @@ begin:control
   nx = 200
 
   # final time of simulation
-  t_end = 16e-15
+  t_end = 50 * femto
 
   # size of domain
-  x_min = -4e-6
+  x_min = -4 * micron
   x_max = -x_min
 end:control
 
@@ -19,14 +19,14 @@ end:boundaries
 begin:laser
   boundary = x_min
   intensity_w_cm2 = 1.0e15
-  lambda = 1.e-6
-  t_profile = gauss(time,4e-15,4e-15)
-  t_end = 14e-15
+  lambda = 1 * micron
+  t_profile = gauss(time,4*femto,4*femto)
+  t_end = 14 * femto
 end:laser
 
 
 begin:output
-  dt_snapshot = 8e-15
+  dt_snapshot = 8 * femto
 
   # Properties on grid
   grid = always

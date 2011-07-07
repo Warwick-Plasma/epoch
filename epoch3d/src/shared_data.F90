@@ -199,7 +199,12 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_ev = 8
   INTEGER, PARAMETER :: c_const_kev = 9
   INTEGER, PARAMETER :: c_const_mev = 10
-  INTEGER, PARAMETER :: c_const_micron = 11
+  INTEGER, PARAMETER :: c_const_milli = 11
+  INTEGER, PARAMETER :: c_const_micro = 12
+  INTEGER, PARAMETER :: c_const_nano = 13
+  INTEGER, PARAMETER :: c_const_pico = 14
+  INTEGER, PARAMETER :: c_const_femto = 15
+  INTEGER, PARAMETER :: c_const_atto = 16
 
   ! Constants refering to grid properties
   INTEGER, PARAMETER :: c_const_x = 25

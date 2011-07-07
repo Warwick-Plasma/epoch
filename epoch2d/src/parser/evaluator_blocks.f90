@@ -179,8 +179,33 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (opcode .EQ. c_const_micron) THEN
+    IF (opcode .EQ. c_const_milli) THEN
+      CALL push_on_eval(1.0e-3_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_micro) THEN
       CALL push_on_eval(1.0e-6_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nano) THEN
+      CALL push_on_eval(1.0e-9_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_pico) THEN
+      CALL push_on_eval(1.0e-12_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_femto) THEN
+      CALL push_on_eval(1.0e-15_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_atto) THEN
+      CALL push_on_eval(1.0e-18_num)
       RETURN
     ENDIF
 

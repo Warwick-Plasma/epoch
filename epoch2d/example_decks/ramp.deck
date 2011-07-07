@@ -1,8 +1,8 @@
 begin:constant
-  points = 512
+  # particles per cell
   part = 32
 
-  las_lambda = 1.0e-6
+  las_lambda = 1 * micron
   las_omega = 2.0 * pi * c / las_lambda
   las_time = 2.0 * pi / las_omega
 
@@ -10,11 +10,11 @@ begin:constant
 
   rhomax = 0.8 * n_crit
 
-  scale_x = 20e-6
+  scale_x = 20 * micron
 
-  las_scale_y = 8.0e-6
+  las_scale_y = 8 * micron
 
-  xmin = -4e-6
+  xmin = -4 * micron
 
   # Gaussian Beam stuff
   w0 = las_scale_y
@@ -29,13 +29,13 @@ begin:control
   ny = 512
 
   # final time of simulation
-  t_end = 0.4e-12
+  t_end = 0.4 * pico
 
   # size of domain
   x_min = xmin
-  x_end = scale_x + 20e-6
+  x_end = scale_x + 20 * micron
 
-  y_min = -20e-6
+  y_min = -20 * micron
   y_max = -y_min
 
   stdout_frequency = 10
@@ -64,12 +64,12 @@ begin:species
   name = electron
   charge = -1.0
   mass = 1.0
-  npart = points * points * part
+  npart = nx * ny * part
 
   density = rhomax * (exp(x/scale_x) - 1) / (exp(1) - 1)
   density = if(x lt 0, 0.0, density(electron))
   density = if(density(electron) gt rhomax, rhomax, density(electron))
-  density = if(x gt 75e-6, 0.0, density(electron))
+  density = if(x gt 75*micron, 0.0, density(electron))
   #density = density(electron) * (0.8 + 0.2 * gauss(y,0,0.5*las_scale_y))
   density_min = 0.0001 * n_crit
   density_max = n_crit
@@ -83,7 +83,7 @@ begin:species
   name = proton
   charge = 1.0
   mass = 1836.2
-  npart = points * points * part
+  npart = nx * ny * part
 
   density = density(electron)
   density_min = 0.0001 * n_crit
@@ -95,7 +95,7 @@ end:species
 
 begin:output
   # number of timesteps between output dumps
-  dt_snapshot = 0.5e-14
+  dt_snapshot = 5 * femto
   # Number of snapshots between full dumps
   full_dump_every = 10
   restart_dump_every = -1

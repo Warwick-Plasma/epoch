@@ -96,7 +96,13 @@ CONTAINS
     IF (str_cmp(name, "ev")) as_constant = c_const_ev
     IF (str_cmp(name, "kev")) as_constant = c_const_kev
     IF (str_cmp(name, "mev")) as_constant = c_const_mev
-    IF (str_cmp(name, "micron")) as_constant = c_const_micron
+    IF (str_cmp(name, "milli")) as_constant = c_const_milli
+    IF (str_cmp(name, "micro") &
+        .OR. str_cmp(name, "micron")) as_constant = c_const_micro
+    IF (str_cmp(name, "nano")) as_constant = c_const_nano
+    IF (str_cmp(name, "pico")) as_constant = c_const_pico
+    IF (str_cmp(name, "femto")) as_constant = c_const_femto
+    IF (str_cmp(name, "atto")) as_constant = c_const_atto
     IF (str_cmp(name, "x"))  as_constant = c_const_x
     IF (str_cmp(name, "y"))  as_constant = c_const_y
     IF (str_cmp(name, "z"))  as_constant = c_const_z
