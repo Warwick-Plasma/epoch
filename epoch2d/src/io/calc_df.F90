@@ -60,6 +60,8 @@ CONTAINS
 #include "particle_head.inc"
 
     data_array = 0.0_num
+    part_m = 0.0_num
+    fac = 0.0_num
 
     idx = 1.0_num / dx / dy
 
@@ -78,22 +80,33 @@ CONTAINS
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_m  = species_list(ispecies)%mass
-#endif
 #ifndef PER_PARTICLE_WEIGHT
       fac = species_list(ispecies)%weight * idx
+#endif
+      wdata = part_m * fac
+#else
+#ifndef PER_PARTICLE_WEIGHT
+      fac = species_list(ispecies)%weight * idx
+      wdata = part_m * fac
+#endif
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_m  = current%mass
-#endif
 #ifdef PER_PARTICLE_WEIGHT
         fac = current%weight * idx
+#endif
+        wdata = part_m * fac
+#else
+#ifdef PER_PARTICLE_WEIGHT
+        fac = current%weight * idx
+        wdata = part_m * fac
+#endif
 #endif
 
 #include "particle_to_grid.inc"
 
-        wdata = part_m * fac
         DO iy = sf_min, sf_max
           DO ix = sf_min, sf_max
             data_array(cell_x+ix, cell_y+iy) = &
@@ -134,6 +147,8 @@ CONTAINS
     ALLOCATE(wt(-2:nx+3,-2:ny+3))
     data_array = 0.0_num
     wt = 0.0_num
+    part_mc  = 1.0_num
+    l_weight = 1.0_num
 
     spec_start = current_species
     spec_end = current_species
@@ -230,6 +245,8 @@ CONTAINS
     ALLOCATE(wt(-2:nx+3,-2:ny+3))
     data_array = 0.0_num
     wt = 0.0_num
+    part_mc  = 1.0_num
+    l_weight = 1.0_num
 
     xfac = c * dy
     yfac = c * dx
@@ -399,6 +416,8 @@ CONTAINS
 #include "particle_head.inc"
 
     data_array = 0.0_num
+    part_q = 0.0_num
+    fac = 0.0_num
 
     idx = 1.0_num / dx / dy
 
@@ -417,22 +436,33 @@ CONTAINS
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = species_list(ispecies)%charge
-#endif
 #ifndef PER_PARTICLE_WEIGHT
       fac = species_list(ispecies)%weight * idx
+#endif
+      wdata = part_q * fac
+#else
+#ifndef PER_PARTICLE_WEIGHT
+      fac = species_list(ispecies)%weight * idx
+      wdata = part_q * fac
+#endif
 #endif
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_q  = current%charge
-#endif
 #ifdef PER_PARTICLE_WEIGHT
         fac = current%weight * idx
+#endif
+        wdata = part_q * fac
+#else
+#ifdef PER_PARTICLE_WEIGHT
+        fac = current%weight * idx
+        wdata = part_q * fac
+#endif
 #endif
 
 #include "particle_to_grid.inc"
 
-        wdata = part_q * fac
         DO iy = sf_min, sf_max
           DO ix = sf_min, sf_max
             data_array(cell_x+ix, cell_y+iy) = &
