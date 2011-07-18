@@ -293,14 +293,12 @@ CONTAINS
       time_first = t0
       IF (dt_snapshot .GT. 0 .AND. time .GE. time_next) THEN
         time_next  = time_next + dt_snapshot
-        nstep_next = i + nstep_snapshot
         print_arrays = .TRUE.
       ENDIF
     ELSE
       ! Next I/O dump based on nstep_snapshot
       time_first = t1
       IF (nstep_snapshot .GT. 0 .AND. i .GE. nstep_next) THEN
-        time_next  = time + dt_snapshot
         nstep_next = nstep_next + nstep_snapshot
         print_arrays = .TRUE.
       ENDIF
