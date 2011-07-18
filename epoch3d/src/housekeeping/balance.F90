@@ -731,13 +731,12 @@ CONTAINS
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: starts, ends
     INTEGER :: sz, idim, partition, proc, old, shift
-    INTEGER(KIND=8) :: total, total_old
-    INTEGER :: load_per_proc_ideal
+    INTEGER(KIND=8) :: total, total_old, load_per_proc_ideal
 
     sz = SIZE(load)
     ends = sz
 
-    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc)
+    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, 8)
 
     proc = 1
     total = 0
@@ -760,13 +759,13 @@ CONTAINS
 
     ! Sanity check. Must be one cell of separation between each endpoint.
     ! Forwards (unnecessary?)
-    !old = 0
-    !DO proc = 1, nproc
-    !  IF (ends(proc) - old .LE. 0) THEN
-    !    ends(proc) = old + 1
-    !  ENDIF
-    !  old = ends(proc)
-    !ENDDO
+    old = 0
+    DO proc = 1, nproc
+      IF (ends(proc) - old .LE. 0) THEN
+        ends(proc) = old + 1
+      ENDIF
+      old = ends(proc)
+    ENDDO
 
     ! Backwards
     old = sz + 1
