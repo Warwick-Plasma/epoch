@@ -427,7 +427,7 @@ CONTAINS
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
               xbd = -1
-              cur%part_pos(1) = part_pos + (length_x + dx)
+              cur%part_pos(1) = part_pos + length_x
             ENDIF
           ENDIF
         ENDIF
@@ -445,7 +445,7 @@ CONTAINS
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
               xbd = 1
-              cur%part_pos(1) = part_pos - (length_x + dx)
+              cur%part_pos(1) = part_pos - length_x
             ENDIF
           ENDIF
         ENDIF
@@ -464,7 +464,7 @@ CONTAINS
               cur%part_p(2) = -cur%part_p(2)
             ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_periodic) THEN
               ybd = -1
-              cur%part_pos(2) = part_pos + (length_y + dy)
+              cur%part_pos(2) = part_pos + length_y
             ENDIF
           ENDIF
         ENDIF
@@ -482,7 +482,7 @@ CONTAINS
               cur%part_p(2) = -cur%part_p(2)
             ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_periodic) THEN
               ybd = 1
-              cur%part_pos(2) = part_pos - (length_y + dy)
+              cur%part_pos(2) = part_pos - length_y
             ENDIF
           ENDIF
         ENDIF

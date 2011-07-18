@@ -111,7 +111,6 @@ CONTAINS
     xb_min = x_min
     x_min = x_min + dx / 2.0_num
     x_max = x_max - dx / 2.0_num
-    length_x = x_max - x_min
 
     ! Setup global grid
     DO ix = -2, nx_global + 3

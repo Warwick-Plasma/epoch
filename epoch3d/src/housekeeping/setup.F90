@@ -125,9 +125,6 @@ CONTAINS
     y_max = y_max - dy / 2.0_num
     z_min = z_min + dz / 2.0_num
     z_max = z_max - dz / 2.0_num
-    length_x = x_max - x_min
-    length_y = y_max - y_min
-    length_z = z_max - z_min
 
     ! Setup global grid
     DO ix = -2, nx_global + 3
