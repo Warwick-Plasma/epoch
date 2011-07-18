@@ -43,6 +43,17 @@ CONTAINS
     dims = (/nprocy, nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
 
+    IF (nx_global .LT. dims(c_ndims)) THEN
+      dims = 0
+      dims(c_ndims) = nx_global
+      CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
+    ENDIF
+    IF (ny_global .LT. dims(c_ndims-1)) THEN
+      dims = 0
+      dims(c_ndims-1) = ny_global
+      CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
+    ENDIF
+
     periods = .FALSE.
     reorder = .TRUE.
 
