@@ -337,7 +337,7 @@ CONTAINS
     LOGICAL :: white_space_over
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
     TYPE(file_buffer), POINTER :: fbuf
-    LOGICAL :: already_parsed, got_eor
+    LOGICAL :: already_parsed, got_eor, got_eof
 
     deck_state = deck_state_in
     ! No error yet
@@ -452,8 +452,15 @@ CONTAINS
         ! When an end of line character is read then got_eor is .TRUE.
         ! When end of file is reached, f is negative and got_eor is .FALSE.
         got_eor = .TRUE.
+        got_eof = .FALSE.
         READ(lun, "(A1)", advance='no', size=s, iostat=f, eor=10) u1
-        got_eor = .FALSE.
+
+        IF (f .LT. 0) THEN
+          got_eor = .TRUE.
+          got_eof = .TRUE.
+        ELSE
+          got_eor = .FALSE.
+        ENDIF
 
 10      IF (.NOT. already_parsed) THEN
           ! Store character in a buffer so that we can write the input deck
@@ -539,7 +546,7 @@ CONTAINS
           is_comment = .FALSE.
           white_space_over = .FALSE.
         ENDIF
-        IF (f .LT. 0 .AND. .NOT.got_eor) THEN
+        IF (got_eof) THEN
           CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
           CLOSE(lun)
           EXIT
