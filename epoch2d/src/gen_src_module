@@ -25,10 +25,10 @@ if [ "$1"x = "opt_dont_build_embedded_source"x ]; then
 fi
 
 if [ $build_sha1 -eq 1 ]; then
-  sha=`cat $* | shasum | cut -f1 -d' '`
+  sha=`cat $* | shasum 2>/dev/null | cut -f1 -d' '`
   if [ "$sha"x = x ]; then
-    echo shasum failed. Trying sha1sum.
-    sha=`cat $* | sha1sum | cut -f1 -d' '`
+    #echo shasum failed. Trying sha1sum.
+    sha=`cat $* | sha1sum 2>/dev/null | cut -f1 -d' '`
   fi
   if [ "$sha"x = x ]; then
     echo WARNING: unable to create valid sha1
@@ -56,13 +56,13 @@ nlines=0
 if [ $embed_source -eq 1 ]; then
   tar czf $tmp $*
   if [ $? -eq 0 ]; then
-    base64 $tmp > $tmp2
+    base64 $tmp > $tmp2 2>/dev/null
     if [ $? -ne 0 ]; then
-      echo base64 failed. Trying mimencode.
-      mimencode $tmp -o $tmp2
+      #echo base64 failed. Trying mimencode.
+      mimencode $tmp -o $tmp2 2>/dev/null
       if [ $? -ne 0 ]; then
-        echo mimencode failed. Trying uuencode.
-        uuencode -m $tmp epoch.tgz > $tmp2
+        #echo mimencode failed. Trying uuencode.
+        uuencode -m $tmp epoch.tgz > $tmp2 2>/dev/null
         if [ $? -eq 0 ]; then
           n=`cat $tmp2 | wc -l`
           sed -n 2,$((n-1))p $tmp2 > $tmp
@@ -71,7 +71,7 @@ if [ $embed_source -eq 1 ]; then
           false
         fi
         if [ $? -ne 0 ]; then
-          echo uuencode failed. Trying perl.
+          #echo uuencode failed. Trying perl.
           perl -MMIME::Base64 -0777 -ne \
             'print encode_base64($_)' < $tmp > $tmp2
         fi
