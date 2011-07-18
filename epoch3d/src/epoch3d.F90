@@ -38,7 +38,7 @@ PROGRAM pic
 
   IMPLICIT NONE
 
-  INTEGER :: ispecies, i = 0
+  INTEGER :: ispecies, step = 0
   LOGICAL :: halt = .FALSE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
 
@@ -67,7 +67,7 @@ PROGRAM pic
     ! Re-scan the input deck for items which require allocated memory
     CALL read_deck(deck_file, .TRUE., c_ds_last)
     CALL after_deck_last
-    CALL restart_data(i)    ! restart from data in file save.data
+    CALL restart_data(step)    ! restart from data in file save.data
     IF (rank .EQ. 0) PRINT *, "Load from restart dump OK"
     output_file = restart_snapshot + 1
   ELSE
@@ -104,15 +104,14 @@ PROGRAM pic
     CALL update_eb_fields_final
     IF (rank .EQ. 0) PRINT *, "Equilibrium set up OK, running code"
     walltime_start = MPI_WTIME()
-    CALL output_routines(i) ! diagnostics.f90
+    CALL output_routines(step) ! diagnostics.f90
   ELSE
     walltime_start = MPI_WTIME()
   ENDIF
 
   DO
-    IF ((i .GE. nsteps .AND. nsteps .GE. 0) &
+    IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
         .OR. (time .GE. t_end) .OR. halt) EXIT
-    i = i + 1
     CALL set_dt
     CALL update_eb_fields_half
     CALL push_particles
@@ -130,7 +129,8 @@ PROGRAM pic
 #ifdef PARTICLE_IONISE
     CALL ionise_particles
 #endif
-    time = time+dt
+    step = step + 1
+    time = time + dt
     IF (dlb) THEN
       ! .FALSE. this time to use load balancing threshold
       CALL balance_workload(.FALSE.)
@@ -149,13 +149,13 @@ PROGRAM pic
     ENDDO
 #endif
     IF (halt) EXIT
-    CALL output_routines(i)
+    CALL output_routines(step)
   ENDDO
 
   IF (rank .EQ. 0) &
       PRINT *, "Final runtime of core = ", MPI_WTIME() - walltime_start
 
-  IF (halt) CALL output_routines(i)
+  IF (halt) CALL output_routines(step)
 
   CALL close_files
   CALL MPI_FINALIZE(errcode)

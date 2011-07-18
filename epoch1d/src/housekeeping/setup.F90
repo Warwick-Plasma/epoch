@@ -370,9 +370,9 @@ CONTAINS
 
 
 
-  SUBROUTINE restart_data(snap)
+  SUBROUTINE restart_data(step)
 
-    INTEGER, INTENT(OUT) :: snap
+    INTEGER, INTENT(OUT) :: step
     CHARACTER(LEN=20+data_dir_max_length) :: filename
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1
     CHARACTER(LEN=c_max_string_length) :: name
@@ -387,13 +387,13 @@ CONTAINS
     INTEGER, POINTER :: species_subtypes(:)
 
     npart_global = 0
-    snap = -1
+    step = -1
 
     ! Create the filename for the last snapshot
     WRITE(filename, '(a, "/", i4.4, ".sdf")') TRIM(data_dir), restart_snapshot
     CALL sdf_open(sdf_handle, filename, rank, comm, c_sdf_read)
 
-    CALL sdf_read_header(sdf_handle, snap, time, code_name, code_io_version, &
+    CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         restart_flag)
 
     IF (dt_snapshot .GT. 0.0_num) THEN
@@ -402,9 +402,9 @@ CONTAINS
       time_next = time
     ENDIF
     IF (nstep_snapshot .GT. 0) THEN
-      nstep_next = snap + nstep_snapshot
+      nstep_next = step + nstep_snapshot
     ELSE
-      nstep_next = snap
+      nstep_next = step
     ENDIF
 
     IF (.NOT. restart_flag) THEN

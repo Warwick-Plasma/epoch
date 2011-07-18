@@ -23,9 +23,9 @@ MODULE diagnostics
 
 CONTAINS
 
-  SUBROUTINE output_routines(i)   ! i = step index
+  SUBROUTINE output_routines(step)   ! step = step index
 
-    INTEGER, INTENT(INOUT) :: i
+    INTEGER, INTENT(INOUT) :: step
     LOGICAL :: print_arrays, last_call
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=8) :: dump_type
@@ -46,12 +46,12 @@ CONTAINS
 #endif
 
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
-        .AND. MOD(i, stdout_frequency) .EQ. 0) THEN
+        .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
       WRITE(*, '("Time", g20.12, " and iteration", i7, " after ", &
-          & f8.1, " seconds")') time, i, MPI_WTIME() - walltime_start
+          & f8.1, " seconds")') time, step, MPI_WTIME() - walltime_start
     ENDIF
 
-    CALL io_test(i, print_arrays, last_call)
+    CALL io_test(step, print_arrays, last_call)
 
     IF (.NOT.print_arrays) RETURN
 
@@ -87,7 +87,7 @@ CONTAINS
 
     ! open the file
     CALL sdf_open(sdf_handle, filename, rank, comm, c_sdf_write)
-    CALL sdf_write_header(sdf_handle, 'Epoch1d', 1, i, time, restart_flag, &
+    CALL sdf_write_header(sdf_handle, 'Epoch1d', 1, step, time, restart_flag, &
         jobid)
     CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_commit_id, &
         sha1sum, c_compile_machine, c_compile_flags, defines, c_compile_date, &
@@ -229,7 +229,7 @@ CONTAINS
         CALL append_filename(dump_type, output_file)
       ENDIF
       WRITE(stat_unit, '("Wrote ", a7, " dump number", i5, " at time", g20.12, &
-          & " and iteration", i7)') dump_type, output_file, time, i
+          & " and iteration", i7)') dump_type, output_file, time, step
       CALL flush_stat_file()
     ENDIF
 
@@ -271,9 +271,9 @@ CONTAINS
 
 
 
-  SUBROUTINE io_test(i, print_arrays, last_call)
+  SUBROUTINE io_test(step, print_arrays, last_call)
 
-    INTEGER, INTENT(IN) :: i
+    INTEGER, INTENT(IN) :: step
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
     INTEGER :: id
     REAL(num) :: t0, t1, time_first
@@ -286,7 +286,7 @@ CONTAINS
     t0 = HUGE(1.0_num)
     t1 = HUGE(1.0_num)
     IF (dt_snapshot .GE. 0.0_num) t0 = time_next
-    IF (nstep_snapshot .GE. 0) t1 = time + dt * (nstep_next - i)
+    IF (nstep_snapshot .GE. 0) t1 = time + dt * (nstep_next - step)
 
     IF (t0 .LT. t1) THEN
       ! Next I/O dump based on dt_snapshot
@@ -298,7 +298,7 @@ CONTAINS
     ELSE
       ! Next I/O dump based on nstep_snapshot
       time_first = t1
-      IF (nstep_snapshot .GT. 0 .AND. i .GE. nstep_next) THEN
+      IF (nstep_snapshot .GT. 0 .AND. step .GE. nstep_next) THEN
         nstep_next = nstep_next + nstep_snapshot
         print_arrays = .TRUE.
       ENDIF
@@ -312,7 +312,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF ((time .GE. t_end .OR. i .EQ. nsteps) .AND. dump_last) THEN
+    IF ((time .GE. t_end .OR. step .EQ. nsteps) .AND. dump_last) THEN
       last_call = .TRUE.
       print_arrays = .TRUE.
     ENDIF
