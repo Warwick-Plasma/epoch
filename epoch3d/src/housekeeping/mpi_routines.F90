@@ -28,6 +28,8 @@ CONTAINS
     LOGICAL :: periods(ndims), reorder, op
     INTEGER :: test_coords(ndims)
     INTEGER :: ix, iy, iz
+    INTEGER :: nxsplit, nysplit, nzsplit
+    INTEGER :: area, minarea, nprocyz
 
     IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm, errcode)
 
@@ -41,24 +43,39 @@ CONTAINS
       nprocz = 0
     ENDIF
 
+    IF (nprocx * nprocy * nprocz .EQ. 0) THEN
+      ! Find the processor split which minimizes surface area of
+      ! the resulting domain
+
+      minarea = nx_global * ny_global + ny_global * nz_global &
+          + nz_global * nx_global
+
+      DO ix = 1, nproc
+        nprocyz = nproc / ix
+        IF (ix * nprocyz .NE. nproc) CYCLE
+
+        nxsplit = nx_global / ix
+
+        DO iy = 1, nprocyz
+          iz = nprocyz / iy
+          IF (iy * iz .NE. nprocyz) CYCLE
+
+          nysplit = ny_global / iy
+          nzsplit = nz_global / iz
+
+          area = nxsplit * nysplit + nysplit * nzsplit + nzsplit * nxsplit
+          IF (area .LT. minarea) THEN
+            nprocx = ix
+            nprocy = iy
+            nprocz = iz
+            minarea = area
+          ENDIF
+        ENDDO
+      ENDDO
+    ENDIF
+
     dims = (/nprocz, nprocy, nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
-
-    IF (nx_global .LT. dims(c_ndims)) THEN
-      dims = 0
-      dims(c_ndims) = nx_global
-      CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
-    ENDIF
-    IF (ny_global .LT. dims(c_ndims-1)) THEN
-      dims = 0
-      dims(c_ndims-1) = ny_global
-      CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
-    ENDIF
-    IF (nz_global .LT. dims(c_ndims-2)) THEN
-      dims = 0
-      dims(c_ndims-2) = nz_global
-      CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
-    ENDIF
 
     periods = .FALSE.
     reorder = .TRUE.
