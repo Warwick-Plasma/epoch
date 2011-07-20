@@ -9,6 +9,7 @@ MODULE setup
   USE shared_data
   USE strings
   USE version_data
+  USE welcome
   USE random_generator
 
   IMPLICIT NONE
@@ -284,9 +285,11 @@ CONTAINS
         CALL integer_as_string(restart_snapshot, string)
         WRITE(stat_unit,*)
         WRITE(stat_unit,*) 'Restarting from ', TRIM(string)
+        WRITE(stat_unit,*) ascii_header
+      ELSE
+        WRITE(stat_unit,*) ascii_header
+        WRITE(stat_unit,*)
       ENDIF
-      WRITE(stat_unit,*) ascii_header
-      WRITE(stat_unit,*)
     ENDIF
 
   END SUBROUTINE open_files
@@ -455,6 +458,10 @@ CONTAINS
 
     nblocks = sdf_read_nblocks(sdf_handle)
     jobid = sdf_read_jobid(sdf_handle)
+
+    CALL create_ascii_header
+    WRITE(stat_unit,*) ascii_header
+    WRITE(stat_unit,*)
 
     ex = 0.0_num
     ey = 0.0_num

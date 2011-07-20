@@ -6,7 +6,7 @@ MODULE welcome
   IMPLICIT NONE
 
   PRIVATE
-  PUBLIC :: welcome_message
+  PUBLIC :: welcome_message, create_ascii_header
 
 CONTAINS
 
@@ -58,14 +58,8 @@ CONTAINS
       WRITE(*, *) logo_string
     ENDDO
 
+    CALL create_ascii_header
     WRITE(*, *) ""
-    CALL integer_as_string(c_version, ver)
-    CALL integer_as_string(c_revision, rev)
-    version_string = TRIM(ver) // "." // TRIM(ADJUSTL(rev))
-    CALL integer_as_string(jobid%start_seconds, ver)
-    CALL integer_as_string(jobid%start_milliseconds, rev)
-    ascii_header = c_code_name // " v" // TRIM(version_string) // " " &
-        // c_commit_id // " " // TRIM(ver) // "." // TRIM(ADJUSTL(rev))
     WRITE(*, *) "Welcome to EPOCH3D Version ", version_string
     WRITE(*, *) ""
 
@@ -151,5 +145,21 @@ CONTAINS
     WRITE(*, *) ""
 
   END SUBROUTINE mpi_status
+
+
+
+  SUBROUTINE create_ascii_header
+
+    CHARACTER(LEN=11) :: ver, rev
+
+    CALL integer_as_string(c_version, ver)
+    CALL integer_as_string(c_revision, rev)
+    version_string = TRIM(ver) // "." // TRIM(ADJUSTL(rev))
+    CALL integer_as_string(jobid%start_seconds, ver)
+    CALL integer_as_string(jobid%start_milliseconds, rev)
+    ascii_header = c_code_name // " v" // TRIM(version_string) // " " &
+        // c_commit_id // " " // TRIM(ver) // "." // TRIM(ADJUSTL(rev))
+
+  END SUBROUTINE create_ascii_header
 
 END MODULE welcome

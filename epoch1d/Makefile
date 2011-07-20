@@ -223,7 +223,7 @@ sdf_output_point.o: sdf_output_point.f90 sdf_common.o sdf_output.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output.o sdf_output_cartesian.o \
   sdf_output_point.o
 setup.o: setup.F90 fields.o mpi_subtype_control.o partlist.o \
-  random_generator.o sdf.o shared_data.o strings.o version_data.o \
+  random_generator.o sdf.o shared_data.o strings.o version_data.o welcome.o \
   $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
