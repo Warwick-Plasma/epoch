@@ -237,6 +237,8 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (ic_from_restart) RETURN
+
     ! Initial conditions
 
     IF (str_cmp(element, "offset")) THEN
