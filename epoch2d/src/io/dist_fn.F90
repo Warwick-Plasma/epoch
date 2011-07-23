@@ -126,14 +126,12 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
     INTEGER, DIMENSION(c_df_maxdims) :: cell
-    LOGICAL :: use_this
-    REAL(num) :: part_weight, part_mc, part_mc2, gamma_m1
+    REAL(num) :: part_weight, part_mc, part_mc2, gamma_m1, start
 
     TYPE(particle), POINTER :: current
     CHARACTER(LEN=string_length) :: var_name
     CHARACTER(LEN=8), DIMENSION(c_df_maxdirs) :: labels, units
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
-    REAL(num) :: max_p_conv
 
     errcode = 0
     use_x = .FALSE.
@@ -232,7 +230,7 @@ CONTAINS
       ENDDO
       current=>species_list(species)%attached_list%head
 
-      DO WHILE(ASSOCIATED(current))
+      out1: DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc  = current%mass * c
         part_mc2 = part_mc * c
@@ -244,65 +242,61 @@ CONTAINS
         particle_data(c_dir_en) = gamma_m1 * part_mc2
         particle_data(c_dir_gamma_m1) = gamma_m1
 
+        current=>current%next
+
         DO idim = 1, curdims
           IF (calc_range(idim)) THEN
-            current_data = particle_data(direction(idim))
-            use_this = .TRUE.
             DO idir = 1, c_df_maxdirs
               IF (use_restrictions(idir) &
                   .AND. (particle_data(idir) .LT. restrictions(1,idir) &
                   .OR. particle_data(idir) .GT. restrictions(2,idir))) &
-                      use_this = .FALSE.
+                      CYCLE out1
             ENDDO
-            IF (use_this) THEN
-              IF (current_data .LT. ranges(1,idim)) &
-                  ranges(1,idim) = current_data
-              IF (current_data .GT. ranges(2,idim)) &
-                  ranges(2,idim) = current_data
-            ENDIF
+
+            current_data = particle_data(direction(idim))
+            IF (current_data .LT. ranges(1,idim)) ranges(1,idim) = current_data
+            IF (current_data .GT. ranges(2,idim)) ranges(2,idim) = current_data
           ENDIF
         ENDDO
-        current=>current%next
+      ENDDO out1
+
+      DO idim = 1, curdims
+        IF (.NOT. parallel(idim)) THEN
+          ! If not parallel then this is a momentum dimension
+          CALL MPI_ALLREDUCE(ranges(1,idim), temp_data, 1, mpireal, MPI_MIN, &
+              comm, errcode)
+          ranges(1,idim) = temp_data
+          CALL MPI_ALLREDUCE(ranges(2,idim), temp_data, 1, mpireal, MPI_MAX, &
+              comm, errcode)
+          ranges(2,idim) = temp_data
+        ENDIF
       ENDDO
     ENDIF
 
-    max_p_conv = -10.0_num
     DO idim = 1, curdims
-      IF (.NOT. parallel(idim)) THEN
-        ! If not parallel then this is a momentum dimension
-        CALL MPI_ALLREDUCE(ranges(1,idim), temp_data, 1, mpireal, MPI_MIN, &
-            comm, errcode)
-        ranges(1,idim) = temp_data
-        CALL MPI_ALLREDUCE(ranges(2,idim), temp_data, 1, mpireal, MPI_MAX, &
-            comm, errcode)
-        ranges(2,idim) = temp_data
-      ENDIF
       ! Fix so that if distribution function is zero then it picks an arbitrary
       ! scale in that direction
       IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
         ranges(1,idim) = -1.0_num
         ranges(2,idim) = 1.0_num
       ENDIF
-      ! Calculate the maximum range of a momentum direction
-      IF (ranges(2,idim) - ranges(1,idim) .GT. max_p_conv &
-          .AND. .NOT. parallel(idim)) &
-              max_p_conv = ranges(2,idim) - ranges(1,idim)
-    ENDDO
 
-    ! Calculate grid spacing
-    DO idim = 1, curdims
+      ! Calculate grid spacing
       IF (.NOT. parallel(idim)) dgrid(idim) = &
-          (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim)-1, num)
+          (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim), num)
     ENDDO
 
     ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
     array = 0.0_num
 
     current=>species_list(species)%attached_list%head
-    DO WHILE(ASSOCIATED(current))
+    out2: DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
       part_mc  = current%mass * c
       part_mc2 = part_mc * c
+#endif
+#ifdef PER_PARTICLE_WEIGHT
+      part_weight = current%weight
 #endif
       gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
 
@@ -311,29 +305,26 @@ CONTAINS
       particle_data(c_dir_en) = gamma_m1 * part_mc2
       particle_data(c_dir_gamma_m1) = gamma_m1
 
-      use_this = .TRUE.
+      current=>current%next
+
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &
             .AND. (particle_data(idir) .LT. restrictions(1,idir) &
             .OR. particle_data(idir) .GT. restrictions(2,idir))) &
-                use_this = .FALSE.
+                CYCLE out2
       ENDDO
-      IF (use_this) THEN
-        cell = 1
-        DO idim = 1, curdims
-          current_data = particle_data(direction(idim))
-          cell(idim) = NINT((current_data - ranges(1,idim)) / dgrid(idim)) + 1
-          IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
-              use_this = .FALSE.
-        ENDDO
-#ifdef PER_PARTICLE_WEIGHT
-        part_weight = current%weight
-#endif
-        IF (use_this) array(cell(1), cell(2), cell(3)) = &
-            array(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
-      ENDIF
-      current=>current%next
-    ENDDO
+
+      cell = 1
+      DO idim = 1, curdims
+        current_data = particle_data(direction(idim))
+        cell(idim) = FLOOR((current_data - ranges(1,idim)) / dgrid(idim)) + 1
+        IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
+            CYCLE out2
+      ENDDO
+
+      array(cell(1), cell(2), cell(3)) = &
+          array(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
+    ENDDO out2
 
     need_reduce = .TRUE.
     IF (use_x .AND. use_y) need_reduce = .FALSE.
@@ -357,21 +348,24 @@ CONTAINS
 
     ! Create grids
     ALLOCATE(grid1(global_resolution(1)))
+    start = ranges(1,1) + 0.5_num * dgrid(1)
     DO idir = 1, global_resolution(1)
-      grid1(idir) = ranges(1,1) + (idir - 1) * dgrid(1)
+      grid1(idir) = start + (idir - 1) * dgrid(1)
     ENDDO
 
     IF (curdims .GE. 2) THEN
       ALLOCATE(grid2(global_resolution(2)))
+      start = ranges(1,2) + 0.5_num * dgrid(2)
       DO idir = 1, global_resolution(2)
-        grid2(idir) = ranges(1,2) + (idir - 1) * dgrid(2)
+        grid2(idir) = start + (idir - 1) * dgrid(2)
       ENDDO
     ENDIF
 
     IF (curdims .GE. 3) THEN
       ALLOCATE(grid3(global_resolution(3)))
+      start = ranges(1,3) + 0.5_num * dgrid(3)
       DO idir = 1, global_resolution(3)
-        grid3(idir) = ranges(1,3) + (idir - 1) * dgrid(3)
+        grid3(idir) = start + (idir - 1) * dgrid(3)
       ENDDO
     ENDIF
 
