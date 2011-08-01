@@ -232,6 +232,10 @@ CONTAINS
       IF (mask_element .EQ. c_dump_jx) bad = .FALSE.
       IF (mask_element .EQ. c_dump_jy) bad = .FALSE.
       IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
+
+      ! Unset "no_sum" dumpmask for grid variables
+      IF (.NOT.bad) mask = IAND(mask, NOT(c_io_no_sum))
+
       IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
       IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
       IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.

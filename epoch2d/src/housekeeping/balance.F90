@@ -277,6 +277,8 @@ CONTAINS
       IF (IAND(dumpmask(index), c_io_species) .NE. 0) &
           n_species_local = n_species_local + n_species
 
+      IF (n_species_local .LE. 0) CYCLE
+
       ALLOCATE(temp3d(-2:nx_new+3, -2:ny_new+3, 1:n_species_local))
 
       DO ispecies = 1, n_species_local

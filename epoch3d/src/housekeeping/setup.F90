@@ -216,6 +216,9 @@ CONTAINS
             nspec_local = 1
         IF (IAND(dumpmask(io), c_io_species) .NE. 0) &
             nspec_local = nspec_local + n_species
+
+        IF (nspec_local .LE. 0) CYCLE
+
         ALLOCATE(averaged_data(io)%array(-2:nx+3,-2:ny+3,-2:nz+3,nspec_local))
         averaged_data(io)%array = 0.0_num
         averaged_data(io)%real_time = 0.0_num

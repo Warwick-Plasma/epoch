@@ -338,6 +338,8 @@ CONTAINS
 
     n_species_local = n_species_local + species_sum
 
+    IF (n_species_local .LE. 0) RETURN
+
     SELECT CASE(ioutput)
     CASE(c_dump_ex)
       averaged_data(ioutput)%array(:,:,1) = &
