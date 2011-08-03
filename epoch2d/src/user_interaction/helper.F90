@@ -134,13 +134,18 @@ CONTAINS
 
     num_valid_cells = 0
     density_total = 0.0_num
+
+    DO iy = -2, ny+3
+      DO ix = -2, nx+3
+        IF (density(ix,iy) .GT. density_max) density(ix,iy) = density_max
+      ENDDO
+    ENDDO
+
     DO iy = 1, ny
       DO ix = 1, nx
         IF (density(ix,iy) .GE. density_min) THEN
           num_valid_cells = num_valid_cells + 1
           density_total = density_total + density(ix,iy)
-        ELSE IF (density(ix,iy) .GT. density_max) THEN
-          density(ix,iy) = density_max
         ENDIF
       ENDDO
     ENDDO
@@ -413,13 +418,15 @@ CONTAINS
 
     CALL field_bc(density)
 
+    DO iy = -2, ny+3
+      DO ix = -2, nx+3
+        IF (density(ix,iy) .GT. density_max) density(ix,iy) = density_max
+      ENDDO
+    ENDDO
+
     DO iy = 1, ny
       DO ix = 1, nx
-        IF (density(ix,iy) .GE. density_min) THEN
-          density_map(ix,iy) = .TRUE.
-        ELSE IF (density(ix,iy) .GT. density_max) THEN
-          density(ix,iy) = density_max
-        ENDIF
+        IF (density(ix,iy) .GE. density_min) density_map(ix,iy) = .TRUE.
       ENDDO
     ENDDO
 
