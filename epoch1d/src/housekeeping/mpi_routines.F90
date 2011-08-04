@@ -83,35 +83,36 @@ CONTAINS
   SUBROUTINE mpi_initialise
 
     INTEGER :: ispecies, idim
-    INTEGER :: nx_big, nx_little
+    INTEGER :: nx0, nxp
 
     CALL setup_communicator
-    nx = nx_global / nprocx
+
+    nx0 = nx_global / nprocx
+
+    nx  = nx0
 
     ! If the number of gridpoints cannot be exactly subdivided then fix
+    ! The first nxp processors have nx0 grid points
+    ! The remaining processors have nx0+1 grid points
     IF (nx * nprocx .NE. nx_global) THEN
-      nx_big = nx + 1
-      nx_little = nx_global - (nx + 1) * (nprocx - 1)
-      IF (x_max_boundary) THEN
-        nx = nx_little
-      ELSE
-        nx = nx_big
-      ENDIF
+      nxp = (nx + 1) * nprocx - nx_global
+      IF (x_coords .GE. nxp) nx = nx + 1
     ELSE
-      nx_big = nx
-      nx_little = nx
+      nxp = nprocx
     ENDIF
 
     ALLOCATE(npart_each_rank(1:nproc))
     ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
     ALLOCATE(cell_x_min(1:nprocx), cell_x_max(1:nprocx))
 
-    DO idim = 1, nprocx-1
-      cell_x_min(idim) = nx_big * (idim - 1) + 1
-      cell_x_max(idim) = nx_big * idim
+    DO idim = 1, nxp
+      cell_x_min(idim) = (idim - 1) * nx0 + 1
+      cell_x_max(idim) = idim * nx0
     ENDDO
-    cell_x_min(nprocx) = (nprocx - 1) * nx_big + 1
-    cell_x_max(nprocx) = (nprocx - 1) * nx_big + nx_little
+    DO idim = nxp + 1, nprocx
+      cell_x_min(idim) = nxp * nx0 + (idim - nxp - 1) * (nx0 + 1) + 1
+      cell_x_max(idim) = nxp * nx0 + (idim - nxp) * (nx0 + 1)
+    ENDDO
 
     subtype_field = 0
 
