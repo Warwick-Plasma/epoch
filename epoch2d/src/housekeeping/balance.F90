@@ -527,7 +527,7 @@ CONTAINS
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp + ny
+    load = push_per_field * temp + ny_global
 
     DEALLOCATE(temp)
 
@@ -569,7 +569,7 @@ CONTAINS
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp + nx
+    load = push_per_field * temp + nx_global
 
     DEALLOCATE(temp)
 
