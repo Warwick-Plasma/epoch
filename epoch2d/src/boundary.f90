@@ -428,6 +428,12 @@ CONTAINS
             ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
               xbd = -1
               cur%part_pos(1) = part_pos + length_x
+            ELSE
+              IF (rank .EQ. 0) THEN
+                WRITE(*,*) '*** ERROR ***'
+                WRITE(*,*) 'Unrecognised particle boundary condition.'
+              ENDIF
+              CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
             ENDIF
           ENDIF
         ENDIF
@@ -446,6 +452,12 @@ CONTAINS
             ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
               xbd = 1
               cur%part_pos(1) = part_pos - length_x
+            ELSE
+              IF (rank .EQ. 0) THEN
+                WRITE(*,*) '*** ERROR ***'
+                WRITE(*,*) 'Unrecognised particle boundary condition.'
+              ENDIF
+              CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
             ENDIF
           ENDIF
         ENDIF
@@ -465,6 +477,12 @@ CONTAINS
             ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_periodic) THEN
               ybd = -1
               cur%part_pos(2) = part_pos + length_y
+            ELSE
+              IF (rank .EQ. 0) THEN
+                WRITE(*,*) '*** ERROR ***'
+                WRITE(*,*) 'Unrecognised particle boundary condition.'
+              ENDIF
+              CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
             ENDIF
           ENDIF
         ENDIF
@@ -483,6 +501,12 @@ CONTAINS
             ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_periodic) THEN
               ybd = 1
               cur%part_pos(2) = part_pos - length_y
+            ELSE
+              IF (rank .EQ. 0) THEN
+                WRITE(*,*) '*** ERROR ***'
+                WRITE(*,*) 'Unrecognised particle boundary condition.'
+              ENDIF
+              CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
             ENDIF
           ENDIF
         ENDIF
