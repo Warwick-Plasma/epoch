@@ -137,7 +137,7 @@ CONTAINS
     ranges = ranges_in
     resolution = resolution_in
     global_resolution = resolution
-    parallel = .TRUE.
+    parallel = .FALSE.
     start_local = 1
     calc_range = .FALSE.
     calc_ranges = .FALSE.
@@ -162,6 +162,7 @@ CONTAINS
         dgrid(idim) = dx
         labels(idim) = 'X'
         units(idim)  = 'm'
+        parallel(idim) = .TRUE.
         CYCLE
 
       ENDIF
@@ -172,7 +173,6 @@ CONTAINS
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
-      parallel(idim) = .FALSE.
 
       IF (direction(idim) .EQ. c_dir_px) THEN
         labels(idim) = 'Px'
