@@ -11,6 +11,9 @@ CONTAINS
   SUBROUTINE setup_particle_boundaries
 
     INTEGER :: i
+    LOGICAL :: error
+    CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
+        boundary = (/ "x_min", "x_max" /)
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
@@ -38,6 +41,23 @@ CONTAINS
       IF (bc_field(i) .EQ. c_bc_reflect) bc_field(i) = c_bc_clamp
       IF (bc_field(i) .EQ. c_bc_open) bc_field(i) = c_bc_simple_outflow
     ENDDO
+
+    ! Sanity check on particle boundaries
+    error = .FALSE.
+    DO i = 1, 2*c_ndims
+      IF (bc_particle(i) .EQ. c_bc_periodic &
+          .OR. bc_particle(i) .EQ. c_bc_reflect &
+          .OR. bc_particle(i) .EQ. c_bc_open) CYCLE
+      IF (rank .EQ. 0) THEN
+        WRITE(*,*)
+        WRITE(*,*) '*** ERROR ***'
+        WRITE(*,*) 'Unrecognised particle boundary condition on "', &
+            boundary(i), '" boundary.'
+      ENDIF
+      error = .TRUE.
+    ENDDO
+
+    IF (error) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
 
   END SUBROUTINE setup_particle_boundaries
 
@@ -283,20 +303,15 @@ CONTAINS
           ! Particle has left the system
           IF (x_min_boundary) THEN
             xbd = 0
-            IF (bc_particle(c_bd_x_min) .EQ. c_bc_open) THEN
-              out_of_bounds = .TRUE.
-            ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
+            IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_min - dx - part_pos
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
               xbd = -1
               cur%part_pos = part_pos + length_x
             ELSE
-              IF (rank .EQ. 0) THEN
-                WRITE(*,*) '*** ERROR ***'
-                WRITE(*,*) 'Unrecognised particle boundary condition.'
-              ENDIF
-              CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
+              ! Default to open boundary conditions - remove particle
+              out_of_bounds = .TRUE.
             ENDIF
           ENDIF
         ENDIF
@@ -307,20 +322,15 @@ CONTAINS
           ! Particle has left the system
           IF (x_max_boundary) THEN
             xbd = 0
-            IF (bc_particle(c_bd_x_max) .EQ. c_bc_open) THEN
-              out_of_bounds = .TRUE.
-            ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
+            IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_max + dx - part_pos
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
               xbd = 1
               cur%part_pos = part_pos - length_x
             ELSE
-              IF (rank .EQ. 0) THEN
-                WRITE(*,*) '*** ERROR ***'
-                WRITE(*,*) 'Unrecognised particle boundary condition.'
-              ENDIF
-              CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
+              ! Default to open boundary conditions - remove particle
+              out_of_bounds = .TRUE.
             ENDIF
           ENDIF
         ENDIF
