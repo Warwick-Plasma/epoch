@@ -51,8 +51,8 @@ CONTAINS
     ENDIF
 
     IF (bc_particle(c_bd_z_min) .NE. c_bc_periodic .AND. z_min_boundary) THEN
-      DO k = -2, nz+3
-        DO j = -2, ny+3
+      DO j = -2, ny+3
+        DO i = -2, nx+3
           data_array(i,j,1) = data_array(i,j,1) + data_array(i,j, 0)
           data_array(i,j,2) = data_array(i,j,2) + data_array(i,j,-1)
           data_array(i,j,3) = data_array(i,j,3) + data_array(i,j,-2)
@@ -60,8 +60,8 @@ CONTAINS
       ENDDO
     ENDIF
     IF (bc_particle(c_bd_z_max) .NE. c_bc_periodic .AND. z_max_boundary) THEN
-      DO k = -2, nz+3
-        DO j = -2, ny+3
+      DO j = -2, ny+3
+        DO i = -2, nx+3
           data_array(i,j,nz-2) = data_array(i,j,nz-2) + data_array(i,j,nz+3)
           data_array(i,j,nz-1) = data_array(i,j,nz-1) + data_array(i,j,nz+2)
           data_array(i,j,nz  ) = data_array(i,j,nz  ) + data_array(i,j,nz+1)
