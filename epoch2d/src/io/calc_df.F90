@@ -12,6 +12,8 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
     INTEGER :: i, j
 
+    CALL processor_summation_bcs(data_array)
+
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic .AND. x_min_boundary) THEN
       DO j = -2, ny+3
         data_array(1,j) = data_array(1,j) + data_array( 0,j)
@@ -118,7 +120,6 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(data_array)
     CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
@@ -210,9 +211,7 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(data_array)
     CALL calc_boundary(data_array)
-    CALL processor_summation_bcs(wt)
     CALL calc_boundary(wt)
 
     data_array = data_array / MAX(wt, c_non_zero)
@@ -340,9 +339,7 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(data_array)
     CALL calc_boundary(data_array)
-    CALL processor_summation_bcs(wt)
     CALL calc_boundary(wt)
 
     data_array = data_array / MAX(wt, c_non_zero)
@@ -474,7 +471,6 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(data_array)
     CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
@@ -533,7 +529,6 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(data_array)
     CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
@@ -617,10 +612,10 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(meanx)
-    CALL processor_summation_bcs(meany)
-    CALL processor_summation_bcs(meanz)
-    CALL processor_summation_bcs(part_count)
+    CALL calc_boundary(meanx)
+    CALL calc_boundary(meany)
+    CALL calc_boundary(meanz)
+    CALL calc_boundary(part_count)
 
     part_count = MAX(part_count, 1.e-6_num)
 
@@ -663,10 +658,11 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(sigma)
-    CALL processor_summation_bcs(part_count)
+    CALL calc_boundary(sigma)
+    CALL calc_boundary(part_count)
 
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / c_ndims
+    ! N/2 kT = <p^2>/(2m), where N is the number of degrees of freedom
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / REAL(c_ndims)
 
     DEALLOCATE(part_count, meanx, meany, meanz)
 
@@ -723,7 +719,7 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
