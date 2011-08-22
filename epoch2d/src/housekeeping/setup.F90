@@ -413,7 +413,6 @@ CONTAINS
     INTEGER, DIMENSION(4) :: dims
     LOGICAL :: restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
-    TYPE(particle), POINTER :: current
     TYPE(particle_species), POINTER :: species
     INTEGER, POINTER :: species_subtypes(:)
 

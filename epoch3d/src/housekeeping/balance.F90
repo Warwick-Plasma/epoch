@@ -732,7 +732,7 @@ CONTAINS
     INTEGER(KIND=8), INTENT(IN), DIMENSION(:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: starts, ends
-    INTEGER :: sz, idim, partition, proc, old, shift
+    INTEGER :: sz, idim, proc, old
     INTEGER(KIND=8) :: total, total_old, load_per_proc_ideal
 
     sz = SIZE(load)

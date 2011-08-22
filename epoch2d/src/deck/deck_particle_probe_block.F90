@@ -54,6 +54,7 @@ CONTAINS
 
     LOGICAL :: discard
     REAL(num), DIMENSION(c_ndims) :: r1
+    INTEGER :: io
 
     IF (deck_state .EQ. c_ds_first) RETURN
 

@@ -17,7 +17,6 @@ CONTAINS
     CHARACTER(logo_x*2+1) :: logo_string
     CHARACTER, DIMENSION(5) :: logo_els
     INTEGER :: ix, iy
-    CHARACTER(LEN=11) :: ver, rev
 
     IF (rank .NE. 0) RETURN
 

@@ -327,9 +327,8 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_safe_string_composite(h, string1, string2, output_string)
+  SUBROUTINE safe_string_composite(string1, string2, output_string)
 
-    TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: string1, string2
     CHARACTER(LEN=*), INTENT(OUT) :: output_string
     INTEGER :: len1, len2, olen
@@ -352,7 +351,7 @@ CONTAINS
       output_string(len1+2:len1+len2+1) = string2(1:len2)
     ENDIF
 
-  END SUBROUTINE sdf_safe_string_composite
+  END SUBROUTINE safe_string_composite
 
 
 

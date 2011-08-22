@@ -53,7 +53,7 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 # -DNO_IO
 
 # If you are having trouble compiling the encoded_source module or
-# don't want embedded source code in restart dumps, uncommenting the
+# don't want embedded source code in restart dumps, uncomment the
 # following line.
 #ENCODED_SOURCE = dummy_encoded_source.o
 

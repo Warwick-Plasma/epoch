@@ -1541,12 +1541,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_material(h, id, temp_name, mesh_id, stagger, &
         material_names, variable_ids)
 
@@ -1554,7 +1554,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
+      CALL safe_string_composite(name, material_names(i), temp_name)
       IF (last) THEN
         CALL sdf_write_1d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
@@ -1610,12 +1610,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_material(h, id, temp_name, mesh_id, stagger, &
         material_names, variable_ids)
 
@@ -1623,7 +1623,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
+      CALL safe_string_composite(name, material_names(i), temp_name)
       IF (last) THEN
         CALL sdf_write_2d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
@@ -1679,12 +1679,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_material(h, id, temp_name, mesh_id, stagger, &
         material_names, variable_ids)
 
@@ -1692,7 +1692,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
+      CALL safe_string_composite(name, material_names(i), temp_name)
       IF (last) THEN
         CALL sdf_write_3d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
@@ -1749,12 +1749,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
         material_id, variable_ids)
 
@@ -1762,7 +1762,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
+      CALL safe_string_composite(name, material_names(i), temp_name)
       IF (last) THEN
         CALL sdf_write_1d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
@@ -1819,12 +1819,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
         material_id, variable_ids)
 
@@ -1832,7 +1832,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
+      CALL safe_string_composite(name, material_names(i), temp_name)
       IF (last) THEN
         CALL sdf_write_2d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
@@ -1889,12 +1889,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
         material_id, variable_ids)
 
@@ -1902,7 +1902,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
+      CALL safe_string_composite(name, material_names(i), temp_name)
       IF (last) THEN
         CALL sdf_write_3d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
@@ -1960,12 +1960,12 @@ CONTAINS
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids)
 
@@ -1973,7 +1973,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
+      CALL safe_string_composite(name, specnames(i), temp_name)
       IF (last) THEN
         CALL sdf_write_1d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
@@ -2031,12 +2031,12 @@ CONTAINS
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids)
 
@@ -2044,7 +2044,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
+      CALL safe_string_composite(name, specnames(i), temp_name)
       IF (last) THEN
         CALL sdf_write_2d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
@@ -2102,12 +2102,12 @@ CONTAINS
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL sdf_safe_string_composite(h, id, &
+        CALL safe_string_composite(id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
+    CALL safe_string_composite(name, 'All', temp_name)
     CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids)
 
@@ -2115,7 +2115,7 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
+      CALL safe_string_composite(name, specnames(i), temp_name)
       IF (last) THEN
         CALL sdf_write_3d_var_last(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)

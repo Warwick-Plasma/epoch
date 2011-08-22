@@ -119,6 +119,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: density
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
+#ifndef PER_PARTICLE_WEIGHT
     INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
     INTEGER(KIND=8) :: npart_per_cell
     REAL(num) :: npart_per_cell_average
@@ -129,7 +130,6 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
 
-#ifndef PER_PARTICLE_WEIGHT
     partlist=>species%attached_list
 
     num_valid_cells = 0
@@ -399,6 +399,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: density_in
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
+#ifdef PER_PARTICLE_WEIGHT
     REAL(num) :: weight_local
     TYPE(particle), POINTER :: current
     INTEGER(KIND=8) :: ipart
@@ -410,7 +411,6 @@ CONTAINS
     LOGICAL, DIMENSION(:,:), ALLOCATABLE :: density_map
 #include "particle_head.inc"
 
-#ifdef PER_PARTICLE_WEIGHT
     ALLOCATE(density(-2:nx+3,-2:ny+3))
     ALLOCATE(density_map(-2:nx+3,-2:ny+3))
     density = density_in

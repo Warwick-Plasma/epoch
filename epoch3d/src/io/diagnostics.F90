@@ -30,10 +30,13 @@ CONTAINS
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
-    INTEGER :: code, ispecies
+    INTEGER :: code
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag
+#ifndef PER_PARTICLE_WEIGHT
+    INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
+#endif
 
     CHARACTER(LEN=1), DIMENSION(3) :: dim_tags = (/'x', 'y', 'z'/)
     CHARACTER(LEN=2), DIMENSION(6) :: dir_tags = &
