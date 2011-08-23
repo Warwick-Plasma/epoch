@@ -9,8 +9,8 @@ MODULE split_particle
   SAVE
 
   INTEGER(KIND=8) :: npart_per_cell_min = 5
+  LOGICAL :: split_none = .TRUE.
 
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
 CONTAINS
 
   SUBROUTINE reorder_particles_to_grid
@@ -73,12 +73,35 @@ CONTAINS
 
 
 
+  SUBROUTINE setup_split_particles
+
+#ifdef PER_PARTICLE_WEIGHT
+    INTEGER :: ispecies
+
+    split_none = .TRUE.
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%split) THEN
+        split_none = .FALSE.
+        EXIT
+      ENDIF
+    ENDDO
+
+    IF (.NOT.split_none) use_particle_lists = .TRUE.
+#endif
+
+  END SUBROUTINE setup_split_particles
+
+
+
   SUBROUTINE split_particles
 
+#ifdef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies, ix, iy
     INTEGER(KIND=8) :: count
     TYPE(particle), POINTER :: current, new_particle
     REAL(num) :: jitter_x, jitter_y
+
+    IF (split_none) RETURN
 
     DO ispecies = 1, n_species
       IF (.NOT. species_list(ispecies)%split) CYCLE
@@ -119,8 +142,8 @@ CONTAINS
         ENDDO
       ENDDO
     ENDDO
+#endif
 
   END SUBROUTINE split_particles
-#endif
 
 END MODULE split_particle

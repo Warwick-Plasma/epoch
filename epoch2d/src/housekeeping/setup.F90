@@ -11,6 +11,7 @@ MODULE setup
   USE version_data
   USE welcome
   USE random_generator
+  USE split_particle
 
   IMPLICIT NONE
 
@@ -61,6 +62,7 @@ CONTAINS
     dlb = .FALSE.
     use_random_seed = .FALSE.
     use_offset_grid = .FALSE.
+    use_particle_lists = .FALSE.
     force_final_to_be_restartable = .FALSE.
     dump_source_code = .TRUE.
     dump_input_decks = .TRUE.
@@ -172,6 +174,7 @@ CONTAINS
   SUBROUTINE after_deck_last
 
     CALL setup_data_averaging
+    CALL setup_split_particles
 
   END SUBROUTINE after_deck_last
 
@@ -224,16 +227,14 @@ CONTAINS
       species_list(ispecies)%count = -1
       species_list(ispecies)%id = 0
       species_list(ispecies)%npart_per_cell = 0
+      species_list(ispecies)%split = .FALSE.
+      species_list(ispecies)%npart_max = 0
+      species_list(ispecies)%global_count = 0
       NULLIFY(species_list(ispecies)%density)
       NULLIFY(species_list(ispecies)%temperature)
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
-      species_list(ispecies)%split = .FALSE.
-      species_list(ispecies)%npart_max = 0
-      species_list(ispecies)%global_count = 0
       NULLIFY(species_list(ispecies)%secondary_list)
-#endif
 #ifdef PARTICLE_IONISE
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1

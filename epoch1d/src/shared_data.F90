@@ -416,13 +416,11 @@ MODULE shared_data
 #endif
 
     ! particle cell division
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
     INTEGER(KIND=8) :: global_count
     LOGICAL :: split
     INTEGER(KIND=8) :: npart_max
     ! Secondary list
     TYPE(particle_list), DIMENSION(:), POINTER :: secondary_list
-#endif
 
     ! Injection of particles
     INTEGER(KIND=8) :: npart_per_cell
@@ -528,6 +526,7 @@ MODULE shared_data
 
   LOGICAL :: neutral_background = .TRUE.
   LOGICAL :: use_random_seed = .FALSE.
+  LOGICAL :: use_particle_lists = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_min_average

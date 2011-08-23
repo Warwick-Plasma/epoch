@@ -183,21 +183,12 @@ CONTAINS
     ! This section sets properties for particle splitting
     ! *************************************************************
     IF (str_cmp(element, "split")) THEN
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
       species_list(species_id)%split = as_logical(value, errcode)
-#else
-      IF (as_logical(value, errcode)) THEN
-        errcode = c_err_pp_options_wrong
-        extended_error_string = "-DSPLIT_PARTICLES_AFTER_PUSH"
-      ENDIF
-#endif
       RETURN
     ENDIF
 
     IF (str_cmp(element, "npart_max")) THEN
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
       species_list(species_id)%npart_max = as_long_integer(value, errcode)
-#endif
       RETURN
     ENDIF
 

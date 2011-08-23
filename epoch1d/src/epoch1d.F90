@@ -29,9 +29,7 @@ PROGRAM pic
   USE setup
   USE welcome
   USE window
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
   USE split_particle
-#endif
 #ifdef PARTICLE_IONISE
   USE ionise
 #endif
@@ -115,16 +113,15 @@ PROGRAM pic
     CALL set_dt
     CALL update_eb_fields_half
     CALL push_particles
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
-    ! After this line, the particles can be accessed on a cell by cell basis
-    ! Using the particle_species%secondary_list property
-    CALL reorder_particles_to_grid
-    ! CALL Collisions  !An example, no collision operator yet
-#ifdef PER_PARTICLE_WEIGHT
-    CALL split_particles ! Early beta version of particle splitting operator
-#endif
-    CALL reattach_particles_to_mainlist
-#endif
+    IF (use_particle_lists) THEN
+      ! After this line, the particles can be accessed on a cell by cell basis
+      ! Using the particle_species%secondary_list property
+      CALL reorder_particles_to_grid
+
+      CALL split_particles ! Early beta version of particle splitting operator
+
+      CALL reattach_particles_to_mainlist
+    ENDIF
     CALL update_eb_fields_final
 #ifdef PARTICLE_IONISE
     CALL ionise_particles

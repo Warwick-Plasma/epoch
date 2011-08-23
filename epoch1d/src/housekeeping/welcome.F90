@@ -94,10 +94,6 @@ CONTAINS
     defines = IOR(defines, c_def_particle_shape_tophat)
     WRITE(*, *) "Top-hat particle shape -DPARTICLE_SHAPE_TOPHAT"
 #endif
-#ifdef SPLIT_PARTICLES_AFTER_PUSH
-    defines = IOR(defines, c_def_split_part_after_push)
-    WRITE(*, *) "Particle/cell ordering -DSPLIT_PARTICLES_AFTER_PUSH"
-#endif
 #ifdef PER_PARTICLE_WEIGHT
     defines = IOR(defines, c_def_per_particle_weight)
     WRITE(*, *) "Per particle weighting -DPER_PARTICLE_WEIGHT"

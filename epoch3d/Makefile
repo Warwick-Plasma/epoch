@@ -23,9 +23,6 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 # Specify charge and mass per particle rather than per species.
 # -DPER_PARTICLE_CHARGE_MASS
 
-# Turn on particle cell division. Required for collisions.
-# -DSPLIT_PARTICLES_AFTER_PUSH
-
 # Turn on debugging.
 # -DFIELD_DEBUG -DPARSER_DEBUG -DPARTICLE_DEBUG
 
@@ -223,8 +220,8 @@ sdf_output_point.o: sdf_output_point.f90 sdf_common.o sdf_output.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output.o sdf_output_cartesian.o \
   sdf_output_point.o
 setup.o: setup.F90 fields.o mpi_subtype_control.o partlist.o \
-  random_generator.o sdf.o shared_data.o strings.o version_data.o welcome.o \
-  $(ENCODED_SOURCE)
+  random_generator.o sdf.o shared_data.o split_particle.o strings.o \
+  version_data.o welcome.o $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o
