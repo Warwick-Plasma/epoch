@@ -68,9 +68,6 @@ PROGRAM pic
   CALL mpi_initialise  ! mpi_routines.f90
   CALL after_control   ! setup.f90
   CALL open_files      ! setup.f90
-#ifdef COLLISIONS
-  CALL init_collision_matrix ! window.f90
-#endif
 
   ! restart flag is set
   IF (ic_from_restart) THEN

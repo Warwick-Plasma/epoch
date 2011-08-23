@@ -12,7 +12,7 @@ MODULEFLAG = -module
 TARGET = epoch2d
 
 # Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DCOLLISIONS
+DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES -DCOLLISIONS
 
 # The following are a list of pre-processor defines which can be added to
 # the above line modifying the code behaviour at compile time.
@@ -64,7 +64,7 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DCOLLISIONS
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.
-ENCODED_SOURCE = dummy_encoded_source.o
+#ENCODED_SOURCE = dummy_encoded_source.o
 
 
 
@@ -89,7 +89,7 @@ PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
   deck.F90 deck_boundaries_block.f90 deck_constant_block.f90 \
-  deck_control_block.f90 deck_dist_fn_block.f90 deck_fields_block.f90 \
+  deck_control_block.F90 deck_dist_fn_block.f90 deck_fields_block.f90 \
   deck_io_block.F90 deck_laser_block.f90 deck_particle_probe_block.F90 \
   deck_species_block.F90 deck_window_block.f90 diagnostics.F90 dist_fn.F90 \
   epoch2d.F90 evaluate.f90 evaluator_blocks.f90 fields.f90 helper.F90 \
@@ -171,8 +171,7 @@ balance.o: balance.F90 boundary.o mpi_subtype_control.o partlist.o
 boundary.o: boundary.f90 deck_io_block.o laser.o particle_temperature.o \
   partlist.o
 calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
-collisions.o: collisions.F90 calc_df.o helper.o particle_temperature.o \
-  partlist.o shared_data.o
+collisions.o: collisions.F90 boundary.o calc_df.o random_generator.o
 current_smooth.o: current_smooth.F90 shape_functions.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
@@ -184,7 +183,8 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_constant_block.o \
   version_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings.o strings_advanced.o
 deck_constant_block.o: deck_constant_block.f90 shunt.o strings.o
-deck_control_block.o: deck_control_block.f90 fields.o strings_advanced.o
+deck_control_block.o: deck_control_block.F90 collisions.o fields.o \
+  strings_advanced.o
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o

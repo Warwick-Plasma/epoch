@@ -6,33 +6,36 @@
 
 MODULE collisions
 
-  USE shared_data
-  USE helper
-  USE partlist
+  USE random_generator
+  USE boundary
   USE calc_df
-  USE particle_temperature
 
   IMPLICIT NONE
+
+  PRIVATE
+  PUBLIC :: particle_collisions, setup_collisions
 
   REAL(num) :: collision_count, large_angle_collision
 
   REAL(num) :: nu_avg
   INTEGER :: nu_count
 
+  REAL(num), DIMENSION(:,:), ALLOCATABLE :: meanx, meany, meanz, part_count
+
 CONTAINS
 
   SUBROUTINE particle_collisions
 
     INTEGER :: ispecies, jspecies
-    INTEGER(KIND=8) :: icount, jcount, ix, iy, k
-    TYPE(particle_list),POINTER :: p_list1, p_list2
+    INTEGER(KIND=8) :: ix, iy
+    TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
-    REAL(num) :: user_factor, np, q1, q2, m1, m2, w1, w2
+    REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
 
-    DO ix = 1, nx
-      DO iy = 1, ny
-        DO ispecies=1,n_species
+    DO iy = 1, ny
+      DO ix = 1, nx
+        DO ispecies = 1, n_species
           p_list1 => species_list(ispecies)%secondary_list(ix,iy)
           CALL shuffle_particle_list_random(p_list1)
         ENDDO
@@ -44,6 +47,10 @@ CONTAINS
     ALLOCATE(itemp(-2:nx+3,-2:ny+3))
     ALLOCATE(jtemp(-2:nx+3,-2:ny+3))
     ALLOCATE(log_lambda(-2:nx+3,-2:ny+3))
+    ALLOCATE(meanx(-2:nx+3,-2:ny+3))
+    ALLOCATE(meany(-2:nx+3,-2:ny+3))
+    ALLOCATE(meanz(-2:nx+3,-2:ny+3))
+    ALLOCATE(part_count(-2:nx+3,-2:ny+3))
 
     DO ispecies = 1, n_species
       CALL calc_coll_number_density(idens, ispecies)
@@ -55,7 +62,7 @@ CONTAINS
       itemp = itemp * kb / q0
 
       DO jspecies = ispecies, n_species
-        user_factor = coll_pairs(ispecies, jspecies);
+        user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor .LE. 0) CYCLE
 
         CALL calc_coll_number_density(jdens, jspecies)
@@ -77,15 +84,15 @@ CONTAINS
           IF (ispecies .EQ. jspecies) THEN
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy), &
-                m1, q1, w1, &
-                idens(ix,iy), itemp(ix,iy), log_lambda(ix,iy), user_factor)
+                m1, q1, w1, idens(ix,iy), itemp(ix,iy), &
+                log_lambda(ix,iy), user_factor)
           ELSE
             CALL inter_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy), &
                 species_list(jspecies)%secondary_list(ix,iy), &
-                m1, m2, q1, q2, w1, w2, &
-                idens(ix,iy), jdens(ix,iy), itemp(ix,iy), jtemp(ix,iy), &
-                log_lambda(ix,iy), user_factor)
+                m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
+                itemp(ix,iy), jtemp(ix,iy), log_lambda(ix,iy), &
+                user_factor)
           ENDIF
         ENDDO ! ix
         ENDDO ! iy
@@ -93,11 +100,14 @@ CONTAINS
     ENDDO ! ispecies
 
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
+    DEALLOCATE(meanx, meany, meanz, part_count)
 
   END SUBROUTINE particle_collisions
 
+
+
   SUBROUTINE intra_species_collisions(p_list, mass, charge, weight, &
-        dens, temp, log_lambda, user_factor)
+      dens, temp, log_lambda, user_factor)
     ! Perform collisions between particles of the same species.
 
     TYPE(particle_list), INTENT(INOUT) :: p_list
@@ -114,7 +124,7 @@ CONTAINS
     ! Intra-species collisions
     icount = p_list%count
 #ifndef PER_PARTICLE_WEIGHT
-    np = icount*weight
+    np = icount * weight
     factor = user_factor
 #else
     ! If there aren't enough particles to collide, then don't bother
@@ -136,7 +146,7 @@ CONTAINS
         factor = factor + MIN(impact%weight, impact%next%weight)
       ENDIF
 
-      factor = user_factor * np/factor
+      factor = user_factor * np / factor
 #endif
 
       current => p_list%head
@@ -167,6 +177,8 @@ CONTAINS
 
   END SUBROUTINE intra_species_collisions
 
+
+
   SUBROUTINE inter_species_collisions(p_list1, p_list2, mass1, mass2, &
       charge1, charge2, weight1, weight2, &
       idens, jdens, itemp, jtemp, log_lambda, user_factor )
@@ -194,17 +206,14 @@ CONTAINS
     jcount = p_list2%count
     pcount = MAX(icount, jcount)
 
-
-    IF ((icount .GT. 0) .AND. (jcount .GT. 0)) THEN
-
+    IF (icount .GT. 0 .AND. jcount .GT. 0) THEN
       ! temporarily join tail to the head of the lists to make them circular
       p_list1%tail%next => p_list1%head
       p_list2%tail%next => p_list2%head
 
-
 #ifndef PER_PARTICLE_WEIGHT
-    np = pcount*weight1
-    factor = pcount*MIN(weight1,weight2)
+      np = pcount * weight1
+      factor = pcount * MIN(weight1, weight2)
 #else
       current => p_list1%head
       impact => p_list2%head
@@ -234,6 +243,8 @@ CONTAINS
 
   END SUBROUTINE inter_species_collisions
 
+
+
   SUBROUTINE scatter(current, impact, mass1, mass2, charge1, charge2, &
       weight1, weight2, idens, jdens, itemp, jtemp, log_lambda, factor)
 
@@ -253,22 +264,20 @@ CONTAINS
     REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
     REAL(num), DIMENSION(3) :: vc ! Velocity of COM frame wrt lab frame
     REAL(num), DIMENSION(3) :: p3, p4
-    REAL(num), DIMENSION(3) :: p5, p6, pperp
+    REAL(num), DIMENSION(3) :: p5, p6
     REAL(num), DIMENSION(3) :: v3, v4
     REAL(num), DIMENSION(3) :: vr, vcr
     REAL(num), DIMENSION(3) :: c1, c2, c3
     REAL(num) :: m1, m2, q1, q2, w1, w2 ! Masses and charges
     REAL(num) :: e1, e2 ! Pre-collision energies
     REAL(num) :: e3, e4, e5, e6
-    REAL(num) :: gc, gr, gcr, ge, gp
+    REAL(num) :: gc, gcr
     REAL(num) :: tvar ! Dummy variable for temporarily storing values
     REAL(num) :: vc_sq, vc_mag, p1_vc, p2_vc, p3_mag
     REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
     REAL(num) :: vrabs
-    REAL(num) :: mu, nu, qu, ran1, ran2, nus, nuf
-    REAL(num), DIMENSION(3) :: ptemp
-    REAL(num) :: etemp, mtemp
-    REAL(num) :: m_red
+    REAL(num) :: nu, ran1, ran2
+    !REAL(num) :: m_red
 
     ! Copy all of the necessary particle data into variables with easier to
     ! read names
@@ -292,19 +301,19 @@ CONTAINS
 
     ! Velocity of centre-of-momentum (COM) reference frame
     vc = (p1 + p2) * c**2 / (e1 + e2)
-    vc_sq = DOT_PRODUCT(vc,vc)
+    vc_sq = DOT_PRODUCT(vc, vc)
     vc_mag = SQRT(vc_sq)
-    gc = 1.0_num/SQRT(1.0_num - (vc_sq/c**2))
+    gc = 1.0_num / SQRT(1.0_num - vc_sq / c**2)
 
     ! Lorentz momentum transform to get into COM frame
-    p1_vc = DOT_PRODUCT(p1,vc)
-    p2_vc = DOT_PRODUCT(p2,vc)
-    tvar = p1_vc*(gc-1.0_num)/vc_sq
-    p3 = p1 + vc*(tvar - gc*e1/c**2)
-    tvar = p2_vc*(gc-1.0_num)/vc_sq
-    p4 = p2 + vc*(tvar - gc*e2/c**2)
+    p1_vc = DOT_PRODUCT(p1, vc)
+    p2_vc = DOT_PRODUCT(p2, vc)
+    tvar = p1_vc * (gc - 1.0_num) / vc_sq
+    p3 = p1 + vc * (tvar - gc * e1 / c**2)
+    tvar = p2_vc * (gc - 1.0_num) / vc_sq
+    p4 = p2 + vc * (tvar - gc * e2 / c**2)
 
-    p3_mag = SQRT(DOT_PRODUCT(p3,p3))
+    p3_mag = SQRT(DOT_PRODUCT(p3, p3))
 
     ! Lorentz energy transform
     e3 = gc * (e1 - p1_vc)
@@ -322,9 +331,10 @@ CONTAINS
     nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, jdens)
     nu = nu * factor * dt
 
-!    m_red = mass1*mass2/(mass1+mass2)
-!    nu = ((idens * (charge1*charge2)**2 * log_lambda) &
-!        / (8.0_num*pi*(epsilon0**2)*(m_red**2)*(vrabs**3)))*gc*dt*factor
+!    m_red = mass1 * mass2 / (mass1 + mass2)
+!    nu = ((idens * (charge1 * charge2)**2 * log_lambda) &
+!        / (8.0_num * pi * (epsilon0**2) * (m_red**2) * (vrabs**3))) &
+!        * gc * dt * factor
 
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
     ! frequency
@@ -335,19 +345,19 @@ CONTAINS
     ! this is to ensure that 0 < ran1 < 1
     ! ran1=0 gives NaN in logarithm
     ! ran1=1 could give positive logarithm due to rounding errors
-    ran1 = (1.0_num - 1.0e-10_num)*random() + 0.5e-10_num
+    ran1 = (1.0_num - 1.0e-10_num) * random() + 0.5e-10_num
     ran2 = random()
 
     ! Box Muller method for random from Gaussian distribution,
     ! mean 0, variance of nu
     ! Possible place for speed up by caching the second Box Muller number
     ! and using it later
-    ! SQRT(-2.0_num*nu*LOG(ran1)) * COS(2.0_num*pi*ran2)
-    delta = SQRT(-2.0_num*nu*LOG(ran1)) * SIN(2.0_num*pi*ran2)
+    ! SQRT(-2.0_num * nu * LOG(ran1)) * COS(2.0_num * pi * ran2)
+    delta = SQRT(-2.0_num * nu * LOG(ran1)) * SIN(2.0_num * pi * ran2)
 
     ! angle theta in the One Particle at Rest frame
-    sin_theta = (2.0_num*delta)/(1.0_num+delta**2)
-    cos_theta = 1.0_num - (2.0_num*delta**2)/(1.0_num+delta**2)
+    sin_theta = (2.0_num * delta) / (1.0_num + delta**2)
+    cos_theta = 1.0_num - (2.0_num * delta**2) / (1.0_num + delta**2)
 
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
@@ -358,19 +368,19 @@ CONTAINS
         / (gcr * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) / vrabs))
     tan_theta_cm2 = tan_theta_cm**2
 
-    sin_theta = SQRT(tan_theta_cm2/(1+tan_theta_cm2))
-    cos_theta = SQRT(1.0_num/(1.0_num+tan_theta_cm2))
+    sin_theta = SQRT(tan_theta_cm2 / (1 + tan_theta_cm2))
+    cos_theta = SQRT(1.0_num / (1.0_num + tan_theta_cm2))
 
     ! Post-collision momenta in COM frame
-    p3 = p3_mag &
-        * (c1*cos_theta + c2*sin_theta*COS(ran2) + c3*sin_theta*SIN(ran2))
+    p3 = p3_mag * (c1 * cos_theta + c2 * sin_theta * COS(ran2) &
+        + c3 * sin_theta * SIN(ran2))
     p4 = -p3
 
     ! Lorentz momentum transform to get back to lab frame
     tvar = DOT_PRODUCT(p3, vc) * (gc - 1.0_num) / vc_sq
-    p5 = p3 + vc*(tvar + gc*e3/c**2)
+    p5 = p3 + vc * (tvar + gc * e3 / c**2)
     tvar = DOT_PRODUCT(p4, vc) * (gc - 1.0_num) / vc_sq
-    p6 = p4 + vc*(tvar + gc*e4/c**2)
+    p6 = p4 + vc * (tvar + gc * e4 / c**2)
 
     e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
     e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
@@ -384,9 +394,9 @@ CONTAINS
 #endif
 
     IF (w1 .GT. w2) THEN
-      CALL weighted_particles_correction(w2/w1, p1, p5, e1, e5, m1)
+      CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
     ELSEIF (w2 .GT. w1) THEN
-      CALL weighted_particles_correction(w1/w2, p2, p6, e2, e6, m2)
+      CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
     ENDIF
 
     ! Update particle properties
@@ -394,6 +404,8 @@ CONTAINS
     impact%part_p = p6
 
   END SUBROUTINE scatter
+
+
 
   PURE FUNCTION coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, &
       jdens)
@@ -431,46 +443,51 @@ CONTAINS
 
   END FUNCTION
 
+
+
   SUBROUTINE weighted_particles_correction(wtr, p, p_scat, en, en_scat, mass)
+
     ! This is the correction to the particle according to
     ! Sentoku and Kemp (2008) formulas 21 to 26.
-    REAL(num),INTENT(INOUT) :: p_scat(3)
-    REAL(num),INTENT(IN) :: p(3)
-    REAL(num),INTENT(IN) :: wtr
-    REAL(num),INTENT(IN) :: en, en_scat
-    REAL(num),INTENT(IN) :: mass
+    REAL(num), INTENT(INOUT) :: p_scat(3)
+    REAL(num), INTENT(IN) :: p(3)
+    REAL(num), INTENT(IN) :: wtr
+    REAL(num), INTENT(IN) :: en, en_scat
+    REAL(num), INTENT(IN) :: mass
 
     REAL(num) :: p_after(3)
     REAL(num) :: en_after
     REAL(num) :: gamma_en, gamma_p
     REAL(num) :: delta_p, p_mag, p_trans_mag
-    REAL(num) :: c1(3),c2(3),c3(3)
+    REAL(num) :: c1(3), c2(3), c3(3)
     REAL(num) :: phi
 
-    en_after = (1-wtr)*en + wtr*en_scat
-    p_after  = (1-wtr)*p  + wtr*p_scat
+    en_after = (1 - wtr) * en + wtr * en_scat
+    p_after  = (1 - wtr) * p  + wtr * p_scat
     p_mag = SQRT(DOT_PRODUCT(p_after, p_after))
-!    gamma_en = 1 + en_after/(mass*c**2)
-    gamma_en = en_after/(mass*c**2)
-    gamma_p = SQRT(1+p_mag**2/(mass*c)**2)
+!    gamma_en = 1 + en_after / (mass * c**2)
+    gamma_en = en_after / (mass * c**2)
+    gamma_p = SQRT(1 + (p_mag / mass / c)**2)
 
     ! This if-statement is just to take care of possible rounding errors
     ! gamma_p should always be smaller than gamma_en
     IF (gamma_p .LT. gamma_en) THEN
       ! magnitude of the momentum correction
-      delta_p = mass*c*SQRT(gamma_en**2 - gamma_p**2)
+      delta_p = mass * c * SQRT(gamma_en**2 - gamma_p**2)
       p_trans_mag = SQRT(p_after(2)**2 + p_after(3)**2)
 
       CALL new_coords(p_after, c1, c2, c3)
 
-      phi = 2.0_num*pi*random()
+      phi = 2.0_num * pi * random()
 
       ! Correcting for the loss in energy by adding a perpendicular
       ! momentum correction
-      p_scat = p_after + delta_p*(c2*COS(phi) + c3*SIN(phi))
+      p_scat = p_after + delta_p * (c2 * COS(phi) + c3 * SIN(phi))
     ENDIF
 
   END SUBROUTINE weighted_particles_correction
+
+
 
   SUBROUTINE new_coords(vector, c1, c2, c3)
 
@@ -486,7 +503,7 @@ CONTAINS
     REAL(num), DIMENSION(3), INTENT(OUT) :: c1, c2, c3
     REAL(num) :: vtrans, vmag
 
-    vmag = SQRT(DOT_PRODUCT(vector,vector))
+    vmag = SQRT(DOT_PRODUCT(vector, vector))
     vtrans = SQRT(vector(2)**2 + vector(3)**2)
 
     IF (vtrans .NE. 0.0_num) THEN
@@ -494,9 +511,9 @@ CONTAINS
       c2 = (/ 0.0_num, vector(3), -vector(2) /)
       c2 = c2 / vtrans
       c3 = (/ vtrans**2, &
-          -(vector(1)*vector(2)), &
-          -(vector(1)*vector(3)) /)
-      c3 = c3 / (vmag*vtrans)
+          -(vector(1) * vector(2)), &
+          -(vector(1) * vector(3)) /)
+      c3 = c3 / (vmag * vtrans)
     ELSE
       c1 = (/ 1.0_num, 0.0_num, 0.0_num /)
       c2 = (/ 0.0_num, 1.0_num, 0.0_num /)
@@ -506,16 +523,20 @@ CONTAINS
   END SUBROUTINE new_coords
 
 
+
   ! Swaps to entries in coll_sort_array
   ! Hopefully the routine will be inlined by the compiler
   SUBROUTINE swap_coll_sort_elements(i, j)
+
     TYPE(particle_sort_element) :: swap
-    INTEGER :: i,j
+    INTEGER :: i, j
 
     swap = coll_sort_array(i)
     coll_sort_array(i) = coll_sort_array(j)
     coll_sort_array(j) = swap
+
   END SUBROUTINE swap_coll_sort_elements
+
 
 
   ! Attaches random numbers to each particle and performs a QuickSort
@@ -523,8 +544,9 @@ CONTAINS
   ! Particle numbers per cell aren't too large, so this should not result
   ! in a serious memory overhead
   SUBROUTINE shuffle_particle_list_random(p_list)
+
     TYPE(particle_list), INTENT(INOUT) :: p_list
-    TYPE(particle),POINTER :: particle1, patricle2
+    TYPE(particle), POINTER :: particle1, patricle2
 
     INTEGER :: i
     INTEGER :: p_num
@@ -551,7 +573,7 @@ CONTAINS
 
       ! make the sort array somewhat larger to avoid frequent deallocation
       ! and reallocation
-      coll_sort_array_size = (11*p_list%count)/10 + 10
+      coll_sort_array_size = (11 * p_list%count) / 10 + 10
       ALLOCATE(coll_sort_array(coll_sort_array_size))
     ENDIF
 
@@ -563,7 +585,7 @@ CONTAINS
       coll_sort_array(i)%particle => particle1
       coll_sort_array(i)%sort_index = random()
       particle1 => particle1%next
-      i = i+1
+      i = i + 1
     ENDDO
 
     sblock_start(1) = 1
@@ -573,14 +595,14 @@ CONTAINS
     DO WHILE(sblocks .GT. 0)
       b_start = sblock_start(sblocks)
       b_end = sblock_end(sblocks)
-      sblocks = sblocks-1
+      sblocks = sblocks - 1
 
-      pivot = (b_start + b_end)/2
+      pivot = (b_start + b_end) / 2
       pivot_val = coll_sort_array(pivot)%sort_index
 
       CALL swap_coll_sort_elements(pivot, b_end) ! Move pivot to end
       store_index = b_start
-      DO i = b_start,b_end-1
+      DO i = b_start, b_end - 1
         IF (coll_sort_array(i)%sort_index .LE. pivot_val) THEN
            CALL swap_coll_sort_elements(i, store_index)
            store_index = store_index + 1
@@ -591,14 +613,14 @@ CONTAINS
 
       ! Create two sub-blocks if they contain at least two elements
       ! Remember, the pivot element is in its right place
-      IF (b_start .LT. store_index-1) THEN
-        sblocks = sblocks+1
+      IF (b_start .LT. store_index - 1) THEN
+        sblocks = sblocks + 1
         sblock_start(sblocks) = b_start
-        sblock_end(sblocks) = store_index-1
+        sblock_end(sblocks) = store_index - 1
       ENDIF
-      IF (store_index+1 .LT. b_end) THEN
-        sblocks = sblocks+1
-        sblock_start(sblocks) = store_index+1
+      IF (store_index + 1 .LT. b_end) THEN
+        sblocks = sblocks + 1
+        sblock_start(sblocks) = store_index + 1
         sblock_end(sblocks) = b_end
       ENDIF
 
@@ -611,7 +633,7 @@ CONTAINS
     NULLIFY(particle1%prev)
 
     ! Then do all the particle links between head and tail.
-    DO i=2,p_num
+    DO i = 2, p_num
       patricle2 => particle1
       particle1 => coll_sort_array(i)%particle
 
@@ -626,6 +648,8 @@ CONTAINS
 
   END SUBROUTINE shuffle_particle_list_random
 
+
+
   PURE FUNCTION calc_coulomb_log(temp, dens, q1, q2)
 
     REAL(num), DIMENSION(-2:nx+3,-2:ny+3), INTENT(IN) :: temp, dens
@@ -639,6 +663,8 @@ CONTAINS
 
   END FUNCTION
 
+
+
   SUBROUTINE calc_coll_number_density(data_array, ispecies)
 
     ! This subroutine calculates the grid-based number density of a given
@@ -646,18 +672,15 @@ CONTAINS
     ! It is almost identical to the calc_number_density subroutine in calc_df,
     ! except it uses the secondary_list rather than the attached_list.
 
-    ! The data to be weighted onto the grid
-    REAL(num) :: wdata
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
-    TYPE(particle), POINTER :: current
+    ! The data to be weighted onto the grid
+    REAL(num) :: wdata
+    REAL(num) :: idx
     INTEGER :: ix, iy
     INTEGER :: jx, jy
-    REAL(num) :: idx
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    INTEGER :: cell_x, cell_y
+    TYPE(particle), POINTER :: current
+#include "particle_head.inc"
 
     data_array = 0.0_num
 
@@ -674,22 +697,7 @@ CONTAINS
         wdata = current%weight * idx
 #endif
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
+#include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
           DO ix = sf_min, sf_max
@@ -703,12 +711,13 @@ CONTAINS
     ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(data_array)
+    CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
 
   END SUBROUTINE calc_coll_number_density
+
 
 
   SUBROUTINE calc_coll_temperature(sigma, ispecies)
@@ -725,22 +734,19 @@ CONTAINS
     ! The weight of a particle
     REAL(num) :: l_weight
     REAL(num) :: gf
-    TYPE(particle), POINTER :: current
     INTEGER :: ix, iy
     INTEGER :: jx, jy
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy
-    REAL(num) :: cell_x_r, cell_frac_x
-    REAL(num) :: cell_y_r, cell_frac_y
-    INTEGER :: cell_x, cell_y
+    TYPE(particle), POINTER :: current
+#include "particle_head.inc"
 
-    coll_meanx = 0.0_num
-    coll_meany = 0.0_num
-    coll_meanz = 0.0_num
-    coll_part_count = 0.0_num
+    meanx = 0.0_num
+    meany = 0.0_num
+    meanz = 0.0_num
+    part_count = 0.0_num
     sigma = 0.0_num
 
 #ifndef PER_PARTICLE_CHARGE_MASS
-    sqrt_part_m = SQRT(species_list(ispecies)%mass)
+    sqrt_part_m  = SQRT(species_list(ispecies)%mass)
 #endif
 #ifndef PER_PARTICLE_WEIGHT
     l_weight = species_list(ispecies)%weight
@@ -750,7 +756,7 @@ CONTAINS
       current => species_list(ispecies)%secondary_list(jx,jy)%head
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
-        sqrt_part_m = SQRT(current%mass)
+        sqrt_part_m  = SQRT(current%mass)
 #endif
 #ifdef PER_PARTICLE_WEIGHT
         l_weight = current%weight
@@ -760,34 +766,19 @@ CONTAINS
         part_pmy = current%part_p(2) / sqrt_part_m
         part_pmz = current%part_p(3) / sqrt_part_m
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
+#include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
           DO ix = sf_min, sf_max
             gf = gx(ix) * gy(iy) * l_weight
-            coll_meanx(cell_x+ix, cell_y+iy) = &
-                coll_meanx(cell_x+ix, cell_y+iy) + gf * part_pmx
-            coll_meany(cell_x+ix, cell_y+iy) = &
-                coll_meany(cell_x+ix, cell_y+iy) + gf * part_pmy
-            coll_meanz(cell_x+ix, cell_y+iy) = &
-                coll_meanz(cell_x+ix, cell_y+iy) + gf * part_pmz
-            coll_part_count(cell_x+ix, cell_y+iy) = &
-                coll_part_count(cell_x+ix, cell_y+iy) + gf
+            meanx(cell_x+ix, cell_y+iy) = &
+                meanx(cell_x+ix, cell_y+iy) + gf * part_pmx
+            meany(cell_x+ix, cell_y+iy) = &
+                meany(cell_x+ix, cell_y+iy) + gf * part_pmy
+            meanz(cell_x+ix, cell_y+iy) = &
+                meanz(cell_x+ix, cell_y+iy) + gf * part_pmz
+            part_count(cell_x+ix, cell_y+iy) = &
+                part_count(cell_x+ix, cell_y+iy) + gf
           ENDDO
         ENDDO
         current => current%next
@@ -795,59 +786,41 @@ CONTAINS
     ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(coll_meanx)
-    CALL processor_summation_bcs(coll_meany)
-    CALL processor_summation_bcs(coll_meanz)
-    CALL processor_summation_bcs(coll_part_count)
+    CALL calc_boundary(meanx)
+    CALL calc_boundary(meany)
+    CALL calc_boundary(meanz)
+    CALL calc_boundary(part_count)
 
-    coll_part_count = MAX(coll_part_count, 1.e-6_num)
+    part_count = MAX(part_count, 1.e-6_num)
 
-    coll_meanx = coll_meanx / coll_part_count
-    coll_meany = coll_meany / coll_part_count
-    coll_meanz = coll_meanz / coll_part_count
+    meanx = meanx / part_count
+    meany = meany / part_count
+    meanz = meanz / part_count
 
-#ifndef PER_PARTICLE_CHARGE_MASS
-    sqrt_part_m = SQRT(species_list(ispecies)%mass)
-#endif
-    coll_part_count = 0.0_num
+    part_count = 0.0_num
     DO jy = 1, ny
     DO jx = 1, nx
       current => species_list(ispecies)%secondary_list(jx,jy)%head
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
-        sqrt_part_m = SQRT(current%mass)
+        sqrt_part_m  = SQRT(current%mass)
 #endif
         ! Copy the particle properties out for speed
         part_pmx = current%part_p(1) / sqrt_part_m
         part_pmy = current%part_p(2) / sqrt_part_m
         part_pmz = current%part_p(3) / sqrt_part_m
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-#else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-#endif
-        cell_x = FLOOR(cell_x_r + 0.5_num)
-        cell_y = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_x = REAL(cell_x, num) - cell_x_r
-        cell_frac_y = REAL(cell_y, num) - cell_y_r
-        cell_x = cell_x + 1
-        cell_y = cell_y + 1
-
-        CALL particle_to_grid(cell_frac_x, gx)
-        CALL particle_to_grid(cell_frac_y, gy)
+#include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
           DO ix = sf_min, sf_max
             gf = gx(ix) * gy(iy)
             sigma(cell_x+ix, cell_y+iy) = sigma(cell_x+ix, cell_y+iy) + gf &
-                * ((part_pmx - coll_meanx(cell_x+ix, cell_y+iy))**2 &
-                + (part_pmy - coll_meany(cell_x+ix, cell_y+iy))**2 &
-                + (part_pmz - coll_meanz(cell_x+ix, cell_y+iy))**2)
-            coll_part_count(cell_x+ix, cell_y+iy) = &
-                coll_part_count(cell_x+ix, cell_y+iy) + gf
+                * ((part_pmx - meanx(cell_x+ix, cell_y+iy))**2 &
+                + (part_pmy - meany(cell_x+ix, cell_y+iy))**2 &
+                + (part_pmz - meanz(cell_x+ix, cell_y+iy))**2)
+            part_count(cell_x+ix, cell_y+iy) = &
+                part_count(cell_x+ix, cell_y+iy) + gf
           ENDDO
         ENDDO
         current => current%next
@@ -855,37 +828,39 @@ CONTAINS
     ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(sigma)
-    CALL processor_summation_bcs(coll_part_count)
+    CALL calc_boundary(sigma)
+    CALL calc_boundary(part_count)
 
     ! N/2 kT = <p^2>/(2m), where N is the number of degrees of freedom
-    sigma = sigma / MAX(coll_part_count, 1.e-6_num) / kb / REAL(c_ndims)
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / REAL(c_ndims)
 
   END SUBROUTINE calc_coll_temperature
 
-  SUBROUTINE init_collision_matrix
+
+
+  SUBROUTINE setup_collisions
+
     ALLOCATE(coll_pairs(1:n_species, 1:n_species))
-    ALLOCATE(coll_pairs_touched(1:n_species, 1:n_species))
-
     coll_pairs = 1.0_num
-    coll_pairs_touched = .FALSE.
-  END SUBROUTINE init_collision_matrix
+
+  END SUBROUTINE setup_collisions
 
 
-  SUBROUTINE diag_collision_matrix
-    INTEGER i,j
-    WRITE (*,*) coll_pairs
-  END SUBROUTINE diag_collision_matrix
 
 #ifdef COLLISIONS_TEST
   SUBROUTINE test_collisions
+
     CALL test_scatter
     CALL test_inter_species
     CALL test_intra_species
     CALL test_shuffle
+
   END SUBROUTINE test_collisions
 
+
+
   SUBROUTINE test_scatter
+
     TYPE(particle), POINTER :: part1, part2
     REAL(num) :: p1(3), p2(3)  ! momenta of the collision partners
     REAL(num) :: mass1, mass2     ! masses of the collision partners
@@ -893,7 +868,6 @@ CONTAINS
     REAL(num) :: wt1, wt2         ! weights of the collision partners
     REAL(num) :: density          ! particle density
     REAL(num) :: t_factor         ! time step correction factor
-
 
     REAL(num) :: en1_before, en2_before
     REAL(num) :: en1_after, en2_after
@@ -917,11 +891,11 @@ CONTAINS
     ! electron-electron collisions (equal weighting)
     !==============================================================
 
-    WRITE(*,*) "==================================================="
-    WRITE(*,*) "============   SCATTER TEST   ====================="
-    WRITE(*,*) "==================================================="
+    WRITE(*,*) '==================================================='
+    WRITE(*,*) '============   SCATTER TEST   ====================='
+    WRITE(*,*) '==================================================='
     WRITE(*,*)
-    WRITE(*,*) "Testing electron-electron collisions (equal weighting)"
+    WRITE(*,*) 'Testing electron-electron collisions (equal weighting)'
 
     mass1 = m0
     mass2 = m0
@@ -936,49 +910,49 @@ CONTAINS
     en_error = 0.0_num
     p_error = 0.0_num
 
-    DO i=1,N
-      p1(1) = 5*mass1*c * random()
-      p1(2) = 5*mass1*c * random()
-      p1(3) = 5*mass1*c * random()
-      p2(1) = 5*mass2*c * random()
-      p2(2) = 5*mass2*c * random()
-      p2(3) = 5*mass2*c * random()
+    DO i = 1, N
+      p1(1) = 5 * mass1 * c * random()
+      p1(2) = 5 * mass1 * c * random()
+      p1(3) = 5 * mass1 * c * random()
+      p2(1) = 5 * mass2 * c * random()
+      p2(2) = 5 * mass2 * c * random()
+      p2(3) = 5 * mass2 * c * random()
 
-      part1%part_p = p1;
-      part2%part_p = p2;
-      part1%weight = wt1;
-      part2%weight = wt2;
+      part1%part_p = p1
+      part2%part_p = p2
+      part1%weight = wt1
+      part2%weight = wt2
 
-      en1_before = c*SQRT(DOT_PRODUCT(p1,p1)*c**2 + mass1**2*c**4)
-      en2_before = c*SQRT(DOT_PRODUCT(p2,p2)*c**2 + mass2**2*c**4)
+      en1_before = c**2 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_before = c**2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error + p1 + p2
       p_sqr = p_sqr + SUM((p1 + p2)**2)
       en_error = en_error + en1_before + en2_before
-      en_sqr = en_sqr + (en1_before+en2_before)**2
+      en_sqr = en_sqr + (en1_before + en2_before)**2
 
       CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
           density, density, 1.0e4_num, 1.0e4_num, 10.0_num, t_factor)
 
-      p1 = part1%part_p;
-      p2 = part2%part_p;
+      p1 = part1%part_p
+      p2 = part2%part_p
 
-      en1_after = c*SQRT(DOT_PRODUCT(p1,p1)*c**2 + mass1**2*c**4)
-      en2_after = c*SQRT(DOT_PRODUCT(p2,p2)*c**2 + mass2**2*c**4)
+      en1_after = c**2 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_after = c**2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error - p1 - p2
       en_error = en_error - en1_after - en2_after
     ENDDO
 
     WRITE(*,'("  Errors after ",I10," iterations")') N
-    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2)/p_sqr)
-    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2/en_sqr)
+    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
+    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2 / en_sqr)
 
     !==============================================================
     ! electron-ion collisions (equal weighting)
     !==============================================================
 
-    WRITE(*,*) "Testing electron-ion collisions (equal weighting)"
+    WRITE(*,*) 'Testing electron-ion collisions (equal weighting)'
 
     mass1 = m0
     mass2 = 1836.2_num * 105.0_num * m0
@@ -993,29 +967,29 @@ CONTAINS
     en_error = 0.0_num
     p_error = 0.0_num
 
-    DO i=1,N
-      p1(1) = 5*mass1*c * random()
-      p1(2) = 5*mass1*c * random()
-      p1(3) = 5*mass1*c * random()
-      p2(1) = 5*mass2*c * random()
-      p2(2) = 5*mass2*c * random()
-      p2(3) = 5*mass2*c * random()
+    DO i = 1, N
+      p1(1) = 5 * mass1 * c * random()
+      p1(2) = 5 * mass1 * c * random()
+      p1(3) = 5 * mass1 * c * random()
+      p2(1) = 5 * mass2 * c * random()
+      p2(2) = 5 * mass2 * c * random()
+      p2(3) = 5 * mass2 * c * random()
 
-      part1%part_p = p1;
-      part2%part_p = p2;
-      part1%weight = wt1;
-      part2%weight = wt2;
+      part1%part_p = p1
+      part2%part_p = p2
+      part1%weight = wt1
+      part2%weight = wt2
 
-      en1_before = c*SQRT(DOT_PRODUCT(p1,p1)*c**2 + mass1**2*c**4)
-      en2_before = c*SQRT(DOT_PRODUCT(p2,p2)*c**2 + mass2**2*c**4)
+      en1_before = c**2 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_before = c**2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error + p1 + p2
       p_sqr = p_sqr + SUM((p1 + p2)**2)
       en_error = en_error + en1_before + en2_before
-      en_sqr = en_sqr + (en1_before+en2_before)**2
+      en_sqr = en_sqr + (en1_before + en2_before)**2
 
       ! alternate particle1 and particle2
-      IF (MOD(i,2) .EQ. 0) THEN
+      IF (MOD(i, 2) .EQ. 0) THEN
         CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
       ELSE
@@ -1023,25 +997,25 @@ CONTAINS
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
       ENDIF
 
-      p1 = part1%part_p;
-      p2 = part2%part_p;
+      p1 = part1%part_p
+      p2 = part2%part_p
 
-      en1_after = c*SQRT(DOT_PRODUCT(p1,p1)*c**2 + mass1**2*c**4)
-      en2_after = c*SQRT(DOT_PRODUCT(p2,p2)*c**2 + mass2**2*c**4)
+      en1_after = c**2 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_after = c**2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error - p1 - p2
       en_error = en_error - en1_after - en2_after
     ENDDO
 
     WRITE(*,'("  Errors after ",I10," iterations")') N
-    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2)/p_sqr)
-    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2/en_sqr)
+    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
+    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2 / en_sqr)
 
     !==============================================================
     ! electron-electron collisions (random weighting)
     !==============================================================
 
-    WRITE(*,*) "Testing electron-electron collisions (random weighting)"
+    WRITE(*,*) 'Testing electron-electron collisions (random weighting)'
 
     mass1 = m0
     mass2 = m0
@@ -1054,52 +1028,52 @@ CONTAINS
     en_error = 0.0_num
     p_error = 0.0_num
 
-    DO i=1,N
-      p1(1) = 5*mass1*c * random()
-      p1(2) = 5*mass1*c * random()
-      p1(3) = 5*mass1*c * random()
-      p2(1) = 5*mass2*c * random()
-      p2(2) = 5*mass2*c * random()
-      p2(3) = 5*mass2*c * random()
-      wt1 = random()+1e-10_num
-      wt2 = random()+1e-10_num
+    DO i = 1, N
+      p1(1) = 5 * mass1 * c * random()
+      p1(2) = 5 * mass1 * c * random()
+      p1(3) = 5 * mass1 * c * random()
+      p2(1) = 5 * mass2 * c * random()
+      p2(2) = 5 * mass2 * c * random()
+      p2(3) = 5 * mass2 * c * random()
+      wt1 = random() + 1e-10_num
+      wt2 = random() + 1e-10_num
 
-      part1%part_p = p1;
-      part2%part_p = p2;
-      part1%weight = wt1;
-      part2%weight = wt2;
+      part1%part_p = p1
+      part2%part_p = p2
+      part1%weight = wt1
+      part2%weight = wt2
 
 
-      en1_before = c*wt1*SQRT(DOT_PRODUCT(p1,p1)*c**2 + mass1**2*c**4)
-      en2_before = c*wt2*SQRT(DOT_PRODUCT(p2,p2)*c**2 + mass2**2*c**4)
+      en1_before = c**2 * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_before = c**2 * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
-      p_error = p_error + wt1*p1 + wt2*p2
-      p_sqr = p_sqr + SUM((wt1*p1 + wt2*p2)**2)
+      p_error = p_error + wt1 * p1 + wt2 * p2
+      p_sqr = p_sqr + SUM((wt1 * p1 + wt2 * p2)**2)
       en_error = en_error + en1_before + en2_before
-      en_sqr = en_sqr + (en1_before+en2_before)**2
+      en_sqr = en_sqr + (en1_before + en2_before)**2
 
       CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
 
-      p1 = part1%part_p;
-      p2 = part2%part_p;
+      p1 = part1%part_p
+      p2 = part2%part_p
 
-      en1_after = c*wt1*SQRT(DOT_PRODUCT(p1,p1)*c**2 + mass1**2*c**4)
-      en2_after = c*wt2*SQRT(DOT_PRODUCT(p2,p2)*c**2 + mass2**2*c**4)
+      en1_after = c**2 * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_after = c**2 * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
-      p_error = p_error - wt1*p1 - wt2*p2
+      p_error = p_error - wt1 * p1 - wt2 * p2
       en_error = en_error - en1_after - en2_after
     ENDDO
 
     WRITE(*,'("  Errors after ",I10," iterations")') N
-    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2)/p_sqr)
-    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2/en_sqr)
+    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
+    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2 / en_sqr)
 
     !==============================================================
     ! electron-ion collisions (random weighting)
     !==============================================================
 
-    WRITE(*,*) "Testing electron-ion collisions (random weighting)"
+    WRITE(*,*) 'Testing electron-ion collisions (random weighting)'
 
     mass1 = m0
     mass2 = 1836.2_num * 105.0_num * m0
@@ -1112,31 +1086,31 @@ CONTAINS
     en_error = 0.0_num
     p_error = 0.0_num
 
-    DO i=1,N
-      p1(1) = 5*mass1*c * random()
-      p1(2) = 5*mass1*c * random()
-      p1(3) = 5*mass1*c * random()
-      p2(1) = 5*mass2*c * random()
-      p2(2) = 5*mass2*c * random()
-      p2(3) = 5*mass2*c * random()
-      wt1 = random()+1e-10_num
-      wt2 = random()+1e-10_num
+    DO i = 1, N
+      p1(1) = 5 * mass1 * c * random()
+      p1(2) = 5 * mass1 * c * random()
+      p1(3) = 5 * mass1 * c * random()
+      p2(1) = 5 * mass2 * c * random()
+      p2(2) = 5 * mass2 * c * random()
+      p2(3) = 5 * mass2 * c * random()
+      wt1 = random() + 1e-10_num
+      wt2 = random() + 1e-10_num
 
-      part1%part_p = p1;
-      part2%part_p = p2;
-      part1%weight = wt1;
-      part2%weight = wt2;
+      part1%part_p = p1
+      part2%part_p = p2
+      part1%weight = wt1
+      part2%weight = wt2
 
-      en1_before = c*wt1*SQRT(DOT_PRODUCT(p1,p1)*c**2 + mass1**2*c**4)
-      en2_before = c*wt2*SQRT(DOT_PRODUCT(p2,p2)*c**2 + mass2**2*c**4)
+      en1_before = c**2 * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_before = c**2 * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
-      p_error = p_error + wt1*p1 + wt2*p2
-      p_sqr = p_sqr + SUM((wt1*p1 + wt2*p2)**2)
+      p_error = p_error + wt1 * p1 + wt2 * p2
+      p_sqr = p_sqr + SUM((wt1 * p1 + wt2 * p2)**2)
       en_error = en_error + en1_before + en2_before
-      en_sqr = en_sqr + (en1_before+en2_before)**2
+      en_sqr = en_sqr + (en1_before + en2_before)**2
 
       ! alternate particle1 and particle2
-      IF (MOD(i,2) .EQ. 0) THEN
+      IF (MOD(i, 2) .EQ. 0) THEN
         CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
       ELSE
@@ -1144,23 +1118,26 @@ CONTAINS
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
       ENDIF
 
-      p1 = part1%part_p;
-      p2 = part2%part_p;
+      p1 = part1%part_p
+      p2 = part2%part_p
 
-      en1_after = c*wt1*SQRT(DOT_PRODUCT(p1,p1)*c**2 + mass1**2*c**4)
-      en2_after = c*wt2*SQRT(DOT_PRODUCT(p2,p2)*c**2 + mass2**2*c**4)
+      en1_after = c**2 * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_after = c**2 * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
-      p_error = p_error - wt1*p1 - wt2*p2
+      p_error = p_error - wt1 * p1 - wt2 * p2
       en_error = en_error - en1_after - en2_after
     ENDDO
 
     WRITE(*,'("  Errors after ",I10," iterations")') N
-    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2)/p_sqr)
-    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2/en_sqr)
+    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
+    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2 / en_sqr)
 
   END SUBROUTINE test_scatter
 
+
+
   SUBROUTINE test_inter_species
+
     TYPE(particle_list) :: partlist1
     TYPE(particle_list) :: partlist2
     TYPE(particle), POINTER :: part
@@ -1172,7 +1149,7 @@ CONTAINS
     INTEGER, DIMENSION(:), ALLOCATABLE :: histo1, histo2
     INTEGER :: histo1max, histo2max
     INTEGER :: cnt1, cnt2
-    INTEGER :: a,b
+    INTEGER :: a, b
     INTEGER :: error
 
     dt = 1.0e-8_num
@@ -1186,18 +1163,18 @@ CONTAINS
     ALLOCATE(histo1(0:2*max_num))
     ALLOCATE(histo2(0:2*max_num))
 
-    WRITE(*,*) "==================================================="
-    WRITE(*,*) "======   INTER SPECIES COLLISION TEST   ==========="
-    WRITE(*,*) "==================================================="
+    WRITE(*,*) '==================================================='
+    WRITE(*,*) '======   INTER SPECIES COLLISION TEST   ==========='
+    WRITE(*,*) '==================================================='
     WRITE(*,*)
-    WRITE(*,*) "Testing electron-electron collisions (random weighting)"
+    WRITE(*,*) 'Testing electron-electron collisions (random weighting)'
 
     mass1 = m0
     mass2 = m0
     charge1 = -q0
     charge2 = -q0
 
-    DO i=1,N
+    DO i = 1, N
       ! allocate particles
       CALL create_allocated_partlist(partlist1, INT(max_num*random(), KIND=8))
       CALL create_allocated_partlist(partlist2, INT(max_num*random(), KIND=8))
@@ -1206,9 +1183,9 @@ CONTAINS
 
       part => partlist1%head
       DO WHILE (ASSOCIATED(part))
-        part%part_p(1) = 5*mass1*c * random()
-        part%part_p(2) = 5*mass1*c * random()
-        part%part_p(3) = 5*mass1*c * random()
+        part%part_p(1) = 5 * mass1 * c * random()
+        part%part_p(2) = 5 * mass1 * c * random()
+        part%part_p(3) = 5 * mass1 * c * random()
         part%coll_count = 0
 
         part%weight = random() + 1e-10_num
@@ -1218,9 +1195,9 @@ CONTAINS
 
       part => partlist2%head
       DO WHILE (ASSOCIATED(part))
-        part%part_p(1) = 5*mass2*c * random()
-        part%part_p(2) = 5*mass2*c * random()
-        part%part_p(3) = 5*mass2*c * random()
+        part%part_p(1) = 5 * mass2 * c * random()
+        part%part_p(2) = 5 * mass2 * c * random()
+        part%part_p(3) = 5 * mass2 * c * random()
         part%coll_count = 0
 
         part%weight = random() + 1e-10_num
@@ -1248,7 +1225,7 @@ CONTAINS
       ! creating histograms
 
       part => partlist1%head
-      DO j=1,partlist1%count
+      DO j = 1, partlist1%count
 !        WRITE(*,'("    ",I4,": ",I10)') j, part%coll_count
         IF (part%coll_count .GT. histo1max) histo1max = part%coll_count
         histo1(part%coll_count) = histo1(part%coll_count) + 1
@@ -1266,13 +1243,13 @@ CONTAINS
       ENDDO
 
 ! only need to output if something is wrong
-!      WRITE(*,*) "  Histogram 1"
-!      DO j=1, histo1max
+!      WRITE(*,*) '  Histogram 1'
+!      DO j = 1, histo1max
 !        WRITE(*,'("    ",I4,": ",I10)') j, histo1(j)
 !      ENDDO
 !
-!      WRITE(*,*) "  Histogram 2"
-!      DO j=1, histo2max
+!      WRITE(*,*) '  Histogram 2'
+!      DO j = 1, histo2max
 !        WRITE(*,'("    ",I4,": ",I10)') j, histo2(j)
 !      ENDDO
 
@@ -1283,13 +1260,13 @@ CONTAINS
         IF (cnt1 .GT. cnt2) THEN
           histo1(2) = histo1(2) - cnt1
           a = cnt1 / cnt2
-          b = cnt1 - cnt2*a
+          b = cnt1 - cnt2 * a
           histo2(2*a) = histo2(2*a) - (cnt2 - b)
           histo2(2*a+2) = histo2(2*a+2) - b
         ELSE IF (cnt1 .LT. cnt2) THEN
           histo2(2) = histo2(2) - cnt2
           a = cnt2 / cnt1
-          b = cnt2 - cnt1*a
+          b = cnt2 - cnt1 * a
           histo1(2*a) = histo1(2*a) - (cnt1 - b)
           histo1(2*a+2) = histo1(2*a+2) - b
         ELSE
@@ -1300,15 +1277,15 @@ CONTAINS
 
       ! now check that both arrays are zero
       error = 0
-      DO j=1, histo1max
-        IF (histo1(j) .NE. 0) error = error+1
+      DO j = 1, histo1max
+        IF (histo1(j) .NE. 0) error = error + 1
       ENDDO
-      DO j=1, histo2max
-        IF (histo2(j) .NE. 0) error = error+1
+      DO j = 1, histo2max
+        IF (histo2(j) .NE. 0) error = error + 1
       ENDDO
 
       IF (error .GT. 0) THEN
-        WRITE(*,*) "  Error in inter species collisions"
+        WRITE(*,*) '  Error in inter species collisions'
         WRITE(*,'("    Iteration:   ",I10)') i
         WRITE(*,'("    List counts: ",I10,", ",I10)') cnt1, cnt2
         STOP
@@ -1319,17 +1296,20 @@ CONTAINS
       CALL destroy_partlist(partlist2)
     ENDDO
 
-    WRITE(*,*) "  SUCCESS!"
+    WRITE(*,*) '  SUCCESS!'
     WRITE(*,'("    Number of iterations:   ",I10)') N
     WRITE(*,'("    Average list lengths:   ",F10.5,", ",F10.5)') &
-        plist1_length/N, plist2_length/N
+        plist1_length / N, plist2_length / N
 
     DEALLOCATE(histo1)
     DEALLOCATE(histo2)
 
   END SUBROUTINE test_inter_species
 
+
+
   SUBROUTINE test_intra_species
+
     TYPE(particle_list) :: partlist
     TYPE(particle), POINTER :: part
     REAL(num) :: mass, charge ! mass and charg of the collision partners
@@ -1345,16 +1325,16 @@ CONTAINS
 
     ALLOCATE(histo(0:2*max_num))
 
-    WRITE(*,*) "==================================================="
-    WRITE(*,*) "======   INTRA SPECIES COLLISION TEST   ==========="
-    WRITE(*,*) "==================================================="
+    WRITE(*,*) '==================================================='
+    WRITE(*,*) '======   INTRA SPECIES COLLISION TEST   ==========='
+    WRITE(*,*) '==================================================='
     WRITE(*,*)
-    WRITE(*,*) "Testing collisions (random weighting)"
+    WRITE(*,*) 'Testing collisions (random weighting)'
 
     mass = m0
     charge = -q0
 
-    DO i=1,N
+    DO i = 1, N
       ! allocate particles
       CALL create_allocated_partlist(partlist, INT(max_num*random(), KIND=8))
 
@@ -1362,9 +1342,9 @@ CONTAINS
 
       part => partlist%head
       DO WHILE (ASSOCIATED(part))
-        part%part_p(1) = 5*mass*c * random()
-        part%part_p(2) = 5*mass*c * random()
-        part%part_p(3) = 5*mass*c * random()
+        part%part_p(1) = 5 * mass * c * random()
+        part%part_p(2) = 5 * mass * c * random()
+        part%part_p(3) = 5 * mass * c * random()
         part%coll_count = 0
 
         part%weight = random() + 1e-10_num
@@ -1384,7 +1364,7 @@ CONTAINS
 !      WRITE(*,'("  Particle List: ",I10)') partlist%count
 
       part => partlist%head
-      DO j=1,partlist%count
+      DO j = 1, partlist%count
         ! WRITE(*,'("    ",I4,": ",I10)') j, part%coll_count
         IF (part%coll_count .GT. histo_max) histo_max = part%coll_count
         histo(part%coll_count) = histo(part%coll_count) + 1
@@ -1392,8 +1372,8 @@ CONTAINS
       ENDDO
 
 ! only need to output if something is wrong
-!      WRITE(*,*) "  Histogram"
-!      DO j=1, histo_max
+!      WRITE(*,*) '  Histogram'
+!      DO j = 1, histo_max
 !        WRITE(*,'("    ",I4,": ",I10)') j, histo(j)
 !      ENDDO
 
@@ -1404,12 +1384,12 @@ CONTAINS
 
       ! now check that array is zero
       error = 0
-      DO j=1, histo_max
-        IF (histo(j) .NE. 0) error = error+1
+      DO j = 1, histo_max
+        IF (histo(j) .NE. 0) error = error + 1
       ENDDO
 
       IF (error .GT. 0) THEN
-        WRITE(*,*) "  Error in intra species collisions"
+        WRITE(*,*) '  Error in intra species collisions'
         WRITE(*,'("    Iteration:   ",I10)') i
         WRITE(*,'("    List count: ",I10)') partlist%count
         STOP
@@ -1419,18 +1399,20 @@ CONTAINS
       CALL destroy_partlist(partlist)
     ENDDO
 
-    WRITE(*,*) "  SUCCESS!"
+    WRITE(*,*) '  SUCCESS!'
     WRITE(*,'("    Number of iterations:   ",I10)') N
-    WRITE(*,'("    Average list length:   ",F10.5)') plist_length/N
+    WRITE(*,'("    Average list length:   ",F10.5)') plist_length / N
 
     DEALLOCATE(histo)
 
   END SUBROUTINE test_intra_species
 
+
+
   SUBROUTINE scatter_count(particle1, particle2, full)
+
     TYPE(particle), INTENT(INOUT) :: particle1, particle2
     LOGICAL, INTENT(IN) :: full
-
     INTEGER :: coll_num
 
     IF (full) THEN
@@ -1444,10 +1426,12 @@ CONTAINS
 
   END SUBROUTINE scatter_count
 
+
+
   SUBROUTINE test_shuffle
+
     TYPE(particle_list) :: partlist
     TYPE(particle), POINTER :: part
-
     INTEGER :: N, max_num, min_num, i, j, k
     INTEGER(8) :: plist_length
     INTEGER :: iterations
@@ -1467,13 +1451,13 @@ CONTAINS
     ALLOCATE(maxp(0:max_num))
     ALLOCATE(std_dev(0:max_num))
 
-    WRITE(*,*) "==================================================="
-    WRITE(*,*) "============   RANDOM SHUFFLE TEST   =============="
-    WRITE(*,*) "==================================================="
+    WRITE(*,*) '==================================================='
+    WRITE(*,*) '============   RANDOM SHUFFLE TEST   =============='
+    WRITE(*,*) '==================================================='
     WRITE(*,*)
 
-    DO k=1,iterations
-      plist_length = (max_num-min_num)*random() + min_num
+    DO k = 1, iterations
+      plist_length = (max_num - min_num) * random() + min_num
       histo = 0.0_num
       minp = max_num
       maxp = 0
@@ -1481,15 +1465,15 @@ CONTAINS
 
       WRITE(*,'("  List length: ",I10)') plist_length
 
-      DO i=1,N
+      DO i = 1, N
         ! allocate particles
         CALL create_allocated_partlist(partlist, plist_length)
 
         ! fill particle values
         !   note: we only need particle position which is stored in coll_count
         part => partlist%head
-        DO j=1,plist_length
-          IF (.NOT. ASSOCIATED(part)) WRITE(*,*) "    !!not associated!!"
+        DO j = 1, plist_length
+          IF (.NOT. ASSOCIATED(part)) WRITE(*,*) '    !!not associated!!'
           part%coll_count = j
           part => part%next
         ENDDO
@@ -1499,7 +1483,7 @@ CONTAINS
 
         ! perform statistics
         part => partlist%head
-        DO j=1,plist_length
+        DO j = 1, plist_length
           histo(j) = histo(j) + part%coll_count
           if (minp(j) .GT. part%coll_count) minp(j) = part%coll_count
           if (maxp(j) .LT. part%coll_count) maxp(j) = part%coll_count
@@ -1511,10 +1495,11 @@ CONTAINS
       ENDDO
 
       WRITE(*,'("   Statistics (",I10," runs)")') N
-      WRITE(*,*) "    avg        std_dev       min        max"
-      DO i=1,plist_length
+      WRITE(*,*) '    avg        std_dev       min        max'
+      DO i = 1, plist_length
         WRITE(*,'("    ",F10.5,"    ",F10.5,"    ",I10,"    ",I10)') &
-            histo(i)/N, SQRT(std_dev(i)/N - (histo(i)/N)**2), minp(i), maxp(i)
+            histo(i) / N, SQRT(std_dev(i) / N - (histo(i) / N)**2), &
+            minp(i), maxp(i)
       ENDDO
 
     ENDDO
@@ -1524,6 +1509,7 @@ CONTAINS
   END SUBROUTINE test_shuffle
 
 
+
   SUBROUTINE check_particle_data
 
     INTEGER :: ispecies
@@ -1531,12 +1517,12 @@ CONTAINS
     REAL(num) :: part_x, part_y
     REAL(num) :: part_px, part_py, part_pz
     LOGICAL :: haveNaN
-    TYPE(particle),POINTER :: current
+    TYPE(particle), POINTER :: current
 
     haveNaN = .FALSE.
 
     DO ispecies = 1, n_species
-      current=>species_list(ispecies)%attached_list%head
+      current => species_list(ispecies)%attached_list%head
       DO ipart = 1, species_list(ispecies)%attached_list%count
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
@@ -1545,23 +1531,23 @@ CONTAINS
         part_pz = current%part_p(3)
 
         IF (part_x .NE. part_x) THEN
-          WRITE (*,*) "WARNING x = NaN on node ", rank, ipart
+          WRITE (*,*) 'WARNING x = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
         IF (part_y .NE. part_y) THEN
-          WRITE (*,*) "WARNING y = NaN on node ", rank, ipart
+          WRITE (*,*) 'WARNING y = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
         IF (part_px .NE. part_px) THEN
-          WRITE (*,*) "WARNING px = NaN on node ", rank, ipart
+          WRITE (*,*) 'WARNING px = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
         IF (part_py .NE. part_py) THEN
-          WRITE (*,*) "WARNING py = NaN on node ", rank, ipart
+          WRITE (*,*) 'WARNING py = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
         IF (part_pz .NE. part_pz) THEN
-          WRITE (*,*) "WARNING pz = NaN on node ", rank, ipart
+          WRITE (*,*) 'WARNING pz = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
 
@@ -1578,6 +1564,3 @@ CONTAINS
 #endif
 
 END MODULE collisions
-
-#endif
-

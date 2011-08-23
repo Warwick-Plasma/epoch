@@ -608,13 +608,9 @@ MODULE shared_data
   TYPE(particle_sort_element), POINTER, DIMENSION(:) :: coll_sort_array
   INTEGER :: coll_sort_array_size = 0
 
-  LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
   REAL(num) :: coulomb_log
   LOGICAL :: coulomb_log_auto
-
-  REAL(num), DIMENSION(:,:), ALLOCATABLE :: coll_part_count, coll_meanx, &
-        coll_meany, coll_meanz
 #endif
 
   !----------------------------------------------------------------------------
