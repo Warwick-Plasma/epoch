@@ -3,9 +3,7 @@ MODULE deck_control_block
   USE mpi
   USE strings_advanced
   USE fields
-#ifdef COLLISIONS
   USE collisions
-#endif
 
   IMPLICIT NONE
   SAVE
@@ -15,7 +13,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 14 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 15 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -40,6 +38,7 @@ MODULE deck_control_block
           "stdout_frequency  ", &
           "use_random_seed   ", &
           "smooth_currents   ", &
+          "use_collisions    ", &
           "coulomb_log       ", &
           "collide           " /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -64,6 +63,7 @@ MODULE deck_control_block
           "stdout_frequency  ", &
           "use_random_seed   ", &
           "smooth_currents   ", &
+          "use_collisions    ", &
           "coulomb_log       ", &
           "collide           " /)
 
@@ -73,12 +73,11 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_first) THEN
       control_block_done = .FALSE.
-#ifdef COLLISIONS
+      use_collisions = .FALSE.
     ELSE
       ALLOCATE(coll_pairs_touched(1:n_species, 1:n_species))
       coll_pairs_touched = .FALSE.
       CALL setup_collisions
-#endif
     ENDIF
 
   END SUBROUTINE control_deck_initialise
@@ -87,10 +86,22 @@ CONTAINS
 
   SUBROUTINE control_deck_finalise
 
+    INTEGER :: i, j
+
     IF (deck_state .EQ. c_ds_first) RETURN
-#ifdef COLLISIONS
     DEALLOCATE(coll_pairs_touched)
-#endif
+
+    IF (use_collisions) THEN
+      use_collisions = .FALSE.
+      DO j = 1, n_species
+        DO i = 1, n_species
+          IF (coll_pairs(i,j) .GT. 0) THEN
+            use_collisions = .TRUE.
+            EXIT
+          ENDIF
+        ENDDO
+      ENDDO
+    ENDIF
 
   END SUBROUTINE control_deck_finalise
 
@@ -117,12 +128,10 @@ CONTAINS
     errcode = c_err_none
 
     IF (deck_state .NE. c_ds_first) THEN
-#ifdef COLLISIONS
-      loop = 4*c_ndims + 14
+      loop = 4*c_ndims + 15
       IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop))))) THEN
         CALL set_collision_matrix(TRIM(ADJUSTL(value)), errcode)
       ENDIF
-#endif
       RETURN
     ENDIF
 
@@ -145,7 +154,7 @@ CONTAINS
     ENDIF
 
     control_block_done(elementselected) = .TRUE.
-    control_block_done(4*c_ndims+14) = .FALSE.
+    control_block_done(4*c_ndims+15) = .FALSE.
     errcode = c_err_none
 
     SELECT CASE (elementselected)
@@ -204,15 +213,15 @@ CONTAINS
       use_random_seed = as_logical(value, errcode)
     CASE(4*c_ndims+12)
       smooth_currents = as_logical(value, errcode)
-#ifdef COLLISIONS
     CASE(4*c_ndims+13)
+      use_collisions = as_logical(value, errcode)
+    CASE(4*c_ndims+14)
       IF (str_cmp(value, 'auto')) THEN
         coulomb_log_auto = .TRUE.
       ELSE
         coulomb_log_auto = .FALSE.
         coulomb_log = as_real(value, errcode)
       ENDIF
-#endif
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -268,7 +277,6 @@ CONTAINS
 
 
 
-#ifdef COLLISIONS
 ! The following code is all about reading the coll_pairs from the input deck
 
   SUBROUTINE get_token(str_in, str_out, token_out, err)
@@ -365,6 +373,5 @@ CONTAINS
     coll_pairs_touched(sp2, sp1) = .TRUE.
 
   END SUBROUTINE set_collision_matrix
-#endif
 
 END MODULE deck_control_block

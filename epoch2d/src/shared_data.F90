@@ -599,7 +599,6 @@ MODULE shared_data
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_snapshot
 
-#ifdef COLLISIONS
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
     REAL(num) :: sort_index
@@ -610,8 +609,7 @@ MODULE shared_data
 
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
   REAL(num) :: coulomb_log
-  LOGICAL :: coulomb_log_auto
-#endif
+  LOGICAL :: coulomb_log_auto, use_collisions
 
   !----------------------------------------------------------------------------
   ! Moving window

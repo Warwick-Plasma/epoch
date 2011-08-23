@@ -12,7 +12,7 @@ MODULEFLAG = -module
 TARGET = epoch2d
 
 # Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES -DCOLLISIONS
+DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 
 # The following are a list of pre-processor defines which can be added to
 # the above line modifying the code behaviour at compile time.
@@ -54,9 +54,6 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES -DCOLLISION
 # -DPARTICLE_ID
 # -DPARTICLE_ID4
 
-# Add this for collisions
-# -DCOLLISIONS
-
 # Bypass the main simulation and only perform collision tests.
 # -DCOLLISIONS_TEST
 
@@ -89,7 +86,7 @@ PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
   deck.F90 deck_boundaries_block.f90 deck_constant_block.f90 \
-  deck_control_block.F90 deck_dist_fn_block.f90 deck_fields_block.f90 \
+  deck_control_block.f90 deck_dist_fn_block.f90 deck_fields_block.f90 \
   deck_io_block.F90 deck_laser_block.f90 deck_particle_probe_block.F90 \
   deck_species_block.F90 deck_window_block.f90 diagnostics.F90 dist_fn.F90 \
   epoch2d.F90 evaluate.f90 evaluator_blocks.f90 fields.f90 helper.F90 \
@@ -183,7 +180,7 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_constant_block.o \
   version_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings.o strings_advanced.o
 deck_constant_block.o: deck_constant_block.f90 shunt.o strings.o
-deck_control_block.o: deck_control_block.F90 collisions.o fields.o \
+deck_control_block.o: deck_control_block.f90 collisions.o fields.o \
   strings_advanced.o
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o

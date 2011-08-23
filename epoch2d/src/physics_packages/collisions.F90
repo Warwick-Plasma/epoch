@@ -2,8 +2,6 @@
 ! written by M. G. Ramsay and H. Schmitz
 ! based on algorithm by Sentoku & Kemp [J Comput Phys, 227, 6846 (2008)]
 
-#ifdef COLLISIONS
-
 MODULE collisions
 
   USE random_generator
@@ -32,6 +30,8 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
+
+    IF (.NOT.use_collisions) RETURN
 
     DO iy = 1, ny
       DO ix = 1, nx

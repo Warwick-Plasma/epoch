@@ -31,11 +31,9 @@ PROGRAM pic
   USE welcome
   USE window
   USE split_particle
+  USE collisions
 #ifdef PARTICLE_IONISE
   USE ionise
-#endif
-#ifdef COLLISIONS
-  USE collisions
 #endif
 
   IMPLICIT NONE
@@ -124,9 +122,7 @@ PROGRAM pic
       ! Using the particle_species%secondary_list property
       CALL reorder_particles_to_grid
 
-#ifdef COLLISIONS
       CALL particle_collisions  ! call collision operator
-#endif
 
       CALL split_particles ! Early beta version of particle splitting operator
 
