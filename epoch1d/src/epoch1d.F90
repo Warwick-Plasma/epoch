@@ -31,6 +31,7 @@ PROGRAM pic
   USE welcome
   USE window
   USE split_particle
+  USE collisions
 #ifdef PARTICLE_IONISE
   USE ionise
 #endif
@@ -40,6 +41,12 @@ PROGRAM pic
   INTEGER :: ispecies, step = 0
   LOGICAL :: halt = .FALSE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
+
+#ifdef COLLISIONS_TEST
+  ! used for testing
+  CALL test_collisions
+  STOP
+#endif
 
   CALL mpi_minimal_init ! mpi_routines.f90
   CALL minimal_init     ! setup.f90
@@ -114,6 +121,8 @@ PROGRAM pic
       ! After this line, the particles can be accessed on a cell by cell basis
       ! Using the particle_species%secondary_list property
       CALL reorder_particles_to_grid
+
+      CALL particle_collisions  ! call collision operator
 
       CALL split_particles ! Early beta version of particle splitting operator
 
