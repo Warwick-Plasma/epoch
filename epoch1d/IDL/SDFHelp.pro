@@ -20,7 +20,7 @@ END
 ; --------------------------------------------------------------------------
 
 COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
-    SDF_Datatypes
+    SDF_Datatypes, SDF_Error
 
 SDF_Common = { $
     ID_LENGTH:32L, $
@@ -72,5 +72,12 @@ SDF_Datatypes = { $
     CHARACTER:6L, $
     LOGICAL:7L, $
     OTHER:8L }
+
+SDF_Error = { $
+    NONE:0L, $
+    BAD_USAGE:1L, $
+    BAD_MAGIC:2L, $
+    BAD_VERSION:3L, $
+    BAD_BLOCK_COUNT:4L }
 
 END

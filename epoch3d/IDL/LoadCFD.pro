@@ -15,13 +15,22 @@ END
 ; --------------------------------------------------------------------------
 
 FUNCTION LoadCFDFile, filename, Variables=requestv, $
-    request_classes=requestc, _extra=extra
+    request_classes=requestc, _extra=extra, var_list=var_list, $
+    block_types=block_types, block_dims=block_dims, $
+    silent=silent, errval=errval, retro=retro
 
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
 
   ON_ERROR, 2
+
+  display = 1 - N_ELEMENTS(silent)
+
+  IF (KEYWORD_SET(retro) and display) THEN BEGIN
+    PRINT, "WARNING! loading files in retro mode. It is recommended that " $
+        + "you use modern mode."
+  ENDIF
 
   Version = 1L
   Revision = 1L
@@ -31,7 +40,8 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
   offset = 0LL
 
   IF N_PARAMS() EQ 0 THEN BEGIN
-    PRINT , "Usage: result = LoadCFDFile(Filename[, /variables])"
+    IF (display) THEN PRINT, $
+        "Usage: result = LoadCFDFile(Filename[, /variables])"
     RETURN, "Usage: result = LoadCFDFile(Filename[, /variables])"
   ENDIF
 
@@ -57,35 +67,45 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
   ; Whole load of boring tests
 
   IF (STRING(fileheader.cfd) NE "CFD") THEN BEGIN
-    PRINT, "The file ", filename, " is not a valid CFD file"
+    IF (display) THEN PRINT, "The file ", filename, " is not a valid CFD file"
     CLOSE, 1
     RETURN, 0
   ENDIF
 
   IF (fileheader.Version GT Version) THEN BEGIN
-    PRINT, "The file ", filename, $
-        " is of a version too high to be read by this program"
-    PRINT, "Please contact the CFSA, University of Warwick " + $
-        "to obtain a new version"
+    IF (display) THEN BEGIN
+      PRINT, "The file ", filename, $
+          " is of a version too high to be read by this program"
+      PRINT, "Please contact the CFSA, University of Warwick " $
+          + "to obtain a new version"
+    ENDIF
     CLOSE, 1
     RETURN, 0
   ENDIF
 
   IF (fileheader.Revision GT Revision) THEN BEGIN
-    PRINT, "WARNING : The file ", filename, $
-        " has a higher revision number than this reader"
-    PRINT, "Not all data in the file will be available"
-    PRINT, "Please contact the CFSA, University of Warwick " + $
-        "to obtain a new version"
+    IF (display) THEN BEGIN
+      PRINT, "WARNING : The file ", filename, $
+          " has a higher revision number than this reader"
+      PRINT, "Not all data in the file will be available"
+      PRINT, "Please contact the CFSA, University of Warwick " $
+          + "to obtain a new version"
+    ENDIF
   ENDIF
 
   IF (fileheader.nblocks LE 0) THEN BEGIN
-    PRINT, "The file ", filename, " either contains no blocks or is corrupted"
+    IF (display) THEN BEGIN
+      PRINT, "The file ", filename, " either contains no blocks or is corrupted"
+    ENDIF
     CLOSE, 1
     RETURN, 0
   ENDIF
 
   ; The file seems valid, spool through blocks
+
+  var_list = strarr(fileheader.nblocks)
+  block_types = intarr(fileheader.nblocks)
+  block_dims = intarr(fileheader.nblocks)
 
   IF ((fileheader.version EQ 1) AND (fileheader.revision EQ 0)) THEN BEGIN
     f = {filename: filename}
@@ -94,7 +114,7 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
   ENDELSE
 
   IF (N_ELEMENTS(requestv) NE 0) THEN BEGIN
-    PRINT, "Available elements are "
+    IF (display) THEN PRINT, "Available elements are "
   ENDIF
 
   vBlock = 0
@@ -107,10 +127,10 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
     offset = offset + fileheader.blockheaderoff
     IF (N_ELEMENTS(requestv) NE 0) THEN BEGIN
       HandleBlock, fileheader, blockheader, f, offset, name_arr, $
-          /onlymd, md=md
+          /onlymd, md=md, retro=retro
       q = ReturnIDLUsable(blockheader, md)
       IF (q EQ 1) THEN BEGIN
-        PRINT, STRTRIM(STRING(vBlock + 1), 2), ") ", $
+        IF (display) THEN PRINT, STRTRIM(STRING(vBlock + 1), 2), ") ", $
             STRTRIM(STRING(blockheader.Name), 2), " (" + $
             swapchr(STRTRIM(STRING(blockheader.Class), 2), ' ', '_') + $
             ") : " + ReturnFriendlyTypeName(blockheader, md)
@@ -118,8 +138,12 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
       ENDIF
       element_block(*) = 1
     ENDIF ELSE BEGIN
-      HandleBlock, fileheader, blockheader, f, offset, name_arr, element_block
+      HandleBlock, fileheader, blockheader, f, offset, name_arr, $
+          element_block, md=md, retro=retro
     ENDELSE
+    var_list[iBlock] = STRTRIM(STRING(blockheader.name))
+    block_types[iBlock] = blockheader.type
+    IF (N_ELEMENTS(md) GT 0) THEN block_dims[iBlock] = md.nd
     offset = offset + blockheader.BlockLen
   ENDFOR
 
@@ -145,7 +169,7 @@ END
 ; --------------------------------------------------------------------------
 
 PRO HandleBlock, fileheader, blockheader, outputobject, offset, name_arr, $
-    element_block, md=md, onlymd=onlymd
+    element_block, md=md, onlymd=onlymd, retro=retro
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
 
@@ -153,17 +177,17 @@ PRO HandleBlock, fileheader, blockheader, outputobject, offset, name_arr, $
   IF (NameMatch EQ 1 || blockheader.Type EQ TYPE_SNAPSHOT) THEN BEGIN
     IF (blockheader.Type EQ TYPE_MESH) THEN BEGIN
       GetMesh, fileheader, blockheader, outputobject, offset, $
-          onlymd=onlymd, md=md, byname=NameMatch
+          onlymd=onlymd, md=md, byname=NameMatch, retro=retro
       RETURN
     ENDIF
     IF (blockheader.Type EQ TYPE_MESH_VARIABLE) THEN  BEGIN
       GetMeshVar, fileheader, blockheader, outputobject, offset, $
-          onlymd=onlymd, md=md
+          onlymd=onlymd, md=md, retro=retro
       RETURN
     ENDIF
     IF (blockheader.Type EQ TYPE_SNAPSHOT) THEN  BEGIN
       GetSnapShot, fileheader, blockheader, outputobject, offset, $
-          onlymd=onlymd, md=md
+          onlymd=onlymd, md=md, retro=retro
       RETURN
     ENDIF
   ENDIF
@@ -172,7 +196,7 @@ END
 ; --------------------------------------------------------------------------
 
 PRO GetMesh, file_header, block_header, output_struct, offset, $
-    onlymd=onlymd, md=md, byname=byname
+    onlymd=onlymd, md=md, byname=byname, retro=retro
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
   COMMON ParticleCoords, PARTICLE_CARTESIAN
 
@@ -243,13 +267,20 @@ END
 ; --------------------------------------------------------------------------
 
 PRO GetMeshVar, file_header, block_header, output_struct, offset, $
-    md=md, onlymd=onlymd
+    md=md, onlymd=onlymd, retro=retro
   COMMON VarTypes, VAR_CARTESIAN, VAR_PARTICLE
 
   var_header = readvar(1, {VarType:0L, nd:0L, sof:0L}, offset)
+  mesh_header = readvar(1, {mesh_id:BYTARR(file_header.MaxString), $
+    mesh_class:BYTARR(file_header.MaxString)}, $
+    offset + block_header.BlockMDLen - 2 * file_header.MaxString)
   mdonly_f = 1
 
   IF (N_ELEMENTS(onlymd) EQ 0) THEN mdonly_f = 0
+
+  struct_name = 'data'
+  IF (KEYWORD_SET(retro)) THEN $
+      struct_name = STRTRIM(STRING(block_header.name), 2)
 
   IF (var_header.VarType EQ VAR_CARTESIAN) THEN BEGIN
     ; Read in the actual variable
@@ -257,11 +288,9 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
         npts:LONARR(var_header.nd)}, offset)
     IF (mdonly_f NE 1) THEN BEGIN
       IF (var_header.sof EQ 4) THEN $
-          datastruct = CREATE_STRUCT(STRTRIM(STRING(block_header.name), 2), $
-              FLTARR(var_header.npts))
+          datastruct = CREATE_STRUCT(struct_name, FLTARR(var_header.npts))
       IF (var_header.sof EQ 8) THEN $
-          datastruct = CREATE_STRUCT(STRTRIM(STRING(block_header.name), 2), $
-              DBLARR(var_header.npts))
+          datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.npts))
     ENDIF
 
     md = var_header
@@ -272,11 +301,9 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
     var_header = readvar(1, {VarType:0L, nd:0L, sof:0L, npart:0LL}, offset)
     IF (mdonly_f NE 1) THEN BEGIN
       IF (var_header.sof EQ 4) THEN $
-          datastruct = CREATE_STRUCT(STRTRIM(STRING(block_header.name), 2), $
-              FLTARR(var_header.npart))
+          datastruct = CREATE_STRUCT(struct_name, FLTARR(var_header.npart))
       IF (var_header.sof EQ 8) THEN $
-          datastruct = CREATE_STRUCT(STRTRIM(STRING(block_header.name), 2), $
-              DBLARR(var_header.npart))
+          datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.npart))
     ENDIF
 
     md = var_header
@@ -285,15 +312,27 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
     ENDIF
   ENDIF
 
+  ; Attach the meshname and class to the metadata structure
+  var_header = CREATE_STRUCT(var_header, mesh_header)
+
   IF(mdonly_f NE 1 AND N_ELEMENTS(d) NE 0) THEN BEGIN
+    obj = CREATE_STRUCT('metadata', var_header, d)
+  ENDIF ELSE BEGIN
+    obj = CREATE_STRUCT('metadata', var_header)
+  ENDELSE
+
+  IF (KEYWORD_SET(retro)) THEN BEGIN
     output_struct = CREATE_STRUCT(output_struct, d)
-  ENDIF
+  ENDIF ELSE BEGIN
+    output_struct = CREATE_STRUCT(output_struct, $
+        STRTRIM(STRING(block_header.name), 2), obj)
+  ENDELSE
 END
 
 ; --------------------------------------------------------------------------
 
 PRO GetSnapshot, file_header, block_header, output_struct, offset, $
-    md=md, onlymd=onlymd
+    md=md, onlymd=onlymd, retro=retro
 
   snap_header = readvar(1, {Snapshot:0L, Time:0D}, offset)
 

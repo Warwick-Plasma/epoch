@@ -14,18 +14,28 @@ END
 
 ; --------------------------------------------------------------------------
 
-FUNCTION LoadSDFFile, filename, Variables=requestv, $
-    request_classes=requestc, _extra=extra
+FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
+    var_list=var_list, block_types=block_types, block_dims=block_dims, $
+    silent=silent, errval=errval, retro=retro, _extra=extra
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
-      SDF_Datatypes
+      SDF_Datatypes, SDF_Error
 
   ON_ERROR, 2
+  display = 1 - N_ELEMENTS(silent)
+  errval = SDF_Error.NONE
+
+  IF (KEYWORD_SET(retro) and display) THEN BEGIN
+    PRINT, "WARNING! loading files in retro mode. It is recommended that " $
+        + "you use modern mode."
+  ENDIF
 
   base_mesh_in_place = 0
 
   IF N_PARAMS() EQ 0 THEN BEGIN
-    PRINT , "Usage: result = LoadSDFFile(Filename[, /variables])"
+    IF (display) THEN PRINT, $
+        "Usage: result = LoadSDFFile(Filename[, /variables])"
+    errval = SDF_Error.ERR_BAD_USAGE
     RETURN, "Usage: result = LoadSDFFile(Filename[, /variables])"
   ENDIF
 
@@ -61,16 +71,20 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, $
   ; Whole load of boring tests
 
   IF (STRING(file_header.sdf) NE SDF_Common.MAGIC) THEN BEGIN
-    PRINT, "The file ", filename, " is not a valid SDF file"
+    IF (display) THEN PRINT, "The file ", filename, " is not a valid SDF file"
+    errcode = SDF_Error.BAD_MAGIC
     CLOSE, 1
     RETURN, 0
   ENDIF
 
   IF (file_header.version GT SDF_Common.VERSION) THEN BEGIN
-    PRINT, "The file ", filename, $
-        " is of a version too high to be read by this program"
-    PRINT, "Please contact the CFSA, University of Warwick " + $
-        "to obtain a new version"
+    IF (display) THEN BEGIN
+      PRINT, "The file ", filename, $
+          " is of a version too high to be read by this program"
+      PRINT, "Please contact the CFSA, University of Warwick " $
+          + "to obtain a new version"
+    END
+    errcode = SDF_Error.BAD_VERSION
     CLOSE, 1
     RETURN, 0
   ENDIF
@@ -79,12 +93,15 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, $
     PRINT, "WARNING : The file ", filename, $
         " has a higher revision number than this reader"
     PRINT, "Not all data in the file will be available"
-    PRINT, "Please contact the CFSA, University of Warwick " + $
-        "to obtain a new version"
+    PRINT, "Please contact the CFSA, University of Warwick " $
+        + "to obtain a new version"
   ENDIF
 
   IF (file_header.nblocks LE 0) THEN BEGIN
-    PRINT, "The file ", filename, " either contains no blocks or is corrupted"
+    IF (display) THEN BEGIN
+      PRINT, "The file ", filename, " either contains no blocks or is corrupted"
+    ENDIF
+    errcode = SDF_Error.BAD_BLOCK_COUNT
     CLOSE, 1
     RETURN, 0
   ENDIF
@@ -93,9 +110,13 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, $
 
   f = {filename: filename, timestep: file_header.step, time: file_header.time}
 
-  IF (N_ELEMENTS(requestv) NE 0) THEN BEGIN
+  IF (N_ELEMENTS(requestv) NE 0 AND display) THEN BEGIN
     PRINT, "Available elements are "
   ENDIF
+
+  var_list = strarr(file_header.nblocks)
+  block_types = intarr(file_header.nblocks)
+  block_dims = intarr(file_header.nblocks)
 
   string_length = file_header.string_length
   offset = file_header.first_block_location
@@ -124,14 +145,18 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, $
         b.name = STRMID(b.name, pos+1)
       ENDIF
 
-      IF (N_ELEMENTS(requestv) NE 0) THEN BEGIN
+      var_list[iBlock] = STRTRIM(b.name)
+      block_types[iBlock] = b.blocktype
+      block_dims[iBlock] = b.ndims
+      IF (N_ELEMENTS(requestv) NE 0 AND display) THEN BEGIN
         PRINT, STRTRIM(STRING(vBlock + 1), 2) + ") " + b.name + " (" $
             + b.class + ") : " + STRTRIM(STRING(b.ndims), 2) + "D " $
             + SDF_Blocktype_names[b.blocktype]
         vBlock = vBlock + 1
         element_block(*) = 1
       ENDIF ELSE BEGIN
-        SDFHandleBlock, file_header, b, f, offset, name_arr, element_block
+        SDFHandleBlock, file_header, b, f, offset, name_arr, element_block, $
+            retro=retro
       ENDELSE
       END
     ELSE:
@@ -144,14 +169,19 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, $
   Errcount = 0
   FOR iEl = 0, N_ELEMENTS(name_arr)-1 DO BEGIN
     IF (element_block(iEl) EQ 0) THEN BEGIN
-      PRINT, "WARNING! Unrecognised variable requested (", name_arr(iEl), ")"
+      IF (display) THEN BEGIN
+        PRINT, "WARNING! Unrecognised variable requested (", name_arr(iEl), ")"
+      ENDIF
       Errcount = Errcount + 1
     ENDIF
   ENDFOR
 
   IF (Errcount NE 0) THEN BEGIN
-    PRINT, "You have specified nonexistant variables. To list available " + $
-        "variables, use the '/variables' switch"
+    IF (display) THEN BEGIN
+      PRINT, "You have specified nonexistant variables. To list available " $
+          + "variables, use the '/variables' switch. Alternatively use the " $
+          + "data explorer by using the '/explorer' flag."
+    ENDIF
   ENDIF
 
   CLOSE, 1
@@ -162,26 +192,30 @@ END
 ; --------------------------------------------------------------------------
 
 PRO SDFHandleBlock, file_header, block_header, outputobject, offset, $
-    name_arr, element_block, md=md
+    name_arr, element_block, md=md, retro=retro
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
-      SDF_Datatypes
+      SDF_Datatypes, SDF_Error
 
   NameMatch = SDFCheckName(block_header, name_arr, element_block)
 
   IF (NameMatch EQ 1) THEN BEGIN
     CASE block_header.blocktype OF
       SDF_Blocktypes.PLAIN_MESH: BEGIN
-        SDFGetPlainMesh, file_header, block_header, outputobject, offset, md=md
+        SDFGetPlainMesh, file_header, block_header, outputobject, offset, $
+            md=md, retro=retro
       END
       SDF_Blocktypes.POINT_MESH: BEGIN
-        SDFGetPointMesh, file_header, block_header, outputobject, offset, md=md
+        SDFGetPointMesh, file_header, block_header, outputobject, offset, $
+            md=md, retro=retro
       END
       SDF_Blocktypes.PLAIN_VARIABLE: BEGIN
-        SDFGetPlainVar, file_header, block_header, outputobject, offset, md=md
+        SDFGetPlainVar, file_header, block_header, outputobject, offset, $
+            md=md, retro=retro
       END
       SDF_Blocktypes.POINT_VARIABLE: BEGIN
-        SDFGetPointVar, file_header, block_header, outputobject, offset, md=md
+        SDFGetPointVar, file_header, block_header, outputobject, offset, $
+            md=md, retro=retro
       END
     ELSE:
     ENDCASE
@@ -190,10 +224,11 @@ END
 
 ; --------------------------------------------------------------------------
 
-PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md
+PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md, $
+    retro=retro
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
-      SDF_Datatypes
+      SDF_Datatypes, SDF_Error
 
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
@@ -261,10 +296,11 @@ END
 
 ; --------------------------------------------------------------------------
 
-PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md
+PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md, $
+    retro=retro
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
-      SDF_Datatypes
+      SDF_Datatypes, SDF_Error
 
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
@@ -319,10 +355,11 @@ END
 
 ; --------------------------------------------------------------------------
 
-PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md
+PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md, $
+    retro=retro
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
-      SDF_Datatypes
+      SDF_Datatypes, SDF_Error
 
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
@@ -330,52 +367,68 @@ PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md
       mesh_id:BYTARR(id_length), dims:LONARR(block_header.ndims), $
       stagger:0L}, offset)
 
+  struct_name = 'data'
+  IF (KEYWORD_SET(retro)) THEN struct_name = block_header.idname
+
   CASE block_header.datatype OF
     SDF_Datatypes.REAL4: BEGIN
-      datastruct = CREATE_STRUCT(block_header.idname, FLTARR(var_header.dims))
+      datastruct = CREATE_STRUCT(struct_name, FLTARR(var_header.dims))
     END
     SDF_Datatypes.REAL8: BEGIN
-      datastruct = CREATE_STRUCT(block_header.idname, DBLARR(var_header.dims))
+      datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.dims))
     END
   ENDCASE
 
   offset = block_header.data_location
   d = readvar(1, datastruct, offset)
 
+
+  obj = CREATE_STRUCT('metadata', var_header, d)
   md = var_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN
-    output_struct = CREATE_STRUCT(output_struct, d)
+    IF (KEYWORD_SET(retro)) THEN BEGIN
+      output_struct = CREATE_STRUCT(output_struct, d)
+    ENDIF ELSE BEGIN
+      output_struct = CREATE_STRUCT(output_struct, block_header.idname, obj)
+    ENDELSE
   ENDIF
 END
 
 ; --------------------------------------------------------------------------
 
-PRO SDFGetPointVar, file_header, block_header, output_struct, offset, md=md
+PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
+    md=md, retro=retro
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
-      SDF_Datatypes
+      SDF_Datatypes, SDF_Error
 
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
   var_header = readvar(1, {mult:0D, units:BYTARR(id_length), $
       mesh_id:BYTARR(id_length), npoints:0LL}, offset)
 
+  struct_name = 'data'
+  IF (KEYWORD_SET(retro)) THEN struct_name = block_header.idname
+
   CASE block_header.datatype OF
     SDF_Datatypes.REAL4: BEGIN
-      datastruct = CREATE_STRUCT(block_header.idname, $
-          FLTARR(var_header.npoints))
+      datastruct = CREATE_STRUCT(struct_name, FLTARR(var_header.npoints))
     END
     SDF_Datatypes.REAL8: BEGIN
-      datastruct = CREATE_STRUCT(block_header.idname, $
-          DBLARR(var_header.npoints))
+      datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.npoints))
     END
   ENDCASE
 
   offset = block_header.data_location
   d = readvar(1, datastruct, offset)
 
+  obj = CREATE_STRUCT('metadata', var_header, d)
   md = var_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN
-    output_struct = CREATE_STRUCT(output_struct, d)
+    IF (KEYWORD_SET(retro)) THEN BEGIN
+      output_struct = CREATE_STRUCT(output_struct, d)
+    ENDIF ELSE BEGIN
+      output_struct = CREATE_STRUCT(output_struct, block_header.idname, obj)
+    ENDELSE
   ENDIF
 END

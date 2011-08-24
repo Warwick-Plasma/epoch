@@ -1,9 +1,12 @@
-COMMON background, wkdir_global
+COMMON background, wkdir_global, retro_global
 COMMON gdlset, gdl
 DEFSYSV, '!GDL', EXISTS=gdl
 
+retro_global = 0
 wkdir_global = "Data"
 @ IDL/StartCFD.pro
+
+.r IDL/widget
 .r IDL/StartPIC.pro
 
 Q0 = 1.60217646d-19 ; C
