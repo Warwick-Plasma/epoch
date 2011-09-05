@@ -54,14 +54,14 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (str_cmp(element, "offset")) THEN
+    IF (str_cmp(element, 'offset')) THEN
       offset = as_long_integer_simple(value, errcode)
       RETURN
     ENDIF
 
     CALL get_filename(value, filename, got_file, err)
 
-    IF (str_cmp(element, "ex")) THEN
+    IF (str_cmp(element, 'ex')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, ex, offset, errcode)
       ELSE
@@ -71,7 +71,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "ey")) THEN
+    IF (str_cmp(element, 'ey')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, ey, offset, errcode)
       ELSE
@@ -81,7 +81,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "ez")) THEN
+    IF (str_cmp(element, 'ez')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, ez, offset, errcode)
       ELSE
@@ -91,7 +91,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "bx")) THEN
+    IF (str_cmp(element, 'bx')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, bx, offset, errcode)
       ELSE
@@ -101,7 +101,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "by")) THEN
+    IF (str_cmp(element, 'by')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, by, offset, errcode)
       ELSE
@@ -111,7 +111,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "bz")) THEN
+    IF (str_cmp(element, 'bz')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, bz, offset, errcode)
       ELSE

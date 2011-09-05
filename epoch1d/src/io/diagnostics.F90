@@ -54,8 +54,8 @@ CONTAINS
 
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
         .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
-      WRITE(*, '("Time", g20.12, " and iteration", i7, " after ", &
-          & f8.1, " seconds")') time, step, MPI_WTIME() - walltime_start
+      WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after '', &
+          f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
     ENDIF
 
     CALL io_test(step, print_arrays, last_call)
@@ -66,14 +66,14 @@ CONTAINS
 
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
-    WRITE(filename_desc, '("(a, ''/'', i", i3.3, ".", i3.3, ", ''.sdf'')")') &
+    WRITE(filename_desc, '(''(a, "/", i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
         n_zeros, n_zeros
     WRITE(filename, filename_desc) TRIM(data_dir), output_file
 
-    ! Always dump the variables with the "Every" attribute
+    ! Always dump the variables with the 'Every' attribute
     code = c_io_always
 
-    ! Only dump variables with the "FULL" attributre on full dump intervals
+    ! Only dump variables with the 'FULL' attributre on full dump intervals
     IF (MOD(output_file, full_dump_every) .EQ. 0 &
         .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
     IF (MOD(output_file, restart_dump_every) .EQ. 0 &
@@ -239,8 +239,8 @@ CONTAINS
     IF (restart_flag) THEN
       IF (dump_input_decks) CALL write_input_decks(sdf_handle)
       IF (dump_source_code .AND. SIZE(source_code) .GT. 0) &
-          CALL sdf_write_source_code(sdf_handle, "code", &
-              "base64_packed_source_code", source_code, last_line, 0)
+          CALL sdf_write_source_code(sdf_handle, 'code', &
+              'base64_packed_source_code', source_code, last_line, 0)
     ENDIF
 
     ! close the file
@@ -257,8 +257,8 @@ CONTAINS
         dump_type = 'full'
         CALL append_filename(dump_type, output_file)
       ENDIF
-      WRITE(stat_unit, '("Wrote ", a7, " dump number", i5, " at time", g20.12, &
-          & " and iteration", i7)') dump_type, output_file, time, step
+      WRITE(stat_unit, '(''Wrote '', a7, '' dump number'', i5, '' at time'', &
+          g20.12, '' and iteration'', i7)') dump_type, output_file, time, step
       CALL flush_stat_file()
     ENDIF
 
@@ -289,7 +289,7 @@ CONTAINS
     INTEGER :: ierr
     LOGICAL :: exists
 
-    WRITE(filename_desc, '("(i", i3.3, ".", i3.3, ", ''.sdf'')")') &
+    WRITE(filename_desc, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
         n_zeros, n_zeros
     listfile = TRIM(data_dir) // '/' // TRIM(listname) // '.visit'
 
@@ -602,9 +602,9 @@ CONTAINS
             ENDIF
           ENDIF
 
-          WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
+          WRITE(temp_block_id, '(a, ''_'', a)') TRIM(block_id), &
               TRIM(species_list(ispecies)%name(1:len4))
-          WRITE(temp_name, '(a, "_", a)') TRIM(name), &
+          WRITE(temp_name, '(a, ''_'', a)') TRIM(name), &
               TRIM(species_list(ispecies)%name(1:len5))
           CALL func(array, ispecies)
           CALL sdf_write_plain_variable(sdf_handle, &
@@ -652,9 +652,9 @@ CONTAINS
             ENDIF
           ENDIF
 
-          WRITE(temp_block_id, '(a, "_", a, "_averaged")') TRIM(block_id), &
+          WRITE(temp_block_id, '(a, ''_'', a, ''_averaged'')') TRIM(block_id), &
               TRIM(species_list(ispecies)%name(1:len4))
-          WRITE(temp_name, '(a, "_", a, "_averaged")') TRIM(name), &
+          WRITE(temp_name, '(a, ''_'', a, ''_averaged'')') TRIM(name), &
               TRIM(species_list(ispecies)%name(1:len5))
           CALL sdf_write_plain_variable(sdf_handle, &
               TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
@@ -706,9 +706,9 @@ CONTAINS
 
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
       DO idir = 1, ndirs
-        WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
+        WRITE(temp_block_id, '(a, ''_'', a)') TRIM(block_id), &
             TRIM(dir_tags(idir))
-        WRITE(temp_name, '(a, "_", a)') TRIM(name), &
+        WRITE(temp_name, '(a, ''_'', a)') TRIM(name), &
             TRIM(dir_tags(idir))
         CALL func(array, fluxdir(idir))
         CALL sdf_write_plain_variable(sdf_handle, &
@@ -763,9 +763,9 @@ CONTAINS
         IF (npart_global .EQ. 0) RETURN
 
         DO idir = 1, ndirs
-          WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
+          WRITE(temp_block_id, '(a, ''_'', a)') TRIM(block_id), &
               TRIM(dir_tags(idir))
-          WRITE(temp_name, '(a, "_", a)') TRIM(name), &
+          WRITE(temp_name, '(a, ''_'', a)') TRIM(name), &
               TRIM(dir_tags(idir))
           CALL func(array, 0, fluxdir(idir))
           CALL sdf_write_plain_variable(sdf_handle, &
@@ -805,9 +805,9 @@ CONTAINS
           ENDIF
 
           DO idir = 1, ndirs
-            WRITE(temp_block_id, '(a, "_", a, "_", a)') TRIM(block_id), &
+            WRITE(temp_block_id, '(a, ''_'', a, ''_'', a)') TRIM(block_id), &
                 TRIM(species_list(ispecies)%name(1:len4)), TRIM(dir_tags(idir))
-            WRITE(temp_name, '(a, "_", a, "_", a)') TRIM(name), &
+            WRITE(temp_name, '(a, ''_'', a, ''_'', a)') TRIM(name), &
                 TRIM(species_list(ispecies)%name(1:len5)), TRIM(dir_tags(idir))
             CALL func(array, ispecies, fluxdir(idir))
             CALL sdf_write_plain_variable(sdf_handle, &

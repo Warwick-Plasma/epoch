@@ -51,7 +51,7 @@ CONTAINS
     z = z + seed
     w = w + seed
 
-    ! "Warm-up" the generator by cycling through a few times
+    ! 'Warm-up' the generator by cycling through a few times
     DO i = 1, 1000
       dummy = random()
     ENDDO

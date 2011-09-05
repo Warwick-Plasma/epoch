@@ -36,7 +36,7 @@ CONTAINS
     IF (sdf .NE. c_sdf_magic) THEN
       CALL MPI_FILE_CLOSE(h%filehandle, errcode)
       IF (h%rank .EQ. h%rank_master) &
-          PRINT *, "The specified file is not a valid SDF file"
+          PRINT *, 'The specified file is not a valid SDF file'
       CALL MPI_ABORT(h%comm, errcode, ierr)
     ENDIF
 
@@ -45,7 +45,7 @@ CONTAINS
     CALL read_entry_int4(h, h%file_version)
 
     IF (h%file_version .GT. sdf_version) THEN
-      IF (h%rank .EQ. h%rank_master) PRINT *, "Version number incompatible"
+      IF (h%rank .EQ. h%rank_master) PRINT *, 'Version number incompatible'
       CALL MPI_ABORT(h%comm, errcode, ierr)
     ENDIF
 
@@ -117,7 +117,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     ! Read the header
@@ -129,7 +129,7 @@ CONTAINS
 
     IF (h%file_revision .GT. sdf_revision) THEN
       IF (h%rank .EQ. h%rank_master) &
-          PRINT *, "Revision number of file is too high. Writing disabled"
+          PRINT *, 'Revision number of file is too high. Writing disabled'
       h%writing = .FALSE.
     ENDIF
 
@@ -227,7 +227,7 @@ CONTAINS
 
       IF (PRESENT(id)) THEN
         CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-            MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+            MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
       ENDIF
 
       CALL read_block_header(h)
@@ -303,7 +303,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     ! Metadata is
@@ -373,7 +373,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     IF (b%datatype .EQ. c_datatype_integer4) THEN
@@ -486,7 +486,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     ! Size of array
@@ -524,7 +524,7 @@ CONTAINS
     n1 = b%dims(1)
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(h%filehandle, values, n1, b%mpitype, &
         MPI_STATUS_IGNORE, errcode)
@@ -561,7 +561,7 @@ CONTAINS
     n2 = b%dims(2)
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     DO i = 1,n2
       CALL MPI_FILE_READ_ALL(h%filehandle, values(1,i), n1, b%mpitype, &
@@ -599,7 +599,7 @@ CONTAINS
     n1 = b%dims(1)
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(h%filehandle, values, n1, b%mpitype, &
         MPI_STATUS_IGNORE, errcode)
@@ -636,7 +636,7 @@ CONTAINS
     n2 = b%dims(2)
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     DO i = 1,n2
       CALL MPI_FILE_READ_ALL(h%filehandle, values(1,i), n1, b%mpitype, &
@@ -675,7 +675,7 @@ CONTAINS
     n1 = b%dims(1)
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     ALLOCATE(cvalues(n1))
 
@@ -724,7 +724,7 @@ CONTAINS
     n2 = b%dims(2)
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     DO i = 1,n2
       CALL MPI_FILE_READ_ALL(h%filehandle, values(i), n1, b%mpitype, &
@@ -759,7 +759,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     ! Metadata is
@@ -804,7 +804,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     ! Metadata is
@@ -855,7 +855,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     ! Metadata is
@@ -903,7 +903,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     ! Metadata is

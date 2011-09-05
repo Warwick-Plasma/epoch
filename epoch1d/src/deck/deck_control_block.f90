@@ -18,46 +18,46 @@ MODULE deck_control_block
   LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
-          "nx                ", &
-          "x_min             ", &
-          "x_max             ", &
-          "nprocx            ", &
-          "npart             ", &
-          "nsteps            ", &
-          "t_end             ", &
-          "dt_multiplier     ", &
-          "dlb_threshold     ", &
-          "icfile            ", &
-          "restart_snapshot  ", &
-          "neutral_background", &
-          "field_order       ", &
-          "stdout_frequency  ", &
-          "use_random_seed   ", &
-          "smooth_currents   ", &
-          "use_collisions    ", &
-          "coulomb_log       ", &
-          "collide           " /)
+          'nx                ', &
+          'x_min             ', &
+          'x_max             ', &
+          'nprocx            ', &
+          'npart             ', &
+          'nsteps            ', &
+          't_end             ', &
+          'dt_multiplier     ', &
+          'dlb_threshold     ', &
+          'icfile            ', &
+          'restart_snapshot  ', &
+          'neutral_background', &
+          'field_order       ', &
+          'stdout_frequency  ', &
+          'use_random_seed   ', &
+          'smooth_currents   ', &
+          'use_collisions    ', &
+          'coulomb_log       ', &
+          'collide           ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
-          "nx                ", &
-          "x_start           ", &
-          "x_end             ", &
-          "nprocx            ", &
-          "npart             ", &
-          "nsteps            ", &
-          "t_end             ", &
-          "dt_multiplier     ", &
-          "dlb_threshold     ", &
-          "icfile            ", &
-          "restart_snapshot  ", &
-          "neutral_background", &
-          "field_order       ", &
-          "stdout_frequency  ", &
-          "use_random_seed   ", &
-          "smooth_currents   ", &
-          "use_collisions    ", &
-          "coulomb_log       ", &
-          "collide           " /)
+          'nx                ', &
+          'x_start           ', &
+          'x_end             ', &
+          'nprocx            ', &
+          'npart             ', &
+          'nsteps            ', &
+          't_end             ', &
+          'dt_multiplier     ', &
+          'dlb_threshold     ', &
+          'icfile            ', &
+          'restart_snapshot  ', &
+          'neutral_background', &
+          'field_order       ', &
+          'stdout_frequency  ', &
+          'use_random_seed   ', &
+          'smooth_currents   ', &
+          'use_collisions    ', &
+          'coulomb_log       ', &
+          'collide           ' /)
 
 CONTAINS
 

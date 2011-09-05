@@ -101,7 +101,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(name, ", ")) THEN
+    IF (str_cmp(name, ', ')) THEN
       block%ptype = c_pt_separator
       block%value = 0
       block%numerical_data = 0.0_num
@@ -127,11 +127,11 @@ CONTAINS
 
     as_parenthesis = 0
 
-    IF (str_cmp(name, "(")) THEN
+    IF (str_cmp(name, '(')) THEN
       as_parenthesis = c_paren_left_bracket
     ENDIF
 
-    IF (str_cmp(name, ")")) THEN
+    IF (str_cmp(name, ')')) THEN
       as_parenthesis = c_paren_right_bracket
     ENDIF
 
@@ -250,7 +250,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: offset
 
     IF (stack%stack_point-offset .LE. 0) THEN
-      PRINT *, "Unable to snoop stack", stack%stack_point
+      PRINT *, 'Unable to snoop stack', stack%stack_point
       STOP
     ENDIF
 
@@ -294,7 +294,7 @@ CONTAINS
 
     CALL initialise_stack(stack)
 
-    current(:) = " "
+    current(:) = ' '
     current(1:1) = expression(1:1)
     current_pointer = 2
     current_type = char_type(expression(1:1))
@@ -307,10 +307,10 @@ CONTAINS
       ptype = char_type(expression(i:i))
       ! This is a bit of a hack.
       ! Allow numbers to follow letters in an expression *except* in the
-      ! special case of a single "e" character, to allow 10.0e5, etc.
+      ! special case of a single 'e' character, to allow 10.0e5, etc.
       IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. c_char_delimiter) &
         .OR. (ptype .EQ. c_char_numeric .AND. current_type .EQ. c_char_alpha &
-        .AND. .NOT. str_cmp(current, "e"))) THEN
+        .AND. .NOT. str_cmp(current, 'e'))) THEN
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
       ELSE
@@ -322,7 +322,7 @@ CONTAINS
 #endif
           IF (block%ptype .EQ. c_pt_bad) THEN
             IF (rank .EQ. 0) THEN
-              PRINT *, "Unable to parse block with text ", TRIM(current)
+              PRINT *, 'Unable to parse block with text ', TRIM(current)
               CALL check_deprecated(current)
             ENDIF
             err = c_err_bad_value
@@ -382,7 +382,7 @@ CONTAINS
                 CALL pop_to_stack(stack, output)
               ELSE
                 IF (block2%value .NE. c_paren_left_bracket) THEN
-                  PRINT *, "Bad function expression"
+                  PRINT *, 'Bad function expression'
                   STOP
                 ENDIF
                 EXIT
@@ -432,7 +432,7 @@ CONTAINS
           ENDIF
 
         ENDIF
-        current(:) = " "
+        current(:) = ' '
         current_pointer = 2
         current(1:1) = expression(i:i)
         current_type = ptype
@@ -465,7 +465,7 @@ CONTAINS
 
     CALL initialise_stack(stack)
 
-    current(:) = " "
+    current(:) = ' '
     current(1:1) = expression(1:1)
     current_pointer = 2
     current_type = char_type(expression(1:1))
@@ -478,10 +478,10 @@ CONTAINS
       ptype = char_type(expression(i:i))
       ! This is a bit of a hack.
       ! Allow numbers to follow letters in an expression *except* in the
-      ! special case of a single "e" character, to allow 10.0e5, etc.
+      ! special case of a single 'e' character, to allow 10.0e5, etc.
       IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. c_char_delimiter) &
         .OR. (ptype .EQ. c_char_numeric .AND. current_type .EQ. c_char_alpha &
-        .AND. .NOT. str_cmp(current, "e"))) THEN
+        .AND. .NOT. str_cmp(current, 'e'))) THEN
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
       ELSE
@@ -494,7 +494,7 @@ CONTAINS
           PRINT *, block%ptype, TRIM(current)
           IF (block%ptype .EQ. c_pt_bad) THEN
             IF (rank .EQ. 0) THEN
-              PRINT *, "Unable to parse block with text ", TRIM(current)
+              PRINT *, 'Unable to parse block with text ', TRIM(current)
             ENDIF
             err = c_err_bad_value
             CALL deallocate_stack(stack)
@@ -503,7 +503,7 @@ CONTAINS
           IF (block%ptype .NE. c_pt_parenthesis &
               .AND. block%ptype .NE. c_pt_null) THEN
             last_block_type = block%ptype
-            IF (debug_mode) PRINT *, "Setting", block%ptype, TRIM(current)
+            IF (debug_mode) PRINT *, 'Setting', block%ptype, TRIM(current)
           ENDIF
           IF (block%ptype .EQ. c_pt_deck_constant) THEN
             const = deck_constant_list(block%value)
@@ -515,7 +515,7 @@ CONTAINS
             CALL push_to_stack(output, block)
           ENDIF
         ENDIF
-        current(:) = " "
+        current(:) = ' '
         current_pointer = 2
         current(1:1) = expression(i:i)
         current_type = ptype
@@ -538,13 +538,13 @@ CONTAINS
 
     IF (rank .EQ. 0) THEN
       DO i = 1, token_list%stack_point
-        PRINT *, "Type", token_list%entries(i)%ptype
-        PRINT *, "Data", token_list%entries(i)%value
-        PRINT *, "NumData", token_list%entries(i)%numerical_data
+        PRINT *, 'Type', token_list%entries(i)%ptype
+        PRINT *, 'Data', token_list%entries(i)%value
+        PRINT *, 'NumData', token_list%entries(i)%numerical_data
 #ifdef PARSER_DEBUG
-        PRINT *, "Text :", TRIM(token_list%entries(i)%text)
+        PRINT *, 'Text :', TRIM(token_list%entries(i)%text)
 #endif
-        PRINT *, "---------------"
+        PRINT *, '---------------'
       ENDDO
     ENDIF
 

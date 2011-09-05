@@ -259,7 +259,7 @@ CONTAINS
 
     IF (len_s .GT. length .AND. h%rank .EQ. h%rank_master) THEN
       PRINT*, '*** WARNING ***'
-      PRINT*, 'Output string "' // string // '" has been truncated'
+      PRINT*, 'Output string "' // TRIM(string) // '" has been truncated'
     ENDIF
 
     ! This subroutine expects that the record marker is in place and that
@@ -339,7 +339,7 @@ CONTAINS
     len2 = LEN_TRIM(string2)
     olen = LEN(output_string)
 
-    output_string = ""
+    output_string = ''
 
     IF (olen < len1 + 1) THEN
       output_string(1:olen) = string1(1:olen)

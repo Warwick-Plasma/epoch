@@ -28,14 +28,14 @@ CONTAINS
         MPI_INFO_NULL, fh, errcode)
 
     IF (errcode .NE. 0) THEN
-      IF (rank .EQ. 0) PRINT *, "file ", TRIM(filename), " does not exist."
+      IF (rank .EQ. 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF
 
     subtype = create_current_field_subtype()
     subarray = create_current_field_subarray()
-    CALL MPI_FILE_SET_VIEW(fh, offset, subarray, subtype, "native", &
+    CALL MPI_FILE_SET_VIEW(fh, offset, subarray, subtype, 'native', &
         MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(fh, array, 1, subarray, MPI_STATUS_IGNORE, errcode)

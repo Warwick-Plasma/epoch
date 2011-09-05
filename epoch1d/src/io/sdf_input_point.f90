@@ -42,7 +42,7 @@ CONTAINS
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
   END SUBROUTINE sdf_info_init
@@ -142,7 +142,7 @@ CONTAINS
     ! Read the real data
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     npoints = b%npoints
     CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
@@ -178,7 +178,7 @@ CONTAINS
     ! Read the real data
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     npoints = b%npoints
     CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
@@ -217,7 +217,7 @@ CONTAINS
     ! Read the real data
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     npoints = b%npoints
     CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
@@ -283,7 +283,7 @@ CONTAINS
       npoint_this_it  = INT(npoint_this_it8)
 
       CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, &
-          b%mpitype, distribution, "native", MPI_INFO_NULL, errcode)
+          b%mpitype, distribution, 'native', MPI_INFO_NULL, errcode)
 
       DO WHILE (npoint_this_it .GT. 0)
         CALL MPI_FILE_READ(h%filehandle, array, npoint_this_it, b%mpitype, &
@@ -393,7 +393,7 @@ CONTAINS
     h%current_location = b%data_location
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, &
-        b%mpitype, distribution, "native", MPI_INFO_NULL, errcode)
+        b%mpitype, distribution, 'native', MPI_INFO_NULL, errcode)
 
     start = .TRUE.
     npoint_per_it8 = MIN(npoint_local, npoint_per_iteration)
@@ -447,7 +447,7 @@ CONTAINS
     ! Read the real data
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     npoints = b%npoints
     CALL MPI_FILE_READ_ALL(h%filehandle, array, npoints, b%mpitype, &
@@ -483,7 +483,7 @@ CONTAINS
     ! Read the real data
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     npoints = b%npoints
     CALL MPI_FILE_READ_ALL(h%filehandle, array, npoints, b%mpitype, &

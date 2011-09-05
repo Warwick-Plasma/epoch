@@ -395,7 +395,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = REAL(cur%processor, num)
-        IF (cur%processor .GE. nproc) PRINT *, "Bad Processor"
+        IF (cur%processor .GE. nproc) PRINT *, 'Bad Processor'
         cur=>cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
@@ -428,7 +428,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = REAL(cur%processor_at_t0, num)
-        IF (cur%processor .GE. nproc) PRINT *, "Bad Processor"
+        IF (cur%processor .GE. nproc) PRINT *, 'Bad Processor'
         cur=>cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one

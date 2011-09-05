@@ -57,7 +57,7 @@ CONTAINS
       npart_av = REAL(sum_npart, num) / nproc
       balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
       IF (balance_frac .GT. dlb_threshold) RETURN
-      IF (rank .EQ. 0) PRINT *, "Load balancing with fraction", balance_frac
+      IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
 
     ALLOCATE(starts_x(1:nprocx), ends_x(1:nprocx))
@@ -953,7 +953,7 @@ CONTAINS
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
 
-    WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
+    WRITE(filename, '(a, ''/balance.dat'')') TRIM(data_dir)
 
     nx_new = domain(1,2) - domain(1,1) + 1
     ny_new = domain(2,2) - domain(2,1) + 1
@@ -970,11 +970,11 @@ CONTAINS
         MPI_INFO_NULL, fh, errcode)
 
     CALL MPI_FILE_SET_VIEW(fh, offset, subarray_write, subtype_write, &
-        "native", MPI_INFO_NULL, errcode)
+        'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(fh, field_in, 1, subarray_write, status, errcode)
 
     CALL MPI_FILE_SET_VIEW(fh, offset, subarray_read, subtype_read, &
-        "native", MPI_INFO_NULL, errcode)
+        'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_READ_ALL(fh, field_out, 1, subarray_read, status, errcode)
 
     CALL MPI_FILE_CLOSE(fh, errcode)
@@ -1037,7 +1037,7 @@ CONTAINS
       n_old_start(2) = cell_y_min(y_coords+1)
     ENDIF
 
-    WRITE(filename, '(a, "/balance.dat")') TRIM(data_dir)
+    WRITE(filename, '(a, ''/balance.dat'')') TRIM(data_dir)
 
     n_new(1) = domain(n1_dir,2) - domain(n1_dir,1) + 1
     n_new(2) = domain(n2_dir,2) - domain(n2_dir,1) + 1
@@ -1053,11 +1053,11 @@ CONTAINS
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
         MPI_INFO_NULL, fh, errcode)
 
-    CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, "native", &
+    CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, 'native', &
         MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(fh, field_in, 1, subarray_write, status, errcode)
 
-    CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, "native", &
+    CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, 'native', &
         MPI_INFO_NULL, errcode)
     CALL MPI_FILE_READ_ALL(fh, field_out, 1, subarray_read, status, errcode)
 
@@ -1342,7 +1342,7 @@ CONTAINS
         next=>current%next
         part_proc = get_particle_processor(current)
         IF (part_proc .LT. 0) THEN
-          PRINT *, "Unlocatable particle on processor", rank, current%part_pos
+          PRINT *, 'Unlocatable particle on processor', rank, current%part_pos
           CALL MPI_ABORT(comm, errcode, ierr)
           STOP
         ENDIF

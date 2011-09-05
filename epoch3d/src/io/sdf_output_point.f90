@@ -523,7 +523,7 @@ CONTAINS
         ENDIF
 
         CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, b%mpitype, &
-            b%mpitype, "native", MPI_INFO_NULL, errcode)
+            b%mpitype, 'native', MPI_INFO_NULL, errcode)
         CALL MPI_FILE_WRITE_ALL(h%filehandle, array, npoint_this_cycle, &
             b%mpitype, MPI_STATUS_IGNORE, errcode)
 
@@ -534,7 +534,7 @@ CONTAINS
           + npoint_global * b%type_size
     ENDDO
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, "native", &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
 
     DEALLOCATE(array)
@@ -847,7 +847,7 @@ CONTAINS
       IF (start) start = .FALSE.
 
       CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, b%mpitype, &
-          b%mpitype, "native", MPI_INFO_NULL, errcode)
+          b%mpitype, 'native', MPI_INFO_NULL, errcode)
       CALL MPI_FILE_WRITE_ALL(h%filehandle, array, npoint_this_cycle, &
           b%mpitype, MPI_STATUS_IGNORE, errcode)
 
@@ -856,7 +856,7 @@ CONTAINS
 
     DEALLOCATE(array)
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, "native", &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
 
     h%current_location = b%data_location + b%data_length

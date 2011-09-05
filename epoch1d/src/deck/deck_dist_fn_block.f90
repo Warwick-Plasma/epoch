@@ -63,12 +63,12 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (str_cmp(element, "name")) THEN
+    IF (str_cmp(element, 'name')) THEN
       working_block%name = value
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "ndims")) THEN
+    IF (str_cmp(element, 'ndims')) THEN
       work = as_integer(value, errcode)
       IF (work .GE. 1 .AND. work .LE. 3) THEN
         working_block%ndims = work
@@ -93,52 +93,52 @@ CONTAINS
           WRITE(io,*) 'function properties.'
         ENDDO
       ENDIF
-      extended_error_string = "ndims"
+      extended_error_string = 'ndims'
       errcode = c_err_required_element_not_set
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "dumpmask")) THEN
+    IF (str_cmp(element, 'dumpmask')) THEN
       working_block%dumpmask = as_integer(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "restrict_x")) THEN
+    IF (str_cmp(element, 'restrict_x')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(1) = .TRUE.
       working_block%restrictions(:,1) = (/work1, work2/)
     ENDIF
 
-    IF (str_cmp(element, "restrict_y")) THEN
+    IF (str_cmp(element, 'restrict_y')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(2) = .TRUE.
       working_block%restrictions(:,2) = (/work1, work2/)
     ENDIF
 
-    IF (str_cmp(element, "restrict_px")) THEN
+    IF (str_cmp(element, 'restrict_px')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(3) = .TRUE.
       working_block%restrictions(:,3) = (/work1, work2/)
     ENDIF
 
-    IF (str_cmp(element, "restrict_py")) THEN
+    IF (str_cmp(element, 'restrict_py')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(4) = .TRUE.
       working_block%restrictions(:,4) = (/work1, work2/)
     ENDIF
 
-    IF (str_cmp(element, "restrict_pz")) THEN
+    IF (str_cmp(element, 'restrict_pz')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(5) = .TRUE.
       working_block%restrictions(:,5) = (/work1, work2/)
     ENDIF
 
-    IF (str_cmp(element, "include_species")) THEN
+    IF (str_cmp(element, 'include_species')) THEN
       ispecies = as_integer(value, errcode)
       IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
@@ -164,12 +164,12 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "direction")) THEN
+    IF (str_cmp(part1, 'direction')) THEN
       working_block%directions(part2) = as_integer(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "range")) THEN
+    IF (str_cmp(part1, 'range')) THEN
       CALL split_range(TRIM(value), work1, work2, errcode)
       IF (IAND(errcode, c_err_bad_value) .NE. 0) THEN
         errcode = IAND(errcode, NOT(c_err_bad_value))
@@ -181,7 +181,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(part1, "resolution")) THEN
+    IF (str_cmp(part1, 'resolution')) THEN
       working_block%resolution(part2) = as_integer(value, errcode)
       RETURN
     ENDIF

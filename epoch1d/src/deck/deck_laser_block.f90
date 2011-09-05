@@ -64,8 +64,8 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (str_cmp(element, "boundary") .OR. str_cmp(element, "direction")) THEN
-      IF (rank .EQ. 0 .AND. str_cmp(element, "direction")) THEN
+    IF (str_cmp(element, 'boundary') .OR. str_cmp(element, 'direction')) THEN
+      IF (rank .EQ. 0 .AND. str_cmp(element, 'direction')) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "direction" in the block "laser" is deprecated.'
@@ -88,32 +88,32 @@ CONTAINS
         ENDDO
         CALL MPI_ABORT(comm, errcode, ierr)
       ENDIF
-      extended_error_string = "boundary"
+      extended_error_string = 'boundary'
       errcode = c_err_required_element_not_set
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "amp")) THEN
+    IF (str_cmp(element, 'amp')) THEN
       working_laser%amp = as_real(value, errcode)
       RETURN
     ENDIF
 
     ! SI (W/m^2)
-    IF (str_cmp(element, "irradiance") .OR. str_cmp(element, "intensity")) THEN
+    IF (str_cmp(element, 'irradiance') .OR. str_cmp(element, 'intensity')) THEN
       working_laser%amp = SQRT(as_real(value, errcode) &
           / (c*epsilon0/2.0_num))
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "irradiance_w_cm2") &
-        .OR. str_cmp(element, "intensity_w_cm2")) THEN
+    IF (str_cmp(element, 'irradiance_w_cm2') &
+        .OR. str_cmp(element, 'intensity_w_cm2')) THEN
       working_laser%amp = SQRT(as_real(value, errcode) &
           / (c*epsilon0/2.0_num)) * 100_num 
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "omega") .OR. str_cmp(element, "freq")) THEN
-      IF (rank .EQ. 0 .AND. str_cmp(element, "freq")) THEN
+    IF (str_cmp(element, 'omega') .OR. str_cmp(element, 'freq')) THEN
+      IF (rank .EQ. 0 .AND. str_cmp(element, 'freq')) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "freq" in the block "laser" is deprecated.'
@@ -124,37 +124,37 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "frequency")) THEN
+    IF (str_cmp(element, 'frequency')) THEN
       working_laser%omega = 2.0_num * pi * as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "lambda")) THEN
+    IF (str_cmp(element, 'lambda')) THEN
       working_laser%omega = 2.0_num * pi * c / as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "profile")) THEN
+    IF (str_cmp(element, 'profile')) THEN
       working_laser%profile = as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "phase")) THEN
+    IF (str_cmp(element, 'phase')) THEN
       working_laser%phase = as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "t_start")) THEN
+    IF (str_cmp(element, 't_start')) THEN
       working_laser%t_start = as_time(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "t_end")) THEN
+    IF (str_cmp(element, 't_end')) THEN
       working_laser%t_end = as_time(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "t_profile")) THEN
+    IF (str_cmp(element, 't_profile')) THEN
       working_laser%use_time_function = .TRUE.
       CALL initialise_stack(working_laser%time_function)
       CALL tokenize(value, working_laser%time_function, errcode)
@@ -163,18 +163,18 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "pol_angle")) THEN
+    IF (str_cmp(element, 'pol_angle')) THEN
       working_laser%pol_angle = as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "pol")) THEN
+    IF (str_cmp(element, 'pol')) THEN
       ! Convert from degrees to radians
       working_laser%pol_angle = pi * as_real(value, errcode) / 180.0_num
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "id")) THEN
+    IF (str_cmp(element, 'id')) THEN
       working_laser%id = as_integer(value, errcode)
       RETURN
     ENDIF
@@ -238,12 +238,12 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     REAL(num) :: as_time
 
-    IF (str_cmp(value, "start")) THEN
+    IF (str_cmp(value, 'start')) THEN
       as_time = 0.0_num
       RETURN
     ENDIF
 
-    IF (str_cmp(value, "end")) THEN
+    IF (str_cmp(value, 'end')) THEN
       as_time = t_end
       RETURN
     ENDIF

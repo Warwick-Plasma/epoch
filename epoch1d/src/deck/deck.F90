@@ -170,9 +170,9 @@ CONTAINS
 
     handle_block = c_err_none
     ! Constants can be defined in any deck state, so put them here
-    IF (str_cmp(block_name, "constant") &
-            .OR. str_cmp(block_name, "deo")) THEN
-      IF (rank .EQ. 0 .AND. str_cmp(block_name, "deo") .AND. deo_warn) THEN
+    IF (str_cmp(block_name, 'constant') &
+            .OR. str_cmp(block_name, 'deo')) THEN
+      IF (rank .EQ. 0 .AND. str_cmp(block_name, 'deo') .AND. deo_warn) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'The block name "deo" is deprecated.'
@@ -211,7 +211,7 @@ CONTAINS
       handle_block = probe_block_handle_element(block_element, block_value)
 #else
       handle_block = IOR(handle_block, c_err_pp_options_wrong)
-      extended_error_string = "-DPARTICLE_PROBES"
+      extended_error_string = '-DPARTICLE_PROBES'
 #endif
       RETURN
     ELSE IF (str_cmp(block_name, 'species')) THEN
@@ -344,8 +344,8 @@ CONTAINS
     deck_state = deck_state_in
     ! No error yet
     errcode_deck = c_err_none
-    ! Characteristic string which represents a "blank" string
-    blank = "BLANKBLANK"
+    ! Characteristic string which represents a 'blank' string
+    blank = 'BLANKBLANK'
 
     lun = 5
     rank_check = 0
@@ -380,7 +380,7 @@ CONTAINS
       IF (.NOT. ASSOCIATED(file_buffer_head)) THEN
         ALLOCATE(file_buffer_head)
         fbuf=>file_buffer_head
-        fbuf%filename = ""
+        fbuf%filename = ''
         NULLIFY(fbuf%next)
       ELSE
         fbuf=>file_buffer_head
@@ -443,13 +443,13 @@ CONTAINS
         OPEN(unit=lu, status='UNKNOWN', file=list_filename)
         CLOSE(unit=lu, status='DELETE')
       ENDIF
-      deck_values(1)%value = ""
-      deck_values(2)%value = ""
+      deck_values(1)%value = ''
+      deck_values(2)%value = ''
       slen = 1
 
       ! Use non-advancing IO to pop characters off the deck file one at a time
       ! Use basic token parsing to split into two substrings across
-      ! an "=" or ":" symbol
+      ! an '=' or ':' symbol
       DO
         errcode_deck = c_err_none
         ! Read a character
@@ -458,7 +458,7 @@ CONTAINS
         ! When end of file is reached, f is negative and got_eor is .FALSE.
         got_eor = .TRUE.
         got_eof = .FALSE.
-        READ(lun, "(A1)", advance='no', size=s, iostat=f, eor=10) u1
+        READ(lun, '(A1)', advance='no', size=s, iostat=f, eor=10) u1
 
         IF (f .LT. 0) THEN
           got_eor = .TRUE.
@@ -596,8 +596,8 @@ CONTAINS
               0, MPI_COMM_WORLD, errcode)
           CALL handle_deck_element(deck_values(1)%value, deck_values(2)%value, &
               errcode_deck)
-          deck_values(1)%value = ""
-          deck_values(2)%value = ""
+          deck_values(1)%value = ''
+          deck_values(2)%value = ''
           ignore = .FALSE.
           continuation = .FALSE.
           u0 = ' '
@@ -622,8 +622,8 @@ CONTAINS
               0, MPI_COMM_WORLD, errcode)
         CALL handle_deck_element(deck_values(1)%value, deck_values(2)%value, &
               errcode_deck)
-        deck_values(1)%value = ""
-        deck_values(2)%value = ""
+        deck_values(1)%value = ''
+        deck_values(2)%value = ''
         terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
         IF (terminate) EXIT
       ENDDO
@@ -671,7 +671,7 @@ CONTAINS
 
     rank_check = 0
 
-    IF (str_cmp(element, "import")) THEN
+    IF (str_cmp(element, 'import')) THEN
       invalid_block = .TRUE.
       IF (rank .EQ. rank_check) THEN
         WRITE(du,*)
@@ -682,7 +682,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "begin")) THEN
+    IF (str_cmp(element, 'begin')) THEN
       errcode_deck = handle_block(value, blank, blank)
       invalid_block = IAND(errcode_deck, c_err_unknown_block) .NE. 0
       invalid_block = invalid_block .OR. IAND(errcode_deck, &
@@ -721,7 +721,7 @@ CONTAINS
       errcode_deck = c_err_none
       RETURN
     ENDIF
-    IF (str_cmp(element, "end")) THEN
+    IF (str_cmp(element, 'end')) THEN
       CALL end_block(current_block_name)
       invalid_block = .TRUE.
       IF (rank .EQ. rank_check) THEN
@@ -747,8 +747,8 @@ CONTAINS
 
     IF (errcode_deck .EQ. c_err_none) THEN
       IF (rank .EQ. rank_check) &
-          WRITE(du, *) ACHAR(9), "Element ", TRIM(ADJUSTL(element)), "=", &
-              TRIM(ADJUSTL(value)), " handled OK"
+          WRITE(du, *) ACHAR(9), 'Element ', TRIM(ADJUSTL(element)), '=', &
+              TRIM(ADJUSTL(value)), ' handled OK'
       RETURN
     ENDIF
     ! Test for error conditions
@@ -881,12 +881,12 @@ CONTAINS
         fbuf=>fbuf%next
 
         CALL sdf_write_source_code(handle, TRIM(fbuf%filename), &
-            "Embedded_input_deck", fbuf%buffer(1:fbuf%idx-1), &
+            'Embedded_input_deck', fbuf%buffer(1:fbuf%idx-1), &
             fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), 0)
       ENDDO
     ELSE
       DO i = 1,nbuffers
-        CALL sdf_write_source_code(handle, "", "Embedded_input_deck", dummy1, &
+        CALL sdf_write_source_code(handle, '', 'Embedded_input_deck', dummy1, &
             dummy2, 0)
       ENDDO
     ENDIF

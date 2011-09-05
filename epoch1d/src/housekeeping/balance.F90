@@ -51,7 +51,7 @@ CONTAINS
       npart_av = REAL(sum_npart, num) / nproc
       balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
       IF (balance_frac .GT. dlb_threshold) RETURN
-      IF (rank .EQ. 0) PRINT *, "Load balancing with fraction", balance_frac
+      IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
 
     ALLOCATE(starts_x(1:nprocx), ends_x(1:nprocx))
@@ -486,7 +486,7 @@ CONTAINS
         next=>current%next
         part_proc = get_particle_processor(current)
         IF (part_proc .LT. 0) THEN
-          PRINT *, "Unlocatable particle on processor", rank, current%part_pos
+          PRINT *, 'Unlocatable particle on processor', rank, current%part_pos
           CALL MPI_ABORT(comm, errcode, ierr)
           STOP
         ENDIF

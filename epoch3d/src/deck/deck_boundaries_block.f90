@@ -17,52 +17,52 @@ MODULE deck_boundaries_block
   LOGICAL, DIMENSION(boundary_block_elements) :: boundary_block_done
   CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
       boundary_block_name = (/ &
-          "bc_x_min         ", &
-          "bc_x_max         ", &
-          "bc_y_min         ", &
-          "bc_y_max         ", &
-          "bc_z_min         ", &
-          "bc_z_max         ", &
-          "bc_x_min_field   ", &
-          "bc_x_max_field   ", &
-          "bc_y_min_field   ", &
-          "bc_y_max_field   ", &
-          "bc_z_min_field   ", &
-          "bc_z_max_field   ", &
-          "bc_x_min_particle", &
-          "bc_x_max_particle", &
-          "bc_y_min_particle", &
-          "bc_y_max_particle", &
-          "bc_z_min_particle", &
-          "bc_z_max_particle", &
-          "cpml_thickness   ", &
-          "cpml_kappa_max   ", &
-          "cpml_a_max       ", &
-          "cpml_sigma_max   " /)
+          'bc_x_min         ', &
+          'bc_x_max         ', &
+          'bc_y_min         ', &
+          'bc_y_max         ', &
+          'bc_z_min         ', &
+          'bc_z_max         ', &
+          'bc_x_min_field   ', &
+          'bc_x_max_field   ', &
+          'bc_y_min_field   ', &
+          'bc_y_max_field   ', &
+          'bc_z_min_field   ', &
+          'bc_z_max_field   ', &
+          'bc_x_min_particle', &
+          'bc_x_max_particle', &
+          'bc_y_min_particle', &
+          'bc_y_max_particle', &
+          'bc_z_min_particle', &
+          'bc_z_max_particle', &
+          'cpml_thickness   ', &
+          'cpml_kappa_max   ', &
+          'cpml_a_max       ', &
+          'cpml_sigma_max   ' /)
   CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
       alternate_name = (/ &
-          "xbc_left          ", &
-          "xbc_right         ", &
-          "ybc_down          ", &
-          "ybc_up            ", &
-          "zbc_back          ", &
-          "zbc_front         ", &
-          "xbc_left_field    ", &
-          "xbc_right_field   ", &
-          "ybc_down_field    ", &
-          "ybc_up_field      ", &
-          "zbc_back_field    ", &
-          "zbc_front_field   ", &
-          "xbc_left_particle ", &
-          "xbc_right_particle", &
-          "ybc_down_particle ", &
-          "ybc_up_particle   ", &
-          "zbc_back_particle ", &
-          "zbc_front_particle", &
-          "cpml_thickness    ", &
-          "cpml_kappa_max    ", &
-          "cpml_a_max        ", &
-          "cpml_sigma_max    " /)
+          'xbc_left          ', &
+          'xbc_right         ', &
+          'ybc_down          ', &
+          'ybc_up            ', &
+          'zbc_back          ', &
+          'zbc_front         ', &
+          'xbc_left_field    ', &
+          'xbc_right_field   ', &
+          'ybc_down_field    ', &
+          'ybc_up_field      ', &
+          'zbc_back_field    ', &
+          'zbc_front_field   ', &
+          'xbc_left_particle ', &
+          'xbc_right_particle', &
+          'ybc_down_particle ', &
+          'ybc_up_particle   ', &
+          'zbc_back_particle ', &
+          'zbc_front_particle', &
+          'cpml_thickness    ', &
+          'cpml_kappa_max    ', &
+          'cpml_a_max        ', &
+          'cpml_sigma_max    ' /)
 
 CONTAINS
 

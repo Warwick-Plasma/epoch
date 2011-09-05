@@ -522,7 +522,7 @@ top:DO it = 1, 3
     ipart = 0
     ! First loop converts number density into weight function
     DO WHILE(ipart .LT. partlist%count)
-      IF (.NOT. ASSOCIATED(current)) PRINT *, "Bad Particle"
+      IF (.NOT. ASSOCIATED(current)) PRINT *, 'Bad Particle'
 
 #include "particle_to_grid.inc"
 

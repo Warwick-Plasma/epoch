@@ -56,7 +56,7 @@ PROGRAM pic
   CALL register_objects ! custom.f90
 
   IF (rank .EQ. 0) THEN
-    PRINT *, "Specify output directory"
+    PRINT *, 'Specify output directory'
     READ(*, *) data_dir
   ENDIF
 
@@ -73,7 +73,7 @@ PROGRAM pic
     CALL read_deck(deck_file, .TRUE., c_ds_last)
     CALL after_deck_last
     CALL restart_data(step)    ! restart from data in file save.data
-    IF (rank .EQ. 0) PRINT *, "Load from restart dump OK"
+    IF (rank .EQ. 0) PRINT *, 'Load from restart dump OK'
     output_file = restart_snapshot + 1
   ELSE
     ! Using autoloader
@@ -104,7 +104,7 @@ PROGRAM pic
   CALL bfield_final_bcs
 
   IF (.NOT. ic_from_restart) THEN
-    IF (rank .EQ. 0) PRINT *, "Equilibrium set up OK, running code"
+    IF (rank .EQ. 0) PRINT *, 'Equilibrium set up OK, running code'
     walltime_start = MPI_WTIME()
     CALL output_routines(step) ! diagnostics.f90
   ELSE
@@ -158,7 +158,7 @@ PROGRAM pic
   ENDDO
 
   IF (rank .EQ. 0) &
-      PRINT *, "Final runtime of core = ", MPI_WTIME() - walltime_start
+      PRINT *, 'Final runtime of core = ', MPI_WTIME() - walltime_start
 
   IF (halt) CALL output_routines(step)
 

@@ -361,7 +361,7 @@ CONTAINS
 #ifdef NO_IO
       stat_file = '/dev/null'
 #else
-      WRITE(stat_file, '(a, "/epoch2d.dat")') TRIM(data_dir)
+      WRITE(stat_file, '(a, ''/epoch2d.dat'')') TRIM(data_dir)
 #endif
       IF (ic_from_restart) THEN
         INQUIRE(file=stat_file, exist=exists)
@@ -502,7 +502,8 @@ CONTAINS
     step = -1
 
     ! Create the filename for the last snapshot
-    WRITE(filename, '(a, "/", i4.4, ".sdf")') TRIM(data_dir), restart_snapshot
+    WRITE(filename, '(a, ''/'', i4.4, ''.sdf'')') TRIM(data_dir), &
+        restart_snapshot
     CALL sdf_open(sdf_handle, filename, rank, comm, c_sdf_read)
 
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &

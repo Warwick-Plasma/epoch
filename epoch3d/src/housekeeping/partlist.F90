@@ -244,7 +244,7 @@ CONTAINS
 
     IF (.NOT. head%safe .OR. .NOT. tail%safe) THEN
       IF (rank .EQ. 0) &
-          PRINT *, "Unable to append partlists because one is not safe"
+          PRINT *, 'Unable to append partlists because one is not safe'
       RETURN
     ENDIF
 
@@ -352,7 +352,7 @@ CONTAINS
     cpos = cpos+1
 #endif
 
-!!$    PRINT *, "In Pack", rank, a_particle%part_pos
+!!$    PRINT *, 'In Pack', rank, a_particle%part_pos
 
   END SUBROUTINE pack_particle
 
@@ -424,8 +424,8 @@ CONTAINS
 
     TYPE(particle), POINTER :: a_particle
 
-    PRINT *, "Position", a_particle%part_pos
-    PRINT *, "Momentum", a_particle%part_p
+    PRINT *, 'Position', a_particle%part_pos
+    PRINT *, 'Momentum', a_particle%part_p
 
   END SUBROUTINE display_particle
 
@@ -473,12 +473,12 @@ CONTAINS
     test_packed_particles = .FALSE.
 
     IF (npart_in_data * nvar .NE. SIZE(array)) THEN
-      PRINT *, "Size of data array does not match specified on", rank, &
+      PRINT *, 'Size of data array does not match specified on', rank, &
           npart_in_data, SIZE(array)
       RETURN
     ENDIF
     IF (partlist%count .NE. npart_in_data) THEN
-      PRINT *, "Size of data array does not match partlist on", rank
+      PRINT *, 'Size of data array does not match partlist on', rank
       RETURN
     ENDIF
 
@@ -488,7 +488,7 @@ CONTAINS
     DO ipart = 0, npart_in_data-1
       CALL unpack_particle(array(ipart*nvar+1:(ipart+1)*nvar), a_particle)
       IF (.NOT. compare_particles(a_particle, current)) THEN
-        PRINT *, "BAD PARTICLE ", ipart, "on", rank
+        PRINT *, 'BAD PARTICLE ', ipart, 'on', rank
         RETURN
       ENDIF
       current=>current%next

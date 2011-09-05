@@ -151,7 +151,7 @@ CONTAINS
         number_at_part = fac**2 * number_at_part
 
         ! In this section need to calculate the ionisation rate
-        ! And store it in the variable "ion_rate".
+        ! And store it in the variable 'ion_rate'.
         ! The rest of the routine is general 
 
         ! The code is supplied with a 

@@ -30,8 +30,8 @@ CONTAINS
     ! This subroutine is to allow you to force the code to bomb out if an
     ! essential element of the input deck is missing. If you either don't
     ! want to check, are not extending the input deck, or all elements are
-    ! set then set "errcode = c_err_none". Otherwise set the
-    ! return value to "errcode = c_err_missing_elements".
+    ! set then set 'errcode = c_err_none'. Otherwise set the
+    ! return value to 'errcode = c_err_missing_elements'.
 
     errcode = c_err_none
 

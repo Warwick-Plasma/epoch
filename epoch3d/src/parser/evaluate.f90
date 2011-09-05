@@ -35,7 +35,7 @@ CONTAINS
       ENDIF
 
       IF (err .NE. c_err_none) THEN
-        PRINT *, "BAD block", err, block%ptype, i, block%value
+        PRINT *, 'BAD block', err, block%ptype, i, block%value
         CALL MPI_ABORT(comm, errcode, ierr)
         STOP
       ENDIF

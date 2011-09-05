@@ -195,7 +195,7 @@ CONTAINS
 #ifndef PARTICLE_PROBES
     IF (mask_element .EQ. c_dump_probes .AND. mask .NE. c_io_never) THEN
       errcode = c_err_pp_options_wrong
-      extended_error_string = "-DPARTICLE_PROBES"
+      extended_error_string = '-DPARTICLE_PROBES'
       mask = c_io_never
     ENDIF
 #endif
@@ -251,7 +251,7 @@ CONTAINS
       IF (mask_element .EQ. c_dump_jy) bad = .FALSE.
       IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
 
-      ! Unset "no_sum" dumpmask for grid variables
+      ! Unset 'no_sum' dumpmask for grid variables
       IF (.NOT.bad) mask = IAND(mask, NOT(c_io_no_sum))
 
       IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.

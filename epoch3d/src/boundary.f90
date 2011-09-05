@@ -15,7 +15,7 @@ CONTAINS
     INTEGER :: i
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
-        boundary = (/ "x_min", "x_max", "y_min", "y_max", "z_min", "z_max" /)
+        boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max' /)
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here

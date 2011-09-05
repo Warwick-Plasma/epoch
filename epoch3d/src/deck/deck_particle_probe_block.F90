@@ -122,76 +122,76 @@ CONTAINS
     ! get particle probe diagnostics (rolling total of all particles which
     ! pass through a given region of real space (defined by a point on a plane
     ! and the normal to that plane.
-    IF (str_cmp(element, "dumpmask") .OR. str_cmp(element, "dump")) THEN
+    IF (str_cmp(element, 'dumpmask') .OR. str_cmp(element, 'dump')) THEN
       working_probe%dumpmask = as_integer(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "point")) THEN
+    IF (str_cmp(element, 'point')) THEN
       got_point = .TRUE.
       CALL get_vector(value, working_probe%point, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "normal")) THEN
+    IF (str_cmp(element, 'normal')) THEN
       got_normal = .TRUE.
       CALL get_vector(value, working_probe%normal, errcode)
       RETURN
     ENDIF
 
     ! Top left
-    IF (str_cmp(element, "x_tl")) THEN
+    IF (str_cmp(element, 'x_tl')) THEN
       got_x = .TRUE.
       working_probe%point(1) = as_real(value, errcode)
       RETURN
     ENDIF
-    IF (str_cmp(element, "y_tl")) THEN
+    IF (str_cmp(element, 'y_tl')) THEN
       got_x = .TRUE.
       working_probe%point(2) = as_real(value, errcode)
       RETURN
     ENDIF
-    IF (str_cmp(element, "z_tl")) THEN
+    IF (str_cmp(element, 'z_tl')) THEN
       got_x = .TRUE.
       working_probe%point(3) = as_real(value, errcode)
       RETURN
     ENDIF
 
     ! Bottom right
-    IF (str_cmp(element, "x_br")) THEN
+    IF (str_cmp(element, 'x_br')) THEN
       got_x = .TRUE.
       point2(1) = as_real(value, errcode)
       RETURN
     ENDIF
-    IF (str_cmp(element, "y_br")) THEN
+    IF (str_cmp(element, 'y_br')) THEN
       got_x = .TRUE.
       point2(2) = as_real(value, errcode)
       RETURN
     ENDIF
-    IF (str_cmp(element, "z_br")) THEN
+    IF (str_cmp(element, 'z_br')) THEN
       got_x = .TRUE.
       point2(3) = as_real(value, errcode)
       RETURN
     ENDIF
 
     ! Top right
-    IF (str_cmp(element, "x_tr")) THEN
+    IF (str_cmp(element, 'x_tr')) THEN
       got_x = .TRUE.
       point3(1) = as_real(value, errcode)
       RETURN
     ENDIF
-    IF (str_cmp(element, "y_tr")) THEN
+    IF (str_cmp(element, 'y_tr')) THEN
       got_x = .TRUE.
       point3(2) = as_real(value, errcode)
       RETURN
     ENDIF
-    IF (str_cmp(element, "z_tr")) THEN
+    IF (str_cmp(element, 'z_tr')) THEN
       got_x = .TRUE.
       point3(3) = as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "include_species") &
-        .OR. str_cmp(element, "probe_species")) THEN
+    IF (str_cmp(element, 'include_species') &
+        .OR. str_cmp(element, 'probe_species')) THEN
       ispecies = as_integer(value, errcode)
       IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
@@ -210,18 +210,18 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "ek_min")) THEN
+    IF (str_cmp(element, 'ek_min')) THEN
       working_probe%ek_min = as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "ek_max")) THEN
+    IF (str_cmp(element, 'ek_max')) THEN
       working_probe%ek_max = as_real(value, errcode)
       IF (working_probe%ek_max .LT. 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "name")) THEN
+    IF (str_cmp(element, 'name')) THEN
       working_probe%name = TRIM(value)
       RETURN
     ENDIF

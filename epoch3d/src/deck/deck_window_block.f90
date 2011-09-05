@@ -49,29 +49,29 @@ CONTAINS
     IF (deck_state .NE. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-    IF (str_cmp(element, "move_window")) THEN
+    IF (str_cmp(element, 'move_window')) THEN
       move_window = as_logical(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "window_v_x")) THEN
+    IF (str_cmp(element, 'window_v_x')) THEN
       window_v_x = as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "window_start_time")) THEN
+    IF (str_cmp(element, 'window_start_time')) THEN
       window_start_time = as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "bc_x_min_after_move") &
-        .OR. str_cmp(element, "xbc_left_after_move")) THEN
+    IF (str_cmp(element, 'bc_x_min_after_move') &
+        .OR. str_cmp(element, 'xbc_left_after_move')) THEN
       bc_x_min_after_move = as_bc(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "bc_x_max_after_move") &
-        .OR. str_cmp(element, "xbc_right_after_move")) THEN
+    IF (str_cmp(element, 'bc_x_max_after_move') &
+        .OR. str_cmp(element, 'xbc_right_after_move')) THEN
       bc_x_max_after_move = as_bc(value, errcode)
       RETURN
     ENDIF

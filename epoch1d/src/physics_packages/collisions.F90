@@ -911,9 +911,9 @@ CONTAINS
       en_error = en_error - en1_after - en2_after
     ENDDO
 
-    WRITE(*,'("  Errors after ",I10," iterations")') N
-    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
-    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2 / en_sqr)
+    WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
+    WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
+    WRITE(*,'(''    E: '',ES15.8)') SQRT(en_error**2 / en_sqr)
 
     !==============================================================
     ! electron-ion collisions (equal weighting)
@@ -974,9 +974,9 @@ CONTAINS
       en_error = en_error - en1_after - en2_after
     ENDDO
 
-    WRITE(*,'("  Errors after ",I10," iterations")') N
-    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
-    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2 / en_sqr)
+    WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
+    WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
+    WRITE(*,'(''    E: '',ES15.8)') SQRT(en_error**2 / en_sqr)
 
     !==============================================================
     ! electron-electron collisions (random weighting)
@@ -1032,9 +1032,9 @@ CONTAINS
       en_error = en_error - en1_after - en2_after
     ENDDO
 
-    WRITE(*,'("  Errors after ",I10," iterations")') N
-    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
-    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2 / en_sqr)
+    WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
+    WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
+    WRITE(*,'(''    E: '',ES15.8)') SQRT(en_error**2 / en_sqr)
 
     !==============================================================
     ! electron-ion collisions (random weighting)
@@ -1095,9 +1095,9 @@ CONTAINS
       en_error = en_error - en1_after - en2_after
     ENDDO
 
-    WRITE(*,'("  Errors after ",I10," iterations")') N
-    WRITE(*,'("    p: ",ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
-    WRITE(*,'("    E: ",ES15.8)') SQRT(en_error**2 / en_sqr)
+    WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
+    WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
+    WRITE(*,'(''    E: '',ES15.8)') SQRT(en_error**2 / en_sqr)
 
   END SUBROUTINE test_scatter
 
@@ -1183,7 +1183,7 @@ CONTAINS
       histo1max = 0
       histo2max = 0
 
-!      WRITE(*,'("  Particle List 1: ",I10)') partlist1%count
+!      WRITE(*,'(''  Particle List 1: '',I10)') partlist1%count
       cnt1 = partlist1%count
       cnt2 = partlist2%count
       plist1_length = plist1_length + cnt1
@@ -1193,17 +1193,17 @@ CONTAINS
 
       part => partlist1%head
       DO j = 1, partlist1%count
-!        WRITE(*,'("    ",I4,": ",I10)') j, part%coll_count
+!        WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
         IF (part%coll_count .GT. histo1max) histo1max = part%coll_count
         histo1(part%coll_count) = histo1(part%coll_count) + 1
         part => part%next
       ENDDO
 
-!      WRITE(*,'("  Particle List 2: ",I10)') partlist2%count
+!      WRITE(*,'(''  Particle List 2: '',I10)') partlist2%count
 
       part => partlist2%head
       DO WHILE (ASSOCIATED(part))
-!        WRITE(*,'("    ",I4,": ",I10)') j, part%coll_count
+!        WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
         IF (part%coll_count .GT. histo2max) histo2max = part%coll_count
         histo2(part%coll_count) = histo2(part%coll_count) + 1
         part => part%next
@@ -1212,12 +1212,12 @@ CONTAINS
 ! only need to output if something is wrong
 !      WRITE(*,*) '  Histogram 1'
 !      DO j = 1, histo1max
-!        WRITE(*,'("    ",I4,": ",I10)') j, histo1(j)
+!        WRITE(*,'(''    '',I4,'': '',I10)') j, histo1(j)
 !      ENDDO
 !
 !      WRITE(*,*) '  Histogram 2'
 !      DO j = 1, histo2max
-!        WRITE(*,'("    ",I4,": ",I10)') j, histo2(j)
+!        WRITE(*,'(''    '',I4,'': '',I10)') j, histo2(j)
 !      ENDDO
 
       ! performing check on histograms
@@ -1253,8 +1253,8 @@ CONTAINS
 
       IF (error .GT. 0) THEN
         WRITE(*,*) '  Error in inter species collisions'
-        WRITE(*,'("    Iteration:   ",I10)') i
-        WRITE(*,'("    List counts: ",I10,", ",I10)') cnt1, cnt2
+        WRITE(*,'(''    Iteration:   '',I10)') i
+        WRITE(*,'(''    List counts: '',I10,'', '',I10)') cnt1, cnt2
         STOP
       ENDIF
 
@@ -1264,8 +1264,8 @@ CONTAINS
     ENDDO
 
     WRITE(*,*) '  SUCCESS!'
-    WRITE(*,'("    Number of iterations:   ",I10)') N
-    WRITE(*,'("    Average list lengths:   ",F10.5,", ",F10.5)') &
+    WRITE(*,'(''    Number of iterations:   '',I10)') N
+    WRITE(*,'(''    Average list lengths:   '',F10.5,'', '',F10.5)') &
         plist1_length / N, plist2_length / N
 
     DEALLOCATE(histo1)
@@ -1328,11 +1328,11 @@ CONTAINS
       histo_max = 0
       plist_length = plist_length + partlist%count
 
-!      WRITE(*,'("  Particle List: ",I10)') partlist%count
+!      WRITE(*,'(''  Particle List: '',I10)') partlist%count
 
       part => partlist%head
       DO j = 1, partlist%count
-        ! WRITE(*,'("    ",I4,": ",I10)') j, part%coll_count
+        ! WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
         IF (part%coll_count .GT. histo_max) histo_max = part%coll_count
         histo(part%coll_count) = histo(part%coll_count) + 1
         part => part%next
@@ -1341,7 +1341,7 @@ CONTAINS
 ! only need to output if something is wrong
 !      WRITE(*,*) '  Histogram'
 !      DO j = 1, histo_max
-!        WRITE(*,'("    ",I4,": ",I10)') j, histo(j)
+!        WRITE(*,'(''    '',I4,'': '',I10)') j, histo(j)
 !      ENDDO
 
       ! performing check on histograms
@@ -1357,8 +1357,8 @@ CONTAINS
 
       IF (error .GT. 0) THEN
         WRITE(*,*) '  Error in intra species collisions'
-        WRITE(*,'("    Iteration:   ",I10)') i
-        WRITE(*,'("    List count: ",I10)') partlist%count
+        WRITE(*,'(''    Iteration:   '',I10)') i
+        WRITE(*,'(''    List count: '',I10)') partlist%count
         STOP
       ENDIF
 
@@ -1367,8 +1367,8 @@ CONTAINS
     ENDDO
 
     WRITE(*,*) '  SUCCESS!'
-    WRITE(*,'("    Number of iterations:   ",I10)') N
-    WRITE(*,'("    Average list length:   ",F10.5)') plist_length / N
+    WRITE(*,'(''    Number of iterations:   '',I10)') N
+    WRITE(*,'(''    Average list length:   '',F10.5)') plist_length / N
 
     DEALLOCATE(histo)
 
@@ -1430,7 +1430,7 @@ CONTAINS
       maxp = 0
       std_dev = 0.0_num
 
-      WRITE(*,'("  List length: ",I10)') plist_length
+      WRITE(*,'(''  List length: '',I10)') plist_length
 
       DO i = 1, N
         ! allocate particles
@@ -1461,10 +1461,10 @@ CONTAINS
         CALL destroy_partlist(partlist)
       ENDDO
 
-      WRITE(*,'("   Statistics (",I10," runs)")') N
+      WRITE(*,'(''   Statistics ('',I10,'' runs)'')') N
       WRITE(*,*) '    avg        std_dev       min        max'
       DO i = 1, plist_length
-        WRITE(*,'("    ",F10.5,"    ",F10.5,"    ",I10,"    ",I10)') &
+        WRITE(*,'(''    '',F10.5,''    '',F10.5,''    '',I10,''    '',I10)') &
             histo(i) / N, SQRT(std_dev(i) / N - (histo(i) / N)**2), &
             minp(i), maxp(i)
       ENDDO

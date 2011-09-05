@@ -138,7 +138,7 @@ CONTAINS
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
 
-    IF (str_cmp(element, "name")) THEN
+    IF (str_cmp(element, 'name')) THEN
       IF (got_name) THEN
         errcode = c_err_preset_element
         RETURN
@@ -150,7 +150,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "ionisation_energies")) THEN
+    IF (str_cmp(element, 'ionisation_energies')) THEN
 #ifdef PARTICLE_IONISE
       IF (deck_state .EQ. c_ds_first) THEN
         NULLIFY(dat)
@@ -166,7 +166,7 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
-    IF (str_cmp(element, "mass")) THEN
+    IF (str_cmp(element, 'mass')) THEN
       species_list(species_id)%mass = as_real(value, errcode) * m0
       IF (species_list(species_id)%mass .LT. 0) THEN
         IF (rank .EQ. 0) THEN
@@ -180,13 +180,13 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "charge")) THEN
+    IF (str_cmp(element, 'charge')) THEN
       species_list(species_id)%charge = as_real(value, errcode) * q0
       species_charge_set(species_id) = .TRUE.
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "frac") .OR. str_cmp(element, "fraction")) THEN
+    IF (str_cmp(element, 'frac') .OR. str_cmp(element, 'fraction')) THEN
       IF (npart_global .GE. 0) THEN
         species_list(species_id)%count = &
             INT(as_real(value, errcode) * npart_global)
@@ -196,17 +196,17 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "npart")) THEN
+    IF (str_cmp(element, 'npart')) THEN
       species_list(species_id)%count = as_long_integer(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "npart_per_cell")) THEN
+    IF (str_cmp(element, 'npart_per_cell')) THEN
       species_list(species_id)%npart_per_cell = as_real(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "dump")) THEN
+    IF (str_cmp(element, 'dump')) THEN
       dump = as_logical(value, errcode)
       IF (dump) THEN
         species_list(species_id)%dumpmask = c_io_always
@@ -216,7 +216,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "dumpmask")) THEN
+    IF (str_cmp(element, 'dumpmask')) THEN
       species_list(species_id)%dumpmask = as_integer(value, errcode)
       RETURN
     ENDIF
@@ -224,13 +224,13 @@ CONTAINS
     ! *************************************************************
     ! This section sets properties for tracer particles
     ! *************************************************************
-    IF (str_cmp(element, "tracer")) THEN
+    IF (str_cmp(element, 'tracer')) THEN
 #ifdef TRACER_PARTICLES
       species_list(species_id)%tracer = as_logical(value, errcode)
 #else
       IF (as_logical(value, errcode)) THEN
         errcode = c_err_pp_options_wrong
-        extended_error_string = "-DTRACER_PARTICLES"
+        extended_error_string = '-DTRACER_PARTICLES'
       ENDIF
 #endif
       RETURN
@@ -239,12 +239,12 @@ CONTAINS
     ! *************************************************************
     ! This section sets properties for particle splitting
     ! *************************************************************
-    IF (str_cmp(element, "split")) THEN
+    IF (str_cmp(element, 'split')) THEN
       species_list(species_id)%split = as_logical(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "npart_max")) THEN
+    IF (str_cmp(element, 'npart_max')) THEN
       species_list(species_id)%npart_max = as_long_integer(value, errcode)
       RETURN
     ENDIF
@@ -252,15 +252,15 @@ CONTAINS
     ! *************************************************************
     ! This section sets properties for ionisation
     ! *************************************************************
-    IF (str_cmp(element, "ionisation_electron_species") &
-        .OR. str_cmp(element, "electron")) THEN
+    IF (str_cmp(element, 'ionisation_electron_species') &
+        .OR. str_cmp(element, 'electron')) THEN
 #ifdef PARTICLE_IONISE
       species_list(species_id)%release_species = as_integer(value, errcode)
 #endif
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "ionisation_energies")) THEN
+    IF (str_cmp(element, 'ionisation_energies')) THEN
 #ifdef PARTICLE_IONISE
       IF (species_list(species_id)%release_species .LT. 0) THEN
         IF (rank .EQ. 0) THEN
@@ -271,7 +271,7 @@ CONTAINS
           ENDDO
         ENDIF
         errcode = c_err_required_element_not_set
-        extended_error_string = "ionisation_electron_species"
+        extended_error_string = 'ionisation_electron_species'
         RETURN
       ENDIF
 
@@ -310,26 +310,26 @@ CONTAINS
 
     ! Initial conditions
 
-    IF (str_cmp(element, "offset")) THEN
+    IF (str_cmp(element, 'offset')) THEN
       offset = as_long_integer_simple(value, errcode)
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "density_min") .OR. str_cmp(element, "minrho")) THEN
+    IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho')) THEN
       dmin = as_real(value, errcode)
       IF (dmin .LE. 0.0_num) dmin = EPSILON(1.0_num)
       initial_conditions(species_id)%density_min = dmin
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "density_max") .OR. str_cmp(element, "maxrho")) THEN
+    IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho')) THEN
       initial_conditions(species_id)%density_max = as_real(value, errcode)
       RETURN
     ENDIF
 
     CALL get_filename(value, filename, got_file, errcode)
 
-    IF (str_cmp(element, "density") .OR. str_cmp(element, "rho")) THEN
+    IF (str_cmp(element, 'density') .OR. str_cmp(element, 'rho')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%density(:), offset, errcode)
@@ -341,7 +341,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "mass_density")) THEN
+    IF (str_cmp(element, 'mass_density')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%density(:), offset, errcode)
@@ -356,7 +356,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "drift_x")) THEN
+    IF (str_cmp(element, 'drift_x')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,1), offset, errcode)
@@ -368,7 +368,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "drift_y")) THEN
+    IF (str_cmp(element, 'drift_y')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,2), offset, errcode)
@@ -380,7 +380,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "drift_z")) THEN
+    IF (str_cmp(element, 'drift_z')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%drift(:,3), offset, errcode)
@@ -392,8 +392,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "temp") .OR. str_cmp(element, "temp_k") &
-        .OR. str_cmp(element, "temp_ev")) THEN
+    IF (str_cmp(element, 'temp') .OR. str_cmp(element, 'temp_k') &
+        .OR. str_cmp(element, 'temp_ev')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,1), offset, errcode)
@@ -402,7 +402,7 @@ CONTAINS
             initial_conditions(species_id)%temp(:,1), &
             -2, nx+3, errcode)
       ENDIF
-      IF (str_cmp(element, "temp_ev")) THEN
+      IF (str_cmp(element, 'temp_ev')) THEN
         initial_conditions(species_id)%temp(:,1) = ev / kb * &
             initial_conditions(species_id)%temp(:,1)
       ENDIF
@@ -412,8 +412,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "temp_x") .OR. str_cmp(element, "temp_x_k") &
-        .OR. str_cmp(element, "temp_x_ev")) THEN
+    IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
+        .OR. str_cmp(element, 'temp_x_ev')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,1), offset, errcode)
@@ -422,15 +422,15 @@ CONTAINS
             initial_conditions(species_id)%temp(:,1), &
             -2, nx+3, errcode)
       ENDIF
-      IF (str_cmp(element, "temp_x_ev")) THEN
+      IF (str_cmp(element, 'temp_x_ev')) THEN
         initial_conditions(species_id)%temp(:,1) = ev / kb * &
             initial_conditions(species_id)%temp(:,1)
       ENDIF
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "temp_y") .OR. str_cmp(element, "temp_y_k") &
-        .OR. str_cmp(element, "temp_y_ev")) THEN
+    IF (str_cmp(element, 'temp_y') .OR. str_cmp(element, 'temp_y_k') &
+        .OR. str_cmp(element, 'temp_y_ev')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,2), offset, errcode)
@@ -439,15 +439,15 @@ CONTAINS
             initial_conditions(species_id)%temp(:,2), &
             -2, nx+3, errcode)
       ENDIF
-      IF (str_cmp(element, "temp_y_ev")) THEN
+      IF (str_cmp(element, 'temp_y_ev')) THEN
         initial_conditions(species_id)%temp(:,2) = ev / kb * &
             initial_conditions(species_id)%temp(:,2)
       ENDIF
       RETURN
     ENDIF
 
-    IF (str_cmp(element, "temp_z") .OR. str_cmp(element, "temp_z_k") &
-        .OR. str_cmp(element, "temp_z_ev")) THEN
+    IF (str_cmp(element, 'temp_z') .OR. str_cmp(element, 'temp_z_k') &
+        .OR. str_cmp(element, 'temp_z_ev')) THEN
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, &
             initial_conditions(species_id)%temp(:,3), offset, errcode)
@@ -456,7 +456,7 @@ CONTAINS
             initial_conditions(species_id)%temp(:,3), &
             -2, nx+3, errcode)
       ENDIF
-      IF (str_cmp(element, "temp_z_ev")) THEN
+      IF (str_cmp(element, 'temp_z_ev')) THEN
         initial_conditions(species_id)%temp(:,3) = ev / kb * &
             initial_conditions(species_id)%temp(:,3)
       ENDIF
@@ -554,8 +554,8 @@ CONTAINS
     working_species => species_list(working_id)
 
     IF (rank .EQ. 0) THEN
-      PRINT '("Autocreated ionised form of ", a, " as species ", i3, &
-          & " named ", a)', TRIM(base_species%name), working_id, TRIM(name)
+      PRINT '(''Autocreated ionised form of '', a, '' as species '', i3, &
+          & '' named '', a)', TRIM(base_species%name), working_id, TRIM(name)
     ENDIF
 
     working_species%charge = current_species%charge &

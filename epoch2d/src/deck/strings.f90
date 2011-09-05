@@ -25,7 +25,7 @@ CONTAINS
     ELSE
       n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
     ENDIF
-    WRITE(numfmt, '("(I", I6.6, ")")') n_nums
+    WRITE(numfmt, '(''(I'', I6.6, '')'')') n_nums
     WRITE(string, numfmt) int_in
 
   END SUBROUTINE integer4_as_string
@@ -45,7 +45,7 @@ CONTAINS
     ELSE
       n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
     ENDIF
-    WRITE(numfmt, '("(I", I9.9, ")")') n_nums
+    WRITE(numfmt, '(''(I'', I9.9, '')'')') n_nums
     WRITE(string, numfmt) int_in
 
   END SUBROUTINE integer8_as_string
@@ -135,13 +135,13 @@ CONTAINS
 
     as_boundary = -1
 
-    IF (str_cmp(str_in, "x_min") .OR. str_cmp(str_in, "left")) &
+    IF (str_cmp(str_in, 'x_min') .OR. str_cmp(str_in, 'left')) &
         as_boundary = c_bd_x_min
-    IF (str_cmp(str_in, "x_max") .OR. str_cmp(str_in, "right")) &
+    IF (str_cmp(str_in, 'x_max') .OR. str_cmp(str_in, 'right')) &
         as_boundary = c_bd_x_max
-    IF (str_cmp(str_in, "y_min") .OR. str_cmp(str_in, "down")) &
+    IF (str_cmp(str_in, 'y_min') .OR. str_cmp(str_in, 'down')) &
         as_boundary = c_bd_y_min
-    IF (str_cmp(str_in, "y_max") .OR. str_cmp(str_in, "up")) &
+    IF (str_cmp(str_in, 'y_max') .OR. str_cmp(str_in, 'up')) &
         as_boundary = c_bd_y_max
 
     IF (as_boundary .EQ. -1) err = IOR(err, c_err_bad_value)
@@ -157,11 +157,11 @@ CONTAINS
     LOGICAL :: as_logical
 
     as_logical = .FALSE.
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "T")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'T')) THEN
       as_logical = .TRUE.
       RETURN
     ENDIF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "F")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'F')) THEN
       as_logical = .FALSE.
       RETURN
     ENDIF
@@ -180,52 +180,52 @@ CONTAINS
 
     as_bc = -1
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "periodic")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'periodic')) THEN
       as_bc = c_bc_periodic
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "simple_laser")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'simple_laser')) THEN
       as_bc = c_bc_simple_laser
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "simple_outflow")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'simple_outflow')) THEN
       as_bc = c_bc_simple_outflow
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "other")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'other')) THEN
       as_bc = c_bc_other
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "reflect")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'reflect')) THEN
       as_bc = c_bc_reflect
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "conduct")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'conduct')) THEN
       as_bc = c_bc_conduct
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "open")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'open')) THEN
       as_bc = c_bc_open
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "thermal")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'thermal')) THEN
       as_bc = c_bc_thermal
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "cpml_laser")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'cpml_laser')) THEN
       as_bc = c_bc_cpml_laser
       RETURN
     ENDIF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "cpml_outflow")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'cpml_outflow')) THEN
       as_bc = c_bc_cpml_outflow
       RETURN
     ENDIF
@@ -244,19 +244,19 @@ CONTAINS
 
     as_dump_param = -1
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "never")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'never')) THEN
       as_dump_param = c_io_never
       RETURN
     ENDIF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "always")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'always')) THEN
       as_dump_param = c_io_always
       RETURN
     ENDIF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "full")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'full')) THEN
       as_dump_param = c_io_full
       RETURN
     ENDIF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "restart")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'restart')) THEN
       as_dump_param = c_io_restartable
       RETURN
     ENDIF
@@ -275,11 +275,11 @@ CONTAINS
 
     as_domain = -1
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "decomposed")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'decomposed')) THEN
       as_domain = c_do_decomposed
       RETURN
     ENDIF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), "full")) THEN
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'full')) THEN
       as_domain = c_do_full
       RETURN
     ENDIF

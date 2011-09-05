@@ -108,7 +108,7 @@ CONTAINS
     ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, &
-        MPI_BYTE, "native", MPI_INFO_NULL, errcode)
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_BARRIER(h%comm, errcode)
 
