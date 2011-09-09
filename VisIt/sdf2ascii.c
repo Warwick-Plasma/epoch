@@ -37,6 +37,7 @@ int main(int argc, char **argv)
         return 1;
     }
     h->use_float = 0;
+    h->print = 1;
     sdf_set_ncpus(h, size);
 
     sdf_read_blocklist(h);
@@ -47,19 +48,6 @@ int main(int argc, char **argv)
     for (i=0; i<h->nblocks; i++) {
         b = h->current_block;
         sdf_read_data(h);
-        if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
-            if (b->datatype_out == SDF_DATATYPE_REAL8) {
-                int n, j;
-                double *arr;
-                for (n=0; n<b->ndims; n++) {
-                    printf("r8 ");
-                    arr = b->grids[n];
-                    for (j=0; j<b->dims[n]; j++)
-                        printf(" %g", *arr++);
-                    printf("\n");
-                }
-            }
-        }
         h->current_block = b->next;
 #ifdef SDF_DEBUG
         printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';

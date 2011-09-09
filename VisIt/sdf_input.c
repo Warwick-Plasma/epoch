@@ -634,12 +634,14 @@ int sdf_read_array(sdf_file_t *h)
         sdf_read_bytes(h, b->data, n);
     }
 
-    h->indent = 0;
-    SDF_DPRNT("\n");
-    SDF_DPRNT("b->name: %s ", b->name);
-    for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
-    SDF_DPRNT("\n  ");
-    SDF_DPRNTar(b->data, b->nlocal);
+    if (h->print) {
+        h->indent = 0;
+        SDF_DPRNT("\n");
+        SDF_DPRNT("b->name: %s ", b->name);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
+        SDF_DPRNT("\n  ");
+        SDF_DPRNTar(b->data, b->nlocal);
+    }
 
     b->done_data = 1;
 

@@ -15,7 +15,9 @@
 extern "C" {
 #endif
 
+#ifdef SDF_DEBUG_ALL
 #define SDF_DEBUG
+#endif
 
 #define SDF_MAXDIMS 4
 #define SDF_ID_LENGTH 32
@@ -183,12 +185,12 @@ struct sdf_file {
     uint32_t block_header_length, string_length, nblocks;
     uint32_t file_version, file_revision, code_io_version, step;
     comm_t comm;
-    int rank, ncpus, ndomains, rank_master, indent;
+    int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer;
     char done_header, restart_flag, other_domains, use_float;
     char *code_name;
     sdf_block_t *blocklist, *current_block;
-    void *mmap;
+    char *mmap;
 #ifdef SDF_DEBUG
     char *dbg, *dbg_buf;
     size_t dbg_count;

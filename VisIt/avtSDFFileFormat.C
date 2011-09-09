@@ -609,7 +609,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     h->current_block = b;
 
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
-            b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE) {
+            b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
         sdf_read_data(h);
     } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
         sdf_block_t *material = sdf_find_block_by_id(h, b->material_id);
@@ -719,7 +719,9 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
 
     rv->SetVoidArray(b->data, b->nlocal, 1);
 
-    SetUpDomainConnectivity();
+    if (b->blocktype != SDF_BLOCKTYPE_POINT_MESH &&
+        b->blocktype != SDF_BLOCKTYPE_POINT_VARIABLE)
+            SetUpDomainConnectivity();
 
 #ifdef SDF_DEBUG
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
@@ -784,6 +786,7 @@ avtSDFFileFormat::GetVectorVar(int domain, const char *varname)
     // delete [] one_entry;
     // return rv;
     //
+    return NULL;
 }
 
 

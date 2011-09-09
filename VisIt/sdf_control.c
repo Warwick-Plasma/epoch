@@ -48,9 +48,11 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
         return h;
     }
 
+#ifndef PARALLEL
     if (use_mmap)
         h->mmap = "";
     else
+#endif
         h->mmap = NULL;
 
     ret = sdf_read_header(h);
@@ -450,8 +452,8 @@ int sdf_factor(sdf_file_t *h, int *start)
 #ifdef PARALLEL
     int periods[3] = {0, 0, 0};
 
-    if (b->stagger != SDF_STAGGER_CELL_CENTRE)
-        for (n = 0; n < b->ndims; n++) b->dims[n]--;
+    //if (b->stagger != SDF_STAGGER_CELL_CENTRE)
+    //    for (n = 0; n < b->ndims; n++) b->dims[n]--;
 
     for (n = 0; n < b->ndims; n++) if (b->dims[n] < 1) b->dims[n] = 1;
 
@@ -460,8 +462,8 @@ int sdf_factor(sdf_file_t *h, int *start)
     else
         factor3d(h->ncpus, b->dims, b->cpu_split);
 
-    if (b->stagger != SDF_STAGGER_CELL_CENTRE)
-        for (n = 0; n < b->ndims; n++) b->dims[n]++;
+    //if (b->stagger != SDF_STAGGER_CELL_CENTRE)
+    //    for (n = 0; n < b->ndims; n++) b->dims[n]++;
 
     MPI_Cart_create(h->comm, b->ndims, b->cpu_split, periods, 1, &b->cart_comm);
     MPI_Comm_rank(b->cart_comm, &b->cart_rank);

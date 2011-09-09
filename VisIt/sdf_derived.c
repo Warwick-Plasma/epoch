@@ -6,6 +6,7 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
     b->data = mesh->grids[b->nm];
+    return b;
 }
 
 
