@@ -100,26 +100,26 @@ CONTAINS
           ! dump Px
           WRITE(temp_name, '(a, "/Px")') TRIM(probe_name)
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
-              TRIM(temp_name), 'Pa', npart_probe_global, TRIM(probe_name), &
+              TRIM(temp_name), 'kg.m/s', npart_probe_global, TRIM(probe_name), &
               iterate_probe_px, part_probe_offset)
 
           ! dump Py
           WRITE(temp_name, '(a, "/Py")') TRIM(probe_name)
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
-              TRIM(temp_name), 'Pa', npart_probe_global, TRIM(probe_name), &
+              TRIM(temp_name), 'kg.m/s', npart_probe_global, TRIM(probe_name), &
               iterate_probe_py, part_probe_offset)
 
           ! dump Pz
           WRITE(temp_name, '(a, "/Pz")') TRIM(probe_name)
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
-              TRIM(temp_name), 'Pa', npart_probe_global, TRIM(probe_name), &
+              TRIM(temp_name), 'kg.m/s', npart_probe_global, TRIM(probe_name), &
               iterate_probe_pz, part_probe_offset)
 
           ! dump particle weight function
           WRITE(temp_name, '(a, "/weight")') TRIM(probe_name)
 #ifdef PER_PARTICLE_WEIGHT
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
-              TRIM(temp_name), 'kg', npart_probe_global, TRIM(probe_name), &
+              TRIM(temp_name), '', npart_probe_global, TRIM(probe_name), &
               iterate_probe_weight, part_probe_offset)
 #else
           CALL sdf_write_srl(sdf_handle, TRIM(temp_name), TRIM(probe_name), &

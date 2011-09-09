@@ -115,7 +115,7 @@ CONTAINS
     ENDIF
 
 #ifdef PER_PARTICLE_WEIGHT
-    CALL write_particle_variable(c_dump_part_weight, code, 'Weight', &
+    CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
         iterate_weight)
 #else
     IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
@@ -129,71 +129,76 @@ CONTAINS
       ENDDO
     ENDIF
 #endif
-    CALL write_particle_variable(c_dump_part_px, code, 'Px', iterate_px)
-    CALL write_particle_variable(c_dump_part_py, code, 'Py', iterate_py)
-    CALL write_particle_variable(c_dump_part_pz, code, 'Pz', iterate_pz)
+    CALL write_particle_variable(c_dump_part_px, code, 'Px', 'kg.m/s', &
+        iterate_px)
+    CALL write_particle_variable(c_dump_part_py, code, 'Py', 'kg.m/s', &
+        iterate_py)
+    CALL write_particle_variable(c_dump_part_pz, code, 'Pz', 'kg.m/s', &
+        iterate_pz)
 
-    CALL write_particle_variable(c_dump_part_vx, code, 'Vx', iterate_vx)
-    CALL write_particle_variable(c_dump_part_vy, code, 'Vy', iterate_vy)
-    CALL write_particle_variable(c_dump_part_vz, code, 'Vz', iterate_vz)
+    CALL write_particle_variable(c_dump_part_vx, code, 'Vx', 'm/s', iterate_vx)
+    CALL write_particle_variable(c_dump_part_vy, code, 'Vy', 'm/s', iterate_vy)
+    CALL write_particle_variable(c_dump_part_vz, code, 'Vz', 'm/s', iterate_vz)
 
-    CALL write_particle_variable(c_dump_part_charge, code, 'Q', iterate_charge)
-    CALL write_particle_variable(c_dump_part_mass, code, 'Mass', iterate_mass)
+    CALL write_particle_variable(c_dump_part_charge, code, 'Q', 'C', &
+        iterate_charge)
+    CALL write_particle_variable(c_dump_part_mass, code, 'Mass', 'kg', &
+        iterate_mass)
 #ifdef PARTICLE_DEBUG
     CALL write_particle_variable(c_dump_part_grid, code, 'Processor', &
-        iterate_processor)
+        '', iterate_processor)
     CALL write_particle_variable(c_dump_part_grid, code, 'Processor_at_t0', &
-        iterate_processor0)
+        '', iterate_processor0)
 #endif
 
-    CALL write_field(c_dump_ex, code, 'ex', 'Electric Field/Ex', 'Volt/m', &
+    CALL write_field(c_dump_ex, code, 'ex', 'Electric Field/Ex', 'V/m', &
         c_stagger_ex, ex)
-    CALL write_field(c_dump_ey, code, 'ey', 'Electric Field/Ey', 'Volt/m', &
+    CALL write_field(c_dump_ey, code, 'ey', 'Electric Field/Ey', 'V/m', &
         c_stagger_ey, ey)
-    CALL write_field(c_dump_ez, code, 'ez', 'Electric Field/Ez', 'Volt/m', &
+    CALL write_field(c_dump_ez, code, 'ez', 'Electric Field/Ez', 'V/m', &
         c_stagger_ez, ez)
 
-    CALL write_field(c_dump_bx, code, 'bx', 'Magnetic Field/Bx', 'Tesla', &
+    CALL write_field(c_dump_bx, code, 'bx', 'Magnetic Field/Bx', 'T', &
         c_stagger_bx, bx)
-    CALL write_field(c_dump_by, code, 'by', 'Magnetic Field/By', 'Tesla', &
+    CALL write_field(c_dump_by, code, 'by', 'Magnetic Field/By', 'T', &
         c_stagger_by, by)
-    CALL write_field(c_dump_bz, code, 'bz', 'Magnetic Field/Bz', 'Tesla', &
+    CALL write_field(c_dump_bz, code, 'bz', 'Magnetic Field/Bz', 'T', &
         c_stagger_bz, bz)
 
-    CALL write_field(c_dump_jx, code, 'jx', 'Current/Jx', 'Amp', &
+    CALL write_field(c_dump_jx, code, 'jx', 'Current/Jx', 'A/m^2', &
         c_stagger_jx, jx)
-    CALL write_field(c_dump_jy, code, 'jy', 'Current/Jy', 'Amp', &
+    CALL write_field(c_dump_jy, code, 'jy', 'Current/Jy', 'A/m^2', &
         c_stagger_jy, jy)
-    CALL write_field(c_dump_jz, code, 'jz', 'Current/Jz', 'Amp', &
+    CALL write_field(c_dump_jz, code, 'jz', 'Current/Jz', 'A/m^2', &
         c_stagger_jz, jz)
 
     ! These are derived variables from the particles
     CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &
-        'Derived/EkBar', '?', c_stagger_cell_centre, &
+        'Derived/EkBar', 'J', c_stagger_cell_centre, &
         calc_ekbar, array)
 
     CALL write_nspecies_field(c_dump_mass_density, code, 'mass_density', &
-        'Derived/Mass_Density', '?', c_stagger_cell_centre, &
+        'Derived/Mass_Density', 'kg/m^3', c_stagger_cell_centre, &
         calc_mass_density, array)
 
     CALL write_nspecies_field(c_dump_charge_density, code, 'charge_density', &
-        'Derived/Charge_Density', '?', c_stagger_cell_centre, &
+        'Derived/Charge_Density', 'C/m^3', c_stagger_cell_centre, &
         calc_charge_density, array)
 
     CALL write_nspecies_field(c_dump_number_density, code, 'number_density', &
-        'Derived/Number_Density', '?', c_stagger_cell_centre, &
+        'Derived/Number_Density', '1/m^3', c_stagger_cell_centre, &
         calc_number_density, array)
 
     CALL write_nspecies_field(c_dump_temperature, code, 'temperature', &
-        'Derived/Temperature', '?', c_stagger_cell_centre, &
+        'Derived/Temperature', 'K', c_stagger_cell_centre, &
         calc_temperature, array)
 
     CALL write_nspecies_flux(c_dump_ekflux, code, 'ekflux', &
-        'Derived/EkFlux', '?', c_stagger_cell_centre, &
+        'Derived/EkFlux', 'W/m^2', c_stagger_cell_centre, &
         calc_ekflux, array, fluxdir, dir_tags)
 
     CALL write_nspecies_flux(c_dump_poynt_flux, code, 'poynt_flux', &
-        'Derived/Poynting Flux', '?', c_stagger_cell_centre, &
+        'Derived/Poynting Flux', 'W/m^2', c_stagger_cell_centre, &
         calc_poynt_flux, array, fluxdir(1:3), dim_tags)
 
 #ifdef FIELD_DEBUG
@@ -756,10 +761,10 @@ CONTAINS
 
 
 
-  SUBROUTINE write_particle_variable(id_in, code, name, iterator)
+  SUBROUTINE write_particle_variable(id_in, code, name, units, iterator)
 
     INTEGER, INTENT(IN) :: id_in, code
-    CHARACTER(LEN=*), INTENT(IN) :: name
+    CHARACTER(LEN=*), INTENT(IN) :: name, units
 
     INTERFACE
       FUNCTION iterator(array, npart_it, start)
@@ -785,7 +790,7 @@ CONTAINS
           CALL sdf_write_point_variable(sdf_handle, &
               lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
               'Particles/' // TRIM(current_species%name) // '/' // &
-              TRIM(name), '', &
+              TRIM(name), TRIM(units), &
               species_list(ispecies)%count, &
               'grid/' // TRIM(current_species%name), &
               iterator, species_offset(ispecies))
@@ -804,7 +809,7 @@ CONTAINS
         CALL sdf_write_point_variable(sdf_handle, &
             lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
             'Particles/' // TRIM(current_species%name) // '/' // &
-            TRIM(name), '', &
+            TRIM(name), TRIM(units), &
             ejected_list(ispecies)%count, &
             'grid/' // TRIM(current_species%name), &
             iterator, ejected_offset(ispecies))
