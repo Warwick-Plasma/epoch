@@ -474,6 +474,57 @@ MODULE shared_data
   TYPE(initial_condition_block), DIMENSION(:), ALLOCATABLE :: initial_conditions
 
   !----------------------------------------------------------------------------
+  ! file handling
+  !----------------------------------------------------------------------------
+  INTEGER :: subtype_field, subarray_field
+  INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
+  INTEGER :: full_dump_every, restart_dump_every
+  INTEGER :: output_file
+  LOGICAL :: force_final_to_be_restartable, dump_last
+  LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
+  INTEGER :: n_zeros = 4
+  REAL(num) :: dt_snapshot, time_next = 0.0_num
+  INTEGER :: nstep_snapshot, nstep_next = 0
+  INTEGER, PARAMETER :: c_dump_part_grid         = 1
+  INTEGER, PARAMETER :: c_dump_grid              = 2
+  INTEGER, PARAMETER :: c_dump_part_species      = 3
+  INTEGER, PARAMETER :: c_dump_part_weight       = 4
+  INTEGER, PARAMETER :: c_dump_part_px           = 5
+  INTEGER, PARAMETER :: c_dump_part_py           = 6
+  INTEGER, PARAMETER :: c_dump_part_pz           = 7
+  INTEGER, PARAMETER :: c_dump_part_vx           = 8
+  INTEGER, PARAMETER :: c_dump_part_vy           = 9
+  INTEGER, PARAMETER :: c_dump_part_vz           = 10
+  INTEGER, PARAMETER :: c_dump_part_charge       = 11
+  INTEGER, PARAMETER :: c_dump_part_mass         = 12
+  INTEGER, PARAMETER :: c_dump_part_id           = 13
+  INTEGER, PARAMETER :: c_dump_ex                = 14
+  INTEGER, PARAMETER :: c_dump_ey                = 15
+  INTEGER, PARAMETER :: c_dump_ez                = 16
+  INTEGER, PARAMETER :: c_dump_bx                = 17
+  INTEGER, PARAMETER :: c_dump_by                = 18
+  INTEGER, PARAMETER :: c_dump_bz                = 19
+  INTEGER, PARAMETER :: c_dump_jx                = 20
+  INTEGER, PARAMETER :: c_dump_jy                = 21
+  INTEGER, PARAMETER :: c_dump_jz                = 22
+  INTEGER, PARAMETER :: c_dump_ekbar             = 23
+  INTEGER, PARAMETER :: c_dump_mass_density      = 24
+  INTEGER, PARAMETER :: c_dump_charge_density    = 25
+  INTEGER, PARAMETER :: c_dump_number_density    = 26
+  INTEGER, PARAMETER :: c_dump_temperature       = 27
+  INTEGER, PARAMETER :: c_dump_dist_fns          = 28
+  INTEGER, PARAMETER :: c_dump_probes            = 29
+  INTEGER, PARAMETER :: c_dump_ejected_particles = 30
+  INTEGER, PARAMETER :: c_dump_ekflux            = 31
+  INTEGER, PARAMETER :: c_dump_poynt_flux        = 32
+  INTEGER, PARAMETER :: c_dump_cpml_psi_eyx      = 33
+  INTEGER, PARAMETER :: c_dump_cpml_psi_ezx      = 34
+  INTEGER, PARAMETER :: c_dump_cpml_psi_byx      = 35
+  INTEGER, PARAMETER :: c_dump_cpml_psi_bzx      = 36
+  INTEGER, PARAMETER :: num_vars_to_dump         = 36
+  INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
+
+  !----------------------------------------------------------------------------
   ! Extended IO information
   !----------------------------------------------------------------------------
 
@@ -629,57 +680,6 @@ MODULE shared_data
   INTEGER :: nx_global_min, nx_global_max
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
-
-  !----------------------------------------------------------------------------
-  ! file handling
-  !----------------------------------------------------------------------------
-  INTEGER :: subtype_field, subarray_field
-  INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
-  INTEGER :: full_dump_every, restart_dump_every
-  INTEGER :: output_file
-  LOGICAL :: force_final_to_be_restartable, dump_last
-  LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
-  INTEGER :: n_zeros = 4
-  REAL(num) :: dt_snapshot, time_next = 0.0_num
-  INTEGER :: nstep_snapshot, nstep_next = 0
-  INTEGER, PARAMETER :: c_dump_part_grid         = 1
-  INTEGER, PARAMETER :: c_dump_grid              = 2
-  INTEGER, PARAMETER :: c_dump_part_species      = 3
-  INTEGER, PARAMETER :: c_dump_part_weight       = 4
-  INTEGER, PARAMETER :: c_dump_part_px           = 5
-  INTEGER, PARAMETER :: c_dump_part_py           = 6
-  INTEGER, PARAMETER :: c_dump_part_pz           = 7
-  INTEGER, PARAMETER :: c_dump_part_vx           = 8
-  INTEGER, PARAMETER :: c_dump_part_vy           = 9
-  INTEGER, PARAMETER :: c_dump_part_vz           = 10
-  INTEGER, PARAMETER :: c_dump_part_charge       = 11
-  INTEGER, PARAMETER :: c_dump_part_mass         = 12
-  INTEGER, PARAMETER :: c_dump_part_id           = 13
-  INTEGER, PARAMETER :: c_dump_ex                = 14
-  INTEGER, PARAMETER :: c_dump_ey                = 15
-  INTEGER, PARAMETER :: c_dump_ez                = 16
-  INTEGER, PARAMETER :: c_dump_bx                = 17
-  INTEGER, PARAMETER :: c_dump_by                = 18
-  INTEGER, PARAMETER :: c_dump_bz                = 19
-  INTEGER, PARAMETER :: c_dump_jx                = 20
-  INTEGER, PARAMETER :: c_dump_jy                = 21
-  INTEGER, PARAMETER :: c_dump_jz                = 22
-  INTEGER, PARAMETER :: c_dump_ekbar             = 23
-  INTEGER, PARAMETER :: c_dump_mass_density      = 24
-  INTEGER, PARAMETER :: c_dump_charge_density    = 25
-  INTEGER, PARAMETER :: c_dump_number_density    = 26
-  INTEGER, PARAMETER :: c_dump_temperature       = 27
-  INTEGER, PARAMETER :: c_dump_dist_fns          = 28
-  INTEGER, PARAMETER :: c_dump_probes            = 29
-  INTEGER, PARAMETER :: c_dump_ejected_particles = 30
-  INTEGER, PARAMETER :: c_dump_ekflux            = 31
-  INTEGER, PARAMETER :: c_dump_poynt_flux        = 32
-  INTEGER, PARAMETER :: c_dump_cpml_psi_eyx      = 33
-  INTEGER, PARAMETER :: c_dump_cpml_psi_ezx      = 34
-  INTEGER, PARAMETER :: c_dump_cpml_psi_byx      = 35
-  INTEGER, PARAMETER :: c_dump_cpml_psi_bzx      = 36
-  INTEGER, PARAMETER :: num_vars_to_dump         = 36
-  INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
   ! Time averaged IO

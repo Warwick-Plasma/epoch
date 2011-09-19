@@ -104,8 +104,6 @@ CONTAINS
     CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
         dt_plasma_frequency)
 
-    CALL write_particle_grid(code)
-
     ! Write the cartesian mesh
     IF (IAND(dumpmask(c_dump_grid), code) .NE. 0) THEN
       IF (.NOT. use_offset_grid) THEN
@@ -118,47 +116,6 @@ CONTAINS
             'Grid/Grid_Full', xb_global, yb_global, zb_global)
       ENDIF
     ENDIF
-
-#ifdef PER_PARTICLE_WEIGHT
-    CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
-        iterate_weight)
-#else
-    IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
-      DO ispecies = 1, n_species
-        species => species_list(ispecies)
-        IF (IAND(species%dumpmask, code) .NE. 0 &
-            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
-          CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
-              'Particles/Weight/' // TRIM(species%name), species%weight)
-        ENDIF
-      ENDDO
-    ENDIF
-#endif
-    CALL write_particle_variable(c_dump_part_px, code, 'Px', 'kg.m/s', &
-        iterate_px)
-    CALL write_particle_variable(c_dump_part_py, code, 'Py', 'kg.m/s', &
-        iterate_py)
-    CALL write_particle_variable(c_dump_part_pz, code, 'Pz', 'kg.m/s', &
-        iterate_pz)
-
-    CALL write_particle_variable(c_dump_part_vx, code, 'Vx', 'm/s', iterate_vx)
-    CALL write_particle_variable(c_dump_part_vy, code, 'Vy', 'm/s', iterate_vy)
-    CALL write_particle_variable(c_dump_part_vz, code, 'Vz', 'm/s', iterate_vz)
-
-    CALL write_particle_variable(c_dump_part_charge, code, 'Q', 'C', &
-        iterate_charge)
-    CALL write_particle_variable(c_dump_part_mass, code, 'Mass', 'kg', &
-        iterate_mass)
-#ifdef PARTICLE_DEBUG
-    CALL write_particle_variable(c_dump_part_grid, code, 'Processor', &
-        '', iterate_processor)
-    CALL write_particle_variable(c_dump_part_grid, code, 'Processor_at_t0', &
-        '', iterate_processor0)
-#endif
-#if PARTICLE_ID || PARTICLE_ID4
-    CALL write_particle_variable(c_dump_part_id, code, 'ID', '#', &
-        iterate_id)
-#endif
 
     CALL write_field(c_dump_ex, code, 'ex', 'Electric Field/Ex', 'V/m', &
         c_stagger_ex, ex)
@@ -182,60 +139,31 @@ CONTAINS
         c_stagger_jz, jz)
 
     CALL write_field(c_dump_cpml_psi_eyx, code, 'cpml_psi_eyx', 'CPML/Ey_x', &
-        'Amp', c_stagger_cell_centre, cpml_psi_eyx)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_eyx)
     CALL write_field(c_dump_cpml_psi_ezx, code, 'cpml_psi_ezx', 'CPML/Ez_x', &
-        'Amp', c_stagger_cell_centre, cpml_psi_ezx)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_ezx)
     CALL write_field(c_dump_cpml_psi_byx, code, 'cpml_psi_byx', 'CPML/By_x', &
-        'Amp', c_stagger_cell_centre, cpml_psi_byx)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_byx)
     CALL write_field(c_dump_cpml_psi_bzx, code, 'cpml_psi_bzx', 'CPML/Bz_x', &
-        'Amp', c_stagger_cell_centre, cpml_psi_bzx)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_bzx)
 
     CALL write_field(c_dump_cpml_psi_exy, code, 'cpml_psi_exy', 'CPML/Ex_y', &
-        'Amp', c_stagger_cell_centre, cpml_psi_exy)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_exy)
     CALL write_field(c_dump_cpml_psi_ezy, code, 'cpml_psi_ezy', 'CPML/Ez_y', &
-        'Amp', c_stagger_cell_centre, cpml_psi_ezy)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_ezy)
     CALL write_field(c_dump_cpml_psi_bxy, code, 'cpml_psi_bxy', 'CPML/Bx_y', &
-        'Amp', c_stagger_cell_centre, cpml_psi_bxy)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_bxy)
     CALL write_field(c_dump_cpml_psi_bzy, code, 'cpml_psi_bzy', 'CPML/Bz_y', &
-        'Amp', c_stagger_cell_centre, cpml_psi_bzy)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_bzy)
 
     CALL write_field(c_dump_cpml_psi_exz, code, 'cpml_psi_exz', 'CPML/Ex_z', &
-        'Amp', c_stagger_cell_centre, cpml_psi_exz)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_exz)
     CALL write_field(c_dump_cpml_psi_eyz, code, 'cpml_psi_eyz', 'CPML/Ey_z', &
-        'Amp', c_stagger_cell_centre, cpml_psi_eyz)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_eyz)
     CALL write_field(c_dump_cpml_psi_bxz, code, 'cpml_psi_bxz', 'CPML/Bx_z', &
-        'Amp', c_stagger_cell_centre, cpml_psi_bxz)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_bxz)
     CALL write_field(c_dump_cpml_psi_byz, code, 'cpml_psi_byz', 'CPML/By_z', &
-        'Amp', c_stagger_cell_centre, cpml_psi_byz)
-
-    ! These are derived variables from the particles
-    CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &
-        'Derived/EkBar', 'J', c_stagger_cell_centre, &
-        calc_ekbar, array)
-
-    CALL write_nspecies_field(c_dump_mass_density, code, 'mass_density', &
-        'Derived/Mass_Density', 'kg/m^3', c_stagger_cell_centre, &
-        calc_mass_density, array)
-
-    CALL write_nspecies_field(c_dump_charge_density, code, 'charge_density', &
-        'Derived/Charge_Density', 'C/m^3', c_stagger_cell_centre, &
-        calc_charge_density, array)
-
-    CALL write_nspecies_field(c_dump_number_density, code, 'number_density', &
-        'Derived/Number_Density', '1/m^3', c_stagger_cell_centre, &
-        calc_number_density, array)
-
-    CALL write_nspecies_field(c_dump_temperature, code, 'temperature', &
-        'Derived/Temperature', 'K', c_stagger_cell_centre, &
-        calc_temperature, array)
-
-    CALL write_nspecies_flux(c_dump_ekflux, code, 'ekflux', &
-        'Derived/EkFlux', 'W/m^2', c_stagger_cell_centre, &
-        calc_ekflux, array, fluxdir, dir_tags)
-
-    CALL write_field_flux(c_dump_poynt_flux, code, 'poynt_flux', &
-        'Derived/Poynting Flux', 'W/m^2', c_stagger_cell_centre, &
-        calc_poynt_flux, array, fluxdir(1:3), dim_tags)
+        'A/m^2', c_stagger_cell_centre, cpml_psi_byz)
 
 #ifdef FIELD_DEBUG
     array = rank
@@ -243,6 +171,81 @@ CONTAINS
         dims, c_stagger_cell_centre, 'grid', array, subtype_field, &
         subarray_field)
 #endif
+
+    CALL write_particle_grid(code)
+
+#ifdef PER_PARTICLE_WEIGHT
+    CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
+        iterate_weight)
+#else
+    IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
+      DO ispecies = 1, n_species
+        species => species_list(ispecies)
+        IF (IAND(species%dumpmask, code) .NE. 0 &
+            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
+              'Particles/Weight/' // TRIM(species%name), species%weight)
+        ENDIF
+      ENDDO
+    ENDIF
+#endif
+    CALL write_particle_variable(c_dump_part_px, code, 'Px', 'kg.m/s', &
+        iterate_px)
+    CALL write_particle_variable(c_dump_part_py, code, 'Py', 'kg.m/s', &
+        iterate_py)
+    CALL write_particle_variable(c_dump_part_pz, code, 'Pz', 'kg.m/s', &
+        iterate_pz)
+
+    CALL write_particle_variable(c_dump_part_vx, code, 'Vx', 'm/s', &
+        iterate_vx)
+    CALL write_particle_variable(c_dump_part_vy, code, 'Vy', 'm/s', &
+        iterate_vy)
+    CALL write_particle_variable(c_dump_part_vz, code, 'Vz', 'm/s', &
+        iterate_vz)
+
+    CALL write_particle_variable(c_dump_part_charge, code, 'Q', 'C', &
+        iterate_charge)
+    CALL write_particle_variable(c_dump_part_mass, code, 'Mass', 'kg', &
+        iterate_mass)
+#ifdef PARTICLE_DEBUG
+    CALL write_particle_variable(c_dump_part_grid, code, 'Processor', &
+        '', iterate_processor)
+    CALL write_particle_variable(c_dump_part_grid, code, 'Processor_at_t0', &
+        '', iterate_processor0)
+#endif
+#if PARTICLE_ID || PARTICLE_ID4
+    CALL write_particle_variable(c_dump_part_id, code, 'ID', '#', &
+        iterate_id)
+#endif
+
+    ! These are derived variables from the particles
+    CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &
+        'EkBar', 'J', c_stagger_cell_centre, &
+        calc_ekbar, array)
+
+    CALL write_nspecies_field(c_dump_mass_density, code, 'mass_density', &
+        'Mass_Density', 'kg/m^3', c_stagger_cell_centre, &
+        calc_mass_density, array)
+
+    CALL write_nspecies_field(c_dump_charge_density, code, 'charge_density', &
+        'Charge_Density', 'C/m^3', c_stagger_cell_centre, &
+        calc_charge_density, array)
+
+    CALL write_nspecies_field(c_dump_number_density, code, 'number_density', &
+        'Number_Density', '1/m^3', c_stagger_cell_centre, &
+        calc_number_density, array)
+
+    CALL write_nspecies_field(c_dump_temperature, code, 'temperature', &
+        'Temperature', 'K', c_stagger_cell_centre, &
+        calc_temperature, array)
+
+    CALL write_nspecies_flux(c_dump_ekflux, code, 'ekflux', &
+        'EkFlux', 'W/m^2', c_stagger_cell_centre, &
+        calc_ekflux, array, fluxdir, dir_tags)
+
+    CALL write_field_flux(c_dump_poynt_flux, code, 'poynt_flux', &
+        'Poynting Flux', 'W/m^2', c_stagger_cell_centre, &
+        calc_poynt_flux, array, fluxdir(1:3), dim_tags)
 
     IF (IAND(dumpmask(c_dump_dist_fns), code) .NE. 0) THEN
       CALL write_dist_fns(sdf_handle, code)
@@ -528,19 +531,17 @@ CONTAINS
     should_dump = IOR(should_dump, NOT(c_io_averaged))
 
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
-      CALL sdf_write_plain_variable(sdf_handle, &
-          TRIM(block_id), TRIM(name), &
-          TRIM(units), dims, stagger, 'grid', &
-          array, subtype_field, subarray_field)
+      CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id), &
+          TRIM(name), TRIM(units), dims, stagger, 'grid', array, &
+          subtype_field, subarray_field)
     ENDIF
 
     IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
       averaged_data(id)%array = averaged_data(id)%array &
           / averaged_data(id)%real_time
 
-      CALL sdf_write_plain_variable(sdf_handle, &
-          TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
-          TRIM(units), dims, stagger, 'grid', &
+      CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id) // '_averaged', &
+          TRIM(name) // '_averaged', TRIM(units), dims, stagger, 'grid', &
           averaged_data(id)%array(:,:,:,1), subtype_field, subarray_field)
 
       averaged_data(id)%real_time = c_non_zero
@@ -586,19 +587,20 @@ CONTAINS
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
+        temp_block_id = 'derived/' // TRIM(block_id)
+        temp_name = 'Derived/' // TRIM(name)
         CALL func(array, 0)
-        CALL sdf_write_plain_variable(sdf_handle, &
-            TRIM(ADJUSTL(block_id)), TRIM(ADJUSTL(name)), &
-            TRIM(units), dims, stagger, 'grid', &
-            array, subtype_field, subarray_field)
+        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+            TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+            subtype_field, subarray_field)
       ENDIF
 
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
-        len1 = LEN_TRIM(block_id) + 1
-        len2 = LEN_TRIM(name) + 1
+        len1 = LEN_TRIM(block_id) + 9
+        len2 = LEN_TRIM(name) + 9
         DO ispecies = 1, n_species
           len3 = LEN_TRIM(species_list(ispecies)%name)
           len4 = len3
@@ -609,7 +611,7 @@ CONTAINS
             IF (rank .EQ. 0) THEN
               CALL integer_as_string((len2+len3), len_string)
               PRINT*, '*** WARNING ***'
-              PRINT*, 'Output block name ',TRIM(name) // '/' &
+              PRINT*, 'Output block name ','Derived/' // TRIM(name) // '/' &
                   // TRIM(species_list(ispecies)%name),' is truncated.'
               PRINT*, 'Either shorten the species name or increase ', &
                   'the size of "c_max_string_length" ', &
@@ -617,15 +619,14 @@ CONTAINS
             ENDIF
           ENDIF
 
-          WRITE(temp_block_id, '(a, ''/'', a)') TRIM(block_id), &
+          temp_block_id = 'derived/' // TRIM(block_id) // '/' // &
               TRIM(species_list(ispecies)%name(1:len4))
-          WRITE(temp_name, '(a, ''/'', a)') TRIM(name), &
+          temp_name = 'Derived/' // TRIM(name) // '/' // &
               TRIM(species_list(ispecies)%name(1:len5))
           CALL func(array, ispecies)
-          CALL sdf_write_plain_variable(sdf_handle, &
-              TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
-              TRIM(units), dims, stagger, 'grid', &
-              array, subtype_field, subarray_field)
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+              subtype_field, subarray_field)
         ENDDO
       ENDIF
     ENDIF
@@ -639,14 +640,15 @@ CONTAINS
       IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
         species_sum = 1
         CALL sdf_write_plain_variable(sdf_handle, &
-            TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
+            'derived/' // TRIM(block_id) // '_averaged', &
+            'Derived/' // TRIM(name) // '_averaged', &
             TRIM(units), dims, stagger, 'grid', &
             averaged_data(id)%array(:,:,:,1), subtype_field, subarray_field)
       ENDIF
 
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
-        len1 = LEN_TRIM(block_id) + 10
-        len2 = LEN_TRIM(name) + 10
+        len1 = LEN_TRIM(block_id) + 18
+        len2 = LEN_TRIM(name) + 18
 
         DO ispecies = 1, n_species
           len3 = LEN_TRIM(species_list(ispecies)%name)
@@ -658,21 +660,21 @@ CONTAINS
             IF (rank .EQ. 0) THEN
               CALL integer_as_string((len2+len3), len_string)
               PRINT*, '*** WARNING ***'
-              PRINT*, 'Output block name ',TRIM(name) // '_averaged/' // &
-                  TRIM(species_list(ispecies)%name), ' is truncated.'
+              PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
+                  '_averaged/' // TRIM(species_list(ispecies)%name), &
+                  ' is truncated.'
               PRINT*, 'Either shorten the species name or increase ', &
                   'the size of "c_max_string_length" ', &
                   'to at least ',TRIM(len_string)
             ENDIF
           ENDIF
 
-          WRITE(temp_block_id, '(a, ''_averaged/'', a)') TRIM(block_id), &
+          temp_block_id = 'derived/' // TRIM(block_id) // '_averaged/' // &
               TRIM(species_list(ispecies)%name(1:len4))
-          WRITE(temp_name, '(a, ''_averaged/'', a)') TRIM(name), &
+          temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
               TRIM(species_list(ispecies)%name(1:len5))
-          CALL sdf_write_plain_variable(sdf_handle, &
-              TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
-              TRIM(units), dims, stagger, 'grid', &
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
               averaged_data(id)%array(:,:,:,ispecies+species_sum), &
               subtype_field, subarray_field)
         ENDDO
@@ -777,15 +779,14 @@ CONTAINS
         IF (npart_global .EQ. 0) RETURN
 
         DO idir = 1, ndirs
-          WRITE(temp_block_id, '(a, ''_'', a)') TRIM(block_id), &
+          temp_block_id = 'derived/' // TRIM(block_id) // '_' // &
               TRIM(dir_tags(idir))
-          WRITE(temp_name, '(a, ''_'', a)') TRIM(name), &
+          temp_name = 'Derived/' // TRIM(name) // '_' // &
               TRIM(dir_tags(idir))
           CALL func(array, 0, fluxdir(idir))
-          CALL sdf_write_plain_variable(sdf_handle, &
-              TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
-              TRIM(units), dims, stagger, 'grid', &
-              array, subtype_field, subarray_field)
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+              subtype_field, subarray_field)
         ENDDO
       ENDIF
 
@@ -793,8 +794,8 @@ CONTAINS
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
-        len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 2
-        len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 2
+        len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 10
+        len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 10
 
         DO ispecies = 1, n_species
           len3 = LEN_TRIM(species_list(ispecies)%name)
@@ -806,7 +807,7 @@ CONTAINS
             IF (rank .EQ. 0) THEN
               CALL integer_as_string((len2+len3), len_string)
               PRINT*, '*** WARNING ***'
-              PRINT*, 'Output block name ',TRIM(name) // '_' &
+              PRINT*, 'Output block name ','Derived/' // TRIM(name) // '_' &
                   // TRIM(species_list(ispecies)%name) // '/' &
                   // TRIM(dir_tags(1)),' is truncated.'
               PRINT*, 'Either shorten the species name or increase ', &
@@ -816,15 +817,16 @@ CONTAINS
           ENDIF
 
           DO idir = 1, ndirs
-            WRITE(temp_block_id, '(a, ''_'', a, ''/'', a)') TRIM(block_id), &
-                TRIM(species_list(ispecies)%name(1:len4)), TRIM(dir_tags(idir))
-            WRITE(temp_name, '(a, ''_'', a, ''/'', a)') TRIM(name), &
-                TRIM(species_list(ispecies)%name(1:len5)), TRIM(dir_tags(idir))
+            temp_block_id = 'derived/' // TRIM(block_id) // '_' // &
+                TRIM(dir_tags(idir)) // '/' // &
+                TRIM(species_list(ispecies)%name(1:len4))
+            temp_name = 'Derived/' // TRIM(name) // '_' // &
+                TRIM(dir_tags(idir)) // '/' // &
+                TRIM(species_list(ispecies)%name(1:len5))
             CALL func(array, ispecies, fluxdir(idir))
-            CALL sdf_write_plain_variable(sdf_handle, &
-                TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
-                TRIM(units), dims, stagger, 'grid', &
-                array, subtype_field, subarray_field)
+            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+                subtype_field, subarray_field)
           ENDDO
         ENDDO
       ENDIF
