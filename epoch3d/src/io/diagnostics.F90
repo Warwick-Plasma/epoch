@@ -600,9 +600,6 @@ CONTAINS
         len1 = LEN_TRIM(block_id) + 1
         len2 = LEN_TRIM(name) + 1
         DO ispecies = 1, n_species
-#ifdef TRACER_PARTICLES
-          IF (species_list(ispecies)%tracer) CYCLE
-#endif
           len3 = LEN_TRIM(species_list(ispecies)%name)
           len4 = len3
           len5 = len3
@@ -801,9 +798,6 @@ CONTAINS
         len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 2
 
         DO ispecies = 1, n_species
-#ifdef TRACER_PARTICLES
-          IF (species_list(ispecies)%tracer) CYCLE
-#endif
           len3 = LEN_TRIM(species_list(ispecies)%name)
           len4 = len3
           len5 = len3

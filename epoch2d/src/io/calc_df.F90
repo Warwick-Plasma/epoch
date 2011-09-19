@@ -59,6 +59,7 @@ CONTAINS
     REAL(num) :: fac, idx
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
     TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
 #include "particle_head.inc"
 
     data_array = 0.0_num
@@ -69,15 +70,17 @@ CONTAINS
 
     spec_start = current_species
     spec_end = current_species
+    spec_sum = .FALSE.
 
     IF (current_species .LE. 0) THEN
       spec_start = 1
       spec_end = n_species
+      spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
 #endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
@@ -143,6 +146,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
     TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
 #include "particle_head.inc"
 
     ALLOCATE(wt(-2:nx+3,-2:ny+3))
@@ -153,15 +157,17 @@ CONTAINS
 
     spec_start = current_species
     spec_end = current_species
+    spec_sum = .FALSE.
 
     IF (current_species .LE. 0) THEN
       spec_start = 1
       spec_end = n_species
+      spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
 #endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
@@ -239,6 +245,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
     TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
 #include "particle_head.inc"
 
     ALLOCATE(wt(-2:nx+3,-2:ny+3))
@@ -253,15 +260,17 @@ CONTAINS
 
     spec_start = current_species
     spec_end = current_species
+    spec_sum = .FALSE.
 
     IF (current_species .LE. 0) THEN
       spec_start = 1
       spec_end = n_species
+      spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
 #endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
@@ -410,6 +419,7 @@ CONTAINS
     REAL(num) :: fac, idx
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
     TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
 #include "particle_head.inc"
 
     data_array = 0.0_num
@@ -420,15 +430,17 @@ CONTAINS
 
     spec_start = current_species
     spec_end = current_species
+    spec_sum = .FALSE.
 
     IF (current_species .LE. 0) THEN
       spec_start = 1
       spec_end = n_species
+      spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
 #endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
@@ -489,6 +501,7 @@ CONTAINS
     REAL(num) :: idx
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
     TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
 #include "particle_head.inc"
 
     data_array = 0.0_num
@@ -497,15 +510,17 @@ CONTAINS
 
     spec_start = current_species
     spec_end = current_species
+    spec_sum = .FALSE.
 
     IF (current_species .LE. 0) THEN
       spec_start = 1
       spec_end = n_species
+      spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
 #endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_WEIGHT
@@ -550,14 +565,17 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: part_count, meanx, meany, meanz
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
     TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
 #include "particle_head.inc"
 
     spec_start = current_species
     spec_end = current_species
+    spec_sum = .FALSE.
 
     IF (current_species .LE. 0) THEN
       spec_start = 1
       spec_end = n_species
+      spec_sum = .TRUE.
     ENDIF
 
     ALLOCATE(meanx(-2:nx+3,-2:ny+3))
@@ -572,7 +590,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
 #endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
@@ -626,7 +644,7 @@ CONTAINS
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
 #endif
       current=>species_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
@@ -678,6 +696,7 @@ CONTAINS
     REAL(num) :: wdata
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
     TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
 #include "particle_head.inc"
 
     INTERFACE
@@ -693,15 +712,17 @@ CONTAINS
 
     spec_start = current_species
     spec_end = current_species
+    spec_sum = .FALSE.
 
     IF (current_species .LE. 0) THEN
       spec_start = 1
       spec_end = n_species
+      spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
 #endif
       current=>species_list(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
