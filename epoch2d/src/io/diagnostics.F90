@@ -23,7 +23,9 @@ MODULE diagnostics
   TYPE(sdf_file_handle) :: sdf_handle
   INTEGER(KIND=8), ALLOCATABLE :: species_offset(:)
   INTEGER(KIND=8), ALLOCATABLE :: ejected_offset(:)
-  LOGICAL :: reset_ejected
+  LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
+  INTEGER :: isubset
+  INTEGER, DIMENSION(num_vars_to_dump) :: iomask
 
 CONTAINS
 
@@ -163,82 +165,102 @@ CONTAINS
         subarray_field)
 #endif
 
-    io_list = species_list
+    iomask = dumpmask
 
-    CALL write_particle_grid(code)
+    DO isubset = 1, n_subsets + 1
+      done_species_offset_init = .FALSE.
+      done_subset_init = .FALSE.
+      IF (isubset .GT. 1) iomask = subset_list(isubset-1)%dumpmask
+
+      CALL write_particle_grid(code)
 
 #ifdef PER_PARTICLE_WEIGHT
-    CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
-        iterate_weight)
+      CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
+          iterate_weight)
 #else
-    IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
-      DO ispecies = 1, n_species
-        species => io_list(ispecies)
-        IF (IAND(species%dumpmask, code) .NE. 0 &
-            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
-          CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
-              'Particles/Weight/' // TRIM(species%name), species%weight)
-        ENDIF
-      ENDDO
-    ENDIF
+      IF (IAND(iomask(c_dump_part_weight), code) .NE. 0) THEN
+        CALL build_species_subset
+
+        DO ispecies = 1, n_species
+          species => io_list(ispecies)
+          IF (IAND(species%dumpmask, code) .NE. 0 &
+              .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+            CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
+                'Particles/Weight/' // TRIM(species%name), species%weight)
+          ENDIF
+        ENDDO
+      ENDIF
 #endif
-    CALL write_particle_variable(c_dump_part_px, code, 'Px', 'kg.m/s', &
-        iterate_px)
-    CALL write_particle_variable(c_dump_part_py, code, 'Py', 'kg.m/s', &
-        iterate_py)
-    CALL write_particle_variable(c_dump_part_pz, code, 'Pz', 'kg.m/s', &
-        iterate_pz)
+      CALL write_particle_variable(c_dump_part_px, code, 'Px', 'kg.m/s', &
+          iterate_px)
+      CALL write_particle_variable(c_dump_part_py, code, 'Py', 'kg.m/s', &
+          iterate_py)
+      CALL write_particle_variable(c_dump_part_pz, code, 'Pz', 'kg.m/s', &
+          iterate_pz)
 
-    CALL write_particle_variable(c_dump_part_vx, code, 'Vx', 'm/s', &
-        iterate_vx)
-    CALL write_particle_variable(c_dump_part_vy, code, 'Vy', 'm/s', &
-        iterate_vy)
-    CALL write_particle_variable(c_dump_part_vz, code, 'Vz', 'm/s', &
-        iterate_vz)
+      CALL write_particle_variable(c_dump_part_vx, code, 'Vx', 'm/s', &
+          iterate_vx)
+      CALL write_particle_variable(c_dump_part_vy, code, 'Vy', 'm/s', &
+          iterate_vy)
+      CALL write_particle_variable(c_dump_part_vz, code, 'Vz', 'm/s', &
+          iterate_vz)
 
-    CALL write_particle_variable(c_dump_part_charge, code, 'Q', 'C', &
-        iterate_charge)
-    CALL write_particle_variable(c_dump_part_mass, code, 'Mass', 'kg', &
-        iterate_mass)
+      CALL write_particle_variable(c_dump_part_charge, code, 'Q', 'C', &
+          iterate_charge)
+      CALL write_particle_variable(c_dump_part_mass, code, 'Mass', 'kg', &
+          iterate_mass)
 #ifdef PARTICLE_DEBUG
-    CALL write_particle_variable(c_dump_part_grid, code, 'Processor', &
-        '', iterate_processor)
-    CALL write_particle_variable(c_dump_part_grid, code, 'Processor_at_t0', &
-        '', iterate_processor0)
+      CALL write_particle_variable(c_dump_part_grid, code, 'Processor', &
+          '', iterate_processor)
+      CALL write_particle_variable(c_dump_part_grid, code, 'Processor_at_t0', &
+          '', iterate_processor0)
 #endif
 #if PARTICLE_ID || PARTICLE_ID4
-    CALL write_particle_variable(c_dump_part_id, code, 'ID', '#', &
-        iterate_id)
+      CALL write_particle_variable(c_dump_part_id, code, 'ID', '#', &
+          iterate_id)
 #endif
 
-    ! These are derived variables from the particles
-    CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &
-        'EkBar', 'J', c_stagger_cell_centre, &
-        calc_ekbar, array)
+      ! These are derived variables from the particles
+      CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &
+          'EkBar', 'J', c_stagger_cell_centre, &
+          calc_ekbar, array)
 
-    CALL write_nspecies_field(c_dump_mass_density, code, 'mass_density', &
-        'Mass_Density', 'kg/m^3', c_stagger_cell_centre, &
-        calc_mass_density, array)
+      CALL write_nspecies_field(c_dump_mass_density, code, 'mass_density', &
+          'Mass_Density', 'kg/m^3', c_stagger_cell_centre, &
+          calc_mass_density, array)
 
-    CALL write_nspecies_field(c_dump_charge_density, code, 'charge_density', &
-        'Charge_Density', 'C/m^3', c_stagger_cell_centre, &
-        calc_charge_density, array)
+      CALL write_nspecies_field(c_dump_charge_density, code, 'charge_density', &
+          'Charge_Density', 'C/m^3', c_stagger_cell_centre, &
+          calc_charge_density, array)
 
-    CALL write_nspecies_field(c_dump_number_density, code, 'number_density', &
-        'Number_Density', '1/m^3', c_stagger_cell_centre, &
-        calc_number_density, array)
+      CALL write_nspecies_field(c_dump_number_density, code, 'number_density', &
+          'Number_Density', '1/m^3', c_stagger_cell_centre, &
+          calc_number_density, array)
 
-    CALL write_nspecies_field(c_dump_temperature, code, 'temperature', &
-        'Temperature', 'K', c_stagger_cell_centre, &
-        calc_temperature, array)
+      CALL write_nspecies_field(c_dump_temperature, code, 'temperature', &
+          'Temperature', 'K', c_stagger_cell_centre, &
+          calc_temperature, array)
 
-    CALL write_nspecies_flux(c_dump_ekflux, code, 'ekflux', &
-        'EkFlux', 'W/m^2', c_stagger_cell_centre, &
-        calc_ekflux, array, fluxdir, dir_tags)
+      CALL write_nspecies_flux(c_dump_ekflux, code, 'ekflux', &
+          'EkFlux', 'W/m^2', c_stagger_cell_centre, &
+          calc_ekflux, array, fluxdir, dir_tags)
 
-    CALL write_field_flux(c_dump_poynt_flux, code, 'poynt_flux', &
-        'Poynting Flux', 'W/m^2', c_stagger_cell_centre, &
-        calc_poynt_flux, array, fluxdir(1:3), dim_tags)
+      CALL write_field_flux(c_dump_poynt_flux, code, 'poynt_flux', &
+          'Poynting Flux', 'W/m^2', c_stagger_cell_centre, &
+          calc_poynt_flux, array, fluxdir(1:3), dim_tags)
+
+      IF (isubset .NE. 1) THEN
+        DO i = 1, n_species
+          CALL append_partlist(species_list(i)%attached_list, &
+              io_list(i)%attached_list)
+        ENDDO
+      ENDIF
+      DO i = 1, n_species
+        CALL create_empty_partlist(io_list(i)%attached_list)
+      ENDDO
+    ENDDO
+
+    io_list = species_list
 
     IF (IAND(dumpmask(c_dump_dist_fns), code) .NE. 0) THEN
       CALL write_dist_fns(sdf_handle, code)
@@ -566,7 +588,7 @@ CONTAINS
       END SUBROUTINE func
     END INTERFACE
 
-    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+    IF (IAND(iomask(id), code) .EQ. 0) RETURN
 
     dims = (/nx_global, ny_global/)
 
@@ -575,20 +597,27 @@ CONTAINS
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
 
-    IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
-      IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
+    IF (IAND(iomask(id), should_dump) .NE. 0) THEN
+      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0) THEN
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
-        temp_block_id = 'derived/' // TRIM(block_id)
-        temp_name = 'Derived/' // TRIM(name)
+        IF (isubset .EQ. 1) THEN
+          temp_block_id = 'derived/' // TRIM(block_id)
+          temp_name = 'Derived/' // TRIM(name)
+        ELSE
+          temp_block_id = 'derived/' // TRIM(block_id) // '/subset_' // &
+              TRIM(subset_list(isubset-1)%name)
+          temp_name = 'Derived/' // TRIM(name) // '/Subset_' // &
+              TRIM(subset_list(isubset-1)%name)
+        ENDIF
         CALL func(array, 0)
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
             subtype_field, subarray_field)
       ENDIF
 
-      IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+      IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
@@ -624,13 +653,15 @@ CONTAINS
       ENDIF
     ENDIF
 
+    IF (isubset .NE. 1) RETURN
+
     ! Write averaged data
-    IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
+    IF (IAND(iomask(id), c_io_averaged) .NE. 0) THEN
       averaged_data(id)%array = averaged_data(id)%array &
           / averaged_data(id)%real_time
 
       species_sum = 0
-      IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
+      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0) THEN
         species_sum = 1
         CALL sdf_write_plain_variable(sdf_handle, &
             'derived/' // TRIM(block_id) // '_averaged', &
@@ -639,7 +670,7 @@ CONTAINS
             averaged_data(id)%array(:,:,1), subtype_field, subarray_field)
       ENDIF
 
-      IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+      IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
         len1 = LEN_TRIM(block_id) + 18
         len2 = LEN_TRIM(name) + 18
 
@@ -756,7 +787,7 @@ CONTAINS
       END SUBROUTINE func
     END INTERFACE
 
-    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+    IF (IAND(iomask(id), code) .EQ. 0) RETURN
 
     ndirs = SIZE(fluxdir)
     dims = (/nx_global, ny_global/)
@@ -766,8 +797,8 @@ CONTAINS
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
 
-    IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
-      IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
+    IF (IAND(iomask(id), should_dump) .NE. 0) THEN
+      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0) THEN
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
@@ -783,7 +814,7 @@ CONTAINS
         ENDDO
       ENDIF
 
-      IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+      IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
@@ -831,16 +862,157 @@ CONTAINS
 
 
 
+  SUBROUTINE build_species_subset
+
+    INTEGER :: i, l
+    TYPE(particle), POINTER :: current, next
+    LOGICAL :: use_particle
+    REAL(num) :: gamma, random_num, part_mc
+
+    IF (done_subset_init) RETURN
+    done_subset_init = .TRUE.
+
+    IF (isubset .EQ. 1) THEN
+      DO i = 1, n_species
+        io_list(i) = species_list(i)
+        io_list(i)%name = TRIM(species_list(i)%name)
+      ENDDO
+      RETURN
+    ENDIF
+
+    l = isubset - 1
+    DO i = 1, n_species
+      io_list(i) = species_list(i)
+      io_list(i)%count = 0
+      io_list(i)%name = 'subset_' // TRIM(subset_list(l)%name) // '/' // &
+          TRIM(species_list(i)%name)
+      CALL create_empty_partlist(io_list(i)%attached_list)
+
+      IF (.NOT. subset_list(l)%use_species(i)) THEN
+        io_list(i)%dumpmask = c_io_never
+        CYCLE
+      ENDIF
+
+      part_mc = c * species_list(i)%mass
+
+      current => species_list(i)%attached_list%head
+      DO WHILE (ASSOCIATED(current))
+        next => current%next
+        use_particle = .TRUE.
+        IF (subset_list(l)%use_gamma) THEN
+#ifdef PER_PARTICLE_CHARGE_MASS
+          part_mc = c * current%mass
+#endif
+          gamma = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
+          IF (subset_list(l)%use_gamma_min &
+              .AND. gamma .LT. subset_list(l)%gamma_min) use_particle = .FALSE.
+          IF (subset_list(l)%use_gamma_max &
+              .AND. gamma .GT. subset_list(l)%gamma_max) use_particle = .FALSE.
+        ENDIF
+
+        IF (subset_list(l)%use_x_min &
+            .AND. current%part_pos(1) .LT. subset_list(l)%x_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_x_max &
+            .AND. current%part_pos(1) .GT. subset_list(l)%x_max) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_y_min &
+            .AND. current%part_pos(2) .LT. subset_list(l)%y_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_y_max &
+            .AND. current%part_pos(2) .GT. subset_list(l)%y_max) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_px_min &
+            .AND. current%part_p(1) .LT. subset_list(l)%px_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_px_max &
+            .AND. current%part_p(1) .GT. subset_list(l)%px_max) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_py_min &
+            .AND. current%part_p(2) .LT. subset_list(l)%py_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_py_max &
+            .AND. current%part_p(2) .GT. subset_list(l)%py_max) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_pz_min &
+            .AND. current%part_p(3) .LT. subset_list(l)%pz_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_pz_max &
+            .AND. current%part_p(3) .GT. subset_list(l)%pz_max) &
+                use_particle = .FALSE.
+
+#ifdef PER_PARTICLE_WEIGHT
+        IF (subset_list(l)%use_weight_min &
+            .AND. current%weight .LT. subset_list(l)%weight_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_weight_max &
+            .AND. current%weight .GT. subset_list(l)%weight_max) &
+                use_particle = .FALSE.
+
+#endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+        IF (subset_list(l)%use_charge_min &
+            .AND. current%charge .LT. subset_list(l)%charge_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_charge_max &
+            .AND. current%charge .GT. subset_list(l)%charge_max) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_mass_min &
+            .AND. current%mass .LT. subset_list(l)%mass_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_mass_max &
+            .AND. current%mass .GT. subset_list(l)%mass_max) &
+                use_particle = .FALSE.
+
+#endif
+
+        IF (subset_list(l)%use_random) THEN
+          random_num = random()
+          IF (random_num .GT. subset_list(l)%random_fraction) &
+              use_particle = .FALSE.
+        ENDIF
+
+        IF (use_particle) THEN
+          ! Move particle to io_list
+          CALL remove_particle_from_partlist(species_list(i)%attached_list, &
+              current)
+          CALL add_particle_to_partlist(io_list(i)%attached_list, current)
+        ENDIF
+        current => next
+      ENDDO
+    ENDDO
+
+  END SUBROUTINE build_species_subset
+
+
+
   SUBROUTINE species_offset_init
 
     INTEGER(KIND=8) :: species_count
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_species_per_proc
     INTEGER :: i, ispecies
 
-    IF (ALLOCATED(species_offset)) RETURN
+    IF (done_species_offset_init) RETURN
+    done_species_offset_init = .TRUE.
+
+    IF (.NOT.ALLOCATED(species_offset)) ALLOCATE(species_offset(n_species))
+
+    CALL build_species_subset
 
     ALLOCATE(npart_species_per_proc(nproc))
-    ALLOCATE(species_offset(n_species))
     species_offset = 0
 
     npart_global = 0
@@ -856,7 +1028,8 @@ CONTAINS
       npart_global = npart_global + species_count
     ENDDO
 
-    IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
+    IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never &
+        .AND. .NOT.ALLOCATED(ejected_offset)) THEN
       ALLOCATE(ejected_offset(n_species))
       ejected_offset = 0
 
@@ -885,7 +1058,7 @@ CONTAINS
     INTEGER :: ispecies, id
 
     id = c_dump_part_grid
-    IF (IAND(dumpmask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) .NE. 0) THEN
       CALL species_offset_init()
       IF (npart_global .EQ. 0) RETURN
 
@@ -903,8 +1076,10 @@ CONTAINS
       ENDDO
     ENDIF
 
+    IF (isubset .NE. 1) RETURN
+
     id = c_dump_ejected_particles
-    IF (IAND(dumpmask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) .NE. 0) THEN
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
@@ -939,7 +1114,7 @@ CONTAINS
     INTEGER :: ispecies, id
 
     id = id_in
-    IF (IAND(dumpmask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) .NE. 0) THEN
       CALL species_offset_init()
       IF (npart_global .EQ. 0) RETURN
 
@@ -959,7 +1134,7 @@ CONTAINS
     ENDIF
 
     id = c_dump_ejected_particles
-    IF (IAND(dumpmask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) .NE. 0) THEN
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species

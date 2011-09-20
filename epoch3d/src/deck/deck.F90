@@ -13,6 +13,7 @@ MODULE deck
   USE deck_species_block
   USE deck_io_block
   USE deck_window_block
+  USE deck_subset_block
   ! Initial Condition Blocks
   USE deck_laser_block
   USE deck_fields_block
@@ -61,6 +62,7 @@ CONTAINS
     CALL fields_deck_initialise
     CALL io_deck_initialise
     CALL laser_deck_initialise
+    CALL subset_deck_initialise
 #ifdef PARTICLE_PROBES
     CALL probe_deck_initialise
 #endif
@@ -83,6 +85,7 @@ CONTAINS
     CALL fields_deck_finalise
     CALL io_deck_finalise
     CALL laser_deck_finalise
+    CALL subset_deck_finalise
 #ifdef PARTICLE_PROBES
     CALL probe_deck_finalise
 #endif
@@ -113,6 +116,8 @@ CONTAINS
       CALL io_block_start
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_start
+    ELSE IF (str_cmp(block_name, 'subset')) THEN
+      CALL subset_block_start
 #ifdef PARTICLE_PROBES
     ELSE IF (str_cmp(block_name, 'probe')) THEN
       CALL probe_block_start
@@ -148,6 +153,8 @@ CONTAINS
       CALL io_block_end
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_end
+    ELSE IF (str_cmp(block_name, 'subset')) THEN
+      CALL subset_block_end
 #ifdef PARTICLE_PROBES
     ELSE IF (str_cmp(block_name, 'probe')) THEN
       CALL probe_block_end
@@ -206,6 +213,10 @@ CONTAINS
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       handle_block = laser_block_handle_element(block_element, block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'subset')) THEN
+      handle_block = &
+          subset_block_handle_element(block_element, block_value)
+      RETURN
     ELSE IF (str_cmp(block_name, 'probe')) THEN
 #ifdef PARTICLE_PROBES
       handle_block = probe_block_handle_element(block_element, block_value)
@@ -253,6 +264,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, fields_block_check())
     errcode_deck = IOR(errcode_deck, io_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
+    errcode_deck = IOR(errcode_deck, subset_block_check())
 #ifdef PARTICLE_PROBES
     errcode_deck = IOR(errcode_deck, probe_block_check())
 #endif

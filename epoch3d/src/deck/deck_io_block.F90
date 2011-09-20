@@ -130,6 +130,8 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
     INTEGER :: loop, elementselected, mask, mask_element, ierr, io
+    INTEGER :: is, subset, n_list
+    INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad
 
     errcode = c_err_none
@@ -195,94 +197,110 @@ CONTAINS
 
     IF (elementselected .GT. num_vars_to_dump) RETURN
 
-    mask = as_integer(value, errcode)
     mask_element = elementselected
+    ALLOCATE(subsets(n_subsets+1))
+    CALL as_list(value, subsets, n_list, errcode)
 
-    ! If setting dumpmask for features which haven't been compiled
-    ! in then issue a warning
+    DO is = 1, n_list
+      subset = subsets(is)
+      IF (is .EQ. 1) THEN
+        mask = subset
+      ELSE
+        mask = subset_list(subset)%mask
+      ENDIF
+
+      ! If setting dumpmask for features which haven't been compiled
+      ! in then issue a warning
 #ifndef PARTICLE_PROBES
-    IF (mask_element .EQ. c_dump_probes .AND. mask .NE. c_io_never) THEN
-      errcode = c_err_pp_options_wrong
-      extended_error_string = '-DPARTICLE_PROBES'
-      mask = c_io_never
-    ENDIF
+      IF (mask_element .EQ. c_dump_probes .AND. mask .NE. c_io_never) THEN
+        errcode = c_err_pp_options_wrong
+        extended_error_string = '-DPARTICLE_PROBES'
+        mask = c_io_never
+      ENDIF
 #endif
 
 #ifdef PARTICLE_ID4
 #define PARTICLE_ID
 #endif
 #ifndef PARTICLE_ID
-    IF (mask_element .EQ. c_dump_part_id .AND. mask .NE. c_io_never) THEN
-      errcode = c_err_pp_options_wrong
-      extended_error_string = '-DPARTICLE_ID'
-      mask = c_io_never
-    ENDIF
+      IF (mask_element .EQ. c_dump_part_id .AND. mask .NE. c_io_never) THEN
+        errcode = c_err_pp_options_wrong
+        extended_error_string = '-DPARTICLE_ID'
+        mask = c_io_never
+      ENDIF
 #endif
 
-    ! Setting some flags like species and average 
-    ! wastes memory if the parameters make no sense. Do sanity checking.
+      ! Setting some flags like species and average 
+      ! wastes memory if the parameters make no sense. Do sanity checking.
 
-    IF (IAND(mask, c_io_species) .NE. 0 &
-        .OR. IAND(mask, c_io_no_sum) .EQ. 0) THEN
-      bad = .TRUE.
-      ! Check for sensible per species variables
-      IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_ekflux) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
-      IF (bad) THEN
-        IF (rank .EQ. 0 .AND. IAND(mask, c_io_species) .NE. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Attempting to set per species property for "' &
-                // TRIM(element) // '" which'
-            WRITE(io,*) 'does not support this property. Ignoring.'
-          ENDDO
+      IF (IAND(mask, c_io_species) .NE. 0 &
+          .OR. IAND(mask, c_io_no_sum) .EQ. 0) THEN
+        bad = .TRUE.
+        ! Check for sensible per species variables
+        IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_ekflux) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
+        IF (bad) THEN
+          IF (rank .EQ. 0 .AND. IAND(mask, c_io_species) .NE. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** WARNING ***'
+              WRITE(io,*) 'Attempting to set per species property for "' &
+                  // TRIM(element) // '" which'
+              WRITE(io,*) 'does not support this property. Ignoring.'
+            ENDDO
+          ENDIF
+          mask = IAND(mask, NOT(c_io_species))
+          mask = IOR(mask, c_io_no_sum)
         ENDIF
-        mask = IAND(mask, NOT(c_io_species))
-        mask = IOR(mask, c_io_no_sum)
       ENDIF
-    ENDIF
 
-    IF (IAND(mask, c_io_averaged) .NE. 0) THEN
-      bad = .TRUE.
-      ! Check for sensible averaged variables
-      IF (mask_element .EQ. c_dump_ex) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_ey) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_ez) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_bx) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_by) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_bz) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_jx) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_jy) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
+      IF (IAND(mask, c_io_averaged) .NE. 0) THEN
+        bad = .TRUE.
+        ! Check for sensible averaged variables
+        IF (mask_element .EQ. c_dump_ex) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_ey) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_ez) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_bx) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_by) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_bz) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_jx) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_jy) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
 
-      ! Unset 'no_sum' dumpmask for grid variables
-      IF (.NOT.bad) mask = IAND(mask, NOT(c_io_no_sum))
+        ! Unset 'no_sum' dumpmask for grid variables
+        IF (.NOT.bad) mask = IAND(mask, NOT(c_io_no_sum))
 
-      IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
-      IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
-      IF (bad) THEN
-        IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Attempting to set average property for "' &
-                // TRIM(element) // '" which'
-            WRITE(io,*) 'does not support this property. Ignoring.'
-          ENDDO
+        IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
+        IF (bad) THEN
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** WARNING ***'
+              WRITE(io,*) 'Attempting to set average property for "' &
+                  // TRIM(element) // '" which'
+              WRITE(io,*) 'does not support this property. Ignoring.'
+            ENDDO
+          ENDIF
+          mask = IAND(mask, NOT(c_io_averaged))
+        ELSE
+          any_average = .TRUE.
         ENDIF
-        mask = IAND(mask, NOT(c_io_averaged))
+      ENDIF
+
+      IF (is .EQ. 1) THEN
+        dumpmask(mask_element) = mask
       ELSE
-        any_average = .TRUE.
+        subset_list(subset)%dumpmask(mask_element) = mask
       ENDIF
-    ENDIF
+    ENDDO
 
-    dumpmask(mask_element) = mask
+    DEALLOCATE(subsets)
 
   END FUNCTION io_block_handle_element
 

@@ -92,6 +92,42 @@ CONTAINS
 
 
 
+  SUBROUTINE evaluate_as_list(input_stack, array, n_elements, err)
+
+    TYPE(primitive_stack), INTENT(IN) :: input_stack
+    INTEGER, DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(OUT) :: n_elements
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: i, ierr
+    TYPE(stack_element) :: block
+
+    array(1) = 0
+    n_elements = 1
+
+    DO i = 1, input_stack%stack_point
+      block = input_stack%entries(i)
+
+      IF (block%ptype .EQ. c_pt_subset) THEN
+        n_elements = n_elements + 1
+        array(n_elements) = block%value
+      ELSE IF (block%ptype .EQ. c_pt_constant) THEN
+        CALL do_constant(block%value, 1, err)
+        array(1) = array(1) + pop_off_eval()
+      ELSE IF (block%ptype .NE. c_pt_operator) THEN
+        err = c_err_bad_value
+      ENDIF
+
+      IF (err .NE. c_err_none) THEN
+        PRINT *, 'BAD block', err, block%ptype, i, block%value
+        CALL MPI_ABORT(comm, errcode, ierr)
+        STOP
+      ENDIF
+    ENDDO
+
+  END SUBROUTINE evaluate_as_list
+
+
+
   FUNCTION evaluate_at_point(input_stack, ix, err)
 
     TYPE(primitive_stack), INTENT(IN) :: input_stack

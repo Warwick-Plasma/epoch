@@ -173,6 +173,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_pt_character = 7
   INTEGER, PARAMETER :: c_pt_deck_constant = 8
   INTEGER, PARAMETER :: c_pt_species = 9
+  INTEGER, PARAMETER :: c_pt_subset = 10
   INTEGER, PARAMETER :: c_pt_bad = 1024
   INTEGER, PARAMETER :: c_pt_null = 1025
 
@@ -566,6 +567,37 @@ MODULE shared_data
     TYPE(distribution_function_block), POINTER :: next
   END TYPE distribution_function_block
   TYPE(distribution_function_block), POINTER :: dist_fns
+
+  ! Represents a data subset
+  TYPE subset
+    CHARACTER(LEN=string_length) :: name
+
+    ! The dumpmask for the subset
+    INTEGER :: mask
+    INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
+    LOGICAL, DIMENSION(:), POINTER :: use_species
+    LOGICAL :: use_gamma, use_gamma_min, use_gamma_max, use_random
+    LOGICAL :: use_x_min, use_x_max
+    LOGICAL :: use_y_min, use_y_max
+    LOGICAL :: use_z_min, use_z_max
+    LOGICAL :: use_px_min, use_px_max
+    LOGICAL :: use_py_min, use_py_max
+    LOGICAL :: use_pz_min, use_pz_max
+    LOGICAL :: use_weight_min, use_weight_max
+    LOGICAL :: use_charge_min, use_charge_max
+    LOGICAL :: use_mass_min, use_mass_max
+    REAL(num) :: gamma_min, gamma_max, random_fraction
+    REAL(num) :: x_min, x_max, y_min, y_max, z_min, z_max
+    REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
+    REAL(num) :: weight_min, weight_max
+    REAL(num) :: charge_min, charge_max
+    REAL(num) :: mass_min, mass_max
+
+    ! Pointer to next subset
+    TYPE(subset), POINTER :: next
+  END TYPE subset
+  TYPE(subset), DIMENSION(:), POINTER :: subset_list
+  INTEGER :: n_subsets
 
 #ifdef PARTICLE_PROBES
   TYPE particle_probe

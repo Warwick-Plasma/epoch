@@ -76,6 +76,26 @@ CONTAINS
 
 
 
+  FUNCTION as_subset(name)
+
+    CHARACTER(LEN=*), INTENT(IN) :: name
+    INTEGER :: as_subset
+    INTEGER :: i
+
+    as_subset = c_prc_not_this_type
+    IF (.NOT. ASSOCIATED(subset_list)) RETURN
+
+    DO i = 1, n_subsets
+      IF (str_cmp(name, subset_list(i)%name)) THEN
+        as_subset = i
+        RETURN
+      ENDIF
+    ENDDO
+
+  END FUNCTION as_subset
+
+
+
   FUNCTION as_constant(name)
 
     CHARACTER(LEN=*), INTENT(IN) :: name

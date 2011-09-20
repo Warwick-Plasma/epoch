@@ -101,6 +101,14 @@ CONTAINS
       RETURN
     ENDIF
 
+    work = as_subset(name)
+    IF (work .NE. 0) THEN
+      ! block is a subset name
+      block%ptype = c_pt_subset
+      block%value = work
+      RETURN
+    ENDIF
+
     IF (str_cmp(name, ', ')) THEN
       block%ptype = c_pt_separator
       block%value = 0
@@ -303,7 +311,7 @@ CONTAINS
 
     last_block_type = c_pt_null
 
-    DO i = 2, LEN(expression)
+    DO i = 2, LEN(TRIM(expression)) + 1
       ptype = char_type(expression(i:i))
       ! This is a bit of a hack.
       ! Allow numbers to follow letters in an expression *except* in the
@@ -343,7 +351,8 @@ CONTAINS
 
           IF (block%ptype .EQ. c_pt_variable &
               .OR. block%ptype .EQ. c_pt_constant &
-              .OR. block%ptype .EQ. c_pt_species) THEN
+              .OR. block%ptype .EQ. c_pt_species &
+              .OR. block%ptype .EQ. c_pt_subset) THEN
             CALL push_to_stack(output, block)
           ENDIF
 
@@ -474,7 +483,7 @@ CONTAINS
 
     last_block_type = c_pt_null
 
-    DO i = 2, LEN(expression)
+    DO i = 2, LEN(TRIM(expression)) + 1
       ptype = char_type(expression(i:i))
       ! This is a bit of a hack.
       ! Allow numbers to follow letters in an expression *except* in the

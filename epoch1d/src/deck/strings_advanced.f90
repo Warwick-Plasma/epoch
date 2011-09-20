@@ -155,6 +155,24 @@ CONTAINS
 
 
 
+  SUBROUTINE as_list(str_in, array, n_elements, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER, INTENT(OUT) :: array(:)
+    INTEGER, INTENT(OUT) :: n_elements
+    INTEGER, INTENT(INOUT) :: err
+    TYPE(primitive_stack) :: output
+
+    CALL initialise_stack(output)
+    CALL tokenize(str_in, output, err)
+    IF (err .EQ. c_err_none) &
+        CALL evaluate_as_list(output, array, n_elements, err)
+    CALL deallocate_stack(output)
+
+  END SUBROUTINE as_list
+
+
+
   SUBROUTINE evaluate_string_in_space(str_in, data_out, x1, x2, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
