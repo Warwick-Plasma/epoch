@@ -154,6 +154,8 @@ CONTAINS
         subarray_field)
 #endif
 
+    io_list = species_list
+
     CALL write_particle_grid(code)
 
 #ifdef PER_PARTICLE_WEIGHT
@@ -162,7 +164,7 @@ CONTAINS
 #else
     IF (IAND(dumpmask(c_dump_part_weight), code) .NE. 0) THEN
       DO ispecies = 1, n_species
-        species => species_list(ispecies)
+        species => io_list(ispecies)
         IF (IAND(species%dumpmask, code) .NE. 0 &
             .OR. IAND(code, c_io_restartable) .NE. 0) THEN
           CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
@@ -584,7 +586,7 @@ CONTAINS
         len1 = LEN_TRIM(block_id) + 9
         len2 = LEN_TRIM(name) + 9
         DO ispecies = 1, n_species
-          len3 = LEN_TRIM(species_list(ispecies)%name)
+          len3 = LEN_TRIM(io_list(ispecies)%name)
           len4 = len3
           len5 = len3
           IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
@@ -594,7 +596,7 @@ CONTAINS
               CALL integer_as_string((len2+len3), len_string)
               PRINT*, '*** WARNING ***'
               PRINT*, 'Output block name ','Derived/' // TRIM(name) // '/' &
-                  // TRIM(species_list(ispecies)%name),' is truncated.'
+                  // TRIM(io_list(ispecies)%name),' is truncated.'
               PRINT*, 'Either shorten the species name or increase ', &
                   'the size of "c_max_string_length" ', &
                   'to at least ',TRIM(len_string)
@@ -602,9 +604,9 @@ CONTAINS
           ENDIF
 
           temp_block_id = 'derived/' // TRIM(block_id) // '/' // &
-              TRIM(species_list(ispecies)%name(1:len4))
+              TRIM(io_list(ispecies)%name(1:len4))
           temp_name = 'Derived/' // TRIM(name) // '/' // &
-              TRIM(species_list(ispecies)%name(1:len5))
+              TRIM(io_list(ispecies)%name(1:len5))
           CALL func(array, ispecies)
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
@@ -633,7 +635,7 @@ CONTAINS
         len2 = LEN_TRIM(name) + 18
 
         DO ispecies = 1, n_species
-          len3 = LEN_TRIM(species_list(ispecies)%name)
+          len3 = LEN_TRIM(io_list(ispecies)%name)
           len4 = len3
           len5 = len3
           IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
@@ -643,7 +645,7 @@ CONTAINS
               CALL integer_as_string((len2+len3), len_string)
               PRINT*, '*** WARNING ***'
               PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
-                  '_averaged/' // TRIM(species_list(ispecies)%name), &
+                  '_averaged/' // TRIM(io_list(ispecies)%name), &
                   ' is truncated.'
               PRINT*, 'Either shorten the species name or increase ', &
                   'the size of "c_max_string_length" ', &
@@ -652,9 +654,9 @@ CONTAINS
           ENDIF
 
           temp_block_id = 'derived/' // TRIM(block_id) // '_averaged/' // &
-              TRIM(species_list(ispecies)%name(1:len4))
+              TRIM(io_list(ispecies)%name(1:len4))
           temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
-              TRIM(species_list(ispecies)%name(1:len5))
+              TRIM(io_list(ispecies)%name(1:len5))
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
               averaged_data(id)%array(:,ispecies+species_sum), &
@@ -780,7 +782,7 @@ CONTAINS
         len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 10
 
         DO ispecies = 1, n_species
-          len3 = LEN_TRIM(species_list(ispecies)%name)
+          len3 = LEN_TRIM(io_list(ispecies)%name)
           len4 = len3
           len5 = len3
           IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
@@ -790,7 +792,7 @@ CONTAINS
               CALL integer_as_string((len2+len3), len_string)
               PRINT*, '*** WARNING ***'
               PRINT*, 'Output block name ','Derived/' // TRIM(name) // '_' &
-                  // TRIM(species_list(ispecies)%name) // '/' &
+                  // TRIM(io_list(ispecies)%name) // '/' &
                   // TRIM(dir_tags(1)),' is truncated.'
               PRINT*, 'Either shorten the species name or increase ', &
                   'the size of "c_max_string_length" ', &
@@ -801,10 +803,10 @@ CONTAINS
           DO idir = 1, ndirs
             temp_block_id = 'derived/' // TRIM(block_id) // '_' // &
                 TRIM(dir_tags(idir)) // '/' // &
-                TRIM(species_list(ispecies)%name(1:len4))
+                TRIM(io_list(ispecies)%name(1:len4))
             temp_name = 'Derived/' // TRIM(name) // '_' // &
                 TRIM(dir_tags(idir)) // '/' // &
-                TRIM(species_list(ispecies)%name(1:len5))
+                TRIM(io_list(ispecies)%name(1:len5))
             CALL func(array, ispecies, fluxdir(idir))
             CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                 TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
@@ -834,14 +836,14 @@ CONTAINS
 
     npart_global = 0
     DO ispecies = 1, n_species
-      CALL MPI_ALLGATHER(species_list(ispecies)%attached_list%count, 1, &
+      CALL MPI_ALLGATHER(io_list(ispecies)%attached_list%count, 1, &
           MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
       species_count = 0
       DO i = 1, nproc
         IF (rank .EQ. i-1) species_offset(ispecies) = species_count
         species_count = species_count + npart_species_per_proc(i)
       ENDDO
-      species_list(ispecies)%count = species_count
+      io_list(ispecies)%count = species_count
       npart_global = npart_global + species_count
     ENDDO
 
@@ -878,19 +880,17 @@ CONTAINS
       CALL species_offset_init()
       IF (npart_global .EQ. 0) RETURN
 
-      CALL start_particle_species_only(current_species)
-
       DO ispecies = 1, n_species
+        current_species => io_list(ispecies)
+
         IF (IAND(current_species%dumpmask, code) .NE. 0 &
             .OR. IAND(code, c_io_restartable) .NE. 0) THEN
           CALL sdf_write_point_mesh(sdf_handle, &
               'grid/' // TRIM(current_species%name), &
               'Grid/Particles/' // TRIM(current_species%name), &
-              species_list(ispecies)%count, c_dimension_1d, &
+              io_list(ispecies)%count, c_dimension_1d, &
               iterate_particles, species_offset(ispecies))
         ENDIF
-
-        CALL advance_particle_species_only(current_species)
       ENDDO
     ENDIF
 
@@ -934,20 +934,18 @@ CONTAINS
       CALL species_offset_init()
       IF (npart_global .EQ. 0) RETURN
 
-      CALL start_particle_species_only(current_species)
-
       DO ispecies = 1, n_species
+        current_species => io_list(ispecies)
+
         IF (IAND(current_species%dumpmask, code) .NE. 0 &
             .OR. IAND(code, c_io_restartable) .NE. 0) THEN
           CALL sdf_write_point_variable(sdf_handle, &
               lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
               'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
-              TRIM(units), species_list(ispecies)%count, &
+              TRIM(units), io_list(ispecies)%count, &
               'grid/' // TRIM(current_species%name), &
               iterator, species_offset(ispecies))
         ENDIF
-
-        CALL advance_particle_species_only(current_species)
       ENDDO
     ENDIF
 

@@ -14,16 +14,16 @@ CONTAINS
     TYPE(distribution_function_block), POINTER :: block
     TYPE(distribution_function_block), POINTER :: current
 
-    current=>dist_fns
+    current => dist_fns
     IF (.NOT. ASSOCIATED(current)) THEN
       ! This is the first distribution function to add
-      dist_fns=>block
+      dist_fns => block
       RETURN
     ENDIF
     DO WHILE(ASSOCIATED(current%next))
-      current=>current%next
+      current => current%next
     ENDDO
-    current%next=>block
+    current%next => block
 
   END SUBROUTINE attach_dist_fn
 
@@ -53,11 +53,11 @@ CONTAINS
 
     TYPE(distribution_function_block), POINTER :: current, next
 
-    current=>dist_fns
+    current => dist_fns
     DO WHILE(ASSOCIATED(current))
-      next=>current%next
+      next => current%next
       DEALLOCATE(current)
-      current=>next
+      current => next
     ENDDO
 
   END SUBROUTINE clean_dist_fns
@@ -73,7 +73,7 @@ CONTAINS
     TYPE(distribution_function_block), POINTER :: current
 
     ! Write the distribution functions
-    current=>dist_fns
+    current => dist_fns
     DO WHILE(ASSOCIATED(current))
       IF (IAND(current%dumpmask, code) .NE. 0) THEN
         DO ispecies = 1, n_species
@@ -88,7 +88,7 @@ CONTAINS
           IF (errcode .NE. 0) current%dumpmask = c_io_never
         ENDDO
       ENDIF
-      current=>current%next
+      current => current%next
     ENDDO
 
   END SUBROUTINE write_dist_fns
@@ -147,11 +147,11 @@ CONTAINS
 
     current_data = 0.0_num
 #ifndef PER_PARTICLE_CHARGE_MASS
-    part_mc  = species_list(species)%mass * c
+    part_mc  = io_list(species)%mass * c
     part_mc2 = part_mc * c
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-    part_weight = species_list(species)%weight
+    part_weight = io_list(species)%weight
 #endif
 
     DO idim = 1, curdims
@@ -229,7 +229,7 @@ CONTAINS
           ranges(2,idim) = -1.0e6_num
         ENDIF
       ENDDO
-      current=>species_list(species)%attached_list%head
+      current => io_list(species)%attached_list%head
 
       out1: DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -243,7 +243,7 @@ CONTAINS
         particle_data(c_dir_en) = gamma_m1 * part_mc2
         particle_data(c_dir_gamma_m1) = gamma_m1
 
-        current=>current%next
+        current => current%next
 
         DO idim = 1, curdims
           IF (calc_range(idim)) THEN
@@ -290,7 +290,7 @@ CONTAINS
     ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
     array = 0.0_num
 
-    current=>species_list(species)%attached_list%head
+    current => io_list(species)%attached_list%head
     out2: DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
       part_mc  = current%mass * c
@@ -306,7 +306,7 @@ CONTAINS
       particle_data(c_dir_en) = gamma_m1 * part_mc2
       particle_data(c_dir_gamma_m1) = gamma_m1
 
-      current=>current%next
+      current => current%next
 
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &
@@ -370,7 +370,7 @@ CONTAINS
       ENDDO
     ENDIF
 
-    var_name = TRIM(name) // '/' // TRIM(species_list(species)%name)
+    var_name = TRIM(name) // '/' // TRIM(io_list(species)%name)
 
     IF (use_offset_grid) THEN
       IF (curdims .EQ. 1) THEN

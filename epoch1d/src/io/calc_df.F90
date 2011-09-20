@@ -60,18 +60,18 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      current=>species_list(ispecies)%attached_list%head
+      current => io_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_m  = species_list(ispecies)%mass
+      part_m  = io_list(ispecies)%mass
 #ifndef PER_PARTICLE_WEIGHT
-      fac = species_list(ispecies)%weight * idx
+      fac = io_list(ispecies)%weight * idx
 #endif
       wdata = part_m * fac
 #else
 #ifndef PER_PARTICLE_WEIGHT
-      fac = species_list(ispecies)%weight * idx
+      fac = io_list(ispecies)%weight * idx
       wdata = part_m * fac
 #endif
 #endif
@@ -96,7 +96,7 @@ CONTAINS
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
         ENDDO
 
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -144,18 +144,18 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      current=>species_list(ispecies)%attached_list%head
+      current => io_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc = c * species_list(ispecies)%mass
+      part_mc = c * io_list(ispecies)%mass
 #ifndef PER_PARTICLE_WEIGHT
-      l_weight = species_list(ispecies)%weight
+      l_weight = io_list(ispecies)%weight
 #endif
       fac = part_mc * l_weight * c
 #else
 #ifndef PER_PARTICLE_WEIGHT
-      l_weight = species_list(ispecies)%weight
+      l_weight = io_list(ispecies)%weight
       fac = part_mc * l_weight * c
 #endif
 #endif
@@ -186,7 +186,7 @@ CONTAINS
           wt(cell_x+ix) = wt(cell_x+ix) + gx(ix) * l_weight
         ENDDO
 
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -243,18 +243,18 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      current=>species_list(ispecies)%attached_list%head
+      current => io_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_mc = c * species_list(ispecies)%mass
+      part_mc = c * io_list(ispecies)%mass
 #ifndef PER_PARTICLE_WEIGHT
-      l_weight = species_list(ispecies)%weight
+      l_weight = io_list(ispecies)%weight
 #endif
       fac = part_mc * l_weight * c
 #else
 #ifndef PER_PARTICLE_WEIGHT
-      l_weight = species_list(ispecies)%weight
+      l_weight = io_list(ispecies)%weight
       fac = part_mc * l_weight * c
 #endif
 #endif
@@ -313,7 +313,7 @@ CONTAINS
           wt(cell_x+ix) = wt(cell_x+ix) + gx(ix) * l_weight
         ENDDO
 
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -401,18 +401,18 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      current=>species_list(ispecies)%attached_list%head
+      current => io_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_q  = species_list(ispecies)%charge
+      part_q  = io_list(ispecies)%charge
 #ifndef PER_PARTICLE_WEIGHT
-      fac = species_list(ispecies)%weight * idx
+      fac = io_list(ispecies)%weight * idx
 #endif
       wdata = part_q * fac
 #else
 #ifndef PER_PARTICLE_WEIGHT
-      fac = species_list(ispecies)%weight * idx
+      fac = io_list(ispecies)%weight * idx
       wdata = part_q * fac
 #endif
 #endif
@@ -437,7 +437,7 @@ CONTAINS
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
         ENDDO
 
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -478,11 +478,11 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      current=>species_list(ispecies)%attached_list%head
+      current => io_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_WEIGHT
-      wdata = species_list(ispecies)%weight * idx
+      wdata = io_list(ispecies)%weight * idx
 #endif
       DO WHILE (ASSOCIATED(current))
 #ifdef PER_PARTICLE_WEIGHT
@@ -495,7 +495,7 @@ CONTAINS
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
         ENDDO
 
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -545,14 +545,14 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      current=>species_list(ispecies)%attached_list%head
+      current => io_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      sqrt_part_m  = SQRT(species_list(ispecies)%mass)
+      sqrt_part_m  = SQRT(io_list(ispecies)%mass)
 #endif
 #ifndef PER_PARTICLE_WEIGHT
-      l_weight = species_list(ispecies)%weight
+      l_weight = io_list(ispecies)%weight
 #endif
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -575,7 +575,7 @@ CONTAINS
           meanz(cell_x+ix) = meanz(cell_x+ix) + gf * part_pmz
           part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         ENDDO
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -593,11 +593,11 @@ CONTAINS
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      current=>species_list(ispecies)%attached_list%head
+      current => io_list(ispecies)%attached_list%head
 #ifndef PER_PARTICLE_CHARGE_MASS
-      sqrt_part_m  = SQRT(species_list(ispecies)%mass)
+      sqrt_part_m  = SQRT(io_list(ispecies)%mass)
 #endif
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -618,7 +618,7 @@ CONTAINS
               + (part_pmz - meanz(cell_x+ix))**2)
           part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         ENDDO
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -668,9 +668,9 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifdef TRACER_PARTICLES
-      IF (spec_sum .AND. species_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      current=>species_list(ispecies)%attached_list%head
+      current => io_list(ispecies)%attached_list%head
       DO WHILE (ASSOCIATED(current))
 #include "particle_to_grid.inc"
 
@@ -679,7 +679,7 @@ CONTAINS
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
         ENDDO
 
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 

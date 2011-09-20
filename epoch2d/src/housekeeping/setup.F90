@@ -250,6 +250,7 @@ CONTAINS
     INTEGER :: ispecies
 
     ALLOCATE(species_list(n_species))
+    ALLOCATE(io_list(n_species))
     ALLOCATE(particle_file_lengths(n_species))
     ALLOCATE(particle_file_offsets(n_species))
 
