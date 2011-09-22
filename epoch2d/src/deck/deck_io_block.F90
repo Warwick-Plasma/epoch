@@ -101,6 +101,9 @@ CONTAINS
       ENDIF
       dt_average = t_end
     ENDIF
+    dumpmask(c_dump_jx) = IOR(dumpmask(c_dump_jx), c_io_no_sum)
+    dumpmask(c_dump_jy) = IOR(dumpmask(c_dump_jy), c_io_no_sum)
+    dumpmask(c_dump_jz) = IOR(dumpmask(c_dump_jz), c_io_no_sum)
 
   END SUBROUTINE io_deck_finalise
 
@@ -239,6 +242,9 @@ CONTAINS
         IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
         IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
         IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_jx) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_jy) bad = .FALSE.
+        IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
         IF (bad) THEN
           IF (rank .EQ. 0 .AND. IAND(mask, c_io_species) .NE. 0) THEN
             DO io = stdout, du, du - stdout ! Print to stdout and to file

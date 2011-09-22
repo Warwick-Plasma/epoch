@@ -747,4 +747,275 @@ CONTAINS
 
   END SUBROUTINE calc_on_grid_with_evaluator
 
+
+
+  ! This subroutine calculates 'per species' currents, in the same way as in the
+  ! particle push, but without looping over species index. Hot electron current
+  ! and ion current are needed for CKD scheme.
+
+  SUBROUTINE calc_per_species_current(data_array, current_species, direction)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species, direction
+
+    INTEGER :: cell_x1, cell_x3
+    INTEGER :: cell_y1, cell_y3
+    INTEGER, PARAMETER :: sf0 = sf_min, sf1 = sf_max
+    REAL(num), DIMENSION(sf0-2:sf1+1,sf0-1:sf1+1) :: jxh
+    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-2:sf1+1) :: jyh
+    REAL(num) :: part_x, part_y
+    REAL(num) :: part_ux, part_uy, part_uz
+    REAL(num) :: part_q, ipart_mc, part_weight
+    REAL(num) :: cell_x_r, cell_y_r
+    REAL(num) :: cell_frac_x, cell_frac_y
+    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: gx, gy
+    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: hx, hy
+    INTEGER :: xmin, xmax, ymin, ymax
+    REAL(num) :: wx, wy, wz
+    REAL(num) :: idx, idy
+    REAL(num) :: idty, idtx, idxy
+    REAL(num) :: idt, dtc
+    REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
+    REAL(num) :: root, fac, third, gamma, igamma, cf2
+    REAL(num) :: delta_x, delta_y, part_vz
+    INTEGER :: ispecies, ix, iy, dcellx, dcelly
+    INTEGER(KIND=8) :: ipart
+    TYPE(particle), POINTER :: current, next
+    INTEGER :: spec_start, spec_end
+    LOGICAL :: spec_sum
+
+    data_array = 0.0_num
+    gx = 0.0_num
+    gy = 0.0_num
+
+    ! Unvarying multiplication factors
+
+    idx = 1.0_num / dx
+    idy = 1.0_num / dy
+    idt = 1.0_num / dt
+    dtc = c * dt
+    third = 1.0_num / 3.0_num
+    ! particle weighting multiplication factor
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    fac = 1.0_num / 24.0_num
+#elif  PARTICLE_SHAPE_TOPHAT
+    fac = 1.0_num
+#else
+    fac = 0.5_num
+#endif
+
+    idty = idt * idy * fac**2
+    idtx = idt * idx * fac**2
+    idxy = idx * idy * fac**2
+
+    spec_start = current_species
+    spec_end = current_species
+    spec_sum = .FALSE.
+
+    IF (current_species .LE. 0) THEN
+      spec_start = 1
+      spec_end = n_species
+      spec_sum = .TRUE.
+    ENDIF
+
+    DO ispecies = spec_start, spec_end
+#ifdef TRACER_PARTICLES
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+#endif
+      current => io_list(ispecies)%attached_list%head
+
+#ifndef PER_PARTICLE_WEIGHT
+      part_weight = io_list(ispecies)%weight
+      fcx = idty * part_weight
+      fcy = idtx * part_weight
+      fcz = idxy * part_weight
+#endif
+#ifndef PER_PARTICLE_CHARGE_MASS
+      part_q   = io_list(ispecies)%charge
+      ipart_mc = 1.0_num / c / io_list(ispecies)%mass
+#endif
+      !DEC$ VECTOR ALWAYS
+      DO ipart = 1, io_list(ispecies)%attached_list%count
+        next => current%next
+#ifdef PER_PARTICLE_WEIGHT
+        part_weight = current%weight
+        fcx = idty * part_weight
+        fcy = idtx * part_weight
+        fcz = idxy * part_weight
+#endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_q   = current%charge
+        ipart_mc = 1.0_num / c / current%mass
+#endif
+        ! Copy the particle properties out for speed
+        part_x  = current%part_pos(1) - x_min_local
+        part_y  = current%part_pos(2) - y_min_local
+        part_ux = current%part_p(1) * ipart_mc
+        part_uy = current%part_p(2) * ipart_mc
+        part_uz = current%part_p(3) * ipart_mc
+
+        ! Work out the grid cell number for the particle.
+        ! Not an integer in general.
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x * idx - 0.5_num
+        cell_y_r = part_y * idy - 0.5_num
+#else
+        cell_x_r = part_x * idx
+        cell_y_r = part_y * idy
+#endif
+        ! Round cell position to nearest cell
+        cell_x1 = FLOOR(cell_x_r + 0.5_num)
+        ! Calculate fraction of cell between nearest cell boundary and particle
+        cell_frac_x = REAL(cell_x1, num) - cell_x_r
+        cell_x1 = cell_x1 + 1
+
+        cell_y1 = FLOOR(cell_y_r + 0.5_num)
+        cell_frac_y = REAL(cell_y1, num) - cell_y_r
+        cell_y1 = cell_y1 + 1
+
+        ! Particle weight factors as described in the manual, page25
+        ! These weight grid properties onto particles
+        ! Also used to weight particle properties onto grid, used later
+        ! to calculate J
+#ifdef PARTICLE_SHAPE_BSPLINE3
+        INCLUDE '../include/bspline3/gx.inc'
+#elif  PARTICLE_SHAPE_TOPHAT
+        INCLUDE '../include/tophat/gx.inc'
+#else
+        INCLUDE '../include/triangle/gx.inc'
+#endif
+
+        ! Calculate particle velocity from particle momentum
+        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        igamma = 1.0_num / gamma
+        root = dtc * igamma
+
+        delta_x = part_ux * root
+        delta_y = part_uy * root
+        part_vz = part_uz * c * igamma
+
+        ! Move particles to end of time step
+        part_x = part_x + delta_x
+        part_y = part_y + delta_y
+
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = part_x * idx - 0.5_num
+        cell_y_r = part_y * idy - 0.5_num
+#else
+        cell_x_r = part_x * idx
+        cell_y_r = part_y * idy
+#endif
+        cell_x3 = FLOOR(cell_x_r + 0.5_num)
+        cell_frac_x = REAL(cell_x3, num) - cell_x_r
+        cell_x3 = cell_x3 + 1
+
+        cell_y3 = FLOOR(cell_y_r + 0.5_num)
+        cell_frac_y = REAL(cell_y3, num) - cell_y_r
+        cell_y3 = cell_y3 + 1
+
+        hx = 0.0_num
+        hy = 0.0_num
+
+        dcellx = cell_x3 - cell_x1
+        dcelly = cell_y3 - cell_y1
+#ifdef PARTICLE_SHAPE_BSPLINE3
+        INCLUDE '../include/bspline3/hx_dcell.inc'
+#elif  PARTICLE_SHAPE_TOPHAT
+        INCLUDE '../include/tophat/hx_dcell.inc'
+#else
+        INCLUDE '../include/triangle/hx_dcell.inc'
+#endif
+
+        ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
+        ! the current update much simpler
+        hx = hx - gx
+        hy = hy - gy
+
+        ! Remember that due to CFL condition particle can never cross more
+        ! than one gridcell in one timestep
+
+        xmin = sf_min + (dcellx - 1) / 2
+        xmax = sf_max + (dcellx + 1) / 2
+
+        ymin = sf_min + (dcelly - 1) / 2
+        ymax = sf_max + (dcelly + 1) / 2
+
+        ! This is the bit that actually solves d(rho)/dt = -div(J)
+        SELECT CASE (direction)
+          CASE(c_dir_x)
+            ! Set this to zero due to diffential inside loop
+            jxh = 0.0_num
+            fjx = fcx * part_q
+            DO iy = ymin, ymax
+              DO ix = xmin, xmax
+                wx =  hx(ix) * (gy(iy) + 0.5_num * hy(iy))
+                jxh(ix,iy) = jxh(ix-1, iy) - fjx * wx
+                data_array(cell_x1+ix,cell_y1+iy) = &
+                    data_array(cell_x1+ix,cell_y1+iy) + jxh(ix,iy)
+              ENDDO
+            ENDDO
+          CASE(c_dir_y)
+            ! Set this to zero due to diffential inside loop
+            jyh = 0.0_num
+            fjy = fcy * part_q
+            DO iy = ymin, ymax
+              DO ix = xmin, xmax
+                wy =  hy(iy) * (gx(ix) + 0.5_num * hx(ix))
+                jyh(ix,iy) = jyh(ix, iy-1) - fjy * wy
+                data_array(cell_x1+ix,cell_y1+iy) = &
+                    data_array(cell_x1+ix,cell_y1+iy) + jyh(ix,iy)
+              ENDDO
+            ENDDO
+          CASE(c_dir_z)
+            fjz = fcz * part_q * part_vz
+            DO iy = ymin, ymax
+              DO ix = xmin, xmax
+                wz =  gx(ix) * (gy(iy) + 0.5_num * hy(iy)) &
+                    + hx(ix) * (third  *  hy(iy) + 0.5_num * gy(iy))
+                data_array(cell_x1+ix,cell_y1+iy) = &
+                    data_array(cell_x1+ix,cell_y1+iy) + fjz * wz
+              ENDDO
+            ENDDO
+        END SELECT
+        current => next
+      ENDDO
+    ENDDO
+
+    CALL processor_summation_bcs(data_array, direction)
+
+  END SUBROUTINE calc_per_species_current
+
+
+
+  SUBROUTINE calc_per_species_jx(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
+
+    CALL calc_per_species_current(data_array, current_species, c_dir_x)
+
+  END SUBROUTINE calc_per_species_jx
+
+
+
+  SUBROUTINE calc_per_species_jy(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
+
+    CALL calc_per_species_current(data_array, current_species, c_dir_y)
+
+  END SUBROUTINE calc_per_species_jy
+
+
+
+  SUBROUTINE calc_per_species_jz(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
+
+    CALL calc_per_species_current(data_array, current_species, c_dir_z)
+
+  END SUBROUTINE calc_per_species_jz
+
 END MODULE calc_df

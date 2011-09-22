@@ -235,6 +235,18 @@ CONTAINS
           'Temperature', 'K', c_stagger_cell_centre, &
           calc_temperature, array)
 
+      CALL write_nspecies_field(c_dump_jx, code, 'jx', &
+          'Jx', 'A/m^2', c_stagger_cell_centre, &
+          calc_per_species_jx, array)
+
+      CALL write_nspecies_field(c_dump_jy, code, 'jy', &
+          'Jy', 'A/m^2', c_stagger_cell_centre, &
+          calc_per_species_jy, array)
+
+      CALL write_nspecies_field(c_dump_jz, code, 'jz', &
+          'Jz', 'A/m^2', c_stagger_cell_centre, &
+          calc_per_species_jz, array)
+
       CALL write_nspecies_flux(c_dump_ekflux, code, 'ekflux', &
           'EkFlux', 'W/m^2', c_stagger_cell_centre, &
           calc_ekflux, array, fluxdir, dir_tags)
