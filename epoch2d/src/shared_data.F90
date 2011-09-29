@@ -611,6 +611,9 @@ MODULE shared_data
   REAL(num) :: coulomb_log
   LOGICAL :: coulomb_log_auto, use_collisions
 
+  ! Number of degrees of freedom
+  INTEGER :: dof = c_ndims
+
   !----------------------------------------------------------------------------
   ! Moving window
   !----------------------------------------------------------------------------

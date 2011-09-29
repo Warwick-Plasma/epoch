@@ -721,7 +721,7 @@ CONTAINS
     CALL calc_boundary(part_count)
 
     ! N/2 kT = <p^2>/(2m), where N is the number of degrees of freedom
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / REAL(c_ndims)
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / REAL(dof)
 
     DEALLOCATE(part_count, meanx, meany, meanz)
 
