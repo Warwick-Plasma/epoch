@@ -125,6 +125,144 @@ CONTAINS
 
 
 
+  SUBROUTINE write_point_variable_meta(h, id, name, units, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: mesh_id
+    REAL(num), INTENT(IN), OPTIONAL :: mult
+    INTEGER :: ndims
+    TYPE(sdf_block_type), POINTER :: b
+    INTEGER :: errcode
+
+    b => h%current_block
+
+    b%blocktype = c_blocktype_point_variable
+    ndims = b%ndims
+    b%nelements = b%ndims * b%npoints
+
+    ! Metadata is
+    ! - mult      REAL(r8)
+    ! - units     CHARACTER(id_length)
+    ! - meshid    CHARACTER(id_length)
+    ! - npoints   INTEGER(i8)
+
+    b%info_length = h%block_header_length + soi8 + sof8 + 2 * c_id_length
+    b%data_length = b%nelements * b%type_size
+
+    ! Write header
+
+    IF (PRESENT(id)) THEN
+      CALL safe_copy_string(units, b%units)
+      CALL safe_copy_string(mesh_id, b%mesh_id)
+
+      IF (PRESENT(mult)) THEN
+        b%mult = REAL(mult,r8)
+      ELSE
+        b%mult = 1.d0
+      ENDIF
+
+      CALL sdf_write_block_header(h, id, name)
+    ELSE
+      CALL write_block_header(h)
+    ENDIF
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_WRITE(h%filehandle, b%mult, 1, MPI_REAL8, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL sdf_safe_write_id(h, b%units)
+
+      CALL sdf_safe_write_id(h, b%mesh_id)
+
+      CALL MPI_FILE_WRITE(h%filehandle, b%npoints, 1, MPI_INTEGER8, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    h%current_location = b%block_start + b%info_length
+    b%done_info = .TRUE.
+
+  END SUBROUTINE write_point_variable_meta
+
+
+
+  SUBROUTINE sdf_write_srl_pt_var_int_array(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(num), INTENT(IN), OPTIONAL :: mult
+    INTEGER(i8) :: idx, npoint_max, npoint_rem
+    INTEGER :: errcode, i
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (npoint_global .LE. 0) RETURN
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = h%soi
+    b%datatype = h%datatype_integer
+    b%mpitype = h%mpitype_integer
+    b%ndims = 1
+    b%npoints = npoint_global
+
+    ! Write header
+
+    CALL write_point_variable_meta(h, id, name, units, mesh_id, mult)
+
+    ! Write the real data
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      h%current_location = b%data_location
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! This is all a bit messy, but it is necessary because MPI_FILE_WRITE
+      ! accepts an INTEGER count of elements to write, which may not be
+      ! big enough for npoint_global which is an INTEGER*8
+
+      npoint_max = HUGE(npoint_max)
+      npoint_rem = MOD(npoint_global, npoint_max)
+
+      idx = 1
+      DO i = 1, npoint_global / npoint_max
+        CALL MPI_FILE_WRITE(h%filehandle, array(idx), npoint_max, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+        idx = idx + npoint_max
+      ENDDO
+
+      CALL MPI_FILE_WRITE(h%filehandle, array(idx), npoint_rem, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_write_srl_pt_var_int_array
+
+
+
+  SUBROUTINE sdf_write_srl_pt_var_int_array4(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(num), INTENT(IN), OPTIONAL :: mult
+
+    CALL sdf_write_srl_pt_var_int_array(h, id, name, units, array, &
+        INT(npoint_global,i8), mesh_id, mult)
+
+  END SUBROUTINE sdf_write_srl_pt_var_int_array4
+
+
+
   SUBROUTINE sdf_write_srl_1d_pt_mesh_array(h, id, name, x, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
@@ -567,67 +705,6 @@ CONTAINS
 
 
 
-  SUBROUTINE write_point_variable_meta(h, id, name, units, mesh_id, mult)
-
-    TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
-    INTEGER :: ndims
-    TYPE(sdf_block_type), POINTER :: b
-    INTEGER :: errcode
-
-    b => h%current_block
-
-    b%blocktype = c_blocktype_point_variable
-    ndims = b%ndims
-    b%nelements = b%ndims * b%npoints
-
-    ! Metadata is
-    ! - mult      REAL(r8)
-    ! - units     CHARACTER(id_length)
-    ! - meshid    CHARACTER(id_length)
-    ! - npoints   INTEGER(i8)
-
-    b%info_length = h%block_header_length + soi8 + sof8 + 2 * c_id_length
-    b%data_length = b%nelements * b%type_size
-
-    ! Write header
-
-    IF (PRESENT(id)) THEN
-      CALL safe_copy_string(units, b%units)
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-
-      IF (PRESENT(mult)) THEN
-        b%mult = REAL(mult,r8)
-      ELSE
-        b%mult = 1.d0
-      ENDIF
-
-      CALL sdf_write_block_header(h, id, name)
-    ELSE
-      CALL write_block_header(h)
-    ENDIF
-
-    IF (h%rank .EQ. h%rank_master) THEN
-      CALL MPI_FILE_WRITE(h%filehandle, b%mult, 1, MPI_REAL8, &
-          MPI_STATUS_IGNORE, errcode)
-
-      CALL sdf_safe_write_id(h, b%units)
-
-      CALL sdf_safe_write_id(h, b%mesh_id)
-
-      CALL MPI_FILE_WRITE(h%filehandle, b%npoints, 1, MPI_INTEGER8, &
-          MPI_STATUS_IGNORE, errcode)
-    ENDIF
-
-    h%current_location = b%block_start + b%info_length
-    b%done_info = .TRUE.
-
-  END SUBROUTINE write_point_variable_meta
-
-
-
   SUBROUTINE sdf_write_srl_pt_var_flt_array(h, id, name, units, array, &
       npoint_global, mesh_id, mult)
 
@@ -702,83 +779,6 @@ CONTAINS
         INT(npoint_global,i8), mesh_id, mult)
 
   END SUBROUTINE sdf_write_srl_pt_var_flt_array4
-
-
-
-  SUBROUTINE sdf_write_srl_pt_var_int_array(h, id, name, units, array, &
-      npoint_global, mesh_id, mult)
-
-    TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, DIMENSION(:), INTENT(IN) :: array
-    INTEGER(i8), INTENT(IN) :: npoint_global
-    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
-    INTEGER(i8) :: idx, npoint_max, npoint_rem
-    INTEGER :: errcode, i
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (npoint_global .LE. 0) RETURN
-
-    CALL sdf_get_next_block(h)
-    b => h%current_block
-
-    b%type_size = h%soi
-    b%datatype = h%datatype_integer
-    b%mpitype = h%mpitype_integer
-    b%ndims = 1
-    b%npoints = npoint_global
-
-    ! Write header
-
-    CALL write_point_variable_meta(h, id, name, units, mesh_id, mult)
-
-    ! Write the real data
-
-    IF (h%rank .EQ. h%rank_master) THEN
-      h%current_location = b%data_location
-      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
-          errcode)
-
-      ! This is all a bit messy, but it is necessary because MPI_FILE_WRITE
-      ! accepts an INTEGER count of elements to write, which may not be
-      ! big enough for npoint_global which is an INTEGER*8
-
-      npoint_max = HUGE(npoint_max)
-      npoint_rem = MOD(npoint_global, npoint_max)
-
-      idx = 1
-      DO i = 1, npoint_global / npoint_max
-        CALL MPI_FILE_WRITE(h%filehandle, array(idx), npoint_max, b%mpitype, &
-            MPI_STATUS_IGNORE, errcode)
-        idx = idx + npoint_max
-      ENDDO
-
-      CALL MPI_FILE_WRITE(h%filehandle, array(idx), npoint_rem, b%mpitype, &
-          MPI_STATUS_IGNORE, errcode)
-    ENDIF
-
-    h%current_location = b%data_location + b%data_length
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_write_srl_pt_var_int_array
-
-
-
-  SUBROUTINE sdf_write_srl_pt_var_int_array4(h, id, name, units, array, &
-      npoint_global, mesh_id, mult)
-
-    TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, DIMENSION(:), INTENT(IN) :: array
-    INTEGER, INTENT(IN) :: npoint_global
-    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
-
-    CALL sdf_write_srl_pt_var_int_array(h, id, name, units, array, &
-        INT(npoint_global,i8), mesh_id, mult)
-
-  END SUBROUTINE sdf_write_srl_pt_var_int_array4
 
 
 

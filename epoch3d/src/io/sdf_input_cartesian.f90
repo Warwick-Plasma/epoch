@@ -134,121 +134,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_srl_1d_mesh(h, x)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: x
-    INTEGER :: errcode, intn
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
-    intn = b%dims(1)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
-
-    ! That should be it, so now skip to end of block
-    h%current_location = b%next_block_location
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_read_srl_1d_mesh
-
-
-
-  SUBROUTINE sdf_read_srl_2d_mesh(h, x, y)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: x, y
-    INTEGER :: errcode, intn
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
-    intn = b%dims(1)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
-    intn = b%dims(2)
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
-
-    ! That should be it, so now skip to end of block
-    h%current_location = b%next_block_location
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_read_srl_2d_mesh
-
-
-
-  SUBROUTINE sdf_read_srl_3d_mesh(h, x, y, z)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: x, y, z
-    INTEGER :: errcode, intn
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
-    intn = b%dims(1)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
-    intn = b%dims(2)
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
-    intn = b%dims(3)
-    CALL MPI_FILE_READ_ALL(h%filehandle, z, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
-
-    ! That should be it, so now skip to end of block
-    h%current_location = b%next_block_location
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_read_srl_3d_mesh
-
-
-
-  ! variable loading functions
+  ! Variable loading functions
 
   SUBROUTINE sdf_read_plain_variable_info(h, dims, units, mesh_id, stagger, &
       mult)
@@ -299,182 +185,6 @@ CONTAINS
     b%done_info = .TRUE.
 
   END SUBROUTINE sdf_read_plain_variable_info
-
-
-
-  !----------------------------------------------------------------------------
-  ! Code to read a 1D cartesian variable in parallel
-  ! using the mpitype {distribution} for distribution of data
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE sdf_read_1d_float(h, variable, distribution, subarray)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
-
-    ! Read the actual data
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
-        distribution, 'native', MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
-        MPI_INFO_NULL, errcode)
-
-    h%current_location = b%data_location + b%data_length
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_read_1d_float
-
-
-
-  !----------------------------------------------------------------------------
-  ! Code to read a 2D cartesian variable in parallel
-  ! using the mpitype {distribution} for distribution of data
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE sdf_read_2d_float(h, variable, distribution, subarray)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(1,1), INTENT(OUT) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
-
-    ! Read the actual data
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
-        distribution, 'native', MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
-        MPI_INFO_NULL, errcode)
-
-    h%current_location = b%data_location + b%data_length
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_read_2d_float
-
-
-
-  !----------------------------------------------------------------------------
-  ! Code to read a 3D cartesian variable in parallel
-  ! using the mpitype {distribution} for distribution of data
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE sdf_read_3d_float(h, variable, distribution, subarray)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(1,1,1), INTENT(OUT) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
-
-    ! Read the actual data
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
-        distribution, 'native', MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
-        MPI_INFO_NULL, errcode)
-
-    h%current_location = b%data_location + b%data_length
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_read_3d_float
-
-
-
-  !----------------------------------------------------------------------------
-  ! Code to read a 4D cartesian variable in parallel
-  ! using the mpitype {distribution} for distribution of data
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE sdf_read_4d_float(h, variable, distribution, subarray)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(1,1,1,1), INTENT(OUT) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
-
-    ! Read the actual data
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
-        distribution, 'native', MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
-        MPI_INFO_NULL, errcode)
-
-    h%current_location = b%data_location + b%data_length
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_read_4d_float
 
 
 
@@ -766,6 +476,296 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE sdf_read_material_info
+
+
+
+  SUBROUTINE sdf_read_srl_1d_mesh(h, x)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(num), DIMENSION(:), INTENT(OUT) :: x
+    INTEGER :: errcode, intn
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+
+    intn = b%dims(1)
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
+        MPI_STATUS_IGNORE, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_read_srl_1d_mesh
+
+
+
+  SUBROUTINE sdf_read_srl_2d_mesh(h, x, y)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(num), DIMENSION(:), INTENT(OUT) :: x, y
+    INTEGER :: errcode, intn
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+
+    intn = b%dims(1)
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
+        MPI_STATUS_IGNORE, errcode)
+    intn = b%dims(2)
+    CALL MPI_FILE_READ_ALL(h%filehandle, y, intn, b%mpitype, &
+        MPI_STATUS_IGNORE, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_read_srl_2d_mesh
+
+
+
+  SUBROUTINE sdf_read_srl_3d_mesh(h, x, y, z)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(num), DIMENSION(:), INTENT(OUT) :: x, y, z
+    INTEGER :: errcode, intn
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+
+    intn = b%dims(1)
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
+        MPI_STATUS_IGNORE, errcode)
+    intn = b%dims(2)
+    CALL MPI_FILE_READ_ALL(h%filehandle, y, intn, b%mpitype, &
+        MPI_STATUS_IGNORE, errcode)
+    intn = b%dims(3)
+    CALL MPI_FILE_READ_ALL(h%filehandle, z, intn, b%mpitype, &
+        MPI_STATUS_IGNORE, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_read_srl_3d_mesh
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to read a 1D cartesian variable in parallel
+  ! using the mpitype {distribution} for distribution of data
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE sdf_read_1d_float(h, variable, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(num), DIMENSION(:), INTENT(OUT) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_read_1d_float
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to read a 2D cartesian variable in parallel
+  ! using the mpitype {distribution} for distribution of data
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE sdf_read_2d_float(h, variable, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(num), DIMENSION(1,1), INTENT(OUT) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_read_2d_float
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to read a 3D cartesian variable in parallel
+  ! using the mpitype {distribution} for distribution of data
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE sdf_read_3d_float(h, variable, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(num), DIMENSION(1,1,1), INTENT(OUT) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_read_3d_float
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to read a 4D cartesian variable in parallel
+  ! using the mpitype {distribution} for distribution of data
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE sdf_read_4d_float(h, variable, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(num), DIMENSION(1,1,1,1), INTENT(OUT) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_read_4d_float
 
 
 
