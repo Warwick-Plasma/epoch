@@ -7,19 +7,24 @@ MODULE sdf_output
 
   IMPLICIT NONE
 
+  INTERFACE sdf_write_header
+    MODULE PROCEDURE &
+        write_header_r8
+  END INTERFACE sdf_write_header
+
   INTERFACE sdf_write_srl
     MODULE PROCEDURE &
-        sdf_write_constant_real, &
-        sdf_write_constant_integer, &
-        sdf_write_constant_logical, &
-        sdf_write_1d_array_real, &
-        sdf_write_2d_array_real, &
-        sdf_write_2d_array_real_spec, &
-        sdf_write_1d_array_integer, &
-        sdf_write_2d_array_integer, &
-        sdf_write_2d_array_integer_spec, &
-        sdf_write_1d_array_logical, &
-        sdf_write_2d_array_character
+        write_constant_real_r8, &
+        write_constant_integer, &
+        write_constant_logical, &
+        write_1d_array_real_r8, &
+        write_2d_array_real_r8, &
+        write_2d_array_real_spec_r8, &
+        write_1d_array_integer, &
+        write_2d_array_integer, &
+        write_2d_array_integer_spec, &
+        write_1d_array_logical, &
+        write_2d_array_character
   END INTERFACE sdf_write_srl
 
 END MODULE sdf_output

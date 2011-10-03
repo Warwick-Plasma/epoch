@@ -8,7 +8,7 @@ MODULE sdf_output_r8
 
 CONTAINS
 
-  SUBROUTINE sdf_write_constant_real(h, id, name, value, rank_write)
+  SUBROUTINE write_constant_real_r8(h, id, name, value, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
@@ -31,11 +31,11 @@ CONTAINS
 
     h%rank_master = h%default_rank
 
-  END SUBROUTINE sdf_write_constant_real
+  END SUBROUTINE write_constant_real_r8
 
 
 
-  SUBROUTINE sdf_write_1d_array_real(h, id, name, array, rank_write)
+  SUBROUTINE write_1d_array_real_r8(h, id, name, array, rank_write)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -77,11 +77,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_1d_array_real
+  END SUBROUTINE write_1d_array_real_r8
 
 
 
-  SUBROUTINE sdf_write_2d_array_real_spec(h, id, name, n1, n2, array, &
+  SUBROUTINE write_2d_array_real_spec_r8(h, id, name, n1, n2, array, &
       rank_write)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -133,11 +133,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_2d_array_real_spec
+  END SUBROUTINE write_2d_array_real_spec_r8
 
 
 
-  SUBROUTINE sdf_write_2d_array_real(h, id, name, array, rank_write)
+  SUBROUTINE write_2d_array_real_r8(h, id, name, array, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
@@ -147,9 +147,9 @@ CONTAINS
 
     n1 = SIZE(array,1)
     n2 = SIZE(array,2)
-    CALL sdf_write_2d_array_real_spec(h, id, name, n1, n2, &
+    CALL write_2d_array_real_spec_r8(h, id, name, n1, n2, &
         array, rank_write)
 
-  END SUBROUTINE sdf_write_2d_array_real
+  END SUBROUTINE write_2d_array_real_r8
 
 END MODULE sdf_output_r8

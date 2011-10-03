@@ -40,7 +40,7 @@ CONTAINS
 
   ! Mesh loading functions
 
-  SUBROUTINE sdf_read_plain_mesh_info(h, geometry, dims, extents, dim_labels, &
+  SUBROUTINE read_plain_mesh_info_ru(h, geometry, dims, extents, dim_labels, &
       dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
@@ -107,13 +107,13 @@ CONTAINS
     h%current_location = b%block_start + h%block_header_length
     b%done_info = .TRUE.
 
-  END SUBROUTINE sdf_read_plain_mesh_info
+  END SUBROUTINE read_plain_mesh_info_ru
 
 
 
   ! Variable loading functions
 
-  SUBROUTINE sdf_read_plain_variable_info(h, dims, units, mesh_id, stagger, &
+  SUBROUTINE read_plain_variable_info_ru(h, dims, units, mesh_id, stagger, &
       mult)
 
     TYPE(sdf_file_handle) :: h
@@ -161,7 +161,7 @@ CONTAINS
     h%current_location = b%block_start + h%block_header_length
     b%done_info = .TRUE.
 
-  END SUBROUTINE sdf_read_plain_variable_info
+  END SUBROUTINE read_plain_variable_info_ru
 
 
 
@@ -170,7 +170,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_1d_integer(h, variable, distribution, subarray)
+  SUBROUTINE read_1d_integer(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:), INTENT(OUT) :: variable
@@ -187,7 +187,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -205,7 +205,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_1d_integer
+  END SUBROUTINE read_1d_integer
 
 
 
@@ -214,7 +214,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_2d_integer(h, variable, distribution, subarray)
+  SUBROUTINE read_2d_integer(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:,:), INTENT(OUT) :: variable
@@ -231,7 +231,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -249,7 +249,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_2d_integer
+  END SUBROUTINE read_2d_integer
 
 
 
@@ -258,7 +258,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_3d_integer(h, variable, distribution, subarray)
+  SUBROUTINE read_3d_integer(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:,:,:), INTENT(OUT) :: variable
@@ -275,7 +275,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -293,7 +293,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_3d_integer
+  END SUBROUTINE read_3d_integer
 
 
 
@@ -302,7 +302,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_1d_character(h, variable, distribution, subarray)
+  SUBROUTINE read_1d_character(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=1), DIMENSION(:), INTENT(OUT) :: variable
@@ -319,7 +319,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -337,7 +337,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_1d_character
+  END SUBROUTINE read_1d_character
 
 
 
@@ -346,7 +346,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_2d_character(h, variable, distribution, subarray)
+  SUBROUTINE read_2d_character(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=1), DIMENSION(:,:), INTENT(OUT) :: variable
@@ -363,7 +363,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -381,7 +381,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_2d_character
+  END SUBROUTINE read_2d_character
 
 
 
@@ -390,7 +390,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_3d_character(h, variable, distribution, subarray)
+  SUBROUTINE read_3d_character(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=1), DIMENSION(:,:,:), INTENT(OUT) :: variable
@@ -407,7 +407,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -425,7 +425,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_3d_character
+  END SUBROUTINE read_3d_character
 
 
 

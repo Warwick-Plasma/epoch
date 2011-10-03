@@ -8,7 +8,7 @@ MODULE sdf_output_cartesian_ru
 
 CONTAINS
 
-  SUBROUTINE write_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+  SUBROUTINE write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
@@ -106,11 +106,11 @@ CONTAINS
     h%current_location = b%block_start + b%info_length
     b%done_info = .TRUE.
 
-  END SUBROUTINE write_mesh_meta
+  END SUBROUTINE write_mesh_meta_r8
 
 
 
-  SUBROUTINE write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+  SUBROUTINE write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units, mesh_id
@@ -175,7 +175,7 @@ CONTAINS
     h%current_location = b%block_start + b%info_length
     b%done_info = .TRUE.
 
-  END SUBROUTINE write_mesh_variable_meta
+  END SUBROUTINE write_mesh_variable_meta_r8
 
 
 
@@ -186,7 +186,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_integer(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_1d_integer_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -222,7 +222,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -237,7 +237,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_1d_integer
+  END SUBROUTINE write_1d_integer_r8
 
 
 
@@ -248,7 +248,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_integer(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_2d_integer_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -284,7 +284,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -299,7 +299,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_2d_integer
+  END SUBROUTINE write_2d_integer_r8
 
 
 
@@ -310,7 +310,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_integer(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_3d_integer_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -346,7 +346,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -361,7 +361,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_3d_integer
+  END SUBROUTINE write_3d_integer_r8
 
 
 
@@ -372,7 +372,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_character(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_1d_character_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -408,7 +408,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -423,7 +423,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_1d_character
+  END SUBROUTINE write_1d_character_r8
 
 
 
@@ -434,7 +434,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_character(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_2d_character_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -470,7 +470,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -485,7 +485,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_2d_character
+  END SUBROUTINE write_2d_character_r8
 
 
 
@@ -496,7 +496,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_character(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_3d_character_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -532,7 +532,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -547,6 +547,6 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_3d_character
+  END SUBROUTINE write_3d_character_r8
 
 END MODULE sdf_output_cartesian_ru

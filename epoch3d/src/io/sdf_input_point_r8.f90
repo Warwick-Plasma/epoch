@@ -9,7 +9,7 @@ MODULE sdf_input_point_r8
 
 CONTAINS
 
-  SUBROUTINE sdf_read_srl_1d_pt_mesh_array(h, x)
+  SUBROUTINE read_srl_1d_pt_mesh_array_r8(h, x)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: x
@@ -25,7 +25,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_point_mesh_info(h)
+    IF (.NOT. b%done_info) CALL read_point_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -41,11 +41,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_srl_1d_pt_mesh_array
+  END SUBROUTINE read_srl_1d_pt_mesh_array_r8
 
 
 
-  SUBROUTINE sdf_read_srl_2d_pt_mesh_array(h, x, y)
+  SUBROUTINE read_srl_2d_pt_mesh_array_r8(h, x, y)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: x, y
@@ -61,7 +61,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_point_mesh_info(h)
+    IF (.NOT. b%done_info) CALL read_point_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -80,11 +80,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_srl_2d_pt_mesh_array
+  END SUBROUTINE read_srl_2d_pt_mesh_array_r8
 
 
 
-  SUBROUTINE sdf_read_srl_3d_pt_mesh_array(h, x, y, z)
+  SUBROUTINE read_srl_3d_pt_mesh_array_r8(h, x, y, z)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: x, y, z
@@ -100,7 +100,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_point_mesh_info(h)
+    IF (.NOT. b%done_info) CALL read_point_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -122,11 +122,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_srl_3d_pt_mesh_array
+  END SUBROUTINE read_srl_3d_pt_mesh_array_r8
 
 
 
-  SUBROUTINE sdf_read_point_mesh(h, npoint_local, distribution, iterator)
+  SUBROUTINE read_point_mesh_r8(h, npoint_local, distribution, iterator)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(IN) :: npoint_local
@@ -158,7 +158,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_point_mesh_info(h)
+    IF (.NOT. b%done_info) CALL read_point_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -195,11 +195,11 @@ CONTAINS
     b%block_start = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_point_mesh
+  END SUBROUTINE read_point_mesh_r8
 
 
 
-  SUBROUTINE sdf_read_point_variable(h, npoint_local, distribution, iterator)
+  SUBROUTINE read_point_variable_r8(h, npoint_local, distribution, iterator)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(IN) :: npoint_local
@@ -230,7 +230,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_point_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_point_variable_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -262,11 +262,11 @@ CONTAINS
     b%block_start = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_point_variable
+  END SUBROUTINE read_point_variable_r8
 
 
 
-  SUBROUTINE sdf_read_srl_pt_var_flt_array(h, array)
+  SUBROUTINE read_srl_pt_var_flt_array_r8(h, array)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
@@ -282,7 +282,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_point_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_point_variable_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -298,6 +298,6 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_srl_pt_var_flt_array
+  END SUBROUTINE read_srl_pt_var_flt_array_r8
 
 END MODULE sdf_input_point_r8

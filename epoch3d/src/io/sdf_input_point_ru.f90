@@ -36,7 +36,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_point_mesh_info(h, npoints, geometry, extents, &
+  SUBROUTINE read_point_mesh_info_ru(h, npoints, geometry, extents, &
       dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
@@ -102,13 +102,13 @@ CONTAINS
     h%current_location = b%block_start + h%block_header_length
     b%done_info = .TRUE.
 
-  END SUBROUTINE sdf_read_point_mesh_info
+  END SUBROUTINE read_point_mesh_info_ru
 
 
 
   ! Variable loading functions
 
-  SUBROUTINE sdf_read_point_variable_info(h, npoints, mesh_id, units, mult)
+  SUBROUTINE read_point_variable_info_ru(h, npoints, mesh_id, units, mult)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT), OPTIONAL :: npoints
@@ -150,11 +150,11 @@ CONTAINS
     h%current_location = b%block_start + h%block_header_length
     b%done_info = .TRUE.
 
-  END SUBROUTINE sdf_read_point_variable_info
+  END SUBROUTINE read_point_variable_info_ru
 
 
 
-  SUBROUTINE sdf_read_srl_pt_var_int_array(h, array)
+  SUBROUTINE read_srl_pt_var_int_array(h, array)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:), INTENT(OUT) :: array
@@ -170,7 +170,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_point_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_point_variable_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -186,6 +186,6 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_srl_pt_var_int_array
+  END SUBROUTINE read_srl_pt_var_int_array
 
 END MODULE sdf_input_point_ru

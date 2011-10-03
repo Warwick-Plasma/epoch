@@ -9,7 +9,7 @@ MODULE sdf_input_cartesian_r8
 
 CONTAINS
 
-  SUBROUTINE sdf_read_srl_1d_mesh(h, x)
+  SUBROUTINE read_srl_1d_mesh_r8(h, x)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: x
@@ -25,7 +25,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -40,11 +40,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_srl_1d_mesh
+  END SUBROUTINE read_srl_1d_mesh_r8
 
 
 
-  SUBROUTINE sdf_read_srl_2d_mesh(h, x, y)
+  SUBROUTINE read_srl_2d_mesh_r8(h, x, y)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: x, y
@@ -60,7 +60,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -78,11 +78,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_srl_2d_mesh
+  END SUBROUTINE read_srl_2d_mesh_r8
 
 
 
-  SUBROUTINE sdf_read_srl_3d_mesh(h, x, y, z)
+  SUBROUTINE read_srl_3d_mesh_r8(h, x, y, z)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: x, y, z
@@ -98,7 +98,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_mesh_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
@@ -119,7 +119,7 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_srl_3d_mesh
+  END SUBROUTINE read_srl_3d_mesh_r8
 
 
 
@@ -128,7 +128,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_1d_float(h, variable, distribution, subarray)
+  SUBROUTINE read_1d_float_r8(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: variable
@@ -145,7 +145,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -163,7 +163,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_1d_float
+  END SUBROUTINE read_1d_float_r8
 
 
 
@@ -172,7 +172,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_2d_float(h, variable, distribution, subarray)
+  SUBROUTINE read_2d_float_r8(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(1,1), INTENT(OUT) :: variable
@@ -189,7 +189,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -207,7 +207,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_2d_float
+  END SUBROUTINE read_2d_float_r8
 
 
 
@@ -216,7 +216,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_3d_float(h, variable, distribution, subarray)
+  SUBROUTINE read_3d_float_r8(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(1,1,1), INTENT(OUT) :: variable
@@ -233,7 +233,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -251,7 +251,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_3d_float
+  END SUBROUTINE read_3d_float_r8
 
 
 
@@ -260,7 +260,7 @@ CONTAINS
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_4d_float(h, variable, distribution, subarray)
+  SUBROUTINE read_4d_float_r8(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(1,1,1,1), INTENT(OUT) :: variable
@@ -277,7 +277,7 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (.NOT. b%done_info) CALL sdf_read_plain_variable_info(h)
+    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
 
     ! Read the actual data
 
@@ -295,7 +295,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_4d_float
+  END SUBROUTINE read_4d_float_r8
 
 
 
@@ -304,7 +304,7 @@ CONTAINS
   ! in parallel using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_1d_var_first(h, nm, dims, variable, idx, distribution, &
+  SUBROUTINE read_1d_var_first_r8(h, nm, dims, variable, idx, distribution, &
       subarray)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -314,9 +314,9 @@ CONTAINS
     REAL(num), INTENT(OUT) :: variable(nm, dims(1))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL sdf_read_2d_float(h, variable(idx,1), distribution, subarray)
+    CALL read_2d_float_r8(h, variable(idx,1), distribution, subarray)
 
-  END SUBROUTINE sdf_read_1d_var_first
+  END SUBROUTINE read_1d_var_first_r8
 
 
 
@@ -325,7 +325,7 @@ CONTAINS
   ! in parallel using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_2d_var_first(h, nm, dims, variable, idx, distribution, &
+  SUBROUTINE read_2d_var_first_r8(h, nm, dims, variable, idx, distribution, &
       subarray)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -335,9 +335,9 @@ CONTAINS
     REAL(num), INTENT(OUT) :: variable(nm, dims(1), dims(2))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL sdf_read_3d_float(h, variable(idx,1,1), distribution, subarray)
+    CALL read_3d_float_r8(h, variable(idx,1,1), distribution, subarray)
 
-  END SUBROUTINE sdf_read_2d_var_first
+  END SUBROUTINE read_2d_var_first_r8
 
 
 
@@ -346,7 +346,7 @@ CONTAINS
   ! in parallel using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_3d_var_first(h, nm, dims, variable, idx, distribution, &
+  SUBROUTINE read_3d_var_first_r8(h, nm, dims, variable, idx, distribution, &
       subarray)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -356,9 +356,9 @@ CONTAINS
     REAL(num), INTENT(OUT) :: variable(nm, dims(1), dims(2), dims(3))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL sdf_read_4d_float(h, variable(idx,1,1,1), distribution, subarray)
+    CALL read_4d_float_r8(h, variable(idx,1,1,1), distribution, subarray)
 
-  END SUBROUTINE sdf_read_3d_var_first
+  END SUBROUTINE read_3d_var_first_r8
 
 
 
@@ -367,7 +367,7 @@ CONTAINS
   ! in parallel using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_1d_var_last(h, nm, dims, variable, idx, distribution, &
+  SUBROUTINE read_1d_var_last_r8(h, nm, dims, variable, idx, distribution, &
       subarray)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -377,9 +377,9 @@ CONTAINS
     REAL(num), INTENT(OUT) :: variable(dims(1), nm)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL sdf_read_2d_float(h, variable(1,idx), distribution, subarray)
+    CALL read_2d_float_r8(h, variable(1,idx), distribution, subarray)
 
-  END SUBROUTINE sdf_read_1d_var_last
+  END SUBROUTINE read_1d_var_last_r8
 
 
 
@@ -388,7 +388,7 @@ CONTAINS
   ! in parallel using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_2d_var_last(h, nm, dims, variable, idx, distribution, &
+  SUBROUTINE read_2d_var_last_r8(h, nm, dims, variable, idx, distribution, &
       subarray)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -398,9 +398,9 @@ CONTAINS
     REAL(num), INTENT(OUT) :: variable(dims(1), dims(2), nm)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL sdf_read_3d_float(h, variable(1,1,idx), distribution, subarray)
+    CALL read_3d_float_r8(h, variable(1,1,idx), distribution, subarray)
 
-  END SUBROUTINE sdf_read_2d_var_last
+  END SUBROUTINE read_2d_var_last_r8
 
 
 
@@ -409,7 +409,7 @@ CONTAINS
   ! in parallel using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_3d_var_last(h, nm, dims, variable, idx, distribution, &
+  SUBROUTINE read_3d_var_last_r8(h, nm, dims, variable, idx, distribution, &
       subarray)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -419,9 +419,9 @@ CONTAINS
     REAL(num), INTENT(OUT) :: variable(dims(1), dims(2), dims(3), nm)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL sdf_read_4d_float(h, variable(1,1,1,idx), distribution, subarray)
+    CALL read_4d_float_r8(h, variable(1,1,1,idx), distribution, subarray)
 
-  END SUBROUTINE sdf_read_3d_var_last
+  END SUBROUTINE read_3d_var_last_r8
 
 
 
@@ -430,7 +430,7 @@ CONTAINS
   ! mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_1d_material(h, variable, distribution, subarray, last_in)
+  SUBROUTINE read_1d_material_r8(h, variable, distribution, subarray, last_in)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -455,7 +455,7 @@ CONTAINS
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL sdf_read_1d_var_last(h, nm, b%dims, variable, i, distribution, &
+        CALL read_1d_var_last_r8(h, nm, b%dims, variable, i, distribution, &
             subarray)
       ENDDO
     ELSE
@@ -463,14 +463,14 @@ CONTAINS
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL sdf_read_1d_var_first(h, nm, b%dims, variable, i, distribution, &
+        CALL read_1d_var_first_r8(h, nm, b%dims, variable, i, distribution, &
             subarray)
       ENDDO
     ENDIF
 
     h%current_block => cur
 
-  END SUBROUTINE sdf_read_1d_material
+  END SUBROUTINE read_1d_material_r8
 
 
 
@@ -479,7 +479,7 @@ CONTAINS
   ! mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_2d_material(h, variable, distribution, subarray, last_in)
+  SUBROUTINE read_2d_material_r8(h, variable, distribution, subarray, last_in)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -504,7 +504,7 @@ CONTAINS
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL sdf_read_2d_var_last(h, nm, b%dims, variable, i, distribution, &
+        CALL read_2d_var_last_r8(h, nm, b%dims, variable, i, distribution, &
             subarray)
       ENDDO
     ELSE
@@ -512,14 +512,14 @@ CONTAINS
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL sdf_read_2d_var_first(h, nm, b%dims, variable, i, distribution, &
+        CALL read_2d_var_first_r8(h, nm, b%dims, variable, i, distribution, &
             subarray)
       ENDDO
     ENDIF
 
     h%current_block => cur
 
-  END SUBROUTINE sdf_read_2d_material
+  END SUBROUTINE read_2d_material_r8
 
 
 
@@ -528,7 +528,7 @@ CONTAINS
   ! mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_3d_material(h, variable, distribution, subarray, last_in)
+  SUBROUTINE read_3d_material_r8(h, variable, distribution, subarray, last_in)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -553,7 +553,7 @@ CONTAINS
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL sdf_read_3d_var_last(h, nm, b%dims, variable, i, distribution, &
+        CALL read_3d_var_last_r8(h, nm, b%dims, variable, i, distribution, &
             subarray)
       ENDDO
     ELSE
@@ -561,14 +561,14 @@ CONTAINS
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL sdf_read_3d_var_first(h, nm, b%dims, variable, i, distribution, &
+        CALL read_3d_var_first_r8(h, nm, b%dims, variable, i, distribution, &
             subarray)
       ENDDO
     ENDIF
 
     h%current_block => cur
 
-  END SUBROUTINE sdf_read_3d_material
+  END SUBROUTINE read_3d_material_r8
 
 
 
@@ -577,7 +577,7 @@ CONTAINS
   ! in parallel
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_2d_variable(h, variable, distribution, subarray, last_in)
+  SUBROUTINE read_2d_variable_r8(h, variable, distribution, subarray, last_in)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: variable
@@ -587,12 +587,12 @@ CONTAINS
 
     b => h%current_block
     IF (b%blocktype .EQ. c_blocktype_plain_variable) THEN
-      CALL sdf_read_2d_float(h, variable, distribution, subarray)
+      CALL read_2d_float_r8(h, variable, distribution, subarray)
     ELSE
-      CALL sdf_read_1d_material(h, variable, distribution, subarray, last_in)
+      CALL read_1d_material_r8(h, variable, distribution, subarray, last_in)
     ENDIF
 
-  END SUBROUTINE sdf_read_2d_variable
+  END SUBROUTINE read_2d_variable_r8
 
 
 
@@ -601,7 +601,7 @@ CONTAINS
   ! in parallel
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_read_3d_variable(h, variable, distribution, subarray, last_in)
+  SUBROUTINE read_3d_variable_r8(h, variable, distribution, subarray, last_in)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: variable
@@ -611,11 +611,11 @@ CONTAINS
 
     b => h%current_block
     IF (b%blocktype .EQ. c_blocktype_plain_variable) THEN
-      CALL sdf_read_3d_float(h, variable, distribution, subarray)
+      CALL read_3d_float_r8(h, variable, distribution, subarray)
     ELSE
-      CALL sdf_read_2d_material(h, variable, distribution, subarray, last_in)
+      CALL read_2d_material_r8(h, variable, distribution, subarray, last_in)
     ENDIF
 
-  END SUBROUTINE sdf_read_3d_variable
+  END SUBROUTINE read_3d_variable_r8
 
 END MODULE sdf_input_cartesian_r8

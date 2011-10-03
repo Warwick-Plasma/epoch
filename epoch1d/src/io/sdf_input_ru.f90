@@ -70,7 +70,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_header(h, step, time, code_name, code_io_version, &
+  SUBROUTINE read_header_ru(h, step, time, code_name, code_io_version, &
       string_length, restart_flag, other_domains)
 
     TYPE(sdf_file_handle) :: h
@@ -131,7 +131,7 @@ CONTAINS
     IF (PRESENT(code_name)) CALL safe_copy_string(h%code_name, code_name)
     IF (PRESENT(string_length)) string_length = h%string_length
 
-  END SUBROUTINE sdf_read_header
+  END SUBROUTINE read_header_ru
 
 
 
@@ -387,7 +387,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_constant_integer(h, value)
+  SUBROUTINE read_constant_integer(h, value)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(OUT) :: value
@@ -407,11 +407,11 @@ CONTAINS
       value = INT(integer8)
     ENDIF
 
-  END SUBROUTINE sdf_read_constant_integer
+  END SUBROUTINE read_constant_integer
 
 
 
-  SUBROUTINE sdf_read_constant_logical(h, value)
+  SUBROUTINE read_constant_logical(h, value)
 
     TYPE(sdf_file_handle) :: h
     LOGICAL, INTENT(OUT) :: value
@@ -423,7 +423,7 @@ CONTAINS
 
     value = TRANSFER(b%const_value, value)
 
-  END SUBROUTINE sdf_read_constant_logical
+  END SUBROUTINE read_constant_logical
 
 
 
@@ -463,7 +463,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_1d_array_integer(h, values)
+  SUBROUTINE read_1d_array_integer(h, values)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:), INTENT(OUT) :: values
@@ -495,11 +495,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_1d_array_integer
+  END SUBROUTINE read_1d_array_integer
 
 
 
-  SUBROUTINE sdf_read_2d_array_integer(h, values)
+  SUBROUTINE read_2d_array_integer(h, values)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:,:), INTENT(OUT) :: values
@@ -534,11 +534,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_2d_array_integer
+  END SUBROUTINE read_2d_array_integer
 
 
 
-  SUBROUTINE sdf_read_1d_array_logical(h, values)
+  SUBROUTINE read_1d_array_logical(h, values)
 
     TYPE(sdf_file_handle) :: h
     LOGICAL, DIMENSION(:), INTENT(OUT) :: values
@@ -583,11 +583,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_1d_array_logical
+  END SUBROUTINE read_1d_array_logical
 
 
 
-  SUBROUTINE sdf_read_2d_array_character(h, values)
+  SUBROUTINE read_2d_array_character(h, values)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), DIMENSION(:), INTENT(OUT) :: values
@@ -622,7 +622,7 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_2d_array_character
+  END SUBROUTINE read_2d_array_character
 
 
 

@@ -8,17 +8,37 @@ MODULE sdf_input_point
 
   IMPLICIT NONE
 
+  INTERFACE sdf_read_point_mesh_info
+    MODULE PROCEDURE &
+        read_point_mesh_info_ru
+  END INTERFACE sdf_read_point_mesh_info
+
+  INTERFACE sdf_read_point_variable_info
+    MODULE PROCEDURE &
+        read_point_variable_info_ru
+  END INTERFACE sdf_read_point_variable_info
+
+  INTERFACE sdf_read_point_mesh
+    MODULE PROCEDURE &
+        read_point_mesh_r8
+  END INTERFACE sdf_read_point_mesh
+
+  INTERFACE sdf_read_point_variable
+    MODULE PROCEDURE &
+        read_point_variable_r8
+  END INTERFACE sdf_read_point_variable
+
   INTERFACE sdf_read_srl_point_mesh
     MODULE PROCEDURE &
-        sdf_read_srl_1d_pt_mesh_array, &
-        sdf_read_srl_2d_pt_mesh_array, &
-        sdf_read_srl_3d_pt_mesh_array
+        read_srl_1d_pt_mesh_array_r8, &
+        read_srl_2d_pt_mesh_array_r8, &
+        read_srl_3d_pt_mesh_array_r8
   END INTERFACE sdf_read_srl_point_mesh
 
   INTERFACE sdf_read_srl_point_variable
     MODULE PROCEDURE &
-        sdf_read_srl_pt_var_int_array, &
-        sdf_read_srl_pt_var_flt_array
+        read_srl_pt_var_flt_array_r8, &
+        read_srl_pt_var_int_array
   END INTERFACE sdf_read_srl_point_variable
 
 END MODULE sdf_input_point

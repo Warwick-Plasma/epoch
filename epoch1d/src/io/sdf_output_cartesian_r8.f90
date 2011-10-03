@@ -15,7 +15,7 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_srl_1d_mesh(h, id, name, x, dim_labels, &
+  SUBROUTINE write_srl_1d_mesh_r8(h, id, name, x, dim_labels, &
       dim_units, dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -48,7 +48,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the actual data
 
@@ -67,7 +67,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_srl_1d_mesh
+  END SUBROUTINE write_srl_1d_mesh_r8
 
 
 
@@ -77,7 +77,7 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_srl_2d_mesh(h, id, name, x, y, dim_labels, &
+  SUBROUTINE write_srl_2d_mesh_r8(h, id, name, x, y, dim_labels, &
       dim_units, dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -113,7 +113,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the actual data
 
@@ -135,7 +135,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_srl_2d_mesh
+  END SUBROUTINE write_srl_2d_mesh_r8
 
 
 
@@ -145,7 +145,7 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_srl_3d_mesh(h, id, name, x, y, z, dim_labels, &
+  SUBROUTINE write_srl_3d_mesh_r8(h, id, name, x, y, z, dim_labels, &
       dim_units, dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -184,7 +184,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the actual data
 
@@ -209,7 +209,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_srl_3d_mesh
+  END SUBROUTINE write_srl_3d_mesh_r8
 
 
 
@@ -220,7 +220,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_mesh(h, id, name, x, dims, xmin, xmax, &
+  SUBROUTINE write_1d_mesh_r8(h, id, name, x, dims, xmin, xmax, &
       distribution, subarray, dim_labels, dim_units, &
       dim_mults)
 
@@ -260,7 +260,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the actual data
 
@@ -275,7 +275,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_1d_mesh
+  END SUBROUTINE write_1d_mesh_r8
 
 
 
@@ -286,7 +286,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_mesh(h, id, name, x, y, dims, xmin, xmax, &
+  SUBROUTINE write_2d_mesh_r8(h, id, name, x, y, dims, xmin, xmax, &
       ymin, ymax, distribution, subarray, dim_labels, dim_units, &
       dim_mults)
 
@@ -328,7 +328,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the actual data
 
@@ -350,7 +350,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_2d_mesh
+  END SUBROUTINE write_2d_mesh_r8
 
 
 
@@ -361,7 +361,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_mesh(h, id, name, x, y, z, dims, xmin, xmax, &
+  SUBROUTINE write_3d_mesh_r8(h, id, name, x, y, z, dims, xmin, xmax, &
       ymin, ymax, zmin, zmax, distribution, subarray, dim_labels, dim_units, &
       dim_mults)
 
@@ -405,7 +405,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the actual data
 
@@ -434,7 +434,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_3d_mesh
+  END SUBROUTINE write_3d_mesh_r8
 
 
 
@@ -445,7 +445,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_float_gen(h, id, name, units, ndims, dims, stagger, &
+  SUBROUTINE write_1d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -475,7 +475,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -490,7 +490,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_1d_float_gen
+  END SUBROUTINE write_1d_float_gen_r8
 
 
 
@@ -501,7 +501,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_float_gen(h, id, name, units, ndims, dims, stagger, &
+  SUBROUTINE write_2d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -531,7 +531,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -546,7 +546,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_2d_float_gen
+  END SUBROUTINE write_2d_float_gen_r8
 
 
 
@@ -557,7 +557,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_float_gen(h, id, name, units, ndims, dims, stagger, &
+  SUBROUTINE write_3d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -587,7 +587,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -602,7 +602,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_3d_float_gen
+  END SUBROUTINE write_3d_float_gen_r8
 
 
 
@@ -613,7 +613,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_4d_float_gen(h, id, name, units, ndims, dims, stagger, &
+  SUBROUTINE write_4d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
       mesh_id, variable, distribution, subarray, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -643,7 +643,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_mesh_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the actual data
 
@@ -658,7 +658,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_4d_float_gen
+  END SUBROUTINE write_4d_float_gen_r8
 
 
 
@@ -669,7 +669,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_float(h, id, name, units, dims, stagger, mesh_id, &
+  SUBROUTINE write_1d_float_r8(h, id, name, units, dims, stagger, mesh_id, &
       variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -682,10 +682,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_1d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_1d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable, distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_1d_float
+  END SUBROUTINE write_1d_float_r8
 
 
 
@@ -696,7 +696,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_float(h, id, name, units, dims, stagger, mesh_id, &
+  SUBROUTINE write_2d_float_r8(h, id, name, units, dims, stagger, mesh_id, &
       variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -709,10 +709,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_2d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_2d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable, distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_2d_float
+  END SUBROUTINE write_2d_float_r8
 
 
 
@@ -723,7 +723,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_float(h, id, name, units, dims, stagger, mesh_id, &
+  SUBROUTINE write_3d_float_r8(h, id, name, units, dims, stagger, mesh_id, &
       variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -736,10 +736,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_3d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_3d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable, distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_3d_float
+  END SUBROUTINE write_3d_float_r8
 
 
 
@@ -751,7 +751,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_var_first(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_1d_var_first_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -764,10 +764,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: idx, distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_2d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_2d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(idx,1), distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_1d_var_first
+  END SUBROUTINE write_1d_var_first_r8
 
 
 
@@ -779,7 +779,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_var_first(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_2d_var_first_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -792,10 +792,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: idx, distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_3d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_3d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(idx,1,1), distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_2d_var_first
+  END SUBROUTINE write_2d_var_first_r8
 
 
 
@@ -807,7 +807,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_var_first(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_3d_var_first_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -820,10 +820,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: idx, distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_4d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_4d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(idx,1,1,1), distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_3d_var_first
+  END SUBROUTINE write_3d_var_first_r8
 
 
 
@@ -835,7 +835,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_var_last(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_1d_var_last_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -848,10 +848,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: idx, distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_2d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_2d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(1,idx), distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_1d_var_last
+  END SUBROUTINE write_1d_var_last_r8
 
 
 
@@ -863,7 +863,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_var_last(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_2d_var_last_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -876,10 +876,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: idx, distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_3d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_3d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(1,1,idx), distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_2d_var_last
+  END SUBROUTINE write_2d_var_last_r8
 
 
 
@@ -891,7 +891,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_var_last(h, id, name, units, dims, stagger, &
+  SUBROUTINE write_3d_var_last_r8(h, id, name, units, dims, stagger, &
       mesh_id, variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -904,10 +904,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: idx, distribution, subarray
     REAL(num), OPTIONAL, INTENT(IN) :: mult
 
-    CALL sdf_write_4d_float_gen(h, id, name, units, ndims, dims, stagger, &
+    CALL write_4d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(1,1,1,idx), distribution, subarray, mult)
 
-  END SUBROUTINE sdf_write_3d_var_last
+  END SUBROUTINE write_3d_var_last_r8
 
 
 
@@ -918,7 +918,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_material(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_1d_material_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_names, variable, distribution, subarray, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -951,12 +951,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_material(h, id, temp_name, mesh_id, stagger, &
         material_names, variable_ids)
 
@@ -964,19 +964,19 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, material_names(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_1d_var_last(h, variable_ids(i), temp_name, units, &
+        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_1d_var_first(h, variable_ids(i), temp_name, units, &
+        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_1d_material
+  END SUBROUTINE write_1d_material_r8
 
 
 
@@ -987,7 +987,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_material(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_2d_material_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_names, variable, distribution, subarray, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -1020,12 +1020,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_material(h, id, temp_name, mesh_id, stagger, &
         material_names, variable_ids)
 
@@ -1033,19 +1033,19 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, material_names(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_2d_var_last(h, variable_ids(i), temp_name, units, &
+        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_2d_var_first(h, variable_ids(i), temp_name, units, &
+        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_2d_material
+  END SUBROUTINE write_2d_material_r8
 
 
 
@@ -1056,7 +1056,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_material(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_3d_material_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_names, variable, distribution, subarray, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -1089,12 +1089,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_material(h, id, temp_name, mesh_id, stagger, &
         material_names, variable_ids)
 
@@ -1102,19 +1102,19 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, material_names(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_3d_var_last(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_3d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_3d_var_first(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_3d_material
+  END SUBROUTINE write_3d_material_r8
 
 
 
@@ -1125,7 +1125,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_matvar(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_1d_matvar_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_names, variable, distribution, &
       subarray, mult, last_in)
 
@@ -1159,12 +1159,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
         material_id, variable_ids)
 
@@ -1172,19 +1172,19 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, material_names(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_1d_var_last(h, variable_ids(i), temp_name, units, &
+        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_1d_var_first(h, variable_ids(i), temp_name, units, &
+        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_1d_matvar
+  END SUBROUTINE write_1d_matvar_r8
 
 
 
@@ -1195,7 +1195,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_matvar(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_2d_matvar_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_names, variable, distribution, &
       subarray, mult, last_in)
 
@@ -1229,12 +1229,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
         material_id, variable_ids)
 
@@ -1242,19 +1242,19 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, material_names(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_2d_var_last(h, variable_ids(i), temp_name, units, &
+        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_2d_var_first(h, variable_ids(i), temp_name, units, &
+        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_2d_matvar
+  END SUBROUTINE write_2d_matvar_r8
 
 
 
@@ -1265,7 +1265,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_matvar(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_3d_matvar_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_names, variable, distribution, &
       subarray, mult, last_in)
 
@@ -1299,12 +1299,12 @@ CONTAINS
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
         material_id, variable_ids)
 
@@ -1312,19 +1312,19 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, material_names(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_3d_var_last(h, variable_ids(i), temp_name, units, &
+        CALL write_3d_var_last_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_3d_var_first(h, variable_ids(i), temp_name, units, &
+        CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_3d_matvar
+  END SUBROUTINE write_3d_matvar_r8
 
 
 
@@ -1335,7 +1335,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_1d_species(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_1d_species_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_name, specnames, variable, distribution, &
       subarray, mult, last_in)
 
@@ -1370,12 +1370,12 @@ CONTAINS
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids)
 
@@ -1383,19 +1383,19 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, specnames(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_1d_var_last(h, variable_ids(i), temp_name, units, &
+        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_1d_var_first(h, variable_ids(i), temp_name, units, &
+        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_1d_species
+  END SUBROUTINE write_1d_species_r8
 
 
 
@@ -1406,7 +1406,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_2d_species(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_2d_species_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_name, specnames, variable, distribution, &
       subarray, mult, last_in)
 
@@ -1441,12 +1441,12 @@ CONTAINS
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids)
 
@@ -1454,19 +1454,19 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, specnames(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_2d_var_last(h, variable_ids(i), temp_name, units, &
+        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_2d_var_first(h, variable_ids(i), temp_name, units, &
+        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_2d_species
+  END SUBROUTINE write_2d_species_r8
 
 
 
@@ -1477,7 +1477,7 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_3d_species(h, id, name, units, dims, nmat, stagger, &
+  SUBROUTINE write_3d_species_r8(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_name, specnames, variable, distribution, &
       subarray, mult, last_in)
 
@@ -1512,12 +1512,12 @@ CONTAINS
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
-        CALL safe_string_composite(id, &
+        CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
       ENDIF
     ENDDO
 
-    CALL safe_string_composite(name, 'All', temp_name)
+    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
     CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids)
 
@@ -1525,18 +1525,18 @@ CONTAINS
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
       idx = idx + 1
-      CALL safe_string_composite(name, specnames(i), temp_name)
+      CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
-        CALL sdf_write_3d_var_last(h, variable_ids(i), temp_name, units, &
+        CALL write_3d_var_last_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL sdf_write_3d_var_first(h, variable_ids(i), temp_name, units, &
+        CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, &
             dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
     DEALLOCATE(variable_ids)
 
-  END SUBROUTINE sdf_write_3d_species
+  END SUBROUTINE write_3d_species_r8
 
 END MODULE sdf_output_cartesian_r8

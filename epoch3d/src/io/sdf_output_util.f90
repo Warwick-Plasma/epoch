@@ -55,13 +55,13 @@ CONTAINS
     b => h%current_block
 
     IF (b%blocktype .EQ. c_blocktype_plain_mesh) THEN
-      CALL write_mesh_meta(h)
+      CALL write_mesh_meta_r8(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_point_mesh) THEN
-      CALL write_point_mesh_meta(h)
+      CALL write_point_mesh_meta_r8(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_plain_variable) THEN
-      CALL write_mesh_variable_meta(h)
+      CALL write_mesh_variable_meta_r8(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_point_variable) THEN
-      CALL write_point_variable_meta(h)
+      CALL write_point_variable_meta_r8(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_constant) THEN
       CALL write_constant_meta(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_array) THEN

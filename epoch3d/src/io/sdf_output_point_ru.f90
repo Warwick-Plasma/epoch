@@ -8,7 +8,7 @@ MODULE sdf_output_point_ru
 
 CONTAINS
 
-  SUBROUTINE write_point_mesh_meta(h, id, name, dim_labels, dim_units, &
+  SUBROUTINE write_point_mesh_meta_r8(h, id, name, dim_labels, dim_units, &
       dim_mults)
 
     TYPE(sdf_file_handle) :: h
@@ -103,11 +103,11 @@ CONTAINS
     h%current_location = b%block_start + b%info_length
     b%done_info = .TRUE.
 
-  END SUBROUTINE write_point_mesh_meta
+  END SUBROUTINE write_point_mesh_meta_r8
 
 
 
-  SUBROUTINE write_point_variable_meta(h, id, name, units, mesh_id, mult)
+  SUBROUTINE write_point_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units
@@ -164,11 +164,11 @@ CONTAINS
     h%current_location = b%block_start + b%info_length
     b%done_info = .TRUE.
 
-  END SUBROUTINE write_point_variable_meta
+  END SUBROUTINE write_point_variable_meta_r8
 
 
 
-  SUBROUTINE sdf_write_srl_pt_var_int_array(h, id, name, units, array, &
+  SUBROUTINE write_srl_pt_var_int_i8_r8(h, id, name, units, array, &
       npoint_global, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -194,7 +194,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_point_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the real data
 
@@ -224,11 +224,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_srl_pt_var_int_array
+  END SUBROUTINE write_srl_pt_var_int_i8_r8
 
 
 
-  SUBROUTINE sdf_write_srl_pt_var_int_array4(h, id, name, units, array, &
+  SUBROUTINE write_srl_pt_var_int_i4_r8(h, id, name, units, array, &
       npoint_global, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -238,9 +238,9 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(num), INTENT(IN), OPTIONAL :: mult
 
-    CALL sdf_write_srl_pt_var_int_array(h, id, name, units, array, &
+    CALL write_srl_pt_var_int_i8_r8(h, id, name, units, array, &
         INT(npoint_global,i8), mesh_id, mult)
 
-  END SUBROUTINE sdf_write_srl_pt_var_int_array4
+  END SUBROUTINE write_srl_pt_var_int_i4_r8
 
 END MODULE sdf_output_point_ru

@@ -9,7 +9,7 @@ MODULE sdf_output_point_r8
 
 CONTAINS
 
-  SUBROUTINE sdf_write_srl_1d_pt_mesh_array(h, id, name, x, &
+  SUBROUTINE write_srl_1d_pt_mesh_i8_r8(h, id, name, x, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 1
@@ -49,7 +49,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_point_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the real data
 
@@ -81,11 +81,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_srl_1d_pt_mesh_array
+  END SUBROUTINE write_srl_1d_pt_mesh_i8_r8
 
 
 
-  SUBROUTINE sdf_write_srl_2d_pt_mesh_array(h, id, name, x, y, &
+  SUBROUTINE write_srl_2d_pt_mesh_i8_r8(h, id, name, x, y, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -127,7 +127,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_point_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the real data
 
@@ -170,11 +170,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_srl_2d_pt_mesh_array
+  END SUBROUTINE write_srl_2d_pt_mesh_i8_r8
 
 
 
-  SUBROUTINE sdf_write_srl_3d_pt_mesh_array(h, id, name, x, y, z, &
+  SUBROUTINE write_srl_3d_pt_mesh_i8_r8(h, id, name, x, y, z, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 3
@@ -218,7 +218,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_point_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the real data
 
@@ -272,11 +272,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_srl_3d_pt_mesh_array
+  END SUBROUTINE write_srl_3d_pt_mesh_i8_r8
 
 
 
-  SUBROUTINE sdf_write_srl_1d_pt_mesh_array4(h, id, name, x, &
+  SUBROUTINE write_srl_1d_pt_mesh_i4_r8(h, id, name, x, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
@@ -286,14 +286,14 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
-    CALL sdf_write_srl_1d_pt_mesh_array(h, id, name, x, &
+    CALL write_srl_1d_pt_mesh_i8_r8(h, id, name, x, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
 
-  END SUBROUTINE sdf_write_srl_1d_pt_mesh_array4
+  END SUBROUTINE write_srl_1d_pt_mesh_i4_r8
 
 
 
-  SUBROUTINE sdf_write_srl_2d_pt_mesh_array4(h, id, name, x, y, &
+  SUBROUTINE write_srl_2d_pt_mesh_i4_r8(h, id, name, x, y, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
@@ -303,14 +303,14 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
-    CALL sdf_write_srl_2d_pt_mesh_array(h, id, name, x, y, &
+    CALL write_srl_2d_pt_mesh_i8_r8(h, id, name, x, y, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
 
-  END SUBROUTINE sdf_write_srl_2d_pt_mesh_array4
+  END SUBROUTINE write_srl_2d_pt_mesh_i4_r8
 
 
 
-  SUBROUTINE sdf_write_srl_3d_pt_mesh_array4(h, id, name, x, y, z, &
+  SUBROUTINE write_srl_3d_pt_mesh_i4_r8(h, id, name, x, y, z, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
@@ -320,10 +320,10 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
-    CALL sdf_write_srl_3d_pt_mesh_array(h, id, name, x, y, z, &
+    CALL write_srl_3d_pt_mesh_i8_r8(h, id, name, x, y, z, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
 
-  END SUBROUTINE sdf_write_srl_3d_pt_mesh_array4
+  END SUBROUTINE write_srl_3d_pt_mesh_i4_r8
 
 
 
@@ -331,8 +331,8 @@ CONTAINS
   ! Code to write a nD point mesh in parallel using an iterator
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_point_mesh(h, id, name, npoint_global, ndims, &
-      iterator, offset, dim_labels, dim_units, dim_mults)
+  SUBROUTINE write_point_mesh_r8(h, id, name, npoint_global, ndims, iterator, &
+      offset, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
@@ -379,7 +379,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_mesh_meta(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_point_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
 
     ! Write the real data
 
@@ -447,11 +447,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_point_mesh
+  END SUBROUTINE write_point_mesh_r8
 
 
 
-  SUBROUTINE sdf_write_srl_pt_var_flt_array(h, id, name, units, array, &
+  SUBROUTINE write_srl_pt_var_flt_i8_r8(h, id, name, units, array, &
       npoint_global, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -477,7 +477,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_point_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the real data
 
@@ -507,11 +507,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_srl_pt_var_flt_array
+  END SUBROUTINE write_srl_pt_var_flt_i8_r8
 
 
 
-  SUBROUTINE sdf_write_srl_pt_var_flt_array4(h, id, name, units, array, &
+  SUBROUTINE write_srl_pt_var_flt_i4_r8(h, id, name, units, array, &
       npoint_global, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -521,10 +521,10 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(num), INTENT(IN), OPTIONAL :: mult
 
-    CALL sdf_write_srl_pt_var_flt_array(h, id, name, units, array, &
+    CALL write_srl_pt_var_flt_i8_r8(h, id, name, units, array, &
         INT(npoint_global,i8), mesh_id, mult)
 
-  END SUBROUTINE sdf_write_srl_pt_var_flt_array4
+  END SUBROUTINE write_srl_pt_var_flt_i4_r8
 
 
 
@@ -532,7 +532,7 @@ CONTAINS
   ! Code to write a point variable in parallel using an iterator
   !----------------------------------------------------------------------------
 
-  SUBROUTINE sdf_write_point_variable(h, id, name, units, npoint_global, &
+  SUBROUTINE write_point_variable_r8(h, id, name, units, npoint_global, &
       mesh_id, iterator, offset, mult)
 
     TYPE(sdf_file_handle) :: h
@@ -573,7 +573,7 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_variable_meta(h, id, name, units, mesh_id, mult)
+    CALL write_point_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     ! Write the real data
 
@@ -608,6 +608,6 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_point_variable
+  END SUBROUTINE write_point_variable_r8
 
 END MODULE sdf_output_point_r8

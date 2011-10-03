@@ -7,7 +7,7 @@ MODULE sdf_output_ru
 
 CONTAINS
 
-  SUBROUTINE sdf_write_header(h, code_name, code_io_version, step, time, &
+  SUBROUTINE write_header_r8(h, code_name, code_io_version, step, time, &
       restart, jobid)
 
     TYPE(sdf_file_handle) :: h
@@ -127,7 +127,7 @@ CONTAINS
     h%current_location = h%first_block_location
     h%done_header = .TRUE.
 
-  END SUBROUTINE sdf_write_header
+  END SUBROUTINE write_header_r8
 
 
 
@@ -314,8 +314,9 @@ CONTAINS
 
 
 
-  SUBROUTINE safe_string_composite(string1, string2, output_string)
+  SUBROUTINE sdf_safe_string_composite(h, string1, string2, output_string)
 
+    TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: string1, string2
     CHARACTER(LEN=*), INTENT(OUT) :: output_string
     INTEGER :: len1, len2, olen
@@ -338,7 +339,7 @@ CONTAINS
       output_string(len1+2:len1+len2+1) = string2(1:len2)
     ENDIF
 
-  END SUBROUTINE safe_string_composite
+  END SUBROUTINE sdf_safe_string_composite
 
 
 
@@ -784,7 +785,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_constant_integer(h, id, name, value, rank_write)
+  SUBROUTINE write_constant_integer(h, id, name, value, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
@@ -807,11 +808,11 @@ CONTAINS
 
     h%rank_master = h%default_rank
 
-  END SUBROUTINE sdf_write_constant_integer
+  END SUBROUTINE write_constant_integer
 
 
 
-  SUBROUTINE sdf_write_constant_logical(h, id, name, value, rank_write)
+  SUBROUTINE write_constant_logical(h, id, name, value, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
@@ -841,7 +842,7 @@ CONTAINS
 
     h%rank_master = h%default_rank
 
-  END SUBROUTINE sdf_write_constant_logical
+  END SUBROUTINE write_constant_logical
 
 
 
@@ -947,7 +948,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_1d_array_integer(h, id, name, array, rank_write)
+  SUBROUTINE write_1d_array_integer(h, id, name, array, rank_write)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -989,11 +990,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_1d_array_integer
+  END SUBROUTINE write_1d_array_integer
 
 
 
-  SUBROUTINE sdf_write_2d_array_integer_spec(h, id, name, n1, n2, array, &
+  SUBROUTINE write_2d_array_integer_spec(h, id, name, n1, n2, array, &
       rank_write)
 
     INTEGER, PARAMETER :: ndims = 2
@@ -1045,11 +1046,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_2d_array_integer_spec
+  END SUBROUTINE write_2d_array_integer_spec
 
 
 
-  SUBROUTINE sdf_write_2d_array_integer(h, id, name, array, rank_write)
+  SUBROUTINE write_2d_array_integer(h, id, name, array, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
@@ -1059,14 +1060,14 @@ CONTAINS
 
     n1 = SIZE(array,1)
     n2 = SIZE(array,2)
-    CALL sdf_write_2d_array_integer_spec(h, id, name, n1, n2, &
+    CALL write_2d_array_integer_spec(h, id, name, n1, n2, &
         array, rank_write)
 
-  END SUBROUTINE sdf_write_2d_array_integer
+  END SUBROUTINE write_2d_array_integer
 
 
 
-  SUBROUTINE sdf_write_1d_array_logical(h, id, name, array, rank_write)
+  SUBROUTINE write_1d_array_logical(h, id, name, array, rank_write)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -1120,11 +1121,11 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_1d_array_logical
+  END SUBROUTINE write_1d_array_logical
 
 
 
-  SUBROUTINE sdf_write_2d_array_character(h, id, name, array, rank_write)
+  SUBROUTINE write_2d_array_character(h, id, name, array, rank_write)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -1169,6 +1170,6 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_2d_array_character
+  END SUBROUTINE write_2d_array_character
 
 END MODULE sdf_output_ru

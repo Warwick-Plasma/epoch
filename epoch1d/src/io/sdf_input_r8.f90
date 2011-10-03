@@ -8,7 +8,7 @@ MODULE sdf_input_r8
 
 CONTAINS
 
-  SUBROUTINE sdf_read_constant_real(h, value)
+  SUBROUTINE read_constant_real_r8(h, value)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), INTENT(OUT) :: value
@@ -28,11 +28,11 @@ CONTAINS
       value = REAL(real8,num)
     ENDIF
 
-  END SUBROUTINE sdf_read_constant_real
+  END SUBROUTINE read_constant_real_r8
 
 
 
-  SUBROUTINE sdf_read_1d_array_real(h, values)
+  SUBROUTINE read_1d_array_real_r8(h, values)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:), INTENT(OUT) :: values
@@ -64,11 +64,11 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_1d_array_real
+  END SUBROUTINE read_1d_array_real_r8
 
 
 
-  SUBROUTINE sdf_read_2d_array_real(h, values)
+  SUBROUTINE read_2d_array_real_r8(h, values)
 
     TYPE(sdf_file_handle) :: h
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: values
@@ -103,6 +103,6 @@ CONTAINS
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_2d_array_real
+  END SUBROUTINE read_2d_array_real_r8
 
 END MODULE sdf_input_r8

@@ -10,50 +10,50 @@ MODULE sdf_output_cartesian
 
   INTERFACE sdf_write_srl_plain_mesh
     MODULE PROCEDURE &
-        sdf_write_srl_1d_mesh, &
-        sdf_write_srl_2d_mesh, &
-        sdf_write_srl_3d_mesh
+        write_srl_1d_mesh_r8, &
+        write_srl_2d_mesh_r8, &
+        write_srl_3d_mesh_r8
   END INTERFACE sdf_write_srl_plain_mesh
 
   INTERFACE sdf_write_plain_mesh
     MODULE PROCEDURE &
-        sdf_write_1d_mesh, &
-        sdf_write_2d_mesh, &
-        sdf_write_3d_mesh
+        write_1d_mesh_r8, &
+        write_2d_mesh_r8, &
+        write_3d_mesh_r8
   END INTERFACE sdf_write_plain_mesh
 
   INTERFACE sdf_write_plain_variable
     MODULE PROCEDURE &
-        sdf_write_1d_float, &
-        sdf_write_2d_float, &
-        sdf_write_3d_float, &
-        sdf_write_1d_character, &
-        sdf_write_2d_character, &
-        sdf_write_3d_character, &
-        sdf_write_1d_integer, &
-        sdf_write_2d_integer, &
-        sdf_write_3d_integer
+        write_1d_float_r8, &
+        write_2d_float_r8, &
+        write_3d_float_r8, &
+        write_1d_character_r8, &
+        write_2d_character_r8, &
+        write_3d_character_r8, &
+        write_1d_integer_r8, &
+        write_2d_integer_r8, &
+        write_3d_integer_r8
   END INTERFACE sdf_write_plain_variable
 
   INTERFACE sdf_write_material
     MODULE PROCEDURE &
-        sdf_write_1d_material, &
-        sdf_write_2d_material, &
-        sdf_write_3d_material
+        write_1d_material_r8, &
+        write_2d_material_r8, &
+        write_3d_material_r8
   END INTERFACE sdf_write_material
 
   INTERFACE sdf_write_matvar
     MODULE PROCEDURE &
-        sdf_write_1d_matvar, &
-        sdf_write_2d_matvar, &
-        sdf_write_3d_matvar
+        write_1d_matvar_r8, &
+        write_2d_matvar_r8, &
+        write_3d_matvar_r8
   END INTERFACE sdf_write_matvar
 
   INTERFACE sdf_write_species
     MODULE PROCEDURE &
-        sdf_write_1d_species, &
-        sdf_write_2d_species, &
-        sdf_write_3d_species
+        write_1d_species_r8, &
+        write_2d_species_r8, &
+        write_3d_species_r8
   END INTERFACE sdf_write_species
 
 END MODULE sdf_output_cartesian
