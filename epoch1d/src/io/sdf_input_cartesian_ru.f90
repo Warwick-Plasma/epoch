@@ -40,16 +40,12 @@ CONTAINS
 
   ! Mesh loading functions
 
-  SUBROUTINE read_plain_mesh_info_ru(h, geometry, dims, extents, dim_labels, &
-      dim_units, dim_mults)
+  SUBROUTINE read_plain_mesh_info_ru(h, geometry, dims)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(OUT), OPTIONAL :: geometry
     INTEGER, DIMENSION(:), INTENT(OUT), OPTIONAL :: dims
-    REAL(num), DIMENSION(:), INTENT(OUT), OPTIONAL :: extents
-    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(OUT), OPTIONAL :: dim_mults
-    INTEGER :: i, clen
+    INTEGER :: i
     TYPE(sdf_block_type), POINTER :: b
 
     ! Metadata is
@@ -89,20 +85,6 @@ CONTAINS
 
     IF (PRESENT(geometry)) geometry = b%geometry
     IF (PRESENT(dims)) dims(1:b%ndims) = b%dims(1:b%ndims)
-    IF (PRESENT(extents)) extents(1:2*b%ndims) = b%extents(1:2*b%ndims)
-    IF (PRESENT(dim_mults)) dim_mults = b%dim_mults
-    IF (PRESENT(dim_labels)) THEN
-      DO i = 1,b%ndims
-        clen = MIN(LEN(dim_labels(i)),c_id_length)
-        dim_labels(i)(1:clen) = b%dim_labels(i)(1:clen)
-      ENDDO
-    ENDIF
-    IF (PRESENT(dim_units)) THEN
-      DO i = 1,b%ndims
-        clen = MIN(LEN(dim_units(i)),c_id_length)
-        dim_units(i)(1:clen) = b%dim_units(i)(1:clen)
-      ENDDO
-    ENDIF
 
     h%current_location = b%block_start + h%block_header_length
     b%done_info = .TRUE.
@@ -113,14 +95,12 @@ CONTAINS
 
   ! Variable loading functions
 
-  SUBROUTINE read_plain_variable_info_ru(h, dims, units, mesh_id, stagger, &
-      mult)
+  SUBROUTINE read_plain_variable_info_ru(h, dims, units, mesh_id, stagger)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:), INTENT(OUT), OPTIONAL :: dims
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: units, mesh_id
     INTEGER, INTENT(OUT), OPTIONAL :: stagger
-    REAL(num), INTENT(OUT), OPTIONAL :: mult
     INTEGER :: clen
     TYPE(sdf_block_type), POINTER :: b
 
@@ -148,7 +128,6 @@ CONTAINS
 
     IF (PRESENT(dims)) dims(1:b%ndims) = b%dims(1:b%ndims)
     IF (PRESENT(stagger)) stagger = b%stagger
-    IF (PRESENT(mult)) mult = b%mult
     IF (PRESENT(units)) THEN
       clen = MIN(LEN(units),c_id_length)
       units(1:clen) = b%units(1:clen)
@@ -430,6 +409,7 @@ CONTAINS
 
 
   ! Material mesh loading functions
+
   SUBROUTINE sdf_read_material_info(h, material_names)
 
     TYPE(sdf_file_handle) :: h

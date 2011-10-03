@@ -36,16 +36,12 @@ CONTAINS
 
 
 
-  SUBROUTINE read_point_mesh_info_ru(h, npoints, geometry, extents, &
-      dim_labels, dim_units, dim_mults)
+  SUBROUTINE read_point_mesh_info_ru(h, npoints, geometry)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT), OPTIONAL :: npoints
     INTEGER, INTENT(OUT), OPTIONAL :: geometry
-    REAL(num), DIMENSION(:), INTENT(OUT), OPTIONAL :: extents
-    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(OUT), OPTIONAL :: dim_mults
-    INTEGER :: i, clen
+    INTEGER :: i
     TYPE(sdf_block_type), POINTER :: b
 
     ! Metadata is
@@ -84,20 +80,6 @@ CONTAINS
 
     IF (PRESENT(geometry)) geometry = b%geometry
     IF (PRESENT(npoints)) npoints = b%npoints
-    IF (PRESENT(extents)) extents(1:2*b%ndims) = b%extents(1:2*b%ndims)
-    IF (PRESENT(dim_mults)) dim_mults = b%dim_mults
-    IF (PRESENT(dim_labels)) THEN
-      DO i = 1,b%ndims
-        clen = MIN(LEN(dim_labels(i)),c_id_length)
-        dim_labels(i)(1:clen) = b%dim_labels(i)(1:clen)
-      ENDDO
-    ENDIF
-    IF (PRESENT(dim_units)) THEN
-      DO i = 1,b%ndims
-        clen = MIN(LEN(dim_units(i)),c_id_length)
-        dim_units(i)(1:clen) = b%dim_units(i)(1:clen)
-      ENDDO
-    ENDIF
 
     h%current_location = b%block_start + h%block_header_length
     b%done_info = .TRUE.
@@ -108,12 +90,11 @@ CONTAINS
 
   ! Variable loading functions
 
-  SUBROUTINE read_point_variable_info_ru(h, npoints, mesh_id, units, mult)
+  SUBROUTINE read_point_variable_info_ru(h, npoints, mesh_id, units)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT), OPTIONAL :: npoints
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: mesh_id, units
-    REAL(num), INTENT(OUT), OPTIONAL :: mult
     INTEGER :: clen
     TYPE(sdf_block_type), POINTER :: b
 
@@ -137,7 +118,6 @@ CONTAINS
     ENDIF
 
     IF (PRESENT(npoints)) npoints = b%npoints
-    IF (PRESENT(mult)) mult = b%mult
     IF (PRESENT(units)) THEN
       clen = MIN(LEN(units),c_id_length)
       units(1:clen) = b%units(1:clen)

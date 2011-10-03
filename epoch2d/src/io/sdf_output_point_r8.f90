@@ -7,6 +7,10 @@ MODULE sdf_output_point_r8
 
   IMPLICIT NONE
 
+  INTEGER, PARAMETER, PRIVATE :: sof = 8
+  INTEGER, PARAMETER, PRIVATE :: datatype_real = c_datatype_real8
+  INTEGER, PARAMETER, PRIVATE :: mpitype_real = MPI_REAL8
+
 CONTAINS
 
   SUBROUTINE write_srl_1d_pt_mesh_i8_r8(h, id, name, x, &
@@ -15,12 +19,12 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
-    INTEGER(i8) :: idx, npoint_max
-    INTEGER :: errcode, npoint_rem, i
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    INTEGER(i8) :: idx, npoint_max, npoint_rem
+    INTEGER :: errcode, i
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
@@ -29,9 +33,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
     b%npoints = npoint_global
@@ -91,10 +95,10 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x, y
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER(i8) :: idx, npoint_max, npoint_rem
     INTEGER :: errcode, i
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
@@ -105,9 +109,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
     b%npoints = npoint_global
@@ -180,10 +184,10 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y, z
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x, y, z
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER(i8) :: idx, npoint_max, npoint_rem
     INTEGER :: errcode, i
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
@@ -194,9 +198,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
     b%npoints = npoint_global
@@ -281,10 +285,10 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
     CALL write_srl_1d_pt_mesh_i8_r8(h, id, name, x, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
@@ -298,10 +302,10 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x, y
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
     CALL write_srl_2d_pt_mesh_i8_r8(h, id, name, x, y, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
@@ -315,10 +319,10 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y, z
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x, y, z
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
     CALL write_srl_3d_pt_mesh_i8_r8(h, id, name, x, y, z, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
@@ -340,13 +344,13 @@ CONTAINS
     INTEGER, INTENT(IN) :: ndims
     INTEGER(i8), INTENT(IN) :: offset
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
     INTERFACE
       FUNCTION iterator(array, npoint_it, start, direction)
         USE sdf_common
-        REAL(num) :: iterator
-        REAL(num), DIMENSION(:), INTENT(OUT) :: array
+        REAL(r8) :: iterator
+        REAL(r8), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN) :: direction
@@ -358,18 +362,18 @@ CONTAINS
     INTEGER :: errcode, idim, npoint_this_cycle
     LOGICAL :: start
     REAL(r8), DIMENSION(c_maxdims) :: gmn, gmx
-    REAL(num), ALLOCATABLE, DIMENSION(:) :: array
+    REAL(r8), ALLOCATABLE, DIMENSION(:) :: array
     TYPE(sdf_block_type), POINTER :: b
-    REAL(num) :: ret
+    REAL(r8) :: ret
 
     IF (npoint_global .LE. 0) RETURN
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
     b%npoints = npoint_global
@@ -456,10 +460,10 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    REAL(r8), DIMENSION(:), INTENT(IN) :: array
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
     INTEGER(i8) :: idx, npoint_max, npoint_rem
     INTEGER :: errcode, i
     TYPE(sdf_block_type), POINTER :: b
@@ -469,9 +473,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%ndims = 1
     b%npoints = npoint_global
 
@@ -516,10 +520,10 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    REAL(r8), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
 
     CALL write_srl_pt_var_flt_i8_r8(h, id, name, units, array, &
         INT(npoint_global,i8), mesh_id, mult)
@@ -540,13 +544,13 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     INTEGER(i8), INTENT(IN) :: offset
-    REAL(num), INTENT(IN), OPTIONAL :: mult
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
 
     INTERFACE
       FUNCTION iterator(array, npoint_it, start)
         USE sdf_common
-        REAL(num) :: iterator
-        REAL(num), DIMENSION(:), INTENT(OUT) :: array
+        REAL(r8) :: iterator
+        REAL(r8), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
       END FUNCTION iterator
@@ -555,18 +559,18 @@ CONTAINS
     INTEGER(i8) :: file_offset, nmax
     INTEGER :: errcode, npoint_this_cycle
     LOGICAL :: start
-    REAL(num), ALLOCATABLE, DIMENSION(:) :: array
+    REAL(r8), ALLOCATABLE, DIMENSION(:) :: array
     TYPE(sdf_block_type), POINTER :: b
-    REAL(num) :: ret
+    REAL(r8) :: ret
 
     IF (npoint_global .LE. 0) RETURN
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%blocktype = c_blocktype_point_variable
     b%ndims = 1
     b%npoints = npoint_global

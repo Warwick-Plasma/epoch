@@ -6,22 +6,26 @@ MODULE sdf_output_r8
 
   IMPLICIT NONE
 
+  INTEGER, PARAMETER, PRIVATE :: sof = 8
+  INTEGER, PARAMETER, PRIVATE :: datatype_real = c_datatype_real8
+  INTEGER, PARAMETER, PRIVATE :: mpitype_real = MPI_REAL8
+
 CONTAINS
 
   SUBROUTINE write_constant_real_r8(h, id, name, value, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), INTENT(IN) :: value
+    REAL(r8), INTENT(IN) :: value
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
 
@@ -40,7 +44,7 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    REAL(r8), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: errcode, n1
     TYPE(sdf_block_type), POINTER :: b
@@ -48,9 +52,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%ndims = ndims
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
@@ -81,14 +85,13 @@ CONTAINS
 
 
 
-  SUBROUTINE write_2d_array_real_spec_r8(h, id, name, n1, n2, array, &
-      rank_write)
+  SUBROUTINE write_2d_array_real_spec_r8(h, id, name, n1, n2, array, rank_write)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     INTEGER, INTENT(IN) :: n1, n2
-    REAL(num), DIMENSION(:,:), INTENT(IN) :: array
+    REAL(r8), DIMENSION(:,:), INTENT(IN) :: array
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: errcode, var_len, i
     TYPE(sdf_block_type), POINTER :: b
@@ -96,9 +99,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%ndims = ndims
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
@@ -141,14 +144,13 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:,:), INTENT(IN) :: array
+    REAL(r8), DIMENSION(:,:), INTENT(IN) :: array
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: n1, n2
 
     n1 = SIZE(array,1)
     n2 = SIZE(array,2)
-    CALL write_2d_array_real_spec_r8(h, id, name, n1, n2, &
-        array, rank_write)
+    CALL write_2d_array_real_spec_r8(h, id, name, n1, n2, array, rank_write)
 
   END SUBROUTINE write_2d_array_real_r8
 

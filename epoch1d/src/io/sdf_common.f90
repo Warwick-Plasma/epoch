@@ -50,12 +50,11 @@ MODULE sdf_common
     INTEGER(KIND=MPI_OFFSET_KIND) :: current_location
     REAL(r8) :: time
     INTEGER(i8) :: first_block_location, summary_location, start_location
-    INTEGER(i8) :: soi, sof ! large integer to prevent overflow in calculations
+    INTEGER(i8) :: soi ! large integer to prevent overflow in calculations
     INTEGER(i4) :: endianness, summary_size
     INTEGER(i4) :: block_header_length, string_length, nblocks
     INTEGER(i4) :: file_version, file_revision, code_io_version, step
-    INTEGER(i4) :: datatype_real, datatype_integer
-    INTEGER(i4) :: mpitype_real, mpitype_integer
+    INTEGER(i4) :: datatype_integer, mpitype_integer
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     LOGICAL :: done_header, restart_flag, other_domains, writing
     CHARACTER(LEN=1), POINTER :: buffer(:)
@@ -63,8 +62,6 @@ MODULE sdf_common
     TYPE(jobid_type) :: jobid
     TYPE(sdf_block_type), POINTER :: blocklist, current_block
   END TYPE sdf_file_handle
-
-  INTEGER, PARAMETER :: num = KIND(1.d0)
 
   INTEGER, PARAMETER :: c_sdf_read = 0
   INTEGER, PARAMETER :: c_sdf_write = 1

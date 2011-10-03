@@ -14,7 +14,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER :: ndims
     TYPE(sdf_block_type), POINTER :: b
     INTEGER :: i, errcode
@@ -107,12 +107,38 @@ CONTAINS
 
 
 
+  SUBROUTINE write_point_mesh_meta_r4(h, id, name, dim_labels, dim_units, &
+      dim_mults)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
+    REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(c_maxdims) :: dim_mults8
+    TYPE(sdf_block_type), POINTER :: b
+    INTEGER :: i
+
+    IF (PRESENT(dim_mults)) THEN
+      b => h%current_block
+      DO i = 1,b%ndims
+        dim_mults8(i) = REAL(dim_mults(i),r8)
+      ENDDO
+      CALL write_point_mesh_meta_r8(h, id, name, dim_labels, dim_units, &
+          dim_mults8)
+    ELSE
+      CALL write_point_mesh_meta_r8(h, id, name, dim_labels, dim_units)
+    ENDIF
+
+  END SUBROUTINE write_point_mesh_meta_r4
+
+
+
   SUBROUTINE write_point_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
     INTEGER :: ndims
     TYPE(sdf_block_type), POINTER :: b
     INTEGER :: errcode
@@ -168,6 +194,24 @@ CONTAINS
 
 
 
+  SUBROUTINE write_point_variable_meta_r4(h, id, name, units, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: mesh_id
+    REAL(r4), INTENT(IN), OPTIONAL :: mult
+
+    IF (PRESENT(mult)) THEN
+      CALL write_point_variable_meta_r8(h, id, name, units, mesh_id, &
+          REAL(mult,r8))
+    ELSE
+      CALL write_point_variable_meta_r8(h, id, name, units, mesh_id)
+    ENDIF
+
+  END SUBROUTINE write_point_variable_meta_r4
+
+
+
   SUBROUTINE write_srl_pt_var_int_i8_r8(h, id, name, units, array, &
       npoint_global, mesh_id, mult)
 
@@ -176,7 +220,7 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: array
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
     INTEGER(i8) :: idx, npoint_max, npoint_rem
     INTEGER :: errcode, i
     TYPE(sdf_block_type), POINTER :: b
@@ -236,11 +280,45 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
 
     CALL write_srl_pt_var_int_i8_r8(h, id, name, units, array, &
         INT(npoint_global,i8), mesh_id, mult)
 
   END SUBROUTINE write_srl_pt_var_int_i4_r8
+
+
+
+  SUBROUTINE write_srl_pt_var_int_i8_r4(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_srl_pt_var_int_i8_r8(h, id, name, units, array, &
+        npoint_global, mesh_id, REAL(mult,r8))
+
+  END SUBROUTINE write_srl_pt_var_int_i8_r4
+
+
+
+  SUBROUTINE write_srl_pt_var_int_i4_r4(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_srl_pt_var_int_i8_r8(h, id, name, units, array, &
+        INT(npoint_global,i8), mesh_id, REAL(mult,r8))
+
+  END SUBROUTINE write_srl_pt_var_int_i4_r4
 
 END MODULE sdf_output_point_ru

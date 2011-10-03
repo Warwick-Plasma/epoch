@@ -9,10 +9,46 @@ MODULE sdf_input_cartesian_r8
 
 CONTAINS
 
+  ! Mesh loading functions
+
+  SUBROUTINE read_plain_mesh_info_r8(h, geometry, dims, extents, dim_labels, &
+      dim_units, dim_mults)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER, INTENT(OUT) :: geometry
+    INTEGER, DIMENSION(:), INTENT(OUT) :: dims
+    REAL(r8), DIMENSION(:), INTENT(OUT) :: extents
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: dim_labels(:), dim_units(:)
+    REAL(r8), DIMENSION(:), INTENT(OUT), OPTIONAL :: dim_mults
+    INTEGER :: i, clen
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL read_plain_mesh_info_ru(h, geometry, dims)
+    b => h%current_block
+
+    extents(1:2*b%ndims) = REAL(b%extents(1:2*b%ndims),r8)
+    IF (PRESENT(dim_mults)) dim_mults = REAL(b%dim_mults,r8)
+    IF (PRESENT(dim_labels)) THEN
+      DO i = 1,b%ndims
+        clen = MIN(LEN(dim_labels(i)),c_id_length)
+        dim_labels(i)(1:clen) = b%dim_labels(i)(1:clen)
+      ENDDO
+    ENDIF
+    IF (PRESENT(dim_units)) THEN
+      DO i = 1,b%ndims
+        clen = MIN(LEN(dim_units(i)),c_id_length)
+        dim_units(i)(1:clen) = b%dim_units(i)(1:clen)
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE read_plain_mesh_info_r8
+
+
+
   SUBROUTINE read_srl_1d_mesh_r8(h, x)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: x
+    REAL(r8), DIMENSION(:), INTENT(OUT) :: x
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
@@ -47,7 +83,7 @@ CONTAINS
   SUBROUTINE read_srl_2d_mesh_r8(h, x, y)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: x, y
+    REAL(r8), DIMENSION(:), INTENT(OUT) :: x, y
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
@@ -85,7 +121,7 @@ CONTAINS
   SUBROUTINE read_srl_3d_mesh_r8(h, x, y, z)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: x, y, z
+    REAL(r8), DIMENSION(:), INTENT(OUT) :: x, y, z
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
@@ -123,6 +159,25 @@ CONTAINS
 
 
 
+  ! Variable loading functions
+
+  SUBROUTINE read_plain_variable_info_r8(h, dims, units, mesh_id, stagger, mult)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER, DIMENSION(:), INTENT(OUT) :: dims
+    CHARACTER(LEN=*), INTENT(OUT) :: units, mesh_id
+    INTEGER, INTENT(OUT) :: stagger
+    REAL(r8), INTENT(OUT) :: mult
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL read_plain_variable_info_ru(h, dims, units, mesh_id, stagger)
+    b => h%current_block
+    mult = REAL(b%mult,r8)
+
+  END SUBROUTINE read_plain_variable_info_r8
+
+
+
   !----------------------------------------------------------------------------
   ! Code to read a 1D cartesian variable in parallel
   ! using the mpitype {distribution} for distribution of data
@@ -131,7 +186,7 @@ CONTAINS
   SUBROUTINE read_1d_float_r8(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -175,7 +230,7 @@ CONTAINS
   SUBROUTINE read_2d_float_r8(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(1,1), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(1,1), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -219,7 +274,7 @@ CONTAINS
   SUBROUTINE read_3d_float_r8(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(1,1,1), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(1,1,1), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -263,7 +318,7 @@ CONTAINS
   SUBROUTINE read_4d_float_r8(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(1,1,1,1), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(1,1,1,1), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -311,7 +366,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(num), INTENT(OUT) :: variable(nm, dims(1))
+    REAL(r8), INTENT(OUT) :: variable(nm, dims(1))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_2d_float_r8(h, variable(idx,1), distribution, subarray)
@@ -332,7 +387,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(num), INTENT(OUT) :: variable(nm, dims(1), dims(2))
+    REAL(r8), INTENT(OUT) :: variable(nm, dims(1), dims(2))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_3d_float_r8(h, variable(idx,1,1), distribution, subarray)
@@ -353,7 +408,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(num), INTENT(OUT) :: variable(nm, dims(1), dims(2), dims(3))
+    REAL(r8), INTENT(OUT) :: variable(nm, dims(1), dims(2), dims(3))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_4d_float_r8(h, variable(idx,1,1,1), distribution, subarray)
@@ -374,7 +429,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(num), INTENT(OUT) :: variable(dims(1), nm)
+    REAL(r8), INTENT(OUT) :: variable(dims(1), nm)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_2d_float_r8(h, variable(1,idx), distribution, subarray)
@@ -395,7 +450,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(num), INTENT(OUT) :: variable(dims(1), dims(2), nm)
+    REAL(r8), INTENT(OUT) :: variable(dims(1), dims(2), nm)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_3d_float_r8(h, variable(1,1,idx), distribution, subarray)
@@ -416,7 +471,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(num), INTENT(OUT) :: variable(dims(1), dims(2), dims(3), nm)
+    REAL(r8), INTENT(OUT) :: variable(dims(1), dims(2), dims(3), nm)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_4d_float_r8(h, variable(1,1,1,idx), distribution, subarray)
@@ -434,7 +489,7 @@ CONTAINS
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:,:), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, INTENT(IN), OPTIONAL :: last_in
     INTEGER :: i, nm
@@ -483,7 +538,7 @@ CONTAINS
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(:,:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, INTENT(IN), OPTIONAL :: last_in
     INTEGER :: i, nm
@@ -532,7 +587,7 @@ CONTAINS
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:,:,:,:), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(:,:,:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, INTENT(IN), OPTIONAL :: last_in
     INTEGER :: i, nm
@@ -580,7 +635,7 @@ CONTAINS
   SUBROUTINE read_2d_variable_r8(h, variable, distribution, subarray, last_in)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:,:), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, INTENT(IN), OPTIONAL :: last_in
     TYPE(sdf_block_type), POINTER :: b
@@ -604,7 +659,7 @@ CONTAINS
   SUBROUTINE read_3d_variable_r8(h, variable, distribution, subarray, last_in)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: variable
+    REAL(r8), DIMENSION(:,:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, INTENT(IN), OPTIONAL :: last_in
     TYPE(sdf_block_type), POINTER :: b

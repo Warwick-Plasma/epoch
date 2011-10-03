@@ -100,16 +100,18 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   mpi_routines.F90 mpi_subtype_control.f90 particle_pointer_advance.f90 \
   particle_temperature.F90 particles.F90 partlist.F90 photons.F90 probes.F90 \
   random_generator.f90 sdf.f90 sdf_common.f90 sdf_control.f90 sdf_input.f90 \
-  sdf_input_cartesian.f90 sdf_input_cartesian_r8.f90 \
-  sdf_input_cartesian_ru.f90 sdf_input_point.f90 sdf_input_point_r8.f90 \
-  sdf_input_point_ru.f90 sdf_input_r8.f90 sdf_input_ru.f90 sdf_input_util.f90 \
+  sdf_input_cartesian.f90 sdf_input_cartesian_r4.f90 \
+  sdf_input_cartesian_r8.f90 sdf_input_cartesian_ru.f90 sdf_input_point.f90 \
+  sdf_input_point_r4.f90 sdf_input_point_r8.f90 sdf_input_point_ru.f90 \
+  sdf_input_r4.f90 sdf_input_r8.f90 sdf_input_ru.f90 sdf_input_util.f90 \
   sdf_job_info.f90 sdf_output.f90 sdf_output_cartesian.f90 \
-  sdf_output_cartesian_r8.f90 sdf_output_cartesian_ru.f90 sdf_output_point.f90 \
-  sdf_output_point_r8.f90 sdf_output_point_ru.f90 sdf_output_r8.f90 \
-  sdf_output_ru.f90 sdf_output_util.f90 setup.F90 shape_functions.F90 \
-  shared_data.F90 shunt.F90 simple_io.f90 split_particle.F90 stack.f90 \
-  strings.f90 strings_advanced.f90 tokenizer_blocks.f90 utilities.f90 \
-  version_data.F90 welcome.F90 window.F90
+  sdf_output_cartesian_r4.f90 sdf_output_cartesian_r8.f90 \
+  sdf_output_cartesian_ru.f90 sdf_output_point.f90 sdf_output_point_r4.f90 \
+  sdf_output_point_r8.f90 sdf_output_point_ru.f90 sdf_output_r4.f90 \
+  sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_util.f90 setup.F90 \
+  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
+  split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
+  tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -235,33 +237,45 @@ sdf.o: sdf.f90 sdf_common.o sdf_control.o sdf_input.o sdf_input_cartesian.o \
 sdf_common.o: sdf_common.f90 sdf_job_info.o
 sdf_control.o: sdf_control.f90 sdf_common.o sdf_input.o sdf_output.o \
   sdf_output_util.o
-sdf_input.o: sdf_input.f90 sdf_common.o sdf_input_r8.o sdf_input_ru.o
+sdf_input.o: sdf_input.f90 sdf_common.o sdf_input_r4.o sdf_input_r8.o \
+  sdf_input_ru.o
 sdf_input_cartesian.o: sdf_input_cartesian.f90 sdf_common.o sdf_input.o \
-  sdf_input_cartesian_r8.o sdf_input_cartesian_ru.o
+  sdf_input_cartesian_r4.o sdf_input_cartesian_r8.o sdf_input_cartesian_ru.o
+sdf_input_cartesian_r4.o: sdf_input_cartesian_r4.f90 sdf_common.o sdf_input.o \
+  sdf_input_cartesian_ru.o
 sdf_input_cartesian_r8.o: sdf_input_cartesian_r8.f90 sdf_common.o sdf_input.o \
   sdf_input_cartesian_ru.o
 sdf_input_cartesian_ru.o: sdf_input_cartesian_ru.f90 sdf_common.o sdf_input.o
 sdf_input_point.o: sdf_input_point.f90 sdf_common.o sdf_input.o \
-  sdf_input_point_r8.o sdf_input_point_ru.o
+  sdf_input_point_r4.o sdf_input_point_r8.o sdf_input_point_ru.o
+sdf_input_point_r4.o: sdf_input_point_r4.f90 sdf_common.o sdf_input.o \
+  sdf_input_point_ru.o
 sdf_input_point_r8.o: sdf_input_point_r8.f90 sdf_common.o sdf_input.o \
   sdf_input_point_ru.o
 sdf_input_point_ru.o: sdf_input_point_ru.f90 sdf_common.o sdf_input.o
+sdf_input_r4.o: sdf_input_r4.f90 sdf_common.o sdf_input_ru.o
 sdf_input_r8.o: sdf_input_r8.f90 sdf_common.o sdf_input_ru.o
 sdf_input_ru.o: sdf_input_ru.f90 sdf_common.o
 sdf_input_util.o: sdf_input_util.f90 sdf_input.o sdf_input_cartesian.o \
   sdf_input_point.o
 sdf_job_info.o: sdf_job_info.f90
-sdf_output.o: sdf_output.f90 sdf_common.o sdf_output_r8.o sdf_output_ru.o
+sdf_output.o: sdf_output.f90 sdf_common.o sdf_output_r4.o sdf_output_r8.o \
+  sdf_output_ru.o
 sdf_output_cartesian.o: sdf_output_cartesian.f90 sdf_common.o sdf_output.o \
-  sdf_output_cartesian_r8.o sdf_output_cartesian_ru.o
+  sdf_output_cartesian_r4.o sdf_output_cartesian_r8.o sdf_output_cartesian_ru.o
+sdf_output_cartesian_r4.o: sdf_output_cartesian_r4.f90 sdf_common.o \
+  sdf_output.o sdf_output_cartesian_ru.o
 sdf_output_cartesian_r8.o: sdf_output_cartesian_r8.f90 sdf_common.o \
   sdf_output.o sdf_output_cartesian_ru.o
 sdf_output_cartesian_ru.o: sdf_output_cartesian_ru.f90 sdf_common.o sdf_output.o
 sdf_output_point.o: sdf_output_point.f90 sdf_common.o sdf_output.o \
-  sdf_output_point_r8.o sdf_output_point_ru.o
+  sdf_output_point_r4.o sdf_output_point_r8.o sdf_output_point_ru.o
+sdf_output_point_r4.o: sdf_output_point_r4.f90 sdf_common.o sdf_output.o \
+  sdf_output_point_ru.o
 sdf_output_point_r8.o: sdf_output_point_r8.f90 sdf_common.o sdf_output.o \
   sdf_output_point_ru.o
 sdf_output_point_ru.o: sdf_output_point_ru.f90 sdf_common.o sdf_output.o
+sdf_output_r4.o: sdf_output_r4.f90 sdf_common.o sdf_output_ru.o
 sdf_output_r8.o: sdf_output_r8.f90 sdf_common.o sdf_output_ru.o
 sdf_output_ru.o: sdf_output_ru.f90 sdf_common.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output.o sdf_output_cartesian.o \

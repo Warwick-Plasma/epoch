@@ -13,7 +13,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER :: ndims
     TYPE(sdf_block_type), POINTER :: b
     INTEGER :: i, errcode
@@ -110,11 +110,36 @@ CONTAINS
 
 
 
+  SUBROUTINE write_mesh_meta_r4(h, id, name, dim_labels, dim_units, dim_mults)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
+    REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(c_maxdims) :: dim_mults8
+    TYPE(sdf_block_type), POINTER :: b
+    INTEGER :: i
+
+    IF (PRESENT(dim_mults)) THEN
+      b => h%current_block
+      DO i = 1,b%ndims
+        dim_mults8(i) = REAL(dim_mults(i),r8)
+      ENDDO
+
+      CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults8)
+    ELSE
+      CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units)
+    ENDIF
+
+  END SUBROUTINE write_mesh_meta_r4
+
+
+
   SUBROUTINE write_mesh_variable_meta_r8(h, id, name, units, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units, mesh_id
-    REAL(num), INTENT(IN), OPTIONAL :: mult
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
     INTEGER :: ndims
     TYPE(sdf_block_type), POINTER :: b
     INTEGER :: i, errcode
@@ -179,6 +204,23 @@ CONTAINS
 
 
 
+  SUBROUTINE write_mesh_variable_meta_r4(h, id, name, units, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units, mesh_id
+    REAL(r4), INTENT(IN), OPTIONAL :: mult
+
+    IF (PRESENT(mult)) THEN
+      CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id, &
+          REAL(mult,r8))
+    ELSE
+      CALL write_mesh_variable_meta_r8(h, id, name, units, mesh_id)
+    ENDIF
+
+  END SUBROUTINE write_mesh_variable_meta_r4
+
+
+
   !----------------------------------------------------------------------------
   ! Code to write a 1D cartesian integer variable in parallel
   ! using the mpitype {distribution} for distribution of data
@@ -186,8 +228,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_1d_integer_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_1d_integer_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -197,7 +239,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     INTEGER, DIMENSION(:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -248,8 +290,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_2d_integer_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_2d_integer_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -259,7 +301,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     INTEGER, DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -310,8 +352,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_3d_integer_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_3d_integer_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -321,7 +363,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     INTEGER, DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -365,6 +407,63 @@ CONTAINS
 
 
 
+  SUBROUTINE write_1d_integer_r4(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    INTEGER, DIMENSION(:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_1d_integer_r8(h, id, name, units, dims, stagger, mesh_id, &
+        variable, distribution, subarray, REAL(mult,r8))
+
+  END SUBROUTINE write_1d_integer_r4
+
+
+
+  SUBROUTINE write_2d_integer_r4(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    INTEGER, DIMENSION(:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_2d_integer_r8(h, id, name, units, dims, stagger, mesh_id, &
+        variable, distribution, subarray, REAL(mult,r8))
+
+  END SUBROUTINE write_2d_integer_r4
+
+
+
+  SUBROUTINE write_3d_integer_r4(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    INTEGER, DIMENSION(:,:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_3d_integer_r8(h, id, name, units, dims, stagger, mesh_id, &
+        variable, distribution, subarray, REAL(mult,r8))
+
+  END SUBROUTINE write_3d_integer_r4
+
+
+
   !----------------------------------------------------------------------------
   ! Code to write a 1D cartesian character variable in parallel
   ! using the mpitype {distribution} for distribution of data
@@ -372,8 +471,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_1d_character_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_1d_character_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -383,7 +482,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     CHARACTER(LEN=1), DIMENSION(:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -434,8 +533,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_2d_character_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_2d_character_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -445,7 +544,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     CHARACTER(LEN=1), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -496,8 +595,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_3d_character_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_3d_character_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -507,7 +606,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     CHARACTER(LEN=1), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -548,5 +647,62 @@ CONTAINS
     b%done_data = .TRUE.
 
   END SUBROUTINE write_3d_character_r8
+
+
+
+  SUBROUTINE write_1d_character_r4(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    CHARACTER(LEN=1), DIMENSION(:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_1d_character_r8(h, id, name, units, dims, stagger, mesh_id, &
+        variable, distribution, subarray, REAL(mult,r8))
+
+  END SUBROUTINE write_1d_character_r4
+
+
+
+  SUBROUTINE write_2d_character_r4(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    CHARACTER(LEN=1), DIMENSION(:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_2d_character_r8(h, id, name, units, dims, stagger, mesh_id, &
+        variable, distribution, subarray, REAL(mult,r8))
+
+  END SUBROUTINE write_2d_character_r4
+
+
+
+  SUBROUTINE write_3d_character_r4(h, id, name, units, dims, stagger, mesh_id, &
+      variable, distribution, subarray, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    CHARACTER(LEN=1), DIMENSION(:,:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_3d_character_r8(h, id, name, units, dims, stagger, mesh_id, &
+        variable, distribution, subarray, REAL(mult,r8))
+
+  END SUBROUTINE write_3d_character_r4
 
 END MODULE sdf_output_cartesian_ru

@@ -8,10 +8,33 @@ MODULE sdf_input_r8
 
 CONTAINS
 
+  SUBROUTINE read_header_r8(h, step, time, code_name, code_io_version, &
+      string_length, restart_flag, other_domains)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER, INTENT(OUT) :: step
+    REAL(r8), INTENT(OUT) :: time
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: code_name
+    INTEGER, INTENT(OUT), OPTIONAL :: code_io_version, string_length
+    LOGICAL, INTENT(OUT), OPTIONAL :: restart_flag, other_domains
+
+    CALL read_header_ru(h, step)
+
+    time = REAL(h%time,r8)
+    IF (PRESENT(code_io_version)) code_io_version = h%code_io_version
+    IF (PRESENT(restart_flag)) restart_flag = h%restart_flag
+    IF (PRESENT(other_domains)) other_domains = h%other_domains
+    IF (PRESENT(code_name)) CALL safe_copy_string(h%code_name, code_name)
+    IF (PRESENT(string_length)) string_length = h%string_length
+
+  END SUBROUTINE read_header_r8
+
+
+
   SUBROUTINE read_constant_real_r8(h, value)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), INTENT(OUT) :: value
+    REAL(r8), INTENT(OUT) :: value
     REAL(r4) :: real4
     REAL(r8) :: real8
     TYPE(sdf_block_type), POINTER :: b
@@ -22,10 +45,10 @@ CONTAINS
 
     IF (b%datatype .EQ. c_datatype_real4) THEN
       real4 = TRANSFER(b%const_value, real4)
-      value = REAL(real4,num)
+      value = REAL(real4,r8)
     ELSE IF (b%datatype .EQ. c_datatype_real8) THEN
       real8 = TRANSFER(b%const_value, real8)
-      value = REAL(real8,num)
+      value = REAL(real8,r8)
     ENDIF
 
   END SUBROUTINE read_constant_real_r8
@@ -35,7 +58,7 @@ CONTAINS
   SUBROUTINE read_1d_array_real_r8(h, values)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:), INTENT(OUT) :: values
+    REAL(r8), DIMENSION(:), INTENT(OUT) :: values
     INTEGER, DIMENSION(c_maxdims) :: dims
     INTEGER :: errcode, n1
     TYPE(sdf_block_type), POINTER :: b
@@ -71,7 +94,7 @@ CONTAINS
   SUBROUTINE read_2d_array_real_r8(h, values)
 
     TYPE(sdf_file_handle) :: h
-    REAL(num), DIMENSION(:,:), INTENT(OUT) :: values
+    REAL(r8), DIMENSION(:,:), INTENT(OUT) :: values
     INTEGER, DIMENSION(c_maxdims) :: dims
     INTEGER :: errcode, i, n1, n2
     TYPE(sdf_block_type), POINTER :: b

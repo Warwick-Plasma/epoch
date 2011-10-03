@@ -13,13 +13,12 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: code_name
     INTEGER, INTENT(IN) :: code_io_version, step
-    REAL(num), INTENT(IN) :: time
+    REAL(r8), INTENT(IN) :: time
     LOGICAL, INTENT(IN) :: restart
     TYPE(jobid_type), INTENT(IN), OPTIONAL :: jobid
     INTEGER(i4) :: int4
     INTEGER :: errcode
     INTEGER, PARAMETER :: sof8 = 8
-    REAL(r8) :: real8
     CHARACTER(LEN=1) :: flag
     CHARACTER(LEN=6) :: padding
 
@@ -89,8 +88,7 @@ CONTAINS
       CALL MPI_FILE_WRITE(h%filehandle, int4, 1, &
           MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
 
-      real8 = REAL(time,r8)
-      CALL MPI_FILE_WRITE(h%filehandle, real8, 1, &
+      CALL MPI_FILE_WRITE(h%filehandle, time, 1, &
           MPI_REAL8, MPI_STATUS_IGNORE, errcode)
 
       CALL MPI_FILE_WRITE(h%filehandle, h%jobid%start_seconds, 1, &
@@ -128,6 +126,23 @@ CONTAINS
     h%done_header = .TRUE.
 
   END SUBROUTINE write_header_r8
+
+
+
+  SUBROUTINE write_header_r4(h, code_name, code_io_version, step, time, &
+      restart, jobid)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: code_name
+    INTEGER, INTENT(IN) :: code_io_version, step
+    REAL(r4), INTENT(IN) :: time
+    LOGICAL, INTENT(IN) :: restart
+    TYPE(jobid_type), INTENT(IN), OPTIONAL :: jobid
+
+    CALL write_header_r8(h, code_name, code_io_version, step, REAL(time,r8), &
+        restart, jobid)
+
+  END SUBROUTINE write_header_r4
 
 
 
@@ -416,9 +431,9 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_run_info(h, version, revision, commit_id, &
-      sha1sum, compile_machine, compile_flags, defines, compile_date, &
-      run_date, rank_write)
+  SUBROUTINE sdf_write_run_info(h, version, revision, commit_id, sha1sum, &
+      compile_machine, compile_flags, defines, compile_date, run_date, &
+      rank_write)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i4), INTENT(IN) :: version, revision
@@ -994,8 +1009,7 @@ CONTAINS
 
 
 
-  SUBROUTINE write_2d_array_integer_spec(h, id, name, n1, n2, array, &
-      rank_write)
+  SUBROUTINE write_2d_array_integer_spec(h, id, name, n1, n2, array, rank_write)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -1060,8 +1074,7 @@ CONTAINS
 
     n1 = SIZE(array,1)
     n2 = SIZE(array,2)
-    CALL write_2d_array_integer_spec(h, id, name, n1, n2, &
-        array, rank_write)
+    CALL write_2d_array_integer_spec(h, id, name, n1, n2, array, rank_write)
 
   END SUBROUTINE write_2d_array_integer
 

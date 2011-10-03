@@ -7,6 +7,10 @@ MODULE sdf_output_cartesian_r8
 
   IMPLICIT NONE
 
+  INTEGER, PARAMETER, PRIVATE :: sof = 8
+  INTEGER, PARAMETER, PRIVATE :: datatype_real = c_datatype_real8
+  INTEGER, PARAMETER, PRIVATE :: mpitype_real = MPI_REAL8
+
 CONTAINS
 
   !----------------------------------------------------------------------------
@@ -15,15 +19,15 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_srl_1d_mesh_r8(h, id, name, x, dim_labels, &
-      dim_units, dim_mults, rank_write)
+  SUBROUTINE write_srl_1d_mesh_r8(h, id, name, x, dim_labels, dim_units, &
+      dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
@@ -31,9 +35,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -77,15 +81,15 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_srl_2d_mesh_r8(h, id, name, x, y, dim_labels, &
-      dim_units, dim_mults, rank_write)
+  SUBROUTINE write_srl_2d_mesh_r8(h, id, name, x, y, dim_labels, dim_units, &
+      dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x, y
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
@@ -93,9 +97,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -145,15 +149,15 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_srl_3d_mesh_r8(h, id, name, x, y, z, dim_labels, &
-      dim_units, dim_mults, rank_write)
+  SUBROUTINE write_srl_3d_mesh_r8(h, id, name, x, y, z, dim_labels, dim_units, &
+      dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y, z
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x, y, z
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
@@ -161,9 +165,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -227,12 +231,12 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
-    REAL(num), INTENT(IN) :: xmin, xmax
+    REAL(r8), INTENT(IN) :: xmin, xmax
     INTEGER, DIMENSION(:), INTENT(IN) :: distribution, subarray
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -240,9 +244,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -293,12 +297,12 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x, y
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
-    REAL(num), INTENT(IN) :: xmin, xmax, ymin, ymax
+    REAL(r8), INTENT(IN) :: xmin, xmax, ymin, ymax
     INTEGER, DIMENSION(:), INTENT(IN) :: distribution, subarray
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -306,9 +310,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -368,12 +372,12 @@ CONTAINS
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    REAL(num), DIMENSION(:), INTENT(IN) :: x, y, z
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x, y, z
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
-    REAL(num), INTENT(IN) :: xmin, xmax, ymin, ymax, zmin, zmax
+    REAL(r8), INTENT(IN) :: xmin, xmax, ymin, ymax, zmin, zmax
     INTEGER, DIMENSION(:), INTENT(IN) :: distribution, subarray
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
-    REAL(num), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -381,9 +385,9 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -454,18 +458,18 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), DIMENSION(1), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(1), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%ndims = ndims
     b%stagger = stagger
 
@@ -510,18 +514,18 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), DIMENSION(1,1), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(1,1), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%ndims = ndims
     b%stagger = stagger
 
@@ -566,18 +570,18 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), DIMENSION(1,1,1), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(1,1,1), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%ndims = ndims
     b%stagger = stagger
 
@@ -622,18 +626,18 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), DIMENSION(1,1,1,1), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(1,1,1,1), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%sof
-    b%datatype = h%datatype_real
-    b%mpitype = h%mpitype_real
+    b%type_size = sof
+    b%datatype = datatype_real
+    b%mpitype = mpitype_real
     b%ndims = ndims
     b%stagger = stagger
 
@@ -678,9 +682,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), DIMENSION(:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_1d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable, distribution, subarray, mult)
@@ -705,9 +709,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_2d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable, distribution, subarray, mult)
@@ -732,9 +736,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_3d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable, distribution, subarray, mult)
@@ -751,8 +755,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_1d_var_first_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_1d_var_first_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -760,9 +764,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN) :: variable(dims(ndims+1),dims(1))
+    REAL(r8), INTENT(IN) :: variable(dims(ndims+1),dims(1))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_2d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(idx,1), distribution, subarray, mult)
@@ -779,8 +783,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_2d_var_first_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_2d_var_first_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -788,9 +792,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN) :: variable(dims(ndims+1),dims(1),dims(2))
+    REAL(r8), INTENT(IN) :: variable(dims(ndims+1),dims(1),dims(2))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_3d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(idx,1,1), distribution, subarray, mult)
@@ -807,8 +811,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_3d_var_first_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_3d_var_first_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -816,9 +820,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN) :: variable(dims(ndims+1),dims(1),dims(2),dims(3))
+    REAL(r8), INTENT(IN) :: variable(dims(ndims+1),dims(1),dims(2),dims(3))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_4d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(idx,1,1,1), distribution, subarray, mult)
@@ -835,8 +839,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_1d_var_last_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_1d_var_last_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -844,9 +848,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN) :: variable(dims(1),dims(ndims+1))
+    REAL(r8), INTENT(IN) :: variable(dims(1),dims(ndims+1))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_2d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(1,idx), distribution, subarray, mult)
@@ -863,8 +867,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_2d_var_last_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_2d_var_last_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -872,9 +876,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN) :: variable(dims(1),dims(2),dims(ndims+1))
+    REAL(r8), INTENT(IN) :: variable(dims(1),dims(2),dims(ndims+1))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_3d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(1,1,idx), distribution, subarray, mult)
@@ -891,8 +895,8 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_3d_var_last_r8(h, id, name, units, dims, stagger, &
-      mesh_id, variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_3d_var_last_r8(h, id, name, units, dims, stagger, mesh_id, &
+      variable, idx, distribution, subarray, mult)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -900,9 +904,9 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(num), INTENT(IN) :: variable(dims(1),dims(2),dims(3),dims(ndims+1))
+    REAL(r8), INTENT(IN) :: variable(dims(1),dims(2),dims(3),dims(ndims+1))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
 
     CALL write_4d_float_gen_r8(h, id, name, units, ndims, dims, stagger, &
         mesh_id, variable(1,1,1,idx), distribution, subarray, mult)
@@ -929,9 +933,9 @@ CONTAINS
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
-    REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -966,11 +970,11 @@ CONTAINS
       idx = idx + 1
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
@@ -998,9 +1002,9 @@ CONTAINS
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
-    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -1035,11 +1039,11 @@ CONTAINS
       idx = idx + 1
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
@@ -1067,9 +1071,9 @@ CONTAINS
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
-    REAL(num), DIMENSION(:,:,:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -1137,9 +1141,9 @@ CONTAINS
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id, material_id
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
-    REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -1174,11 +1178,11 @@ CONTAINS
       idx = idx + 1
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
@@ -1207,9 +1211,9 @@ CONTAINS
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id, material_id
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
-    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -1244,11 +1248,11 @@ CONTAINS
       idx = idx + 1
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
@@ -1277,9 +1281,9 @@ CONTAINS
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id, material_id
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
-    REAL(num), DIMENSION(:,:,:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -1314,11 +1318,11 @@ CONTAINS
       idx = idx + 1
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
-        CALL write_3d_var_last_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_3d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
@@ -1348,9 +1352,9 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id, material_id
     CHARACTER(LEN=*), INTENT(IN) :: material_name
     CHARACTER(LEN=*), INTENT(IN) :: specnames(:)
-    REAL(num), DIMENSION(:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -1385,11 +1389,11 @@ CONTAINS
       idx = idx + 1
       CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
-        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_1d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
@@ -1419,9 +1423,9 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id, material_id
     CHARACTER(LEN=*), INTENT(IN) :: material_name
     CHARACTER(LEN=*), INTENT(IN) :: specnames(:)
-    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -1456,11 +1460,11 @@ CONTAINS
       idx = idx + 1
       CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
-        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_2d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 
@@ -1490,9 +1494,9 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id, material_id
     CHARACTER(LEN=*), INTENT(IN) :: material_name
     CHARACTER(LEN=*), INTENT(IN) :: specnames(:)
-    REAL(num), DIMENSION(:,:,:,:), INTENT(IN) :: variable
+    REAL(r8), DIMENSION(:,:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    REAL(num), OPTIONAL, INTENT(IN) :: mult
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     LOGICAL :: last
@@ -1527,11 +1531,11 @@ CONTAINS
       idx = idx + 1
       CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
-        CALL write_3d_var_last_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_3d_var_last_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ELSE
-        CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, &
-            dims, stagger, mesh_id, variable, idx, distribution, subarray, mult)
+        CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
+            stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
     ENDDO
 

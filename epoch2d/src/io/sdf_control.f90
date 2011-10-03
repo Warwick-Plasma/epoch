@@ -23,25 +23,6 @@ CONTAINS
     h%comm = sdf_comm_in
     h%rank = sdf_rank_in
 
-    ! We currently only support files written at the same precision
-    ! as the 'num' kind
-    IF (num .EQ. r4) THEN
-      ! Should use MPI_SIZEOF() but this breaks on scalimpi
-      h%sof = 4
-      h%datatype_real = c_datatype_real4
-      h%mpitype_real = MPI_REAL4
-    ELSE IF (num .EQ. r8) THEN
-      h%sof = 8
-      h%datatype_real = c_datatype_real8
-      h%mpitype_real = MPI_REAL8
-    ELSE
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'Error writing SDF output file - unknown datatype'
-      ENDIF
-      CALL MPI_ABORT(h%comm, errcode, ierr)
-    ENDIF
-
     ierr = KIND(errcode)
     IF (ierr .EQ. i4) THEN
       ! Should use MPI_SIZEOF() but this breaks on scalimpi

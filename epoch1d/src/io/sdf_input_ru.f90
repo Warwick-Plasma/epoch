@@ -70,15 +70,10 @@ CONTAINS
 
 
 
-  SUBROUTINE read_header_ru(h, step, time, code_name, code_io_version, &
-      string_length, restart_flag, other_domains)
+  SUBROUTINE read_header_ru(h, step)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(OUT), OPTIONAL :: step
-    REAL(num), INTENT(OUT), OPTIONAL :: time
-    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: code_name
-    INTEGER, INTENT(OUT), OPTIONAL :: code_io_version, string_length
-    LOGICAL, INTENT(OUT), OPTIONAL :: restart_flag, other_domains
     INTEGER :: errcode
 
     IF (h%done_header) THEN
@@ -124,12 +119,6 @@ CONTAINS
     h%done_header = .TRUE.
 
     IF (PRESENT(step)) step = h%step
-    IF (PRESENT(time)) time = h%time
-    IF (PRESENT(code_io_version)) code_io_version = h%code_io_version
-    IF (PRESENT(restart_flag)) restart_flag = h%restart_flag
-    IF (PRESENT(other_domains)) other_domains = h%other_domains
-    IF (PRESENT(code_name)) CALL safe_copy_string(h%code_name, code_name)
-    IF (PRESENT(string_length)) string_length = h%string_length
 
   END SUBROUTINE read_header_ru
 
@@ -194,7 +183,6 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: id, name
     INTEGER, INTENT(OUT), OPTIONAL :: blocktype, ndims, datatype
     INTEGER :: errcode, ierr
-    LOGICAL :: precision_error
     TYPE(sdf_block_type), POINTER :: b
 
     IF (.NOT. h%done_header) THEN
@@ -219,16 +207,12 @@ CONTAINS
 
       CALL read_block_header(h)
 
-      precision_error = .FALSE.
-
       IF (b%datatype .EQ. c_datatype_real4) THEN
         b%type_size = 4
         b%mpitype = MPI_REAL4
-        IF (num .NE. r4) precision_error = .TRUE.
       ELSE IF (b%datatype .EQ. c_datatype_real8) THEN
         b%type_size = 8
         b%mpitype = MPI_REAL8
-        IF (num .NE. r8) precision_error = .TRUE.
       ELSE IF (b%datatype .EQ. c_datatype_integer4) THEN
         b%type_size = 4
         b%mpitype = MPI_INTEGER4
@@ -241,15 +225,6 @@ CONTAINS
       ELSE IF (b%datatype .EQ. c_datatype_logical) THEN
         b%type_size = 1
         b%mpitype = MPI_CHARACTER
-      ENDIF
-
-      IF (precision_error) THEN
-        IF (h%rank .EQ. h%rank_master) THEN
-          PRINT*,'*** ERROR ***'
-          PRINT*,'Precision does not match, recompile code so that', &
-              ' sizeof(REAL) = ', h%sof
-        ENDIF
-        CALL MPI_ABORT(h%comm, errcode, ierr)
       ENDIF
 
       b%done_header = .TRUE.
