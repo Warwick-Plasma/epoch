@@ -615,10 +615,10 @@ CONTAINS
         IF (npart_global .EQ. 0) RETURN
 
         IF (isubset .EQ. 1) THEN
-          temp_block_id = 'derived/' // TRIM(block_id)
+          temp_block_id = TRIM(block_id)
           temp_name = 'Derived/' // TRIM(name)
         ELSE
-          temp_block_id = 'derived/' // TRIM(block_id) // '/subset_' // &
+          temp_block_id = TRIM(block_id) // '/subset_' // &
               TRIM(subset_list(isubset-1)%name)
           temp_name = 'Derived/' // TRIM(name) // '/Subset_' // &
               TRIM(subset_list(isubset-1)%name)
@@ -633,7 +633,7 @@ CONTAINS
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
-        len1 = LEN_TRIM(block_id) + 9
+        len1 = LEN_TRIM(block_id) + 1
         len2 = LEN_TRIM(name) + 9
         DO ispecies = 1, n_species
           len3 = LEN_TRIM(io_list(ispecies)%name)
@@ -653,7 +653,7 @@ CONTAINS
             ENDIF
           ENDIF
 
-          temp_block_id = 'derived/' // TRIM(block_id) // '/' // &
+          temp_block_id = TRIM(block_id) // '/' // &
               TRIM(io_list(ispecies)%name(1:len4))
           temp_name = 'Derived/' // TRIM(name) // '/' // &
               TRIM(io_list(ispecies)%name(1:len5))
@@ -676,14 +676,14 @@ CONTAINS
       IF (IAND(iomask(id), c_io_no_sum) .EQ. 0) THEN
         species_sum = 1
         CALL sdf_write_plain_variable(sdf_handle, &
-            'derived/' // TRIM(block_id) // '_averaged', &
+            TRIM(block_id) // '_averaged', &
             'Derived/' // TRIM(name) // '_averaged', &
             TRIM(units), dims, stagger, 'grid', &
             averaged_data(id)%array(:,:,:,1), subtype_field, subarray_field)
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
-        len1 = LEN_TRIM(block_id) + 18
+        len1 = LEN_TRIM(block_id) + 10
         len2 = LEN_TRIM(name) + 18
 
         DO ispecies = 1, n_species
@@ -705,7 +705,7 @@ CONTAINS
             ENDIF
           ENDIF
 
-          temp_block_id = 'derived/' // TRIM(block_id) // '_averaged/' // &
+          temp_block_id = TRIM(block_id) // '_averaged/' // &
               TRIM(io_list(ispecies)%name(1:len4))
           temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
               TRIM(io_list(ispecies)%name(1:len5))
@@ -815,7 +815,7 @@ CONTAINS
         IF (npart_global .EQ. 0) RETURN
 
         DO idir = 1, ndirs
-          temp_block_id = 'derived/' // TRIM(block_id) // '_' // &
+          temp_block_id = TRIM(block_id) // '_' // &
               TRIM(dir_tags(idir))
           temp_name = 'Derived/' // TRIM(name) // '_' // &
               TRIM(dir_tags(idir))
@@ -830,7 +830,7 @@ CONTAINS
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
-        len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 10
+        len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 2
         len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 10
 
         DO ispecies = 1, n_species
@@ -853,7 +853,7 @@ CONTAINS
           ENDIF
 
           DO idir = 1, ndirs
-            temp_block_id = 'derived/' // TRIM(block_id) // '_' // &
+            temp_block_id = TRIM(block_id) // '_' // &
                 TRIM(dir_tags(idir)) // '/' // &
                 TRIM(io_list(ispecies)%name(1:len4))
             temp_name = 'Derived/' // TRIM(name) // '_' // &
