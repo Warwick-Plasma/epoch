@@ -10,7 +10,7 @@ MODULE split_particle
   SAVE
 
   INTEGER(KIND=8) :: npart_per_cell_min = 5
-  LOGICAL :: split_none = .TRUE.
+  LOGICAL :: use_split = .FALSE.
 
 CONTAINS
 
@@ -73,15 +73,15 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies
 
-    split_none = .TRUE.
+    use_split = .FALSE.
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%split) THEN
-        split_none = .FALSE.
+        use_split = .TRUE.
         EXIT
       ENDIF
     ENDDO
 
-    IF (.NOT.split_none) use_particle_lists = .TRUE.
+    use_particle_lists = use_particle_lists .OR. use_split
 #endif
 
   END SUBROUTINE setup_split_particles
@@ -96,8 +96,6 @@ CONTAINS
     TYPE(particle), POINTER :: current, new_particle
     TYPE(particle_list) :: append_list
     REAL(num) :: jitter_x
-
-    IF (split_none) RETURN
 
     DO ispecies = 1, n_species
       IF (.NOT. species_list(ispecies)%split) CYCLE

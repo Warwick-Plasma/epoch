@@ -31,8 +31,6 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
 
-    IF (.NOT.use_collisions) RETURN
-
     DO iy = 1, ny
       DO ix = 1, nx
         DO ispecies = 1, n_species

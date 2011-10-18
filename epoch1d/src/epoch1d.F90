@@ -122,9 +122,11 @@ PROGRAM pic
       ! Using the particle_species%secondary_list property
       CALL reorder_particles_to_grid
 
-      CALL particle_collisions  ! call collision operator
+      ! call collision operator
+      IF (use_collisions) CALL particle_collisions
 
-      CALL split_particles ! Early beta version of particle splitting operator
+      ! Early beta version of particle splitting operator
+      IF (use_split) CALL split_particles
 
       CALL reattach_particles_to_mainlist
     ENDIF
