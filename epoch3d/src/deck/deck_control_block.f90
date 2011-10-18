@@ -109,6 +109,7 @@ CONTAINS
           ENDIF
         ENDDO
       ENDDO
+      use_particle_lists = use_particle_lists .OR. use_collisions
     ENDIF
 
   END SUBROUTINE control_deck_finalise
