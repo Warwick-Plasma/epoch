@@ -350,14 +350,14 @@ CONTAINS
     ! ran1=0 gives NaN in logarithm
     ! ran1=1 could give positive logarithm due to rounding errors
     ran1 = (1.0_num - 1.0e-10_num) * random() + 0.5e-10_num
-    ran2 = random()
+    ran2 = 2.0_num * pi * random()
 
     ! Box Muller method for random from Gaussian distribution,
     ! mean 0, variance of nu
     ! Possible place for speed up by caching the second Box Muller number
     ! and using it later
-    ! SQRT(-2.0_num * nu * LOG(ran1)) * COS(2.0_num * pi * ran2)
-    delta = SQRT(-2.0_num * nu * LOG(ran1)) * SIN(2.0_num * pi * ran2)
+    ! SQRT(-2.0_num * nu * LOG(ran1)) * COS(ran2)
+    delta = SQRT(-2.0_num * nu * LOG(ran1)) * SIN(ran2)
 
     ! angle theta in the One Particle at Rest frame
     sin_theta = (2.0_num * delta) / (1.0_num + delta**2)
