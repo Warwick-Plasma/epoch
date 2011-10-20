@@ -882,10 +882,7 @@ CONTAINS
     done_subset_init = .TRUE.
 
     IF (isubset .EQ. 1) THEN
-      DO i = 1, n_species
-        io_list(i) = species_list(i)
-        io_list(i)%name = TRIM(species_list(i)%name)
-      ENDDO
+      io_list = species_list
       RETURN
     ENDIF
 
