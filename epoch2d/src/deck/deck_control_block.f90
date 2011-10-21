@@ -1,5 +1,6 @@
 MODULE deck_control_block
 
+  USE mpi
   USE strings_advanced
   USE fields
 

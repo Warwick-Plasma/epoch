@@ -1,5 +1,6 @@
 MODULE boundary
 
+  USE mpi
   USE partlist
   USE particle_temperature
   USE deck_io_block

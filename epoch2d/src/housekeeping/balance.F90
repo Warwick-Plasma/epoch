@@ -1,5 +1,6 @@
 MODULE balance
 
+  USE mpi
   USE partlist
   USE boundary
   USE mpi_subtype_control

@@ -1,5 +1,6 @@
 MODULE window
 
+  USE mpi
   USE boundary
   USE partlist
   USE particle_temperature

@@ -1,5 +1,6 @@
 MODULE deck_species_block
 
+  USE mpi
   USE strings_advanced
   USE setup
   USE simple_io

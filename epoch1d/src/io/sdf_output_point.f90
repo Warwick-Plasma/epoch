@@ -1,8 +1,8 @@
 MODULE sdf_output_point
 
+  USE mpi
   USE sdf_common
   USE sdf_output
-  USE mpi
 
   IMPLICIT NONE
 

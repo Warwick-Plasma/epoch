@@ -338,10 +338,10 @@ END MODULE shared_parser_data
 
 MODULE shared_data
 
+  USE mpi
   USE sdf_job_info
   USE constants
   USE shared_parser_data
-  USE mpi
 
   IMPLICIT NONE
 

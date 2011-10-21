@@ -1,5 +1,6 @@
 MODULE deck_fields_block
 
+  USE mpi
   USE strings_advanced
   USE simple_io
 

@@ -15,6 +15,7 @@ PROGRAM pic
   ! University of Warwick, UK
   ! PSC written by Hartmut Ruhl
 
+  USE mpi
   USE balance
   USE boundary
   USE sdf_job_info

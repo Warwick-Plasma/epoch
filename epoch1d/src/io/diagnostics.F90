@@ -1,5 +1,6 @@
 MODULE diagnostics
 
+  USE mpi
   USE calc_df
   USE sdf
   USE deck

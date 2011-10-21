@@ -1,5 +1,6 @@
 MODULE split_particle
 
+  USE mpi
   USE boundary
   USE partlist
   USE random_generator

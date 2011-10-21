@@ -1,5 +1,6 @@
 MODULE evaluator
 
+  USE mpi
   USE stack
   USE evaluator_blocks
   !USE shunt

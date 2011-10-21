@@ -1,7 +1,7 @@
 MODULE sdf_output
 
-  USE sdf_common
   USE mpi
+  USE sdf_common
 
   IMPLICIT NONE
 
