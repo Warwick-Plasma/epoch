@@ -157,7 +157,7 @@ CONTAINS
       bc_field(c_bd_y_max) = as_bc(value, errcode)
       boundary_block_done(4)  = .TRUE.
     CASE(nbase+5)
-      bc_field(c_bd_z_max) = as_bc(value, errcode)
+      bc_field(c_bd_z_min) = as_bc(value, errcode)
       boundary_block_done(5)  = .TRUE.
     CASE(nbase+6)
       bc_field(c_bd_z_max) = as_bc(value, errcode)
@@ -175,7 +175,7 @@ CONTAINS
       bc_particle(c_bd_y_max) = as_bc(value, errcode)
       boundary_block_done(4)  = .TRUE.
     CASE(2*nbase+5)
-      bc_particle(c_bd_z_max) = as_bc(value, errcode)
+      bc_particle(c_bd_z_min) = as_bc(value, errcode)
       boundary_block_done(5)  = .TRUE.
     CASE(2*nbase+6)
       bc_particle(c_bd_z_max) = as_bc(value, errcode)
