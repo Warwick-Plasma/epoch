@@ -6,6 +6,22 @@ formats="$1"
 version=`visit -version 2>&1 | sed 's,.* \([0-9]*\).*,\1,'`
 tmpdir=.tmp
 
+# Find directory containing the actual visit binary
+cwd=`pwd`
+cmd=`which visit`
+i=0
+while [ $i -lt 100 ]; do
+  visitpath=`dirname $cmd`
+  cd "$visitpath"
+  [ "$visitpath"x = "."x ] && visitpath=`pwd`
+  cmd=`basename $cmd`
+  cmd=`readlink $cmd`
+  [ "$cmd"x = x ] && break
+  i=$((i+1))
+done
+cd "$cwd"
+
+export PATH=$visitpath:$PATH
 export CXXFLAGS="-Wno-deprecated"
 
 function buildit {
