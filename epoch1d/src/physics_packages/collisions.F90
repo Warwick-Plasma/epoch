@@ -117,56 +117,57 @@ CONTAINS
 
     ! Intra-species collisions
     icount = p_list%count
+
+    ! If there aren't enough particles to collide, then don't bother
+    IF (icount .LE. 1) RETURN
+
 #ifndef PER_PARTICLE_WEIGHT
     np = icount * weight
     factor = user_factor
 #else
-    ! If there aren't enough particles to collide, then don't bother
-    IF (icount .GT. 1) THEN
-      current => p_list%head
-      impact => current%next
-      DO k = 2, icount-2, 2
-        np = np + current%weight + impact%weight
-        factor = factor + MIN(current%weight, impact%weight)
-        current => impact%next
-        impact => current%next
-      ENDDO
+    current => p_list%head
+    impact => current%next
+    DO k = 2, icount-2, 2
       np = np + current%weight + impact%weight
       factor = factor + MIN(current%weight, impact%weight)
+      current => impact%next
+      impact => current%next
+    ENDDO
+    np = np + current%weight + impact%weight
+    factor = factor + MIN(current%weight, impact%weight)
 
-      IF (MOD(icount, 2) .NE. 0) THEN
-        np = np + impact%next%weight
-        factor = factor + MIN(current%weight, impact%next%weight)
-        factor = factor + MIN(impact%weight, impact%next%weight)
-      ENDIF
+    IF (MOD(icount, 2) .NE. 0) THEN
+      np = np + impact%next%weight
+      factor = factor + MIN(current%weight, impact%next%weight)
+      factor = factor + MIN(impact%weight, impact%next%weight)
+    ENDIF
 
-      factor = user_factor * np / factor
+    factor = user_factor * np / factor
 #endif
 
-      current => p_list%head
+    current => p_list%head
+    impact => current%next
+    DO k = 2, icount-2, 2
+      CALL scatter(current, impact, mass, mass, charge, charge, &
+          weight, weight, dens, dens, temp, temp, log_lambda, factor)
+      current => impact%next
       impact => current%next
-      DO k = 2, icount-2, 2
-        CALL scatter(current, impact, mass, mass, charge, charge, &
-            weight, weight, dens, dens, temp, temp, log_lambda, factor)
-        current => impact%next
-        impact => current%next
-      ENDDO
+    ENDDO
 
-      IF (MOD(icount, 2) .EQ. 0) THEN
-        CALL scatter(current, impact, mass, mass, charge, charge, &
-            weight, weight, dens, dens, temp, temp, log_lambda, factor)
-      ELSE
-        CALL scatter(current, impact, mass, mass, charge, charge, &
-            weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
-        current => impact%next
-        impact => current%prev%prev
-        CALL scatter(current, impact, mass, mass, charge, charge, &
-            weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
-        current => current%prev
-        impact => current%next
-        CALL scatter(current, impact, mass, mass, charge, charge, &
-            weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
-      ENDIF
+    IF (MOD(icount, 2) .EQ. 0) THEN
+      CALL scatter(current, impact, mass, mass, charge, charge, &
+          weight, weight, dens, dens, temp, temp, log_lambda, factor)
+    ELSE
+      CALL scatter(current, impact, mass, mass, charge, charge, &
+          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
+      current => impact%next
+      impact => current%prev%prev
+      CALL scatter(current, impact, mass, mass, charge, charge, &
+          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
+      current => current%prev
+      impact => current%next
+      CALL scatter(current, impact, mass, mass, charge, charge, &
+          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
     ENDIF
 
   END SUBROUTINE intra_species_collisions
