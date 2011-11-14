@@ -50,6 +50,7 @@ CONTAINS
     DO i = 1, 2*c_ndims
       IF (bc_particle(i) .EQ. c_bc_periodic &
           .OR. bc_particle(i) .EQ. c_bc_reflect &
+          .OR. bc_particle(i) .EQ. c_bc_thermal &
           .OR. bc_particle(i) .EQ. c_bc_open) CYCLE
       IF (rank .EQ. 0) THEN
         WRITE(*,*)
@@ -290,7 +291,9 @@ CONTAINS
         neighbour(-1,0,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect .AND. x_min_boundary) THEN
+    IF ((bc_particle(c_bd_x_min) .EQ. c_bc_reflect &
+        .OR. bc_particle(c_bd_x_min) .EQ. c_bc_thermal) &
+        .AND. x_min_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -309,7 +312,9 @@ CONTAINS
         neighbour( 1,0,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect .AND. x_max_boundary) THEN
+    IF ((bc_particle(c_bd_x_max) .EQ. c_bc_reflect &
+        .OR. bc_particle(c_bd_x_max) .EQ. c_bc_thermal) &
+        .AND. x_max_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -341,7 +346,9 @@ CONTAINS
         neighbour(0,-1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_y_min) .EQ. c_bc_reflect .AND. y_min_boundary) THEN
+    IF ((bc_particle(c_bd_y_min) .EQ. c_bc_reflect &
+        .OR. bc_particle(c_bd_y_min) .EQ. c_bc_thermal) &
+        .AND. y_min_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -360,7 +367,9 @@ CONTAINS
         neighbour(0, 1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_y_max) .EQ. c_bc_reflect .AND. y_max_boundary) THEN
+    IF ((bc_particle(c_bd_y_max) .EQ. c_bc_reflect &
+        .OR. bc_particle(c_bd_y_max) .EQ. c_bc_thermal) &
+        .AND. y_max_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -392,7 +401,9 @@ CONTAINS
         neighbour(0,0,-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_z_min) .EQ. c_bc_reflect .AND. z_min_boundary) THEN
+    IF ((bc_particle(c_bd_z_min) .EQ. c_bc_reflect &
+        .OR. bc_particle(c_bd_z_min) .EQ. c_bc_thermal) &
+        .AND. z_min_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -411,7 +422,9 @@ CONTAINS
         neighbour(0,0, 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_z_max) .EQ. c_bc_reflect .AND. z_max_boundary) THEN
+    IF ((bc_particle(c_bd_z_max) .EQ. c_bc_reflect &
+        .OR. bc_particle(c_bd_z_max) .EQ. c_bc_thermal) &
+        .AND. z_max_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -606,7 +619,7 @@ CONTAINS
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cell_z_r, cell_frac_z
-    REAL(num) :: cf2, temp(3), temp_v
+    REAL(num) :: cf2, temp(3)
     REAL(num) :: part_pos
 
     DO ispecies = 1, n_species
@@ -688,8 +701,7 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              temp_v = cur%part_p(1) / species_list(ispecies)%mass
-              cur%part_pos(1) = x_min - dx / 2.0_num + temp_v * dt
+              cur%part_pos(1) = 2.0_num * x_min - dx - part_pos
 
             ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
               xbd = -1
@@ -758,8 +770,7 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              temp_v = cur%part_p(1) / species_list(ispecies)%mass
-              cur%part_pos(1) = x_max + dx / 2.0_num + temp_v * dt
+              cur%part_pos(1) = 2.0_num * x_max + dx - part_pos
 
             ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
               xbd = 1
@@ -829,8 +840,7 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              temp_v = cur%part_p(2) / species_list(ispecies)%mass
-              cur%part_pos(2) = y_min - dy / 2.0_num + temp_v * dt
+              cur%part_pos(2) = 2.0_num * y_min - dy - part_pos
 
             ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_periodic) THEN
               ybd = -1
@@ -899,8 +909,7 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              temp_v = cur%part_p(2) / species_list(ispecies)%mass
-              cur%part_pos(2) = y_max + dy / 2.0_num + temp_v * dt
+              cur%part_pos(2) = 2.0_num * y_max + dy - part_pos
 
             ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_periodic) THEN
               ybd = 1
@@ -970,8 +979,7 @@ CONTAINS
               cur%part_p(i) = ABS(momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num))
 
-              temp_v = cur%part_p(3) / species_list(ispecies)%mass
-              cur%part_pos(3) = z_min - dz / 2.0_num + temp_v * dt
+              cur%part_pos(3) = 2.0_num * z_min - dz - part_pos
 
             ELSE IF (bc_particle(c_bd_z_min) .EQ. c_bc_periodic) THEN
               zbd = -1
@@ -1040,8 +1048,7 @@ CONTAINS
               cur%part_p(i) = -ABS(momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num))
 
-              temp_v = cur%part_p(3) / species_list(ispecies)%mass
-              cur%part_pos(3) = z_max + dz / 2.0_num + temp_v * dt
+              cur%part_pos(3) = 2.0_num * z_max + dz - part_pos
 
             ELSE IF (bc_particle(c_bd_z_max) .EQ. c_bc_periodic) THEN
               zbd = 1

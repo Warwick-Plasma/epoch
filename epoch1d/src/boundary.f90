@@ -50,6 +50,7 @@ CONTAINS
     DO i = 1, 2*c_ndims
       IF (bc_particle(i) .EQ. c_bc_periodic &
           .OR. bc_particle(i) .EQ. c_bc_reflect &
+          .OR. bc_particle(i) .EQ. c_bc_thermal &
           .OR. bc_particle(i) .EQ. c_bc_open) CYCLE
       IF (rank .EQ. 0) THEN
         WRITE(*,*)
@@ -163,7 +164,9 @@ CONTAINS
         neighbour(-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect .AND. x_min_boundary) THEN
+    IF ((bc_particle(c_bd_x_min) .EQ. c_bc_reflect &
+        .OR. bc_particle(c_bd_x_min) .EQ. c_bc_thermal) &
+        .AND. x_min_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -182,7 +185,9 @@ CONTAINS
         neighbour( 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect .AND. x_max_boundary) THEN
+    IF ((bc_particle(c_bd_x_max) .EQ. c_bc_reflect &
+        .OR. bc_particle(c_bd_x_max) .EQ. c_bc_thermal) &
+        .AND. x_max_boundary) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -315,7 +320,7 @@ CONTAINS
     INTEGER(KIND=8) :: ixp
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix
-    REAL(num) :: temp(3), temp_v
+    REAL(num) :: temp(3)
     REAL(num) :: part_pos
 
     DO ispecies = 1, n_species
@@ -362,8 +367,7 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              temp_v = cur%part_p(1) / species_list(ispecies)%mass
-              cur%part_pos = x_min - dx / 2.0_num + temp_v * dt
+              cur%part_pos = 2.0_num * x_min - dx - part_pos
 
             ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
               xbd = -1
@@ -404,8 +408,7 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              temp_v = cur%part_p(1) / species_list(ispecies)%mass
-              cur%part_pos = x_max + dx / 2.0_num + temp_v * dt
+              cur%part_pos = 2.0_num * x_max + dx - part_pos
 
             ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
               xbd = 1
