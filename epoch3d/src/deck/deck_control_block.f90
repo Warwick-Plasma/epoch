@@ -310,7 +310,7 @@ CONTAINS
 
     DO char = 1, str_len
       c = str_in(char:char)
-      IF (c .EQ. ' ' .OR. ICHAR(c) .EQ. 32)  THEN
+      IF (c .EQ. ' ')  THEN
         pos = char
         EXIT
       ENDIF
