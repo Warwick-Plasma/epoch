@@ -470,9 +470,9 @@ CONTAINS
           IF (f .EQ. 0) THEN
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = u1
           ELSE IF (got_eor) THEN
-            fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(10)
+            fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(10) ! new line
           ELSE
-            fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(0)
+            fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(0)  ! null
             fbuf%pos = fbuf%pos - 1
           ENDIF
 
@@ -501,7 +501,7 @@ CONTAINS
         ENDIF
 
         IF (continuation .AND. warn) THEN
-          IF (u1 .NE. ' ' .AND. u1 .NE. ACHAR(9)) THEN
+          IF (u1 .NE. ' ' .AND. u1 .NE. ACHAR(9)) THEN ! ACHAR(9) = tab
             IF (rank .EQ. rank_check) THEN
               DO io = stdout, du, du - stdout ! Print to stdout and to file
                 WRITE(io,*)
@@ -518,7 +518,7 @@ CONTAINS
         ! If the character is a # or \ then ignore the rest of the line
         IF (u1 .EQ. '#') THEN
           ignore = .TRUE.
-        ELSE IF (u1 .EQ. '\') THEN
+        ELSE IF (u1 .EQ. ACHAR(92)) THEN ! ACHAR(92) = '\'
           ignore = .TRUE.
           continuation = .TRUE.
         ENDIF
@@ -527,9 +527,10 @@ CONTAINS
         IF (.NOT. ignore) THEN
           ! If the current character isn't a special character then just stick
           ! it in the buffer
+          ! ACHAR(9) = tab
           IF (u1 .NE. '=' .AND. u1 .NE. ACHAR(9) .AND. u1 .NE. ':' &
               .AND. f .EQ. 0) THEN
-            IF ((u1 .NE. ' ' .AND. u1 .NE. ACHAR(32)) .OR. u0 .NE. ' ') THEN
+            IF (u1 .NE. ' ' .OR. u0 .NE. ' ') THEN
               deck_values(flip)%value(pos:pos) = u1
               pos = pos+1
               u0 = u1

@@ -15,8 +15,7 @@ CONTAINS
 
     char_type = c_char_unknown
 
-    ! 32 is the ASCII code for sp
-    IF (char .EQ. ' ' .OR. ICHAR(char) .EQ. 32) THEN
+    IF (char .EQ. ' ') THEN
       char_type = c_char_space
     ELSEIF (char .GE. '0' .AND. char .LE. '9' .OR. char .EQ. '.') THEN
       char_type = c_char_numeric

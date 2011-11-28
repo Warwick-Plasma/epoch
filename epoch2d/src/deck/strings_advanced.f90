@@ -21,6 +21,7 @@ CONTAINS
     got_file = .FALSE.
 
     c = ICHAR(str_in(1:1))
+    ! ACHAR(39) = '\'', ACHAR(34) = '"'
     IF (c .NE. 39 .AND. c .NE. 34) RETURN
 
     delimiter = c
@@ -58,6 +59,7 @@ CONTAINS
 
     DO char = 1, str_len
       c = ICHAR(str_in(char:char))
+      ! ACHAR(48)-ACHAR(57) = '0'-'9'
       IF (c .GT. 47 .AND. c .LT. 58) THEN
         pos = char
         EXIT
