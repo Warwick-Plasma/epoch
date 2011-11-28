@@ -23,13 +23,16 @@ CONTAINS
 
     IF (field_order .EQ. 2) THEN
       const(1:2) = (/ -1.0_num, 1.0_num /)
+      cfl = 1.0_num
     ELSE IF (field_order .EQ. 4) THEN
       const(1:4) = (/ 1.0_num/24.0_num, -9.0_num/8.0_num, &
           9.0_num/8.0_num, -1.0_num/24.0_num /)
+      cfl = 6.0_num / 7.0_num
     ELSE
       const(1:6) = (/ -3.0_num/640.0_num, 25.0_num/384.0_num, &
           -75.0_num/64.0_num, 75.0_num/64.0_num, -25.0_num/384.0_num, &
           3.0_num/640.0_num /)
+      cfl = 120.0_num / 149.0_num
     ENDIF
 
   END SUBROUTINE set_field_order
