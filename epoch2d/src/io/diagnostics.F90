@@ -540,6 +540,9 @@ CONTAINS
 
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
       IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
         CALL func(array, 0)
         CALL sdf_write_plain_variable(sdf_handle, &
             TRIM(ADJUSTL(block_id)), TRIM(ADJUSTL(name)), &
@@ -548,6 +551,9 @@ CONTAINS
       ENDIF
 
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
         DO ispecies = 1, n_species
 #ifdef TRACER_PARTICLES
           IF (species_list(ispecies)%tracer) CYCLE
@@ -685,6 +691,9 @@ CONTAINS
 
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
       IF (IAND(dumpmask(id), c_io_no_sum) .EQ. 0) THEN
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
         DO idir = 1, ndirs
           WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
               TRIM(dir_tags(idir))
@@ -699,6 +708,9 @@ CONTAINS
       ENDIF
 
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
         DO ispecies = 1, n_species
 #ifdef TRACER_PARTICLES
           IF (species_list(ispecies)%tracer) CYCLE
@@ -736,6 +748,7 @@ CONTAINS
     ALLOCATE(species_offset(n_species))
     species_offset = 0
 
+    npart_global = 0
     DO ispecies = 1, n_species
       CALL MPI_ALLGATHER(species_list(ispecies)%attached_list%count, 1, &
           MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
@@ -745,6 +758,7 @@ CONTAINS
         species_count = species_count + npart_species_per_proc(i)
       ENDDO
       species_list(ispecies)%count = species_count
+      npart_global = npart_global + species_count
     ENDDO
 
     IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
@@ -778,6 +792,7 @@ CONTAINS
     id = c_dump_part_grid
     IF (IAND(dumpmask(id), code) .NE. 0) THEN
       CALL species_offset_init()
+      IF (npart_global .EQ. 0) RETURN
 
       CALL start_particle_species_only(current_species)
 
@@ -833,6 +848,7 @@ CONTAINS
     id = id_in
     IF (IAND(dumpmask(id), code) .NE. 0) THEN
       CALL species_offset_init()
+      IF (npart_global .EQ. 0) RETURN
 
       CALL start_particle_species_only(current_species)
 
