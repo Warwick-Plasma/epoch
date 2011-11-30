@@ -322,10 +322,10 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_poynt_flux(data_array, current_species, direction)
+  SUBROUTINE calc_poynt_flux(data_array, direction)
 
     REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species, direction
+    INTEGER, INTENT(IN) :: direction
     INTEGER :: ix
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
 

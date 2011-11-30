@@ -198,7 +198,7 @@ CONTAINS
         'Derived/EkFlux', 'W/m^2', c_stagger_cell_centre, &
         calc_ekflux, array, fluxdir, dir_tags)
 
-    CALL write_nspecies_flux(c_dump_poynt_flux, code, 'poynt_flux', &
+    CALL write_field_flux(c_dump_poynt_flux, code, 'poynt_flux', &
         'Derived/Poynting Flux', 'W/m^2', c_stagger_cell_centre, &
         calc_poynt_flux, array, fluxdir(1:3), dim_tags)
 
@@ -598,6 +598,57 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE write_nspecies_field
+
+
+
+  SUBROUTINE write_field_flux(id, code, block_id, name, units, stagger, &
+      func, array, fluxdir, dir_tags)
+
+    INTEGER, INTENT(IN) :: id, code
+    CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
+    INTEGER, INTENT(IN) :: stagger
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, DIMENSION(:), INTENT(IN) :: fluxdir
+    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
+    INTEGER, DIMENSION(c_ndims) :: dims
+    INTEGER :: should_dump, ndirs, idir
+    CHARACTER(LEN=c_max_string_length) :: temp_block_id, temp_name
+
+    INTERFACE
+      SUBROUTINE func(data_array, direction)
+        USE shared_data
+        REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
+        INTEGER, INTENT(IN) :: direction
+      END SUBROUTINE func
+    END INTERFACE
+
+    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+
+    ndirs = SIZE(fluxdir)
+    dims = (/nx_global/)
+
+    ! Want the code to output unaveraged data if either restarting or
+    ! requested by the user
+    should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
+    should_dump = IOR(should_dump, NOT(c_io_averaged))
+
+    IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
+      DO idir = 1, ndirs
+        WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
+            TRIM(dir_tags(idir))
+        WRITE(temp_name, '(a, "_", a)') TRIM(name), &
+            TRIM(dir_tags(idir))
+        CALL func(array, fluxdir(idir))
+        CALL sdf_write_plain_variable(sdf_handle, &
+            TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
+            TRIM(units), dims, stagger, 'grid', &
+            array, subtype_field, subarray_field)
+      ENDDO
+    ENDIF
+
+    ! Flux variables not currently averaged
+
+  END SUBROUTINE write_field_flux
 
 
 
