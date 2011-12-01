@@ -43,9 +43,9 @@ CONTAINS
 
     CHARACTER(LEN=1), DIMENSION(3) :: dim_tags = (/'x', 'y', 'z'/)
     CHARACTER(LEN=5), DIMENSION(6) :: dir_tags = &
-        (/'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max'/)
+        (/'x_max', 'y_max', 'z_max', 'x_min', 'y_min', 'z_min'/)
     INTEGER, DIMENSION(6) :: fluxdir = &
-        (/-c_dir_x, c_dir_x, -c_dir_y, c_dir_y, -c_dir_z, c_dir_z/)
+        (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
 
 #ifdef NO_IO
     RETURN
