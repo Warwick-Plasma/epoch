@@ -158,8 +158,8 @@ CONTAINS
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
-        ranges(1,idim) = x_min_local
-        ranges(2,idim) = x_max_local
+        ranges(1,idim) = x_min_local - 0.5_num * dx
+        ranges(2,idim) = x_max_local + 0.5_num * dx
         start_local(idim) = cell_x_min(x_coords+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
@@ -171,8 +171,8 @@ CONTAINS
       ELSE IF (direction(idim) .EQ. c_dir_y) THEN
         use_y = .TRUE.
         resolution(idim) = ny
-        ranges(1,idim) = y_min_local
-        ranges(2,idim) = y_max_local
+        ranges(1,idim) = y_min_local - 0.5_num * dy
+        ranges(2,idim) = y_max_local + 0.5_num * dy
         start_local(idim) = cell_y_min(y_coords+1)
         global_resolution(idim) = ny_global
         dgrid(idim) = dy

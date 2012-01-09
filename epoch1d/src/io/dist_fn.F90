@@ -155,8 +155,8 @@ CONTAINS
       IF (direction(idim) .EQ. c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
-        ranges(1,idim) = x_min_local
-        ranges(2,idim) = x_max_local
+        ranges(1,idim) = x_min_local - 0.5_num * dx
+        ranges(2,idim) = x_max_local + 0.5_num * dx
         start_local(idim) = cell_x_min(x_coords+1)
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
