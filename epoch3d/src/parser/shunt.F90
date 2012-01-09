@@ -274,200 +274,8 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: output
     INTEGER, INTENT(INOUT) :: err
 
-#ifndef RPN_DECK
-    CALL tokenize_infix(expression, output, err)
-#else
-    CALL tokenize_rpn(expression, output, err)
-#endif
-
-  END SUBROUTINE tokenize
-
-
-
-  SUBROUTINE tokenize_infix(expression, output, err)
-
-    ! This subroutine tokenizes input in normal infix maths notation
-    ! It uses Dijkstra's shunting yard algorithm to convert to RPN
-
-    CHARACTER(LEN=*), INTENT(IN) :: expression
-    TYPE(primitive_stack), INTENT(INOUT) :: output
-    INTEGER, INTENT(INOUT) :: err
-    TYPE(deck_constant) :: const
-
     CHARACTER(LEN=500) :: current
-    INTEGER :: current_type, current_pointer, i, ptype, ipoint
-
-    TYPE(primitive_stack) :: stack
-    TYPE(stack_element) :: block, block2
-
-    CALL initialise_stack(stack)
-
-    current(:) = ' '
-    current(1:1) = expression(1:1)
-    current_pointer = 2
-    current_type = char_type(expression(1:1))
-
-    err = c_err_none
-
-    last_block_type = c_pt_null
-
-    DO i = 2, LEN(TRIM(expression)) + 1
-      ptype = char_type(expression(i:i))
-      ! This is a bit of a hack.
-      ! Allow numbers to follow letters in an expression *except* in the
-      ! special case of a single 'e' character, to allow 10.0e5, etc.
-      IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. c_char_delimiter) &
-        .OR. (ptype .EQ. c_char_numeric .AND. current_type .EQ. c_char_alpha &
-        .AND. .NOT. str_cmp(current, 'e'))) THEN
-        current(current_pointer:current_pointer) = expression(i:i)
-        current_pointer = current_pointer+1
-      ELSE
-        IF (ICHAR(current(1:1)) .NE. 0) THEN
-          ! Populate the block
-          CALL load_block(current, block)
-#ifdef PARSER_DEBUG
-          block%text = TRIM(current)
-#endif
-          IF (block%ptype .EQ. c_pt_bad) THEN
-            IF (rank .EQ. 0) THEN
-              PRINT *, 'Unable to parse block with text ', TRIM(current)
-              CALL check_deprecated(current)
-            ENDIF
-            err = c_err_bad_value
-            CALL deallocate_stack(stack)
-            RETURN
-          ENDIF
-          IF (block%ptype .EQ. c_pt_deck_constant) THEN
-            const = deck_constant_list(block%value)
-            DO ipoint = 1, const%execution_stream%stack_point
-              CALL push_to_stack(output, const%execution_stream%entries(ipoint))
-            ENDDO
-          ENDIF
-
-          IF (block%ptype .NE. c_pt_parenthesis &
-              .AND. block%ptype .NE. c_pt_null) THEN
-            last_block_type = block%ptype
-          ENDIF
-
-          IF (block%ptype .EQ. c_pt_variable &
-              .OR. block%ptype .EQ. c_pt_constant &
-              .OR. block%ptype .EQ. c_pt_species &
-              .OR. block%ptype .EQ. c_pt_subset) THEN
-            CALL push_to_stack(output, block)
-          ENDIF
-
-          IF (block%ptype .EQ. c_pt_parenthesis) THEN
-            IF (block%value .EQ. c_paren_left_bracket) THEN
-              CALL push_to_stack(stack, block)
-            ELSE
-              DO
-                CALL stack_snoop(stack, block2, 0)
-                IF (block2%ptype .EQ. c_pt_parenthesis &
-                    .AND. block2%value .EQ. c_paren_left_bracket) THEN
-                  CALL pop_to_null(stack)
-                  ! If stack isn't empty then check for function
-                  IF (stack%stack_point .NE. 0) THEN
-                    CALL stack_snoop(stack, block2, 0)
-                    IF (block2%ptype .EQ. c_pt_function) &
-                        CALL pop_to_stack(stack, output)
-                  ENDIF
-                  EXIT
-                ELSE
-                  CALL pop_to_stack(stack, output)
-                ENDIF
-              ENDDO
-            ENDIF
-          ENDIF
-
-          IF (block%ptype .EQ. c_pt_function) THEN
-            ! Just push functions straight onto the stack
-            CALL push_to_stack(stack, block)
-          ENDIF
-
-          IF (block%ptype .EQ. c_pt_separator) THEN
-            DO
-              CALL stack_snoop(stack, block2, 0)
-              IF (block2%ptype .NE. c_pt_parenthesis) THEN
-                CALL pop_to_stack(stack, output)
-              ELSE
-                IF (block2%value .NE. c_paren_left_bracket) THEN
-                  PRINT *, 'Bad function expression'
-                  STOP
-                ENDIF
-                EXIT
-              ENDIF
-            ENDDO
-          ENDIF
-
-          IF (block%ptype .EQ. c_pt_operator) THEN
-            DO
-              IF (stack%stack_point .EQ. 0) THEN
-                ! stack is empty, so just push operator onto stack and
-                ! leave loop
-                CALL push_to_stack(stack, block)
-                EXIT
-              ENDIF
-              ! stack is not empty so check precedence etc.
-              CALL stack_snoop(stack, block2, 0)
-              IF (block2%ptype .NE. c_pt_operator) THEN
-                ! Previous block is not an operator so push current operator
-                ! to stack and leave loop
-                CALL push_to_stack(stack, block)
-                EXIT
-              ELSE
-                IF (opcode_assoc(block%value) .EQ. c_assoc_la &
-                    .OR. opcode_assoc(block%value) .EQ. c_assoc_a) THEN
-                  ! Operator is full associative or left associative
-                  IF (opcode_precedence(block%value) &
-                      .LE. opcode_precedence(block2%value)) THEN
-                    CALL pop_to_stack(stack, output)
-                    CYCLE
-                  ELSE
-                    CALL push_to_stack(stack, block)
-                    EXIT
-                  ENDIF
-                ELSE
-                  IF (opcode_precedence(block%value) &
-                      .LT. opcode_precedence(block2%value)) THEN
-                    CALL pop_to_stack(stack, output)
-                    CYCLE
-                  ELSE
-                    CALL push_to_stack(stack, block)
-                    EXIT
-                  ENDIF
-                ENDIF
-              ENDIF
-            ENDDO
-          ENDIF
-
-        ENDIF
-        current(:) = ' '
-        current_pointer = 2
-        current(1:1) = expression(i:i)
-        current_type = ptype
-      ENDIF
-    ENDDO
-
-    DO i = 1, stack%stack_point
-      CALL pop_to_stack(stack, output)
-    ENDDO
-    CALL deallocate_stack(stack)
-
-  END SUBROUTINE tokenize_infix
-
-
-
-  SUBROUTINE tokenize_rpn(expression, output, err)
-
-    ! This routine tokenizes input which is already in Reverse Polish Notiation
-
-    CHARACTER(LEN=*), INTENT(IN) :: expression
-    TYPE(primitive_stack), INTENT(INOUT) :: output
-    TYPE(deck_constant) :: const
-    INTEGER, INTENT(INOUT) :: err
-
-    CHARACTER(LEN=500) :: current
-    INTEGER :: current_type, current_pointer, i, ptype, ipoint
+    INTEGER :: current_type, current_pointer, i, ptype
 
     TYPE(primitive_stack) :: stack
     TYPE(stack_element) :: block
@@ -483,7 +291,7 @@ CONTAINS
 
     last_block_type = c_pt_null
 
-    DO i = 2, LEN(TRIM(expression)) + 1
+    DO i = 2, LEN(TRIM(expression))
       ptype = char_type(expression(i:i))
       ! This is a bit of a hack.
       ! Allow numbers to follow letters in an expression *except* in the
@@ -494,36 +302,12 @@ CONTAINS
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
       ELSE
-        IF (ICHAR(current(1:1)) .NE. 0) THEN
-          ! Populate the block
-          CALL load_block(current, block)
-#ifdef PARSER_DEBUG
-          block%text = TRIM(current)
+#ifndef RPN_DECK
+        CALL tokenize_subexpression_infix(current, block, stack, output, err)
+#else
+        CALL tokenize_subexpression_rpn(current, block, stack, output, err)
 #endif
-          PRINT *, block%ptype, TRIM(current)
-          IF (block%ptype .EQ. c_pt_bad) THEN
-            IF (rank .EQ. 0) THEN
-              PRINT *, 'Unable to parse block with text ', TRIM(current)
-            ENDIF
-            err = c_err_bad_value
-            CALL deallocate_stack(stack)
-            RETURN
-          ENDIF
-          IF (block%ptype .NE. c_pt_parenthesis &
-              .AND. block%ptype .NE. c_pt_null) THEN
-            last_block_type = block%ptype
-            IF (debug_mode) PRINT *, 'Setting', block%ptype, TRIM(current)
-          ENDIF
-          IF (block%ptype .EQ. c_pt_deck_constant) THEN
-            const = deck_constant_list(block%value)
-            DO ipoint = 1, const%execution_stream%stack_point
-              CALL push_to_stack(output, const%execution_stream%entries(ipoint))
-            ENDDO
-            CYCLE
-          ELSE IF (block%ptype .NE. c_pt_null) THEN
-            CALL push_to_stack(output, block)
-          ENDIF
-        ENDIF
+        IF (err .NE. c_err_none) RETURN
         current(:) = ' '
         current_pointer = 2
         current(1:1) = expression(i:i)
@@ -531,12 +315,204 @@ CONTAINS
       ENDIF
     ENDDO
 
+#ifndef RPN_DECK
+    CALL tokenize_subexpression_infix(current, block, stack, output, err)
+#else
+    CALL tokenize_subexpression_rpn(current, block, stack, output, err)
+#endif
+    IF (err .NE. c_err_none) RETURN
+
     DO i = 1, stack%stack_point
       CALL pop_to_stack(stack, output)
     ENDDO
     CALL deallocate_stack(stack)
 
-  END SUBROUTINE tokenize_rpn
+  END SUBROUTINE tokenize
+
+
+
+  SUBROUTINE tokenize_subexpression_infix(current, block, stack, output, err)
+
+    ! This subroutine tokenizes input in normal infix maths notation
+    ! It uses Dijkstra's shunting yard algorithm to convert to RPN
+
+    CHARACTER(LEN=*), INTENT(IN) :: current
+    TYPE(stack_element), INTENT(INOUT) :: block
+    TYPE(primitive_stack), INTENT(INOUT) :: stack, output
+    INTEGER, INTENT(INOUT) :: err
+    TYPE(deck_constant) :: const
+    TYPE(stack_element) :: block2
+    INTEGER :: ipoint
+
+    IF (ICHAR(current(1:1)) .EQ. 0) RETURN
+
+    ! Populate the block
+    CALL load_block(current, block)
+#ifdef PARSER_DEBUG
+    block%text = TRIM(current)
+#endif
+    IF (block%ptype .EQ. c_pt_bad) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT *, 'Unable to parse block with text ', TRIM(current)
+        CALL check_deprecated(current)
+      ENDIF
+      err = c_err_bad_value
+      CALL deallocate_stack(stack)
+      RETURN
+    ENDIF
+
+    IF (block%ptype .EQ. c_pt_deck_constant) THEN
+      const = deck_constant_list(block%value)
+      DO ipoint = 1, const%execution_stream%stack_point
+        CALL push_to_stack(output, const%execution_stream%entries(ipoint))
+      ENDDO
+    ENDIF
+
+    IF (block%ptype .NE. c_pt_parenthesis &
+        .AND. block%ptype .NE. c_pt_null) THEN
+      last_block_type = block%ptype
+    ENDIF
+
+    IF (block%ptype .EQ. c_pt_variable &
+        .OR. block%ptype .EQ. c_pt_constant &
+        .OR. block%ptype .EQ. c_pt_species &
+        .OR. block%ptype .EQ. c_pt_subset) THEN
+      CALL push_to_stack(output, block)
+    ENDIF
+
+    IF (block%ptype .EQ. c_pt_parenthesis) THEN
+      IF (block%value .EQ. c_paren_left_bracket) THEN
+        CALL push_to_stack(stack, block)
+      ELSE
+        DO
+          CALL stack_snoop(stack, block2, 0)
+          IF (block2%ptype .EQ. c_pt_parenthesis &
+              .AND. block2%value .EQ. c_paren_left_bracket) THEN
+            CALL pop_to_null(stack)
+            ! If stack isn't empty then check for function
+            IF (stack%stack_point .NE. 0) THEN
+              CALL stack_snoop(stack, block2, 0)
+              IF (block2%ptype .EQ. c_pt_function) &
+                  CALL pop_to_stack(stack, output)
+            ENDIF
+            EXIT
+          ELSE
+            CALL pop_to_stack(stack, output)
+          ENDIF
+        ENDDO
+      ENDIF
+    ENDIF
+
+    IF (block%ptype .EQ. c_pt_function) THEN
+      ! Just push functions straight onto the stack
+      CALL push_to_stack(stack, block)
+    ENDIF
+
+    IF (block%ptype .EQ. c_pt_separator) THEN
+      DO
+        CALL stack_snoop(stack, block2, 0)
+        IF (block2%ptype .NE. c_pt_parenthesis) THEN
+          CALL pop_to_stack(stack, output)
+        ELSE
+          IF (block2%value .NE. c_paren_left_bracket) THEN
+            PRINT *, 'Bad function expression'
+            STOP
+          ENDIF
+          EXIT
+        ENDIF
+      ENDDO
+    ENDIF
+
+    IF (block%ptype .EQ. c_pt_operator) THEN
+      DO
+        IF (stack%stack_point .EQ. 0) THEN
+          ! stack is empty, so just push operator onto stack and
+          ! leave loop
+          CALL push_to_stack(stack, block)
+          EXIT
+        ENDIF
+        ! stack is not empty so check precedence etc.
+        CALL stack_snoop(stack, block2, 0)
+        IF (block2%ptype .NE. c_pt_operator) THEN
+          ! Previous block is not an operator so push current operator
+          ! to stack and leave loop
+          CALL push_to_stack(stack, block)
+          EXIT
+        ELSE
+          IF (opcode_assoc(block%value) .EQ. c_assoc_la &
+              .OR. opcode_assoc(block%value) .EQ. c_assoc_a) THEN
+            ! Operator is full associative or left associative
+            IF (opcode_precedence(block%value) &
+                .LE. opcode_precedence(block2%value)) THEN
+              CALL pop_to_stack(stack, output)
+              CYCLE
+            ELSE
+              CALL push_to_stack(stack, block)
+              EXIT
+            ENDIF
+          ELSE
+            IF (opcode_precedence(block%value) &
+                .LT. opcode_precedence(block2%value)) THEN
+              CALL pop_to_stack(stack, output)
+              CYCLE
+            ELSE
+              CALL push_to_stack(stack, block)
+              EXIT
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE tokenize_subexpression_infix
+
+
+
+  SUBROUTINE tokenize_subexpression_rpn(current, block, stack, output, err)
+
+    ! This routine tokenizes input which is already in Reverse Polish Notiation
+
+    CHARACTER(LEN=*), INTENT(IN) :: current
+    TYPE(stack_element), INTENT(INOUT) :: block
+    TYPE(primitive_stack), INTENT(INOUT) :: stack, output
+    INTEGER, INTENT(INOUT) :: err
+    TYPE(deck_constant) :: const
+    TYPE(stack_element) :: block2
+    INTEGER :: ipoint
+
+    IF (ICHAR(current(1:1)) .EQ. 0) RETURN
+
+    ! Populate the block
+    CALL load_block(current, block)
+#ifdef PARSER_DEBUG
+    block%text = TRIM(current)
+    PRINT *, block%ptype, TRIM(current)
+#endif
+    IF (block%ptype .EQ. c_pt_bad) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT *, 'Unable to parse block with text ', TRIM(current)
+      ENDIF
+      err = c_err_bad_value
+      CALL deallocate_stack(stack)
+      RETURN
+    ENDIF
+
+    IF (block%ptype .NE. c_pt_parenthesis &
+        .AND. block%ptype .NE. c_pt_null) THEN
+      last_block_type = block%ptype
+      IF (debug_mode) PRINT *, 'Setting', block%ptype, TRIM(current)
+    ENDIF
+
+    IF (block%ptype .EQ. c_pt_deck_constant) THEN
+      const = deck_constant_list(block%value)
+      DO ipoint = 1, const%execution_stream%stack_point
+        CALL push_to_stack(output, const%execution_stream%entries(ipoint))
+      ENDDO
+    ELSE IF (block%ptype .NE. c_pt_null) THEN
+      CALL push_to_stack(output, block)
+    ENDIF
+
+  END SUBROUTINE tokenize_subexpression_rpn
 
 
 
