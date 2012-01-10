@@ -197,8 +197,12 @@ CONTAINS
       current=>next
     ENDDO
 
+#if PARTICLE_ID || PARTICLE_ID4
+    CALL generate_particle_ids(partlist, npart_this_species)
+#else
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
+#endif
 
     species%count = npart_this_species
     species%weight = density_total_global * dx / npart_this_species
@@ -351,8 +355,12 @@ CONTAINS
       current=>next
     ENDDO
 
+#if PARTICLE_ID || PARTICLE_ID4
+    CALL generate_particle_ids(partlist, npart_this_species)
+#else
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
+#endif
 
     species%count = npart_this_species
 

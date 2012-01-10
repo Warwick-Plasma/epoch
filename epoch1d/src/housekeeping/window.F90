@@ -133,6 +133,7 @@ CONTAINS
         CALL add_particle_to_partlist(append_list, current)
       ENDDO
 
+      CALL generate_particle_ids(append_list, npart_this_species)
       CALL append_partlist(species_list(ispecies)%attached_list, append_list)
     ENDDO
 

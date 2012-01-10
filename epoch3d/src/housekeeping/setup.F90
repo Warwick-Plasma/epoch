@@ -430,13 +430,15 @@ CONTAINS
     INTEGER :: ierr, i1, i2, iblock, nblocks, ndims, found_species
     INTEGER(KIND=8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims
-    LOGICAL :: restart_flag
+    LOGICAL :: restart_flag, found_ids
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
+    TYPE(particle_list), POINTER :: partlist
     INTEGER, POINTER :: species_subtypes(:)
 
     npart_global = 0
     step = -1
+    found_ids = .FALSE.
 
     ! Create the filename for the last snapshot
     WRITE(filename, '(a, "/", i4.4, ".sdf")') TRIM(data_dir), restart_snapshot
@@ -668,6 +670,19 @@ CONTAINS
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
               species_subtypes(ispecies), it_pz)
 
+        ELSE IF (block_id(1:3) .EQ. 'id/') THEN
+#if PARTICLE_ID || PARTICLE_ID4
+          found_ids = .TRUE.
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_id)
+#else
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** WARNING ***'
+            PRINT*, 'Discarding particle IDs.'
+            PRINT*, 'To use, please recompile with the -DPARTICLE_ID option.'
+          ENDIF
+#endif
+
         ELSE IF (block_id(1:7) .EQ. 'weight/') THEN
 #ifdef PER_PARTICLE_WEIGHT
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
@@ -687,6 +702,20 @@ CONTAINS
 
     CALL sdf_close(sdf_handle)
     CALL free_subtypes_for_load(species_subtypes)
+
+#if PARTICLE_ID || PARTICLE_ID4
+    IF (found_ids) RETURN
+
+    IF (rank .EQ. 0) THEN
+      PRINT*, '*** WARNING ***'
+      PRINT*, 'File did not contain particle IDs. Generating new ones.'
+    ENDIF
+
+    DO ispecies = 1, n_species
+      partlist => species_list(ispecies)%attached_list
+      CALL generate_particle_ids(partlist, npart)
+    ENDDO
+#endif
 
   END SUBROUTINE restart_data
 
@@ -790,6 +819,31 @@ CONTAINS
     it_weight = 0
 
   END FUNCTION it_weight
+#endif
+
+
+
+#if PARTICLE_ID || PARTICLE_ID4
+  FUNCTION it_id(array, npart_this_it, start)
+
+    REAL(num) :: it_id
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+#ifdef PARTICLE_ID4
+      iterator_list%id = NINT(array(ipart))
+#else
+      iterator_list%id = NINT(array(ipart),8)
+#endif
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_id = 0
+
+  END FUNCTION it_id
 #endif
 
 END MODULE setup

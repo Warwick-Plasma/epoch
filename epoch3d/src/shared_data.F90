@@ -388,6 +388,11 @@ MODULE shared_data
     INTEGER :: processor
     INTEGER :: processor_at_t0
 #endif
+#ifdef PARTICLE_ID4
+    INTEGER :: id
+#elif PARTICLE_ID
+    INTEGER(KIND=8) :: id
+#endif
   END TYPE particle
 
   ! Object representing a collection of particles
@@ -514,7 +519,7 @@ MODULE shared_data
 
   INTEGER :: nx, ny, nz
   INTEGER :: nx_global, ny_global, nz_global
-  INTEGER(KIND=8) :: npart_global
+  INTEGER(KIND=8) :: npart_global, particle_max_id
   INTEGER :: nprocx, nprocy, nprocz
   INTEGER :: nsteps, n_species = -1
   LOGICAL :: smooth_currents
@@ -621,26 +626,27 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_vz           = 10
   INTEGER, PARAMETER :: c_dump_part_charge       = 11
   INTEGER, PARAMETER :: c_dump_part_mass         = 12
-  INTEGER, PARAMETER :: c_dump_ex                = 13
-  INTEGER, PARAMETER :: c_dump_ey                = 14
-  INTEGER, PARAMETER :: c_dump_ez                = 15
-  INTEGER, PARAMETER :: c_dump_bx                = 16
-  INTEGER, PARAMETER :: c_dump_by                = 17
-  INTEGER, PARAMETER :: c_dump_bz                = 18
-  INTEGER, PARAMETER :: c_dump_jx                = 19
-  INTEGER, PARAMETER :: c_dump_jy                = 20
-  INTEGER, PARAMETER :: c_dump_jz                = 21
-  INTEGER, PARAMETER :: c_dump_ekbar             = 22
-  INTEGER, PARAMETER :: c_dump_mass_density      = 23
-  INTEGER, PARAMETER :: c_dump_charge_density    = 24
-  INTEGER, PARAMETER :: c_dump_number_density    = 25
-  INTEGER, PARAMETER :: c_dump_temperature       = 26
-  INTEGER, PARAMETER :: c_dump_dist_fns          = 27
-  INTEGER, PARAMETER :: c_dump_probes            = 28
-  INTEGER, PARAMETER :: c_dump_ejected_particles = 29
-  INTEGER, PARAMETER :: c_dump_ekflux            = 30
-  INTEGER, PARAMETER :: c_dump_poynt_flux        = 31
-  INTEGER, PARAMETER :: num_vars_to_dump         = 31
+  INTEGER, PARAMETER :: c_dump_part_id           = 13
+  INTEGER, PARAMETER :: c_dump_ex                = 14
+  INTEGER, PARAMETER :: c_dump_ey                = 15
+  INTEGER, PARAMETER :: c_dump_ez                = 16
+  INTEGER, PARAMETER :: c_dump_bx                = 17
+  INTEGER, PARAMETER :: c_dump_by                = 18
+  INTEGER, PARAMETER :: c_dump_bz                = 19
+  INTEGER, PARAMETER :: c_dump_jx                = 20
+  INTEGER, PARAMETER :: c_dump_jy                = 21
+  INTEGER, PARAMETER :: c_dump_jz                = 22
+  INTEGER, PARAMETER :: c_dump_ekbar             = 23
+  INTEGER, PARAMETER :: c_dump_mass_density      = 24
+  INTEGER, PARAMETER :: c_dump_charge_density    = 25
+  INTEGER, PARAMETER :: c_dump_number_density    = 26
+  INTEGER, PARAMETER :: c_dump_temperature       = 27
+  INTEGER, PARAMETER :: c_dump_dist_fns          = 28
+  INTEGER, PARAMETER :: c_dump_probes            = 29
+  INTEGER, PARAMETER :: c_dump_ejected_particles = 30
+  INTEGER, PARAMETER :: c_dump_ekflux            = 31
+  INTEGER, PARAMETER :: c_dump_poynt_flux        = 32
+  INTEGER, PARAMETER :: num_vars_to_dump         = 32
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------

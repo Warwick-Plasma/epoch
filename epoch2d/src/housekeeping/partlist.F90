@@ -23,6 +23,9 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
     nvar = nvar+2
 #endif
+#if PARTICLE_ID || PARTICLE_ID4
+    nvar = nvar+1
+#endif
 
   END SUBROUTINE setup_partlists
 
@@ -330,6 +333,10 @@ CONTAINS
     array(cpos+1) = REAL(a_particle%processor_at_t0, num)
     cpos = cpos+2
 #endif
+#if PARTICLE_ID || PARTICLE_ID4
+    array(cpos) = REAL(a_particle%id, num)
+    cpos = cpos+1
+#endif
 
 !!$    PRINT *, "In Pack", rank, a_particle%part_pos
 
@@ -362,6 +369,13 @@ CONTAINS
     a_particle%processor_at_t0 = NINT(array(cpos+1))
     cpos = cpos+2
 #endif
+#ifdef PARTICLE_ID4
+    a_particle%id = NINT(array(cpos))
+    cpos = cpos+1
+#elif PARTICLE_ID
+    a_particle%id = NINT(array(cpos),8)
+    cpos = cpos+1
+#endif
 
   END SUBROUTINE unpack_particle
 
@@ -383,6 +397,9 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
     new_particle%processor = 0
     new_particle%processor_at_t0 = 0
+#endif
+#if PARTICLE_ID || PARTICLE_ID4
+    new_particle%id = 0
 #endif
 
   END SUBROUTINE init_particle
@@ -569,5 +586,49 @@ CONTAINS
     DEALLOCATE(data_recv)
 
   END SUBROUTINE partlist_sendrecv
+
+
+
+  SUBROUTINE generate_particle_ids(partlist, npart_this_species)
+
+    TYPE(particle_list), POINTER :: partlist
+    INTEGER(KIND=8), INTENT(OUT) :: npart_this_species
+#if PARTICLE_ID || PARTICLE_ID4
+    INTEGER(KIND=8), ALLOCATABLE :: npart_species_per_proc(:)
+    INTEGER(KIND=8) :: part_id
+    INTEGER :: i
+    TYPE(particle), POINTER :: current
+
+    ALLOCATE(npart_species_per_proc(nproc))
+
+    CALL MPI_ALLGATHER(partlist%count, 1, MPI_INTEGER8, npart_species_per_proc, &
+        1, MPI_INTEGER8, comm, errcode)
+
+    ! Count number of particles on ranks zero to rank-1
+    npart_this_species = 0
+    DO i = 1, rank
+      npart_this_species = npart_this_species + npart_species_per_proc(i)
+    ENDDO
+    part_id = particles_max_id + npart_this_species
+
+    ! Count remaining particles
+    DO i = rank+1, nproc
+      npart_this_species = npart_this_species + npart_species_per_proc(i)
+    ENDDO
+
+    DEALLOCATE(npart_species_per_proc)
+
+    ! Number each particle with a unique id within this species
+    current=>partlist%head
+    DO WHILE(ASSOCIATED(current))
+      part_id = part_id + 1
+      current%id = part_id
+      current=>current%next
+    ENDDO
+
+    particles_max_id = particles_max_id + npart_this_species
+#endif
+
+  END SUBROUTINE generate_particle_ids
 
 END MODULE partlist

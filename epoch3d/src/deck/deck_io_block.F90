@@ -35,6 +35,7 @@ CONTAINS
     io_block_name(c_dump_part_vz          ) = 'vz'
     io_block_name(c_dump_part_charge      ) = 'charge'
     io_block_name(c_dump_part_mass        ) = 'mass'
+    io_block_name(c_dump_part_id          ) = 'id'
     io_block_name(c_dump_ex               ) = 'ex'
     io_block_name(c_dump_ey               ) = 'ey'
     io_block_name(c_dump_ez               ) = 'ez'
@@ -183,12 +184,23 @@ CONTAINS
     mask = as_integer(value, errcode)
     mask_element = elementselected
 
-    ! If setting dumpmask for particle probes then report if the code wasn't
-    ! compiled for particle probes
+    ! If setting dumpmask for features which haven't been compiled
+    ! in then issue a warning
 #ifndef PARTICLE_PROBES
     IF (mask_element .EQ. c_dump_probes .AND. mask .NE. c_io_never) THEN
       errcode = c_err_pp_options_wrong
       extended_error_string = "-DPARTICLE_PROBES"
+      mask = c_io_never
+    ENDIF
+#endif
+
+#ifdef PARTICLE_ID4
+#define PARTICLE_ID
+#endif
+#ifndef PARTICLE_ID
+    IF (mask_element .EQ. c_dump_part_id .AND. mask .NE. c_io_never) THEN
+      errcode = c_err_pp_options_wrong
+      extended_error_string = '-DPARTICLE_ID'
       mask = c_io_never
     ENDIF
 #endif

@@ -154,6 +154,10 @@ CONTAINS
     CALL write_particle_variable(c_dump_part_grid, code, 'Processor_at_t0', &
         '', iterate_processor0)
 #endif
+#if PARTICLE_ID || PARTICLE_ID4
+    CALL write_particle_variable(c_dump_part_id, code, 'ID', '#', &
+        iterate_id)
+#endif
 
     CALL write_field(c_dump_ex, code, 'ex', 'Electric Field/Ex', 'V/m', &
         c_stagger_ex, ex)

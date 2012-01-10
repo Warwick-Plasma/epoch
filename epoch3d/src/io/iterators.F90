@@ -440,4 +440,39 @@ CONTAINS
   END FUNCTION iterate_processor0
 #endif
 
+
+
+#if PARTICLE_ID || PARTICLE_ID4
+  ! iterator for particle id
+  FUNCTION iterate_id(array, n_points, start)
+
+    REAL(num) :: iterate_id
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: n_points
+    LOGICAL, INTENT(IN) :: start
+    TYPE(particle), POINTER, SAVE :: cur
+    TYPE(particle_list), POINTER, SAVE :: current_list
+    INTEGER :: part_count
+
+    IF (start)  THEN
+      CALL start_particle_list(current_species, current_list, cur)
+    ENDIF
+
+    part_count = 0
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = REAL(cur%id, num)
+        cur=>cur%next
+      ENDDO
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    ENDDO
+    n_points = part_count
+
+    iterate_id = 0
+
+  END FUNCTION iterate_id
+#endif
+
 END MODULE iterators

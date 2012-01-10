@@ -49,6 +49,12 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 # Don't generate any output at all. Useful for benchmarking.
 # -DNO_IO
 
+# Include a unique global particle ID. The first flag defines the ID using
+# an 8-byte integer, the second uses 4-bytes.
+# -DPARTICLE_ID
+# -DPARTICLE_ID4
+
+
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.
