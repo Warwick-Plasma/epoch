@@ -980,6 +980,15 @@ CONTAINS
                 use_particle = .FALSE.
 
 #endif
+#if PARTICLE_ID || PARTICLE_ID4
+        IF (subset_list(l)%use_id_min &
+            .AND. current%id .LT. subset_list(l)%id_min) &
+                use_particle = .FALSE.
+
+        IF (subset_list(l)%use_id_max &
+            .AND. current%id .LT. subset_list(l)%id_max) &
+                use_particle = .FALSE.
+#endif
 
         IF (subset_list(l)%use_random) THEN
           random_num = random()

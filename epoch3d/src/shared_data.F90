@@ -586,12 +586,14 @@ MODULE shared_data
     LOGICAL :: use_weight_min, use_weight_max
     LOGICAL :: use_charge_min, use_charge_max
     LOGICAL :: use_mass_min, use_mass_max
+    LOGICAL :: use_id_min, use_id_max
     REAL(num) :: gamma_min, gamma_max, random_fraction
     REAL(num) :: x_min, x_max, y_min, y_max, z_min, z_max
     REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
     REAL(num) :: weight_min, weight_max
     REAL(num) :: charge_min, charge_max
     REAL(num) :: mass_min, mass_max
+    INTEGER(KIND=8) :: id_min, id_max
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next

@@ -233,6 +233,18 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'id_min')) THEN
+      subset_list(subset_id)%id_min = as_integer(value, errcode)
+      subset_list(subset_id)%use_id_min = .TRUE.
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'id_max')) THEN
+      subset_list(subset_id)%id_max = as_integer(value, errcode)
+      subset_list(subset_id)%use_id_max = .TRUE.
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'dumpmask')) THEN
       subset_list(subset_id)%mask = as_integer(value, errcode)
       RETURN
