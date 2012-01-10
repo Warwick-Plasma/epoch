@@ -100,6 +100,9 @@ CONTAINS
         sha1sum, c_compile_machine, c_compile_flags, defines, c_compile_date, &
         run_date)
 
+    CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
+        dt_plasma_frequency)
+
     CALL write_particle_grid(code)
 
     ! Write the cartesian mesh

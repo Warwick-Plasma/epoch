@@ -551,7 +551,9 @@ CONTAINS
 
       SELECT CASE(blocktype)
       CASE(c_blocktype_constant)
-        IF (block_id(1:7) .EQ. 'weight/') THEN
+        IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
+          CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
+        ELSE IF (block_id(1:7) .EQ. 'weight/') THEN
           CALL find_species_by_name(block_id, ispecies)
           CALL sdf_read_srl(sdf_handle, species_list(ispecies)%weight)
         ENDIF
