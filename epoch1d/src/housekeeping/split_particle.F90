@@ -94,6 +94,7 @@ CONTAINS
     INTEGER :: ispecies, ix
     INTEGER(KIND=8) :: count
     TYPE(particle), POINTER :: current, new_particle
+    TYPE(particle_list) :: append_list
     REAL(num) :: jitter_x
 
     IF (split_none) RETURN
@@ -103,6 +104,8 @@ CONTAINS
       IF (species_list(ispecies)%npart_max .GT. 0 &
           .AND. species_list(ispecies)%global_count &
           .GE. species_list(ispecies)%npart_max) CYCLE
+
+      CALL create_empty_partlist(append_list)
 
       DO ix = 1, nx
         count = species_list(ispecies)%secondary_list(ix)%count
@@ -116,8 +119,7 @@ CONTAINS
             ALLOCATE(new_particle)
             new_particle = current
             new_particle%part_pos = current%part_pos + jitter_x
-            CALL add_particle_to_partlist(&
-                species_list(ispecies)%attached_list, new_particle)
+            CALL add_particle_to_partlist(append_list, new_particle)
 #ifdef PARTICLE_DEBUG
             ! If running with particle debugging, specify that this
             ! particle has been split
@@ -130,6 +132,8 @@ CONTAINS
           ENDDO
         ENDIF
       ENDDO
+
+      CALL append_partlist(species_list(ispecies)%attached_list, append_list)
     ENDDO
 #endif
 

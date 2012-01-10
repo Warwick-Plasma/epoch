@@ -125,6 +125,7 @@ CONTAINS
   SUBROUTINE insert_particles
 
     TYPE(particle), POINTER :: current
+    TYPE(particle_list) :: append_list
     INTEGER :: ispecies, ipart, i, iy, iz, isuby, isubz
     REAL(num) :: cell_y_r, cell_frac_y, cy2
     REAL(num) :: cell_z_r, cell_frac_z, cz2
@@ -136,71 +137,74 @@ CONTAINS
     ! This subroutine injects particles at the right hand edge of the box
 
     ! Only processors on the right need do anything
-    IF (x_max_boundary) THEN
-      DO ispecies = 1, n_species
-        DO iz = 1, nz
-          DO iy = 1, ny
-            DO ipart = 1, species_list(ispecies)%npart_per_cell
-              ALLOCATE(current)
-              current%part_pos(1) = x_max + dx + (random() - 0.5_num) * dx
-              current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
-              current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
+    IF (.NOT.x_max_boundary) RETURN
 
-              ! Always use the triangle particle weighting for simplicity
-              cell_y_r = (current%part_pos(2) - y_min_local) / dy
-              cell_y = FLOOR(cell_y_r + 0.5_num)
-              cell_frac_y = REAL(cell_y, num) - cell_y_r
-              cell_y = cell_y + 1
+    DO ispecies = 1, n_species
+      CALL create_empty_partlist(append_list)
 
-              cell_z_r = (current%part_pos(3) - z_min_local) / dz
-              cell_z = FLOOR(cell_z_r + 0.5_num)
-              cell_frac_z = REAL(cell_z, num) - cell_z_r
-              cell_z = cell_z + 1
+      DO iz = 1, nz
+        DO iy = 1, ny
+          DO ipart = 1, species_list(ispecies)%npart_per_cell
+            ALLOCATE(current)
+            current%part_pos(1) = x_max + dx + (random() - 0.5_num) * dx
+            current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
+            current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
 
-              cy2 = cell_frac_y**2
-              gy(-1) = 0.5_num * (0.25_num + cy2 + cell_frac_y)
-              gy( 0) = 0.75_num - cy2
-              gy( 1) = 0.5_num * (0.25_num + cy2 - cell_frac_y)
+            ! Always use the triangle particle weighting for simplicity
+            cell_y_r = (current%part_pos(2) - y_min_local) / dy
+            cell_y = FLOOR(cell_y_r + 0.5_num)
+            cell_frac_y = REAL(cell_y, num) - cell_y_r
+            cell_y = cell_y + 1
 
-              cz2 = cell_frac_z**2
-              gz(-1) = 0.5_num * (0.25_num + cz2 + cell_frac_z)
-              gz( 0) = 0.75_num - cz2
-              gz( 1) = 0.5_num * (0.25_num + cz2 - cell_frac_z)
+            cell_z_r = (current%part_pos(3) - z_min_local) / dz
+            cell_z = FLOOR(cell_z_r + 0.5_num)
+            cell_frac_z = REAL(cell_z, num) - cell_z_r
+            cell_z = cell_z + 1
 
-              DO i = 1, 3
-                temp_local = 0.0_num
-                DO isubz = -1, 1
-                  DO isuby = -1, 1
-                    temp_local = temp_local + gy(isuby) * gz(isubz) &
-                        * species_list(ispecies)&
-                        %temperature(cell_y+isuby, cell_z+isubz, i)
-                  ENDDO
-                ENDDO
-                current%part_p(i) = momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp_local, 0.0_num)
-              ENDDO
+            cy2 = cell_frac_y**2
+            gy(-1) = 0.5_num * (0.25_num + cy2 + cell_frac_y)
+            gy( 0) = 0.75_num - cy2
+            gy( 1) = 0.5_num * (0.25_num + cy2 - cell_frac_y)
 
-              weight_local = 0.0_num
+            cz2 = cell_frac_z**2
+            gz(-1) = 0.5_num * (0.25_num + cz2 + cell_frac_z)
+            gz( 0) = 0.75_num - cz2
+            gz( 1) = 0.5_num * (0.25_num + cz2 - cell_frac_z)
+
+            DO i = 1, 3
+              temp_local = 0.0_num
               DO isubz = -1, 1
                 DO isuby = -1, 1
-                  weight_local = weight_local &
-                      + gy(isuby) * gz(isubz) * dx * dy * dz &
-                      / REAL(species_list(ispecies)%npart_per_cell, num) &
-                      *species_list(ispecies)%density(cell_y+isuby,cell_z+isubz)
+                  temp_local = temp_local + gy(isuby) * gz(isubz) &
+                      * species_list(ispecies)&
+                      %temperature(cell_y+isuby, cell_z+isubz, i)
                 ENDDO
               ENDDO
-              current%weight = weight_local
-#ifdef PARTICLE_DEBUG
-              current%processor = rank
-              current%processor_at_t0 = rank
-#endif
-              CALL add_particle_to_partlist(&
-                  species_list(ispecies)%attached_list, current)
+              current%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp_local, 0.0_num)
             ENDDO
+
+            weight_local = 0.0_num
+            DO isubz = -1, 1
+              DO isuby = -1, 1
+                weight_local = weight_local &
+                    + gy(isuby) * gz(isubz) * dx * dy * dz &
+                    / REAL(species_list(ispecies)%npart_per_cell, num) &
+                    *species_list(ispecies)%density(cell_y+isuby,cell_z+isubz)
+              ENDDO
+            ENDDO
+            current%weight = weight_local
+#ifdef PARTICLE_DEBUG
+            current%processor = rank
+            current%processor_at_t0 = rank
+#endif
+            CALL add_particle_to_partlist(append_list, current)
           ENDDO
         ENDDO
       ENDDO
-    ENDIF
+
+      CALL append_partlist(species_list(ispecies)%attached_list, append_list)
+    ENDDO
 
   END SUBROUTINE insert_particles
 

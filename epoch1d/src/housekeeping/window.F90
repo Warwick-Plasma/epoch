@@ -102,35 +102,39 @@ CONTAINS
   SUBROUTINE insert_particles
 
     TYPE(particle), POINTER :: current
+    TYPE(particle_list) :: append_list
     INTEGER :: ispecies, ipart, i
     REAL(num) :: temp_local
 
     ! This subroutine injects particles at the right hand edge of the box
 
     ! Only processors on the right need do anything
-    IF (x_max_boundary) THEN
-      DO ispecies = 1, n_species
-        DO ipart = 1, species_list(ispecies)%npart_per_cell
-          ALLOCATE(current)
-          current%part_pos = x_max + dx + (random() - 0.5_num) * dx
+    IF (.NOT.x_max_boundary) RETURN
 
-          DO i = 1, 3
-            temp_local = species_list(ispecies)%temperature(i)
-            current%part_p(i) = momentum_from_temperature(&
-                species_list(ispecies)%mass, temp_local, 0.0_num)
-          ENDDO
+    DO ispecies = 1, n_species
+      CALL create_empty_partlist(append_list)
 
-          current%weight = dx * species_list(ispecies)%density &
-              / REAL(species_list(ispecies)%npart_per_cell, num)
-#ifdef PARTICLE_DEBUG
-          current%processor = rank
-          current%processor_at_t0 = rank
-#endif
-          CALL add_particle_to_partlist(&
-              species_list(ispecies)%attached_list, current)
+      DO ipart = 1, species_list(ispecies)%npart_per_cell
+        ALLOCATE(current)
+        current%part_pos = x_max + dx + (random() - 0.5_num) * dx
+
+        DO i = 1, 3
+          temp_local = species_list(ispecies)%temperature(i)
+          current%part_p(i) = momentum_from_temperature(&
+              species_list(ispecies)%mass, temp_local, 0.0_num)
         ENDDO
+
+        current%weight = dx * species_list(ispecies)%density &
+            / REAL(species_list(ispecies)%npart_per_cell, num)
+#ifdef PARTICLE_DEBUG
+        current%processor = rank
+        current%processor_at_t0 = rank
+#endif
+        CALL add_particle_to_partlist(append_list, current)
       ENDDO
-    ENDIF
+
+      CALL append_partlist(species_list(ispecies)%attached_list, append_list)
+    ENDDO
 
   END SUBROUTINE insert_particles
 

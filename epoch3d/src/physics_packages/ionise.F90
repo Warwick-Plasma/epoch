@@ -12,6 +12,7 @@ CONTAINS
 #ifdef PARTICLE_IONISE
     INTEGER :: ispecies
     TYPE(particle), POINTER :: current, next, new_part
+    TYPE(particle_list), ALLOCATABLE :: append_lists(:)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
     REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y
     REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z
@@ -42,12 +43,18 @@ CONTAINS
     ALLOCATE(nd_low (-2:nx+3,-2:ny+3,-2:nz+3))
     ALLOCATE(nd_high(-2:nx+3,-2:ny+3,-2:nz+3))
 
+    ALLOCATE(append_lists(n_species))
+    DO ispecies = 1, n_species
+      CALL create_empty_partlist(append_lists(ispecies))
+    ENDDO
+
     DO ispecies = 1, n_species
       IF (.NOT. species_list(ispecies)%ionise) CYCLE
       CALL calc_number_density(nd_low, ispecies)
       CALL calc_number_density(nd_high, &
           species_list(ispecies)%ionise_to_species)
       density = nd_low+nd_high
+
       current=>species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next=>current%next
@@ -191,17 +198,20 @@ CONTAINS
             new_part%processor = rank
             new_part%processor_at_t0 = rank
 #endif
-            CALL add_particle_to_partlist(&
-                species_list(next_species)%attached_list, new_part)
+            CALL add_particle_to_partlist(append_lists(next_species), new_part)
           ENDIF
         ENDIF
 
         current=>next
       ENDDO
-
     ENDDO
 
-    DEALLOCATE(density)
+    DO ispecies = 1, n_species
+      CALL append_partlist(species_list(ispecies)%attached_list, &
+          append_lists(ispecies))
+    ENDDO
+
+    DEALLOCATE(density, append_lists)
     DEALLOCATE(nd_low, nd_high)
 #endif
 
