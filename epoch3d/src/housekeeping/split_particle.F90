@@ -105,7 +105,7 @@ CONTAINS
 
 #ifdef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies, ix, iy, iz
-    INTEGER(KIND=8) :: count
+    INTEGER(KIND=8) :: count, npart_this_species
     TYPE(particle), POINTER :: current, new_particle
     TYPE(particle_list) :: append_list
     REAL(num) :: jitter_x, jitter_y, jitter_z

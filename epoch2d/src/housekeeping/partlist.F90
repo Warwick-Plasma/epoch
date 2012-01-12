@@ -591,7 +591,7 @@ CONTAINS
 
   SUBROUTINE generate_particle_ids(partlist, npart_this_species)
 
-    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle_list) :: partlist
     INTEGER(KIND=8), INTENT(OUT) :: npart_this_species
 #if PARTICLE_ID || PARTICLE_ID4
     INTEGER(KIND=8), ALLOCATABLE :: npart_species_per_proc(:)
@@ -601,8 +601,8 @@ CONTAINS
 
     ALLOCATE(npart_species_per_proc(nproc))
 
-    CALL MPI_ALLGATHER(partlist%count, 1, MPI_INTEGER8, npart_species_per_proc, &
-        1, MPI_INTEGER8, comm, errcode)
+    CALL MPI_ALLGATHER(partlist%count, 1, MPI_INTEGER8, &
+        npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
 
     ! Count number of particles on ranks zero to rank-1
     npart_this_species = 0
@@ -627,6 +627,8 @@ CONTAINS
     ENDDO
 
     particles_max_id = particles_max_id + npart_this_species
+#else
+    npart_this_species = 0
 #endif
 
   END SUBROUTINE generate_particle_ids

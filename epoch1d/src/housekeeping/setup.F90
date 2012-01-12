@@ -72,6 +72,7 @@ CONTAINS
     nstep_snapshot = -1
     nsteps = -1
     t_end = HUGE(1.0_num)
+    particles_max_id = 0
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)

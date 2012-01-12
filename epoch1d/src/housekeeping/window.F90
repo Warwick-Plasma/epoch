@@ -104,6 +104,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, ipart, i
+    INTEGER(KIND=8) :: npart_this_species
     REAL(num) :: temp_local
 
     ! This subroutine injects particles at the right hand edge of the box

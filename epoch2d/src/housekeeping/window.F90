@@ -123,6 +123,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, ipart, i, iy, isuby
+    INTEGER(KIND=8) :: npart_this_species
     REAL(num) :: cell_y_r, cell_frac_y, cy2
     INTEGER :: cell_y
     REAL(num), DIMENSION(-1:1) :: gy

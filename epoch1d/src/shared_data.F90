@@ -514,7 +514,7 @@ MODULE shared_data
 
   INTEGER :: nx
   INTEGER :: nx_global
-  INTEGER(KIND=8) :: npart_global, particle_max_id
+  INTEGER(KIND=8) :: npart_global, particles_max_id
   INTEGER :: nprocx
   INTEGER :: nsteps, n_species = -1
   LOGICAL :: smooth_currents
