@@ -119,7 +119,7 @@ CONTAINS
     IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
 
     IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
-      IF (stagger(1,stagger_type) .EQ. 1) THEN
+      IF (stagger(c_dir_x,stagger_type)) THEN
         field(-1) = -field(1)
         field( 0) = 0.0_num
       ELSE
@@ -127,7 +127,7 @@ CONTAINS
         field( 0) = -field(1)
       ENDIF
     ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
-      IF (stagger(1,stagger_type) .EQ. 1) THEN
+      IF (stagger(c_dir_x,stagger_type)) THEN
         field(nx  ) = 0.0_num
         field(nx+1) = -field(nx-1)
       ELSE

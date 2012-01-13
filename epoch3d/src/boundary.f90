@@ -183,7 +183,7 @@ CONTAINS
     IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
 
     IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
-      IF (stagger(1,stagger_type) .EQ. 1) THEN
+      IF (stagger(c_dir_x,stagger_type)) THEN
         field(-1,:,:) = -field(1,:,:)
         field( 0,:,:) = 0.0_num
       ELSE
@@ -191,7 +191,7 @@ CONTAINS
         field( 0,:,:) = -field(1,:,:)
       ENDIF
     ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
-      IF (stagger(1,stagger_type) .EQ. 1) THEN
+      IF (stagger(c_dir_x,stagger_type)) THEN
         field(nx  ,:,:) = 0.0_num
         field(nx+1,:,:) = -field(nx-1,:,:)
       ELSE
@@ -199,7 +199,7 @@ CONTAINS
         field(nx+2,:,:) = -field(nx-1,:,:)
       ENDIF
     ELSE IF (boundary .EQ. c_bd_y_min .AND. y_min_boundary) THEN
-      IF (stagger(2,stagger_type) .EQ. 1) THEN
+      IF (stagger(c_dir_y,stagger_type)) THEN
         field(:,-1,:) = -field(:,1,:)
         field(:, 0,:) = 0.0_num
       ELSE
@@ -207,7 +207,7 @@ CONTAINS
         field(:, 0,:) = -field(:,1,:)
       ENDIF
     ELSE IF (boundary .EQ. c_bd_y_max .AND. y_max_boundary) THEN
-      IF (stagger(2,stagger_type) .EQ. 1) THEN
+      IF (stagger(c_dir_y,stagger_type)) THEN
         field(:,ny  ,:) = 0.0_num
         field(:,ny+1,:) = -field(:,ny-1,:)
       ELSE
@@ -215,7 +215,7 @@ CONTAINS
         field(:,ny+2,:) = -field(:,ny-1,:)
       ENDIF
     ELSE IF (boundary .EQ. c_bd_z_min .AND. z_min_boundary) THEN
-      IF (stagger(3,stagger_type) .EQ. 1) THEN
+      IF (stagger(c_dir_z,stagger_type)) THEN
         field(:,:,-1) = -field(:,:,1)
         field(:,:, 0) = 0.0_num
       ELSE
@@ -223,7 +223,7 @@ CONTAINS
         field(:,:, 0) = -field(:,:,1)
       ENDIF
     ELSE IF (boundary .EQ. c_bd_z_max .AND. z_max_boundary) THEN
-      IF (stagger(3,stagger_type) .EQ. 1) THEN
+      IF (stagger(c_dir_z,stagger_type)) THEN
         field(:,:,nz  ) = 0.0_num
         field(:,:,nz+1) = -field(:,:,nz-1)
       ELSE

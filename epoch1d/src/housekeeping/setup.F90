@@ -85,17 +85,19 @@ CONTAINS
 
     CALL init_source_code()
 
-    stagger = 0
-    stagger(1,c_stagger_ex) = 1
-    stagger(2,c_stagger_ey) = 1
-    stagger(3,c_stagger_ez) = 1
+    ! This array is true if a field component is staggered in the
+    ! given direction.
+    stagger = .FALSE.
+    stagger(c_dir_x,c_stagger_ex) = .TRUE.
+    stagger(c_dir_y,c_stagger_ey) = .TRUE.
+    stagger(c_dir_z,c_stagger_ez) = .TRUE.
 
-    stagger(1:3,c_stagger_bx) = 1
-    stagger(1:3,c_stagger_by) = 1
-    stagger(1:3,c_stagger_bz) = 1
-    stagger(1,c_stagger_bx) = 0
-    stagger(2,c_stagger_by) = 0
-    stagger(3,c_stagger_bz) = 0
+    stagger(c_dir_x:c_dir_z,c_stagger_bx) = .TRUE.
+    stagger(c_dir_x:c_dir_z,c_stagger_by) = .TRUE.
+    stagger(c_dir_x:c_dir_z,c_stagger_bz) = .TRUE.
+    stagger(c_dir_x,c_stagger_bx) = .FALSE.
+    stagger(c_dir_y,c_stagger_by) = .FALSE.
+    stagger(c_dir_z,c_stagger_bz) = .FALSE.
 
   END SUBROUTINE minimal_init
 
