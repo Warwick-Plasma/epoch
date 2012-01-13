@@ -150,23 +150,47 @@ CONTAINS
     IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
 
     IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
-      field(-1,:,:) = field(2,:,:)
-      field( 0,:,:) = field(1,:,:)
+      IF (stagger(c_dir_x,stagger_type)) THEN
+        field(-1,:,:) = field(1,:,:)
+      ELSE
+        field(-1,:,:) = field(2,:,:)
+        field( 0,:,:) = field(1,:,:)
+      ENDIF
     ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
-      field(nx+1,:,:) = field(nx  ,:,:)
-      field(nx+2,:,:) = field(nx-1,:,:)
+      IF (stagger(c_dir_x,stagger_type)) THEN
+        field(nx+1,:,:) = field(nx-1,:,:)
+      ELSE
+        field(nx+1,:,:) = field(nx  ,:,:)
+        field(nx+2,:,:) = field(nx-1,:,:)
+      ENDIF
     ELSE IF (boundary .EQ. c_bd_y_min .AND. y_min_boundary) THEN
-      field(:,-1,:) = field(:,2,:)
-      field(:, 0,:) = field(:,1,:)
+      IF (stagger(c_dir_y,stagger_type)) THEN
+        field(:,-1,:) = field(:,1,:)
+      ELSE
+        field(:,-1,:) = field(:,2,:)
+        field(:, 0,:) = field(:,1,:)
+      ENDIF
     ELSE IF (boundary .EQ. c_bd_y_max .AND. y_max_boundary) THEN
-      field(:,ny+1,:) = field(:,ny  ,:)
-      field(:,ny+2,:) = field(:,ny-1,:)
+      IF (stagger(c_dir_y,stagger_type)) THEN
+        field(:,ny+1,:) = field(:,ny-1,:)
+      ELSE
+        field(:,ny+1,:) = field(:,ny  ,:)
+        field(:,ny+2,:) = field(:,ny-1,:)
+      ENDIF
     ELSE IF (boundary .EQ. c_bd_z_min .AND. z_min_boundary) THEN
-      field(:,:,-1) = field(:,:,2)
-      field(:,:, 0) = field(:,:,1)
+      IF (stagger(c_dir_z,stagger_type)) THEN
+        field(:,:,-1) = field(:,:,1)
+      ELSE
+        field(:,:,-1) = field(:,:,2)
+        field(:,:, 0) = field(:,:,1)
+      ENDIF
     ELSE IF (boundary .EQ. c_bd_z_max .AND. z_max_boundary) THEN
-      field(:,:,nz+1) = field(:,:,nz  )
-      field(:,:,nz+2) = field(:,:,nz-1)
+      IF (stagger(c_dir_z,stagger_type)) THEN
+        field(:,:,nz+1) = field(:,:,nz-1)
+      ELSE
+        field(:,:,nz+1) = field(:,:,nz  )
+        field(:,:,nz+2) = field(:,:,nz-1)
+      ENDIF
     ENDIF
 
   END SUBROUTINE field_zero_gradient
