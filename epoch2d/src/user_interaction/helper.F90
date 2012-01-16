@@ -121,7 +121,7 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
 #ifndef PER_PARTICLE_WEIGHT
-    INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_global
+    INTEGER(KIND=8) :: num_valid_cells_local, num_valid_cells_global
     INTEGER(KIND=8) :: npart_per_cell
     REAL(num) :: npart_per_cell_average
     REAL(num) :: density_total, density_total_global, density_average
@@ -133,7 +133,7 @@ CONTAINS
 
     partlist=>species%attached_list
 
-    num_valid_cells = 0
+    num_valid_cells_local = 0
     density_total = 0.0_num
 
     DO iy = -2, ny+3
@@ -145,16 +145,21 @@ CONTAINS
     DO iy = 1, ny
       DO ix = 1, nx
         IF (density(ix,iy) .GE. density_min) THEN
-          num_valid_cells = num_valid_cells + 1
+          num_valid_cells_local = num_valid_cells_local + 1
           density_total = density_total + density(ix,iy)
         ENDIF
       ENDDO
     ENDDO
 
-    CALL MPI_ALLREDUCE(num_valid_cells, num_valid_cells_global, 1, &
+    CALL MPI_ALLREDUCE(num_valid_cells_local, num_valid_cells_global, 1, &
         MPI_INTEGER8, MPI_MAX, comm, errcode)
-    npart_per_cell_average = REAL(species%count, num) &
-        / REAL(num_valid_cells_global, num)
+
+    IF (species%npart_per_cell .GE. 0) THEN
+      npart_per_cell_average = species%npart_per_cell
+    ELSE
+      npart_per_cell_average = REAL(species%count, num) &
+          / REAL(num_valid_cells_global, num)
+    ENDIF
 
     IF (npart_per_cell_average .LE. 0) RETURN
 
@@ -248,7 +253,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
     INTEGER(KIND=8) :: ipart, npart_per_cell
-    INTEGER(KIND=8) :: num_valid_cells, num_valid_cells_local
+    INTEGER(KIND=8) :: num_valid_cells_local, num_valid_cells_global
     INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
     REAL(num) :: valid_cell_frac
     INTEGER :: cell_x
@@ -275,33 +280,39 @@ CONTAINS
       ENDDO
     ENDDO
 
-    ! Calculate global number of particles per cell
-    CALL MPI_ALLREDUCE(num_valid_cells_local, num_valid_cells, 1, &
-        MPI_INTEGER8, MPI_SUM, comm, errcode)
+    IF (species%npart_per_cell .GE. 0) THEN
+      npart_per_cell = species%npart_per_cell
+      num_new_particles = npart_per_cell * num_valid_cells_local
+    ELSE
+      ! Calculate global number of particles per cell
+      CALL MPI_ALLREDUCE(num_valid_cells_local, num_valid_cells_global, 1, &
+          MPI_INTEGER8, MPI_SUM, comm, errcode)
 
-    IF (num_valid_cells .EQ. 0) THEN
-      IF (rank .EQ. 0) THEN
-        WRITE(*,*) '*** ERROR ***'
-        WRITE(*,*) 'Intial condition settings mean that there are no cells ' &
-            // 'where particles may'
-        WRITE(*,*) 'validly be placed for at least one species. Code will ' &
-            // 'now terminate.'
-        CALL MPI_ABORT(comm, errcode, ierr)
+      IF (num_valid_cells_global .EQ. 0) THEN
+        IF (rank .EQ. 0) THEN
+          WRITE(*,*) '*** ERROR ***'
+          WRITE(*,*) 'Intial condition settings mean that there are no cells ' &
+              // 'where particles may'
+          WRITE(*,*) 'validly be placed for at least one species. Code will ' &
+              // 'now terminate.'
+          CALL MPI_ABORT(comm, errcode, ierr)
+        ENDIF
       ENDIF
+
+      valid_cell_frac = &
+          REAL(num_valid_cells_local, num) / REAL(num_valid_cells_global, num)
+      num_new_particles = NINT(npart_this_species*valid_cell_frac, KIND=8)
+
+      npart_per_cell = npart_this_species / num_valid_cells_global
+      species%npart_per_cell = npart_per_cell
+
+      IF (species%npart_per_cell .EQ. 0) species%npart_per_cell = 1
     ENDIF
 
     partlist=>species%attached_list
 
-    valid_cell_frac = &
-        REAL(num_valid_cells_local, num) / REAL(num_valid_cells, num)
-    num_new_particles = NINT(npart_this_species*valid_cell_frac, KIND=8)
-
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, num_new_particles)
-
-    npart_per_cell = npart_this_species / num_valid_cells
-    species%npart_per_cell = npart_per_cell
-    IF (species%npart_per_cell .EQ. 0) species%npart_per_cell = 1
 
     ! Randomly place npart_per_cell particles into each valid cell
     npart_left = num_new_particles
@@ -335,8 +346,9 @@ CONTAINS
 
     ENDIF
 
-    ! When num_new_particles does not equal npart_per_cell * num_valid_cells
-    ! there will be particles left over that didn't get placed.
+    ! When num_new_particles does not equal
+    ! npart_per_cell * num_valid_cells_local there will be particles left
+    ! over that didn't get placed.
     ! The following loop randomly place remaining particles into valid cells.
     IF (npart_left .GT. 0) THEN
       ALLOCATE(valid_cell_list(num_valid_cells_local))

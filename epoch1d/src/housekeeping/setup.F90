@@ -204,7 +204,7 @@ CONTAINS
       species_list(ispecies)%dumpmask = c_io_always
       species_list(ispecies)%count = -1
       species_list(ispecies)%id = 0
-      species_list(ispecies)%npart_per_cell = 0
+      species_list(ispecies)%npart_per_cell = -1
       species_list(ispecies)%density = 0.0_num
       species_list(ispecies)%temperature = 0.0_num
       species_list(ispecies)%split = .FALSE.

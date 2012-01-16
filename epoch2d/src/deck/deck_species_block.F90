@@ -172,6 +172,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, "npart_per_cell")) THEN
+      species_list(species_id)%npart_per_cell = as_long_integer(value, errcode)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, "dump")) THEN
       dump = as_logical(value, errcode)
       IF (dump) THEN
@@ -444,6 +449,17 @@ CONTAINS
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
+      ENDIF
+      IF (species_list(i)%npart_per_cell .GE. 0) THEN
+        IF (species_list(i)%count .GE. 0 .AND. rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Two forms of npart used for particle species "', &
+                TRIM(species_list(i)%name),'"'
+            WRITE(io,*) 'Just using "npart_per_cell".'
+          ENDDO
+        ENDIF
+        species_list(i)%count = species_list(i)%npart_per_cell
       ENDIF
     ENDDO
 
