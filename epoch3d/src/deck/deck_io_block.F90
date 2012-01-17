@@ -105,9 +105,9 @@ CONTAINS
       ENDIF
       dt_average = t_end
     ENDIF
-    dumpmask(c_dump_jx) = IOR(dumpmask(c_dump_jx), c_io_no_sum)
-    dumpmask(c_dump_jy) = IOR(dumpmask(c_dump_jy), c_io_no_sum)
-    dumpmask(c_dump_jz) = IOR(dumpmask(c_dump_jz), c_io_no_sum)
+    dumpmask(c_dump_jx) = IOR(dumpmask(c_dump_jx), c_io_field)
+    dumpmask(c_dump_jy) = IOR(dumpmask(c_dump_jy), c_io_field)
+    dumpmask(c_dump_jz) = IOR(dumpmask(c_dump_jz), c_io_field)
 
   END SUBROUTINE io_deck_finalise
 

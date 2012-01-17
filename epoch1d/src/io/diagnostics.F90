@@ -604,7 +604,8 @@ CONTAINS
     should_dump = IOR(should_dump, NOT(c_io_averaged))
 
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN
-      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0) THEN
+      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+          .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
@@ -667,7 +668,8 @@ CONTAINS
           / averaged_data(id)%real_time
 
       species_sum = 0
-      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0) THEN
+      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+          .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
         species_sum = 1
         CALL sdf_write_plain_variable(sdf_handle, &
             TRIM(block_id) // '_averaged', &
@@ -804,7 +806,8 @@ CONTAINS
     should_dump = IOR(should_dump, NOT(c_io_averaged))
 
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN
-      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0) THEN
+      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+          .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 

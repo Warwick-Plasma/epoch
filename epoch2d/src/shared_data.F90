@@ -71,6 +71,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_no_sum = 2**4
   INTEGER, PARAMETER :: c_io_averaged = 2**5
   INTEGER, PARAMETER :: c_io_snapshot = 2**6
+  INTEGER, PARAMETER :: c_io_field = 2**7
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
