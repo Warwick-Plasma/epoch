@@ -4,6 +4,7 @@ MODULE window
   USE boundary
   USE partlist
   USE particle_temperature
+  USE evaluator
 
   IMPLICIT NONE
 
@@ -161,6 +162,8 @@ CONTAINS
     ! Only processors on the right need do anything
     IF (.NOT.x_max_boundary) RETURN
 
+    errcode = c_err_none
+
     DO ispecies = 1, n_species
       CALL create_empty_partlist(append_list)
       npart_per_cell = AINT(species_list(ispecies)%npart_per_cell, KIND=8)
@@ -170,6 +173,17 @@ CONTAINS
       ELSE
         n0 = 1
       ENDIF
+
+      DO i = 1, 3
+        DO iy = -2, ny+3
+          species_list(ispecies)%temperature(iy, i) = evaluate_at_point( &
+              species_list(ispecies)%temperature_function(i), nx, iy, errcode)
+        ENDDO
+      ENDDO
+      DO iy = -2, ny+3
+        species_list(ispecies)%density(iy) = evaluate_at_point( &
+            species_list(ispecies)%density_function, nx, iy, errcode)
+      ENDDO
 
       DO iy = 1, ny
         DO ipart = n0, npart_per_cell

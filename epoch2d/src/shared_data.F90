@@ -443,6 +443,7 @@ MODULE shared_data
     REAL(num) :: npart_per_cell
     REAL(num), DIMENSION(:), POINTER :: density
     REAL(num), DIMENSION(:,:), POINTER :: temperature
+    TYPE(primitive_stack) :: density_function, temperature_function(3)
 
     ! Thermal boundaries
     REAL(num), DIMENSION(:,:), POINTER :: ext_temp_x_min, ext_temp_x_max

@@ -248,4 +248,4 @@ tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90
 welcome.o: welcome.F90 strings.o version_data.o
-window.o: window.F90 boundary.o particle_temperature.o partlist.o
+window.o: window.F90 boundary.o evaluate.o particle_temperature.o partlist.o

@@ -179,6 +179,19 @@ CONTAINS
 
 
 
+  SUBROUTINE copy_stack(stack, copy)
+
+    TYPE(primitive_stack), INTENT(IN) :: stack
+    TYPE(primitive_stack), INTENT(OUT) :: copy
+
+    copy = stack
+    ALLOCATE(copy%entries(copy%stack_size))
+    copy%entries(1:copy%stack_point) = stack%entries(1:copy%stack_point)
+
+  END SUBROUTINE copy_stack
+
+
+
   SUBROUTINE push_to_stack(stack, value)
 
     TYPE(stack_element), INTENT(IN) :: value
@@ -392,8 +405,9 @@ CONTAINS
             ! If stack isn't empty then check for function
             IF (stack%stack_point .NE. 0) THEN
               CALL stack_snoop(stack, block2, 0)
-              IF (block2%ptype .EQ. c_pt_function) &
-                  CALL pop_to_stack(stack, output)
+              IF (block2%ptype .EQ. c_pt_function) THEN
+                CALL add_function_to_stack(block2%value, stack, output)
+              ENDIF
             ENDIF
             EXIT
           ELSE
@@ -513,6 +527,51 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE tokenize_subexpression_rpn
+
+
+
+  SUBROUTINE add_function_to_stack(opcode, stack, output)
+
+    INTEGER, INTENT(IN) :: opcode
+    TYPE(primitive_stack), INTENT(INOUT) :: stack, output
+    TYPE(primitive_stack) :: func_stack
+    TYPE(stack_element) :: block
+    INTEGER :: id, i, err
+
+    CALL stack_snoop(output, block, 0)
+    id = block%value
+
+    IF (opcode .EQ. c_func_rho) THEN
+      CALL copy_stack(species_list(id)%density_function, func_stack)
+    ELSE IF (opcode .EQ. c_func_tempx) THEN
+      CALL copy_stack(species_list(id)%temperature_function(1), func_stack)
+    ELSE IF (opcode .EQ. c_func_tempy) THEN
+      CALL copy_stack(species_list(id)%temperature_function(2), func_stack)
+    ELSE IF (opcode .EQ. c_func_tempz) THEN
+      CALL copy_stack(species_list(id)%temperature_function(3), func_stack)
+    ELSE IF (opcode .EQ. c_func_tempx_ev) THEN
+      CALL copy_stack(species_list(id)%temperature_function(1), func_stack)
+      CALL tokenize('* kb / ev', func_stack, err)
+    ELSE IF (opcode .EQ. c_func_tempy_ev) THEN
+      CALL copy_stack(species_list(id)%temperature_function(2), func_stack)
+      CALL tokenize('* kb / ev', func_stack, err)
+    ELSE IF (opcode .EQ. c_func_tempz_ev) THEN
+      CALL copy_stack(species_list(id)%temperature_function(3), func_stack)
+      CALL tokenize('* kb / ev', func_stack, err)
+    ENDIF
+
+    IF (func_stack%stack_point .GT. 0) THEN
+      CALL pop_to_null(output)
+      CALL pop_to_null(stack)
+      DO i = 1, func_stack%stack_point
+        CALL push_to_stack(output, func_stack%entries(i))
+      ENDDO
+      CALL deallocate_stack(func_stack)
+    ELSE
+      CALL pop_to_stack(stack, output)
+    ENDIF
+
+  END SUBROUTINE add_function_to_stack
 
 
 

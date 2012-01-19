@@ -12,6 +12,7 @@ MODULE setup
   USE welcome
   USE random_generator
   USE split_particle
+  USE shunt
 
   IMPLICIT NONE
 
@@ -239,6 +240,10 @@ CONTAINS
       NULLIFY(species_list(ispecies)%ext_temp_x_min)
       NULLIFY(species_list(ispecies)%ext_temp_x_max)
       NULLIFY(species_list(ispecies)%secondary_list)
+      CALL initialise_stack(species_list(ispecies)%density_function)
+      CALL initialise_stack(species_list(ispecies)%temperature_function(1))
+      CALL initialise_stack(species_list(ispecies)%temperature_function(2))
+      CALL initialise_stack(species_list(ispecies)%temperature_function(3))
 #ifdef PARTICLE_IONISE
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1

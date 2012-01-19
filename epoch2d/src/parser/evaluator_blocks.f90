@@ -483,21 +483,21 @@ CONTAINS
 
     IF (opcode .EQ. c_func_tempx_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(ev / kb &
+      CALL push_on_eval(kb / ev &
           * initial_conditions(NINT(values(1)))%temp(ix, iy, 1))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_tempy_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(ev / kb &
+      CALL push_on_eval(kb / ev &
           * initial_conditions(NINT(values(1)))%temp(ix, iy, 2))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_tempz_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(ev / kb &
+      CALL push_on_eval(kb / ev &
           * initial_conditions(NINT(values(1)))%temp(ix, iy, 3))
       RETURN
     ENDIF

@@ -131,10 +131,10 @@ CONTAINS
     TYPE(particle_species), POINTER :: base_species, species
     REAL(num), DIMENSION(:), POINTER :: dat
     REAL(num), DIMENSION(:), POINTER :: array
-    REAL(num) :: dmin
-    CHARACTER(LEN=string_length) :: filename
+    REAL(num) :: dmin, mult
+    CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
-    INTEGER :: i, io
+    INTEGER :: i, io, n
 
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
@@ -330,16 +330,19 @@ CONTAINS
 
     CALL get_filename(value, filename, got_file, errcode)
 
+    mult = 1.0_num
+
     IF (str_cmp(element, 'density') .OR. str_cmp(element, 'rho') &
         .OR. str_cmp(element, 'mass_density')) THEN
-      array => initial_conditions(species_id)%density
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, array, offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
+
+      IF (str_cmp(element, 'mass_density')) THEN
+        mult = 1.0_num / species_list(species_id)%mass
+        mult_string = '/ species_list(species_id)%mass'
       ENDIF
-      IF (str_cmp(element, 'mass_density')) &
-          array = array / species_list(species_id)%mass
+
+      CALL fill_array(species_list(species_id)%density_function, &
+          initial_conditions(species_id)%density, &
+          mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
 
@@ -373,16 +376,19 @@ CONTAINS
       RETURN
     ENDIF
 
+    mult_string = '* ev / kb'
+
     IF (str_cmp(element, 'temp') .OR. str_cmp(element, 'temp_k') &
         .OR. str_cmp(element, 'temp_ev')) THEN
-      array => initial_conditions(species_id)%temp(:,1)
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, array, offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
-      ENDIF
-      IF (str_cmp(element, 'temp_ev')) &
-          array = ev / kb * array
+      IF (str_cmp(element, 'temp_ev')) mult = ev / kb
+
+      n = 1
+      CALL fill_array(species_list(species_id)%temperature_function(n), &
+          initial_conditions(species_id)%temp(:,n), &
+          mult, mult_string, element, value, filename, got_file)
+
+      CALL set_stack_zero(species_list(species_id)%temperature_function(2))
+      CALL set_stack_zero(species_list(species_id)%temperature_function(3))
 
       debug_mode = .FALSE.
       initial_conditions(species_id)%temp(:,2) = 0.0_num
@@ -392,40 +398,34 @@ CONTAINS
 
     IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
         .OR. str_cmp(element, 'temp_x_ev')) THEN
-      array => initial_conditions(species_id)%temp(:,1)
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, array, offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
-      ENDIF
-      IF (str_cmp(element, 'temp_x_ev')) &
-          array = ev / kb * array
+      IF (str_cmp(element, 'temp_x_ev')) mult = ev / kb
+
+      n = 1
+      CALL fill_array(species_list(species_id)%temperature_function(n), &
+          initial_conditions(species_id)%temp(:,n), &
+          mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'temp_y') .OR. str_cmp(element, 'temp_y_k') &
         .OR. str_cmp(element, 'temp_y_ev')) THEN
-      array => initial_conditions(species_id)%temp(:,2)
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, array, offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
-      ENDIF
-      IF (str_cmp(element, 'temp_y_ev')) &
-          array = ev / kb * array
+      IF (str_cmp(element, 'temp_y_ev')) mult = ev / kb
+
+      n = 2
+      CALL fill_array(species_list(species_id)%temperature_function(n), &
+          initial_conditions(species_id)%temp(:,n), &
+          mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'temp_z') .OR. str_cmp(element, 'temp_z_k') &
         .OR. str_cmp(element, 'temp_z_ev')) THEN
-      array => initial_conditions(species_id)%temp(:,3)
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, array, offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
-      ENDIF
-      IF (str_cmp(element, 'temp_z_ev')) &
-          array = ev / kb * array
+      IF (str_cmp(element, 'temp_z_ev')) mult = ev / kb
+
+      n = 3
+      CALL fill_array(species_list(species_id)%temperature_function(n), &
+          initial_conditions(species_id)%temp(:,n), &
+          mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
 
@@ -500,6 +500,66 @@ CONTAINS
     species_number_from_name = n_species
 
   END FUNCTION species_number_from_name
+
+
+
+  SUBROUTINE fill_array(output, array, mult, mult_string, element, value, &
+      filename, got_file)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: output
+    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: array
+    REAL(num), INTENT(IN) :: mult
+    CHARACTER(LEN=*), INTENT(IN) :: mult_string, element, value, filename
+    LOGICAL, INTENT(IN) :: got_file
+    TYPE(stack_element) :: block
+    TYPE(primitive_stack) :: stack
+    INTEGER :: io, ix
+
+    CALL initialise_stack(stack)
+    IF (got_file) THEN
+      IF (move_window) THEN
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Cannot load from file whilst using a moving window.'
+          ENDDO
+        ENDIF
+        errcode = c_err_bad_value
+        RETURN
+      ENDIF
+
+      CALL load_single_array_from_file(filename, array, offset, errcode)
+
+      CALL load_block(species_list(species_id)%name, block)
+      CALL push_to_stack(stack, block)
+      CALL load_block(element, block)
+      CALL push_to_stack(stack, block)
+      IF (mult .NE. 1) array = mult * array
+    ELSE
+      CALL tokenize(value, stack, errcode)
+      IF (mult .NE. 1) CALL tokenize(mult_string, stack, errcode)
+
+      DO ix = -2, nx+3
+        array(ix) = evaluate_at_point(stack, ix, errcode)
+      ENDDO
+    ENDIF
+
+    CALL deallocate_stack(output)
+    output = stack
+
+  END SUBROUTINE fill_array
+
+
+
+  SUBROUTINE set_stack_zero(stack)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: stack
+
+    CALL deallocate_stack(stack)
+    CALL initialise_stack(stack)
+    CALL tokenize('0', stack, errcode)
+
+  END SUBROUTINE set_stack_zero
 
 
 
