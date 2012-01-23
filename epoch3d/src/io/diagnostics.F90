@@ -427,8 +427,6 @@ CONTAINS
 
     IF (n_species_local .LE. 0) RETURN
 
-    io_list = species_list
-
     SELECT CASE(ioutput)
     CASE(c_dump_ex)
       averaged_data(ioutput)%array(:,:,:,1) = &
