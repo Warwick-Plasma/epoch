@@ -130,6 +130,7 @@ CONTAINS
     TYPE(primitive_stack) :: stack
     TYPE(particle_species), POINTER :: base_species, species
     REAL(num), DIMENSION(:), POINTER :: dat
+    REAL(num), DIMENSION(:), POINTER :: array
     REAL(num) :: dmin
     CHARACTER(LEN=string_length) :: filename
     LOGICAL :: got_file, dump
@@ -329,83 +330,60 @@ CONTAINS
 
     CALL get_filename(value, filename, got_file, errcode)
 
-    IF (str_cmp(element, 'density') .OR. str_cmp(element, 'rho')) THEN
+    IF (str_cmp(element, 'density') .OR. str_cmp(element, 'rho') &
+        .OR. str_cmp(element, 'mass_density')) THEN
+      array(-2:) => initial_conditions(species_id)%density
       IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%density(:), offset, errcode)
+        CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%density(:), &
-            -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
       ENDIF
-      RETURN
-    ENDIF
-
-    IF (str_cmp(element, 'mass_density')) THEN
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%density(:), offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%density(:), &
-            -2, nx+3, errcode)
-      ENDIF
-      initial_conditions(species_id)%density = &
-          initial_conditions(species_id)%density &
-              / species_list(species_id)%mass
+      IF (str_cmp(element, 'mass_density')) &
+          array = array / species_list(species_id)%mass
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_x')) THEN
+      array(-2:) => initial_conditions(species_id)%drift(:,1)
       IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%drift(:,1), offset, errcode)
+        CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%drift(:,1), &
-            -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
       ENDIF
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_y')) THEN
+      array(-2:) => initial_conditions(species_id)%drift(:,2)
       IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%drift(:,2), offset, errcode)
+        CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%drift(:,2), &
-            -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
       ENDIF
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_z')) THEN
+      array(-2:) => initial_conditions(species_id)%drift(:,3)
       IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%drift(:,3), offset, errcode)
+        CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%drift(:,3), &
-            -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
       ENDIF
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'temp') .OR. str_cmp(element, 'temp_k') &
         .OR. str_cmp(element, 'temp_ev')) THEN
+      array(-2:) => initial_conditions(species_id)%temp(:,1)
       IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%temp(:,1), offset, errcode)
+        CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%temp(:,1), &
-            -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
       ENDIF
-      IF (str_cmp(element, 'temp_ev')) THEN
-        initial_conditions(species_id)%temp(:,1) = ev / kb * &
-            initial_conditions(species_id)%temp(:,1)
-      ENDIF
+      IF (str_cmp(element, 'temp_ev')) &
+          array = ev / kb * array
+
       debug_mode = .FALSE.
       initial_conditions(species_id)%temp(:,2) = 0.0_num
       initial_conditions(species_id)%temp(:,3) = 0.0_num
@@ -414,52 +392,40 @@ CONTAINS
 
     IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
         .OR. str_cmp(element, 'temp_x_ev')) THEN
+      array(-2:) => initial_conditions(species_id)%temp(:,1)
       IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%temp(:,1), offset, errcode)
+        CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%temp(:,1), &
-            -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
       ENDIF
-      IF (str_cmp(element, 'temp_x_ev')) THEN
-        initial_conditions(species_id)%temp(:,1) = ev / kb * &
-            initial_conditions(species_id)%temp(:,1)
-      ENDIF
+      IF (str_cmp(element, 'temp_x_ev')) &
+          array = ev / kb * array
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'temp_y') .OR. str_cmp(element, 'temp_y_k') &
         .OR. str_cmp(element, 'temp_y_ev')) THEN
+      array(-2:) => initial_conditions(species_id)%temp(:,2)
       IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%temp(:,2), offset, errcode)
+        CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%temp(:,2), &
-            -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
       ENDIF
-      IF (str_cmp(element, 'temp_y_ev')) THEN
-        initial_conditions(species_id)%temp(:,2) = ev / kb * &
-            initial_conditions(species_id)%temp(:,2)
-      ENDIF
+      IF (str_cmp(element, 'temp_y_ev')) &
+          array = ev / kb * array
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'temp_z') .OR. str_cmp(element, 'temp_z_k') &
         .OR. str_cmp(element, 'temp_z_ev')) THEN
+      array(-2:) => initial_conditions(species_id)%temp(:,3)
       IF (got_file) THEN
-        CALL load_single_array_from_file(filename, &
-            initial_conditions(species_id)%temp(:,3), offset, errcode)
+        CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
-        CALL evaluate_string_in_space(value, &
-            initial_conditions(species_id)%temp(:,3), &
-            -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, array, -2, nx+3, errcode)
       ENDIF
-      IF (str_cmp(element, 'temp_z_ev')) THEN
-        initial_conditions(species_id)%temp(:,3) = ev / kb * &
-            initial_conditions(species_id)%temp(:,3)
-      ENDIF
+      IF (str_cmp(element, 'temp_z_ev')) &
+          array = ev / kb * array
       RETURN
     ENDIF
 
