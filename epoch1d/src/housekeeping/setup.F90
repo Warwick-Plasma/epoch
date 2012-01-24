@@ -161,7 +161,7 @@ CONTAINS
 
     IF (cpml_boundaries) THEN
       CALL allocate_cpml_fields
-      CALL set_cpml_helpers
+      CALL set_cpml_helpers(nx, nx_global_min, nx_global_max)
     ELSE
       cpml_thickness = 0
       cpml_kappa_max = 1.0_num

@@ -858,8 +858,11 @@ CONTAINS
 
 
 
-  SUBROUTINE set_cpml_helpers
+  SUBROUTINE set_cpml_helpers(nx, nx_global_min, nx_global_max, &
+      ny, ny_global_min, ny_global_max)
 
+    INTEGER, INTENT(IN) :: nx, nx_global_min, nx_global_max
+    INTEGER, INTENT(IN) :: ny, ny_global_min, ny_global_max
     INTEGER :: i
     INTEGER :: ix, ix_glob
     INTEGER :: iy, iy_glob

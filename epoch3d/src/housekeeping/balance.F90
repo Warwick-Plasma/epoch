@@ -162,18 +162,10 @@ CONTAINS
 
     ! Now need to calculate the start and end points for the new domain on
     ! the current processor
-    nx_global_min = starts_x(x_coords+1)
-    nx_global_max = ends_x(x_coords+1)
 
-    ny_global_min = starts_y(y_coords+1)
-    ny_global_max = ends_y(y_coords+1)
-
-    nz_global_min = starts_z(z_coords+1)
-    nz_global_max = ends_z(z_coords+1)
-
-    domain(1,:) = (/nx_global_min, nx_global_max/)
-    domain(2,:) = (/ny_global_min, ny_global_max/)
-    domain(3,:) = (/nz_global_min, nz_global_max/)
+    domain(1,:) = (/starts_x(x_coords+1), ends_x(x_coords+1)/)
+    domain(2,:) = (/starts_y(y_coords+1), ends_y(y_coords+1)/)
+    domain(3,:) = (/starts_z(z_coords+1), ends_z(z_coords+1)/)
 
     ! Redistribute the field variables
     CALL redistribute_fields(domain)
@@ -187,6 +179,15 @@ CONTAINS
     cell_z_max = ends_z
 
     ! Set the new nx, ny, nz
+    nx_global_min = cell_x_min(x_coords+1)
+    nx_global_max = cell_x_max(x_coords+1)
+
+    ny_global_min = cell_y_min(y_coords+1)
+    ny_global_max = cell_y_max(y_coords+1)
+
+    nz_global_min = cell_z_min(z_coords+1)
+    nz_global_max = cell_z_max(z_coords+1)
+
     nx = nx_global_max - nx_global_min + 1
     ny = ny_global_max - ny_global_min + 1
     nz = nz_global_max - nz_global_min + 1
@@ -393,7 +394,9 @@ CONTAINS
       cpml_psi_byz = temp
 
       CALL deallocate_cpml_helpers
-      CALL set_cpml_helpers
+      CALL set_cpml_helpers(nx_new, new_domain(1,1), new_domain(1,2), &
+          ny_new, new_domain(2,1), new_domain(2,2), &
+          nz_new, new_domain(3,1), new_domain(3,2))
     ENDIF
 
     DEALLOCATE(temp)
