@@ -7,8 +7,6 @@ MODULE balance
 
   IMPLICIT NONE
 
-  INTEGER :: nx_old, ny_old, nz_old
-
 CONTAINS
 
   SUBROUTINE balance_workload(over_ride)
@@ -177,15 +175,6 @@ CONTAINS
     domain(2,:) = (/ny_global_min, ny_global_max/)
     domain(3,:) = (/nz_global_min, nz_global_max/)
 
-    nx_old = nx
-    ny_old = ny
-    nz_old = nz
-
-    ! Set the new nx, ny, nz
-    nx = nx_global_max - nx_global_min + 1
-    ny = ny_global_max - ny_global_min + 1
-    nz = nz_global_max - nz_global_min + 1
-
     ! Redistribute the field variables
     CALL redistribute_fields(domain)
 
@@ -196,6 +185,11 @@ CONTAINS
     cell_x_max = ends_x
     cell_y_max = ends_y
     cell_z_max = ends_z
+
+    ! Set the new nx, ny, nz
+    nx = nx_global_max - nx_global_min + 1
+    ny = ny_global_max - ny_global_min + 1
+    nz = nz_global_max - nz_global_min + 1
 
     ! Do X, Y, Z arrays separately because we already have global copies
     DEALLOCATE(x, y, z)
@@ -778,13 +772,13 @@ CONTAINS
         ALLOCATE(temp(-2:ny_new+3,-2:nz_new+3,3))
 
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%temperature(-2:ny_old+3,-2:nz_old+3,1), &
+            species_list(ispecies)%temperature(-2:ny+3,-2:nz+3,1), &
             temp(-2:ny_new+3,-2:nz_new+3,1))
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%temperature(-2:ny_old+3,-2:nz_old+3,2), &
+            species_list(ispecies)%temperature(-2:ny+3,-2:nz+3,2), &
             temp(-2:ny_new+3,-2:nz_new+3,2))
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%temperature(-2:ny_old+3,-2:nz_old+3,3), &
+            species_list(ispecies)%temperature(-2:ny+3,-2:nz+3,3), &
             temp(-2:ny_new+3,-2:nz_new+3,3))
 
         DEALLOCATE(species_list(ispecies)%temperature)
@@ -801,13 +795,13 @@ CONTAINS
         temp = 0.0_num
 
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%ext_temp_x_min(-2:ny_old+3,-2:nz_old+3,1), &
+            species_list(ispecies)%ext_temp_x_min(-2:ny+3,-2:nz+3,1), &
             temp(-2:ny_new+3,-2:nz_new+3,1))
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%ext_temp_x_min(-2:ny_old+3,-2:nz_old+3,2), &
+            species_list(ispecies)%ext_temp_x_min(-2:ny+3,-2:nz+3,2), &
             temp(-2:ny_new+3,-2:nz_new+3,2))
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%ext_temp_x_min(-2:ny_old+3,-2:nz_old+3,3), &
+            species_list(ispecies)%ext_temp_x_min(-2:ny+3,-2:nz+3,3), &
             temp(-2:ny_new+3,-2:nz_new+3,3))
 
         DEALLOCATE(species_list(ispecies)%ext_temp_x_min)
@@ -824,13 +818,13 @@ CONTAINS
         temp = 0.0_num
 
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%ext_temp_x_max(-2:ny_old+3,-2:nz_old+3,1), &
+            species_list(ispecies)%ext_temp_x_max(-2:ny+3,-2:nz+3,1), &
             temp(-2:ny_new+3,-2:nz_new+3,1))
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%ext_temp_x_max(-2:ny_old+3,-2:nz_old+3,2), &
+            species_list(ispecies)%ext_temp_x_max(-2:ny+3,-2:nz+3,2), &
             temp(-2:ny_new+3,-2:nz_new+3,2))
         CALL redistribute_field_2d(new_domain, c_dir_x, &
-            species_list(ispecies)%ext_temp_x_max(-2:ny_old+3,-2:nz_old+3,3), &
+            species_list(ispecies)%ext_temp_x_max(-2:ny+3,-2:nz+3,3), &
             temp(-2:ny_new+3,-2:nz_new+3,3))
 
         DEALLOCATE(species_list(ispecies)%ext_temp_x_max)
@@ -847,13 +841,13 @@ CONTAINS
         temp = 0.0_num
 
         CALL redistribute_field_2d(new_domain, c_dir_y, &
-            species_list(ispecies)%ext_temp_y_min(-2:nx_old+3,-2:nz_old+3,1), &
+            species_list(ispecies)%ext_temp_y_min(-2:nx+3,-2:nz+3,1), &
             temp(-2:nx_new+3,-2:nz_new+3,1))
         CALL redistribute_field_2d(new_domain, c_dir_y, &
-            species_list(ispecies)%ext_temp_y_min(-2:nx_old+3,-2:nz_old+3,2), &
+            species_list(ispecies)%ext_temp_y_min(-2:nx+3,-2:nz+3,2), &
             temp(-2:nx_new+3,-2:nz_new+3,2))
         CALL redistribute_field_2d(new_domain, c_dir_y, &
-            species_list(ispecies)%ext_temp_y_min(-2:nx_old+3,-2:nz_old+3,3), &
+            species_list(ispecies)%ext_temp_y_min(-2:nx+3,-2:nz+3,3), &
             temp(-2:nx_new+3,-2:nz_new+3,3))
 
         DEALLOCATE(species_list(ispecies)%ext_temp_y_min)
@@ -870,13 +864,13 @@ CONTAINS
         temp = 0.0_num
 
         CALL redistribute_field_2d(new_domain, c_dir_y, &
-            species_list(ispecies)%ext_temp_y_max(-2:nx_old+3,-2:nz_old+3,1), &
+            species_list(ispecies)%ext_temp_y_max(-2:nx+3,-2:nz+3,1), &
             temp(-2:nx_new+3,-2:nz_new+3,1))
         CALL redistribute_field_2d(new_domain, c_dir_y, &
-            species_list(ispecies)%ext_temp_y_max(-2:nx_old+3,-2:nz_old+3,2), &
+            species_list(ispecies)%ext_temp_y_max(-2:nx+3,-2:nz+3,2), &
             temp(-2:nx_new+3,-2:nz_new+3,2))
         CALL redistribute_field_2d(new_domain, c_dir_y, &
-            species_list(ispecies)%ext_temp_y_max(-2:nx_old+3,-2:nz_old+3,3), &
+            species_list(ispecies)%ext_temp_y_max(-2:nx+3,-2:nz+3,3), &
             temp(-2:nx_new+3,-2:nz_new+3,3))
 
         DEALLOCATE(species_list(ispecies)%ext_temp_y_max)
@@ -893,13 +887,13 @@ CONTAINS
         temp = 0.0_num
 
         CALL redistribute_field_2d(new_domain, c_dir_z, &
-            species_list(ispecies)%ext_temp_z_min(-2:nx_old+3,-2:ny_old+3,1), &
+            species_list(ispecies)%ext_temp_z_min(-2:nx+3,-2:ny+3,1), &
             temp(-2:nx_new+3,-2:ny_new+3,1))
         CALL redistribute_field_2d(new_domain, c_dir_z, &
-            species_list(ispecies)%ext_temp_z_min(-2:nx_old+3,-2:ny_old+3,2), &
+            species_list(ispecies)%ext_temp_z_min(-2:nx+3,-2:ny+3,2), &
             temp(-2:nx_new+3,-2:ny_new+3,2))
         CALL redistribute_field_2d(new_domain, c_dir_z, &
-            species_list(ispecies)%ext_temp_z_min(-2:nx_old+3,-2:ny_old+3,3), &
+            species_list(ispecies)%ext_temp_z_min(-2:nx+3,-2:ny+3,3), &
             temp(-2:nx_new+3,-2:ny_new+3,3))
 
         DEALLOCATE(species_list(ispecies)%ext_temp_z_min)
@@ -916,13 +910,13 @@ CONTAINS
         temp = 0.0_num
 
         CALL redistribute_field_2d(new_domain, c_dir_z, &
-            species_list(ispecies)%ext_temp_z_max(-2:nx_old+3,-2:ny_old+3,1), &
+            species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,1), &
             temp(-2:nx_new+3,-2:ny_new+3,1))
         CALL redistribute_field_2d(new_domain, c_dir_z, &
-            species_list(ispecies)%ext_temp_z_max(-2:nx_old+3,-2:ny_old+3,2), &
+            species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,2), &
             temp(-2:nx_new+3,-2:ny_new+3,2))
         CALL redistribute_field_2d(new_domain, c_dir_z, &
-            species_list(ispecies)%ext_temp_z_max(-2:nx_old+3,-2:ny_old+3,3), &
+            species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,3), &
             temp(-2:nx_new+3,-2:ny_new+3,3))
 
         DEALLOCATE(species_list(ispecies)%ext_temp_z_max)
@@ -1014,8 +1008,8 @@ CONTAINS
     IF (direction .EQ. c_dir_x) THEN
       n1_dir = 2
       n2_dir = 3
-      n(1) = ny_old
-      n(2) = nz_old
+      n(1) = ny
+      n(2) = nz
       n_global(1) = ny_global
       n_global(2) = nz_global
       n_old_start(1) = cell_y_min(y_coords+1)
@@ -1023,8 +1017,8 @@ CONTAINS
     ELSE IF (direction .EQ. c_dir_y) THEN
       n1_dir = 1
       n2_dir = 3
-      n(1) = nx_old
-      n(2) = nz_old
+      n(1) = nx
+      n(2) = nz
       n_global(1) = nx_global
       n_global(2) = nz_global
       n_old_start(1) = cell_x_min(x_coords+1)
@@ -1032,8 +1026,8 @@ CONTAINS
     ELSE
       n1_dir = 1
       n2_dir = 2
-      n(1) = nx_old
-      n(2) = ny_old
+      n(1) = nx
+      n(2) = ny
       n_global(1) = nx_global
       n_global(2) = ny_global
       n_old_start(1) = cell_x_min(x_coords+1)

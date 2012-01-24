@@ -7,8 +7,6 @@ MODULE balance
 
   IMPLICIT NONE
 
-  INTEGER :: nx_old
-
 CONTAINS
 
   SUBROUTINE balance_workload(over_ride)
@@ -80,17 +78,15 @@ CONTAINS
 
     domain(1,:) = (/nx_global_min, nx_global_max/)
 
-    nx_old = nx
-
-    ! Set the new nx
-    nx = nx_global_max - nx_global_min + 1
-
     ! Redistribute the field variables
     CALL redistribute_fields(domain)
 
     ! Copy the new lengths into the permanent variables
     cell_x_min = starts_x
     cell_x_max = ends_x
+
+    ! Set the new nx
+    nx = nx_global_max - nx_global_min + 1
 
     ! Do X array separately because we already have global copies
     DEALLOCATE(x)
@@ -286,7 +282,7 @@ CONTAINS
     color = 1
     coord = x_coords
     old_start = cell_x_min(x_coords+1)
-    old_pts = nx_old
+    old_pts = nx
     npts_global = nx_global
     IF (x_max_boundary) ghost_end = 3
 
