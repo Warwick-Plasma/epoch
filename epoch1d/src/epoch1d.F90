@@ -103,13 +103,10 @@ PROGRAM pic
   CALL efield_bcs
   CALL bfield_final_bcs
 
-  IF (.NOT. ic_from_restart) THEN
-    IF (rank .EQ. 0) PRINT *, 'Equilibrium set up OK, running code'
-    walltime_start = MPI_WTIME()
-    CALL output_routines(step) ! diagnostics.f90
-  ELSE
-    walltime_start = MPI_WTIME()
-  ENDIF
+  IF (rank .EQ. 0) PRINT *, 'Equilibrium set up OK, running code'
+
+  walltime_start = MPI_WTIME()
+  CALL output_routines(step) ! diagnostics.f90
 
   DO
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &

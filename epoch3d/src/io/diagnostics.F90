@@ -32,7 +32,7 @@ CONTAINS
   SUBROUTINE output_routines(step)   ! step = step index
 
     INTEGER, INTENT(INOUT) :: step
-    LOGICAL :: print_arrays, last_call
+    LOGICAL :: print_arrays, first_call, last_call
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=8) :: dump_type
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
@@ -60,7 +60,7 @@ CONTAINS
           f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
     ENDIF
 
-    CALL io_test(step, print_arrays, last_call)
+    CALL io_test(step, print_arrays, first_call, last_call)
 
     IF (.NOT.print_arrays) RETURN
 
@@ -80,6 +80,8 @@ CONTAINS
         .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
     IF (MOD(output_file, restart_dump_every) .EQ. 0 &
         .AND. restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
+    IF (first_call .AND. dump_first) &
+        code = IOR(code, c_io_restartable)
     IF (last_call .AND. force_final_to_be_restartable) &
         code = IOR(code, c_io_restartable)
 
@@ -367,14 +369,16 @@ CONTAINS
 
 
 
-  SUBROUTINE io_test(step, print_arrays, last_call)
+  SUBROUTINE io_test(step, print_arrays, first_call, last_call)
 
     INTEGER, INTENT(IN) :: step
-    LOGICAL, INTENT(OUT) :: print_arrays, last_call
+    LOGICAL, INTENT(OUT) :: print_arrays, first_call, last_call
     INTEGER :: id
     REAL(num) :: t0, t1, time_first, av_time_first
+    LOGICAL, SAVE :: first = .TRUE.
 
     print_arrays = .FALSE.
+    first_call = first
     last_call = .FALSE.
 
     ! Work out the time that the next dump will occur based on the
@@ -413,6 +417,11 @@ CONTAINS
         ENDIF
       ENDIF
     ENDDO
+
+    IF (first) THEN
+      first = .FALSE.
+      print_arrays = .TRUE.
+    ENDIF
 
     IF ((time .GE. t_end .OR. step .EQ. nsteps) .AND. dump_last) THEN
       last_call = .TRUE.

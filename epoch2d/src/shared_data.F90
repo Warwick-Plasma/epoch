@@ -484,7 +484,7 @@ MODULE shared_data
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
   INTEGER :: output_file
-  LOGICAL :: force_final_to_be_restartable, dump_last
+  LOGICAL :: force_final_to_be_restartable, dump_first, dump_last
   LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
   INTEGER :: n_zeros = 4
   REAL(num) :: dt_snapshot, time_next = 0.0_num

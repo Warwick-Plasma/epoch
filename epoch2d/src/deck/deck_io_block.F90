@@ -11,7 +11,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 12
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 13
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
@@ -78,9 +78,11 @@ CONTAINS
     io_block_name (i+9 ) = 'nstep_snapshot'
     io_block_name (i+10) = 'dump_source_code'
     io_block_name (i+11) = 'dump_input_decks'
-    io_block_name (i+12) = 'dump_last'
+    io_block_name (i+12) = 'dump_first'
+    io_block_name (i+13) = 'dump_last'
 
-    dump_last = .FALSE.
+    dump_first = .FALSE.
+    dump_last  = .FALSE.
 
   END SUBROUTINE io_deck_initialise
 
@@ -112,7 +114,8 @@ CONTAINS
   SUBROUTINE io_block_start
 
     io_block_done = .FALSE.
-    dump_last = .TRUE.
+    dump_first = .TRUE.
+    dump_last  = .TRUE.
 
   END SUBROUTINE io_block_start
 
@@ -191,6 +194,8 @@ CONTAINS
     CASE(11)
       dump_input_decks = as_logical(value, errcode)
     CASE(12)
+      dump_first = as_logical(value, errcode)
+    CASE(13)
       dump_last = as_logical(value, errcode)
     END SELECT
 
