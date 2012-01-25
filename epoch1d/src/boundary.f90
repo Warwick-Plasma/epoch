@@ -88,15 +88,33 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local
+    INTEGER :: basetype
 
-    CALL MPI_SENDRECV(field(1), 3, mpireal, proc_x_min, tag, &
-        field(nx_local+1), 3, mpireal, proc_x_max, tag, &
-        comm, status, errcode)
-    CALL MPI_SENDRECV(field(nx_local-2), 3, mpireal, proc_x_max, tag, &
-        field(-2), 3, mpireal, proc_x_min, tag, &
-        comm, status, errcode)
+    basetype = mpireal
+
+    CALL MPI_SENDRECV(field(1), 3, basetype, proc_x_min, tag, &
+        field(nx_local+1), 3, basetype, proc_x_max, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(nx_local-2), 3, basetype, proc_x_max, tag, &
+        field(-2), 3, basetype, proc_x_min, tag, comm, status, errcode)
 
   END SUBROUTINE do_field_mpi_with_lengths
+
+
+
+  SUBROUTINE do_field_mpi_with_lengths_r4(field, nx_local)
+
+    REAL(r4), DIMENSION(-2:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: nx_local
+    INTEGER :: basetype
+
+    basetype = MPI_REAL4
+
+    CALL MPI_SENDRECV(field(1), 3, basetype, proc_x_min, tag, &
+        field(nx_local+1), 3, basetype, proc_x_max, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(nx_local-2), 3, basetype, proc_x_max, tag, &
+        field(-2), 3, basetype, proc_x_min, tag, comm, status, errcode)
+
+  END SUBROUTINE do_field_mpi_with_lengths_r4
 
 
 

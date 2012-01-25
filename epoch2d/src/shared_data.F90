@@ -80,6 +80,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_snapshot = 2**6
   INTEGER, PARAMETER :: c_io_field = 2**7
   INTEGER, PARAMETER :: c_io_dump_single = 2**8
+  INTEGER, PARAMETER :: c_io_average_single = c_io_averaged + 2**9
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
@@ -298,6 +299,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_io_average = 66
   INTEGER, PARAMETER :: c_const_io_snapshot = 67
   INTEGER, PARAMETER :: c_const_io_dump_single = 68
+  INTEGER, PARAMETER :: c_const_io_average_single = 69
 
   INTEGER, PARAMETER :: c_const_dir_x = 80
   INTEGER, PARAMETER :: c_const_dir_y = 81
@@ -737,6 +739,7 @@ MODULE shared_data
   INTEGER :: nsteps, n_species = -1
   LOGICAL :: smooth_currents
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
+  REAL(r4), ALLOCATABLE, DIMENSION(:,:) :: r4array
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ex_x_min, ex_x_max
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ey_x_min, ey_x_max
@@ -868,8 +871,9 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   TYPE averaged_data_block
     REAL(num), DIMENSION(:,:,:), POINTER :: array
+    REAL(r4), DIMENSION(:,:,:), POINTER :: r4array
     REAL(num) :: real_time
-    LOGICAL :: started
+    LOGICAL :: started, dump_single
   END TYPE averaged_data_block
   TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
   INTEGER :: nstep_average = -1

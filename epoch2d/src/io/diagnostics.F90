@@ -462,61 +462,124 @@ CONTAINS
 
     IF (n_species_local .LE. 0) RETURN
 
-    SELECT CASE(ioutput)
-    CASE(c_dump_ex)
-      avg%array(:,:,1) = avg%array(:,:,1) + ex * dt
-    CASE(c_dump_ey)
-      avg%array(:,:,1) = avg%array(:,:,1) + ey * dt
-    CASE(c_dump_ez)
-      avg%array(:,:,1) = avg%array(:,:,1) + ez * dt
-    CASE(c_dump_bx)
-      avg%array(:,:,1) = avg%array(:,:,1) + bx * dt
-    CASE(c_dump_by)
-      avg%array(:,:,1) = avg%array(:,:,1) + by * dt
-    CASE(c_dump_bz)
-      avg%array(:,:,1) = avg%array(:,:,1) + bz * dt
-    CASE(c_dump_jx)
-      avg%array(:,:,1) = avg%array(:,:,1) + jx * dt
-    CASE(c_dump_jy)
-      avg%array(:,:,1) = avg%array(:,:,1) + jy * dt
-    CASE(c_dump_jz)
-      avg%array(:,:,1) = avg%array(:,:,1) + jz * dt
-    CASE(c_dump_ekbar)
-      ALLOCATE(array(-2:nx+3,-2:ny+3))
-      DO ispecies = 1, n_species_local
-        CALL calc_ekbar(array, ispecies-species_sum)
-        avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
-      ENDDO
-      DEALLOCATE(array)
-    CASE(c_dump_mass_density)
-      ALLOCATE(array(-2:nx+3,-2:ny+3))
-      DO ispecies = 1, n_species_local
-        CALL calc_mass_density(array, ispecies-species_sum)
-        avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
-      ENDDO
-      DEALLOCATE(array)
-    CASE(c_dump_charge_density)
-      ALLOCATE(array(-2:nx+3,-2:ny+3))
-      DO ispecies = 1, n_species_local
-        CALL calc_charge_density(array, ispecies-species_sum)
-        avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
-      ENDDO
-      DEALLOCATE(array)
-    CASE(c_dump_number_density)
-      ALLOCATE(array(-2:nx+3,-2:ny+3))
-      DO ispecies = 1, n_species_local
-        CALL calc_number_density(array, ispecies-species_sum)
-        avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
-      ENDDO
-      DEALLOCATE(array)
-    CASE(c_dump_temperature)
-      ALLOCATE(array(-2:nx+3,-2:ny+3))
-      DO ispecies = 1, n_species_local
-        CALL calc_temperature(array, ispecies-species_sum)
-        avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
-      ENDDO
-      DEALLOCATE(array)
-    END SELECT
+    IF (avg%dump_single) THEN
+      SELECT CASE(ioutput)
+      CASE(c_dump_ex)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(ex * dt, r4)
+      CASE(c_dump_ey)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(ey * dt, r4)
+      CASE(c_dump_ez)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(ez * dt, r4)
+      CASE(c_dump_bx)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(bx * dt, r4)
+      CASE(c_dump_by)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(by * dt, r4)
+      CASE(c_dump_bz)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(bz * dt, r4)
+      CASE(c_dump_jx)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(jx * dt, r4)
+      CASE(c_dump_jy)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(jy * dt, r4)
+      CASE(c_dump_jz)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(jz * dt, r4)
+      CASE(c_dump_ekbar)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_ekbar(array, ispecies-species_sum)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_mass_density)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_mass_density(array, ispecies-species_sum)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_charge_density)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_charge_density(array, ispecies-species_sum)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_number_density)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_number_density(array, ispecies-species_sum)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_temperature)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_temperature(array, ispecies-species_sum)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        ENDDO
+        DEALLOCATE(array)
+      END SELECT
+    ELSE
+      SELECT CASE(ioutput)
+      CASE(c_dump_ex)
+        avg%array(:,:,1) = avg%array(:,:,1) + ex * dt
+      CASE(c_dump_ey)
+        avg%array(:,:,1) = avg%array(:,:,1) + ey * dt
+      CASE(c_dump_ez)
+        avg%array(:,:,1) = avg%array(:,:,1) + ez * dt
+      CASE(c_dump_bx)
+        avg%array(:,:,1) = avg%array(:,:,1) + bx * dt
+      CASE(c_dump_by)
+        avg%array(:,:,1) = avg%array(:,:,1) + by * dt
+      CASE(c_dump_bz)
+        avg%array(:,:,1) = avg%array(:,:,1) + bz * dt
+      CASE(c_dump_jx)
+        avg%array(:,:,1) = avg%array(:,:,1) + jx * dt
+      CASE(c_dump_jy)
+        avg%array(:,:,1) = avg%array(:,:,1) + jy * dt
+      CASE(c_dump_jz)
+        avg%array(:,:,1) = avg%array(:,:,1) + jz * dt
+      CASE(c_dump_ekbar)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_ekbar(array, ispecies-species_sum)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_mass_density)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_mass_density(array, ispecies-species_sum)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_charge_density)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_charge_density(array, ispecies-species_sum)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_number_density)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_number_density(array, ispecies-species_sum)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_temperature)
+        ALLOCATE(array(-2:nx+3,-2:ny+3))
+        DO ispecies = 1, n_species_local
+          CALL calc_temperature(array, ispecies-species_sum)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        ENDDO
+        DEALLOCATE(array)
+      END SELECT
+    ENDIF
 
   END SUBROUTINE average_field
 
@@ -565,15 +628,30 @@ CONTAINS
 
     IF (IAND(dumpmask(id), c_io_averaged) .NE. 0 &
         .AND. averaged_data(id)%started) THEN
-      averaged_data(id)%array = averaged_data(id)%array &
-          / averaged_data(id)%real_time
+      IF (averaged_data(id)%dump_single) THEN
+        averaged_data(id)%r4array = averaged_data(id)%r4array &
+            / REAL(averaged_data(id)%real_time, r4)
 
-      CALL sdf_write_plain_variable(sdf_handle, &
-          TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
-          TRIM(units), dims, stagger, 'grid', &
-          averaged_data(id)%array(:,:,1), subtype, subarray, convert)
+        CALL sdf_write_plain_variable(sdf_handle, &
+            TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
+            TRIM(units), dims, stagger, 'grid', &
+            averaged_data(id)%r4array(:,:,1), subtype_field_r4, &
+            subarray_field_r4)
 
-      averaged_data(id)%array = 0.0_num
+        averaged_data(id)%r4array = 0.0_num
+      ELSE
+        averaged_data(id)%array = averaged_data(id)%array &
+            / averaged_data(id)%real_time
+
+        CALL sdf_write_plain_variable(sdf_handle, &
+            TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
+            TRIM(units), dims, stagger, 'grid', &
+            averaged_data(id)%array(:,:,1), subtype_field, &
+            subarray_field)
+
+        averaged_data(id)%array = 0.0_num
+      ENDIF
+
       averaged_data(id)%real_time = 0.0_num
       averaged_data(id)%started = .FALSE.
     ENDIF
@@ -685,56 +763,110 @@ CONTAINS
     ! Write averaged data
     IF (IAND(iomask(id), c_io_averaged) .NE. 0 &
         .AND. averaged_data(id)%started) THEN
-      averaged_data(id)%array = averaged_data(id)%array &
-          / averaged_data(id)%real_time
+      IF (averaged_data(id)%dump_single) THEN
+        averaged_data(id)%r4array = averaged_data(id)%r4array &
+            / REAL(averaged_data(id)%real_time, r4)
 
-      species_sum = 0
-      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
-          .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-        species_sum = 1
-        CALL sdf_write_plain_variable(sdf_handle, &
-            TRIM(block_id) // '_averaged', &
-            'Derived/' // TRIM(name) // '_averaged', &
-            TRIM(units), dims, stagger, 'grid', &
-            averaged_data(id)%array(:,:,1), subtype, &
-            subarray, convert)
-      ENDIF
+        species_sum = 0
+        IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+            .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
+          species_sum = 1
+          CALL sdf_write_plain_variable(sdf_handle, &
+              TRIM(block_id) // '_averaged', &
+              'Derived/' // TRIM(name) // '_averaged', &
+              TRIM(units), dims, stagger, 'grid', &
+              averaged_data(id)%r4array(:,:,1), subtype_field_r4, &
+              subarray_field_r4)
+        ENDIF
 
-      IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
-        len1 = LEN_TRIM(block_id) + 10
-        len2 = LEN_TRIM(name) + 18
+        IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
+          len1 = LEN_TRIM(block_id) + 10
+          len2 = LEN_TRIM(name) + 18
 
-        DO ispecies = 1, n_species
-          len3 = LEN_TRIM(io_list(ispecies)%name)
-          len4 = len3
-          len5 = len3
-          IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
-          IF ((len2 + len3) > c_max_string_length) THEN
-            len5 = c_max_string_length - len2
-            IF (rank .EQ. 0) THEN
-              CALL integer_as_string((len2+len3), len_string)
-              PRINT*, '*** WARNING ***'
-              PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
-                  '_averaged/' // TRIM(io_list(ispecies)%name), &
-                  ' is truncated.'
-              PRINT*, 'Either shorten the species name or increase ', &
-                  'the size of "c_max_string_length" ', &
-                  'to at least ',TRIM(len_string)
+          DO ispecies = 1, n_species
+            len3 = LEN_TRIM(io_list(ispecies)%name)
+            len4 = len3
+            len5 = len3
+            IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
+            IF ((len2 + len3) > c_max_string_length) THEN
+              len5 = c_max_string_length - len2
+              IF (rank .EQ. 0) THEN
+                CALL integer_as_string((len2+len3), len_string)
+                PRINT*, '*** WARNING ***'
+                PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
+                    '_averaged/' // TRIM(io_list(ispecies)%name), &
+                    ' is truncated.'
+                PRINT*, 'Either shorten the species name or increase ', &
+                    'the size of "c_max_string_length" ', &
+                    'to at least ',TRIM(len_string)
+              ENDIF
             ENDIF
-          ENDIF
 
-          temp_block_id = TRIM(block_id) // '_averaged/' // &
-              TRIM(io_list(ispecies)%name(1:len4))
-          temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
-              TRIM(io_list(ispecies)%name(1:len5))
-          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-              averaged_data(id)%array(:,:,ispecies+species_sum), &
-              subtype, subarray, convert)
-        ENDDO
+            temp_block_id = TRIM(block_id) // '_averaged/' // &
+                TRIM(io_list(ispecies)%name(1:len4))
+            temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
+                TRIM(io_list(ispecies)%name(1:len5))
+            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
+                averaged_data(id)%r4array(:,:,ispecies+species_sum), &
+                subtype_field_r4, subarray_field_r4)
+          ENDDO
+        ENDIF
+
+        averaged_data(id)%r4array = 0.0_num
+      ELSE
+        averaged_data(id)%array = averaged_data(id)%array &
+            / averaged_data(id)%real_time
+
+        species_sum = 0
+        IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+            .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
+          species_sum = 1
+          CALL sdf_write_plain_variable(sdf_handle, &
+              TRIM(block_id) // '_averaged', &
+              'Derived/' // TRIM(name) // '_averaged', &
+              TRIM(units), dims, stagger, 'grid', &
+              averaged_data(id)%array(:,:,1), subtype_field, &
+              subarray_field)
+        ENDIF
+
+        IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
+          len1 = LEN_TRIM(block_id) + 10
+          len2 = LEN_TRIM(name) + 18
+
+          DO ispecies = 1, n_species
+            len3 = LEN_TRIM(io_list(ispecies)%name)
+            len4 = len3
+            len5 = len3
+            IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
+            IF ((len2 + len3) > c_max_string_length) THEN
+              len5 = c_max_string_length - len2
+              IF (rank .EQ. 0) THEN
+                CALL integer_as_string((len2+len3), len_string)
+                PRINT*, '*** WARNING ***'
+                PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
+                    '_averaged/' // TRIM(io_list(ispecies)%name), &
+                    ' is truncated.'
+                PRINT*, 'Either shorten the species name or increase ', &
+                    'the size of "c_max_string_length" ', &
+                    'to at least ',TRIM(len_string)
+              ENDIF
+            ENDIF
+
+            temp_block_id = TRIM(block_id) // '_averaged/' // &
+                TRIM(io_list(ispecies)%name(1:len4))
+            temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
+                TRIM(io_list(ispecies)%name(1:len5))
+            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
+                averaged_data(id)%array(:,:,ispecies+species_sum), &
+                subtype_field, subarray_field)
+          ENDDO
+        ENDIF
+
+        averaged_data(id)%array = 0.0_num
       ENDIF
 
-      averaged_data(id)%array = 0.0_num
       averaged_data(id)%real_time = 0.0_num
       averaged_data(id)%started = .FALSE.
     ENDIF

@@ -302,6 +302,9 @@ CONTAINS
           mask = IAND(mask, NOT(c_io_averaged))
         ELSE
           any_average = .TRUE.
+          IF (IAND(mask, c_io_average_single) .NE. 0 .AND. num .NE. r4) THEN
+            averaged_data(mask_element)%dump_single = .TRUE.
+          ENDIF
         ENDIF
       ENDIF
 

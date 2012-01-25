@@ -234,8 +234,13 @@ CONTAINS
 
         IF (nspec_local .LE. 0) CYCLE
 
-        ALLOCATE(averaged_data(io)%array(-2:nx+3, -2:ny+3, nspec_local))
-        averaged_data(io)%array = 0.0_num
+        IF (averaged_data(io)%dump_single) THEN
+          ALLOCATE(averaged_data(io)%r4array(-2:nx+3, -2:ny+3, nspec_local))
+          averaged_data(io)%r4array = 0.0_num
+        ELSE
+          ALLOCATE(averaged_data(io)%array(-2:nx+3, -2:ny+3, nspec_local))
+          averaged_data(io)%array = 0.0_num
+        ENDIF
         averaged_data(io)%real_time = 0.0_num
         averaged_data(io)%started = .FALSE.
       ENDIF
