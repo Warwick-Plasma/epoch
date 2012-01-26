@@ -302,7 +302,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: step
     LOGICAL, INTENT(OUT) :: print_arrays, last_call
     INTEGER :: id
-    REAL(num) :: t0, t1, time_first
+    REAL(num) :: t0, t1, time_first, av_time_first
 
     print_arrays = .FALSE.
     last_call = .FALSE.
@@ -330,9 +330,15 @@ CONTAINS
       ENDIF
     ENDIF
 
+    IF (dt * nsteps .LT. time_first) THEN
+      av_time_first = dt * nsteps
+    ELSE
+      av_time_first = time_first
+    ENDIF
+
     DO id = 1, num_vars_to_dump
       IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
-        IF (time .GE. time_first - average_time) THEN
+        IF (time .GE. av_time_first - average_time) THEN
           CALL average_field(id)
         ENDIF
       ENDIF
