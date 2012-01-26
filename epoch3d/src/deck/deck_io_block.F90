@@ -291,7 +291,7 @@ CONTAINS
     ! Averaging info not compulsory unless averaged variable selected
     IF (.NOT. any_average) io_block_done(i+7:i+8) = .TRUE.
 
-    IF (.NOT. io_block_done(i+7) .AND. .NOT. io_block_done(i+7)) THEN
+    IF (.NOT. io_block_done(i+7) .AND. .NOT. io_block_done(i+8)) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*)
