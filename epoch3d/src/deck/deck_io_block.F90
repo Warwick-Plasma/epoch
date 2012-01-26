@@ -289,20 +289,18 @@ CONTAINS
     ! Averaging info not compulsory unless averaged variable selected
     IF (.NOT. any_average) io_block_done(i+7:i+8) = .TRUE.
 
-    DO index = i+7, i+8
-      IF (.NOT. io_block_done(index)) THEN
-        IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*)
-            WRITE(io,*) '*** ERROR ***'
-            WRITE(io,*) 'Required output block element ', &
-                TRIM(ADJUSTL(io_block_name(index))), &
-                ' absent. Please create this entry in the input deck'
-          ENDDO
-        ENDIF
-        errcode = c_err_missing_elements
+    IF (.NOT. io_block_done(i+7) .AND. .NOT. io_block_done(i+7)) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Required output block element ', &
+              TRIM(ADJUSTL(io_block_name(i+7))), &
+              ' absent. Please create this entry in the input deck'
+        ENDDO
       ENDIF
-    ENDDO
+      errcode = c_err_missing_elements
+    ENDIF
 
     IF (dt_average .GT. dt_snapshot) THEN
       IF (rank .EQ. 0) THEN
