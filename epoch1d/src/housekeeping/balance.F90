@@ -603,8 +603,6 @@ CONTAINS
     DEALLOCATE(sendcounts, recvcounts, oddlist, evnlist)
     DEALLOCATE(pointers_send, pointers_recv)
 
-    io_list = species_list
-
   END SUBROUTINE distribute_particles
 
 END MODULE balance

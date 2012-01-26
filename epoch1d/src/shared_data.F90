@@ -637,7 +637,7 @@ MODULE shared_data
 
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
-  TYPE(particle_species), DIMENSION(:), POINTER :: io_list
+  TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x
 

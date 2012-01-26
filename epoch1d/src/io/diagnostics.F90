@@ -161,7 +161,10 @@ CONTAINS
     DO isubset = 1, n_subsets + 1
       done_species_offset_init = .FALSE.
       done_subset_init = .FALSE.
-      IF (isubset .GT. 1) iomask = subset_list(isubset-1)%dumpmask
+      IF (isubset .GT. 1) THEN
+        iomask = subset_list(isubset-1)%dumpmask
+        io_list => io_list_data
+      ENDIF
 
       CALL write_particle_grid(code)
 
@@ -245,13 +248,13 @@ CONTAINS
           CALL append_partlist(species_list(i)%attached_list, &
               io_list(i)%attached_list)
         ENDDO
+        DO i = 1, n_species
+          CALL create_empty_partlist(io_list(i)%attached_list)
+        ENDDO
       ENDIF
-      DO i = 1, n_species
-        CALL create_empty_partlist(io_list(i)%attached_list)
-      ENDDO
     ENDDO
 
-    io_list = species_list
+    io_list => species_list
 
     IF (IAND(dumpmask(c_dump_dist_fns), code) .NE. 0) THEN
       CALL write_dist_fns(sdf_handle, code)
@@ -864,9 +867,11 @@ CONTAINS
     done_subset_init = .TRUE.
 
     IF (isubset .EQ. 1) THEN
-      io_list = species_list
+      io_list => species_list
       RETURN
     ENDIF
+
+    io_list => io_list_data
 
     l = isubset - 1
     DO i = 1, n_species

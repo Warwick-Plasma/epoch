@@ -99,8 +99,6 @@ PROGRAM pic
   ! .TRUE. to over_ride balance fraction check
   IF (npart_global .GT. 0) CALL balance_workload(.TRUE.)
 
-  io_list = species_list
-
   CALL particle_bcs
   CALL efield_bcs
   CALL bfield_final_bcs
