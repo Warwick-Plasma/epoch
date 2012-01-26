@@ -153,6 +153,9 @@ CONTAINS
     IF (str_cmp(name, 'dir_pz')) as_constant = c_const_dir_pz
     IF (str_cmp(name, 'dir_en')) as_constant = c_const_dir_en
     IF (str_cmp(name, 'dir_gamma_m1')) as_constant = c_const_dir_gamma_m1
+    IF (str_cmp(name, 'dir_xy_angle')) as_constant = c_const_dir_xy_angle
+    IF (str_cmp(name, 'dir_yz_angle')) as_constant = c_const_dir_yz_angle
+    IF (str_cmp(name, 'dir_zx_angle')) as_constant = c_const_dir_zx_angle
 
     ! User submitted constant using 'Register'
     DO i = 1, n_new_constant

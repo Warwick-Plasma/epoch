@@ -113,12 +113,13 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid1, grid2, grid3
     LOGICAL, DIMENSION(c_df_maxdims) :: parallel
     REAL(num), DIMENSION(c_df_maxdims) :: dgrid
-    REAL(num) :: current_data, temp_data
+    REAL(num) :: current_data, temp_data, theta, p, px, py, pz
     INTEGER :: idim, idir
     LOGICAL, DIMENSION(c_df_maxdims) :: calc_range
     LOGICAL :: calc_ranges
 
     LOGICAL :: use_x, use_y, use_z, need_reduce
+    LOGICAL :: use_xy_angle, use_yz_angle, use_zx_angle
     INTEGER, DIMENSION(c_df_maxdims) :: start_local, global_resolution
     INTEGER :: color, comm_new
     INTEGER :: new_type, array_type
@@ -145,6 +146,9 @@ CONTAINS
     start_local = 1
     calc_range = .FALSE.
     calc_ranges = .FALSE.
+    use_xy_angle = .FALSE.
+    use_yz_angle = .FALSE.
+    use_zx_angle = .FALSE.
 
     current_data = 0.0_num
 #ifndef PER_PARTICLE_CHARGE_MASS
@@ -224,6 +228,21 @@ CONTAINS
         labels(idim) = 'gamma-1'
         units(idim)  = ''
 
+      ELSE IF (direction(idim) .EQ. c_dir_xy_angle) THEN
+        use_xy_angle = .TRUE.
+        labels(idim) = 'xy_angle'
+        units(idim)  = 'radians'
+
+      ELSE IF (direction(idim) .EQ. c_dir_yz_angle) THEN
+        use_yz_angle = .TRUE.
+        labels(idim) = 'yz_angle'
+        units(idim)  = 'radians'
+
+      ELSE IF (direction(idim) .EQ. c_dir_zx_angle) THEN
+        use_zx_angle = .TRUE.
+        labels(idim) = 'zx_angle'
+        units(idim)  = 'radians'
+
       ELSE
         IF (rank .EQ. 0) THEN
           WRITE(*,*) '*** WARNING ***'
@@ -251,6 +270,9 @@ CONTAINS
         part_mc2 = part_mc * c
 #endif
         gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
+        px = current%part_p(1)
+        py = current%part_p(2)
+        pz = current%part_p(3)
 
         particle_data(1:c_ndims) = current%part_pos
         IF (io_list(species)%species_type .EQ. c_species_id_photon) THEN
@@ -266,9 +288,62 @@ CONTAINS
           ! Can't define gamma for photon so one is as good as anything
           particle_data(c_dir_gamma_m1) = 1.0_num
         ELSE
-          particle_data(c_dir_px:c_dir_pz) = current%part_p
+          particle_data(c_dir_px) = px
+          particle_data(c_dir_py) = py
+          particle_data(c_dir_pz) = pz
           particle_data(c_dir_en) = gamma_m1 * part_mc2
           particle_data(c_dir_gamma_m1) = gamma_m1
+        ENDIF
+
+        IF (use_xy_angle) THEN
+          p = SQRT(px**2 + py**2)
+          IF (p .LT. c_non_zero) CYCLE
+
+          theta = ASIN(py / p)
+          IF (px .GE. 0.0_num) THEN
+            IF (py .GE. 0.0_num) THEN
+              temp_data = theta
+            ELSE
+              temp_data = theta + 2.0_num * pi
+            ENDIF
+          ELSE
+            temp_data = pi - theta
+          ENDIF
+          particle_data(c_dir_xy_angle) = temp_data
+        ENDIF
+
+        IF (use_yz_angle) THEN
+          p = SQRT(py**2 + pz**2)
+          IF (p .LT. c_non_zero) CYCLE
+
+          theta = ASIN(pz / p)
+          IF (px .GE. 0.0_num) THEN
+            IF (py .GE. 0.0_num) THEN
+              temp_data = theta
+            ELSE
+              temp_data = theta + 2.0_num * pi
+            ENDIF
+          ELSE
+            temp_data = pi - theta
+          ENDIF
+          particle_data(c_dir_yz_angle) = temp_data
+        ENDIF
+
+        IF (use_zx_angle) THEN
+          p = SQRT(pz**2 + px**2)
+          IF (p .LT. c_non_zero) CYCLE
+
+          theta = ASIN(px / p)
+          IF (px .GE. 0.0_num) THEN
+            IF (py .GE. 0.0_num) THEN
+              temp_data = theta
+            ELSE
+              temp_data = theta + 2.0_num * pi
+            ENDIF
+          ELSE
+            temp_data = pi - theta
+          ENDIF
+          particle_data(c_dir_zx_angle) = temp_data
         ENDIF
 
         current => current%next
@@ -328,6 +403,9 @@ CONTAINS
       part_weight = current%weight
 #endif
       gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
+      px = current%part_p(1)
+      py = current%part_p(2)
+      pz = current%part_p(3)
 
       particle_data(1:c_ndims) = current%part_pos
       IF (io_list(species)%species_type .EQ. c_species_id_photon) THEN
@@ -343,9 +421,62 @@ CONTAINS
         ! Can't define gamma for photon so one is as good as anything
         particle_data(c_dir_gamma_m1) = 1.0_num
       ELSE
-        particle_data(c_dir_px:c_dir_pz) = current%part_p
+        particle_data(c_dir_px) = px
+        particle_data(c_dir_py) = py
+        particle_data(c_dir_pz) = pz
         particle_data(c_dir_en) = gamma_m1 * part_mc2
         particle_data(c_dir_gamma_m1) = gamma_m1
+      ENDIF
+
+      IF (use_xy_angle) THEN
+        p = SQRT(px**2 + py**2)
+        IF (p .LT. c_non_zero) CYCLE
+
+        theta = ASIN(py / p)
+        IF (px .GE. 0.0_num) THEN
+          IF (py .GE. 0.0_num) THEN
+            temp_data = theta
+          ELSE
+            temp_data = theta + 2.0_num * pi
+          ENDIF
+        ELSE
+          temp_data = pi - theta
+        ENDIF
+        particle_data(c_dir_xy_angle) = temp_data
+      ENDIF
+
+      IF (use_yz_angle) THEN
+        p = SQRT(py**2 + pz**2)
+        IF (p .LT. c_non_zero) CYCLE
+
+        theta = ASIN(pz / p)
+        IF (px .GE. 0.0_num) THEN
+          IF (py .GE. 0.0_num) THEN
+            temp_data = theta
+          ELSE
+            temp_data = theta + 2.0_num * pi
+          ENDIF
+        ELSE
+          temp_data = pi - theta
+        ENDIF
+        particle_data(c_dir_yz_angle) = temp_data
+      ENDIF
+
+      IF (use_zx_angle) THEN
+        p = SQRT(pz**2 + px**2)
+        IF (p .LT. c_non_zero) CYCLE
+
+        theta = ASIN(px / p)
+        IF (px .GE. 0.0_num) THEN
+          IF (py .GE. 0.0_num) THEN
+            temp_data = theta
+          ELSE
+            temp_data = theta + 2.0_num * pi
+          ENDIF
+        ELSE
+          temp_data = pi - theta
+        ENDIF
+        particle_data(c_dir_zx_angle) = temp_data
       ENDIF
 
       current => current%next

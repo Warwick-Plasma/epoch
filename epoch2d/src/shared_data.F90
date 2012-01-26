@@ -122,6 +122,14 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_pz = c_ndims + 3
   INTEGER, PARAMETER :: c_dir_en = c_ndims + 4
   INTEGER, PARAMETER :: c_dir_gamma_m1 = c_ndims + 5
+  INTEGER, PARAMETER :: c_dir_xy_angle = c_ndims + 6
+  INTEGER, PARAMETER :: c_dir_yz_angle = c_ndims + 7
+  INTEGER, PARAMETER :: c_dir_zx_angle = c_ndims + 8
+
+  ! constants defining the maximum number of dimensions and directions
+  ! in a distribution function
+  INTEGER, PARAMETER :: c_df_maxdirs = c_dir_zx_angle
+  INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! define flags
   INTEGER(8), PARAMETER :: c_def_particle_debug = 2**0
@@ -141,11 +149,6 @@ MODULE constants
   INTEGER(8), PARAMETER :: c_def_particle_id  = 2**14
   INTEGER(8), PARAMETER :: c_def_photons = 2**15
   INTEGER(8), PARAMETER :: c_def_trident_photons = 2**16
-
-  ! constants defining the maximum number of dimensions and directions
-  ! in a distribution function
-  INTEGER, PARAMETER :: c_df_maxdirs = 5 + c_ndims
-  INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -274,6 +277,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_pz = 85
   INTEGER, PARAMETER :: c_const_dir_en = 86
   INTEGER, PARAMETER :: c_const_dir_gamma_m1 = 87
+  INTEGER, PARAMETER :: c_const_dir_xy_angle = 88
+  INTEGER, PARAMETER :: c_const_dir_yz_angle = 89
+  INTEGER, PARAMETER :: c_const_dir_zx_angle = 90
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
