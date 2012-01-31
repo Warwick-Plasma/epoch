@@ -59,7 +59,6 @@ PROGRAM pic
   CALL mpi_initialise  ! mpi_routines.f90
   CALL after_control   ! setup.f90
   CALL open_files      ! setup.f90
-  CALL allocate_window ! window.f90
 
   ! restart flag is set
   IF (ic_from_restart) THEN
@@ -82,6 +81,7 @@ PROGRAM pic
   ENDIF
 
   CALL manual_load
+  CALL initialise_window ! window.f90
   IF (.NOT. ic_from_restart) CALL deallocate_ic
 
   npart_global = 0

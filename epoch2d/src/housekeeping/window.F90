@@ -11,7 +11,7 @@ MODULE window
 
 CONTAINS
 
-  SUBROUTINE allocate_window
+  SUBROUTINE initialise_window
 
     INTEGER :: ispecies
 
@@ -21,6 +21,10 @@ CONTAINS
     DO ispecies = 1, n_species
       ALLOCATE(species_list(ispecies)%density(-2:ny+3))
       ALLOCATE(species_list(ispecies)%temperature(-2:ny+3, 1:3))
+      species_list(ispecies)%density = &
+          initial_conditions(ispecies)%density(nx,:)
+      species_list(ispecies)%temperature = &
+          initial_conditions(ispecies)%temp(nx,:,:)
     ENDDO
     window_started = .FALSE.
 #else
@@ -31,7 +35,7 @@ CONTAINS
     CALL MPI_ABORT(comm, errcode, errcode)
 #endif
 
-  END SUBROUTINE allocate_window
+  END SUBROUTINE initialise_window
 
 
 
@@ -76,20 +80,28 @@ CONTAINS
       CALL remove_particles
 
       ! Shift fields around
-      CALL shift_field(ex)
-      CALL shift_field(ey)
-      CALL shift_field(ez)
-
-      CALL shift_field(jx)
-      CALL shift_field(jy)
-      CALL shift_field(jz)
-
-      CALL shift_field(bx)
-      CALL shift_field(by)
-      CALL shift_field(bz)
+      CALL shift_fields
     ENDDO
 
   END SUBROUTINE shift_window
+
+
+
+  SUBROUTINE shift_fields
+
+    CALL shift_field(ex)
+    CALL shift_field(ey)
+    CALL shift_field(ez)
+
+    CALL shift_field(bx)
+    CALL shift_field(by)
+    CALL shift_field(bz)
+
+    CALL shift_field(jx)
+    CALL shift_field(jy)
+    CALL shift_field(jz)
+
+  END SUBROUTINE shift_fields
 
 
 

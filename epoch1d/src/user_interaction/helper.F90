@@ -16,12 +16,6 @@ CONTAINS
 
     DO ispecies = 1, n_species
       species=>species_list(ispecies)
-      IF (move_window) THEN
-        species_list(ispecies)%density = &
-            initial_conditions(ispecies)%density(nx)
-        species_list(ispecies)%temperature = &
-            initial_conditions(ispecies)%temp(nx,:)
-      ENDIF
 #ifdef PER_PARTICLE_WEIGHT
       CALL setup_particle_density(initial_conditions(ispecies)%density, &
           species, initial_conditions(ispecies)%density_min, &
