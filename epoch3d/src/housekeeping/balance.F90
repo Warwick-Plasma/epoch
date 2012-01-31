@@ -384,6 +384,78 @@ CONTAINS
       current=>current%next
     ENDDO
 
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, ex_x_min, temp2d)
+    DEALLOCATE(ex_x_min)
+    ALLOCATE(ex_x_min(-2:ny_new+3, -2:nz_new+3))
+    ex_x_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, ex_x_max, temp2d)
+    DEALLOCATE(ex_x_max)
+    ALLOCATE(ex_x_max(-2:ny_new+3, -2:nz_new+3))
+    ex_x_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, ey_x_min, temp2d)
+    DEALLOCATE(ey_x_min)
+    ALLOCATE(ey_x_min(-2:ny_new+3, -2:nz_new+3))
+    ey_x_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, ey_x_max, temp2d)
+    DEALLOCATE(ey_x_max)
+    ALLOCATE(ey_x_max(-2:ny_new+3, -2:nz_new+3))
+    ey_x_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, ez_x_min, temp2d)
+    DEALLOCATE(ez_x_min)
+    ALLOCATE(ez_x_min(-2:ny_new+3, -2:nz_new+3))
+    ez_x_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, ez_x_max, temp2d)
+    DEALLOCATE(ez_x_max)
+    ALLOCATE(ez_x_max(-2:ny_new+3, -2:nz_new+3))
+    ez_x_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, bx_x_min, temp2d)
+    DEALLOCATE(bx_x_min)
+    ALLOCATE(bx_x_min(-2:ny_new+3, -2:nz_new+3))
+    bx_x_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, bx_x_max, temp2d)
+    DEALLOCATE(bx_x_max)
+    ALLOCATE(bx_x_max(-2:ny_new+3, -2:nz_new+3))
+    bx_x_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, by_x_min, temp2d)
+    DEALLOCATE(by_x_min)
+    ALLOCATE(by_x_min(-2:ny_new+3, -2:nz_new+3))
+    by_x_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, by_x_max, temp2d)
+    DEALLOCATE(by_x_max)
+    ALLOCATE(by_x_max(-2:ny_new+3, -2:nz_new+3))
+    by_x_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, bz_x_min, temp2d)
+    DEALLOCATE(bz_x_min)
+    ALLOCATE(bz_x_min(-2:ny_new+3, -2:nz_new+3))
+    bz_x_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_x, bz_x_max, temp2d)
+    DEALLOCATE(bz_x_max)
+    ALLOCATE(bz_x_max(-2:ny_new+3, -2:nz_new+3))
+    bz_x_max = temp2d
+
     DEALLOCATE(temp2d)
     ALLOCATE(temp2d(-2:nx_new+3, -2:nz_new+3))
 
@@ -421,6 +493,78 @@ CONTAINS
       current=>current%next
     ENDDO
 
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, ex_y_min, temp2d)
+    DEALLOCATE(ex_y_min)
+    ALLOCATE(ex_y_min(-2:nx_new+3, -2:nz_new+3))
+    ex_y_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, ex_y_max, temp2d)
+    DEALLOCATE(ex_y_max)
+    ALLOCATE(ex_y_max(-2:nx_new+3, -2:nz_new+3))
+    ex_y_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, ey_y_min, temp2d)
+    DEALLOCATE(ey_y_min)
+    ALLOCATE(ey_y_min(-2:nx_new+3, -2:nz_new+3))
+    ey_y_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, ey_y_max, temp2d)
+    DEALLOCATE(ey_y_max)
+    ALLOCATE(ey_y_max(-2:nx_new+3, -2:nz_new+3))
+    ey_y_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, ez_y_min, temp2d)
+    DEALLOCATE(ez_y_min)
+    ALLOCATE(ez_y_min(-2:nx_new+3, -2:nz_new+3))
+    ez_y_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, ez_y_max, temp2d)
+    DEALLOCATE(ez_y_max)
+    ALLOCATE(ez_y_max(-2:nx_new+3, -2:nz_new+3))
+    ez_y_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, bx_y_min, temp2d)
+    DEALLOCATE(bx_y_min)
+    ALLOCATE(bx_y_min(-2:nx_new+3, -2:nz_new+3))
+    bx_y_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, bx_y_max, temp2d)
+    DEALLOCATE(bx_y_max)
+    ALLOCATE(bx_y_max(-2:nx_new+3, -2:nz_new+3))
+    bx_y_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, by_y_min, temp2d)
+    DEALLOCATE(by_y_min)
+    ALLOCATE(by_y_min(-2:nx_new+3, -2:nz_new+3))
+    by_y_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, by_y_max, temp2d)
+    DEALLOCATE(by_y_max)
+    ALLOCATE(by_y_max(-2:nx_new+3, -2:nz_new+3))
+    by_y_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, bz_y_min, temp2d)
+    DEALLOCATE(bz_y_min)
+    ALLOCATE(bz_y_min(-2:nx_new+3, -2:nz_new+3))
+    bz_y_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_y, bz_y_max, temp2d)
+    DEALLOCATE(bz_y_max)
+    ALLOCATE(bz_y_max(-2:nx_new+3, -2:nz_new+3))
+    bz_y_max = temp2d
+
     DEALLOCATE(temp2d)
     ALLOCATE(temp2d(-2:nx_new+3, -2:ny_new+3))
 
@@ -457,6 +601,78 @@ CONTAINS
 
       current=>current%next
     ENDDO
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, ex_z_min, temp2d)
+    DEALLOCATE(ex_z_min)
+    ALLOCATE(ex_z_min(-2:nx_new+3, -2:ny_new+3))
+    ex_z_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, ex_z_max, temp2d)
+    DEALLOCATE(ex_z_max)
+    ALLOCATE(ex_z_max(-2:nx_new+3, -2:ny_new+3))
+    ex_z_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, ey_z_min, temp2d)
+    DEALLOCATE(ey_z_min)
+    ALLOCATE(ey_z_min(-2:nx_new+3, -2:ny_new+3))
+    ey_z_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, ey_z_max, temp2d)
+    DEALLOCATE(ey_z_max)
+    ALLOCATE(ey_z_max(-2:nx_new+3, -2:ny_new+3))
+    ey_z_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, ez_z_min, temp2d)
+    DEALLOCATE(ez_z_min)
+    ALLOCATE(ez_z_min(-2:nx_new+3, -2:ny_new+3))
+    ez_z_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, ez_z_max, temp2d)
+    DEALLOCATE(ez_z_max)
+    ALLOCATE(ez_z_max(-2:nx_new+3, -2:ny_new+3))
+    ez_z_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, bx_z_min, temp2d)
+    DEALLOCATE(bx_z_min)
+    ALLOCATE(bx_z_min(-2:nx_new+3, -2:ny_new+3))
+    bx_z_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, bx_z_max, temp2d)
+    DEALLOCATE(bx_z_max)
+    ALLOCATE(bx_z_max(-2:nx_new+3, -2:ny_new+3))
+    bx_z_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, by_z_min, temp2d)
+    DEALLOCATE(by_z_min)
+    ALLOCATE(by_z_min(-2:nx_new+3, -2:ny_new+3))
+    by_z_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, by_z_max, temp2d)
+    DEALLOCATE(by_z_max)
+    ALLOCATE(by_z_max(-2:nx_new+3, -2:ny_new+3))
+    by_z_max = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, bz_z_min, temp2d)
+    DEALLOCATE(bz_z_min)
+    ALLOCATE(bz_z_min(-2:nx_new+3, -2:ny_new+3))
+    bz_z_min = temp2d
+
+    temp2d = 0.0_num
+    CALL redistribute_field_2d(new_domain, c_dir_z, bz_z_max, temp2d)
+    DEALLOCATE(bz_z_max)
+    ALLOCATE(bz_z_max(-2:nx_new+3, -2:ny_new+3))
+    bz_z_max = temp2d
 
     DEALLOCATE(temp2d)
 

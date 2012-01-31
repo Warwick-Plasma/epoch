@@ -91,18 +91,17 @@ CONTAINS
     CALL shift_field(jz)
 
     IF (x_max_boundary) THEN
-      ! Fix incoming field cell. A future version will use
-      ! equilibrium fields, rather than zero.
-      ex(nx)   = 0.0_num
-      ex(nx+1) = 0.0_num
-      ey(nx+1) = 0.0_num
-      ez(nx+1) = 0.0_num
+      ! Fix incoming field cell.
+      ex(nx)   = ex_x_max
+      ex(nx+1) = ex_x_max
+      ey(nx+1) = ey_x_max
+      ez(nx+1) = ez_x_max
       ex(nx-1) = 0.5_num * (ex(nx-2) + ex(nx))
       ey(nx)   = 0.5_num * (ey(nx-1) + ey(nx+1))
       ez(nx)   = 0.5_num * (ez(nx-1) + ez(nx+1))
-      bx(nx+1) = 0.0_num
-      by(nx)   = 0.0_num
-      bz(nx)   = 0.0_num
+      bx(nx+1) = bx_x_max
+      by(nx)   = by_x_max
+      bz(nx)   = bz_x_max
       bx(nx)   = 0.5_num * (bx(nx-1) + bx(nx+1))
       by(nx-1) = 0.5_num * (by(nx-2) + by(nx))
       bz(nx-1) = 0.5_num * (bz(nx-2) + bz(nx))

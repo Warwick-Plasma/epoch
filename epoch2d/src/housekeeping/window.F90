@@ -105,18 +105,17 @@ CONTAINS
 
     IF (x_max_boundary) THEN
       DO j = -2, ny+3
-        ! Fix incoming field cell. A future version will use
-        ! equilibrium fields, rather than zero.
-        ex(nx,j)   = 0.0_num
-        ex(nx+1,j) = 0.0_num
-        ey(nx+1,j) = 0.0_num
-        ez(nx+1,j) = 0.0_num
+        ! Fix incoming field cell.
+        ex(nx,j)   = ex_x_max(j)
+        ex(nx+1,j) = ex_x_max(j)
+        ey(nx+1,j) = ey_x_max(j)
+        ez(nx+1,j) = ez_x_max(j)
         ex(nx-1,j) = 0.5_num * (ex(nx-2,j) + ex(nx,j))
         ey(nx,j)   = 0.5_num * (ey(nx-1,j) + ey(nx+1,j))
         ez(nx,j)   = 0.5_num * (ez(nx-1,j) + ez(nx+1,j))
-        bx(nx+1,j) = 0.0_num
-        by(nx,j)   = 0.0_num
-        bz(nx,j)   = 0.0_num
+        bx(nx+1,j) = bx_x_max(j)
+        by(nx,j)   = by_x_max(j)
+        bz(nx,j)   = bz_x_max(j)
         bx(nx,j)   = 0.5_num * (bx(nx-1,j) + bx(nx+1,j))
         by(nx-1,j) = 0.5_num * (by(nx-2,j) + by(nx,j))
         bz(nx-1,j) = 0.5_num * (bz(nx-2,j) + bz(nx,j))

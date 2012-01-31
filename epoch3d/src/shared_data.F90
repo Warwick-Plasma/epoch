@@ -525,6 +525,27 @@ MODULE shared_data
   LOGICAL :: smooth_currents
   REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
 
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex_x_min, ex_x_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ey_x_min, ey_x_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ez_x_min, ez_x_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bx_x_min, bx_x_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: by_x_min, by_x_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bz_x_min, bz_x_max
+
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex_y_min, ex_y_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ey_y_min, ey_y_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ez_y_min, ez_y_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bx_y_min, bx_y_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: by_y_min, by_y_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bz_y_min, bz_y_max
+
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex_z_min, ex_z_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ey_z_min, ey_z_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ez_z_min, ez_z_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bx_z_min, bx_z_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: by_z_min, by_z_max
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bz_z_min, bz_z_max
+
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
 

@@ -147,6 +147,7 @@ CONTAINS
     ENDDO
 
     bz(0) = sum * ( 4.0_num * fplus &
+        + 2.0_num * (ey_x_min + c * bz_x_min) &
         - 2.0_num * ey(1) &
         + dt_eps * jy(1) &
         + diff * bz(1))
@@ -165,6 +166,7 @@ CONTAINS
     ENDDO
 
     by(0) = sum * (-4.0_num * fplus &
+        - 2.0_num * (ez_x_min - c * by_x_min) &
         + 2.0_num * ez(1) &
         - dt_eps * jz(1) &
         + diff * by(1))
@@ -202,6 +204,7 @@ CONTAINS
     ENDDO
 
     bz(nx) = sum * (-4.0_num * fneg &
+        - 2.0_num * (ey_x_max - c * bz_x_max) &
         + 2.0_num * ey(nx) &
         - dt_eps * jy(nx) &
         + diff * bz(nx-1))
@@ -220,6 +223,7 @@ CONTAINS
     ENDDO
 
     by(nx) = sum * ( 4.0_num * fneg &
+        + 2.0_num * (ez_x_max + c * by_x_max) &
         - 2.0_num * ez(nx) &
         + dt_eps * jz(nx) &
         + diff * by(nx-1))
@@ -238,10 +242,12 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(0) = 0.0_num
+    bx(0) = bx_x_min
     bz(0) = sum * (-2.0_num * ey(1) &
+        + 2.0_num * (ey_x_min + c * bz_x_min) &
         + dt_eps * jy(1) + diff * bz(1))
     by(0) = sum * ( 2.0_num * ez(1) &
+        - 2.0_num * (ez_x_min - c * by_x_min) &
         - dt_eps * jz(1) + diff * by(1))
 
   END SUBROUTINE outflow_bcs_x_min
@@ -258,10 +264,12 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(nx+1) = 0.0_num
+    bx(nx+1) = bx_x_max
     bz(nx) = sum * ( 2.0_num * ey(nx) &
+        - 2.0_num * (ey_x_max - c * bz_x_max) &
         - dt_eps * jy(nx) + diff * bz(nx-1))
     by(nx) = sum * (-2.0_num * ez(nx) &
+        + 2.0_num * (ez_x_max + c * by_x_max) &
         + dt_eps * jz(nx) + diff * by(nx-1))
 
   END SUBROUTINE outflow_bcs_x_max

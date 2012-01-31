@@ -127,18 +127,17 @@ CONTAINS
     IF (x_max_boundary) THEN
       DO k = -2, nz+3
         DO j = -2, ny+3
-          ! Fix incoming field cell. A future version will use
-          ! equilibrium fields, rather than zero.
-          ex(nx,j,k)   = 0.0_num
-          ex(nx+1,j,k) = 0.0_num
-          ey(nx+1,j,k) = 0.0_num
-          ez(nx+1,j,k) = 0.0_num
+          ! Fix incoming field cell.
+          ex(nx,j,k)   = ex_x_max(j,k)
+          ex(nx+1,j,k) = ex_x_max(j,k)
+          ey(nx+1,j,k) = ey_x_max(j,k)
+          ez(nx+1,j,k) = ez_x_max(j,k)
           ex(nx-1,j,k) = 0.5_num * (ex(nx-2,j,k) + ex(nx,j,k))
           ey(nx,j,k)   = 0.5_num * (ey(nx-1,j,k) + ey(nx+1,j,k))
           ez(nx,j,k)   = 0.5_num * (ez(nx-1,j,k) + ez(nx+1,j,k))
-          bx(nx+1,j,k) = 0.0_num
-          by(nx,j,k)   = 0.0_num
-          bz(nx,j,k)   = 0.0_num
+          bx(nx+1,j,k) = bx_x_max(j,k)
+          by(nx,j,k)   = by_x_max(j,k)
+          bz(nx,j,k)   = bz_x_max(j,k)
           bx(nx,j,k)   = 0.5_num * (bx(nx-1,j,k) + bx(nx+1,j,k))
           by(nx-1,j,k) = 0.5_num * (by(nx-2,j,k) + by(nx,j,k))
           bz(nx-1,j,k) = 0.5_num * (bz(nx-2,j,k) + bz(nx,j,k))

@@ -153,6 +153,7 @@ CONTAINS
 
     CALL setup_data_averaging
     CALL setup_split_particles
+    CALL setup_field_boundaries
 
   END SUBROUTINE after_deck_last
 
@@ -229,6 +230,25 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE setup_species
+
+
+
+  SUBROUTINE setup_field_boundaries
+
+    ex_x_min = ex(0)
+    ey_x_min = ey(0)
+    ez_x_min = ez(0)
+    bx_x_min = bx(0)
+    by_x_min = by(0)
+    bz_x_min = bz(0)
+    ex_x_max = ex(nx+1)
+    ey_x_max = ey(nx+1)
+    ez_x_max = ez(nx+1)
+    bx_x_max = bx(nx+1)
+    by_x_max = by(nx+1)
+    bz_x_max = bz(nx+1)
+
+  END SUBROUTINE setup_field_boundaries
 
 
 

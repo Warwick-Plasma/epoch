@@ -198,6 +198,7 @@ CONTAINS
     ENDDO
 
     bz(0, 1:ny) = sum * ( 4.0_num * fplus &
+        + 2.0_num * (ey_x_min(1:ny) + c * bz_x_min(1:ny)) &
         - 2.0_num * ey(1, 1:ny) &
         + dt_eps * jy(1, 1:ny) &
         + diff * bz(1, 1:ny))
@@ -217,6 +218,7 @@ CONTAINS
     ENDDO
 
     by(0, 1:ny) = sum * (-4.0_num * fplus &
+        - 2.0_num * (ez_x_min(1:ny) - c * by_x_min(1:ny)) &
         + 2.0_num * ez(1, 1:ny) &
         - ly * (bx(1, 1:ny+1) - bx(1, 0:ny)) &
         - dt_eps * jz(1, 1:ny) &
@@ -260,6 +262,7 @@ CONTAINS
     ENDDO
 
     bz(nx, 1:ny) = sum * (-4.0_num * fneg &
+        - 2.0_num * (ey_x_max(1:ny) - c * bz_x_max(1:ny)) &
         + 2.0_num * ey(nx, 1:ny) &
         - dt_eps * jy(nx, 1:ny) &
         + diff * bz(nx-1, 1:ny))
@@ -279,6 +282,7 @@ CONTAINS
     ENDDO
 
     by(nx, 1:ny) = sum * ( 4.0_num * fneg &
+        + 2.0_num * (ez_x_max(1:ny) + c * by_x_max(1:ny)) &
         - 2.0_num * ez(nx, 1:ny) &
         + ly * (bx(nx, 1:ny+1) - bx(nx, 0:ny)) &
         + dt_eps * jz(nx, 1:ny) &
@@ -322,6 +326,7 @@ CONTAINS
     ENDDO
 
     bx(1:nx, 0) = sum * ( 4.0_num * fplus &
+        + 2.0_num * (ez_y_min(1:nx) + c * bx_y_min(1:nx)) &
         - 2.0_num * ez(1:nx, 1) &
         - lx * (by(1:nx+1, 1) - by(0:nx, 1)) &
         + dt_eps * jz(1:nx, 1) &
@@ -342,6 +347,7 @@ CONTAINS
     ENDDO
 
     bz(1:nx, 0) = sum * (-4.0_num * fplus &
+        - 2.0_num * (ex_y_min(1:nx) - c * bz_y_min(1:nx)) &
         + 2.0_num * ex(1:nx, 1) &
         - dt_eps * jx(1:nx, 1) &
         + diff * bz(1:nx, 1))
@@ -384,6 +390,7 @@ CONTAINS
     ENDDO
 
     bx(1:nx, ny) = sum * (-4.0_num * fneg &
+        - 2.0_num * (ez_y_max(1:nx) - c * bx_y_max(1:nx)) &
         + 2.0_num * ez(1:nx, ny) &
         + lx * (by(1:nx+1, ny) - by(0:nx, ny)) &
         - dt_eps * jz(1:nx, ny) &
@@ -404,6 +411,7 @@ CONTAINS
     ENDDO
 
     bz(1:nx, ny) = sum * ( 4.0_num * fneg &
+        + 2.0_num * (ex_y_max(1:nx) + c * bz_y_max(1:nx)) &
         - 2.0_num * ex(1:nx, ny) &
         + dt_eps * jx(1:nx, ny) &
         + diff * bz(1:nx, ny-1))
@@ -425,10 +433,12 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(0, 1:ny) = 0.0_num
+    bx(0, 1:ny) = bx_x_min(1:ny)
     bz(0, 1:ny) = sum * (-2.0_num * ey(1, 1:ny) &
+        + 2.0_num * (ey_x_min(1:ny) + c * bz_x_min(1:ny)) &
         + dt_eps * jy(1, 1:ny) + diff * bz(1, 1:ny))
     by(0, 1:ny) = sum * ( 2.0_num * ez(1, 1:ny) &
+        - 2.0_num * (ez_x_min(1:ny) - c * by_x_min(1:ny)) &
         - ly * (bx(1, 1:ny+1) - bx(1, 0:ny)) &
         - dt_eps * jz(1, 1:ny) + diff * by(1, 1:ny))
 
@@ -447,10 +457,12 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(nx+1, 1:ny) = 0.0_num
+    bx(nx+1, 1:ny) = bx_x_max(1:ny)
     bz(nx, 1:ny) = sum * ( 2.0_num * ey(nx, 1:ny) &
+        - 2.0_num * (ey_x_max(1:ny) - c * bz_x_max(1:ny)) &
         - dt_eps * jy(nx, 1:ny) + diff * bz(nx-1, 1:ny))
     by(nx, 1:ny) = sum * (-2.0_num * ez(nx, 1:ny) &
+        + 2.0_num * (ez_x_max(1:ny) + c * by_x_max(1:ny)) &
         + ly * (bx(nx, 1:ny+1) - bx(nx, 0:ny)) &
         + dt_eps * jz(nx, 1:ny) + diff * by(nx-1, 1:ny))
 
@@ -469,11 +481,13 @@ CONTAINS
     diff = ly - c
     dt_eps = dt / epsilon0
 
-    by(1:nx, 0) = 0.0_num
+    by(1:nx, 0) = by_y_min(1:nx)
     bx(1:nx, 0) = sum * (-2.0_num * ez(1:nx, 1) &
+        + 2.0_num * (ez_y_min(1:nx) + c * bx_y_min(1:nx)) &
         - lx * (by(1:nx+1, 1) - by(0:nx, 1)) &
         + dt_eps * jz(1:nx, 1) + diff * bx(1:nx, 1))
     bz(1:nx, 0) = sum * ( 2.0_num * ex(1:nx, 1) &
+        - 2.0_num * (ex_y_min(1:nx) - c * bz_y_min(1:nx)) &
         - dt_eps * jx(1:nx, 1) + diff * bz(1:nx, 1))
 
   END SUBROUTINE outflow_bcs_y_min
@@ -491,11 +505,13 @@ CONTAINS
     diff = ly - c
     dt_eps = dt / epsilon0
 
-    by(1:nx, ny+1) = 0.0_num
+    by(1:nx, ny+1) = by_y_max(1:nx)
     bx(1:nx, ny) = sum * ( 2.0_num * ez(1:nx, ny) &
+        - 2.0_num * (ez_y_max(1:nx) - c * bx_y_max(1:nx)) &
         + lx * (by(1:nx+1, ny) - by(0:nx, ny)) &
         - dt_eps * jz(1:nx, ny) + diff * bx(1:nx, ny-1))
     bz(1:nx, ny) = sum * (-2.0_num * ex(1:nx, ny) &
+        + 2.0_num * (ex_y_max(1:nx) + c * bz_y_max(1:nx)) &
         + dt_eps * jx(1:nx, ny) + diff * bz(1:nx, ny-1))
 
   END SUBROUTINE outflow_bcs_y_max

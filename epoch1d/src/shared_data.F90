@@ -521,6 +521,13 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
   REAL(num), ALLOCATABLE, DIMENSION(:) :: wk_array
 
+  REAL(num) :: ex_x_min, ex_x_max
+  REAL(num) :: ey_x_min, ey_x_max
+  REAL(num) :: ez_x_min, ez_x_max
+  REAL(num) :: bx_x_min, bx_x_max
+  REAL(num) :: by_x_min, by_x_max
+  REAL(num) :: bz_x_min, bz_x_max
+
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
 
