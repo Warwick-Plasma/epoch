@@ -26,6 +26,7 @@ CONTAINS
     REAL(num) :: lambda_db, e_photon, t_eff, saha_rhs, ion_frac, rand
     REAL(num) :: fac, tfac, lfac, cf2
     INTEGER :: next_species
+    INTEGER(KIND=8) :: npart_this_species
     INTEGER, PARAMETER :: dcellx = 0, dcelly = 0, dcellz = 0
 
     rand = random()
