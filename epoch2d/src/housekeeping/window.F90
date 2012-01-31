@@ -89,6 +89,8 @@ CONTAINS
 
   SUBROUTINE shift_fields
 
+    INTEGER :: j
+
     CALL shift_field(ex)
     CALL shift_field(ey)
     CALL shift_field(ez)
@@ -101,6 +103,26 @@ CONTAINS
     CALL shift_field(jy)
     CALL shift_field(jz)
 
+    IF (x_max_boundary) THEN
+      DO j = -2, ny+3
+        ! Fix incoming field cell. A future version will use
+        ! equilibrium fields, rather than zero.
+        ex(nx,j)   = 0.0_num
+        ex(nx+1,j) = 0.0_num
+        ey(nx+1,j) = 0.0_num
+        ez(nx+1,j) = 0.0_num
+        ex(nx-1,j) = 0.5_num * (ex(nx-2,j) + ex(nx,j))
+        ey(nx,j)   = 0.5_num * (ey(nx-1,j) + ey(nx+1,j))
+        ez(nx,j)   = 0.5_num * (ez(nx-1,j) + ez(nx+1,j))
+        bx(nx+1,j) = 0.0_num
+        by(nx,j)   = 0.0_num
+        bz(nx,j)   = 0.0_num
+        bx(nx,j)   = 0.5_num * (bx(nx-1,j) + bx(nx+1,j))
+        by(nx-1,j) = 0.5_num * (by(nx-2,j) + by(nx,j))
+        bz(nx-1,j) = 0.5_num * (bz(nx-2,j) + bz(nx,j))
+      ENDDO
+    ENDIF
+
   END SUBROUTINE shift_fields
 
 
@@ -109,13 +131,6 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
     INTEGER :: i, j
-
-    ! Interpolate the field into the first ghost cell
-    IF (x_max_boundary) THEN
-      DO j = -2, ny+3
-        field(nx+1,j) = 2.0_num * field(nx,j) - field(nx-1,j)
-      ENDDO
-    ENDIF
 
     ! Shift field to the left by one cell
     DO j = -2, ny+3

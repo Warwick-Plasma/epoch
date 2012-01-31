@@ -89,6 +89,8 @@ CONTAINS
 
   SUBROUTINE shift_fields
 
+    INTEGER :: j, k
+
     CALL shift_field(ex)
     CALL shift_field(ey)
     CALL shift_field(ez)
@@ -101,6 +103,49 @@ CONTAINS
     CALL shift_field(jy)
     CALL shift_field(jz)
 
+    IF (x_max_boundary) THEN
+      DO k = -2, nz+3
+        DO j = -2, ny+3
+          ! Fix up incoming field cell. A future version will use
+          ! equilibrium field, rather than zero.
+          ex(nx+1,j,k) = 0.0_num
+          ey(nx+1,j,k) = 0.0_num
+          ez(nx+1,j,k) = 0.0_num
+          ex(nx,j,k)   = 0.5_num * (ex(nx-1,j,k) + ex(nx+1,j,k))
+          ey(nx,j,k)   = 0.5_num * (ey(nx-1,j,k) + ey(nx+1,j,k))
+          ez(nx,j,k)   = 0.5_num * (ez(nx-1,j,k) + ez(nx+1,j,k))
+          bx(nx+1,j,k) = 0.0_num
+          by(nx+1,j,k) = 0.0_num
+          bz(nx+1,j,k) = 0.0_num
+          bx(nx,j,k)   = 0.5_num * (bx(nx-1,j,k) + bx(nx+1,j,k))
+          by(nx,j,k)   = 0.5_num * (by(nx-1,j,k) + by(nx+1,j,k))
+          bz(nx,j,k)   = 0.5_num * (bz(nx-1,j,k) + bz(nx+1,j,k))
+        ENDDO
+      ENDDO
+    ENDIF
+
+    IF (x_max_boundary) THEN
+      DO k = -2, nz+3
+        DO j = -2, ny+3
+          ! Fix incoming field cell. A future version will use
+          ! equilibrium fields, rather than zero.
+          ex(nx,j,k)   = 0.0_num
+          ex(nx+1,j,k) = 0.0_num
+          ey(nx+1,j,k) = 0.0_num
+          ez(nx+1,j,k) = 0.0_num
+          ex(nx-1,j,k) = 0.5_num * (ex(nx-2,j,k) + ex(nx,j,k))
+          ey(nx,j,k)   = 0.5_num * (ey(nx-1,j,k) + ey(nx+1,j,k))
+          ez(nx,j,k)   = 0.5_num * (ez(nx-1,j,k) + ez(nx+1,j,k))
+          bx(nx+1,j,k) = 0.0_num
+          by(nx,j,k)   = 0.0_num
+          bz(nx,j,k)   = 0.0_num
+          bx(nx,j,k)   = 0.5_num * (bx(nx-1,j,k) + bx(nx+1,j,k))
+          by(nx-1,j,k) = 0.5_num * (by(nx-2,j,k) + by(nx,j,k))
+          bz(nx-1,j,k) = 0.5_num * (bz(nx-2,j,k) + bz(nx,j,k))
+        ENDDO
+      ENDDO
+    ENDIF
+
   END SUBROUTINE shift_fields
 
 
@@ -109,15 +154,6 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
     INTEGER :: i, j, k
-
-    ! Interpolate the field into the first ghost cell
-    IF (x_max_boundary) THEN
-      DO k = -2, nz+3
-        DO j = -2, ny+3
-          field(nx+1,j,k) = 2.0_num * field(nx,j,k) - field(nx-1,j,k)
-        ENDDO
-      ENDDO
-    ENDIF
 
     ! Shift field to the left by one cell
     DO k = -2, nz+3

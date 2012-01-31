@@ -90,6 +90,24 @@ CONTAINS
     CALL shift_field(jy)
     CALL shift_field(jz)
 
+    IF (x_max_boundary) THEN
+      ! Fix incoming field cell. A future version will use
+      ! equilibrium fields, rather than zero.
+      ex(nx)   = 0.0_num
+      ex(nx+1) = 0.0_num
+      ey(nx+1) = 0.0_num
+      ez(nx+1) = 0.0_num
+      ex(nx-1) = 0.5_num * (ex(nx-2) + ex(nx))
+      ey(nx)   = 0.5_num * (ey(nx-1) + ey(nx+1))
+      ez(nx)   = 0.5_num * (ez(nx-1) + ez(nx+1))
+      bx(nx+1) = 0.0_num
+      by(nx)   = 0.0_num
+      bz(nx)   = 0.0_num
+      bx(nx)   = 0.5_num * (bx(nx-1) + bx(nx+1))
+      by(nx-1) = 0.5_num * (by(nx-2) + by(nx))
+      bz(nx-1) = 0.5_num * (bz(nx-2) + bz(nx))
+    ENDIF
+
   END SUBROUTINE shift_fields
 
 
@@ -98,11 +116,6 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
     INTEGER :: i
-
-    ! Interpolate the field into the first ghost cell
-    IF (x_max_boundary) THEN
-      field(nx+1) = 2.0_num * field(nx) - field(nx-1)
-    ENDIF
 
     ! Shift field to the left by one cell
     DO i = -2, nx+2
