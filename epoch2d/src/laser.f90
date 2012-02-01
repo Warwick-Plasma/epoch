@@ -181,7 +181,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fplus(1:ny))
-    bx(0, 1:ny) = 0.0_num
+    bx(0, 1:ny) = bx_x_min(1:ny)
 
     fplus = 0.0_num
     current=>laser_x_min
@@ -245,7 +245,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fneg(1:ny))
-    bx(nx+1, 1:ny) = 0.0_num
+    bx(nx+1, 1:ny) = bx_x_max(1:ny)
 
     fneg = 0.0_num
     current=>laser_x_max
@@ -309,7 +309,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fplus(1:nx))
-    by(1:nx, 0) = 0.0_num
+    by(1:nx, 0) = by_y_min(1:nx)
 
     fplus = 0.0_num
     current=>laser_y_min
@@ -373,7 +373,7 @@ CONTAINS
     dt_eps = dt / epsilon0
 
     ALLOCATE(fneg(1:nx))
-    by(1:nx, ny+1) = 0.0_num
+    by(1:nx, ny+1) = by_y_max(1:nx)
 
     fneg = 0.0_num
     current=>laser_y_max

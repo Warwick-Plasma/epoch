@@ -131,7 +131,7 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(0) = 0.0_num
+    bx(0) = bx_x_min
 
     fplus = 0.0_num
     current=>laser_x_min
@@ -188,7 +188,7 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    bx(nx+1) = 0.0_num
+    bx(nx+1) = bx_x_max
 
     fneg = 0.0_num
     current=>laser_x_max
