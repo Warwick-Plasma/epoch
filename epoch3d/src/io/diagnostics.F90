@@ -515,7 +515,7 @@ CONTAINS
           TRIM(units), dims, stagger, 'grid', &
           averaged_data(id)%array(:,:,:,1), subtype_field, subarray_field)
 
-      averaged_data(id)%real_time = 0.0_num
+      averaged_data(id)%real_time = c_non_zero
       averaged_data(id)%array = 0.0_num
     ENDIF
 
@@ -612,7 +612,7 @@ CONTAINS
         ENDDO
       ENDIF
 
-      averaged_data(id)%real_time = 0.0_num
+      averaged_data(id)%real_time = c_non_zero
       averaged_data(id)%array = 0.0_num
     ENDIF
 
