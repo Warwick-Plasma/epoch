@@ -353,6 +353,8 @@ CONTAINS
 
     nx0 = 1
     nx1 = nx
+    IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser) nx0 = cpml_x_min_laser_idx-1
+    IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser) nx1 = cpml_x_max_laser_idx+1
 
     ex_x_min = 0.5_num * (ex(nx0,:,:) + ex(nx0-1,:,:))
     ey_x_min = ey(nx0,:,:)
@@ -370,6 +372,8 @@ CONTAINS
 
     ny0 = 1
     ny1 = ny
+    IF (bc_field(c_bd_y_min) .EQ. c_bc_cpml_laser) ny0 = cpml_y_min_laser_idx-1
+    IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser) ny1 = cpml_y_max_laser_idx+1
 
     ex_y_min = ex(:,ny0,:)
     ey_y_min = 0.5_num * (ey(:,ny0,:) + ey(:,ny0-1,:))
@@ -387,8 +391,8 @@ CONTAINS
 
     nz0 = 1
     nz1 = nz
-
-    bx_z_min = 0.5_num * (bx(:,:,nz0) + bx(:,:,nz0-1))
+    IF (bc_field(c_bd_z_min) .EQ. c_bc_cpml_laser) nz0 = cpml_z_min_laser_idx-1
+    IF (bc_field(c_bd_z_max) .EQ. c_bc_cpml_laser) nz1 = cpml_z_max_laser_idx+1
 
     ex_z_min = ex(:,:,nz0)
     ey_z_min = ey(:,:,nz0)
