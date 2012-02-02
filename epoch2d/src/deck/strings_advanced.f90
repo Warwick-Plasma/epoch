@@ -178,7 +178,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
     INTEGER, INTENT(IN) :: x1, x2, y1, y2
-    REAL(num), DIMENSION(1:,1:), INTENT(OUT) :: data_out
+    REAL(num), DIMENSION(:,:), INTENT(OUT) :: data_out
     TYPE(primitive_stack) :: output
     INTEGER :: ix, iy
 

@@ -332,7 +332,7 @@ CONTAINS
 
     IF (str_cmp(element, 'density') .OR. str_cmp(element, 'rho') &
         .OR. str_cmp(element, 'mass_density')) THEN
-      array(-2:) => initial_conditions(species_id)%density
+      array => initial_conditions(species_id)%density
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
@@ -344,7 +344,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'drift_x')) THEN
-      array(-2:) => initial_conditions(species_id)%drift(:,1)
+      array => initial_conditions(species_id)%drift(:,1)
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
@@ -354,7 +354,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'drift_y')) THEN
-      array(-2:) => initial_conditions(species_id)%drift(:,2)
+      array => initial_conditions(species_id)%drift(:,2)
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
@@ -364,7 +364,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'drift_z')) THEN
-      array(-2:) => initial_conditions(species_id)%drift(:,3)
+      array => initial_conditions(species_id)%drift(:,3)
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
@@ -375,7 +375,7 @@ CONTAINS
 
     IF (str_cmp(element, 'temp') .OR. str_cmp(element, 'temp_k') &
         .OR. str_cmp(element, 'temp_ev')) THEN
-      array(-2:) => initial_conditions(species_id)%temp(:,1)
+      array => initial_conditions(species_id)%temp(:,1)
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
@@ -392,7 +392,7 @@ CONTAINS
 
     IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
         .OR. str_cmp(element, 'temp_x_ev')) THEN
-      array(-2:) => initial_conditions(species_id)%temp(:,1)
+      array => initial_conditions(species_id)%temp(:,1)
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
@@ -405,7 +405,7 @@ CONTAINS
 
     IF (str_cmp(element, 'temp_y') .OR. str_cmp(element, 'temp_y_k') &
         .OR. str_cmp(element, 'temp_y_ev')) THEN
-      array(-2:) => initial_conditions(species_id)%temp(:,2)
+      array => initial_conditions(species_id)%temp(:,2)
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
@@ -418,7 +418,7 @@ CONTAINS
 
     IF (str_cmp(element, 'temp_z') .OR. str_cmp(element, 'temp_z_k') &
         .OR. str_cmp(element, 'temp_z_ev')) THEN
-      array(-2:) => initial_conditions(species_id)%temp(:,3)
+      array => initial_conditions(species_id)%temp(:,3)
       IF (got_file) THEN
         CALL load_single_array_from_file(filename, array, offset, errcode)
       ELSE
