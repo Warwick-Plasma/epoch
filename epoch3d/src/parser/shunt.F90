@@ -540,6 +540,7 @@ CONTAINS
 
     CALL stack_snoop(output, block, 0)
     id = block%value
+    func_stack%stack_point = 0
 
     IF (opcode .EQ. c_func_rho) THEN
       CALL copy_stack(species_list(id)%density_function, func_stack)
