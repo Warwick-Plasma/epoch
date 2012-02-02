@@ -562,18 +562,6 @@ CONTAINS
 
 
 
-  SUBROUTINE set_stack_zero(stack)
-
-    TYPE(primitive_stack), INTENT(INOUT) :: stack
-
-    CALL deallocate_stack(stack)
-    CALL initialise_stack(stack)
-    CALL tokenize('0', stack, errcode)
-
-  END SUBROUTINE set_stack_zero
-
-
-
 #ifdef PARTICLE_IONISE
   SUBROUTINE create_ion_subspecies(base_species, current_species, index, energy)
 

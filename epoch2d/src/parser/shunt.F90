@@ -594,4 +594,16 @@ CONTAINS
 
   END SUBROUTINE display_tokens
 
+
+
+  SUBROUTINE set_stack_zero(stack)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: stack
+
+    CALL deallocate_stack(stack)
+    CALL initialise_stack(stack)
+    CALL tokenize('0', stack, errcode)
+
+  END SUBROUTINE set_stack_zero
+
 END MODULE shunt
