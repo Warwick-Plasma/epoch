@@ -235,18 +235,24 @@ CONTAINS
 
   SUBROUTINE setup_field_boundaries
 
-    ex_x_min = ex(0)
-    ey_x_min = ey(0)
-    ez_x_min = ez(0)
-    bx_x_min = bx(0)
-    by_x_min = by(0)
-    bz_x_min = bz(0)
-    ex_x_max = ex(nx+1)
-    ey_x_max = ey(nx+1)
-    ez_x_max = ez(nx+1)
-    bx_x_max = bx(nx+1)
-    by_x_max = by(nx+1)
-    bz_x_max = bz(nx+1)
+    INTEGER :: nx0, nx1
+
+    nx0 = 1
+    nx1 = nx
+
+    ex_x_min = 0.5_num * (ex(nx0) + ex(nx0-1))
+    ey_x_min = ey(nx0)
+    ez_x_min = ez(nx0)
+    ex_x_max = 0.5_num * (ex(nx1) + ex(nx1-1))
+    ey_x_max = ey(nx1)
+    ez_x_max = ez(nx1)
+
+    bx_x_min = bx(nx0)
+    by_x_min = 0.5_num * (by(nx0) + by(nx0-1))
+    bz_x_min = 0.5_num * (bz(nx0) + bz(nx0-1))
+    bx_x_max = bx(nx1)
+    by_x_max = 0.5_num * (by(nx1) + by(nx1-1))
+    bz_x_max = 0.5_num * (bz(nx1) + bz(nx1-1))
 
   END SUBROUTINE setup_field_boundaries
 

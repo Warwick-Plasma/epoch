@@ -4,6 +4,7 @@ MODULE boundary
   USE partlist
   USE particle_temperature
   USE deck_io_block
+  USE laser
 
   IMPLICIT NONE
 
@@ -541,6 +542,54 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE bfield_bcs
+
+
+
+  SUBROUTINE bfield_final_bcs
+
+    INTEGER :: i
+
+    CALL bfield_bcs(.FALSE.)
+
+    IF (x_min_boundary) THEN
+      i = c_bd_x_min
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_x_min
+    ENDIF
+
+    IF (x_max_boundary) THEN
+      i = c_bd_x_max
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_x_max
+    ENDIF
+
+    IF (y_min_boundary) THEN
+      i = c_bd_y_min
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_y_min
+    ENDIF
+
+    IF (y_max_boundary) THEN
+      i = c_bd_y_max
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_y_max
+    ENDIF
+
+    IF (z_min_boundary) THEN
+      i = c_bd_z_min
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_z_min
+    ENDIF
+
+    IF (z_max_boundary) THEN
+      i = c_bd_z_max
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_z_max
+    ENDIF
+
+    CALL bfield_bcs(.TRUE.)
+
+  END SUBROUTINE bfield_final_bcs
 
 
 

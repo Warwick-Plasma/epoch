@@ -1,7 +1,6 @@
 MODULE fields
 
   USE boundary
-  USE laser
 
   IMPLICIT NONE
 
@@ -123,7 +122,7 @@ CONTAINS
     CALL update_b_field
 
     ! Now have B field at t+dt/2. Do boundary conditions on B
-    CALL bfield_bcs(.FALSE.)
+    CALL bfield_bcs(.TRUE.)
 
     ! Now have E&B fields at t = t+dt/2
     ! Move to particle pusher
@@ -134,37 +133,9 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
-    INTEGER :: i
-
     CALL update_b_field
 
-    CALL bfield_bcs(.FALSE.)
-
-    IF (x_min_boundary) THEN
-      i = c_bd_x_min
-      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
-          CALL outflow_bcs_x_min
-    ENDIF
-
-    IF (x_max_boundary) THEN
-      i = c_bd_x_max
-      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
-          CALL outflow_bcs_x_max
-    ENDIF
-
-    IF (y_min_boundary) THEN
-      i = c_bd_y_min
-      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
-          CALL outflow_bcs_y_min
-    ENDIF
-
-    IF (y_max_boundary) THEN
-      i = c_bd_y_max
-      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
-          CALL outflow_bcs_y_max
-    ENDIF
-
-    CALL bfield_bcs(.TRUE.)
+    CALL bfield_final_bcs
 
     CALL update_e_field
 

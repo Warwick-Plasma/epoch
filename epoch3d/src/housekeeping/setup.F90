@@ -285,6 +285,8 @@ CONTAINS
 
   SUBROUTINE setup_field_boundaries
 
+    INTEGER :: nx0, nx1, ny0, ny1, nz0, nz1
+
     ALLOCATE(ex_x_min(-2:ny+3,-2:nz+3), ex_x_max(-2:ny+3,-2:nz+3))
     ALLOCATE(ey_x_min(-2:ny+3,-2:nz+3), ey_x_max(-2:ny+3,-2:nz+3))
     ALLOCATE(ez_x_min(-2:ny+3,-2:nz+3), ez_x_max(-2:ny+3,-2:nz+3))
@@ -306,44 +308,58 @@ CONTAINS
     ALLOCATE(by_z_min(-2:nx+3,-2:ny+3), by_z_max(-2:nx+3,-2:ny+3))
     ALLOCATE(bz_z_min(-2:nx+3,-2:ny+3), bz_z_max(-2:nx+3,-2:ny+3))
 
-    ex_x_min = ex(0,:,:)
-    ey_x_min = ey(0,:,:)
-    ez_x_min = ez(0,:,:)
-    bx_x_min = bx(0,:,:)
-    by_x_min = by(0,:,:)
-    bz_x_min = bz(0,:,:)
-    ex_x_max = ex(nx+1,:,:)
-    ey_x_max = ey(nx+1,:,:)
-    ez_x_max = ez(nx+1,:,:)
-    bx_x_max = bx(nx+1,:,:)
-    by_x_max = by(nx+1,:,:)
-    bz_x_max = bz(nx+1,:,:)
+    nx0 = 1
+    nx1 = nx
 
-    ex_y_min = ex(:,0,:)
-    ey_y_min = ey(:,0,:)
-    ez_y_min = ez(:,0,:)
-    bx_y_min = bx(:,0,:)
-    by_y_min = by(:,0,:)
-    bz_y_min = bz(:,0,:)
-    ex_y_max = ex(:,ny+1,:)
-    ey_y_max = ey(:,ny+1,:)
-    ez_y_max = ez(:,ny+1,:)
-    bx_y_max = bx(:,ny+1,:)
-    by_y_max = by(:,ny+1,:)
-    bz_y_max = bz(:,ny+1,:)
+    ex_x_min = 0.5_num * (ex(nx0,:,:) + ex(nx0-1,:,:))
+    ey_x_min = ey(nx0,:,:)
+    ez_x_min = ez(nx0,:,:)
+    ex_x_max = 0.5_num * (ex(nx1,:,:) + ex(nx1-1,:,:))
+    ey_x_max = ey(nx1,:,:)
+    ez_x_max = ez(nx1,:,:)
 
-    ex_z_min = ex(:,:,0)
-    ey_z_min = ey(:,:,0)
-    ez_z_min = ez(:,:,0)
-    bx_z_min = bx(:,:,0)
-    by_z_min = by(:,:,0)
-    bz_z_min = bz(:,:,0)
-    ex_z_max = ex(:,:,nz+1)
-    ey_z_max = ey(:,:,nz+1)
-    ez_z_max = ez(:,:,nz+1)
-    bx_z_max = bx(:,:,nz+1)
-    by_z_max = by(:,:,nz+1)
-    bz_z_max = bz(:,:,nz+1)
+    bx_x_min = bx(nx0,:,:)
+    by_x_min = 0.5_num * (by(nx0,:,:) + by(nx0-1,:,:))
+    bz_x_min = 0.5_num * (bz(nx0,:,:) + bz(nx0-1,:,:))
+    bx_x_max = bx(nx1,:,:)
+    by_x_max = 0.5_num * (by(nx1,:,:) + by(nx1-1,:,:))
+    bz_x_max = 0.5_num * (bz(nx1,:,:) + bz(nx1-1,:,:))
+
+    ny0 = 1
+    ny1 = ny
+
+    ex_y_min = ex(:,ny0,:)
+    ey_y_min = 0.5_num * (ey(:,ny0,:) + ey(:,ny0-1,:))
+    ez_y_min = ez(:,ny0,:)
+    ex_y_max = ex(:,ny1,:)
+    ey_y_max = 0.5_num * (ey(:,ny1,:) + ey(:,ny1-1,:))
+    ez_y_max = ez(:,ny1,:)
+
+    bx_y_min = 0.5_num * (bx(:,ny0,:) + bx(:,ny0-1,:))
+    by_y_min = by(:,ny0,:)
+    bz_y_min = 0.5_num * (bz(:,ny0,:) + bz(:,ny0-1,:))
+    bx_y_max = 0.5_num * (bx(:,ny1,:) + bx(:,ny1-1,:))
+    by_y_max = by(:,ny1,:)
+    bz_y_max = 0.5_num * (bz(:,ny1,:) + bz(:,ny1-1,:))
+
+    nz0 = 1
+    nz1 = nz
+
+    bx_z_min = 0.5_num * (bx(:,:,nz0) + bx(:,:,nz0-1))
+
+    ex_z_min = ex(:,:,nz0)
+    ey_z_min = ey(:,:,nz0)
+    ez_z_min = 0.5_num * (ez(:,:,nz0) + ez(:,:,nz0-1))
+    ex_z_max = ex(:,:,nz1)
+    ey_z_max = ey(:,:,nz1)
+    ez_z_max = 0.5_num * (ez(:,:,nz1) + ez(:,:,nz1-1))
+
+    bx_z_min = 0.5_num * (bx(:,:,nz0) + bx(:,:,nz0-1))
+    by_z_min = 0.5_num * (by(:,:,nz0) + by(:,:,nz0-1))
+    bz_z_min = bz(:,:,nz0)
+    bx_z_max = 0.5_num * (bx(:,:,nz1) + bx(:,:,nz1-1))
+    by_z_max = 0.5_num * (by(:,:,nz1) + by(:,:,nz1-1))
+    bz_z_max = bz(:,:,nz1)
 
   END SUBROUTINE setup_field_boundaries
 

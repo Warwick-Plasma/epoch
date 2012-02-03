@@ -161,7 +161,8 @@ visitclean:
 # All the dependencies
 
 balance.o: balance.F90 boundary.o mpi_subtype_control.o partlist.o
-boundary.o: boundary.f90 deck_io_block.o particle_temperature.o partlist.o
+boundary.o: boundary.f90 deck_io_block.o laser.o particle_temperature.o \
+  partlist.o
 calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
 current_smooth.o: current_smooth.F90 shape_functions.o
 custom_deck.o: custom_deck.f90 shared_data.o
@@ -193,7 +194,7 @@ epoch3d.o: epoch3d.F90 balance.o boundary.o custom_parser.o deck.o \
   particles.o sdf_job_info.o setup.o split_particle.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
-fields.o: fields.f90 boundary.o laser.o
+fields.o: fields.f90 boundary.o
 helper.o: helper.F90 boundary.o random_generator.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 ionise.o: ionise.F90 calc_df.o split_particle.o

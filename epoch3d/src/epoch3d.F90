@@ -94,13 +94,9 @@ PROGRAM pic
 
   CALL particle_bcs
   CALL efield_bcs
-  CALL bfield_bcs(.FALSE.)
+  CALL bfield_final_bcs
 
   IF (.NOT. ic_from_restart) THEN
-    CALL set_dt
-    CALL update_eb_fields_half
-    CALL push_particles
-    CALL update_eb_fields_final
     IF (rank .EQ. 0) PRINT *, "Equilibrium set up OK, running code"
     walltime_start = MPI_WTIME()
     CALL output_routines(step) ! diagnostics.f90
