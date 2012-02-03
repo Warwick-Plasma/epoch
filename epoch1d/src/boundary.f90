@@ -22,6 +22,7 @@ CONTAINS
     DO i = 1, 2*c_ndims
       IF (bc_particle(i) .EQ. c_bc_other) bc_particle(i) = c_bc_reflect
       IF (bc_field(i) .EQ. c_bc_other) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) .EQ. c_bc_simple_laser) add_laser(i) = .TRUE.
     ENDDO
 
     ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to

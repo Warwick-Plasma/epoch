@@ -118,12 +118,15 @@ CONTAINS
 
 
 
-  SUBROUTINE laser_bcs_x_min
+  SUBROUTINE outflow_bcs_x_min
 
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, sum, diff, dt_eps
     REAL(num) :: fplus
+    INTEGER :: i
     TYPE(laser_block), POINTER :: current
+
+    i = c_bd_x_min
 
     dtc2 = dt * c**2
     lx = dtc2 / dx
@@ -134,17 +137,19 @@ CONTAINS
     bx(0) = bx_x_min
 
     fplus = 0.0_num
-    current=>laser_x_min
-    DO WHILE(ASSOCIATED(current))
-      ! evaluate the temporal evolution of the laser
-      IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-        t_env = laser_time_profile(current)
-        fplus = fplus + t_env * current%amp * current%profile &
-            * SIN(current%omega * time + current%phase) &
-            * COS(current%pol_angle)
-      ENDIF
-      current=>current%next
-    ENDDO
+    IF (add_laser(i)) THEN
+      current=>laser_x_min
+      DO WHILE(ASSOCIATED(current))
+        ! evaluate the temporal evolution of the laser
+        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+          t_env = laser_time_profile(current)
+          fplus = fplus + t_env * current%amp * current%profile &
+              * SIN(current%omega * time + current%phase) &
+              * COS(current%pol_angle)
+        ENDIF
+        current=>current%next
+      ENDDO
+    ENDIF
 
     bz(0) = sum * ( 4.0_num * fplus &
         + 2.0_num * (ey_x_min + c * bz_x_min) &
@@ -152,18 +157,20 @@ CONTAINS
         + dt_eps * jy(1) &
         + diff * bz(1))
 
-    fplus = 0.0_num
-    current=>laser_x_min
-    DO WHILE(ASSOCIATED(current))
-      ! evaluate the temporal evolution of the laser
-      IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-        t_env = laser_time_profile(current)
-        fplus = fplus + t_env * current%amp * current%profile &
-            * SIN(current%omega * time + current%phase) &
-            * SIN(current%pol_angle)
-      ENDIF
-      current=>current%next
-    ENDDO
+    IF (add_laser(i)) THEN
+      fplus = 0.0_num
+      current=>laser_x_min
+      DO WHILE(ASSOCIATED(current))
+        ! evaluate the temporal evolution of the laser
+        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+          t_env = laser_time_profile(current)
+          fplus = fplus + t_env * current%amp * current%profile &
+              * SIN(current%omega * time + current%phase) &
+              * SIN(current%pol_angle)
+        ENDIF
+        current=>current%next
+      ENDDO
+    ENDIF
 
     by(0) = sum * (-4.0_num * fplus &
         - 2.0_num * (ez_x_min - c * by_x_min) &
@@ -171,16 +178,19 @@ CONTAINS
         - dt_eps * jz(1) &
         + diff * by(1))
 
-  END SUBROUTINE laser_bcs_x_min
+  END SUBROUTINE outflow_bcs_x_min
 
 
 
-  SUBROUTINE laser_bcs_x_max
+  SUBROUTINE outflow_bcs_x_max
 
     REAL(num) :: t_env
     REAL(num) :: dtc2, lx, sum, diff, dt_eps
     REAL(num) :: fneg
+    INTEGER :: i
     TYPE(laser_block), POINTER :: current
+
+    i = c_bd_x_max
 
     dtc2 = dt * c**2
     lx = dtc2 / dx
@@ -191,17 +201,19 @@ CONTAINS
     bx(nx+1) = bx_x_max
 
     fneg = 0.0_num
-    current=>laser_x_max
-    DO WHILE(ASSOCIATED(current))
-      ! evaluate the temporal evolution of the laser
-      IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-        t_env = laser_time_profile(current)
-        fneg = fneg + t_env * current%amp * current%profile &
-            * SIN(current%omega * time + current%phase) &
-            * COS(current%pol_angle)
-      ENDIF
-      current=>current%next
-    ENDDO
+    IF (add_laser(i)) THEN
+      current=>laser_x_max
+      DO WHILE(ASSOCIATED(current))
+        ! evaluate the temporal evolution of the laser
+        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+          t_env = laser_time_profile(current)
+          fneg = fneg + t_env * current%amp * current%profile &
+              * SIN(current%omega * time + current%phase) &
+              * COS(current%pol_angle)
+        ENDIF
+        current=>current%next
+      ENDDO
+    ENDIF
 
     bz(nx) = sum * (-4.0_num * fneg &
         - 2.0_num * (ey_x_max - c * bz_x_max) &
@@ -209,68 +221,26 @@ CONTAINS
         - dt_eps * jy(nx) &
         + diff * bz(nx-1))
 
-    fneg = 0.0_num
-    current=>laser_x_max
-    DO WHILE(ASSOCIATED(current))
-      ! evaluate the temporal evolution of the laser
-      IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-        t_env = laser_time_profile(current)
-        fneg = fneg + t_env * current%amp * current%profile &
-            * SIN(current%omega * time + current%phase) &
-            * SIN(current%pol_angle)
-      ENDIF
-      current=>current%next
-    ENDDO
+    IF (add_laser(i)) THEN
+      fneg = 0.0_num
+      current=>laser_x_max
+      DO WHILE(ASSOCIATED(current))
+        ! evaluate the temporal evolution of the laser
+        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+          t_env = laser_time_profile(current)
+          fneg = fneg + t_env * current%amp * current%profile &
+              * SIN(current%omega * time + current%phase) &
+              * SIN(current%pol_angle)
+        ENDIF
+        current=>current%next
+      ENDDO
+    ENDIF
 
     by(nx) = sum * ( 4.0_num * fneg &
         + 2.0_num * (ez_x_max + c * by_x_max) &
         - 2.0_num * ez(nx) &
         + dt_eps * jz(nx) &
         + diff * by(nx-1))
-
-  END SUBROUTINE laser_bcs_x_max
-
-
-
-  SUBROUTINE outflow_bcs_x_min
-
-    REAL(num) :: dtc2, lx, sum, diff, dt_eps
-
-    dtc2 = dt * c**2
-    lx = dtc2 / dx
-    sum = 1.0_num / (lx + c)
-    diff = lx - c
-    dt_eps = dt / epsilon0
-
-    bx(0) = bx_x_min
-    bz(0) = sum * (-2.0_num * ey(1) &
-        + 2.0_num * (ey_x_min + c * bz_x_min) &
-        + dt_eps * jy(1) + diff * bz(1))
-    by(0) = sum * ( 2.0_num * ez(1) &
-        - 2.0_num * (ez_x_min - c * by_x_min) &
-        - dt_eps * jz(1) + diff * by(1))
-
-  END SUBROUTINE outflow_bcs_x_min
-
-
-
-  SUBROUTINE outflow_bcs_x_max
-
-    REAL(num) :: dtc2, lx, sum, diff, dt_eps
-
-    dtc2 = dt * c**2
-    lx = dtc2 / dx
-    sum = 1.0_num / (lx + c)
-    diff = lx - c
-    dt_eps = dt / epsilon0
-
-    bx(nx+1) = bx_x_max
-    bz(nx) = sum * ( 2.0_num * ey(nx) &
-        - 2.0_num * (ey_x_max - c * bz_x_max) &
-        - dt_eps * jy(nx) + diff * bz(nx-1))
-    by(nx) = sum * (-2.0_num * ez(nx) &
-        + 2.0_num * (ez_x_max + c * by_x_max) &
-        + dt_eps * jz(nx) + diff * by(nx-1))
 
   END SUBROUTINE outflow_bcs_x_max
 

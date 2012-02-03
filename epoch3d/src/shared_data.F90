@@ -709,6 +709,7 @@ MODULE shared_data
   INTEGER :: n_laser_x_min, n_laser_x_max
   INTEGER :: n_laser_y_min, n_laser_y_max
   INTEGER :: n_laser_z_min, n_laser_z_max
+  LOGICAL, DIMENSION(2*c_ndims) :: add_laser = .FALSE.
 
   TYPE(jobid_type) :: jobid
 

@@ -688,6 +688,7 @@ MODULE shared_data
   TYPE(laser_block), POINTER :: laser_y_min, laser_y_max
   INTEGER :: n_laser_x_min, n_laser_x_max
   INTEGER :: n_laser_y_min, n_laser_y_max
+  LOGICAL, DIMENSION(2*c_ndims) :: add_laser = .FALSE.
 
   TYPE(jobid_type) :: jobid
 

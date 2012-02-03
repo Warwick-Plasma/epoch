@@ -152,56 +152,46 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
+    INTEGER :: i
+
     CALL update_b_field
 
     CALL bfield_bcs(.FALSE.)
 
     IF (x_min_boundary) THEN
-      IF (bc_field(c_bd_x_min) .EQ. c_bc_simple_laser) THEN
-        CALL laser_bcs_x_min
-      ELSE IF (bc_field(c_bd_x_min) .EQ. c_bc_simple_outflow) THEN
-        CALL outflow_bcs_x_min
-      ENDIF
+      i = c_bd_x_min
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_x_min
     ENDIF
 
     IF (x_max_boundary) THEN
-      IF (bc_field(c_bd_x_max) .EQ. c_bc_simple_laser) THEN
-        CALL laser_bcs_x_max
-      ELSE IF (bc_field(c_bd_x_max) .EQ. c_bc_simple_outflow) THEN
-        CALL outflow_bcs_x_max
-      ENDIF
+      i = c_bd_x_max
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_x_max
     ENDIF
 
     IF (y_min_boundary) THEN
-      IF (bc_field(c_bd_y_min) .EQ. c_bc_simple_laser) THEN
-        CALL laser_bcs_y_min
-      ELSE IF (bc_field(c_bd_y_min) .EQ. c_bc_simple_outflow) THEN
-        CALL outflow_bcs_y_min
-      ENDIF
+      i = c_bd_y_min
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_y_min
     ENDIF
 
     IF (y_max_boundary) THEN
-      IF (bc_field(c_bd_y_max) .EQ. c_bc_simple_laser) THEN
-        CALL laser_bcs_y_max
-      ELSE IF (bc_field(c_bd_y_max) .EQ. c_bc_simple_outflow) THEN
-        CALL outflow_bcs_y_max
-      ENDIF
+      i = c_bd_y_max
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_y_max
     ENDIF
 
     IF (z_min_boundary) THEN
-      IF (bc_field(c_bd_z_min) .EQ. c_bc_simple_laser) THEN
-        CALL laser_bcs_z_min
-      ELSE IF (bc_field(c_bd_z_min) .EQ. c_bc_simple_outflow) THEN
-        CALL outflow_bcs_z_min
-      ENDIF
+      i = c_bd_z_min
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_z_min
     ENDIF
 
     IF (z_max_boundary) THEN
-      IF (bc_field(c_bd_z_max) .EQ. c_bc_simple_laser) THEN
-        CALL laser_bcs_z_max
-      ELSE IF (bc_field(c_bd_z_max) .EQ. c_bc_simple_outflow) THEN
-        CALL outflow_bcs_z_max
-      ENDIF
+      i = c_bd_z_max
+      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+          CALL outflow_bcs_z_max
     ENDIF
 
     CALL bfield_bcs(.TRUE.)
