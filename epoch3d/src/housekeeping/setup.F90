@@ -396,6 +396,8 @@ CONTAINS
     IF (bc_field(c_bd_z_min) .EQ. c_bc_cpml_laser) nz0 = cpml_z_min_laser_idx-1
     IF (bc_field(c_bd_z_max) .EQ. c_bc_cpml_laser) nz1 = cpml_z_max_laser_idx+1
 
+    bx_z_min = 0.5_num * (bx(:,:,nz0) + bx(:,:,nz0-1))
+
     ex_z_min = ex(:,:,nz0)
     ey_z_min = ey(:,:,nz0)
     ez_z_min = 0.5_num * (ez(:,:,nz0) + ez(:,:,nz0-1))
