@@ -403,7 +403,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: specname
     INTEGER, INTENT(OUT) :: species_number
-    INTEGER :: ispecies, errcode, ierr, i1, i2
+    INTEGER :: ispecies, ierr, i1, i2
 
     CALL strip_species_name(specname, i1, i2)
 
@@ -414,16 +414,6 @@ CONTAINS
         EXIT
       ENDIF
     ENDDO
-
-    IF (species_number .EQ. 0) THEN
-      IF (rank .EQ. 0) THEN
-        PRINT*, '*** ERROR ***'
-        PRINT*, 'Particle species "', specname(i1:i2),'" from restart dump ', &
-            'not found in input deck.'
-      ENDIF
-      CALL MPI_ABORT(comm, errcode, ierr)
-      STOP
-    ENDIF
 
   END SUBROUTINE find_species_by_name
 
@@ -533,6 +523,15 @@ CONTAINS
         CALL sdf_read_point_mesh_info(sdf_handle, npart)
 
         CALL find_species_by_name(name, ispecies)
+        IF (ispecies .EQ. 0) THEN
+          IF (rank .EQ. 0) THEN
+            CALL strip_species_name(name, i1, i2)
+            PRINT*, '*** WARNING ***'
+            PRINT*, 'Particle species "', name(i1:i2), '" from restart dump ', &
+                'not found in input deck. Ignoring.'
+          ENDIF
+          CYCLE
+        ENDIF
         species => species_list(ispecies)
 
         IF (ASSOCIATED(species%attached_list%head)) THEN
@@ -582,6 +581,7 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
         ELSE IF (block_id(1:7) .EQ. 'weight/') THEN
           CALL find_species_by_name(block_id, ispecies)
+          IF (ispecies .EQ. 0) CYClE
           CALL sdf_read_srl(sdf_handle, species_list(ispecies)%weight)
         ENDIF
       !CASE(c_blocktype_plain_mesh)
@@ -592,6 +592,7 @@ CONTAINS
         CALL sdf_read_point_mesh_info(sdf_handle, npart)
 
         CALL find_species_by_name(name, ispecies)
+        IF (ispecies .EQ. 0) CYClE
         species => species_list(ispecies)
 
         npart_local = species%attached_list%count
@@ -663,6 +664,7 @@ CONTAINS
         CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id)
 
         CALL find_species_by_name(mesh_id, ispecies)
+        IF (ispecies .EQ. 0) CYClE
         species => species_list(ispecies)
 
         IF (npart .NE. species%count) THEN
