@@ -149,8 +149,10 @@ CONTAINS
       IF (dt_snapshot .LT. 0.0_num) dt_snapshot = 0.0_num
     CASE(2)
       full_dump_every = as_integer(value, errcode)
+      IF (full_dump_every .EQ. 0) full_dump_every = 1
     CASE(3)
       restart_dump_every = as_integer(value, errcode)
+      IF (restart_dump_every .EQ. 0) restart_dump_every = 1
     CASE(4)
       force_final_to_be_restartable = as_logical(value, errcode)
     CASE(5)
