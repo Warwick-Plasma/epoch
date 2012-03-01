@@ -339,6 +339,24 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
     REAL(num) :: point, t0
 
+    IF (opcode .EQ. c_func_floor) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(FLOOR(values(1)))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_ceil) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(CEILING(values(1)))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_func_nint) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(NINT(values(1)))
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_func_sqrt) THEN
       CALL get_values(1, values)
       CALL push_on_eval(SQRT(values(1)))
