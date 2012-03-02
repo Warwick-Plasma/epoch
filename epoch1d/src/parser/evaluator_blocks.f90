@@ -341,19 +341,19 @@ CONTAINS
 
     IF (opcode .EQ. c_func_floor) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(FLOOR(values(1)))
+      CALL push_on_eval(REAL(FLOOR(values(1)),num))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_ceil) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(CEILING(values(1)))
+      CALL push_on_eval(REAL(CEILING(values(1)),num))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_nint) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(NINT(values(1)))
+      CALL push_on_eval(REAL(NINT(values(1)),num))
       RETURN
     ENDIF
 
