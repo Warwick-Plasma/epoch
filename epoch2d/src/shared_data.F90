@@ -43,31 +43,31 @@ MODULE constants
 
   ! Error codes
   INTEGER, PARAMETER :: c_err_none = 0
-  INTEGER, PARAMETER :: c_err_unknown_block = 1
-  INTEGER, PARAMETER :: c_err_unknown_element = 2
-  INTEGER, PARAMETER :: c_err_preset_element = 4
-  INTEGER, PARAMETER :: c_err_preset_element_use_later = 8
-  INTEGER, PARAMETER :: c_err_bad_value = 16
-  INTEGER, PARAMETER :: c_err_missing_elements = 32
-  INTEGER, PARAMETER :: c_err_terminate = 64
-  INTEGER, PARAMETER :: c_err_required_element_not_set = 128
-  INTEGER, PARAMETER :: c_err_pp_options_wrong = 256
-  INTEGER, PARAMETER :: c_err_bad_array_length = 512
-  INTEGER, PARAMETER :: c_err_other = 1024
-  INTEGER, PARAMETER :: c_err_warn_bad_value = 2048
+  INTEGER, PARAMETER :: c_err_unknown_block = 2**0
+  INTEGER, PARAMETER :: c_err_unknown_element = 2**1
+  INTEGER, PARAMETER :: c_err_preset_element = 2**2
+  INTEGER, PARAMETER :: c_err_preset_element_use_later = 2**3
+  INTEGER, PARAMETER :: c_err_bad_value = 2**4
+  INTEGER, PARAMETER :: c_err_missing_elements = 2**5
+  INTEGER, PARAMETER :: c_err_terminate = 2**6
+  INTEGER, PARAMETER :: c_err_required_element_not_set = 2**7
+  INTEGER, PARAMETER :: c_err_pp_options_wrong = 2**8
+  INTEGER, PARAMETER :: c_err_bad_array_length = 2**9
+  INTEGER, PARAMETER :: c_err_other = 2**10
+  INTEGER, PARAMETER :: c_err_warn_bad_value = 2**11
 
   INTEGER, PARAMETER :: c_ds_first = 1
   INTEGER, PARAMETER :: c_ds_last = 2
 
   ! IO codes
   INTEGER, PARAMETER :: c_io_never = 0
-  INTEGER, PARAMETER :: c_io_always = 1
-  INTEGER, PARAMETER :: c_io_full = 2
-  INTEGER, PARAMETER :: c_io_restartable = 4
-  INTEGER, PARAMETER :: c_io_species = 8
-  INTEGER, PARAMETER :: c_io_no_sum = 16
-  INTEGER, PARAMETER :: c_io_averaged = 32
-  INTEGER, PARAMETER :: c_io_snapshot = 64
+  INTEGER, PARAMETER :: c_io_always = 2**0
+  INTEGER, PARAMETER :: c_io_full = 2**1
+  INTEGER, PARAMETER :: c_io_restartable = 2**2
+  INTEGER, PARAMETER :: c_io_species = 2**3
+  INTEGER, PARAMETER :: c_io_no_sum = 2**4
+  INTEGER, PARAMETER :: c_io_averaged = 2**5
+  INTEGER, PARAMETER :: c_io_snapshot = 2**6
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
@@ -101,19 +101,19 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_gamma_m1 = c_ndims + 5
 
   ! define flags
-  INTEGER(8), PARAMETER :: c_def_particle_debug = 1
-  INTEGER(8), PARAMETER :: c_def_field_debug = 2
-  INTEGER(8), PARAMETER :: c_def_particle_shape_bspline3 = 4
-  INTEGER(8), PARAMETER :: c_def_split_part_after_push = 8
-  INTEGER(8), PARAMETER :: c_def_per_particle_weight = 16
-  INTEGER(8), PARAMETER :: c_def_particle_count_update = 32
-  INTEGER(8), PARAMETER :: c_def_tracer_particles = 64
-  INTEGER(8), PARAMETER :: c_def_particle_probes = 128
-  INTEGER(8), PARAMETER :: c_def_per_particle_chargemass = 256
-  INTEGER(8), PARAMETER :: c_def_particle_ionise = 512
-  INTEGER(8), PARAMETER :: c_def_high_order_smoothing = 1024
-  INTEGER(8), PARAMETER :: c_def_particle_shape_tophat = 2048
-  INTEGER(8), PARAMETER :: c_def_parser_debug = 4096
+  INTEGER(8), PARAMETER :: c_def_particle_debug = 2**0
+  INTEGER(8), PARAMETER :: c_def_field_debug = 2**1
+  INTEGER(8), PARAMETER :: c_def_particle_shape_bspline3 = 2**2
+  INTEGER(8), PARAMETER :: c_def_split_part_after_push = 2**3
+  INTEGER(8), PARAMETER :: c_def_per_particle_weight = 2**4
+  INTEGER(8), PARAMETER :: c_def_particle_count_update = 2**5
+  INTEGER(8), PARAMETER :: c_def_tracer_particles = 2**6
+  INTEGER(8), PARAMETER :: c_def_particle_probes = 2**7
+  INTEGER(8), PARAMETER :: c_def_per_particle_chargemass = 2**8
+  INTEGER(8), PARAMETER :: c_def_particle_ionise = 2**9
+  INTEGER(8), PARAMETER :: c_def_high_order_smoothing = 2**10
+  INTEGER(8), PARAMETER :: c_def_particle_shape_tophat = 2**11
+  INTEGER(8), PARAMETER :: c_def_parser_debug = 2**12
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
