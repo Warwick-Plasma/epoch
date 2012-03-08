@@ -123,6 +123,14 @@ CONTAINS
     WRITE(*, *) "High order current smoothing (matches particle &
         &interpolation function) -DHIGH_ORDER_SMOOTHING"
 #endif
+#ifdef PARTICLE_ID4
+    defines = IOR(defines, c_def_particle_id4)
+    WRITE(*, *) "Particle ID tracking (4-bytes) -DPARTICLE_ID4"
+#endif
+#ifdef PARTICLE_ID
+    defines = IOR(defines, c_def_particle_id)
+    WRITE(*, *) "Particle ID tracking (8-bytes) -DPARTICLE_ID"
+#endif
     WRITE(*, *) "*************************************************************"
     WRITE(*, *) ""
 

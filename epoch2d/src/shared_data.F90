@@ -114,6 +114,8 @@ MODULE constants
   INTEGER(8), PARAMETER :: c_def_high_order_smoothing = 2**10
   INTEGER(8), PARAMETER :: c_def_particle_shape_tophat = 2**11
   INTEGER(8), PARAMETER :: c_def_parser_debug = 2**12
+  INTEGER(8), PARAMETER :: c_def_particle_id4 = 2**13
+  INTEGER(8), PARAMETER :: c_def_particle_id  = 2**14
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
