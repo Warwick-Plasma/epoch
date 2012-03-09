@@ -231,14 +231,17 @@ CONTAINS
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
-    INTEGER(KIND=8) :: ipart, npart_per_cell
+    INTEGER(KIND=8) :: ipart, npart_per_cell, num_int, num_total, idx
     INTEGER(KIND=8) :: num_valid_cells_local, num_valid_cells_global
     INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
-    REAL(num) :: valid_cell_frac
+    INTEGER(KIND=8), ALLOCATABLE :: num_valid_cells_all(:), num_idx(:)
+    REAL(num) :: valid_cell_frac, num_real, f0, f1
+    REAL(num), ALLOCATABLE :: num_frac(:)
     INTEGER :: cell_x
     INTEGER(KIND=8) :: i, ipos
     INTEGER :: ierr, ix
     CHARACTER(LEN=15) :: string
+    LOGICAL :: sweep
 
     npart_this_species = species%count
     IF (npart_this_species .LT. 0) THEN
@@ -260,9 +263,16 @@ CONTAINS
       npart_per_cell = species%npart_per_cell
       num_new_particles = npart_per_cell * num_valid_cells_local
     ELSE
+      ALLOCATE(num_valid_cells_all(nproc), num_idx(nproc), num_frac(nproc))
+
       ! Calculate global number of particles per cell
-      CALL MPI_ALLREDUCE(num_valid_cells_local, num_valid_cells_global, 1, &
-          MPI_INTEGER8, MPI_SUM, comm, errcode)
+      CALL MPI_ALLGATHER(num_valid_cells_local, 1, MPI_INTEGER8, &
+          num_valid_cells_all, 1, MPI_INTEGER8, comm, errcode)
+
+      num_valid_cells_global = 0
+      DO i = 1,nproc
+        num_valid_cells_global = num_valid_cells_global + num_valid_cells_all(i)
+      ENDDO
 
       IF (num_valid_cells_global .EQ. 0) THEN
         IF (rank .EQ. 0) THEN
@@ -275,9 +285,62 @@ CONTAINS
         ENDIF
       ENDIF
 
-      valid_cell_frac = &
-          REAL(num_valid_cells_local, num) / REAL(num_valid_cells_global, num)
-      num_new_particles = NINT(npart_this_species*valid_cell_frac, KIND=8)
+      valid_cell_frac = REAL(num_valid_cells_local, num) &
+          / REAL(num_valid_cells_global, num)
+      num_real = npart_this_species * valid_cell_frac
+      num_new_particles = AINT(num_real, KIND=8)
+
+      ! Work out which processors get the remaining fractional numbers
+      ! of particles
+
+      ! Get a list of the fractional part on each processor, along with
+      ! the total
+      num_total = 0
+      DO i = 1,nproc
+        valid_cell_frac = REAL(num_valid_cells_all(i), num) &
+            / REAL(num_valid_cells_global, num)
+        num_real = npart_this_species * valid_cell_frac
+        num_int = AINT(num_real, KIND=8)
+        num_frac(i) = num_real - num_int
+        num_idx (i) = i
+        num_total = num_total + num_int
+      ENDDO
+      num_total = npart_this_species - num_total
+
+      ! Sort the list of fractions into decreasing order using bubble sort
+      sweep = .TRUE.
+      DO WHILE(sweep)
+        sweep = .FALSE.
+        f0 = num_frac(1)
+        DO i = 2,nproc
+          f1 = num_frac(i)
+          IF (f1 .GT. f0) THEN
+            num_frac(i-1) = f1
+            num_frac(i) = f0
+            idx = num_idx(i-1)
+            num_idx(i-1) = num_idx(i)
+            num_idx(i) = idx
+            sweep = .TRUE.
+          ENDIF
+          f0 = f1
+        ENDDO
+      ENDDO
+
+      ! Accumulate fractional particles until they have all been accounted
+      ! for. If any of them have been assigned to the current processor,
+      ! add them and exit the loop.
+
+      DO i = 1,nproc-1
+        num_int = AINT(num_frac(i) / num_frac(i+1), KIND=8)
+        IF (num_idx(i) .EQ. rank) THEN
+          num_new_particles = num_new_particles + num_int
+          EXIT
+        ENDIF
+        num_total = num_total - num_int
+        IF (num_total .LE. 0) EXIT
+      ENDDO
+
+      DEALLOCATE(num_valid_cells_all, num_idx, num_frac)
 
       npart_per_cell = npart_this_species / num_valid_cells_global
       species%npart_per_cell = npart_per_cell
