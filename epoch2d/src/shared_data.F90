@@ -399,6 +399,7 @@ MODULE shared_data
     TYPE(particle), POINTER :: head
     TYPE(particle), POINTER :: tail
     INTEGER(KIND=8) :: count
+    INTEGER :: id_update
     ! Pointer is safe if the particles in it are all unambiguously linked
     LOGICAL :: safe
 

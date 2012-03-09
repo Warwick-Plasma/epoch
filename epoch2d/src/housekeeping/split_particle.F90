@@ -98,7 +98,7 @@ CONTAINS
 
 #ifdef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies, ix, iy
-    INTEGER(KIND=8) :: count, npart_this_species
+    INTEGER(KIND=8) :: count
     TYPE(particle), POINTER :: current, new_particle
     TYPE(particle_list) :: append_list
     REAL(num) :: jitter_x, jitter_y
@@ -127,6 +127,9 @@ CONTAINS
               current%weight = 0.5_num * current%weight
               ALLOCATE(new_particle)
               new_particle = current
+#if PARTICLE_ID || PARTICLE_ID4
+              new_particle%id = 0
+#endif
               new_particle%part_pos(1) = current%part_pos(1) + jitter_x
               new_particle%part_pos(2) = current%part_pos(2) + jitter_y
               CALL add_particle_to_partlist(append_list, new_particle)
@@ -145,7 +148,6 @@ CONTAINS
         ENDDO
       ENDDO
 
-      CALL generate_particle_ids(append_list, npart_this_species)
       CALL append_partlist(species_list(ispecies)%attached_list, append_list)
     ENDDO
 #endif

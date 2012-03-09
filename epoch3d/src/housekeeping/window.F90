@@ -174,7 +174,6 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, ipart, i, iy, iz, isuby, isubz
-    INTEGER(KIND=8) :: npart_this_species
     REAL(num) :: cell_y_r, cell_frac_y, cy2
     REAL(num) :: cell_z_r, cell_frac_z, cz2
     INTEGER :: cell_y, cell_z
@@ -194,6 +193,7 @@ CONTAINS
         DO iy = 1, ny
           DO ipart = 1, species_list(ispecies)%npart_per_cell
             ALLOCATE(current)
+            CALL init_particle(current)
             current%part_pos(1) = x_max + dx + (random() - 0.5_num) * dx
             current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
             current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
@@ -251,7 +251,6 @@ CONTAINS
         ENDDO
       ENDDO
 
-      CALL generate_particle_ids(append_list, npart_this_species)
       CALL append_partlist(species_list(ispecies)%attached_list, append_list)
     ENDDO
 

@@ -26,7 +26,6 @@ CONTAINS
     REAL(num) :: lambda_db, e_photon, t_eff, saha_rhs, ion_frac, rand
     REAL(num) :: fac, tfac, lfac, cf2
     INTEGER :: next_species
-    INTEGER(KIND=8) :: npart_this_species
     INTEGER, PARAMETER :: dcellx = 0, dcelly = 0, dcellz = 0
 
     rand = random()
@@ -186,6 +185,7 @@ CONTAINS
           next_species = species_list(ispecies)%release_species
           IF (next_species .GT. 0) THEN
             ALLOCATE(new_part)
+            CALL init_particle(new_part)
 #ifdef PER_PARTICLE_WEIGHT
             new_part%weight = current%weight
 #endif
@@ -208,7 +208,6 @@ CONTAINS
     ENDDO
 
     DO ispecies = 1, n_species
-      CALL generate_particle_ids(append_lists(ispecies), npart_this_species)
       CALL append_partlist(species_list(ispecies)%attached_list, &
           append_lists(ispecies))
     ENDDO

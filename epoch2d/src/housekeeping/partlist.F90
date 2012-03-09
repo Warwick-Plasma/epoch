@@ -9,6 +9,15 @@ MODULE partlist
 
   INTEGER :: nvar
 
+  TYPE pointer_item
+    TYPE(particle), POINTER :: part
+    TYPE(pointer_item), POINTER :: next
+  END TYPE pointer_item
+
+  TYPE pointer_list
+    TYPE(pointer_item), POINTER :: head, tail
+  END TYPE pointer_list
+
 CONTAINS
 
   SUBROUTINE setup_partlists
@@ -38,6 +47,7 @@ CONTAINS
     NULLIFY(partlist%head)
     NULLIFY(partlist%tail)
     partlist%count = 0
+    partlist%id_update = 0
     partlist%safe = .TRUE.
 
   END SUBROUTINE create_empty_partlist
@@ -220,7 +230,9 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist1, partlist2
 
     partlist2%head=>partlist1%head
-    partlist2%tail=>partlist2%tail
+    partlist2%tail=>partlist1%tail
+    partlist2%count = partlist1%count
+    partlist2%id_update = partlist1%id_update
 
   END SUBROUTINE copy_partlist
 
@@ -243,7 +255,8 @@ CONTAINS
     ENDIF
     IF (ASSOCIATED(tail%head)) tail%head%prev=>head%tail
     IF (ASSOCIATED(tail%tail)) head%tail=>tail%tail
-    head%count = head%count+tail%count
+    head%count = head%count + tail%count
+    head%id_update = head%id_update + tail%id_update
 
     CALL create_empty_partlist(tail)
 
@@ -264,7 +277,8 @@ CONTAINS
     NULLIFY(new_particle%next, new_particle%prev)
 
     ! Add particle count
-    partlist%count = partlist%count+1
+    partlist%count = partlist%count + 1
+    partlist%id_update = 1
     IF (.NOT. ASSOCIATED(partlist%tail)) THEN
       ! partlist is empty
       partlist%head=>new_particle
@@ -493,11 +507,14 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(KIND=8) :: cpos = 0, npart_left, ipart
+    INTEGER(KIND=8) :: cpos = 0, npart_left, ipart, send_buf(2)
     TYPE(particle), POINTER :: current
 
     npart_left = partlist%count
-    CALL MPI_SEND(partlist%count, 1, MPI_INTEGER, dest, tag, comm, errcode)
+    send_buf(1) = partlist%count
+    send_buf(2) = partlist%id_update
+
+    CALL MPI_SEND(send_buf, 2, MPI_INTEGER8, dest, tag, comm, errcode)
 
     ALLOCATE(array(1:partlist%count*nvar))
     array = 0.0_num
@@ -522,12 +539,14 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: src
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(KIND=8) :: count
+    INTEGER(KIND=8) :: count, recv_buf(2)
 
     CALL create_empty_partlist(partlist)
 
-    count = 0
-    CALL MPI_RECV(count, 1, MPI_INTEGER, src, tag, comm, status, errcode)
+    recv_buf = 0
+    CALL MPI_RECV(recv_buf, 2, MPI_INTEGER8, src, tag, comm, status, errcode)
+    count = recv_buf(1)
+    partlist%id_update = partlist%id_update + recv_buf(2)
 
     ALLOCATE(array(1:count*nvar))
     array = 0.0_num
@@ -546,17 +565,23 @@ CONTAINS
     INTEGER, INTENT(IN) :: dest, src
     REAL(num), DIMENSION(:), ALLOCATABLE :: data_send, data_recv, data_temp
     INTEGER(KIND=8) :: cpos = 0, ipart = 0
-    INTEGER(KIND=8) :: npart_send, npart_recv
+    INTEGER(KIND=8) :: npart_send, npart_recv, send_buf(2), recv_buf(2)
     TYPE(particle), POINTER :: current
 
     ! This subroutine doesn't try to use memory efficient buffering, it sends
     ! all the particles at once. This should work for boundary calls, but
     ! don't try it for any other reason
 
-    npart_send = partlist_send%count
-    npart_recv = 0
-    CALL MPI_SENDRECV(npart_send, 1, MPI_INTEGER, dest, tag, npart_recv, 1, &
-        MPI_INTEGER, src, tag, comm, status, errcode)
+    recv_buf = 0
+    send_buf(1) = partlist_send%count
+    send_buf(2) = partlist_send%id_update
+
+    CALL MPI_SENDRECV(send_buf, 2, MPI_INTEGER8, dest, tag, recv_buf, 2, &
+        MPI_INTEGER8, src, tag, comm, status, errcode)
+
+    npart_send = send_buf(1)
+    npart_recv = recv_buf(1)
+    partlist_recv%id_update = partlist_recv%id_update + recv_buf(2)
 
     ! Copy the data for the particles into a buffer
     ALLOCATE(data_send(1:npart_send*nvar))
@@ -589,46 +614,92 @@ CONTAINS
 
 
 
-  SUBROUTINE generate_particle_ids(partlist, npart_this_species)
+  SUBROUTINE add_particle_to_list(part, list)
+
+    TYPE(particle), POINTER :: part
+    TYPE(pointer_list) :: list
+    TYPE(pointer_item), POINTER :: item
+
+    ALLOCATE(item)
+    item%part => part
+    NULLIFY(item%next)
+
+    list%tail%next => item
+    list%tail => item
+
+  END SUBROUTINE add_particle_to_list
+
+
+
+  SUBROUTINE generate_particle_ids(partlist)
 
     TYPE(particle_list) :: partlist
-    INTEGER(KIND=8), INTENT(OUT) :: npart_this_species
 #if PARTICLE_ID || PARTICLE_ID4
-    INTEGER(KIND=8), ALLOCATABLE :: npart_species_per_proc(:)
-    INTEGER(KIND=8) :: part_id
-    INTEGER :: i
+    INTEGER(KIND=8), ALLOCATABLE :: nid_all(:)
+    INTEGER(KIND=8) :: nid, part_id
+    INTEGER :: i, id_update
     TYPE(particle), POINTER :: current
+    TYPE(pointer_list) :: idlist
+    TYPE(pointer_item), POINTER :: idcurrent, idnext
 
-    ALLOCATE(npart_species_per_proc(nproc))
+    id_update = partlist%id_update
 
-    CALL MPI_ALLGATHER(partlist%count, 1, MPI_INTEGER8, &
-        npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
+    CALL MPI_ALLREDUCE(id_update, partlist%id_update, 1, MPI_INTEGER, &
+        MPI_MAX, comm, errcode)
+
+    IF (partlist%id_update .EQ. 0) RETURN
+
+    ALLOCATE(idlist%head)
+    idlist%tail => idlist%head
+    NULLIFY(idlist%head%next)
+    NULLIFY(idlist%head%part)
+
+    ! Scan through particle list and identify particles which need
+    ! an ID to be assigned.
+    nid = 0
+    current => partlist%head
+    DO WHILE(ASSOCIATED(current))
+      IF (current%id .EQ. 0) THEN
+        nid = nid + 1
+        CALL add_particle_to_list(current, idlist)
+      ENDIF
+      current => current%next
+    ENDDO
+
+    ALLOCATE(nid_all(nproc))
+
+    CALL MPI_ALLGATHER(nid, 1, MPI_INTEGER8, nid_all, 1, MPI_INTEGER8, &
+        comm, errcode)
 
     ! Count number of particles on ranks zero to rank-1
-    npart_this_species = 0
+    nid = 0
     DO i = 1, rank
-      npart_this_species = npart_this_species + npart_species_per_proc(i)
+      nid = nid + nid_all(i)
     ENDDO
-    part_id = particles_max_id + npart_this_species
+    part_id = particles_max_id + nid
 
     ! Count remaining particles
     DO i = rank+1, nproc
-      npart_this_species = npart_this_species + npart_species_per_proc(i)
+      nid = nid + nid_all(i)
     ENDDO
 
-    DEALLOCATE(npart_species_per_proc)
+    particles_max_id = particles_max_id + nid
 
-    ! Number each particle with a unique id within this species
-    current=>partlist%head
-    DO WHILE(ASSOCIATED(current))
+    DEALLOCATE(nid_all)
+
+    ! Number each particle with a unique id
+    idcurrent => idlist%head%next
+    DO WHILE(ASSOCIATED(idcurrent))
       part_id = part_id + 1
-      current%id = part_id
-      current=>current%next
+      idcurrent%part%id = part_id
+      idnext => idcurrent%next
+      DEALLOCATE(idcurrent)
+      idcurrent => idnext
     ENDDO
 
-    particles_max_id = particles_max_id + npart_this_species
-#else
-    npart_this_species = 0
+    DEALLOCATE(idlist%head)
+
+    partlist%id_update = 0
 #endif
 
   END SUBROUTINE generate_particle_ids

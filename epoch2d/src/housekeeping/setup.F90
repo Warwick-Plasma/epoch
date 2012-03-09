@@ -455,7 +455,7 @@ CONTAINS
     INTEGER :: ierr, i1, i2, iblock, nblocks, ndims, found_species
     INTEGER(KIND=8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims
-    LOGICAL :: restart_flag, found_ids
+    LOGICAL :: restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
     TYPE(particle_list), POINTER :: partlist
@@ -463,7 +463,6 @@ CONTAINS
 
     npart_global = 0
     step = -1
-    found_ids = .FALSE.
 
     ! Create the filename for the last snapshot
     WRITE(filename, '(a, "/", i4.4, ".sdf")') TRIM(data_dir), restart_snapshot
@@ -704,7 +703,6 @@ CONTAINS
 
         ELSE IF (block_id(1:3) .EQ. 'id/') THEN
 #if PARTICLE_ID || PARTICLE_ID4
-          found_ids = .TRUE.
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
               species_subtypes(ispecies), it_id)
 #else
@@ -734,20 +732,6 @@ CONTAINS
 
     CALL sdf_close(sdf_handle)
     CALL free_subtypes_for_load(species_subtypes)
-
-#if PARTICLE_ID || PARTICLE_ID4
-    IF (found_ids) RETURN
-
-    IF (rank .EQ. 0) THEN
-      PRINT*, '*** WARNING ***'
-      PRINT*, 'File did not contain particle IDs. Generating new ones.'
-    ENDIF
-
-    DO ispecies = 1, n_species
-      partlist => species_list(ispecies)%attached_list
-      CALL generate_particle_ids(partlist, npart)
-    ENDDO
-#endif
 
   END SUBROUTINE restart_data
 

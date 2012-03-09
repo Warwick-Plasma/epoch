@@ -1,6 +1,7 @@
 MODULE iterators
 
   USE particle_pointer_advance
+  USE partlist
 
   IMPLICIT NONE
 
@@ -456,6 +457,7 @@ CONTAINS
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
+      CALL generate_particle_ids(current_list)
     ENDIF
 
     part_count = 0
@@ -466,7 +468,10 @@ CONTAINS
         cur=>cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
-      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+      IF (.NOT. ASSOCIATED(cur)) THEN
+        CALL advance_particle_list(current_list, cur)
+        IF (ASSOCIATED(current_list)) CALL generate_particle_ids(current_list)
+      ENDIF
     ENDDO
     n_points = part_count
 

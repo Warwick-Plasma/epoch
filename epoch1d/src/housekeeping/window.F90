@@ -132,7 +132,6 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, ipart, i
-    INTEGER(KIND=8) :: npart_this_species
     REAL(num) :: temp_local
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -145,6 +144,7 @@ CONTAINS
 
       DO ipart = 1, species_list(ispecies)%npart_per_cell
         ALLOCATE(current)
+        CALL init_particle(current)
         current%part_pos = x_max + dx + (random() - 0.5_num) * dx
 
         DO i = 1, 3
@@ -162,7 +162,6 @@ CONTAINS
         CALL add_particle_to_partlist(append_list, current)
       ENDDO
 
-      CALL generate_particle_ids(append_list, npart_this_species)
       CALL append_partlist(species_list(ispecies)%attached_list, append_list)
     ENDDO
 
