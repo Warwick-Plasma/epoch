@@ -13,7 +13,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 15 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 20 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -44,7 +44,12 @@ MODULE deck_control_block
           'smooth_currents   ', &
           'use_collisions    ', &
           'coulomb_log       ', &
-          'collide           ' /)
+          'collide           ', &
+          'qed               ', &
+          'qed_start_time    ', &
+          'produce_photons   ', &
+          'photon_energy_min ', &
+          'produce_pairs     ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                ', &
@@ -73,7 +78,13 @@ MODULE deck_control_block
           'smooth_currents   ', &
           'use_collisions    ', &
           'coulomb_log       ', &
-          'collide           ' /)
+          'collide           ', &
+          'qed               ', &
+          'qed_start_time    ', &
+          'produce_photons   ', &
+          'min_photon_energy ', &
+          'produce_pairs     ' /)
+
 
 CONTAINS
 
@@ -239,6 +250,42 @@ CONTAINS
         coulomb_log_auto = .FALSE.
         coulomb_log = as_real(value, errcode)
       ENDIF
+   !4*c_ndims+15 is the special case of the collision matrix
+    CASE(4*c_ndims+16)
+#ifdef PHOTONS
+      qed_active = as_logical(value, errcode)
+#else
+      extended_error_string='-DPHOTONS'
+      errcode = c_err_pp_options_wrong
+#endif
+    CASE(4*c_ndims+17)
+#ifdef PHOTONS
+      qed_start_time = as_real(value, errcode)
+#else
+      extended_error_string='-DPHOTONS'
+      errcode = c_err_pp_options_wrong
+#endif
+    CASE(4*c_ndims+18)
+#ifdef PHOTONS
+      produce_photons = as_logical(value, errcode)
+#else
+      extended_error_string='-DPHOTONS'
+      errcode = c_err_pp_options_wrong
+#endif
+    CASE(4*c_ndims+19)
+#ifdef PHOTONS
+      photon_energy_min = as_real(value, errcode)
+#else
+      extended_error_string='-DPHOTONS'
+      errcode = c_err_pp_options_wrong
+#endif
+    CASE(4*c_ndims+20)
+#ifdef PHOTONS
+      produce_pairs = as_logical(value, errcode)
+#else
+      extended_error_string='-DPHOTONS'
+      errcode = c_err_pp_options_wrong
+#endif
     END SELECT
 
   END FUNCTION control_block_handle_element

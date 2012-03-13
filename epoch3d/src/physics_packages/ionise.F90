@@ -2,6 +2,7 @@ MODULE ionise
 
   USE calc_df
   USE split_particle
+  USE partlist
 
   IMPLICIT NONE
 

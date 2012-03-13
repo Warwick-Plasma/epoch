@@ -20,7 +20,7 @@ CONTAINS
 
   TYPE(particle_probe), POINTER :: working_probe
   REAL(num) :: point2(c_ndims), point3(c_ndims)
-  LOGICAL :: got_point, got_normal, got_x
+  LOGICAL :: got_point, got_normal, got_x, got_radius
 
 CONTAINS
 
@@ -136,6 +136,12 @@ CONTAINS
     IF (str_cmp(element, 'normal')) THEN
       got_normal = .TRUE.
       CALL get_vector(value, working_probe%normal, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'radius')) THEN
+      got_radius = .TRUE.
+      working_probe%radius=as_real(value,errcode)
       RETURN
     ENDIF
 

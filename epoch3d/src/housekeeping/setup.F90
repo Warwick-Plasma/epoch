@@ -13,6 +13,7 @@ MODULE setup
   USE random_generator
   USE split_particle
   USE shunt
+  USE probes
 
   IMPLICIT NONE
 
@@ -87,6 +88,11 @@ CONTAINS
     NULLIFY(laser_z_min)
 
     NULLIFY(dist_fns)
+
+#ifdef PARTICLE_PROBES
+    NULLIFY(attached_probes)
+    n_probes = 0
+#endif
 
     run_date = get_unix_time()
 
@@ -220,6 +226,7 @@ CONTAINS
     CALL setup_data_averaging
     CALL setup_split_particles
     CALL setup_field_boundaries
+    CALL create_probe_subsets
 
     IF (cpml_boundaries) THEN
       CALL allocate_cpml_fields
@@ -329,7 +336,6 @@ CONTAINS
       species_list(ispecies)%tracer = .FALSE.
 #endif
 #ifdef PARTICLE_PROBES
-      NULLIFY(species_list(ispecies)%attached_probes)
 #endif
     ENDDO
 

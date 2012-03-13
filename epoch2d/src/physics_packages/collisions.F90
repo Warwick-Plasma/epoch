@@ -51,6 +51,8 @@ CONTAINS
     ALLOCATE(part_count(-2:nx+3,-2:ny+3))
 
     DO ispecies = 1, n_species
+      IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) &
+          CYCLE
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
 
@@ -60,6 +62,8 @@ CONTAINS
       itemp = itemp * kb / q0
 
       DO jspecies = ispecies, n_species
+        IF (species_list(jspecies)%species_type .EQ. c_species_id_photon) &
+            CYCLE
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor .LE. 0) CYCLE
 

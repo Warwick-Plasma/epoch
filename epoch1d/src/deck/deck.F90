@@ -22,6 +22,9 @@ MODULE deck
 #ifdef PARTICLE_PROBES
   USE deck_particle_probe_block
 #endif
+#ifdef PHOTONS
+  USE photons
+#endif
   ! Custom blocks
   USE custom_deck
   USE version_data
@@ -268,6 +271,11 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, subset_block_check())
 #ifdef PARTICLE_PROBES
     errcode_deck = IOR(errcode_deck, probe_block_check())
+#endif
+#ifdef PHOTONS
+    IF (qed_active) THEN
+      errcode_deck = IOR(errcode_deck, check_qed_variables())
+    ENDIF
 #endif
     errcode_deck = IOR(errcode_deck, species_block_check())
     errcode_deck = IOR(errcode_deck, window_block_check())
@@ -859,6 +867,27 @@ CONTAINS
           WRITE(io,*)
         ENDDO
       ENDIF
+    ENDIF
+    IF (IAND(errcode_deck, c_err_generic_warning) .NE. 0) THEN
+      IF (rank .EQ. rank_check) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) TRIM(extended_error_string)
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+    ENDIF
+    IF (IAND(errcode_deck, c_err_generic_error) .NE. 0) THEN
+      IF (rank .EQ. rank_check) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) TRIM(extended_error_string)
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+      errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
     IF (IAND(errcode_deck, c_err_other) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN

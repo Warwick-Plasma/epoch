@@ -35,6 +35,9 @@ PROGRAM pic
 #ifdef PARTICLE_IONISE
   USE ionise
 #endif
+#ifdef PHOTONS
+  USE photons
+#endif
 
   IMPLICIT NONE
 
@@ -107,12 +110,21 @@ PROGRAM pic
 
   walltime_start = MPI_WTIME()
   CALL output_routines(step) ! diagnostics.f90
+#ifdef PHOTONS
+  IF (qed_active) CALL setup_qed_module()
+#endif
+
 
   DO
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
         .OR. (time .GE. t_end) .OR. halt) EXIT
     CALL set_dt
     CALL update_eb_fields_half
+#ifdef PHOTONS
+    IF (time .GT. qed_start_time .AND. qed_active) THEN
+      CALL qed_update_optical_depth()
+    ENDIF
+#endif
     CALL push_particles
     IF (use_particle_lists) THEN
       ! After this line, the particles can be accessed on a cell by cell basis
@@ -153,6 +165,10 @@ PROGRAM pic
     IF (halt) EXIT
     CALL output_routines(step)
   ENDDO
+
+#ifdef PHOTONS
+  IF (qed_active) CALL shutdown_qed_module()
+#endif
 
   IF (rank .EQ. 0) &
       PRINT *, 'Final runtime of core = ', MPI_WTIME() - walltime_start

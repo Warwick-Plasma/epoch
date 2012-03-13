@@ -131,6 +131,14 @@ CONTAINS
     defines = IOR(defines, c_def_particle_id)
     WRITE(*, *) 'Particle ID tracking (8-bytes) -DPARTICLE_ID'
 #endif
+#ifdef PHOTONS
+    defines = IOR(defines, c_def_photons)
+    WRITE(*, *) 'QED Effects -DPHOTONS'
+#ifdef TRIDENT_PHOTONS
+    defines = IOR(defines, c_def_trident_photons)
+    WRITE(*, *) 'Pair production by Trident process -DTRIDENT_PHOTONS'
+#endif
+#endif
     WRITE(*, *) '*************************************************************'
     WRITE(*, *)
 

@@ -293,9 +293,9 @@ CONTAINS
     ENDIF
 
 #ifdef PARTICLE_PROBES
-    IF (IAND(dumpmask(c_dump_probes), code) .NE. 0) THEN
-      CALL write_probes(sdf_handle, code)
-    ENDIF
+!    IF (IAND(dumpmask(c_dump_probes), code) .NE. 0) THEN
+!      CALL write_probes(sdf_handle, code)
+!    ENDIF
 #endif
 
     IF (restart_flag) THEN
@@ -910,6 +910,11 @@ CONTAINS
 
     IF (isubset .EQ. 1) THEN
       io_list => species_list
+      RETURN
+    ENDIF
+
+    IF (ASSOCIATED(subset_list(isubset)%connected_probe)) THEN
+      io_list => subset_list(isubset)%connected_probe%sampled_particles
       RETURN
     ENDIF
 

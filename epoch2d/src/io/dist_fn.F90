@@ -238,10 +238,24 @@ CONTAINS
 #endif
         gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
 
-        particle_data(1:c_ndims) = current%part_pos
+      particle_data(1:c_ndims) = current%part_pos
+      IF (io_list(species)%species_type .EQ. c_species_id_photon) THEN
+        particle_data(c_dir_gamma_m1) = 0.0_num
+#ifdef PHOTONS
+        particle_data(c_dir_px:c_dir_pz) = current%particle_energy&
+            *current%part_p/(c**2)
+        particle_data(c_dir_en) = current%particle_energy
+#else
+        particle_data(c_dir_px:c_dir_pz) = 0.0_num
+        particle_data(c_dir_en) = 0.0_num
+#endif
+        !Can't define gamma for photon so one is as good as anything
+        particle_data(c_dir_gamma_m1) = 1.0_num
+      ELSE
         particle_data(c_dir_px:c_dir_pz) = current%part_p
         particle_data(c_dir_en) = gamma_m1 * part_mc2
         particle_data(c_dir_gamma_m1) = gamma_m1
+      ENDIF
 
         current => current%next
 
@@ -302,9 +316,23 @@ CONTAINS
       gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
 
       particle_data(1:c_ndims) = current%part_pos
-      particle_data(c_dir_px:c_dir_pz) = current%part_p
-      particle_data(c_dir_en) = gamma_m1 * part_mc2
-      particle_data(c_dir_gamma_m1) = gamma_m1
+      IF (io_list(species)%species_type .EQ. c_species_id_photon) THEN
+        particle_data(c_dir_gamma_m1) = 0.0_num
+#ifdef PHOTONS
+        particle_data(c_dir_px:c_dir_pz) = current%particle_energy&
+            *current%part_p/(c**2)
+        particle_data(c_dir_en) = current%particle_energy
+#else
+        particle_data(c_dir_px:c_dir_pz) = 0.0_num
+        particle_data(c_dir_en) = 0.0_num
+#endif
+        !Can't define gamma for photon so one is as good as anything
+        particle_data(c_dir_gamma_m1) = 1.0
+      ELSE
+        particle_data(c_dir_px:c_dir_pz) = current%part_p
+        particle_data(c_dir_en) = gamma_m1 * part_mc2
+        particle_data(c_dir_gamma_m1) = gamma_m1
+      ENDIF
 
       current => current%next
 

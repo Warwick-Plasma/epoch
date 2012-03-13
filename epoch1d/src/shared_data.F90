@@ -58,6 +58,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_bad_array_length = 2**9
   INTEGER, PARAMETER :: c_err_other = 2**10
   INTEGER, PARAMETER :: c_err_warn_bad_value = 2**11
+  INTEGER, PARAMETER :: c_err_generic_warning = 2**12
+  INTEGER, PARAMETER :: c_err_generic_error = 2**13
 
   INTEGER, PARAMETER :: c_ds_first = 1
   INTEGER, PARAMETER :: c_ds_last = 2
@@ -93,6 +95,21 @@ MODULE constants
   REAL(num), PARAMETER :: h_planck = 6.62606896e-34_num ! J s (+/- 3.3e-41)
   REAL(num), PARAMETER :: ev = q0 ! J
 
+  ! Constants used in pair production
+#ifdef PHOTONS
+  REAL(num), PARAMETER :: B_s = (m0*c)**2d0/((h_planck*q0)/(2d0*pi))
+  REAL(num), PARAMETER :: E_s = B_s*c
+  REAL(num), PARAMETER :: alpha_f = (q0**2d0)/(2d0*epsilon0*h_planck*c)
+  REAL(num), PARAMETER :: tau_C = h_planck/(2d0*pi*m0*c**2d0)
+#endif
+
+  ! define special particle IDs
+  INTEGER, PARAMETER :: c_species_id_generic = 0
+  INTEGER, PARAMETER :: c_species_id_photon = 1
+  INTEGER, PARAMETER :: c_species_id_electron = 2
+  INTEGER, PARAMETER :: c_species_id_positron = 3
+  INTEGER, PARAMETER :: c_species_id_proton = 4
+
   ! direction parameters
   INTEGER, PARAMETER :: c_dir_x = 1
   INTEGER, PARAMETER :: c_dir_y = 2
@@ -119,6 +136,8 @@ MODULE constants
   INTEGER(8), PARAMETER :: c_def_parser_debug = 2**12
   INTEGER(8), PARAMETER :: c_def_particle_id4 = 2**13
   INTEGER(8), PARAMETER :: c_def_particle_id  = 2**14
+  INTEGER(8), PARAMETER :: c_def_photons = 2**15
+  INTEGER(8), PARAMETER :: c_def_trident_photons = 2**16
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
@@ -398,6 +417,13 @@ MODULE shared_data
 #ifdef COLLISIONS_TEST
     INTEGER :: coll_count
 #endif
+#ifdef PHOTONS
+    REAL(num) :: optical_depth
+    REAL(num) :: particle_energy
+#ifdef TRIDENT_PHOTONS
+    REAL(num) :: optical_depth_tri
+#endif
+#endif
   END TYPE particle
 
   ! Object representing a collection of particles
@@ -430,6 +456,9 @@ MODULE shared_data
 #ifdef TRACER_PARTICLES
     LOGICAL :: tracer
 #endif
+
+    !ID code which identifies if a species is of a special type
+    INTEGER :: species_type
 
     ! particle cell division
     INTEGER(KIND=8) :: global_count
@@ -688,6 +717,28 @@ MODULE shared_data
   INTEGER :: bc_x_min_after_move
   INTEGER :: bc_x_max_after_move
   REAL(num) :: window_shift
+
+#ifdef PHOTONS
+  !----------------------------------------------------------------------------
+  ! QED - Written by C. P. Ridgers                       
+  !----------------------------------------------------------------------------
+   REAL(num), ALLOCATABLE :: log_chi2(:), epsilon_split(:), P_energy(:,:)
+   REAL(num), ALLOCATABLE :: log_hsokolov(:,:), P_photon_energy(:,:)
+   REAL(num), ALLOCATABLE :: log_eta(:), log_chi(:,:), log_tpair_dummy(:,:)
+   REAL(num), ALLOCATABLE :: log_tpair(:,:), chimin_table(:), log_omegahat(:,:)
+   INTEGER :: n_photon, n_pair
+   INTEGER :: n_sample_epsilon, n_sample_chi2, n_sample_h
+   INTEGER :: n_sample_eta, n_sample_chi, n_sample_t
+
+   !These track which species should be the species used by the QED routines
+   INTEGER :: photon_species=-1, trident_electron_species=-1
+   INTEGER :: breit_wheeler_electron_species=-1
+   INTEGER :: trident_positron_species=-1, breit_wheeler_positron_species=-1
+
+   REAL(num) :: photon_energy_min=0.0_num
+   REAL(num) :: qed_start_time=0.0_num
+   LOGICAL :: qed_active=.FALSE., produce_pairs=.FALSE., produce_photons=.FALSE.
+#endif
 
   !----------------------------------------------------------------------------
   ! MPI data

@@ -2,6 +2,7 @@ MODULE partlist
 
   USE mpi
   USE shared_data
+  USE random_generator
 
   IMPLICIT NONE
 
@@ -34,6 +35,12 @@ CONTAINS
 #endif
 #if PARTICLE_ID || PARTICLE_ID4
     nvar = nvar+1
+#endif
+#ifdef PHOTONS
+    nvar = nvar+2
+#ifdef TRIDENT_PHOTONS
+    nvar = nvar+1
+#endif
 #endif
 
   END SUBROUTINE setup_partlists
@@ -352,6 +359,16 @@ CONTAINS
     cpos = cpos+1
 #endif
 
+#ifdef PHOTONS
+    array(cpos) = a_particle%optical_depth
+    array(cpos+1) = a_particle%particle_energy
+    cpos = cpos+2
+#ifdef TRIDENT_PHOTONS
+    array(cpos) = a_particle%optical_depth_tri
+    cpos = cpos+1
+#endif
+#endif
+
   END SUBROUTINE pack_particle
 
 
@@ -389,6 +406,16 @@ CONTAINS
     cpos = cpos+1
 #endif
 
+#ifdef PHOTONS
+    a_particle%optical_depth = array(cpos)
+    a_particle%particle_energy = array(cpos+1)
+    cpos = cpos+2
+#ifdef TRIDENT_PHOTONS
+    a_particle%optical_depth_tri = array(cpos)
+    cpos = cpos+1
+#endif
+#endif
+
   END SUBROUTINE unpack_particle
 
 
@@ -412,6 +439,14 @@ CONTAINS
 #endif
 #if PARTICLE_ID || PARTICLE_ID4
     new_particle%id = 0
+#endif
+#ifdef PHOTONS
+    !This assigns an optical depth to newly created particle
+    new_particle%particle_energy=0.0_num
+    new_particle%optical_depth=LOG(1.0_num/(1.0_num-random()))
+#ifdef TRIDENT_PHOTONS
+    new_particle%optical_depth_tri = LOG(1.0_num/(1.0_num-random()))
+#endif
 #endif
 
   END SUBROUTINE init_particle

@@ -226,14 +226,32 @@ CONTAINS
         fac = part_mc * l_weight * c
 #endif
 #endif
-        part_ux = current%part_p(1) / part_mc
-        part_uy = current%part_p(2) / part_mc
-        part_uz = current%part_p(3) / part_mc
+#ifdef PHOTONS
+        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+#endif
+          part_ux = current%part_p(1) / part_mc
+          part_uy = current%part_p(2) / part_mc
+          part_uz = current%part_p(3) / part_mc
+#ifdef PHOTONS
+        ELSE
+          part_ux = current%part_p(1) / c
+          part_uy = current%part_p(2) / c
+          part_uz = current%part_p(3) / c
+        ENDIF
+#endif
 
 #include "particle_to_grid.inc"
 
-        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        wdata = (gamma - 1.0_num) * fac
+#ifdef PHOTONS
+        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+#endif
+          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+          wdata = (gamma - 1.0_num) * fac
+#ifdef PHOTONS
+        ELSE
+          wdata = current%particle_energy * l_weight
+        ENDIF
+#endif
         DO iz = sf_min, sf_max
           DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
@@ -333,14 +351,33 @@ CONTAINS
         fac = part_mc * l_weight * c
 #endif
 #endif
-        part_ux = current%part_p(1) / part_mc
-        part_uy = current%part_p(2) / part_mc
-        part_uz = current%part_p(3) / part_mc
+#ifdef PHOTONS
+        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+#endif
+          part_ux = current%part_p(1) / part_mc
+          part_uy = current%part_p(2) / part_mc
+          part_uz = current%part_p(3) / part_mc
+#ifdef PHOTONS
+        ELSE
+          part_ux = current%part_p(1) / c
+          part_uy = current%part_p(2) / c
+          part_uz = current%part_p(3) / c
+        ENDIF
+#endif
 
 #include "particle_to_grid.inc"
 
-        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        ek = (gamma - 1.0_num) * fac
+#ifdef PHOTONS
+        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+#endif
+          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+          ek = (gamma - 1.0_num) * fac
+#ifdef PHOTONS
+        ELSE
+          ek = current%particle_energy * l_weight
+          gamma = 1.0_num
+        ENDIF
+#endif
 
         SELECT CASE(direction)
         CASE(-c_dir_x)
