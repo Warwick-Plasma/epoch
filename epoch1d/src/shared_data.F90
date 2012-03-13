@@ -431,7 +431,7 @@ MODULE shared_data
     TYPE(particle_list), DIMENSION(:), POINTER :: secondary_list
 
     ! Injection of particles
-    INTEGER(KIND=8) :: npart_per_cell
+    REAL(num) :: npart_per_cell
     REAL(num) :: density
     REAL(num), DIMENSION(3) :: temperature
 

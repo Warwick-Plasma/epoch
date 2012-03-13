@@ -173,7 +173,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, "npart_per_cell")) THEN
-      species_list(species_id)%npart_per_cell = as_long_integer(value, errcode)
+      species_list(species_id)%npart_per_cell = as_real(value, errcode)
       RETURN
     ENDIF
 

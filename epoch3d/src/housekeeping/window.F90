@@ -173,12 +173,13 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
-    INTEGER :: ispecies, ipart, i, iy, iz, isuby, isubz
+    INTEGER :: ispecies, i, iy, iz, isuby, isubz
+    INTEGER(KIND=8) :: ipart, npart_per_cell, n0
     REAL(num) :: cell_y_r, cell_frac_y, cy2
     REAL(num) :: cell_z_r, cell_frac_z, cz2
     INTEGER :: cell_y, cell_z
     REAL(num), DIMENSION(-1:1) :: gy, gz
-    REAL(num) :: temp_local
+    REAL(num) :: temp_local, npart_frac
     REAL(num) :: weight_local
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -188,10 +189,21 @@ CONTAINS
 
     DO ispecies = 1, n_species
       CALL create_empty_partlist(append_list)
+      npart_per_cell = AINT(species_list(ispecies)%npart_per_cell, KIND=8)
+      npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
+      IF (npart_frac .GT. 0) THEN
+        n0 = 0
+      ELSE
+        n0 = 1
+      ENDIF
 
       DO iz = 1, nz
         DO iy = 1, ny
-          DO ipart = 1, species_list(ispecies)%npart_per_cell
+          DO ipart = n0, npart_per_cell
+            ! Place extra particle based on probability
+            IF (ipart .EQ. 0) THEN
+              IF (npart_frac .LT. random()) CYCLE
+            ENDIF
             ALLOCATE(current)
             CALL init_particle(current)
             current%part_pos(1) = x_max + dx + (random() - 0.5_num) * dx
@@ -237,7 +249,7 @@ CONTAINS
               DO isuby = -1, 1
                 weight_local = weight_local &
                     + gy(isuby) * gz(isubz) * dx * dy * dz &
-                    / REAL(species_list(ispecies)%npart_per_cell, num) &
+                    / species_list(ispecies)%npart_per_cell &
                     *species_list(ispecies)%density(cell_y+isuby,cell_z+isubz)
               ENDDO
             ENDDO

@@ -157,7 +157,7 @@ CONTAINS
         MPI_INTEGER8, MPI_SUM, comm, errcode)
 
     IF (species%npart_per_cell .GE. 0) THEN
-      npart_per_cell_average = species%npart_per_cell
+      npart_per_cell_average = AINT(species%npart_per_cell, num)
     ELSE
       npart_per_cell_average = REAL(species%count, num) &
           / REAL(num_valid_cells_global, num)
@@ -291,8 +291,9 @@ CONTAINS
     ENDDO
 
     IF (species%npart_per_cell .GE. 0) THEN
-      npart_per_cell = species%npart_per_cell
-      num_new_particles = npart_per_cell * num_valid_cells_local
+      npart_per_cell = AINT(species%npart_per_cell, KIND=8)
+      num_new_particles = &
+          AINT(species%npart_per_cell * num_valid_cells_local, KIND=8)
     ELSE
       ALLOCATE(num_valid_cells_all(nproc), num_idx(nproc), num_frac(nproc))
 
@@ -373,10 +374,9 @@ CONTAINS
 
       DEALLOCATE(num_valid_cells_all, num_idx, num_frac)
 
-      npart_per_cell = npart_this_species / num_valid_cells_global
-      species%npart_per_cell = npart_per_cell
-
-      IF (species%npart_per_cell .EQ. 0) species%npart_per_cell = 1
+      species%npart_per_cell = &
+          REAL(npart_this_species,num) / num_valid_cells_global
+      npart_per_cell = AINT(species%npart_per_cell, KIND=8)
     ENDIF
 
     partlist=>species%attached_list
