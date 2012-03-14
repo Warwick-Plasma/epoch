@@ -309,7 +309,8 @@ CONTAINS
       lun = lun+1
       IF (lun .GT. max_lun) THEN
         IF (rank .EQ. 0) THEN
-          WRITE(*,*) '***FATAL ERROR*** unable to open lun for input deck read'
+          WRITE(*,*) '*** ERROR ***'
+          WRITE(*,*) 'Unable to open lun for input deck read'
         ENDIF
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
@@ -327,12 +328,13 @@ CONTAINS
     LOGICAL, INTENT(IN) :: first_call
     INTEGER, INTENT(IN) :: deck_state_in
     CHARACTER :: u0, u1
-    INTEGER :: pos = 1, flip = 1, s, f, elements = 0, lun
+    INTEGER :: pos = 1, flip = 1, slen, s, f, elements = 0, lun
     LOGICAL :: ignore, continuation
     LOGICAL, SAVE :: warn = .TRUE.
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=64+data_dir_max_length) :: deck_filename, status_filename
     CHARACTER(LEN=64+data_dir_max_length) :: list_filename
+    CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE., exists
     INTEGER :: errcode_deck, ierr, i, io, rank_check
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
@@ -443,6 +445,7 @@ CONTAINS
       ENDIF
       deck_values(1)%value = ""
       deck_values(2)%value = ""
+      slen = 1
 
       ! Use non-advancing IO to pop characters off the deck file one at a time
       ! Use basic token parsing to split into two substrings across
@@ -532,8 +535,10 @@ CONTAINS
               .AND. f .EQ. 0) THEN
             IF (u1 .NE. ' ' .OR. u0 .NE. ' ') THEN
               deck_values(flip)%value(pos:pos) = u1
-              pos = pos+1
+              pos = pos + 1
+              slen = slen + 1
               u0 = u1
+              IF (pos .GT. string_length) pos = string_length
             ENDIF
           ENDIF
 
@@ -542,6 +547,7 @@ CONTAINS
           IF (u1 .EQ. '=' .OR. u1 .EQ. ':') THEN
             flip = 2
             pos = 1
+            slen = 1
           ENDIF
         ENDIF
 
@@ -558,9 +564,28 @@ CONTAINS
 
         ! If you've not read a blank line then
         IF (got_eor .AND. pos .GT. 1) THEN
+          IF (slen .GT. string_length) THEN
+            CALL integer_as_string(slen, len_string)
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*)
+              WRITE(io,*) '*** ERROR ***'
+              IF (flip .GT. 1) THEN
+                WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) // &
+                    ' = ' // TRIM(deck_values(2)%value(1:pos-1))
+              ELSE
+                WRITE(io,*) 'Whilst reading ', &
+                    TRIM(deck_values(1)%value(1:pos-1))
+              ENDIF
+              WRITE(io,*) 'String value too long. Please increase the size ', &
+                  'of "string_length" in ','shared_data.F90 to be at least ', &
+                  TRIM(len_string)
+            ENDDO
+            CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          ENDIF
           elements = elements+1
           flip = 1
           pos = 1
+          slen = 1
           deck_values(1)%value = TRIM(ADJUSTL(deck_values(1)%value))
           deck_values(2)%value = TRIM(ADJUSTL(deck_values(2)%value))
           CALL MPI_BCAST(1, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
@@ -618,7 +643,7 @@ CONTAINS
     IF (terminate .AND. rank .EQ. 0) THEN
       DO io = stdout, du, du - stdout ! Print to stdout and to file
         WRITE(io,*)
-        WRITE(io,*) '***FATAL ERROR***'
+        WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'The code cannot parse the input deck sufficiently to run.'
       ENDDO
       WRITE(*, *) 'Please read the output file "', TRIM(status_filename), &
