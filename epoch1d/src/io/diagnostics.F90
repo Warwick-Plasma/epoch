@@ -621,11 +621,32 @@ CONTAINS
       ENDIF
 
       IF (IAND(dumpmask(id), c_io_species) .NE. 0) THEN
+        len1 = LEN_TRIM(block_id) + 10
+        len2 = LEN_TRIM(name) + 10
+
         DO ispecies = 1, n_species
+          len3 = LEN_TRIM(species_list(ispecies)%name)
+          len4 = len3
+          len5 = len3
+          IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
+          IF ((len2 + len3) > c_max_string_length) THEN
+            len5 = c_max_string_length - len2
+            IF (rank .EQ. 0) THEN
+              CALL integer_as_string((len2+len3), len_string)
+              PRINT*, '*** WARNING ***'
+              PRINT*, 'Output block name ',TRIM(name) // '_' // &
+                  TRIM(species_list(ispecies)%name) // '_averaged', &
+                  ' is truncated.'
+              PRINT*, 'Either shorten the species name or increase ', &
+                  'the size of "c_max_string_length" ', &
+                  'to at least ',TRIM(len_string)
+            ENDIF
+          ENDIF
+
           WRITE(temp_block_id, '(a, "_", a, "_averaged")') TRIM(block_id), &
-              TRIM(species_list(ispecies)%name)
+              TRIM(species_list(ispecies)%name(1:len4))
           WRITE(temp_name, '(a, "_", a, "_averaged")') TRIM(name), &
-              TRIM(species_list(ispecies)%name)
+              TRIM(species_list(ispecies)%name(1:len5))
           CALL sdf_write_plain_variable(sdf_handle, &
               TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
               TRIM(units), dims, stagger, 'grid', &
