@@ -57,8 +57,8 @@ SDF_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void
 SDF_dealloc(PyObject* self)
 {
-    /* Needs fixing */
-    //SDFObject *h = (SDFObject*)self;
+    SDFObject *pyo = (SDFObject*)self;
+    if (pyo->h) sdf_close(pyo->h);
     self->ob_type->tp_free(self);
 }
 
@@ -78,13 +78,14 @@ static void setup_mesh(sdf_file_t *h, PyObject *dict)
     for (n = 0; n < b->ndims; n++) {
         ndims = b->dims[n];
 
-        l1 = strlen(b->id);
+        l1 = strlen(b->name);
         l2 = strlen(b->dim_labels[n]);
         label = malloc(l1 + l2 + 2);
-        memcpy(label, b->id, l1);
+        memcpy(label, b->name, l1);
         label[l1] = '/';
         memcpy(label+l1+1, b->dim_labels[n], l2+1);
 
+        l1 = strlen(b->id);
         grid = b->grids[n];
         /* Hack to node-centre the cartesian grid */
         if (strncmp(b->id, "grid", l1+1) == 0) {
@@ -121,6 +122,34 @@ static void setup_mesh(sdf_file_t *h, PyObject *dict)
 }
 
 
+#define SET_ENTRY(type,value) \
+    PyDict_SetItemString(dict, #value, Py_BuildValue(#type, h->value))
+
+#define SET_BOOL(value) \
+    if (h->value) PyDict_SetItemString(dict, #value, Py_True); \
+    else PyDict_SetItemString(dict, #value, Py_False)
+
+static PyObject *fill_header(sdf_file_t *h)
+{
+    PyObject *dict;
+
+    dict = PyDict_New();
+
+    SET_ENTRY(i, file_version);
+    SET_ENTRY(i, file_revision);
+    SET_ENTRY(s, code_name);
+    SET_ENTRY(i, step);
+    SET_ENTRY(d, time);
+    SET_ENTRY(i, jobid1);
+    SET_ENTRY(i, jobid2);
+    SET_ENTRY(i, code_io_version);
+    SET_BOOL(restart_flag);
+    SET_BOOL(other_domains);
+
+    Py_INCREF(dict);
+    return dict;
+}
+
 static PyObject* SDF_read(SDFObject *self, PyObject *args)
 {
     sdf_file_t *h;
@@ -132,6 +161,10 @@ static PyObject* SDF_read(SDFObject *self, PyObject *args)
     h = self->h;
     sdf_read_blocklist(h);
     dict = PyDict_New();
+
+    // Add header
+    PyDict_SetItemString(dict, "Header", fill_header(h));
+
     b = h->current_block = h->blocklist;
     for (i = 0; i < h->nblocks; i++) {
         switch(b->blocktype) {
@@ -146,7 +179,7 @@ static PyObject* SDF_read(SDFObject *self, PyObject *args)
             sub = PyArray_NewFromDescr(&PyArray_Type,
                 PyArray_DescrFromType(typemap[b->datatype_out]), b->ndims,
                 dims, NULL, b->data, NPY_F_CONTIGUOUS, NULL);
-            PyDict_SetItemString(dict, b->id, sub);
+            PyDict_SetItemString(dict, b->name, sub);
         }
         b = h->current_block = b->next;
     }

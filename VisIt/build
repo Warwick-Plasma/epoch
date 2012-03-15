@@ -82,6 +82,7 @@ fi
 if [ "$fmt"x = "SDF"x ]; then
   gcc -DSDF_DEBUG_ALL -O3 -o sdf2ascii sdf2ascii.c sdf_control.c \
       sdf_input.c sdf_input_cartesian.c sdf_input_point.c
+  python setup.py build -b pybuild install
 fi
 
 rm -rf $tmpdir
