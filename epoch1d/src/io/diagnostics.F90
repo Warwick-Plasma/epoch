@@ -12,6 +12,7 @@ MODULE diagnostics
   USE shared_data
   USE version_data
   USE setup
+  USE strings
 
   IMPLICIT NONE
 
@@ -532,7 +533,9 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, should_dump, species_sum
-    CHARACTER(LEN=c_max_string_length) :: temp_block_id, temp_name
+    INTEGER :: len1, len2, len3, len4, len5
+    CHARACTER(LEN=c_id_length) :: temp_block_id
+    CHARACTER(LEN=c_max_string_length) :: temp_name, len_string
 
     INTERFACE
       SUBROUTINE func(data_array, current_species)
@@ -567,14 +570,33 @@ CONTAINS
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
+        len1 = LEN_TRIM(block_id) + 1
+        len2 = LEN_TRIM(name) + 1
         DO ispecies = 1, n_species
 #ifdef TRACER_PARTICLES
           IF (species_list(ispecies)%tracer) CYCLE
 #endif
+          len3 = LEN_TRIM(species_list(ispecies)%name)
+          len4 = len3
+          len5 = len3
+          IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
+          IF ((len2 + len3) > c_max_string_length) THEN
+            len5 = c_max_string_length - len2
+            IF (rank .EQ. 0) THEN
+              CALL integer_as_string((len2+len3), len_string)
+              PRINT*, '*** WARNING ***'
+              PRINT*, 'Output block name ',TRIM(name) // '_' &
+                  // TRIM(species_list(ispecies)%name),' is truncated.'
+              PRINT*, 'Either shorten the species name or increase ', &
+                  'the size of "c_max_string_length" ', &
+                  'to at least ',TRIM(len_string)
+            ENDIF
+          ENDIF
+
           WRITE(temp_block_id, '(a, "_", a)') TRIM(block_id), &
-              TRIM(species_list(ispecies)%name)
+              TRIM(species_list(ispecies)%name(1:len4))
           WRITE(temp_name, '(a, "_", a)') TRIM(name), &
-              TRIM(species_list(ispecies)%name)
+              TRIM(species_list(ispecies)%name(1:len5))
           CALL func(array, ispecies)
           CALL sdf_write_plain_variable(sdf_handle, &
               TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
@@ -631,7 +653,8 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: should_dump, ndirs, idir
-    CHARACTER(LEN=c_max_string_length) :: temp_block_id, temp_name
+    CHARACTER(LEN=c_id_length) :: temp_block_id
+    CHARACTER(LEN=c_max_string_length) :: temp_name
 
     INTERFACE
       SUBROUTINE func(data_array, direction)
@@ -682,7 +705,9 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, should_dump, ndirs, idir
-    CHARACTER(LEN=c_max_string_length) :: temp_block_id, temp_name
+    INTEGER :: len1, len2, len3, len4, len5
+    CHARACTER(LEN=c_id_length) :: temp_block_id
+    CHARACTER(LEN=c_max_string_length) :: temp_name, len_string
 
     INTERFACE
       SUBROUTINE func(data_array, current_species, direction)
@@ -724,15 +749,36 @@ CONTAINS
         CALL species_offset_init()
         IF (npart_global .EQ. 0) RETURN
 
+        len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 2
+        len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 2
+
         DO ispecies = 1, n_species
 #ifdef TRACER_PARTICLES
           IF (species_list(ispecies)%tracer) CYCLE
 #endif
+          len3 = LEN_TRIM(species_list(ispecies)%name)
+          len4 = len3
+          len5 = len3
+          IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
+          IF ((len2 + len3) > c_max_string_length) THEN
+            len5 = c_max_string_length - len2
+            IF (rank .EQ. 0) THEN
+              CALL integer_as_string((len2+len3), len_string)
+              PRINT*, '*** WARNING ***'
+              PRINT*, 'Output block name ',TRIM(name) // '_' &
+                  // TRIM(species_list(ispecies)%name) // '_' &
+                  // TRIM(dir_tags(1)),' is truncated.'
+              PRINT*, 'Either shorten the species name or increase ', &
+                  'the size of "c_max_string_length" ', &
+                  'to at least ',TRIM(len_string)
+            ENDIF
+          ENDIF
+
           DO idir = 1, ndirs
             WRITE(temp_block_id, '(a, "_", a, "_", a)') TRIM(block_id), &
-                TRIM(species_list(ispecies)%name), TRIM(dir_tags(idir))
+                TRIM(species_list(ispecies)%name(1:len4)), TRIM(dir_tags(idir))
             WRITE(temp_name, '(a, "_", a, "_", a)') TRIM(name), &
-                TRIM(species_list(ispecies)%name), TRIM(dir_tags(idir))
+                TRIM(species_list(ispecies)%name(1:len5)), TRIM(dir_tags(idir))
             CALL func(array, ispecies, fluxdir(idir))
             CALL sdf_write_plain_variable(sdf_handle, &
                 TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &

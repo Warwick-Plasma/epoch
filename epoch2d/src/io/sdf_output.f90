@@ -208,6 +208,7 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=c_id_length) :: new_id
     TYPE(sdf_block_type), POINTER :: b
 
     b => h%current_block
@@ -234,7 +235,8 @@ CONTAINS
     b%data_location = b%block_start + b%info_length
     b%next_block_location = b%data_location + b%data_length
 
-    CALL safe_copy_string(id, b%id)
+    CALL get_unique_id(h, id, new_id)
+    CALL safe_copy_string(new_id, b%id)
     CALL safe_copy_string(name, b%name)
 
     CALL write_block_header(h)

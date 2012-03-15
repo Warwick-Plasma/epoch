@@ -84,13 +84,13 @@ CONTAINS
 
 
   SUBROUTINE sdf_read_header(h, step, time, code_name, code_io_version, &
-      restart_flag, other_domains)
+      string_length, restart_flag, other_domains)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(OUT), OPTIONAL :: step
     REAL(num), INTENT(OUT), OPTIONAL :: time
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: code_name
-    INTEGER, INTENT(OUT), OPTIONAL :: code_io_version
+    INTEGER, INTENT(OUT), OPTIONAL :: code_io_version, string_length
     LOGICAL, INTENT(OUT), OPTIONAL :: restart_flag, other_domains
     INTEGER :: errcode
 
@@ -142,6 +142,7 @@ CONTAINS
     IF (PRESENT(restart_flag)) restart_flag = h%restart_flag
     IF (PRESENT(other_domains)) other_domains = h%other_domains
     IF (PRESENT(code_name)) CALL safe_copy_string(h%code_name, code_name)
+    IF (PRESENT(string_length)) string_length = h%string_length
 
   END SUBROUTINE sdf_read_header
 

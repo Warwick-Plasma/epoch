@@ -259,6 +259,42 @@ CONTAINS
 
 
 
+  SUBROUTINE get_unique_id(h, id, new_id)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id
+    CHARACTER(LEN=c_id_length), INTENT(OUT) :: new_id
+    TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: found
+    CHARACTER(LEN=*), PARAMETER :: numbers = '0123456789'
+    INTEGER :: i, n, num, pos
+
+    CALL safe_copy_string(id, new_id)
+    found = sdf_find_block(h, b, new_id)
+    i = 1
+    DO WHILE(found)
+      num = i
+
+      ! Generate a new ID by adding ASCII digits to the end.
+      pos = c_id_length
+      n = MOD(num,10)
+      new_id(pos:pos) = numbers(n+1:n+1)
+      num = num / 10
+      DO WHILE(num .GT. 0)
+        pos = pos - 1
+        n = MOD(num,10)
+        new_id(pos:pos) = numbers(n+1:n+1)
+        num = num / 10
+      ENDDO
+
+      found = sdf_find_block(h, b, new_id)
+      i = i + 1
+    ENDDO
+
+  END SUBROUTINE get_unique_id
+
+
+
   SUBROUTINE initialise_block_type(var)
 
     TYPE(sdf_block_type) :: var
