@@ -517,6 +517,7 @@ CONTAINS
 
   SUBROUTINE set_cpml_helpers
 
+    INTEGER :: i
     INTEGER :: ix, ix_glob
     INTEGER, PARAMETER :: cpml_m = 3
     INTEGER, PARAMETER :: cpml_ma = 1
@@ -539,8 +540,9 @@ CONTAINS
 
     ! ============= x_min boundary =============
 
-    IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
+    i = c_bd_x_min
+    IF (bc_field(i) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
       cpml_x_min_start = nx+1
       cpml_x_min_end = 0
 
@@ -589,16 +591,17 @@ CONTAINS
       ! Ghost cells start at the edge of the CPML boundary
       IF (nx_global_min .LE. cpml_thickness + ng + 1 &
           .AND. nx_global_max .GE. cpml_thickness + ng + 1) THEN
-        cpml_x_min_laser = .TRUE.
+        add_laser(i) = .TRUE.
         cpml_x_min_laser_idx = cpml_thickness + ng - nx_global_min + 1
       ENDIF
     ENDIF
 
     ! ============= x_max boundary =============
 
+    i = c_bd_x_max
     ! Same as x_min using the transformation ix -> nx_global - ix + 1
-    IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(i) .EQ. c_bc_cpml_laser &
+        .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
       cpml_x_max_start = nx+1
       cpml_x_max_end = 0
 
@@ -647,7 +650,7 @@ CONTAINS
       ! Ghost cells start at the edge of the CPML boundary
       IF (nx_global_min .LE. nx_global - cpml_thickness - ng + 1 &
           .AND. nx_global_max .GE. nx_global - cpml_thickness - ng + 1) THEN
-        cpml_x_max_laser = .TRUE.
+        add_laser(i) = .TRUE.
         cpml_x_max_laser_idx = &
             nx_global - cpml_thickness - ng + 1 - nx_global_min + 1
       ENDIF

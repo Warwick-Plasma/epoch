@@ -534,11 +534,8 @@ MODULE shared_data
   LOGICAL :: cpml_z_min = .FALSE., cpml_z_max = .FALSE.
   LOGICAL :: cpml_boundaries
   ! Indicate that the laser injection is located on the current processor
-  LOGICAL :: cpml_x_min_laser = .FALSE., cpml_x_max_laser = .FALSE.
   INTEGER :: cpml_x_min_laser_idx, cpml_x_max_laser_idx
-  LOGICAL :: cpml_y_min_laser = .FALSE., cpml_y_max_laser = .FALSE.
   INTEGER :: cpml_y_min_laser_idx, cpml_y_max_laser_idx
-  LOGICAL :: cpml_z_min_laser = .FALSE., cpml_z_max_laser = .FALSE.
   INTEGER :: cpml_z_min_laser_idx, cpml_z_max_laser_idx
   REAL(num) :: cpml_kappa_max, cpml_a_max, cpml_sigma_max
   REAL(num), ALLOCATABLE, DIMENSION(:) :: cpml_kappa_e_dx, cpml_kappa_b_dx

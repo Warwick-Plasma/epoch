@@ -212,8 +212,6 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
-    INTEGER :: i
-
     CALL update_b_field
 
     CALL bfield_final_bcs
