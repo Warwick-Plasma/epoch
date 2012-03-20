@@ -273,7 +273,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, probe_block_check())
 #endif
 #ifdef PHOTONS
-    IF (qed_active) THEN
+    IF (use_qed) THEN
       errcode_deck = IOR(errcode_deck, check_qed_variables())
     ENDIF
 #endif

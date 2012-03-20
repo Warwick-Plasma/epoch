@@ -111,7 +111,7 @@ PROGRAM pic
   walltime_start = MPI_WTIME()
   CALL output_routines(step) ! diagnostics.f90
 #ifdef PHOTONS
-  IF (qed_active) CALL setup_qed_module()
+  IF (use_qed) CALL setup_qed_module()
 #endif
 
   DO
@@ -120,7 +120,7 @@ PROGRAM pic
     CALL set_dt
     CALL update_eb_fields_half
 #ifdef PHOTONS
-    IF (time .GT. qed_start_time .AND. qed_active) THEN
+    IF (time .GT. qed_start_time .AND. use_qed) THEN
       CALL qed_update_optical_depth()
     ENDIF
 #endif
@@ -166,7 +166,7 @@ PROGRAM pic
   ENDDO
 
 #ifdef PHOTONS
-  IF (qed_active) CALL shutdown_qed_module()
+  IF (use_qed) CALL shutdown_qed_module()
 #endif
 
   IF (rank .EQ. 0) &

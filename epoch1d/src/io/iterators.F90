@@ -87,19 +87,19 @@ CONTAINS
 
     REAL(num) :: iterate_px
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    REAL(num) :: csqr
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
+    REAL(num) :: csqr
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
-    csqr=c**2
+    csqr = c**2
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
 #ifdef PHOTONS
       IF (current_species%species_type .NE. c_species_id_photon) THEN
@@ -110,13 +110,13 @@ CONTAINS
           cur=>cur%next
         ENDDO
 #ifdef PHOTONS
-       ELSE
+      ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
-          array(part_count) = cur%particle_energy*cur%part_p(1)/csqr
+          array(part_count) = cur%particle_energy * cur%part_p(1) / csqr
           cur=>cur%next
-         ENDDO
-       ENDIF
+        ENDDO
+      ENDIF
 #endif
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -133,19 +133,19 @@ CONTAINS
 
     REAL(num) :: iterate_py
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    REAL(num) :: csqr
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
+    REAL(num) :: csqr
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
-    csqr=c**2
+    csqr = c**2
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
 #ifdef PHOTONS
       IF (current_species%species_type .NE. c_species_id_photon) THEN
@@ -156,13 +156,13 @@ CONTAINS
           cur=>cur%next
         ENDDO
 #ifdef PHOTONS
-       ELSE
+      ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
-          array(part_count) = cur%particle_energy*cur%part_p(2)/csqr
+          array(part_count) = cur%particle_energy * cur%part_p(2) / csqr
           cur=>cur%next
         ENDDO
-       ENDIF
+      ENDIF
 #endif
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -179,19 +179,19 @@ CONTAINS
 
     REAL(num) :: iterate_pz
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    REAL(num) :: csqr
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
+    REAL(num) :: csqr
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
-    csqr=c**2
+    csqr = c**2
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
 #ifdef PHOTONS
       IF (current_species%species_type .NE. c_species_id_photon) THEN
@@ -202,13 +202,13 @@ CONTAINS
           cur=>cur%next
         ENDDO
 #ifdef PHOTONS
-       ELSE
+      ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
-          array(part_count) = cur%particle_energy*cur%part_p(3)/csqr
+          array(part_count) = cur%particle_energy * cur%part_p(3) / csqr
           cur=>cur%next
-         ENDDO
-       ENDIF
+        ENDDO
+      ENDIF
 #endif
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)

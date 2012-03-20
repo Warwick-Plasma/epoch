@@ -249,40 +249,40 @@ CONTAINS
         coulomb_log_auto = .FALSE.
         coulomb_log = as_real(value, errcode)
       ENDIF
-    !4*c_ndims+15 is the special case of the collision matrix
+    ! 4*c_ndims+15 is the special case of the collision matrix
     CASE(4*c_ndims+16)
 #ifdef PHOTONS
-      qed_active = as_logical(value, errcode)
+      use_qed = as_logical(value, errcode)
 #else
-      extended_error_string='-DPHOTONS'
+      extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
     CASE(4*c_ndims+17)
 #ifdef PHOTONS
       qed_start_time = as_real(value, errcode)
 #else
-      extended_error_string='-DPHOTONS'
+      extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
     CASE(4*c_ndims+18)
 #ifdef PHOTONS
       produce_photons = as_logical(value, errcode)
 #else
-      extended_error_string='-DPHOTONS'
+      extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
     CASE(4*c_ndims+19)
 #ifdef PHOTONS
       photon_energy_min = as_real(value, errcode)
 #else
-      extended_error_string='-DPHOTONS'
+      extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
     CASE(4*c_ndims+20)
 #ifdef PHOTONS
       produce_pairs = as_logical(value, errcode)
 #else
-      extended_error_string='-DPHOTONS'
+      extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
     END SELECT
@@ -309,7 +309,7 @@ CONTAINS
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
 
-    !qed stuff is incorrect if not compiled with the correct options
+    ! QED stuff is incorrect if not compiled with the correct options
 #ifndef PHOTONS
     DO index = 4*c_ndims+16, 4*c_ndims+20
       IF (control_block_done(index)) THEN
@@ -319,10 +319,11 @@ CONTAINS
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'Cannot turn on QED option ', &
                 TRIM(ADJUSTL(control_block_name(index))), &
-                ' unless code is compiled with the correct preprocessor (-DPHOTONS)'
+                ' unless code is compiled with the correct ', &
+                'preprocessor option (-DPHOTONS)'
           ENDDO
         ENDIF
-        extended_error_string='-DPHOTONS'
+        extended_error_string = '-DPHOTONS'
         errcode = c_err_pp_options_wrong
       ENDIF
     ENDDO

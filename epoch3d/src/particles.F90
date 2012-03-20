@@ -92,7 +92,6 @@ CONTAINS
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
     INTEGER(KIND=8) :: ipart
 #ifdef PARTICLE_PROBES
-    LOGICAL :: copy_this_particle
     LOGICAL :: probes_for_species
 #endif
 #ifdef TRACER_PARTICLES
@@ -139,8 +138,7 @@ CONTAINS
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
 #ifdef PHOTONS
-      IF (species_list(ispecies)%species_type .EQ. &
-          c_species_id_photon) THEN
+      IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) THEN
         CALL push_photons(ispecies)
         CYCLE
       ENDIF
@@ -459,34 +457,29 @@ CONTAINS
 
           ! Cycle through probes
           DO WHILE(ASSOCIATED(current_probe))
-            copy_this_particle=.FALSE.
             ! Note that this is the energy of a single REAL particle in the
             ! pseudoparticle, NOT the energy of the pseudoparticle
-            probe_energy = current%particle_energy
+            probe_energy = (gamma - 1.0_num) * part_mc2
 
             ! Unidirectional probe
             IF (probe_energy .GT. current_probe%ek_min) THEN
               IF (probe_energy .LT. current_probe%ek_max) THEN
-                d_init  = SUM(current_probe%normal &
-                    * (current_probe%point - (/init_part_x, init_part_y, &
-                    init_part_z/)))
-                d_final = SUM(current_probe%normal &
-                    * (current_probe%point - (/final_part_x, final_part_y,&
-                    init_part_z/)))
+
+                d_init  = SUM(current_probe%normal * (current_probe%point &
+                    - (/init_part_x, init_part_y, init_part_z/)))
+                d_final = SUM(current_probe%normal * (current_probe%point &
+                    - (/final_part_x, final_part_y, final_part_z/)))
                 IF (d_final .LT. 0.0_num .AND. d_init .GE. 0.0_num) THEN
                   ! this particle is wanted so copy it to the list associated
                   ! with this probe
-                  copy_this_particle=.TRUE.
+                  ALLOCATE(particle_copy)
+                  particle_copy = current
+                  CALL add_particle_to_partlist(&
+                      current_probe%sampled_particles, particle_copy)
+                  NULLIFY(particle_copy)
                 ENDIF
-              ENDIF
-            ENDIF
 
-            IF (copy_this_particle) THEN
-              ALLOCATE(particle_copy)
-              particle_copy = current
-              CALL add_particle_to_partlist(&
-                  current_probe%sampled_particles, particle_copy)
-              NULLIFY(particle_copy)
+              ENDIF
             ENDIF
             current_probe => current_probe%next
           ENDDO
@@ -508,8 +501,7 @@ CONTAINS
 
     ! Very simple photon pusher
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_x, delta_x, part_y, delta_y, part_z, delta_z
-    REAL(num) :: part_vx, part_vy, part_vz
+    REAL(num) :: delta_x, delta_y, delta_z
     INTEGER,INTENT(IN) :: ispecies
     TYPE(particle), POINTER :: current
 
@@ -522,7 +514,6 @@ CONTAINS
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: d_init, d_final
     REAL(num) :: probe_energy
-    LOGICAL :: copy_this_particle
     LOGICAL :: probes_for_species
 #endif
 
@@ -541,59 +532,54 @@ CONTAINS
       delta_y = current%part_p(2) * dt
       delta_z = current%part_p(3) * dt
 #ifdef PARTICLE_PROBES
-        init_part_x = current%part_pos(1)
-        init_part_y = current%part_pos(2)
-        init_part_z = current%part_pos(3)
+      init_part_x = current%part_pos(1)
+      init_part_y = current%part_pos(2)
+      init_part_z = current%part_pos(3)
 #endif
       current%part_pos = current%part_pos + (/delta_x, delta_y, delta_z/)
 #ifdef PARTICLE_PROBES
-        final_part_x = current%part_pos(1)
-        final_part_y = current%part_pos(2)
-        final_part_z = current%part_pos(3)
+      final_part_x = current%part_pos(1)
+      final_part_y = current%part_pos(2)
+      final_part_z = current%part_pos(3)
 #endif
 
 #ifdef PARTICLE_PROBES
-        IF (probes_for_species) THEN
-          ! Compare the current particle with the parameters of any probes in
-          ! the system. These particles are copied into a separate part of the
-          ! output file.
+      IF (probes_for_species) THEN
+        ! Compare the current particle with the parameters of any probes in
+        ! the system. These particles are copied into a separate part of the
+        ! output file.
 
-          current_probe => species_list(ispecies)%attached_probes
+        current_probe => species_list(ispecies)%attached_probes
 
-          ! Cycle through probes
-          DO WHILE(ASSOCIATED(current_probe))
-            copy_this_particle=.FALSE.
-            ! Note that this is the energy of a single REAL particle in the
-            ! pseudoparticle, NOT the energy of the pseudoparticle
-            probe_energy = current%particle_energy
+        ! Cycle through probes
+        DO WHILE(ASSOCIATED(current_probe))
+          ! Note that this is the energy of a single REAL particle in the
+          ! pseudoparticle, NOT the energy of the pseudoparticle
+          probe_energy = current%particle_energy
 
-            ! Unidirectional probe
-            IF (probe_energy .GT. current_probe%ek_min) THEN
-              IF (probe_energy .LT. current_probe%ek_max) THEN
-                d_init  = SUM(current_probe%normal &
-                    * (current_probe%point - (/init_part_x, init_part_y, &
-                    init_part_z/)))
-                d_final = SUM(current_probe%normal &
-                    * (current_probe%point - (/final_part_x, final_part_y,&
-                    init_part_z/)))
-                IF (d_final .LT. 0.0_num .AND. d_init .GE. 0.0_num) THEN
-                  ! this particle is wanted so copy it to the list associated
-                  ! with this probe
-                  copy_this_particle=.TRUE.
-                ENDIF
+          ! Unidirectional probe
+          IF (probe_energy .GT. current_probe%ek_min) THEN
+            IF (probe_energy .LT. current_probe%ek_max) THEN
+
+              d_init  = SUM(current_probe%normal * (current_probe%point &
+                  - (/init_part_x, init_part_y, init_part_z/)))
+              d_final = SUM(current_probe%normal * (current_probe%point &
+                  - (/final_part_x, final_part_y, final_part_z/)))
+              IF (d_final .LT. 0.0_num .AND. d_init .GE. 0.0_num) THEN
+                ! this particle is wanted so copy it to the list associated
+                ! with this probe
+                ALLOCATE(particle_copy)
+                particle_copy = current
+                CALL add_particle_to_partlist(&
+                    current_probe%sampled_particles, particle_copy)
+                NULLIFY(particle_copy)
               ENDIF
-            ENDIF
 
-            IF (copy_this_particle) THEN
-              ALLOCATE(particle_copy)
-              particle_copy = current
-              CALL add_particle_to_partlist(&
-                  current_probe%sampled_particles, particle_copy)
-              NULLIFY(particle_copy)
             ENDIF
-            current_probe => current_probe%next
-          ENDDO
-        ENDIF
+          ENDIF
+          current_probe => current_probe%next
+        ENDDO
+      ENDIF
 #endif
 
       current => current%next

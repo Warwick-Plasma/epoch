@@ -439,11 +439,11 @@ CONTAINS
     new_particle%id = 0
 #endif
 #ifdef PHOTONS
-    !This assigns an optical depth to newly created particle
-    new_particle%particle_energy=0.0_num
-    new_particle%optical_depth=LOG(1.0_num/(1.0_num-random()))
+    ! This assigns an optical depth to newly created particle
+    new_particle%particle_energy = 0.0_num
+    new_particle%optical_depth = LOG(1.0_num / (1.0_num - random()))
 #ifdef TRIDENT_PHOTONS
-    new_particle%optical_depth_tri = LOG(1.0_num/(1.0_num-random()))
+    new_particle%optical_depth_tri = LOG(1.0_num / (1.0_num - random()))
 #endif
 #endif
 

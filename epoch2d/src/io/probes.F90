@@ -179,11 +179,11 @@ CONTAINS
 
     REAL(num) :: iterate_probe_px
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    REAL(num) :: csqr
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     INTEGER :: part_count
+    REAL(num) :: csqr
 
     IF (start)  THEN
       cur=> current_list%head
@@ -201,13 +201,13 @@ CONTAINS
           cur=>cur%next
         ENDDO
 #ifdef PHOTONS
-       ELSE
+      ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
-          array(part_count) = cur%particle_energy*cur%part_p(1)/csqr
+          array(part_count) = cur%particle_energy * cur%part_p(1) / csqr
           cur=>cur%next
-         ENDDO
-       ENDIF
+        ENDDO
+      ENDIF
 #endif
     ENDDO
     n_points = part_count
@@ -222,11 +222,11 @@ CONTAINS
 
     REAL(num) :: iterate_probe_py
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    REAL(num) :: csqr
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     INTEGER :: part_count
+    REAL(num) :: csqr
 
     IF (start)  THEN
       cur=> current_list%head
@@ -244,16 +244,15 @@ CONTAINS
           cur=>cur%next
         ENDDO
 #ifdef PHOTONS
-       ELSE
+      ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
-          array(part_count) = cur%particle_energy*cur%part_p(2)/csqr
+          array(part_count) = cur%particle_energy * cur%part_p(2) / csqr
           cur=>cur%next
-         ENDDO
-       ENDIF
+        ENDDO
+      ENDIF
 #endif
     ENDDO
-
     n_points = part_count
 
     iterate_probe_py = 0
@@ -266,11 +265,11 @@ CONTAINS
 
     REAL(num) :: iterate_probe_pz
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    REAL(num) :: csqr
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     INTEGER :: part_count
+    REAL(num) :: csqr
 
     IF (start)  THEN
       cur=> current_list%head
@@ -288,16 +287,15 @@ CONTAINS
           cur=>cur%next
         ENDDO
 #ifdef PHOTONS
-       ELSE
+      ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
-          array(part_count) = cur%particle_energy*cur%part_p(3)/csqr
+          array(part_count) = cur%particle_energy * cur%part_p(3) / csqr
           cur=>cur%next
-         ENDDO
-       ENDIF
+        ENDDO
+      ENDIF
 #endif
     ENDDO
-
     n_points = part_count
 
     iterate_probe_pz = 0

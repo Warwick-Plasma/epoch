@@ -99,10 +99,11 @@ MODULE constants
 
   ! Constants used in pair production
 #ifdef PHOTONS
-  REAL(num), PARAMETER :: B_s = (m0*c)**2d0/((h_planck*q0)/(2d0*pi))
-  REAL(num), PARAMETER :: E_s = B_s*c
-  REAL(num), PARAMETER :: alpha_f = (q0**2d0)/(2d0*epsilon0*h_planck*c)
-  REAL(num), PARAMETER :: tau_C = h_planck/(2d0*pi*m0*c**2d0)
+  REAL(num), PARAMETER :: h_bar = h_planck / 2.0_num / pi
+  REAL(num), PARAMETER :: b_s = (m0 * c)**2 / (h_bar * q0)
+  REAL(num), PARAMETER :: e_s = b_s * c
+  REAL(num), PARAMETER :: alpha_f = q0**2 / (2.0_num * epsilon0 * h_planck * c)
+  REAL(num), PARAMETER :: tau_c = h_bar / (m0 * c**2)
 #endif
 
   ! define special particle IDs
@@ -462,7 +463,7 @@ MODULE shared_data
     LOGICAL :: tracer
 #endif
 
-    !ID code which identifies if a species is of a special type
+    ! ID code which identifies if a species is of a special type
     INTEGER :: species_type
 
     ! particle cell division
@@ -777,22 +778,23 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! QED - Written by C. P. Ridgers
   !----------------------------------------------------------------------------
-   REAL(num), ALLOCATABLE :: log_chi2(:), epsilon_split(:), P_energy(:,:)
-   REAL(num), ALLOCATABLE :: log_hsokolov(:,:), P_photon_energy(:,:)
-   REAL(num), ALLOCATABLE :: log_eta(:), log_chi(:,:), log_tpair_dummy(:,:)
-   REAL(num), ALLOCATABLE :: log_tpair(:,:), chimin_table(:), log_omegahat(:,:)
-   INTEGER :: n_photon, n_pair
-   INTEGER :: n_sample_epsilon, n_sample_chi2, n_sample_h
-   INTEGER :: n_sample_eta, n_sample_chi, n_sample_t
+  REAL(num), ALLOCATABLE :: log_chi2(:), epsilon_split(:), p_energy(:,:)
+  REAL(num), ALLOCATABLE :: log_hsokolov(:,:), p_photon_energy(:,:)
+  REAL(num), ALLOCATABLE :: log_eta(:), log_chi(:,:), log_tpair_dummy(:,:)
+  REAL(num), ALLOCATABLE :: log_tpair(:,:), chimin_table(:), log_omegahat(:,:)
+  INTEGER :: n_photon, n_pair
+  INTEGER :: n_sample_epsilon, n_sample_chi2, n_sample_h
+  INTEGER :: n_sample_eta, n_sample_chi, n_sample_t
 
-   !These track which species should be the species used by the QED routines
-   INTEGER :: photon_species=-1, trident_electron_species=-1
-   INTEGER :: breit_wheeler_electron_species=-1
-   INTEGER :: trident_positron_species=-1, breit_wheeler_positron_species=-1
+  ! These track which species should be the species used by the QED routines
+  INTEGER :: photon_species = -1, trident_electron_species = -1
+  INTEGER :: breit_wheeler_electron_species = -1
+  INTEGER :: trident_positron_species = -1, breit_wheeler_positron_species = -1
 
-   REAL(num) :: photon_energy_min=0.0_num
-   REAL(num) :: qed_start_time=0.0_num
-   LOGICAL :: qed_active=.FALSE., produce_pairs=.FALSE., produce_photons=.FALSE.
+  REAL(num) :: photon_energy_min = 0.0_num
+  REAL(num) :: qed_start_time = 0.0_num
+  LOGICAL :: use_qed = .FALSE., produce_pairs = .FALSE.
+  LOGICAL :: produce_photons = .FALSE.
 #endif
 
   !----------------------------------------------------------------------------
