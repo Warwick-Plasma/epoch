@@ -1,4 +1,4 @@
-FUNCTION getdata, snapshot, wkdir=wkdir, explorer=explorer, retro=retro, $
+FUNCTION getdata, snapshot, wkdir=wkdir, retro=retro, $
     _EXTRA=extra
 
   COMMON background, wkdir_global, retro_global
