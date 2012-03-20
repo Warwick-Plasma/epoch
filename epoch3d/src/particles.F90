@@ -146,15 +146,10 @@ CONTAINS
       ENDIF
 #endif
 #ifdef PARTICLE_PROBES
-      current_probe => attached_probes
+      current_probe => species_list(ispecies)%attached_probes
+      probes_for_species = ASSOCIATED(current_probe)
+#else
       probes_for_species = .FALSE.
-      DO WHILE (ASSOCIATED(current_probe))
-        IF (current_probe%use_species(ispecies)) THEN
-          probes_for_species = .TRUE.
-          EXIT
-        ENDIF
-        current_probe => current_probe%next
-      ENDDO
 #endif
 #ifdef TRACER_PARTICLES
       not_tracer_species = .NOT. species_list(ispecies)%tracer
@@ -460,11 +455,10 @@ CONTAINS
           ! the system. These particles are copied into a separate part of the
           ! output file.
 
-          current_probe => attached_probes
+          current_probe => species_list(ispecies)%attached_probes
 
           ! Cycle through probes
           DO WHILE(ASSOCIATED(current_probe))
-            IF (.NOT. current_probe%use_species(ispecies)) CYCLE
             copy_this_particle=.FALSE.
             ! Note that this is the energy of a single REAL particle in the
             ! pseudoparticle, NOT the energy of the pseudoparticle
@@ -491,8 +485,7 @@ CONTAINS
               ALLOCATE(particle_copy)
               particle_copy = current
               CALL add_particle_to_partlist(&
-                  current_probe%sampled_particles(ispecies)%attached_list,&
-                  particle_copy)
+                  current_probe%sampled_particles, particle_copy)
               NULLIFY(particle_copy)
             ENDIF
             current_probe => current_probe%next
@@ -534,15 +527,8 @@ CONTAINS
 #endif
 
 #ifdef PARTICLE_PROBES
-    current_probe => attached_probes
-    probes_for_species = .FALSE.
-    DO WHILE (ASSOCIATED(current_probe))
-      IF (current_probe%use_species(ispecies)) THEN
-        probes_for_species = .TRUE.
-        EXIT
-      ENDIF
-      current_probe => current_probe%next
-    ENDDO
+    current_probe => species_list(ispecies)%attached_probes
+    probes_for_species = ASSOCIATED(current_probe)
 #else
     probes_for_species = .FALSE.
 #endif
@@ -572,11 +558,10 @@ CONTAINS
           ! the system. These particles are copied into a separate part of the
           ! output file.
 
-          current_probe => attached_probes
+          current_probe => species_list(ispecies)%attached_probes
 
           ! Cycle through probes
           DO WHILE(ASSOCIATED(current_probe))
-            IF (.NOT. current_probe%use_species(ispecies)) CYCLE
             copy_this_particle=.FALSE.
             ! Note that this is the energy of a single REAL particle in the
             ! pseudoparticle, NOT the energy of the pseudoparticle
@@ -603,8 +588,7 @@ CONTAINS
               ALLOCATE(particle_copy)
               particle_copy = current
               CALL add_particle_to_partlist(&
-                  current_probe%sampled_particles(ispecies)%attached_list&
-                  , particle_copy)
+                  current_probe%sampled_particles, particle_copy)
               NULLIFY(particle_copy)
             ENDIF
             current_probe => current_probe%next

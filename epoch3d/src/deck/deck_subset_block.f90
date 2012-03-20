@@ -325,7 +325,6 @@ CONTAINS
     ALLOCATE(subset_list(n_subsets))
 
     DO i = 1, n_subsets
-      NULLIFY(subset_list(i)%connected_probe)
       subset_list(i)%name = blank
       subset_list(i)%use_random     = .FALSE.
       subset_list(i)%use_gamma      = .FALSE.

@@ -490,6 +490,10 @@ MODULE shared_data
     INTEGER :: release_species
     REAL(num) :: ionisation_energy
 #endif
+    ! Attached probes for this species
+#ifdef PARTICLE_PROBES
+    TYPE(particle_probe), POINTER :: attached_probes
+#endif
   END TYPE particle_species
 
   !----------------------------------------------------------------------------
@@ -622,9 +626,6 @@ MODULE shared_data
     REAL(num) :: mass_min, mass_max
     INTEGER(KIND=8) :: id_min, id_max
 
-    !This is used to connect particle probes to subsets
-    TYPE(particle_probe), POINTER :: connected_probe
-
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
   END TYPE subset
@@ -637,21 +638,15 @@ MODULE shared_data
     REAL(num), DIMENSION(c_ndims) :: point
     ! The normal to the plane
     REAL(num), DIMENSION(c_ndims) :: normal
-    !The radius of the detector sphere is radial
-    REAL(num) :: radius
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
 
     LOGICAL, DIMENSION(:), POINTER :: use_species
-    TYPE(particle_species), DIMENSION(:), POINTER :: sampled_particles
+    TYPE(particle_list) :: sampled_particles
     TYPE(particle_probe), POINTER :: next
     INTEGER :: dumpmask
-    LOGICAL :: radial
   END TYPE particle_probe
-  TYPE(particle_probe), POINTER :: attached_probes
-  INTEGER :: n_probes
 #endif
-
 
   INTEGER :: cpml_thickness
   INTEGER :: cpml_x_min_start, cpml_x_min_end
