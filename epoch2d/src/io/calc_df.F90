@@ -79,6 +79,7 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
+      IF (io_list(ispecies)%species_type .EQ. c_species_id_photon) CYCLE
 #ifdef TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -209,7 +210,9 @@ CONTAINS
           part_uz = current%part_p(3) / c
         ENDIF
 #endif
+
 #include "particle_to_grid.inc"
+
 #ifdef PHOTONS
         IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
 #endif
@@ -220,7 +223,6 @@ CONTAINS
           wdata = current%particle_energy * l_weight
         ENDIF
 #endif
-
         DO iy = sf_min, sf_max
           DO ix = sf_min, sf_max
             data_array(cell_x+ix, cell_y+iy) = &

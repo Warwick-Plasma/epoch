@@ -211,7 +211,7 @@ evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
 helper.o: helper.F90 boundary.o random_generator.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
-ionise.o: ionise.F90 calc_df.o split_particle.o
+ionise.o: ionise.F90 calc_df.o partlist.o split_particle.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 partlist.o

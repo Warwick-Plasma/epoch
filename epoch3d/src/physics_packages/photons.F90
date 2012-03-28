@@ -637,13 +637,13 @@ CONTAINS
         ! Work out the grid cell number for the particle.
         ! Not an integer in general.
 #ifdef PARTICLE_SHAPE_TOPHAT
-    cell_x_r = part_x  / dx - 0.5_num
-    cell_y_r = part_y  / dy - 0.5_num
-    cell_z_r = part_z  / dz - 0.5_num
+    cell_x_r = part_x / dx - 0.5_num
+    cell_y_r = part_y / dy - 0.5_num
+    cell_z_r = part_z / dz - 0.5_num
 #else
-    cell_x_r = part_x  / dx
-    cell_y_r = part_y  / dy
-    cell_z_r = part_z  / dz
+    cell_x_r = part_x / dx
+    cell_y_r = part_y / dy
+    cell_z_r = part_z / dz
 #endif
     ! Round cell position to nearest cell
     cell_x1 = FLOOR(cell_x_r + 0.5_num)
@@ -794,7 +794,6 @@ CONTAINS
     rand_temp=random()
     new_photon%particle_energy = calculate_photon_energy(rand_temp,eta,&
         generating_gamma)
-    IF (new_photon%particle_energy .GT. 1.0_num) PRINT *,generating_gamma,mag_p
     new_photon%weight = generating_electron%weight
 
     ! calculate electron recoil

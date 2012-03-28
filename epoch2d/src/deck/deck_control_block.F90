@@ -233,7 +233,7 @@ CONTAINS
         coulomb_log_auto = .FALSE.
         coulomb_log = as_real(value, errcode)
       ENDIF
-   !4*c_ndims+15 is the special case of the collision matrix
+    !4*c_ndims+15 is the special case of the collision matrix
     CASE(4*c_ndims+16)
 #ifdef PHOTONS
       qed_active = as_logical(value, errcode)

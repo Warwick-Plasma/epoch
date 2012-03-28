@@ -358,7 +358,6 @@ CONTAINS
     array(cpos) = REAL(a_particle%id, num)
     cpos = cpos+1
 #endif
-
 #ifdef PHOTONS
     array(cpos) = a_particle%optical_depth
     array(cpos+1) = a_particle%particle_energy
@@ -405,7 +404,6 @@ CONTAINS
     a_particle%id = NINT(array(cpos),8)
     cpos = cpos+1
 #endif
-
 #ifdef PHOTONS
     a_particle%optical_depth = array(cpos)
     a_particle%particle_energy = array(cpos+1)

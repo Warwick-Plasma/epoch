@@ -39,7 +39,6 @@ PROGRAM pic
   USE photons
 #endif
 
-
   IMPLICIT NONE
 
   INTEGER :: ispecies, step = 0

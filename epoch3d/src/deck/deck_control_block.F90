@@ -85,7 +85,6 @@ MODULE deck_control_block
           'min_photon_energy ', &
           'produce_pairs     ' /)
 
-
 CONTAINS
 
   SUBROUTINE control_deck_initialise
@@ -250,7 +249,7 @@ CONTAINS
         coulomb_log_auto = .FALSE.
         coulomb_log = as_real(value, errcode)
       ENDIF
-   !4*c_ndims+15 is the special case of the collision matrix
+    !4*c_ndims+15 is the special case of the collision matrix
     CASE(4*c_ndims+16)
 #ifdef PHOTONS
       qed_active = as_logical(value, errcode)
@@ -309,6 +308,25 @@ CONTAINS
 
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
+
+    !qed stuff is incorrect if not compiled with the correct options
+#ifndef PHOTONS
+    DO index = 4*c_ndims+16, 4*c_ndims+20
+      IF (control_block_done(index)) THEN
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*)
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Cannot turn on QED option ', &
+                TRIM(ADJUSTL(control_block_name(index))), &
+                ' unless code is compiled with the correct preprocessor (-DPHOTONS)'
+          ENDDO
+        ENDIF
+        extended_error_string='-DPHOTONS'
+        errcode = c_err_pp_options_wrong
+      ENDIF
+    ENDDO
+#endif
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN

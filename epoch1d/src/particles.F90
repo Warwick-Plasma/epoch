@@ -138,6 +138,8 @@ CONTAINS
 #ifdef PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
+#else
+      probes_for_species = .FALSE.
 #endif
 #ifdef TRACER_PARTICLES
       not_tracer_species = .NOT. species_list(ispecies)%tracer
@@ -436,13 +438,18 @@ CONTAINS
     LOGICAL :: probes_for_species
 #endif
 
+#ifdef PARTICLE_PROBES
+    current_probe => species_list(ispecies)%attached_probes
+    probes_for_species = ASSOCIATED(current_probe)
+#else
+    probes_for_species = .FALSE.
+#endif
 
     ! set current to point to head of list
     current => species_list(ispecies)%attached_list%head
     ! loop over photons
     DO WHILE(ASSOCIATED(current))
       delta_x = current%part_p(1) * dt
-
 #ifdef PARTICLE_PROBES
         init_part_x = current%part_pos
 #endif

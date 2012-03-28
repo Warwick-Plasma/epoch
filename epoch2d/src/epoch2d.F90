@@ -114,7 +114,6 @@ PROGRAM pic
   IF (qed_active) CALL setup_qed_module()
 #endif
 
-
   DO
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
         .OR. (time .GE. t_end) .OR. halt) EXIT

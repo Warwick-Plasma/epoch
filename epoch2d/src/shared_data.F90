@@ -111,7 +111,6 @@ MODULE constants
   INTEGER, PARAMETER :: c_species_id_positron = 3
   INTEGER, PARAMETER :: c_species_id_proton = 4
 
-
   ! direction parameters
   INTEGER, PARAMETER :: c_dir_x = 1
   INTEGER, PARAMETER :: c_dir_y = 2

@@ -165,6 +165,7 @@ CONTAINS
   END FUNCTION check_qed_variables
 
 
+
   SUBROUTINE setup_tables_qed()
 
     ! reads files epsilon.table, log_chi.table, energy_split.table
@@ -327,7 +328,8 @@ CONTAINS
     INTEGER :: ispecies
     TYPE(particle), POINTER :: current, next_pt
 
-    REAL(num) :: part_x, part_px, part_py, part_pz, eta, chi_val
+    REAL(num) :: part_x, part_px, part_py, part_pz,&
+        eta, chi_val
     REAL(num) :: part_vx, part_vy, part_vz, part_E
 
     DO ispecies=1,n_species
@@ -374,33 +376,33 @@ CONTAINS
           c_species_id_positron) THEN
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
-        ! find eta at particle position
-        part_x  = current%part_pos - x_min_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
+          ! find eta at particle position
+          part_x  = current%part_pos - x_min_local
+          part_px = current%part_p(1)
+          part_py = current%part_p(2)
+          part_pz = current%part_p(3)
 
-        eta = calculate_eta(part_x,part_px,part_py,part_pz)
+          eta = calculate_eta(part_x,part_px,part_py,part_pz)
 
-        current%optical_depth = current%optical_depth - &
-            delta_optical_depth(eta,part_px,part_py,part_pz)
+          current%optical_depth = current%optical_depth - &
+              delta_optical_depth(eta,part_px,part_py,part_pz)
 #ifdef TRIDENT_PHOTONS
-        current%optical_depth_tri = current%optical_depth_tri - &
-            delta_optical_depth_tri(eta,part_px,part_py,part_pz)
+          current%optical_depth_tri = current%optical_depth_tri - &
+              delta_optical_depth_tri(eta,part_px,part_py,part_pz)
 #endif
           ! if optical depth dropped below zero generate photon...
-        IF(current%optical_depth  .LE.  0.0_num) THEN
-          CALL generate_photon(current,photon_species,eta)
-          ! ... and reset optical depth
-          current%optical_depth = reset_optical_depth()
-        ENDIF
+          IF(current%optical_depth  .LE.  0.0_num) THEN
+            CALL generate_photon(current,photon_species,eta)
+            ! ... and reset optical depth
+            current%optical_depth = reset_optical_depth()
+          ENDIF
 
 #ifdef TRIDENT_PHOTONS
-        IF(current%optical_depth_tri  .LE.  0.0_num) THEN
-          CALL generate_pair_tri(current,trident_electron_species,&
-              trident_positron_species)
-          ! ... and reset optical depth
-          current%optical_depth_tri = reset_optical_depth()
+          IF(current%optical_depth_tri  .LE.  0.0_num) THEN
+            CALL generate_pair_tri(current,trident_electron_species,&
+                trident_positron_species)
+            ! ... and reset optical depth
+            current%optical_depth_tri = reset_optical_depth()
           ENDIF
 #endif
           current => current%next
@@ -420,7 +422,8 @@ CONTAINS
             part_vy = current%part_p(2)
             part_vz = current%part_p(3)
             part_E = current%particle_energy
-            chi_val = calculate_chi(part_x,part_vx,part_vy,part_vz,part_E)
+            chi_val = calculate_chi(part_x,part_vx,part_vy,&
+                part_vz,part_E)
 
             current%optical_depth = current%optical_depth - &
                 delta_optical_depth_photon(chi_val,part_E)
@@ -604,10 +607,10 @@ CONTAINS
 
     ! Contains the floating point version of the cell number (never actually
     ! used)
-    REAL(num) :: cell_x_r, cell_y_r
+    REAL(num) :: cell_x_r
 
     ! The fraction of a cell between the particle position and cell boundary
-    REAL(num) :: cell_frac_x, cell_frac_y
+    REAL(num) :: cell_frac_x
 
     ! Weighting factors as Eqn 4.77 page 25 of manual
     ! Eqn 4.77 would be written as
@@ -620,7 +623,7 @@ CONTAINS
     REAL(num), DIMENSION(sf_min:sf_max) :: hx
     ! Temporary variables
     REAL(num) :: cf2
-    INTEGER dcellx, dcelly
+    INTEGER dcellx
     REAL(num) :: ex_part, ey_part, ez_part
     REAL(num) :: bx_part, by_part, bz_part
     REAL(num) :: B_at_part(1:3), E_at_part(1:3)
@@ -658,7 +661,6 @@ CONTAINS
     cell_x2 = cell_x2 + 1
 
     dcellx = 0
-    dcelly = 0
 #ifdef PARTICLE_SHAPE_BSPLINE3
     INCLUDE '../include/bspline3/hx_dcell.inc'
 #elif  PARTICLE_SHAPE_TOPHAT
@@ -731,7 +733,6 @@ CONTAINS
     TYPE(particle), POINTER :: new_photon, generating_electron
     INTEGER :: iphoton
     REAL(num) :: mult_x, mult_y, mult_z, mag_p, generating_gamma,eta
-    REAL(num) :: part_x, cell_x_r, cell_frac_x
     INTEGER :: cell_x
     REAL(4) :: rand_temp
 
@@ -769,8 +770,6 @@ CONTAINS
     generating_electron%part_p(1) = mult_x*mag_p
     generating_electron%part_p(2) = mult_y*mag_p
     generating_electron%part_p(3) = mult_z*mag_p
-
-    part_x  = new_photon%part_pos - x_min_local
 
     !This will only create photons that have energies above a user specified cutoff
     ! and if photon generation is turned on. E± recoil is always considered
