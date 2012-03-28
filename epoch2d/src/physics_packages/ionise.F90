@@ -131,9 +131,9 @@ CONTAINS
 
         ! In this section need to calculate the ionisation rate
         ! And store it in the variable 'ion_rate'.
-        ! The rest of the routine is general 
+        ! The rest of the routine is general
 
-        ! The code is supplied with a 
+        ! The code is supplied with a
         ! simple implementation of Keldysh equation
         ! Keldysh (Zh. Eksp. Teor. Fiz. 47, 1945 (1964))
         ! In English (Sov. Phys. JETP 20, 1307 (1965))

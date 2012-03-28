@@ -234,7 +234,7 @@ CONTAINS
       ENDIF
 #endif
 
-      ! Setting some flags like species and average 
+      ! Setting some flags like species and average
       ! wastes memory if the parameters make no sense. Do sanity checking.
 
       IF (IAND(mask, c_io_species) .NE. 0 &

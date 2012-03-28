@@ -681,22 +681,22 @@ CONTAINS
                 cell_y = FLOOR(cell_y_r + 0.5_num)
                 cell_frac_y = REAL(cell_y, num) - cell_y_r
                 cell_y = cell_y + 1
-  
+
                 cell_z_r = (cur%part_pos(3) - z_min_local) / dz
                 cell_z = FLOOR(cell_z_r + 0.5_num)
                 cell_frac_z = REAL(cell_z, num) - cell_z_r
                 cell_z = cell_z + 1
-  
+
                 cf2 = cell_frac_y**2
                 gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
                 gy( 0) = 0.75_num - cf2
                 gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
-  
+
                 cf2 = cell_frac_z**2
                 gz(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_z)
                 gz( 0) = 0.75_num - cf2
                 gz( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_z)
-  
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
                   DO iz = -1, 1
@@ -764,22 +764,22 @@ CONTAINS
                 cell_y = FLOOR(cell_y_r + 0.5_num)
                 cell_frac_y = REAL(cell_y, num) - cell_y_r
                 cell_y = cell_y + 1
-  
+
                 cell_z_r = (cur%part_pos(3) - z_min_local) / dz
                 cell_z = FLOOR(cell_z_r + 0.5_num)
                 cell_frac_z = REAL(cell_z, num) - cell_z_r
                 cell_z = cell_z + 1
-  
+
                 cf2 = cell_frac_y**2
                 gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
                 gy( 0) = 0.75_num - cf2
                 gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
-  
+
                 cf2 = cell_frac_z**2
                 gz(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_z)
                 gz( 0) = 0.75_num - cf2
                 gz( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_z)
-  
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
                   DO iz = -1, 1
@@ -848,22 +848,22 @@ CONTAINS
                 cell_x = FLOOR(cell_x_r + 0.5_num)
                 cell_frac_x = REAL(cell_x, num) - cell_x_r
                 cell_x = cell_x + 1
-  
+
                 cell_z_r = (cur%part_pos(3) - z_min_local) / dz
                 cell_z = FLOOR(cell_z_r + 0.5_num)
                 cell_frac_z = REAL(cell_z, num) - cell_z_r
                 cell_z = cell_z + 1
-  
+
                 cf2 = cell_frac_x**2
                 gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
                 gx( 0) = 0.75_num - cf2
                 gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
-  
+
                 cf2 = cell_frac_z**2
                 gz(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_z)
                 gz( 0) = 0.75_num - cf2
                 gz( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_z)
-  
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
                   DO iz = -1, 1
@@ -931,22 +931,22 @@ CONTAINS
                 cell_x = FLOOR(cell_x_r + 0.5_num)
                 cell_frac_x = REAL(cell_x, num) - cell_x_r
                 cell_x = cell_x + 1
-  
+
                 cell_z_r = (cur%part_pos(3) - z_min_local) / dz
                 cell_z = FLOOR(cell_z_r + 0.5_num)
                 cell_frac_z = REAL(cell_z, num) - cell_z_r
                 cell_z = cell_z + 1
-  
+
                 cf2 = cell_frac_x**2
                 gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
                 gx( 0) = 0.75_num - cf2
                 gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
-  
+
                 cf2 = cell_frac_z**2
                 gz(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_z)
                 gz( 0) = 0.75_num - cf2
                 gz( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_z)
-  
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
                   DO iz = -1, 1
@@ -1015,22 +1015,22 @@ CONTAINS
                 cell_x = FLOOR(cell_x_r + 0.5_num)
                 cell_frac_x = REAL(cell_x, num) - cell_x_r
                 cell_x = cell_x + 1
-  
+
                 cell_y_r = (cur%part_pos(2) - y_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
                 cell_frac_y = REAL(cell_y, num) - cell_y_r
                 cell_y = cell_y + 1
-  
+
                 cf2 = cell_frac_x**2
                 gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
                 gx( 0) = 0.75_num - cf2
                 gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
-  
+
                 cf2 = cell_frac_y**2
                 gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
                 gy( 0) = 0.75_num - cf2
                 gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
-  
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
                   DO iy = -1, 1
@@ -1098,22 +1098,22 @@ CONTAINS
                 cell_x = FLOOR(cell_x_r + 0.5_num)
                 cell_frac_x = REAL(cell_x, num) - cell_x_r
                 cell_x = cell_x + 1
-  
+
                 cell_y_r = (cur%part_pos(2) - y_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
                 cell_frac_y = REAL(cell_y, num) - cell_y_r
                 cell_y = cell_y + 1
-  
+
                 cf2 = cell_frac_x**2
                 gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
                 gx( 0) = 0.75_num - cf2
                 gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
-  
+
                 cf2 = cell_frac_y**2
                 gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
                 gy( 0) = 0.75_num - cf2
                 gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
-  
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
                   DO iy = -1, 1
