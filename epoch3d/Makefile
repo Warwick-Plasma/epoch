@@ -12,7 +12,7 @@ MODULEFLAG = -module
 TARGET = epoch3d
 
 # Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES -DPHOTONS
+DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 
 # The following are a list of pre-processor defines which can be added to
 # the above line modifying the code behaviour at compile time.
@@ -57,11 +57,17 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES -DPHOTONS
 # Bypass the main simulation and only perform collision tests.
 # -DCOLLISIONS_TEST
 
+# Include QED routines
+# -DPHOTONS
+
+# Use the Trident process for pair production
+# -DTRIDENT_PHOTONS
+
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.
-ENCODED_SOURCE = dummy_encoded_source.o
+#ENCODED_SOURCE = dummy_encoded_source.o
 
 
 
@@ -198,13 +204,14 @@ diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o \
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o sdf.o shared_data.o
 epoch3d.o: epoch3d.F90 balance.o boundary.o collisions.o custom_parser.o \
   deck.o diagnostics.o fields.o helper.o ic_module.o ionise.o mpi_routines.o \
-  particles.o photons.o sdf_job_info.o setup.o split_particle.o welcome.o window.o
+  particles.o photons.o sdf_job_info.o setup.o split_particle.o welcome.o \
+  window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
 helper.o: helper.F90 boundary.o random_generator.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
-ionise.o: ionise.F90 calc_df.o split_particle.o partlist.o
+ionise.o: ionise.F90 calc_df.o partlist.o split_particle.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 partlist.o
@@ -213,9 +220,9 @@ particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shape_functions.o
 particles.o: particles.F90 boundary.o current_smooth.o shape_functions.o
-partlist.o: partlist.F90 shared_data.o random_generator.o
-photons.o: photons.F90 shared_data.o random_generator.o partlist.o\
-   shape_functions.o
+partlist.o: partlist.F90 random_generator.o shared_data.o
+photons.o: photons.F90 partlist.o random_generator.o shape_functions.o \
+  shared_data.o
 probes.o: probes.F90 mpi_subtype_control.o partlist.o sdf.o
 random_generator.o: random_generator.f90
 sdf.o: sdf.f90 sdf_common.o sdf_control.o sdf_input.o sdf_input_cartesian.o \
