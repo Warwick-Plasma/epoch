@@ -33,7 +33,7 @@
       m1=1.+1./(1.-x)**2
       m2=2./(1.-x)
       m3=x**2/(1.-x)**2
-      
+
 !      Read in the tabulated values of the j integrals
 
       if(iread)then
@@ -46,7 +46,7 @@
          close(11)
       end if
       iread=.false.
-      
+
       call hunt(ylogtable,npoints,ylog,nlow)
       delta=ylogtable(nlow+1)-ylogtable(nlow)
 
@@ -99,7 +99,7 @@ end function fsynchqmexact
          close(11)
       end if
       iread=.false.
-      
+
       call hunt(etalogtable,npoints,etalog,nlow)
       delta=etalogtable(nlow+1)-etalogtable(nlow)
 
@@ -141,7 +141,7 @@ end function gsokolov
          close(11)
       end if
       iread=.false.
-      
+
       call hunt(etalogtable,npoints,etalog,nlow)
       delta=etalogtable(nlow+1)-etalogtable(nlow)
 
@@ -216,14 +216,14 @@ end function s1func
       return
 end function s2func
 
-        
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       function omegahat(eta)
       implicit none
       integer, parameter :: real8=selected_real_kind(15,40)
 
-!       The function defined by Erber for trident 
+!       The function defined by Erber for trident
 !       pair production (via a virtual photon)
 
       real (kind=real8) , dimension(1500) :: etalogtable,ologtable,tlogtable
@@ -251,7 +251,7 @@ end function s2func
          close(11)
       end if
       iread=.false.
-      
+
       call hunt(etalogtable,npoints,etalog,nlow)
       delta=etalogtable(nlow+1)-etalogtable(nlow)
 
@@ -261,14 +261,14 @@ end function s2func
       omegahat=10.**olog
 
 end function omegahat
-         
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       function tpair(chi)
       implicit none
       integer, parameter :: real8=selected_real_kind(15,40)
 
-!       The function defined by Erber for  
+!       The function defined by Erber for
 !       pair production by a (real) photon
 
       real (kind=real8) , dimension(1500) :: chilogtable,ologtable,tlogtable
@@ -292,7 +292,7 @@ end function omegahat
          close(11)
       end if
       iread=.false.
-      
+
       call hunt(chilogtable,npoints,chilog,nlow)
       if(nlow.eq.0)then
         tpair=0.
@@ -306,4 +306,4 @@ end function omegahat
       end if
       return
 end function tpair
-         
+

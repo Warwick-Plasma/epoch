@@ -775,7 +775,7 @@ MODULE shared_data
 
 #ifdef PHOTONS
   !----------------------------------------------------------------------------
-  ! QED - Written by C. P. Ridgers                       
+  ! QED - Written by C. P. Ridgers
   !----------------------------------------------------------------------------
    REAL(num), ALLOCATABLE :: log_chi2(:), epsilon_split(:), P_energy(:,:)
    REAL(num), ALLOCATABLE :: log_hsokolov(:,:), P_photon_energy(:,:)

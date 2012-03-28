@@ -58,11 +58,11 @@ CONTAINS
     !Identify if there exists any electron species
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type .EQ. &
-          c_species_id_electron .AND. first_electron .EQ. -1) THEN 
+          c_species_id_electron .AND. first_electron .EQ. -1) THEN
         first_electron=ispecies
       ENDIF
       IF (species_list(ispecies)%species_type .EQ. &
-          c_species_id_positron .AND. first_positron .EQ. -1) THEN 
+          c_species_id_positron .AND. first_positron .EQ. -1) THEN
         first_positron=ispecies
       ENDIF
     ENDDO
@@ -81,7 +81,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (photon_species .LT. 0) THEN 
+    IF (photon_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
         WRITE(io,*) '*** ERROR ***'
@@ -93,7 +93,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    !If you're not producing pairs then you don't have to designate special 
+    !If you're not producing pairs then you don't have to designate special
     !Electron or positron species so just return
     IF (.NOT. produce_pairs) RETURN
 
@@ -124,7 +124,7 @@ CONTAINS
 
 
 #ifdef TRIDENT_PHOTONS
-    IF (trident_positron_species .LT. 0) THEN 
+    IF (trident_positron_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
         WRITE(io,*) '*** WARNING ***'
@@ -137,7 +137,7 @@ CONTAINS
     ENDIF
 #endif
 
-    IF (breit_wheeler_electron_species .LT. 0) THEN 
+    IF (breit_wheeler_electron_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
         WRITE(io,*) '*** WARNING ***'
@@ -150,7 +150,7 @@ CONTAINS
     ENDIF
 
 #ifdef TRIDENT_PHOTONS
-    IF (trident_electron_species .LT. 0) THEN 
+    IF (trident_electron_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
         WRITE(io,*) '*** WARNING ***'
@@ -167,11 +167,11 @@ CONTAINS
 
 
   SUBROUTINE setup_tables_qed()
-  
+
     ! reads files epsilon.table, log_chi.table, energy_split.table
     ! and sets up appropriate tables
 
-    INTEGER :: ichi2, iepsilon, ieta, ichi, idummy 
+    INTEGER :: ichi2, iepsilon, ieta, ichi, idummy
     REAL(num) :: etalog_min, etalog_max
 
     OPEN(50,file='./src/physics_packages/TABLES/hsokolov.table',status='old')
@@ -179,7 +179,7 @@ CONTAINS
     ALLOCATE(log_hsokolov(1:2,1:n_sample_h))
     DO ieta=1,n_sample_h
       READ(50,*)log_hsokolov(1:2,ieta)
-    ENDDO   
+    ENDDO
     CLOSE(50)
 
 
@@ -190,14 +190,14 @@ CONTAINS
     ALLOCATE(log_omegahat(1:2,1:n_sample_t))
     DO ichi=1,n_sample_t
       READ(51,*)log_tpair_dummy(1:3,ichi)
-    ENDDO   
+    ENDDO
     CLOSE(51)
 
     DO ichi=1,n_sample_t
       log_tpair(1,ichi) = log_tpair_dummy(1,ichi)
       log_tpair(2,ichi) = log_tpair_dummy(3,ichi)
       log_omegahat(1,ichi) = log_tpair_dummy(1,ichi)
-      log_omegahat(2,ichi) = log_tpair_dummy(2,ichi)    
+      log_omegahat(2,ichi) = log_tpair_dummy(2,ichi)
     ENDDO
 
 
@@ -213,10 +213,10 @@ CONTAINS
 
 
     READ(80,*) (chimin_table(ieta),ieta=1,n_sample_eta)
-  
+
     DO ieta=1,n_sample_eta
       log_eta(ieta) = etalog_min + (dble(ieta)-1.0_num)*(etalog_max-etalog_min)  &
-        & / (dble(n_sample_eta)-1.0_num) 
+        & / (dble(n_sample_eta)-1.0_num)
     ENDDO
 
     DO ieta=1,n_sample_eta
@@ -230,15 +230,15 @@ CONTAINS
 
     DO ieta=1,n_sample_eta
       DO idummy=1,ieta
-        READ(70,*)    
+        READ(70,*)
       ENDDO
       READ(70,*) (P_photon_energy(ieta,ichi),ichi=1,n_sample_chi)
       REWIND(70)
-    ENDDO  
+    ENDDO
 
     CLOSE(70)
     CLOSE(80)
- 
+
     OPEN(10,file='./src/physics_packages/TABLES/log_chi2.table',status='old')
     READ(10,*) n_sample_chi2
     ALLOCATE(log_chi2(1:n_sample_chi2))
@@ -265,7 +265,7 @@ CONTAINS
     CLOSE(30)
 
   END SUBROUTINE setup_tables_qed
-  
+
 
 
   SUBROUTINE deallocate_tables_qed()
@@ -288,17 +288,17 @@ CONTAINS
   SUBROUTINE initialise_optical_depth(current_species)
 
   ! resets optical depth (to random number) of all particles
-  
+
     TYPE(particle_species) :: current_species
     TYPE(particle), POINTER :: current
     REAL(num) :: P_tau
 
     current=>current_species%attached_list%head
     DO WHILE(ASSOCIATED(current))
- 
+
       P_tau = random()
       current%optical_depth = log(1.0_num/(1.0_num-P_tau))
-    
+
 #ifdef TRIDENT_PHOTONS
       P_tau = random()
       current%optical_depth_tri = log(1.0_num/(1.0_num-P_tau))
@@ -326,19 +326,19 @@ CONTAINS
     ! updates the optical depth for electrons and photons
 
     INTEGER :: ispecies
-    TYPE(particle), POINTER :: current, next_pt  
+    TYPE(particle), POINTER :: current, next_pt
 
     REAL(num) :: part_x, part_y, part_z, part_px, part_py, part_pz,&
         eta, chi_val
     REAL(num) :: part_vx, part_vy, part_vz, part_E
 
-    DO ispecies=1,n_species 
-  
+    DO ispecies=1,n_species
+
       ! first consider electrons
       IF(species_list(ispecies)%species_type .EQ. &
           c_species_id_electron) THEN
         current => species_list(ispecies)%attached_list%head
-        DO WHILE(ASSOCIATED(current))   
+        DO WHILE(ASSOCIATED(current))
           ! find eta at particle position
           part_x  = current%part_pos(1) - x_min_local
           part_y  = current%part_pos(2) - y_min_local
@@ -364,7 +364,7 @@ CONTAINS
 #ifdef TRIDENT_PHOTONS
           IF(current%optical_depth_tri  .LE.  0.0_num) THEN
             CALL generate_pair_tri(current,trident_electron_species,&
-                trident_positron_species)   
+                trident_positron_species)
             ! ... and reset optical depth
             current%optical_depth_tri = reset_optical_depth()
           ENDIF
@@ -377,7 +377,7 @@ CONTAINS
       IF(species_list(ispecies)%species_type .EQ. &
           c_species_id_positron) THEN
         current => species_list(ispecies)%attached_list%head
-        DO WHILE(ASSOCIATED(current))   
+        DO WHILE(ASSOCIATED(current))
           ! find eta at particle position
           part_x  = current%part_pos(1) - x_min_local
           part_y  = current%part_pos(2) - y_min_local
@@ -387,7 +387,7 @@ CONTAINS
           part_pz = current%part_p(3)
 
           eta = calculate_eta(part_x,part_y,part_z,part_px,part_py,part_pz)
-     
+
           current%optical_depth = current%optical_depth - &
               delta_optical_depth(eta,part_px,part_py,part_pz)
 #ifdef TRIDENT_PHOTONS
@@ -396,7 +396,7 @@ CONTAINS
 #endif
           ! if optical depth dropped below zero generate photon...
           IF(current%optical_depth  .LE.  0.0_num) THEN
-            CALL generate_photon(current,photon_species,eta)  
+            CALL generate_photon(current,photon_species,eta)
             ! ... and reset optical depth
             current%optical_depth = reset_optical_depth()
           ENDIF
@@ -404,12 +404,12 @@ CONTAINS
 #ifdef TRIDENT_PHOTONS
           IF(current%optical_depth_tri  .LE.  0.0_num) THEN
             CALL generate_pair_tri(current,trident_electron_species,&
-                trident_positron_species)   
+                trident_positron_species)
             ! ... and reset optical depth
-            current%optical_depth_tri = reset_optical_depth()        
+            current%optical_depth_tri = reset_optical_depth()
           ENDIF
 #endif
-          current => current%next    
+          current => current%next
         ENDDO
       ENDIF
 
@@ -418,9 +418,9 @@ CONTAINS
           c_species_id_photon) THEN
         IF (produce_pairs) THEN
           current => species_list(ispecies)%attached_list%head
-          DO WHILE(ASSOCIATED(current))  
+          DO WHILE(ASSOCIATED(current))
             ! current may be deleted
-            next_pt=> current%next  
+            next_pt=> current%next
             part_x  = current%part_pos(1) - x_min_local
             part_y  = current%part_pos(2) - y_min_local
             part_z  = current%part_pos(3) - z_min_local
@@ -430,7 +430,7 @@ CONTAINS
             part_E = current%particle_energy
             chi_val = calculate_chi(part_x,part_y,part_z,part_vx,part_vy,&
                 part_vz,part_E)
-     
+
             current%optical_depth = current%optical_depth - &
                 delta_optical_depth_photon(chi_val,part_E)
             ! if optical depth dropped below zero generate pair...
@@ -458,7 +458,7 @@ CONTAINS
 
     gamma = SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2)/((m0*c)**2))
 
-    hsokolov = find_value_from_table_1D(n_sample_h,log_hsokolov(1,:),& 
+    hsokolov = find_value_from_table_1D(n_sample_h,log_hsokolov(1,:),&
         eta,log_hsokolov(2,:))
 
     delta_optical_depth  = dt*SQRT(3.0_num)*alpha_f*eta*hsokolov  &
@@ -473,7 +473,7 @@ CONTAINS
     REAL(num) :: delta_optical_depth_tri
     REAL(num) :: eta, omegahat, gamma, part_px, part_py, part_pz
 
-    omegahat = find_value_from_table_1D(n_sample_t,log_omegahat(1,:),& 
+    omegahat = find_value_from_table_1D(n_sample_t,log_omegahat(1,:),&
         eta,log_omegahat(2,:))
 
     gamma = SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2)/((m0*c)**2))
@@ -481,7 +481,7 @@ CONTAINS
     delta_optical_depth_tri = (dt/(2*pi*tau_C))*(0.64_num/gamma)*&
         (alpha_f**2.0_num)*eta*omegahat
 
-  END FUNCTION delta_optical_depth_tri  
+  END FUNCTION delta_optical_depth_tri
 
 
 
@@ -490,9 +490,9 @@ CONTAINS
     REAL(num) :: delta_optical_depth_photon
     REAL(num) :: chi_val, part_E, tpair
 
-    tpair = find_value_from_table_1D(n_sample_t,log_tpair(1,:),& 
+    tpair = find_value_from_table_1D(n_sample_t,log_tpair(1,:),&
         chi_val,log_tpair(2,:))
-  
+
     delta_optical_depth_photon = (dt/tau_C)*alpha_f*((m0*c**2.0_num)/part_E)*&
         chi_val*tpair
 
@@ -510,7 +510,7 @@ CONTAINS
     REAL(num) :: lambdaC, coeff_eta, modp, modpclip
 
     CALL field_at_particle(part_x,part_y,part_z,E_at_part,B_at_part)
-    
+
     modp=part_px**2 + part_py**2 + part_pz**2
     modpclip=MAX(modp,c_non_zero)
     modp=SQRT(modp)
@@ -526,9 +526,9 @@ CONTAINS
 
 
     lambdaC = h_planck/(2*pi*m0*c)
-  
+
     coeff_eta = SQRT(3.0_num*lambdaC/(2.0_num*alpha_f*m0*c**3.0_num))
-    
+
     fLperp(1) = q0*( E_at_part(1) +c*beta_y*B_at_part(3)-c*beta_z*B_at_part(2)&
         -((part_px*E_at_part(1)+part_py*E_at_part(2)+part_pz*E_at_part(3)) &
         /modpclip**2)*part_px)
@@ -539,19 +539,19 @@ CONTAINS
 
     fLperp(3) = q0*( E_at_part(3) +c*beta_x*B_at_part(2)-c*beta_y*B_at_part(1)&
         -((part_px*E_at_part(1)+part_py*E_at_part(2)+part_pz*E_at_part(3)) &
-        /modpclip**2)*part_pz )  
+        /modpclip**2)*part_pz )
 
     !dipole emission intensity
 
     tau0 = q0**2.0_num/(6.0_num*pi*epsilon0*m0*c**3.0_num)
-   
+
     I_E = tau0*gamma**2.0_num*((fLperp(1)*fLperp(1)+fLperp(2)*fLperp(2)+&
         fLperp(3)*fLperp(3))&
         + (q0*(c*beta_x*E_at_part(1)+c*beta_y*E_at_part(2) &
         + c*beta_z*E_at_part(3)))**2.0_num &
         /(modpclip**2/m0**2.0_num)) &
         / m0
- 
+
     roland_eta = coeff_eta*SQRT(I_E)
 
     ! determine eta from fields
@@ -586,11 +586,11 @@ CONTAINS
 
     E_dot_dir = E_at_part(1)*dir_x + E_at_part(2)*dir_y+E_at_part(3)*dir_z
     q(1) = E_at_part(1) - E_dot_dir*dir_x + c*(dir_y*B_at_part(3)-dir_z*&
-        B_at_part(2)) 
+        B_at_part(2))
     q(2) = E_at_part(2) - E_dot_dir*dir_y + c*(dir_z*B_at_part(1)-dir_x*&
-        B_at_part(3)) 
+        B_at_part(3))
     q(3) = E_at_part(3) - E_dot_dir*dir_z + c*(dir_x*B_at_part(2)-dir_y*&
-        B_at_part(1)) 
+        B_at_part(1))
 
     calculate_chi_roland = 0.5_num*part_E_n*SQRT(q(1)**2.0_num+q(2)**2.0_num&
         +q(3)**2.0_num)/E_s
@@ -714,9 +714,9 @@ CONTAINS
 #endif
 
     ! update particle momenta using weighted fields
-    ! ex_part etc are NOT fields at particle, but fac times 
+    ! ex_part etc are NOT fields at particle, but fac times
     ! field
- 
+
     E_at_part(1) = fac*ex_part
     E_at_part(2) = fac*ey_part
     E_at_part(3) = fac*ez_part
@@ -730,16 +730,16 @@ CONTAINS
 
 
   FUNCTION find_index_from_table(npoints,ylogtable,ylog)
- 
+
     INTEGER :: find_index_from_table
     INTEGER :: npoints, j, dummy
     REAL(num) :: ylogtable(1:npoints), ylog
     LOGICAL :: dummy_flag
-    
+
     dummy_flag=.FALSE.
 
     DO j=1,npoints
-      IF((ylogtable(j) .GT. ylog).AND.( .NOT. dummy_flag)) THEN 
+      IF((ylogtable(j) .GT. ylog).AND.( .NOT. dummy_flag)) THEN
         dummy=j
         dummy_flag=.TRUE.
       ENDIF
@@ -755,11 +755,11 @@ CONTAINS
 
 
   SUBROUTINE generate_photon(generating_electron,iphoton,eta)
- 
-    ! generates a photon moving in same direction as electron
-    ! (generates entirely new photon) 
 
-    ! initialises photons with unit vector along generating electron 
+    ! generates a photon moving in same direction as electron
+    ! (generates entirely new photon)
+
+    ! initialises photons with unit vector along generating electron
     ! momentum and speed c (STORED IN part_p!!!)
 
     TYPE(particle), POINTER :: new_photon, generating_electron
@@ -774,10 +774,10 @@ CONTAINS
     new_photon%part_pos = generating_electron%part_pos
 
     mag_p = MAX(SQRT(generating_electron%part_p(1)**2.0_num + &
-        generating_electron%part_p(2)**2.0_num + & 
+        generating_electron%part_p(2)**2.0_num + &
         generating_electron%part_p(3)**2.0_num),c_non_zero)
 
-    mult_x = (generating_electron%part_p(1))/mag_p 
+    mult_x = (generating_electron%part_p(1))/mag_p
     mult_y = (generating_electron%part_p(2))/mag_p
     mult_z = (generating_electron%part_p(3))/mag_p
 
@@ -785,7 +785,7 @@ CONTAINS
     new_photon%part_p(2) = c*mult_y
     new_photon%part_p(3) = c*mult_z
 
-    new_photon%optical_depth = reset_optical_depth()  
+    new_photon%optical_depth = reset_optical_depth()
 
     generating_gamma = SQRT(1.0_num+(mag_p/(m0*c))**2.0_num)
 
@@ -796,7 +796,7 @@ CONTAINS
         generating_gamma)
     IF (new_photon%particle_energy .GT. 1.0_num) PRINT *,generating_gamma,mag_p
     new_photon%weight = generating_electron%weight
-    
+
     ! calculate electron recoil
 
     mag_p = mag_p - (new_photon%particle_energy)/c
@@ -822,11 +822,11 @@ CONTAINS
   FUNCTION calculate_photon_energy(rand_seed,eta,generating_gamma)
     REAL(num) :: calculate_photon_energy
     REAL(4) :: rand_seed
-    REAL(num) :: eta, generating_gamma, chi_final  
+    REAL(num) :: eta, generating_gamma, chi_final
 
     chi_final = find_value_from_table_alt(rand_seed,eta,log_eta,log_chi,&
-        P_photon_energy,n_sample_eta,n_sample_chi) 
-  
+        P_photon_energy,n_sample_eta,n_sample_chi)
+
     calculate_photon_energy = (2.0_num*chi_final/eta)*generating_gamma*&
         m0*(c**2.0_num)
 
@@ -854,7 +854,7 @@ CONTAINS
     new_electron%part_pos = generating_photon%part_pos
     new_positron%part_pos = generating_photon%part_pos
 
-    mult_x = (generating_photon%part_p(1))/c 
+    mult_x = (generating_photon%part_p(1))/c
     mult_y = (generating_photon%part_p(2))/c
     mult_z = (generating_photon%part_p(3))/c
 
@@ -865,8 +865,8 @@ CONTAINS
 
     epsilon_frac = find_value_from_table(probability_split,chi_val,&
         log_chi2,epsilon_split,P_energy,&
-        n_sample_chi2,n_sample_epsilon) 
- 
+        n_sample_chi2,n_sample_epsilon)
+
     mag_p = MAX((generating_photon%particle_energy)/c,c_non_zero)
 
     new_electron%part_p(1) = epsilon_frac*mag_p*mult_x
@@ -877,11 +877,11 @@ CONTAINS
     new_positron%part_p(2) = (1.0_num-epsilon_frac)*mag_p*mult_y
     new_positron%part_p(3) = (1.0_num-epsilon_frac)*mag_p*mult_z
 
-    new_electron%optical_depth = reset_optical_depth()  
+    new_electron%optical_depth = reset_optical_depth()
     new_positron%optical_depth = reset_optical_depth()
 
 #ifdef TRIDENT_PHOTONS
-    new_electron%optical_depth_tri = reset_optical_depth()  
+    new_electron%optical_depth_tri = reset_optical_depth()
     new_positron%optical_depth_tri = reset_optical_depth()
 #endif
 
@@ -894,7 +894,7 @@ CONTAINS
     CALL add_particle_to_partlist(species_list(ipositron)%attached_list,&
         new_positron)
 
-    ! remove photon   
+    ! remove photon
     CALL remove_particle_from_partlist(species_list(iphoton)&
                                       %attached_list,generating_photon)
     DEALLOCATE(generating_photon)
@@ -906,7 +906,7 @@ CONTAINS
 
   SUBROUTINE generate_pair_tri(generating_electron,ielectron,ipositron)
 
- 
+
     ! generates a pair moving in same direction as photon
 
     TYPE(particle), POINTER :: new_electron, new_positron
@@ -923,11 +923,11 @@ CONTAINS
     new_electron%part_p(1:3) = 0.0_num
     new_positron%part_p(1:3) = 0.0_num
 
-    new_electron%optical_depth = reset_optical_depth()  
+    new_electron%optical_depth = reset_optical_depth()
     new_positron%optical_depth = reset_optical_depth()
 
 #ifdef TRIDENT_PHOTONS
-    new_electron%optical_depth_tri = reset_optical_depth()  
+    new_electron%optical_depth_tri = reset_optical_depth()
     new_positron%optical_depth_tri = reset_optical_depth()
 #endif
 
@@ -947,9 +947,9 @@ CONTAINS
 
     REAL(num) :: find_value_from_table_1D
     LOGICAL :: l_found_element
-    INTEGER i_x, n_x, index_gt, index_lt 
+    INTEGER i_x, n_x, index_gt, index_lt
     REAL(num) :: x_value, x(1:n_x), values(1:n_x), f_x, value_interp
-  
+
     l_found_element = .FALSE.
     DO i_x=1,n_x
       IF((x(i_x) .GT. LOG10(x_value)).AND.(.NOT. l_found_element)) THEN
@@ -961,8 +961,8 @@ CONTAINS
         ENDIF
         l_found_element = .TRUE.
       ENDIF
-    ENDDO 
-  
+    ENDDO
+
     IF( .NOT. l_found_element) THEN
       index_gt = n_x
       index_lt = n_x
@@ -977,7 +977,7 @@ CONTAINS
     ENDIF
 
     value_interp = (1.0_num-f_x)*values(index_lt)+&
-        f_x*values(index_gt)  
+        f_x*values(index_gt)
 
     find_value_from_table_1D = 10.0_num**value_interp
 
@@ -1009,8 +1009,8 @@ CONTAINS
         ENDIF
         l_found_element1 = .TRUE.
       ENDIF
-    ENDDO 
-  
+    ENDDO
+
     IF(.NOT. l_found_element1) THEN
       index_gt = n_x
       index_lt = n_x
@@ -1029,13 +1029,13 @@ CONTAINS
         ENDIF
         l_found_element1 = .TRUE.
       ENDIF
-    ENDDO 
+    ENDDO
 
     IF(.NOT. l_found_element1) THEN
       index_lt_lt = n_y
       index_gt_lt = n_y
     ENDIF
-  
+
     IF(index_lt_lt==index_gt_lt) THEN
       f_chi1 = 0.0_num
     ELSE
@@ -1058,13 +1058,13 @@ CONTAINS
         ENDIF
         l_found_element1 = .TRUE.
       ENDIF
-    ENDDO 
+    ENDDO
 
     IF(.NOT. l_found_element1) THEN
       index_lt_gt = n_y
       index_gt_gt = n_y
     ENDIF
-  
+
     IF(index_lt_gt==index_gt_gt) THEN
       f_chi1 = 0.0_num
     ELSE
@@ -1080,7 +1080,7 @@ CONTAINS
     ELSE
       f_eta = (LOG10(x_value)-x(index_lt))/(x(index_gt)-x(index_lt))
     ENDIF
- 
+
     chi_interp = (1.0_num-f_eta)*chi_low+f_eta*chi_up
     find_value_from_table_alt = 10.0_num**(chi_interp)
 
@@ -1112,8 +1112,8 @@ CONTAINS
         ENDIF
         l_found_element1 = .TRUE.
       ENDIF
-    ENDDO 
-  
+    ENDDO
+
     IF(.NOT. l_found_element1) THEN
       index_gt = n_x
       index_lt = n_x
@@ -1131,7 +1131,7 @@ CONTAINS
       P_interp(i_y) = (1.0_num-f_chi)*P_table(index_lt,i_y)+&
           f_chi*P_table(index_gt,i_y)
     ENDDO
- 
+
     ! scan through table row to find epsilon
 
     l_found_element1 = .FALSE.
@@ -1145,13 +1145,13 @@ CONTAINS
         ENDIF
         l_found_element1 = .TRUE.
       ENDIF
-    ENDDO 
+    ENDDO
 
     IF(.NOT. l_found_element1) THEN
       index_gt = n_y
       index_lt = n_y
     ENDIF
-  
+
     IF(index_lt==index_gt) THEN
       f_epsilon = 0.0_num
     ELSE
@@ -1161,7 +1161,7 @@ CONTAINS
 
     epsilon_interp = (1.0_num-f_epsilon)*epsilon_split(index_lt)+&
         f_epsilon*epsilon_split(index_gt)
-  
+
     find_value_from_table = epsilon_interp
 
   END FUNCTION find_value_from_table

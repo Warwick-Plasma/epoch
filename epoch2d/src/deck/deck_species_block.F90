@@ -174,7 +174,7 @@ CONTAINS
     ! This section identifies a species. Generic
     ! but currently only used in photon production
     ! *************************************************************
-    IF (str_cmp(element,'identify')) THEN 
+    IF (str_cmp(element,'identify')) THEN
       CALL identify_species(value,errcode)
       RETURN
     END IF
