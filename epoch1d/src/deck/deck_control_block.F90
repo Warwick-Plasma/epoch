@@ -13,7 +13,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 20 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 21 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -41,7 +41,8 @@ MODULE deck_control_block
           'qed_start_time    ', &
           'produce_photons   ', &
           'photon_energy_min ', &
-          'produce_pairs     ' /)
+          'produce_pairs     ', &
+          'qed_table_location' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                ', &
@@ -67,7 +68,8 @@ MODULE deck_control_block
           'qed_start_time    ', &
           'produce_photons   ', &
           'min_photon_energy ', &
-          'produce_pairs     ' /)
+          'produce_pairs     ', &
+          'qed_table_location' /)
 
 CONTAINS
 
@@ -76,6 +78,9 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) THEN
       control_block_done = .FALSE.
       use_collisions = .FALSE.
+#ifdef PHOTONS
+      qed_table_location = 'src/physics_packages/TABLES'
+#endif
     ELSE
       ALLOCATE(coll_pairs_touched(1:n_species, 1:n_species))
       coll_pairs_touched = .FALSE.
@@ -88,7 +93,8 @@ CONTAINS
 
   SUBROUTINE control_deck_finalise
 
-    INTEGER :: i, j
+    INTEGER :: i, j, io, ierr
+    LOGICAL :: exists
 
     IF (deck_state .EQ. c_ds_first) RETURN
     DEALLOCATE(coll_pairs_touched)
@@ -105,6 +111,20 @@ CONTAINS
       ENDDO
       use_particle_lists = use_particle_lists .OR. use_collisions
     ENDIF
+
+#ifdef PHOTONS
+    IF (rank .EQ. 0) THEN
+      INQUIRE(file=TRIM(qed_table_location)//'/hsokolov.table', exist=exists)
+      IF (.NOT.exists) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Unable to find QED tables in the ', &
+              'directory "' // TRIM(qed_table_location) // '"'
+        ENDDO
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      ENDIF
+    ENDIF
+#endif
 
   END SUBROUTINE control_deck_finalise
 
@@ -249,6 +269,13 @@ CONTAINS
     CASE(4*c_ndims+20)
 #ifdef PHOTONS
       produce_pairs = as_logical(value, errcode)
+#else
+      extended_error_string = '-DPHOTONS'
+      errcode = c_err_pp_options_wrong
+#endif
+    CASE(4*c_ndims+21)
+#ifdef PHOTONS
+      qed_table_location = TRIM(ADJUSTL(value))
 #else
       extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong

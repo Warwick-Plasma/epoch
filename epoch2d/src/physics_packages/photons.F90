@@ -169,69 +169,232 @@ CONTAINS
     ! and sets up appropriate tables
 
     REAL(num) :: etalog_min, etalog_max, etalog_dx, chi_min, chi_dx
-    INTEGER :: i, ichi2, iepsilon, ieta, ichi
+    REAL(num), ALLOCATABLE :: realbuf(:)
+    INTEGER :: i, n, ichi2, iepsilon, ieta, ichi, bufsize, intbuf(6)
 
-    OPEN(unit=lu, file='./src/physics_packages/TABLES/hsokolov.table', &
-        status='OLD')
-    READ(lu,*) n_sample_h
-    ALLOCATE(log_hsokolov(n_sample_h,2))
-    DO ieta = 1, n_sample_h
-      READ(lu,*) log_hsokolov(ieta,1), log_hsokolov(ieta,2)
-    ENDDO
-    CLOSE(unit=lu)
-
-    OPEN(unit=lu, file='./src/physics_packages/TABLES/pairprod.table', &
-        status='OLD')
-    READ(lu,*) n_sample_t
-    ALLOCATE(log_tpair(n_sample_t,2))
-    ALLOCATE(log_omegahat(n_sample_t,2))
-    DO ichi = 1, n_sample_t
-      READ(lu,*) log_tpair(ichi,1), log_omegahat(ichi,2), log_tpair(ichi,2)
-    ENDDO
-    CLOSE(unit=lu)
-
-    OPEN(unit=lu, file='./src/physics_packages/TABLES/ksi_sokolov.table', &
-        status='OLD')
-    READ(lu,*) n_sample_eta, n_sample_chi, etalog_min, etalog_max
-    ALLOCATE(p_photon_energy(n_sample_eta,n_sample_chi))
-    DO ieta = 1, n_sample_eta
-      READ(lu,*) (p_photon_energy(ieta,ichi), ichi=1,n_sample_chi)
-    ENDDO
-    CLOSE(unit=lu)
-
-    OPEN(unit=lu, file='./src/physics_packages/TABLES/chimin.table', &
-        status='OLD')
-    ALLOCATE(chimin_table(n_sample_eta))
-    READ(lu,*) (chimin_table(ieta), ieta=1,n_sample_eta)
-    CLOSE(unit=lu)
-
-    OPEN(unit=lu, file='./src/physics_packages/TABLES/log_chi2.table', &
-        status='OLD')
-    READ(lu,*) n_sample_chi2
-    ALLOCATE(log_chi2(n_sample_chi2))
-    DO ichi2 = 1, n_sample_chi2
-      READ(lu,*) log_chi2(ichi2)
-    ENDDO
-    CLOSE(unit=lu)
-
-    OPEN(unit=lu, file='./src/physics_packages/TABLES/epsilon.table', &
-        status='OLD')
-    READ(lu,*) n_sample_epsilon
-    ALLOCATE(epsilon_split(n_sample_epsilon))
-    DO iepsilon = 1, n_sample_epsilon
-      READ(lu,*) epsilon_split(iepsilon)
-    ENDDO
-    CLOSE(unit=lu)
-
-    OPEN(unit=lu, file='./src/physics_packages/TABLES/energy_split.table', &
-        status='OLD')
-    ALLOCATE(p_energy(n_sample_chi2,n_sample_epsilon))
-    DO ichi2 = 1, n_sample_chi2
-      DO iepsilon = 1, n_sample_epsilon
-        READ(lu,*) p_energy(ichi2,iepsilon)
+    IF (rank .EQ. 0) THEN
+      OPEN(unit=lu, file=TRIM(qed_table_location)//'/hsokolov.table', &
+          status='OLD')
+      READ(lu,*) n_sample_h
+      ALLOCATE(log_hsokolov(n_sample_h,2))
+      DO ieta = 1, n_sample_h
+        READ(lu,*) log_hsokolov(ieta,1), log_hsokolov(ieta,2)
       ENDDO
-    ENDDO
-    CLOSE(unit=lu)
+      CLOSE(unit=lu)
+
+      OPEN(unit=lu, file=TRIM(qed_table_location)//'/pairprod.table', &
+          status='OLD')
+      READ(lu,*) n_sample_t
+      ALLOCATE(log_tpair(n_sample_t,2))
+      ALLOCATE(log_omegahat(n_sample_t,2))
+      DO ichi = 1, n_sample_t
+        READ(lu,*) log_tpair(ichi,1), log_omegahat(ichi,2), log_tpair(ichi,2)
+      ENDDO
+      CLOSE(unit=lu)
+
+      OPEN(unit=lu, file=TRIM(qed_table_location)//'/ksi_sokolov.table', &
+          status='OLD')
+      READ(lu,*) n_sample_eta, n_sample_chi, etalog_min, etalog_max
+      ALLOCATE(p_photon_energy(n_sample_eta,n_sample_chi))
+      DO ieta = 1, n_sample_eta
+        READ(lu,*) (p_photon_energy(ieta,ichi), ichi=1,n_sample_chi)
+      ENDDO
+      CLOSE(unit=lu)
+
+      OPEN(unit=lu, file=TRIM(qed_table_location)//'/chimin.table', &
+          status='OLD')
+      ALLOCATE(chimin_table(n_sample_eta))
+      READ(lu,*) (chimin_table(ieta), ieta=1,n_sample_eta)
+      CLOSE(unit=lu)
+
+      OPEN(unit=lu, file=TRIM(qed_table_location)//'/log_chi2.table', &
+          status='OLD')
+      READ(lu,*) n_sample_chi2
+      ALLOCATE(log_chi2(n_sample_chi2))
+      DO ichi2 = 1, n_sample_chi2
+        READ(lu,*) log_chi2(ichi2)
+      ENDDO
+      CLOSE(unit=lu)
+
+      OPEN(unit=lu, file=TRIM(qed_table_location)//'/epsilon.table', &
+          status='OLD')
+      READ(lu,*) n_sample_epsilon
+      ALLOCATE(epsilon_split(n_sample_epsilon))
+      DO iepsilon = 1, n_sample_epsilon
+        READ(lu,*) epsilon_split(iepsilon)
+      ENDDO
+      CLOSE(unit=lu)
+
+      OPEN(unit=lu, file=TRIM(qed_table_location)//'/energy_split.table', &
+          status='OLD')
+      ALLOCATE(p_energy(n_sample_chi2,n_sample_epsilon))
+      DO ichi2 = 1, n_sample_chi2
+        DO iepsilon = 1, n_sample_epsilon
+          READ(lu,*) p_energy(ichi2,iepsilon)
+        ENDDO
+      ENDDO
+      CLOSE(unit=lu)
+
+      ! Pack data for broadcasting to other processes
+
+      intbuf(1) = n_sample_h
+      intbuf(2) = n_sample_t
+      intbuf(3) = n_sample_eta
+      intbuf(4) = n_sample_chi
+      intbuf(5) = n_sample_chi2
+      intbuf(6) = n_sample_epsilon
+
+      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+
+      bufsize = n_sample_h * 2
+      bufsize = bufsize + n_sample_t * 3
+      bufsize = bufsize + 2 + n_sample_eta * n_sample_chi
+      bufsize = bufsize + n_sample_eta
+      bufsize = bufsize + n_sample_chi2
+      bufsize = bufsize + n_sample_epsilon
+      bufsize = bufsize + n_sample_chi2 * n_sample_epsilon
+
+      ALLOCATE(realbuf(bufsize))
+      n = 1
+
+      DO i = 1, 2
+        DO ieta = 1, n_sample_h
+          realbuf(n) = log_hsokolov(ieta,i)
+          n = n + 1
+        ENDDO
+      ENDDO
+
+      DO ichi = 1, n_sample_t
+        realbuf(n) = log_tpair(ichi,1)
+        n = n + 1
+        realbuf(n) = log_tpair(ichi,2)
+        n = n + 1
+        realbuf(n) = log_omegahat(ichi,2)
+        n = n + 1
+      ENDDO
+
+      realbuf(n) = etalog_min
+      n = n + 1
+      realbuf(n) = etalog_max
+      n = n + 1
+
+      DO ichi = 1, n_sample_chi
+        DO ieta = 1, n_sample_eta
+          realbuf(n) = p_photon_energy(ieta,ichi)
+          n = n + 1
+        ENDDO
+      ENDDO
+
+      DO ieta = 1, n_sample_eta
+        realbuf(n) = chimin_table(ieta)
+        n = n + 1
+      ENDDO
+
+      DO ichi2 = 1, n_sample_chi2
+        realbuf(n) = log_chi2(ichi2)
+        n = n + 1
+      ENDDO
+
+      DO iepsilon = 1, n_sample_epsilon
+        realbuf(n) = epsilon_split(iepsilon)
+        n = n + 1
+      ENDDO
+
+      DO iepsilon = 1, n_sample_epsilon
+        DO ichi2 = 1, n_sample_chi2
+          realbuf(n) = p_energy(ichi2,iepsilon)
+          n = n + 1
+        ENDDO
+      ENDDO
+
+      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, MPI_COMM_WORLD, errcode)
+
+      DEALLOCATE(realbuf)
+    ELSE
+      ! Unpack data from rank zero
+
+      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+
+      n_sample_h       = intbuf(1)
+      n_sample_t       = intbuf(2)
+      n_sample_eta     = intbuf(3)
+      n_sample_chi     = intbuf(4)
+      n_sample_chi2    = intbuf(5)
+      n_sample_epsilon = intbuf(6)
+
+      bufsize = n_sample_h * 2
+      bufsize = bufsize + n_sample_t * 3
+      bufsize = bufsize + 2 + n_sample_eta * n_sample_chi
+      bufsize = bufsize + n_sample_eta
+      bufsize = bufsize + n_sample_chi2
+      bufsize = bufsize + n_sample_epsilon
+      bufsize = bufsize + n_sample_chi2 * n_sample_epsilon
+
+      ALLOCATE(realbuf(bufsize))
+      n = 1
+
+      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, MPI_COMM_WORLD, errcode)
+
+      ALLOCATE(log_hsokolov(n_sample_h,2))
+      DO i = 1, 2
+        DO ieta = 1, n_sample_h
+          log_hsokolov(ieta,i) = realbuf(n)
+          n = n + 1
+        ENDDO
+      ENDDO
+
+      ALLOCATE(log_tpair(n_sample_t,2))
+      ALLOCATE(log_omegahat(n_sample_t,2))
+      DO ichi = 1, n_sample_t
+        log_tpair(ichi,1)    = realbuf(n)
+        n = n + 1
+        log_tpair(ichi,2)    = realbuf(n)
+        n = n + 1
+        log_omegahat(ichi,2) = realbuf(n)
+        n = n + 1
+      ENDDO
+
+      etalog_min = realbuf(n)
+      n = n + 1
+      etalog_max = realbuf(n)
+      n = n + 1
+
+      ALLOCATE(p_photon_energy(n_sample_eta,n_sample_chi))
+      DO ichi = 1, n_sample_chi
+        DO ieta = 1, n_sample_eta
+          p_photon_energy(ieta,ichi) = realbuf(n)
+          n = n + 1
+        ENDDO
+      ENDDO
+
+      ALLOCATE(chimin_table(n_sample_eta))
+      DO ieta = 1, n_sample_eta
+        chimin_table(ieta) = realbuf(n)
+        n = n + 1
+      ENDDO
+
+      ALLOCATE(log_chi2(n_sample_chi2))
+      DO ichi2 = 1, n_sample_chi2
+        log_chi2(ichi2) = realbuf(n)
+        n = n + 1
+      ENDDO
+
+      ALLOCATE(epsilon_split(n_sample_epsilon))
+      DO iepsilon = 1, n_sample_epsilon
+        epsilon_split(iepsilon) = realbuf(n)
+        n = n + 1
+      ENDDO
+
+      ALLOCATE(p_energy(n_sample_chi2,n_sample_epsilon))
+      DO iepsilon = 1, n_sample_epsilon
+        DO ichi2 = 1, n_sample_chi2
+          p_energy(ichi2,iepsilon) = realbuf(n)
+          n = n + 1
+        ENDDO
+      ENDDO
+
+      DEALLOCATE(realbuf)
+    ENDIF
 
     log_omegahat(:,1) = log_tpair(:,1)
 

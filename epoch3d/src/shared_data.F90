@@ -796,6 +796,7 @@ MODULE shared_data
   REAL(num) :: qed_start_time = 0.0_num
   LOGICAL :: use_qed = .FALSE., produce_pairs = .FALSE.
   LOGICAL :: produce_photons = .FALSE.
+  CHARACTER(LEN=string_length) :: qed_table_location
 #endif
 
   !----------------------------------------------------------------------------
