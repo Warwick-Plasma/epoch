@@ -235,7 +235,7 @@ CONTAINS
 
     errcode = c_err_none
 
-    ! nprocx/y and npart are optional
+    ! nprocx/y/z and npart are optional
     control_block_done(3*c_ndims+1:4*c_ndims+1) = .TRUE.
 
     ! Only one of nsteps or t_end need be specified

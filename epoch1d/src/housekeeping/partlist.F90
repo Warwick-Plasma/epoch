@@ -352,8 +352,6 @@ CONTAINS
     cpos = cpos+1
 #endif
 
-!!$    PRINT *, 'In Pack', rank, a_particle%part_pos
-
   END SUBROUTINE pack_particle
 
 

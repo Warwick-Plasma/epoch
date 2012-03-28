@@ -18,7 +18,7 @@ MODULE diagnostics
 
   PRIVATE
 
-  PUBLIC :: set_dt, output_routines, iterate_charge
+  PUBLIC :: set_dt, output_routines
 
   TYPE(sdf_file_handle) :: sdf_handle
   INTEGER(KIND=8), ALLOCATABLE :: species_offset(:)

@@ -949,9 +949,9 @@ CONTAINS
             DO iy = ymin, ymax
               DO ix = xmin, xmax
                 wx =  hx(ix) * (gy(iy) + 0.5_num * hy(iy))
-                jxh(ix,iy) = jxh(ix-1, iy) - fjx * wx
-                data_array(cell_x1+ix,cell_y1+iy) = &
-                    data_array(cell_x1+ix,cell_y1+iy) + jxh(ix,iy)
+                jxh(ix, iy) = jxh(ix-1, iy) - fjx * wx
+                data_array(cell_x1+ix, cell_y1+iy) = &
+                    data_array(cell_x1+ix, cell_y1+iy) + jxh(ix, iy)
               ENDDO
             ENDDO
           CASE(c_dir_y)
@@ -961,9 +961,9 @@ CONTAINS
             DO iy = ymin, ymax
               DO ix = xmin, xmax
                 wy =  hy(iy) * (gx(ix) + 0.5_num * hx(ix))
-                jyh(ix,iy) = jyh(ix, iy-1) - fjy * wy
-                data_array(cell_x1+ix,cell_y1+iy) = &
-                    data_array(cell_x1+ix,cell_y1+iy) + jyh(ix,iy)
+                jyh(ix, iy) = jyh(ix, iy-1) - fjy * wy
+                data_array(cell_x1+ix, cell_y1+iy) = &
+                    data_array(cell_x1+ix, cell_y1+iy) + jyh(ix, iy)
               ENDDO
             ENDDO
           CASE(c_dir_z)
@@ -972,8 +972,8 @@ CONTAINS
               DO ix = xmin, xmax
                 wz =  gx(ix) * (gy(iy) + 0.5_num * hy(iy)) &
                     + hx(ix) * (third  *  hy(iy) + 0.5_num * gy(iy))
-                data_array(cell_x1+ix,cell_y1+iy) = &
-                    data_array(cell_x1+ix,cell_y1+iy) + fjz * wz
+                data_array(cell_x1+ix, cell_y1+iy) = &
+                    data_array(cell_x1+ix, cell_y1+iy) + fjz * wz
               ENDDO
             ENDDO
         END SELECT

@@ -52,7 +52,7 @@ CONTAINS
         species_list(i)%name = species_names(i)
         IF (rank .EQ. 0) THEN
           CALL integer_as_string(i, string)
-          PRINT*,'Name of species ', TRIM(ADJUSTL(string)), ' is ', &
+          PRINT*, 'Name of species ', TRIM(ADJUSTL(string)), ' is ', &
               TRIM(species_names(i))
         ENDIF
       ENDDO
@@ -457,7 +457,7 @@ CONTAINS
           DO io = stdout, du, du - stdout ! Print to stdout and to file
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'No mass specified for particle species "', &
-                TRIM(species_list(i)%name),'"'
+                TRIM(species_list(i)%name), '"'
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
@@ -467,7 +467,7 @@ CONTAINS
           DO io = stdout, du, du - stdout ! Print to stdout and to file
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'No charge specified for particle species "', &
-                TRIM(species_list(i)%name),'"'
+                TRIM(species_list(i)%name), '"'
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
@@ -477,7 +477,7 @@ CONTAINS
           DO io = stdout, du, du - stdout ! Print to stdout and to file
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'Two forms of npart used for particle species "', &
-                TRIM(species_list(i)%name),'"'
+                TRIM(species_list(i)%name), '"'
             WRITE(io,*) 'Just using "npart_per_cell".'
           ENDDO
         ENDIF

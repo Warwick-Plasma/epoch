@@ -662,6 +662,11 @@ CONTAINS
 
   SUBROUTINE calc_coll_number_density(data_array, ispecies)
 
+    ! This subroutine calculates the grid-based number density of a given
+    ! particle species.
+    ! It is almost identical to the calc_number_density subroutine in calc_df,
+    ! except it uses the secondary_list rather than the attached_list.
+
     REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
@@ -692,7 +697,7 @@ CONTAINS
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
         ENDDO
 
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -706,6 +711,11 @@ CONTAINS
 
 
   SUBROUTINE calc_coll_temperature(sigma, ispecies)
+
+    ! This subroutine calculates the grid-based temperature of a given
+    ! particle species.
+    ! It is almost identical to the calc_temperature subroutine in calc_df,
+    ! except it uses the secondary_list rather than the attached_list.
 
     REAL(num), DIMENSION(-2:), INTENT(OUT) :: sigma
     INTEGER, INTENT(IN) :: ispecies
@@ -754,7 +764,7 @@ CONTAINS
           meanz(cell_x+ix) = meanz(cell_x+ix) + gf * part_pmz
           part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         ENDDO
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -791,7 +801,7 @@ CONTAINS
               + (part_pmz - meanz(cell_x+ix))**2)
           part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         ENDDO
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 

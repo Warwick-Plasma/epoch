@@ -342,12 +342,11 @@ CONTAINS
           DO ix = xmin, xmax
             wx =  hx(ix)
             wy =  gx(ix) + 0.5_num * hx(ix)
-            wz =  gx(ix) + 0.5_num * hx(ix)
 
             ! This is the bit that actually solves d(rho)/dt = -div(J)
             jxh(ix) = jxh(ix-1) - fjx * wx
             jyh(ix) = fjy * wy
-            jzh(ix) = fjz * wz
+            jzh(ix) = fjz * wy
 
             jx(cell_x1+ix) = jx(cell_x1+ix) + jxh(ix)
             jy(cell_x1+ix) = jy(cell_x1+ix) + jyh(ix)

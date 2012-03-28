@@ -306,11 +306,8 @@ CONTAINS
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
-        current%part_pos(1) = part_x + x_min_local
-        current%part_pos(2) = part_y + y_min_local
-        current%part_p(1) = part_mc * part_ux
-        current%part_p(2) = part_mc * part_uy
-        current%part_p(3) = part_mc * part_uz
+        current%part_pos = (/ part_x + x_min_local, part_y + y_min_local /)
+        current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
 #ifdef PARTICLE_PROBES
         final_part_x = current%part_pos(1)
@@ -389,13 +386,16 @@ CONTAINS
                   + hx(ix) * (third  *  hy(iy) + 0.5_num * gy(iy))
 
               ! This is the bit that actually solves d(rho)/dt = -div(J)
-              jxh(ix,iy) = jxh(ix-1, iy) - fjx * wx
-              jyh(ix,iy) = jyh(ix, iy-1) - fjy * wy
-              jzh(ix,iy) = fjz * wz
+              jxh(ix, iy) = jxh(ix-1, iy) - fjx * wx
+              jyh(ix, iy) = jyh(ix, iy-1) - fjy * wy
+              jzh(ix, iy) = fjz * wz
 
-              jx(cell_x1+ix,cell_y1+iy) = jx(cell_x1+ix,cell_y1+iy) + jxh(ix,iy)
-              jy(cell_x1+ix,cell_y1+iy) = jy(cell_x1+ix,cell_y1+iy) + jyh(ix,iy)
-              jz(cell_x1+ix,cell_y1+iy) = jz(cell_x1+ix,cell_y1+iy) + jzh(ix,iy)
+              jx(cell_x1+ix, cell_y1+iy) = &
+                  jx(cell_x1+ix, cell_y1+iy) + jxh(ix, iy)
+              jy(cell_x1+ix, cell_y1+iy) = &
+                  jy(cell_x1+ix, cell_y1+iy) + jyh(ix, iy)
+              jz(cell_x1+ix, cell_y1+iy) = &
+                  jz(cell_x1+ix, cell_y1+iy) + jzh(ix, iy)
             ENDDO
           ENDDO
 #ifdef TRACER_PARTICLES
