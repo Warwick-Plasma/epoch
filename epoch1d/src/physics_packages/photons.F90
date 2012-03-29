@@ -168,97 +168,88 @@ CONTAINS
     ! Reads files epsilon.table, log_chi.table, energy_split.table
     ! and sets up appropriate tables
 
-    REAL(num) :: etalog_min, etalog_max
-    INTEGER :: ichi2, iepsilon, ieta, ichi, idummy
+    REAL(num) :: etalog_min, etalog_max, etalog_dx, chi_min, chi_dx
+    INTEGER :: ichi2, iepsilon, ieta, ichi
 
-    OPEN(50, file='./src/physics_packages/TABLES/hsokolov.table', status='OLD')
-    READ(50,*) n_sample_h
+    OPEN(unit=lu, file='./src/physics_packages/TABLES/hsokolov.table', &
+        status='OLD')
+    READ(lu,*) n_sample_h
     ALLOCATE(log_hsokolov(2,n_sample_h))
     DO ieta = 1, n_sample_h
-      READ(50,*) log_hsokolov(1:2,ieta)
+      READ(lu,*) log_hsokolov(1:2,ieta)
     ENDDO
-    CLOSE(50)
+    CLOSE(unit=lu)
 
-    OPEN(51, file='./src/physics_packages/TABLES/pairprod.table', status='OLD')
-    READ(51,*) n_sample_t
-    ALLOCATE(log_tpair_dummy(3,n_sample_t))
+    OPEN(unit=lu, file='./src/physics_packages/TABLES/pairprod.table', &
+        status='OLD')
+    READ(lu,*) n_sample_t
     ALLOCATE(log_tpair(2,n_sample_t))
     ALLOCATE(log_omegahat(2,n_sample_t))
     DO ichi = 1, n_sample_t
-      READ(51,*) log_tpair_dummy(1:3,ichi)
+      READ(lu,*) log_tpair(1,ichi), log_omegahat(2,ichi), log_tpair(2,ichi)
     ENDDO
-    CLOSE(51)
+    CLOSE(unit=lu)
 
-    DO ichi = 1, n_sample_t
-      log_tpair(1,ichi) = log_tpair_dummy(1,ichi)
-      log_tpair(2,ichi) = log_tpair_dummy(3,ichi)
-      log_omegahat(1,ichi) = log_tpair_dummy(1,ichi)
-      log_omegahat(2,ichi) = log_tpair_dummy(2,ichi)
-    ENDDO
-
-    OPEN(70, file='./src/physics_packages/TABLES/ksi_sokolov.table', &
+    OPEN(unit=lu, file='./src/physics_packages/TABLES/ksi_sokolov.table', &
         status='OLD')
-    OPEN(80, file='./src/physics_packages/TABLES/chimin.table', status='OLD')
-
-    READ(70,*) n_sample_eta, n_sample_chi, etalog_min, etalog_max
-
-    ALLOCATE(chimin_table(n_sample_eta))
-    ALLOCATE(log_eta(n_sample_eta))
-    ALLOCATE(log_chi(n_sample_eta,n_sample_chi))
+    READ(lu,*) n_sample_eta, n_sample_chi, etalog_min, etalog_max
     ALLOCATE(p_photon_energy(n_sample_eta,n_sample_chi))
-
-    READ(80,*) (chimin_table(ieta), ieta=1,n_sample_eta)
-
     DO ieta = 1, n_sample_eta
-      log_eta(ieta) = etalog_min + (DBLE(ieta) - 1.0_num) &
-          * (etalog_max - etalog_min) / (DBLE(n_sample_eta) - 1.0_num)
+      READ(lu,*) (p_photon_energy(ieta,ichi), ichi=1,n_sample_chi)
     ENDDO
+    CLOSE(unit=lu)
 
-    DO ieta = 1, n_sample_eta
-      DO ichi = 1, n_sample_chi
-        log_chi(ieta,ichi) = LOG10(chimin_table(ieta)) &
-            + (DBLE(ichi) - 1.0_num) &
-            * (LOG10(10.0_num**(log_eta(ieta)) / 2.0_num) &
-            - LOG10(chimin_table(ieta))) / (DBLE(n_sample_chi) - 1.0_num)
-      ENDDO
-    ENDDO
+    OPEN(unit=lu, file='./src/physics_packages/TABLES/chimin.table', &
+        status='OLD')
+    ALLOCATE(chimin_table(n_sample_eta))
+    READ(lu,*) (chimin_table(ieta), ieta=1,n_sample_eta)
+    CLOSE(unit=lu)
 
-    DO ieta = 1, n_sample_eta
-      DO idummy = 1, ieta
-        READ(70,*)
-      ENDDO
-      READ(70,*) (p_photon_energy(ieta,ichi), ichi=1,n_sample_chi)
-      REWIND(70)
-    ENDDO
-
-    CLOSE(70)
-    CLOSE(80)
-
-    OPEN(10, file='./src/physics_packages/TABLES/log_chi2.table', status='OLD')
-    READ(10,*) n_sample_chi2
+    OPEN(unit=lu, file='./src/physics_packages/TABLES/log_chi2.table', &
+        status='OLD')
+    READ(lu,*) n_sample_chi2
     ALLOCATE(log_chi2(n_sample_chi2))
     DO ichi2 = 1, n_sample_chi2
-      READ(10,*) log_chi2(ichi2)
+      READ(lu,*) log_chi2(ichi2)
     ENDDO
-    CLOSE(10)
+    CLOSE(unit=lu)
 
-    OPEN(21, file='./src/physics_packages/TABLES/epsilon.table', status='OLD')
-    READ(21,*) n_sample_epsilon
+    OPEN(unit=lu, file='./src/physics_packages/TABLES/epsilon.table', &
+        status='OLD')
+    READ(lu,*) n_sample_epsilon
     ALLOCATE(epsilon_split(n_sample_epsilon))
     DO iepsilon = 1, n_sample_epsilon
-      READ(21,*) epsilon_split(iepsilon)
+      READ(lu,*) epsilon_split(iepsilon)
     ENDDO
-    CLOSE(21)
+    CLOSE(unit=lu)
 
-    ALLOCATE(p_energy(n_sample_chi2,n_sample_epsilon))
-    OPEN(30, file='./src/physics_packages/TABLES/energy_split.table', &
+    OPEN(unit=lu, file='./src/physics_packages/TABLES/energy_split.table', &
         status='OLD')
+    ALLOCATE(p_energy(n_sample_chi2,n_sample_epsilon))
     DO ichi2 = 1, n_sample_chi2
       DO iepsilon = 1, n_sample_epsilon
-        READ(30,*) p_energy(ichi2,iepsilon)
+        READ(lu,*) p_energy(ichi2,iepsilon)
       ENDDO
     ENDDO
-    CLOSE(30)
+    CLOSE(unit=lu)
+
+    log_omegahat(1,:) = log_tpair(1,:)
+
+    ALLOCATE(log_eta(n_sample_eta))
+    ALLOCATE(log_chi(n_sample_eta,n_sample_chi))
+
+    etalog_dx = (etalog_max - etalog_min) / REAL(n_sample_eta-1,num)
+    DO ieta = 1, n_sample_eta
+      log_eta(ieta) = etalog_min + REAL(ieta-1,num) * etalog_dx
+      chi_min = LOG10(chimin_table(ieta))
+      chi_dx = (LOG10(10.0_num**(log_eta(ieta)) / 2.0_num) &
+            - LOG10(chimin_table(ieta))) / REAL(n_sample_chi-1,num)
+      DO ichi = 1, n_sample_chi
+        log_chi(ieta,ichi) = chi_min + REAL(ichi-1,num) * chi_dx
+      ENDDO
+    ENDDO
+
+    DEALLOCATE(chimin_table)
 
   END SUBROUTINE setup_tables_qed
 
@@ -273,10 +264,8 @@ CONTAINS
     DEALLOCATE(log_eta)
     DEALLOCATE(log_chi)
     DEALLOCATE(p_photon_energy)
-    DEALLOCATE(log_tpair_dummy)
     DEALLOCATE(log_tpair)
     DEALLOCATE(log_omegahat)
-    DEALLOCATE(chimin_table)
 
   END SUBROUTINE deallocate_tables_qed
 

@@ -725,7 +725,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   REAL(num), ALLOCATABLE :: log_chi2(:), epsilon_split(:), p_energy(:,:)
   REAL(num), ALLOCATABLE :: log_hsokolov(:,:), p_photon_energy(:,:)
-  REAL(num), ALLOCATABLE :: log_eta(:), log_chi(:,:), log_tpair_dummy(:,:)
+  REAL(num), ALLOCATABLE :: log_eta(:), log_chi(:,:)
   REAL(num), ALLOCATABLE :: log_tpair(:,:), chimin_table(:), log_omegahat(:,:)
   INTEGER :: n_photon, n_pair
   INTEGER :: n_sample_epsilon, n_sample_chi2, n_sample_h
