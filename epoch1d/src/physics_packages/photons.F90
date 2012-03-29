@@ -169,24 +169,24 @@ CONTAINS
     ! and sets up appropriate tables
 
     REAL(num) :: etalog_min, etalog_max, etalog_dx, chi_min, chi_dx
-    INTEGER :: ichi2, iepsilon, ieta, ichi
+    INTEGER :: i, ichi2, iepsilon, ieta, ichi
 
     OPEN(unit=lu, file='./src/physics_packages/TABLES/hsokolov.table', &
         status='OLD')
     READ(lu,*) n_sample_h
-    ALLOCATE(log_hsokolov(2,n_sample_h))
+    ALLOCATE(log_hsokolov(n_sample_h,2))
     DO ieta = 1, n_sample_h
-      READ(lu,*) log_hsokolov(1:2,ieta)
+      READ(lu,*) log_hsokolov(ieta,1), log_hsokolov(ieta,2)
     ENDDO
     CLOSE(unit=lu)
 
     OPEN(unit=lu, file='./src/physics_packages/TABLES/pairprod.table', &
         status='OLD')
     READ(lu,*) n_sample_t
-    ALLOCATE(log_tpair(2,n_sample_t))
-    ALLOCATE(log_omegahat(2,n_sample_t))
+    ALLOCATE(log_tpair(n_sample_t,2))
+    ALLOCATE(log_omegahat(n_sample_t,2))
     DO ichi = 1, n_sample_t
-      READ(lu,*) log_tpair(1,ichi), log_omegahat(2,ichi), log_tpair(2,ichi)
+      READ(lu,*) log_tpair(ichi,1), log_omegahat(ichi,2), log_tpair(ichi,2)
     ENDDO
     CLOSE(unit=lu)
 
@@ -233,7 +233,7 @@ CONTAINS
     ENDDO
     CLOSE(unit=lu)
 
-    log_omegahat(1,:) = log_tpair(1,:)
+    log_omegahat(:,1) = log_tpair(:,1)
 
     ALLOCATE(log_eta(n_sample_eta))
     ALLOCATE(log_chi(n_sample_eta,n_sample_chi))
@@ -242,8 +242,8 @@ CONTAINS
     DO ieta = 1, n_sample_eta
       log_eta(ieta) = etalog_min + REAL(ieta-1,num) * etalog_dx
       chi_min = LOG10(chimin_table(ieta))
-      chi_dx = (LOG10(10.0_num**(log_eta(ieta)) / 2.0_num) &
-            - LOG10(chimin_table(ieta))) / REAL(n_sample_chi-1,num)
+      chi_dx  = (log_eta(ieta) - LOG10(2.0_num) - chi_min) &
+          / REAL(n_sample_chi-1,num)
       DO ichi = 1, n_sample_chi
         log_chi(ieta,ichi) = chi_min + REAL(ichi-1,num) * chi_dx
       ENDDO
@@ -281,11 +281,11 @@ CONTAINS
     current => current_species%attached_list%head
     DO WHILE(ASSOCIATED(current))
       p_tau = random()
-      current%optical_depth = LOG(1.0_num / (1.0_num - p_tau))
+      current%optical_depth = -LOG(1.0_num - p_tau)
 
 #ifdef TRIDENT_PHOTONS
       p_tau = random()
-      current%optical_depth_tri = LOG(1.0_num / (1.0_num - p_tau))
+      current%optical_depth_tri = -LOG(1.0_num - p_tau)
 #endif
       current => current%next
     ENDDO
@@ -301,7 +301,7 @@ CONTAINS
     REAL(num) :: p_tau
 
     p_tau = random()
-    reset_optical_depth = LOG(1.0_num / (1.0_num - p_tau))
+    reset_optical_depth = -LOG(1.0_num - p_tau)
 
   END FUNCTION reset_optical_depth
 
@@ -438,8 +438,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: eta, gamma
     REAL(num) :: hsokolov
 
-    hsokolov = find_value_from_table_1d(eta, n_sample_h, log_hsokolov(1,:), &
-        log_hsokolov(2,:))
+    hsokolov = find_value_from_table_1d(eta, n_sample_h, log_hsokolov(:,1), &
+        log_hsokolov(:,2))
 
     delta_optical_depth = dt * eta * alpha_f * SQRT(3.0_num) * hsokolov &
         / (2.0_num * pi * tau_c * gamma)
@@ -455,8 +455,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: eta, gamma
     REAL(num) :: omegahat
 
-    omegahat = find_value_from_table_1d(eta, n_sample_t, log_omegahat(1,:), &
-        log_omegahat(2,:))
+    omegahat = find_value_from_table_1d(eta, n_sample_t, log_omegahat(:,1), &
+        log_omegahat(:,2))
 
     delta_optical_depth_tri = dt * eta * alpha_f**2 * 0.64_num * omegahat &
         / (2.0_num * pi * tau_c * gamma)
