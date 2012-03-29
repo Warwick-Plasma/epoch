@@ -441,8 +441,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: eta, gamma
     REAL(num) :: hsokolov
 
-    hsokolov = find_value_from_table_1d(n_sample_h, log_hsokolov(1,:), &
-        eta, log_hsokolov(2,:))
+    hsokolov = find_value_from_table_1d(eta, n_sample_h, log_hsokolov(1,:), &
+        log_hsokolov(2,:))
 
     delta_optical_depth = dt * eta * alpha_f * SQRT(3.0_num) * hsokolov &
         / (2.0_num * pi * tau_c * gamma)
@@ -458,8 +458,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: eta, gamma
     REAL(num) :: omegahat
 
-    omegahat = find_value_from_table_1d(n_sample_t, log_omegahat(1,:), &
-        eta, log_omegahat(2,:))
+    omegahat = find_value_from_table_1d(eta, n_sample_t, log_omegahat(1,:), &
+        log_omegahat(2,:))
 
     delta_optical_depth_tri = dt * eta * alpha_f**2 * 0.64_num * omegahat &
         / (2.0_num * pi * tau_c * gamma)
@@ -475,8 +475,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: chi_val, part_e
     REAL(num) :: tpair
 
-    tpair = find_value_from_table_1d(n_sample_t, log_tpair(1,:), &
-        chi_val, log_tpair(2,:))
+    tpair = find_value_from_table_1d(chi_val, n_sample_t, log_tpair(1,:), &
+        log_tpair(2,:))
 
     delta_optical_depth_photon = dt / tau_c * alpha_f / part_e * chi_val * tpair
 
@@ -756,8 +756,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: rand_seed, eta, generating_gamma
     REAL(num) :: chi_final
 
-    chi_final = find_value_from_table_alt(rand_seed, eta, log_eta, log_chi, &
-        p_photon_energy, n_sample_eta, n_sample_chi)
+    chi_final = find_value_from_table_alt(eta, rand_seed, &
+        n_sample_eta, n_sample_chi, log_eta, log_chi, p_photon_energy)
 
     calculate_photon_energy = (2.0_num * chi_final / eta) * generating_gamma &
         * m0 * c**2
@@ -792,8 +792,8 @@ CONTAINS
 
     probability_split = random()
 
-    epsilon_frac = find_value_from_table(probability_split, chi_val, &
-        log_chi2, epsilon_split, p_energy, n_sample_chi2, n_sample_epsilon)
+    epsilon_frac = find_value_from_table(chi_val, probability_split, &
+        n_sample_chi2, n_sample_epsilon, log_chi2, epsilon_split, p_energy)
 
     mag_p = MAX(generating_photon%particle_energy / c, c_non_zero)
 
@@ -867,38 +867,32 @@ CONTAINS
 
 
 
-  FUNCTION find_value_from_table_1d(nx, x, x_value, values)
+  FUNCTION find_value_from_table_1d(x_in, nx, x, values)
 
     REAL(num) :: find_value_from_table_1d
+    REAL(num), INTENT(IN) :: x_in
     INTEGER, INTENT(IN) :: nx
-    REAL(num), INTENT(IN) :: x(nx), x_value, values(nx)
-    LOGICAL :: l_found_element
-    INTEGER :: ix, index_gt, index_lt
-    REAL(num) :: fx, value_interp
+    REAL(num), INTENT(IN) :: x(nx), values(nx)
+    REAL(num) :: fx, x_value, value_interp
+    INTEGER :: ix, index_lt, index_gt
 
-    l_found_element = .FALSE.
+    x_value = LOG10(x_in)
+
+    index_lt = 1
+    index_gt = 1
     DO ix = 1, nx
-      IF (x(ix) .GT. LOG10(x_value) .AND. .NOT.l_found_element) THEN
+      IF (x(ix) .GT. x_value) THEN
         index_gt = ix
-        IF (index_gt .GT. 1) THEN
-          index_lt = index_gt
-        ELSE
-          index_lt = ix - 1
-        ENDIF
-        l_found_element = .TRUE.
+        IF (index_gt .GT. 1) index_lt = ix - 1
+        EXIT
       ENDIF
     ENDDO
 
-    IF (.NOT.l_found_element) THEN
-      index_gt = nx
-      index_lt = nx
-    ENDIF
-
     ! Interpolate in x
-    IF (index_lt .GT. index_gt) THEN
+    IF (index_lt .EQ. index_gt) THEN
       fx = 0.0_num
     ELSE
-      fx = (LOG10(x_value) - x(index_lt)) / (x(index_gt) - x(index_lt))
+      fx = (x_value - x(index_lt)) / (x(index_gt) - x(index_lt))
     ENDIF
 
     value_interp = (1.0_num - fx) * values(index_lt) + fx * values(index_gt)
@@ -909,184 +903,143 @@ CONTAINS
 
 
 
-  FUNCTION find_value_from_table_alt(p, x_value, x, y, p_table, nx, ny)
+  FUNCTION find_value_from_table_alt(x_in, p_value, nx, ny, x, y, p_table)
 
     REAL(num) :: find_value_from_table_alt
-    REAL(num), INTENT(IN) :: p, x_value, x(nx), y(nx,ny), p_table(nx,ny)
+    REAL(num), INTENT(IN) :: x_in, p_value
     INTEGER, INTENT(IN) :: nx, ny
-    INTEGER :: ix, iy, index_gt, index_lt
-    INTEGER :: index_lt_lt, index_lt_gt, index_gt_lt, index_gt_gt
-    REAL(num) :: chi_interp
-    REAL(num) :: f_eta, f_chi1, chi_low, chi_up
-    LOGICAL :: l_found_element
+    REAL(num), INTENT(IN) :: x(nx), y(nx,ny), p_table(nx,ny)
+    INTEGER :: ix, iy, index_lt, index_gt, index_y_lt, index_y_gt
+    REAL(num) :: fx, fp, y_lt, y_gt, x_value, y_interp
 
-    ! Scan through chi to find correct row of table
+    x_value = LOG10(x_in)
 
-    l_found_element = .FALSE.
+    ! Scan through x to find correct row of table
+    index_lt = 1
+    index_gt = 1
     DO ix = 1, nx
-      IF (x(ix) .GT. LOG10(x_value) .AND. .NOT.l_found_element) THEN
+      IF (x(ix) .GT. x_value) THEN
         index_gt = ix
-        IF (index_gt .GT. 1) THEN
-          index_lt = index_gt
-        ELSE
-          index_lt = ix - 1
-        ENDIF
-        l_found_element = .TRUE.
+        IF (index_gt .GT. 1) index_lt = ix - 1
+        EXIT
       ENDIF
     ENDDO
 
-    IF (.NOT.l_found_element) THEN
-      index_gt = nx
-      index_lt = nx
-    ENDIF
-
-    ! Scan through table row to find chi
-
-    l_found_element = .FALSE.
+    ! Scan through table row to find p_value
+    index_y_lt = 1
+    index_y_gt = 1
     DO iy = 1, ny
-      IF (p_table(index_lt,iy) .GT. p .AND. .NOT.l_found_element) THEN
-        index_gt_lt = iy
-        IF (index_gt_lt .GT. 1) THEN
-          index_lt_lt = index_gt_lt
-        ELSE
-          index_lt_lt = iy - 1
-        ENDIF
-        l_found_element = .TRUE.
+      IF (p_table(index_lt,iy) .GT. p_value) THEN
+        index_y_gt = iy
+        IF (index_y_gt .GT. 1) index_y_lt = iy - 1
+        EXIT
       ENDIF
     ENDDO
 
-    IF (.NOT.l_found_element) THEN
-      index_lt_lt = ny
-      index_gt_lt = ny
-    ENDIF
-
-    IF (index_lt_lt .GT. index_gt_lt) THEN
-      f_chi1 = 0.0_num
+    IF (index_y_lt .EQ. index_y_gt) THEN
+      fp = 0.0_num
     ELSE
-      f_chi1 = (p - p_table(index_lt,index_lt_lt)) &
-          / (p_table(index_lt,index_gt_lt) - p_table(index_lt,index_lt_lt))
+      fp = (p_value - p_table(index_lt,index_y_lt)) &
+          / (p_table(index_lt,index_y_gt) - p_table(index_lt,index_y_lt))
     ENDIF
 
-    chi_low = (1.0_num - f_chi1) * y(index_lt,index_lt_lt) &
-        + f_chi1 * y(index_lt,index_gt_lt)
+    y_lt = (1.0_num - fp) * y(index_lt,index_y_lt) + fp * y(index_lt,index_y_gt)
 
-    l_found_element = .FALSE.
+    ! Scan through table row to find p_value
+    index_y_lt = 1
+    index_y_gt = 1
     DO iy = 1, ny
-      IF (p_table(index_gt,iy) .GT. p .AND. .NOT.l_found_element) THEN
-        index_gt_gt = iy
-        IF (index_gt_gt .GT. 1) THEN
-          index_lt_gt = index_gt_gt
-        ELSE
-          index_lt_gt = iy - 1
-        ENDIF
-        l_found_element = .TRUE.
+      IF (p_table(index_gt,iy) .GT. p_value) THEN
+        index_y_gt = iy
+        IF (index_y_gt .GT. 1) index_y_lt = iy - 1
+        EXIT
       ENDIF
     ENDDO
 
-    IF (.NOT.l_found_element) THEN
-      index_lt_gt = ny
-      index_gt_gt = ny
-    ENDIF
-
-    IF (index_lt_gt .GT. index_gt_gt) THEN
-      f_chi1 = 0.0_num
+    IF (index_y_lt .EQ. index_y_gt) THEN
+      fp = 0.0_num
     ELSE
-      f_chi1 = (p - p_table(index_gt,index_lt_gt)) &
-          / (p_table(index_gt,index_gt_gt) - p_table(index_gt,index_lt_gt))
+      fp = (p_value - p_table(index_gt,index_y_lt)) &
+          / (p_table(index_gt,index_y_gt) - p_table(index_gt,index_y_lt))
     ENDIF
 
-    chi_up = (1.0_num - f_chi1) * y(index_gt,index_lt_gt) &
-        + f_chi1 * y(index_gt,index_gt_gt)
+    y_gt = (1.0_num - fp) * y(index_gt,index_y_lt) + fp * y(index_gt,index_y_gt)
 
-    IF (index_lt .GT. index_gt) THEN
-      f_eta = 0.0_num
+    ! Interpolate in x
+    IF (index_lt .EQ. index_gt) THEN
+      fx = 0.0_num
     ELSE
-      f_eta = (LOG10(x_value) - x(index_lt)) / (x(index_gt) - x(index_lt))
+      fx = (x_value - x(index_lt)) / (x(index_gt) - x(index_lt))
     ENDIF
 
-    chi_interp = (1.0_num - f_eta) * chi_low + f_eta * chi_up
+    y_interp = (1.0_num - fx) * y_lt + fx * y_gt
 
-    find_value_from_table_alt = 10.0_num**chi_interp
+    find_value_from_table_alt = 10.0_num**y_interp
 
   END FUNCTION find_value_from_table_alt
 
 
 
-  FUNCTION find_value_from_table(p, x_value, x, y, p_table, nx, ny)
+  FUNCTION find_value_from_table(x_in, p_value, nx, ny, x, y, p_table)
 
     REAL(num) :: find_value_from_table
-    REAL(num), INTENT(IN) :: p, x_value, x(nx), y(ny), p_table(nx,ny)
+    REAL(num), INTENT(IN) :: x_in, p_value
     INTEGER, INTENT(IN) :: nx, ny
-    INTEGER :: ix, iy, index_gt, index_lt
-    REAL(num) :: f_epsilon, epsilon_interp
-    REAL(num) :: f_chi
-    LOGICAL :: l_found_element
-    REAL(num) :: p_interp(ny)
+    REAL(num), INTENT(IN) :: x(nx), y(ny), p_table(nx,ny)
+    INTEGER :: ix, iy, index_lt, index_gt
+    REAL(num) :: fx, fp, x_value, y_interp
+    REAL(num), ALLOCATABLE :: p_interp(:)
 
-    ! Scan through chi to find correct row of table
+    x_value = LOG10(x_in)
 
-    l_found_element = .FALSE.
+    ! Scan through x to find correct row of table
+    index_lt = 1
+    index_gt = 1
     DO ix = 1, nx
-      IF (x(ix) .GT. LOG10(x_value) .AND. .NOT.l_found_element) THEN
+      IF (x(ix) .GT. x_value) THEN
         index_gt = ix
-        IF (index_gt .GT. 1) THEN
-          index_lt = index_gt
-        ELSE
-          index_lt = ix - 1
-        ENDIF
-        l_found_element = .TRUE.
+        IF (index_gt .GT. 1) index_lt = ix - 1
+        EXIT
       ENDIF
     ENDDO
 
-    IF (.NOT.l_found_element) THEN
-      index_gt = nx
-      index_lt = nx
-    ENDIF
-
-    ! Interpolate p in chi
-
-    IF (index_lt .GT. index_gt) THEN
-      f_chi = 0.0_num
+    ! Interpolate p in x
+    IF (index_lt .EQ. index_gt) THEN
+      fx = 0.0_num
     ELSE
-      f_chi = (LOG10(x_value) - x(index_lt)) / (x(index_gt) - x(index_lt))
+      fx = (x_value - x(index_lt)) / (x(index_gt) - x(index_lt))
     ENDIF
+
+    ALLOCATE(p_interp(ny))
 
     DO iy = 1, ny
-      p_interp(iy) = (1.0_num - f_chi) * p_table(index_lt,iy) &
-          + f_chi * p_table(index_gt,iy)
+      p_interp(iy) = (1.0_num - fx) * p_table(index_lt,iy) &
+          + fx * p_table(index_gt,iy)
     ENDDO
 
-    ! Scan through table row to find epsilon
-
-    l_found_element = .FALSE.
+    ! Scan through table row to find p_value
+    index_lt = 1
+    index_gt = 1
     DO iy = 1, ny
-      IF (p_interp(iy) .GT. p .AND. .NOT.l_found_element) THEN
+      IF (p_interp(iy) .GT. p_value) THEN
         index_gt = iy
-        IF (index_gt .GT. 1) THEN
-          index_lt = index_gt
-        ELSE
-          index_lt = iy - 1
-        ENDIF
-        l_found_element = .TRUE.
+        IF (index_gt .GT. 1) index_lt = iy - 1
+        EXIT
       ENDIF
     ENDDO
 
-    IF (.NOT.l_found_element) THEN
-      index_gt = ny
-      index_lt = ny
-    ENDIF
-
-    IF (index_lt .GT. index_gt) THEN
-      f_epsilon = 0.0_num
+    IF (index_lt .EQ. index_gt) THEN
+      fp = 0.0_num
     ELSE
-      f_epsilon = (p - p_interp(index_lt)) &
+      fp = (p_value - p_interp(index_lt)) &
           / (p_interp(index_gt) - p_interp(index_lt))
     ENDIF
 
-    epsilon_interp = (1.0_num - f_epsilon) * epsilon_split(index_lt) &
-        + f_epsilon * epsilon_split(index_gt)
+    y_interp = (1.0_num - fp) * y(index_lt) + fp * y(index_gt)
 
-    find_value_from_table = epsilon_interp
+    find_value_from_table = y_interp
+
+    DEALLOCATE(p_interp)
 
   END FUNCTION find_value_from_table
 
