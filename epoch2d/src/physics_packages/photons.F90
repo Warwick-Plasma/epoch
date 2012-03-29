@@ -1149,9 +1149,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: x_in, p_value
     INTEGER, INTENT(IN) :: nx, ny
     REAL(num), INTENT(IN) :: x(nx), y(ny), p_table(nx,ny)
-    INTEGER :: ix, iy, index_lt, index_gt
-    REAL(num) :: fx, fp, x_value, y_interp
-    REAL(num), ALLOCATABLE :: p_interp(:)
+    INTEGER :: ix, iy, index_lt, index_gt, index_y_lt, index_y_gt
+    REAL(num) :: fx, fp, y_lt, y_gt, x_value, y_interp
 
     x_value = LOG10(x_in)
 
@@ -1166,43 +1165,56 @@ CONTAINS
       ENDIF
     ENDDO
 
-    ! Interpolate p in x
+    ! Scan through table row to find p_value
+    index_y_lt = 1
+    index_y_gt = 1
+    DO iy = 1, ny
+      IF (p_table(index_lt,iy) .GT. p_value) THEN
+        index_y_gt = iy
+        IF (index_y_gt .GT. 1) index_y_lt = iy - 1
+        EXIT
+      ENDIF
+    ENDDO
+
+    IF (index_y_lt .EQ. index_y_gt) THEN
+      fp = 0.0_num
+    ELSE
+      fp = (p_value - p_table(index_lt,index_y_lt)) &
+          / (p_table(index_lt,index_y_gt) - p_table(index_lt,index_y_lt))
+    ENDIF
+
+    y_lt = (1.0_num - fp) * y(index_y_lt) + fp * y(index_y_gt)
+
+    ! Scan through table row to find p_value
+    index_y_lt = 1
+    index_y_gt = 1
+    DO iy = 1, ny
+      IF (p_table(index_gt,iy) .GT. p_value) THEN
+        index_y_gt = iy
+        IF (index_y_gt .GT. 1) index_y_lt = iy - 1
+        EXIT
+      ENDIF
+    ENDDO
+
+    IF (index_y_lt .EQ. index_y_gt) THEN
+      fp = 0.0_num
+    ELSE
+      fp = (p_value - p_table(index_gt,index_y_lt)) &
+          / (p_table(index_gt,index_y_gt) - p_table(index_gt,index_y_lt))
+    ENDIF
+
+    y_gt = (1.0_num - fp) * y(index_y_lt) + fp * y(index_y_gt)
+
+    ! Interpolate in x
     IF (index_lt .EQ. index_gt) THEN
       fx = 0.0_num
     ELSE
       fx = (x_value - x(index_lt)) / (x(index_gt) - x(index_lt))
     ENDIF
 
-    ALLOCATE(p_interp(ny))
-
-    DO iy = 1, ny
-      p_interp(iy) = (1.0_num - fx) * p_table(index_lt,iy) &
-          + fx * p_table(index_gt,iy)
-    ENDDO
-
-    ! Scan through table row to find p_value
-    index_lt = 1
-    index_gt = 1
-    DO iy = 1, ny
-      IF (p_interp(iy) .GT. p_value) THEN
-        index_gt = iy
-        IF (index_gt .GT. 1) index_lt = iy - 1
-        EXIT
-      ENDIF
-    ENDDO
-
-    IF (index_lt .EQ. index_gt) THEN
-      fp = 0.0_num
-    ELSE
-      fp = (p_value - p_interp(index_lt)) &
-          / (p_interp(index_gt) - p_interp(index_lt))
-    ENDIF
-
-    y_interp = (1.0_num - fp) * y(index_lt) + fp * y(index_gt)
+    y_interp = (1.0_num - fx) * y_lt + fx * y_gt
 
     find_value_from_table = y_interp
-
-    DEALLOCATE(p_interp)
 
   END FUNCTION find_value_from_table
 
