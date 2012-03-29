@@ -314,9 +314,9 @@ CONTAINS
     TYPE(particle), POINTER :: current, next_pt
 
     REAL(num) :: part_x
-    REAL(num) :: part_px, part_py, part_pz
-    REAL(num) :: part_vx, part_vy, part_vz
-    REAL(num) :: eta, chi_val, part_e
+    REAL(num) :: part_ux, part_uy, part_uz
+    REAL(num) :: dir_x, dir_y, dir_z
+    REAL(num) :: eta, chi_val, part_e, gamma
 
     DO ispecies = 1, n_species
 
@@ -326,16 +326,19 @@ CONTAINS
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
           part_x  = current%part_pos - x_min_local
-          part_px = current%part_p(1)
-          part_py = current%part_p(2)
-          part_pz = current%part_p(3)
+          part_ux = current%part_p(1) / mc0
+          part_uy = current%part_p(2) / mc0
+          part_uz = current%part_p(3) / mc0
+          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
 
-          eta = calculate_eta(part_x, part_px, part_py, part_pz)
-          current%optical_depth = current%optical_depth &
-              - delta_optical_depth(eta, part_px, part_py, part_pz)
+          eta = calculate_eta(part_x, part_ux, part_uy, &
+              part_uz, gamma)
+
+          current%optical_depth = &
+              current%optical_depth - delta_optical_depth(eta, gamma)
 #ifdef TRIDENT_PHOTONS
-          current%optical_depth_tri = current%optical_depth_tri &
-              - delta_optical_depth_tri(eta, part_px, part_py, part_pz)
+          current%optical_depth_tri = &
+              current%optical_depth_tri - delta_optical_depth_tri(eta, gamma)
 #endif
           ! If optical depth dropped below zero generate photon...
           IF (current%optical_depth .LE. 0.0_num) THEN
@@ -362,17 +365,19 @@ CONTAINS
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
           part_x  = current%part_pos - x_min_local
-          part_px = current%part_p(1)
-          part_py = current%part_p(2)
-          part_pz = current%part_p(3)
+          part_ux = current%part_p(1) / mc0
+          part_uy = current%part_p(2) / mc0
+          part_uz = current%part_p(3) / mc0
+          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
 
-          eta = calculate_eta(part_x, part_px, part_py, part_pz)
+          eta = calculate_eta(part_x, part_ux, part_uy, &
+              part_uz, gamma)
 
-          current%optical_depth = current%optical_depth &
-              - delta_optical_depth(eta, part_px, part_py, part_pz)
+          current%optical_depth = &
+              current%optical_depth - delta_optical_depth(eta, gamma)
 #ifdef TRIDENT_PHOTONS
-          current%optical_depth_tri = current%optical_depth_tri &
-              - delta_optical_depth_tri(eta, part_px, part_py, part_pz)
+          current%optical_depth_tri = &
+              current%optical_depth_tri - delta_optical_depth_tri(eta, gamma)
 #endif
           ! If optical depth dropped below zero generate photon...
           IF (current%optical_depth .LE. 0.0_num) THEN
@@ -401,12 +406,12 @@ CONTAINS
             ! Current may be deleted
             next_pt => current%next
             part_x  = current%part_pos - x_min_local
-            part_vx = current%part_p(1)
-            part_vy = current%part_p(2)
-            part_vz = current%part_p(3)
-            part_e = current%particle_energy
-            chi_val = calculate_chi(part_x, part_vx, part_vy, &
-                part_vz, part_e)
+            dir_x = current%part_p(1) / c
+            dir_y = current%part_p(2) / c
+            dir_z = current%part_p(3) / c
+            part_e  = current%particle_energy / m0 / c**2
+            chi_val = calculate_chi(part_x, dir_x, dir_y, &
+                dir_z, part_e)
 
             current%optical_depth = current%optical_depth &
                 - delta_optical_depth_photon(chi_val, part_e)
@@ -426,14 +431,12 @@ CONTAINS
 
 
 
-  FUNCTION delta_optical_depth(eta, part_px, part_py, part_pz)
+  FUNCTION delta_optical_depth(eta, gamma)
 
     ! Function that calcualtes the change to the optical depth
     REAL(num) :: delta_optical_depth
-    REAL(num), INTENT(IN) :: eta, part_px, part_py, part_pz
-    REAL(num) :: hsokolov, gamma
-
-    gamma = SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2)/((m0*c)**2))
+    REAL(num), INTENT(IN) :: eta, gamma
+    REAL(num) :: hsokolov
 
     hsokolov = find_value_from_table_1d(n_sample_h, log_hsokolov(1,:), &
         eta, log_hsokolov(2,:))
@@ -445,14 +448,12 @@ CONTAINS
 
 
 
-  FUNCTION delta_optical_depth_tri(eta, part_px, part_py, part_pz)
+  FUNCTION delta_optical_depth_tri(eta, gamma)
 
     ! Function that calcualtes the change to the optical depth
     REAL(num) :: delta_optical_depth_tri
-    REAL(num), INTENT(IN) :: eta, part_px, part_py, part_pz
-    REAL(num) :: omegahat, gamma
-
-    gamma = SQRT(1.0_num + (part_px**2 + part_py**2 + part_pz**2)/((m0*c)**2))
+    REAL(num), INTENT(IN) :: eta, gamma
+    REAL(num) :: omegahat
 
     omegahat = find_value_from_table_1d(n_sample_t, log_omegahat(1,:), &
         eta, log_omegahat(2,:))
@@ -474,52 +475,46 @@ CONTAINS
     tpair = find_value_from_table_1d(n_sample_t, log_tpair(1,:), &
         chi_val, log_tpair(2,:))
 
-    delta_optical_depth_photon = (dt / tau_c) * alpha_f * (m0 * c**2 / part_e) &
-        * chi_val * tpair
+    delta_optical_depth_photon = dt / tau_c * alpha_f / part_e * chi_val * tpair
 
   END FUNCTION delta_optical_depth_photon
 
 
 
-  FUNCTION calculate_eta(part_x, part_px, part_py, part_pz)
+  FUNCTION calculate_eta(part_x, part_ux, part_uy, part_uz, &
+      gamma)
 
     REAL(num) :: calculate_eta
     REAL(num), INTENT(IN) :: part_x
-    REAL(num), INTENT(IN) :: part_px, part_py, part_pz
+    REAL(num), INTENT(IN) :: part_ux, part_uy, part_uz, gamma
     REAL(num) :: e_at_part(3), b_at_part(3)
-    REAL(num) :: gamma, beta_x, beta_y, beta_z
-    REAL(num) :: dir_x, dir_y, dir_z, flperp(3), i_e, tau0, roland_eta
-    REAL(num) :: lambdac, coeff_eta, modp, modpclip, p_dot_e
+    REAL(num) :: beta_x, beta_y, beta_z
+    REAL(num) :: flperp(3), i_e, tau0, roland_eta
+    REAL(num) :: lambdac, coeff_eta, moduclip, moduclip2, u_dot_e
 
     CALL field_at_particle(part_x, e_at_part, b_at_part)
 
-    modp = part_px**2 + part_py**2 + part_pz**2
-    modpclip = MAX(modp, c_non_zero)
-    modp = SQRT(modp)
-    modpclip = SQRT(modpclip)
-    gamma = SQRT(1.0_num + modp**2 / (m0*c)**2)
+    moduclip2 = MAX(part_ux**2 + part_uy**2 + part_uz**2, c_non_zero)
+    moduclip = SQRT(moduclip2)
 
-    beta_x = part_px / (gamma * m0 * c)
-    beta_y = part_py / (gamma * m0 * c)
-    beta_z = part_pz / (gamma * m0 * c)
-    dir_x = part_px / modpclip
-    dir_y = part_py / modpclip
-    dir_z = part_pz / modpclip
+    beta_x = part_ux / gamma
+    beta_y = part_uy / gamma
+    beta_z = part_uz / gamma
 
-    lambdac = h_bar / m0 / c
+    lambdac = h_bar / mc0
 
     coeff_eta = SQRT(3.0_num * lambdac / (2.0_num * alpha_f * m0 * c**3))
 
-    p_dot_e = (part_px * e_at_part(1) + part_py * e_at_part(2) &
-        + part_pz * e_at_part(3)) / modpclip**2
+    u_dot_e = (part_ux * e_at_part(1) + part_uy * e_at_part(2) &
+        + part_uz * e_at_part(3)) / moduclip2
 
-    flperp(1) = q0 * (e_at_part(1) - p_dot_e * part_px &
+    flperp(1) = q0 * (e_at_part(1) - u_dot_e * part_ux &
         + c * (beta_y * b_at_part(3) - beta_z * b_at_part(2)))
 
-    flperp(2) = q0 * (e_at_part(2) - p_dot_e * part_py &
+    flperp(2) = q0 * (e_at_part(2) - u_dot_e * part_uy &
         + c * (beta_z * b_at_part(1) - beta_x * b_at_part(3)))
 
-    flperp(3) = q0 * (e_at_part(3) - p_dot_e * part_pz &
+    flperp(3) = q0 * (e_at_part(3) - u_dot_e * part_uz &
         + c * (beta_x * b_at_part(2) - beta_y * b_at_part(1)))
 
     ! Dipole emission intensity
@@ -527,8 +522,8 @@ CONTAINS
     tau0 = q0**2 / (6.0_num * pi * epsilon0 * m0 * c**3)
 
     i_e = tau0 * gamma**2 * (flperp(1)**2 + flperp(2)**2 + flperp(3)**2 &
-        + (q0 * m0 * c * (beta_x * e_at_part(1) + beta_y * e_at_part(2) &
-        + beta_z * e_at_part(3)) / modpclip)**2) / m0
+        + (q0 * (beta_x * e_at_part(1) + beta_y * e_at_part(2) &
+        + beta_z * e_at_part(3)) / moduclip)**2) / m0
 
     roland_eta = coeff_eta * SQRT(i_e)
 
@@ -539,26 +534,15 @@ CONTAINS
 
 
 
-  FUNCTION calculate_chi(part_x, part_vx, part_vy, part_vz, &
-      part_e)
+  FUNCTION calculate_chi(part_x, dir_x, dir_y, dir_z, part_e)
 
     REAL(num) :: calculate_chi
     REAL(num), INTENT(IN) :: part_x
-    REAL(num), INTENT(IN) :: part_vx, part_vy, part_vz, part_e
+    REAL(num), INTENT(IN) :: dir_x, dir_y, dir_z, part_e
     REAL(num) :: e_at_part(3), b_at_part(3), q(3)
-    REAL(num) :: part_px, part_py, part_pz, part_e_n, dir_x, dir_y, dir_z
     REAL(num) :: e_dot_dir, calculate_chi_roland
 
     CALL field_at_particle(part_x, e_at_part, b_at_part)
-
-    part_px = ((part_vx / c) * (part_e / c)) / (m0 * c)
-    part_py = ((part_vy / c) * (part_e / c)) / (m0 * c)
-    part_pz = ((part_vz / c) * (part_e / c)) / (m0 * c)
-    part_e_n = part_e / (m0 * c**2)
-
-    dir_x = part_vx / c
-    dir_y = part_vy / c
-    dir_z = part_vz / c
 
     e_dot_dir = e_at_part(1) * dir_x + e_at_part(2) * dir_y &
         + e_at_part(3) * dir_z
@@ -571,7 +555,7 @@ CONTAINS
         + c * (dir_x * b_at_part(2) - dir_y * b_at_part(1))
 
     calculate_chi_roland = 0.5_num * SQRT(q(1)**2 + q(2)**2 + q(3)**2) &
-        * part_e_n / e_s
+        * part_e / e_s
 
     ! Determine chi from fields
     calculate_chi = calculate_chi_roland
@@ -698,7 +682,7 @@ CONTAINS
     TYPE(particle), POINTER :: generating_electron
     INTEGER, INTENT(IN) :: iphoton
     REAL(num), INTENT(IN) :: eta
-    REAL(num) :: mult_x, mult_y, mult_z, mag_p, generating_gamma
+    REAL(num) :: dir_x, dir_y, dir_z, mag_p, generating_gamma
     REAL(num) :: rand_temp
     TYPE(particle), POINTER :: new_photon
 
@@ -710,13 +694,13 @@ CONTAINS
         + generating_electron%part_p(2)**2 &
         + generating_electron%part_p(3)**2), c_non_zero)
 
-    mult_x = generating_electron%part_p(1) / mag_p
-    mult_y = generating_electron%part_p(2) / mag_p
-    mult_z = generating_electron%part_p(3) / mag_p
+    dir_x = generating_electron%part_p(1) / mag_p
+    dir_y = generating_electron%part_p(2) / mag_p
+    dir_z = generating_electron%part_p(3) / mag_p
 
-    new_photon%part_p(1) = c * mult_x
-    new_photon%part_p(2) = c * mult_y
-    new_photon%part_p(3) = c * mult_z
+    new_photon%part_p(1) = c * dir_x
+    new_photon%part_p(2) = c * dir_y
+    new_photon%part_p(3) = c * dir_z
 
     new_photon%optical_depth = reset_optical_depth()
 
@@ -733,9 +717,9 @@ CONTAINS
 
     mag_p = mag_p - new_photon%particle_energy / c
 
-    generating_electron%part_p(1) = mult_x * mag_p
-    generating_electron%part_p(2) = mult_y * mag_p
-    generating_electron%part_p(3) = mult_z * mag_p
+    generating_electron%part_p(1) = dir_x * mag_p
+    generating_electron%part_p(2) = dir_y * mag_p
+    generating_electron%part_p(3) = dir_z * mag_p
 
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
@@ -775,7 +759,7 @@ CONTAINS
     TYPE(particle), POINTER :: generating_photon
     REAL(num), INTENT(IN) :: chi_val
     INTEGER, INTENT(IN) :: iphoton, ielectron, ipositron
-    REAL(num) :: mult_x, mult_y, mult_z, mag_p
+    REAL(num) :: dir_x, dir_y, dir_z, mag_p
     REAL(num) :: probability_split, epsilon_frac
     TYPE(particle), POINTER :: new_electron, new_positron
 
@@ -785,9 +769,9 @@ CONTAINS
     new_electron%part_pos = generating_photon%part_pos
     new_positron%part_pos = generating_photon%part_pos
 
-    mult_x = generating_photon%part_p(1) / c
-    mult_y = generating_photon%part_p(2) / c
-    mult_z = generating_photon%part_p(3) / c
+    dir_x = generating_photon%part_p(1) / c
+    dir_y = generating_photon%part_p(2) / c
+    dir_z = generating_photon%part_p(3) / c
 
     ! Determine how to split the energy amoung e-/e+
     ! IS CHI HERE SAME AS ROLAND'S? DEFINED BSinT/B_s
@@ -799,13 +783,13 @@ CONTAINS
 
     mag_p = MAX(generating_photon%particle_energy / c, c_non_zero)
 
-    new_electron%part_p(1) = epsilon_frac * mag_p * mult_x
-    new_electron%part_p(2) = epsilon_frac * mag_p * mult_y
-    new_electron%part_p(3) = epsilon_frac * mag_p * mult_z
+    new_electron%part_p(1) = epsilon_frac * mag_p * dir_x
+    new_electron%part_p(2) = epsilon_frac * mag_p * dir_y
+    new_electron%part_p(3) = epsilon_frac * mag_p * dir_z
 
-    new_positron%part_p(1) = (1.0_num - epsilon_frac) * mag_p * mult_x
-    new_positron%part_p(2) = (1.0_num - epsilon_frac) * mag_p * mult_y
-    new_positron%part_p(3) = (1.0_num - epsilon_frac) * mag_p * mult_z
+    new_positron%part_p(1) = (1.0_num - epsilon_frac) * mag_p * dir_x
+    new_positron%part_p(2) = (1.0_num - epsilon_frac) * mag_p * dir_y
+    new_positron%part_p(3) = (1.0_num - epsilon_frac) * mag_p * dir_z
 
     new_electron%optical_depth = reset_optical_depth()
     new_positron%optical_depth = reset_optical_depth()

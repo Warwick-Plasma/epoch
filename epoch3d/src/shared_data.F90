@@ -99,8 +99,9 @@ MODULE constants
 
   ! Constants used in pair production
 #ifdef PHOTONS
+  REAL(num), PARAMETER :: mc0 = m0 * c
   REAL(num), PARAMETER :: h_bar = h_planck / 2.0_num / pi
-  REAL(num), PARAMETER :: b_s = (m0 * c)**2 / (h_bar * q0)
+  REAL(num), PARAMETER :: b_s = mc0**2 / (h_bar * q0)
   REAL(num), PARAMETER :: e_s = b_s * c
   REAL(num), PARAMETER :: alpha_f = q0**2 / (2.0_num * epsilon0 * h_planck * c)
   REAL(num), PARAMETER :: tau_c = h_bar / (m0 * c**2)
