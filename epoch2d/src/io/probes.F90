@@ -191,25 +191,23 @@ CONTAINS
     part_count = 0
     csqr = c**2
 
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
 #ifdef PHOTONS
-      IF (current_species%species_type .NE. c_species_id_photon) THEN
+    IF (current_species%species_type .NE. c_species_id_photon) THEN
 #endif
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count + 1
-          array(part_count) = cur%part_p(1)
-          cur=>cur%next
-        ENDDO
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(1)
+        cur=>cur%next
+      ENDDO
 #ifdef PHOTONS
-      ELSE
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count + 1
-          array(part_count) = cur%particle_energy * cur%part_p(1) / csqr
-          cur=>cur%next
-        ENDDO
-      ENDIF
+    ELSE
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%particle_energy * cur%part_p(1) / csqr
+        cur=>cur%next
+      ENDDO
+    ENDIF
 #endif
-    ENDDO
     n_points = part_count
 
     iterate_probe_px = 0
@@ -234,25 +232,23 @@ CONTAINS
     part_count = 0
     csqr = c**2
 
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
 #ifdef PHOTONS
-      IF (current_species%species_type .NE. c_species_id_photon) THEN
+    IF (current_species%species_type .NE. c_species_id_photon) THEN
 #endif
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count + 1
-          array(part_count) = cur%part_p(2)
-          cur=>cur%next
-        ENDDO
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(2)
+        cur=>cur%next
+      ENDDO
 #ifdef PHOTONS
-      ELSE
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count + 1
-          array(part_count) = cur%particle_energy * cur%part_p(2) / csqr
-          cur=>cur%next
-        ENDDO
-      ENDIF
+    ELSE
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%particle_energy * cur%part_p(2) / csqr
+        cur=>cur%next
+      ENDDO
+    ENDIF
 #endif
-    ENDDO
     n_points = part_count
 
     iterate_probe_py = 0
@@ -277,25 +273,23 @@ CONTAINS
     part_count = 0
     csqr = c**2
 
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
 #ifdef PHOTONS
-      IF (current_species%species_type .NE. c_species_id_photon) THEN
+    IF (current_species%species_type .NE. c_species_id_photon) THEN
 #endif
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count + 1
-          array(part_count) = cur%part_p(3)
-          cur=>cur%next
-        ENDDO
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(3)
+        cur=>cur%next
+      ENDDO
 #ifdef PHOTONS
-      ELSE
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-          part_count = part_count + 1
-          array(part_count) = cur%particle_energy * cur%part_p(3) / csqr
-          cur=>cur%next
-        ENDDO
-      ENDIF
+    ELSE
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%particle_energy * cur%part_p(3) / csqr
+        cur=>cur%next
+      ENDDO
+    ENDIF
 #endif
-    ENDDO
     n_points = part_count
 
     iterate_probe_pz = 0
