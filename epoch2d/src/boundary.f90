@@ -12,7 +12,7 @@ CONTAINS
 
   SUBROUTINE setup_particle_boundaries
 
-    INTEGER :: i
+    INTEGER :: i, ierr
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max' /)
@@ -66,7 +66,7 @@ CONTAINS
       error = .TRUE.
     ENDDO
 
-    IF (error) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
+    IF (error) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
 
   END SUBROUTINE setup_particle_boundaries
 
@@ -874,7 +874,6 @@ CONTAINS
     INTEGER, PARAMETER :: cpml_ma = 1
     REAL(num) :: x_pos, x_pos_m, x_pos_ma
     REAL(num) :: y_pos, y_pos_m, y_pos_ma
-    REAL(num) :: sigma, kappa, acoeff, bcoeff, ccoeff
 
     ALLOCATE(cpml_kappa_ex(-2:nx+3), cpml_kappa_bx(-2:nx+3))
     ALLOCATE(cpml_a_ex(-2:nx+3), cpml_a_bx(-2:nx+3))

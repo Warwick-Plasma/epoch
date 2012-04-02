@@ -175,7 +175,7 @@ CONTAINS
   FUNCTION boundary_block_check() RESULT(errcode)
 
     INTEGER :: errcode
-    INTEGER :: index, io
+    INTEGER :: index, io, ierr
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
     LOGICAL :: error
 
@@ -226,7 +226,7 @@ CONTAINS
               ' of the domain.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     ENDIF
 
   END FUNCTION boundary_block_check

@@ -37,8 +37,9 @@ MODULE deck
   LOGICAL :: invalid_block
 
   INTEGER, PARAMETER :: buffer_size = 1024
+  INTEGER, PARAMETER :: filename_length = 64+data_dir_max_length
   TYPE :: file_buffer
-    CHARACTER(LEN=45+data_dir_max_length) :: filename
+    CHARACTER(LEN=filename_length) :: filename
     CHARACTER(LEN=buffer_size), DIMENSION(:), POINTER :: buffer
     INTEGER :: pos, idx, length
     TYPE(file_buffer), POINTER :: next
@@ -344,8 +345,8 @@ CONTAINS
     LOGICAL :: ignore, continuation
     LOGICAL, SAVE :: warn = .TRUE.
     TYPE(string_type), DIMENSION(2) :: deck_values
-    CHARACTER(LEN=64+data_dir_max_length) :: deck_filename, status_filename
-    CHARACTER(LEN=64+data_dir_max_length) :: list_filename
+    CHARACTER(LEN=filename_length) :: deck_filename, status_filename
+    CHARACTER(LEN=filename_length) :: list_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE., exists
     INTEGER :: errcode_deck, ierr, i, io, rank_check

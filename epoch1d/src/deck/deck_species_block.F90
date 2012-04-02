@@ -127,14 +127,17 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
+#ifdef PARTICLE_IONISE
     TYPE(primitive_stack) :: stack
     TYPE(particle_species), POINTER :: base_species, species
     REAL(num), DIMENSION(:), POINTER :: dat
+    INTEGER :: i
+#endif
     REAL(num), DIMENSION(:), POINTER :: array
     REAL(num) :: dmin, mult
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
-    INTEGER :: i, io, n
+    INTEGER :: io, n
 
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN

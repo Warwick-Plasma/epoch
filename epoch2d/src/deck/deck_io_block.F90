@@ -315,7 +315,7 @@ CONTAINS
 
   FUNCTION io_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, index, io, i
+    INTEGER :: errcode, io, i
 
     ! Just assume that anything not included except for the compulsory
     ! elements is not wanted

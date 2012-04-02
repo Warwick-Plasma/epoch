@@ -57,7 +57,7 @@ CONTAINS
     IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
         .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
       WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after '', &
-          f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
+          & f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
     ENDIF
 
     CALL io_test(step, print_arrays, first_call, last_call)
@@ -302,7 +302,7 @@ CONTAINS
         CALL append_filename(dump_type, output_file)
       ENDIF
       WRITE(stat_unit, '(''Wrote '', a7, '' dump number'', i5, '' at time'', &
-          g20.12, '' and iteration'', i7)') dump_type, output_file, time, step
+          & g20.12, '' and iteration'', i7)') dump_type, output_file, time, step
       CALL flush_stat_file()
     ENDIF
 

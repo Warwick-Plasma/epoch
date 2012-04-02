@@ -491,7 +491,6 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: stack, output
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
-    TYPE(stack_element) :: block2
     INTEGER :: ipoint
 
     IF (ICHAR(current(1:1)) .EQ. 0) RETURN

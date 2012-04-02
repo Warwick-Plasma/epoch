@@ -267,11 +267,12 @@ top:DO it = 1, 3
 
     CALL particle_bcs
 #else
+    INTEGER :: ierr
     IF (rank .EQ. 0) THEN
       WRITE(*,*) 'non_uniform_load_particles() only available when using', &
           ' per species weighting'
     ENDIF
-    CALL MPI_ABORT(comm, errcode, errcode)
+    CALL MPI_ABORT(comm, errcode, ierr)
 #endif
 
   END SUBROUTINE non_uniform_load_particles

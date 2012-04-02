@@ -173,7 +173,7 @@ CONTAINS
       hours = total / 3600
       WRITE(stat_unit, *)
       WRITE(stat_unit, '(''runtime = '', i4, ''h '', i2, ''m '', i2, &
-          ''s on '', i4, '' process elements.'')') hours, minutes, seconds, &
+          & ''s on '', i4, '' process elements.'')') hours, minutes, seconds, &
           nproc
     ENDIF
 
