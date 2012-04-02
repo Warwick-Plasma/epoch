@@ -1036,29 +1036,43 @@ CONTAINS
     REAL(num), INTENT(IN) :: x_in
     INTEGER, INTENT(IN) :: nx
     REAL(num), INTENT(IN) :: x(nx), values(nx)
-    REAL(num) :: fx, x_value, value_interp
-    INTEGER :: ix, index_lt, index_gt
+    REAL(num) :: fx, x_value, value_interp, xdif1, xdif2, xdifm
+    INTEGER :: i1, i2, im
 
     x_value = LOG10(x_in)
 
-    index_lt = 1
-    index_gt = 1
-    DO ix = 1, nx
-      IF (x(ix) .GT. x_value) THEN
-        index_gt = ix
-        IF (index_gt .GT. 1) index_lt = ix - 1
-        EXIT
-      ENDIF
-    ENDDO
-
-    ! Interpolate in x
-    IF (index_lt .EQ. index_gt) THEN
-      fx = 0.0_num
+    i1 = 1
+    i2 = nx
+    xdif1 = x(i1) - x_value
+    xdif2 = x(i2) - x_value
+    IF (xdif1 * xdif2 .LT. 0) THEN
+      ! Use bisection to find the nearest cell
+      DO
+        im = (i1 + i2) / 2
+        xdifm = x(im) - x_value
+        IF (xdif1 * xdifm .LT. 0) THEN
+          i2 = im
+        ELSE
+          i1 = im
+          xdif1 = xdifm
+        ENDIF
+        IF (i2 - i1 .EQ. 1) EXIT
+      ENDDO
+      ! Interpolate in x
+      fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      fx = (x_value - x(index_lt)) / (x(index_gt) - x(index_lt))
+      PRINT*,'*** WARNING ***'
+      PRINT*,'Argument to "find_value_from_table_1d" outside the range ', &
+          'of the table.'
+      PRINT*,'Using truncated value.'
+      IF (xdif1 .LE. 0) THEN
+        fx = 0.0_num
+      ELSE
+        fx = 1.0_num
+      ENDIF
     ENDIF
 
-    value_interp = (1.0_num - fx) * values(index_lt) + fx * values(index_gt)
+    value_interp = (1.0_num - fx) * values(i1) + fx * values(i2)
 
     find_value_from_table_1d = 10.0_num**value_interp
 
@@ -1072,68 +1086,117 @@ CONTAINS
     REAL(num), INTENT(IN) :: x_in, p_value
     INTEGER, INTENT(IN) :: nx, ny
     REAL(num), INTENT(IN) :: x(nx), y(nx,ny), p_table(nx,ny)
-    INTEGER :: ix, iy, index_lt, index_gt, index_y_lt, index_y_gt
-    REAL(num) :: fx, fp, y_lt, y_gt, x_value, y_interp
+    INTEGER :: ix, index_lt, index_gt, i1, i2, im
+    REAL(num) :: fx, fp, y_lt, y_gt, x_value, y_interp, xdif1, xdif2, xdifm
 
     x_value = LOG10(x_in)
 
     ! Scan through x to find correct row of table
-    index_lt = 1
-    index_gt = 1
-    DO ix = 1, nx
-      IF (x(ix) .GT. x_value) THEN
-        index_gt = ix
-        IF (index_gt .GT. 1) index_lt = ix - 1
-        EXIT
-      ENDIF
-    ENDDO
-
-    ! Scan through table row to find p_value
-    index_y_lt = 1
-    index_y_gt = 1
-    DO iy = 1, ny
-      IF (p_table(index_lt,iy) .GT. p_value) THEN
-        index_y_gt = iy
-        IF (index_y_gt .GT. 1) index_y_lt = iy - 1
-        EXIT
-      ENDIF
-    ENDDO
-
-    IF (index_y_lt .EQ. index_y_gt) THEN
-      fp = 0.0_num
+    i1 = 1
+    i2 = nx
+    xdif1 = x(i1) - x_value
+    xdif2 = x(i2) - x_value
+    IF (xdif1 * xdif2 .LT. 0) THEN
+      ! Use bisection to find the nearest cell
+      DO
+        im = (i1 + i2) / 2
+        xdifm = x(im) - x_value
+        IF (xdif1 * xdifm .LT. 0) THEN
+          i2 = im
+        ELSE
+          i1 = im
+          xdif1 = xdifm
+        ENDIF
+        IF (i2 - i1 .EQ. 1) EXIT
+      ENDDO
+      ! Interpolate in x
+      fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      fp = (p_value - p_table(index_lt,index_y_lt)) &
-          / (p_table(index_lt,index_y_gt) - p_table(index_lt,index_y_lt))
+      PRINT*,'*** WARNING ***'
+      PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
+          'of the table.'
+      PRINT*,'Using truncated value.'
+      IF (xdif1 .LE. 0) THEN
+        fx = 0.0_num
+      ELSE
+        fx = 1.0_num
+      ENDIF
     ENDIF
 
-    y_lt = (1.0_num - fp) * y(index_lt,index_y_lt) + fp * y(index_lt,index_y_gt)
+    index_lt = i1
+    index_gt = i2
 
+    ix = index_lt
     ! Scan through table row to find p_value
-    index_y_lt = 1
-    index_y_gt = 1
-    DO iy = 1, ny
-      IF (p_table(index_gt,iy) .GT. p_value) THEN
-        index_y_gt = iy
-        IF (index_y_gt .GT. 1) index_y_lt = iy - 1
-        EXIT
-      ENDIF
-    ENDDO
-
-    IF (index_y_lt .EQ. index_y_gt) THEN
-      fp = 0.0_num
+    i1 = 1
+    i2 = ny
+    xdif1 = p_table(ix,i1) - p_value
+    xdif2 = p_table(ix,i2) - p_value
+    IF (xdif1 * xdif2 .LT. 0) THEN
+      ! Use bisection to find the nearest cell
+      DO
+        im = (i1 + i2) / 2
+        xdifm = p_table(ix,im) - p_value
+        IF (xdif1 * xdifm .LT. 0) THEN
+          i2 = im
+        ELSE
+          i1 = im
+          xdif1 = xdifm
+        ENDIF
+        IF (i2 - i1 .EQ. 1) EXIT
+      ENDDO
+      ! Interpolate in x
+      fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      fp = (p_value - p_table(index_gt,index_y_lt)) &
-          / (p_table(index_gt,index_y_gt) - p_table(index_gt,index_y_lt))
+      PRINT*,'*** WARNING ***'
+      PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
+          'of the table.'
+      PRINT*,'Using truncated value.'
+      IF (xdif1 .LE. 0) THEN
+        fp = 0.0_num
+      ELSE
+        fp = 1.0_num
+      ENDIF
     ENDIF
 
-    y_gt = (1.0_num - fp) * y(index_gt,index_y_lt) + fp * y(index_gt,index_y_gt)
+    y_lt = (1.0_num - fp) * y(ix,i1) + fp * y(ix,i2)
+
+    ix = index_gt
+    ! Scan through table row to find p_value
+    i1 = 1
+    i2 = ny
+    xdif1 = p_table(ix,i1) - p_value
+    xdif2 = p_table(ix,i2) - p_value
+    IF (xdif1 * xdif2 .LT. 0) THEN
+      ! Use bisection to find the nearest cell
+      DO
+        im = (i1 + i2) / 2
+        xdifm = p_table(ix,im) - p_value
+        IF (xdif1 * xdifm .LT. 0) THEN
+          i2 = im
+        ELSE
+          i1 = im
+          xdif1 = xdifm
+        ENDIF
+        IF (i2 - i1 .EQ. 1) EXIT
+      ENDDO
+      ! Interpolate in x
+      fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
+    ELSE
+      PRINT*,'*** WARNING ***'
+      PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
+          'of the table.'
+      PRINT*,'Using truncated value.'
+      IF (xdif1 .LE. 0) THEN
+        fp = 0.0_num
+      ELSE
+        fp = 1.0_num
+      ENDIF
+    ENDIF
+
+    y_gt = (1.0_num - fp) * y(ix,i1) + fp * y(ix,i2)
 
     ! Interpolate in x
-    IF (index_lt .EQ. index_gt) THEN
-      fx = 0.0_num
-    ELSE
-      fx = (x_value - x(index_lt)) / (x(index_gt) - x(index_lt))
-    ENDIF
 
     y_interp = (1.0_num - fx) * y_lt + fx * y_gt
 
@@ -1149,68 +1212,117 @@ CONTAINS
     REAL(num), INTENT(IN) :: x_in, p_value
     INTEGER, INTENT(IN) :: nx, ny
     REAL(num), INTENT(IN) :: x(nx), y(ny), p_table(nx,ny)
-    INTEGER :: ix, iy, index_lt, index_gt, index_y_lt, index_y_gt
-    REAL(num) :: fx, fp, y_lt, y_gt, x_value, y_interp
+    INTEGER :: ix, index_lt, index_gt, i1, i2, im
+    REAL(num) :: fx, fp, y_lt, y_gt, x_value, y_interp, xdif1, xdif2, xdifm
 
     x_value = LOG10(x_in)
 
     ! Scan through x to find correct row of table
-    index_lt = 1
-    index_gt = 1
-    DO ix = 1, nx
-      IF (x(ix) .GT. x_value) THEN
-        index_gt = ix
-        IF (index_gt .GT. 1) index_lt = ix - 1
-        EXIT
-      ENDIF
-    ENDDO
-
-    ! Scan through table row to find p_value
-    index_y_lt = 1
-    index_y_gt = 1
-    DO iy = 1, ny
-      IF (p_table(index_lt,iy) .GT. p_value) THEN
-        index_y_gt = iy
-        IF (index_y_gt .GT. 1) index_y_lt = iy - 1
-        EXIT
-      ENDIF
-    ENDDO
-
-    IF (index_y_lt .EQ. index_y_gt) THEN
-      fp = 0.0_num
+    i1 = 1
+    i2 = nx
+    xdif1 = x(i1) - x_value
+    xdif2 = x(i2) - x_value
+    IF (xdif1 * xdif2 .LT. 0) THEN
+      ! Use bisection to find the nearest cell
+      DO
+        im = (i1 + i2) / 2
+        xdifm = x(im) - x_value
+        IF (xdif1 * xdifm .LT. 0) THEN
+          i2 = im
+        ELSE
+          i1 = im
+          xdif1 = xdifm
+        ENDIF
+        IF (i2 - i1 .EQ. 1) EXIT
+      ENDDO
+      ! Interpolate in x
+      fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      fp = (p_value - p_table(index_lt,index_y_lt)) &
-          / (p_table(index_lt,index_y_gt) - p_table(index_lt,index_y_lt))
+      PRINT*,'*** WARNING ***'
+      PRINT*,'Argument to "find_value_from_table" outside the range ', &
+          'of the table.'
+      PRINT*,'Using truncated value.'
+      IF (xdif1 .LE. 0) THEN
+        fx = 0.0_num
+      ELSE
+        fx = 1.0_num
+      ENDIF
     ENDIF
 
-    y_lt = (1.0_num - fp) * y(index_y_lt) + fp * y(index_y_gt)
+    index_lt = i1
+    index_gt = i2
 
+    ix = index_lt
     ! Scan through table row to find p_value
-    index_y_lt = 1
-    index_y_gt = 1
-    DO iy = 1, ny
-      IF (p_table(index_gt,iy) .GT. p_value) THEN
-        index_y_gt = iy
-        IF (index_y_gt .GT. 1) index_y_lt = iy - 1
-        EXIT
-      ENDIF
-    ENDDO
-
-    IF (index_y_lt .EQ. index_y_gt) THEN
-      fp = 0.0_num
+    i1 = 1
+    i2 = ny
+    xdif1 = p_table(ix,i1) - p_value
+    xdif2 = p_table(ix,i2) - p_value
+    IF (xdif1 * xdif2 .LT. 0) THEN
+      ! Use bisection to find the nearest cell
+      DO
+        im = (i1 + i2) / 2
+        xdifm = p_table(ix,im) - p_value
+        IF (xdif1 * xdifm .LT. 0) THEN
+          i2 = im
+        ELSE
+          i1 = im
+          xdif1 = xdifm
+        ENDIF
+        IF (i2 - i1 .EQ. 1) EXIT
+      ENDDO
+      ! Interpolate in x
+      fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      fp = (p_value - p_table(index_gt,index_y_lt)) &
-          / (p_table(index_gt,index_y_gt) - p_table(index_gt,index_y_lt))
+      PRINT*,'*** WARNING ***'
+      PRINT*,'Argument to "find_value_from_table" outside the range ', &
+          'of the table.'
+      PRINT*,'Using truncated value.'
+      IF (xdif1 .LE. 0) THEN
+        fp = 0.0_num
+      ELSE
+        fp = 1.0_num
+      ENDIF
     ENDIF
 
-    y_gt = (1.0_num - fp) * y(index_y_lt) + fp * y(index_y_gt)
+    y_lt = (1.0_num - fp) * y(i1) + fp * y(i2)
+
+    ix = index_gt
+    ! Scan through table row to find p_value
+    i1 = 1
+    i2 = ny
+    xdif1 = p_table(ix,i1) - p_value
+    xdif2 = p_table(ix,i2) - p_value
+    IF (xdif1 * xdif2 .LT. 0) THEN
+      ! Use bisection to find the nearest cell
+      DO
+        im = (i1 + i2) / 2
+        xdifm = p_table(ix,im) - p_value
+        IF (xdif1 * xdifm .LT. 0) THEN
+          i2 = im
+        ELSE
+          i1 = im
+          xdif1 = xdifm
+        ENDIF
+        IF (i2 - i1 .EQ. 1) EXIT
+      ENDDO
+      ! Interpolate in x
+      fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
+    ELSE
+      PRINT*,'*** WARNING ***'
+      PRINT*,'Argument to "find_value_from_table" outside the range ', &
+          'of the table.'
+      PRINT*,'Using truncated value.'
+      IF (xdif1 .LE. 0) THEN
+        fp = 0.0_num
+      ELSE
+        fp = 1.0_num
+      ENDIF
+    ENDIF
+
+    y_gt = (1.0_num - fp) * y(i1) + fp * y(i2)
 
     ! Interpolate in x
-    IF (index_lt .EQ. index_gt) THEN
-      fx = 0.0_num
-    ELSE
-      fx = (x_value - x(index_lt)) / (x(index_gt) - x(index_lt))
-    ENDIF
 
     y_interp = (1.0_num - fx) * y_lt + fx * y_gt
 
