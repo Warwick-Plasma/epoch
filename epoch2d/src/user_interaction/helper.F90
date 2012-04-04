@@ -322,38 +322,40 @@ CONTAINS
       ENDDO
       num_total = npart_this_species - num_total
 
-      ! Sort the list of fractions into decreasing order using bubble sort
-      sweep = .TRUE.
-      DO WHILE(sweep)
-        sweep = .FALSE.
-        f0 = num_frac(1)
-        DO i = 2,nproc
-          f1 = num_frac(i)
-          IF (f1 .GT. f0) THEN
-            num_frac(i-1) = f1
-            num_frac(i) = f0
-            idx = num_idx(i-1)
-            num_idx(i-1) = num_idx(i)
-            num_idx(i) = idx
-            sweep = .TRUE.
-          ENDIF
-          f0 = f1
+      IF (num_total .GT. 0) THEN
+        ! Sort the list of fractions into decreasing order using bubble sort
+        sweep = .TRUE.
+        DO WHILE(sweep)
+          sweep = .FALSE.
+          f0 = num_frac(1)
+          DO i = 2,nproc
+            f1 = num_frac(i)
+            IF (f1 .GT. f0) THEN
+              num_frac(i-1) = f1
+              num_frac(i) = f0
+              idx = num_idx(i-1)
+              num_idx(i-1) = num_idx(i)
+              num_idx(i) = idx
+              sweep = .TRUE.
+            ENDIF
+            f0 = f1
+          ENDDO
         ENDDO
-      ENDDO
 
-      ! Accumulate fractional particles until they have all been accounted
-      ! for. If any of them have been assigned to the current processor,
-      ! add them and exit the loop.
+        ! Accumulate fractional particles until they have all been accounted
+        ! for. If any of them have been assigned to the current processor,
+        ! add them and exit the loop.
 
-      DO i = 1,nproc-1
-        num_int = AINT(num_frac(i) / num_frac(i+1), KIND=8)
-        IF (num_idx(i) .EQ. rank) THEN
-          num_new_particles = num_new_particles + num_int
-          EXIT
-        ENDIF
-        num_total = num_total - num_int
-        IF (num_total .LE. 0) EXIT
-      ENDDO
+        DO i = 1,nproc-1
+          num_int = AINT(num_frac(i) / (num_frac(i+1)+EPSILON(1.0_num)), KIND=8)
+          IF (num_idx(i) .EQ. rank) THEN
+            num_new_particles = num_new_particles + num_int
+            EXIT
+          ENDIF
+          num_total = num_total - num_int
+          IF (num_total .LE. 0) EXIT
+        ENDDO
+      ENDIF
 
       DEALLOCATE(num_valid_cells_all, num_idx, num_frac)
 
