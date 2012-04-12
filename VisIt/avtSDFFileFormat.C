@@ -74,7 +74,6 @@
 using     std::string;
 
 
-
 // ****************************************************************************
 //  Memory management stack
 // ****************************************************************************
@@ -165,9 +164,14 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
     h = NULL;
 
     use_float = 0;
-    if (readOpts &&
-        readOpts->GetBool("Read double variables as floats to save memory"))
+    if (readOpts) {
+        bool opt =
+            readOpts->GetBool("Read double variables as floats to save memory");
+        if (opt)
             use_float = 1;
+        else
+            use_float = 0;
+    }
 
     stack_init();
 
@@ -231,8 +235,6 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
            << ") " << this << endl;
 
     if (md == NULL) return;
-
-    use_float = 1;
 
     //
     // CODE TO ADD A MESH
@@ -318,7 +320,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 avtCurveMetaData *cmd = new avtCurveMetaData(b->name);
                 cmd->originalName = b->name;
                 cmd->validVariable = true;
-                cmd->yUnits = var->units;
+                cmd->yUnits = b->units;
                 cmd->xUnits = mesh->dim_units[0];
                 cmd->xLabel = mesh->dim_labels[0];
                 cmd->hasDataExtents = false;
@@ -330,7 +332,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 avtCentering cent;
                 // For the time being, most data is plotted as zon-centred
                 // This will probably change in the future.
-                if (var->stagger == SDF_STAGGER_VERTEX)
+                if (b->stagger == SDF_STAGGER_VERTEX)
                     cent = AVT_NODECENT;
 	        else
                     cent = AVT_ZONECENT;
@@ -340,7 +342,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 smd->hasDataExtents = false;
                 smd->treatAsASCII = false;
                 smd->hasUnits = true;
-                smd->units = var->units;
+                smd->units = b->units;
                 md->Add(smd);
             }
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR) {
@@ -404,7 +406,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             vector<int> nspec;
             vector<vector<string> > specnames;
             for (int n = 0 ; n < mat->ndims ; n++) {
-                if (strcmp(b->material_names[n],b->material_name) == 0) {
+                if (strcmp(mat->material_names[n],b->material_name) == 0) {
                     specnames.push_back(mnames);
                     nspec.push_back(mnames.size());
                 } else {
@@ -415,7 +417,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             }
 
             AddSpeciesToMetaData(md, b->name, mesh->name, mat->name,
-                mnames.size(), nspec, specnames);
+                mat->ndims, nspec, specnames);
         }
         h->current_block = b->next;
     }
@@ -455,7 +457,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     //
 
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
 }
 
@@ -524,7 +526,7 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         points->Delete();
 
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+        debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
         return ugrid;
     }
@@ -558,7 +560,7 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
     SetUpDomainConnectivity();
 
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return rgrid;
 }
@@ -673,6 +675,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
             b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
         sdf_read_data(h);
+
     } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) {
         sdf_block_t *material = sdf_find_block_by_id(h, b->material_id);
         if (!material) return NULL;
@@ -714,6 +717,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
                 }
             }
         }
+
     } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED ||
                b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
         sdf_block_t *var;
@@ -734,10 +738,12 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
 
         // Execute callback to fill in the derived variable
         if (b->populate_data) b->populate_data(h, b);
-    }
+
+    } else
+        sdf_read_data(h);
 
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return b;
 }
@@ -787,7 +793,7 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
             SetUpDomainConnectivity();
 
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return rv;
 }
@@ -971,7 +977,7 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
         sdf_read_data(h);
     }
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
 
     sdf_block_t *v = vfm_blocks[0];
@@ -1055,7 +1061,7 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
     SetUpDomainConnectivity();
 
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return (void *)mat;
 }
@@ -1199,7 +1205,7 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
     delete [] specmf;
 
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return spec;
 }
@@ -1243,7 +1249,7 @@ avtSDFFileFormat::GetAuxiliaryData(const char *var, int domain,
     }
 
 #ifdef SDF_DEBUG
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf;
+    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return rv;
 }

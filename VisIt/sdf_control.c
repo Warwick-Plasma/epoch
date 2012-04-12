@@ -87,11 +87,11 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
     if (!b) return 1;
 
     if (b->grids) {
-        if (!h->mmap)
+        if (!h->mmap && b->done_data)
             for (i = 0; i < b->ndims; i++) if (b->grids[i]) free(b->grids[i]);
         free(b->grids);
     }
-    if (!h->mmap && b->data) free(b->data);
+    if (!h->mmap && b->data && b->done_data) free(b->data);
     b->grids = NULL;
     b->data = NULL;
     b->done_data = 0;
@@ -158,16 +158,16 @@ static int sdf_free_handle(sdf_file_t *h)
     if (h->blocklist) {
         b = h->blocklist;
         for (i=0; i < h->nblocks; i++) {
+            if (!b->next) break;
             next = b->next;
             sdf_free_block(h, b);
             b = next;
         }
-        h->blocklist = NULL;
     }
     // Destroy handle
     if (h->buffer) free(h->buffer);
     if (h->code_name) free(h->code_name);
-    h->filehandle = 0;
+    memset(h, 0, sizeof(sdf_file_t));
     free(h);
     h = NULL;
 

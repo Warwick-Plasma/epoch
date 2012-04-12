@@ -225,7 +225,11 @@ int sdf_read_next_block_header(sdf_file_t *h)
 
     SDF_READ_ENTRY_STRING(b->name);
 
-    b->stagger = SDF_STAGGER_CELL_CENTRE;
+    if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE
+            || b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
+        b->stagger = SDF_STAGGER_VERTEX;
+    else
+        b->stagger = SDF_STAGGER_CELL_CENTRE;
     for (i = 0; i < 3; i++) b->dims[i] = 1;
 
     b->done_header = 1;

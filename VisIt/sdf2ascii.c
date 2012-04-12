@@ -24,7 +24,9 @@ void usage(int err)
   -v --variable=id    Find the block with id matching 'id'\n\
   -m --mmap           Use mmap'ed file I/O\n\
 ");
-  //-d --debug          Show the contents of the debug buffer\n\
+/*
+  -d --debug          Show the contents of the debug buffer\n\
+*/
 
     exit(err);
 }
