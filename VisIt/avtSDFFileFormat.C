@@ -133,6 +133,27 @@ static inline void stack_init(void)
 }
 
 
+// ****************************************************************************
+//  Helper routine for opening SDF files.
+// ****************************************************************************
+
+void
+avtSDFFileFormat::OpenFile(int open_only)
+{
+    if (!h) h = sdf_open(filename, rank, comm, 0);
+    if (!h) EXCEPTION1(InvalidFilesException, filename);
+    h->use_float = use_float;
+    debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
+
+    if (open_only) return;
+
+    if (h->blocklist) return;
+
+    sdf_read_blocklist(h);
+    // Append derived data to the blocklist using built-in library.
+    sdf_add_derived_blocks(h);
+}
+
 
 // ****************************************************************************
 //  Method: avtSDFFileFormat constructor
@@ -175,10 +196,8 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
 
     stack_init();
 
-    if (!h) {
-        h = sdf_open(filename, rank, comm, 0);
-        sdf_read_header(h);
-    }
+    debug1 << "avtSDFFileFormat::OpenFile() " << __LINE__ << endl;
+    OpenFile(1);
 }
 
 
@@ -240,12 +259,8 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     // CODE TO ADD A MESH
     //
 
-    if (!h) h = sdf_open(filename, rank, comm, 0);
-    if (!h) EXCEPTION1(InvalidFilesException, filename);
-    h->use_float = use_float;
-    debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
-    sdf_read_blocklist(h);
-    sdf_add_derived_blocks(h);
+    debug1 << "avtSDFFileFormat::OpenFile() " << __LINE__ << endl;
+    OpenFile(0);
 
     gotMetadata = true;
 
@@ -889,10 +904,8 @@ avtSDFFileFormat::ActivateTimestep(void)
     ncpus = PAR_Size();
     debug1 << rank << " " << ncpus << " " << comm << " f:" << filename << endl;
 
-    if (!h) h = sdf_open(filename, rank, comm, 0);
-    if (!h) EXCEPTION1(InvalidFilesException, filename);
-    h->use_float = use_float;
-    sdf_read_blocklist(h);
+    debug1 << "avtSDFFileFormat::OpenFile() " << __LINE__ << endl;
+    OpenFile(0);
 }
 
 
