@@ -173,6 +173,8 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
             b->distribution, "native", MPI_INFO_NULL);
     MPI_File_read_all(h->filehandle, *var, count, b->mpitype,
             MPI_STATUS_IGNORE);
+    MPI_File_set_view(h->filehandle, 0, MPI_BYTE, MPI_BYTE, "native",
+            MPI_INFO_NULL);
 #else
     fseeko(h->filehandle, h->current_location, SEEK_SET);
     fread(*var, b->type_size, count, h->filehandle);
