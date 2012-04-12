@@ -1,4 +1,4 @@
-#include "sdf_common.h"
+#include "sdf.h"
 #include <stdlib.h>
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))

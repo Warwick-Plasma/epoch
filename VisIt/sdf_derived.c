@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "sdf_common.h"
+#include "sdf.h"
 
 
 sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)

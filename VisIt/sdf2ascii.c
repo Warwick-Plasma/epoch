@@ -3,7 +3,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <sys/stat.h>
-#include "sdf_common.h"
+#include "sdf.h"
 
 #ifdef PARALLEL
 #include <mpi.h>

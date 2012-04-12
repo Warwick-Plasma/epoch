@@ -1,7 +1,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <structmember.h>
-#include "sdf_common.h"
+#include "sdf.h"
 
 
 static const int typemap[] = {

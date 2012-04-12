@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
-#include "sdf_common.h"
+#include "sdf.h"
 
 #ifdef PARALLEL
 #include <mpi.h>

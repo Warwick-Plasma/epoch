@@ -46,7 +46,7 @@
 #include <avtSTMDFileFormat.h>
 
 #include <vector>
-#include "sdf_common.h"
+#include "sdf.h"
 
 class DBOptionsAttributes;
 using std::vector;
