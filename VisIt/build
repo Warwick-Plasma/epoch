@@ -80,6 +80,7 @@ if [ $? -ne 0 ]; then
   grep libmpi $tmpdir/err > /dev/null && mpi=1
   if [ $mpi -ne 0 ]; then
     echo "Trying again with mpicc"
+    # Execute in a subshell to stop CC being altered in the current shell.
     (export CC=mpicc
     export CXX=mpicxx
     buildit)

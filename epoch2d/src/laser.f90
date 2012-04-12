@@ -227,7 +227,7 @@ CONTAINS
     by(0, 1:ny) = sum * (-4.0_num * fplus &
         - 2.0_num * (ez_x_min(1:ny) - c * by_x_min(1:ny)) &
         + 2.0_num * ez(1, 1:ny) &
-        - ly * (bx(1, 1:ny+1) - bx(1, 0:ny)) &
+        - ly * (bx(1, 1:ny) - bx(1, 0:ny-1)) &
         - dt_eps * jz(1, 1:ny) &
         + diff * by(1, 1:ny))
 
@@ -298,7 +298,7 @@ CONTAINS
     by(nx, 1:ny) = sum * ( 4.0_num * fneg &
         + 2.0_num * (ez_x_max(1:ny) + c * by_x_max(1:ny)) &
         - 2.0_num * ez(nx, 1:ny) &
-        + ly * (bx(nx, 1:ny+1) - bx(nx, 0:ny)) &
+        + ly * (bx(nx, 1:ny) - bx(nx, 0:ny-1)) &
         + dt_eps * jz(nx, 1:ny) &
         + diff * by(nx-1, 1:ny))
 
@@ -347,7 +347,7 @@ CONTAINS
     bx(1:nx, 0) = sum * ( 4.0_num * fplus &
         + 2.0_num * (ez_y_min(1:nx) + c * bx_y_min(1:nx)) &
         - 2.0_num * ez(1:nx, 1) &
-        - lx * (by(1:nx+1, 1) - by(0:nx, 1)) &
+        - lx * (by(1:nx, 1) - by(0:nx-1, 1)) &
         + dt_eps * jz(1:nx, 1) &
         + diff * bx(1:nx, 1))
 
@@ -418,7 +418,7 @@ CONTAINS
     bx(1:nx, ny) = sum * (-4.0_num * fneg &
         - 2.0_num * (ez_y_max(1:nx) - c * bx_y_max(1:nx)) &
         + 2.0_num * ez(1:nx, ny) &
-        + lx * (by(1:nx+1, ny) - by(0:nx, ny)) &
+        + lx * (by(1:nx, ny) - by(0:nx-1, ny)) &
         - dt_eps * jz(1:nx, ny) &
         + diff * bx(1:nx, ny-1))
 
