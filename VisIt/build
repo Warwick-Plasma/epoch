@@ -5,6 +5,7 @@ formats="$1"
 
 version=`visit -version 2>&1 | sed 's,.* \([0-9]*\).*,\1,'`
 tmpdir=.tmp
+debug=0
 
 # Find directory containing the actual visit binary
 cwd=`pwd`
@@ -21,10 +22,18 @@ while [ $i -lt 100 ]; do
 done
 cd "$cwd"
 
-export PATH=$visitpath:$PATH
-export CXXFLAGS="-Wno-deprecated"
+if [ $debug -ne 0 ]; then
+  DBG=""
+  CDBG=""
+else
+  DBG="-g -O0"
+  CDBG="-DCMAKE_BUILD_TYPE=Debug"
+fi
 
-function buildit {
+export PATH=$visitpath:$PATH
+export CXXFLAGS="-Wno-deprecated $DBG"
+
+buildit () {
   rm -rf $tmpdir
   mkdir -p $tmpdir
   if [ "$version"x != x ]; then
@@ -35,9 +44,9 @@ function buildit {
       if [ $version -eq 1 ]; then
         xml2makefile -clobber ${fmt}${version}.xml
         if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
-          sed 's,\(^CXXFLAGS.*\),\1 -m32 -g\
-CFLAGS=$(CFLAGSORIG) -m32 -g\
-PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32,' Makefile > .Makefile.tmp
+          sed "s,\(^CXXFLAGS.*\),\1 -m32 $DBG \
+CFLAGS=$(CFLAGSORIG) -m32 $DBG \
+PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile > .Makefile.tmp
           \mv -f .Makefile.tmp Makefile
         fi
       else
@@ -49,7 +58,7 @@ PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32,' Makefile > .M
               CMakeLists.txt > $tmpdir/tmp
           mv $tmpdir/tmp CMakeLists.txt
         done
-        cmake -DCMAKE_BUILD_TYPE=Debug .
+        cmake $CDBG .
       fi
   
       make clean
@@ -60,7 +69,7 @@ PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32,' Makefile > .M
   fi
 }
 
-  
+
 buildit
 
 if [ $? -ne 0 ]; then
@@ -71,18 +80,20 @@ if [ $? -ne 0 ]; then
   grep libmpi $tmpdir/err > /dev/null && mpi=1
   if [ $mpi -ne 0 ]; then
     echo "Trying again with mpicc"
-    export CC=mpicc
+    (export CC=mpicc
     export CXX=mpicxx
-    buildit
+    buildit)
   else
     cat $tmpdir/err
   fi
 fi
 
-if [ "$fmt"x = "SDF"x ]; then
-  gcc -DSDF_DEBUG_ALL -O3 -o sdf2ascii sdf2ascii.c sdf_control.c \
-      sdf_input.c sdf_input_cartesian.c sdf_input_point.c
-  python setup.py build -b pybuild install
-fi
+for fmt in $formats; do
+  if [ "$fmt"x = "SDF"x ]; then
+    gcc -DSDF_DEBUG_ALL $DBG -o sdf2ascii sdf2ascii.c sdf_control.c \
+        sdf_input.c sdf_input_cartesian.c sdf_input_point.c
+    python setup.py build -b pybuild install
+  fi
+done
 
 rm -rf $tmpdir
