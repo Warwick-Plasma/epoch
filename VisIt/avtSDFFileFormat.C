@@ -71,8 +71,68 @@
 #include <InvalidFilesException.h>
 #include <InvalidVariableException.h>
 
-
 using     std::string;
+
+
+
+// ****************************************************************************
+//  Memory management stack
+// ****************************************************************************
+
+struct stack;
+
+struct stack {
+    sdf_block_t *block;
+    struct stack *next;
+};
+
+static struct stack *stack_head = NULL;
+static struct stack *stack_tail = NULL;
+
+#define MAX_MEMORY 2147483648 // 2GB
+static uint64_t memory_size = 0;
+
+
+static inline void stack_alloc(sdf_block_t *b)
+{
+    struct stack *tail;
+    b->data = calloc(b->nlocal, b->type_size_out);
+    memory_size += b->nlocal * b->type_size_out;
+    stack_tail->next = tail = (struct stack*)malloc(sizeof(struct stack));
+    tail->block = b;
+    tail->next = NULL;
+    stack_tail = tail;
+}
+
+
+static inline void stack_free(void)
+{
+    sdf_block_t *b;
+    struct stack *head;
+
+    if (memory_size < MAX_MEMORY) return;
+
+    while (stack_head->next) {
+        head = stack_head;
+        stack_head = stack_head->next;
+        free(head);
+        b = stack_head->block;
+        stack_head->block = NULL;
+        free(b->data);
+        b->data = NULL;
+        b->done_data = 0;
+        memory_size -= b->nlocal * b->type_size_out;
+        if (memory_size < MAX_MEMORY) break;
+    }
+}
+
+
+static inline void stack_init(void)
+{
+    if (!stack_head) stack_head =
+        stack_tail = (struct stack*)calloc(1, sizeof(struct stack));
+}
+
 
 
 // ****************************************************************************
@@ -108,6 +168,8 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
     if (readOpts &&
         readOpts->GetBool("Read double variables as floats to save memory"))
             use_float = 1;
+
+    stack_init();
 
     if (!h) {
         h = sdf_open(filename, rank, comm, 0);
@@ -630,7 +692,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
                 b->type_size_out = var->type_size_out;
                 b->datatype_out = var->datatype_out;
                 memcpy(b->local_dims, var->local_dims, var->ndims*sizeof(int));
-                b->data = calloc(b->nlocal, b->type_size_out);
+                stack_alloc(b);
             }
 
             // Calculate stitched total
@@ -667,7 +729,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
             b->type_size_out = var->type_size_out;
             b->datatype_out = var->datatype_out;
             memcpy(b->local_dims, var->local_dims, var->ndims*sizeof(int));
-            b->data = calloc(b->nlocal, b->type_size_out);
+            stack_alloc(b);
         }
 
         // Execute callback to fill in the derived variable
@@ -705,6 +767,7 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
 {
     debug1 << "avtSDFFileFormat::GetVar(domain:" << domain << ", varname:"
            << varname << ") " << this << endl;
+    stack_free();
 
     sdf_block_t *b = GetArray(domain, varname);
     if (!b) EXCEPTION1(InvalidVariableException, varname);
