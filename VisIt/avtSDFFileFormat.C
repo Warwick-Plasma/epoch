@@ -581,7 +581,6 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
 }
 
 
-
 // ****************************************************************************
 //  Method: avtSDFFileFormat::GetCurve
 //
@@ -1080,7 +1079,6 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
 }
 
 
-
 // ****************************************************************************
 //  Method: avtSDFFileFormat::GetSpecies
 //
@@ -1095,7 +1093,7 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
 //  Creation:   Dec 7, 2010
 //
 // ****************************************************************************
-    
+
 void *
 avtSDFFileFormat::GetSpecies(const char *var, int domain)
 {
@@ -1164,26 +1162,40 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
         vfm_ptrs[i] = (float*)vfm_block->data;
     }
 
-    int nelements = vfm_block->nelements;
+    int nlocal = vfm_block->nlocal;
     int ndims = vfm_block->ndims;
     int dims[ndims];
     for (int i = 0; i < ndims; i++) dims[i] = vfm_block->dims[i];
 
-    float *specmf = new float[nspec * nelements];
-    int *speclist = new int[nelements];
-
     int nmf = 0;
     int mix = 0;
+    for (int i = 0; i < nlocal; i++) {
+        if (matlist[i] == specmat) {
+            nmf += nspec;
+        } else if (matlist[i] < 0) {
+            while (true) {
+                if (mixmat[mix] == specmat)
+                    nmf += nspec;
+                if (mixnext[mix] == 0) break;
+                mix = mixnext[mix] - 1;
+            }
+        }
+    }
+
+    float *specmf = new float[nmf * nlocal];
+    int *speclist = new int[nlocal];
+
+    nmf = 0;
+    mix = 0;
     float *specptr = specmf;
-    for (int i = 0; i < nelements; i++) {
+    for (int i = 0; i < nlocal; i++) {
         if (matlist[i] == specmat) {
             // Chemistry material
             speclist[i] = nmf + 1;
+            nmf += nspec;
             for (int m = 0; m < nspec; m++) {
-                *specptr = *vfm_ptrs[i];
+                *specptr = vfm_ptrs[m][i];
                 specptr++;
-                vfm_ptrs[i]++;
-                nmf++;
             }
         } else if (matlist[i] < 0) {
             // Mixed material
@@ -1191,11 +1203,10 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
             while (true) {
                 if (mixmat[mix] == specmat) {
                     mixlist[mix] = nmf;
+                    nmf += nspec;
                     for (int m = 0; m < nspec; m++) {
-                        *specptr = *vfm_ptrs[i];
+                        *specptr = vfm_ptrs[m][i];
                         specptr++;
-                        vfm_ptrs[i]++;
-                        nmf++;
                     }
                 } else
                     mixlist[mix] = 0;
@@ -1222,7 +1233,6 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
 #endif
     return spec;
 }
-
 
 
 // ****************************************************************************
