@@ -506,20 +506,49 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         points->SetNumberOfPoints(b->nlocal);
         ugrid->Allocate(b->nlocal);
         ugrid->SetPoints(points);
-        float *x = (float *)b->grids[0];
-        float *y = (float *)b->grids[1];
-        if (b->ndims > 2) {
-            float *z = (float *)b->grids[2];
-            for (vtkIdType i=0; i < b->nlocal; i++) {
-                points->SetPoint(i, x[i], y[i], z[i]);
-                ugrid->InsertNextCell(VTK_VERTEX, 1, &i);
+
+        if (b->datatype_out == SDF_DATATYPE_REAL4) {
+            float *x = (float *)b->grids[0];
+            float *y = NULL;
+            float *z = NULL;
+            if (b->ndims > 1) {
+                y = (float *)b->grids[1];
+                if (b->ndims > 2) z = (float *)b->grids[2];
+            }
+
+            vtkIdType vertex;
+            float yy = 0, zz = 0;
+            for (int i=0; i < b->nlocal; i++) {
+                if (y) {
+                    yy = y[i];
+                    if (z) zz = z[i];
+                }
+                vertex = i;
+                points->SetPoint(i, x[i], yy, zz);
+                ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
             }
         } else {
-            for (vtkIdType i=0; i < b->nlocal; i++) {
-                points->SetPoint(i, x[i], y[i], 0.0);
-                ugrid->InsertNextCell(VTK_VERTEX, 1, &i);
+            double *x = (double *)b->grids[0];
+            double *y = NULL;
+            double *z = NULL;
+            if (b->ndims > 1) {
+                y = (double *)b->grids[1];
+                if (b->ndims > 2) z = (double *)b->grids[2];
+            }
+
+            vtkIdType vertex;
+            double yy = 0, zz = 0;
+            for (int i=0; i < b->nlocal; i++) {
+                if (y) {
+                    yy = y[i];
+                    if (z) zz = z[i];
+                }
+                vertex = i;
+                points->SetPoint(i, x[i], yy, zz);
+                ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
             }
         }
+
         points->Delete();
 
 #ifdef SDF_DEBUG
@@ -603,13 +632,22 @@ avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
     //
     // Add all of the points to an array.
     //
-    vtkPoints   *pts = vtkPoints::New();
-    float *x = (float*)mesh->grids[0];
-    float *y = (float*)b->data;
-
+    vtkPoints *pts = vtkPoints::New();
     pts->SetNumberOfPoints(nlocal);
-    for (int i = 0 ; i < nlocal; i++)
-        pts->SetPoint(i, x[i], y[i], 0.0);
+
+    if (b->datatype_out == SDF_DATATYPE_REAL4) {
+        float *x = (float*)mesh->grids[0];
+        float *y = (float*)b->data;
+
+        for (int i = 0 ; i < nlocal; i++)
+            pts->SetPoint(i, x[i], y[i], 0.0);
+    } else {
+        double *x = (double*)mesh->grids[0];
+        double *y = (double*)b->data;
+
+        for (int i = 0 ; i < nlocal; i++)
+            pts->SetPoint(i, x[i], y[i], 0.0);
+    }
 
     //
     // Connect the points up with line segments.
@@ -891,7 +929,7 @@ avtSDFFileFormat::SetUpDomainConnectivity(void)
 
 
 // ****************************************************************************
-//  Method: avtSDFFileFormat::GetMaterial
+//  Method: avtSDFFileFormat::GetMaterialType
 //
 //  Purpose:
 //      Gets an avtMaterial object for the specified domain
@@ -905,18 +943,10 @@ avtSDFFileFormat::SetUpDomainConnectivity(void)
 //
 // ****************************************************************************
 
+template <typename Real>
 void *
-avtSDFFileFormat::GetMaterial(const char *var, int domain)
+avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
 {
-    debug1 << "avtSDFFileFormat::GetMaterial(var:" << var << ", domain:"
-           << domain << ")" << endl;
-
-    sdf_block_t *sblock = sdf_find_block_by_name(h, var);
-    if (!sblock) EXCEPTION1(InvalidVariableException, var);
-    h->current_block = sblock;
-
-    debug1 << "found block:" << sblock->id << " for material:" << var << endl;
-
     // Read volume fraction blocks for each material
     char *var_id;
     int nm = sblock->ndims;
@@ -942,13 +972,13 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
     for (int n = 0; n < nm; n++) mat_numbers[n] = n + 1;
 
     // Fill in the pure cell array and find the size of the mixed cell arrays
-    float *vfm;
+    Real *vfm;
     for (int i = 0; i < nlocal; i++) {
         int material_number = 0, nmats = 0;
-        float vf;
+        Real vf;
         // Find number of materials for this cell
         for (int n = 0; n < nm; n++) {
-            vfm = (float *)vfm_blocks[n]->data;
+            vfm = (Real *)vfm_blocks[n]->data;
             vf = vfm[i];
             if (vf > 0) {
                 nmats++;
@@ -978,9 +1008,9 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
         material_list[i] = -mix_index;
 
         int material_number = 0, nmats = 0, idx = 0;
-        float vf;
+        Real vf;
         for (int n = 0; n < nm; n++) {
-            vfm = (float *)vfm_blocks[n]->data;
+            vfm = (Real *)vfm_blocks[n]->data;
             vf = vfm[i];
             if (vf > 0) {
                 idx = mix_index - 1;
@@ -1020,7 +1050,41 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
 
 
 // ****************************************************************************
-//  Method: avtSDFFileFormat::GetSpecies
+//  Method: avtSDFFileFormat::GetMaterial
+//
+//  Purpose:
+//      Gets an avtMaterial object for the specified domain
+//
+//  Arguments:
+//      var        The variable of interest.
+//      domain     The domain of interest.
+//
+//  Programmer: Keith Bennett
+//  Creation:   Nov 8, 2010
+//
+// ****************************************************************************
+
+void *
+avtSDFFileFormat::GetMaterial(const char *var, int domain)
+{
+    debug1 << "avtSDFFileFormat::GetMaterial(var:" << var << ", domain:"
+           << domain << ")" << endl;
+
+    sdf_block_t *sblock = sdf_find_block_by_name(h, var);
+    if (!sblock) EXCEPTION1(InvalidVariableException, var);
+    h->current_block = sblock;
+
+    debug1 << "found block:" << sblock->id << " for material:" << var << endl;
+
+    if (sblock->datatype_out == SDF_DATATYPE_REAL4)
+        return GetMaterialType<float>(sblock, domain);
+    else
+        return GetMaterialType<double>(sblock, domain);
+}
+
+
+// ****************************************************************************
+//  Method: avtSDFFileFormat::GetSpeciesType
 //
 //  Purpose:
 //      Gets an avtSpecies object for the specified domain
@@ -1034,18 +1098,10 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
 //
 // ****************************************************************************
 
+template <typename Real>
 void *
-avtSDFFileFormat::GetSpecies(const char *var, int domain)
+avtSDFFileFormat::GetSpeciesType(sdf_block_t *sblock, int domain)
 {
-    debug1 << "avtSDFFileFormat::GetSpecies(var:" << var << ", domain:"
-           << domain << ")" << endl;
-
-    sdf_block_t *sblock = sdf_find_block_by_name(h, var);
-    if (!sblock) EXCEPTION1(InvalidVariableException, var);
-    h->current_block = sblock;
-
-    debug1 << "found block:" << sblock->id << " for material:" << var << endl;
-
     sdf_block_t *mblock = sdf_find_block_by_id(h, sblock->material_id);
     if (!mblock) EXCEPTION1(InvalidVariableException, sblock->material_id);
 
@@ -1065,7 +1121,7 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
     }
 
     avtMaterial *mat = (avtMaterial*) *vrTmp;
-    if (mat == 0) EXCEPTION1(InvalidVariableException, var);
+    if (mat == 0) EXCEPTION1(InvalidVariableException, mblock->name);
 
     const int* matlist  = mat->GetMatlist();
     const int* mixmat   = mat->GetMixMat();
@@ -1092,14 +1148,14 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
     // Read mass fraction blocks for each species
     char *var_id;
     sdf_block_t *vfm_block;
-    float **vfm_ptrs = new float *[nspec];
+    Real **vfm_ptrs = new Real *[nspec];
     for (int i = 0; i < nspec; i++) {
         var_id = sblock->variable_ids[i];
         vfm_block = sdf_find_block_by_id(h, var_id);
         if (!vfm_block) EXCEPTION1(InvalidVariableException, var_id);
         h->current_block = vfm_block;
         sdf_read_data(h);
-        vfm_ptrs[i] = (float*)vfm_block->data;
+        vfm_ptrs[i] = (Real*)vfm_block->data;
     }
 
     int nlocal = vfm_block->nlocal;
@@ -1172,6 +1228,40 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return spec;
+}
+
+
+// ****************************************************************************
+//  Method: avtSDFFileFormat::GetSpecies
+//
+//  Purpose:
+//      Gets an avtSpecies object for the specified domain
+//
+//  Arguments:
+//      var        The variable of interest.
+//      domain     The domain of interest.
+//
+//  Programmer: Keith Bennett
+//  Creation:   Dec 7, 2010
+//
+// ****************************************************************************
+
+void *
+avtSDFFileFormat::GetSpecies(const char *var, int domain)
+{
+    debug1 << "avtSDFFileFormat::GetSpecies(var:" << var << ", domain:"
+           << domain << ")" << endl;
+
+    sdf_block_t *sblock = sdf_find_block_by_name(h, var);
+    if (!sblock) EXCEPTION1(InvalidVariableException, var);
+    h->current_block = sblock;
+
+    debug1 << "found block:" << sblock->id << " for material:" << var << endl;
+
+    if (sblock->datatype_out == SDF_DATATYPE_REAL4)
+        return GetSpeciesType<float>(sblock, domain);
+    else
+        return GetSpeciesType<double>(sblock, domain);
 }
 
 
