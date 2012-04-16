@@ -47,6 +47,7 @@
 
 #include <vector>
 #include "sdf.h"
+#include "sdf_derived.h"
 
 class DBOptionsAttributes;
 using std::vector;
@@ -94,10 +95,10 @@ class avtSDFFileFormat : public avtSTMDFileFormat
     virtual bool          HasInvariantMetaData(void) const { return false; };
     virtual bool          HasInvariantSIL(void) const      { return false; };
     virtual void           SetUpDomainConnectivity(void);
-    int         GetCycle(void) { return h->step; }
-    double      GetTime(void) { return h->time; }
-    int         GetCycleFromFilename(const char *f) const { return h->step; }
-    double      GetTimeFromFilename(const char *f) const { return h->time; }
+    int         GetCycle(void) { return step; }
+    double      GetTime(void) { return time; }
+    int         GetCycleFromFilename(const char *f) const { return step; }
+    double      GetTimeFromFilename(const char *f) const { return time; }
     bool        ReturnsValidCycle(void) const { return true; }
     bool        ReturnsValidTime(void) const { return true; }
 /*
@@ -186,7 +187,8 @@ class avtSDFFileFormat : public avtSTMDFileFormat
 
   protected:
     // DATA MEMBERS
-    int rank, ncpus, ndomains, use_float;
+    int rank, ncpus, ndomains, use_float, step;
+    double time;
     comm_t comm;
     sdf_file_t *h;
     char *filename;

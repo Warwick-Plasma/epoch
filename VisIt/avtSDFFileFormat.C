@@ -143,6 +143,8 @@ avtSDFFileFormat::OpenFile(int open_only)
     if (!h) h = sdf_open(filename, rank, comm, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
     h->use_float = use_float;
+    step = h->step;
+    time = h->time;
     debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
 
     if (open_only) return;
