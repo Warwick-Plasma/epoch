@@ -201,7 +201,7 @@ struct sdf_file {
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float;
     char *code_name;
-    sdf_block_t *blocklist, *current_block;
+    sdf_block_t *blocklist, *tail, *current_block;
     char *mmap;
     void *ext_data;
 #ifdef SDF_DEBUG

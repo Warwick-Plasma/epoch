@@ -38,15 +38,15 @@ static inline int sdf_get_next_block(sdf_file_t *h)
         else {
             sdf_block_t *block = malloc(sizeof(sdf_block_t));
             memset(block, 0, sizeof(sdf_block_t));
-            block->block_start = h->current_block->next_block_location;
-            h->current_block->next = block;
-            h->current_block = block;
+            block->block_start = h->tail->next_block_location;
+            h->tail->next = block;
+            h->current_block = h->tail = block;
         }
     } else {
         sdf_block_t *block = malloc(sizeof(sdf_block_t));
         memset(block, 0, sizeof(sdf_block_t));
         block->block_start = h->summary_location;
-        h->blocklist = h->current_block = block;
+        h->blocklist = h->tail = h->current_block = block;
     }
 
     return 0;

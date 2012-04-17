@@ -12,21 +12,21 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 
 int sdf_add_derived_blocks(sdf_file_t *h)
 {
-    sdf_block_t *b, *cur, *last_block, *append, *append_head;
+    sdf_block_t *b, *cur, *append, *append_head, *append_tail;
     int i, len1, len2, nappend = 0;
     char *str;
 
     cur = h->current_block;
     append = append_head = calloc(1, sizeof(sdf_block_t));
 
-    last_block = b = h->blocklist;
+    b = h->blocklist;
     while (b) {
         if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
             for (i = 0; i < b->ndims; i++) {
                 append->next = calloc(1, sizeof(sdf_block_t));
 
                 nappend++;
-                append = append->next;
+                append = append_tail = append->next;
                 append->next = NULL;
 
                 len1 = strlen(b->id);
@@ -60,12 +60,12 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append->blocktype = SDF_BLOCKTYPE_POINT_DERIVED;
             }
         }
-        last_block = b;
         b = b->next;
     }
 
     if (nappend) {
-        last_block->next = append_head->next;
+        h->tail->next = append_head->next;
+        h->tail = append_tail;
         h->nblocks += nappend;
     }
 
