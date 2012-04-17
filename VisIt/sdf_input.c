@@ -333,13 +333,17 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_array_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO)
         ret = sdf_read_run_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR)
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
+            || b->blocktype == SDF_BLOCKTYPE_MULTI_TENSOR)
         ret = sdf_read_stitched_tensor(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL)
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
+            || b->blocktype == SDF_BLOCKTYPE_MULTI_MATERIAL)
         ret = sdf_read_stitched_material(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR)
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR
+            || b->blocktype == SDF_BLOCKTYPE_MULTI_MATVAR)
         ret = sdf_read_stitched_matvar(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES)
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
+            || b->blocktype == SDF_BLOCKTYPE_MULTI_SPECIES)
         ret = sdf_read_stitched_species(h);
 
     return ret;
