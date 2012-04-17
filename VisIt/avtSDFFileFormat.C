@@ -727,10 +727,27 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
 
         // Allocate derived variable data if required
         if (!b->data) {
-            b->nlocal = var->nlocal;
-            b->type_size_out = var->type_size_out;
-            b->datatype_out = var->datatype_out;
-            memcpy(b->local_dims, var->local_dims, var->ndims*sizeof(int));
+            sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
+            b->ndims = mesh->ndims;
+            memcpy(b->local_dims, mesh->local_dims, b->ndims*sizeof(int));
+
+            if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
+                b->nlocal = mesh->npoints;
+            } else {
+                b->nlocal = 1;
+                for (int i=0; i < b->ndims; i++) {
+                    if (b->stagger == SDF_STAGGER_CELL_CENTRE)
+                        b->local_dims[i]--;
+                    b->nlocal *= b->local_dims[i];
+                }
+            }
+
+            if (!b->datatype_out) {
+                b->type_size_out = mesh->type_size_out;
+                b->datatype_out = mesh->datatype_out;
+            } else
+                b->type_size_out = SDF_TYPE_SIZES[b->datatype_out];
+
             stack_alloc(b);
         }
 

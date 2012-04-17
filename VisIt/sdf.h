@@ -78,6 +78,18 @@ enum sdf_datatype {
     SDF_DATATYPE_OTHER,
 };
 
+static const int SDF_TYPE_SIZES[] = {
+    0,  // SDF_DATATYPE_NULL = 0,
+    4,  // SDF_DATATYPE_INTEGER4,
+    8,  // SDF_DATATYPE_INTEGER8,
+    4,  // SDF_DATATYPE_REAL4,
+    8,  // SDF_DATATYPE_REAL8,
+    16, // SDF_DATATYPE_REAL16,
+    1,  // SDF_DATATYPE_CHARACTER,
+    1,  // SDF_DATATYPE_LOGICAL,
+    0,  // SDF_DATATYPE_OTHER,
+};
+
 enum sdf_dimension {
     SDF_DIMENSION_IRRELEVANT = 0,
     SDF_DIMENSION_1D,
