@@ -147,7 +147,11 @@ avtSDFFileFormat::OpenFile(int open_only)
     time = h->time;
     debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
 
-    if (open_only) return;
+    if (open_only) {
+        sdf_close(h);
+        h = NULL;
+        return;
+    }
 
     if (h->blocklist) return;
 
