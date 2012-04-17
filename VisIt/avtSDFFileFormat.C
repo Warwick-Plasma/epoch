@@ -281,9 +281,10 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
 
     md->SetMustAlphabetizeVariables(false);
 
-    sdf_block_t *b, *c;
+    sdf_block_t *b, *c, *next = h->blocklist;
     for (int i = 0; i < h->nblocks; i++) {
-        b = h->current_block;
+        b = h->current_block = next;
+        next = b->next;
         if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
                 b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
             debug1 << "Found mesh: " << b->id << " " << b->name << endl;
@@ -422,7 +423,6 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             AddSpeciesToMetaData(md, b->name, mesh->name, mat->name,
                 mat->ndims, nspec, specnames);
         }
-        h->current_block = b->next;
     }
 
     md->SetFormatCanDoDomainDecomposition(true);
