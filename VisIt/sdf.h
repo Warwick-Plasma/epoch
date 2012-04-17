@@ -190,7 +190,7 @@ struct sdf_file {
     uint32_t block_header_length, string_length, nblocks;
     uint32_t file_version, file_revision, code_io_version, step;
     int rank, ncpus, ndomains, rank_master, indent, print;
-    char *buffer;
+    char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float;
     char *code_name;
     sdf_block_t *blocklist, *current_block;

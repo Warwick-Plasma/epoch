@@ -13,6 +13,23 @@
 #define ABS(a) (((a) > 0) ? (a) : (-(a)))
 
 
+int sdf_fopen(sdf_file_t *h)
+{
+    int ret = 0;
+
+#ifdef PARALLEL
+    ret = MPI_File_open(h->comm, (char*)h->filename, MPI_MODE_RDONLY,
+        MPI_INFO_NULL, &h->filehandle);
+    if (ret) h->filehandle = 0;
+#else
+    h->filehandle = fopen(h->filename, "r");
+#endif
+    if (!h->filehandle) ret = 1;
+
+    return ret;
+}
+
+
 sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
 {
     sdf_file_t *h;
@@ -35,14 +52,15 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
 #ifdef PARALLEL
     h->comm = comm;
     h->rank = rank;
-    ret = MPI_File_open(h->comm, (char*)filename, MPI_MODE_RDONLY,
-        MPI_INFO_NULL, &h->filehandle);
-    if (ret) h->filehandle = 0;
 #else
     h->rank = 0;
-    h->filehandle = fopen(filename, "r");
 #endif
+    h->filename = malloc(strlen(filename)+1);
+    memcpy(h->filename, filename, strlen(filename)+1);
+
+    sdf_fopen(h);
     if (!h->filehandle) {
+        free(h->filename);
         free(h);
         h = NULL;
         return h;
@@ -172,6 +190,7 @@ static int sdf_free_handle(sdf_file_t *h)
     // Destroy handle
     if (h->buffer) free(h->buffer);
     if (h->code_name) free(h->code_name);
+    if (h->filename) free(h->filename);
     memset(h, 0, sizeof(sdf_file_t));
     free(h);
     h = NULL;
@@ -181,7 +200,7 @@ static int sdf_free_handle(sdf_file_t *h)
 
 
 
-int sdf_close(sdf_file_t *h)
+int sdf_fclose(sdf_file_t *h)
 {
     // No open file
     if (!h || !h->filehandle) return 1;
@@ -193,6 +212,19 @@ int sdf_close(sdf_file_t *h)
 #else
     fclose(h->filehandle);
 #endif
+    h->filehandle = 0;
+
+    return 0;
+}
+
+
+
+int sdf_close(sdf_file_t *h)
+{
+    // No open file
+    if (!h || !h->filehandle) return 1;
+
+    sdf_fclose(h);
 
     // Destroy filehandle
     sdf_free_handle(h);
