@@ -1052,6 +1052,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: x(nx), values(nx)
     REAL(num) :: fx, x_value, value_interp, xdif1, xdif2, xdifm
     INTEGER :: i1, i2, im
+    LOGICAL, SAVE :: warning = .TRUE.
 
     x_value = LOG10(x_in)
 
@@ -1075,11 +1076,14 @@ CONTAINS
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      PRINT*,'*** WARNING ***'
-      PRINT*,'Argument to "find_value_from_table_1d" outside the range ', &
-          'of the table.'
-      PRINT*,'Using truncated value.'
-      IF (xdif1 .LE. 0) THEN
+      IF (warning .AND. rank .EQ. 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Argument to "find_value_from_table_1d" outside the range ', &
+            'of the table.'
+        PRINT*,'Using truncated value. No more warnings will be issued.'
+        warning = .FALSE.
+      ENDIF
+      IF (xdif1 .GE. 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
@@ -1102,6 +1106,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: x(nx), y(nx,ny), p_table(nx,ny)
     INTEGER :: ix, index_lt, index_gt, i1, i2, im
     REAL(num) :: fx, fp, y_lt, y_gt, x_value, y_interp, xdif1, xdif2, xdifm
+    LOGICAL, SAVE :: warning = .TRUE.
 
     x_value = LOG10(x_in)
 
@@ -1126,11 +1131,14 @@ CONTAINS
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      PRINT*,'*** WARNING ***'
-      PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
-          'of the table.'
-      PRINT*,'Using truncated value.'
-      IF (xdif1 .LE. 0) THEN
+      IF (warning .AND. rank .EQ. 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
+            'of the table.'
+        PRINT*,'Using truncated value. No more warnings will be issued.'
+        warning = .FALSE.
+      ENDIF
+      IF (xdif1 .GE. 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
@@ -1162,11 +1170,14 @@ CONTAINS
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      PRINT*,'*** WARNING ***'
-      PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
-          'of the table.'
-      PRINT*,'Using truncated value.'
-      IF (xdif1 .LE. 0) THEN
+      IF (warning .AND. rank .EQ. 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
+            'of the table.'
+        PRINT*,'Using truncated value. No more warnings will be issued.'
+        warning = .FALSE.
+      ENDIF
+      IF (xdif1 .GE. 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
@@ -1197,11 +1208,14 @@ CONTAINS
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      PRINT*,'*** WARNING ***'
-      PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
-          'of the table.'
-      PRINT*,'Using truncated value.'
-      IF (xdif1 .LE. 0) THEN
+      IF (warning .AND. rank .EQ. 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
+            'of the table.'
+        PRINT*,'Using truncated value. No more warnings will be issued.'
+        warning = .FALSE.
+      ENDIF
+      IF (xdif1 .GE. 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
@@ -1228,6 +1242,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: x(nx), y(ny), p_table(nx,ny)
     INTEGER :: ix, index_lt, index_gt, i1, i2, im
     REAL(num) :: fx, fp, y_lt, y_gt, x_value, y_interp, xdif1, xdif2, xdifm
+    LOGICAL, SAVE :: warning = .TRUE.
 
     x_value = LOG10(x_in)
 
@@ -1252,11 +1267,14 @@ CONTAINS
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      PRINT*,'*** WARNING ***'
-      PRINT*,'Argument to "find_value_from_table" outside the range ', &
-          'of the table.'
-      PRINT*,'Using truncated value.'
-      IF (xdif1 .LE. 0) THEN
+      IF (warning .AND. rank .EQ. 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Argument to "find_value_from_table" outside the range ', &
+            'of the table.'
+        PRINT*,'Using truncated value. No more warnings will be issued.'
+        warning = .FALSE.
+      ENDIF
+      IF (xdif1 .GE. 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
@@ -1288,11 +1306,14 @@ CONTAINS
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      PRINT*,'*** WARNING ***'
-      PRINT*,'Argument to "find_value_from_table" outside the range ', &
-          'of the table.'
-      PRINT*,'Using truncated value.'
-      IF (xdif1 .LE. 0) THEN
+      IF (warning .AND. rank .EQ. 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Argument to "find_value_from_table" outside the range ', &
+            'of the table.'
+        PRINT*,'Using truncated value. No more warnings will be issued.'
+        warning = .FALSE.
+      ENDIF
+      IF (xdif1 .GE. 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
@@ -1323,11 +1344,14 @@ CONTAINS
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      PRINT*,'*** WARNING ***'
-      PRINT*,'Argument to "find_value_from_table" outside the range ', &
-          'of the table.'
-      PRINT*,'Using truncated value.'
-      IF (xdif1 .LE. 0) THEN
+      IF (warning .AND. rank .EQ. 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Argument to "find_value_from_table" outside the range ', &
+            'of the table.'
+        PRINT*,'Using truncated value. No more warnings will be issued.'
+        warning = .FALSE.
+      ENDIF
+      IF (xdif1 .GE. 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
