@@ -5,13 +5,14 @@
     </Extensions>
     <Files components="M,E">
       avtSDFFileFormat.C
-      sdf_control.c
-      sdf_derived.c
-      sdf_input.c
-      sdf_input_cartesian.c
-      sdf_input_point.c
-      sdf_util.c
+      SDF_lib/sdf_control.c
+      SDF_lib/sdf_derived.c
+      SDF_lib/sdf_input.c
+      SDF_lib/sdf_input_cartesian.c
+      SDF_lib/sdf_input_point.c
+      SDF_lib/sdf_util.c
     </Files>
+    <CXXFLAGS>-ISDF_lib -Iextension</CXXFLAGS>
     <Attribute name="" purpose="" persistent="true" keyframe="true" exportAPI="" exportInclude="">
     </Attribute>
   </Plugin>

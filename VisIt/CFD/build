@@ -1,7 +1,6 @@
 #! /bin/sh
 
-formats="$1"
-[ "$formats"x = x ] && formats="CFD SDF"
+fmt="CFD"
 
 version=`visit -version 2>&1 | sed 's,.* \([0-9]*\).*,\1,'`
 tmpdir=.tmp
@@ -37,33 +36,31 @@ buildit () {
   rm -rf $tmpdir
   mkdir -p $tmpdir
   if [ "$version"x != x ]; then
-    for fmt in $formats; do
-      xml2info -clobber ${fmt}${version}.xml
-      rm -f CMake* cmake* Makefile
-  
-      if [ $version -eq 1 ]; then
-        xml2makefile -clobber ${fmt}${version}.xml
-        if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
-          sed "s,\(^CXXFLAGS.*\),\1 -m32 $DBG \
+    xml2info -clobber ${fmt}${version}.xml
+    rm -f CMake* cmake* Makefile
+
+    if [ $version -eq 1 ]; then
+      xml2makefile -clobber ${fmt}${version}.xml
+      if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
+        sed "s,\(^CXXFLAGS.*\),\1 -m32 $DBG \
 CFLAGS=$(CFLAGSORIG) -m32 $DBG \
 PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile > .Makefile.tmp
-          \mv -f .Makefile.tmp Makefile
-        fi
-      else
-        xml2cmake -clobber ${fmt}${version}.xml
-        for f in `grep -w INCLUDE CMakeLists.txt | cut -f2 -d\"`; do
-          base=`basename $f`
-          sed 's,/usr/lib/libmpi[^;]*.dylib,,g;s,/usr/lib/libopen[^;]*.dylib,,g' $f > $tmpdir/$base
-          sed 's,INCLUDE("'$f',INCLUDE("'$tmpdir/$base',' \
-              CMakeLists.txt > $tmpdir/tmp
-          mv $tmpdir/tmp CMakeLists.txt
-        done
-        cmake $CDBG .
+        \mv -f .Makefile.tmp Makefile
       fi
-  
-      make clean
-      make 2> $tmpdir/err
-    done
+    else
+      xml2cmake -clobber ${fmt}${version}.xml
+      for f in `grep -w INCLUDE CMakeLists.txt | cut -f2 -d\"`; do
+        base=`basename $f`
+        sed 's,/usr/lib/libmpi[^;]*.dylib,,g;s,/usr/lib/libopen[^;]*.dylib,,g' $f > $tmpdir/$base
+        sed 's,INCLUDE("'$f',INCLUDE("'$tmpdir/$base',' \
+            CMakeLists.txt > $tmpdir/tmp
+        mv $tmpdir/tmp CMakeLists.txt
+      done
+      cmake $CDBG .
+    fi
+
+    make clean
+    make 2> $tmpdir/err
   else
     echo "Unable to build. Please add visit to your \$PATH"
   fi
@@ -89,13 +86,7 @@ if [ $? -ne 0 ]; then
   fi
 fi
 
-for fmt in $formats; do
-  if [ "$fmt"x = "SDF"x ]; then
-    gcc -DSDF_DEBUG_ALL $DBG -o sdf2ascii sdf2ascii.c \
-        sdf_control.c sdf_input.c sdf_input_cartesian.c \
-        sdf_input_point.c
-    python setup.py build -b pybuild install --user
-  fi
-done
+[ -x ./extension/build ] && ./extension/build
+[ -x ./utilities/build ] && ./utilities/build
 
 rm -rf $tmpdir
