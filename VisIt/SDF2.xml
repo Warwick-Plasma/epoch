@@ -6,12 +6,12 @@
     <Files components="M,E">
       avtSDFFileFormat.C
       avtSDFOptions.C
+      sdf_derived.c
       sdf_control.c
       sdf_util.c
       sdf_input.c
       sdf_input_cartesian.c
       sdf_input_point.c
-      sdf_derived.c
     </Files>
     <Attribute name="" purpose="" persistent="true" keyframe="true" exportAPI="" exportInclude="">
     </Attribute>
