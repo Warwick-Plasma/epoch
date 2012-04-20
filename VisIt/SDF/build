@@ -5,7 +5,24 @@ fmt="SDF"
 version=`visit -version 2>&1 | sed 's,.* \([0-9]*\).*,\1,'`
 tmpdir=.tmp
 
-debug=0
+clean=0
+DBG=""
+DEBUG=""
+PRIVATE="-private"
+VERBOSE=""
+OPTS="$*"
+
+while getopts cdpv name
+do
+   echo $name $OPTIND $OPTARG
+   case $name in
+      c) clean=1 ;;
+      d) DBG="-g -O0";
+         DEBUG="-DCMAKE_BUILD_TYPE=Debug" ;;
+      p) PRIVATE="-public" ;;
+      v) VERBOSE="VERBOSE=1" ;;
+   esac
+done
 
 # Find directory containing the actual visit binary
 cwd=`pwd`
@@ -22,13 +39,6 @@ while [ $i -lt 100 ]; do
 done
 cd "$cwd"
 
-if [ $debug -ne 0 ]; then
-  DBG=""
-  CDBG=""
-else
-  DBG="-g -O0"
-  CDBG="-DCMAKE_BUILD_TYPE=Debug"
-fi
 
 export PATH=$visitpath:$PATH
 export CXXFLAGS="-Wno-deprecated $DBG"
@@ -37,11 +47,11 @@ buildit () {
   rm -rf $tmpdir
   mkdir -p $tmpdir
   if [ "$version"x != x ]; then
-    xml2info -clobber ${fmt}${version}.xml
-    rm -f CMake* cmake* Makefile
+    xml2info -clobber $PRIVATE ${fmt}${version}.xml
+    rm -rf CMake* cmake* Makefile
 
     if [ $version -eq 1 ]; then
-      xml2makefile -clobber ${fmt}${version}.xml
+      xml2makefile -clobber $PRIVATE ${fmt}${version}.xml
       if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
         sed "s,\(^CXXFLAGS.*\),\1 -m32 $DBG \
 CFLAGS=$(CFLAGSORIG) -m32 $DBG \
@@ -49,7 +59,7 @@ PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile
         \mv -f .Makefile.tmp Makefile
       fi
     else
-      xml2cmake -clobber ${fmt}${version}.xml
+      xml2cmake -clobber $PRIVATE ${fmt}${version}.xml
       for f in `grep -w INCLUDE CMakeLists.txt | cut -f2 -d\"`; do
         base=`basename $f`
         sed 's,/usr/lib/libmpi[^;]*.dylib,,g;s,/usr/lib/libopen[^;]*.dylib,,g' $f > $tmpdir/$base
@@ -57,7 +67,7 @@ PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile
             CMakeLists.txt > $tmpdir/tmp
         mv $tmpdir/tmp CMakeLists.txt
       done
-      cmake $CDBG .
+      cmake $DEBUG .
     fi
 
     make clean
@@ -68,26 +78,31 @@ PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile
 }
 
 
-buildit
-
-if [ $? -ne 0 ]; then
-  mpi=0
-  grep -w mpi.h $tmpdir/err > /dev/null && mpi=1
-  grep -w lmpi $tmpdir/err > /dev/null && mpi=1
-  grep -w MPI $tmpdir/err > /dev/null && mpi=1
-  grep libmpi $tmpdir/err > /dev/null && mpi=1
-  if [ $mpi -ne 0 ]; then
-    echo "Trying again with mpicc"
-    # Execute in a subshell to stop CC being altered in the current shell.
-    (export CC=mpicc
-    export CXX=mpicxx
-    buildit)
-  else
-    cat $tmpdir/err
+if [ $clean -eq 1 ]; then
+  make clean > /dev/null 2>&1
+  rm -rf CMake* cmake* Makefile SDF*Info.C SDF*Info.h
+else
+  buildit
+  
+  if [ $? -ne 0 ]; then
+    mpi=0
+    grep -w mpi.h $tmpdir/err > /dev/null && mpi=1
+    grep -w lmpi $tmpdir/err > /dev/null && mpi=1
+    grep -w MPI $tmpdir/err > /dev/null && mpi=1
+    grep libmpi $tmpdir/err > /dev/null && mpi=1
+    if [ $mpi -ne 0 ]; then
+      echo "Trying again with mpicc"
+      # Execute in a subshell to stop CC being altered in the current shell.
+      (export CC=mpicc
+      export CXX=mpicxx
+      buildit)
+    else
+      cat $tmpdir/err
+    fi
   fi
 fi
 
-[ -x ./extension/build ] && ./extension/build
-[ -x ./utilities/build ] && ./utilities/build
+[ -x ./extension/build ] && ./extension/build $OPTS
+[ -x ./utilities/build ] && ./utilities/build $OPTS
 
 rm -rf $tmpdir
