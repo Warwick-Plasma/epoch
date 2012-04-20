@@ -5,7 +5,10 @@
 sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
-    b->data = mesh->grids[b->nm];
+
+    if (!b->grids) b->grids = calloc(1, sizeof(float*));
+    b->data = b->grids[0] = mesh->grids[b->nm];
+    b->local_dims[0] = b->nlocal = mesh->nlocal;
     return b;
 }
 
@@ -14,7 +17,8 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 {
     sdf_block_t *b, *cur, *append, *append_head, *append_tail;
     int i, len1, len2, nappend = 0;
-    char *str;
+    char *str, *name1, *name2;
+    char *grid_ids[] = { "x", "y", "z" };
 
     cur = h->current_block;
     append = append_head = calloc(1, sizeof(sdf_block_t));
@@ -23,26 +27,34 @@ int sdf_add_derived_blocks(sdf_file_t *h)
     while (b) {
         if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
             for (i = 0; i < b->ndims; i++) {
+                // Add 1d arrays for each coordinate dimension of the
+                // particles. (ie. all the x's, all the y's, all the z's).
+                // These are required in order to perform scatter plots.
                 append->next = calloc(1, sizeof(sdf_block_t));
 
                 nappend++;
                 append = append_tail = append->next;
                 append->next = NULL;
 
-                len1 = strlen(b->id);
-                len2 = strlen(b->dim_labels[i]);
+                name1 = b->id;
+                name2 = grid_ids[i];
+                len1 = strlen(name1);
+                len2 = strlen(name2);
                 str = (char*)malloc(len1 + len2 + 2);
-                memcpy(str, b->id, len1);
+                memcpy(str, name1, len1);
                 str[len1] = '/';
-                memcpy(str+len1+1, b->dim_labels[i], len2);
+                memcpy(str+len1+1, name2, len2);
                 str[len1+len2+1] = '\0';
                 append->id = str;
 
-                len1 = strlen(b->name);
+                name1 = b->name;
+                name2 = b->dim_labels[i];
+                len1 = strlen(name1);
+                len2 = strlen(name2);
                 str = (char*)malloc(len1 + len2 + 2);
-                memcpy(str, b->name, len1);
+                memcpy(str, name1, len1);
                 str[len1] = '/';
-                memcpy(str+len1+1, b->dim_labels[i], len2);
+                memcpy(str+len1+1, name2, len2);
                 str[len1+len2+1] = '\0';
                 append->name = str;
 
@@ -58,6 +70,8 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append->populate_data = sdf_callback_grid_component;
                 append->done_header = 1;
                 append->blocktype = SDF_BLOCKTYPE_POINT_DERIVED;
+                // Hack to prevent storage being allocated for this variable.
+                append->data = 1;
             }
         }
         b = b->next;
