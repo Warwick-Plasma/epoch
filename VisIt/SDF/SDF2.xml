@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
   <Plugin name="SDF" type="database" label="Self Describing Format" version="1.0ALPHA" enabled="true" mdspecificcode="false" engspecificcode="false" onlyengine="false" noengine="false" dbtype="STMD" haswriter="false" hasoptions="true" filePatternsStrict="false" opensWholeDirectory="false">
-    <Extensions>
-      sdf
-    </Extensions>
+    <FilePatterns>
+      *.sdf
+    </FilePatterns>
     <Files components="M,E">
       avtSDFFileFormat.C
-      sdf_derived.c
+      avtSDFOptions.C
       sdf_control.c
-      sdf_util.c
+      sdf_derived.c
       sdf_input.c
       sdf_input_cartesian.c
       sdf_input_point.c
+      sdf_util.c
     </Files>
     <Attribute name="" purpose="" persistent="true" keyframe="true" exportAPI="" exportInclude="">
     </Attribute>
