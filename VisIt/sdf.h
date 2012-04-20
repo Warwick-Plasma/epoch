@@ -164,10 +164,10 @@ struct sdf_block {
     uint32_t type_size, stagger, datatype_out, type_size_out;
     uint32_t *dims_in;
     uint64_t dims[3];
-    int local_dims[3], nm, nlocal;
+    int local_dims[3], nm, nlocal, n_ids, opt;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
-    char *name, *material_name;
+    char *name, *material_name, *must_read;
     char **dim_labels, **dim_units;
     char **variable_ids, **material_names;
     char done_header, done_info, done_data;
@@ -195,6 +195,7 @@ struct sdf_file {
     char *code_name;
     sdf_block_t *blocklist, *current_block;
     char *mmap;
+    void *ext_data;
 #ifdef SDF_DEBUG
     char *dbg, *dbg_buf;
     size_t dbg_count;

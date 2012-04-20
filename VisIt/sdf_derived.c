@@ -50,8 +50,11 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 SDF_SET_ENTRY_ID(append->mesh_id, b->id);
                 append->nm = i;
                 append->ndims = 1;
-                append->variable_ids = calloc(append->ndims, sizeof(char*));
+                append->n_ids = 1;
+                append->variable_ids = calloc(append->n_ids, sizeof(char*));
                 SDF_SET_ENTRY_ID(append->variable_ids[0], b->id);
+                append->must_read = calloc(append->n_ids, sizeof(char*));
+                append->must_read[0] = 1;
                 append->populate_data = sdf_callback_grid_component;
                 append->done_header = 1;
                 append->blocktype = SDF_BLOCKTYPE_POINT_DERIVED;

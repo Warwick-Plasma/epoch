@@ -71,7 +71,10 @@
 #include <InvalidFilesException.h>
 #include <InvalidVariableException.h>
 
+#include <dlfcn.h>
+
 using     std::string;
+int avtSDFFileFormat::extension_not_found = 0;
 
 
 // ****************************************************************************
@@ -133,6 +136,49 @@ static inline void stack_init(void)
 }
 
 
+sdf_extension_t *avtSDFFileFormat::sdf_extension_load(sdf_file_t *h)
+{
+    if (avtSDFFileFormat::extension_not_found) return NULL;
+
+    sdf_extension_handle = dlopen("sdf_extension.so", RTLD_LAZY);
+
+    if (!sdf_extension_handle) {
+        avtSDFFileFormat::extension_not_found = 1;
+        cerr << dlerror() << endl;
+        return NULL;
+    }
+
+    sdf_extension_create_t *sdf_extension_create =
+        (sdf_extension_create_t *)dlsym(sdf_extension_handle,
+        "sdf_extension_create");
+
+    sdf_extension_t *ext = sdf_extension_create(h);
+
+    if (!ext) avtSDFFileFormat::extension_not_found = 1;
+
+    return ext;
+}
+
+
+void avtSDFFileFormat::sdf_extension_unload(void)
+{
+    if (!sdf_extension_handle) return;
+
+    sdf_extension_destroy_t *sdf_extension_destroy =
+        (sdf_extension_destroy_t *)dlsym(sdf_extension_handle,
+        "sdf_extension_destroy");
+
+    sdf_extension_destroy(ext);
+
+    dlclose(sdf_extension_handle);
+
+    sdf_extension_destroy = NULL;
+    ext = NULL;
+
+    return;
+}
+
+
 // ****************************************************************************
 //  Helper routine for opening SDF files.
 // ****************************************************************************
@@ -148,16 +194,49 @@ avtSDFFileFormat::OpenFile(int open_only)
     debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
 
     if (open_only) {
+        // Retrieve the extended interface library from the plugin manager
+        ext = sdf_extension_load(h);
+
         sdf_close(h);
         h = NULL;
         return;
     }
 
-    if (h->blocklist) return;
+    if (h->blocklist) {
+        if (ext) ext->timestate_update(ext, h);
+        return;
+    }
 
     sdf_read_blocklist(h);
     // Append derived data to the blocklist using built-in library.
     sdf_add_derived_blocks(h);
+
+    if (ext) {
+        char **preload;
+
+        preload = ext->preload(ext, h);
+        // For each entry in the preload array, try to find the block
+        // and populate its data.
+        if (preload) {
+            sdf_block_t *var, *cur;
+            int n = 0;
+            cur = h->current_block;
+            while(preload[n]) {
+                var = sdf_find_block_by_id(h, preload[n]);
+                if (var && !var->data) {
+                    h->current_block = var;
+                    sdf_read_data(h);
+                }
+                free(preload[n]);
+                n++;
+            }
+            free(preload);
+            h->current_block = cur;
+        }
+
+        // Append derived data to the blocklist using the extension library.
+        ext->read_blocklist(ext, h);
+    }
 }
 
 
@@ -189,6 +268,7 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
     memcpy(this->filename, filename, strlen(filename)+1);
     gotMetadata = false;
     h = NULL;
+    sdf_extension_handle = NULL;
 
     use_float = 0;
     if (readOpts) {
@@ -237,6 +317,7 @@ avtSDFFileFormat::~avtSDFFileFormat(void)
     filename = NULL;
     if (h) sdf_close(h);
     h = NULL;
+    sdf_extension_unload();
 }
 
 
@@ -719,10 +800,12 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED ||
                b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
         sdf_block_t *var;
-        for (int i = 0; i < b->ndims; i++) {
+        for (int i = 0; i < b->n_ids; i++) {
             // Fill in derived components which are not already cached
-            var = sdf_find_block_by_id(h, b->variable_ids[i]);
-            if (!var->data) GetArray(domain, var->name);
+            if (b->must_read[i]) {
+                var = sdf_find_block_by_id(h, b->variable_ids[i]);
+                if (var && !var->data) GetArray(domain, var->name);
+            }
         }
 
         // Allocate derived variable data if required

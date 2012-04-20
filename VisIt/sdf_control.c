@@ -74,8 +74,13 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
 #define FREE_ARRAY(value) do { \
     if (value) { \
         int i; \
-        for (i = 0; i < b->ndims; i++) \
-            free(value[i]); \
+        if (b->n_ids) { \
+            for (i = 0; i < b->n_ids; i++) \
+                if (value[i]) free(value[i]); \
+        } else { \
+            for (i = 0; i < b->ndims; i++) \
+                if (value[i]) free(value[i]); \
+        } \
         free(value); \
     }} while(0)
 
