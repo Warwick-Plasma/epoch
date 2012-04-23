@@ -8,7 +8,10 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 
     if (!b->grids) b->grids = calloc(1, sizeof(float*));
     b->data = b->grids[0] = mesh->grids[b->nm];
-    b->local_dims[0] = b->nlocal = mesh->nlocal;
+    if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED)
+        b->local_dims[0] = b->nlocal = mesh->nlocal;
+    else
+        b->local_dims[0] = mesh->local_dims[b->nm];
     return b;
 }
 
@@ -25,7 +28,8 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 
     b = h->blocklist;
     while (b) {
-        if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+        if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH
+            || b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
             for (i = 0; i < b->ndims; i++) {
                 // Add 1d arrays for each coordinate dimension of the
                 // particles. (ie. all the x's, all the y's, all the z's).
@@ -36,19 +40,29 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append = append_tail = append->next;
                 append->next = NULL;
 
-                name1 = b->id;
-                name2 = grid_ids[i];
-                len1 = strlen(name1);
-                len2 = strlen(name2);
-                str = (char*)malloc(len1 + len2 + 2);
-                memcpy(str, name1, len1);
-                str[len1] = '/';
-                memcpy(str+len1+1, name2, len2);
-                str[len1+len2+1] = '\0';
-                append->id = str;
+                if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+                    name1 = b->id;
+                    name2 = grid_ids[i];
+                    len1 = strlen(name1);
+                    len2 = strlen(name2);
+                    str = (char*)malloc(len1 + len2 + 2);
+                    memcpy(str, name1, len1);
+                    str[len1] = '/';
+                    memcpy(str+len1+1, name2, len2);
+                    str[len1+len2+1] = '\0';
+                    append->id = str;
+
+                    append->blocktype = SDF_BLOCKTYPE_POINT_DERIVED;
+                    name2 = b->dim_labels[i];
+                } else {
+                    append->id = NULL;
+                    SDF_SET_ENTRY_ID(append->id, grid_ids[i]);
+
+                    append->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
+                    name2 = grid_ids[i];
+                }
 
                 name1 = b->name;
-                name2 = b->dim_labels[i];
                 len1 = strlen(name1);
                 len2 = strlen(name2);
                 str = (char*)malloc(len1 + len2 + 2);
@@ -69,7 +83,6 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append->must_read[0] = 1;
                 append->populate_data = sdf_callback_grid_component;
                 append->done_header = 1;
-                append->blocktype = SDF_BLOCKTYPE_POINT_DERIVED;
                 // Hack to prevent storage being allocated for this variable.
                 append->data = 1;
             }
