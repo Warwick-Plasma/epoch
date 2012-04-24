@@ -963,14 +963,15 @@ CONTAINS
 
 
 
-  SUBROUTINE write_1d_array_integer(h, id, name, array, rank_write)
+  SUBROUTINE write_1d_array_integer_spec(h, id, name, n1, array, rank_write)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: n1
     INTEGER, DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: errcode, n1
+    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
@@ -983,7 +984,6 @@ CONTAINS
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
 
-    n1 = SIZE(array,1)
     b%dims(1) = n1
 
     ! Write header
@@ -1004,6 +1004,22 @@ CONTAINS
     h%rank_master = h%default_rank
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
+
+  END SUBROUTINE write_1d_array_integer_spec
+
+
+
+  SUBROUTINE write_1d_array_integer(h, id, name, array, rank_write)
+
+    INTEGER, PARAMETER :: ndims = 1
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: n1
+
+    n1 = SIZE(array,1)
+    CALL write_1d_array_integer_spec(h, id, name, n1, array, rank_write)
 
   END SUBROUTINE write_1d_array_integer
 
@@ -1080,15 +1096,16 @@ CONTAINS
 
 
 
-  SUBROUTINE write_1d_array_logical(h, id, name, array, rank_write)
+  SUBROUTINE write_1d_array_logical_spec(h, id, name, n1, array, rank_write)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: n1
     LOGICAL, DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     CHARACTER(LEN=1), DIMENSION(:), ALLOCATABLE :: carray
-    INTEGER :: errcode, n1, i
+    INTEGER :: errcode, i
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
@@ -1101,7 +1118,6 @@ CONTAINS
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
 
-    n1 = SIZE(array,1)
     b%dims(1) = n1
 
     ! Write header
@@ -1133,6 +1149,23 @@ CONTAINS
     h%rank_master = h%default_rank
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
+
+  END SUBROUTINE write_1d_array_logical_spec
+
+
+
+  SUBROUTINE write_1d_array_logical(h, id, name, array, rank_write)
+
+    INTEGER, PARAMETER :: ndims = 1
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    CHARACTER(LEN=1), DIMENSION(:), ALLOCATABLE :: carray
+    INTEGER :: n1
+
+    n1 = SIZE(array,1)
+    CALL write_1d_array_logical_spec(h, id, name, n1, array, rank_write)
 
   END SUBROUTINE write_1d_array_logical
 

@@ -21,15 +21,19 @@ MODULE sdf_output
         write_constant_integer, &
         write_constant_logical, &
         write_1d_array_real_r4, &
+        write_1d_array_real_spec_r4, &
         write_2d_array_real_r4, &
         write_2d_array_real_spec_r4, &
         write_1d_array_real_r8, &
+        write_1d_array_real_spec_r8, &
         write_2d_array_real_r8, &
         write_2d_array_real_spec_r8, &
         write_1d_array_integer, &
+        write_1d_array_integer_spec, &
         write_2d_array_integer, &
         write_2d_array_integer_spec, &
         write_1d_array_logical, &
+        write_1d_array_logical_spec, &
         write_2d_array_character
   END INTERFACE sdf_write_srl
 
