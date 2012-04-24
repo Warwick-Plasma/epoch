@@ -12,6 +12,7 @@ MODULE sdf_input_point
   INTERFACE sdf_read_point_mesh_info
     MODULE PROCEDURE &
         read_point_mesh_info_ru, &
+        read_point_mesh_info_i4_ru, &
         read_point_mesh_info_r4, &
         read_point_mesh_info_r8
   END INTERFACE sdf_read_point_mesh_info

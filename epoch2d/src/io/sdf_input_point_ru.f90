@@ -88,6 +88,20 @@ CONTAINS
 
 
 
+  SUBROUTINE read_point_mesh_info_i4_ru(h, npoints, geometry)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i4), INTENT(OUT) :: npoints
+    INTEGER, INTENT(OUT), OPTIONAL :: geometry
+    INTEGER(i8) :: npoints8
+
+    CALL read_point_mesh_info_ru(h, npoints8, geometry)
+    npoints = INT(npoints8,i4)
+
+  END SUBROUTINE read_point_mesh_info_i4_ru
+
+
+
   ! Variable loading functions
 
   SUBROUTINE read_point_variable_info_ru(h, npoints, mesh_id, units)
