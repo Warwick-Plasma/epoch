@@ -1168,8 +1168,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
-    CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
+    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids)
 
     idx = 0
@@ -1238,8 +1237,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
-    CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
+    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids)
 
     idx = 0
@@ -1308,8 +1306,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
-    CALL sdf_write_stitched_matvar(h, id, temp_name, mesh_id, stagger, &
+    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids)
 
     idx = 0
