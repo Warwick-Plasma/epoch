@@ -51,6 +51,7 @@ MODULE sdf_common
     REAL(r8) :: time
     INTEGER(i8) :: first_block_location, summary_location, start_location
     INTEGER(i8) :: soi ! large integer to prevent overflow in calculations
+    INTEGER(i8) :: data_location
     INTEGER(i4) :: endianness, summary_size
     INTEGER(i4) :: block_header_length, string_length, nblocks, error_code
     INTEGER(i4) :: file_version, file_revision, code_io_version, step
@@ -359,6 +360,7 @@ CONTAINS
     var%done_header = .FALSE.
     var%done_info = .FALSE.
     var%done_data = .FALSE.
+    var%data_location = 0
 
   END SUBROUTINE initialise_block_type
 

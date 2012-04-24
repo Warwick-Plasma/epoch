@@ -48,6 +48,7 @@ CONTAINS
     h%summary_location = h%first_block_location
     h%summary_size = 0
     h%current_location = 0
+    h%data_location = 0
 
     IF (h%rank .EQ. h%rank_master) THEN
       CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
@@ -236,8 +237,13 @@ CONTAINS
       RETURN
     ENDIF
 
-    b%data_location = b%block_start + b%info_length
-    b%next_block_location = b%data_location + b%data_length
+    IF (h%data_location .NE. 0) THEN
+      b%data_location = h%data_location
+      b%next_block_location = b%block_start + b%info_length
+    ELSE
+      b%data_location = b%block_start + b%info_length
+      b%next_block_location = b%data_location + b%data_length
+    ENDIF
 
     CALL get_unique_id(h, id, new_id)
     CALL safe_copy_string(new_id, b%id)

@@ -483,6 +483,7 @@ CONTAINS
 
     ! Write the actual data
 
+    h%current_location = b%data_location
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
@@ -539,6 +540,7 @@ CONTAINS
 
     ! Write the actual data
 
+    h%current_location = b%data_location
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
@@ -595,6 +597,7 @@ CONTAINS
 
     ! Write the actual data
 
+    h%current_location = b%data_location
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
@@ -651,6 +654,7 @@ CONTAINS
 
     ! Write the actual data
 
+    h%current_location = b%data_location
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
