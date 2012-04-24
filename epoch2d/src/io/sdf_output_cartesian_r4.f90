@@ -268,7 +268,7 @@ CONTAINS
 
     ! Write the actual data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray(1), &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
         MPI_STATUS_IGNORE, errcode)
@@ -336,14 +336,14 @@ CONTAINS
 
     ! Write the actual data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray(1), &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
         MPI_STATUS_IGNORE, errcode)
 
     h%current_location = h%current_location + b%dims(1) * b%type_size
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray(2), &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(2), 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, y, 1, subarray(2), &
         MPI_STATUS_IGNORE, errcode)
@@ -413,21 +413,21 @@ CONTAINS
 
     ! Write the actual data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray(1), &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
         MPI_STATUS_IGNORE, errcode)
 
     h%current_location = h%current_location + b%dims(1) * b%type_size
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray(2), &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(2), 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, y, 1, subarray(2), &
         MPI_STATUS_IGNORE, errcode)
 
     h%current_location = h%current_location + b%dims(2) * b%type_size
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray(3), &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(3), 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, z, 1, subarray(3), &
         MPI_STATUS_IGNORE, errcode)
@@ -483,7 +483,7 @@ CONTAINS
 
     ! Write the actual data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
         MPI_STATUS_IGNORE, errcode)
@@ -539,7 +539,7 @@ CONTAINS
 
     ! Write the actual data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
         MPI_STATUS_IGNORE, errcode)
@@ -595,7 +595,7 @@ CONTAINS
 
     ! Write the actual data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
         MPI_STATUS_IGNORE, errcode)
@@ -651,7 +651,7 @@ CONTAINS
 
     ! Write the actual data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
     CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
         MPI_STATUS_IGNORE, errcode)

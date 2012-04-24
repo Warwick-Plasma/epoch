@@ -35,7 +35,7 @@ CONTAINS
 
     subtype = create_current_field_subtype()
     subarray = create_current_field_subarray()
-    CALL MPI_FILE_SET_VIEW(fh, offset, subarray, subtype, 'native', &
+    CALL MPI_FILE_SET_VIEW(fh, offset, MPI_BYTE, subtype, 'native', &
         MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(fh, array, 1, subarray, MPI_STATUS_IGNORE, errcode)

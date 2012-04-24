@@ -172,7 +172,7 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
@@ -216,7 +216,7 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
@@ -260,7 +260,7 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
@@ -304,7 +304,7 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
@@ -348,7 +348,7 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
@@ -392,7 +392,7 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, subarray, &
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &

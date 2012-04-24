@@ -410,7 +410,7 @@ CONTAINS
           gmx(idim) = REAL(MAX(gmx(idim),MAXVAL(array(1:npoint_this_cycle))),r8)
         ENDIF
 
-        CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, b%mpitype, &
+        CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, MPI_BYTE, &
             b%mpitype, 'native', MPI_INFO_NULL, errcode)
         CALL MPI_FILE_WRITE_ALL(h%filehandle, array, npoint_this_cycle, &
             b%mpitype, MPI_STATUS_IGNORE, errcode)
@@ -596,7 +596,7 @@ CONTAINS
 
       IF (start) start = .FALSE.
 
-      CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, b%mpitype, &
+      CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, MPI_BYTE, &
           b%mpitype, 'native', MPI_INFO_NULL, errcode)
       CALL MPI_FILE_WRITE_ALL(h%filehandle, array, npoint_this_cycle, &
           b%mpitype, MPI_STATUS_IGNORE, errcode)

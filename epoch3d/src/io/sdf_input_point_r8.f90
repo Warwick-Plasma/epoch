@@ -208,8 +208,8 @@ CONTAINS
       npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
       npoint_this_it  = INT(npoint_this_it8)
 
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, &
-          b%mpitype, distribution, 'native', MPI_INFO_NULL, errcode)
+      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+          distribution, 'native', MPI_INFO_NULL, errcode)
 
       DO WHILE (npoint_this_it .GT. 0)
         CALL MPI_FILE_READ(h%filehandle, array, npoint_this_it, b%mpitype, &
@@ -288,8 +288,8 @@ CONTAINS
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, &
-        b%mpitype, distribution, 'native', MPI_INFO_NULL, errcode)
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
 
     start = .TRUE.
     npoint_per_it8 = MIN(npoint_local, npoint_per_iteration)
