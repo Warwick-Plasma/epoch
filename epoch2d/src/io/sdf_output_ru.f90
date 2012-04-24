@@ -545,6 +545,53 @@ CONTAINS
 
 
 
+  SUBROUTINE sdf_write_stitched_tensor_mat(h, id, name, mesh_id, stagger, &
+      variable_ids, nmat, material_names, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
+    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: nmat
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_names(:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: i, j, ndims
+    INTEGER, PARAMETER :: maxstring = 512
+    CHARACTER(LEN=maxstring) :: temp_name
+    CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: ids
+    CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: new_variable_ids
+
+    ALLOCATE(ids(nmat))
+
+    DO i = 1,nmat
+      IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
+        ids(i) = ''
+      ELSE
+        CALL sdf_safe_string_composite(h, id, &
+            sdf_string_lowercase(material_names(i)), ids(i))
+      ENDIF
+    ENDDO
+
+    ndims = INT(SIZE(variable_ids),i4)
+    ALLOCATE(new_variable_ids(ndims))
+    DO i = 1,nmat
+      IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
+      DO j = 1,ndims
+        CALL sdf_safe_string_composite(h, variable_ids(j), &
+            sdf_string_lowercase(material_names(i)), new_variable_ids(j))
+      ENDDO
+      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
+      CALL sdf_write_stitched_tensor(h, ids(i), temp_name, mesh_id, &
+          stagger, new_variable_ids, rank_write)
+    ENDDO
+
+    DEALLOCATE(ids)
+    DEALLOCATE(new_variable_ids)
+
+  END SUBROUTINE sdf_write_stitched_tensor_mat
+
+
+
   SUBROUTINE sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
       material_names, variable_ids, rank_write)
 
