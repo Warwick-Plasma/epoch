@@ -38,14 +38,20 @@ static inline int sdf_get_next_block(sdf_file_t *h)
         else {
             sdf_block_t *block = malloc(sizeof(sdf_block_t));
             memset(block, 0, sizeof(sdf_block_t));
-            block->block_start = h->tail->next_block_location;
+            if (h->use_summary)
+                block->block_start = h->tail->next_block_location;
+            else
+                block->block_start = h->current_location;
             h->tail->next = block;
             h->current_block = h->tail = block;
         }
     } else {
         sdf_block_t *block = malloc(sizeof(sdf_block_t));
         memset(block, 0, sizeof(sdf_block_t));
-        block->block_start = h->summary_location;
+        if (h->use_summary)
+            block->block_start = h->summary_location;
+        else
+            block->block_start = 0;
         h->blocklist = h->tail = h->current_block = block;
     }
 
@@ -82,7 +88,7 @@ int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen)
     return MPI_File_read(h->filehandle, buf, buflen, MPI_BYTE,
             MPI_STATUS_IGNORE);
 #else
-    return fread(buf, buflen, 1, h->filehandle);
+    return (1 != fread(buf, buflen, 1, h->filehandle));
 #endif
 }
 
@@ -170,6 +176,8 @@ int sdf_read_header(sdf_file_t *h)
     h->current_location = SDF_HEADER_LENGTH;
     h->done_header = 1;
 
+    if (h->summary_location == 0) h->use_summary = 0;
+
     return 0;
 }
 
@@ -208,7 +216,8 @@ int sdf_read_next_block_header(sdf_file_t *h)
     h->indent = 2;
     SDF_DPRNT("\n");
 
-    h->current_location = b->block_start;
+    if (h->use_summary)
+        h->current_location = b->block_start;
 
     SDF_READ_ENTRY_INT8(b->next_block_location);
 
@@ -351,6 +360,111 @@ int sdf_read_block_info(sdf_file_t *h)
 
 
 
+// Read all the block metadata sections and copy them into
+// one contiguous buffer (h->buffer).
+static void build_summary_buffer(sdf_file_t *h)
+{
+    int i, buflen;
+    uint64_t data_location, block_location, next_block_location;
+    uint32_t block_info_length;
+    void *bufptr;
+
+    struct list_entry {
+        void *buffer;
+        int len;
+        struct list_entry *next;
+    } *blockbuf_head, *blockbuf;
+
+    h->current_location = h->first_block_location;
+
+    // Read the file and build the buffer on rank zero.
+    if (h->rank == h->rank_master) {
+        next_block_location = block_location = h->current_location;
+
+        blockbuf_head = blockbuf = calloc(1,sizeof(*blockbuf));
+        buflen = 0;
+        h->nblocks = 0;
+        // Read the block metadata into a temporary linked list structure
+        while (1) {
+            if (h->summary_location &&
+                h->current_location >= h->summary_location) break;
+
+            sdf_seek(h);
+
+            // Read the fixed length block header
+            blockbuf->len = h->block_header_length;
+            blockbuf->buffer = malloc(blockbuf->len);
+            i = sdf_read_bytes(h, blockbuf->buffer, blockbuf->len);
+            if (i != 0) break;
+
+            memcpy(&next_block_location, blockbuf->buffer, sizeof(uint64_t));
+            memcpy(&data_location, blockbuf->buffer+8, sizeof(uint64_t));
+
+            if (data_location > block_location)
+                block_info_length = data_location
+                    - block_location - h->block_header_length;
+            else
+                block_info_length = next_block_location
+                    - block_location - h->block_header_length;
+
+            // Read the block specific metadata if it exists
+            if (block_info_length > 0) {
+                blockbuf->next = calloc(1,sizeof(*blockbuf));
+                blockbuf = blockbuf->next;
+
+                blockbuf->len = block_info_length;
+                blockbuf->buffer = malloc(blockbuf->len);
+                i = sdf_read_bytes(h, blockbuf->buffer, blockbuf->len);
+                if (i != 0) break;
+            }
+
+            buflen += h->block_header_length + block_info_length;
+
+            h->current_location = block_location = next_block_location;
+            h->nblocks++;
+
+            blockbuf->next = calloc(1,sizeof(*blockbuf));
+            blockbuf = blockbuf->next;
+        }
+
+        if (blockbuf->buffer) {
+            free(blockbuf->buffer);
+            blockbuf->buffer = NULL;
+        }
+
+        // Copy the contents of the linked list into a single contiguous buffer.
+        bufptr = h->buffer = malloc(buflen);
+        while (blockbuf_head) {
+            blockbuf = blockbuf_head;
+
+            if (blockbuf->buffer == NULL) {
+                free(blockbuf);
+                break;
+            }
+
+            memcpy(bufptr, blockbuf->buffer, blockbuf->len);
+            bufptr += blockbuf->len;
+
+            blockbuf_head = blockbuf->next;
+
+            free(blockbuf->buffer);
+            free(blockbuf);
+        }
+    }
+
+    // Send the temporary buffer length to all processors
+    sdf_broadcast(h, &buflen, sizeof(buflen));
+
+    // Allocate the buffer on all non rank zero processors
+    if (h->rank != h->rank_master)
+        h->buffer = malloc(buflen);
+
+    h->summary_size = buflen;
+    h->current_location = 0;
+}
+
+
+
 int sdf_read_blocklist(sdf_file_t *h)
 {
     int i, buflen;
@@ -364,17 +478,20 @@ int sdf_read_blocklist(sdf_file_t *h)
     h->current_block = NULL;
 
     // Read the whole summary block into a temporary buffer on rank 0
-    buflen = h->summary_size;
-    h->current_location = h->start_location = h->summary_location;
-    h->buffer = malloc(buflen);
+    if (h->use_summary > 0) {
+        h->current_location = h->start_location = h->summary_location;
+        h->buffer = malloc(h->summary_size);
 
-    if (h->rank == h->rank_master) {
-        sdf_seek(h);
-        sdf_read_bytes(h, h->buffer, buflen);
+        if (h->rank == h->rank_master) {
+            sdf_seek(h);
+            sdf_read_bytes(h, h->buffer, h->summary_size);
+        }
+    } else {
+        build_summary_buffer(h);
     }
 
     // Send the temporary buffer to all processors
-    sdf_broadcast(h, h->buffer, buflen);
+    sdf_broadcast(h, h->buffer, h->summary_size);
 
     // Construct the metadata blocklist using the contents of the buffer
     for (i = 0; i < h->nblocks; i++) {
@@ -382,6 +499,7 @@ int sdf_read_blocklist(sdf_file_t *h)
     }
 
     free(h->buffer);
+
     h->buffer = NULL;
     h->current_block = h->blocklist;
 
@@ -512,7 +630,6 @@ int sdf_read_constant(sdf_file_t *h)
     SDF_READ_ENTRY_CONST(b->const_value);
 
     b->stagger = SDF_STAGGER_VERTEX;
-    h->current_location = b->block_start + b->info_length;
 
     return 0;
 }
@@ -591,8 +708,6 @@ int sdf_read_run_info(sdf_file_t *h)
     }
 */
 
-    h->current_location = b->block_start + b->info_length;
-
     return 0;
 }
 
@@ -615,8 +730,6 @@ int sdf_read_array_info(sdf_file_t *h)
         b->local_dims[i] = b->dims_in[i];
         b->nlocal *= b->dims[i];
     }
-
-    h->current_location = b->block_start + b->info_length;
 
     return 0;
 }

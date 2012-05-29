@@ -9,7 +9,7 @@
 #include <mpi.h>
 #endif
 
-int metadata, contents, debug, single, mmap;
+int metadata, contents, debug, single, mmap, ignore_summary;
 char *variable_id;
 
 
@@ -23,6 +23,7 @@ void usage(int err)
   -s --single         Convert block data to single precision\n\
   -v --variable=id    Find the block with id matching 'id'\n\
   -m --mmap           Use mmap'ed file I/O\n\
+  -i --no-summary     Ignore the metadata summary\n\
 ");
 /*
   -d --debug          Show the contents of the debug buffer\n\
@@ -45,14 +46,15 @@ char *parse_args(int *argc, char ***argv)
         { "help",     no_argument,       NULL,      'h' },
         { "variable", required_argument, NULL,      'v' },
         { "mmap",     no_argument,       NULL,      'm' },
+        { "no-summary", no_argument,     NULL,      'i' },
         { NULL,       0,                 NULL,       0  }
     };
 
     metadata = debug = 1;
-    contents = single = mmap = 0;
+    contents = single = mmap = ignore_summary = 0;
     variable_id = NULL;
 
-    while ((c = getopt_long(*argc, *argv, "hncsmv:", longopts, NULL)) != -1) {
+    while ((c = getopt_long(*argc, *argv, "hncsmiv:", longopts, NULL)) != -1) {
         switch (c) {
         case 'h':
             usage(0);
@@ -73,6 +75,9 @@ char *parse_args(int *argc, char ***argv)
             break;
         case 'm':
             mmap = 1;
+            break;
+        case 'i':
+            ignore_summary = 1;
             break;
         default:
             usage(1);
@@ -121,6 +126,7 @@ int main(int argc, char **argv)
     }
     h->use_float = single;
     h->print = debug;
+    if (ignore_summary) h->use_summary = 0;
     sdf_set_ncpus(h, size);
 
     //sdf_read_blocklist(h);
@@ -135,9 +141,11 @@ int main(int argc, char **argv)
         err = -h->nblocks - 64 * block;
         fprintf(stderr, "Error code %s found at block %i\n",
                 sdf_error_codes_c[err], block);
-        return 1;
+        //return 1;
     }
 
+    sdf_read_blocklist(h);
+/*
     // Read the whole summary block into a temporary buffer on rank 0
     buflen = h->summary_size;
     h->current_location = h->start_location = h->summary_location;
@@ -166,6 +174,7 @@ int main(int argc, char **argv)
 
     free(h->buffer);
     h->buffer = NULL;
+*/
     h->current_block = h->blocklist;
 #ifdef SDF_DEBUG
     if (metadata)

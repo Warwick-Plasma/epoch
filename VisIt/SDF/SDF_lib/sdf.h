@@ -250,7 +250,7 @@ struct sdf_file {
     int32_t nblocks;
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
-    char done_header, restart_flag, other_domains, use_float;
+    char done_header, restart_flag, other_domains, use_float, use_summary;
     char *code_name;
     sdf_block_t *blocklist, *tail, *current_block;
     char *mmap;

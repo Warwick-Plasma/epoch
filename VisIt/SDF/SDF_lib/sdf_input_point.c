@@ -54,7 +54,6 @@ int sdf_read_point_mesh_info(sdf_file_t *h)
     for (i = 0; i < b->ndims; i++) b->dims[i] = b->npoints;
 
     b->stagger = SDF_STAGGER_VERTEX;
-    h->current_location = b->block_start + b->info_length;
 
     return 0;
 }
@@ -81,8 +80,6 @@ int sdf_read_point_variable_info(sdf_file_t *h)
 
     SDF_READ_ENTRY_INT8(b->npoints);
     b->dims[0] = b->npoints;
-
-    h->current_location = b->block_start + b->info_length;
 
     return 0;
 }
