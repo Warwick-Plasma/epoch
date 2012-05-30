@@ -40,7 +40,7 @@ CONTAINS
     ! header length - must be updated if sdf_write_header changes
     h%first_block_location = c_header_length
     ! block header length - must be updated if sdf_write_block_header changes
-    h%block_header_length = 3 * soi4 + 3 * soi8 + c_id_length &
+    h%block_header_length = 4 * soi4 + 3 * soi8 + c_id_length &
         + h%string_length
 
     ! Currently no blocks written
@@ -150,7 +150,7 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     TYPE(sdf_block_type), POINTER :: b
-    INTEGER :: errcode
+    INTEGER :: errcode, block_info_length
 
     b => h%current_block
     IF (b%done_header) RETURN
@@ -186,6 +186,10 @@ CONTAINS
           MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
 
       CALL sdf_safe_write_string(h, b%name)
+
+      block_info_length = b%info_length - h%block_header_length
+      CALL MPI_FILE_WRITE(h%filehandle, block_info_length, 1, &
+          MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     h%current_location = b%block_start + h%block_header_length

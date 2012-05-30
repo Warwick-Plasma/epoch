@@ -217,8 +217,8 @@ struct sdf_block {
     double *dim_mults, *extents, mult;
     uint64_t block_start;
     uint64_t next_block_location, data_location;
-    uint64_t nelements, npoints, data_length, info_length;
-    uint32_t ndims, geometry, datatype, blocktype;
+    uint64_t nelements, npoints, data_length;
+    uint32_t ndims, geometry, datatype, blocktype, block_info_length;
     uint32_t type_size, stagger, datatype_out, type_size_out;
     uint32_t *dims_in;
     uint64_t dims[3];

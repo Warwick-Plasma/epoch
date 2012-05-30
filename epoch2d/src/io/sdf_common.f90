@@ -128,7 +128,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_stagger_vertex = &
       c_stagger_face_x + c_stagger_face_y + c_stagger_face_z
 
-  INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 0
+  INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 1
 
   INTEGER(i4), PARAMETER :: soi4 = 4 ! Size of 4-byte integer
   INTEGER(i4), PARAMETER :: soi8 = 8 ! Size of 8-byte integer

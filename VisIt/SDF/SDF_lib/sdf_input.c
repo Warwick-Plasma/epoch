@@ -235,6 +235,11 @@ int sdf_read_next_block_header(sdf_file_t *h)
 
     SDF_READ_ENTRY_STRING(b->name);
 
+    // Older versions of the file did not contain the block
+    // info length in the header.
+    if (h->file_version + h->file_revision > 1)
+        SDF_READ_ENTRY_INT4(b->block_info_length);
+
     if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE
             || b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
         b->stagger = SDF_STAGGER_VERTEX;
@@ -400,12 +405,19 @@ static void build_summary_buffer(sdf_file_t *h)
             memcpy(&next_block_location, blockbuf->buffer, sizeof(uint64_t));
             memcpy(&data_location, blockbuf->buffer+8, sizeof(uint64_t));
 
-            if (data_location > block_location)
-                block_info_length = data_location
-                    - block_location - h->block_header_length;
-            else
-                block_info_length = next_block_location
-                    - block_location - h->block_header_length;
+            // Older versions of the file did not contain the block
+            // info length in the header.
+            if (h->file_version + h->file_revision > 1) {
+                memcpy(&block_info_length, blockbuf->buffer+132,
+                       sizeof(uint32_t));
+            } else {
+                if (data_location > block_location)
+                    block_info_length = data_location
+                        - block_location - h->block_header_length;
+                else
+                    block_info_length = next_block_location
+                        - block_location - h->block_header_length;
+            }
 
             // Read the block specific metadata if it exists
             if (block_info_length > 0) {
