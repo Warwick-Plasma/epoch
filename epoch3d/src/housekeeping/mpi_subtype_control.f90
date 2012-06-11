@@ -46,7 +46,7 @@ CONTAINS
     ! field and particles data. It is used when writing data
     INTEGER, INTENT(IN) :: dump_code
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_local
-    INTEGER :: n_dump_species, ispecies, index
+    INTEGER :: n_dump_species, ispecies, index, realtmp
 
     ! count the number of dumped particles of each species
     n_dump_species = 0
@@ -71,6 +71,10 @@ CONTAINS
     ! Actually create the subtypes
     subtype_field = create_current_field_subtype()
     subarray_field = create_current_field_subarray()
+
+    subtype_field_r4 = create_current_field_subtype(MPI_REAL4)
+    subarray_field_r4 = create_current_field_subarray(MPI_REAL4)
+
     CALL create_ordered_particle_offsets(n_dump_species, npart_local)
 
     DEALLOCATE(npart_local)
@@ -87,6 +91,8 @@ CONTAINS
 
     CALL MPI_TYPE_FREE(subtype_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field, errcode)
+    CALL MPI_TYPE_FREE(subtype_field_r4, errcode)
+    CALL MPI_TYPE_FREE(subarray_field_r4, errcode)
 
   END SUBROUTINE free_subtypes
 
@@ -97,12 +103,20 @@ CONTAINS
   ! current load balanced geometry
   !----------------------------------------------------------------------------
 
-  FUNCTION create_current_field_subtype()
+  FUNCTION create_current_field_subtype(basetype_in)
 
     INTEGER :: create_current_field_subtype
+    INTEGER, OPTIONAL, INTENT(IN) :: basetype_in
+    INTEGER :: basetype
+
+    IF (PRESENT(basetype_in)) THEN
+      basetype = basetype_in
+    ELSE
+      basetype = mpireal
+    ENDIF
 
     create_current_field_subtype = &
-        create_field_subtype(nx, ny, nz, cell_x_min(x_coords+1), &
+        create_field_subtype(basetype, nx, ny, nz, cell_x_min(x_coords+1), &
             cell_y_min(y_coords+1), cell_z_min(z_coords+1))
 
   END FUNCTION create_current_field_subtype
@@ -114,11 +128,19 @@ CONTAINS
   ! current load balanced geometry
   !----------------------------------------------------------------------------
 
-  FUNCTION create_current_field_subarray()
+  FUNCTION create_current_field_subarray(basetype_in)
 
     INTEGER :: create_current_field_subarray
+    INTEGER, OPTIONAL, INTENT(IN) :: basetype_in
+    INTEGER :: basetype
 
-    create_current_field_subarray = create_field_subarray(nx, ny, nz)
+    IF (PRESENT(basetype_in)) THEN
+      basetype = basetype_in
+    ELSE
+      basetype = mpireal
+    ENDIF
+
+    create_current_field_subarray = create_field_subarray(basetype, nx, ny, nz)
 
   END FUNCTION create_current_field_subarray
 
@@ -135,10 +157,14 @@ CONTAINS
     ! field and particles data. It is used when reading data.
 
     INTEGER, POINTER :: species_subtypes(:)
-    INTEGER :: i
+    INTEGER :: i, realtmp
 
     subtype_field = create_current_field_subtype()
     subarray_field = create_current_field_subarray()
+
+    subtype_field_r4 = create_current_field_subtype(MPI_REAL4)
+    subarray_field_r4 = create_current_field_subarray(MPI_REAL4)
+
     ALLOCATE(species_subtypes(n_species))
     DO i = 1,n_species
       species_subtypes(i) = &
@@ -160,6 +186,8 @@ CONTAINS
 
     CALL MPI_TYPE_FREE(subtype_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field, errcode)
+    CALL MPI_TYPE_FREE(subtype_field_r4, errcode)
+    CALL MPI_TYPE_FREE(subarray_field_r4, errcode)
     DO i = 1,n_species
       CALL MPI_TYPE_FREE(species_subtypes(i), errcode)
     ENDDO
@@ -182,7 +210,7 @@ CONTAINS
     INTEGER, DIMENSION(3) :: lengths, types
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
     INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, total_particles
-    INTEGER :: i, subtype
+    INTEGER :: i, subtype, basetype, typesize
 
     npart_local = npart_in
 
@@ -205,6 +233,9 @@ CONTAINS
 
     DEALLOCATE(npart_each_rank)
 
+    basetype = mpireal
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
+
     ! If npart_in is bigger than an integer then the data will not
     ! get written/read properly. This would require about 48GB per processor
     ! so it is unlikely to be a problem any time soon.
@@ -212,10 +243,10 @@ CONTAINS
     lengths(2) = INT(npart_in)
     lengths(3) = 1
     disp(1) = 0
-    disp(2) = particles_to_skip * realsize
-    disp(3) = total_particles * realsize
+    disp(2) = particles_to_skip * typesize
+    disp(3) = total_particles * typesize
     types(1) = MPI_LB
-    types(2) = mpireal
+    types(2) = basetype
     types(3) = MPI_UB
 
     subtype = 0
@@ -273,9 +304,10 @@ CONTAINS
   ! domain. Only used directly during load balancing
   !----------------------------------------------------------------------------
 
-  FUNCTION create_field_subtype(nx_local, ny_local, nz_local, &
+  FUNCTION create_field_subtype(basetype, nx_local, ny_local, nz_local, &
       cell_start_x_local, cell_start_y_local, cell_start_z_local)
 
+    INTEGER, INTENT(IN) :: basetype
     INTEGER, INTENT(IN) :: nx_local
     INTEGER, INTENT(IN) :: ny_local
     INTEGER, INTENT(IN) :: nz_local
@@ -289,7 +321,8 @@ CONTAINS
     n_global = (/nx_global, ny_global, nz_global/)
     start = (/cell_start_x_local, cell_start_y_local, cell_start_z_local/)
 
-    create_field_subtype = create_3d_array_subtype(n_local, n_global, start)
+    create_field_subtype = &
+        create_3d_array_subtype(basetype, n_local, n_global, start)
 
   END FUNCTION create_field_subtype
 
@@ -301,25 +334,27 @@ CONTAINS
   ! domain at all.
   !----------------------------------------------------------------------------
 
-  FUNCTION create_1d_array_subtype(n_local, n_global, start) RESULT(vec1d_sub)
+  FUNCTION create_1d_array_subtype(basetype, n_local, n_global, start) &
+      RESULT(vec1d_sub)
 
+    INTEGER, INTENT(IN) :: basetype
     INTEGER, DIMENSION(1), INTENT(IN) :: n_local
     INTEGER, DIMENSION(1), INTENT(IN) :: n_global
     INTEGER, DIMENSION(1), INTENT(IN) :: start
     INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(1), sz
-    INTEGER :: vec1d, vec1d_sub
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(1)
+    INTEGER :: vec1d, vec1d_sub, typesize
 
     vec1d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CONTIGUOUS(n_local(1), mpireal, vec1d, errcode)
+    CALL MPI_TYPE_CONTIGUOUS(n_local(1), basetype, vec1d, errcode)
 
-    sz = realsize
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
     starts = start - 1
     lengths = 1
 
     disp(1) = 0
-    disp(2) = sz * starts(1)
-    disp(3) = sz * n_global(1)
+    disp(2) = typesize * starts(1)
+    disp(3) = typesize * n_global(1)
     types(1) = MPI_LB
     types(2) = vec1d
     types(3) = MPI_UB
@@ -339,26 +374,28 @@ CONTAINS
   ! domain at all.
   !----------------------------------------------------------------------------
 
-  FUNCTION create_2d_array_subtype(n_local, n_global, start) RESULT(vec2d_sub)
+  FUNCTION create_2d_array_subtype(basetype, n_local, n_global, start) &
+      RESULT(vec2d_sub)
 
+    INTEGER, INTENT(IN) :: basetype
     INTEGER, DIMENSION(2), INTENT(IN) :: n_local
     INTEGER, DIMENSION(2), INTENT(IN) :: n_global
     INTEGER, DIMENSION(2), INTENT(IN) :: start
     INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(2), sz
-    INTEGER :: vec2d, vec2d_sub
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(2)
+    INTEGER :: vec2d, vec2d_sub, typesize
 
     vec2d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), mpireal, &
+    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), basetype, &
         vec2d, errcode)
 
-    sz = realsize
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
     starts = start - 1
     lengths = 1
 
     disp(1) = 0
-    disp(2) = sz * (starts(1) + n_global(1) * starts(2))
-    disp(3) = sz * n_global(1) * n_global(2)
+    disp(2) = typesize * (starts(1) + n_global(1) * starts(2))
+    disp(3) = typesize * n_global(1) * n_global(2)
     types(1) = MPI_LB
     types(2) = vec2d
     types(3) = MPI_UB
@@ -378,27 +415,29 @@ CONTAINS
   ! domain at all.
   !----------------------------------------------------------------------------
 
-  FUNCTION create_3d_array_subtype(n_local, n_global, start) RESULT(vec3d_sub)
+  FUNCTION create_3d_array_subtype(basetype, n_local, n_global, start) &
+      RESULT(vec3d_sub)
 
+    INTEGER, INTENT(IN) :: basetype
     INTEGER, DIMENSION(3), INTENT(IN) :: n_local
     INTEGER, DIMENSION(3), INTENT(IN) :: n_global
     INTEGER, DIMENSION(3), INTENT(IN) :: start
     INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(3), sz
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(3)
     INTEGER :: vec2d, vec2d_sub
-    INTEGER :: vec3d, vec3d_sub
+    INTEGER :: vec3d, vec3d_sub, typesize
 
     vec2d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), mpireal, &
+    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), basetype, &
         vec2d, errcode)
 
-    sz = realsize
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
     starts = start - 1
     lengths = 1
 
     disp(1) = 0
-    disp(2) = sz * (starts(1) + n_global(1) * starts(2))
-    disp(3) = sz * n_global(1) * n_global(2)
+    disp(2) = typesize * (starts(1) + n_global(1) * starts(2))
+    disp(3) = typesize * n_global(1) * n_global(2)
     types(1) = MPI_LB
     types(2) = vec2d
     types(3) = MPI_UB
@@ -410,8 +449,8 @@ CONTAINS
     CALL MPI_TYPE_CONTIGUOUS(n_local(3), vec2d_sub, vec3d, errcode)
 
     disp(1) = 0
-    disp(2) = sz * n_global(1) * n_global(2) * starts(3)
-    disp(3) = sz * n_global(1) * n_global(2) * n_global(3)
+    disp(2) = typesize * n_global(1) * n_global(2) * starts(3)
+    disp(3) = typesize * n_global(1) * n_global(2) * n_global(3)
     types(1) = MPI_LB
     types(2) = vec3d
     types(3) = MPI_UB
@@ -425,10 +464,10 @@ CONTAINS
 
 
 
-  FUNCTION create_field_subarray(n1, n2, n3)
+  FUNCTION create_field_subarray(basetype, n1, n2, n3)
 
     INTEGER, PARAMETER :: ng = 3
-    INTEGER, INTENT(IN) :: n1
+    INTEGER, INTENT(IN) :: basetype, n1
     INTEGER, INTENT(IN), OPTIONAL :: n2, n3
     INTEGER, DIMENSION(3) :: n_local, n_global, start
     INTEGER :: i, ndim, create_field_subarray
@@ -450,11 +489,14 @@ CONTAINS
     ENDDO
 
     IF (PRESENT(n3)) THEN
-      create_field_subarray = create_3d_array_subtype(n_local, n_global, start)
+      create_field_subarray = &
+          create_3d_array_subtype(basetype, n_local, n_global, start)
     ELSE IF (PRESENT(n2)) THEN
-      create_field_subarray = create_2d_array_subtype(n_local, n_global, start)
+      create_field_subarray = &
+          create_2d_array_subtype(basetype, n_local, n_global, start)
     ELSE
-      create_field_subarray = create_1d_array_subtype(n_local, n_global, start)
+      create_field_subarray = &
+          create_1d_array_subtype(basetype, n_local, n_global, start)
     ENDIF
 
   END FUNCTION create_field_subarray

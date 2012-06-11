@@ -262,13 +262,15 @@ CONTAINS
     INTEGER, DIMENSION(nd), INTENT(IN) :: our_coords
     INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min1, old_cell_max1
     INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min1, new_cell_max1
-    INTEGER :: irank, nproc_tot
+    INTEGER :: irank, nproc_tot, basetype
     INTEGER :: i, iproc, inew
     INTEGER, DIMENSION(nd) :: type_min, type_max, old_0, old_1, new_0
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
+
+    basetype = mpireal
 
     nprocs(1) = SIZE(old_cell_min1)
 
@@ -313,7 +315,8 @@ CONTAINS
       CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
       IF (rank .NE. irank) THEN
-        sendtypes(irank) = create_1d_array_subtype(n_local, n_global, start)
+        sendtypes(irank) = create_1d_array_subtype(basetype, n_local, &
+            n_global, start)
       ELSE
         ! New domain is on the same processor as the old domain.
         ! Just copy the region rather than using MPI.
@@ -355,7 +358,8 @@ CONTAINS
       CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
       IF (rank .NE. irank) THEN
-        recvtypes(irank) = create_1d_array_subtype(n_local, n_global, start)
+        recvtypes(irank) = create_1d_array_subtype(basetype, n_local, &
+            n_global, start)
       ELSE
         ! New domain is on the same processor as the old domain.
         ! Just copy the region rather than using MPI.

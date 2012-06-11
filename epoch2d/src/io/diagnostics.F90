@@ -38,7 +38,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER :: code, i
     INTEGER, DIMENSION(c_ndims) :: dims
-    LOGICAL :: restart_flag
+    LOGICAL :: restart_flag, convert
 #ifndef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
@@ -110,14 +110,16 @@ CONTAINS
 
     ! Write the cartesian mesh
     IF (IAND(dumpmask(c_dump_grid), code) .NE. 0) THEN
+      convert = (IAND(dumpmask(c_dump_grid), c_io_dump_single) .NE. 0 &
+          .AND. IAND(dumpmask(c_dump_grid), c_io_restartable) .EQ. 0)
       IF (.NOT. use_offset_grid) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
-            xb_global, yb_global)
+            xb_global, yb_global, convert)
       ELSE
         CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
-            xb_offset_global, yb_offset_global)
+            xb_offset_global, yb_offset_global, convert)
         CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid_full', &
-            'Grid/Grid_Full', xb_global, yb_global)
+            'Grid/Grid_Full', xb_global, yb_global, convert)
       ENDIF
     ENDIF
 
@@ -558,7 +560,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:,:), INTENT(IN) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: should_dump
+    INTEGER :: should_dump, subtype, subarray
+    LOGICAL :: convert
 
     IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
 
@@ -568,23 +571,34 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
+    convert = (IAND(dumpmask(id), c_io_dump_single) .NE. 0 &
+        .AND. IAND(dumpmask(id), c_io_restartable) .EQ. 0)
+
+    IF (convert) THEN
+      subtype  = subtype_field_r4
+      subarray = subarray_field_r4
+    ELSE
+      subtype  = subtype_field
+      subarray = subarray_field
+    ENDIF
 
     IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
       CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id), &
           TRIM(name), TRIM(units), dims, stagger, 'grid', array, &
-          subtype_field, subarray_field)
+          subtype, subarray, convert)
     ENDIF
 
     IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
       averaged_data(id)%array = averaged_data(id)%array &
           / averaged_data(id)%real_time
 
-      CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id) // '_averaged', &
-          TRIM(name) // '_averaged', TRIM(units), dims, stagger, 'grid', &
-          averaged_data(id)%array(:,:,1), subtype_field, subarray_field)
+      CALL sdf_write_plain_variable(sdf_handle, &
+          TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
+          TRIM(units), dims, stagger, 'grid', &
+          averaged_data(id)%array(:,:,1), subtype, subarray, convert)
 
-      averaged_data(id)%real_time = c_non_zero
       averaged_data(id)%array = 0.0_num
+      averaged_data(id)%real_time = c_non_zero
     ENDIF
 
   END SUBROUTINE write_field
@@ -599,10 +613,11 @@ CONTAINS
     INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: ispecies, should_dump, species_sum
+    INTEGER :: should_dump, subtype, subarray, ispecies, species_sum
     INTEGER :: len1, len2, len3, len4, len5
     CHARACTER(LEN=c_id_length) :: temp_block_id
     CHARACTER(LEN=c_max_string_length) :: temp_name, len_string
+    LOGICAL :: convert
 
     INTERFACE
       SUBROUTINE func(data_array, current_species)
@@ -620,6 +635,16 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
+    convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+        .AND. IAND(iomask(id), c_io_restartable) .EQ. 0)
+
+    IF (convert) THEN
+      subtype  = subtype_field_r4
+      subarray = subarray_field_r4
+    ELSE
+      subtype  = subtype_field
+      subarray = subarray_field
+    ENDIF
 
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN
       IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
@@ -639,7 +664,7 @@ CONTAINS
         CALL func(array, 0)
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-            subtype_field, subarray_field)
+            subtype, subarray, convert)
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
@@ -673,7 +698,7 @@ CONTAINS
           CALL func(array, ispecies)
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-              subtype_field, subarray_field)
+              subtype, subarray, convert)
         ENDDO
       ENDIF
     ENDIF
@@ -693,7 +718,8 @@ CONTAINS
             TRIM(block_id) // '_averaged', &
             'Derived/' // TRIM(name) // '_averaged', &
             TRIM(units), dims, stagger, 'grid', &
-            averaged_data(id)%array(:,:,1), subtype_field, subarray_field)
+            averaged_data(id)%array(:,:,1), subtype, &
+            subarray, convert)
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
@@ -726,12 +752,12 @@ CONTAINS
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
               averaged_data(id)%array(:,:,ispecies+species_sum), &
-              subtype_field, subarray_field)
+              subtype, subarray, convert)
         ENDDO
       ENDIF
 
-      averaged_data(id)%real_time = c_non_zero
       averaged_data(id)%array = 0.0_num
+      averaged_data(id)%real_time = c_non_zero
     ENDIF
 
   END SUBROUTINE write_nspecies_field
@@ -800,10 +826,11 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: fluxdir
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: ispecies, should_dump, ndirs, idir
+    INTEGER :: should_dump, subtype, subarray, ispecies, ndirs, idir
     INTEGER :: len1, len2, len3, len4, len5
     CHARACTER(LEN=c_id_length) :: temp_block_id
     CHARACTER(LEN=c_max_string_length) :: temp_name, len_string
+    LOGICAL :: convert
 
     INTERFACE
       SUBROUTINE func(data_array, current_species, direction)
@@ -822,6 +849,16 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
+    convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+        .AND. IAND(iomask(id), c_io_restartable) .EQ. 0)
+
+    IF (convert) THEN
+      subtype  = subtype_field_r4
+      subarray = subarray_field_r4
+    ELSE
+      subtype  = subtype_field
+      subarray = subarray_field
+    ENDIF
 
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN
       IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
@@ -837,7 +874,7 @@ CONTAINS
           CALL func(array, 0, fluxdir(idir))
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-              subtype_field, subarray_field)
+              subtype, subarray, convert)
         ENDDO
       ENDIF
 
@@ -877,7 +914,7 @@ CONTAINS
             CALL func(array, ispecies, fluxdir(idir))
             CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                 TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-                subtype_field, subarray_field)
+                subtype, subarray, convert)
           ENDDO
         ENDDO
       ENDIF
@@ -1091,9 +1128,13 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: code
     INTEGER :: ispecies, id
+    LOGICAL :: convert
 
     id = c_dump_part_grid
     IF (IAND(iomask(id), code) .NE. 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. IAND(code, c_io_restartable) .EQ. 0)
+
       CALL species_offset_init()
       IF (npart_global .EQ. 0) RETURN
 
@@ -1106,7 +1147,7 @@ CONTAINS
               'grid/' // TRIM(current_species%name), &
               'Grid/Particles/' // TRIM(current_species%name), &
               io_list(ispecies)%count, c_dimension_2d, &
-              iterate_particles, species_offset(ispecies))
+              iterate_particles, species_offset(ispecies), convert)
         ENDIF
       ENDDO
     ENDIF
@@ -1115,6 +1156,7 @@ CONTAINS
 
     id = c_dump_ejected_particles
     IF (IAND(iomask(id), code) .NE. 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0)
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
@@ -1123,7 +1165,7 @@ CONTAINS
             'grid/' // TRIM(current_species%name), &
             'Grid/Particles/' // TRIM(current_species%name), &
             ejected_list(ispecies)%count, c_dimension_2d, &
-            iterate_particles, ejected_offset(ispecies))
+            iterate_particles, ejected_offset(ispecies), convert)
       ENDDO
     ENDIF
 
@@ -1147,9 +1189,13 @@ CONTAINS
     END INTERFACE
 
     INTEGER :: ispecies, id
+    LOGICAL :: convert
 
     id = id_in
     IF (IAND(iomask(id), code) .NE. 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. IAND(IAND(iomask(id), code), c_io_restartable) .EQ. 0)
+
       CALL species_offset_init()
       IF (npart_global .EQ. 0) RETURN
 
@@ -1163,13 +1209,14 @@ CONTAINS
               'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
               TRIM(units), io_list(ispecies)%count, &
               'grid/' // TRIM(current_species%name), &
-              iterator, species_offset(ispecies))
+              iterator, species_offset(ispecies), convert)
         ENDIF
       ENDDO
     ENDIF
 
     id = c_dump_ejected_particles
     IF (IAND(iomask(id), code) .NE. 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0)
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
@@ -1179,7 +1226,7 @@ CONTAINS
             'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
             TRIM(units), ejected_list(ispecies)%count, &
             'grid/' // TRIM(current_species%name), &
-            iterator, ejected_offset(ispecies))
+            iterator, ejected_offset(ispecies), convert)
       ENDDO
     ENDIF
 

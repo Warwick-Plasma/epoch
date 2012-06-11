@@ -74,6 +74,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_averaged = 2**5
   INTEGER, PARAMETER :: c_io_snapshot = 2**6
   INTEGER, PARAMETER :: c_io_field = 2**7
+  INTEGER, PARAMETER :: c_io_dump_single = 2**8
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
@@ -272,6 +273,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_io_no_sum = 65
   INTEGER, PARAMETER :: c_const_io_average = 66
   INTEGER, PARAMETER :: c_const_io_snapshot = 67
+  INTEGER, PARAMETER :: c_const_io_dump_single = 68
 
   INTEGER, PARAMETER :: c_const_dir_x = 80
   INTEGER, PARAMETER :: c_const_dir_y = 81
@@ -524,6 +526,7 @@ MODULE shared_data
   ! file handling
   !----------------------------------------------------------------------------
   INTEGER :: subtype_field, subarray_field
+  INTEGER :: subtype_field_r4, subarray_field_r4
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
   INTEGER :: output_file

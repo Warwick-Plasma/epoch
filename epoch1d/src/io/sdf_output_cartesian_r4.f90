@@ -19,25 +19,40 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_srl_1d_mesh_r4(h, id, name, x, dim_labels, dim_units, &
-      dim_mults, rank_write)
+  SUBROUTINE write_srl_1d_mesh_r4(h, id, name, x, convert_in, &
+      dim_labels, dim_units, dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     REAL(r4), DIMENSION(:), INTENT(IN) :: x
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -62,9 +77,21 @@ CONTAINS
       CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
           errcode)
 
-      intn = b%dims(1)
-      CALL MPI_FILE_WRITE(h%filehandle, x, intn, b%mpitype, &
-          MPI_STATUS_IGNORE, errcode)
+      IF (convert) THEN
+        intn = b%dims(1)
+        ALLOCATE(r4array(intn))
+
+        intn = b%dims(1)
+        r4array(1:intn) = REAL(x(1:intn),r4)
+        CALL MPI_FILE_WRITE(h%filehandle, r4array, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        DEALLOCATE(r4array)
+      ELSE
+        intn = b%dims(1)
+        CALL MPI_FILE_WRITE(h%filehandle, x, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+      ENDIF
     ENDIF
 
     h%rank_master = h%default_rank
@@ -81,25 +108,40 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_srl_2d_mesh_r4(h, id, name, x, y, dim_labels, dim_units, &
-      dim_mults, rank_write)
+  SUBROUTINE write_srl_2d_mesh_r4(h, id, name, x, y, convert_in, &
+      dim_labels, dim_units, dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     REAL(r4), DIMENSION(:), INTENT(IN) :: x, y
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -127,12 +169,30 @@ CONTAINS
       CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
           errcode)
 
-      intn = b%dims(1)
-      CALL MPI_FILE_WRITE(h%filehandle, x, intn, b%mpitype, &
-          MPI_STATUS_IGNORE, errcode)
-      intn = b%dims(2)
-      CALL MPI_FILE_WRITE(h%filehandle, y, intn, b%mpitype, &
-          MPI_STATUS_IGNORE, errcode)
+      IF (convert) THEN
+        intn = MAX(b%dims(1),b%dims(2))
+        ALLOCATE(r4array(intn))
+
+        intn = b%dims(1)
+        r4array(1:intn) = REAL(x(1:intn),r4)
+        CALL MPI_FILE_WRITE(h%filehandle, r4array, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        intn = b%dims(2)
+        r4array(1:intn) = REAL(y(1:intn),r4)
+        CALL MPI_FILE_WRITE(h%filehandle, r4array, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        DEALLOCATE(r4array)
+      ELSE
+        intn = b%dims(1)
+        CALL MPI_FILE_WRITE(h%filehandle, x, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        intn = b%dims(2)
+        CALL MPI_FILE_WRITE(h%filehandle, y, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+      ENDIF
     ENDIF
 
     h%rank_master = h%default_rank
@@ -149,25 +209,40 @@ CONTAINS
   ! Serial operation, so no need to specify dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_srl_3d_mesh_r4(h, id, name, x, y, z, dim_labels, dim_units, &
-      dim_mults, rank_write)
+  SUBROUTINE write_srl_3d_mesh_r4(h, id, name, x, y, z, convert_in, &
+      dim_labels, dim_units, dim_mults, rank_write)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     REAL(r4), DIMENSION(:), INTENT(IN) :: x, y, z
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -198,15 +273,39 @@ CONTAINS
       CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
           errcode)
 
-      intn = b%dims(1)
-      CALL MPI_FILE_WRITE(h%filehandle, x, intn, b%mpitype, &
-          MPI_STATUS_IGNORE, errcode)
-      intn = b%dims(2)
-      CALL MPI_FILE_WRITE(h%filehandle, y, intn, b%mpitype, &
-          MPI_STATUS_IGNORE, errcode)
-      intn = b%dims(3)
-      CALL MPI_FILE_WRITE(h%filehandle, z, intn, b%mpitype, &
-          MPI_STATUS_IGNORE, errcode)
+      IF (convert) THEN
+        intn = MAX(MAX(b%dims(1),b%dims(2)),b%dims(3))
+        ALLOCATE(r4array(intn))
+
+        intn = b%dims(1)
+        r4array(1:intn) = REAL(x(1:intn),r4)
+        CALL MPI_FILE_WRITE(h%filehandle, r4array, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        intn = b%dims(2)
+        r4array(1:intn) = REAL(y(1:intn),r4)
+        CALL MPI_FILE_WRITE(h%filehandle, r4array, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        intn = b%dims(3)
+        r4array(1:intn) = REAL(z(1:intn),r4)
+        CALL MPI_FILE_WRITE(h%filehandle, r4array, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        DEALLOCATE(r4array)
+      ELSE
+        intn = b%dims(1)
+        CALL MPI_FILE_WRITE(h%filehandle, x, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        intn = b%dims(2)
+        CALL MPI_FILE_WRITE(h%filehandle, y, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+
+        intn = b%dims(3)
+        CALL MPI_FILE_WRITE(h%filehandle, z, intn, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+      ENDIF
     ENDIF
 
     h%rank_master = h%default_rank
@@ -225,8 +324,8 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_1d_mesh_r4(h, id, name, x, dims, xmin, xmax, &
-      distribution, subarray, dim_labels, dim_units, &
-      dim_mults)
+      distribution, subarray, convert_in, dim_labels, &
+      dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -235,18 +334,36 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     REAL(r4), INTENT(IN) :: xmin, xmax
     INTEGER, DIMENSION(:), INTENT(IN) :: distribution, subarray
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
-    INTEGER :: i, errcode
+    REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
+    INTEGER :: i, errcode, intn
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+
+      intn = INT(SIZE(x),i4)
+      ALLOCATE(r4array(intn))
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -270,8 +387,15 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      r4array(1:intn) = x(1:intn)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -291,8 +415,8 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_2d_mesh_r4(h, id, name, x, y, dims, xmin, xmax, &
-      ymin, ymax, distribution, subarray, dim_labels, dim_units, &
-      dim_mults)
+      ymin, ymax, distribution, subarray, convert_in, dim_labels, &
+      dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -301,18 +425,39 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     REAL(r4), INTENT(IN) :: xmin, xmax, ymin, ymax
     INTEGER, DIMENSION(:), INTENT(IN) :: distribution, subarray
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
-    INTEGER :: i, errcode
+    REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
+    INTEGER :: i, errcode, sz(ndims), intn
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+
+      sz(1) = INT(SIZE(x),i4)
+      sz(2) = INT(SIZE(y),i4)
+
+      intn = MAX(sz(1),sz(2))
+      ALLOCATE(r4array(intn))
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -338,15 +483,30 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      intn = sz(1)
+      r4array(1:intn) = x(1:intn)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     h%current_location = h%current_location + b%dims(1) * b%type_size
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(2), 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, y, 1, subarray(2), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      intn = sz(2)
+      r4array(1:intn) = y(1:intn)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(2), &
+          MPI_STATUS_IGNORE, errcode)
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, y, 1, subarray(2), &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -366,8 +526,8 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_3d_mesh_r4(h, id, name, x, y, z, dims, xmin, xmax, &
-      ymin, ymax, zmin, zmax, distribution, subarray, dim_labels, dim_units, &
-      dim_mults)
+      ymin, ymax, zmin, zmax, distribution, subarray, convert_in, dim_labels, &
+      dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -376,18 +536,40 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
     REAL(r4), INTENT(IN) :: xmin, xmax, ymin, ymax, zmin, zmax
     INTEGER, DIMENSION(:), INTENT(IN) :: distribution, subarray
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
-    INTEGER :: i, errcode
+    REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
+    INTEGER :: i, errcode, sz(ndims), intn
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+
+      sz(1) = INT(SIZE(x),i4)
+      sz(2) = INT(SIZE(y),i4)
+      sz(3) = INT(SIZE(z),i4)
+
+      intn = MAX(MAX(sz(1),sz(2)),sz(3))
+      ALLOCATE(r4array(intn))
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%geometry = c_geometry_cartesian
     b%ndims = ndims
 
@@ -415,22 +597,44 @@ CONTAINS
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      intn = sz(1)
+      r4array(1:intn) = x(1:intn)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     h%current_location = h%current_location + b%dims(1) * b%type_size
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(2), 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, y, 1, subarray(2), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      intn = sz(2)
+      r4array(1:intn) = y(1:intn)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(2), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, y, 1, subarray(2), &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     h%current_location = h%current_location + b%dims(2) * b%type_size
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(3), 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, z, 1, subarray(3), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      intn = sz(3)
+      r4array(1:intn) = z(1:intn)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(3), &
+          MPI_STATUS_IGNORE, errcode)
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, z, 1, subarray(3), &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -449,27 +653,42 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_1d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_1d_float_gen_r4(h, id, name, units, ndims, dims, sz, &
+      stagger, mesh_id, variable, distribution, subarray, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
     INTEGER, INTENT(IN) :: ndims
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), DIMENSION(1), INTENT(IN) :: variable
+    REAL(r4), INTENT(IN) :: variable(1)
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%ndims = ndims
     b%stagger = stagger
 
@@ -486,8 +705,16 @@ CONTAINS
     h%current_location = b%data_location
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      ALLOCATE(r4array(sz(1)))
+      r4array = REAL(variable,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -506,27 +733,42 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_2d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_2d_float_gen_r4(h, id, name, units, ndims, dims, sz, &
+      stagger, mesh_id, variable, distribution, subarray, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
     INTEGER, INTENT(IN) :: ndims
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), DIMENSION(1,1), INTENT(IN) :: variable
+    REAL(r4), INTENT(IN) :: variable(1,1)
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    REAL(r4), DIMENSION(:,:), ALLOCATABLE :: r4array
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%ndims = ndims
     b%stagger = stagger
 
@@ -543,8 +785,16 @@ CONTAINS
     h%current_location = b%data_location
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      ALLOCATE(r4array(sz(1),sz(2)))
+      r4array = REAL(variable,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -563,27 +813,42 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_3d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_3d_float_gen_r4(h, id, name, units, ndims, dims, sz, &
+      stagger, mesh_id, variable, distribution, subarray, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
     INTEGER, INTENT(IN) :: ndims
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), DIMENSION(1,1,1), INTENT(IN) :: variable
+    REAL(r4), INTENT(IN) :: variable(1,1,1)
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    REAL(r4), DIMENSION(:,:,:), ALLOCATABLE :: r4array
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%ndims = ndims
     b%stagger = stagger
 
@@ -600,8 +865,16 @@ CONTAINS
     h%current_location = b%data_location
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      ALLOCATE(r4array(sz(1),sz(2),sz(3)))
+      r4array = REAL(variable,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -620,27 +893,42 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_4d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-      mesh_id, variable, distribution, subarray, mult)
+  SUBROUTINE write_4d_float_gen_r4(h, id, name, units, ndims, dims, sz, &
+      stagger, mesh_id, variable, distribution, subarray, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
     INTEGER, INTENT(IN) :: ndims
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), DIMENSION(1,1,1,1), INTENT(IN) :: variable
+    REAL(r4), INTENT(IN) :: variable(1,1,1,1)
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    REAL(r4), DIMENSION(:,:,:,:), ALLOCATABLE :: r4array
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
 
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = sof
-    b%datatype = datatype_real
-    b%mpitype = mpitype_real
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
     b%ndims = ndims
     b%stagger = stagger
 
@@ -657,8 +945,16 @@ CONTAINS
     h%current_location = b%data_location
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (convert) THEN
+      ALLOCATE(r4array(sz(1),sz(2),sz(3),sz(4)))
+      r4array = REAL(variable,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -678,7 +974,7 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_1d_float_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, distribution, subarray, mult)
+      variable, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -688,10 +984,16 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r4), DIMENSION(:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    INTEGER :: i, sz(ndims)
 
-    CALL write_1d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable, distribution, subarray, mult)
+    DO i = 1,ndims
+      sz(i) = SIZE(variable,i)
+    ENDDO
+
+    CALL write_1d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable, distribution, subarray, convert, mult)
 
   END SUBROUTINE write_1d_float_r4
 
@@ -705,7 +1007,7 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_2d_float_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, distribution, subarray, mult)
+      variable, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -715,10 +1017,16 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r4), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    INTEGER :: i, sz(ndims)
 
-    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable, distribution, subarray, mult)
+    DO i = 1,ndims
+      sz(i) = SIZE(variable,i)
+    ENDDO
+
+    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable, distribution, subarray, convert, mult)
 
   END SUBROUTINE write_2d_float_r4
 
@@ -732,7 +1040,7 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_3d_float_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, distribution, subarray, mult)
+      variable, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -742,10 +1050,16 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r4), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    INTEGER :: i, sz(ndims)
 
-    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable, distribution, subarray, mult)
+    DO i = 1,ndims
+      sz(i) = SIZE(variable,i)
+    ENDDO
+
+    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable, distribution, subarray, convert, mult)
 
   END SUBROUTINE write_3d_float_r4
 
@@ -759,21 +1073,22 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_1d_var_first_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_1d_var_first_r4(h, id, name, units, dims, sz, stagger, &
+      mesh_id, variable, idx, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), INTENT(IN) :: variable(dims(ndims+1),dims(1))
+    REAL(r4), INTENT(IN) :: variable(sz(1),sz(2))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable(idx,1), distribution, subarray, mult)
+    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable(idx,1), distribution, subarray, convert, mult)
 
   END SUBROUTINE write_1d_var_first_r4
 
@@ -787,21 +1102,22 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_2d_var_first_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_2d_var_first_r4(h, id, name, units, dims, sz, stagger, &
+      mesh_id, variable, idx, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), INTENT(IN) :: variable(dims(ndims+1),dims(1),dims(2))
+    REAL(r4), INTENT(IN) :: variable(sz(1),sz(2),sz(3))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable(idx,1,1), distribution, subarray, mult)
+    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable(idx,1,1), distribution, subarray, convert, mult)
 
   END SUBROUTINE write_2d_var_first_r4
 
@@ -815,21 +1131,22 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_3d_var_first_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_3d_var_first_r4(h, id, name, units, dims, sz, stagger, &
+      mesh_id, variable, idx, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), INTENT(IN) :: variable(dims(ndims+1),dims(1),dims(2),dims(3))
+    REAL(r4), INTENT(IN) :: variable(sz(1),sz(2),sz(3),sz(4))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_4d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable(idx,1,1,1), distribution, subarray, mult)
+    CALL write_4d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable(idx,1,1,1), distribution, subarray, convert, mult)
 
   END SUBROUTINE write_3d_var_first_r4
 
@@ -843,21 +1160,22 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_1d_var_last_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_1d_var_last_r4(h, id, name, units, dims, sz, stagger, &
+      mesh_id, variable, idx, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), INTENT(IN) :: variable(dims(1),dims(ndims+1))
+    REAL(r4), INTENT(IN) :: variable(sz(1),sz(2))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable(1,idx), distribution, subarray, mult)
+    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable(1,idx), distribution, subarray, convert, mult)
 
   END SUBROUTINE write_1d_var_last_r4
 
@@ -871,21 +1189,22 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_2d_var_last_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_2d_var_last_r4(h, id, name, units, dims, sz, stagger, &
+      mesh_id, variable, idx, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), INTENT(IN) :: variable(dims(1),dims(2),dims(ndims+1))
+    REAL(r4), INTENT(IN) :: variable(sz(1),sz(2),sz(3))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable(1,1,idx), distribution, subarray, mult)
+    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable(1,1,idx), distribution, subarray, convert, mult)
 
   END SUBROUTINE write_2d_var_last_r4
 
@@ -899,21 +1218,22 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_3d_var_last_r4(h, id, name, units, dims, stagger, mesh_id, &
-      variable, idx, distribution, subarray, mult)
+  SUBROUTINE write_3d_var_last_r4(h, id, name, units, dims, sz, stagger, &
+      mesh_id, variable, idx, distribution, subarray, convert, mult)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r4), INTENT(IN) :: variable(dims(1),dims(2),dims(3),dims(ndims+1))
+    REAL(r4), INTENT(IN) :: variable(sz(1),sz(2),sz(3),sz(4))
     INTEGER, INTENT(IN) :: idx, distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_4d_float_gen_r4(h, id, name, units, ndims, dims, stagger, &
-        mesh_id, variable(1,1,1,idx), distribution, subarray, mult)
+    CALL write_4d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
+        mesh_id, variable(1,1,1,idx), distribution, subarray, convert, mult)
 
   END SUBROUTINE write_3d_var_last_r4
 
@@ -927,7 +1247,8 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_1d_material_r4(h, id, name, units, dims, nmat, stagger, &
-      mesh_id, material_names, variable, distribution, subarray, mult, last_in)
+      mesh_id, material_names, variable, distribution, subarray, convert, &
+      mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -939,10 +1260,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
     REAL(r4), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -953,6 +1276,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -984,10 +1311,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
         CALL write_1d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_1d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO
@@ -1008,7 +1337,8 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_2d_material_r4(h, id, name, units, dims, nmat, stagger, &
-      mesh_id, material_names, variable, distribution, subarray, mult, last_in)
+      mesh_id, material_names, variable, distribution, subarray, convert, &
+      mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -1020,10 +1350,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
     REAL(r4), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1034,6 +1366,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -1065,10 +1401,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
         CALL write_2d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_2d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO
@@ -1089,7 +1427,8 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE write_3d_material_r4(h, id, name, units, dims, nmat, stagger, &
-      mesh_id, material_names, variable, distribution, subarray, mult, last_in)
+      mesh_id, material_names, variable, distribution, subarray, convert, &
+      mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -1101,10 +1440,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
     REAL(r4), DIMENSION(:,:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1115,6 +1456,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -1146,10 +1491,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
         CALL write_3d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_3d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO
@@ -1171,7 +1518,7 @@ CONTAINS
 
   SUBROUTINE write_1d_matvar_r4(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_names, variable, distribution, &
-      subarray, mult, last_in)
+      subarray, convert, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -1183,10 +1530,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
     REAL(r4), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1197,6 +1546,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -1228,10 +1581,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
         CALL write_1d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_1d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO
@@ -1253,7 +1608,7 @@ CONTAINS
 
   SUBROUTINE write_2d_matvar_r4(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_names, variable, distribution, &
-      subarray, mult, last_in)
+      subarray, convert, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -1265,10 +1620,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
     REAL(r4), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1279,6 +1636,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -1310,10 +1671,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
         CALL write_2d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_2d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO
@@ -1335,7 +1698,7 @@ CONTAINS
 
   SUBROUTINE write_3d_matvar_r4(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_names, variable, distribution, &
-      subarray, mult, last_in)
+      subarray, convert, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -1347,10 +1710,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
     REAL(r4), DIMENSION(:,:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1361,6 +1726,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -1392,10 +1761,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       IF (last) THEN
         CALL write_3d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_3d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO
@@ -1417,7 +1788,7 @@ CONTAINS
 
   SUBROUTINE write_1d_species_r4(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_name, specnames, variable, distribution, &
-      subarray, mult, last_in)
+      subarray, convert, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
@@ -1430,10 +1801,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: specnames(:)
     REAL(r4), DIMENSION(:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1444,6 +1817,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -1475,10 +1852,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
         CALL write_1d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_1d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO
@@ -1500,7 +1879,7 @@ CONTAINS
 
   SUBROUTINE write_2d_species_r4(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_name, specnames, variable, distribution, &
-      subarray, mult, last_in)
+      subarray, convert, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
@@ -1513,10 +1892,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: specnames(:)
     REAL(r4), DIMENSION(:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1527,6 +1908,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -1558,10 +1943,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
         CALL write_2d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_2d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO
@@ -1583,7 +1970,7 @@ CONTAINS
 
   SUBROUTINE write_3d_species_r4(h, id, name, units, dims, nmat, stagger, &
       mesh_id, material_id, material_name, specnames, variable, distribution, &
-      subarray, mult, last_in)
+      subarray, convert, mult, last_in)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
@@ -1596,10 +1983,12 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: specnames(:)
     REAL(r4), DIMENSION(:,:,:,:), INTENT(IN) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
     INTEGER(i8) :: nsize, data_length
+    INTEGER :: sz(ndims+1)
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1610,6 +1999,10 @@ CONTAINS
     ELSE
       last = .FALSE.
     ENDIF
+
+    DO i = 1,ndims+1
+      sz(i) = INT(SIZE(variable,i),i4)
+    ENDDO
 
     ALLOCATE(variable_ids(nmat))
 
@@ -1641,10 +2034,12 @@ CONTAINS
       CALL sdf_safe_string_composite(h, name, specnames(i), temp_name)
       IF (last) THEN
         CALL write_3d_var_last_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ELSE
         CALL write_3d_var_first_r4(h, variable_ids(i), temp_name, units, dims, &
-            stagger, mesh_id, variable, idx, distribution, subarray, mult)
+            sz, stagger, mesh_id, variable, idx, distribution, subarray, &
+            convert, mult)
       ENDIF
       h%data_location = h%data_location + nsize
     ENDDO

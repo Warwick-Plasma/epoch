@@ -314,6 +314,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_io_dump_single) THEN
+      CALL push_on_eval(REAL(c_io_dump_single, num))
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_const_dir_x) THEN
       CALL push_on_eval(REAL(c_dir_x, num))
       RETURN

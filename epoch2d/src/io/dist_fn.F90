@@ -71,6 +71,7 @@ CONTAINS
 
     INTEGER :: ispecies, errcode
     TYPE(distribution_function_block), POINTER :: current
+    LOGICAL :: convert
 
     ! Write the distribution functions
     current => dist_fns
@@ -79,10 +80,13 @@ CONTAINS
         DO ispecies = 1, n_species
           IF (.NOT. current%use_species(ispecies)) CYCLE
 
+          convert = (IAND(IOR(dumpmask(c_dump_dist_fns),current%dumpmask), &
+                          c_io_dump_single) .NE. 0)
+
           CALL general_dist_fn(sdf_handle, current%name, current%directions, &
               current%ranges, current%resolution, ispecies, &
               current%restrictions, current%use_restrictions, current%ndims, &
-              errcode)
+              convert, errcode)
 
           ! If there was an error writing the dist_fn then ignore it in future
           IF (errcode .NE. 0) current%dumpmask = c_io_never
@@ -96,7 +100,8 @@ CONTAINS
 
 
   SUBROUTINE general_dist_fn(sdf_handle, name, direction, ranges_in, &
-      resolution_in, species, restrictions, use_restrictions, curdims, errcode)
+      resolution_in, species, restrictions, use_restrictions, curdims, &
+      convert, errcode)
 
     TYPE(sdf_file_handle) :: sdf_handle
     CHARACTER(LEN=*), INTENT(IN) :: name
@@ -107,6 +112,7 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
     INTEGER, INTENT(IN) :: curdims
+    LOGICAL, INTENT(IN) :: convert
     INTEGER, INTENT(OUT) :: errcode
 
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array, array_tmp
@@ -535,15 +541,15 @@ CONTAINS
       IF (curdims .EQ. 1) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
-            grid1, labels, units)
+            grid1, convert, labels, units)
       ELSE IF (curdims .EQ. 2) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
-            grid1, grid2, labels, units)
+            grid1, grid2, convert, labels, units)
       ELSE IF (curdims .EQ. 3) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
-            grid1, grid2, grid3, labels, units)
+            grid1, grid2, grid3, convert, labels, units)
       ENDIF
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
@@ -552,22 +558,23 @@ CONTAINS
 
     IF (curdims .EQ. 1) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-          'Grid/' // TRIM(var_name), grid1, labels, units)
+          'Grid/' // TRIM(var_name), grid1, convert, labels, units)
       DEALLOCATE(grid1)
-      new_type = &
-          create_1d_array_subtype(resolution, global_resolution, start_local)
+      new_type = create_1d_array_subtype(mpireal, resolution, &
+          global_resolution, start_local)
     ELSE IF (curdims .EQ. 2) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-          'Grid/' // TRIM(var_name), grid1, grid2, labels, units)
+          'Grid/' // TRIM(var_name), grid1, grid2, convert, labels, units)
       DEALLOCATE(grid1, grid2)
-      new_type = &
-          create_2d_array_subtype(resolution, global_resolution, start_local)
+      new_type = create_2d_array_subtype(mpireal, resolution, &
+          global_resolution, start_local)
     ELSE IF (curdims .EQ. 3) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
-          'Grid/' // TRIM(var_name), grid1, grid2, grid3, labels, units)
+          'Grid/' // TRIM(var_name), grid1, grid2, grid3, convert, labels, &
+          units)
       DEALLOCATE(grid1, grid2, grid3)
-      new_type = &
-          create_3d_array_subtype(resolution, global_resolution, start_local)
+      new_type = create_3d_array_subtype(mpireal, resolution, &
+          global_resolution, start_local)
     ENDIF
 
     CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
@@ -577,7 +584,7 @@ CONTAINS
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
         'dist_fn/' // TRIM(var_name), 'npart/cell', global_resolution, &
         c_stagger_vertex, 'grid/' // TRIM(var_name), array, new_type, &
-        array_type)
+        array_type, convert)
 
     CALL MPI_TYPE_FREE(new_type, errcode)
     CALL MPI_TYPE_FREE(array_type, errcode)
