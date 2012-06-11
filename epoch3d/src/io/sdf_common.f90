@@ -92,7 +92,10 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_species = 13
   INTEGER(i4), PARAMETER :: c_blocktype_plain_derived = 14
   INTEGER(i4), PARAMETER :: c_blocktype_point_derived = 15
-  INTEGER(i4), PARAMETER :: c_blocktype_multi_material = 16
+  INTEGER(i4), PARAMETER :: c_blocktype_multi_tensor = 16
+  INTEGER(i4), PARAMETER :: c_blocktype_multi_material = 17
+  INTEGER(i4), PARAMETER :: c_blocktype_multi_matvar = 18
+  INTEGER(i4), PARAMETER :: c_blocktype_multi_species = 19
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1

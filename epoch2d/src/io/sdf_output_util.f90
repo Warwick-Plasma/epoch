@@ -78,8 +78,14 @@ CONTAINS
       CALL sdf_write_stitched_matvar(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_species) THEN
       CALL sdf_write_stitched_species(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_multi_tensor) THEN
+      CALL sdf_write_multi_tensor(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_multi_material) THEN
       CALL sdf_write_multi_material(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_multi_matvar) THEN
+      CALL sdf_write_stitched_matvar(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_multi_species) THEN
+      CALL sdf_write_multi_species(h)
     ELSE
       CALL write_block_header(h)
     ENDIF

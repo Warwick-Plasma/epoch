@@ -1186,6 +1186,7 @@ CONTAINS
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
+    INTEGER(i8) :: nsize, data_length
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1199,18 +1200,27 @@ CONTAINS
 
     ALLOCATE(variable_ids(nmat))
 
+    nsize = 1
+    DO i = 1,ndims
+      nsize = nsize * dims(i)
+    ENDDO
+    nsize = sof * nsize
+
+    data_length = 0
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
         CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
+        data_length = data_length + nsize
       ENDIF
     ENDDO
 
-    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
-        material_id, variable_ids)
+    CALL sdf_write_multi_matvar(h, id, name, mesh_id, stagger, &
+        material_id, variable_ids, data_length)
 
+    h%data_location = h%current_block%data_location
     idx = 0
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
@@ -1223,7 +1233,10 @@ CONTAINS
         CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
             stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
+      h%data_location = h%data_location + nsize
     ENDDO
+
+    h%data_location = 0
 
     DEALLOCATE(variable_ids)
 
@@ -1255,6 +1268,7 @@ CONTAINS
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
+    INTEGER(i8) :: nsize, data_length
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1268,18 +1282,27 @@ CONTAINS
 
     ALLOCATE(variable_ids(nmat))
 
+    nsize = 1
+    DO i = 1,ndims
+      nsize = nsize * dims(i)
+    ENDDO
+    nsize = sof * nsize
+
+    data_length = 0
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
         CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
+        data_length = data_length + nsize
       ENDIF
     ENDDO
 
-    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
-        material_id, variable_ids)
+    CALL sdf_write_multi_matvar(h, id, name, mesh_id, stagger, &
+        material_id, variable_ids, data_length)
 
+    h%data_location = h%current_block%data_location
     idx = 0
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
@@ -1292,7 +1315,10 @@ CONTAINS
         CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
             stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
+      h%data_location = h%data_location + nsize
     ENDDO
+
+    h%data_location = 0
 
     DEALLOCATE(variable_ids)
 
@@ -1324,6 +1350,7 @@ CONTAINS
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
+    INTEGER(i8) :: nsize, data_length
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1337,18 +1364,27 @@ CONTAINS
 
     ALLOCATE(variable_ids(nmat))
 
+    nsize = 1
+    DO i = 1,ndims
+      nsize = nsize * dims(i)
+    ENDDO
+    nsize = sof * nsize
+
+    data_length = 0
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
         CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(material_names(i)), variable_ids(i))
+        data_length = data_length + nsize
       ENDIF
     ENDDO
 
-    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
-        material_id, variable_ids)
+    CALL sdf_write_multi_matvar(h, id, name, mesh_id, stagger, &
+        material_id, variable_ids, data_length)
 
+    h%data_location = h%current_block%data_location
     idx = 0
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
@@ -1361,7 +1397,10 @@ CONTAINS
         CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
             stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
+      h%data_location = h%data_location + nsize
     ENDDO
+
+    h%data_location = 0
 
     DEALLOCATE(variable_ids)
 
@@ -1394,6 +1433,7 @@ CONTAINS
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
+    INTEGER(i8) :: nsize, data_length
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1407,19 +1447,27 @@ CONTAINS
 
     ALLOCATE(variable_ids(nmat))
 
+    nsize = 1
+    DO i = 1,ndims
+      nsize = nsize * dims(i)
+    ENDDO
+    nsize = sof * nsize
+
+    data_length = 0
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
         CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
+        data_length = data_length + nsize
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
-    CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
-        material_id, material_name, specnames, variable_ids)
+    CALL sdf_write_multi_species(h, id, name, mesh_id, stagger, &
+        material_id, material_name, specnames, variable_ids, data_length)
 
+    h%data_location = h%current_block%data_location
     idx = 0
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
@@ -1432,7 +1480,10 @@ CONTAINS
         CALL write_1d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
             stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
+      h%data_location = h%data_location + nsize
     ENDDO
+
+    h%data_location = 0
 
     DEALLOCATE(variable_ids)
 
@@ -1465,6 +1516,7 @@ CONTAINS
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
+    INTEGER(i8) :: nsize, data_length
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1478,19 +1530,27 @@ CONTAINS
 
     ALLOCATE(variable_ids(nmat))
 
+    nsize = 1
+    DO i = 1,ndims
+      nsize = nsize * dims(i)
+    ENDDO
+    nsize = sof * nsize
+
+    data_length = 0
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
         CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
+        data_length = data_length + nsize
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
-    CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
-        material_id, material_name, specnames, variable_ids)
+    CALL sdf_write_multi_species(h, id, name, mesh_id, stagger, &
+        material_id, material_name, specnames, variable_ids, data_length)
 
+    h%data_location = h%current_block%data_location
     idx = 0
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
@@ -1503,7 +1563,10 @@ CONTAINS
         CALL write_2d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
             stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
+      h%data_location = h%data_location + nsize
     ENDDO
+
+    h%data_location = 0
 
     DEALLOCATE(variable_ids)
 
@@ -1536,6 +1599,7 @@ CONTAINS
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
     LOGICAL, OPTIONAL, INTENT(IN) :: last_in
     INTEGER :: i, idx
+    INTEGER(i8) :: nsize, data_length
     LOGICAL :: last
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
@@ -1549,19 +1613,27 @@ CONTAINS
 
     ALLOCATE(variable_ids(nmat))
 
+    nsize = 1
+    DO i = 1,ndims
+      nsize = nsize * dims(i)
+    ENDDO
+    nsize = sof * nsize
+
+    data_length = 0
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
         variable_ids(i) = ''
       ELSE
         CALL sdf_safe_string_composite(h, id, &
             sdf_string_lowercase(specnames(i)), variable_ids(i))
+        data_length = data_length + nsize
       ENDIF
     ENDDO
 
-    CALL sdf_safe_string_composite(h, name, 'All', temp_name)
-    CALL sdf_write_stitched_species(h, id, temp_name, mesh_id, stagger, &
-        material_id, material_name, specnames, variable_ids)
+    CALL sdf_write_multi_species(h, id, name, mesh_id, stagger, &
+        material_id, material_name, specnames, variable_ids, data_length)
 
+    h%data_location = h%current_block%data_location
     idx = 0
     DO i = 1,nmat
       IF (LEN_TRIM(specnames(i)) .EQ. 0) CYCLE
@@ -1574,7 +1646,10 @@ CONTAINS
         CALL write_3d_var_first_r8(h, variable_ids(i), temp_name, units, dims, &
             stagger, mesh_id, variable, idx, distribution, subarray, mult)
       ENDIF
+      h%data_location = h%data_location + nsize
     ENDDO
+
+    h%data_location = 0
 
     DEALLOCATE(variable_ids)
 
