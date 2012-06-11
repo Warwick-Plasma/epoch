@@ -666,6 +666,81 @@ CONTAINS
 
 
 
+  SUBROUTINE sdf_write_multi_material(h, id, name, mesh_id, stagger, &
+      material_names, variable_ids, data_length, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
+    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_names(:), variable_ids(:)
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: i, errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (PRESENT(id)) THEN
+      CALL sdf_get_next_block(h)
+      b => h%current_block
+      b%ndims = INT(SIZE(variable_ids),i4)
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_other
+    b%blocktype = c_blocktype_multi_material
+
+    IF (PRESENT(rank_write)) h%rank_master = rank_write
+
+    ! Metadata is
+    ! - stagger   INTEGER(i4)
+    ! - meshid    CHARACTER(id_length)
+    ! - material_names ndims*CHARACTER(string_length)
+    ! - varids    ndims*CHARACTER(id_length)
+
+    b%info_length = h%block_header_length + soi4 + (b%ndims + 1) * c_id_length &
+        + b%ndims * h%string_length
+
+    ! Write header
+    IF (PRESENT(id)) THEN
+      b%stagger = stagger
+      b%data_length = data_length
+      CALL safe_copy_string(mesh_id, b%mesh_id)
+      CALL sdf_write_block_header(h, id, name)
+      ALLOCATE(b%material_names(b%ndims))
+      ALLOCATE(b%variable_ids(b%ndims))
+      DO i = 1, b%ndims
+        CALL safe_copy_string(material_names(i), b%material_names(i))
+        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+      ENDDO
+    ELSE
+      CALL write_block_header(h)
+    ENDIF
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      ! Write metadata
+      CALL MPI_FILE_WRITE(h%filehandle, b%stagger, 1, MPI_INTEGER4, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL sdf_safe_write_id(h, b%mesh_id)
+
+      DO i = 1, b%ndims
+        CALL sdf_safe_write_string(h, b%material_names(i))
+      ENDDO
+
+      DO i = 1, b%ndims
+        CALL sdf_safe_write_id(h, b%variable_ids(i))
+      ENDDO
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%next_block_location
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_write_multi_material
+
+
+
   SUBROUTINE sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
       material_id, variable_ids, rank_write)
 

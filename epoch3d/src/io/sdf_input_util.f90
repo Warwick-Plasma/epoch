@@ -69,7 +69,8 @@ CONTAINS
       CALL sdf_read_run_info(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_tensor) THEN
       CALL sdf_read_stitched_tensor(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_material) THEN
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_material &
+        .OR. b%blocktype .EQ. c_blocktype_multi_material) THEN
       CALL sdf_read_stitched_material(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_matvar) THEN
       CALL sdf_read_stitched_matvar(h)
