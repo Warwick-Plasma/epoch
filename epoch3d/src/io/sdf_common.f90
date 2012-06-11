@@ -52,16 +52,24 @@ MODULE sdf_common
     INTEGER(i8) :: first_block_location, summary_location, start_location
     INTEGER(i8) :: soi ! large integer to prevent overflow in calculations
     INTEGER(i4) :: endianness, summary_size
-    INTEGER(i4) :: block_header_length, string_length, nblocks
+    INTEGER(i4) :: block_header_length, string_length, nblocks, error_code
     INTEGER(i4) :: file_version, file_revision, code_io_version, step
     INTEGER(i4) :: datatype_integer, mpitype_integer
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
-    LOGICAL :: done_header, restart_flag, other_domains, writing
+    INTEGER :: errhandler
+    LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error
     CHARACTER(LEN=1), POINTER :: buffer(:)
     CHARACTER(LEN=c_id_length) :: code_name
     TYPE(jobid_type) :: jobid
     TYPE(sdf_block_type), POINTER :: blocklist, current_block
   END TYPE sdf_file_handle
+
+  TYPE sdf_handle_type
+    INTEGER :: filehandle
+    TYPE(sdf_file_handle), POINTER :: handle
+  END TYPE sdf_handle_type
+  INTEGER, PARAMETER :: max_handles = 64
+  TYPE(sdf_handle_type) :: sdf_handles(max_handles)
 
   INTEGER, PARAMETER :: c_sdf_read = 0
   INTEGER, PARAMETER :: c_sdf_write = 1
@@ -138,6 +146,51 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_endianness = 16911887
 
   INTEGER(KIND=MPI_OFFSET_KIND), PARAMETER :: c_off0 = 0
+  INTEGER, PARAMETER :: max_mpi_error_codes = 20
+  INTEGER, PARAMETER :: mpi_error_codes(max_mpi_error_codes) = (/ &
+      MPI_ERR_ACCESS, &
+      MPI_ERR_AMODE, &
+      MPI_ERR_BAD_FILE, &
+      MPI_ERR_CONVERSION, &
+      MPI_ERR_DUP_DATAREP, &
+      MPI_ERR_FILE, &
+      MPI_ERR_FILE_EXISTS, &
+      MPI_ERR_FILE_IN_USE, &
+      MPI_ERR_INFO, &
+      MPI_ERR_INFO_KEY, &
+      MPI_ERR_INFO_NOKEY, &
+      MPI_ERR_INFO_VALUE, &
+      MPI_ERR_IO, &
+      MPI_ERR_NOT_SAME, &
+      MPI_ERR_NO_SPACE, &
+      MPI_ERR_NO_SUCH_FILE, &
+      MPI_ERR_QUOTA, &
+      MPI_ERR_READ_ONLY, &
+      MPI_ERR_UNSUPPORTED_DATAREP, &
+      MPI_ERR_UNSUPPORTED_OPERATION /)
+
+  INTEGER, PARAMETER :: c_err_success = 0
+  INTEGER, PARAMETER :: c_err_access = 1
+  INTEGER, PARAMETER :: c_err_amode = 2
+  INTEGER, PARAMETER :: c_err_bad_file = 3
+  INTEGER, PARAMETER :: c_err_conversion = 4
+  INTEGER, PARAMETER :: c_err_dup_datarep = 5
+  INTEGER, PARAMETER :: c_err_file = 6
+  INTEGER, PARAMETER :: c_err_file_exists = 7
+  INTEGER, PARAMETER :: c_err_file_in_use = 8
+  INTEGER, PARAMETER :: c_err_info = 9
+  INTEGER, PARAMETER :: c_err_info_key = 10
+  INTEGER, PARAMETER :: c_err_info_nokey = 11
+  INTEGER, PARAMETER :: c_err_info_value = 12
+  INTEGER, PARAMETER :: c_err_io = 13
+  INTEGER, PARAMETER :: c_err_not_same = 14
+  INTEGER, PARAMETER :: c_err_no_space = 15
+  INTEGER, PARAMETER :: c_err_no_such_file = 16
+  INTEGER, PARAMETER :: c_err_quota = 17
+  INTEGER, PARAMETER :: c_err_read_only = 18
+  INTEGER, PARAMETER :: c_err_unsupported_datarep = 19
+  INTEGER, PARAMETER :: c_err_unsupported_operation = 20
+  INTEGER, PARAMETER :: c_err_unknown = 21
 
 CONTAINS
 
@@ -341,6 +394,10 @@ CONTAINS
     var%restart_flag = .FALSE.
     var%other_domains = .FALSE.
     var%writing = .FALSE.
+    var%handled_error = .FALSE.
+    var%nblocks = 0
+    var%error_code = 0
+    var%errhandler = 0
 
   END SUBROUTINE initialise_file_handle
 
@@ -349,11 +406,61 @@ CONTAINS
   SUBROUTINE deallocate_file_handle(var)
 
     TYPE(sdf_file_handle) :: var
+    INTEGER :: errcode, i
 
     IF (ASSOCIATED(var%buffer)) DEALLOCATE(var%buffer)
+
+    IF (var%errhandler .NE. 0) THEN
+      CALL MPI_ERRHANDLER_FREE(var%errhandler, errcode)
+    ENDIF
+
+    DO i = 1, max_handles
+      IF (sdf_handles(i)%filehandle .EQ. var%filehandle) THEN
+        sdf_handles(i)%filehandle = 0
+        EXIT
+      ENDIF
+    ENDDO
 
     CALL initialise_file_handle(var)
 
   END SUBROUTINE deallocate_file_handle
+
+
+
+  FUNCTION map_error_code(error_code) RESULT(errcode)
+
+    INTEGER, INTENT(IN) :: error_code
+    INTEGER :: errcode, i
+
+    errcode = c_err_unknown
+    DO i = 1, max_mpi_error_codes
+      IF (error_code .EQ. mpi_error_codes(i)) THEN
+        errcode = i
+        RETURN
+      ENDIF
+    ENDDO
+
+  END FUNCTION map_error_code
+
+
+
+  SUBROUTINE error_handler(filehandle, error_code)
+
+    INTEGER, INTENT(IN) :: filehandle, error_code
+    TYPE(sdf_file_handle), POINTER :: h
+    INTEGER :: i
+
+    DO i = 1, max_handles
+      IF (sdf_handles(i)%filehandle .EQ. filehandle) THEN
+        h => sdf_handles(i)%handle
+        IF (.NOT.h%handled_error) THEN
+          h%error_code = map_error_code(error_code) + 64 * h%nblocks
+          h%handled_error = .TRUE.
+        ENDIF
+        EXIT
+      ENDIF
+    ENDDO
+
+  END SUBROUTINE error_handler
 
 END MODULE sdf_common

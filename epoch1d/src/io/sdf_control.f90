@@ -12,10 +12,10 @@ CONTAINS
 
   SUBROUTINE sdf_open(h, filename, sdf_rank_in, sdf_comm_in, mode)
 
-    TYPE(sdf_file_handle) :: h
+    TYPE(sdf_file_handle), TARGET :: h
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER, INTENT(IN) :: sdf_rank_in, sdf_comm_in, mode
-    INTEGER :: errcode, ierr
+    INTEGER :: errcode, ierr, i
 
     CALL initialise_file_handle(h)
     CALL sdf_set_default_rank(h, 0)
@@ -56,6 +56,19 @@ CONTAINS
 
     CALL MPI_FILE_OPEN(h%comm, TRIM(filename), h%mode, MPI_INFO_NULL, &
         h%filehandle, errcode)
+    IF (errcode .NE. 0) h%error_code = map_error_code(errcode)
+
+    IF (h%rank .EQ. h%rank_master .AND. h%filehandle .NE. 0) THEN
+      CALL MPI_FILE_CREATE_ERRHANDLER(error_handler, h%errhandler, errcode)
+      CALL MPI_FILE_SET_ERRHANDLER(h%filehandle, h%errhandler, errcode)
+      DO i = 1, max_handles
+        IF (sdf_handles(i)%filehandle .EQ. 0) THEN
+          sdf_handles(i)%filehandle = h%filehandle
+          sdf_handles(i)%handle => h
+          EXIT
+        ENDIF
+      ENDDO
+    ENDIF
 
   END SUBROUTINE sdf_open
 
@@ -76,6 +89,11 @@ CONTAINS
 
       ! Update summary and nblocks info
       IF (h%rank .EQ. h%rank_master) THEN
+        IF (h%error_code .NE. 0) THEN
+          h%nblocks = -h%error_code
+          h%summary_location = 0
+          h%summary_size = 0
+        ENDIF
         offset = c_summary_offset
         CALL MPI_FILE_SEEK(h%filehandle, offset, MPI_SEEK_SET, &
             errcode)

@@ -101,6 +101,31 @@ enum sdf_dimension {
     SDF_DIMENSION_3D,
 };
 
+enum sdf_error_codes {
+    SDF_ERR_SUCCESS = 0,
+    SDF_ERR_ACCESS,
+    SDF_ERR_AMODE,
+    SDF_ERR_BAD_FILE,
+    SDF_ERR_CONVERSION,
+    SDF_ERR_DUP_DATAREP,
+    SDF_ERR_FILE,
+    SDF_ERR_FILE_EXISTS,
+    SDF_ERR_FILE_IN_USE,
+    SDF_ERR_INFO,
+    SDF_ERR_INFO_KEY,
+    SDF_ERR_INFO_NOKEY,
+    SDF_ERR_INFO_VALUE,
+    SDF_ERR_IO,
+    SDF_ERR_NOT_SAME,
+    SDF_ERR_NO_SPACE,
+    SDF_ERR_NO_SUCH_FILE,
+    SDF_ERR_QUOTA,
+    SDF_ERR_READ_ONLY,
+    SDF_ERR_UNSUPPORTED_DATAREP,
+    SDF_ERR_UNSUPPORTED_OPERATION,
+    SDF_ERR_UNKNOWN,
+};
+
 static const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_NULL",
     "SDF_BLOCKTYPE_PLAIN_MESH",
@@ -154,6 +179,31 @@ static const char *sdf_datatype_c[] = {
     "SDF_DATATYPE_OTHER",
 };
 
+static const char *sdf_error_codes_c[] = {
+    "SDF_ERR_SUCCESS",
+    "SDF_ERR_ACCESS",
+    "SDF_ERR_AMODE",
+    "SDF_ERR_BAD_FILE",
+    "SDF_ERR_CONVERSION",
+    "SDF_ERR_DUP_DATAREP",
+    "SDF_ERR_FILE",
+    "SDF_ERR_FILE_EXISTS",
+    "SDF_ERR_FILE_IN_USE",
+    "SDF_ERR_INFO",
+    "SDF_ERR_INFO_KEY",
+    "SDF_ERR_INFO_NOKEY",
+    "SDF_ERR_INFO_VALUE",
+    "SDF_ERR_IO",
+    "SDF_ERR_NOT_SAME",
+    "SDF_ERR_NO_SPACE",
+    "SDF_ERR_NO_SUCH_FILE",
+    "SDF_ERR_QUOTA",
+    "SDF_ERR_READ_ONLY",
+    "SDF_ERR_UNSUPPORTED_DATAREP",
+    "SDF_ERR_UNSUPPORTED_OPERATION",
+    "SDF_ERR_UNKNOWN",
+};
+
 #ifdef PARALLEL
     typedef MPI_Comm comm_t;
 #else
@@ -195,8 +245,9 @@ struct sdf_file {
     uint64_t first_block_location, summary_location, start_location, soi, sof;
     uint64_t current_location;
     uint32_t jobid1, jobid2, endianness, summary_size;
-    uint32_t block_header_length, string_length, nblocks;
+    uint32_t block_header_length, string_length;
     uint32_t file_version, file_revision, code_io_version, step;
+    int32_t nblocks;
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float;

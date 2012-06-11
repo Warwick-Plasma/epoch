@@ -202,6 +202,16 @@ avtSDFFileFormat::OpenFile(int open_only)
         return;
     }
 
+    // If nblocks is negative then the file is corrupt
+    if (h->nblocks <= 0) {
+        int block = (-h->nblocks) / 64;
+        int err = -h->nblocks - 64 * block;
+        cerr << "Error code " << sdf_error_codes_c[err] << " at block "
+             << block << " found for SDF file:" << endl;
+        cerr << "\"" << filename << "\"" << endl;
+        EXCEPTION1(InvalidFilesException, filename);
+    }
+
     if (h->blocklist) {
         if (ext) ext->timestate_update(ext, h);
         return;

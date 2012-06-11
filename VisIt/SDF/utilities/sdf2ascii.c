@@ -99,7 +99,7 @@ char *parse_args(int *argc, char ***argv)
 int main(int argc, char **argv)
 {
     char *file = NULL;
-    int i, buflen, len;
+    int i, buflen, len, block, err;
     sdf_file_t *h;
     sdf_block_t *b;
     int rank = 0, size = 1;
@@ -128,6 +128,15 @@ int main(int argc, char **argv)
     // to parse as we go
     sdf_read_header(h);
     h->current_block = NULL;
+
+    // If nblocks is negative then the file is corrupt
+    if (h->nblocks < 0) {
+        block = (-h->nblocks) / 64;
+        err = -h->nblocks - 64 * block;
+        fprintf(stderr, "Error code %s found at block %i\n",
+                sdf_error_codes_c[err], block);
+        return 1;
+    }
 
     // Read the whole summary block into a temporary buffer on rank 0
     buflen = h->summary_size;
