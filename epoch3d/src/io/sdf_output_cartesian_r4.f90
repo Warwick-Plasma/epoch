@@ -653,12 +653,12 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_1d_float_gen_r4(h, id, name, units, ndims, dims, sz, &
+  SUBROUTINE write_1d_float_gen_r4(h, id, name, units, ndims, nm, dims, sz, &
       stagger, mesh_id, variable, distribution, subarray, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, INTENT(IN) :: ndims
+    INTEGER, INTENT(IN) :: ndims, nm
     INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
@@ -667,7 +667,7 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
-    INTEGER :: i, errcode
+    INTEGER :: i, errcode, nd
     TYPE(sdf_block_type), POINTER :: b
     LOGICAL :: convert
 
@@ -692,7 +692,13 @@ CONTAINS
     b%ndims = ndims
     b%stagger = stagger
 
-    DO i = 1,ndims
+    nd = ndims
+    IF (nm .GT. 1) THEN
+      b%dims(nd) = nm
+      nd = nd - 1
+    ENDIF
+
+    DO i = 1,nd
       b%dims(i) = INT(dims(i),i4)
     ENDDO
 
@@ -708,11 +714,11 @@ CONTAINS
     IF (convert) THEN
       ALLOCATE(r4array(sz(1)))
       r4array = REAL(variable,r4)
-      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, nm, subarray, &
           MPI_STATUS_IGNORE, errcode)
       DEALLOCATE(r4array)
     ELSE
-      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, nm, subarray, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
@@ -733,12 +739,12 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_2d_float_gen_r4(h, id, name, units, ndims, dims, sz, &
+  SUBROUTINE write_2d_float_gen_r4(h, id, name, units, ndims, nm, dims, sz, &
       stagger, mesh_id, variable, distribution, subarray, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, INTENT(IN) :: ndims
+    INTEGER, INTENT(IN) :: ndims, nm
     INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
@@ -747,7 +753,7 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     REAL(r4), DIMENSION(:,:), ALLOCATABLE :: r4array
-    INTEGER :: i, errcode
+    INTEGER :: i, errcode, nd
     TYPE(sdf_block_type), POINTER :: b
     LOGICAL :: convert
 
@@ -772,7 +778,13 @@ CONTAINS
     b%ndims = ndims
     b%stagger = stagger
 
-    DO i = 1,ndims
+    nd = ndims
+    IF (nm .GT. 1) THEN
+      b%dims(nd) = nm
+      nd = nd - 1
+    ENDIF
+
+    DO i = 1,nd
       b%dims(i) = INT(dims(i),i4)
     ENDDO
 
@@ -788,11 +800,11 @@ CONTAINS
     IF (convert) THEN
       ALLOCATE(r4array(sz(1),sz(2)))
       r4array = REAL(variable,r4)
-      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, nm, subarray, &
           MPI_STATUS_IGNORE, errcode)
       DEALLOCATE(r4array)
     ELSE
-      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, nm, subarray, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
@@ -813,12 +825,12 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_3d_float_gen_r4(h, id, name, units, ndims, dims, sz, &
+  SUBROUTINE write_3d_float_gen_r4(h, id, name, units, ndims, nm, dims, sz, &
       stagger, mesh_id, variable, distribution, subarray, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, INTENT(IN) :: ndims
+    INTEGER, INTENT(IN) :: ndims, nm
     INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
@@ -827,7 +839,7 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     REAL(r4), DIMENSION(:,:,:), ALLOCATABLE :: r4array
-    INTEGER :: i, errcode
+    INTEGER :: i, errcode, nd
     TYPE(sdf_block_type), POINTER :: b
     LOGICAL :: convert
 
@@ -852,7 +864,13 @@ CONTAINS
     b%ndims = ndims
     b%stagger = stagger
 
-    DO i = 1,ndims
+    nd = ndims
+    IF (nm .GT. 1) THEN
+      b%dims(nd) = nm
+      nd = nd - 1
+    ENDIF
+
+    DO i = 1,nd
       b%dims(i) = INT(dims(i),i4)
     ENDDO
 
@@ -868,11 +886,11 @@ CONTAINS
     IF (convert) THEN
       ALLOCATE(r4array(sz(1),sz(2),sz(3)))
       r4array = REAL(variable,r4)
-      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, nm, subarray, &
           MPI_STATUS_IGNORE, errcode)
       DEALLOCATE(r4array)
     ELSE
-      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, nm, subarray, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
@@ -893,12 +911,12 @@ CONTAINS
   ! need global dims
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_4d_float_gen_r4(h, id, name, units, ndims, dims, sz, &
+  SUBROUTINE write_4d_float_gen_r4(h, id, name, units, ndims, nm, dims, sz, &
       stagger, mesh_id, variable, distribution, subarray, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
-    INTEGER, INTENT(IN) :: ndims
+    INTEGER, INTENT(IN) :: ndims, nm
     INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
@@ -907,7 +925,7 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
     REAL(r4), DIMENSION(:,:,:,:), ALLOCATABLE :: r4array
-    INTEGER :: i, errcode
+    INTEGER :: i, errcode, nd
     TYPE(sdf_block_type), POINTER :: b
     LOGICAL :: convert
 
@@ -932,7 +950,13 @@ CONTAINS
     b%ndims = ndims
     b%stagger = stagger
 
-    DO i = 1,ndims
+    nd = ndims
+    IF (nm .GT. 1) THEN
+      b%dims(nd) = nm
+      nd = nd - 1
+    ENDIF
+
+    DO i = 1,nd
       b%dims(i) = INT(dims(i),i4)
     ENDDO
 
@@ -948,11 +972,11 @@ CONTAINS
     IF (convert) THEN
       ALLOCATE(r4array(sz(1),sz(2),sz(3),sz(4)))
       r4array = REAL(variable,r4)
-      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, nm, subarray, &
           MPI_STATUS_IGNORE, errcode)
       DEALLOCATE(r4array)
     ELSE
-      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, 1, subarray, &
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, variable, nm, subarray, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF
 
@@ -992,8 +1016,8 @@ CONTAINS
       sz(i) = SIZE(variable,i)
     ENDDO
 
-    CALL write_1d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable, distribution, subarray, convert, mult)
+    CALL write_1d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable, distribution, subarray, convert, mult)
 
   END SUBROUTINE write_1d_float_r4
 
@@ -1025,8 +1049,8 @@ CONTAINS
       sz(i) = SIZE(variable,i)
     ENDDO
 
-    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable, distribution, subarray, convert, mult)
+    CALL write_2d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable, distribution, subarray, convert, mult)
 
   END SUBROUTINE write_2d_float_r4
 
@@ -1058,10 +1082,146 @@ CONTAINS
       sz(i) = SIZE(variable,i)
     ENDDO
 
-    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable, distribution, subarray, convert, mult)
+    CALL write_3d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable, distribution, subarray, convert, mult)
 
   END SUBROUTINE write_3d_float_r4
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 1D cartesian variable in parallel
+  ! using the mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_1d_float_num_r4(h, id, name, units, dims, nm, stagger, &
+      mesh_id, variable, distribution, subarray, convert, mult)
+
+    INTEGER, PARAMETER :: ndims = 1
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nm
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), DIMENSION(:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
+    REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    INTEGER :: i, sz(ndims)
+
+    DO i = 1,ndims
+      sz(i) = SIZE(variable,i)
+    ENDDO
+
+    CALL write_1d_float_gen_r4(h, id, name, units, ndims, nm, dims, sz, &
+        stagger, mesh_id, variable, distribution, subarray, convert, mult)
+
+  END SUBROUTINE write_1d_float_num_r4
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 2D cartesian variable in parallel
+  ! using the mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_2d_float_num_r4(h, id, name, units, dims, nm, stagger, &
+      mesh_id, variable, distribution, subarray, convert, mult)
+
+    INTEGER, PARAMETER :: ndims = 2
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nm
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), DIMENSION(:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
+    REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    INTEGER :: i, sz(ndims)
+
+    DO i = 1,ndims
+      sz(i) = SIZE(variable,i)
+    ENDDO
+
+    CALL write_2d_float_gen_r4(h, id, name, units, ndims, nm, dims, sz, &
+        stagger, mesh_id, variable, distribution, subarray, convert, mult)
+
+  END SUBROUTINE write_2d_float_num_r4
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 3D cartesian variable in parallel
+  ! using the mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_3d_float_num_r4(h, id, name, units, dims, nm, stagger, &
+      mesh_id, variable, distribution, subarray, convert, mult)
+
+    INTEGER, PARAMETER :: ndims = 3
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nm
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), DIMENSION(:,:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
+    REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    INTEGER :: i, sz(ndims)
+
+    DO i = 1,ndims
+      sz(i) = SIZE(variable,i)
+    ENDDO
+
+    CALL write_3d_float_gen_r4(h, id, name, units, ndims, nm, dims, sz, &
+        stagger, mesh_id, variable, distribution, subarray, convert, mult)
+
+  END SUBROUTINE write_3d_float_num_r4
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 4D cartesian variable in parallel
+  ! using the mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_4d_float_num_r4(h, id, name, units, dims, nm, stagger, &
+      mesh_id, variable, distribution, subarray, convert, mult)
+
+    INTEGER, PARAMETER :: ndims = 4
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nm
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), DIMENSION(:,:,:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
+    REAL(r4), OPTIONAL, INTENT(IN) :: mult
+    INTEGER :: i, sz(ndims)
+
+    DO i = 1,ndims
+      sz(i) = SIZE(variable,i)
+    ENDDO
+
+    CALL write_4d_float_gen_r4(h, id, name, units, ndims, nm, dims, sz, &
+        stagger, mesh_id, variable, distribution, subarray, convert, mult)
+
+  END SUBROUTINE write_4d_float_num_r4
 
 
 
@@ -1087,8 +1247,9 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable(idx,1), distribution, subarray, convert, mult)
+    CALL write_2d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable(idx,1), distribution, subarray, &
+        convert, mult)
 
   END SUBROUTINE write_1d_var_first_r4
 
@@ -1116,8 +1277,9 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable(idx,1,1), distribution, subarray, convert, mult)
+    CALL write_3d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable(idx,1,1), distribution, subarray, &
+        convert, mult)
 
   END SUBROUTINE write_2d_var_first_r4
 
@@ -1145,8 +1307,9 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_4d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable(idx,1,1,1), distribution, subarray, convert, mult)
+    CALL write_4d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable(idx,1,1,1), distribution, subarray, &
+        convert, mult)
 
   END SUBROUTINE write_3d_var_first_r4
 
@@ -1174,8 +1337,9 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_2d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable(1,idx), distribution, subarray, convert, mult)
+    CALL write_2d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable(1,idx), distribution, subarray, &
+        convert, mult)
 
   END SUBROUTINE write_1d_var_last_r4
 
@@ -1203,8 +1367,9 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_3d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable(1,1,idx), distribution, subarray, convert, mult)
+    CALL write_3d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable(1,1,idx), distribution, subarray, &
+        convert, mult)
 
   END SUBROUTINE write_2d_var_last_r4
 
@@ -1232,8 +1397,9 @@ CONTAINS
     LOGICAL, OPTIONAL, INTENT(IN) :: convert
     REAL(r4), OPTIONAL, INTENT(IN) :: mult
 
-    CALL write_4d_float_gen_r4(h, id, name, units, ndims, dims, sz, stagger, &
-        mesh_id, variable(1,1,1,idx), distribution, subarray, convert, mult)
+    CALL write_4d_float_gen_r4(h, id, name, units, ndims, 1, dims, sz, &
+        stagger, mesh_id, variable(1,1,1,idx), distribution, subarray, &
+        convert, mult)
 
   END SUBROUTINE write_3d_var_last_r4
 
