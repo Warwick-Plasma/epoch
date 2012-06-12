@@ -812,7 +812,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
         }
 
         // Allocate derived variable data if required
-        if (!b->data) {
+        if (!b->data && !b->dont_allocate) {
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             b->ndims = mesh->ndims;
             memcpy(b->local_dims, mesh->local_dims, b->ndims*sizeof(int));
@@ -839,7 +839,6 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
 
         // Execute callback to fill in the derived variable
         if (b->populate_data) b->populate_data(h, b);
-
     } else
         sdf_read_data(h);
 

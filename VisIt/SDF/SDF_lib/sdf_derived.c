@@ -84,7 +84,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append->populate_data = sdf_callback_grid_component;
                 append->done_header = 1;
                 // Hack to prevent storage being allocated for this variable.
-                append->data = 1;
+                append->dont_allocate = 1;
             }
         }
         b = b->next;

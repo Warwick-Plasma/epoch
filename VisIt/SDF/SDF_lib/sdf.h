@@ -178,7 +178,7 @@ struct sdf_block {
     char *name, *material_name, *must_read;
     char **dim_labels, **dim_units;
     char **variable_ids, **material_names;
-    char done_header, done_info, done_data;
+    char done_header, done_info, done_data, dont_allocate;
     void **grids, *data;
     sdf_block_t *next;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
