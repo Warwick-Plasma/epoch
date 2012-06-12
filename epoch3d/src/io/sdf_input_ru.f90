@@ -418,7 +418,10 @@ CONTAINS
     ENDIF
 
     b => h%current_block
-    IF (b%done_info) RETURN
+    IF (b%done_info) THEN
+      IF (PRESENT(dims)) dims(1:b%ndims) = b%dims(1:b%ndims)
+      RETURN
+    ENDIF
 
     CALL read_block_header(h)
 

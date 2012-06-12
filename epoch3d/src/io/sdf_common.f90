@@ -29,13 +29,13 @@ MODULE sdf_common
     REAL(r8), DIMENSION(2*c_maxdims) :: extents
     REAL(r8) :: mult
     REAL(r8), DIMENSION(:), POINTER :: dim_mults
+    REAL(r8) :: const_value
     INTEGER(KIND=MPI_OFFSET_KIND) :: block_start
     INTEGER(i8) :: next_block_location, data_location
     INTEGER(i8) :: nelements, npoints, data_length, info_length
     INTEGER(i4) :: ndims, geometry, datatype, blocktype
     INTEGER(i4) :: mpitype, type_size, stagger
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
-    CHARACTER(LEN=1) :: const_value(16)
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length), POINTER :: variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
