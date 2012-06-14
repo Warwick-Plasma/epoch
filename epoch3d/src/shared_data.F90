@@ -634,6 +634,18 @@ MODULE shared_data
   INTEGER, PARAMETER :: num_vars_to_dump         = 45
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
+  !----------------------------------------------------------------------------
+  ! Time averaged IO
+  !----------------------------------------------------------------------------
+  TYPE averaged_data_block
+    REAL(num), DIMENSION(:,:,:,:), POINTER :: array
+    REAL(r4), DIMENSION(:,:,:,:), POINTER :: r4array
+    REAL(num) :: real_time
+    LOGICAL :: started, dump_single
+  END TYPE averaged_data_block
+  TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
+  LOGICAL :: any_average = .FALSE.
+
   TYPE io_block_type
     CHARACTER(LEN=string_length) :: name
     REAL(num) :: dt_snapshot, time_next, time_first
@@ -641,6 +653,7 @@ MODULE shared_data
     INTEGER :: nstep_snapshot, nstep_next, nstep_first, nstep_average
     LOGICAL :: restart, dump, any_average
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
+    TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
 
   TYPE(io_block_type), POINTER :: io_block_list(:)
@@ -917,18 +930,6 @@ MODULE shared_data
   INTEGER :: nz_global_min, nz_global_max
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
-
-  !----------------------------------------------------------------------------
-  ! Time averaged IO
-  !----------------------------------------------------------------------------
-  TYPE averaged_data_block
-    REAL(num), DIMENSION(:,:,:,:), POINTER :: array
-    REAL(r4), DIMENSION(:,:,:,:), POINTER :: r4array
-    REAL(num) :: real_time
-    LOGICAL :: started, dump_single
-  END TYPE averaged_data_block
-  TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
-  LOGICAL :: any_average = .FALSE.
 
   !----------------------------------------------------------------------------
   ! laser boundaries

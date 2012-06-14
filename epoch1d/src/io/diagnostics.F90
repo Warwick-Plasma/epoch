@@ -445,12 +445,15 @@ CONTAINS
       av_time_first = time_first
     ENDIF
 
-    DO id = 1, num_vars_to_dump
-      io = averaged_var_block(id)
-      IF (io .GT. 0) THEN
-        IF (time .GE. av_time_first - io_block_list(io)%average_time) THEN
-          CALL average_field(id, averaged_data(id))
-        ENDIF
+    DO io = 1, n_io_blocks
+      IF (.NOT. io_block_list(io)%any_average) CYCLE
+
+      IF (time .GE. av_time_first - io_block_list(io)%average_time) THEN
+        DO id = 1, num_vars_to_dump
+          IF (IAND(io_block_list(io)%dumpmask(id), c_io_averaged) .NE. 0) THEN
+            CALL average_field(id, io_block_list(io)%averaged_data(id))
+          ENDIF
+        ENDDO
       ENDIF
     ENDDO
 
