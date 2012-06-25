@@ -8,6 +8,10 @@ MODULE balance
 
   IMPLICIT NONE
 
+  INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
+  INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
+  INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_z_min, new_cell_z_max
+
 CONTAINS
 
   SUBROUTINE balance_workload(over_ride)
@@ -23,9 +27,6 @@ CONTAINS
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: load_x
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: load_y
     INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: load_z
-    INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
-    INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
-    INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_z_min, new_cell_z_max
     REAL(num) :: balance_frac, npart_av
     REAL(num) :: balance_frac_x, balance_frac_y, balance_frac_z
     INTEGER(KIND=8) :: min_x, max_x, min_y, max_y, min_z, max_z
@@ -266,33 +267,33 @@ CONTAINS
 
     ALLOCATE(temp(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3))
 
-    CALL redistribute_field(new_domain, ex, temp)
-    CALL redistribute_field(new_domain, ey, temp)
-    CALL redistribute_field(new_domain, ez, temp)
+    CALL redistribute_field(ex, temp)
+    CALL redistribute_field(ey, temp)
+    CALL redistribute_field(ez, temp)
 
-    CALL redistribute_field(new_domain, bx, temp)
-    CALL redistribute_field(new_domain, by, temp)
-    CALL redistribute_field(new_domain, bz, temp)
+    CALL redistribute_field(bx, temp)
+    CALL redistribute_field(by, temp)
+    CALL redistribute_field(bz, temp)
 
-    CALL redistribute_field(new_domain, jx, temp)
-    CALL redistribute_field(new_domain, jy, temp)
-    CALL redistribute_field(new_domain, jz, temp)
+    CALL redistribute_field(jx, temp)
+    CALL redistribute_field(jy, temp)
+    CALL redistribute_field(jz, temp)
 
     IF (cpml_boundaries) THEN
-      CALL redistribute_field(new_domain, cpml_psi_eyx, temp)
-      CALL redistribute_field(new_domain, cpml_psi_byx, temp)
-      CALL redistribute_field(new_domain, cpml_psi_ezx, temp)
-      CALL redistribute_field(new_domain, cpml_psi_bzx, temp)
+      CALL redistribute_field(cpml_psi_eyx, temp)
+      CALL redistribute_field(cpml_psi_byx, temp)
+      CALL redistribute_field(cpml_psi_ezx, temp)
+      CALL redistribute_field(cpml_psi_bzx, temp)
 
-      CALL redistribute_field(new_domain, cpml_psi_exy, temp)
-      CALL redistribute_field(new_domain, cpml_psi_bxy, temp)
-      CALL redistribute_field(new_domain, cpml_psi_ezy, temp)
-      CALL redistribute_field(new_domain, cpml_psi_bzy, temp)
+      CALL redistribute_field(cpml_psi_exy, temp)
+      CALL redistribute_field(cpml_psi_bxy, temp)
+      CALL redistribute_field(cpml_psi_ezy, temp)
+      CALL redistribute_field(cpml_psi_bzy, temp)
 
-      CALL redistribute_field(new_domain, cpml_psi_exz, temp)
-      CALL redistribute_field(new_domain, cpml_psi_bxz, temp)
-      CALL redistribute_field(new_domain, cpml_psi_eyz, temp)
-      CALL redistribute_field(new_domain, cpml_psi_byz, temp)
+      CALL redistribute_field(cpml_psi_exz, temp)
+      CALL redistribute_field(cpml_psi_bxz, temp)
+      CALL redistribute_field(cpml_psi_eyz, temp)
+      CALL redistribute_field(cpml_psi_byz, temp)
 
       CALL deallocate_cpml_helpers
       CALL set_cpml_helpers(nx_new, new_domain(1,1), new_domain(1,2), &
@@ -315,8 +316,7 @@ CONTAINS
 
       ALLOCATE(temp_sum(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3, n_species_local))
 
-      CALL redistribute_field_sum(new_domain, averaged_data(index)%array, &
-          temp_sum)
+      CALL redistribute_field_sum(averaged_data(index)%array, temp_sum)
 
       DEALLOCATE(temp_sum)
     ENDDO
@@ -325,111 +325,99 @@ CONTAINS
 
     current=>laser_x_min
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_x, current%profile, &
-          temp_slice)
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_x, current%phase, &
-          temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_x, current%profile, temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_x, current%phase, temp_slice)
 
       current=>current%next
     ENDDO
 
     current=>laser_x_max
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_x, current%profile, &
-          temp_slice)
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_x, current%phase, &
-          temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_x, current%profile, temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_x, current%phase, temp_slice)
 
       current=>current%next
     ENDDO
 
-    CALL redistribute_field_slice(new_domain, c_dir_x, ex_x_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, ex_x_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, ey_x_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, ey_x_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, ez_x_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, ez_x_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, ex_x_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, ex_x_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, ey_x_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, ey_x_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, ez_x_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, ez_x_max, temp_slice)
 
-    CALL redistribute_field_slice(new_domain, c_dir_x, bx_x_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, bx_x_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, by_x_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, by_x_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, bz_x_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_x, bz_x_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, bx_x_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, bx_x_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, by_x_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, by_x_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, bz_x_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_x, bz_x_max, temp_slice)
 
     DEALLOCATE(temp_slice)
     ALLOCATE(temp_slice(-2:nx_new+3, -2:nz_new+3))
 
     current=>laser_y_min
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_y, current%profile, &
-          temp_slice)
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_y, current%phase, &
-          temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_y, current%profile, temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_y, current%phase, temp_slice)
 
       current=>current%next
     ENDDO
 
     current=>laser_y_max
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_y, current%profile, &
-          temp_slice)
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_y, current%phase, &
-          temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_y, current%profile, temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_y, current%phase, temp_slice)
 
       current=>current%next
     ENDDO
 
-    CALL redistribute_field_slice(new_domain, c_dir_y, ex_y_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, ex_y_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, ey_y_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, ey_y_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, ez_y_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, ez_y_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, ex_y_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, ex_y_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, ey_y_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, ey_y_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, ez_y_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, ez_y_max, temp_slice)
 
-    CALL redistribute_field_slice(new_domain, c_dir_y, bx_y_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, bx_y_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, by_y_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, by_y_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, bz_y_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_y, bz_y_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, bx_y_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, bx_y_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, by_y_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, by_y_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, bz_y_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_y, bz_y_max, temp_slice)
 
     DEALLOCATE(temp_slice)
     ALLOCATE(temp_slice(-2:nx_new+3, -2:ny_new+3))
 
     current=>laser_z_min
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_z, current%profile, &
-          temp_slice)
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_z, current%phase, &
-          temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_z, current%profile, temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_z, current%phase, temp_slice)
 
       current=>current%next
     ENDDO
 
     current=>laser_z_max
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_z, current%profile, &
-          temp_slice)
-      CALL redistribute_field_slice_ptr(new_domain, c_dir_z, current%phase, &
-          temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_z, current%profile, temp_slice)
+      CALL redistribute_field_slice_ptr(c_dir_z, current%phase, temp_slice)
 
       current=>current%next
     ENDDO
 
-    CALL redistribute_field_slice(new_domain, c_dir_z, ex_z_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, ex_z_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, ey_z_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, ey_z_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, ez_z_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, ez_z_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, ex_z_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, ex_z_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, ey_z_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, ey_z_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, ez_z_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, ez_z_max, temp_slice)
 
-    CALL redistribute_field_slice(new_domain, c_dir_z, bx_z_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, bx_z_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, by_z_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, by_z_max, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, bz_z_min, temp_slice)
-    CALL redistribute_field_slice(new_domain, c_dir_z, bz_z_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, bx_z_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, bx_z_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, by_z_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, by_z_max, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, bz_z_min, temp_slice)
+    CALL redistribute_field_slice(c_dir_z, bz_z_max, temp_slice)
 
     DEALLOCATE(temp_slice)
 
@@ -438,7 +426,7 @@ CONTAINS
       ALLOCATE(temp_slice(-2:ny_new+3, -2:nz_new+3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_ptr(new_domain, c_dir_x, &
+        CALL redistribute_field_slice_ptr(c_dir_x, &
             species_list(ispecies)%density, temp_slice)
       ENDDO
 
@@ -447,7 +435,7 @@ CONTAINS
       ALLOCATE(temp(-2:ny_new+3, -2:nz_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(new_domain, c_dir_x, &
+        CALL redistribute_field_slice_sum(c_dir_x, &
             species_list(ispecies)%temperature, temp)
       ENDDO
 
@@ -458,7 +446,7 @@ CONTAINS
       ALLOCATE(temp(-2:ny_new+3, -2:nz_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(new_domain, c_dir_x, &
+        CALL redistribute_field_slice_sum(c_dir_x, &
             species_list(ispecies)%ext_temp_x_min, temp)
       ENDDO
 
@@ -469,7 +457,7 @@ CONTAINS
       ALLOCATE(temp(-2:ny_new+3, -2:nz_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(new_domain, c_dir_x, &
+        CALL redistribute_field_slice_sum(c_dir_x, &
             species_list(ispecies)%ext_temp_x_max, temp)
       ENDDO
 
@@ -480,7 +468,7 @@ CONTAINS
       ALLOCATE(temp(-2:nx_new+3, -2:nz_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(new_domain, c_dir_y, &
+        CALL redistribute_field_slice_sum(c_dir_y, &
             species_list(ispecies)%ext_temp_y_min, temp)
       ENDDO
 
@@ -491,7 +479,7 @@ CONTAINS
       ALLOCATE(temp(-2:nx_new+3, -2:nz_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(new_domain, c_dir_y, &
+        CALL redistribute_field_slice_sum(c_dir_y, &
             species_list(ispecies)%ext_temp_y_max, temp)
       ENDDO
 
@@ -502,7 +490,7 @@ CONTAINS
       ALLOCATE(temp(-2:nx_new+3, -2:ny_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(new_domain, c_dir_z, &
+        CALL redistribute_field_slice_sum(c_dir_z, &
             species_list(ispecies)%ext_temp_z_min, temp)
       ENDDO
 
@@ -513,7 +501,7 @@ CONTAINS
       ALLOCATE(temp(-2:nx_new+3, -2:ny_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(new_domain, c_dir_z, &
+        CALL redistribute_field_slice_sum(c_dir_z, &
             species_list(ispecies)%ext_temp_z_max, temp)
       ENDDO
 
@@ -524,9 +512,8 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field(new_domain, field, temp)
+  SUBROUTINE redistribute_field(field, temp)
 
-    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE, INTENT(INOUT) :: field
     REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: temp
     INTEGER :: n_new(c_ndims)
@@ -534,7 +521,7 @@ CONTAINS
     n_new = SHAPE(temp)
 
     temp = 0.0_num
-    CALL redistribute_field_3d(new_domain, field, temp)
+    CALL remap_field(field, temp)
     DEALLOCATE(field)
     ALLOCATE(field(-2:n_new(1)+3, -2:n_new(2)+3, -2:n_new(3)+3))
     field = temp
@@ -543,9 +530,8 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field_slice(new_domain, direction, field, temp)
+  SUBROUTINE redistribute_field_slice(direction, field, temp)
 
-    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
     INTEGER, INTENT(IN) :: direction
     REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT) :: field
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: temp
@@ -554,7 +540,7 @@ CONTAINS
     n_new = SHAPE(temp)
 
     temp = 0.0_num
-    CALL redistribute_field_2d(new_domain, direction, field, temp)
+    CALL remap_field_slice(direction, field, temp)
     DEALLOCATE(field)
     ALLOCATE(field(-2:n_new(1)+3, -2:n_new(2)+3))
     field = temp
@@ -563,9 +549,8 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field_slice_ptr(new_domain, direction, field, temp)
+  SUBROUTINE redistribute_field_slice_ptr(direction, field, temp)
 
-    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
     INTEGER, INTENT(IN) :: direction
     REAL(num), DIMENSION(:,:), POINTER, INTENT(INOUT) :: field
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: temp
@@ -574,7 +559,7 @@ CONTAINS
     n_new = SHAPE(temp)
 
     temp = 0.0_num
-    CALL redistribute_field_2d(new_domain, direction, field, temp)
+    CALL remap_field_slice(direction, field, temp)
     DEALLOCATE(field)
     ALLOCATE(field(-2:n_new(1)+3, -2:n_new(2)+3))
     field = temp
@@ -583,9 +568,8 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field_sum(new_domain, field, temp)
+  SUBROUTINE redistribute_field_sum(field, temp)
 
-    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
     REAL(num), DIMENSION(:,:,:,:), POINTER, INTENT(INOUT) :: field
     REAL(num), DIMENSION(:,:,:,:), INTENT(OUT) :: temp
     INTEGER :: i, n_new(c_ndims+1)
@@ -594,7 +578,7 @@ CONTAINS
 
     temp = 0.0_num
     DO i = 1, n_new(c_ndims+1)
-      CALL redistribute_field_3d(new_domain, field(:,:,:,i), temp(:,:,:,i))
+      CALL remap_field(field(:,:,:,i), temp(:,:,:,i))
     ENDDO
 
     DEALLOCATE(field)
@@ -606,9 +590,8 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field_slice_sum(new_domain, direction, field, temp)
+  SUBROUTINE redistribute_field_slice_sum(direction, field, temp)
 
-    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
     INTEGER, INTENT(IN) :: direction
     REAL(num), DIMENSION(:,:,:), POINTER, INTENT(INOUT) :: field
     REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: temp
@@ -618,8 +601,7 @@ CONTAINS
 
     temp = 0.0_num
     DO i = 1, n_new(c_ndims)
-      CALL redistribute_field_2d(new_domain, direction, field(:,:,i), &
-          temp(:,:,i))
+      CALL remap_field_slice(direction, field(:,:,i), temp(:,:,i))
     ENDDO
 
     DEALLOCATE(field)
@@ -631,136 +613,504 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field_2d(domain, direction, field_in, field_out)
+  SUBROUTINE remap_field_slice(direction, field_in, field_out)
 
-    ! This subroutine redistributes the fields over the new processor layout
-    ! The current version works by writing the field to a file and then each
-    ! processor loads back in it's own part. This is better than the previous
-    ! version where each processor produced it's own copy of the global array
-    ! and then took its own subsection
-    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: domain
+    ! This is a wrapper for the field redistribution routine
     INTEGER, INTENT(IN) :: direction
     REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field_in
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: field_out
-    INTEGER, DIMENSION(2) :: n, n_new, n_global, n_old_start, n_start
-    INTEGER :: n1_dir, n2_dir
-    INTEGER :: subarray_write, subarray_read
-    INTEGER :: subtype_write, subtype_read, fh
-    INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
-    CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
+    INTEGER, DIMENSION(c_ndims-1) :: our_coords
 
     IF (direction .EQ. c_dir_x) THEN
-      n1_dir = 2
-      n2_dir = 3
-      n(1) = ny
-      n(2) = nz
-      n_global(1) = ny_global
-      n_global(2) = nz_global
-      n_old_start(1) = cell_y_min(y_coords+1)
-      n_old_start(2) = cell_z_min(z_coords+1)
+      our_coords(1) = y_coords
+      our_coords(2) = z_coords
+      CALL redistribute_field_2d(field_in, field_out, our_coords, &
+          cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max, &
+          cell_z_min, cell_z_max, new_cell_z_min, new_cell_z_max)
     ELSE IF (direction .EQ. c_dir_y) THEN
-      n1_dir = 1
-      n2_dir = 3
-      n(1) = nx
-      n(2) = nz
-      n_global(1) = nx_global
-      n_global(2) = nz_global
-      n_old_start(1) = cell_x_min(x_coords+1)
-      n_old_start(2) = cell_z_min(z_coords+1)
+      our_coords(1) = x_coords
+      our_coords(2) = z_coords
+      CALL redistribute_field_2d(field_in, field_out, our_coords, &
+          cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
+          cell_z_min, cell_z_max, new_cell_z_min, new_cell_z_max)
     ELSE
-      n1_dir = 1
-      n2_dir = 2
-      n(1) = nx
-      n(2) = ny
-      n_global(1) = nx_global
-      n_global(2) = ny_global
-      n_old_start(1) = cell_x_min(x_coords+1)
-      n_old_start(2) = cell_y_min(y_coords+1)
+      our_coords(1) = x_coords
+      our_coords(2) = y_coords
+      CALL redistribute_field_2d(field_in, field_out, our_coords, &
+          cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
+          cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max)
     ENDIF
 
-    WRITE(filename, '(a, ''/balance.dat'')') TRIM(data_dir)
+  END SUBROUTINE remap_field_slice
 
-    n_new(1) = domain(n1_dir,2) - domain(n1_dir,1) + 1
-    n_new(2) = domain(n2_dir,2) - domain(n2_dir,1) + 1
-    n_start(1) = domain(n1_dir,1)
-    n_start(2) = domain(n2_dir,1)
 
-    subarray_write = create_field_subarray(n(1), n(2))
-    subtype_write = create_2d_array_subtype(n, n_global, n_old_start)
 
-    subarray_read = create_field_subarray(n_new(1), n_new(2))
-    subtype_read = create_2d_array_subtype(n_new, n_global, n_start)
+  SUBROUTINE remap_field(field_in, field_out)
 
-    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
-        MPI_INFO_NULL, fh, errcode)
+    ! This is a wrapper for the field redistribution routine
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: field_in
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(c_ndims) :: our_coords, n_new
+    INTEGER :: i
 
-    CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, 'native', &
-        MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(fh, field_in, 1, subarray_write, status, errcode)
+    n_new = SHAPE(field_out)
+    DO i = 1,c_ndims
+      our_coords(i) = coordinates(c_ndims+i-1)
+    ENDDO
 
-    CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, 'native', &
-        MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, field_out, 1, subarray_read, status, errcode)
+    CALL redistribute_field_3d(field_in, field_out, our_coords, &
+        cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
+        cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max, &
+        cell_z_min, cell_z_max, new_cell_z_min, new_cell_z_max)
 
-    CALL MPI_FILE_CLOSE(fh, errcode)
+    CALL do_field_mpi_with_lengths(field_out, n_new(1), n_new(2), n_new(3))
 
-    CALL MPI_TYPE_FREE(subarray_write, errcode)
-    CALL MPI_TYPE_FREE(subtype_write, errcode)
-    CALL MPI_TYPE_FREE(subarray_read, errcode)
-    CALL MPI_TYPE_FREE(subtype_read, errcode)
+  END SUBROUTINE remap_field
+
+
+
+  SUBROUTINE redistribute_field_2d(field_in, field_out, our_coords, &
+      old_cell_min1, old_cell_max1, new_cell_min1, new_cell_max1, &
+      old_cell_min2, old_cell_max2, new_cell_min2, new_cell_max2)
+
+    ! This subroutine redistributes the fields over the new processor layout
+    INTEGER, PARAMETER :: ng = 3, nd = 2
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: field_in
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(nd), INTENT(IN) :: our_coords
+    INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min1, old_cell_max1
+    INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min1, new_cell_max1
+    INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min2, old_cell_max2
+    INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min2, new_cell_max2
+    INTEGER :: irank, nproc_tot
+    INTEGER :: i, iproc, inew
+    INTEGER :: j, jproc, jnew
+    INTEGER, DIMENSION(nd) :: type_min, type_max, old_0, old_1, new_0
+    INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
+    INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
+    INTEGER, DIMENSION(c_ndims) :: coord
+    INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
+
+    nprocs(1) = SIZE(old_cell_min1)
+    nprocs(2) = SIZE(old_cell_min2)
+
+    nproc_tot = nprocs(1) * nprocs(2)
+
+    ALLOCATE(sendtypes(0:nproc_tot-1))
+    ALLOCATE(recvtypes(0:nproc_tot-1))
+
+    old_min(1) = old_cell_min1(our_coords(1)+1)
+    old_max(1) = old_cell_max1(our_coords(1)+1)
+    new_min(1) = new_cell_min1(our_coords(1)+1)
+    new_max(1) = new_cell_max1(our_coords(1)+1)
+
+    old_min(2) = old_cell_min2(our_coords(2)+1)
+    old_max(2) = old_cell_max2(our_coords(2)+1)
+    new_min(2) = new_cell_min2(our_coords(2)+1)
+    new_max(2) = new_cell_max2(our_coords(2)+1)
+
+    tag = 0
+    sendtypes = 0
+    recvtypes = 0
+
+    ! Create array of sendtypes
+
+    DO i = 1,nd
+      n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
+    ENDDO
+
+    type_min(2) = old_min(2)
+    type_max(2) = old_min(2)
+
+    ! Find the new processor on which the old y_min resides.
+    ! This could be sped up by using bisection.
+    DO jproc = 1, nprocs(2)-1
+      IF (new_cell_min2(jproc) .LE. old_min(2) &
+          .AND. new_cell_max2(jproc) .GE. old_min(2)) EXIT
+    ENDDO
+
+    DO WHILE(type_max(2) .LE. old_max(2))
+      coord(c_ndims-1) = jproc - 1
+      type_max(2) = new_cell_max2(jproc)
+      IF (type_max(2) .GT. old_max(2)) type_max(2) = old_max(2)
+
+      n_local(2) = type_max(2) - type_min(2) + 1
+      start(2) = type_min(2) - old_min(2) + ng + 1
+
+      type_min(1) = old_min(1)
+      type_max(1) = old_min(1)
+
+      ! Find the new processor on which the old x_min resides
+      ! This could be sped up by using bisection.
+      DO iproc = 1, nprocs(1)-1
+        IF (new_cell_min1(iproc) .LE. old_min(1) &
+            .AND. new_cell_max1(iproc) .GE. old_min(1)) EXIT
+      ENDDO
+
+      DO WHILE(type_max(1) .LE. old_max(1))
+        coord(c_ndims) = iproc - 1
+        type_max(1) = new_cell_max1(iproc)
+        IF (type_max(1) .GT. old_max(1)) type_max(1) = old_max(1)
+
+        n_local(1) = type_max(1) - type_min(1) + 1
+        start(1) = type_min(1) - old_min(1) + ng + 1
+
+        CALL MPI_CART_RANK(comm, coord, irank, errcode)
+
+        IF (rank .NE. irank) THEN
+          sendtypes(irank) = create_2d_array_subtype(n_local, n_global, start)
+        ELSE
+          ! New domain is on the same processor as the old domain.
+          ! Just copy the region rather than using MPI.
+          DO i = 1,nd
+            old_0(i) = start(i) - ng
+            old_1(i) = old_0(i) + n_local(i) - 1
+          ENDDO
+        ENDIF
+
+        IF (type_max(1) .EQ. old_max(1)) EXIT
+        iproc = iproc + 1
+        type_min(1) = new_cell_min1(iproc)
+      ENDDO
+
+      IF (type_max(2) .EQ. old_max(2)) EXIT
+      jproc = jproc + 1
+      type_min(2) = new_cell_min2(jproc)
+    ENDDO
+
+    ! Create array of recvtypes
+
+    DO i = 1,nd
+      n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
+    ENDDO
+
+    type_min(2) = new_min(2)
+    type_max(2) = new_min(2)
+
+    ! Find the old processor on which the new y_min resides.
+    ! This could be sped up by using bisection.
+    DO jproc = 1, nprocs(2)-1
+      IF (old_cell_min2(jproc) .LE. new_min(2) &
+          .AND. old_cell_max2(jproc) .GE. new_min(2)) EXIT
+    ENDDO
+
+    DO WHILE(type_max(2) .LE. new_max(2))
+      coord(c_ndims-1) = jproc - 1
+      type_max(2) = old_cell_max2(jproc)
+      IF (type_max(2) .GT. new_max(2)) type_max(2) = new_max(2)
+
+      n_local(2) = type_max(2) - type_min(2) + 1
+      start(2) = type_min(2) - new_min(2) + ng + 1
+
+      type_min(1) = new_min(1)
+      type_max(1) = new_min(1)
+
+      ! Find the old processor on which the new x_min resides
+      ! This could be sped up by using bisection.
+      DO iproc = 1, nprocs(1)-1
+        IF (old_cell_min1(iproc) .LE. new_min(1) &
+            .AND. old_cell_max1(iproc) .GE. new_min(1)) EXIT
+      ENDDO
+
+      DO WHILE(type_max(1) .LE. new_max(1))
+        coord(c_ndims) = iproc - 1
+        type_max(1) = old_cell_max1(iproc)
+        IF (type_max(1) .GT. new_max(1)) type_max(1) = new_max(1)
+
+        n_local(1) = type_max(1) - type_min(1) + 1
+        start(1) = type_min(1) - new_min(1) + ng + 1
+
+        CALL MPI_CART_RANK(comm, coord, irank, errcode)
+
+        IF (rank .NE. irank) THEN
+          recvtypes(irank) = create_2d_array_subtype(n_local, n_global, start)
+        ELSE
+          ! New domain is on the same processor as the old domain.
+          ! Just copy the region rather than using MPI.
+          DO i = 1,nd
+            new_0(i) = start(i) - ng
+          ENDDO
+          DO j = old_0(2),old_1(2)
+            jnew = new_0(2) + j - old_0(2)
+            DO i = old_0(1),old_1(1)
+              inew = new_0(1) + i - old_0(1)
+              field_out(inew,jnew) = field_in(i,j)
+            ENDDO
+          ENDDO
+        ENDIF
+
+        IF (type_max(1) .EQ. new_max(1)) EXIT
+        iproc = iproc + 1
+        type_min(1) = old_cell_min1(iproc)
+      ENDDO
+
+      IF (type_max(2) .EQ. new_max(2)) EXIT
+      jproc = jproc + 1
+      type_min(2) = old_cell_min2(jproc)
+    ENDDO
+
+    CALL redblack(field_in, field_out, sendtypes, recvtypes)
+
+    DO i = 0,nproc_tot-1
+      IF (sendtypes(i) .NE. 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
+      IF (recvtypes(i) .NE. 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
+    ENDDO
+
+    DEALLOCATE(sendtypes)
+    DEALLOCATE(recvtypes)
 
   END SUBROUTINE redistribute_field_2d
 
 
 
-  SUBROUTINE redistribute_field_3d(domain, field_in, field_out)
+  SUBROUTINE redistribute_field_3d(field_in, field_out, our_coords, &
+      old_cell_min1, old_cell_max1, new_cell_min1, new_cell_max1, &
+      old_cell_min2, old_cell_max2, new_cell_min2, new_cell_max2, &
+      old_cell_min3, old_cell_max3, new_cell_min3, new_cell_max3)
 
     ! This subroutine redistributes the fields over the new processor layout
-    ! The current version works by writing the field to a file and then each
-    ! processor loads back in it's own part. This is better than the previous
-    ! version where each processor produced it's own copy of the global array
-    ! and then took its own subsection
-    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: domain
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: field_in
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: field_out
-    INTEGER :: nx_new, ny_new, nz_new
-    INTEGER :: subarray_write, subarray_read
-    INTEGER :: subtype_write, subtype_read, fh
-    INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
-    CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
+    INTEGER, PARAMETER :: ng = 3, nd = 3
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(IN) :: field_in
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(nd), INTENT(IN) :: our_coords
+    INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min1, old_cell_max1
+    INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min1, new_cell_max1
+    INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min2, old_cell_max2
+    INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min2, new_cell_max2
+    INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min3, old_cell_max3
+    INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min3, new_cell_max3
+    INTEGER :: irank, nproc_tot
+    INTEGER :: i, iproc, inew
+    INTEGER :: j, jproc, jnew
+    INTEGER :: k, kproc, knew
+    INTEGER, DIMENSION(nd) :: type_min, type_max, old_0, old_1, new_0
+    INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
+    INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
+    INTEGER, DIMENSION(c_ndims) :: coord
+    INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
-    WRITE(filename, '(a, ''/balance.dat'')') TRIM(data_dir)
+    nprocs(1) = SIZE(old_cell_min1)
+    nprocs(2) = SIZE(old_cell_min2)
+    nprocs(3) = SIZE(old_cell_min3)
 
-    nx_new = domain(1,2) - domain(1,1) + 1
-    ny_new = domain(2,2) - domain(2,1) + 1
-    nz_new = domain(3,2) - domain(3,1) + 1
+    nproc_tot = nprocs(1) * nprocs(2) * nprocs(3)
 
-    subarray_write = create_current_field_subarray()
-    subtype_write  = create_current_field_subtype()
+    ALLOCATE(sendtypes(0:nproc_tot-1))
+    ALLOCATE(recvtypes(0:nproc_tot-1))
 
-    subarray_read = create_field_subarray(nx_new, ny_new, nz_new)
-    subtype_read  = create_field_subtype(nx_new, ny_new, nz_new, &
-        domain(1,1), domain(2,1), domain(3,1))
+    old_min(1) = old_cell_min1(our_coords(1)+1)
+    old_max(1) = old_cell_max1(our_coords(1)+1)
+    new_min(1) = new_cell_min1(our_coords(1)+1)
+    new_max(1) = new_cell_max1(our_coords(1)+1)
 
-    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDWR+MPI_MODE_CREATE, &
-        MPI_INFO_NULL, fh, errcode)
+    old_min(2) = old_cell_min2(our_coords(2)+1)
+    old_max(2) = old_cell_max2(our_coords(2)+1)
+    new_min(2) = new_cell_min2(our_coords(2)+1)
+    new_max(2) = new_cell_max2(our_coords(2)+1)
 
-    CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_write, 'native', &
-        MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_WRITE_ALL(fh, field_in, 1, subarray_write, status, errcode)
+    old_min(3) = old_cell_min3(our_coords(3)+1)
+    old_max(3) = old_cell_max3(our_coords(3)+1)
+    new_min(3) = new_cell_min3(our_coords(3)+1)
+    new_max(3) = new_cell_max3(our_coords(3)+1)
 
-    CALL MPI_FILE_SET_VIEW(fh, offset, mpireal, subtype_read, 'native', &
-        MPI_INFO_NULL, errcode)
-    CALL MPI_FILE_READ_ALL(fh, field_out, 1, subarray_read, status, errcode)
+    tag = 0
+    sendtypes = 0
+    recvtypes = 0
 
-    CALL MPI_FILE_CLOSE(fh, errcode)
+    ! Create array of sendtypes
 
-    CALL MPI_TYPE_FREE(subarray_write, errcode)
-    CALL MPI_TYPE_FREE(subtype_write, errcode)
-    CALL MPI_TYPE_FREE(subarray_read, errcode)
-    CALL MPI_TYPE_FREE(subtype_read, errcode)
+    DO i = 1,nd
+      n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
+    ENDDO
 
-    CALL do_field_mpi_with_lengths(field_out, nx_new, ny_new, nz_new)
+    type_min(3) = old_min(3)
+    type_max(3) = old_min(3)
+
+    ! Find the new processor on which the old y_min resides.
+    ! This could be sped up by using bisection.
+    DO kproc = 1, nprocs(3)-1
+      IF (new_cell_min3(kproc) .LE. old_min(3) &
+          .AND. new_cell_max3(kproc) .GE. old_min(3)) EXIT
+    ENDDO
+
+    DO WHILE(type_max(3) .LE. old_max(3))
+      coord(c_ndims-2) = kproc - 1
+      type_max(3) = new_cell_max3(kproc)
+      IF (type_max(3) .GT. old_max(3)) type_max(3) = old_max(3)
+
+      n_local(3) = type_max(3) - type_min(3) + 1
+      start(3) = type_min(3) - old_min(3) + ng + 1
+
+      type_min(2) = old_min(2)
+      type_max(2) = old_min(2)
+
+      ! Find the new processor on which the old y_min resides.
+      ! This could be sped up by using bisection.
+      DO jproc = 1, nprocs(2)-1
+        IF (new_cell_min2(jproc) .LE. old_min(2) &
+            .AND. new_cell_max2(jproc) .GE. old_min(2)) EXIT
+      ENDDO
+
+      DO WHILE(type_max(2) .LE. old_max(2))
+        coord(c_ndims-1) = jproc - 1
+        type_max(2) = new_cell_max2(jproc)
+        IF (type_max(2) .GT. old_max(2)) type_max(2) = old_max(2)
+
+        n_local(2) = type_max(2) - type_min(2) + 1
+        start(2) = type_min(2) - old_min(2) + ng + 1
+
+        type_min(1) = old_min(1)
+        type_max(1) = old_min(1)
+
+        ! Find the new processor on which the old x_min resides
+        ! This could be sped up by using bisection.
+        DO iproc = 1, nprocs(1)-1
+          IF (new_cell_min1(iproc) .LE. old_min(1) &
+              .AND. new_cell_max1(iproc) .GE. old_min(1)) EXIT
+        ENDDO
+
+        DO WHILE(type_max(1) .LE. old_max(1))
+          coord(c_ndims) = iproc - 1
+          type_max(1) = new_cell_max1(iproc)
+          IF (type_max(1) .GT. old_max(1)) type_max(1) = old_max(1)
+
+          n_local(1) = type_max(1) - type_min(1) + 1
+          start(1) = type_min(1) - old_min(1) + ng + 1
+
+          CALL MPI_CART_RANK(comm, coord, irank, errcode)
+
+          IF (rank .NE. irank) THEN
+            sendtypes(irank) = create_3d_array_subtype(n_local, n_global, start)
+          ELSE
+            ! New domain is on the same processor as the old domain.
+            ! Just copy the region rather than using MPI.
+            DO i = 1,nd
+              old_0(i) = start(i) - ng
+              old_1(i) = old_0(i) + n_local(i) - 1
+            ENDDO
+          ENDIF
+
+          IF (type_max(1) .EQ. old_max(1)) EXIT
+          iproc = iproc + 1
+          type_min(1) = new_cell_min1(iproc)
+        ENDDO
+
+        IF (type_max(2) .EQ. old_max(2)) EXIT
+        jproc = jproc + 1
+        type_min(2) = new_cell_min2(jproc)
+      ENDDO
+
+      IF (type_max(3) .EQ. old_max(3)) EXIT
+      kproc = kproc + 1
+      type_min(3) = new_cell_min3(kproc)
+    ENDDO
+
+    ! Create array of recvtypes
+
+    DO i = 1,nd
+      n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
+    ENDDO
+
+    type_min(3) = new_min(3)
+    type_max(3) = new_min(3)
+
+    ! Find the old processor on which the new y_min resides.
+    ! This could be sped up by using bisection.
+    DO kproc = 1, nprocs(3)-1
+      IF (old_cell_min3(kproc) .LE. new_min(3) &
+          .AND. old_cell_max3(kproc) .GE. new_min(3)) EXIT
+    ENDDO
+
+    DO WHILE(type_max(3) .LE. new_max(3))
+      coord(c_ndims-2) = kproc - 1
+      type_max(3) = old_cell_max3(kproc)
+      IF (type_max(3) .GT. new_max(3)) type_max(3) = new_max(3)
+
+      n_local(3) = type_max(3) - type_min(3) + 1
+      start(3) = type_min(3) - new_min(3) + ng + 1
+
+      type_min(2) = new_min(2)
+      type_max(2) = new_min(2)
+
+      ! Find the old processor on which the new y_min resides.
+      ! This could be sped up by using bisection.
+      DO jproc = 1, nprocs(2)-1
+        IF (old_cell_min2(jproc) .LE. new_min(2) &
+            .AND. old_cell_max2(jproc) .GE. new_min(2)) EXIT
+      ENDDO
+
+      DO WHILE(type_max(2) .LE. new_max(2))
+        coord(c_ndims-1) = jproc - 1
+        type_max(2) = old_cell_max2(jproc)
+        IF (type_max(2) .GT. new_max(2)) type_max(2) = new_max(2)
+
+        n_local(2) = type_max(2) - type_min(2) + 1
+        start(2) = type_min(2) - new_min(2) + ng + 1
+
+        type_min(1) = new_min(1)
+        type_max(1) = new_min(1)
+
+        ! Find the old processor on which the new x_min resides
+        ! This could be sped up by using bisection.
+        DO iproc = 1, nprocs(1)-1
+          IF (old_cell_min1(iproc) .LE. new_min(1) &
+              .AND. old_cell_max1(iproc) .GE. new_min(1)) EXIT
+        ENDDO
+
+        DO WHILE(type_max(1) .LE. new_max(1))
+          coord(c_ndims) = iproc - 1
+          type_max(1) = old_cell_max1(iproc)
+          IF (type_max(1) .GT. new_max(1)) type_max(1) = new_max(1)
+
+          n_local(1) = type_max(1) - type_min(1) + 1
+          start(1) = type_min(1) - new_min(1) + ng + 1
+
+          CALL MPI_CART_RANK(comm, coord, irank, errcode)
+
+          IF (rank .NE. irank) THEN
+            recvtypes(irank) = create_3d_array_subtype(n_local, n_global, start)
+          ELSE
+            ! New domain is on the same processor as the old domain.
+            ! Just copy the region rather than using MPI.
+            DO i = 1,nd
+              new_0(i) = start(i) - ng
+            ENDDO
+            DO k = old_0(3),old_1(3)
+              knew = new_0(3) + k - old_0(3)
+              DO j = old_0(2),old_1(2)
+                jnew = new_0(2) + j - old_0(2)
+                DO i = old_0(1),old_1(1)
+                  inew = new_0(1) + i - old_0(1)
+                  field_out(inew,jnew,knew) = field_in(i,j,k)
+                ENDDO
+              ENDDO
+            ENDDO
+          ENDIF
+
+          IF (type_max(1) .EQ. new_max(1)) EXIT
+          iproc = iproc + 1
+          type_min(1) = old_cell_min1(iproc)
+        ENDDO
+
+        IF (type_max(2) .EQ. new_max(2)) EXIT
+        jproc = jproc + 1
+        type_min(2) = old_cell_min2(jproc)
+      ENDDO
+
+      IF (type_max(3) .EQ. new_max(3)) EXIT
+      kproc = kproc + 1
+      type_min(3) = old_cell_min3(kproc)
+    ENDDO
+
+    CALL redblack(field_in, field_out, sendtypes, recvtypes)
+
+    DO i = 0,nproc_tot-1
+      IF (sendtypes(i) .NE. 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
+      IF (recvtypes(i) .NE. 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
+    ENDDO
+
+    DEALLOCATE(sendtypes)
+    DEALLOCATE(recvtypes)
 
   END SUBROUTINE redistribute_field_3d
 
