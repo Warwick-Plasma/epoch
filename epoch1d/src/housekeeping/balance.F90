@@ -129,14 +129,13 @@ CONTAINS
 
   SUBROUTINE redistribute_fields(new_domain)
 
-    ! This subroutine redistributes the 2D field variables over the new
-    ! processor layout. If using a 2D field of your own then set the
-    ! redistribute_field subroutine to implement it. 1D fields, you're on
-    ! your own (have global copies and use those to repopulate?)
+    ! This subroutine redistributes the field variables over the new
+    ! processor layout. If using a field of your own then set the
+    ! redistribute_field subroutine to implement it.
 
     INTEGER :: nx_new
     INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp2d
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp_sum
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
     INTEGER :: ispecies, index, n_species_local
 
@@ -144,84 +143,23 @@ CONTAINS
 
     ALLOCATE(temp(-2:nx_new+3))
 
-    temp = 0.0_num
     CALL redistribute_field(new_domain, ex, temp)
-    DEALLOCATE(ex)
-    ALLOCATE(ex(-2:nx_new+3))
-    ex = temp
-
-    temp = 0.0_num
     CALL redistribute_field(new_domain, ey, temp)
-    DEALLOCATE(ey)
-    ALLOCATE(ey(-2:nx_new+3))
-    ey = temp
-
-    temp = 0.0_num
     CALL redistribute_field(new_domain, ez, temp)
-    DEALLOCATE(ez)
-    ALLOCATE(ez(-2:nx_new+3))
-    ez = temp
 
-    temp = 0.0_num
     CALL redistribute_field(new_domain, bx, temp)
-    DEALLOCATE(bx)
-    ALLOCATE(bx(-2:nx_new+3))
-    bx = temp
-
-    temp = 0.0_num
     CALL redistribute_field(new_domain, by, temp)
-    DEALLOCATE(by)
-    ALLOCATE(by(-2:nx_new+3))
-    by = temp
-
-    temp = 0.0_num
     CALL redistribute_field(new_domain, bz, temp)
-    DEALLOCATE(bz)
-    ALLOCATE(bz(-2:nx_new+3))
-    bz = temp
 
-    temp = 0.0_num
     CALL redistribute_field(new_domain, jx, temp)
-    DEALLOCATE(jx)
-    ALLOCATE(jx(-2:nx_new+3))
-    jx = temp
-
-    temp = 0.0_num
     CALL redistribute_field(new_domain, jy, temp)
-    DEALLOCATE(jy)
-    ALLOCATE(jy(-2:nx_new+3))
-    jy = temp
-
-    temp = 0.0_num
     CALL redistribute_field(new_domain, jz, temp)
-    DEALLOCATE(jz)
-    ALLOCATE(jz(-2:nx_new+3))
-    jz = temp
 
     IF (cpml_boundaries) THEN
-      temp = 0.0_num
       CALL redistribute_field(new_domain, cpml_psi_eyx, temp)
-      DEALLOCATE(cpml_psi_eyx)
-      ALLOCATE(cpml_psi_eyx(-2:nx_new+3))
-      cpml_psi_eyx = temp
-
-      temp = 0.0_num
-      CALL redistribute_field(new_domain, cpml_psi_ezx, temp)
-      DEALLOCATE(cpml_psi_ezx)
-      ALLOCATE(cpml_psi_ezx(-2:nx_new+3))
-      cpml_psi_ezx = temp
-
-      temp = 0.0_num
       CALL redistribute_field(new_domain, cpml_psi_byx, temp)
-      DEALLOCATE(cpml_psi_byx)
-      ALLOCATE(cpml_psi_byx(-2:nx_new+3))
-      cpml_psi_byx = temp
-
-      temp = 0.0_num
+      CALL redistribute_field(new_domain, cpml_psi_ezx, temp)
       CALL redistribute_field(new_domain, cpml_psi_bzx, temp)
-      DEALLOCATE(cpml_psi_bzx)
-      ALLOCATE(cpml_psi_bzx(-2:nx_new+3))
-      cpml_psi_bzx = temp
 
       CALL deallocate_cpml_helpers
       CALL set_cpml_helpers(nx_new, new_domain(1,1), new_domain(1,2))
@@ -240,19 +178,12 @@ CONTAINS
 
       IF (n_species_local .LE. 0) CYCLE
 
-      ALLOCATE(temp2d(-2:nx_new+3, 1:n_species_local))
+      ALLOCATE(temp_sum(-2:nx_new+3, n_species_local))
 
-      DO ispecies = 1, n_species_local
-        CALL redistribute_field(new_domain, &
-            averaged_data(index)%array(:,ispecies), temp2d(:,ispecies))
-      ENDDO
+      CALL redistribute_field_sum(new_domain, averaged_data(index)%array, &
+          temp_sum)
 
-      DEALLOCATE(averaged_data(index)%array)
-      ALLOCATE(averaged_data(index)%array(-2:nx_new+3,n_species_local))
-
-      averaged_data(index)%array = temp2d
-
-      DEALLOCATE(temp2d)
+      DEALLOCATE(temp_sum)
     ENDDO
 
     ! No need to rebalance lasers in 1D, lasers are just a point!
@@ -262,7 +193,49 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field(domain, field_in, field_out)
+  SUBROUTINE redistribute_field(new_domain, field, temp)
+
+    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
+    REAL(num), DIMENSION(:), ALLOCATABLE, INTENT(INOUT) :: field
+    REAL(num), DIMENSION(:), INTENT(OUT) :: temp
+    INTEGER :: n_new(c_ndims)
+
+    n_new = SHAPE(temp)
+
+    temp = 0.0_num
+    CALL redistribute_field_1d(new_domain, field, temp)
+    DEALLOCATE(field)
+    ALLOCATE(field(-2:n_new(1)+3))
+    field = temp
+
+  END SUBROUTINE redistribute_field
+
+
+
+  SUBROUTINE redistribute_field_sum(new_domain, field, temp)
+
+    INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
+    REAL(num), DIMENSION(:,:), POINTER, INTENT(INOUT) :: field
+    REAL(num), DIMENSION(:,:), INTENT(OUT) :: temp
+    INTEGER :: i, n_new(c_ndims+1)
+
+    n_new = SHAPE(temp)
+
+    temp = 0.0_num
+    DO i = 1, n_new(c_ndims+1)
+      CALL redistribute_field_1d(new_domain, field(:,i), temp(:,i))
+    ENDDO
+
+    DEALLOCATE(field)
+    ALLOCATE(field(-2:n_new(1)+3, n_new(c_ndims+1)))
+
+    field = temp
+
+  END SUBROUTINE redistribute_field_sum
+
+
+
+  SUBROUTINE redistribute_field_1d(domain, field_in, field_out)
 
     ! This subroutine redistributes a 1D field over the new processor layout
     ! The current version works by producing a global copy on each processor
@@ -314,7 +287,7 @@ CONTAINS
     DEALLOCATE(field_temp)
     CALL MPI_COMM_FREE(new_comm, errcode)
 
-  END SUBROUTINE redistribute_field
+  END SUBROUTINE redistribute_field_1d
 
 
 
