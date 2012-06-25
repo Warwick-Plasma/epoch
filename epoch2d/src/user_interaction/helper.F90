@@ -378,6 +378,7 @@ top:DO it = 1, 3
             IF (f1 .GT. f0) THEN
               num_frac(i-1) = f1
               num_frac(i) = f0
+              f1 = f0
               idx = num_idx(i-1)
               num_idx(i-1) = num_idx(i)
               num_idx(i) = idx
