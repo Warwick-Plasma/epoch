@@ -447,19 +447,23 @@ int sdf_factor(sdf_file_t *h, int *start)
     int n;
 #ifdef PARALLEL
     int periods[3] = {0, 0, 0};
+    int old_dims[6];
 
-    //if (b->stagger != SDF_STAGGER_CELL_CENTRE)
-    //    for (n = 0; n < b->ndims; n++) b->dims[n]--;
-
-    for (n = 0; n < b->ndims; n++) if (b->dims[n] < 1) b->dims[n] = 1;
+    // Adjust dimensions to those of a cell-centred variable
+    for (n = 0; n < b->ndims; n++) {
+        old_dims[n] = b->dims[n];
+        if (b->stagger & n) b->dims[n]--;
+        if (b->dims[n] < 1) b->dims[n] = 1;
+    }
 
     if (b->ndims == 2)
         factor2d(h->ncpus, b->dims, b->cpu_split);
     else
         factor3d(h->ncpus, b->dims, b->cpu_split);
 
-    //if (b->stagger != SDF_STAGGER_CELL_CENTRE)
-    //    for (n = 0; n < b->ndims; n++) b->dims[n]++;
+    // Return dimensions back to their original values
+    for (n = 0; n < b->ndims; n++)
+        b->dims[n] = old_dims[n];
 
     MPI_Cart_create(h->comm, b->ndims, b->cpu_split, periods, 1, &b->cart_comm);
     MPI_Comm_rank(b->cart_comm, &b->cart_rank);
