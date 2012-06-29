@@ -898,10 +898,6 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
 
     rv->SetVoidArray(b->data, b->nlocal, 1);
 
-    if (b->blocktype != SDF_BLOCKTYPE_POINT_MESH &&
-        b->blocktype != SDF_BLOCKTYPE_POINT_VARIABLE)
-            SetUpDomainConnectivity();
-
 #ifdef SDF_DEBUG
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
@@ -1157,8 +1153,6 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
     delete [] vfm_blocks;
 
     debug1 << "GetMaterial() done" << endl;
-
-    SetUpDomainConnectivity();
 
 #ifdef SDF_DEBUG
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
