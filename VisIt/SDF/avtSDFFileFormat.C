@@ -1188,6 +1188,16 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
 
     debug1 << "found block:" << sblock->id << " for material:" << var << endl;
 
+    if (sblock->datatype_out == SDF_DATATYPE_OTHER) {
+        if (sblock->variable_ids && sblock->variable_ids[0]) {
+            sdf_block_t *b = sdf_find_block_by_id(h, sblock->variable_ids[0]);
+            sblock->datatype_out = b->datatype_out;
+        } else {
+            EXCEPTION1(InvalidVariableException, sblock->id);
+            return NULL;
+        }
+    }
+
     if (sblock->datatype_out == SDF_DATATYPE_REAL4)
         return GetMaterialType<float>(sblock, domain);
     else
@@ -1369,6 +1379,16 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
     h->current_block = sblock;
 
     debug1 << "found block:" << sblock->id << " for material:" << var << endl;
+
+    if (sblock->datatype_out == SDF_DATATYPE_OTHER) {
+        if (sblock->variable_ids && sblock->variable_ids[0]) {
+            sdf_block_t *b = sdf_find_block_by_id(h, sblock->variable_ids[0]);
+            sblock->datatype_out = b->datatype_out;
+        } else {
+            EXCEPTION1(InvalidVariableException, sblock->id);
+            return NULL;
+        }
+    }
 
     if (sblock->datatype_out == SDF_DATATYPE_REAL4)
         return GetSpeciesType<float>(sblock, domain);

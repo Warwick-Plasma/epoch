@@ -272,6 +272,10 @@ int sdf_read_next_block_header(sdf_file_t *h)
     }
     b->datatype_out = b->datatype;
     b->type_size_out = b->type_size;
+    if (h->use_float && b->datatype == SDF_DATATYPE_REAL8) {
+        b->datatype_out = SDF_DATATYPE_REAL4;
+        b->type_size_out = 4;
+    }
 #ifdef PARALLEL
     switch (b->datatype) {
     case(SDF_DATATYPE_REAL4):
