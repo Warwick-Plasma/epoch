@@ -135,6 +135,10 @@ CONTAINS
     WRITE(*, *) 'Pair production by Trident process -DTRIDENT_PHOTONS'
 #endif
 #endif
+#ifdef PREFETCH
+    defines = IOR(defines, c_def_prefetch)
+    WRITE(*, *) 'Particle prefetching -DPREFETCH'
+#endif
     WRITE(*, *) '*************************************************************'
     WRITE(*, *)
 

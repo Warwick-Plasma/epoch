@@ -60,6 +60,10 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 # Use the Trident process for pair production
 # -DTRIDENT_PHOTONS
 
+# Use Intel-specific 'mm_prefetch' calls to load next particle in the list
+# into cache ahead of time. Gives ~10% speed-up with Intel 12 compilers.
+# -DPREFETCH
+
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
@@ -96,8 +100,8 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   epoch3d.F90 evaluate.f90 evaluator_blocks.f90 fields.f90 helper.F90 \
   ic_module.f90 ionise.F90 iterators.F90 laser.f90 mpi_routines.F90 \
   mpi_subtype_control.f90 numerics.f90 particle_pointer_advance.f90 \
-  particle_temperature.F90 particles.F90 partlist.F90 photons.F90 probes.F90 \
-  random_generator.f90 redblack_module.f90 sdf.f90 sdf_common.f90 \
+  particle_temperature.F90 particles.F90 partlist.F90 photons.F90 prefetch.F90 \
+  probes.F90 random_generator.f90 redblack_module.f90 sdf.f90 sdf_common.f90 \
   sdf_control.f90 sdf_input.f90 sdf_input_cartesian.f90 \
   sdf_input_cartesian_r4.f90 sdf_input_cartesian_r8.f90 \
   sdf_input_cartesian_ru.f90 sdf_input_point.f90 sdf_input_point_r4.f90 \
@@ -179,7 +183,7 @@ balance.o: balance.F90 boundary.o mpi_subtype_control.o partlist.o \
 boundary.o: boundary.f90 deck_io_block.o laser.o particle_temperature.o \
   partlist.o
 calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
-collisions.o: collisions.F90 boundary.o calc_df.o random_generator.o
+collisions.o: collisions.F90 boundary.o calc_df.o prefetch.o random_generator.o
 current_smooth.o: current_smooth.F90 shape_functions.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
@@ -228,10 +232,12 @@ numerics.o: numerics.f90 shared_data.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shape_functions.o
-particles.o: particles.F90 boundary.o current_smooth.o shape_functions.o
+particles.o: particles.F90 boundary.o current_smooth.o prefetch.o \
+  shape_functions.o
 partlist.o: partlist.F90 random_generator.o shared_data.o
 photons.o: photons.F90 partlist.o random_generator.o shape_functions.o \
   shared_data.o
+prefetch.o: prefetch.F90 shared_data.o
 probes.o: probes.F90 mpi_subtype_control.o partlist.o sdf.o
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o shared_data.o

@@ -3,6 +3,7 @@ MODULE particles
   USE boundary
   USE shape_functions
   USE current_smooth
+  USE prefetch
 
   IMPLICIT NONE
 
@@ -100,6 +101,10 @@ CONTAINS
 
     TYPE(particle), POINTER :: current, next
 
+#ifdef PREFETCH
+    CALL prefetch_particle(species_list(1)%attached_list%head)
+#endif
+
     jx = 0.0_num
     jy = 0.0_num
     jz = 0.0_num
@@ -172,6 +177,9 @@ CONTAINS
       !DEC$ VECTOR ALWAYS
       DO ipart = 1, species_list(ispecies)%attached_list%count
         next=>current%next
+#ifdef PREFETCH
+        CALL prefetch_particle(next)
+#endif
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
         fcx = idtyz * part_weight

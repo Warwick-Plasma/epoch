@@ -174,6 +174,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_particle_id  = 2**14
   INTEGER(i8), PARAMETER :: c_def_photons = 2**15
   INTEGER(i8), PARAMETER :: c_def_trident_photons = 2**16
+  INTEGER(i8), PARAMETER :: c_def_prefetch = 2**17
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x

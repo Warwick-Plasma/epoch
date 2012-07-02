@@ -7,6 +7,7 @@ MODULE collisions
   USE random_generator
   USE boundary
   USE calc_df
+  USE prefetch
 
   IMPLICIT NONE
 
@@ -149,6 +150,10 @@ CONTAINS
       factor = factor + MIN(current%weight, impact%weight)
       current => impact%next
       impact => current%next
+#ifdef PREFETCH
+      CALL prefetch_particle(current)
+      CALL prefetch_particle(current)
+#endif
     ENDDO
     np = np + current%weight + impact%weight
     factor = factor + MIN(current%weight, impact%weight)
@@ -169,6 +174,10 @@ CONTAINS
           weight, weight, dens, dens, temp, temp, log_lambda, factor)
       current => impact%next
       impact => current%next
+#ifdef PREFETCH
+      CALL prefetch_particle(current)
+      CALL prefetch_particle(current)
+#endif
     ENDDO
 
     IF (MOD(icount, 2_i8) .EQ. 0) THEN
@@ -238,6 +247,10 @@ CONTAINS
         factor = factor + MIN(current%weight, impact%weight)
         current => current%next
         impact => impact%next
+#ifdef PREFETCH
+        CALL prefetch_particle(current)
+        CALL prefetch_particle(current)
+#endif
       ENDDO
 #endif
 
@@ -249,6 +262,10 @@ CONTAINS
             log_lambda, user_factor * np / factor)
         current => current%next
         impact => impact%next
+#ifdef PREFETCH
+        CALL prefetch_particle(current)
+        CALL prefetch_particle(current)
+#endif
       ENDDO
 
       ! restore the tail of the lists
