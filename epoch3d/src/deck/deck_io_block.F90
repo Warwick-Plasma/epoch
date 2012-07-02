@@ -67,6 +67,7 @@ CONTAINS
     io_block_name(c_dump_cpml_psi_eyz     ) = 'cpml_psi_eyz'
     io_block_name(c_dump_cpml_psi_bxz     ) = 'cpml_psi_bxz'
     io_block_name(c_dump_cpml_psi_byz     ) = 'cpml_psi_byz'
+    io_block_name(c_dump_absorption       ) = 'absorption'
 
     i = num_vars_to_dump
     io_block_name (i+1 ) = 'dt_snapshot'

@@ -259,6 +259,14 @@ CONTAINS
 
     DEALLOCATE(fplus)
 
+    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+      IF (add_laser(i)) THEN
+        CALL calc_absorption(c_bd_x_min, lasers = laser_x_min)
+      ELSE
+        CALL calc_absorption(c_bd_x_min)
+      ENDIF
+    ENDIF
+
   END SUBROUTINE outflow_bcs_x_min
 
 
@@ -335,6 +343,14 @@ CONTAINS
         + diff * by(laserpos-1, 1:ny, 1:nz))
 
     DEALLOCATE(fneg)
+
+    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+      IF (add_laser(i)) THEN
+        CALL calc_absorption(c_bd_x_max, lasers = laser_x_max)
+      ELSE
+        CALL calc_absorption(c_bd_x_max)
+      ENDIF
+    ENDIF
 
   END SUBROUTINE outflow_bcs_x_max
 
@@ -413,6 +429,14 @@ CONTAINS
 
     DEALLOCATE(fplus)
 
+    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+      IF (add_laser(i)) THEN
+        CALL calc_absorption(c_bd_y_min, lasers = laser_y_min)
+      ELSE
+        CALL calc_absorption(c_bd_y_min)
+      ENDIF
+    ENDIF
+
   END SUBROUTINE outflow_bcs_y_min
 
 
@@ -489,6 +513,14 @@ CONTAINS
         + diff * bz(1:nx, laserpos-1, 1:nz))
 
     DEALLOCATE(fneg)
+
+    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+      IF (add_laser(i)) THEN
+        CALL calc_absorption(c_bd_y_max, lasers = laser_y_max)
+      ELSE
+        CALL calc_absorption(c_bd_y_max)
+      ENDIF
+    ENDIF
 
   END SUBROUTINE outflow_bcs_y_max
 
@@ -567,6 +599,14 @@ CONTAINS
 
     DEALLOCATE(fplus)
 
+    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+      IF (add_laser(i)) THEN
+        CALL calc_absorption(c_bd_z_min, lasers = laser_z_min)
+      ELSE
+        CALL calc_absorption(c_bd_z_min)
+      ENDIF
+    ENDIF
+
   END SUBROUTINE outflow_bcs_z_min
 
 
@@ -644,6 +684,120 @@ CONTAINS
 
     DEALLOCATE(fneg)
 
+    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+      IF (add_laser(i)) THEN
+        CALL calc_absorption(c_bd_z_max, lasers = laser_z_max)
+      ELSE
+        CALL calc_absorption(c_bd_z_max)
+      ENDIF
+    ENDIF
+
   END SUBROUTINE outflow_bcs_z_max
+
+
+
+  SUBROUTINE calc_absorption(bd, lasers)
+
+    TYPE(laser_block), POINTER, OPTIONAL, INTENT(IN) :: lasers
+    INTEGER, INTENT(IN) :: bd
+    TYPE(laser_block), POINTER :: current
+    REAL(num) :: t_env, dir, dd
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: e1, e2, b1, b2
+    INTEGER :: mm, nn, ibc, icell, jcell
+
+    ! Note: ideally e1, e2, b1, b2 should be face-centred. However, this is not
+    ! possible with 'open' boundaries since E-fields are not defined in the
+    ! ghost cell, so we use the cell-centred quantities in the first cell.
+
+    dir = 1.0_num
+
+    SELECT CASE(bd)
+      CASE(c_bd_x_min, c_bd_x_max)
+        mm = ny
+        nn = nz
+        ALLOCATE(e1(mm, nn), e2(mm, nn), b1(mm, nn), b2(mm, nn))
+
+        ibc = 1
+        dd = dy * dz
+        IF (bd .EQ. c_bd_x_max) THEN
+          dir = -1.0_num
+          ibc = nx
+        ENDIF
+
+        e1 = 0.5_num  * (ey(ibc  , 0:ny-1, 1:nz  ) + ey(ibc, 1:ny  , 1:nz  ))
+        e2 = 0.5_num  * (ez(ibc  , 1:ny  , 0:nz-1) + ez(ibc, 1:ny  , 1:nz  ))
+        b1 = 0.25_num * (bz(ibc-1, 0:ny-1, 1:nz  ) + bz(ibc, 0:ny-1, 1:nz  ) &
+                       + bz(ibc-1, 1:ny  , 1:nz  ) + bz(ibc, 1:ny  , 1:nz  ))
+        b2 = 0.25_num * (by(ibc-1, 1:ny  , 0:nz-1) + by(ibc, 1:ny  , 0:nz-1) &
+                       + by(ibc-1, 1:ny  , 1:nz  ) + by(ibc, 1:ny  , 1:nz  ))
+
+      CASE(c_bd_y_min, c_bd_y_max)
+        mm = nx
+        nn = nz
+        ALLOCATE(e1(mm, nn), e2(mm, nn), b1(mm, nn), b2(mm, nn))
+
+        ibc = 1
+        dd = dx * dz
+        IF (bd .EQ. c_bd_y_max) THEN
+          dir = -1.0_num
+          ibc = ny
+        ENDIF
+
+        e1 = 0.5_num  * (ez(1:nx  , ibc  , 0:nz-1) + ez(1:nx  , ibc, 1:nz  ))
+        e2 = 0.5_num  * (ez(0:nx-1, ibc  , 1:nx  ) + ex(1:nx  , ibc, 1:nz  ))
+        b1 = 0.25_num * (bx(1:nx  , ibc-1, 0:nz-1) + bx(1:nx  , ibc, 0:nz-1) &
+                       + bx(1:nx  , ibc-1, 1:nz  ) + bx(1:nx  , ibc, 1:nz  ))
+        b2 = 0.25_num * (bz(0:nx-1, ibc-1, 1:nz  ) + bz(0:nx-1, ibc, 1:nz  ) &
+                       + bz(1:nx  , ibc-1, 1:nz  ) + bz(1:nx  , ibc, 1:nz))
+
+      CASE(c_bd_z_min, c_bd_z_max)
+        mm = nx
+        nn = ny
+        ALLOCATE(e1(mm, nn), e2(mm, nn), b1(mm, nn), b2(mm, nn))
+
+        ibc = 1
+        dd = dy * dz
+        IF (bd .EQ. c_bd_z_max) THEN
+          dir = -1.0_num
+          ibc = nz
+        ENDIF
+
+        e1 = 0.5_num  * (ex(0:nx-1, 1:ny  , ibc  ) + ex(1:nx  , 1:ny  , ibc))
+        e2 = 0.5_num  * (ey(1:nx  , 0:ny-1, ibc  ) + ey(1:nx  , 1:ny  , ibc))
+        b1 = 0.25_num * (by(0:nx-1, 1:ny  , ibc-1) + by(0:nx-1, 1:ny  , ibc) &
+                       + by(1:nx  , 1:ny  , ibc-1) + by(1:nx  , 1:ny  , ibc))
+        b2 = 0.25_num * (bx(1:nx  , 0:ny-1, ibc-1) + bx(1:nx  , 0:ny-1, ibc) &
+                       + bx(1:nx  , 1:ny  , ibc-1) + bx(1:nx  , 1:ny  , ibc))
+
+      CASE DEFAULT
+        dd = 0.0_num
+        e1 = 0.0_num
+        e2 = 0.0_num
+        b1 = 0.0_num
+        b2 = 0.0_num
+
+      END SELECT
+
+    laser_absorb_local = laser_absorb_local &
+        + dt * dir * SUM(e1 * b1 - e2 * b2) / mu0
+
+    IF (PRESENT(lasers)) THEN
+      current => lasers
+      DO WHILE(ASSOCIATED(current))
+        t_env = laser_time_profile(current)
+        DO jcell = 1, nn
+          DO icell = 1, mm
+            laser_inject_local = laser_inject_local &
+                + dir * dt * 0.5_num * epsilon0 * c &
+                * (t_env * current%amp * current%profile(icell, jcell))**2
+          ENDDO
+        ENDDO
+        current => current%next
+      ENDDO
+    ENDIF
+
+    DEALLOCATE(e1, e2, b1, b2)
+
+  END SUBROUTINE calc_absorption
 
 END MODULE laser

@@ -598,7 +598,8 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_cpml_psi_ezy      = 38
   INTEGER, PARAMETER :: c_dump_cpml_psi_bxy      = 39
   INTEGER, PARAMETER :: c_dump_cpml_psi_bzy      = 40
-  INTEGER, PARAMETER :: num_vars_to_dump         = 40
+  INTEGER, PARAMETER :: c_dump_absorption        = 41
+  INTEGER, PARAMETER :: num_vars_to_dump         = 41
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -891,5 +892,11 @@ MODULE shared_data
 
   LOGICAL, DIMENSION(c_dir_x:c_dir_z,0:c_stagger_max) :: stagger
   INTEGER(i8) :: push_per_field = 5
+
+  ! Absorption diagnostic
+  REAL(num) :: laser_inject_local = 0.0_num
+  REAL(num) :: laser_absorb_local = 0.0_num
+  REAL(num) :: laser_injected = 0.0_num
+  REAL(num) :: laser_absorbed = 0.0_num
 
 END MODULE shared_data

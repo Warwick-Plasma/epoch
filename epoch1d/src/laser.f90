@@ -182,6 +182,14 @@ CONTAINS
         - dt_eps * jz(laserpos) &
         + diff * by(laserpos))
 
+    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+      IF (add_laser(i)) THEN
+        CALL calc_absorption(c_bd_x_min, lasers = laser_x_min)
+      ELSE
+        CALL calc_absorption(c_bd_x_min)
+      ENDIF
+    ENDIF
+
   END SUBROUTINE outflow_bcs_x_min
 
 
@@ -250,6 +258,59 @@ CONTAINS
         + dt_eps * jz(laserpos) &
         + diff * by(laserpos-1))
 
+    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+      IF (add_laser(i)) THEN
+        CALL calc_absorption(c_bd_x_max, lasers = laser_x_max)
+      ELSE
+        CALL calc_absorption(c_bd_x_max)
+      ENDIF
+    ENDIF
+
   END SUBROUTINE outflow_bcs_x_max
+
+
+
+  SUBROUTINE calc_absorption(bd, lasers)
+
+    TYPE(laser_block), POINTER, OPTIONAL, INTENT(IN) :: lasers
+    INTEGER, INTENT(IN) :: bd
+    TYPE(laser_block), POINTER :: current
+    REAL(num) :: t_env, dir
+    REAL(num) :: e1, e2, b1, b2
+    INTEGER :: ibc
+
+    ! Note: ideally e1, e2, b1, b2 should be face-centred. However, this is not
+    ! possible with 'open' boundaries since E-fields are not defined in the
+    ! ghost cell, so we use the cell-centred quantities in the first cell.
+
+    dir = 1.0_num
+    ibc = 1
+
+    IF (bd .EQ. c_bd_x_max) THEN
+      dir = -1.0_num
+      ibc = nx
+    ENDIF
+
+    e1 = ey(ibc)
+    e2 = ez(ibc)
+    b1 = 0.5_num * (bz(ibc) + bz(ibc-1))
+    b2 = 0.5_num * (by(ibc) + by(ibc-1))
+
+    laser_absorb_local = laser_absorb_local &
+        + dt * dir * (e1 * b1 - e2 * b2) / mu0
+
+    IF (PRESENT(lasers)) THEN
+      current => lasers
+      DO WHILE(ASSOCIATED(current))
+        t_env = laser_time_profile(current)
+
+        laser_inject_local = laser_inject_local &
+            + dir * dt * 0.5_num * epsilon0 * c &
+            * (t_env * current%amp * current%profile)**2
+        current => current%next
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE calc_absorption
 
 END MODULE laser

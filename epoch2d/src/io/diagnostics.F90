@@ -298,6 +298,22 @@ CONTAINS
               'base64_packed_source_code', source_code, last_line, 0)
     ENDIF
 
+    IF (IAND(dumpmask(c_dump_absorption), code) .NE. 0) THEN
+      CALL MPI_ALLREDUCE(laser_absorb_local, laser_absorbed, 1, mpireal, &
+          MPI_SUM, comm, errcode)
+      CALL MPI_ALLREDUCE(laser_inject_local, laser_injected, 1, mpireal, &
+          MPI_SUM, comm, errcode)
+      IF (laser_injected .GT. 0.0_num) THEN
+        laser_absorbed = laser_absorbed / laser_injected
+      ELSE
+        laser_absorbed = 0.0_num
+      ENDIF
+      CALL sdf_write_srl(sdf_handle, 'abs_frac', 'Absorption/Abs_frac', &
+          laser_absorbed)
+      CALL sdf_write_srl(sdf_handle, 'laser_enTotal', &
+          'Absorption/Laser_enTotal', laser_injected)
+    ENDIF
+
     ! close the file
     CALL sdf_close(sdf_handle)
 
