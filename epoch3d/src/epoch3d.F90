@@ -40,7 +40,7 @@ PROGRAM pic
   IMPLICIT NONE
 
   INTEGER :: ispecies, step = 0
-  LOGICAL :: halt = .FALSE.
+  LOGICAL :: halt = .FALSE., push = .TRUE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
 
 #ifdef COLLISIONS_TEST
@@ -115,29 +115,32 @@ PROGRAM pic
   IF (use_ionisation) CALL initialise_ionisation
 
   DO
+    push = (time .GE. particle_push_start_time)
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
         .OR. (time .GE. t_end) .OR. halt) EXIT
     CALL update_eb_fields_half
+    IF (push) THEN
 #ifdef PHOTONS
-    IF (time .GT. qed_start_time .AND. use_qed) THEN
-      CALL qed_update_optical_depth()
-    ENDIF
+      IF (time .GT. qed_start_time .AND. use_qed) THEN
+        CALL qed_update_optical_depth()
+      ENDIF
 #endif
-    CALL push_particles
-    IF (use_particle_lists) THEN
-      ! After this line, the particles can be accessed on a cell by cell basis
-      ! Using the particle_species%secondary_list property
-      CALL reorder_particles_to_grid
+      CALL push_particles
+      IF (use_particle_lists) THEN
+        ! After this line, the particles can be accessed on a cell by cell basis
+        ! Using the particle_species%secondary_list property
+        CALL reorder_particles_to_grid
 
-      ! call collision operator
-      IF (use_collisions) CALL particle_collisions
+        ! call collision operator
+        IF (use_collisions) CALL particle_collisions
 
-      ! Early beta version of particle splitting operator
-      IF (use_split) CALL split_particles
+        ! Early beta version of particle splitting operator
+        IF (use_split) CALL split_particles
 
-      CALL reattach_particles_to_mainlist
+        CALL reattach_particles_to_mainlist
+      ENDIF
     ENDIF
-    IF (use_ionisation) CALL ionise_particles
+    IF (push .AND. use_ionisation) CALL ionise_particles
     CALL update_eb_fields_final
     step = step + 1
     time = time + dt

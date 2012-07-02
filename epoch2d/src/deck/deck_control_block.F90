@@ -12,7 +12,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 14 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 15 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -37,7 +37,8 @@ MODULE deck_control_block
           'use_random_seed   ', &
           'smooth_currents   ', &
           'use_multiphoton   ', &
-          'use_bsi           ' /)
+          'use_bsi           ', &
+          'particle_tstart   ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                ', &
@@ -61,7 +62,8 @@ MODULE deck_control_block
           'use_random_seed   ', &
           'smooth_currents   ', &
           'multiphoton       ', &
-          'bsi               ' /)
+          'bsi               ', &
+          'particle_tstart   ' /)
 
 CONTAINS
 
@@ -184,6 +186,8 @@ CONTAINS
       use_multiphoton = as_logical(value, errcode)
     CASE(4*c_ndims+14)
       use_bsi = as_logical(value, errcode)
+    CASE(4*c_ndims+15)
+      particle_push_start_time = as_real(value, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

@@ -418,6 +418,10 @@ MODULE shared_data
   ! Particles
   !----------------------------------------------------------------------------
 
+  ! Time to start the particle push - 0 by default, can be set in the control
+  ! block of the deck using 'particle_tstart'.
+  REAL(num) :: particle_push_start_time = 0.0_num
+
   ! The order for the spline interpolation used as a particle representation.
 #ifdef PARTICLE_SHAPE_BSPLINE3
   INTEGER, PARAMETER :: sf_min = -2
