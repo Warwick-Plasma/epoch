@@ -731,57 +731,25 @@ CONTAINS
 
 
 
-  ! This subroutine calculates 'per species' currents, in the same way as in the
-  ! particle push, but without looping over species index. Hot electron current
-  ! and ion current are needed for CKD scheme.
-
   SUBROUTINE calc_per_species_current(data_array, current_species, direction)
 
-    REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species, direction
 
-    INTEGER :: cell_x1, cell_x3
-    INTEGER, PARAMETER :: sf0 = sf_min, sf1 = sf_max
-    REAL(num), DIMENSION(sf0-2:sf1+1) :: jxh
-    REAL(num) :: part_x
-    REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: part_q, ipart_mc, part_weight
-    REAL(num) :: cell_x_r
-    REAL(num) :: cell_frac_x
-    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: gx
-    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: hx
-    INTEGER :: xmin, xmax
-    REAL(num) :: wx, wy, wz
-    REAL(num) :: idx
-    REAL(num) :: idtf, idxf
-    REAL(num) :: idt
-    REAL(num) :: fcx, fcy, fjx, fjy, fjz
-    REAL(num) :: root, fac, gamma, cf2
-    REAL(num) :: delta_x, part_vy, part_vz
-    INTEGER :: ispecies, ix, dcellx
+    REAL(num) :: part_px, part_py, part_pz
+    REAL(num) :: part_q, part_mc, part_weight
+    REAL(num) :: part_j
+    REAL(num) :: idx, root
+    INTEGER :: ispecies, spec_start, spec_end, ix
     INTEGER(i8) :: ipart
-    TYPE(particle), POINTER :: current, next
-    INTEGER :: spec_start, spec_end
     LOGICAL :: spec_sum
 
-    data_array = 0.0_num
-    gx = 0.0_num
+    TYPE (particle), POINTER :: current, next
+#include "particle_head.inc"
 
-    ! Unvarying multiplication factors
+    data_array = 0.0_num
 
     idx = 1.0_num / dx
-    idt = 1.0_num / dt
-    ! particle weighting multiplication factor
-#ifdef PARTICLE_SHAPE_BSPLINE3
-    fac = 1.0_num / 24.0_num
-#elif  PARTICLE_SHAPE_TOPHAT
-    fac = 1.0_num
-#else
-    fac = 0.5_num
-#endif
-
-    idtf = idt * fac
-    idxf = idx * fac
 
     spec_start = current_species
     spec_end = current_species
@@ -802,121 +770,39 @@ CONTAINS
 
 #ifndef PER_PARTICLE_WEIGHT
       part_weight = io_list(ispecies)%weight
-      fcx = idtf * part_weight
-      fcy = idxf * part_weight
 #endif
 #ifndef PER_PARTICLE_CHARGE_MASS
-      part_q   = io_list(ispecies)%charge
-      ipart_mc = 1.0_num / c / io_list(ispecies)%mass
+      part_q  = io_list(ispecies)%charge
+      part_mc = c * io_list(ispecies)%mass
 #endif
-      !DEC$ VECTOR ALWAYS
       DO ipart = 1, io_list(ispecies)%attached_list%count
         next => current%next
 #ifdef PER_PARTICLE_WEIGHT
         part_weight = current%weight
-        fcx = idtf * part_weight
-        fcy = idxf * part_weight
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
-        part_q   = current%charge
-        ipart_mc = 1.0_num / c / current%mass
+        part_q  = current%charge
+        part_mc = c * current%mass
 #endif
+#include "particle_to_grid.inc"
+
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos - x_min_local
-        part_ux = current%part_p(1) * ipart_mc
-        part_uy = current%part_p(2) * ipart_mc
-        part_uz = current%part_p(3) * ipart_mc
-
-        ! Work out the grid cell number for the particle.
-        ! Not an integer in general.
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x * idx - 0.5_num
-#else
-        cell_x_r = part_x * idx
-#endif
-        ! Round cell position to nearest cell
-        cell_x1 = FLOOR(cell_x_r + 0.5_num)
-        ! Calculate fraction of cell between nearest cell boundary and particle
-        cell_frac_x = REAL(cell_x1, num) - cell_x_r
-        cell_x1 = cell_x1 + 1
-
-        ! Particle weight factors as described in the manual, page25
-        ! These weight grid properties onto particles
-        ! Also used to weight particle properties onto grid, used later
-        ! to calculate J
-#ifdef PARTICLE_SHAPE_BSPLINE3
-        INCLUDE '../include/bspline3/gx.inc'
-#elif  PARTICLE_SHAPE_TOPHAT
-        INCLUDE '../include/tophat/gx.inc'
-#else
-        INCLUDE '../include/triangle/gx.inc'
-#endif
-
-        ! Calculate particle velocity from particle momentum
-        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        root = c / gamma
-
-        delta_x = part_ux * root * dt
-        part_vy = part_uy * root
-        part_vz = part_uz * root
-
-        ! Move particles to end of time step
-        part_x = part_x + delta_x
-
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x * idx - 0.5_num
-#else
-        cell_x_r = part_x * idx
-#endif
-        cell_x3 = FLOOR(cell_x_r + 0.5_num)
-        cell_frac_x = REAL(cell_x3, num) - cell_x_r
-        cell_x3 = cell_x3 + 1
-
-        hx = 0.0_num
-
-        dcellx = cell_x3 - cell_x1
-#ifdef PARTICLE_SHAPE_BSPLINE3
-        INCLUDE '../include/bspline3/hx_dcell.inc'
-#elif  PARTICLE_SHAPE_TOPHAT
-        INCLUDE '../include/tophat/hx_dcell.inc'
-#else
-        INCLUDE '../include/triangle/hx_dcell.inc'
-#endif
-
-        ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
-        ! the current update much simpler
-        hx = hx - gx
-
-        ! Remember that due to CFL condition particle can never cross more
-        ! than one gridcell in one timestep
-
-        xmin = sf_min + (dcellx - 1) / 2
-        xmax = sf_max + (dcellx + 1) / 2
-
-        ! This is the bit that actually solves d(rho)/dt = -div(J)
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
+        root = c / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
         SELECT CASE (direction)
           CASE(c_dir_x)
-            ! Set this to zero due to diffential inside loop
-            jxh = 0.0_num
-            fjx = fcx * part_q
-            DO ix = xmin, xmax
-              wx =  hx(ix)
-              jxh(ix) = jxh(ix-1) - fjx * wx
-              data_array(cell_x1+ix) = data_array(cell_x1+ix) + jxh(ix)
-            ENDDO
+            part_j = part_q * part_px * root * part_weight * idx
           CASE(c_dir_y)
-            fjy = fcy * part_q * part_vy
-            DO ix = xmin, xmax
-              wy =  gx(ix) + 0.5_num * hx(ix)
-              data_array(cell_x1+ix) = data_array(cell_x1+ix) + fjy * wy
-            ENDDO
+            part_j = part_q * part_py * root * part_weight * idx
           CASE(c_dir_z)
-            fjz = fcy * part_q * part_vz
-            DO ix = xmin, xmax
-              wz =  gx(ix) + 0.5_num * hx(ix)
-              data_array(cell_x1+ix) = data_array(cell_x1+ix) + fjz * wz
-            ENDDO
+            part_j = part_q * part_pz * root * part_weight * idx
         END SELECT
+
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * part_j
+        ENDDO
         current => next
       ENDDO
     ENDDO
