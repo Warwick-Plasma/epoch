@@ -367,7 +367,7 @@ CONTAINS
 
     ! angle theta in the One Particle at Rest frame
     sin_theta = (2.0_num * delta) / (1.0_num + delta**2)
-    cos_theta = 1.0_num - (2.0_num * delta**2) / (1.0_num + delta**2)
+    cos_theta = (1.0_num - delta**2) / (1.0_num + delta**2)
 
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
