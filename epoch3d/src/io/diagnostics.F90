@@ -457,6 +457,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
 
     averaged_data(ioutput)%real_time = averaged_data(ioutput)%real_time + dt
+    averaged_data(ioutput)%started = .TRUE.
 
     species_sum = 0
     n_species_local = 0
@@ -584,7 +585,8 @@ CONTAINS
           subtype, subarray, convert)
     ENDIF
 
-    IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
+    IF (IAND(dumpmask(id), c_io_averaged) .NE. 0 &
+        .AND. averaged_data(id)%started) THEN
       averaged_data(id)%array = averaged_data(id)%array &
           / averaged_data(id)%real_time
 
@@ -594,7 +596,8 @@ CONTAINS
           averaged_data(id)%array(:,:,:,1), subtype, subarray, convert)
 
       averaged_data(id)%array = 0.0_num
-      averaged_data(id)%real_time = c_non_zero
+      averaged_data(id)%real_time = 0.0_num
+      averaged_data(id)%started = .FALSE.
     ENDIF
 
   END SUBROUTINE write_field
@@ -702,7 +705,8 @@ CONTAINS
     IF (isubset .NE. 1) RETURN
 
     ! Write averaged data
-    IF (IAND(iomask(id), c_io_averaged) .NE. 0) THEN
+    IF (IAND(iomask(id), c_io_averaged) .NE. 0 &
+        .AND. averaged_data(id)%started) THEN
       averaged_data(id)%array = averaged_data(id)%array &
           / averaged_data(id)%real_time
 
@@ -753,7 +757,8 @@ CONTAINS
       ENDIF
 
       averaged_data(id)%array = 0.0_num
-      averaged_data(id)%real_time = c_non_zero
+      averaged_data(id)%real_time = 0.0_num
+      averaged_data(id)%started = .FALSE.
     ENDIF
 
   END SUBROUTINE write_nspecies_field

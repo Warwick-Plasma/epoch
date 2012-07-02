@@ -839,6 +839,7 @@ MODULE shared_data
   TYPE averaged_data_block
     REAL(num), DIMENSION(:,:), POINTER :: array
     REAL(num) :: real_time
+    LOGICAL :: started
   END TYPE averaged_data_block
   TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
   INTEGER :: nstep_average = -1

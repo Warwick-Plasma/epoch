@@ -202,7 +202,8 @@ CONTAINS
 
         ALLOCATE(averaged_data(io)%array(-2:nx+3, nspec_local))
         averaged_data(io)%array = 0.0_num
-        averaged_data(io)%real_time = c_non_zero
+        averaged_data(io)%real_time = 0.0_num
+        averaged_data(io)%started = .FALSE.
       ENDIF
     ENDDO
 
