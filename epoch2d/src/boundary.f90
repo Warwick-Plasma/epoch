@@ -242,9 +242,7 @@ CONTAINS
         neighbour(-1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_min) .EQ. c_bc_reflect &
-        .OR. bc_particle(c_bd_x_min) .EQ. c_bc_thermal) &
-        .AND. x_min_boundary) THEN
+    IF ((bc_particle(c_bd_x_min) .EQ. c_bc_reflect .AND. x_min_boundary)) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -263,9 +261,7 @@ CONTAINS
         neighbour( 1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_max) .EQ. c_bc_reflect &
-        .OR. bc_particle(c_bd_x_max) .EQ. c_bc_thermal) &
-        .AND. x_max_boundary) THEN
+    IF ((bc_particle(c_bd_x_max) .EQ. c_bc_reflect .AND. x_max_boundary)) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -296,9 +292,7 @@ CONTAINS
         neighbour(0,-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_y_min) .EQ. c_bc_reflect &
-        .OR. bc_particle(c_bd_y_min) .EQ. c_bc_thermal) &
-        .AND. y_min_boundary) THEN
+    IF ((bc_particle(c_bd_y_min) .EQ. c_bc_reflect .AND. y_min_boundary)) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
@@ -317,9 +311,7 @@ CONTAINS
         neighbour(0, 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_y_max) .EQ. c_bc_reflect &
-        .OR. bc_particle(c_bd_y_max) .EQ. c_bc_thermal) &
-        .AND. y_max_boundary) THEN
+    IF ((bc_particle(c_bd_y_max) .EQ. c_bc_reflect .AND. y_max_boundary)) THEN
       sgn = 1
       IF (PRESENT(flip_direction)) THEN
         ! Currents get reversed in the direction of the boundary
