@@ -158,6 +158,16 @@ CONTAINS
     CALL redistribute_field(jy, temp)
     CALL redistribute_field(jz, temp)
 
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%migrate%fluid) THEN
+        CALL redistribute_field(species_list(ispecies)%migrate%fluid_energy, &
+            temp)
+
+        CALL redistribute_field(species_list(ispecies)%migrate%fluid_density, &
+            temp)
+      ENDIF
+    ENDDO
+
     IF (cpml_boundaries) THEN
       CALL redistribute_field(cpml_psi_eyx, temp)
       CALL redistribute_field(cpml_psi_byx, temp)

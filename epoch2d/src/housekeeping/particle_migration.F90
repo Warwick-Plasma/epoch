@@ -1,0 +1,378 @@
+! Module to move particles between species based on energy
+! written by M. G. Ramsay and N. J. Sircombe
+
+MODULE particle_migration
+
+  USE shared_data
+  USE partlist
+  USE calc_df
+  USE prefetch
+
+  IMPLICIT NONE
+
+  PUBLIC :: initialise_migration, migrate_particles
+
+CONTAINS
+
+  SUBROUTINE migrate_particles(step)
+
+    INTEGER, INTENT(IN) :: step
+    INTEGER :: ispecies
+
+    ! Is it time to migrate particles?
+    IF (MOD(step, particle_migration_interval) .NE. 0) RETURN
+
+    ! Update fluid energies & densities
+    io_list = species_list
+    DO ispecies = 1, n_species
+      IF (.NOT. species_list(ispecies)%migrate%fluid) CYCLE
+      CALL update_fluid_energy(ispecies)
+    ENDDO
+
+    species_list(:)%migrate%done = .FALSE.
+
+    DO ispecies = 1, n_species
+      ! Migration must start with the most energetic end of the chain and work
+      ! back
+      CALL migration_chain(ispecies)
+    ENDDO
+
+  END SUBROUTINE migrate_particles
+
+
+
+  RECURSIVE SUBROUTINE migration_chain(current_list)
+
+    INTEGER, INTENT(IN) :: current_list
+    INTEGER :: next_list
+
+    ! Does this species need to be done?
+    IF (.NOT. species_list(current_list)%migrate%this_species) RETURN
+    IF (species_list(current_list)%migrate%done) RETURN
+
+    ! If there's another species above this one in the chain, then do that one
+    ! first
+    IF (species_list(current_list)%migrate%promoteable) THEN
+      next_list = species_list(current_list)%migrate%promote_to_species
+      CALL migration_chain(next_list)
+    ENDIF
+
+    ! Do promotions and demotions on this species
+    IF (species_list(current_list)%migrate%promoteable) &
+        CALL promote_particles(current_list)
+    IF (species_list(current_list)%migrate%demoteable) &
+        CALL demote_particles(current_list)
+
+    ! Flag this species as done
+    species_list(current_list)%migrate%done = .TRUE.
+
+  END SUBROUTINE migration_chain
+
+
+
+  SUBROUTINE update_fluid_energy(fluid_list)
+
+    INTEGER, INTENT(IN) :: fluid_list
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: tmp
+    REAL(num), PARAMETER :: mean_steps = 0.25_num
+
+    ALLOCATE(tmp(-2:nx+3, -2:ny+3))
+
+    CALL calc_temperature(tmp, fluid_list)
+
+    species_list(fluid_list)%migrate%fluid_energy = mean_steps * tmp &
+        + (1.0_num - mean_steps) &
+        * species_list(fluid_list)%migrate%fluid_energy
+
+    CALL calc_number_density(tmp, fluid_list)
+
+    species_list(fluid_list)%migrate%fluid_density = mean_steps * tmp &
+        + (1.0_num - mean_steps) &
+        * species_list(fluid_list)%migrate%fluid_density
+
+    DEALLOCATE(tmp)
+
+  END SUBROUTINE update_fluid_energy
+
+
+
+  SUBROUTINE promote_particles(from_list)
+
+    INTEGER, INTENT(IN) :: from_list
+    INTEGER :: to_list
+    REAL(num) :: ke_multiplier, density_condition
+    REAL(num) :: rsqrt_part_m
+    REAL(num) :: part_ke, local_te, local_ne
+    INTEGER(KIND=i8) :: ipart
+    INTEGER :: ix, iy
+    TYPE(particle), POINTER :: current, next
+#include "particle_head.inc"
+
+    to_list = species_list(from_list)%migrate%promote_to_species
+    ke_multiplier = species_list(from_list)%migrate%promotion_energy_factor
+    density_condition = species_list(from_list)%migrate%promotion_density
+#ifndef PER_PARTICLE_CHARGE_MASS
+    rsqrt_part_m = 1.0_num / SQRT(species_list(from_list)%mass)
+#endif
+
+    current => species_list(from_list)%attached_list%head
+    DO ipart = 1, species_list(from_list)%attached_list%count
+      next => current%next
+#ifdef PREFETCH
+      CALL prefetch_particle(next)
+#endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+      rsqrt_part_m = 1.0_num / SQRT(current%mass)
+#endif
+      part_ke = SUM((current%part_p(:) * rsqrt_part_m)**2)
+
+#include "particle_to_grid.inc"
+
+      local_te = 0.0_num
+      local_ne = 0.0_num
+      DO iy = sf_min, sf_max
+      DO ix = sf_min, sf_max
+        local_te = local_te + gx(ix) * gy(iy) &
+            * species_list(from_list)%migrate%fluid_energy(cell_x+ix, &
+            cell_y+iy)
+        local_ne = local_ne + gx(ix) * gy(iy) &
+            * species_list(from_list)%migrate%fluid_density(cell_x+ix, &
+            cell_y+iy)
+      ENDDO
+      ENDDO
+
+      IF (part_ke .GT. ke_multiplier * REAL(dof) * kb * local_te &
+          .AND. local_ne .LT. density_condition) &
+          CALL swap_lists(from_list, to_list, current)
+
+      current => next
+    ENDDO
+
+  END SUBROUTINE promote_particles
+
+
+
+  SUBROUTINE demote_particles(from_list)
+
+    INTEGER, INTENT(IN) :: from_list
+    INTEGER :: to_list
+    REAL(num) :: ke_multiplier, density_condition
+    REAL(num) :: rsqrt_part_m
+    REAL(num) :: part_ke, local_te, local_ne
+    INTEGER(KIND=i8) :: ipart
+    INTEGER :: ix, iy
+    TYPE(particle), POINTER :: current, next
+#include "particle_head.inc"
+
+    to_list = species_list(from_list)%migrate%demote_to_species
+    ke_multiplier = species_list(from_list)%migrate%demotion_energy_factor
+    density_condition = species_list(from_list)%migrate%demotion_density
+#ifndef PER_PARTICLE_CHARGE_MASS
+    rsqrt_part_m = 1.0_num / SQRT(species_list(from_list)%mass)
+#endif
+
+    current => species_list(from_list)%attached_list%head
+    DO ipart = 1, species_list(from_list)%attached_list%count
+      next => current%next
+#ifdef PREFETCH
+      CALL prefetch_particle(next)
+#endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+      rsqrt_part_m = 1.0_num / SQRT(current%mass)
+#endif
+      part_ke = SUM((current%part_p(:) * rsqrt_part_m)**2)
+
+#include "particle_to_grid.inc"
+
+      local_te = 0.0_num
+      local_ne = 0.0_num
+      DO iy = sf_min, sf_max
+      DO ix = sf_min, sf_max
+        local_te = local_te + gx(ix) * gy(iy) &
+            * species_list(to_list)%migrate%fluid_energy(cell_x+ix, &
+            cell_y+iy)
+        local_ne = local_ne + gx(ix) * gy(iy) &
+            * species_list(to_list)%migrate%fluid_density(cell_x+ix, &
+            cell_y+iy)
+      ENDDO
+      ENDDO
+
+      IF (part_ke .LT. ke_multiplier * REAL(dof) * kb * local_te &
+          .AND. local_ne .GE. density_condition) &
+          CALL swap_lists(from_list, to_list, current)
+
+      current => next
+    ENDDO
+
+  END SUBROUTINE demote_particles
+
+
+
+  SUBROUTINE swap_lists(from_list, to_list, current)
+
+    INTEGER, INTENT(IN) :: from_list, to_list
+    TYPE(particle), POINTER, INTENT(IN) :: current
+
+    CALL remove_particle_from_partlist(species_list(from_list)%attached_list, &
+        current)
+    CALL add_particle_to_partlist(species_list(to_list)%attached_list, &
+        current)
+
+  END SUBROUTINE swap_lists
+
+
+
+  SUBROUTINE initialise_migration
+
+    INTEGER :: ispecies, ipromote, idemote, current_list, next_list
+
+    DO ispecies = 1, n_species
+      IF (.NOT. species_list(ispecies)%migrate%this_species) CYCLE
+
+      ipromote = species_list(ispecies)%migrate%promote_to_species
+      idemote = species_list(ispecies)%migrate%demote_to_species
+
+      IF ((ipromote .GE. 1) .AND. (ipromote .LE. n_species)) &
+          species_list(ispecies)%migrate%promoteable = .TRUE.
+      IF ((idemote .GE. 1) .AND. (idemote .LE. n_species)) &
+          species_list(ispecies)%migrate%demoteable = .TRUE.
+
+      IF ((.NOT. species_list(ispecies)%migrate%promoteable) &
+          .AND. (.NOT. species_list(ispecies)%migrate%demoteable)) THEN
+        species_list(ispecies)%migrate%this_species = .FALSE.
+        IF (rank .EQ. 0) THEN
+          WRITE(stdout, *) '*** WARNING ***'
+          WRITE(stdout, *) 'No valid promotion or demotion species specified.'
+          WRITE(stdout, *) 'Migration turned off for species ',  &
+              TRIM(species_list(ispecies)%name)
+        ENDIF
+        CYCLE
+      ENDIF
+
+#ifndef PER_PARTICLE_CHARGE_MASS
+      IF (species_list(ispecies)%migrate%promoteable) THEN
+        IF (species_list(ispecies)%mass .NE. species_list(ipromote)%mass &
+            .OR. species_list(ispecies)%charge .NE. &
+            species_list(ipromote)%charge) THEN
+          species_list(ispecies)%migrate%promoteable = .FALSE.
+          IF (rank .EQ. 0) THEN
+            WRITE(stdout, *) '*** WARNING ***'
+            WRITE(stdout, *) 'Attempting to promote between species with'
+            WRITE(stdout, *) 'different charge and/or mass.'
+            WRITE(stdout, *) 'Promotion turned off for species ',  &
+                TRIM(species_list(ispecies)%name)
+          ENDIF
+        ENDIF
+      ENDIF
+
+      IF (species_list(ispecies)%migrate%demoteable) THEN
+        IF (species_list(ispecies)%mass .NE. species_list(idemote)%mass &
+            .OR. species_list(ispecies)%charge .NE. &
+            species_list(idemote)%charge) THEN
+          species_list(ispecies)%migrate%demoteable = .FALSE.
+          IF (rank .EQ. 0) THEN
+            WRITE(stdout, *) '*** WARNING ***'
+            WRITE(stdout, *) 'Attempting to demote between species with'
+            WRITE(stdout, *) 'different charge and/or mass.'
+            WRITE(stdout, *) 'Demotion turned off for species ',  &
+                TRIM(species_list(ispecies)%name)
+          ENDIF
+        ENDIF
+      ENDIF
+
+      IF ((.NOT. species_list(ispecies)%migrate%promoteable) &
+          .AND. (.NOT. species_list(ispecies)%migrate%demoteable)) THEN
+        species_list(ispecies)%migrate%this_species = .FALSE.
+        CYCLE
+      ENDIF
+#endif
+
+      ! Fluids are 'background' species - species that can be promoted from
+      ! and/or demoted to.
+      IF (species_list(ispecies)%migrate%promoteable) &
+          species_list(ispecies)%migrate%fluid = .TRUE.
+      IF (species_list(ispecies)%migrate%demoteable) &
+          species_list(idemote)%migrate%fluid = .TRUE.
+    ENDDO
+
+    ! Check for looped migration chains
+    DO ispecies = 1, n_species
+      IF (.NOT. species_list(ispecies)%migrate%this_species) CYCLE
+
+      current_list = ispecies
+      DO WHILE(species_list(current_list)%migrate%promoteable)
+        next_list = species_list(current_list)%migrate%promote_to_species
+        IF (next_list .EQ. ispecies) THEN
+          IF (rank .EQ. 0) THEN
+            WRITE(stdout, *) '*** WARNING ***'
+            WRITE(stdout, *) 'Looped promotion chain.'
+            WRITE(stdout, *) 'Promotion from species ',  &
+                TRIM(species_list(current_list)%name), ' to ', &
+                TRIM(species_list(next_list)%name), ' disabled.'
+          ENDIF
+          species_list(current_list)%migrate%promote_to_species = 0
+          species_list(current_list)%migrate%promoteable = .FALSE.
+        ELSE
+          current_list = next_list
+        ENDIF
+      ENDDO
+
+      current_list = ispecies
+      DO WHILE(species_list(current_list)%migrate%demoteable)
+        next_list = species_list(current_list)%migrate%demote_to_species
+        IF (next_list .EQ. ispecies) THEN
+          IF (rank .EQ. 0) THEN
+            WRITE(stdout, *) '*** WARNING ***'
+            WRITE(stdout, *) 'Looped demotion chain.'
+            WRITE(stdout, *) 'Demotion from species ',  &
+                TRIM(species_list(current_list)%name), ' to ', &
+                TRIM(species_list(next_list)%name), ' disabled.'
+          ENDIF
+          species_list(current_list)%migrate%demote_to_species = 0
+          species_list(current_list)%migrate%demoteable = .FALSE.
+        ELSE
+          current_list = next_list
+        ENDIF
+      ENDDO
+
+      IF ((.NOT. species_list(ispecies)%migrate%promoteable) &
+          .AND. (.NOT. species_list(ispecies)%migrate%demoteable)) THEN
+        species_list(ispecies)%migrate%this_species = .FALSE.
+        IF (rank .EQ. 0) THEN
+          WRITE(stdout, *) '*** WARNING ***'
+          WRITE(stdout, *) 'No valid promotion or demotion species specified.'
+          WRITE(stdout, *) 'Migration turned off for species ', &
+              TRIM(species_list(ispecies)%name)
+        ENDIF
+      ENDIF
+    ENDDO
+
+    ! After all that, do we still need migration at all?
+    IF (.NOT. ANY(species_list(:)%migrate%this_species)) THEN
+      use_particle_migration = .FALSE.
+      IF (rank .EQ. 0) THEN
+        WRITE(stdout, *) '*** WARNING ***'
+        WRITE(stdout, *) 'All particle migration has been disabled.'
+      ENDIF
+
+      RETURN
+    ENDIF
+
+    !Need to keep time-averaged temperature and density fields for fluids.
+    io_list = species_list
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%migrate%fluid) THEN
+        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(-2:nx+3, &
+            -2:ny+3))
+        CALL calc_temperature(species_list(ispecies)%migrate%fluid_energy, &
+            ispecies)
+        ALLOCATE(species_list(ispecies)%migrate%fluid_density(-2:nx+3, &
+            -2:ny+3))
+        CALL calc_number_density(species_list(ispecies)%migrate%fluid_density,&
+            ispecies)
+      ENDIF
+    ENDDO
+
+  END SUBROUTINE initialise_migration
+
+END MODULE particle_migration

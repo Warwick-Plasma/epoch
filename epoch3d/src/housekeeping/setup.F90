@@ -328,6 +328,17 @@ CONTAINS
       species_list(ispecies)%n = 0
       species_list(ispecies)%l = 0
       species_list(ispecies)%ionisation_energy = HUGE(0.0_num)
+      species_list(ispecies)%migrate%this_species = .FALSE.
+      species_list(ispecies)%migrate%fluid = .FALSE.
+      species_list(ispecies)%migrate%done = .FALSE.
+      species_list(ispecies)%migrate%promoteable = .FALSE.
+      species_list(ispecies)%migrate%demoteable = .FALSE.
+      species_list(ispecies)%migrate%promote_to_species = 0
+      species_list(ispecies)%migrate%demote_to_species = 0
+      species_list(ispecies)%migrate%promotion_energy_factor = 1.0_num
+      species_list(ispecies)%migrate%demotion_energy_factor = 1.0_num
+      species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
+      species_list(ispecies)%migrate%demotion_density = 0.0_num
 #ifdef TRACER_PARTICLES
       species_list(ispecies)%tracer = .FALSE.
 #endif

@@ -407,6 +407,52 @@ CONTAINS
       RETURN
     ENDIF
 
+    ! *************************************************************
+    ! This section sets properties for migration
+    ! *************************************************************
+
+    IF (str_cmp(element, 'migrate')) THEN
+      species_list(species_id)%migrate%this_species = &
+          as_logical(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'promote_to')) THEN
+      species_list(species_id)%migrate%promote_to_species = &
+          as_integer(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'demote_to')) THEN
+      species_list(species_id)%migrate%demote_to_species = &
+          as_integer(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'promote_multiplier')) THEN
+      species_list(species_id)%migrate%promotion_energy_factor = &
+          as_real(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'demote_multiplier')) THEN
+      species_list(species_id)%migrate%demotion_energy_factor = &
+          as_real(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'promote_density')) THEN
+      species_list(species_id)%migrate%promotion_density = &
+          as_real(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'demote_density')) THEN
+      species_list(species_id)%migrate%demotion_density = &
+          as_real(value, errcode)
+      RETURN
+    ENDIF
+
     IF (ic_from_restart) RETURN
 
     ! Initial conditions

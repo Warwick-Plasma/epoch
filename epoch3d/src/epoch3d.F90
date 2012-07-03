@@ -32,6 +32,7 @@ PROGRAM pic
   USE window
   USE split_particle
   USE collisions
+  USE particle_migration
   USE ionise
 #ifdef PHOTONS
   USE photons
@@ -105,6 +106,9 @@ PROGRAM pic
   CALL efield_bcs
   CALL bfield_final_bcs
 
+  ! Setup particle migration between species
+  IF (use_particle_migration) CALL initialise_migration
+
   IF (rank .EQ. 0) PRINT *, 'Equilibrium set up OK, running code'
 
   walltime_start = MPI_WTIME()
@@ -139,6 +143,7 @@ PROGRAM pic
 
         CALL reattach_particles_to_mainlist
       ENDIF
+      IF (use_particle_migration) CALL migrate_particles(step)
     ENDIF
     IF (push .AND. use_ionisation) CALL ionise_particles
     CALL update_eb_fields_final

@@ -469,6 +469,19 @@ MODULE shared_data
 #endif
   END TYPE particle
 
+  ! Data for migration between species
+  TYPE particle_species_migration
+    LOGICAL :: this_species, fluid, done
+    LOGICAL :: promoteable, demoteable
+    INTEGER :: promote_to_species, demote_to_species
+    REAL(num) :: promotion_energy_factor, demotion_energy_factor
+    REAL(num) :: promotion_density, demotion_density
+    REAL(num), DIMENSION(:), ALLOCATABLE :: fluid_energy, fluid_density
+  END TYPE particle_species_migration
+
+  LOGICAL :: use_particle_migration = .FALSE.
+  INTEGER :: particle_migration_interval = 1
+
   ! Object representing a collection of particles
   ! Used internally by the MPI particle transfer code
   TYPE particle_list
@@ -531,6 +544,10 @@ MODULE shared_data
 #ifdef PARTICLE_PROBES
     TYPE(particle_probe), POINTER :: attached_probes
 #endif
+
+    ! Particle migration
+    TYPE(particle_species_migration) :: migrate
+
   END TYPE particle_species
 
   !----------------------------------------------------------------------------

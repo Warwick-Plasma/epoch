@@ -99,19 +99,20 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   deck_subset_block.f90 deck_window_block.f90 diagnostics.F90 dist_fn.F90 \
   epoch3d.F90 evaluate.f90 evaluator_blocks.f90 fields.f90 helper.F90 \
   ic_module.f90 ionise.F90 iterators.F90 laser.f90 mpi_routines.F90 \
-  mpi_subtype_control.f90 numerics.f90 particle_pointer_advance.f90 \
-  particle_temperature.F90 particles.F90 partlist.F90 photons.F90 prefetch.F90 \
-  probes.F90 random_generator.f90 redblack_module.f90 sdf.f90 sdf_common.f90 \
-  sdf_control.f90 sdf_input.f90 sdf_input_cartesian.f90 \
-  sdf_input_cartesian_r4.f90 sdf_input_cartesian_r8.f90 \
-  sdf_input_cartesian_ru.f90 sdf_input_point.f90 sdf_input_point_r4.f90 \
-  sdf_input_point_r8.f90 sdf_input_point_ru.f90 sdf_input_r4.f90 \
-  sdf_input_r8.f90 sdf_input_ru.f90 sdf_input_util.f90 sdf_job_info.f90 \
-  sdf_output.f90 sdf_output_cartesian.f90 sdf_output_cartesian_r4.f90 \
-  sdf_output_cartesian_r8.f90 sdf_output_cartesian_ru.f90 sdf_output_point.f90 \
-  sdf_output_point_r4.f90 sdf_output_point_r8.f90 sdf_output_point_ru.f90 \
-  sdf_output_r4.f90 sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_util.f90 \
-  setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
+  mpi_subtype_control.f90 numerics.f90 particle_migration.F90 \
+  particle_pointer_advance.f90 particle_temperature.F90 particles.F90 \
+  partlist.F90 photons.F90 prefetch.F90 probes.F90 random_generator.f90 \
+  redblack_module.f90 sdf.f90 sdf_common.f90 sdf_control.f90 sdf_input.f90 \
+  sdf_input_cartesian.f90 sdf_input_cartesian_r4.f90 \
+  sdf_input_cartesian_r8.f90 sdf_input_cartesian_ru.f90 sdf_input_point.f90 \
+  sdf_input_point_r4.f90 sdf_input_point_r8.f90 sdf_input_point_ru.f90 \
+  sdf_input_r4.f90 sdf_input_r8.f90 sdf_input_ru.f90 sdf_input_util.f90 \
+  sdf_job_info.f90 sdf_output.f90 sdf_output_cartesian.f90 \
+  sdf_output_cartesian_r4.f90 sdf_output_cartesian_r8.f90 \
+  sdf_output_cartesian_ru.f90 sdf_output_point.f90 sdf_output_point_r4.f90 \
+  sdf_output_point_r8.f90 sdf_output_point_ru.f90 sdf_output_r4.f90 \
+  sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_util.f90 setup.F90 \
+  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
   split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
   tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
 
@@ -215,8 +216,8 @@ diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o \
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o sdf.o shared_data.o
 epoch3d.o: epoch3d.F90 balance.o boundary.o collisions.o custom_parser.o \
   deck.o diagnostics.o fields.o helper.o ic_module.o ionise.o mpi_routines.o \
-  particles.o photons.o sdf_job_info.o setup.o split_particle.o welcome.o \
-  window.o
+  particle_migration.o particles.o photons.o sdf_job_info.o setup.o \
+  split_particle.o welcome.o window.o
 evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
@@ -229,6 +230,8 @@ laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 partlist.o
 mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 numerics.o: numerics.f90 shared_data.o
+particle_migration.o: particle_migration.F90 calc_df.o partlist.o prefetch.o \
+  shared_data.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shape_functions.o
