@@ -367,7 +367,7 @@ CONTAINS
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
     vcr = -v4
-    gcr = 1.0_num / DSQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
+    gcr = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
 
     tan_theta_cm = sin_theta &
         / (gcr * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) / vrabs))
@@ -422,7 +422,7 @@ CONTAINS
 
     ! Manheimer-like collision operator
     ! Valid for e-i and e-e collisions
-    gr = 1.0_num / DSQRT(1.0_num - (vrabs / c)**2)
+    gr = 1.0_num / SQRT(1.0_num - (vrabs / c)**2)
     mu = m2 / 1.6726d-27
     ek = (gr - 1.0_num) * m1 * c**2 / q0
     slow = 0.23_num * (mu / jtemp)**1.5_num
@@ -441,7 +441,7 @@ CONTAINS
     !coll_freq = ((q1 * q2)**2 * jdens * log_lambda) &
     !    / (4.0_num * pi * (epsilon0 * mu)**2 * vrabs**3)
     !coll_freq = ((q1 * q2)**2 * jdens * log_lambda) &
-    !    / (3.0_num * epsilon0**2 * DSQRT(mu) &
+    !    / (3.0_num * epsilon0**2 * SQRT(mu) &
     !    * (2.0_num * pi * q0 * itemp)**1.5_num)
 
     !coll_freq = MAX(coll_freq, vrabs / (jdens**(1.0_num / 3.0_num)))
@@ -662,7 +662,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:nx+3,-2:ny+3) :: calc_coulomb_log
 
     calc_coulomb_log = LOG(4.13d6 * q0**3 / ABS(q1**2 * q2) &
-        * (temp / kb * q0)**1.5_num / DSQRT(dens))
+        * (temp / kb * q0)**1.5_num / SQRT(dens))
     WHERE (calc_coulomb_log .LT. 1.0_num) calc_coulomb_log = 1.0_num
     WHERE (dens .EQ. 0.0_num) calc_coulomb_log = 1.0_num
 
