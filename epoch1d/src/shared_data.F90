@@ -91,15 +91,16 @@ MODULE constants
   INTEGER, PARAMETER :: c_lb_all = c_lb_x + c_lb_y + c_lb_z
   INTEGER, PARAMETER :: c_lb_auto = c_lb_all + 1
 
-  ! Taken from http://physics.nist.gov/cuu/Constants
-  REAL(num), PARAMETER :: pi = 3.141592653589793238462643383279502884_num
-  REAL(num), PARAMETER :: q0 = 1.602176487e-19_num ! C (+/- 4e-27)
-  REAL(num), PARAMETER :: m0 = 9.10938215e-31_num ! kg (+/- 4.5e-38)
+  ! Taken from http://physics.nist.gov/cuu/Constants (05/07/2012)
+  REAL(num), PARAMETER :: pi = 3.141592653589793238462643383279503_num
+  REAL(num), PARAMETER :: q0 = 1.602176565e-19_num ! C (+/- 3.5e-27)
+  REAL(num), PARAMETER :: m0 = 9.10938291e-31_num ! kg (+/- 4e-38)
   REAL(num), PARAMETER :: c  = 2.99792458e8_num   ! m/s^2 (exact)
-  REAL(num), PARAMETER :: kb = 1.3806504e-23_num  ! J/K (+/- 2.4e-29)
+  REAL(num), PARAMETER :: kb = 1.3806488e-23_num  ! J/K (+/- 1.3e-29)
   REAL(num), PARAMETER :: mu0 = 4.e-7_num * pi ! N/A^2 (exact)
-  REAL(num), PARAMETER :: epsilon0 = 1.0_num / mu0 / c**2 ! F/m (exact)
-  REAL(num), PARAMETER :: h_planck = 6.62606896e-34_num ! J s (+/- 3.3e-41)
+  ! epsilon0 = 1.0_num / mu0 / c**2 ! F/m (exact)
+  REAL(num), PARAMETER :: epsilon0 = 8.854187817620389850536563031710750e-12_num
+  REAL(num), PARAMETER :: h_planck = 6.62606957e-34_num ! J s (+/- 2.9e-41)
   REAL(num), PARAMETER :: ev = q0 ! J
   ! Derived physical parameters used in ionisation
   REAL(num), PARAMETER :: h_bar = h_planck / 2.0_num / pi
