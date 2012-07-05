@@ -8,6 +8,7 @@
 ; which in turn reponds to mouse movements
 
 PRO TrackEx_Event, sEvent
+  COMPILE_OPT idl2, hidden
   WIDGET_CONTROL, sEvent.Top, GET_UVALUE=sState, /NO_COPY
   bHaveXform = sState.oTrackball->Update(sEvent, TRANSFORM=TrackXform)
 
@@ -69,6 +70,7 @@ PRO IsoPlot, volData, level, ViewPt=viewPt, Print=print, Win=win, $
   ;   The view-point can be changed dynamically whilst the program is running
   ;   by clicking and dragging the mouse across the window.
 
+  COMPILE_OPT idl2
 
   ; Find the size of input array - volData
   volsize = SIZE(volData, /DIMENSIONS)

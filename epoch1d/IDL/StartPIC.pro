@@ -1,6 +1,6 @@
-FUNCTION getdata, snapshot, wkdir, retro=retro, $
-    _EXTRA=extra
+FUNCTION getdata, snapshot, wkdir, retro=retro, _EXTRA=extra
 
+  COMPILE_OPT idl2
   COMMON background, wkdir_global, retro_global
   ON_ERROR, 2
 
@@ -36,20 +36,24 @@ END
 
 FUNCTION explore_data, wkdir, snapshot=snapshot
 
+  COMPILE_OPT idl2
   COMMON background, wkdir_global, retro_global
   ON_ERROR, 2
+
   IF N_ELEMENTS(wkdir) EQ 0 THEN wkdir = wkdir_global
-  RETURN, sdf_explorer(wkdir,snapshot=snapshot)
+
+  RETURN, sdf_explorer(wkdir, snapshot=snapshot)
 END
 
 ; --------------------------------------------------------------------------
 
 PRO quick_view, wkdir, snapshot=snapshot
 
+  COMPILE_OPT idl2
   COMMON background, wkdir_global
   ON_ERROR, 2
 
   IF NOT KEYWORD_SET(wkdir) THEN wkdir = wkdir_global
 
-  a=create_sdf_visualizer(wkdir,snapshot=snapshot)
+  a = create_sdf_visualizer(wkdir, snapshot=snapshot)
 END

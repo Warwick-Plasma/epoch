@@ -1,6 +1,9 @@
 ; Function to test whether a block name appears in a given namelist
 ; If the namelist is empty then the block is assumed valid
 FUNCTION SDFCheckName, blockheader, namelist, element_block
+
+  COMPILE_OPT idl2, hidden
+
   IF (namelist[0] EQ "") THEN RETURN, 1
 
   FOR i = 0, N_ELEMENTS(namelist)-1 DO BEGIN
@@ -19,6 +22,7 @@ END
 
 ; --------------------------------------------------------------------------
 
+COMPILE_OPT idl2, hidden
 COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
     SDF_Datatypes, SDF_Error
 

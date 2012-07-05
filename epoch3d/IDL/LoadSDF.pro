@@ -1,4 +1,6 @@
 FUNCTION readvar, handle, varstruct, offset
+
+  COMPILE_OPT idl2, hidden
   COMMON gdlset, gdl
 
   IF (gdl) THEN BEGIN
@@ -15,9 +17,11 @@ END
 ; --------------------------------------------------------------------------
 
 FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
-    var_list=var_list, name_list=name_list, block_types=block_types, block_dims=block_dims, $
-    silent=silent, errval=errval, retro=retro, only_md=only_md, _extra=extra
+    var_list=var_list, name_list=name_list, block_types=block_types, $
+    block_dims=block_dims, silent=silent, errval=errval, retro=retro, $
+    only_md=only_md, _extra=extra
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
@@ -43,7 +47,7 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
   IF (N_ELEMENTS(extra) NE 0) THEN BEGIN
     name_arr = TAG_NAMES(extra)
     element_block = INTARR(N_ELEMENTS(name_arr))
-    element_block(*) = 0
+    element_block[*] = 0
   ENDIF ELSE BEGIN
     name_arr = ""
     element_block = 1
@@ -114,10 +118,10 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
     PRINT, "Available elements are "
   ENDIF
 
-  var_list = strarr(file_header.nblocks)
-  name_list = strarr(file_header.nblocks)
-  block_types = intarr(file_header.nblocks)
-  block_dims = intarr(file_header.nblocks)
+  var_list = STRARR(file_header.nblocks)
+  name_list = STRARR(file_header.nblocks)
+  block_types = INTARR(file_header.nblocks)
+  block_dims = INTARR(file_header.nblocks)
 
   string_length = file_header.string_length
   offset = file_header.first_block_location
@@ -151,14 +155,13 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
       block_types[iBlock] = b.blocktype
       block_dims[iBlock] = b.ndims
 
-
       IF (N_ELEMENTS(requestv) NE 0) THEN BEGIN
         IF (display) THEN BEGIN
           PRINT, STRTRIM(STRING(vBlock + 1), 2) + ") " + b.name + " (" $
               + b.class + ") : " + STRTRIM(STRING(b.ndims), 2) + "D " $
               + SDF_Blocktype_names[b.blocktype]
           vBlock = vBlock + 1
-          element_block(*) = 1
+          element_block[*] = 1
         END
       ENDIF ELSE BEGIN
         SDFHandleBlock, file_header, b, f, offset, name_arr, element_block, $
@@ -174,9 +177,9 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
   ; Check for any names given which have not been understood
   Errcount = 0
   FOR iEl = 0, N_ELEMENTS(name_arr)-1 DO BEGIN
-    IF (element_block(iEl) EQ 0) THEN BEGIN
+    IF (element_block[iEl] EQ 0) THEN BEGIN
       IF (display) THEN BEGIN
-        PRINT, "WARNING! Unrecognised variable requested (", name_arr(iEl), ")"
+        PRINT, "WARNING! Unrecognised variable requested (", name_arr[iEl], ")"
       ENDIF
       Errcount = Errcount + 1
     ENDIF
@@ -197,8 +200,9 @@ END
 ; --------------------------------------------------------------------------
 
 PRO SDFHandleBlock, file_header, block_header, outputobject, offset, $
-    name_arr, element_block, md=md, retro=retro, only_md = only_md
+    name_arr, element_block, md=md, retro=retro, only_md=only_md
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
@@ -232,10 +236,11 @@ END
 PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md, $
     retro=retro, only_md=only_md
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
-  mdflag=KEYWORD_SET(only_md)
+  mdflag = KEYWORD_SET(only_md)
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
   mesh_header = readvar(1, { mults:DBLARR(block_header.ndims), $
@@ -284,7 +289,8 @@ PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md, $
   d = CREATE_STRUCT(d,'LABELS', labelstr)
   d = CREATE_STRUCT(d, 'UNITS', units)
   d = CREATE_STRUCT(d, 'NPTS', mesh_header.dims)
-  mesh_header = CREATE_STRUCT(mesh_header, 'FRIENDLYNAME', STRTRIM(STRING(block_header.fname),2))
+  mesh_header = CREATE_STRUCT(mesh_header, 'FRIENDLYNAME', $
+      STRTRIM(STRING(block_header.fname),2))
 
   obj = CREATE_STRUCT('metadata', mesh_header, d)
   md = mesh_header
@@ -315,6 +321,7 @@ END
 PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md, $
     retro=retro, only_md=only_md
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
@@ -367,7 +374,8 @@ PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md, $
   d = CREATE_STRUCT(d, 'LABELS', labelstr)
   d = CREATE_STRUCT(d, 'UNITS', units)
   d = CREATE_STRUCT(d, 'NPART', mesh_header.npoints)
-  mesh_header = CREATE_STRUCT(mesh_header, 'FRIENDLYNAME', STRTRIM(STRING(block_header.fname),2))
+  mesh_header = CREATE_STRUCT(mesh_header, 'FRIENDLYNAME', $
+      STRTRIM(STRING(block_header.fname),2))
 
   obj = CREATE_STRUCT('metadata', mesh_header, d)
   md = mesh_header
@@ -386,6 +394,7 @@ END
 PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md, $
     retro=retro, only_md=only_md
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
@@ -414,7 +423,8 @@ PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md, $
     d=CREATE_STRUCT('ONLYMD',1)
   ENDELSE
 
-  var_header = CREATE_STRUCT(var_header, 'FRIENDLYNAME', STRTRIM(STRING(block_header.fname),2))
+  var_header = CREATE_STRUCT(var_header, 'FRIENDLYNAME', $
+      STRTRIM(STRING(block_header.fname),2))
   obj = CREATE_STRUCT('metadata', var_header, d)
   md = var_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN
@@ -431,6 +441,7 @@ END
 PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
     md=md, retro=retro, only_md=only_md
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
@@ -459,7 +470,8 @@ PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
     d = CREATE_STRUCT('MDONLY',1)
   ENDELSE
 
-  var_header = CREATE_STRUCT(var_header, 'FRIENDLYNAME', STRTRIM(STRING(block_header.fname),2))
+  var_header = CREATE_STRUCT(var_header, 'FRIENDLYNAME', $
+      STRTRIM(STRING(block_header.fname),2))
   obj = CREATE_STRUCT('metadata', var_header, d)
   md = var_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN

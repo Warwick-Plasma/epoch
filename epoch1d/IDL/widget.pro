@@ -1,4 +1,6 @@
-FUNCTION generate_filename,wkdir,snapshot
+FUNCTION generate_filename, wkdir, snapshot
+  COMPILE_OPT idl2, hidden
+
   file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".cfd")')
   info = FILE_INFO(file)
 
@@ -9,67 +11,84 @@ FUNCTION generate_filename,wkdir,snapshot
     RETURN, file
   ENDELSE
 END
+
 ; --------------------------------------------------------------------------
-FUNCTION count_files,wkdir
-  sdf=FLOOR(TOTAL(FILE_SEARCH(wkdir+'/*.sdf') ne ''))
-  cfd=FLOOR(TOTAL(FILE_SEARCH(wkdir+'/*.cfd') ne ''))
+
+FUNCTION count_files, wkdir
+  COMPILE_OPT idl2, hidden
+
+  sdf = FLOOR(TOTAL(FILE_SEARCH(wkdir+'/*.sdf') NE ''))
+  cfd = FLOOR(TOTAL(FILE_SEARCH(wkdir+'/*.cfd') NE ''))
+
   IF (sdf NE 0 AND cfd NE 0) THEN BEGIN
     PRINT ,'Cannot use explorer on directory containing both CFD and SDF files'
-    RETURN,0
+    RETURN, 0
   END
-  RETURN,MAX([sdf,cfd])
+
+  RETURN, MAX([sdf,cfd])
 END
+
 ; --------------------------------------------------------------------------
-FUNCTION load_raw, filename, idstruct,only_md=only_md
+
+FUNCTION load_raw, filename, idstruct, only_md=only_md
+  COMPILE_OPT idl2, hidden
 
   IF (STRUPCASE(STRMID(filename, STRLEN(filename) - 3)) EQ 'CFD') THEN BEGIN
-    RETURN, loadcfdfile(filename, _extra=idstruct,only_md=only_md)
+    RETURN, loadcfdfile(filename, _extra=idstruct, only_md=only_md)
   ENDIF ELSE BEGIN
-    RETURN, loadsdffile(filename, _extra=idstruct,only_md=only_md)
+    RETURN, loadsdffile(filename, _extra=idstruct, only_md=only_md)
   ENDELSE
 
 END
 
 ; --------------------------------------------------------------------------
-FUNCTION get_sdf_metatext,viewer,element
+
+FUNCTION get_sdf_metatext, viewer, element
+  COMPILE_OPT idl2, hidden
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
 
-  newline = string(10B)
+  newline = STRING(10B)
 
   namestruct = {silent:1}
-  name = (*obj_data.valid_names)(element)
+  name = (*obj_data.valid_names)[element]
   namestruct = CREATE_STRUCT(namestruct, name, 1L)
-  data = load_raw(*obj_data.filename, namestruct,/only_md)
+  data = load_raw(*obj_data.filename, namestruct, /only_md)
   a = MAX(TAG_NAMES(data) EQ name, lookup)
   IF (a EQ 0) THEN RETURN, ''
   a = MAX(TAG_NAMES(data) EQ name, lookup)
 
-  str="Name : " + data.(lookup).metadata.friendlyname +newline
-  str=str+"Structure Name : " + (TAG_NAMES(data))(lookup) +newline
+  str = "Name : " + data.(lookup).metadata.friendlyname + newline
+  str = str + "Structure Name : " + (TAG_NAMES(data))[lookup] + newline
   IF (MAX(TAG_NAMES(data.(lookup).metadata) EQ 'DIMS') EQ 1) THEN BEGIN
-    ndims=(SIZE(data.(lookup).metadata.dims))[1]
-    str=str+"Dimensions : " + STRING(ndims,FORMAT='(I1)') + newline
-    str=str+"Gridpoints : "
-    FOR i=0,ndims-2 do begin
-      str=str+STRING(data.(lookup).metadata.dims[i],FORMAT='(I4)')+' x '
+    ndims = (SIZE(data.(lookup).metadata.dims))[1]
+    str = str + "Dimensions : " + STRING(ndims, FORMAT='(I1)') + newline
+    str = str + "Gridpoints : "
+    FOR i = 0, ndims-2 DO BEGIN
+      str = str + STRING(data.(lookup).metadata.dims[i], FORMAT='(I4)') + ' x '
     END
-    str=str+STRING(data.(lookup).metadata.dims[ndims-1],FORMAT='(I4)')+newline
+    str = str + STRING(data.(lookup).metadata.dims[ndims-1], FORMAT='(I4)') $
+        + newline
   ENDIF
+
   IF (MAX(TAG_NAMES(data.(lookup).metadata) EQ 'NPOINTS') EQ 1) THEN BEGIN
-    npoints=data.(lookup).metadata.npoints
-    str=str+"Number of points : " + STRING(npoints,FORMAT='(I7)') + newline
+    npoints = data.(lookup).metadata.npoints
+    str = str + "Number of points : " + STRING(npoints, FORMAT='(I7)') + newline
   ENDIF
+
   IF (MAX(TAG_NAMES(data.(lookup).metadata) EQ 'MESH_ID') EQ 1) THEN BEGIN
-    str=str+"Associated Grid : " + STRTRIM(STRING(data.(lookup).metadata.mesh_id),2)$
-        +newline
+    str = str + "Associated Grid : " $
+        + STRTRIM(STRING(data.(lookup).metadata.mesh_id), 2) + newline
   END
 
   RETURN, str
-end
+END
+
 ; --------------------------------------------------------------------------
+
 PRO viewer_event_handler, event ; event handler
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
@@ -113,8 +132,8 @@ PRO viewer_event_handler, event ; event handler
 
   IF TAG_NAMES(event, /STRUCTURE_NAME) EQ 'WIDGET_SLIDER' THEN BEGIN
     WIDGET_CONTROL, uvalue.viewer, get_uvalue=vuv
-    filename=generate_filename(vuv.wkdir,event.value)
-    viewer_load_new_file,uvalue.viewer,filename
+    filename = generate_filename(vuv.wkdir, event.value)
+    viewer_load_new_file, uvalue.viewer, filename
   ENDIF
 
   IF (uvalue.name EQ 'colour_button') THEN BEGIN
@@ -174,6 +193,7 @@ END
 
 PRO explorer_event_handler, event ; event handler
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
@@ -194,14 +214,14 @@ PRO explorer_event_handler, event ; event handler
   IF (N_ELEMENTS(uvalue) EQ 0) THEN RETURN
 
   IF TAG_NAMES(event, /STRUCTURE_NAME) EQ 'WIDGET_LIST' THEN BEGIN
-    text=get_sdf_metatext(uvalue.viewer,event.index)
-    WIDGET_CONTROL,uvalue.panel, set_value=text
+    text = get_sdf_metatext(uvalue.viewer, event.index)
+    WIDGET_CONTROL, uvalue.panel, set_value=text
   ENDIF
 
   IF TAG_NAMES(event, /STRUCTURE_NAME) EQ 'WIDGET_SLIDER' THEN BEGIN
     WIDGET_CONTROL, uvalue.viewer, get_uvalue=vuv
-    filename=generate_filename(vuv.wkdir,event.value)
-    explorer_load_new_file,uvalue.viewer,filename
+    filename = generate_filename(vuv.wkdir, event.value)
+    explorer_load_new_file, uvalue.viewer, filename
   ENDIF
 
   IF (uvalue.name EQ 'explorer_close') THEN BEGIN
@@ -219,7 +239,8 @@ END
 
 PRO xloadct_callback, data=data
 
-    draw_image, data
+  COMPILE_OPT idl2, hidden
+  draw_image, data
 
 END
 
@@ -227,6 +248,7 @@ END
 
 PRO load_data, viewer, idstruct
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_View_Internal_data, Loaded_Data, newline
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
@@ -234,7 +256,7 @@ PRO load_data, viewer, idstruct
 
   struct = {silent:1}
   FOR i = 0, N_ELEMENTS(element) - 1 DO BEGIN
-    name = (*obj_data.valid_names)(element(i))
+    name = (*obj_data.valid_names)[element[i]]
     struct = CREATE_STRUCT(struct, name, 1)
   ENDFOR
   WIDGET_CONTROL, /hourglass
@@ -247,15 +269,16 @@ END
 
 PRO draw_image, viewer, force=force, nowset=nowset, iplot=iplot
 
+  COMPILE_OPT idl2, hidden
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
   IF (NOT obj_data.auto_update AND N_ELEMENTS(force) EQ 0) THEN BEGIN
-    clear_draw_surface, obj_data.viewer,text='Click "Redraw" to show image'
+    clear_draw_surface, obj_data.viewer, text='Click "Redraw" to show image'
     RETURN
   ENDIF
   element = WIDGET_INFO(obj_data.list, /list_select)
 
   IF (NOT PTR_VALID(obj_data.valid_names) OR element LT 0) THEN BEGIN
-    clear_draw_surface, obj_data.viewer,text='Invalid variable requested'
+    clear_draw_surface, obj_data.viewer, text='Invalid variable requested'
     RETURN
   ENDIF
 
@@ -267,26 +290,28 @@ PRO draw_image, viewer, force=force, nowset=nowset, iplot=iplot
   bar1 = FINDGEN(bar_height) / FLOAT(bar_height)
   bar = FLTARR(20, bar_height)
   FOR i = 0, 19 DO BEGIN
-    bar(i,*) = bar1
+    bar[i,*] = bar1
   ENDFOR
   bar_rel_height = FLOAT(bar_height) / FLOAT(geom.ysize)
   bar_rel_pos = 0.5 - (bar_rel_height) / 2.0
 
   WIDGET_CONTROL, /hourglass
   namestruct = {silent:1}
-  name = (*obj_data.valid_names)(element)
+  name = (*obj_data.valid_names)[element]
   namestruct = CREATE_STRUCT(namestruct, name, 1L)
-  data = load_raw(*obj_data.filename, namestruct,/only_md)
+  data = load_raw(*obj_data.filename, namestruct, /only_md)
   a = MAX(TAG_NAMES(data) EQ name, lookup)
   IF (a EQ 0) THEN RETURN
 
   ndims = FLOOR(total(data.(lookup).metadata.dims GT 1))
   IF (ndims EQ 3) THEN BEGIN
-    IF (NOT KEYWORD_SET(force)AND NOT KEYWORD_SET(iplot)) THEN BEGIN
-      clear_draw_surface, obj_data.viewer,text='Please click on iPlot button to launch an iVolume renderer'
+    IF (NOT KEYWORD_SET(force) AND NOT KEYWORD_SET(iplot)) THEN BEGIN
+      clear_draw_surface, obj_data.viewer, $
+          text='Please click on iPlot button to launch an iVolume renderer'
       RETURN
     ENDIF
   ENDIF
+
   meshname = STRTRIM(swapchr(STRUPCASE(STRTRIM(STRING( $
       data.(lookup).metadata.mesh_id))), '/', '_'))
   namestruct = CREATE_STRUCT(namestruct, meshname, 1L)
@@ -314,44 +339,50 @@ PRO draw_image, viewer, force=force, nowset=nowset, iplot=iplot
     ENDFOR
   ENDIF
 
-  IF (KEYWORD_SET(iplot)) THEN   clear_draw_surface, obj_data.viewer,text='Using IDL iPlot to render. Press "Redraw" to show native display.'
+  IF (KEYWORD_SET(iplot)) THEN BEGIN
+    clear_draw_surface, obj_data.viewer, $
+        text='Using IDL iPlot to render. Press "Redraw" to show native display.'
+  ENDIF
+
   plotter = data.(lookup).data
   range = [MIN(plotter), MAX(plotter)]
-  disprange=range
+  disprange = range
   IF (obj_data.logscale AND range[0] LE 0.0) THEN BEGIN
     range[0] = MIN(plotter + range[1] * (plotter LE 0.0))
-    disprange[0]=range[0]
-    plotter(WHERE(plotter LE 0)) = range[0]
+    disprange[0] = range[0]
+    plotter[WHERE(plotter LE 0)] = range[0]
   ENDIF
   IF (obj_data.logscale) THEN BEGIN
     plotter = ALOG(plotter)
     range = ALOG(range)
-    disprange=ALOG(disprange)
+    disprange = ALOG(disprange)
   ENDIF
   IF (ndims EQ 1) THEN BEGIN
     sz = SIZE(plotter)
-    nx=sz[1]
+    nx = sz[1]
     IF (KEYWORD_SET(iplot)) THEN BEGIN
-      iPLOT,mesh.x(0:nx-1),plotter,xtitle=axis[0],ytitle=data.(lookup).metadata.friendlyname $
-          + '('+STRTRIM(STRING(data.(lookup).metadata.units))+')', $
-          yrange=range,/disable_splash_screen,/no_saveprompt
+      iPLOT, mesh.x[0:nx-1], plotter, xtitle=axis[0], $
+          ytitle=data.(lookup).metadata.friendlyname + '(' + $
+          STRTRIM(STRING(data.(lookup).metadata.units)) + ')', $
+          yrange=range, /disable_splash_screen, /no_saveprompt
     ENDIF ELSE BEGIN
-      PLOT, mesh.x(0:nx-1), plotter, xtitle=axis[0], ytitle=data.(lookup).metadata.friendlyname $
-          + '('+STRTRIM(STRING(data.(lookup).metadata.units))+')', $
+      PLOT, mesh.x[0:nx-1], plotter, xtitle=axis[0], $
+          ytitle=data.(lookup).metadata.friendlyname + '(' + $
+          STRTRIM(STRING(data.(lookup).metadata.units)) + ')', $
           yrange=range, position=[0.2,0.2,0.95,0.95]
     ENDELSE
   ENDIF
   IF (ndims EQ 2) THEN BEGIN
     sz = SIZE(plotter)
-    nx = sz(1)
-    ny = sz(2)
+    nx = sz[1]
+    ny = sz[2]
     IF (KEYWORD_SET(iplot)) THEN BEGIN
-      iCONTOUR,plotter,n_levels=40,/fill,rgb_table=1,/insert_colorbar,mesh.x(0:nx-1), $
-            mesh.y(0:ny-1), xtitle=axis[0], ytitle=axis[1], zrange=range,$
-            /disable_splash_screen,/no_saveprompt
+      iCONTOUR, plotter, n_levels=40, /fill, rgb_table=1, /insert_colorbar, $
+          mesh.x[0:nx-1], mesh.y[0:ny-1], xtitle=axis[0], ytitle=axis[1], $
+          zrange=range, /disable_splash_screen, /no_saveprompt
     ENDIF ELSE BEGIN
-      CONTOUR, plotter, nlevels=40, /fill, /xsty, /ysty, mesh.x(0:nx-1), $
-          mesh.y(0:ny-1), xtitle=axis[0], ytitle=axis[1], zrange=range, $
+      CONTOUR, plotter, nlevels=40, /fill, /xsty, /ysty, mesh.x[0:nx-1], $
+          mesh.y[0:ny-1], xtitle=axis[0], ytitle=axis[1], zrange=range, $
           iso=obj_data.iso, chars=1.2, position=[0.1,0.1,0.85,0.95]
       TVSCL, bar, /normal, 0.86, bar_rel_pos
       txtpos = 0.87
@@ -361,13 +392,13 @@ PRO draw_image, viewer, force=force, nowset=nowset, iplot=iplot
       XYOUTS, /normal, txtpos, bar_rel_pos + bar_rel_height, $
           STRTRIM(STRING(disprange[1], format=form)), chars=1.2
       XYOUTS, /normal, txtpos, bar_rel_pos + bar_rel_height / 2.0, $
-          STRTRIM(STRING((disprange[0] + disprange[1]) / 2.0, format=form)), chars=1.2
-
+          STRTRIM(STRING((disprange[0] + disprange[1]) / 2.0, format=form)), $
+          chars=1.2
     ENDELSE
   ENDIF
 
   IF (ndims EQ 3) THEN BEGIN
-   ivolume,plotter,/disable_splash_screen,/no_saveprompt
+   ivolume, plotter, /disable_splash_screen, /no_saveprompt
   ENDIF
   WIDGET_CONTROL, /hourglass
 
@@ -377,6 +408,7 @@ END
 
 PRO load_meta_and_populate_sdf, viewer, accepted_types
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
@@ -385,7 +417,7 @@ PRO load_meta_and_populate_sdf, viewer, accepted_types
   IF (obj_data.cfdfile EQ 1) THEN BEGIN
     data = loadcfdfile(*obj_data.filename, /silent, /variables, var_list=v, $
         block_types=types, block_dims=dims)
-    names=v
+    names = v
   ENDIF ELSE BEGIN
     data = loadsdffile(*obj_data.filename, /silent, /variables, var_list=v, $
         block_types=types, block_dims=dims, name_list=names)
@@ -394,9 +426,9 @@ PRO load_meta_and_populate_sdf, viewer, accepted_types
   IF (N_ELEMENTS(accepted_types) EQ 0) THEN BEGIN
     n_valid = N_ELEMENTS(v)
   ENDIF ELSE BEGIN
-    n_valid=0
+    n_valid = 0
     FOR i = 0, N_ELEMENTS(v) - 1 DO BEGIN
-     n_valid=n_valid + MAX(types(i) EQ accepted_types)
+     n_valid = n_valid + MAX(types[i] EQ accepted_types)
     END
   ENDELSE
   valid_names = STRARR(n_valid)
@@ -412,11 +444,11 @@ PRO load_meta_and_populate_sdf, viewer, accepted_types
   ENDIF ELSE BEGIN
     cur = 0
     FOR i = 0, N_ELEMENTS(v) - 1 DO BEGIN
-      IF (MAX(types(i) EQ accepted_types) EQ 1) THEN BEGIN
-        valid_names(cur) = STRUPCASE(v(i))
-        friendly_names(cur) = names(i)
-        valid_types(cur) = types(i)
-        valid_dims(cur) = dims(i)
+      IF (MAX(types[i] EQ accepted_types) EQ 1) THEN BEGIN
+        valid_names[cur] = STRUPCASE(v[i])
+        friendly_names[cur] = names[i]
+        valid_types[cur] = types[i]
+        valid_dims[cur] = dims[i]
         cur = cur + 1
       ENDIF
     ENDFOR
@@ -444,6 +476,7 @@ END
 
 PRO clear_draw_surface, viewer, nowset=nowset, text=text
 
+  COMPILE_OPT idl2, hidden
   WIDGET_CONTROL, viewer, get_uvalue = obj_data
   WIDGET_CONTROL, obj_data.surface, get_value=surface_id
   data = WIDGET_INFO(obj_data.surface, /geometry)
@@ -452,7 +485,7 @@ PRO clear_draw_surface, viewer, nowset=nowset, text=text
 
   IF (N_ELEMENTS(text) NE 0) THEN BEGIN
     data = WIDGET_INFO(viewer, /geometry)
-    XYOUTS,0.0,data.ysize/2,text,/device
+    XYOUTS, 0.0, data.ysize/2, text, /device
   ENDIF
 
 END
@@ -461,6 +494,7 @@ END
 
 FUNCTION sdf_explorer, wkdir, snapshot=snapshot
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_View_Internal_data, Loaded_Data, newline
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
@@ -470,12 +504,12 @@ FUNCTION sdf_explorer, wkdir, snapshot=snapshot
 
   Loaded_Data = 'Load Cancelled'
 
-  IF (N_ELEMENTS(snapshot) EQ 0) THEN snapshot=0
+  IF (N_ELEMENTS(snapshot) EQ 0) THEN snapshot = 0
 
-  mxcount=count_files(wkdir)
-  IF (mxcount EQ 0) THEN return,'Invalid directory'
-  IF (snapshot GT mxcount) THEN snapshot=mxcount
-  filename=generate_filename(wkdir,snapshot)
+  mxcount = count_files(wkdir)
+  IF (mxcount EQ 0) THEN RETURN, 'Invalid directory'
+  IF (snapshot GT mxcount) THEN snapshot = mxcount
+  filename = generate_filename(wkdir, snapshot)
   info = FILE_INFO(filename)
   IF (info.exists NE 1) THEN BEGIN
     PRINT, 'File ' + STRTRIM(filename) + ' does not exist'
@@ -484,17 +518,17 @@ FUNCTION sdf_explorer, wkdir, snapshot=snapshot
 
   main = WIDGET_BASE(title='SDF Explorer', xsize=605, ysize=430, $
       tlb_frame_attr=1, /TLB_KILL_REQUEST_EVENTS)
-  label_id = WIDGET_LABEL(main, value='', ysize=20, xsize=605,yoffset=35)
+  label_id = WIDGET_LABEL(main, value='', ysize=20, xsize=605, yoffset=35)
   list_id = WIDGET_LIST(main , yoffset=60, xsize=29, ysize=20, /multiple)
-  panel_id = WIDGET_TEXT(main, value='', xoffset=205, yoffset=60, ysize=27, xsize=400,/sensitive)
-  slide_id = WIDGET_SLIDER(main, minimum=0, maximum=mxcount-1, value=snapshot,xsize=605, ysize=35,$
+  panel_id = WIDGET_TEXT(main, value='', xoffset=205, yoffset=60, ysize=27, $
+      xsize=400, /sensitive)
+  slide_id = WIDGET_SLIDER(main, minimum=0, maximum=mxcount-1, $
+      value=snapshot, xsize=605, ysize=35, $
       uvalue=CREATE_STRUCT({viewer:main, name:'timeslider'}))
 
-
   ; Base data that all objects need access to
-  base_data = {type:0, filename:PTR_NEW(filename),wkdir:wkdir, viewer:main, list:list_id, $
-      cfdfile:0,label:label_id,panel:panel_id,slide:slide_id}
-
+  base_data = {type:0, filename:PTR_NEW(filename), wkdir:wkdir, viewer:main, $
+      list:list_id, cfdfile:0, label:label_id, panel:panel_id, slide:slide_id}
 
   IF (STRUPCASE(STRMID(filename, STRLEN(filename) - 3)) EQ 'CFD') THEN BEGIN
     base_data.cfdfile = 1
@@ -527,7 +561,10 @@ FUNCTION sdf_explorer, wkdir, snapshot=snapshot
 END
 
 ; --------------------------------------------------------------------------
-PRO explorer_load_new_file,viewer,filename
+
+PRO explorer_load_new_file, viewer, filename
+
+  COMPILE_OPT idl2, hidden
   COMMON SDF_View_Internal_data, Loaded_Data, newline
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
@@ -536,21 +573,24 @@ PRO explorer_load_new_file,viewer,filename
       TYPE_SNAPSHOT
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
-  PTR_FREE,obj_data.filename
-  obj_data.filename=PTR_NEW(filename)
+  PTR_FREE, obj_data.filename
+  obj_data.filename = PTR_NEW(filename)
   WIDGET_CONTROL, viewer, set_uvalue=obj_data
 
   IF (obj_data.cfdfile) THEN BEGIN
     load_meta_and_populate_sdf, viewer, TYPE_MESH_VARIABLE
   ENDIF ELSE BEGIN
-    load_meta_and_populate_sdf, viewer, [SDF_BlockTypes.PLAIN_VARIABLE,SDF_BlockTypes.POINT_VARIABLE]
+    load_meta_and_populate_sdf, viewer, $
+        [SDF_BlockTypes.PLAIN_VARIABLE, SDF_BlockTypes.POINT_VARIABLE]
   ENDELSE
 
 END
+
 ; --------------------------------------------------------------------------
 
 FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
 
+  COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
   ; common info for the older CFD file format
@@ -558,30 +598,32 @@ FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
       TYPE_SNAPSHOT
   COMMON SDF_View_Internal_data, Loaded_Data, newline
 
-  Loaded_Data='No Data Loaded'
+  Loaded_Data = 'No Data Loaded'
 
-  IF (N_ELEMENTS(snapshot) EQ 0) THEN snapshot=0
-  filename=generate_filename(wkdir,snapshot)
+  IF (N_ELEMENTS(snapshot) EQ 0) THEN snapshot = 0
+  filename = generate_filename(wkdir, snapshot)
   info = FILE_INFO(filename)
   IF (info.exists NE 1) THEN BEGIN
     PRINT, 'File ' + STRTRIM(filename) + ' does not exist'
     RETURN, 'File ' + STRTRIM(filename) + ' does not exist'
   ENDIF
 
-  mxcount=count_files(wkdir)
-  IF (mxcount EQ 0) THEN return,'Invalid directory'
-  IF (snapshot GT mxcount) THEN snapshot=mxcount
+  mxcount = count_files(wkdir)
+  IF (mxcount EQ 0) THEN RETURN, 'Invalid directory'
+  IF (snapshot GT mxcount) THEN snapshot = mxcount
   main = WIDGET_BASE(title='SDF Quick Data Visualizer', xsize=1000, $
       ysize=855, /TLB_KILL_REQUEST_EVENTS, /TLB_SIZE_EVENTS)
-  label_id = WIDGET_LABEL(main, value='', ysize=20, xsize=1000,yoffset=35)
+  label_id = WIDGET_LABEL(main, value='', ysize=20, xsize=1000, yoffset=35)
   draw_id = WIDGET_DRAW(main, xsize=800, ysize=800, yoffset=60, xoffset=210)
   list_id = WIDGET_LIST(main , yoffset=60, xsize=29, ysize=20)
-  slide_id = WIDGET_SLIDER(main, minimum=0, maximum=mxcount-1, value=snapshot,xsize=1000, ysize=35)
+  slide_id = WIDGET_SLIDER(main, minimum=0, maximum=mxcount-1, $
+      value=snapshot, xsize=1000, ysize=35)
 
   ; Base data that all objects need access to
   base_data = {type:1, filename:PTR_NEW(filename), viewer:main, list:list_id, $
-      surface:draw_id, label:label_id, slide:slide_id, auto_update:1, logscale:0, $
-      minval:0.0d, maxval:0.0d, use_min:0, use_max:0, cfdfile:0, iso:1, wkdir:wkdir}
+      surface:draw_id, label:label_id, slide:slide_id, auto_update:1, $
+      logscale:0, minval:0.0d, maxval:0.0d, use_min:0, use_max:0, cfdfile:0, $
+      iso:1, wkdir:wkdir}
 
   IF (STRUPCASE(STRMID(filename, STRLEN(filename) - 3)) EQ 'CFD') THEN BEGIN
     base_data.cfdfile = 1
@@ -590,8 +632,8 @@ FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
   ENDELSE
 
   WIDGET_CONTROL, main, set_uvalue=CREATE_STRUCT(base_data, 'name', $
-      'base' + filename, 'valid_names', PTR_NEW(), 'friendly_names', PTR_NEW(),$
-      'valid_types', PTR_NEW(), 'valid_dims', PTR_NEW())
+      'base' + filename, 'valid_names', PTR_NEW(), 'friendly_names', $
+      PTR_NEW(), 'valid_types', PTR_NEW(), 'valid_dims', PTR_NEW())
   WIDGET_CONTROL, list_id, set_uvalue=CREATE_STRUCT(base_data, 'name', 'list')
   WIDGET_CONTROL, slide_id, set_uvalue=CREATE_STRUCT(base_data, 'name', 'slide')
 
@@ -639,7 +681,6 @@ FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
       uvalue=CREATE_STRUCT(base_data, 'name', 'iplot_button'))
   cur_y = cur_y + 20
 
-
   WIDGET_CONTROL, main, /realize
   WIDGET_CONTROL, checkbox_container, /realize
 
@@ -654,12 +695,14 @@ FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
     load_meta_and_populate_sdf, main, SDF_BlockTypes.PLAIN_VARIABLE
   ENDELSE
 
-  RETURN,loaded_data
+  RETURN, loaded_data
 END
 
 ; --------------------------------------------------------------------------
-PRO viewer_load_new_file,viewer,filename
 
+PRO viewer_load_new_file, viewer, filename
+
+  COMPILE_OPT idl2, hidden
   COMMON SDF_View_Internal_data, Loaded_Data, newline
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
@@ -668,18 +711,15 @@ PRO viewer_load_new_file,viewer,filename
       TYPE_SNAPSHOT
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
-  PTR_FREE,obj_data.filename
-  obj_data.filename=PTR_NEW(filename)
+  PTR_FREE, obj_data.filename
+  obj_data.filename = PTR_NEW(filename)
   WIDGET_CONTROL, viewer, set_uvalue=obj_data
 
-  clear_draw_surface, viewer,text='Please select a variable to view'
+  clear_draw_surface, viewer, text='Please select a variable to view'
   IF (obj_data.cfdfile) THEN BEGIN
     load_meta_and_populate_sdf, viewer, TYPE_MESH_VARIABLE
   ENDIF ELSE BEGIN
     load_meta_and_populate_sdf, viewer, SDF_BlockTypes.PLAIN_VARIABLE
   ENDELSE
 
-END
-
-  newline = string(10B)
 END

@@ -1,4 +1,6 @@
 FUNCTION readvar, handle, varstruct, offset
+
+  COMPILE_OPT idl2, hidden
   COMMON gdlset, gdl
 
   IF (gdl) THEN BEGIN
@@ -17,8 +19,9 @@ END
 FUNCTION LoadCFDFile, filename, Variables=requestv, $
     request_classes=requestc, _extra=extra, var_list=var_list, $
     block_types=block_types, block_dims=block_dims, $
-    silent=silent, errval=errval, retro=retro, onlymd=onlymd
+    silent=silent, errval=errval, retro=retro, only_md=only_md
 
+  COMPILE_OPT idl2, hidden
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
@@ -49,7 +52,7 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
   IF (N_ELEMENTS(extra) NE 0) THEN BEGIN
     name_arr = TAG_NAMES(extra)
     element_block = INTARR(N_ELEMENTS(name_arr))
-    element_block(*) = 0
+    element_block[*] = 0
   ENDIF ELSE BEGIN
     name_arr = ""
     element_block = 1
@@ -136,10 +139,10 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
             ") : " + ReturnFriendlyTypeName(blockheader, md)
         vBlock = vBlock + 1
       ENDIF
-      element_block(*) = 1
+      element_block[*] = 1
     ENDIF ELSE BEGIN
       HandleBlock, fileheader, blockheader, f, offset, name_arr, $
-          element_block, md=md, retro=retro, onlymd=onlymd
+          element_block, md=md, retro=retro, only_md=only_md
     ENDELSE
     var_list[iBlock] = STRTRIM(STRING(blockheader.name))
     block_types[iBlock] = blockheader.type
@@ -150,8 +153,8 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
   ; Check for any names given which have not been understood
   Errcount = 0
   FOR iEl = 0, N_ELEMENTS(name_arr)-1 DO BEGIN
-    IF (element_block(iEl) EQ 0) THEN BEGIN
-      PRINT, "WARNING! Unrecognised variable requested (", name_arr(iEl), ")"
+    IF (element_block[iEl] EQ 0) THEN BEGIN
+      PRINT, "WARNING! Unrecognised variable requested (", name_arr[iEl], ")"
       Errcount = Errcount + 1
     ENDIF
   ENDFOR
@@ -170,6 +173,8 @@ END
 
 PRO HandleBlock, fileheader, blockheader, outputobject, offset, name_arr, $
     element_block, md=md, only_md=only_md, retro=retro
+
+  COMPILE_OPT idl2, hidden
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
 
@@ -197,6 +202,8 @@ END
 
 PRO GetMesh, file_header, block_header, output_struct, offset, $
     only_md=only_md, md=md, byname=byname, retro=retro
+
+  COMPILE_OPT idl2, hidden
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
   COMMON ParticleCoords, PARTICLE_CARTESIAN
 
@@ -233,7 +240,8 @@ PRO GetMesh, file_header, block_header, output_struct, offset, $
       ENDIF
     ENDIF
 
-    mesh_header=CREATE_STRUCT(mesh_header,'FRIENDLYNAME',STRTRIM(STRING(block_header.Name), 2))
+    mesh_header = CREATE_STRUCT(mesh_header, 'FRIENDLYNAME', $
+        STRTRIM(STRING(block_header.Name), 2))
 
     IF(mdonly_f NE 1) THEN BEGIN
       d = readvar(1, datastruct, offset + block_header.BlockMDLen)
@@ -270,6 +278,8 @@ END
 
 PRO GetMeshVar, file_header, block_header, output_struct, offset, $
     md=md, only_md=only_md, retro=retro
+
+  COMPILE_OPT idl2, hidden
   COMMON VarTypes, VAR_CARTESIAN, VAR_PARTICLE
 
   var_header = readvar(1, {VarType:0L, nd:0L, sof:0L}, offset)
@@ -295,7 +305,8 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
           datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.npts))
     ENDIF
 
-    var_header=CREATE_STRUCT(var_header,'FRIENDLYNAME',STRTRIM(STRING(block_header.Name), 2))
+    var_header = CREATE_STRUCT(var_header, 'FRIENDLYNAME', $
+        STRTRIM(STRING(block_header.Name), 2))
     md = var_header
     IF (mdonly_f NE 1) THEN BEGIN
       d = readvar(1, datastruct, offset + block_header.BlockMDLen)
@@ -336,6 +347,8 @@ END
 
 PRO GetSnapshot, file_header, block_header, output_struct, offset, $
     md=md, only_md=only_md, retro=retro
+
+  COMPILE_OPT idl2, hidden
 
   snap_header = readvar(1, {Snapshot:0L, Time:0D}, offset)
 

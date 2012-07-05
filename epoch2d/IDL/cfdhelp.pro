@@ -1,12 +1,14 @@
 ; Takes the string provided by instring and replaces all occurences of
 ; the character fromchar with the character tochar
 FUNCTION swapchr, instring, fromchar, tochar
+  COMPILE_OPT idl2, hidden
+
   stringbytes = BYTE(instring)
   frombytes = BYTE(fromchar)
-  occurences = WHERE(stringbytes EQ frombytes(0), nfound)
+  occurences = WHERE(stringbytes EQ frombytes[0], nfound)
   IF nfound EQ 0 THEN RETURN, instring
   tobytes = BYTE(tochar)
-  stringbytes(occurences) = tobytes(0)
+  stringbytes[occurences] = tobytes[0]
   RETURN, STRING(stringbytes)
 END
 
@@ -15,6 +17,8 @@ END
 ; Function to test whether a block name appears in a given namelist
 ; If the namelist is empty then the block is assumed valid
 FUNCTION CheckName, block_header, namelist, element_block
+  COMPILE_OPT idl2, hidden
+
   IF (namelist[0] EQ "") THEN RETURN, 1
 
   FOR i = 0, N_ELEMENTS(namelist)-1 DO BEGIN
@@ -34,6 +38,7 @@ END
 ; Return whether or not IDL knows how to deal with the block
 ; Stops people seing VISIT specific blocks etc.
 FUNCTION ReturnIDLUsable, block_header, block_metadata
+  COMPILE_OPT idl2, hidden
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
@@ -54,6 +59,7 @@ END
 
 ; Returns a user friendly name for when people list variables
 FUNCTION ReturnFriendlyTypeName, block_header, block_metadata
+  COMPILE_OPT idl2, hidden
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
@@ -82,7 +88,8 @@ FUNCTION ReturnFriendlyTypeName, block_header, block_metadata
 END
 
 ; --------------------------------------------------------------------------
-
+  
+COMPILE_OPT idl2, hidden
 COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, TYPE_SNAPSHOT
 COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
 COMMON VarTypes, VAR_CARTESIAN, VAR_PARTICLE
