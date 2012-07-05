@@ -26,7 +26,7 @@ SDF_Common = { $
     ID_LENGTH:32L, $
     ENDIANNESS:16911887L, $
     VERSION:1L, $
-    REVISION:0L, $
+    REVISION:1L, $
     MAGIC:"SDF1" }
 
 SDF_Blocktypes = { $
