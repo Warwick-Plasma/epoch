@@ -337,7 +337,7 @@ CONTAINS
     control_block_done(4*c_ndims+4:) = .TRUE.
 
     ! QED stuff is incorrect if not compiled with the correct options
-#ifndef PHOTONS
+#ifdef PHOTONS
     DO index = 4*c_ndims+16, 4*c_ndims+20
       IF (control_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
