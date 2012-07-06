@@ -59,7 +59,7 @@ top:DO it = 1, 3
             dof_tmp = dof_tmp + 1
             CYCLE top
           ENDIF
-        ENDDO
+        ENDDO ! ix
       ENDDO
     ENDDO top
 
@@ -126,8 +126,8 @@ top:DO it = 1, 3
     REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER(i8) :: num_valid_cells_local, num_valid_cells_global
     INTEGER(i8) :: npart_per_cell
-    REAL(num) :: npart_per_cell_average
     REAL(num) :: density_total, density_total_global, density_average
+    REAL(num) :: npart_per_cell_average
     INTEGER(i8) :: npart_this_proc_new, ipart, npart_this_species
     INTEGER :: ix
     CHARACTER(LEN=15) :: string
@@ -141,14 +141,14 @@ top:DO it = 1, 3
 
     DO ix = -2, nx+3
       IF (density(ix) .GT. density_max) density(ix) = density_max
-    ENDDO
+    ENDDO ! ix
 
     DO ix = 1, nx
       IF (density(ix) .GE. density_min) THEN
         num_valid_cells_local = num_valid_cells_local + 1
         density_total = density_total + density(ix)
       ENDIF
-    ENDDO
+    ENDDO ! ix
 
     CALL MPI_ALLREDUCE(num_valid_cells_local, num_valid_cells_global, 1, &
         MPI_INTEGER8, MPI_SUM, comm, errcode)
@@ -171,7 +171,7 @@ top:DO it = 1, 3
       npart_per_cell = NINT(density(ix) / density_average &
           * npart_per_cell_average)
       npart_this_proc_new = npart_this_proc_new + npart_per_cell
-    ENDDO
+    ENDDO ! ix
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
@@ -196,7 +196,7 @@ top:DO it = 1, 3
         ipart = ipart + 1
         current=>current%next
       ENDDO
-    ENDDO
+    ENDDO ! ix
 
     ! Remove any unplaced particles from the list. This should never be
     ! called if the above routines worked correctly.
@@ -262,7 +262,7 @@ top:DO it = 1, 3
     num_valid_cells_local = 0
     DO ix = 1, nx
       IF (load_list(ix)) num_valid_cells_local = num_valid_cells_local + 1
-    ENDDO
+    ENDDO ! ix
 
     IF (species%npart_per_cell .GE. 0) THEN
       npart_per_cell = AINT(species%npart_per_cell, KIND=i8)
@@ -385,7 +385,7 @@ top:DO it = 1, 3
           ! One particle sucessfully placed
           npart_left = npart_left - 1
         ENDDO
-      ENDDO
+      ENDDO ! ix
 
     ENDIF
 
@@ -402,7 +402,7 @@ top:DO it = 1, 3
           ipos = ipos + 1
           valid_cell_list(ipos) = ix - 1
         ENDIF
-      ENDDO
+      ENDDO ! ix
 
       DO i = 1, npart_left
         ipos = INT(random() * (num_valid_cells_local - 1)) + 1
@@ -473,11 +473,11 @@ top:DO it = 1, 3
 
     DO ix = -2, nx+3
       IF (density(ix) .GT. density_max) density(ix) = density_max
-    ENDDO
+    ENDDO ! ix
 
     DO ix = 1, nx
       IF (density(ix) .GE. density_min) density_map(ix) = .TRUE.
-    ENDDO
+    ENDDO ! ix
 
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
@@ -514,8 +514,8 @@ top:DO it = 1, 3
 
     CALL processor_summation_bcs(weight_fn)
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
-      IF (x_min_boundary) weight_fn(0 ) = weight_fn(1   )
-      IF (x_max_boundary) weight_fn(nx) = weight_fn(nx-1)
+      IF (x_min_boundary) weight_fn(0   ) = weight_fn(1 )
+      IF (x_max_boundary) weight_fn(nx+1) = weight_fn(nx)
     ENDIF
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
@@ -528,12 +528,12 @@ top:DO it = 1, 3
       ELSE
         weight_fn(ix) = 0.0_num
       ENDIF
-    ENDDO
+    ENDDO ! ix
     DEALLOCATE(density)
 
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
-      IF (x_min_boundary) weight_fn(0 ) = weight_fn(1   )
-      IF (x_max_boundary) weight_fn(nx) = weight_fn(nx-1)
+      IF (x_min_boundary) weight_fn(0   ) = weight_fn(1 )
+      IF (x_max_boundary) weight_fn(nx+1) = weight_fn(nx)
     ENDIF
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
@@ -550,7 +550,7 @@ top:DO it = 1, 3
       weight_local = 0.0_num
       DO isubx = sf_min, sf_max
         weight_local = weight_local + gx(isubx) * weight_fn(cell_x+isubx)
-      ENDDO
+      ENDDO ! isubx
       current%weight = weight_local
 
       current=>current%next

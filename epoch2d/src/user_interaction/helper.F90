@@ -68,8 +68,8 @@ top:DO it = 1, 3
             dof_tmp = dof_tmp + 1
             CYCLE top
           ENDIF
-        ENDDO
-        ENDDO
+        ENDDO ! ix
+        ENDDO ! iy
       ENDDO
     ENDDO top
 
@@ -136,8 +136,8 @@ top:DO it = 1, 3
     REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER(i8) :: num_valid_cells_local, num_valid_cells_global
     INTEGER(i8) :: npart_per_cell
-    REAL(num) :: npart_per_cell_average
     REAL(num) :: density_total, density_total_global, density_average
+    REAL(num) :: npart_per_cell_average
     INTEGER(i8) :: npart_this_proc_new, ipart, npart_this_species
     INTEGER :: ix, iy
     CHARACTER(LEN=15) :: string
@@ -150,19 +150,19 @@ top:DO it = 1, 3
     density_total = 0.0_num
 
     DO iy = -2, ny+3
-      DO ix = -2, nx+3
-        IF (density(ix,iy) .GT. density_max) density(ix,iy) = density_max
-      ENDDO
-    ENDDO
+    DO ix = -2, nx+3
+      IF (density(ix,iy) .GT. density_max) density(ix,iy) = density_max
+    ENDDO ! ix
+    ENDDO ! iy
 
     DO iy = 1, ny
-      DO ix = 1, nx
-        IF (density(ix,iy) .GE. density_min) THEN
-          num_valid_cells_local = num_valid_cells_local + 1
-          density_total = density_total + density(ix,iy)
-        ENDIF
-      ENDDO
-    ENDDO
+    DO ix = 1, nx
+      IF (density(ix,iy) .GE. density_min) THEN
+        num_valid_cells_local = num_valid_cells_local + 1
+        density_total = density_total + density(ix,iy)
+      ENDIF
+    ENDDO ! ix
+    ENDDO ! iy
 
     CALL MPI_ALLREDUCE(num_valid_cells_local, num_valid_cells_global, 1, &
         MPI_INTEGER8, MPI_SUM, comm, errcode)
@@ -182,12 +182,12 @@ top:DO it = 1, 3
 
     npart_this_proc_new = 0
     DO iy = 1, ny
-      DO ix = 1, nx
-        npart_per_cell = NINT(density(ix, iy) / density_average &
-            * npart_per_cell_average)
-        npart_this_proc_new = npart_this_proc_new + npart_per_cell
-      ENDDO
-    ENDDO
+    DO ix = 1, nx
+      npart_per_cell = NINT(density(ix, iy) / density_average &
+          * npart_per_cell_average)
+      npart_this_proc_new = npart_this_proc_new + npart_per_cell
+    ENDDO ! ix
+    ENDDO ! iy
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
@@ -195,27 +195,27 @@ top:DO it = 1, 3
     ! Randomly place npart_per_cell particles into each valid cell
     current=>partlist%head
     DO iy = 1, ny
-      DO ix = 1, nx
-        npart_per_cell = NINT(density(ix, iy) / density_average &
-            * npart_per_cell_average)
+    DO ix = 1, nx
+      npart_per_cell = NINT(density(ix, iy) / density_average &
+          * npart_per_cell_average)
 
-        ipart = 0
-        DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
+      ipart = 0
+      DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGE_MASS
-          ! Even if particles have per particle charge and mass, assume
-          ! that initially they all have the same charge and mass (user
-          ! can easily over_ride)
-          current%charge = species%charge
-          current%mass = species%mass
+        ! Even if particles have per particle charge and mass, assume
+        ! that initially they all have the same charge and mass (user
+        ! can easily over_ride)
+        current%charge = species%charge
+        current%mass = species%mass
 #endif
-          current%part_pos(1) = x(ix) + (random() - 0.5_num) * dx
-          current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
+        current%part_pos(1) = x(ix) + (random() - 0.5_num) * dx
+        current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
 
-          ipart = ipart + 1
-          current=>current%next
-        ENDDO
+        ipart = ipart + 1
+        current=>current%next
       ENDDO
-    ENDDO
+    ENDDO ! ix
+    ENDDO ! iy
 
     ! Remove any unplaced particles from the list. This should never be
     ! called if the above routines worked correctly.
@@ -281,10 +281,10 @@ top:DO it = 1, 3
 
     num_valid_cells_local = 0
     DO iy = 1, ny
-      DO ix = 1, nx
-        IF (load_list(ix, iy)) num_valid_cells_local = num_valid_cells_local + 1
-      ENDDO
-    ENDDO
+    DO ix = 1, nx
+      IF (load_list(ix, iy)) num_valid_cells_local = num_valid_cells_local + 1
+    ENDDO ! ix
+    ENDDO ! iy
 
     IF (species%npart_per_cell .GE. 0) THEN
       npart_per_cell = AINT(species%npart_per_cell, KIND=i8)
@@ -388,29 +388,29 @@ top:DO it = 1, 3
     IF (npart_per_cell .GT. 0) THEN
 
       DO iy = 1, ny
-        DO ix = 1, nx
-          IF (.NOT. load_list(ix, iy)) CYCLE
+      DO ix = 1, nx
+        IF (.NOT. load_list(ix, iy)) CYCLE
 
-          ipart = 0
-          DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
+        ipart = 0
+        DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
 #ifdef PER_PARTICLE_CHARGE_MASS
-            ! Even if particles have per particle charge and mass, assume
-            ! that initially they all have the same charge and mass (user
-            ! can easily over_ride)
-            current%charge = species%charge
-            current%mass = species%mass
+          ! Even if particles have per particle charge and mass, assume
+          ! that initially they all have the same charge and mass (user
+          ! can easily over_ride)
+          current%charge = species%charge
+          current%mass = species%mass
 #endif
-            current%part_pos(1) = x(ix) + (random() - 0.5_num) * dx
-            current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
+          current%part_pos(1) = x(ix) + (random() - 0.5_num) * dx
+          current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
 
-            ipart = ipart + 1
-            current=>current%next
+          ipart = ipart + 1
+          current=>current%next
 
-            ! One particle sucessfully placed
-            npart_left = npart_left - 1
-          ENDDO
+          ! One particle sucessfully placed
+          npart_left = npart_left - 1
         ENDDO
-      ENDDO
+      ENDDO ! ix
+      ENDDO ! iy
 
     ENDIF
 
@@ -423,13 +423,13 @@ top:DO it = 1, 3
 
       ipos = 0
       DO iy = 1, ny
-        DO ix = 1, nx
-          IF (load_list(ix,iy)) THEN
-            ipos = ipos + 1
-            valid_cell_list(ipos) = ix - 1 + nx * (iy - 1)
-          ENDIF
-        ENDDO
-      ENDDO
+      DO ix = 1, nx
+        IF (load_list(ix,iy)) THEN
+          ipos = ipos + 1
+          valid_cell_list(ipos) = ix - 1 + nx * (iy - 1)
+        ENDIF
+      ENDDO ! ix
+      ENDDO ! iy
 
       DO i = 1, npart_left
         ipos = INT(random() * (num_valid_cells_local - 1)) + 1
@@ -504,16 +504,16 @@ top:DO it = 1, 3
     CALL field_bc(density)
 
     DO iy = -2, ny+3
-      DO ix = -2, nx+3
-        IF (density(ix,iy) .GT. density_max) density(ix,iy) = density_max
-      ENDDO
-    ENDDO
+    DO ix = -2, nx+3
+      IF (density(ix,iy) .GT. density_max) density(ix,iy) = density_max
+    ENDDO ! ix
+    ENDDO ! iy
 
     DO iy = 1, ny
-      DO ix = 1, nx
-        IF (density(ix,iy) .GE. density_min) density_map(ix,iy) = .TRUE.
-      ENDDO
-    ENDDO
+    DO ix = 1, nx
+      IF (density(ix,iy) .GE. density_min) density_map(ix,iy) = .TRUE.
+    ENDDO ! ix
+    ENDDO ! iy
 
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
@@ -534,11 +534,12 @@ top:DO it = 1, 3
 #include "particle_to_grid.inc"
 
       DO isuby = sf_min, sf_max
+        i = cell_x
         j = cell_y + isuby
 #ifdef PARTICLE_SHAPE_TOPHAT
-        IF (.NOT. density_map(cell_x,j)) j = cell_y + 1 - isuby
+        IF (.NOT. density_map(i,j)) j = cell_y + 1 - isuby
 #else
-        IF (.NOT. density_map(cell_x,j)) j = cell_y - isuby / 2
+        IF (.NOT. density_map(i,j)) j = cell_y - isuby / 2
 #endif
         DO isubx = sf_min, sf_max
           i = cell_x + isubx
@@ -571,14 +572,14 @@ top:DO it = 1, 3
 
     wdata = dx * dy
     DO iy = -2, ny+3
-      DO ix = -2, nx+3
-        IF (weight_fn(ix, iy) .GT. 0.0_num) THEN
-          weight_fn(ix, iy) = wdata * density(ix, iy) / weight_fn(ix, iy)
-        ELSE
-          weight_fn(ix, iy) = 0.0_num
-        ENDIF
-      ENDDO
-    ENDDO
+    DO ix = -2, nx+3
+      IF (weight_fn(ix, iy) .GT. 0.0_num) THEN
+        weight_fn(ix, iy) = wdata * density(ix, iy) / weight_fn(ix, iy)
+      ELSE
+        weight_fn(ix, iy) = 0.0_num
+      ENDIF
+    ENDDO ! ix
+    ENDDO ! iy
     DEALLOCATE(density)
 
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
@@ -603,11 +604,11 @@ top:DO it = 1, 3
 
       weight_local = 0.0_num
       DO isuby = sf_min, sf_max
-        DO isubx = sf_min, sf_max
-          weight_local = weight_local + gx(isubx) * gy(isuby) &
-              * weight_fn(cell_x+isubx, cell_y+isuby)
-        ENDDO
-      ENDDO
+      DO isubx = sf_min, sf_max
+        weight_local = weight_local + gx(isubx) * gy(isuby) &
+            * weight_fn(cell_x+isubx, cell_y+isuby)
+      ENDDO ! isubx
+      ENDDO ! isuby
       current%weight = weight_local
 
       current=>current%next
