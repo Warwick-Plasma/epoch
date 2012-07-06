@@ -15,8 +15,8 @@ END
 ; --------------------------------------------------------------------------
 
 FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
-    var_list=var_list, block_types=block_types, block_dims=block_dims, $
-    silent=silent, errval=errval, retro=retro, _extra=extra
+    var_list=var_list, name_list=name_list, block_types=block_types, block_dims=block_dims, $
+    silent=silent, errval=errval, retro=retro, only_md=only_md, _extra=extra
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
@@ -115,6 +115,7 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
   ENDIF
 
   var_list = strarr(file_header.nblocks)
+  name_list = strarr(file_header.nblocks)
   block_types = intarr(file_header.nblocks)
   block_dims = intarr(file_header.nblocks)
 
@@ -145,18 +146,23 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
         b.name = STRMID(b.name, pos+1)
       ENDIF
 
-      var_list[iBlock] = STRTRIM(b.name)
+      var_list[iBlock] = STRTRIM(b.idname)
+      name_list[iBlock] = STRTRIM(b.fname)
       block_types[iBlock] = b.blocktype
       block_dims[iBlock] = b.ndims
-      IF (N_ELEMENTS(requestv) NE 0 AND display) THEN BEGIN
-        PRINT, STRTRIM(STRING(vBlock + 1), 2) + ") " + b.name + " (" $
-            + b.class + ") : " + STRTRIM(STRING(b.ndims), 2) + "D " $
-            + SDF_Blocktype_names[b.blocktype]
-        vBlock = vBlock + 1
-        element_block(*) = 1
+
+
+      IF (N_ELEMENTS(requestv) NE 0) THEN BEGIN
+        IF (display) THEN BEGIN
+          PRINT, STRTRIM(STRING(vBlock + 1), 2) + ") " + b.name + " (" $
+              + b.class + ") : " + STRTRIM(STRING(b.ndims), 2) + "D " $
+              + SDF_Blocktype_names[b.blocktype]
+          vBlock = vBlock + 1
+          element_block(*) = 1
+        END
       ENDIF ELSE BEGIN
         SDFHandleBlock, file_header, b, f, offset, name_arr, element_block, $
-            retro=retro
+            retro=retro, only_md=only_md
       ENDELSE
       END
     ELSE:
@@ -179,8 +185,7 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
   IF (Errcount NE 0) THEN BEGIN
     IF (display) THEN BEGIN
       PRINT, "You have specified nonexistant variables. To list available " $
-          + "variables, use the '/variables' switch. Alternatively use the " $
-          + "data explorer by using the '/explorer' flag."
+          + "variables, use the '/variables' switch."
     ENDIF
   ENDIF
 
@@ -192,7 +197,7 @@ END
 ; --------------------------------------------------------------------------
 
 PRO SDFHandleBlock, file_header, block_header, outputobject, offset, $
-    name_arr, element_block, md=md, retro=retro
+    name_arr, element_block, md=md, retro=retro, only_md = only_md
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
@@ -203,19 +208,19 @@ PRO SDFHandleBlock, file_header, block_header, outputobject, offset, $
     CASE block_header.blocktype OF
       SDF_Blocktypes.PLAIN_MESH: BEGIN
         SDFGetPlainMesh, file_header, block_header, outputobject, offset, $
-            md=md, retro=retro
+            md=md, retro=retro, only_md=only_md
       END
       SDF_Blocktypes.POINT_MESH: BEGIN
         SDFGetPointMesh, file_header, block_header, outputobject, offset, $
-            md=md, retro=retro
+            md=md, retro=retro, only_md=only_md
       END
       SDF_Blocktypes.PLAIN_VARIABLE: BEGIN
         SDFGetPlainVar, file_header, block_header, outputobject, offset, $
-            md=md, retro=retro
+            md=md, retro=retro, only_md=only_md
       END
       SDF_Blocktypes.POINT_VARIABLE: BEGIN
         SDFGetPointVar, file_header, block_header, outputobject, offset, $
-            md=md, retro=retro
+            md=md, retro=retro, only_md=only_md
       END
     ELSE:
     ENDCASE
@@ -225,11 +230,12 @@ END
 ; --------------------------------------------------------------------------
 
 PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md, $
-    retro=retro
+    retro=retro, only_md=only_md
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
+  mdflag=KEYWORD_SET(only_md)
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
   mesh_header = readvar(1, { mults:DBLARR(block_header.ndims), $
@@ -252,34 +258,44 @@ PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md, $
   IF (ndims GT 1) THEN labels[1] = 'Y'
   IF (ndims GT 2) THEN labels[2] = 'Z'
 
-  CASE block_header.datatype OF
-    SDF_Datatypes.REAL4: BEGIN
-      datastruct = CREATE_STRUCT(labels[0], FLTARR(mesh_header.dims[0]))
-      FOR iDim = 1, ndims-1 DO BEGIN
-        datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
-            FLTARR(mesh_header.dims[iDim]))
-      ENDFOR
-    END
-    SDF_Datatypes.REAL8: BEGIN
-      datastruct = CREATE_STRUCT(labels[0], DBLARR(mesh_header.dims[0]))
-      FOR iDim = 1, ndims-1 DO BEGIN
-        datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
-            DBLARR(mesh_header.dims[iDim]))
-      ENDFOR
-    END
-  ENDCASE
+  IF (~mdflag) THEN BEGIN
+    CASE block_header.datatype OF
+      SDF_Datatypes.REAL4: BEGIN
+        datastruct = CREATE_STRUCT(labels[0], FLTARR(mesh_header.dims[0]))
+        FOR iDim = 1, ndims-1 DO BEGIN
+          datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
+              FLTARR(mesh_header.dims[iDim]))
+        ENDFOR
+      END
+      SDF_Datatypes.REAL8: BEGIN
+        datastruct = CREATE_STRUCT(labels[0], DBLARR(mesh_header.dims[0]))
+        FOR iDim = 1, ndims-1 DO BEGIN
+          datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
+              DBLARR(mesh_header.dims[iDim]))
+        ENDFOR
+      END
+    ENDCASE
+    offset = block_header.data_location
+    d = readvar(1, datastruct, offset)
+  ENDIF ELSE BEGIN
+    d = CREATE_STRUCT('ONLYMD',1)
+  ENDELSE
 
-  offset = block_header.data_location
-  d = readvar(1, datastruct, offset)
-  d = CREATE_STRUCT(d, 'LABELS', labelstr)
+  d = CREATE_STRUCT(d,'LABELS', labelstr)
   d = CREATE_STRUCT(d, 'UNITS', units)
   d = CREATE_STRUCT(d, 'NPTS', mesh_header.dims)
+  mesh_header = CREATE_STRUCT(mesh_header, 'FRIENDLYNAME', STRTRIM(STRING(block_header.fname),2))
 
+  obj = CREATE_STRUCT('metadata', mesh_header, d)
   md = mesh_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN
-    output_struct = CREATE_STRUCT(output_struct, block_header.idname, d)
+    IF (KEYWORD_SET(retro)) THEN BEGIN
+      output_struct = CREATE_STRUCT(output_struct, d)
+    ENDIF ELSE BEGIN
+      output_struct = CREATE_STRUCT(output_struct, block_header.idname, obj)
+    ENDELSE
     ; Hack to add a cell centred grid for plotting node-centred values
-    IF (block_header.idname EQ 'grid') THEN BEGIN
+    IF (block_header.idname EQ 'grid' AND ~mdflag) THEN BEGIN
       iDim = 0
       nx = mesh_header.dims[iDim] - 1
       x = 0.5 * (d.(iDim)[0:nx-1] + d.(iDim)[1:nx])
@@ -297,11 +313,12 @@ END
 ; --------------------------------------------------------------------------
 
 PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md, $
-    retro=retro
+    retro=retro, only_md=only_md
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
+  mdflag=KEYWORD_SET(only_md)
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
   mesh_header = readvar(1, { mults:DBLARR(block_header.ndims), $
@@ -324,43 +341,55 @@ PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md, $
   IF (ndims GT 1) THEN labels[1] = 'Y'
   IF (ndims GT 2) THEN labels[2] = 'Z'
 
-  CASE block_header.datatype OF
-    SDF_Datatypes.REAL4: BEGIN
-      datastruct = CREATE_STRUCT(labels[0], FLTARR(mesh_header.npoints))
-      FOR iDim = 1, ndims-1 DO BEGIN
-        datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
-            FLTARR(mesh_header.npoints))
-      ENDFOR
-    END
-    SDF_Datatypes.REAL8: BEGIN
-      datastruct = CREATE_STRUCT(labels[0], DBLARR(mesh_header.npoints))
-      FOR iDim = 1, ndims-1 DO BEGIN
-        datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
-            DBLARR(mesh_header.npoints))
-      ENDFOR
-    END
-  ENDCASE
+  IF (~mdflag) THEN BEGIN
+    CASE block_header.datatype OF
+      SDF_Datatypes.REAL4: BEGIN
+        datastruct = CREATE_STRUCT(labels[0], FLTARR(mesh_header.npoints))
+        FOR iDim = 1, ndims-1 DO BEGIN
+          datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
+              FLTARR(mesh_header.npoints))
+        ENDFOR
+      END
+      SDF_Datatypes.REAL8: BEGIN
+        datastruct = CREATE_STRUCT(labels[0], DBLARR(mesh_header.npoints))
+        FOR iDim = 1, ndims-1 DO BEGIN
+          datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
+              DBLARR(mesh_header.npoints))
+        ENDFOR
+      END
+    ENDCASE
+    offset = block_header.data_location
+    d = readvar(1, datastruct, offset)
+  ENDIF ELSE BEGIN
+    d=CREATE_STRUCT('ONLYMD',1)
+  ENDELSE
 
-  offset = block_header.data_location
-  d = readvar(1, datastruct, offset)
   d = CREATE_STRUCT(d, 'LABELS', labelstr)
   d = CREATE_STRUCT(d, 'UNITS', units)
   d = CREATE_STRUCT(d, 'NPART', mesh_header.npoints)
+  mesh_header = CREATE_STRUCT(mesh_header, 'FRIENDLYNAME', STRTRIM(STRING(block_header.fname),2))
 
+  obj = CREATE_STRUCT('metadata', mesh_header, d)
   md = mesh_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN
-    output_struct = CREATE_STRUCT(output_struct, block_header.idname, d)
+    IF (KEYWORD_SET(retro)) THEN BEGIN
+      output_struct = CREATE_STRUCT(output_struct, d)
+    ENDIF ELSE BEGIN
+      output_struct = CREATE_STRUCT(output_struct, block_header.idname, obj)
+    ENDELSE
   ENDIF
+
 END
 
 ; --------------------------------------------------------------------------
 
 PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md, $
-    retro=retro
+    retro=retro, only_md=only_md
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
+  mdflag=KEYWORD_SET(only_md)
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
   var_header = readvar(1, {mult:0D, units:BYTARR(id_length), $
@@ -370,19 +399,22 @@ PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md, $
   struct_name = 'data'
   IF (KEYWORD_SET(retro)) THEN struct_name = block_header.idname
 
-  CASE block_header.datatype OF
-    SDF_Datatypes.REAL4: BEGIN
-      datastruct = CREATE_STRUCT(struct_name, FLTARR(var_header.dims))
-    END
-    SDF_Datatypes.REAL8: BEGIN
-      datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.dims))
-    END
-  ENDCASE
+  IF (~mdflag) THEN BEGIN
+    CASE block_header.datatype OF
+      SDF_Datatypes.REAL4: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, FLTARR(var_header.dims))
+      END
+      SDF_Datatypes.REAL8: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.dims))
+      END
+    ENDCASE
+    offset = block_header.data_location
+    d = readvar(1, datastruct, offset)
+  ENDIF ELSE BEGIN
+    d=CREATE_STRUCT('ONLYMD',1)
+  ENDELSE
 
-  offset = block_header.data_location
-  d = readvar(1, datastruct, offset)
-
-
+  var_header = CREATE_STRUCT(var_header, 'FRIENDLYNAME', STRTRIM(STRING(block_header.fname),2))
   obj = CREATE_STRUCT('metadata', var_header, d)
   md = var_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN
@@ -397,11 +429,12 @@ END
 ; --------------------------------------------------------------------------
 
 PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
-    md=md, retro=retro
+    md=md, retro=retro, only_md=only_md
 
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
 
+  mdflag=KEYWORD_SET(only_md)
   id_length = SDF_Common.ID_LENGTH
   offset = block_header.start + file_header.block_header_length
   var_header = readvar(1, {mult:0D, units:BYTARR(id_length), $
@@ -410,18 +443,23 @@ PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
   struct_name = 'data'
   IF (KEYWORD_SET(retro)) THEN struct_name = block_header.idname
 
-  CASE block_header.datatype OF
-    SDF_Datatypes.REAL4: BEGIN
-      datastruct = CREATE_STRUCT(struct_name, FLTARR(var_header.npoints))
-    END
-    SDF_Datatypes.REAL8: BEGIN
-      datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.npoints))
-    END
-  ENDCASE
+  IF (~mdflag) THEN BEGIN
+    CASE block_header.datatype OF
+      SDF_Datatypes.REAL4: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, FLTARR(var_header.npoints))
+      END
+      SDF_Datatypes.REAL8: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.npoints))
+      END
+    ENDCASE
 
-  offset = block_header.data_location
-  d = readvar(1, datastruct, offset)
+    offset = block_header.data_location
+    d = readvar(1, datastruct, offset)
+  ENDIF ELSE BEGIN
+    d = CREATE_STRUCT('MDONLY',1)
+  ENDELSE
 
+  var_header = CREATE_STRUCT(var_header, 'FRIENDLYNAME', STRTRIM(STRING(block_header.fname),2))
   obj = CREATE_STRUCT('metadata', var_header, d)
   md = var_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN

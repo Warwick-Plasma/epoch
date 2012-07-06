@@ -17,7 +17,7 @@ END
 FUNCTION LoadCFDFile, filename, Variables=requestv, $
     request_classes=requestc, _extra=extra, var_list=var_list, $
     block_types=block_types, block_dims=block_dims, $
-    silent=silent, errval=errval, retro=retro
+    silent=silent, errval=errval, retro=retro, onlymd=onlymd
 
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
@@ -127,7 +127,7 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
     offset = offset + fileheader.blockheaderoff
     IF (N_ELEMENTS(requestv) NE 0) THEN BEGIN
       HandleBlock, fileheader, blockheader, f, offset, name_arr, $
-          /onlymd, md=md, retro=retro
+          /only_md, md=md, retro=retro
       q = ReturnIDLUsable(blockheader, md)
       IF (q EQ 1) THEN BEGIN
         IF (display) THEN PRINT, STRTRIM(STRING(vBlock + 1), 2), ") ", $
@@ -139,7 +139,7 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
       element_block(*) = 1
     ENDIF ELSE BEGIN
       HandleBlock, fileheader, blockheader, f, offset, name_arr, $
-          element_block, md=md, retro=retro
+          element_block, md=md, retro=retro, onlymd=onlymd
     ENDELSE
     var_list[iBlock] = STRTRIM(STRING(blockheader.name))
     block_types[iBlock] = blockheader.type
@@ -169,7 +169,7 @@ END
 ; --------------------------------------------------------------------------
 
 PRO HandleBlock, fileheader, blockheader, outputobject, offset, name_arr, $
-    element_block, md=md, onlymd=onlymd, retro=retro
+    element_block, md=md, only_md=only_md, retro=retro
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
 
@@ -177,17 +177,17 @@ PRO HandleBlock, fileheader, blockheader, outputobject, offset, name_arr, $
   IF (NameMatch EQ 1 || blockheader.Type EQ TYPE_SNAPSHOT) THEN BEGIN
     IF (blockheader.Type EQ TYPE_MESH) THEN BEGIN
       GetMesh, fileheader, blockheader, outputobject, offset, $
-          onlymd=onlymd, md=md, byname=NameMatch, retro=retro
+          only_md=only_md, md=md, byname=NameMatch, retro=retro
       RETURN
     ENDIF
     IF (blockheader.Type EQ TYPE_MESH_VARIABLE) THEN  BEGIN
       GetMeshVar, fileheader, blockheader, outputobject, offset, $
-          onlymd=onlymd, md=md, retro=retro
+          only_md=only_md, md=md, retro=retro
       RETURN
     ENDIF
     IF (blockheader.Type EQ TYPE_SNAPSHOT) THEN  BEGIN
       GetSnapShot, fileheader, blockheader, outputobject, offset, $
-          onlymd=onlymd, md=md, retro=retro
+          only_md=only_md, md=md, retro=retro
       RETURN
     ENDIF
   ENDIF
@@ -196,14 +196,14 @@ END
 ; --------------------------------------------------------------------------
 
 PRO GetMesh, file_header, block_header, output_struct, offset, $
-    onlymd=onlymd, md=md, byname=byname, retro=retro
+    only_md=only_md, md=md, byname=byname, retro=retro
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
   COMMON ParticleCoords, PARTICLE_CARTESIAN
 
   mesh_header = readvar(1, {MeshType:0L, nd:0L, sof:0L}, offset)
 
   mdonly_f = 0
-  IF (n_elements(onlymd) NE 0) THEN mdonly_f = 1
+  IF (n_elements(only_md) NE 0) THEN mdonly_f = 1
   byname_f = 0
   IF (n_elements(byname) NE 0) THEN byname_f = byname
 
@@ -232,6 +232,8 @@ PRO GetMesh, file_header, block_header, output_struct, offset, $
         ENDFOR
       ENDIF
     ENDIF
+
+    mesh_header=CREATE_STRUCT(mesh_header,'FRIENDLYNAME',STRTRIM(STRING(block_header.Name), 2))
 
     IF(mdonly_f NE 1) THEN BEGIN
       d = readvar(1, datastruct, offset + block_header.BlockMDLen)
@@ -267,7 +269,7 @@ END
 ; --------------------------------------------------------------------------
 
 PRO GetMeshVar, file_header, block_header, output_struct, offset, $
-    md=md, onlymd=onlymd, retro=retro
+    md=md, only_md=only_md, retro=retro
   COMMON VarTypes, VAR_CARTESIAN, VAR_PARTICLE
 
   var_header = readvar(1, {VarType:0L, nd:0L, sof:0L}, offset)
@@ -276,7 +278,7 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
     offset + block_header.BlockMDLen - 2 * file_header.MaxString)
   mdonly_f = 1
 
-  IF (N_ELEMENTS(onlymd) EQ 0) THEN mdonly_f = 0
+  IF (N_ELEMENTS(only_md) EQ 0) THEN mdonly_f = 0
 
   struct_name = 'data'
   IF (KEYWORD_SET(retro)) THEN $
@@ -293,6 +295,7 @@ PRO GetMeshVar, file_header, block_header, output_struct, offset, $
           datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.npts))
     ENDIF
 
+    var_header=CREATE_STRUCT(var_header,'FRIENDLYNAME',STRTRIM(STRING(block_header.Name), 2))
     md = var_header
     IF (mdonly_f NE 1) THEN BEGIN
       d = readvar(1, datastruct, offset + block_header.BlockMDLen)
@@ -332,12 +335,12 @@ END
 ; --------------------------------------------------------------------------
 
 PRO GetSnapshot, file_header, block_header, output_struct, offset, $
-    md=md, onlymd=onlymd, retro=retro
+    md=md, only_md=only_md, retro=retro
 
   snap_header = readvar(1, {Snapshot:0L, Time:0D}, offset)
 
   mdonly_f = 1
-  IF (N_ELEMENTS(onlymd) EQ 0) THEN mdonly_f = 0
+  IF (N_ELEMENTS(only_md) EQ 0) THEN mdonly_f = 0
 
   IF (mdonly_f NE 1) THEN BEGIN
     output_struct = CREATE_STRUCT(output_struct, snap_header)

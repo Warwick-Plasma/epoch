@@ -1,16 +1,16 @@
-FUNCTION getdata, snapshot, wkdir=wkdir, retro=retro, $
+FUNCTION getdata, snapshot, wkdir, retro=retro, $
     _EXTRA=extra
 
   COMMON background, wkdir_global, retro_global
   ON_ERROR, 2
 
-  IF NOT KEYWORD_SET(wkdir) THEN wkdir = wkdir_global
+  IF N_ELEMENTS(wkdir) EQ 0 THEN wkdir = wkdir_global
   IF NOT KEYWORD_SET(retro) THEN retro = retro_global
 
   IF N_PARAMS() EQ 0 THEN BEGIN
-    PRINT, "Usage: result = getdata(snapnumber[, wkdir=<dir>, " + $
+    PRINT, "Usage: result = getdata(snapnumber[,<wkdir>, " + $
         "/empty | /rho, /temp, /vx ...])"
-    RETURN, "Usage: result = getdata(snapnumber[, wkdir=<dir>, " + $
+    RETURN, "Usage: result = getdata(snapnumber[,<wkdir>, " + $
         "/empty | /rho, /temp, /vx ...])"
   ENDIF
 
@@ -34,26 +34,22 @@ END
 
 ; --------------------------------------------------------------------------
 
-PRO quick_view, snapshot, wkdir=wkdir, get_viewer=get_viewer, $
-    set_viewer=set_viewer
+FUNCTION explore_data, wkdir, snapshot=snapshot
+
+  COMMON background, wkdir_global, retro_global
+  ON_ERROR, 2
+  IF N_ELEMENTS(wkdir) EQ 0 THEN wkdir = wkdir_global
+  RETURN, sdf_explorer(wkdir,snapshot=snapshot)
+END
+
+; --------------------------------------------------------------------------
+
+PRO quick_view, wkdir, snapshot=snapshot
 
   COMMON background, wkdir_global
   ON_ERROR, 2
 
   IF NOT KEYWORD_SET(wkdir) THEN wkdir = wkdir_global
 
-  IF N_PARAMS() EQ 0 THEN BEGIN
-    PRINT, "Usage: result = showdata(snapnumber[, wkdir=<dir>])"
-    RETURN
-  ENDIF
-
-  file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".cfd")')
-  info = FILE_INFO(file)
-
-  IF info.exists EQ 1 THEN BEGIN
-    get_viewer = create_sdf_visualizer(file, set_viewer=set_viewer)
-  ENDIF ELSE BEGIN
-    file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".sdf")')
-    get_viewer = create_sdf_visualizer(file, set_viewer=set_viewer)
-  ENDELSE
+  a=create_sdf_visualizer(wkdir,snapshot=snapshot)
 END
