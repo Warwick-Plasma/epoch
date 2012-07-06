@@ -160,8 +160,8 @@ FUNCTION LoadCFDFile, filename, Variables=requestv, $
   ENDFOR
 
   IF (Errcount NE 0) THEN BEGIN
-    PRINT, "You have specified nonexistant variables. To list available " + $
-        "variables, use the '/variables' switch"
+    PRINT, "You have specified nonexistant variables. To list available"
+    PRINT, "variables, use the 'list_variables' routine."
   ENDIF
 
   CLOSE, 1
@@ -205,7 +205,8 @@ PRO GetMesh, file_header, block_header, output_struct, offset, $
 
   COMPILE_OPT idl2, hidden
   COMMON MeshTypes, MESH_CARTESIAN, MESH_PARTICLE
-  COMMON ParticleCoords, PARTICLE_CARTESIAN
+  COMMON ParticleCoords, PARTICLE_CARTESIAN, PARTICLE_POLAR, $
+      PARTICLE_CYLINDRICAL
 
   mesh_header = readvar(1, {MeshType:0L, nd:0L, sof:0L}, offset)
 

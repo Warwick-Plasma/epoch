@@ -47,6 +47,16 @@ END
 
 ; --------------------------------------------------------------------------
 
+PRO list_variables, snapshot, wkdir
+
+  COMPILE_OPT idl2
+  ON_ERROR, 2
+
+  q = getdata(snapshot, wkdir, /variables)
+END
+
+; --------------------------------------------------------------------------
+
 PRO quick_view, wkdir, snapshot=snapshot
 
   COMPILE_OPT idl2
@@ -56,4 +66,45 @@ PRO quick_view, wkdir, snapshot=snapshot
   IF NOT KEYWORD_SET(wkdir) THEN wkdir = wkdir_global
 
   a = create_sdf_visualizer(wkdir, snapshot=snapshot)
+END
+
+; --------------------------------------------------------------------------
+
+FUNCTION get_wkdir
+  COMPILE_OPT idl2
+  COMMON background, wkdir_global, retro_global
+
+  RETURN, wkdir_global
+END
+
+; --------------------------------------------------------------------------
+
+PRO set_wkdir, wkdir
+  COMPILE_OPT idl2
+  COMMON background, wkdir_global, retro_global
+
+  IF KEYWORD_SET(wkdir) THEN wkdir_global = wkdir
+END
+
+; --------------------------------------------------------------------------
+
+PRO init_StartPIC
+  COMPILE_OPT idl2, hidden
+  COMMON background, wkdir_global, retro_global
+  COMMON gdlset, gdl
+  DEFSYSV, '!GDL', EXISTS=gdl
+
+  init_widget
+  init_cfdhelp
+  init_SDFHelp
+
+  retro_global = 0
+  set_wkdir, "Data"
+
+  device, true_color=24
+  device, decompose=0
+  device, retain=2
+
+  !p.charsize = 2
+  loadct, 3
 END

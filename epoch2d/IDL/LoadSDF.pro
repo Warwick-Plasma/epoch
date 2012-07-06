@@ -187,8 +187,8 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
 
   IF (Errcount NE 0) THEN BEGIN
     IF (display) THEN BEGIN
-      PRINT, "You have specified nonexistant variables. To list available " $
-          + "variables, use the '/variables' switch."
+      PRINT, "You have specified nonexistant variables. To list available"
+      PRINT, "variables, use the 'list_variables' routine."
     ENDIF
   ENDIF
 

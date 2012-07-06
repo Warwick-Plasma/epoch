@@ -1,3 +1,12 @@
+PRO init_widget
+  COMPILE_OPT idl2, hidden
+  COMMON SDF_View_Internal_data, Loaded_Data, newline
+
+  newline = STRING(10B)
+END
+
+; --------------------------------------------------------------------------
+
 FUNCTION generate_filename, wkdir, snapshot
   COMPILE_OPT idl2, hidden
 
@@ -45,10 +54,9 @@ END
 
 FUNCTION get_sdf_metatext, viewer, element
   COMPILE_OPT idl2, hidden
+  COMMON SDF_View_Internal_data, Loaded_Data, newline
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
-
-  newline = STRING(10B)
 
   namestruct = {silent:1}
   name = (*obj_data.valid_names)[element]
@@ -225,8 +233,8 @@ PRO explorer_event_handler, event ; event handler
   ENDIF
 
   IF (uvalue.name EQ 'explorer_close') THEN BEGIN
-    load_data, uvalue.viewer
-    WIDGET_CONTROL, uvalue.viewer, /destroy
+    load_data, uvalue.viewer, errcode
+    IF (errcode EQ 0) THEN WIDGET_CONTROL, uvalue.viewer, /destroy
   ENDIF
 
   IF (uvalue.name EQ 'explorer_cancel') THEN BEGIN
@@ -246,13 +254,18 @@ END
 
 ; --------------------------------------------------------------------------
 
-PRO load_data, viewer, idstruct
+PRO load_data, viewer, errcode
 
   COMPILE_OPT idl2, hidden
   COMMON SDF_View_Internal_data, Loaded_Data, newline
 
+  errcode = 1
+
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
   element = WIDGET_INFO(obj_data.list, /list_select)
+
+  ; Handle case where no items were selected
+  IF (N_ELEMENTS(element) EQ 1 AND element LT 0) THEN RETURN
 
   struct = {silent:1}
   FOR i = 0, N_ELEMENTS(element) - 1 DO BEGIN
@@ -262,6 +275,7 @@ PRO load_data, viewer, idstruct
   WIDGET_CONTROL, /hourglass
   Loaded_Data = load_raw(*obj_data.filename, struct)
   WIDGET_CONTROL, /hourglass
+  errcode = 0
 
 END
 
