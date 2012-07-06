@@ -7,11 +7,10 @@ FUNCTION SDFCheckName, blockheader, namelist, element_block
   IF (namelist[0] EQ "") THEN RETURN, 1
 
   FOR i = 0, N_ELEMENTS(namelist)-1 DO BEGIN
-    name = STRUPCASE(blockheader.name)
+    fullname = STRUPCASE(blockheader.name)
     class = STRUPCASE(blockheader.class)
-    fullname = class + '_' + name
     namecmp = STRUPCASE(STRTRIM(namelist[i]))
-    IF (namecmp EQ fullname || namecmp EQ name $
+    IF (namecmp EQ fullname $
         || namecmp EQ class || namecmp EQ "EMPTY") THEN BEGIN
       element_block[i] = 1
       IF (namecmp NE "EMPTY") THEN RETURN, 1

@@ -137,20 +137,20 @@ FUNCTION LoadSDFFile, filename, _variables=requestv, _silent=silent, $
     SDF_Blocktypes.PLAIN_VARIABLE:
     SDF_Blocktypes.POINT_VARIABLE: BEGIN
 
-      b = CREATE_STRUCT(b, 'idname', STRTRIM(STRING(b.id), 2))
-      b = CREATE_STRUCT(b, 'name', STRTRIM(STRING(b.fname), 2))
-      b = CREATE_STRUCT(b, 'class', "")
-      b.idname = swapchr(b.idname, ' ', '_')
-      b.idname = swapchr(b.idname, '/', '_')
+      b = CREATE_STRUCT(b, 'name', STRTRIM(STRING(b.id), 2))
       b.name = swapchr(b.name, ' ', '_')
-      pos = STRPOS(b.name, '/')
-      b.name = swapchr(b.fname, '/', '_')
-      IF (pos GT 0) THEN BEGIN
-        b.class = STRMID(b.name, 0, pos)
-        b.name = STRMID(b.name, pos+1)
-      ENDIF
+      b.name = swapchr(b.name, '/', '_')
+      b.name = STRUPCASE(STRTRIM(b.name))
 
-      var_list[iBlock] = STRTRIM(b.idname)
+      fname = STRTRIM(STRING(b.fname), 2)
+      pos = STRPOS(fname, '/')
+      IF (pos GT 0) THEN BEGIN
+        b = CREATE_STRUCT(b, 'class', STRMID(fname, 0, pos))
+      ENDIF ELSE BEGIN
+        b = CREATE_STRUCT(b, 'class', fname)
+      ENDELSE
+
+      var_list[iBlock] = STRTRIM(b.name)
       name_list[iBlock] = STRTRIM(b.fname)
       block_types[iBlock] = b.blocktype
       block_dims[iBlock] = b.ndims
@@ -298,10 +298,10 @@ PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md, $
     IF (KEYWORD_SET(retro)) THEN BEGIN
       output_struct = CREATE_STRUCT(output_struct, d)
     ENDIF ELSE BEGIN
-      output_struct = CREATE_STRUCT(output_struct, block_header.idname, obj)
+      output_struct = CREATE_STRUCT(output_struct, block_header.name, obj)
     ENDELSE
     ; Hack to add a cell centred grid for plotting node-centred values
-    IF (block_header.idname EQ 'grid' AND ~mdflag) THEN BEGIN
+    IF (block_header.name EQ 'grid' AND ~mdflag) THEN BEGIN
       iDim = 0
       nx = mesh_header.dims[iDim] - 1
       x = 0.5 * (d.(iDim)[0:nx-1] + d.(iDim)[1:nx])
@@ -383,7 +383,7 @@ PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md, $
     IF (KEYWORD_SET(retro)) THEN BEGIN
       output_struct = CREATE_STRUCT(output_struct, d)
     ENDIF ELSE BEGIN
-      output_struct = CREATE_STRUCT(output_struct, block_header.idname, obj)
+      output_struct = CREATE_STRUCT(output_struct, block_header.name, obj)
     ENDELSE
   ENDIF
 
@@ -406,7 +406,7 @@ PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md, $
       stagger:0L}, offset)
 
   struct_name = 'data'
-  IF (KEYWORD_SET(retro)) THEN struct_name = block_header.idname
+  IF (KEYWORD_SET(retro)) THEN struct_name = block_header.name
 
   IF (~mdflag) THEN BEGIN
     CASE block_header.datatype OF
@@ -431,7 +431,7 @@ PRO SDFGetPlainVar, file_header, block_header, output_struct, offset, md=md, $
     IF (KEYWORD_SET(retro)) THEN BEGIN
       output_struct = CREATE_STRUCT(output_struct, d)
     ENDIF ELSE BEGIN
-      output_struct = CREATE_STRUCT(output_struct, block_header.idname, obj)
+      output_struct = CREATE_STRUCT(output_struct, block_header.name, obj)
     ENDELSE
   ENDIF
 END
@@ -452,7 +452,7 @@ PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
       mesh_id:BYTARR(id_length), npoints:0LL}, offset)
 
   struct_name = 'data'
-  IF (KEYWORD_SET(retro)) THEN struct_name = block_header.idname
+  IF (KEYWORD_SET(retro)) THEN struct_name = block_header.name
 
   IF (~mdflag) THEN BEGIN
     CASE block_header.datatype OF
@@ -478,7 +478,7 @@ PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
     IF (KEYWORD_SET(retro)) THEN BEGIN
       output_struct = CREATE_STRUCT(output_struct, d)
     ENDIF ELSE BEGIN
-      output_struct = CREATE_STRUCT(output_struct, block_header.idname, obj)
+      output_struct = CREATE_STRUCT(output_struct, block_header.name, obj)
     ENDELSE
   ENDIF
 END
