@@ -103,20 +103,31 @@ MODULE constants
   REAL(num), PARAMETER :: h_planck = 6.62606957e-34_num ! J s (+/- 2.9e-41)
   REAL(num), PARAMETER :: ev = q0 ! J
   ! Derived physical parameters used in ionisation
-  REAL(num), PARAMETER :: h_bar = h_planck / 2.0_num / pi
+  ! h_bar = h_planck / 2.0_num / pi
+  REAL(num), PARAMETER :: h_bar = 1.054571725336289397963133257349698e-34_num
+  ! a0 = 4.0_num * pi * epsilon0 * (h_bar / q0)**2.0_num / m0
+  REAL(num), PARAMETER :: a0 = 5.291772101121111395947216558438464e-11_num
+  ! hartree = (h_bar / a0)**2.0_num / m0
+  REAL(num), PARAMETER :: hartree = 4.359744350823120007758594450644308e-18_num
+  ! atomic_time = h_bar / hartree
   REAL(num), PARAMETER :: &
-      a0 = 4.0_num * pi * epsilon0 * (h_bar / q0)**2.0_num / m0
-  REAL(num), PARAMETER :: hartree = (h_bar / a0)**2.0_num / m0
-  REAL(num), PARAMETER :: atomic_time = h_bar / hartree
-  REAL(num), PARAMETER :: atomic_electric_field = hartree / q0 / a0
+      atomic_time = 2.418884320905619591809404261549867e-17_num
+  ! atomic_electric_field = hartree / q0 / a0
+  REAL(num), PARAMETER :: &
+      atomic_electric_field = 5.142206538736485312185213306837419e11_num
 
   ! Constants used in pair production
 #ifdef PHOTONS
-  REAL(num), PARAMETER :: mc0 = m0 * c
-  REAL(num), PARAMETER :: b_s = mc0**2 / (h_bar * q0)
-  REAL(num), PARAMETER :: e_s = b_s * c
-  REAL(num), PARAMETER :: alpha_f = q0**2 / (2.0_num * epsilon0 * h_planck * c)
-  REAL(num), PARAMETER :: tau_c = h_bar / (m0 * c**2)
+  ! m0 * c
+  REAL(num), PARAMETER :: mc0 = 2.73092429345209278e-22_num
+  ! b_s = mc0**2 / (h_bar * q0)
+  REAL(num), PARAMETER :: b_s = 4.414005028109566589829741352306303e9_num
+  ! e_s = b_s * c
+  REAL(num), PARAMETER :: e_s = 1.323285417001326061279735961512150e18_num
+  ! alpha_f = q0**2 / (2.0_num * epsilon0 * h_planck * c)
+  REAL(num), PARAMETER :: alpha_f = 7.297352575523020256850802729527158e-3_num
+  ! tau_c = h_bar / (m0 * c**2)
+  REAL(num), PARAMETER :: tau_c = 1.288088667367242662108649212042082e-21_num
 #endif
 
   ! define special particle IDs

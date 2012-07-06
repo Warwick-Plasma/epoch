@@ -135,6 +135,9 @@ CONTAINS
     ! If there aren't enough particles to collide, then don't bother
     IF (icount .LE. 1) RETURN
 
+    ! No collisions in cold plasma so return
+    IF (temp .EQ. 0.0_num) RETURN
+
 #ifndef PER_PARTICLE_WEIGHT
     np = icount * weight
     factor = user_factor
@@ -209,6 +212,9 @@ CONTAINS
 
     factor = 0.0_num
     np = 0.0_num
+
+    ! No collisions in cold plasma so return
+    IF (itemp .EQ. 0.0_num .AND. jtemp .EQ. 0.0_num) RETURN
 
     ! Inter-species collisions
     icount = p_list1%count
@@ -304,6 +310,9 @@ CONTAINS
     q2 = charge2
 #endif
 
+    ! Two stationary particles can't collide, so don't try
+    IF (SUM(p1**2) .EQ. 0.0_num .AND. SUM(p2**2) .EQ. 0.0_num) RETURN
+
     ! Pre-collision energies
     e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
     e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
@@ -317,9 +326,9 @@ CONTAINS
     ! Lorentz momentum transform to get into COM frame
     p1_vc = DOT_PRODUCT(p1, vc)
     p2_vc = DOT_PRODUCT(p2, vc)
-    tvar = p1_vc * (gc - 1.0_num) / vc_sq
+    tvar = p1_vc * (gc - 1.0_num) / MAX(vc_sq,c_non_zero)
     p3 = p1 + vc * (tvar - gc * e1 / c**2)
-    tvar = p2_vc * (gc - 1.0_num) / vc_sq
+    tvar = p2_vc * (gc - 1.0_num) / MAX(vc_sq,c_non_zero)
     p4 = p2 + vc * (tvar - gc * e2 / c**2)
 
     p3_mag = SQRT(DOT_PRODUCT(p3, p3))
@@ -429,11 +438,16 @@ CONTAINS
     gr = 1.0_num / SQRT(1.0_num - (vrabs / c)**2)
     mu = m2 / 1.6726d-27
     ek = (gr - 1.0_num) * m1 * c**2 / q0
-    slow = 0.23_num * (mu / jtemp)**1.5_num
-    fast = 3.9d-6 / ek**1.5_num
-    coll_freq = slow / (1.0_num + slow / fast)
-    IF (jtemp .LE. 0.0_num) coll_freq = fast
-    IF (ek .LE. 0.0_num) coll_freq = 0.0_num
+
+    fast = 3.9d-6 / MAX(ek**1.5_num,c_non_zero)
+    IF (jtemp .LE. 0.0_num) THEN
+      coll_freq = fast
+    ELSE
+      slow = 0.23_num * (mu / MAX(jtemp,c_non_zero))**1.5_num
+      coll_freq = slow / (1.0_num + slow / fast)
+      IF (ek .LE. 0.0_num) coll_freq = 0.0_num
+    ENDIF
+
     IF (coll_freq .GT. 0.0_num) THEN
       coll_freq = coll_freq * jdens * log_lambda * (q2 / q0)**2 / 1.0d6
     ELSE
@@ -665,10 +679,12 @@ CONTAINS
     REAL(num), INTENT(IN) :: q1, q2
     REAL(num), DIMENSION(-2:nx+3,-2:ny+3,-2:nz+3) :: calc_coulomb_log
 
-    calc_coulomb_log = LOG(4.13d6 * q0**3 / ABS(q1**2 * q2) &
-        * (temp / kb * q0)**1.5_num / SQRT(dens))
+    WHERE (dens .GT. 0.0_num) &
+        calc_coulomb_log = LOG(MAX(4.13d6 * q0**3 / ABS(q1**2 * q2) &
+            * (temp / kb * q0)**1.5_num &
+            / MAX(SQRT(dens),c_non_zero),c_non_zero))
+    WHERE (dens .LE. 0.0_num) calc_coulomb_log = 1.0_num
     WHERE (calc_coulomb_log .LT. 1.0_num) calc_coulomb_log = 1.0_num
-    WHERE (dens .EQ. 0.0_num) calc_coulomb_log = 1.0_num
 
   END FUNCTION
 

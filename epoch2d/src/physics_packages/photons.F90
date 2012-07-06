@@ -1040,7 +1040,7 @@ CONTAINS
     INTEGER :: i1, i2, im
     LOGICAL, SAVE :: warning = .TRUE.
 
-    x_value = LOG10(x_in)
+    x_value = LOG10(MAX(x_in,c_non_zero))
 
     i1 = 1
     i2 = nx

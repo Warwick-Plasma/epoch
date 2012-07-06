@@ -1,5 +1,6 @@
 MODULE deck_qed_block
 
+  USE mpi
   USE strings_advanced
 
   IMPLICIT NONE
@@ -25,6 +26,25 @@ CONTAINS
 
   SUBROUTINE qed_deck_finalise
 
+#ifdef PHOTONS
+    LOGICAL :: exists
+    INTEGER :: io, ierr
+
+    IF (deck_state .EQ. c_ds_first) RETURN
+
+    IF (rank .EQ. 0) THEN
+      INQUIRE(file=TRIM(qed_table_location)//'/hsokolov.table', exist=exists)
+      IF (.NOT.exists) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Unable to find QED tables in the ', &
+              'directory "' // TRIM(qed_table_location) // '"'
+        ENDDO
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      ENDIF
+    ENDIF
+#endif
+
   END SUBROUTINE qed_deck_finalise
 
 
@@ -47,7 +67,7 @@ CONTAINS
     INTEGER :: errcode
 
     errcode = c_err_none
-    IF (deck_state .NE. c_ds_first) RETURN
+    IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
 #ifdef PHOTONS
@@ -66,8 +86,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'photon_energy_min') .OR. &
-        str_cmp(element,'min_photon_energy')) THEN
+    IF (str_cmp(element, 'photon_energy_min') &
+        .OR. str_cmp(element, 'min_photon_energy')) THEN
       photon_energy_min = as_real(value, errcode)
       RETURN
     ENDIF
@@ -100,6 +120,7 @@ CONTAINS
   FUNCTION qed_block_check() RESULT(errcode)
 
     INTEGER :: errcode, io
+
     errcode = c_err_none
 
 #ifdef PHOTONS

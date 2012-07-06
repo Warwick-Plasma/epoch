@@ -1,0 +1,272 @@
+begin:constant
+
+  # This constant block specifies the electron number density of the target
+  # in /cc and laser intensity in W/cm^2
+  nel = 1.0e22
+  intens = 1.0e22
+
+end:constant
+
+
+begin:control
+
+  # global number of gridpoints
+  nx = 128 # in x
+  ny = 128
+  nz = 128
+  npart = nx * ny * nz * 10
+
+  # maximum number of iterations
+  # set to -1 to run until finished
+  nsteps = -1
+
+  # final time of simulation
+  t_end = 100e-15
+
+  # size of domain
+  x_min = -3e-6
+  x_max = 20e-6
+  y_min = -10e-6
+  y_max = 10e-6
+  z_min = -10e-6
+  z_max = 10e-6
+
+  dt_multiplier = 0.8
+
+end:control
+
+
+begin:qed
+
+  # These are the parts that control the QED sections of EPOCH
+  use_qed = T # Turn on or off QED. If you're normally running without QED then
+              # don't compile with -DPHOTONS
+
+  qed_start_time = 0 # Time after which QED effects should start.
+
+  produce_photons = T # Should the code actually produce and track photons.
+                      # If F then the code calculates the recoil due to emitting
+                      # photons, but the photon is not tracked. qed must be on
+                      # to Ever produce photons
+
+  photon_energy_min = 50 * kev # Minimum energy for a tracked photon. Photons
+                               # emitted with lower energy still cause electron
+                               # recoil but are not tracked
+
+  produce_pairs = F # Whether or not to activate the module for pair production
+                    # by the Breit-Wheeler process. Both qed and
+                    # produce_photons must be on to produce pairs
+
+  photon_dynamics = F # Quite often you're more interested in where photons are
+                      # generated than where they propagate to. This option
+                      # stops the core code from moving the photons.
+                      # This is also much faster.
+
+end:qed
+
+
+begin:collisions
+
+  use_collisions = T
+  coulomb_log = auto
+  collide = all
+
+end:collisions
+
+
+begin:boundaries
+
+  bc_x_min = simple_laser
+  bc_x_max = simple_laser
+
+  bc_y_max = periodic
+  bc_y_min = periodic
+
+  bc_z_min = periodic
+  bc_z_max = periodic
+
+end:boundaries
+
+
+begin:species
+
+  # electrons
+  name = Electron
+  frac = 0.5
+  dump = T
+
+  temp = 0
+  rho = if (x gt -1e-6, nel * 1.0e6, 0)
+  minrho = 1
+
+  # In EPOCH-QED you have to identify the type of a charged particle. This is
+  # done with the "identify" directive. You have to know which species the
+  # produced photons, electrons and positrons should be placed in. You also
+  # have to know which species are electrons or positrons in order to
+  # calculate their synchrotron emission.
+  # Ion synchrotron emission is ignored
+
+  # This identifies this species as an electron. In most senses it's still a
+  # normal charged particle species. You can specify initial conditions as
+  # normal. If you identify multiple species as electrons then the QED routines
+  # will produce the electrons from pairs in the first specified electron
+  # species. If you want to specify which positron species should receive pair
+  # positrons then identify it using identify:bw_electron
+
+  identify:electron
+
+end:species
+
+
+begin:species
+
+  # ions
+  name = Ion
+  frac = 0.5
+  dump = T
+
+  rho = rho(Electron)
+  temp = temp_x(Electron)
+  minrho = 1
+
+  # You don't have to identify protons, since they're not used in the QED
+  # routines, but the alias exists and it's quicker than specifying it manually.
+  # Protons are the only ion species with and identify alias.
+  identify:proton
+
+end:species
+
+
+begin:species
+
+  name = Photon  
+  npart = 0 # npart=0 since there are no initial photons in the system
+  dump = T 
+
+  # This is the key line here. It identifies that this species is a photon
+  # species. Without this line this species won't work properly. Presently you
+  # can't specify initial conditions for photons.
+ identify:photon
+
+end:species
+
+
+begin:species
+
+  name = Positron  
+  npart = 0 # npart=0 since no initial positrons in the system
+  dump = T 
+
+  # This identifies this species as a positron. In most senses it's still a
+  # normal charged particle species. You can specify initial conditions as
+  # normal. If you identify multiple species as positrons then the QED routines
+  # will produce the positrons from pairs in the first specified positron
+  # species. If you want to specify which positron species should receive pair
+  # positrons then identify it using identify:bw_positron
+
+  identify:positron
+
+end:species
+
+
+begin:output
+
+  # If use_offset_grid is true then the code dumps a grid which displays
+  # positions relative to the left hand edge of the window
+  use_offset_grid = F
+
+  # number of timesteps between output dumps
+  dt_snapshot = 100.0e-15/100.0
+
+  # Number of dt_snapshot between full dumps
+  full_dump_every = 10
+  restart_dump_every = -1
+  force_final_to_be_restartable = T
+
+  # Properties at particle positions
+  particles = never
+  px = never
+  py = never
+  pz = never
+  vx = never
+  vy = never
+  vz = never
+  charge = never
+  mass = never
+  particle_weight = never
+  species_id = never
+
+  # Properties on grid
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  bx = always
+  by = always
+  bz = always
+  jx = always
+  jy = always
+  jz = never
+  ekbar = always + species
+  mass_density = never + species
+  charge_density = never
+  number_density = always + species
+  temperature = never + species
+
+  # extended io
+  distribution_functions = always
+  particle_probes = never
+
+end:output
+
+
+begin:constant
+
+  omega = 2.0 * pi * c / (1.0e-6)
+  den_crit = critical(omega) # per cubic metre
+  scale = 3.5e-6 # microns
+  den_max = 5.0 * den_crit
+  den_maxpoint = 40.0e-6 # microns
+  den_contrast = 1.0
+
+  amax = 1.0
+
+end:constant
+
+
+begin:laser
+
+  boundary = x_min
+  intensity = intens * 1.0e4
+  omega = omega  # red
+  pol = 0.0
+  phase = 0.0
+  t_profile = 1  # semigauss(time, amax, 0.1 * amax, t_wid)
+  t_start = 0.0
+  t_end = end
+  profile = gauss(y, 0, 2.0 * micron) * gauss(z, 0, 2.0 * micron)
+
+end:laser
+
+
+begin:dist_fn
+
+  name = px_py
+  ndims = 2
+  dumpmask = always
+
+  direction1 = dir_px
+  direction2 = dir_py
+
+  # range is ignored for spatial coordinates
+  range1 = (-1.5e-21, 1.5e-21)
+  range2 = (-1.5e-21, 1.5e-21)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 200
+  resolution2 = 200
+
+  include_species:Photon
+  # include_species:Electron
+
+end:dist_fn
