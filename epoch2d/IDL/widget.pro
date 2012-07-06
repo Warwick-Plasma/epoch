@@ -43,9 +43,9 @@ FUNCTION load_raw, filename, idstruct, only_md=only_md
   COMPILE_OPT idl2, hidden
 
   IF (STRUPCASE(STRMID(filename, STRLEN(filename) - 3)) EQ 'CFD') THEN BEGIN
-    RETURN, loadcfdfile(filename, _extra=idstruct, only_md=only_md)
+    RETURN, LoadCFDFile(filename, _extra=idstruct, _only_md=only_md)
   ENDIF ELSE BEGIN
-    RETURN, loadsdffile(filename, _extra=idstruct, only_md=only_md)
+    RETURN, LoadSDFFile(filename, _extra=idstruct, _only_md=only_md)
   ENDELSE
 
 END
@@ -58,7 +58,7 @@ FUNCTION get_sdf_metatext, viewer, element
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
 
-  namestruct = {silent:1}
+  namestruct = {_silent:1}
   name = (*obj_data.valid_names)[element]
   namestruct = CREATE_STRUCT(namestruct, name, 1L)
   data = load_raw(*obj_data.filename, namestruct, /only_md)
@@ -429,12 +429,12 @@ PRO load_meta_and_populate_sdf, viewer, accepted_types
   WIDGET_CONTROL, /hourglass
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
   IF (obj_data.cfdfile EQ 1) THEN BEGIN
-    data = loadcfdfile(*obj_data.filename, /silent, /variables, var_list=v, $
-        block_types=types, block_dims=dims)
+    data = LoadCFDFile(*obj_data.filename, /_silent, /_variables, _var_list=v, $
+        _block_types=types, _block_dims=dims)
     names = v
   ENDIF ELSE BEGIN
-    data = loadsdffile(*obj_data.filename, /silent, /variables, var_list=v, $
-        block_types=types, block_dims=dims, name_list=names)
+    data = LoadSDFFile(*obj_data.filename, /_silent, /_variables, _var_list=v, $
+        _block_types=types, _block_dims=dims, _name_list=names)
   ENDELSE
 
   IF (N_ELEMENTS(accepted_types) EQ 0) THEN BEGIN

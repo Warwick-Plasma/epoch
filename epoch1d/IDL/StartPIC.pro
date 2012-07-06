@@ -1,34 +1,67 @@
-FUNCTION getdata, snapshot, wkdir, retro=retro, _EXTRA=extra
+FUNCTION getdata, snapshot_in, wkdir_in, _EXTRA=extra
 
   COMPILE_OPT idl2
   COMMON background, wkdir_global, retro_global
   ON_ERROR, 2
 
-  IF N_ELEMENTS(wkdir) EQ 0 THEN wkdir = wkdir_global
-  IF NOT KEYWORD_SET(retro) THEN retro = retro_global
+  snapshot = -1
+  retro = -1
+  wkdir = ''
 
-  IF N_PARAMS() EQ 0 THEN BEGIN
+  IF (N_ELEMENTS(snapshot_in) NE 0) THEN BEGIN
+    IF (SIZE(snapshot_in, /TYPE) EQ 7) THEN BEGIN
+      wkdir = snapshot_in
+    ENDIF ELSE BEGIN
+      snapshot = snapshot_in
+    ENDELSE
+  ENDIF
+
+  IF (N_ELEMENTS(wkdir_in) NE 0) THEN BEGIN
+    IF (SIZE(wkdir_in, /TYPE) EQ 7) THEN BEGIN
+      wkdir = wkdir_in
+    ENDIF ELSE BEGIN
+      snapshot = wkdir_in
+    ENDELSE
+  ENDIF
+
+  IF (KEYWORD_SET(extra)) THEN BEGIN
+    extra_tags = TAG_NAMES(extra)
+    gotextra = 0
+    FOR i = 0, N_ELEMENTS(extra_tags)-1 DO BEGIN
+      CASE extra_tags[i] OF
+        'SNAPSHOT': snapshot = extra.snapshot
+        'WKDIR': wkdir = extra.wkdir
+        'RETRO': retro = extra.retro
+        ELSE: BEGIN
+          IF (gotextra EQ 0) THEN BEGIN
+            new_extra = CREATE_STRUCT(extra_tags[i], extra.(i))
+            gotextra = 1
+          ENDIF ELSE BEGIN
+            new_extra = CREATE_STRUCT(new_extra, extra_tags[i], extra.(i))
+          ENDELSE
+        END
+      ENDCASE
+    ENDFOR
+  ENDIF
+
+  IF snapshot EQ -1 THEN BEGIN
     PRINT, "Usage: result = getdata(snapnumber[,<wkdir>, " + $
         "/empty | /rho, /temp, /vx ...])"
     RETURN, "Usage: result = getdata(snapnumber[,<wkdir>, " + $
         "/empty | /rho, /temp, /vx ...])"
   ENDIF
 
+  IF (wkdir EQ '') THEN wkdir = wkdir_global
+  IF (retro EQ -1) THEN retro = retro_global
+
   file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".cfd")')
   info = FILE_INFO(file)
 
   IF info.exists EQ 1 THEN BEGIN
-    IF (N_ELEMENTS(explorer) NE 0) THEN BEGIN
-      RETURN, sdf_explorer(file)
-    ENDIF
-    RETURN, LoadCFDFile(file, retro=retro, _EXTRA=extra)
+    RETURN, LoadCFDFile(file, _retro=retro, _EXTRA=new_extra)
   ENDIF ELSE BEGIN
     file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".sdf")')
-    IF (N_ELEMENTS(explorer) NE 0) THEN BEGIN
-      RETURN, sdf_explorer(file)
-    ENDIF ELSE BEGIN
-      RETURN, LoadSDFFile(file, retro=retro, _EXTRA=extra)
-    ENDELSE
+    RETURN, LoadSDFFile(file, _retro=retro, _EXTRA=new_extra)
   ENDELSE
 END
 
@@ -52,7 +85,12 @@ PRO list_variables, snapshot, wkdir
   COMPILE_OPT idl2
   ON_ERROR, 2
 
-  q = getdata(snapshot, wkdir, /variables)
+  IF (N_ELEMENTS(snapshot) EQ 0) THEN BEGIN
+    PRINT, "Usage: list_variables, snapnumber[, <wkdir>]"
+    RETURN
+  ENDIF
+
+  q = getdata(snapshot, wkdir, /_variables)
 END
 
 ; --------------------------------------------------------------------------
@@ -63,7 +101,7 @@ PRO quick_view, wkdir, snapshot=snapshot
   COMMON background, wkdir_global
   ON_ERROR, 2
 
-  IF NOT KEYWORD_SET(wkdir) THEN wkdir = wkdir_global
+  IF (N_ELEMENTS(wkdir_in) EQ 0) THEN wkdir = wkdir_global
 
   a = create_sdf_visualizer(wkdir, snapshot=snapshot)
 END
@@ -83,7 +121,7 @@ PRO set_wkdir, wkdir
   COMPILE_OPT idl2
   COMMON background, wkdir_global, retro_global
 
-  IF KEYWORD_SET(wkdir) THEN wkdir_global = wkdir
+  IF (N_ELEMENTS(wkdir) NE 0) THEN wkdir_global = wkdir
 END
 
 ; --------------------------------------------------------------------------
@@ -101,7 +139,7 @@ PRO init_StartPIC
   retro_global = 0
   set_wkdir, "Data"
 
-  device, true_color=24
+  ;device, true_color=24
   device, decompose=0
   device, retain=2
 

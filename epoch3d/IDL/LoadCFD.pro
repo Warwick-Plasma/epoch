@@ -16,10 +16,10 @@ END
 
 ; --------------------------------------------------------------------------
 
-FUNCTION LoadCFDFile, filename, Variables=requestv, $
-    request_classes=requestc, _extra=extra, var_list=var_list, $
-    block_types=block_types, block_dims=block_dims, $
-    silent=silent, errval=errval, retro=retro, only_md=only_md
+FUNCTION LoadCFDFile, filename, _variables=requestv, _silent=silent, $
+    _retro=retro, _only_md=only_md, _errvar=errval, _var_list=var_list, $
+    _block_types=block_types, _block_dims=block_dims, _name_list=name_list, $
+    _extra=extra
 
   COMPILE_OPT idl2, hidden
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $

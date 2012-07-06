@@ -16,10 +16,10 @@ END
 
 ; --------------------------------------------------------------------------
 
-FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
-    var_list=var_list, name_list=name_list, block_types=block_types, $
-    block_dims=block_dims, silent=silent, errval=errval, retro=retro, $
-    only_md=only_md, _extra=extra
+FUNCTION LoadSDFFile, filename, _variables=requestv, _silent=silent, $
+    _retro=retro, _only_md=only_md, _errvar=errval, _var_list=var_list, $
+    _block_types=block_types, _block_dims=block_dims, _name_list=name_list, $
+    _extra=extra
 
   COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
@@ -29,7 +29,7 @@ FUNCTION LoadSDFFile, filename, Variables=requestv, request_classes=requestc, $
   display = 1 - N_ELEMENTS(silent)
   errval = SDF_Error.NONE
 
-  IF (KEYWORD_SET(retro) and display) THEN BEGIN
+  IF (KEYWORD_SET(_retro) and display) THEN BEGIN
     PRINT, "WARNING! loading files in retro mode. It is recommended that " $
         + "you use modern mode."
   ENDIF
