@@ -1,12 +1,31 @@
-# Set the compiler flags
-FFLAGS = -O3 #-heap-arrays 0 -fast
+# Compiler specific flags
 
-# The default MODULEFLAG is set for the Intel and PGI compilers
-MODULEFLAG = -module 
-# Uncomment for the g95 compiler
-#MODULEFLAG = -fmod=
-# Uncomment for the gfortran compiler
-#MODULEFLAG = -I/usr/include -Iobj -J
+# PGI
+# ===
+#FFLAGS = -r8 -fast -fastsse -O3 -Mipa=fast,inline -Minfo # Optimised
+#FFLAGS = -Mbounds -g                                     # Debug
+#MODULEFLAG = -module $(OBJDIR)
+
+# Intel
+# =====
+FFLAGS = -O3 -heap-arrays 64 -ipo -xHost # Optimised (B)
+#FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
+#FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
+#         -C -g -heap-arrays 64 -warn                   # Debug
+MODULEFLAG = -module $(OBJDIR)
+
+# gfortran
+# ========
+#FFLAGS = -O3
+#FFLAGS = -fbounds-check -fbacktrace -Wall -O0 -g \
+#         -Wextra -pedantic                             # Debug
+#MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
+
+# g95
+# ========
+#FFLAGS = -O3
+#FFLAGS = -O0 -g                                        # Debug
+#MODULEFLAG = -fmod=$(OBJDIR)
 
 # Set some of the build parameters
 TARGET = epoch1d
@@ -140,14 +159,14 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:$(SRCDIR)/p
 
 %.o: %.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -c $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
+	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
 
 %.o: %.F90
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -c $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
+	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
 $(FULLTARGET): $(OBJFILES)
-	$(FC) $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
+	$(FC) $(FFLAGS) $(MODULEFLAG) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
 opt_dont_build_sha1: ;
 opt_dont_build_embedded_source: ;
@@ -157,7 +176,7 @@ $(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(INCLUDES) \
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -c $(FFLAGS) $(MODULEFLAG)$(OBJDIR) -o $(OBJDIR)/$@ $<
+	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
 
 COMMIT: $(SRCFILES)
 	./$(SRCDIR)/gen_commit_string
