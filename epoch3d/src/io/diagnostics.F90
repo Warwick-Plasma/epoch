@@ -431,7 +431,7 @@ CONTAINS
     DO id = 1, num_vars_to_dump
       IF (IAND(dumpmask(id), c_io_averaged) .NE. 0) THEN
         IF (time .GE. av_time_first - average_time) THEN
-          CALL average_field(id)
+          CALL average_field(id, averaged_data(id))
         ENDIF
       ENDIF
     ENDDO
@@ -450,14 +450,15 @@ CONTAINS
 
 
 
-  SUBROUTINE average_field(ioutput)
+  SUBROUTINE average_field(ioutput, avg)
 
     INTEGER, INTENT(IN) :: ioutput
+    TYPE(averaged_data_block) :: avg
     INTEGER :: n_species_local, ispecies, species_sum
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
 
-    averaged_data(ioutput)%real_time = averaged_data(ioutput)%real_time + dt
-    averaged_data(ioutput)%started = .TRUE.
+    avg%real_time = avg%real_time + dt
+    avg%started = .TRUE.
 
     species_sum = 0
     n_species_local = 0
@@ -472,70 +473,56 @@ CONTAINS
 
     SELECT CASE(ioutput)
     CASE(c_dump_ex)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + ex * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + ex * dt
     CASE(c_dump_ey)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + ey * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + ey * dt
     CASE(c_dump_ez)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + ez * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + ez * dt
     CASE(c_dump_bx)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + bx * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + bx * dt
     CASE(c_dump_by)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + by * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + by * dt
     CASE(c_dump_bz)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + bz * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + bz * dt
     CASE(c_dump_jx)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + jx * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + jx * dt
     CASE(c_dump_jy)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + jy * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + jy * dt
     CASE(c_dump_jz)
-      averaged_data(ioutput)%array(:,:,:,1) = &
-          averaged_data(ioutput)%array(:,:,:,1) + jz * dt
+      avg%array(:,:,:,1) = avg%array(:,:,:,1) + jz * dt
     CASE(c_dump_ekbar)
       ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
       DO ispecies = 1, n_species_local
         CALL calc_ekbar(array, ispecies-species_sum)
-        averaged_data(ioutput)%array(:,:,:,ispecies) = &
-            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+        avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
       ENDDO
       DEALLOCATE(array)
     CASE(c_dump_mass_density)
       ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
       DO ispecies = 1, n_species_local
         CALL calc_mass_density(array, ispecies-species_sum)
-        averaged_data(ioutput)%array(:,:,:,ispecies) = &
-            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+        avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
       ENDDO
       DEALLOCATE(array)
     CASE(c_dump_charge_density)
       ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
       DO ispecies = 1, n_species_local
         CALL calc_charge_density(array, ispecies-species_sum)
-        averaged_data(ioutput)%array(:,:,:,ispecies) = &
-            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+        avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
       ENDDO
       DEALLOCATE(array)
     CASE(c_dump_number_density)
       ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
       DO ispecies = 1, n_species_local
         CALL calc_number_density(array, ispecies-species_sum)
-        averaged_data(ioutput)%array(:,:,:,ispecies) = &
-            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+        avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
       ENDDO
       DEALLOCATE(array)
     CASE(c_dump_temperature)
       ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
       DO ispecies = 1, n_species_local
         CALL calc_temperature(array, ispecies-species_sum)
-        averaged_data(ioutput)%array(:,:,:,ispecies) = &
-            averaged_data(ioutput)%array(:,:,:,ispecies) + array * dt
+        avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
       ENDDO
       DEALLOCATE(array)
     END SELECT
