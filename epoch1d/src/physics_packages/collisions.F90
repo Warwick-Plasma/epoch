@@ -318,9 +318,9 @@ CONTAINS
     ! Lorentz momentum transform to get into COM frame
     p1_vc = DOT_PRODUCT(p1, vc)
     p2_vc = DOT_PRODUCT(p2, vc)
-    tvar = p1_vc * (gc - 1.0_num) / MAX(vc_sq,c_non_zero)
+    tvar = p1_vc * (gc - 1.0_num) / (vc_sq + c_non_zero)
     p3 = p1 + vc * (tvar - gc * e1 / c**2)
-    tvar = p2_vc * (gc - 1.0_num) / MAX(vc_sq,c_non_zero)
+    tvar = p2_vc * (gc - 1.0_num) / (vc_sq + c_non_zero)
     p4 = p2 + vc * (tvar - gc * e2 / c**2)
 
     p3_mag = SQRT(DOT_PRODUCT(p3, p3))
@@ -485,14 +485,14 @@ CONTAINS
       IF (ek .LE. 0.0_num) THEN
         manheimer_collisions = 0.0_num
       ELSE
-        manheimer_collisions = 3.9d-6 / ek**1.5_num
+        manheimer_collisions = 3.9d-6 / (SQRT(ek**3) + c_non_zero)
       ENDIF
     ELSE
       IF (ek .LE. 0.0_num) THEN
-        manheimer_collisions = 0.23_num * (mu / jtemp)**1.5_num
+        manheimer_collisions = 0.23_num * SQRT((mu / (jtemp + c_non_zero))**3)
       ELSE
-        slow = 0.23_num * (mu / jtemp)**1.5_num
-        fast = 3.9d-6 / ek**1.5_num
+        slow = 0.23_num * SQRT((mu / (jtemp + c_non_zero))**3)
+        fast = 3.9d-6 / (SQRT(ek**3) + c_non_zero)
         manheimer_collisions = slow / (1.0_num + slow / fast)
       ENDIF
     ENDIF
@@ -713,13 +713,30 @@ CONTAINS
     REAL(num), DIMENSION(-2:nx+3), INTENT(IN) :: temp, dens
     REAL(num), INTENT(IN) :: q1, q2
     REAL(num), DIMENSION(-2:nx+3) :: calc_coulomb_log
+    REAL(num), PARAMETER :: cfac = 4.13d6 * SQRT((q0 / kb)**3)
+    REAL(num), PARAMETER :: exp1 = EXP(1.0_num)
+    REAL(num) :: fac, efac, lfac, temp3, den, ratio
+    INTEGER :: i
 
-    WHERE (dens .GT. 0.0_num) &
-        calc_coulomb_log = LOG(MAX(4.13d6 * q0**3 / ABS(q1**2 * q2) &
-            * (temp / kb * q0)**1.5_num &
-            / MAX(SQRT(dens),c_non_zero),c_non_zero))
-    WHERE (dens .LE. 0.0_num) calc_coulomb_log = 1.0_num
-    WHERE (calc_coulomb_log .LT. 1.0_num) calc_coulomb_log = 1.0_num
+    fac  = cfac * (q0 / q1)**2 * ABS(q0 / q2)
+    efac = (exp1 / fac)**2
+    lfac = LOG(fac)
+
+    DO i = -2, nx+3
+      temp3 = temp(i)**3
+      den = dens(i)
+      IF (den .LE. 0.0_num &
+          .OR. EXPONENT(temp3) - EXPONENT(den) .GE. c_maxexponent) THEN
+        calc_coulomb_log(i) = 1.0_num
+      ELSE
+        ratio = temp3 / den
+        IF (ratio .LE. efac) THEN
+          calc_coulomb_log(i) = 1.0_num
+        ELSE
+          calc_coulomb_log(i) = lfac + 0.5_num * LOG(ratio)
+        ENDIF
+      ENDIF
+    ENDDO
 
   END FUNCTION
 

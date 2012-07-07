@@ -17,6 +17,7 @@ MODULE constants
   REAL(num), PARAMETER :: c_non_zero = TINY(1.0_num)
   REAL(num), PARAMETER :: c_largest_number = HUGE(1.0_num)
   REAL(num), PARAMETER :: c_largest_exp = LOG(c_largest_number)
+  REAL(num), PARAMETER :: c_maxexponent = MAXEXPONENT(1.0_num)
 
   INTEGER, PARAMETER :: c_ndims = 3
 
