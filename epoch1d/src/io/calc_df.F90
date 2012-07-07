@@ -739,7 +739,7 @@ CONTAINS
     REAL(num) :: part_px, part_py, part_pz
     REAL(num) :: part_q, part_mc, part_weight
     REAL(num) :: part_j
-    REAL(num) :: idx, root
+    REAL(num) :: idxyz, root
     INTEGER :: ispecies, spec_start, spec_end, ix
     INTEGER(i8) :: ipart
     LOGICAL :: spec_sum
@@ -749,7 +749,7 @@ CONTAINS
 
     data_array = 0.0_num
 
-    idx = 1.0_num / dx
+    idxyz = 1.0_num / dx
 
     spec_start = current_species
     spec_end = current_species
@@ -793,11 +793,11 @@ CONTAINS
         root = c / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
         SELECT CASE (direction)
           CASE(c_dir_x)
-            part_j = part_q * part_px * root * part_weight * idx
+            part_j = part_q * part_px * root * part_weight * idxyz
           CASE(c_dir_y)
-            part_j = part_q * part_py * root * part_weight * idx
+            part_j = part_q * part_py * root * part_weight * idxyz
           CASE(c_dir_z)
-            part_j = part_q * part_pz * root * part_weight * idx
+            part_j = part_q * part_pz * root * part_weight * idxyz
         END SELECT
 
         DO ix = sf_min, sf_max

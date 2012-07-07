@@ -114,10 +114,10 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-          ENDDO
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+        ENDDO
         ENDDO
 
         current => current%next
@@ -224,12 +224,12 @@ CONTAINS
         ENDIF
 #endif
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-            wt(cell_x+ix, cell_y+iy) = &
-                wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
-          ENDDO
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+          wt(cell_x+ix, cell_y+iy) = &
+              wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
+        ENDDO
         ENDDO
 
         current => current%next
@@ -374,12 +374,12 @@ CONTAINS
         END SELECT
 
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-            wt(cell_x+ix, cell_y+iy) = &
-                wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
-          ENDDO
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+          wt(cell_x+ix, cell_y+iy) = &
+              wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
+        ENDDO
         ENDDO
 
         current => current%next
@@ -410,35 +410,35 @@ CONTAINS
     SELECT CASE(direction)
     CASE(c_dir_x)
       DO iy = 1, ny
-        DO ix = 1, nx
-          ey_cc = 0.5_num  * (ey(ix  , iy-1) + ey(ix, iy))
-          ez_cc = ez(ix, iy)
-          by_cc = 0.5_num  * (by(ix-1, iy  ) + by(ix, iy))
-          bz_cc = 0.25_num * (bz(ix-1, iy-1) + bz(ix, iy-1) &
-                           +  bz(ix-1, iy  ) + bz(ix, iy  ))
-          data_array(ix,iy) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
-        ENDDO
+      DO ix = 1, nx
+        ey_cc = 0.5_num  * (ey(ix  , iy-1) + ey(ix, iy))
+        ez_cc = ez(ix, iy)
+        by_cc = 0.5_num  * (by(ix-1, iy  ) + by(ix, iy))
+        bz_cc = 0.25_num * (bz(ix-1, iy-1) + bz(ix, iy-1) &
+                         +  bz(ix-1, iy  ) + bz(ix, iy  ))
+        data_array(ix,iy) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
+      ENDDO
       ENDDO
     CASE(c_dir_y)
       DO iy = 1, ny
-        DO ix = 1, nx
-          ex_cc = 0.5_num  * (ex(ix-1, iy  ) + ex(ix, iy))
-          ez_cc = ez(ix, iy)
-          bx_cc = 0.5_num  * (bx(ix  , iy-1) + bx(ix, iy))
-          bz_cc = 0.25_num * (bz(ix-1, iy-1) + bz(ix, iy-1) &
-                           +  bz(ix-1, iy  ) + bz(ix, iy  ))
-          data_array(ix,iy) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
-        ENDDO
+      DO ix = 1, nx
+        ex_cc = 0.5_num  * (ex(ix-1, iy  ) + ex(ix, iy))
+        ez_cc = ez(ix, iy)
+        bx_cc = 0.5_num  * (bx(ix  , iy-1) + bx(ix, iy))
+        bz_cc = 0.25_num * (bz(ix-1, iy-1) + bz(ix, iy-1) &
+                         +  bz(ix-1, iy  ) + bz(ix, iy  ))
+        data_array(ix,iy) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
+      ENDDO
       ENDDO
     CASE(c_dir_z)
       DO iy = 1, ny
-        DO ix = 1, nx
-          ex_cc = 0.5_num  * (ex(ix-1, iy  ) + ex(ix, iy))
-          ey_cc = 0.5_num  * (ey(ix  , iy-1) + ey(ix, iy))
-          bx_cc = 0.5_num  * (bx(ix  , iy-1) + bx(ix, iy))
-          by_cc = 0.5_num  * (by(ix-1, iy  ) + by(ix, iy))
-          data_array(ix,iy) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
-        ENDDO
+      DO ix = 1, nx
+        ex_cc = 0.5_num  * (ex(ix-1, iy  ) + ex(ix, iy))
+        ey_cc = 0.5_num  * (ey(ix  , iy-1) + ey(ix, iy))
+        bx_cc = 0.5_num  * (bx(ix  , iy-1) + bx(ix, iy))
+        by_cc = 0.5_num  * (by(ix-1, iy  ) + by(ix, iy))
+        data_array(ix,iy) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
+      ENDDO
       ENDDO
     END SELECT
 
@@ -512,10 +512,10 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-          ENDDO
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+        ENDDO
         ENDDO
 
         current => current%next
@@ -573,10 +573,10 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-          ENDDO
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+        ENDDO
         ENDDO
 
         current => current%next
@@ -653,17 +653,17 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            gf = gx(ix) * gy(iy) * l_weight
-            meanx(cell_x+ix, cell_y+iy) = &
-                meanx(cell_x+ix, cell_y+iy) + gf * part_pmx
-            meany(cell_x+ix, cell_y+iy) = &
-                meany(cell_x+ix, cell_y+iy) + gf * part_pmy
-            meanz(cell_x+ix, cell_y+iy) = &
-                meanz(cell_x+ix, cell_y+iy) + gf * part_pmz
-            part_count(cell_x+ix, cell_y+iy) = &
-                part_count(cell_x+ix, cell_y+iy) + gf
-          ENDDO
+        DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy) * l_weight
+          meanx(cell_x+ix, cell_y+iy) = &
+              meanx(cell_x+ix, cell_y+iy) + gf * part_pmx
+          meany(cell_x+ix, cell_y+iy) = &
+              meany(cell_x+ix, cell_y+iy) + gf * part_pmy
+          meanz(cell_x+ix, cell_y+iy) = &
+              meanz(cell_x+ix, cell_y+iy) + gf * part_pmz
+          part_count(cell_x+ix, cell_y+iy) = &
+              part_count(cell_x+ix, cell_y+iy) + gf
+        ENDDO
         ENDDO
         current => current%next
       ENDDO
@@ -701,15 +701,15 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            gf = gx(ix) * gy(iy)
-            sigma(cell_x+ix, cell_y+iy) = sigma(cell_x+ix, cell_y+iy) + gf &
-                * ((part_pmx - meanx(cell_x+ix, cell_y+iy))**2 &
-                + (part_pmy - meany(cell_x+ix, cell_y+iy))**2 &
-                + (part_pmz - meanz(cell_x+ix, cell_y+iy))**2)
-            part_count(cell_x+ix, cell_y+iy) = &
-                part_count(cell_x+ix, cell_y+iy) + gf
-          ENDDO
+        DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy)
+          sigma(cell_x+ix, cell_y+iy) = sigma(cell_x+ix, cell_y+iy) + gf &
+              * ((part_pmx - meanx(cell_x+ix, cell_y+iy))**2 &
+              + (part_pmy - meany(cell_x+ix, cell_y+iy))**2 &
+              + (part_pmz - meanz(cell_x+ix, cell_y+iy))**2)
+          part_count(cell_x+ix, cell_y+iy) = &
+              part_count(cell_x+ix, cell_y+iy) + gf
+        ENDDO
         ENDDO
         current => current%next
       ENDDO
@@ -769,10 +769,10 @@ CONTAINS
 
         wdata = evaluator(current, ispecies)
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-          ENDDO
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+        ENDDO
         ENDDO
 
         current => current%next
@@ -796,7 +796,7 @@ CONTAINS
     REAL(num) :: part_px, part_py, part_pz
     REAL(num) :: part_q, part_mc, part_weight
     REAL(num) :: part_j
-    REAL(num) :: idxy, root
+    REAL(num) :: idxyz, root
     INTEGER :: ispecies, spec_start, spec_end, ix, iy
     INTEGER(i8) :: ipart
     LOGICAL :: spec_sum
@@ -806,7 +806,7 @@ CONTAINS
 
     data_array = 0.0_num
 
-    idxy = 1.0_num / (dx * dy)
+    idxyz = 1.0_num / (dx * dy)
 
     spec_start = current_species
     spec_end = current_species
@@ -850,18 +850,18 @@ CONTAINS
         root = c / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
         SELECT CASE (direction)
           CASE(c_dir_x)
-            part_j = part_q * part_px * root * part_weight * idxy
+            part_j = part_q * part_px * root * part_weight * idxyz
           CASE(c_dir_y)
-            part_j = part_q * part_py * root * part_weight * idxy
+            part_j = part_q * part_py * root * part_weight * idxyz
           CASE(c_dir_z)
-            part_j = part_q * part_pz * root * part_weight * idxy
+            part_j = part_q * part_pz * root * part_weight * idxyz
         END SELECT
 
         DO iy = sf_min, sf_max
-          DO ix = sf_min, sf_max
-            data_array(cell_x+ix, cell_y+iy) = &
-                data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_j
-          ENDDO
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_j
+        ENDDO
         ENDDO
         current => next
       ENDDO

@@ -16,58 +16,58 @@ CONTAINS
 
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic .AND. x_min_boundary) THEN
       DO k = -2, nz+3
-        DO j = -2, ny+3
-          data_array(1,j,k) = data_array(1,j,k) + data_array( 0,j,k)
-          data_array(2,j,k) = data_array(2,j,k) + data_array(-1,j,k)
-          data_array(3,j,k) = data_array(3,j,k) + data_array(-2,j,k)
-        ENDDO
+      DO j = -2, ny+3
+        data_array(1,j,k) = data_array(1,j,k) + data_array( 0,j,k)
+        data_array(2,j,k) = data_array(2,j,k) + data_array(-1,j,k)
+        data_array(3,j,k) = data_array(3,j,k) + data_array(-2,j,k)
+      ENDDO
       ENDDO
     ENDIF
     IF (bc_particle(c_bd_x_max) .NE. c_bc_periodic .AND. x_max_boundary) THEN
       DO k = -2, nz+3
-        DO j = -2, ny+3
-          data_array(nx-2,j,k) = data_array(nx-2,j,k) + data_array(nx+3,j,k)
-          data_array(nx-1,j,k) = data_array(nx-1,j,k) + data_array(nx+2,j,k)
-          data_array(nx  ,j,k) = data_array(nx  ,j,k) + data_array(nx+1,j,k)
-        ENDDO
+      DO j = -2, ny+3
+        data_array(nx-2,j,k) = data_array(nx-2,j,k) + data_array(nx+3,j,k)
+        data_array(nx-1,j,k) = data_array(nx-1,j,k) + data_array(nx+2,j,k)
+        data_array(nx  ,j,k) = data_array(nx  ,j,k) + data_array(nx+1,j,k)
+      ENDDO
       ENDDO
     ENDIF
 
     IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic .AND. y_min_boundary) THEN
       DO k = -2, nz+3
-        DO i = -2, nx+3
-          data_array(i,1,k) = data_array(i,1,k) + data_array(i, 0,k)
-          data_array(i,2,k) = data_array(i,2,k) + data_array(i,-1,k)
-          data_array(i,3,k) = data_array(i,3,k) + data_array(i,-2,k)
-        ENDDO
+      DO i = -2, nx+3
+        data_array(i,1,k) = data_array(i,1,k) + data_array(i, 0,k)
+        data_array(i,2,k) = data_array(i,2,k) + data_array(i,-1,k)
+        data_array(i,3,k) = data_array(i,3,k) + data_array(i,-2,k)
+      ENDDO
       ENDDO
     ENDIF
     IF (bc_particle(c_bd_y_max) .NE. c_bc_periodic .AND. y_max_boundary) THEN
       DO k = -2, nz+3
-        DO i = -2, nx+3
-          data_array(i,ny-2,k) = data_array(i,ny-2,k) + data_array(i,ny+3,k)
-          data_array(i,ny-1,k) = data_array(i,ny-1,k) + data_array(i,ny+2,k)
-          data_array(i,ny  ,k) = data_array(i,ny  ,k) + data_array(i,ny+1,k)
-        ENDDO
+      DO i = -2, nx+3
+        data_array(i,ny-2,k) = data_array(i,ny-2,k) + data_array(i,ny+3,k)
+        data_array(i,ny-1,k) = data_array(i,ny-1,k) + data_array(i,ny+2,k)
+        data_array(i,ny  ,k) = data_array(i,ny  ,k) + data_array(i,ny+1,k)
+      ENDDO
       ENDDO
     ENDIF
 
     IF (bc_particle(c_bd_z_min) .NE. c_bc_periodic .AND. z_min_boundary) THEN
       DO j = -2, ny+3
-        DO i = -2, nx+3
-          data_array(i,j,1) = data_array(i,j,1) + data_array(i,j, 0)
-          data_array(i,j,2) = data_array(i,j,2) + data_array(i,j,-1)
-          data_array(i,j,3) = data_array(i,j,3) + data_array(i,j,-2)
-        ENDDO
+      DO i = -2, nx+3
+        data_array(i,j,1) = data_array(i,j,1) + data_array(i,j, 0)
+        data_array(i,j,2) = data_array(i,j,2) + data_array(i,j,-1)
+        data_array(i,j,3) = data_array(i,j,3) + data_array(i,j,-2)
+      ENDDO
       ENDDO
     ENDIF
     IF (bc_particle(c_bd_z_max) .NE. c_bc_periodic .AND. z_max_boundary) THEN
       DO j = -2, ny+3
-        DO i = -2, nx+3
-          data_array(i,j,nz-2) = data_array(i,j,nz-2) + data_array(i,j,nz+3)
-          data_array(i,j,nz-1) = data_array(i,j,nz-1) + data_array(i,j,nz+2)
-          data_array(i,j,nz  ) = data_array(i,j,nz  ) + data_array(i,j,nz+1)
-        ENDDO
+      DO i = -2, nx+3
+        data_array(i,j,nz-2) = data_array(i,j,nz-2) + data_array(i,j,nz+3)
+        data_array(i,j,nz-1) = data_array(i,j,nz-1) + data_array(i,j,nz+2)
+        data_array(i,j,nz  ) = data_array(i,j,nz  ) + data_array(i,j,nz+1)
+      ENDDO
       ENDDO
     ENDIF
 
@@ -141,13 +141,13 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * wdata
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * wdata
+        ENDDO
+        ENDDO
         ENDDO
 
         current => current%next
@@ -254,16 +254,16 @@ CONTAINS
         ENDIF
 #endif
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * wdata
-              wt(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  wt(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * l_weight
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * wdata
+          wt(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              wt(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * l_weight
+        ENDDO
+        ENDDO
         ENDDO
 
         current => current%next
@@ -408,16 +408,16 @@ CONTAINS
         END SELECT
 
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * wdata
-              wt(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  wt(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * l_weight
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * wdata
+          wt(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              wt(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * l_weight
+        ENDDO
+        ENDDO
         ENDDO
 
         current => current%next
@@ -448,45 +448,45 @@ CONTAINS
     SELECT CASE(direction)
     CASE(c_dir_x)
       DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
-            ey_cc = 0.5_num  * (ey(ix  , iy-1, iz  ) + ey(ix, iy, iz))
-            ez_cc = 0.5_num  * (ez(ix  , iy  , iz-1) + ez(ix, iy, iz))
-            by_cc = 0.25_num * (by(ix-1, iy  , iz-1) + by(ix  , iy  , iz-1) &
-                             +  by(ix-1, iy  , iz  ) + by(ix  , iy  , iz  ))
-            bz_cc = 0.25_num * (bz(ix-1, iy-1, iz  ) + bz(ix  , iy-1, iz  ) &
-                             +  bz(ix-1, iy  , iz  ) + bz(ix  , iy  , iz  ))
-            data_array(ix,iy,iz) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
-          ENDDO
-        ENDDO
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ey_cc = 0.5_num  * (ey(ix  , iy-1, iz  ) + ey(ix, iy, iz))
+        ez_cc = 0.5_num  * (ez(ix  , iy  , iz-1) + ez(ix, iy, iz))
+        by_cc = 0.25_num * (by(ix-1, iy  , iz-1) + by(ix  , iy  , iz-1) &
+                         +  by(ix-1, iy  , iz  ) + by(ix  , iy  , iz  ))
+        bz_cc = 0.25_num * (bz(ix-1, iy-1, iz  ) + bz(ix  , iy-1, iz  ) &
+                         +  bz(ix-1, iy  , iz  ) + bz(ix  , iy  , iz  ))
+        data_array(ix,iy,iz) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
+      ENDDO
+      ENDDO
       ENDDO
     CASE(c_dir_y)
       DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
-            ex_cc = 0.5_num  * (ex(ix-1, iy  , iz  ) + ex(ix, iy, iz))
-            ez_cc = 0.5_num  * (ez(ix  , iy  , iz-1) + ez(ix, iy, iz))
-            bx_cc = 0.25_num * (bx(ix  , iy-1, iz-1) + bx(ix  , iy  , iz-1) &
-                             +  bx(ix  , iy-1, iz  ) + bx(ix  , iy  , iz  ))
-            bz_cc = 0.25_num * (bz(ix-1, iy-1, iz  ) + bz(ix  , iy-1, iz  ) &
-                             +  bz(ix-1, iy  , iz  ) + bz(ix  , iy  , iz  ))
-            data_array(ix,iy,iz) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
-          ENDDO
-        ENDDO
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ex_cc = 0.5_num  * (ex(ix-1, iy  , iz  ) + ex(ix, iy, iz))
+        ez_cc = 0.5_num  * (ez(ix  , iy  , iz-1) + ez(ix, iy, iz))
+        bx_cc = 0.25_num * (bx(ix  , iy-1, iz-1) + bx(ix  , iy  , iz-1) &
+                         +  bx(ix  , iy-1, iz  ) + bx(ix  , iy  , iz  ))
+        bz_cc = 0.25_num * (bz(ix-1, iy-1, iz  ) + bz(ix  , iy-1, iz  ) &
+                         +  bz(ix-1, iy  , iz  ) + bz(ix  , iy  , iz  ))
+        data_array(ix,iy,iz) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
+      ENDDO
+      ENDDO
       ENDDO
     CASE(c_dir_z)
       DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
-            ex_cc = 0.5_num  * (ex(ix-1, iy  , iz  ) + ex(ix, iy, iz))
-            ey_cc = 0.5_num  * (ey(ix  , iy-1, iz  ) + ey(ix, iy, iz))
-            bx_cc = 0.25_num * (bx(ix  , iy-1, iz-1) + bx(ix  , iy  , iz-1) &
-                             +  bx(ix  , iy-1, iz  ) + bx(ix  , iy  , iz  ))
-            by_cc = 0.25_num * (by(ix-1, iy  , iz-1) + by(ix  , iy  , iz-1) &
-                             +  by(ix-1, iy  , iz  ) + by(ix  , iy  , iz  ))
-            data_array(ix,iy,iz) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
-          ENDDO
-        ENDDO
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ex_cc = 0.5_num  * (ex(ix-1, iy  , iz  ) + ex(ix, iy, iz))
+        ey_cc = 0.5_num  * (ey(ix  , iy-1, iz  ) + ey(ix, iy, iz))
+        bx_cc = 0.25_num * (bx(ix  , iy-1, iz-1) + bx(ix  , iy  , iz-1) &
+                         +  bx(ix  , iy-1, iz  ) + bx(ix  , iy  , iz  ))
+        by_cc = 0.25_num * (by(ix-1, iy  , iz-1) + by(ix  , iy  , iz-1) &
+                         +  by(ix-1, iy  , iz  ) + by(ix  , iy  , iz  ))
+        data_array(ix,iy,iz) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
+      ENDDO
+      ENDDO
       ENDDO
     END SELECT
 
@@ -560,13 +560,13 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * wdata
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * wdata
+        ENDDO
+        ENDDO
         ENDDO
 
         current => current%next
@@ -624,13 +624,13 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * wdata
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * wdata
+        ENDDO
+        ENDDO
         ENDDO
 
         current => current%next
@@ -707,19 +707,19 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              gf = gx(ix) * gy(iy) * gz(iz) * l_weight
-              meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
-              meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
-              meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
-              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy) * gz(iz) * l_weight
+          meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
+          meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
+          meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
+          part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+        ENDDO
+        ENDDO
         ENDDO
         current => current%next
       ENDDO
@@ -757,18 +757,18 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              gf = gx(ix) * gy(iy) * gz(iz)
-              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf &
-                  * ((part_pmx - meanx(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
-                  + (part_pmy - meany(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
-                  + (part_pmz - meanz(cell_x+ix, cell_y+iy, cell_z+iz))**2)
-              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy) * gz(iz)
+          sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf &
+              * ((part_pmx - meanx(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
+              + (part_pmy - meany(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
+              + (part_pmz - meanz(cell_x+ix, cell_y+iy, cell_z+iz))**2)
+          part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+        ENDDO
+        ENDDO
         ENDDO
         current => current%next
       ENDDO
@@ -828,13 +828,13 @@ CONTAINS
 
         wdata = evaluator(current, ispecies)
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * wdata
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * wdata
+        ENDDO
+        ENDDO
         ENDDO
 
         current => current%next
@@ -920,13 +920,13 @@ CONTAINS
         END SELECT
 
         DO iz = sf_min, sf_max
-          DO iy = sf_min, sf_max
-            DO ix = sf_min, sf_max
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-                  data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-                  + gx(ix) * gy(iy) * gz(iz) * part_j
-            ENDDO
-          ENDDO
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * part_j
+        ENDDO
+        ENDDO
         ENDDO
         current => next
       ENDDO
