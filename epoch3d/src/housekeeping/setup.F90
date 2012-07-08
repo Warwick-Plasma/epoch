@@ -171,17 +171,17 @@ CONTAINS
       zb_offset_global(iz) = zb_global(iz)
     ENDDO
 
-    DO iproc = 1, nprocx
-      x_mins(iproc) = x_global(cell_x_min(iproc))
-      x_maxs(iproc) = x_global(cell_x_max(iproc))
+    DO iproc = 0, nprocx-1
+      x_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
-    DO iproc = 1, nprocy
-      y_mins(iproc) = y_global(cell_y_min(iproc))
-      y_maxs(iproc) = y_global(cell_y_max(iproc))
+    DO iproc = 0, nprocy-1
+      y_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
-    DO iproc = 1, nprocz
-      z_mins(iproc) = z_global(cell_z_min(iproc))
-      z_maxs(iproc) = z_global(cell_z_max(iproc))
+    DO iproc = 0, nprocz-1
+      z_mins(iproc) = z_global(cell_z_min(iproc+1))
+      z_maxs(iproc) = z_global(cell_z_max(iproc+1))
     ENDDO
 
     x_min_local = x_mins(x_coords)

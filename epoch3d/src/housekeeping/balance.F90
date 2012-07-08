@@ -194,6 +194,10 @@ CONTAINS
     ny = ny_global_max - ny_global_min + 1
     nz = nz_global_max - nz_global_min + 1
 
+    DEALLOCATE(new_cell_x_min, new_cell_x_max)
+    DEALLOCATE(new_cell_y_min, new_cell_y_max)
+    DEALLOCATE(new_cell_z_min, new_cell_z_max)
+
     ! Do X, Y, Z arrays separately because we already have global copies
     DEALLOCATE(x, y, z)
     ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))
@@ -202,19 +206,19 @@ CONTAINS
     z(-2:nz+3) = z_global(nz_global_min-3:nz_global_max+3)
 
     ! Recalculate x_mins and x_maxs so that rebalancing works next time
-    DO iproc = 1, nprocx
-      x_mins(iproc) = x_global(cell_x_min(iproc))
-      x_maxs(iproc) = x_global(cell_x_max(iproc))
+    DO iproc = 0, nprocx - 1
+      x_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
     ! Same for y
-    DO iproc = 1, nprocy
-      y_mins(iproc) = y_global(cell_y_min(iproc))
-      y_maxs(iproc) = y_global(cell_y_max(iproc))
+    DO iproc = 0, nprocy - 1
+      y_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
     ! Same for z
-    DO iproc = 1, nprocz
-      z_mins(iproc) = z_global(cell_z_min(iproc))
-      z_maxs(iproc) = z_global(cell_z_max(iproc))
+    DO iproc = 0, nprocz - 1
+      z_mins(iproc) = z_global(cell_z_min(iproc+1))
+      z_maxs(iproc) = z_global(cell_z_max(iproc+1))
     ENDDO
 
     ! Set the lengths of the current domain so that the particle balancer
@@ -518,7 +522,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: temp
     INTEGER :: n_new(c_ndims)
 
-    n_new = SHAPE(temp)
+    n_new = SHAPE(temp) - 2 * 3
 
     temp = 0.0_num
     CALL remap_field(field, temp)
@@ -537,7 +541,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: temp
     INTEGER :: n_new(c_ndims-1)
 
-    n_new = SHAPE(temp)
+    n_new = SHAPE(temp) - 2 * 3
 
     temp = 0.0_num
     CALL remap_field_slice(direction, field, temp)
@@ -556,7 +560,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: temp
     INTEGER :: n_new(c_ndims-1)
 
-    n_new = SHAPE(temp)
+    n_new = SHAPE(temp) - 2 * 3
 
     temp = 0.0_num
     CALL remap_field_slice(direction, field, temp)
@@ -574,7 +578,8 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:,:), INTENT(OUT) :: temp
     INTEGER :: i, n_new(c_ndims+1)
 
-    n_new = SHAPE(temp)
+    n_new = SHAPE(temp) - 2 * 3
+    n_new(c_ndims+1) = n_new(c_ndims+1) + 2 * 3
 
     temp = 0.0_num
     DO i = 1, n_new(c_ndims+1)
@@ -597,7 +602,8 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: temp
     INTEGER :: i, n_new(c_ndims)
 
-    n_new = SHAPE(temp)
+    n_new = SHAPE(temp) - 2 * 3
+    n_new(c_ndims) = n_new(c_ndims) + 2 * 3
 
     temp = 0.0_num
     DO i = 1, n_new(c_ndims)
@@ -605,7 +611,7 @@ CONTAINS
     ENDDO
 
     DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3, -2:n_new(2)+3, n_new(c_ndims+1)))
+    ALLOCATE(field(-2:n_new(1)+3, -2:n_new(2)+3, n_new(c_ndims)))
 
     field = temp
 
@@ -617,26 +623,28 @@ CONTAINS
 
     ! This is a wrapper for the field redistribution routine
     INTEGER, INTENT(IN) :: direction
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: field_in
-    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: field_out
-    INTEGER, DIMENSION(c_ndims-1) :: our_coords
+    REAL(num), DIMENSION(:,:), INTENT(IN) :: field_in
+    REAL(num), DIMENSION(:,:), INTENT(OUT) :: field_out
+    INTEGER :: i, n
+    INTEGER, DIMENSION(c_ndims-1) ::cdim
+
+    n = 1
+    DO i = 1, c_ndims
+      IF (i .EQ. direction) CYCLE
+      cdim(n) = c_ndims + 1 - i
+      n = n + 1
+    ENDDO
 
     IF (direction .EQ. c_dir_x) THEN
-      our_coords(1) = y_coords
-      our_coords(2) = z_coords
-      CALL redistribute_field_2d(field_in, field_out, our_coords, &
+      CALL redistribute_field_2d(field_in, field_out, cdim, &
           cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max, &
           cell_z_min, cell_z_max, new_cell_z_min, new_cell_z_max)
     ELSE IF (direction .EQ. c_dir_y) THEN
-      our_coords(1) = x_coords
-      our_coords(2) = z_coords
-      CALL redistribute_field_2d(field_in, field_out, our_coords, &
+      CALL redistribute_field_2d(field_in, field_out, cdim, &
           cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
           cell_z_min, cell_z_max, new_cell_z_min, new_cell_z_max)
     ELSE
-      our_coords(1) = x_coords
-      our_coords(2) = y_coords
-      CALL redistribute_field_2d(field_in, field_out, our_coords, &
+      CALL redistribute_field_2d(field_in, field_out, cdim, &
           cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
           cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max)
     ENDIF
@@ -648,17 +656,18 @@ CONTAINS
   SUBROUTINE remap_field(field_in, field_out)
 
     ! This is a wrapper for the field redistribution routine
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: field_in
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: field_out
-    INTEGER, DIMENSION(c_ndims) :: our_coords, n_new
+    REAL(num), DIMENSION(:,:,:), INTENT(IN) :: field_in
+    REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(c_ndims) :: n_new, cdim
     INTEGER :: i
 
-    n_new = SHAPE(field_out)
-    DO i = 1,c_ndims
-      our_coords(i) = coordinates(c_ndims+i-1)
+    n_new = SHAPE(field_out) - 2 * 3
+
+    DO i = 1, c_ndims
+      cdim(i) = c_ndims + 1 - i
     ENDDO
 
-    CALL redistribute_field_3d(field_in, field_out, our_coords, &
+    CALL redistribute_field_3d(field_in, field_out, cdim, &
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
         cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max, &
         cell_z_min, cell_z_max, new_cell_z_min, new_cell_z_max)
@@ -669,7 +678,7 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field_2d(field_in, field_out, our_coords, &
+  SUBROUTINE redistribute_field_2d(field_in, field_out, cdim, &
       old_cell_min1, old_cell_max1, new_cell_min1, new_cell_max1, &
       old_cell_min2, old_cell_max2, new_cell_min2, new_cell_max2)
 
@@ -677,29 +686,32 @@ CONTAINS
     INTEGER, PARAMETER :: ng = 3, nd = 2
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: field_in
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: field_out
-    INTEGER, DIMENSION(nd), INTENT(IN) :: our_coords
+    INTEGER, DIMENSION(nd), INTENT(IN) :: cdim
     INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min1, old_cell_max1
     INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min1, new_cell_max1
     INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min2, old_cell_max2
     INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min2, new_cell_max2
-    INTEGER :: irank, nproc_tot, basetype
+    INTEGER :: irank, basetype
     INTEGER :: i, iproc, inew
     INTEGER :: j, jproc, jnew
     INTEGER, DIMENSION(nd) :: type_min, type_max, old_0, old_1, new_0
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
+    INTEGER, DIMENSION(nd) :: our_coords
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = mpireal
 
+    ALLOCATE(sendtypes(0:nproc-1))
+    ALLOCATE(recvtypes(0:nproc-1))
+
+    DO i = 1, nd
+      our_coords(i) = coordinates(cdim(i))
+    ENDDO
+
     nprocs(1) = SIZE(old_cell_min1)
     nprocs(2) = SIZE(old_cell_min2)
-
-    nproc_tot = nprocs(1) * nprocs(2)
-
-    ALLOCATE(sendtypes(0:nproc_tot-1))
-    ALLOCATE(recvtypes(0:nproc_tot-1))
 
     old_min(1) = old_cell_min1(our_coords(1)+1)
     old_max(1) = old_cell_max1(our_coords(1)+1)
@@ -714,6 +726,7 @@ CONTAINS
     tag = 0
     sendtypes = 0
     recvtypes = 0
+    coord = coordinates
 
     ! Create array of sendtypes
 
@@ -732,7 +745,7 @@ CONTAINS
     ENDDO
 
     DO WHILE(type_max(2) .LE. old_max(2))
-      coord(c_ndims-1) = jproc - 1
+      coord(cdim(2)) = jproc - 1
       type_max(2) = new_cell_max2(jproc)
       IF (type_max(2) .GT. old_max(2)) type_max(2) = old_max(2)
 
@@ -750,7 +763,7 @@ CONTAINS
       ENDDO
 
       DO WHILE(type_max(1) .LE. old_max(1))
-        coord(c_ndims) = iproc - 1
+        coord(cdim(1)) = iproc - 1
         type_max(1) = new_cell_max1(iproc)
         IF (type_max(1) .GT. old_max(1)) type_max(1) = old_max(1)
 
@@ -798,7 +811,7 @@ CONTAINS
     ENDDO
 
     DO WHILE(type_max(2) .LE. new_max(2))
-      coord(c_ndims-1) = jproc - 1
+      coord(cdim(2)) = jproc - 1
       type_max(2) = old_cell_max2(jproc)
       IF (type_max(2) .GT. new_max(2)) type_max(2) = new_max(2)
 
@@ -816,7 +829,7 @@ CONTAINS
       ENDDO
 
       DO WHILE(type_max(1) .LE. new_max(1))
-        coord(c_ndims) = iproc - 1
+        coord(cdim(1)) = iproc - 1
         type_max(1) = old_cell_max1(iproc)
         IF (type_max(1) .GT. new_max(1)) type_max(1) = new_max(1)
 
@@ -855,7 +868,7 @@ CONTAINS
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
-    DO i = 0,nproc_tot-1
+    DO i = 0,nproc-1
       IF (sendtypes(i) .NE. 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) .NE. 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     ENDDO
@@ -867,7 +880,7 @@ CONTAINS
 
 
 
-  SUBROUTINE redistribute_field_3d(field_in, field_out, our_coords, &
+  SUBROUTINE redistribute_field_3d(field_in, field_out, cdim, &
       old_cell_min1, old_cell_max1, new_cell_min1, new_cell_max1, &
       old_cell_min2, old_cell_max2, new_cell_min2, new_cell_max2, &
       old_cell_min3, old_cell_max3, new_cell_min3, new_cell_max3)
@@ -876,14 +889,14 @@ CONTAINS
     INTEGER, PARAMETER :: ng = 3, nd = 3
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(IN) :: field_in
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: field_out
-    INTEGER, DIMENSION(nd), INTENT(IN) :: our_coords
+    INTEGER, DIMENSION(nd), INTENT(IN) :: cdim
     INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min1, old_cell_max1
     INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min1, new_cell_max1
     INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min2, old_cell_max2
     INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min2, new_cell_max2
     INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min3, old_cell_max3
     INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min3, new_cell_max3
-    INTEGER :: irank, nproc_tot, basetype
+    INTEGER :: irank, basetype
     INTEGER :: i, iproc, inew
     INTEGER :: j, jproc, jnew
     INTEGER :: k, kproc, knew
@@ -891,18 +904,21 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
+    INTEGER, DIMENSION(nd) :: our_coords
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = mpireal
 
+    ALLOCATE(sendtypes(0:nproc-1))
+    ALLOCATE(recvtypes(0:nproc-1))
+
+    DO i = 1, nd
+      our_coords(i) = coordinates(cdim(i))
+    ENDDO
+
     nprocs(1) = SIZE(old_cell_min1)
     nprocs(2) = SIZE(old_cell_min2)
     nprocs(3) = SIZE(old_cell_min3)
-
-    nproc_tot = nprocs(1) * nprocs(2) * nprocs(3)
-
-    ALLOCATE(sendtypes(0:nproc_tot-1))
-    ALLOCATE(recvtypes(0:nproc_tot-1))
 
     old_min(1) = old_cell_min1(our_coords(1)+1)
     old_max(1) = old_cell_max1(our_coords(1)+1)
@@ -922,6 +938,7 @@ CONTAINS
     tag = 0
     sendtypes = 0
     recvtypes = 0
+    coord = coordinates
 
     ! Create array of sendtypes
 
@@ -940,7 +957,7 @@ CONTAINS
     ENDDO
 
     DO WHILE(type_max(3) .LE. old_max(3))
-      coord(c_ndims-2) = kproc - 1
+      coord(cdim(3)) = kproc - 1
       type_max(3) = new_cell_max3(kproc)
       IF (type_max(3) .GT. old_max(3)) type_max(3) = old_max(3)
 
@@ -958,7 +975,7 @@ CONTAINS
       ENDDO
 
       DO WHILE(type_max(2) .LE. old_max(2))
-        coord(c_ndims-1) = jproc - 1
+        coord(cdim(2)) = jproc - 1
         type_max(2) = new_cell_max2(jproc)
         IF (type_max(2) .GT. old_max(2)) type_max(2) = old_max(2)
 
@@ -976,7 +993,7 @@ CONTAINS
         ENDDO
 
         DO WHILE(type_max(1) .LE. old_max(1))
-          coord(c_ndims) = iproc - 1
+          coord(cdim(1)) = iproc - 1
           type_max(1) = new_cell_max1(iproc)
           IF (type_max(1) .GT. old_max(1)) type_max(1) = old_max(1)
 
@@ -1029,7 +1046,7 @@ CONTAINS
     ENDDO
 
     DO WHILE(type_max(3) .LE. new_max(3))
-      coord(c_ndims-2) = kproc - 1
+      coord(cdim(3)) = kproc - 1
       type_max(3) = old_cell_max3(kproc)
       IF (type_max(3) .GT. new_max(3)) type_max(3) = new_max(3)
 
@@ -1047,7 +1064,7 @@ CONTAINS
       ENDDO
 
       DO WHILE(type_max(2) .LE. new_max(2))
-        coord(c_ndims-1) = jproc - 1
+        coord(cdim(2)) = jproc - 1
         type_max(2) = old_cell_max2(jproc)
         IF (type_max(2) .GT. new_max(2)) type_max(2) = new_max(2)
 
@@ -1065,7 +1082,7 @@ CONTAINS
         ENDDO
 
         DO WHILE(type_max(1) .LE. new_max(1))
-          coord(c_ndims) = iproc - 1
+          coord(cdim(1)) = iproc - 1
           type_max(1) = old_cell_max1(iproc)
           IF (type_max(1) .GT. new_max(1)) type_max(1) = new_max(1)
 
@@ -1112,7 +1129,7 @@ CONTAINS
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
-    DO i = 0,nproc_tot-1
+    DO i = 0,nproc-1
       IF (sendtypes(i) .NE. 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) .NE. 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     ENDDO
@@ -1328,26 +1345,26 @@ CONTAINS
     ! This could be replaced by a bisection method, but for the moment I
     ! just don't care
 
-    DO iproc = 1, nprocx
+    DO iproc = 0, nprocx - 1
       IF (a_particle%part_pos(1) .GE. x_mins(iproc) - dx / 2.0_num &
           .AND. a_particle%part_pos(1) .LT. x_maxs(iproc) + dx / 2.0_num) THEN
-        coords(c_ndims) = iproc - 1
+        coords(c_ndims) = iproc
         EXIT
       ENDIF
     ENDDO
 
-    DO iproc = 1, nprocy
+    DO iproc = 0, nprocy - 1
       IF (a_particle%part_pos(2) .GE. y_mins(iproc) - dy / 2.0_num &
           .AND. a_particle%part_pos(2) .LT. y_maxs(iproc) + dy / 2.0_num) THEN
-        coords(c_ndims-1) = iproc - 1
+        coords(c_ndims-1) = iproc
         EXIT
       ENDIF
     ENDDO
 
-    DO iproc = 1, nprocz
+    DO iproc = 0, nprocz - 1
       IF (a_particle%part_pos(3) .GE. z_mins(iproc) - dz / 2.0_num &
           .AND. a_particle%part_pos(3) .LT. z_maxs(iproc) + dz / 2.0_num) THEN
-        coords(c_ndims-2) = iproc - 1
+        coords(c_ndims-2) = iproc
         EXIT
       ENDIF
     ENDDO

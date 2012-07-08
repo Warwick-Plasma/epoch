@@ -137,8 +137,8 @@ CONTAINS
 
   SUBROUTINE redblackpart(psend, precv, sendcounts_in, recvcounts_in)
 
-    TYPE(particle_list), DIMENSION(:), TARGET :: psend, precv
-    INTEGER(KIND=8), DIMENSION(:), TARGET :: sendcounts_in, recvcounts_in
+    TYPE(particle_list), DIMENSION(0:), TARGET :: psend, precv
+    INTEGER(KIND=8), DIMENSION(0:), TARGET :: sendcounts_in, recvcounts_in
 
     pointers_send => psend
     pointers_recv => precv

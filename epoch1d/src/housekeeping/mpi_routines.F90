@@ -107,7 +107,7 @@ CONTAINS
     ENDIF
 
     ALLOCATE(npart_each_rank(nproc))
-    ALLOCATE(x_mins(nprocx), x_maxs(nprocx))
+    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
     ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
 
     DO idim = 1, nxp

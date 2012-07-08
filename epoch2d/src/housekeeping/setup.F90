@@ -153,13 +153,13 @@ CONTAINS
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
 
-    DO iproc = 1, nprocx
-      x_mins(iproc) = x_global(cell_x_min(iproc))
-      x_maxs(iproc) = x_global(cell_x_max(iproc))
+    DO iproc = 0, nprocx-1
+      x_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
-    DO iproc = 1, nprocy
-      y_mins(iproc) = y_global(cell_y_min(iproc))
-      y_maxs(iproc) = y_global(cell_y_max(iproc))
+    DO iproc = 0, nprocy-1
+      y_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
 
     x_min_local = x_mins(x_coords)
