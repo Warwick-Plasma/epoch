@@ -744,7 +744,10 @@ MODULE shared_data
   INTEGER :: mpireal = MPI_DOUBLE_PRECISION
   INTEGER :: realsize
 
-  INTEGER :: nx, ny, ng
+  ! ng is the number of ghost cells allocated in the arrays
+  ! fng is the number of ghost cells needed by the field solver
+  INTEGER, PARAMETER :: ng = 3
+  INTEGER :: fng, nx, ny
   INTEGER :: nx_global, ny_global
   INTEGER(i8) :: npart_global, particles_max_id
   INTEGER :: nprocx, nprocy

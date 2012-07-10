@@ -116,11 +116,11 @@ CONTAINS
 
   SUBROUTINE shift_field(field)
 
-    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
     INTEGER :: i
 
     ! Shift field to the left by one cell
-    DO i = -2, nx+2
+    DO i = 1-ng, nx+ng-1
       field(i) = field(i+1)
     ENDDO
 
@@ -177,8 +177,8 @@ CONTAINS
               species_list(ispecies)%mass, temp_local, 0.0_num)
         ENDDO
 
-        current%weight = dx * species_list(ispecies)%density &
-            / species_list(ispecies)%npart_per_cell
+        current%weight = dx / species_list(ispecies)%npart_per_cell &
+            * species_list(ispecies)%density
 #ifdef PARTICLE_DEBUG
         current%processor = rank
         current%processor_at_t0 = rank

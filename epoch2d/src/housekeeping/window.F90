@@ -131,14 +131,14 @@ CONTAINS
 
   SUBROUTINE shift_field(field)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER :: i, j
 
     ! Shift field to the left by one cell
-    DO j = -2, ny+3
-      DO i = -2, nx+2
-        field(i,j) = field(i+1,j)
-      ENDDO
+    DO j = 1-ng, ny+ng
+    DO i = 1-ng, nx+ng-1
+      field(i,j) = field(i+1,j)
+    ENDDO
     ENDDO
 
     CALL field_bc(field)
@@ -178,7 +178,7 @@ CONTAINS
 
       DO i = 1, 3
         DO iy = -2, ny+3
-          species_list(ispecies)%temperature(iy, i) = evaluate_at_point( &
+          species_list(ispecies)%temperature(iy,i) = evaluate_at_point( &
               species_list(ispecies)%temperature_function(i), nx, iy, errcode)
         ENDDO
       ENDDO

@@ -464,7 +464,6 @@ CONTAINS
 
   FUNCTION create_field_subarray(basetype, n1, n2, n3)
 
-    INTEGER, PARAMETER :: ng = 3
     INTEGER, INTENT(IN) :: basetype, n1
     INTEGER, INTENT(IN), OPTIONAL :: n2, n3
     INTEGER, DIMENSION(3) :: n_local, n_global, start

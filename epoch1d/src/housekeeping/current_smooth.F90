@@ -20,16 +20,16 @@ CONTAINS
 
   SUBROUTINE smooth_array(array)
 
-    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:), ALLOCATABLE :: wk_array
     INTEGER :: ix
 #ifdef HIGH_ORDER_SMOOTHING
     INTEGER :: isubx
     REAL(num), DIMENSION(sf_min:sf_max) :: weight_fn
-    REAL(num) :: val
+    REAL(num) :: val, w1
 #endif
 
-    ALLOCATE(wk_array(1:nx))
+    ALLOCATE(wk_array(nx))
 
 #ifdef HIGH_ORDER_SMOOTHING
     CALL particle_to_grid(0.0_num, weight_fn)
@@ -37,7 +37,8 @@ CONTAINS
     DO ix = 1, nx
       val = 0.0_num
       DO isubx = sf_min, sf_max
-        val = val + array(ix+isubx) * weight_fn(isubx)
+        w1 = weight_fn(isubx)
+        val = val + array(ix+isubx) * w1
       ENDDO
       wk_array(ix) = val
     ENDDO

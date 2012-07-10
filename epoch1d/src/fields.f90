@@ -19,7 +19,7 @@ CONTAINS
     order = field_order
     large = order / 2
     small = large - 1
-    ng = large
+    fng = large
 
     IF (field_order .EQ. 2) THEN
       const(1:2) = (/ -1.0_num, 1.0_num /)

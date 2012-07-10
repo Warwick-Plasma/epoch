@@ -243,25 +243,25 @@ CONTAINS
 
     subtype_field = 0
 
-    ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))
-    ALLOCATE(x_global(-2:nx_global+3))
-    ALLOCATE(y_global(-2:ny_global+3))
-    ALLOCATE(z_global(-2:nz_global+3))
+    ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng), z(1-ng:nz+ng))
+    ALLOCATE(x_global(1-ng:nx_global+ng))
+    ALLOCATE(y_global(1-ng:ny_global+ng))
+    ALLOCATE(z_global(1-ng:nz_global+ng))
     ALLOCATE(xb_global(nx_global+1))
     ALLOCATE(yb_global(ny_global+1))
     ALLOCATE(zb_global(nz_global+1))
     ALLOCATE(xb_offset_global(nx_global+1))
     ALLOCATE(yb_offset_global(ny_global+1))
     ALLOCATE(zb_offset_global(nz_global+1))
-    ALLOCATE(ex(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(ey(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(ez(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(bx(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(by(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(bz(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(jx(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(jy(-2:nx+3, -2:ny+3, -2:nz+3))
-    ALLOCATE(jz(-2:nx+3, -2:ny+3, -2:nz+3))
+    ALLOCATE(ex(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(ey(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(ez(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(bx(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(by(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(bz(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(jx(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(jy(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(jz(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
 
     ! Setup the particle lists
     IF (n_species .GT. 0) &
@@ -282,22 +282,28 @@ CONTAINS
       CALL create_empty_partlist(species_list(ispecies)%attached_list)
 
       IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_x_min(-2:ny+3,-2:nz+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_x_min(1-ng:ny+ng, &
+            1-ng:nz+ng,1:3))
       ENDIF
       IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_x_max(-2:ny+3,-2:nz+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_x_max(1-ng:ny+ng, &
+            1-ng:nz+ng,1:3))
       ENDIF
       IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_y_min(-2:nx+3,-2:nz+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_y_min(1-ng:nx+ng, &
+            1-ng:nz+ng,1:3))
       ENDIF
       IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_y_max(-2:nx+3,-2:nz+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_y_max(1-ng:nx+ng, &
+            1-ng:nz+ng,1:3))
       ENDIF
       IF (bc_particle(c_bd_z_min) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_z_min(-2:nx+3,-2:ny+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_z_min(1-ng:nx+ng, &
+            1-ng:ny+ng,1:3))
       ENDIF
       IF (bc_particle(c_bd_z_max) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_z_max(1-ng:nx+ng, &
+            1-ng:ny+ng,1:3))
       ENDIF
     ENDDO
 

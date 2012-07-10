@@ -133,16 +133,16 @@ CONTAINS
 
   SUBROUTINE shift_field(field)
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER :: i, j, k
 
     ! Shift field to the left by one cell
-    DO k = -2, nz+3
-      DO j = -2, ny+3
-        DO i = -2, nx+2
-          field(i,j,k) = field(i+1,j,k)
-        ENDDO
-      ENDDO
+    DO k = 1-ng, nz+ng
+    DO j = 1-ng, ny+ng
+    DO i = 1-ng, nx+ng-1
+      field(i,j,k) = field(i+1,j,k)
+    ENDDO
+    ENDDO
     ENDDO
 
     CALL field_bc(field)

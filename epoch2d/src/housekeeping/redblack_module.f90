@@ -336,9 +336,6 @@ CONTAINS
 
   SUBROUTINE redblack_main(do_send, do_recv)
 
-    ! This subroutine redistributes the fields over the new processor layout
-    INTEGER, PARAMETER :: ng = 3
-
     INTERFACE
       SUBROUTINE do_send(iproc)
         INTEGER, INTENT(IN) :: iproc

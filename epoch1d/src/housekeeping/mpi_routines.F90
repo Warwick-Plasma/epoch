@@ -121,19 +121,19 @@ CONTAINS
 
     subtype_field = 0
 
-    ALLOCATE(x(-2:nx+3))
-    ALLOCATE(x_global(-2:nx_global+3))
+    ALLOCATE(x(1-ng:nx+ng))
+    ALLOCATE(x_global(1-ng:nx_global+ng))
     ALLOCATE(xb_global(nx_global+1))
     ALLOCATE(xb_offset_global(nx_global+1))
-    ALLOCATE(ex(-2:nx+3))
-    ALLOCATE(ey(-2:nx+3))
-    ALLOCATE(ez(-2:nx+3))
-    ALLOCATE(bx(-2:nx+3))
-    ALLOCATE(by(-2:nx+3))
-    ALLOCATE(bz(-2:nx+3))
-    ALLOCATE(jx(-2:nx+3))
-    ALLOCATE(jy(-2:nx+3))
-    ALLOCATE(jz(-2:nx+3))
+    ALLOCATE(ex(1-ng:nx+ng))
+    ALLOCATE(ey(1-ng:nx+ng))
+    ALLOCATE(ez(1-ng:nx+ng))
+    ALLOCATE(bx(1-ng:nx+ng))
+    ALLOCATE(by(1-ng:nx+ng))
+    ALLOCATE(bz(1-ng:nx+ng))
+    ALLOCATE(jx(1-ng:nx+ng))
+    ALLOCATE(jy(1-ng:nx+ng))
+    ALLOCATE(jz(1-ng:nx+ng))
 
     ! Setup the particle lists
     IF (n_species .GT. 0) &

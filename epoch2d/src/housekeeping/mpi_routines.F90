@@ -195,13 +195,22 @@ CONTAINS
 
     subtype_field = 0
 
-    ALLOCATE(x(-2:nx+3), y(-2:ny+3))
-    ALLOCATE(x_global(-2:nx_global+3), y_global(-2:ny_global+3))
-    ALLOCATE(xb_global(nx_global+1), yb_global(ny_global+1))
-    ALLOCATE(xb_offset_global(nx_global+1), yb_offset_global(ny_global+1))
-    ALLOCATE(ex(-2:nx+3, -2:ny+3), ey(-2:nx+3, -2:ny+3), ez(-2:nx+3, -2:ny+3))
-    ALLOCATE(bx(-2:nx+3, -2:ny+3), by(-2:nx+3, -2:ny+3), bz(-2:nx+3, -2:ny+3))
-    ALLOCATE(jx(-2:nx+3, -2:ny+3), jy(-2:nx+3, -2:ny+3), jz(-2:nx+3, -2:ny+3))
+    ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng))
+    ALLOCATE(x_global(1-ng:nx_global+ng))
+    ALLOCATE(y_global(1-ng:ny_global+ng))
+    ALLOCATE(xb_global(nx_global+1))
+    ALLOCATE(yb_global(ny_global+1))
+    ALLOCATE(xb_offset_global(nx_global+1))
+    ALLOCATE(yb_offset_global(ny_global+1))
+    ALLOCATE(ex(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(ey(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(ez(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(bx(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(by(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(bz(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(jx(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(jy(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(jz(1-ng:nx+ng, 1-ng:ny+ng))
 
     ! Setup the particle lists
     IF (n_species .GT. 0) &
@@ -222,16 +231,16 @@ CONTAINS
       CALL create_empty_partlist(species_list(ispecies)%attached_list)
 
       IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_x_min(-2:ny+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_x_min(1-ng:ny+ng,1:3))
       ENDIF
       IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_x_max(-2:ny+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_x_max(1-ng:ny+ng,1:3))
       ENDIF
       IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_y_min(-2:nx+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_y_min(1-ng:nx+ng,1:3))
       ENDIF
       IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
-        ALLOCATE(species_list(ispecies)%ext_temp_y_max(-2:nx+3,1:3))
+        ALLOCATE(species_list(ispecies)%ext_temp_y_max(1-ng:nx+ng,1:3))
       ENDIF
     ENDDO
 

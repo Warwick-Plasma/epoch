@@ -86,44 +86,45 @@ CONTAINS
 
   SUBROUTINE do_field_mpi_with_lengths(field, nx_local, ny_local)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
     INTEGER :: subarray, basetype
 
     basetype = mpireal
 
-    sizes(1) = nx_local + 6
-    sizes(2) = ny_local + 6
-    subsizes(1) = 3
-    subsizes(2) = ny_local + 6
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
     starts = 0
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    CALL MPI_SENDRECV(field(1,-2), 1, subarray, proc_x_min, tag, &
-        field(nx_local+1,-2), 1, subarray, proc_x_max, tag, &
+    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, tag, &
+        field(nx_local+1,1-ng), 1, subarray, proc_x_max, tag, &
         comm, status, errcode)
-    CALL MPI_SENDRECV(field(nx_local-2,-2), 1, subarray, proc_x_max, tag, &
-        field(-2,-2), 1, subarray, proc_x_min, tag, &
+    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
+        tag, field(1-ng,1-ng), 1, subarray, proc_x_min, tag, &
         comm, status, errcode)
 
     CALL MPI_TYPE_FREE(subarray, errcode)
 
-    subsizes(1) = nx_local + 6
-    subsizes(2) = 3
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    CALL MPI_SENDRECV(field(-2,1), 1, subarray, proc_y_min, tag, &
-        field(-2,ny_local+1), 1, subarray, proc_y_max, tag, &
+    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, tag, &
+        field(1-ng,ny_local+1), 1, subarray, proc_y_max, tag, &
         comm, status, errcode)
-    CALL MPI_SENDRECV(field(-2,ny_local-2), 1, subarray, proc_y_max, tag, &
-        field(-2,-2), 1, subarray, proc_y_min, tag, &
+    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
+        tag, field(1-ng,1-ng), 1, subarray, proc_y_min, tag, &
         comm, status, errcode)
 
     CALL MPI_TYPE_FREE(subarray, errcode)
@@ -134,44 +135,45 @@ CONTAINS
 
   SUBROUTINE do_field_mpi_with_lengths_r4(field, nx_local, ny_local)
 
-    REAL(r4), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
+    REAL(r4), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
     INTEGER :: subarray, basetype
 
     basetype = MPI_REAL4
 
-    sizes(1) = nx_local + 6
-    sizes(2) = ny_local + 6
-    subsizes(1) = 3
-    subsizes(2) = ny_local + 6
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
     starts = 0
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    CALL MPI_SENDRECV(field(1,-2), 1, subarray, proc_x_min, tag, &
-        field(nx_local+1,-2), 1, subarray, proc_x_max, tag, &
+    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, tag, &
+        field(nx_local+1,1-ng), 1, subarray, proc_x_max, tag, &
         comm, status, errcode)
-    CALL MPI_SENDRECV(field(nx_local-2,-2), 1, subarray, proc_x_max, tag, &
-        field(-2,-2), 1, subarray, proc_x_min, tag, &
+    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
+        tag, field(1-ng,1-ng), 1, subarray, proc_x_min, tag, &
         comm, status, errcode)
 
     CALL MPI_TYPE_FREE(subarray, errcode)
 
-    subsizes(1) = nx_local + 6
-    subsizes(2) = 3
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    CALL MPI_SENDRECV(field(-2,1), 1, subarray, proc_y_min, tag, &
-        field(-2,ny_local+1), 1, subarray, proc_y_max, tag, &
+    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, tag, &
+        field(1-ng,ny_local+1), 1, subarray, proc_y_max, tag, &
         comm, status, errcode)
-    CALL MPI_SENDRECV(field(-2,ny_local-2), 1, subarray, proc_y_max, tag, &
-        field(-2,-2), 1, subarray, proc_y_min, tag, &
+    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
+        tag, field(1-ng,1-ng), 1, subarray, proc_y_min, tag, &
         comm, status, errcode)
 
     CALL MPI_TYPE_FREE(subarray, errcode)
@@ -182,38 +184,54 @@ CONTAINS
 
   SUBROUTINE field_zero_gradient(field, stagger_type, boundary)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: stagger_type, boundary
+    INTEGER :: i, nn
 
     IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
 
     IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
-        field(-1,:) = field(1,:)
+        DO i = 1, ng
+          field(i-ng,:) = field(ng-i,:)
+        ENDDO
       ELSE
-        field(-1,:) = field(2,:)
-        field( 0,:) = field(1,:)
+        DO i = 1, ng
+          field(i-ng,:) = field(ng+1-i,:)
+        ENDDO
       ENDIF
     ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
+      nn = nx
       IF (stagger(c_dir_x,stagger_type)) THEN
-        field(nx+1,:) = field(nx-1,:)
+        DO i = 1, ng
+          field(nn+i,:) = field(nn-i,:)
+        ENDDO
       ELSE
-        field(nx+1,:) = field(nx  ,:)
-        field(nx+2,:) = field(nx-1,:)
+        DO i = 1, ng
+          field(nn+i,:) = field(nn+1-i,:)
+        ENDDO
       ENDIF
+
     ELSE IF (boundary .EQ. c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
-        field(:,-1) = field(:,1)
+        DO i = 1, ng
+          field(:,i-ng) = field(:,ng-i)
+        ENDDO
       ELSE
-        field(:,-1) = field(:,2)
-        field(:, 0) = field(:,1)
+        DO i = 1, ng
+          field(:,i-ng) = field(:,ng+1-i)
+        ENDDO
       ENDIF
     ELSE IF (boundary .EQ. c_bd_y_max .AND. y_max_boundary) THEN
+      nn = ny
       IF (stagger(c_dir_y,stagger_type)) THEN
-        field(:,ny+1) = field(:,ny-1)
+        DO i = 1, ng
+          field(:,nn+i) = field(:,nn-i)
+        ENDDO
       ELSE
-        field(:,ny+1) = field(:,ny  )
-        field(:,ny+2) = field(:,ny-1)
+        DO i = 1, ng
+          field(:,nn+i) = field(:,nn+1-i)
+        ENDDO
       ENDIF
     ENDIF
 
@@ -223,42 +241,58 @@ CONTAINS
 
   SUBROUTINE field_clamp_zero(field, stagger_type, boundary)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: stagger_type, boundary
+    INTEGER :: i, nn
 
     IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
 
     IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
-        field(-1,:) = -field(1,:)
-        field( 0,:) = 0.0_num
+        DO i = 1, ng-1
+          field(i-ng,:) = -field(ng-i,:)
+        ENDDO
+        field(0,:) = 0.0_num
       ELSE
-        field(-1,:) = -field(2,:)
-        field( 0,:) = -field(1,:)
+        DO i = 1, ng
+          field(i-ng,:) = -field(ng+1-i,:)
+        ENDDO
       ENDIF
     ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
+      nn = nx
       IF (stagger(c_dir_x,stagger_type)) THEN
-        field(nx  ,:) = 0.0_num
-        field(nx+1,:) = -field(nx-1,:)
+        field(nn,:) = 0.0_num
+        DO i = 1, ng-1
+          field(nn+i,:) = -field(nn-i,:)
+        ENDDO
       ELSE
-        field(nx+1,:) = -field(nx  ,:)
-        field(nx+2,:) = -field(nx-1,:)
+        DO i = 1, ng
+          field(nn+i,:) = -field(nn+1-i,:)
+        ENDDO
       ENDIF
+
     ELSE IF (boundary .EQ. c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
-        field(:,-1) = -field(:,1)
-        field(:, 0) = 0.0_num
+        DO i = 1, ng-1
+          field(:,i-ng) = -field(:,ng-i)
+        ENDDO
+        field(:,0) = 0.0_num
       ELSE
-        field(:,-1) = -field(:,2)
-        field(:, 0) = -field(:,1)
+        DO i = 1, ng
+          field(:,i-ng) = -field(:,ng+1-i)
+        ENDDO
       ENDIF
     ELSE IF (boundary .EQ. c_bd_y_max .AND. y_max_boundary) THEN
+      nn = ny
       IF (stagger(c_dir_y,stagger_type)) THEN
-        field(:,ny  ) = 0.0_num
-        field(:,ny+1) = -field(:,ny-1)
+        field(:,nn) = 0.0_num
+        DO i = 1, ng-1
+          field(:,nn+i) = -field(:,nn-i)
+        ENDDO
       ELSE
-        field(:,ny+1) = -field(:,ny  )
-        field(:,ny+2) = -field(:,ny-1)
+        DO i = 1, ng
+          field(:,nn+i) = -field(:,nn+1-i)
+        ENDDO
       ENDIF
     ENDIF
 
@@ -268,27 +302,29 @@ CONTAINS
 
   SUBROUTINE processor_summation_bcs(array, flip_direction)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, sgn
+    INTEGER :: subarray, sgn, sz, i
 
-    sizes(1) = nx + 6
-    sizes(2) = ny + 6
-    subsizes(1) = 3
-    subsizes(2) = ny + 6
+    sizes(1) = nx + 2 * ng
+    sizes(2) = ny + 2 * ng
     starts = 0
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    ALLOCATE(temp(3, ny+6))
+    sz = subsizes(1) * subsizes(2)
+    ALLOCATE(temp(subsizes(1), subsizes(2)))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(nx+1,-2), 1, subarray, &
-        neighbour( 1,0), tag, temp, 3*(ny+6), mpireal, &
+    CALL MPI_SENDRECV(array(nx+1,1-ng), 1, subarray, &
+        neighbour( 1,0), tag, temp, sz, mpireal, &
         neighbour(-1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
@@ -298,16 +334,16 @@ CONTAINS
         ! Currents get reversed in the direction of the boundary
         IF (flip_direction .EQ. c_dir_x) sgn = -1
       ENDIF
-      array(1,:) = array(1,:) + sgn * array( 0,:)
-      array(2,:) = array(2,:) + sgn * array(-1,:)
-      array(3,:) = array(3,:) + sgn * array(-2,:)
+      DO i = 1, ng
+        array(i,:) = array(i,:) + sgn * array(1-i,:)
+      ENDDO
     ELSE
-      array(1:3,:) = array(1:3,:) + temp
+      array(1:ng,:) = array(1:ng,:) + temp
     ENDIF
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(-2,-2), 1, subarray, &
-        neighbour(-1,0), tag, temp, 3*(ny+6), mpireal, &
+    CALL MPI_SENDRECV(array(1-ng,1-ng), 1, subarray, &
+        neighbour(-1,0), tag, temp, sz, mpireal, &
         neighbour( 1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
@@ -317,28 +353,29 @@ CONTAINS
         ! Currents get reversed in the direction of the boundary
         IF (flip_direction .EQ. c_dir_x) sgn = -1
       ENDIF
-      array(nx-2,:) = array(nx-2,:) + sgn * array(nx+3,:)
-      array(nx-1,:) = array(nx-1,:) + sgn * array(nx+2,:)
-      array(nx  ,:) = array(nx  ,:) + sgn * array(nx+1,:)
+      DO i = 1, ng
+        array(nx+1-i,:) = array(nx+1-i,:) + sgn * array(nx+i,:)
+      ENDDO
     ELSE
-      array(nx-2:nx,:) = array(nx-2:nx,:) + temp
+      array(nx+1-ng:nx,:) = array(nx+1-ng:nx,:) + temp
     ENDIF
 
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
 
-    subsizes(1) = nx + 6
-    subsizes(2) = 3
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    ALLOCATE(temp(nx+6, 3))
+    sz = subsizes(1) * subsizes(2)
+    ALLOCATE(temp(subsizes(1), subsizes(2)))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(-2,ny+1), 1, subarray, &
-        neighbour(0, 1), tag, temp, 3*(nx+6), mpireal, &
+    CALL MPI_SENDRECV(array(1-ng,ny+1), 1, subarray, &
+        neighbour(0, 1), tag, temp, sz, mpireal, &
         neighbour(0,-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
@@ -348,16 +385,16 @@ CONTAINS
         ! Currents get reversed in the direction of the boundary
         IF (flip_direction .EQ. c_dir_y) sgn = -1
       ENDIF
-      array(:,1) = array(:,1) + sgn * array(:, 0)
-      array(:,2) = array(:,2) + sgn * array(:,-1)
-      array(:,3) = array(:,3) + sgn * array(:,-2)
+      DO i = 1, ng
+        array(:,i) = array(:,i) + sgn * array(:,1-i)
+      ENDDO
     ELSE
-      array(:,1:3) = array(:,1:3) + temp
+      array(:,1:ng) = array(:,1:ng) + temp
     ENDIF
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(-2,-2), 1, subarray, &
-        neighbour(0,-1), tag, temp, 3*(nx+6), mpireal, &
+    CALL MPI_SENDRECV(array(1-ng,1-ng), 1, subarray, &
+        neighbour(0,-1), tag, temp, sz, mpireal, &
         neighbour(0, 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
@@ -367,11 +404,11 @@ CONTAINS
         ! Currents get reversed in the direction of the boundary
         IF (flip_direction .EQ. c_dir_y) sgn = -1
       ENDIF
-      array(:,ny-2) = array(:,ny-2) + sgn * array(:,ny+3)
-      array(:,ny-1) = array(:,ny-1) + sgn * array(:,ny+2)
-      array(:,ny  ) = array(:,ny  ) + sgn * array(:,ny+1)
+      DO i = 1, ng
+        array(:,ny+1-i) = array(:,ny+1-i) + sgn * array(:,ny+i)
+      ENDDO
     ELSE
-      array(:,ny-2:ny) = array(:,ny-2:ny) + temp
+      array(:,ny+1-ng:ny) = array(:,ny+1-ng:ny) + temp
     ENDIF
 
     DEALLOCATE(temp)
@@ -917,13 +954,13 @@ CONTAINS
     REAL(num) :: x_pos, x_pos_m, x_pos_ma
     REAL(num) :: y_pos, y_pos_m, y_pos_ma
 
-    ALLOCATE(cpml_kappa_ex(-2:nx+3), cpml_kappa_bx(-2:nx+3))
-    ALLOCATE(cpml_a_ex(-2:nx+3), cpml_a_bx(-2:nx+3))
-    ALLOCATE(cpml_sigma_ex(-2:nx+3), cpml_sigma_bx(-2:nx+3))
+    ALLOCATE(cpml_kappa_ex(1-ng:nx+ng), cpml_kappa_bx(1-ng:nx+ng))
+    ALLOCATE(cpml_a_ex(1-ng:nx+ng), cpml_a_bx(1-ng:nx+ng))
+    ALLOCATE(cpml_sigma_ex(1-ng:nx+ng), cpml_sigma_bx(1-ng:nx+ng))
 
-    ALLOCATE(cpml_kappa_ey(-2:ny+3), cpml_kappa_by(-2:ny+3))
-    ALLOCATE(cpml_a_ey(-2:ny+3), cpml_a_by(-2:ny+3))
-    ALLOCATE(cpml_sigma_ey(-2:ny+3), cpml_sigma_by(-2:ny+3))
+    ALLOCATE(cpml_kappa_ey(1-ng:ny+ng), cpml_kappa_by(1-ng:ny+ng))
+    ALLOCATE(cpml_a_ey(1-ng:ny+ng), cpml_a_by(1-ng:ny+ng))
+    ALLOCATE(cpml_sigma_ey(1-ng:ny+ng), cpml_sigma_by(1-ng:ny+ng))
 
     cpml_kappa_ex = 1.0_num
     cpml_kappa_bx = 1.0_num
@@ -994,10 +1031,10 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (nx_global_min .LE. cpml_thickness + ng + 1 &
-          .AND. nx_global_max .GE. cpml_thickness + ng + 1) THEN
+      IF (nx_global_min .LE. cpml_thickness + fng + 1 &
+          .AND. nx_global_max .GE. cpml_thickness + fng + 1) THEN
         add_laser(i) = .TRUE.
-        cpml_x_min_laser_idx = cpml_thickness + ng + 1 - nx_global_min
+        cpml_x_min_laser_idx = cpml_thickness + fng + 1 - nx_global_min
       ENDIF
     ENDIF
 
@@ -1053,11 +1090,11 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (nx_global_min .LE. nx_global - cpml_thickness - ng + 2 &
-          .AND. nx_global_max .GE. nx_global - cpml_thickness - ng + 2) THEN
+      IF (nx_global_min .LE. nx_global - cpml_thickness - fng + 2 &
+          .AND. nx_global_max .GE. nx_global - cpml_thickness - fng + 2) THEN
         add_laser(i) = .TRUE.
         cpml_x_max_laser_idx = &
-            nx_global - cpml_thickness - ng + 2 - nx_global_min
+            nx_global - cpml_thickness - fng + 2 - nx_global_min
       ENDIF
     ENDIF
 
@@ -1112,10 +1149,10 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (ny_global_min .LE. cpml_thickness + ng + 1 &
-          .AND. ny_global_max .GE. cpml_thickness + ng + 1) THEN
+      IF (ny_global_min .LE. cpml_thickness + fng + 1 &
+          .AND. ny_global_max .GE. cpml_thickness + fng + 1) THEN
         add_laser(i) = .TRUE.
-        cpml_y_min_laser_idx = cpml_thickness + ng + 1 - ny_global_min
+        cpml_y_min_laser_idx = cpml_thickness + fng + 1 - ny_global_min
       ENDIF
     ENDIF
 
@@ -1171,11 +1208,11 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (ny_global_min .LE. ny_global - cpml_thickness - ng + 2 &
-          .AND. ny_global_max .GE. ny_global - cpml_thickness - ng + 2) THEN
+      IF (ny_global_min .LE. ny_global - cpml_thickness - fng + 2 &
+          .AND. ny_global_max .GE. ny_global - cpml_thickness - fng + 2) THEN
         add_laser(i) = .TRUE.
         cpml_y_max_laser_idx = &
-            ny_global - cpml_thickness - ng + 2 - ny_global_min
+            ny_global - cpml_thickness - fng + 2 - ny_global_min
       ENDIF
     ENDIF
 
@@ -1187,10 +1224,15 @@ CONTAINS
 
     ! I will ignore memory consumption issues and, for simplicity,
     ! allocate the boundary fields throughout the whole simulation box.
-    ALLOCATE(cpml_psi_eyx(-2:nx+3,-2:ny+3), cpml_psi_ezx(-2:nx+3,-2:ny+3))
-    ALLOCATE(cpml_psi_byx(-2:nx+3,-2:ny+3), cpml_psi_bzx(-2:nx+3,-2:ny+3))
-    ALLOCATE(cpml_psi_exy(-2:nx+3,-2:ny+3), cpml_psi_ezy(-2:nx+3,-2:ny+3))
-    ALLOCATE(cpml_psi_bxy(-2:nx+3,-2:ny+3), cpml_psi_bzy(-2:nx+3,-2:ny+3))
+    ALLOCATE(cpml_psi_eyx(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(cpml_psi_ezx(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(cpml_psi_byx(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(cpml_psi_bzx(1-ng:nx+ng,1-ng:ny+ng))
+
+    ALLOCATE(cpml_psi_exy(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(cpml_psi_ezy(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(cpml_psi_bxy(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(cpml_psi_bzy(1-ng:nx+ng,1-ng:ny+ng))
 
     cpml_psi_eyx = 0.0_num
     cpml_psi_ezx = 0.0_num

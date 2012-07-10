@@ -331,7 +331,7 @@ CONTAINS
       old_cell_min1, old_cell_max1, new_cell_min1, new_cell_max1)
 
     ! This subroutine redistributes the fields over the new processor layout
-    INTEGER, PARAMETER :: ng = 3, nd = 1
+    INTEGER, PARAMETER :: nd = 1
     REAL(num), DIMENSION(1-ng:), INTENT(IN) :: field_in
     REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: field_out
     INTEGER, DIMENSION(nd), INTENT(IN) :: cdim
@@ -474,7 +474,7 @@ CONTAINS
       old_cell_min1, old_cell_max1, new_cell_min1, new_cell_max1)
 
     ! This subroutine redistributes the fields over the new processor layout
-    INTEGER, PARAMETER :: ng = 3, nd = 1
+    INTEGER, PARAMETER :: nd = 1
     REAL(r4), DIMENSION(1-ng:), INTENT(IN) :: field_in
     REAL(r4), DIMENSION(1-ng:), INTENT(OUT) :: field_out
     INTEGER, DIMENSION(nd), INTENT(IN) :: cdim
