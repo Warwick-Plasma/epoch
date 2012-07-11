@@ -12,7 +12,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
     INTEGER :: i, j
 
-    CALL processor_summation_bcs(data_array)
+    CALL processor_summation_bcs(data_array, ng)
 
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic .AND. x_min_boundary) THEN
       DO j = -2, ny+3
@@ -867,7 +867,7 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL processor_summation_bcs(data_array, direction)
+    CALL processor_summation_bcs(data_array, ng, direction)
 
   END SUBROUTINE calc_per_species_current
 

@@ -129,6 +129,10 @@ PROGRAM pic
         CALL qed_update_optical_depth()
       ENDIF
 #endif
+      IF (dlb) THEN
+        ! .FALSE. this time to use load balancing threshold
+        CALL balance_workload(.FALSE.)
+      ENDIF
       CALL push_particles
       IF (use_particle_lists) THEN
         ! After this line, the particles can be accessed on a cell by cell basis
@@ -149,10 +153,6 @@ PROGRAM pic
     CALL update_eb_fields_final
     step = step + 1
     time = time + dt
-    IF (dlb) THEN
-      ! .FALSE. this time to use load balancing threshold
-      CALL balance_workload(.FALSE.)
-    ENDIF
 
     CALL moving_window
 

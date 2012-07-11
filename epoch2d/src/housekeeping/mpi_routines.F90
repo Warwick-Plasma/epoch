@@ -208,9 +208,10 @@ CONTAINS
     ALLOCATE(bx(1-ng:nx+ng, 1-ng:ny+ng))
     ALLOCATE(by(1-ng:nx+ng, 1-ng:ny+ng))
     ALLOCATE(bz(1-ng:nx+ng, 1-ng:ny+ng))
-    ALLOCATE(jx(1-ng:nx+ng, 1-ng:ny+ng))
-    ALLOCATE(jy(1-ng:nx+ng, 1-ng:ny+ng))
-    ALLOCATE(jz(1-ng:nx+ng, 1-ng:ny+ng))
+    ! Current may need an extra layer of ghostcells.
+    ALLOCATE(jx(1-jng:nx+jng, 1-jng:ny+jng))
+    ALLOCATE(jy(1-jng:nx+jng, 1-jng:ny+jng))
+    ALLOCATE(jz(1-jng:nx+jng, 1-jng:ny+jng))
 
     ! Setup the particle lists
     IF (n_species .GT. 0) &

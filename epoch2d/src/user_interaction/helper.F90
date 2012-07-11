@@ -557,7 +557,7 @@ top:DO it = 1, 3
     ENDDO
     DEALLOCATE(density_map)
 
-    CALL processor_summation_bcs(weight_fn)
+    CALL processor_summation_bcs(weight_fn, ng)
     IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
       IF (x_min_boundary) weight_fn(0   ,:) = weight_fn(1 ,:)
       IF (x_max_boundary) weight_fn(nx+1,:) = weight_fn(nx,:)

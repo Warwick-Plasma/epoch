@@ -70,10 +70,12 @@ CONTAINS
 
     ! Actually create the subtypes
     subtype_field = create_current_field_subtype()
-    subarray_field = create_current_field_subarray()
+    subarray_field = create_current_field_subarray(ng)
+    subarray_field_big = create_current_field_subarray(jng)
 
     subtype_field_r4 = create_current_field_subtype(MPI_REAL4)
-    subarray_field_r4 = create_current_field_subarray(MPI_REAL4)
+    subarray_field_r4 = create_current_field_subarray(ng, MPI_REAL4)
+    subarray_field_big_r4 = create_current_field_subarray(jng, MPI_REAL4)
 
     CALL create_ordered_particle_offsets(n_dump_species, npart_local)
 
@@ -128,9 +130,10 @@ CONTAINS
   ! current load balanced geometry
   !----------------------------------------------------------------------------
 
-  FUNCTION create_current_field_subarray(basetype_in)
+  FUNCTION create_current_field_subarray(ng, basetype_in)
 
     INTEGER :: create_current_field_subarray
+    INTEGER, INTENT(IN) :: ng
     INTEGER, OPTIONAL, INTENT(IN) :: basetype_in
     INTEGER :: basetype
 
@@ -140,7 +143,7 @@ CONTAINS
       basetype = mpireal
     ENDIF
 
-    create_current_field_subarray = create_field_subarray(basetype, nx, ny)
+    create_current_field_subarray = create_field_subarray(basetype, ng, nx, ny)
 
   END FUNCTION create_current_field_subarray
 
@@ -160,10 +163,12 @@ CONTAINS
     INTEGER :: i
 
     subtype_field = create_current_field_subtype()
-    subarray_field = create_current_field_subarray()
+    subarray_field = create_current_field_subarray(ng)
+    subarray_field_big = create_current_field_subarray(jng)
 
     subtype_field_r4 = create_current_field_subtype(MPI_REAL4)
-    subarray_field_r4 = create_current_field_subarray(MPI_REAL4)
+    subarray_field_r4 = create_current_field_subarray(ng, MPI_REAL4)
+    subarray_field_big_r4 = create_current_field_subarray(jng, MPI_REAL4)
 
     ALLOCATE(species_subtypes(n_species))
     DO i = 1,n_species
@@ -462,9 +467,9 @@ CONTAINS
 
 
 
-  FUNCTION create_field_subarray(basetype, n1, n2, n3)
+  FUNCTION create_field_subarray(basetype, ng, n1, n2, n3)
 
-    INTEGER, INTENT(IN) :: basetype, n1
+    INTEGER, INTENT(IN) :: basetype, ng, n1
     INTEGER, INTENT(IN), OPTIONAL :: n2, n3
     INTEGER, DIMENSION(3) :: n_local, n_global, start
     INTEGER :: i, ndim, create_field_subarray

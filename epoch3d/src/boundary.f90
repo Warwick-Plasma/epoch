@@ -301,10 +301,10 @@ CONTAINS
 
 
 
-  SUBROUTINE field_clamp_zero(field, stagger_type, boundary)
+  SUBROUTINE field_clamp_zero(field, ng, stagger_type, boundary)
 
+    INTEGER, INTENT(IN) :: ng, stagger_type, boundary
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
-    INTEGER, INTENT(IN) :: stagger_type, boundary
     INTEGER :: i, nn
 
     IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
@@ -386,8 +386,9 @@ CONTAINS
 
 
 
-  SUBROUTINE processor_summation_bcs(array, flip_direction)
+  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
 
+    INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
@@ -573,22 +574,22 @@ CONTAINS
     ! Perfectly conducting boundaries
     DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
       IF (bc_field(i) .EQ. c_bc_conduct) THEN
-        CALL field_clamp_zero(ey, c_stagger_ey, i)
-        CALL field_clamp_zero(ez, c_stagger_ez, i)
+        CALL field_clamp_zero(ey, ng, c_stagger_ey, i)
+        CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
       ENDIF
     ENDDO
 
     DO i = c_bd_y_min, c_bd_y_max, c_bd_y_max - c_bd_y_min
       IF (bc_field(i) .EQ. c_bc_conduct) THEN
-        CALL field_clamp_zero(ex, c_stagger_ex, i)
-        CALL field_clamp_zero(ez, c_stagger_ez, i)
+        CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
+        CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
       ENDIF
     ENDDO
 
     DO i = c_bd_z_min, c_bd_z_max, c_bd_z_max - c_bd_z_min
       IF (bc_field(i) .EQ. c_bc_conduct) THEN
-        CALL field_clamp_zero(ex, c_stagger_ex, i)
-        CALL field_clamp_zero(ez, c_stagger_ey, i)
+        CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
+        CALL field_clamp_zero(ez, ng, c_stagger_ey, i)
       ENDIF
     ENDDO
 
@@ -597,9 +598,9 @@ CONTAINS
       IF (bc_field(i) .EQ. c_bc_clamp &
           .OR. bc_field(i) .EQ. c_bc_simple_laser &
           .OR. bc_field(i) .EQ. c_bc_simple_outflow) THEN
-        CALL field_clamp_zero(ex, c_stagger_ex, i)
-        CALL field_clamp_zero(ey, c_stagger_ey, i)
-        CALL field_clamp_zero(ez, c_stagger_ez, i)
+        CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
+        CALL field_clamp_zero(ey, ng, c_stagger_ey, i)
+        CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
       ENDIF
 
       ! These apply zero gradient boundary conditions on the edges
@@ -631,7 +632,7 @@ CONTAINS
     ! Perfectly conducting boundaries
     DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
       IF (bc_field(i) .EQ. c_bc_conduct) THEN
-        CALL field_clamp_zero(bx, c_stagger_bx, i)
+        CALL field_clamp_zero(bx, ng, c_stagger_bx, i)
         CALL field_zero_gradient(by, c_stagger_by, i)
         CALL field_zero_gradient(bz, c_stagger_bz, i)
       ENDIF
@@ -639,7 +640,7 @@ CONTAINS
 
     DO i = c_bd_y_min, c_bd_y_max, c_bd_y_max - c_bd_y_min
       IF (bc_field(i) .EQ. c_bc_conduct) THEN
-        CALL field_clamp_zero(by, c_stagger_by, i)
+        CALL field_clamp_zero(by, ng, c_stagger_by, i)
         CALL field_zero_gradient(bx, c_stagger_bx, i)
         CALL field_zero_gradient(bz, c_stagger_bz, i)
       ENDIF
@@ -647,7 +648,7 @@ CONTAINS
 
     DO i = c_bd_z_min, c_bd_z_max, c_bd_z_max - c_bd_z_min
       IF (bc_field(i) .EQ. c_bc_conduct) THEN
-        CALL field_clamp_zero(bz, c_stagger_bz, i)
+        CALL field_clamp_zero(bz, ng, c_stagger_bz, i)
         CALL field_zero_gradient(bx, c_stagger_bx, i)
         CALL field_zero_gradient(by, c_stagger_by, i)
       ENDIF
@@ -658,9 +659,9 @@ CONTAINS
       IF (bc_field(i) .EQ. c_bc_clamp &
           .OR. bc_field(i) .EQ. c_bc_simple_laser &
           .OR. bc_field(i) .EQ. c_bc_simple_outflow) THEN
-        CALL field_clamp_zero(bx, c_stagger_bx, i)
-        CALL field_clamp_zero(by, c_stagger_by, i)
-        CALL field_clamp_zero(bz, c_stagger_bz, i)
+        CALL field_clamp_zero(bx, ng, c_stagger_bx, i)
+        CALL field_clamp_zero(by, ng, c_stagger_by, i)
+        CALL field_clamp_zero(bz, ng, c_stagger_bz, i)
       ENDIF
 
       ! These apply zero gradient boundary conditions on the edges
@@ -1321,15 +1322,15 @@ CONTAINS
     INTEGER :: i
 
     ! domain is decomposed. Just add currents at edges
-    CALL processor_summation_bcs(jx, c_dir_x)
-    CALL processor_summation_bcs(jy, c_dir_y)
-    CALL processor_summation_bcs(jz, c_dir_z)
+    CALL processor_summation_bcs(jx, jng, c_dir_x)
+    CALL processor_summation_bcs(jy, jng, c_dir_y)
+    CALL processor_summation_bcs(jz, jng, c_dir_z)
 
     DO i = 1, 2*c_ndims
       IF (bc_particle(i) .EQ. c_bc_reflect) THEN
-        CALL field_clamp_zero(jx, c_stagger_jx, i)
-        CALL field_clamp_zero(jy, c_stagger_jy, i)
-        CALL field_clamp_zero(jz, c_stagger_jz, i)
+        CALL field_clamp_zero(jx, jng, c_stagger_jx, i)
+        CALL field_clamp_zero(jy, jng, c_stagger_jy, i)
+        CALL field_clamp_zero(jz, jng, c_stagger_jz, i)
       ENDIF
     ENDDO
 

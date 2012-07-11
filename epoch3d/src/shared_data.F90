@@ -425,15 +425,19 @@ MODULE shared_data
   REAL(num) :: particle_push_start_time = 0.0_num
 
   ! The order for the spline interpolation used as a particle representation.
+  ! png is the number of ghost cells needed by the particles
 #ifdef PARTICLE_SHAPE_BSPLINE3
   INTEGER, PARAMETER :: sf_min = -2
   INTEGER, PARAMETER :: sf_max =  2
+  INTEGER, PARAMETER :: png =  4
 #elif  PARTICLE_SHAPE_TOPHAT
   INTEGER, PARAMETER :: sf_min =  0
   INTEGER, PARAMETER :: sf_max =  1
+  INTEGER, PARAMETER :: png =  2
 #else
   INTEGER, PARAMETER :: sf_min = -1
   INTEGER, PARAMETER :: sf_max =  1
+  INTEGER, PARAMETER :: png =  3
 #endif
 
   ! Object representing a particle
@@ -573,8 +577,9 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! file handling
   !----------------------------------------------------------------------------
-  INTEGER :: subtype_field, subarray_field
-  INTEGER :: subtype_field_r4, subarray_field_r4
+  INTEGER :: subtype_field, subtype_field_r4
+  INTEGER :: subarray_field, subarray_field_r4
+  INTEGER :: subarray_field_big, subarray_field_big_r4
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
   INTEGER :: output_file
@@ -761,7 +766,9 @@ MODULE shared_data
 
   ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
+  ! jng is the number of ghost cells needed by the current arrays
   INTEGER, PARAMETER :: ng = 3
+  INTEGER, PARAMETER :: jng =  MAX(ng,png)
   INTEGER :: fng, nx, ny, nz
   INTEGER :: nx_global, ny_global, nz_global
   INTEGER(i8) :: npart_global, particles_max_id

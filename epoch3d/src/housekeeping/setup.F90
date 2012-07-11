@@ -905,15 +905,15 @@ CONTAINS
 
         ELSE IF (str_cmp(block_id, 'jx')) THEN
           CALL sdf_read_plain_variable(sdf_handle, jx, &
-              subtype_field, subarray_field)
+              subtype_field, subarray_field_big)
 
         ELSE IF (str_cmp(block_id, 'jy')) THEN
           CALL sdf_read_plain_variable(sdf_handle, jy, &
-              subtype_field, subarray_field)
+              subtype_field, subarray_field_big)
 
         ELSE IF (str_cmp(block_id, 'jz')) THEN
           CALL sdf_read_plain_variable(sdf_handle, jz, &
-              subtype_field, subarray_field)
+              subtype_field, subarray_field_big)
 
         ELSE IF (str_cmp(block_id, 'cpml_psi_eyx')) THEN
           CALL sdf_read_plain_variable(sdf_handle, cpml_psi_eyx, &

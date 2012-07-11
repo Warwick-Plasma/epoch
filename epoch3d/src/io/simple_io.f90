@@ -34,7 +34,7 @@ CONTAINS
     ENDIF
 
     subtype = create_current_field_subtype()
-    subarray = create_current_field_subarray()
+    subarray = create_current_field_subarray(ng)
     CALL MPI_FILE_SET_VIEW(fh, offset, MPI_BYTE, subtype, 'native', &
         MPI_INFO_NULL, errcode)
 

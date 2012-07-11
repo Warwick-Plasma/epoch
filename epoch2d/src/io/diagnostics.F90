@@ -516,11 +516,14 @@ CONTAINS
       CASE(c_dump_bz)
         avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(bz * dt, r4)
       CASE(c_dump_jx)
-        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(jx * dt, r4)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) &
+            + REAL(jx(1-ng:nx+ng,1-ng:ny+ng) * dt, r4)
       CASE(c_dump_jy)
-        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(jy * dt, r4)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) &
+            + REAL(jy(1-ng:nx+ng,1-ng:ny+ng) * dt, r4)
       CASE(c_dump_jz)
-        avg%r4array(:,:,1) = avg%r4array(:,:,1) + REAL(jz * dt, r4)
+        avg%r4array(:,:,1) = avg%r4array(:,:,1) &
+            + REAL(jz(1-ng:nx+ng,1-ng:ny+ng) * dt, r4)
       CASE(c_dump_ekbar)
         ALLOCATE(array(-2:nx+3,-2:ny+3))
         DO ispecies = 1, n_species_local
@@ -577,11 +580,11 @@ CONTAINS
       CASE(c_dump_bz)
         avg%array(:,:,1) = avg%array(:,:,1) + bz * dt
       CASE(c_dump_jx)
-        avg%array(:,:,1) = avg%array(:,:,1) + jx * dt
+        avg%array(:,:,1) = avg%array(:,:,1) + jx(1-ng:nx+ng,1-ng:ny+ng) * dt
       CASE(c_dump_jy)
-        avg%array(:,:,1) = avg%array(:,:,1) + jy * dt
+        avg%array(:,:,1) = avg%array(:,:,1) + jy(1-ng:nx+ng,1-ng:ny+ng) * dt
       CASE(c_dump_jz)
-        avg%array(:,:,1) = avg%array(:,:,1) + jz * dt
+        avg%array(:,:,1) = avg%array(:,:,1) + jz(1-ng:nx+ng,1-ng:ny+ng) * dt
       CASE(c_dump_ekbar)
         ALLOCATE(array(-2:nx+3,-2:ny+3))
         DO ispecies = 1, n_species_local
@@ -653,10 +656,18 @@ CONTAINS
 
     IF (convert) THEN
       subtype  = subtype_field_r4
-      subarray = subarray_field_r4
+      IF (id .EQ. c_dump_jx .OR. id .EQ. c_dump_jy .OR. id .EQ. c_dump_jz) THEN
+        subarray = subarray_field_big_r4
+      ELSE
+        subarray = subarray_field_r4
+      ENDIF
     ELSE
       subtype  = subtype_field
-      subarray = subarray_field
+      IF (id .EQ. c_dump_jx .OR. id .EQ. c_dump_jy .OR. id .EQ. c_dump_jz) THEN
+        subarray = subarray_field_big
+      ELSE
+        subarray = subarray_field
+      ENDIF
     ENDIF
 
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN

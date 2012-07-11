@@ -94,17 +94,17 @@ CONTAINS
 
     INTEGER :: j, k
 
-    CALL shift_field(ex)
-    CALL shift_field(ey)
-    CALL shift_field(ez)
+    CALL shift_field(ex, ng)
+    CALL shift_field(ey, ng)
+    CALL shift_field(ez, ng)
 
-    CALL shift_field(bx)
-    CALL shift_field(by)
-    CALL shift_field(bz)
+    CALL shift_field(bx, ng)
+    CALL shift_field(by, ng)
+    CALL shift_field(bz, ng)
 
-    CALL shift_field(jx)
-    CALL shift_field(jy)
-    CALL shift_field(jz)
+    CALL shift_field(jx, jng)
+    CALL shift_field(jy, jng)
+    CALL shift_field(jz, jng)
 
     IF (x_max_boundary) THEN
       DO k = -2, nz+3
@@ -131,8 +131,9 @@ CONTAINS
 
 
 
-  SUBROUTINE shift_field(field)
+  SUBROUTINE shift_field(field, ng)
 
+    INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER :: i, j, k
 

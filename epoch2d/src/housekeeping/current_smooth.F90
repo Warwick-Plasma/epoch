@@ -20,7 +20,7 @@ CONTAINS
 
   SUBROUTINE smooth_array(array)
 
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-jng:,1-jng:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: wk_array
     INTEGER :: ix, iy
 #ifdef HIGH_ORDER_SMOOTHING

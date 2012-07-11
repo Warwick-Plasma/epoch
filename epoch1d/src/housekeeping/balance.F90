@@ -126,6 +126,9 @@ CONTAINS
     ENDIF
 #endif
 
+    CALL efield_bcs
+    CALL bfield_bcs(.FALSE.)
+
   END SUBROUTINE balance_workload
 
 
@@ -145,6 +148,22 @@ CONTAINS
 
     nx_new = new_domain(1,2) - new_domain(1,1) + 1
 
+    ! Current will be recalculated during the particle push, so there
+    ! is no need to copy the contents of the old arrays.
+
+    DEALLOCATE(jx)
+    DEALLOCATE(jy)
+    DEALLOCATE(jz)
+    ALLOCATE(jx(1-jng:nx_new+jng))
+    ALLOCATE(jy(1-jng:nx_new+jng))
+    ALLOCATE(jz(1-jng:nx_new+jng))
+
+    IF (time .EQ. 0) THEN
+      jx = 0.0_num
+      jy = 0.0_num
+      jz = 0.0_num
+    ENDIF
+
     ALLOCATE(temp(-2:nx_new+3))
 
     CALL redistribute_field(ex, temp)
@@ -154,10 +173,6 @@ CONTAINS
     CALL redistribute_field(bx, temp)
     CALL redistribute_field(by, temp)
     CALL redistribute_field(bz, temp)
-
-    CALL redistribute_field(jx, temp)
-    CALL redistribute_field(jy, temp)
-    CALL redistribute_field(jz, temp)
 
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%migrate%fluid) THEN
@@ -225,7 +240,6 @@ CONTAINS
 
     n_new = SHAPE(temp) - 2 * 3
 
-    temp = 0.0_num
     CALL remap_field(field, temp)
     DEALLOCATE(field)
     ALLOCATE(field(-2:n_new(1)+3))
@@ -244,7 +258,6 @@ CONTAINS
     n_new = SHAPE(temp) - 2 * 3
     n_new(c_ndims+1) = n_new(c_ndims+1) + 2 * 3
 
-    temp = 0.0_num
     DO i = 1, n_new(c_ndims+1)
       CALL remap_field(field(:,i), temp(:,i))
     ENDDO
@@ -267,7 +280,6 @@ CONTAINS
     n_new = SHAPE(temp) - 2 * 3
     n_new(c_ndims+1) = n_new(c_ndims+1) + 2 * 3
 
-    temp = 0.0_num
     DO i = 1, n_new(c_ndims+1)
       CALL remap_field_r4(field(:,i), temp(:,i))
     ENDDO
