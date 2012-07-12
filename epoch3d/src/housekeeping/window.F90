@@ -14,7 +14,9 @@ CONTAINS
 
   SUBROUTINE initialise_window
 
+#ifdef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies
+#endif
 
     IF (.NOT. move_window) RETURN
 
@@ -154,7 +156,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, i, iy, iz, isuby, isubz
-    INTEGER(KIND=8) :: ipart, npart_per_cell, n0
+    INTEGER(i8) :: ipart, npart_per_cell, n0
     REAL(num) :: cell_y_r, cell_frac_y, cy2
     REAL(num) :: cell_z_r, cell_frac_z, cz2
     INTEGER :: cell_y, cell_z
@@ -171,7 +173,7 @@ CONTAINS
 
     DO ispecies = 1, n_species
       CALL create_empty_partlist(append_list)
-      npart_per_cell = AINT(species_list(ispecies)%npart_per_cell, KIND=8)
+      npart_per_cell = AINT(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
       IF (npart_frac .GT. 0) THEN
         n0 = 0
@@ -296,9 +298,11 @@ CONTAINS
 
   SUBROUTINE moving_window
 
+#ifdef PER_PARTICLE_WEIGHT
     REAL(num), SAVE :: window_shift_fraction
     REAL(num) :: window_shift_real
     INTEGER :: window_shift_cells
+#endif
 
     IF (.NOT. move_window) RETURN
 

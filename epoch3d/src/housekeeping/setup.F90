@@ -527,7 +527,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: specname
     INTEGER, INTENT(OUT) :: species_number
-    INTEGER :: ispecies, ierr, i1, i2
+    INTEGER :: ispecies, i1, i2
 
     CALL strip_species_name(specname, i1, i2)
 
@@ -567,7 +567,7 @@ CONTAINS
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
     INTEGER :: ierr, i1, i2, iblock, nblocks, ndims, found_species
-    INTEGER(KIND=8) :: npart, npart_local
+    INTEGER(i8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims
     LOGICAL :: restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
@@ -927,7 +927,7 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
 
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
     TYPE(particle), POINTER, SAVE :: cur
 
     IF (start) cur => iterator_list

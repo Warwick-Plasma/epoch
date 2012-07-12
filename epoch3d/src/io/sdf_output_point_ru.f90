@@ -221,8 +221,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r8), INTENT(IN), OPTIONAL :: mult
-    INTEGER(i8) :: idx, npoint_max, npoint_rem
-    INTEGER :: errcode, i
+    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
+    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (npoint_global .LE. 0) RETURN
@@ -230,7 +230,7 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%soi
+    b%type_size = INT(h%soi,r4)
     b%datatype = h%datatype_integer
     b%mpitype = h%mpitype_integer
     b%ndims = 1

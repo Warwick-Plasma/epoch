@@ -19,7 +19,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     REAL(num) :: mass, temp_local, drift_local
     TYPE(particle), POINTER :: current
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
     INTEGER :: ix, iy, iz
 #include "particle_head.inc"
 

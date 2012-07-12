@@ -90,7 +90,7 @@ CONTAINS
     REAL(num) :: root, fac, dtfac, third, gamma, cf2
     REAL(num) :: delta_x, delta_y, delta_z
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
 #ifdef PARTICLE_PROBES
     LOGICAL :: probes_for_species
 #endif

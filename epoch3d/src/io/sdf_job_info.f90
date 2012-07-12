@@ -2,7 +2,7 @@ MODULE sdf_job_info
 
   IMPLICIT NONE
 
-  INTEGER, PARAMETER, PRIVATE :: i4  = SELECTED_INT_KIND(9) ! 4-byte 2^31 ~ 10^9
+  INTEGER, PARAMETER, PRIVATE :: i4 = SELECTED_INT_KIND(9) ! 4-byte 2^31 ~ 10^9
 
   TYPE :: jobid_type
     INTEGER(i4) :: start_seconds

@@ -23,8 +23,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
-    INTEGER(i8) :: idx, npoint_max, npoint_rem
-    INTEGER :: errcode, i
+    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
+    INTEGER :: errcode
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
@@ -99,8 +99,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
-    INTEGER(i8) :: idx, npoint_max, npoint_rem
-    INTEGER :: errcode, i
+    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
+    INTEGER :: errcode
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
@@ -188,8 +188,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
-    INTEGER(i8) :: idx, npoint_max, npoint_rem
-    INTEGER :: errcode, i
+    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
+    INTEGER :: errcode
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
@@ -341,7 +341,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     INTEGER(i8), INTENT(IN) :: npoint_global
-    INTEGER, INTENT(IN) :: ndims
+    INTEGER(i4), INTENT(IN) :: ndims
     INTEGER(i8), INTENT(IN) :: offset
     LOGICAL, INTENT(IN), OPTIONAL :: convert_in
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
@@ -358,8 +358,8 @@ CONTAINS
       END FUNCTION iterator
     END INTERFACE
 
-    INTEGER(MPI_OFFSET_KIND) :: offset_for_min_max
-    INTEGER(i8) :: file_offset, nmax
+    INTEGER(MPI_OFFSET_KIND) :: file_offset, offset_for_min_max
+    INTEGER(i8) :: nmax
     INTEGER :: errcode, idim, npoint_this_cycle
     LOGICAL :: start, convert
     REAL(r8), DIMENSION(c_maxdims) :: gmn, gmx
@@ -405,7 +405,7 @@ CONTAINS
     IF (convert) ALLOCATE(r4array(1:npoint_per_iteration))
 
     DO idim = 1, ndims
-      npoint_this_cycle = npoint_per_iteration
+      npoint_this_cycle = INT(npoint_per_iteration)
       start = .TRUE.
       file_offset = h%current_location + offset * b%type_size
 
@@ -417,13 +417,13 @@ CONTAINS
         IF (nmax .LE. 0) EXIT
 
         start = .FALSE.
-        gmn(idim) = REAL(MIN(gmn(idim),MINVAL(array(1:npoint_this_cycle))),r8)
-        gmx(idim) = REAL(MAX(gmx(idim),MAXVAL(array(1:npoint_this_cycle))),r8)
+        gmn(idim) = MIN(gmn(idim),REAL(MINVAL(array(1:npoint_this_cycle)),r8))
+        gmx(idim) = MAX(gmx(idim),REAL(MAXVAL(array(1:npoint_this_cycle)),r8))
 
         CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, MPI_BYTE, &
             b%mpitype, 'native', MPI_INFO_NULL, errcode)
         IF (convert) THEN
-          r4array = array
+          r4array = REAL(array,r4)
           CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, npoint_this_cycle, &
               b%mpitype, MPI_STATUS_IGNORE, errcode)
         ELSE
@@ -481,8 +481,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r4), INTENT(IN), OPTIONAL :: mult
-    INTEGER(i8) :: idx, npoint_max, npoint_rem
-    INTEGER :: errcode, i
+    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
+    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (npoint_global .LE. 0) RETURN
@@ -574,7 +574,8 @@ CONTAINS
       END FUNCTION iterator
     END INTERFACE
 
-    INTEGER(i8) :: file_offset, nmax
+    INTEGER(MPI_OFFSET_KIND) :: file_offset
+    INTEGER(i8) :: nmax
     INTEGER :: errcode, npoint_this_cycle
     LOGICAL :: start, convert
     REAL(r4), ALLOCATABLE, DIMENSION(:) :: array
@@ -615,7 +616,7 @@ CONTAINS
     ALLOCATE(array(1:npoint_per_iteration))
     IF (convert) ALLOCATE(r4array(1:npoint_per_iteration))
 
-    npoint_this_cycle = npoint_per_iteration
+    npoint_this_cycle = INT(npoint_per_iteration)
     start = .TRUE.
     file_offset = h%current_location + offset * b%type_size
 
@@ -631,7 +632,7 @@ CONTAINS
       CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, MPI_BYTE, &
           b%mpitype, 'native', MPI_INFO_NULL, errcode)
       IF (convert) THEN
-        r4array = array
+        r4array = REAL(array,r4)
         CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, npoint_this_cycle, &
             b%mpitype, MPI_STATUS_IGNORE, errcode)
       ELSE

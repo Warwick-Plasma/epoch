@@ -61,7 +61,7 @@ CONTAINS
       ALLOCATE(b%dim_units(b%ndims))
       ALLOCATE(b%dim_mults(b%ndims))
 
-      CALL read_entry_array_real8(h, b%dim_mults, b%ndims)
+      CALL read_entry_array_real8(h, b%dim_mults, INT(b%ndims))
 
       DO i = 1,b%ndims
         CALL read_entry_id(h, b%dim_labels(i))
@@ -73,7 +73,7 @@ CONTAINS
 
       CALL read_entry_int4(h, b%geometry)
 
-      CALL read_entry_array_real8(h, b%extents, 2*b%ndims)
+      CALL read_entry_array_real8(h, b%extents, INT(2*b%ndims))
 
       CALL read_entry_int8(h, b%npoints)
     ENDIF
@@ -133,11 +133,11 @@ CONTAINS
 
     IF (PRESENT(npoints)) npoints = b%npoints
     IF (PRESENT(units)) THEN
-      clen = MIN(LEN(units),c_id_length)
+      clen = MIN(LEN(units),INT(c_id_length))
       units(1:clen) = b%units(1:clen)
     ENDIF
     IF (PRESENT(mesh_id)) THEN
-      clen = MIN(LEN(mesh_id),c_id_length)
+      clen = MIN(LEN(mesh_id),INT(c_id_length))
       mesh_id(1:clen) = b%mesh_id(1:clen)
     ENDIF
 
@@ -173,7 +173,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
-    npoints = b%npoints
+    npoints = INT(b%npoints)
     CALL MPI_FILE_READ_ALL(h%filehandle, array, npoints, b%mpitype, &
         MPI_STATUS_IGNORE, errcode)
 

@@ -171,11 +171,11 @@ top:DO it = 1, 3
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
 #ifndef PER_PARTICLE_WEIGHT
-    INTEGER(KIND=8) :: num_valid_cells_local, num_valid_cells_global
-    INTEGER(KIND=8) :: npart_per_cell
+    INTEGER(i8) :: num_valid_cells_local, num_valid_cells_global
+    INTEGER(i8) :: npart_per_cell
     REAL(num) :: density_total, density_total_global, density_average
     REAL(num) :: npart_per_cell_average
-    INTEGER(KIND=8) :: npart_this_proc_new, ipart, npart_this_species
+    INTEGER(i8) :: npart_this_proc_new, ipart, npart_this_species
     INTEGER :: ix, iy, iz
     CHARACTER(LEN=15) :: string
     TYPE(particle_list), POINTER :: partlist
@@ -306,19 +306,19 @@ top:DO it = 1, 3
 
     TYPE(particle_species), POINTER :: species
     LOGICAL, DIMENSION(-2:,-2:,-2:), INTENT(IN) :: load_list
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
-    INTEGER(KIND=8) :: ipart, npart_per_cell, num_int, num_total, idx
-    INTEGER(KIND=8) :: num_valid_cells_local, num_valid_cells_global
-    INTEGER(KIND=8) :: npart_this_species, num_new_particles, npart_left
-    INTEGER(KIND=8), ALLOCATABLE :: num_valid_cells_all(:), num_idx(:)
+    INTEGER(i8) :: ipart, npart_per_cell, num_int, num_total, idx
+    INTEGER(i8) :: num_valid_cells_local, num_valid_cells_global
+    INTEGER(i8) :: npart_this_species, num_new_particles, npart_left
+    INTEGER(i8), ALLOCATABLE :: num_valid_cells_all(:), num_idx(:)
     REAL(num) :: valid_cell_frac, num_real, f0, f1
     REAL(num), ALLOCATABLE :: num_frac(:)
-    INTEGER :: cell_x
-    INTEGER :: cell_y
-    INTEGER :: cell_z
-    INTEGER(KIND=8) :: i, ipos
+    INTEGER(i8) :: cell_x
+    INTEGER(i8) :: cell_y
+    INTEGER(i8) :: cell_z
+    INTEGER(i8) :: i, ipos
     INTEGER :: ierr, ix, iy, iz
     CHARACTER(LEN=15) :: string
     LOGICAL :: sweep
@@ -345,9 +345,9 @@ top:DO it = 1, 3
     ENDDO
 
     IF (species%npart_per_cell .GE. 0) THEN
-      npart_per_cell = AINT(species%npart_per_cell, KIND=8)
+      npart_per_cell = AINT(species%npart_per_cell, KIND=i8)
       num_new_particles = &
-          AINT(species%npart_per_cell * num_valid_cells_local, KIND=8)
+          AINT(species%npart_per_cell * num_valid_cells_local, KIND=i8)
     ELSE
       ALLOCATE(num_valid_cells_all(nproc), num_idx(nproc), num_frac(nproc))
 
@@ -374,7 +374,7 @@ top:DO it = 1, 3
       valid_cell_frac = REAL(num_valid_cells_local, num) &
           / REAL(num_valid_cells_global, num)
       num_real = npart_this_species * valid_cell_frac
-      num_new_particles = AINT(num_real, KIND=8)
+      num_new_particles = AINT(num_real, KIND=i8)
 
       ! Work out which processors get the remaining fractional numbers
       ! of particles
@@ -386,7 +386,7 @@ top:DO it = 1, 3
         valid_cell_frac = REAL(num_valid_cells_all(i), num) &
             / REAL(num_valid_cells_global, num)
         num_real = npart_this_species * valid_cell_frac
-        num_int = AINT(num_real, KIND=8)
+        num_int = AINT(num_real, KIND=i8)
         num_frac(i) = num_real - num_int
         num_idx (i) = i - 1
         num_total = num_total + num_int
@@ -432,7 +432,7 @@ top:DO it = 1, 3
 
       species%npart_per_cell = &
           REAL(npart_this_species,num) / num_valid_cells_global
-      npart_per_cell = AINT(species%npart_per_cell, KIND=8)
+      npart_per_cell = AINT(species%npart_per_cell, KIND=i8)
     ENDIF
 
     partlist=>species%attached_list
@@ -555,7 +555,7 @@ top:DO it = 1, 3
 #ifdef PER_PARTICLE_WEIGHT
     REAL(num) :: weight_local
     TYPE(particle), POINTER :: current
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: weight_fn
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist

@@ -22,7 +22,7 @@ CONTAINS
     ! This subroutine describes the total number of particles on the current
     ! processor. It simply sums over every particle species
 
-    INTEGER(KIND=8) :: get_total_local_particles
+    INTEGER(i8) :: get_total_local_particles
     INTEGER :: ispecies
 
     get_total_local_particles = 0
@@ -45,8 +45,8 @@ CONTAINS
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when writing data
     INTEGER, INTENT(IN) :: dump_code
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_local
-    INTEGER :: n_dump_species, ispecies, index, realtmp
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_local
+    INTEGER :: n_dump_species, ispecies, index
 
     ! count the number of dumped particles of each species
     n_dump_species = 0
@@ -156,7 +156,7 @@ CONTAINS
     ! field and particles data. It is used when reading data.
 
     INTEGER, POINTER :: species_subtypes(:)
-    INTEGER :: i, realtmp
+    INTEGER :: i
 
     subtype_field = create_current_field_subtype()
     subarray_field = create_current_field_subarray()
@@ -203,9 +203,9 @@ CONTAINS
 
   FUNCTION create_particle_subtype(npart_in) RESULT(subtype)
 
-    INTEGER(KIND=8), INTENT(IN) :: npart_in
-    INTEGER(KIND=8), DIMENSION(1) :: npart_local
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
+    INTEGER(i8), INTENT(IN) :: npart_in
+    INTEGER(i8), DIMENSION(1) :: npart_local
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
     INTEGER, DIMENSION(3) :: lengths, types
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
     INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, total_particles
@@ -264,8 +264,8 @@ CONTAINS
   SUBROUTINE create_ordered_particle_offsets(n_dump_species, npart_local)
 
     INTEGER, INTENT(IN) :: n_dump_species
-    INTEGER(KIND=8), DIMENSION(n_dump_species), INTENT(IN) :: npart_local
-    INTEGER(KIND=8), DIMENSION(:,:), ALLOCATABLE :: npart_each_rank
+    INTEGER(i8), DIMENSION(n_dump_species), INTENT(IN) :: npart_local
+    INTEGER(i8), DIMENSION(:,:), ALLOCATABLE :: npart_each_rank
     INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip
     INTEGER :: ispecies, i
 

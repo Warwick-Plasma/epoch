@@ -41,7 +41,7 @@ CONTAINS
       CALL sdf_write_block_info(h)
     ENDDO
 
-    h%summary_size = h%current_location - h%summary_location
+    h%summary_size = INT(h%current_location - h%summary_location,i4)
 
   END SUBROUTINE sdf_write_summary
 

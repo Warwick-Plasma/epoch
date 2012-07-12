@@ -25,7 +25,7 @@ CONTAINS
   SUBROUTINE particle_collisions
 
     INTEGER :: ispecies, jspecies
-    INTEGER(KIND=8) :: ix, iy, iz
+    INTEGER(i8) :: ix, iy, iz
     TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
@@ -124,7 +124,7 @@ CONTAINS
     TYPE(particle), POINTER :: current, impact
     REAL(num) :: factor, np
     REAL(num) :: dens, temp, log_lambda
-    INTEGER(KIND=8) :: icount, k
+    INTEGER(i8) :: icount, k
 
     factor = 0.0_num
     np = 0.0_num
@@ -150,7 +150,7 @@ CONTAINS
     np = np + current%weight + impact%weight
     factor = factor + MIN(current%weight, impact%weight)
 
-    IF (MOD(icount, 2) .NE. 0) THEN
+    IF (MOD(icount, 2_i8) .NE. 0) THEN
       np = np + impact%next%weight
       factor = factor + MIN(current%weight, impact%next%weight)
       factor = factor + MIN(impact%weight, impact%next%weight)
@@ -168,7 +168,7 @@ CONTAINS
       impact => current%next
     ENDDO
 
-    IF (MOD(icount, 2) .EQ. 0) THEN
+    IF (MOD(icount, 2_i8) .EQ. 0) THEN
       CALL scatter(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, temp, temp, log_lambda, factor)
     ELSE
@@ -205,7 +205,7 @@ CONTAINS
     TYPE(particle), POINTER :: current, impact
 
     REAL(num) :: factor, np
-    INTEGER(KIND=8) :: icount, jcount, pcount, k
+    INTEGER(i8) :: icount, jcount, pcount, k
 
     factor = 0.0_num
     np = 0.0_num
@@ -570,7 +570,7 @@ CONTAINS
     INTEGER :: pivot, store_index
     REAL(num) :: pivot_val
 
-    p_num = p_list%count
+    p_num = INT(p_list%count)
 
     ! Nothing to be done
     IF (p_num .LE. 2) RETURN
@@ -582,7 +582,7 @@ CONTAINS
 
       ! make the sort array somewhat larger to avoid frequent deallocation
       ! and reallocation
-      coll_sort_array_size = (11 * p_list%count) / 10 + 10
+      coll_sort_array_size = (11 * INT(p_list%count)) / 10 + 10
       ALLOCATE(coll_sort_array(coll_sort_array_size))
     ENDIF
 
@@ -1199,8 +1199,8 @@ CONTAINS
 
     DO i = 1, N
       ! allocate particles
-      CALL create_allocated_partlist(partlist1, INT(max_num*random(), KIND=8))
-      CALL create_allocated_partlist(partlist2, INT(max_num*random(), KIND=8))
+      CALL create_allocated_partlist(partlist1, INT(max_num*random(), KIND=i8))
+      CALL create_allocated_partlist(partlist2, INT(max_num*random(), KIND=i8))
 
       ! fill particle values
 
@@ -1359,7 +1359,7 @@ CONTAINS
 
     DO i = 1, N
       ! allocate particles
-      CALL create_allocated_partlist(partlist, INT(max_num*random(), KIND=8))
+      CALL create_allocated_partlist(partlist, INT(max_num*random(), KIND=i8))
 
       ! fill particle values
 
@@ -1456,7 +1456,7 @@ CONTAINS
     TYPE(particle_list) :: partlist
     TYPE(particle), POINTER :: part
     INTEGER :: N, max_num, min_num, i, j, k
-    INTEGER(8) :: plist_length
+    INTEGER(i8) :: plist_length
     INTEGER :: iterations
     REAL(num), DIMENSION(:), ALLOCATABLE :: histo
     INTEGER, DIMENSION(:), ALLOCATABLE :: minp, maxp

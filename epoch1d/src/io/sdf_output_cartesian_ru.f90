@@ -246,7 +246,7 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%soi
+    b%type_size = INT(h%soi,i4)
     b%datatype = h%datatype_integer
     b%mpitype = h%mpitype_integer
     b%ndims = ndims
@@ -308,7 +308,7 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%soi
+    b%type_size = INT(h%soi,i4)
     b%datatype = h%datatype_integer
     b%mpitype = h%mpitype_integer
     b%ndims = ndims
@@ -370,7 +370,7 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%soi
+    b%type_size = INT(h%soi,i4)
     b%datatype = h%datatype_integer
     b%mpitype = h%mpitype_integer
     b%ndims = ndims

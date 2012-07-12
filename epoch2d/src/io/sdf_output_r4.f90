@@ -87,7 +87,6 @@ CONTAINS
 
   SUBROUTINE write_1d_array_real_r4(h, id, name, array, rank_write)
 
-    INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     REAL(r4), DIMENSION(:), INTENT(IN) :: array
@@ -137,7 +136,7 @@ CONTAINS
 
       ! Actual array
       IF (n1 .EQ. SIZE(array,1)) THEN
-        var_len = b%nelements
+        var_len = INT(b%nelements)
         CALL MPI_FILE_WRITE(h%filehandle, array, var_len, b%mpitype, &
             MPI_STATUS_IGNORE, errcode)
       ELSE

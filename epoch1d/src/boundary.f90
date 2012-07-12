@@ -326,7 +326,7 @@ CONTAINS
     TYPE(particle), POINTER :: cur, next
     TYPE(particle_list), DIMENSION(-1:1) :: send, recv
     INTEGER :: xbd
-    INTEGER(KIND=8) :: ixp
+    INTEGER(i8) :: ixp
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix
     REAL(num) :: temp(3)
@@ -693,7 +693,7 @@ CONTAINS
   SUBROUTINE cpml_advance_e_currents(tstep)
 
     REAL(num), INTENT(IN) :: tstep
-    INTEGER :: ipos, ix
+    INTEGER :: ipos
     REAL(num) :: acoeff, bcoeff, ccoeff_d
     REAL(num) :: kappa, sigma
 
@@ -742,7 +742,7 @@ CONTAINS
   SUBROUTINE cpml_advance_b_currents(tstep)
 
     REAL(num), INTENT(IN) :: tstep
-    INTEGER :: ipos, ix
+    INTEGER :: ipos
     REAL(num) :: acoeff, bcoeff, ccoeff_d
     REAL(num) :: kappa, sigma
 

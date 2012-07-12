@@ -11,6 +11,9 @@ MODULE constants
 
   INTEGER, PARAMETER :: num = KIND(1.d0)
   INTEGER, PARAMETER :: dbl = KIND(1.d0)
+  INTEGER, PARAMETER :: r4  = SELECTED_REAL_KIND(r=30)
+  INTEGER, PARAMETER :: i4  = SELECTED_INT_KIND(9)  ! 4-byte 2^31 ~ 10^9
+  INTEGER, PARAMETER :: i8  = SELECTED_INT_KIND(18) ! 8-byte 2^63 ~ 10^18
   REAL(num), PARAMETER :: c_non_zero = TINY(1.0_num)
   REAL(num), PARAMETER :: c_largest_number = HUGE(1.0_num)
   REAL(num), PARAMETER :: c_largest_exp = LOG(c_largest_number)
@@ -141,23 +144,23 @@ MODULE constants
   INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! define flags
-  INTEGER(8), PARAMETER :: c_def_particle_debug = 2**0
-  INTEGER(8), PARAMETER :: c_def_field_debug = 2**1
-  INTEGER(8), PARAMETER :: c_def_particle_shape_bspline3 = 2**2
-  INTEGER(8), PARAMETER :: c_def_split_part_after_push = 2**3
-  INTEGER(8), PARAMETER :: c_def_per_particle_weight = 2**4
-  INTEGER(8), PARAMETER :: c_def_particle_count_update = 2**5
-  INTEGER(8), PARAMETER :: c_def_tracer_particles = 2**6
-  INTEGER(8), PARAMETER :: c_def_particle_probes = 2**7
-  INTEGER(8), PARAMETER :: c_def_per_particle_chargemass = 2**8
-  INTEGER(8), PARAMETER :: c_def_particle_ionise = 2**9
-  INTEGER(8), PARAMETER :: c_def_high_order_smoothing = 2**10
-  INTEGER(8), PARAMETER :: c_def_particle_shape_tophat = 2**11
-  INTEGER(8), PARAMETER :: c_def_parser_debug = 2**12
-  INTEGER(8), PARAMETER :: c_def_particle_id4 = 2**13
-  INTEGER(8), PARAMETER :: c_def_particle_id  = 2**14
-  INTEGER(8), PARAMETER :: c_def_photons = 2**15
-  INTEGER(8), PARAMETER :: c_def_trident_photons = 2**16
+  INTEGER(i8), PARAMETER :: c_def_particle_debug = 2**0
+  INTEGER(i8), PARAMETER :: c_def_field_debug = 2**1
+  INTEGER(i8), PARAMETER :: c_def_particle_shape_bspline3 = 2**2
+  INTEGER(i8), PARAMETER :: c_def_split_part_after_push = 2**3
+  INTEGER(i8), PARAMETER :: c_def_per_particle_weight = 2**4
+  INTEGER(i8), PARAMETER :: c_def_particle_count_update = 2**5
+  INTEGER(i8), PARAMETER :: c_def_tracer_particles = 2**6
+  INTEGER(i8), PARAMETER :: c_def_particle_probes = 2**7
+  INTEGER(i8), PARAMETER :: c_def_per_particle_chargemass = 2**8
+  INTEGER(i8), PARAMETER :: c_def_particle_ionise = 2**9
+  INTEGER(i8), PARAMETER :: c_def_high_order_smoothing = 2**10
+  INTEGER(i8), PARAMETER :: c_def_particle_shape_tophat = 2**11
+  INTEGER(i8), PARAMETER :: c_def_parser_debug = 2**12
+  INTEGER(i8), PARAMETER :: c_def_particle_id4 = 2**13
+  INTEGER(i8), PARAMETER :: c_def_particle_id  = 2**14
+  INTEGER(i8), PARAMETER :: c_def_photons = 2**15
+  INTEGER(i8), PARAMETER :: c_def_trident_photons = 2**16
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -419,7 +422,7 @@ MODULE shared_data
   TYPE particle
     REAL(num), DIMENSION(3) :: part_p
     REAL(num), DIMENSION(c_ndims) :: part_pos
-#ifdef PER_PARTICLE_WEIGHT
+#if PER_PARTICLE_WEIGHT || PHOTONS
     REAL(num) :: weight
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -434,7 +437,7 @@ MODULE shared_data
 #ifdef PARTICLE_ID4
     INTEGER :: id
 #elif PARTICLE_ID
-    INTEGER(KIND=8) :: id
+    INTEGER(i8) :: id
 #endif
 #ifdef COLLISIONS_TEST
     INTEGER :: coll_count
@@ -453,7 +456,7 @@ MODULE shared_data
   TYPE particle_list
     TYPE(particle), POINTER :: head
     TYPE(particle), POINTER :: tail
-    INTEGER(KIND=8) :: count
+    INTEGER(i8) :: count
     INTEGER :: id_update
     ! Pointer is safe if the particles in it are all unambiguously linked
     LOGICAL :: safe
@@ -472,7 +475,7 @@ MODULE shared_data
     REAL(num) :: charge
     REAL(num) :: mass
     REAL(num) :: weight
-    INTEGER(KIND=8) :: count
+    INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
 
 #ifdef TRACER_PARTICLES
@@ -483,9 +486,9 @@ MODULE shared_data
     INTEGER :: species_type
 
     ! particle cell division
-    INTEGER(KIND=8) :: global_count
+    INTEGER(i8) :: global_count
     LOGICAL :: split
-    INTEGER(KIND=8) :: npart_max
+    INTEGER(i8) :: npart_max
     ! Secondary list
     TYPE(particle_list), DIMENSION(:,:), POINTER :: secondary_list
 
@@ -637,7 +640,7 @@ MODULE shared_data
     REAL(num) :: weight_min, weight_max
     REAL(num) :: charge_min, charge_max
     REAL(num) :: mass_min, mass_max
-    INTEGER(KIND=8) :: id_min, id_max
+    INTEGER(i8) :: id_min, id_max
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
@@ -693,7 +696,7 @@ MODULE shared_data
 
   INTEGER :: nx, ny, ng
   INTEGER :: nx_global, ny_global
-  INTEGER(KIND=8) :: npart_global, particles_max_id
+  INTEGER(i8) :: npart_global, particles_max_id
   INTEGER :: nprocx, nprocy
   INTEGER :: nsteps, n_species = -1
   LOGICAL :: smooth_currents
@@ -802,7 +805,7 @@ MODULE shared_data
   INTEGER :: errcode, comm, tag, nproc, rank
   INTEGER :: status(MPI_STATUS_SIZE)
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank, ny_each_rank
-  INTEGER(KIND=8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
+  INTEGER(i8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
   LOGICAL :: x_min_boundary, x_max_boundary
   LOGICAL :: y_min_boundary, y_max_boundary
 
@@ -811,7 +814,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   LOGICAL :: dlb
   REAL(num) :: dlb_threshold
-  INTEGER(KIND=8), PARAMETER :: npart_per_it = 1000000
+  INTEGER(i8), PARAMETER :: npart_per_it = 1000000
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_global, y_global
   REAL(num), DIMENSION(:), ALLOCATABLE :: xb_global, yb_global
   REAL(num), DIMENSION(:), ALLOCATABLE :: xb_offset_global
@@ -865,8 +868,8 @@ MODULE shared_data
 
   TYPE(jobid_type) :: jobid
 
-  INTEGER(4) :: run_date
-  INTEGER(8) :: defines
+  INTEGER(i4) :: run_date
+  INTEGER(i8) :: defines
 
   REAL(num) :: walltime_start
   INTEGER :: stdout_frequency
@@ -874,6 +877,6 @@ MODULE shared_data
       particle_file_lengths, particle_file_offsets
 
   LOGICAL, DIMENSION(c_dir_x:c_dir_z,0:c_stagger_max) :: stagger
-  INTEGER(KIND=8) :: push_per_field = 5
+  INTEGER(i8) :: push_per_field = 5
 
 END MODULE shared_data

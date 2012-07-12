@@ -483,7 +483,7 @@ CONTAINS
     TYPE(particle), POINTER :: cur, next
     TYPE(particle_list), DIMENSION(-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd
-    INTEGER(KIND=8) :: ixp, iyp
+    INTEGER(i8) :: ixp, iyp
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix, iy
     INTEGER :: cell_x, cell_y

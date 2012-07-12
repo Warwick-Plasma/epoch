@@ -12,6 +12,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: opcode, ix, iy
     INTEGER, INTENT(INOUT) :: err
 
+    err = c_err_none
     CALL push_on_eval(REAL(opcode, num))
 
   END SUBROUTINE do_species
@@ -25,6 +26,8 @@ CONTAINS
     REAL(num), DIMENSION(2) :: values
     REAL(num) :: val
     LOGICAL :: comp
+
+    err = c_err_none
 
     IF (opcode .EQ. c_opcode_plus) THEN
       CALL get_values(2, values)
@@ -121,6 +124,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: opcode, ix, iy
     INTEGER, INTENT(INOUT) :: err
     REAL(num) :: val
+
+    err = c_err_none
 
     IF (opcode .GE. c_const_custom_lowbound) THEN
       ! Check for custom constants
@@ -394,6 +399,8 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
     REAL(num) :: point, t0
 
+    err = c_err_none
+
     IF (opcode .EQ. c_func_floor) THEN
       CALL get_values(1, values)
       CALL push_on_eval(REAL(FLOOR(values(1)),num))
@@ -626,7 +633,7 @@ CONTAINS
 
     IF (opcode .EQ. c_func_supergauss) THEN
       CALL get_values(4, values)
-      n = values(4)
+      n = INT(values(4))
       CALL push_on_eval(EXP(-ABS(((values(1)-values(2))/values(3)))**n))
       RETURN
     ENDIF

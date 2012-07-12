@@ -182,7 +182,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: id, name
     INTEGER, INTENT(OUT), OPTIONAL :: blocktype, ndims, datatype
-    INTEGER :: errcode, ierr
+    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (.NOT. h%done_header) THEN
@@ -431,7 +431,7 @@ CONTAINS
     ENDIF
 
     ! Size of array
-    CALL read_entry_array_int4(h, b%dims, b%ndims)
+    CALL read_entry_array_int4(h, b%dims, INT(b%ndims))
 
     IF (PRESENT(dims)) dims(1:b%ndims) = b%dims(1:b%ndims)
 
@@ -810,7 +810,8 @@ CONTAINS
     INTEGER, PARAMETER :: n = 4
     TYPE(sdf_file_handle) :: h
     INTEGER(i4), INTENT(OUT) :: value
-    INTEGER :: i, errcode
+    INTEGER(i8) :: i
+    INTEGER :: errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -831,7 +832,8 @@ CONTAINS
     INTEGER, PARAMETER :: n = 8
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT) :: value
-    INTEGER :: i, errcode
+    INTEGER(i8) :: i
+    INTEGER :: errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -852,7 +854,8 @@ CONTAINS
     INTEGER, PARAMETER :: n = 4
     TYPE(sdf_file_handle) :: h
     REAL(r4), INTENT(OUT) :: value
-    INTEGER :: i, errcode
+    INTEGER(i8) :: i
+    INTEGER :: errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -873,7 +876,8 @@ CONTAINS
     INTEGER, PARAMETER :: n = 8
     TYPE(sdf_file_handle) :: h
     REAL(r8), INTENT(OUT) :: value
-    INTEGER :: i, errcode
+    INTEGER(i8) :: i
+    INTEGER :: errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -895,7 +899,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     LOGICAL, INTENT(OUT) :: value
     CHARACTER(LEN=1) :: cvalue
-    INTEGER :: i, errcode
+    INTEGER(i8) :: i
+    INTEGER :: errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -922,7 +927,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(OUT) :: value
     INTEGER, INTENT(IN) :: n
-    INTEGER :: i, j, idx, errcode
+    INTEGER(i8) :: i
+    INTEGER :: j, idx, errcode
 
     idx = 1
 
@@ -957,7 +963,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(OUT) :: value
 
-    CALL read_entry_stringlen(h, value, h%string_length)
+    CALL read_entry_stringlen(h, value, INT(h%string_length))
 
   END SUBROUTINE read_entry_string
 
@@ -968,7 +974,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(OUT) :: value
 
-    CALL read_entry_stringlen(h, value, c_id_length)
+    CALL read_entry_stringlen(h, value, INT(c_id_length))
 
   END SUBROUTINE read_entry_id
 
@@ -980,7 +986,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER(i4), INTENT(OUT) :: value(:)
     INTEGER, INTENT(IN) :: nentries
-    INTEGER :: i, j, errcode
+    INTEGER(i8) :: i
+    INTEGER :: j, errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -1005,7 +1012,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT) :: value(:)
     INTEGER, INTENT(IN) :: nentries
-    INTEGER :: i, j, errcode
+    INTEGER(i8) :: i
+    INTEGER :: j, errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -1030,7 +1038,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     REAL(r4), INTENT(OUT) :: value(:)
     INTEGER, INTENT(IN) :: nentries
-    INTEGER :: i, j, errcode
+    INTEGER(i8) :: i
+    INTEGER :: j, errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -1055,7 +1064,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     REAL(r8), INTENT(OUT) :: value(:)
     INTEGER, INTENT(IN) :: nentries
-    INTEGER :: i, j, errcode
+    INTEGER(i8) :: i
+    INTEGER :: j, errcode
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
@@ -1079,7 +1089,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(OUT) :: string
 
-    CALL sdf_safe_read_string_len(h, string, h%string_length)
+    CALL sdf_safe_read_string_len(h, string, INT(h%string_length))
 
   END SUBROUTINE sdf_safe_read_string
 
@@ -1103,7 +1113,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(OUT) :: string
 
-    CALL sdf_safe_read_string_len(h, string, c_id_length)
+    CALL sdf_safe_read_string_len(h, string, INT(c_id_length))
 
   END SUBROUTINE sdf_safe_read_id
 

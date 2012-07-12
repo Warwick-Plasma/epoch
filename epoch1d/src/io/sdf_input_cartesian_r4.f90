@@ -30,13 +30,13 @@ CONTAINS
     IF (PRESENT(dim_mults)) dim_mults = REAL(b%dim_mults,r4)
     IF (PRESENT(dim_labels)) THEN
       DO i = 1,b%ndims
-        clen = MIN(LEN(dim_labels(i)),c_id_length)
+        clen = MIN(LEN(dim_labels(i)),INT(c_id_length))
         dim_labels(i)(1:clen) = b%dim_labels(i)(1:clen)
       ENDDO
     ENDIF
     IF (PRESENT(dim_units)) THEN
       DO i = 1,b%ndims
-        clen = MIN(LEN(dim_units(i)),c_id_length)
+        clen = MIN(LEN(dim_units(i)),INT(c_id_length))
         dim_units(i)(1:clen) = b%dim_units(i)(1:clen)
       ENDDO
     ENDIF
@@ -362,7 +362,6 @@ CONTAINS
   SUBROUTINE read_1d_var_first_r4(h, nm, dims, variable, idx, distribution, &
       subarray)
 
-    INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
@@ -383,7 +382,6 @@ CONTAINS
   SUBROUTINE read_2d_var_first_r4(h, nm, dims, variable, idx, distribution, &
       subarray)
 
-    INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
@@ -404,7 +402,6 @@ CONTAINS
   SUBROUTINE read_3d_var_first_r4(h, nm, dims, variable, idx, distribution, &
       subarray)
 
-    INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
@@ -425,7 +422,6 @@ CONTAINS
   SUBROUTINE read_1d_var_last_r4(h, nm, dims, variable, idx, distribution, &
       subarray)
 
-    INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
@@ -446,7 +442,6 @@ CONTAINS
   SUBROUTINE read_2d_var_last_r4(h, nm, dims, variable, idx, distribution, &
       subarray)
 
-    INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
@@ -467,7 +462,6 @@ CONTAINS
   SUBROUTINE read_3d_var_last_r4(h, nm, dims, variable, idx, distribution, &
       subarray)
 
-    INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
@@ -487,7 +481,6 @@ CONTAINS
 
   SUBROUTINE read_1d_material_r4(h, variable, distribution, subarray, last_in)
 
-    INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     REAL(r4), DIMENSION(:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
@@ -536,7 +529,6 @@ CONTAINS
 
   SUBROUTINE read_2d_material_r4(h, variable, distribution, subarray, last_in)
 
-    INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     REAL(r4), DIMENSION(:,:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
@@ -585,7 +577,6 @@ CONTAINS
 
   SUBROUTINE read_3d_material_r4(h, variable, distribution, subarray, last_in)
 
-    INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     REAL(r4), DIMENSION(:,:,:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray

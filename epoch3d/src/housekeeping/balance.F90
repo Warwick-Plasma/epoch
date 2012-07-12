@@ -24,13 +24,13 @@ CONTAINS
     ! So cheat
 
     LOGICAL, INTENT(IN) :: over_ride
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: load_x
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: load_y
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: load_z
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_z
     REAL(num) :: balance_frac, npart_av
     REAL(num) :: balance_frac_x, balance_frac_y, balance_frac_z
-    INTEGER(KIND=8) :: min_x, max_x, min_y, max_y, min_z, max_z
-    INTEGER(KIND=8) :: npart_local, sum_npart, max_npart, wk
+    INTEGER(i8) :: min_x, max_x, min_y, max_y, min_z, max_z
+    INTEGER(i8) :: npart_local, sum_npart, max_npart, wk
     INTEGER :: iproc
     INTEGER, DIMENSION(c_ndims,2) :: domain
 #ifdef PARTICLE_DEBUG
@@ -1146,8 +1146,8 @@ CONTAINS
     ! Calculate total load across the X direction
     ! Summed in the Y,Z directions
 
-    INTEGER(KIND=8), DIMENSION(:), INTENT(OUT) :: load
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: temp
     TYPE(particle), POINTER :: current
     INTEGER :: cell, ispecies, sz
 
@@ -1188,8 +1188,8 @@ CONTAINS
     ! Calculate total load across the Y direction
     ! Summed in the X,Z directions
 
-    INTEGER(KIND=8), DIMENSION(:), INTENT(OUT) :: load
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: temp
     TYPE(particle), POINTER :: current
     INTEGER :: cell, ispecies, sz
 
@@ -1230,8 +1230,8 @@ CONTAINS
     ! Calculate total load across the Z direction
     ! Summed in the Y,Z directions
 
-    INTEGER(KIND=8), DIMENSION(:), INTENT(OUT) :: load
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: temp
     TYPE(particle), POINTER :: current
     INTEGER :: cell, ispecies, sz
 
@@ -1272,11 +1272,11 @@ CONTAINS
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(KIND=8), INTENT(IN), DIMENSION(:) :: load
+    INTEGER(i8), INTENT(IN), DIMENSION(:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old
-    INTEGER(KIND=8) :: total, total_old, load_per_proc_ideal
+    INTEGER(i8) :: total, total_old, load_per_proc_ideal
 
     sz = SIZE(load)
     maxs = sz
@@ -1390,7 +1390,7 @@ CONTAINS
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_recv
     TYPE(particle), POINTER :: current, next
     INTEGER :: part_proc, iproc, ispecies, ierr
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: sendcounts, recvcounts
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: sendcounts, recvcounts
 
     ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))
     ALLOCATE(sendcounts(0:nproc-1), recvcounts(0:nproc-1))

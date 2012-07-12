@@ -18,7 +18,6 @@ CONTAINS
     TYPE(jobid_type), INTENT(IN), OPTIONAL :: jobid
     INTEGER(i4) :: int4
     INTEGER :: errcode
-    INTEGER, PARAMETER :: sof8 = 8
     CHARACTER(LEN=1) :: flag
     CHARACTER(LEN=6) :: padding
 
@@ -188,7 +187,7 @@ CONTAINS
 
       CALL sdf_safe_write_string(h, b%name)
 
-      block_info_length = b%info_length - h%block_header_length
+      block_info_length = INT(b%info_length - h%block_header_length)
       CALL MPI_FILE_WRITE(h%filehandle, block_info_length, 1, &
           MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
     ENDIF
@@ -314,7 +313,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: string
 
-    CALL sdf_safe_write_string_len(h, string, c_id_length)
+    CALL sdf_safe_write_string_len(h, string, INT(c_id_length))
 
   END SUBROUTINE sdf_safe_write_id
 
@@ -1214,7 +1213,7 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%soi
+    b%type_size = INT(h%soi,i4)
     b%datatype = h%datatype_integer
     b%mpitype = h%mpitype_integer
 
@@ -1271,8 +1270,8 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: array
     CHARACTER(LEN=*), INTENT(IN) :: last
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER(i8) :: sz
-    INTEGER :: i, errcode, len1, len2
+    INTEGER(i8) :: i, sz
+    INTEGER :: errcode, len1, len2
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
@@ -1380,7 +1379,7 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%soi
+    b%type_size = INT(h%soi,i4)
     b%datatype = h%datatype_integer
     b%mpitype = h%mpitype_integer
     b%ndims = ndims
@@ -1414,7 +1413,6 @@ CONTAINS
 
   SUBROUTINE write_1d_array_integer(h, id, name, array, rank_write)
 
-    INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     INTEGER, DIMENSION(:), INTENT(IN) :: array
@@ -1442,7 +1440,7 @@ CONTAINS
     CALL sdf_get_next_block(h)
     b => h%current_block
 
-    b%type_size = h%soi
+    b%type_size = INT(h%soi,i4)
     b%datatype = h%datatype_integer
     b%mpitype = h%mpitype_integer
     b%ndims = ndims
@@ -1464,7 +1462,7 @@ CONTAINS
 
       ! Actual array
       IF (n1 .EQ. SIZE(array,1)) THEN
-        var_len = b%nelements
+        var_len = INT(b%nelements)
         CALL MPI_FILE_WRITE(h%filehandle, array, var_len, b%mpitype, &
             MPI_STATUS_IGNORE, errcode)
       ELSE
@@ -1559,12 +1557,10 @@ CONTAINS
 
   SUBROUTINE write_1d_array_logical(h, id, name, array, rank_write)
 
-    INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
     LOGICAL, DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    CHARACTER(LEN=1), DIMENSION(:), ALLOCATABLE :: carray
     INTEGER :: n1
 
     n1 = SIZE(array,1)
@@ -1610,7 +1606,7 @@ CONTAINS
           errcode)
 
       ! Actual array
-      var_len = b%nelements
+      var_len = INT(b%nelements)
       CALL MPI_FILE_WRITE(h%filehandle, array, var_len, b%mpitype, &
           MPI_STATUS_IGNORE, errcode)
     ENDIF

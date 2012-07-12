@@ -620,7 +620,7 @@ CONTAINS
     TYPE(particle), POINTER :: cur, next
     TYPE(particle_list), DIMENSION(-1:1,-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd, zbd
-    INTEGER(KIND=8) :: ixp, iyp, izp
+    INTEGER(i8) :: ixp, iyp, izp
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix, iy, iz
     INTEGER :: cell_x, cell_y, cell_z

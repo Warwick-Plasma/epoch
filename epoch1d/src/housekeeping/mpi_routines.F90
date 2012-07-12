@@ -50,7 +50,7 @@ CONTAINS
     CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
         comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
-    CALL MPI_CART_COORDS(comm, rank, 1, coordinates, errcode)
+    CALL MPI_CART_COORDS(comm, rank, ndims, coordinates, errcode)
     CALL MPI_CART_SHIFT(comm, 0, 1, proc_x_min, proc_x_max, errcode)
 
     nprocx = dims(1)
@@ -125,9 +125,15 @@ CONTAINS
     ALLOCATE(x_global(-2:nx_global+3))
     ALLOCATE(xb_global(nx_global+1))
     ALLOCATE(xb_offset_global(nx_global+1))
-    ALLOCATE(ex(-2:nx+3), ey(-2:nx+3), ez(-2:nx+3))
-    ALLOCATE(bx(-2:nx+3), by(-2:nx+3), bz(-2:nx+3))
-    ALLOCATE(jx(-2:nx+3), jy(-2:nx+3), jz(-2:nx+3))
+    ALLOCATE(ex(-2:nx+3))
+    ALLOCATE(ey(-2:nx+3))
+    ALLOCATE(ez(-2:nx+3))
+    ALLOCATE(bx(-2:nx+3))
+    ALLOCATE(by(-2:nx+3))
+    ALLOCATE(bz(-2:nx+3))
+    ALLOCATE(jx(-2:nx+3))
+    ALLOCATE(jy(-2:nx+3))
+    ALLOCATE(jz(-2:nx+3))
 
     ! Setup the particle lists
     IF (n_species .GT. 0) &

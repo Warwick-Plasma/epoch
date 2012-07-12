@@ -66,8 +66,8 @@ CONTAINS
     TYPE(particle_probe), POINTER :: current_probe
     CHARACTER(LEN=string_length) :: probe_name, temp_name
     INTEGER :: ispecies, i
-    INTEGER(8) :: npart_probe_global, part_probe_offset
-    INTEGER(8), DIMENSION(:), ALLOCATABLE :: npart_probe_per_proc
+    INTEGER(i8) :: npart_probe_global, part_probe_offset
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_probe_per_proc
     LOGICAL :: convert
 
     ALLOCATE(npart_probe_per_proc(nproc))

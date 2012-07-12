@@ -14,7 +14,7 @@ CONTAINS
 
   SUBROUTINE integer4_as_string(int_in, string)
 
-    INTEGER(KIND=4), INTENT(IN) :: int_in
+    INTEGER(i4), INTENT(IN) :: int_in
     CHARACTER(LEN=*), INTENT(OUT) :: string
 
     INTEGER :: n_nums
@@ -34,7 +34,7 @@ CONTAINS
 
   SUBROUTINE integer8_as_string(int_in, string)
 
-    INTEGER(KIND=8), INTENT(IN) :: int_in
+    INTEGER(i8), INTENT(IN) :: int_in
     CHARACTER(LEN=*), INTENT(OUT) :: string
 
     INTEGER :: n_nums
@@ -116,7 +116,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
-    INTEGER(KIND=8) :: as_long_integer_simple, value
+    INTEGER(i8) :: as_long_integer_simple, value
     INTEGER :: f
 
     READ(unit=str_in, fmt=*, iostat=f) value

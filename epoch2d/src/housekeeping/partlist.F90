@@ -65,9 +65,9 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     TYPE(particle), POINTER :: a_particle
-    INTEGER(KIND=8), INTENT(IN) :: n_elements
+    INTEGER(i8), INTENT(IN) :: n_elements
     TYPE(particle), POINTER :: current
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
 
     CALL create_empty_partlist(partlist)
 
@@ -91,7 +91,7 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     TYPE(particle), POINTER :: head, tail
     TYPE(particle), POINTER :: current
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
 
     CALL create_empty_partlist(partlist)
 
@@ -118,9 +118,9 @@ CONTAINS
   SUBROUTINE create_allocated_partlist(partlist, n_elements)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
-    INTEGER(8), INTENT(IN) :: n_elements
+    INTEGER(i8), INTENT(IN) :: n_elements
     TYPE(particle), POINTER :: new_particle
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
 
     CALL create_empty_partlist(partlist)
 
@@ -139,9 +139,9 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     REAL(num), DIMENSION(:), INTENT(IN) :: data_in
-    INTEGER(8), INTENT(IN) :: n_elements
+    INTEGER(i8), INTENT(IN) :: n_elements
     TYPE(particle), POINTER :: new_particle
-    INTEGER(KIND=8) :: ipart, cpos = 0
+    INTEGER(i8) :: ipart, cpos = 0
 
     CALL create_empty_partlist(partlist)
 
@@ -165,7 +165,7 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     TYPE(particle), POINTER :: current
     INTEGER :: test_partlist
-    INTEGER(KIND=8) :: test_ct
+    INTEGER(i8) :: test_ct
 
     test_partlist = 0
     test_ct = 0
@@ -214,7 +214,7 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     TYPE(particle), POINTER :: new_particle, next
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
 
     ! Go through list and delete all the particles in the list
     new_particle=>partlist%head
@@ -333,7 +333,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(KIND=8) :: cpos
+    INTEGER(i8) :: cpos
 
     cpos = 1
     array(cpos:cpos+c_ndims-1) = a_particle%part_pos
@@ -376,7 +376,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(KIND=8) :: cpos
+    INTEGER(i8) :: cpos
 
     cpos = 1
     a_particle%part_pos = array(cpos:cpos+c_ndims-1)
@@ -495,11 +495,11 @@ CONTAINS
 
     TYPE(particle_list), INTENT(IN) :: partlist
     REAL(num), DIMENSION(:), INTENT(IN) :: array
-    INTEGER(KIND=8), INTENT(IN) :: npart_in_data
+    INTEGER(i8), INTENT(IN) :: npart_in_data
     TYPE(particle), POINTER :: current
     TYPE(particle), POINTER :: a_particle
     LOGICAL :: test_packed_particles
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
 
     test_packed_particles = .FALSE.
 
@@ -538,7 +538,7 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(KIND=8) :: cpos = 0, npart_left, ipart
+    INTEGER(i8) :: cpos = 0, npart_left, ipart
     TYPE(particle), POINTER :: current
 
     npart_left = partlist%count
@@ -565,7 +565,7 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
-    INTEGER(KIND=8) :: send_buf(2)
+    INTEGER(i8) :: send_buf(2)
 
     send_buf(1) = partlist%count
     send_buf(2) = partlist%id_update
@@ -582,7 +582,7 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: src
-    INTEGER(KIND=8), INTENT(IN) :: count
+    INTEGER(i8), INTENT(IN) :: count
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
 
     CALL create_empty_partlist(partlist)
@@ -602,12 +602,12 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: src
-    INTEGER(KIND=8) :: count, recv_buf(2)
+    INTEGER(i8) :: count, recv_buf(2)
 
     recv_buf = 0
     CALL MPI_RECV(recv_buf, 2, MPI_INTEGER8, src, tag, comm, status, errcode)
     count = recv_buf(1)
-    partlist%id_update = partlist%id_update + recv_buf(2)
+    partlist%id_update = partlist%id_update + INT(recv_buf(2))
 
     CALL partlist_recv_nocount(partlist, src, count)
 
@@ -620,8 +620,8 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist_send, partlist_recv
     INTEGER, INTENT(IN) :: dest, src
     REAL(num), DIMENSION(:), ALLOCATABLE :: data_send, data_recv, data_temp
-    INTEGER(KIND=8) :: cpos = 0, ipart = 0
-    INTEGER(KIND=8) :: npart_send, npart_recv, send_buf(2), recv_buf(2)
+    INTEGER(i8) :: cpos = 0, ipart = 0
+    INTEGER(i8) :: npart_send, npart_recv, send_buf(2), recv_buf(2)
     TYPE(particle), POINTER :: current
 
     ! This subroutine doesn't try to use memory efficient buffering, it sends
@@ -637,7 +637,7 @@ CONTAINS
 
     npart_send = send_buf(1)
     npart_recv = recv_buf(1)
-    partlist_recv%id_update = partlist_recv%id_update + recv_buf(2)
+    partlist_recv%id_update = partlist_recv%id_update + INT(recv_buf(2))
 
     ! Copy the data for the particles into a buffer
     ALLOCATE(data_send(1:npart_send*nvar))
@@ -691,8 +691,8 @@ CONTAINS
 
     TYPE(particle_list) :: partlist
 #if PARTICLE_ID || PARTICLE_ID4
-    INTEGER(KIND=8), ALLOCATABLE :: nid_all(:)
-    INTEGER(KIND=8) :: nid, part_id
+    INTEGER(i8), ALLOCATABLE :: nid_all(:)
+    INTEGER(i8) :: nid, part_id
     INTEGER :: i, id_update
     TYPE(particle), POINTER :: current
     TYPE(pointer_list) :: idlist

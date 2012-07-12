@@ -21,8 +21,8 @@ MODULE diagnostics
   PUBLIC :: set_dt, output_routines
 
   TYPE(sdf_file_handle) :: sdf_handle
-  INTEGER(KIND=8), ALLOCATABLE :: species_offset(:)
-  INTEGER(KIND=8), ALLOCATABLE :: ejected_offset(:)
+  INTEGER(i8), ALLOCATABLE :: species_offset(:)
+  INTEGER(i8), ALLOCATABLE :: ejected_offset(:)
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
@@ -1056,8 +1056,8 @@ CONTAINS
 
   SUBROUTINE species_offset_init
 
-    INTEGER(KIND=8) :: species_count
-    INTEGER(KIND=8), DIMENSION(:), ALLOCATABLE :: npart_species_per_proc
+    INTEGER(i8) :: species_count
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_species_per_proc
     INTEGER :: i, ispecies
 
     IF (done_species_offset_init) RETURN

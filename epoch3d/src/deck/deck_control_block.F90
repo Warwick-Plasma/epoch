@@ -113,8 +113,11 @@ CONTAINS
 
   SUBROUTINE control_deck_finalise
 
-    INTEGER :: i, j, io, ierr
+    INTEGER :: i, j
+#ifdef PHOTONS
     LOGICAL :: exists
+    INTEGER :: io, ierr
+#endif
 
     IF (deck_state .EQ. c_ds_first) RETURN
     DEALLOCATE(coll_pairs_touched)

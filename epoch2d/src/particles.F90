@@ -37,7 +37,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y
     REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: part_q, part_mc, ipart_mc, part_mc2, part_weight
+    REAL(num) :: part_q, part_mc, ipart_mc, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifdef PARTICLE_PROBES
@@ -46,7 +46,7 @@ CONTAINS
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: d_init, d_final
-    REAL(num) :: probe_energy
+    REAL(num) :: probe_energy, part_mc2
 #endif
 
     ! Contains the floating point version of the cell number (never actually
@@ -88,7 +88,7 @@ CONTAINS
     REAL(num) :: root, fac, dtfac, third, gamma, igamma, cf2
     REAL(num) :: delta_x, delta_y, part_vz
     INTEGER :: ispecies, ix, iy, dcellx, dcelly
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
 #ifdef PARTICLE_PROBES
     LOGICAL :: probes_for_species
 #endif
@@ -142,8 +142,6 @@ CONTAINS
 #ifdef PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
-#else
-      probes_for_species = .FALSE.
 #endif
 #ifdef TRACER_PARTICLES
       not_tracer_species = .NOT. species_list(ispecies)%tracer
@@ -481,8 +479,6 @@ CONTAINS
 #ifdef PARTICLE_PROBES
     current_probe => species_list(ispecies)%attached_probes
     probes_for_species = ASSOCIATED(current_probe)
-#else
-    probes_for_species = .FALSE.
 #endif
 
     ! set current to point to head of list

@@ -574,7 +574,7 @@ CONTAINS
             WRITE(io,*) 'Just using "npart_per_cell".'
           ENDDO
         ENDIF
-        species_list(i)%count = species_list(i)%npart_per_cell
+        species_list(i)%count = INT(species_list(i)%npart_per_cell, i8)
       ENDIF
     ENDDO
 

@@ -66,7 +66,7 @@ CONTAINS
       ALLOCATE(b%dim_units(b%ndims))
       ALLOCATE(b%dim_mults(b%ndims))
 
-      CALL read_entry_array_real8(h, b%dim_mults, b%ndims)
+      CALL read_entry_array_real8(h, b%dim_mults, INT(b%ndims))
 
       DO i = 1,b%ndims
         CALL read_entry_id(h, b%dim_labels(i))
@@ -78,9 +78,9 @@ CONTAINS
 
       CALL read_entry_int4(h, b%geometry)
 
-      CALL read_entry_array_real8(h, b%extents, 2*b%ndims)
+      CALL read_entry_array_real8(h, b%extents, 2*INT(b%ndims))
 
-      CALL read_entry_array_int4(h, b%dims, b%ndims)
+      CALL read_entry_array_int4(h, b%dims, INT(b%ndims))
     ENDIF
 
     IF (PRESENT(geometry)) geometry = b%geometry
@@ -121,7 +121,7 @@ CONTAINS
 
       CALL read_entry_id(h, b%mesh_id)
 
-      CALL read_entry_array_int4(h, b%dims, b%ndims)
+      CALL read_entry_array_int4(h, b%dims, INT(b%ndims))
 
       CALL read_entry_int4(h, b%stagger)
     ENDIF
@@ -129,11 +129,11 @@ CONTAINS
     IF (PRESENT(dims)) dims(1:b%ndims) = b%dims(1:b%ndims)
     IF (PRESENT(stagger)) stagger = b%stagger
     IF (PRESENT(units)) THEN
-      clen = MIN(LEN(units),c_id_length)
+      clen = MIN(LEN(units),INT(c_id_length))
       units(1:clen) = b%units(1:clen)
     ENDIF
     IF (PRESENT(mesh_id)) THEN
-      clen = MIN(LEN(mesh_id),c_id_length)
+      clen = MIN(LEN(mesh_id),INT(c_id_length))
       mesh_id(1:clen) = b%mesh_id(1:clen)
     ENDIF
 

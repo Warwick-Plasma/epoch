@@ -9,7 +9,7 @@ MODULE split_particle
 
   SAVE
 
-  INTEGER(KIND=8) :: npart_per_cell_min = 5
+  INTEGER(i8) :: npart_per_cell_min = 5
   LOGICAL :: use_split = .FALSE.
 
 CONTAINS
@@ -19,7 +19,7 @@ CONTAINS
     INTEGER :: ispecies, ix, iy
     INTEGER :: cell_x, cell_y
     TYPE(particle), POINTER :: current, next
-    INTEGER(KIND=8) :: local_count
+    INTEGER(i8) :: local_count
 
     DO ispecies = 1, n_species
       local_count = species_list(ispecies)%attached_list%count
@@ -98,7 +98,7 @@ CONTAINS
 
 #ifdef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies, ix, iy
-    INTEGER(KIND=8) :: count
+    INTEGER(i8) :: count
     TYPE(particle), POINTER :: current, new_particle
     TYPE(particle_list) :: append_list
     REAL(num) :: jitter_x, jitter_y

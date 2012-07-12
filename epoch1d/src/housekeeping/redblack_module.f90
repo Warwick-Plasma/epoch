@@ -10,7 +10,7 @@ MODULE redblack_module
   REAL(num), DIMENSION(:,:,:), POINTER :: field_in3d, field_out3d
   INTEGER, DIMENSION(:), POINTER :: sendtypes, recvtypes
   TYPE(particle_list), DIMENSION(:), POINTER :: pointers_send, pointers_recv
-  INTEGER(KIND=8), DIMENSION(:), POINTER :: sendcounts, recvcounts
+  INTEGER(i8), DIMENSION(:), POINTER :: sendcounts, recvcounts
 
   INTERFACE redblack
     MODULE PROCEDURE &
@@ -25,7 +25,6 @@ CONTAINS
   SUBROUTINE do_sendpart(iproc)
 
     INTEGER, INTENT(IN) :: iproc
-    INTEGER :: ierr
 
     IF (sendcounts(iproc) .GT. 0) THEN
       CALL partlist_send_nocount(pointers_send(iproc), iproc)
@@ -40,7 +39,6 @@ CONTAINS
 
     USE mpi
     INTEGER, INTENT(IN) :: iproc
-    INTEGER :: ierr
 
     IF (recvcounts(iproc) .GT. 0) THEN
       CALL partlist_recv_nocount(pointers_recv(iproc), iproc, &
@@ -138,7 +136,7 @@ CONTAINS
   SUBROUTINE redblackpart(psend, precv, sendcounts_in, recvcounts_in)
 
     TYPE(particle_list), DIMENSION(0:), TARGET :: psend, precv
-    INTEGER(KIND=8), DIMENSION(0:), TARGET :: sendcounts_in, recvcounts_in
+    INTEGER(i8), DIMENSION(0:), TARGET :: sendcounts_in, recvcounts_in
 
     pointers_send => psend
     pointers_recv => precv
@@ -214,7 +212,7 @@ CONTAINS
     END INTERFACE
 
     INTEGER, DIMENSION(:), ALLOCATABLE :: oddlist, evnlist
-    INTEGER :: nodd, nevn, iproc, i, ierr
+    INTEGER :: nodd, nevn, iproc, i
     LOGICAL :: is_evn
 
     ! Split the processors into even and odd lists.

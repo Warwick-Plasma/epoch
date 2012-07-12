@@ -114,7 +114,7 @@ CONTAINS
         array(n_elements) = block%value
       ELSE IF (block%ptype .EQ. c_pt_constant) THEN
         CALL do_constant(block%value, 1, 1, 1, err)
-        array(1) = array(1) + pop_off_eval()
+        array(1) = array(1) + INT(pop_off_eval())
       ELSE IF (block%ptype .NE. c_pt_operator) THEN
         err = c_err_bad_value
       ENDIF

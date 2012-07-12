@@ -30,13 +30,13 @@ CONTAINS
     IF (PRESENT(dim_mults)) dim_mults = REAL(b%dim_mults,r4)
     IF (PRESENT(dim_labels)) THEN
       DO i = 1,b%ndims
-        clen = MIN(LEN(dim_labels(i)),c_id_length)
+        clen = MIN(LEN(dim_labels(i)),INT(c_id_length))
         dim_labels(i)(1:clen) = b%dim_labels(i)(1:clen)
       ENDDO
     ENDIF
     IF (PRESENT(dim_units)) THEN
       DO i = 1,b%ndims
-        clen = MIN(LEN(dim_units(i)),c_id_length)
+        clen = MIN(LEN(dim_units(i)),INT(c_id_length))
         dim_units(i)(1:clen) = b%dim_units(i)(1:clen)
       ENDDO
     ENDIF
@@ -70,7 +70,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
-    npoints = b%npoints
+    npoints = INT(b%npoints)
     CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
         MPI_STATUS_IGNORE, errcode)
 
@@ -106,7 +106,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
-    npoints = b%npoints
+    npoints = INT(b%npoints)
     CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
         MPI_STATUS_IGNORE, errcode)
 
@@ -145,7 +145,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
-    npoints = b%npoints
+    npoints = INT(b%npoints)
     CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
         MPI_STATUS_IGNORE, errcode)
 
@@ -345,7 +345,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
 
-    npoints = b%npoints
+    npoints = INT(b%npoints)
     CALL MPI_FILE_READ_ALL(h%filehandle, array, npoints, b%mpitype, &
         MPI_STATUS_IGNORE, errcode)
 

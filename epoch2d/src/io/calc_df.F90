@@ -818,7 +818,7 @@ CONTAINS
     REAL(num) :: root, fac, third, gamma, igamma, cf2
     REAL(num) :: delta_x, delta_y, part_vz
     INTEGER :: ispecies, ix, iy, dcellx, dcelly
-    INTEGER(KIND=8) :: ipart
+    INTEGER(i8) :: ipart
     TYPE(particle), POINTER :: current, next
     INTEGER :: spec_start, spec_end
     LOGICAL :: spec_sum
