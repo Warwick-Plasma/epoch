@@ -18,7 +18,7 @@ MODULE diagnostics
 
   PRIVATE
 
-  PUBLIC :: set_dt, output_routines
+  PUBLIC :: output_routines
 
   TYPE(sdf_file_handle) :: sdf_handle
   INTEGER(i8), ALLOCATABLE :: species_offset(:)
@@ -524,35 +524,6 @@ CONTAINS
     END SELECT
 
   END SUBROUTINE average_field
-
-
-
-  SUBROUTINE set_dt        ! sets CFL limited step
-
-    dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
-    IF (dt_plasma_frequency .NE. 0.0_num) dt = MIN(dt, dt_plasma_frequency)
-    IF (dt_laser .NE. 0.0_num) dt = MIN(dt, dt_laser)
-    dt = dt_multiplier * dt
-
-    IF (.NOT. any_average) RETURN
-
-    average_time = MAX(dt_average, dt * nstep_average)
-
-    IF (dt_min_average .GT. 0) THEN
-      IF (dt_min_average .LT. dt) THEN
-        IF (rank .EQ. 0) THEN
-          PRINT*,'*** WARNING ***'
-          PRINT*,'Time step is too small to satisfy "nstep_average"'
-          PRINT*,'Averaging will occur over fewer time steps than specified'
-          PRINT*,'Set "dt_multiplier" less than ', &
-              dt_multiplier * dt_min_average / dt, &
-              ' to fix this'
-        ENDIF
-        dt_min_average = -1
-      ENDIF
-    ENDIF
-
-  END SUBROUTINE set_dt
 
 
 

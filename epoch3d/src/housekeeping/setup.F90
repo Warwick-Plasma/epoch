@@ -20,7 +20,7 @@ MODULE setup
 
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files, flush_stat_file
-  PUBLIC :: setup_species, after_deck_last
+  PUBLIC :: setup_species, after_deck_last, set_dt
 
   TYPE(particle), POINTER, SAVE :: iterator_list
   CHARACTER(LEN=11+data_dir_max_length), SAVE :: stat_file
@@ -520,6 +520,71 @@ CONTAINS
     CALL random_init(seed)
 
   END SUBROUTINE set_initial_values
+
+
+
+  SUBROUTINE set_plasma_frequency_dt
+
+    INTEGER :: ispecies, ix, iy, iz
+    REAL(num) :: min_dt, omega, k_max
+
+    min_dt = 1000000.0_num
+    k_max = 2.0_num * pi / MIN(dx, dy)
+
+    ! Identify the plasma frequency (Bohm-Gross dispersion relation)
+    ! Note that this doesn't get strongly relativistic plasmas right
+    DO ispecies = 1, n_species
+      DO iz = 1, nz
+      DO iy = 1, ny
+      DO ix = 1, nx
+        omega = SQRT((initial_conditions(ispecies)%density(ix,iy,iz) * q0**2) &
+            / (species_list(ispecies)%mass * epsilon0) &
+            + 6.0_num * k_max**2 * kb &
+            * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:)) &
+            / (species_list(ispecies)%mass))
+        IF (omega .EQ. 0.0_num) CYCLE
+        IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
+      ENDDO
+      ENDDO
+      ENDDO
+    ENDDO
+
+    CALL MPI_ALLREDUCE(min_dt, dt_plasma_frequency, 1, mpireal, MPI_MIN, &
+        comm, errcode)
+    ! Must resolve plasma frequency
+    dt_plasma_frequency = dt_plasma_frequency / 2.0_num
+
+  END SUBROUTINE set_plasma_frequency_dt
+
+
+
+  SUBROUTINE set_dt        ! sets CFL limited step
+
+    CALL set_plasma_frequency_dt
+    CALL set_laser_dt
+
+    dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+    IF (dt_plasma_frequency .NE. 0.0_num) dt = MIN(dt, dt_plasma_frequency)
+    IF (dt_laser .NE. 0.0_num) dt = MIN(dt, dt_laser)
+    dt = dt_multiplier * dt
+
+    IF (.NOT. any_average) RETURN
+
+    average_time = MAX(dt_average, dt * nstep_average)
+
+    IF (dt_min_average .GT. 0 .AND. dt_min_average .LT. dt) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Time step is too small to satisfy "nstep_average"'
+        PRINT*,'Averaging will occur over fewer time steps than specified'
+        PRINT*,'Set "dt_multiplier" less than ', &
+            dt_multiplier * dt_min_average / dt, &
+            ' to fix this'
+      ENDIF
+      dt_min_average = -1
+    ENDIF
+
+  END SUBROUTINE set_dt
 
 
 

@@ -134,7 +134,7 @@ CONTAINS
     REAL(num) :: dt_local
     TYPE(laser_block), POINTER :: current
 
-    dt_laser = 1000000.0_num
+    dt_laser = HUGE(1.0_num)
 
     current=>laser_x_min
     DO WHILE(ASSOCIATED(current))

@@ -124,34 +124,7 @@ top:DO it = 1, 3
 
   SUBROUTINE deallocate_ic
 
-    INTEGER :: ispecies, ix, iy, iz
-    REAL(num) :: min_dt, omega, k_max
-
-    min_dt = 1000000.0_num
-    k_max = 2.0_num * pi / MIN(dx, dy)
-
-    ! Identify the plasma frequency (Bohm-Gross dispersion relation)
-    ! Note that this doesn't get strongly relativistic plasmas right
-    DO ispecies = 1, n_species
-      DO iz = 1, nz
-      DO iy = 1, ny
-      DO ix = 1, nx
-        omega = SQRT((initial_conditions(ispecies)%density(ix,iy,iz) * q0**2) &
-            / (species_list(ispecies)%mass * epsilon0) &
-            + 6.0_num * k_max**2 * kb &
-            * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:)) &
-            / (species_list(ispecies)%mass))
-        IF (omega .EQ. 0.0_num) CYCLE
-        IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
-      ENDDO
-      ENDDO
-      ENDDO
-    ENDDO
-
-    CALL MPI_ALLREDUCE(min_dt, dt_plasma_frequency, 1, mpireal, MPI_MIN, &
-        comm, errcode)
-    ! Must resolve plasma frequency
-    dt_plasma_frequency = dt_plasma_frequency / 2.0_num
+    INTEGER :: ispecies
 
     DO ispecies = 1, n_species
       DEALLOCATE(initial_conditions(ispecies)%density)

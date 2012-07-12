@@ -90,6 +90,7 @@ PROGRAM pic
 
   CALL manual_load
   CALL initialise_window ! window.f90
+  CALL set_dt
   IF (.NOT. ic_from_restart) CALL deallocate_ic
 
   npart_global = 0
@@ -116,7 +117,6 @@ PROGRAM pic
   DO
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
         .OR. (time .GE. t_end) .OR. halt) EXIT
-    CALL set_dt
     CALL update_eb_fields_half
 #ifdef PHOTONS
     IF (time .GT. qed_start_time .AND. use_qed) THEN
