@@ -15,13 +15,20 @@ MODULE deck_species_block
   PUBLIC :: species_block_handle_element, species_block_check
 
   INTEGER :: species_id, current_block
-  INTEGER :: n_secondary_species_in_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: species_names
   INTEGER, DIMENSION(:), POINTER :: species_blocks
-  LOGICAL, DIMENSION(:), ALLOCATABLE :: species_charge_set
   LOGICAL :: got_name
   INTEGER :: check_block = c_err_none
+  LOGICAL, DIMENSION(:), ALLOCATABLE :: species_charge_set
+  INTEGER :: n_secondary_species_in_block
+  CHARACTER(LEN=string_length) :: release_species_list
+  CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: release_species
+  REAL(num), DIMENSION(:), POINTER :: species_ionisation_energies
+  REAL(num), DIMENSION(:), POINTER :: ionisation_energies, ionise_to_species
+  REAL(num), DIMENSION(:), POINTER :: mass, charge, angular, part_count
+  REAL(num), DIMENSION(:), POINTER :: principle
+  REAL(num) :: species_mass, species_charge
 
 CONTAINS
 
@@ -32,6 +39,17 @@ CONTAINS
       n_species = 0
       ALLOCATE(species_names(4))
       ALLOCATE(species_blocks(4))
+      ! All the following information is required during c_ds_first so that the
+      ! derived ionisation species can be correctly set up
+      ALLOCATE(ionise_to_species(4))
+      ALLOCATE(release_species(4))
+      ALLOCATE(ionisation_energies(4))
+      ALLOCATE(mass(4))
+      ALLOCATE(charge(4))
+      ALLOCATE(principle(4))
+      ALLOCATE(angular(4))
+      ALLOCATE(part_count(4))
+      release_species = ''
     ENDIF
 
   END SUBROUTINE species_deck_initialise
@@ -40,8 +58,10 @@ CONTAINS
 
   SUBROUTINE species_deck_finalise
 
-    INTEGER :: i
+    INTEGER :: i, j, io, nlevels, nrelease
     CHARACTER(LEN=8) :: string
+    INTEGER :: errcode
+    TYPE(primitive_stack) :: stack
 
     IF (deck_state .EQ. c_ds_first) THEN
       CALL setup_species
@@ -55,12 +75,88 @@ CONTAINS
           PRINT*, 'Name of species ', TRIM(ADJUSTL(string)), ' is ', &
               TRIM(species_names(i))
         ENDIF
+        ! This would usually be set after c_ds_first but all of this is required
+        ! during setup of derived ionisation species
+        species_list(i)%ionise_to_species = INT(ionise_to_species(i))
+        species_list(i)%ionisation_energy = ionisation_energies(i)
+        species_list(i)%n = INT(principle(i))
+        species_list(i)%l = INT(angular(i))
+        species_list(i)%mass = mass(i)
+        species_list(i)%charge = charge(i)
+        species_list(i)%count = INT(part_count(i),i8)
+        IF (species_list(i)%ionise_to_species .GT. 0) &
+            species_list(i)%ionise = .TRUE.
       ENDDO
-      IF (rank .EQ. 0) PRINT*
+
+      DEALLOCATE(part_count)
+      DEALLOCATE(principle)
+      DEALLOCATE(angular)
+      DEALLOCATE(charge)
+      DEALLOCATE(mass)
+      DEALLOCATE(ionisation_energies)
+
+      DO i = 1, n_species
+        IF (TRIM(release_species(i)) .NE. '') THEN
+          CALL initialise_stack(stack)
+          CALL tokenize(release_species(i), stack, errcode)
+          nlevels = 0
+          j = i
+          ! Count number of ionisation levels of species i
+          DO WHILE(species_list(j)%ionise)
+            nlevels = nlevels + 1
+            j = species_list(j)%ionise_to_species
+          ENDDO
+
+          ! Count number of release species listed for species i; we need to do
+          ! this because sometimes extra values are returned on the stack
+          nrelease = 0
+          DO j = 1, SIZE(stack%entries)
+            IF (stack%entries(j)%value .GT. 0 &
+                .AND. stack%entries(j)%value .LE. n_species) &
+                    nrelease = nrelease + 1
+          ENDDO
+
+          ! If there's only one release species use it for all ionisation levels
+          IF (SIZE(stack%entries) .EQ. 1) THEN
+            j = i
+            DO WHILE(species_list(j)%ionise)
+              species_list(j)%release_species = stack%entries(1)%value
+              j = species_list(j)%ionise_to_species
+            ENDDO
+          ! If there's a list of release species use it
+          ELSEIF (nlevels .EQ. nrelease) THEN
+            nlevels = 1
+            j = i
+            DO WHILE(species_list(j)%ionise)
+              species_list(j)%release_species = stack%entries(nlevels)%value
+              nlevels = nlevels + 1
+              j = species_list(j)%ionise_to_species
+            ENDDO
+          ! If there's too many or not enough release species specified use the
+          ! first one only and throw an error
+          ELSE
+            j = i
+            DO WHILE(species_list(j)%ionise)
+              species_list(j)%release_species = stack%entries(1)%value
+              j = species_list(j)%ionise_to_species
+            ENDDO
+            IF (rank .EQ. 0) THEN
+              DO io = stdout, du, du - stdout ! Print to stdout and to file
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,*) 'Incorrect number of release species specified ', &
+                    'for ', TRIM(species_names(i)), '. Using only first ', &
+                    'specified.'
+              ENDDO
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDDO
+      DEALLOCATE(release_species)
+      DEALLOCATE(ionise_to_species)
       DEALLOCATE(species_names)
     ELSE
-      DEALLOCATE(species_blocks)
       DEALLOCATE(species_charge_set)
+      DEALLOCATE(species_blocks)
 
       IF (dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
         ALLOCATE(ejected_list(n_species))
@@ -95,7 +191,7 @@ CONTAINS
 
     CHARACTER(LEN=8) :: id_string
     CHARACTER(LEN=string_length) :: name
-    INTEGER :: io, i, itmp, block_species_id
+    INTEGER :: i, io, block_species_id
 
     IF (.NOT.got_name) THEN
       IF (rank .EQ. 0) THEN
@@ -112,11 +208,21 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_first) THEN
       block_species_id = n_species
-      DO i = 1, n_secondary_species_in_block
-        CALL integer_as_string(i, id_string)
-        name = TRIM(TRIM(species_names(block_species_id))//id_string)
-        itmp = species_number_from_name(name)
-      ENDDO
+      charge(n_species) = species_charge
+      mass(n_species) = species_mass
+      IF (n_secondary_species_in_block .GT. 0) THEN
+        ! Create an empty species for each ionisation energy listed in species
+        ! block
+        release_species(n_species) = release_species_list
+        DO i = 1, n_secondary_species_in_block
+          CALL integer_as_string(i, id_string)
+          name = TRIM(TRIM(species_names(block_species_id))//id_string)
+          CALL create_ionisation_species_from_name(name, &
+              species_ionisation_energies(i), &
+              n_secondary_species_in_block + 1 - i)
+        ENDDO
+        DEALLOCATE(species_ionisation_energies)
+      ENDIF
     ENDIF
 
   END SUBROUTINE species_block_end
@@ -127,17 +233,12 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-#ifdef PARTICLE_IONISE
     TYPE(primitive_stack) :: stack
-    TYPE(particle_species), POINTER :: base_species, species
-    REAL(num), DIMENSION(:), POINTER :: dat
-    INTEGER :: i
-#endif
     REAL(num), DIMENSION(:,:), POINTER :: array
     REAL(num) :: dmin, mult
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
-    INTEGER :: io, n
+    INTEGER :: i, j, io, n
 
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
@@ -150,22 +251,44 @@ CONTAINS
       got_name = .TRUE.
       IF (deck_state .NE. c_ds_first) RETURN
       CALL grow_array(species_blocks, current_block)
-      species_blocks(current_block) = species_number_from_name(value)
+      species_blocks(current_block) = create_species_number_from_name(value)
       RETURN
     ENDIF
 
+    ! Collect ionisation energies for the species
     IF (str_cmp(element, 'ionisation_energies')) THEN
-#ifdef PARTICLE_IONISE
       IF (deck_state .EQ. c_ds_first) THEN
-        NULLIFY(dat)
-        stack%stack_point = 0
+        NULLIFY(species_ionisation_energies)
+        CALL initialise_stack(stack)
         CALL tokenize(value, stack, errcode)
         CALL evaluate_and_return_all(stack, 0, 0, &
-            n_secondary_species_in_block, dat, errcode)
-        DEALLOCATE(dat)
+            n_secondary_species_in_block, species_ionisation_energies, errcode)
+        use_ionisation = .TRUE.
+      ENDIF
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'ionisation_electron_species') &
+        .OR. str_cmp(element, 'electron_species') &
+        .OR. str_cmp(element, 'electron')) THEN
+      IF (deck_state .EQ. c_ds_first) THEN
+        release_species_list = value
+      ENDIF
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'mass')) THEN
+      IF (deck_state .EQ. c_ds_first) THEN
+        species_mass = as_real(value, errcode) * m0
         RETURN
       ENDIF
-#endif
+    ENDIF
+
+    IF (str_cmp(element, 'charge')) THEN
+      IF (deck_state .EQ. c_ds_first) THEN
+        species_charge = as_real(value, errcode) * q0
+        RETURN
+      ENDIF
     ENDIF
 
     IF (deck_state .EQ. c_ds_first) RETURN
@@ -180,7 +303,20 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'mass')) THEN
-      species_list(species_id)%mass = as_real(value, errcode) * m0
+      ! Find the release species for each ionising species and subtract the
+      ! release mass from the ionising species and each child species. Doing it
+      ! like this ensures the right number of electron masses is removed for
+      ! each ion.
+      DO i = 1, n_species
+        IF (species_id .EQ. species_list(i)%release_species) THEN
+          j = species_list(i)%ionise_to_species
+          DO WHILE(j .GT. 0)
+            species_list(j)%mass = species_list(j)%mass &
+                - species_list(species_id)%mass
+            j = species_list(j)%ionise_to_species
+          ENDDO
+        ENDIF
+      ENDDO
       IF (species_list(species_id)%mass .LT. 0) THEN
         IF (rank .EQ. 0) THEN
           DO io = stdout, du, du - stdout ! Print to stdout and to file
@@ -194,8 +330,23 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'charge')) THEN
-      species_list(species_id)%charge = as_real(value, errcode) * q0
       species_charge_set(species_id) = .TRUE.
+      ! Find the release species for each ionising species and subtract the
+      ! release charge from the ionising species and each child species. Doing
+      ! it like this ensures the right number of electron charges is removed for
+      ! each ion. The species charge is considered set for the derived ionised
+      ! species if it is touched in this routine.
+      DO i = 1, n_species
+        IF (species_id .EQ. species_list(i)%release_species) THEN
+          j = species_list(i)%ionise_to_species
+          DO WHILE(j .GT. 0)
+            species_list(j)%charge = species_list(j)%charge &
+                - species_list(species_id)%charge
+            species_charge_set(j) = .TRUE.
+            j = species_list(j)%ionise_to_species
+          ENDDO
+        ENDIF
+      ENDDO
       RETURN
     ENDIF
 
@@ -259,63 +410,6 @@ CONTAINS
 
     IF (str_cmp(element, 'npart_max')) THEN
       species_list(species_id)%npart_max = as_long_integer(value, errcode)
-      RETURN
-    ENDIF
-
-    ! *************************************************************
-    ! This section sets properties for ionisation
-    ! *************************************************************
-    IF (str_cmp(element, 'ionisation_electron_species') &
-        .OR. str_cmp(element, 'electron')) THEN
-#ifdef PARTICLE_IONISE
-      species_list(species_id)%release_species = as_integer(value, errcode)
-#endif
-      RETURN
-    ENDIF
-
-    IF (str_cmp(element, 'ionisation_energies')) THEN
-#ifdef PARTICLE_IONISE
-      IF (species_list(species_id)%release_species .LT. 0) THEN
-        IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*) '*** ERROR ***'
-            WRITE(io,*) 'Attempting to set ionisation energies without', &
-                ' specifying electron species'
-          ENDDO
-        ENDIF
-        errcode = c_err_required_element_not_set
-        extended_error_string = 'ionisation_electron_species'
-        RETURN
-      ENDIF
-
-      IF (species_list(species_id)%ionise) THEN
-        IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*) '*** ERROR ***'
-            WRITE(io,*) 'Attempting to set ionisation energies twice for'
-            WRITE(io,*) 'species "' &
-                // TRIM(species_list(species_id)%name) // '"'
-          ENDDO
-        ENDIF
-        errcode = c_err_preset_element
-        RETURN
-      ENDIF
-
-      species_list(species_id)%ionise = .TRUE.
-      NULLIFY(dat)
-      stack%stack_point = 0
-      CALL tokenize(value, stack, errcode)
-      CALL evaluate_and_return_all(stack, 0, 0, &
-          n_secondary_species_in_block, dat, errcode)
-
-      base_species=>species_list(species_id)
-      species=>species_list(species_id)
-
-      DO i = 1, n_secondary_species_in_block
-        CALL create_ion_subspecies(base_species, species, i, dat(i))
-      ENDDO
-      DEALLOCATE(dat)
-#endif
       RETURN
     ENDIF
 
@@ -496,6 +590,99 @@ CONTAINS
 
 
 
+  FUNCTION create_species_number_from_name(name)
+
+    CHARACTER(*), INTENT(IN) :: name
+    INTEGER :: create_species_number_from_name
+    INTEGER :: i
+
+    DO i = 1, n_species
+      IF (str_cmp(name, species_names(i))) THEN
+        create_species_number_from_name = i
+        RETURN
+      ENDIF
+    ENDDO
+    n_species = n_species + 1
+    CALL grow_array(species_names, n_species)
+    species_names(n_species) = TRIM(name)
+    CALL grow_array(ionise_to_species, n_species)
+    ionise_to_species(n_species) = -1
+    CALL grow_array(release_species, n_species)
+    release_species(n_species) = ''
+    CALL grow_array(mass, n_species)
+    mass(n_species) = -1.0_num
+    CALL grow_array(charge, n_species)
+    charge(n_species) = 0.0_num
+    CALL grow_array(ionisation_energies, n_species)
+    ionisation_energies(n_species) = HUGE(0.0_num)
+    CALL grow_array(principle, n_species)
+    principle(n_species) = -1
+    CALL grow_array(angular, n_species)
+    angular(n_species) = -1
+    CALL grow_array(part_count, n_species)
+    part_count(n_species) = -1
+    create_species_number_from_name = n_species
+    RETURN
+
+  END FUNCTION create_species_number_from_name
+
+
+
+  SUBROUTINE create_ionisation_species_from_name(name, ionisation_energy, &
+      n_electrons)
+
+    CHARACTER(*), INTENT(IN) :: name
+    REAL(num), INTENT(IN) :: ionisation_energy
+    INTEGER, INTENT(IN) :: n_electrons
+    INTEGER :: i, n, l
+
+    DO i = 1, n_species
+      IF (str_cmp(name, species_names(i))) RETURN
+    ENDDO
+    ! This calculates the principle and angular quantum number based on the
+    ! assumption that shells are filled as they would be in the ground state
+    ! e.g. 1s, 2s, 2p, 3s, 3p, 4s, 3d, 4p, 5s, 4d, 5p, 6s, 4f, 5d, 6p, 7s, etc
+    n = 0
+    i = 0
+    DO WHILE(n_electrons .GT. i)
+      n = n + 1
+      DO l = (n - 1) / 2, 0, -1
+        i = i + 4 * l + 2
+        IF (n_electrons .LE. i) THEN
+          n = n - l
+          EXIT
+        ENDIF
+      ENDDO
+    ENDDO
+    principle(n_species) = n
+    angular(n_species) = l
+    ionisation_energies(n_species) = ionisation_energy
+    ionise_to_species(n_species) = n_species + 1
+    n_species = n_species + 1
+    CALL grow_array(species_names, n_species)
+    species_names(n_species) = TRIM(name)
+    CALL grow_array(ionise_to_species, n_species)
+    ionise_to_species(n_species) = -1
+    CALL grow_array(release_species, n_species)
+    release_species(n_species) = ''
+    CALL grow_array(mass, n_species)
+    mass(n_species) = species_mass
+    CALL grow_array(charge, n_species)
+    charge(n_species) = species_charge
+    CALL grow_array(ionisation_energies, n_species)
+    ionisation_energies(n_species) = HUGE(0.0_num)
+    CALL grow_array(principle, n_species)
+    principle(n_species) = -1
+    CALL grow_array(angular, n_species)
+    angular(n_species) = -1
+    CALL grow_array(part_count, n_species)
+    part_count(n_species) = 0
+    RETURN
+
+  END SUBROUTINE create_ionisation_species_from_name
+
+
+
   FUNCTION species_number_from_name(name)
 
     CHARACTER(*), INTENT(IN) :: name
@@ -503,15 +690,13 @@ CONTAINS
     INTEGER :: i
 
     DO i = 1, n_species
-      IF (str_cmp(name, species_names(i))) THEN
+      IF (str_cmp(name, species_list(i)%name)) THEN
         species_number_from_name = i
         RETURN
       ENDIF
     ENDDO
-    n_species = n_species + 1
-    CALL grow_array(species_names, n_species)
-    species_names(n_species) = TRIM(name)
-    species_number_from_name = n_species
+    species_number_from_name = -1
+    RETURN
 
   END FUNCTION species_number_from_name
 
@@ -697,47 +882,5 @@ CONTAINS
     errcode = IAND(errcode, c_err_bad_value)
 
   END SUBROUTINE identify_species
-
-
-
-#ifdef PARTICLE_IONISE
-  SUBROUTINE create_ion_subspecies(base_species, current_species, index, energy)
-
-    TYPE(particle_species), POINTER :: base_species, current_species
-    INTEGER, INTENT(IN) :: index
-    REAL(num), INTENT(IN) :: energy
-    TYPE(particle_species), POINTER :: working_species
-    INTEGER :: working_id, err
-    CHARACTER(LEN=string_length) :: name, indexstring
-
-    CALL integer_as_string(index, indexstring)
-    name = TRIM(TRIM(base_species%name)//indexstring)
-
-    working_id = as_integer(name, err)
-    working_species => species_list(working_id)
-
-    IF (rank .EQ. 0) THEN
-      PRINT '(''Autocreated ionised form of '', a, '' as species '', i3, &
-          & '' named '', a)', TRIM(base_species%name), working_id, TRIM(name)
-    ENDIF
-
-    working_species%charge = current_species%charge &
-        - species_list(base_species%release_species)%charge
-    working_species%mass = current_species%mass &
-        - species_list(base_species%release_species)%mass
-    working_species%dumpmask = base_species%dumpmask
-    working_species%split = base_species%split
-    working_species%npart_max = base_species%npart_max
-    working_species%count = 0
-
-    current_species%ionise = .TRUE.
-    current_species%ionise_to_species = working_species%id
-    current_species%release_species = base_species%release_species
-    current_species%ionisation_energy = energy
-
-    current_species => working_species
-
-  END SUBROUTINE create_ion_subspecies
-#endif
 
 END MODULE deck_species_block

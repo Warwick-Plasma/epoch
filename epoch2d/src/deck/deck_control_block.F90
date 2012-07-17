@@ -13,7 +13,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 21 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 23 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -38,6 +38,8 @@ MODULE deck_control_block
           'stdout_frequency  ', &
           'use_random_seed   ', &
           'smooth_currents   ', &
+          'use_multiphoton   ', &
+          'use_bsi           ', &
           'use_collisions    ', &
           'coulomb_log       ', &
           'collide           ', &
@@ -69,6 +71,8 @@ MODULE deck_control_block
           'stdout_frequency  ', &
           'use_random_seed   ', &
           'smooth_currents   ', &
+          'multiphoton       ', &
+          'bsi               ', &
           'use_collisions    ', &
           'coulomb_log       ', &
           'collide           ', &
@@ -159,7 +163,7 @@ CONTAINS
     errcode = c_err_none
 
     IF (deck_state .NE. c_ds_first) THEN
-      loop = 4*c_ndims + 15
+      loop = 4*c_ndims + 17
       IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop))))) THEN
         CALL set_collision_matrix(TRIM(ADJUSTL(value)), errcode)
       ENDIF
@@ -185,7 +189,7 @@ CONTAINS
     ENDIF
 
     control_block_done(elementselected) = .TRUE.
-    control_block_done(4*c_ndims+15) = .FALSE.
+    control_block_done(4*c_ndims+17) = .FALSE.
     errcode = c_err_none
 
     SELECT CASE (elementselected)
@@ -245,51 +249,55 @@ CONTAINS
     CASE(4*c_ndims+12)
       smooth_currents = as_logical(value, errcode)
     CASE(4*c_ndims+13)
-      use_collisions = as_logical(value, errcode)
+      use_multiphoton = as_logical(value, errcode)
     CASE(4*c_ndims+14)
+      use_bsi = as_logical(value, errcode)
+    CASE(4*c_ndims+15)
+      use_collisions = as_logical(value, errcode)
+    CASE(4*c_ndims+16)
       IF (str_cmp(value, 'auto')) THEN
         coulomb_log_auto = .TRUE.
       ELSE
         coulomb_log_auto = .FALSE.
         coulomb_log = as_real(value, errcode)
       ENDIF
-    ! 4*c_ndims+15 is the special case of the collision matrix
-    CASE(4*c_ndims+16)
+    ! 4*c_ndims+17 is the special case of the collision matrix
+    CASE(4*c_ndims+18)
 #ifdef PHOTONS
       use_qed = as_logical(value, errcode)
 #else
       extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
-    CASE(4*c_ndims+17)
+    CASE(4*c_ndims+19)
 #ifdef PHOTONS
       qed_start_time = as_real(value, errcode)
 #else
       extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
-    CASE(4*c_ndims+18)
+    CASE(4*c_ndims+20)
 #ifdef PHOTONS
       produce_photons = as_logical(value, errcode)
 #else
       extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
-    CASE(4*c_ndims+19)
+    CASE(4*c_ndims+21)
 #ifdef PHOTONS
       photon_energy_min = as_real(value, errcode)
 #else
       extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
-    CASE(4*c_ndims+20)
+    CASE(4*c_ndims+22)
 #ifdef PHOTONS
       produce_pairs = as_logical(value, errcode)
 #else
       extended_error_string = '-DPHOTONS'
       errcode = c_err_pp_options_wrong
 #endif
-    CASE(4*c_ndims+21)
+    CASE(4*c_ndims+23)
 #ifdef PHOTONS
       qed_table_location = TRIM(ADJUSTL(value))
 #else
@@ -321,8 +329,8 @@ CONTAINS
     control_block_done(4*c_ndims+4:) = .TRUE.
 
     ! QED stuff is incorrect if not compiled with the correct options
-#ifdef PHOTONS
-    DO index = 4*c_ndims+16, 4*c_ndims+20
+#ifndef PHOTONS
+    DO index = 4*c_ndims+18, 4*c_ndims+23
       IF (control_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
           DO io = stdout, du, du - stdout ! Print to stdout and to file

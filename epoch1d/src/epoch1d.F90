@@ -32,9 +32,7 @@ PROGRAM pic
   USE window
   USE split_particle
   USE collisions
-#ifdef PARTICLE_IONISE
   USE ionise
-#endif
 #ifdef PHOTONS
   USE photons
 #endif
@@ -113,6 +111,7 @@ PROGRAM pic
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
+  IF (use_ionisation) CALL initialise_ionisation
 
   DO
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
@@ -138,10 +137,8 @@ PROGRAM pic
 
       CALL reattach_particles_to_mainlist
     ENDIF
+    IF (use_ionisation) CALL ionise_particles
     CALL update_eb_fields_final
-#ifdef PARTICLE_IONISE
-    CALL ionise_particles
-#endif
     step = step + 1
     time = time + dt
     IF (dlb) THEN

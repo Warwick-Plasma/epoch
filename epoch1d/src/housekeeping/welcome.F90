@@ -114,10 +114,6 @@ CONTAINS
     defines = IOR(defines, c_def_per_particle_chargemass)
     WRITE(*, *) 'Per particle charge and mass -DPER_PARTICLE_CHARGE_MASS'
 #endif
-#ifdef PARTICLE_IONISE
-    defines = IOR(defines, c_def_particle_ionise)
-    WRITE(*, *) 'Particle ionisation model -DPARTICLE_IONISE'
-#endif
 #ifdef HIGH_ORDER_SMOOTHING
     defines = IOR(defines, c_def_high_order_smoothing)
     WRITE(*, *) 'High order current smoothing (matches particle ', &

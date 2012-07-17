@@ -68,6 +68,8 @@ CONTAINS
     use_random_seed = .FALSE.
     use_offset_grid = .FALSE.
     use_particle_lists = .FALSE.
+    use_multiphoton = .TRUE.
+    use_bsi = .TRUE.
     force_final_to_be_restartable = .FALSE.
     dump_source_code = .TRUE.
     dump_input_decks = .TRUE.
@@ -320,12 +322,12 @@ CONTAINS
       CALL set_stack_zero(species_list(ispecies)%temperature_function(1))
       CALL set_stack_zero(species_list(ispecies)%temperature_function(2))
       CALL set_stack_zero(species_list(ispecies)%temperature_function(3))
-#ifdef PARTICLE_IONISE
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1
       species_list(ispecies)%release_species = -1
-      species_list(ispecies)%ionisation_energy = 0.0_num
-#endif
+      species_list(ispecies)%n = 0
+      species_list(ispecies)%l = 0
+      species_list(ispecies)%ionisation_energy = HUGE(0.0_num)
 #ifdef TRACER_PARTICLES
       species_list(ispecies)%tracer = .FALSE.
 #endif
@@ -756,7 +758,7 @@ CONTAINS
             CALL integer_as_string(dims(1), str1)
             CALL integer_as_string(dims(2), str2)
             CALL integer_as_string(dims(3), str3)
-            PRINT*, 'Restart dump grid: ',TRIM(str1), ',', TRIM(str2), &
+            PRINT*, 'Restart dump grid: ', TRIM(str1), ',', TRIM(str2), &
                 ',', TRIM(str3)
           ENDIF
           CALL MPI_ABORT(comm, errcode, ierr)

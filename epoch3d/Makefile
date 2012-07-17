@@ -26,9 +26,6 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 # Turn on debugging.
 # -DFIELD_DEBUG -DPARSER_DEBUG -DPARTICLE_DEBUG
 
-# Turn on particle ionisation model. (Beta).
-# -DPARTICLE_IONISE
-
 # Keep global particle counts up to date.
 # -DPARTICLE_COUNT_UPDATE
 
@@ -97,10 +94,10 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   deck_species_block.F90 deck_subset_block.f90 deck_window_block.f90 \
   diagnostics.F90 dist_fn.F90 epoch3d.F90 evaluate.f90 evaluator_blocks.f90 \
   fields.f90 helper.F90 ic_module.f90 ionise.F90 iterators.F90 laser.f90 \
-  mpi_routines.F90 mpi_subtype_control.f90 particle_pointer_advance.f90 \
-  particle_temperature.F90 particles.F90 partlist.F90 photons.F90 probes.F90 \
-  random_generator.f90 redblack_module.f90 sdf.f90 sdf_common.f90 \
-  sdf_control.f90 sdf_input.f90 sdf_input_cartesian.f90 \
+  mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 \
+  particle_pointer_advance.f90 particle_temperature.F90 particles.F90 \
+  partlist.F90 photons.F90 probes.F90 random_generator.f90 redblack_module.f90 \
+  sdf.f90 sdf_common.f90 sdf_control.f90 sdf_input.f90 sdf_input_cartesian.f90 \
   sdf_input_cartesian_r4.f90 sdf_input_cartesian_r8.f90 \
   sdf_input_cartesian_ru.f90 sdf_input_point.f90 sdf_input_point_r4.f90 \
   sdf_input_point_r8.f90 sdf_input_point_ru.f90 sdf_input_r4.f90 \
@@ -218,11 +215,13 @@ evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
 helper.o: helper.F90 boundary.o random_generator.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
-ionise.o: ionise.F90 calc_df.o partlist.o split_particle.o
+ionise.o: ionise.F90 calc_df.o numerics.o random_generator.o shape_functions.o \
+  split_particle.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 partlist.o
 mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
+numerics.o: numerics.f90 shared_data.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shape_functions.o

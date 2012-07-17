@@ -12,7 +12,8 @@ MODULE constants
   INTEGER, PARAMETER :: num = KIND(1.d0)
   INTEGER, PARAMETER :: dbl = KIND(1.d0)
   REAL(num), PARAMETER :: c_non_zero = TINY(1.0_num)
-  REAL(num), PARAMETER :: largest_number = HUGE(1.0_num)
+  REAL(num), PARAMETER :: c_largest_number = HUGE(1.0_num)
+  REAL(num), PARAMETER :: c_largest_exp = LOG(c_largest_number)
 
   INTEGER, PARAMETER :: c_ndims = 1
 
@@ -82,7 +83,9 @@ MODULE constants
 
   ! Load balance codes
   INTEGER, PARAMETER :: c_lb_x = 1
-  INTEGER, PARAMETER :: c_lb_all = c_lb_x
+  INTEGER, PARAMETER :: c_lb_y = 2
+  INTEGER, PARAMETER :: c_lb_z = 4
+  INTEGER, PARAMETER :: c_lb_all = c_lb_x + c_lb_y + c_lb_z
   INTEGER, PARAMETER :: c_lb_auto = c_lb_all + 1
 
   ! Taken from http://physics.nist.gov/cuu/Constants
@@ -95,11 +98,17 @@ MODULE constants
   REAL(num), PARAMETER :: epsilon0 = 1.0_num / mu0 / c**2 ! F/m (exact)
   REAL(num), PARAMETER :: h_planck = 6.62606896e-34_num ! J s (+/- 3.3e-41)
   REAL(num), PARAMETER :: ev = q0 ! J
+  ! Derived physical parameters used in ionisation
+  REAL(num), PARAMETER :: h_bar = h_planck / 2.0_num / pi
+  REAL(num), PARAMETER :: &
+      a0 = 4.0_num * pi * epsilon0 * (h_bar / q0)**2.0_num / m0
+  REAL(num), PARAMETER :: hartree = (h_bar / a0)**2.0_num / m0
+  REAL(num), PARAMETER :: atomic_time = h_bar / hartree
+  REAL(num), PARAMETER :: atomic_electric_field = hartree / q0 / a0
 
   ! Constants used in pair production
 #ifdef PHOTONS
   REAL(num), PARAMETER :: mc0 = m0 * c
-  REAL(num), PARAMETER :: h_bar = h_planck / 2.0_num / pi
   REAL(num), PARAMETER :: b_s = mc0**2 / (h_bar * q0)
   REAL(num), PARAMETER :: e_s = b_s * c
   REAL(num), PARAMETER :: alpha_f = q0**2 / (2.0_num * epsilon0 * h_planck * c)
@@ -259,6 +268,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_ny = 44
   INTEGER, PARAMETER :: c_const_nz = 45
   INTEGER, PARAMETER :: c_const_time = 46
+  INTEGER, PARAMETER :: c_const_r_xy = 47
+  INTEGER, PARAMETER :: c_const_r_yz = 48
+  INTEGER, PARAMETER :: c_const_r_xz = 49
 
   INTEGER, PARAMETER :: c_const_io_never = 60
   INTEGER, PARAMETER :: c_const_io_always = 61
@@ -487,12 +499,13 @@ MODULE shared_data
     REAL(num), DIMENSION(:), POINTER :: ext_temp_x_min, ext_temp_x_max
 
     ! Species_ionisation
-#ifdef PARTICLE_IONISE
     LOGICAL :: ionise
     INTEGER :: ionise_to_species
     INTEGER :: release_species
+    INTEGER :: n
+    INTEGER :: l
     REAL(num) :: ionisation_energy
-#endif
+
     ! Attached probes for this species
 #ifdef PARTICLE_PROBES
     TYPE(particle_probe), POINTER :: attached_probes
@@ -715,6 +728,8 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
   REAL(num) :: coulomb_log
   LOGICAL :: coulomb_log_auto, use_collisions
+
+  LOGICAL :: use_ionisation, use_multiphoton, use_bsi
 
   ! Number of degrees of freedom
   INTEGER :: dof = c_ndims
