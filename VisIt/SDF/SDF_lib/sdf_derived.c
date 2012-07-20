@@ -8,6 +8,7 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 
     if (!b->grids) b->grids = calloc(1, sizeof(float*));
     b->data = b->grids[0] = mesh->grids[b->nm];
+    b->datatype_out = mesh->datatype_out;
     if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED)
         b->local_dims[0] = b->nlocal = mesh->nlocal;
     else
@@ -60,6 +61,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 
                     append->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
                     name2 = grid_ids[i];
+                    append->dont_display = 1;
                 }
 
                 name1 = b->name;

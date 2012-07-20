@@ -376,20 +376,26 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     for (int i = 0; i < h->nblocks; i++) {
         b = h->current_block = next;
         next = b->next;
+        if (b->dont_display) continue;
+
         if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
                 b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
             debug1 << "Found mesh: " << b->id << " " << b->name << endl;
             avtMeshType meshtype;
-            int topol;
+            int topol, ndims = b->ndims;
             if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
                 meshtype = AVT_RECTILINEAR_MESH;
                 topol = b->ndims;
             } else {
                 meshtype = AVT_POINT_MESH;
                 topol = 0;
+                // VisIt does not seem to handle scatter plots of 1D variables
+                // properly. This hack makes changes 1D particle data to 2D
+                // which works around the issue.
+                if (b->ndims == 1) ndims = 2;
             }
             avtMeshMetaData *mmd = new avtMeshMetaData(b->name, 1, 0, 0, 0,
-                b->ndims, topol, meshtype);
+                ndims, topol, meshtype);
             mmd->xUnits = b->dim_units[0];
             if (b->ndims > 1) mmd->yUnits = b->dim_units[1];
             if (b->ndims > 2) mmd->zUnits = b->dim_units[2];
@@ -401,6 +407,12 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 mmd->minSpatialExtents[n] = b->extents[n];
                 mmd->maxSpatialExtents[n] = b->extents[b->ndims+n];
             }
+            if (b->ndims == 1 && ndims == 2) {
+                mmd->yUnits = b->dim_units[0];
+                mmd->yLabel = b->dim_labels[0];
+                mmd->minSpatialExtents[1] = 0;
+                mmd->maxSpatialExtents[1] = 0;
+            }
             md->Add(mmd);
         } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
                 b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE ||
@@ -411,7 +423,9 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             if (!mesh) continue;
 
-            if (mesh->ndims == 1) {
+            if (mesh->ndims == 1 &&
+                    (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
+                    b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED)) {
                 avtCurveMetaData *cmd = new avtCurveMetaData(b->name);
                 cmd->originalName = b->name;
                 cmd->validVariable = true;
@@ -419,7 +433,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 cmd->xUnits = mesh->dim_units[0];
                 cmd->xLabel = mesh->dim_labels[0];
                 cmd->hasDataExtents = false;
-                //cmd->meshName = mesh->name;
+                cmd->meshName = mesh->name;
                 md->Add(cmd);
                 //continue;
             } else {
