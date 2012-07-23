@@ -475,8 +475,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: chi_val, part_e
     REAL(num) :: tpair
 
-    tpair = find_value_from_table_1d(chi_val, n_sample_t, log_tpair(1,:), &
-        log_tpair(2,:))
+    tpair = find_value_from_table_1d(chi_val, n_sample_t, log_tpair(:,1), &
+        log_tpair(:,2))
 
     delta_optical_depth_photon = dt / tau_c * alpha_f / part_e * chi_val * tpair
 
