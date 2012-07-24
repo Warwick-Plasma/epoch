@@ -57,8 +57,8 @@ CONTAINS
             (species_list(species_list(i)%ionise_to_species)%charge / ev) &
             / SQRT(2.0_num * species_list(i)%ionisation_energy / hartree)
         ! Electric field strength scaling in ADK
-        adk_scaling(i) = 2.0 * SQRT((2.0_num * species_list(i)%ionisation_energy &
-            / hartree)**3)
+        adk_scaling(i) = 2.0 * SQRT((2.0_num &
+            * species_list(i)%ionisation_energy / hartree)**3)
         ! Constant in ADK equation
         ionisation_constant(i) = SQRT(6.0_num / pi) &
             * species_list(i)%ionisation_energy / hartree * 2.0_num**(2.0_num &
@@ -229,21 +229,34 @@ CONTAINS
   SUBROUTINE multiphoton_tunnelling_bsi
 
     INTEGER :: i, current_state, bessel_error
-    INTEGER :: ix, cell_x1, cell_x2
-    INTEGER :: iy, cell_y1, cell_y2
-    INTEGER :: iz, cell_z1, cell_z2
+    INTEGER :: ix, cell_x1, cell_x2, dcellx
+    INTEGER :: iy, cell_y1, cell_y2, dcelly
+    INTEGER :: iz, cell_z1, cell_z2, dcellz
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: j_ion(3)
+    REAL(num) :: cf2, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y
-    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z
+    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z, idz
     LOGICAL :: multiphoton_ionised
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)
+
+    ! Particle weighting multiplication factor
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
+#elif  PARTICLE_SHAPE_TOPHAT
+    REAL(num), PARAMETER :: fac = 1.0_num
+#else
+    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
+#endif
+
+    idx = 1.0_num / dx
+    idy = 1.0_num / dy
+    idz = 1.0_num / dz
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -262,75 +275,88 @@ CONTAINS
 
       ! Try to ionise every particle of the species
       DO WHILE(ASSOCIATED(current))
-
-        ! Calculate particle positions
+        ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
         part_z  = current%part_pos(3) - z_min_local
 
-        ! Grid cell position as a fraction
+        ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = part_x * idx - 0.5_num
+        cell_y_r = part_y * idy - 0.5_num
+        cell_z_r = part_z * idz - 0.5_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = part_x * idx
+        cell_y_r = part_y * idy
+        cell_z_r = part_z * idz
 #endif
         ! Round cell position to nearest cell
         cell_x1 = FLOOR(cell_x_r + 0.5_num)
-        cell_y1 = FLOOR(cell_y_r + 0.5_num)
-        cell_z1 = FLOOR(cell_z_r + 0.5_num)
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_x = REAL(cell_x1, num) - cell_x_r
-        cell_frac_y = REAL(cell_y1, num) - cell_y_r
-        cell_frac_z = REAL(cell_z1, num) - cell_z_r
         cell_x1 = cell_x1 + 1
+
+        cell_y1 = FLOOR(cell_y_r + 0.5_num)
+        cell_frac_y = REAL(cell_y1, num) - cell_y_r
         cell_y1 = cell_y1 + 1
+
+        cell_z1 = FLOOR(cell_z_r + 0.5_num)
+        cell_frac_z = REAL(cell_z1, num) - cell_z_r
         cell_z1 = cell_z1 + 1
 
-        ! Find weightings according to position and weight functions
-        CALL grid_to_particle(cell_frac_x, gx)
-        CALL grid_to_particle(cell_frac_y, gy)
-        CALL grid_to_particle(cell_frac_z, gz)
+        ! Particle weight factors as described in the manual, page25
+        ! These weight grid properties onto particles
+        ! Also used to weight particle properties onto grid, used later
+        ! to calculate J
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx.inc"
+#else
+#include "triangle/gx.inc"
+#endif
 
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
         ! And in Y&Z for bx, X&Z for by, X&Y for bz
         cell_x2 = FLOOR(cell_x_r)
-        cell_y2 = FLOOR(cell_y_r)
-        cell_z2 = FLOOR(cell_z_r)
         cell_frac_x = REAL(cell_x2, num) - cell_x_r + 0.5_num
-        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
-        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
         cell_x2 = cell_x2 + 1
+
+        cell_y2 = FLOOR(cell_y_r)
+        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
         cell_y2 = cell_y2 + 1
+
+        cell_z2 = FLOOR(cell_z_r)
+        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
         cell_z2 = cell_z2 + 1
 
-        ! Find weightings for staggered grid variables
-        CALL grid_to_particle(cell_frac_x, hx)
-        CALL grid_to_particle(cell_frac_y, hy)
-        CALL grid_to_particle(cell_frac_z, hz)
+        dcellx = 0
+        dcelly = 0
+        dcellz = 0
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/hx_dcell.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/hx_dcell.inc"
+#else
+#include "triangle/hx_dcell.inc"
+#endif
 
-        ! Calculate self-consistent field strength at the particle. This can be
-        ! done with electric field smoothing but hasn't been necessary since the
-        ! statistics were changed away from using number densities
-        ex_part = 0.0_num
-        ey_part = 0.0_num
-        ez_part = 0.0_num
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          ex_part = ex_part + hx(ix) * gy(iy) * gz(iz) &
-              * ex(cell_x2+ix, cell_y1+iy, cell_z1+iz)
-          ey_part = ey_part + gx(ix) * hy(iy) * gz(iz) &
-              * ey(cell_x1+ix, cell_y2+iy, cell_z1+iz)
-          ez_part = ez_part + gx(ix) * gy(iy) * hz(iz) &
-              * ez(cell_x1+ix, cell_y1+iy, cell_z2+iz)
-        ENDDO
-        ENDDO
-        ENDDO
+        ! These are the electric and magnetic fields interpolated to the
+        ! particle position. They have been checked and are correct.
+        ! Actually checking this is messy.
+        ! This can be done with electric field smoothing but hasn't been
+        ! necessary since the statistics were changed away from using number
+        ! densities.
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_part.inc"
+#else
+#include "triangle/e_part.inc"
+#endif
 
         ! Electric field strength in atomic units
         e_part_mag = SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
@@ -456,16 +482,11 @@ CONTAINS
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
-#ifdef PARTICLE_SHAPE_BSPLINE3
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
-              / (24.0_num * dt * (atomic_electric_field * e_part_mag)**2)
-#elif  PARTICLE_SHAPE_TOPHAT
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
+
+          j_ion = fac * j_ion * current%weight &
+              * (/ ex_part, ey_part, ez_part /) &
               / (dt * (atomic_electric_field * e_part_mag)**2)
-#else
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
-              / (2.0_num * dt * (atomic_electric_field * e_part_mag)**2)
-#endif
+
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
               j_ion(3) .NE. 0.0_num) THEN
             DO iz = sf_min, sf_max
@@ -502,21 +523,34 @@ CONTAINS
   SUBROUTINE multiphoton_tunnelling
 
     INTEGER :: i, current_state, bessel_error
-    INTEGER :: ix, cell_x1, cell_x2
-    INTEGER :: iy, cell_y1, cell_y2
-    INTEGER :: iz, cell_z1, cell_z2
+    INTEGER :: ix, cell_x1, cell_x2, dcellx
+    INTEGER :: iy, cell_y1, cell_y2, dcelly
+    INTEGER :: iz, cell_z1, cell_z2, dcellz
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: j_ion(3)
+    REAL(num) :: cf2, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y
-    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z
+    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z, idz
     LOGICAL :: multiphoton_ionised
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)
+
+    ! Particle weighting multiplication factor
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
+#elif  PARTICLE_SHAPE_TOPHAT
+    REAL(num), PARAMETER :: fac = 1.0_num
+#else
+    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
+#endif
+
+    idx = 1.0_num / dx
+    idy = 1.0_num / dy
+    idz = 1.0_num / dz
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -535,75 +569,88 @@ CONTAINS
 
       ! Try to ionise every particle of the species
       DO WHILE(ASSOCIATED(current))
-
-        ! Calculate particle positions
+        ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
         part_z  = current%part_pos(3) - z_min_local
 
-        ! Grid cell position as a fraction
+        ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = part_x * idx - 0.5_num
+        cell_y_r = part_y * idy - 0.5_num
+        cell_z_r = part_z * idz - 0.5_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = part_x * idx
+        cell_y_r = part_y * idy
+        cell_z_r = part_z * idz
 #endif
         ! Round cell position to nearest cell
         cell_x1 = FLOOR(cell_x_r + 0.5_num)
-        cell_y1 = FLOOR(cell_y_r + 0.5_num)
-        cell_z1 = FLOOR(cell_z_r + 0.5_num)
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_x = REAL(cell_x1, num) - cell_x_r
-        cell_frac_y = REAL(cell_y1, num) - cell_y_r
-        cell_frac_z = REAL(cell_z1, num) - cell_z_r
         cell_x1 = cell_x1 + 1
+
+        cell_y1 = FLOOR(cell_y_r + 0.5_num)
+        cell_frac_y = REAL(cell_y1, num) - cell_y_r
         cell_y1 = cell_y1 + 1
+
+        cell_z1 = FLOOR(cell_z_r + 0.5_num)
+        cell_frac_z = REAL(cell_z1, num) - cell_z_r
         cell_z1 = cell_z1 + 1
 
-        ! Find weightings according to position and weight functions
-        CALL grid_to_particle(cell_frac_x, gx)
-        CALL grid_to_particle(cell_frac_y, gy)
-        CALL grid_to_particle(cell_frac_z, gz)
+        ! Particle weight factors as described in the manual, page25
+        ! These weight grid properties onto particles
+        ! Also used to weight particle properties onto grid, used later
+        ! to calculate J
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx.inc"
+#else
+#include "triangle/gx.inc"
+#endif
 
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
         ! And in Y&Z for bx, X&Z for by, X&Y for bz
         cell_x2 = FLOOR(cell_x_r)
-        cell_y2 = FLOOR(cell_y_r)
-        cell_z2 = FLOOR(cell_z_r)
         cell_frac_x = REAL(cell_x2, num) - cell_x_r + 0.5_num
-        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
-        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
         cell_x2 = cell_x2 + 1
+
+        cell_y2 = FLOOR(cell_y_r)
+        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
         cell_y2 = cell_y2 + 1
+
+        cell_z2 = FLOOR(cell_z_r)
+        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
         cell_z2 = cell_z2 + 1
 
-        ! Find weightings for staggered grid variables
-        CALL grid_to_particle(cell_frac_x, hx)
-        CALL grid_to_particle(cell_frac_y, hy)
-        CALL grid_to_particle(cell_frac_z, hz)
+        dcellx = 0
+        dcelly = 0
+        dcellz = 0
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/hx_dcell.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/hx_dcell.inc"
+#else
+#include "triangle/hx_dcell.inc"
+#endif
 
-        ! Calculate self-consistent field strength at the particle. This can be
-        ! done with electric field smoothing but hasn't been necessary since the
-        ! statistics were changed away from using number densities
-        ex_part = 0.0_num
-        ey_part = 0.0_num
-        ez_part = 0.0_num
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          ex_part = ex_part + hx(ix) * gy(iy) * gz(iz) &
-              * ex(cell_x2+ix, cell_y1+iy, cell_z1+iz)
-          ey_part = ey_part + gx(ix) * hy(iy) * gz(iz) &
-              * ey(cell_x1+ix, cell_y2+iy, cell_z1+iz)
-          ez_part = ez_part + gx(ix) * gy(iy) * hz(iz) &
-              * ez(cell_x1+ix, cell_y1+iy, cell_z2+iz)
-        ENDDO
-        ENDDO
-        ENDDO
+        ! These are the electric and magnetic fields interpolated to the
+        ! particle position. They have been checked and are correct.
+        ! Actually checking this is messy.
+        ! This can be done with electric field smoothing but hasn't been
+        ! necessary since the statistics were changed away from using number
+        ! densities.
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_part.inc"
+#else
+#include "triangle/e_part.inc"
+#endif
 
         ! Electric field strength in atomic units
         e_part_mag = SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
@@ -716,16 +763,11 @@ CONTAINS
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
-#ifdef PARTICLE_SHAPE_BSPLINE3
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
-              / (24.0_num * dt * (atomic_electric_field * e_part_mag)**2)
-#elif  PARTICLE_SHAPE_TOPHAT
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
+
+          j_ion = fac * j_ion * current%weight &
+              * (/ ex_part, ey_part, ez_part /) &
               / (dt * (atomic_electric_field * e_part_mag)**2)
-#else
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
-              / (2.0_num * dt * (atomic_electric_field * e_part_mag)**2)
-#endif
+
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
               j_ion(3) .NE. 0.0_num) THEN
             DO iz = sf_min, sf_max
@@ -762,20 +804,33 @@ CONTAINS
   SUBROUTINE tunnelling_bsi
 
     INTEGER :: i, current_state, bessel_error
-    INTEGER :: ix, cell_x1, cell_x2
-    INTEGER :: iy, cell_y1, cell_y2
-    INTEGER :: iz, cell_z1, cell_z2
+    INTEGER :: ix, cell_x1, cell_x2, dcellx
+    INTEGER :: iy, cell_y1, cell_y2, dcelly
+    INTEGER :: iz, cell_z1, cell_z2, dcellz
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: j_ion(3)
+    REAL(num) :: cf2, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y
-    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z
+    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z, idz
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)
+
+    ! Particle weighting multiplication factor
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
+#elif  PARTICLE_SHAPE_TOPHAT
+    REAL(num), PARAMETER :: fac = 1.0_num
+#else
+    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
+#endif
+
+    idx = 1.0_num / dx
+    idy = 1.0_num / dy
+    idz = 1.0_num / dz
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -794,75 +849,88 @@ CONTAINS
 
       ! Try to ionise every particle of the species
       DO WHILE(ASSOCIATED(current))
-
-        ! Calculate particle positions
+        ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
         part_z  = current%part_pos(3) - z_min_local
 
-        ! Grid cell position as a fraction
+        ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = part_x * idx - 0.5_num
+        cell_y_r = part_y * idy - 0.5_num
+        cell_z_r = part_z * idz - 0.5_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = part_x * idx
+        cell_y_r = part_y * idy
+        cell_z_r = part_z * idz
 #endif
         ! Round cell position to nearest cell
         cell_x1 = FLOOR(cell_x_r + 0.5_num)
-        cell_y1 = FLOOR(cell_y_r + 0.5_num)
-        cell_z1 = FLOOR(cell_z_r + 0.5_num)
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_x = REAL(cell_x1, num) - cell_x_r
-        cell_frac_y = REAL(cell_y1, num) - cell_y_r
-        cell_frac_z = REAL(cell_z1, num) - cell_z_r
         cell_x1 = cell_x1 + 1
+
+        cell_y1 = FLOOR(cell_y_r + 0.5_num)
+        cell_frac_y = REAL(cell_y1, num) - cell_y_r
         cell_y1 = cell_y1 + 1
+
+        cell_z1 = FLOOR(cell_z_r + 0.5_num)
+        cell_frac_z = REAL(cell_z1, num) - cell_z_r
         cell_z1 = cell_z1 + 1
 
-        ! Find weightings according to position and weight functions
-        CALL grid_to_particle(cell_frac_x, gx)
-        CALL grid_to_particle(cell_frac_y, gy)
-        CALL grid_to_particle(cell_frac_z, gz)
+        ! Particle weight factors as described in the manual, page25
+        ! These weight grid properties onto particles
+        ! Also used to weight particle properties onto grid, used later
+        ! to calculate J
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx.inc"
+#else
+#include "triangle/gx.inc"
+#endif
 
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
         ! And in Y&Z for bx, X&Z for by, X&Y for bz
         cell_x2 = FLOOR(cell_x_r)
-        cell_y2 = FLOOR(cell_y_r)
-        cell_z2 = FLOOR(cell_z_r)
         cell_frac_x = REAL(cell_x2, num) - cell_x_r + 0.5_num
-        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
-        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
         cell_x2 = cell_x2 + 1
+
+        cell_y2 = FLOOR(cell_y_r)
+        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
         cell_y2 = cell_y2 + 1
+
+        cell_z2 = FLOOR(cell_z_r)
+        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
         cell_z2 = cell_z2 + 1
 
-        ! Find weightings for staggered grid variables
-        CALL grid_to_particle(cell_frac_x, hx)
-        CALL grid_to_particle(cell_frac_y, hy)
-        CALL grid_to_particle(cell_frac_z, hz)
+        dcellx = 0
+        dcelly = 0
+        dcellz = 0
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/hx_dcell.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/hx_dcell.inc"
+#else
+#include "triangle/hx_dcell.inc"
+#endif
 
-        ! Calculate self-consistent field strength at the particle. This can be
-        ! done with electric field smoothing but hasn't been necessary since the
-        ! statistics were changed away from using number densities
-        ex_part = 0.0_num
-        ey_part = 0.0_num
-        ez_part = 0.0_num
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          ex_part = ex_part + hx(ix) * gy(iy) * gz(iz) &
-              * ex(cell_x2+ix, cell_y1+iy, cell_z1+iz)
-          ey_part = ey_part + gx(ix) * hy(iy) * gz(iz) &
-              * ey(cell_x1+ix, cell_y2+iy, cell_z1+iz)
-          ez_part = ez_part + gx(ix) * gy(iy) * hz(iz) &
-              * ez(cell_x1+ix, cell_y1+iy, cell_z2+iz)
-        ENDDO
-        ENDDO
-        ENDDO
+        ! These are the electric and magnetic fields interpolated to the
+        ! particle position. They have been checked and are correct.
+        ! Actually checking this is messy.
+        ! This can be done with electric field smoothing but hasn't been
+        ! necessary since the statistics were changed away from using number
+        ! densities.
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_part.inc"
+#else
+#include "triangle/e_part.inc"
+#endif
 
         ! Electric field strength in atomic units
         e_part_mag = SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
@@ -965,16 +1033,11 @@ CONTAINS
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
-#ifdef PARTICLE_SHAPE_BSPLINE3
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
-              / (24.0_num * dt * (atomic_electric_field * e_part_mag)**2)
-#elif  PARTICLE_SHAPE_TOPHAT
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
+
+          j_ion = fac * j_ion * current%weight &
+              * (/ ex_part, ey_part, ez_part /) &
               / (dt * (atomic_electric_field * e_part_mag)**2)
-#else
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
-              / (2.0_num * dt * (atomic_electric_field * e_part_mag)**2)
-#endif
+
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
               j_ion(3) .NE. 0.0_num) THEN
             DO iz = sf_min, sf_max
@@ -1011,20 +1074,33 @@ CONTAINS
   SUBROUTINE tunnelling
 
     INTEGER :: i, current_state, bessel_error
-    INTEGER :: ix, cell_x1, cell_x2
-    INTEGER :: iy, cell_y1, cell_y2
-    INTEGER :: iz, cell_z1, cell_z2
+    INTEGER :: ix, cell_x1, cell_x2, dcellx
+    INTEGER :: iy, cell_y1, cell_y2, dcelly
+    INTEGER :: iz, cell_z1, cell_z2, dcellz
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: j_ion(3)
+    REAL(num) :: cf2, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y
-    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z
+    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z, idz
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)
+
+    ! Particle weighting multiplication factor
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
+#elif  PARTICLE_SHAPE_TOPHAT
+    REAL(num), PARAMETER :: fac = 1.0_num
+#else
+    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
+#endif
+
+    idx = 1.0_num / dx
+    idy = 1.0_num / dy
+    idz = 1.0_num / dz
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -1043,75 +1119,88 @@ CONTAINS
 
       ! Try to ionise every particle of the species
       DO WHILE(ASSOCIATED(current))
-
-        ! Calculate particle positions
+        ! Copy the particle properties out for speed
         part_x  = current%part_pos(1) - x_min_local
         part_y  = current%part_pos(2) - y_min_local
         part_z  = current%part_pos(3) - z_min_local
 
-        ! Grid cell position as a fraction
+        ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x / dx - 0.5_num
-        cell_y_r = part_y / dy - 0.5_num
-        cell_z_r = part_z / dz - 0.5_num
+        cell_x_r = part_x * idx - 0.5_num
+        cell_y_r = part_y * idy - 0.5_num
+        cell_z_r = part_z * idz - 0.5_num
 #else
-        cell_x_r = part_x / dx
-        cell_y_r = part_y / dy
-        cell_z_r = part_z / dz
+        cell_x_r = part_x * idx
+        cell_y_r = part_y * idy
+        cell_z_r = part_z * idz
 #endif
         ! Round cell position to nearest cell
         cell_x1 = FLOOR(cell_x_r + 0.5_num)
-        cell_y1 = FLOOR(cell_y_r + 0.5_num)
-        cell_z1 = FLOOR(cell_z_r + 0.5_num)
         ! Calculate fraction of cell between nearest cell boundary and particle
         cell_frac_x = REAL(cell_x1, num) - cell_x_r
-        cell_frac_y = REAL(cell_y1, num) - cell_y_r
-        cell_frac_z = REAL(cell_z1, num) - cell_z_r
         cell_x1 = cell_x1 + 1
+
+        cell_y1 = FLOOR(cell_y_r + 0.5_num)
+        cell_frac_y = REAL(cell_y1, num) - cell_y_r
         cell_y1 = cell_y1 + 1
+
+        cell_z1 = FLOOR(cell_z_r + 0.5_num)
+        cell_frac_z = REAL(cell_z1, num) - cell_z_r
         cell_z1 = cell_z1 + 1
 
-        ! Find weightings according to position and weight functions
-        CALL grid_to_particle(cell_frac_x, gx)
-        CALL grid_to_particle(cell_frac_y, gy)
-        CALL grid_to_particle(cell_frac_z, gz)
+        ! Particle weight factors as described in the manual, page25
+        ! These weight grid properties onto particles
+        ! Also used to weight particle properties onto grid, used later
+        ! to calculate J
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx.inc"
+#else
+#include "triangle/gx.inc"
+#endif
 
         ! Now redo shifted by half a cell due to grid stagger.
         ! Use shifted version for ex in X, ey in Y, ez in Z
         ! And in Y&Z for bx, X&Z for by, X&Y for bz
         cell_x2 = FLOOR(cell_x_r)
-        cell_y2 = FLOOR(cell_y_r)
-        cell_z2 = FLOOR(cell_z_r)
         cell_frac_x = REAL(cell_x2, num) - cell_x_r + 0.5_num
-        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
-        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
         cell_x2 = cell_x2 + 1
+
+        cell_y2 = FLOOR(cell_y_r)
+        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
         cell_y2 = cell_y2 + 1
+
+        cell_z2 = FLOOR(cell_z_r)
+        cell_frac_z = REAL(cell_z2, num) - cell_z_r + 0.5_num
         cell_z2 = cell_z2 + 1
 
-        ! Find weightings for staggered grid variables
-        CALL grid_to_particle(cell_frac_x, hx)
-        CALL grid_to_particle(cell_frac_y, hy)
-        CALL grid_to_particle(cell_frac_z, hz)
+        dcellx = 0
+        dcelly = 0
+        dcellz = 0
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/hx_dcell.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/hx_dcell.inc"
+#else
+#include "triangle/hx_dcell.inc"
+#endif
 
-        ! Calculate self-consistent field strength at the particle. This can be
-        ! done with electric field smoothing but hasn't been necessary since the
-        ! statistics were changed away from using number densities
-        ex_part = 0.0_num
-        ey_part = 0.0_num
-        ez_part = 0.0_num
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          ex_part = ex_part + hx(ix) * gy(iy) * gz(iz) &
-              * ex(cell_x2+ix, cell_y1+iy, cell_z1+iz)
-          ey_part = ey_part + gx(ix) * hy(iy) * gz(iz) &
-              * ey(cell_x1+ix, cell_y2+iy, cell_z1+iz)
-          ez_part = ez_part + gx(ix) * gy(iy) * hz(iz) &
-              * ez(cell_x1+ix, cell_y1+iy, cell_z2+iz)
-        ENDDO
-        ENDDO
-        ENDDO
+        ! These are the electric and magnetic fields interpolated to the
+        ! particle position. They have been checked and are correct.
+        ! Actually checking this is messy.
+        ! This can be done with electric field smoothing but hasn't been
+        ! necessary since the statistics were changed away from using number
+        ! densities.
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_part.inc"
+#else
+#include "triangle/e_part.inc"
+#endif
 
         ! Electric field strength in atomic units
         e_part_mag = SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
@@ -1200,16 +1289,11 @@ CONTAINS
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
-#ifdef PARTICLE_SHAPE_BSPLINE3
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
-              / (24.0_num * dt * (atomic_electric_field * e_part_mag)**2)
-#elif  PARTICLE_SHAPE_TOPHAT
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
+
+          j_ion = fac * j_ion * current%weight &
+              * (/ ex_part, ey_part, ez_part /) &
               / (dt * (atomic_electric_field * e_part_mag)**2)
-#else
-          j_ion = j_ion * current%weight * (/ ex_part, ey_part, ez_part /) &
-              / (2.0_num * dt * (atomic_electric_field * e_part_mag)**2)
-#endif
+
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
               j_ion(3) .NE. 0.0_num) THEN
             DO iz = sf_min, sf_max

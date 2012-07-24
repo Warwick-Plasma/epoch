@@ -218,8 +218,7 @@ CONTAINS
         part_y = part_y + part_uy * root
         part_z = part_z + part_uz * root
 
-        ! Work out the grid cell number for the particle.
-        ! Not an integer in general.
+        ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = part_x * idx - 0.5_num
         cell_y_r = part_y * idy - 0.5_num

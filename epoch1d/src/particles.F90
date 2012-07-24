@@ -198,8 +198,7 @@ CONTAINS
         ! Move particles to half timestep position to first order
         part_x = part_x + part_ux * root
 
-        ! Work out the grid cell number for the particle.
-        ! Not an integer in general.
+        ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x_r = part_x * idx - 0.5_num
 #else

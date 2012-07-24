@@ -772,8 +772,7 @@ CONTAINS
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 
-    ! Work out the grid cell number for the particle.
-    ! Not an integer in general.
+    ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
     cell_x_r = part_x / dx - 0.5_num
     cell_y_r = part_y / dy - 0.5_num
