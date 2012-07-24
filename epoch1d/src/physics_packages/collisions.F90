@@ -53,6 +53,9 @@ CONTAINS
       ! Currently no support for photon collisions so just cycle round
       IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) &
           CYCLE
+      ! Currently no support for collisions involving chargeless particles
+      IF (species_list(ispecies)%charge .EQ. 0.0_num) &
+          CYCLE
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
 
@@ -64,6 +67,9 @@ CONTAINS
       DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
         IF (species_list(jspecies)%species_type .EQ. c_species_id_photon) &
+            CYCLE
+        ! Currently no support for collisions involving chargeless particles
+        IF (species_list(jspecies)%charge .EQ. 0.0_num) &
             CYCLE
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor .LE. 0) CYCLE

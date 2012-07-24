@@ -148,8 +148,8 @@ PROGRAM pic
         CALL reattach_particles_to_mainlist
       ENDIF
       IF (use_particle_migration) CALL migrate_particles(step)
+      IF (use_ionisation) CALL ionise_particles
     ENDIF
-    IF (push .AND. use_ionisation) CALL ionise_particles
     CALL update_eb_fields_final
     step = step + 1
     time = time + dt
