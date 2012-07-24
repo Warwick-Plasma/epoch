@@ -388,7 +388,7 @@ top:DO it = 1, 3
         num_real = npart_this_species * valid_cell_frac
         num_int = AINT(num_real, KIND=8)
         num_frac(i) = num_real - num_int
-        num_idx (i) = i
+        num_idx (i) = i - 1
         num_total = num_total + num_int
       ENDDO
       num_total = npart_this_species - num_total
@@ -418,13 +418,12 @@ top:DO it = 1, 3
         ! for. If any of them have been assigned to the current processor,
         ! add them and exit the loop.
 
-        DO i = 1,nproc-1
-          num_int = AINT(num_frac(i) / (num_frac(i+1)+EPSILON(1.0_num)), KIND=8)
+        DO i = 1,nproc
           IF (num_idx(i) .EQ. rank) THEN
-            num_new_particles = num_new_particles + num_int
+            num_new_particles = num_new_particles + 1
             EXIT
           ENDIF
-          num_total = num_total - num_int
+          num_total = num_total - 1
           IF (num_total .LE. 0) EXIT
         ENDDO
       ENDIF
