@@ -27,8 +27,12 @@ fi
 if [ $build_sha1 -eq 1 ]; then
   sha=`cat $* | shasum 2>/dev/null | cut -f1 -d' '`
   if [ "$sha"x = x ]; then
-    #echo shasum failed. Trying sha1sum.
-    sha=`cat $* | sha1sum 2>/dev/null | cut -f1 -d' '`
+    #echo shasum failed. Trying openssl.
+    sha=`cat $* | openssl dgst -sha1 2>/dev/null`
+    if [ "$sha"x = x ]; then
+      #echo openssl failed. Trying sha1sum.
+      sha=`cat $* | sha1sum 2>/dev/null | cut -f1 -d' '`
+    fi
   fi
   if [ "$sha"x = x ]; then
     echo WARNING: unable to create valid sha1
@@ -36,7 +40,8 @@ if [ $build_sha1 -eq 1 ]; then
 fi
 
 # Only generate new embedded source code if sha1 has changed
-oldsha=`cat $shafile 2>/dev/null`
+oldsha=1
+[ -r "$shafile" ] && oldsha=`cat $shafile 2>/dev/null`
 if [ "$oldsha"x = "$sha"x ]; then
   # sha is the same
   if [ $embed_source -eq 1 ]; then
