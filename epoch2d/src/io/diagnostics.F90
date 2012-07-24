@@ -420,10 +420,12 @@ CONTAINS
               io_block_list(io)%time_next + io_block_list(io)%dt_snapshot
           print_arrays = .TRUE.
           iomask = IOR(iomask, io_block_list(io)%dumpmask)
-          DO is = 1, n_subsets
-            iodumpmask(1+is,:) = &
-                IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
-          ENDDO
+          IF (n_subsets .NE. 0) THEN
+            DO is = 1, n_subsets
+              iodumpmask(1+is,:) = &
+                  IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
+            ENDDO
+          ENDIF
           io_block_list(io)%dump = .TRUE.
         ENDIF
       ELSE
@@ -435,10 +437,12 @@ CONTAINS
               io_block_list(io)%nstep_next + io_block_list(io)%nstep_snapshot
           print_arrays = .TRUE.
           iomask = IOR(iomask, io_block_list(io)%dumpmask)
-          DO is = 1, n_subsets
-            iodumpmask(1+is,:) = &
-                IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
-          ENDDO
+          IF (n_subsets .NE. 0) THEN
+            DO is = 1, n_subsets
+              iodumpmask(1+is,:) = &
+                  IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
+            ENDDO
+          ENDIF
           io_block_list(io)%dump = .TRUE.
         ENDIF
       ENDIF
