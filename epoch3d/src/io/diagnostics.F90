@@ -475,17 +475,17 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (first) THEN
-      first = .FALSE.
-      print_arrays = .TRUE.
-    ENDIF
-
     IF ((time .GE. t_end .OR. step .EQ. nsteps) .AND. dump_last) THEN
       last_call = .TRUE.
       print_arrays = .TRUE.
       DO io = 1, n_io_blocks
         io_block_list(io)%dump = .TRUE.
       ENDDO
+    ENDIF
+
+    IF (first) THEN
+      first = .FALSE.
+      IF (.NOT.dump_first) print_arrays = .FALSE.
     ENDIF
 
     iodumpmask(1,:) = iomask
