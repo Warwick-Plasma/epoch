@@ -232,12 +232,13 @@ CONTAINS
         ! These weight grid properties onto particles
         ! Also used to weight particle properties onto grid, used later
         ! to calculate J
+        ! NOTE: These weights require an additional multiplication factor!
 #ifdef PARTICLE_SHAPE_BSPLINE3
-        INCLUDE 'include/bspline3/gx.inc'
+#include "bspline3/gx.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
-        INCLUDE 'include/tophat/gx.inc'
+#include "tophat/gx.inc"
 #else
-        INCLUDE 'include/triangle/gx.inc'
+#include "triangle/gx.inc"
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -253,23 +254,27 @@ CONTAINS
 
         dcellx = 0
         dcelly = 0
+        ! NOTE: These weights require an additional multiplication factor!
 #ifdef PARTICLE_SHAPE_BSPLINE3
-        INCLUDE 'include/bspline3/hx_dcell.inc'
+#include "bspline3/hx_dcell.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
-        INCLUDE 'include/tophat/hx_dcell.inc'
+#include "tophat/hx_dcell.inc"
 #else
-        INCLUDE 'include/triangle/hx_dcell.inc'
+#include "triangle/hx_dcell.inc"
 #endif
 
         ! These are the electric and magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
 #ifdef PARTICLE_SHAPE_BSPLINE3
-        INCLUDE 'include/bspline3/eb_part.inc'
+#include "bspline3/e_part.inc"
+#include "bspline3/b_part.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
-        INCLUDE 'include/tophat/eb_part.inc'
+#include "tophat/e_part.inc"
+#include "tophat/b_part.inc"
 #else
-        INCLUDE 'include/triangle/eb_part.inc'
+#include "triangle/e_part.inc"
+#include "triangle/b_part.inc"
 #endif
 
         ! update particle momenta using weighted fields
@@ -362,12 +367,13 @@ CONTAINS
 
           dcellx = cell_x3 - cell_x1
           dcelly = cell_y3 - cell_y1
+          ! NOTE: These weights require an additional multiplication factor!
 #ifdef PARTICLE_SHAPE_BSPLINE3
-          INCLUDE 'include/bspline3/hx_dcell.inc'
+#include "bspline3/hx_dcell.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
-          INCLUDE 'include/tophat/hx_dcell.inc'
+#include "tophat/hx_dcell.inc"
 #else
-          INCLUDE 'include/triangle/hx_dcell.inc'
+#include "triangle/hx_dcell.inc"
 #endif
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of

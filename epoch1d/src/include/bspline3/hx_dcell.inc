@@ -1,3 +1,5 @@
+! IMPORTANT NOTE
+! These weight need to be multiplied by 1/24
         cf2 = cell_frac_x**2
         hx(dcellx-2) = (0.5_num + cell_frac_x)**4
         hx(dcellx-1) = 4.75_num + 11.0_num * cell_frac_x &

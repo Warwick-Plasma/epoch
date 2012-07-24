@@ -139,12 +139,15 @@ OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
 
 INCLUDES = $(INCDIR)/particle_head.inc $(INCDIR)/particle_to_grid.inc \
-  $(INCDIR)/bspline3/eb_part.inc $(INCDIR)/bspline3/gxfac.inc \
-  $(INCDIR)/bspline3/gx.inc $(INCDIR)/bspline3/hx_dcell.inc \
-  $(INCDIR)/tophat/eb_part.inc $(INCDIR)/tophat/gxfac.inc \
-  $(INCDIR)/tophat/gx.inc $(INCDIR)/tophat/hx_dcell.inc \
-  $(INCDIR)/triangle/eb_part.inc $(INCDIR)/triangle/gxfac.inc \
-  $(INCDIR)/triangle/gx.inc $(INCDIR)/triangle/hx_dcell.inc
+  $(INCDIR)/bspline3/b_part.inc $(INCDIR)/bspline3/e_part.inc \
+  $(INCDIR)/bspline3/gx.inc $(INCDIR)/bspline3/gxfac.inc \
+  $(INCDIR)/bspline3/hx_dcell.inc \
+  $(INCDIR)/tophat/b_part.inc $(INCDIR)/tophat/e_part.inc \
+  $(INCDIR)/tophat/gx.inc $(INCDIR)/tophat/gxfac.inc \
+  $(INCDIR)/tophat/hx_dcell.inc \
+  $(INCDIR)/triangle/b_part.inc $(INCDIR)/triangle/e_part.inc \
+  $(INCDIR)/triangle/gx.inc $(INCDIR)/triangle/gxfac.inc \
+  $(INCDIR)/triangle/hx_dcell.inc
 
 ENCODED_SOURCE ?= encoded_source.o
 OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)
