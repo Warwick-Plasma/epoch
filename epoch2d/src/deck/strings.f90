@@ -87,9 +87,14 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: f
     REAL(num) :: as_real_simple
-    REAL(num) :: value
+    REAL(num) :: value = 0.0_num
+    CHARACTER :: char
 
-    READ(unit=str_in, fmt=*, iostat=f) value
+    f = 1
+    char = str_in(1:1)
+    IF (char .GE. '0' .AND. char .LE. '9' .OR. char .EQ. '.') THEN
+      READ(unit=str_in, fmt=*, iostat=f) value
+    ENDIF
     IF (f .NE. 0) err = IOR(err, c_err_bad_value)
     as_real_simple = value
 
@@ -101,10 +106,15 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: as_integer_simple, value
+    INTEGER :: as_integer_simple, value = 0
     INTEGER :: f
+    CHARACTER :: char
 
-    READ(unit=str_in, fmt=*, iostat=f) value
+    f = 1
+    char = str_in(1:1)
+    IF (char .GE. '0' .AND. char .LE. '9') THEN
+      READ(unit=str_in, fmt=*, iostat=f) value
+    ENDIF
     IF (f .NE. 0) err = IOR(err, c_err_bad_value)
     as_integer_simple = value
 
@@ -116,10 +126,15 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
-    INTEGER(i8) :: as_long_integer_simple, value
+    INTEGER(i8) :: as_long_integer_simple, value = 0
     INTEGER :: f
+    CHARACTER :: char
 
-    READ(unit=str_in, fmt=*, iostat=f) value
+    f = 1
+    char = str_in(1:1)
+    IF (char .GE. '0' .AND. char .LE. '9') THEN
+      READ(unit=str_in, fmt=*, iostat=f) value
+    ENDIF
     IF (f .NE. 0) err = IOR(err, c_err_bad_value)
     as_long_integer_simple = value
 
