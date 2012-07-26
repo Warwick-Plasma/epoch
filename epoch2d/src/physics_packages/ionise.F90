@@ -232,7 +232,7 @@ CONTAINS
     INTEGER :: ix, cell_x1, cell_x2, dcellx
     INTEGER :: iy, cell_y1, cell_y2, dcelly
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: cf2, j_ion(3)
+    REAL(num) :: dfac, cf2, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
@@ -253,6 +253,8 @@ CONTAINS
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
+
+    dfac = fac**2 / dt / dx / dy
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -343,7 +345,7 @@ CONTAINS
 #endif
 
         ! Electric field strength in atomic units
-        e_part_mag = SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
+        e_part_mag = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
             / atomic_electric_field
         next => current%next
         ! Need to keep track of what ionisation state current particle has
@@ -420,7 +422,7 @@ CONTAINS
               IF (multiphoton_ionised) new%part_p = new%part_p + SQRT(2.0_num &
                   * m0 * (k_photons_energy(current_state) &
                   - species_list(current_state)%ionisation_energy)) &
-                  * (/ ex_part, ey_part, ez_part /) / (e_part_mag &
+                  * fac * (/ ex_part, ey_part, ez_part /) / (e_part_mag &
                   * atomic_electric_field)
 #ifdef PER_PARTICLE_CHARGE_MASS
               new%charge = species_list( &
@@ -467,9 +469,9 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-          j_ion = fac * j_ion * current%weight &
+          j_ion = dfac * j_ion * current%weight &
               * (/ ex_part, ey_part, ez_part /) &
-              / (dt * (atomic_electric_field * e_part_mag)**2)
+              / (atomic_electric_field * e_part_mag)**2
 
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
               j_ion(3) .NE. 0.0_num) THEN
@@ -505,7 +507,7 @@ CONTAINS
     INTEGER :: ix, cell_x1, cell_x2, dcellx
     INTEGER :: iy, cell_y1, cell_y2, dcelly
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: cf2, j_ion(3)
+    REAL(num) :: dfac, cf2, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
@@ -526,6 +528,8 @@ CONTAINS
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
+
+    dfac = fac**2 / dt / dx / dy
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -616,7 +620,7 @@ CONTAINS
 #endif
 
         ! Electric field strength in atomic units
-        e_part_mag = SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
+        e_part_mag = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
             / atomic_electric_field
         next => current%next
         ! Need to keep track of what ionisation state current particle has
@@ -680,7 +684,7 @@ CONTAINS
               IF (multiphoton_ionised) new%part_p = new%part_p + SQRT(2.0_num &
                   * m0 * (k_photons_energy(current_state) &
                   - species_list(current_state)%ionisation_energy)) &
-                  * (/ ex_part, ey_part, ez_part /) / (e_part_mag &
+                  * fac * (/ ex_part, ey_part, ez_part /) / (e_part_mag &
                   * atomic_electric_field)
 #ifdef PER_PARTICLE_CHARGE_MASS
               new%charge = species_list( &
@@ -727,9 +731,9 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-          j_ion = fac * j_ion * current%weight &
+          j_ion = dfac * j_ion * current%weight &
               * (/ ex_part, ey_part, ez_part /) &
-              / (dt * (atomic_electric_field * e_part_mag)**2)
+              / (atomic_electric_field * e_part_mag)**2
 
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
               j_ion(3) .NE. 0.0_num) THEN
@@ -765,7 +769,7 @@ CONTAINS
     INTEGER :: ix, cell_x1, cell_x2, dcellx
     INTEGER :: iy, cell_y1, cell_y2, dcelly
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: cf2, j_ion(3)
+    REAL(num) :: dfac, cf2, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
@@ -785,6 +789,8 @@ CONTAINS
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
+
+    dfac = fac**2 / dt / dx / dy
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -875,7 +881,7 @@ CONTAINS
 #endif
 
         ! Electric field strength in atomic units
-        e_part_mag = SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
+        e_part_mag = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
             / atomic_electric_field
         next => current%next
         ! Need to keep track of what ionisation state current particle has
@@ -976,9 +982,9 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-          j_ion = fac * j_ion * current%weight &
+          j_ion = dfac * j_ion * current%weight &
               * (/ ex_part, ey_part, ez_part /) &
-              / (dt * (atomic_electric_field * e_part_mag)**2)
+              / (atomic_electric_field * e_part_mag)**2
 
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
               j_ion(3) .NE. 0.0_num) THEN
@@ -1014,7 +1020,7 @@ CONTAINS
     INTEGER :: ix, cell_x1, cell_x2, dcellx
     INTEGER :: iy, cell_y1, cell_y2, dcelly
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: cf2, j_ion(3)
+    REAL(num) :: dfac, cf2, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
@@ -1034,6 +1040,8 @@ CONTAINS
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
+
+    dfac = fac**2 / dt / dx / dy
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -1124,7 +1132,7 @@ CONTAINS
 #endif
 
         ! Electric field strength in atomic units
-        e_part_mag = SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
+        e_part_mag = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
             / atomic_electric_field
         next => current%next
         ! Need to keep track of what ionisation state current particle has
@@ -1211,9 +1219,9 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-          j_ion = fac * j_ion * current%weight &
+          j_ion = dfac * j_ion * current%weight &
               * (/ ex_part, ey_part, ez_part /) &
-              / (dt * (atomic_electric_field * e_part_mag)**2)
+              / (atomic_electric_field * e_part_mag)**2
 
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
               j_ion(3) .NE. 0.0_num) THEN
