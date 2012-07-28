@@ -15,7 +15,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: part
 
-    part_species=>species_list(1)
+    part_species => species_list(1)
 
     CALL start_particle_list(part_species, partlist, part)
 
@@ -27,7 +27,7 @@ CONTAINS
 
     TYPE(particle_species), POINTER :: part_species
 
-    part_species=>species_list(1)
+    part_species => species_list(1)
 
   END SUBROUTINE start_particle_species_only
 
@@ -40,9 +40,9 @@ CONTAINS
     TYPE(particle), POINTER :: part
 
     IF (ASSOCIATED(part_species)) THEN
-      partlist=>part_species%attached_list
+      partlist => part_species%attached_list
       IF (ASSOCIATED(partlist)) THEN
-        part=>partlist%head
+        part => partlist%head
       ELSE
         NULLIFY(part)
       ENDIF
@@ -60,9 +60,9 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: part
 
-    partlist=>partlist%next
+    partlist => partlist%next
     IF (ASSOCIATED(partlist)) THEN
-      part=>partlist%head
+      part => partlist%head
     ELSE
       NULLIFY(part)
     ENDIF
@@ -77,7 +77,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: part
 
-    part_species=>part_species%next
+    part_species => part_species%next
     CALL start_particle_list(part_species, partlist, part)
 
   END SUBROUTINE advance_particle_species
@@ -88,7 +88,7 @@ CONTAINS
 
     TYPE(particle_species), POINTER :: part_species
 
-    part_species=>part_species%next
+    part_species => part_species%next
 
   END SUBROUTINE advance_particle_species_only
 

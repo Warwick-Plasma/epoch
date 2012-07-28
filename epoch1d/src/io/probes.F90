@@ -73,16 +73,16 @@ CONTAINS
     ALLOCATE(npart_probe_per_proc(nproc))
 
     DO ispecies = 1, n_species
-      current_species=>species_list(ispecies)
-      current_probe=>species_list(ispecies)%attached_probes
+      current_species => species_list(ispecies)
+      current_probe => species_list(ispecies)%attached_probes
       DO WHILE(ASSOCIATED(current_probe))
         ! If don't dump this probe currently then just cycle
         IF (IAND(current_probe%dumpmask, code) .EQ. 0) THEN
-          current_probe=>current_probe%next
+          current_probe => current_probe%next
           CYCLE
         ENDIF
 
-        current_list=>current_probe%sampled_particles
+        current_list => current_probe%sampled_particles
 
         CALL MPI_ALLGATHER(current_probe%sampled_particles%count, 1, &
             MPI_INTEGER8, npart_probe_per_proc, 1, MPI_INTEGER8, comm, errcode)
@@ -136,7 +136,7 @@ CONTAINS
 
           CALL destroy_partlist(current_probe%sampled_particles)
         ENDIF
-        current_probe=>current_probe%next
+        current_probe => current_probe%next
 
       ENDDO
 
@@ -161,14 +161,14 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      cur=> current_list%head
+      cur => current_list%head
     ENDIF
     part_count = 0
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
       array(part_count) = cur%part_pos - window_shift
-      cur=>cur%next
+      cur => cur%next
     ENDDO
 
     n_points = part_count
@@ -191,7 +191,7 @@ CONTAINS
     REAL(num) :: csqr
 
     IF (start)  THEN
-      cur=> current_list%head
+      cur => current_list%head
     ENDIF
     part_count = 0
     csqr = c**2
@@ -202,14 +202,14 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = cur%part_p(1)
-        cur=>cur%next
+        cur => cur%next
       ENDDO
 #ifdef PHOTONS
     ELSE
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = cur%particle_energy * cur%part_p(1) / csqr
-        cur=>cur%next
+        cur => cur%next
       ENDDO
     ENDIF
 #endif
@@ -232,7 +232,7 @@ CONTAINS
     REAL(num) :: csqr
 
     IF (start)  THEN
-      cur=> current_list%head
+      cur => current_list%head
     ENDIF
     part_count = 0
     csqr = c**2
@@ -243,14 +243,14 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = cur%part_p(2)
-        cur=>cur%next
+        cur => cur%next
       ENDDO
 #ifdef PHOTONS
     ELSE
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = cur%particle_energy * cur%part_p(2) / csqr
-        cur=>cur%next
+        cur => cur%next
       ENDDO
     ENDIF
 #endif
@@ -273,7 +273,7 @@ CONTAINS
     REAL(num) :: csqr
 
     IF (start)  THEN
-      cur=> current_list%head
+      cur => current_list%head
     ENDIF
     part_count = 0
     csqr = c**2
@@ -284,14 +284,14 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = cur%part_p(3)
-        cur=>cur%next
+        cur => cur%next
       ENDDO
 #ifdef PHOTONS
     ELSE
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = cur%particle_energy * cur%part_p(3) / csqr
-        cur=>cur%next
+        cur => cur%next
       ENDDO
     ENDIF
 #endif
@@ -314,14 +314,14 @@ CONTAINS
     INTEGER :: part_count
 
     IF (start)  THEN
-      cur=> current_list%head
+      cur => current_list%head
     ENDIF
     part_count = 0
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
       part_count = part_count+1
       array(part_count) = cur%weight
-      cur=>cur%next
+      cur => cur%next
     ENDDO
 
     n_points = part_count

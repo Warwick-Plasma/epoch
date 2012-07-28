@@ -170,7 +170,7 @@ CONTAINS
 #endif
       !DEC$ VECTOR ALWAYS
       DO ipart = 1, species_list(ispecies)%attached_list%count
-        next=>current%next
+        next => current%next
 #ifdef PREFETCH
         CALL prefetch_particle(next)
 #endif
@@ -458,7 +458,7 @@ CONTAINS
           ENDDO
         ENDIF
 #endif
-        current=>next
+        current => next
       ENDDO
     ENDDO
 

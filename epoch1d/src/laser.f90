@@ -76,13 +76,13 @@ CONTAINS
     TYPE(laser_block), POINTER :: current
 
     IF (ASSOCIATED(list)) THEN
-      current=>list
+      current => list
       DO WHILE(ASSOCIATED(current%next))
-        current=>current%next
+        current => current%next
       ENDDO
-      current%next=>laser
+      current%next => laser
     ELSE
-      list=>laser
+      list => laser
     ENDIF
 
   END SUBROUTINE attach_laser_to_list
@@ -96,18 +96,18 @@ CONTAINS
 
     dt_laser = HUGE(1.0_num)
 
-    current=>laser_x_min
+    current => laser_x_min
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
-      current=>current%next
+      current => current%next
     ENDDO
 
-    current=>laser_x_max
+    current => laser_x_max
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
-      current=>current%next
+      current => current%next
     ENDDO
 
     ! Need at least two iterations per laser period
@@ -142,7 +142,7 @@ CONTAINS
 
     fplus = 0.0_num
     IF (add_laser(i)) THEN
-      current=>laser_x_min
+      current => laser_x_min
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -151,7 +151,7 @@ CONTAINS
               * SIN(current%omega * time + current%phase) &
               * COS(current%pol_angle)
         ENDIF
-        current=>current%next
+        current => current%next
       ENDDO
     ENDIF
 
@@ -163,7 +163,7 @@ CONTAINS
 
     IF (add_laser(i)) THEN
       fplus = 0.0_num
-      current=>laser_x_min
+      current => laser_x_min
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -172,7 +172,7 @@ CONTAINS
               * SIN(current%omega * time + current%phase) &
               * SIN(current%pol_angle)
         ENDIF
-        current=>current%next
+        current => current%next
       ENDDO
     ENDIF
 
@@ -218,7 +218,7 @@ CONTAINS
 
     fneg = 0.0_num
     IF (add_laser(i)) THEN
-      current=>laser_x_max
+      current => laser_x_max
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -227,7 +227,7 @@ CONTAINS
               * SIN(current%omega * time + current%phase) &
               * COS(current%pol_angle)
         ENDIF
-        current=>current%next
+        current => current%next
       ENDDO
     ENDIF
 
@@ -239,7 +239,7 @@ CONTAINS
 
     IF (add_laser(i)) THEN
       fneg = 0.0_num
-      current=>laser_x_max
+      current => laser_x_max
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
@@ -248,7 +248,7 @@ CONTAINS
               * SIN(current%omega * time + current%phase) &
               * SIN(current%pol_angle)
         ENDIF
-        current=>current%next
+        current => current%next
       ENDDO
     ENDIF
 

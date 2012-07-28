@@ -16,7 +16,7 @@ CONTAINS
     INTEGER :: dof_tmp, it, ix, iy
 
     DO ispecies = 1, n_species
-      species=>species_list(ispecies)
+      species => species_list(ispecies)
 
       ! Set temperature at boundary for thermal bcs.
 
@@ -144,7 +144,7 @@ top:DO it = 1, 3
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
 
-    partlist=>species%attached_list
+    partlist => species%attached_list
 
     num_valid_cells_local = 0
     density_total = 0.0_num
@@ -193,7 +193,7 @@ top:DO it = 1, 3
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
 
     ! Randomly place npart_per_cell particles into each valid cell
-    current=>partlist%head
+    current => partlist%head
     DO iy = 1, ny
     DO ix = 1, nx
       npart_per_cell = NINT(density(ix, iy) / density_average &
@@ -212,7 +212,7 @@ top:DO it = 1, 3
         current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
 
         ipart = ipart + 1
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO ! ix
     ENDDO ! iy
@@ -220,10 +220,10 @@ top:DO it = 1, 3
     ! Remove any unplaced particles from the list. This should never be
     ! called if the above routines worked correctly.
     DO WHILE(ASSOCIATED(current))
-      next=>current%next
+      next => current%next
       CALL remove_particle_from_partlist(partlist, current)
       DEALLOCATE(current)
-      current=>next
+      current => next
     ENDDO
 
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
@@ -377,14 +377,14 @@ top:DO it = 1, 3
       npart_per_cell = AINT(species%npart_per_cell, KIND=i8)
     ENDIF
 
-    partlist=>species%attached_list
+    partlist => species%attached_list
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, num_new_particles)
 
     ! Randomly place npart_per_cell particles into each valid cell
     npart_left = num_new_particles
-    current=>partlist%head
+    current => partlist%head
     IF (npart_per_cell .GT. 0) THEN
 
       DO iy = 1, ny
@@ -404,7 +404,7 @@ top:DO it = 1, 3
           current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
 
           ipart = ipart + 1
-          current=>current%next
+          current => current%next
 
           ! One particle sucessfully placed
           npart_left = npart_left - 1
@@ -444,7 +444,7 @@ top:DO it = 1, 3
         current%part_pos(1) = x(cell_x) + (random() - 0.5_num) * dx
         current%part_pos(2) = y(cell_y) + (random() - 0.5_num) * dy
 
-        current=>current%next
+        current => current%next
       ENDDO
 
       DEALLOCATE(valid_cell_list)
@@ -453,10 +453,10 @@ top:DO it = 1, 3
     ! Remove any unplaced particles from the list. This should never be
     ! called if the above routines worked correctly.
     DO WHILE(ASSOCIATED(current))
-      next=>current%next
+      next => current%next
       CALL remove_particle_from_partlist(partlist, current)
       DEALLOCATE(current)
-      current=>next
+      current => next
     ENDDO
 
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
@@ -522,10 +522,10 @@ top:DO it = 1, 3
     CALL MPI_BARRIER(comm, errcode)
     weight_fn = 0.0_num
 
-    partlist=>species%attached_list
+    partlist => species%attached_list
     ! If using per particle weighing then use the weight function to match the
     ! uniform pseudoparticle density to the real particle density
-    current=>partlist%head
+    current => partlist%head
     ipart = 0
     ! First loop converts number density into weight function
     DO WHILE(ipart .LT. partlist%count)
@@ -552,7 +552,7 @@ top:DO it = 1, 3
         ENDDO
       ENDDO
 
-      current=>current%next
+      current => current%next
       ipart = ipart + 1
     ENDDO
     DEALLOCATE(density_map)
@@ -594,10 +594,10 @@ top:DO it = 1, 3
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
     ENDDO
 
-    partlist=>species%attached_list
+    partlist => species%attached_list
     ! Second loop actually assigns weights to particles
     ! Again assumes linear interpolation
-    current=>partlist%head
+    current => partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
 #include "particle_to_grid.inc"
@@ -611,7 +611,7 @@ top:DO it = 1, 3
       ENDDO ! isuby
       current%weight = weight_local
 
-      current=>current%next
+      current => current%next
       ipart = ipart + 1
     ENDDO
 

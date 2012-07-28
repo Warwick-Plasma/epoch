@@ -194,18 +194,18 @@ CONTAINS
     errcode = c_err_none
 
     error = 0
-    current=>laser_x_min
+    current => laser_x_min
     DO WHILE(ASSOCIATED(current))
       IF (current%omega .LT. 0.0_num) error = IOR(error, 1)
       IF (current%amp .LT. 0.0_num) error = IOR(error, 2)
-      current=>current%next
+      current => current%next
     ENDDO
 
-    current=>laser_x_max
+    current => laser_x_max
     DO WHILE(ASSOCIATED(current))
       IF (current%omega .LT. 0.0_num) error = IOR(error, 1)
       IF (current%amp .LT. 0.0_num) error = IOR(error, 2)
-      current=>current%next
+      current => current%next
     ENDDO
 
     IF (IAND(error,1) .NE. 0) THEN

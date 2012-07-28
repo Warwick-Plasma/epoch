@@ -34,9 +34,9 @@ CONTAINS
           ENDDO
         ENDDO
       ENDDO
-      current=>species_list(ispecies)%attached_list%head
+      current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
-        next=>current%next
+        next => current%next
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x = FLOOR((current%part_pos(1) - x_min_local) / dx) + 1
         cell_y = FLOOR((current%part_pos(2) - y_min_local) / dy) + 1
@@ -51,7 +51,7 @@ CONTAINS
         CALL add_particle_to_partlist(&
             species_list(ispecies)%secondary_list(cell_x,cell_y,cell_z), &
             current)
-        current=>next
+        current => next
       ENDDO
     ENDDO
 
@@ -123,7 +123,7 @@ CONTAINS
           DO ix = 1, nx
             count = species_list(ispecies)%secondary_list(ix,iy,iz)%count
             IF (count .GT. 0 .AND. count .LE. npart_per_cell_min) THEN
-              current=>species_list(ispecies)%secondary_list(ix,iy,iz)%head
+              current => species_list(ispecies)%secondary_list(ix,iy,iz)%head
               DO WHILE(ASSOCIATED(current) .AND. count .LE. npart_per_cell_min &
                   .AND. current%weight .GE. 1.0_num)
                 count = &
@@ -151,7 +151,7 @@ CONTAINS
                 current%part_pos(1) = current%part_pos(1) - jitter_x
                 current%part_pos(2) = current%part_pos(2) - jitter_y
                 current%part_pos(3) = current%part_pos(3) - jitter_z
-                current=>current%next
+                current => current%next
               ENDDO
             ENDIF
           ENDDO

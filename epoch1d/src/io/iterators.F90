@@ -32,7 +32,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = cur%part_pos - window_shift
-        cur=>cur%next
+        cur => cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -68,7 +68,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = cur%weight
-        cur=>cur%next
+        cur => cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -107,14 +107,14 @@ CONTAINS
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%part_p(1)
-          cur=>cur%next
+          cur => cur%next
         ENDDO
 #ifdef PHOTONS
       ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%particle_energy * cur%part_p(1) / csqr
-          cur=>cur%next
+          cur => cur%next
         ENDDO
       ENDIF
 #endif
@@ -153,14 +153,14 @@ CONTAINS
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%part_p(2)
-          cur=>cur%next
+          cur => cur%next
         ENDDO
 #ifdef PHOTONS
       ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%particle_energy * cur%part_p(2) / csqr
-          cur=>cur%next
+          cur => cur%next
         ENDDO
       ENDIF
 #endif
@@ -199,14 +199,14 @@ CONTAINS
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%part_p(3)
-          cur=>cur%next
+          cur => cur%next
         ENDDO
 #ifdef PHOTONS
       ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%particle_energy * cur%part_p(3) / csqr
-          cur=>cur%next
+          cur => cur%next
         ENDDO
       ENDIF
 #endif
@@ -252,14 +252,14 @@ CONTAINS
 #endif
           gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
           array(part_count) = cur%part_p(1) / gamma_mass
-          cur=>cur%next
+          cur => cur%next
         ENDDO
 #ifdef PHOTONS
       ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%part_p(1)
-          cur=>cur%next
+          cur => cur%next
         ENDDO
       ENDIF
 #endif
@@ -304,14 +304,14 @@ CONTAINS
 #endif
           gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
           array(part_count) = cur%part_p(2) / gamma_mass
-          cur=>cur%next
+          cur => cur%next
         ENDDO
 #ifdef PHOTONS
       ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%part_p(2)
-          cur=>cur%next
+          cur => cur%next
         ENDDO
       ENDIF
 #endif
@@ -356,14 +356,14 @@ CONTAINS
 #endif
           gamma_mass = SQRT(SUM(cur%part_p**2) + part_mc2) / c
           array(part_count) = cur%part_p(3) / gamma_mass
-          cur=>cur%next
+          cur => cur%next
         ENDDO
 #ifdef PHOTONS
       ELSE
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
           array(part_count) = cur%part_p(3)
-          cur=>cur%next
+          cur => cur%next
         ENDDO
       ENDIF
 #endif
@@ -402,7 +402,7 @@ CONTAINS
 #else
         array(part_count) = current_species%charge
 #endif
-        cur=>cur%next
+        cur => cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -439,7 +439,7 @@ CONTAINS
 #else
         array(part_count) = current_species%mass
 #endif
-        cur=>cur%next
+        cur => cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -474,7 +474,7 @@ CONTAINS
         part_count = part_count + 1
         array(part_count) = REAL(cur%processor, num)
         IF (cur%processor .GE. nproc) PRINT *, 'Bad Processor'
-        cur=>cur%next
+        cur => cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -507,7 +507,7 @@ CONTAINS
         part_count = part_count + 1
         array(part_count) = REAL(cur%processor_at_t0, num)
         IF (cur%processor .GE. nproc) PRINT *, 'Bad Processor'
-        cur=>cur%next
+        cur => cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
@@ -543,7 +543,7 @@ CONTAINS
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
         array(part_count) = REAL(cur%id, num)
-        cur=>cur%next
+        cur => cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) THEN

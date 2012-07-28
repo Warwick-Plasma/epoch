@@ -140,10 +140,10 @@ CONTAINS
     IF (n_species .GT. 0) &
         NULLIFY(species_list(1)%prev, species_list(n_species)%next)
     DO ispecies = 1, n_species-1
-      species_list(ispecies)%next=>species_list(ispecies+1)
+      species_list(ispecies)%next => species_list(ispecies+1)
     ENDDO
     DO ispecies = 2, n_species
-      species_list(ispecies)%prev=>species_list(ispecies-1)
+      species_list(ispecies)%prev => species_list(ispecies-1)
     ENDDO
     DO ispecies = 1, n_species
       species_list(ispecies)%id = ispecies

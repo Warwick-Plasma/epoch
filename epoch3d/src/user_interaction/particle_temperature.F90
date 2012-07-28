@@ -23,8 +23,8 @@ CONTAINS
     INTEGER :: ix, iy, iz
 #include "particle_head.inc"
 
-    partlist=>part_species%attached_list
-    current=>partlist%head
+    partlist => part_species%attached_list
+    current => partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -58,7 +58,7 @@ CONTAINS
       IF (direction .EQ. c_dir_z) current%part_p(3) = &
           momentum_from_temperature(mass, temp_local, drift_local)
 
-      current=>current%next
+      current => current%next
       ipart = ipart + 1
     ENDDO
 

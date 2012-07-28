@@ -743,7 +743,7 @@ CONTAINS
     REAL(num) :: part_pos
 
     DO ispecies = 1, n_species
-      cur=>species_list(ispecies)%attached_list%head
+      cur => species_list(ispecies)%attached_list%head
 
       DO iz = -1, 1
         DO iy = -1, 1
@@ -756,7 +756,7 @@ CONTAINS
       ENDDO
 
       DO WHILE (ASSOCIATED(cur))
-        next=>cur%next
+        next => cur%next
 
         xbd = 0
         ybd = 0
@@ -1282,7 +1282,7 @@ CONTAINS
         ENDIF
 
         ! Move to next particle
-        cur=>next
+        cur => next
       ENDDO
 
       ! swap Particles

@@ -433,15 +433,15 @@ CONTAINS
     IF (rank .EQ. 0) THEN
       IF (.NOT. ASSOCIATED(file_buffer_head)) THEN
         ALLOCATE(file_buffer_head)
-        fbuf=>file_buffer_head
+        fbuf => file_buffer_head
         fbuf%filename = ''
         NULLIFY(fbuf%next)
       ELSE
-        fbuf=>file_buffer_head
+        fbuf => file_buffer_head
       ENDIF
 
       DO WHILE (ASSOCIATED(fbuf%next))
-        fbuf=>fbuf%next
+        fbuf => fbuf%next
         IF (fbuf%filename .EQ. deck_filename) THEN
           already_parsed = .TRUE.
           EXIT
@@ -450,7 +450,7 @@ CONTAINS
       IF (.NOT. already_parsed) THEN
         ALLOCATE(fbuf%next)
         nbuffers = nbuffers + 1
-        fbuf=>fbuf%next
+        fbuf => fbuf%next
         fbuf%filename = deck_filename
         fbuf%pos = 1
         fbuf%idx = 1
@@ -951,9 +951,9 @@ CONTAINS
     INTEGER :: i
 
     IF (rank .EQ. 0) THEN
-      fbuf=>file_buffer_head
+      fbuf => file_buffer_head
       DO i = 1,nbuffers
-        fbuf=>fbuf%next
+        fbuf => fbuf%next
 
         CALL sdf_write_source_code(handle, TRIM(fbuf%filename), &
             'Embedded_input_deck', fbuf%buffer(1:fbuf%idx-1), &

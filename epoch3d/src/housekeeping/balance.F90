@@ -238,10 +238,10 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
     IF (over_ride) THEN
       DO ispecies = 1, n_species
-        current=>species_list(ispecies)%attached_list%head
+        current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           current%processor_at_t0 = rank
-          current=>current%next
+          current => current%next
         ENDDO
       ENDDO
     ENDIF
@@ -367,20 +367,20 @@ CONTAINS
 
     ALLOCATE(temp_slice(-2:ny_new+3, -2:nz_new+3))
 
-    current=>laser_x_min
+    current => laser_x_min
     DO WHILE(ASSOCIATED(current))
       CALL redistribute_field_slice_ptr(c_dir_x, current%profile, temp_slice)
       CALL redistribute_field_slice_ptr(c_dir_x, current%phase, temp_slice)
 
-      current=>current%next
+      current => current%next
     ENDDO
 
-    current=>laser_x_max
+    current => laser_x_max
     DO WHILE(ASSOCIATED(current))
       CALL redistribute_field_slice_ptr(c_dir_x, current%profile, temp_slice)
       CALL redistribute_field_slice_ptr(c_dir_x, current%phase, temp_slice)
 
-      current=>current%next
+      current => current%next
     ENDDO
 
     CALL redistribute_field_slice(c_dir_x, ex_x_min, temp_slice)
@@ -400,20 +400,20 @@ CONTAINS
     DEALLOCATE(temp_slice)
     ALLOCATE(temp_slice(-2:nx_new+3, -2:nz_new+3))
 
-    current=>laser_y_min
+    current => laser_y_min
     DO WHILE(ASSOCIATED(current))
       CALL redistribute_field_slice_ptr(c_dir_y, current%profile, temp_slice)
       CALL redistribute_field_slice_ptr(c_dir_y, current%phase, temp_slice)
 
-      current=>current%next
+      current => current%next
     ENDDO
 
-    current=>laser_y_max
+    current => laser_y_max
     DO WHILE(ASSOCIATED(current))
       CALL redistribute_field_slice_ptr(c_dir_y, current%profile, temp_slice)
       CALL redistribute_field_slice_ptr(c_dir_y, current%phase, temp_slice)
 
-      current=>current%next
+      current => current%next
     ENDDO
 
     CALL redistribute_field_slice(c_dir_y, ex_y_min, temp_slice)
@@ -433,20 +433,20 @@ CONTAINS
     DEALLOCATE(temp_slice)
     ALLOCATE(temp_slice(-2:nx_new+3, -2:ny_new+3))
 
-    current=>laser_z_min
+    current => laser_z_min
     DO WHILE(ASSOCIATED(current))
       CALL redistribute_field_slice_ptr(c_dir_z, current%profile, temp_slice)
       CALL redistribute_field_slice_ptr(c_dir_z, current%phase, temp_slice)
 
-      current=>current%next
+      current => current%next
     ENDDO
 
-    current=>laser_z_max
+    current => laser_z_max
     DO WHILE(ASSOCIATED(current))
       CALL redistribute_field_slice_ptr(c_dir_z, current%profile, temp_slice)
       CALL redistribute_field_slice_ptr(c_dir_z, current%phase, temp_slice)
 
-      current=>current%next
+      current => current%next
     ENDDO
 
     CALL redistribute_field_slice(c_dir_z, ex_z_min, temp_slice)
@@ -1500,7 +1500,7 @@ CONTAINS
     load = 0
 
     DO ispecies = 1, n_species
-      current=>species_list(ispecies)%attached_list%head
+      current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_min, NOT x_min_local
 #ifdef PARTICLE_SHAPE_TOPHAT
@@ -1509,7 +1509,7 @@ CONTAINS
         cell = FLOOR((current%part_pos(1) - x_min) / dx + 1.5_num)
 #endif
         load(cell) = load(cell) + 1
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -1542,7 +1542,7 @@ CONTAINS
     load = 0
 
     DO ispecies = 1, n_species
-      current=>species_list(ispecies)%attached_list%head
+      current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so y_min, NOT y_min_local
 #ifdef PARTICLE_SHAPE_TOPHAT
@@ -1551,7 +1551,7 @@ CONTAINS
         cell = FLOOR((current%part_pos(2) - y_min) / dy + 1.5_num)
 #endif
         load(cell) = load(cell) + 1
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -1584,7 +1584,7 @@ CONTAINS
     load = 0
 
     DO ispecies = 1, n_species
-      current=>species_list(ispecies)%attached_list%head
+      current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so z_min, NOT z_min_local
 #ifdef PARTICLE_SHAPE_TOPHAT
@@ -1593,7 +1593,7 @@ CONTAINS
         cell = FLOOR((current%part_pos(3) - z_min) / dz + 1.5_num)
 #endif
         load(cell) = load(cell) + 1
-        current=>current%next
+        current => current%next
       ENDDO
     ENDDO
 
@@ -1742,14 +1742,14 @@ CONTAINS
     ALLOCATE(sendcounts(0:nproc-1), recvcounts(0:nproc-1))
 
     DO ispecies = 1, n_species
-      current=>species_list(ispecies)%attached_list%head
+      current => species_list(ispecies)%attached_list%head
       DO iproc = 0, nproc - 1
         CALL create_empty_partlist(pointers_send(iproc))
         CALL create_empty_partlist(pointers_recv(iproc))
       ENDDO
 
       DO WHILE(ASSOCIATED(current))
-        next=>current%next
+        next => current%next
         part_proc = get_particle_processor(current)
         IF (part_proc .LT. 0) THEN
           PRINT *, 'Unlocatable particle on processor', rank, current%part_pos
@@ -1764,7 +1764,7 @@ CONTAINS
               species_list(ispecies)%attached_list, current)
           CALL add_particle_to_partlist(pointers_send(part_proc), current)
         ENDIF
-        current=>next
+        current => next
       ENDDO
 
       DO iproc = 0, nproc - 1

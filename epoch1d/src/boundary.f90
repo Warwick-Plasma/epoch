@@ -368,7 +368,7 @@ CONTAINS
     REAL(num) :: part_pos
 
     DO ispecies = 1, n_species
-      cur=>species_list(ispecies)%attached_list%head
+      cur => species_list(ispecies)%attached_list%head
 
       DO ix = -1, 1, 2
         CALL create_empty_partlist(send(ix))
@@ -376,7 +376,7 @@ CONTAINS
       ENDDO
 
       DO WHILE (ASSOCIATED(cur))
-        next=>cur%next
+        next => cur%next
 
         xbd = 0
         out_of_bounds = .FALSE.
@@ -510,7 +510,7 @@ CONTAINS
         ENDIF
 
         ! Move to next particle
-        cur=>next
+        cur => next
       ENDDO
 
       ! swap Particles

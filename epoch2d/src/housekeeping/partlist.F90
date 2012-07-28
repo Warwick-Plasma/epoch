@@ -72,14 +72,14 @@ CONTAINS
     CALL create_empty_partlist(partlist)
 
     partlist%safe = .FALSE.
-    current=>a_particle
+    current => a_particle
     ipart = 1
     DO WHILE (ASSOCIATED(current) .AND. ipart .LT. n_elements)
       ipart = ipart+1
-      current=>current%next
+      current => current%next
     ENDDO
-    partlist%head=>a_particle
-    partlist%tail=>current
+    partlist%head => a_particle
+    partlist%tail => current
     partlist%count = ipart
 
   END SUBROUTINE create_unsafe_partlist
@@ -96,14 +96,14 @@ CONTAINS
     CALL create_empty_partlist(partlist)
 
     partlist%safe = .FALSE.
-    partlist%head=>head
-    partlist%tail=>tail
+    partlist%head => head
+    partlist%tail => tail
 
-    current=>head
+    current => head
     ipart = 0
     DO WHILE (ASSOCIATED(current))
       ipart = ipart+1
-      current=>current%next
+      current => current%next
       IF (ASSOCIATED(current)) THEN
         IF (ASSOCIATED(current%prev, TARGET=tail)) EXIT
       ENDIF
@@ -193,10 +193,10 @@ CONTAINS
 
     ! Since we don't KNOW that count is OK (that's what we're checking)
     ! Have to check both for end of list and for having reached the tail item
-    current=>partlist%head
+    current => partlist%head
     DO WHILE (ASSOCIATED(current))
       test_ct = test_ct+1
-      current=>current%next
+      current => current%next
       IF (ASSOCIATED(current)) THEN
         ! This tests if we've just jumped to the tail element
         ! Allows testing of unsafe partlists
@@ -217,12 +217,12 @@ CONTAINS
     INTEGER(i8) :: ipart
 
     ! Go through list and delete all the particles in the list
-    new_particle=>partlist%head
+    new_particle => partlist%head
     ipart = 0
     DO WHILE (ipart .LT. partlist%count)
-      next=>new_particle%next
+      next => new_particle%next
       DEALLOCATE(new_particle)
-      new_particle=>next
+      new_particle => next
       ipart = ipart+1
     ENDDO
 
@@ -236,8 +236,8 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist1, partlist2
 
-    partlist2%head=>partlist1%head
-    partlist2%tail=>partlist1%tail
+    partlist2%head => partlist1%head
+    partlist2%tail => partlist1%tail
     partlist2%count = partlist1%count
     partlist2%id_update = partlist1%id_update
 
@@ -256,12 +256,12 @@ CONTAINS
     ENDIF
 
     IF (ASSOCIATED(head%tail)) THEN
-      head%tail%next=>tail%head
+      head%tail%next => tail%head
     ELSE
-      head%head=>tail%head
+      head%head => tail%head
     ENDIF
-    IF (ASSOCIATED(tail%head)) tail%head%prev=>head%tail
-    IF (ASSOCIATED(tail%tail)) head%tail=>tail%tail
+    IF (ASSOCIATED(tail%head)) tail%head%prev => head%tail
+    IF (ASSOCIATED(tail%tail)) head%tail => tail%tail
     head%count = head%count + tail%count
     head%id_update = head%id_update + tail%id_update
 
@@ -288,15 +288,15 @@ CONTAINS
     partlist%id_update = 1
     IF (.NOT. ASSOCIATED(partlist%tail)) THEN
       ! partlist is empty
-      partlist%head=>new_particle
-      partlist%tail=>new_particle
+      partlist%head => new_particle
+      partlist%tail => new_particle
       RETURN
     ENDIF
 
-    partlist%tail%next=>new_particle
-    new_particle%prev=>partlist%tail
+    partlist%tail%next => new_particle
+    new_particle%prev => partlist%tail
     NULLIFY(new_particle%next)
-    partlist%tail=>new_particle
+    partlist%tail => new_particle
 
   END SUBROUTINE add_particle_to_partlist
 
@@ -312,13 +312,13 @@ CONTAINS
 
     ! Check whether particle is head or tail of list and unlink
     IF (ASSOCIATED(partlist%head, TARGET=a_particle)) &
-        partlist%head=>a_particle%next
+        partlist%head => a_particle%next
     IF (ASSOCIATED(partlist%tail, TARGET=a_particle)) &
-        partlist%tail=>a_particle%prev
+        partlist%tail => a_particle%prev
 
     ! Link particles on either side together
-    IF (ASSOCIATED(a_particle%next)) a_particle%next%prev=>a_particle%prev
-    IF (ASSOCIATED(a_particle%prev)) a_particle%prev%next=>a_particle%next
+    IF (ASSOCIATED(a_particle%next)) a_particle%next%prev => a_particle%prev
+    IF (ASSOCIATED(a_particle%prev)) a_particle%prev%next => a_particle%next
 
     NULLIFY(a_particle%next, a_particle%prev)
 
@@ -515,14 +515,14 @@ CONTAINS
 
     ALLOCATE(a_particle)
 
-    current=>partlist%head
+    current => partlist%head
     DO ipart = 0, npart_in_data-1
       CALL unpack_particle(array(ipart*nvar+1:(ipart+1)*nvar), a_particle)
       IF (.NOT. compare_particles(a_particle, current)) THEN
         PRINT *, 'BAD PARTICLE ', ipart, 'on', rank
         RETURN
       ENDIF
-      current=>current%next
+      current => current%next
     ENDDO
 
     DEALLOCATE(a_particle)
@@ -545,13 +545,13 @@ CONTAINS
 
     ALLOCATE(array(1:partlist%count*nvar))
     array = 0.0_num
-    current=>partlist%head
+    current => partlist%head
     ipart = 0
     DO WHILE (ipart .LT. partlist%count)
       cpos = ipart*nvar+1
       CALL pack_particle(array(cpos:cpos+nvar-1), current)
       ipart = ipart+1
-      current=>current%next
+      current => current%next
     ENDDO
     CALL MPI_SEND(array, npart_left*nvar, mpireal, dest, tag, comm, errcode)
 
@@ -645,14 +645,14 @@ CONTAINS
     ALLOCATE(data_temp(1:nvar))
 
     ! Pack particles to send into buffer
-    current=>partlist_send%head
+    current => partlist_send%head
     ipart = 0
     DO WHILE (ipart .LT. partlist_send%count)
       cpos = ipart*nvar+1
       CALL pack_particle(data_temp, current)
       data_send(cpos:cpos+nvar-1) = data_temp
       ipart = ipart+1
-      current=>current%next
+      current => current%next
     ENDDO
 
     ! No longer need the sending partlist, so destroy it to save some memory

@@ -30,9 +30,9 @@ CONTAINS
         CALL create_empty_partlist(&
             species_list(ispecies)%secondary_list(ix))
       ENDDO
-      current=>species_list(ispecies)%attached_list%head
+      current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
-        next=>current%next
+        next => current%next
 #ifdef PARTICLE_SHAPE_TOPHAT
         cell_x = FLOOR((current%part_pos - x_min_local) / dx) + 1
 #else
@@ -42,7 +42,7 @@ CONTAINS
             species_list(ispecies)%attached_list, current)
         CALL add_particle_to_partlist(&
             species_list(ispecies)%secondary_list(cell_x), current)
-        current=>next
+        current => next
       ENDDO
     ENDDO
 
@@ -108,7 +108,7 @@ CONTAINS
       DO ix = 1, nx
         count = species_list(ispecies)%secondary_list(ix)%count
         IF (count .GT. 0 .AND. count .LE. npart_per_cell_min) THEN
-          current=>species_list(ispecies)%secondary_list(ix)%head
+          current => species_list(ispecies)%secondary_list(ix)%head
           DO WHILE(ASSOCIATED(current) .AND. count .LE. npart_per_cell_min &
               .AND. current%weight .GE. 1.0_num)
             count = species_list(ispecies)%secondary_list(ix)%count
@@ -129,7 +129,7 @@ CONTAINS
             NULLIFY(new_particle)
 
             current%part_pos = current%part_pos - jitter_x
-            current=>current%next
+            current => current%next
           ENDDO
         ENDIF
       ENDDO
