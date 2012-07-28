@@ -3,7 +3,6 @@ MODULE deck_control_block
   USE mpi
   USE strings_advanced
   USE fields
-  USE collisions
 
   IMPLICIT NONE
   SAVE
@@ -13,9 +12,8 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 17 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 14 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
-  LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           'nx                ', &
@@ -39,10 +37,7 @@ MODULE deck_control_block
           'use_random_seed   ', &
           'smooth_currents   ', &
           'use_multiphoton   ', &
-          'use_bsi           ', &
-          'use_collisions    ', &
-          'coulomb_log       ', &
-          'collide           ' /)
+          'use_bsi           ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                ', &
@@ -66,10 +61,7 @@ MODULE deck_control_block
           'use_random_seed   ', &
           'smooth_currents   ', &
           'multiphoton       ', &
-          'bsi               ', &
-          'use_collisions    ', &
-          'coulomb_log       ', &
-          'collide           ' /)
+          'bsi               ' /)
 
 CONTAINS
 
@@ -77,11 +69,6 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_first) THEN
       control_block_done = .FALSE.
-      use_collisions = .FALSE.
-    ELSE
-      ALLOCATE(coll_pairs_touched(1:n_species, 1:n_species))
-      coll_pairs_touched = .FALSE.
-      CALL setup_collisions
     ENDIF
 
   END SUBROUTINE control_deck_initialise
@@ -89,24 +76,6 @@ CONTAINS
 
 
   SUBROUTINE control_deck_finalise
-
-    INTEGER :: i, j
-
-    IF (deck_state .EQ. c_ds_first) RETURN
-    DEALLOCATE(coll_pairs_touched)
-
-    IF (use_collisions) THEN
-      use_collisions = .FALSE.
-      DO j = 1, n_species
-        DO i = 1, n_species
-          IF (coll_pairs(i,j) .GT. 0) THEN
-            use_collisions = .TRUE.
-            EXIT
-          ENDIF
-        ENDDO
-      ENDDO
-      use_particle_lists = use_particle_lists .OR. use_collisions
-    ENDIF
 
   END SUBROUTINE control_deck_finalise
 
@@ -132,13 +101,7 @@ CONTAINS
 
     errcode = c_err_none
 
-    IF (deck_state .NE. c_ds_first) THEN
-      loop = 4*c_ndims + 17
-      IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop))))) THEN
-        CALL set_collision_matrix(TRIM(ADJUSTL(value)), errcode)
-      ENDIF
-      RETURN
-    ENDIF
+    IF (deck_state .NE. c_ds_first) RETURN
 
     errcode = c_err_unknown_element
     elementselected = 0
@@ -159,7 +122,6 @@ CONTAINS
     ENDIF
 
     control_block_done(elementselected) = .TRUE.
-    control_block_done(4*c_ndims+17) = .FALSE.
     errcode = c_err_none
 
     SELECT CASE (elementselected)
@@ -222,16 +184,6 @@ CONTAINS
       use_multiphoton = as_logical(value, errcode)
     CASE(4*c_ndims+14)
       use_bsi = as_logical(value, errcode)
-    CASE(4*c_ndims+15)
-      use_collisions = as_logical(value, errcode)
-    CASE(4*c_ndims+16)
-      IF (str_cmp(value, 'auto')) THEN
-        coulomb_log_auto = .TRUE.
-      ELSE
-        coulomb_log_auto = .FALSE.
-        coulomb_log = as_real(value, errcode)
-      ENDIF
-    ! 4*c_ndims+17 is the special case of the collision matrix
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -284,104 +236,5 @@ CONTAINS
     ENDIF
 
   END FUNCTION control_block_check
-
-
-
-! The following code is all about reading the coll_pairs from the input deck
-
-  SUBROUTINE get_token(str_in, str_out, token_out, err)
-
-    CHARACTER(*), INTENT(IN) :: str_in
-    CHARACTER(*), INTENT(OUT) :: str_out
-    CHARACTER(*), INTENT(OUT) :: token_out
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: str_len, char, pos
-    CHARACTER(1) :: c
-
-    str_len = LEN(str_in)
-    pos = str_len
-
-    DO char = 1, str_len
-      c = str_in(char:char)
-      IF (c .EQ. ' ')  THEN
-        pos = char
-        EXIT
-      ENDIF
-    ENDDO
-
-    IF (pos .LT. str_len) THEN
-      str_out = TRIM(ADJUSTL(str_in(pos+1:str_len)))
-    ELSE
-      str_out = ''
-    ENDIF
-
-    token_out = TRIM(str_in(1:pos))
-
-  END SUBROUTINE get_token
-
-
-
-  SUBROUTINE set_collision_matrix(str_in, errcode)
-
-    CHARACTER(*), INTENT(IN) :: str_in
-    INTEGER, INTENT(INOUT) :: errcode
-    CHARACTER(LEN=string_length) :: tstr1, tstr2
-    CHARACTER(LEN=string_length) :: species1, species2
-    REAL(num) :: collstate
-    INTEGER :: io, sp1, sp2
-
-    IF (deck_state .NE. c_ds_last) RETURN
-
-    IF (str_cmp(TRIM(str_in), 'all')) THEN
-      coll_pairs = 1.0_num
-      RETURN
-    ENDIF
-
-    IF (str_cmp(TRIM(str_in), 'none')) THEN
-      coll_pairs = -1.0_num
-      RETURN
-    ENDIF
-
-    CALL get_token(str_in, tstr1, species1, errcode)
-    IF (errcode .NE. 0) RETURN
-
-    sp1 = as_integer(species1, errcode)
-    IF (errcode .NE. 0) RETURN
-
-    CALL get_token(tstr1, tstr2, species2, errcode)
-    IF (errcode .NE. 0) RETURN
-
-    sp2 = as_integer(species2, errcode)
-    IF (errcode .NE. 0) RETURN
-
-    collstate = 1.0_num
-    IF (str_cmp(TRIM(tstr2), 'on') .OR. str_cmp(TRIM(tstr2), '')) THEN
-      collstate = 1.0_num
-    ELSEIF (str_cmp(TRIM(tstr2), 'off')) THEN
-      collstate = -1.0_num
-    ELSE
-      collstate = as_real(tstr2, errcode)
-      IF (errcode .NE. 0) RETURN
-    ENDIF
-
-    IF (coll_pairs_touched(sp1, sp2) .AND. rank .EQ. 0) THEN
-      DO io = stdout, du, du - stdout ! Print to stdout and to file
-        WRITE(io,*)
-        WRITE(io,*) '*** WARNING ***'
-        WRITE(io,*) 'The collide parameter for ' // TRIM(species1) // ' <-> ' &
-            // TRIM(species2)
-        WRITE(io,*) 'has been set multiple times!'
-        WRITE(io,*) 'Collisions will only be carried out once per species pair.'
-        WRITE(io,*) 'Later specifications will always override earlier ones.'
-        WRITE(io,*)
-      ENDDO
-    ENDIF
-
-    coll_pairs(sp1, sp2) = collstate
-    coll_pairs(sp2, sp1) = collstate
-    coll_pairs_touched(sp1, sp2) = .TRUE.
-    coll_pairs_touched(sp2, sp1) = .TRUE.
-
-  END SUBROUTINE set_collision_matrix
 
 END MODULE deck_control_block

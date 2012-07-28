@@ -14,6 +14,7 @@ MODULE deck
   USE deck_io_block
   USE deck_window_block
   USE deck_subset_block
+  USE deck_collision_block
 #ifdef PHOTONS
   USE photons
   USE deck_qed_block
@@ -61,6 +62,7 @@ CONTAINS
   SUBROUTINE deck_initialise
 
     CALL boundary_deck_initialise
+    CALL collision_deck_initialise
     CALL constant_deck_initialise
     CALL control_deck_initialise
     CALL dist_fn_deck_initialise
@@ -87,6 +89,7 @@ CONTAINS
 
     CALL check_compulsory_blocks(errcode_deck)
     CALL boundary_deck_finalise
+    CALL collision_deck_finalise
     CALL constant_deck_finalise
     CALL control_deck_finalise
     CALL dist_fn_deck_finalise
@@ -115,6 +118,8 @@ CONTAINS
 
     IF (str_cmp(block_name, 'boundaries')) THEN
       CALL boundary_block_start
+    ELSE IF (str_cmp(block_name, 'collisions')) THEN
+      CALL collision_block_start
     ELSE IF (str_cmp(block_name, 'constant')) THEN
       CALL constant_block_start
     ELSE IF (str_cmp(block_name, 'control')) THEN
@@ -156,6 +161,8 @@ CONTAINS
 
     IF (str_cmp(block_name, 'boundaries')) THEN
       CALL boundary_block_end
+    ELSE IF (str_cmp(block_name, 'collisions')) THEN
+      CALL collision_block_end
     ELSE IF (str_cmp(block_name, 'constant')) THEN
       CALL constant_block_end
     ELSE IF (str_cmp(block_name, 'control')) THEN
@@ -213,6 +220,9 @@ CONTAINS
     ! Test for known blocks
     IF (str_cmp(block_name, 'boundaries')) THEN
       handle_block = boundary_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'collisions')) THEN
+      handle_block = collision_block_handle_element(block_element, block_value)
       RETURN
     ELSE IF (str_cmp(block_name, 'constant')) THEN
       handle_block = constant_block_handle_element(block_element, block_value)
