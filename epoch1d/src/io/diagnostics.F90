@@ -81,7 +81,7 @@ CONTAINS
         .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
     IF (MOD(output_file, restart_dump_every) .EQ. 0 &
         .AND. restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
-    IF (first_call .AND. dump_first) &
+    IF (first_call .AND. force_first_to_be_restartable) &
         code = IOR(code, c_io_restartable)
     IF (last_call .AND. force_final_to_be_restartable) &
         code = IOR(code, c_io_restartable)

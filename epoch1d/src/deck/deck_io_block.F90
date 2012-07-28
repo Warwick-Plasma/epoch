@@ -11,7 +11,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 15
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 16
   INTEGER :: block_number, full_io_block, restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_default
@@ -72,20 +72,21 @@ CONTAINS
     io_block_name (i+1 ) = 'dt_snapshot'
     io_block_name (i+2 ) = 'full_dump_every'
     io_block_name (i+3 ) = 'restart_dump_every'
-    io_block_name (i+4 ) = 'force_final_to_be_restartable'
-    io_block_name (i+5 ) = 'use_offset_grid'
-    io_block_name (i+6 ) = 'extended_io_file'
-    io_block_name (i+7 ) = 'dt_average'
-    alternate_name(i+7 ) = 'averaging_period'
-    io_block_name (i+8 ) = 'nstep_average'
-    alternate_name(i+8 ) = 'min_cycles_per_average'
-    io_block_name (i+9 ) = 'nstep_snapshot'
-    io_block_name (i+10) = 'dump_source_code'
-    io_block_name (i+11) = 'dump_input_decks'
-    io_block_name (i+12) = 'dump_first'
-    io_block_name (i+13) = 'dump_last'
-    io_block_name (i+14) = 'restartable'
-    io_block_name (i+15) = 'name'
+    io_block_name (i+4 ) = 'force_first_to_be_restartable'
+    io_block_name (i+5 ) = 'force_final_to_be_restartable'
+    io_block_name (i+6 ) = 'use_offset_grid'
+    io_block_name (i+7 ) = 'extended_io_file'
+    io_block_name (i+8 ) = 'dt_average'
+    alternate_name(i+8 ) = 'averaging_period'
+    io_block_name (i+9 ) = 'nstep_average'
+    alternate_name(i+9 ) = 'min_cycles_per_average'
+    io_block_name (i+10) = 'nstep_snapshot'
+    io_block_name (i+11) = 'dump_source_code'
+    io_block_name (i+12) = 'dump_input_decks'
+    io_block_name (i+13) = 'dump_first'
+    io_block_name (i+14) = 'dump_last'
+    io_block_name (i+15) = 'restartable'
+    io_block_name (i+16) = 'name'
 
     dump_first = .FALSE.
     dump_last  = .FALSE.
@@ -229,10 +230,12 @@ CONTAINS
       restart_dump_every = as_integer(value, errcode)
       IF (restart_dump_every .EQ. 0) restart_dump_every = 1
     CASE(4)
-      force_final_to_be_restartable = as_logical(value, errcode)
+      force_first_to_be_restartable = as_logical(value, errcode)
     CASE(5)
-      use_offset_grid = as_logical(value, errcode)
+      force_final_to_be_restartable = as_logical(value, errcode)
     CASE(6)
+      use_offset_grid = as_logical(value, errcode)
+    CASE(7)
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** ERROR ***'
@@ -241,24 +244,24 @@ CONTAINS
         ENDDO
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
-    CASE(7)
-      io_block%dt_average = as_real(value, errcode)
     CASE(8)
-      io_block%nstep_average = as_integer(value, errcode)
+      io_block%dt_average = as_real(value, errcode)
     CASE(9)
+      io_block%nstep_average = as_integer(value, errcode)
+    CASE(10)
       io_block%nstep_snapshot = as_integer(value, errcode)
       IF (io_block%nstep_snapshot .LT. 0) io_block%nstep_snapshot = 0
-    CASE(10)
-      dump_source_code = as_logical(value, errcode)
     CASE(11)
-      dump_input_decks = as_logical(value, errcode)
+      dump_source_code = as_logical(value, errcode)
     CASE(12)
-      dump_first = as_logical(value, errcode)
+      dump_input_decks = as_logical(value, errcode)
     CASE(13)
-      dump_last = as_logical(value, errcode)
+      dump_first = as_logical(value, errcode)
     CASE(14)
-      io_block%restart = as_logical(value, errcode)
+      dump_last = as_logical(value, errcode)
     CASE(15)
+      io_block%restart = as_logical(value, errcode)
+    CASE(16)
       io_block%name = value
       got_name = .TRUE.
     END SELECT
