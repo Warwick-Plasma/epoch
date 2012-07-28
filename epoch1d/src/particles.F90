@@ -129,7 +129,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
 #ifdef PHOTONS
       IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) THEN
-        CALL push_photons(ispecies)
+        IF (photon_dynamics) CALL push_photons(ispecies)
         CYCLE
       ENDIF
 #endif

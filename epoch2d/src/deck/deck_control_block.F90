@@ -13,7 +13,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 23 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 17 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -42,13 +42,7 @@ MODULE deck_control_block
           'use_bsi           ', &
           'use_collisions    ', &
           'coulomb_log       ', &
-          'collide           ', &
-          'qed               ', &
-          'qed_start_time    ', &
-          'produce_photons   ', &
-          'photon_energy_min ', &
-          'produce_pairs     ', &
-          'qed_table_location' /)
+          'collide           ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                ', &
@@ -75,13 +69,7 @@ MODULE deck_control_block
           'bsi               ', &
           'use_collisions    ', &
           'coulomb_log       ', &
-          'collide           ', &
-          'qed               ', &
-          'qed_start_time    ', &
-          'produce_photons   ', &
-          'min_photon_energy ', &
-          'produce_pairs     ', &
-          'qed_table_location' /)
+          'collide           ' /)
 
 CONTAINS
 
@@ -90,9 +78,6 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) THEN
       control_block_done = .FALSE.
       use_collisions = .FALSE.
-#ifdef PHOTONS
-      qed_table_location = 'src/physics_packages/TABLES'
-#endif
     ELSE
       ALLOCATE(coll_pairs_touched(1:n_species, 1:n_species))
       coll_pairs_touched = .FALSE.
@@ -106,10 +91,6 @@ CONTAINS
   SUBROUTINE control_deck_finalise
 
     INTEGER :: i, j
-#ifdef PHOTONS
-    LOGICAL :: exists
-    INTEGER :: io, ierr
-#endif
 
     IF (deck_state .EQ. c_ds_first) RETURN
     DEALLOCATE(coll_pairs_touched)
@@ -126,20 +107,6 @@ CONTAINS
       ENDDO
       use_particle_lists = use_particle_lists .OR. use_collisions
     ENDIF
-
-#ifdef PHOTONS
-    IF (rank .EQ. 0) THEN
-      INQUIRE(file=TRIM(qed_table_location)//'/hsokolov.table', exist=exists)
-      IF (.NOT.exists) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
-          WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Unable to find QED tables in the ', &
-              'directory "' // TRIM(qed_table_location) // '"'
-        ENDDO
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
-      ENDIF
-    ENDIF
-#endif
 
   END SUBROUTINE control_deck_finalise
 
@@ -265,48 +232,6 @@ CONTAINS
         coulomb_log = as_real(value, errcode)
       ENDIF
     ! 4*c_ndims+17 is the special case of the collision matrix
-    CASE(4*c_ndims+18)
-#ifdef PHOTONS
-      use_qed = as_logical(value, errcode)
-#else
-      extended_error_string = '-DPHOTONS'
-      errcode = c_err_pp_options_wrong
-#endif
-    CASE(4*c_ndims+19)
-#ifdef PHOTONS
-      qed_start_time = as_real(value, errcode)
-#else
-      extended_error_string = '-DPHOTONS'
-      errcode = c_err_pp_options_wrong
-#endif
-    CASE(4*c_ndims+20)
-#ifdef PHOTONS
-      produce_photons = as_logical(value, errcode)
-#else
-      extended_error_string = '-DPHOTONS'
-      errcode = c_err_pp_options_wrong
-#endif
-    CASE(4*c_ndims+21)
-#ifdef PHOTONS
-      photon_energy_min = as_real(value, errcode)
-#else
-      extended_error_string = '-DPHOTONS'
-      errcode = c_err_pp_options_wrong
-#endif
-    CASE(4*c_ndims+22)
-#ifdef PHOTONS
-      produce_pairs = as_logical(value, errcode)
-#else
-      extended_error_string = '-DPHOTONS'
-      errcode = c_err_pp_options_wrong
-#endif
-    CASE(4*c_ndims+23)
-#ifdef PHOTONS
-      qed_table_location = TRIM(ADJUSTL(value))
-#else
-      extended_error_string = '-DPHOTONS'
-      errcode = c_err_pp_options_wrong
-#endif
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -330,26 +255,6 @@ CONTAINS
 
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
-
-    ! QED stuff is incorrect if not compiled with the correct options
-#ifndef PHOTONS
-    DO index = 4*c_ndims+18, 4*c_ndims+23
-      IF (control_block_done(index)) THEN
-        IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
-            WRITE(io,*)
-            WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Cannot turn on QED option ', &
-                TRIM(ADJUSTL(control_block_name(index))), &
-                ' unless code is compiled with the correct ', &
-                'preprocessor option (-DPHOTONS)'
-          ENDDO
-        ENDIF
-        extended_error_string = '-DPHOTONS'
-        errcode = c_err_pp_options_wrong
-      ENDIF
-    ENDDO
-#endif
 
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN
