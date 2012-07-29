@@ -417,6 +417,9 @@ CONTAINS
       errcode = c_err_missing_elements
     ENDIF
 
+    ! Can't check the io_block if it hasn't been allocated.
+    IF (n_io_blocks .EQ. 0) RETURN
+
     IF (io_block%dt_average .GT. io_block%dt_snapshot) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
