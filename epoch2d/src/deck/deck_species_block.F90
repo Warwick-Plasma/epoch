@@ -271,24 +271,16 @@ CONTAINS
     IF (str_cmp(element, 'ionisation_electron_species') &
         .OR. str_cmp(element, 'electron_species') &
         .OR. str_cmp(element, 'electron')) THEN
-      IF (deck_state .EQ. c_ds_first) THEN
-        release_species_list = value
-      ENDIF
+      release_species_list = value
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'mass')) THEN
-      IF (deck_state .EQ. c_ds_first) THEN
-        species_mass = as_real(value, errcode) * m0
-        RETURN
-      ENDIF
+      species_mass = as_real(value, errcode) * m0
     ENDIF
 
     IF (str_cmp(element, 'charge')) THEN
-      IF (deck_state .EQ. c_ds_first) THEN
-        species_charge = as_real(value, errcode) * q0
-        RETURN
-      ENDIF
+      species_charge = as_real(value, errcode) * q0
     ENDIF
 
     IF (deck_state .EQ. c_ds_first) RETURN
@@ -303,6 +295,7 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'mass')) THEN
+      species_list(species_id)%mass = species_mass
       ! Find the release species for each ionising species and subtract the
       ! release mass from the ionising species and each child species. Doing it
       ! like this ensures the right number of electron masses is removed for
@@ -330,6 +323,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'charge')) THEN
+      species_list(species_id)%charge = species_charge
       species_charge_set(species_id) = .TRUE.
       ! Find the release species for each ionising species and subtract the
       ! release charge from the ionising species and each child species. Doing
