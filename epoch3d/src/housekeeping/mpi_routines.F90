@@ -109,6 +109,7 @@ CONTAINS
     nprocx = dims(3)
     nprocy = dims(2)
     nprocz = dims(1)
+    nprocdir = dims
 
     IF (rank .EQ. 0) THEN
       PRINT *, 'Processor subdivision is ', (/nprocx, nprocy, nprocz/)

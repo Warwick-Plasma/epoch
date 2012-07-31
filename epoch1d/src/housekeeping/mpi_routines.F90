@@ -54,6 +54,7 @@ CONTAINS
     CALL MPI_CART_SHIFT(comm, 0, 1, proc_x_min, proc_x_max, errcode)
 
     nprocx = dims(1)
+    nprocdir = dims
 
     x_coords = coordinates(c_ndims)
     x_min_boundary = .FALSE.

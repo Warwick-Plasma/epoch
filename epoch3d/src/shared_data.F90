@@ -788,6 +788,7 @@ MODULE shared_data
   INTEGER :: nx_global, ny_global, nz_global
   INTEGER(i8) :: npart_global, particles_max_id
   INTEGER :: nprocx, nprocy, nprocz
+  INTEGER :: nprocdir(c_ndims)
   INTEGER :: nsteps, n_species = -1
   LOGICAL :: smooth_currents
   REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
