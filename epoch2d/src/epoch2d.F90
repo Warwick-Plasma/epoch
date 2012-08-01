@@ -122,17 +122,15 @@ PROGRAM pic
     push = (time .GE. particle_push_start_time)
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
         .OR. (time .GE. t_end) .OR. halt) EXIT
+#ifdef PHOTONS
+    IF (push .AND. (time .GT. qed_start_time .AND. use_qed)) THEN
+      CALL qed_update_optical_depth()
+    ENDIF
+#endif
     CALL update_eb_fields_half
     IF (push) THEN
-#ifdef PHOTONS
-      IF (time .GT. qed_start_time .AND. use_qed) THEN
-        CALL qed_update_optical_depth()
-      ENDIF
-#endif
-      IF (dlb) THEN
-        ! .FALSE. this time to use load balancing threshold
-        CALL balance_workload(.FALSE.)
-      ENDIF
+      ! .FALSE. this time to use load balancing threshold
+      IF (dlb) CALL balance_workload(.FALSE.)
       CALL push_particles
       IF (use_particle_lists) THEN
         ! After this line, the particles can be accessed on a cell by cell basis
