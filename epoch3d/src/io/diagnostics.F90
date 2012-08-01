@@ -81,8 +81,11 @@ CONTAINS
         .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
     IF (MOD(output_file, restart_dump_every) .EQ. 0 &
         .AND. restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
-    IF (first_call .AND. force_first_to_be_restartable) &
-        code = IOR(code, c_io_restartable)
+    IF (first_call .AND. force_first_to_be_restartable) THEN
+      code = IOR(code, c_io_restartable)
+    ELSE
+      code = IOR(code, c_io_full)
+    ENDIF
     IF (last_call .AND. force_final_to_be_restartable) &
         code = IOR(code, c_io_restartable)
 
@@ -404,12 +407,22 @@ CONTAINS
 
     print_arrays = .FALSE.
     first_call = first
-    last_call = .FALSE.
     iomask = c_io_never
     iodumpmask = c_io_never
 
+    IF ((time .GE. t_end .OR. step .EQ. nsteps) .AND. dump_last) THEN
+      last_call = .TRUE.
+      print_arrays = .TRUE.
+    ELSE
+      last_call = .FALSE.
+    ENDIF
+
     DO io = 1, n_io_blocks
-      io_block_list(io)%dump = .FALSE.
+      IF (last_call) THEN
+        io_block_list(io)%dump = .TRUE.
+      ELSE
+        io_block_list(io)%dump = .FALSE.
+      ENDIF
 
       ! Work out the time that the next dump will occur based on the
       ! current timestep
@@ -427,14 +440,6 @@ CONTAINS
             .AND. time .GE. io_block_list(io)%time_next) THEN
           io_block_list(io)%time_next  = &
               io_block_list(io)%time_next + io_block_list(io)%dt_snapshot
-          print_arrays = .TRUE.
-          iomask = IOR(iomask, io_block_list(io)%dumpmask)
-          IF (n_subsets .NE. 0) THEN
-            DO is = 1, n_subsets
-              iodumpmask(1+is,:) = &
-                  IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
-            ENDDO
-          ENDIF
           io_block_list(io)%dump = .TRUE.
         ENDIF
       ELSE
@@ -444,15 +449,18 @@ CONTAINS
             .AND. step .GE. io_block_list(io)%nstep_next) THEN
           io_block_list(io)%nstep_next = &
               io_block_list(io)%nstep_next + io_block_list(io)%nstep_snapshot
-          print_arrays = .TRUE.
-          iomask = IOR(iomask, io_block_list(io)%dumpmask)
-          IF (n_subsets .NE. 0) THEN
-            DO is = 1, n_subsets
-              iodumpmask(1+is,:) = &
-                  IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
-            ENDDO
-          ENDIF
           io_block_list(io)%dump = .TRUE.
+        ENDIF
+      ENDIF
+
+      IF (io_block_list(io)%dump) THEN
+        print_arrays = .TRUE.
+        iomask = IOR(iomask, io_block_list(io)%dumpmask)
+        IF (n_subsets .NE. 0) THEN
+          DO is = 1, n_subsets
+            iodumpmask(1+is,:) = &
+                IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
+          ENDDO
         ENDIF
       ENDIF
     ENDDO
@@ -474,14 +482,6 @@ CONTAINS
         ENDDO
       ENDIF
     ENDDO
-
-    IF ((time .GE. t_end .OR. step .EQ. nsteps) .AND. dump_last) THEN
-      last_call = .TRUE.
-      print_arrays = .TRUE.
-      DO io = 1, n_io_blocks
-        io_block_list(io)%dump = .TRUE.
-      ENDDO
-    ENDIF
 
     IF (first) THEN
       first = .FALSE.
