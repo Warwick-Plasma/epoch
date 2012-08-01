@@ -63,7 +63,7 @@ CONTAINS
     window_shift = 0.0_num
     npart_global = -1
     smooth_currents = .FALSE.
-    dlb = .FALSE.
+    use_balance = .FALSE.
     use_random_seed = .FALSE.
     use_offset_grid = .FALSE.
     use_particle_lists = .FALSE.

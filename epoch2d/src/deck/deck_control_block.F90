@@ -157,7 +157,7 @@ CONTAINS
       dt_multiplier = as_real(value, errcode)
     CASE(4*c_ndims+5)
       dlb_threshold = as_real(value, errcode)
-      dlb = .TRUE.
+      use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file

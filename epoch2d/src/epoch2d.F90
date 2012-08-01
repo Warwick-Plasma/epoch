@@ -130,7 +130,7 @@ PROGRAM pic
     CALL update_eb_fields_half
     IF (push) THEN
       ! .FALSE. this time to use load balancing threshold
-      IF (dlb) CALL balance_workload(.FALSE.)
+      IF (use_balance) CALL balance_workload(.FALSE.)
       CALL push_particles
       IF (use_particle_lists) THEN
         ! After this line, the particles can be accessed on a cell by cell basis

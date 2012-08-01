@@ -861,7 +861,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! domain and loadbalancing
   !----------------------------------------------------------------------------
-  LOGICAL :: dlb
+  LOGICAL :: use_balance
   REAL(num) :: dlb_threshold
   INTEGER(i8), PARAMETER :: npart_per_it = 1000000
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_global
