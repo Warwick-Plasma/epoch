@@ -737,7 +737,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: q1, q2
     REAL(num), DIMENSION(-2:nx+3) :: calc_coulomb_log
     REAL(num), PARAMETER :: cfac = 4.13d6 * SQRT((q0 / kb)**3)
-    REAL(num), PARAMETER :: exp1 = EXP(1.0_num)
+    REAL(num), PARAMETER :: exp1 = 2.7182818284590452353602874713526625_num
     REAL(num) :: fac, efac, lfac, temp3, den, ratio
     INTEGER :: i
 

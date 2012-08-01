@@ -16,8 +16,9 @@ MODULE constants
   INTEGER, PARAMETER :: i8  = SELECTED_INT_KIND(18) ! 8-byte 2^63 ~ 10^18
   REAL(num), PARAMETER :: c_non_zero = TINY(1.0_num)
   REAL(num), PARAMETER :: c_largest_number = HUGE(1.0_num)
-  REAL(num), PARAMETER :: c_largest_exp = LOG(c_largest_number)
   REAL(num), PARAMETER :: c_maxexponent = MAXEXPONENT(1.0_num)
+  REAL(num), PARAMETER :: c_log2 = 0.69314718055994530941723212145817657_num
+  REAL(num), PARAMETER :: c_largest_exp = c_maxexponent * c_log2
 
   INTEGER, PARAMETER :: c_ndims = 2
 
