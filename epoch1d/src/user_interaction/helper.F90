@@ -573,25 +573,27 @@ top:DO it = 1, 3
     REAL(num) :: sample_dist_function
 
     n_points = SIZE(dist_fn)
-    ALLOCATE(cdf(1:n_points))
-    DO ipoint = 1, n_points
-      cdf(ipoint) = SUM(dist_fn(1:ipoint))
+    ALLOCATE(cdf(n_points))
+
+    cdf(1) = dist_fn(1)
+    DO ipoint = 2, n_points
+      cdf(ipoint) = cdf(ipoint-1) + dist_fn(ipoint)
     ENDDO
-    cdf = cdf / SUM(dist_fn)
+
+    cdf = cdf / cdf(n_points)
 
     position = random()
     sample_dist_function = 0.0_num
 
     start = 1
     endpoint = n_points
-    current = (start+endpoint) / 2
+    current = (start + endpoint) / 2
 
     DO current = 1, n_points-1
       IF (cdf(current) .LE. position .AND. cdf(current+1) .GE. position) THEN
-        d_cdf = cdf(current+1)-cdf(current)
-        sample_dist_function = &
-            (axis(current)*(position-cdf(current)) / d_cdf &
-            + axis(current+1)*(cdf(current+1)-position) / d_cdf)
+        d_cdf = cdf(current+1) - cdf(current)
+        sample_dist_function = (axis(current) * (position - cdf(current)) &
+            + axis(current+1) * (cdf(current+1) - position)) / d_cdf
         EXIT
       ENDIF
     ENDDO
