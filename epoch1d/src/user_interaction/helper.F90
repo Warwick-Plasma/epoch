@@ -469,7 +469,7 @@ top:DO it = 1, 3
     density = density_in
     density_map = .FALSE.
 
-    CALL field_bc(density)
+    CALL field_bc(density, ng)
 
     DO ix = -2, nx+3
       IF (density(ix) .GT. density_max) density(ix) = density_max

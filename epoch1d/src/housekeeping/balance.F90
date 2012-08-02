@@ -307,7 +307,7 @@ CONTAINS
     CALL redistribute_field_1d(field_in, field_out, cdim, &
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
 
-    CALL do_field_mpi_with_lengths(field_out, n_new(1))
+    CALL do_field_mpi_with_lengths(field_out, ng, n_new(1))
 
   END SUBROUTINE remap_field
 
@@ -330,7 +330,7 @@ CONTAINS
     CALL redistribute_field_1d_r4(field_in, field_out, cdim, &
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
 
-    CALL do_field_mpi_with_lengths_r4(field_out, n_new(1))
+    CALL do_field_mpi_with_lengths_r4(field_out, ng, n_new(1))
 
   END SUBROUTINE remap_field_r4
 

@@ -501,7 +501,7 @@ top:DO it = 1, 3
     density = density_in
     density_map = .FALSE.
 
-    CALL field_bc(density)
+    CALL field_bc(density, ng)
 
     DO iy = -2, ny+3
     DO ix = -2, nx+3

@@ -74,18 +74,20 @@ CONTAINS
 
   ! Exchanges field values at processor boundaries and applies field
   ! boundary conditions
-  SUBROUTINE field_bc(field)
+  SUBROUTINE field_bc(field, ng)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
 
-    CALL do_field_mpi_with_lengths(field, nx, ny)
+    CALL do_field_mpi_with_lengths(field, ng, nx, ny)
 
   END SUBROUTINE field_bc
 
 
 
-  SUBROUTINE do_field_mpi_with_lengths(field, nx_local, ny_local)
+  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, ny_local)
 
+    INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
@@ -133,8 +135,9 @@ CONTAINS
 
 
 
-  SUBROUTINE do_field_mpi_with_lengths_r4(field, nx_local, ny_local)
+  SUBROUTINE do_field_mpi_with_lengths_r4(field, ng, nx_local, ny_local)
 
+    INTEGER, INTENT(IN) :: ng
     REAL(r4), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
@@ -415,7 +418,7 @@ CONTAINS
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
 
-    CALL field_bc(array)
+    CALL field_bc(array, ng)
 
   END SUBROUTINE processor_summation_bcs
 
@@ -426,9 +429,9 @@ CONTAINS
     INTEGER :: i
 
     ! These are the MPI boundaries
-    CALL field_bc(ex)
-    CALL field_bc(ey)
-    CALL field_bc(ez)
+    CALL field_bc(ex, ng)
+    CALL field_bc(ey, ng)
+    CALL field_bc(ez, ng)
 
     ! Perfectly conducting boundaries
     DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
@@ -475,9 +478,9 @@ CONTAINS
     INTEGER :: i
 
     ! These are the MPI boundaries
-    CALL field_bc(bx)
-    CALL field_bc(by)
-    CALL field_bc(bz)
+    CALL field_bc(bx, ng)
+    CALL field_bc(by, ng)
+    CALL field_bc(bz, ng)
 
     IF (mpi_only) RETURN
 

@@ -119,11 +119,11 @@ PROGRAM pic
   IF (use_ionisation) CALL initialise_ionisation
 
   DO
-    push = (time .GE. particle_push_start_time)
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
         .OR. (time .GE. t_end) .OR. halt) EXIT
+    push = (time .GE. particle_push_start_time)
 #ifdef PHOTONS
-    IF (push .AND. (time .GT. qed_start_time .AND. use_qed)) THEN
+    IF (push .AND. use_qed .AND. time .GT. qed_start_time) THEN
       CALL qed_update_optical_depth()
     ENDIF
 #endif

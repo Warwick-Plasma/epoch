@@ -43,7 +43,7 @@ CONTAINS
     CALL MPI_FILE_CLOSE(fh, errcode)
     CALL MPI_TYPE_FREE(subtype, errcode)
 
-    CALL field_bc(array)
+    CALL field_bc(array, ng)
     DO i = 1, 2*c_ndims
       CALL field_zero_gradient(array, c_stagger_centre, i)
     ENDDO

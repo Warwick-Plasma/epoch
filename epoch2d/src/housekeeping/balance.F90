@@ -608,7 +608,7 @@ CONTAINS
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
         cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max)
 
-    CALL do_field_mpi_with_lengths(field_out, n_new(1), n_new(2))
+    CALL do_field_mpi_with_lengths(field_out, ng, n_new(1), n_new(2))
 
   END SUBROUTINE remap_field
 
@@ -632,7 +632,7 @@ CONTAINS
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
         cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max)
 
-    CALL do_field_mpi_with_lengths_r4(field_out, n_new(1), n_new(2))
+    CALL do_field_mpi_with_lengths_r4(field_out, ng, n_new(1), n_new(2))
 
   END SUBROUTINE remap_field_r4
 

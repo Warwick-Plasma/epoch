@@ -142,7 +142,7 @@ CONTAINS
     ENDDO
     ENDDO
 
-    CALL field_bc(field)
+    CALL field_bc(field, ng)
 
   END SUBROUTINE shift_field
 

@@ -125,7 +125,7 @@ CONTAINS
       field(i) = field(i+1)
     ENDDO
 
-    CALL field_bc(field)
+    CALL field_bc(field, ng)
 
   END SUBROUTINE shift_field
 
