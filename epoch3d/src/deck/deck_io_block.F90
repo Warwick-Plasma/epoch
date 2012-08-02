@@ -96,8 +96,8 @@ CONTAINS
     io_block_name (i+15) = 'restartable'
     io_block_name (i+16) = 'name'
 
-    dump_first = .FALSE.
-    dump_last  = .FALSE.
+    dump_first = .TRUE.
+    dump_last  = .TRUE.
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
     got_default = .FALSE.
@@ -143,7 +143,7 @@ CONTAINS
   SUBROUTINE io_block_start
 
     io_block_done = .FALSE.
-    dump_first = .FALSE.
+    dump_first = .TRUE.
     dump_last  = .TRUE.
     got_name = .FALSE.
     block_number = block_number + 1
