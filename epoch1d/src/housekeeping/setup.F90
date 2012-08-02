@@ -432,6 +432,8 @@ CONTAINS
     INTEGER :: ispecies, ix
     REAL(num) :: min_dt, omega, k_max
 
+    IF (ic_from_restart) RETURN
+
     min_dt = 1000000.0_num
     k_max = 2.0_num * pi / dx
 
@@ -672,15 +674,6 @@ CONTAINS
         found_species = found_species + 1
       ENDIF
     ENDDO
-
-    IF (found_species .NE. n_species) THEN
-      IF (rank .EQ. 0) THEN
-        PRINT*, '*** ERROR ***'
-        PRINT*, 'Number of species in restart dump does not match input.deck'
-      ENDIF
-      CALL MPI_ABORT(comm, errcode, ierr)
-      STOP
-    ENDIF
 
     CALL create_subtypes_for_load(species_subtypes)
 
