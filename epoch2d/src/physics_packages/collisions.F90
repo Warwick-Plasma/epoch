@@ -465,11 +465,20 @@ CONTAINS
   PURE FUNCTION velocity_collisions(vrabs, log_lambda, mu, q1, q2, jdens)
 
     REAL(num), INTENT(IN) :: vrabs, log_lambda, mu, q1, q2, jdens
+    REAL(num), PARAMETER :: fac = 4.0_num * pi * epsilon0**2
+    REAL(num) :: numerator, denominator
     REAL(num) :: velocity_collisions
 
-    IF (vrabs .NE. 0.0_num) THEN
-      velocity_collisions = ((q1 * q2)**2 * jdens * log_lambda) &
-          / (4.0_num * pi * (epsilon0 * mu)**2 * vrabs**3)
+    IF (vrabs .GT. 0.0_num) THEN
+      numerator = (q1 * q2)**2 * jdens * log_lambda
+      denominator = fac * mu**2 * vrabs**3
+      IF (denominator .LE. 0.0_num &
+          .OR. EXPONENT(numerator) - EXPONENT(denominator) &
+          .GE. c_maxexponent) THEN
+        velocity_collisions = 0.0_num
+      ELSE
+        velocity_collisions = numerator / denominator
+      ENDIF
     ELSE
       velocity_collisions = 0.0_num
     ENDIF
