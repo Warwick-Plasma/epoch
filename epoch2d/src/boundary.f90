@@ -310,7 +310,7 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, sgn, sz, i
+    INTEGER :: subarray, nn, sz, i
 
     sizes(1) = nx + 2 * ng
     sizes(2) = ny + 2 * ng
@@ -318,6 +318,7 @@ CONTAINS
 
     subsizes(1) = ng
     subsizes(2) = sizes(2)
+    nn = nx
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
@@ -327,20 +328,22 @@ CONTAINS
     ALLOCATE(temp(subsizes(1), subsizes(2)))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(nx+1,1-ng), 1, subarray, &
+    CALL MPI_SENDRECV(array(nn+1,1-ng), 1, subarray, &
         neighbour( 1,0), tag, temp, sz, mpireal, &
         neighbour(-1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_x_min) .EQ. c_bc_reflect .AND. x_min_boundary)) THEN
-      sgn = 1
-      IF (PRESENT(flip_direction)) THEN
+      IF (PRESENT(flip_direction) .AND. flip_direction .EQ. c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
-        IF (flip_direction .EQ. c_dir_x) sgn = -1
+        DO i = 1, ng-1
+          array(i,:) = array(i,:) - array(-i,:)
+        ENDDO
+      ELSE
+        DO i = 1, ng-1
+          array(i,:) = array(i,:) + array(1-i,:)
+        ENDDO
       ENDIF
-      DO i = 1, ng
-        array(i,:) = array(i,:) + sgn * array(1-i,:)
-      ENDDO
     ELSE
       array(1:ng,:) = array(1:ng,:) + temp
     ENDIF
@@ -352,16 +355,18 @@ CONTAINS
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_x_max) .EQ. c_bc_reflect .AND. x_max_boundary)) THEN
-      sgn = 1
-      IF (PRESENT(flip_direction)) THEN
+      IF (PRESENT(flip_direction) .AND. flip_direction .EQ. c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
-        IF (flip_direction .EQ. c_dir_x) sgn = -1
+        DO i = 1, ng
+          array(nn-i,:) = array(nn-i,:) - array(nn+i,:)
+        ENDDO
+      ELSE
+        DO i = 1, ng
+          array(nn+1-i,:) = array(nn+1-i,:) + array(nn+i,:)
+        ENDDO
       ENDIF
-      DO i = 1, ng
-        array(nx+1-i,:) = array(nx+1-i,:) + sgn * array(nx+i,:)
-      ENDDO
     ELSE
-      array(nx+1-ng:nx,:) = array(nx+1-ng:nx,:) + temp
+      array(nn+1-ng:nn,:) = array(nn+1-ng:nn,:) + temp
     ENDIF
 
     DEALLOCATE(temp)
@@ -369,6 +374,7 @@ CONTAINS
 
     subsizes(1) = sizes(1)
     subsizes(2) = ng
+    nn = ny
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
@@ -378,20 +384,22 @@ CONTAINS
     ALLOCATE(temp(subsizes(1), subsizes(2)))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(1-ng,ny+1), 1, subarray, &
+    CALL MPI_SENDRECV(array(1-ng,nn+1), 1, subarray, &
         neighbour(0, 1), tag, temp, sz, mpireal, &
         neighbour(0,-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_y_min) .EQ. c_bc_reflect .AND. y_min_boundary)) THEN
-      sgn = 1
-      IF (PRESENT(flip_direction)) THEN
+      IF (PRESENT(flip_direction) .AND. flip_direction .EQ. c_dir_y) THEN
         ! Currents get reversed in the direction of the boundary
-        IF (flip_direction .EQ. c_dir_y) sgn = -1
+        DO i = 1, ng-1
+          array(:,i) = array(:,i) - array(:,-i)
+        ENDDO
+      ELSE
+        DO i = 1, ng-1
+          array(:,i) = array(:,i) + array(:,1-i)
+        ENDDO
       ENDIF
-      DO i = 1, ng
-        array(:,i) = array(:,i) + sgn * array(:,1-i)
-      ENDDO
     ELSE
       array(:,1:ng) = array(:,1:ng) + temp
     ENDIF
@@ -403,16 +411,18 @@ CONTAINS
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_y_max) .EQ. c_bc_reflect .AND. y_max_boundary)) THEN
-      sgn = 1
-      IF (PRESENT(flip_direction)) THEN
+      IF (PRESENT(flip_direction) .AND. flip_direction .EQ. c_dir_y) THEN
         ! Currents get reversed in the direction of the boundary
-        IF (flip_direction .EQ. c_dir_y) sgn = -1
+        DO i = 1, ng
+          array(:,nn-i) = array(:,nn-i) - array(:,nn+i)
+        ENDDO
+      ELSE
+        DO i = 1, ng
+          array(:,nn+1-i) = array(:,nn+1-i) + array(:,nn+i)
+        ENDDO
       ENDIF
-      DO i = 1, ng
-        array(:,ny+1-i) = array(:,ny+1-i) + sgn * array(:,ny+i)
-      ENDDO
     ELSE
-      array(:,ny+1-ng:ny) = array(:,ny+1-ng:ny) + temp
+      array(:,nn+1-ng:nn) = array(:,nn+1-ng:nn) + temp
     ENDIF
 
     DEALLOCATE(temp)

@@ -202,24 +202,30 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
-    REAL(num), DIMENSION(ng) :: temp
-    INTEGER :: sgn, i
+    REAL(num), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER :: nn, i
+
+    nn = nx
+
+    ALLOCATE(temp(ng))
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(nx+1), ng, mpireal, &
+    CALL MPI_SENDRECV(array(nn+1), ng, mpireal, &
         neighbour( 1), tag, temp, ng, mpireal, &
         neighbour(-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_x_min) .EQ. c_bc_reflect .AND. x_min_boundary)) THEN
-      sgn = 1
-      IF (PRESENT(flip_direction)) THEN
+      IF (PRESENT(flip_direction) .AND. flip_direction .EQ. c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
-        IF (flip_direction .EQ. c_dir_x) sgn = -1
+        DO i = 1, ng-1
+          array(i) = array(i) - array(-i)
+        ENDDO
+      ELSE
+        DO i = 1, ng-1
+          array(i) = array(i) + array(1-i)
+        ENDDO
       ENDIF
-      DO i = 1, ng
-        array(i) = array(i) + sgn * array(1-i)
-      ENDDO
     ELSE
       array(1:ng) = array(1:ng) + temp
     ENDIF
@@ -231,17 +237,21 @@ CONTAINS
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_x_max) .EQ. c_bc_reflect .AND. x_max_boundary)) THEN
-      sgn = 1
-      IF (PRESENT(flip_direction)) THEN
+      IF (PRESENT(flip_direction) .AND. flip_direction .EQ. c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
-        IF (flip_direction .EQ. c_dir_x) sgn = -1
+        DO i = 1, ng
+          array(nn-i) = array(nn-i) - array(nn+i)
+        ENDDO
+      ELSE
+        DO i = 1, ng
+          array(nn+1-i) = array(nn+1-i) + array(nn+i)
+        ENDDO
       ENDIF
-      DO i = 1, ng
-        array(nx+1-i) = array(nx+1-i) + sgn * array(nx+i)
-      ENDDO
     ELSE
-      array(nx+1-ng:nx) = array(nx+1-ng:nx) + temp
+      array(nn+1-ng:nn) = array(nn+1-ng:nn) + temp
     ENDIF
+
+    DEALLOCATE(temp)
 
     CALL field_bc(array, ng)
 
