@@ -141,9 +141,15 @@ FUNCTION LoadSDFFile, filename, _variables=requestv, _silent=silent, $
       b.name = swapchr(b.name, ' ', '_')
       b.name = swapchr(b.name, '/', '_')
       b.name = STRUPCASE(STRTRIM(b.name))
+      b = CREATE_STRUCT(b, 'idname', b.name)
 
       fname = STRTRIM(STRING(b.fname), 2)
       pos = STRPOS(fname, '/')
+      IF (KEYWORD_SET(retro)) THEN BEGIN
+        fname = STRUPCASE(STRTRIM(fname))
+        fname = swapchr(fname, ' ', '_')
+      ENDIF
+
       IF (pos GT 0) THEN BEGIN
         b = CREATE_STRUCT(b, 'class', STRMID(fname, 0, pos))
       ENDIF ELSE BEGIN
@@ -296,12 +302,12 @@ PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md, $
   md = mesh_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN
     IF (KEYWORD_SET(retro)) THEN BEGIN
-      output_struct = CREATE_STRUCT(output_struct, d)
+      output_struct = CREATE_STRUCT(output_struct, block_header.idname, d)
     ENDIF ELSE BEGIN
       output_struct = CREATE_STRUCT(output_struct, block_header.name, obj)
     ENDELSE
     ; Hack to add a cell centred grid for plotting node-centred values
-    IF (block_header.name EQ 'grid' AND ~mdflag) THEN BEGIN
+    IF (block_header.idname EQ 'GRID' AND ~mdflag) THEN BEGIN
       iDim = 0
       nx = mesh_header.dims[iDim] - 1
       x = 0.5 * (d.(iDim)[0:nx-1] + d.(iDim)[1:nx])
@@ -381,7 +387,7 @@ PRO SDFGetPointMesh, file_header, block_header, output_struct, offset, md=md, $
   md = mesh_header
   IF (N_ELEMENTS(d) NE 0) THEN BEGIN
     IF (KEYWORD_SET(retro)) THEN BEGIN
-      output_struct = CREATE_STRUCT(output_struct, d)
+      output_struct = CREATE_STRUCT(output_struct, block_header.idname, d)
     ENDIF ELSE BEGIN
       output_struct = CREATE_STRUCT(output_struct, block_header.name, obj)
     ENDELSE

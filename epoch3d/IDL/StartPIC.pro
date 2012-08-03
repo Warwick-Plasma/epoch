@@ -67,6 +67,17 @@ END
 
 ; --------------------------------------------------------------------------
 
+FUNCTION getstruct, snapshot_in, wkdir_in, _EXTRA=extra
+  COMPILE_OPT idl2
+  COMMON background, wkdir_global, retro_global
+
+  data = getdata(snapshot_in, wkdir_in, _retro=0, _EXTRA=extra)
+
+  RETURN, data
+END
+
+; --------------------------------------------------------------------------
+
 FUNCTION explore_data, wkdir, snapshot=snapshot
 
   COMPILE_OPT idl2
@@ -75,7 +86,20 @@ FUNCTION explore_data, wkdir, snapshot=snapshot
 
   IF N_ELEMENTS(wkdir) EQ 0 THEN wkdir = wkdir_global
 
-  RETURN, sdf_explorer(wkdir, snapshot=snapshot)
+  RETURN, sdf_explorer(wkdir, snapshot=snapshot, _struct=0)
+END
+
+; --------------------------------------------------------------------------
+
+FUNCTION explore_struct, wkdir, snapshot=snapshot
+
+  COMPILE_OPT idl2
+  COMMON background, wkdir_global, retro_global
+  ON_ERROR, 2
+
+  IF N_ELEMENTS(wkdir) EQ 0 THEN wkdir = wkdir_global
+
+  RETURN, sdf_explorer(wkdir, snapshot=snapshot, _struct=1)
 END
 
 ; --------------------------------------------------------------------------
@@ -90,7 +114,7 @@ PRO list_variables, snapshot, wkdir
     RETURN
   ENDIF
 
-  q = getdata(snapshot, wkdir, /_variables)
+  q = getdata(snapshot, wkdir, _retro=1, /_variables)
 END
 
 ; --------------------------------------------------------------------------
@@ -136,7 +160,7 @@ PRO init_StartPIC
   init_cfdhelp
   init_SDFHelp
 
-  retro_global = 0
+  retro_global = 1
   set_wkdir, "Data"
 
   ;device, true_color=24

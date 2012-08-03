@@ -1,6 +1,6 @@
 PRO init_widget
   COMPILE_OPT idl2, hidden
-  COMMON SDF_View_Internal_data, Loaded_Data, newline
+  COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
 
   newline = STRING(10B)
 END
@@ -54,7 +54,7 @@ END
 
 FUNCTION get_sdf_metatext, viewer, element
   COMPILE_OPT idl2, hidden
-  COMMON SDF_View_Internal_data, Loaded_Data, newline
+  COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
 
@@ -257,7 +257,7 @@ END
 PRO load_data, viewer, errcode
 
   COMPILE_OPT idl2, hidden
-  COMMON SDF_View_Internal_data, Loaded_Data, newline
+  COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
 
   errcode = 1
 
@@ -265,9 +265,9 @@ PRO load_data, viewer, errcode
   element = WIDGET_INFO(obj_data.list, /list_select)
 
   ; Handle case where no items were selected
-  IF (N_ELEMENTS(element) EQ 1 AND element LT 0) THEN RETURN
+  IF (N_ELEMENTS(element) EQ 1 AND element[0] LT 0) THEN RETURN
 
-  struct = {silent:1}
+  struct = {_silent:1,_retro:use_retro}
   FOR i = 0, N_ELEMENTS(element) - 1 DO BEGIN
     name = (*obj_data.valid_names)[element[i]]
     struct = CREATE_STRUCT(struct, name, 1)
@@ -310,7 +310,7 @@ PRO draw_image, viewer, force=force, nowset=nowset, iplot=iplot
   bar_rel_pos = 0.5 - (bar_rel_height) / 2.0
 
   WIDGET_CONTROL, /hourglass
-  namestruct = {silent:1}
+  namestruct = {_silent:1}
   name = (*obj_data.valid_names)[element]
   namestruct = CREATE_STRUCT(namestruct, name, 1L)
   data = load_raw(*obj_data.filename, namestruct, /only_md)
@@ -434,7 +434,7 @@ PRO load_meta_and_populate_sdf, viewer, accepted_types
     names = v
   ENDIF ELSE BEGIN
     data = LoadSDFFile(*obj_data.filename, /_silent, /_variables, _var_list=v, $
-        _block_types=types, _block_dims=dims, _name_list=names)
+        _block_types=types, _block_dims=dims, _name_list=names, _retro=0)
   ENDELSE
 
   IF (N_ELEMENTS(accepted_types) EQ 0) THEN BEGIN
@@ -506,10 +506,10 @@ END
 
 ; --------------------------------------------------------------------------
 
-FUNCTION sdf_explorer, wkdir, snapshot=snapshot
+FUNCTION sdf_explorer, wkdir, snapshot=snapshot, _struct=struct
 
   COMPILE_OPT idl2, hidden
-  COMMON SDF_View_Internal_data, Loaded_Data, newline
+  COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
   ; common info for the older CFD file format
@@ -518,6 +518,8 @@ FUNCTION sdf_explorer, wkdir, snapshot=snapshot
 
   Loaded_Data = 'Load Cancelled'
 
+  use_retro = 1
+  IF (KEYWORD_SET(struct)) THEN use_retro = 0
   IF (N_ELEMENTS(snapshot) EQ 0) THEN snapshot = 0
 
   mxcount = count_files(wkdir)
@@ -579,7 +581,7 @@ END
 PRO explorer_load_new_file, viewer, filename
 
   COMPILE_OPT idl2, hidden
-  COMMON SDF_View_Internal_data, Loaded_Data, newline
+  COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
   ; common info for the older CFD file format
@@ -610,7 +612,7 @@ FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
   ; common info for the older CFD file format
   COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
       TYPE_SNAPSHOT
-  COMMON SDF_View_Internal_data, Loaded_Data, newline
+  COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
 
   Loaded_Data = 'No Data Loaded'
 
@@ -717,7 +719,7 @@ END
 PRO viewer_load_new_file, viewer, filename
 
   COMPILE_OPT idl2, hidden
-  COMMON SDF_View_Internal_data, Loaded_Data, newline
+  COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
   ; common info for the older CFD file format
