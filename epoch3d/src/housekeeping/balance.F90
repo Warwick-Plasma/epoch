@@ -822,6 +822,11 @@ CONTAINS
     type_min(n) = old_min(n)
     type_max(n) = old_min(n)
 
+    ng0 = 0
+    ng1 = 0
+    IF (our_coords(n) .EQ. 0) ng0 = ng
+    IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
+
     ! Find the new processor on which the old y_min resides
     ! This could be sped up by using bisection.
     DO jproc = 1, nprocs(n)-1
@@ -834,17 +839,17 @@ CONTAINS
       type_max(n) = new_cell_max2(jproc)
       IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-      ng0 = 0
-      ng1 = 0
-      IF (jproc .EQ. 1) ng0 = ng
-      IF (jproc .EQ. nprocdir(cdim(n))) ng1 = ng
-
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
       n = 1
       type_min(n) = old_min(n)
       type_max(n) = old_min(n)
+
+      ng0 = 0
+      ng1 = 0
+      IF (our_coords(n) .EQ. 0) ng0 = ng
+      IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
 
       ! Find the new processor on which the old x_min resides
       ! This could be sped up by using bisection.
@@ -858,13 +863,11 @@ CONTAINS
         type_max(n) = new_cell_max1(iproc)
         IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-        ng0 = 0
-        ng1 = 0
-        IF (iproc .EQ. 1) ng0 = ng
-        IF (iproc .EQ. nprocdir(cdim(n))) ng1 = ng
-
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
+
+        ng0 = 0
+        ng1 = 0
 
         CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
@@ -1062,6 +1065,11 @@ CONTAINS
     type_min(n) = old_min(n)
     type_max(n) = old_min(n)
 
+    ng0 = 0
+    ng1 = 0
+    IF (our_coords(n) .EQ. 0) ng0 = ng
+    IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
+
     ! Find the new processor on which the old z_min resides
     ! This could be sped up by using bisection.
     DO kproc = 1, nprocs(n)-1
@@ -1074,17 +1082,17 @@ CONTAINS
       type_max(n) = new_cell_max3(kproc)
       IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-      ng0 = 0
-      ng1 = 0
-      IF (kproc .EQ. 1) ng0 = ng
-      IF (kproc .EQ. nprocdir(cdim(n))) ng1 = ng
-
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
       n = 2
       type_min(n) = old_min(n)
       type_max(n) = old_min(n)
+
+      ng0 = 0
+      ng1 = 0
+      IF (our_coords(n) .EQ. 0) ng0 = ng
+      IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
 
       ! Find the new processor on which the old y_min resides
       ! This could be sped up by using bisection.
@@ -1098,17 +1106,17 @@ CONTAINS
         type_max(n) = new_cell_max2(jproc)
         IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-        ng0 = 0
-        ng1 = 0
-        IF (jproc .EQ. 1) ng0 = ng
-        IF (jproc .EQ. nprocdir(cdim(n))) ng1 = ng
-
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
         n = 1
         type_min(n) = old_min(n)
         type_max(n) = old_min(n)
+
+        ng0 = 0
+        ng1 = 0
+        IF (our_coords(n) .EQ. 0) ng0 = ng
+        IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
 
         ! Find the new processor on which the old x_min resides
         ! This could be sped up by using bisection.
@@ -1122,13 +1130,11 @@ CONTAINS
           type_max(n) = new_cell_max1(iproc)
           IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-          ng0 = 0
-          ng1 = 0
-          IF (iproc .EQ. 1) ng0 = ng
-          IF (iproc .EQ. nprocdir(cdim(n))) ng1 = ng
-
           n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
           start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
+
+          ng0 = 0
+          ng1 = 0
 
           CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
@@ -1365,6 +1371,11 @@ CONTAINS
     type_min(n) = old_min(n)
     type_max(n) = old_min(n)
 
+    ng0 = 0
+    ng1 = 0
+    IF (our_coords(n) .EQ. 0) ng0 = ng
+    IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
+
     ! Find the new processor on which the old z_min resides
     ! This could be sped up by using bisection.
     DO kproc = 1, nprocs(n)-1
@@ -1377,17 +1388,17 @@ CONTAINS
       type_max(n) = new_cell_max3(kproc)
       IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-      ng0 = 0
-      ng1 = 0
-      IF (kproc .EQ. 1) ng0 = ng
-      IF (kproc .EQ. nprocdir(cdim(n))) ng1 = ng
-
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
       n = 2
       type_min(n) = old_min(n)
       type_max(n) = old_min(n)
+
+      ng0 = 0
+      ng1 = 0
+      IF (our_coords(n) .EQ. 0) ng0 = ng
+      IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
 
       ! Find the new processor on which the old y_min resides
       ! This could be sped up by using bisection.
@@ -1401,17 +1412,17 @@ CONTAINS
         type_max(n) = new_cell_max2(jproc)
         IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-        ng0 = 0
-        ng1 = 0
-        IF (jproc .EQ. 1) ng0 = ng
-        IF (jproc .EQ. nprocdir(cdim(n))) ng1 = ng
-
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
         n = 1
         type_min(n) = old_min(n)
         type_max(n) = old_min(n)
+
+        ng0 = 0
+        ng1 = 0
+        IF (our_coords(n) .EQ. 0) ng0 = ng
+        IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
 
         ! Find the new processor on which the old x_min resides
         ! This could be sped up by using bisection.
@@ -1425,13 +1436,11 @@ CONTAINS
           type_max(n) = new_cell_max1(iproc)
           IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-          ng0 = 0
-          ng1 = 0
-          IF (iproc .EQ. 1) ng0 = ng
-          IF (iproc .EQ. nprocdir(cdim(n))) ng1 = ng
-
           n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
           start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
+
+          ng0 = 0
+          ng1 = 0
 
           CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
