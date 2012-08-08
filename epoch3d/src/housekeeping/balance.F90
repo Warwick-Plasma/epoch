@@ -1614,11 +1614,8 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_min, NOT x_min_local
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell = FLOOR((current%part_pos(1) - x_min) / dx) + 1
-#else
         cell = FLOOR((current%part_pos(1) - x_min) / dx + 1.5_num)
-#endif
+
         load(cell) = load(cell) + 1
         current => current%next
       ENDDO
@@ -1656,11 +1653,8 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so y_min, NOT y_min_local
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell = FLOOR((current%part_pos(2) - y_min) / dy) + 1
-#else
         cell = FLOOR((current%part_pos(2) - y_min) / dy + 1.5_num)
-#endif
+
         load(cell) = load(cell) + 1
         current => current%next
       ENDDO
@@ -1698,11 +1692,8 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so z_min, NOT z_min_local
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell = FLOOR((current%part_pos(3) - z_min) / dz) + 1
-#else
         cell = FLOOR((current%part_pos(3) - z_min) / dz + 1.5_num)
-#endif
+
         load(cell) = load(cell) + 1
         current => current%next
       ENDDO
