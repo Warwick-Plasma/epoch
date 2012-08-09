@@ -189,6 +189,7 @@ avtSDFFileFormat::OpenFile(int open_only)
     if (!h) h = sdf_open(filename, rank, comm, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
     h->use_float = use_float;
+    h->use_random = use_random;
     step = h->step;
     time = h->time;
     debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
@@ -281,6 +282,7 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
     sdf_extension_handle = NULL;
 
     use_float = 0;
+    use_random = 0;
     if (readOpts) {
         bool opt =
             readOpts->GetBool("Read double variables as floats to save memory");
@@ -288,6 +290,12 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
             use_float = 1;
         else
             use_float = 0;
+
+        opt = readOpts->GetBool("Randomise particle data");
+        if (opt)
+            use_random = 1;
+        else
+            use_random = 0;
     }
 
     stack_init();

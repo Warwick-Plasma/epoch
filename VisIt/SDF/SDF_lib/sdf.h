@@ -251,6 +251,7 @@ struct sdf_file {
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float, use_summary;
+    char use_random;
     char *code_name;
     sdf_block_t *blocklist, *tail, *current_block;
     char *mmap;
@@ -286,6 +287,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local);
 
 int sdf_factor(sdf_file_t *h, int *start);
 int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count);
+int sdf_randomize_array(sdf_file_t *h, void **var_in, int count);
 int sdf_set_rank_master(sdf_file_t *h, int rank);
 int sdf_read_nblocks(sdf_file_t *h);
 

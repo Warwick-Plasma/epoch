@@ -68,6 +68,7 @@ GetSDFReadOptions(void)
 {
     DBOptionsAttributes *rv = new DBOptionsAttributes;
     rv->SetBool("Read double variables as floats to save memory", false);
+    rv->SetBool("Randomise particle data", false);
     return rv;
 /* EXAMPLE OF OPTIONS
     rv->SetEnum("Dimension", 1);

@@ -13,6 +13,12 @@
 #define ABS(a) (((a) > 0) ? (a) : (-(a)))
 
 
+#define SDF_MAX_RND (1LL<<32)
+
+static uint32_t sdf_random(void);
+static void sdf_random_init(void);
+
+
 int sdf_fopen(sdf_file_t *h)
 {
     int ret = 0;
@@ -502,4 +508,78 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
 #endif
     }
     return 0;
+}
+
+
+
+int sdf_randomize_array(sdf_file_t *h, void **var_in, int count)
+{
+    sdf_block_t *b = h->current_block;
+
+    sdf_random_init();
+
+    if (b->datatype_out == SDF_DATATYPE_REAL8) {
+        double tmp, *array = (double*)(*var_in);
+        int i, id1, id2;
+
+        for (i=0; i < count; i++) {
+            id1 = 1LL * count * sdf_random() / SDF_MAX_RND;
+            id2 = 1LL * count * sdf_random() / SDF_MAX_RND;
+            tmp = array[id1];
+            array[id1] = array[id2];
+            array[id2] = tmp;
+        }
+    } else {
+        float tmp, *array = (float*)(*var_in);
+        int i, id1, id2;
+
+        for (i=0; i < count; i++) {
+            id1 = 1LL * count * sdf_random() / SDF_MAX_RND;
+            id2 = 1LL * count * sdf_random() / SDF_MAX_RND;
+            tmp = array[id1];
+            array[id1] = array[id2];
+            array[id2] = tmp;
+        }
+    }
+
+    return 0;
+}
+
+
+static uint32_t Q[41790], indx, carry, xcng, xs;
+
+#define CNG (xcng = 69609 * xcng + 123)
+#define XS (xs ^= xs<<13, xs ^= (unsigned)xs>>17, xs ^= xs>>5 )
+#define SUPR (indx < 41790 ? Q[indx++] : refill())
+#define KISS SUPR + CNG + XS
+
+static uint32_t refill(void)
+{
+    int i;
+    uint64_t t;
+    for (i=0; i<41790; i++) {
+        t = 7010176LL * Q[i] + carry;
+        carry = (t>>32);
+        Q[i] =~ (t);
+    }
+    indx = 1;
+    return (Q[0]);
+}
+
+
+static uint32_t sdf_random(void)
+{
+    return KISS;
+}
+
+
+static void sdf_random_init(void)
+{
+    int i;
+    indx = 41790;
+    carry = 362436;
+    xcng = 1236789;
+    xs = 521288629;
+    for (i=0; i<41790; i++) Q[i] = CNG + XS;
+    for (i=0; i<41790; i++) sdf_random();
 }

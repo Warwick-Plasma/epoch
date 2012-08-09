@@ -184,6 +184,7 @@ int sdf_read_point_mesh(sdf_file_t *h)
             sdf_helper_read_array(h, &b->grids[n], b->nlocal);
             sdf_free_distribution(h);
             sdf_convert_array_to_float(h, &b->grids[n], b->nlocal);
+            if (h->use_random) sdf_randomize_array(h, &b->grids[n], b->nlocal);
             if (h->print) {
                 SDF_DPRNT("%s: ", b->dim_labels[n]);
                 SDF_DPRNTar(b->grids[n], b->nlocal);
@@ -239,6 +240,7 @@ int sdf_read_point_variable(sdf_file_t *h)
     sdf_helper_read_array(h, &b->data, b->nlocal);
     sdf_free_distribution(h);
     sdf_convert_array_to_float(h, &b->data, b->nlocal);
+    if (h->use_random) sdf_randomize_array(h, &b->data, b->nlocal);
     h->current_location = h->current_location + b->type_size * b->npoints;
 
     if (h->print) {
