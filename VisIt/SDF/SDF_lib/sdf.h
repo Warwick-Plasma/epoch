@@ -347,11 +347,11 @@ int sdf_read_point_variable_info(sdf_file_t *h);
             float *arr = (a); \
             SDF_PRNT("r4 "); \
             _d=0; while (_d<(len)) { \
+                SDF_PRNT("\n%i ",_d); \
                 for (_i=0; _i < 10; _i++, _d++) { \
                     SDF_PRNT(" %g", arr[_d]); \
                     if (_d == (len)) break; \
                 } \
-                SDF_PRNT("\n"); \
             } \
         } else if (b->datatype_out == SDF_DATATYPE_REAL8) { \
             double *arr = (a); \
@@ -367,11 +367,11 @@ int sdf_read_point_variable_info(sdf_file_t *h);
             int *arr = (a); \
             SDF_PRNT("i4 "); \
             _d=0; while (_d<(len)) { \
+                SDF_PRNT("\n%i ",_d); \
                 for (_i=0; _i < 10; _i++, _d++) { \
                     SDF_PRNT(" %i", arr[_d]); \
                     if (_d == (len)) break; \
                 } \
-                SDF_PRNT("\n"); \
             } \
         } \
         SDF_PRNT("\n"); \

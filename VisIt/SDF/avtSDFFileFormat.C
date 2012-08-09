@@ -380,7 +380,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
 
     md->SetMustAlphabetizeVariables(false);
 
-    sdf_block_t *b, *c, *next = h->blocklist;
+    sdf_block_t *b, *next = h->blocklist;
     for (int i = 0; i < h->nblocks; i++) {
         b = h->current_block = next;
         next = b->next;
@@ -411,7 +411,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             if (b->ndims > 1) mmd->yLabel = b->dim_labels[1];
             if (b->ndims > 2) mmd->zLabel = b->dim_labels[2];
             mmd->hasSpatialExtents = true;
-            for (int n=0; n < b->ndims; n++) {
+            for (unsigned int n=0; n < b->ndims; n++) {
                 mmd->minSpatialExtents[n] = b->extents[n];
                 mmd->maxSpatialExtents[n] = b->extents[b->ndims+n];
             }
@@ -468,7 +468,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             definition.append("{");
             sdf_block_t *matvar;
             bool done = false;
-            for (int i = 0; i < b->ndims; i++) {
+            for (unsigned int i = 0; i < b->ndims; i++) {
                 matvar = sdf_find_block_by_id(h, b->variable_ids[i]);
                 if (!matvar) continue;
                 if (done) definition.append(",");
@@ -497,7 +497,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
 
             vector<string> mnames;
             char **matptr = b->material_names;
-            for (int n = 0 ; n < b->ndims ; n++) {
+            for (unsigned int n = 0 ; n < b->ndims ; n++) {
                 mnames.push_back(*matptr);
                 matptr++;
             }
@@ -518,14 +518,14 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
 
             vector<string> mnames;
             char **matptr = b->material_names;
-            for (int n = 0 ; n < b->ndims ; n++) {
+            for (unsigned int n = 0 ; n < b->ndims ; n++) {
                 mnames.push_back(*matptr);
                 matptr++;
             }
 
             vector<int> nspec;
             vector<vector<string> > specnames;
-            for (int n = 0 ; n < mat->ndims ; n++) {
+            for (unsigned int n = 0 ; n < mat->ndims ; n++) {
                 if (strcmp(mat->material_names[n],b->material_name) == 0) {
                     specnames.push_back(mnames);
                     nspec.push_back(mnames.size());
@@ -853,7 +853,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
                 b->nlocal = mesh->npoints;
             } else {
                 b->nlocal = 1;
-                for (int i=0; i < b->ndims; i++) {
+                for (unsigned int i=0; i < b->ndims; i++) {
                     if (b->stagger == SDF_STAGGER_CELL_CENTRE)
                         b->local_dims[i]--;
                     b->nlocal *= b->local_dims[i];
@@ -1143,7 +1143,7 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
 
         material_list[i] = -mix_index;
 
-        int material_number = 0, nmats = 0, idx = 0;
+        int idx = 0;
         Real vf;
         for (int n = 0; n < nm; n++) {
             vfm = (Real *)vfm_blocks[n]->data;

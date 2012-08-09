@@ -287,6 +287,7 @@ int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
 
 
 
+#ifdef PARALLEL
 static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
 {
     const int ndims = 2;
@@ -399,6 +400,7 @@ static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
 
     return 0;
 }
+#endif
 
 
 

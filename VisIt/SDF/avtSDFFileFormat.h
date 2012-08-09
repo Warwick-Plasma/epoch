@@ -97,7 +97,9 @@ class avtSDFFileFormat : public avtSTMDFileFormat
     virtual bool          HasInvariantSIL(void) const      { return false; };
     virtual void           SetUpDomainConnectivity(void);
     int         GetCycle(void) { return step; }
+    int         GetCycle(int) { return step; }
     double      GetTime(void) { return time; }
+    double      GetTime(int) { return time; }
     int         GetCycleFromFilename(const char *f) const { return step; }
     double      GetTimeFromFilename(const char *f) const { return time; }
     bool        ReturnsValidCycle(void) const { return true; }

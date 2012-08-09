@@ -376,7 +376,7 @@ static void build_summary_buffer(sdf_file_t *h)
     int i, buflen;
     uint64_t data_location, block_location, next_block_location;
     uint32_t block_info_length;
-    void *bufptr;
+    char *bufptr;
 
     struct list_entry {
         void *buffer;
@@ -407,12 +407,12 @@ static void build_summary_buffer(sdf_file_t *h)
             if (i != 0) break;
 
             memcpy(&next_block_location, blockbuf->buffer, sizeof(uint64_t));
-            memcpy(&data_location, blockbuf->buffer+8, sizeof(uint64_t));
+            memcpy(&data_location, (char*)blockbuf->buffer+8, sizeof(uint64_t));
 
             // Older versions of the file did not contain the block
             // info length in the header.
             if (h->file_version + h->file_revision > 1) {
-                memcpy(&block_info_length, blockbuf->buffer+132,
+                memcpy(&block_info_length, (char*)blockbuf->buffer+132,
                        sizeof(uint32_t));
             } else {
                 if (data_location > block_location)
