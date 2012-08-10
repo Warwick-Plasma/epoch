@@ -662,7 +662,7 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r8), INTENT(IN) :: variable(1)
+    REAL(r8), INTENT(IN) :: variable(sz(1))
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
@@ -748,7 +748,7 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r8), INTENT(IN) :: variable(1,1)
+    REAL(r8), INTENT(IN) :: variable(sz(1),sz(2))
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
@@ -834,7 +834,7 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r8), INTENT(IN) :: variable(1,1,1)
+    REAL(r8), INTENT(IN) :: variable(sz(1),sz(2),sz(3))
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r8), OPTIONAL, INTENT(IN) :: mult
@@ -920,7 +920,7 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: dims, sz
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
-    REAL(r8), INTENT(IN) :: variable(1,1,1,1)
+    REAL(r8), INTENT(IN) :: variable(sz(1),sz(2),sz(3),sz(4))
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, OPTIONAL, INTENT(IN) :: convert_in
     REAL(r8), OPTIONAL, INTENT(IN) :: mult

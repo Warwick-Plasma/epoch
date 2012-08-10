@@ -117,7 +117,8 @@ CONTAINS
     ! Write the cartesian mesh
     IF (IAND(iomask(c_dump_grid), code) .NE. 0) THEN
       convert = (IAND(iomask(c_dump_grid), c_io_dump_single) .NE. 0 &
-          .AND. IAND(iomask(c_dump_grid), c_io_restartable) .EQ. 0)
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(c_dump_grid), c_io_restartable) .EQ. 0))
       IF (.NOT. use_offset_grid) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
             xb_global, yb_global, zb_global, convert)
@@ -667,7 +668,8 @@ CONTAINS
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
     convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-        .AND. IAND(iomask(id), c_io_restartable) .EQ. 0)
+        .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+        .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
 
     IF (convert) THEN
       subtype  = subtype_field_r4
@@ -756,7 +758,8 @@ CONTAINS
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
     convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-        .AND. IAND(iomask(id), c_io_restartable) .EQ. 0)
+        .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+        .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
 
     IF (convert) THEN
       subtype  = subtype_field_r4
@@ -1026,7 +1029,8 @@ CONTAINS
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
     convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-        .AND. IAND(iomask(id), c_io_restartable) .EQ. 0)
+        .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+        .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
 
     IF (convert) THEN
       subtype  = subtype_field_r4
@@ -1316,11 +1320,12 @@ CONTAINS
 
     id = c_dump_part_grid
     IF (IAND(iomask(id), code) .NE. 0) THEN
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. IAND(code, c_io_restartable) .EQ. 0)
-
       CALL species_offset_init()
       IF (npart_global .EQ. 0) RETURN
+
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
 
       DO ispecies = 1, n_species
         current_species => io_list(ispecies)
@@ -1340,7 +1345,9 @@ CONTAINS
 
     id = c_dump_ejected_particles
     IF (IAND(iomask(id), code) .NE. 0) THEN
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0)
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
@@ -1377,11 +1384,12 @@ CONTAINS
 
     id = id_in
     IF (IAND(iomask(id), code) .NE. 0) THEN
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. IAND(IAND(iomask(id), code), c_io_restartable) .EQ. 0)
-
       CALL species_offset_init()
       IF (npart_global .EQ. 0) RETURN
+
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
 
       DO ispecies = 1, n_species
         current_species => io_list(ispecies)
@@ -1400,7 +1408,9 @@ CONTAINS
 
     id = c_dump_ejected_particles
     IF (IAND(iomask(id), code) .NE. 0) THEN
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0)
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
