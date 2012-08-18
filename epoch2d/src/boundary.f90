@@ -85,6 +85,35 @@ CONTAINS
 
 
 
+  SUBROUTINE do_field_mpi_with_lengths_slice(field, direction, ng, n1_local)
+
+    INTEGER, INTENT(IN) :: direction, ng
+    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: n1_local
+    INTEGER :: proc1_min, proc1_max
+    INTEGER :: basetype
+
+    basetype = mpireal
+
+    IF (direction .EQ. c_dir_x) THEN
+      proc1_min = proc_y_min
+      proc1_max = proc_y_max
+    ELSE
+      proc1_min = proc_x_min
+      proc1_max = proc_x_max
+    ENDIF
+
+    CALL MPI_SENDRECV(field(1), ng, basetype, proc1_min, tag, &
+        field(n1_local+1), ng, basetype, proc1_max, tag, &
+        comm, status, errcode)
+    CALL MPI_SENDRECV(field(n1_local+1-ng), ng, basetype, proc1_max, &
+        tag, field(1-ng), ng, basetype, proc1_min, tag, &
+        comm, status, errcode)
+
+  END SUBROUTINE do_field_mpi_with_lengths_slice
+
+
+
   SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, ny_local)
 
     INTEGER, INTENT(IN) :: ng

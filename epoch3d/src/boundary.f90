@@ -85,6 +85,76 @@ CONTAINS
 
 
 
+  SUBROUTINE do_field_mpi_with_lengths_slice(field, direction, ng, n1_local, &
+      n2_local)
+
+    INTEGER, INTENT(IN) :: direction, ng
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: n1_local, n2_local
+    INTEGER :: proc1_min, proc1_max
+    INTEGER :: proc2_min, proc2_max
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER :: subarray, basetype
+
+    basetype = mpireal
+
+    IF (direction .EQ. c_dir_x) THEN
+      proc1_min = proc_y_min
+      proc1_max = proc_y_max
+      proc2_min = proc_z_min
+      proc2_max = proc_z_max
+    ELSE IF (direction .EQ. c_dir_y) THEN
+      proc1_min = proc_x_min
+      proc1_max = proc_x_max
+      proc2_min = proc_z_min
+      proc2_max = proc_z_max
+    ELSE
+      proc1_min = proc_x_min
+      proc1_max = proc_x_max
+      proc2_min = proc_y_min
+      proc2_max = proc_y_max
+    ENDIF
+
+    sizes(1) = n1_local + 2 * ng
+    sizes(2) = n2_local + 2 * ng
+    starts = 0
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, basetype, subarray, errcode)
+    CALL MPI_TYPE_COMMIT(subarray, errcode)
+
+    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc1_min, tag, &
+        field(n1_local+1,1-ng), 1, subarray, proc1_max, tag, &
+        comm, status, errcode)
+    CALL MPI_SENDRECV(field(n1_local+1-ng,1-ng), 1, subarray, proc1_max, &
+        tag, field(1-ng,1-ng), 1, subarray, proc1_min, tag, &
+        comm, status, errcode)
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
+
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+        MPI_ORDER_FORTRAN, basetype, subarray, errcode)
+    CALL MPI_TYPE_COMMIT(subarray, errcode)
+
+    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc2_min, tag, &
+        field(1-ng,n2_local+1), 1, subarray, proc2_max, tag, &
+        comm, status, errcode)
+    CALL MPI_SENDRECV(field(1-ng,n2_local+1-ng), 1, subarray, proc2_max, &
+        tag, field(1-ng,1-ng), 1, subarray, proc2_min, tag, &
+        comm, status, errcode)
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+  END SUBROUTINE do_field_mpi_with_lengths_slice
+
+
+
   SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, ny_local, &
       nz_local)
 

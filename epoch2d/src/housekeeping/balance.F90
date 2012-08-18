@@ -10,6 +10,7 @@ MODULE balance
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
+  LOGICAL :: first
 
 CONTAINS
 
@@ -59,6 +60,8 @@ CONTAINS
       IF (balance_frac .GT. dlb_threshold) RETURN
       IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
+
+    first = over_ride
 
     ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
     ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
@@ -227,7 +230,7 @@ CONTAINS
     ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng))
     ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng))
 
-    IF (time .EQ. 0) THEN
+    IF (first) THEN
       jx = 0.0_num
       jy = 0.0_num
       jz = 0.0_num
@@ -465,7 +468,6 @@ CONTAINS
 
     n_new = SHAPE(temp) - 2 * 3
 
-    temp = 0.0_num
     CALL remap_field_slice(direction, field, temp)
     DEALLOCATE(field)
     ALLOCATE(field(-2:n_new(1)+3))
@@ -484,7 +486,6 @@ CONTAINS
 
     n_new = SHAPE(temp) - 2 * 3
 
-    temp = 0.0_num
     CALL remap_field_slice(direction, field, temp)
     DEALLOCATE(field)
     ALLOCATE(field(-2:n_new(1)+3))
@@ -548,7 +549,6 @@ CONTAINS
     n_new = SHAPE(temp) - 2 * 3
     n_new(c_ndims) = n_new(c_ndims) + 2 * 3
 
-    temp = 0.0_num
     DO i = 1, n_new(c_ndims)
       CALL remap_field_slice(direction, field(:,i), temp(:,i))
     ENDDO
@@ -569,7 +569,9 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(IN) :: field_in
     REAL(num), DIMENSION(:), INTENT(OUT) :: field_out
     INTEGER :: i, n
-    INTEGER, DIMENSION(c_ndims-1) ::cdim
+    INTEGER, DIMENSION(c_ndims-1) :: n_new, cdim
+
+    n_new = SHAPE(field_out) - 2 * 3
 
     n = 1
     DO i = 1, c_ndims
@@ -585,6 +587,8 @@ CONTAINS
       CALL redistribute_field_1d(field_in, field_out, cdim, &
           cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
     ENDIF
+
+    CALL do_field_mpi_with_lengths_slice(field_out, direction, ng, n_new(1))
 
   END SUBROUTINE remap_field_slice
 
@@ -654,7 +658,7 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
-    INTEGER, DIMENSION(nd) :: our_coords
+    INTEGER, DIMENSION(nd) :: our_coords, nmin, nmax
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = mpireal
@@ -673,6 +677,9 @@ CONTAINS
     new_min(1) = new_cell_min1(our_coords(1)+1)
     new_max(1) = new_cell_max1(our_coords(1)+1)
 
+    nmin(1) = new_cell_min1(1)
+    nmax(1) = new_cell_max1(nprocs(1))
+
     tag = 0
     sendtypes = 0
     recvtypes = 0
@@ -688,11 +695,6 @@ CONTAINS
     type_min(n) = old_min(n)
     type_max(n) = old_min(n)
 
-    ng0 = 0
-    ng1 = 0
-    IF (our_coords(n) .EQ. 0) ng0 = ng
-    IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
-
     ! Find the new processor on which the old x_min resides
     ! This could be sped up by using bisection.
     DO iproc = 1, nprocs(n)-1
@@ -705,11 +707,13 @@ CONTAINS
       type_max(n) = new_cell_max1(iproc)
       IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-      n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
-      start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
-
       ng0 = 0
       ng1 = 0
+      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+
+      n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
+      start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
       CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
@@ -755,8 +759,8 @@ CONTAINS
 
       ng0 = 0
       ng1 = 0
-      IF (iproc .EQ. 1) ng0 = ng
-      IF (iproc .EQ. nprocdir(cdim(n))) ng1 = ng
+      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
@@ -818,7 +822,7 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
-    INTEGER, DIMENSION(nd) :: our_coords
+    INTEGER, DIMENSION(nd) :: our_coords, nmin, nmax
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = mpireal
@@ -843,6 +847,11 @@ CONTAINS
     new_min(2) = new_cell_min2(our_coords(2)+1)
     new_max(2) = new_cell_max2(our_coords(2)+1)
 
+    nmin(1) = new_cell_min1(1)
+    nmax(1) = new_cell_max1(nprocs(1))
+    nmin(2) = new_cell_min2(1)
+    nmax(2) = new_cell_max2(nprocs(2))
+
     tag = 0
     sendtypes = 0
     recvtypes = 0
@@ -858,11 +867,6 @@ CONTAINS
     type_min(n) = old_min(n)
     type_max(n) = old_min(n)
 
-    ng0 = 0
-    ng1 = 0
-    IF (our_coords(n) .EQ. 0) ng0 = ng
-    IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
-
     ! Find the new processor on which the old y_min resides
     ! This could be sped up by using bisection.
     DO jproc = 1, nprocs(n)-1
@@ -875,17 +879,17 @@ CONTAINS
       type_max(n) = new_cell_max2(jproc)
       IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
+      ng0 = 0
+      ng1 = 0
+      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
       n = 1
       type_min(n) = old_min(n)
       type_max(n) = old_min(n)
-
-      ng0 = 0
-      ng1 = 0
-      IF (our_coords(n) .EQ. 0) ng0 = ng
-      IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
 
       ! Find the new processor on which the old x_min resides
       ! This could be sped up by using bisection.
@@ -899,11 +903,13 @@ CONTAINS
         type_max(n) = new_cell_max1(iproc)
         IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-        n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
-        start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
-
         ng0 = 0
         ng1 = 0
+        IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+        IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+
+        n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
+        start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
         CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
@@ -955,8 +961,8 @@ CONTAINS
 
       ng0 = 0
       ng1 = 0
-      IF (jproc .EQ. 1) ng0 = ng
-      IF (jproc .EQ. nprocdir(cdim(n))) ng1 = ng
+      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
@@ -979,8 +985,8 @@ CONTAINS
 
         ng0 = 0
         ng1 = 0
-        IF (iproc .EQ. 1) ng0 = ng
-        IF (iproc .EQ. nprocdir(cdim(n))) ng1 = ng
+        IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+        IF (type_max(n) .EQ. nmax(n)) ng1 = ng
 
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
@@ -1051,7 +1057,7 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
-    INTEGER, DIMENSION(nd) :: our_coords
+    INTEGER, DIMENSION(nd) :: our_coords, nmin, nmax
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = MPI_REAL4
@@ -1076,6 +1082,11 @@ CONTAINS
     new_min(2) = new_cell_min2(our_coords(2)+1)
     new_max(2) = new_cell_max2(our_coords(2)+1)
 
+    nmin(1) = new_cell_min1(1)
+    nmax(1) = new_cell_max1(nprocs(1))
+    nmin(2) = new_cell_min2(1)
+    nmax(2) = new_cell_max2(nprocs(2))
+
     tag = 0
     sendtypes = 0
     recvtypes = 0
@@ -1091,11 +1102,6 @@ CONTAINS
     type_min(n) = old_min(n)
     type_max(n) = old_min(n)
 
-    ng0 = 0
-    ng1 = 0
-    IF (our_coords(n) .EQ. 0) ng0 = ng
-    IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
-
     ! Find the new processor on which the old y_min resides
     ! This could be sped up by using bisection.
     DO jproc = 1, nprocs(n)-1
@@ -1108,17 +1114,17 @@ CONTAINS
       type_max(n) = new_cell_max2(jproc)
       IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
+      ng0 = 0
+      ng1 = 0
+      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
       n = 1
       type_min(n) = old_min(n)
       type_max(n) = old_min(n)
-
-      ng0 = 0
-      ng1 = 0
-      IF (our_coords(n) .EQ. 0) ng0 = ng
-      IF (our_coords(n) .EQ. nprocdir(cdim(n))-1) ng1 = ng
 
       ! Find the new processor on which the old x_min resides
       ! This could be sped up by using bisection.
@@ -1132,11 +1138,13 @@ CONTAINS
         type_max(n) = new_cell_max1(iproc)
         IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
 
-        n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
-        start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
-
         ng0 = 0
         ng1 = 0
+        IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+        IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+
+        n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
+        start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
         CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
@@ -1188,8 +1196,8 @@ CONTAINS
 
       ng0 = 0
       ng1 = 0
-      IF (jproc .EQ. 1) ng0 = ng
-      IF (jproc .EQ. nprocdir(cdim(n))) ng1 = ng
+      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
@@ -1212,8 +1220,8 @@ CONTAINS
 
         ng0 = 0
         ng1 = 0
-        IF (iproc .EQ. 1) ng0 = ng
-        IF (iproc .EQ. nprocdir(cdim(n))) ng1 = ng
+        IF (type_min(n) .EQ. nmin(n)) ng0 = ng
+        IF (type_max(n) .EQ. nmax(n)) ng1 = ng
 
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
