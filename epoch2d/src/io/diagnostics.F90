@@ -645,8 +645,9 @@ CONTAINS
     INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:,:), INTENT(IN) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: should_dump, subtype, subarray
+    INTEGER :: should_dump, subtype, subarray, io
     LOGICAL :: convert
+    TYPE(averaged_data_block), POINTER :: avg
 
     IF (IAND(iomask(id), code) .EQ. 0) RETURN
 
@@ -682,35 +683,35 @@ CONTAINS
           subtype, subarray, convert)
     ENDIF
 
-    IF (IAND(iomask(id), c_io_averaged) .NE. 0 &
-        .AND. averaged_data(id)%started) THEN
-      IF (averaged_data(id)%dump_single) THEN
-        averaged_data(id)%r4array = averaged_data(id)%r4array &
-            / REAL(averaged_data(id)%real_time, r4)
+    DO io = 1, n_io_blocks
+      IF (io_block_list(io)%dump) THEN
+        avg => io_block_list(io)%averaged_data(id)
+        IF (IAND(iomask(id), c_io_averaged) .NE. 0 .AND. avg%started) THEN
+          IF (avg%dump_single) THEN
+            avg%r4array = avg%r4array / REAL(avg%real_time, r4)
 
-        CALL sdf_write_plain_variable(sdf_handle, &
-            TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
-            TRIM(units), dims, stagger, 'grid', &
-            averaged_data(id)%r4array(:,:,1), subtype_field_r4, &
-            subarray_field_r4)
+            CALL sdf_write_plain_variable(sdf_handle, &
+                TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
+                TRIM(units), dims, stagger, 'grid', &
+                avg%r4array(:,:,1), subtype_field_r4, subarray_field_r4)
 
-        averaged_data(id)%r4array = 0.0_num
-      ELSE
-        averaged_data(id)%array = averaged_data(id)%array &
-            / averaged_data(id)%real_time
+            avg%r4array = 0.0_num
+          ELSE
+            avg%array = avg%array / avg%real_time
 
-        CALL sdf_write_plain_variable(sdf_handle, &
-            TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
-            TRIM(units), dims, stagger, 'grid', &
-            averaged_data(id)%array(:,:,1), subtype_field, &
-            subarray_field)
+            CALL sdf_write_plain_variable(sdf_handle, &
+                TRIM(block_id) // '_averaged', TRIM(name) // '_averaged', &
+                TRIM(units), dims, stagger, 'grid', &
+                avg%array(:,:,1), subtype_field, subarray_field)
 
-        averaged_data(id)%array = 0.0_num
+            avg%array = 0.0_num
+          ENDIF
+
+          avg%real_time = 0.0_num
+          avg%started = .FALSE.
+        ENDIF
       ENDIF
-
-      averaged_data(id)%real_time = 0.0_num
-      averaged_data(id)%started = .FALSE.
-    ENDIF
+    ENDDO
 
   END SUBROUTINE write_field
 
@@ -725,10 +726,11 @@ CONTAINS
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: should_dump, subtype, subarray, ispecies, species_sum
-    INTEGER :: len1, len2, len3, len4, len5
+    INTEGER :: len1, len2, len3, len4, len5, io
     CHARACTER(LEN=c_id_length) :: temp_block_id
     CHARACTER(LEN=c_max_string_length) :: temp_name, len_string
     LOGICAL :: convert
+    TYPE(averaged_data_block), POINTER :: avg
 
     INTERFACE
       SUBROUTINE func(data_array, current_species)
@@ -818,115 +820,115 @@ CONTAINS
     IF (isubset .NE. 1) RETURN
 
     ! Write averaged data
-    IF (IAND(iomask(id), c_io_averaged) .NE. 0 &
-        .AND. averaged_data(id)%started) THEN
-      IF (averaged_data(id)%dump_single) THEN
-        averaged_data(id)%r4array = averaged_data(id)%r4array &
-            / REAL(averaged_data(id)%real_time, r4)
+    DO io = 1, n_io_blocks
+      IF (io_block_list(io)%dump) THEN
+        avg => io_block_list(io)%averaged_data(id)
+        IF (IAND(iomask(id), c_io_averaged) .NE. 0 .AND. avg%started) THEN
+          IF (avg%dump_single) THEN
+            avg%r4array = avg%r4array / REAL(avg%real_time, r4)
 
-        species_sum = 0
-        IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
-            .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-          species_sum = 1
-          CALL sdf_write_plain_variable(sdf_handle, &
-              TRIM(block_id) // '_averaged', &
-              'Derived/' // TRIM(name) // '_averaged', &
-              TRIM(units), dims, stagger, 'grid', &
-              averaged_data(id)%r4array(:,:,1), subtype_field_r4, &
-              subarray_field_r4)
-        ENDIF
-
-        IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
-          len1 = LEN_TRIM(block_id) + 10
-          len2 = LEN_TRIM(name) + 18
-
-          DO ispecies = 1, n_species
-            len3 = LEN_TRIM(io_list(ispecies)%name)
-            len4 = len3
-            len5 = len3
-            IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
-            IF ((len2 + len3) > c_max_string_length) THEN
-              len5 = c_max_string_length - len2
-              IF (rank .EQ. 0) THEN
-                CALL integer_as_string((len2+len3), len_string)
-                PRINT*, '*** WARNING ***'
-                PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
-                    '_averaged/' // TRIM(io_list(ispecies)%name), &
-                    ' is truncated.'
-                PRINT*, 'Either shorten the species name or increase ', &
-                    'the size of "c_max_string_length" ', &
-                    'to at least ',TRIM(len_string)
-              ENDIF
+            species_sum = 0
+            IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+                .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
+              species_sum = 1
+              CALL sdf_write_plain_variable(sdf_handle, &
+                  TRIM(block_id) // '_averaged', &
+                  'Derived/' // TRIM(name) // '_averaged', &
+                  TRIM(units), dims, stagger, 'grid', &
+                  avg%r4array(:,:,1), subtype_field_r4, subarray_field_r4)
             ENDIF
 
-            temp_block_id = TRIM(block_id) // '_averaged/' // &
-                TRIM(io_list(ispecies)%name(1:len4))
-            temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
-                TRIM(io_list(ispecies)%name(1:len5))
-            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-                TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-                averaged_data(id)%r4array(:,:,ispecies+species_sum), &
-                subtype_field_r4, subarray_field_r4)
-          ENDDO
-        ENDIF
+            IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
+              len1 = LEN_TRIM(block_id) + 10
+              len2 = LEN_TRIM(name) + 18
 
-        averaged_data(id)%r4array = 0.0_num
-      ELSE
-        averaged_data(id)%array = averaged_data(id)%array &
-            / averaged_data(id)%real_time
+              DO ispecies = 1, n_species
+                len3 = LEN_TRIM(io_list(ispecies)%name)
+                len4 = len3
+                len5 = len3
+                IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
+                IF ((len2 + len3) > c_max_string_length) THEN
+                  len5 = c_max_string_length - len2
+                  IF (rank .EQ. 0) THEN
+                    CALL integer_as_string((len2+len3), len_string)
+                    PRINT*, '*** WARNING ***'
+                    PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
+                        '_averaged/' // TRIM(io_list(ispecies)%name), &
+                        ' is truncated.'
+                    PRINT*, 'Either shorten the species name or increase ', &
+                        'the size of "c_max_string_length" ', &
+                        'to at least ',TRIM(len_string)
+                  ENDIF
+                ENDIF
 
-        species_sum = 0
-        IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
-            .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-          species_sum = 1
-          CALL sdf_write_plain_variable(sdf_handle, &
-              TRIM(block_id) // '_averaged', &
-              'Derived/' // TRIM(name) // '_averaged', &
-              TRIM(units), dims, stagger, 'grid', &
-              averaged_data(id)%array(:,:,1), subtype_field, &
-              subarray_field)
-        ENDIF
-
-        IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
-          len1 = LEN_TRIM(block_id) + 10
-          len2 = LEN_TRIM(name) + 18
-
-          DO ispecies = 1, n_species
-            len3 = LEN_TRIM(io_list(ispecies)%name)
-            len4 = len3
-            len5 = len3
-            IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
-            IF ((len2 + len3) > c_max_string_length) THEN
-              len5 = c_max_string_length - len2
-              IF (rank .EQ. 0) THEN
-                CALL integer_as_string((len2+len3), len_string)
-                PRINT*, '*** WARNING ***'
-                PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
-                    '_averaged/' // TRIM(io_list(ispecies)%name), &
-                    ' is truncated.'
-                PRINT*, 'Either shorten the species name or increase ', &
-                    'the size of "c_max_string_length" ', &
-                    'to at least ',TRIM(len_string)
-              ENDIF
+                temp_block_id = TRIM(block_id) // '_averaged/' // &
+                    TRIM(io_list(ispecies)%name(1:len4))
+                temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
+                    TRIM(io_list(ispecies)%name(1:len5))
+                CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                    TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
+                    avg%r4array(:,:,ispecies+species_sum), &
+                    subtype_field_r4, subarray_field_r4)
+              ENDDO
             ENDIF
 
-            temp_block_id = TRIM(block_id) // '_averaged/' // &
-                TRIM(io_list(ispecies)%name(1:len4))
-            temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
-                TRIM(io_list(ispecies)%name(1:len5))
-            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-                TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-                averaged_data(id)%array(:,:,ispecies+species_sum), &
-                subtype_field, subarray_field)
-          ENDDO
-        ENDIF
+            avg%r4array = 0.0_num
+          ELSE
+            avg%array = avg%array / avg%real_time
 
-        averaged_data(id)%array = 0.0_num
+            species_sum = 0
+            IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+                .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
+              species_sum = 1
+              CALL sdf_write_plain_variable(sdf_handle, &
+                  TRIM(block_id) // '_averaged', &
+                  'Derived/' // TRIM(name) // '_averaged', &
+                  TRIM(units), dims, stagger, 'grid', &
+                  avg%array(:,:,1), subtype_field, subarray_field)
+            ENDIF
+
+            IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
+              len1 = LEN_TRIM(block_id) + 10
+              len2 = LEN_TRIM(name) + 18
+
+              DO ispecies = 1, n_species
+                len3 = LEN_TRIM(io_list(ispecies)%name)
+                len4 = len3
+                len5 = len3
+                IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
+                IF ((len2 + len3) > c_max_string_length) THEN
+                  len5 = c_max_string_length - len2
+                  IF (rank .EQ. 0) THEN
+                    CALL integer_as_string((len2+len3), len_string)
+                    PRINT*, '*** WARNING ***'
+                    PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
+                        '_averaged/' // TRIM(io_list(ispecies)%name), &
+                        ' is truncated.'
+                    PRINT*, 'Either shorten the species name or increase ', &
+                        'the size of "c_max_string_length" ', &
+                        'to at least ',TRIM(len_string)
+                  ENDIF
+                ENDIF
+
+                temp_block_id = TRIM(block_id) // '_averaged/' // &
+                    TRIM(io_list(ispecies)%name(1:len4))
+                temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
+                    TRIM(io_list(ispecies)%name(1:len5))
+                CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                    TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
+                    avg%array(:,:,ispecies+species_sum), &
+                    subtype_field, subarray_field)
+              ENDDO
+            ENDIF
+
+            avg%array = 0.0_num
+          ENDIF
+
+          avg%real_time = 0.0_num
+          avg%started = .FALSE.
+        ENDIF
       ENDIF
-
-      averaged_data(id)%real_time = 0.0_num
-      averaged_data(id)%started = .FALSE.
-    ENDIF
+    ENDDO
 
   END SUBROUTINE write_nspecies_field
 

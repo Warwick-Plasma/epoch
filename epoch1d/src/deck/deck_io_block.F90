@@ -366,7 +366,7 @@ CONTAINS
           any_average = .TRUE.
           io_block%any_average = .TRUE.
           IF (IAND(mask, c_io_average_single) .NE. 0 .AND. num .NE. r4) THEN
-            averaged_data(mask_element)%dump_single = .TRUE.
+            io_block%averaged_data(mask_element)%dump_single = .TRUE.
           ENDIF
           IF (averaged_var_block(mask_element) .NE. 0) THEN
             PRINT*,'error ',mask_element,block_number
@@ -398,18 +398,18 @@ CONTAINS
 
     ! Other control parameters are optional
     i = num_vars_to_dump
-    io_block_done(i+1:i+6) = .TRUE.
-    io_block_done(i+9:io_block_elements) = .TRUE.
+    io_block_done(i+1:i+7) = .TRUE.
+    io_block_done(i+10:io_block_elements) = .TRUE.
     ! Averaging info not compulsory unless averaged variable selected
-    IF (.NOT. any_average) io_block_done(i+7:i+8) = .TRUE.
+    IF (.NOT. any_average) io_block_done(i+8:i+9) = .TRUE.
 
-    IF (.NOT. io_block_done(i+7) .AND. .NOT. io_block_done(i+8)) THEN
+    IF (.NOT. io_block_done(i+8) .AND. .NOT. io_block_done(i+9)) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Required output block element ', &
-              TRIM(ADJUSTL(io_block_name(i+7))), &
+              TRIM(ADJUSTL(io_block_name(i+8))), &
               ' absent. Please create this entry in the input deck'
         ENDDO
       ENDIF
@@ -482,6 +482,7 @@ CONTAINS
   SUBROUTINE init_io_block(io_block)
 
     TYPE(io_block_type) :: io_block
+    INTEGER :: i
 
     io_block%name = ''
     io_block%dt_snapshot = -1.0_num
@@ -498,6 +499,9 @@ CONTAINS
     io_block%dump = .FALSE.
     io_block%any_average = .FALSE.
     io_block%dumpmask = 0
+    DO i = 1, num_vars_to_dump
+      io_block%averaged_data(i)%dump_single = .FALSE.
+    ENDDO
 
   END SUBROUTINE init_io_block
 

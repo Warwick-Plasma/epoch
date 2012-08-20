@@ -267,7 +267,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp_slice
     TYPE(laser_block), POINTER :: current
-    INTEGER :: i, ispecies, index, nspec_local, mask
+    INTEGER :: i, ispecies, io, id, nspec_local, mask
 
     nx_new = new_domain(1,2) - new_domain(1,1) + 1
     ny_new = new_domain(2,2) - new_domain(2,1) + 1
@@ -333,11 +333,11 @@ CONTAINS
 
     DEALLOCATE(temp)
 
-    DO index = 1, num_vars_to_dump
-      i = averaged_var_block(index)
-      IF (i .EQ. 0) CYCLE
+    DO id = 1, num_vars_to_dump
+      io = averaged_var_block(id)
+      IF (io .EQ. 0) CYCLE
 
-      mask = io_block_list(averaged_var_block(index))%dumpmask(index)
+      mask = io_block_list(io)%dumpmask(id)
       nspec_local = 0
       IF (IAND(mask, c_io_no_sum) .EQ. 0) &
           nspec_local = 1
@@ -346,20 +346,22 @@ CONTAINS
 
       IF (nspec_local .LE. 0) CYCLE
 
-      IF (averaged_data(index)%dump_single) THEN
-        IF (.NOT. ASSOCIATED(averaged_data(index)%r4array)) CYCLE
+      IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
+        IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
 
         ALLOCATE(r4temp_sum(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3, nspec_local))
 
-        CALL redistribute_field_sum_r4(averaged_data(index)%r4array, r4temp_sum)
+        CALL redistribute_field_sum_r4(&
+            io_block_list(io)%averaged_data(id)%r4array, r4temp_sum)
 
         DEALLOCATE(r4temp_sum)
       ELSE
-        IF (.NOT. ASSOCIATED(averaged_data(index)%array)) CYCLE
+        IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
 
         ALLOCATE(temp_sum(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3, nspec_local))
 
-        CALL redistribute_field_sum(averaged_data(index)%array, temp_sum)
+        CALL redistribute_field_sum(&
+            io_block_list(io)%averaged_data(id)%array, temp_sum)
 
         DEALLOCATE(temp_sum)
       ENDIF

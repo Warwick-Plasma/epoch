@@ -81,7 +81,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_snapshot = 2**6
   INTEGER, PARAMETER :: c_io_field = 2**7
   INTEGER, PARAMETER :: c_io_dump_single = 2**8
-  INTEGER, PARAMETER :: c_io_average_single = c_io_averaged + 2**9
+  INTEGER, PARAMETER :: c_io_average_single = 2**9
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
@@ -635,7 +635,6 @@ MODULE shared_data
     REAL(num) :: real_time
     LOGICAL :: started, dump_single
   END TYPE averaged_data_block
-  TYPE(averaged_data_block), DIMENSION(num_vars_to_dump), SAVE :: averaged_data
   LOGICAL :: any_average = .FALSE.
 
   TYPE io_block_type
