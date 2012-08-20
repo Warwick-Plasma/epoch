@@ -10,7 +10,10 @@
 #endif
 
 int metadata, contents, debug, single, mmap, ignore_summary;
-char *variable_id;
+struct id_list {
+  char *id;
+  struct id_list *next;
+} *variable_ids, *last_id;
 
 
 void usage(int err)
@@ -52,7 +55,8 @@ char *parse_args(int *argc, char ***argv)
 
     metadata = debug = 1;
     contents = single = mmap = ignore_summary = 0;
-    variable_id = NULL;
+    variable_ids = NULL;
+    last_id = NULL;
 
     while ((c = getopt_long(*argc, *argv, "hncsmiv:", longopts, NULL)) != -1) {
         switch (c) {
@@ -69,9 +73,15 @@ char *parse_args(int *argc, char ***argv)
             single = 1;
             break;
         case 'v':
-            if (variable_id) free(variable_id);
-            variable_id = malloc(strlen(optarg)+1);
-            memcpy(variable_id, optarg, strlen(optarg)+1);
+            if (!variable_ids) {
+                last_id = variable_ids = malloc(sizeof(*variable_ids));
+            } else {
+                last_id->next = malloc(sizeof(*variable_ids));
+                last_id = last_id->next;
+            }
+            last_id->next = NULL;
+            last_id->id = malloc(strlen(optarg)+1);
+            memcpy(last_id->id, optarg, strlen(optarg)+1);
             break;
         case 'm':
             mmap = 1;
@@ -104,7 +114,7 @@ char *parse_args(int *argc, char ***argv)
 int main(int argc, char **argv)
 {
     char *file = NULL;
-    int i, buflen, len, block, err;
+    int i, buflen, block, err;
     sdf_file_t *h;
     sdf_block_t *b;
     int rank = 0, size = 1;
@@ -129,9 +139,6 @@ int main(int argc, char **argv)
     if (ignore_summary) h->use_summary = 0;
     sdf_set_ncpus(h, size);
 
-    //sdf_read_blocklist(h);
-    // Read blocklist -- just like sdf_read_blocklist() but with the ability
-    // to parse as we go
     sdf_read_header(h);
     h->current_block = NULL;
 
@@ -144,38 +151,34 @@ int main(int argc, char **argv)
         //return 1;
     }
 
-    sdf_read_blocklist(h);
-/*
-    // Read the whole summary block into a temporary buffer on rank 0
-    buflen = h->summary_size;
-    h->current_location = h->start_location = h->summary_location;
-    h->buffer = malloc(buflen);
-
-    if (h->rank == h->rank_master) {
-        sdf_seek(h);
-        sdf_read_bytes(h, h->buffer, buflen);
-    }
-
-    // Send the temporary buffer to all processors
-    sdf_broadcast(h, h->buffer, buflen);
+    // Read blocklist -- just like sdf_read_blocklist() but with the ability
+    // to parse as we go
+    sdf_read_summary(h);
 
     // Construct the metadata blocklist using the contents of the buffer
-    len = 0;
-    if (variable_id && metadata) len = strlen(variable_id) + 1;
     for (i = 0; i < h->nblocks; i++) {
-        if (len)
+        if (variable_ids && metadata)
             h->dbg = h->dbg_buf; *h->dbg = '\0';
         sdf_read_block_info(h);
-        if (len && !memcmp(h->current_block->id, variable_id, len)) {
-            printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
-            break;
+        if (variable_ids && metadata) {
+            last_id = variable_ids;
+            while (last_id) {
+                if (!memcmp(h->current_block->id, last_id->id,
+                        strlen(last_id->id)+1)) {
+                    printf("%s", h->dbg_buf); h->dbg = h->dbg_buf;
+                    *h->dbg = '\0';
+                    break;
+                }
+                last_id = last_id->next;
+            }
+            h->dbg = h->dbg_buf; *h->dbg = '\0';
         }
     }
 
     free(h->buffer);
     h->buffer = NULL;
-*/
     h->current_block = h->blocklist;
+
 #ifdef SDF_DEBUG
     if (metadata)
         printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
@@ -185,20 +188,25 @@ int main(int argc, char **argv)
 
     if (!contents) return 0;
 
-    len = 0;
-    if (variable_id) len = strlen(variable_id) + 1;
-printf("cont %s %i\n", variable_id, len);
     b = h->current_block = h->blocklist;
     for (i=0; i<h->nblocks; i++) {
         b = h->current_block;
-        if (len) {
+        if (variable_ids) {
             h->print = 0;
-            if (!memcmp(b->id, variable_id, len)) {
-                h->print = 1;
-                sdf_read_data(h);
-                printf("c %s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
-                break;
+            last_id = variable_ids;
+            while (last_id) {
+                if (!memcmp(b->id, last_id->id, strlen(last_id->id)+1)) {
+                    h->print = 1;
+                    sdf_read_data(h);
+#ifdef SDF_DEBUG
+                    printf("%s", h->dbg_buf); h->dbg = h->dbg_buf;
+                    *h->dbg = '\0';
+#endif
+                    break;
+                }
+                last_id = last_id->next;
             }
+            h->dbg = h->dbg_buf; *h->dbg = '\0';
         } else
             sdf_read_data(h);
         h->current_block = b->next;

@@ -204,6 +204,12 @@ static const char *sdf_error_codes_c[] = {
     "SDF_ERR_UNKNOWN",
 };
 
+static const int sdf_blocktype_len = sizeof(sdf_blocktype_c) / sizeof(sdf_blocktype_c[0]);
+static const int sdf_geometry_len = sizeof(sdf_geometry_c) / sizeof(sdf_geometry_c[0]);
+static const int sdf_stagger_len = sizeof(sdf_stagger_c) / sizeof(sdf_stagger_c[0]);
+static const int sdf_datatype_len = sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
+static const int sdf_error_codes_len = sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
+
 #ifdef PARALLEL
     typedef MPI_Comm comm_t;
 #else
@@ -275,6 +281,7 @@ sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id);
 sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name);
 int sdf_read_header(sdf_file_t *h);
 int sdf_read_blocklist(sdf_file_t *h);
+int sdf_read_summary(sdf_file_t *h);
 int sdf_read_block_info(sdf_file_t *h);
 int sdf_read_data(sdf_file_t *h);
 int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen);
@@ -349,8 +356,8 @@ int sdf_read_point_variable_info(sdf_file_t *h);
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
                 for (_i=0; _i < 10; _i++, _d++) { \
-                    SDF_PRNT(" %g", arr[_d]); \
                     if (_d == (len)) break; \
+                    SDF_PRNT(" %g", arr[_d]); \
                 } \
             } \
         } else if (b->datatype_out == SDF_DATATYPE_REAL8) { \
@@ -359,8 +366,8 @@ int sdf_read_point_variable_info(sdf_file_t *h);
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
                 for (_i=0; _i < 10; _i++, _d++) { \
-                    SDF_PRNT(" %g", arr[_d]); \
                     if (_d == (len)) break; \
+                    SDF_PRNT(" %g", arr[_d]); \
                 } \
             } \
         } else { \
@@ -369,8 +376,8 @@ int sdf_read_point_variable_info(sdf_file_t *h);
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
                 for (_i=0; _i < 10; _i++, _d++) { \
-                    SDF_PRNT(" %i", arr[_d]); \
                     if (_d == (len)) break; \
+                    SDF_PRNT(" %i", arr[_d]); \
                 } \
             } \
         } \
@@ -480,7 +487,10 @@ int sdf_read_point_variable_info(sdf_file_t *h);
         (b->value) = *((uint32_t *) \
             (h->buffer + h->current_location - h->start_location)); \
         h->current_location += 4; \
-        SDF_DPRNT("b->" #value ": %s\n", sdf_ ## value ## _c[b->value]); \
+        if (b->value < sdf_ ## value ## _len) \
+            SDF_DPRNT("b->" #value ": %s\n", sdf_ ## value ## _c[b->value]); \
+        else \
+            SDF_DPRNT("b->" #value ": %i (UNKNOWN)\n", b->value); \
     } while (0)
 
 #define SDF_READ_ENTRY_STRINGLEN(value, length) do { \

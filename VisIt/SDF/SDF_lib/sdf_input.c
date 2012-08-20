@@ -481,10 +481,8 @@ static void build_summary_buffer(sdf_file_t *h)
 
 
 
-int sdf_read_blocklist(sdf_file_t *h)
+int sdf_read_summary(sdf_file_t *h)
 {
-    int i, buflen;
-
     if (h->blocklist) {
         h->current_block = h->blocklist;
         return 0;
@@ -508,6 +506,17 @@ int sdf_read_blocklist(sdf_file_t *h)
 
     // Send the temporary buffer to all processors
     sdf_broadcast(h, h->buffer, h->summary_size);
+
+    return 0;
+}
+
+
+
+int sdf_read_blocklist(sdf_file_t *h)
+{
+    int i;
+
+    sdf_read_summary(h);
 
     // Construct the metadata blocklist using the contents of the buffer
     for (i = 0; i < h->nblocks; i++) {
