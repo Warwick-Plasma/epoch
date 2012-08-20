@@ -43,6 +43,7 @@ MODULE sdf
   PUBLIC :: c_blocktype_multi_material
   PUBLIC :: c_blocktype_multi_matvar
   PUBLIC :: c_blocktype_multi_species
+  PUBLIC :: c_blocktype_cpu_split
 
   PUBLIC :: c_datatype_null
   PUBLIC :: c_datatype_integer4
@@ -120,5 +121,6 @@ MODULE sdf
   PUBLIC :: sdf_write_multi_material
   PUBLIC :: sdf_write_multi_matvar
   PUBLIC :: sdf_write_multi_species
+  PUBLIC :: sdf_write_cpu_split
 
 END MODULE sdf

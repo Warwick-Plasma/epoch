@@ -108,6 +108,8 @@ CONTAINS
     CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_commit_id, &
         sha1sum, c_compile_machine, c_compile_flags, defines, c_compile_date, &
         run_date)
+    CALL sdf_write_cpu_split(sdf_handle, 'cpu_split', 'CPU split', &
+        cell_x_max, cell_y_max)
 
     CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
         dt_plasma_frequency)
@@ -177,13 +179,6 @@ CONTAINS
         'A/m^2', c_stagger_cell_centre, cpml_psi_bxz)
     CALL write_field(c_dump_cpml_psi_byz, code, 'cpml_psi_byz', 'CPML/By_z', &
         'A/m^2', c_stagger_cell_centre, cpml_psi_byz)
-
-#ifdef FIELD_DEBUG
-    array = rank
-    CALL sdf_write_plain_variable(sdf_handle, 'rank', 'Processor/Rank', '', &
-        dims, c_stagger_cell_centre, 'grid', array, subtype_field, &
-        subarray_field)
-#endif
 
     DO isubset = 1, n_subsets + 1
       done_species_offset_init = .FALSE.

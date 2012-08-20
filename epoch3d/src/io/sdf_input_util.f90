@@ -65,6 +65,8 @@ CONTAINS
       CALL sdf_read_constant(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_array) THEN
       CALL sdf_read_array_info(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_cpu_split) THEN
+      CALL sdf_read_array_info(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_run_info) THEN
       CALL sdf_read_run_info(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_tensor &

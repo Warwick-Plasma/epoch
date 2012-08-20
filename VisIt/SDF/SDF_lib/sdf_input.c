@@ -319,7 +319,8 @@ int sdf_read_data(sdf_file_t *h)
         return sdf_read_plain_variable(h);
     else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
         return sdf_read_point_variable(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_ARRAY)
+    else if (b->blocktype == SDF_BLOCKTYPE_ARRAY
+            || b->blocktype == SDF_BLOCKTYPE_CPU_SPLIT)
         return sdf_read_array(h);
 
     return 1;
@@ -349,6 +350,8 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_constant(h);
     else if (b->blocktype == SDF_BLOCKTYPE_ARRAY)
         ret = sdf_read_array_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_CPU_SPLIT)
+        ret = sdf_read_cpu_split_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO)
         ret = sdf_read_run_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
@@ -754,6 +757,40 @@ int sdf_read_array_info(sdf_file_t *h)
         b->dims[i] = b->dims_in[i];
         b->local_dims[i] = b->dims_in[i];
         b->nlocal *= b->dims[i];
+    }
+
+    return 0;
+}
+
+
+
+int sdf_read_cpu_split_info(sdf_file_t *h)
+{
+    sdf_block_t *b;
+    int i;
+
+    // Metadata is
+    // - dims      INTEGER(i4), DIMENSION(ndims)
+
+    SDF_COMMON_INFO();
+
+    SDF_READ_ENTRY_INT4(b->geometry);
+    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
+    for (i = 0; i < b->ndims; i++) {
+        b->dims[i] = b->dims_in[i];
+        b->local_dims[i] = b->dims_in[i];
+    }
+    if (b->geometry == 1) {
+        b->nlocal = 0;
+        for (i = 0; i < b->ndims; i++)
+            b->nlocal += b->dims[i];
+    } else if (b->geometry == 2) {
+        b->nlocal = b->dims[0] * (b->dims[1] + 1);
+        if (b->ndims > 2) b->nlocal += b->dims[0] * b->dims[1] * b->dims[2];
+    } else if (b->geometry == 3) {
+        b->nlocal = 1;
+        for (i = 0; i < b->ndims; i++)
+            b->nlocal *= b->dims[i];
     }
 
     return 0;

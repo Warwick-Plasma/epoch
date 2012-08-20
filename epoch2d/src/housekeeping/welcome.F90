@@ -78,10 +78,6 @@ CONTAINS
     defines = IOR(defines, c_def_particle_debug)
     WRITE(*, *) 'Particle Debug information -DPARTICLE_DEBUG'
 #endif
-#ifdef FIELD_DEBUG
-    defines = IOR(defines, c_def_field_debug)
-    WRITE(*, *) 'Field Debug information -DFIELD_DEBUG'
-#endif
 #ifdef PARSER_DEBUG
     defines = IOR(defines, c_def_parser_debug)
     WRITE(*, *) 'Particle Debug information -DPARSER_DEBUG'

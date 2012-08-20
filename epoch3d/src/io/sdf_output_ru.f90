@@ -1322,6 +1322,232 @@ CONTAINS
 
 
 
+  SUBROUTINE write_cpu_split_meta(h, id, name)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
+    INTEGER :: errcode, ndims
+    TYPE(sdf_block_type), POINTER :: b
+
+    b => h%current_block
+
+    b%blocktype = c_blocktype_cpu_split
+    ndims = b%ndims
+
+    ! Metadata is
+    ! - type      INTEGER(i4)
+    ! - dims      ndims*INTEGER(i4)
+
+    b%info_length = h%block_header_length + (b%ndims + 1) * soi4
+    b%data_length = b%nelements * b%type_size
+
+    ! Write header
+
+    IF (PRESENT(id)) THEN
+      CALL sdf_write_block_header(h, id, name)
+    ELSE
+      CALL write_block_header(h)
+    ENDIF
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_WRITE(h%filehandle, b%geometry, 1, MPI_INTEGER4, &
+          MPI_STATUS_IGNORE, errcode)
+      CALL MPI_FILE_WRITE(h%filehandle, b%dims, ndims, MPI_INTEGER4, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    h%current_location = b%block_start + b%info_length
+    b%done_info = .TRUE.
+
+  END SUBROUTINE write_cpu_split_meta
+
+
+
+  SUBROUTINE write_cpu_split_1d(h, id, name, nmax1, nmax2, nmax3, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: nmax1(:)
+    INTEGER, INTENT(IN), OPTIONAL :: nmax2(:), nmax3(:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: errcode, i
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = INT(h%soi,i4)
+    b%datatype = h%datatype_integer
+    b%mpitype = h%mpitype_integer
+    b%geometry = 1
+
+    IF (PRESENT(rank_write)) h%rank_master = rank_write
+
+    b%dims(1) = SIZE(nmax1) - 1
+    b%ndims = 1
+    IF (PRESENT(nmax2)) THEN
+      b%dims(2) = SIZE(nmax2) - 1
+      b%ndims = 2
+    ENDIF
+    IF (PRESENT(nmax3)) THEN
+      b%dims(3) = SIZE(nmax3) - 1
+      b%ndims = 3
+    ENDIF
+
+    b%nelements = 0
+    DO i = 1,b%ndims
+      b%nelements = b%nelements + b%dims(i)
+    ENDDO
+
+    ! Write header
+
+    CALL write_cpu_split_meta(h, id, name)
+
+    h%current_location = b%data_location
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! Actual array
+      CALL MPI_FILE_WRITE(h%filehandle, nmax1, b%dims(1), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+      IF (b%ndims .GT. 1) THEN
+        CALL MPI_FILE_WRITE(h%filehandle, nmax2, b%dims(2), b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+      ENDIF
+      IF (b%ndims .GT. 2) THEN
+        CALL MPI_FILE_WRITE(h%filehandle, nmax3, b%dims(3), b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+      ENDIF
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%data_location + b%data_length
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_cpu_split_1d
+
+
+
+  SUBROUTINE write_cpu_split_mix(h, id, name, nmax1, nmax2, nmax3, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: nmax1(:), nmax2(:,:)
+    INTEGER, INTENT(IN), OPTIONAL :: nmax3(:,:,:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: errcode, n1, n2, n3, i, j, k, npt
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = INT(h%soi,i4)
+    b%datatype = h%datatype_integer
+    b%mpitype = h%mpitype_integer
+    b%geometry = 2
+
+    IF (PRESENT(rank_write)) h%rank_master = rank_write
+
+    n1 = SIZE(nmax1)
+    n2 = SIZE(nmax2,1)
+    b%dims(1) = n1
+    b%dims(2) = n2
+
+    b%ndims = 2
+    b%nelements = n1 * (1 + n2)
+    IF (PRESENT(nmax3)) THEN
+      n3 = SIZE(nmax3,1)
+      b%dims(3) = n3
+      b%ndims = 3
+      b%nelements = b%nelements + n1 * n2 * n3
+    ENDIF
+
+    ! Write header
+
+    CALL write_cpu_split_meta(h, id, name)
+
+    h%current_location = b%data_location
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! Actual array
+      npt = n1
+      CALL MPI_FILE_WRITE(h%filehandle, nmax1, npt, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+      npt = npt * n2
+      CALL MPI_FILE_WRITE(h%filehandle, nmax2, npt, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+      IF (b%ndims .GT. 2) THEN
+        npt = npt * n3
+        CALL MPI_FILE_WRITE(h%filehandle, nmax3, npt, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+      ENDIF
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%data_location + b%data_length
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_cpu_split_mix
+
+
+
+  SUBROUTINE write_cpu_split_3d(h, id, name, cpu_splits, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: cpu_splits(:,:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: errcode, npt
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = INT(h%soi,i4)
+    b%datatype = h%datatype_integer
+    b%mpitype = h%mpitype_integer
+    b%geometry = 3
+
+    IF (PRESENT(rank_write)) h%rank_master = rank_write
+
+    b%dims(1) = SIZE(cpu_splits,1)
+    b%dims(2) = SIZE(cpu_splits,2)
+    b%ndims = 2
+    npt = b%dims(1) * b%dims(2)
+
+    b%nelements = npt
+
+    ! Write header
+
+    CALL write_cpu_split_meta(h, id, name)
+
+    h%current_location = b%data_location
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! Actual array
+      CALL MPI_FILE_WRITE(h%filehandle, cpu_splits, npt, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%data_location + b%data_length
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_cpu_split_3d
+
+
+
   SUBROUTINE write_array_meta(h, id, name)
 
     TYPE(sdf_file_handle) :: h

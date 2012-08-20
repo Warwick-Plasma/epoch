@@ -50,6 +50,7 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_MULTI_MATERIAL,
     SDF_BLOCKTYPE_MULTI_MATVAR,
     SDF_BLOCKTYPE_MULTI_SPECIES,
+    SDF_BLOCKTYPE_CPU_SPLIT,
 };
 
 enum sdf_geometry {
@@ -147,6 +148,7 @@ static const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_MULTI_MATERIAL",
     "SDF_BLOCKTYPE_MULTI_MATVAR",
     "SDF_BLOCKTYPE_MULTI_SPECIES",
+    "SDF_BLOCKTYPE_CPU_SPLIT",
 };
 
 static const char *sdf_geometry_c[] = {

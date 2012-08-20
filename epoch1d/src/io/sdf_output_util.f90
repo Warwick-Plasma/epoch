@@ -66,6 +66,8 @@ CONTAINS
       CALL write_constant_meta(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_array) THEN
       CALL write_array_meta(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_cpu_split) THEN
+      CALL write_cpu_split_meta(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_run_info) THEN
       CALL write_run_info_meta(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_source) THEN

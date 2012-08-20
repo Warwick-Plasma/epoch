@@ -37,4 +37,11 @@ MODULE sdf_output
         write_2d_array_character
   END INTERFACE sdf_write_srl
 
+  INTERFACE sdf_write_cpu_split
+    MODULE PROCEDURE &
+        write_cpu_split_1d, &
+        write_cpu_split_mix, &
+        write_cpu_split_3d
+  END INTERFACE sdf_write_cpu_split
+
 END MODULE sdf_output

@@ -756,8 +756,6 @@ MODULE shared_data
   INTEGER :: fng, nx
   INTEGER :: nx_global
   INTEGER(i8) :: npart_global, particles_max_id
-  INTEGER :: nprocx
-  INTEGER :: nprocdir(c_ndims)
   INTEGER :: nsteps, n_species = -1
   LOGICAL :: smooth_currents
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
@@ -852,7 +850,9 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   INTEGER :: coordinates(c_ndims), neighbour(-1:1)
   INTEGER :: x_coords, proc_x_min, proc_x_max
-  INTEGER :: errcode, comm, tag, nproc, rank
+  INTEGER :: errcode, comm, tag, rank
+  INTEGER :: nproc, nprocx
+  INTEGER :: nprocdir(c_ndims)
   INTEGER :: status(MPI_STATUS_SIZE)
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank
   INTEGER(i8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
