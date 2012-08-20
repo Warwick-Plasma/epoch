@@ -406,6 +406,7 @@ CONTAINS
       ELSE
         io_block_list(io)%dump = .FALSE.
       ENDIF
+      IF (first .AND. dump_first) io_block_list(io)%dump = .TRUE.
 
       ! Work out the time that the next dump will occur based on the
       ! current timestep
