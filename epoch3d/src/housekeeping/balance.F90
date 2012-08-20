@@ -561,17 +561,6 @@ CONTAINS
     ALLOCATE(bz_x_max(-2:ny_new+3, -2:nz_new+3))
     bz_x_max = temp_slice
 
-    ! Re-distribute moving window density
-    IF (move_window) THEN
-      DO ispecies = 1, n_species
-        CALL remap_field_slice(c_dir_x, species_list(ispecies)%density, &
-            temp_slice)
-        DEALLOCATE(species_list(ispecies)%density)
-        ALLOCATE(species_list(ispecies)%density(-2:ny_new+3, -2:nz_new+3))
-        species_list(ispecies)%density = temp_slice
-      ENDDO
-    ENDIF
-
     DEALLOCATE(temp_slice)
 
     ! Slice in Y-direction
@@ -767,22 +756,6 @@ CONTAINS
     DEALLOCATE(temp_slice)
 
     ! Slice in X-direction with an additional index
-
-    IF (move_window) THEN
-      ALLOCATE(temp(-2:ny_new+3, -2:nz_new+3, 3))
-
-      DO ispecies = 1, n_species
-        DO i = 1, 3
-          CALL remap_field_slice(c_dir_x, &
-              species_list(ispecies)%temperature(:,:,i), temp(:,:,i))
-        ENDDO
-
-        DEALLOCATE(species_list(ispecies)%temperature)
-        ALLOCATE(species_list(ispecies)%temperature(-2:ny_new+3,-2:nz_new+3,3))
-
-        species_list(ispecies)%temperature = temp
-      ENDDO
-    ENDIF
 
     IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
       IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:ny_new+3, -2:nz_new+3, 3))

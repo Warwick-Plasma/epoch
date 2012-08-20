@@ -9,24 +9,15 @@ MODULE window
   IMPLICIT NONE
 
   LOGICAL, SAVE :: window_started
+  REAL(num) :: density, temperature(3)
 
 CONTAINS
 
   SUBROUTINE initialise_window
 
-#ifdef PER_PARTICLE_WEIGHT
-    INTEGER :: ispecies
-#endif
-
     IF (.NOT. move_window) RETURN
 
 #ifdef PER_PARTICLE_WEIGHT
-    DO ispecies = 1, n_species
-      species_list(ispecies)%density = &
-          initial_conditions(ispecies)%density(nx)
-      species_list(ispecies)%temperature = &
-          initial_conditions(ispecies)%temp(nx,:)
-    ENDDO
     window_started = .FALSE.
 #else
     IF (rank .EQ. 0) THEN
@@ -157,10 +148,10 @@ CONTAINS
       ENDIF
 
       DO i = 1, 3
-        species_list(ispecies)%temperature(i) = evaluate_at_point( &
+        temperature(i) = evaluate_at_point( &
             species_list(ispecies)%temperature_function(i), nx, errcode)
       ENDDO
-      species_list(ispecies)%density = evaluate_at_point( &
+      density = evaluate_at_point( &
           species_list(ispecies)%density_function, nx, errcode)
 
       DO ipart = n0, npart_per_cell
@@ -173,13 +164,12 @@ CONTAINS
         current%part_pos = x_max + dx + (random() - 0.5_num) * dx
 
         DO i = 1, 3
-          temp_local = species_list(ispecies)%temperature(i)
+          temp_local = temperature(i)
           current%part_p(i) = momentum_from_temperature(&
               species_list(ispecies)%mass, temp_local, 0.0_num)
         ENDDO
 
-        current%weight = dx / species_list(ispecies)%npart_per_cell &
-            * species_list(ispecies)%density
+        current%weight = dx / species_list(ispecies)%npart_per_cell * density
 #ifdef PARTICLE_DEBUG
         current%processor = rank
         current%processor_at_t0 = rank

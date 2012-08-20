@@ -297,8 +297,6 @@ CONTAINS
       species_list(ispecies)%npart_max = 0
       species_list(ispecies)%global_count = 0
       species_list(ispecies)%species_type = c_species_id_generic
-      NULLIFY(species_list(ispecies)%density)
-      NULLIFY(species_list(ispecies)%temperature)
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
       NULLIFY(species_list(ispecies)%ext_temp_x_min)

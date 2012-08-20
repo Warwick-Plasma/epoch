@@ -532,8 +532,6 @@ MODULE shared_data
 
     ! Injection of particles
     REAL(num) :: npart_per_cell
-    REAL(num) :: density
-    REAL(num), DIMENSION(3) :: temperature
     TYPE(primitive_stack) :: density_function, temperature_function(3)
 
     ! Thermal boundaries

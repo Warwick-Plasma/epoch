@@ -9,26 +9,17 @@ MODULE window
   IMPLICIT NONE
 
   LOGICAL, SAVE :: window_started
+  REAL(num), ALLOCATABLE :: density(:), temperature(:,:)
 
 CONTAINS
 
   SUBROUTINE initialise_window
 
-#ifdef PER_PARTICLE_WEIGHT
-    INTEGER :: ispecies
-#endif
-
     IF (.NOT. move_window) RETURN
 
 #ifdef PER_PARTICLE_WEIGHT
-    DO ispecies = 1, n_species
-      ALLOCATE(species_list(ispecies)%density(-2:ny+3))
-      ALLOCATE(species_list(ispecies)%temperature(-2:ny+3, 1:3))
-      species_list(ispecies)%density = &
-          initial_conditions(ispecies)%density(nx,:)
-      species_list(ispecies)%temperature = &
-          initial_conditions(ispecies)%temp(nx,:,:)
-    ENDDO
+    ALLOCATE(density(-2:ny+3))
+    ALLOCATE(temperature(-2:ny+3, 1:3))
     window_started = .FALSE.
 #else
     IF (rank .EQ. 0) THEN
@@ -44,14 +35,8 @@ CONTAINS
 
   SUBROUTINE deallocate_window
 
-    INTEGER :: ispecies
-
-    DO ispecies = 1, n_species
-      IF (ASSOCIATED(species_list(ispecies)%density)) &
-          DEALLOCATE(species_list(ispecies)%density)
-      IF (ASSOCIATED(species_list(ispecies)%temperature)) &
-          DEALLOCATE(species_list(ispecies)%temperature)
-    ENDDO
+    IF (ALLOCATED(density)) DEALLOCATE(density)
+    IF (ALLOCATED(temperature)) DEALLOCATE(temperature)
 
   END SUBROUTINE deallocate_window
 
@@ -165,6 +150,14 @@ CONTAINS
     ! Only processors on the right need do anything
     IF (.NOT.x_max_boundary) RETURN
 
+    IF (nproc .GT. 1) THEN
+      IF (SIZE(density) .NE. ny+6) THEN
+        DEALLOCATE(density, temperature)
+        ALLOCATE(density(-2:ny+3))
+        ALLOCATE(temperature(-2:ny+3, 1:3))
+      ENDIF
+    ENDIF
+
     errcode = c_err_none
 
     DO ispecies = 1, n_species
@@ -179,12 +172,12 @@ CONTAINS
 
       DO i = 1, 3
         DO iy = -2, ny+3
-          species_list(ispecies)%temperature(iy,i) = evaluate_at_point( &
+          temperature(iy,i) = evaluate_at_point( &
               species_list(ispecies)%temperature_function(i), nx, iy, errcode)
         ENDDO
       ENDDO
       DO iy = -2, ny+3
-        species_list(ispecies)%density(iy) = evaluate_at_point( &
+        density(iy) = evaluate_at_point( &
             species_list(ispecies)%density_function, nx, iy, errcode)
       ENDDO
 
@@ -213,8 +206,7 @@ CONTAINS
           DO i = 1, 3
             temp_local = 0.0_num
             DO isuby = -1, 1
-              temp_local = temp_local + gy(isuby) &
-                  * species_list(ispecies)%temperature(cell_y+isuby, i)
+              temp_local = temp_local + gy(isuby) * temperature(cell_y+isuby, i)
             ENDDO
             current%part_p(i) = momentum_from_temperature(&
                 species_list(ispecies)%mass, temp_local, 0.0_num)
@@ -223,8 +215,7 @@ CONTAINS
           weight_local = 0.0_num
           DO isuby = -1, 1
             weight_local = weight_local + gy(isuby) * dx * dy &
-                / species_list(ispecies)%npart_per_cell &
-                * species_list(ispecies)%density(cell_y+isuby)
+                / species_list(ispecies)%npart_per_cell * density(cell_y+isuby)
           ENDDO
           current%weight = weight_local
 #ifdef PARTICLE_DEBUG

@@ -9,26 +9,17 @@ MODULE window
   IMPLICIT NONE
 
   LOGICAL, SAVE :: window_started
+  REAL(num), ALLOCATABLE :: density(:,:), temperature(:,:,:)
 
 CONTAINS
 
   SUBROUTINE initialise_window
 
-#ifdef PER_PARTICLE_WEIGHT
-    INTEGER :: ispecies
-#endif
-
     IF (.NOT. move_window) RETURN
 
 #ifdef PER_PARTICLE_WEIGHT
-    DO ispecies = 1, n_species
-      ALLOCATE(species_list(ispecies)%density(-2:ny+3,-2:nz+3))
-      ALLOCATE(species_list(ispecies)%temperature(-2:ny+3,-2:nz+3, 1:3))
-      species_list(ispecies)%density = &
-          initial_conditions(ispecies)%density(nx,:,:)
-      species_list(ispecies)%temperature = &
-          initial_conditions(ispecies)%temp(nx,:,:,:)
-    ENDDO
+    ALLOCATE(density(-2:ny+3,-2:nz+3))
+    ALLOCATE(temperature(-2:ny+3,-2:nz+3, 1:3))
     window_started = .FALSE.
 #else
     IF (rank .EQ. 0) THEN
@@ -44,14 +35,8 @@ CONTAINS
 
   SUBROUTINE deallocate_window
 
-    INTEGER :: ispecies
-
-    DO ispecies = 1, n_species
-      IF (ASSOCIATED(species_list(ispecies)%density)) &
-          DEALLOCATE(species_list(ispecies)%density)
-      IF (ASSOCIATED(species_list(ispecies)%temperature)) &
-          DEALLOCATE(species_list(ispecies)%temperature)
-    ENDDO
+    IF (ALLOCATED(density)) DEALLOCATE(density)
+    IF (ALLOCATED(temperature)) DEALLOCATE(temperature)
 
   END SUBROUTINE deallocate_window
 
@@ -170,6 +155,14 @@ CONTAINS
     ! Only processors on the right need do anything
     IF (.NOT.x_max_boundary) RETURN
 
+    IF (nproc .GT. 1) THEN
+      IF (SIZE(density,1) .NE. ny+6 .OR. SIZE(density,2) .NE. nz+6) THEN
+        DEALLOCATE(density, temperature)
+        ALLOCATE(density(-2:ny+3,-2:nz+3))
+        ALLOCATE(temperature(-2:ny+3,-2:nz+3, 1:3))
+      ENDIF
+    ENDIF
+
     errcode = c_err_none
 
     DO ispecies = 1, n_species
@@ -185,7 +178,7 @@ CONTAINS
       DO i = 1, 3
         DO iz = -2, nz+3
           DO iy = -2, ny+3
-            species_list(ispecies)%temperature(iy,iz,i) = evaluate_at_point( &
+            temperature(iy,iz,i) = evaluate_at_point( &
                 species_list(ispecies)%temperature_function(i), nx, &
                 iy, iz, errcode)
           ENDDO
@@ -193,7 +186,7 @@ CONTAINS
       ENDDO
       DO iz = -2, nz+3
         DO iy = -2, ny+3
-          species_list(ispecies)%density(iy,iz) = evaluate_at_point( &
+          density(iy,iz) = evaluate_at_point( &
               species_list(ispecies)%density_function, nx, iy, iz, errcode)
         ENDDO
       ENDDO
@@ -237,8 +230,7 @@ CONTAINS
               DO isubz = -1, 1
                 DO isuby = -1, 1
                   temp_local = temp_local + gy(isuby) * gz(isubz) &
-                      * species_list(ispecies) &
-                          %temperature(cell_y+isuby, cell_z+isubz, i)
+                      * temperature(cell_y+isuby, cell_z+isubz, i)
                 ENDDO
               ENDDO
               current%part_p(i) = momentum_from_temperature(&
@@ -251,7 +243,7 @@ CONTAINS
                 weight_local = weight_local &
                     + gy(isuby) * gz(isubz) * dx * dy * dz &
                     / species_list(ispecies)%npart_per_cell &
-                    * species_list(ispecies)%density(cell_y+isuby, cell_z+isubz)
+                    * density(cell_y+isuby, cell_z+isubz)
               ENDDO
             ENDDO
             current%weight = weight_local
