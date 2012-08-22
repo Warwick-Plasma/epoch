@@ -231,7 +231,7 @@ CONTAINS
     INTEGER :: i, current_state, bessel_error
     INTEGER :: ix, cell_x1, cell_x2, dcellx
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: dfac, cf2, j_ion(3)
+    REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
     LOGICAL :: multiphoton_ionised
@@ -266,6 +266,9 @@ CONTAINS
       IF ( .NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
+#ifndef PER_PARTICLE_WEIGHT
+      weight = species_list(i)%weight
+#endif
 
       ! Try to ionise every particle of the species
       DO WHILE(ASSOCIATED(current))
@@ -453,8 +456,10 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-          j_ion = dfac * j_ion * current%weight &
-              * (/ ex_part, ey_part, ez_part /) &
+#ifdef PER_PARTICLE_WEIGHT
+          weight = current%weight
+#endif
+          j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
@@ -485,7 +490,7 @@ CONTAINS
     INTEGER :: i, current_state, bessel_error
     INTEGER :: ix, cell_x1, cell_x2, dcellx
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: dfac, cf2, j_ion(3)
+    REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
     LOGICAL :: multiphoton_ionised
@@ -520,6 +525,9 @@ CONTAINS
       IF ( .NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
+#ifndef PER_PARTICLE_WEIGHT
+      weight = species_list(i)%weight
+#endif
 
       ! Try to ionise every particle of the species
       DO WHILE(ASSOCIATED(current))
@@ -694,8 +702,10 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-          j_ion = dfac * j_ion * current%weight &
-              * (/ ex_part, ey_part, ez_part /) &
+#ifdef PER_PARTICLE_WEIGHT
+          weight = current%weight
+#endif
+          j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
@@ -726,7 +736,7 @@ CONTAINS
     INTEGER :: i, current_state, bessel_error
     INTEGER :: ix, cell_x1, cell_x2, dcellx
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: dfac, cf2, j_ion(3)
+    REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
 
@@ -760,6 +770,9 @@ CONTAINS
       IF ( .NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
+#ifndef PER_PARTICLE_WEIGHT
+      weight = species_list(i)%weight
+#endif
 
       ! Try to ionise every particle of the species
       DO WHILE(ASSOCIATED(current))
@@ -924,8 +937,10 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-          j_ion = dfac * j_ion * current%weight &
-              * (/ ex_part, ey_part, ez_part /) &
+#ifdef PER_PARTICLE_WEIGHT
+          weight = current%weight
+#endif
+          j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
@@ -956,7 +971,7 @@ CONTAINS
     INTEGER :: i, current_state, bessel_error
     INTEGER :: ix, cell_x1, cell_x2, dcellx
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: dfac, cf2, j_ion(3)
+    REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
 
@@ -990,6 +1005,9 @@ CONTAINS
       IF ( .NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
+#ifndef PER_PARTICLE_WEIGHT
+      weight = species_list(i)%weight
+#endif
 
       ! Try to ionise every particle of the species
       DO WHILE(ASSOCIATED(current))
@@ -1140,8 +1158,10 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-          j_ion = dfac * j_ion * current%weight &
-              * (/ ex_part, ey_part, ez_part /) &
+#ifdef PER_PARTICLE_WEIGHT
+          weight = current%weight
+#endif
+          j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
           IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
