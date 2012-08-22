@@ -69,43 +69,44 @@ CONTAINS
     ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
     ALLOCATE(new_cell_z_min(nprocz), new_cell_z_max(nprocz))
 
+    new_cell_x_min = cell_x_min
+    new_cell_x_max = cell_x_max
+    new_cell_y_min = cell_y_min
+    new_cell_y_max = cell_y_max
+    new_cell_z_min = cell_z_min
+    new_cell_z_max = cell_z_max
+
     ! Sweep in X
-    IF (IAND(balance_mode, c_lb_x) .NE. 0 &
-        .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
-      ! Rebalancing in X
-      ALLOCATE(load_x(nx_global))
-      CALL get_load_in_x(load_x)
-      CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-    ELSE
-      ! Just keep the original lengths
-      new_cell_x_min = cell_x_min
-      new_cell_x_max = cell_x_max
+    IF (nprocx .GT. 1) THEN
+      IF (IAND(balance_mode, c_lb_x) .NE. 0 &
+          .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+        ! Rebalancing in X
+        ALLOCATE(load_x(nx_global))
+        CALL get_load_in_x(load_x)
+        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+      ENDIF
     ENDIF
 
     ! Sweep in Y
-    IF (IAND(balance_mode, c_lb_y) .NE. 0 &
-        .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
-      ! Rebalancing in Y
-      ALLOCATE(load_y(ny_global))
-      CALL get_load_in_y(load_y)
-      CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
-    ELSE
-      ! Just keep the original lengths
-      new_cell_y_min = cell_y_min
-      new_cell_y_max = cell_y_max
+    IF (nprocy .GT. 1) THEN
+      IF (IAND(balance_mode, c_lb_y) .NE. 0 &
+          .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+        ! Rebalancing in Y
+        ALLOCATE(load_y(ny_global))
+        CALL get_load_in_y(load_y)
+        CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
+      ENDIF
     ENDIF
 
     ! Sweep in Z
-    IF (IAND(balance_mode, c_lb_z) .NE. 0 &
-        .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
-      ! Rebalancing in Z
-      ALLOCATE(load_z(nz_global))
-      CALL get_load_in_z(load_z)
-      CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
-    ELSE
-      ! Just keep the original lengths
-      new_cell_z_min = cell_z_min
-      new_cell_z_max = cell_z_max
+    IF (nprocz .GT. 1) THEN
+      IF (IAND(balance_mode, c_lb_z) .NE. 0 &
+          .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+        ! Rebalancing in Z
+        ALLOCATE(load_z(nz_global))
+        CALL get_load_in_z(load_z)
+        CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
+      ENDIF
     ENDIF
 
     ! In the autobalancer then determine whether to balance in X, Y or Z
@@ -1755,7 +1756,7 @@ CONTAINS
     sz = SIZE(load)
     maxs = sz
 
-    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, 8)
+    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
 
     proc = 1
     total = 0

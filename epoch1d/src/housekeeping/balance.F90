@@ -61,17 +61,18 @@ CONTAINS
 
     ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
 
+    new_cell_x_min = cell_x_min
+    new_cell_x_max = cell_x_max
+
     ! Sweep in X
-    IF (IAND(balance_mode, c_lb_x) .NE. 0 &
-        .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
-      ! Rebalancing in X
-      ALLOCATE(load_x(nx_global))
-      CALL get_load_in_x(load_x)
-      CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-    ELSE
-      ! Just keep the original lengths
-      new_cell_x_min = cell_x_min
-      new_cell_x_max = cell_x_max
+    IF (nprocx .GT. 1) THEN
+      IF (IAND(balance_mode, c_lb_x) .NE. 0 &
+          .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+        ! Rebalancing in X
+        ALLOCATE(load_x(nx_global))
+        CALL get_load_in_x(load_x)
+        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+      ENDIF
     ENDIF
 
     IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
@@ -713,7 +714,7 @@ CONTAINS
     sz = SIZE(load)
     maxs = sz
 
-    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, 8)
+    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
 
     proc = 1
     total = 0
