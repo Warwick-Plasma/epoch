@@ -26,6 +26,7 @@ MODULE ionise
   REAL(num), DIMENSION(:), ALLOCATABLE :: k_photons_energy
   REAL(num), DIMENSION(:), ALLOCATABLE :: k_photons_exponent
   REAL(num), DIMENSION(:), ALLOCATABLE :: adk_multiphoton_cap
+  REAL(num) :: omega
 
 CONTAINS
 
@@ -34,7 +35,75 @@ CONTAINS
 
   SUBROUTINE initialise_ionisation
 
-    INTEGER :: i, bessel_error
+    INTEGER :: i, io, ierr, bessel_error, err_laser
+    LOGICAL :: laser_set
+    TYPE(laser_block), POINTER :: current_laser
+
+    IF (use_multiphoton) THEN
+      err_laser = 0
+      laser_set = .FALSE.
+      omega = -1
+
+      IF (ASSOCIATED(laser_x_min)) THEN
+        current_laser => laser_x_min
+        IF (laser_set .AND. current_laser%omega .NE. omega) THEN
+          err_laser = 1
+        ELSE
+          omega = current_laser%omega
+          laser_set = .TRUE.
+        ENDIF
+        DO WHILE (ASSOCIATED(current_laser%next))
+          IF (current_laser%omega .NE. omega) THEN
+            err_laser = 1
+            EXIT
+          ENDIF
+          current_laser => current_laser%next
+        ENDDO
+      ENDIF
+
+      IF (ASSOCIATED(laser_x_max)) THEN
+        current_laser => laser_x_max
+        IF (laser_set .AND. current_laser%omega .NE. omega) THEN
+          err_laser = 1
+        ELSE
+          omega = current_laser%omega
+          laser_set = .TRUE.
+        ENDIF
+        DO WHILE (ASSOCIATED(current_laser%next))
+          IF (current_laser%omega .NE. omega) THEN
+            err_laser = 1
+            EXIT
+          ENDIF
+          current_laser => current_laser%next
+        ENDDO
+      ENDIF
+
+      IF (.NOT. laser_set) err_laser = 2
+
+      SELECT CASE (err_laser)
+        CASE (1)
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Multiphoton ionisation model does not currently'
+              WRITE(io,*) 'support lasers of differing frequencies attached to'
+              WRITE(io,*) 'the boundaries. Please adjust your input deck.'
+            ENDDO
+          ENDIF
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CASE (2)
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Multiphoton ionisation model requires a single laser'
+              WRITE(io,*) 'attached to a boundary. Please adjust your input ', &
+                  'deck'
+            ENDDO
+          ENDIF
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CASE DEFAULT
+      END SELECT
+    ENDIF
 
     ALLOCATE(released_mass_fraction(n_species), &
         effective_n_exponent(n_species), adk_scaling(n_species), &
@@ -89,14 +158,14 @@ CONTAINS
           ! Number of photons required for ionisation in multiphoton
           k_photons_exponent(i) = &
               REAL(FLOOR((species_list(i)%ionisation_energy / hartree) &
-              / (laser_x_min%omega*atomic_time)) + 1, num)
+              / (omega * atomic_time)) + 1, num)
           multi_constant(i) = factorial(k_photons_exponent(i))
 
           ! If K! is too large then the multiphoton ionisation rate is zero
           IF (multi_constant(i) .LT. SQRT(HUGE(0.0_num))) THEN
             multi_constant(i) = c * (atomic_time / a0) * multi_constant(i)**2 &
                 * REAL(species_list(i)%n**5,num) &
-                * (laser_x_min%omega * atomic_time)**((10.0_num &
+                * (omega * atomic_time)**((10.0_num &
                 * k_photons_exponent(i) - 1.0_num) / 3.0_num) &
                 * SQRT(k_photons_exponent(i)) &
                 * (2.0_num * k_photons_exponent(i) + 1.0_num)
@@ -106,13 +175,14 @@ CONTAINS
 
           ! Constant in multiphoton equations, calculated like this to trap any
           ! floating underflow
-          IF (multi_constant(i) .NE. 0.0_num) multi_constant(i) = 4.8_num &
-              * (1.3_num * c * (atomic_time / a0) / (8.0_num * pi &
-              * laser_x_min%omega * atomic_time))**k_photons_exponent(i) &
-              / multi_constant(i)
+          IF (multi_constant(i) .NE. 0.0_num) THEN
+            multi_constant(i) = 4.8_num * (1.3_num * c * (atomic_time / a0) &
+                / (8.0_num * pi * omega * atomic_time))**k_photons_exponent(i) &
+                / multi_constant(i)
+          ENDIF
           ! Energy in K photons
           k_photons_energy(i) = &
-              k_photons_exponent(i) * h_bar * laser_x_min%omega
+              k_photons_exponent(i) * h_bar * omega
           ! Constant used in multiphoton equation
           k_photons_exponent(i) = 4.0_num * k_photons_exponent(i) - 2.0_num
         ENDIF
@@ -139,7 +209,7 @@ CONTAINS
           ! case we ensure a monotonic increasing ionisation rate by forcing the
           ! transition to occur at the smallest usable E instead.
           keldysh(i) = MAX(adk_scaling(i) / (0.99472065388909858_num &
-              * c_largest_exp), laser_x_min%omega * atomic_time * SQRT(2.0_num &
+              * c_largest_exp), omega * atomic_time * SQRT(2.0_num &
               * species_list(i)%ionisation_energy / hartree) / 0.5)
 
           ! Threshold ADK ionisation rate at transition to multiphoton regime
