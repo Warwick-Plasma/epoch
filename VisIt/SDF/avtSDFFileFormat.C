@@ -192,7 +192,7 @@ avtSDFFileFormat::OpenFile(int open_only)
     h->use_random = use_random;
     step = h->step;
     time = h->time;
-    debug1 << "avtSDFFileFormat:: " << __LINE__ << " h:" << h << endl;
+    debug1 << "avtSDFFileFormat::OpenFile h:" << h << endl;
 
     if (open_only) {
         // Retrieve the extended interface library from the plugin manager
@@ -274,7 +274,8 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
     rank = PAR_Rank();
     ncpus = PAR_Size();
     ndomains = ncpus;
-    debug1 << rank << " " << ncpus << " " << comm << " f:" << filename << endl;
+    debug1 << "avtSDFFileFormat:: rank:" << rank << ", ncpus:" << ncpus
+           << ", comm:" << comm << ", filename:" << filename << endl;
     this->filename = new char[strlen(filename)+1];
     memcpy(this->filename, filename, strlen(filename)+1);
     gotMetadata = false;
@@ -300,7 +301,7 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
 
     stack_init();
 
-    debug1 << "avtSDFFileFormat::OpenFile() " << __LINE__ << endl;
+    debug1 << "avtSDFFileFormat::OpenFile(1) call " << __LINE__ << endl;
     OpenFile(1);
 }
 
@@ -364,7 +365,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     // CODE TO ADD A MESH
     //
 
-    debug1 << "avtSDFFileFormat::OpenFile() " << __LINE__ << endl;
+    debug1 << "avtSDFFileFormat::OpenFile(0) call " << __LINE__ << endl;
     OpenFile(0);
 
     gotMetadata = true;
@@ -388,7 +389,8 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
 
         if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
                 b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
-            debug1 << "Found mesh: " << b->id << " " << b->name << endl;
+            debug1 << "avtSDFFileFormat:: Found mesh: id:" << b->id
+                   << ", name:" << b->name << endl;
             avtMeshType meshtype;
             int topol, ndims = b->ndims;
             if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
@@ -576,6 +578,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     //
 
 #ifdef SDF_DEBUG
+    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
 }
@@ -611,7 +614,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
     if (!b) EXCEPTION1(InvalidVariableException, meshname);
     h->current_block = b;
 
-    debug1 << "found block:" << b->id << " for mesh:" << meshname << endl;
+    debug1 << "avtSDFFileFormat:: Found block: id:" << b->id << " for mesh:"
+           << meshname << endl;
 
     ncpus = PAR_Size();
     sdf_set_ncpus(h, ncpus);
@@ -674,6 +678,7 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         points->Delete();
 
 #ifdef SDF_DEBUG
+        debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
         debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
         return ugrid;
@@ -708,6 +713,7 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
     SetUpDomainConnectivity();
 
 #ifdef SDF_DEBUG
+    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return rgrid;
@@ -735,6 +741,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
 vtkDataSet *
 avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
 {
+    debug1 << "avtSDFFileFormat::GetCurve(domain:" << domain << ", sdf_block:"
+           << b << ")" << endl;
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
 
     int nlocal;
@@ -822,8 +830,8 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     sdf_block_t *b = sdf_find_block_by_name(h, varname);
     if (!b) return NULL;
 
-    debug1 << "found block:" << b->id << " for var:" << varname <<
-              " type " << b->blocktype << endl;
+    debug1 << "avtSDFFileFormat:: Found block: id:" << b->id << " for var:"
+           << varname << " type " << b->blocktype << endl;
 
     if (b->data) return b;
     h->current_block = b;
@@ -875,6 +883,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
         sdf_read_data(h);
 
 #ifdef SDF_DEBUG
+    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return b;
@@ -921,6 +930,7 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
     rv->SetVoidArray(b->data, b->nlocal, 1);
 
 #ifdef SDF_DEBUG
+    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return rv;
@@ -1006,18 +1016,19 @@ avtSDFFileFormat::ActivateTimestep(void)
 
 #ifdef PARALLEL
     comm = VISIT_MPI_COMM;
-    debug1 << "avtSDFFileFormat::A parallel" << endl;
+    debug1 << "avtSDFFileFormat:: parallel" << endl;
     ncpus = PAR_Size();
-    debug1 << "cpu1: " << ncpus << endl;
+    debug1 << "avtSDFFileFormat:: original ncpus: " << ncpus << endl;
     MPI_Comm_size(VISIT_MPI_COMM, &ncpus);
 #else
-    debug1 << "avtSDFFileFormat::A serial" << endl;
+    debug1 << "avtSDFFileFormat:: serial" << endl;
 #endif
     rank = PAR_Rank();
     ncpus = PAR_Size();
-    debug1 << rank << " " << ncpus << " " << comm << " f:" << filename << endl;
+    debug1 << "avtSDFFileFormat:: rank:" << rank << ", ncpus:" << ncpus
+           << ", comm:" << comm << ", filename:" << filename << endl;
 
-    debug1 << "avtSDFFileFormat::OpenFile() " << __LINE__ << endl;
+    debug1 << "avtSDFFileFormat::OpenFile(0) call " << __LINE__ << endl;
     OpenFile(0);
 }
 
@@ -1025,7 +1036,7 @@ avtSDFFileFormat::ActivateTimestep(void)
 void
 avtSDFFileFormat::SetUpDomainConnectivity(void)
 {
-    debug1 << "SetUpDomainConnectivity()" << endl;
+    debug1 << "avtSDFFileFormat::SetUpDomainConnectivity()" << endl;
     if (ncpus < 2) return;
 
     avtRectilinearDomainBoundaries *rdb =
@@ -1040,7 +1051,7 @@ avtSDFFileFormat::SetUpDomainConnectivity(void)
 
         sdf_get_domain_extents(h, n, start, local);
 
-        debug1 << "SetUpDomainConnectivity0(" << n << ": ";
+        debug1 << "avtSDFFileFormat:: Connectivity0 (" << n << ": ";
         for (int i = 0; i < 3; i++) {
             extents[2*i] = start[i];
             extents[2*i+1] = start[i] + local[i] - 1;
@@ -1048,9 +1059,9 @@ avtSDFFileFormat::SetUpDomainConnectivity(void)
         }
         debug1 << ")" << endl;
 
-        debug1 << "SetUpDomainConnectivity(" << n << ": ";
+        debug1 << "avtSDFFileFormat:: Connectivity1 (" << n << ": ";
         for (int i = 0; i < 6; i++) debug1 << extents[i] << " ";
-        debug1 << endl;
+        debug1 << ")" << endl;
 
         rdb->SetIndicesForRectGrid(n, extents);
     }
@@ -1095,6 +1106,7 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
         sdf_read_data(h);
     }
 #ifdef SDF_DEBUG
+    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
 
@@ -1174,9 +1186,10 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
     delete [] material_list;
     delete [] vfm_blocks;
 
-    debug1 << "GetMaterial() done" << endl;
+    debug1 << "avtSDFFileFormat::GetMaterial() done" << endl;
 
 #ifdef SDF_DEBUG
+    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return (void *)mat;
@@ -1208,7 +1221,8 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
     if (!sblock) EXCEPTION1(InvalidVariableException, var);
     h->current_block = sblock;
 
-    debug1 << "found block:" << sblock->id << " for material:" << var << endl;
+    debug1 << "avtSDFFileFormat:: Found block: id:" << sblock->id
+           << " for material:" << var << endl;
 
     if (sblock->datatype_out == SDF_DATATYPE_OTHER) {
         if (sblock->variable_ids && sblock->variable_ids[0]) {
@@ -1369,6 +1383,7 @@ avtSDFFileFormat::GetSpeciesType(sdf_block_t *sblock, int domain)
     delete [] specmf;
 
 #ifdef SDF_DEBUG
+    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return spec;
@@ -1400,7 +1415,8 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
     if (!sblock) EXCEPTION1(InvalidVariableException, var);
     h->current_block = sblock;
 
-    debug1 << "found block:" << sblock->id << " for material:" << var << endl;
+    debug1 << "avtSDFFileFormat:: Found block: id:" << sblock->id
+           << " for material:" << var << endl;
 
     if (sblock->datatype_out == SDF_DATATYPE_OTHER) {
         if (sblock->variable_ids && sblock->variable_ids[0]) {
@@ -1456,6 +1472,7 @@ avtSDFFileFormat::GetAuxiliaryData(const char *var, int domain,
     }
 
 #ifdef SDF_DEBUG
+    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
     debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
     return rv;
