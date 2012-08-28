@@ -370,6 +370,16 @@ int sdf_read_point_variable_info(sdf_file_t *h);
                     SDF_PRNT(" %g", arr[_d]); \
                 } \
             } \
+        } else if (b->datatype_out == SDF_DATATYPE_CHARACTER) { \
+            char *arr = (a); \
+            SDF_PRNT("c1 "); \
+            _d=0; while (_d<(len)) { \
+                SDF_PRNT("\n%i ",_d); \
+                for (_i=0; _i < 10; _i++, _d++) { \
+                    if (_d == (len)) break; \
+                    SDF_PRNT("%c", arr[_d]); \
+                } \
+            } \
         } else { \
             int *arr = (a); \
             SDF_PRNT("i4 "); \
