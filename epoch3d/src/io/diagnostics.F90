@@ -109,7 +109,7 @@ CONTAINS
         sha1sum, c_compile_machine, c_compile_flags, defines, c_compile_date, &
         run_date)
     CALL sdf_write_cpu_split(sdf_handle, 'cpu_split', 'CPU split', &
-        cell_x_max, cell_y_max)
+        cell_x_max, cell_y_max, cell_z_max)
 
     CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
         dt_plasma_frequency)
