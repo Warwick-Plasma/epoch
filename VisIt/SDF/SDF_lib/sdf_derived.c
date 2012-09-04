@@ -199,7 +199,7 @@ sdf_block_t *sdf_callback_cpu_split(sdf_file_t *h, sdf_block_t *b)
 int sdf_add_derived_blocks(sdf_file_t *h)
 {
     sdf_block_t *b, *next, *cur, *append, *append_head, *append_tail;
-    sdf_block_t *mesh;
+    sdf_block_t *mesh, *vfm, *obst;
     int i, len1, len2, nappend = 0;
     char *str, *name1, *name2;
     char *grid_ids[] = { "x", "y", "z" };
@@ -309,6 +309,16 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             append->must_read[0] = 1;
             append->populate_data = sdf_callback_cpu_split;
             append->datatype = append->datatype_out = SDF_DATATYPE_INTEGER4;
+
+        } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP) {
+            obst = sdf_find_block_by_id(h, b->obstacle_id);
+            if (obst) {
+                vfm = sdf_find_block_by_id(h, b->vfm_id);
+                if (vfm) {
+                    vfm->subblock = b;
+                    b->subblock = obst;
+                }
+            }
         }
     }
 

@@ -51,6 +51,7 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_MULTI_MATVAR,
     SDF_BLOCKTYPE_MULTI_SPECIES,
     SDF_BLOCKTYPE_CPU_SPLIT,
+    SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP,
 };
 
 enum sdf_geometry {
@@ -149,6 +150,7 @@ static const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_MULTI_MATVAR",
     "SDF_BLOCKTYPE_MULTI_SPECIES",
     "SDF_BLOCKTYPE_CPU_SPLIT",
+    "SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP",
 };
 
 static const char *sdf_geometry_c[] = {
@@ -206,11 +208,16 @@ static const char *sdf_error_codes_c[] = {
     "SDF_ERR_UNKNOWN",
 };
 
-static const int sdf_blocktype_len = sizeof(sdf_blocktype_c) / sizeof(sdf_blocktype_c[0]);
-static const int sdf_geometry_len = sizeof(sdf_geometry_c) / sizeof(sdf_geometry_c[0]);
-static const int sdf_stagger_len = sizeof(sdf_stagger_c) / sizeof(sdf_stagger_c[0]);
-static const int sdf_datatype_len = sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
-static const int sdf_error_codes_len = sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
+static const int sdf_blocktype_len =
+       sizeof(sdf_blocktype_c) / sizeof(sdf_blocktype_c[0]);
+static const int sdf_geometry_len =
+       sizeof(sdf_geometry_c) / sizeof(sdf_geometry_c[0]);
+static const int sdf_stagger_len =
+       sizeof(sdf_stagger_c) / sizeof(sdf_stagger_c[0]);
+static const int sdf_datatype_len =
+       sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
+static const int sdf_error_codes_len =
+       sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
 
 #ifdef PARALLEL
     typedef MPI_Comm comm_t;
@@ -233,12 +240,14 @@ struct sdf_block {
     int local_dims[3], nm, nlocal, n_ids, opt;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
+    char *vfm_id, *obstacle_id;
     char *name, *material_name, *must_read;
     char **dim_labels, **dim_units;
     char **variable_ids, **material_names;
     char done_header, done_info, done_data, dont_allocate, dont_display;
     void **grids, *data;
     sdf_block_t *next;
+    sdf_block_t *subblock;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;
@@ -305,6 +314,7 @@ int sdf_read_stitched_tensor(sdf_file_t *h);
 int sdf_read_stitched_material(sdf_file_t *h);
 int sdf_read_stitched_matvar(sdf_file_t *h);
 int sdf_read_stitched_species(sdf_file_t *h);
+int sdf_read_stitched_obstacle_group(sdf_file_t *h);
 int sdf_read_constant(sdf_file_t *h);
 
 int sdf_read_plain_mesh(sdf_file_t *h);

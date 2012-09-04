@@ -805,6 +805,54 @@ CONTAINS
 
 
 
+  SUBROUTINE sdf_read_stitched_obstacle_group(h)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER :: iloop, errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT. ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (b%done_data) RETURN
+
+    CALL read_block_header(h)
+
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
+      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+    ENDIF
+
+    ! Metadata is
+    ! - stagger   INTEGER(i4)
+    ! - obstacle_id    CHARACTER(id_length)
+    ! - vfm_id         CHARACTER(id_length)
+    ! - obstacle_names ndims*CHARACTER(string_length)
+
+    CALL read_entry_int4(h, b%stagger)
+
+    CALL read_entry_id(h, b%obstacle_id)
+
+    CALL read_entry_id(h, b%vfm_id)
+
+    ALLOCATE(b%material_names(b%ndims))
+    DO iloop = 1, b%ndims
+      CALL read_entry_string(h, b%material_names(iloop))
+    ENDDO
+
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_read_stitched_obstacle_group
+
+
+
   SUBROUTINE read_entry_int4(h, value)
 
     INTEGER, PARAMETER :: n = 4

@@ -37,6 +37,7 @@ MODULE sdf_common
     INTEGER(i4) :: mpitype, type_size, stagger
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
+    CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id
     CHARACTER(LEN=c_id_length), POINTER :: variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
     CHARACTER(LEN=c_max_string_length) :: name, material_name
@@ -97,6 +98,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_multi_matvar = 18
   INTEGER(i4), PARAMETER :: c_blocktype_multi_species = 19
   INTEGER(i4), PARAMETER :: c_blocktype_cpu_split = 20
+  INTEGER(i4), PARAMETER :: c_blocktype_stitched_obstacle_group = 21
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1

@@ -81,6 +81,8 @@ CONTAINS
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_species &
         .OR. b%blocktype .EQ. c_blocktype_multi_species) THEN
       CALL sdf_read_stitched_species(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_obstacle_group) THEN
+      CALL sdf_read_stitched_obstacle_group(h)
     ENDIF
 
   END SUBROUTINE sdf_read_block_info

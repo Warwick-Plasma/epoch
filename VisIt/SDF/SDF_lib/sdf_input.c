@@ -366,6 +366,8 @@ int sdf_read_block_info(sdf_file_t *h)
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
             || b->blocktype == SDF_BLOCKTYPE_MULTI_SPECIES)
         ret = sdf_read_stitched_species(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP)
+        ret = sdf_read_stitched_obstacle_group(h);
 
     return ret;
 }
@@ -659,6 +661,33 @@ int sdf_read_stitched_species(sdf_file_t *h)
     SDF_READ_ENTRY_ARRAY_STRING(b->material_names, b->ndims);
 
     SDF_READ_ENTRY_ARRAY_ID(b->variable_ids, b->ndims);
+
+    b->done_data = 1;
+
+    return 0;
+}
+
+
+
+int sdf_read_stitched_obstacle_group(sdf_file_t *h)
+{
+    sdf_block_t *b;
+
+    SDF_COMMON_INFO();
+
+    // Metadata is
+    // - stagger         INTEGER(i4)
+    // - obstacle_id     CHARACTER(id_length)
+    // - vfm_id          CHARACTER(id_length)
+    // - obstacle_names  ndims*CHARACTER(string_length)
+
+    SDF_READ_ENTRY_INT4(b->stagger);
+
+    SDF_READ_ENTRY_ID(b->obstacle_id);
+
+    SDF_READ_ENTRY_ID(b->vfm_id);
+
+    SDF_READ_ENTRY_ARRAY_STRING(b->material_names, b->ndims);
 
     b->done_data = 1;
 

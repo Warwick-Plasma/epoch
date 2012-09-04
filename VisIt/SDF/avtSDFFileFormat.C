@@ -505,7 +505,20 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 matptr++;
             }
 
-            AddMaterialToMetaData(md, b->name, mesh->name, b->ndims, mnames);
+            // UGLY HACK
+            // Look for an obstacle block which links with this material.
+            // If found, add to the list of material names.
+            if (b->subblock) {
+                sdf_block_t *ob = b->subblock;
+                char **matptr = ob->material_names;
+                for (unsigned int n = 0 ; n < ob->ndims ; n++) {
+                    mnames.push_back(*matptr);
+                    matptr++;
+                }
+            }
+
+            AddMaterialToMetaData(md, b->name, mesh->name, mnames.size(),
+                mnames);
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
                 || b->blocktype == SDF_BLOCKTYPE_MULTI_SPECIES) {
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
@@ -1117,14 +1130,52 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
 
     int *material_list = new int[nlocal];
     int mixed_size = 0;
-    int *mat_numbers = new int[nm];
-    for (int n = 0; n < nm; n++) mat_numbers[n] = n + 1;
+    int nmat = nm;
+    char **mat_names = sblock->material_names;
+
+    int *obdata = NULL;
+    if (sblock->subblock) {
+        sdf_block_t *obgrp = sblock->subblock;
+        sdf_block_t *ob = obgrp->subblock;
+        h->current_block = ob;
+        sdf_read_data(h);
+        obdata = (int *)ob->data;
+        nmat += obgrp->ndims;
+        char **mat_namesptr, **matptr;
+        mat_names = new char*[nmat];
+        mat_namesptr = matptr = mat_names = sblock->material_names;
+        for (int n = 0; n < nm; n++) {
+            *mat_namesptr = *matptr;
+            mat_namesptr++;
+            matptr++;
+        }
+        matptr = obgrp->material_names;
+        for (int n = 0; n < obgrp->ndims; n++) {
+            *mat_namesptr = *matptr;
+            mat_namesptr++;
+            matptr++;
+        }
+    }
+
+    int *mat_numbers = new int[nmat];
+    for (int n = 0; n < nmat; n++) mat_numbers[n] = n + 1;
 
     // Fill in the pure cell array and find the size of the mixed cell arrays
     Real *vfm;
+    int material_number = 0, nmats = 0;
+    Real vf;
     for (int i = 0; i < nlocal; i++) {
-        int material_number = 0, nmats = 0;
-        Real vf;
+        if (obdata) {
+            if (*obdata) {
+                material_list[i] = *obdata + nm;
+                obdata++;
+                continue;
+            }
+            obdata++;
+        }
+
+        material_number = 0;
+        nmats = 0;
         // Find number of materials for this cell
         for (int n = 0; n < nm; n++) {
             vfm = (Real *)vfm_blocks[n]->data;
@@ -1175,9 +1226,9 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
     char dom_string[128];
     sprintf(dom_string, "Domain %d", domain);
 
-    avtMaterial *mat = new avtMaterial(nm, mat_numbers, sblock->material_names,
-            ndims, v->local_dims, 0, material_list, mixed_size, mix_mat,
-            mix_next, mix_zone, mix_vf, dom_string, 0);
+    avtMaterial *mat = new avtMaterial(nmat, mat_numbers,
+            mat_names, ndims, v->local_dims, 0, material_list, mixed_size,
+            mix_mat, mix_next, mix_zone, mix_vf, dom_string, 0);
 
     delete [] mix_vf;
     delete [] mix_next;
@@ -1186,6 +1237,7 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
     delete [] mat_numbers;
     delete [] material_list;
     delete [] vfm_blocks;
+    if (obdata) delete [] mat_names;
 
     debug1 << "avtSDFFileFormat::GetMaterial() done" << endl;
 

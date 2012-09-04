@@ -1164,6 +1164,76 @@ CONTAINS
 
 
 
+  SUBROUTINE sdf_write_stitched_obstacle_group(h, id, name, obstacle_id, &
+      vfm_id, stagger, obstacle_names, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, obstacle_id, vfm_id
+    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: obstacle_names(:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: i, errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (PRESENT(id)) THEN
+      CALL sdf_get_next_block(h)
+      b => h%current_block
+      b%ndims = INT(SIZE(obstacle_names),i4)
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_other
+    b%blocktype = c_blocktype_stitched_obstacle_group
+
+    IF (PRESENT(rank_write)) h%rank_master = rank_write
+
+    ! Metadata is
+    ! - stagger        INTEGER(i4)
+    ! - obstacle_id    CHARACTER(id_length)
+    ! - vfm_id         CHARACTER(id_length)
+    ! - obstacle_names ndims*CHARACTER(string_length)
+
+    b%info_length = h%block_header_length + soi4 + 2 * c_id_length &
+        + b%ndims * h%string_length
+    b%data_length = 0
+
+    ! Write header
+    IF (PRESENT(id)) THEN
+      b%stagger = stagger
+      CALL safe_copy_string(obstacle_id, b%obstacle_id)
+      CALL safe_copy_string(vfm_id, b%vfm_id)
+      CALL sdf_write_block_header(h, id, name)
+      ALLOCATE(b%material_names(b%ndims))
+      DO i = 1, b%ndims
+        CALL safe_copy_string(obstacle_names(i), b%material_names(i))
+      ENDDO
+    ELSE
+      CALL write_block_header(h)
+    ENDIF
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      ! Write metadata
+      CALL MPI_FILE_WRITE(h%filehandle, b%stagger, 1, MPI_INTEGER4, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL sdf_safe_write_id(h, b%obstacle_id)
+      CALL sdf_safe_write_id(h, b%vfm_id)
+
+      DO i = 1, b%ndims
+        CALL sdf_safe_write_string(h, b%material_names(i))
+      ENDDO
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%block_start + b%info_length
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_write_stitched_obstacle_group
+
+
+
   SUBROUTINE write_constant_meta(h, id, name)
 
     TYPE(sdf_file_handle) :: h
