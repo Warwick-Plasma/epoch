@@ -454,7 +454,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 // This will probably change in the future.
                 if (b->stagger == SDF_STAGGER_VERTEX)
                     cent = AVT_NODECENT;
-	        else
+                else
                     cent = AVT_ZONECENT;
                 smd->name = b->name;
                 smd->meshName = mesh->name;
@@ -988,7 +988,7 @@ avtSDFFileFormat::GetVectorVar(int domain, const char *varname)
     //           one_entry[j] = ...
     //      for (j = ncomps ; j < ucomps ; j++)
     //           one_entry[j] = 0.;
-    //      rv->SetTuple(i, one_entry); 
+    //      rv->SetTuple(i, one_entry);
     // }
     //
     // delete [] one_entry;
@@ -1007,7 +1007,7 @@ avtSDFFileFormat::GetVectorVar(int domain, const char *varname)
 //
 //  Programmer: Keith Bennett
 //  Creation:   Fri Oct 29 15:31:09 PST 2010
-//   
+//
 // ****************************************************************************
 
 void
@@ -1177,7 +1177,7 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
 
     avtMaterial *mat = new avtMaterial(nm, mat_numbers, sblock->material_names,
             ndims, v->local_dims, 0, material_list, mixed_size, mix_mat,
-            mix_next, mix_zone, mix_vf, dom_string, 0); 
+            mix_next, mix_zone, mix_vf, dom_string, 0);
 
     delete [] mix_vf;
     delete [] mix_next;

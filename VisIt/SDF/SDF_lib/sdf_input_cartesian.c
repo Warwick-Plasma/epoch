@@ -208,7 +208,7 @@ int sdf_read_plain_mesh(sdf_file_t *h)
         h->indent = 2;
     }
     for (n = 0; n < 3; n++) {
-        if (b->ndims > n) { 
+        if (b->ndims > n) {
             sdf_create_1d_distribution(h, b->dims[n], b->local_dims[n],
                     local_start[n]);
             sdf_helper_read_array(h, &b->grids[n], b->local_dims[n]);

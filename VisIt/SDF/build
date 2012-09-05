@@ -117,7 +117,7 @@ elif [ $build_visit_reader -eq 1 ]; then
   build_parallel=0
   build_serial=0
   buildit
-  
+
   if [ $? -ne 0 ]; then
     build_parallel=1
     echo

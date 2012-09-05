@@ -75,7 +75,7 @@ class avtSDFFileFormat : public avtSTMDFileFormat
     // information to information about block connectivity.
     //
     virtual void      *GetAuxiliaryData(const char *var, int domain,
-                                        const char *type, void *args, 
+                                        const char *type, void *args,
                                         DestructorFunction &);
 
     //
@@ -86,7 +86,7 @@ class avtSDFFileFormat : public avtSTMDFileFormat
     //
 
     virtual const char    *GetType(void)   { return "SDF"; };
-    virtual void           FreeUpResources(void); 
+    virtual void           FreeUpResources(void);
 
     virtual vtkDataSet    *GetMesh(int, const char *);
     virtual vtkDataArray  *GetVar(int, const char *);
@@ -154,10 +154,10 @@ class avtSDFFileFormat : public avtSTMDFileFormat
     // the difference.
     //
     virtual int           GetCycleFromFilename(const char *f) const
-                              { if (f[0] == '\0') return FORMAT_INVALID_CYCLE; 
+                              { if (f[0] == '\0') return FORMAT_INVALID_CYCLE;
                                 return GuessCycle(f); };
     virtual double        GetTimeFromFilename(const char *f) const
-                              { if (f[0] == '\0') return FORMAT_INVALID_TIME; 
+                              { if (f[0] == '\0') return FORMAT_INVALID_TIME;
                                 return GuessTime(f); };
 
     void       AddMeshToMetaData(avtDatabaseMetaData *, std::string,
