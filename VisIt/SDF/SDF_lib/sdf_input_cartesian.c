@@ -1,9 +1,6 @@
 #include "sdf.h"
 #include <stdlib.h>
 
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-
 //#define SDF_COMMON_MESH_LENGTH (4 + 8 + SDF_ID_LENGTH + 4 * b->ndims)
 
 #define SDF_COMMON_MESH_INFO() do { \

@@ -120,10 +120,12 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
         if (!h->mmap && b->done_data)
             for (i = 0; i < b->ndims; i++) if (b->grids[i]) free(b->grids[i]);
         free(b->grids);
+        b->grids = NULL;
     }
-    if (!h->mmap && b->data && b->done_data) free(b->data);
-    b->grids = NULL;
-    b->data = NULL;
+    if (!h->mmap && b->data && b->done_data) {
+        free(b->data);
+        b->data = NULL;
+    }
     b->done_data = 0;
 
     return 0;

@@ -198,7 +198,7 @@ sdf_block_t *sdf_callback_cpu_split(sdf_file_t *h, sdf_block_t *b)
 
 int sdf_add_derived_blocks(sdf_file_t *h)
 {
-    sdf_block_t *b, *cur, *append, *append_head, *append_tail;
+    sdf_block_t *b, *next, *cur, *append, *append_head, *append_tail;
     sdf_block_t *mesh;
     int i, len1, len2, nappend = 0;
     char *str, *name1, *name2;
@@ -207,8 +207,11 @@ int sdf_add_derived_blocks(sdf_file_t *h)
     cur = h->current_block;
     append = append_head = calloc(1, sizeof(sdf_block_t));
 
-    b = h->blocklist;
-    while (b) {
+    next = h->blocklist;
+    while (next) {
+        b = next;
+        next = b->next;
+
         if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH
             || b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
             for (i = 0; i < b->ndims; i++) {
@@ -307,7 +310,6 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             append->populate_data = sdf_callback_cpu_split;
             append->datatype = append->datatype_out = SDF_DATATYPE_INTEGER4;
         }
-        b = b->next;
     }
 
     if (nappend) {
