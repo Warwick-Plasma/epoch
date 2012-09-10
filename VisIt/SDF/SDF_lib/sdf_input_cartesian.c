@@ -152,10 +152,136 @@ static int sdf_free_distribution(sdf_file_t *h)
 
 
 
+static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
+{
+    sdf_block_t *b = h->current_block;
+    char **var = (char **)var_in;
+    char *vptr;
+    int subsizes[SDF_MAXDIMS], starts[SDF_MAXDIMS];
+    uint64_t offset;
+#ifdef PARALLEL
+    MPI_Datatype subarray;
+    int face[SDF_MAXDIMS];
+    int i, tag;
+    char *p1, *p2;
+#else
+    int i, n;
+    int idx, rem, orem, dim, npt;
+#endif
+
+    b->nlocal = 1;
+    for (i=0; i < b->ndims; i++) {
+        subsizes[i] = b->local_dims[i];
+        starts[i] = b->ng;
+        b->local_dims[i] += 2 * b->ng;
+        b->dims[i] += 2 * b->ng;
+        b->nlocal *= b->local_dims[i];
+    }
+    for (i=b->ndims; i < SDF_MAXDIMS; i++)
+        subsizes[i] = 1;
+
+    if (*var) free(*var);
+    vptr = *var = calloc(b->nlocal, b->type_size);
+#ifdef PARALLEL
+    MPI_Type_create_subarray(b->ndims, b->local_dims, subsizes, starts,
+        MPI_ORDER_FORTRAN, b->mpitype, &subarray);
+
+    MPI_Type_commit(&subarray);
+
+    MPI_File_set_view(h->filehandle, h->current_location, b->mpitype,
+            b->distribution, "native", MPI_INFO_NULL);
+    MPI_File_read_all(h->filehandle, *var, 1, subarray,
+            MPI_STATUS_IGNORE);
+    MPI_File_set_view(h->filehandle, 0, MPI_BYTE, MPI_BYTE, "native",
+            MPI_INFO_NULL);
+
+    MPI_Type_free(&subarray);
+
+    // Swap ghostcell faces
+    for (i=0; i < b->ndims; i++) {
+        face[i] = b->local_dims[i] - 2 * b->ng;
+        starts[i] = b->ng;
+    }
+
+    tag = 1;
+    offset = b->type_size;
+    for (i=0; i < b->ndims; i++) {
+        face[i] = b->ng;
+        starts[i] = 0;
+
+        MPI_Type_create_subarray(b->ndims, b->local_dims, face, starts,
+            MPI_ORDER_FORTRAN, b->mpitype, &subarray);
+        MPI_Type_commit(&subarray);
+
+        p1 = b->data + b->ng * offset;
+        p2 = b->data + (b->local_dims[i] - b->ng) * offset;
+        MPI_Sendrecv(p1, 1, subarray, b->proc_min[i], tag, p2, 1, subarray,
+            b->proc_max[i], tag, h->comm, MPI_STATUS_IGNORE);
+        tag++;
+
+        p1 = b->data + (b->local_dims[i] - 2 * b->ng) * offset;
+        p2 = b->data;
+        MPI_Sendrecv(p1, 1, subarray, b->proc_max[i], tag, p2, 1, subarray,
+            b->proc_min[i], tag, h->comm, MPI_STATUS_IGNORE);
+        tag++;
+
+        MPI_Type_free(&subarray);
+
+        face[i] = b->local_dims[i];
+        offset *= b->local_dims[i];
+    }
+#else
+    idx = 0;
+    offset = b->ng;
+    for (i=0; i < b->ndims; i++) {
+        idx += offset;
+        offset *= b->local_dims[i];
+    }
+
+    offset = b->local_dims[0];
+    npt = b->local_dims[0] - 2 * b->ng;
+    for (i=1; i < b->ndims; i++) {
+        npt += (b->local_dims[i] - 2 * b->ng) * offset;
+        offset *= b->local_dims[i];
+    }
+
+    vptr += idx * b->type_size;
+
+    while (idx < npt) {
+        fseeko(h->filehandle, h->current_location, SEEK_SET);
+        fread(vptr, b->type_size, subsizes[0], h->filehandle);
+        h->current_location += subsizes[0] * b->type_size;
+        vptr += b->local_dims[0] * b->type_size;
+        idx += b->local_dims[0];
+
+        dim = b->local_dims[0];
+        orem = idx / dim;
+        offset = 2 * b->ng * dim;
+        for (i=1; i < b->ndims; i++) {
+            rem = orem / dim;
+            n = orem - rem * dim;
+            dim = b->local_dims[i];
+            if (n == dim - b->ng) {
+                vptr += offset * b->type_size;
+                idx += offset;
+            }
+            offset *= dim;
+            orem = rem;
+        }
+    }
+#endif
+
+    return 0;
+}
+
+
+
 static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
 {
     sdf_block_t *b = h->current_block;
     char **var = (char **)var_in;
+
+    if (b->ng) return sdf_helper_read_array_halo(h, var_in);
 
     if (h->mmap) {
         *var = h->mmap + h->current_location;
