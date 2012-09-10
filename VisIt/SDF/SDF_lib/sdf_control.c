@@ -126,6 +126,10 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
         free(b->data);
         b->data = NULL;
     }
+    if (b->node_list) free(b->node_list);
+    if (b->boundary_cells) free(b->boundary_cells);
+    b->node_list = NULL;
+    b->boundary_cells = NULL;
     b->done_data = 0;
 
     return 0;

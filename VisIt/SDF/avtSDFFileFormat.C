@@ -219,8 +219,6 @@ avtSDFFileFormat::OpenFile(int open_only)
     }
 
     sdf_read_blocklist(h);
-    // Append derived data to the blocklist using built-in library.
-    sdf_add_derived_blocks(h);
 
     if (ext) {
         char **preload;
@@ -248,6 +246,9 @@ avtSDFFileFormat::OpenFile(int open_only)
         // Append derived data to the blocklist using the extension library.
         ext->read_blocklist(ext, h);
     }
+
+    // Append derived data to the blocklist using built-in library.
+    sdf_add_derived_blocks(h);
 }
 
 
@@ -423,6 +424,22 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 mmd->minSpatialExtents[1] = 0;
                 mmd->maxSpatialExtents[1] = 0;
             }
+            md->Add(mmd);
+        } else if (b->blocktype == SDF_BLOCKTYPE_UNSTRUCTURED_MESH) {
+            debug1 << "avtSDFFileFormat:: Found mesh: id:" << b->id
+                   << ", name:" << b->name << endl;
+            sdf_block_t *mesh = sdf_find_block_by_id(h, b->subblock->mesh_id);
+            avtMeshType meshtype = AVT_UNSTRUCTURED_MESH;
+            int topol = b->ndims-1, ndims = b->ndims;
+            avtMeshMetaData *mmd = new avtMeshMetaData(b->name, 1, 0, 0, 0,
+                ndims, topol, meshtype);
+            mmd->xUnits = mesh->dim_units[0];
+            if (b->ndims > 1) mmd->yUnits = mesh->dim_units[1];
+            if (b->ndims > 2) mmd->zUnits = mesh->dim_units[2];
+            mmd->xLabel = mesh->dim_labels[0];
+            if (b->ndims > 1) mmd->yLabel = mesh->dim_labels[1];
+            if (b->ndims > 2) mmd->zLabel = mesh->dim_labels[2];
+            mmd->hasSpatialExtents = false;
             md->Add(mmd);
         } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
                 b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE ||
@@ -695,6 +712,45 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
         debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
+        return ugrid;
+
+    } else if (b->blocktype == SDF_BLOCKTYPE_UNSTRUCTURED_MESH) {
+        if (b->populate_data) b->populate_data(h, b);
+
+        vtkDataArray *array = vtkFloatArray::New();
+        array->SetNumberOfComponents(b->ndims);
+        array->SetVoidArray(b->data, b->ndims * b->npoints, 1);
+
+        vtkPoints *points = vtkPoints::New();
+        points->SetData(array);
+        array->Delete();
+
+        vtkUnstructuredGrid *ugrid = vtkUnstructuredGrid::New();
+        ugrid->SetPoints(points);
+        points->Delete();
+
+        ugrid->Allocate(b->nfaces);
+
+        vtkIdTypeArray *nlist = vtkIdTypeArray::New();
+        nlist->SetNumberOfValues(5 * b->nfaces);
+        vtkIdType *nl = nlist->GetPointer(0);
+        int *node = b->node_list;
+
+        for (int i = 0; i < b->nfaces; i++) {
+            *nl++ = 4;
+            *nl++ = *node++;
+            *nl++ = *node++;
+            *nl++ = *node++;
+            *nl++ = *node++;
+        }
+
+        vtkCellArray *ca = vtkCellArray::New();
+        ca->SetCells(b->nfaces, nlist);
+        nlist->Delete();
+
+        ugrid->SetCells(VTK_QUAD, ca);
+        ca->Delete();
+
         return ugrid;
     }
 

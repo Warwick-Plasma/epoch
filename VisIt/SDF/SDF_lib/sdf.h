@@ -52,6 +52,7 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_MULTI_SPECIES,
     SDF_BLOCKTYPE_CPU_SPLIT,
     SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP,
+    SDF_BLOCKTYPE_UNSTRUCTURED_MESH,
 };
 
 enum sdf_geometry {
@@ -151,6 +152,7 @@ static const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_MULTI_SPECIES",
     "SDF_BLOCKTYPE_CPU_SPLIT",
     "SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP",
+    "SDF_BLOCKTYPE_UNSTRUCTURED_MESH",
 };
 
 static const char *sdf_geometry_c[] = {
@@ -237,15 +239,16 @@ struct sdf_block {
     uint32_t type_size, stagger, datatype_out, type_size_out;
     uint32_t *dims_in;
     uint64_t dims[3];
-    int local_dims[3], nm, nlocal, n_ids, opt, ng;
+    int local_dims[3], nm, nlocal, n_ids, opt, ng, nfaces;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
     char *vfm_id, *obstacle_id;
     char *name, *material_name, *must_read;
     char **dim_labels, **dim_units;
     char **variable_ids, **material_names;
-    char done_header, done_info, done_data, dont_allocate, dont_display;
+    int *node_list, *boundary_cells;
     void **grids, *data;
+    char done_header, done_info, done_data, dont_allocate, dont_display;
     sdf_block_t *next;
     sdf_block_t *subblock;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
