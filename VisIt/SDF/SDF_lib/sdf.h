@@ -242,9 +242,8 @@ struct sdf_block {
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;
-    int cart_rank, cpu_split[SDF_MAXDIMS];
-    int coordinates[3], proc_min[3], proc_max[3];
-    MPI_Comm cart_comm;
+    int cpu_split[SDF_MAXDIMS];
+    int proc_min[3], proc_max[3];
 #endif
 };
 

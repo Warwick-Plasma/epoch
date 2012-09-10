@@ -426,6 +426,17 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     div = 1;
     for (n = 0; n < b->ndims; n++) {
         coords = (rank / div) % b->cpu_split[n];
+
+        if (coords == 0)
+            b->proc_min[n] = MPI_PROC_NULL;
+        else
+            b->proc_min[n] = rank - div;
+
+        if (coords == b->cpu_split[n] - 1)
+            b->proc_max[n] = MPI_PROC_NULL;
+        else
+            b->proc_max[n] = rank + div;
+
         div = div * b->cpu_split[n];
         npoint_min = b->dims[n] / b->cpu_split[n];
         split_big = b->dims[n] - b->cpu_split[n] * npoint_min;
@@ -479,13 +490,6 @@ int sdf_factor(sdf_file_t *h, int *start)
     // Return dimensions back to their original values
     for (n = 0; n < b->ndims; n++)
         b->dims[n] = old_dims[n];
-
-    MPI_Cart_create(h->comm, b->ndims, b->cpu_split, periods, 1, &b->cart_comm);
-    MPI_Comm_rank(b->cart_comm, &b->cart_rank);
-    MPI_Cart_coords(b->cart_comm, b->cart_rank, b->ndims, b->coordinates);
-    for (n = 0; n < b->ndims; n++)
-        MPI_Cart_shift(b->cart_comm, 0, 1, &b->proc_min[n], &b->proc_max[n]);
-
 #endif
 
     sdf_get_domain_extents(h, h->rank, start, b->local_dims);
