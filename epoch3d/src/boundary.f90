@@ -93,7 +93,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: n1_local, n2_local
     INTEGER :: proc1_min, proc1_max
     INTEGER :: proc2_min, proc2_max
-    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER, DIMENSION(c_ndims-1) :: sizes, subsizes, starts
     INTEGER :: subarray, basetype
 
     basetype = mpireal
@@ -122,7 +122,7 @@ CONTAINS
     subsizes(1) = ng
     subsizes(2) = sizes(2)
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims-1, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
@@ -138,7 +138,7 @@ CONTAINS
     subsizes(1) = sizes(1)
     subsizes(2) = ng
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims-1, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
