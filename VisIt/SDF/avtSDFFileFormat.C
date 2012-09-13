@@ -76,6 +76,7 @@
 using     std::string;
 int avtSDFFileFormat::extension_not_found = 0;
 
+#define IJK2(i,j,k) ((i)+ng + (nx+2*ng) * ((j)+ng + (ny+2*ng) * ((k)+ng)))
 
 // ****************************************************************************
 //  Memory management stack
@@ -1190,12 +1191,16 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
     char **mat_names = sblock->material_names;
 
     int *obdata = NULL;
+    int nx, ny, ng = 0;
     if (sblock->subblock) {
         sdf_block_t *obgrp = sblock->subblock;
         sdf_block_t *ob = obgrp->subblock;
         h->current_block = ob;
         sdf_read_data(h);
         obdata = (int *)ob->data;
+        ng = ob->ng;
+        nx = ob->local_dims[0] - 2 * ng;
+        ny = ob->local_dims[1] - 2 * ng;
         nmat += obgrp->ndims;
         char **mat_namesptr, **matptr;
         mat_names = new char*[nmat];
@@ -1222,12 +1227,26 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
     Real vf;
     for (int i = 0; i < nlocal; i++) {
         if (obdata) {
-            if (*obdata) {
-                material_list[i] = *obdata + nm;
+            if (ng) {
+                // Skip ghostcells in obstacle data if they exist.
+                int rem = i / nx;
+                int kk = rem / ny;
+                int ii = i - nx * rem;
+                int jj = rem - ny * kk;
+                if (ndims < 3) kk = -ng;
+                int obgrp = obdata[IJK2(ii,jj,kk)];
+                if (obgrp) {
+                    material_list[i] = obgrp + nm;
+                    continue;
+                }
+            } else {
+                if (*obdata) {
+                    material_list[i] = *obdata + nm;
+                    obdata++;
+                    continue;
+                }
                 obdata++;
-                continue;
             }
-            obdata++;
         }
 
         material_number = 0;
