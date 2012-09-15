@@ -20,7 +20,9 @@
 #define SDF_ENDIANNESS 16911887
 
 #define SDF_VERSION  1
-#define SDF_REVISION 0
+#define SDF_REVISION 1
+#define SDF_LIB_VERSION  1
+#define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
 
@@ -211,15 +213,15 @@ static const char *sdf_error_codes_c[] = {
 };
 
 static const int sdf_blocktype_len =
-       sizeof(sdf_blocktype_c) / sizeof(sdf_blocktype_c[0]);
+        sizeof(sdf_blocktype_c) / sizeof(sdf_blocktype_c[0]);
 static const int sdf_geometry_len =
-       sizeof(sdf_geometry_c) / sizeof(sdf_geometry_c[0]);
+        sizeof(sdf_geometry_c) / sizeof(sdf_geometry_c[0]);
 static const int sdf_stagger_len =
-       sizeof(sdf_stagger_c) / sizeof(sdf_stagger_c[0]);
+        sizeof(sdf_stagger_c) / sizeof(sdf_stagger_c[0]);
 static const int sdf_datatype_len =
-       sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
+        sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
 static const int sdf_error_codes_len =
-       sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
+        sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
 
 #ifdef PARALLEL
     typedef MPI_Comm comm_t;
@@ -231,6 +233,8 @@ typedef struct sdf_block sdf_block_t;
 typedef struct sdf_file sdf_file_t;
 
 struct sdf_block {
+    // This struct must be changed with care and the SDF_LIB_VERSION bumped
+    // if the resulting struct is not aligned the same.
     double *dim_mults, *extents, mult;
     uint64_t block_start;
     uint64_t next_block_location, data_location;
@@ -260,12 +264,20 @@ struct sdf_block {
 };
 
 struct sdf_file {
+    uint64_t dbg_count;
+    uint32_t sdf_lib_version, sdf_lib_revision;
+    uint32_t sdf_extension_version, sdf_extension_revision;
+    uint32_t file_version, file_revision;
+    char *dbg, *dbg_buf, **extension_names;
+    // Lines above should never be changed.
+    // Lines below must be changed with care and the SDF_LIB_VERSION bumped
+    // if the resulting struct is not aligned the same.
     double time;
     uint64_t first_block_location, summary_location, start_location, soi, sof;
     uint64_t current_location;
     uint32_t jobid1, jobid2, endianness, summary_size;
     uint32_t block_header_length, string_length;
-    uint32_t file_version, file_revision, code_io_version, step;
+    uint32_t code_io_version, step;
     int32_t nblocks;
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
@@ -275,10 +287,6 @@ struct sdf_file {
     sdf_block_t *blocklist, *tail, *current_block;
     char *mmap;
     void *ext_data;
-#ifdef SDF_DEBUG
-    char *dbg, *dbg_buf;
-    size_t dbg_count;
-#endif
 #ifdef PARALLEL
     MPI_File filehandle;
 #else

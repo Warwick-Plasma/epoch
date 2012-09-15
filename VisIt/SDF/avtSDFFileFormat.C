@@ -193,6 +193,8 @@ avtSDFFileFormat::OpenFile(int open_only)
     if (!h) EXCEPTION1(InvalidFilesException, filename);
     h->use_float = use_float;
     h->use_random = use_random;
+    h->sdf_extension_version  = SDF_EXTENSION_VERSION;
+    h->sdf_extension_revision = SDF_EXTENSION_REVISION;
     step = h->step;
     time = h->time;
     debug1 << "avtSDFFileFormat::OpenFile h:" << h << endl;

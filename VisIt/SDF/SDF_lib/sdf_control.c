@@ -55,6 +55,8 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
     h->done_header = 0;
     h->ncpus = 1;
     h->use_summary = 1;
+    h->sdf_lib_version  = SDF_LIB_VERSION;
+    h->sdf_lib_revision = SDF_LIB_REVISION;
 
 #ifdef PARALLEL
     h->comm = comm;
