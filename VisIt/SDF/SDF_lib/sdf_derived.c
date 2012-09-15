@@ -62,15 +62,14 @@ static void vector_free(vector_t *vector)
 
 sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
 {
-    int grp = b->nm + 1;
     sdf_block_t *grid = sdf_find_block_by_id(h, b->subblock->mesh_id);
     sdf_block_t *current_block = h->current_block;
 
     int i, j, k, ii, jj, kk, i0, j0, k0, i1, j1, k1;
     int imin, imax, jmin, jmax, kmin, kmax;
     int nx, ny, nz;
-    int gotmat, gotobst, npoints, face, which, cell, ocell;
-    int *node, *vertex_index, *obdata, *ijk;
+    int gotmat, gotobst, npoints;
+    int *vertex_index, *obdata, *ijk;
     float *vertex;
 
     vector_t *faces = vector_new();
@@ -332,7 +331,7 @@ sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
     int i, j, k, i1, j1, k1;
     int nx, ny, nz;
     int gotmat, gotobst, npoints, face, which, cell, ocell;
-    int *node, *vertex_index, *obdata;
+    int *vertex_index, *obdata;
     float *vertex;
 
     vector_t *faces = vector_new();
@@ -723,8 +722,7 @@ static void add_surface_variables(sdf_file_t *h, sdf_block_t *surf,
         int *nappend_ptr)
 {
     sdf_block_t *b, *next, *append, *append_tail;
-    sdf_block_t *mesh, *vfm, *obst;
-    int i, len1, len2, nappend = *nappend_ptr;
+    int len1, len2, nappend = *nappend_ptr;
     char *str, *name1, *name2;
 
     append = *append_ptr;
@@ -735,7 +733,10 @@ static void add_surface_variables(sdf_file_t *h, sdf_block_t *surf,
         b = next;
         next = b->next;
 
-        if (b->blocktype != SDF_BLOCKTYPE_PLAIN_VARIABLE) continue;
+        if ((b->blocktype != SDF_BLOCKTYPE_PLAIN_VARIABLE &&
+                b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED) ||
+                b->dont_display || b->stagger != SDF_STAGGER_CELL_CENTRE)
+                    continue;
 
         append->next = calloc(1, sizeof(sdf_block_t));
 
@@ -792,13 +793,11 @@ static void add_surface_variables(sdf_file_t *h, sdf_block_t *surf,
 int sdf_add_derived_blocks(sdf_file_t *h)
 {
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
-    sdf_block_t *mesh, *vfm, *obst;
+    sdf_block_t *mesh;
     sdf_block_t *current_block = h->current_block;
     int i, len1, len2, nappend = 0;
     char *str, *name1, *name2;
     char *grid_ids[] = { "x", "y", "z" };
-    char *boundary_names[] =
-        { "", "_x_min", "_x_max", "_y_min", "_y_max", "_z_min", "_z_max" };
 
     append = append_head = calloc(1, sizeof(sdf_block_t));
 
@@ -904,8 +903,40 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             append->must_read[0] = 1;
             append->populate_data = sdf_callback_cpu_split;
             append->datatype = append->datatype_out = SDF_DATATYPE_INTEGER4;
+        }
+    }
 
-        } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP) {
+    if (nappend) {
+        h->tail->next = append_head->next;
+        h->tail = append_tail;
+        h->nblocks += nappend;
+    }
+
+    h->current_block = current_block;
+
+    return 0;
+}
+
+
+
+int sdf_add_derived_blocks_final(sdf_file_t *h)
+{
+    sdf_block_t *b, *next, *append, *append_head, *append_tail;
+    sdf_block_t *mesh, *vfm, *obst;
+    sdf_block_t *current_block = h->current_block;
+    int i, len1, len2, nappend = 0;
+    char *str, *name1, *name2;
+    char *boundary_names[] =
+        { "", "_x_min", "_x_max", "_y_min", "_y_max", "_z_min", "_z_max" };
+
+    append = append_head = calloc(1, sizeof(sdf_block_t));
+
+    next = h->blocklist;
+    while (next) {
+        b = next;
+        next = b->next;
+
+        if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP) {
             obst = sdf_find_block_by_id(h, b->obstacle_id);
             if (!obst) continue;
 

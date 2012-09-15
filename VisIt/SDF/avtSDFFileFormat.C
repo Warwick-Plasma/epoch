@@ -223,6 +223,9 @@ avtSDFFileFormat::OpenFile(int open_only)
 
     sdf_read_blocklist(h);
 
+    // Append derived data to the blocklist using built-in library.
+    sdf_add_derived_blocks(h);
+
     if (ext) {
         char **preload;
 
@@ -248,10 +251,10 @@ avtSDFFileFormat::OpenFile(int open_only)
 
         // Append derived data to the blocklist using the extension library.
         ext->read_blocklist(ext, h);
-    }
 
-    // Append derived data to the blocklist using built-in library.
-    sdf_add_derived_blocks(h);
+        // Append additional derived data for blocks added by the extension.
+        sdf_add_derived_blocks_final(h);
+    }
 }
 
 
