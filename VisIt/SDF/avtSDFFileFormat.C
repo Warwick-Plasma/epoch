@@ -251,22 +251,20 @@ avtSDFFileFormat::OpenFile(int open_only)
 {
     if (!h) h = sdf_open(filename, rank, comm, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
-    h->use_float = use_float;
-    h->use_random = use_random;
-    h->sdf_extension_version  = SDF_EXTENSION_VERSION;
-    h->sdf_extension_revision = SDF_EXTENSION_REVISION;
     step = h->step;
     time = h->time;
     debug1 << "avtSDFFileFormat::OpenFile h:" << h << endl;
 
     if (open_only) {
-        // Retrieve the extended interface library from the plugin manager
-        ext = sdf_extension_load(h);
-
         sdf_close(h);
         h = NULL;
         return;
     }
+
+    h->use_float = use_float;
+    h->use_random = use_random;
+    h->sdf_extension_version  = SDF_EXTENSION_VERSION;
+    h->sdf_extension_revision = SDF_EXTENSION_REVISION;
 
     // If nblocks is negative then the file is corrupt
     if (h->nblocks <= 0) {
@@ -277,6 +275,9 @@ avtSDFFileFormat::OpenFile(int open_only)
         cerr << "\"" << filename << "\"" << endl;
         EXCEPTION1(InvalidFilesException, filename);
     }
+
+    // Retrieve the extended interface library from the plugin manager
+    if (!ext && !extension_not_found) ext = sdf_extension_load(h);
 
     if (h->blocklist) {
         if (ext) ext->timestate_update(ext, h);
@@ -365,9 +366,12 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
     }
 
     stack_init();
+    ext = NULL;
 
+#ifdef MDSERVER
     debug1 << "avtSDFFileFormat::OpenFile(1) call " << __LINE__ << endl;
     OpenFile(1);
+#endif
 }
 
 
