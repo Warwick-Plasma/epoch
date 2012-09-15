@@ -46,6 +46,7 @@
 
 #include <string>
 
+using namespace SDFDBOptions;
 
 // ****************************************************************************
 //  Function: GetSDFReadOptions
@@ -67,24 +68,9 @@ DBOptionsAttributes *
 GetSDFReadOptions(void)
 {
     DBOptionsAttributes *rv = new DBOptionsAttributes;
-    rv->SetBool("Read double variables as floats to save memory", false);
-    rv->SetBool("Randomise particle data", false);
+    rv->SetBool(SDF_RDOPT_CONVERT_FLOAT, false);
+    rv->SetBool(SDF_RDOPT_RANDOMISE, false);
     return rv;
-/* EXAMPLE OF OPTIONS
-    rv->SetEnum("Dimension", 1);
-    vector<string> dims;
-    dims.push_back("0D");
-    dims.push_back("1D");
-    dims.push_back("2D");
-    dims.push_back("3D");
-    rv->SetEnumStrings("Dimension", dims);
-    rv->SetInt("Number of variables", 5);
-    rv->SetString("Name of auxiliary file", );
-    rv->SetDouble("Displacement factor", 1.0);
-
-    // When reading or writing the file, you can get the options out of this object like:
-    rv->GetDouble("Displacement factor");
-*/
 }
 
 

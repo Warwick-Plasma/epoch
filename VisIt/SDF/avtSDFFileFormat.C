@@ -41,6 +41,7 @@
 // ************************************************************************* //
 
 #include <avtSDFFileFormat.h>
+#include <avtSDFOptions.h>
 #ifdef PARALLEL
 #include <mpi.h>
 #endif
@@ -73,7 +74,8 @@
 
 #include <dlfcn.h>
 
-using     std::string;
+using std::string;
+using namespace SDFDBOptions;
 int avtSDFFileFormat::extension_not_found = 0;
 
 #define IJK2(i,j,k) ((i)+ng + (nx+2*ng) * ((j)+ng + (ny+2*ng) * ((k)+ng)))
@@ -286,19 +288,14 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
 
     use_float = 0;
     use_random = 0;
-    if (readOpts) {
-        bool opt =
-            readOpts->GetBool("Read double variables as floats to save memory");
-        if (opt)
-            use_float = 1;
+    for (int i = 0; readOpts && i < readOpts->GetNumberOfOptions(); i++) {
+        if (readOpts->GetName(i) == SDF_RDOPT_CONVERT_FLOAT)
+            use_float = readOpts->GetBool(SDF_RDOPT_CONVERT_FLOAT) ? 1 : 0;
+        else if (readOpts->GetName(i) == SDF_RDOPT_RANDOMISE)
+            use_random = readOpts->GetBool(SDF_RDOPT_RANDOMISE) ? 1 : 0;
         else
-            use_float = 0;
-
-        opt = readOpts->GetBool("Randomise particle data");
-        if (opt)
-            use_random = 1;
-        else
-            use_random = 0;
+            debug1 << "Ignoring unknown option \"" << readOpts->GetName(i)
+                   << "\"" << endl;
     }
 
     stack_init();
