@@ -380,6 +380,7 @@ static void build_summary_buffer(sdf_file_t *h)
     uint64_t data_location, block_location, next_block_location;
     uint32_t block_info_length;
     char *bufptr;
+    char skip_summary;
 
     struct list_entry {
         void *buffer;
@@ -396,9 +397,11 @@ static void build_summary_buffer(sdf_file_t *h)
         blockbuf_head = blockbuf = calloc(1,sizeof(*blockbuf));
         buflen = 0;
         h->nblocks = 0;
+        skip_summary = (h->summary_location &&
+                h->summary_location != h->first_block_location);
         // Read the block metadata into a temporary linked list structure
         while (1) {
-            if (h->summary_location &&
+            if (skip_summary &&
                 h->current_location >= h->summary_location) break;
 
             sdf_seek(h);

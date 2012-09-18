@@ -39,8 +39,7 @@ void usage(int err)
 char *parse_args(int *argc, char ***argv)
 {
     char *file = NULL;
-    char c;
-    int err;
+    int c, err;
     struct stat statbuf;
     static struct option longopts[] = {
         { "no-metadata", no_argument,    NULL,      'n' },
