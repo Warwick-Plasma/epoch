@@ -483,7 +483,7 @@ MODULE shared_data
     INTEGER :: promote_to_species, demote_to_species
     REAL(num) :: promotion_energy_factor, demotion_energy_factor
     REAL(num) :: promotion_density, demotion_density
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: fluid_energy, fluid_density
+    REAL(num), DIMENSION(:,:), POINTER :: fluid_energy, fluid_density
   END TYPE particle_species_migration
 
   LOGICAL :: use_particle_migration = .FALSE.

@@ -165,37 +165,86 @@ CONTAINS
       jz = 0.0_num
     ENDIF
 
+    ! The following code is quite messy and repetitive. Unfortunately, the
+    ! F90 standard does not allow the ALLOCATABLE attribute for subroutine
+    ! arguments and POINTER arrays are not as fast.
+
+    ! Full domain arrays
+
     ALLOCATE(temp(-2:nx_new+3))
 
-    CALL redistribute_field(ex, temp)
-    CALL redistribute_field(ey, temp)
-    CALL redistribute_field(ez, temp)
+    CALL remap_field(ex, temp)
+    DEALLOCATE(ex)
+    ALLOCATE(ex(-2:nx_new+3))
+    ex = temp
 
-    CALL redistribute_field(bx, temp)
-    CALL redistribute_field(by, temp)
-    CALL redistribute_field(bz, temp)
+    CALL remap_field(ey, temp)
+    DEALLOCATE(ey)
+    ALLOCATE(ey(-2:nx_new+3))
+    ey = temp
+
+    CALL remap_field(ez, temp)
+    DEALLOCATE(ez)
+    ALLOCATE(ez(-2:nx_new+3))
+    ez = temp
+
+    CALL remap_field(bx, temp)
+    DEALLOCATE(bx)
+    ALLOCATE(bx(-2:nx_new+3))
+    bx = temp
+
+    CALL remap_field(by, temp)
+    DEALLOCATE(by)
+    ALLOCATE(by(-2:nx_new+3))
+    by = temp
+
+    CALL remap_field(bz, temp)
+    DEALLOCATE(bz)
+    ALLOCATE(bz(-2:nx_new+3))
+    bz = temp
 
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%migrate%fluid) THEN
-        CALL redistribute_field(species_list(ispecies)%migrate%fluid_energy, &
-            temp)
+        CALL remap_field(species_list(ispecies)%migrate%fluid_energy, temp)
+        DEALLOCATE(species_list(ispecies)%migrate%fluid_energy)
+        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(-2:nx_new+3))
+        species_list(ispecies)%migrate%fluid_energy = temp
 
-        CALL redistribute_field(species_list(ispecies)%migrate%fluid_density, &
-            temp)
+        CALL remap_field(species_list(ispecies)%migrate%fluid_density, temp)
+        DEALLOCATE(species_list(ispecies)%migrate%fluid_density)
+        ALLOCATE(species_list(ispecies)%migrate%fluid_density(-2:nx_new+3))
+        species_list(ispecies)%migrate%fluid_density = temp
       ENDIF
     ENDDO
 
     IF (cpml_boundaries) THEN
-      CALL redistribute_field(cpml_psi_eyx, temp)
-      CALL redistribute_field(cpml_psi_byx, temp)
-      CALL redistribute_field(cpml_psi_ezx, temp)
-      CALL redistribute_field(cpml_psi_bzx, temp)
+      CALL remap_field(cpml_psi_eyx, temp)
+      DEALLOCATE(cpml_psi_eyx)
+      ALLOCATE(cpml_psi_eyx(-2:nx_new+3))
+      cpml_psi_eyx = temp
+
+      CALL remap_field(cpml_psi_byx, temp)
+      DEALLOCATE(cpml_psi_byx)
+      ALLOCATE(cpml_psi_byx(-2:nx_new+3))
+      cpml_psi_byx = temp
+
+      CALL remap_field(cpml_psi_ezx, temp)
+      DEALLOCATE(cpml_psi_ezx)
+      ALLOCATE(cpml_psi_ezx(-2:nx_new+3))
+      cpml_psi_ezx = temp
+
+      CALL remap_field(cpml_psi_bzx, temp)
+      DEALLOCATE(cpml_psi_bzx)
+      ALLOCATE(cpml_psi_bzx(-2:nx_new+3))
+      cpml_psi_bzx = temp
 
       CALL deallocate_cpml_helpers
       CALL set_cpml_helpers(nx_new, new_domain(1,1), new_domain(1,2))
     ENDIF
 
     DEALLOCATE(temp)
+
+    ! Full domain arrays with an additional index
 
     DO id = 1, num_vars_to_dump
       io = averaged_var_block(id)
@@ -215,8 +264,17 @@ CONTAINS
 
         ALLOCATE(r4temp_sum(-2:nx_new+3, nspec_local))
 
-        CALL redistribute_field_sum_r4(&
-            io_block_list(io)%averaged_data(id)%r4array, r4temp_sum)
+        DO i = 1, nspec_local
+          CALL remap_field_r4(&
+              io_block_list(io)%averaged_data(id)%r4array(:,i), &
+              r4temp_sum(:,i))
+        ENDDO
+
+        DEALLOCATE(io_block_list(io)%averaged_data(id)%r4array)
+        ALLOCATE(io_block_list(io)%averaged_data(id)&
+            %r4array(-2:nx_new+3, nspec_local))
+
+        io_block_list(io)%averaged_data(id)%r4array = r4temp_sum
 
         DEALLOCATE(r4temp_sum)
       ELSE
@@ -224,75 +282,23 @@ CONTAINS
 
         ALLOCATE(temp_sum(-2:nx_new+3, nspec_local))
 
-        CALL redistribute_field_sum(&
-            io_block_list(io)%averaged_data(id)%array, temp_sum)
+        DO i = 1, nspec_local
+          CALL remap_field(&
+              io_block_list(io)%averaged_data(id)%array(:,i), &
+              temp_sum(:,i))
+        ENDDO
+
+        DEALLOCATE(io_block_list(io)%averaged_data(id)%array)
+        ALLOCATE(io_block_list(io)%averaged_data(id)&
+            %array(-2:nx_new+3, nspec_local))
+
+        io_block_list(io)%averaged_data(id)%array = temp_sum
 
         DEALLOCATE(temp_sum)
       ENDIF
     ENDDO
 
   END SUBROUTINE redistribute_fields
-
-
-
-  SUBROUTINE redistribute_field(field, temp)
-
-    REAL(num), DIMENSION(:), ALLOCATABLE, INTENT(INOUT) :: field
-    REAL(num), DIMENSION(:), INTENT(OUT) :: temp
-    INTEGER :: n_new(c_ndims)
-
-    n_new = SHAPE(temp) - 2 * 3
-
-    CALL remap_field(field, temp)
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3))
-    field = temp
-
-  END SUBROUTINE redistribute_field
-
-
-
-  SUBROUTINE redistribute_field_sum(field, temp)
-
-    REAL(num), DIMENSION(:,:), POINTER, INTENT(INOUT) :: field
-    REAL(num), DIMENSION(:,:), INTENT(OUT) :: temp
-    INTEGER :: i, n_new(c_ndims+1)
-
-    n_new = SHAPE(temp) - 2 * 3
-    n_new(c_ndims+1) = n_new(c_ndims+1) + 2 * 3
-
-    DO i = 1, n_new(c_ndims+1)
-      CALL remap_field(field(:,i), temp(:,i))
-    ENDDO
-
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3, n_new(c_ndims+1)))
-
-    field = temp
-
-  END SUBROUTINE redistribute_field_sum
-
-
-
-  SUBROUTINE redistribute_field_sum_r4(field, temp)
-
-    REAL(r4), DIMENSION(:,:), POINTER, INTENT(INOUT) :: field
-    REAL(r4), DIMENSION(:,:), INTENT(OUT) :: temp
-    INTEGER :: i, n_new(c_ndims+1)
-
-    n_new = SHAPE(temp) - 2 * 3
-    n_new(c_ndims+1) = n_new(c_ndims+1) + 2 * 3
-
-    DO i = 1, n_new(c_ndims+1)
-      CALL remap_field_r4(field(:,i), temp(:,i))
-    ENDDO
-
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3, n_new(c_ndims+1)))
-
-    field = temp
-
-  END SUBROUTINE redistribute_field_sum_r4
 
 
 

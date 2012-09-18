@@ -237,36 +237,100 @@ CONTAINS
       jz = 0.0_num
     ENDIF
 
+    ! The following code is quite messy and repetitive. Unfortunately, the
+    ! F90 standard does not allow the ALLOCATABLE attribute for subroutine
+    ! arguments and POINTER arrays are not as fast.
+
+    ! Full domain arrays
+
     ALLOCATE(temp(-2:nx_new+3, -2:ny_new+3))
 
-    CALL redistribute_field(ex, temp)
-    CALL redistribute_field(ey, temp)
-    CALL redistribute_field(ez, temp)
+    CALL remap_field(ex, temp)
+    DEALLOCATE(ex)
+    ALLOCATE(ex(-2:nx_new+3, -2:ny_new+3))
+    ex = temp
 
-    CALL redistribute_field(bx, temp)
-    CALL redistribute_field(by, temp)
-    CALL redistribute_field(bz, temp)
+    CALL remap_field(ey, temp)
+    DEALLOCATE(ey)
+    ALLOCATE(ey(-2:nx_new+3, -2:ny_new+3))
+    ey = temp
+
+    CALL remap_field(ez, temp)
+    DEALLOCATE(ez)
+    ALLOCATE(ez(-2:nx_new+3, -2:ny_new+3))
+    ez = temp
+
+    CALL remap_field(bx, temp)
+    DEALLOCATE(bx)
+    ALLOCATE(bx(-2:nx_new+3, -2:ny_new+3))
+    bx = temp
+
+    CALL remap_field(by, temp)
+    DEALLOCATE(by)
+    ALLOCATE(by(-2:nx_new+3, -2:ny_new+3))
+    by = temp
+
+    CALL remap_field(bz, temp)
+    DEALLOCATE(bz)
+    ALLOCATE(bz(-2:nx_new+3, -2:ny_new+3))
+    bz = temp
 
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%migrate%fluid) THEN
-        CALL redistribute_field(species_list(ispecies)%migrate%fluid_energy, &
-            temp)
+        CALL remap_field(species_list(ispecies)%migrate%fluid_energy, temp)
+        DEALLOCATE(species_list(ispecies)%migrate%fluid_energy)
+        ALLOCATE(species_list(ispecies)&
+            %migrate%fluid_energy(-2:nx_new+3, -2:ny_new+3))
+        species_list(ispecies)%migrate%fluid_energy = temp
 
-        CALL redistribute_field(species_list(ispecies)%migrate%fluid_density, &
-            temp)
+        CALL remap_field(species_list(ispecies)%migrate%fluid_density, temp)
+        DEALLOCATE(species_list(ispecies)%migrate%fluid_density)
+        ALLOCATE(species_list(ispecies)&
+            %migrate%fluid_density(-2:nx_new+3, -2:ny_new+3))
+        species_list(ispecies)%migrate%fluid_density = temp
       ENDIF
     ENDDO
 
     IF (cpml_boundaries) THEN
-      CALL redistribute_field(cpml_psi_eyx, temp)
-      CALL redistribute_field(cpml_psi_byx, temp)
-      CALL redistribute_field(cpml_psi_ezx, temp)
-      CALL redistribute_field(cpml_psi_bzx, temp)
+      CALL remap_field(cpml_psi_eyx, temp)
+      DEALLOCATE(cpml_psi_eyx)
+      ALLOCATE(cpml_psi_eyx(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_eyx = temp
 
-      CALL redistribute_field(cpml_psi_exy, temp)
-      CALL redistribute_field(cpml_psi_bxy, temp)
-      CALL redistribute_field(cpml_psi_ezy, temp)
-      CALL redistribute_field(cpml_psi_bzy, temp)
+      CALL remap_field(cpml_psi_byx, temp)
+      DEALLOCATE(cpml_psi_byx)
+      ALLOCATE(cpml_psi_byx(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_byx = temp
+
+      CALL remap_field(cpml_psi_ezx, temp)
+      DEALLOCATE(cpml_psi_ezx)
+      ALLOCATE(cpml_psi_ezx(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_ezx = temp
+
+      CALL remap_field(cpml_psi_bzx, temp)
+      DEALLOCATE(cpml_psi_bzx)
+      ALLOCATE(cpml_psi_bzx(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_bzx = temp
+
+      CALL remap_field(cpml_psi_exy, temp)
+      DEALLOCATE(cpml_psi_exy)
+      ALLOCATE(cpml_psi_exy(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_exy = temp
+
+      CALL remap_field(cpml_psi_bxy, temp)
+      DEALLOCATE(cpml_psi_bxy)
+      ALLOCATE(cpml_psi_bxy(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_bxy = temp
+
+      CALL remap_field(cpml_psi_ezy, temp)
+      DEALLOCATE(cpml_psi_ezy)
+      ALLOCATE(cpml_psi_ezy(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_ezy = temp
+
+      CALL remap_field(cpml_psi_bzy, temp)
+      DEALLOCATE(cpml_psi_bzy)
+      ALLOCATE(cpml_psi_bzy(-2:nx_new+3, -2:ny_new+3))
+      cpml_psi_bzy = temp
 
       CALL deallocate_cpml_helpers
       CALL set_cpml_helpers(nx_new, new_domain(1,1), new_domain(1,2), &
@@ -274,6 +338,8 @@ CONTAINS
     ENDIF
 
     DEALLOCATE(temp)
+
+    ! Full domain arrays with an additional index
 
     DO id = 1, num_vars_to_dump
       io = averaged_var_block(id)
@@ -293,8 +359,17 @@ CONTAINS
 
         ALLOCATE(r4temp_sum(-2:nx_new+3, -2:ny_new+3, nspec_local))
 
-        CALL redistribute_field_sum_r4(&
-            io_block_list(io)%averaged_data(id)%r4array, r4temp_sum)
+        DO i = 1, nspec_local
+          CALL remap_field_r4(&
+              io_block_list(io)%averaged_data(id)%r4array(:,:,i), &
+              r4temp_sum(:,:,i))
+        ENDDO
+
+        DEALLOCATE(io_block_list(io)%averaged_data(id)%r4array)
+        ALLOCATE(io_block_list(io)%averaged_data(id)&
+            %r4array(-2:nx_new+3, -2:ny_new+3, nspec_local))
+
+        io_block_list(io)%averaged_data(id)%r4array = r4temp_sum
 
         DEALLOCATE(r4temp_sum)
       ELSE
@@ -302,266 +377,314 @@ CONTAINS
 
         ALLOCATE(temp_sum(-2:nx_new+3, -2:ny_new+3, nspec_local))
 
-        CALL redistribute_field_sum(&
-            io_block_list(io)%averaged_data(id)%array, temp_sum)
+        DO i = 1, nspec_local
+          CALL remap_field(&
+              io_block_list(io)%averaged_data(id)%array(:,:,i), &
+              temp_sum(:,:,i))
+        ENDDO
+
+        DEALLOCATE(io_block_list(io)%averaged_data(id)%array)
+        ALLOCATE(io_block_list(io)%averaged_data(id)&
+            %array(-2:nx_new+3, -2:ny_new+3, nspec_local))
+
+        io_block_list(io)%averaged_data(id)%array = temp_sum
 
         DEALLOCATE(temp_sum)
       ENDIF
     ENDDO
 
+    ! Slice in X-direction
+
     ALLOCATE(temp_slice(-2:ny_new+3))
 
     current => laser_x_min
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(c_dir_x, current%profile, temp_slice)
-      CALL redistribute_field_slice_ptr(c_dir_x, current%phase, temp_slice)
+      CALL remap_field_slice(c_dir_x, current%profile, temp_slice)
+      DEALLOCATE(current%profile)
+      ALLOCATE(current%profile(-2:ny_new+3))
+      current%profile = temp_slice
+
+      CALL remap_field_slice(c_dir_x, current%phase, temp_slice)
+      DEALLOCATE(current%phase)
+      ALLOCATE(current%phase(-2:ny_new+3))
+      current%phase = temp_slice
 
       current => current%next
     ENDDO
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(c_dir_x, current%profile, temp_slice)
-      CALL redistribute_field_slice_ptr(c_dir_x, current%phase, temp_slice)
+      CALL remap_field_slice(c_dir_x, current%profile, temp_slice)
+      DEALLOCATE(current%profile)
+      ALLOCATE(current%profile(-2:ny_new+3))
+      current%profile = temp_slice
+
+      CALL remap_field_slice(c_dir_x, current%phase, temp_slice)
+      DEALLOCATE(current%phase)
+      ALLOCATE(current%phase(-2:ny_new+3))
+      current%phase = temp_slice
 
       current => current%next
     ENDDO
 
-    CALL redistribute_field_slice(c_dir_x, ex_x_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, ex_x_max, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, ey_x_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, ey_x_max, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, ez_x_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, ez_x_max, temp_slice)
+    CALL remap_field_slice(c_dir_x, ex_x_min, temp_slice)
+    DEALLOCATE(ex_x_min)
+    ALLOCATE(ex_x_min(-2:ny_new+3))
+    ex_x_min = temp_slice
 
-    CALL redistribute_field_slice(c_dir_x, bx_x_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, bx_x_max, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, by_x_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, by_x_max, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, bz_x_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_x, bz_x_max, temp_slice)
+    CALL remap_field_slice(c_dir_x, ex_x_max, temp_slice)
+    DEALLOCATE(ex_x_max)
+    ALLOCATE(ex_x_max(-2:ny_new+3))
+    ex_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ey_x_min, temp_slice)
+    DEALLOCATE(ey_x_min)
+    ALLOCATE(ey_x_min(-2:ny_new+3))
+    ey_x_min = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ey_x_max, temp_slice)
+    DEALLOCATE(ey_x_max)
+    ALLOCATE(ey_x_max(-2:ny_new+3))
+    ey_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ez_x_min, temp_slice)
+    DEALLOCATE(ez_x_min)
+    ALLOCATE(ez_x_min(-2:ny_new+3))
+    ez_x_min = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ez_x_max, temp_slice)
+    DEALLOCATE(ez_x_max)
+    ALLOCATE(ez_x_max(-2:ny_new+3))
+    ez_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, bx_x_min, temp_slice)
+    DEALLOCATE(bx_x_min)
+    ALLOCATE(bx_x_min(-2:ny_new+3))
+    bx_x_min = temp_slice
+
+    CALL remap_field_slice(c_dir_x, bx_x_max, temp_slice)
+    DEALLOCATE(bx_x_max)
+    ALLOCATE(bx_x_max(-2:ny_new+3))
+    bx_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, by_x_min, temp_slice)
+    DEALLOCATE(by_x_min)
+    ALLOCATE(by_x_min(-2:ny_new+3))
+    by_x_min = temp_slice
+
+    CALL remap_field_slice(c_dir_x, by_x_max, temp_slice)
+    DEALLOCATE(by_x_max)
+    ALLOCATE(by_x_max(-2:ny_new+3))
+    by_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, bz_x_min, temp_slice)
+    DEALLOCATE(bz_x_min)
+    ALLOCATE(bz_x_min(-2:ny_new+3))
+    bz_x_min = temp_slice
+
+    CALL remap_field_slice(c_dir_x, bz_x_max, temp_slice)
+    DEALLOCATE(bz_x_max)
+    ALLOCATE(bz_x_max(-2:ny_new+3))
+    bz_x_max = temp_slice
+
+    ! Re-distribute moving window density
+    IF (move_window) THEN
+      DO ispecies = 1, n_species
+        CALL remap_field_slice(c_dir_x, species_list(ispecies)%density, &
+            temp_slice)
+        DEALLOCATE(species_list(ispecies)%density)
+        ALLOCATE(species_list(ispecies)%density(-2:ny_new+3))
+        species_list(ispecies)%density = temp_slice
+      ENDDO
+    ENDIF
 
     DEALLOCATE(temp_slice)
+
+    ! Slice in Y-direction
+
     ALLOCATE(temp_slice(-2:nx_new+3))
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(c_dir_y, current%profile, temp_slice)
-      CALL redistribute_field_slice_ptr(c_dir_y, current%phase, temp_slice)
+      CALL remap_field_slice(c_dir_y, current%profile, temp_slice)
+      DEALLOCATE(current%profile)
+      ALLOCATE(current%profile(-2:nx_new+3))
+      current%profile = temp_slice
+
+      CALL remap_field_slice(c_dir_y, current%phase, temp_slice)
+      DEALLOCATE(current%phase)
+      ALLOCATE(current%phase(-2:nx_new+3))
+      current%phase = temp_slice
 
       current => current%next
     ENDDO
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
-      CALL redistribute_field_slice_ptr(c_dir_y, current%profile, temp_slice)
-      CALL redistribute_field_slice_ptr(c_dir_y, current%phase, temp_slice)
+      CALL remap_field_slice(c_dir_y, current%profile, temp_slice)
+      DEALLOCATE(current%profile)
+      ALLOCATE(current%profile(-2:nx_new+3))
+      current%profile = temp_slice
+
+      CALL remap_field_slice(c_dir_y, current%phase, temp_slice)
+      DEALLOCATE(current%phase)
+      ALLOCATE(current%phase(-2:nx_new+3))
+      current%phase = temp_slice
 
       current => current%next
     ENDDO
 
-    CALL redistribute_field_slice(c_dir_y, ex_y_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, ex_y_max, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, ey_y_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, ey_y_max, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, ez_y_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, ez_y_max, temp_slice)
+    CALL remap_field_slice(c_dir_y, ex_y_min, temp_slice)
+    DEALLOCATE(ex_y_min)
+    ALLOCATE(ex_y_min(-2:nx_new+3))
+    ex_y_min = temp_slice
 
-    CALL redistribute_field_slice(c_dir_y, bx_y_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, bx_y_max, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, by_y_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, by_y_max, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, bz_y_min, temp_slice)
-    CALL redistribute_field_slice(c_dir_y, bz_y_max, temp_slice)
+    CALL remap_field_slice(c_dir_y, ex_y_max, temp_slice)
+    DEALLOCATE(ex_y_max)
+    ALLOCATE(ex_y_max(-2:nx_new+3))
+    ex_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ey_y_min, temp_slice)
+    DEALLOCATE(ey_y_min)
+    ALLOCATE(ey_y_min(-2:nx_new+3))
+    ey_y_min = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ey_y_max, temp_slice)
+    DEALLOCATE(ey_y_max)
+    ALLOCATE(ey_y_max(-2:nx_new+3))
+    ey_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ez_y_min, temp_slice)
+    DEALLOCATE(ez_y_min)
+    ALLOCATE(ez_y_min(-2:nx_new+3))
+    ez_y_min = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ez_y_max, temp_slice)
+    DEALLOCATE(ez_y_max)
+    ALLOCATE(ez_y_max(-2:nx_new+3))
+    ez_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, bx_y_min, temp_slice)
+    DEALLOCATE(bx_y_min)
+    ALLOCATE(bx_y_min(-2:nx_new+3))
+    bx_y_min = temp_slice
+
+    CALL remap_field_slice(c_dir_y, bx_y_max, temp_slice)
+    DEALLOCATE(bx_y_max)
+    ALLOCATE(bx_y_max(-2:nx_new+3))
+    bx_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, by_y_min, temp_slice)
+    DEALLOCATE(by_y_min)
+    ALLOCATE(by_y_min(-2:nx_new+3))
+    by_y_min = temp_slice
+
+    CALL remap_field_slice(c_dir_y, by_y_max, temp_slice)
+    DEALLOCATE(by_y_max)
+    ALLOCATE(by_y_max(-2:nx_new+3))
+    by_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, bz_y_min, temp_slice)
+    DEALLOCATE(bz_y_min)
+    ALLOCATE(bz_y_min(-2:nx_new+3))
+    bz_y_min = temp_slice
+
+    CALL remap_field_slice(c_dir_y, bz_y_max, temp_slice)
+    DEALLOCATE(bz_y_max)
+    ALLOCATE(bz_y_max(-2:nx_new+3))
+    bz_y_max = temp_slice
 
     DEALLOCATE(temp_slice)
 
-    ! Re-distribute moving windows and temperature boundaries
+    ! Slice in X-direction with an additional index
+
     IF (move_window) THEN
-      ALLOCATE(temp_slice(-2:ny_new+3))
-
-      DO ispecies = 1, n_species
-        CALL redistribute_field_slice_ptr(c_dir_x, &
-            species_list(ispecies)%density, temp_slice)
-      ENDDO
-
-      DEALLOCATE(temp_slice)
-
       ALLOCATE(temp(-2:ny_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(c_dir_x, &
-            species_list(ispecies)%temperature, temp)
-      ENDDO
+        DO i = 1, 3
+          CALL remap_field_slice(c_dir_x, &
+              species_list(ispecies)%temperature(:,i), temp(:,i))
+        ENDDO
 
-      DEALLOCATE(temp)
+        DEALLOCATE(species_list(ispecies)%temperature)
+        ALLOCATE(species_list(ispecies)%temperature(-2:ny_new+3, 3))
+
+        species_list(ispecies)%temperature = temp
+      ENDDO
     ENDIF
 
     IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
-      ALLOCATE(temp(-2:ny_new+3, 3))
+      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:ny_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(c_dir_x, &
-            species_list(ispecies)%ext_temp_x_min, temp)
-      ENDDO
+        DO i = 1, 3
+          CALL remap_field_slice(c_dir_x, &
+              species_list(ispecies)%ext_temp_x_min(:,i), temp(:,i))
+        ENDDO
 
-      DEALLOCATE(temp)
+        DEALLOCATE(species_list(ispecies)%ext_temp_x_min)
+        ALLOCATE(species_list(ispecies)%ext_temp_x_min(-2:ny_new+3, 3))
+
+        species_list(ispecies)%ext_temp_x_min = temp
+      ENDDO
     ENDIF
 
     IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
-      ALLOCATE(temp(-2:ny_new+3, 3))
+      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:ny_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(c_dir_x, &
-            species_list(ispecies)%ext_temp_x_max, temp)
-      ENDDO
+        DO i = 1, 3
+          CALL remap_field_slice(c_dir_x, &
+              species_list(ispecies)%ext_temp_x_max(:,i), temp(:,i))
+        ENDDO
 
-      DEALLOCATE(temp)
+        DEALLOCATE(species_list(ispecies)%ext_temp_x_max)
+        ALLOCATE(species_list(ispecies)%ext_temp_x_max(-2:ny_new+3, 3))
+
+        species_list(ispecies)%ext_temp_x_max = temp
+      ENDDO
     ENDIF
 
+    IF (ALLOCATED(temp)) DEALLOCATE(temp)
+
+    ! Slice in Y-direction with an additional index
+
     IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
-      ALLOCATE(temp(-2:nx_new+3, 3))
+      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:nx_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(c_dir_y, &
-            species_list(ispecies)%ext_temp_y_min, temp)
-      ENDDO
+        DO i = 1, 3
+          CALL remap_field_slice(c_dir_y, &
+              species_list(ispecies)%ext_temp_y_min(:,i), temp(:,i))
+        ENDDO
 
-      DEALLOCATE(temp)
+        DEALLOCATE(species_list(ispecies)%ext_temp_y_min)
+        ALLOCATE(species_list(ispecies)%ext_temp_y_min(-2:nx_new+3, 3))
+
+        species_list(ispecies)%ext_temp_y_min = temp
+      ENDDO
     ENDIF
 
     IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
-      ALLOCATE(temp(-2:nx_new+3, 3))
+      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:nx_new+3, 3))
 
       DO ispecies = 1, n_species
-        CALL redistribute_field_slice_sum(c_dir_y, &
-            species_list(ispecies)%ext_temp_y_max, temp)
-      ENDDO
+        DO i = 1, 3
+          CALL remap_field_slice(c_dir_y, &
+              species_list(ispecies)%ext_temp_y_max(:,i), temp(:,i))
+        ENDDO
 
-      DEALLOCATE(temp)
+        DEALLOCATE(species_list(ispecies)%ext_temp_y_max)
+        ALLOCATE(species_list(ispecies)%ext_temp_y_max(-2:nx_new+3, 3))
+
+        species_list(ispecies)%ext_temp_y_max = temp
+      ENDDO
     ENDIF
 
+    IF (ALLOCATED(temp)) DEALLOCATE(temp)
+
   END SUBROUTINE redistribute_fields
-
-
-
-  SUBROUTINE redistribute_field(field, temp)
-
-    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(INOUT) :: field
-    REAL(num), DIMENSION(:,:), INTENT(OUT) :: temp
-    INTEGER :: n_new(c_ndims)
-
-    n_new = SHAPE(temp) - 2 * 3
-
-    CALL remap_field(field, temp)
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3, -2:n_new(2)+3))
-    field = temp
-
-  END SUBROUTINE redistribute_field
-
-
-
-  SUBROUTINE redistribute_field_slice(direction, field, temp)
-
-    INTEGER, INTENT(IN) :: direction
-    REAL(num), DIMENSION(:), ALLOCATABLE, INTENT(INOUT) :: field
-    REAL(num), DIMENSION(:), INTENT(OUT) :: temp
-    INTEGER :: n_new(c_ndims-1)
-
-    n_new = SHAPE(temp) - 2 * 3
-
-    CALL remap_field_slice(direction, field, temp)
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3))
-    field = temp
-
-  END SUBROUTINE redistribute_field_slice
-
-
-
-  SUBROUTINE redistribute_field_slice_ptr(direction, field, temp)
-
-    INTEGER, INTENT(IN) :: direction
-    REAL(num), DIMENSION(:), POINTER, INTENT(INOUT) :: field
-    REAL(num), DIMENSION(:), INTENT(OUT) :: temp
-    INTEGER :: n_new(c_ndims-1)
-
-    n_new = SHAPE(temp) - 2 * 3
-
-    CALL remap_field_slice(direction, field, temp)
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3))
-    field = temp
-
-  END SUBROUTINE redistribute_field_slice_ptr
-
-
-
-  SUBROUTINE redistribute_field_sum(field, temp)
-
-    REAL(num), DIMENSION(:,:,:), POINTER, INTENT(INOUT) :: field
-    REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: temp
-    INTEGER :: i, n_new(c_ndims+1)
-
-    n_new = SHAPE(temp) - 2 * 3
-    n_new(c_ndims+1) = n_new(c_ndims+1) + 2 * 3
-
-    DO i = 1, n_new(c_ndims+1)
-      CALL remap_field(field(:,:,i), temp(:,:,i))
-    ENDDO
-
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3, -2:n_new(2)+3, n_new(c_ndims+1)))
-
-    field = temp
-
-  END SUBROUTINE redistribute_field_sum
-
-
-
-  SUBROUTINE redistribute_field_sum_r4(field, temp)
-
-    REAL(r4), DIMENSION(:,:,:), POINTER, INTENT(INOUT) :: field
-    REAL(r4), DIMENSION(:,:,:), INTENT(OUT) :: temp
-    INTEGER :: i, n_new(c_ndims+1)
-
-    n_new = SHAPE(temp) - 2 * 3
-    n_new(c_ndims+1) = n_new(c_ndims+1) + 2 * 3
-
-    DO i = 1, n_new(c_ndims+1)
-      CALL remap_field_r4(field(:,:,i), temp(:,:,i))
-    ENDDO
-
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3, -2:n_new(2)+3, n_new(c_ndims+1)))
-
-    field = temp
-
-  END SUBROUTINE redistribute_field_sum_r4
-
-
-
-  SUBROUTINE redistribute_field_slice_sum(direction, field, temp)
-
-    INTEGER, INTENT(IN) :: direction
-    REAL(num), DIMENSION(:,:), POINTER, INTENT(INOUT) :: field
-    REAL(num), DIMENSION(:,:), INTENT(OUT) :: temp
-    INTEGER :: i, n_new(c_ndims)
-
-    n_new = SHAPE(temp) - 2 * 3
-    n_new(c_ndims) = n_new(c_ndims) + 2 * 3
-
-    DO i = 1, n_new(c_ndims)
-      CALL remap_field_slice(direction, field(:,i), temp(:,i))
-    ENDDO
-
-    DEALLOCATE(field)
-    ALLOCATE(field(-2:n_new(1)+3, n_new(c_ndims)))
-
-    field = temp
-
-  END SUBROUTINE redistribute_field_slice_sum
 
 
 
