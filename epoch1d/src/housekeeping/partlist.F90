@@ -538,22 +538,25 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(i8) :: cpos = 0, npart_left, ipart
+    INTEGER(i8) :: ipart
+    INTEGER :: nsend, cpos
     TYPE(particle), POINTER :: current
 
-    npart_left = partlist%count
-
-    ALLOCATE(array(1:partlist%count*nvar))
+    nsend = partlist%count * nvar
+    ALLOCATE(array(nsend))
     array = 0.0_num
+
     current => partlist%head
     ipart = 0
+    cpos = 0
     DO WHILE (ipart .LT. partlist%count)
-      cpos = ipart*nvar+1
+      cpos = ipart * nvar + 1
       CALL pack_particle(array(cpos:cpos+nvar-1), current)
-      ipart = ipart+1
+      ipart = ipart + 1
       current => current%next
     ENDDO
-    CALL MPI_SEND(array, npart_left*nvar, mpireal, dest, tag, comm, errcode)
+
+    CALL MPI_SEND(array, nsend, mpireal, dest, tag, comm, errcode)
 
     DEALLOCATE(array)
 
@@ -583,13 +586,16 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: src
     INTEGER(i8), INTENT(IN) :: count
+    INTEGER :: nrecv
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
 
     CALL create_empty_partlist(partlist)
 
-    ALLOCATE(array(1:count*nvar))
+    nrecv = count * nvar
+    ALLOCATE(array(nrecv))
     array = 0.0_num
-    CALL MPI_RECV(array, count*nvar, mpireal, src, tag, comm, status, errcode)
+
+    CALL MPI_RECV(array, nrecv, mpireal, src, tag, comm, status, errcode)
     CALL create_filled_partlist(partlist, array, count)
 
     DEALLOCATE(array)
@@ -621,7 +627,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: dest, src
     REAL(num), DIMENSION(:), ALLOCATABLE :: data_send, data_recv, data_temp
     INTEGER(i8) :: cpos = 0, ipart = 0
-    INTEGER(i8) :: npart_send, npart_recv, send_buf(2), recv_buf(2)
+    INTEGER(i8) :: npart_recv, send_buf(2), recv_buf(2)
+    INTEGER :: nsend, nrecv
     TYPE(particle), POINTER :: current
 
     ! This subroutine doesn't try to use memory efficient buffering, it sends
@@ -635,14 +642,15 @@ CONTAINS
     CALL MPI_SENDRECV(send_buf, 2, MPI_INTEGER8, dest, tag, recv_buf, 2, &
         MPI_INTEGER8, src, tag, comm, status, errcode)
 
-    npart_send = send_buf(1)
     npart_recv = recv_buf(1)
+    nsend = send_buf(1) * nvar
+    nrecv = npart_recv * nvar
     partlist_recv%id_update = partlist_recv%id_update + INT(recv_buf(2))
 
     ! Copy the data for the particles into a buffer
-    ALLOCATE(data_send(1:npart_send*nvar))
-    ALLOCATE(data_recv(1:npart_recv*nvar))
-    ALLOCATE(data_temp(1:nvar))
+    ALLOCATE(data_send(nsend))
+    ALLOCATE(data_recv(nrecv))
+    ALLOCATE(data_temp(nvar))
 
     ! Pack particles to send into buffer
     current => partlist_send%head
@@ -659,8 +667,8 @@ CONTAINS
     CALL destroy_partlist(partlist_send)
 
     ! Actual MPI commands
-    CALL MPI_SENDRECV(data_send, npart_send*nvar, mpireal, dest, tag, &
-        data_recv, npart_recv*nvar, mpireal, src, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(data_send, nsend, mpireal, dest, tag, &
+        data_recv, nrecv, mpireal, src, tag, comm, status, errcode)
 
     DEALLOCATE(data_send)
     CALL create_filled_partlist(partlist_recv, data_recv, npart_recv)

@@ -24,7 +24,7 @@ CONTAINS
     DO ispecies = 1, n_species
       local_count = species_list(ispecies)%attached_list%count
       CALL MPI_ALLREDUCE(local_count, species_list(ispecies)%global_count, &
-          1, mpireal, MPI_SUM, comm, errcode)
+          1, MPI_INTEGER8, MPI_SUM, comm, errcode)
       ALLOCATE(species_list(ispecies)%secondary_list(nx,ny))
       DO iy = 1, ny
         DO ix = 1, nx
