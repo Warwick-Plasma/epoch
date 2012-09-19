@@ -303,7 +303,7 @@ CONTAINS
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
     REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
     LOGICAL :: multiphoton_ionised
 
     TYPE(particle), POINTER :: current, new, next
@@ -562,7 +562,7 @@ CONTAINS
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
     REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
     LOGICAL :: multiphoton_ionised
 
     TYPE(particle), POINTER :: current, new, next
@@ -808,7 +808,7 @@ CONTAINS
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
     REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)
@@ -1043,7 +1043,7 @@ CONTAINS
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
     REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)

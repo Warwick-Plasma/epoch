@@ -339,8 +339,8 @@ CONTAINS
     REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, cell_y_r, cell_frac_y, idy
     LOGICAL :: multiphoton_ionised
 
     TYPE(particle), POINTER :: current, new, next
@@ -619,8 +619,8 @@ CONTAINS
     REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, cell_y_r, cell_frac_y, idy
     LOGICAL :: multiphoton_ionised
 
     TYPE(particle), POINTER :: current, new, next
@@ -886,8 +886,8 @@ CONTAINS
     REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, cell_y_r, cell_frac_y, idy
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)
@@ -1142,8 +1142,8 @@ CONTAINS
     REAL(num) :: dfac, cf2, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, cell_y_r, cell_frac_y, idy
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)

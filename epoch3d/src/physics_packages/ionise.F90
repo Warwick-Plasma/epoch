@@ -375,9 +375,9 @@ CONTAINS
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
-    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z, idz
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_z, cell_z_r, cell_frac_z, idz
     LOGICAL :: multiphoton_ionised
 
     TYPE(particle), POINTER :: current, new, next
@@ -676,9 +676,9 @@ CONTAINS
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
-    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z, idz
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_z, cell_z_r, cell_frac_z, idz
     LOGICAL :: multiphoton_ionised
 
     TYPE(particle), POINTER :: current, new, next
@@ -964,9 +964,9 @@ CONTAINS
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
-    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z, idz
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_z, cell_z_r, cell_frac_z, idz
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)
@@ -1241,9 +1241,9 @@ CONTAINS
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
-    REAL(num) :: part_x, part_x2, cell_x_r, cell_frac_x, idx
-    REAL(num) :: part_y, part_y2, cell_y_r, cell_frac_y, idy
-    REAL(num) :: part_z, part_z2, cell_z_r, cell_frac_z, idz
+    REAL(num) :: part_x, cell_x_r, cell_frac_x, idx
+    REAL(num) :: part_y, cell_y_r, cell_frac_y, idy
+    REAL(num) :: part_z, cell_z_r, cell_frac_z, idz
 
     TYPE(particle), POINTER :: current, new, next
     TYPE(particle_list) :: ionised_list(n_species)

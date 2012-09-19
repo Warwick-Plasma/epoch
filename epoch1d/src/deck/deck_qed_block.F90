@@ -119,7 +119,10 @@ CONTAINS
 
   FUNCTION qed_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, io
+    INTEGER :: errcode
+#ifdef PHOTONS
+    INTEGER :: io
+#endif
 
     errcode = c_err_none
 

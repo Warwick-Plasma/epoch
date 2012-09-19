@@ -1438,7 +1438,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nmax1(:), nmax2(:,:)
     INTEGER, INTENT(IN), OPTIONAL :: nmax3(:,:,:)
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: errcode, n1, n2, n3, i, j, k, npt
+    INTEGER :: errcode, n1, n2, n3, npt
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)
