@@ -135,7 +135,7 @@ CONTAINS
   SUBROUTINE io_block_start
 
     io_block_done = .FALSE.
-    dump_first = .TRUE.
+    dump_first = .NOT.ic_from_restart
     dump_last  = .TRUE.
     got_name = .FALSE.
     block_number = block_number + 1

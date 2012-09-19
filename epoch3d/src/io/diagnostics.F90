@@ -111,8 +111,21 @@ CONTAINS
     CALL sdf_write_cpu_split(sdf_handle, 'cpu_split', 'CPU split', &
         cell_x_max, cell_y_max, cell_z_max)
 
-    CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
-        dt_plasma_frequency)
+    IF (restart_flag) THEN
+      CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
+          dt_plasma_frequency)
+
+      DO io = 1, n_io_blocks
+        CALL sdf_write_srl(sdf_handle, &
+            'time_next/'//TRIM(io_block_list(io)%name), &
+            'time_next/'//TRIM(io_block_list(io)%name), &
+            io_block_list(io)%time_next)
+        CALL sdf_write_srl(sdf_handle, &
+            'nstep_next/'//TRIM(io_block_list(io)%name), &
+            'nstep_next/'//TRIM(io_block_list(io)%name), &
+            io_block_list(io)%nstep_next)
+      ENDDO
+    ENDIF
 
     iomask = iodumpmask(1,:)
 
