@@ -5,7 +5,7 @@ SDFDIR=../SDF_lib
 clean=0
 DBG=""
 
-while getopts cd name
+while getopts cdp name
 do
    case $name in
       c) clean=1 ;;

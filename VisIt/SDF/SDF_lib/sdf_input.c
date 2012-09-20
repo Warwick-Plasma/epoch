@@ -848,7 +848,7 @@ int sdf_read_array(sdf_file_t *h)
         if (b->datatype_out == SDF_DATATYPE_CHARACTER) {
             p = b->data;
             for (n=0; n < b->local_dims[1]; n++) {
-                p = b->data + n * b->local_dims[0];
+                p = (char*)b->data + n * b->local_dims[0];
                 count = 0;
                 for (i=0; i < b->local_dims[0]; i++) {
                     if (*p == '\0') break;
@@ -856,7 +856,7 @@ int sdf_read_array(sdf_file_t *h)
                     p++;
                 }
                 SDF_DPRNT("c*%i[%i] ", b->local_dims[0], n);
-                p = b->data + n * b->local_dims[0];
+                p = (char*)b->data + n * b->local_dims[0];
                 for (i=0; i < count; i++) {
                     SDF_DPRNT("%c", *p);
                     p++;
