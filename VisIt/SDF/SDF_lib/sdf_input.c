@@ -355,16 +355,16 @@ int sdf_read_block_info(sdf_file_t *h)
     else if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO)
         ret = sdf_read_run_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
-            || b->blocktype == SDF_BLOCKTYPE_MULTI_TENSOR)
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_TENSOR)
         ret = sdf_read_stitched_tensor(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
-            || b->blocktype == SDF_BLOCKTYPE_MULTI_MATERIAL)
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL)
         ret = sdf_read_stitched_material(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR
-            || b->blocktype == SDF_BLOCKTYPE_MULTI_MATVAR)
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATVAR)
         ret = sdf_read_stitched_matvar(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
-            || b->blocktype == SDF_BLOCKTYPE_MULTI_SPECIES)
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_SPECIES)
         ret = sdf_read_stitched_species(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP)
         ret = sdf_read_stitched_obstacle_group(h);

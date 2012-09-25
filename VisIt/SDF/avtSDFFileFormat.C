@@ -552,7 +552,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 md->Add(smd);
             }
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
-                || b->blocktype == SDF_BLOCKTYPE_MULTI_TENSOR) {
+                || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_TENSOR) {
             std::string definition;
             definition.append("{");
             sdf_block_t *matvar;
@@ -574,7 +574,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             expr.SetType(Expression::VectorMeshVar);
             md->AddExpression(&expr);
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
-                || b->blocktype == SDF_BLOCKTYPE_MULTI_MATERIAL) {
+                || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL) {
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             if (!mesh) continue;
 
@@ -606,7 +606,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             AddMaterialToMetaData(md, b->name, mesh->name, mnames.size(),
                 mnames);
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
-                || b->blocktype == SDF_BLOCKTYPE_MULTI_SPECIES) {
+                || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_SPECIES) {
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             if (!mesh) continue;
             sdf_block_t *mat = sdf_find_block_by_id(h, b->material_id);

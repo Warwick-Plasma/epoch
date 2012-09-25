@@ -1466,7 +1466,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_material(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
         material_names, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location
@@ -1556,7 +1556,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_material(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
         material_names, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location
@@ -1646,7 +1646,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_material(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
         material_names, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location
@@ -1736,7 +1736,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_matvar(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location
@@ -1826,7 +1826,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_matvar(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location
@@ -1916,7 +1916,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_matvar(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location
@@ -2007,7 +2007,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_species(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location
@@ -2098,7 +2098,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_species(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location
@@ -2189,7 +2189,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    CALL sdf_write_multi_species(h, id, name, mesh_id, stagger, &
+    CALL sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids, data_length)
 
     h%data_location = h%current_block%data_location

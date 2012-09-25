@@ -70,16 +70,16 @@ CONTAINS
     ELSE IF (b%blocktype .EQ. c_blocktype_run_info) THEN
       CALL sdf_read_run_info(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_tensor &
-        .OR. b%blocktype .EQ. c_blocktype_multi_tensor) THEN
+        .OR. b%blocktype .EQ. c_blocktype_contiguous_tensor) THEN
       CALL sdf_read_stitched_tensor(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_material &
-        .OR. b%blocktype .EQ. c_blocktype_multi_material) THEN
+        .OR. b%blocktype .EQ. c_blocktype_contiguous_material) THEN
       CALL sdf_read_stitched_material(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_matvar &
-        .OR. b%blocktype .EQ. c_blocktype_multi_matvar) THEN
+        .OR. b%blocktype .EQ. c_blocktype_contiguous_matvar) THEN
       CALL sdf_read_stitched_matvar(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_species &
-        .OR. b%blocktype .EQ. c_blocktype_multi_species) THEN
+        .OR. b%blocktype .EQ. c_blocktype_contiguous_species) THEN
       CALL sdf_read_stitched_species(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_obstacle_group) THEN
       CALL sdf_read_stitched_obstacle_group(h)
