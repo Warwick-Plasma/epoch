@@ -479,12 +479,13 @@ CONTAINS
 
 
   SUBROUTINE sdf_write_stitched_tensor(h, id, name, mesh_id, stagger, &
-      variable_ids, data_length)
+      variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
     INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -492,7 +493,11 @@ CONTAINS
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(variable_ids),i4)
+      ENDIF
     ENDIF
 
     b => h%current_block
@@ -552,20 +557,32 @@ CONTAINS
 
 
   SUBROUTINE sdf_write_stitched_tensor_mat(h, id, name, mesh_id, stagger, &
-      variable_ids, nmat, material_names, data_length)
+      variable_ids, material_names, ndims_in, nmat_in, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, mesh_id
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: variable_ids(:)
-    INTEGER, INTENT(IN) :: nmat
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims_in, nmat_in
     INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
-    INTEGER :: i, j, ndims
+    INTEGER :: i, j, ndims, nmat
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
     CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: ids
     CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: new_variable_ids
+
+    IF (PRESENT(ndims_in)) THEN
+      ndims = ndims_in
+    ELSE
+      ndims = INT(SIZE(variable_ids),i4)
+    ENDIF
+
+    IF (PRESENT(nmat_in)) THEN
+      nmat = nmat_in
+    ELSE
+      nmat = INT(SIZE(material_names),i4)
+    ENDIF
 
     ALLOCATE(ids(nmat))
 
@@ -578,7 +595,6 @@ CONTAINS
       ENDIF
     ENDDO
 
-    ndims = INT(SIZE(variable_ids),i4)
     ALLOCATE(new_variable_ids(ndims))
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
@@ -588,7 +604,7 @@ CONTAINS
       ENDDO
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       CALL sdf_write_stitched_tensor(h, ids(i), temp_name, mesh_id, &
-          stagger, new_variable_ids, data_length)
+          stagger, new_variable_ids, ndims, data_length)
     ENDDO
 
     DEALLOCATE(ids)
@@ -599,12 +615,13 @@ CONTAINS
 
 
   SUBROUTINE sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
-      material_names, variable_ids, data_length)
+      material_names, variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_names(:), variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
     INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -612,7 +629,11 @@ CONTAINS
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(variable_ids),i4)
+      ENDIF
     ENDIF
 
     b => h%current_block
@@ -680,12 +701,13 @@ CONTAINS
 
 
   SUBROUTINE sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
-      material_id, variable_ids, data_length)
+      material_id, variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_id, variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
     INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -693,7 +715,11 @@ CONTAINS
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(variable_ids),i4)
+      ENDIF
     ENDIF
 
     b => h%current_block
@@ -757,13 +783,14 @@ CONTAINS
 
 
   SUBROUTINE sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
-      material_id, material_name, specnames, variable_ids, data_length)
+      material_id, material_name, specnames, variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_id, material_name
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: specnames(:), variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
     INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -771,7 +798,11 @@ CONTAINS
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(variable_ids),i4)
+      ENDIF
     ENDIF
 
     b => h%current_block
@@ -847,12 +878,13 @@ CONTAINS
 
 
   SUBROUTINE sdf_write_stitched_obstacle_group(h, id, name, obstacle_id, &
-      vfm_id, stagger, obstacle_names, rank_write)
+      vfm_id, stagger, obstacle_names, ndims, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, obstacle_id, vfm_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: obstacle_names(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -860,7 +892,11 @@ CONTAINS
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block
-      b%ndims = INT(SIZE(obstacle_names),i4)
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(obstacle_names),i4)
+      ENDIF
     ENDIF
 
     b => h%current_block
