@@ -40,11 +40,12 @@ CONTAINS
 
   ! Mesh loading functions
 
-  SUBROUTINE read_plain_mesh_info_ru(h, geometry, dims)
+  SUBROUTINE read_plain_mesh_info_ru(h, geometry, dims, extents)
 
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(OUT), OPTIONAL :: geometry
     INTEGER, DIMENSION(:), INTENT(OUT), OPTIONAL :: dims
+    INTEGER, DIMENSION(:), INTENT(OUT), OPTIONAL :: extents
     INTEGER :: i
     TYPE(sdf_block_type), POINTER :: b
 
@@ -85,6 +86,7 @@ CONTAINS
 
     IF (PRESENT(geometry)) geometry = b%geometry
     IF (PRESENT(dims)) dims(1:b%ndims) = b%dims(1:b%ndims)
+    IF (PRESENT(extents)) extents(1:2*b%ndims) = b%extents(1:2*b%ndims)
 
     h%current_location = b%block_start + h%block_header_length
     b%done_info = .TRUE.

@@ -111,6 +111,15 @@ CONTAINS
 
   SUBROUTINE after_control
 
+    CALL setup_grid
+    CALL set_initial_values
+
+  END SUBROUTINE after_control
+
+
+
+  SUBROUTINE setup_grid
+
     INTEGER :: iproc, ix
     REAL(num) :: xb_min
 
@@ -152,9 +161,7 @@ CONTAINS
       x(ix) = x_global(nx_global_min+ix-1)
     ENDDO
 
-    CALL set_initial_values
-
-  END SUBROUTINE after_control
+  END SUBROUTINE setup_grid
 
 
 
@@ -543,10 +550,11 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, found_species
+    INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, found_species, geometry
     INTEGER(i8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims
-    LOGICAL :: restart_flag
+    REAL(num), DIMENSION(2*c_ndims) :: extents
+    LOGICAL :: restart_flag, got_full
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
 #if PARTICLE_ID || PARTICLE_ID4
@@ -554,6 +562,7 @@ CONTAINS
 #endif
     INTEGER, POINTER :: species_subtypes(:)
 
+    got_full = .FALSE.
     npart_global = 0
     step = -1
 
@@ -706,10 +715,16 @@ CONTAINS
             ENDIF
           ENDDO
         ENDIF
-      !CASE(c_blocktype_plain_mesh)
-        !CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims)
-
-        !CALL sdf_read_srl_plain_mesh(sdf_handle, x, y)
+      CASE(c_blocktype_plain_mesh)
+        IF (.NOT.got_full) THEN
+          IF (str_cmp(block_id, 'grid') &
+              .OR. str_cmp(block_id, 'grid_full')) THEN
+            CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
+            x_min = extents(1)
+            x_max = extents(c_ndims+1)
+            IF (str_cmp(block_id, 'grid_full')) got_full = .TRUE.
+          ENDIF
+        ENDIF
       CASE(c_blocktype_point_mesh)
         CALL sdf_read_point_mesh_info(sdf_handle, npart)
 
@@ -859,6 +874,8 @@ CONTAINS
 
     CALL sdf_close(sdf_handle)
     CALL free_subtypes_for_load(species_subtypes)
+
+    CALL setup_grid
 
   END SUBROUTINE restart_data
 
