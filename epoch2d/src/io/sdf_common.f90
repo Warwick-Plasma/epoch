@@ -57,6 +57,7 @@ MODULE sdf_common
     INTEGER(i4) :: block_header_length, string_length, nblocks, error_code
     INTEGER(i4) :: file_version, file_revision, code_io_version, step
     INTEGER(i4) :: datatype_integer, mpitype_integer
+    INTEGER(i4) :: blocktype
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     INTEGER :: errhandler
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error

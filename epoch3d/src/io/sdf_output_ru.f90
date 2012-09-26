@@ -677,6 +677,12 @@ CONTAINS
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
+    IF (h%blocktype .EQ. c_blocktype_contiguous) THEN
+      CALL sdf_write_stitched(h, id, name, mesh_id, stagger, &
+          variable_ids, ndims, data_length)
+      RETURN
+    ENDIF
+
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block

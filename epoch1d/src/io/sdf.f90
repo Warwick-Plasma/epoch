@@ -120,6 +120,7 @@ MODULE sdf
   PUBLIC :: sdf_write_srl_point_mesh
   PUBLIC :: sdf_write_srl_point_variable
   PUBLIC :: sdf_write_stitched
+  PUBLIC :: sdf_write_stitched_var
   PUBLIC :: sdf_write_stitched_tensor
   PUBLIC :: sdf_write_stitched_tensor_mat
   PUBLIC :: sdf_write_stitched_material

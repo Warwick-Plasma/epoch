@@ -2216,4 +2216,109 @@ CONTAINS
 
   END SUBROUTINE write_3d_species_r8
 
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 1D cartesian stitched variable in parallel using the
+  ! mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_1d_stitched_var_r8(h, id, name, units, dims, nmat, stagger, &
+      mesh_id, material_names, variable, distribution, subarray, convert, &
+      mult, last_in)
+
+    INTEGER, PARAMETER :: ndims = 1
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nmat
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
+    REAL(r8), DIMENSION(:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
+    LOGICAL, OPTIONAL, INTENT(IN) :: last_in
+
+    h%blocktype = c_blocktype_contiguous
+    CALL write_1d_material_r8(h, id, name, units, dims, nmat, stagger, &
+        mesh_id, material_names, variable, distribution, subarray, convert, &
+        mult, last_in)
+    h%blocktype = 0
+
+  END SUBROUTINE write_1d_stitched_var_r8
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 2D cartesian stitched variable in parallel using the
+  ! mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_2d_stitched_var_r8(h, id, name, units, dims, nmat, stagger, &
+      mesh_id, material_names, variable, distribution, subarray, convert, &
+      mult, last_in)
+
+    INTEGER, PARAMETER :: ndims = 2
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nmat
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
+    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
+    LOGICAL, OPTIONAL, INTENT(IN) :: last_in
+
+    h%blocktype = c_blocktype_contiguous
+    CALL write_2d_material_r8(h, id, name, units, dims, nmat, stagger, &
+        mesh_id, material_names, variable, distribution, subarray, convert, &
+        mult, last_in)
+    h%blocktype = 0
+
+  END SUBROUTINE write_2d_stitched_var_r8
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 3D cartesian stitched variable in parallel using the
+  ! mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_3d_stitched_var_r8(h, id, name, units, dims, nmat, stagger, &
+      mesh_id, material_names, variable, distribution, subarray, convert, &
+      mult, last_in)
+
+    INTEGER, PARAMETER :: ndims = 3
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nmat
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
+    REAL(r8), DIMENSION(:,:,:,:), INTENT(IN) :: variable
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, OPTIONAL, INTENT(IN) :: convert
+    REAL(r8), OPTIONAL, INTENT(IN) :: mult
+    LOGICAL, OPTIONAL, INTENT(IN) :: last_in
+
+    h%blocktype = c_blocktype_contiguous
+    CALL write_3d_material_r8(h, id, name, units, dims, nmat, stagger, &
+        mesh_id, material_names, variable, distribution, subarray, convert, &
+        mult, last_in)
+    h%blocktype = 0
+
+  END SUBROUTINE write_3d_stitched_var_r8
+
 END MODULE sdf_output_cartesian_r8
