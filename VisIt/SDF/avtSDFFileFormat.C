@@ -110,7 +110,48 @@ static inline void stack_alloc(sdf_block_t *b)
 }
 
 
-static inline void stack_free(void)
+static inline void stack_free_block(sdf_block_t *b)
+{
+    struct stack *old_stack_entry = stack_head;
+    struct stack *stack_entry = stack_head;
+
+    while (stack_entry) {
+        if (stack_entry->block == b) {
+            free(b->data);
+            b->data = NULL;
+            b->done_data = 0;
+            memory_size -= b->nlocal * b->type_size_out;
+            old_stack_entry->next = stack_entry->next;
+            if (stack_entry == stack_tail) stack_tail = old_stack_entry;
+            free(stack_entry);
+            return;
+        }
+        old_stack_entry = stack_entry;
+        stack_entry = stack_entry->next;
+    }
+}
+
+
+static inline void stack_push_to_bottom(sdf_block_t *b)
+{
+    struct stack *old_stack_entry = stack_head;
+    struct stack *stack_entry = stack_head;
+
+    while (stack_entry) {
+        if (stack_entry->block == b) {
+            old_stack_entry->next = stack_entry->next;
+            stack_tail->next = stack_entry;
+            stack_tail = stack_entry;
+            stack_tail->next = NULL;
+            return;
+        }
+        old_stack_entry = stack_entry;
+        stack_entry = stack_entry->next;
+    }
+}
+
+
+static inline void stack_freeup_memory(void)
 {
     sdf_block_t *b;
     struct stack *head;
@@ -129,6 +170,25 @@ static inline void stack_free(void)
         memory_size -= b->nlocal * b->type_size_out;
         if (memory_size < MAX_MEMORY) break;
     }
+}
+
+
+static inline void stack_free(void)
+{
+    sdf_block_t *b;
+    struct stack *head;
+
+    while (stack_head->next) {
+        head = stack_head;
+        stack_head = stack_head->next;
+        free(head);
+        b = stack_head->block;
+        stack_head->block = NULL;
+        free(b->data);
+        b->data = NULL;
+        b->done_data = 0;
+    }
+    memory_size = 0;
 }
 
 
@@ -242,6 +302,7 @@ avtSDFFileFormat::OpenFile(int open_only)
                 var = sdf_find_block_by_id(h, preload[n]);
                 if (var && !var->data) {
                     h->current_block = var;
+                    stack_alloc(h->current_block);
                     sdf_read_data(h);
                 }
                 free(preload[n]);
@@ -328,6 +389,7 @@ void
 avtSDFFileFormat::FreeUpResources(void)
 {
     debug1 << "avtSDFFileFormat::FreeUpResources(void) " << this << endl;
+    stack_free();
     sdf_free_blocklist_data(h);
 }
 
@@ -659,6 +721,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
     debug1 << "avtSDFFileFormat::GetMesh(domain:" << domain << ", meshname:"
            << meshname << ") " << this << endl;
 
+    stack_freeup_memory();
+
     sdf_block_t *b = sdf_find_block_by_name(h, meshname);
     if (!b) EXCEPTION1(InvalidVariableException, meshname);
     h->current_block = b;
@@ -673,6 +737,7 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
             || b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
         return GetCurve(domain, b);
 
+    stack_alloc(h->current_block);
     sdf_read_data(h);
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
@@ -831,14 +896,19 @@ avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
 {
     debug1 << "avtSDFFileFormat::GetCurve(domain:" << domain << ", sdf_block:"
            << b << ")" << endl;
+
+    stack_freeup_memory();
+
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
 
     int nlocal;
 
     h->current_block = mesh;
+    stack_alloc(h->current_block);
     sdf_read_data(h);
 
     h->current_block = b;
+    stack_alloc(h->current_block);
     sdf_read_data(h);
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
@@ -926,6 +996,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
 
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
             b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
+        stack_alloc(h->current_block);
         sdf_read_data(h);
 
     } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED ||
@@ -967,8 +1038,10 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
 
         // Execute callback to fill in the derived variable
         if (b->populate_data) b->populate_data(h, b);
-    } else
+    } else {
+        stack_alloc(h->current_block);
         sdf_read_data(h);
+    }
 
 #ifdef SDF_DEBUG
     debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
@@ -1002,7 +1075,8 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
 {
     debug1 << "avtSDFFileFormat::GetVar(domain:" << domain << ", varname:"
            << varname << ") " << this << endl;
-    stack_free();
+
+    stack_freeup_memory();
 
     sdf_block_t *b = GetArray(domain, varname);
     if (!b) EXCEPTION1(InvalidVariableException, varname);
@@ -1191,6 +1265,7 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
         vfm_blocks[i] = sdf_find_block_by_id(h, var_id);
         if (!vfm_blocks[i]) EXCEPTION1(InvalidVariableException, var_id);
         h->current_block = vfm_blocks[i];
+        stack_alloc(h->current_block);
         sdf_read_data(h);
     }
 #ifdef SDF_DEBUG
@@ -1213,6 +1288,7 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
         sdf_block_t *obgrp = sblock->subblock;
         sdf_block_t *ob = obgrp->subblock;
         h->current_block = ob;
+        stack_alloc(h->current_block);
         sdf_read_data(h);
         obdata = (int *)ob->data;
         ng = ob->ng;
@@ -1362,6 +1438,8 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
     debug1 << "avtSDFFileFormat::GetMaterial(var:" << var << ", domain:"
            << domain << ")" << endl;
 
+    stack_freeup_memory();
+
     sdf_block_t *sblock = sdf_find_block_by_name(h, var);
     if (!sblock) EXCEPTION1(InvalidVariableException, var);
     h->current_block = sblock;
@@ -1457,6 +1535,7 @@ avtSDFFileFormat::GetSpeciesType(sdf_block_t *sblock, int domain)
         vfm_block = sdf_find_block_by_id(h, var_id);
         if (!vfm_block) EXCEPTION1(InvalidVariableException, var_id);
         h->current_block = vfm_block;
+        stack_alloc(h->current_block);
         sdf_read_data(h);
         vfm_ptrs[i] = (Real*)vfm_block->data;
     }
@@ -1555,6 +1634,8 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
 {
     debug1 << "avtSDFFileFormat::GetSpecies(var:" << var << ", domain:"
            << domain << ")" << endl;
+
+    stack_freeup_memory();
 
     sdf_block_t *sblock = sdf_find_block_by_name(h, var);
     if (!sblock) EXCEPTION1(InvalidVariableException, var);
