@@ -562,7 +562,8 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             vector<int> nspec;
             vector<vector<string> > specnames;
             for (unsigned int n = 0 ; n < mat->ndims ; n++) {
-                if (strcmp(mat->material_names[n],b->material_name) == 0) {
+                if (strcmp(mat->material_names[n],b->material_name) == 0
+                        || strcmp(mat->id,b->material_name) == 0) {
                     specnames.push_back(mnames);
                     nspec.push_back(mnames.size());
                 } else {
@@ -572,8 +573,22 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 }
             }
 
+            int matdims = mat->ndims;
+            // UGLY HACK
+            // Look for an obstacle block which links with this material.
+            // If found, add to the list of material names.
+            if (mat->subblock) {
+                sdf_block_t *ob = mat->subblock;
+                for (unsigned int n = 0 ; n < ob->ndims ; n++) {
+                    vector<string> tmp;
+                    specnames.push_back(tmp);
+                    nspec.push_back(0);
+                }
+                matdims += ob->ndims;
+            }
+
             AddSpeciesToMetaData(md, b->name, mesh->name, mat->name,
-                mat->ndims, nspec, specnames);
+                matdims, nspec, specnames);
         }
     }
 
