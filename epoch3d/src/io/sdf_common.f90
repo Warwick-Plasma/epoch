@@ -99,6 +99,9 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_contiguous_species = 19
   INTEGER(i4), PARAMETER :: c_blocktype_cpu_split = 20
   INTEGER(i4), PARAMETER :: c_blocktype_stitched_obstacle_group = 21
+  INTEGER(i4), PARAMETER :: c_blocktype_unstructured_mesh = 22
+  INTEGER(i4), PARAMETER :: c_blocktype_stitched = 23
+  INTEGER(i4), PARAMETER :: c_blocktype_contiguous = 24
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1

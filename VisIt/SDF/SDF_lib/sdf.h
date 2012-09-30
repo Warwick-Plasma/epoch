@@ -55,6 +55,8 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_CPU_SPLIT,
     SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP,
     SDF_BLOCKTYPE_UNSTRUCTURED_MESH,
+    SDF_BLOCKTYPE_STITCHED,
+    SDF_BLOCKTYPE_CONTIGUOUS,
 };
 
 enum sdf_geometry {
@@ -155,6 +157,8 @@ static const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_CPU_SPLIT",
     "SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP",
     "SDF_BLOCKTYPE_UNSTRUCTURED_MESH",
+    "SDF_BLOCKTYPE_STITCHED",
+    "SDF_BLOCKTYPE_CONTIGUOUS",
 };
 
 static const char *sdf_geometry_c[] = {
@@ -321,11 +325,11 @@ int sdf_read_nblocks(sdf_file_t *h);
 
 int sdf_abort(sdf_file_t *h);
 int sdf_read_next_block_header(sdf_file_t *h);
-int sdf_read_stitched_tensor(sdf_file_t *h);
 int sdf_read_stitched_material(sdf_file_t *h);
 int sdf_read_stitched_matvar(sdf_file_t *h);
 int sdf_read_stitched_species(sdf_file_t *h);
 int sdf_read_stitched_obstacle_group(sdf_file_t *h);
+int sdf_read_stitched(sdf_file_t *h);
 int sdf_read_constant(sdf_file_t *h);
 
 int sdf_read_plain_mesh(sdf_file_t *h);

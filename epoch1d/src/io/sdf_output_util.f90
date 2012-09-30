@@ -72,9 +72,11 @@ CONTAINS
       CALL write_run_info_meta(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_source) THEN
       CALL write_block_header(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_tensor &
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched &
+        .OR. b%blocktype .EQ. c_blocktype_contiguous &
+        .OR. b%blocktype .EQ. c_blocktype_stitched_tensor &
         .OR. b%blocktype .EQ. c_blocktype_contiguous_tensor) THEN
-      CALL sdf_write_stitched_tensor(h)
+      CALL sdf_write_stitched(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_material &
         .OR. b%blocktype .EQ. c_blocktype_contiguous_material) THEN
       CALL sdf_write_stitched_material(h)

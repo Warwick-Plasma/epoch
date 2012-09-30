@@ -354,9 +354,11 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_cpu_split_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO)
         ret = sdf_read_run_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS
+            || b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
             || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_TENSOR)
-        ret = sdf_read_stitched_tensor(h);
+        ret = sdf_read_stitched(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
             || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL)
         ret = sdf_read_stitched_material(h);
@@ -564,7 +566,7 @@ int sdf_read_blocklist(sdf_file_t *h)
 
 
 
-int sdf_read_stitched_tensor(sdf_file_t *h)
+int sdf_read_stitched(sdf_file_t *h)
 {
     sdf_block_t *b;
 

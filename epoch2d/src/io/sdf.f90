@@ -45,6 +45,7 @@ MODULE sdf
   PUBLIC :: c_blocktype_contiguous_species
   PUBLIC :: c_blocktype_cpu_split
   PUBLIC :: c_blocktype_stitched_obstacle_group
+  PUBLIC :: c_blocktype_stitched
 
   PUBLIC :: c_datatype_null
   PUBLIC :: c_datatype_integer4
@@ -88,6 +89,7 @@ MODULE sdf
   PUBLIC :: sdf_read_srl
   PUBLIC :: sdf_read_array_info
   PUBLIC :: sdf_read_material_info
+  PUBLIC :: sdf_read_stitched_info
   PUBLIC :: sdf_read_plain_mesh_info
   PUBLIC :: sdf_read_obstacle_group_info
   PUBLIC :: sdf_read_plain_variable
@@ -113,6 +115,7 @@ MODULE sdf
   PUBLIC :: sdf_write_srl_plain_mesh
   PUBLIC :: sdf_write_srl_point_mesh
   PUBLIC :: sdf_write_srl_point_variable
+  PUBLIC :: sdf_write_stitched
   PUBLIC :: sdf_write_stitched_tensor
   PUBLIC :: sdf_write_stitched_tensor_mat
   PUBLIC :: sdf_write_stitched_material

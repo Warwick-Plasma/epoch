@@ -478,7 +478,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_stitched_tensor(h, id, name, mesh_id, stagger, &
+  SUBROUTINE write_stitched(h, id, name, mesh_id, stagger, &
       variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
@@ -490,17 +490,15 @@ CONTAINS
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
+    b => h%current_block
+
     IF (PRESENT(id)) THEN
-      CALL sdf_get_next_block(h)
-      b => h%current_block
       IF (PRESENT(ndims)) THEN
         b%ndims = ndims
       ELSE
         b%ndims = INT(SIZE(variable_ids),i4)
       ENDIF
     ENDIF
-
-    b => h%current_block
 
     b%datatype = c_datatype_other
 
@@ -514,13 +512,6 @@ CONTAINS
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
-      IF (PRESENT(data_length)) THEN
-        b%data_length = data_length
-        b%blocktype = c_blocktype_contiguous_tensor
-      ELSE
-        b%data_length = 0
-        b%blocktype = c_blocktype_stitched_tensor
-      ENDIF
       CALL safe_copy_string(mesh_id, b%mesh_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%variable_ids(b%ndims))
@@ -551,6 +542,66 @@ CONTAINS
     ENDIF
     b%done_info = .TRUE.
     b%done_data = .TRUE.
+
+  END SUBROUTINE write_stitched
+
+
+
+  SUBROUTINE sdf_write_stitched(h, id, name, mesh_id, stagger, &
+      variable_ids, ndims, data_length)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
+    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (PRESENT(id)) THEN
+      CALL sdf_get_next_block(h)
+      b => h%current_block
+      IF (PRESENT(data_length)) THEN
+        b%data_length = data_length
+        b%blocktype = c_blocktype_contiguous
+      ELSE
+        b%data_length = 0
+        b%blocktype = c_blocktype_stitched
+      ENDIF
+    ENDIF
+
+    CALL write_stitched(h, id, name, mesh_id, stagger, variable_ids, ndims, &
+        data_length)
+
+  END SUBROUTINE sdf_write_stitched
+
+
+
+  SUBROUTINE sdf_write_stitched_tensor(h, id, name, mesh_id, stagger, &
+      variable_ids, ndims, data_length)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
+    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (PRESENT(id)) THEN
+      CALL sdf_get_next_block(h)
+      b => h%current_block
+      IF (PRESENT(data_length)) THEN
+        b%data_length = data_length
+        b%blocktype = c_blocktype_contiguous_tensor
+      ELSE
+        b%data_length = 0
+        b%blocktype = c_blocktype_stitched_tensor
+      ENDIF
+    ENDIF
+
+    CALL write_stitched(h, id, name, mesh_id, stagger, variable_ids, ndims, &
+        data_length)
 
   END SUBROUTINE sdf_write_stitched_tensor
 

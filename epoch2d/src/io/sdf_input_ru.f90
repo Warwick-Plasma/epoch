@@ -604,7 +604,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_stitched_tensor(h)
+  SUBROUTINE sdf_read_stitched(h)
 
     TYPE(sdf_file_handle) :: h
     INTEGER :: iloop, errcode
@@ -645,7 +645,7 @@ CONTAINS
     b%done_info = .TRUE.
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_stitched_tensor
+  END SUBROUTINE sdf_read_stitched
 
 
 

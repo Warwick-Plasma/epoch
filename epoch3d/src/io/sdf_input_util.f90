@@ -69,9 +69,11 @@ CONTAINS
       CALL sdf_read_array_info(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_run_info) THEN
       CALL sdf_read_run_info(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_tensor &
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched &
+        .OR. b%blocktype .EQ. c_blocktype_contiguous &
+        .OR. b%blocktype .EQ. c_blocktype_stitched_tensor &
         .OR. b%blocktype .EQ. c_blocktype_contiguous_tensor) THEN
-      CALL sdf_read_stitched_tensor(h)
+      CALL sdf_read_stitched(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_material &
         .OR. b%blocktype .EQ. c_blocktype_contiguous_material) THEN
       CALL sdf_read_stitched_material(h)
@@ -86,5 +88,31 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE sdf_read_block_info
+
+
+
+  SUBROUTINE sdf_read_stitched_info(h, variable_ids)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), DIMENSION(:), INTENT(OUT) :: variable_ids
+    INTEGER :: iloop
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    CALL sdf_read_stitched(h)
+    b => h%current_block
+
+    DO iloop = 1, b%ndims
+      CALL safe_copy_string(b%variable_ids(iloop), variable_ids(iloop))
+    ENDDO
+
+  END SUBROUTINE sdf_read_stitched_info
 
 END MODULE sdf_input_util
