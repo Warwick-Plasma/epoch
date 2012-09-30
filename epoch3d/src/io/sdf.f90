@@ -89,6 +89,7 @@ MODULE sdf
   PUBLIC :: sdf_read_array_info
   PUBLIC :: sdf_read_material_info
   PUBLIC :: sdf_read_plain_mesh_info
+  PUBLIC :: sdf_read_obstacle_group_info
   PUBLIC :: sdf_read_plain_variable
   PUBLIC :: sdf_read_plain_variable_info
   PUBLIC :: sdf_read_point_mesh
@@ -117,12 +118,12 @@ MODULE sdf
   PUBLIC :: sdf_write_stitched_material
   PUBLIC :: sdf_write_stitched_matvar
   PUBLIC :: sdf_write_stitched_species
+  PUBLIC :: sdf_write_stitched_obstacle_group
   PUBLIC :: sdf_write_multi_tensor
   PUBLIC :: sdf_write_multi_tensor_mat
   PUBLIC :: sdf_write_multi_material
   PUBLIC :: sdf_write_multi_matvar
   PUBLIC :: sdf_write_multi_species
   PUBLIC :: sdf_write_cpu_split
-  PUBLIC :: sdf_write_stitched_obstacle_group
 
 END MODULE sdf

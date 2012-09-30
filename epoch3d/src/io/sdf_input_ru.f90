@@ -853,6 +853,32 @@ CONTAINS
 
 
 
+  SUBROUTINE sdf_read_obstacle_group_info(h, material_names)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), DIMENSION(:), INTENT(OUT) :: material_names
+    INTEGER :: iloop
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    CALL sdf_read_stitched_obstacle_group(h)
+    b => h%current_block
+
+    DO iloop = 1, b%ndims
+      CALL safe_copy_string(b%material_names(iloop), material_names(iloop))
+    ENDDO
+
+  END SUBROUTINE sdf_read_obstacle_group_info
+
+
+
   SUBROUTINE read_entry_int4(h, value)
 
     INTEGER, PARAMETER :: n = 4
