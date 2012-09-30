@@ -388,7 +388,7 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
     IF (convert) THEN
-      r4array(1:intn) = x(1:intn)
+      r4array(1:intn) = REAL(x(1:intn),r4)
       CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(1), &
           MPI_STATUS_IGNORE, errcode)
       DEALLOCATE(r4array)
@@ -485,7 +485,7 @@ CONTAINS
         distribution(1), 'native', MPI_INFO_NULL, errcode)
     IF (convert) THEN
       intn = sz(1)
-      r4array(1:intn) = x(1:intn)
+      r4array(1:intn) = REAL(x(1:intn),r4)
       CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(1), &
           MPI_STATUS_IGNORE, errcode)
     ELSE
@@ -499,7 +499,7 @@ CONTAINS
         distribution(2), 'native', MPI_INFO_NULL, errcode)
     IF (convert) THEN
       intn = sz(2)
-      r4array(1:intn) = y(1:intn)
+      r4array(1:intn) = REAL(y(1:intn),r4)
       CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(2), &
           MPI_STATUS_IGNORE, errcode)
       DEALLOCATE(r4array)
@@ -599,7 +599,7 @@ CONTAINS
         distribution(1), 'native', MPI_INFO_NULL, errcode)
     IF (convert) THEN
       intn = sz(1)
-      r4array(1:intn) = x(1:intn)
+      r4array(1:intn) = REAL(x(1:intn),r4)
       CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(1), &
           MPI_STATUS_IGNORE, errcode)
     ELSE
@@ -613,7 +613,7 @@ CONTAINS
         distribution(2), 'native', MPI_INFO_NULL, errcode)
     IF (convert) THEN
       intn = sz(2)
-      r4array(1:intn) = y(1:intn)
+      r4array(1:intn) = REAL(y(1:intn),r4)
       CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(2), &
           MPI_STATUS_IGNORE, errcode)
     ELSE
@@ -627,7 +627,7 @@ CONTAINS
         distribution(3), 'native', MPI_INFO_NULL, errcode)
     IF (convert) THEN
       intn = sz(3)
-      r4array(1:intn) = z(1:intn)
+      r4array(1:intn) = REAL(z(1:intn),r4)
       CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray(3), &
           MPI_STATUS_IGNORE, errcode)
       DEALLOCATE(r4array)

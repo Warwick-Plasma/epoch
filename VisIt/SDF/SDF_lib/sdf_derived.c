@@ -534,7 +534,7 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
     if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED)
         b->local_dims[0] = b->nlocal = mesh->nlocal;
     else
-        b->local_dims[0] = mesh->local_dims[b->nm];
+        b->local_dims[0] = b->nlocal = mesh->local_dims[b->nm];
     return b;
 }
 

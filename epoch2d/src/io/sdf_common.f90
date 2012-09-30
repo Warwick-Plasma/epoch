@@ -296,7 +296,7 @@ CONTAINS
       s2(olen:len2) = ACHAR(0)
       s2(1:olen) = s1(1:olen)
     ELSE
-      s2(1:1) = ACHAR(0)
+      s2 = ACHAR(0)
     ENDIF
 
   END SUBROUTINE safe_copy_string

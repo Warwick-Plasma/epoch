@@ -264,7 +264,7 @@ CONTAINS
     CHARACTER(LEN=length) :: output
     INTEGER :: len_s, errcode
 
-    len_s = LEN(TRIM(string))
+    len_s = LEN_TRIM(string)
 
     IF (len_s .GT. length .AND. h%rank .EQ. h%rank_master) THEN
       PRINT*, '*** WARNING ***'
