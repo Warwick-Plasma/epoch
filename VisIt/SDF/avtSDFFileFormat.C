@@ -995,6 +995,40 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     debug1 << "avtSDFFileFormat:: Found block: id:" << b->id << " for var:"
            << varname << " type " << b->blocktype << endl;
 
+    if (b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS) {
+        sdf_block_t *var;
+        if (!b->data) {
+            // Free any components which have already been allocated
+            for (int i = 0; i < b->n_ids; i++) {
+                if (b->must_read[i]) {
+                    var = sdf_find_block_by_id(h, b->variable_ids[i]);
+                    if (var->data) stack_free_block(var);
+                }
+            }
+            stack_alloc(b);
+        }
+
+        for (int i = 0; i < b->n_ids; i++) {
+            // Fill in derived components which are not already cached
+            if (b->must_read[i]) {
+                var = sdf_find_block_by_id(h, b->variable_ids[i]);
+                if (var) {
+                    var->data = (char*)b->data
+                            + i * var->nlocal * var->type_size_out;
+                    var->dont_own_data = 1;
+                    h->current_block = var;
+                    stack_alloc(h->current_block);
+                    sdf_read_data(h);
+                }
+            }
+        }
+#ifdef SDF_DEBUG
+        debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
+        debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
+#endif
+        return b;
+    }
+
     if (b->data) return b;
     h->current_block = b;
 

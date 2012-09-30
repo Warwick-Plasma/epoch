@@ -21,7 +21,7 @@
 
 #define SDF_VERSION  1
 #define SDF_REVISION 1
-#define SDF_LIB_VERSION  1
+#define SDF_LIB_VERSION  2
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
@@ -257,6 +257,7 @@ struct sdf_block {
     int *node_list, *boundary_cells;
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
+    char dont_own_data;
     sdf_block_t *next;
     sdf_block_t *subblock;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
