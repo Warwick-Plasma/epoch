@@ -177,7 +177,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_next_block_header(h, id, name, blocktype, ndims, datatype)
+  SUBROUTINE sdf_read_block_header(h, id, name, blocktype, ndims, datatype)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: id, name
@@ -192,8 +192,6 @@ CONTAINS
       ENDIF
       RETURN
     ENDIF
-
-    CALL sdf_get_next_block(h)
 
     b => h%current_block
 
@@ -239,6 +237,28 @@ CONTAINS
     ENDIF
 
     h%current_location = b%block_start + h%block_header_length
+
+  END SUBROUTINE sdf_read_block_header
+
+
+
+  SUBROUTINE sdf_read_next_block_header(h, id, name, blocktype, ndims, datatype)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: id, name
+    INTEGER, INTENT(OUT), OPTIONAL :: blocktype, ndims, datatype
+
+    IF (.NOT. h%done_header) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF header has not been read. Unable to read block.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    CALL sdf_get_next_block(h)
+
+    CALL sdf_read_block_header(h, id, name, blocktype, ndims, datatype)
 
   END SUBROUTINE sdf_read_next_block_header
 

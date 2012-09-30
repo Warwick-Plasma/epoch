@@ -81,10 +81,14 @@ MODULE sdf
   PUBLIC :: sdf_set_string_length
   PUBLIC :: sdf_set_default_rank
   PUBLIC :: sdf_seek_start
+  PUBLIC :: sdf_seek_block
+  PUBLIC :: sdf_get_data_location
+  PUBLIC :: sdf_set_data_location
   PUBLIC :: sdf_read_header
   PUBLIC :: sdf_read_blocklist
   PUBLIC :: sdf_read_nblocks
   PUBLIC :: sdf_read_jobid
+  PUBLIC :: sdf_read_block_header
   PUBLIC :: sdf_read_next_block_header
   PUBLIC :: sdf_read_srl
   PUBLIC :: sdf_read_array_info

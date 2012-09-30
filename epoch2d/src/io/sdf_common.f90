@@ -259,6 +259,42 @@ CONTAINS
 
 
 
+  FUNCTION sdf_seek_block(h, block_id) RESULT(found)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: block_id
+    TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: found
+
+    found = sdf_find_block(h, b, block_id)
+    IF (found) h%current_block => b
+
+  END FUNCTION sdf_seek_block
+
+
+
+  FUNCTION sdf_get_data_location(h) RESULT(data_location)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i8) :: data_location
+
+    data_location = h%current_block%data_location
+
+  END FUNCTION sdf_get_data_location
+
+
+
+  SUBROUTINE sdf_set_data_location(h, data_location)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i8), INTENT(IN) :: data_location
+
+    h%data_location = data_location
+
+  END SUBROUTINE sdf_set_data_location
+
+
+
   FUNCTION sdf_string_equal(str1, str2) RESULT(equal)
 
     CHARACTER(LEN=*), INTENT(IN) :: str1, str2
