@@ -228,13 +228,11 @@ CONTAINS
       b%done_header = .TRUE.
     ENDIF
 
-    IF (PRESENT(id)) THEN
-      blocktype = b%blocktype
-      CALL safe_copy_string(b%id, id)
-      CALL safe_copy_string(b%name, name)
-      datatype = b%datatype
-      ndims = b%ndims
-    ENDIF
+    IF (PRESENT(id)) CALL safe_copy_string(b%id, id)
+    IF (PRESENT(name)) CALL safe_copy_string(b%name, name)
+    IF (PRESENT(blocktype)) blocktype = b%blocktype
+    IF (PRESENT(ndims)) ndims = b%ndims
+    IF (PRESENT(datatype)) datatype = b%datatype
 
     h%current_location = b%block_start + h%block_header_length
 
