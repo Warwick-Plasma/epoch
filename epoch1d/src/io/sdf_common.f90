@@ -260,6 +260,20 @@ CONTAINS
 
 
 
+  FUNCTION sdf_find_block_by_id(h, block_id) RESULT(found)
+
+    TYPE(sdf_file_handle) :: h
+    TYPE(sdf_block_type), POINTER :: b
+    CHARACTER(LEN=*), INTENT(IN) :: block_id
+    LOGICAL :: found
+
+    found = sdf_find_block(h, b, block_id)
+    IF (found) h%current_block => b
+
+  END FUNCTION sdf_find_block_by_id
+
+
+
   FUNCTION sdf_seek_block(h, block_id) RESULT(found)
 
     TYPE(sdf_file_handle) :: h

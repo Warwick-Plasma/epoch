@@ -82,6 +82,7 @@ MODULE sdf
   PUBLIC :: sdf_set_default_rank
   PUBLIC :: sdf_seek_start
   PUBLIC :: sdf_seek_block
+  PUBLIC :: sdf_find_block_by_id
   PUBLIC :: sdf_get_data_location
   PUBLIC :: sdf_set_data_location
   PUBLIC :: sdf_read_header
