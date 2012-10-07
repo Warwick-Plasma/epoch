@@ -742,8 +742,10 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
             || b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
         return GetCurve(domain, b);
 
-    stack_alloc(h->current_block);
-    sdf_read_data(h);
+    if (b->populate_data)
+        b->populate_data(h, b);
+    else
+        sdf_read_data(h);
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
         vtkPoints *points  = vtkPoints::New();

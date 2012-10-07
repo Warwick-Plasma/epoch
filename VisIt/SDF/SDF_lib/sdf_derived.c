@@ -540,6 +540,75 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 
 
 
+sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
+{
+    int i, n, sz;
+    sdf_block_t *old = b->subblock;
+    sdf_block_t *current_block = h->current_block;
+
+    if (b->done_data) return b;
+
+    if (!old->grids) {
+        h->current_block = old;
+        sdf_read_data(h);
+        h->current_block = current_block;
+    }
+
+    memcpy(b->local_dims, old->local_dims, 3 * sizeof(int));
+
+    b->grids = calloc(3, sizeof(float*));
+    for (i = 0; i < 3; i++) {
+        if (i != b->stagger) {
+            sz = b->local_dims[i] * b->type_size_out;
+            b->grids[i] = malloc(sz);
+            memcpy(b->grids[i], old->grids[i], sz);
+        }
+    }
+
+    n = b->stagger;
+    b->local_dims[n] += 1;
+    sz = b->local_dims[n] * b->type_size_out;
+    b->grids[n] = malloc(sz);
+    if (b->datatype_out == SDF_DATATYPE_REAL8) {
+        double *oldx_ptr = (double*)old->grids[n];
+        double *newx_ptr = (double*)b->grids[n];
+        double x0, x1;
+        x0 = *oldx_ptr++;
+        x1 = *oldx_ptr;
+        *newx_ptr++ = 0.5 * (3 * x0 - x1);
+
+        for (i = 0; i < old->local_dims[n]-1; i++) {
+            *newx_ptr++ = 0.5 * (x0 + *oldx_ptr);
+            x0 = *oldx_ptr++;
+        }
+
+        x0 = *(oldx_ptr-1);
+        x1 = *(oldx_ptr-2);
+        *newx_ptr = 0.5 * (3 * x0 - x1);
+    } else {
+        float *oldx_ptr = (float*)old->grids[n];
+        float *newx_ptr = (float*)b->grids[n];
+        float x0, x1;
+        x0 = *oldx_ptr++;
+        x1 = *oldx_ptr;
+        *newx_ptr++ = 0.5 * (3 * x0 - x1);
+
+        for (i = 0; i < old->local_dims[n]-1; i++) {
+            *newx_ptr++ = 0.5 * (x0 + *oldx_ptr);
+            x0 = *oldx_ptr++;
+        }
+
+        x0 = *(oldx_ptr-1);
+        x1 = *(oldx_ptr-2);
+        *newx_ptr = 0.5 * (3 * x0 - x1);
+    }
+    b->done_data = 1;
+
+    return b;
+}
+
+
+
 sdf_block_t *sdf_callback_cpu_split(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *split_block = sdf_find_block_by_id(h, b->variable_ids[0]);
@@ -922,12 +991,13 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 int sdf_add_derived_blocks_final(sdf_file_t *h)
 {
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
-    sdf_block_t *mesh, *vfm, *obst;
+    sdf_block_t *mesh, *old_mesh, *vfm, *obst;
     sdf_block_t *current_block = h->current_block;
-    int i, len1, len2, nappend = 0;
+    int i, n, nd, len1, len2, stagger, nappend = 0;
     char *str, *name1, *name2;
     char *boundary_names[] =
         { "", "_x_min", "_x_max", "_y_min", "_y_max", "_z_min", "_z_max" };
+    char *face_grid_ids[] = { "xface", "yface", "zface" };
 
     append = append_head = calloc(1, sizeof(sdf_block_t));
 
@@ -1021,6 +1091,74 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
 
                 add_surface_variables(h, append, &append, &append_tail,
                     &nappend);
+            }
+        } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE
+                || b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED) {
+            // Add grids for face-staggered variables
+            for (i = 0; i < 3; i++) {
+                stagger = 1<<i;
+                if (b->stagger == stagger) {
+                    old_mesh = sdf_find_block_by_id(h, b->mesh_id);
+
+                    name1 = b->mesh_id;
+                    name2 = face_grid_ids[i];
+                    len1 = strlen(name1);
+                    len2 = strlen(name2);
+                    str = (char*)malloc(len1 + len2 + 2);
+                    memcpy(str, name1, len1);
+                    str[len1] = '/';
+                    memcpy(str+len1+1, name2, len2);
+                    str[len1+len2+1] = '\0';
+                    free(b->mesh_id);
+                    b->mesh_id = str;
+
+                    // Add new face grid if it doesn't exist
+                    mesh = sdf_find_block_by_id(h, b->mesh_id);
+                    if (!mesh) {
+                        append->next = calloc(1, sizeof(sdf_block_t));
+
+                        nappend++;
+                        append = append_tail = append->next;
+
+                        memcpy(append, old_mesh, sizeof(sdf_block_t));
+                        append->next = NULL;
+
+                        str = (char*)malloc(len1 + len2 + 2);
+                        memcpy(str, b->mesh_id, len1+len2+2);
+                        append->id = str;
+
+                        name1 = old_mesh->name;
+                        len1 = strlen(name1);
+                        str = (char*)malloc(len1 + len2 + 2);
+                        memcpy(str, name1, len1);
+                        str[len1] = '/';
+                        memcpy(str+len1+1, name2, len2);
+                        str[len1+len2+1] = '\0';
+                        append->name = str;
+
+                        append->stagger = i;
+                        append->subblock = old_mesh;
+                        append->populate_data = sdf_callback_face_grid;
+
+                        append->dims[i] += 1;
+                        append->dims_in = NULL;
+                        append->dim_mults = NULL;
+                        append->extents = NULL;
+
+                        nd = old_mesh->ndims;
+                        len1 = 2 * nd * sizeof(double*);
+                        append->extents = malloc(len1);
+                        memcpy(append->extents, old_mesh->extents, len1);
+                        append->dim_labels = calloc(nd, sizeof(char*));
+                        append->dim_units = calloc(nd, sizeof(char*));
+                        for (n = 0; n < nd; n++) {
+                            SDF_SET_ENTRY_STRING(append->dim_labels[n],
+                                old_mesh->dim_labels[n]);
+                            SDF_SET_ENTRY_STRING(append->dim_units[n],
+                                old_mesh->dim_units[n]);
+                        }
+                    }
+                }
             }
         }
     }
