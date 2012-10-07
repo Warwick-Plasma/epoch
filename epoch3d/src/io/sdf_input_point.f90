@@ -50,7 +50,8 @@ MODULE sdf_input_point
     MODULE PROCEDURE &
         read_srl_pt_var_flt_array_r4, &
         read_srl_pt_var_flt_array_r8, &
-        read_srl_pt_var_int_array
+        read_srl_pt_var_int_array, &
+        read_srl_pt_var_logical_array
   END INTERFACE sdf_read_srl_point_variable
 
 END MODULE sdf_input_point
