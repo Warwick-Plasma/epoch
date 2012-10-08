@@ -609,6 +609,18 @@ sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 
 
 
+sdf_block_t *sdf_callback_current_split(sdf_file_t *h, sdf_block_t *b)
+{
+    int i;
+    int *ptr = b->data;
+
+    for (i = 0; i < b->nlocal; i++) *ptr++ = h->rank;
+
+    return b;
+}
+
+
+
 sdf_block_t *sdf_callback_cpu_split(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *split_block = sdf_find_block_by_id(h, b->variable_ids[0]);
@@ -862,7 +874,7 @@ static void add_surface_variables(sdf_file_t *h, sdf_block_t *surf,
 int sdf_add_derived_blocks(sdf_file_t *h)
 {
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
-    sdf_block_t *mesh;
+    sdf_block_t *mesh, *first_mesh = NULL;
     sdf_block_t *current_block = h->current_block;
     int i, len1, len2, nappend = 0;
     char *str, *name1, *name2;
@@ -877,6 +889,9 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 
         if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH
             || b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
+            if (!first_mesh && b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
+                first_mesh = b;
+
             for (i = 0; i < b->ndims; i++) {
                 // Add 1d arrays for each coordinate dimension of the
                 // particles. (ie. all the x's, all the y's, all the z's).
@@ -973,6 +988,26 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             append->populate_data = sdf_callback_cpu_split;
             append->datatype = append->datatype_out = SDF_DATATYPE_INTEGER4;
         }
+    }
+
+    if (first_mesh) {
+        append->next = calloc(1, sizeof(sdf_block_t));
+
+        nappend++;
+        append = append_tail = append->next;
+        append->next = NULL;
+
+        SDF_SET_ENTRY_ID(append->id, "Current Split");
+        SDF_SET_ENTRY_ID(append->name, "Current Split");
+
+        append->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
+
+        SDF_SET_ENTRY_ID(append->units, "CPU");
+        SDF_SET_ENTRY_ID(append->mesh_id, first_mesh->id);
+        append->ndims = first_mesh->ndims;
+        for (i=0; i<3; i++) append->dims[i] = first_mesh->dims[i] - 1;
+        append->populate_data = sdf_callback_current_split;
+        append->datatype = append->datatype_out = SDF_DATATYPE_INTEGER4;
     }
 
     if (nappend) {
