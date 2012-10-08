@@ -26,6 +26,7 @@
 int sdf_read_array_info(sdf_file_t *h);
 int sdf_read_run_info(sdf_file_t *h);
 int sdf_read_array(sdf_file_t *h);
+static int sdf_read_cpu_split_info(sdf_file_t *h);
 
 
 static inline int sdf_get_next_block(sdf_file_t *h)
@@ -821,7 +822,7 @@ int sdf_read_array_info(sdf_file_t *h)
 
 
 
-int sdf_read_cpu_split_info(sdf_file_t *h)
+static int sdf_read_cpu_split_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;

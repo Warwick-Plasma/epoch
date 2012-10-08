@@ -478,7 +478,6 @@ int sdf_factor(sdf_file_t *h, int *start)
     sdf_block_t *b = h->current_block;
     int n;
 #ifdef PARALLEL
-    int periods[3] = {0, 0, 0};
     int old_dims[6];
 
     // Adjust dimensions to those of a cell-centred variable
