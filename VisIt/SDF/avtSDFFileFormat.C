@@ -252,6 +252,7 @@ avtSDFFileFormat::OpenFile(int open_only)
 {
     if (!h) h = sdf_open(filename, rank, comm, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
+    sdf_set_ncpus(h, ncpus);
     step = h->step;
     time = h->time;
     debug1 << "avtSDFFileFormat::OpenFile h:" << h << endl;
@@ -316,10 +317,10 @@ avtSDFFileFormat::OpenFile(int open_only)
 
         // Append derived data to the blocklist using the extension library.
         ext->read_blocklist(ext, h);
-
-        // Append additional derived data for blocks added by the extension.
-        sdf_add_derived_blocks_final(h);
     }
+
+    // Append additional derived data for blocks added by the extension.
+    sdf_add_derived_blocks_final(h);
 }
 
 

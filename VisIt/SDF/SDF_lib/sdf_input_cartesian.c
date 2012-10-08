@@ -136,9 +136,11 @@ static int sdf_plain_mesh_distribution(sdf_file_t *h)
     int n;
     int local_start[SDF_MAXDIMS], sizes[SDF_MAXDIMS];
 
-    if (b->ng) return 0;
-
-    for (n=0; n < b->ndims; n++) sizes[n] = b->dims[n];
+    for (n=0; n < b->ndims; n++) {
+        b->dims[n] -= 2 * b->ng;
+        b->local_dims[n] -= 2 * b->ng;
+        sizes[n] = b->dims[n];
+    }
 
     // Get local_start for creating subarray
     sdf_factor(h, local_start);
@@ -146,6 +148,13 @@ static int sdf_plain_mesh_distribution(sdf_file_t *h)
     MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, local_start,
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
+
+    b->nlocal = 1;
+    for (n=0; n < b->ndims; n++) {
+        b->dims[n] += 2 * b->ng;
+        b->local_dims[n] += 2 * b->ng;
+        b->nlocal *= b->local_dims[n];
+    }
 #endif
 
     return 0;
@@ -172,36 +181,36 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
     sdf_block_t *b = h->current_block;
     char **var_ptr = (char**)var_in;
     char *var = *var_ptr;
-    char *vptr;
     char convert;
-    int count, subsizes[SDF_MAXDIMS], starts[SDF_MAXDIMS];
-    uint64_t offset;
+    int count;
 #ifdef PARALLEL
     MPI_Datatype distribution, facetype;
+    int subsizes[SDF_MAXDIMS], starts[SDF_MAXDIMS];
     int face[SDF_MAXDIMS];
     int i, tag;
+    uint64_t offset;
     char *p1, *p2;
 #else
-    int i, n;
-    int idx, rem, orem, dim, npt;
+    char *vptr;
+    int i, j, k;
+    int nx, ny, nz;
+    int j0, j1, k0, k1;
+    int subsize;
 #endif
 
-    b->nlocal = 1;
-    for (i=0; i < b->ndims; i++) {
-        subsizes[i] = b->local_dims[i];
-        starts[i] = b->ng;
-        b->local_dims[i] += 2 * b->ng;
-        b->dims[i] += 2 * b->ng;
-        b->nlocal *= b->local_dims[i];
-    }
-    for (i=b->ndims; i < SDF_MAXDIMS; i++)
-        subsizes[i] = 1;
     count = b->nlocal;
 
     if (*var_ptr) free(*var_ptr);
     *var_ptr = var = malloc(count * b->type_size);
 
 #ifdef PARALLEL
+    for (i=0; i < b->ndims; i++) {
+        subsizes[i] = b->local_dims[i] - 2 * b->ng;
+        starts[i] = b->ng;
+    }
+    for (i=b->ndims; i < SDF_MAXDIMS; i++)
+        subsizes[i] = 1;
+
     MPI_Type_create_subarray(b->ndims, b->local_dims, subsizes, starts,
         MPI_ORDER_FORTRAN, b->mpitype, &distribution);
 
@@ -250,44 +259,31 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
         offset *= b->local_dims[i];
     }
 #else
-    idx = 0;
-    offset = b->ng;
-    for (i=0; i < b->ndims; i++) {
-        idx += offset;
-        offset *= b->local_dims[i];
+    j0 = k0 = 0;
+    j1 = k1 = ny = nz = 1;
+
+    i = b->ng;
+    nx = b->local_dims[0];
+    subsize = nx - 2 * i;
+
+    if (b->ndims > 1) {
+        ny = b->local_dims[1];
+        j0 = b->ng;
+        j1 = ny - b->ng;
+    }
+    if (b->ndims > 2) {
+        nz = b->local_dims[2];
+        k0 = b->ng;
+        k1 = nz - b->ng;
     }
 
-    offset = b->local_dims[0];
-    npt = b->local_dims[0] - 2 * b->ng;
-    for (i=1; i < b->ndims; i++) {
-        npt += (b->local_dims[i] - 2 * b->ng) * offset;
-        offset *= b->local_dims[i];
-    }
-
-    vptr = var + idx * b->type_size;
-
-    while (idx < npt) {
+    for (k = k0; k < k1; k++) {
+    for (j = j0; j < j1; j++) {
+        vptr = var + (i + nx * (j + ny * k)) * b->type_size;
         fseeko(h->filehandle, h->current_location, SEEK_SET);
-        fread(vptr, b->type_size, subsizes[0], h->filehandle);
-        h->current_location += subsizes[0] * b->type_size;
-        vptr += b->local_dims[0] * b->type_size;
-        idx += b->local_dims[0];
-
-        dim = b->local_dims[0];
-        orem = idx / dim;
-        offset = 2 * b->ng * dim;
-        for (i=1; i < b->ndims; i++) {
-            rem = orem / dim;
-            n = orem - rem * dim;
-            dim = b->local_dims[i];
-            if (n == dim - b->ng) {
-                vptr += offset * b->type_size;
-                idx += offset;
-            }
-            offset *= dim;
-            orem = rem;
-        }
-    }
+        fread(vptr, b->type_size, subsize, h->filehandle);
+        h->current_location += subsize * b->type_size;
+    }}
 #endif
 
     if (h->use_float && b->datatype == SDF_DATATYPE_REAL8)

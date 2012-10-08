@@ -1015,9 +1015,18 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
 
             vfm->subblock = b;
             b->subblock = obst;
-            obst->ng = 1;
-            obst->dont_display = 1;
             mesh = sdf_find_block_by_id(h, obst->mesh_id);
+
+            if (obst->ng == 0) {
+                obst->ng = 1;
+                obst->dont_display = 1;
+                obst->nlocal = 1;
+                for (i = 0; i < obst->ndims; i++) {
+                    obst->dims[i] += 2 * obst->ng;
+                    obst->local_dims[i] += 2 * obst->ng;
+                    obst->nlocal *= obst->local_dims[i];
+                }
+            }
 
             for (i = 0; i < b->ndims; i++) {
                 append->next = calloc(1, sizeof(sdf_block_t));
