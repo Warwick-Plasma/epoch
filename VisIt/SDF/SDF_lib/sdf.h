@@ -264,7 +264,7 @@ struct sdf_block {
     char done_header, done_info, done_data, dont_allocate, dont_display;
     char dont_own_data;
     sdf_block_t *next;
-    sdf_block_t *subblock;
+    sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;

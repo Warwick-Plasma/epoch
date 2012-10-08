@@ -609,189 +609,183 @@ sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_current_split(sdf_file_t *h, sdf_block_t *b)
+sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
-    int i;
-    int *ptr = b->data;
+    int i, n, sz, np, nx, nxmesh;
+    int i0, i1, idx;
+    int *index;
+    double *d;
+    char *x, *xmesh;
+    void *buf;
+    sdf_block_t *split = b->subblock;
+    sdf_block_t *mesh = b->subblock2;
+    sdf_block_t *current_block = h->current_block;
 
-    for (i = 0; i < b->nlocal; i++) *ptr++ = h->rank;
+    if (b->done_data) return b;
+
+    if (!split->done_data) {
+        h->current_block = split;
+        sdf_read_data(h);
+        h->current_block = current_block;
+    }
+
+    if (!mesh->done_data) {
+        h->current_block = mesh;
+        sdf_read_data(h);
+        h->current_block = current_block;
+    }
+#ifdef PARALLEL
+    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(int));
+#endif
+
+    b->datatype_out = mesh->datatype_out;
+    b->grids = calloc(3, sizeof(float*));
+    sz = b->type_size_out = mesh->type_size_out;
+
+    if (split->geometry == 1) {
+        index = split->data;
+        np = 0;
+
+        b->nlocal = 1;
+        for (n=0; n < b->ndims; n++) {
+            xmesh = mesh->grids[n];
+            nxmesh = mesh->dims[n];
+
+            nx = b->local_dims[n] = b->dims[n];
+            x = calloc(nx, sz);
+#ifdef PARALLEL
+            i0 = mesh->starts[n];
+#else
+            i0 = 0;
+#endif
+            i1 = mesh->local_dims[n] - 1;
+            for (i = 1; i < nx-1; i++) {
+                idx = index[np++] - i0;
+                if (idx > i1) break;
+                if (idx >= 0)
+                    memcpy(x+sz*i, xmesh+sz*idx, sz);
+            }
+            if (i0 == 0)
+                memcpy(x, xmesh, sz);
+            idx = mesh->local_dims[n] - 1;
+            if (mesh->dims[n] == mesh->local_dims[n] + i0)
+                memcpy(x+sz*(nx-1), xmesh+sz*idx, sz);
+
+#ifdef PARALLEL
+            buf = malloc(nx*sz);
+            MPI_Reduce(x, buf, nx*sz, MPI_BYTE, MPI_BOR, 0, h->comm);
+            free(x);
+            x = buf;
+
+            if (h->rank)
+                free(x);
+            else
+#endif
+            b->grids[n] = x;
+            b->nlocal *= nx;
+        }
+        for (n=b->ndims; n < 3; n++) {
+            b->local_dims[n] = 1;
+            b->grids[n] = calloc(1, b->type_size_out);
+        }
+
+#ifdef PARALLEL
+        if (h->rank) {
+            for (n=0; n < 3; n++) {
+                b->local_dims[n] = 1;
+                b->grids[n] = calloc(1, sz);
+            }
+            b->nlocal = 1;
+        }
+#endif
+    }
+
+    b->done_data = 1;
 
     return b;
 }
 
 
 
-sdf_block_t *sdf_callback_cpu_split(sdf_file_t *h, sdf_block_t *b)
+sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
-    sdf_block_t *split_block = sdf_find_block_by_id(h, b->variable_ids[0]);
-    int *var, *split, *xsplit, *ysplit, *zsplit;
-    int nproc, nprocx, nprocy, nprocz, np, idx, i, j, k;
-    int x0, x1, y0, y1, z0, z1;
-    int nx, ny, nz, npx, npy, npz;
+    int n, nx, sz, idx, rem = h->rank, i0 = 0, pmax = -2;
+    void *x, *buf;
+    sdf_block_t *mesh = b->subblock;
+    sdf_block_t *current_block = h->current_block;
 
-    nx = b->dims[0];
-    ny = b->dims[1];
-    nz = b->dims[2];
+    if (b->done_data) return b;
 
-    if (split_block->geometry == 1) {
-        var = split_block->data;
-        np = 0;
-
-        nprocx = split_block->dims[0] + 1;
-        xsplit = malloc(nprocx * sizeof(int));
-        for (i = 0; i < nprocx-1; i++) xsplit[i] = var[np++];
-        xsplit[nprocx-1] = nx = b->dims[0];
-
-        if (b->ndims > 1) {
-            nprocy = split_block->dims[1] + 1;
-            ysplit = malloc(nprocy * sizeof(int));
-            for (i = 0; i < nprocy-1; i++) ysplit[i] = var[np++];
-            ysplit[nprocy-1] = ny = b->dims[1];
-        } else {
-            nprocy = 1;
-            ysplit = malloc(nprocy * sizeof(int));
-            ysplit[nprocy-1] = ny = 1;
-        }
-
-        if (b->ndims > 2) {
-            nprocz = split_block->dims[2] + 1;
-            zsplit = malloc(nprocz * sizeof(int));
-            for (i = 0; i < nprocz-1; i++) zsplit[i] = var[np++];
-            zsplit[nprocz-1] = nz = b->dims[2];
-        } else {
-            nprocz = 1;
-            zsplit = malloc(nprocz * sizeof(int));
-            zsplit[nprocz-1] = nz = 1;
-        }
-
-        var = b->data;
-
-        np = 0;
-        z0 = 0;
-        for (npz = 0; npz < nprocz; npz++) {
-            z1 = zsplit[npz];
-            y0 = 0;
-            for (npy = 0; npy < nprocy; npy++) {
-                y1 = ysplit[npy];
-                x0 = 0;
-                for (npx = 0; npx < nprocx; npx++) {
-                    x1 = xsplit[npx];
-                    for (k = z0; k < z1; k++) {
-                    for (j = y0; j < y1; j++) {
-                        idx = (j + k * ny) * nx + x0;
-                        for (i = x0; i < x1; i++) {
-                            var[idx++] = np;
-                    }}}
-                    np++;
-                    x0 = x1;
-                }
-                y0 = y1;
-            }
-            z0 = z1;
-        }
-        free(xsplit);
-        if (b->ndims > 1) free(ysplit);
-        if (b->ndims > 2) free(zsplit);
-
-    } else if (split_block->geometry == 2) {
-        nprocx = split_block->dims[0];
-        nprocy = split_block->dims[1];
-        nprocz = split_block->dims[2];
-
-        var = b->data;
-        split = split_block->data;
-        np = 0;
-
-        if (b->ndims == 2) {
-            x0 = 0;
-            for (npx = 0; npx < nprocx; npx++) {
-                x1 = split[npx];
-                y0 = 0;
-                for (npy = 0; npy < nprocy; npy++) {
-                    y1 = split[nprocx + npy + npx * nprocy];
-                    np = npx + npy * nprocx;
-                    for (j = y0; j < y1; j++) {
-                        idx = j * nx + x0;
-                        for (i = x0; i < x1; i++) {
-                            var[idx++] = np;
-                    }}
-                    y0 = y1;
-                }
-                x0 = x1;
-            }
-        } else if (b->ndims == 3) {
-            x0 = 0;
-            for (npx = 0; npx < nprocx; npx++) {
-                x1 = split[npx];
-                y0 = 0;
-                for (npy = 0; npy < nprocy; npy++) {
-                    y1 = split[nprocx + npy + npx * nprocy];
-                    z0 = 0;
-                    for (npz = 0; npz < nprocz; npz++) {
-                        z1 = split[nprocx * (1 + nprocy) +
-                                   npz + (npy + npx * nprocy) * nprocz];
-                        np = npx + (npy + npz * nprocy) * nprocx;
-                        for (k = z0; k < z1; k++) {
-                        for (j = y0; j < y1; j++) {
-                            idx = (j + k * ny) * nx + x0;
-                            for (i = x0; i < x1; i++) {
-                                var[idx++] = np;
-                        }}}
-                        z0 = z1;
-                    }
-                    y0 = y1;
-                }
-                x0 = x1;
-            }
-        }
-
-    } else if (split_block->geometry == 3) {
-        split = split_block->data;
-        nproc = split_block->dims[1];
-
-        var = b->data;
-
-        if (b->ndims == 1) {
-            for (np = 0; np < nproc; np++) {
-                x0 = split[2*np]-1;
-                x1 = split[2*np+1];
-
-                idx = x0;
-                for (i = x0; i < x1; i++) {
-                    var[idx++] = np;
-                }
-            }
-        } else if (b->ndims == 2) {
-            for (np = 0; np < nproc; np++) {
-                x0 = split[4*np]-1;
-                y0 = split[4*np+1]-1;
-                x1 = split[4*np+2];
-                y1 = split[4*np+3];
-
-                for (j = y0; j < y1; j++) {
-                    idx = j * nx + x0;
-                    for (i = x0; i < x1; i++) {
-                        var[idx++] = np;
-                }}
-            }
-        } else if (b->ndims == 3) {
-            for (np = 0; np < nproc; np++) {
-                x0 = split[6*np]-1;
-                y0 = split[6*np+1]-1;
-                z0 = split[6*np+2]-1;
-                x1 = split[6*np+3];
-                y1 = split[6*np+4];
-                z1 = split[6*np+5];
-
-                for (k = z0; k < z1; k++) {
-                for (j = y0; j < y1; j++) {
-                    idx = (j + k * ny) * nx + x0;
-                    for (i = x0; i < x1; i++) {
-                        var[idx++] = np;
-                }}}
-            }
-        }
+    if (!mesh->done_data) {
+        h->current_block = mesh;
+        sdf_read_data(h);
+        h->current_block = current_block;
     }
+#ifdef PARALLEL
+    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(int));
+#endif
+
+    b->datatype_out = mesh->datatype_out;
+    sz = b->type_size_out = mesh->type_size_out;
+    b->grids = malloc(3 * sizeof(float*));
+
+    b->nlocal = 1;
+    for (n = 0; n < b->ndims; n++) {
+#ifdef PARALLEL
+        nx = mesh->cpu_split[n];
+        i0 = rem%nx;
+        rem = rem / nx;
+        b->local_dims[n] = ++nx;
+        pmax = mesh->proc_max[n];
+#else
+        nx = b->local_dims[n] = 2;
+#endif
+        idx = mesh->local_dims[n] - 1;
+        x = calloc(nx, sz);
+        memcpy(x+sz*i0, mesh->grids[n], sz);
+        if (pmax < 0) memcpy(x+sz*(i0+1), mesh->grids[n]+sz*idx, sz);
+        b->nlocal *= nx;
+#ifdef PARALLEL
+        buf = malloc(nx*sz);
+        MPI_Reduce(x, buf, nx*sz, MPI_BYTE, MPI_BOR, 0, h->comm);
+        free(x);
+        x = buf;
+
+        if (h->rank)
+            free(x);
+        else
+#endif
+        b->grids[n] = x;
+    }
+
+    if (h->rank) {
+        b->nlocal = 1;
+        nx = 0;
+    } else
+        nx = b->ndims;
+
+    for (n = nx; n < 3; n++) {
+        b->local_dims[n] = 1;
+        b->grids[n] = calloc(1, sz);
+    }
+
+    b->subblock->nlocal = b->nlocal;
+    b->done_data = 1;
+
+    return b;
+}
+
+
+
+sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
+{
+    int n, *var = b->data;
+
+    if (b->done_data) return b;
+
+    for (n=0; n < b->nlocal; n++) var[n] = n;
+
+    b->done_data = 1;
 
     return b;
 }
@@ -876,7 +870,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
     sdf_block_t *mesh, *first_mesh = NULL;
     sdf_block_t *current_block = h->current_block;
-    int i, len1, len2, nappend = 0;
+    int i, n, nd, len1, len2, nappend = 0;
     char *str, *name1, *name2;
     char *grid_ids[] = { "x", "y", "z" };
 
@@ -950,64 +944,150 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append->dont_allocate = 1;
             }
         } else if (b->blocktype == SDF_BLOCKTYPE_CPU_SPLIT) {
-            append->next = calloc(1, sizeof(sdf_block_t));
-
-            nappend++;
-            append = append_tail = append->next;
-            append->next = NULL;
-
-            len1 = strlen(b->id);
-            append->id = b->id;
-            b->id = malloc(len1+7);
-            memcpy(b->id, append->id, len1);
-            memcpy(b->id+len1, "_orig", 6);
-
-            len1 = strlen(b->name);
-            append->name = b->name;
-            b->name = malloc(len1+7);
-            memcpy(b->name, append->name, len1);
-            memcpy(b->name+len1, "_orig", 6);
-
-            append->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
-
             // Find first grid mesh
             mesh = h->blocklist;
             while (mesh) {
                 if (mesh->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) break;
                 mesh = mesh->next;
             }
-            SDF_SET_ENTRY_ID(append->units, "CPU");
+
+            // First add CPU mesh
+            append->next = calloc(1, sizeof(sdf_block_t));
+
+            nappend++;
+            append = append_tail = append->next;
+
+            len1 = strlen(b->id);
+            str = malloc(len1+6);
+            memcpy(str, "grid_", 5);
+            memcpy(str+5, b->id, len1+1);
+            append->id = str;
+
+            len1 = strlen(b->name);
+            str = malloc(len1+6);
+            memcpy(str, "Grid/", 5);
+            memcpy(str+5, b->name, len1+1);
+            append->name = str;
+
+            append->subblock = b;
+            append->subblock2 = mesh;
+            append->populate_data = sdf_callback_cpu_mesh;
+            append->blocktype = SDF_BLOCKTYPE_PLAIN_MESH;
+
+            append->ndims = b->ndims;
+            for (i = 0; i < b->ndims; i++) append->dims[i] = b->dims[i] + 2;
+            for (i = b->ndims; i < 3; i++) append->dims[i] = 1;
+
+            nd = mesh->ndims;
+            len1 = 2 * nd * sizeof(double*);
+            append->extents = malloc(len1);
+            memcpy(append->extents, mesh->extents, len1);
+            append->dim_labels = calloc(nd, sizeof(char*));
+            append->dim_units = calloc(nd, sizeof(char*));
+            for (n = 0; n < nd; n++) {
+                SDF_SET_ENTRY_STRING(append->dim_labels[n],
+                    mesh->dim_labels[n]);
+                SDF_SET_ENTRY_STRING(append->dim_units[n],
+                    mesh->dim_units[n]);
+            }
+            mesh = append;
+
+            // Now add CPU data block
+            append->next = calloc(1, sizeof(sdf_block_t));
+
+            nappend++;
+            append = append_tail = append->next;
+            append->next = NULL;
+
+            // Rename original block so that we can use the original name
+            // for plotting
+            str = b->id;
+            append->id = str;
+            len1 = strlen(str);
+            str = malloc(len1+7);
+            memcpy(str, append->id, len1);
+            memcpy(str+len1, "_orig", 6);
+            b->id = str;
+
+            str = b->name;
+            append->name = str;
+            len1 = strlen(str);
+            str = malloc(len1+7);
+            memcpy(str, append->name, len1);
+            memcpy(str+len1, "_orig", 6);
+            b->name = str;
+
+            append->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
+
             SDF_SET_ENTRY_ID(append->mesh_id, mesh->id);
-            append->ndims = mesh->ndims;
-            for (i=0; i<3; i++) append->dims[i] = mesh->dims[i] - 1;
+            SDF_SET_ENTRY_ID(append->units, "CPU");
+            append->ndims = b->ndims;
+            append->nlocal = 1;
+            for (i=0; i<b->ndims; i++) {
+                append->local_dims[i] = append->dims[i] = b->dims[i] + 1;
+                append->nlocal *= append->local_dims[i];
+            }
+            for (i=b->ndims; i<3; i++)
+                append->local_dims[i] = append->dims[i] = 1;
             append->n_ids = 1;
             append->variable_ids = calloc(append->n_ids, sizeof(char*));
             SDF_SET_ENTRY_ID(append->variable_ids[0], b->id);
             append->must_read = calloc(append->n_ids, sizeof(char*));
             append->must_read[0] = 1;
-            append->populate_data = sdf_callback_cpu_split;
+            append->populate_data = sdf_callback_cpu_data;
             append->datatype = append->datatype_out = SDF_DATATYPE_INTEGER4;
         }
     }
 
     if (first_mesh) {
+        // First add CPU mesh
+        append->next = calloc(1, sizeof(sdf_block_t));
+
+        nappend++;
+        append = append_tail = append->next;
+
+        SDF_SET_ENTRY_ID(append->id, "grid_cpus_current");
+        SDF_SET_ENTRY_STRING(append->name, "Grid/CPUs/Current rank");
+
+        append->subblock = first_mesh;
+        append->populate_data = sdf_callback_current_cpu_mesh;
+        append->blocktype = SDF_BLOCKTYPE_PLAIN_MESH;
+
+        nd = append->ndims = first_mesh->ndims;
+
+        len1 = 2 * nd * sizeof(double*);
+        append->extents = malloc(len1);
+        memcpy(append->extents, first_mesh->extents, len1);
+        append->dim_labels = calloc(nd, sizeof(char*));
+        append->dim_units = calloc(nd, sizeof(char*));
+        for (n = 0; n < nd; n++) {
+            SDF_SET_ENTRY_STRING(append->dim_labels[n],
+                first_mesh->dim_labels[n]);
+            SDF_SET_ENTRY_STRING(append->dim_units[n],
+                first_mesh->dim_units[n]);
+        }
+        mesh = append;
+
+        // Now add CPU data block
         append->next = calloc(1, sizeof(sdf_block_t));
 
         nappend++;
         append = append_tail = append->next;
         append->next = NULL;
 
-        SDF_SET_ENTRY_ID(append->id, "Current Split");
-        SDF_SET_ENTRY_ID(append->name, "Current Split");
+        SDF_SET_ENTRY_ID(append->id, "cpus_current");
+        SDF_SET_ENTRY_ID(append->name, "CPUs/Current rank");
 
         append->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
 
         SDF_SET_ENTRY_ID(append->units, "CPU");
-        SDF_SET_ENTRY_ID(append->mesh_id, first_mesh->id);
-        append->ndims = first_mesh->ndims;
-        for (i=0; i<3; i++) append->dims[i] = first_mesh->dims[i] - 1;
-        append->populate_data = sdf_callback_current_split;
+        SDF_SET_ENTRY_ID(append->mesh_id, mesh->id);
+        append->ndims = mesh->ndims;
+        append->subblock = mesh;
+        append->populate_data = sdf_callback_cpu_data;
         append->datatype = append->datatype_out = SDF_DATATYPE_INTEGER4;
+
+        mesh->subblock2 = append;
     }
 
     if (nappend) {
@@ -1028,7 +1108,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
     sdf_block_t *mesh, *old_mesh, *vfm, *obst;
     sdf_block_t *current_block = h->current_block;
-    int i, n, nd, len1, len2, stagger, nappend = 0;
+    int i, n, nd, len1, len2, stagger, dont_add, nappend = 0;
     char *str, *name1, *name2;
     char *boundary_names[] =
         { "", "_x_min", "_x_max", "_y_min", "_y_max", "_z_min", "_z_max" };
@@ -1143,6 +1223,15 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                 stagger = 1<<i;
                 if (b->stagger == stagger) {
                     old_mesh = sdf_find_block_by_id(h, b->mesh_id);
+                    // For now, only add the mesh if variables are the correct
+                    // dimensions
+                    dont_add = 0;
+                    for (n = 0; n < b->ndims; n++) {
+                        nd = old_mesh->dims[n];
+                        if (n == i) nd += b->ng;
+                        if (b->dims[n] != nd) dont_add = 1;
+                    }
+                    if (dont_add) continue;
 
                     name1 = b->mesh_id;
                     name2 = face_grid_ids[i];
