@@ -1252,6 +1252,7 @@ CONTAINS
     INTEGER(i8) :: species_count
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_species_per_proc
     INTEGER :: i, ispecies
+    TYPE(particle_species), POINTER :: spec
 
     IF (done_species_offset_init) RETURN
     done_species_offset_init = .TRUE.
@@ -1265,15 +1266,20 @@ CONTAINS
 
     npart_global = 0
     DO ispecies = 1, n_species
-      CALL MPI_ALLGATHER(io_list(ispecies)%attached_list%count, 1, &
-          MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
+      spec => io_list(ispecies)
+
+      CALL MPI_ALLGATHER(spec%attached_list%count, 1, MPI_INTEGER8, &
+          npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
       species_count = 0
       DO i = 1, nproc
         IF (rank .EQ. i-1) species_offset(ispecies) = species_count
         species_count = species_count + npart_species_per_proc(i)
       ENDDO
-      io_list(ispecies)%count = species_count
+      spec%count = species_count
       npart_global = npart_global + species_count
+
+      CALL sdf_write_cpu_split(sdf_handle, 'cpu_split/' // TRIM(spec%name), &
+          'CPU split/' // TRIM(spec%name), npart_species_per_proc)
     ENDDO
 
     IF (track_ejected_particles &
@@ -1282,15 +1288,19 @@ CONTAINS
       ejected_offset = 0
 
       DO ispecies = 1, n_species
-        CALL MPI_ALLGATHER(ejected_list(ispecies)%attached_list%count, 1, &
-            MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, &
-            errcode)
+        spec => ejected_list(ispecies)
+
+        CALL MPI_ALLGATHER(spec%attached_list%count, 1, MPI_INTEGER8, &
+            npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
         species_count = 0
         DO i = 1, nproc
           IF (rank .EQ. i-1) ejected_offset(ispecies) = species_count
           species_count = species_count + npart_species_per_proc(i)
         ENDDO
-        ejected_list(ispecies)%count = species_count
+        spec%count = species_count
+
+        CALL sdf_write_cpu_split(sdf_handle, 'cpu_split/' // TRIM(spec%name), &
+            'CPU split/' // TRIM(spec%name), npart_species_per_proc)
       ENDDO
     ENDIF
 

@@ -40,8 +40,10 @@ MODULE sdf_output
   INTERFACE sdf_write_cpu_split
     MODULE PROCEDURE &
         write_cpu_split_1d, &
+        write_cpu_split_1d_spec, &
         write_cpu_split_mix, &
-        write_cpu_split_3d
+        write_cpu_split_3d, &
+        write_cpu_split_part
   END INTERFACE sdf_write_cpu_split
 
 END MODULE sdf_output

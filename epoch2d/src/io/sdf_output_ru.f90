@@ -1208,12 +1208,60 @@ CONTAINS
 
 
 
-  SUBROUTINE write_cpu_split_1d(h, id, name, nmax1, nmax2, nmax3, rank_write)
+  SUBROUTINE write_cpu_split_part(h, id, name, npart, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    INTEGER, INTENT(IN) :: nmax1(:)
-    INTEGER, INTENT(IN), OPTIONAL :: nmax2(:), nmax3(:)
+    INTEGER(i8), INTENT(IN) :: npart(:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = soi8
+    b%datatype = c_datatype_integer8
+    b%mpitype = MPI_INTEGER8
+    b%geometry = 4
+
+    IF (PRESENT(rank_write)) h%rank_master = rank_write
+
+    b%dims(1) = SIZE(npart)
+    b%ndims = 1
+    b%nelements = b%dims(1)
+
+    ! Write header
+
+    CALL write_cpu_split_meta(h, id, name)
+
+    h%current_location = b%data_location
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! Actual array
+      CALL MPI_FILE_WRITE(h%filehandle, npart, b%dims(1), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%data_location + b%data_length
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_cpu_split_part
+
+
+
+  SUBROUTINE write_cpu_split_1d_spec(h, id, name, ndim1, nmax1, ndim2, nmax2, &
+          ndim3, nmax3, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: ndim1, nmax1(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndim2, nmax2(:), ndim3, nmax3(:)
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: errcode, i
     TYPE(sdf_block_type), POINTER :: b
@@ -1228,14 +1276,14 @@ CONTAINS
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
 
-    b%dims(1) = SIZE(nmax1) - 1
+    b%dims(1) = ndim1 - 1
     b%ndims = 1
     IF (PRESENT(nmax2)) THEN
-      b%dims(2) = SIZE(nmax2) - 1
+      b%dims(2) = ndim2 - 1
       b%ndims = 2
     ENDIF
     IF (PRESENT(nmax3)) THEN
-      b%dims(3) = SIZE(nmax3) - 1
+      b%dims(3) = ndim3 - 1
       b%ndims = 3
     ENDIF
 
@@ -1271,6 +1319,32 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_info = .TRUE.
     b%done_data = .TRUE.
+
+  END SUBROUTINE write_cpu_split_1d_spec
+
+
+
+  SUBROUTINE write_cpu_split_1d(h, id, name, nmax1, nmax2, nmax3, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: nmax1(:)
+    INTEGER, INTENT(IN), OPTIONAL :: nmax2(:), nmax3(:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: ndim1, ndim2, ndim3
+
+    ndim1 = SIZE(nmax1)
+    IF (PRESENT(nmax3)) THEN
+      ndim2 = SIZE(nmax2)
+      ndim3 = SIZE(nmax3)
+      CALL write_cpu_split_1d_spec(h, id, name, ndim1, nmax1, ndim2, nmax2, &
+          ndim3, nmax3, rank_write)
+    ELSE IF (PRESENT(nmax2)) THEN
+      ndim2 = SIZE(nmax2)
+      CALL write_cpu_split_1d_spec(h, id, name, ndim1, nmax1, ndim2, nmax2)
+    ELSE
+      CALL write_cpu_split_1d_spec(h, id, name, ndim1, nmax1)
+    ENDIF
 
   END SUBROUTINE write_cpu_split_1d
 
