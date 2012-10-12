@@ -728,12 +728,12 @@ static int sdf_array_datatype(sdf_file_t *h)
     int n;
 
 #ifdef PARALLEL
-    int local_start[SDF_MAXDIMS], sizes[SDF_MAXDIMS];
+    int sizes[SDF_MAXDIMS];
     for (n=0; n < b->ndims; n++) sizes[n] = b->dims[n];
 
-    sdf_factor(h, local_start);
+    sdf_factor(h);
 
-    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, local_start,
+    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, b->starts,
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 #else

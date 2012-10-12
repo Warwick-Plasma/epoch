@@ -18,7 +18,7 @@
     b->done_info = 1; } while(0)
 
 
-int sdf_point_factor(sdf_file_t *h, int *local_npoints, int *local_start);
+int sdf_point_factor(sdf_file_t *h, int *local_npoints);
 
 
 int sdf_read_point_mesh_info(sdf_file_t *h)
@@ -154,13 +154,12 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
 int sdf_read_point_mesh(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
-    int local_start;
     int n;
 
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_point_mesh_info(h);
 
-    sdf_point_factor(h, &b->nlocal, &local_start);
+    sdf_point_factor(h, &b->nlocal);
 
     h->current_location = b->data_location;
 
@@ -176,8 +175,10 @@ int sdf_read_point_mesh(sdf_file_t *h)
     }
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) {
+#ifdef PARALLEL
             sdf_create_1d_distribution(h, b->npoints, b->nlocal,
-                    local_start);
+                    b->starts[0]);
+#endif
             sdf_helper_read_array(h, &b->grids[n], b->nlocal);
             sdf_free_distribution(h);
             sdf_convert_array_to_float(h, &b->grids[n], b->nlocal);
@@ -198,8 +199,9 @@ int sdf_read_point_mesh(sdf_file_t *h)
 
 
 
-int sdf_point_factor(sdf_file_t *h, int *local_npoints, int *local_start)
+int sdf_point_factor(sdf_file_t *h, int *local_npoints)
 {
+#ifdef PARALLEL
     sdf_block_t *b = h->current_block;
     int npoint_min, split_big;
 
@@ -207,13 +209,14 @@ int sdf_point_factor(sdf_file_t *h, int *local_npoints, int *local_start)
     split_big = b->npoints - h->ncpus * npoint_min;
 
     if (h->rank >= split_big) {
-        *local_start = split_big * (npoint_min + 1)
+        b->starts[0] = split_big * (npoint_min + 1)
             + (h->rank - split_big) * npoint_min;
         *local_npoints = npoint_min;
     } else {
-        *local_start = h->rank * (npoint_min + 1);
+        b->starts[0] = h->rank * (npoint_min + 1);
         *local_npoints = npoint_min + 1;
     }
+#endif
 
     return 0;
 }
@@ -223,17 +226,18 @@ int sdf_point_factor(sdf_file_t *h, int *local_npoints, int *local_start)
 int sdf_read_point_variable(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
-    int local_start;
     int n;
 
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_blocklist(h);
 
-    sdf_point_factor(h, &b->nlocal, &local_start);
+    sdf_point_factor(h, &b->nlocal);
 
     h->current_location = b->data_location;
 
-    sdf_create_1d_distribution(h, b->npoints, b->nlocal, local_start);
+#ifdef PARALLEL
+    sdf_create_1d_distribution(h, b->npoints, b->nlocal, b->starts[0]);
+#endif
     sdf_helper_read_array(h, &b->data, b->nlocal);
     sdf_free_distribution(h);
     sdf_convert_array_to_float(h, &b->data, b->nlocal);

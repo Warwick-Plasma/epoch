@@ -473,7 +473,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
 
 
 
-int sdf_factor(sdf_file_t *h, int *start)
+int sdf_factor(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
     int n;
@@ -495,9 +495,12 @@ int sdf_factor(sdf_file_t *h, int *start)
     // Return dimensions back to their original values
     for (n = 0; n < b->ndims; n++)
         b->dims[n] = old_dims[n];
+
+    sdf_get_domain_extents(h, h->rank, b->starts, b->local_dims);
+#else
+    for (n = 0; n < 3; n++) b->local_dims[n] = b->dims[n];
 #endif
 
-    sdf_get_domain_extents(h, h->rank, start, b->local_dims);
     b->nlocal = 1;
     for (n = 0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
 

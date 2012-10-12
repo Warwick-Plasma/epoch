@@ -268,7 +268,7 @@ struct sdf_block {
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;
-    int cpu_split[SDF_MAXDIMS];
+    int cpu_split[SDF_MAXDIMS], starts[SDF_MAXDIMS];
     int proc_min[3], proc_max[3];
 #endif
 };
@@ -323,7 +323,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local);
 
 // internal routines
 
-int sdf_factor(sdf_file_t *h, int *start);
+int sdf_factor(sdf_file_t *h);
 int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count);
 int sdf_randomize_array(sdf_file_t *h, void **var_in, int count);
 int sdf_set_rank_master(sdf_file_t *h, int rank);

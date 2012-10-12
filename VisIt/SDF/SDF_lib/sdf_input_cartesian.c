@@ -59,9 +59,6 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
-#ifdef PARALLEL
-    int local_start[SDF_MAXDIMS];
-#endif
 
     // Metadata is
     // - mult      REAL(r8)
@@ -87,7 +84,7 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
 #ifdef PARALLEL
     // Calculate per block parallel factorisation
     // This will be fixed up later once we have the whole block list.
-    sdf_factor(h, local_start);
+    sdf_factor(h);
 #else
     b->nlocal = 1;
     for (i=0; i < b->ndims; i++) {
@@ -134,7 +131,7 @@ static int sdf_plain_mesh_distribution(sdf_file_t *h)
 #ifdef PARALLEL
     sdf_block_t *b = h->current_block;
     int n;
-    int local_start[SDF_MAXDIMS], sizes[SDF_MAXDIMS];
+    int sizes[SDF_MAXDIMS];
 
     for (n=0; n < b->ndims; n++) {
         b->dims[n] -= 2 * b->ng;
@@ -142,10 +139,10 @@ static int sdf_plain_mesh_distribution(sdf_file_t *h)
         sizes[n] = b->dims[n];
     }
 
-    // Get local_start for creating subarray
-    sdf_factor(h, local_start);
+    // Get starts for creating subarray
+    sdf_factor(h);
 
-    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, local_start,
+    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, b->starts,
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 
@@ -185,7 +182,7 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
     int count;
 #ifdef PARALLEL
     MPI_Datatype distribution, facetype;
-    int subsizes[SDF_MAXDIMS], starts[SDF_MAXDIMS];
+    int subsizes[SDF_MAXDIMS];
     int face[SDF_MAXDIMS];
     int i, tag;
     uint64_t offset;
@@ -206,12 +203,12 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
 #ifdef PARALLEL
     for (i=0; i < b->ndims; i++) {
         subsizes[i] = b->local_dims[i] - 2 * b->ng;
-        starts[i] = b->ng;
+        b->starts[i] = b->ng;
     }
     for (i=b->ndims; i < SDF_MAXDIMS; i++)
         subsizes[i] = 1;
 
-    MPI_Type_create_subarray(b->ndims, b->local_dims, subsizes, starts,
+    MPI_Type_create_subarray(b->ndims, b->local_dims, subsizes, b->starts,
         MPI_ORDER_FORTRAN, b->mpitype, &distribution);
 
     MPI_Type_commit(&distribution);
@@ -228,16 +225,16 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
     // Swap ghostcell faces
     for (i=0; i < b->ndims; i++) {
         face[i] = b->local_dims[i] - 2 * b->ng;
-        starts[i] = b->ng;
+        b->starts[i] = b->ng;
     }
 
     tag = 1;
     offset = b->type_size;
     for (i=0; i < b->ndims; i++) {
         face[i] = b->ng;
-        starts[i] = 0;
+        b->starts[i] = 0;
 
-        MPI_Type_create_subarray(b->ndims, b->local_dims, face, starts,
+        MPI_Type_create_subarray(b->ndims, b->local_dims, face, b->starts,
             MPI_ORDER_FORTRAN, b->mpitype, &facetype);
         MPI_Type_commit(&facetype);
 
@@ -378,13 +375,12 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
 int sdf_read_plain_mesh(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
-    int local_start[SDF_MAXDIMS];
     int n;
 
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_blocklist(h);
 
-    sdf_factor(h, local_start);
+    sdf_factor(h);
 
     h->current_location = b->data_location;
 
@@ -400,8 +396,10 @@ int sdf_read_plain_mesh(sdf_file_t *h)
     }
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) {
+#ifdef PARALLEL
             sdf_create_1d_distribution(h, b->dims[n], b->local_dims[n],
-                    local_start[n]);
+                    b->starts[n]);
+#endif
             sdf_helper_read_array(h, &b->grids[n], b->local_dims[n]);
             sdf_free_distribution(h);
             if (h->print) {
