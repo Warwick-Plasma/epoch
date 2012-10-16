@@ -104,7 +104,11 @@ PROGRAM pic
 
   CALL particle_bcs
   CALL efield_bcs
-  CALL bfield_final_bcs
+  IF (ic_from_restart) THEN
+    CALL bfield_bcs(.TRUE.)
+  ELSE
+    CALL bfield_final_bcs
+  ENDIF
 
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration

@@ -11,7 +11,7 @@ MODULE balance
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_z_min, new_cell_z_max
-  LOGICAL :: first
+  LOGICAL :: overriding
 
 CONTAINS
 
@@ -63,7 +63,7 @@ CONTAINS
       IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
 
-    first = over_ride
+    overriding = over_ride
 
     ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
     ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
@@ -265,7 +265,7 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims,2), INTENT(IN) :: new_domain
     REAL(num), DIMENSION(:,:,:,:), ALLOCATABLE :: temp_sum
     REAL(r4), DIMENSION(:,:,:,:), ALLOCATABLE :: r4temp_sum
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp, temp2
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp_slice
     TYPE(laser_block), POINTER :: current
     INTEGER :: i, ispecies, io, id, nspec_local, mask
@@ -274,22 +274,6 @@ CONTAINS
     ny_new = new_domain(2,2) - new_domain(2,1) + 1
     nz_new = new_domain(3,2) - new_domain(3,1) + 1
 
-    ! Current will be recalculated during the particle push, so there
-    ! is no need to copy the contents of the old arrays.
-
-    DEALLOCATE(jx)
-    DEALLOCATE(jy)
-    DEALLOCATE(jz)
-    ALLOCATE(jx(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
-    ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
-    ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
-
-    IF (first) THEN
-      jx = 0.0_num
-      jy = 0.0_num
-      jz = 0.0_num
-    ENDIF
-
     ! The following code is quite messy and repetitive. Unfortunately, the
     ! F90 standard does not allow the ALLOCATABLE attribute for subroutine
     ! arguments and POINTER arrays are not as fast.
@@ -297,6 +281,47 @@ CONTAINS
     ! Full domain arrays
 
     ALLOCATE(temp(-2:nx_new+3, -2:ny_new+3, -2:nz_new+3))
+
+    ! Current will be recalculated during the particle push, so there
+    ! is no need to copy the contents of the old arrays.
+    ! If overriding, then we may not be doing a particle push next
+    ! so we still have to balance the arrays.
+    ! It is done slightly differently since the arrays may be
+    ! a different size.
+
+    IF (overriding) THEN
+      ALLOCATE(temp2(-2:nx+3, -2:ny+3, -2:nz+3))
+
+      temp2(0:nx+1, 0:ny+1, 0:nz+1) = jx(0:nx+1, 0:ny+1, 0:nz+1)
+      CALL remap_field(temp2, temp)
+      DEALLOCATE(jx)
+      ALLOCATE(jx(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+      jx(0:nx_new+1, 0:ny_new+1, 0:nz_new+1) = &
+          temp(0:nx_new+1, 0:ny_new+1, 0:nz_new+1)
+
+      temp2(0:nx+1, 0:ny+1, 0:nz+1) = jy(0:nx+1, 0:ny+1, 0:nz+1)
+      CALL remap_field(temp2, temp)
+      DEALLOCATE(jy)
+      ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+      jy(0:nx_new+1, 0:ny_new+1, 0:nz_new+1) = &
+          temp(0:nx_new+1, 0:ny_new+1, 0:nz_new+1)
+
+      temp2(0:nx+1, 0:ny+1, 0:nz+1) = jz(0:nx+1, 0:ny+1, 0:nz+1)
+      CALL remap_field(temp2, temp)
+      DEALLOCATE(jz)
+      ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+      jz(0:nx_new+1, 0:ny_new+1, 0:nz_new+1) = &
+          temp(0:nx_new+1, 0:ny_new+1, 0:nz_new+1)
+
+      DEALLOCATE(temp2)
+    ELSE
+      DEALLOCATE(jx)
+      DEALLOCATE(jy)
+      DEALLOCATE(jz)
+      ALLOCATE(jx(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+      ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+      ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+    ENDIF
 
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
