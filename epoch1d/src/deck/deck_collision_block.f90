@@ -74,8 +74,8 @@ CONTAINS
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     ! Performed on second parse to ensure that species are set up first.
-    IF (deck_state .NE. c_ds_first) THEN
-      IF (str_cmp(element, 'collide')) THEN
+    IF (str_cmp(element, 'collide')) THEN
+      IF (deck_state .NE. c_ds_first) THEN
         CALL set_collision_matrix(TRIM(ADJUSTL(value)), errcode)
       ENDIF
       RETURN
