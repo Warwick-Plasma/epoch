@@ -145,55 +145,73 @@ CONTAINS
 
     CALL setup_communicator
 
-    nx_global = nx_global + 2 * cpml_thickness
-    ny_global = ny_global + 2 * cpml_thickness
-
-    nx0 = nx_global / nprocx
-    ny0 = ny_global / nprocy
-
-    nx  = nx0
-    ny  = ny0
-
-    ! If the number of gridpoints cannot be exactly subdivided then fix
-    ! The first nxp processors have nx0 grid points
-    ! The remaining processors have nx0+1 grid points
-    IF (nx * nprocx .NE. nx_global) THEN
-      nxp = (nx + 1) * nprocx - nx_global
-      IF (x_coords .GE. nxp) nx = nx + 1
-    ELSE
-      nxp = nprocx
-    ENDIF
-
-    IF (ny * nprocy .NE. ny_global) THEN
-      nyp = (ny + 1) * nprocy - ny_global
-      IF (y_coords .GE. nyp) ny = ny + 1
-    ELSE
-      nyp = nprocy
-    ENDIF
-
     ALLOCATE(npart_each_rank(nproc))
     ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
     ALLOCATE(y_mins(0:nprocy-1), y_maxs(0:nprocy-1))
     ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
     ALLOCATE(cell_y_min(nprocy), cell_y_max(nprocy))
 
-    DO idim = 1, nxp
-      cell_x_min(idim) = (idim - 1) * nx0 + 1
-      cell_x_max(idim) = idim * nx0
-    ENDDO
-    DO idim = nxp + 1, nprocx
-      cell_x_min(idim) = nxp * nx0 + (idim - nxp - 1) * (nx0 + 1) + 1
-      cell_x_max(idim) = nxp * nx0 + (idim - nxp) * (nx0 + 1)
-    ENDDO
+    nx_global = nx_global + 2 * cpml_thickness
+    ny_global = ny_global + 2 * cpml_thickness
 
-    DO idim = 1, nyp
-      cell_y_min(idim) = (idim - 1) * ny0 + 1
-      cell_y_max(idim) = idim * ny0
-    ENDDO
-    DO idim = nyp + 1, nprocy
-      cell_y_min(idim) = nyp * ny0 + (idim - nyp - 1) * (ny0 + 1) + 1
-      cell_y_max(idim) = nyp * ny0 + (idim - nyp) * (ny0 + 1)
-    ENDDO
+    IF (use_exact_restart) THEN
+      old_x_max(nprocx) = nx_global
+      cell_x_max = old_x_max
+      DEALLOCATE(old_x_max)
+
+      old_y_max(nprocy) = ny_global
+      cell_y_max = old_y_max
+      DEALLOCATE(old_y_max)
+
+      cell_x_min(1) = 1
+      DO idim = 2, nprocx
+        cell_x_min(idim) = cell_x_max(idim-1) + 1
+      ENDDO
+
+      cell_y_min(1) = 1
+      DO idim = 2, nprocy
+        cell_y_min(idim) = cell_y_max(idim-1) + 1
+      ENDDO
+    ELSE
+      nx0 = nx_global / nprocx
+      ny0 = ny_global / nprocy
+
+      ! If the number of gridpoints cannot be exactly subdivided then fix
+      ! The first nxp processors have nx0 grid points
+      ! The remaining processors have nx0+1 grid points
+      IF (nx0 * nprocx .NE. nx_global) THEN
+        nxp = (nx0 + 1) * nprocx - nx_global
+      ELSE
+        nxp = nprocx
+      ENDIF
+
+      IF (ny0 * nprocy .NE. ny_global) THEN
+        nyp = (ny0 + 1) * nprocy - ny_global
+      ELSE
+        nyp = nprocy
+      ENDIF
+
+      DO idim = 1, nxp
+        cell_x_min(idim) = (idim - 1) * nx0 + 1
+        cell_x_max(idim) = idim * nx0
+      ENDDO
+      DO idim = nxp + 1, nprocx
+        cell_x_min(idim) = nxp * nx0 + (idim - nxp - 1) * (nx0 + 1) + 1
+        cell_x_max(idim) = nxp * nx0 + (idim - nxp) * (nx0 + 1)
+      ENDDO
+
+      DO idim = 1, nyp
+        cell_y_min(idim) = (idim - 1) * ny0 + 1
+        cell_y_max(idim) = idim * ny0
+      ENDDO
+      DO idim = nyp + 1, nprocy
+        cell_y_min(idim) = nyp * ny0 + (idim - nyp - 1) * (ny0 + 1) + 1
+        cell_y_max(idim) = nyp * ny0 + (idim - nyp) * (ny0 + 1)
+      ENDDO
+    ENDIF
+
+    nx = cell_x_max(x_coords+1) - cell_x_min(x_coords+1) + 1
+    ny = cell_y_max(y_coords+1) - cell_y_min(y_coords+1) + 1
 
     subtype_field = 0
 

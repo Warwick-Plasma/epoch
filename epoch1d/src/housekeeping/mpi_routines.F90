@@ -92,34 +92,44 @@ CONTAINS
 
     CALL setup_communicator
 
-    nx_global = nx_global + 2 * cpml_thickness
-
-    nx0 = nx_global / nprocx
-
-    nx  = nx0
-
-    ! If the number of gridpoints cannot be exactly subdivided then fix
-    ! The first nxp processors have nx0 grid points
-    ! The remaining processors have nx0+1 grid points
-    IF (nx * nprocx .NE. nx_global) THEN
-      nxp = (nx + 1) * nprocx - nx_global
-      IF (x_coords .GE. nxp) nx = nx + 1
-    ELSE
-      nxp = nprocx
-    ENDIF
-
     ALLOCATE(npart_each_rank(nproc))
     ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
     ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
 
-    DO idim = 1, nxp
-      cell_x_min(idim) = (idim - 1) * nx0 + 1
-      cell_x_max(idim) = idim * nx0
-    ENDDO
-    DO idim = nxp + 1, nprocx
-      cell_x_min(idim) = nxp * nx0 + (idim - nxp - 1) * (nx0 + 1) + 1
-      cell_x_max(idim) = nxp * nx0 + (idim - nxp) * (nx0 + 1)
-    ENDDO
+    nx_global = nx_global + 2 * cpml_thickness
+
+    IF (use_exact_restart) THEN
+      old_x_max(nprocx) = nx_global
+      cell_x_max = old_x_max
+      DEALLOCATE(old_x_max)
+
+      cell_x_min(1) = 1
+      DO idim = 2, nprocx
+        cell_x_min(idim) = cell_x_max(idim-1) + 1
+      ENDDO
+    ELSE
+      nx0 = nx_global / nprocx
+
+      ! If the number of gridpoints cannot be exactly subdivided then fix
+      ! The first nxp processors have nx0 grid points
+      ! The remaining processors have nx0+1 grid points
+      IF (nx0 * nprocx .NE. nx_global) THEN
+        nxp = (nx0 + 1) * nprocx - nx_global
+      ELSE
+        nxp = nprocx
+      ENDIF
+
+      DO idim = 1, nxp
+        cell_x_min(idim) = (idim - 1) * nx0 + 1
+        cell_x_max(idim) = idim * nx0
+      ENDDO
+      DO idim = nxp + 1, nprocx
+        cell_x_min(idim) = nxp * nx0 + (idim - nxp - 1) * (nx0 + 1) + 1
+        cell_x_max(idim) = nxp * nx0 + (idim - nxp) * (nx0 + 1)
+      ENDDO
+    ENDIF
+
+    nx = cell_x_max(x_coords+1) - cell_x_min(x_coords+1) + 1
 
     subtype_field = 0
 

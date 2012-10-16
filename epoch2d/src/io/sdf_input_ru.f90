@@ -128,6 +128,7 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     TYPE(sdf_block_type), POINTER :: b
+    INTEGER(i4) :: info_length
 
     IF (.NOT. ASSOCIATED(h%current_block)) THEN
       IF (h%rank .EQ. h%rank_master) THEN
@@ -161,6 +162,9 @@ CONTAINS
     CALL read_entry_int4(h, b%ndims)
 
     CALL read_entry_string(h, b%name)
+
+    CALL read_entry_int4(h, info_length)
+    b%info_length = INT(info_length,i8)
 
     b%done_header = .TRUE.
 

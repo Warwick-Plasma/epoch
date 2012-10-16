@@ -21,6 +21,7 @@ MODULE setup
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files, flush_stat_file
   PUBLIC :: setup_species, after_deck_last, set_dt
+  PUBLIC :: read_cpu_split
 
   TYPE(particle), POINTER, SAVE :: iterator_list
   CHARACTER(LEN=11+data_dir_max_length), SAVE :: stat_file
@@ -696,9 +697,12 @@ CONTAINS
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
     INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, geometry
     INTEGER(i8) :: npart, npart_local
+    INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
+    INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     REAL(num), DIMENSION(2*c_ndims) :: extents
     LOGICAL :: restart_flag, got_full
+    LOGICAL, ALLOCATABLE :: species_found(:)
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
 #if PARTICLE_ID || PARTICLE_ID4
@@ -783,35 +787,61 @@ CONTAINS
 
     CALL sdf_read_blocklist(sdf_handle)
 
+    ALLOCATE(nparts(n_species))
+    ALLOCATE(npart_locals(n_species))
+    ALLOCATE(species_found(n_species))
+    nparts = 0
+    npart_locals = 0
+    species_found = .FALSE.
+
     ! Scan file for particle species and allocate storage
+    ! Both particle grids and CPU split blocks are interrogated. CPU split
+    ! blocks take precedence if found and "use_exact_restart" is set.
     DO iblock = 1, nblocks
       CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
           ndims, datatype)
 
-      IF (blocktype .EQ. c_blocktype_point_mesh) THEN
+      IF (blocktype .EQ. c_blocktype_cpu_split) THEN
+        IF (.NOT.use_exact_restart .OR. datatype .NE. c_datatype_integer8) CYCLE
+      ELSE IF (blocktype .NE. c_blocktype_point_mesh) THEN
+        CYCLE
+      ENDIF
+
+      CALL find_species_by_name(name, ispecies)
+      IF (ispecies .EQ. 0) THEN
+        IF (rank .EQ. 0) THEN
+          CALL strip_species_name(name, i1, i2)
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Particle species "', name(i1:i2), '" from restart dump ', &
+              'not found in input deck. Ignoring.'
+        ENDIF
+        CYCLE
+      ENDIF
+
+      IF (species_found(ispecies)) CYCLE
+
+      species => species_list(ispecies)
+
+      IF (blocktype .EQ. c_blocktype_cpu_split) THEN
+        CALL sdf_read_cpu_split_info(sdf_handle, dims, geometry)
+
+        ALLOCATE(npart_proc(dims(1)))
+        CALL sdf_read_srl_cpu_split(sdf_handle, npart_proc)
+
+        npart = 0
+        DO i = 1,dims(1)
+          npart = npart + npart_proc(i)
+        ENDDO
+        npart_local = npart_proc(rank+1)
+        DEALLOCATE(npart_proc)
+
+        npart_locals(ispecies) = npart_local
+        nparts(ispecies) = npart
+        species_found(ispecies) = .TRUE.
+      ELSE IF (blocktype .EQ. c_blocktype_point_mesh) THEN
         CALL sdf_read_point_mesh_info(sdf_handle, npart)
 
-        CALL find_species_by_name(name, ispecies)
-        IF (ispecies .EQ. 0) THEN
-          IF (rank .EQ. 0) THEN
-            CALL strip_species_name(name, i1, i2)
-            PRINT*, '*** WARNING ***'
-            PRINT*, 'Particle species "', name(i1:i2), '" from restart dump ', &
-                'not found in input deck. Ignoring.'
-          ENDIF
-          CYCLE
-        ENDIF
-        species => species_list(ispecies)
-
-        IF (ASSOCIATED(species%attached_list%head)) THEN
-          IF (rank .EQ. 0) THEN
-            CALL strip_species_name(name, i1, i2)
-            PRINT*, '*** ERROR ***'
-            PRINT*, 'Duplicate meshes for species "', name(i1:i2),'"'
-          ENDIF
-          CALL MPI_ABORT(comm, errcode, ierr)
-          STOP
-        ENDIF
+        nparts(ispecies) = npart
 
         npart_local = npart / nproc
         IF (npart_local * nproc .NE. npart) THEN
@@ -819,12 +849,24 @@ CONTAINS
               npart_local = npart_local + 1
         ENDIF
 
-        CALL create_allocated_partlist(species%attached_list, npart_local)
-
-        npart_global = npart_global + npart
-        species%count = npart
+        npart_locals(ispecies) = npart_local
       ENDIF
     ENDDO
+
+    DEALLOCATE(species_found)
+
+    ! Do the species allocation
+    DO ispecies = 1, n_species
+      species => species_list(ispecies)
+      npart_local = npart_locals(ispecies)
+
+      CALL create_allocated_partlist(species%attached_list, npart_local)
+
+      npart_global = npart_global + nparts(ispecies)
+      species%count = nparts(ispecies)
+    ENDDO
+
+    DEALLOCATE(nparts, npart_locals)
 
     CALL create_subtypes_for_load(species_subtypes)
 
@@ -835,6 +877,14 @@ CONTAINS
           ndims, datatype)
 
       SELECT CASE(blocktype)
+      CASE(c_blocktype_array)
+        IF (use_exact_restart .AND. need_random_state &
+            .AND. str_cmp(block_id, 'random_states')) THEN
+          ALLOCATE(random_states_per_proc(4*nproc))
+          CALL sdf_read_srl(sdf_handle, random_states_per_proc)
+          CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
+          DEALLOCATE(random_states_per_proc)
+        ENDIF
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
@@ -1067,6 +1117,85 @@ CONTAINS
     CALL setup_grid
 
   END SUBROUTINE restart_data
+
+
+
+  SUBROUTINE read_cpu_split
+
+    CHARACTER(LEN=20+data_dir_max_length) :: filename
+    CHARACTER(LEN=c_id_length) :: code_name, block_id
+    CHARACTER(LEN=c_max_string_length) :: name
+    INTEGER :: ierr, step, code_io_version, string_len, nblocks, ndims
+    INTEGER :: blocktype, geometry, iblock, npx, npy, npz
+    INTEGER, DIMENSION(4) :: dims
+    LOGICAL :: restart_flag
+    TYPE(sdf_file_handle) :: sdf_handle
+
+    ! Create the filename for the last snapshot
+    WRITE(filename, '(a, ''/'', i4.4, ''.sdf'')') TRIM(data_dir), &
+        restart_snapshot
+    CALL sdf_open(sdf_handle, filename, MPI_COMM_WORLD, c_sdf_read)
+
+    CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
+        string_len, restart_flag)
+
+    IF (.NOT. restart_flag) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'SDF file is not a restart dump. Unable to continue.'
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      STOP
+    ENDIF
+
+    IF (.NOT.str_cmp(code_name, 'Epoch3d')) THEN
+      IF (rank .EQ. 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'SDF restart file was not generated by Epoch3d. Unable to ', &
+            'continue.'
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      STOP
+    ENDIF
+
+    nblocks = sdf_read_nblocks(sdf_handle)
+
+    CALL sdf_read_blocklist(sdf_handle)
+
+    DO iblock = 1, nblocks
+      CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
+          ndims)
+
+      IF (blocktype .EQ. c_blocktype_cpu_split) THEN
+        CALL sdf_read_cpu_split_info(sdf_handle, dims, geometry)
+        npx = dims(1) + 1
+        npy = dims(2) + 1
+        npz = dims(3) + 1
+        IF (npx * npy * npz .EQ. nproc) THEN
+          nprocx = npx
+          nprocy = npy
+          nprocz = npz
+          ALLOCATE(old_x_max(nprocx))
+          ALLOCATE(old_y_max(nprocy))
+          ALLOCATE(old_z_max(nprocz))
+          CALL sdf_read_srl_cpu_split(sdf_handle, old_x_max, old_y_max, &
+              old_z_max)
+          EXIT
+        ELSE
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** WARNING ***'
+            PRINT'('' SDF restart file was generated using'', &
+                & i4,'' CPUs.'')', npx * npy * npz
+            PRINT*, 'Ignoring "use_exact_restart" flag.'
+          ENDIF
+          use_exact_restart = .FALSE.
+        ENDIF
+      ENDIF
+    ENDDO
+
+    CALL sdf_close(sdf_handle)
+
+  END SUBROUTINE read_cpu_split
 
 
 

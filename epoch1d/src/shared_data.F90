@@ -794,6 +794,7 @@ MODULE shared_data
 
   LOGICAL :: ic_from_restart = .FALSE.
   LOGICAL :: need_random_state
+  LOGICAL :: use_exact_restart
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_snapshot
 
@@ -869,6 +870,7 @@ MODULE shared_data
   REAL(num), DIMENSION(:), ALLOCATABLE :: xb_offset_global
   ! The location of the processors
   INTEGER, DIMENSION(:), ALLOCATABLE :: cell_x_min, cell_x_max
+  INTEGER, DIMENSION(:), ALLOCATABLE :: old_x_max
   INTEGER :: nx_global_min, nx_global_max
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
