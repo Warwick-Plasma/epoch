@@ -319,7 +319,7 @@ CONTAINS
               'base64_packed_source_code', source_code, last_line, 0)
     ENDIF
 
-    IF (IAND(dumpmask(c_dump_absorption), code) .NE. 0) THEN
+    IF (IAND(iomask(c_dump_absorption), code) .NE. 0) THEN
       CALL MPI_ALLREDUCE(laser_absorb_local, laser_absorbed, 1, mpireal, &
           MPI_SUM, comm, errcode)
       CALL MPI_ALLREDUCE(laser_inject_local, laser_injected, 1, mpireal, &
@@ -964,9 +964,10 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: fluxdir
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: should_dump, ndirs, idir
+    INTEGER :: should_dump, subtype, subarray, ndirs, idir
     CHARACTER(LEN=c_id_length) :: temp_block_id
     CHARACTER(LEN=c_max_string_length) :: temp_name
+    LOGICAL :: convert
 
     INTERFACE
       SUBROUTINE func(data_array, direction)
@@ -976,7 +977,7 @@ CONTAINS
       END SUBROUTINE func
     END INTERFACE
 
-    IF (IAND(dumpmask(id), code) .EQ. 0) RETURN
+    IF (IAND(iomask(id), code) .EQ. 0) RETURN
 
     ndirs = SIZE(fluxdir)
     dims = (/nx_global, ny_global, nz_global/)
@@ -985,18 +986,29 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
+    convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+        .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+        .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
 
-    IF (IAND(dumpmask(id), should_dump) .NE. 0) THEN
+    IF (convert) THEN
+      subtype  = subtype_field_r4
+      subarray = subarray_field_r4
+    ELSE
+      subtype  = subtype_field
+      subarray = subarray_field
+    ENDIF
+
+    IF (IAND(iomask(id), should_dump) .NE. 0) THEN
       DO idir = 1, ndirs
-        WRITE(temp_block_id, '(a, ''_'', a)') TRIM(block_id), &
+        temp_block_id = TRIM(block_id) // '/' // &
             TRIM(dir_tags(idir))
-        WRITE(temp_name, '(a, ''_'', a)') TRIM(name), &
+        temp_name = 'Derived/' // TRIM(name) // '/' // &
             TRIM(dir_tags(idir))
         CALL func(array, fluxdir(idir))
         CALL sdf_write_plain_variable(sdf_handle, &
             TRIM(ADJUSTL(temp_block_id)), TRIM(ADJUSTL(temp_name)), &
             TRIM(units), dims, stagger, 'grid', &
-            array, subtype_field, subarray_field)
+            array, subtype, subarray, convert)
       ENDDO
     ENDIF
 
@@ -1058,9 +1070,9 @@ CONTAINS
         IF (npart_global .EQ. 0) RETURN
 
         DO idir = 1, ndirs
-          temp_block_id = TRIM(block_id) // '_' // &
+          temp_block_id = TRIM(block_id) // '/' // &
               TRIM(dir_tags(idir))
-          temp_name = 'Derived/' // TRIM(name) // '_' // &
+          temp_name = 'Derived/' // TRIM(name) // '/' // &
               TRIM(dir_tags(idir))
           CALL func(array, 0, fluxdir(idir))
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
