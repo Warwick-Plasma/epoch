@@ -46,6 +46,7 @@ MODULE sdf
   PUBLIC :: c_blocktype_cpu_split
   PUBLIC :: c_blocktype_stitched_obstacle_group
   PUBLIC :: c_blocktype_stitched
+  PUBLIC :: c_blocktype_max
 
   PUBLIC :: c_datatype_null
   PUBLIC :: c_datatype_integer4
@@ -56,6 +57,7 @@ MODULE sdf
   PUBLIC :: c_datatype_character
   PUBLIC :: c_datatype_logical
   PUBLIC :: c_datatype_other
+  PUBLIC :: c_datatype_max
 
   PUBLIC :: c_geometry_null
   PUBLIC :: c_geometry_cartesian
@@ -75,6 +77,9 @@ MODULE sdf
   PUBLIC :: c_stagger_edge_y
   PUBLIC :: c_stagger_edge_z
   PUBLIC :: c_stagger_vertex
+
+  PUBLIC :: c_blocktypes_char
+  PUBLIC :: c_datatypes_char
 
   PUBLIC :: sdf_open
   PUBLIC :: sdf_close

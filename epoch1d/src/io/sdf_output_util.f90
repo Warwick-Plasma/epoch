@@ -15,6 +15,8 @@ CONTAINS
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
+    IF (.NOT.ASSOCIATED(h%current_block)) RETURN
+
     b => h%current_block
 
     h%summary_location = b%next_block_location

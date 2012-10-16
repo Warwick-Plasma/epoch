@@ -103,6 +103,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_unstructured_mesh = 22
   INTEGER(i4), PARAMETER :: c_blocktype_stitched = 23
   INTEGER(i4), PARAMETER :: c_blocktype_contiguous = 24
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 24
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
@@ -113,6 +114,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_datatype_character = 6
   INTEGER(i4), PARAMETER :: c_datatype_logical = 7
   INTEGER(i4), PARAMETER :: c_datatype_other = 8
+  INTEGER(i4), PARAMETER :: c_datatype_max = 8
 
   INTEGER(i4), PARAMETER :: c_geometry_null = 0
   INTEGER(i4), PARAMETER :: c_geometry_cartesian = 1
@@ -189,6 +191,45 @@ MODULE sdf_common
   INTEGER, PARAMETER :: c_err_unsupported_datarep = 19
   INTEGER, PARAMETER :: c_err_unsupported_operation = 20
   INTEGER, PARAMETER :: c_err_unknown = 21
+
+  CHARACTER(LEN=*), PARAMETER :: c_blocktypes_char(-1:c_blocktype_max) = (/ &
+      'SDF_BLOCKTYPE_SCRUBBED               ', &
+      'SDF_BLOCKTYPE_NULL                   ', &
+      'SDF_BLOCKTYPE_PLAIN_MESH             ', &
+      'SDF_BLOCKTYPE_POINT_MESH             ', &
+      'SDF_BLOCKTYPE_PLAIN_VARIABLE         ', &
+      'SDF_BLOCKTYPE_POINT_VARIABLE         ', &
+      'SDF_BLOCKTYPE_CONSTANT               ', &
+      'SDF_BLOCKTYPE_ARRAY                  ', &
+      'SDF_BLOCKTYPE_RUN_INFO               ', &
+      'SDF_BLOCKTYPE_SOURCE                 ', &
+      'SDF_BLOCKTYPE_STITCHED_TENSOR        ', &
+      'SDF_BLOCKTYPE_STITCHED_MATERIAL      ', &
+      'SDF_BLOCKTYPE_STITCHED_MATVAR        ', &
+      'SDF_BLOCKTYPE_STITCHED_SPECIES       ', &
+      'SDF_BLOCKTYPE_SPECIES                ', &
+      'SDF_BLOCKTYPE_PLAIN_DERIVED          ', &
+      'SDF_BLOCKTYPE_POINT_DERIVED          ', &
+      'SDF_BLOCKTYPE_MULTI_TENSOR           ', &
+      'SDF_BLOCKTYPE_MULTI_MATERIAL         ', &
+      'SDF_BLOCKTYPE_MULTI_MATVAR           ', &
+      'SDF_BLOCKTYPE_MULTI_SPECIES          ', &
+      'SDF_BLOCKTYPE_CPU_SPLIT              ', &
+      'SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP', &
+      'SDF_BLOCKTYPE_UNSTRUCTURED_MESH      ', &
+      'SDF_BLOCKTYPE_STITCHED               ', &
+      'SDF_BLOCKTYPE_CONTIGUOUS             ' /)
+
+  CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
+      'SDF_DATATYPE_NULL     ', &
+      'SDF_DATATYPE_INTEGER4 ', &
+      'SDF_DATATYPE_INTEGER8 ', &
+      'SDF_DATATYPE_REAL4    ', &
+      'SDF_DATATYPE_REAL8    ', &
+      'SDF_DATATYPE_REAL16   ', &
+      'SDF_DATATYPE_CHARACTER', &
+      'SDF_DATATYPE_LOGICAL  ', &
+      'SDF_DATATYPE_OTHER    ' /)
 
 CONTAINS
 
