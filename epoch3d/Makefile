@@ -8,10 +8,11 @@
 
 # Intel
 # =====
-FFLAGS = -O3 -heap-arrays 64 -ipo -xHost # Optimised (B)
+FFLAGS = -O3
+#FFLAGS = -O3 -heap-arrays 64 -ipo -xHost # Optimised (B)
 #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
 #FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-#         -C -g -heap-arrays 64 -warn                   # Debug
+#         -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
 MODULEFLAG = -module $(OBJDIR)
 
 # gfortran
