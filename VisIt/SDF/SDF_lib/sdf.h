@@ -412,9 +412,19 @@ int sdf_read_point_variable_info(sdf_file_t *h);
                     SDF_PRNT("%c", arr[_d]); \
                 } \
             } \
-        } else { \
+        } else if (b->datatype_out == SDF_DATATYPE_INTEGER4) { \
             int *arr = (a); \
             SDF_PRNT("i4 "); \
+            _d=0; while (_d<(len)) { \
+                SDF_PRNT("\n%i ",_d); \
+                for (_i=0; _i < 10; _i++, _d++) { \
+                    if (_d == (len)) break; \
+                    SDF_PRNT(" %i", arr[_d]); \
+                } \
+            } \
+        } else if (b->datatype_out == SDF_DATATYPE_INTEGER8) { \
+            uint64_t *arr = (a); \
+            SDF_PRNT("i8 "); \
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
                 for (_i=0; _i < 10; _i++, _d++) { \
