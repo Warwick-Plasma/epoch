@@ -628,7 +628,7 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, found_species, geometry
+    INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, geometry
     INTEGER(i8) :: npart, npart_local
     INTEGER, DIMENSION(4) :: dims
     REAL(num), DIMENSION(2*c_ndims) :: extents
@@ -718,7 +718,6 @@ CONTAINS
     CALL sdf_read_blocklist(sdf_handle)
 
     ! Scan file for particle species and allocate storage
-    found_species = 0
     DO iblock = 1, nblocks
       CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
           ndims, datatype)
@@ -758,7 +757,6 @@ CONTAINS
 
         npart_global = npart_global + npart
         species%count = npart
-        found_species = found_species + 1
       ENDIF
     ENDDO
 
