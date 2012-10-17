@@ -45,7 +45,6 @@ CONTAINS
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when writing data
     INTEGER, INTENT(IN) :: dump_code
-    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_local
     INTEGER :: n_dump_species, ispecies, index
 
     ! count the number of dumped particles of each species
@@ -57,17 +56,6 @@ CONTAINS
       ENDIF
     ENDDO
 
-    ALLOCATE(npart_local(n_dump_species))
-    index = 1
-    DO ispecies = 1, n_species
-      IF (IAND(species_list(ispecies)%dumpmask, dump_code) .NE. 0 &
-          .OR. IAND(dump_code, c_io_restartable) .NE. 0) THEN
-        npart_local(index) = species_list(ispecies)%attached_list%count
-        particle_file_lengths(index) = npart_local(index)
-        index = index + 1
-      ENDIF
-    ENDDO
-
     ! Actually create the subtypes
     subtype_field = create_current_field_subtype()
     subarray_field = create_current_field_subarray(ng)
@@ -76,10 +64,6 @@ CONTAINS
     subtype_field_r4 = create_current_field_subtype(MPI_REAL4)
     subarray_field_r4 = create_current_field_subarray(ng, MPI_REAL4)
     subarray_field_big_r4 = create_current_field_subarray(jng, MPI_REAL4)
-
-    CALL create_ordered_particle_offsets(n_dump_species, npart_local)
-
-    DEALLOCATE(npart_local)
 
   END SUBROUTINE create_subtypes
 
@@ -265,47 +249,6 @@ CONTAINS
     CALL MPI_TYPE_COMMIT(subtype, errcode)
 
   END FUNCTION create_particle_subtype
-
-
-
-  !----------------------------------------------------------------------------
-  ! create_ordered_particle_offsets - Creates an array of offsets representing
-  ! the local particles
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE create_ordered_particle_offsets(n_dump_species, npart_local)
-
-    INTEGER, INTENT(IN) :: n_dump_species
-    INTEGER(i8), DIMENSION(n_dump_species), INTENT(IN) :: npart_local
-    INTEGER(i8), DIMENSION(:,:), ALLOCATABLE :: npart_each_rank
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip
-    INTEGER :: ispecies, i
-
-    ALLOCATE(npart_each_rank(n_dump_species, nproc))
-
-    ! Create the subarray for the particles in this problem: subtype decribes
-    ! where this process's data fits into the global picture.
-    CALL MPI_ALLGATHER(npart_local, n_dump_species, MPI_INTEGER8, &
-        npart_each_rank, n_dump_species, MPI_INTEGER8, comm, errcode)
-
-    ! If npart_local is bigger than an integer then the data will not
-    ! get written properly. This would require about 48GB per processor
-    ! so it is unlikely to be a problem any time soon.
-
-    particles_to_skip = 0
-    DO ispecies = 1, n_dump_species
-      DO i = 1, rank
-        particles_to_skip = particles_to_skip + npart_each_rank(ispecies,i)
-      ENDDO
-      particle_file_offsets(ispecies) = particles_to_skip
-      DO i = rank+1, nproc
-        particles_to_skip = particles_to_skip + npart_each_rank(ispecies,i)
-      ENDDO
-    ENDDO
-
-    DEALLOCATE(npart_each_rank)
-
-  END SUBROUTINE create_ordered_particle_offsets
 
 
 

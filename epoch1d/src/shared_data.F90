@@ -903,8 +903,6 @@ MODULE shared_data
 
   REAL(num) :: walltime_start
   INTEGER :: stdout_frequency
-  INTEGER(KIND=MPI_OFFSET_KIND), DIMENSION(:), ALLOCATABLE :: &
-      particle_file_lengths, particle_file_offsets
 
   LOGICAL, DIMENSION(c_dir_x:c_dir_z,0:c_stagger_max) :: stagger
   INTEGER(i8) :: push_per_field = 5

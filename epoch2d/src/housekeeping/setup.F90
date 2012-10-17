@@ -288,8 +288,6 @@ CONTAINS
 
     ALLOCATE(species_list(n_species))
     ALLOCATE(io_list_data(n_species))
-    ALLOCATE(particle_file_lengths(n_species))
-    ALLOCATE(particle_file_offsets(n_species))
     io_list => species_list
 
     DO ispecies = 1, n_species
