@@ -768,8 +768,7 @@ CONTAINS
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN
       IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
           .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-        CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        CALL build_species_subset
 
         IF (isubset .EQ. 1) THEN
           temp_block_id = TRIM(block_id)
@@ -787,8 +786,7 @@ CONTAINS
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
-        CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        CALL build_species_subset
 
         len1 = LEN_TRIM(block_id) + 1
         len2 = LEN_TRIM(name) + 9
@@ -1051,8 +1049,7 @@ CONTAINS
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN
       IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
           .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-        CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        CALL build_species_subset
 
         DO idir = 1, ndirs
           temp_block_id = TRIM(block_id) // '/' // &
@@ -1067,8 +1064,7 @@ CONTAINS
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
-        CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        CALL build_species_subset
 
         len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 2
         len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 10
@@ -1312,9 +1308,6 @@ CONTAINS
 
     id = c_dump_part_grid
     IF (IAND(iomask(id), code) .NE. 0) THEN
-      CALL species_offset_init()
-      IF (npart_global .EQ. 0) RETURN
-
       convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
           .AND. (IAND(code,c_io_restartable) .EQ. 0 &
           .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
@@ -1324,6 +1317,9 @@ CONTAINS
 
         IF (IAND(current_species%dumpmask, code) .NE. 0 &
             .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL species_offset_init()
+          IF (npart_global .EQ. 0) RETURN
+
           CALL sdf_write_point_mesh(sdf_handle, &
               'grid/' // TRIM(current_species%name), &
               'Grid/Particles/' // TRIM(current_species%name), &
@@ -1343,6 +1339,9 @@ CONTAINS
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
         current_species => ejected_list(ispecies)
         CALL sdf_write_point_mesh(sdf_handle, &
             'grid/' // TRIM(current_species%name), &
@@ -1376,9 +1375,6 @@ CONTAINS
 
     id = id_in
     IF (IAND(iomask(id), code) .NE. 0) THEN
-      CALL species_offset_init()
-      IF (npart_global .EQ. 0) RETURN
-
       convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
           .AND. (IAND(code,c_io_restartable) .EQ. 0 &
           .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
@@ -1388,6 +1384,9 @@ CONTAINS
 
         IF (IAND(current_species%dumpmask, code) .NE. 0 &
             .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL species_offset_init()
+          IF (npart_global .EQ. 0) RETURN
+
           CALL sdf_write_point_variable(sdf_handle, &
               lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
               'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
@@ -1406,6 +1405,9 @@ CONTAINS
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
         current_species => ejected_list(ispecies)
         CALL sdf_write_point_variable(sdf_handle, &
             lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
