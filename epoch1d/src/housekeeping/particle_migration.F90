@@ -137,7 +137,7 @@ CONTAINS
             * species_list(from_list)%migrate%fluid_density(cell_x+ix)
       ENDDO
 
-      IF (part_ke .GT. ke_multiplier * REAL(dof) * kb * local_te &
+      IF (part_ke .GT. ke_multiplier * 3.0_num * kb * local_te &
           .AND. local_ne .LT. density_condition) &
           CALL swap_lists(from_list, to_list, current)
 
@@ -189,7 +189,7 @@ CONTAINS
             * species_list(to_list)%migrate%fluid_density(cell_x+ix)
       ENDDO
 
-      IF (part_ke .LT. ke_multiplier * REAL(dof) * kb * local_te &
+      IF (part_ke .LT. ke_multiplier * 3.0_num * kb * local_te &
           .AND. local_ne .GE. density_condition) &
           CALL swap_lists(from_list, to_list, current)
 

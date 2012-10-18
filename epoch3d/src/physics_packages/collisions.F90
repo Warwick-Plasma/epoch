@@ -966,8 +966,8 @@ CONTAINS
     CALL calc_boundary(sigma)
     CALL calc_boundary(part_count)
 
-    ! N/2 kT = <p^2>/(2m), where N is the number of degrees of freedom
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / REAL(dof)
+    ! 3/2 kT = <p^2>/(2m)
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
 
   END SUBROUTINE calc_coll_temperature
 

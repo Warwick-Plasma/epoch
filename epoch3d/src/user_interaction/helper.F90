@@ -13,7 +13,7 @@ CONTAINS
 
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
-    INTEGER :: dof_tmp, it, ix, iy, iz
+    INTEGER :: it, ix, iy, iz
 
     DO ispecies = 1, n_species
       species => species_list(ispecies)
@@ -64,30 +64,6 @@ CONTAINS
           initial_conditions(ispecies)%temp(:,:,:,3), c_dir_z, species, &
           initial_conditions(ispecies)%drift(:,:,:,3))
     ENDDO
-
-    ! Calculate number of degrees of freedom based on initial temperatures
-    dof_tmp = 0
-
-top:DO it = 1, 3
-      DO ispecies = 1, n_species
-        DO iz = -2, nz+3
-        DO iy = -2, ny+3
-        DO ix = -2, nx+3
-          IF (initial_conditions(ispecies)%temp(ix,iy,iz,it) .NE. 0.0_num) THEN
-            dof_tmp = dof_tmp + 1
-            CYCLE top
-          ENDIF
-        ENDDO ! ix
-        ENDDO ! iy
-        ENDDO ! iz
-      ENDDO
-    ENDDO top
-
-    dof = MAX(dof, dof_tmp)
-
-    ! Collisions allow scattering into z-direction, so collisional
-    ! simulations will always have three degrees of freedom.
-    IF (use_collisions) dof = 3
 
   END SUBROUTINE auto_load
 

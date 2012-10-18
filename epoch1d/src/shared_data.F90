@@ -806,9 +806,6 @@ MODULE shared_data
 
   LOGICAL :: use_ionisation, use_multiphoton, use_bsi
 
-  ! Number of degrees of freedom
-  INTEGER :: dof = c_ndims
-
   !----------------------------------------------------------------------------
   ! Moving window
   !----------------------------------------------------------------------------
