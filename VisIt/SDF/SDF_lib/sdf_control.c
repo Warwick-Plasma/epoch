@@ -36,7 +36,7 @@ int sdf_fopen(sdf_file_t *h)
 }
 
 
-sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
+sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 {
     sdf_file_t *h;
     int ret;
@@ -60,7 +60,7 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
 
 #ifdef PARALLEL
     h->comm = comm;
-    h->rank = rank;
+    MPI_Comm_rank(h->comm, &h->rank);
 #else
     h->rank = 0;
 #endif

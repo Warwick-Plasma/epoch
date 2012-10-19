@@ -133,6 +133,11 @@ enum sdf_error_codes {
     SDF_ERR_UNKNOWN,
 };
 
+
+#define SDF_MODE_READ  1
+#define SDF_MODE_WRITE 2
+
+
 static const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_NULL",
     "SDF_BLOCKTYPE_PLAIN_MESH",
@@ -300,7 +305,7 @@ struct sdf_file {
     comm_t comm;
 };
 
-sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap);
+sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap);
 int sdf_close(sdf_file_t *h);
 int sdf_seek(sdf_file_t *h);
 sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id);

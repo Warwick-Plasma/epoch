@@ -32,7 +32,8 @@ SDF_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     sdf_file_t *h;
     const char *file;
     SDFObject *self;
-    int convert = 0;
+    int convert = 0, use_mmap = 1, mode = SDF_MODE_READ;
+    comm_t comm = 0;
 
     if (!PyArg_ParseTuple(args, "s|i", &file, &convert))
         return NULL;
@@ -41,7 +42,7 @@ SDF_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if (self == NULL)
         return NULL;
 
-    h = sdf_open(file, 0, 0, 1);
+    h = sdf_open(file, comm, mode, use_mmap);
     self->h = h;
     if (!self->h) {
         Py_DECREF(self);

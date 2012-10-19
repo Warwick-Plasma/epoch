@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     MPI_Comm_size(comm, &size);
 #endif
 
-    h = sdf_open(file, rank, comm, mmap);
+    h = sdf_open(file, comm, SDF_MODE_READ, mmap);
     if (!h) {
         fprintf(stderr, "Error opening file %s\n", file);
         return 1;
