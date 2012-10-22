@@ -843,6 +843,7 @@ MODULE shared_data
   REAL(num) :: total_ohmic_heating = 0.0_num
 
   LOGICAL :: ic_from_restart = .FALSE.
+  LOGICAL :: need_random_state
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_snapshot
 

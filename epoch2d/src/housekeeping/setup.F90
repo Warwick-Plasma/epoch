@@ -69,6 +69,7 @@ CONTAINS
     use_particle_lists = .FALSE.
     use_multiphoton = .TRUE.
     use_bsi = .TRUE.
+    need_random_state = .FALSE.
     force_first_to_be_restartable = .FALSE.
     force_final_to_be_restartable = .FALSE.
     dump_source_code = .TRUE.

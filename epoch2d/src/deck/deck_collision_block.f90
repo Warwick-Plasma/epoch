@@ -47,6 +47,7 @@ CONTAINS
         ENDDO
       ENDDO
       use_particle_lists = use_particle_lists .OR. use_collisions
+      need_random_state = .TRUE.
     ENDIF
 
   END SUBROUTINE collision_deck_finalise

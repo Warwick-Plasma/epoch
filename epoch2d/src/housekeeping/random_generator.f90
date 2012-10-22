@@ -2,7 +2,7 @@ MODULE random_generator
 
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: random, random_init
+  PUBLIC :: random, random_init, get_random_state, set_random_state
   INTEGER :: x = 123456789, y = 362436069, z = 521288629, w = 916191069
 
 CONTAINS
@@ -57,5 +57,31 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE random_init
+
+
+
+  SUBROUTINE get_random_state(state)
+
+    INTEGER, INTENT(OUT) :: state(:)
+
+    state(1) = x
+    state(2) = y
+    state(3) = z
+    state(4) = w
+
+  END SUBROUTINE get_random_state
+
+
+
+  SUBROUTINE set_random_state(state)
+
+    INTEGER, INTENT(IN) :: state(:)
+
+    x = state(1)
+    y = state(2)
+    z = state(3)
+    w = state(4)
+
+  END SUBROUTINE set_random_state
 
 END MODULE random_generator

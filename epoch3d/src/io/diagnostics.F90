@@ -37,7 +37,8 @@ CONTAINS
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=c_max_string_length) :: dump_type
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
-    INTEGER :: code, i, io
+    INTEGER :: code, i, io, random_state(4)
+    INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag, convert
     INTEGER :: ispecies
@@ -127,6 +128,16 @@ CONTAINS
             'Particles/Particles Per Cell/' // TRIM(species%name), &
             species%npart_per_cell)
       ENDDO
+
+      IF (need_random_state) THEN
+        CALL get_random_state(random_state)
+        ALLOCATE(random_states_per_proc(4*nproc))
+        CALL MPI_GATHER(random_state, 4, MPI_INTEGER, &
+            random_states_per_proc, 4, MPI_INTEGER, 0, comm, errcode)
+        CALL sdf_write_srl(sdf_handle, 'random_states', 'Random States', &
+            random_states_per_proc)
+        DEALLOCATE(random_states_per_proc)
+      ENDIF
     ENDIF
 
     iomask = iodumpmask(1,:)
