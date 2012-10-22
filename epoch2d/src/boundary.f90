@@ -5,6 +5,7 @@ MODULE boundary
   USE particle_temperature
   USE deck_io_block
   USE laser
+  USE mpi_subtype_control
 
   IMPLICIT NONE
 
@@ -147,7 +148,7 @@ CONTAINS
 
     sizes(1) = nx_local + 2 * ng
     sizes(2) = ny_local + 2 * ng
-    starts = 0
+    starts = 1
 
     szmax = sizes(1) * ng
     sz = sizes(2) * ng
@@ -160,9 +161,7 @@ CONTAINS
 
     sz = subsizes(1) * subsizes(2)
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, basetype, subarray, errcode)
-    CALL MPI_TYPE_COMMIT(subarray, errcode)
+    subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
     CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
@@ -197,9 +196,7 @@ CONTAINS
 
     sz = subsizes(1) * subsizes(2)
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, basetype, subarray, errcode)
-    CALL MPI_TYPE_COMMIT(subarray, errcode)
+    subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
     CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
@@ -248,7 +245,7 @@ CONTAINS
 
     sizes(1) = nx_local + 2 * ng
     sizes(2) = ny_local + 2 * ng
-    starts = 0
+    starts = 1
 
     szmax = sizes(1) * ng
     sz = sizes(2) * ng
@@ -261,9 +258,7 @@ CONTAINS
 
     sz = subsizes(1) * subsizes(2)
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, basetype, subarray, errcode)
-    CALL MPI_TYPE_COMMIT(subarray, errcode)
+    subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
     CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
@@ -298,9 +293,7 @@ CONTAINS
 
     sz = subsizes(1) * subsizes(2)
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, basetype, subarray, errcode)
-    CALL MPI_TYPE_COMMIT(subarray, errcode)
+    subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
     CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
@@ -465,15 +458,13 @@ CONTAINS
 
     sizes(1) = nx + 2 * ng
     sizes(2) = ny + 2 * ng
-    starts = 0
+    starts = 1
 
     subsizes(1) = ng
     subsizes(2) = sizes(2)
     nn = nx
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
-    CALL MPI_TYPE_COMMIT(subarray, errcode)
+    subarray = create_2d_array_subtype(mpireal, subsizes, sizes, starts)
 
     sz = subsizes(1) * subsizes(2)
     ALLOCATE(temp(subsizes(1), subsizes(2)))
@@ -527,9 +518,7 @@ CONTAINS
     subsizes(2) = ng
     nn = ny
 
-    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
-        MPI_ORDER_FORTRAN, mpireal, subarray, errcode)
-    CALL MPI_TYPE_COMMIT(subarray, errcode)
+    subarray = create_2d_array_subtype(mpireal, subsizes, sizes, starts)
 
     sz = subsizes(1) * subsizes(2)
     ALLOCATE(temp(subsizes(1), subsizes(2)))
