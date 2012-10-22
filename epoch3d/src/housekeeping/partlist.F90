@@ -24,7 +24,7 @@ CONTAINS
   SUBROUTINE setup_partlists
 
     nvar = 3 + c_ndims
-#ifdef PER_PARTICLE_WEIGHT
+#if PER_PARTICLE_WEIGHT || PHOTONS
     nvar = nvar+1
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -34,6 +34,9 @@ CONTAINS
     nvar = nvar+2
 #endif
 #if PARTICLE_ID || PARTICLE_ID4
+    nvar = nvar+1
+#endif
+#ifdef COLLISIONS_TEST
     nvar = nvar+1
 #endif
 #ifdef PHOTONS
@@ -340,7 +343,7 @@ CONTAINS
     cpos = cpos+c_ndims
     array(cpos:cpos+2) = a_particle%part_p
     cpos = cpos+3
-#ifdef PER_PARTICLE_WEIGHT
+#if PER_PARTICLE_WEIGHT || PHOTONS
     array(cpos) = a_particle%weight
     cpos = cpos+1
 #endif
@@ -356,6 +359,10 @@ CONTAINS
 #endif
 #if PARTICLE_ID || PARTICLE_ID4
     array(cpos) = REAL(a_particle%id, num)
+    cpos = cpos+1
+#endif
+#ifdef COLLISIONS_TEST
+    array(cpos) = REAL(a_particle%coll_count, num)
     cpos = cpos+1
 #endif
 #ifdef PHOTONS
@@ -383,7 +390,7 @@ CONTAINS
     cpos = cpos+c_ndims
     a_particle%part_p = array(cpos:cpos+2)
     cpos = cpos+3
-#ifdef PER_PARTICLE_WEIGHT
+#if PER_PARTICLE_WEIGHT || PHOTONS
     a_particle%weight = array(cpos)
     cpos = cpos+1
 #endif
@@ -402,6 +409,10 @@ CONTAINS
     cpos = cpos+1
 #elif PARTICLE_ID
     a_particle%id = NINT(array(cpos),8)
+    cpos = cpos+1
+#endif
+#ifdef COLLISIONS_TEST
+    a_particle%coll_count = NINT(array(cpos))
     cpos = cpos+1
 #endif
 #ifdef PHOTONS
@@ -424,7 +435,7 @@ CONTAINS
 
     new_particle%part_p = 0.0_num
     new_particle%part_pos = 0.0_num
-#ifdef PER_PARTICLE_WEIGHT
+#if PER_PARTICLE_WEIGHT || PHOTONS
     new_particle%weight = 0.0_num
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -437,6 +448,9 @@ CONTAINS
 #endif
 #if PARTICLE_ID || PARTICLE_ID4
     new_particle%id = 0
+#endif
+#ifdef COLLISIONS_TEST
+    new_particle%coll_count = 0
 #endif
 #ifdef PHOTONS
     ! This assigns an optical depth to newly created particle
