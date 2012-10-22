@@ -91,7 +91,8 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: n1_local
     INTEGER :: proc1_min, proc1_max
-    INTEGER :: basetype
+    INTEGER :: basetype, i, n
+    REAL(num), ALLOCATABLE :: temp(:)
 
     basetype = mpireal
 
@@ -103,12 +104,31 @@ CONTAINS
       proc1_max = proc_x_max
     ENDIF
 
-    CALL MPI_SENDRECV(field(1), ng, basetype, proc1_min, tag, &
-        field(n1_local+1), ng, basetype, proc1_max, tag, &
-        comm, status, errcode)
+    ALLOCATE(temp(ng))
+
+    CALL MPI_SENDRECV(field(1), ng, basetype, proc1_min, &
+        tag, temp, ng, basetype, proc1_max, tag, comm, status, errcode)
+
+    IF (proc1_max .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO i = n1_local+1, ng+n1_local
+        field(i) = temp(n)
+        n = n + 1
+      ENDDO
+    ENDIF
+
     CALL MPI_SENDRECV(field(n1_local+1-ng), ng, basetype, proc1_max, &
-        tag, field(1-ng), ng, basetype, proc1_min, tag, &
-        comm, status, errcode)
+        tag, temp, ng, basetype, proc1_min, tag, comm, status, errcode)
+
+    IF (proc1_min .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO i = 1-ng, 0
+        field(i) = temp(n)
+        n = n + 1
+      ENDDO
+    ENDIF
+
+    DEALLOCATE(temp)
 
   END SUBROUTINE do_field_mpi_with_lengths_slice
 
@@ -120,7 +140,8 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, basetype
+    INTEGER :: subarray, basetype, sz, szmax, i, j, n
+    REAL(num), ALLOCATABLE :: temp(:)
 
     basetype = mpireal
 
@@ -128,37 +149,87 @@ CONTAINS
     sizes(2) = ny_local + 2 * ng
     starts = 0
 
+    szmax = sizes(1) * ng
+    sz = sizes(2) * ng
+    IF (sz .GT. szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+
     subsizes(1) = ng
     subsizes(2) = sizes(2)
+
+    sz = subsizes(1) * subsizes(2)
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, tag, &
-        field(nx_local+1,1-ng), 1, subarray, proc_x_max, tag, &
-        comm, status, errcode)
+    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (proc_x_max .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = nx_local+1, subsizes(1)+nx_local
+        field(i,j) = temp(n)
+        n = n + 1
+      ENDDO
+      ENDDO
+    ENDIF
+
     CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
-        tag, field(1-ng,1-ng), 1, subarray, proc_x_min, tag, &
-        comm, status, errcode)
+        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (proc_x_min .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      ENDDO
+      ENDDO
+    ENDIF
 
     CALL MPI_TYPE_FREE(subarray, errcode)
 
     subsizes(1) = sizes(1)
     subsizes(2) = ng
 
+    sz = subsizes(1) * subsizes(2)
+
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, tag, &
-        field(1-ng,ny_local+1), 1, subarray, proc_y_max, tag, &
-        comm, status, errcode)
+    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
+        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
+
+    IF (proc_y_max .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO j = ny_local+1, subsizes(2)+ny_local
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      ENDDO
+      ENDDO
+    ENDIF
+
     CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
-        tag, field(1-ng,1-ng), 1, subarray, proc_y_min, tag, &
-        comm, status, errcode)
+        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
+
+    IF (proc_y_min .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      ENDDO
+      ENDDO
+    ENDIF
 
     CALL MPI_TYPE_FREE(subarray, errcode)
+
+    DEALLOCATE(temp)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -170,7 +241,8 @@ CONTAINS
     REAL(r4), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, basetype
+    INTEGER :: subarray, basetype, sz, szmax, i, j, n
+    REAL(r4), ALLOCATABLE :: temp(:)
 
     basetype = MPI_REAL4
 
@@ -178,37 +250,87 @@ CONTAINS
     sizes(2) = ny_local + 2 * ng
     starts = 0
 
+    szmax = sizes(1) * ng
+    sz = sizes(2) * ng
+    IF (sz .GT. szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+
     subsizes(1) = ng
     subsizes(2) = sizes(2)
+
+    sz = subsizes(1) * subsizes(2)
 
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, tag, &
-        field(nx_local+1,1-ng), 1, subarray, proc_x_max, tag, &
-        comm, status, errcode)
+    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (proc_x_max .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = nx_local+1, subsizes(1)+nx_local
+        field(i,j) = temp(n)
+        n = n + 1
+      ENDDO
+      ENDDO
+    ENDIF
+
     CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
-        tag, field(1-ng,1-ng), 1, subarray, proc_x_min, tag, &
-        comm, status, errcode)
+        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (proc_x_min .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      ENDDO
+      ENDDO
+    ENDIF
 
     CALL MPI_TYPE_FREE(subarray, errcode)
 
     subsizes(1) = sizes(1)
     subsizes(2) = ng
 
+    sz = subsizes(1) * subsizes(2)
+
     CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sizes, subsizes, starts, &
         MPI_ORDER_FORTRAN, basetype, subarray, errcode)
     CALL MPI_TYPE_COMMIT(subarray, errcode)
 
-    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, tag, &
-        field(1-ng,ny_local+1), 1, subarray, proc_y_max, tag, &
-        comm, status, errcode)
+    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
+        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
+
+    IF (proc_y_max .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO j = ny_local+1, subsizes(2)+ny_local
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      ENDDO
+      ENDDO
+    ENDIF
+
     CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
-        tag, field(1-ng,1-ng), 1, subarray, proc_y_min, tag, &
-        comm, status, errcode)
+        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
+
+    IF (proc_y_min .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      ENDDO
+      ENDDO
+    ENDIF
 
     CALL MPI_TYPE_FREE(subarray, errcode)
+
+    DEALLOCATE(temp)
 
   END SUBROUTINE do_field_mpi_with_lengths_r4
 

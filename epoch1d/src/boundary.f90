@@ -90,16 +90,36 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local
-    INTEGER :: basetype
+    INTEGER :: basetype, i, n
+    REAL(num), ALLOCATABLE :: temp(:)
 
     basetype = mpireal
 
-    CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, tag, &
-        field(nx_local+1), ng, basetype, proc_x_max, tag, &
-        comm, status, errcode)
+    ALLOCATE(temp(ng))
+
+    CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
+        tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (proc_x_max .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO i = nx_local+1, nx_local+ng
+        field(i) = temp(n)
+        n = n + 1
+      ENDDO
+    ENDIF
+
     CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
-        tag, field(1-ng), ng, basetype, proc_x_min, tag, &
-        comm, status, errcode)
+        tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (proc_x_min .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO i = 1-ng, 0
+        field(i) = temp(n)
+        n = n + 1
+      ENDDO
+    ENDIF
+
+    DEALLOCATE(temp)
 
   END SUBROUTINE do_field_mpi_with_lengths
 
@@ -110,16 +130,36 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(r4), DIMENSION(1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local
-    INTEGER :: basetype
+    INTEGER :: basetype, i, n
+    REAL(r4), ALLOCATABLE :: temp(:)
 
     basetype = MPI_REAL4
 
-    CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, tag, &
-        field(nx_local+1), ng, basetype, proc_x_max, tag, &
-        comm, status, errcode)
+    ALLOCATE(temp(ng))
+
+    CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
+        tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (proc_x_max .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO i = nx_local+1, nx_local+ng
+        field(i) = temp(n)
+        n = n + 1
+      ENDDO
+    ENDIF
+
     CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
-        tag, field(1-ng), ng, basetype, proc_x_min, tag, &
-        comm, status, errcode)
+        tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (proc_x_min .NE. MPI_PROC_NULL) THEN
+      n = 1
+      DO i = 1-ng, 0
+        field(i) = temp(n)
+        n = n + 1
+      ENDDO
+    ENDIF
+
+    DEALLOCATE(temp)
 
   END SUBROUTINE do_field_mpi_with_lengths_r4
 
