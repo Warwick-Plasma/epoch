@@ -10,18 +10,18 @@ MODULE sdf_control
 
 CONTAINS
 
-  SUBROUTINE sdf_open(h, filename, sdf_rank_in, sdf_comm_in, mode)
+  SUBROUTINE sdf_open(h, filename, sdf_comm_in, mode)
 
     TYPE(sdf_file_handle), TARGET :: h
     CHARACTER(LEN=*), INTENT(IN) :: filename
-    INTEGER, INTENT(IN) :: sdf_rank_in, sdf_comm_in, mode
+    INTEGER, INTENT(IN) :: sdf_comm_in, mode
     INTEGER :: errcode, ierr, i
 
     CALL initialise_file_handle(h)
     CALL sdf_set_default_rank(h, 0)
 
     h%comm = sdf_comm_in
-    h%rank = sdf_rank_in
+    CALL MPI_COMM_RANK(sdf_comm_in, h%rank, errcode)
 
     ierr = KIND(errcode)
     IF (ierr .EQ. i4) THEN

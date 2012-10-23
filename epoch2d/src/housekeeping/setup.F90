@@ -647,7 +647,7 @@ CONTAINS
     ! Create the filename for the last snapshot
     WRITE(filename, '(a, ''/'', i4.4, ''.sdf'')') TRIM(data_dir), &
         restart_snapshot
-    CALL sdf_open(sdf_handle, filename, rank, comm, c_sdf_read)
+    CALL sdf_open(sdf_handle, filename, comm, c_sdf_read)
 
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)

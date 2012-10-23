@@ -97,7 +97,7 @@ CONTAINS
     ALLOCATE(array(-2:nx+3,-2:ny+3))
 
     ! open the file
-    CALL sdf_open(sdf_handle, filename, rank, comm, c_sdf_write)
+    CALL sdf_open(sdf_handle, filename, comm, c_sdf_write)
     CALL sdf_write_header(sdf_handle, 'Epoch2d', 1, step, time, restart_flag, &
         jobid)
     CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_commit_id, &
