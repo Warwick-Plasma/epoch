@@ -410,9 +410,14 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     int n;
 #ifdef PARALLEL
     int npoint_min, split_big, coords, div;
+    int old_dims[6];
 
-    if (b->stagger != SDF_STAGGER_CELL_CENTRE)
-        for (n = 0; n < b->ndims; n++) b->dims[n]--;
+    // Adjust dimensions to those of a cell-centred variable
+    for (n = 0; n < b->ndims; n++) {
+        old_dims[n] = b->dims[n];
+        if (b->const_value[n]) b->dims[n]--;
+        if (b->dims[n] < 1) b->dims[n] = 1;
+    }
 
     memset(start, 0, 3*sizeof(int));
 
@@ -432,11 +437,11 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
         }
     }
 
-    if (b->stagger != SDF_STAGGER_CELL_CENTRE) {
-        for (n = 0; n < b->ndims; n++) {
-            b->dims[n]++;
-            local[n]++;
-        }
+    // Return dimensions back to their original values
+    for (n = 0; n < b->ndims; n++) {
+        b->dims[n] = old_dims[n];
+        // Add extra staggered value if required
+        if (b->const_value[n]) local[n]++;
     }
 #else
     memset(start, 0, 3*sizeof(int));
@@ -460,7 +465,7 @@ int sdf_factor(sdf_file_t *h, int *start)
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
         old_dims[n] = b->dims[n];
-        if (b->stagger & n) b->dims[n]--;
+        if (b->const_value[n]) b->dims[n]--;
         if (b->dims[n] < 1) b->dims[n] = 1;
     }
 

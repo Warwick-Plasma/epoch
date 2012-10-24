@@ -144,7 +144,7 @@ sdf_extension_t *avtSDFFileFormat::sdf_extension_load(sdf_file_t *h)
 
     if (!sdf_extension_handle) {
         avtSDFFileFormat::extension_not_found = 1;
-        cerr << dlerror() << endl;
+        if (!h->rank) debug1 << dlerror() << endl;
         return NULL;
     }
 
