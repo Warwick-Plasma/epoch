@@ -135,7 +135,8 @@ FUNCTION LoadSDFFile, filename, _variables=requestv, _silent=silent, $
     SDF_Blocktypes.PLAIN_MESH:
     SDF_Blocktypes.POINT_MESH:
     SDF_Blocktypes.PLAIN_VARIABLE:
-    SDF_Blocktypes.POINT_VARIABLE: BEGIN
+    SDF_Blocktypes.POINT_VARIABLE:
+    SDF_Blocktypes.CONSTANT: BEGIN
 
       b = CREATE_STRUCT(b, 'name', STRTRIM(STRING(b.id), 2))
       b.name = swapchr(b.name, ' ', '_')
@@ -230,6 +231,10 @@ PRO SDFHandleBlock, file_header, block_header, outputobject, offset, $
       END
       SDF_Blocktypes.POINT_VARIABLE: BEGIN
         SDFGetPointVar, file_header, block_header, outputobject, offset, $
+            md=md, retro=retro, only_md=only_md
+      END
+      SDF_Blocktypes.CONSTANT: BEGIN
+        SDFGetConstant, file_header, block_header, outputobject, offset, $
             md=md, retro=retro, only_md=only_md
       END
     ELSE:
@@ -477,6 +482,62 @@ PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
   ENDELSE
 
   var_header = CREATE_STRUCT(var_header, 'FRIENDLYNAME', $
+      STRTRIM(STRING(block_header.fname),2))
+  obj = CREATE_STRUCT('metadata', var_header, d)
+  md = var_header
+  IF (N_ELEMENTS(d) NE 0) THEN BEGIN
+    IF (KEYWORD_SET(retro)) THEN BEGIN
+      output_struct = CREATE_STRUCT(output_struct, d)
+    ENDIF ELSE BEGIN
+      output_struct = CREATE_STRUCT(output_struct, block_header.name, obj)
+    ENDELSE
+  ENDIF
+END
+
+; --------------------------------------------------------------------------
+
+PRO SDFGetConstant, file_header, block_header, output_struct, offset, $
+    md=md, retro=retro, only_md=only_md
+
+  COMPILE_OPT idl2, hidden
+  COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
+      SDF_Datatypes, SDF_Error
+
+  mdflag=KEYWORD_SET(only_md)
+  id_length = SDF_Common.ID_LENGTH
+  offset = block_header.start + file_header.block_header_length
+
+  struct_name = 'data'
+  IF (KEYWORD_SET(retro)) THEN struct_name = block_header.name
+
+  IF (~mdflag) THEN BEGIN
+    CASE block_header.datatype OF
+      SDF_Datatypes.REAL4: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, 0.0D)
+      END
+      SDF_Datatypes.REAL8: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, 0.0)
+      END
+      SDF_Datatypes.INTEGER4: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, 0L)
+      END
+      SDF_Datatypes.INTEGER8: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, 0LL)
+      END
+      SDF_Datatypes.CHARACTER: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, 0B)
+      END
+      SDF_Datatypes.LOGICAL: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, 0B)
+      END
+    ENDCASE
+
+    d = readvar(1, datastruct, offset)
+  ENDIF ELSE BEGIN
+    d = CREATE_STRUCT('MDONLY',1)
+  ENDELSE
+
+  var_header = CREATE_STRUCT('FRIENDLYNAME', $
       STRTRIM(STRING(block_header.fname),2))
   obj = CREATE_STRUCT('metadata', var_header, d)
   md = var_header
