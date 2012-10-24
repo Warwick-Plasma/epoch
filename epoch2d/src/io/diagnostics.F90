@@ -454,9 +454,10 @@ CONTAINS
         ENDIF
       ENDIF
 
+      iomask = IOR(iomask, io_block_list(io)%dumpmask)
+
       IF (io_block_list(io)%dump) THEN
         print_arrays = .TRUE.
-        iomask = IOR(iomask, io_block_list(io)%dumpmask)
         IF (n_subsets .NE. 0) THEN
           DO is = 1, n_subsets
             iodumpmask(1+is,:) = &
