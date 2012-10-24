@@ -108,7 +108,7 @@ CONTAINS
     CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_commit_id, &
         sha1sum, c_compile_machine, c_compile_flags, defines, c_compile_date, &
         run_date)
-    CALL sdf_write_cpu_split(sdf_handle, 'cpu_split', 'CPU split', &
+    CALL sdf_write_cpu_split(sdf_handle, 'cpu_rank', 'CPUs/Original rank', &
         cell_x_max, cell_y_max, cell_z_max)
 
     IF (restart_flag) THEN
