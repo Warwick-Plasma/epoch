@@ -443,7 +443,8 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 cmd->xUnits = mesh->dim_units[0];
                 cmd->xLabel = mesh->dim_labels[0];
                 cmd->hasDataExtents = false;
-                cmd->meshName = mesh->name;
+                // Older versions of VisIt don't support this
+                //cmd->meshName = mesh->name;
                 md->Add(cmd);
                 //continue;
             } else {

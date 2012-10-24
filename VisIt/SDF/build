@@ -56,9 +56,18 @@ buildit () {
     if [ $version -eq 1 ]; then
       xml2makefile -clobber $PRIVATE ${fmt}${version}.xml
       if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
-        sed "s,\(^CXXFLAGS.*\),\1 -m32 $DBG \
-CFLAGS=$(CFLAGSORIG) -m32 $DBG \
+        sed "s,\(^CXXFLAGS.*\),\1 -m32 $DBG\\
+CFLAGS=$(CFLAGSORIG) -m32 $DBG\\
 PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile > .Makefile.tmp
+        \mv -f .Makefile.tmp Makefile
+      fi
+      if [ $build_parallel -eq 1 ]; then
+        sed "s,\(^CXXFLAGS.*\),\1\\
+CXX=mpic++\\
+CC=mpicc," Makefile > .Makefile.tmp
+        \mv -f .Makefile.tmp Makefile
+      elif [ $build_serial -eq 1 ]; then
+        grep -v "^EPARDSO" Makefile > .Makefile.tmp
         \mv -f .Makefile.tmp Makefile
       fi
     else
@@ -70,7 +79,8 @@ PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile
             $f > $tmpdir/$base
         if [ $build_parallel -eq 1 ]; then
           grep -v 'CMAKE_CXX_COMPILER ' $tmpdir/$base | \
-              grep -v 'CMAKE_C_COMPILER ' > $tmpdir/tmp
+              grep -v 'CMAKE_C_COMPILER ' | \
+              grep -v 'VISIT_PARALLEL_LIBS ' > $tmpdir/tmp
           mv $tmpdir/tmp $tmpdir/$base
         elif [ $build_serial -eq 1 ]; then
           grep -v 'VISIT_PARALLEL ' $tmpdir/$base > $tmpdir/tmp
@@ -81,6 +91,13 @@ PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile
         mv $tmpdir/tmp CMakeLists.txt
       done
       cmake $DEBUG .
+      # FIXME: This is to workaround incorrect cmake output
+      ofile=CMakeFiles/ESDFDatabase_par.dir/build.make
+      if [ -e $ofile ]; then
+        sed '/visit.*librt\.so/ d;/visit.*libpthread\.so/ d' $ofile \
+            > $tmpdir/tmp
+        mv $tmpdir/tmp $ofile
+      fi
     fi
 
     make clean
