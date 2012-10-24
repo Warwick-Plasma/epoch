@@ -106,6 +106,9 @@ MODULE sdf
   PUBLIC :: sdf_read_srl_plain_mesh
   PUBLIC :: sdf_read_srl_point_mesh
   PUBLIC :: sdf_read_srl_point_variable
+  PUBLIC :: sdf_read_cpu_split_info
+  PUBLIC :: sdf_read_srl_cpu_split
+  PUBLIC :: sdf_read_run_info
   PUBLIC :: sdf_write_header
   PUBLIC :: sdf_write_run_info
   PUBLIC :: sdf_write_source_code

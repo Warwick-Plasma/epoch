@@ -31,4 +31,10 @@ MODULE sdf_input
         read_2d_array_character
   END INTERFACE sdf_read_srl
 
+  INTERFACE sdf_read_srl_cpu_split
+    MODULE PROCEDURE &
+        read_srl_cpu_split, &
+        read_srl_cpu_split_part
+  END INTERFACE sdf_read_srl_cpu_split
+
 END MODULE sdf_input

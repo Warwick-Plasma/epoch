@@ -838,7 +838,7 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
         b->dims[i] = b->dims_in[i];
         b->local_dims[i] = b->dims_in[i];
     }
-    if (b->geometry == 1) {
+    if (b->geometry == 1 || b->geometry == 4) {
         b->nlocal = 0;
         for (i = 0; i < b->ndims; i++)
             b->nlocal += b->dims[i];
