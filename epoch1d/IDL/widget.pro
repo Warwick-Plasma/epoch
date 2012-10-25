@@ -484,6 +484,7 @@ PRO load_meta_and_populate_sdf, viewer, accepted_types
   ; set the label to be the filename
   WIDGET_CONTROL, obj_data.label, set_value=*obj_data.filename
   WIDGET_CONTROL, /hourglass
+
 END
 
 ; --------------------------------------------------------------------------
@@ -727,15 +728,29 @@ PRO viewer_load_new_file, viewer, filename
       TYPE_SNAPSHOT
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
+  element = WIDGET_INFO(obj_data.list, /list_select)
+  IF (element GE 0) THEN BEGIN
+    name = (*(obj_data.valid_names))[element]
+  ENDIF ELSE BEGIN
+    name = "blankblank"
+  ENDELSE
   PTR_FREE, obj_data.filename
   obj_data.filename = PTR_NEW(filename)
   WIDGET_CONTROL, viewer, set_uvalue=obj_data
 
-  clear_draw_surface, viewer, text='Please select a variable to view'
   IF (obj_data.cfdfile) THEN BEGIN
     load_meta_and_populate_sdf, viewer, TYPE_MESH_VARIABLE
   ENDIF ELSE BEGIN
     load_meta_and_populate_sdf, viewer, SDF_BlockTypes.PLAIN_VARIABLE
+  ENDELSE
+
+  WIDGET_CONTROL, viewer, get_uvalue=obj_data
+
+  IF (MAX(*(obj_data.valid_names) EQ name,loc) NE 0) THEN BEGIN
+    WIDGET_CONTROL,obj_data.list,set_list_select=loc
+    draw_image, viewer, /force
+  ENDIF ELSE BEGIN
+    clear_draw_surface, viewer, text='Please select a variable to view'
   ENDELSE
 
 END
