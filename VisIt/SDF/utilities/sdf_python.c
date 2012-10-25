@@ -111,6 +111,24 @@ static void setup_mesh(sdf_file_t *h, PyObject *dict)
                     ptr++;
                 }
             }
+
+            dims[0] = ndims;
+            sub = PyArray_NewFromDescr(&PyArray_Type,
+                PyArray_DescrFromType(typemap[b->datatype_out]), 1,
+                dims, NULL, grid, NPY_F_CONTIGUOUS, NULL);
+            PyDict_SetItemString(dict, label, sub);
+
+            /* Now add the original grid with "_node" appended */
+            ndims++;
+            grid = b->grids[n];
+
+            l1 = strlen(b->name);
+            l2 = strlen(b->dim_labels[n]);
+            label = malloc(l1 + l2 + 2 + 5);
+            memcpy(label, b->name, l1);
+            memcpy(label+l1, "_node", 5);
+            label[l1+5] = '/';
+            memcpy(label+l1+6, b->dim_labels[n], l2+1);
         }
 
         dims[0] = ndims;
