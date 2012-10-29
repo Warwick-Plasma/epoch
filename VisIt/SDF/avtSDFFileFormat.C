@@ -252,7 +252,6 @@ avtSDFFileFormat::OpenFile(int open_only)
 {
     if (!h) h = sdf_open(filename, comm, SDF_MODE_READ, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
-    sdf_set_ncpus(h, ncpus);
     step = h->step;
     time = h->time;
     debug1 << "avtSDFFileFormat::OpenFile h:" << h << endl;
@@ -736,9 +735,6 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
     debug1 << "avtSDFFileFormat:: Found block: id:" << b->id << " for mesh:"
            << meshname << endl;
 
-    ncpus = PAR_Size();
-    sdf_set_ncpus(h, ncpus);
-
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE
             || b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
         return GetCurve(domain, b);
@@ -990,9 +986,6 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     debug1 << "avtSDFFileFormat::GetArray(domain:" << domain << ", varname:"
            << varname << ") " << this << endl;
 
-    ncpus = PAR_Size();
-    sdf_set_ncpus(h, ncpus);
-
     sdf_block_t *b = sdf_find_block_by_name(h, varname);
     if (!b) return NULL;
 
@@ -1221,9 +1214,6 @@ avtSDFFileFormat::ActivateTimestep(void)
 #ifdef PARALLEL
     MPI_Comm_dup(VISIT_MPI_COMM, &comm);
     debug1 << "avtSDFFileFormat:: parallel" << endl;
-    ncpus = PAR_Size();
-    debug1 << "avtSDFFileFormat:: original ncpus: " << ncpus << endl;
-    MPI_Comm_size(VISIT_MPI_COMM, &ncpus);
 #else
     debug1 << "avtSDFFileFormat:: serial" << endl;
 #endif

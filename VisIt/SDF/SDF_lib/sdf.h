@@ -317,7 +317,6 @@ int sdf_read_block_info(sdf_file_t *h);
 int sdf_read_data(sdf_file_t *h);
 int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen);
 int sdf_free_blocklist_data(sdf_file_t *h);
-int sdf_set_ncpus(sdf_file_t *h, int ncpus);
 int sdf_broadcast(sdf_file_t *h, void *buf, int size);
 int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local);
 

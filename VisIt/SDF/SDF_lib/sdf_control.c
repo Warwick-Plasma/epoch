@@ -53,7 +53,6 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
     h->indent = 0;
 
     h->done_header = 0;
-    h->ncpus = 1;
     h->use_summary = 1;
     h->sdf_lib_version  = SDF_LIB_VERSION;
     h->sdf_lib_revision = SDF_LIB_REVISION;
@@ -61,8 +60,10 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 #ifdef PARALLEL
     h->comm = comm;
     MPI_Comm_rank(h->comm, &h->rank);
+    MPI_Comm_size(h->comm, &h->ncpus);
 #else
     h->rank = 0;
+    h->ncpus = 1;
 #endif
     h->filename = malloc(strlen(filename)+1);
     memcpy(h->filename, filename, strlen(filename)+1);
@@ -267,16 +268,6 @@ int sdf_read_nblocks(sdf_file_t *h)
         return h->nblocks;
     else
         return -1;
-}
-
-
-
-int sdf_set_ncpus(sdf_file_t *h, int ncpus)
-{
-    if (!h) return -1;
-
-    h->ncpus = ncpus;
-    return 0;
 }
 
 
