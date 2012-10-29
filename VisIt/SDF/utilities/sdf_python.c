@@ -32,7 +32,7 @@ SDF_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     sdf_file_t *h;
     const char *file;
     SDFObject *self;
-    int convert = 0, use_mmap = 1, mode = SDF_MODE_READ;
+    int convert = 0, use_mmap = 1, mode = SDF_READ;
     comm_t comm = 0;
 
     if (!PyArg_ParseTuple(args, "s|i", &file, &convert))

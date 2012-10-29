@@ -134,8 +134,8 @@ enum sdf_error_codes {
 };
 
 
-#define SDF_MODE_READ  1
-#define SDF_MODE_WRITE 2
+#define SDF_READ  1
+#define SDF_WRITE 2
 
 
 static const char *sdf_blocktype_c[] = {

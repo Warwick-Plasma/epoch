@@ -250,7 +250,7 @@ void avtSDFFileFormat::sdf_extension_unload(void)
 void
 avtSDFFileFormat::OpenFile(int open_only)
 {
-    if (!h) h = sdf_open(filename, comm, SDF_MODE_READ, 0);
+    if (!h) h = sdf_open(filename, comm, SDF_READ, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
     step = h->step;
     time = h->time;

@@ -125,7 +125,7 @@ int main(int argc, char **argv)
     MPI_Comm_dup(MPI_COMM_WORLD, &comm);
 #endif
 
-    h = sdf_open(file, comm, SDF_MODE_READ, mmap);
+    h = sdf_open(file, comm, SDF_READ, mmap);
     if (!h) {
         fprintf(stderr, "Error opening file %s\n", file);
         return 1;
