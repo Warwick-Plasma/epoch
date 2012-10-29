@@ -116,15 +116,14 @@ int main(int argc, char **argv)
     int i, buflen, block, err;
     sdf_file_t *h;
     sdf_block_t *b;
-    int rank = 0, size = 1;
+    int size = 1;
     comm_t comm;
 
     file = parse_args(&argc, &argv);
 
 #ifdef PARALLEL
     MPI_Init(&argc, &argv);
-    comm = MPI_COMM_WORLD;
-    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_dup(MPI_COMM_WORLD, &comm);
     MPI_Comm_size(comm, &size);
 #endif
 

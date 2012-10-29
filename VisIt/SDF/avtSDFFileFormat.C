@@ -339,7 +339,7 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
            << ") " << this << endl;
     // INITIALIZE DATA MEMBERS
 #ifdef PARALLEL
-    comm = VISIT_MPI_COMM;
+    MPI_Comm_dup(VISIT_MPI_COMM, &comm);
     debug1 << "avtSDFFileFormat:: parallel" << endl;
 #else
     debug1 << "avtSDFFileFormat:: serial" << endl;
@@ -1219,7 +1219,7 @@ avtSDFFileFormat::ActivateTimestep(void)
     debug1 << "avtSDFFileFormat::ActivateTimestep(void) " << this << endl;
 
 #ifdef PARALLEL
-    comm = VISIT_MPI_COMM;
+    MPI_Comm_dup(VISIT_MPI_COMM, &comm);
     debug1 << "avtSDFFileFormat:: parallel" << endl;
     ncpus = PAR_Size();
     debug1 << "avtSDFFileFormat:: original ncpus: " << ncpus << endl;
