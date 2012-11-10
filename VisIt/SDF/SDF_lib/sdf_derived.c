@@ -1274,7 +1274,6 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                         append->populate_data = sdf_callback_face_grid;
 
                         append->dims[i] += 1;
-                        append->dims_in = NULL;
                         append->dim_mults = NULL;
                         append->extents = NULL;
 

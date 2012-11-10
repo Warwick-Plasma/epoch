@@ -149,7 +149,6 @@ static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
     if (b->material_id) free(b->material_id);
     if (b->name) free(b->name);
     if (b->material_name) free(b->material_name);
-    if (b->dims_in) free(b->dims_in);
     if (b->dim_mults) free(b->dim_mults);
     if (b->extents) free(b->extents);
     FREE_ARRAY(b->variable_ids);

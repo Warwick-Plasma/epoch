@@ -807,16 +807,6 @@ int sdf_read_run_info(sdf_file_t *h)
     else
         SDF_READ_ENTRY_INT4(minor_rev);
 
-/*
-    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
-    b->nlocal = 1;
-    for (i = 0; i < b->ndims; i++) {
-        b->dims[i] = b->dims_in[i];
-        b->local_dims[i] = b->dims_in[i];
-        b->nlocal *= b->dims[i];
-    }
-*/
-
     return 0;
 }
 
@@ -826,17 +816,18 @@ int sdf_read_array_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
+    uint32_t dims_in[SDF_MAXDIMS];
+    uint32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - dims      INTEGER(i4), DIMENSION(ndims)
 
     SDF_COMMON_INFO();
 
-    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
+    SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
     b->nlocal = 1;
     for (i = 0; i < b->ndims; i++) {
-        b->dims[i] = b->dims_in[i];
-        b->local_dims[i] = b->dims_in[i];
+        b->local_dims[i] = b->dims[i] = dims_in[i];
         b->nlocal *= b->dims[i];
     }
 
@@ -849,6 +840,8 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
+    uint32_t dims_in[SDF_MAXDIMS];
+    uint32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - dims      INTEGER(i4), DIMENSION(ndims)
@@ -856,10 +849,9 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
     SDF_COMMON_INFO();
 
     SDF_READ_ENTRY_INT4(b->geometry);
-    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
+    SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
     for (i = 0; i < b->ndims; i++) {
-        b->dims[i] = b->dims_in[i];
-        b->local_dims[i] = b->dims_in[i];
+        b->local_dims[i] = b->dims[i] = dims_in[i];
     }
     if (b->geometry == 1 || b->geometry == 4) {
         b->nlocal = 0;

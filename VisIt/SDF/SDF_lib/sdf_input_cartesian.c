@@ -22,6 +22,8 @@ int sdf_read_plain_mesh_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
+    uint32_t dims_in[SDF_MAXDIMS];
+    uint32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - mults     REAL(r8), DIMENSION(ndims)
@@ -44,8 +46,8 @@ int sdf_read_plain_mesh_info(sdf_file_t *h)
 
     SDF_READ_ENTRY_ARRAY_REAL8(b->extents, 2*b->ndims);
 
-    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
-    for (i = 0; i < b->ndims; i++) b->dims[i] = b->dims_in[i];
+    SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
+    for (i = 0; i < b->ndims; i++) b->dims[i] = dims_in[i];
 
     b->stagger = SDF_STAGGER_VERTEX;
     for (i = 0; i < b->ndims; i++) b->const_value[i] = 1;
@@ -59,6 +61,8 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
+    uint32_t dims_in[SDF_MAXDIMS];
+    uint32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - mult      REAL(r8)
@@ -75,8 +79,8 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
 
     SDF_READ_ENTRY_ID(b->mesh_id);
 
-    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
-    for (i = 0; i < b->ndims; i++) b->dims[i] = b->dims_in[i];
+    SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
+    for (i = 0; i < b->ndims; i++) b->dims[i] = dims_in[i];
 
     SDF_READ_ENTRY_INT4(b->stagger);
     for (i = 0; i < b->ndims; i++) b->const_value[i] = (b->stagger & 1<<i);
