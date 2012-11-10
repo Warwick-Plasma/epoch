@@ -96,8 +96,8 @@ static int sdf_create_1d_distribution(sdf_file_t *h, int64_t global, int local,
     lengths[1] = local;
     lengths[2] = 1;
     disp[0] = 0;
-    disp[1] = start * b->type_size;
-    disp[2] = global * b->type_size;
+    disp[1] = start * SDF_TYPE_SIZES[b->datatype];
+    disp[2] = global * SDF_TYPE_SIZES[b->datatype];
     types[0] = MPI_LB;
     types[1] = b->mpitype;
     types[2] = MPI_UB;
@@ -133,7 +133,7 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
     }
 
     if (*var) free(*var);
-    *var = malloc(count * b->type_size);
+    *var = malloc(count * SDF_TYPE_SIZES[b->datatype]);
 #ifdef PARALLEL
     MPI_File_set_view(h->filehandle, h->current_location, b->mpitype,
             b->distribution, "native", MPI_INFO_NULL);
@@ -143,7 +143,7 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
             MPI_INFO_NULL);
 #else
     fseeko(h->filehandle, h->current_location, SEEK_SET);
-    fread(*var, b->type_size, count, h->filehandle);
+    fread(*var, SDF_TYPE_SIZES[b->datatype], count, h->filehandle);
 #endif
 
     return 0;
@@ -188,7 +188,7 @@ int sdf_read_point_mesh(sdf_file_t *h)
                 SDF_DPRNTar(b->grids[n], b->nlocal);
             }
             h->current_location = h->current_location
-                    + b->type_size * b->npoints;
+                    + SDF_TYPE_SIZES[b->datatype] * b->npoints;
         }
     }
 
@@ -244,7 +244,8 @@ int sdf_read_point_variable(sdf_file_t *h)
     sdf_free_distribution(h);
     sdf_convert_array_to_float(h, &b->data, b->nlocal);
     if (h->use_random) sdf_randomize_array(h, &b->data, b->nlocal);
-    h->current_location = h->current_location + b->type_size * b->npoints;
+    h->current_location = h->current_location
+            + SDF_TYPE_SIZES[b->datatype] * b->npoints;
 
     if (h->print) {
         h->indent = 0;

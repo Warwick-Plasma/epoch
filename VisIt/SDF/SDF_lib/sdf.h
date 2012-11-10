@@ -493,8 +493,8 @@ void sdf_trim(char *str);
 
 #define SDF_READ_ENTRY_CONST(value) do { \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
-            b->type_size); \
-        h->current_location += b->type_size; \
+            SDF_TYPE_SIZES[b->datatype]); \
+        h->current_location += SDF_TYPE_SIZES[b->datatype]; \
         switch (b->datatype) { \
         case(SDF_DATATYPE_REAL4): \
           SDF_DPRNT(#value ": %g\n", *((float*)(value))); \

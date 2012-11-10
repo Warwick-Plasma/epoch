@@ -104,8 +104,8 @@ static inline void stack_alloc(sdf_block_t *b)
 {
     struct stack *tail;
     if (b->done_data || b->dont_own_data) return;
-    b->data = calloc(b->nlocal, b->type_size_out);
-    memory_size += b->nlocal * b->type_size_out;
+    b->data = calloc(b->nlocal, SDF_TYPE_SIZES[b->datatype_out]);
+    memory_size += b->nlocal * SDF_TYPE_SIZES[b->datatype_out];
     stack_tail->next = tail = (struct stack*)malloc(sizeof(struct stack));
     tail->block = b;
     tail->next = NULL;
@@ -123,7 +123,7 @@ static inline void stack_free_block(sdf_block_t *b)
             free(b->data);
             b->data = NULL;
             b->done_data = 0;
-            memory_size -= b->nlocal * b->type_size_out;
+            memory_size -= b->nlocal * SDF_TYPE_SIZES[b->datatype_out];
             old_stack_entry->next = stack_entry->next;
             if (stack_entry == stack_tail) stack_tail = old_stack_entry;
             free(stack_entry);
@@ -170,7 +170,7 @@ static inline void stack_freeup_memory(void)
         free(b->data);
         b->data = NULL;
         b->done_data = 0;
-        memory_size -= b->nlocal * b->type_size_out;
+        memory_size -= b->nlocal * SDF_TYPE_SIZES[b->datatype_out];
         if (memory_size < MAX_MEMORY) break;
     }
 }
@@ -1100,8 +1100,8 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
             if (b->must_read[i]) {
                 var = sdf_find_block_by_id(h, b->variable_ids[i]);
                 if (var) {
-                    var->data = (char*)b->data
-                            + i * var->nlocal * var->type_size_out;
+                    var->data = (char*)b->data + i * var->nlocal
+                            * SDF_TYPE_SIZES[var->datatype_out];
                     var->dont_own_data = 1;
                     h->current_block = var;
                     stack_alloc(h->current_block);
@@ -1152,11 +1152,8 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
                 }
             }
 
-            if (!b->datatype_out) {
-                b->type_size_out = mesh->type_size_out;
+            if (!b->datatype_out)
                 b->datatype_out = mesh->datatype_out;
-            } else
-                b->type_size_out = SDF_TYPE_SIZES[b->datatype_out];
 
             stack_alloc(b);
         }

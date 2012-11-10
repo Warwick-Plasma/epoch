@@ -510,8 +510,8 @@ sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
 
     b->nlocal = mesh->nfaces;
     b->datatype_out = b->subblock->datatype_out;
-    sz = b->type_size_out = b->subblock->type_size_out;
-    ptr = b->data = malloc(b->nlocal * b->type_size_out);
+    sz = SDF_TYPE_SIZES[b->datatype_out];
+    ptr = b->data = malloc(b->nlocal * sz);
     dptr = b->subblock->data;
     for (i=0; i < b->nlocal; i++) {
         idx = *indexes++;
@@ -559,7 +559,7 @@ sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
     b->grids = calloc(3, sizeof(float*));
     for (i = 0; i < 3; i++) {
         if (i != b->stagger) {
-            sz = b->local_dims[i] * b->type_size_out;
+            sz = b->local_dims[i] * SDF_TYPE_SIZES[b->datatype_out];
             b->grids[i] = malloc(sz);
             memcpy(b->grids[i], old->grids[i], sz);
         }
@@ -567,7 +567,7 @@ sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 
     n = b->stagger;
     b->local_dims[n] += 1;
-    sz = b->local_dims[n] * b->type_size_out;
+    sz = b->local_dims[n] * SDF_TYPE_SIZES[b->datatype_out];
     b->grids[n] = malloc(sz);
     if (b->datatype_out == SDF_DATATYPE_REAL8) {
         double *oldx_ptr = (double*)old->grids[n];
@@ -640,7 +640,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 
     b->datatype_out = mesh->datatype_out;
     b->grids = calloc(3, sizeof(float*));
-    sz = b->type_size_out = mesh->type_size_out;
+    sz = SDF_TYPE_SIZES[b->datatype_out];
 
     if (split->geometry == 1) {
         index = split->data;
@@ -686,7 +686,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         }
         for (n=b->ndims; n < 3; n++) {
             b->local_dims[n] = 1;
-            b->grids[n] = calloc(1, b->type_size_out);
+            b->grids[n] = calloc(1, sz);
         }
 
 #ifdef PARALLEL
@@ -726,8 +726,8 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 #endif
 
     b->datatype_out = mesh->datatype_out;
-    sz = b->type_size_out = mesh->type_size_out;
     b->grids = malloc(3 * sizeof(float*));
+    sz = SDF_TYPE_SIZES[b->datatype_out];
 
     b->nlocal = 1;
     for (n = 0; n < b->ndims; n++) {

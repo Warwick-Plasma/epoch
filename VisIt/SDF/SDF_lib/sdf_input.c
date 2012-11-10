@@ -263,32 +263,9 @@ int sdf_read_next_block_header(sdf_file_t *h)
     b->done_header = 1;
     h->current_location = b->block_start + h->block_header_length;
 
-    switch (b->datatype) {
-    case(SDF_DATATYPE_REAL4):
-        b->type_size = 4;
-        break;
-    case(SDF_DATATYPE_REAL8):
-        b->type_size = 8;
-        break;
-    case(SDF_DATATYPE_INTEGER4):
-        b->type_size = 4;
-        break;
-    case(SDF_DATATYPE_INTEGER8):
-        b->type_size = 8;
-        break;
-    case(SDF_DATATYPE_CHARACTER):
-        b->type_size = 1;
-        break;
-    case(SDF_DATATYPE_LOGICAL):
-        b->type_size = 1;
-        break;
-    }
     b->datatype_out = b->datatype;
-    b->type_size_out = b->type_size;
-    if (h->use_float && b->datatype == SDF_DATATYPE_REAL8) {
+    if (h->use_float && b->datatype == SDF_DATATYPE_REAL8)
         b->datatype_out = SDF_DATATYPE_REAL4;
-        b->type_size_out = 4;
-    }
 #ifdef PARALLEL
     switch (b->datatype) {
     case(SDF_DATATYPE_REAL4):
@@ -882,7 +859,7 @@ int sdf_read_array(sdf_file_t *h)
 
     h->current_location = b->data_location;
 
-    n = b->type_size * b->nlocal;
+    n = SDF_TYPE_SIZES[b->datatype] * b->nlocal;
     if (h->mmap) {
         b->data = h->mmap + h->current_location;
     } else {

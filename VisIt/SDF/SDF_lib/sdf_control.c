@@ -513,7 +513,6 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
             *r4++ = (float)(*r8++);
         if (!h->mmap) free(old_var);
         b->datatype_out = SDF_DATATYPE_REAL4;
-        b->type_size_out = 4;
 #ifdef PARALLEL
         b->mpitype_out = MPI_FLOAT;
 #endif
