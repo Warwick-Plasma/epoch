@@ -18,7 +18,7 @@
     b->done_info = 1; } while(0)
 
 
-int sdf_point_factor(sdf_file_t *h, int *local_npoints);
+int sdf_point_factor(sdf_file_t *h, int *nelements_local);
 
 
 int sdf_read_point_mesh_info(sdf_file_t *h)
@@ -159,7 +159,7 @@ int sdf_read_point_mesh(sdf_file_t *h)
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_point_mesh_info(h);
 
-    sdf_point_factor(h, &b->nlocal);
+    sdf_point_factor(h, &b->nelements_local);
 
     h->current_location = b->data_location;
 
@@ -169,23 +169,24 @@ int sdf_read_point_mesh(sdf_file_t *h)
         h->indent = 0;
         SDF_DPRNT("\n");
         SDF_DPRNT("b->name: %s ", b->name);
-        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nlocal);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nelements_local);
         SDF_DPRNT("\n");
         h->indent = 2;
     }
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) {
 #ifdef PARALLEL
-            sdf_create_1d_distribution(h, b->npoints, b->nlocal,
+            sdf_create_1d_distribution(h, b->npoints, b->nelements_local,
                     b->starts[0]);
 #endif
-            sdf_helper_read_array(h, &b->grids[n], b->nlocal);
+            sdf_helper_read_array(h, &b->grids[n], b->nelements_local);
             sdf_free_distribution(h);
-            sdf_convert_array_to_float(h, &b->grids[n], b->nlocal);
-            if (h->use_random) sdf_randomize_array(h, &b->grids[n], b->nlocal);
+            sdf_convert_array_to_float(h, &b->grids[n], b->nelements_local);
+            if (h->use_random)
+                sdf_randomize_array(h, &b->grids[n], b->nelements_local);
             if (h->print) {
                 SDF_DPRNT("%s: ", b->dim_labels[n]);
-                SDF_DPRNTar(b->grids[n], b->nlocal);
+                SDF_DPRNTar(b->grids[n], b->nelements_local);
             }
             h->current_location = h->current_location
                     + SDF_TYPE_SIZES[b->datatype] * b->npoints;
@@ -199,7 +200,7 @@ int sdf_read_point_mesh(sdf_file_t *h)
 
 
 
-int sdf_point_factor(sdf_file_t *h, int *local_npoints)
+int sdf_point_factor(sdf_file_t *h, int *nelements_local)
 {
     sdf_block_t *b = h->current_block;
 #ifdef PARALLEL
@@ -211,13 +212,13 @@ int sdf_point_factor(sdf_file_t *h, int *local_npoints)
     if (h->rank >= split_big) {
         b->starts[0] = split_big * (npoint_min + 1)
             + (h->rank - split_big) * npoint_min;
-        *local_npoints = npoint_min;
+        *nelements_local = npoint_min;
     } else {
         b->starts[0] = h->rank * (npoint_min + 1);
-        *local_npoints = npoint_min + 1;
+        *nelements_local = npoint_min + 1;
     }
 #else
-    *local_npoints = (int)b->npoints;
+    *nelements_local = (int)b->npoints;
 #endif
 
     return 0;
@@ -233,17 +234,17 @@ int sdf_read_point_variable(sdf_file_t *h)
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_blocklist(h);
 
-    sdf_point_factor(h, &b->nlocal);
+    sdf_point_factor(h, &b->nelements_local);
 
     h->current_location = b->data_location;
 
 #ifdef PARALLEL
-    sdf_create_1d_distribution(h, b->npoints, b->nlocal, b->starts[0]);
+    sdf_create_1d_distribution(h, b->npoints, b->nelements_local, b->starts[0]);
 #endif
-    sdf_helper_read_array(h, &b->data, b->nlocal);
+    sdf_helper_read_array(h, &b->data, b->nelements_local);
     sdf_free_distribution(h);
-    sdf_convert_array_to_float(h, &b->data, b->nlocal);
-    if (h->use_random) sdf_randomize_array(h, &b->data, b->nlocal);
+    sdf_convert_array_to_float(h, &b->data, b->nelements_local);
+    if (h->use_random) sdf_randomize_array(h, &b->data, b->nelements_local);
     h->current_location = h->current_location
             + SDF_TYPE_SIZES[b->datatype] * b->npoints;
 
@@ -251,9 +252,9 @@ int sdf_read_point_variable(sdf_file_t *h)
         h->indent = 0;
         SDF_DPRNT("\n");
         SDF_DPRNT("b->name: %s ", b->name);
-        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nlocal);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nelements_local);
         SDF_DPRNT("\n  ");
-        SDF_DPRNTar(b->data, b->nlocal);
+        SDF_DPRNTar(b->data, b->nelements_local);
     }
 
     b->done_data = 1;

@@ -627,8 +627,8 @@ int sdf_factor(sdf_file_t *h)
     for (n = 0; n < 3; n++) b->local_dims[n] = (int)b->dims[n];
 #endif
 
-    b->nlocal = 1;
-    for (n = 0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
+    b->nelements_local = 1;
+    for (n = 0; n < b->ndims; n++) b->nelements_local *= b->local_dims[n];
 
     return 0;
 }

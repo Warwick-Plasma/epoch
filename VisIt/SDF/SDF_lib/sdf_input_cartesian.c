@@ -90,10 +90,10 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
     // This will be fixed up later once we have the whole block list.
     sdf_factor(h);
 #else
-    b->nlocal = 1;
+    b->nelements_local = 1;
     for (i=0; i < b->ndims; i++) {
         b->local_dims[i] = (int)b->dims[i];
-        b->nlocal *= b->dims[i];
+        b->nelements_local *= b->dims[i];
     }
     for (i=b->ndims; i < 3; i++) b->local_dims[i] = 1;
 #endif
@@ -150,11 +150,11 @@ static int sdf_plain_mesh_distribution(sdf_file_t *h)
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 
-    b->nlocal = 1;
+    b->nelements_local = 1;
     for (n=0; n < b->ndims; n++) {
         b->dims[n] += 2 * b->ng;
         b->local_dims[n] += 2 * b->ng;
-        b->nlocal *= b->local_dims[n];
+        b->nelements_local *= b->local_dims[n];
     }
 #endif
 
@@ -199,7 +199,7 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
     int subsize;
 #endif
 
-    count = b->nlocal;
+    count = b->nelements_local;
 
     if (*var_ptr) free(*var_ptr);
     sz = SDF_TYPE_SIZES[b->datatype];
@@ -455,11 +455,11 @@ int sdf_read_lagran_mesh(sdf_file_t *h)
 
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) {
-            sdf_helper_read_array(h, &b->grids[n], b->nlocal);
-            sdf_convert_array_to_float(h, &b->grids[n], b->nlocal);
+            sdf_helper_read_array(h, &b->grids[n], b->nelements_local);
+            sdf_convert_array_to_float(h, &b->grids[n], b->nelements_local);
             if (h->print) {
                 SDF_DPRNT("%s: ", b->dim_labels[n]);
-                SDF_DPRNTar(b->grids[n], b->nlocal);
+                SDF_DPRNTar(b->grids[n], b->nelements_local);
             }
             h->current_location = h->current_location
                     + b->type_size * nelements;
@@ -489,7 +489,7 @@ int sdf_read_plain_variable(sdf_file_t *h)
 
     sdf_plain_mesh_distribution(h);
 
-    sdf_helper_read_array(h, &b->data, b->nlocal);
+    sdf_helper_read_array(h, &b->data, b->nelements_local);
 
     sdf_free_distribution(h);
 
@@ -499,7 +499,7 @@ int sdf_read_plain_variable(sdf_file_t *h)
         SDF_DPRNT("b->name: %s ", b->name);
         for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
         SDF_DPRNT("\n  ");
-        SDF_DPRNTar(b->data, b->nlocal);
+        SDF_DPRNTar(b->data, b->nelements_local);
     }
 
     b->done_data = 1;

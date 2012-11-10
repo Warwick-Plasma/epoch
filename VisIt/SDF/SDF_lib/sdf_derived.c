@@ -508,12 +508,12 @@ sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
         h->current_block = current_block;
     }
 
-    b->nlocal = mesh->nfaces;
+    b->nelements_local = mesh->nfaces;
     b->datatype_out = b->subblock->datatype_out;
     sz = SDF_TYPE_SIZES[b->datatype_out];
-    ptr = b->data = malloc(b->nlocal * sz);
+    ptr = b->data = malloc(b->nelements_local * sz);
     dptr = b->subblock->data;
-    for (i=0; i < b->nlocal; i++) {
+    for (i=0; i < b->nelements_local; i++) {
         idx = *indexes++;
         memcpy(ptr, dptr + idx * sz, sz);
         ptr += sz;
@@ -532,9 +532,9 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
     b->data = b->grids[0] = mesh->grids[b->nm];
     b->datatype_out = mesh->datatype_out;
     if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED)
-        b->local_dims[0] = b->nlocal = mesh->nlocal;
+        b->local_dims[0] = b->nelements_local = mesh->nelements_local;
     else
-        b->local_dims[0] = b->nlocal = mesh->local_dims[b->nm];
+        b->local_dims[0] = b->nelements_local = mesh->local_dims[b->nm];
     return b;
 }
 
@@ -647,7 +647,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         index = split->data;
         np = 0;
 
-        b->nlocal = 1;
+        b->nelements_local = 1;
         for (n=0; n < b->ndims; n++) {
             xmesh = mesh->grids[n];
             nxmesh = (int)mesh->dims[n];
@@ -683,7 +683,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
             else
 #endif
             b->grids[n] = x;
-            b->nlocal *= nx;
+            b->nelements_local *= nx;
         }
         for (n=b->ndims; n < 3; n++) {
             b->local_dims[n] = 1;
@@ -696,7 +696,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
                 b->local_dims[n] = 1;
                 b->grids[n] = calloc(1, sz);
             }
-            b->nlocal = 1;
+            b->nelements_local = 1;
         }
 #endif
     }
@@ -734,7 +734,7 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
     b->grids = malloc(3 * sizeof(float*));
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
-    b->nlocal = 1;
+    b->nelements_local = 1;
     for (n = 0; n < b->ndims; n++) {
 #ifdef PARALLEL
         nx = mesh->cpu_split[n];
@@ -749,7 +749,7 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         x = calloc(nx, sz);
         memcpy(x+sz*i0, mesh->grids[n], sz);
         if (pmax < 0) memcpy(x+sz*(i0+1), (char*)mesh->grids[n]+sz*idx, sz);
-        b->nlocal *= nx;
+        b->nelements_local *= nx;
 #ifdef PARALLEL
         buf = malloc(nx*sz);
         MPI_Reduce(x, buf, nx*sz, MPI_BYTE, MPI_BOR, 0, h->comm);
@@ -764,7 +764,7 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
     }
 
     if (h->rank) {
-        b->nlocal = 1;
+        b->nelements_local = 1;
         nx = 0;
     } else
         nx = b->ndims;
@@ -774,7 +774,7 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         b->grids[n] = calloc(1, sz);
     }
 
-    b->subblock->nlocal = b->nlocal;
+    b->subblock->nelements_local = b->nelements_local;
     b->done_data = 1;
 
     return b;
@@ -788,7 +788,7 @@ sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
 
     if (b->done_data) return b;
 
-    for (n=0; n < b->nlocal; n++) var[n] = n;
+    for (n=0; n < b->nelements_local; n++) var[n] = n;
 
     b->done_data = 1;
 
@@ -1029,11 +1029,11 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             SDF_SET_ENTRY_ID(append->mesh_id, mesh->id);
             SDF_SET_ENTRY_ID(append->units, "CPU");
             append->ndims = b->ndims;
-            append->nlocal = 1;
+            append->nelements_local = 1;
             for (i=0; i<b->ndims; i++) {
                 append->dims[i] = b->dims[i] + 1;
                 append->local_dims[i] = (int)append->dims[i];
-                append->nlocal *= append->local_dims[i];
+                append->nelements_local *= append->local_dims[i];
             }
             for (i=b->ndims; i<3; i++)
                 append->local_dims[i] = append->dims[i] = 1;
@@ -1144,11 +1144,11 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
             if (obst->ng == 0) {
                 obst->ng = 1;
                 obst->dont_display = 1;
-                obst->nlocal = 1;
+                obst->nelements_local = 1;
                 for (i = 0; i < obst->ndims; i++) {
                     obst->dims[i] += 2 * obst->ng;
                     obst->local_dims[i] += 2 * obst->ng;
-                    obst->nlocal *= obst->local_dims[i];
+                    obst->nelements_local *= obst->local_dims[i];
                 }
             }
 

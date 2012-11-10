@@ -175,7 +175,7 @@ struct sdf_block {
     uint32_t type_size, stagger, datatype_out, type_size_out;
     uint32_t *dims_in;
     uint64_t dims[3];
-    int local_dims[3], nm, nlocal, n_ids, opt, ng, nfaces;
+    int local_dims[3], nm, nelements_local, n_ids, opt, ng, nfaces;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
     char *vfm_id, *obstacle_id;

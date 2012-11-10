@@ -703,8 +703,8 @@ static int sdf_array_datatype(sdf_file_t *h)
 #endif
     for (n=b->ndims; n < 3; n++) b->local_dims[n] = 1;
 
-    b->nlocal = 1;
-    for (n=0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
+    b->nelements_local = 1;
+    for (n=0; n < b->ndims; n++) b->nelements_local *= b->local_dims[n];
 
     return 0;
 }
@@ -769,10 +769,10 @@ int sdf_read_array_info(sdf_file_t *h)
     SDF_COMMON_INFO();
 
     SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
-    b->nlocal = 1;
+    b->nelements_local = 1;
     for (i = 0; i < b->ndims; i++) {
         b->local_dims[i] = b->dims[i] = dims_in[i];
-        b->nlocal *= b->dims[i];
+        b->nelements_local *= b->dims[i];
     }
 
     return 0;
@@ -798,16 +798,17 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
         b->local_dims[i] = b->dims[i] = dims_in[i];
     }
     if (b->geometry == 1 || b->geometry == 4) {
-        b->nlocal = 0;
+        b->nelements_local = 0;
         for (i = 0; i < b->ndims; i++)
-            b->nlocal += b->dims[i];
+            b->nelements_local += b->dims[i];
     } else if (b->geometry == 2) {
-        b->nlocal = (int)(b->dims[0] * (b->dims[1] + 1));
-        if (b->ndims > 2) b->nlocal += b->dims[0] * b->dims[1] * b->dims[2];
+        b->nelements_local = (int)(b->dims[0] * (b->dims[1] + 1));
+        if (b->ndims > 2)
+            b->nelements_local += b->dims[0] * b->dims[1] * b->dims[2];
     } else if (b->geometry == 3) {
-        b->nlocal = 1;
+        b->nelements_local = 1;
         for (i = 0; i < b->ndims; i++)
-            b->nlocal *= b->dims[i];
+            b->nelements_local *= b->dims[i];
     }
 
     return 0;
@@ -826,7 +827,7 @@ int sdf_read_array(sdf_file_t *h)
 
     h->current_location = b->data_location;
 
-    n = SDF_TYPE_SIZES[b->datatype] * b->nlocal;
+    n = SDF_TYPE_SIZES[b->datatype] * b->nelements_local;
     if (h->mmap) {
         b->data = h->mmap + h->current_location;
     } else {
@@ -861,7 +862,7 @@ int sdf_read_array(sdf_file_t *h)
                 SDF_DPRNT("\n  ");
             }
         } else {
-            SDF_DPRNTar(b->data, b->nlocal);
+            SDF_DPRNTar(b->data, b->nelements_local);
         }
     }
 
