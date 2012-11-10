@@ -834,7 +834,7 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
 
         vtkDataArray *array = vtkFloatArray::New();
         array->SetNumberOfComponents(b->ndims);
-        array->SetVoidArray(b->data, b->ndims * b->npoints, 1);
+        array->SetVoidArray(b->data, b->ndims * b->dims[0], 1);
 
         vtkPoints *points = vtkPoints::New();
         points->SetData(array);
@@ -1142,7 +1142,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
             memcpy(b->local_dims, mesh->local_dims, b->ndims*sizeof(int));
 
             if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
-                b->nelements_local = mesh->npoints;
+                b->nelements_local = mesh->dims[0];
             } else {
                 b->nelements_local = 1;
                 for (unsigned int i=0; i < b->ndims; i++) {

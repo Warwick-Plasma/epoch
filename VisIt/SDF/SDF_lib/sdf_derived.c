@@ -68,7 +68,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
     int i, j, k, ii, jj, kk, i0, j0, k0, i1, j1, k1;
     int imin, imax, jmin, jmax, kmin, kmax;
     int nx, ny, nz;
-    int gotmat, gotobst, npoints;
+    int gotmat, gotobst, nelements;
     int *vertex_index, *obdata, *ijk;
     float *vertex;
 
@@ -133,7 +133,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
             break;
     }
 
-    npoints = 0;
+    nelements = 0;
     vertex_index = (int*)malloc((nx+1)*(ny+1)*(nz+1)*sizeof(int));
 
     ii = 0;
@@ -154,7 +154,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
                 }}
 
                 if (gotmat) {
-                    vertex_index[IJK1(i,j,k)] = npoints++;
+                    vertex_index[IJK1(i,j,k)] = nelements++;
                     vector_push_back(vertijk, i);
                     vector_push_back(vertijk, j);
                     vector_push_back(vertijk, k);
@@ -185,7 +185,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
                 }}
 
                 if (gotmat) {
-                    vertex_index[IJK1(i,j,k)] = npoints++;
+                    vertex_index[IJK1(i,j,k)] = nelements++;
                     vector_push_back(vertijk, i);
                     vector_push_back(vertijk, j);
                     vector_push_back(vertijk, k);
@@ -216,7 +216,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
                 }}
 
                 if (gotmat) {
-                    vertex_index[IJK1(i,j,k)] = npoints++;
+                    vertex_index[IJK1(i,j,k)] = nelements++;
                     vector_push_back(vertijk, i);
                     vector_push_back(vertijk, j);
                     vector_push_back(vertijk, k);
@@ -229,8 +229,8 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
         kk = nz-1;
     }
 
-    b->npoints = npoints;
-    b->data = malloc(b->ndims * npoints * sizeof(float));
+    b->dims[0] = b->nelements = nelements;
+    b->data = malloc(b->ndims * nelements * sizeof(float));
     vertex = (float*)b->data;
     ijk = vertijk->data;
 
@@ -238,7 +238,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
         double *x = grid->grids[0];
         double *y = grid->grids[1];
         double *z = grid->grids[2];
-        for (i = 0; i < npoints; i++) {
+        for (i = 0; i < nelements; i++) {
             *vertex++ = x[*ijk++];
             *vertex++ = y[*ijk++];
             *vertex++ = z[*ijk++];
@@ -247,7 +247,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
         float *x = grid->grids[0];
         float *y = grid->grids[1];
         float *z = grid->grids[2];
-        for (i = 0; i < npoints; i++) {
+        for (i = 0; i < nelements; i++) {
             *vertex++ = x[*ijk++];
             *vertex++ = y[*ijk++];
             *vertex++ = z[*ijk++];
@@ -330,7 +330,7 @@ sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
 
     int i, j, k, i1, j1, k1;
     int nx, ny, nz;
-    int gotmat, gotobst, npoints, face, which, cell, ocell;
+    int gotmat, gotobst, nelements, face, which, cell, ocell;
     int *vertex_index, *obdata;
     float *vertex;
 
@@ -348,7 +348,7 @@ sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
     ny = b->subblock->local_dims[1] - 2;
     nz = b->subblock->local_dims[2] - 2;
 
-    npoints = 0;
+    nelements = 0;
     vertex_index = (int*)malloc((nx+1)*(ny+1)*(nz+1)*sizeof(int));
 
     for (k = 0; k <= nz; k++) {
@@ -366,11 +366,11 @@ sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
         }}}
 
         if (gotmat && gotobst)
-            vertex_index[IJK1(i,j,k)] = npoints++;
+            vertex_index[IJK1(i,j,k)] = nelements++;
     }}}
 
-    b->npoints = npoints;
-    b->data = malloc(b->ndims * npoints * sizeof(float));
+    b->dims[0] = b->nelements = nelements;
+    b->data = malloc(b->ndims * nelements * sizeof(float));
     vertex = (float*)b->data;
 
     if (grid->datatype_out == SDF_DATATYPE_REAL8) {
