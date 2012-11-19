@@ -485,7 +485,7 @@ CONTAINS
     REAL(r4), DIMENSION(:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, INTENT(IN), OPTIONAL :: last_in
-    INTEGER :: i, nm
+    INTEGER :: i, j, nm, nsub
     LOGICAL :: last, found
     TYPE(sdf_block_type), POINTER :: cur, b
 
@@ -497,21 +497,30 @@ CONTAINS
 
     cur => h%current_block
     nm = cur%ndims
+    nsub = 0
+    DO i = 1,nm
+      IF (cur%variable_ids(i) .NE. '') nsub = nsub + 1
+    ENDDO
 
+    j = 0
     IF (last) THEN
       DO i = 1,nm
+        IF (cur%variable_ids(i) .EQ. '') CYCLE
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL read_1d_var_last_r4(h, nm, b%dims, variable, i, distribution, &
+        j = j + 1
+        CALL read_1d_var_last_r4(h, nsub, b%dims, variable, j, distribution, &
             subarray)
       ENDDO
     ELSE
       DO i = 1,nm
+        IF (cur%variable_ids(i) .EQ. '') CYCLE
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL read_1d_var_first_r4(h, nm, b%dims, variable, i, distribution, &
+        j = j + 1
+        CALL read_1d_var_first_r4(h, nsub, b%dims, variable, j, distribution, &
             subarray)
       ENDDO
     ENDIF
@@ -533,7 +542,7 @@ CONTAINS
     REAL(r4), DIMENSION(:,:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, INTENT(IN), OPTIONAL :: last_in
-    INTEGER :: i, nm
+    INTEGER :: i, j, nm, nsub
     LOGICAL :: last, found
     TYPE(sdf_block_type), POINTER :: cur, b
 
@@ -545,21 +554,30 @@ CONTAINS
 
     cur => h%current_block
     nm = cur%ndims
+    nsub = 0
+    DO i = 1,nm
+      IF (cur%variable_ids(i) .NE. '') nsub = nsub + 1
+    ENDDO
 
+    j = 0
     IF (last) THEN
       DO i = 1,nm
+        IF (cur%variable_ids(i) .EQ. '') CYCLE
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL read_2d_var_last_r4(h, nm, b%dims, variable, i, distribution, &
+        j = j + 1
+        CALL read_2d_var_last_r4(h, nsub, b%dims, variable, j, distribution, &
             subarray)
       ENDDO
     ELSE
       DO i = 1,nm
+        IF (cur%variable_ids(i) .EQ. '') CYCLE
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL read_2d_var_first_r4(h, nm, b%dims, variable, i, distribution, &
+        j = j + 1
+        CALL read_2d_var_first_r4(h, nsub, b%dims, variable, j, distribution, &
             subarray)
       ENDDO
     ENDIF
@@ -581,7 +599,7 @@ CONTAINS
     REAL(r4), DIMENSION(:,:,:,:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     LOGICAL, INTENT(IN), OPTIONAL :: last_in
-    INTEGER :: i, nm
+    INTEGER :: i, j, nm, nsub
     LOGICAL :: last, found
     TYPE(sdf_block_type), POINTER :: cur, b
 
@@ -593,13 +611,19 @@ CONTAINS
 
     cur => h%current_block
     nm = cur%ndims
+    nsub = 0
+    DO i = 1,nm
+      IF (cur%variable_ids(i) .NE. '') nsub = nsub + 1
+    ENDDO
 
+    j = 0
     IF (last) THEN
       DO i = 1,nm
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL read_3d_var_last_r4(h, nm, b%dims, variable, i, distribution, &
+        j = j + 1
+        CALL read_3d_var_last_r4(h, nsub, b%dims, variable, j, distribution, &
             subarray)
       ENDDO
     ELSE
@@ -607,7 +631,8 @@ CONTAINS
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
-        CALL read_3d_var_first_r4(h, nm, b%dims, variable, i, distribution, &
+        j = j + 1
+        CALL read_3d_var_first_r4(h, nsub, b%dims, variable, j, distribution, &
             subarray)
       ENDDO
     ENDIF
