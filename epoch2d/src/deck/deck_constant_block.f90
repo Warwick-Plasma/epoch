@@ -50,19 +50,9 @@ CONTAINS
 
     IF (value .EQ. blank) RETURN
 
-    CALL initialise_stack(temp)
-    CALL tokenize(value, temp, errcode)
-    IF (errcode .NE. c_err_none) THEN
-      CALL deallocate_stack(temp)
-      RETURN
-    ENDIF
-
     ! First check whether constant already exists
     DO ix = 1, n_deck_constants
-      IF (str_cmp(TRIM(element), TRIM(deck_constant_list(ix)%name))) THEN
-        deck_constant_list(ix)%execution_stream = temp
-        RETURN
-      ENDIF
+      IF (str_cmp(TRIM(element), TRIM(deck_constant_list(ix)%name))) RETURN
     ENDDO
 
     ! If we're here then then named constant doesn't yet exist, so create it
@@ -79,6 +69,13 @@ CONTAINS
           WRITE(io,*)
         ENDDO
       ENDIF
+    ENDIF
+
+    CALL initialise_stack(temp)
+    CALL tokenize(value, temp, errcode)
+    IF (errcode .NE. c_err_none) THEN
+      CALL deallocate_stack(temp)
+      RETURN
     ENDIF
 
     ! Take a copy of the old list

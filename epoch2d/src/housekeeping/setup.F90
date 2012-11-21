@@ -311,6 +311,9 @@ CONTAINS
       NULLIFY(species_list(ispecies)%ext_temp_y_min)
       NULLIFY(species_list(ispecies)%ext_temp_y_max)
       NULLIFY(species_list(ispecies)%secondary_list)
+    ENDDO
+
+    DO ispecies = 1, n_species
       CALL initialise_stack(species_list(ispecies)%density_function)
       CALL initialise_stack(species_list(ispecies)%temperature_function(1))
       CALL initialise_stack(species_list(ispecies)%temperature_function(2))

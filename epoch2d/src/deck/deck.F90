@@ -436,6 +436,7 @@ CONTAINS
         fbuf => file_buffer_head
         fbuf%filename = ''
         NULLIFY(fbuf%next)
+        NULLIFY(fbuf%buffer)
       ELSE
         fbuf => file_buffer_head
       ENDIF

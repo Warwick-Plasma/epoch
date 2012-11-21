@@ -93,8 +93,11 @@ CONTAINS
 
     CALL MPI_TYPE_FREE(subtype_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field, errcode)
+    CALL MPI_TYPE_FREE(subarray_field_big, errcode)
+
     CALL MPI_TYPE_FREE(subtype_field_r4, errcode)
     CALL MPI_TYPE_FREE(subarray_field_r4, errcode)
+    CALL MPI_TYPE_FREE(subarray_field_big_r4, errcode)
 
   END SUBROUTINE free_subtypes
 
@@ -191,8 +194,11 @@ CONTAINS
 
     CALL MPI_TYPE_FREE(subtype_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field, errcode)
+    CALL MPI_TYPE_FREE(subarray_field_big, errcode)
+
     CALL MPI_TYPE_FREE(subtype_field_r4, errcode)
     CALL MPI_TYPE_FREE(subarray_field_r4, errcode)
+    CALL MPI_TYPE_FREE(subarray_field_big_r4, errcode)
     DO i = 1,n_species
       CALL MPI_TYPE_FREE(species_subtypes(i), errcode)
     ENDDO
@@ -350,6 +356,7 @@ CONTAINS
 
     vec1d = MPI_DATATYPE_NULL
     CALL MPI_TYPE_CONTIGUOUS(n_local(1), basetype, vec1d, errcode)
+    CALL MPI_TYPE_COMMIT(vec1d, errcode)
 
     CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
     starts = start - 1
@@ -364,8 +371,9 @@ CONTAINS
 
     vec1d_sub = MPI_DATATYPE_NULL
     CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec1d_sub, errcode)
-
     CALL MPI_TYPE_COMMIT(vec1d_sub, errcode)
+
+    CALL MPI_TYPE_FREE(vec1d, errcode)
 
   END FUNCTION create_1d_array_subtype
 
@@ -391,6 +399,7 @@ CONTAINS
     vec2d = MPI_DATATYPE_NULL
     CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), basetype, &
         vec2d, errcode)
+    CALL MPI_TYPE_COMMIT(vec2d, errcode)
 
     CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
     starts = start - 1
@@ -405,8 +414,9 @@ CONTAINS
 
     vec2d_sub = MPI_DATATYPE_NULL
     CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec2d_sub, errcode)
-
     CALL MPI_TYPE_COMMIT(vec2d_sub, errcode)
+
+    CALL MPI_TYPE_FREE(vec2d, errcode)
 
   END FUNCTION create_2d_array_subtype
 
@@ -433,6 +443,7 @@ CONTAINS
     vec2d = MPI_DATATYPE_NULL
     CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), basetype, &
         vec2d, errcode)
+    CALL MPI_TYPE_COMMIT(vec2d, errcode)
 
     CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
     starts = start - 1
@@ -447,9 +458,11 @@ CONTAINS
 
     vec2d_sub = MPI_DATATYPE_NULL
     CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec2d_sub, errcode)
+    CALL MPI_TYPE_COMMIT(vec2d_sub, errcode)
 
     vec3d = MPI_DATATYPE_NULL
     CALL MPI_TYPE_CONTIGUOUS(n_local(3), vec2d_sub, vec3d, errcode)
+    CALL MPI_TYPE_COMMIT(vec3d, errcode)
 
     disp(1) = 0
     disp(2) = typesize * n_global(1) * n_global(2) * starts(3)
@@ -460,8 +473,11 @@ CONTAINS
 
     vec3d_sub = MPI_DATATYPE_NULL
     CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec3d_sub, errcode)
-
     CALL MPI_TYPE_COMMIT(vec3d_sub, errcode)
+
+    CALL MPI_TYPE_FREE(vec2d, errcode)
+    CALL MPI_TYPE_FREE(vec2d_sub, errcode)
+    CALL MPI_TYPE_FREE(vec3d, errcode)
 
   END FUNCTION create_3d_array_subtype
 

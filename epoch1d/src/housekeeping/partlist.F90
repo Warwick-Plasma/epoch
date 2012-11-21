@@ -552,11 +552,10 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER, INTENT(IN) :: dest
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
-    INTEGER(i8) :: ipart
-    INTEGER :: nsend, cpos
+    INTEGER :: ipart, nsend, cpos
     TYPE(particle), POINTER :: current
 
-    nsend = partlist%count * nvar
+    nsend = INT(partlist%count) * nvar
     ALLOCATE(array(nsend))
     array = 0.0_num
 
@@ -605,7 +604,7 @@ CONTAINS
 
     CALL create_empty_partlist(partlist)
 
-    nrecv = count * nvar
+    nrecv = INT(count) * nvar
     ALLOCATE(array(nrecv))
     array = 0.0_num
 
@@ -657,8 +656,8 @@ CONTAINS
         MPI_INTEGER8, src, tag, comm, status, errcode)
 
     npart_recv = recv_buf(1)
-    nsend = send_buf(1) * nvar
-    nrecv = npart_recv * nvar
+    nsend = INT(send_buf(1)) * nvar
+    nrecv = INT(npart_recv) * nvar
     partlist_recv%id_update = partlist_recv%id_update + INT(recv_buf(2))
 
     ! Copy the data for the particles into a buffer

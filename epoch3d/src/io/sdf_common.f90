@@ -366,6 +366,7 @@ CONTAINS
     IF (ASSOCIATED(var%dim_labels)) DEALLOCATE(var%dim_labels)
     IF (ASSOCIATED(var%dim_units)) DEALLOCATE(var%dim_units)
     IF (ASSOCIATED(var%material_names)) DEALLOCATE(var%material_names)
+    IF (ASSOCIATED(var%run)) DEALLOCATE(var%run)
 
     CALL initialise_block_type(var)
 
@@ -439,7 +440,7 @@ CONTAINS
 
   SUBROUTINE error_handler(filehandle, error_code)
 
-    INTEGER, INTENT(IN) :: filehandle, error_code
+    INTEGER :: filehandle, error_code
     TYPE(sdf_file_handle), POINTER :: h
     INTEGER :: i
 
