@@ -184,6 +184,12 @@ CONTAINS
     CALL write_field(c_dump_cpml_psi_bzy, code, 'cpml_psi_bzy', 'CPML/Bz_y', &
         'A/m^2', c_stagger_cell_centre, cpml_psi_bzy)
 
+    IF (n_subsets .GT. 0) THEN
+      DO i = 1, n_species
+        CALL create_empty_partlist(io_list_data(i)%attached_list)
+      ENDDO
+    ENDIF
+
     DO isubset = 1, n_subsets + 1
       done_species_offset_init = .FALSE.
       done_subset_init = .FALSE.
