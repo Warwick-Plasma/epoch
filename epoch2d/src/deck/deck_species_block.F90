@@ -535,12 +535,14 @@ CONTAINS
 
       species_list(species_id)%temperature_function(2) = &
           species_list(species_id)%temperature_function(n)
-      CALL set_stack_zero(species_list(species_id)%temperature_function(3))
+      species_list(species_id)%temperature_function(3) = &
+          species_list(species_id)%temperature_function(n)
 
       debug_mode = .FALSE.
       initial_conditions(species_id)%temp(:,:,2) = &
           initial_conditions(species_id)%temp(:,:,n)
-      initial_conditions(species_id)%temp(:,:,3) = 0.0_num
+      initial_conditions(species_id)%temp(:,:,3) = &
+          initial_conditions(species_id)%temp(:,:,n)
       RETURN
     ENDIF
 

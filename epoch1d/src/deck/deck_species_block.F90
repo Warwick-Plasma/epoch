@@ -533,12 +533,16 @@ CONTAINS
           initial_conditions(species_id)%temp(:,n), &
           mult, mult_string, element, value, filename, got_file)
 
-      CALL set_stack_zero(species_list(species_id)%temperature_function(2))
-      CALL set_stack_zero(species_list(species_id)%temperature_function(3))
+      species_list(species_id)%temperature_function(2) = &
+          species_list(species_id)%temperature_function(n)
+      species_list(species_id)%temperature_function(3) = &
+          species_list(species_id)%temperature_function(n)
 
       debug_mode = .FALSE.
-      initial_conditions(species_id)%temp(:,2) = 0.0_num
-      initial_conditions(species_id)%temp(:,3) = 0.0_num
+      initial_conditions(species_id)%temp(:,2) = &
+          initial_conditions(species_id)%temp(:,n)
+      initial_conditions(species_id)%temp(:,3) = &
+          initial_conditions(species_id)%temp(:,n)
       RETURN
     ENDIF
 
