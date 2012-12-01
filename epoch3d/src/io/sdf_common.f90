@@ -191,6 +191,7 @@ MODULE sdf_common
   INTEGER, PARAMETER :: c_err_unsupported_datarep = 19
   INTEGER, PARAMETER :: c_err_unsupported_operation = 20
   INTEGER, PARAMETER :: c_err_unknown = 21
+  INTEGER, PARAMETER :: c_err_unsupported_file = 22
 
   CHARACTER(LEN=*), PARAMETER :: c_blocktypes_char(-1:c_blocktype_max) = (/ &
       'SDF_BLOCKTYPE_SCRUBBED               ', &

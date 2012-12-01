@@ -137,5 +137,6 @@ MODULE sdf
   PUBLIC :: sdf_write_stitched_species
   PUBLIC :: sdf_write_stitched_obstacle_group
   PUBLIC :: sdf_write_cpu_split
+  PUBLIC :: sdf_errorcode
 
 END MODULE sdf

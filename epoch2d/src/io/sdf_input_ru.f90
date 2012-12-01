@@ -11,7 +11,7 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=4) :: sdf
-    INTEGER :: errcode, ierr
+    INTEGER :: errcode
 
     h%current_location = 0
     h%start_location = 0
@@ -22,9 +22,9 @@ CONTAINS
     ! If this isn't SDF_MAGIC then this isn't an SDF file
     IF (sdf .NE. c_sdf_magic) THEN
       CALL MPI_FILE_CLOSE(h%filehandle, errcode)
-      IF (h%rank .EQ. h%rank_master) &
-          PRINT *, 'The specified file is not a valid SDF file'
-      CALL MPI_ABORT(h%comm, errcode, ierr)
+      h%error_code = c_err_unsupported_file + 64 * h%nblocks
+      h%handled_error = .TRUE.
+      RETURN
     ENDIF
 
     CALL read_entry_int4(h, h%endianness)
@@ -32,8 +32,10 @@ CONTAINS
     CALL read_entry_int4(h, h%file_version)
 
     IF (h%file_version .GT. sdf_version) THEN
-      IF (h%rank .EQ. h%rank_master) PRINT *, 'Version number incompatible'
-      CALL MPI_ABORT(h%comm, errcode, ierr)
+      CALL MPI_FILE_CLOSE(h%filehandle, errcode)
+      h%error_code = c_err_unsupported_file + 64 * h%nblocks
+      h%handled_error = .TRUE.
+      RETURN
     ENDIF
 
     CALL read_entry_int4(h, h%file_revision)

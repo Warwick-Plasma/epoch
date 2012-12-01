@@ -34,11 +34,9 @@ CONTAINS
       h%datatype_integer = c_datatype_integer8
       h%mpitype_integer = MPI_INTEGER8
     ELSE
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'Error writing SDF output file - unknown datatype'
-      ENDIF
-      CALL MPI_ABORT(h%comm, errcode, ierr)
+      h%error_code = c_err_unsupported_datarep + 64 * h%nblocks
+      h%handled_error = .TRUE.
+      RETURN
     ENDIF
 
     IF (mode .EQ. c_sdf_write) THEN
@@ -197,5 +195,20 @@ CONTAINS
     sdf_read_jobid = h%jobid
 
   END FUNCTION sdf_read_jobid
+
+
+
+  FUNCTION sdf_errorcode(h)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER :: sdf_errorcode
+
+    IF (h%handled_error) THEN
+      sdf_errorcode = h%error_code
+    ELSE
+      sdf_errorcode = c_err_success
+    ENDIF
+
+  END FUNCTION sdf_errorcode
 
 END MODULE sdf_control
