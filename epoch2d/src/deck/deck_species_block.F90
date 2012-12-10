@@ -745,7 +745,7 @@ CONTAINS
     LOGICAL, INTENT(IN) :: got_file
     TYPE(stack_element) :: block
     TYPE(primitive_stack) :: stack
-    INTEGER :: io, ix, iy
+    INTEGER :: io, ix, iy, ierr
 
     CALL initialise_stack(stack)
     IF (got_file) THEN
@@ -770,6 +770,18 @@ CONTAINS
     ELSE
       CALL tokenize(value, stack, errcode)
       IF (mult .NE. 1) CALL tokenize(mult_string, stack, errcode)
+
+      ! Sanity check
+      array(1,1) = evaluate_at_point(stack, 1, 1, errcode)
+      IF (errcode .NE. c_err_none) THEN
+        IF (rank .EQ. 0) THEN
+          DO io = stdout, du, du - stdout ! Print to stdout and to file
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Unable to parse input deck.'
+          ENDDO
+        ENDIF
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      ENDIF
 
       DO iy = -2, ny+3
         DO ix = -2, nx+3
