@@ -619,6 +619,7 @@ CONTAINS
     j = 0
     IF (last) THEN
       DO i = 1,nm
+        IF (cur%variable_ids(i) .EQ. '') CYCLE
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
@@ -628,6 +629,7 @@ CONTAINS
       ENDDO
     ELSE
       DO i = 1,nm
+        IF (cur%variable_ids(i) .EQ. '') CYCLE
         found = sdf_find_block(h, b, cur%variable_ids(i))
         IF (.NOT. found) RETURN
         h%current_block => b
