@@ -2,6 +2,7 @@ MODULE mpi_routines
 
   USE mpi
   USE partlist
+  USE helper
 
   IMPLICIT NONE
 
@@ -308,6 +309,8 @@ CONTAINS
             1-ng:ny+ng,1:3))
       ENDIF
     ENDDO
+
+    CALL allocate_ic
 
     start_time = MPI_WTIME()
 

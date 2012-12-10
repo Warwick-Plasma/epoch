@@ -2,6 +2,7 @@ MODULE mpi_routines
 
   USE mpi
   USE partlist
+  USE helper
 
   IMPLICIT NONE
 
@@ -245,6 +246,8 @@ CONTAINS
         ALLOCATE(species_list(ispecies)%ext_temp_y_max(1-ng:nx+ng,1:3))
       ENDIF
     ENDDO
+
+    CALL allocate_ic
 
     start_time = MPI_WTIME()
 

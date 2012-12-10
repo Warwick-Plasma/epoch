@@ -69,20 +69,16 @@ PROGRAM pic
   CALL after_control   ! setup.f90
   CALL open_files      ! setup.f90
 
+  ! Re-scan the input deck for items which require allocated memory
+  CALL read_deck(deck_file, .TRUE., c_ds_last)
+  CALL after_deck_last
+
   ! restart flag is set
   IF (ic_from_restart) THEN
-    ! Re-scan the input deck for items which require allocated memory
-    CALL read_deck(deck_file, .TRUE., c_ds_last)
-    CALL after_deck_last
     CALL restart_data(step)    ! restart from data in file save.data
     IF (rank .EQ. 0) PRINT *, 'Load from restart dump OK'
     output_file = restart_snapshot + 1
   ELSE
-    ! Using autoloader
-    CALL allocate_ic
-    ! Re-scan the input deck for items which require allocated memory
-    CALL read_deck(deck_file, .TRUE., c_ds_last)
-    CALL after_deck_last
     ! auto_load particles
     CALL auto_load
     time = 0.0_num
@@ -92,7 +88,7 @@ PROGRAM pic
   CALL manual_load
   CALL initialise_window ! window.f90
   CALL set_dt
-  IF (.NOT. ic_from_restart) CALL deallocate_ic
+  CALL deallocate_ic
 
   npart_global = 0
   DO ispecies = 1, n_species

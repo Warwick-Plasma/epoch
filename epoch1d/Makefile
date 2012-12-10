@@ -250,7 +250,7 @@ ionise.o: ionise.F90 calc_df.o numerics.o random_generator.o shape_functions.o \
   split_particle.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
-mpi_routines.o: mpi_routines.F90 partlist.o
+mpi_routines.o: mpi_routines.F90 helper.o partlist.o
 mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 numerics.o: numerics.f90 shared_data.o
 particle_migration.o: particle_migration.F90 calc_df.o partlist.o prefetch.o \

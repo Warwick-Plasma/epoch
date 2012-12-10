@@ -86,14 +86,6 @@ CONTAINS
       initial_conditions(ispecies)%density_max = HUGE(1.0_num)
     ENDDO
 
-    ex = 0.0_num
-    ey = 0.0_num
-    ez = 0.0_num
-
-    bx = 0.0_num
-    by = 0.0_num
-    bz = 0.0_num
-
   END SUBROUTINE allocate_ic
 
 
