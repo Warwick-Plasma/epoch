@@ -9,7 +9,7 @@ MODULE window
   IMPLICIT NONE
 
   LOGICAL, SAVE :: window_started
-  REAL(num) :: density, temperature(3)
+  REAL(num) :: density, temperature(3), drift(3)
 
 CONTAINS
 
@@ -128,7 +128,7 @@ CONTAINS
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, i
     INTEGER(i8) :: ipart, npart_per_cell, n0
-    REAL(num) :: temp_local, npart_frac
+    REAL(num) :: temp_local, drift_local, npart_frac
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -150,9 +150,15 @@ CONTAINS
       DO i = 1, 3
         temperature(i) = evaluate_at_point( &
             species_list(ispecies)%temperature_function(i), nx, errcode)
+        drift(i) = evaluate_at_point( &
+            species_list(ispecies)%drift_function(i), nx, errcode)
       ENDDO
       density = evaluate_at_point( &
           species_list(ispecies)%density_function, nx, errcode)
+      IF (density .GT. initial_conditions(ispecies)%density_max) &
+          density = initial_conditions(ispecies)%density_max
+
+      IF (density .LT. initial_conditions(ispecies)%density_min) CYCLE
 
       DO ipart = n0, npart_per_cell
         ! Place extra particle based on probability
@@ -165,8 +171,9 @@ CONTAINS
 
         DO i = 1, 3
           temp_local = temperature(i)
+          drift_local = drift(i)
           current%part_p(i) = momentum_from_temperature(&
-              species_list(ispecies)%mass, temp_local, 0.0_num)
+              species_list(ispecies)%mass, temp_local, drift_local)
         ENDDO
 
         current%weight = dx / species_list(ispecies)%npart_per_cell * density

@@ -558,6 +558,12 @@ CONTAINS
     ELSE IF (opcode .EQ. c_func_tempz_ev) THEN
       CALL copy_stack(species_list(id)%temperature_function(3), func_stack)
       CALL tokenize('* kb / ev', func_stack, err)
+    ELSE IF (opcode .EQ. c_func_driftx) THEN
+      CALL copy_stack(species_list(id)%drift_function(1), func_stack)
+    ELSE IF (opcode .EQ. c_func_drifty) THEN
+      CALL copy_stack(species_list(id)%drift_function(2), func_stack)
+    ELSE IF (opcode .EQ. c_func_driftz) THEN
+      CALL copy_stack(species_list(id)%drift_function(3), func_stack)
     ENDIF
 
     IF (func_stack%stack_point .GT. 0) THEN

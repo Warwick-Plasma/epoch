@@ -356,6 +356,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_func_tempx_ev = 41
   INTEGER, PARAMETER :: c_func_tempy_ev = 42
   INTEGER, PARAMETER :: c_func_tempz_ev = 43
+  INTEGER, PARAMETER :: c_func_driftx = 44
+  INTEGER, PARAMETER :: c_func_drifty = 45
+  INTEGER, PARAMETER :: c_func_driftz = 46
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
 
@@ -533,6 +536,7 @@ MODULE shared_data
     ! Injection of particles
     REAL(num) :: npart_per_cell
     TYPE(primitive_stack) :: density_function, temperature_function(3)
+    TYPE(primitive_stack) :: drift_function(3)
 
     ! Thermal boundaries
     REAL(num), DIMENSION(:,:,:), POINTER :: ext_temp_x_min, ext_temp_x_max

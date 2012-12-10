@@ -353,10 +353,16 @@ CONTAINS
       CALL initialise_stack(species_list(ispecies)%temperature_function(1))
       CALL initialise_stack(species_list(ispecies)%temperature_function(2))
       CALL initialise_stack(species_list(ispecies)%temperature_function(3))
+      CALL initialise_stack(species_list(ispecies)%drift_function(1))
+      CALL initialise_stack(species_list(ispecies)%drift_function(2))
+      CALL initialise_stack(species_list(ispecies)%drift_function(3))
       CALL set_stack_zero(species_list(ispecies)%density_function)
       CALL set_stack_zero(species_list(ispecies)%temperature_function(1))
       CALL set_stack_zero(species_list(ispecies)%temperature_function(2))
       CALL set_stack_zero(species_list(ispecies)%temperature_function(3))
+      CALL set_stack_zero(species_list(ispecies)%drift_function(1))
+      CALL set_stack_zero(species_list(ispecies)%drift_function(2))
+      CALL set_stack_zero(species_list(ispecies)%drift_function(3))
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1
       species_list(ispecies)%release_species = -1

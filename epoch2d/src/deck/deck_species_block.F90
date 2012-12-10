@@ -234,7 +234,6 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
     TYPE(primitive_stack) :: stack
-    REAL(num), DIMENSION(:,:), POINTER :: array
     REAL(num) :: dmin, mult
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
@@ -491,32 +490,26 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'drift_x')) THEN
-      array => initial_conditions(species_id)%drift(:,:,1)
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, array, offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, array, -2, nx+3, -2, ny+3, errcode)
-      ENDIF
+      n = 1
+      CALL fill_array(species_list(species_id)%drift_function(n), &
+          initial_conditions(species_id)%drift(:,:,n), &
+          mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_y')) THEN
-      array => initial_conditions(species_id)%drift(:,:,2)
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, array, offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, array, -2, nx+3, -2, ny+3, errcode)
-      ENDIF
+      n = 2
+      CALL fill_array(species_list(species_id)%drift_function(n), &
+          initial_conditions(species_id)%drift(:,:,n), &
+          mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_z')) THEN
-      array => initial_conditions(species_id)%drift(:,:,3)
-      IF (got_file) THEN
-        CALL load_single_array_from_file(filename, array, offset, errcode)
-      ELSE
-        CALL evaluate_string_in_space(value, array, -2, nx+3, -2, ny+3, errcode)
-      ENDIF
+      n = 3
+      CALL fill_array(species_list(species_id)%drift_function(n), &
+          initial_conditions(species_id)%drift(:,:,n), &
+          mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
 

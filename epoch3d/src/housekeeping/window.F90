@@ -9,7 +9,7 @@ MODULE window
   IMPLICIT NONE
 
   LOGICAL, SAVE :: window_started
-  REAL(num), ALLOCATABLE :: density(:,:), temperature(:,:,:)
+  REAL(num), ALLOCATABLE :: density(:,:), temperature(:,:,:), drift(:,:,:)
 
 CONTAINS
 
@@ -20,6 +20,7 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
     ALLOCATE(density(-2:ny+3,-2:nz+3))
     ALLOCATE(temperature(-2:ny+3,-2:nz+3, 1:3))
+    ALLOCATE(drift(-2:ny+3,-2:nz+3, 1:3))
     window_started = .FALSE.
 #else
     IF (rank .EQ. 0) THEN
@@ -37,6 +38,7 @@ CONTAINS
 
     IF (ALLOCATED(density)) DEALLOCATE(density)
     IF (ALLOCATED(temperature)) DEALLOCATE(temperature)
+    IF (ALLOCATED(drift)) DEALLOCATE(drift)
 
   END SUBROUTINE deallocate_window
 
@@ -147,7 +149,7 @@ CONTAINS
     REAL(num) :: cell_z_r, cell_frac_z, cz2
     INTEGER :: cell_y, cell_z
     REAL(num), DIMENSION(-1:1) :: gy, gz
-    REAL(num) :: temp_local, npart_frac
+    REAL(num) :: temp_local, drift_local, npart_frac
     REAL(num) :: weight_local
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -157,9 +159,10 @@ CONTAINS
 
     IF (nproc .GT. 1) THEN
       IF (SIZE(density,1) .NE. ny+6 .OR. SIZE(density,2) .NE. nz+6) THEN
-        DEALLOCATE(density, temperature)
+        DEALLOCATE(density, temperature, drift)
         ALLOCATE(density(-2:ny+3,-2:nz+3))
         ALLOCATE(temperature(-2:ny+3,-2:nz+3, 1:3))
+        ALLOCATE(drift(-2:ny+3,-2:nz+3, 1:3))
       ENDIF
     ENDIF
 
@@ -181,6 +184,9 @@ CONTAINS
             temperature(iy,iz,i) = evaluate_at_point( &
                 species_list(ispecies)%temperature_function(i), nx, &
                 iy, iz, errcode)
+            drift(iy,iz,i) = evaluate_at_point( &
+                species_list(ispecies)%drift_function(i), nx, &
+                iy, iz, errcode)
           ENDDO
         ENDDO
       ENDDO
@@ -188,11 +194,15 @@ CONTAINS
         DO iy = -2, ny+3
           density(iy,iz) = evaluate_at_point( &
               species_list(ispecies)%density_function, nx, iy, iz, errcode)
+          IF (density(iy,iz) .GT. initial_conditions(ispecies)%density_max) &
+              density(iy,iz) = initial_conditions(ispecies)%density_max
         ENDDO
       ENDDO
 
       DO iz = 1, nz
         DO iy = 1, ny
+          IF (density(iy,iz) .LT. initial_conditions(ispecies)%density_min) &
+              CYCLE
           DO ipart = n0, npart_per_cell
             ! Place extra particle based on probability
             IF (ipart .EQ. 0) THEN
@@ -227,14 +237,17 @@ CONTAINS
 
             DO i = 1, 3
               temp_local = 0.0_num
+              drift_local = 0.0_num
               DO isubz = -1, 1
                 DO isuby = -1, 1
                   temp_local = temp_local + gy(isuby) * gz(isubz) &
                       * temperature(cell_y+isuby, cell_z+isubz, i)
+                  drift_local = drift_local + gy(isuby) * gz(isubz) &
+                      * drift(cell_y+isuby, cell_z+isubz, i)
                 ENDDO
               ENDDO
               current%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp_local, 0.0_num)
+                  species_list(ispecies)%mass, temp_local, drift_local)
             ENDDO
 
             weight_local = 0.0_num

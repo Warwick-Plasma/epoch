@@ -13,7 +13,6 @@ CONTAINS
 
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
-    INTEGER :: it, ix
 
     DO ispecies = 1, n_species
       species => species_list(ispecies)
@@ -83,7 +82,7 @@ CONTAINS
       DEALLOCATE(initial_conditions(ispecies)%temp)
       DEALLOCATE(initial_conditions(ispecies)%drift)
     ENDDO
-    DEALLOCATE(initial_conditions)
+    IF (.NOT. move_window) DEALLOCATE(initial_conditions)
 
   END SUBROUTINE deallocate_ic
 
