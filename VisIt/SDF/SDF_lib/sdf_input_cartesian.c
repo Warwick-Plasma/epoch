@@ -92,7 +92,7 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
 #else
     b->nlocal = 1;
     for (i=0; i < b->ndims; i++) {
-        b->local_dims[i] = b->dims[i];
+        b->local_dims[i] = (int)b->dims[i];
         b->nlocal *= b->dims[i];
     }
     for (i=b->ndims; i < 3; i++) b->local_dims[i] = 1;
@@ -140,7 +140,7 @@ static int sdf_plain_mesh_distribution(sdf_file_t *h)
     for (n=0; n < b->ndims; n++) {
         b->dims[n] -= 2 * b->ng;
         b->local_dims[n] -= 2 * b->ng;
-        sizes[n] = b->dims[n];
+        sizes[n] = (int)b->dims[n];
     }
 
     // Get starts for creating subarray
@@ -402,7 +402,7 @@ int sdf_read_plain_mesh(sdf_file_t *h)
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) {
 #ifdef PARALLEL
-            sdf_create_1d_distribution(h, b->dims[n], b->local_dims[n],
+            sdf_create_1d_distribution(h, (int)b->dims[n], b->local_dims[n],
                     b->starts[n]);
 #endif
             sdf_helper_read_array(h, &b->grids[n], b->local_dims[n]);

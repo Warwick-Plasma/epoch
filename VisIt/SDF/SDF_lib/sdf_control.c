@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/mman.h>
 #include "sdf.h"
 
@@ -221,7 +222,7 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 
 #ifndef PARALLEL
     if (h->mmap)
-        h->mmap = mmap(NULL, h->summary_location, PROT_READ, MAP_SHARED,
+        h->mmap = mmap(NULL, (size_t)h->summary_location, PROT_READ, MAP_SHARED,
             fileno(h->filehandle), 0);
 #endif
 
@@ -423,15 +424,16 @@ static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
 {
     const int ndims = 2;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
-    int i, j, ii, jj, n, cpus, maxcpus, grid, split_big;
+    int i, j, ii, jj, n, cpus, maxcpus, grid, split_big, dim;
     float gridav, deviation, mindeviation;
 
     cpus = 1;
     gridav = 1;
     for (i=0; i < ndims; i++) {
-        dmin[i] = MIN(ncpus, dims[i]);
+        dim = (int)dims[i];
+        dmin[i] = MIN(ncpus, dim);
         cpus = cpus * dmin[i];
-        gridav = gridav * dims[i];
+        gridav = gridav * dim;
     }
     mindeviation = gridav;
     gridav = gridav / ncpus;
@@ -450,8 +452,8 @@ static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
         if (cpus != maxcpus) continue;
 
         for (n=0; n < ndims; n++) {
-            npoint_min[n] = dims[n] / cpu_split_tmp[n];
-            split_big = dims[n] - cpu_split_tmp[n] * npoint_min[n];
+            npoint_min[n] = (int)dims[n] / cpu_split_tmp[n];
+            split_big = (int)dims[n] - cpu_split_tmp[n] * npoint_min[n];
             grids[n][0] = npoint_min[n];
             grids[n][1] = npoint_min[n] + 1;
             if (cpu_split_tmp[n] == split_big) grids[n][0] = 0;
@@ -479,15 +481,16 @@ static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
 {
     const int ndims = 3;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
-    int i, j, k, ii, jj, kk, n, cpus, maxcpus, grid, split_big;
+    int i, j, k, ii, jj, kk, n, cpus, maxcpus, grid, split_big, dim;
     float gridav, deviation, mindeviation;
 
     cpus = 1;
     gridav = 1;
     for (i=0; i < ndims; i++) {
-        dmin[i] = MIN(ncpus, dims[i]);
+        dim = (int)dims[i];
+        dmin[i] = MIN(ncpus, dim);
         cpus = cpus * dmin[i];
-        gridav = gridav * dims[i];
+        gridav = gridav * dim;
     }
     mindeviation = gridav;
     gridav = gridav / ncpus;
@@ -508,8 +511,8 @@ static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
         if (cpus != maxcpus) continue;
 
         for (n=0; n < ndims; n++) {
-            npoint_min[n] = dims[n] / cpu_split_tmp[n];
-            split_big = dims[n] - cpu_split_tmp[n] * npoint_min[n];
+            npoint_min[n] = (int)dims[n] / cpu_split_tmp[n];
+            split_big = (int)dims[n] - cpu_split_tmp[n] * npoint_min[n];
             grids[n][0] = npoint_min[n];
             grids[n][1] = npoint_min[n] + 1;
             if (cpu_split_tmp[n] == split_big) grids[n][0] = 0;
@@ -541,7 +544,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     int n;
 #ifdef PARALLEL
     int npoint_min, split_big, coords, div;
-    int old_dims[6];
+    uint64_t old_dims[6];
 
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
@@ -567,8 +570,8 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
             b->proc_max[n] = rank + div;
 
         div = div * b->cpu_split[n];
-        npoint_min = b->dims[n] / b->cpu_split[n];
-        split_big = b->dims[n] - b->cpu_split[n] * npoint_min;
+        npoint_min = (int)b->dims[n] / b->cpu_split[n];
+        split_big = (int)(b->dims[n] - b->cpu_split[n] * npoint_min);
         if (coords >= split_big) {
             start[n] = split_big * (npoint_min + 1)
                 + (coords - split_big) * npoint_min;
@@ -587,7 +590,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     }
 #else
     memset(start, 0, 3*sizeof(int));
-    for (n=0; n < b->ndims; n++) local[n] = b->dims[n];
+    for (n=0; n < b->ndims; n++) local[n] = (int)b->dims[n];
 #endif
     for (n=b->ndims; n < 3; n++) local[n] = 1;
 
@@ -601,7 +604,7 @@ int sdf_factor(sdf_file_t *h)
     sdf_block_t *b = h->current_block;
     int n;
 #ifdef PARALLEL
-    int old_dims[6];
+    uint64_t old_dims[6];
 
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
@@ -621,7 +624,7 @@ int sdf_factor(sdf_file_t *h)
 
     sdf_get_domain_extents(h, h->rank, b->starts, b->local_dims);
 #else
-    for (n = 0; n < 3; n++) b->local_dims[n] = b->dims[n];
+    for (n = 0; n < 3; n++) b->local_dims[n] = (int)b->dims[n];
 #endif
 
     b->nlocal = 1;
@@ -702,9 +705,9 @@ static uint32_t refill(void)
     int i;
     uint64_t t;
     for (i=0; i<41790; i++) {
-        t = 7010176LL * Q[i] + carry;
+        t = 7010176ULL * Q[i] + carry;
         carry = (t>>32);
-        Q[i] =~ (t);
+        Q[i] = (uint32_t)~(t);
     }
     indx = 1;
     return (Q[0]);

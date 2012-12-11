@@ -386,11 +386,11 @@ static void build_summary_buffer(sdf_file_t *h)
                        sizeof(uint32_t));
             } else {
                 if (data_location > block_location)
-                    block_info_length = data_location
-                        - block_location - h->block_header_length;
+                    block_info_length = (uint32_t)(data_location
+                        - block_location) - h->block_header_length;
                 else
-                    block_info_length = next_block_location
-                        - block_location - h->block_header_length;
+                    block_info_length = (uint32_t)(next_block_location
+                        - block_location) - h->block_header_length;
             }
 
             // Read the block specific metadata if it exists
@@ -691,7 +691,7 @@ static int sdf_array_datatype(sdf_file_t *h)
 
 #ifdef PARALLEL
     int sizes[SDF_MAXDIMS];
-    for (n=0; n < b->ndims; n++) sizes[n] = b->dims[n];
+    for (n=0; n < b->ndims; n++) sizes[n] = (int)b->dims[n];
 
     sdf_factor(h);
 
@@ -699,7 +699,7 @@ static int sdf_array_datatype(sdf_file_t *h)
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 #else
-    for (n=0; n < b->ndims; n++) b->local_dims[n] = b->dims[n];
+    for (n=0; n < b->ndims; n++) b->local_dims[n] = (int)b->dims[n];
 #endif
     for (n=b->ndims; n < 3; n++) b->local_dims[n] = 1;
 
@@ -802,7 +802,7 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
         for (i = 0; i < b->ndims; i++)
             b->nlocal += b->dims[i];
     } else if (b->geometry == 2) {
-        b->nlocal = b->dims[0] * (b->dims[1] + 1);
+        b->nlocal = (int)(b->dims[0] * (b->dims[1] + 1));
         if (b->ndims > 2) b->nlocal += b->dims[0] * b->dims[1] * b->dims[2];
     } else if (b->geometry == 3) {
         b->nlocal = 1;

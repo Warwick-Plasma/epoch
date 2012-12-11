@@ -97,7 +97,7 @@ static int sdf_create_1d_distribution(sdf_file_t *h, int64_t global, int local,
     lengths[2] = 1;
     disp[0] = 0;
     disp[1] = start * SDF_TYPE_SIZES[b->datatype];
-    disp[2] = global * SDF_TYPE_SIZES[b->datatype];
+    disp[2] = (int)global * SDF_TYPE_SIZES[b->datatype];
     types[0] = MPI_LB;
     types[1] = b->mpitype;
     types[2] = MPI_UB;
@@ -201,12 +201,12 @@ int sdf_read_point_mesh(sdf_file_t *h)
 
 int sdf_point_factor(sdf_file_t *h, int *local_npoints)
 {
-#ifdef PARALLEL
     sdf_block_t *b = h->current_block;
+#ifdef PARALLEL
     int npoint_min, split_big;
 
-    npoint_min = b->npoints / h->ncpus;
-    split_big = b->npoints - h->ncpus * npoint_min;
+    npoint_min = (int)b->npoints / h->ncpus;
+    split_big = (int)b->npoints - h->ncpus * npoint_min;
 
     if (h->rank >= split_big) {
         b->starts[0] = split_big * (npoint_min + 1)
@@ -217,7 +217,7 @@ int sdf_point_factor(sdf_file_t *h, int *local_npoints)
         *local_npoints = npoint_min + 1;
     }
 #else
-    *local_npoints = h->current_block->npoints;
+    *local_npoints = (int)b->npoints;
 #endif
 
     return 0;

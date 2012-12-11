@@ -6,7 +6,8 @@
 sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id)
 {
     sdf_block_t *current, *b;
-    int i, len;
+    size_t len;
+    int i;
 
     if (!h || !h->blocklist || !id)
         return NULL;
@@ -26,7 +27,8 @@ sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id)
 sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name)
 {
     sdf_block_t *current, *b;
-    int i, len;
+    size_t len;
+    int i;
 
     if (!h || !h->blocklist || !name)
         return NULL;

@@ -614,12 +614,13 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
     int i, n, sz, np, nx, nxmesh;
     int i0, i1, idx;
     int *index;
-    double *d;
     char *x, *xmesh;
-    void *buf;
     sdf_block_t *split = b->subblock;
     sdf_block_t *mesh = b->subblock2;
     sdf_block_t *current_block = h->current_block;
+#ifdef PARALLEL
+    void *buf;
+#endif
 
     if (b->done_data) return b;
 
@@ -649,9 +650,9 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         b->nlocal = 1;
         for (n=0; n < b->ndims; n++) {
             xmesh = mesh->grids[n];
-            nxmesh = mesh->dims[n];
+            nxmesh = (int)mesh->dims[n];
 
-            nx = b->local_dims[n] = b->dims[n];
+            nx = b->local_dims[n] = (int)b->dims[n];
             x = calloc(nx, sz);
 #ifdef PARALLEL
             i0 = mesh->starts[n];
@@ -709,10 +710,14 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 
 sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
-    int n, nx, sz, idx, rem = h->rank, i0 = 0, pmax = -2;
-    char *x, *buf;
+    int n, nx, sz, idx, i0 = 0, pmax = -2;
+    char *x;
     sdf_block_t *mesh = b->subblock;
     sdf_block_t *current_block = h->current_block;
+#ifdef PARALLEL
+    int rem = h->rank;
+    char *buf;
+#endif
 
     if (b->done_data) return b;
 
@@ -797,7 +802,8 @@ static void add_surface_variables(sdf_file_t *h, sdf_block_t *surf,
         int *nappend_ptr)
 {
     sdf_block_t *b, *next, *append, *append_tail;
-    int len1, len2, nappend = *nappend_ptr;
+    int nappend = *nappend_ptr;
+    size_t len1, len2;
     char *str, *name1, *name2;
 
     append = *append_ptr;
@@ -870,7 +876,8 @@ int sdf_add_derived_blocks(sdf_file_t *h)
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
     sdf_block_t *mesh, *first_mesh = NULL;
     sdf_block_t *current_block = h->current_block;
-    int i, n, nd, len1, len2, nappend = 0;
+    int i, n, nd, nappend = 0;
+    size_t len1, len2;
     char *str, *name1, *name2;
     char *grid_ids[] = { "x", "y", "z" };
 
@@ -1024,7 +1031,8 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             append->ndims = b->ndims;
             append->nlocal = 1;
             for (i=0; i<b->ndims; i++) {
-                append->local_dims[i] = append->dims[i] = b->dims[i] + 1;
+                append->dims[i] = b->dims[i] + 1;
+                append->local_dims[i] = (int)append->dims[i];
                 append->nlocal *= append->local_dims[i];
             }
             for (i=b->ndims; i<3; i++)
@@ -1108,7 +1116,8 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
     sdf_block_t *mesh, *old_mesh, *vfm, *obst;
     sdf_block_t *current_block = h->current_block;
-    int i, n, nd, len1, len2, stagger, dont_add, nappend = 0;
+    int i, n, stagger, dont_add, nappend = 0;
+    size_t nd, len1, len2;
     char *str, *name1, *name2;
     char *boundary_names[] =
         { "", "_x_min", "_x_max", "_y_min", "_y_max", "_z_min", "_z_max" };
@@ -1227,7 +1236,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                     // dimensions
                     dont_add = 0;
                     for (n = 0; n < b->ndims; n++) {
-                        nd = old_mesh->dims[n];
+                        nd = (size_t)old_mesh->dims[n];
                         if (n == i) nd += b->ng;
                         if (b->dims[n] != nd) dont_add = 1;
                     }
