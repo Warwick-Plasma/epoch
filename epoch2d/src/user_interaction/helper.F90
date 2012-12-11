@@ -240,8 +240,8 @@ CONTAINS
     npart_this_species = species%count
     IF (npart_this_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
-        WRITE(*,*) 'Unable to continue, species ', &
-          TRIM(species%name), ' has not had a number of particles set'
+        WRITE(*,*) 'Unable to continue, species "' // TRIM(species%name) &
+            // '" has ', 'not had a number of particles set'
       ENDIF
       CALL MPI_ABORT(comm, errcode, ierr)
     ELSE IF (npart_this_species .EQ. 0) THEN
@@ -276,8 +276,8 @@ CONTAINS
           WRITE(*,*) '*** ERROR ***'
           WRITE(*,*) 'Intial condition settings mean that there are no cells ' &
               // 'where particles may'
-          WRITE(*,*) 'validly be placed for at least one species. Code will ' &
-              // 'now terminate.'
+          WRITE(*,*) 'validly be placed for species "' // TRIM(species%name) &
+              // '". ', 'Code will now terminate.'
           CALL MPI_ABORT(comm, errcode, ierr)
         ENDIF
       ENDIF
