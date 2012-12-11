@@ -703,6 +703,10 @@ CONTAINS
           CALL find_species_by_name(block_id, ispecies)
           IF (ispecies .EQ. 0) CYClE
           CALL sdf_read_srl(sdf_handle, species_list(ispecies)%weight)
+        ELSE IF (block_id(1:5) .EQ. 'nppc/') THEN
+          CALL find_species_by_name(block_id, ispecies)
+          IF (ispecies .EQ. 0) CYClE
+          CALL sdf_read_srl(sdf_handle, species_list(ispecies)%npart_per_cell)
         ELSE IF (block_id(1:10) .EQ. 'time_next/') THEN
           DO i = 1, n_io_blocks
             IF (str_cmp(block_id(11:), io_block_list(i)%name)) THEN

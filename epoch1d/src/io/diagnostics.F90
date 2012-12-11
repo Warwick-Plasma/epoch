@@ -40,10 +40,8 @@ CONTAINS
     INTEGER :: code, i, io
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag, convert
-#ifndef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
-#endif
 
     CHARACTER(LEN=1), DIMENSION(3) :: dim_tags = (/'x', 'y', 'z'/)
     CHARACTER(LEN=5), DIMENSION(6) :: dir_tags = &
@@ -121,6 +119,13 @@ CONTAINS
             'nstep_next/'//TRIM(io_block_list(io)%name), &
             'nstep_next/'//TRIM(io_block_list(io)%name), &
             io_block_list(io)%nstep_next)
+      ENDDO
+
+      DO ispecies = 1, n_species
+        species => io_list(ispecies)
+        CALL sdf_write_srl(sdf_handle, 'nppc/' // TRIM(species%name), &
+            'Particles/Particles Per Cell/' // TRIM(species%name), &
+            species%npart_per_cell)
       ENDDO
     ENDIF
 
