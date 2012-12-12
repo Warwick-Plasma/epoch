@@ -168,7 +168,7 @@ int sdf_read_point_mesh(sdf_file_t *h)
     if (h->print) {
         h->indent = 0;
         SDF_DPRNT("\n");
-        SDF_DPRNT("zz b->name: %s ", b->name);
+        SDF_DPRNT("b->name: %s ", b->name);
         for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nlocal);
         SDF_DPRNT("\n");
         h->indent = 2;

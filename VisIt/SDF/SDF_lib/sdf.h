@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 
 #ifdef PARALLEL
 #include <mpi.h>
@@ -430,7 +434,7 @@ int sdf_read_point_variable_info(sdf_file_t *h);
                 SDF_PRNT("\n%i ",_d); \
                 for (_i=0; _i < 10; _i++, _d++) { \
                     if (_d == (len)) break; \
-                    SDF_PRNT(" %i", arr[_d]); \
+                    SDF_PRNT(" %" PRIu64, arr[_d]); \
                 } \
             } \
         } \
