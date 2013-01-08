@@ -1002,6 +1002,7 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
                     if (var->data) stack_free_block(var);
                 }
             }
+            b->done_data = 0;
             stack_alloc(b);
         }
 
