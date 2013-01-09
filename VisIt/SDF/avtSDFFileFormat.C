@@ -101,7 +101,7 @@ static uint64_t memory_size = 0;
 static inline void stack_alloc(sdf_block_t *b)
 {
     struct stack *tail;
-    if (b->done_data) return;
+    if (b->done_data || b->dont_own_data) return;
     b->data = calloc(b->nlocal, b->type_size_out);
     memory_size += b->nlocal * b->type_size_out;
     stack_tail->next = tail = (struct stack*)malloc(sizeof(struct stack));
