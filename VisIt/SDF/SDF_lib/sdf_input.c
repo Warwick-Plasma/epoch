@@ -314,6 +314,8 @@ int sdf_read_data(sdf_file_t *h)
 
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
         return sdf_read_plain_mesh(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
+        return sdf_read_lagran_mesh(h);
     else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
         return sdf_read_point_mesh(h);
     else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
@@ -339,7 +341,8 @@ int sdf_read_block_info(sdf_file_t *h)
     if (b->done_info) return 0;
 
     h->indent += 2;
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH
+            || b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
         ret = sdf_read_plain_mesh_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
         ret = sdf_read_point_mesh_info(h);

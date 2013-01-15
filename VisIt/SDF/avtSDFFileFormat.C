@@ -459,7 +459,8 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
         if (b->dont_display) continue;
 
         if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
-                b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+                b->blocktype == SDF_BLOCKTYPE_POINT_MESH ||
+                b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH) {
             debug1 << "avtSDFFileFormat:: Found mesh: id:" << b->id
                    << ", name:" << b->name << endl;
             avtMeshType meshtype;
@@ -467,13 +468,16 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
                 meshtype = AVT_RECTILINEAR_MESH;
                 topol = b->ndims;
-            } else {
+            } else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
                 meshtype = AVT_POINT_MESH;
                 topol = 0;
                 // VisIt does not seem to handle scatter plots of 1D variables
                 // properly. This hack makes changes 1D particle data to 2D
                 // which works around the issue.
                 if (b->ndims == 1) ndims = 2;
+            } else {
+                meshtype = AVT_CURVILINEAR_MESH;
+                topol = b->ndims;
             }
             avtMeshMetaData *mmd = new avtMeshMetaData(b->name, 1, 0, 0, 0,
                 ndims, topol, meshtype);
@@ -755,41 +759,59 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
             float *x = (float *)b->grids[0];
             float *y = NULL;
             float *z = NULL;
-            if (b->ndims > 1) {
-                y = (float *)b->grids[1];
-                if (b->ndims > 2) z = (float *)b->grids[2];
-            }
-
-            vtkIdType vertex;
             float yy = 0, zz = 0;
-            for (int i=0; i < b->nlocal; i++) {
-                if (y) {
-                    yy = y[i];
-                    if (z) zz = z[i];
+            vtkIdType vertex;
+
+            if (b->ndims > 2) {
+                y = (float *)b->grids[1];
+                z = (float *)b->grids[2];
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], y[i], z[i]);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
                 }
-                vertex = i;
-                points->SetPoint(i, x[i], yy, zz);
-                ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+            } else if (b->ndims > 1) {
+                y = (float *)b->grids[1];
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], y[i], zz);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+                }
+            } else {
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], yy, zz);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+                }
             }
         } else {
             double *x = (double *)b->grids[0];
             double *y = NULL;
             double *z = NULL;
-            if (b->ndims > 1) {
-                y = (double *)b->grids[1];
-                if (b->ndims > 2) z = (double *)b->grids[2];
-            }
-
-            vtkIdType vertex;
             double yy = 0, zz = 0;
-            for (int i=0; i < b->nlocal; i++) {
-                if (y) {
-                    yy = y[i];
-                    if (z) zz = z[i];
+            vtkIdType vertex;
+
+            if (b->ndims > 2) {
+                y = (double *)b->grids[1];
+                z = (double *)b->grids[2];
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], y[i], z[i]);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
                 }
-                vertex = i;
-                points->SetPoint(i, x[i], yy, zz);
-                ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+            } else if (b->ndims > 1) {
+                y = (double *)b->grids[1];
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], y[i], zz);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+                }
+            } else {
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], yy, zz);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+                }
             }
         }
 
@@ -841,39 +863,98 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         return ugrid;
     }
 
-    vtkDataArray *xx, *yy, *zz;
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
+        vtkDataArray *xx, *yy, *zz;
 
-    if (b->datatype_out == SDF_DATATYPE_REAL4) {
-        xx = vtkFloatArray::New();
-        yy = vtkFloatArray::New();
-        zz = vtkFloatArray::New();
-    } else if (b->datatype_out == SDF_DATATYPE_REAL8) {
-        xx = vtkDoubleArray::New();
-        yy = vtkDoubleArray::New();
-        zz = vtkDoubleArray::New();
-    }
+        if (b->datatype_out == SDF_DATATYPE_REAL4) {
+            xx = vtkFloatArray::New();
+            yy = vtkFloatArray::New();
+            zz = vtkFloatArray::New();
+        } else if (b->datatype_out == SDF_DATATYPE_REAL8) {
+            xx = vtkDoubleArray::New();
+            yy = vtkDoubleArray::New();
+            zz = vtkDoubleArray::New();
+        }
 
-    xx->SetVoidArray(b->grids[0], b->local_dims[0], 1);
-    yy->SetVoidArray(b->grids[1], b->local_dims[1], 1);
-    zz->SetVoidArray(b->grids[2], b->local_dims[2], 1);
+        xx->SetVoidArray(b->grids[0], b->local_dims[0], 1);
+        yy->SetVoidArray(b->grids[1], b->local_dims[1], 1);
+        zz->SetVoidArray(b->grids[2], b->local_dims[2], 1);
 
-    vtkRectilinearGrid *rgrid = vtkRectilinearGrid::New();
-    rgrid->SetDimensions(b->local_dims);
-    rgrid->SetXCoordinates(xx);
-    rgrid->SetYCoordinates(yy);
-    rgrid->SetZCoordinates(zz);
+        vtkRectilinearGrid *rgrid = vtkRectilinearGrid::New();
+        rgrid->SetDimensions(b->local_dims);
+        rgrid->SetXCoordinates(xx);
+        rgrid->SetYCoordinates(yy);
+        rgrid->SetZCoordinates(zz);
 
-    xx->Delete();
-    yy->Delete();
-    zz->Delete();
+        xx->Delete();
+        yy->Delete();
+        zz->Delete();
 
-    SetUpDomainConnectivity();
+        SetUpDomainConnectivity();
 
 #ifdef SDF_DEBUG
-    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
+        debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
+        debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
-    return rgrid;
+        return rgrid;
+    }
+
+    if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH) {
+        vtkPoints *points  = vtkPoints::New();
+        vtkStructuredGrid *sgrid = vtkStructuredGrid::New();
+
+        points->SetNumberOfPoints(b->nlocal);
+        sgrid->SetDimensions(b->local_dims);
+        sgrid->SetPoints(points);
+
+        if (b->datatype_out == SDF_DATATYPE_REAL4) {
+            float *x = (float *)b->grids[0];
+            float *y = NULL;
+            float *z = NULL;
+            float yy = 0, zz = 0;
+
+            if (b->ndims > 2) {
+                y = (float *)b->grids[1];
+                z = (float *)b->grids[2];
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], y[i], z[i]);
+            } else if (b->ndims > 1) {
+                y = (float *)b->grids[1];
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], y[i], zz);
+            } else {
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], yy, zz);
+            }
+        } else {
+            double *x = (double *)b->grids[0];
+            double *y = NULL;
+            double *z = NULL;
+            double yy = 0, zz = 0;
+
+            if (b->ndims > 2) {
+                y = (double *)b->grids[1];
+                z = (double *)b->grids[2];
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], y[i], z[i]);
+            } else if (b->ndims > 1) {
+                y = (double *)b->grids[1];
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], y[i], zz);
+            } else {
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], yy, zz);
+            }
+        }
+
+        SetUpDomainConnectivity();
+
+#ifdef SDF_DEBUG
+        debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
+        debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
+#endif
+        return sgrid;
+    }
 }
 
 

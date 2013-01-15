@@ -647,6 +647,318 @@ CONTAINS
 
 
   !----------------------------------------------------------------------------
+  ! Code to write a 1D lagrangian mesh in parallel using the
+  ! mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_1d_lag_mesh_r8(h, id, name, x, dims, xmin, xmax, &
+      distribution, subarray, convert_in, dim_labels, &
+      dim_units, dim_mults)
+
+    INTEGER, PARAMETER :: ndims = 1
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    REAL(r8), DIMENSION(:), INTENT(IN) :: x
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    REAL(r8), INTENT(IN) :: xmin, xmax
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(ndims) :: gmn, gmx
+    REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
+    INTEGER :: i, errcode, sz(ndims)
+    TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+
+      sz(1) = INT(SIZE(x,1),i4)
+
+      ALLOCATE(r4array(sz(1)))
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
+    b%geometry = c_geometry_cartesian
+    b%ndims = ndims
+
+    DO i = 1,ndims
+      b%dims(i) = INT(dims(i),i4)
+    ENDDO
+
+    gmn(1) = xmin
+    gmx(1) = xmax
+
+    CALL MPI_ALLREDUCE(gmn, b%extents, ndims, MPI_REAL8, MPI_MIN, &
+        h%comm, errcode)
+    CALL MPI_ALLREDUCE(gmx, b%extents(ndims+1), ndims, MPI_REAL8, MPI_MAX, &
+        h%comm, errcode)
+
+    ! Write header
+
+    b%blocktype = c_blocktype_lagrangian_mesh
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
+
+    ! Write the actual data
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+    IF (convert) THEN
+      r4array = REAL(x,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_1d_lag_mesh_r8
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 2D lagrangian mesh in parallel using the
+  ! mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_2d_lag_mesh_r8(h, id, name, x, y, dims, xmin, xmax, &
+      ymin, ymax, distribution, subarray, convert_in, dim_labels, &
+      dim_units, dim_mults)
+
+    INTEGER, PARAMETER :: ndims = 2
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    REAL(r8), DIMENSION(:,:), INTENT(IN) :: x, y
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    REAL(r8), INTENT(IN) :: xmin, xmax, ymin, ymax
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(ndims) :: gmn, gmx
+    REAL(r4), DIMENSION(:,:), ALLOCATABLE :: r4array
+    INTEGER :: i, errcode, sz(ndims)
+    TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+
+      sz(1) = INT(SIZE(x,1),i4)
+      sz(2) = INT(SIZE(x,2),i4)
+
+      ALLOCATE(r4array(sz(1),sz(2)))
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
+    b%geometry = c_geometry_cartesian
+    b%ndims = ndims
+
+    DO i = 1,ndims
+      b%dims(i) = INT(dims(i),i4)
+    ENDDO
+
+    gmn(1) = xmin
+    gmx(1) = xmax
+    gmn(2) = ymin
+    gmx(2) = ymax
+
+    CALL MPI_ALLREDUCE(gmn, b%extents, ndims, MPI_REAL8, MPI_MIN, &
+        h%comm, errcode)
+    CALL MPI_ALLREDUCE(gmx, b%extents(ndims+1), ndims, MPI_REAL8, MPI_MAX, &
+        h%comm, errcode)
+
+    ! Write header
+
+    b%blocktype = c_blocktype_lagrangian_mesh
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
+
+    ! Write the actual data
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+    IF (convert) THEN
+      r4array = REAL(x,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      r4array = REAL(y,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, y, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_2d_lag_mesh_r8
+
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a 3D lagrangian mesh in parallel using the
+  ! mpitype {distribution} for distribution of data
+  ! It's up to the coder to design the distribution parallel operation, so
+  ! need global dims
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_3d_lag_mesh_r8(h, id, name, x, y, z, dims, xmin, xmax, &
+      ymin, ymax, zmin, zmax, distribution, subarray, convert_in, dim_labels, &
+      dim_units, dim_mults)
+
+    INTEGER, PARAMETER :: ndims = 3
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    REAL(r8), DIMENSION(:,:,:), INTENT(IN) :: x, y, z
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    REAL(r8), INTENT(IN) :: xmin, xmax, ymin, ymax, zmin, zmax
+    INTEGER, INTENT(IN) :: distribution, subarray
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+    REAL(r8), DIMENSION(ndims) :: gmn, gmx
+    REAL(r4), DIMENSION(:,:,:), ALLOCATABLE :: r4array
+    INTEGER :: i, errcode, sz(ndims)
+    TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: convert
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+
+      sz(1) = INT(SIZE(x,1),i4)
+      sz(2) = INT(SIZE(x,2),i4)
+      sz(3) = INT(SIZE(x,3),i4)
+
+      ALLOCATE(r4array(sz(1),sz(2),sz(3)))
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
+    b%geometry = c_geometry_cartesian
+    b%ndims = ndims
+
+    DO i = 1,ndims
+      b%dims(i) = INT(dims(i),i4)
+    ENDDO
+
+    gmn(1) = xmin
+    gmx(1) = xmax
+    gmn(2) = ymin
+    gmx(2) = ymax
+    gmn(3) = zmin
+    gmx(3) = zmax
+
+    CALL MPI_ALLREDUCE(gmn, b%extents, ndims, MPI_REAL8, MPI_MIN, &
+        h%comm, errcode)
+    CALL MPI_ALLREDUCE(gmx, b%extents(ndims+1), ndims, MPI_REAL8, MPI_MAX, &
+        h%comm, errcode)
+
+    ! Write header
+
+    b%blocktype = c_blocktype_lagrangian_mesh
+    CALL write_mesh_meta_r8(h, id, name, dim_labels, dim_units, dim_mults)
+
+    ! Write the actual data
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+    IF (convert) THEN
+      r4array = REAL(x,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      r4array = REAL(y,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      r4array = REAL(z,r4)
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      DEALLOCATE(r4array)
+    ELSE
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, x, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, y, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_WRITE_ALL(h%filehandle, z, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_3d_lag_mesh_r8
+
+
+
+  !----------------------------------------------------------------------------
   ! Code to write a 1D cartesian variable in parallel
   ! using the mpitype {distribution} for distribution of data
   ! It's up to the coder to design the distribution parallel operation, so

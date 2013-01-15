@@ -45,7 +45,10 @@ MODULE sdf
   PUBLIC :: c_blocktype_contiguous_species
   PUBLIC :: c_blocktype_cpu_split
   PUBLIC :: c_blocktype_stitched_obstacle_group
+  PUBLIC :: c_blocktype_unstructured_mesh
   PUBLIC :: c_blocktype_stitched
+  PUBLIC :: c_blocktype_contiguous
+  PUBLIC :: c_blocktype_lagrangian_mesh
   PUBLIC :: c_blocktype_max
 
   PUBLIC :: c_datatype_null
@@ -109,6 +112,7 @@ MODULE sdf
   PUBLIC :: sdf_read_point_mesh_info
   PUBLIC :: sdf_read_point_variable
   PUBLIC :: sdf_read_point_variable_info
+  PUBLIC :: sdf_read_lagrangian_mesh
   PUBLIC :: sdf_read_srl_plain_mesh
   PUBLIC :: sdf_read_srl_point_mesh
   PUBLIC :: sdf_read_srl_point_variable
@@ -126,6 +130,7 @@ MODULE sdf
   PUBLIC :: sdf_write_plain_variable
   PUBLIC :: sdf_write_point_mesh
   PUBLIC :: sdf_write_point_variable
+  PUBLIC :: sdf_write_lagrangian_mesh
   PUBLIC :: sdf_write_srl_plain_mesh
   PUBLIC :: sdf_write_srl_point_mesh
   PUBLIC :: sdf_write_srl_point_variable

@@ -43,6 +43,16 @@ MODULE sdf_input_cartesian
         read_3d_mesh_r8
   END INTERFACE sdf_read_plain_mesh
 
+  INTERFACE sdf_read_lagrangian_mesh
+    MODULE PROCEDURE &
+        read_1d_lag_mesh_r4, &
+        read_2d_lag_mesh_r4, &
+        read_3d_lag_mesh_r4, &
+        read_1d_lag_mesh_r8, &
+        read_2d_lag_mesh_r8, &
+        read_3d_lag_mesh_r8
+  END INTERFACE sdf_read_lagrangian_mesh
+
   INTERFACE sdf_read_plain_variable
     MODULE PROCEDURE &
         read_1d_float_r4, &

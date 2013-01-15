@@ -57,6 +57,7 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_UNSTRUCTURED_MESH,
     SDF_BLOCKTYPE_STITCHED,
     SDF_BLOCKTYPE_CONTIGUOUS,
+    SDF_BLOCKTYPE_LAGRANGIAN_MESH,
 };
 
 enum sdf_geometry {
@@ -164,6 +165,7 @@ static const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_UNSTRUCTURED_MESH",
     "SDF_BLOCKTYPE_STITCHED",
     "SDF_BLOCKTYPE_CONTIGUOUS",
+    "SDF_BLOCKTYPE_LAGRANGIAN_MESH",
 };
 
 static const char *sdf_geometry_c[] = {
