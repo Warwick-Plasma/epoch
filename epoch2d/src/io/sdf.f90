@@ -100,6 +100,7 @@ MODULE sdf
   PUBLIC :: sdf_read_array_info
   PUBLIC :: sdf_read_material_info
   PUBLIC :: sdf_read_stitched_info
+  PUBLIC :: sdf_read_plain_mesh
   PUBLIC :: sdf_read_plain_mesh_info
   PUBLIC :: sdf_read_obstacle_group_info
   PUBLIC :: sdf_read_plain_variable
