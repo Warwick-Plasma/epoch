@@ -159,6 +159,264 @@ CONTAINS
 
 
 
+  SUBROUTINE read_1d_mesh_r4(h, x, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(r4), DIMENSION(:), INTENT(OUT) :: x
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_1d_mesh_r4
+
+
+
+  SUBROUTINE read_2d_mesh_r4(h, x, y, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(r4), DIMENSION(:), INTENT(OUT) :: x, y
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_2d_mesh_r4
+
+
+
+  SUBROUTINE read_3d_mesh_r4(h, x, y, z, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(r4), DIMENSION(:), INTENT(OUT) :: x, y, z
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, z, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_3d_mesh_r4
+
+
+
+  SUBROUTINE read_1d_lag_mesh_r4(h, x, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(r4), DIMENSION(:), INTENT(OUT) :: x
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_1d_lag_mesh_r4
+
+
+
+  SUBROUTINE read_2d_lag_mesh_r4(h, x, y, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(r4), DIMENSION(:,:), INTENT(OUT) :: x, y
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_2d_lag_mesh_r4
+
+
+
+  SUBROUTINE read_3d_lag_mesh_r4(h, x, y, z, distribution, subarray)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(r4), DIMENSION(:,:,:), INTENT(OUT) :: x, y, z
+    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
+
+    ! Read the actual data
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, z, 1, subarray, &
+        MPI_STATUS_IGNORE, errcode)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    ! That should be it, so now skip to end of block
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_3d_lag_mesh_r4
+
+
+
   ! Variable loading functions
 
   SUBROUTINE read_plain_variable_info_r4(h, dims, units, mesh_id, stagger, mult)

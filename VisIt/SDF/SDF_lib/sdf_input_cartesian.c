@@ -419,6 +419,60 @@ int sdf_read_plain_mesh(sdf_file_t *h)
 }
 
 
+
+int sdf_read_lagran_mesh(sdf_file_t *h)
+{
+    sdf_block_t *b = h->current_block;
+    int local_start[SDF_MAXDIMS];
+    int n;
+    uint64_t nelements = 1;
+
+    if (b->done_data) return 0;
+    if (!b->done_info) sdf_read_blocklist(h);
+
+    sdf_factor(h, local_start);
+
+    h->current_location = b->data_location;
+
+    if (!b->grids) b->grids = calloc(3, sizeof(float*));
+
+    if (h->print) {
+        h->indent = 0;
+        SDF_DPRNT("\n");
+        SDF_DPRNT("b->name: %s ", b->name);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
+        SDF_DPRNT("\n");
+        h->indent = 2;
+    }
+
+    sdf_plain_mesh_datatype(h);
+
+    for (n = 0; n < b->ndims; n++) nelements *= b->dims[n];
+
+    for (n = 0; n < 3; n++) {
+        if (b->ndims > n) {
+            sdf_helper_read_array(h, &b->grids[n], b->nlocal);
+            sdf_convert_array_to_float(h, &b->grids[n], b->nlocal);
+            if (h->print) {
+                SDF_DPRNT("%s: ", b->dim_labels[n]);
+                SDF_DPRNTar(b->grids[n], b->nlocal);
+            }
+            h->current_location = h->current_location
+                    + b->type_size * nelements;
+        } else {
+            b->grids[n] = calloc(1, b->type_size);
+        }
+    }
+
+    sdf_free_distribution(h);
+
+    b->done_data = 1;
+
+    return 0;
+}
+
+
+
 int sdf_read_plain_variable(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;

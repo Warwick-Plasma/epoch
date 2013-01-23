@@ -20,7 +20,8 @@ CONTAINS
 
     b => h%current_block
 
-    b%blocktype = c_blocktype_plain_mesh
+    IF (b%blocktype .NE. c_blocktype_lagrangian_mesh) &
+        b%blocktype = c_blocktype_plain_mesh
     ndims = b%ndims
 
     b%nelements = 0

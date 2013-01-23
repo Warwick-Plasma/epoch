@@ -103,7 +103,8 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_unstructured_mesh = 22
   INTEGER(i4), PARAMETER :: c_blocktype_stitched = 23
   INTEGER(i4), PARAMETER :: c_blocktype_contiguous = 24
-  INTEGER(i4), PARAMETER :: c_blocktype_max = 24
+  INTEGER(i4), PARAMETER :: c_blocktype_lagrangian_mesh = 25
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 25
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
