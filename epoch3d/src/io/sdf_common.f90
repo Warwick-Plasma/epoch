@@ -220,7 +220,8 @@ MODULE sdf_common
       'SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP', &
       'SDF_BLOCKTYPE_UNSTRUCTURED_MESH      ', &
       'SDF_BLOCKTYPE_STITCHED               ', &
-      'SDF_BLOCKTYPE_CONTIGUOUS             ' /)
+      'SDF_BLOCKTYPE_CONTIGUOUS             ', &
+      'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ' /)
 
   CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
       'SDF_DATATYPE_NULL     ', &
