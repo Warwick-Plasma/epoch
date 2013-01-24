@@ -53,7 +53,7 @@ CONTAINS
   SUBROUTINE probe_block_end
 
     LOGICAL :: discard
-    INTEGER :: io
+    INTEGER :: io, ierr
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
