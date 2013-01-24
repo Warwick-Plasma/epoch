@@ -37,7 +37,8 @@ CONTAINS
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=c_max_string_length) :: dump_type
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
-    INTEGER :: code, i, io
+    INTEGER :: code, i, io, random_state(4)
+    INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: restart_flag, convert
     INTEGER :: ispecies
@@ -97,7 +98,7 @@ CONTAINS
     ALLOCATE(array(-2:nx+3,-2:ny+3))
 
     ! open the file
-    CALL sdf_open(sdf_handle, filename, rank, comm, c_sdf_write)
+    CALL sdf_open(sdf_handle, filename, comm, c_sdf_write)
     CALL sdf_write_header(sdf_handle, 'Epoch2d', 1, step, time, restart_flag, &
         jobid)
     CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_commit_id, &
@@ -127,6 +128,16 @@ CONTAINS
             'Particles/Particles Per Cell/' // TRIM(species%name), &
             species%npart_per_cell)
       ENDDO
+
+      IF (need_random_state) THEN
+        CALL get_random_state(random_state)
+        ALLOCATE(random_states_per_proc(4*nproc))
+        CALL MPI_GATHER(random_state, 4, MPI_INTEGER, &
+            random_states_per_proc, 4, MPI_INTEGER, 0, comm, errcode)
+        CALL sdf_write_srl(sdf_handle, 'random_states', 'Random States', &
+            random_states_per_proc)
+        DEALLOCATE(random_states_per_proc)
+      ENDIF
     ENDIF
 
     iomask = iodumpmask(1,:)
@@ -780,8 +791,7 @@ CONTAINS
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN
       IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
           .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-        CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        CALL build_species_subset
 
         IF (isubset .EQ. 1) THEN
           temp_block_id = TRIM(block_id)
@@ -799,8 +809,7 @@ CONTAINS
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
-        CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        CALL build_species_subset
 
         len1 = LEN_TRIM(block_id) + 1
         len2 = LEN_TRIM(name) + 9
@@ -1063,8 +1072,7 @@ CONTAINS
     IF (IAND(iomask(id), should_dump) .NE. 0) THEN
       IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
           .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-        CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        CALL build_species_subset
 
         DO idir = 1, ndirs
           temp_block_id = TRIM(block_id) // '/' // &
@@ -1079,8 +1087,7 @@ CONTAINS
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
-        CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        CALL build_species_subset
 
         len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 2
         len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 10
@@ -1276,6 +1283,7 @@ CONTAINS
     INTEGER(i8) :: species_count
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_species_per_proc
     INTEGER :: i, ispecies
+    TYPE(particle_species), POINTER :: spec
 
     IF (done_species_offset_init) RETURN
     done_species_offset_init = .TRUE.
@@ -1289,15 +1297,20 @@ CONTAINS
 
     npart_global = 0
     DO ispecies = 1, n_species
-      CALL MPI_ALLGATHER(io_list(ispecies)%attached_list%count, 1, &
-          MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
+      spec => io_list(ispecies)
+
+      CALL MPI_ALLGATHER(spec%attached_list%count, 1, MPI_INTEGER8, &
+          npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
       species_count = 0
       DO i = 1, nproc
         IF (rank .EQ. i-1) species_offset(ispecies) = species_count
         species_count = species_count + npart_species_per_proc(i)
       ENDDO
-      io_list(ispecies)%count = species_count
+      spec%count = species_count
       npart_global = npart_global + species_count
+
+      CALL sdf_write_cpu_split(sdf_handle, 'cpu_split/' // TRIM(spec%name), &
+          'CPU split/' // TRIM(spec%name), npart_species_per_proc)
     ENDDO
 
     IF (track_ejected_particles &
@@ -1306,15 +1319,19 @@ CONTAINS
       ejected_offset = 0
 
       DO ispecies = 1, n_species
-        CALL MPI_ALLGATHER(ejected_list(ispecies)%attached_list%count, 1, &
-            MPI_INTEGER8, npart_species_per_proc, 1, MPI_INTEGER8, comm, &
-            errcode)
+        spec => ejected_list(ispecies)
+
+        CALL MPI_ALLGATHER(spec%attached_list%count, 1, MPI_INTEGER8, &
+            npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
         species_count = 0
         DO i = 1, nproc
           IF (rank .EQ. i-1) ejected_offset(ispecies) = species_count
           species_count = species_count + npart_species_per_proc(i)
         ENDDO
-        ejected_list(ispecies)%count = species_count
+        spec%count = species_count
+
+        CALL sdf_write_cpu_split(sdf_handle, 'cpu_split/' // TRIM(spec%name), &
+            'CPU split/' // TRIM(spec%name), npart_species_per_proc)
       ENDDO
     ENDIF
 
@@ -1332,9 +1349,6 @@ CONTAINS
 
     id = c_dump_part_grid
     IF (IAND(iomask(id), code) .NE. 0) THEN
-      CALL species_offset_init()
-      IF (npart_global .EQ. 0) RETURN
-
       convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
           .AND. (IAND(code,c_io_restartable) .EQ. 0 &
           .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
@@ -1344,6 +1358,9 @@ CONTAINS
 
         IF (IAND(current_species%dumpmask, code) .NE. 0 &
             .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL species_offset_init()
+          IF (npart_global .EQ. 0) RETURN
+
           CALL sdf_write_point_mesh(sdf_handle, &
               'grid/' // TRIM(current_species%name), &
               'Grid/Particles/' // TRIM(current_species%name), &
@@ -1363,6 +1380,9 @@ CONTAINS
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
         current_species => ejected_list(ispecies)
         CALL sdf_write_point_mesh(sdf_handle, &
             'grid/' // TRIM(current_species%name), &
@@ -1396,9 +1416,6 @@ CONTAINS
 
     id = id_in
     IF (IAND(iomask(id), code) .NE. 0) THEN
-      CALL species_offset_init()
-      IF (npart_global .EQ. 0) RETURN
-
       convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
           .AND. (IAND(code,c_io_restartable) .EQ. 0 &
           .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
@@ -1408,6 +1425,9 @@ CONTAINS
 
         IF (IAND(current_species%dumpmask, code) .NE. 0 &
             .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL species_offset_init()
+          IF (npart_global .EQ. 0) RETURN
+
           CALL sdf_write_point_variable(sdf_handle, &
               lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
               'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
@@ -1426,6 +1446,9 @@ CONTAINS
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
         current_species => ejected_list(ispecies)
         CALL sdf_write_point_variable(sdf_handle, &
             lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &

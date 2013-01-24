@@ -46,7 +46,11 @@ MODULE sdf_output_point
         write_srl_pt_var_int_i8_r8, &
         write_srl_pt_var_int_i4_r8, &
         write_srl_pt_var_flt_i8_r8, &
-        write_srl_pt_var_flt_i4_r8
+        write_srl_pt_var_flt_i4_r8, &
+        write_srl_pt_var_logical_i8_r4, &
+        write_srl_pt_var_logical_i4_r4, &
+        write_srl_pt_var_logical_i8_r8, &
+        write_srl_pt_var_logical_i4_r8
   END INTERFACE sdf_write_srl_point_variable
 
 END MODULE sdf_output_point

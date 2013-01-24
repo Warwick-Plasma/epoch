@@ -29,6 +29,16 @@ MODULE sdf_output_cartesian
         write_3d_mesh_r8
   END INTERFACE sdf_write_plain_mesh
 
+  INTERFACE sdf_write_lagrangian_mesh
+    MODULE PROCEDURE &
+        write_1d_lag_mesh_r4, &
+        write_2d_lag_mesh_r4, &
+        write_3d_lag_mesh_r4, &
+        write_1d_lag_mesh_r8, &
+        write_2d_lag_mesh_r8, &
+        write_3d_lag_mesh_r8
+  END INTERFACE sdf_write_lagrangian_mesh
+
   INTERFACE sdf_write_plain_variable
     MODULE PROCEDURE &
         write_1d_float_r4, &
@@ -88,5 +98,15 @@ MODULE sdf_output_cartesian
         write_2d_species_r8, &
         write_3d_species_r8
   END INTERFACE sdf_write_species
+
+  INTERFACE sdf_write_stitched_var
+    MODULE PROCEDURE &
+        write_1d_stitched_var_r4, &
+        write_2d_stitched_var_r4, &
+        write_3d_stitched_var_r4, &
+        write_1d_stitched_var_r8, &
+        write_2d_stitched_var_r8, &
+        write_3d_stitched_var_r8
+  END INTERFACE sdf_write_stitched_var
 
 END MODULE sdf_output_cartesian

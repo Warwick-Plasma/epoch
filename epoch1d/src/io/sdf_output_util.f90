@@ -15,6 +15,8 @@ CONTAINS
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
+    IF (.NOT.ASSOCIATED(h%current_block)) RETURN
+
     b => h%current_block
 
     h%summary_location = b%next_block_location
@@ -72,22 +74,22 @@ CONTAINS
       CALL write_run_info_meta(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_source) THEN
       CALL write_block_header(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_tensor) THEN
-      CALL sdf_write_stitched_tensor(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_material) THEN
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched &
+        .OR. b%blocktype .EQ. c_blocktype_contiguous &
+        .OR. b%blocktype .EQ. c_blocktype_stitched_tensor &
+        .OR. b%blocktype .EQ. c_blocktype_contiguous_tensor) THEN
+      CALL sdf_write_stitched(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_material &
+        .OR. b%blocktype .EQ. c_blocktype_contiguous_material) THEN
       CALL sdf_write_stitched_material(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_matvar) THEN
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_matvar &
+        .OR. b%blocktype .EQ. c_blocktype_contiguous_matvar) THEN
       CALL sdf_write_stitched_matvar(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_species) THEN
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_species &
+        .OR. b%blocktype .EQ. c_blocktype_contiguous_species) THEN
       CALL sdf_write_stitched_species(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_multi_tensor) THEN
-      CALL sdf_write_multi_tensor(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_multi_material) THEN
-      CALL sdf_write_multi_material(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_multi_matvar) THEN
-      CALL sdf_write_stitched_matvar(h)
-    ELSE IF (b%blocktype .EQ. c_blocktype_multi_species) THEN
-      CALL sdf_write_multi_species(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_stitched_obstacle_group) THEN
+      CALL sdf_write_stitched_obstacle_group(h)
     ELSE
       CALL write_block_header(h)
     ENDIF

@@ -3,6 +3,7 @@ MODULE deck_particle_probe_block
   USE probes
   USE strings_advanced
 
+  IMPLICIT NONE
 #ifndef PARTICLE_PROBES
 CONTAINS
 
@@ -20,7 +21,11 @@ CONTAINS
 
   TYPE(particle_probe), POINTER :: working_probe
   REAL(num) :: point2(c_ndims), point3(c_ndims)
-  LOGICAL :: got_point, got_normal, got_x
+  LOGICAL :: got_name, got_point, got_normal
+  INTEGER :: got_x
+  INTEGER, PARAMETER :: ndim = 9
+  CHARACTER(LEN=*), PARAMETER :: xs(ndim) = (/'x_tl', 'y_tl', 'z_tl', 'x_br', &
+      'y_br', 'z_br', 'x_tr', 'y_tr', 'z_tr'/)
 
 CONTAINS
 
@@ -42,9 +47,10 @@ CONTAINS
 
     ALLOCATE(working_probe)
     CALL init_probe(working_probe)
+    got_name = .FALSE.
     got_point = .FALSE.
     got_normal = .FALSE.
-    got_x = .FALSE.
+    got_x = 0
 
   END SUBROUTINE probe_block_start
 
@@ -54,24 +60,35 @@ CONTAINS
 
     LOGICAL :: discard
     REAL(num), DIMENSION(c_ndims) :: r1, r2
-    INTEGER :: io
+    INTEGER :: io, i, ierr, scount, sarr(ndim)
 
     IF (deck_state .EQ. c_ds_first) RETURN
+
+    IF (.NOT.got_name) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) '"probe" block does not have a "name" entry.'
+        ENDDO
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
 
     discard = .FALSE.
     IF (got_point) THEN
       IF (rank .EQ. 0) THEN
-        IF (got_x) THEN
+        IF (got_x .NE. 0) THEN
           DO io = stdout,du,du-stdout ! Print to stdout and to file
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Both "x1", etc. and "point" were used in probe block.'
+            WRITE(io,*) 'Both "x1", etc. and "point" were used in probe ', &
+                'block, "' // TRIM(working_probe%name) // '".'
             WRITE(io,*) 'Only "point" and "normal" will be used.'
           ENDDO
         ENDIF
       ENDIF
       IF (.NOT. got_normal) discard = .TRUE.
     ELSE
-      IF (.NOT.got_x) THEN
+      IF (got_x .NE. 2**ndim-1) THEN
         discard = .TRUE.
       ELSE
         ! Old style configuration supplied. Need to calculate the normal.
@@ -91,8 +108,29 @@ CONTAINS
       IF (rank .EQ. 0) THEN
         DO io = stdout,du,du-stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'Position not fully specified for distribution ', &
-            'function. It will be discarded.'
+          WRITE(io,*) 'Position of probe "' // TRIM(working_probe%name) &
+              // '" ', 'not fully specified. ', 'It will be discarded.'
+          IF (got_point .OR. got_normal .OR. got_x .EQ. 0) THEN
+            WRITE(io,*) 'Both "point" and "normal" are required.'
+          ELSE
+            scount = 0
+            sarr = 0
+            DO i = 0,ndim-1
+              IF (IAND(got_x,2**i) .EQ. 0) THEN
+                scount = scount + 1
+                sarr(scount) = i + 1
+              ENDIF
+            ENDDO
+            IF (scount .GT. 1) THEN
+              DO i = 1, scount-2
+                WRITE(io,'(A)',ADVANCE='NO') ' "' // xs(sarr(i)) // '",'
+              ENDDO
+              WRITE(io,*) '"' // xs(sarr(scount-1)) // '" and "' &
+                  // xs(sarr(scount)) // '" not specified.'
+            ELSE
+              WRITE(io,*) '"' // xs(sarr(scount)) // '" not specified.'
+            ENDIF
+          ENDIF
         ENDDO
       ENDIF
 
@@ -127,7 +165,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'point')) THEN
+    IF (str_cmp(element, 'point') .OR. str_cmp(element, 'probe_point')) THEN
       got_point = .TRUE.
       CALL get_vector(value, working_probe%point, errcode)
       RETURN
@@ -141,51 +179,51 @@ CONTAINS
 
     ! Top left
     IF (str_cmp(element, 'x_tl')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**0)
       working_probe%point(1) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'y_tl')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**1)
       working_probe%point(2) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'z_tl')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**2)
       working_probe%point(3) = as_real(value, errcode)
       RETURN
     ENDIF
 
     ! Bottom right
     IF (str_cmp(element, 'x_br')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**3)
       point2(1) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'y_br')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**4)
       point2(2) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'z_br')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**5)
       point2(3) = as_real(value, errcode)
       RETURN
     ENDIF
 
     ! Top right
     IF (str_cmp(element, 'x_tr')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**6)
       point3(1) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'y_tr')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**7)
       point3(2) = as_real(value, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'z_tr')) THEN
-      got_x = .TRUE.
+      got_x = IOR(got_x,2**8)
       point3(3) = as_real(value, errcode)
       RETURN
     ENDIF
@@ -222,6 +260,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'name')) THEN
+      got_name = .TRUE.
       working_probe%name = TRIM(value)
       RETURN
     ENDIF

@@ -10,18 +10,18 @@ MODULE sdf_control
 
 CONTAINS
 
-  SUBROUTINE sdf_open(h, filename, sdf_rank_in, sdf_comm_in, mode)
+  SUBROUTINE sdf_open(h, filename, sdf_comm_in, mode)
 
     TYPE(sdf_file_handle), TARGET :: h
     CHARACTER(LEN=*), INTENT(IN) :: filename
-    INTEGER, INTENT(IN) :: sdf_rank_in, sdf_comm_in, mode
+    INTEGER, INTENT(IN) :: sdf_comm_in, mode
     INTEGER :: errcode, ierr, i
 
     CALL initialise_file_handle(h)
     CALL sdf_set_default_rank(h, 0)
 
     h%comm = sdf_comm_in
-    h%rank = sdf_rank_in
+    CALL MPI_COMM_RANK(sdf_comm_in, h%rank, errcode)
 
     ierr = KIND(errcode)
     IF (ierr .EQ. i4) THEN
@@ -34,11 +34,9 @@ CONTAINS
       h%datatype_integer = c_datatype_integer8
       h%mpitype_integer = MPI_INTEGER8
     ELSE
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'Error writing SDF output file - unknown datatype'
-      ENDIF
-      CALL MPI_ABORT(h%comm, errcode, ierr)
+      h%error_code = c_err_unsupported_datarep + 64 * h%nblocks
+      h%handled_error = .TRUE.
+      RETURN
     ENDIF
 
     IF (mode .EQ. c_sdf_write) THEN
@@ -197,5 +195,20 @@ CONTAINS
     sdf_read_jobid = h%jobid
 
   END FUNCTION sdf_read_jobid
+
+
+
+  FUNCTION sdf_errorcode(h)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER :: sdf_errorcode
+
+    IF (h%handled_error) THEN
+      sdf_errorcode = h%error_code
+    ELSE
+      sdf_errorcode = c_err_success
+    ENDIF
+
+  END FUNCTION sdf_errorcode
 
 END MODULE sdf_control

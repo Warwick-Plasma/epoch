@@ -116,19 +116,16 @@ int main(int argc, char **argv)
     int i, buflen, block, err;
     sdf_file_t *h;
     sdf_block_t *b;
-    int rank = 0, size = 1;
     comm_t comm;
 
     file = parse_args(&argc, &argv);
 
 #ifdef PARALLEL
     MPI_Init(&argc, &argv);
-    comm = MPI_COMM_WORLD;
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &size);
+    MPI_Comm_dup(MPI_COMM_WORLD, &comm);
 #endif
 
-    h = sdf_open(file, rank, comm, mmap);
+    h = sdf_open(file, comm, SDF_READ, mmap);
     if (!h) {
         fprintf(stderr, "Error opening file %s\n", file);
         return 1;
@@ -136,7 +133,6 @@ int main(int argc, char **argv)
     h->use_float = single;
     h->print = debug;
     if (ignore_summary) h->use_summary = 0;
-    sdf_set_ncpus(h, size);
 
     sdf_read_header(h);
     h->current_block = NULL;

@@ -26,6 +26,7 @@
 int sdf_read_array_info(sdf_file_t *h);
 int sdf_read_run_info(sdf_file_t *h);
 int sdf_read_array(sdf_file_t *h);
+static int sdf_read_cpu_split_info(sdf_file_t *h);
 
 
 static inline int sdf_get_next_block(sdf_file_t *h)
@@ -313,6 +314,8 @@ int sdf_read_data(sdf_file_t *h)
 
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
         return sdf_read_plain_mesh(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
+        return sdf_read_lagran_mesh(h);
     else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
         return sdf_read_point_mesh(h);
     else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
@@ -338,7 +341,8 @@ int sdf_read_block_info(sdf_file_t *h)
     if (b->done_info) return 0;
 
     h->indent += 2;
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH
+            || b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
         ret = sdf_read_plain_mesh_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
         ret = sdf_read_point_mesh_info(h);
@@ -354,18 +358,22 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_cpu_split_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO)
         ret = sdf_read_run_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
-            || b->blocktype == SDF_BLOCKTYPE_MULTI_TENSOR)
-        ret = sdf_read_stitched_tensor(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS
+            || b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_TENSOR)
+        ret = sdf_read_stitched(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
-            || b->blocktype == SDF_BLOCKTYPE_MULTI_MATERIAL)
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL)
         ret = sdf_read_stitched_material(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR
-            || b->blocktype == SDF_BLOCKTYPE_MULTI_MATVAR)
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATVAR)
         ret = sdf_read_stitched_matvar(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
-            || b->blocktype == SDF_BLOCKTYPE_MULTI_SPECIES)
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_SPECIES)
         ret = sdf_read_stitched_species(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP)
+        ret = sdf_read_stitched_obstacle_group(h);
 
     return ret;
 }
@@ -520,7 +528,7 @@ int sdf_read_summary(sdf_file_t *h)
 
 int sdf_read_blocklist(sdf_file_t *h)
 {
-    int i;
+    int i, fix;
     sdf_block_t *b, *next, *mesh;
 
     sdf_read_summary(h);
@@ -542,11 +550,17 @@ int sdf_read_blocklist(sdf_file_t *h)
         b = next;
         next = b->next;
         if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE && b->stagger) {
+            fix = 0;
             mesh = sdf_find_block_by_id(h, b->mesh_id);
             for (i = 0; i < b->ndims; i++) {
                 if (b->const_value[i] && b->dims[i] != mesh->dims[i]) {
+                    fix = 1;
                     b->const_value[i] = 0;
                 }
+            }
+            if (fix) {
+                // Re-calculate per block parallel factorisation
+                sdf_factor(h);
             }
         }
     }
@@ -556,7 +570,7 @@ int sdf_read_blocklist(sdf_file_t *h)
 
 
 
-int sdf_read_stitched_tensor(sdf_file_t *h)
+int sdf_read_stitched(sdf_file_t *h)
 {
     sdf_block_t *b;
 
@@ -667,6 +681,33 @@ int sdf_read_stitched_species(sdf_file_t *h)
 
 
 
+int sdf_read_stitched_obstacle_group(sdf_file_t *h)
+{
+    sdf_block_t *b;
+
+    SDF_COMMON_INFO();
+
+    // Metadata is
+    // - stagger         INTEGER(i4)
+    // - obstacle_id     CHARACTER(id_length)
+    // - vfm_id          CHARACTER(id_length)
+    // - obstacle_names  ndims*CHARACTER(string_length)
+
+    SDF_READ_ENTRY_INT4(b->stagger);
+
+    SDF_READ_ENTRY_ID(b->obstacle_id);
+
+    SDF_READ_ENTRY_ID(b->vfm_id);
+
+    SDF_READ_ENTRY_ARRAY_STRING(b->material_names, b->ndims);
+
+    b->done_data = 1;
+
+    return 0;
+}
+
+
+
 int sdf_read_constant(sdf_file_t *h)
 {
     sdf_block_t *b;
@@ -690,12 +731,12 @@ static int sdf_array_datatype(sdf_file_t *h)
     int n;
 
 #ifdef PARALLEL
-    int local_start[SDF_MAXDIMS], sizes[SDF_MAXDIMS];
+    int sizes[SDF_MAXDIMS];
     for (n=0; n < b->ndims; n++) sizes[n] = b->dims[n];
 
-    sdf_factor(h, local_start);
+    sdf_factor(h);
 
-    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, local_start,
+    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, b->starts,
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 #else
@@ -784,7 +825,7 @@ int sdf_read_array_info(sdf_file_t *h)
 
 
 
-int sdf_read_cpu_split_info(sdf_file_t *h)
+static int sdf_read_cpu_split_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
@@ -800,7 +841,7 @@ int sdf_read_cpu_split_info(sdf_file_t *h)
         b->dims[i] = b->dims_in[i];
         b->local_dims[i] = b->dims_in[i];
     }
-    if (b->geometry == 1) {
+    if (b->geometry == 1 || b->geometry == 4) {
         b->nlocal = 0;
         for (i = 0; i < b->ndims; i++)
             b->nlocal += b->dims[i];

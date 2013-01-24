@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 int sdf_add_derived_blocks(sdf_file_t *h);
+int sdf_add_derived_blocks_final(sdf_file_t *h);
 
 #ifdef __cplusplus
 }

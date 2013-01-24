@@ -41,6 +41,7 @@
 // ************************************************************************* //
 
 #include <avtSDFFileFormat.h>
+#include <avtSDFOptions.h>
 #ifdef PARALLEL
 #include <mpi.h>
 #endif
@@ -73,9 +74,11 @@
 
 #include <dlfcn.h>
 
-using     std::string;
+using std::string;
+using namespace SDFDBOptions;
 int avtSDFFileFormat::extension_not_found = 0;
 
+#define IJK2(i,j,k) ((i)+ng + (nx+2*ng) * ((j)+ng + (ny+2*ng) * ((k)+ng)))
 
 // ****************************************************************************
 //  Memory management stack
@@ -98,6 +101,7 @@ static uint64_t memory_size = 0;
 static inline void stack_alloc(sdf_block_t *b)
 {
     struct stack *tail;
+    if (b->done_data || b->dont_own_data) return;
     b->data = calloc(b->nlocal, b->type_size_out);
     memory_size += b->nlocal * b->type_size_out;
     stack_tail->next = tail = (struct stack*)malloc(sizeof(struct stack));
@@ -107,7 +111,48 @@ static inline void stack_alloc(sdf_block_t *b)
 }
 
 
-static inline void stack_free(void)
+static inline void stack_free_block(sdf_block_t *b)
+{
+    struct stack *old_stack_entry = stack_head;
+    struct stack *stack_entry = stack_head;
+
+    while (stack_entry) {
+        if (stack_entry->block == b) {
+            free(b->data);
+            b->data = NULL;
+            b->done_data = 0;
+            memory_size -= b->nlocal * b->type_size_out;
+            old_stack_entry->next = stack_entry->next;
+            if (stack_entry == stack_tail) stack_tail = old_stack_entry;
+            free(stack_entry);
+            return;
+        }
+        old_stack_entry = stack_entry;
+        stack_entry = stack_entry->next;
+    }
+}
+
+
+static inline void stack_push_to_bottom(sdf_block_t *b)
+{
+    struct stack *old_stack_entry = stack_head;
+    struct stack *stack_entry = stack_head;
+
+    while (stack_entry) {
+        if (stack_entry->block == b) {
+            old_stack_entry->next = stack_entry->next;
+            stack_tail->next = stack_entry;
+            stack_tail = stack_entry;
+            stack_tail->next = NULL;
+            return;
+        }
+        old_stack_entry = stack_entry;
+        stack_entry = stack_entry->next;
+    }
+}
+
+
+static inline void stack_freeup_memory(void)
 {
     sdf_block_t *b;
     struct stack *head;
@@ -126,6 +171,25 @@ static inline void stack_free(void)
         memory_size -= b->nlocal * b->type_size_out;
         if (memory_size < MAX_MEMORY) break;
     }
+}
+
+
+static inline void stack_free(void)
+{
+    sdf_block_t *b;
+    struct stack *head;
+
+    while (stack_head->next) {
+        head = stack_head;
+        stack_head = stack_head->next;
+        free(head);
+        b = stack_head->block;
+        stack_head->block = NULL;
+        free(b->data);
+        b->data = NULL;
+        b->done_data = 0;
+    }
+    memory_size = 0;
 }
 
 
@@ -186,22 +250,22 @@ void avtSDFFileFormat::sdf_extension_unload(void)
 void
 avtSDFFileFormat::OpenFile(int open_only)
 {
-    if (!h) h = sdf_open(filename, rank, comm, 0);
+    if (!h) h = sdf_open(filename, comm, SDF_READ, 0);
     if (!h) EXCEPTION1(InvalidFilesException, filename);
-    h->use_float = use_float;
-    h->use_random = use_random;
     step = h->step;
     time = h->time;
     debug1 << "avtSDFFileFormat::OpenFile h:" << h << endl;
 
     if (open_only) {
-        // Retrieve the extended interface library from the plugin manager
-        ext = sdf_extension_load(h);
-
         sdf_close(h);
         h = NULL;
         return;
     }
+
+    h->use_float = use_float;
+    h->use_random = use_random;
+    h->sdf_extension_version  = SDF_EXTENSION_VERSION;
+    h->sdf_extension_revision = SDF_EXTENSION_REVISION;
 
     // If nblocks is negative then the file is corrupt
     if (h->nblocks <= 0) {
@@ -213,12 +277,16 @@ avtSDFFileFormat::OpenFile(int open_only)
         EXCEPTION1(InvalidFilesException, filename);
     }
 
+    // Retrieve the extended interface library from the plugin manager
+    if (!ext && !extension_not_found) ext = sdf_extension_load(h);
+
     if (h->blocklist) {
         if (ext) ext->timestate_update(ext, h);
         return;
     }
 
     sdf_read_blocklist(h);
+
     // Append derived data to the blocklist using built-in library.
     sdf_add_derived_blocks(h);
 
@@ -236,6 +304,7 @@ avtSDFFileFormat::OpenFile(int open_only)
                 var = sdf_find_block_by_id(h, preload[n]);
                 if (var && !var->data) {
                     h->current_block = var;
+                    stack_alloc(h->current_block);
                     sdf_read_data(h);
                 }
                 free(preload[n]);
@@ -248,6 +317,9 @@ avtSDFFileFormat::OpenFile(int open_only)
         // Append derived data to the blocklist using the extension library.
         ext->read_blocklist(ext, h);
     }
+
+    // Append additional derived data for blocks added by the extension.
+    sdf_add_derived_blocks_final(h);
 }
 
 
@@ -266,7 +338,7 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
            << ") " << this << endl;
     // INITIALIZE DATA MEMBERS
 #ifdef PARALLEL
-    comm = VISIT_MPI_COMM;
+    MPI_Comm_dup(VISIT_MPI_COMM, &comm);
     debug1 << "avtSDFFileFormat:: parallel" << endl;
 #else
     debug1 << "avtSDFFileFormat:: serial" << endl;
@@ -284,25 +356,23 @@ avtSDFFileFormat::avtSDFFileFormat(const char *filename,
 
     use_float = 0;
     use_random = 0;
-    if (readOpts) {
-        bool opt =
-            readOpts->GetBool("Read double variables as floats to save memory");
-        if (opt)
-            use_float = 1;
+    for (int i = 0; readOpts && i < readOpts->GetNumberOfOptions(); i++) {
+        if (readOpts->GetName(i) == SDF_RDOPT_CONVERT_FLOAT)
+            use_float = readOpts->GetBool(SDF_RDOPT_CONVERT_FLOAT) ? 1 : 0;
+        else if (readOpts->GetName(i) == SDF_RDOPT_RANDOMISE)
+            use_random = readOpts->GetBool(SDF_RDOPT_RANDOMISE) ? 1 : 0;
         else
-            use_float = 0;
-
-        opt = readOpts->GetBool("Randomise particle data");
-        if (opt)
-            use_random = 1;
-        else
-            use_random = 0;
+            debug1 << "Ignoring unknown option \"" << readOpts->GetName(i)
+                   << "\"" << endl;
     }
 
     stack_init();
+    ext = NULL;
 
+#ifdef MDSERVER
     debug1 << "avtSDFFileFormat::OpenFile(1) call " << __LINE__ << endl;
     OpenFile(1);
+#endif
 }
 
 
@@ -324,6 +394,7 @@ void
 avtSDFFileFormat::FreeUpResources(void)
 {
     debug1 << "avtSDFFileFormat::FreeUpResources(void) " << this << endl;
+    stack_free();
     sdf_free_blocklist_data(h);
 }
 
@@ -388,7 +459,8 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
         if (b->dont_display) continue;
 
         if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
-                b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+                b->blocktype == SDF_BLOCKTYPE_POINT_MESH ||
+                b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH) {
             debug1 << "avtSDFFileFormat:: Found mesh: id:" << b->id
                    << ", name:" << b->name << endl;
             avtMeshType meshtype;
@@ -396,13 +468,16 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
                 meshtype = AVT_RECTILINEAR_MESH;
                 topol = b->ndims;
-            } else {
+            } else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
                 meshtype = AVT_POINT_MESH;
                 topol = 0;
                 // VisIt does not seem to handle scatter plots of 1D variables
                 // properly. This hack makes changes 1D particle data to 2D
                 // which works around the issue.
                 if (b->ndims == 1) ndims = 2;
+            } else {
+                meshtype = AVT_CURVILINEAR_MESH;
+                topol = b->ndims;
             }
             avtMeshMetaData *mmd = new avtMeshMetaData(b->name, 1, 0, 0, 0,
                 ndims, topol, meshtype);
@@ -423,6 +498,22 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 mmd->minSpatialExtents[1] = 0;
                 mmd->maxSpatialExtents[1] = 0;
             }
+            md->Add(mmd);
+        } else if (b->blocktype == SDF_BLOCKTYPE_UNSTRUCTURED_MESH) {
+            debug1 << "avtSDFFileFormat:: Found mesh: id:" << b->id
+                   << ", name:" << b->name << endl;
+            sdf_block_t *mesh = sdf_find_block_by_id(h, b->subblock->mesh_id);
+            avtMeshType meshtype = AVT_UNSTRUCTURED_MESH;
+            int topol = b->ndims-1, ndims = b->ndims;
+            avtMeshMetaData *mmd = new avtMeshMetaData(b->name, 1, 0, 0, 0,
+                ndims, topol, meshtype);
+            mmd->xUnits = mesh->dim_units[0];
+            if (b->ndims > 1) mmd->yUnits = mesh->dim_units[1];
+            if (b->ndims > 2) mmd->zUnits = mesh->dim_units[2];
+            mmd->xLabel = mesh->dim_labels[0];
+            if (b->ndims > 1) mmd->yLabel = mesh->dim_labels[1];
+            if (b->ndims > 2) mmd->zLabel = mesh->dim_labels[2];
+            mmd->hasSpatialExtents = false;
             md->Add(mmd);
         } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
                 b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE ||
@@ -454,7 +545,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 // This will probably change in the future.
                 if (b->stagger == SDF_STAGGER_VERTEX)
                     cent = AVT_NODECENT;
-	        else
+                else
                     cent = AVT_ZONECENT;
                 smd->name = b->name;
                 smd->meshName = mesh->name;
@@ -466,7 +557,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 md->Add(smd);
             }
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
-                || b->blocktype == SDF_BLOCKTYPE_MULTI_TENSOR) {
+                || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_TENSOR) {
             std::string definition;
             definition.append("{");
             sdf_block_t *matvar;
@@ -488,7 +579,7 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             expr.SetType(Expression::VectorMeshVar);
             md->AddExpression(&expr);
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
-                || b->blocktype == SDF_BLOCKTYPE_MULTI_MATERIAL) {
+                || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL) {
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             if (!mesh) continue;
 
@@ -505,9 +596,22 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 matptr++;
             }
 
-            AddMaterialToMetaData(md, b->name, mesh->name, b->ndims, mnames);
+            // UGLY HACK
+            // Look for an obstacle block which links with this material.
+            // If found, add to the list of material names.
+            if (b->subblock) {
+                sdf_block_t *ob = b->subblock;
+                char **matptr = ob->material_names;
+                for (unsigned int n = 0 ; n < ob->ndims ; n++) {
+                    mnames.push_back(*matptr);
+                    matptr++;
+                }
+            }
+
+            AddMaterialToMetaData(md, b->name, mesh->name, mnames.size(),
+                mnames);
         } else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
-                || b->blocktype == SDF_BLOCKTYPE_MULTI_SPECIES) {
+                || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_SPECIES) {
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             if (!mesh) continue;
             sdf_block_t *mat = sdf_find_block_by_id(h, b->material_id);
@@ -529,7 +633,8 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
             vector<int> nspec;
             vector<vector<string> > specnames;
             for (unsigned int n = 0 ; n < mat->ndims ; n++) {
-                if (strcmp(mat->material_names[n],b->material_name) == 0) {
+                if (strcmp(mat->material_names[n],b->material_name) == 0
+                        || strcmp(mat->id,b->material_name) == 0) {
                     specnames.push_back(mnames);
                     nspec.push_back(mnames.size());
                 } else {
@@ -539,8 +644,22 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
                 }
             }
 
+            int matdims = mat->ndims;
+            // UGLY HACK
+            // Look for an obstacle block which links with this material.
+            // If found, add to the list of material names.
+            if (mat->subblock) {
+                sdf_block_t *ob = mat->subblock;
+                for (unsigned int n = 0 ; n < ob->ndims ; n++) {
+                    vector<string> tmp;
+                    specnames.push_back(tmp);
+                    nspec.push_back(0);
+                }
+                matdims += ob->ndims;
+            }
+
             AddSpeciesToMetaData(md, b->name, mesh->name, mat->name,
-                mat->ndims, nspec, specnames);
+                matdims, nspec, specnames);
         }
     }
 
@@ -611,6 +730,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
     debug1 << "avtSDFFileFormat::GetMesh(domain:" << domain << ", meshname:"
            << meshname << ") " << this << endl;
 
+    stack_freeup_memory();
+
     sdf_block_t *b = sdf_find_block_by_name(h, meshname);
     if (!b) EXCEPTION1(InvalidVariableException, meshname);
     h->current_block = b;
@@ -618,14 +739,14 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
     debug1 << "avtSDFFileFormat:: Found block: id:" << b->id << " for mesh:"
            << meshname << endl;
 
-    ncpus = PAR_Size();
-    sdf_set_ncpus(h, ncpus);
-
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE
             || b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
         return GetCurve(domain, b);
 
-    sdf_read_data(h);
+    if (b->populate_data)
+        b->populate_data(h, b);
+    else
+        sdf_read_data(h);
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
         vtkPoints *points  = vtkPoints::New();
@@ -638,41 +759,59 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
             float *x = (float *)b->grids[0];
             float *y = NULL;
             float *z = NULL;
-            if (b->ndims > 1) {
-                y = (float *)b->grids[1];
-                if (b->ndims > 2) z = (float *)b->grids[2];
-            }
-
-            vtkIdType vertex;
             float yy = 0, zz = 0;
-            for (int i=0; i < b->nlocal; i++) {
-                if (y) {
-                    yy = y[i];
-                    if (z) zz = z[i];
+            vtkIdType vertex;
+
+            if (b->ndims > 2) {
+                y = (float *)b->grids[1];
+                z = (float *)b->grids[2];
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], y[i], z[i]);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
                 }
-                vertex = i;
-                points->SetPoint(i, x[i], yy, zz);
-                ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+            } else if (b->ndims > 1) {
+                y = (float *)b->grids[1];
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], y[i], zz);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+                }
+            } else {
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], yy, zz);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+                }
             }
         } else {
             double *x = (double *)b->grids[0];
             double *y = NULL;
             double *z = NULL;
-            if (b->ndims > 1) {
-                y = (double *)b->grids[1];
-                if (b->ndims > 2) z = (double *)b->grids[2];
-            }
-
-            vtkIdType vertex;
             double yy = 0, zz = 0;
-            for (int i=0; i < b->nlocal; i++) {
-                if (y) {
-                    yy = y[i];
-                    if (z) zz = z[i];
+            vtkIdType vertex;
+
+            if (b->ndims > 2) {
+                y = (double *)b->grids[1];
+                z = (double *)b->grids[2];
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], y[i], z[i]);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
                 }
-                vertex = i;
-                points->SetPoint(i, x[i], yy, zz);
-                ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+            } else if (b->ndims > 1) {
+                y = (double *)b->grids[1];
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], y[i], zz);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+                }
+            } else {
+                for (int i=0; i < b->nlocal; i++) {
+                    vertex = i;
+                    points->SetPoint(i, x[i], yy, zz);
+                    ugrid->InsertNextCell(VTK_VERTEX, 1, &vertex);
+                }
             }
         }
 
@@ -683,41 +822,139 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
         return ugrid;
+
+    } else if (b->blocktype == SDF_BLOCKTYPE_UNSTRUCTURED_MESH) {
+        if (b->populate_data) b->populate_data(h, b);
+
+        vtkDataArray *array = vtkFloatArray::New();
+        array->SetNumberOfComponents(b->ndims);
+        array->SetVoidArray(b->data, b->ndims * b->npoints, 1);
+
+        vtkPoints *points = vtkPoints::New();
+        points->SetData(array);
+        array->Delete();
+
+        vtkUnstructuredGrid *ugrid = vtkUnstructuredGrid::New();
+        ugrid->SetPoints(points);
+        points->Delete();
+
+        ugrid->Allocate(b->nfaces);
+
+        vtkIdTypeArray *nlist = vtkIdTypeArray::New();
+        nlist->SetNumberOfValues(5 * b->nfaces);
+        vtkIdType *nl = nlist->GetPointer(0);
+        int *node = b->node_list;
+
+        for (int i = 0; i < b->nfaces; i++) {
+            *nl++ = 4;
+            *nl++ = *node++;
+            *nl++ = *node++;
+            *nl++ = *node++;
+            *nl++ = *node++;
+        }
+
+        vtkCellArray *ca = vtkCellArray::New();
+        ca->SetCells(b->nfaces, nlist);
+        nlist->Delete();
+
+        ugrid->SetCells(VTK_QUAD, ca);
+        ca->Delete();
+
+        return ugrid;
     }
 
-    vtkDataArray *xx, *yy, *zz;
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
+        vtkDataArray *xx, *yy, *zz;
 
-    if (b->datatype_out == SDF_DATATYPE_REAL4) {
-        xx = vtkFloatArray::New();
-        yy = vtkFloatArray::New();
-        zz = vtkFloatArray::New();
-    } else if (b->datatype_out == SDF_DATATYPE_REAL8) {
-        xx = vtkDoubleArray::New();
-        yy = vtkDoubleArray::New();
-        zz = vtkDoubleArray::New();
-    }
+        if (b->datatype_out == SDF_DATATYPE_REAL4) {
+            xx = vtkFloatArray::New();
+            yy = vtkFloatArray::New();
+            zz = vtkFloatArray::New();
+        } else if (b->datatype_out == SDF_DATATYPE_REAL8) {
+            xx = vtkDoubleArray::New();
+            yy = vtkDoubleArray::New();
+            zz = vtkDoubleArray::New();
+        }
 
-    xx->SetVoidArray(b->grids[0], b->local_dims[0], 1);
-    yy->SetVoidArray(b->grids[1], b->local_dims[1], 1);
-    zz->SetVoidArray(b->grids[2], b->local_dims[2], 1);
+        xx->SetVoidArray(b->grids[0], b->local_dims[0], 1);
+        yy->SetVoidArray(b->grids[1], b->local_dims[1], 1);
+        zz->SetVoidArray(b->grids[2], b->local_dims[2], 1);
 
-    vtkRectilinearGrid *rgrid = vtkRectilinearGrid::New();
-    rgrid->SetDimensions(b->local_dims);
-    rgrid->SetXCoordinates(xx);
-    rgrid->SetYCoordinates(yy);
-    rgrid->SetZCoordinates(zz);
+        vtkRectilinearGrid *rgrid = vtkRectilinearGrid::New();
+        rgrid->SetDimensions(b->local_dims);
+        rgrid->SetXCoordinates(xx);
+        rgrid->SetYCoordinates(yy);
+        rgrid->SetZCoordinates(zz);
 
-    xx->Delete();
-    yy->Delete();
-    zz->Delete();
+        xx->Delete();
+        yy->Delete();
+        zz->Delete();
 
-    SetUpDomainConnectivity();
+        SetUpDomainConnectivity();
 
 #ifdef SDF_DEBUG
-    debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
-    debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
+        debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
+        debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
 #endif
-    return rgrid;
+        return rgrid;
+    }
+
+    if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH) {
+        vtkPoints *points  = vtkPoints::New();
+        vtkStructuredGrid *sgrid = vtkStructuredGrid::New();
+
+        points->SetNumberOfPoints(b->nlocal);
+        sgrid->SetDimensions(b->local_dims);
+        sgrid->SetPoints(points);
+
+        if (b->datatype_out == SDF_DATATYPE_REAL4) {
+            float *x = (float *)b->grids[0];
+            float *y = NULL;
+            float *z = NULL;
+            float yy = 0, zz = 0;
+
+            if (b->ndims > 2) {
+                y = (float *)b->grids[1];
+                z = (float *)b->grids[2];
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], y[i], z[i]);
+            } else if (b->ndims > 1) {
+                y = (float *)b->grids[1];
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], y[i], zz);
+            } else {
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], yy, zz);
+            }
+        } else {
+            double *x = (double *)b->grids[0];
+            double *y = NULL;
+            double *z = NULL;
+            double yy = 0, zz = 0;
+
+            if (b->ndims > 2) {
+                y = (double *)b->grids[1];
+                z = (double *)b->grids[2];
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], y[i], z[i]);
+            } else if (b->ndims > 1) {
+                y = (double *)b->grids[1];
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], y[i], zz);
+            } else {
+                for (int i=0; i < b->nlocal; i++)
+                    points->SetPoint(i, x[i], yy, zz);
+            }
+        }
+
+        SetUpDomainConnectivity();
+
+#ifdef SDF_DEBUG
+        debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
+        debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
+#endif
+        return sgrid;
+    }
 }
 
 
@@ -744,14 +981,19 @@ avtSDFFileFormat::GetCurve(int domain, sdf_block_t *b)
 {
     debug1 << "avtSDFFileFormat::GetCurve(domain:" << domain << ", sdf_block:"
            << b << ")" << endl;
+
+    stack_freeup_memory();
+
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
 
     int nlocal;
 
     h->current_block = mesh;
+    stack_alloc(h->current_block);
     sdf_read_data(h);
 
     h->current_block = b;
+    stack_alloc(h->current_block);
     sdf_read_data(h);
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
@@ -825,20 +1067,53 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
     debug1 << "avtSDFFileFormat::GetArray(domain:" << domain << ", varname:"
            << varname << ") " << this << endl;
 
-    ncpus = PAR_Size();
-    sdf_set_ncpus(h, ncpus);
-
     sdf_block_t *b = sdf_find_block_by_name(h, varname);
     if (!b) return NULL;
 
     debug1 << "avtSDFFileFormat:: Found block: id:" << b->id << " for var:"
            << varname << " type " << b->blocktype << endl;
 
+    if (b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS) {
+        sdf_block_t *var;
+        if (!b->data) {
+            // Free any components which have already been allocated
+            for (int i = 0; i < b->n_ids; i++) {
+                if (b->must_read[i]) {
+                    var = sdf_find_block_by_id(h, b->variable_ids[i]);
+                    if (var->data) stack_free_block(var);
+                }
+            }
+            b->done_data = 0;
+            stack_alloc(b);
+        }
+
+        for (int i = 0; i < b->n_ids; i++) {
+            // Fill in derived components which are not already cached
+            if (b->must_read[i]) {
+                var = sdf_find_block_by_id(h, b->variable_ids[i]);
+                if (var) {
+                    var->data = (char*)b->data
+                            + i * var->nlocal * var->type_size_out;
+                    var->dont_own_data = 1;
+                    h->current_block = var;
+                    stack_alloc(h->current_block);
+                    sdf_read_data(h);
+                }
+            }
+        }
+#ifdef SDF_DEBUG
+        debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
+        debug1 << h->dbg_buf; h->dbg = h->dbg_buf; *h->dbg = '\0';
+#endif
+        return b;
+    }
+
     if (b->data) return b;
     h->current_block = b;
 
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE ||
             b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE) {
+        stack_alloc(h->current_block);
         sdf_read_data(h);
 
     } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED ||
@@ -880,8 +1155,10 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
 
         // Execute callback to fill in the derived variable
         if (b->populate_data) b->populate_data(h, b);
-    } else
+    } else {
+        stack_alloc(h->current_block);
         sdf_read_data(h);
+    }
 
 #ifdef SDF_DEBUG
     debug1 << "avtSDFFileFormat:: SDF debug buffer: ";
@@ -915,7 +1192,8 @@ avtSDFFileFormat::GetVar(int domain, const char *varname)
 {
     debug1 << "avtSDFFileFormat::GetVar(domain:" << domain << ", varname:"
            << varname << ") " << this << endl;
-    stack_free();
+
+    stack_freeup_memory();
 
     sdf_block_t *b = GetArray(domain, varname);
     if (!b) EXCEPTION1(InvalidVariableException, varname);
@@ -988,7 +1266,7 @@ avtSDFFileFormat::GetVectorVar(int domain, const char *varname)
     //           one_entry[j] = ...
     //      for (j = ncomps ; j < ucomps ; j++)
     //           one_entry[j] = 0.;
-    //      rv->SetTuple(i, one_entry); 
+    //      rv->SetTuple(i, one_entry);
     // }
     //
     // delete [] one_entry;
@@ -1007,7 +1285,7 @@ avtSDFFileFormat::GetVectorVar(int domain, const char *varname)
 //
 //  Programmer: Keith Bennett
 //  Creation:   Fri Oct 29 15:31:09 PST 2010
-//   
+//
 // ****************************************************************************
 
 void
@@ -1016,11 +1294,8 @@ avtSDFFileFormat::ActivateTimestep(void)
     debug1 << "avtSDFFileFormat::ActivateTimestep(void) " << this << endl;
 
 #ifdef PARALLEL
-    comm = VISIT_MPI_COMM;
+    MPI_Comm_dup(VISIT_MPI_COMM, &comm);
     debug1 << "avtSDFFileFormat:: parallel" << endl;
-    ncpus = PAR_Size();
-    debug1 << "avtSDFFileFormat:: original ncpus: " << ncpus << endl;
-    MPI_Comm_size(VISIT_MPI_COMM, &ncpus);
 #else
     debug1 << "avtSDFFileFormat:: serial" << endl;
 #endif
@@ -1104,6 +1379,7 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
         vfm_blocks[i] = sdf_find_block_by_id(h, var_id);
         if (!vfm_blocks[i]) EXCEPTION1(InvalidVariableException, var_id);
         h->current_block = vfm_blocks[i];
+        stack_alloc(h->current_block);
         sdf_read_data(h);
     }
 #ifdef SDF_DEBUG
@@ -1117,14 +1393,71 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
 
     int *material_list = new int[nlocal];
     int mixed_size = 0;
-    int *mat_numbers = new int[nm];
-    for (int n = 0; n < nm; n++) mat_numbers[n] = n + 1;
+    int nmat = nm;
+    char **mat_names = sblock->material_names;
+
+    int *obdata = NULL;
+    int nx, ny, ng = 0;
+    if (sblock->subblock) {
+        sdf_block_t *obgrp = sblock->subblock;
+        sdf_block_t *ob = obgrp->subblock;
+        h->current_block = ob;
+        stack_alloc(h->current_block);
+        sdf_read_data(h);
+        obdata = (int *)ob->data;
+        ng = ob->ng;
+        nx = ob->local_dims[0] - 2 * ng;
+        ny = ob->local_dims[1] - 2 * ng;
+        nmat += obgrp->ndims;
+        char **mat_namesptr, **matptr;
+        mat_names = new char*[nmat];
+        mat_namesptr = matptr = mat_names = sblock->material_names;
+        for (int n = 0; n < nm; n++) {
+            *mat_namesptr = *matptr;
+            mat_namesptr++;
+            matptr++;
+        }
+        matptr = obgrp->material_names;
+        for (int n = 0; n < obgrp->ndims; n++) {
+            *mat_namesptr = *matptr;
+            mat_namesptr++;
+            matptr++;
+        }
+    }
+
+    int *mat_numbers = new int[nmat];
+    for (int n = 0; n < nmat; n++) mat_numbers[n] = n + 1;
 
     // Fill in the pure cell array and find the size of the mixed cell arrays
     Real *vfm;
+    int material_number = 0, nmats = 0;
+    Real vf;
     for (int i = 0; i < nlocal; i++) {
-        int material_number = 0, nmats = 0;
-        Real vf;
+        if (obdata) {
+            if (ng) {
+                // Skip ghostcells in obstacle data if they exist.
+                int rem = i / nx;
+                int kk = rem / ny;
+                int ii = i - nx * rem;
+                int jj = rem - ny * kk;
+                if (ndims < 3) kk = -ng;
+                int obgrp = obdata[IJK2(ii,jj,kk)];
+                if (obgrp) {
+                    material_list[i] = obgrp + nm;
+                    continue;
+                }
+            } else {
+                if (*obdata) {
+                    material_list[i] = *obdata + nm;
+                    obdata++;
+                    continue;
+                }
+                obdata++;
+            }
+        }
+
+        material_number = 0;
+        nmats = 0;
         // Find number of materials for this cell
         for (int n = 0; n < nm; n++) {
             vfm = (Real *)vfm_blocks[n]->data;
@@ -1175,9 +1508,9 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
     char dom_string[128];
     sprintf(dom_string, "Domain %d", domain);
 
-    avtMaterial *mat = new avtMaterial(nm, mat_numbers, sblock->material_names,
-            ndims, v->local_dims, 0, material_list, mixed_size, mix_mat,
-            mix_next, mix_zone, mix_vf, dom_string, 0); 
+    avtMaterial *mat = new avtMaterial(nmat, mat_numbers,
+            mat_names, ndims, v->local_dims, 0, material_list, mixed_size,
+            mix_mat, mix_next, mix_zone, mix_vf, dom_string, 0);
 
     delete [] mix_vf;
     delete [] mix_next;
@@ -1186,6 +1519,7 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
     delete [] mat_numbers;
     delete [] material_list;
     delete [] vfm_blocks;
+    if (obdata) delete [] mat_names;
 
     debug1 << "avtSDFFileFormat::GetMaterial() done" << endl;
 
@@ -1217,6 +1551,8 @@ avtSDFFileFormat::GetMaterial(const char *var, int domain)
 {
     debug1 << "avtSDFFileFormat::GetMaterial(var:" << var << ", domain:"
            << domain << ")" << endl;
+
+    stack_freeup_memory();
 
     sdf_block_t *sblock = sdf_find_block_by_name(h, var);
     if (!sblock) EXCEPTION1(InvalidVariableException, var);
@@ -1313,6 +1649,7 @@ avtSDFFileFormat::GetSpeciesType(sdf_block_t *sblock, int domain)
         vfm_block = sdf_find_block_by_id(h, var_id);
         if (!vfm_block) EXCEPTION1(InvalidVariableException, var_id);
         h->current_block = vfm_block;
+        stack_alloc(h->current_block);
         sdf_read_data(h);
         vfm_ptrs[i] = (Real*)vfm_block->data;
     }
@@ -1411,6 +1748,8 @@ avtSDFFileFormat::GetSpecies(const char *var, int domain)
 {
     debug1 << "avtSDFFileFormat::GetSpecies(var:" << var << ", domain:"
            << domain << ")" << endl;
+
+    stack_freeup_memory();
 
     sdf_block_t *sblock = sdf_find_block_by_name(h, var);
     if (!sblock) EXCEPTION1(InvalidVariableException, var);

@@ -212,6 +212,144 @@ CONTAINS
 
 
 
+  SUBROUTINE write_srl_pt_var_logical_i8_r8(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+    INTEGER(i8) :: i, j, n, idx, npoint_max, npoint_rem
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+    CHARACTER(LEN=1), ALLOCATABLE :: cvalues(:)
+
+    IF (npoint_global .LE. 0) RETURN
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = INT(h%soi,r4)
+    b%datatype = c_datatype_logical
+    b%mpitype = MPI_CHARACTER
+    b%ndims = 1
+    b%npoints = npoint_global
+
+    ! Write header
+
+    CALL write_point_variable_meta_r8(h, id, name, units, mesh_id, mult)
+
+    ! Write the real data
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      h%current_location = b%data_location
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! This is all a bit messy, but it is necessary because MPI_FILE_WRITE
+      ! accepts an INTEGER count of elements to write, which may not be
+      ! big enough for npoint_global which is an INTEGER*8
+
+      npoint_max = HUGE(npoint_max)
+      npoint_rem = MOD(npoint_global, npoint_max)
+
+      IF ((npoint_global / npoint_max) .GT. 0) THEN
+        ALLOCATE(cvalues(npoint_max))
+      ELSE
+        ALLOCATE(cvalues(npoint_global))
+      ENDIF
+
+      idx = 1
+      DO i = 1, npoint_global / npoint_max
+        n = idx
+        DO j = 1, npoint_max
+          IF (array(n)) THEN
+            cvalues(j) = ACHAR(1)
+          ELSE
+            cvalues(j) = ACHAR(0)
+          ENDIF
+          n = n + 1
+        ENDDO
+        CALL MPI_FILE_WRITE(h%filehandle, cvalues, npoint_max, b%mpitype, &
+            MPI_STATUS_IGNORE, errcode)
+        idx = idx + npoint_max
+      ENDDO
+
+      n = idx
+      DO j = 1, npoint_rem
+        IF (array(n)) THEN
+          cvalues(j) = ACHAR(1)
+        ELSE
+          cvalues(j) = ACHAR(0)
+        ENDIF
+        n = n + 1
+      ENDDO
+      CALL MPI_FILE_WRITE(h%filehandle, cvalues, npoint_rem, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+
+      DEALLOCATE(cvalues)
+    ENDIF
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_srl_pt_var_logical_i8_r8
+
+
+
+  SUBROUTINE write_srl_pt_var_logical_i4_r8(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i4), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    CALL write_srl_pt_var_logical_i8_r8(h, id, name, units, array, &
+        INT(npoint_global,i8), mesh_id, mult)
+
+  END SUBROUTINE write_srl_pt_var_logical_i4_r8
+
+
+
+  SUBROUTINE write_srl_pt_var_logical_i8_r4(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_srl_pt_var_logical_i8_r8(h, id, name, units, array, &
+        npoint_global, mesh_id, REAL(mult,r8))
+
+  END SUBROUTINE write_srl_pt_var_logical_i8_r4
+
+
+
+  SUBROUTINE write_srl_pt_var_logical_i4_r4(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i4), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_srl_pt_var_logical_i8_r8(h, id, name, units, array, &
+        INT(npoint_global,i8), mesh_id, REAL(mult,r8))
+
+  END SUBROUTINE write_srl_pt_var_logical_i4_r4
+
+
+
   SUBROUTINE write_srl_pt_var_int_i8_r8(h, id, name, units, array, &
       npoint_global, mesh_id, mult)
 

@@ -47,6 +47,13 @@ class DBOptionsAttributes;
 
 #include <string>
 
+namespace SDFDBOptions
+{
+    // Read options
+    const char *const SDF_RDOPT_CONVERT_FLOAT =
+            "Read double variables as floats to save memory";
+    const char *const SDF_RDOPT_RANDOMISE = "Randomise particle data";
+}
 
 // ****************************************************************************
 //  Functions: avtSDFOptions

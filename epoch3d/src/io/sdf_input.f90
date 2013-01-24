@@ -23,12 +23,20 @@ MODULE sdf_input
         read_constant_logical, &
         read_1d_array_real_r4, &
         read_2d_array_real_r4, &
+        read_3d_array_real_r4, &
         read_1d_array_real_r8, &
         read_2d_array_real_r8, &
+        read_3d_array_real_r8, &
         read_1d_array_integer, &
         read_2d_array_integer, &
         read_1d_array_logical, &
         read_2d_array_character
   END INTERFACE sdf_read_srl
+
+  INTERFACE sdf_read_srl_cpu_split
+    MODULE PROCEDURE &
+        read_srl_cpu_split, &
+        read_srl_cpu_split_part
+  END INTERFACE sdf_read_srl_cpu_split
 
 END MODULE sdf_input

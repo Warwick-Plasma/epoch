@@ -64,6 +64,18 @@ CONTAINS
           initial_conditions(ispecies)%drift(:,:,:,3))
     ENDDO
 
+    IF (rank .EQ. 0) THEN
+      DO ispecies = 1, n_species
+        species => species_list(ispecies)
+        IF (species%count .LT. 0) THEN
+          WRITE(*,*) 'No particles specified for species ', TRIM(species%name)
+          WRITE(stat_unit,*) &
+              'No particles specified for species ', TRIM(species%name)
+          species%count = 0
+        ENDIF
+      ENDDO
+    ENDIF
+
   END SUBROUTINE auto_load
 
 
@@ -263,15 +275,7 @@ CONTAINS
     LOGICAL :: sweep
 
     npart_this_species = species%count
-    IF (npart_this_species .LT. 0) THEN
-      IF (rank .EQ. 0) THEN
-        WRITE(*,*) 'Unable to continue, species "' // TRIM(species%name) &
-            // '" has ', 'not had a number of particles set'
-      ENDIF
-      CALL MPI_ABORT(comm, errcode, ierr)
-    ELSE IF (npart_this_species .EQ. 0) THEN
-      RETURN
-    ENDIF
+    IF (npart_this_species .LE. 0) RETURN
 
     num_valid_cells_local = 0
     DO iz = 1, nz

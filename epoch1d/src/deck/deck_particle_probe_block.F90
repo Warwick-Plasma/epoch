@@ -3,6 +3,7 @@ MODULE deck_particle_probe_block
   USE probes
   USE strings_advanced
 
+  IMPLICIT NONE
 #ifndef PARTICLE_PROBES
 CONTAINS
 
@@ -19,7 +20,7 @@ CONTAINS
   PUBLIC :: probe_block_handle_element, probe_block_check
 
   TYPE(particle_probe), POINTER :: working_probe
-  LOGICAL :: got_point, got_normal
+  LOGICAL :: got_name, got_point, got_normal
 
 CONTAINS
 
@@ -41,6 +42,7 @@ CONTAINS
 
     ALLOCATE(working_probe)
     CALL init_probe(working_probe)
+    got_name = .FALSE.
     got_point = .FALSE.
     got_normal = .FALSE.
 
@@ -51,20 +53,29 @@ CONTAINS
   SUBROUTINE probe_block_end
 
     LOGICAL :: discard
-    INTEGER :: io
+    INTEGER :: io, ierr
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
-    discard = .FALSE.
-    IF (.NOT. got_point) discard = .TRUE.
-    IF (.NOT. got_normal) discard = .TRUE.
+    IF (.NOT.got_name) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) '"probe" block does not have a "name" entry.'
+        ENDDO
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
+
+    discard = got_point .AND. got_normal
 
     IF (discard) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout,du,du-stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'Position not fully specified for distribution ', &
-            'function. It will be discarded.'
+          WRITE(io,*) 'Position of probe "' // TRIM(working_probe%name) &
+              // '" ', 'not fully specified. ', 'It will be discarded.'
+          WRITE(io,*) 'Both "point" and "normal" are required.'
         ENDDO
       ENDIF
 
@@ -153,6 +164,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'name')) THEN
+      got_name = .TRUE.
       working_probe%name = TRIM(value)
       RETURN
     ENDIF

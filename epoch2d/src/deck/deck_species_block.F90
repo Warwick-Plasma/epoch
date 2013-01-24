@@ -170,6 +170,8 @@ CONTAINS
       ENDIF
     ENDIF
 
+    IF (use_ionisation) need_random_state = .TRUE.
+
   END SUBROUTINE species_deck_finalise
 
 

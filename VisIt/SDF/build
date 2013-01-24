@@ -20,7 +20,7 @@ do
       c) clean=1 ; OPTS="$OPTS -c";;
       d) DBG="-g -O0"; OPTS="$OPTS -d";
          DEBUG="-DCMAKE_BUILD_TYPE=Debug" ;;
-      p) PRIVATE="-public" ;;
+      p) PRIVATE="-public"; OPTS="$OPTS -p" ;;
       n) build_visit_reader=0 ;;
       u) build_utilities=1 ;;
       v) VERBOSE="VERBOSE=1" ;;
@@ -45,6 +45,7 @@ cd "$cwd"
 
 export PATH=$visitpath:$PATH
 export CXXFLAGS="-Wno-deprecated $DBG"
+export CFLAGS="$DBG"
 
 buildit () {
   rm -rf $tmpdir
@@ -55,10 +56,10 @@ buildit () {
 
     if [ $version -eq 1 ]; then
       xml2makefile -clobber $PRIVATE ${fmt}${version}.xml
-      if [ "`uname -s`"x = "Darwinx" -a "`uname -m`"x = "x86_64x" ]; then
+      if [ "`uname -m`"x = "x86_64x" ]; then
         sed "s,\(^CXXFLAGS.*\),\1 -m32 $DBG\\
-CFLAGS=$(CFLAGSORIG) -m32 $DBG\\
-PY_CXXFLAGS=-I$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile > .Makefile.tmp
+CFLAGS=\$(CFLAGSORIG) -m32 $DBG\\
+PY_CXXFLAGS=-I\$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile > .Makefile.tmp
         \mv -f .Makefile.tmp Makefile
       fi
       if [ $build_parallel -eq 1 ]; then
@@ -117,7 +118,7 @@ elif [ $build_visit_reader -eq 1 ]; then
   build_parallel=0
   build_serial=0
   buildit
-  
+
   if [ $? -ne 0 ]; then
     build_parallel=1
     echo

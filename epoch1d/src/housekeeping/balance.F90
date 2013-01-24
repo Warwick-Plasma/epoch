@@ -3,6 +3,7 @@ MODULE balance
   USE mpi
   USE partlist
   USE boundary
+  USE shared_data
   USE mpi_subtype_control
   USE redblack_module
 
@@ -57,61 +58,63 @@ CONTAINS
       IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
 
-    overriding = over_ride
+    IF (.NOT.use_exact_restart) THEN
+      overriding = over_ride
 
-    ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
+      ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
 
-    new_cell_x_min = cell_x_min
-    new_cell_x_max = cell_x_max
+      new_cell_x_min = cell_x_min
+      new_cell_x_max = cell_x_max
 
-    ! Sweep in X
-    IF (nprocx .GT. 1) THEN
-      IF (IAND(balance_mode, c_lb_x) .NE. 0 &
-          .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
-        ! Rebalancing in X
-        ALLOCATE(load_x(nx_global))
-        CALL get_load_in_x(load_x)
-        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+      ! Sweep in X
+      IF (nprocx .GT. 1) THEN
+        IF (IAND(balance_mode, c_lb_x) .NE. 0 &
+            .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+          ! Rebalancing in X
+          ALLOCATE(load_x(nx_global))
+          CALL get_load_in_x(load_x)
+          CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+        ENDIF
       ENDIF
+
+      IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
+
+      ! Now need to calculate the start and end points for the new domain on
+      ! the current processor
+
+      domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
+
+      ! Redistribute the field variables
+      CALL redistribute_fields(domain)
+
+      ! Copy the new lengths into the permanent variables
+      cell_x_min = new_cell_x_min
+      cell_x_max = new_cell_x_max
+
+      ! Set the new nx
+      nx_global_min = cell_x_min(x_coords+1)
+      nx_global_max = cell_x_max(x_coords+1)
+
+      nx = nx_global_max - nx_global_min + 1
+
+      DEALLOCATE(new_cell_x_min, new_cell_x_max)
+
+      ! Do X array separately because we already have global copies
+      DEALLOCATE(x)
+      ALLOCATE(x(-2:nx+3))
+      x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
+
+      ! Recalculate x_mins and x_maxs so that rebalancing works next time
+      DO iproc = 0, nprocx - 1
+        x_mins(iproc) = x_global(cell_x_min(iproc+1))
+        x_maxs(iproc) = x_global(cell_x_max(iproc+1))
+      ENDDO
+
+      ! Set the lengths of the current domain so that the particle balancer
+      ! works properly
+      x_min_local = x_mins(x_coords)
+      x_max_local = x_maxs(x_coords)
     ENDIF
-
-    IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
-
-    ! Now need to calculate the start and end points for the new domain on
-    ! the current processor
-
-    domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
-
-    ! Redistribute the field variables
-    CALL redistribute_fields(domain)
-
-    ! Copy the new lengths into the permanent variables
-    cell_x_min = new_cell_x_min
-    cell_x_max = new_cell_x_max
-
-    ! Set the new nx
-    nx_global_min = cell_x_min(x_coords+1)
-    nx_global_max = cell_x_max(x_coords+1)
-
-    nx = nx_global_max - nx_global_min + 1
-
-    DEALLOCATE(new_cell_x_min, new_cell_x_max)
-
-    ! Do X array separately because we already have global copies
-    DEALLOCATE(x)
-    ALLOCATE(x(-2:nx+3))
-    x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
-
-    ! Recalculate x_mins and x_maxs so that rebalancing works next time
-    DO iproc = 0, nprocx - 1
-      x_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
-    ENDDO
-
-    ! Set the lengths of the current domain so that the particle balancer
-    ! works properly
-    x_min_local = x_mins(x_coords)
-    x_max_local = x_maxs(x_coords)
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -129,6 +132,8 @@ CONTAINS
       ENDDO
     ENDIF
 #endif
+
+    use_exact_restart = .FALSE.
 
   END SUBROUTINE balance_workload
 

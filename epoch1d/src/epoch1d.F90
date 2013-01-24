@@ -64,6 +64,7 @@ PROGRAM pic
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, MPI_COMM_WORLD, errcode)
   CALL read_deck(deck_file, .TRUE., c_ds_first)
+  IF (use_exact_restart) CALL read_cpu_split
   CALL setup_particle_boundaries ! boundary.f90
   CALL mpi_initialise  ! mpi_routines.f90
   CALL after_control   ! setup.f90

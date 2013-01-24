@@ -32,7 +32,7 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
-    IF (rank .EQ. 0) THEN
+    IF (rank .EQ. 0 .AND. use_qed) THEN
       INQUIRE(file=TRIM(qed_table_location)//'/hsokolov.table', exist=exists)
       IF (.NOT.exists) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
@@ -43,6 +43,8 @@ CONTAINS
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
     ENDIF
+
+    IF (use_qed) need_random_state = .TRUE.
 #endif
 
   END SUBROUTINE qed_deck_finalise

@@ -3,6 +3,7 @@ MODULE balance
   USE mpi
   USE partlist
   USE boundary
+  USE shared_data
   USE mpi_subtype_control
   USE redblack_module
 
@@ -63,176 +64,178 @@ CONTAINS
       IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
 
-    overriding = over_ride
+    IF (.NOT.use_exact_restart) THEN
+      overriding = over_ride
 
-    ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
-    ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
-    ALLOCATE(new_cell_z_min(nprocz), new_cell_z_max(nprocz))
+      ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
+      ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
+      ALLOCATE(new_cell_z_min(nprocz), new_cell_z_max(nprocz))
 
-    new_cell_x_min = cell_x_min
-    new_cell_x_max = cell_x_max
-    new_cell_y_min = cell_y_min
-    new_cell_y_max = cell_y_max
-    new_cell_z_min = cell_z_min
-    new_cell_z_max = cell_z_max
+      new_cell_x_min = cell_x_min
+      new_cell_x_max = cell_x_max
+      new_cell_y_min = cell_y_min
+      new_cell_y_max = cell_y_max
+      new_cell_z_min = cell_z_min
+      new_cell_z_max = cell_z_max
 
-    ! Sweep in X
-    IF (nprocx .GT. 1) THEN
-      IF (IAND(balance_mode, c_lb_x) .NE. 0 &
-          .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
-        ! Rebalancing in X
-        ALLOCATE(load_x(nx_global))
-        CALL get_load_in_x(load_x)
-        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-      ENDIF
-    ENDIF
-
-    ! Sweep in Y
-    IF (nprocy .GT. 1) THEN
-      IF (IAND(balance_mode, c_lb_y) .NE. 0 &
-          .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
-        ! Rebalancing in Y
-        ALLOCATE(load_y(ny_global))
-        CALL get_load_in_y(load_y)
-        CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
-      ENDIF
-    ENDIF
-
-    ! Sweep in Z
-    IF (nprocz .GT. 1) THEN
-      IF (IAND(balance_mode, c_lb_z) .NE. 0 &
-          .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
-        ! Rebalancing in Z
-        ALLOCATE(load_z(nz_global))
-        CALL get_load_in_z(load_z)
-        CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
-      ENDIF
-    ENDIF
-
-    ! In the autobalancer then determine whether to balance in X, Y or Z
-    ! Is this worth keeping?
-    IF (IAND(balance_mode, c_lb_auto) .NE. 0 ) THEN
-
-      ! Code is auto load balancing
-      max_x = 0
-      min_x = npart_global
-      DO iproc = 1, nprocx
-        wk = SUM(load_x(new_cell_x_min(iproc):new_cell_x_max(iproc)))
-        IF (wk .GT. max_x) max_x = wk
-        IF (wk .LT. min_x) min_x = wk
-      ENDDO
-
-      max_y = 0
-      min_y = npart_global
-      DO iproc = 1, nprocy
-        wk = SUM(load_y(new_cell_y_min(iproc):new_cell_y_max(iproc)))
-        IF (wk .GT. max_y) max_y = wk
-        IF (wk .LT. min_y) min_y = wk
-      ENDDO
-
-      max_z = 0
-      min_z = npart_global
-      DO iproc = 1, nprocz
-        wk = SUM(load_z(new_cell_z_min(iproc):new_cell_z_max(iproc)))
-        IF (wk .GT. max_z) max_z = wk
-        IF (wk .LT. min_z) min_z = wk
-      ENDDO
-
-      balance_frac_x = REAL(min_x, num) / REAL(max_x, num)
-      balance_frac_y = REAL(min_y, num) / REAL(max_y, num)
-      balance_frac_z = REAL(min_z, num) / REAL(max_z, num)
-
-      IF (balance_frac_x .LT. balance_frac_y) THEN
-        IF (balance_frac_x .LT. balance_frac_z) THEN
-          new_cell_x_min = cell_x_min
-          new_cell_x_max = cell_x_max
-        ELSE
-          new_cell_z_min = cell_z_min
-          new_cell_z_max = cell_z_max
-        ENDIF
-      ELSE
-        IF (balance_frac_y .LT. balance_frac_z) THEN
-          new_cell_y_min = cell_y_min
-          new_cell_y_max = cell_y_max
-        ELSE
-          new_cell_z_min = cell_z_min
-          new_cell_z_max = cell_z_max
+      ! Sweep in X
+      IF (nprocx .GT. 1) THEN
+        IF (IAND(balance_mode, c_lb_x) .NE. 0 &
+            .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+          ! Rebalancing in X
+          ALLOCATE(load_x(nx_global))
+          CALL get_load_in_x(load_x)
+          CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
         ENDIF
       ENDIF
 
+      ! Sweep in Y
+      IF (nprocy .GT. 1) THEN
+        IF (IAND(balance_mode, c_lb_y) .NE. 0 &
+            .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+          ! Rebalancing in Y
+          ALLOCATE(load_y(ny_global))
+          CALL get_load_in_y(load_y)
+          CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
+        ENDIF
+      ENDIF
+
+      ! Sweep in Z
+      IF (nprocz .GT. 1) THEN
+        IF (IAND(balance_mode, c_lb_z) .NE. 0 &
+            .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+          ! Rebalancing in Z
+          ALLOCATE(load_z(nz_global))
+          CALL get_load_in_z(load_z)
+          CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
+        ENDIF
+      ENDIF
+
+      ! In the autobalancer then determine whether to balance in X, Y or Z
+      ! Is this worth keeping?
+      IF (IAND(balance_mode, c_lb_auto) .NE. 0 ) THEN
+
+        ! Code is auto load balancing
+        max_x = 0
+        min_x = npart_global
+        DO iproc = 1, nprocx
+          wk = SUM(load_x(new_cell_x_min(iproc):new_cell_x_max(iproc)))
+          IF (wk .GT. max_x) max_x = wk
+          IF (wk .LT. min_x) min_x = wk
+        ENDDO
+
+        max_y = 0
+        min_y = npart_global
+        DO iproc = 1, nprocy
+          wk = SUM(load_y(new_cell_y_min(iproc):new_cell_y_max(iproc)))
+          IF (wk .GT. max_y) max_y = wk
+          IF (wk .LT. min_y) min_y = wk
+        ENDDO
+
+        max_z = 0
+        min_z = npart_global
+        DO iproc = 1, nprocz
+          wk = SUM(load_z(new_cell_z_min(iproc):new_cell_z_max(iproc)))
+          IF (wk .GT. max_z) max_z = wk
+          IF (wk .LT. min_z) min_z = wk
+        ENDDO
+
+        balance_frac_x = REAL(min_x, num) / REAL(max_x, num)
+        balance_frac_y = REAL(min_y, num) / REAL(max_y, num)
+        balance_frac_z = REAL(min_z, num) / REAL(max_z, num)
+
+        IF (balance_frac_x .LT. balance_frac_y) THEN
+          IF (balance_frac_x .LT. balance_frac_z) THEN
+            new_cell_x_min = cell_x_min
+            new_cell_x_max = cell_x_max
+          ELSE
+            new_cell_z_min = cell_z_min
+            new_cell_z_max = cell_z_max
+          ENDIF
+        ELSE
+          IF (balance_frac_y .LT. balance_frac_z) THEN
+            new_cell_y_min = cell_y_min
+            new_cell_y_max = cell_y_max
+          ELSE
+            new_cell_z_min = cell_z_min
+            new_cell_z_max = cell_z_max
+          ENDIF
+        ENDIF
+
+      ENDIF
+
+      IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
+      IF (ALLOCATED(load_y)) DEALLOCATE(load_y)
+      IF (ALLOCATED(load_z)) DEALLOCATE(load_z)
+
+      ! Now need to calculate the start and end points for the new domain on
+      ! the current processor
+
+      domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
+      domain(2,:) = (/new_cell_y_min(y_coords+1), new_cell_y_max(y_coords+1)/)
+      domain(3,:) = (/new_cell_z_min(z_coords+1), new_cell_z_max(z_coords+1)/)
+
+      ! Redistribute the field variables
+      CALL redistribute_fields(domain)
+
+      ! Copy the new lengths into the permanent variables
+      cell_x_min = new_cell_x_min
+      cell_x_max = new_cell_x_max
+      cell_y_min = new_cell_y_min
+      cell_y_max = new_cell_y_max
+      cell_z_min = new_cell_z_min
+      cell_z_max = new_cell_z_max
+
+      ! Set the new nx, ny, nz
+      nx_global_min = cell_x_min(x_coords+1)
+      nx_global_max = cell_x_max(x_coords+1)
+
+      ny_global_min = cell_y_min(y_coords+1)
+      ny_global_max = cell_y_max(y_coords+1)
+
+      nz_global_min = cell_z_min(z_coords+1)
+      nz_global_max = cell_z_max(z_coords+1)
+
+      nx = nx_global_max - nx_global_min + 1
+      ny = ny_global_max - ny_global_min + 1
+      nz = nz_global_max - nz_global_min + 1
+
+      DEALLOCATE(new_cell_x_min, new_cell_x_max)
+      DEALLOCATE(new_cell_y_min, new_cell_y_max)
+      DEALLOCATE(new_cell_z_min, new_cell_z_max)
+
+      ! Do X, Y, Z arrays separately because we already have global copies
+      DEALLOCATE(x, y, z)
+      ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))
+      x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
+      y(-2:ny+3) = y_global(ny_global_min-3:ny_global_max+3)
+      z(-2:nz+3) = z_global(nz_global_min-3:nz_global_max+3)
+
+      ! Recalculate x_mins and x_maxs so that rebalancing works next time
+      DO iproc = 0, nprocx - 1
+        x_mins(iproc) = x_global(cell_x_min(iproc+1))
+        x_maxs(iproc) = x_global(cell_x_max(iproc+1))
+      ENDDO
+      ! Same for y
+      DO iproc = 0, nprocy - 1
+        y_mins(iproc) = y_global(cell_y_min(iproc+1))
+        y_maxs(iproc) = y_global(cell_y_max(iproc+1))
+      ENDDO
+      ! Same for z
+      DO iproc = 0, nprocz - 1
+        z_mins(iproc) = z_global(cell_z_min(iproc+1))
+        z_maxs(iproc) = z_global(cell_z_max(iproc+1))
+      ENDDO
+
+      ! Set the lengths of the current domain so that the particle balancer
+      ! works properly
+      x_min_local = x_mins(x_coords)
+      x_max_local = x_maxs(x_coords)
+      y_min_local = y_mins(y_coords)
+      y_max_local = y_maxs(y_coords)
+      z_min_local = z_mins(z_coords)
+      z_max_local = z_maxs(z_coords)
     ENDIF
-
-    IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
-    IF (ALLOCATED(load_y)) DEALLOCATE(load_y)
-    IF (ALLOCATED(load_z)) DEALLOCATE(load_z)
-
-    ! Now need to calculate the start and end points for the new domain on
-    ! the current processor
-
-    domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
-    domain(2,:) = (/new_cell_y_min(y_coords+1), new_cell_y_max(y_coords+1)/)
-    domain(3,:) = (/new_cell_z_min(z_coords+1), new_cell_z_max(z_coords+1)/)
-
-    ! Redistribute the field variables
-    CALL redistribute_fields(domain)
-
-    ! Copy the new lengths into the permanent variables
-    cell_x_min = new_cell_x_min
-    cell_x_max = new_cell_x_max
-    cell_y_min = new_cell_y_min
-    cell_y_max = new_cell_y_max
-    cell_z_min = new_cell_z_min
-    cell_z_max = new_cell_z_max
-
-    ! Set the new nx, ny, nz
-    nx_global_min = cell_x_min(x_coords+1)
-    nx_global_max = cell_x_max(x_coords+1)
-
-    ny_global_min = cell_y_min(y_coords+1)
-    ny_global_max = cell_y_max(y_coords+1)
-
-    nz_global_min = cell_z_min(z_coords+1)
-    nz_global_max = cell_z_max(z_coords+1)
-
-    nx = nx_global_max - nx_global_min + 1
-    ny = ny_global_max - ny_global_min + 1
-    nz = nz_global_max - nz_global_min + 1
-
-    DEALLOCATE(new_cell_x_min, new_cell_x_max)
-    DEALLOCATE(new_cell_y_min, new_cell_y_max)
-    DEALLOCATE(new_cell_z_min, new_cell_z_max)
-
-    ! Do X, Y, Z arrays separately because we already have global copies
-    DEALLOCATE(x, y, z)
-    ALLOCATE(x(-2:nx+3), y(-2:ny+3), z(-2:nz+3))
-    x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
-    y(-2:ny+3) = y_global(ny_global_min-3:ny_global_max+3)
-    z(-2:nz+3) = z_global(nz_global_min-3:nz_global_max+3)
-
-    ! Recalculate x_mins and x_maxs so that rebalancing works next time
-    DO iproc = 0, nprocx - 1
-      x_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
-    ENDDO
-    ! Same for y
-    DO iproc = 0, nprocy - 1
-      y_mins(iproc) = y_global(cell_y_min(iproc+1))
-      y_maxs(iproc) = y_global(cell_y_max(iproc+1))
-    ENDDO
-    ! Same for z
-    DO iproc = 0, nprocz - 1
-      z_mins(iproc) = z_global(cell_z_min(iproc+1))
-      z_maxs(iproc) = z_global(cell_z_max(iproc+1))
-    ENDDO
-
-    ! Set the lengths of the current domain so that the particle balancer
-    ! works properly
-    x_min_local = x_mins(x_coords)
-    x_max_local = x_maxs(x_coords)
-    y_min_local = y_mins(y_coords)
-    y_max_local = y_maxs(y_coords)
-    z_min_local = z_mins(z_coords)
-    z_max_local = z_maxs(z_coords)
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -250,6 +253,8 @@ CONTAINS
       ENDDO
     ENDIF
 #endif
+
+    use_exact_restart = .FALSE.
 
   END SUBROUTINE balance_workload
 

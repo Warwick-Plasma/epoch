@@ -182,4 +182,53 @@ CONTAINS
 
   END SUBROUTINE read_srl_pt_var_int_array
 
+
+
+  SUBROUTINE read_srl_pt_var_logical_array(h, array)
+
+    TYPE(sdf_file_handle) :: h
+    LOGICAL, DIMENSION(:), INTENT(OUT) :: array
+    INTEGER :: errcode, npoints, i
+    TYPE(sdf_block_type), POINTER :: b
+    CHARACTER(LEN=1), DIMENSION(:), ALLOCATABLE :: cvalues
+
+    IF (.NOT.ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      RETURN
+    ENDIF
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_point_variable_info_ru(h)
+
+    h%current_location = b%data_location
+
+    ! Read the real data
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+
+    npoints = INT(b%npoints)
+    ALLOCATE(cvalues(npoints))
+
+    CALL MPI_FILE_READ_ALL(h%filehandle, cvalues, npoints, b%mpitype, &
+        MPI_STATUS_IGNORE, errcode)
+
+    DO i = 1,npoints
+      IF (cvalues(i) .EQ. ACHAR(0)) THEN
+        array(i) = .FALSE.
+      ELSE
+        array(i) = .TRUE.
+      ENDIF
+    ENDDO
+
+    DEALLOCATE(cvalues)
+
+    h%current_location = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_srl_pt_var_logical_array
+
 END MODULE sdf_input_point_ru

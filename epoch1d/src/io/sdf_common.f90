@@ -37,6 +37,7 @@ MODULE sdf_common
     INTEGER(i4) :: mpitype, type_size, stagger
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
+    CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id
     CHARACTER(LEN=c_id_length), POINTER :: variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
     CHARACTER(LEN=c_max_string_length) :: name, material_name
@@ -56,6 +57,7 @@ MODULE sdf_common
     INTEGER(i4) :: block_header_length, string_length, nblocks, error_code
     INTEGER(i4) :: file_version, file_revision, code_io_version, step
     INTEGER(i4) :: datatype_integer, mpitype_integer
+    INTEGER(i4) :: blocktype
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     INTEGER :: errhandler
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error
@@ -92,11 +94,17 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_species = 13
   INTEGER(i4), PARAMETER :: c_blocktype_plain_derived = 14
   INTEGER(i4), PARAMETER :: c_blocktype_point_derived = 15
-  INTEGER(i4), PARAMETER :: c_blocktype_multi_tensor = 16
-  INTEGER(i4), PARAMETER :: c_blocktype_multi_material = 17
-  INTEGER(i4), PARAMETER :: c_blocktype_multi_matvar = 18
-  INTEGER(i4), PARAMETER :: c_blocktype_multi_species = 19
+  INTEGER(i4), PARAMETER :: c_blocktype_contiguous_tensor = 16
+  INTEGER(i4), PARAMETER :: c_blocktype_contiguous_material = 17
+  INTEGER(i4), PARAMETER :: c_blocktype_contiguous_matvar = 18
+  INTEGER(i4), PARAMETER :: c_blocktype_contiguous_species = 19
   INTEGER(i4), PARAMETER :: c_blocktype_cpu_split = 20
+  INTEGER(i4), PARAMETER :: c_blocktype_stitched_obstacle_group = 21
+  INTEGER(i4), PARAMETER :: c_blocktype_unstructured_mesh = 22
+  INTEGER(i4), PARAMETER :: c_blocktype_stitched = 23
+  INTEGER(i4), PARAMETER :: c_blocktype_contiguous = 24
+  INTEGER(i4), PARAMETER :: c_blocktype_lagrangian_mesh = 25
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 25
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
@@ -107,6 +115,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_datatype_character = 6
   INTEGER(i4), PARAMETER :: c_datatype_logical = 7
   INTEGER(i4), PARAMETER :: c_datatype_other = 8
+  INTEGER(i4), PARAMETER :: c_datatype_max = 8
 
   INTEGER(i4), PARAMETER :: c_geometry_null = 0
   INTEGER(i4), PARAMETER :: c_geometry_cartesian = 1
@@ -183,6 +192,47 @@ MODULE sdf_common
   INTEGER, PARAMETER :: c_err_unsupported_datarep = 19
   INTEGER, PARAMETER :: c_err_unsupported_operation = 20
   INTEGER, PARAMETER :: c_err_unknown = 21
+  INTEGER, PARAMETER :: c_err_unsupported_file = 22
+
+  CHARACTER(LEN=*), PARAMETER :: c_blocktypes_char(-1:c_blocktype_max) = (/ &
+      'SDF_BLOCKTYPE_SCRUBBED               ', &
+      'SDF_BLOCKTYPE_NULL                   ', &
+      'SDF_BLOCKTYPE_PLAIN_MESH             ', &
+      'SDF_BLOCKTYPE_POINT_MESH             ', &
+      'SDF_BLOCKTYPE_PLAIN_VARIABLE         ', &
+      'SDF_BLOCKTYPE_POINT_VARIABLE         ', &
+      'SDF_BLOCKTYPE_CONSTANT               ', &
+      'SDF_BLOCKTYPE_ARRAY                  ', &
+      'SDF_BLOCKTYPE_RUN_INFO               ', &
+      'SDF_BLOCKTYPE_SOURCE                 ', &
+      'SDF_BLOCKTYPE_STITCHED_TENSOR        ', &
+      'SDF_BLOCKTYPE_STITCHED_MATERIAL      ', &
+      'SDF_BLOCKTYPE_STITCHED_MATVAR        ', &
+      'SDF_BLOCKTYPE_STITCHED_SPECIES       ', &
+      'SDF_BLOCKTYPE_SPECIES                ', &
+      'SDF_BLOCKTYPE_PLAIN_DERIVED          ', &
+      'SDF_BLOCKTYPE_POINT_DERIVED          ', &
+      'SDF_BLOCKTYPE_MULTI_TENSOR           ', &
+      'SDF_BLOCKTYPE_MULTI_MATERIAL         ', &
+      'SDF_BLOCKTYPE_MULTI_MATVAR           ', &
+      'SDF_BLOCKTYPE_MULTI_SPECIES          ', &
+      'SDF_BLOCKTYPE_CPU_SPLIT              ', &
+      'SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP', &
+      'SDF_BLOCKTYPE_UNSTRUCTURED_MESH      ', &
+      'SDF_BLOCKTYPE_STITCHED               ', &
+      'SDF_BLOCKTYPE_CONTIGUOUS             ', &
+      'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ' /)
+
+  CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
+      'SDF_DATATYPE_NULL     ', &
+      'SDF_DATATYPE_INTEGER4 ', &
+      'SDF_DATATYPE_INTEGER8 ', &
+      'SDF_DATATYPE_REAL4    ', &
+      'SDF_DATATYPE_REAL8    ', &
+      'SDF_DATATYPE_REAL16   ', &
+      'SDF_DATATYPE_CHARACTER', &
+      'SDF_DATATYPE_LOGICAL  ', &
+      'SDF_DATATYPE_OTHER    ' /)
 
 CONTAINS
 
@@ -254,6 +304,56 @@ CONTAINS
 
 
 
+  FUNCTION sdf_find_block_by_id(h, block_id) RESULT(found)
+
+    TYPE(sdf_file_handle) :: h
+    TYPE(sdf_block_type), POINTER :: b
+    CHARACTER(LEN=*), INTENT(IN) :: block_id
+    LOGICAL :: found
+
+    found = sdf_find_block(h, b, block_id)
+    IF (found) h%current_block => b
+
+  END FUNCTION sdf_find_block_by_id
+
+
+
+  FUNCTION sdf_seek_block(h, block_id) RESULT(found)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: block_id
+    TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: found
+
+    found = sdf_find_block(h, b, block_id)
+    IF (found) h%current_block => b
+
+  END FUNCTION sdf_seek_block
+
+
+
+  FUNCTION sdf_get_data_location(h) RESULT(data_location)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i8) :: data_location
+
+    data_location = h%current_block%data_location
+
+  END FUNCTION sdf_get_data_location
+
+
+
+  SUBROUTINE sdf_set_data_location(h, data_location)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i8), INTENT(IN) :: data_location
+
+    h%data_location = data_location
+
+  END SUBROUTINE sdf_set_data_location
+
+
+
   FUNCTION sdf_string_equal(str1, str2) RESULT(equal)
 
     CHARACTER(LEN=*), INTENT(IN) :: str1, str2
@@ -294,7 +394,7 @@ CONTAINS
       s2(olen:len2) = ACHAR(0)
       s2(1:olen) = s1(1:olen)
     ELSE
-      s2(1:1) = ACHAR(0)
+      s2 = ACHAR(0)
     ENDIF
 
   END SUBROUTINE safe_copy_string

@@ -84,6 +84,7 @@ CONTAINS
     ENDDO
 
     use_particle_lists = use_particle_lists .OR. use_split
+    IF (use_split) need_random_state = .TRUE.
 #endif
 
   END SUBROUTINE setup_split_particles

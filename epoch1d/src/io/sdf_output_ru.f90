@@ -264,7 +264,7 @@ CONTAINS
     CHARACTER(LEN=length) :: output
     INTEGER :: len_s, errcode
 
-    len_s = LEN(TRIM(string))
+    len_s = LEN_TRIM(string)
 
     IF (len_s .GT. length .AND. h%rank .EQ. h%rank_master) THEN
       PRINT*, '*** WARNING ***'
@@ -478,29 +478,29 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_stitched_tensor(h, id, name, mesh_id, stagger, &
-      variable_ids, rank_write)
+  SUBROUTINE write_stitched(h, id, name, mesh_id, stagger, &
+      variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: variable_ids(:)
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (PRESENT(id)) THEN
-      CALL sdf_get_next_block(h)
-      b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
-    ENDIF
-
     b => h%current_block
 
-    b%datatype = c_datatype_other
-    b%blocktype = c_blocktype_stitched_tensor
+    IF (PRESENT(id)) THEN
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(variable_ids),i4)
+      ENDIF
+    ENDIF
 
-    IF (PRESENT(rank_write)) h%rank_master = rank_write
+    b%datatype = c_datatype_other
 
     ! Metadata is
     ! - stagger   INTEGER(i4)
@@ -508,7 +508,6 @@ CONTAINS
     ! - varids    ndims*CHARACTER(id_length)
 
     b%info_length = h%block_header_length + soi4 + (b%ndims + 1) * c_id_length
-    b%data_length = 0
 
     ! Write header
     IF (PRESENT(id)) THEN
@@ -536,96 +535,105 @@ CONTAINS
     ENDIF
 
     h%rank_master = h%default_rank
-    h%current_location = b%block_start + b%info_length
+    IF (b%data_length .GT. 0) THEN
+      h%current_location = b%next_block_location
+    ELSE
+      h%current_location = b%block_start + b%info_length
+    ENDIF
     b%done_info = .TRUE.
     b%done_data = .TRUE.
+
+  END SUBROUTINE write_stitched
+
+
+
+  SUBROUTINE sdf_write_stitched(h, id, name, mesh_id, stagger, &
+      variable_ids, ndims, data_length)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
+    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (PRESENT(id)) THEN
+      CALL sdf_get_next_block(h)
+      b => h%current_block
+      IF (PRESENT(data_length)) THEN
+        b%data_length = data_length
+        b%blocktype = c_blocktype_contiguous
+      ELSE
+        b%data_length = 0
+        b%blocktype = c_blocktype_stitched
+      ENDIF
+    ENDIF
+
+    CALL write_stitched(h, id, name, mesh_id, stagger, variable_ids, ndims, &
+        data_length)
+
+  END SUBROUTINE sdf_write_stitched
+
+
+
+  SUBROUTINE sdf_write_stitched_tensor(h, id, name, mesh_id, stagger, &
+      variable_ids, ndims, data_length)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
+    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: variable_ids(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (PRESENT(id)) THEN
+      CALL sdf_get_next_block(h)
+      b => h%current_block
+      IF (PRESENT(data_length)) THEN
+        b%data_length = data_length
+        b%blocktype = c_blocktype_contiguous_tensor
+      ELSE
+        b%data_length = 0
+        b%blocktype = c_blocktype_stitched_tensor
+      ENDIF
+    ENDIF
+
+    CALL write_stitched(h, id, name, mesh_id, stagger, variable_ids, ndims, &
+        data_length)
 
   END SUBROUTINE sdf_write_stitched_tensor
 
 
 
-  SUBROUTINE sdf_write_multi_tensor(h, id, name, mesh_id, stagger, &
-      variable_ids, data_length, rank_write)
-
-    TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
-    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: variable_ids(:)
-    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (PRESENT(id)) THEN
-      CALL sdf_get_next_block(h)
-      b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
-    ENDIF
-
-    b => h%current_block
-
-    b%datatype = c_datatype_other
-    b%blocktype = c_blocktype_multi_tensor
-
-    IF (PRESENT(rank_write)) h%rank_master = rank_write
-
-    ! Metadata is
-    ! - stagger   INTEGER(i4)
-    ! - meshid    CHARACTER(id_length)
-    ! - varids    ndims*CHARACTER(id_length)
-
-    b%info_length = h%block_header_length + soi4 + (b%ndims + 1) * c_id_length
-
-    ! Write header
-    IF (PRESENT(id)) THEN
-      b%stagger = stagger
-      b%data_length = data_length
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-      CALL sdf_write_block_header(h, id, name)
-      ALLOCATE(b%variable_ids(b%ndims))
-      DO i = 1, b%ndims
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
-      ENDDO
-    ELSE
-      CALL write_block_header(h)
-    ENDIF
-
-    IF (h%rank .EQ. h%rank_master) THEN
-      ! Write metadata
-      CALL MPI_FILE_WRITE(h%filehandle, b%stagger, 1, MPI_INTEGER4, &
-          MPI_STATUS_IGNORE, errcode)
-
-      CALL sdf_safe_write_id(h, b%mesh_id)
-
-      DO i = 1, b%ndims
-        CALL sdf_safe_write_id(h, b%variable_ids(i))
-      ENDDO
-    ENDIF
-
-    h%rank_master = h%default_rank
-    h%current_location = b%next_block_location
-    b%done_info = .TRUE.
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_write_multi_tensor
-
-
-
   SUBROUTINE sdf_write_stitched_tensor_mat(h, id, name, mesh_id, stagger, &
-      variable_ids, nmat, material_names, rank_write)
+      variable_ids, material_names, ndims_in, nmat_in, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, mesh_id
     INTEGER(i4), INTENT(IN) :: stagger
     CHARACTER(LEN=*), INTENT(IN) :: variable_ids(:)
-    INTEGER, INTENT(IN) :: nmat
     CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, j, ndims
+    INTEGER, INTENT(IN), OPTIONAL :: ndims_in, nmat_in
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
+    INTEGER :: i, j, ndims, nmat
     INTEGER, PARAMETER :: maxstring = 512
     CHARACTER(LEN=maxstring) :: temp_name
     CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: ids
     CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: new_variable_ids
+
+    IF (PRESENT(ndims_in)) THEN
+      ndims = ndims_in
+    ELSE
+      ndims = INT(SIZE(variable_ids),i4)
+    ENDIF
+
+    IF (PRESENT(nmat_in)) THEN
+      nmat = nmat_in
+    ELSE
+      nmat = INT(SIZE(material_names),i4)
+    ENDIF
 
     ALLOCATE(ids(nmat))
 
@@ -638,7 +646,6 @@ CONTAINS
       ENDIF
     ENDDO
 
-    ndims = INT(SIZE(variable_ids),i4)
     ALLOCATE(new_variable_ids(ndims))
     DO i = 1,nmat
       IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
@@ -648,7 +655,7 @@ CONTAINS
       ENDDO
       CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
       CALL sdf_write_stitched_tensor(h, ids(i), temp_name, mesh_id, &
-          stagger, new_variable_ids, rank_write)
+          stagger, new_variable_ids, ndims, data_length)
     ENDDO
 
     DEALLOCATE(ids)
@@ -658,77 +665,37 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_multi_tensor_mat(h, id, name, mesh_id, stagger, &
-      variable_ids, nmat, material_names, data_length, rank_write)
-
-    TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name, mesh_id
-    INTEGER(i4), INTENT(IN) :: stagger
-    CHARACTER(LEN=*), INTENT(IN) :: variable_ids(:)
-    INTEGER, INTENT(IN) :: nmat
-    CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
-    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, j, ndims
-    INTEGER, PARAMETER :: maxstring = 512
-    CHARACTER(LEN=maxstring) :: temp_name
-    CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: ids
-    CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: new_variable_ids
-
-    ALLOCATE(ids(nmat))
-
-    DO i = 1,nmat
-      IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
-        ids(i) = ''
-      ELSE
-        CALL sdf_safe_string_composite(h, id, &
-            sdf_string_lowercase(material_names(i)), ids(i))
-      ENDIF
-    ENDDO
-
-    ndims = INT(SIZE(variable_ids),i4)
-    ALLOCATE(new_variable_ids(ndims))
-    DO i = 1,nmat
-      IF (LEN_TRIM(material_names(i)) .EQ. 0) CYCLE
-      DO j = 1,ndims
-        CALL sdf_safe_string_composite(h, variable_ids(j), &
-            sdf_string_lowercase(material_names(i)), new_variable_ids(j))
-      ENDDO
-      CALL sdf_safe_string_composite(h, name, material_names(i), temp_name)
-      CALL sdf_write_multi_tensor(h, ids(i), temp_name, mesh_id, &
-          stagger, new_variable_ids, data_length, rank_write)
-    ENDDO
-
-    DEALLOCATE(ids)
-    DEALLOCATE(new_variable_ids)
-
-  END SUBROUTINE sdf_write_multi_tensor_mat
-
-
-
   SUBROUTINE sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
-      material_names, variable_ids, rank_write)
+      material_names, variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_names(:), variable_ids(:)
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
+
+    IF (h%blocktype .EQ. c_blocktype_contiguous) THEN
+      CALL sdf_write_stitched(h, id, name, mesh_id, stagger, &
+          variable_ids, ndims, data_length)
+      RETURN
+    ENDIF
 
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(variable_ids),i4)
+      ENDIF
     ENDIF
 
     b => h%current_block
 
     b%datatype = c_datatype_other
-    b%blocktype = c_blocktype_stitched_material
-
-    IF (PRESENT(rank_write)) h%rank_master = rank_write
 
     ! Metadata is
     ! - stagger   INTEGER(i4)
@@ -738,11 +705,17 @@ CONTAINS
 
     b%info_length = h%block_header_length + soi4 + (b%ndims + 1) * c_id_length &
         + b%ndims * h%string_length
-    b%data_length = 0
 
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
+      IF (PRESENT(data_length)) THEN
+        b%data_length = data_length
+        b%blocktype = c_blocktype_contiguous_material
+      ELSE
+        b%data_length = 0
+        b%blocktype = c_blocktype_stitched_material
+      ENDIF
       CALL safe_copy_string(mesh_id, b%mesh_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%material_names(b%ndims))
@@ -772,7 +745,11 @@ CONTAINS
     ENDIF
 
     h%rank_master = h%default_rank
-    h%current_location = b%block_start + b%info_length
+    IF (b%data_length .GT. 0) THEN
+      h%current_location = b%next_block_location
+    ELSE
+      h%current_location = b%block_start + b%info_length
+    ENDIF
     b%done_info = .TRUE.
     b%done_data = .TRUE.
 
@@ -780,104 +757,31 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_multi_material(h, id, name, mesh_id, stagger, &
-      material_names, variable_ids, data_length, rank_write)
-
-    TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
-    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_names(:), variable_ids(:)
-    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (PRESENT(id)) THEN
-      CALL sdf_get_next_block(h)
-      b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
-    ENDIF
-
-    b => h%current_block
-
-    b%datatype = c_datatype_other
-    b%blocktype = c_blocktype_multi_material
-
-    IF (PRESENT(rank_write)) h%rank_master = rank_write
-
-    ! Metadata is
-    ! - stagger   INTEGER(i4)
-    ! - meshid    CHARACTER(id_length)
-    ! - material_names ndims*CHARACTER(string_length)
-    ! - varids    ndims*CHARACTER(id_length)
-
-    b%info_length = h%block_header_length + soi4 + (b%ndims + 1) * c_id_length &
-        + b%ndims * h%string_length
-
-    ! Write header
-    IF (PRESENT(id)) THEN
-      b%stagger = stagger
-      b%data_length = data_length
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-      CALL sdf_write_block_header(h, id, name)
-      ALLOCATE(b%material_names(b%ndims))
-      ALLOCATE(b%variable_ids(b%ndims))
-      DO i = 1, b%ndims
-        CALL safe_copy_string(material_names(i), b%material_names(i))
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
-      ENDDO
-    ELSE
-      CALL write_block_header(h)
-    ENDIF
-
-    IF (h%rank .EQ. h%rank_master) THEN
-      ! Write metadata
-      CALL MPI_FILE_WRITE(h%filehandle, b%stagger, 1, MPI_INTEGER4, &
-          MPI_STATUS_IGNORE, errcode)
-
-      CALL sdf_safe_write_id(h, b%mesh_id)
-
-      DO i = 1, b%ndims
-        CALL sdf_safe_write_string(h, b%material_names(i))
-      ENDDO
-
-      DO i = 1, b%ndims
-        CALL sdf_safe_write_id(h, b%variable_ids(i))
-      ENDDO
-    ENDIF
-
-    h%rank_master = h%default_rank
-    h%current_location = b%next_block_location
-    b%done_info = .TRUE.
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_write_multi_material
-
-
-
   SUBROUTINE sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
-      material_id, variable_ids, rank_write)
+      material_id, variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_id, variable_ids(:)
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(variable_ids),i4)
+      ENDIF
     ENDIF
 
     b => h%current_block
 
     b%datatype = c_datatype_other
-    b%blocktype = c_blocktype_stitched_matvar
-
-    IF (PRESENT(rank_write)) h%rank_master = rank_write
 
     ! Metadata is
     ! - stagger   INTEGER(i4)
@@ -886,11 +790,17 @@ CONTAINS
     ! - varids    ndims*CHARACTER(id_length)
 
     b%info_length = h%block_header_length + soi4 + (b%ndims + 2) * c_id_length
-    b%data_length = 0
 
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
+      IF (PRESENT(data_length)) THEN
+        b%data_length = data_length
+        b%blocktype = c_blocktype_contiguous_matvar
+      ELSE
+        b%data_length = 0
+        b%blocktype = c_blocktype_stitched_matvar
+      ENDIF
       CALL safe_copy_string(mesh_id, b%mesh_id)
       CALL safe_copy_string(material_id, b%material_id)
       CALL sdf_write_block_header(h, id, name)
@@ -917,7 +827,11 @@ CONTAINS
     ENDIF
 
     h%rank_master = h%default_rank
-    h%current_location = b%block_start + b%info_length
+    IF (b%data_length .GT. 0) THEN
+      h%current_location = b%next_block_location
+    ELSE
+      h%current_location = b%block_start + b%info_length
+    ENDIF
     b%done_info = .TRUE.
     b%done_data = .TRUE.
 
@@ -925,101 +839,32 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_multi_matvar(h, id, name, mesh_id, stagger, &
-      material_id, variable_ids, data_length, rank_write)
-
-    TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
-    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_id, variable_ids(:)
-    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (PRESENT(id)) THEN
-      CALL sdf_get_next_block(h)
-      b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
-    ENDIF
-
-    b => h%current_block
-
-    b%datatype = c_datatype_other
-    b%blocktype = c_blocktype_multi_matvar
-
-    IF (PRESENT(rank_write)) h%rank_master = rank_write
-
-    ! Metadata is
-    ! - stagger   INTEGER(i4)
-    ! - meshid    CHARACTER(id_length)
-    ! - matid     CHARACTER(id_length)
-    ! - varids    ndims*CHARACTER(id_length)
-
-    b%info_length = h%block_header_length + soi4 + (b%ndims + 2) * c_id_length
-
-    ! Write header
-    IF (PRESENT(id)) THEN
-      b%stagger = stagger
-      b%data_length = data_length
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-      CALL safe_copy_string(material_id, b%material_id)
-      CALL sdf_write_block_header(h, id, name)
-      ALLOCATE(b%variable_ids(b%ndims))
-      DO i = 1, b%ndims
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
-      ENDDO
-    ELSE
-      CALL write_block_header(h)
-    ENDIF
-
-    IF (h%rank .EQ. h%rank_master) THEN
-      ! Write metadata
-      CALL MPI_FILE_WRITE(h%filehandle, b%stagger, 1, MPI_INTEGER4, &
-          MPI_STATUS_IGNORE, errcode)
-
-      CALL sdf_safe_write_id(h, b%mesh_id)
-
-      CALL sdf_safe_write_id(h, b%material_id)
-
-      DO i = 1, b%ndims
-        CALL sdf_safe_write_id(h, b%variable_ids(i))
-      ENDDO
-    ENDIF
-
-    h%rank_master = h%default_rank
-    h%current_location = b%next_block_location
-    b%done_info = .TRUE.
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_write_multi_matvar
-
-
-
   SUBROUTINE sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
-      material_id, material_name, specnames, variable_ids, rank_write)
+      material_id, material_name, specnames, variable_ids, ndims, data_length)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
     INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_id, material_name
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: specnames(:), variable_ids(:)
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
     INTEGER :: i, errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (PRESENT(id)) THEN
       CALL sdf_get_next_block(h)
       b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(variable_ids),i4)
+      ENDIF
     ENDIF
 
     b => h%current_block
 
     b%datatype = c_datatype_other
-    b%blocktype = c_blocktype_stitched_species
-
-    IF (PRESENT(rank_write)) h%rank_master = rank_write
 
     ! Metadata is
     ! - stagger   INTEGER(i4)
@@ -1031,11 +876,17 @@ CONTAINS
 
     b%info_length = h%block_header_length + soi4 + (b%ndims + 2) * c_id_length &
         + (b%ndims + 1) * h%string_length
-    b%data_length = 0
 
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
+      IF (PRESENT(data_length)) THEN
+        b%data_length = data_length
+        b%blocktype = c_blocktype_contiguous_species
+      ELSE
+        b%data_length = 0
+        b%blocktype = c_blocktype_stitched_species
+      ENDIF
       CALL safe_copy_string(mesh_id, b%mesh_id)
       CALL safe_copy_string(material_id, b%material_id)
       CALL safe_copy_string(material_name, b%material_name)
@@ -1067,6 +918,85 @@ CONTAINS
 
       DO i = 1, b%ndims
         CALL sdf_safe_write_id(h, b%variable_ids(i))
+      ENDDO
+    ENDIF
+
+    h%rank_master = h%default_rank
+    IF (b%data_length .GT. 0) THEN
+      h%current_location = b%next_block_location
+    ELSE
+      h%current_location = b%block_start + b%info_length
+    ENDIF
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_write_stitched_species
+
+
+
+  SUBROUTINE sdf_write_stitched_obstacle_group(h, id, name, obstacle_id, &
+      vfm_id, stagger, obstacle_names, ndims, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, obstacle_id, vfm_id
+    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: obstacle_names(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: i, errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    IF (PRESENT(id)) THEN
+      CALL sdf_get_next_block(h)
+      b => h%current_block
+      IF (PRESENT(ndims)) THEN
+        b%ndims = ndims
+      ELSE
+        b%ndims = INT(SIZE(obstacle_names),i4)
+      ENDIF
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_other
+    b%blocktype = c_blocktype_stitched_obstacle_group
+
+    IF (PRESENT(rank_write)) h%rank_master = rank_write
+
+    ! Metadata is
+    ! - stagger        INTEGER(i4)
+    ! - obstacle_id    CHARACTER(id_length)
+    ! - vfm_id         CHARACTER(id_length)
+    ! - obstacle_names ndims*CHARACTER(string_length)
+
+    b%info_length = h%block_header_length + soi4 + 2 * c_id_length &
+        + b%ndims * h%string_length
+    b%data_length = 0
+
+    ! Write header
+    IF (PRESENT(id)) THEN
+      b%stagger = stagger
+      CALL safe_copy_string(obstacle_id, b%obstacle_id)
+      CALL safe_copy_string(vfm_id, b%vfm_id)
+      CALL sdf_write_block_header(h, id, name)
+      ALLOCATE(b%material_names(b%ndims))
+      DO i = 1, b%ndims
+        CALL safe_copy_string(obstacle_names(i), b%material_names(i))
+      ENDDO
+    ELSE
+      CALL write_block_header(h)
+    ENDIF
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      ! Write metadata
+      CALL MPI_FILE_WRITE(h%filehandle, b%stagger, 1, MPI_INTEGER4, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL sdf_safe_write_id(h, b%obstacle_id)
+      CALL sdf_safe_write_id(h, b%vfm_id)
+
+      DO i = 1, b%ndims
+        CALL sdf_safe_write_string(h, b%material_names(i))
       ENDDO
     ENDIF
 
@@ -1075,92 +1005,7 @@ CONTAINS
     b%done_info = .TRUE.
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_stitched_species
-
-
-
-  SUBROUTINE sdf_write_multi_species(h, id, name, mesh_id, stagger, &
-      material_id, material_name, specnames, variable_ids, data_length, &
-      rank_write)
-
-    TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, mesh_id
-    INTEGER(i4), INTENT(IN), OPTIONAL :: stagger
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: material_id, material_name
-    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: specnames(:), variable_ids(:)
-    INTEGER(i8), INTENT(IN), OPTIONAL :: data_length
-    INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: i, errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (PRESENT(id)) THEN
-      CALL sdf_get_next_block(h)
-      b => h%current_block
-      b%ndims = INT(SIZE(variable_ids),i4)
-    ENDIF
-
-    b => h%current_block
-
-    b%datatype = c_datatype_other
-    b%blocktype = c_blocktype_multi_species
-
-    IF (PRESENT(rank_write)) h%rank_master = rank_write
-
-    ! Metadata is
-    ! - stagger   INTEGER(i4)
-    ! - meshid    CHARACTER(id_length)
-    ! - matid     CHARACTER(id_length)
-    ! - matname   CHARACTER(string_length)
-    ! - specnames ndims*CHARACTER(string_length)
-    ! - varids    ndims*CHARACTER(id_length)
-
-    b%info_length = h%block_header_length + soi4 + (b%ndims + 2) * c_id_length &
-        + (b%ndims + 1) * h%string_length
-
-    ! Write header
-    IF (PRESENT(id)) THEN
-      b%stagger = stagger
-      b%data_length = data_length
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-      CALL safe_copy_string(material_id, b%material_id)
-      CALL safe_copy_string(material_name, b%material_name)
-      ALLOCATE(b%material_names(b%ndims))
-      ALLOCATE(b%variable_ids(b%ndims))
-      DO i = 1, b%ndims
-        CALL safe_copy_string(specnames(i), b%material_names(i))
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
-      ENDDO
-      CALL sdf_write_block_header(h, id, name)
-    ELSE
-      CALL write_block_header(h)
-    ENDIF
-
-    IF (h%rank .EQ. h%rank_master) THEN
-      ! Write metadata
-      CALL MPI_FILE_WRITE(h%filehandle, b%stagger, 1, MPI_INTEGER4, &
-          MPI_STATUS_IGNORE, errcode)
-
-      CALL sdf_safe_write_id(h, b%mesh_id)
-
-      CALL sdf_safe_write_id(h, b%material_id)
-
-      CALL sdf_safe_write_string(h, b%material_name)
-
-      DO i = 1, b%ndims
-        CALL sdf_safe_write_string(h, b%material_names(i))
-      ENDDO
-
-      DO i = 1, b%ndims
-        CALL sdf_safe_write_id(h, b%variable_ids(i))
-      ENDDO
-    ENDIF
-
-    h%rank_master = h%default_rank
-    h%current_location = b%next_block_location
-    b%done_info = .TRUE.
-    b%done_data = .TRUE.
-
-  END SUBROUTINE sdf_write_multi_species
+  END SUBROUTINE sdf_write_stitched_obstacle_group
 
 
 
@@ -1363,12 +1208,60 @@ CONTAINS
 
 
 
-  SUBROUTINE write_cpu_split_1d(h, id, name, nmax1, nmax2, nmax3, rank_write)
+  SUBROUTINE write_cpu_split_part(h, id, name, npart, rank_write)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    INTEGER, INTENT(IN) :: nmax1(:)
-    INTEGER, INTENT(IN), OPTIONAL :: nmax2(:), nmax3(:)
+    INTEGER(i8), INTENT(IN) :: npart(:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = soi8
+    b%datatype = c_datatype_integer8
+    b%mpitype = MPI_INTEGER8
+    b%geometry = 4
+
+    IF (PRESENT(rank_write)) h%rank_master = rank_write
+
+    b%dims(1) = SIZE(npart)
+    b%ndims = 1
+    b%nelements = b%dims(1)
+
+    ! Write header
+
+    CALL write_cpu_split_meta(h, id, name)
+
+    h%current_location = b%data_location
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! Actual array
+      CALL MPI_FILE_WRITE(h%filehandle, npart, b%dims(1), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%data_location + b%data_length
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_cpu_split_part
+
+
+
+  SUBROUTINE write_cpu_split_1d_spec(h, id, name, ndim1, nmax1, ndim2, nmax2, &
+          ndim3, nmax3, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: ndim1, nmax1(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndim2, nmax2(:), ndim3, nmax3(:)
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
     INTEGER :: errcode, i
     TYPE(sdf_block_type), POINTER :: b
@@ -1383,14 +1276,14 @@ CONTAINS
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
 
-    b%dims(1) = SIZE(nmax1) - 1
+    b%dims(1) = ndim1 - 1
     b%ndims = 1
     IF (PRESENT(nmax2)) THEN
-      b%dims(2) = SIZE(nmax2) - 1
+      b%dims(2) = ndim2 - 1
       b%ndims = 2
     ENDIF
     IF (PRESENT(nmax3)) THEN
-      b%dims(3) = SIZE(nmax3) - 1
+      b%dims(3) = ndim3 - 1
       b%ndims = 3
     ENDIF
 
@@ -1426,6 +1319,32 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_info = .TRUE.
     b%done_data = .TRUE.
+
+  END SUBROUTINE write_cpu_split_1d_spec
+
+
+
+  SUBROUTINE write_cpu_split_1d(h, id, name, nmax1, nmax2, nmax3, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER, INTENT(IN) :: nmax1(:)
+    INTEGER, INTENT(IN), OPTIONAL :: nmax2(:), nmax3(:)
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+    INTEGER :: ndim1, ndim2, ndim3
+
+    ndim1 = SIZE(nmax1)
+    IF (PRESENT(nmax3)) THEN
+      ndim2 = SIZE(nmax2)
+      ndim3 = SIZE(nmax3)
+      CALL write_cpu_split_1d_spec(h, id, name, ndim1, nmax1, ndim2, nmax2, &
+          ndim3, nmax3, rank_write)
+    ELSE IF (PRESENT(nmax2)) THEN
+      ndim2 = SIZE(nmax2)
+      CALL write_cpu_split_1d_spec(h, id, name, ndim1, nmax1, ndim2, nmax2)
+    ELSE
+      CALL write_cpu_split_1d_spec(h, id, name, ndim1, nmax1)
+    ENDIF
 
   END SUBROUTINE write_cpu_split_1d
 

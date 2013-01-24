@@ -19,6 +19,8 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
+    IF (move_window) need_random_state = .TRUE.
+
   END SUBROUTINE window_deck_finalise
 
 

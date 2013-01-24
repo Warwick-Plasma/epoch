@@ -36,7 +36,7 @@ int sdf_fopen(sdf_file_t *h)
 }
 
 
-sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
+sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 {
     sdf_file_t *h;
     int ret;
@@ -53,14 +53,17 @@ sdf_file_t *sdf_open(const char *filename, int rank, comm_t comm, int use_mmap)
     h->indent = 0;
 
     h->done_header = 0;
-    h->ncpus = 1;
     h->use_summary = 1;
+    h->sdf_lib_version  = SDF_LIB_VERSION;
+    h->sdf_lib_revision = SDF_LIB_REVISION;
 
 #ifdef PARALLEL
     h->comm = comm;
-    h->rank = rank;
+    MPI_Comm_rank(h->comm, &h->rank);
+    MPI_Comm_size(h->comm, &h->ncpus);
 #else
     h->rank = 0;
+    h->ncpus = 1;
 #endif
     h->filename = malloc(strlen(filename)+1);
     memcpy(h->filename, filename, strlen(filename)+1);
@@ -121,10 +124,16 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
             for (i = 0; i < b->ndims; i++) if (b->grids[i]) free(b->grids[i]);
         free(b->grids);
     }
-    if (!h->mmap && b->data && b->done_data) free(b->data);
+    if (!h->mmap && b->data && b->done_data && !b->dont_own_data) {
+        free(b->data);
+    }
+    if (b->node_list) free(b->node_list);
+    if (b->boundary_cells) free(b->boundary_cells);
+    b->node_list = NULL;
+    b->boundary_cells = NULL;
+    b->done_data = 0;
     b->grids = NULL;
     b->data = NULL;
-    b->done_data = 0;
 
     return 0;
 }
@@ -259,16 +268,6 @@ int sdf_read_nblocks(sdf_file_t *h)
         return h->nblocks;
     else
         return -1;
-}
-
-
-
-int sdf_set_ncpus(sdf_file_t *h, int ncpus)
-{
-    if (!h) return -1;
-
-    h->ncpus = ncpus;
-    return 0;
 }
 
 
@@ -424,6 +423,17 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     div = 1;
     for (n = 0; n < b->ndims; n++) {
         coords = (rank / div) % b->cpu_split[n];
+
+        if (coords == 0)
+            b->proc_min[n] = MPI_PROC_NULL;
+        else
+            b->proc_min[n] = rank - div;
+
+        if (coords == b->cpu_split[n] - 1)
+            b->proc_max[n] = MPI_PROC_NULL;
+        else
+            b->proc_max[n] = rank + div;
+
         div = div * b->cpu_split[n];
         npoint_min = b->dims[n] / b->cpu_split[n];
         split_big = b->dims[n] - b->cpu_split[n] * npoint_min;
@@ -454,12 +464,11 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
 
 
 
-int sdf_factor(sdf_file_t *h, int *start)
+int sdf_factor(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
     int n;
 #ifdef PARALLEL
-    int periods[3] = {0, 0, 0};
     int old_dims[6];
 
     // Adjust dimensions to those of a cell-centred variable
@@ -478,15 +487,11 @@ int sdf_factor(sdf_file_t *h, int *start)
     for (n = 0; n < b->ndims; n++)
         b->dims[n] = old_dims[n];
 
-    MPI_Cart_create(h->comm, b->ndims, b->cpu_split, periods, 1, &b->cart_comm);
-    MPI_Comm_rank(b->cart_comm, &b->cart_rank);
-    MPI_Cart_coords(b->cart_comm, b->cart_rank, b->ndims, b->coordinates);
-    for (n = 0; n < b->ndims; n++)
-        MPI_Cart_shift(b->cart_comm, 0, 1, &b->proc_min[n], &b->proc_max[n]);
-
+    sdf_get_domain_extents(h, h->rank, b->starts, b->local_dims);
+#else
+    for (n = 0; n < 3; n++) b->local_dims[n] = b->dims[n];
 #endif
 
-    sdf_get_domain_extents(h, h->rank, start, b->local_dims);
     b->nlocal = 1;
     for (n = 0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
 
