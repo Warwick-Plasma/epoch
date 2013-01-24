@@ -1,0 +1,8 @@
+*.d
+*.o
+*PluginInfo.C
+*PluginInfo.h
+CMake*
+cmake*
+Makefile
+*.dSYM
