@@ -430,7 +430,7 @@ int sdf_read_lagran_mesh(sdf_file_t *h)
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_blocklist(h);
 
-    sdf_factor(h, local_start);
+    sdf_factor(h);
 
     h->current_location = b->data_location;
 
@@ -445,7 +445,7 @@ int sdf_read_lagran_mesh(sdf_file_t *h)
         h->indent = 2;
     }
 
-    sdf_plain_mesh_datatype(h);
+    sdf_plain_mesh_distribution(h);
 
     for (n = 0; n < b->ndims; n++) nelements *= b->dims[n];
 
