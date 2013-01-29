@@ -158,7 +158,7 @@ CONTAINS
       impact => current%next
 #ifdef PREFETCH
       CALL prefetch_particle(current)
-      CALL prefetch_particle(current)
+      CALL prefetch_particle(impact)
 #endif
     ENDDO
     np = np + current%weight + impact%weight
@@ -182,7 +182,7 @@ CONTAINS
       impact => current%next
 #ifdef PREFETCH
       CALL prefetch_particle(current)
-      CALL prefetch_particle(current)
+      CALL prefetch_particle(impact)
 #endif
     ENDDO
 
@@ -255,7 +255,7 @@ CONTAINS
         impact => impact%next
 #ifdef PREFETCH
         CALL prefetch_particle(current)
-        CALL prefetch_particle(current)
+        CALL prefetch_particle(impact)
 #endif
       ENDDO
 #endif
@@ -270,7 +270,7 @@ CONTAINS
         impact => impact%next
 #ifdef PREFETCH
         CALL prefetch_particle(current)
-        CALL prefetch_particle(current)
+        CALL prefetch_particle(impact)
 #endif
       ENDDO
 
