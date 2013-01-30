@@ -1222,7 +1222,7 @@ CONTAINS
 #ifdef PARTICLE_ID4
       iterator_list%id = NINT(array(ipart))
 #else
-      iterator_list%id = NINT(array(ipart),8)
+      iterator_list%id = NINT(array(ipart),i8)
 #endif
       iterator_list => iterator_list%next
     ENDDO

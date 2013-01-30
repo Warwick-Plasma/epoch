@@ -133,7 +133,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: str_in
     INTEGER, INTENT(INOUT) :: err
     INTEGER(i8) :: as_long_integer
-    as_long_integer = NINT(as_real(str_in, err),8)
+    as_long_integer = NINT(as_real(str_in, err),i8)
 
   END FUNCTION as_long_integer
 
