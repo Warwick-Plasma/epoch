@@ -31,17 +31,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
-
-    DO iz = 1, nz
-      DO iy = 1, ny
-        DO ix = 1, nx
-          DO ispecies = 1, n_species
-            p_list1 => species_list(ispecies)%secondary_list(ix,iy,iz)
-            CALL shuffle_particle_list_random(p_list1)
-          ENDDO
-        ENDDO
-      ENDDO
-    ENDDO
+    LOGICAL :: collide_species
 
     ALLOCATE(idens(-2:nx+3,-2:ny+3,-2:nz+3))
     ALLOCATE(jdens(-2:nx+3,-2:ny+3,-2:nz+3))
@@ -60,6 +50,18 @@ CONTAINS
       ! Currently no support for collisions involving chargeless particles
       IF (species_list(ispecies)%charge .EQ. 0.0_num) &
           CYCLE
+
+      collide_species = .FALSE.
+      DO jspecies = ispecies, n_species
+        user_factor = coll_pairs(ispecies, jspecies)
+        IF (user_factor .GT. 0) THEN
+          collide_species = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+
+      IF (.NOT.collide_species) CYCLE
+
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
 
@@ -67,6 +69,15 @@ CONTAINS
       q1 = species_list(ispecies)%charge
       w1 = species_list(ispecies)%weight
       itemp = itemp * kb / q0
+
+      DO iz = 1, nz
+      DO iy = 1, ny
+      DO ix = 1, nx
+        p_list1 => species_list(ispecies)%secondary_list(ix,iy,iz)
+        CALL shuffle_particle_list_random(p_list1)
+      ENDDO
+      ENDDO
+      ENDDO
 
       DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
