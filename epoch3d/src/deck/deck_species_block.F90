@@ -636,7 +636,8 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: name
     INTEGER :: create_species_number_from_name
-    INTEGER :: i
+    INTEGER :: i, io, ierr
+    TYPE(stack_element) :: block
 
     DO i = 1, n_species
       IF (str_cmp(name, species_names(i))) THEN
@@ -644,28 +645,47 @@ CONTAINS
         RETURN
       ENDIF
     ENDDO
+
+    ! If we're here then then named species doesn't yet exist
+
+    ! First issue a warning message if the name overrides a built-in one
+    CALL load_block(name, block)
+    IF (block%ptype .NE. c_pt_bad .AND. block%ptype .NE. c_pt_null) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The species name "' // TRIM(name) // '" is not valid.'
+          WRITE(io,*) 'Please choose a different name and try again.'
+        ENDDO
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
+
     n_species = n_species + 1
-    CALL grow_array(species_names, n_species)
-    species_names(n_species) = TRIM(name)
-    CALL grow_array(ionise_to_species, n_species)
-    ionise_to_species(n_species) = -1
-    CALL grow_array(release_species, n_species)
-    release_species(n_species) = ''
-    CALL grow_array(mass, n_species)
-    mass(n_species) = -1.0_num
-    CALL grow_array(charge, n_species)
-    charge(n_species) = 0.0_num
-    CALL grow_array(ionisation_energies, n_species)
-    ionisation_energies(n_species) = HUGE(0.0_num)
-    CALL grow_array(principle, n_species)
-    principle(n_species) = -1
-    CALL grow_array(angular, n_species)
-    angular(n_species) = -1
-    CALL grow_array(part_count, n_species)
-    part_count(n_species) = -1
-    CALL grow_array(dumpmask_array, n_species)
-    dumpmask_array(n_species) = species_dumpmask
     create_species_number_from_name = n_species
+
+    CALL grow_array(species_names, n_species)
+    CALL grow_array(ionise_to_species, n_species)
+    CALL grow_array(release_species, n_species)
+    CALL grow_array(mass, n_species)
+    CALL grow_array(charge, n_species)
+    CALL grow_array(ionisation_energies, n_species)
+    CALL grow_array(principle, n_species)
+    CALL grow_array(angular, n_species)
+    CALL grow_array(part_count, n_species)
+    CALL grow_array(dumpmask_array, n_species)
+
+    species_names(n_species) = TRIM(name)
+    ionise_to_species(n_species) = -1
+    release_species(n_species) = ''
+    mass(n_species) = -1.0_num
+    charge(n_species) = 0.0_num
+    ionisation_energies(n_species) = HUGE(0.0_num)
+    principle(n_species) = -1
+    angular(n_species) = -1
+    part_count(n_species) = -1
+    dumpmask_array(n_species) = species_dumpmask
+
     RETURN
 
   END FUNCTION create_species_number_from_name
