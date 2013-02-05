@@ -242,6 +242,20 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_opcode_and = 10
   INTEGER, PARAMETER :: c_opcode_or = 11
   INTEGER, PARAMETER :: c_opcode_unary_minus = 12
+  INTEGER, PARAMETER :: c_opcode_unary_plus = 13
+  INTEGER, PARAMETER :: c_num_ops = 13
+
+  ! Associativity constants
+  INTEGER, PARAMETER :: c_assoc_a = 1
+  INTEGER, PARAMETER :: c_assoc_la = 2
+  INTEGER, PARAMETER :: c_assoc_ra = 3
+
+  INTEGER, DIMENSION(c_num_ops), PARAMETER :: &
+      opcode_precedence = (/1, 1, 2, 2, 3, 4, 1, 1, 1, 2, 2, 5, 5/)
+  INTEGER, DIMENSION(c_num_ops), PARAMETER :: &
+      opcode_assoc = (/c_assoc_a, c_assoc_la, c_assoc_a, c_assoc_la, &
+          c_assoc_la, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, &
+          c_assoc_a, c_assoc_ra, c_assoc_ra/)
 
   INTEGER, PARAMETER :: c_paren_left_bracket = 1
   INTEGER, PARAMETER :: c_paren_right_bracket = 2
@@ -361,19 +375,6 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_func_driftz = 46
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
-
-  ! Associativity constants
-  INTEGER, PARAMETER :: c_assoc_a = 1
-  INTEGER, PARAMETER :: c_assoc_la = 2
-  INTEGER, PARAMETER :: c_assoc_ra = 3
-
-  INTEGER, PARAMETER :: num_ops = 12
-  INTEGER, DIMENSION(num_ops), PARAMETER :: &
-      opcode_precedence = (/1, 1, 2, 2, 3, 4, 1, 1, 1, 2, 2, 5/)
-  INTEGER, DIMENSION(num_ops), PARAMETER :: &
-      opcode_assoc = (/c_assoc_a, c_assoc_la, c_assoc_a, c_assoc_la, &
-          c_assoc_la, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, &
-          c_assoc_a, c_assoc_ra/)
 
   TYPE stack_element
     INTEGER :: ptype

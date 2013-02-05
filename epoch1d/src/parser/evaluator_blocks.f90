@@ -41,6 +41,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_opcode_unary_plus) THEN
+      CALL get_values(1, values)
+      CALL push_on_eval(values(1))
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_opcode_unary_minus) THEN
       CALL get_values(1, values)
       CALL push_on_eval(-values(1))
