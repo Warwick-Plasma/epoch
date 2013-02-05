@@ -179,11 +179,6 @@ CONTAINS
     y_min_local = y_mins(y_coords)
     y_max_local = y_maxs(y_coords)
 
-    nx_global_min = cell_x_min(x_coords+1)
-    nx_global_max = cell_x_max(x_coords+1)
-    ny_global_min = cell_y_min(y_coords+1)
-    ny_global_max = cell_y_max(y_coords+1)
-
     ! Setup local grid
     DO ix = -2, nx + 3
       x(ix) = x_global(nx_global_min+ix-1)

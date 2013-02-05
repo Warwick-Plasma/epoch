@@ -932,6 +932,7 @@ MODULE shared_data
   INTEGER :: nx_global_min, nx_global_max
   INTEGER :: ny_global_min, ny_global_max
   INTEGER :: nz_global_min, nz_global_max
+  INTEGER :: n_global_min(c_ndims), n_global_max(c_ndims)
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
 

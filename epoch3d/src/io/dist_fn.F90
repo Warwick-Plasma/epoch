@@ -171,7 +171,7 @@ CONTAINS
         resolution(idim) = nx
         ranges(1,idim) = x_min_local - 0.5_num * dx
         ranges(2,idim) = x_max_local + 0.5_num * dx
-        start_local(idim) = cell_x_min(x_coords+1)
+        start_local(idim) = nx_global_min
         global_resolution(idim) = nx_global
         dgrid(idim) = dx
         labels(idim) = 'X'
@@ -184,7 +184,7 @@ CONTAINS
         resolution(idim) = ny
         ranges(1,idim) = y_min_local - 0.5_num * dy
         ranges(2,idim) = y_max_local + 0.5_num * dy
-        start_local(idim) = cell_y_min(y_coords+1)
+        start_local(idim) = ny_global_min
         global_resolution(idim) = ny_global
         dgrid(idim) = dy
         labels(idim) = 'Y'
@@ -197,7 +197,7 @@ CONTAINS
         resolution(idim) = nz
         ranges(1,idim) = z_min_local - 0.5_num * dz
         ranges(2,idim) = z_max_local + 0.5_num * dz
-        start_local(idim) = cell_z_min(z_coords+1)
+        start_local(idim) = nz_global_min
         global_resolution(idim) = nz_global
         dgrid(idim) = dz
         labels(idim) = 'Z'

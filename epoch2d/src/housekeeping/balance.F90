@@ -150,9 +150,13 @@ CONTAINS
       ! Set the new nx, ny
       nx_global_min = cell_x_min(x_coords+1)
       nx_global_max = cell_x_max(x_coords+1)
+      n_global_min(1) = nx_global_min
+      n_global_max(1) = nx_global_max
 
       ny_global_min = cell_y_min(y_coords+1)
       ny_global_max = cell_y_max(y_coords+1)
+      n_global_min(2) = ny_global_min
+      n_global_max(2) = ny_global_max
 
       nx = nx_global_max - nx_global_min + 1
       ny = ny_global_max - ny_global_min + 1

@@ -902,6 +902,7 @@ MODULE shared_data
   INTEGER, DIMENSION(:), ALLOCATABLE :: old_x_max, old_y_max
   INTEGER :: nx_global_min, nx_global_max
   INTEGER :: ny_global_min, ny_global_max
+  INTEGER :: n_global_min(c_ndims), n_global_max(c_ndims)
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
 

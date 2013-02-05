@@ -265,6 +265,25 @@ CONTAINS
       ENDDO
     ENDIF
 
+    nx_global_min = cell_x_min(x_coords+1)
+    nx_global_max = cell_x_max(x_coords+1)
+    n_global_min(1) = nx_global_min
+    n_global_max(1) = nx_global_max
+
+    ny_global_min = cell_y_min(y_coords+1)
+    ny_global_max = cell_y_max(y_coords+1)
+    n_global_min(2) = ny_global_min
+    n_global_max(2) = ny_global_max
+
+    nz_global_min = cell_z_min(z_coords+1)
+    nz_global_max = cell_z_max(z_coords+1)
+    n_global_min(3) = nz_global_min
+    n_global_max(3) = nz_global_max
+
+    nx = nx_global_max - nx_global_min + 1
+    ny = ny_global_max - ny_global_min + 1
+    nz = nz_global_max - nz_global_min + 1
+
     subtype_field = 0
 
     ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng), z(1-ng:nz+ng))
