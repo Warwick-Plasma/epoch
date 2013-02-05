@@ -866,7 +866,6 @@ MODULE shared_data
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
-    REAL(num) :: sort_index
   END TYPE particle_sort_element
 
   TYPE(particle_sort_element), POINTER, DIMENSION(:) :: coll_sort_array
