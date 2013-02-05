@@ -59,7 +59,7 @@ PROGRAM pic
 
   IF (rank .EQ. 0) THEN
     PRINT *, 'Specify output directory'
-    READ(*, *) data_dir
+    READ(*,'(A)') data_dir
   ENDIF
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, MPI_COMM_WORLD, errcode)
