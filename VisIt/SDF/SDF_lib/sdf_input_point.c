@@ -216,6 +216,8 @@ int sdf_point_factor(sdf_file_t *h, int *local_npoints)
         b->starts[0] = h->rank * (npoint_min + 1);
         *local_npoints = npoint_min + 1;
     }
+#else
+    *local_npoints = h->current_block->npoints;
 #endif
 
     return 0;
