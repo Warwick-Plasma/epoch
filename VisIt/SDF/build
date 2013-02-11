@@ -95,7 +95,7 @@ CC=mpicc," Makefile > .Makefile.tmp
       # FIXME: This is to workaround incorrect cmake output
       ofile=CMakeFiles/ESDFDatabase_par.dir/build.make
       if [ -e $ofile ]; then
-        sed '/visit.*librt\.so/ d;/visit.*libpthread\.so/ d' $ofile \
+        sed '/linux-x86_64\/lib\/librt\.so/ d;/linux-x86_64\/lib\/libpthread\.so/ d' $ofile \
             > $tmpdir/tmp
         mv $tmpdir/tmp $ofile
       fi
