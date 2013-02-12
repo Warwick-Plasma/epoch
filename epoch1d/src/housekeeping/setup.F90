@@ -155,9 +155,6 @@ CONTAINS
     x_min_local = x_mins(x_coords)
     x_max_local = x_maxs(x_coords)
 
-    nx_global_min = cell_x_min(x_coords+1)
-    nx_global_max = cell_x_max(x_coords+1)
-
     ! Setup local grid
     DO ix = -2, nx + 3
       x(ix) = x_global(nx_global_min+ix-1)
@@ -1128,7 +1125,7 @@ CONTAINS
 #ifdef PARTICLE_ID4
       iterator_list%id = NINT(array(ipart))
 #else
-      iterator_list%id = NINT(array(ipart),8)
+      iterator_list%id = NINT(array(ipart),i8)
 #endif
       iterator_list => iterator_list%next
     ENDDO

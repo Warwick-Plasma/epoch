@@ -129,7 +129,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    nx = cell_x_max(x_coords+1) - cell_x_min(x_coords+1) + 1
+    nx_global_min = cell_x_min(x_coords+1)
+    nx_global_max = cell_x_max(x_coords+1)
+    n_global_min(1) = nx_global_min
+    n_global_max(1) = nx_global_max
+
+    nx = nx_global_max - nx_global_min + 1
 
     subtype_field = 0
 

@@ -283,7 +283,13 @@ CONTAINS
     as_operator = c_prc_not_this_type
 
     IF (str_cmp(name, '+')) THEN
-      as_operator = c_opcode_plus
+      IF (last_block_type .EQ. c_pt_variable &
+          .OR. last_block_type .EQ. c_pt_constant &
+          .OR. last_block_type .EQ. c_pt_deck_constant) THEN
+        as_operator = c_opcode_plus
+      ELSE
+        as_operator = c_opcode_unary_plus
+      ENDIF
     ENDIF
     IF (str_cmp(name, '-'))  THEN
       IF (last_block_type .EQ. c_pt_variable &

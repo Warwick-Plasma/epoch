@@ -105,8 +105,7 @@ CONTAINS
     ENDIF
 
     create_current_field_subtype = &
-        create_field_subtype(basetype, nx, ny, cell_x_min(x_coords+1), &
-            cell_y_min(y_coords+1))
+        create_field_subtype(basetype, nx, ny, nx_global_min, ny_global_min)
 
   END FUNCTION create_current_field_subtype
 

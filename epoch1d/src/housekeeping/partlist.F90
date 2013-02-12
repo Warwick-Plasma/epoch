@@ -408,7 +408,7 @@ CONTAINS
     a_particle%id = NINT(array(cpos))
     cpos = cpos+1
 #elif PARTICLE_ID
-    a_particle%id = NINT(array(cpos),8)
+    a_particle%id = NINT(array(cpos),i8)
     cpos = cpos+1
 #endif
 #ifdef COLLISIONS_TEST
