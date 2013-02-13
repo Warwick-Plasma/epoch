@@ -134,8 +134,8 @@ CONTAINS
 
     subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
-    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc1_min, tag, &
-        temp, sz, basetype, proc1_max, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc1_min, &
+        tag, temp, sz, basetype, proc1_max, tag, comm, status, errcode)
 
     IF (proc1_max .NE. MPI_PROC_NULL) THEN
       n = 1
@@ -148,7 +148,7 @@ CONTAINS
     ENDIF
 
     CALL MPI_SENDRECV(field(n1_local+1-ng,1-ng), 1, subarray, proc1_max, &
-        temp, sz, basetype, proc1_min, tag, comm, status, errcode)
+        tag, temp, sz, basetype, proc1_min, tag, comm, status, errcode)
 
     IF (proc1_min .NE. MPI_PROC_NULL) THEN
       n = 1
@@ -169,8 +169,8 @@ CONTAINS
 
     subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
-    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc2_min, tag, &
-        temp, sz, basetype, proc2_max, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc2_min, &
+        tag, temp, sz, basetype, proc2_max, tag, comm, status, errcode)
 
     IF (proc2_max .NE. MPI_PROC_NULL) THEN
       n = 1
@@ -183,7 +183,7 @@ CONTAINS
     ENDIF
 
     CALL MPI_SENDRECV(field(1-ng,n2_local+1-ng), 1, subarray, proc2_max, &
-        temp, sz, basetype, proc2_min, tag, comm, status, errcode)
+        tag, temp, sz, basetype, proc2_min, tag, comm, status, errcode)
 
     IF (proc2_min .NE. MPI_PROC_NULL) THEN
       n = 1
