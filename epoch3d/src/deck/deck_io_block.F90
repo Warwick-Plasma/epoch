@@ -43,6 +43,8 @@ CONTAINS
     io_block_name(c_dump_part_charge      ) = 'charge'
     io_block_name(c_dump_part_mass        ) = 'mass'
     io_block_name(c_dump_part_id          ) = 'id'
+    io_block_name(c_dump_part_ek          ) = 'ek'
+    alternate_name(c_dump_part_ek         ) = 'particle_energy'
     io_block_name(c_dump_ex               ) = 'ex'
     io_block_name(c_dump_ey               ) = 'ey'
     io_block_name(c_dump_ez               ) = 'ez'

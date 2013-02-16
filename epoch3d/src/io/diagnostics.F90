@@ -255,6 +255,8 @@ CONTAINS
           iterate_charge)
       CALL write_particle_variable(c_dump_part_mass, code, 'Mass', 'kg', &
           iterate_mass)
+      CALL write_particle_variable(c_dump_part_ek, code, 'Ek', 'J', &
+          iterate_ek)
 #ifdef PARTICLE_DEBUG
       CALL write_particle_variable(c_dump_part_grid, code, 'Processor', &
           '', iterate_processor)
