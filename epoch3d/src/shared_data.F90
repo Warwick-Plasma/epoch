@@ -177,6 +177,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_photons = 2**15
   INTEGER(i8), PARAMETER :: c_def_trident_photons = 2**16
   INTEGER(i8), PARAMETER :: c_def_prefetch = 2**17
+  INTEGER(i8), PARAMETER :: c_def_mpi_debug = 2**18
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x

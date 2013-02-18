@@ -135,6 +135,10 @@ CONTAINS
     defines = IOR(defines, c_def_prefetch)
     WRITE(*, *) 'Particle prefetching -DPREFETCH'
 #endif
+#ifdef MPI_DEBUG
+    defines = IOR(defines, c_def_mpi_debug)
+    WRITE(*, *) 'MPI error handling -DMPI_DEBUG'
+#endif
     WRITE(*, *) '*************************************************************'
     WRITE(*, *)
 
