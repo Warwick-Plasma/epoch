@@ -155,6 +155,7 @@ CONTAINS
 
     stack%stack_size = 1
     ALLOCATE(stack%entries(stack%stack_size))
+    CALL initialise_stack_element(stack%entries(1))
     stack%init = .TRUE.
 
   END SUBROUTINE initialise_stack
@@ -197,7 +198,7 @@ CONTAINS
     TYPE(stack_element), INTENT(IN) :: value
     TYPE(primitive_stack), INTENT(INOUT) :: stack
     TYPE(stack_element), POINTER :: old_buffer(:)
-    INTEGER :: old_size
+    INTEGER :: i, old_size
 
     stack%stack_point = stack%stack_point + 1
 
@@ -212,6 +213,9 @@ CONTAINS
       old_buffer => stack%entries
       ALLOCATE(stack%entries(stack%stack_size))
       stack%entries(1:old_size) = old_buffer(1:old_size)
+      DO i = old_size+1,stack%stack_size
+        CALL initialise_stack_element(stack%entries(i))
+      ENDDO
       DEALLOCATE(old_buffer)
     ENDIF
 
@@ -278,6 +282,21 @@ CONTAINS
     value = stack%entries(stack%stack_point-offset)
 
   END SUBROUTINE stack_snoop
+
+
+
+  SUBROUTINE initialise_stack_element(element)
+
+    TYPE(stack_element), INTENT(INOUT) :: element
+
+    element%ptype = 0
+    element%value = 0
+    element%numerical_data = 0
+#ifdef PARSER_DEBUG
+    element%text = ''
+#endif
+
+  END SUBROUTINE initialise_stack_element
 
 
 

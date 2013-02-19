@@ -177,6 +177,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_photons = 2**15
   INTEGER(i8), PARAMETER :: c_def_trident_photons = 2**16
   INTEGER(i8), PARAMETER :: c_def_prefetch = 2**17
+  INTEGER(i8), PARAMETER :: c_def_mpi_debug = 2**18
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -636,7 +637,8 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_cpml_psi_bxz      = 43
   INTEGER, PARAMETER :: c_dump_cpml_psi_byz      = 44
   INTEGER, PARAMETER :: c_dump_absorption        = 45
-  INTEGER, PARAMETER :: num_vars_to_dump         = 45
+  INTEGER, PARAMETER :: c_dump_part_ek           = 46
+  INTEGER, PARAMETER :: num_vars_to_dump         = 46
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -652,9 +654,9 @@ MODULE shared_data
 
   TYPE io_block_type
     CHARACTER(LEN=string_length) :: name
-    REAL(num) :: dt_snapshot, time_next, time_first
+    REAL(num) :: dt_snapshot, time_prev, time_first
     REAL(num) :: dt_average, dt_min_average, average_time
-    INTEGER :: nstep_snapshot, nstep_next, nstep_first, nstep_average
+    INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     LOGICAL :: restart, dump, any_average
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data

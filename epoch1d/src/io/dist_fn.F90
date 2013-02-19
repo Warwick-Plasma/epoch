@@ -139,6 +139,8 @@ CONTAINS
     CHARACTER(LEN=8), DIMENSION(c_df_maxdirs) :: labels, units
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
 
+    IF (io_list(species)%count .LT. 1) RETURN
+
     errcode = 0
     use_x = .FALSE.
     ranges = ranges_in

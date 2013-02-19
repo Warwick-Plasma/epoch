@@ -43,6 +43,8 @@ CONTAINS
     io_block_name(c_dump_part_charge      ) = 'charge'
     io_block_name(c_dump_part_mass        ) = 'mass'
     io_block_name(c_dump_part_id          ) = 'id'
+    io_block_name(c_dump_part_ek          ) = 'ek'
+    alternate_name(c_dump_part_ek         ) = 'particle_energy'
     io_block_name(c_dump_ex               ) = 'ex'
     io_block_name(c_dump_ey               ) = 'ey'
     io_block_name(c_dump_ez               ) = 'ez'
@@ -510,13 +512,13 @@ CONTAINS
 
     io_block%name = ''
     io_block%dt_snapshot = -1.0_num
-    io_block%time_next = 0.0_num
+    io_block%time_prev = 0.0_num
     io_block%time_first = 0.0_num
     io_block%dt_average = -1.0_num
     io_block%dt_min_average = -1.0_num
     io_block%average_time = -1.0_num
     io_block%nstep_snapshot = -1
-    io_block%nstep_next = 0
+    io_block%nstep_prev = 0
     io_block%nstep_first = 0
     io_block%nstep_average = -1
     io_block%restart = .FALSE.

@@ -452,6 +452,58 @@ CONTAINS
 
 
 
+  ! iterator for particle energy
+  FUNCTION iterate_ek(array, n_points, start)
+
+    REAL(num) :: iterate_ek
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: n_points
+    LOGICAL, INTENT(IN) :: start
+    TYPE(particle), POINTER, SAVE :: cur
+    TYPE(particle_list), POINTER, SAVE :: current_list
+    INTEGER :: part_count
+    REAL(num) :: part_mc2
+
+    IF (start)  THEN
+      CALL start_particle_list(current_species, current_list, cur)
+    ENDIF
+
+    part_count = 0
+#ifndef PER_PARTICLE_CHARGE_MASS
+    part_mc2 = (current_species%mass * c)**2
+#endif
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+#ifdef PHOTONS
+      IF (current_species%species_type .NE. c_species_id_photon) THEN
+#endif
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+          part_count = part_count + 1
+#ifdef PER_PARTICLE_CHARGE_MASS
+          part_mc2 = (cur%mass * c)**2
+#endif
+          array(part_count) = c * SQRT(SUM(cur%part_p**2) + part_mc2)
+          cur => cur%next
+        ENDDO
+#ifdef PHOTONS
+      ELSE
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+          part_count = part_count + 1
+          array(part_count) = cur%particle_energy
+          cur => cur%next
+        ENDDO
+      ENDIF
+#endif
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    ENDDO
+    n_points = part_count
+
+    iterate_ek = 0
+
+  END FUNCTION iterate_ek
+
+
+
 #ifdef PARTICLE_DEBUG
   ! iterator for particle processor
   FUNCTION iterate_processor(array, n_points, start)

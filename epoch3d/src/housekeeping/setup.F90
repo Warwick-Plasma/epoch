@@ -717,14 +717,14 @@ CONTAINS
 
     DO i = 1, n_io_blocks
       IF (io_block_list(i)%dt_snapshot .GT. 0.0_num) THEN
-        io_block_list(i)%time_next = time + io_block_list(i)%dt_snapshot
+        io_block_list(i)%time_prev = time
       ELSE
-        io_block_list(i)%time_next = time
+        io_block_list(i)%time_prev = 0.0_num
       ENDIF
       IF (io_block_list(i)%nstep_snapshot .GT. 0) THEN
-        io_block_list(i)%nstep_next = step + io_block_list(i)%nstep_snapshot
+        io_block_list(i)%nstep_prev = step
       ELSE
-        io_block_list(i)%nstep_next = step
+        io_block_list(i)%nstep_prev = 0
       ENDIF
     ENDDO
 
@@ -889,17 +889,17 @@ CONTAINS
           CALL find_species_by_name(block_id, ispecies)
           IF (ispecies .EQ. 0) CYClE
           CALL sdf_read_srl(sdf_handle, species_list(ispecies)%npart_per_cell)
-        ELSE IF (block_id(1:10) .EQ. 'time_next/') THEN
+        ELSE IF (block_id(1:10) .EQ. 'time_prev/') THEN
           DO i = 1, n_io_blocks
             IF (str_cmp(block_id(11:), io_block_list(i)%name)) THEN
-              CALL sdf_read_srl(sdf_handle, io_block_list(i)%time_next)
+              CALL sdf_read_srl(sdf_handle, io_block_list(i)%time_prev)
               EXIT
             ENDIF
           ENDDO
-        ELSE IF (block_id(1:11) .EQ. 'nstep_next/') THEN
+        ELSE IF (block_id(1:11) .EQ. 'nstep_prev/') THEN
           DO i = 1, n_io_blocks
             IF (str_cmp(block_id(12:), io_block_list(i)%name)) THEN
-              CALL sdf_read_srl(sdf_handle, io_block_list(i)%nstep_next)
+              CALL sdf_read_srl(sdf_handle, io_block_list(i)%nstep_prev)
               EXIT
             ENDIF
           ENDDO

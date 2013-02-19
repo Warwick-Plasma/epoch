@@ -18,6 +18,9 @@ CONTAINS
     CALL MPI_INIT(errcode)
     CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nproc, errcode)
     CALL MPI_COMM_RANK(MPI_COMM_WORLD, rank, errcode)
+#ifdef MPI_DEBUG
+    CALL mpi_set_error_handler
+#endif
 
   END SUBROUTINE mpi_minimal_init
 
@@ -378,5 +381,95 @@ CONTAINS
     CALL MPI_BARRIER(comm, errcode)
 
   END SUBROUTINE mpi_close
+
+
+
+#ifdef MPI_DEBUG
+  SUBROUTINE mpi_set_error_handler
+
+    INTEGER :: errhandler
+
+    CALL MPI_COMM_CREATE_ERRHANDLER(mpi_error_handler, errhandler, errcode)
+    CALL MPI_COMM_SET_ERRHANDLER(MPI_COMM_WORLD, errhandler, errcode)
+
+  END SUBROUTINE mpi_set_error_handler
+
+
+
+  SUBROUTINE mpi_error_handler(comm, error_code)
+
+    INTEGER :: comm, error_code
+    REAL :: tmp1, tmp2
+    CHARACTER(LEN=29) :: errstring(0:MPI_ERR_LASTCODE)
+
+    errstring(MPI_SUCCESS                  ) = 'MPI_SUCCESS                  '
+    errstring(MPI_ERR_BUFFER               ) = 'MPI_ERR_BUFFER               '
+    errstring(MPI_ERR_COUNT                ) = 'MPI_ERR_COUNT                '
+    errstring(MPI_ERR_TYPE                 ) = 'MPI_ERR_TYPE                 '
+    errstring(MPI_ERR_TAG                  ) = 'MPI_ERR_TAG                  '
+    errstring(MPI_ERR_COMM                 ) = 'MPI_ERR_COMM                 '
+    errstring(MPI_ERR_RANK                 ) = 'MPI_ERR_RANK                 '
+    errstring(MPI_ERR_REQUEST              ) = 'MPI_ERR_REQUEST              '
+    errstring(MPI_ERR_ROOT                 ) = 'MPI_ERR_ROOT                 '
+    errstring(MPI_ERR_GROUP                ) = 'MPI_ERR_GROUP                '
+    errstring(MPI_ERR_OP                   ) = 'MPI_ERR_OP                   '
+    errstring(MPI_ERR_TOPOLOGY             ) = 'MPI_ERR_TOPOLOGY             '
+    errstring(MPI_ERR_DIMS                 ) = 'MPI_ERR_DIMS                 '
+    errstring(MPI_ERR_ARG                  ) = 'MPI_ERR_ARG                  '
+    errstring(MPI_ERR_UNKNOWN              ) = 'MPI_ERR_UNKNOWN              '
+    errstring(MPI_ERR_TRUNCATE             ) = 'MPI_ERR_TRUNCATE             '
+    errstring(MPI_ERR_OTHER                ) = 'MPI_ERR_OTHER                '
+    errstring(MPI_ERR_INTERN               ) = 'MPI_ERR_INTERN               '
+    errstring(MPI_ERR_IN_STATUS            ) = 'MPI_ERR_IN_STATUS            '
+    errstring(MPI_ERR_PENDING              ) = 'MPI_ERR_PENDING              '
+    errstring(MPI_ERR_ACCESS               ) = 'MPI_ERR_ACCESS               '
+    errstring(MPI_ERR_AMODE                ) = 'MPI_ERR_AMODE                '
+    errstring(MPI_ERR_ASSERT               ) = 'MPI_ERR_ASSERT               '
+    errstring(MPI_ERR_BAD_FILE             ) = 'MPI_ERR_BAD_FILE             '
+    errstring(MPI_ERR_BASE                 ) = 'MPI_ERR_BASE                 '
+    errstring(MPI_ERR_CONVERSION           ) = 'MPI_ERR_CONVERSION           '
+    errstring(MPI_ERR_DISP                 ) = 'MPI_ERR_DISP                 '
+    errstring(MPI_ERR_DUP_DATAREP          ) = 'MPI_ERR_DUP_DATAREP          '
+    errstring(MPI_ERR_FILE_EXISTS          ) = 'MPI_ERR_FILE_EXISTS          '
+    errstring(MPI_ERR_FILE_IN_USE          ) = 'MPI_ERR_FILE_IN_USE          '
+    errstring(MPI_ERR_FILE                 ) = 'MPI_ERR_FILE                 '
+    errstring(MPI_ERR_INFO_KEY             ) = 'MPI_ERR_INFO_KEY             '
+    errstring(MPI_ERR_INFO_NOKEY           ) = 'MPI_ERR_INFO_NOKEY           '
+    errstring(MPI_ERR_INFO_VALUE           ) = 'MPI_ERR_INFO_VALUE           '
+    errstring(MPI_ERR_INFO                 ) = 'MPI_ERR_INFO                 '
+    errstring(MPI_ERR_IO                   ) = 'MPI_ERR_IO                   '
+    errstring(MPI_ERR_KEYVAL               ) = 'MPI_ERR_KEYVAL               '
+    errstring(MPI_ERR_LOCKTYPE             ) = 'MPI_ERR_LOCKTYPE             '
+    errstring(MPI_ERR_NAME                 ) = 'MPI_ERR_NAME                 '
+    errstring(MPI_ERR_NO_MEM               ) = 'MPI_ERR_NO_MEM               '
+    errstring(MPI_ERR_NOT_SAME             ) = 'MPI_ERR_NOT_SAME             '
+    errstring(MPI_ERR_NO_SPACE             ) = 'MPI_ERR_NO_SPACE             '
+    errstring(MPI_ERR_NO_SUCH_FILE         ) = 'MPI_ERR_NO_SUCH_FILE         '
+    errstring(MPI_ERR_PORT                 ) = 'MPI_ERR_PORT                 '
+    errstring(MPI_ERR_QUOTA                ) = 'MPI_ERR_QUOTA                '
+    errstring(MPI_ERR_READ_ONLY            ) = 'MPI_ERR_READ_ONLY            '
+    errstring(MPI_ERR_RMA_CONFLICT         ) = 'MPI_ERR_RMA_CONFLICT         '
+    errstring(MPI_ERR_RMA_SYNC             ) = 'MPI_ERR_RMA_SYNC             '
+    errstring(MPI_ERR_SERVICE              ) = 'MPI_ERR_SERVICE              '
+    errstring(MPI_ERR_SIZE                 ) = 'MPI_ERR_SIZE                 '
+    errstring(MPI_ERR_SPAWN                ) = 'MPI_ERR_SPAWN                '
+    errstring(MPI_ERR_UNSUPPORTED_DATAREP  ) = 'MPI_ERR_UNSUPPORTED_DATAREP  '
+    errstring(MPI_ERR_UNSUPPORTED_OPERATION) = 'MPI_ERR_UNSUPPORTED_OPERATION'
+    errstring(MPI_ERR_WIN                  ) = 'MPI_ERR_WIN                  '
+    errstring(MPI_ERR_LASTCODE             ) = 'MPI_ERR_LASTCODE             '
+
+    PRINT*, "Caught MPI error: ", TRIM(errstring(error_code))
+    IF (comm .EQ. MPI_COMM_WORLD) THEN
+      PRINT*, "Communicator MPI_COMM_WORLD"
+    ELSE
+      PRINT*, "Communicator ", comm, "(Not MPI_COMM_WORLD)"
+    ENDIF
+
+    ! Deliberately raise a divide-by-zero error
+    tmp1 = 0.0
+    tmp2 = 1.0 / tmp1
+
+  END SUBROUTINE mpi_error_handler
+#endif
 
 END MODULE mpi_routines
