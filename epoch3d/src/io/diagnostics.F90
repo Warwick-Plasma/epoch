@@ -1371,6 +1371,8 @@ CONTAINS
 
     id = c_dump_part_grid
     IF (IAND(iomask(id), code) .NE. 0) THEN
+      CALL build_species_subset
+
       convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
           .AND. (IAND(code,c_io_restartable) .EQ. 0 &
           .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
@@ -1438,6 +1440,8 @@ CONTAINS
 
     id = id_in
     IF (IAND(iomask(id), code) .NE. 0) THEN
+      CALL build_species_subset
+
       convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
           .AND. (IAND(code,c_io_restartable) .EQ. 0 &
           .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
