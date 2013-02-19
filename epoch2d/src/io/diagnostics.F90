@@ -113,13 +113,13 @@ CONTAINS
 
       DO io = 1, n_io_blocks
         CALL sdf_write_srl(sdf_handle, &
-            'time_next/'//TRIM(io_block_list(io)%name), &
-            'time_next/'//TRIM(io_block_list(io)%name), &
-            io_block_list(io)%time_next)
+            'time_prev/'//TRIM(io_block_list(io)%name), &
+            'time_prev/'//TRIM(io_block_list(io)%name), &
+            io_block_list(io)%time_prev)
         CALL sdf_write_srl(sdf_handle, &
-            'nstep_next/'//TRIM(io_block_list(io)%name), &
-            'nstep_next/'//TRIM(io_block_list(io)%name), &
-            io_block_list(io)%nstep_next)
+            'nstep_prev/'//TRIM(io_block_list(io)%name), &
+            'nstep_prev/'//TRIM(io_block_list(io)%name), &
+            io_block_list(io)%nstep_prev)
       ENDDO
 
       DO ispecies = 1, n_species
@@ -419,7 +419,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: step
     LOGICAL, INTENT(OUT) :: print_arrays, first_call, last_call
-    INTEGER :: id, io, is
+    INTEGER :: id, io, is, nstep_next
     REAL(num) :: t0, t1, time_first, av_time_first
     LOGICAL, SAVE :: first = .TRUE.
 
@@ -451,26 +451,26 @@ CONTAINS
       t0 = HUGE(1.0_num)
       t1 = HUGE(1.0_num)
       IF (io_block_list(io)%dt_snapshot .GE. 0.0_num) &
-          t0 = io_block_list(io)%time_next
-      IF (io_block_list(io)%nstep_snapshot .GE. 0) &
-          t1 = time + dt * (io_block_list(io)%nstep_next - step)
+          t0 = io_block_list(io)%time_prev + io_block_list(io)%dt_snapshot
+      IF (io_block_list(io)%nstep_snapshot .GE. 0) THEN
+        nstep_next = io_block_list(io)%nstep_prev &
+            + io_block_list(io)%nstep_snapshot
+        t1 = time + dt * (nstep_next - step)
+      ENDIF
 
       IF (t0 .LT. t1) THEN
         ! Next I/O dump based on dt_snapshot
         time_first = t0
-        IF (io_block_list(io)%dt_snapshot .GT. 0 &
-            .AND. time .GE. io_block_list(io)%time_next) THEN
-          io_block_list(io)%time_next  = &
-              io_block_list(io)%time_next + io_block_list(io)%dt_snapshot
+        IF (io_block_list(io)%dt_snapshot .GT. 0 .AND. time .GE. t0) THEN
+          io_block_list(io)%time_prev = time
           io_block_list(io)%dump = .TRUE.
         ENDIF
       ELSE
         ! Next I/O dump based on nstep_snapshot
         time_first = t1
         IF (io_block_list(io)%nstep_snapshot .GT. 0 &
-            .AND. step .GE. io_block_list(io)%nstep_next) THEN
-          io_block_list(io)%nstep_next = &
-              io_block_list(io)%nstep_next + io_block_list(io)%nstep_snapshot
+            .AND. step .GE. nstep_next) THEN
+          io_block_list(io)%nstep_prev = step
           io_block_list(io)%dump = .TRUE.
         ENDIF
       ENDIF

@@ -654,9 +654,9 @@ MODULE shared_data
 
   TYPE io_block_type
     CHARACTER(LEN=string_length) :: name
-    REAL(num) :: dt_snapshot, time_next, time_first
+    REAL(num) :: dt_snapshot, time_prev, time_first
     REAL(num) :: dt_average, dt_min_average, average_time
-    INTEGER :: nstep_snapshot, nstep_next, nstep_first, nstep_average
+    INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     LOGICAL :: restart, dump, any_average
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
