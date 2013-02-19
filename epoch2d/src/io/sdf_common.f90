@@ -452,6 +452,7 @@ CONTAINS
     var%done_info = .FALSE.
     var%done_data = .FALSE.
     var%data_location = 0
+    var%blocktype = c_blocktype_null
 
   END SUBROUTINE initialise_block_type
 
