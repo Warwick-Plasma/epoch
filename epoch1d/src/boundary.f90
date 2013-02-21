@@ -243,7 +243,9 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-    INTEGER :: nn, i
+    INTEGER :: nn, i, flip_dir = 0
+
+    IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
     nn = nx
 
@@ -256,7 +258,7 @@ CONTAINS
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_x_min) .EQ. c_bc_reflect .AND. x_min_boundary)) THEN
-      IF (PRESENT(flip_direction) .AND. flip_direction .EQ. c_dir_x) THEN
+      IF (flip_dir .EQ. c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(i) = array(i) - array(-i)
@@ -277,7 +279,7 @@ CONTAINS
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_x_max) .EQ. c_bc_reflect .AND. x_max_boundary)) THEN
-      IF (PRESENT(flip_direction) .AND. flip_direction .EQ. c_dir_x) THEN
+      IF (flip_dir .EQ. c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(nn-i) = array(nn-i) - array(nn+i)
