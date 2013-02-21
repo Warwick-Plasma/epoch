@@ -179,14 +179,16 @@ CONTAINS
     CALL write_field(c_dump_jz, code, 'jz', 'Current/Jz', 'A/m^2', &
         c_stagger_jz, jz)
 
-    CALL write_field(c_dump_cpml_psi_eyx, code, 'cpml_psi_eyx', 'CPML/Ey_x', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_eyx)
-    CALL write_field(c_dump_cpml_psi_ezx, code, 'cpml_psi_ezx', 'CPML/Ez_x', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_ezx)
-    CALL write_field(c_dump_cpml_psi_byx, code, 'cpml_psi_byx', 'CPML/By_x', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_byx)
-    CALL write_field(c_dump_cpml_psi_bzx, code, 'cpml_psi_bzx', 'CPML/Bz_x', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_bzx)
+    IF (cpml_boundaries) THEN
+      CALL write_field(c_dump_cpml_psi_eyx, code, 'cpml_psi_eyx', 'CPML/Ey_x', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_eyx)
+      CALL write_field(c_dump_cpml_psi_ezx, code, 'cpml_psi_ezx', 'CPML/Ez_x', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_ezx)
+      CALL write_field(c_dump_cpml_psi_byx, code, 'cpml_psi_byx', 'CPML/By_x', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_byx)
+      CALL write_field(c_dump_cpml_psi_bzx, code, 'cpml_psi_bzx', 'CPML/Bz_x', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_bzx)
+    ENDIF
 
     IF (n_subsets .GT. 0) THEN
       DO i = 1, n_species
