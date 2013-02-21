@@ -179,32 +179,34 @@ CONTAINS
     CALL write_field(c_dump_jz, code, 'jz', 'Current/Jz', 'A/m^2', &
         c_stagger_jz, jz)
 
-    CALL write_field(c_dump_cpml_psi_eyx, code, 'cpml_psi_eyx', 'CPML/Ey_x', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_eyx)
-    CALL write_field(c_dump_cpml_psi_ezx, code, 'cpml_psi_ezx', 'CPML/Ez_x', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_ezx)
-    CALL write_field(c_dump_cpml_psi_byx, code, 'cpml_psi_byx', 'CPML/By_x', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_byx)
-    CALL write_field(c_dump_cpml_psi_bzx, code, 'cpml_psi_bzx', 'CPML/Bz_x', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_bzx)
+    IF (cpml_boundaries) THEN
+      CALL write_field(c_dump_cpml_psi_eyx, code, 'cpml_psi_eyx', 'CPML/Ey_x', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_eyx)
+      CALL write_field(c_dump_cpml_psi_ezx, code, 'cpml_psi_ezx', 'CPML/Ez_x', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_ezx)
+      CALL write_field(c_dump_cpml_psi_byx, code, 'cpml_psi_byx', 'CPML/By_x', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_byx)
+      CALL write_field(c_dump_cpml_psi_bzx, code, 'cpml_psi_bzx', 'CPML/Bz_x', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_bzx)
 
-    CALL write_field(c_dump_cpml_psi_exy, code, 'cpml_psi_exy', 'CPML/Ex_y', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_exy)
-    CALL write_field(c_dump_cpml_psi_ezy, code, 'cpml_psi_ezy', 'CPML/Ez_y', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_ezy)
-    CALL write_field(c_dump_cpml_psi_bxy, code, 'cpml_psi_bxy', 'CPML/Bx_y', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_bxy)
-    CALL write_field(c_dump_cpml_psi_bzy, code, 'cpml_psi_bzy', 'CPML/Bz_y', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_bzy)
+      CALL write_field(c_dump_cpml_psi_exy, code, 'cpml_psi_exy', 'CPML/Ex_y', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_exy)
+      CALL write_field(c_dump_cpml_psi_ezy, code, 'cpml_psi_ezy', 'CPML/Ez_y', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_ezy)
+      CALL write_field(c_dump_cpml_psi_bxy, code, 'cpml_psi_bxy', 'CPML/Bx_y', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_bxy)
+      CALL write_field(c_dump_cpml_psi_bzy, code, 'cpml_psi_bzy', 'CPML/Bz_y', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_bzy)
 
-    CALL write_field(c_dump_cpml_psi_exz, code, 'cpml_psi_exz', 'CPML/Ex_z', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_exz)
-    CALL write_field(c_dump_cpml_psi_eyz, code, 'cpml_psi_eyz', 'CPML/Ey_z', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_eyz)
-    CALL write_field(c_dump_cpml_psi_bxz, code, 'cpml_psi_bxz', 'CPML/Bx_z', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_bxz)
-    CALL write_field(c_dump_cpml_psi_byz, code, 'cpml_psi_byz', 'CPML/By_z', &
-        'A/m^2', c_stagger_cell_centre, cpml_psi_byz)
+      CALL write_field(c_dump_cpml_psi_exz, code, 'cpml_psi_exz', 'CPML/Ex_z', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_exz)
+      CALL write_field(c_dump_cpml_psi_eyz, code, 'cpml_psi_eyz', 'CPML/Ey_z', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_eyz)
+      CALL write_field(c_dump_cpml_psi_bxz, code, 'cpml_psi_bxz', 'CPML/Bx_z', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_bxz)
+      CALL write_field(c_dump_cpml_psi_byz, code, 'cpml_psi_byz', 'CPML/By_z', &
+          'A/m^2', c_stagger_cell_centre, cpml_psi_byz)
+    ENDIF
 
     IF (n_subsets .GT. 0) THEN
       DO i = 1, n_species
