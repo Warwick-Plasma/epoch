@@ -2,10 +2,12 @@
 
 fmt="SDF"
 
-version=`visit -version 2>&1 | sed 's,.* \([0-9]*\).*,\1,'`
-tmpdir=.tmp
+fullversion=`visit -version 2>&1 | sed 's,.* \([0-9\.]*\),\1,'`
+version=${fullversion%%\.*}
+tmpdir=.builddir
 
 clean=0
+build_type=0
 build_visit_reader=1
 build_utilities=0
 DBG=""
@@ -13,17 +15,44 @@ DEBUG=""
 PRIVATE="-private"
 VERBOSE=""
 OPTS=""
+err=0
 
-while getopts cdpnuv name
+while getopts crdpnuvh123 name
 do
    case $name in
-      c) (( clean++ )) ; OPTS+=" -c";;
+      c) clean=2 ; OPTS+=" -c";;
+      r) clean=1 ; OPTS+=" -r";;
       d) DBG="-g -O0"; OPTS="$OPTS -d";
          DEBUG="-DCMAKE_BUILD_TYPE=Debug" ;;
       p) PRIVATE="-public"; OPTS="$OPTS -p" ;;
       n) build_visit_reader=0 ;;
       u) build_utilities=1 ;;
       v) VERBOSE="VERBOSE=1" ;;
+      h) cat <<EOF
+The VisIt build script attempts to automate the process of building the SDF
+VisIt reader plugin on a variety of platforms. By default it will try three
+approaches to building the plugin. First it tries the build environment
+supplied by the VisIt installation. If this fails, it will attempt to build a
+parallel version of the plugin using the mpi compiler in the current search
+path. Finally, it will try just building the serial version of the plugin.
+
+VisIt build script options:
+  -c: Clean up files. Do not build anything.
+  -r: Rebuild. Clean up files and then build.
+  -d: Build with debugging flags enabled.
+  -p: Do a "public" build. This passes the "-public" flag on to the VisIt build
+      system which copies the binaries into a publically accessible location.
+  -n: Don't build the VisIt reader plugin.
+  -u: Do build the additional SDF utilities.
+  -v: Build verbosely.
+  -1: Perform only the default VisIt build.
+  -2: Perform only a parallel VisIt build.
+  -3: Perform only a serial VisIt build.
+EOF
+         exit ;;
+      1) build_type=1 ;;
+      2) build_type=2 ;;
+      3) build_type=3 ;;
    esac
 done
 
@@ -48,11 +77,29 @@ export CXXFLAGS="-Wno-deprecated $DBG"
 export CFLAGS="$DBG"
 
 buildit () {
-  rm -rf $tmpdir
-  mkdir -p $tmpdir
-  if [ "$version"x != x ]; then
+  err=0
+
+  purge=0
+  buildver="$build_type -- $fullversion"
+  oldbuildver=""
+  [ -r $tmpdir/buildver ] && oldbuildver=`cat $tmpdir/buildver`
+  if [ "$oldbuildver"x != "$buildver"x ]; then
+    purge=1
+    rm -rf $tmpdir
+    mkdir -p $tmpdir
+    echo "$buildver" > $tmpdir/buildver
+    rm -rf CMake* cmake* Makefile
+  else
+    echo "No need to purge"
+  fi
+
+  if [ "$version"x = x ]; then
+    echo "Unable to build. Please add visit to your \$PATH"
+    exit 1
+  fi
+
+  if [ $purge -ne 0 ]; then
     xml2info -clobber $PRIVATE ${fmt}${version}.xml
-    if [ $clean -ge 1 ] ; then rm -rf CMake* cmake* Makefile ; fi
 
     if [ $version -eq 1 ]; then
       xml2makefile -clobber $PRIVATE ${fmt}${version}.xml
@@ -62,12 +109,12 @@ CFLAGS=\$(CFLAGSORIG) -m32 $DBG\\
 PY_CXXFLAGS=-I\$(TOPDIR)/include/python,;s,\(^LDFLAGS.*\),\1 -m32 $DBG," Makefile > .Makefile.tmp
         \mv -f .Makefile.tmp Makefile
       fi
-      if [ $build_parallel -eq 1 ]; then
+      if [ $build_type -eq 2 ]; then
         sed "s,\(^CXXFLAGS.*\),\1\\
 CXX=mpic++\\
 CC=mpicc," Makefile > .Makefile.tmp
         \mv -f .Makefile.tmp Makefile
-      elif [ $build_serial -eq 1 ]; then
+      elif [ $build_type -eq 3 ]; then
         grep -v "^EPARDSO" Makefile > .Makefile.tmp
         \mv -f .Makefile.tmp Makefile
       fi
@@ -78,12 +125,12 @@ CC=mpicc," Makefile > .Makefile.tmp
         base=`basename $f`
         sed 's,/[^;]*libmpi[^;]*;,,g; s,/[^;]*libopen-[^;]*;,,g;
              s,[^;]*}general;,,g' $f > $tmpdir/$base
-        if [ $build_parallel -eq 1 ]; then
+        if [ $build_type -eq 2 ]; then
           grep -v 'CMAKE_CXX_COMPILER ' $tmpdir/$base | \
               grep -v 'CMAKE_C_COMPILER ' | \
               grep -v 'VISIT_PARALLEL_LIBS ' > $tmpdir/tmp
           mv $tmpdir/tmp $tmpdir/$base
-        elif [ $build_serial -eq 1 ]; then
+        elif [ $build_type -eq 3 ]; then
           grep -v 'VISIT_PARALLEL ' $tmpdir/$base > $tmpdir/tmp
           mv $tmpdir/tmp $tmpdir/$base
         fi
@@ -91,56 +138,90 @@ CC=mpicc," Makefile > .Makefile.tmp
             CMakeLists.txt > $tmpdir/tmp
         mv $tmpdir/tmp CMakeLists.txt
       done
-      cmake $DEBUG .
-      # FIXME: This is to workaround incorrect cmake output
-      ofile=CMakeFiles/ESDFDatabase_par.dir/build.make
-      if [ -e $ofile ]; then
-        sed '/linux-x86_64\/lib\/librt\.so/ d;
-             /linux-x86_64\/lib\/libpthread\.so/ d' $ofile > $tmpdir/tmp
-        mv $tmpdir/tmp $ofile
-      fi
     fi
-
-    if [ $clean -ge 1 ] ; then make clean ; fi
-    make $VERBOSE
-  else
-    echo "Unable to build. Please add visit to your \$PATH"
+    cmake $DEBUG .
+    # FIXME: This is to workaround incorrect cmake output
+    ofile=CMakeFiles/ESDFDatabase_par.dir/build.make
+    if [ -e $ofile ]; then
+      sed '/linux-x86_64\/lib\/librt\.so/ d;
+           /linux-x86_64\/lib\/libpthread\.so/ d' $ofile > $tmpdir/tmp
+      mv $tmpdir/tmp $ofile
+    fi
   fi
+
+  if [ $clean -ge 1 ] ; then make clean ; fi
+  make $VERBOSE
+}
+
+build_default () {
+  srl=""
+  build_type=1
+  buildit
+  err=$?
+}
+
+build_parallel () {
+  srl=""
+  build_type=2
+  # Execute in a subshell to stop CC being altered in the current shell.
+  (export CC=mpicc
+  export CXX=mpicxx
+  buildit)
+  err=$?
+}
+
+build_serial () {
+  srl=" (Serial version only)."
+  build_type=3
+  buildit
+  err=$?
+}
+
+get_old_build_type () {
+  type=1
+  [ -r $tmpdir/buildver ] && type=`cut -c1 $tmpdir/buildver`
+  return $type
 }
 
 if [ $clean -ge 2 ]; then
   make clean > /dev/null 2>&1
-  rm -rf CMake* cmake* Makefile ${fmt}*Info.C ${fmt}*Info.h
+  rm -rf CMake* cmake* Makefile ${fmt}*Info.C ${fmt}*Info.h $tmpdir
 elif [ $build_visit_reader -eq 1 ]; then
-  srl=""
-  err=0
   ./gen_commit_string
   echo "#define SDF_READER_BUILD_DATE \"`date`\"" > build_date.h
-  build_parallel=0
-  build_serial=0
-  buildit
 
-  if [ $? -ne 0 ]; then
-    build_parallel=1
-    echo
-    echo "Trying again with mpicc"
-    # Execute in a subshell to stop CC being altered in the current shell.
-    (export CC=mpicc
-    export CXX=mpicxx
-    buildit)
-    [ $? -ne 0 ] && err=1
-    build_parallel=0
-  fi
+  if [ $build_type -eq 1 ]; then
+    build_default
+  elif [ $build_type -eq 2 ]; then
+    build_parallel
+  elif [ $build_type -eq 3 ]; then
+    build_serial
+  else
+    get_old_build_type
+    tried=$?
+    if [ $tried -eq 1 ]; then
+      build_default
+    elif [ $tried -eq 2 ]; then
+      build_parallel
+    elif [ $tried -eq 3 ]; then
+      build_serial
+    fi
 
-  if [ $err -ne 0 ]; then
-    err=0
-    build_serial=1
-    echo
-    echo "Trying again without parallel reader."
-    srl=" (Serial version only)."
-    buildit
-    [ $? -ne 0 ] && err=1
-    build_serial=0
+    if [ $err -ne 0 -a $tried -ne 1 ]; then
+      echo
+      echo "Trying again with default"
+      build_default
+    fi
+    if [ $err -ne 0 -a $tried -ne 2 ]; then
+      echo
+      echo "Trying again with mpicc"
+      build_parallel
+    fi
+    if [ $err -ne 0 -a $tried -ne 3 ]; then
+      echo
+      echo "Trying again without parallel reader."
+      build_serial
+    fi
   fi
 
   if [ $err -ne 0 ]; then
@@ -156,5 +237,3 @@ fi
 if [ $build_utilities -eq 1 ]; then
   [ -x ./utilities/build ] && ./utilities/build $OPTS
 fi
-
-rm -rf $tmpdir

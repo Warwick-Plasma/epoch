@@ -5,19 +5,27 @@ SDFDIR=../SDF_lib
 clean=0
 DBG=""
 
-while getopts cdp name
+while getopts crdph name
 do
    case $name in
-      c) clean=1 ;;
+      c) clean=2 ;;
+      r) clean=1 ;;
       d) DBG="-g -O0" ;;
+      h) cat <<EOF
+build script options:
+  -c: Clean up files. Do not build anything.
+  -r: Rebuild. Clean up files and then build.
+  -d: Build with debugging flags enabled.
+EOF
+         exit ;;
    esac
 done
 
 cd `dirname $0`/.
 
-if [ $clean -eq 1 ] ; then
+if [ $clean -ge 1 ] ; then
   rm -rf sdf2ascii sdf2ascii.dSYM
-  #[ -r pybuild/files.txt ] && cat pybuild/files.txt | xargs rm
+  [ -r pybuild/files.txt ] && cat pybuild/files.txt | xargs rm
   rm -rf pybuild
 fi
 if [ $clean -le 1 ] ; then

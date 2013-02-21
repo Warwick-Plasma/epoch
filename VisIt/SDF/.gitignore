@@ -11,3 +11,4 @@ Makefile
 pybuild
 commit_info.h
 build_date.h
+.builddir
