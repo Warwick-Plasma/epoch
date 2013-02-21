@@ -20,7 +20,7 @@ MODULE sdf_common
   CHARACTER(LEN=4), PARAMETER :: c_sdf_magic = 'SDF1'
 
   TYPE sdf_run_type
-    INTEGER(i4) :: version, revision, compile_date, run_date, io_date
+    INTEGER(i4) :: version, revision, minor_rev, compile_date, run_date, io_date
     INTEGER(i8) :: defines
     CHARACTER(LEN=c_max_string_length) :: commit_id, sha1sum
     CHARACTER(LEN=c_max_string_length) :: compile_machine, compile_flags
@@ -145,7 +145,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_stagger_vertex = &
       c_stagger_face_x + c_stagger_face_y + c_stagger_face_z
 
-  INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 1
+  INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 2
 
   INTEGER(i4), PARAMETER :: soi4 = 4 ! Size of 4-byte integer
   INTEGER(i4), PARAMETER :: soi8 = 8 ! Size of 8-byte integer

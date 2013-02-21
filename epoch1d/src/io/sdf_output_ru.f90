@@ -389,8 +389,9 @@ CONTAINS
     ! - compdate  INTEGER(i4)
     ! - rundate   INTEGER(i4)
     ! - iodate    INTEGER(i4)
+    ! - minor_rev INTEGER(i4)
 
-    b%info_length = h%block_header_length + 5 * soi4 + soi8 &
+    b%info_length = h%block_header_length + 6 * soi4 + soi8 &
         + 4 * h%string_length
     b%data_length = 0
 
@@ -428,6 +429,9 @@ CONTAINS
 
       CALL MPI_FILE_WRITE(h%filehandle, b%run%io_date, 1, MPI_INTEGER4, &
           MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_WRITE(h%filehandle, b%run%minor_rev, 1, MPI_INTEGER4, &
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     h%current_location = b%block_start + b%info_length
@@ -438,12 +442,12 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_run_info(h, version, revision, commit_id, sha1sum, &
-      compile_machine, compile_flags, defines, compile_date, run_date, &
-      rank_write)
+  SUBROUTINE sdf_write_run_info(h, version, revision, minor_rev, commit_id, &
+      sha1sum, compile_machine, compile_flags, defines, compile_date, &
+      run_date, rank_write)
 
     TYPE(sdf_file_handle) :: h
-    INTEGER(i4), INTENT(IN) :: version, revision
+    INTEGER(i4), INTENT(IN) :: version, revision, minor_rev
     CHARACTER(LEN=*), INTENT(IN) :: commit_id, sha1sum
     CHARACTER(LEN=*), INTENT(IN) :: compile_machine, compile_flags
     INTEGER(i8), INTENT(IN) :: defines
@@ -459,6 +463,7 @@ CONTAINS
     IF (.NOT. ASSOCIATED(b%run)) ALLOCATE(b%run)
     b%run%version = version
     b%run%revision = revision
+    b%run%minor_rev = minor_rev
     CALL safe_copy_string(commit_id, b%run%commit_id)
     CALL safe_copy_string(sha1sum, b%run%sha1sum)
     CALL safe_copy_string(compile_machine, b%run%compile_machine)

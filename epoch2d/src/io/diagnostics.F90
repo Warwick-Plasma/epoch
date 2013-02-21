@@ -101,9 +101,9 @@ CONTAINS
     CALL sdf_open(sdf_handle, filename, comm, c_sdf_write)
     CALL sdf_write_header(sdf_handle, 'Epoch2d', 1, step, time, restart_flag, &
         jobid)
-    CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_commit_id, &
-        sha1sum, c_compile_machine, c_compile_flags, defines, c_compile_date, &
-        run_date)
+    CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_minor_rev, &
+        c_commit_id, sha1sum, c_compile_machine, c_compile_flags, defines, &
+        c_compile_date, run_date)
     CALL sdf_write_cpu_split(sdf_handle, 'cpu_rank', 'CPUs/Original rank', &
         cell_x_max, cell_y_max)
 

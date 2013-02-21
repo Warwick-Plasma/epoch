@@ -24,7 +24,7 @@
 #define SDF_ENDIANNESS 16911887
 
 #define SDF_VERSION  1
-#define SDF_REVISION 1
+#define SDF_REVISION 2
 #define SDF_LIB_VERSION  2
 #define SDF_LIB_REVISION 0
 

@@ -268,11 +268,12 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_run_info(h, version, revision, commit_id, sha1sum, &
-      compile_machine, compile_flags, defines, compile_date, run_date, io_date)
+  SUBROUTINE sdf_read_run_info(h, version, revision, minor_rev, commit_id, &
+      sha1sum, compile_machine, compile_flags, defines, compile_date, &
+      run_date, io_date)
 
     TYPE(sdf_file_handle) :: h
-    INTEGER(i4), INTENT(OUT), OPTIONAL :: version, revision
+    INTEGER(i4), INTENT(OUT), OPTIONAL :: version, revision, minor_rev
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: commit_id, sha1sum
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: compile_machine, compile_flags
     INTEGER(i8), INTENT(OUT), OPTIONAL :: defines
@@ -309,6 +310,7 @@ CONTAINS
       ! - compdate  INTEGER(i4)
       ! - rundate   INTEGER(i4)
       ! - iodate    INTEGER(i4)
+      ! - minor_rev INTEGER(i4)
 
       IF (.NOT. ASSOCIATED(b%run)) ALLOCATE(b%run)
 
@@ -331,10 +333,17 @@ CONTAINS
       CALL read_entry_int4(h, b%run%run_date)
 
       CALL read_entry_int4(h, b%run%io_date)
+
+      IF (h%file_version .EQ. 1 .AND. h%file_revision .GE. 2) THEN
+        CALL read_entry_int4(h, b%run%minor_rev)
+      ELSE
+        b%run%minor_rev = 0
+      ENDIF
     ENDIF
 
     IF (PRESENT(version)) version = b%run%version
     IF (PRESENT(revision)) revision = b%run%revision
+    IF (PRESENT(minor_rev)) minor_rev = b%run%minor_rev
     IF (PRESENT(commit_id)) CALL safe_copy_string(b%run%commit_id, commit_id)
     IF (PRESENT(sha1sum)) CALL safe_copy_string(b%run%sha1sum, sha1sum)
     IF (PRESENT(compile_machine)) &

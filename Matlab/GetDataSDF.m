@@ -7,7 +7,7 @@ global block;
 h.ID_LENGTH = 32;
 h.ENDIANNESS = 16911887;
 h.VERSION = 1;
-h.REVISION = 0;
+h.REVISION = 2;
 h.MAGIC = 'SDF1';
 
 h.BLOCKTYPE.SCRUBBED = -1;
