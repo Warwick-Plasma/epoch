@@ -801,7 +801,7 @@ CONTAINS
           temp_block_id = TRIM(block_id)
           temp_name = 'Derived/' // TRIM(name)
         ELSE
-          temp_block_id = TRIM(block_id) // '/subset_' // &
+          temp_block_id = TRIM(block_id) // '/s_' // &
               TRIM(subset_list(isubset-1)%name)
           temp_name = 'Derived/' // TRIM(name) // '/Subset_' // &
               TRIM(subset_list(isubset-1)%name)
@@ -1313,7 +1313,7 @@ CONTAINS
       spec%count = species_count
       npart_global = npart_global + species_count
 
-      CALL sdf_write_cpu_split(sdf_handle, 'cpu_split/' // TRIM(spec%name), &
+      CALL sdf_write_cpu_split(sdf_handle, 'cpu/' // TRIM(spec%name), &
           'CPU split/' // TRIM(spec%name), npart_species_per_proc)
     ENDDO
 
@@ -1334,7 +1334,7 @@ CONTAINS
         ENDDO
         spec%count = species_count
 
-        CALL sdf_write_cpu_split(sdf_handle, 'cpu_split/' // TRIM(spec%name), &
+        CALL sdf_write_cpu_split(sdf_handle, 'cpu/' // TRIM(spec%name), &
             'CPU split/' // TRIM(spec%name), npart_species_per_proc)
       ENDDO
     ENDIF
