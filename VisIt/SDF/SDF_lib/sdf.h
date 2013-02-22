@@ -352,6 +352,7 @@ int sdf_read_point_mesh(sdf_file_t *h);
 int sdf_read_point_mesh_info(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
 int sdf_read_point_variable_info(sdf_file_t *h);
+void sdf_trim(char *str);
 
 
 #ifdef SDF_DEBUG
@@ -551,7 +552,7 @@ int sdf_read_point_variable_info(sdf_file_t *h);
     } while (0)
 
 #define SDF_READ_ENTRY_STRINGLEN(value, length) do { \
-        if (!(value)) value = malloc(h->string_length); \
+        if (!(value)) value = calloc(length+1, sizeof(char)); \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
             (length)); \
         h->current_location += (length); \
@@ -568,6 +569,7 @@ int sdf_read_point_variable_info(sdf_file_t *h);
 
 #define SDF_READ_ENTRY_ID(value) do { \
         SDF_READ_ENTRY_STRINGLEN(value, SDF_ID_LENGTH); \
+        sdf_trim(value); \
         SDF_DPRNT(#value ": %s\n", (value)); \
     } while (0)
 

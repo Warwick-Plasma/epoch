@@ -29,6 +29,18 @@ int sdf_read_array(sdf_file_t *h);
 static int sdf_read_cpu_split_info(sdf_file_t *h);
 
 
+
+void sdf_trim(char *str)
+{
+    int i, len = strlen(str);
+    char *ptr = str + len - 1;
+
+    for (i=0, ptr=str+len-1; i<len && *ptr==' '; i++, ptr--)
+        *ptr = '\0';
+}
+
+
+
 static inline int sdf_get_next_block(sdf_file_t *h)
 {
     if (h->blocklist) {
