@@ -385,16 +385,20 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: s1
     CHARACTER(LEN=*), INTENT(OUT) :: s2
-    INTEGER :: len1, len2, olen
+    INTEGER :: len1, len2, olen, i
 
     len1 = LEN_TRIM(s1)
     len2 = LEN(s2)
     olen = MIN(len1,len2)
     IF (olen .GT. 0) THEN
-      s2(olen:len2) = ACHAR(0)
       s2(1:olen) = s1(1:olen)
+      DO i = olen+1,len2
+        s2(i:i) = ACHAR(0)
+      ENDDO
     ELSE
-      s2 = ACHAR(0)
+      DO i = 1,len2
+        s2(i:i) = ACHAR(0)
+      ENDDO
     ENDIF
 
   END SUBROUTINE safe_copy_string
