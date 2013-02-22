@@ -14,6 +14,7 @@ MODULE sdf_common
 
   INTEGER, PARAMETER :: c_maxdims = 4
   INTEGER(i4), PARAMETER :: c_id_length = 32
+  INTEGER(i4), PARAMETER :: c_long_id_length = 256
   INTEGER(i4), PARAMETER :: c_max_string_length = 64
   INTEGER(i8) :: npoint_per_iteration = 10000
   CHARACTER(LEN=4), PARAMETER :: c_sdf_magic = 'SDF1'
@@ -38,11 +39,12 @@ MODULE sdf_common
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id
+    CHARACTER(LEN=c_long_id_length) :: long_id
     CHARACTER(LEN=c_id_length), POINTER :: variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
     CHARACTER(LEN=c_max_string_length) :: name, material_name
     CHARACTER(LEN=c_max_string_length), POINTER :: material_names(:)
-    LOGICAL :: done_header, done_info, done_data
+    LOGICAL :: done_header, done_info, done_data, truncated_id
     TYPE(sdf_run_type), POINTER :: run
     TYPE(sdf_block_type), POINTER :: next_block
   END TYPE sdf_block_type
@@ -434,6 +436,17 @@ CONTAINS
     INTEGER :: i, n, num, pos
     TYPE(sdf_block_type), POINTER :: tmp
 
+    IF (LEN_TRIM(id) .GT. c_id_length) THEN
+      b%truncated_id = .TRUE.
+      CALL safe_copy_string(id, b%long_id)
+      IF (LEN_TRIM(id) .GT. c_long_id_length) THEN
+        IF (h%rank .EQ. h%rank_master) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'SDF ID string "' // TRIM(id) // '" was truncated.'
+        ENDIF
+      ENDIF
+    ENDIF
+
     CALL safe_copy_string(id, b%id)
     found = sdf_find_block(h, tmp, b%id)
     i = 1
@@ -474,6 +487,7 @@ CONTAINS
     var%done_header = .FALSE.
     var%done_info = .FALSE.
     var%done_data = .FALSE.
+    var%truncated_id = .FALSE.
     var%data_location = 0
     var%blocktype = c_blocktype_null
 
