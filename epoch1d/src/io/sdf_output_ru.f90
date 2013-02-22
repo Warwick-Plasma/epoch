@@ -512,11 +512,11 @@ CONTAINS
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
-      CALL safe_copy_string(mesh_id, b%mesh_id)
+      CALL safe_copy_id(h, mesh_id, b%mesh_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -716,13 +716,13 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_material
       ENDIF
-      CALL safe_copy_string(mesh_id, b%mesh_id)
+      CALL safe_copy_id(h, mesh_id, b%mesh_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%material_names(b%ndims))
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
         CALL safe_copy_string(material_names(i), b%material_names(i))
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -801,12 +801,12 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_matvar
       ENDIF
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-      CALL safe_copy_string(material_id, b%material_id)
+      CALL safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL safe_copy_id(h, material_id, b%material_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -887,14 +887,14 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_species
       ENDIF
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-      CALL safe_copy_string(material_id, b%material_id)
+      CALL safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL safe_copy_id(h, material_id, b%material_id)
       CALL safe_copy_string(material_name, b%material_name)
       ALLOCATE(b%material_names(b%ndims))
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
         CALL safe_copy_string(specnames(i), b%material_names(i))
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
       CALL sdf_write_block_header(h, id, name)
     ELSE
@@ -976,8 +976,8 @@ CONTAINS
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
-      CALL safe_copy_string(obstacle_id, b%obstacle_id)
-      CALL safe_copy_string(vfm_id, b%vfm_id)
+      CALL safe_copy_id(h, obstacle_id, b%obstacle_id)
+      CALL safe_copy_id(h, vfm_id, b%vfm_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%material_names(b%ndims))
       DO i = 1, b%ndims

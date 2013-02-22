@@ -405,6 +405,25 @@ CONTAINS
 
 
 
+  SUBROUTINE safe_copy_id(h, id, new_id)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id
+    CHARACTER(LEN=c_id_length), INTENT(OUT) :: new_id
+
+    IF (LEN_TRIM(id) .GT. c_id_length) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'SDF ID string "' // TRIM(id) // '" was truncated.'
+      ENDIF
+    ENDIF
+
+    CALL safe_copy_string(id, new_id)
+
+  END SUBROUTINE safe_copy_id
+
+
+
   SUBROUTINE get_unique_id(h, id, new_id)
 
     TYPE(sdf_file_handle) :: h
