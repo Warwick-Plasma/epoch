@@ -101,9 +101,9 @@ CONTAINS
     CALL sdf_open(sdf_handle, filename, comm, c_sdf_write)
     CALL sdf_write_header(sdf_handle, 'Epoch3d', 1, step, time, restart_flag, &
         jobid)
-    CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_commit_id, &
-        sha1sum, c_compile_machine, c_compile_flags, defines, c_compile_date, &
-        run_date)
+    CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_minor_rev, &
+        c_commit_id, sha1sum, c_compile_machine, c_compile_flags, defines, &
+        c_compile_date, run_date)
     CALL sdf_write_cpu_split(sdf_handle, 'cpu_rank', 'CPUs/Original rank', &
         cell_x_max, cell_y_max, cell_z_max)
 
@@ -813,7 +813,7 @@ CONTAINS
           temp_block_id = TRIM(block_id)
           temp_name = 'Derived/' // TRIM(name)
         ELSE
-          temp_block_id = TRIM(block_id) // '/subset_' // &
+          temp_block_id = TRIM(block_id) // '/s_' // &
               TRIM(subset_list(isubset-1)%name)
           temp_name = 'Derived/' // TRIM(name) // '/Subset_' // &
               TRIM(subset_list(isubset-1)%name)
@@ -1333,7 +1333,7 @@ CONTAINS
       spec%count = species_count
       npart_global = npart_global + species_count
 
-      CALL sdf_write_cpu_split(sdf_handle, 'cpu_split/' // TRIM(spec%name), &
+      CALL sdf_write_cpu_split(sdf_handle, 'cpu/' // TRIM(spec%name), &
           'CPU split/' // TRIM(spec%name), npart_species_per_proc)
     ENDDO
 
@@ -1354,7 +1354,7 @@ CONTAINS
         ENDDO
         spec%count = species_count
 
-        CALL sdf_write_cpu_split(sdf_handle, 'cpu_split/' // TRIM(spec%name), &
+        CALL sdf_write_cpu_split(sdf_handle, 'cpu/' // TRIM(spec%name), &
             'CPU split/' // TRIM(spec%name), npart_species_per_proc)
       ENDDO
     ENDIF
@@ -1426,6 +1426,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: id_in, code
     CHARACTER(LEN=*), INTENT(IN) :: name, units
+    CHARACTER(LEN=c_id_length) :: temp_block_id
 
     INTERFACE
       FUNCTION iterator(array, npart_it, start)
@@ -1438,7 +1439,7 @@ CONTAINS
     END INTERFACE
 
     INTEGER :: ispecies, id
-    LOGICAL :: convert
+    LOGICAL :: convert, found
 
     id = id_in
     IF (IAND(iomask(id), code) .NE. 0) THEN
@@ -1456,11 +1457,12 @@ CONTAINS
           CALL species_offset_init()
           IF (npart_global .EQ. 0) RETURN
 
+          found = sdf_get_block_id(sdf_handle, &
+              'grid/' // TRIM(current_species%name), temp_block_id)
           CALL sdf_write_point_variable(sdf_handle, &
               lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
               'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
-              TRIM(units), io_list(ispecies)%count, &
-              'grid/' // TRIM(current_species%name), &
+              TRIM(units), io_list(ispecies)%count, temp_block_id, &
               iterator, species_offset(ispecies), convert)
         ENDIF
       ENDDO
@@ -1478,11 +1480,12 @@ CONTAINS
         IF (npart_global .EQ. 0) RETURN
 
         current_species => ejected_list(ispecies)
+        found = sdf_get_block_id(sdf_handle, &
+            'grid/' // TRIM(current_species%name), temp_block_id)
         CALL sdf_write_point_variable(sdf_handle, &
             lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
             'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
-            TRIM(units), ejected_list(ispecies)%count, &
-            'grid/' // TRIM(current_species%name), &
+            TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
             iterator, ejected_offset(ispecies), convert)
       ENDDO
     ENDIF

@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 
 #ifdef PARALLEL
 #include <mpi.h>
@@ -20,7 +24,7 @@
 #define SDF_ENDIANNESS 16911887
 
 #define SDF_VERSION  1
-#define SDF_REVISION 1
+#define SDF_REVISION 2
 #define SDF_LIB_VERSION  2
 #define SDF_LIB_REVISION 0
 
@@ -348,6 +352,7 @@ int sdf_read_point_mesh(sdf_file_t *h);
 int sdf_read_point_mesh_info(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
 int sdf_read_point_variable_info(sdf_file_t *h);
+void sdf_trim(char *str);
 
 
 #ifdef SDF_DEBUG
@@ -430,7 +435,7 @@ int sdf_read_point_variable_info(sdf_file_t *h);
                 SDF_PRNT("\n%i ",_d); \
                 for (_i=0; _i < 10; _i++, _d++) { \
                     if (_d == (len)) break; \
-                    SDF_PRNT(" %i", arr[_d]); \
+                    SDF_PRNT(" %" PRIu64, arr[_d]); \
                 } \
             } \
         } \
@@ -547,7 +552,7 @@ int sdf_read_point_variable_info(sdf_file_t *h);
     } while (0)
 
 #define SDF_READ_ENTRY_STRINGLEN(value, length) do { \
-        if (!(value)) value = malloc(h->string_length); \
+        if (!(value)) value = calloc(length+1, sizeof(char)); \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
             (length)); \
         h->current_location += (length); \
@@ -564,6 +569,7 @@ int sdf_read_point_variable_info(sdf_file_t *h);
 
 #define SDF_READ_ENTRY_ID(value) do { \
         SDF_READ_ENTRY_STRINGLEN(value, SDF_ID_LENGTH); \
+        sdf_trim(value); \
         SDF_DPRNT(#value ": %s\n", (value)); \
     } while (0)
 

@@ -29,6 +29,18 @@ int sdf_read_array(sdf_file_t *h);
 static int sdf_read_cpu_split_info(sdf_file_t *h);
 
 
+
+void sdf_trim(char *str)
+{
+    int i, len = strlen(str);
+    char *ptr = str + len - 1;
+
+    for (i=0, ptr=str+len-1; i<len && *ptr==' '; i++, ptr--)
+        *ptr = '\0';
+}
+
+
+
 static inline int sdf_get_next_block(sdf_file_t *h)
 {
     if (h->blocklist) {
@@ -755,7 +767,7 @@ static int sdf_array_datatype(sdf_file_t *h)
 int sdf_read_run_info(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int version, revision, compdate, rundate, iodate;
+    int version, revision, minor_rev, compdate, rundate, iodate;
     uint64_t defines;
     char *str = NULL;
 
@@ -770,6 +782,7 @@ int sdf_read_run_info(sdf_file_t *h)
     // - compdate  INTEGER(i4)
     // - rundate   INTEGER(i4)
     // - iodate    INTEGER(i4)
+    // - minor_rev INTEGER(i4)
 
     SDF_COMMON_INFO();
     SDF_READ_ENTRY_INT4(version);
@@ -786,6 +799,10 @@ int sdf_read_run_info(sdf_file_t *h)
     SDF_READ_ENTRY_INT4(compdate);
     SDF_READ_ENTRY_INT4(rundate);
     SDF_READ_ENTRY_INT4(iodate);
+    if (h->file_version == 0 && h->file_revision > 1)
+        SDF_READ_ENTRY_INT4(minor_rev);
+    else
+        minor_rev = 0;
 
 /*
     SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);

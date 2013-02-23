@@ -212,7 +212,6 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name
-    CHARACTER(LEN=c_id_length) :: new_id
     TYPE(sdf_block_type), POINTER :: b
 
     b => h%current_block
@@ -244,8 +243,7 @@ CONTAINS
       b%next_block_location = b%data_location + b%data_length
     ENDIF
 
-    CALL get_unique_id(h, id, new_id)
-    CALL safe_copy_string(new_id, b%id)
+    CALL safe_copy_unique_id(h, b, id)
     CALL safe_copy_string(name, b%name)
 
     CALL write_block_header(h)
@@ -391,8 +389,9 @@ CONTAINS
     ! - compdate  INTEGER(i4)
     ! - rundate   INTEGER(i4)
     ! - iodate    INTEGER(i4)
+    ! - minor_rev INTEGER(i4)
 
-    b%info_length = h%block_header_length + 5 * soi4 + soi8 &
+    b%info_length = h%block_header_length + 6 * soi4 + soi8 &
         + 4 * h%string_length
     b%data_length = 0
 
@@ -430,6 +429,9 @@ CONTAINS
 
       CALL MPI_FILE_WRITE(h%filehandle, b%run%io_date, 1, MPI_INTEGER4, &
           MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_WRITE(h%filehandle, b%run%minor_rev, 1, MPI_INTEGER4, &
+          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     h%current_location = b%block_start + b%info_length
@@ -440,12 +442,12 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_run_info(h, version, revision, commit_id, sha1sum, &
-      compile_machine, compile_flags, defines, compile_date, run_date, &
-      rank_write)
+  SUBROUTINE sdf_write_run_info(h, version, revision, minor_rev, commit_id, &
+      sha1sum, compile_machine, compile_flags, defines, compile_date, &
+      run_date, rank_write)
 
     TYPE(sdf_file_handle) :: h
-    INTEGER(i4), INTENT(IN) :: version, revision
+    INTEGER(i4), INTENT(IN) :: version, revision, minor_rev
     CHARACTER(LEN=*), INTENT(IN) :: commit_id, sha1sum
     CHARACTER(LEN=*), INTENT(IN) :: compile_machine, compile_flags
     INTEGER(i8), INTENT(IN) :: defines
@@ -461,6 +463,7 @@ CONTAINS
     IF (.NOT. ASSOCIATED(b%run)) ALLOCATE(b%run)
     b%run%version = version
     b%run%revision = revision
+    b%run%minor_rev = minor_rev
     CALL safe_copy_string(commit_id, b%run%commit_id)
     CALL safe_copy_string(sha1sum, b%run%sha1sum)
     CALL safe_copy_string(compile_machine, b%run%compile_machine)
@@ -512,11 +515,11 @@ CONTAINS
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
-      CALL safe_copy_string(mesh_id, b%mesh_id)
+      CALL safe_copy_id(h, mesh_id, b%mesh_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -716,13 +719,13 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_material
       ENDIF
-      CALL safe_copy_string(mesh_id, b%mesh_id)
+      CALL safe_copy_id(h, mesh_id, b%mesh_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%material_names(b%ndims))
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
         CALL safe_copy_string(material_names(i), b%material_names(i))
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -801,12 +804,12 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_matvar
       ENDIF
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-      CALL safe_copy_string(material_id, b%material_id)
+      CALL safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL safe_copy_id(h, material_id, b%material_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -887,14 +890,14 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_species
       ENDIF
-      CALL safe_copy_string(mesh_id, b%mesh_id)
-      CALL safe_copy_string(material_id, b%material_id)
+      CALL safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL safe_copy_id(h, material_id, b%material_id)
       CALL safe_copy_string(material_name, b%material_name)
       ALLOCATE(b%material_names(b%ndims))
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
         CALL safe_copy_string(specnames(i), b%material_names(i))
-        CALL safe_copy_string(variable_ids(i), b%variable_ids(i))
+        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
       CALL sdf_write_block_header(h, id, name)
     ELSE
@@ -976,8 +979,8 @@ CONTAINS
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
-      CALL safe_copy_string(obstacle_id, b%obstacle_id)
-      CALL safe_copy_string(vfm_id, b%vfm_id)
+      CALL safe_copy_id(h, obstacle_id, b%obstacle_id)
+      CALL safe_copy_id(h, vfm_id, b%vfm_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%material_names(b%ndims))
       DO i = 1, b%ndims

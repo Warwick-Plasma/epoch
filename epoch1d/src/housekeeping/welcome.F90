@@ -161,11 +161,13 @@ CONTAINS
 
   SUBROUTINE create_ascii_header
 
-    CHARACTER(LEN=11) :: ver, rev
+    CHARACTER(LEN=11) :: ver, rev, minor_rev
 
     CALL integer_as_string(c_version, ver)
     CALL integer_as_string(c_revision, rev)
-    version_string = TRIM(ver) // '.' // TRIM(ADJUSTL(rev))
+    CALL integer_as_string(c_minor_rev, minor_rev)
+    version_string = TRIM(ver) // '.' // TRIM(ADJUSTL(rev)) // '.' &
+      // TRIM(ADJUSTL(minor_rev))
     CALL integer_as_string(jobid%start_seconds, ver)
     CALL integer_as_string(jobid%start_milliseconds, rev)
     ascii_header = c_code_name // ' v' // TRIM(version_string) // ' ' &

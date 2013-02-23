@@ -14,12 +14,13 @@ MODULE sdf_common
 
   INTEGER, PARAMETER :: c_maxdims = 4
   INTEGER(i4), PARAMETER :: c_id_length = 32
+  INTEGER(i4), PARAMETER :: c_long_id_length = 256
   INTEGER(i4), PARAMETER :: c_max_string_length = 64
   INTEGER(i8) :: npoint_per_iteration = 10000
   CHARACTER(LEN=4), PARAMETER :: c_sdf_magic = 'SDF1'
 
   TYPE sdf_run_type
-    INTEGER(i4) :: version, revision, compile_date, run_date, io_date
+    INTEGER(i4) :: version, revision, minor_rev, compile_date, run_date, io_date
     INTEGER(i8) :: defines
     CHARACTER(LEN=c_max_string_length) :: commit_id, sha1sum
     CHARACTER(LEN=c_max_string_length) :: compile_machine, compile_flags
@@ -38,11 +39,12 @@ MODULE sdf_common
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id
+    CHARACTER(LEN=c_long_id_length) :: long_id
     CHARACTER(LEN=c_id_length), POINTER :: variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
     CHARACTER(LEN=c_max_string_length) :: name, material_name
     CHARACTER(LEN=c_max_string_length), POINTER :: material_names(:)
-    LOGICAL :: done_header, done_info, done_data
+    LOGICAL :: done_header, done_info, done_data, truncated_id
     TYPE(sdf_run_type), POINTER :: run
     TYPE(sdf_block_type), POINTER :: next_block
   END TYPE sdf_block_type
@@ -143,7 +145,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_stagger_vertex = &
       c_stagger_face_x + c_stagger_face_y + c_stagger_face_z
 
-  INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 1
+  INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 2
 
   INTEGER(i4), PARAMETER :: soi4 = 4 ! Size of 4-byte integer
   INTEGER(i4), PARAMETER :: soi8 = 8 ! Size of 8-byte integer
@@ -288,12 +290,17 @@ CONTAINS
     TYPE(sdf_block_type), POINTER :: b
     CHARACTER(LEN=*), INTENT(IN) :: block_id
     INTEGER :: i
-    LOGICAL :: found
+    LOGICAL :: found, use_truncated
+
+    use_truncated = (LEN_TRIM(block_id) .GT. c_id_length)
 
     found = .TRUE.
     b => h%blocklist
     DO i = 1,h%nblocks
       IF (sdf_string_equal(block_id, b%id)) RETURN
+      IF (use_truncated .AND. b%truncated_id) THEN
+        IF (sdf_string_equal(block_id, b%long_id)) RETURN
+      ENDIF
       b => b%next_block
     ENDDO
 
@@ -315,6 +322,25 @@ CONTAINS
     IF (found) h%current_block => b
 
   END FUNCTION sdf_find_block_by_id
+
+
+
+  FUNCTION sdf_get_block_id(h, long_id, block_id) RESULT(found)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: long_id
+    CHARACTER(LEN=*), INTENT(OUT) :: block_id
+    TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: found
+
+    found = sdf_find_block(h, b, long_id)
+    IF (found) THEN
+      CALL safe_copy_string(b%id, block_id)
+    ELSE
+      CALL safe_copy_string(long_id, block_id)
+    ENDIF
+
+  END FUNCTION sdf_get_block_id
 
 
 
@@ -385,34 +411,68 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: s1
     CHARACTER(LEN=*), INTENT(OUT) :: s2
-    INTEGER :: len1, len2, olen
+    INTEGER :: len1, len2, olen, i
 
     len1 = LEN_TRIM(s1)
     len2 = LEN(s2)
     olen = MIN(len1,len2)
     IF (olen .GT. 0) THEN
-      s2(olen:len2) = ACHAR(0)
       s2(1:olen) = s1(1:olen)
+      DO i = olen+1,len2
+        s2(i:i) = ACHAR(0)
+      ENDDO
     ELSE
-      s2 = ACHAR(0)
+      DO i = 1,len2
+        s2(i:i) = ACHAR(0)
+      ENDDO
     ENDIF
 
   END SUBROUTINE safe_copy_string
 
 
 
-  SUBROUTINE get_unique_id(h, id, new_id)
+  SUBROUTINE safe_copy_id(h, id, new_id)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id
     CHARACTER(LEN=c_id_length), INTENT(OUT) :: new_id
+
+    IF (LEN_TRIM(id) .GT. c_id_length) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'SDF ID string "' // TRIM(id) // '" was truncated.'
+      ENDIF
+    ENDIF
+
+    CALL safe_copy_string(id, new_id)
+
+  END SUBROUTINE safe_copy_id
+
+
+
+  SUBROUTINE safe_copy_unique_id(h, b, id)
+
+    TYPE(sdf_file_handle) :: h
     TYPE(sdf_block_type), POINTER :: b
+    CHARACTER(LEN=*), INTENT(IN) :: id
     LOGICAL :: found
     CHARACTER(LEN=*), PARAMETER :: numbers = '0123456789'
     INTEGER :: i, n, num, pos
+    TYPE(sdf_block_type), POINTER :: tmp
 
-    CALL safe_copy_string(id, new_id)
-    found = sdf_find_block(h, b, new_id)
+    IF (LEN_TRIM(id) .GT. c_id_length) THEN
+      b%truncated_id = .TRUE.
+      CALL safe_copy_string(id, b%long_id)
+      IF (LEN_TRIM(id) .GT. c_long_id_length) THEN
+        IF (h%rank .EQ. h%rank_master) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'SDF ID string "' // TRIM(id) // '" was truncated.'
+        ENDIF
+      ENDIF
+    ENDIF
+
+    CALL safe_copy_string(id, b%id)
+    found = sdf_find_block(h, tmp, b%id)
     i = 1
     DO WHILE(found)
       num = i
@@ -420,20 +480,20 @@ CONTAINS
       ! Generate a new ID by adding ASCII digits to the end.
       pos = c_id_length
       n = MOD(num,10)
-      new_id(pos:pos) = numbers(n+1:n+1)
+      b%id(pos:pos) = numbers(n+1:n+1)
       num = num / 10
       DO WHILE(num .GT. 0)
         pos = pos - 1
         n = MOD(num,10)
-        new_id(pos:pos) = numbers(n+1:n+1)
+        b%id(pos:pos) = numbers(n+1:n+1)
         num = num / 10
       ENDDO
 
-      found = sdf_find_block(h, b, new_id)
+      found = sdf_find_block(h, tmp, b%id)
       i = i + 1
     ENDDO
 
-  END SUBROUTINE get_unique_id
+  END SUBROUTINE safe_copy_unique_id
 
 
 
@@ -451,6 +511,7 @@ CONTAINS
     var%done_header = .FALSE.
     var%done_info = .FALSE.
     var%done_data = .FALSE.
+    var%truncated_id = .FALSE.
     var%data_location = 0
     var%blocktype = c_blocktype_null
 
