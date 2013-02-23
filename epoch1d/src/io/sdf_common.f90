@@ -290,12 +290,17 @@ CONTAINS
     TYPE(sdf_block_type), POINTER :: b
     CHARACTER(LEN=*), INTENT(IN) :: block_id
     INTEGER :: i
-    LOGICAL :: found
+    LOGICAL :: found, use_truncated
+
+    use_truncated = (LEN_TRIM(block_id) .GT. c_id_length)
 
     found = .TRUE.
     b => h%blocklist
     DO i = 1,h%nblocks
       IF (sdf_string_equal(block_id, b%id)) RETURN
+      IF (use_truncated .AND. b%truncated_id) THEN
+        IF (sdf_string_equal(block_id, b%long_id)) RETURN
+      ENDIF
       b => b%next_block
     ENDDO
 
@@ -317,6 +322,25 @@ CONTAINS
     IF (found) h%current_block => b
 
   END FUNCTION sdf_find_block_by_id
+
+
+
+  FUNCTION sdf_get_block_id(h, long_id, block_id) RESULT(found)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: long_id
+    CHARACTER(LEN=*), INTENT(OUT) :: block_id
+    TYPE(sdf_block_type), POINTER :: b
+    LOGICAL :: found
+
+    found = sdf_find_block(h, b, long_id)
+    IF (found) THEN
+      CALL safe_copy_string(b%id, block_id)
+    ELSE
+      CALL safe_copy_string(long_id, block_id)
+    ENDIF
+
+  END FUNCTION sdf_get_block_id
 
 
 
