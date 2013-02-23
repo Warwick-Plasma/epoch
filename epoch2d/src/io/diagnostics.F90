@@ -1406,6 +1406,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: id_in, code
     CHARACTER(LEN=*), INTENT(IN) :: name, units
+    CHARACTER(LEN=c_id_length) :: temp_block_id
 
     INTERFACE
       FUNCTION iterator(array, npart_it, start)
@@ -1418,7 +1419,7 @@ CONTAINS
     END INTERFACE
 
     INTEGER :: ispecies, id
-    LOGICAL :: convert
+    LOGICAL :: convert, found
 
     id = id_in
     IF (IAND(iomask(id), code) .NE. 0) THEN
@@ -1436,11 +1437,12 @@ CONTAINS
           CALL species_offset_init()
           IF (npart_global .EQ. 0) RETURN
 
+          found = sdf_get_block_id(sdf_handle, &
+              'grid/' // TRIM(current_species%name), temp_block_id)
           CALL sdf_write_point_variable(sdf_handle, &
               lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
               'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
-              TRIM(units), io_list(ispecies)%count, &
-              'grid/' // TRIM(current_species%name), &
+              TRIM(units), io_list(ispecies)%count, temp_block_id, &
               iterator, species_offset(ispecies), convert)
         ENDIF
       ENDDO
@@ -1458,11 +1460,12 @@ CONTAINS
         IF (npart_global .EQ. 0) RETURN
 
         current_species => ejected_list(ispecies)
+        found = sdf_get_block_id(sdf_handle, &
+            'grid/' // TRIM(current_species%name), temp_block_id)
         CALL sdf_write_point_variable(sdf_handle, &
             lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
             'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
-            TRIM(units), ejected_list(ispecies)%count, &
-            'grid/' // TRIM(current_species%name), &
+            TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
             iterator, ejected_offset(ispecies), convert)
       ENDDO
     ENDIF
