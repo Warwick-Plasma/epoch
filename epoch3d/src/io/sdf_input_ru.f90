@@ -268,7 +268,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_read_run_info(h, version, revision, minor_rev, commit_id, &
+  SUBROUTINE read_run_info_minor(h, version, revision, minor_rev, commit_id, &
       sha1sum, compile_machine, compile_flags, defines, compile_date, &
       run_date, io_date)
 
@@ -358,7 +358,28 @@ CONTAINS
     b%done_info = .TRUE.
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_read_run_info
+  END SUBROUTINE read_run_info_minor
+
+
+
+  SUBROUTINE read_run_info_old(h, version, revision, commit_id, &
+      sha1sum, compile_machine, compile_flags, defines, compile_date, &
+      run_date, io_date)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i4), INTENT(OUT) :: version, revision
+    CHARACTER(LEN=*), INTENT(OUT) :: commit_id
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: sha1sum
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: compile_machine, compile_flags
+    INTEGER(i8), INTENT(OUT), OPTIONAL :: defines
+    INTEGER(i4), INTENT(OUT), OPTIONAL :: compile_date, run_date, io_date
+    INTEGER(i4) :: minor_rev
+
+    CALL read_run_info_minor(h, version, revision, minor_rev, commit_id, &
+        sha1sum, compile_machine, compile_flags, defines, compile_date, &
+        run_date, io_date)
+
+  END SUBROUTINE read_run_info_old
 
 
 

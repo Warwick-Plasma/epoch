@@ -46,4 +46,10 @@ MODULE sdf_output
         write_cpu_split_part
   END INTERFACE sdf_write_cpu_split
 
+  INTERFACE sdf_write_run_info
+    MODULE PROCEDURE &
+        write_run_info_old, &
+        write_run_info_minor
+  END INTERFACE sdf_write_run_info
+
 END MODULE sdf_output
