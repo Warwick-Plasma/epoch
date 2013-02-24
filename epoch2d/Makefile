@@ -223,6 +223,7 @@ COMMIT: FORCE
 	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
 -include COMMIT
 
+SDFDIR = ../SDF/FORTRAN/src
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
@@ -257,8 +258,8 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   sdf_output_point_r8.f90 sdf_output_point_ru.f90 sdf_output_r4.f90 \
   sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_source.f90 \
   sdf_output_station.f90 sdf_output_station_r4.f90 sdf_output_station_r8.f90 \
-  sdf_output_station_ru.f90 sdf_output_util.f90 sdf_source_info.f90 setup.F90 \
-  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
+  sdf_output_station_ru.f90 sdf_output_util.f90 sdf_source_info_dummy.f90 \
+  setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
   split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 timer.f90 \
   tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
 
@@ -285,7 +286,7 @@ FULLTARGET = $(BINDIR)/$(TARGET)
 #vpath %.o $(OBJDIR)
 VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
   $(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:\
-  $(OBJDIR)
+  $(SDFDIR):$(OBJDIR)
 
 
 # Rule to build the fortran files
@@ -317,10 +318,10 @@ tidy:
 	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 
 visit:
-	@cd ../VisIt; ./build SDF
+	@cd ../SDF/VisIt; ./build
 
 visitclean:
-	@cd ../VisIt; make clean; \
+	@cd ../SDF/VisIt; make clean; ./build -c; \
 	  rm -rf .depend *.d *Info.C *Info.h CMake* cmake* Makefile
 
 $(OBJFILES): | $(OBJDIR)
@@ -437,7 +438,7 @@ sdf_output_r4.o: sdf_output_r4.f90 sdf_output_ru.o
 sdf_output_r8.o: sdf_output_r8.f90 sdf_output_ru.o
 sdf_output_ru.o: sdf_output_ru.f90 sdf_common.o
 sdf_output_source.o: sdf_output_source.f90 sdf_common.o sdf_output.o \
-  sdf_source_info.o
+  sdf_source_info_dummy.o
 sdf_output_station.o: sdf_output_station.f90 sdf_output_station_r4.o \
   sdf_output_station_r8.o
 sdf_output_station_r4.o: sdf_output_station_r4.f90 sdf_output_station_ru.o
@@ -445,7 +446,7 @@ sdf_output_station_r8.o: sdf_output_station_r8.f90 sdf_output_station_ru.o
 sdf_output_station_ru.o: sdf_output_station_ru.f90 sdf_output_ru.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
   sdf_output_point_ru.o
-sdf_source_info.o: sdf_source_info.f90
+sdf_source_info_dummy.o: sdf_source_info_dummy.f90
 setup.o: setup.F90 fields.o helper.o laser.o mpi_subtype_control.o \
   shared_data.o shunt.o split_particle.o timer.o version_data.o welcome.o \
   window.o $(ENCODED_SOURCE)
