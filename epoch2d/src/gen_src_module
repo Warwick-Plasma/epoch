@@ -12,6 +12,7 @@ dir=`dirname $file`
 shafile=$dir/SHA1_SUM
 tmp=$dir/tmp
 tmp2=$dir/tmp2
+tmp3=$dir/tmp3
 
 [ -d $dir ] || mkdir $dir
 
@@ -47,40 +48,45 @@ if [ "$oldsha"x = "$sha"x ]; then
   if [ $embed_source -eq 1 ]; then
     [ -f "$file" ] && embed_source=0
   fi
-  rm -f $tmp $tmp2
+  rm -f $tmp $tmp2 $tmp3
   exit
 else
   # sha has changed
   echo "$sha" > $shafile
 fi
 
-rm -f $tmp $tmp2
+rm -f $tmp $tmp2 $tmp3
 
 nlines=0
 
 if [ $embed_source -eq 1 ]; then
   tar czf $tmp $*
   if [ $? -eq 0 ]; then
-    base64 $tmp > $tmp2 2>/dev/null
+    # First try GNU-style wrapping options for base64
+    base64 -w76 $tmp > $tmp2 2>/dev/null
+    if [ $? -ne 0 ]; then
+      # Next try BSD-style wrapping options for base64
+      base64 -b76 $tmp > $tmp2 2>/dev/null
+    fi
     if [ $? -ne 0 ]; then
       #echo base64 failed. Trying mimencode.
       mimencode $tmp -o $tmp2 2>/dev/null
-      if [ $? -ne 0 ]; then
-        #echo mimencode failed. Trying uuencode.
-        uuencode -m $tmp epoch.tgz > $tmp2 2>/dev/null
-        if [ $? -eq 0 ]; then
-          n=`cat $tmp2 | wc -l`
-          sed -n 2,$((n-1))p $tmp2 > $tmp
-          mv $tmp $tmp2
-        else
-          false
-        fi
-        if [ $? -ne 0 ]; then
-          #echo uuencode failed. Trying perl.
-          perl -MMIME::Base64 -0777 -ne \
-            'print encode_base64($_)' < $tmp > $tmp2
-        fi
+    fi
+    if [ $? -ne 0 ]; then
+      #echo mimencode failed. Trying uuencode.
+      uuencode -m $tmp epoch.tgz > $tmp2 2>/dev/null
+      if [ $? -eq 0 ]; then
+        n=`cat $tmp2 | wc -l`
+        sed -n 2,$((n-1))p $tmp2 > $tmp3
+        mv $tmp3 $tmp2
+      else
+        false
       fi
+    fi
+    if [ $? -ne 0 ]; then
+      #echo uuencode failed. Trying perl.
+      perl -MMIME::Base64 -0777 -ne \
+        'print encode_base64($_)' < $tmp > $tmp2
     fi
     if [ $? -eq 0 ]; then
       nlines=`cat $tmp2 | wc -l`
