@@ -334,10 +334,10 @@ CONTAINS
 
       CALL read_entry_int4(h, b%run%io_date)
 
-      IF (h%file_version .EQ. 1 .AND. h%file_revision .GE. 2) THEN
-        CALL read_entry_int4(h, b%run%minor_rev)
-      ELSE
+      IF (h%file_version .EQ. 1 .AND. h%file_revision .LT. 2) THEN
         b%run%minor_rev = 0
+      ELSE
+        CALL read_entry_int4(h, b%run%minor_rev)
       ENDIF
     ENDIF
 
