@@ -93,6 +93,7 @@ MODULE sdf
   PUBLIC :: sdf_get_block_id
   PUBLIC :: sdf_get_data_location
   PUBLIC :: sdf_set_data_location
+  PUBLIC :: sdf_flush
   PUBLIC :: sdf_read_header
   PUBLIC :: sdf_read_blocklist
   PUBLIC :: sdf_read_nblocks

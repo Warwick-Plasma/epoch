@@ -51,15 +51,15 @@ MODULE sdf_common
 
   TYPE sdf_file_handle
     INTEGER(KIND=MPI_OFFSET_KIND) :: current_location
-    REAL(r8) :: time
+    REAL(r8) :: time, time_wrote
     INTEGER(i8) :: first_block_location, summary_location, start_location
     INTEGER(i8) :: soi ! large integer to prevent overflow in calculations
-    INTEGER(i8) :: data_location
+    INTEGER(i8) :: data_location, summary_location_wrote
     INTEGER(i4) :: endianness, summary_size
     INTEGER(i4) :: block_header_length, string_length, nblocks, error_code
     INTEGER(i4) :: file_version, file_revision, code_io_version, step
     INTEGER(i4) :: datatype_integer, mpitype_integer
-    INTEGER(i4) :: blocktype
+    INTEGER(i4) :: blocktype, summary_size_wrote, nblocks_wrote, step_wrote
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     INTEGER :: errhandler
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error

@@ -72,7 +72,6 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     INTEGER :: errcode
-    INTEGER(KIND=MPI_OFFSET_KIND) :: offset
 
     ! No open file
     IF (h%filehandle .EQ. -1) RETURN
@@ -81,23 +80,7 @@ CONTAINS
     IF (h%writing) THEN
       CALL sdf_write_summary(h)
 
-      ! Update summary and nblocks info
-      IF (h%rank .EQ. h%rank_master) THEN
-        IF (h%error_code .NE. 0) THEN
-          h%nblocks = -h%error_code
-          h%summary_location = 0
-          h%summary_size = 0
-        ENDIF
-        offset = c_summary_offset
-        CALL MPI_FILE_SEEK(h%filehandle, offset, MPI_SEEK_SET, &
-            errcode)
-        CALL MPI_FILE_WRITE(h%filehandle, h%summary_location, 1, MPI_INTEGER8, &
-            MPI_STATUS_IGNORE, errcode)
-        CALL MPI_FILE_WRITE(h%filehandle, h%summary_size, 1, MPI_INTEGER4, &
-            MPI_STATUS_IGNORE, errcode)
-        CALL MPI_FILE_WRITE(h%filehandle, h%nblocks, 1, MPI_INTEGER4, &
-            MPI_STATUS_IGNORE, errcode)
-      ENDIF
+      CALL sdf_flush(h)
     ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, &
