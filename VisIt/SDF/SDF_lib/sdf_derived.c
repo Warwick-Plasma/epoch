@@ -710,7 +710,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     int n, nx, sz, idx, rem = h->rank, i0 = 0, pmax = -2;
-    void *x, *buf;
+    char *x, *buf;
     sdf_block_t *mesh = b->subblock;
     sdf_block_t *current_block = h->current_block;
 
@@ -743,7 +743,7 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         idx = mesh->local_dims[n] - 1;
         x = calloc(nx, sz);
         memcpy(x+sz*i0, mesh->grids[n], sz);
-        if (pmax < 0) memcpy(x+sz*(i0+1), mesh->grids[n]+sz*idx, sz);
+        if (pmax < 0) memcpy(x+sz*(i0+1), (char*)mesh->grids[n]+sz*idx, sz);
         b->nlocal *= nx;
 #ifdef PARALLEL
         buf = malloc(nx*sz);

@@ -238,13 +238,13 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
             MPI_ORDER_FORTRAN, b->mpitype, &facetype);
         MPI_Type_commit(&facetype);
 
-        p1 = b->data + b->ng * offset;
-        p2 = b->data + (b->local_dims[i] - b->ng) * offset;
+        p1 = (char*)b->data + b->ng * offset;
+        p2 = (char*)b->data + (b->local_dims[i] - b->ng) * offset;
         MPI_Sendrecv(p1, 1, facetype, b->proc_min[i], tag, p2, 1, facetype,
             b->proc_max[i], tag, h->comm, MPI_STATUS_IGNORE);
         tag++;
 
-        p1 = b->data + (b->local_dims[i] - 2 * b->ng) * offset;
+        p1 = (char*)b->data + (b->local_dims[i] - 2 * b->ng) * offset;
         p2 = b->data;
         MPI_Sendrecv(p1, 1, facetype, b->proc_max[i], tag, p2, 1, facetype,
             b->proc_min[i], tag, h->comm, MPI_STATUS_IGNORE);
@@ -423,7 +423,6 @@ int sdf_read_plain_mesh(sdf_file_t *h)
 int sdf_read_lagran_mesh(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
-    int local_start[SDF_MAXDIMS];
     int n;
     uint64_t nelements = 1;
 

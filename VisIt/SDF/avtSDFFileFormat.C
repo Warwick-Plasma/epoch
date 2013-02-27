@@ -208,7 +208,9 @@ sdf_extension_t *avtSDFFileFormat::sdf_extension_load(sdf_file_t *h)
 
     if (!sdf_extension_handle) {
         avtSDFFileFormat::extension_not_found = 1;
-        if (!h->rank) debug1 << dlerror() << endl;
+        if (!h->rank) {
+            debug1 << dlerror() << endl;
+        }
         return NULL;
     }
 
@@ -955,6 +957,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
 #endif
         return sgrid;
     }
+
+    return NULL;
 }
 
 
