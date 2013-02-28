@@ -39,4 +39,10 @@ MODULE sdf_input
         read_srl_cpu_split_part
   END INTERFACE sdf_read_srl_cpu_split
 
+  INTERFACE sdf_read_run_info
+    MODULE PROCEDURE &
+        read_run_info_old, &
+        read_run_info_minor
+  END INTERFACE sdf_read_run_info
+
 END MODULE sdf_input

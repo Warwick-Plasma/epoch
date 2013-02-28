@@ -442,7 +442,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_run_info(h, version, revision, minor_rev, commit_id, &
+  SUBROUTINE write_run_info_minor(h, version, revision, minor_rev, commit_id, &
       sha1sum, compile_machine, compile_flags, defines, compile_date, &
       run_date, rank_write)
 
@@ -477,7 +477,27 @@ CONTAINS
 
     h%rank_master = h%default_rank
 
-  END SUBROUTINE sdf_write_run_info
+  END SUBROUTINE write_run_info_minor
+
+
+
+  SUBROUTINE write_run_info_old(h, version, revision, commit_id, &
+      sha1sum, compile_machine, compile_flags, defines, compile_date, &
+      run_date, rank_write)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i4), INTENT(IN) :: version, revision
+    CHARACTER(LEN=*), INTENT(IN) :: commit_id, sha1sum
+    CHARACTER(LEN=*), INTENT(IN) :: compile_machine, compile_flags
+    INTEGER(i8), INTENT(IN) :: defines
+    INTEGER(i4), INTENT(IN) :: compile_date, run_date
+    INTEGER, INTENT(IN), OPTIONAL :: rank_write
+
+    CALL write_run_info_minor(h, version, revision, 0, commit_id, &
+      sha1sum, compile_machine, compile_flags, defines, compile_date, &
+      run_date, rank_write)
+
+  END SUBROUTINE write_run_info_old
 
 
 

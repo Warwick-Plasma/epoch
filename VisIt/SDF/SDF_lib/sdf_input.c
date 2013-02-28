@@ -799,10 +799,10 @@ int sdf_read_run_info(sdf_file_t *h)
     SDF_READ_ENTRY_INT4(compdate);
     SDF_READ_ENTRY_INT4(rundate);
     SDF_READ_ENTRY_INT4(iodate);
-    if (h->file_version == 0 && h->file_revision > 1)
-        SDF_READ_ENTRY_INT4(minor_rev);
-    else
+    if (h->file_version == 1 && h->file_revision < 2)
         minor_rev = 0;
+    else
+        SDF_READ_ENTRY_INT4(minor_rev);
 
 /*
     SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
