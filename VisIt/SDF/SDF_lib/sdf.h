@@ -555,12 +555,14 @@ void sdf_trim(char *str);
         if (!(value)) value = calloc(length+1, sizeof(char)); \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
             (length)); \
+        value[length] = '\0'; \
+        sdf_trim(value); \
         h->current_location += (length); \
     } while (0)
 
 #define SDF_READ_ENTRY_ARRAY_STRINGLEN(value, length, clen) do { \
         int _e; \
-        if (!(value)) value = calloc((length), sizeof(char*)); \
+        if (!(value)) value = calloc((length+1), sizeof(char*)); \
         for (_e=0; _e<(length); _e++) { \
             SDF_READ_ENTRY_STRINGLEN(value[_e], clen); \
             SDF_DPRNT(#value "[%i]: %s\n", _e, (value[_e])); \
@@ -569,7 +571,6 @@ void sdf_trim(char *str);
 
 #define SDF_READ_ENTRY_ID(value) do { \
         SDF_READ_ENTRY_STRINGLEN(value, SDF_ID_LENGTH); \
-        sdf_trim(value); \
         SDF_DPRNT(#value ": %s\n", (value)); \
     } while (0)
 
@@ -585,7 +586,7 @@ void sdf_trim(char *str);
         SDF_READ_ENTRY_ARRAY_STRINGLEN(value, length, h->string_length)
 
 #define SDF_SET_ENTRY_STRINGLEN(value, strvalue, length) do { \
-        if (!(value)) value = malloc(h->string_length); \
+        if (!(value)) value = malloc(h->string_length+1); \
         strncpy((value), (strvalue), (length)); \
     } while (0)
 

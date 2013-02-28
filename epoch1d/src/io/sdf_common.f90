@@ -419,11 +419,11 @@ CONTAINS
     IF (olen .GT. 0) THEN
       s2(1:olen) = s1(1:olen)
       DO i = olen+1,len2
-        s2(i:i) = ACHAR(0)
+        s2(i:i) = ' '
       ENDDO
     ELSE
       DO i = 1,len2
-        s2(i:i) = ACHAR(0)
+        s2(i:i) = ' '
       ENDDO
     ENDIF
 
