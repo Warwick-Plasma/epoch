@@ -6,30 +6,6 @@ MODULE sdf_input_cartesian_ru
 
 CONTAINS
 
-  !----------------------------------------------------------------------------
-  ! Code to read common mesh info
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE sdf_info_init(h)
-
-    TYPE(sdf_file_handle) :: h
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (sdf_check_block_header(h)) RETURN
-
-    b => h%current_block
-    h%current_location = b%block_start + h%block_header_length
-
-    IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-    ENDIF
-
-  END SUBROUTINE sdf_info_init
-
-
-
   ! Mesh loading functions
 
   SUBROUTINE read_plain_mesh_info_ru(h, geometry, dims)
@@ -49,7 +25,7 @@ CONTAINS
     ! - maxval    REAL(r8), DIMENSION(ndims)
     ! - dims      INTEGER(i4), DIMENSION(ndims)
 
-    CALL sdf_info_init(h)
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
 
@@ -103,7 +79,7 @@ CONTAINS
     ! - dims      INTEGER(i4), DIMENSION(ndims)
     ! - stagger   INTEGER(i4)
 
-    CALL sdf_info_init(h)
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) THEN

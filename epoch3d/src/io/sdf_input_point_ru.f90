@@ -8,26 +8,6 @@ CONTAINS
 
   ! Mesh loading functions
 
-  SUBROUTINE sdf_info_init(h)
-
-    TYPE(sdf_file_handle) :: h
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (sdf_check_block_header(h)) RETURN
-
-    b => h%current_block
-    h%current_location = b%block_start + h%block_header_length
-
-    IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-    ENDIF
-
-  END SUBROUTINE sdf_info_init
-
-
-
   SUBROUTINE read_point_mesh_info_ru(h, npoints, geometry)
 
     TYPE(sdf_file_handle) :: h
@@ -45,7 +25,7 @@ CONTAINS
     ! - maxval    REAL(r8), DIMENSION(ndims)
     ! - npoints   INTEGER(i8)
 
-    CALL sdf_info_init(h)
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) THEN
@@ -110,7 +90,7 @@ CONTAINS
     ! - meshid    CHARACTER(id_length)
     ! - npoints   INTEGER(i8)
 
-    CALL sdf_info_init(h)
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) THEN

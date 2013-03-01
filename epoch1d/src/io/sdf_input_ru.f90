@@ -1383,4 +1383,28 @@ CONTAINS
 
   END FUNCTION sdf_check_block_header
 
+
+
+  FUNCTION sdf_info_init(h) RESULT(error)
+
+    LOGICAL :: error
+    TYPE(sdf_file_handle) :: h
+    INTEGER :: errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    error = sdf_check_block_header(h)
+    IF (error) RETURN
+
+    b => h%current_block
+    h%current_location = b%block_start + h%block_header_length
+
+    IF (b%done_info) RETURN
+
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+    ENDIF
+
+  END FUNCTION sdf_info_init
+
 END MODULE sdf_input_ru
