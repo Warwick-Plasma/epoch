@@ -2541,7 +2541,6 @@ CONTAINS
       mesh_id, material_names, variable, distribution, subarray, convert, &
       mult, last_in)
 
-    INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
@@ -2576,7 +2575,6 @@ CONTAINS
       mesh_id, material_names, variable, distribution, subarray, convert, &
       mult, last_in)
 
-    INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
     INTEGER, DIMENSION(:), INTENT(IN) :: dims
@@ -2611,7 +2609,6 @@ CONTAINS
       mesh_id, material_names, variable, distribution, subarray, convert, &
       mult, last_in)
 
-    INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id, name, units
     INTEGER, DIMENSION(:), INTENT(IN) :: dims

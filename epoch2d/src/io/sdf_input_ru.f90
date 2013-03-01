@@ -425,19 +425,19 @@ CONTAINS
 
     IF (b%datatype .EQ. c_datatype_integer4) THEN
       CALL read_entry_int4(h, int4)
-      b%const_value = TRANSFER(int4, b%const_value)
+      b%const_value(1:soi4) = TRANSFER(int4, b%const_value(1:soi4))
     ELSE IF (b%datatype .EQ. c_datatype_integer8) THEN
       CALL read_entry_int8(h, int8)
-      b%const_value = TRANSFER(int8, b%const_value)
+      b%const_value(1:soi8) = TRANSFER(int8, b%const_value(1:soi8))
     ELSE IF (b%datatype .EQ. c_datatype_real4) THEN
       CALL read_entry_real4(h, real4)
-      b%const_value = TRANSFER(real4, b%const_value)
+      b%const_value(1:sof4) = TRANSFER(real4, b%const_value(1:sof4))
     ELSE IF (b%datatype .EQ. c_datatype_real8) THEN
       CALL read_entry_real8(h, real8)
-      b%const_value = TRANSFER(real8, b%const_value)
+      b%const_value(1:sof8) = TRANSFER(real8, b%const_value(1:sof8))
     ELSE IF (b%datatype .EQ. c_datatype_logical) THEN
       CALL read_entry_logical(h, logic)
-      b%const_value = TRANSFER(logic, b%const_value)
+      b%const_value(1:sol) = TRANSFER(logic, b%const_value(1:sol))
     ENDIF
 
     b%done_info = .TRUE.
@@ -1084,15 +1084,20 @@ CONTAINS
 
   SUBROUTINE read_entry_int4(h, value)
 
-    INTEGER, PARAMETER :: n = 4
+    INTEGER, PARAMETER :: n = soi4
     TYPE(sdf_file_handle) :: h
     INTEGER(i4), INTENT(OUT) :: value
     INTEGER(i8) :: i
-    INTEGER :: errcode
+    INTEGER :: j, errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
-      value = TRANSFER(h%buffer(i:i+n-1), value)
+      DO j = 1,n
+        buf(j:j) = h%buffer(i)
+        i = i + 1
+      ENDDO
+      value = TRANSFER(buf, value)
     ELSE
       CALL MPI_FILE_READ_ALL(h%filehandle, value, 1, MPI_INTEGER4, &
          MPI_STATUS_IGNORE, errcode)
@@ -1106,15 +1111,20 @@ CONTAINS
 
   SUBROUTINE read_entry_int8(h, value)
 
-    INTEGER, PARAMETER :: n = 8
+    INTEGER, PARAMETER :: n = soi8
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT) :: value
     INTEGER(i8) :: i
-    INTEGER :: errcode
+    INTEGER :: j, errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
-      value = TRANSFER(h%buffer(i:i+n-1), value)
+      DO j = 1,n
+        buf(j:j) = h%buffer(i)
+        i = i + 1
+      ENDDO
+      value = TRANSFER(buf, value)
     ELSE
       CALL MPI_FILE_READ_ALL(h%filehandle, value, 1, MPI_INTEGER8, &
          MPI_STATUS_IGNORE, errcode)
@@ -1128,15 +1138,20 @@ CONTAINS
 
   SUBROUTINE read_entry_real4(h, value)
 
-    INTEGER, PARAMETER :: n = 4
+    INTEGER, PARAMETER :: n = sof4
     TYPE(sdf_file_handle) :: h
     REAL(r4), INTENT(OUT) :: value
     INTEGER(i8) :: i
-    INTEGER :: errcode
+    INTEGER :: j, errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
-      value = TRANSFER(h%buffer(i:i+n-1), value)
+      DO j = 1,n
+        buf(j:j) = h%buffer(i)
+        i = i + 1
+      ENDDO
+      value = TRANSFER(buf, value)
     ELSE
       CALL MPI_FILE_READ_ALL(h%filehandle, value, 1, MPI_REAL4, &
          MPI_STATUS_IGNORE, errcode)
@@ -1150,15 +1165,20 @@ CONTAINS
 
   SUBROUTINE read_entry_real8(h, value)
 
-    INTEGER, PARAMETER :: n = 8
+    INTEGER, PARAMETER :: n = sof8
     TYPE(sdf_file_handle) :: h
     REAL(r8), INTENT(OUT) :: value
     INTEGER(i8) :: i
-    INTEGER :: errcode
+    INTEGER :: j, errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
-      value = TRANSFER(h%buffer(i:i+n-1), value)
+      DO j = 1,n
+        buf(j:j) = h%buffer(i)
+        i = i + 1
+      ENDDO
+      value = TRANSFER(buf, value)
     ELSE
       CALL MPI_FILE_READ_ALL(h%filehandle, value, 1, MPI_REAL8, &
          MPI_STATUS_IGNORE, errcode)
@@ -1175,19 +1195,19 @@ CONTAINS
     INTEGER, PARAMETER :: n = 1
     TYPE(sdf_file_handle) :: h
     LOGICAL, INTENT(OUT) :: value
-    CHARACTER(LEN=1) :: cvalue
     INTEGER(i8) :: i
     INTEGER :: errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
-      cvalue = TRANSFER(h%buffer(i:i+n-1), cvalue)
+      buf(1:1) = h%buffer(i)
     ELSE
-      CALL MPI_FILE_READ_ALL(h%filehandle, cvalue, 1, MPI_CHARACTER, &
+      CALL MPI_FILE_READ_ALL(h%filehandle, buf, 1, MPI_CHARACTER, &
          MPI_STATUS_IGNORE, errcode)
     ENDIF
 
-    IF (cvalue(1:1) .EQ. ACHAR(1)) THEN
+    IF (buf(1:1) .EQ. ACHAR(1)) THEN
       value = .TRUE.
     ELSE
       value = .FALSE.
@@ -1259,18 +1279,22 @@ CONTAINS
 
   SUBROUTINE read_entry_array_int4(h, value, nentries)
 
-    INTEGER, PARAMETER :: n = 4
+    INTEGER, PARAMETER :: n = soi4
     TYPE(sdf_file_handle) :: h
     INTEGER(i4), INTENT(OUT) :: value(:)
     INTEGER, INTENT(IN) :: nentries
     INTEGER(i8) :: i
-    INTEGER :: j, errcode
+    INTEGER :: j, k, errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1, nentries
-        value(j) = TRANSFER(h%buffer(i:i+n-1), value(1))
-        i = i + n
+        DO k = 1,n
+          buf(k:k) = h%buffer(i)
+          i = i + 1
+        ENDDO
+        value(j) = TRANSFER(buf, value(1))
       ENDDO
     ELSE
       CALL MPI_FILE_READ_ALL(h%filehandle, value, nentries, MPI_INTEGER4, &
@@ -1285,18 +1309,22 @@ CONTAINS
 
   SUBROUTINE read_entry_array_int8(h, value, nentries)
 
-    INTEGER, PARAMETER :: n = 8
+    INTEGER, PARAMETER :: n = soi8
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT) :: value(:)
     INTEGER, INTENT(IN) :: nentries
     INTEGER(i8) :: i
-    INTEGER :: j, errcode
+    INTEGER :: j, k, errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1, nentries
-        value(j) = TRANSFER(h%buffer(i:i+n-1), value(1))
-        i = i + n
+        DO k = 1,n
+          buf(k:k) = h%buffer(i)
+          i = i + 1
+        ENDDO
+        value(j) = TRANSFER(buf, value(1))
       ENDDO
     ELSE
       CALL MPI_FILE_READ_ALL(h%filehandle, value, nentries, MPI_INTEGER8, &
@@ -1311,18 +1339,22 @@ CONTAINS
 
   SUBROUTINE read_entry_array_real4(h, value, nentries)
 
-    INTEGER, PARAMETER :: n = 4
+    INTEGER, PARAMETER :: n = sof4
     TYPE(sdf_file_handle) :: h
     REAL(r4), INTENT(OUT) :: value(:)
     INTEGER, INTENT(IN) :: nentries
     INTEGER(i8) :: i
-    INTEGER :: j, errcode
+    INTEGER :: j, k, errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1, nentries
-        value(j) = TRANSFER(h%buffer(i:i+n-1), value(1))
-        i = i + n
+        DO k = 1,n
+          buf(k:k) = h%buffer(i)
+          i = i + 1
+        ENDDO
+        value(j) = TRANSFER(buf, value(1))
       ENDDO
     ELSE
       CALL MPI_FILE_READ_ALL(h%filehandle, value, nentries, MPI_REAL4, &
@@ -1337,18 +1369,22 @@ CONTAINS
 
   SUBROUTINE read_entry_array_real8(h, value, nentries)
 
-    INTEGER, PARAMETER :: n = 8
+    INTEGER, PARAMETER :: n = sof8
     TYPE(sdf_file_handle) :: h
     REAL(r8), INTENT(OUT) :: value(:)
     INTEGER, INTENT(IN) :: nentries
     INTEGER(i8) :: i
-    INTEGER :: j, errcode
+    INTEGER :: j, k, errcode
+    CHARACTER(LEN=n) :: buf
 
     IF (ASSOCIATED(h%buffer)) THEN
       i = h%current_location - h%start_location + 1
       DO j = 1, nentries
-        value(j) = TRANSFER(h%buffer(i:i+n-1), value(1))
-        i = i + n
+        DO k = 1,n
+          buf(k:k) = h%buffer(i)
+          i = i + 1
+        ENDDO
+        value(j) = TRANSFER(buf, value(1))
       ENDDO
     ELSE
       CALL MPI_FILE_READ_ALL(h%filehandle, value, nentries, MPI_REAL8, &

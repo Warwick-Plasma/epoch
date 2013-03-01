@@ -29,7 +29,7 @@ CONTAINS
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
 
-    b%const_value = TRANSFER(value, b%const_value)
+    b%const_value(1:sof) = TRANSFER(value, b%const_value(1:sof))
 
     CALL write_constant_meta(h, id, name)
 
