@@ -28,23 +28,27 @@ MODULE sdf_common
 
   TYPE sdf_block_type
     REAL(r8), DIMENSION(2*c_maxdims) :: extents
-    REAL(r8) :: mult
+    REAL(r8) :: mult, time, time_increment
     REAL(r8), DIMENSION(:), POINTER :: dim_mults
+    REAL(r8), DIMENSION(:,:), POINTER :: station_grid
     INTEGER(KIND=MPI_OFFSET_KIND) :: block_start
     INTEGER(i8) :: next_block_location, data_location
     INTEGER(i8) :: nelements, npoints, data_length, info_length
     INTEGER(i4) :: ndims, geometry, datatype, blocktype
     INTEGER(i4) :: mpitype, type_size, stagger
+    INTEGER(i4) :: nstations, nvariables, step, step_increment
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
+    INTEGER(i4), POINTER :: station_nvars(:), station_move(:), variable_types(:)
     CHARACTER(LEN=8) :: const_value
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id
     CHARACTER(LEN=c_long_id_length) :: long_id
-    CHARACTER(LEN=c_id_length), POINTER :: variable_ids(:)
+    CHARACTER(LEN=c_id_length), POINTER :: station_ids(:), variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
     CHARACTER(LEN=c_max_string_length) :: name, material_name
+    CHARACTER(LEN=c_max_string_length), POINTER :: station_names(:)
     CHARACTER(LEN=c_max_string_length), POINTER :: material_names(:)
-    LOGICAL :: done_header, done_info, done_data, truncated_id
+    LOGICAL :: done_header, done_info, done_data, truncated_id, use_mult
     TYPE(sdf_run_type), POINTER :: run
     TYPE(sdf_block_type), POINTER :: next_block
   END TYPE sdf_block_type
@@ -63,6 +67,7 @@ MODULE sdf_common
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     INTEGER :: errhandler
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error
+    LOGICAL :: station_file
     CHARACTER(LEN=1), POINTER :: buffer(:)
     CHARACTER(LEN=c_id_length) :: code_name
     TYPE(jobid_type) :: jobid
@@ -78,6 +83,7 @@ MODULE sdf_common
 
   INTEGER, PARAMETER :: c_sdf_read = 0
   INTEGER, PARAMETER :: c_sdf_write = 1
+  INTEGER, PARAMETER :: c_sdf_append = 3
 
   INTEGER(i4), PARAMETER :: c_blocktype_scrubbed = -1
   INTEGER(i4), PARAMETER :: c_blocktype_null = 0
@@ -106,7 +112,8 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_stitched = 23
   INTEGER(i4), PARAMETER :: c_blocktype_contiguous = 24
   INTEGER(i4), PARAMETER :: c_blocktype_lagrangian_mesh = 25
-  INTEGER(i4), PARAMETER :: c_blocktype_max = 25
+  INTEGER(i4), PARAMETER :: c_blocktype_station = 26
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 26
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
@@ -118,6 +125,8 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_datatype_logical = 7
   INTEGER(i4), PARAMETER :: c_datatype_other = 8
   INTEGER(i4), PARAMETER :: c_datatype_max = 8
+  INTEGER, PARAMETER :: c_type_sizes(0:c_datatype_max) = &
+      (/ 0, 4, 8, 4, 8, 16, 1, 1, 0 /)
 
   INTEGER(i4), PARAMETER :: c_geometry_null = 0
   INTEGER(i4), PARAMETER :: c_geometry_cartesian = 1
@@ -225,7 +234,8 @@ MODULE sdf_common
       'SDF_BLOCKTYPE_UNSTRUCTURED_MESH      ', &
       'SDF_BLOCKTYPE_STITCHED               ', &
       'SDF_BLOCKTYPE_CONTIGUOUS             ', &
-      'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ' /)
+      'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ', &
+      'SDF_BLOCKTYPE_STATION                ' /)
 
   CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
       'SDF_DATATYPE_NULL     ', &
@@ -516,12 +526,23 @@ CONTAINS
     NULLIFY(var%material_names)
     NULLIFY(var%run)
     NULLIFY(var%next_block)
+    NULLIFY(var%station_ids)
+    NULLIFY(var%station_names)
+    NULLIFY(var%station_nvars)
+    NULLIFY(var%station_move)
+    NULLIFY(var%station_grid)
+    NULLIFY(var%variable_types)
     var%done_header = .FALSE.
     var%done_info = .FALSE.
     var%done_data = .FALSE.
     var%truncated_id = .FALSE.
+    var%use_mult = .FALSE.
     var%data_location = 0
     var%blocktype = c_blocktype_null
+    var%step = 0
+    var%step_increment = 0
+    var%time = 0
+    var%time_increment = 0
 
   END SUBROUTINE initialise_block_type
 
@@ -531,12 +552,18 @@ CONTAINS
 
     TYPE(sdf_block_type) :: var
 
-    IF (ASSOCIATED(var%dim_mults)) DEALLOCATE(var%dim_mults)
-    IF (ASSOCIATED(var%variable_ids)) DEALLOCATE(var%variable_ids)
-    IF (ASSOCIATED(var%dim_labels)) DEALLOCATE(var%dim_labels)
-    IF (ASSOCIATED(var%dim_units)) DEALLOCATE(var%dim_units)
+    IF (ASSOCIATED(var%dim_mults))      DEALLOCATE(var%dim_mults)
+    IF (ASSOCIATED(var%variable_ids))   DEALLOCATE(var%variable_ids)
+    IF (ASSOCIATED(var%dim_labels))     DEALLOCATE(var%dim_labels)
+    IF (ASSOCIATED(var%dim_units))      DEALLOCATE(var%dim_units)
     IF (ASSOCIATED(var%material_names)) DEALLOCATE(var%material_names)
-    IF (ASSOCIATED(var%run)) DEALLOCATE(var%run)
+    IF (ASSOCIATED(var%run))            DEALLOCATE(var%run)
+    IF (ASSOCIATED(var%station_ids))    DEALLOCATE(var%station_ids)
+    IF (ASSOCIATED(var%station_names))  DEALLOCATE(var%station_names)
+    IF (ASSOCIATED(var%station_nvars))  DEALLOCATE(var%station_nvars)
+    IF (ASSOCIATED(var%station_move))   DEALLOCATE(var%station_move)
+    IF (ASSOCIATED(var%station_grid))   DEALLOCATE(var%station_grid)
+    IF (ASSOCIATED(var%variable_types)) DEALLOCATE(var%variable_types)
 
     CALL initialise_block_type(var)
 
@@ -559,6 +586,7 @@ CONTAINS
     var%other_domains = .FALSE.
     var%writing = .FALSE.
     var%handled_error = .FALSE.
+    var%station_file = .FALSE.
     var%nblocks = 0
     var%error_code = 0
     var%errhandler = 0

@@ -3,6 +3,8 @@ MODULE sdf_input_util
   USE sdf_input
   USE sdf_input_cartesian
   USE sdf_input_point
+  USE sdf_input_station
+  USE sdf_output_station_ru
 
   IMPLICIT NONE
 
@@ -94,6 +96,8 @@ CONTAINS
       CALL sdf_read_stitched_species(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_obstacle_group) THEN
       CALL sdf_read_stitched_obstacle_group(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_station) THEN
+      CALL sdf_read_station_info(h)
     ENDIF
 
   END SUBROUTINE sdf_read_block_info
@@ -117,5 +121,75 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE sdf_read_stitched_info
+
+
+
+  FUNCTION sdf_station_seek_time(h, time) RESULT(found)
+
+    TYPE(sdf_file_handle) :: h
+    REAL(r8), INTENT(IN) :: time
+    LOGICAL :: found
+    INTEGER :: i, ns, nstep, errcode, mpireal
+    INTEGER(KIND=MPI_OFFSET_KIND) :: offset
+    REAL(r4) :: time4
+    TYPE(sdf_block_type), POINTER :: b, station_block
+
+    IF (.NOT.ASSOCIATED(h%blocklist)) CALL sdf_read_blocklist(h)
+
+    found = .FALSE.
+    b => h%blocklist
+    DO i = 1,h%nblocks
+      IF (b%blocktype .EQ. c_blocktype_station) THEN
+        station_block => b
+        found = .TRUE.
+      ENDIF
+      b => b%next_block
+    ENDDO
+
+    IF (.NOT.found) RETURN
+
+    found = .TRUE.
+
+    b => station_block
+    ns = INT((time - b%time) * b%nelements / (h%time - b%time))
+    IF (ns .GE. b%nelements) THEN
+      ns = INT(b%nelements-1)
+    ELSE IF (ns .LT. 0) THEN
+      ns = 0
+    ENDIF
+    nstep = ns
+
+    offset = b%data_location + ns * b%type_size
+    mpireal = MPI_REAL4
+
+    CALL MPI_FILE_READ_AT(h%filehandle, offset, time4, 1, mpireal, &
+        MPI_STATUS_IGNORE, errcode)
+    IF (time4 .GT. time) THEN
+      DO i = ns-1, 0, -1
+        offset = offset - b%type_size
+        CALL MPI_FILE_READ_AT(h%filehandle, offset, time4, 1, mpireal, &
+            MPI_STATUS_IGNORE, errcode)
+        nstep = i
+        IF (time4 .LT. time) EXIT
+      ENDDO
+    ELSE
+      DO i = ns+1, INT(b%nelements)
+        offset = offset + b%type_size
+        CALL MPI_FILE_READ_AT(h%filehandle, offset, time4, 1, mpireal, &
+            MPI_STATUS_IGNORE, errcode)
+        IF (time4 .GT. time) EXIT
+        nstep = i
+      ENDDO
+    ENDIF
+
+    h%current_block => b
+    b%nelements = nstep
+    b%data_length = b%nelements * b%type_size
+    h%step = b%step + nstep
+    h%time = time4
+
+    CALL write_station_update(h)
+
+  END FUNCTION sdf_station_seek_time
 
 END MODULE sdf_input_util

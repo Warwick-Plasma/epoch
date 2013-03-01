@@ -42,6 +42,9 @@ CONTAINS
       ! Delete file
       IF (h%rank .EQ. h%rank_master) &
           CALL MPI_FILE_DELETE(TRIM(filename), MPI_INFO_NULL, errcode)
+    ELSE IF (mode .EQ. c_sdf_append) THEN
+      h%writing = .TRUE.
+      h%mode = MPI_MODE_CREATE + MPI_MODE_RDWR
     ELSE
       ! We're opening a file which already exists, so don't damage it
       h%writing = .FALSE.
@@ -78,7 +81,7 @@ CONTAINS
 
     ! If writing
     IF (h%writing) THEN
-      CALL sdf_write_summary(h)
+      IF (.NOT.h%station_file) CALL sdf_write_summary(h)
 
       CALL sdf_flush(h)
     ENDIF

@@ -563,6 +563,8 @@ CONTAINS
 
     ALLOCATE(cvalues(n1))
 
+    h%current_location = b%data_location
+
     IF (h%rank .EQ. h%rank_master) THEN
       CALL MPI_FILE_READ_AT(h%filehandle, h%current_location, cvalues, n1, &
           b%mpitype, MPI_STATUS_IGNORE, errcode)
