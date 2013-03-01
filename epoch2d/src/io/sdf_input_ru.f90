@@ -88,20 +88,14 @@ CONTAINS
     ALLOCATE(h%buffer(c_header_length))
 
     h%current_location = 0
+    CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, errcode)
     IF (h%rank .EQ. h%rank_master) THEN
-      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
-          errcode)
       CALL MPI_FILE_READ(h%filehandle, h%buffer, c_header_length, &
           MPI_CHARACTER, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     CALL MPI_BCAST(h%buffer, c_header_length, MPI_CHARACTER, h%rank_master, &
         h%comm, errcode)
-
-    IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-    ENDIF
 
     ! Read the header
 
@@ -198,8 +192,8 @@ CONTAINS
       h%current_location = b%block_start
 
       IF (PRESENT(id)) THEN
-        CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-            MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+        CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+            errcode)
       ENDIF
 
       CALL read_block_header(h)
@@ -385,9 +379,11 @@ CONTAINS
 
     CALL read_block_header(h)
 
+    h%current_location = b%block_start + h%block_header_length
+
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
     ENDIF
 
     IF (b%datatype .EQ. c_datatype_integer4) THEN
@@ -747,8 +743,8 @@ CONTAINS
     CALL read_block_header(h)
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
     ENDIF
 
     ! Metadata is
@@ -786,8 +782,8 @@ CONTAINS
     CALL read_block_header(h)
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
     ENDIF
 
     ! Metadata is
@@ -831,8 +827,8 @@ CONTAINS
     CALL read_block_header(h)
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
     ENDIF
 
     ! Metadata is
@@ -873,8 +869,8 @@ CONTAINS
     CALL read_block_header(h)
 
     IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
     ENDIF
 
     ! Metadata is

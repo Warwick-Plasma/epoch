@@ -22,11 +22,8 @@ CONTAINS
 
     IF (h%rank .EQ. h%rank_master) THEN
       h%current_location = h%summary_location
-      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
-          errcode)
-
-      CALL MPI_FILE_READ(h%filehandle, h%buffer, buflen, &
-          MPI_CHARACTER, MPI_STATUS_IGNORE, errcode)
+      CALL MPI_FILE_READ_AT(h%filehandle, h%current_location, h%buffer, &
+          buflen, MPI_CHARACTER, MPI_STATUS_IGNORE, errcode)
     ENDIF
 
     CALL MPI_BCAST(h%buffer, buflen, MPI_CHARACTER, h%rank_master, &
