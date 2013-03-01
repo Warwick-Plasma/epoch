@@ -190,13 +190,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. h%done_header) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF header has not been read. Unable to read block.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_header(h)) RETURN
 
     b => h%current_block
 
@@ -251,13 +245,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: id, name
     INTEGER, INTENT(OUT), OPTIONAL :: blocktype, ndims, datatype
 
-    IF (.NOT. h%done_header) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF header has not been read. Unable to read block.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_header(h)) RETURN
 
     CALL sdf_get_next_block(h)
 
@@ -280,13 +268,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
 
@@ -404,13 +386,7 @@ CONTAINS
     LOGICAL :: logic
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (b%done_data) RETURN
@@ -493,13 +469,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (b%done_info) THEN
@@ -533,13 +503,7 @@ CONTAINS
     INTEGER :: errcode, n1
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_array_info(h, dims)
@@ -569,13 +533,7 @@ CONTAINS
     INTEGER :: errcode, i, n1, n2
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_array_info(h, dims)
@@ -609,13 +567,7 @@ CONTAINS
     INTEGER :: errcode, i, n1
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_array_info(h, dims)
@@ -657,13 +609,7 @@ CONTAINS
     INTEGER :: errcode, i, n1, n2
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_array_info(h, dims)
@@ -695,13 +641,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT.b%done_info) THEN
@@ -732,13 +672,7 @@ CONTAINS
     INTEGER :: errcode, n1
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_cpu_split_info(h)
@@ -767,13 +701,7 @@ CONTAINS
     INTEGER :: errcode, n1
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_cpu_split_info(h)
@@ -812,13 +740,7 @@ CONTAINS
     INTEGER :: iloop, errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (b%done_data) RETURN
@@ -857,13 +779,7 @@ CONTAINS
     INTEGER :: iloop, errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (b%done_data) RETURN
@@ -908,13 +824,7 @@ CONTAINS
     INTEGER :: iloop, errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (b%done_data) RETURN
@@ -956,13 +866,7 @@ CONTAINS
     INTEGER :: iloop, errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (b%done_data) RETURN
@@ -1013,13 +917,7 @@ CONTAINS
     INTEGER :: iloop, errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (b%done_data) RETURN
@@ -1062,13 +960,7 @@ CONTAINS
     INTEGER :: iloop
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     CALL sdf_read_stitched_obstacle_group(h)
     b => h%current_block
@@ -1448,5 +1340,47 @@ CONTAINS
     string = string_l(1:MIN(string_len, length))
 
   END SUBROUTINE sdf_safe_read_string_len
+
+
+
+  FUNCTION sdf_check_header(h) RESULT(error)
+
+    LOGICAL :: error
+    TYPE(sdf_file_handle) :: h
+
+    IF (.NOT. h%done_header) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF header has not been read. Unable to read block.'
+      ENDIF
+      h%error_code = c_err_sdf
+      error = .TRUE.
+      RETURN
+    ENDIF
+
+    error = .FALSE.
+
+  END FUNCTION sdf_check_header
+
+
+
+  FUNCTION sdf_check_block_header(h) RESULT(error)
+
+    LOGICAL :: error
+    TYPE(sdf_file_handle) :: h
+
+    IF (.NOT. ASSOCIATED(h%current_block)) THEN
+      IF (h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** ERROR ***'
+        PRINT*,'SDF block header has not been read. Ignoring call.'
+      ENDIF
+      h%error_code = c_err_sdf
+      error = .TRUE.
+      RETURN
+    ENDIF
+
+    error = .FALSE.
+
+  END FUNCTION sdf_check_block_header
 
 END MODULE sdf_input_ru
