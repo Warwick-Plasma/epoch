@@ -58,12 +58,15 @@ CONTAINS
 
     ! Read the real data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     npoints = INT(b%npoints)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+      CALL MPI_FILE_READ(h%filehandle, x, npoints, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(x, npoints, b%mpitype, h%rank_master, h%comm, errcode)
 
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
@@ -88,15 +91,22 @@ CONTAINS
 
     ! Read the real data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     npoints = INT(b%npoints)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+      CALL MPI_FILE_READ(h%filehandle, x, npoints, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    CALL MPI_BCAST(x, npoints, b%mpitype, h%rank_master, h%comm, errcode)
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ(h%filehandle, y, npoints, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(y, npoints, b%mpitype, h%rank_master, h%comm, errcode)
 
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
@@ -121,18 +131,29 @@ CONTAINS
 
     ! Read the real data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     npoints = INT(b%npoints)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+      CALL MPI_FILE_READ(h%filehandle, x, npoints, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    CALL MPI_BCAST(x, npoints, b%mpitype, h%rank_master, h%comm, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, z, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ(h%filehandle, y, npoints, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(y, npoints, b%mpitype, h%rank_master, h%comm, errcode)
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ(h%filehandle, z, npoints, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(z, npoints, b%mpitype, h%rank_master, h%comm, errcode)
 
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
@@ -303,12 +324,13 @@ CONTAINS
 
     ! Read the real data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     npoints = INT(b%npoints)
-    CALL MPI_FILE_READ_ALL(h%filehandle, array, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ_AT(h%filehandle, h%current_location, array, npoints, &
+          b%mpitype, MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(array, npoints, b%mpitype, h%rank_master, h%comm, errcode)
 
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
