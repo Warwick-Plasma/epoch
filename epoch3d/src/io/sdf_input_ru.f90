@@ -265,21 +265,13 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: compile_machine, compile_flags
     INTEGER(i8), INTENT(OUT), OPTIONAL :: defines
     INTEGER(i4), INTENT(OUT), OPTIONAL :: compile_date, run_date, io_date
-    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (sdf_check_block_header(h)) RETURN
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
 
     IF (.NOT. b%done_info) THEN
-      CALL read_block_header(h)
-
-      IF (.NOT. ASSOCIATED(h%buffer)) THEN
-        CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-            MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-      ENDIF
-
       ! Metadata is
       ! - version   INTEGER(i4)
       ! - revision  INTEGER(i4)
@@ -466,22 +458,17 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     INTEGER, DIMENSION(:), INTENT(OUT), OPTIONAL :: dims
-    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (sdf_check_block_header(h)) RETURN
+    IF (sdf_info_init(h)) RETURN
+
+    ! Metadata is
+    ! - dims      ndims*INTEGER(i4)
 
     b => h%current_block
     IF (b%done_info) THEN
       IF (PRESENT(dims)) dims(1:b%ndims) = b%dims(1:b%ndims)
       RETURN
-    ENDIF
-
-    CALL read_block_header(h)
-
-    IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
     ENDIF
 
     ! Size of array
@@ -638,20 +625,12 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(OUT), OPTIONAL :: dims(:), geometry
-    INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (sdf_check_block_header(h)) RETURN
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
     IF (.NOT.b%done_info) THEN
-      CALL read_block_header(h)
-
-      IF (.NOT. ASSOCIATED(h%buffer)) THEN
-        CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-            MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-      ENDIF
-
       CALL read_entry_int4(h, b%geometry)
       CALL read_entry_array_int4(h, b%dims, INT(b%ndims))
     ENDIF
@@ -914,20 +893,13 @@ CONTAINS
   SUBROUTINE sdf_read_stitched_obstacle_group(h)
 
     TYPE(sdf_file_handle) :: h
-    INTEGER :: iloop, errcode
+    INTEGER :: iloop
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (sdf_check_block_header(h)) RETURN
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
     IF (b%done_data) RETURN
-
-    CALL read_block_header(h)
-
-    IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-    ENDIF
 
     ! Metadata is
     ! - stagger   INTEGER(i4)
