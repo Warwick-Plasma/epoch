@@ -273,7 +273,7 @@ CONTAINS
       run_date, io_date)
 
     TYPE(sdf_file_handle) :: h
-    INTEGER(i4), INTENT(OUT), OPTIONAL :: version, revision, minor_rev
+    INTEGER(i4), INTENT(OUT) :: version, revision, minor_rev
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: commit_id, sha1sum
     CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: compile_machine, compile_flags
     INTEGER(i8), INTENT(OUT), OPTIONAL :: defines
@@ -341,9 +341,9 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (PRESENT(version)) version = b%run%version
-    IF (PRESENT(revision)) revision = b%run%revision
-    IF (PRESENT(minor_rev)) minor_rev = b%run%minor_rev
+    version = b%run%version
+    revision = b%run%revision
+    minor_rev = b%run%minor_rev
     IF (PRESENT(commit_id)) CALL safe_copy_string(b%run%commit_id, commit_id)
     IF (PRESENT(sha1sum)) CALL safe_copy_string(b%run%sha1sum, sha1sum)
     IF (PRESENT(compile_machine)) &
@@ -380,6 +380,17 @@ CONTAINS
         run_date, io_date)
 
   END SUBROUTINE read_run_info_old
+
+
+
+  SUBROUTINE read_run_info(h)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i4) :: version, revision, minor_rev
+
+    CALL read_run_info_minor(h, version, revision, minor_rev)
+
+  END SUBROUTINE read_run_info
 
 
 
