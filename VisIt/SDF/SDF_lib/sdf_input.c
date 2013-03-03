@@ -330,6 +330,8 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_stitched_species(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP)
         ret = sdf_read_stitched_obstacle_group(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STATION)
+        ret = sdf_read_station_info(h);
 
     return ret;
 }

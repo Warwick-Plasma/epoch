@@ -62,6 +62,7 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_STITCHED,
     SDF_BLOCKTYPE_CONTIGUOUS,
     SDF_BLOCKTYPE_LAGRANGIAN_MESH,
+    SDF_BLOCKTYPE_STATION,
 };
 
 enum sdf_geometry {
@@ -167,13 +168,14 @@ typedef struct sdf_file sdf_file_t;
 struct sdf_block {
     // This struct must be changed with care and the SDF_LIB_VERSION bumped
     // if the resulting struct is not aligned the same.
-    double *dim_mults, *extents, mult;
+    double *dim_mults, *variable_mults, *extents, mult;
+    double *station_x, *station_y, *station_z;
     uint64_t block_start;
     uint64_t next_block_location, data_location;
     uint64_t nelements, npoints, data_length;
     uint32_t ndims, geometry, datatype, blocktype, block_info_length;
     uint32_t type_size, stagger, datatype_out, type_size_out;
-    uint32_t *dims_in;
+    uint32_t *dims_in, *station_nvars, *station_move, *variable_types;
     uint64_t dims[3];
     int local_dims[3], nm, nelements_local, n_ids, opt, ng, nfaces;
     char const_value[16];
@@ -181,7 +183,8 @@ struct sdf_block {
     char *vfm_id, *obstacle_id;
     char *name, *material_name, *must_read;
     char **dim_labels, **dim_units;
-    char **variable_ids, **material_names;
+    char **station_ids, **station_names, **material_names;
+    char **variable_ids, **variable_names, **variable_units;
     int *node_list, *boundary_cells;
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
@@ -270,6 +273,7 @@ int sdf_read_point_mesh_info(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
 int sdf_read_point_variable_info(sdf_file_t *h);
 int sdf_read_lagran_mesh(sdf_file_t *h);
+int sdf_read_station_info(sdf_file_t *h);
 
 void sdf_trim(char *str);
 

@@ -12,6 +12,7 @@
       SDF_lib/sdf_input.c
       SDF_lib/sdf_input_cartesian.c
       SDF_lib/sdf_input_point.c
+      SDF_lib/sdf_input_station.c
       SDF_lib/sdf_util.c
     </Files>
     <CXXFLAGS>-ISDF_lib -Iextension</CXXFLAGS>

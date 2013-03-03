@@ -46,6 +46,7 @@ const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_STITCHED",
     "SDF_BLOCKTYPE_CONTIGUOUS",
     "SDF_BLOCKTYPE_LAGRANGIAN_MESH",
+    "SDF_BLOCKTYPE_STATION",
 };
 
 const char *sdf_geometry_c[] = {
@@ -285,7 +286,18 @@ static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
     if (b->material_name) free(b->material_name);
     if (b->dim_mults) free(b->dim_mults);
     if (b->extents) free(b->extents);
+    if (b->station_nvars) free(b->station_nvars);
+    if (b->station_move) free(b->station_move);
+    if (b->station_x) free(b->station_x);
+    if (b->station_y) free(b->station_y);
+    if (b->station_z) free(b->station_z);
+    if (b->variable_types) free(b->variable_types);
+    if (b->variable_mults) free(b->variable_mults);
+    FREE_ARRAY(b->station_ids);
+    FREE_ARRAY(b->station_names);
     FREE_ARRAY(b->variable_ids);
+    FREE_ARRAY(b->variable_names);
+    FREE_ARRAY(b->variable_units);
     FREE_ARRAY(b->material_names);
     sdf_free_block_data(h, b);
 
