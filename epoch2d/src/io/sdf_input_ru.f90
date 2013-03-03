@@ -124,6 +124,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     TYPE(sdf_block_type), POINTER :: b
     INTEGER(i4) :: info_length
+    INTEGER :: errcode
 
     IF (.NOT. ASSOCIATED(h%current_block)) THEN
       IF (h%rank .EQ. h%rank_master) THEN
@@ -141,6 +142,10 @@ CONTAINS
     ENDIF
 
     h%current_location = b%block_start
+    IF (.NOT. ASSOCIATED(h%buffer)) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+    ENDIF
 
     CALL read_entry_int8(h, b%next_block_location)
 
