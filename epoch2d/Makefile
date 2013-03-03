@@ -350,7 +350,7 @@ sdf_output_station.o: sdf_output_station.f90 sdf_output_station_r4.o \
   sdf_output_station_r8.o
 sdf_output_station_r4.o: sdf_output_station_r4.f90 sdf_output_station_ru.o
 sdf_output_station_r8.o: sdf_output_station_r8.f90 sdf_output_station_ru.o
-sdf_output_station_ru.o: sdf_output_station_ru.f90 sdf_common.o
+sdf_output_station_ru.o: sdf_output_station_ru.f90 sdf_output_ru.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
   sdf_output_point_ru.o
 setup.o: setup.F90 fields.o laser.o mpi_subtype_control.o shunt.o \

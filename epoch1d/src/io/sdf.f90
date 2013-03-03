@@ -146,6 +146,9 @@ MODULE sdf
   PUBLIC :: sdf_write_srl_point_variable
   PUBLIC :: sdf_write_station_header
   PUBLIC :: sdf_write_station_array
+  PUBLIC :: sdf_write_station_material
+  PUBLIC :: sdf_write_station_matvar
+  PUBLIC :: sdf_write_station_species
   PUBLIC :: sdf_write_stitched
   PUBLIC :: sdf_write_stitched_var
   PUBLIC :: sdf_write_stitched_tensor

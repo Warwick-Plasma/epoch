@@ -1,6 +1,6 @@
 MODULE sdf_output_station_ru
 
-  USE sdf_common
+  USE sdf_output_ru
 
   IMPLICIT NONE
 
@@ -433,5 +433,111 @@ CONTAINS
     CALL sdf_update(h)
 
   END SUBROUTINE write_station_update
+
+
+
+  SUBROUTINE sdf_write_station_material(h, id, name, units, dims, nmat, &
+      stagger, mesh_id, material_names)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nmat
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
+    INTEGER :: i
+    CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: variable_ids
+
+    ALLOCATE(variable_ids(nmat))
+
+    DO i = 1,nmat
+      IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
+        variable_ids(i) = ''
+      ELSE
+        CALL sdf_safe_string_composite(h, id, &
+            sdf_string_lowercase(material_names(i)), variable_ids(i))
+      ENDIF
+    ENDDO
+
+    CALL sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
+        material_names, variable_ids, nmat)
+
+    h%data_location = 0
+
+    DEALLOCATE(variable_ids)
+
+  END SUBROUTINE sdf_write_station_material
+
+
+
+  SUBROUTINE sdf_write_station_matvar(h, id, name, units, dims, nmat, stagger, &
+      mesh_id, material_id, material_names)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nmat
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id, material_id
+    CHARACTER(LEN=*), INTENT(IN) :: material_names(:)
+    INTEGER :: i
+    CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: variable_ids
+
+    ALLOCATE(variable_ids(nmat))
+
+    DO i = 1,nmat
+      IF (LEN_TRIM(material_names(i)) .EQ. 0) THEN
+        variable_ids(i) = ''
+      ELSE
+        CALL sdf_safe_string_composite(h, id, &
+            sdf_string_lowercase(material_names(i)), variable_ids(i))
+      ENDIF
+    ENDDO
+
+    CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
+        material_id, variable_ids, nmat)
+
+    h%data_location = 0
+
+    DEALLOCATE(variable_ids)
+
+  END SUBROUTINE sdf_write_station_matvar
+
+
+
+  SUBROUTINE sdf_write_station_species(h, id, name, units, dims, nmat, &
+      stagger, mesh_id, material_id, material_name, specnames)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: dims
+    INTEGER, INTENT(IN) :: nmat
+    INTEGER(i4), INTENT(IN) :: stagger
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id, material_id
+    CHARACTER(LEN=*), INTENT(IN) :: material_name
+    CHARACTER(LEN=*), INTENT(IN) :: specnames(:)
+    INTEGER :: i
+    CHARACTER(LEN=c_id_length), DIMENSION(:), ALLOCATABLE :: variable_ids
+
+    ALLOCATE(variable_ids(nmat))
+
+    DO i = 1,nmat
+      IF (LEN_TRIM(specnames(i)) .EQ. 0) THEN
+        variable_ids(i) = ''
+      ELSE
+        CALL sdf_safe_string_composite(h, id, &
+            sdf_string_lowercase(specnames(i)), variable_ids(i))
+      ENDIF
+    ENDDO
+
+    CALL sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
+        material_id, material_name, specnames, variable_ids, nmat)
+
+    h%data_location = 0
+
+    DEALLOCATE(variable_ids)
+
+  END SUBROUTINE sdf_write_station_species
 
 END MODULE sdf_output_station_ru
