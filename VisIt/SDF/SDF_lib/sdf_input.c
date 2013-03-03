@@ -156,7 +156,7 @@ int sdf_read_header(sdf_file_t *h)
     h->current_location = SDF_HEADER_LENGTH;
     h->done_header = 1;
 
-    if (h->summary_location == 0) h->use_summary = 0;
+    if (h->summary_size == 0) h->use_summary = 0;
 
     return 0;
 }
@@ -406,11 +406,14 @@ static void build_summary_buffer(sdf_file_t *h)
 
             buflen += h->block_header_length + block_info_length;
 
-            h->current_location = block_location = next_block_location;
             h->nblocks++;
 
             blockbuf->next = calloc(1,sizeof(*blockbuf));
             blockbuf = blockbuf->next;
+
+            if (h->current_location > next_block_location) break;
+
+            h->current_location = block_location = next_block_location;
         }
 
         if (blockbuf->buffer) {
