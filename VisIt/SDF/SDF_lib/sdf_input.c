@@ -73,28 +73,6 @@ static inline int sdf_get_next_block(sdf_file_t *h)
 
 
 
-int sdf_abort(sdf_file_t *h)
-{
-#ifdef PARALLEL
-    MPI_Abort(h->comm, 1);
-#endif
-    _exit(1);
-    return 0;
-}
-
-
-
-int sdf_seek(sdf_file_t *h)
-{
-#ifdef PARALLEL
-    return MPI_File_seek(h->filehandle, h->current_location, MPI_SEEK_SET);
-#else
-    return fseeko(h->filehandle, h->current_location, SEEK_SET);
-#endif
-}
-
-
-
 int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen)
 {
 #ifdef PARALLEL
@@ -102,17 +80,6 @@ int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen)
             MPI_STATUS_IGNORE);
 #else
     return (1 != fread(buf, buflen, 1, h->filehandle));
-#endif
-}
-
-
-
-int sdf_broadcast(sdf_file_t *h, void *buf, int size)
-{
-#ifdef PARALLEL
-    return MPI_Bcast(buf, size, MPI_BYTE, h->rank_master, h->comm);
-#else
-    return 0;
 #endif
 }
 

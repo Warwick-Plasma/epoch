@@ -18,6 +18,135 @@
 static uint32_t sdf_random(void);
 static void sdf_random_init(void);
 
+const char *sdf_blocktype_c[] = {
+    "SDF_BLOCKTYPE_NULL",
+    "SDF_BLOCKTYPE_PLAIN_MESH",
+    "SDF_BLOCKTYPE_POINT_MESH",
+    "SDF_BLOCKTYPE_PLAIN_VARIABLE",
+    "SDF_BLOCKTYPE_POINT_VARIABLE",
+    "SDF_BLOCKTYPE_CONSTANT",
+    "SDF_BLOCKTYPE_ARRAY",
+    "SDF_BLOCKTYPE_RUN_INFO",
+    "SDF_BLOCKTYPE_SOURCE",
+    "SDF_BLOCKTYPE_STITCHED_TENSOR",
+    "SDF_BLOCKTYPE_STITCHED_MATERIAL",
+    "SDF_BLOCKTYPE_STITCHED_MATVAR",
+    "SDF_BLOCKTYPE_STITCHED_SPECIES",
+    "SDF_BLOCKTYPE_SPECIES",
+    "SDF_BLOCKTYPE_PLAIN_DERIVED",
+    "SDF_BLOCKTYPE_POINT_DERIVED",
+    "SDF_BLOCKTYPE_CONTIGUOUS_TENSOR",
+    "SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL",
+    "SDF_BLOCKTYPE_CONTIGUOUS_MATVAR",
+    "SDF_BLOCKTYPE_CONTIGUOUS_SPECIES",
+    "SDF_BLOCKTYPE_CPU_SPLIT",
+    "SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP",
+    "SDF_BLOCKTYPE_UNSTRUCTURED_MESH",
+    "SDF_BLOCKTYPE_STITCHED",
+    "SDF_BLOCKTYPE_CONTIGUOUS",
+    "SDF_BLOCKTYPE_LAGRANGIAN_MESH",
+};
+
+const char *sdf_geometry_c[] = {
+    "SDF_GEOMETRY_NULL",
+    "SDF_GEOMETRY_CARTESIAN",
+    "SDF_GEOMETRY_CYLINDRICAL",
+    "SDF_GEOMETRY_SPHERICAL",
+};
+
+const char *sdf_stagger_c[] = {
+    "SDF_STAGGER_CELL_CENTRE",
+    "SDF_STAGGER_FACE_X",
+    "SDF_STAGGER_FACE_Y",
+    "SDF_STAGGER_EDGE_Z",
+    "SDF_STAGGER_FACE_Z",
+    "SDF_STAGGER_EDGE_Y",
+    "SDF_STAGGER_EDGE_X",
+    "SDF_STAGGER_VERTEX",
+};
+
+const char *sdf_datatype_c[] = {
+    "SDF_DATATYPE_NULL",
+    "SDF_DATATYPE_INTEGER4",
+    "SDF_DATATYPE_INTEGER8",
+    "SDF_DATATYPE_REAL4",
+    "SDF_DATATYPE_REAL8",
+    "SDF_DATATYPE_REAL16",
+    "SDF_DATATYPE_CHARACTER",
+    "SDF_DATATYPE_LOGICAL",
+    "SDF_DATATYPE_OTHER",
+};
+
+const char *sdf_error_codes_c[] = {
+    "SDF_ERR_SUCCESS",
+    "SDF_ERR_ACCESS",
+    "SDF_ERR_AMODE",
+    "SDF_ERR_BAD_FILE",
+    "SDF_ERR_CONVERSION",
+    "SDF_ERR_DUP_DATAREP",
+    "SDF_ERR_FILE",
+    "SDF_ERR_FILE_EXISTS",
+    "SDF_ERR_FILE_IN_USE",
+    "SDF_ERR_INFO",
+    "SDF_ERR_INFO_KEY",
+    "SDF_ERR_INFO_NOKEY",
+    "SDF_ERR_INFO_VALUE",
+    "SDF_ERR_IO",
+    "SDF_ERR_NOT_SAME",
+    "SDF_ERR_NO_SPACE",
+    "SDF_ERR_NO_SUCH_FILE",
+    "SDF_ERR_QUOTA",
+    "SDF_ERR_READ_ONLY",
+    "SDF_ERR_UNSUPPORTED_DATAREP",
+    "SDF_ERR_UNSUPPORTED_OPERATION",
+    "SDF_ERR_UNKNOWN",
+};
+
+const int sdf_blocktype_len =
+        sizeof(sdf_blocktype_c) / sizeof(sdf_blocktype_c[0]);
+const int sdf_geometry_len =
+        sizeof(sdf_geometry_c) / sizeof(sdf_geometry_c[0]);
+const int sdf_stagger_len =
+        sizeof(sdf_stagger_c) / sizeof(sdf_stagger_c[0]);
+const int sdf_datatype_len =
+        sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
+const int sdf_error_codes_len =
+        sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
+
+
+
+int sdf_abort(sdf_file_t *h)
+{
+#ifdef PARALLEL
+    MPI_Abort(h->comm, 1);
+#endif
+    _exit(1);
+    return 0;
+}
+
+
+
+int sdf_seek(sdf_file_t *h)
+{
+#ifdef PARALLEL
+    return MPI_File_seek(h->filehandle, h->current_location, MPI_SEEK_SET);
+#else
+    return fseeko(h->filehandle, h->current_location, SEEK_SET);
+#endif
+}
+
+
+
+int sdf_broadcast(sdf_file_t *h, void *buf, int size)
+{
+#ifdef PARALLEL
+    return MPI_Bcast(buf, size, MPI_BYTE, h->rank_master, h->comm);
+#else
+    return 0;
+#endif
+}
+
+
 
 int sdf_fopen(sdf_file_t *h)
 {
@@ -34,6 +163,7 @@ int sdf_fopen(sdf_file_t *h)
 
     return ret;
 }
+
 
 
 sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
@@ -99,6 +229,7 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 }
 
 
+
 #define FREE_ARRAY(value) do { \
     if (value) { \
         int i; \
@@ -111,6 +242,7 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
         } \
         free(value); \
     }} while(0)
+
 
 
 static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
@@ -137,6 +269,7 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 
     return 0;
 }
+
 
 
 static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
@@ -556,6 +689,7 @@ int sdf_randomize_array(sdf_file_t *h, void **var_in, int count)
 }
 
 
+
 static uint32_t Q[41790], indx, carry, xcng, xs;
 
 #define CNG (xcng = 69609 * xcng + 123)
@@ -577,10 +711,12 @@ static uint32_t refill(void)
 }
 
 
+
 static uint32_t sdf_random(void)
 {
     return KISS;
 }
+
 
 
 static void sdf_random_init(void)
