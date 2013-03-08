@@ -67,7 +67,7 @@ MODULE sdf_common
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     INTEGER :: errhandler
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error
-    LOGICAL :: station_file
+    LOGICAL :: station_file, first
     CHARACTER(LEN=1), POINTER :: buffer(:)
     CHARACTER(LEN=c_id_length) :: code_name
     TYPE(jobid_type) :: jobid
@@ -265,6 +265,9 @@ CONTAINS
       IF (.NOT. ASSOCIATED(h%current_block)) THEN
         h%current_block => h%blocklist
         RETURN
+      ELSE IF (h%first .AND. ASSOCIATED(h%current_block, h%blocklist)) THEN
+        h%first = .FALSE.
+        RETURN
       ELSE IF (ASSOCIATED(h%current_block%next_block)) THEN
         h%current_block => h%current_block%next_block
         RETURN
@@ -281,6 +284,7 @@ CONTAINS
       next%block_start = h%summary_location
     ENDIF
 
+    h%first = .FALSE.
     next%done_header = .FALSE.
     next%done_info = .FALSE.
     next%done_data = .FALSE.
@@ -297,6 +301,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
 
     h%current_block => h%blocklist
+    h%first = .TRUE.
 
   END SUBROUTINE sdf_seek_start
 
@@ -587,6 +592,7 @@ CONTAINS
     var%writing = .FALSE.
     var%handled_error = .FALSE.
     var%station_file = .FALSE.
+    var%first = .TRUE.
     var%nblocks = 0
     var%error_code = 0
     var%errhandler = 0
