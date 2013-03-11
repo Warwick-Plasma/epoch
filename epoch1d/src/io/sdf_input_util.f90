@@ -192,4 +192,102 @@ CONTAINS
 
   END FUNCTION sdf_station_seek_time
 
+
+
+  SUBROUTINE sdf_get_all_stations(h, nstations, station_ids)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER, INTENT(OUT), OPTIONAL :: nstations
+    CHARACTER(LEN=c_id_length), POINTER, OPTIONAL :: station_ids(:)
+    INTEGER :: i, m, n, nstat_max, nstat_list_max, nextra
+    TYPE(sdf_block_type), POINTER :: b, next
+    CHARACTER(LEN=c_id_length), POINTER :: ctmp(:)
+    LOGICAL :: found
+    LOGICAL, ALLOCATABLE :: found_id(:)
+    INTEGER, ALLOCATABLE :: extra_id(:)
+
+    IF (.NOT.ASSOCIATED(h%blocklist)) CALL sdf_read_blocklist(h)
+
+    IF (.NOT.ASSOCIATED(h%station_ids)) THEN
+      nstat_max = 2
+      ALLOCATE(extra_id(nstat_max))
+      ALLOCATE(found_id(1))
+
+      nstat_list_max = 0
+      next => h%blocklist
+      DO i = 1,h%nblocks
+        h%current_block => next
+        next => h%current_block%next_block
+        IF (h%current_block%blocktype .NE. c_blocktype_station) CYCLE
+
+        b => h%current_block
+        CALL sdf_read_block_info(h)
+
+        IF (b%nstations .GT. nstat_max) THEN
+          nstat_max = b%nstations * 11 / 10 + 2
+          DEALLOCATE(extra_id)
+          ALLOCATE(extra_id(nstat_max))
+        ENDIF
+
+        ALLOCATE(b%station_index(b%nstations))
+        found_id = .FALSE.
+        nextra = 0
+        DO n = 1, b%nstations
+          found = .FALSE.
+          DO m = 1, nstat_list_max
+            IF (found_id(m)) CYCLE
+            IF (b%station_ids(n) .NE. h%station_ids(m)) CYCLE
+            b%station_index(n) = m
+            found = .TRUE.
+            found_id(m) = .TRUE.
+            EXIT
+          ENDDO
+          IF (.NOT.found) THEN
+            nextra = nextra + 1
+            extra_id(nextra) = n
+            b%station_index(n) = nstat_list_max + n
+          ENDIF
+        ENDDO
+
+        IF (nextra .EQ. 0) CYCLE
+
+        IF (nstat_list_max .EQ. 0) THEN
+          ALLOCATE(h%station_ids(nstat_list_max+nextra))
+        ELSE
+          ALLOCATE(ctmp(nstat_list_max))
+          ctmp(1:nstat_list_max) = h%station_ids(1:nstat_list_max)
+          DEALLOCATE(h%station_ids)
+          ALLOCATE(h%station_ids(nstat_list_max+nextra))
+          h%station_ids(1:nstat_list_max) = ctmp(1:nstat_list_max)
+          DEALLOCATE(ctmp)
+        ENDIF
+
+        DEALLOCATE(found_id)
+        ALLOCATE(found_id(nstat_list_max+nextra))
+
+        m = nstat_list_max
+        DO n = 1,nextra
+          m = m + 1
+          h%station_ids(m) = b%station_ids(extra_id(n))
+        ENDDO
+
+        nstat_list_max = nstat_list_max + nextra
+      ENDDO
+
+      h%nstations = nstat_list_max
+
+      DEALLOCATE(extra_id, found_id)
+    ENDIF
+
+    IF (PRESENT(nstations)) nstations = nstat_list_max
+
+    IF (PRESENT(station_ids) .AND. h%nstations .GT. 0) THEN
+      ALLOCATE(station_ids(h%nstations))
+      DO n = 1,h%nstations
+        station_ids(n) = h%station_ids(n)
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE sdf_get_all_stations
+
 END MODULE sdf_input_util

@@ -98,6 +98,7 @@ MODULE sdf
   PUBLIC :: sdf_get_block_id
   PUBLIC :: sdf_get_data_location
   PUBLIC :: sdf_set_data_location
+  PUBLIC :: sdf_get_all_stations
   PUBLIC :: sdf_station_seek_time
   PUBLIC :: sdf_flush
   PUBLIC :: sdf_read_header
@@ -128,6 +129,7 @@ MODULE sdf
   PUBLIC :: sdf_read_run_info
   PUBLIC :: sdf_read_station_info
   PUBLIC :: sdf_read_station_info_arrays
+  PUBLIC :: sdf_read_station_info_arrays_all
   PUBLIC :: sdf_read_station_array
   PUBLIC :: sdf_write_header
   PUBLIC :: sdf_write_run_info

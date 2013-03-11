@@ -39,6 +39,7 @@ MODULE sdf_common
     INTEGER(i4) :: nstations, nvariables, step, step_increment
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     INTEGER(i4), POINTER :: station_nvars(:), station_move(:), variable_types(:)
+    INTEGER(i4), POINTER :: station_index(:)
     CHARACTER(LEN=8) :: const_value
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id
@@ -65,11 +66,12 @@ MODULE sdf_common
     INTEGER(i4) :: datatype_integer, mpitype_integer
     INTEGER(i4) :: blocktype, summary_size_wrote, nblocks_wrote, step_wrote
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
-    INTEGER :: errhandler
+    INTEGER :: errhandler, nstations
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error
     LOGICAL :: station_file, first
     CHARACTER(LEN=1), POINTER :: buffer(:)
     CHARACTER(LEN=c_id_length) :: code_name
+    CHARACTER(LEN=c_id_length), POINTER :: station_ids(:)
     TYPE(jobid_type) :: jobid
     TYPE(sdf_block_type), POINTER :: blocklist, current_block
   END TYPE sdf_file_handle
@@ -536,6 +538,7 @@ CONTAINS
     NULLIFY(var%station_nvars)
     NULLIFY(var%station_move)
     NULLIFY(var%station_grid)
+    NULLIFY(var%station_index)
     NULLIFY(var%variable_types)
     var%done_header = .FALSE.
     var%done_info = .FALSE.
@@ -568,6 +571,7 @@ CONTAINS
     IF (ASSOCIATED(var%station_nvars))  DEALLOCATE(var%station_nvars)
     IF (ASSOCIATED(var%station_move))   DEALLOCATE(var%station_move)
     IF (ASSOCIATED(var%station_grid))   DEALLOCATE(var%station_grid)
+    IF (ASSOCIATED(var%station_index))  DEALLOCATE(var%station_index)
     IF (ASSOCIATED(var%variable_types)) DEALLOCATE(var%variable_types)
 
     CALL initialise_block_type(var)
@@ -583,6 +587,7 @@ CONTAINS
     NULLIFY(var%buffer)
     NULLIFY(var%blocklist)
     NULLIFY(var%current_block)
+    NULLIFY(var%station_ids)
     ! Set filehandle to -1 to show that the file is closed
     var%filehandle = -1
     var%string_length = c_max_string_length
@@ -607,6 +612,7 @@ CONTAINS
     INTEGER :: errcode, i
 
     IF (ASSOCIATED(var%buffer)) DEALLOCATE(var%buffer)
+    IF (ASSOCIATED(var%station_ids)) DEALLOCATE(var%station_ids)
 
     IF (var%errhandler .NE. 0) THEN
       CALL MPI_ERRHANDLER_FREE(var%errhandler, errcode)

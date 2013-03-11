@@ -126,4 +126,30 @@ CONTAINS
 
   END SUBROUTINE sdf_read_station_info_arrays
 
+
+
+  SUBROUTINE sdf_read_station_info_arrays_all(h, station_move, station_nvars)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER, INTENT(OUT), OPTIONAL :: station_move(:)
+    INTEGER, INTENT(OUT), OPTIONAL :: station_nvars(:)
+    INTEGER :: i
+    TYPE(sdf_block_type), POINTER :: b
+
+    b => h%current_block
+    IF (PRESENT(station_move)) THEN
+      station_move = -1
+      DO i = 1,b%nstations
+        station_move(b%station_index(i)) = b%station_move(i)
+      ENDDO
+    ENDIF
+    IF (PRESENT(station_nvars)) THEN
+      station_nvars = 0
+      DO i = 1,b%nstations
+        station_nvars(b%station_index(i)) = b%station_nvars(i)
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE sdf_read_station_info_arrays_all
+
 END MODULE sdf_input_station_ru
