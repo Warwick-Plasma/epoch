@@ -13,6 +13,9 @@ MODULE collisions
 
   PRIVATE
   PUBLIC :: particle_collisions, setup_collisions
+#ifdef COLLISIONS_TEST
+  PUBLIC :: test_collisions
+#endif
 
   REAL(num) :: collision_count, large_angle_collision
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
@@ -902,6 +905,7 @@ CONTAINS
 #ifdef COLLISIONS_TEST
   SUBROUTINE test_collisions
 
+    CALL setup_collisions
     CALL test_scatter
     CALL test_inter_species
     CALL test_intra_species
@@ -1385,6 +1389,7 @@ CONTAINS
 
     mass = m0
     charge = -q0
+    plist_length = 0
 
     DO i = 1, N
       ! allocate particles
@@ -1490,8 +1495,6 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: histo
     INTEGER, DIMENSION(:), ALLOCATABLE :: minp, maxp
     REAL(num), DIMENSION(:), ALLOCATABLE :: std_dev
-    INTEGER :: histo_max
-    INTEGER :: error
 
     N = 10000
     max_num = 200
