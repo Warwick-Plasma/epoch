@@ -151,6 +151,7 @@ CONTAINS
     IF (str_cmp(name, 'always')) as_constant = c_const_io_always
     IF (str_cmp(name, 'full')) as_constant = c_const_io_full
     IF (str_cmp(name, 'restartable')) as_constant = c_const_io_restartable
+    IF (str_cmp(name, 'restart')) as_constant = c_const_io_restartable
     IF (str_cmp(name, 'average')) as_constant = c_const_io_average
     IF (str_cmp(name, 'snapshot')) as_constant = c_const_io_snapshot
     IF (str_cmp(name, 'species')) as_constant = c_const_io_species

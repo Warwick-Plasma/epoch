@@ -247,37 +247,6 @@ CONTAINS
 
 
 
-  FUNCTION as_dump_param(str_in, err)
-
-    CHARACTER(*), INTENT(IN) :: str_in
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: as_dump_param
-
-    as_dump_param = -1
-
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'never')) THEN
-      as_dump_param = c_io_never
-      RETURN
-    ENDIF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'always')) THEN
-      as_dump_param = c_io_always
-      RETURN
-    ENDIF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'full')) THEN
-      as_dump_param = c_io_full
-      RETURN
-    ENDIF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'restart')) THEN
-      as_dump_param = c_io_restartable
-      RETURN
-    ENDIF
-
-    err = IOR(err, c_err_bad_value)
-
-  END FUNCTION as_dump_param
-
-
-
   FUNCTION as_domain(str_in, err)
 
     CHARACTER(*), INTENT(IN) :: str_in

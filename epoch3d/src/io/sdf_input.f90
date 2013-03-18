@@ -41,6 +41,7 @@ MODULE sdf_input
 
   INTERFACE sdf_read_run_info
     MODULE PROCEDURE &
+        read_run_info, &
         read_run_info_old, &
         read_run_info_minor
   END INTERFACE sdf_read_run_info

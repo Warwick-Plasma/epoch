@@ -1087,7 +1087,7 @@ CONTAINS
 
     IF (PRESENT(rank_write)) h%rank_master = rank_write
 
-    b%const_value = TRANSFER(value, b%const_value)
+    b%const_value(1:h%soi) = TRANSFER(value, b%const_value(1:h%soi))
 
     CALL write_constant_meta(h, id, name)
 
@@ -1121,7 +1121,7 @@ CONTAINS
       cvalue = ACHAR(0)
     ENDIF
 
-    b%const_value = TRANSFER(cvalue, b%const_value)
+    b%const_value(1:1) = TRANSFER(cvalue, b%const_value(1:1))
 
     CALL write_constant_meta(h, id, name)
 
