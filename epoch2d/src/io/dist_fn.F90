@@ -1,9 +1,6 @@
 MODULE dist_fn
 
-  USE mpi
-  USE sdf
   USE mpi_subtype_control
-  USE shared_data
 
   IMPLICIT NONE
 

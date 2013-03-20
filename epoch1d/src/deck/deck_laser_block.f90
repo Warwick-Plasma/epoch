@@ -1,6 +1,5 @@
 MODULE deck_laser_block
 
-  USE mpi
   USE strings_advanced
   USE laser
 

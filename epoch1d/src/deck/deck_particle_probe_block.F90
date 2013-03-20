@@ -1,10 +1,8 @@
 MODULE deck_particle_probe_block
 
-  USE probes
-  USE strings_advanced
-
-  IMPLICIT NONE
 #ifndef PARTICLE_PROBES
+  IMPLICIT NONE
+
 CONTAINS
 
   SUBROUTINE probe_deck_dummy
@@ -12,6 +10,10 @@ CONTAINS
   END SUBROUTINE probe_deck_dummy
 
 #else
+  USE strings_advanced
+  USE probes
+
+  IMPLICIT NONE
   SAVE
 
   PRIVATE

@@ -1,6 +1,5 @@
 MODULE deck_subset_block
 
-  USE mpi
   USE strings_advanced
   USE utilities
 

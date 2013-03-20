@@ -1,6 +1,5 @@
 MODULE sdf_input_util
 
-  USE mpi
   USE sdf_input
   USE sdf_input_cartesian
   USE sdf_input_point

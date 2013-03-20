@@ -1,7 +1,5 @@
 MODULE mpi_routines
 
-  USE mpi
-  USE partlist
   USE helper
 
   IMPLICIT NONE

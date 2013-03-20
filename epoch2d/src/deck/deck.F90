@@ -1,9 +1,6 @@
 MODULE deck
 
   ! Basic operations
-  USE mpi
-  USE sdf
-  USE shared_data
   USE strings
   ! Deck internals
   USE deck_constant_block

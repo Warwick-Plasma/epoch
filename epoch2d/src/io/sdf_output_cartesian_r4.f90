@@ -1,8 +1,5 @@
 MODULE sdf_output_cartesian_r4
 
-  USE mpi
-  USE sdf_common
-  USE sdf_output
   USE sdf_output_cartesian_ru
 
   IMPLICIT NONE

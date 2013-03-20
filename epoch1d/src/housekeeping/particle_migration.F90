@@ -3,10 +3,11 @@
 
 MODULE particle_migration
 
-  USE shared_data
-  USE partlist
   USE calc_df
+  USE partlist
+#ifdef PREFETCH
   USE prefetch
+#endif
 
   IMPLICIT NONE
 

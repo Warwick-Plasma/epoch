@@ -1,8 +1,5 @@
 MODULE sdf_input_cartesian_r8
 
-  USE mpi
-  USE sdf_common
-  USE sdf_input
   USE sdf_input_cartesian_ru
 
   IMPLICIT NONE

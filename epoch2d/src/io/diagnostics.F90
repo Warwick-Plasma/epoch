@@ -1,17 +1,15 @@
 MODULE diagnostics
 
-  USE mpi
   USE calc_df
   USE sdf
   USE deck
   USE dist_fn
   USE encoded_source
   USE iterators
-  USE mpi_subtype_control
   USE probes
-  USE shared_data
   USE version_data
   USE setup
+  USE random_generator
   USE strings
 
   IMPLICIT NONE
@@ -766,7 +764,7 @@ CONTAINS
 
     INTERFACE
       SUBROUTINE func(data_array, current_species)
-        USE shared_data
+        USE constants
         REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species
       END SUBROUTINE func
@@ -981,7 +979,7 @@ CONTAINS
 
     INTERFACE
       SUBROUTINE func(data_array, direction)
-        USE shared_data
+        USE constants
         REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: direction
       END SUBROUTINE func
@@ -1046,7 +1044,7 @@ CONTAINS
 
     INTERFACE
       SUBROUTINE func(data_array, current_species, direction)
-        USE shared_data
+        USE constants
         REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species, direction
       END SUBROUTINE func
@@ -1410,7 +1408,7 @@ CONTAINS
 
     INTERFACE
       FUNCTION iterator(array, npart_it, start)
-        USE shared_data
+        USE constants
         REAL(num) :: iterator
         REAL(num), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npart_it

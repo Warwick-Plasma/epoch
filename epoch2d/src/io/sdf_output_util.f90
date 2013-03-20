@@ -1,9 +1,7 @@
 MODULE sdf_output_util
 
-  USE mpi
-  USE sdf_output
-  USE sdf_output_cartesian
-  USE sdf_output_point
+  USE sdf_output_cartesian_ru
+  USE sdf_output_point_ru
 
   IMPLICIT NONE
 

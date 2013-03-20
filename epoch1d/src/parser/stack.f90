@@ -1,6 +1,6 @@
 MODULE stack
 
-  USE shared_data
+  USE constants
 
   IMPLICIT NONE
 

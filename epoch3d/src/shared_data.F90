@@ -1,6 +1,5 @@
 ! ****************************************************************
 ! All global variables defined here (cf F77 COMMON block).
-! All the names in here are public provided the MODULE is USE'd
 ! ****************************************************************
 
 MODULE constants
@@ -407,9 +406,8 @@ END MODULE shared_parser_data
 MODULE shared_data
 
   USE mpi
-  USE sdf_job_info
-  USE constants
   USE shared_parser_data
+  USE sdf_job_info
 
   IMPLICIT NONE
 

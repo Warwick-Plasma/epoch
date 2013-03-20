@@ -1,6 +1,6 @@
 MODULE custom_deck
 
-  USE shared_data
+  USE constants
 
   IMPLICIT NONE
 

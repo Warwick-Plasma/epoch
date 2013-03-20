@@ -1,8 +1,6 @@
 MODULE sdf_input_point_ru
 
-  USE mpi
-  USE sdf_common
-  USE sdf_input
+  USE sdf_input_ru
 
   IMPLICIT NONE
 

@@ -1,9 +1,5 @@
 MODULE sdf_control
 
-  USE mpi
-  USE sdf_common
-  USE sdf_input
-  USE sdf_output
   USE sdf_output_util
 
   IMPLICIT NONE

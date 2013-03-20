@@ -1,7 +1,7 @@
 MODULE particle_temperature
 
+  USE shared_data
   USE random_generator
-  USE shape_functions
 
   IMPLICIT NONE
 

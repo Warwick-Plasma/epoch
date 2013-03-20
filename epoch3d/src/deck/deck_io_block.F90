@@ -1,6 +1,5 @@
 MODULE deck_io_block
 
-  USE mpi
   USE strings_advanced
 
   IMPLICIT NONE

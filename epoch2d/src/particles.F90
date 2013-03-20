@@ -1,9 +1,11 @@
 MODULE particles
 
-  USE boundary
-  USE shape_functions
   USE current_smooth
+  USE boundary
+  USE partlist
+#ifdef PREFETCH
   USE prefetch
+#endif
 
   IMPLICIT NONE
 

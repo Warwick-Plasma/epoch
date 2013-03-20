@@ -1,18 +1,13 @@
 MODULE setup
 
-  USE mpi
-  USE sdf
   USE encoded_source
   USE fields
   USE mpi_subtype_control
-  USE partlist
-  USE shared_data
-  USE strings
   USE version_data
   USE welcome
-  USE random_generator
   USE split_particle
   USE shunt
+  USE laser
 
   IMPLICIT NONE
 

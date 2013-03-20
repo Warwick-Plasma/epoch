@@ -202,13 +202,12 @@ visitclean:
 
 # All the dependencies
 
-balance.o: balance.F90 boundary.o mpi_subtype_control.o partlist.o \
-  redblack_module.o shared_data.o
-boundary.o: boundary.f90 deck_io_block.o laser.o mpi_subtype_control.o \
-  particle_temperature.o partlist.o
-calc_df.o: calc_df.F90 boundary.o shape_functions.o shared_data.o
-collisions.o: collisions.F90 boundary.o calc_df.o prefetch.o random_generator.o
-current_smooth.o: current_smooth.F90 shape_functions.o
+balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o
+boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
+  partlist.o
+calc_df.o: calc_df.F90 boundary.o shared_data.o
+collisions.o: collisions.F90 calc_df.o prefetch.o
+current_smooth.o: current_smooth.F90 shape_functions.o shared_data.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o
@@ -216,11 +215,10 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   deck_constant_block.o deck_control_block.o deck_dist_fn_block.o \
   deck_fields_block.o deck_io_block.o deck_laser_block.o \
   deck_particle_probe_block.o deck_qed_block.o deck_species_block.o \
-  deck_subset_block.o deck_window_block.o photons.o sdf.o shared_data.o \
-  strings.o version_data.o
-deck_boundaries_block.o: deck_boundaries_block.f90 strings.o strings_advanced.o
+  deck_subset_block.o deck_window_block.o photons.o strings.o version_data.o
+deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o
 deck_collision_block.o: deck_collision_block.f90 collisions.o strings_advanced.o
-deck_constant_block.o: deck_constant_block.f90 shunt.o strings.o
+deck_constant_block.o: deck_constant_block.f90 shunt.o
 deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o
@@ -228,102 +226,86 @@ deck_io_block.o: deck_io_block.F90 strings_advanced.o
 deck_laser_block.o: deck_laser_block.f90 laser.o strings_advanced.o
 deck_particle_probe_block.o: deck_particle_probe_block.F90 probes.o \
   strings_advanced.o
-deck_qed_block.o: deck_qed_block.F90 strings_advanced.o
-deck_species_block.o: deck_species_block.F90 setup.o simple_io.o \
+deck_qed_block.o: deck_qed_block.F90 shared_data.o strings_advanced.o
+deck_species_block.o: deck_species_block.F90 partlist.o setup.o simple_io.o \
   strings_advanced.o utilities.o
 deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
-diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o \
-  mpi_subtype_control.o probes.o sdf.o setup.o shared_data.o strings.o \
-  version_data.o $(ENCODED_SOURCE)
-dist_fn.o: dist_fn.F90 mpi_subtype_control.o sdf.o shared_data.o
-epoch3d.o: epoch3d.F90 balance.o boundary.o collisions.o custom_parser.o \
-  deck.o diagnostics.o fields.o helper.o ic_module.o ionise.o mpi_routines.o \
-  particle_migration.o particles.o photons.o sdf_job_info.o setup.o \
-  split_particle.o welcome.o window.o
-evaluate.o: evaluate.f90 evaluator_blocks.o stack.o
+diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
+  random_generator.o sdf.o setup.o shared_data.o strings.o version_data.o \
+  $(ENCODED_SOURCE)
+dist_fn.o: dist_fn.F90 mpi_subtype_control.o
+epoch3d.o: epoch3d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
+  helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
+  particles.o photons.o setup.o split_particle.o welcome.o window.o
+evaluate.o: evaluate.f90 evaluator_blocks.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
-helper.o: helper.F90 boundary.o random_generator.o strings.o
-ic_module.o: ic_module.f90 helper.o shared_data.o
-ionise.o: ionise.F90 calc_df.o numerics.o random_generator.o shape_functions.o \
-  split_particle.o
+helper.o: helper.F90 boundary.o partlist.o strings.o
+ic_module.o: ic_module.f90
+ionise.o: ionise.F90 numerics.o partlist.o random_generator.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
-mpi_routines.o: mpi_routines.F90 helper.o partlist.o
+mpi_routines.o: mpi_routines.F90 helper.o
 mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 numerics.o: numerics.f90 shared_data.o
-particle_migration.o: particle_migration.F90 calc_df.o partlist.o prefetch.o \
-  shared_data.o
+particle_migration.o: particle_migration.F90 calc_df.o partlist.o prefetch.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
-  shape_functions.o
-particles.o: particles.F90 boundary.o current_smooth.o prefetch.o \
-  shape_functions.o
-partlist.o: partlist.F90 random_generator.o shared_data.o
-photons.o: photons.F90 partlist.o random_generator.o shape_functions.o \
   shared_data.o
+particles.o: particles.F90 boundary.o current_smooth.o partlist.o prefetch.o
+partlist.o: partlist.F90 random_generator.o shared_data.o
+photons.o: photons.F90 partlist.o
 prefetch.o: prefetch.F90 shared_data.o
-probes.o: probes.F90 mpi_subtype_control.o partlist.o sdf.o
+probes.o: probes.F90 partlist.o
 random_generator.o: random_generator.f90
-redblack_module.o: redblack_module.f90 partlist.o shared_data.o
-sdf.o: sdf.f90 sdf_common.o sdf_control.o sdf_input.o sdf_input_cartesian.o \
+redblack_module.o: redblack_module.f90 partlist.o
+sdf.o: sdf.f90 sdf_control.o sdf_input.o sdf_input_cartesian.o \
   sdf_input_point.o sdf_input_util.o sdf_output.o sdf_output_cartesian.o \
-  sdf_output_point.o sdf_output_util.o
+  sdf_output_point.o
 sdf_common.o: sdf_common.f90 sdf_job_info.o
-sdf_control.o: sdf_control.f90 sdf_common.o sdf_input.o sdf_output.o \
-  sdf_output_util.o
-sdf_input.o: sdf_input.f90 sdf_common.o sdf_input_r4.o sdf_input_r8.o \
-  sdf_input_ru.o
-sdf_input_cartesian.o: sdf_input_cartesian.f90 sdf_common.o sdf_input.o \
-  sdf_input_cartesian_r4.o sdf_input_cartesian_r8.o sdf_input_cartesian_ru.o
-sdf_input_cartesian_r4.o: sdf_input_cartesian_r4.f90 sdf_common.o sdf_input.o \
-  sdf_input_cartesian_ru.o
-sdf_input_cartesian_r8.o: sdf_input_cartesian_r8.f90 sdf_common.o sdf_input.o \
-  sdf_input_cartesian_ru.o
-sdf_input_cartesian_ru.o: sdf_input_cartesian_ru.f90 sdf_common.o sdf_input.o
-sdf_input_point.o: sdf_input_point.f90 sdf_common.o sdf_input.o \
-  sdf_input_point_r4.o sdf_input_point_r8.o sdf_input_point_ru.o
-sdf_input_point_r4.o: sdf_input_point_r4.f90 sdf_common.o sdf_input.o \
-  sdf_input_point_ru.o
-sdf_input_point_r8.o: sdf_input_point_r8.f90 sdf_common.o sdf_input.o \
-  sdf_input_point_ru.o
-sdf_input_point_ru.o: sdf_input_point_ru.f90 sdf_common.o sdf_input.o
-sdf_input_r4.o: sdf_input_r4.f90 sdf_common.o sdf_input_ru.o
-sdf_input_r8.o: sdf_input_r8.f90 sdf_common.o sdf_input_ru.o
+sdf_control.o: sdf_control.f90 sdf_output_util.o
+sdf_input.o: sdf_input.f90 sdf_input_r4.o sdf_input_r8.o
+sdf_input_cartesian.o: sdf_input_cartesian.f90 sdf_input_cartesian_r4.o \
+  sdf_input_cartesian_r8.o
+sdf_input_cartesian_r4.o: sdf_input_cartesian_r4.f90 sdf_input_cartesian_ru.o
+sdf_input_cartesian_r8.o: sdf_input_cartesian_r8.f90 sdf_input_cartesian_ru.o
+sdf_input_cartesian_ru.o: sdf_input_cartesian_ru.f90 sdf_input_ru.o
+sdf_input_point.o: sdf_input_point.f90 sdf_input_point_r4.o sdf_input_point_r8.o
+sdf_input_point_r4.o: sdf_input_point_r4.f90 sdf_common.o sdf_input_point_ru.o
+sdf_input_point_r8.o: sdf_input_point_r8.f90 sdf_common.o sdf_input_point_ru.o
+sdf_input_point_ru.o: sdf_input_point_ru.f90 sdf_input_ru.o
+sdf_input_r4.o: sdf_input_r4.f90 sdf_input_ru.o
+sdf_input_r8.o: sdf_input_r8.f90 sdf_input_ru.o
 sdf_input_ru.o: sdf_input_ru.f90 sdf_common.o
 sdf_input_util.o: sdf_input_util.f90 sdf_input.o sdf_input_cartesian.o \
   sdf_input_point.o
 sdf_job_info.o: sdf_job_info.f90
-sdf_output.o: sdf_output.f90 sdf_common.o sdf_output_r4.o sdf_output_r8.o \
-  sdf_output_ru.o
-sdf_output_cartesian.o: sdf_output_cartesian.f90 sdf_common.o sdf_output.o \
-  sdf_output_cartesian_r4.o sdf_output_cartesian_r8.o sdf_output_cartesian_ru.o
-sdf_output_cartesian_r4.o: sdf_output_cartesian_r4.f90 sdf_common.o \
-  sdf_output.o sdf_output_cartesian_ru.o
-sdf_output_cartesian_r8.o: sdf_output_cartesian_r8.f90 sdf_common.o \
-  sdf_output.o sdf_output_cartesian_ru.o
-sdf_output_cartesian_ru.o: sdf_output_cartesian_ru.f90 sdf_common.o sdf_output.o
-sdf_output_point.o: sdf_output_point.f90 sdf_common.o sdf_output.o \
-  sdf_output_point_r4.o sdf_output_point_r8.o sdf_output_point_ru.o
-sdf_output_point_r4.o: sdf_output_point_r4.f90 sdf_common.o sdf_output.o \
+sdf_output.o: sdf_output.f90 sdf_output_r4.o sdf_output_r8.o
+sdf_output_cartesian.o: sdf_output_cartesian.f90 sdf_output_cartesian_r4.o \
+  sdf_output_cartesian_r8.o
+sdf_output_cartesian_r4.o: sdf_output_cartesian_r4.f90 sdf_output_cartesian_ru.o
+sdf_output_cartesian_r8.o: sdf_output_cartesian_r8.f90 sdf_output_cartesian_ru.o
+sdf_output_cartesian_ru.o: sdf_output_cartesian_ru.f90 sdf_output_ru.o
+sdf_output_point.o: sdf_output_point.f90 sdf_output_point_r4.o \
+  sdf_output_point_r8.o
+sdf_output_point_r4.o: sdf_output_point_r4.f90 sdf_common.o \
   sdf_output_point_ru.o
-sdf_output_point_r8.o: sdf_output_point_r8.f90 sdf_common.o sdf_output.o \
+sdf_output_point_r8.o: sdf_output_point_r8.f90 sdf_common.o \
   sdf_output_point_ru.o
-sdf_output_point_ru.o: sdf_output_point_ru.f90 sdf_common.o sdf_output.o
-sdf_output_r4.o: sdf_output_r4.f90 sdf_common.o sdf_output_ru.o
-sdf_output_r8.o: sdf_output_r8.f90 sdf_common.o sdf_output_ru.o
+sdf_output_point_ru.o: sdf_output_point_ru.f90 sdf_output_ru.o
+sdf_output_r4.o: sdf_output_r4.f90 sdf_output_ru.o
+sdf_output_r8.o: sdf_output_r8.f90 sdf_output_ru.o
 sdf_output_ru.o: sdf_output_ru.f90 sdf_common.o
-sdf_output_util.o: sdf_output_util.f90 sdf_output.o sdf_output_cartesian.o \
-  sdf_output_point.o
-setup.o: setup.F90 fields.o mpi_subtype_control.o partlist.o \
-  random_generator.o sdf.o shared_data.o shunt.o split_particle.o strings.o \
-  version_data.o welcome.o $(ENCODED_SOURCE)
+sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
+  sdf_output_point_ru.o
+setup.o: setup.F90 fields.o laser.o mpi_subtype_control.o shunt.o \
+  split_particle.o version_data.o welcome.o $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.f90 boundary.o mpi_subtype_control.o
-split_particle.o: split_particle.F90 boundary.o partlist.o random_generator.o
+split_particle.o: split_particle.F90 boundary.o
 stack.o: stack.f90 shared_data.o
 strings.o: strings.f90 shared_data.o
 strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
@@ -331,4 +313,4 @@ tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90
 welcome.o: welcome.F90 strings.o version_data.o
-window.o: window.F90 boundary.o evaluate.o particle_temperature.o partlist.o
+window.o: window.F90 boundary.o evaluate.o partlist.o

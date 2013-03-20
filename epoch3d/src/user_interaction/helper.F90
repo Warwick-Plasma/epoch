@@ -1,9 +1,8 @@
 MODULE helper
 
-  USE mpi
   USE boundary
-  USE random_generator
   USE strings
+  USE partlist
 
   IMPLICIT NONE
 
