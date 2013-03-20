@@ -1,0 +1,70 @@
+#!/bin/sh
+
+# Generate a COMMIT file containing a string which describes the
+# commit status of the current source tree.
+
+# The commit string has five parts. The first three come from git-describe
+# And correspond to tag, commits since tag and commit hash.
+# The fourth part is the subversion revision number and the fifth
+# part indicates wether there are uncommitted changes
+
+# If any of these fields is unavailable then the tag 'unknown' will be
+# used. If none of the tags are known then the COMMIT file is left untouched
+
+COMMIT_FILE=commit_info.h
+
+LF='
+'
+
+state='clean'
+commit_string=""
+
+git show-ref > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+# in a git repo
+  gitdescribe=$(git describe --long HEAD 2>/dev/null)
+
+  if [ $? -ne 0 ]; then
+    always=$(git describe --always --long HEAD 2>/dev/null)
+    gitdescribe=unknown-unknown-g$always
+  fi
+
+  svnrev=$(git svn log -1 --oneline 2>/dev/null)
+  if [ $? -eq 0 ]; then
+    svnrev=$(echo $svnrev | cut -f1 -d' ' | cut -c2-)
+  else
+    svnrev=unknown
+  fi
+
+  git update-index -q --refresh
+  test -z "$(git diff-index --name-only HEAD --)" || state='dirty'
+
+  commit_string=$gitdescribe-$svnrev-$state
+else
+# not in a git repo
+  gitdescribe=unknown-unknown-unknown
+
+  svnrev=$(svn info 2>/dev/null | grep '^Last Changed Rev:')
+
+  if [ $? -eq 0 ]; then
+    svnrev=$(echo $svnrev | sed 's/Last Changed Rev: *//')
+
+    n=$(svn status 2>/dev/null | grep -v '?' | wc -l)
+    [ $n -ne 0 ] && state='dirty'
+
+    commit_string=$gitdescribe-$svnrev-$state
+  fi
+fi
+
+[ -z $commit_string ] && exit
+
+grep "$commit_string" $COMMIT_FILE > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+  exit
+else
+  sec=$(git log --pretty=format:%ct -1 HEAD)
+  commit_date=$(date -r $sec)
+  echo "#define SDF_READER_COMMIT_ID \"$commit_string\"" > $COMMIT_FILE
+  echo "#define SDF_READER_COMMIT_DATE \"$commit_date\"" >> $COMMIT_FILE
+  exit 1
+fi

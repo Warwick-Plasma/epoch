@@ -8,3 +8,5 @@ Makefile
 sdf2ascii
 *.dSYM
 pybuild
+commit_info.h
+build_date.h

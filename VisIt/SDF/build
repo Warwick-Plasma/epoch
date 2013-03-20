@@ -115,6 +115,8 @@ if [ $clean -eq 1 ]; then
 elif [ $build_visit_reader -eq 1 ]; then
   srl=""
   err=0
+  ./gen_commit_string
+  echo "#define SDF_READER_BUILD_DATE \"`date`\"" > build_date.h
   build_parallel=0
   build_serial=0
   buildit
