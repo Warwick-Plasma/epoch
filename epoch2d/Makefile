@@ -108,7 +108,8 @@ INCDIR = $(SRCDIR)/include
 FC = mpif90
 DATE := $(shell date +%s)
 MACHINE := $(shell uname -n)
-PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) -D_MACHINE='"$(MACHINE)"' -I$(INCDIR)
+PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) \
+  -D_MACHINE='"$(MACHINE)"' -I$(INCDIR)
 
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
@@ -157,7 +158,11 @@ FULLTARGET = $(BINDIR)/$(TARGET)
 
 #vpath %.f90 $(SRCDIR)
 #vpath %.o $(OBJDIR)
-VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:$(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:$(OBJDIR)
+VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
+  $(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:\
+  $(OBJDIR)
+
+all: $(FULLTARGET)
 
 # Rule to build the fortran files
 
@@ -172,6 +177,8 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:$(SRCDIR)/p
 $(FULLTARGET): $(OBJFILES)
 	$(FC) $(FFLAGS) $(MODULEFLAG) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
+$(OBJFILES): | COMMIT_MAKE
+
 opt_dont_build_sha1: ;
 opt_dont_build_embedded_source: ;
 $(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(INCLUDES) \
@@ -182,8 +189,8 @@ encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
 
-COMMIT: $(SRCFILES)
-	./$(SRCDIR)/gen_commit_string
+COMMIT_MAKE:
+	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
 
 clean: tidy
 	@rm -rf *~ $(BINDIR)
@@ -198,7 +205,7 @@ visitclean:
 	@cd ../VisIt; make clean; \
 	  rm -rf .depend *.d *Info.C *Info.h CMake* cmake* Makefile
 
-.PHONY: clean tidy visit visitclean
+.PHONY: clean tidy visit visitclean COMMIT_MAKE
 
 # All the dependencies
 
@@ -311,6 +318,6 @@ strings.o: strings.f90 shared_data.o
 strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
-version_data.o: version_data.F90
+version_data.o: version_data.F90 COMMIT
 welcome.o: welcome.F90 strings.o version_data.o
 window.o: window.F90 boundary.o evaluate.o partlist.o
