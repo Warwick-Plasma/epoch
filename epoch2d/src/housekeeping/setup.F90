@@ -520,7 +520,7 @@ CONTAINS
         DO ix = 1, nx
           omega = SQRT(initial_conditions(ispecies)%density(ix,iy) * q0**2 &
               / species_list(ispecies)%mass / epsilon0 &
-              + 6.0_num * k_max**2 * kb &
+              + 3.0_num * k_max**2 * kb &
               * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:)) &
               / species_list(ispecies)%mass)
           IF (omega .EQ. 0.0_num) CYCLE
