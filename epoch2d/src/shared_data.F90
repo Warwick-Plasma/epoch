@@ -662,6 +662,8 @@ MODULE shared_data
   INTEGER :: n_io_blocks
   LOGICAL :: track_ejected_particles, new_style_io_block
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
+  REAL(num) :: time_start, time_stop
+  INTEGER :: nstep_start, nstep_stop
 
   !----------------------------------------------------------------------------
   ! Extended IO information

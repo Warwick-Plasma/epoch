@@ -1,6 +1,6 @@
 MODULE deck_io_global_block
 
-  USE strings
+  USE strings_advanced
 
   IMPLICIT NONE
 
@@ -12,6 +12,11 @@ MODULE deck_io_global_block
 CONTAINS
 
   SUBROUTINE io_global_deck_initialise
+
+    time_start  = -1.0_num
+    time_stop   = HUGE(1.0_num)
+    nstep_start = -1
+    nstep_stop  = HUGE(1)
 
   END SUBROUTINE io_global_deck_initialise
 
@@ -72,6 +77,26 @@ CONTAINS
 
     IF (str_cmp(element, 'use_offset_grid')) THEN
       use_offset_grid = as_logical(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'time_start')) THEN
+      time_start = as_real(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'time_stop')) THEN
+      time_stop = as_real(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'nstep_start')) THEN
+      nstep_start = as_integer(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'nstep_stop')) THEN
+      nstep_stop = as_integer(value, errcode)
       RETURN
     ENDIF
 

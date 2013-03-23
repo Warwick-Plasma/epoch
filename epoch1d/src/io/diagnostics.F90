@@ -448,6 +448,8 @@ CONTAINS
           dump = .TRUE.
           IF (dump .AND. time .LT. io_block_list(io)%time_start) dump = .FALSE.
           IF (dump .AND. time .GT. io_block_list(io)%time_stop)  dump = .FALSE.
+          IF (dump .AND. time .LT. time_start) dump = .FALSE.
+          IF (dump .AND. time .GT. time_stop)  dump = .FALSE.
           IF (dump) io_block_list(io)%dump = .TRUE.
         ENDIF
       ELSE
@@ -459,6 +461,8 @@ CONTAINS
           dump = .TRUE.
           IF (dump .AND. step .LT. io_block_list(io)%nstep_start) dump = .FALSE.
           IF (dump .AND. step .GT. io_block_list(io)%nstep_stop)  dump = .FALSE.
+          IF (dump .AND. step .LT. nstep_start) dump = .FALSE.
+          IF (dump .AND. step .GT. nstep_stop)  dump = .FALSE.
           IF (dump) io_block_list(io)%dump = .TRUE.
         ENDIF
       ENDIF
