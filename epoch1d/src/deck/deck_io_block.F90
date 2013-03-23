@@ -10,7 +10,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 16
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 20
   INTEGER :: block_number, full_io_block, restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
@@ -88,6 +88,10 @@ CONTAINS
     io_block_name (i+14) = 'dump_last'
     io_block_name (i+15) = 'restartable'
     io_block_name (i+16) = 'name'
+    io_block_name (i+17) = 'time_start'
+    io_block_name (i+18) = 'time_stop'
+    io_block_name (i+19) = 'nstep_start'
+    io_block_name (i+20) = 'nstep_stop'
 
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
@@ -307,6 +311,14 @@ CONTAINS
     CASE(16)
       io_block%name = value
       got_name = .TRUE.
+    CASE(17)
+      io_block%time_start = as_real(value, errcode)
+    CASE(18)
+      io_block%time_stop = as_real(value, errcode)
+    CASE(19)
+      io_block%nstep_start = as_integer(value, errcode)
+    CASE(20)
+      io_block%nstep_stop = as_integer(value, errcode)
     END SELECT
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN
@@ -584,6 +596,10 @@ CONTAINS
     io_block%dump_source_code = .FALSE.
     io_block%dump_input_decks = .FALSE.
     io_block%dumpmask = 0
+    io_block%time_start = -1.0_num
+    io_block%time_stop  = HUGE(1.0_num)
+    io_block%nstep_start = -1
+    io_block%nstep_stop  = HUGE(1)
     DO i = 1, num_vars_to_dump
       io_block%averaged_data(i)%dump_single = .FALSE.
     ENDDO

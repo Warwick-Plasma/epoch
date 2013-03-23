@@ -410,7 +410,7 @@ CONTAINS
     INTEGER :: id, io, is, nstep_next
     REAL(num) :: t0, t1, time_first, av_time_first
     LOGICAL, SAVE :: first_call = .TRUE.
-    LOGICAL :: last_call
+    LOGICAL :: last_call, dump
 
     IF (.NOT.ALLOCATED(iodumpmask)) &
         ALLOCATE(iodumpmask(n_subsets+1,num_vars_to_dump))
@@ -454,7 +454,10 @@ CONTAINS
         time_first = t0
         IF (io_block_list(io)%dt_snapshot .GT. 0 .AND. time .GE. t0) THEN
           io_block_list(io)%time_prev = time
-          io_block_list(io)%dump = .TRUE.
+          dump = .TRUE.
+          IF (dump .AND. time .LT. io_block_list(io)%time_start) dump = .FALSE.
+          IF (dump .AND. time .GT. io_block_list(io)%time_stop)  dump = .FALSE.
+          IF (dump) io_block_list(io)%dump = .TRUE.
         ENDIF
       ELSE
         ! Next I/O dump based on nstep_snapshot
@@ -462,7 +465,10 @@ CONTAINS
         IF (io_block_list(io)%nstep_snapshot .GT. 0 &
             .AND. step .GE. nstep_next) THEN
           io_block_list(io)%nstep_prev = step
-          io_block_list(io)%dump = .TRUE.
+          dump = .TRUE.
+          IF (dump .AND. step .LT. io_block_list(io)%nstep_start) dump = .FALSE.
+          IF (dump .AND. step .GT. io_block_list(io)%nstep_stop)  dump = .FALSE.
+          IF (dump) io_block_list(io)%dump = .TRUE.
         ENDIF
       ENDIF
 

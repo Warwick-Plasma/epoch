@@ -644,7 +644,9 @@ MODULE shared_data
     CHARACTER(LEN=string_length) :: name
     REAL(num) :: dt_snapshot, time_prev, time_first
     REAL(num) :: dt_average, dt_min_average, average_time
+    REAL(num) :: time_start, time_stop
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
+    INTEGER :: nstep_start, nstep_stop
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
     LOGICAL :: dump_source_code, dump_input_decks
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
