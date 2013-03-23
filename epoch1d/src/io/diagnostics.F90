@@ -22,6 +22,7 @@ MODULE diagnostics
   INTEGER(i8), ALLOCATABLE :: species_offset(:)
   INTEGER(i8), ALLOCATABLE :: ejected_offset(:)
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
+  LOGICAL :: restart_flag
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
@@ -31,14 +32,14 @@ CONTAINS
   SUBROUTINE output_routines(step)   ! step = step index
 
     INTEGER, INTENT(INOUT) :: step
-    LOGICAL :: print_arrays, first_call, last_call
+    LOGICAL :: print_arrays
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=c_max_string_length) :: dump_type
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
     INTEGER :: code, i, io, random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
-    LOGICAL :: restart_flag, convert
+    LOGICAL :: convert
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
 
@@ -58,7 +59,7 @@ CONTAINS
           & f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
     ENDIF
 
-    CALL io_test(step, print_arrays, first_call, last_call)
+    CALL io_test(step, print_arrays)
 
     IF (.NOT.print_arrays) RETURN
 
@@ -76,21 +77,10 @@ CONTAINS
     ! Only dump variables with the 'FULL' attributre on full dump intervals
     IF (MOD(output_file, full_dump_every) .EQ. 0 &
         .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
-    IF (MOD(output_file, restart_dump_every) .EQ. 0 &
-        .AND. restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
-    IF (first_call .AND. force_first_to_be_restartable) &
-        code = IOR(code, c_io_restartable)
-    IF (last_call .AND. force_final_to_be_restartable) &
-        code = IOR(code, c_io_restartable)
+    IF (restart_flag) code = IOR(code, c_io_restartable)
 
     CALL create_subtypes(code)
 
-    ! Set a restart_flag to pass to the file header
-    IF (IAND(code, c_io_restartable) .NE. 0) THEN
-      restart_flag = .TRUE.
-    ELSE
-      restart_flag = .FALSE.
-    ENDIF
     reset_ejected = .FALSE.
 
     ALLOCATE(array(-2:nx+3))
@@ -406,36 +396,37 @@ CONTAINS
 
 
 
-  SUBROUTINE io_test(step, print_arrays, first_call, last_call)
+  SUBROUTINE io_test(step, print_arrays)
 
     INTEGER, INTENT(IN) :: step
-    LOGICAL, INTENT(OUT) :: print_arrays, first_call, last_call
+    LOGICAL, INTENT(OUT) :: print_arrays
     INTEGER :: id, io, is, nstep_next
     REAL(num) :: t0, t1, time_first, av_time_first
-    LOGICAL, SAVE :: first = .TRUE.
+    LOGICAL, SAVE :: first_call = .TRUE.
+    LOGICAL :: last_call
 
     IF (.NOT.ALLOCATED(iodumpmask)) &
         ALLOCATE(iodumpmask(n_subsets+1,num_vars_to_dump))
 
+    restart_flag = .FALSE.
     print_arrays = .FALSE.
-    first_call = first
     iomask = c_io_never
     iodumpmask = c_io_never
 
-    IF ((time .GE. t_end .OR. step .EQ. nsteps) .AND. dump_last) THEN
+    IF (time .GE. t_end .OR. step .EQ. nsteps) THEN
       last_call = .TRUE.
-      print_arrays = .TRUE.
     ELSE
       last_call = .FALSE.
     ENDIF
 
     DO io = 1, n_io_blocks
-      IF (last_call) THEN
+      IF (last_call .AND. io_block_list(io)%dump_last) THEN
         io_block_list(io)%dump = .TRUE.
       ELSE
         io_block_list(io)%dump = .FALSE.
       ENDIF
-      IF (first .AND. dump_first) io_block_list(io)%dump = .TRUE.
+      IF (first_call .AND. io_block_list(io)%dump_first) &
+          io_block_list(io)%dump = .TRUE.
 
       ! Work out the time that the next dump will occur based on the
       ! current timestep
@@ -468,6 +459,7 @@ CONTAINS
 
       IF (io_block_list(io)%dump) THEN
         print_arrays = .TRUE.
+        IF (io_block_list(io)%restart) restart_flag = .TRUE.
         iomask = IOR(iomask, io_block_list(io)%dumpmask)
         IF (n_subsets .NE. 0) THEN
           DO is = 1, n_subsets
@@ -496,10 +488,12 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (first) THEN
-      first = .FALSE.
-      IF (.NOT.dump_first) print_arrays = .FALSE.
-    ENDIF
+    IF (MOD(output_file, restart_dump_every) .EQ. 0 &
+        .AND. restart_dump_every .GT. -1) restart_flag = .TRUE.
+    IF (first_call .AND. force_first_to_be_restartable) restart_flag = .TRUE.
+    IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
+
+    IF (first_call) first_call = .FALSE.
 
     iodumpmask(1,:) = iomask
 

@@ -9,6 +9,7 @@ MODULE deck
   USE deck_boundaries_block
   USE deck_species_block
   USE deck_io_block
+  USE deck_io_global_block
   USE deck_window_block
   USE deck_subset_block
   USE deck_collision_block
@@ -65,6 +66,7 @@ CONTAINS
     CALL dist_fn_deck_initialise
     CALL fields_deck_initialise
     CALL io_deck_initialise
+    CALL io_global_deck_initialise
     CALL laser_deck_initialise
     CALL subset_deck_initialise
 #ifdef PARTICLE_PROBES
@@ -92,6 +94,7 @@ CONTAINS
     CALL dist_fn_deck_finalise
     CALL fields_deck_finalise
     CALL io_deck_finalise
+    CALL io_global_deck_finalise
     CALL laser_deck_finalise
     CALL subset_deck_finalise
 #ifdef PARTICLE_PROBES
@@ -127,6 +130,8 @@ CONTAINS
       CALL fields_block_start
     ELSE IF (str_cmp(block_name, 'output')) THEN
       CALL io_block_start
+    ELSE IF (str_cmp(block_name, 'output_global')) THEN
+      CALL io_global_block_start
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_start
     ELSE IF (str_cmp(block_name, 'subset')) THEN
@@ -170,6 +175,8 @@ CONTAINS
       CALL fields_block_end
     ELSE IF (str_cmp(block_name, 'output')) THEN
       CALL io_block_end
+    ELSE IF (str_cmp(block_name, 'output_global')) THEN
+      CALL io_global_block_end
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_end
     ELSE IF (str_cmp(block_name, 'subset')) THEN
@@ -235,6 +242,9 @@ CONTAINS
       RETURN
     ELSE IF (str_cmp(block_name, 'output')) THEN
       handle_block = io_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'output_global')) THEN
+      handle_block = io_global_block_handle_element(block_element, block_value)
       RETURN
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       handle_block = laser_block_handle_element(block_element, block_value)
@@ -302,6 +312,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, dist_fn_block_check())
     errcode_deck = IOR(errcode_deck, fields_block_check())
     errcode_deck = IOR(errcode_deck, io_block_check())
+    errcode_deck = IOR(errcode_deck, io_global_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
     errcode_deck = IOR(errcode_deck, subset_block_check())
 #ifdef PARTICLE_PROBES

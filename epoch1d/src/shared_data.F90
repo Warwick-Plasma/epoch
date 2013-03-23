@@ -584,8 +584,8 @@ MODULE shared_data
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
   INTEGER :: output_file
-  LOGICAL :: force_first_to_be_restartable, dump_first
-  LOGICAL :: force_final_to_be_restartable, dump_last
+  LOGICAL :: force_first_to_be_restartable
+  LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
   INTEGER :: n_zeros = 4
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
@@ -645,14 +645,14 @@ MODULE shared_data
     REAL(num) :: dt_snapshot, time_prev, time_first
     REAL(num) :: dt_average, dt_min_average, average_time
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
-    LOGICAL :: restart, dump, any_average
+    LOGICAL :: restart, dump, any_average, dump_first, dump_last
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
 
   TYPE(io_block_type), POINTER :: io_block_list(:)
   INTEGER :: n_io_blocks
-  LOGICAL :: track_ejected_particles
+  LOGICAL :: track_ejected_particles, new_style_io_block
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
 
   !----------------------------------------------------------------------------
