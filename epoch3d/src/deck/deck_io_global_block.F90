@@ -8,6 +8,7 @@ MODULE deck_io_global_block
   PUBLIC :: io_global_deck_initialise, io_global_deck_finalise
   PUBLIC :: io_global_block_start, io_global_block_end
   PUBLIC :: io_global_block_handle_element, io_global_block_check
+  LOGICAL, SAVE :: dump_first, dump_last, got_dump_first, got_dump_last
 
 CONTAINS
 
@@ -17,12 +18,30 @@ CONTAINS
     time_stop   = HUGE(1.0_num)
     nstep_start = -1
     nstep_stop  = HUGE(1)
+    got_dump_first = .FALSE.
+    got_dump_last = .FALSE.
 
   END SUBROUTINE io_global_deck_initialise
 
 
 
   SUBROUTINE io_global_deck_finalise
+
+    INTEGER :: i
+
+    IF (deck_state .EQ. c_ds_first) RETURN
+
+    IF (got_dump_first) THEN
+      DO i = 1, n_io_blocks
+        io_block_list(i)%dump_first = dump_first
+      ENDDO
+    ENDIF
+
+    IF (got_dump_last) THEN
+      DO i = 1, n_io_blocks
+        io_block_list(i)%dump_last = dump_last
+      ENDDO
+    ENDIF
 
   END SUBROUTINE io_global_deck_finalise
 
@@ -97,6 +116,18 @@ CONTAINS
 
     IF (str_cmp(element, 'nstep_stop')) THEN
       nstep_stop = as_integer(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'dump_first')) THEN
+      got_dump_first = .TRUE.
+      dump_first = as_logical(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'dump_last')) THEN
+      got_dump_last = .TRUE.
+      dump_last = as_logical(value, errcode)
       RETURN
     ENDIF
 
