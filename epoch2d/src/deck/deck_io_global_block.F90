@@ -75,16 +75,6 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'dump_source_code')) THEN
-      dump_source_code = as_logical(value, errcode)
-      RETURN
-    ENDIF
-
-    IF (str_cmp(element, 'dump_input_decks')) THEN
-      dump_input_decks = as_logical(value, errcode)
-      RETURN
-    ENDIF
-
     errcode = c_err_unknown_element
 
   END FUNCTION io_global_block_handle_element

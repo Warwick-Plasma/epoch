@@ -68,8 +68,6 @@ CONTAINS
     need_random_state = .FALSE.
     force_first_to_be_restartable = .FALSE.
     force_final_to_be_restartable = .FALSE.
-    dump_source_code = .TRUE.
-    dump_input_decks = .TRUE.
     full_dump_every = -1
     restart_dump_every = -1
     nsteps = -1

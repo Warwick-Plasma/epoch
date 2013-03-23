@@ -13,7 +13,7 @@ MODULE deck_io_block
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 16
   INTEGER :: block_number, full_io_block, restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
-  LOGICAL, PRIVATE :: got_name
+  LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
   CHARACTER(LEN=string_length) :: name
@@ -145,6 +145,8 @@ CONTAINS
 
     io_block_done = .FALSE.
     got_name = .FALSE.
+    got_dump_source_code = .FALSE.
+    got_dump_input_decks = .FALSE.
     block_number = block_number + 1
     IF (deck_state .NE. c_ds_first .AND. block_number .GT. 0) THEN
       io_block => io_block_list(block_number)
@@ -191,6 +193,16 @@ CONTAINS
     io_block%dumpmask(c_dump_jx) = IOR(io_block%dumpmask(c_dump_jx), c_io_field)
     io_block%dumpmask(c_dump_jy) = IOR(io_block%dumpmask(c_dump_jy), c_io_field)
     io_block%dumpmask(c_dump_jz) = IOR(io_block%dumpmask(c_dump_jz), c_io_field)
+
+    IF (.NOT.got_dump_source_code) THEN
+      IF (io_block%restart .OR. .NOT.new_style_io_block) &
+          io_block%dump_source_code = .TRUE.
+    ENDIF
+
+    IF (.NOT.got_dump_input_decks) THEN
+      IF (io_block%restart .OR. .NOT.new_style_io_block) &
+          io_block%dump_input_decks = .TRUE.
+    ENDIF
 
   END SUBROUTINE io_block_end
 
@@ -280,11 +292,11 @@ CONTAINS
       io_block%nstep_snapshot = as_integer(value, errcode)
       IF (io_block%nstep_snapshot .LT. 0) io_block%nstep_snapshot = 0
     CASE(11)
-      IF (new_style_io_block) style_error = c_err_new_style_global
-      dump_source_code = as_logical(value, errcode)
+      io_block%dump_source_code = as_logical(value, errcode)
+      got_dump_source_code = .TRUE.
     CASE(12)
-      IF (new_style_io_block) style_error = c_err_new_style_global
-      dump_input_decks = as_logical(value, errcode)
+      io_block%dump_input_decks = as_logical(value, errcode)
+      got_dump_input_decks = .TRUE.
     CASE(13)
       io_block%dump_first = as_logical(value, errcode)
     CASE(14)
@@ -569,6 +581,8 @@ CONTAINS
     io_block%any_average = .FALSE.
     io_block%dump_first = .FALSE.
     io_block%dump_last = .TRUE.
+    io_block%dump_source_code = .FALSE.
+    io_block%dump_input_decks = .FALSE.
     io_block%dumpmask = 0
     DO i = 1, num_vars_to_dump
       io_block%averaged_data(i)%dump_single = .FALSE.

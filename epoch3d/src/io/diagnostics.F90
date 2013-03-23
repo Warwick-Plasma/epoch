@@ -22,7 +22,7 @@ MODULE diagnostics
   INTEGER(i8), ALLOCATABLE :: species_offset(:)
   INTEGER(i8), ALLOCATABLE :: ejected_offset(:)
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
-  LOGICAL :: restart_flag
+  LOGICAL :: restart_flag, dump_source_code, dump_input_decks
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
@@ -323,12 +323,10 @@ CONTAINS
     ENDIF
 #endif
 
-    IF (restart_flag) THEN
-      IF (dump_input_decks) CALL write_input_decks(sdf_handle)
-      IF (dump_source_code .AND. SIZE(source_code) .GT. 0) &
-          CALL sdf_write_source_code(sdf_handle, 'code', &
-              'base64_packed_source_code', source_code, last_line, 0)
-    ENDIF
+    IF (dump_input_decks) CALL write_input_decks(sdf_handle)
+    IF (dump_source_code .AND. SIZE(source_code) .GT. 0) &
+        CALL sdf_write_source_code(sdf_handle, 'code', &
+            'base64_packed_source_code', source_code, last_line, 0)
 
     IF (IAND(iomask(c_dump_absorption), code) .NE. 0) THEN
       CALL MPI_ALLREDUCE(laser_absorb_local, laser_absorbed, 1, mpireal, &
@@ -427,6 +425,8 @@ CONTAINS
         ALLOCATE(iodumpmask(n_subsets+1,num_vars_to_dump))
 
     restart_flag = .FALSE.
+    dump_source_code = .FALSE.
+    dump_input_decks = .FALSE.
     print_arrays = .FALSE.
     iomask = c_io_never
     iodumpmask = c_io_never
@@ -478,6 +478,8 @@ CONTAINS
       IF (io_block_list(io)%dump) THEN
         print_arrays = .TRUE.
         IF (io_block_list(io)%restart) restart_flag = .TRUE.
+        IF (io_block_list(io)%dump_source_code) dump_source_code = .TRUE.
+        IF (io_block_list(io)%dump_input_decks) dump_input_decks = .TRUE.
         iomask = IOR(iomask, io_block_list(io)%dumpmask)
         IF (n_subsets .NE. 0) THEN
           DO is = 1, n_subsets
@@ -510,6 +512,11 @@ CONTAINS
         .AND. restart_dump_every .GT. -1) restart_flag = .TRUE.
     IF (first_call .AND. force_first_to_be_restartable) restart_flag = .TRUE.
     IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
+
+    IF (.NOT.restart_flag .AND. .NOT.new_style_io_block) THEN
+      dump_source_code = .FALSE.
+      dump_input_decks = .FALSE.
+    ENDIF
 
     IF (first_call) first_call = .FALSE.
 
