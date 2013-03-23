@@ -11,7 +11,7 @@
 # If any of these fields is unavailable then the tag 'unknown' will be
 # used. If none of the tags are known then the COMMIT file is left untouched
 
-COMMIT_FILE=COMMIT
+COMMIT_FILE=commit_info.h
 
 LF='
 '
@@ -62,6 +62,9 @@ grep "$commit_string" $COMMIT_FILE > /dev/null 2>&1
 if [ $? -eq 0 ]; then
   exit
 else
-  echo "COMMIT = $commit_string" > $COMMIT_FILE
+  sec=$(git log --pretty=format:%ct -1 HEAD)
+  commit_date=$(date -r $sec)
+  echo "#define SDF_READER_COMMIT_ID \"$commit_string\"" > $COMMIT_FILE
+  echo "#define SDF_READER_COMMIT_DATE \"$commit_date\"" >> $COMMIT_FILE
   exit 1
 fi

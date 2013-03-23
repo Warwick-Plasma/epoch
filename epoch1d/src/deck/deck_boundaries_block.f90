@@ -1,7 +1,5 @@
 MODULE deck_boundaries_block
 
-  USE mpi
-  USE strings
   USE strings_advanced
 
   IMPLICIT NONE

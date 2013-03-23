@@ -1,9 +1,5 @@
 MODULE sdf_input_cartesian
 
-  USE mpi
-  USE sdf_common
-  USE sdf_input
-  USE sdf_input_cartesian_ru
   USE sdf_input_cartesian_r4
   USE sdf_input_cartesian_r8
 

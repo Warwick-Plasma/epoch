@@ -445,6 +445,31 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_nprocx) THEN
+      CALL push_on_eval(REAL(nprocx, num))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nprocy) THEN
+      CALL push_on_eval(REAL(nprocy, num))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nprocz) THEN
+      CALL push_on_eval(REAL(nprocz, num))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nsteps) THEN
+      CALL push_on_eval(REAL(nsteps, num))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_t_end) THEN
+      CALL push_on_eval(t_end)
+      RETURN
+    ENDIF
+
   END SUBROUTINE do_constant
 
 

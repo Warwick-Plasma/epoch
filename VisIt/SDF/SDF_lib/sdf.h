@@ -352,6 +352,8 @@ int sdf_read_point_mesh(sdf_file_t *h);
 int sdf_read_point_mesh_info(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
 int sdf_read_point_variable_info(sdf_file_t *h);
+int sdf_read_lagran_mesh(sdf_file_t *h);
+
 void sdf_trim(char *str);
 
 

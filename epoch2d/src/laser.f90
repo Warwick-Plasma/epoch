@@ -1,7 +1,7 @@
 MODULE laser
 
-  USE evaluator
   USE custom_laser
+  USE evaluator
 
   IMPLICIT NONE
 

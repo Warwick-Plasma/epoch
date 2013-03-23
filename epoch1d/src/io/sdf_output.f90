@@ -1,8 +1,5 @@
 MODULE sdf_output
 
-  USE mpi
-  USE sdf_common
-  USE sdf_output_ru
   USE sdf_output_r4
   USE sdf_output_r8
 

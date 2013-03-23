@@ -1,6 +1,5 @@
 MODULE deck_io_block
 
-  USE mpi
   USE strings_advanced
 
   IMPLICIT NONE
@@ -11,10 +10,10 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 16
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 20
   INTEGER :: block_number, full_io_block, restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
-  LOGICAL, PRIVATE :: got_name, got_default
+  LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
   CHARACTER(LEN=string_length) :: name
@@ -89,12 +88,14 @@ CONTAINS
     io_block_name (i+14) = 'dump_last'
     io_block_name (i+15) = 'restartable'
     io_block_name (i+16) = 'name'
+    io_block_name (i+17) = 'time_start'
+    io_block_name (i+18) = 'time_stop'
+    io_block_name (i+19) = 'nstep_start'
+    io_block_name (i+20) = 'nstep_stop'
 
-    dump_first = .TRUE.
-    dump_last  = .TRUE.
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
-    got_default = .FALSE.
+    new_style_io_block = .FALSE.
     n_io_blocks = 0
 
   END SUBROUTINE io_deck_initialise
@@ -103,12 +104,22 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
-    INTEGER :: i, io
+    INTEGER :: i, io, ierr
 
     n_io_blocks = block_number
 
     IF (n_io_blocks .GT. 0) THEN
       IF (deck_state .EQ. c_ds_first) THEN
+        IF (.NOT.new_style_io_block .AND. n_io_blocks .NE. 1) THEN
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Cannot have multiple unnamed "output" blocks.'
+            ENDDO
+          ENDIF
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        ENDIF
+
         ALLOCATE(io_block_list(n_io_blocks))
         DO i = 1, n_io_blocks
           CALL init_io_block(io_block_list(i))
@@ -137,12 +148,13 @@ CONTAINS
   SUBROUTINE io_block_start
 
     io_block_done = .FALSE.
-    dump_first = .NOT.ic_from_restart
-    dump_last  = .TRUE.
     got_name = .FALSE.
+    got_dump_source_code = .FALSE.
+    got_dump_input_decks = .FALSE.
     block_number = block_number + 1
     IF (deck_state .NE. c_ds_first .AND. block_number .GT. 0) THEN
       io_block => io_block_list(block_number)
+      io_block%dump_first = .FALSE.
     ENDIF
 
   END SUBROUTINE io_block_start
@@ -159,18 +171,20 @@ CONTAINS
     IF (io_block%dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
       track_ejected_particles = .TRUE.
     ENDIF
+
     IF (.NOT. got_name) THEN
-      IF (got_default) THEN
+      IF (new_style_io_block) THEN
         IF (rank .EQ. 0) THEN
           DO io = stdout, du, du - stdout ! Print to stdout and to file
             WRITE(io,*) '*** ERROR ***'
-            WRITE(io,*) 'Cannot have multiple unnamed blocks.'
+            WRITE(io,*) 'Cannot mix old and new style output blocks.'
+            WRITE(io,*) 'You can either have multiple, named output blocks ', &
+                'or a single unnamed one.'
           ENDDO
         ENDIF
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
       io_block%name = 'normal'
-      got_default = .TRUE.
     ENDIF
 
     ! Delete any existing visit file lists
@@ -184,6 +198,16 @@ CONTAINS
     io_block%dumpmask(c_dump_jy) = IOR(io_block%dumpmask(c_dump_jy), c_io_field)
     io_block%dumpmask(c_dump_jz) = IOR(io_block%dumpmask(c_dump_jz), c_io_field)
 
+    IF (.NOT.got_dump_source_code) THEN
+      IF (io_block%restart .OR. .NOT.new_style_io_block) &
+          io_block%dump_source_code = .TRUE.
+    ENDIF
+
+    IF (.NOT.got_dump_input_decks) THEN
+      IF (io_block%restart .OR. .NOT.new_style_io_block) &
+          io_block%dump_input_decks = .TRUE.
+    ENDIF
+
   END SUBROUTINE io_block_end
 
 
@@ -191,14 +215,20 @@ CONTAINS
   FUNCTION io_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: errcode
+    INTEGER :: errcode, style_error
     INTEGER :: loop, elementselected, mask, mask_element, ierr, io
     INTEGER :: is, subset, n_list
     INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad
+    INTEGER, PARAMETER :: c_err_new_style_ignore = 1
+    INTEGER, PARAMETER :: c_err_new_style_global = 2
+    INTEGER, PARAMETER :: c_err_old_style_ignore = 3
 
     errcode = c_err_none
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state .EQ. c_ds_first) THEN
+      IF (str_cmp(element, 'name')) new_style_io_block = .TRUE.
+      RETURN
+    ENDIF
 
     errcode = c_err_unknown_element
 
@@ -220,22 +250,34 @@ CONTAINS
     ENDIF
     io_block_done(elementselected) = .TRUE.
     errcode = c_err_none
+    style_error = c_err_none
 
     SELECT CASE (elementselected-num_vars_to_dump)
     CASE(1)
       io_block%dt_snapshot = as_real(value, errcode)
       IF (io_block%dt_snapshot .LT. 0.0_num) io_block%dt_snapshot = 0.0_num
     CASE(2)
-      full_dump_every = as_integer(value, errcode)
-      IF (full_dump_every .EQ. 0) full_dump_every = 1
+      IF (new_style_io_block) THEN
+        style_error = c_err_new_style_ignore
+      ELSE
+        full_dump_every = as_integer(value, errcode)
+        IF (full_dump_every .EQ. 0) full_dump_every = 1
+      ENDIF
     CASE(3)
-      restart_dump_every = as_integer(value, errcode)
-      IF (restart_dump_every .EQ. 0) restart_dump_every = 1
+      IF (new_style_io_block) THEN
+        style_error = c_err_new_style_ignore
+      ELSE
+        restart_dump_every = as_integer(value, errcode)
+        IF (restart_dump_every .EQ. 0) restart_dump_every = 1
+      ENDIF
     CASE(4)
+      IF (new_style_io_block) style_error = c_err_new_style_global
       force_first_to_be_restartable = as_logical(value, errcode)
     CASE(5)
+      IF (new_style_io_block) style_error = c_err_new_style_global
       force_final_to_be_restartable = as_logical(value, errcode)
     CASE(6)
+      IF (new_style_io_block) style_error = c_err_new_style_global
       use_offset_grid = as_logical(value, errcode)
     CASE(7)
       IF (rank .EQ. 0) THEN
@@ -254,19 +296,68 @@ CONTAINS
       io_block%nstep_snapshot = as_integer(value, errcode)
       IF (io_block%nstep_snapshot .LT. 0) io_block%nstep_snapshot = 0
     CASE(11)
-      dump_source_code = as_logical(value, errcode)
+      io_block%dump_source_code = as_logical(value, errcode)
+      got_dump_source_code = .TRUE.
     CASE(12)
-      dump_input_decks = as_logical(value, errcode)
+      io_block%dump_input_decks = as_logical(value, errcode)
+      got_dump_input_decks = .TRUE.
     CASE(13)
-      dump_first = as_logical(value, errcode)
+      io_block%dump_first = as_logical(value, errcode)
     CASE(14)
-      dump_last = as_logical(value, errcode)
+      io_block%dump_last = as_logical(value, errcode)
     CASE(15)
+      IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       io_block%restart = as_logical(value, errcode)
     CASE(16)
       io_block%name = value
       got_name = .TRUE.
+    CASE(17)
+      io_block%time_start = as_real(value, errcode)
+    CASE(18)
+      io_block%time_stop = as_real(value, errcode)
+    CASE(19)
+      io_block%nstep_start = as_integer(value, errcode)
+    CASE(20)
+      io_block%nstep_stop = as_integer(value, errcode)
     END SELECT
+
+    IF (style_error .EQ. c_err_old_style_ignore) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Element "' &
+              // TRIM(ADJUSTL(io_block_name(elementselected))) &
+              // '" not ', 'allowed in an unnamed output block.'
+          WRITE(io,*) 'It has been ignored.'
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+    ELSE IF (style_error .EQ. c_err_new_style_ignore) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Element "' &
+              // TRIM(ADJUSTL(io_block_name(elementselected))) &
+              // '" not ', 'allowed in a named output block.'
+          WRITE(io,*) 'It has been ignored.'
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+    ELSE IF (style_error .EQ. c_err_new_style_global) THEN
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Element "' &
+              // TRIM(ADJUSTL(io_block_name(elementselected))) &
+              // '" should be moved to ', 'an "output_global" block.'
+          WRITE(io,*) 'Its value will be applied to all output blocks.'
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+    ENDIF
 
     IF (elementselected .GT. num_vars_to_dump) RETURN
 
@@ -500,7 +591,15 @@ CONTAINS
     io_block%restart = .FALSE.
     io_block%dump = .FALSE.
     io_block%any_average = .FALSE.
+    io_block%dump_first = .FALSE.
+    io_block%dump_last = .TRUE.
+    io_block%dump_source_code = .FALSE.
+    io_block%dump_input_decks = .FALSE.
     io_block%dumpmask = 0
+    io_block%time_start = -1.0_num
+    io_block%time_stop  = HUGE(1.0_num)
+    io_block%nstep_start = -1
+    io_block%nstep_stop  = HUGE(1)
     DO i = 1, num_vars_to_dump
       io_block%averaged_data(i)%dump_single = .FALSE.
     ENDDO

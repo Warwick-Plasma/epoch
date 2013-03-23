@@ -1,7 +1,10 @@
 MODULE deck_qed_block
 
-  USE mpi
+#ifdef PHOTONS
   USE strings_advanced
+#else
+  USE shared_data
+#endif
 
   IMPLICIT NONE
 

@@ -1,10 +1,9 @@
 MODULE boundary
 
-  USE mpi
   USE partlist
   USE particle_temperature
-  USE deck_io_block
   USE laser
+  USE mpi_subtype_control
 
   IMPLICIT NONE
 

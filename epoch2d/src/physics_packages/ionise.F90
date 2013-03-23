@@ -1,10 +1,8 @@
 MODULE ionise
 
-  USE calc_df
-  USE split_particle
-  USE shape_functions
-  USE random_generator
   USE numerics
+  USE random_generator
+  USE partlist
 
   IMPLICIT NONE
 

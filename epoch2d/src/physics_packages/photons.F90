@@ -1,10 +1,7 @@
 #ifdef PHOTONS
 MODULE photons
 
-  USE shared_data
-  USE random_generator
   USE partlist
-  USE shape_functions
 
   IMPLICIT NONE
 

@@ -1,17 +1,15 @@
 MODULE diagnostics
 
-  USE mpi
   USE calc_df
   USE sdf
   USE deck
   USE dist_fn
   USE encoded_source
   USE iterators
-  USE mpi_subtype_control
   USE probes
-  USE shared_data
   USE version_data
   USE setup
+  USE random_generator
   USE strings
 
   IMPLICIT NONE
@@ -24,6 +22,7 @@ MODULE diagnostics
   INTEGER(i8), ALLOCATABLE :: species_offset(:)
   INTEGER(i8), ALLOCATABLE :: ejected_offset(:)
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
+  LOGICAL :: restart_flag, dump_source_code, dump_input_decks
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
@@ -33,14 +32,14 @@ CONTAINS
   SUBROUTINE output_routines(step)   ! step = step index
 
     INTEGER, INTENT(INOUT) :: step
-    LOGICAL :: print_arrays, first_call, last_call
+    LOGICAL :: print_arrays
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=c_max_string_length) :: dump_type
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
     INTEGER :: code, i, io, random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
-    LOGICAL :: restart_flag, convert
+    LOGICAL :: convert
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
 
@@ -60,7 +59,7 @@ CONTAINS
           & f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
     ENDIF
 
-    CALL io_test(step, print_arrays, first_call, last_call)
+    CALL io_test(step, print_arrays)
 
     IF (.NOT.print_arrays) RETURN
 
@@ -78,21 +77,10 @@ CONTAINS
     ! Only dump variables with the 'FULL' attributre on full dump intervals
     IF (MOD(output_file, full_dump_every) .EQ. 0 &
         .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
-    IF (MOD(output_file, restart_dump_every) .EQ. 0 &
-        .AND. restart_dump_every .GT. -1) code = IOR(code, c_io_restartable)
-    IF (first_call .AND. force_first_to_be_restartable) &
-        code = IOR(code, c_io_restartable)
-    IF (last_call .AND. force_final_to_be_restartable) &
-        code = IOR(code, c_io_restartable)
+    IF (restart_flag) code = IOR(code, c_io_restartable)
 
     CALL create_subtypes(code)
 
-    ! Set a restart_flag to pass to the file header
-    IF (IAND(code, c_io_restartable) .NE. 0) THEN
-      restart_flag = .TRUE.
-    ELSE
-      restart_flag = .FALSE.
-    ENDIF
     reset_ejected = .FALSE.
 
     ALLOCATE(array(-2:nx+3))
@@ -317,12 +305,10 @@ CONTAINS
     ENDIF
 #endif
 
-    IF (restart_flag) THEN
-      IF (dump_input_decks) CALL write_input_decks(sdf_handle)
-      IF (dump_source_code .AND. SIZE(source_code) .GT. 0) &
-          CALL sdf_write_source_code(sdf_handle, 'code', &
-              'base64_packed_source_code', source_code, last_line, 0)
-    ENDIF
+    IF (dump_input_decks) CALL write_input_decks(sdf_handle)
+    IF (dump_source_code .AND. SIZE(source_code) .GT. 0) &
+        CALL sdf_write_source_code(sdf_handle, 'code', &
+            'base64_packed_source_code', source_code, last_line, 0)
 
     IF (IAND(iomask(c_dump_absorption), code) .NE. 0) THEN
       CALL MPI_ALLREDUCE(laser_absorb_local, laser_absorbed, 1, mpireal, &
@@ -408,36 +394,39 @@ CONTAINS
 
 
 
-  SUBROUTINE io_test(step, print_arrays, first_call, last_call)
+  SUBROUTINE io_test(step, print_arrays)
 
     INTEGER, INTENT(IN) :: step
-    LOGICAL, INTENT(OUT) :: print_arrays, first_call, last_call
+    LOGICAL, INTENT(OUT) :: print_arrays
     INTEGER :: id, io, is, nstep_next
     REAL(num) :: t0, t1, time_first, av_time_first
-    LOGICAL, SAVE :: first = .TRUE.
+    LOGICAL, SAVE :: first_call = .TRUE.
+    LOGICAL :: last_call, dump
 
     IF (.NOT.ALLOCATED(iodumpmask)) &
         ALLOCATE(iodumpmask(n_subsets+1,num_vars_to_dump))
 
+    restart_flag = .FALSE.
+    dump_source_code = .FALSE.
+    dump_input_decks = .FALSE.
     print_arrays = .FALSE.
-    first_call = first
     iomask = c_io_never
     iodumpmask = c_io_never
 
-    IF ((time .GE. t_end .OR. step .EQ. nsteps) .AND. dump_last) THEN
+    IF (time .GE. t_end .OR. step .EQ. nsteps) THEN
       last_call = .TRUE.
-      print_arrays = .TRUE.
     ELSE
       last_call = .FALSE.
     ENDIF
 
     DO io = 1, n_io_blocks
-      IF (last_call) THEN
+      IF (last_call .AND. io_block_list(io)%dump_last) THEN
         io_block_list(io)%dump = .TRUE.
       ELSE
         io_block_list(io)%dump = .FALSE.
       ENDIF
-      IF (first .AND. dump_first) io_block_list(io)%dump = .TRUE.
+      IF (first_call .AND. io_block_list(io)%dump_first) &
+          io_block_list(io)%dump = .TRUE.
 
       ! Work out the time that the next dump will occur based on the
       ! current timestep
@@ -456,7 +445,12 @@ CONTAINS
         time_first = t0
         IF (io_block_list(io)%dt_snapshot .GT. 0 .AND. time .GE. t0) THEN
           io_block_list(io)%time_prev = time
-          io_block_list(io)%dump = .TRUE.
+          dump = .TRUE.
+          IF (dump .AND. time .LT. io_block_list(io)%time_start) dump = .FALSE.
+          IF (dump .AND. time .GT. io_block_list(io)%time_stop)  dump = .FALSE.
+          IF (dump .AND. time .LT. time_start) dump = .FALSE.
+          IF (dump .AND. time .GT. time_stop)  dump = .FALSE.
+          IF (dump) io_block_list(io)%dump = .TRUE.
         ENDIF
       ELSE
         ! Next I/O dump based on nstep_snapshot
@@ -464,14 +458,21 @@ CONTAINS
         IF (io_block_list(io)%nstep_snapshot .GT. 0 &
             .AND. step .GE. nstep_next) THEN
           io_block_list(io)%nstep_prev = step
-          io_block_list(io)%dump = .TRUE.
+          dump = .TRUE.
+          IF (dump .AND. step .LT. io_block_list(io)%nstep_start) dump = .FALSE.
+          IF (dump .AND. step .GT. io_block_list(io)%nstep_stop)  dump = .FALSE.
+          IF (dump .AND. step .LT. nstep_start) dump = .FALSE.
+          IF (dump .AND. step .GT. nstep_stop)  dump = .FALSE.
+          IF (dump) io_block_list(io)%dump = .TRUE.
         ENDIF
       ENDIF
 
-      iomask = IOR(iomask, io_block_list(io)%dumpmask)
-
       IF (io_block_list(io)%dump) THEN
         print_arrays = .TRUE.
+        IF (io_block_list(io)%restart) restart_flag = .TRUE.
+        IF (io_block_list(io)%dump_source_code) dump_source_code = .TRUE.
+        IF (io_block_list(io)%dump_input_decks) dump_input_decks = .TRUE.
+        iomask = IOR(iomask, io_block_list(io)%dumpmask)
         IF (n_subsets .NE. 0) THEN
           DO is = 1, n_subsets
             iodumpmask(1+is,:) = &
@@ -499,10 +500,17 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (first) THEN
-      first = .FALSE.
-      IF (.NOT.dump_first) print_arrays = .FALSE.
+    IF (MOD(output_file, restart_dump_every) .EQ. 0 &
+        .AND. restart_dump_every .GT. -1) restart_flag = .TRUE.
+    IF (first_call .AND. force_first_to_be_restartable) restart_flag = .TRUE.
+    IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
+
+    IF (.NOT.restart_flag .AND. .NOT.new_style_io_block) THEN
+      dump_source_code = .FALSE.
+      dump_input_decks = .FALSE.
     ENDIF
+
+    IF (first_call) first_call = .FALSE.
 
     iodumpmask(1,:) = iomask
 
@@ -754,7 +762,7 @@ CONTAINS
 
     INTERFACE
       SUBROUTINE func(data_array, current_species)
-        USE shared_data
+        USE constants
         REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species
       END SUBROUTINE func
@@ -969,7 +977,7 @@ CONTAINS
 
     INTERFACE
       SUBROUTINE func(data_array, direction)
-        USE shared_data
+        USE constants
         REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: direction
       END SUBROUTINE func
@@ -1034,7 +1042,7 @@ CONTAINS
 
     INTERFACE
       SUBROUTINE func(data_array, current_species, direction)
-        USE shared_data
+        USE constants
         REAL(num), DIMENSION(-2:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species, direction
       END SUBROUTINE func
@@ -1390,7 +1398,7 @@ CONTAINS
 
     INTERFACE
       FUNCTION iterator(array, npart_it, start)
-        USE shared_data
+        USE constants
         REAL(num) :: iterator
         REAL(num), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npart_it

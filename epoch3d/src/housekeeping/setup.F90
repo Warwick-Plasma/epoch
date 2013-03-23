@@ -1,18 +1,13 @@
 MODULE setup
 
-  USE mpi
-  USE sdf
   USE encoded_source
   USE fields
   USE mpi_subtype_control
-  USE partlist
-  USE shared_data
-  USE strings
   USE version_data
   USE welcome
-  USE random_generator
   USE split_particle
   USE shunt
+  USE laser
 
   IMPLICIT NONE
 
@@ -73,8 +68,6 @@ CONTAINS
     need_random_state = .FALSE.
     force_first_to_be_restartable = .FALSE.
     force_final_to_be_restartable = .FALSE.
-    dump_source_code = .TRUE.
-    dump_input_decks = .TRUE.
     full_dump_every = -1
     restart_dump_every = -1
     nsteps = -1
@@ -587,7 +580,7 @@ CONTAINS
         DO ix = 1, nx
           omega = SQRT(initial_conditions(ispecies)%density(ix,iy,iz) * q0**2 &
               / species_list(ispecies)%mass / epsilon0 &
-              + 6.0_num * k_max**2 * kb &
+              + 3.0_num * k_max**2 * kb &
               * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:)) &
               / species_list(ispecies)%mass)
           IF (omega .EQ. 0.0_num) CYCLE

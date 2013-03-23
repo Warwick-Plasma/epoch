@@ -73,6 +73,8 @@
 #include <InvalidVariableException.h>
 
 #include <dlfcn.h>
+#include "commit_info.h"
+#include "build_date.h"
 
 using std::string;
 using namespace SDFDBOptions;
@@ -208,7 +210,9 @@ sdf_extension_t *avtSDFFileFormat::sdf_extension_load(sdf_file_t *h)
 
     if (!sdf_extension_handle) {
         avtSDFFileFormat::extension_not_found = 1;
-        if (!h->rank) debug1 << dlerror() << endl;
+        if (!h->rank) {
+            debug1 << dlerror() << endl;
+        }
         return NULL;
     }
 
@@ -442,11 +446,13 @@ avtSDFFileFormat::PopulateDatabaseMetaData(avtDatabaseMetaData *md)
     gotMetadata = true;
 
     char buf[1024];
-    snprintf(buf, 1024, " Job ID: %d.%d\n Code name: %s\n "
-        "Code I/O version: %d\n File revision: %d\n Restart flag: %d\n "
-        "Other domains: %d", h->jobid1, h->jobid2, h->code_name,
-        h->code_io_version, h->file_revision, h->restart_flag,
-        h->other_domains);
+    snprintf(buf, 1024, "\n SDF reader commit ID: %s\n "
+        "SDF reader commit date: %s\n SDF reader build date: %s\n "
+        "Job ID: %d.%d\n Code name: %s\n Code I/O version: %d\n "
+        "File revision: %d\n Restart flag: %d\n Other domains: %d",
+        SDF_READER_COMMIT_ID, SDF_READER_COMMIT_DATE, SDF_READER_BUILD_DATE,
+        h->jobid1, h->jobid2, h->code_name, h->code_io_version,
+        h->file_revision, h->restart_flag, h->other_domains);
 
     md->SetDatabaseComment(buf);
 
@@ -955,6 +961,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
 #endif
         return sgrid;
     }
+
+    return NULL;
 }
 
 

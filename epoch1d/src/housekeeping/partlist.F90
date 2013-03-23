@@ -1,8 +1,9 @@
 MODULE partlist
 
-  USE mpi
   USE shared_data
+#ifdef PHOTONS
   USE random_generator
+#endif
 
   IMPLICIT NONE
 

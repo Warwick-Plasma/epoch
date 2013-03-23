@@ -135,6 +135,9 @@ CONTAINS
         as_constant = c_const_x_max
     IF (str_cmp(name, 'lengthx') .OR. str_cmp(name, 'length_x')) &
         as_constant = c_const_lx
+    IF (str_cmp(name, 'nprocx')) as_constant = c_const_nprocx
+    IF (str_cmp(name, 'nsteps')) as_constant = c_const_nsteps
+    IF (str_cmp(name, 't_end')) as_constant = c_const_t_end
 
     ! Dumpmask constants
     IF (str_cmp(name, 'never')) as_constant = c_const_io_never

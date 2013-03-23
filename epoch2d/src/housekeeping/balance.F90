@@ -1,9 +1,6 @@
 MODULE balance
 
-  USE mpi
-  USE partlist
   USE boundary
-  USE shared_data
   USE mpi_subtype_control
   USE redblack_module
 
