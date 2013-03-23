@@ -145,6 +145,10 @@ CONTAINS
         as_constant = c_const_lx
     IF (str_cmp(name, 'lengthy') .OR. str_cmp(name, 'length_y')) &
         as_constant = c_const_ly
+    IF (str_cmp(name, 'nprocx')) as_constant = c_const_nprocx
+    IF (str_cmp(name, 'nprocy')) as_constant = c_const_nprocy
+    IF (str_cmp(name, 'nsteps')) as_constant = c_const_nsteps
+    IF (str_cmp(name, 't_end')) as_constant = c_const_t_end
 
     ! Dumpmask constants
     IF (str_cmp(name, 'never')) as_constant = c_const_io_never
