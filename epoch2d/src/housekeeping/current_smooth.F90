@@ -1,6 +1,10 @@
 MODULE current_smooth
 
+#ifdef HIGH_ORDER_SMOOTHING
   USE shape_functions
+#else
+  USE shared_data
+#endif
 
   IMPLICIT NONE
 

@@ -1,7 +1,9 @@
 MODULE iterators
 
   USE particle_pointer_advance
+#if PARTICLE_ID || PARTICLE_ID4
   USE partlist
+#endif
 
   IMPLICIT NONE
 

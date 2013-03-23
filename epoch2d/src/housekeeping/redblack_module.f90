@@ -1,6 +1,5 @@
 MODULE redblack_module
 
-  USE shared_data
   USE partlist
 
   IMPLICIT NONE
@@ -43,7 +42,6 @@ CONTAINS
 
   SUBROUTINE do_recvpart(iproc)
 
-    USE mpi
     INTEGER, INTENT(IN) :: iproc
 
     IF (recvcounts(iproc) .GT. 0) THEN
@@ -70,7 +68,6 @@ CONTAINS
 
   SUBROUTINE do_recv1d(iproc)
 
-    USE mpi
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
@@ -98,7 +95,6 @@ CONTAINS
 
   SUBROUTINE do_recv2d(iproc)
 
-    USE mpi
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
@@ -126,7 +122,6 @@ CONTAINS
 
   SUBROUTINE do_recv3d(iproc)
 
-    USE mpi
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
@@ -154,7 +149,6 @@ CONTAINS
 
   SUBROUTINE do_recv1dr4(iproc)
 
-    USE mpi
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
@@ -182,7 +176,6 @@ CONTAINS
 
   SUBROUTINE do_recv2dr4(iproc)
 
-    USE mpi
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
@@ -210,7 +203,6 @@ CONTAINS
 
   SUBROUTINE do_recv3dr4(iproc)
 
-    USE mpi
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 

@@ -1,7 +1,5 @@
 MODULE sdf
 
-  USE mpi
-  USE sdf_common
   USE sdf_control
   USE sdf_input
   USE sdf_input_cartesian
@@ -10,7 +8,6 @@ MODULE sdf
   USE sdf_output
   USE sdf_output_cartesian
   USE sdf_output_point
-  USE sdf_output_util
 
   IMPLICIT NONE
 

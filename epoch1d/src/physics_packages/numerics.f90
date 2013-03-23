@@ -1,6 +1,6 @@
 MODULE numerics
 
-  USE shared_data
+  USE constants
 
   IMPLICIT NONE
 

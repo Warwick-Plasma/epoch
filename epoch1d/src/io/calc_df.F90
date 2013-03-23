@@ -1,7 +1,6 @@
 MODULE calc_df
 
   USE boundary
-  USE shape_functions
 
   IMPLICIT NONE
 

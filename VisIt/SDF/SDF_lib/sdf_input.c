@@ -540,8 +540,11 @@ int sdf_read_summary(sdf_file_t *h)
 
 int sdf_read_blocklist(sdf_file_t *h)
 {
-    int i, fix;
+    int i;
+#ifdef PARALLEL
+    int fix;
     sdf_block_t *b, *next, *mesh;
+#endif
 
     sdf_read_summary(h);
 

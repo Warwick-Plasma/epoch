@@ -58,4 +58,10 @@ fi
 
 [ -z $commit_string ] && exit
 
-echo "COMMIT = $commit_string" > $COMMIT_FILE
+grep "$commit_string" $COMMIT_FILE > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+  exit
+else
+  echo "COMMIT = $commit_string" > $COMMIT_FILE
+  exit 1
+fi

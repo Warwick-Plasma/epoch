@@ -1,6 +1,5 @@
 MODULE strings_advanced
 
-
   USE shunt
   USE evaluator
 

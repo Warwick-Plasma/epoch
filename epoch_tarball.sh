@@ -22,6 +22,8 @@ if [ "$cstring"x != "$fullstring"x ]; then
   fi
 fi
 
+(cd VisIt/SDF
+/bin/sh gen_commit_string)
 /bin/sh epoch1d/src/gen_commit_string
 cp COMMIT epoch1d/
 cp COMMIT epoch2d/

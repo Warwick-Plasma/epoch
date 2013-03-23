@@ -1,8 +1,6 @@
 MODULE sdf_output_point_ru
 
-  USE mpi
-  USE sdf_common
-  USE sdf_output
+  USE sdf_output_ru
 
   IMPLICIT NONE
 

@@ -1,7 +1,5 @@
 MODULE evaluator
 
-  USE mpi
-  USE stack
   USE evaluator_blocks
 
   IMPLICIT NONE

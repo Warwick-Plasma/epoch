@@ -4,10 +4,10 @@
 
 MODULE collisions
 
-  USE random_generator
-  USE boundary
   USE calc_df
+#ifdef PREFETCH
   USE prefetch
+#endif
 
   IMPLICIT NONE
 

@@ -1,8 +1,7 @@
 MODULE simple_io
 
-  USE mpi
-  USE mpi_subtype_control
   USE boundary
+  USE mpi_subtype_control
 
   IMPLICIT NONE
 

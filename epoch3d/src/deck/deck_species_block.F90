@@ -1,10 +1,10 @@
 MODULE deck_species_block
 
-  USE mpi
   USE strings_advanced
   USE setup
   USE simple_io
   USE utilities
+  USE partlist
 
   IMPLICIT NONE
   SAVE
@@ -27,8 +27,8 @@ MODULE deck_species_block
   REAL(num), DIMENSION(:), POINTER :: species_ionisation_energies
   REAL(num), DIMENSION(:), POINTER :: ionisation_energies, ionise_to_species
   REAL(num), DIMENSION(:), POINTER :: mass, charge, angular, part_count
-  REAL(num), DIMENSION(:), POINTER :: principle
-  REAL(num) :: species_mass, species_charge
+  REAL(num), DIMENSION(:), POINTER :: principle, dumpmask_array
+  REAL(num) :: species_mass, species_charge, species_dumpmask
 
 CONTAINS
 
@@ -49,6 +49,7 @@ CONTAINS
       ALLOCATE(principle(4))
       ALLOCATE(angular(4))
       ALLOCATE(part_count(4))
+      ALLOCATE(dumpmask_array(4))
       release_species = ''
     ENDIF
 
@@ -84,10 +85,12 @@ CONTAINS
         species_list(i)%mass = mass(i)
         species_list(i)%charge = charge(i)
         species_list(i)%count = INT(part_count(i),i8)
+        species_list(i)%dumpmask = INT(dumpmask_array(i))
         IF (species_list(i)%ionise_to_species .GT. 0) &
             species_list(i)%ionise = .TRUE.
       ENDDO
 
+      DEALLOCATE(dumpmask_array)
       DEALLOCATE(part_count)
       DEALLOCATE(principle)
       DEALLOCATE(angular)
@@ -181,6 +184,7 @@ CONTAINS
     n_secondary_species_in_block = 0
     current_block = current_block + 1
     got_name = .FALSE.
+    species_dumpmask = c_io_always
     IF (deck_state .EQ. c_ds_first) RETURN
     species_id = species_blocks(current_block)
     offset = 0
@@ -284,6 +288,19 @@ CONTAINS
       species_charge = as_real(value, errcode) * q0
     ENDIF
 
+    IF (str_cmp(element, 'dump')) THEN
+      dump = as_logical(value, errcode)
+      IF (dump) THEN
+        species_dumpmask = c_io_always
+      ELSE
+        species_dumpmask = c_io_never
+      ENDIF
+    ENDIF
+
+    IF (str_cmp(element, 'dumpmask')) THEN
+      species_dumpmask = as_integer(value, errcode)
+    ENDIF
+
     IF (deck_state .EQ. c_ds_first) RETURN
 
     ! *************************************************************
@@ -365,18 +382,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'dump')) THEN
-      dump = as_logical(value, errcode)
-      IF (dump) THEN
-        species_list(species_id)%dumpmask = c_io_always
-      ELSE
-        species_list(species_id)%dumpmask = c_io_never
-      ENDIF
-      RETURN
-    ENDIF
-
-    IF (str_cmp(element, 'dumpmask')) THEN
-      species_list(species_id)%dumpmask = as_integer(value, errcode)
+    IF (str_cmp(element, 'dump') .OR. str_cmp(element, 'dumpmask')) THEN
+      species_list(species_id)%dumpmask = species_dumpmask
       RETURN
     ENDIF
 
@@ -656,6 +663,8 @@ CONTAINS
     angular(n_species) = -1
     CALL grow_array(part_count, n_species)
     part_count(n_species) = -1
+    CALL grow_array(dumpmask_array, n_species)
+    dumpmask_array(n_species) = species_dumpmask
     create_species_number_from_name = n_species
     RETURN
 
@@ -712,6 +721,8 @@ CONTAINS
     angular(n_species) = -1
     CALL grow_array(part_count, n_species)
     part_count(n_species) = 0
+    CALL grow_array(dumpmask_array, n_species)
+    dumpmask_array(n_species) = species_dumpmask
     RETURN
 
   END SUBROUTINE create_ionisation_species_from_name

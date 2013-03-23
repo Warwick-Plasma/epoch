@@ -1,6 +1,5 @@
 ! ****************************************************************
 ! All global variables defined here (cf F77 COMMON block).
-! All the names in here are public provided the MODULE is USE'd
 ! ****************************************************************
 
 MODULE constants
@@ -305,6 +304,11 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_r_xy = 47
   INTEGER, PARAMETER :: c_const_r_yz = 48
   INTEGER, PARAMETER :: c_const_r_xz = 49
+  INTEGER, PARAMETER :: c_const_nprocx = 50
+  INTEGER, PARAMETER :: c_const_nprocy = 51
+  INTEGER, PARAMETER :: c_const_nprocz = 52
+  INTEGER, PARAMETER :: c_const_nsteps = 53
+  INTEGER, PARAMETER :: c_const_t_end = 54
 
   INTEGER, PARAMETER :: c_const_io_never = 60
   INTEGER, PARAMETER :: c_const_io_always = 61
@@ -407,9 +411,8 @@ END MODULE shared_parser_data
 MODULE shared_data
 
   USE mpi
-  USE sdf_job_info
-  USE constants
   USE shared_parser_data
+  USE sdf_job_info
 
   IMPLICIT NONE
 
@@ -588,9 +591,9 @@ MODULE shared_data
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
   INTEGER :: output_file
-  LOGICAL :: force_first_to_be_restartable, dump_first
-  LOGICAL :: force_final_to_be_restartable, dump_last
-  LOGICAL :: use_offset_grid, dump_source_code, dump_input_decks
+  LOGICAL :: force_first_to_be_restartable
+  LOGICAL :: force_final_to_be_restartable
+  LOGICAL :: use_offset_grid
   INTEGER :: n_zeros = 4
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
@@ -656,16 +659,21 @@ MODULE shared_data
     CHARACTER(LEN=string_length) :: name
     REAL(num) :: dt_snapshot, time_prev, time_first
     REAL(num) :: dt_average, dt_min_average, average_time
+    REAL(num) :: time_start, time_stop
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
-    LOGICAL :: restart, dump, any_average
+    INTEGER :: nstep_start, nstep_stop
+    LOGICAL :: restart, dump, any_average, dump_first, dump_last
+    LOGICAL :: dump_source_code, dump_input_decks
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
 
   TYPE(io_block_type), POINTER :: io_block_list(:)
   INTEGER :: n_io_blocks
-  LOGICAL :: track_ejected_particles
+  LOGICAL :: track_ejected_particles, new_style_io_block
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
+  REAL(num) :: time_start, time_stop
+  INTEGER :: nstep_start, nstep_stop
 
   !----------------------------------------------------------------------------
   ! Extended IO information

@@ -1,7 +1,7 @@
 MODULE welcome
 
-  USE strings
   USE version_data
+  USE strings
 
   IMPLICIT NONE
 

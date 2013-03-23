@@ -76,8 +76,8 @@ CC=mpicc," Makefile > .Makefile.tmp
       for f in `grep -w INCLUDE CMakeLists.txt | cut -f2 -d\( | \
           cut -f1 -d\) | tr -d \"`; do
         base=`basename $f`
-        sed 's,/[^;]*libmpi[^;]*;,,g;s,/[^;]*libopen-[^;]*;,,g' \
-            $f > $tmpdir/$base
+        sed 's,/[^;]*libmpi[^;]*;,,g; s,/[^;]*libopen-[^;]*;,,g;
+             s,[^;]*}general;,,g' $f > $tmpdir/$base
         if [ $build_parallel -eq 1 ]; then
           grep -v 'CMAKE_CXX_COMPILER ' $tmpdir/$base | \
               grep -v 'CMAKE_C_COMPILER ' | \
@@ -95,8 +95,8 @@ CC=mpicc," Makefile > .Makefile.tmp
       # FIXME: This is to workaround incorrect cmake output
       ofile=CMakeFiles/ESDFDatabase_par.dir/build.make
       if [ -e $ofile ]; then
-        sed '/linux-x86_64\/lib\/librt\.so/ d;/linux-x86_64\/lib\/libpthread\.so/ d' $ofile \
-            > $tmpdir/tmp
+        sed '/linux-x86_64\/lib\/librt\.so/ d;
+             /linux-x86_64\/lib\/libpthread\.so/ d' $ofile > $tmpdir/tmp
         mv $tmpdir/tmp $ofile
       fi
     fi
@@ -115,6 +115,8 @@ if [ $clean -eq 1 ]; then
 elif [ $build_visit_reader -eq 1 ]; then
   srl=""
   err=0
+  ./gen_commit_string
+  echo "#define SDF_READER_BUILD_DATE \"`date`\"" > build_date.h
   build_parallel=0
   build_serial=0
   buildit

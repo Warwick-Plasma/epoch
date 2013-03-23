@@ -1,6 +1,5 @@
 MODULE deck_constant_block
 
-  USE strings
   USE shunt
 
   IMPLICIT NONE

@@ -1,6 +1,8 @@
 MODULE utilities
 
-  USE shared_data
+  USE constants
+
+  IMPLICIT NONE
 
   INTERFACE grow_array
     MODULE PROCEDURE grow_real_array, grow_integer_array, grow_string_array

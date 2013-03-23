@@ -1,9 +1,6 @@
 MODULE probes
 
 #ifdef PARTICLE_PROBES
-  USE mpi
-  USE sdf
-  USE mpi_subtype_control
   USE partlist
 
   IMPLICIT NONE
