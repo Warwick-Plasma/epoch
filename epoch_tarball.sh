@@ -16,8 +16,7 @@ if [ "$cstring"x != "$fullstring"x ]; then
   # Only append date if there are actually changes
   git diff --quiet "$(git describe --abbrev=0 --match v[0-9]* HEAD)"
   if [ $? -ne 0 ]; then
-    sec=$(git log --pretty=format:%ct -1 HEAD)
-    dt=$(date -r $sec +"%d_%m_%Y")
+    dt=$(git log --pretty=format:%ci -1 HEAD | cut -f1 -d' ')
     cstring="${cstring}-$dt"
   fi
 fi
