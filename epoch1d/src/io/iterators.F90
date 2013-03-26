@@ -573,4 +573,104 @@ CONTAINS
   END FUNCTION iterate_id
 #endif
 
+
+
+#ifdef PHOTONS
+  FUNCTION iterate_optical_depth(array, n_points, start)
+
+    REAL(num) :: iterate_optical_depth
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: n_points
+    LOGICAL, INTENT(IN) :: start
+    TYPE(particle), POINTER, SAVE :: cur
+    TYPE(particle_list), POINTER, SAVE :: current_list
+    INTEGER :: part_count
+
+    IF (start)  THEN
+      CALL start_particle_list(current_species, current_list, cur)
+    ENDIF
+
+    part_count = 0
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%optical_depth
+        cur => cur%next
+      ENDDO
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    ENDDO
+    n_points = part_count
+
+    iterate_optical_depth = 0
+
+  END FUNCTION iterate_optical_depth
+
+
+
+  FUNCTION iterate_qed_energy(array, n_points, start)
+
+    REAL(num) :: iterate_qed_energy
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: n_points
+    LOGICAL, INTENT(IN) :: start
+    TYPE(particle), POINTER, SAVE :: cur
+    TYPE(particle_list), POINTER, SAVE :: current_list
+    INTEGER :: part_count
+
+    IF (start)  THEN
+      CALL start_particle_list(current_species, current_list, cur)
+    ENDIF
+
+    part_count = 0
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%particle_energy
+        cur => cur%next
+      ENDDO
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    ENDDO
+    n_points = part_count
+
+    iterate_qed_energy = 0
+
+  END FUNCTION iterate_qed_energy
+
+
+
+#ifdef TRIDENT_PHOTONS
+  FUNCTION iterate_optical_depth_trident(array, n_points, start)
+
+    REAL(num) :: iterate_optical_depth_trident
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: n_points
+    LOGICAL, INTENT(IN) :: start
+    TYPE(particle), POINTER, SAVE :: cur
+    TYPE(particle_list), POINTER, SAVE :: current_list
+    INTEGER :: part_count
+
+    IF (start)  THEN
+      CALL start_particle_list(current_species, current_list, cur)
+    ENDIF
+
+    part_count = 0
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%optical_depth_tri
+        cur => cur%next
+      ENDDO
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    ENDDO
+    n_points = part_count
+
+    iterate_optical_depth_trident = 0
+
+  END FUNCTION iterate_optical_depth_trident
+#endif
+#endif
+
 END MODULE iterators

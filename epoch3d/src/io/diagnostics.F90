@@ -257,6 +257,16 @@ CONTAINS
       CALL write_particle_variable(c_dump_part_id, code, 'ID', '#', &
           iterate_id)
 #endif
+#ifdef PHOTONS
+      CALL write_particle_variable(c_dump_part_opdepth, code, 'Optical depth', &
+          '', iterate_optical_depth)
+      CALL write_particle_variable(c_dump_part_qed_energy, code, &
+          'QED energy', 'J', iterate_qed_energy)
+#ifdef TRIDENT_PHOTONS
+      CALL write_particle_variable(c_dump_part_opdepth_tri, code, &
+          'Trident Depth', '', iterate_optical_depth_trident)
+#endif
+#endif
 
       ! These are derived variables from the particles
       CALL write_nspecies_field(c_dump_ekbar, code, 'ekbar', &

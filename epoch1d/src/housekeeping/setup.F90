@@ -919,6 +919,48 @@ CONTAINS
           CALL MPI_ABORT(comm, errcode, ierr)
           STOP
 #endif
+
+        ELSE IF (block_id(1:14) .EQ. 'optical depth/') THEN
+#ifdef PHOTONS
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_optical_depth)
+#else
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with optical depths.'
+            PRINT*, 'Please recompile with the -DPHOTONS option.'
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+#endif
+
+        ELSE IF (block_id(1:11) .EQ. 'qed energy/') THEN
+#ifdef PHOTONS
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_qed_energy)
+#else
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with QED energies.'
+            PRINT*, 'Please recompile with the -DPHOTONS option.'
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+#endif
+
+        ELSE IF (block_id(1:14) .EQ. 'trident depth/') THEN
+#ifdef TRIDENT_PHOTONS
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_optical_depth_trident)
+#else
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with Trident optical depths.'
+            PRINT*, 'Please recompile with the -DTRIDENT_PHOTONS option.'
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+#endif
         ENDIF
       END SELECT
     ENDDO
@@ -1127,6 +1169,67 @@ CONTAINS
     it_id = 0
 
   END FUNCTION it_id
+#endif
+
+
+
+#ifdef PHOTONS
+  FUNCTION it_optical_depth(array, npart_this_it, start)
+
+    REAL(num) :: it_optical_depth
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%optical_depth = array(ipart)
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_optical_depth = 0
+
+  END FUNCTION it_optical_depth
+
+
+
+  FUNCTION it_qed_energy(array, npart_this_it, start)
+
+    REAL(num) :: it_qed_energy
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%particle_energy = array(ipart)
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_qed_energy = 0
+
+  END FUNCTION it_qed_energy
+
+
+
+#ifdef TRIDENT_PHOTONS
+  FUNCTION it_optical_depth_trident(array, npart_this_it, start)
+
+    REAL(num) :: it_optical_depth_trident
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%optical_depth_tri = array(ipart)
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_optical_depth_trident = 0
+
+  END FUNCTION it_optical_depth_trident
+#endif
 #endif
 
 END MODULE setup

@@ -16,9 +16,11 @@ CONTAINS
 
     ! Load the tables for the QED routines
     CALL setup_tables_qed
-    DO ispecies = 1, n_species
-      CALL initialise_optical_depth(species_list(ispecies))
-    ENDDO
+    IF (.NOT.ic_from_restart) THEN
+      DO ispecies = 1, n_species
+        CALL initialise_optical_depth(species_list(ispecies))
+      ENDDO
+    ENDIF
 
   END SUBROUTINE setup_qed_module
 

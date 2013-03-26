@@ -631,7 +631,10 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_cpml_psi_bzx      = 36
   INTEGER, PARAMETER :: c_dump_absorption        = 37
   INTEGER, PARAMETER :: c_dump_part_ek           = 38
-  INTEGER, PARAMETER :: num_vars_to_dump         = 38
+  INTEGER, PARAMETER :: c_dump_part_opdepth      = 39
+  INTEGER, PARAMETER :: c_dump_part_qed_energy   = 40
+  INTEGER, PARAMETER :: c_dump_part_opdepth_tri  = 41
+  INTEGER, PARAMETER :: num_vars_to_dump         = 41
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------

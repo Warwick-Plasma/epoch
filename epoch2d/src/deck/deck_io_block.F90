@@ -44,6 +44,18 @@ CONTAINS
     io_block_name(c_dump_part_id          ) = 'id'
     io_block_name(c_dump_part_ek          ) = 'ek'
     alternate_name(c_dump_part_ek         ) = 'particle_energy'
+
+    io_block_name(c_dump_part_opdepth     ) = ''
+    io_block_name(c_dump_part_qed_energy  ) = ''
+    io_block_name(c_dump_part_opdepth_tri ) = ''
+#ifdef PHOTONS
+    io_block_name(c_dump_part_opdepth     ) = 'optical_depth'
+    io_block_name(c_dump_part_qed_energy  ) = 'qed_energy'
+#ifdef TRIDENT_PHOTONS
+    io_block_name(c_dump_part_opdepth_tri ) = 'trident_optical_depth'
+#endif
+#endif
+
     io_block_name(c_dump_ex               ) = 'ex'
     io_block_name(c_dump_ey               ) = 'ey'
     io_block_name(c_dump_ez               ) = 'ez'
@@ -543,6 +555,16 @@ CONTAINS
         IOR(io_block%dumpmask(c_dump_part_py), c_io_restartable)
     io_block%dumpmask(c_dump_part_pz) = &
         IOR(io_block%dumpmask(c_dump_part_pz), c_io_restartable)
+#ifdef PHOTONS
+    io_block%dumpmask(c_dump_part_opdepth) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth), c_io_restartable)
+    io_block%dumpmask(c_dump_part_qed_energy) = &
+        IOR(io_block%dumpmask(c_dump_part_qed_energy), c_io_restartable)
+#ifdef TRIDENT_PHOTONS
+    io_block%dumpmask(c_dump_part_opdepth_tri) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth_tri), c_io_restartable)
+#endif
+#endif
     ! Fields
     io_block%dumpmask(c_dump_grid) = &
         IOR(io_block%dumpmask(c_dump_grid), c_io_restartable)
