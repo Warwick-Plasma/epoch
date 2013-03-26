@@ -44,7 +44,7 @@ CONTAINS
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when writing data
     INTEGER, INTENT(IN) :: dump_code
-    INTEGER :: n_dump_species, ispecies, index
+    INTEGER :: n_dump_species, ispecies
 
     ! count the number of dumped particles of each species
     n_dump_species = 0
