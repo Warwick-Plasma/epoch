@@ -117,11 +117,17 @@ CONTAINS
 
     INTEGER :: iproc, ix
     REAL(num) :: xb_min
+    LOGICAL, SAVE :: first = .TRUE.
 
-    length_x = x_max - x_min
-    dx = length_x / REAL(nx_global-2*cpml_thickness, num)
-    x_min = x_min - dx * cpml_thickness
-    x_max = x_max + dx * cpml_thickness
+    IF (first) THEN
+      length_x = x_max - x_min
+      dx = length_x / REAL(nx_global-2*cpml_thickness, num)
+      x_min = x_min - dx * cpml_thickness
+      x_max = x_max + dx * cpml_thickness
+
+      first = .FALSE.
+    ENDIF
+
     length_x = x_max - x_min
 
     ! Shift grid to cell centres.
