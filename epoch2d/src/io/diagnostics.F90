@@ -31,9 +31,10 @@ MODULE diagnostics
 
 CONTAINS
 
-  SUBROUTINE output_routines(step)   ! step = step index
+  SUBROUTINE output_routines(step, force_write)   ! step = step index
 
     INTEGER, INTENT(INOUT) :: step
+    LOGICAL, INTENT(IN), OPTIONAL :: force_write
     LOGICAL :: print_arrays
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=c_max_string_length) :: dump_type
@@ -41,7 +42,7 @@ CONTAINS
     INTEGER :: code, i, io, random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
-    LOGICAL :: convert
+    LOGICAL :: convert, force
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
 
@@ -64,7 +65,10 @@ CONTAINS
       ENDIF
     ENDIF
 
-    CALL io_test(step, print_arrays)
+    force = .FALSE.
+    IF (PRESENT(force_write)) force = force_write
+
+    CALL io_test(step, print_arrays, force)
 
     IF (.NOT.print_arrays) RETURN
 
@@ -423,10 +427,11 @@ CONTAINS
 
 
 
-  SUBROUTINE io_test(step, print_arrays)
+  SUBROUTINE io_test(step, print_arrays, force)
 
     INTEGER, INTENT(IN) :: step
     LOGICAL, INTENT(OUT) :: print_arrays
+    LOGICAL, INTENT(IN) :: force
     INTEGER :: id, io, is, nstep_next
     REAL(num) :: t0, t1, time_first, av_time_first
     LOGICAL, SAVE :: first_call = .TRUE.
@@ -456,6 +461,8 @@ CONTAINS
       ENDIF
       IF (first_call .AND. io_block_list(io)%dump_first) &
           io_block_list(io)%dump = .TRUE.
+
+      IF (force) io_block_list(io)%dump = .TRUE.
 
       ! Work out the time that the next dump will occur based on the
       ! current timestep
