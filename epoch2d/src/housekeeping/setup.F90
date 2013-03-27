@@ -8,6 +8,7 @@ MODULE setup
   USE split_particle
   USE shunt
   USE laser
+  USE window
 
   IMPLICIT NONE
 
@@ -713,6 +714,8 @@ CONTAINS
     by = 0.0_num
     bz = 0.0_num
 
+    dt_from_restart = 0.0_num
+
     IF (rank .EQ. 0) PRINT*, 'Input file contains', nblocks, 'blocks'
 
     CALL sdf_read_blocklist(sdf_handle)
@@ -818,6 +821,10 @@ CONTAINS
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
+        ELSE IF (str_cmp(block_id, 'dt')) THEN
+          CALL sdf_read_srl(sdf_handle, dt_from_restart)
+        ELSE IF (str_cmp(block_id, 'window_shift_fraction')) THEN
+          CALL sdf_read_srl(sdf_handle, window_shift_fraction)
         ELSE IF (block_id(1:7) .EQ. 'weight/') THEN
           CALL find_species_by_name(block_id, ispecies)
           IF (ispecies .EQ. 0) CYClE

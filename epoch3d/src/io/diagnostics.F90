@@ -11,6 +11,7 @@ MODULE diagnostics
   USE setup
   USE random_generator
   USE strings
+  USE window
 
   IMPLICIT NONE
 
@@ -96,8 +97,13 @@ CONTAINS
         cell_x_max, cell_y_max, cell_z_max)
 
     IF (restart_flag) THEN
-      CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
-          dt_plasma_frequency)
+      CALL sdf_write_srl(sdf_handle, 'dt', 'Time increment', dt)
+      CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', &
+          'Plasma frequency timestep restriction', dt_plasma_frequency)
+      IF (move_window .AND. window_started) THEN
+        CALL sdf_write_srl(sdf_handle, 'window_shift_fraction', &
+            'Window Shift Fraction', window_shift_fraction)
+      ENDIF
 
       DO io = 1, n_io_blocks
         CALL sdf_write_srl(sdf_handle, &
