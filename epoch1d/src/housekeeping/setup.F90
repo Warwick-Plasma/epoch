@@ -993,7 +993,7 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: code_name, block_id
     CHARACTER(LEN=c_max_string_length) :: name
     INTEGER :: ierr, step, code_io_version, string_len, nblocks, ndims
-    INTEGER :: blocktype, geometry, iblock, npx
+    INTEGER :: blocktype, datatype, geometry, iblock, npx
     INTEGER, DIMENSION(4) :: dims
     LOGICAL :: restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
@@ -1031,16 +1031,16 @@ CONTAINS
 
     DO iblock = 1, nblocks
       CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
-          ndims)
+          ndims, datatype)
 
-      IF (blocktype .EQ. c_blocktype_cpu_split) THEN
+      IF (blocktype .EQ. c_blocktype_cpu_split &
+          .AND. datatype .NE. c_datatype_integer8) THEN
         CALL sdf_read_cpu_split_info(sdf_handle, dims, geometry)
         npx = dims(1) + 1
         IF (npx .EQ. nproc) THEN
           nprocx = npx
           ALLOCATE(old_x_max(nprocx))
           CALL sdf_read_srl_cpu_split(sdf_handle, old_x_max)
-          EXIT
         ELSE
           IF (rank .EQ. 0) THEN
             PRINT*, '*** WARNING ***'
@@ -1050,6 +1050,7 @@ CONTAINS
           ENDIF
           use_exact_restart = .FALSE.
         ENDIF
+        EXIT
       ENDIF
     ENDDO
 
