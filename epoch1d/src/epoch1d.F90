@@ -102,10 +102,11 @@ PROGRAM pic
     CALL bfield_bcs(.TRUE.)
     CALL update_eb_fields_final
     IF (dt_from_restart .GT. 0) THEN
-      time = time + dt_from_restart / 2.0_num
+      time = time + dt_from_restart
     ELSE
-      time = time + dt / 2.0_num
+      time = time + dt
     ENDIF
+    step = step + 1
     CALL moving_window
   ELSE
     CALL bfield_final_bcs
@@ -117,7 +118,7 @@ PROGRAM pic
   IF (rank .EQ. 0) PRINT *, 'Equilibrium set up OK, running code'
 
   walltime_start = MPI_WTIME()
-  CALL output_routines(step) ! diagnostics.f90
+  IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
@@ -155,13 +156,11 @@ PROGRAM pic
     ENDIF
 
     IF (halt) EXIT
-    step = step + 1
-    time = time + dt / 2.0_num
     CALL output_routines(step)
-    time = time - dt / 2.0_num
 
     CALL update_eb_fields_final
     time = time + dt
+    step = step + 1
 
     CALL moving_window
 

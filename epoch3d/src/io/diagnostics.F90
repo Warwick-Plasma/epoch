@@ -27,6 +27,7 @@ MODULE diagnostics
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
+  INTEGER, SAVE :: last_step = -1
 
 CONTAINS
 
@@ -54,10 +55,13 @@ CONTAINS
     RETURN
 #endif
 
-    IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
-        .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
-      WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after '', &
-          & f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
+    IF (step .NE. last_step) THEN
+      last_step = step
+      IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
+          .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
+        WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after '', &
+            & f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
+      ENDIF
     ENDIF
 
     CALL io_test(step, print_arrays)
