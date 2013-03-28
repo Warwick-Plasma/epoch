@@ -136,9 +136,17 @@ CONTAINS
     CHARACTER(LEN=8), DIMENSION(c_df_maxdirs) :: labels, units
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
 
+    errcode = 0
+    ! Update species count if necessary
+    IF (io_list(species)%count_update_step .LT. step) THEN
+      CALL MPI_ALLREDUCE(io_list(species)%attached_list%count, &
+          io_list(species)%count, 1, MPI_INTEGER8, MPI_SUM, &
+          comm, errcode)
+      io_list(species)%count_update_step = step
+    ENDIF
+
     IF (io_list(species)%count .LT. 1) RETURN
 
-    errcode = 0
     use_x = .FALSE.
     ranges = ranges_in
     resolution = resolution_in
