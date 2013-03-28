@@ -36,11 +36,12 @@ PROGRAM pic
 
   IMPLICIT NONE
 
-  INTEGER :: ispecies, step = 0
+  INTEGER :: ispecies
   LOGICAL :: halt = .FALSE., push = .TRUE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   REAL(num) :: runtime
 
+  step = 0
 #ifdef COLLISIONS_TEST
   ! used for testing
   CALL test_collisions
@@ -172,6 +173,7 @@ PROGRAM pic
       CALL MPI_ALLREDUCE(species_list(ispecies)%attached_list%count, &
           species_list(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
           comm, errcode)
+      species_list(ispecies)%count_update_step = step
     ENDDO
 #endif
   ENDDO
