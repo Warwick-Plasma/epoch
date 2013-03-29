@@ -10,7 +10,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 22
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 23
   INTEGER :: block_number, full_io_block, restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
@@ -118,6 +118,7 @@ CONTAINS
     alternate_name(i+21) = 'nsteps_dump'
     io_block_name (i+22) = 'dump_at_times'
     alternate_name(i+22) = 'times_dump'
+    io_block_name (i+23) = 'dump_cycle'
 
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
@@ -353,6 +354,8 @@ CONTAINS
     CASE(22)
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       CALL get_allocated_array(value, io_block%dump_at_times, errcode)
+    CASE(23)
+      io_block%dump_cycle = as_integer(value, errcode)
     END SELECT
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN
@@ -590,6 +593,7 @@ CONTAINS
     io_block%time_stop  = HUGE(1.0_num)
     io_block%nstep_start = -1
     io_block%nstep_stop  = HUGE(1)
+    io_block%dump_cycle  = HUGE(1)
     NULLIFY(io_block%dump_at_nsteps)
     NULLIFY(io_block%dump_at_times)
     DO i = 1, num_vars_to_dump

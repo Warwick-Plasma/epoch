@@ -517,6 +517,7 @@ CONTAINS
         IF (io_block_list(io)%restart) restart_flag = .TRUE.
         IF (io_block_list(io)%dump_source_code) dump_source_code = .TRUE.
         IF (io_block_list(io)%dump_input_decks) dump_input_decks = .TRUE.
+        IF (output_file .GT. io_block_list(io)%dump_cycle) output_file = 0
         iomask = IOR(iomask, io_block_list(io)%dumpmask)
         IF (n_subsets .NE. 0) THEN
           DO is = 1, n_subsets

@@ -667,7 +667,7 @@ MODULE shared_data
     REAL(num), POINTER :: dump_at_times(:)
     INTEGER, POINTER :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
-    INTEGER :: nstep_start, nstep_stop
+    INTEGER :: nstep_start, nstep_stop, dump_cycle
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
     LOGICAL :: dump_source_code, dump_input_decks
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
