@@ -109,7 +109,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(name, ', ')) THEN
+    IF (str_cmp(name, ',')) THEN
       block%ptype = c_pt_separator
       block%value = 0
       block%numerical_data = 0.0_num

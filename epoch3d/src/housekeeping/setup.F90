@@ -688,7 +688,7 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2, str3
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, geometry
+    INTEGER :: ierr, i, is, i1, i2, iblock, nblocks, ndims, geometry
     INTEGER(i8) :: npart, npart_local
     INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
@@ -715,6 +715,7 @@ CONTAINS
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)
 
+    ! Reset io_block parameters
     DO i = 1, n_io_blocks
       IF (io_block_list(i)%dt_snapshot .GT. 0.0_num) THEN
         io_block_list(i)%time_prev = time
@@ -725,6 +726,20 @@ CONTAINS
         io_block_list(i)%nstep_prev = step
       ELSE
         io_block_list(i)%nstep_prev = 0
+      ENDIF
+      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
+          IF (step .GE. io_block_list(i)%dump_at_nsteps(is)) THEN
+            io_block_list(i)%dump_at_nsteps(is) = HUGE(1)
+          ENDIF
+        ENDDO
+      ENDIF
+      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_times)
+          IF (time .GE. io_block_list(i)%dump_at_times(is)) THEN
+            io_block_list(i)%dump_at_times(is) = HUGE(1.0_num)
+          ENDIF
+        ENDDO
       ENDIF
     ENDDO
 

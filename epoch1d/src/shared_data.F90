@@ -654,6 +654,8 @@ MODULE shared_data
     REAL(num) :: dt_snapshot, time_prev, time_first
     REAL(num) :: dt_average, dt_min_average, average_time
     REAL(num) :: time_start, time_stop
+    REAL(num), POINTER :: dump_at_times(:)
+    INTEGER, POINTER :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     INTEGER :: nstep_start, nstep_stop
     LOGICAL :: restart, dump, any_average, dump_first, dump_last

@@ -455,6 +455,24 @@ CONTAINS
 
       IF (force) io_block_list(io)%dump = .TRUE.
 
+      IF (ASSOCIATED(io_block_list(io)%dump_at_nsteps)) THEN
+        DO is = 1, SIZE(io_block_list(io)%dump_at_nsteps)
+          IF (step .GE. io_block_list(io)%dump_at_nsteps(is)) THEN
+            io_block_list(io)%dump = .TRUE.
+            io_block_list(io)%dump_at_nsteps(is) = HUGE(1)
+          ENDIF
+        ENDDO
+      ENDIF
+
+      IF (ASSOCIATED(io_block_list(io)%dump_at_times)) THEN
+        DO is = 1, SIZE(io_block_list(io)%dump_at_times)
+          IF (time .GE. io_block_list(io)%dump_at_times(is)) THEN
+            io_block_list(io)%dump = .TRUE.
+            io_block_list(io)%dump_at_times(is) = HUGE(1.0_num)
+          ENDIF
+        ENDDO
+      ENDIF
+
       ! Work out the time that the next dump will occur based on the
       ! current timestep
       t0 = HUGE(1.0_num)
