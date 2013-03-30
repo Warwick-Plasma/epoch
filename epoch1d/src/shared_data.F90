@@ -589,7 +589,6 @@ MODULE shared_data
   INTEGER :: subarray_field_big, subarray_field_big_r4
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
-  INTEGER :: output_file
   LOGICAL :: force_first_to_be_restartable
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid
@@ -658,7 +657,7 @@ MODULE shared_data
     REAL(num), POINTER :: dump_at_times(:)
     INTEGER, POINTER :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
-    INTEGER :: nstep_start, nstep_stop, dump_cycle
+    INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
     LOGICAL :: dump_source_code, dump_input_decks
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
@@ -671,6 +670,8 @@ MODULE shared_data
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
   REAL(num) :: time_start, time_stop
   INTEGER :: nstep_start, nstep_stop
+  CHARACTER(LEN=c_id_length), ALLOCATABLE :: file_prefixes(:)
+  INTEGER, ALLOCATABLE :: file_numbers(:)
 
   !----------------------------------------------------------------------------
   ! Extended IO information
@@ -816,8 +817,9 @@ MODULE shared_data
   LOGICAL :: use_exact_restart
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
-  CHARACTER(LEN=5+c_max_zeros) :: restart_filename
-  CHARACTER(LEN=6+data_dir_max_length+c_max_zeros) :: &
+  CHARACTER(LEN=c_id_length) :: restart_prefix
+  CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename
+  CHARACTER(LEN=6+data_dir_max_length+c_max_zeros+c_id_length) :: &
       full_restart_filename
 
   TYPE particle_sort_element

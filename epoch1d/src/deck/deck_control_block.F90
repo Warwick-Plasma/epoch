@@ -70,6 +70,7 @@ CONTAINS
       control_block_done = .FALSE.
       use_exact_restart = .FALSE.
       restart_number = 0
+      restart_prefix = ''
       restart_filename = ''
     ENDIF
 
@@ -79,15 +80,16 @@ CONTAINS
 
   SUBROUTINE control_deck_finalise
 
-    CHARACTER(LEN=19) :: filename_fmt
+    CHARACTER(LEN=22) :: filename_fmt
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
 
     IF (ic_from_restart) THEN
       IF (TRIM(restart_filename) .EQ. '') THEN
-        WRITE(filename_fmt, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
+        WRITE(filename_fmt, '(''(a, i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
             n_zeros, n_zeros
-        WRITE(restart_filename, filename_fmt) restart_number
+        WRITE(restart_filename, filename_fmt) TRIM(restart_prefix), &
+            restart_number
       ENDIF
       full_restart_filename = TRIM(data_dir) // '/' // TRIM(restart_filename)
     ENDIF

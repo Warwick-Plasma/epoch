@@ -10,13 +10,14 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 23
-  INTEGER :: block_number, full_io_block, restart_io_block
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 24
+  INTEGER :: block_number, full_io_block, restart_io_block, nfile_prefixes
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
   CHARACTER(LEN=string_length) :: name
+  CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
   TYPE(io_block_type), POINTER :: io_block
 
 CONTAINS
@@ -115,6 +116,7 @@ CONTAINS
     io_block_name (i+22) = 'dump_at_times'
     alternate_name(i+22) = 'times_dump'
     io_block_name (i+23) = 'dump_cycle'
+    io_block_name (i+24) = 'file_prefix'
 
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
@@ -145,6 +147,10 @@ CONTAINS
           CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         ENDIF
 
+        ALLOCATE(io_prefixes(n_io_blocks))
+        nfile_prefixes = 1
+        io_prefixes(1) = ''
+
         ALLOCATE(io_block_list(n_io_blocks))
         DO i = 1, n_io_blocks
           CALL init_io_block(io_block_list(i))
@@ -163,6 +169,14 @@ CONTAINS
             io_block_list(i)%dt_average = t_end
           ENDIF
         ENDDO
+
+        ALLOCATE(file_prefixes(nfile_prefixes))
+        ALLOCATE(file_numbers(nfile_prefixes))
+        DO i = 1,nfile_prefixes
+          file_prefixes(i) = TRIM(io_prefixes(i))
+          file_numbers(i) = 0
+        ENDDO
+        DEALLOCATE(io_prefixes)
       ENDIF
 
       ! Remove any left-over VisIt file lists
@@ -259,7 +273,7 @@ CONTAINS
     INTEGER :: loop, elementselected, mask, mask_element, ierr, io
     INTEGER :: i, is, subset, n_list
     INTEGER, ALLOCATABLE :: subsets(:)
-    LOGICAL :: bad
+    LOGICAL :: bad, found
     INTEGER, PARAMETER :: c_err_new_style_ignore = 1
     INTEGER, PARAMETER :: c_err_new_style_global = 2
     INTEGER, PARAMETER :: c_err_old_style_ignore = 3
@@ -379,6 +393,20 @@ CONTAINS
       CALL get_allocated_array(value, io_block%dump_at_times, errcode)
     CASE(23)
       io_block%dump_cycle = as_integer(value, errcode)
+    CASE(24)
+      found = .FALSE.
+      DO i = 1,nfile_prefixes
+        IF (TRIM(io_prefixes(i)) .EQ. TRIM(value)) THEN
+          found = .TRUE.
+          io_block%prefix_index = i
+          EXIT
+        ENDIF
+      ENDDO
+      IF (.NOT.found) THEN
+        nfile_prefixes = nfile_prefixes + 1
+        io_prefixes(nfile_prefixes) = TRIM(value)
+        io_block%prefix_index = nfile_prefixes
+      ENDIF
     END SELECT
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN
@@ -617,6 +645,7 @@ CONTAINS
     io_block%nstep_start = -1
     io_block%nstep_stop  = HUGE(1)
     io_block%dump_cycle  = HUGE(1)
+    io_block%prefix_index = 1
     NULLIFY(io_block%dump_at_nsteps)
     NULLIFY(io_block%dump_at_times)
     DO i = 1, num_vars_to_dump

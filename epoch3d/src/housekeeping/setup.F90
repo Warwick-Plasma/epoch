@@ -889,6 +889,16 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, random_states_per_proc)
           CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
           DEALLOCATE(random_states_per_proc)
+        ELSE IF (str_cmp(block_id, 'file_numbers')) THEN
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (ndims .NE. 1 .OR. dims(1) .NE. SIZE(file_numbers)) THEN
+            IF (rank .EQ. 0) THEN
+              PRINT*, '*** WARNING ***'
+              PRINT*, 'Output file numbers do not agree. Ignoring.'
+            ENDIF
+          ELSE
+            CALL sdf_read_srl(sdf_handle, file_numbers)
+          ENDIF
         ENDIF
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
