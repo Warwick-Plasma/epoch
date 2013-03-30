@@ -131,6 +131,7 @@ CONTAINS
     INTEGER :: i, io, ierr
 
     n_io_blocks = block_number
+    block_number = 0
 
     IF (n_io_blocks .GT. 0) THEN
       IF (deck_state .EQ. c_ds_first) THEN
@@ -256,7 +257,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
     INTEGER :: loop, elementselected, mask, mask_element, ierr, io
-    INTEGER :: is, subset, n_list
+    INTEGER :: i, is, subset, n_list
     INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad
     INTEGER, PARAMETER :: c_err_new_style_ignore = 1
@@ -348,6 +349,18 @@ CONTAINS
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       io_block%restart = as_logical(value, errcode)
     CASE(16)
+      DO i = 1,block_number
+        IF (TRIM(io_block_list(i)%name) .EQ. TRIM(value)) THEN
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Output block "' // TRIM(value) &
+                  // '" already defined.'
+            ENDDO
+          ENDIF
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        ENDIF
+      ENDDO
       io_block%name = value
       got_name = .TRUE.
     CASE(17)
