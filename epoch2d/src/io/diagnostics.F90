@@ -49,7 +49,9 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: step
     LOGICAL, INTENT(IN), OPTIONAL :: force_write
     LOGICAL :: print_arrays
-    CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
+    CHARACTER(LEN=19) :: filename_fmt
+    CHARACTER(LEN=5+n_zeros) :: filename
+    CHARACTER(LEN=6+data_dir_max_length+n_zeros) :: full_filename
     CHARACTER(LEN=c_max_string_length) :: dump_type
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER :: code, i, io, random_state(4)
@@ -98,9 +100,10 @@ CONTAINS
 
     ! Allows a maximum of 10^999 output dumps, should be enough for anyone
     ! (feel free to laugh when this isn't the case)
-    WRITE(filename_desc, '(''(a, "/", i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
+    WRITE(filename_fmt, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
         n_zeros, n_zeros
-    WRITE(filename, filename_desc) TRIM(data_dir), output_file
+    WRITE(filename, filename_fmt) output_file
+    full_filename = TRIM(data_dir) // '/' // TRIM(filename)
 
     ! Always dump the variables with the 'Every' attribute
     code = c_io_always
@@ -117,7 +120,7 @@ CONTAINS
     ALLOCATE(array(-2:nx+3,-2:ny+3))
 
     ! open the file
-    CALL sdf_open(sdf_handle, filename, comm, c_sdf_write)
+    CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
     CALL sdf_write_header(sdf_handle, 'Epoch2d', 1, step, time, restart_flag, &
         jobid)
     CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_minor_rev, &
@@ -388,19 +391,20 @@ CONTAINS
       DO io = 1, n_io_blocks
         IF (io_block_list(io)%dump) THEN
           dump_type = TRIM(io_block_list(io)%name)
-          CALL append_filename(dump_type, output_file, io)
+          CALL append_filename(dump_type, filename, io)
         ENDIF
       ENDDO
       IF (IAND(code, c_io_restartable) .NE. 0) THEN
         dump_type = 'restart'
-        CALL append_filename(dump_type, output_file, n_io_blocks+1)
+        CALL append_filename(dump_type, filename, n_io_blocks+1)
       ENDIF
       IF (IAND(code, c_io_full) .NE. 0) THEN
         dump_type = 'full'
-        CALL append_filename(dump_type, output_file, n_io_blocks+2)
+        CALL append_filename(dump_type, filename, n_io_blocks+2)
       ENDIF
-      WRITE(stat_unit, '(''Wrote '', a7, '' dump number'', i5, '' at time'', &
-          & g20.12, '' and iteration'', i7)') dump_type, output_file, time, step
+      WRITE(stat_unit, '(''Wrote '', a7, '' dump '', a, '' at time'', &
+          & g20.12, '' and iteration'', i7)') dump_type, TRIM(filename), &
+          & time, step
       CALL flush_stat_file()
     ENDIF
 
@@ -421,24 +425,19 @@ CONTAINS
 
 
 
-  SUBROUTINE append_filename(listname, output_file, list_index)
+  SUBROUTINE append_filename(listname, filename, list_index)
     ! This routine updates a list of each output type (eg. full, dump, normal)
     ! that can be passed to VisIt to filter the output.
 
-    CHARACTER(LEN=*), INTENT(IN) :: listname
-    INTEGER, INTENT(IN) :: output_file, list_index
-    CHARACTER(LEN=data_dir_max_length+64) :: listfile, filename_desc
-    CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
+    CHARACTER(LEN=*), INTENT(IN) :: listname, filename
+    INTEGER, INTENT(IN) :: list_index
+    CHARACTER(LEN=data_dir_max_length+string_length+8) :: listfile
     TYPE(string_list), POINTER :: list
     TYPE(string_entry), POINTER :: lcur
     INTEGER :: ierr, i
     LOGICAL :: exists
 
     list => file_list(list_index)
-
-    WRITE(filename_desc, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
-        n_zeros, n_zeros
-    WRITE(filename, filename_desc) output_file
 
     listfile = TRIM(data_dir) // '/' // TRIM(listname) // '.visit'
     INQUIRE(file=listfile, exist=exists)
