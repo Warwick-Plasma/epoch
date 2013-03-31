@@ -77,6 +77,8 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) THEN
       control_block_done = .FALSE.
       use_exact_restart = .FALSE.
+      restart_number = 0
+      restart_filename = ''
     ENDIF
 
   END SUBROUTINE control_deck_initialise
@@ -85,7 +87,18 @@ CONTAINS
 
   SUBROUTINE control_deck_finalise
 
+    CHARACTER(LEN=19) :: filename_fmt
+
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
+
+    IF (ic_from_restart) THEN
+      IF (TRIM(restart_filename) .EQ. '') THEN
+        WRITE(filename_fmt, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
+            n_zeros, n_zeros
+        WRITE(restart_filename, filename_fmt) restart_number
+      ENDIF
+      full_restart_filename = TRIM(data_dir) // '/' // TRIM(restart_filename)
+    ENDIF
 
   END SUBROUTINE control_deck_finalise
 
@@ -106,8 +119,11 @@ CONTAINS
   FUNCTION control_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
+    CHARACTER(LEN=string_length) :: str_tmp
+    CHARACTER(LEN=1) :: c
     INTEGER :: errcode
-    INTEGER :: loop, elementselected, field_order, ierr, io
+    INTEGER :: loop, elementselected, field_order, ierr, io, i
+    LOGICAL :: isnum
 
     errcode = c_err_none
 
@@ -172,7 +188,20 @@ CONTAINS
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(4*c_ndims+7)
-      restart_snapshot = as_integer(value, errcode)
+      isnum = .TRUE.
+      str_tmp = TRIM(ADJUSTL(value))
+      DO i = 1,LEN_TRIM(str_tmp)
+        c = str_tmp(i:i)
+        IF (c .LT. '0' .OR. c .GT. '9') THEN
+          isnum = .FALSE.
+          EXIT
+        ENDIF
+      ENDDO
+      IF (isnum) THEN
+        restart_number = as_integer(value, errcode)
+      ELSE
+        restart_filename = TRIM(str_tmp)
+      ENDIF
       ic_from_restart = .TRUE.
     CASE(4*c_ndims+8)
       neutral_background = as_logical(value, errcode)

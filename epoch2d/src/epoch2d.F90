@@ -76,7 +76,7 @@ PROGRAM pic
   IF (ic_from_restart) THEN
     CALL restart_data(step)    ! restart from data in file save.data
     IF (rank .EQ. 0) PRINT *, 'Load from restart dump OK'
-    output_file = restart_snapshot + 1
+    output_file = restart_number + 1
   ELSE
     ! auto_load particles
     CALL auto_load

@@ -595,6 +595,7 @@ MODULE shared_data
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid
   INTEGER :: n_zeros = 4
+  INTEGER, PARAMETER :: c_max_zeros = 9
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
   INTEGER, PARAMETER :: c_dump_part_species      = 3
@@ -839,7 +840,10 @@ MODULE shared_data
   LOGICAL :: need_random_state
   LOGICAL :: use_exact_restart
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
-  INTEGER :: restart_snapshot, step
+  INTEGER :: restart_number, step
+  CHARACTER(LEN=5+c_max_zeros) :: restart_filename
+  CHARACTER(LEN=6+data_dir_max_length+c_max_zeros) :: &
+      full_restart_filename
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
