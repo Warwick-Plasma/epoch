@@ -131,6 +131,7 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
+    CHARACTER(LEN=c_max_string_length) :: list_filename
     INTEGER :: i, io, ierr
 
     n_io_blocks = block_number
@@ -165,6 +166,19 @@ CONTAINS
             io_block_list(i)%dt_average = t_end
           ENDIF
         ENDDO
+      ENDIF
+
+      ! Remove any left-over VisIt file lists
+      IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/full.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/normal.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/restart.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
       ENDIF
     ENDIF
 
@@ -215,7 +229,7 @@ CONTAINS
     ENDIF
 
     ! Delete any existing visit file lists
-    IF (rank .EQ. 0) THEN
+    IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
       list_filename = TRIM(ADJUSTL(data_dir)) // '/' &
           // TRIM(io_block%name) // '.visit'
       OPEN(unit=lu, status='UNKNOWN', file=list_filename)

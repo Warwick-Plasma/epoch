@@ -29,6 +29,19 @@ MODULE diagnostics
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
   INTEGER, SAVE :: last_step = -1
 
+  ! Data structures for tracking the list of strings written to '.visit' files
+  TYPE string_entry
+    CHARACTER(LEN=string_length) :: text
+    TYPE(string_entry), POINTER :: next
+  END TYPE string_entry
+
+  TYPE string_list
+    TYPE(string_entry), POINTER :: head, tail
+    INTEGER :: count
+  END TYPE string_list
+
+  TYPE(string_list), POINTER :: file_list(:)
+
 CONTAINS
 
   SUBROUTINE output_routines(step, force_write)   ! step = step index
@@ -43,6 +56,7 @@ CONTAINS
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: convert, force
+    LOGICAL, SAVE :: first_call = .TRUE.
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
 
@@ -55,6 +69,14 @@ CONTAINS
 #ifdef NO_IO
     RETURN
 #endif
+
+    IF (first_call) THEN
+      ALLOCATE(file_list(n_io_blocks+2))
+      DO i = 1,n_io_blocks+2
+        file_list(i)%count = 0
+      ENDDO
+      first_call = .FALSE.
+    ENDIF
 
     IF (step .NE. last_step) THEN
       last_step = step
@@ -357,16 +379,16 @@ CONTAINS
       DO io = 1, n_io_blocks
         IF (io_block_list(io)%dump) THEN
           dump_type = TRIM(io_block_list(io)%name)
-          CALL append_filename(dump_type, output_file)
+          CALL append_filename(dump_type, output_file, io)
         ENDIF
       ENDDO
       IF (IAND(code, c_io_restartable) .NE. 0) THEN
         dump_type = 'restart'
-        CALL append_filename(dump_type, output_file)
+        CALL append_filename(dump_type, output_file, n_io_blocks+1)
       ENDIF
       IF (IAND(code, c_io_full) .NE. 0) THEN
         dump_type = 'full'
-        CALL append_filename(dump_type, output_file)
+        CALL append_filename(dump_type, output_file, n_io_blocks+2)
       ENDIF
       WRITE(stat_unit, '(''Wrote '', a7, '' dump number'', i5, '' at time'', &
           & g20.12, '' and iteration'', i7)') dump_type, output_file, time, step
@@ -390,31 +412,83 @@ CONTAINS
 
 
 
-  SUBROUTINE append_filename(listname, output_file)
+  SUBROUTINE append_filename(listname, output_file, list_index)
     ! This routine updates a list of each output type (eg. full, dump, normal)
     ! that can be passed to VisIt to filter the output.
 
     CHARACTER(LEN=*), INTENT(IN) :: listname
-    INTEGER, INTENT(IN) :: output_file
+    INTEGER, INTENT(IN) :: output_file, list_index
     CHARACTER(LEN=data_dir_max_length+64) :: listfile, filename_desc
-    INTEGER :: ierr
+    CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename
+    TYPE(string_list), POINTER :: list
+    TYPE(string_entry), POINTER :: lcur
+    INTEGER :: ierr, i
     LOGICAL :: exists
+
+    list => file_list(list_index)
 
     WRITE(filename_desc, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
         n_zeros, n_zeros
-    listfile = TRIM(data_dir) // '/' // TRIM(listname) // '.visit'
+    WRITE(filename, filename_desc) output_file
 
+    listfile = TRIM(data_dir) // '/' // TRIM(listname) // '.visit'
     INQUIRE(file=listfile, exist=exists)
+
+    IF (list%count .EQ. 0) THEN
+      ALLOCATE(list%head)
+      list%tail => list%head
+      IF (ic_from_restart .AND. exists) CALL setup_file_list(listfile, list)
+    ELSE
+      ALLOCATE(list%tail%next)
+      list%tail => list%tail%next
+    ENDIF
+
+    IF (list%count .GT. 0) THEN
+      lcur  => list%head
+      IF (TRIM(lcur%text) .EQ. TRIM(filename)) RETURN
+      DO i = 2,list%count
+        lcur  => lcur%next
+        IF (TRIM(lcur%text) .EQ. TRIM(filename)) RETURN
+      ENDDO
+    ENDIF
+
+    list%count = list%count + 1
+    list%tail%text = TRIM(filename)
+
     IF (exists) THEN
       OPEN(unit=lu, status='OLD', position='APPEND', file=listfile, iostat=ierr)
     ELSE
       OPEN(unit=lu, status='NEW', file=listfile, iostat=errcode)
     ENDIF
 
-    WRITE(lu,filename_desc) output_file
+    WRITE(lu,'(a)') TRIM(filename)
     CLOSE(lu)
 
   END SUBROUTINE append_filename
+
+
+
+  SUBROUTINE setup_file_list(listfile, list)
+    ! This routine initialises the file list contained in the given
+    ! *.visit file which is required when restarting.
+
+    CHARACTER(LEN=*), INTENT(IN) :: listfile
+    TYPE(string_list), POINTER :: list
+    CHARACTER(LEN=string_length) :: str
+    INTEGER :: ierr
+
+    OPEN(unit=lu, status='OLD', file=listfile, iostat=ierr)
+    DO
+      READ(lu, '(A)', iostat=ierr) str
+      IF (ierr .LT. 0) EXIT
+      list%tail%text = TRIM(str)
+      list%count = list%count + 1
+      ALLOCATE(list%tail%next)
+      list%tail => list%tail%next
+    ENDDO
+    CLOSE(lu)
+
+  END SUBROUTINE setup_file_list
 
 
 
