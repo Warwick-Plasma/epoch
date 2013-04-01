@@ -10,8 +10,9 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 24
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 25
   INTEGER :: block_number, full_io_block, restart_io_block, nfile_prefixes
+  INTEGER :: rolling_restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
@@ -113,11 +114,13 @@ CONTAINS
     alternate_name(i+22) = 'times_dump'
     io_block_name (i+23) = 'dump_cycle'
     io_block_name (i+24) = 'file_prefix'
+    io_block_name (i+25) = 'rolling_restart'
 
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
     new_style_io_block = .FALSE.
     n_io_blocks = 0
+    rolling_restart_io_block = 0
 
   END SUBROUTINE io_deck_initialise
 
@@ -150,6 +153,14 @@ CONTAINS
         ALLOCATE(io_block_list(n_io_blocks))
         DO i = 1, n_io_blocks
           CALL init_io_block(io_block_list(i))
+          IF (i .EQ. rolling_restart_io_block) THEN
+            io_block_list(i)%rolling_restart = .TRUE.
+            io_block_list(i)%dump_cycle = 1
+            io_block_list(i)%restart = .TRUE.
+            io_block_list(i)%prefix_index = 2
+            nfile_prefixes = 2
+            io_prefixes(2) = 'roll'
+          ENDIF
         ENDDO
       ELSE
         DO i = 1, n_io_blocks
@@ -203,6 +214,11 @@ CONTAINS
     IF (deck_state .NE. c_ds_first .AND. block_number .GT. 0) THEN
       io_block => io_block_list(block_number)
       io_block%dump_first = .FALSE.
+      IF (io_block%rolling_restart) THEN
+        io_block_done(num_vars_to_dump+15) = .TRUE.
+        io_block_done(num_vars_to_dump+23) = .TRUE.
+        io_block_done(num_vars_to_dump+24) = .TRUE.
+      ENDIF
     ENDIF
 
   END SUBROUTINE io_block_start
@@ -277,6 +293,18 @@ CONTAINS
     errcode = c_err_none
     IF (deck_state .EQ. c_ds_first) THEN
       IF (str_cmp(element, 'name')) new_style_io_block = .TRUE.
+      IF (str_cmp(element, 'rolling_restart')) THEN
+        IF (rolling_restart_io_block .GT. 0) THEN
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Cannot have multiple "rolling_restart" blocks.'
+            ENDDO
+          ENDIF
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        ENDIF
+        rolling_restart_io_block = block_number
+      ENDIF
       RETURN
     ENDIF
 
@@ -642,6 +670,7 @@ CONTAINS
     io_block%nstep_stop  = HUGE(1)
     io_block%dump_cycle  = HUGE(1)
     io_block%prefix_index = 1
+    io_block%rolling_restart = .FALSE.
     NULLIFY(io_block%dump_at_nsteps)
     NULLIFY(io_block%dump_at_times)
     DO i = 1, num_vars_to_dump

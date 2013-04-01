@@ -659,7 +659,7 @@ MODULE shared_data
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
-    LOGICAL :: dump_source_code, dump_input_decks
+    LOGICAL :: dump_source_code, dump_input_decks, rolling_restart
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
