@@ -241,7 +241,7 @@ deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
   random_generator.o sdf.o setup.o shared_data.o strings.o version_data.o \
-  $(ENCODED_SOURCE)
+  window.o $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o
 epoch2d.o: epoch2d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
   helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
@@ -308,7 +308,7 @@ sdf_output_ru.o: sdf_output_ru.f90 sdf_common.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
   sdf_output_point_ru.o
 setup.o: setup.F90 fields.o laser.o mpi_subtype_control.o shunt.o \
-  split_particle.o version_data.o welcome.o $(ENCODED_SOURCE)
+  split_particle.o version_data.o welcome.o window.o $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o

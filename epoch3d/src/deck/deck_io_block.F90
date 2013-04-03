@@ -44,6 +44,18 @@ CONTAINS
     io_block_name(c_dump_part_id          ) = 'id'
     io_block_name(c_dump_part_ek          ) = 'ek'
     alternate_name(c_dump_part_ek         ) = 'particle_energy'
+
+    io_block_name(c_dump_part_opdepth     ) = ''
+    io_block_name(c_dump_part_qed_energy  ) = ''
+    io_block_name(c_dump_part_opdepth_tri ) = ''
+#ifdef PHOTONS
+    io_block_name(c_dump_part_opdepth     ) = 'optical_depth'
+    io_block_name(c_dump_part_qed_energy  ) = 'qed_energy'
+#ifdef TRIDENT_PHOTONS
+    io_block_name(c_dump_part_opdepth_tri ) = 'trident_optical_depth'
+#endif
+#endif
+
     io_block_name(c_dump_ex               ) = 'ex'
     io_block_name(c_dump_ey               ) = 'ey'
     io_block_name(c_dump_ez               ) = 'ez'
@@ -217,6 +229,8 @@ CONTAINS
       IF (io_block%restart .OR. .NOT.new_style_io_block) &
           io_block%dump_input_decks = .TRUE.
     ENDIF
+
+    CALL set_restart_dumpmasks
 
   END SUBROUTINE io_block_end
 
@@ -534,6 +548,50 @@ CONTAINS
       io_block%dt_average = io_block%dt_snapshot
     ENDIF
 
+  END FUNCTION io_block_check
+
+
+
+  SUBROUTINE init_io_block(io_block)
+
+    TYPE(io_block_type) :: io_block
+    INTEGER :: i
+
+    io_block%name = ''
+    io_block%dt_snapshot = -1.0_num
+    io_block%time_prev = 0.0_num
+    io_block%time_first = 0.0_num
+    io_block%dt_average = -1.0_num
+    io_block%dt_min_average = -1.0_num
+    io_block%average_time = -1.0_num
+    io_block%nstep_snapshot = -1
+    io_block%nstep_prev = 0
+    io_block%nstep_first = 0
+    io_block%nstep_average = -1
+    io_block%restart = .FALSE.
+    io_block%dump = .FALSE.
+    io_block%any_average = .FALSE.
+    io_block%dump_first = .FALSE.
+    io_block%dump_last = .TRUE.
+    io_block%dump_source_code = .FALSE.
+    io_block%dump_input_decks = .FALSE.
+    io_block%dumpmask = 0
+    io_block%time_start = -1.0_num
+    io_block%time_stop  = HUGE(1.0_num)
+    io_block%nstep_start = -1
+    io_block%nstep_stop  = HUGE(1)
+    DO i = 1, num_vars_to_dump
+      io_block%averaged_data(i)%dump_single = .FALSE.
+    ENDDO
+
+  END SUBROUTINE init_io_block
+
+
+
+  SUBROUTINE set_restart_dumpmasks
+
+    ! Set the dumpmask for variables required to restart
+
     ! Particles
     io_block%dumpmask(c_dump_part_grid) = &
         IOR(io_block%dumpmask(c_dump_part_grid), c_io_restartable)
@@ -547,6 +605,16 @@ CONTAINS
         IOR(io_block%dumpmask(c_dump_part_py), c_io_restartable)
     io_block%dumpmask(c_dump_part_pz) = &
         IOR(io_block%dumpmask(c_dump_part_pz), c_io_restartable)
+#ifdef PHOTONS
+    io_block%dumpmask(c_dump_part_opdepth) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth), c_io_restartable)
+    io_block%dumpmask(c_dump_part_qed_energy) = &
+        IOR(io_block%dumpmask(c_dump_part_qed_energy), c_io_restartable)
+#ifdef TRIDENT_PHOTONS
+    io_block%dumpmask(c_dump_part_opdepth_tri) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth_tri), c_io_restartable)
+#endif
+#endif
     ! Fields
     io_block%dumpmask(c_dump_grid) = &
         IOR(io_block%dumpmask(c_dump_grid), c_io_restartable)
@@ -594,42 +662,6 @@ CONTAINS
     io_block%dumpmask(c_dump_cpml_psi_byz) = &
         IOR(io_block%dumpmask(c_dump_cpml_psi_byz), c_io_restartable)
 
-  END FUNCTION io_block_check
-
-
-
-  SUBROUTINE init_io_block(io_block)
-
-    TYPE(io_block_type) :: io_block
-    INTEGER :: i
-
-    io_block%name = ''
-    io_block%dt_snapshot = -1.0_num
-    io_block%time_prev = 0.0_num
-    io_block%time_first = 0.0_num
-    io_block%dt_average = -1.0_num
-    io_block%dt_min_average = -1.0_num
-    io_block%average_time = -1.0_num
-    io_block%nstep_snapshot = -1
-    io_block%nstep_prev = 0
-    io_block%nstep_first = 0
-    io_block%nstep_average = -1
-    io_block%restart = .FALSE.
-    io_block%dump = .FALSE.
-    io_block%any_average = .FALSE.
-    io_block%dump_first = .FALSE.
-    io_block%dump_last = .TRUE.
-    io_block%dump_source_code = .FALSE.
-    io_block%dump_input_decks = .FALSE.
-    io_block%dumpmask = 0
-    io_block%time_start = -1.0_num
-    io_block%time_stop  = HUGE(1.0_num)
-    io_block%nstep_start = -1
-    io_block%nstep_stop  = HUGE(1)
-    DO i = 1, num_vars_to_dump
-      io_block%averaged_data(i)%dump_single = .FALSE.
-    ENDDO
-
-  END SUBROUTINE init_io_block
+  END SUBROUTINE set_restart_dumpmasks
 
 END MODULE deck_io_block

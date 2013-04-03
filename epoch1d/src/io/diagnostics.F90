@@ -11,6 +11,7 @@ MODULE diagnostics
   USE setup
   USE random_generator
   USE strings
+  USE window
 
   IMPLICIT NONE
 
@@ -26,12 +27,14 @@ MODULE diagnostics
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
+  INTEGER, SAVE :: last_step = -1
 
 CONTAINS
 
-  SUBROUTINE output_routines(step)   ! step = step index
+  SUBROUTINE output_routines(step, force_write)   ! step = step index
 
     INTEGER, INTENT(INOUT) :: step
+    LOGICAL, INTENT(IN), OPTIONAL :: force_write
     LOGICAL :: print_arrays
     CHARACTER(LEN=9+data_dir_max_length+n_zeros) :: filename, filename_desc
     CHARACTER(LEN=c_max_string_length) :: dump_type
@@ -39,7 +42,7 @@ CONTAINS
     INTEGER :: code, i, io, random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
-    LOGICAL :: convert
+    LOGICAL :: convert, force
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
 
@@ -53,13 +56,19 @@ CONTAINS
     RETURN
 #endif
 
-    IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
-        .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
-      WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after '', &
-          & f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
+    IF (step .NE. last_step) THEN
+      last_step = step
+      IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
+          .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
+        WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after '', &
+            & f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
+      ENDIF
     ENDIF
 
-    CALL io_test(step, print_arrays)
+    force = .FALSE.
+    IF (PRESENT(force_write)) force = force_write
+
+    CALL io_test(step, print_arrays, force)
 
     IF (.NOT.print_arrays) RETURN
 
@@ -96,8 +105,13 @@ CONTAINS
         cell_x_max)
 
     IF (restart_flag) THEN
-      CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', 'Time increment', &
-          dt_plasma_frequency)
+      CALL sdf_write_srl(sdf_handle, 'dt', 'Time increment', dt)
+      CALL sdf_write_srl(sdf_handle, 'dt_plasma_frequency', &
+          'Plasma frequency timestep restriction', dt_plasma_frequency)
+      IF (move_window .AND. window_started) THEN
+        CALL sdf_write_srl(sdf_handle, 'window_shift_fraction', &
+            'Window Shift Fraction', window_shift_fraction)
+      ENDIF
 
       DO io = 1, n_io_blocks
         CALL sdf_write_srl(sdf_handle, &
@@ -238,6 +252,16 @@ CONTAINS
 #if PARTICLE_ID || PARTICLE_ID4
       CALL write_particle_variable(c_dump_part_id, code, 'ID', '#', &
           iterate_id)
+#endif
+#ifdef PHOTONS
+      CALL write_particle_variable(c_dump_part_opdepth, code, 'Optical depth', &
+          '', iterate_optical_depth)
+      CALL write_particle_variable(c_dump_part_qed_energy, code, &
+          'QED energy', 'J', iterate_qed_energy)
+#ifdef TRIDENT_PHOTONS
+      CALL write_particle_variable(c_dump_part_opdepth_tri, code, &
+          'Trident Depth', '', iterate_optical_depth_trident)
+#endif
 #endif
 
       ! These are derived variables from the particles
@@ -394,10 +418,11 @@ CONTAINS
 
 
 
-  SUBROUTINE io_test(step, print_arrays)
+  SUBROUTINE io_test(step, print_arrays, force)
 
     INTEGER, INTENT(IN) :: step
     LOGICAL, INTENT(OUT) :: print_arrays
+    LOGICAL, INTENT(IN) :: force
     INTEGER :: id, io, is, nstep_next
     REAL(num) :: t0, t1, time_first, av_time_first
     LOGICAL, SAVE :: first_call = .TRUE.
@@ -427,6 +452,8 @@ CONTAINS
       ENDIF
       IF (first_call .AND. io_block_list(io)%dump_first) &
           io_block_list(io)%dump = .TRUE.
+
+      IF (force) io_block_list(io)%dump = .TRUE.
 
       ! Work out the time that the next dump will occur based on the
       ! current timestep

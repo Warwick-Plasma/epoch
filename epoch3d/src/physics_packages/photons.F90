@@ -16,9 +16,11 @@ CONTAINS
 
     ! Load the tables for the QED routines
     CALL setup_tables_qed
-    DO ispecies = 1, n_species
-      CALL initialise_optical_depth(species_list(ispecies))
-    ENDDO
+    IF (.NOT.ic_from_restart) THEN
+      DO ispecies = 1, n_species
+        CALL initialise_optical_depth(species_list(ispecies))
+      ENDDO
+    ENDIF
 
   END SUBROUTINE setup_qed_module
 
@@ -476,7 +478,7 @@ CONTAINS
     REAL(num) :: part_x, part_y, part_z
     REAL(num) :: part_ux, part_uy, part_uz
     REAL(num) :: dir_x, dir_y, dir_z
-    REAL(num) :: eta, chi_val, part_e, gamma
+    REAL(num) :: eta, chi_val, part_e, gamma, norm
 
     DO ispecies = 1, n_species
 
@@ -572,9 +574,10 @@ CONTAINS
             part_x  = current%part_pos(1) - x_min_local
             part_y  = current%part_pos(2) - y_min_local
             part_z  = current%part_pos(3) - z_min_local
-            dir_x = current%part_p(1) / c
-            dir_y = current%part_p(2) / c
-            dir_z = current%part_p(3) / c
+            norm  = c / current%particle_energy
+            dir_x = current%part_p(1) * norm
+            dir_y = current%part_p(2) * norm
+            dir_z = current%part_p(3) * norm
             part_e  = current%particle_energy / m0 / c**2
             chi_val = calculate_chi(part_x, part_y, part_z, dir_x, dir_y, &
                 dir_z, part_e)
@@ -868,19 +871,12 @@ CONTAINS
     ! Generates a photon moving in same direction as electron
     ! (generates entirely new photon)
 
-    ! Initialises photons with unit vector along generating electron
-    ! momentum and speed c (STORED IN part_p!!!)
-
     TYPE(particle), POINTER :: generating_electron
     INTEGER, INTENT(IN) :: iphoton
     REAL(num), INTENT(IN) :: eta
     REAL(num) :: dir_x, dir_y, dir_z, mag_p, generating_gamma
-    REAL(num) :: rand_temp
+    REAL(num) :: rand_temp, photon_energy
     TYPE(particle), POINTER :: new_photon
-
-    ALLOCATE(new_photon)
-
-    new_photon%part_pos = generating_electron%part_pos
 
     mag_p = MAX(SQRT(generating_electron%part_p(1)**2 &
         + generating_electron%part_p(2)**2 &
@@ -890,20 +886,12 @@ CONTAINS
     dir_y = generating_electron%part_p(2) / mag_p
     dir_z = generating_electron%part_p(3) / mag_p
 
-    new_photon%part_p(1) = c * dir_x
-    new_photon%part_p(2) = c * dir_y
-    new_photon%part_p(3) = c * dir_z
-
-    new_photon%optical_depth = reset_optical_depth()
-
     generating_gamma = SQRT(1.0_num + (mag_p / m0 / c)**2)
 
     ! Determine photon energy
 
     rand_temp = random()
-    new_photon%particle_energy = calculate_photon_energy(rand_temp, eta, &
-        generating_gamma)
-    new_photon%weight = generating_electron%weight
+    photon_energy = calculate_photon_energy(rand_temp, eta, generating_gamma)
 
     ! Calculate electron recoil
 
@@ -916,10 +904,19 @@ CONTAINS
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
-    IF (new_photon%particle_energy .LE. photon_energy_min &
-        .OR. .NOT.produce_photons) THEN
-      DEALLOCATE(new_photon)
-    ELSE
+    IF (new_photon%particle_energy .GT. photon_energy_min &
+        .AND. produce_photons) THEN
+      ALLOCATE(new_photon)
+      new_photon%part_pos = generating_electron%part_pos
+
+      new_photon%part_p(1) = dir_x * photon_energy / c
+      new_photon%part_p(2) = dir_y * photon_energy / c
+      new_photon%part_p(3) = dir_z * photon_energy / c
+
+      new_photon%optical_depth = reset_optical_depth()
+      new_photon%particle_energy = photon_energy
+      new_photon%weight = generating_electron%weight
+
       CALL add_particle_to_partlist(species_list(iphoton)%attached_list, &
           new_photon)
     ENDIF
@@ -952,7 +949,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: chi_val
     INTEGER, INTENT(IN) :: iphoton, ielectron, ipositron
     REAL(num) :: dir_x, dir_y, dir_z, mag_p
-    REAL(num) :: probability_split, epsilon_frac
+    REAL(num) :: probability_split, epsilon_frac, norm
     TYPE(particle), POINTER :: new_electron, new_positron
 
     ALLOCATE(new_electron)
@@ -961,9 +958,10 @@ CONTAINS
     new_electron%part_pos = generating_photon%part_pos
     new_positron%part_pos = generating_photon%part_pos
 
-    dir_x = generating_photon%part_p(1) / c
-    dir_y = generating_photon%part_p(2) / c
-    dir_z = generating_photon%part_p(3) / c
+    norm  = c / generating_photon%particle_energy
+    dir_x = generating_photon%part_p(1) * norm
+    dir_y = generating_photon%part_p(2) * norm
+    dir_z = generating_photon%part_p(3) * norm
 
     ! Determine how to split the energy amoung e-/e+
     ! IS CHI HERE SAME AS ROLAND'S? DEFINED BSinT/B_s

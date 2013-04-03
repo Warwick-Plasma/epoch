@@ -44,6 +44,18 @@ CONTAINS
     io_block_name(c_dump_part_id          ) = 'id'
     io_block_name(c_dump_part_ek          ) = 'ek'
     alternate_name(c_dump_part_ek         ) = 'particle_energy'
+
+    io_block_name(c_dump_part_opdepth     ) = ''
+    io_block_name(c_dump_part_qed_energy  ) = ''
+    io_block_name(c_dump_part_opdepth_tri ) = ''
+#ifdef PHOTONS
+    io_block_name(c_dump_part_opdepth     ) = 'optical_depth'
+    io_block_name(c_dump_part_qed_energy  ) = 'qed_energy'
+#ifdef TRIDENT_PHOTONS
+    io_block_name(c_dump_part_opdepth_tri ) = 'trident_optical_depth'
+#endif
+#endif
+
     io_block_name(c_dump_ex               ) = 'ex'
     io_block_name(c_dump_ey               ) = 'ey'
     io_block_name(c_dump_ez               ) = 'ez'
@@ -209,6 +221,8 @@ CONTAINS
       IF (io_block%restart .OR. .NOT.new_style_io_block) &
           io_block%dump_input_decks = .TRUE.
     ENDIF
+
+    CALL set_restart_dumpmasks
 
   END SUBROUTINE io_block_end
 
@@ -526,50 +540,6 @@ CONTAINS
       io_block%dt_average = io_block%dt_snapshot
     ENDIF
 
-    ! Particles
-    io_block%dumpmask(c_dump_part_grid) = &
-        IOR(io_block%dumpmask(c_dump_part_grid), c_io_restartable)
-    io_block%dumpmask(c_dump_part_species) = &
-        IOR(io_block%dumpmask(c_dump_part_species), c_io_restartable)
-    io_block%dumpmask(c_dump_part_weight) = &
-        IOR(io_block%dumpmask(c_dump_part_weight), c_io_restartable)
-    io_block%dumpmask(c_dump_part_px) = &
-        IOR(io_block%dumpmask(c_dump_part_px), c_io_restartable)
-    io_block%dumpmask(c_dump_part_py) = &
-        IOR(io_block%dumpmask(c_dump_part_py), c_io_restartable)
-    io_block%dumpmask(c_dump_part_pz) = &
-        IOR(io_block%dumpmask(c_dump_part_pz), c_io_restartable)
-    ! Fields
-    io_block%dumpmask(c_dump_grid) = &
-        IOR(io_block%dumpmask(c_dump_grid), c_io_restartable)
-    io_block%dumpmask(c_dump_ex) = &
-        IOR(io_block%dumpmask(c_dump_ex), c_io_restartable)
-    io_block%dumpmask(c_dump_ey) = &
-        IOR(io_block%dumpmask(c_dump_ey), c_io_restartable)
-    io_block%dumpmask(c_dump_ez) = &
-        IOR(io_block%dumpmask(c_dump_ez), c_io_restartable)
-    io_block%dumpmask(c_dump_bx) = &
-        IOR(io_block%dumpmask(c_dump_bx), c_io_restartable)
-    io_block%dumpmask(c_dump_by) = &
-        IOR(io_block%dumpmask(c_dump_by), c_io_restartable)
-    io_block%dumpmask(c_dump_bz) = &
-        IOR(io_block%dumpmask(c_dump_bz), c_io_restartable)
-    io_block%dumpmask(c_dump_jx) = &
-        IOR(io_block%dumpmask(c_dump_jx), c_io_restartable)
-    io_block%dumpmask(c_dump_jy) = &
-        IOR(io_block%dumpmask(c_dump_jy), c_io_restartable)
-    io_block%dumpmask(c_dump_jz) = &
-        IOR(io_block%dumpmask(c_dump_jz), c_io_restartable)
-    ! CPML boundaries
-    io_block%dumpmask(c_dump_cpml_psi_eyx) = &
-        IOR(io_block%dumpmask(c_dump_cpml_psi_eyx), c_io_restartable)
-    io_block%dumpmask(c_dump_cpml_psi_ezx) = &
-        IOR(io_block%dumpmask(c_dump_cpml_psi_ezx), c_io_restartable)
-    io_block%dumpmask(c_dump_cpml_psi_byx) = &
-        IOR(io_block%dumpmask(c_dump_cpml_psi_byx), c_io_restartable)
-    io_block%dumpmask(c_dump_cpml_psi_bzx) = &
-        IOR(io_block%dumpmask(c_dump_cpml_psi_bzx), c_io_restartable)
-
   END FUNCTION io_block_check
 
 
@@ -607,5 +577,67 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE init_io_block
+
+
+
+  SUBROUTINE set_restart_dumpmasks
+
+    ! Set the dumpmask for variables required to restart
+
+    ! Particles
+    io_block%dumpmask(c_dump_part_grid) = &
+        IOR(io_block%dumpmask(c_dump_part_grid), c_io_restartable)
+    io_block%dumpmask(c_dump_part_species) = &
+        IOR(io_block%dumpmask(c_dump_part_species), c_io_restartable)
+    io_block%dumpmask(c_dump_part_weight) = &
+        IOR(io_block%dumpmask(c_dump_part_weight), c_io_restartable)
+    io_block%dumpmask(c_dump_part_px) = &
+        IOR(io_block%dumpmask(c_dump_part_px), c_io_restartable)
+    io_block%dumpmask(c_dump_part_py) = &
+        IOR(io_block%dumpmask(c_dump_part_py), c_io_restartable)
+    io_block%dumpmask(c_dump_part_pz) = &
+        IOR(io_block%dumpmask(c_dump_part_pz), c_io_restartable)
+#ifdef PHOTONS
+    io_block%dumpmask(c_dump_part_opdepth) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth), c_io_restartable)
+    io_block%dumpmask(c_dump_part_qed_energy) = &
+        IOR(io_block%dumpmask(c_dump_part_qed_energy), c_io_restartable)
+#ifdef TRIDENT_PHOTONS
+    io_block%dumpmask(c_dump_part_opdepth_tri) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth_tri), c_io_restartable)
+#endif
+#endif
+    ! Fields
+    io_block%dumpmask(c_dump_grid) = &
+        IOR(io_block%dumpmask(c_dump_grid), c_io_restartable)
+    io_block%dumpmask(c_dump_ex) = &
+        IOR(io_block%dumpmask(c_dump_ex), c_io_restartable)
+    io_block%dumpmask(c_dump_ey) = &
+        IOR(io_block%dumpmask(c_dump_ey), c_io_restartable)
+    io_block%dumpmask(c_dump_ez) = &
+        IOR(io_block%dumpmask(c_dump_ez), c_io_restartable)
+    io_block%dumpmask(c_dump_bx) = &
+        IOR(io_block%dumpmask(c_dump_bx), c_io_restartable)
+    io_block%dumpmask(c_dump_by) = &
+        IOR(io_block%dumpmask(c_dump_by), c_io_restartable)
+    io_block%dumpmask(c_dump_bz) = &
+        IOR(io_block%dumpmask(c_dump_bz), c_io_restartable)
+    io_block%dumpmask(c_dump_jx) = &
+        IOR(io_block%dumpmask(c_dump_jx), c_io_restartable)
+    io_block%dumpmask(c_dump_jy) = &
+        IOR(io_block%dumpmask(c_dump_jy), c_io_restartable)
+    io_block%dumpmask(c_dump_jz) = &
+        IOR(io_block%dumpmask(c_dump_jz), c_io_restartable)
+    ! CPML boundaries
+    io_block%dumpmask(c_dump_cpml_psi_eyx) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_eyx), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_ezx) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_ezx), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_byx) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_byx), c_io_restartable)
+    io_block%dumpmask(c_dump_cpml_psi_bzx) = &
+        IOR(io_block%dumpmask(c_dump_cpml_psi_bzx), c_io_restartable)
+
+  END SUBROUTINE set_restart_dumpmasks
 
 END MODULE deck_io_block

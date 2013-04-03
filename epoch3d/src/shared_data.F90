@@ -641,7 +641,10 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_cpml_psi_byz      = 44
   INTEGER, PARAMETER :: c_dump_absorption        = 45
   INTEGER, PARAMETER :: c_dump_part_ek           = 46
-  INTEGER, PARAMETER :: num_vars_to_dump         = 46
+  INTEGER, PARAMETER :: c_dump_part_opdepth      = 47
+  INTEGER, PARAMETER :: c_dump_part_qed_energy   = 48
+  INTEGER, PARAMETER :: c_dump_part_opdepth_tri  = 49
+  INTEGER, PARAMETER :: num_vars_to_dump         = 49
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -840,6 +843,7 @@ MODULE shared_data
   LOGICAL :: use_particle_lists = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
+  REAL(num) :: dt_from_restart
   REAL(num) :: dt_min_average, cfl
   REAL(num) :: length_x, dx, x_min, x_max
   REAL(num) :: x_min_local, x_max_local, length_x_local
