@@ -513,10 +513,10 @@ PRO SDFGetConstant, file_header, block_header, output_struct, offset, $
   IF (~mdflag) THEN BEGIN
     CASE block_header.datatype OF
       SDF_Datatypes.REAL4: BEGIN
-        datastruct = CREATE_STRUCT(struct_name, 0.0D)
+        datastruct = CREATE_STRUCT(struct_name, 0.0)
       END
       SDF_Datatypes.REAL8: BEGIN
-        datastruct = CREATE_STRUCT(struct_name, 0.0)
+        datastruct = CREATE_STRUCT(struct_name, 0.0D)
       END
       SDF_Datatypes.INTEGER4: BEGIN
         datastruct = CREATE_STRUCT(struct_name, 0L)
