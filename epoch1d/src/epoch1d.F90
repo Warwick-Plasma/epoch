@@ -103,11 +103,10 @@ PROGRAM pic
     CALL bfield_bcs(.TRUE.)
     CALL update_eb_fields_final
     IF (dt_from_restart .GT. 0) THEN
-      time = time + dt_from_restart
+      time = time + dt_from_restart / 2.0_num
     ELSE
-      time = time + dt
+      time = time + dt / 2.0_num
     ENDIF
-    step = step + 1
     CALL moving_window
   ELSE
     CALL bfield_final_bcs
@@ -157,11 +156,13 @@ PROGRAM pic
     ENDIF
 
     IF (halt) EXIT
+    step = step + 1
+    time = time + dt / 2.0_num
     CALL output_routines(step)
+    time = time - dt / 2.0_num
 
     CALL update_eb_fields_final
     time = time + dt
-    step = step + 1
 
     CALL moving_window
 
