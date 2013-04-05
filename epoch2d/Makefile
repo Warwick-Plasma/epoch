@@ -1,13 +1,10 @@
+# Specify a particular compiler with "make COMPILER=pgi", etc.
+# Specify debugging flags with "make MODE=debug"
+
+
 # Compiler specific flags
 
-# PGI
-# ===
-#FFLAGS = -r8 -fast -fastsse -O3 -Mipa=fast,inline -Minfo # Optimised
-#FFLAGS = -Mbounds -g                                     # Debug
-#MODULEFLAG = -module $(OBJDIR)
-
-# Intel
-# =====
+# Use intel compatible flags by default
 FFLAGS = -O3
 #FFLAGS = -O3 -heap-arrays 64 -ipo -xHost # Optimised (B)
 #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
@@ -15,18 +12,54 @@ FFLAGS = -O3
 #         -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
 MODULEFLAG = -module $(OBJDIR)
 
+ifeq ($(strip $(MODE)),debug)
+  FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
+           -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
+endif
+
+# PGI
+# ===
+ifeq ($(strip $(COMPILER)),pgi)
+  FFLAGS = -r8 -fast -fastsse -O3 -Mipa=fast,inline -Minfo # Optimised
+  ifeq ($(strip $(MODE)),debug)
+    FFLAGS = -Mbounds -g                                     # Debug
+  endif
+  MODULEFLAG = -module $(OBJDIR)
+endif
+
+# Intel
+# =====
+ifeq ($(strip $(COMPILER)),intel)
+  FFLAGS = -O3
+  #FFLAGS = -O3 -heap-arrays 64 -ipo -xHost # Optimised (B)
+  #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
+  ifeq ($(strip $(MODE)),debug)
+    FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
+             -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
+  endif
+  MODULEFLAG = -module $(OBJDIR)
+endif
+
 # gfortran
 # ========
-#FFLAGS = -O3
-#FFLAGS = -fbounds-check -fbacktrace -Wall -O0 -g \
-#         -Wextra -pedantic                             # Debug
-#MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
+ifeq ($(strip $(COMPILER)),gfortran)
+  FFLAGS = -O3
+  ifeq ($(strip $(MODE)),debug)
+    FFLAGS = -fbounds-check -fbacktrace -Wall -O0 -g \
+             -Wextra -pedantic                             # Debug
+  endif
+  MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
+endif
 
 # g95
 # ========
-#FFLAGS = -O3
-#FFLAGS = -O0 -g                                        # Debug
-#MODULEFLAG = -fmod=$(OBJDIR)
+ifeq ($(strip $(COMPILER)),g95)
+  FFLAGS = -O3
+  ifeq ($(strip $(MODE)),debug)
+    FFLAGS = -O0 -g                                        # Debug
+  endif
+  MODULEFLAG = -fmod=$(OBJDIR)
+endif
 
 # Set some of the build parameters
 TARGET = epoch2d
