@@ -237,6 +237,12 @@ MODULE sdf_common
       'SDF_DATATYPE_LOGICAL  ', &
       'SDF_DATATYPE_OTHER    ' /)
 
+  INTERFACE sdf_set_point_array_size
+    MODULE PROCEDURE &
+        set_point_array_size_i8, &
+        set_point_array_size_i4
+  END INTERFACE sdf_set_point_array_size
+
 CONTAINS
 
   SUBROUTINE sdf_get_next_block(h)
@@ -619,5 +625,35 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE error_handler
+
+
+
+  SUBROUTINE set_point_array_size_i8(value)
+
+    INTEGER(i8) :: value
+
+    npoint_per_iteration = value
+
+  END SUBROUTINE set_point_array_size_i8
+
+
+
+  SUBROUTINE set_point_array_size_i4(value)
+
+    INTEGER(i4) :: value
+
+    npoint_per_iteration = INT(value,i8)
+
+  END SUBROUTINE set_point_array_size_i4
+
+
+
+  FUNCTION sdf_get_point_array_size() RESULT(value)
+
+    INTEGER(i8) :: value
+
+    value = npoint_per_iteration
+
+  END FUNCTION sdf_get_point_array_size
 
 END MODULE sdf_common

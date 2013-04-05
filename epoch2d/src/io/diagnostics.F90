@@ -78,6 +78,9 @@ CONTAINS
         file_list(i)%count = 0
       ENDDO
       first_call = .FALSE.
+      ! Set point data buffer size to 64MB.
+      ! This makes particle output much faster.
+      CALL sdf_set_point_array_size(64*1024*1024)
     ENDIF
 
     IF (step .NE. last_step) THEN
