@@ -814,6 +814,7 @@ CONTAINS
         len1 = LEN_TRIM(block_id) + 1
         len2 = LEN_TRIM(name) + 9
         DO ispecies = 1, n_species
+          IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
           len3 = LEN_TRIM(io_list(ispecies)%name)
           len4 = len3
           len5 = len3
@@ -869,6 +870,7 @@ CONTAINS
               len2 = LEN_TRIM(name) + 18
 
               DO ispecies = 1, n_species
+                IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
                 len3 = LEN_TRIM(io_list(ispecies)%name)
                 len4 = len3
                 len5 = len3
@@ -918,6 +920,7 @@ CONTAINS
               len2 = LEN_TRIM(name) + 18
 
               DO ispecies = 1, n_species
+                IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
                 len3 = LEN_TRIM(io_list(ispecies)%name)
                 len4 = len3
                 len5 = len3
@@ -1093,6 +1096,7 @@ CONTAINS
         len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 10
 
         DO ispecies = 1, n_species
+          IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
           len3 = LEN_TRIM(io_list(ispecies)%name)
           len4 = len3
           len5 = len3
@@ -1299,6 +1303,7 @@ CONTAINS
         species_count = species_count + npart_species_per_proc(i)
       ENDDO
       spec%count = species_count
+      spec%count_update_step = step
       npart_global = npart_global + species_count
 
       CALL sdf_write_cpu_split(sdf_handle, 'cpu/' // TRIM(spec%name), &
@@ -1321,6 +1326,7 @@ CONTAINS
           species_count = species_count + npart_species_per_proc(i)
         ENDDO
         spec%count = species_count
+        spec%count_update_step = step
 
         CALL sdf_write_cpu_split(sdf_handle, 'cpu/' // TRIM(spec%name), &
             'CPU split/' // TRIM(spec%name), npart_species_per_proc)

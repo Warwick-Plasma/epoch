@@ -50,7 +50,6 @@ CONTAINS
   SUBROUTINE io_global_block_start
 
     INTEGER :: io, ierr
-    CHARACTER(LEN=c_max_string_length) :: list_filename
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
@@ -89,7 +88,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'force_final_to_be_restartable')) THEN
+    IF (str_cmp(element, 'force_final_to_be_restartable') &
+        .OR. str_cmp(element, 'force_last_to_be_restartable')) THEN
       force_final_to_be_restartable = as_logical(value, errcode)
       RETURN
     ENDIF
@@ -125,7 +125,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'dump_last')) THEN
+    IF (str_cmp(element, 'dump_last') &
+        .OR. str_cmp(element, 'dump_final')) THEN
       got_dump_last = .TRUE.
       dump_last = as_logical(value, errcode)
       RETURN

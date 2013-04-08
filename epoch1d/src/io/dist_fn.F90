@@ -131,14 +131,22 @@ CONTAINS
     INTEGER, DIMENSION(c_df_maxdims) :: cell
     REAL(num) :: part_weight, part_mc, part_mc2, gamma_m1, start
 
-    TYPE(particle), POINTER :: current
+    TYPE(particle), POINTER :: current, next
     CHARACTER(LEN=string_length) :: var_name
     CHARACTER(LEN=8), DIMENSION(c_df_maxdirs) :: labels, units
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
 
+    errcode = 0
+    ! Update species count if necessary
+    IF (io_list(species)%count_update_step .LT. step) THEN
+      CALL MPI_ALLREDUCE(io_list(species)%attached_list%count, &
+          io_list(species)%count, 1, MPI_INTEGER8, MPI_SUM, &
+          comm, errcode)
+      io_list(species)%count_update_step = step
+    ENDIF
+
     IF (io_list(species)%count .LT. 1) RETURN
 
-    errcode = 0
     use_x = .FALSE.
     ranges = ranges_in
     resolution = resolution_in
@@ -237,9 +245,12 @@ CONTAINS
           ranges(2,idim) = -HUGE(1.0_num)
         ENDIF
       ENDDO
-      current => io_list(species)%attached_list%head
+      next => io_list(species)%attached_list%head
 
-      out1: DO WHILE(ASSOCIATED(current))
+      out1: DO WHILE(ASSOCIATED(next))
+        current => next
+        next => current%next
+
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc  = current%mass * c
         part_mc2 = part_mc * c
@@ -321,8 +332,6 @@ CONTAINS
           particle_data(c_dir_zx_angle) = temp_data
         ENDIF
 
-        current => current%next
-
         DO idim = 1, curdims
           IF (calc_range(idim)) THEN
             DO idir = 1, c_df_maxdirs
@@ -368,8 +377,12 @@ CONTAINS
     ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
     array = 0.0_num
 
-    current => io_list(species)%attached_list%head
-    out2: DO WHILE(ASSOCIATED(current))
+    next => io_list(species)%attached_list%head
+
+    out2: DO WHILE(ASSOCIATED(next))
+      current => next
+      next => current%next
+
 #ifdef PER_PARTICLE_CHARGE_MASS
       part_mc  = current%mass * c
       part_mc2 = part_mc * c
@@ -453,8 +466,6 @@ CONTAINS
         ENDIF
         particle_data(c_dir_zx_angle) = temp_data
       ENDIF
-
-      current => current%next
 
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &

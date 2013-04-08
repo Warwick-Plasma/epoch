@@ -68,6 +68,7 @@ CONTAINS
           WRITE(io,*)
         ENDDO
       ENDIF
+      RETURN
     ENDIF
 
     CALL initialise_stack(temp)

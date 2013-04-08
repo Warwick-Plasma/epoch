@@ -517,6 +517,7 @@ MODULE shared_data
     TYPE(particle_species), POINTER :: next, prev
     INTEGER :: id
     INTEGER :: dumpmask
+    INTEGER :: count_update_step
 
     REAL(num) :: charge
     REAL(num) :: mass
@@ -807,7 +808,7 @@ MODULE shared_data
   LOGICAL :: need_random_state
   LOGICAL :: use_exact_restart
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
-  INTEGER :: restart_snapshot
+  INTEGER :: restart_snapshot, step
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle

@@ -517,17 +517,70 @@ CONTAINS
     DO iy = -2, ny+3
     DO ix = -2, nx+3
       IF (density(ix,iy,iz) .GT. density_max) density(ix,iy,iz) = density_max
-    ENDDO ! ix
-    ENDDO ! iy
-    ENDDO ! iz
-
-    DO iz = 1, nz
-    DO iy = 1, ny
-    DO ix = 1, nx
       IF (density(ix,iy,iz) .GE. density_min) density_map(ix,iy,iz) = .TRUE.
     ENDDO ! ix
     ENDDO ! iy
     ENDDO ! iz
+
+    IF (proc_x_min .EQ. MPI_PROC_NULL) THEN
+      DO iz = 1, nz
+      DO iy = 1, ny
+      DO ix = -2, 0
+        density_map(ix,iy,iz) = .FALSE.
+      ENDDO ! ix
+      ENDDO ! iy
+      ENDDO ! iz
+    ENDIF
+
+    IF (proc_x_max .EQ. MPI_PROC_NULL) THEN
+      DO iz = 1, nz
+      DO iy = 1, ny
+      DO ix = nx+1, nx+3
+        density_map(ix,iy,iz) = .FALSE.
+      ENDDO ! ix
+      ENDDO ! iy
+      ENDDO ! iz
+    ENDIF
+
+    IF (proc_y_min .EQ. MPI_PROC_NULL) THEN
+      DO iz = 1, nz
+      DO iy = -2, 0
+      DO ix = 1, nx
+        density_map(ix,iy,iz) = .FALSE.
+      ENDDO ! ix
+      ENDDO ! iy
+      ENDDO ! iz
+    ENDIF
+
+    IF (proc_y_max .EQ. MPI_PROC_NULL) THEN
+      DO iz = 1, nz
+      DO iy = ny+1, ny+3
+      DO ix = 1, nx
+        density_map(ix,iy,iz) = .FALSE.
+      ENDDO ! ix
+      ENDDO ! iy
+      ENDDO ! iz
+    ENDIF
+
+    IF (proc_z_min .EQ. MPI_PROC_NULL) THEN
+      DO iz = -2, 0
+      DO iy = 1, ny
+      DO ix = 1, nx
+        density_map(ix,iy,iz) = .FALSE.
+      ENDDO ! ix
+      ENDDO ! iy
+      ENDDO ! iz
+    ENDIF
+
+    IF (proc_z_max .EQ. MPI_PROC_NULL) THEN
+      DO iz = nz+1, nz+3
+      DO iy = 1, ny
+      DO ix = 1, nx
+        density_map(ix,iy,iz) = .FALSE.
+      ENDDO ! ix
+      ENDDO ! iy
+      ENDDO ! iz
+    ENDIF
 
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)

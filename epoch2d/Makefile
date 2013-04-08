@@ -99,6 +99,10 @@ DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
 #BUILDOPT += opt_dont_build_sha1
 #BUILDOPT += opt_dont_build_embedded_source
 
+all: epoch
+
+COMMIT: FORCE
+	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
 -include COMMIT
 
 SRCDIR = src
@@ -162,7 +166,6 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
   $(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:\
   $(OBJDIR)
 
-all: $(FULLTARGET)
 
 # Rule to build the fortran files
 
@@ -174,10 +177,9 @@ all: $(FULLTARGET)
 	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
+epoch: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
 	$(FC) $(FFLAGS) $(MODULEFLAG) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
-
-$(OBJFILES): | COMMIT_MAKE
 
 opt_dont_build_sha1: ;
 opt_dont_build_embedded_source: ;
@@ -188,9 +190,6 @@ $(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(INCLUDES) \
 encoded_source.o: $(OBJDIR)/encoded_source.f90
 	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
-
-COMMIT_MAKE:
-	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
 
 clean: tidy
 	@rm -rf *~ $(BINDIR)
@@ -205,7 +204,7 @@ visitclean:
 	@cd ../VisIt; make clean; \
 	  rm -rf .depend *.d *Info.C *Info.h CMake* cmake* Makefile
 
-.PHONY: clean tidy visit visitclean COMMIT_MAKE
+.PHONY: clean tidy visit visitclean epoch FORCE
 
 # All the dependencies
 

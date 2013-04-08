@@ -689,14 +689,15 @@ CONTAINS
       STOP
     ENDIF
 
-    IF (rank .EQ. 0) PRINT*, 'Loading snapshot for time', time
-
     nblocks = sdf_read_nblocks(sdf_handle)
     jobid = sdf_read_jobid(sdf_handle)
 
-    CALL create_ascii_header
-    WRITE(stat_unit,*) ascii_header
-    WRITE(stat_unit,*)
+    IF (rank .EQ. 0) THEN
+      PRINT*, 'Loading snapshot for time', time
+      CALL create_ascii_header
+      WRITE(stat_unit,*) ascii_header
+      WRITE(stat_unit,*)
+    ENDIF
 
     ex = 0.0_num
     ey = 0.0_num

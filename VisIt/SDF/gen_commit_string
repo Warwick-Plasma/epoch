@@ -40,6 +40,7 @@ if [ $? -eq 0 ]; then
   test -z "$(git diff-index --name-only HEAD --)" || state='dirty'
 
   commit_string=$gitdescribe-$svnrev-$state
+  commit_date=$(git log --pretty=format:%cd -1 HEAD)
 else
 # not in a git repo
   gitdescribe=unknown-unknown-unknown
@@ -53,6 +54,12 @@ else
     [ $n -ne 0 ] && state='dirty'
 
     commit_string=$gitdescribe-$svnrev-$state
+
+    svndate=$(svn info --xml ../.. | grep '<date>')
+    commit_date=$(perl -e 'use Time::Local; use POSIX qw(strftime);
+      $_="'$svndate'"; /(\d*)-(\d*)-(\d*)T(\d*):(\d*):(\d*)/; $m=$2-1;
+      $t=timegm($6,$5,$4,$3,$m,$1);
+      $d = strftime "%a %b %e %T %Y %z\n", localtime($t); print "$d";')
   fi
 fi
 
@@ -62,8 +69,6 @@ grep "$commit_string" $COMMIT_FILE > /dev/null 2>&1
 if [ $? -eq 0 ]; then
   exit
 else
-  sec=$(git log --pretty=format:%ct -1 HEAD)
-  commit_date=$(date -r $sec)
   echo "#define SDF_READER_COMMIT_ID \"$commit_string\"" > $COMMIT_FILE
   echo "#define SDF_READER_COMMIT_DATE \"$commit_date\"" >> $COMMIT_FILE
   exit 1
