@@ -6,6 +6,8 @@
     <Files components="M,E">
       avtSDFFileFormat.C
       avtSDFOptions.C
+      build_date.h
+      commit_info.h
       SDF_lib/sdf_control.c
       SDF_lib/sdf_derived.c
       SDF_lib/sdf_input.c
