@@ -447,11 +447,20 @@ CONTAINS
 
     DO ix = -2, nx+3
       IF (density(ix) .GT. density_max) density(ix) = density_max
-    ENDDO ! ix
-
-    DO ix = 1, nx
       IF (density(ix) .GE. density_min) density_map(ix) = .TRUE.
     ENDDO ! ix
+
+    IF (proc_x_min .EQ. MPI_PROC_NULL) THEN
+      DO ix = -2, 0
+        density_map(ix) = .FALSE.
+      ENDDO ! ix
+    ENDIF
+
+    IF (proc_x_max .EQ. MPI_PROC_NULL) THEN
+      DO ix = nx+1, nx+3
+        density_map(ix) = .FALSE.
+      ENDDO ! ix
+    ENDIF
 
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
