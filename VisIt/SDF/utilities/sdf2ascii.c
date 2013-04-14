@@ -9,6 +9,14 @@
 #include <mpi.h>
 #endif
 
+#define DBG_FLUSH() do { \
+        h->dbg = h->dbg_buf; *h->dbg = '\0'; \
+    } while (0)
+
+#define DBG_PRINT_FLUSH() do { \
+        printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0'; \
+    } while (0)
+
 int metadata, contents, debug, single, mmap, ignore_summary;
 struct id_list {
   char *id;
@@ -152,21 +160,21 @@ int main(int argc, char **argv)
 
     // Construct the metadata blocklist using the contents of the buffer
     for (i = 0; i < h->nblocks; i++) {
-        if (variable_ids && metadata)
-            h->dbg = h->dbg_buf; *h->dbg = '\0';
+        if (variable_ids && metadata) DBG_FLUSH();
+
         sdf_read_block_info(h);
+
         if (variable_ids && metadata) {
             last_id = variable_ids;
             while (last_id) {
                 if (!memcmp(h->current_block->id, last_id->id,
                         strlen(last_id->id)+1)) {
-                    printf("%s", h->dbg_buf); h->dbg = h->dbg_buf;
-                    *h->dbg = '\0';
+                    DBG_PRINT_FLUSH();
                     break;
                 }
                 last_id = last_id->next;
             }
-            h->dbg = h->dbg_buf; *h->dbg = '\0';
+            DBG_FLUSH();
         }
     }
 
@@ -175,8 +183,7 @@ int main(int argc, char **argv)
     h->current_block = h->blocklist;
 
 #ifdef SDF_DEBUG
-    if (metadata)
-        printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
+    if (metadata) DBG_PRINT_FLUSH();
 #endif
 
     // Done reading metadata
@@ -194,28 +201,25 @@ int main(int argc, char **argv)
                     h->print = 1;
                     sdf_read_data(h);
 #ifdef SDF_DEBUG
-                    printf("%s", h->dbg_buf); h->dbg = h->dbg_buf;
-                    *h->dbg = '\0';
+                    DBG_PRINT_FLUSH();
 #endif
                     break;
                 }
                 last_id = last_id->next;
             }
-            h->dbg = h->dbg_buf; *h->dbg = '\0';
+            DBG_FLUSH();
         } else
             sdf_read_data(h);
         h->current_block = b->next;
 #ifdef SDF_DEBUG_ALL
 #ifdef SDF_DEBUG
-        if (debug)
-            printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
+        if (debug) DBG_PRINT_FLUSH();
 #endif
 #endif
     }
 #ifdef SDF_DEBUG_ALL
 #ifdef SDF_DEBUG
-    if (debug)
-        printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0';
+    if (debug) DBG_PRINT_FLUSH();
 #endif
 #endif
     sdf_close(h);
