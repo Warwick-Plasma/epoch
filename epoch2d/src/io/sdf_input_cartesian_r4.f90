@@ -449,7 +449,7 @@ CONTAINS
   SUBROUTINE read_2d_float_r4(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
-    REAL(r4), DIMENSION(1,1), INTENT(OUT) :: variable
+    REAL(r4), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -487,7 +487,7 @@ CONTAINS
   SUBROUTINE read_3d_float_r4(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
-    REAL(r4), DIMENSION(1,1,1), INTENT(OUT) :: variable
+    REAL(r4), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -525,7 +525,7 @@ CONTAINS
   SUBROUTINE read_4d_float_r4(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
-    REAL(r4), DIMENSION(1,1,1,1), INTENT(OUT) :: variable
+    REAL(r4), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
@@ -566,7 +566,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(r4), INTENT(OUT) :: variable(nm, dims(1))
+    REAL(r4), INTENT(OUT) :: variable(:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_2d_float_r4(h, variable(idx,1), distribution, subarray)
@@ -586,7 +586,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(r4), INTENT(OUT) :: variable(nm, dims(1), dims(2))
+    REAL(r4), INTENT(OUT) :: variable(:,:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_3d_float_r4(h, variable(idx,1,1), distribution, subarray)
@@ -606,7 +606,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(r4), INTENT(OUT) :: variable(nm, dims(1), dims(2), dims(3))
+    REAL(r4), INTENT(OUT) :: variable(:,:,:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_4d_float_r4(h, variable(idx,1,1,1), distribution, subarray)
@@ -626,7 +626,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(r4), INTENT(OUT) :: variable(dims(1), nm)
+    REAL(r4), INTENT(OUT) :: variable(:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_2d_float_r4(h, variable(1,idx), distribution, subarray)
@@ -646,7 +646,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(r4), INTENT(OUT) :: variable(dims(1), dims(2), nm)
+    REAL(r4), INTENT(OUT) :: variable(:,:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_3d_float_r4(h, variable(1,1,idx), distribution, subarray)
@@ -666,7 +666,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(IN) :: nm
     INTEGER(i4), INTENT(IN) :: dims(:)
-    REAL(r4), INTENT(OUT) :: variable(dims(1), dims(2), dims(3), nm)
+    REAL(r4), INTENT(OUT) :: variable(:,:,:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
     CALL read_4d_float_r4(h, variable(1,1,1,idx), distribution, subarray)
@@ -861,7 +861,7 @@ CONTAINS
 
     b => h%current_block
     IF (b%blocktype .EQ. c_blocktype_plain_variable) THEN
-      CALL read_2d_float_r4(h, variable, distribution, subarray)
+      CALL read_2d_float_r4(h, variable(1,1), distribution, subarray)
     ELSE
       CALL read_1d_material_r4(h, variable, distribution, subarray, last_in)
     ENDIF
@@ -885,7 +885,7 @@ CONTAINS
 
     b => h%current_block
     IF (b%blocktype .EQ. c_blocktype_plain_variable) THEN
-      CALL read_3d_float_r4(h, variable, distribution, subarray)
+      CALL read_3d_float_r4(h, variable(1,1,1), distribution, subarray)
     ELSE
       CALL read_2d_material_r4(h, variable, distribution, subarray, last_in)
     ENDIF
