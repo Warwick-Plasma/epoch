@@ -324,8 +324,8 @@ sdf_input_r8.o: sdf_input_r8.f90 sdf_input_ru.o
 sdf_input_ru.o: sdf_input_ru.f90 sdf_common.o
 sdf_input_station.o: sdf_input_station.f90 sdf_input_station_r4.o \
   sdf_input_station_r8.o sdf_input_station_ru.o
-sdf_input_station_r4.o: sdf_input_station_r4.f90 sdf_input_ru.o
-sdf_input_station_r8.o: sdf_input_station_r8.f90 sdf_input_ru.o
+sdf_input_station_r4.o: sdf_input_station_r4.f90 sdf_input_station_ru.o
+sdf_input_station_r8.o: sdf_input_station_r8.f90 sdf_input_station_ru.o
 sdf_input_station_ru.o: sdf_input_station_ru.f90 sdf_input_ru.o
 sdf_input_util.o: sdf_input_util.f90 sdf_input.o sdf_input_cartesian.o \
   sdf_input_point.o sdf_input_station.o sdf_output_station_ru.o

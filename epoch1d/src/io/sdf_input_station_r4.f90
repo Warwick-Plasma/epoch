@@ -1,6 +1,6 @@
 MODULE sdf_input_station_r4
 
-  USE sdf_input_ru
+  USE sdf_input_station_ru
 
   IMPLICIT NONE
 
