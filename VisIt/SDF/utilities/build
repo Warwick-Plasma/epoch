@@ -15,11 +15,12 @@ done
 
 cd `dirname $0`/.
 
-if [ $clean -eq 1 ]; then
+if [ $clean -eq 1 ] ; then
   rm -rf sdf2ascii sdf2ascii.dSYM
   #[ -r pybuild/files.txt ] && cat pybuild/files.txt | xargs rm
   rm -rf pybuild
-else
+fi
+if [ $clean -le 1 ] ; then
   gcc -DSDF_DEBUG_ALL $DBG -I$SDFDIR -o sdf2ascii sdf2ascii.c \
       $SDFDIR/sdf_control.c $SDFDIR/sdf_input.c $SDFDIR/sdf_input_cartesian.c \
       $SDFDIR/sdf_input_point.c

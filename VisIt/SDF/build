@@ -17,7 +17,7 @@ OPTS=""
 while getopts cdpnuv name
 do
    case $name in
-      c) clean=1 ; OPTS="$OPTS -c";;
+      c) (( clean++ )) ; OPTS+=" -c";;
       d) DBG="-g -O0"; OPTS="$OPTS -d";
          DEBUG="-DCMAKE_BUILD_TYPE=Debug" ;;
       p) PRIVATE="-public"; OPTS="$OPTS -p" ;;
@@ -52,7 +52,7 @@ buildit () {
   mkdir -p $tmpdir
   if [ "$version"x != x ]; then
     xml2info -clobber $PRIVATE ${fmt}${version}.xml
-    rm -rf CMake* cmake* Makefile
+    if [ $clean -ge 1 ] ; then rm -rf CMake* cmake* Makefile ; fi
 
     if [ $version -eq 1 ]; then
       xml2makefile -clobber $PRIVATE ${fmt}${version}.xml
@@ -101,21 +101,20 @@ CC=mpicc," Makefile > .Makefile.tmp
       fi
     fi
 
-    make clean
+    if [ $clean -ge 1 ] ; then make clean ; fi
     make $VERBOSE
   else
     echo "Unable to build. Please add visit to your \$PATH"
   fi
 }
 
-
-if [ $clean -eq 1 ]; then
+if [ $clean -ge 2 ]; then
   make clean > /dev/null 2>&1
   rm -rf CMake* cmake* Makefile ${fmt}*Info.C ${fmt}*Info.h
 elif [ $build_visit_reader -eq 1 ]; then
   srl=""
   err=0
-  ./gen_commit_string
+  sh gen_commit_string
   echo "#define SDF_READER_BUILD_DATE \"`date`\"" > build_date.h
   build_parallel=0
   build_serial=0
