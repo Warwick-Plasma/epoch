@@ -1,6 +1,7 @@
 #! /bin/sh
 
 SDFDIR=../SDF_lib
+EXTDIR=../extension
 
 clean=0
 DBG=""
@@ -32,5 +33,9 @@ if [ $clean -le 1 ] ; then
   gcc -DSDF_DEBUG_ALL $DBG -I$SDFDIR -o sdf2ascii sdf2ascii.c \
       $SDFDIR/sdf_control.c $SDFDIR/sdf_input.c $SDFDIR/sdf_input_cartesian.c \
       $SDFDIR/sdf_input_point.c $SDFDIR/sdf_input_station.c $SDFDIR/sdf_util.c
+  gcc -DSDF_DEBUG_ALL $DBG -I$SDFDIR -I$EXTDIR -o sdffilter sdffilter.c \
+      $SDFDIR/sdf_control.c $SDFDIR/sdf_input.c $SDFDIR/sdf_input_cartesian.c \
+      $SDFDIR/sdf_input_point.c $SDFDIR/sdf_input_station.c $SDFDIR/sdf_util.c \
+      $SDFDIR/sdf_extension_util.c $SDFDIR/sdf_derived.c
   CFLAGS="-Wno-unused-function" python setup.py build -b pybuild install --prefix= --user --record pybuild/files.txt
 fi

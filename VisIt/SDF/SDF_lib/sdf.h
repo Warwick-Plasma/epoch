@@ -242,6 +242,7 @@ sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id);
 sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name);
 int sdf_read_header(sdf_file_t *h);
 int sdf_read_blocklist(sdf_file_t *h);
+int sdf_read_blocklist_all(sdf_file_t *h);
 int sdf_read_summary(sdf_file_t *h);
 int sdf_read_block_info(sdf_file_t *h);
 int sdf_read_data(sdf_file_t *h);
