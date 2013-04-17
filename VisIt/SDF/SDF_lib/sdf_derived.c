@@ -1,63 +1,10 @@
 #include <stdlib.h>
 #include "sdf.h"
+#include "sdf_vector_type.h"
 
 #define IJK(i,j,k) ((i) + nx * ((j) + ny * (k)))
 #define IJK1(i,j,k) ((i) + (nx+1) * ((j) + (ny+1) * (k)))
 #define IJK2(i,j,k) ((i)+1 + (nx+2) * ((j)+1 + (ny+2) * ((k)+1)))
-
-
-typedef struct vector_type vector_t;
-
-struct vector_type {
-    int *data;
-    int allocated, size;
-};
-
-static vector_t *vector_new(void)
-{
-    vector_t *vector;
-
-    vector = (vector_t*)malloc(sizeof(vector_t));
-    vector->allocated = 32;
-    vector->size = 0;
-    vector->data = (int*)malloc(vector->allocated * sizeof(int));
-
-    return vector;
-}
-
-static void vector_push_back(vector_t *vector, int val)
-{
-    int *data;
-
-    // Grow vector if necessary
-    if (vector->size == vector->allocated) {
-        vector->allocated = vector->allocated << 1;
-        data = (int*)malloc(vector->allocated * sizeof(int));
-        memcpy(data, vector->data, vector->size * sizeof(int));
-        free(vector->data);
-        vector->data = data;
-    }
-
-    vector->data[vector->size++] = val;
-}
-
-static void vector_truncate(vector_t *vector)
-{
-    int *data;
-
-    vector->allocated = vector->size;
-    data = (int*)malloc(vector->allocated * sizeof(int));
-    memcpy(data, vector->data, vector->size * sizeof(int));
-    free(vector->data);
-    vector->data = data;
-}
-
-static void vector_free(vector_t *vector)
-{
-    free(vector->data);
-    free(vector);
-}
-
 
 
 sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
