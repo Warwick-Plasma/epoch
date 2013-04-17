@@ -1,10 +1,25 @@
 #include <stdlib.h>
 #include "sdf.h"
 #include "sdf_vector_type.h"
+#include "sdf_list_type.h"
 
 #define IJK(i,j,k) ((i) + nx * ((j) + ny * (k)))
 #define IJK1(i,j,k) ((i) + (nx+1) * ((j) + (ny+1) * (k)))
 #define IJK2(i,j,k) ((i)+1 + (nx+2) * ((j)+1 + (ny+2) * ((k)+1)))
+
+
+static char *strcat_alloc(char *base, char *sfx)
+{
+    int len1 = strlen(base);
+    int len2 = strlen(sfx);
+    char *str = malloc(len1+len2+2);
+    memcpy(str, base, len1);
+    str[len1] = '/';
+    memcpy(str+len1+1, sfx, len2); \
+    str[len1+len2+1] = '\0';
+    return str;
+}
+
 
 
 sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
@@ -474,8 +489,16 @@ sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
 sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
+    sdf_block_t *current_block = h->current_block;
 
     if (!b->grids) b->grids = calloc(1, sizeof(float*));
+
+    if (!mesh->done_data) {
+        h->current_block = mesh;
+        sdf_read_data(h);
+        h->current_block = current_block;
+    }
+
     b->data = b->grids[0] = mesh->grids[b->nm];
     b->datatype_out = mesh->datatype_out;
     if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED)
@@ -558,7 +581,7 @@ sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 
 sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
-    int i, n, sz, np, nx, nxmesh;
+    int i, n, sz, np, nx;
     int i0, i1, idx;
     int *index;
     char *x, *xmesh;
@@ -597,7 +620,6 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         b->nelements_local = 1;
         for (n=0; n < b->ndims; n++) {
             xmesh = mesh->grids[n];
-            nxmesh = (int)mesh->dims[n];
 
             nx = b->local_dims[n] = (int)b->dims[n];
             x = calloc(nx, sz);
@@ -744,6 +766,177 @@ sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
 
 
 
+sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
+{
+    int i, n, idx, sz, data_offset0, varoffset;
+    float *r4, dt4, time4;
+    double *r8, dt8, time8;
+    char *ptr;
+    sdf_block_t *block, *current_block, *mesh = b->subblock;
+
+    if (b->done_data) return b;
+
+    if (mesh) {
+        if (!mesh->done_data) {
+            current_block = h->current_block;
+            h->current_block = mesh;
+            sdf_read_data(h);
+            h->current_block = current_block;
+        }
+
+        if (b->datatype_out == SDF_DATATYPE_REAL4)
+            b->data = (float*)mesh->data + b->opt;
+        else
+            b->data = (double*)mesh->data + b->opt;
+
+        if (!b->grids) b->grids = malloc(sizeof(void**));
+        b->grids[0] = b->data;
+
+        b->done_data = 1;
+
+        return b;
+    }
+
+    sz = SDF_TYPE_SIZES[b->datatype_out];
+    if (!b->data) b->data = malloc(b->nelements_local * sz);
+
+    // Find first station block
+    block = h->blocklist;
+    for (i = 0; i < h->nblocks; i++) {
+        if (block->blocktype == SDF_BLOCKTYPE_STATION) break;
+        block = block->next;
+    }
+
+    // If there is a fixed time increment then generate the data, otherwise
+    // read it from file.
+    if (block->time_increment > 0.0) {
+        if (b->datatype_out == SDF_DATATYPE_REAL4) {
+            r4 = (float*)b->data;
+            dt4 = block->time_increment;
+            time4 = block->time;
+            for (n = 0; n < b->nelements; n++) {
+                *r4++ = time4;
+                time4 += dt4;
+            }
+        } else {
+            r8 = (double*)b->data;
+            dt8 = block->time_increment;
+            time8 = block->time;
+            for (n = 0; n < b->nelements; n++) {
+                *r8++ = time8;
+                time8 += dt8;
+            }
+        }
+    } else {
+        ptr = b->data;
+        idx = i;
+        data_offset0 = 0;
+        varoffset = 0;
+        if (block->step_increment <= 0) {
+            data_offset0 += SDF_TYPE_SIZES[block->variable_types[varoffset]];
+            varoffset++;
+        }
+
+        for (i = idx; i < h->nblocks; i++) {
+            if (block->blocktype == SDF_BLOCKTYPE_STATION) {
+                h->current_location = block->data_location + data_offset0;
+
+                for (n = 0; n < block->nelements; n++) {
+                    sdf_seek(h);
+                    sdf_read_bytes(h, ptr, sz);
+                    ptr += sz;
+                    h->current_location += block->type_size;
+                }
+            }
+            block = block->next;
+        }
+    }
+
+    b->done_data = 1;
+
+    return b;
+}
+
+
+
+sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
+{
+    int i, j, k, sz, len, vidx, varoffset;
+    int data_offset0, data_offset;
+    list_t *station_blocks;
+    char *varid, *ptr = b->data;
+    sdf_block_t *block;
+
+    if (b->done_data) return b;
+
+    // Build list of all station blocks in the file
+    list_init(&station_blocks);
+    block = h->blocklist;
+    for (i = 0; i < h->nblocks; i++) {
+        if (block->blocktype == SDF_BLOCKTYPE_STATION)
+            list_append(station_blocks, block);
+        block = block->next;
+    }
+
+    len = strlen(b->station_id);
+    varid = &b->id[len+1];
+    sz = SDF_TYPE_SIZES[b->datatype_out];
+    if (!b->data) b->data = malloc(b->nelements_local * sz);
+    ptr = b->data;
+
+    // Find station blocks containing this station id.
+    block = list_start(station_blocks);
+    varoffset = 0;
+    data_offset0 = 0;
+    if (block->step_increment <= 0) {
+        data_offset0 += SDF_TYPE_SIZES[block->variable_types[varoffset]];
+        varoffset++;
+    }
+    if (block->time_increment <= 0.0) {
+        data_offset0 += SDF_TYPE_SIZES[block->variable_types[varoffset]];
+        varoffset++;
+    }
+
+    for (i = 0; i < station_blocks->count; i++) {
+        for (j = 0; j < block->nstations; j++) {
+            if (strncmp(block->station_ids[j], b->station_id, SDF_ID_LENGTH))
+                continue;
+            if (block->station_move[j] < 0) continue;
+
+            // Found station block. Now find the variable.
+            vidx = varoffset;
+            for (k = 0; k < j; k++) vidx += block->station_nvars[k];
+
+            for (k = 0; k < block->station_nvars[j]; k++, vidx++) {
+                if (strncmp(block->variable_ids[vidx], varid,
+                    SDF_ID_LENGTH) == 0) break;
+            }
+
+            // Now read the data.
+            data_offset = data_offset0;
+            for (k = 0; k < vidx; k++)
+                data_offset += SDF_TYPE_SIZES[block->variable_types[k]];
+
+            h->current_location = block->data_location + data_offset;
+            for (k = 0; k < block->nelements; k++) {
+                sdf_seek(h);
+                sdf_read_bytes(h, ptr, sz);
+                ptr += sz;
+                h->current_location += block->type_size;
+            }
+        }
+        block = list_next(station_blocks);
+    }
+
+    list_destroy(&station_blocks);
+
+    b->done_data = 1;
+
+    return b;
+}
+
+
+
 static void add_surface_variables(sdf_file_t *h, sdf_block_t *surf,
         sdf_block_t **append_ptr, sdf_block_t **append_tail_ptr,
         int *nappend_ptr)
@@ -814,6 +1007,377 @@ static void add_surface_variables(sdf_file_t *h, sdf_block_t *surf,
     *nappend_ptr = nappend;
     *append_tail_ptr = append_tail;
     *append_ptr = append;
+}
+
+
+
+static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
+        sdf_block_t **append_tail, int *nappend)
+{
+    sdf_block_t *b, *sb, *global_mesh, *mesh, *station = *append;
+    char *meshid = "global_station/time";
+    char *meshname = "Station/Time";
+    int varoffset, mesh_datatype, var, i, j, n, is, nelements, nsofar;
+    int *nelements_array;
+    list_t *station_blocks;
+
+    varoffset = 0;
+    mesh_datatype = SDF_DATATYPE_REAL8;
+    if (station->step_increment <= 0) varoffset++;
+
+    if (station->time_increment <= 0.0) {
+        varoffset++;
+        mesh_datatype = station->variable_types[0];
+    }
+
+    // Build list of all station blocks in the file
+    list_init(&station_blocks);
+    b = h->blocklist;
+    for (i = 0; i < h->nblocks; i++) {
+        if (b->blocktype == SDF_BLOCKTYPE_STATION)
+            list_append(station_blocks, b);
+        b = b->next;
+    }
+
+    // Build list of nelements for each station block in the file
+    nelements_array = calloc(station_blocks->count, sizeof(int));
+    b = list_start(station_blocks);
+    for (i = 0; i < station_blocks->count; i++) {
+        nelements_array[i] = b->nelements;
+        b = list_next(station_blocks);
+    }
+
+    // Reverse step over the nelements_array and fill with a cumulative
+    // sum. nelements_array will then contain the number of time entries
+    // for the current station block and all which come after it in the file.
+    nelements = 0;
+    for (i = station_blocks->count-1; i >= 0; i--) {
+        nelements += nelements_array[i];
+        nelements_array[i] = nelements;
+    }
+
+    /* Add global time mesh */
+    global_mesh = mesh = (*append)->next = calloc(1, sizeof(sdf_block_t));
+    (*nappend)++;
+    (*append) = (*append_tail) = (*append)->next;
+
+    SDF_SET_ENTRY_ID(mesh->id, meshid);
+    SDF_SET_ENTRY_ID(mesh->units, "s");
+    SDF_SET_ENTRY_STRING(mesh->name, meshname);
+    mesh->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
+    mesh->ndims = 1;
+    mesh->dim_units = calloc(mesh->ndims, sizeof(char*));
+    mesh->dim_labels = calloc(mesh->ndims, sizeof(char*));
+    SDF_SET_ENTRY_ID(mesh->dim_units[0], "s");
+    SDF_SET_ENTRY_ID(mesh->dim_labels[0], "Time");
+    mesh->populate_data = sdf_callback_station_time;
+    mesh->nelements_local = mesh->nelements = station->nelements;
+    mesh->dims[0] = mesh->nelements;
+    mesh->datatype = mesh->datatype_out = mesh_datatype;
+
+    /* Add per-station-block time meshes */
+    nsofar = 0;
+    b = list_start(station_blocks);
+    for (i = 0; i < station_blocks->count; i++) {
+        mesh = (*append)->next = calloc(1, sizeof(sdf_block_t));
+        (*nappend)++;
+        (*append) = (*append_tail) = (*append)->next;
+
+        mesh->id = strcat_alloc(meshid, b->id);
+        mesh->name = strcat_alloc(meshname, b->name);
+        SDF_SET_ENTRY_ID(mesh->units, "s");
+        mesh->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
+        mesh->ndims = 1;
+        mesh->dim_units = calloc(mesh->ndims, sizeof(char*));
+        mesh->dim_labels = calloc(mesh->ndims, sizeof(char*));
+        SDF_SET_ENTRY_ID(mesh->dim_units[0], "s");
+        SDF_SET_ENTRY_ID(mesh->dim_labels[0], "Time");
+        mesh->populate_data = sdf_callback_station_time;
+        mesh->nelements_local = mesh->nelements = nelements_array[i];
+        mesh->dims[0] = mesh->nelements;
+        mesh->datatype = mesh->datatype_out = mesh_datatype;
+        mesh->subblock = global_mesh;
+        mesh->opt = nsofar;
+        mesh->dont_own_data = 1;
+
+        nsofar += b->nelements;
+        b = list_next(station_blocks);
+    }
+
+    free(nelements_array);
+
+    var = varoffset;
+    for (i = 0; i < station->nstations; i++) {
+        // Sum nelements for all station blocks containing this station
+        nelements = 0;
+        sb = list_start(station_blocks);
+        for (is = 0; is < station_blocks->count; is++) {
+            for (n = 0; n < sb->nstations; n++) {
+                if (strncmp(sb->station_ids[n], station->station_ids[i],
+                        SDF_ID_LENGTH) == 0) {
+                    if (sb->station_move[n] >= 0)
+                        nelements += sb->nelements;
+                    break;
+                }
+            }
+            sb = list_next(station_blocks);
+        }
+        for (j = 0; j < station->station_nvars[i]; j++) {
+            b = (*append)->next = calloc(1, sizeof(sdf_block_t));
+            (*nappend)++;
+            (*append) = (*append_tail) = (*append)->next;
+
+            b->id = strcat_alloc(station->station_ids[i],
+                    station->variable_ids[var]);
+            b->name = strcat_alloc(station->station_names[i],
+                    station->material_names[var]);
+            b->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
+            SDF_SET_ENTRY_ID(b->units, station->dim_units[var]);
+            SDF_SET_ENTRY_ID(b->station_id, station->station_ids[i]);
+            b->ndims = 1;
+            b->populate_data = sdf_callback_station;
+            b->datatype = b->datatype_out = station->variable_types[var];
+            b->nelements_local = b->nelements = nelements;
+            b->dims[0] = b->nelements;
+            var++;
+
+            // Find the first station block which contains this station id
+            nsofar = 0;
+            sb = list_start(station_blocks);
+            for (is = 0; is < station_blocks->count; is++) {
+                for (n = 0; n < sb->nstations; n++) {
+                    if (strncmp(sb->station_ids[n], b->station_id,
+                            SDF_ID_LENGTH) != 0) continue;
+                    if (sb->station_move[n] < 0) continue;
+                    b->mesh_id = strcat_alloc(meshid, sb->id);
+                    break;
+                }
+                if (b->mesh_id) break;
+                nsofar += sb->nelements;
+                sb = list_next(station_blocks);
+            }
+            b->opt = nsofar;
+        }
+    }
+
+    list_destroy(&station_blocks);
+/*
+    b = (*append)->next = calloc(1, sizeof(sdf_block_t));
+    (*nappend)++;
+    (*append) = (*append_tail) = (*append)->next;
+
+    b->blocktype == SDF_BLOCKTYPE_STATION_DERIVED;
+    SDF_SET_ENTRY_ID(b->id, "stat");
+*/
+}
+
+
+
+static void add_global_station(sdf_file_t *h, sdf_block_t **append,
+        sdf_block_t **append_tail, int *nappend)
+{
+    sdf_block_t *b, *next, *new;
+    int nextra, nstat_total, nstat_max = 2;
+    int i, j, m, n, varoffset, nelements;
+    int nidx; // variable index for new block
+    int bidx; // variable index for current station block
+    int *extra_id;
+    char found, *found_id, *ctmp;
+    list_t *station_blocks;
+
+    // Create the new derived block and add it to the list
+    new = (*append)->next = calloc(1, sizeof(sdf_block_t));
+    (*nappend)++;
+    (*append) = (*append_tail) = (*append)->next;
+
+    new->blocktype = SDF_BLOCKTYPE_STATION_DERIVED;
+    SDF_SET_ENTRY_ID(new->id, "global_stations");
+    SDF_SET_ENTRY_STRING(new->name, "Global Stations");
+
+    nelements = 0;
+    extra_id = calloc(nstat_max, sizeof(int));
+    found_id = malloc(sizeof(char));
+    list_init(&station_blocks);
+
+    // Build list of globally unique station_ids and for each
+    // station block, assign the station indexes into this global array
+    next = h->blocklist;
+    for (i = 0; i < h->nblocks; i++) {
+        h->current_block = b = next;
+        next = b->next;
+        if (b->blocktype != SDF_BLOCKTYPE_STATION) continue;
+
+        nelements += b->nelements;
+        list_append(station_blocks, b);
+
+        if (b->nstations > nstat_max) {
+            nstat_max = b->nstations * 11 / 10 + 2;
+            free(extra_id);
+            extra_id = calloc(nstat_max, sizeof(int));
+        }
+
+        b->station_index = calloc(b->nstations, sizeof(int));
+        memset(found_id, 0, new->nstations);
+        nextra = 0;
+        for (n = 0; n < b->nstations; n++) {
+            found = 0;
+            for (m = 0; m < new->nstations; m++) {
+                if (found_id[m]) continue;
+                if (strncmp(b->station_ids[n], new->station_ids[m],
+                        SDF_ID_LENGTH)) continue;
+                b->station_index[n] = m;
+                found = 1;
+                found_id[m] = 1;
+                break;
+            }
+            if (!found) {
+                extra_id[nextra] = n;
+                b->station_index[n] = new->nstations + n;
+                nextra++;
+            }
+        }
+
+        if (nextra == 0) continue;
+
+        nstat_total = new->nstations + nextra;
+
+        if (new->nstations == 0) {
+            new->station_ids = calloc(nstat_total, sizeof(char*));
+        } else {
+            ctmp = malloc(new->nstations);
+            memcpy(ctmp, new->station_ids, new->nstations * sizeof(char*));
+            free(new->station_ids);
+            new->station_ids = calloc(nstat_total, sizeof(char*));
+            memcpy(new->station_ids, ctmp, new->nstations * sizeof(char*));
+            free(ctmp);
+        }
+
+        free(found_id);
+        found_id = malloc(nstat_total * sizeof(char));
+
+        m = new->nstations;
+        for (n = 0; n < nextra; n++) {
+            SDF_SET_ENTRY_ID(new->station_ids[m], b->station_ids[extra_id[n]]);
+            m++;
+        }
+
+        new->nstations = nstat_total;
+    }
+
+
+    // Populate each station_id with its associated data
+    if (new->nstations > 0) {
+        // Assign the station block variables
+        b = list_start(station_blocks);
+        new->step = b->step;
+        new->step_increment = b->step_increment;
+        new->time = b->time;
+        new->time_increment = b->time_increment;
+        new->use_mult = b->use_mult;
+
+        varoffset = 0;
+        if (new->step_increment <= 0) varoffset++;
+        if (new->time_increment <= 0.0) varoffset++;
+        new->nvariables = varoffset;
+        new->nelements_local = new->nelements = nelements;
+
+        // Allocate the stations
+        new->station_names = calloc(new->nstations, sizeof(char*));
+        new->station_nvars = calloc(new->nstations, sizeof(int*));
+        new->station_move = calloc(new->nstations, sizeof(int*));
+        new->station_index = calloc(new->nstations, sizeof(int*));
+        new->station_x = calloc(new->nstations, sizeof(double*));
+        if (new->ndims > 1)
+            new->station_y = calloc(new->nstations, sizeof(double*));
+        if (new->ndims > 2)
+            new->station_z = calloc(new->nstations, sizeof(double*));
+
+        // Assign the stations
+        nstat_total = new->nstations;
+        memset(found_id, 0, nstat_total);
+        next = list_start(station_blocks);
+        for (i = 0; i < station_blocks->count; i++) {
+            b = next;
+            next = list_next(station_blocks);
+            new->station_index[i] = i;
+            for (n = 0; n < b->nstations; n++) {
+                m = b->station_index[n];
+                if (found_id[m]) continue;
+                nstat_total--;
+                found_id[m] = 1;
+                SDF_SET_ENTRY_STRING(new->station_names[m],
+                        b->station_names[n]);
+                new->station_nvars[m] = b->station_nvars[n];
+                new->station_move[m] = b->station_move[n];
+                new->station_x[m] = b->station_x[n];
+                if (new->ndims > 1) new->station_y[m] = b->station_y[n];
+                if (new->ndims > 2) new->station_z[m] = b->station_z[n];
+                new->nvariables += new->station_nvars[m];
+                if (!nstat_total) break;
+            }
+            if (!nstat_total) break;
+        }
+
+        // Allocate the variables
+        new->variable_ids = calloc(new->nvariables, sizeof(char*));
+        new->dim_units = calloc(new->nvariables, sizeof(char*));
+        new->material_names = calloc(new->nvariables, sizeof(char*));
+        new->variable_types = calloc(new->nvariables, sizeof(int*));
+        if (new->use_mult)
+            new->dim_mults = calloc(new->nvariables, sizeof(double*));
+
+        // Assign starting variables (time, step)
+        b = list_start(station_blocks);
+        i = 0;
+        nidx = 0;
+        for (i = 0; i < varoffset; i++) {
+            SDF_SET_ENTRY_ID(new->variable_ids[nidx], b->variable_ids[i]);
+            SDF_SET_ENTRY_ID(new->dim_units[nidx], b->dim_units[i]);
+            SDF_SET_ENTRY_STRING(new->material_names[nidx],
+                b->material_names[i]);
+            new->variable_types[nidx] = b->variable_types[i];
+            if (new->use_mult)
+                new->dim_mults[nidx] = b->dim_mults[i];
+            nidx++;
+        }
+
+        // Assign the remaining variables
+        nstat_total = new->nstations;
+        memset(found_id, 0, nstat_total);
+        next = list_start(station_blocks);
+        for (i = 0; i < station_blocks->count; i++) {
+            b = next;
+            next = list_next(station_blocks);
+            for (n = 0; n < b->nstations; n++) {
+                m = b->station_index[n];
+                if (found_id[m]) continue;
+                nstat_total--;
+                found_id[m] = 1;
+                bidx = varoffset;
+                for (j = 0; j < n; j++)
+                    bidx += b->station_nvars[j];
+                for (j = 0; j < b->station_nvars[n]; j++) {
+                    SDF_SET_ENTRY_ID(new->variable_ids[nidx],
+                            b->variable_ids[bidx]);
+                    SDF_SET_ENTRY_ID(new->dim_units[nidx], b->dim_units[bidx]);
+                    SDF_SET_ENTRY_STRING(new->material_names[nidx],
+                            b->material_names[bidx]);
+                    new->variable_types[nidx] = b->variable_types[bidx];
+                    if (new->use_mult)
+                        new->dim_mults[nidx] = b->dim_mults[bidx];
+                    bidx++; nidx++;
+                }
+                if (!nstat_total) break;
+            }
+            if (!nstat_total) break;
+        }
+    }
+
+    list_destroy(&station_blocks);
+    free(extra_id);
+    free(found_id);
+
+    add_station_variables(h, append, append_tail, nappend);
 }
 
 
@@ -1044,6 +1608,9 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 
         mesh->subblock2 = append;
     }
+
+    if (h->station_file)
+        add_global_station(h, &append, &append_tail, &nappend);
 
     if (nappend) {
         h->tail->next = append_head->next;

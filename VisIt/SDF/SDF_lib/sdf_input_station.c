@@ -21,14 +21,12 @@
 int sdf_read_station_info(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int nstations, nvariables, step0, step_inc;
-    double time0, time_inc;
-    char use_mult[4];
+    char use_mult[5];
     char *use_mult_ptr = use_mult;
 
     // Metadata is
-    // - nentries  INTEGER(i4)
-    // - type_size INTEGER(i4)
+    // - nelements INTEGER(i8)
+    // - entry_len INTEGER(i4)
     // - nstations INTEGER(i4)
     // - nvars     INTEGER(i4)
     // - step0     INTEGER(i4)
@@ -52,30 +50,30 @@ int sdf_read_station_info(sdf_file_t *h)
 
     SDF_READ_ENTRY_INT8(b->nelements);
     SDF_READ_ENTRY_INT4(b->type_size);
-    SDF_READ_ENTRY_INT4(nstations);
-    SDF_READ_ENTRY_INT4(nvariables);
-    SDF_READ_ENTRY_INT4(step0);
-    SDF_READ_ENTRY_INT4(step_inc);
-    SDF_READ_ENTRY_REAL8(time0);
-    SDF_READ_ENTRY_REAL8(time_inc);
+    SDF_READ_ENTRY_INT4(b->nstations);
+    SDF_READ_ENTRY_INT4(b->nvariables);
+    SDF_READ_ENTRY_INT4(b->step);
+    SDF_READ_ENTRY_INT4(b->step_increment);
+    SDF_READ_ENTRY_REAL8(b->time);
+    SDF_READ_ENTRY_REAL8(b->time_increment);
     SDF_READ_ENTRY_STRINGLEN(use_mult_ptr,4);
 
-    SDF_READ_ENTRY_ARRAY_ID(b->station_ids, nstations);
-    SDF_READ_ENTRY_ARRAY_STRING(b->station_names, nstations);
-    SDF_READ_ENTRY_ARRAY_INT4(b->station_nvars, nstations);
-    SDF_READ_ENTRY_ARRAY_INT4(b->station_move, nstations);
-    SDF_READ_ENTRY_ARRAY_REAL8(b->station_x, nstations);
+    SDF_READ_ENTRY_ARRAY_ID(b->station_ids, b->nstations);
+    SDF_READ_ENTRY_ARRAY_STRING(b->station_names, b->nstations);
+    SDF_READ_ENTRY_ARRAY_INT4(b->station_nvars, b->nstations);
+    SDF_READ_ENTRY_ARRAY_INT4(b->station_move, b->nstations);
+    SDF_READ_ENTRY_ARRAY_REAL8(b->station_x, b->nstations);
     if (b->ndims > 1)
-        SDF_READ_ENTRY_ARRAY_REAL8(b->station_y, nstations);
+        SDF_READ_ENTRY_ARRAY_REAL8(b->station_y, b->nstations);
     if (b->ndims > 2)
-        SDF_READ_ENTRY_ARRAY_REAL8(b->station_z, nstations);
+        SDF_READ_ENTRY_ARRAY_REAL8(b->station_z, b->nstations);
 
-    SDF_READ_ENTRY_ARRAY_ID(b->variable_ids, nvariables);
-    SDF_READ_ENTRY_ARRAY_STRING(b->variable_names, nvariables);
-    SDF_READ_ENTRY_ARRAY_INT4(b->variable_types, nvariables);
-    SDF_READ_ENTRY_ARRAY_ID(b->variable_units, nvariables);
+    SDF_READ_ENTRY_ARRAY_ID(b->variable_ids, b->nvariables);
+    SDF_READ_ENTRY_ARRAY_STRING(b->material_names, b->nvariables);
+    SDF_READ_ENTRY_ARRAY_INT4(b->variable_types, b->nvariables);
+    SDF_READ_ENTRY_ARRAY_ID(b->dim_units, b->nvariables);
     if (use_mult[0])
-        SDF_READ_ENTRY_ARRAY_REAL8(b->variable_mults, nvariables);
+        SDF_READ_ENTRY_ARRAY_REAL8(b->dim_mults, b->nvariables);
 
     b->stagger = SDF_STAGGER_VERTEX;
 

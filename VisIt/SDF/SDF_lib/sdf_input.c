@@ -218,7 +218,7 @@ int sdf_read_next_block_header(sdf_file_t *h)
     // Older versions of the file did not contain the block
     // info length in the header.
     if (h->file_version + h->file_revision > 1)
-        SDF_READ_ENTRY_INT4(b->block_info_length);
+        SDF_READ_ENTRY_INT4(b->info_length);
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE
             || b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
@@ -226,6 +226,9 @@ int sdf_read_next_block_header(sdf_file_t *h)
     else
         b->stagger = SDF_STAGGER_CELL_CENTRE;
     for (i = 0; i < 3; i++) b->dims[i] = 1;
+
+    if (b->blocktype == SDF_BLOCKTYPE_STATION)
+        h->station_file = 1;
 
     b->done_header = 1;
     h->current_location = b->block_start + h->block_header_length;
@@ -268,7 +271,10 @@ int sdf_read_data(sdf_file_t *h)
 
     b = h->current_block;
 
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
+    if (b->populate_data) {
+        b->populate_data(h, b);
+        return 0;
+    } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
         return sdf_read_plain_mesh(h);
     else if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
         return sdf_read_lagran_mesh(h);
@@ -344,7 +350,7 @@ static void build_summary_buffer(sdf_file_t *h)
 {
     int i, buflen;
     uint64_t data_location, block_location, next_block_location;
-    uint32_t block_info_length;
+    uint32_t info_length;
     char *bufptr;
     char skip_summary;
 
@@ -384,29 +390,29 @@ static void build_summary_buffer(sdf_file_t *h)
             // Older versions of the file did not contain the block
             // info length in the header.
             if (h->file_version + h->file_revision > 1) {
-                memcpy(&block_info_length, (char*)blockbuf->buffer+132,
+                memcpy(&info_length, (char*)blockbuf->buffer+132,
                        sizeof(uint32_t));
             } else {
                 if (data_location > block_location)
-                    block_info_length = (uint32_t)(data_location
+                    info_length = (uint32_t)(data_location
                         - block_location) - h->block_header_length;
                 else
-                    block_info_length = (uint32_t)(next_block_location
+                    info_length = (uint32_t)(next_block_location
                         - block_location) - h->block_header_length;
             }
 
             // Read the block specific metadata if it exists
-            if (block_info_length > 0) {
+            if (info_length > 0) {
                 blockbuf->next = calloc(1,sizeof(*blockbuf));
                 blockbuf = blockbuf->next;
 
-                blockbuf->len = block_info_length;
+                blockbuf->len = info_length;
                 blockbuf->buffer = malloc(blockbuf->len);
                 i = sdf_read_bytes(h, blockbuf->buffer, blockbuf->len);
                 if (i != 0) break;
             }
 
-            buflen += h->block_header_length + block_info_length;
+            buflen += h->block_header_length + info_length;
 
             h->nblocks++;
 

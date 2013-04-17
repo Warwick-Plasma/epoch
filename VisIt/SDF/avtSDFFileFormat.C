@@ -746,6 +746,7 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
            << meshname << endl;
 
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE
+            || b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED
             || b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
         return GetCurve(domain, b);
 

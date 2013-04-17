@@ -25,7 +25,7 @@
 
 #define SDF_VERSION  1
 #define SDF_REVISION 2
-#define SDF_LIB_VERSION  2
+#define SDF_LIB_VERSION  3
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
@@ -63,6 +63,7 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_CONTIGUOUS,
     SDF_BLOCKTYPE_LAGRANGIAN_MESH,
     SDF_BLOCKTYPE_STATION,
+    SDF_BLOCKTYPE_STATION_DERIVED,
 };
 
 enum sdf_geometry {
@@ -168,27 +169,30 @@ typedef struct sdf_file sdf_file_t;
 struct sdf_block {
     // This struct must be changed with care and the SDF_LIB_VERSION bumped
     // if the resulting struct is not aligned the same.
-    double *dim_mults, *variable_mults, *extents, mult;
+    double *extents, *dim_mults;
     double *station_x, *station_y, *station_z;
+    double mult, time, time_increment;
     uint64_t block_start;
     uint64_t next_block_location, data_location;
     uint64_t nelements, npoints, data_length;
-    uint32_t ndims, geometry, datatype, blocktype, block_info_length;
+    uint32_t ndims, geometry, datatype, blocktype, info_length;
     uint32_t type_size, stagger, datatype_out, type_size_out;
+    uint32_t nstations, nvariables, step, step_increment;
     uint32_t *dims_in, *station_nvars, *station_move, *variable_types;
+    uint32_t *station_index;
     uint64_t dims[3];
     int local_dims[3], nm, nelements_local, n_ids, opt, ng, nfaces;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
-    char *vfm_id, *obstacle_id;
+    char *vfm_id, *obstacle_id, *station_id;
     char *name, *material_name, *must_read;
     char **dim_labels, **dim_units;
-    char **station_ids, **station_names, **material_names;
-    char **variable_ids, **variable_names, **variable_units;
+    char **station_ids, **variable_ids;
+    char **station_names, **material_names;
     int *node_list, *boundary_cells;
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
-    char dont_own_data;
+    char dont_own_data, use_mult;
     sdf_block_t *next;
     sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
@@ -218,8 +222,8 @@ struct sdf_file {
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float, use_summary;
-    char use_random;
-    char *code_name;
+    char use_random, station_file;
+    char *code_name, *error_message;
     sdf_block_t *blocklist, *tail, *current_block;
     char *mmap;
     void *ext_data;
