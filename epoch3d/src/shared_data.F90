@@ -904,7 +904,7 @@ MODULE shared_data
   INTEGER :: breit_wheeler_electron_species = -1
   INTEGER :: trident_positron_species = -1, breit_wheeler_positron_species = -1
 
-  REAL(num) :: photon_energy_min = 0.0_num
+  REAL(num) :: photon_energy_min = EPSILON(1.0_num)
   REAL(num) :: qed_start_time = 0.0_num
   LOGICAL :: use_qed = .FALSE., produce_pairs = .FALSE.
   LOGICAL :: produce_photons = .FALSE., photon_dynamics = .FALSE.

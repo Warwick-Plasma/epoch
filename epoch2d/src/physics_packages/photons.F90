@@ -891,6 +891,8 @@ CONTAINS
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
     IF (photon_energy .GT. photon_energy_min .AND. produce_photons) THEN
+      IF (photon_energy .LT. c_non_zero) photon_energy = c_non_zero
+
       ALLOCATE(new_photon)
       new_photon%part_pos = generating_electron%part_pos
 
