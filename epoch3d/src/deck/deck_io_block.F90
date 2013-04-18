@@ -123,6 +123,7 @@ CONTAINS
     io_block_name (i+23) = 'dump_cycle'
     io_block_name (i+24) = 'file_prefix'
     io_block_name (i+25) = 'rolling_restart'
+    io_block_name (i+26) = 'dump_cycle_first_index'
 
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
@@ -182,6 +183,17 @@ CONTAINS
               ENDDO
             ENDIF
             io_block_list(i)%dt_average = t_end
+          ENDIF
+          IF (io_block%dump_cycle_first_index .GT. io_block%dump_cycle) THEN
+            IF (rank .EQ. 0) THEN
+              DO io = stdout, du, du - stdout ! Print to stdout and to file
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,*) '"dump_cycle_first_index" cannot be greater ', &
+                    'than "dump_cycle"'
+                WRITE(io,*) 'Resetting to zero.'
+              ENDDO
+            ENDIF
+            io_block%dump_cycle_first_index = 0
           ENDIF
         ENDDO
 
@@ -439,6 +451,8 @@ CONTAINS
         io_prefixes(nfile_prefixes) = TRIM(value)
         io_block%prefix_index = nfile_prefixes
       ENDIF
+    CASE(26)
+      io_block%dump_cycle_first_index = as_integer(value, errcode)
     END SELECT
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN
@@ -677,6 +691,7 @@ CONTAINS
     io_block%nstep_start = -1
     io_block%nstep_stop  = HUGE(1)
     io_block%dump_cycle  = HUGE(1)
+    io_block%dump_cycle_first_index = 0
     io_block%prefix_index = 1
     io_block%rolling_restart = .FALSE.
     NULLIFY(io_block%dump_at_nsteps)

@@ -626,7 +626,7 @@ CONTAINS
         IF (io_block_list(io)%dump_source_code) dump_source_code = .TRUE.
         IF (io_block_list(io)%dump_input_decks) dump_input_decks = .TRUE.
         IF (file_numbers(iprefix) .GT. io_block_list(io)%dump_cycle) &
-            file_numbers(iprefix) = 0
+            file_numbers(iprefix) = io_block_list(io)%dump_cycle_first_index
         iomask = IOR(iomask, io_block_list(io)%dumpmask)
         IF (n_subsets .NE. 0) THEN
           DO is = 1, n_subsets

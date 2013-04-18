@@ -658,6 +658,7 @@ MODULE shared_data
     INTEGER, POINTER :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
+    INTEGER :: dump_cycle_first_index
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
     LOGICAL :: dump_source_code, dump_input_decks, rolling_restart
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
