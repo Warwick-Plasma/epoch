@@ -640,7 +640,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (dt * nsteps .LT. time_first) THEN
+    IF (nsteps .GT. 0 .AND. (dt * nsteps .LT. time_first)) THEN
       av_time_first = dt * nsteps
     ELSE
       av_time_first = time_first
@@ -680,18 +680,13 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: ioutput
     TYPE(averaged_data_block) :: avg
-    INTEGER :: n_species_local, ispecies, species_sum
+    INTEGER :: n_species_local, ispecies
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
 
     avg%real_time = avg%real_time + dt
     avg%started = .TRUE.
 
-    species_sum = 0
-    n_species_local = 0
-    IF (IAND(iomask(ioutput), c_io_no_sum) .EQ. 0) species_sum = 1
-    IF (IAND(iomask(ioutput), c_io_species) .NE. 0) n_species_local = n_species
-
-    n_species_local = n_species_local + species_sum
+    n_species_local = avg%n_species + avg%species_sum
 
     IF (n_species_local .LE. 0) RETURN
 
@@ -721,7 +716,7 @@ CONTAINS
       CASE(c_dump_ekbar)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_ekbar(array, ispecies-species_sum)
+          CALL calc_ekbar(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
         ENDDO
@@ -729,7 +724,7 @@ CONTAINS
       CASE(c_dump_mass_density)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_mass_density(array, ispecies-species_sum)
+          CALL calc_mass_density(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
         ENDDO
@@ -737,7 +732,7 @@ CONTAINS
       CASE(c_dump_charge_density)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_charge_density(array, ispecies-species_sum)
+          CALL calc_charge_density(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
         ENDDO
@@ -745,7 +740,7 @@ CONTAINS
       CASE(c_dump_number_density)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_number_density(array, ispecies-species_sum)
+          CALL calc_number_density(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
         ENDDO
@@ -753,7 +748,7 @@ CONTAINS
       CASE(c_dump_temperature)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_temperature(array, ispecies-species_sum)
+          CALL calc_temperature(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
         ENDDO
@@ -785,35 +780,35 @@ CONTAINS
       CASE(c_dump_ekbar)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_ekbar(array, ispecies-species_sum)
+          CALL calc_ekbar(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_mass_density)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_mass_density(array, ispecies-species_sum)
+          CALL calc_mass_density(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_charge_density)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_charge_density(array, ispecies-species_sum)
+          CALL calc_charge_density(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_number_density)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_number_density(array, ispecies-species_sum)
+          CALL calc_number_density(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_temperature)
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         DO ispecies = 1, n_species_local
-          CALL calc_temperature(array, ispecies-species_sum)
+          CALL calc_temperature(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
@@ -917,7 +912,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: should_dump, subtype, subarray, ispecies, species_sum
+    INTEGER :: should_dump, subtype, subarray, ispecies
     INTEGER :: len1, len2, len3, len4, len5, io
     CHARACTER(LEN=c_id_length) :: temp_block_id
     CHARACTER(LEN=c_max_string_length) :: temp_name, len_string
@@ -1018,10 +1013,8 @@ CONTAINS
           IF (avg%dump_single) THEN
             avg%r4array = avg%r4array / REAL(avg%real_time, r4)
 
-            species_sum = 0
-            IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+            IF (avg%species_sum .GT. 0 &
                 .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-              species_sum = 1
               CALL sdf_write_plain_variable(sdf_handle, &
                   TRIM(block_id) // '_averaged', &
                   'Derived/' // TRIM(name) // '_averaged', &
@@ -1029,11 +1022,11 @@ CONTAINS
                   avg%r4array(:,:,:,1), subtype_field_r4, subarray_field_r4)
             ENDIF
 
-            IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
+            IF (avg%n_species .GT. 0) THEN
               len1 = LEN_TRIM(block_id) + 10
               len2 = LEN_TRIM(name) + 18
 
-              DO ispecies = 1, n_species
+              DO ispecies = 1, avg%n_species
                 IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
                 len3 = LEN_TRIM(io_list(ispecies)%name)
                 len4 = len3
@@ -1059,7 +1052,7 @@ CONTAINS
                     TRIM(io_list(ispecies)%name(1:len5))
                 CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                     TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-                    avg%r4array(:,:,:,ispecies+species_sum), &
+                    avg%r4array(:,:,:,ispecies+avg%species_sum), &
                     subtype_field_r4, subarray_field_r4)
               ENDDO
             ENDIF
@@ -1068,10 +1061,8 @@ CONTAINS
           ELSE
             avg%array = avg%array / avg%real_time
 
-            species_sum = 0
-            IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
+            IF (avg%species_sum .GT. 0 &
                 .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
-              species_sum = 1
               CALL sdf_write_plain_variable(sdf_handle, &
                   TRIM(block_id) // '_averaged', &
                   'Derived/' // TRIM(name) // '_averaged', &
@@ -1079,11 +1070,11 @@ CONTAINS
                   avg%array(:,:,:,1), subtype_field, subarray_field)
             ENDIF
 
-            IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
+            IF (avg%n_species .GT. 0) THEN
               len1 = LEN_TRIM(block_id) + 10
               len2 = LEN_TRIM(name) + 18
 
-              DO ispecies = 1, n_species
+              DO ispecies = 1, avg%n_species
                 IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
                 len3 = LEN_TRIM(io_list(ispecies)%name)
                 len4 = len3
@@ -1109,7 +1100,7 @@ CONTAINS
                     TRIM(io_list(ispecies)%name(1:len5))
                 CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                     TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-                    avg%array(:,:,:,ispecies+species_sum), &
+                    avg%array(:,:,:,ispecies+avg%species_sum), &
                     subtype_field, subarray_field)
               ENDDO
             ENDIF

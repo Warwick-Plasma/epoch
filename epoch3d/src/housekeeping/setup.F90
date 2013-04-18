@@ -301,6 +301,12 @@ CONTAINS
           avg%array = 0.0_num
         ENDIF
 
+        avg%species_sum = 0
+        avg%n_species = 0
+        IF (IAND(mask, c_io_no_sum) .EQ. 0) &
+            avg%species_sum = 1
+        IF (IAND(mask, c_io_species) .NE. 0) &
+            avg%n_species = n_species
         avg%real_time = 0.0_num
         avg%started = .FALSE.
       ENDIF

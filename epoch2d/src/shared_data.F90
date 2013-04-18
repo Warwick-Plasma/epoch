@@ -651,6 +651,7 @@ MODULE shared_data
     REAL(num), DIMENSION(:,:,:), POINTER :: array
     REAL(r4), DIMENSION(:,:,:), POINTER :: r4array
     REAL(num) :: real_time
+    INTEGER :: species_sum, n_species
     LOGICAL :: started, dump_single
   END TYPE averaged_data_block
   LOGICAL :: any_average = .FALSE.
