@@ -186,15 +186,15 @@ CONTAINS
   SUBROUTINE outflow_bcs_x_min
 
     REAL(num) :: t_env
-    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: laserpos, i
+    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps, base
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: source1, source2
+    INTEGER :: laserpos, n, i, j
     TYPE(laser_block), POINTER :: current
 
-    i = c_bd_x_min
+    n = c_bd_x_min
 
     laserpos = 1
-    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
       laserpos = cpml_x_min_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -205,59 +205,50 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(fplus(1:ny, 1:nz))
+    ALLOCATE(source1(ny,nz))
+    ALLOCATE(source2(ny,nz))
+    source1 = 0.0_num
+    source2 = 0.0_num
+
     bx(laserpos-1, 1:ny, 1:nz) = bx_x_min(1:ny, 1:nz)
 
-    fplus = 0.0_num
-    IF (add_laser(i)) THEN
+    IF (add_laser(n)) THEN
       current => laser_x_min
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fplus(1:ny, 1:nz) = fplus(1:ny, 1:nz) &
-              + t_env * current%amp * current%profile(1:ny, 1:nz) &
-              * SIN(current%omega * time + current%phase(1:ny, 1:nz)) &
-              * COS(current%pol_angle)
+          t_env = laser_time_profile(current) * current%amp
+          DO j = 1,nz
+          DO i = 1,ny
+            base = t_env * current%profile(i,j) &
+              * SIN(current%omega * time + current%phase(i,j))
+            source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
+            source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
+          ENDDO
+          ENDDO
         ENDIF
         current => current%next
       ENDDO
     ENDIF
 
-    bz(laserpos-1, 1:ny, 1:nz) = sum * ( 4.0_num * fplus &
+    bz(laserpos-1, 1:ny, 1:nz) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ey_x_min(1:ny, 1:nz) + c * bz_x_min(1:ny, 1:nz)) &
         - 2.0_num * ey(laserpos, 1:ny, 1:nz) &
         - lz * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 1:ny, 0:nz-1)) &
         + dt_eps * jy(laserpos, 1:ny, 1:nz) &
         + diff * bz(laserpos, 1:ny, 1:nz))
 
-    IF (add_laser(i)) THEN
-      fplus = 0.0_num
-      current => laser_x_min
-      DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fplus(1:ny, 1:nz) = fplus(1:ny, 1:nz) &
-              + t_env * current%amp * current%profile(1:ny, 1:nz) &
-              * SIN(current%omega * time + current%phase(1:ny, 1:nz)) &
-              * SIN(current%pol_angle)
-        ENDIF
-        current => current%next
-      ENDDO
-    ENDIF
-
-    by(laserpos-1, 1:ny, 1:nz) = sum * (-4.0_num * fplus &
+    by(laserpos-1, 1:ny, 1:nz) = sum * (-4.0_num * source2 &
         - 2.0_num * (ez_x_min(1:ny, 1:nz) - c * by_x_min(1:ny, 1:nz)) &
         + 2.0_num * ez(laserpos, 1:ny, 1:nz) &
         - ly * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 0:ny-1, 1:nz)) &
         - dt_eps * jz(laserpos, 1:ny, 1:nz) &
         + diff * by(laserpos, 1:ny, 1:nz))
 
-    DEALLOCATE(fplus)
+    DEALLOCATE(source1, source2)
 
     IF (dumpmask(c_dump_absorption) .GT. 0) THEN
-      IF (add_laser(i)) THEN
+      IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_x_min, lasers = laser_x_min)
       ELSE
         CALL calc_absorption(c_bd_x_min)
@@ -271,15 +262,15 @@ CONTAINS
   SUBROUTINE outflow_bcs_x_max
 
     REAL(num) :: t_env
-    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: fneg
-    INTEGER :: laserpos, i
+    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps, base
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: source1, source2
+    INTEGER :: laserpos, n, i, j
     TYPE(laser_block), POINTER :: current
 
-    i = c_bd_x_max
+    n = c_bd_x_max
 
     laserpos = nx
-    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
       laserpos = cpml_x_max_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -290,59 +281,50 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(fneg(1:ny, 1:nz))
+    ALLOCATE(source1(ny,nz))
+    ALLOCATE(source2(ny,nz))
+    source1 = 0.0_num
+    source2 = 0.0_num
+
     bx(laserpos+1, 1:ny, 1:nz) = bx_x_max(1:ny, 1:nz)
 
-    fneg = 0.0_num
-    IF (add_laser(i)) THEN
+    IF (add_laser(n)) THEN
       current => laser_x_max
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fneg(1:ny, 1:nz) = fneg(1:ny, 1:nz) &
-              + t_env * current%amp * current%profile(1:ny, 1:nz) &
-              * SIN(current%omega * time + current%phase(1:ny, 1:nz)) &
-              * COS(current%pol_angle)
+          t_env = laser_time_profile(current) * current%amp
+          DO j = 1,nz
+          DO i = 1,ny
+            base = t_env * current%profile(i,j) &
+              * SIN(current%omega * time + current%phase(i,j))
+            source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
+            source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
+          ENDDO
+          ENDDO
         ENDIF
         current => current%next
       ENDDO
     ENDIF
 
-    bz(laserpos, 1:ny, 1:nz) = sum * (-4.0_num * fneg &
+    bz(laserpos, 1:ny, 1:nz) = sum * (-4.0_num * source1 &
         - 2.0_num * (ey_x_max(1:ny, 1:nz) - c * bz_x_max(1:ny, 1:nz)) &
         + 2.0_num * ey(laserpos, 1:ny, 1:nz) &
         + lz * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 1:ny, 0:nz-1)) &
         - dt_eps * jy(laserpos, 1:ny, 1:nz) &
         + diff * bz(laserpos-1, 1:ny, 1:nz))
 
-    IF (add_laser(i)) THEN
-      fneg = 0.0_num
-      current => laser_x_max
-      DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fneg(1:ny, 1:nz) = fneg(1:ny, 1:nz) &
-              + t_env * current%amp * current%profile(1:ny, 1:nz) &
-              * SIN(current%omega * time + current%phase(1:ny, 1:nz)) &
-              * SIN(current%pol_angle)
-        ENDIF
-        current => current%next
-      ENDDO
-    ENDIF
-
-    by(laserpos, 1:ny, 1:nz) = sum * ( 4.0_num * fneg &
+    by(laserpos, 1:ny, 1:nz) = sum * ( 4.0_num * source2 &
         + 2.0_num * (ez_x_max(1:ny, 1:nz) + c * by_x_max(1:ny, 1:nz)) &
         - 2.0_num * ez(laserpos, 1:ny, 1:nz) &
         + ly * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 0:ny-1, 1:nz)) &
         + dt_eps * jz(laserpos, 1:ny, 1:nz) &
         + diff * by(laserpos-1, 1:ny, 1:nz))
 
-    DEALLOCATE(fneg)
+    DEALLOCATE(source1, source2)
 
     IF (dumpmask(c_dump_absorption) .GT. 0) THEN
-      IF (add_laser(i)) THEN
+      IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_x_max, lasers = laser_x_max)
       ELSE
         CALL calc_absorption(c_bd_x_max)
@@ -356,15 +338,15 @@ CONTAINS
   SUBROUTINE outflow_bcs_y_min
 
     REAL(num) :: t_env
-    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: laserpos, i
+    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps, base
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: source1, source2
+    INTEGER :: laserpos, n, i, j
     TYPE(laser_block), POINTER :: current
 
-    i = c_bd_y_min
+    n = c_bd_y_min
 
     laserpos = 1
-    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
       laserpos = cpml_y_min_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -375,59 +357,50 @@ CONTAINS
     diff = ly - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(fplus(1:nx, 1:nz))
+    ALLOCATE(source1(nx,nz))
+    ALLOCATE(source2(nx,nz))
+    source1 = 0.0_num
+    source2 = 0.0_num
+
     by(1:nx, laserpos-1, 1:nz) = by_y_min(1:nx, 1:nz)
 
-    fplus = 0.0_num
-    IF (add_laser(i)) THEN
+    IF (add_laser(n)) THEN
       current => laser_y_min
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fplus(1:nx, 1:nz) = fplus(1:nx, 1:nz) &
-              + t_env * current%amp * current%profile(1:nx, 1:nz) &
-              * SIN(current%omega * time + current%phase(1:nx, 1:nz)) &
-              * COS(current%pol_angle)
+          t_env = laser_time_profile(current) * current%amp
+          DO j = 1,nz
+          DO i = 1,nx
+            base = t_env * current%profile(i,j) &
+              * SIN(current%omega * time + current%phase(i,j))
+            source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
+            source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
+          ENDDO
+          ENDDO
         ENDIF
         current => current%next
       ENDDO
     ENDIF
 
-    bx(1:nx, laserpos-1, 1:nz) = sum * ( 4.0_num * fplus &
+    bx(1:nx, laserpos-1, 1:nz) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ez_y_min(1:nx, 1:nz) + c * bx_y_min(1:nx, 1:nz)) &
         - 2.0_num * ez(1:nx, laserpos, 1:nz) &
         - lx * (by(1:nx, laserpos, 1:nz) - by(0:nx-1, laserpos, 1:nz)) &
         + dt_eps * jz(1:nx, laserpos, 1:nz) &
         + diff * bx(1:nx, laserpos, 1:nz))
 
-    IF (add_laser(i)) THEN
-      fplus = 0.0_num
-      current => laser_y_min
-      DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fplus(1:nx, 1:nz) = fplus(1:nx, 1:nz) &
-              + t_env * current%amp * current%profile(1:nx, 1:nz) &
-              * SIN(current%omega * time + current%phase(1:nx, 1:nz)) &
-              * SIN(current%pol_angle)
-        ENDIF
-        current => current%next
-      ENDDO
-    ENDIF
-
-    bz(1:nx, laserpos-1, 1:nz) = sum * (-4.0_num * fplus &
+    bz(1:nx, laserpos-1, 1:nz) = sum * (-4.0_num * source2 &
         - 2.0_num * (ex_y_min(1:nx, 1:nz) - c * bz_y_min(1:nx, 1:nz)) &
         + 2.0_num * ex(1:nx, laserpos, 1:nz) &
         - lz * (by(1:nx, laserpos, 1:nz) - by(1:nx, laserpos, 0:nz-1)) &
         - dt_eps * jx(1:nx, laserpos, 1:nz) &
         + diff * bz(1:nx, laserpos, 1:nz))
 
-    DEALLOCATE(fplus)
+    DEALLOCATE(source1, source2)
 
     IF (dumpmask(c_dump_absorption) .GT. 0) THEN
-      IF (add_laser(i)) THEN
+      IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_y_min, lasers = laser_y_min)
       ELSE
         CALL calc_absorption(c_bd_y_min)
@@ -441,15 +414,15 @@ CONTAINS
   SUBROUTINE outflow_bcs_y_max
 
     REAL(num) :: t_env
-    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: fneg
-    INTEGER :: laserpos, i
+    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps, base
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: source1, source2
+    INTEGER :: laserpos, n, i, j
     TYPE(laser_block), POINTER :: current
 
-    i = c_bd_y_max
+    n = c_bd_y_max
 
     laserpos = ny
-    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
       laserpos = cpml_y_max_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -460,59 +433,50 @@ CONTAINS
     diff = ly - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(fneg(1:nx, 1:nz))
+    ALLOCATE(source1(nx,nz))
+    ALLOCATE(source2(nx,nz))
+    source1 = 0.0_num
+    source2 = 0.0_num
+
     by(1:nx, laserpos+1, 1:nz) = by_y_max(1:nx, 1:nz)
 
-    fneg = 0.0_num
-    IF (add_laser(i)) THEN
+    IF (add_laser(n)) THEN
       current => laser_y_max
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fneg(1:nx, 1:nz) = fneg(1:nx, 1:nz) &
-              + t_env * current%amp * current%profile(1:nx, 1:nz) &
-              * SIN(current%omega * time + current%phase(1:nx, 1:nz)) &
-              * COS(current%pol_angle)
+          t_env = laser_time_profile(current) * current%amp
+          DO j = 1,nz
+          DO i = 1,nx
+            base = t_env * current%profile(i,j) &
+              * SIN(current%omega * time + current%phase(i,j))
+            source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
+            source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
+          ENDDO
+          ENDDO
         ENDIF
         current => current%next
       ENDDO
     ENDIF
 
-    bx(1:nx, laserpos, 1:nz) = sum * (-4.0_num * fneg &
+    bx(1:nx, laserpos, 1:nz) = sum * (-4.0_num * source1 &
         - 2.0_num * (ez_y_max(1:nx, 1:nz) - c * bx_y_max(1:nx, 1:nz)) &
         + 2.0_num * ez(1:nx, laserpos, 1:nz) &
         + lx * (by(1:nx, laserpos, 1:nz) - by(0:nx-1, laserpos, 1:nz)) &
         - dt_eps * jz(1:nx, laserpos, 1:nz) &
         + diff * bx(1:nx, laserpos-1, 1:nz))
 
-    IF (add_laser(i)) THEN
-      fneg = 0.0_num
-      current => laser_y_max
-      DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fneg(1:nx, 1:nz) = fneg(1:nx, 1:nz) &
-              + t_env * current%amp * current%profile(1:nx, 1:nz) &
-              * SIN(current%omega * time + current%phase(1:nx, 1:nz)) &
-              * SIN(current%pol_angle)
-        ENDIF
-        current => current%next
-      ENDDO
-    ENDIF
-
-    bz(1:nx, laserpos, 1:nz) = sum * ( 4.0_num * fneg &
+    bz(1:nx, laserpos, 1:nz) = sum * ( 4.0_num * source2 &
         + 2.0_num * (ex_y_max(1:nx, 1:nz) + c * bz_y_max(1:nx, 1:nz)) &
         - 2.0_num * ex(1:nx, laserpos, 1:nz) &
         + lz * (by(1:nx, laserpos, 1:nz) - by(1:nx, laserpos, 0:nz-1)) &
         + dt_eps * jx(1:nx, laserpos, 1:nz) &
         + diff * bz(1:nx, laserpos-1, 1:nz))
 
-    DEALLOCATE(fneg)
+    DEALLOCATE(source1, source2)
 
     IF (dumpmask(c_dump_absorption) .GT. 0) THEN
-      IF (add_laser(i)) THEN
+      IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_y_max, lasers = laser_y_max)
       ELSE
         CALL calc_absorption(c_bd_y_max)
@@ -526,15 +490,15 @@ CONTAINS
   SUBROUTINE outflow_bcs_z_min
 
     REAL(num) :: t_env
-    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: fplus
-    INTEGER :: laserpos, i
+    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps, base
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: source1, source2
+    INTEGER :: laserpos, n, i, j
     TYPE(laser_block), POINTER :: current
 
-    i = c_bd_z_min
+    n = c_bd_z_min
 
     laserpos = 1
-    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
       laserpos = cpml_z_min_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -545,59 +509,50 @@ CONTAINS
     diff = lz - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(fplus(1:nx, 1:ny))
+    ALLOCATE(source1(nx,ny))
+    ALLOCATE(source2(nx,ny))
+    source1 = 0.0_num
+    source2 = 0.0_num
+
     bz(1:nx, 1:ny, laserpos-1) = bz_z_min(1:nx, 1:ny)
 
-    fplus = 0.0_num
-    IF (add_laser(i)) THEN
+    IF (add_laser(n)) THEN
       current => laser_z_min
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fplus(1:nx, 1:ny) = fplus(1:nx, 1:ny) &
-              + t_env * current%amp * current%profile(1:nx, 1:ny) &
-              * SIN(current%omega * time + current%phase(1:nx, 1:ny)) &
-              * COS(current%pol_angle)
+          t_env = laser_time_profile(current) * current%amp
+          DO j = 1,ny
+          DO i = 1,nx
+            base = t_env * current%profile(i,j) &
+              * SIN(current%omega * time + current%phase(i,j))
+            source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
+            source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
+          ENDDO
+          ENDDO
         ENDIF
         current => current%next
       ENDDO
     ENDIF
 
-    by(1:nx, 1:ny, laserpos-1) = sum * ( 4.0_num * fplus &
+    by(1:nx, 1:ny, laserpos-1) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ex_z_min(1:nx, 1:ny) + c * by_z_min(1:nx, 1:ny)) &
         - 2.0_num * ex(1:nx, 1:ny, laserpos) &
         - ly * (bz(1:nx, 1:ny, laserpos) - bz(1:nx, 0:ny-1, laserpos)) &
         + dt_eps * jx(1:nx, 1:ny, laserpos) &
         + diff * by(1:nx, 1:ny, laserpos))
 
-    IF (add_laser(i)) THEN
-      fplus = 0.0_num
-      current => laser_z_min
-      DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fplus(1:nx, 1:ny) = fplus(1:nx, 1:ny) &
-              + t_env * current%amp * current%profile(1:nx, 1:ny) &
-              * SIN(current%omega * time + current%phase(1:nx, 1:ny)) &
-              * SIN(current%pol_angle)
-        ENDIF
-        current => current%next
-      ENDDO
-    ENDIF
-
-    bx(1:nx, 1:ny, laserpos-1) = sum * (-4.0_num * fplus &
+    bx(1:nx, 1:ny, laserpos-1) = sum * (-4.0_num * source2 &
         - 2.0_num * (ey_z_min(1:nx, 1:ny) - c * bx_z_min(1:nx, 1:ny)) &
         + 2.0_num * ey(1:nx, 1:ny, laserpos) &
         - lx * (bz(1:nx, 1:ny, laserpos) - bz(0:nx-1, 1:ny, laserpos)) &
         - dt_eps * jy(1:nx, 1:ny, laserpos) &
         + diff * bx(1:nx, 1:ny, laserpos))
 
-    DEALLOCATE(fplus)
+    DEALLOCATE(source1, source2)
 
     IF (dumpmask(c_dump_absorption) .GT. 0) THEN
-      IF (add_laser(i)) THEN
+      IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_z_min, lasers = laser_z_min)
       ELSE
         CALL calc_absorption(c_bd_z_min)
@@ -611,15 +566,15 @@ CONTAINS
   SUBROUTINE outflow_bcs_z_max
 
     REAL(num) :: t_env
-    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: fneg
-    INTEGER :: laserpos, i
+    REAL(num) :: dtc2, lx, ly, lz, sum, diff, dt_eps, base
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: source1, source2
+    INTEGER :: laserpos, n, i, j
     TYPE(laser_block), POINTER :: current
 
-    i = c_bd_z_max
+    n = c_bd_z_max
 
     laserpos = nz
-    IF (bc_field(i) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
       laserpos = cpml_z_max_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -630,59 +585,50 @@ CONTAINS
     diff = lz - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(fneg(1:nx, 1:ny))
+    ALLOCATE(source1(nx,ny))
+    ALLOCATE(source2(nx,ny))
+    source1 = 0.0_num
+    source2 = 0.0_num
+
     bz(1:nx, 1:ny, laserpos+1) = bz_z_max(1:nx, 1:ny)
 
-    fneg = 0.0_num
-    IF (add_laser(i)) THEN
+    IF (add_laser(n)) THEN
       current => laser_z_max
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fneg(1:nx, 1:ny) = fneg(1:nx, 1:ny) &
-              + t_env * current%amp * current%profile(1:nx, 1:ny) &
-              * SIN(current%omega * time + current%phase(1:nx, 1:ny)) &
-              * COS(current%pol_angle)
+          t_env = laser_time_profile(current) * current%amp
+          DO j = 1,ny
+          DO i = 1,nx
+            base = t_env * current%profile(i,j) &
+              * SIN(current%omega * time + current%phase(i,j))
+            source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
+            source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
+          ENDDO
+          ENDDO
         ENDIF
         current => current%next
       ENDDO
     ENDIF
 
-    by(1:nx, 1:ny, laserpos) = sum * (-4.0_num * fneg &
+    by(1:nx, 1:ny, laserpos) = sum * (-4.0_num * source1 &
         - 2.0_num * (ex_z_max(1:nx, 1:ny) - c * by_z_max(1:nx, 1:ny)) &
         + 2.0_num * ex(1:nx, 1:ny, laserpos) &
         + ly * (bz(1:nx, 1:ny, laserpos) - bz(1:nx, 0:ny-1, laserpos)) &
         - dt_eps * jx(1:nx, 1:ny, laserpos) &
         + diff * by(1:nx, 1:ny, laserpos-1))
 
-    IF (add_laser(i)) THEN
-      fneg = 0.0_num
-      current => laser_z_max
-      DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
-          t_env = laser_time_profile(current)
-          fneg(1:nx, 1:ny) = fneg(1:nx, 1:ny) &
-              + t_env * current%amp * current%profile(1:nx, 1:ny) &
-              * SIN(current%omega * time + current%phase(1:nx, 1:ny)) &
-              * SIN(current%pol_angle)
-        ENDIF
-        current => current%next
-      ENDDO
-    ENDIF
-
-    bx(1:nx, 1:ny, laserpos) = sum * ( 4.0_num * fneg &
+    bx(1:nx, 1:ny, laserpos) = sum * ( 4.0_num * source2 &
         + 2.0_num * (ey_z_max(1:nx, 1:ny) + c * bx_z_max(1:nx, 1:ny)) &
         - 2.0_num * ey(1:nx, 1:ny, laserpos) &
         + lx * (bz(1:nx, 1:ny, laserpos) - bz(0:nx-1, 1:ny, laserpos)) &
         + dt_eps * jy(1:nx, 1:ny, laserpos) &
         + diff * bx(1:nx, 1:ny, laserpos-1))
 
-    DEALLOCATE(fneg)
+    DEALLOCATE(source1, source2)
 
     IF (dumpmask(c_dump_absorption) .GT. 0) THEN
-      IF (add_laser(i)) THEN
+      IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_z_max, lasers = laser_z_max)
       ELSE
         CALL calc_absorption(c_bd_z_max)
@@ -745,7 +691,7 @@ CONTAINS
         b1 = 0.25_num * (bx(1:nx  , ibc-1, 0:nz-1) + bx(1:nx  , ibc, 0:nz-1) &
                        + bx(1:nx  , ibc-1, 1:nz  ) + bx(1:nx  , ibc, 1:nz  ))
         b2 = 0.25_num * (bz(0:nx-1, ibc-1, 1:nz  ) + bz(0:nx-1, ibc, 1:nz  ) &
-                       + bz(1:nx  , ibc-1, 1:nz  ) + bz(1:nx  , ibc, 1:nz))
+                       + bz(1:nx  , ibc-1, 1:nz  ) + bz(1:nx  , ibc, 1:nz  ))
 
       CASE(c_bd_z_min, c_bd_z_max)
         mm = nx
@@ -772,8 +718,7 @@ CONTAINS
         e2 = 0.0_num
         b1 = 0.0_num
         b2 = 0.0_num
-
-      END SELECT
+    END SELECT
 
     laser_absorb_local = laser_absorb_local &
         + dt * dir * SUM(e1 * b1 - e2 * b2) / mu0
