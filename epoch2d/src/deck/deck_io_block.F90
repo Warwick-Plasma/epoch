@@ -10,13 +10,15 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 20
-  INTEGER :: block_number, full_io_block, restart_io_block
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 25
+  INTEGER :: block_number, full_io_block, restart_io_block, nfile_prefixes
+  INTEGER :: rolling_restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
   CHARACTER(LEN=string_length) :: name
+  CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
   TYPE(io_block_type), POINTER :: io_block
 
 CONTAINS
@@ -110,11 +112,20 @@ CONTAINS
     io_block_name (i+18) = 'time_stop'
     io_block_name (i+19) = 'nstep_start'
     io_block_name (i+20) = 'nstep_stop'
+    io_block_name (i+21) = 'dump_at_nsteps'
+    alternate_name(i+21) = 'nsteps_dump'
+    io_block_name (i+22) = 'dump_at_times'
+    alternate_name(i+22) = 'times_dump'
+    io_block_name (i+23) = 'dump_cycle'
+    io_block_name (i+24) = 'file_prefix'
+    io_block_name (i+25) = 'rolling_restart'
+    io_block_name (i+26) = 'dump_cycle_first_index'
 
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
     new_style_io_block = .FALSE.
     n_io_blocks = 0
+    rolling_restart_io_block = 0
 
   END SUBROUTINE io_deck_initialise
 
@@ -122,9 +133,11 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
+    CHARACTER(LEN=c_max_string_length) :: list_filename
     INTEGER :: i, io, ierr
 
     n_io_blocks = block_number
+    block_number = 0
 
     IF (n_io_blocks .GT. 0) THEN
       IF (deck_state .EQ. c_ds_first) THEN
@@ -138,9 +151,21 @@ CONTAINS
           CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         ENDIF
 
+        ALLOCATE(io_prefixes(n_io_blocks))
+        nfile_prefixes = 1
+        io_prefixes(1) = ''
+
         ALLOCATE(io_block_list(n_io_blocks))
         DO i = 1, n_io_blocks
           CALL init_io_block(io_block_list(i))
+          IF (i .EQ. rolling_restart_io_block) THEN
+            io_block_list(i)%rolling_restart = .TRUE.
+            io_block_list(i)%dump_cycle = 1
+            io_block_list(i)%restart = .TRUE.
+            io_block_list(i)%prefix_index = 2
+            nfile_prefixes = 2
+            io_prefixes(2) = 'roll'
+          ENDIF
         ENDDO
       ELSE
         DO i = 1, n_io_blocks
@@ -155,7 +180,39 @@ CONTAINS
             ENDIF
             io_block_list(i)%dt_average = t_end
           ENDIF
+          IF (io_block%dump_cycle_first_index .GT. io_block%dump_cycle) THEN
+            IF (rank .EQ. 0) THEN
+              DO io = stdout, du, du - stdout ! Print to stdout and to file
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,*) '"dump_cycle_first_index" cannot be greater ', &
+                    'than "dump_cycle"'
+                WRITE(io,*) 'Resetting to zero.'
+              ENDDO
+            ENDIF
+            io_block%dump_cycle_first_index = 0
+          ENDIF
         ENDDO
+
+        ALLOCATE(file_prefixes(nfile_prefixes))
+        ALLOCATE(file_numbers(nfile_prefixes))
+        DO i = 1,nfile_prefixes
+          file_prefixes(i) = TRIM(io_prefixes(i))
+          file_numbers(i) = 0
+        ENDDO
+        DEALLOCATE(io_prefixes)
+      ENDIF
+
+      ! Remove any left-over VisIt file lists
+      IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/full.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/normal.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
+        list_filename = TRIM(ADJUSTL(data_dir)) // '/restart.visit'
+        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+        CLOSE(unit=lu, status='DELETE')
       ENDIF
     ENDIF
 
@@ -173,6 +230,11 @@ CONTAINS
     IF (deck_state .NE. c_ds_first .AND. block_number .GT. 0) THEN
       io_block => io_block_list(block_number)
       io_block%dump_first = .FALSE.
+      IF (io_block%rolling_restart) THEN
+        io_block_done(num_vars_to_dump+15) = .TRUE.
+        io_block_done(num_vars_to_dump+23) = .TRUE.
+        io_block_done(num_vars_to_dump+24) = .TRUE.
+      ENDIF
     ENDIF
 
   END SUBROUTINE io_block_start
@@ -206,7 +268,7 @@ CONTAINS
     ENDIF
 
     ! Delete any existing visit file lists
-    IF (rank .EQ. 0) THEN
+    IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
       list_filename = TRIM(ADJUSTL(data_dir)) // '/' &
           // TRIM(io_block%name) // '.visit'
       OPEN(unit=lu, status='UNKNOWN', file=list_filename)
@@ -237,9 +299,9 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
     INTEGER :: loop, elementselected, mask, mask_element, ierr, io
-    INTEGER :: is, subset, n_list
+    INTEGER :: i, is, subset, n_list
     INTEGER, ALLOCATABLE :: subsets(:)
-    LOGICAL :: bad
+    LOGICAL :: bad, found
     INTEGER, PARAMETER :: c_err_new_style_ignore = 1
     INTEGER, PARAMETER :: c_err_new_style_global = 2
     INTEGER, PARAMETER :: c_err_old_style_ignore = 3
@@ -247,6 +309,18 @@ CONTAINS
     errcode = c_err_none
     IF (deck_state .EQ. c_ds_first) THEN
       IF (str_cmp(element, 'name')) new_style_io_block = .TRUE.
+      IF (str_cmp(element, 'rolling_restart')) THEN
+        IF (rolling_restart_io_block .GT. 0) THEN
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Cannot have multiple "rolling_restart" blocks.'
+            ENDDO
+          ENDIF
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        ENDIF
+        rolling_restart_io_block = block_number
+      ENDIF
       RETURN
     ENDIF
 
@@ -329,6 +403,18 @@ CONTAINS
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       io_block%restart = as_logical(value, errcode)
     CASE(16)
+      DO i = 1,block_number
+        IF (TRIM(io_block_list(i)%name) .EQ. TRIM(value)) THEN
+          IF (rank .EQ. 0) THEN
+            DO io = stdout, du, du - stdout ! Print to stdout and to file
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Output block "' // TRIM(value) &
+                  // '" already defined.'
+            ENDDO
+          ENDIF
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        ENDIF
+      ENDDO
       io_block%name = value
       got_name = .TRUE.
     CASE(17)
@@ -339,6 +425,30 @@ CONTAINS
       io_block%nstep_start = as_integer(value, errcode)
     CASE(20)
       io_block%nstep_stop = as_integer(value, errcode)
+    CASE(21)
+      IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
+      CALL get_allocated_array(value, io_block%dump_at_nsteps, errcode)
+    CASE(22)
+      IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
+      CALL get_allocated_array(value, io_block%dump_at_times, errcode)
+    CASE(23)
+      io_block%dump_cycle = as_integer(value, errcode)
+    CASE(24)
+      found = .FALSE.
+      DO i = 1,nfile_prefixes
+        IF (TRIM(io_prefixes(i)) .EQ. TRIM(value)) THEN
+          found = .TRUE.
+          io_block%prefix_index = i
+          EXIT
+        ENDIF
+      ENDDO
+      IF (.NOT.found) THEN
+        nfile_prefixes = nfile_prefixes + 1
+        io_prefixes(nfile_prefixes) = TRIM(value)
+        io_block%prefix_index = nfile_prefixes
+      ENDIF
+    CASE(26)
+      io_block%dump_cycle_first_index = as_integer(value, errcode)
     END SELECT
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN
@@ -576,6 +686,12 @@ CONTAINS
     io_block%time_stop  = HUGE(1.0_num)
     io_block%nstep_start = -1
     io_block%nstep_stop  = HUGE(1)
+    io_block%dump_cycle  = HUGE(1)
+    io_block%dump_cycle_first_index = 0
+    io_block%prefix_index = 1
+    io_block%rolling_restart = .FALSE.
+    NULLIFY(io_block%dump_at_nsteps)
+    NULLIFY(io_block%dump_at_times)
     DO i = 1, num_vars_to_dump
       io_block%averaged_data(i)%dump_single = .FALSE.
     ENDDO

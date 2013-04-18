@@ -5,6 +5,12 @@ MODULE strings_advanced
 
   IMPLICIT NONE
 
+  PRIVATE :: get_allocated_array_rnum, get_allocated_array_int
+
+  INTERFACE get_allocated_array
+    MODULE PROCEDURE get_allocated_array_rnum, get_allocated_array_int
+  END INTERFACE get_allocated_array
+
 CONTAINS
 
   SUBROUTINE get_filename(str_in, str_out, got_file, err)
@@ -113,6 +119,63 @@ CONTAINS
     CALL deallocate_stack(output)
 
   END SUBROUTINE get_vector
+
+
+
+  SUBROUTINE get_allocated_array_rnum(str_in, array, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    REAL(num), POINTER, INTENT(OUT) :: array(:)
+    INTEGER, INTENT(INOUT) :: err
+    TYPE(primitive_stack) :: output
+    INTEGER :: ndim, i
+    CHARACTER*1 :: c
+    CHARACTER(LEN=string_length) :: str_tmp
+    LOGICAL :: found
+
+    ! Scan for left parenthesis
+    found = .FALSE.
+    DO i = 1, LEN(TRIM(str_in))
+      c = str_in(i:i)
+      IF (c .EQ. '(') THEN
+        found = .TRUE.
+        EXIT
+      ENDIF
+      IF (c .NE. ' ' .AND. IACHAR(c) .NE. 9) EXIT
+    ENDDO
+
+    CALL initialise_stack(output)
+    IF (found) THEN
+      CALL tokenize(str_in, output, err)
+    ELSE
+      ! If parenthesis not found, create a new string
+      str_tmp = '(' // TRIM(ADJUSTL(str_in)) // ')'
+    ENDIF
+
+    CALL tokenize(str_tmp, output, err)
+    IF (err .EQ. c_err_none) &
+        CALL evaluate_and_return_all(output, 0, 0, 0, ndim, array, err)
+    CALL deallocate_stack(output)
+
+  END SUBROUTINE get_allocated_array_rnum
+
+
+
+  SUBROUTINE get_allocated_array_int(str_in, array, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER, POINTER, INTENT(OUT) :: array(:)
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num), POINTER :: rarray(:)
+
+    CALL get_allocated_array_rnum(str_in, rarray, err)
+
+    IF (ASSOCIATED(array)) DEALLOCATE(array)
+    ALLOCATE(array(SIZE(rarray)))
+    array = INT(rarray)
+    DEALLOCATE(rarray)
+
+  END SUBROUTINE get_allocated_array_int
 
 
 

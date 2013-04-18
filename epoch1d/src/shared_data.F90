@@ -589,11 +589,11 @@ MODULE shared_data
   INTEGER :: subarray_field_big, subarray_field_big_r4
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
-  INTEGER :: output_file
   LOGICAL :: force_first_to_be_restartable
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid
   INTEGER :: n_zeros = 4
+  INTEGER, PARAMETER :: c_max_zeros = 9
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
   INTEGER, PARAMETER :: c_dump_part_species      = 3
@@ -654,10 +654,13 @@ MODULE shared_data
     REAL(num) :: dt_snapshot, time_prev, time_first
     REAL(num) :: dt_average, dt_min_average, average_time
     REAL(num) :: time_start, time_stop
+    REAL(num), POINTER :: dump_at_times(:)
+    INTEGER, POINTER :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
-    INTEGER :: nstep_start, nstep_stop
+    INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
+    INTEGER :: dump_cycle_first_index
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
-    LOGICAL :: dump_source_code, dump_input_decks
+    LOGICAL :: dump_source_code, dump_input_decks, rolling_restart
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
@@ -668,6 +671,8 @@ MODULE shared_data
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
   REAL(num) :: time_start, time_stop
   INTEGER :: nstep_start, nstep_stop
+  CHARACTER(LEN=c_id_length), ALLOCATABLE :: file_prefixes(:)
+  INTEGER, ALLOCATABLE :: file_numbers(:)
 
   !----------------------------------------------------------------------------
   ! Extended IO information
@@ -812,7 +817,11 @@ MODULE shared_data
   LOGICAL :: need_random_state
   LOGICAL :: use_exact_restart
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
-  INTEGER :: restart_snapshot, step
+  INTEGER :: restart_number, step
+  CHARACTER(LEN=c_id_length) :: restart_prefix
+  CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename
+  CHARACTER(LEN=6+data_dir_max_length+c_max_zeros+c_id_length) :: &
+      full_restart_filename
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle

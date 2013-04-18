@@ -347,7 +347,6 @@ CONTAINS
 
   SUBROUTINE open_files
 
-    CHARACTER(LEN=16) :: string
     INTEGER :: errcode, ierr
     LOGICAL :: exists
 
@@ -377,9 +376,8 @@ CONTAINS
         STOP
       ENDIF
       IF (ic_from_restart) THEN
-        CALL integer_as_string(restart_snapshot, string)
         WRITE(stat_unit,*)
-        WRITE(stat_unit,*) 'Restarting from ', TRIM(string)
+        WRITE(stat_unit,*) 'Restarting from ', TRIM(restart_filename)
         WRITE(stat_unit,*) ascii_header
       ELSE
         WRITE(stat_unit,*) ascii_header
@@ -552,11 +550,10 @@ CONTAINS
   SUBROUTINE restart_data(step)
 
     INTEGER, INTENT(OUT) :: step
-    CHARACTER(LEN=20+data_dir_max_length) :: filename
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, geometry
+    INTEGER :: ierr, i, is, i1, i2, iblock, nblocks, ndims, geometry
     INTEGER(i8) :: npart, npart_local
     INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
@@ -575,14 +572,12 @@ CONTAINS
     npart_global = 0
     step = -1
 
-    ! Create the filename for the last snapshot
-    WRITE(filename, '(a, ''/'', i4.4, ''.sdf'')') TRIM(data_dir), &
-        restart_snapshot
-    CALL sdf_open(sdf_handle, filename, comm, c_sdf_read)
+    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read)
 
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)
 
+    ! Reset io_block parameters
     DO i = 1, n_io_blocks
       IF (io_block_list(i)%dt_snapshot .GT. 0.0_num) THEN
         io_block_list(i)%time_prev = time
@@ -593,6 +588,20 @@ CONTAINS
         io_block_list(i)%nstep_prev = step
       ELSE
         io_block_list(i)%nstep_prev = 0
+      ENDIF
+      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
+          IF (step .GE. io_block_list(i)%dump_at_nsteps(is)) THEN
+            io_block_list(i)%dump_at_nsteps(is) = HUGE(1)
+          ENDIF
+        ENDDO
+      ENDIF
+      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_times)
+          IF (time .GE. io_block_list(i)%dump_at_times(is)) THEN
+            io_block_list(i)%dump_at_times(is) = HUGE(1.0_num)
+          ENDIF
+        ENDDO
       ENDIF
     ENDDO
 
@@ -748,6 +757,16 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, random_states_per_proc)
           CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
           DEALLOCATE(random_states_per_proc)
+        ELSE IF (str_cmp(block_id, 'file_numbers')) THEN
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (ndims .NE. 1 .OR. dims(1) .NE. SIZE(file_numbers)) THEN
+            IF (rank .EQ. 0) THEN
+              PRINT*, '*** WARNING ***'
+              PRINT*, 'Output file numbers do not agree. Ignoring.'
+            ENDIF
+          ELSE
+            CALL sdf_read_srl(sdf_handle, file_numbers)
+          ENDIF
         ENDIF
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
@@ -989,7 +1008,6 @@ CONTAINS
 
   SUBROUTINE read_cpu_split
 
-    CHARACTER(LEN=20+data_dir_max_length) :: filename
     CHARACTER(LEN=c_id_length) :: code_name, block_id
     CHARACTER(LEN=c_max_string_length) :: name
     INTEGER :: ierr, step, code_io_version, string_len, nblocks, ndims
@@ -998,10 +1016,7 @@ CONTAINS
     LOGICAL :: restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
 
-    ! Create the filename for the last snapshot
-    WRITE(filename, '(a, ''/'', i4.4, ''.sdf'')') TRIM(data_dir), &
-        restart_snapshot
-    CALL sdf_open(sdf_handle, filename, MPI_COMM_WORLD, c_sdf_read)
+    CALL sdf_open(sdf_handle, full_restart_filename, MPI_COMM_WORLD, c_sdf_read)
 
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)
