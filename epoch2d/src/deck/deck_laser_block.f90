@@ -36,6 +36,7 @@ CONTAINS
     ! Every new laser uses the internal time function
     ALLOCATE(working_laser)
     working_laser%use_time_function = .FALSE.
+    working_laser%use_phase_function = .TRUE.
 
   END SUBROUTINE laser_block_start
 
@@ -154,21 +155,15 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'phase')) THEN
+      CALL initialise_stack(working_laser%phase_function)
+      CALL tokenize(value, working_laser%phase_function, errcode)
       working_laser%phase = 0.0_num
-      CALL initialise_stack(output)
-      CALL tokenize(value, output, errcode)
-      IF (working_laser%boundary .EQ. c_bd_x_min &
-          .OR. working_laser%boundary .EQ. c_bd_x_max) THEN
-        DO iy = 1, ny
-          working_laser%phase(iy) = evaluate_at_point(output, 0, iy, errcode)
-        ENDDO
-      ELSE IF (working_laser%boundary .EQ. c_bd_y_max &
-          .OR. working_laser%boundary .EQ. c_bd_y_min) THEN
-        DO ix = 1, nx
-          working_laser%phase(ix) = evaluate_at_point(output, ix, 0, errcode)
-        ENDDO
+      CALL laser_update_phase(working_laser)
+      IF (working_laser%phase_function%is_time_varying) THEN
+        working_laser%use_phase_function = .TRUE.
+      ELSE
+        CALL deallocate_stack(working_laser%phase_function)
       ENDIF
-      CALL deallocate_stack(output)
       RETURN
     ENDIF
 

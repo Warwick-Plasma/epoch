@@ -394,6 +394,7 @@ MODULE shared_parser_data
     TYPE(stack_element), POINTER :: entries(:)
     INTEGER :: stack_point, stack_size
     LOGICAL :: init = .FALSE.
+    LOGICAL :: is_time_varying = .FALSE.
   END TYPE primitive_stack
 
   TYPE deck_constant
@@ -912,8 +913,8 @@ MODULE shared_data
     REAL(num) :: profile
     REAL(num) :: phase
 
-    LOGICAL :: use_time_function
-    TYPE(primitive_stack) :: time_function
+    LOGICAL :: use_time_function, use_phase_function
+    TYPE(primitive_stack) :: time_function, phase_function
 
     REAL(num) :: amp, omega, pol_angle, t_start, t_end
 
