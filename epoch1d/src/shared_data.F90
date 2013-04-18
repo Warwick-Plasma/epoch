@@ -913,8 +913,8 @@ MODULE shared_data
     REAL(num) :: profile
     REAL(num) :: phase
 
-    LOGICAL :: use_time_function, use_phase_function
-    TYPE(primitive_stack) :: time_function, phase_function
+    LOGICAL :: use_time_function, use_phase_function, use_profile_function
+    TYPE(primitive_stack) :: time_function, phase_function, profile_function
 
     REAL(num) :: amp, omega, pol_angle, t_start, t_end
 

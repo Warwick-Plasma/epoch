@@ -16,6 +16,7 @@ CONTAINS
     laser%id = -1
     laser%use_time_function = .FALSE.
     laser%use_phase_function = .FALSE.
+    laser%use_profile_function = .FALSE.
     laser%amp = -1.0_num
     laser%omega = -1.0_num
     laser%pol_angle = 0.0_num
@@ -75,6 +76,19 @@ CONTAINS
     laser%phase = evaluate_at_point(laser%phase_function, 0, err)
 
   END SUBROUTINE laser_update_phase
+
+
+
+  SUBROUTINE laser_update_profile(laser)
+
+    TYPE(laser_block), POINTER :: laser
+    INTEGER :: err
+
+    err = 0
+    laser%profile = evaluate_at_point(laser%profile_function, 0, err)
+
+  END SUBROUTINE laser_update_profile
+
 
 
 
@@ -159,6 +173,7 @@ CONTAINS
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
+          IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
           base = t_env * current%profile &
             * SIN(current%omega * time + current%phase)
@@ -224,6 +239,7 @@ CONTAINS
         ! evaluate the temporal evolution of the laser
         IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
+          IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
           base = t_env * current%profile &
             * SIN(current%omega * time + current%phase)

@@ -37,6 +37,7 @@ CONTAINS
     ALLOCATE(working_laser)
     working_laser%use_time_function = .FALSE.
     working_laser%use_phase_function = .TRUE.
+    working_laser%use_profile_function = .TRUE.
 
   END SUBROUTINE laser_block_start
 
@@ -135,7 +136,15 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'profile')) THEN
-      working_laser%profile = as_real(value, errcode)
+      CALL initialise_stack(working_laser%profile_function)
+      CALL tokenize(value, working_laser%profile_function, errcode)
+      working_laser%profile = 0.0_num
+      CALL laser_update_profile(working_laser)
+      IF (working_laser%profile_function%is_time_varying) THEN
+        working_laser%use_profile_function = .TRUE.
+      ELSE
+        CALL deallocate_stack(working_laser%profile_function)
+      ENDIF
       RETURN
     ENDIF
 
