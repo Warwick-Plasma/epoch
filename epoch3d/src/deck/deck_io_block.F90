@@ -10,7 +10,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 25
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 26
   INTEGER :: block_number, full_io_block, restart_io_block, nfile_prefixes
   INTEGER :: rolling_restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
