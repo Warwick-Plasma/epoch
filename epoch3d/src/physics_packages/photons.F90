@@ -895,7 +895,7 @@ CONTAINS
 
     ! Calculate electron recoil
 
-    mag_p = mag_p - new_photon%particle_energy / c
+    mag_p = mag_p - photon_energy / c
 
     generating_electron%part_p(1) = dir_x * mag_p
     generating_electron%part_p(2) = dir_y * mag_p
@@ -904,8 +904,7 @@ CONTAINS
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
-    IF (new_photon%particle_energy .GT. photon_energy_min &
-        .AND. produce_photons) THEN
+    IF (photon_energy .GT. photon_energy_min .AND. produce_photons) THEN
       ALLOCATE(new_photon)
       new_photon%part_pos = generating_electron%part_pos
 
