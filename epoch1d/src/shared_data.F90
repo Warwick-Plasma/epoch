@@ -654,7 +654,7 @@ MODULE shared_data
   TYPE io_block_type
     CHARACTER(LEN=string_length) :: name
     REAL(num) :: dt_snapshot, time_prev, time_first
-    REAL(num) :: dt_average, dt_min_average, average_time
+    REAL(num) :: dt_average, dt_min_average, average_time, average_time_start
     REAL(num) :: time_start, time_stop
     REAL(num), POINTER :: dump_at_times(:)
     INTEGER, POINTER :: dump_at_nsteps(:)

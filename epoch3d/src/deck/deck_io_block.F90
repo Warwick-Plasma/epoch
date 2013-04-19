@@ -674,6 +674,7 @@ CONTAINS
     io_block%dt_average = -1.0_num
     io_block%dt_min_average = -1.0_num
     io_block%average_time = -1.0_num
+    io_block%average_time_start = -1.0_num
     io_block%nstep_snapshot = -1
     io_block%nstep_prev = 0
     io_block%nstep_first = 0

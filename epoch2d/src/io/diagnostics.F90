@@ -525,7 +525,7 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: print_arrays
     LOGICAL, INTENT(IN) :: force
     INTEGER :: id, io, is, nstep_next
-    REAL(num) :: t0, t1, time_first, av_time_first
+    REAL(num) :: t0, t1, time_first
     LOGICAL, SAVE :: first_call = .TRUE.
     LOGICAL :: last_call, dump
 
@@ -625,6 +625,9 @@ CONTAINS
         ENDIF
       ENDIF
 
+      io_block_list(io)%average_time_start = &
+          time_first - io_block_list(io)%average_time
+
       IF (io_block_list(io)%dump) THEN
         print_arrays = .TRUE.
         IF (io_block_list(io)%restart) restart_flag = .TRUE.
@@ -642,16 +645,10 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (nsteps .GT. 0 .AND. (dt * nsteps .LT. time_first)) THEN
-      av_time_first = dt * nsteps
-    ELSE
-      av_time_first = time_first
-    ENDIF
-
     DO io = 1, n_io_blocks
       IF (.NOT. io_block_list(io)%any_average) CYCLE
 
-      IF (time .GE. av_time_first - io_block_list(io)%average_time) THEN
+      IF (time .GE. io_block_list(io)%average_time_start) THEN
         DO id = 1, num_vars_to_dump
           IF (IAND(io_block_list(io)%dumpmask(id), c_io_averaged) .NE. 0) THEN
             CALL average_field(id, io_block_list(io)%averaged_data(id))
