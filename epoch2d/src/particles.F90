@@ -487,7 +487,7 @@ CONTAINS
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: d_init, d_final
-    REAL(num) :: probe_energy
+    REAL(num) :: probe_energy, dtfac, fac
     LOGICAL :: probes_for_species
 #endif
 
@@ -495,13 +495,19 @@ CONTAINS
     current_probe => species_list(ispecies)%attached_probes
     probes_for_species = ASSOCIATED(current_probe)
 #endif
+    dtfac = dt * c**2
 
     ! set current to point to head of list
     current => species_list(ispecies)%attached_list%head
     ! loop over photons
     DO WHILE(ASSOCIATED(current))
-      delta_x = current%part_p(1) * dt
-      delta_y = current%part_p(2) * dt
+      ! Note that this is the energy of a single REAL particle in the
+      ! pseudoparticle, NOT the energy of the pseudoparticle
+      probe_energy = current%particle_energy
+
+      fac = dtfac / probe_energy
+      delta_x = current%part_p(1) * fac
+      delta_y = current%part_p(2) * fac
 #ifdef PARTICLE_PROBES
       init_part_x = current%part_pos(1)
       init_part_y = current%part_pos(2)
@@ -522,10 +528,6 @@ CONTAINS
 
         ! Cycle through probes
         DO WHILE(ASSOCIATED(current_probe))
-          ! Note that this is the energy of a single REAL particle in the
-          ! pseudoparticle, NOT the energy of the pseudoparticle
-          probe_energy = current%particle_energy
-
           ! Unidirectional probe
           IF (probe_energy .GT. current_probe%ek_min) THEN
             IF (probe_energy .LT. current_probe%ek_max) THEN

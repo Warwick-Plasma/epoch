@@ -394,6 +394,7 @@ MODULE shared_parser_data
     TYPE(stack_element), POINTER :: entries(:)
     INTEGER :: stack_point, stack_size
     LOGICAL :: init = .FALSE.
+    LOGICAL :: is_time_varying = .FALSE.
   END TYPE primitive_stack
 
   TYPE deck_constant
@@ -589,11 +590,11 @@ MODULE shared_data
   INTEGER :: subarray_field_big, subarray_field_big_r4
   INTEGER(KIND=MPI_OFFSET_KIND) :: initialdisp
   INTEGER :: full_dump_every, restart_dump_every
-  INTEGER :: output_file
   LOGICAL :: force_first_to_be_restartable
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid
   INTEGER :: n_zeros = 4
+  INTEGER, PARAMETER :: c_max_zeros = 9
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
   INTEGER, PARAMETER :: c_dump_part_species      = 3
@@ -632,7 +633,10 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_cpml_psi_bzx      = 36
   INTEGER, PARAMETER :: c_dump_absorption        = 37
   INTEGER, PARAMETER :: c_dump_part_ek           = 38
-  INTEGER, PARAMETER :: num_vars_to_dump         = 38
+  INTEGER, PARAMETER :: c_dump_part_opdepth      = 39
+  INTEGER, PARAMETER :: c_dump_part_qed_energy   = 40
+  INTEGER, PARAMETER :: c_dump_part_opdepth_tri  = 41
+  INTEGER, PARAMETER :: num_vars_to_dump         = 41
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -642,6 +646,7 @@ MODULE shared_data
     REAL(num), DIMENSION(:,:), POINTER :: array
     REAL(r4), DIMENSION(:,:), POINTER :: r4array
     REAL(num) :: real_time
+    INTEGER :: species_sum, n_species
     LOGICAL :: started, dump_single
   END TYPE averaged_data_block
   LOGICAL :: any_average = .FALSE.
@@ -649,12 +654,15 @@ MODULE shared_data
   TYPE io_block_type
     CHARACTER(LEN=string_length) :: name
     REAL(num) :: dt_snapshot, time_prev, time_first
-    REAL(num) :: dt_average, dt_min_average, average_time
+    REAL(num) :: dt_average, dt_min_average, average_time, average_time_start
     REAL(num) :: time_start, time_stop
+    REAL(num), POINTER :: dump_at_times(:)
+    INTEGER, POINTER :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
-    INTEGER :: nstep_start, nstep_stop
+    INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
+    INTEGER :: dump_cycle_first_index
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
-    LOGICAL :: dump_source_code, dump_input_decks
+    LOGICAL :: dump_source_code, dump_input_decks, rolling_restart
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
@@ -665,6 +673,8 @@ MODULE shared_data
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
   REAL(num) :: time_start, time_stop
   INTEGER :: nstep_start, nstep_stop
+  CHARACTER(LEN=c_id_length), ALLOCATABLE :: file_prefixes(:)
+  INTEGER, ALLOCATABLE :: file_numbers(:)
 
   !----------------------------------------------------------------------------
   ! Extended IO information
@@ -797,6 +807,7 @@ MODULE shared_data
   LOGICAL :: use_particle_lists = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
+  REAL(num) :: dt_from_restart
   REAL(num) :: dt_min_average, cfl
   REAL(num) :: length_x, dx, x_min, x_max
   REAL(num) :: x_min_local, x_max_local, length_x_local
@@ -808,11 +819,14 @@ MODULE shared_data
   LOGICAL :: need_random_state
   LOGICAL :: use_exact_restart
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
-  INTEGER :: restart_snapshot, step
+  INTEGER :: restart_number, step
+  CHARACTER(LEN=c_id_length) :: restart_prefix
+  CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename
+  CHARACTER(LEN=6+data_dir_max_length+c_max_zeros+c_id_length) :: &
+      full_restart_filename
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
-    REAL(num) :: sort_index
   END TYPE particle_sort_element
 
   TYPE(particle_sort_element), POINTER, DIMENSION(:) :: coll_sort_array
@@ -851,7 +865,7 @@ MODULE shared_data
   INTEGER :: breit_wheeler_electron_species = -1
   INTEGER :: trident_positron_species = -1, breit_wheeler_positron_species = -1
 
-  REAL(num) :: photon_energy_min = 0.0_num
+  REAL(num) :: photon_energy_min = EPSILON(1.0_num)
   REAL(num) :: qed_start_time = 0.0_num
   LOGICAL :: use_qed = .FALSE., produce_pairs = .FALSE.
   LOGICAL :: produce_photons = .FALSE., photon_dynamics = .FALSE.
@@ -900,8 +914,8 @@ MODULE shared_data
     REAL(num) :: profile
     REAL(num) :: phase
 
-    LOGICAL :: use_time_function
-    TYPE(primitive_stack) :: time_function
+    LOGICAL :: use_time_function, use_phase_function, use_profile_function
+    TYPE(primitive_stack) :: time_function, phase_function, profile_function
 
     REAL(num) :: amp, omega, pol_angle, t_start, t_end
 

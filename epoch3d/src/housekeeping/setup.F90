@@ -8,6 +8,7 @@ MODULE setup
   USE split_particle
   USE shunt
   USE laser
+  USE window
 
   IMPLICIT NONE
 
@@ -121,23 +122,29 @@ CONTAINS
 
     INTEGER :: iproc, ix, iy, iz
     REAL(num) :: xb_min, yb_min, zb_min
+    LOGICAL, SAVE :: first = .TRUE.
+
+    IF (first) THEN
+      length_x = x_max - x_min
+      dx = length_x / REAL(nx_global-2*cpml_thickness, num)
+      x_min = x_min - dx * cpml_thickness
+      x_max = x_max + dx * cpml_thickness
+
+      length_y = y_max - y_min
+      dy = length_y / REAL(ny_global-2*cpml_thickness, num)
+      y_min = y_min - dy * cpml_thickness
+      y_max = y_max + dy * cpml_thickness
+
+      length_z = z_max - z_min
+      dz = length_z / REAL(nz_global-2*cpml_thickness, num)
+      z_min = z_min - dz * cpml_thickness
+      z_max = z_max + dz * cpml_thickness
+
+      first = .FALSE.
+    ENDIF
 
     length_x = x_max - x_min
-    dx = length_x / REAL(nx_global-2*cpml_thickness, num)
-    x_min = x_min - dx * cpml_thickness
-    x_max = x_max + dx * cpml_thickness
-    length_x = x_max - x_min
-
     length_y = y_max - y_min
-    dy = length_y / REAL(ny_global-2*cpml_thickness, num)
-    y_min = y_min - dy * cpml_thickness
-    y_max = y_max + dy * cpml_thickness
-    length_y = y_max - y_min
-
-    length_z = z_max - z_min
-    dz = length_z / REAL(nz_global-2*cpml_thickness, num)
-    z_min = z_min - dz * cpml_thickness
-    z_max = z_max + dz * cpml_thickness
     length_z = z_max - z_min
 
     ! Shift grid to cell centres.
@@ -294,6 +301,12 @@ CONTAINS
           avg%array = 0.0_num
         ENDIF
 
+        avg%species_sum = 0
+        avg%n_species = 0
+        IF (IAND(mask, c_io_no_sum) .EQ. 0) &
+            avg%species_sum = 1
+        IF (IAND(mask, c_io_species) .NE. 0) &
+            avg%n_species = n_species
         avg%real_time = 0.0_num
         avg%started = .FALSE.
       ENDIF
@@ -468,7 +481,6 @@ CONTAINS
 
   SUBROUTINE open_files
 
-    CHARACTER(LEN=16) :: string
     INTEGER :: errcode, ierr
     LOGICAL :: exists
 
@@ -498,9 +510,8 @@ CONTAINS
         STOP
       ENDIF
       IF (ic_from_restart) THEN
-        CALL integer_as_string(restart_snapshot, string)
         WRITE(stat_unit,*)
-        WRITE(stat_unit,*) 'Restarting from ', TRIM(string)
+        WRITE(stat_unit,*) 'Restarting from ', TRIM(restart_filename)
         WRITE(stat_unit,*) ascii_header
       ELSE
         WRITE(stat_unit,*) ascii_header
@@ -677,11 +688,10 @@ CONTAINS
   SUBROUTINE restart_data(step)
 
     INTEGER, INTENT(OUT) :: step
-    CHARACTER(LEN=20+data_dir_max_length) :: filename
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2, str3
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: ierr, i, i1, i2, iblock, nblocks, ndims, geometry
+    INTEGER :: ierr, i, is, i1, i2, iblock, nblocks, ndims, geometry
     INTEGER(i8) :: npart, npart_local
     INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
@@ -700,14 +710,12 @@ CONTAINS
     npart_global = 0
     step = -1
 
-    ! Create the filename for the last snapshot
-    WRITE(filename, '(a, ''/'', i4.4, ''.sdf'')') TRIM(data_dir), &
-        restart_snapshot
-    CALL sdf_open(sdf_handle, filename, comm, c_sdf_read)
+    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read)
 
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)
 
+    ! Reset io_block parameters
     DO i = 1, n_io_blocks
       IF (io_block_list(i)%dt_snapshot .GT. 0.0_num) THEN
         io_block_list(i)%time_prev = time
@@ -718,6 +726,20 @@ CONTAINS
         io_block_list(i)%nstep_prev = step
       ELSE
         io_block_list(i)%nstep_prev = 0
+      ENDIF
+      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
+          IF (step .GE. io_block_list(i)%dump_at_nsteps(is)) THEN
+            io_block_list(i)%dump_at_nsteps(is) = HUGE(1)
+          ENDIF
+        ENDDO
+      ENDIF
+      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_times)
+          IF (time .GE. io_block_list(i)%dump_at_times(is)) THEN
+            io_block_list(i)%dump_at_times(is) = HUGE(1.0_num)
+          ENDIF
+        ENDDO
       ENDIF
     ENDDO
 
@@ -769,6 +791,8 @@ CONTAINS
     bx = 0.0_num
     by = 0.0_num
     bz = 0.0_num
+
+    dt_from_restart = 0.0_num
 
     IF (rank .EQ. 0) PRINT*, 'Input file contains', nblocks, 'blocks'
 
@@ -871,10 +895,24 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, random_states_per_proc)
           CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
           DEALLOCATE(random_states_per_proc)
+        ELSE IF (str_cmp(block_id, 'file_numbers')) THEN
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (ndims .NE. 1 .OR. dims(1) .NE. SIZE(file_numbers)) THEN
+            IF (rank .EQ. 0) THEN
+              PRINT*, '*** WARNING ***'
+              PRINT*, 'Output file numbers do not agree. Ignoring.'
+            ENDIF
+          ELSE
+            CALL sdf_read_srl(sdf_handle, file_numbers)
+          ENDIF
         ENDIF
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
+        ELSE IF (str_cmp(block_id, 'dt')) THEN
+          CALL sdf_read_srl(sdf_handle, dt_from_restart)
+        ELSE IF (str_cmp(block_id, 'window_shift_fraction')) THEN
+          CALL sdf_read_srl(sdf_handle, window_shift_fraction)
         ELSE IF (block_id(1:7) .EQ. 'weight/') THEN
           CALL find_species_by_name(block_id, ispecies)
           IF (ispecies .EQ. 0) CYClE
@@ -1094,6 +1132,48 @@ CONTAINS
           CALL MPI_ABORT(comm, errcode, ierr)
           STOP
 #endif
+
+        ELSE IF (block_id(1:14) .EQ. 'optical depth/') THEN
+#ifdef PHOTONS
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_optical_depth)
+#else
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with optical depths.'
+            PRINT*, 'Please recompile with the -DPHOTONS option.'
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+#endif
+
+        ELSE IF (block_id(1:11) .EQ. 'qed energy/') THEN
+#ifdef PHOTONS
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_qed_energy)
+#else
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with QED energies.'
+            PRINT*, 'Please recompile with the -DPHOTONS option.'
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+#endif
+
+        ELSE IF (block_id(1:14) .EQ. 'trident depth/') THEN
+#ifdef TRIDENT_PHOTONS
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_optical_depth_trident)
+#else
+          IF (rank .EQ. 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with Trident optical depths.'
+            PRINT*, 'Please recompile with the -DTRIDENT_PHOTONS option.'
+          ENDIF
+          CALL MPI_ABORT(comm, errcode, ierr)
+          STOP
+#endif
         ENDIF
       END SELECT
     ENDDO
@@ -1109,19 +1189,15 @@ CONTAINS
 
   SUBROUTINE read_cpu_split
 
-    CHARACTER(LEN=20+data_dir_max_length) :: filename
     CHARACTER(LEN=c_id_length) :: code_name, block_id
     CHARACTER(LEN=c_max_string_length) :: name
     INTEGER :: ierr, step, code_io_version, string_len, nblocks, ndims
-    INTEGER :: blocktype, geometry, iblock, npx, npy, npz
+    INTEGER :: blocktype, datatype, geometry, iblock, npx, npy, npz
     INTEGER, DIMENSION(4) :: dims
     LOGICAL :: restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
 
-    ! Create the filename for the last snapshot
-    WRITE(filename, '(a, ''/'', i4.4, ''.sdf'')') TRIM(data_dir), &
-        restart_snapshot
-    CALL sdf_open(sdf_handle, filename, MPI_COMM_WORLD, c_sdf_read)
+    CALL sdf_open(sdf_handle, full_restart_filename, MPI_COMM_WORLD, c_sdf_read)
 
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)
@@ -1151,9 +1227,10 @@ CONTAINS
 
     DO iblock = 1, nblocks
       CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
-          ndims)
+          ndims, datatype)
 
-      IF (blocktype .EQ. c_blocktype_cpu_split) THEN
+      IF (blocktype .EQ. c_blocktype_cpu_split &
+          .AND. datatype .NE. c_datatype_integer8) THEN
         CALL sdf_read_cpu_split_info(sdf_handle, dims, geometry)
         npx = dims(1) + 1
         npy = dims(2) + 1
@@ -1167,7 +1244,6 @@ CONTAINS
           ALLOCATE(old_z_max(nprocz))
           CALL sdf_read_srl_cpu_split(sdf_handle, old_x_max, old_y_max, &
               old_z_max)
-          EXIT
         ELSE
           IF (rank .EQ. 0) THEN
             PRINT*, '*** WARNING ***'
@@ -1177,6 +1253,7 @@ CONTAINS
           ENDIF
           use_exact_restart = .FALSE.
         ENDIF
+        EXIT
       ENDIF
     ENDDO
 
@@ -1309,6 +1386,67 @@ CONTAINS
     it_id = 0
 
   END FUNCTION it_id
+#endif
+
+
+
+#ifdef PHOTONS
+  FUNCTION it_optical_depth(array, npart_this_it, start)
+
+    REAL(num) :: it_optical_depth
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%optical_depth = array(ipart)
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_optical_depth = 0
+
+  END FUNCTION it_optical_depth
+
+
+
+  FUNCTION it_qed_energy(array, npart_this_it, start)
+
+    REAL(num) :: it_qed_energy
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%particle_energy = array(ipart)
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_qed_energy = 0
+
+  END FUNCTION it_qed_energy
+
+
+
+#ifdef TRIDENT_PHOTONS
+  FUNCTION it_optical_depth_trident(array, npart_this_it, start)
+
+    REAL(num) :: it_optical_depth_trident
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%optical_depth_tri = array(ipart)
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_optical_depth_trident = 0
+
+  END FUNCTION it_optical_depth_trident
+#endif
 #endif
 
 END MODULE setup

@@ -31,13 +31,7 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:), ALLOCATABLE :: itemp, jtemp, log_lambda
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
-
-    DO ix = 1, nx
-      DO ispecies = 1, n_species
-        p_list1 => species_list(ispecies)%secondary_list(ix)
-        CALL shuffle_particle_list_random(p_list1)
-      ENDDO
-    ENDDO
+    LOGICAL :: collide_species
 
     ALLOCATE(idens(-2:nx+3))
     ALLOCATE(jdens(-2:nx+3))
@@ -56,6 +50,18 @@ CONTAINS
       ! Currently no support for collisions involving chargeless particles
       IF (species_list(ispecies)%charge .EQ. 0.0_num) &
           CYCLE
+
+      collide_species = .FALSE.
+      DO jspecies = ispecies, n_species
+        user_factor = coll_pairs(ispecies, jspecies)
+        IF (user_factor .GT. 0) THEN
+          collide_species = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+
+      IF (.NOT.collide_species) CYCLE
+
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
 
@@ -63,6 +69,11 @@ CONTAINS
       q1 = species_list(ispecies)%charge
       w1 = species_list(ispecies)%weight
       itemp = itemp * kb / q0
+
+      DO ix = 1, nx
+        p_list1 => species_list(ispecies)%secondary_list(ix)
+        CALL shuffle_particle_list_random(p_list1)
+      ENDDO
 
       DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
@@ -614,42 +625,13 @@ CONTAINS
 
 
 
-  ! Swaps to entries in coll_sort_array
-  ! Hopefully the routine will be inlined by the compiler
-  SUBROUTINE swap_coll_sort_elements(i, j)
-
-    TYPE(particle_sort_element) :: swap
-    INTEGER :: i, j
-
-    swap = coll_sort_array(i)
-    coll_sort_array(i) = coll_sort_array(j)
-    coll_sort_array(j) = swap
-
-  END SUBROUTINE swap_coll_sort_elements
-
-
-
-  ! Attaches random numbers to each particle and performs a QuickSort
-  ! using the coll_sort_array.
-  ! Particle numbers per cell aren't too large, so this should not result
-  ! in a serious memory overhead
   SUBROUTINE shuffle_particle_list_random(p_list)
 
     TYPE(particle_list), INTENT(INOUT) :: p_list
-    TYPE(particle), POINTER :: particle1, patricle2
+    TYPE(particle), POINTER :: particle1, particle2
 
-    INTEGER :: i
+    INTEGER :: i, idx, swap_idx
     INTEGER :: p_num
-
-    ! stack for holding block information
-    ! large enough to sort 2^100 elements
-    INTEGER, DIMENSION(100) :: sblock_start, sblock_end
-    INTEGER :: sblocks
-
-    INTEGER :: b_start, b_end ! abbreviations
-
-    INTEGER :: pivot, store_index
-    REAL(num) :: pivot_val
 
     p_num = INT(p_list%count)
 
@@ -657,63 +639,30 @@ CONTAINS
     IF (p_num .LE. 2) RETURN
 
     ! First make sure that the sorting array is large enough
-    ! This should not happen
+    ! This should happen infrequently
     IF (p_num .GT. coll_sort_array_size) THEN
-      IF (ASSOCIATED(coll_sort_array)) DEALLOCATE(coll_sort_array)
+      DEALLOCATE(coll_sort_array)
 
       ! make the sort array somewhat larger to avoid frequent deallocation
       ! and reallocation
-      coll_sort_array_size = (11 * INT(p_list%count)) / 10 + 10
+      coll_sort_array_size = (11 * p_num) / 10 + 10
       ALLOCATE(coll_sort_array(coll_sort_array_size))
     ENDIF
 
     ! Copy all the particle pointers into the array and create random
     ! sort indices
-    i = 1
     particle1 => p_list%head
-    DO WHILE (ASSOCIATED(particle1))
+    DO i = 1,p_num
       coll_sort_array(i)%particle => particle1
-      coll_sort_array(i)%sort_index = random()
       particle1 => particle1%next
-      i = i + 1
     ENDDO
 
-    sblock_start(1) = 1
-    sblock_end(1) = p_num
-    sblocks = 1
-
-    DO WHILE(sblocks .GT. 0)
-      b_start = sblock_start(sblocks)
-      b_end = sblock_end(sblocks)
-      sblocks = sblocks - 1
-
-      pivot = (b_start + b_end) / 2
-      pivot_val = coll_sort_array(pivot)%sort_index
-
-      CALL swap_coll_sort_elements(pivot, b_end) ! Move pivot to end
-      store_index = b_start
-      DO i = b_start, b_end - 1
-        IF (coll_sort_array(i)%sort_index .LE. pivot_val) THEN
-           CALL swap_coll_sort_elements(i, store_index)
-           store_index = store_index + 1
-        ENDIF
-      ENDDO
-      ! Move pivot to its final place
-      CALL swap_coll_sort_elements(store_index, b_end)
-
-      ! Create two sub-blocks if they contain at least two elements
-      ! Remember, the pivot element is in its right place
-      IF (b_start .LT. store_index - 1) THEN
-        sblocks = sblocks + 1
-        sblock_start(sblocks) = b_start
-        sblock_end(sblocks) = store_index - 1
-      ENDIF
-      IF (store_index + 1 .LT. b_end) THEN
-        sblocks = sblocks + 1
-        sblock_start(sblocks) = store_index + 1
-        sblock_end(sblocks) = b_end
-      ENDIF
-
+    ! Shuffle particles using Durstenfeld's algorithm
+    DO idx = p_num,2,-1
+      swap_idx = FLOOR(idx * random()) + 1
+      particle1 => coll_sort_array(idx)%particle
+      coll_sort_array(idx)%particle => coll_sort_array(swap_idx)%particle
+      coll_sort_array(swap_idx)%particle => particle1
     ENDDO
 
     ! Finally we have to copy back to the list
@@ -724,11 +673,11 @@ CONTAINS
 
     ! Then do all the particle links between head and tail.
     DO i = 2, p_num
-      patricle2 => particle1
+      particle2 => particle1
       particle1 => coll_sort_array(i)%particle
 
-      particle1%prev => patricle2
-      patricle2%next => particle1
+      particle1%prev => particle2
+      particle2%next => particle1
     ENDDO
 
     ! Finally set the tail (at the end of the loop, particle is pointing to
@@ -931,8 +880,10 @@ CONTAINS
 
   SUBROUTINE setup_collisions
 
-    ALLOCATE(coll_pairs(1:n_species, 1:n_species))
+    ALLOCATE(coll_pairs(n_species, n_species))
     coll_pairs = 1.0_num
+    coll_sort_array_size = 1
+    ALLOCATE(coll_sort_array(coll_sort_array_size))
 
   END SUBROUTINE setup_collisions
 

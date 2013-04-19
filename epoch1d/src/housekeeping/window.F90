@@ -8,6 +8,7 @@ MODULE window
 
   LOGICAL, SAVE :: window_started
   REAL(num) :: density, temperature(3), drift(3)
+  REAL(num), SAVE :: window_shift_fraction
 
 CONTAINS
 
@@ -218,7 +219,6 @@ CONTAINS
   SUBROUTINE moving_window
 
 #ifdef PER_PARTICLE_WEIGHT
-    REAL(num), SAVE :: window_shift_fraction
     REAL(num) :: window_shift_real
     INTEGER :: window_shift_cells
 #endif
@@ -231,7 +231,7 @@ CONTAINS
         bc_field(c_bd_x_min) = bc_x_min_after_move
         bc_field(c_bd_x_max) = bc_x_max_after_move
         CALL setup_particle_boundaries
-        window_shift_fraction = 0.0_num
+        IF (.NOT.ic_from_restart) window_shift_fraction = 0.0_num
         window_started = .TRUE.
       ENDIF
     ENDIF

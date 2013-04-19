@@ -234,9 +234,10 @@ CONTAINS
           part_uz = current%part_p(3) / part_mc
 #ifdef PHOTONS
         ELSE
-          part_ux = current%part_p(1) / c
-          part_uy = current%part_p(2) / c
-          part_uz = current%part_p(3) / c
+          wdata = c**2 / current%particle_energy
+          part_ux = current%part_p(1) * wdata
+          part_uy = current%part_p(2) * wdata
+          part_uz = current%part_p(3) * wdata
         ENDIF
 #endif
 
@@ -359,9 +360,10 @@ CONTAINS
           part_uz = current%part_p(3) / part_mc
 #ifdef PHOTONS
         ELSE
-          part_ux = current%part_p(1) / c
-          part_uy = current%part_p(2) / c
-          part_uz = current%part_p(3) / c
+          wdata = c**2 / current%particle_energy
+          part_ux = current%part_p(1) * wdata
+          part_uy = current%part_p(2) * wdata
+          part_uz = current%part_p(3) * wdata
         ENDIF
 #endif
 

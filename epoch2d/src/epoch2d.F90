@@ -39,6 +39,7 @@ PROGRAM pic
   INTEGER :: ispecies
   LOGICAL :: halt = .FALSE., push = .TRUE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
+  REAL(num) :: runtime
 
   step = 0
 #ifdef COLLISIONS_TEST
@@ -75,12 +76,10 @@ PROGRAM pic
   IF (ic_from_restart) THEN
     CALL restart_data(step)    ! restart from data in file save.data
     IF (rank .EQ. 0) PRINT *, 'Load from restart dump OK'
-    output_file = restart_snapshot + 1
   ELSE
     ! auto_load particles
     CALL auto_load
     time = 0.0_num
-    output_file = 0
   ENDIF
 
   CALL manual_load
@@ -100,6 +99,13 @@ PROGRAM pic
   CALL efield_bcs
   IF (ic_from_restart) THEN
     CALL bfield_bcs(.TRUE.)
+    CALL update_eb_fields_final
+    IF (dt_from_restart .GT. 0) THEN
+      time = time + dt_from_restart / 2.0_num
+    ELSE
+      time = time + dt / 2.0_num
+    ENDIF
+    CALL moving_window
   ELSE
     CALL bfield_final_bcs
   ENDIF
@@ -110,7 +116,7 @@ PROGRAM pic
   IF (rank .EQ. 0) PRINT *, 'Equilibrium set up OK, running code'
 
   walltime_start = MPI_WTIME()
-  CALL output_routines(step) ! diagnostics.f90
+  IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
@@ -146,8 +152,14 @@ PROGRAM pic
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_ionisation) CALL ionise_particles
     ENDIF
-    CALL update_eb_fields_final
+
+    IF (halt) EXIT
     step = step + 1
+    time = time + dt / 2.0_num
+    CALL output_routines(step)
+    time = time - dt / 2.0_num
+
+    CALL update_eb_fields_final
     time = time + dt
 
     CALL moving_window
@@ -163,18 +175,17 @@ PROGRAM pic
       species_list(ispecies)%count_update_step = step
     ENDDO
 #endif
-    IF (halt) EXIT
-    CALL output_routines(step)
   ENDDO
+
+  IF (rank .EQ. 0) runtime = MPI_WTIME() - walltime_start
 
 #ifdef PHOTONS
   IF (use_qed) CALL shutdown_qed_module()
 #endif
 
-  IF (rank .EQ. 0) &
-      PRINT *, 'Final runtime of core = ', MPI_WTIME() - walltime_start
+  CALL output_routines(step)
 
-  IF (halt) CALL output_routines(step)
+  IF (rank .EQ. 0) PRINT*, 'Final runtime of core = ', runtime
 
   CALL close_files
   CALL MPI_FINALIZE(errcode)

@@ -214,6 +214,15 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
+    hdt  = 0.5_num * dt
+    hdtx = hdt / dx
+    hdty = hdt / dy
+
+    cnx = hdtx * c**2
+    cny = hdty * c**2
+
+    fac = hdt / epsilon0
+
     CALL update_b_field
 
     CALL bfield_final_bcs

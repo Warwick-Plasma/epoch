@@ -109,7 +109,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(name, ', ')) THEN
+    IF (str_cmp(name, ',')) THEN
       block%ptype = c_pt_separator
       block%value = 0
       block%numerical_data = 0.0_num
@@ -157,6 +157,7 @@ CONTAINS
     ALLOCATE(stack%entries(stack%stack_size))
     CALL initialise_stack_element(stack%entries(1))
     stack%init = .TRUE.
+    stack%is_time_varying = .FALSE.
 
   END SUBROUTINE initialise_stack
 
@@ -175,6 +176,7 @@ CONTAINS
     stack%stack_size = 0
     IF (stack%init) DEALLOCATE(stack%entries)
     stack%init = .FALSE.
+    stack%is_time_varying = .FALSE.
 
   END SUBROUTINE deallocate_stack
 
@@ -188,6 +190,7 @@ CONTAINS
     copy = stack
     ALLOCATE(copy%entries(copy%stack_size))
     copy%entries(1:copy%stack_point) = stack%entries(1:copy%stack_point)
+    copy%is_time_varying = stack%is_time_varying
 
   END SUBROUTINE copy_stack
 
@@ -358,6 +361,16 @@ CONTAINS
       CALL pop_to_stack(stack, output)
     ENDDO
     CALL deallocate_stack(stack)
+
+    ! Check to see if the expression varies in time
+    DO i = 1, output%stack_point
+      IF (output%entries(i)%ptype .EQ. c_pt_constant) THEN
+        IF (output%entries(i)%value .EQ. c_const_time) THEN
+          output%is_time_varying = .TRUE.
+          EXIT
+        ENDIF
+      ENDIF
+    ENDDO
 
   END SUBROUTINE tokenize
 

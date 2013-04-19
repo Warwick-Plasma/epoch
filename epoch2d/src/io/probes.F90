@@ -185,31 +185,17 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     INTEGER :: part_count
-    REAL(num) :: csqr
 
     IF (start)  THEN
       cur => current_list%head
     ENDIF
     part_count = 0
-    csqr = c**2
 
-#ifdef PHOTONS
-    IF (current_species%species_type .NE. c_species_id_photon) THEN
-#endif
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-        part_count = part_count + 1
-        array(part_count) = cur%part_p(1)
-        cur => cur%next
-      ENDDO
-#ifdef PHOTONS
-    ELSE
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-        part_count = part_count + 1
-        array(part_count) = cur%particle_energy * cur%part_p(1) / csqr
-        cur => cur%next
-      ENDDO
-    ENDIF
-#endif
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+      part_count = part_count + 1
+      array(part_count) = cur%part_p(1)
+      cur => cur%next
+    ENDDO
     n_points = part_count
 
     iterate_probe_px = 0
@@ -226,31 +212,17 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     INTEGER :: part_count
-    REAL(num) :: csqr
 
     IF (start)  THEN
       cur => current_list%head
     ENDIF
     part_count = 0
-    csqr = c**2
 
-#ifdef PHOTONS
-    IF (current_species%species_type .NE. c_species_id_photon) THEN
-#endif
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-        part_count = part_count + 1
-        array(part_count) = cur%part_p(2)
-        cur => cur%next
-      ENDDO
-#ifdef PHOTONS
-    ELSE
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-        part_count = part_count + 1
-        array(part_count) = cur%particle_energy * cur%part_p(2) / csqr
-        cur => cur%next
-      ENDDO
-    ENDIF
-#endif
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+      part_count = part_count + 1
+      array(part_count) = cur%part_p(2)
+      cur => cur%next
+    ENDDO
     n_points = part_count
 
     iterate_probe_py = 0
@@ -267,31 +239,17 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     TYPE(particle), POINTER, SAVE :: cur
     INTEGER :: part_count
-    REAL(num) :: csqr
 
     IF (start)  THEN
       cur => current_list%head
     ENDIF
     part_count = 0
-    csqr = c**2
 
-#ifdef PHOTONS
-    IF (current_species%species_type .NE. c_species_id_photon) THEN
-#endif
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-        part_count = part_count + 1
-        array(part_count) = cur%part_p(3)
-        cur => cur%next
-      ENDDO
-#ifdef PHOTONS
-    ELSE
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-        part_count = part_count + 1
-        array(part_count) = cur%particle_energy * cur%part_p(3) / csqr
-        cur => cur%next
-      ENDDO
-    ENDIF
-#endif
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+      part_count = part_count + 1
+      array(part_count) = cur%part_p(3)
+      cur => cur%next
+    ENDDO
     n_points = part_count
 
     iterate_probe_pz = 0
