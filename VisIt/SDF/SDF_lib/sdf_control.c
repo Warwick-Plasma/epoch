@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/mman.h>
 #include "sdf.h"
 
@@ -18,6 +19,137 @@
 static uint32_t sdf_random(void);
 static void sdf_random_init(void);
 
+const char *sdf_blocktype_c[] = {
+    "SDF_BLOCKTYPE_NULL",
+    "SDF_BLOCKTYPE_PLAIN_MESH",
+    "SDF_BLOCKTYPE_POINT_MESH",
+    "SDF_BLOCKTYPE_PLAIN_VARIABLE",
+    "SDF_BLOCKTYPE_POINT_VARIABLE",
+    "SDF_BLOCKTYPE_CONSTANT",
+    "SDF_BLOCKTYPE_ARRAY",
+    "SDF_BLOCKTYPE_RUN_INFO",
+    "SDF_BLOCKTYPE_SOURCE",
+    "SDF_BLOCKTYPE_STITCHED_TENSOR",
+    "SDF_BLOCKTYPE_STITCHED_MATERIAL",
+    "SDF_BLOCKTYPE_STITCHED_MATVAR",
+    "SDF_BLOCKTYPE_STITCHED_SPECIES",
+    "SDF_BLOCKTYPE_SPECIES",
+    "SDF_BLOCKTYPE_PLAIN_DERIVED",
+    "SDF_BLOCKTYPE_POINT_DERIVED",
+    "SDF_BLOCKTYPE_CONTIGUOUS_TENSOR",
+    "SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL",
+    "SDF_BLOCKTYPE_CONTIGUOUS_MATVAR",
+    "SDF_BLOCKTYPE_CONTIGUOUS_SPECIES",
+    "SDF_BLOCKTYPE_CPU_SPLIT",
+    "SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP",
+    "SDF_BLOCKTYPE_UNSTRUCTURED_MESH",
+    "SDF_BLOCKTYPE_STITCHED",
+    "SDF_BLOCKTYPE_CONTIGUOUS",
+    "SDF_BLOCKTYPE_LAGRANGIAN_MESH",
+    "SDF_BLOCKTYPE_STATION",
+    "SDF_BLOCKTYPE_STATION_DERIVED",
+};
+
+const char *sdf_geometry_c[] = {
+    "SDF_GEOMETRY_NULL",
+    "SDF_GEOMETRY_CARTESIAN",
+    "SDF_GEOMETRY_CYLINDRICAL",
+    "SDF_GEOMETRY_SPHERICAL",
+};
+
+const char *sdf_stagger_c[] = {
+    "SDF_STAGGER_CELL_CENTRE",
+    "SDF_STAGGER_FACE_X",
+    "SDF_STAGGER_FACE_Y",
+    "SDF_STAGGER_EDGE_Z",
+    "SDF_STAGGER_FACE_Z",
+    "SDF_STAGGER_EDGE_Y",
+    "SDF_STAGGER_EDGE_X",
+    "SDF_STAGGER_VERTEX",
+};
+
+const char *sdf_datatype_c[] = {
+    "SDF_DATATYPE_NULL",
+    "SDF_DATATYPE_INTEGER4",
+    "SDF_DATATYPE_INTEGER8",
+    "SDF_DATATYPE_REAL4",
+    "SDF_DATATYPE_REAL8",
+    "SDF_DATATYPE_REAL16",
+    "SDF_DATATYPE_CHARACTER",
+    "SDF_DATATYPE_LOGICAL",
+    "SDF_DATATYPE_OTHER",
+};
+
+const char *sdf_error_codes_c[] = {
+    "SDF_ERR_SUCCESS",
+    "SDF_ERR_ACCESS",
+    "SDF_ERR_AMODE",
+    "SDF_ERR_BAD_FILE",
+    "SDF_ERR_CONVERSION",
+    "SDF_ERR_DUP_DATAREP",
+    "SDF_ERR_FILE",
+    "SDF_ERR_FILE_EXISTS",
+    "SDF_ERR_FILE_IN_USE",
+    "SDF_ERR_INFO",
+    "SDF_ERR_INFO_KEY",
+    "SDF_ERR_INFO_NOKEY",
+    "SDF_ERR_INFO_VALUE",
+    "SDF_ERR_IO",
+    "SDF_ERR_NOT_SAME",
+    "SDF_ERR_NO_SPACE",
+    "SDF_ERR_NO_SUCH_FILE",
+    "SDF_ERR_QUOTA",
+    "SDF_ERR_READ_ONLY",
+    "SDF_ERR_UNSUPPORTED_DATAREP",
+    "SDF_ERR_UNSUPPORTED_OPERATION",
+    "SDF_ERR_UNKNOWN",
+};
+
+const int sdf_blocktype_len =
+        sizeof(sdf_blocktype_c) / sizeof(sdf_blocktype_c[0]);
+const int sdf_geometry_len =
+        sizeof(sdf_geometry_c) / sizeof(sdf_geometry_c[0]);
+const int sdf_stagger_len =
+        sizeof(sdf_stagger_c) / sizeof(sdf_stagger_c[0]);
+const int sdf_datatype_len =
+        sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
+const int sdf_error_codes_len =
+        sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
+
+
+
+int sdf_abort(sdf_file_t *h)
+{
+#ifdef PARALLEL
+    MPI_Abort(h->comm, 1);
+#endif
+    _exit(1);
+    return 0;
+}
+
+
+
+int sdf_seek(sdf_file_t *h)
+{
+#ifdef PARALLEL
+    return MPI_File_seek(h->filehandle, h->current_location, MPI_SEEK_SET);
+#else
+    return fseeko(h->filehandle, h->current_location, SEEK_SET);
+#endif
+}
+
+
+
+int sdf_broadcast(sdf_file_t *h, void *buf, int size)
+{
+#ifdef PARALLEL
+    return MPI_Bcast(buf, size, MPI_BYTE, h->rank_master, h->comm);
+#else
+    return 0;
+#endif
+}
+
+
 
 int sdf_fopen(sdf_file_t *h)
 {
@@ -34,6 +166,7 @@ int sdf_fopen(sdf_file_t *h)
 
     return ret;
 }
+
 
 
 sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
@@ -91,12 +224,13 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 
 #ifndef PARALLEL
     if (h->mmap)
-        h->mmap = mmap(NULL, h->summary_location, PROT_READ, MAP_SHARED,
+        h->mmap = mmap(NULL, (size_t)h->summary_location, PROT_READ, MAP_SHARED,
             fileno(h->filehandle), 0);
 #endif
 
     return h;
 }
+
 
 
 #define FREE_ARRAY(value) do { \
@@ -113,6 +247,7 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
     }} while(0)
 
 
+
 static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 {
     int i;
@@ -120,7 +255,7 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
     if (!b) return 1;
 
     if (b->grids) {
-        if (!h->mmap && b->done_data)
+        if (!h->mmap && b->done_data && !b->dont_own_data)
             for (i = 0; i < b->ndims; i++) if (b->grids[i]) free(b->grids[i]);
         free(b->grids);
     }
@@ -139,6 +274,7 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 }
 
 
+
 static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
 {
     if (!b) return 1;
@@ -149,9 +285,16 @@ static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
     if (b->material_id) free(b->material_id);
     if (b->name) free(b->name);
     if (b->material_name) free(b->material_name);
-    if (b->dims_in) free(b->dims_in);
     if (b->dim_mults) free(b->dim_mults);
     if (b->extents) free(b->extents);
+    if (b->station_nvars) free(b->station_nvars);
+    if (b->station_move) free(b->station_move);
+    if (b->station_x) free(b->station_x);
+    if (b->station_y) free(b->station_y);
+    if (b->station_z) free(b->station_z);
+    if (b->variable_types) free(b->variable_types);
+    FREE_ARRAY(b->station_ids);
+    FREE_ARRAY(b->station_names);
     FREE_ARRAY(b->variable_ids);
     FREE_ARRAY(b->material_names);
     sdf_free_block_data(h, b);
@@ -291,15 +434,16 @@ static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
 {
     const int ndims = 2;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
-    int i, j, ii, jj, n, cpus, maxcpus, grid, split_big;
+    int i, j, ii, jj, n, cpus, maxcpus, grid, split_big, dim;
     float gridav, deviation, mindeviation;
 
     cpus = 1;
     gridav = 1;
     for (i=0; i < ndims; i++) {
-        dmin[i] = MIN(ncpus, dims[i]);
+        dim = (int)dims[i];
+        dmin[i] = MIN(ncpus, dim);
         cpus = cpus * dmin[i];
-        gridav = gridav * dims[i];
+        gridav = gridav * dim;
     }
     mindeviation = gridav;
     gridav = gridav / ncpus;
@@ -318,8 +462,8 @@ static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
         if (cpus != maxcpus) continue;
 
         for (n=0; n < ndims; n++) {
-            npoint_min[n] = dims[n] / cpu_split_tmp[n];
-            split_big = dims[n] - cpu_split_tmp[n] * npoint_min[n];
+            npoint_min[n] = (int)dims[n] / cpu_split_tmp[n];
+            split_big = (int)dims[n] - cpu_split_tmp[n] * npoint_min[n];
             grids[n][0] = npoint_min[n];
             grids[n][1] = npoint_min[n] + 1;
             if (cpu_split_tmp[n] == split_big) grids[n][0] = 0;
@@ -347,15 +491,16 @@ static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
 {
     const int ndims = 3;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
-    int i, j, k, ii, jj, kk, n, cpus, maxcpus, grid, split_big;
+    int i, j, k, ii, jj, kk, n, cpus, maxcpus, grid, split_big, dim;
     float gridav, deviation, mindeviation;
 
     cpus = 1;
     gridav = 1;
     for (i=0; i < ndims; i++) {
-        dmin[i] = MIN(ncpus, dims[i]);
+        dim = (int)dims[i];
+        dmin[i] = MIN(ncpus, dim);
         cpus = cpus * dmin[i];
-        gridav = gridav * dims[i];
+        gridav = gridav * dim;
     }
     mindeviation = gridav;
     gridav = gridav / ncpus;
@@ -376,8 +521,8 @@ static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
         if (cpus != maxcpus) continue;
 
         for (n=0; n < ndims; n++) {
-            npoint_min[n] = dims[n] / cpu_split_tmp[n];
-            split_big = dims[n] - cpu_split_tmp[n] * npoint_min[n];
+            npoint_min[n] = (int)dims[n] / cpu_split_tmp[n];
+            split_big = (int)dims[n] - cpu_split_tmp[n] * npoint_min[n];
             grids[n][0] = npoint_min[n];
             grids[n][1] = npoint_min[n] + 1;
             if (cpu_split_tmp[n] == split_big) grids[n][0] = 0;
@@ -409,7 +554,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     int n;
 #ifdef PARALLEL
     int npoint_min, split_big, coords, div;
-    int old_dims[6];
+    uint64_t old_dims[6];
 
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
@@ -435,8 +580,8 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
             b->proc_max[n] = rank + div;
 
         div = div * b->cpu_split[n];
-        npoint_min = b->dims[n] / b->cpu_split[n];
-        split_big = b->dims[n] - b->cpu_split[n] * npoint_min;
+        npoint_min = (int)b->dims[n] / b->cpu_split[n];
+        split_big = (int)(b->dims[n] - b->cpu_split[n] * npoint_min);
         if (coords >= split_big) {
             start[n] = split_big * (npoint_min + 1)
                 + (coords - split_big) * npoint_min;
@@ -455,7 +600,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     }
 #else
     memset(start, 0, 3*sizeof(int));
-    for (n=0; n < b->ndims; n++) local[n] = b->dims[n];
+    for (n=0; n < b->ndims; n++) local[n] = (int)b->dims[n];
 #endif
     for (n=b->ndims; n < 3; n++) local[n] = 1;
 
@@ -469,7 +614,7 @@ int sdf_factor(sdf_file_t *h)
     sdf_block_t *b = h->current_block;
     int n;
 #ifdef PARALLEL
-    int old_dims[6];
+    uint64_t old_dims[6];
 
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
@@ -489,11 +634,11 @@ int sdf_factor(sdf_file_t *h)
 
     sdf_get_domain_extents(h, h->rank, b->starts, b->local_dims);
 #else
-    for (n = 0; n < 3; n++) b->local_dims[n] = b->dims[n];
+    for (n = 0; n < 3; n++) b->local_dims[n] = (int)b->dims[n];
 #endif
 
-    b->nlocal = 1;
-    for (n = 0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
+    b->nelements_local = 1;
+    for (n = 0; n < b->ndims; n++) b->nelements_local *= b->local_dims[n];
 
     return 0;
 }
@@ -514,7 +659,6 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
             *r4++ = (float)(*r8++);
         if (!h->mmap) free(old_var);
         b->datatype_out = SDF_DATATYPE_REAL4;
-        b->type_size_out = 4;
 #ifdef PARALLEL
         b->mpitype_out = MPI_FLOAT;
 #endif
@@ -558,6 +702,7 @@ int sdf_randomize_array(sdf_file_t *h, void **var_in, int count)
 }
 
 
+
 static uint32_t Q[41790], indx, carry, xcng, xs;
 
 #define CNG (xcng = 69609 * xcng + 123)
@@ -570,19 +715,21 @@ static uint32_t refill(void)
     int i;
     uint64_t t;
     for (i=0; i<41790; i++) {
-        t = 7010176LL * Q[i] + carry;
+        t = 7010176ULL * Q[i] + carry;
         carry = (t>>32);
-        Q[i] =~ (t);
+        Q[i] = (uint32_t)~(t);
     }
     indx = 1;
     return (Q[0]);
 }
 
 
+
 static uint32_t sdf_random(void)
 {
     return KISS;
 }
+
 
 
 static void sdf_random_init(void)

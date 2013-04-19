@@ -28,43 +28,50 @@ MODULE sdf_common
 
   TYPE sdf_block_type
     REAL(r8), DIMENSION(2*c_maxdims) :: extents
-    REAL(r8) :: mult
+    REAL(r8) :: mult, time, time_increment
     REAL(r8), DIMENSION(:), POINTER :: dim_mults
+    REAL(r8), DIMENSION(:,:), POINTER :: station_grid
     INTEGER(KIND=MPI_OFFSET_KIND) :: block_start
     INTEGER(i8) :: next_block_location, data_location
     INTEGER(i8) :: nelements, npoints, data_length, info_length
     INTEGER(i4) :: ndims, geometry, datatype, blocktype
     INTEGER(i4) :: mpitype, type_size, stagger
+    INTEGER(i4) :: nstations, nvariables, step, step_increment
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
+    INTEGER(i4), POINTER :: station_nvars(:), station_move(:), variable_types(:)
+    INTEGER(i4), POINTER :: station_index(:)
     CHARACTER(LEN=8) :: const_value
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id
     CHARACTER(LEN=c_long_id_length) :: long_id
-    CHARACTER(LEN=c_id_length), POINTER :: variable_ids(:)
+    CHARACTER(LEN=c_id_length), POINTER :: station_ids(:), variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
     CHARACTER(LEN=c_max_string_length) :: name, material_name
+    CHARACTER(LEN=c_max_string_length), POINTER :: station_names(:)
     CHARACTER(LEN=c_max_string_length), POINTER :: material_names(:)
-    LOGICAL :: done_header, done_info, done_data, truncated_id
+    LOGICAL :: done_header, done_info, done_data, truncated_id, use_mult
     TYPE(sdf_run_type), POINTER :: run
     TYPE(sdf_block_type), POINTER :: next_block
   END TYPE sdf_block_type
 
   TYPE sdf_file_handle
     INTEGER(KIND=MPI_OFFSET_KIND) :: current_location
-    REAL(r8) :: time
+    REAL(r8) :: time, time_wrote
     INTEGER(i8) :: first_block_location, summary_location, start_location
     INTEGER(i8) :: soi ! large integer to prevent overflow in calculations
-    INTEGER(i8) :: data_location
+    INTEGER(i8) :: data_location, summary_location_wrote
     INTEGER(i4) :: endianness, summary_size
     INTEGER(i4) :: block_header_length, string_length, nblocks, error_code
     INTEGER(i4) :: file_version, file_revision, code_io_version, step
     INTEGER(i4) :: datatype_integer, mpitype_integer
-    INTEGER(i4) :: blocktype
+    INTEGER(i4) :: blocktype, summary_size_wrote, nblocks_wrote, step_wrote
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
-    INTEGER :: errhandler
+    INTEGER :: errhandler, nstations
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error
+    LOGICAL :: station_file, first
     CHARACTER(LEN=1), POINTER :: buffer(:)
     CHARACTER(LEN=c_id_length) :: code_name
+    CHARACTER(LEN=c_id_length), POINTER :: station_ids(:)
     TYPE(jobid_type) :: jobid
     TYPE(sdf_block_type), POINTER :: blocklist, current_block
   END TYPE sdf_file_handle
@@ -78,6 +85,7 @@ MODULE sdf_common
 
   INTEGER, PARAMETER :: c_sdf_read = 0
   INTEGER, PARAMETER :: c_sdf_write = 1
+  INTEGER, PARAMETER :: c_sdf_append = 3
 
   INTEGER(i4), PARAMETER :: c_blocktype_scrubbed = -1
   INTEGER(i4), PARAMETER :: c_blocktype_null = 0
@@ -106,7 +114,8 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_stitched = 23
   INTEGER(i4), PARAMETER :: c_blocktype_contiguous = 24
   INTEGER(i4), PARAMETER :: c_blocktype_lagrangian_mesh = 25
-  INTEGER(i4), PARAMETER :: c_blocktype_max = 25
+  INTEGER(i4), PARAMETER :: c_blocktype_station = 26
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 26
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
@@ -118,6 +127,8 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_datatype_logical = 7
   INTEGER(i4), PARAMETER :: c_datatype_other = 8
   INTEGER(i4), PARAMETER :: c_datatype_max = 8
+  INTEGER, PARAMETER :: c_type_sizes(0:c_datatype_max) = &
+      (/ 0, 4, 8, 4, 8, 16, 1, 1, 0 /)
 
   INTEGER(i4), PARAMETER :: c_geometry_null = 0
   INTEGER(i4), PARAMETER :: c_geometry_cartesian = 1
@@ -196,6 +207,7 @@ MODULE sdf_common
   INTEGER, PARAMETER :: c_err_unsupported_operation = 20
   INTEGER, PARAMETER :: c_err_unknown = 21
   INTEGER, PARAMETER :: c_err_unsupported_file = 22
+  INTEGER, PARAMETER :: c_err_sdf = 23
 
   CHARACTER(LEN=*), PARAMETER :: c_blocktypes_char(-1:c_blocktype_max) = (/ &
       'SDF_BLOCKTYPE_SCRUBBED               ', &
@@ -224,7 +236,8 @@ MODULE sdf_common
       'SDF_BLOCKTYPE_UNSTRUCTURED_MESH      ', &
       'SDF_BLOCKTYPE_STITCHED               ', &
       'SDF_BLOCKTYPE_CONTIGUOUS             ', &
-      'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ' /)
+      'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ', &
+      'SDF_BLOCKTYPE_STATION                ' /)
 
   CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
       'SDF_DATATYPE_NULL     ', &
@@ -254,6 +267,9 @@ CONTAINS
       IF (.NOT. ASSOCIATED(h%current_block)) THEN
         h%current_block => h%blocklist
         RETURN
+      ELSE IF (h%first .AND. ASSOCIATED(h%current_block, h%blocklist)) THEN
+        h%first = .FALSE.
+        RETURN
       ELSE IF (ASSOCIATED(h%current_block%next_block)) THEN
         h%current_block => h%current_block%next_block
         RETURN
@@ -270,6 +286,7 @@ CONTAINS
       next%block_start = h%summary_location
     ENDIF
 
+    h%first = .FALSE.
     next%done_header = .FALSE.
     next%done_info = .FALSE.
     next%done_data = .FALSE.
@@ -286,6 +303,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
 
     h%current_block => h%blocklist
+    h%first = .TRUE.
 
   END SUBROUTINE sdf_seek_start
 
@@ -515,12 +533,24 @@ CONTAINS
     NULLIFY(var%material_names)
     NULLIFY(var%run)
     NULLIFY(var%next_block)
+    NULLIFY(var%station_ids)
+    NULLIFY(var%station_names)
+    NULLIFY(var%station_nvars)
+    NULLIFY(var%station_move)
+    NULLIFY(var%station_grid)
+    NULLIFY(var%station_index)
+    NULLIFY(var%variable_types)
     var%done_header = .FALSE.
     var%done_info = .FALSE.
     var%done_data = .FALSE.
     var%truncated_id = .FALSE.
+    var%use_mult = .FALSE.
     var%data_location = 0
     var%blocktype = c_blocktype_null
+    var%step = 0
+    var%step_increment = 0
+    var%time = 0
+    var%time_increment = 0
 
   END SUBROUTINE initialise_block_type
 
@@ -530,12 +560,19 @@ CONTAINS
 
     TYPE(sdf_block_type) :: var
 
-    IF (ASSOCIATED(var%dim_mults)) DEALLOCATE(var%dim_mults)
-    IF (ASSOCIATED(var%variable_ids)) DEALLOCATE(var%variable_ids)
-    IF (ASSOCIATED(var%dim_labels)) DEALLOCATE(var%dim_labels)
-    IF (ASSOCIATED(var%dim_units)) DEALLOCATE(var%dim_units)
+    IF (ASSOCIATED(var%dim_mults))      DEALLOCATE(var%dim_mults)
+    IF (ASSOCIATED(var%variable_ids))   DEALLOCATE(var%variable_ids)
+    IF (ASSOCIATED(var%dim_labels))     DEALLOCATE(var%dim_labels)
+    IF (ASSOCIATED(var%dim_units))      DEALLOCATE(var%dim_units)
     IF (ASSOCIATED(var%material_names)) DEALLOCATE(var%material_names)
-    IF (ASSOCIATED(var%run)) DEALLOCATE(var%run)
+    IF (ASSOCIATED(var%run))            DEALLOCATE(var%run)
+    IF (ASSOCIATED(var%station_ids))    DEALLOCATE(var%station_ids)
+    IF (ASSOCIATED(var%station_names))  DEALLOCATE(var%station_names)
+    IF (ASSOCIATED(var%station_nvars))  DEALLOCATE(var%station_nvars)
+    IF (ASSOCIATED(var%station_move))   DEALLOCATE(var%station_move)
+    IF (ASSOCIATED(var%station_grid))   DEALLOCATE(var%station_grid)
+    IF (ASSOCIATED(var%station_index))  DEALLOCATE(var%station_index)
+    IF (ASSOCIATED(var%variable_types)) DEALLOCATE(var%variable_types)
 
     CALL initialise_block_type(var)
 
@@ -550,6 +587,7 @@ CONTAINS
     NULLIFY(var%buffer)
     NULLIFY(var%blocklist)
     NULLIFY(var%current_block)
+    NULLIFY(var%station_ids)
     ! Set filehandle to -1 to show that the file is closed
     var%filehandle = -1
     var%string_length = c_max_string_length
@@ -558,6 +596,8 @@ CONTAINS
     var%other_domains = .FALSE.
     var%writing = .FALSE.
     var%handled_error = .FALSE.
+    var%station_file = .FALSE.
+    var%first = .TRUE.
     var%nblocks = 0
     var%error_code = 0
     var%errhandler = 0
@@ -572,6 +612,7 @@ CONTAINS
     INTEGER :: errcode, i
 
     IF (ASSOCIATED(var%buffer)) DEALLOCATE(var%buffer)
+    IF (ASSOCIATED(var%station_ids)) DEALLOCATE(var%station_ids)
 
     IF (var%errhandler .NE. 0) THEN
       CALL MPI_ERRHANDLER_FREE(var%errhandler, errcode)

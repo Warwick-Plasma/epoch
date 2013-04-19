@@ -49,25 +49,22 @@ CONTAINS
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     intn = b%dims(1)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+      CALL MPI_FILE_READ(h%filehandle, x, intn, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(x, intn, b%mpitype, h%rank_master, h%comm, errcode)
 
     ! That should be it, so now skip to end of block
     h%current_location = b%next_block_location
@@ -84,28 +81,30 @@ CONTAINS
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     intn = b%dims(1)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+      CALL MPI_FILE_READ(h%filehandle, x, intn, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(x, intn, b%mpitype, h%rank_master, h%comm, errcode)
+
     intn = b%dims(2)
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ(h%filehandle, y, intn, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(y, intn, b%mpitype, h%rank_master, h%comm, errcode)
 
     ! That should be it, so now skip to end of block
     h%current_location = b%next_block_location
@@ -122,31 +121,38 @@ CONTAINS
     INTEGER :: errcode, intn
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
 
     h%current_location = b%data_location
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     intn = b%dims(1)
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+      CALL MPI_FILE_READ(h%filehandle, x, intn, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(x, intn, b%mpitype, h%rank_master, h%comm, errcode)
+
     intn = b%dims(2)
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ(h%filehandle, y, intn, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(y, intn, b%mpitype, h%rank_master, h%comm, errcode)
+
     intn = b%dims(3)
-    CALL MPI_FILE_READ_ALL(h%filehandle, z, intn, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ(h%filehandle, z, intn, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(z, intn, b%mpitype, h%rank_master, h%comm, errcode)
 
     ! That should be it, so now skip to end of block
     h%current_location = b%next_block_location
@@ -164,13 +170,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
@@ -204,13 +204,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
@@ -247,13 +241,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
@@ -293,13 +281,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
@@ -333,13 +315,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
@@ -376,13 +352,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_mesh_info_ru(h)
@@ -446,13 +416,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
@@ -490,13 +454,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
@@ -534,13 +492,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
@@ -578,13 +530,7 @@ CONTAINS
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)

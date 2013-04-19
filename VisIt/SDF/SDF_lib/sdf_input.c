@@ -73,28 +73,6 @@ static inline int sdf_get_next_block(sdf_file_t *h)
 
 
 
-int sdf_abort(sdf_file_t *h)
-{
-#ifdef PARALLEL
-    MPI_Abort(h->comm, 1);
-#endif
-    _exit(1);
-    return 0;
-}
-
-
-
-int sdf_seek(sdf_file_t *h)
-{
-#ifdef PARALLEL
-    return MPI_File_seek(h->filehandle, h->current_location, MPI_SEEK_SET);
-#else
-    return fseeko(h->filehandle, h->current_location, SEEK_SET);
-#endif
-}
-
-
-
 int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen)
 {
 #ifdef PARALLEL
@@ -102,17 +80,6 @@ int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen)
             MPI_STATUS_IGNORE);
 #else
     return (1 != fread(buf, buflen, 1, h->filehandle));
-#endif
-}
-
-
-
-int sdf_broadcast(sdf_file_t *h, void *buf, int size)
-{
-#ifdef PARALLEL
-    return MPI_Bcast(buf, size, MPI_BYTE, h->rank_master, h->comm);
-#else
-    return 0;
 #endif
 }
 
@@ -189,7 +156,7 @@ int sdf_read_header(sdf_file_t *h)
     h->current_location = SDF_HEADER_LENGTH;
     h->done_header = 1;
 
-    if (h->summary_location == 0) h->use_summary = 0;
+    if (h->summary_size == 0) h->use_summary = 0;
 
     return 0;
 }
@@ -251,7 +218,7 @@ int sdf_read_next_block_header(sdf_file_t *h)
     // Older versions of the file did not contain the block
     // info length in the header.
     if (h->file_version + h->file_revision > 1)
-        SDF_READ_ENTRY_INT4(b->block_info_length);
+        SDF_READ_ENTRY_INT4(b->info_length);
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE
             || b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
@@ -260,35 +227,15 @@ int sdf_read_next_block_header(sdf_file_t *h)
         b->stagger = SDF_STAGGER_CELL_CENTRE;
     for (i = 0; i < 3; i++) b->dims[i] = 1;
 
+    if (b->blocktype == SDF_BLOCKTYPE_STATION)
+        h->station_file = 1;
+
     b->done_header = 1;
     h->current_location = b->block_start + h->block_header_length;
 
-    switch (b->datatype) {
-    case(SDF_DATATYPE_REAL4):
-        b->type_size = 4;
-        break;
-    case(SDF_DATATYPE_REAL8):
-        b->type_size = 8;
-        break;
-    case(SDF_DATATYPE_INTEGER4):
-        b->type_size = 4;
-        break;
-    case(SDF_DATATYPE_INTEGER8):
-        b->type_size = 8;
-        break;
-    case(SDF_DATATYPE_CHARACTER):
-        b->type_size = 1;
-        break;
-    case(SDF_DATATYPE_LOGICAL):
-        b->type_size = 1;
-        break;
-    }
     b->datatype_out = b->datatype;
-    b->type_size_out = b->type_size;
-    if (h->use_float && b->datatype == SDF_DATATYPE_REAL8) {
+    if (h->use_float && b->datatype == SDF_DATATYPE_REAL8)
         b->datatype_out = SDF_DATATYPE_REAL4;
-        b->type_size_out = 4;
-    }
 #ifdef PARALLEL
     switch (b->datatype) {
     case(SDF_DATATYPE_REAL4):
@@ -324,7 +271,10 @@ int sdf_read_data(sdf_file_t *h)
 
     b = h->current_block;
 
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
+    if (b->populate_data) {
+        b->populate_data(h, b);
+        return 0;
+    } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
         return sdf_read_plain_mesh(h);
     else if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
         return sdf_read_lagran_mesh(h);
@@ -386,6 +336,8 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_stitched_species(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP)
         ret = sdf_read_stitched_obstacle_group(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STATION)
+        ret = sdf_read_station_info(h);
 
     return ret;
 }
@@ -398,7 +350,7 @@ static void build_summary_buffer(sdf_file_t *h)
 {
     int i, buflen;
     uint64_t data_location, block_location, next_block_location;
-    uint32_t block_info_length;
+    uint32_t info_length;
     char *bufptr;
     char skip_summary;
 
@@ -438,35 +390,38 @@ static void build_summary_buffer(sdf_file_t *h)
             // Older versions of the file did not contain the block
             // info length in the header.
             if (h->file_version + h->file_revision > 1) {
-                memcpy(&block_info_length, (char*)blockbuf->buffer+132,
+                memcpy(&info_length, (char*)blockbuf->buffer+132,
                        sizeof(uint32_t));
             } else {
                 if (data_location > block_location)
-                    block_info_length = data_location
-                        - block_location - h->block_header_length;
+                    info_length = (uint32_t)(data_location
+                        - block_location) - h->block_header_length;
                 else
-                    block_info_length = next_block_location
-                        - block_location - h->block_header_length;
+                    info_length = (uint32_t)(next_block_location
+                        - block_location) - h->block_header_length;
             }
 
             // Read the block specific metadata if it exists
-            if (block_info_length > 0) {
+            if (info_length > 0) {
                 blockbuf->next = calloc(1,sizeof(*blockbuf));
                 blockbuf = blockbuf->next;
 
-                blockbuf->len = block_info_length;
+                blockbuf->len = info_length;
                 blockbuf->buffer = malloc(blockbuf->len);
                 i = sdf_read_bytes(h, blockbuf->buffer, blockbuf->len);
                 if (i != 0) break;
             }
 
-            buflen += h->block_header_length + block_info_length;
+            buflen += h->block_header_length + info_length;
 
-            h->current_location = block_location = next_block_location;
             h->nblocks++;
 
             blockbuf->next = calloc(1,sizeof(*blockbuf));
             blockbuf = blockbuf->next;
+
+            if (h->current_location > next_block_location) break;
+
+            h->current_location = block_location = next_block_location;
         }
 
         if (blockbuf->buffer) {
@@ -747,7 +702,7 @@ static int sdf_array_datatype(sdf_file_t *h)
 
 #ifdef PARALLEL
     int sizes[SDF_MAXDIMS];
-    for (n=0; n < b->ndims; n++) sizes[n] = b->dims[n];
+    for (n=0; n < b->ndims; n++) sizes[n] = (int)b->dims[n];
 
     sdf_factor(h);
 
@@ -755,12 +710,12 @@ static int sdf_array_datatype(sdf_file_t *h)
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 #else
-    for (n=0; n < b->ndims; n++) b->local_dims[n] = b->dims[n];
+    for (n=0; n < b->ndims; n++) b->local_dims[n] = (int)b->dims[n];
 #endif
     for (n=b->ndims; n < 3; n++) b->local_dims[n] = 1;
 
-    b->nlocal = 1;
-    for (n=0; n < b->ndims; n++) b->nlocal *= b->local_dims[n];
+    b->nelements_local = 1;
+    for (n=0; n < b->ndims; n++) b->nelements_local *= b->local_dims[n];
 
     return 0;
 }
@@ -807,16 +762,6 @@ int sdf_read_run_info(sdf_file_t *h)
     else
         SDF_READ_ENTRY_INT4(minor_rev);
 
-/*
-    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
-    b->nlocal = 1;
-    for (i = 0; i < b->ndims; i++) {
-        b->dims[i] = b->dims_in[i];
-        b->local_dims[i] = b->dims_in[i];
-        b->nlocal *= b->dims[i];
-    }
-*/
-
     return 0;
 }
 
@@ -826,18 +771,19 @@ int sdf_read_array_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
+    uint32_t dims_in[SDF_MAXDIMS];
+    uint32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - dims      INTEGER(i4), DIMENSION(ndims)
 
     SDF_COMMON_INFO();
 
-    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
-    b->nlocal = 1;
+    SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
+    b->nelements_local = 1;
     for (i = 0; i < b->ndims; i++) {
-        b->dims[i] = b->dims_in[i];
-        b->local_dims[i] = b->dims_in[i];
-        b->nlocal *= b->dims[i];
+        b->local_dims[i] = b->dims[i] = dims_in[i];
+        b->nelements_local *= b->dims[i];
     }
 
     return 0;
@@ -849,6 +795,8 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
+    uint32_t dims_in[SDF_MAXDIMS];
+    uint32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - dims      INTEGER(i4), DIMENSION(ndims)
@@ -856,22 +804,22 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
     SDF_COMMON_INFO();
 
     SDF_READ_ENTRY_INT4(b->geometry);
-    SDF_READ_ENTRY_ARRAY_INT4(b->dims_in, b->ndims);
+    SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
     for (i = 0; i < b->ndims; i++) {
-        b->dims[i] = b->dims_in[i];
-        b->local_dims[i] = b->dims_in[i];
+        b->local_dims[i] = b->dims[i] = dims_in[i];
     }
     if (b->geometry == 1 || b->geometry == 4) {
-        b->nlocal = 0;
+        b->nelements_local = 0;
         for (i = 0; i < b->ndims; i++)
-            b->nlocal += b->dims[i];
+            b->nelements_local += b->dims[i];
     } else if (b->geometry == 2) {
-        b->nlocal = b->dims[0] * (b->dims[1] + 1);
-        if (b->ndims > 2) b->nlocal += b->dims[0] * b->dims[1] * b->dims[2];
+        b->nelements_local = (int)(b->dims[0] * (b->dims[1] + 1));
+        if (b->ndims > 2)
+            b->nelements_local += b->dims[0] * b->dims[1] * b->dims[2];
     } else if (b->geometry == 3) {
-        b->nlocal = 1;
+        b->nelements_local = 1;
         for (i = 0; i < b->ndims; i++)
-            b->nlocal *= b->dims[i];
+            b->nelements_local *= b->dims[i];
     }
 
     return 0;
@@ -890,7 +838,7 @@ int sdf_read_array(sdf_file_t *h)
 
     h->current_location = b->data_location;
 
-    n = b->type_size * b->nlocal;
+    n = SDF_TYPE_SIZES[b->datatype] * b->nelements_local;
     if (h->mmap) {
         b->data = h->mmap + h->current_location;
     } else {
@@ -925,7 +873,7 @@ int sdf_read_array(sdf_file_t *h)
                 SDF_DPRNT("\n  ");
             }
         } else {
-            SDF_DPRNTar(b->data, b->nlocal);
+            SDF_DPRNTar(b->data, b->nelements_local);
         }
     }
 

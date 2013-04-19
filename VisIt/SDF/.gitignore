@@ -1,12 +1,14 @@
 *.d
 *.o
+*.a
 *PluginInfo.C
 *PluginInfo.h
 CMake*
 cmake*
 Makefile
-sdf2ascii
 *.dSYM
+.*.swp
 pybuild
 commit_info.h
 build_date.h
+.builddir
