@@ -600,7 +600,12 @@ CONTAINS
         ! Next I/O dump based on dt_snapshot
         time_first = t0
         IF (io_block_list(io)%dt_snapshot .GT. 0 .AND. time .GE. t0) THEN
-          io_block_list(io)%time_prev = time
+          ! Store the most recent output time that qualifies
+          DO
+            t0 = io_block_list(io)%time_prev + io_block_list(io)%dt_snapshot
+            IF (t0 .GT. time) EXIT
+            io_block_list(io)%time_prev = t0
+          ENDDO
           dump = .TRUE.
           IF (dump .AND. time .LT. io_block_list(io)%time_start) dump = .FALSE.
           IF (dump .AND. time .GT. io_block_list(io)%time_stop)  dump = .FALSE.
@@ -613,7 +618,13 @@ CONTAINS
         time_first = t1
         IF (io_block_list(io)%nstep_snapshot .GT. 0 &
             .AND. step .GE. nstep_next) THEN
-          io_block_list(io)%nstep_prev = step
+          ! Store the most recent output step that qualifies
+          DO
+            nstep_next = io_block_list(io)%nstep_prev &
+                + io_block_list(io)%nstep_snapshot
+            IF (nstep_next .GT. step) EXIT
+            io_block_list(io)%nstep_prev = nstep_next
+          ENDDO
           dump = .TRUE.
           IF (dump .AND. step .LT. io_block_list(io)%nstep_start) dump = .FALSE.
           IF (dump .AND. step .GT. io_block_list(io)%nstep_stop)  dump = .FALSE.
