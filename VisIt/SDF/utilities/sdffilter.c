@@ -11,6 +11,7 @@
 #endif
 
 int metadata, contents, debug, single, use_mmap, ignore_summary;
+int exclude_variables;
 char *output_file;
 struct id_list {
   char *id;
@@ -35,6 +36,7 @@ void usage(int err)
   -c --contents       Show block's data content\n\
   -s --single         Convert block data to single precision\n\
   -v --variable=id    Find the block with id matching 'id'\n\
+  -x --exclude=id     Exclude the block with id matching 'id'\n\
   -m --mmap           Use mmap'ed file I/O\n\
   -i --no-summary     Ignore the metadata summary\n\
 ");
@@ -59,7 +61,7 @@ int range_sort(const void *v1, const void *v2)
 char *parse_args(int *argc, char ***argv)
 {
     char *ptr, *file = NULL;
-    int c, i, err, range, sz, nrange_max;
+    int c, i, err, range, sz, nrange_max, got_include, got_exclude;
     struct range_type *range_tmp;
     struct stat statbuf;
     static struct option longopts[] = {
@@ -68,6 +70,7 @@ char *parse_args(int *argc, char ***argv)
         //{ "debug",    no_argument,       NULL,      'd' },
         { "help",     no_argument,       NULL,      'h' },
         { "variable", required_argument, NULL,      'v' },
+        { "exclude",  required_argument, NULL,      'x' },
         { "mmap",     no_argument,       NULL,      'm' },
         { "no-summary", no_argument,     NULL,      'i' },
         //{ "output", required_argument,   NULL,      'o' },
@@ -75,15 +78,17 @@ char *parse_args(int *argc, char ***argv)
     };
 
     metadata = debug = 1;
-    contents = single = use_mmap = ignore_summary = 0;
+    contents = single = use_mmap = ignore_summary = exclude_variables = 0;
     variable_ids = NULL;
     variable_last_id = NULL;
     output_file = NULL;
     nrange_max = nrange = 0;
     sz = sizeof(struct range_type);
 
+    got_include = got_exclude = 0;
+
     while ((c = getopt_long(*argc, *argv,
-            "hncsmiv:", longopts, NULL)) != -1) {
+            "hncsmiv:x:", longopts, NULL)) != -1) {
         switch (c) {
         case 'h':
             usage(0);
@@ -98,6 +103,22 @@ char *parse_args(int *argc, char ***argv)
             single = 1;
             break;
         case 'v':
+        case 'x':
+            err = 0;
+            if (c == 'v') {
+                if (got_exclude) err = 1;
+                got_include = 1;
+            }
+            if (c == 'x') {
+                if (got_include) err = 1;
+                got_exclude = 1;
+                exclude_variables = 1;
+            }
+            if (err) {
+                fprintf(stderr, "ERROR: cannot both include and "
+                        "exclude variables.\n");
+                exit(1);
+            }
             if (*optarg >= '0' && *optarg <= '9') {
                 ptr = optarg;
                 range = 0;
@@ -289,7 +310,11 @@ int main(int argc, char **argv)
             }
         }
 
-        if (!found) continue;
+        if (exclude_variables) {
+            if (found) continue;
+        } else {
+            if (!found) continue;
+        }
 
         if (metadata) {
             printf("%4i id: %s\n", i+1, b->id);
