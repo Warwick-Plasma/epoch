@@ -20,6 +20,10 @@ MODULE sdf_common
   CHARACTER(LEN=4), PARAMETER :: c_sdf_magic = 'SDF1'
   REAL(r8), PARAMETER :: c_tiny = TINY(1.0_r8)
 
+  LOGICAL :: print_errors   = .TRUE.
+  LOGICAL :: print_warnings = .TRUE.
+  LOGICAL :: exit_on_error  = .TRUE.
+
   TYPE sdf_run_type
     INTEGER(i4) :: version, revision, minor_rev, compile_date, run_date, io_date
     INTEGER(i8) :: defines
@@ -70,10 +74,11 @@ MODULE sdf_common
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     INTEGER :: errhandler, nstations
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error
-    LOGICAL :: station_file, first
+    LOGICAL :: station_file, first, print_errors, print_warnings, exit_on_error
     CHARACTER(LEN=1), POINTER :: buffer(:)
     CHARACTER(LEN=c_id_length) :: code_name
     CHARACTER(LEN=c_id_length), POINTER :: station_ids(:)
+    CHARACTER(LEN=c_long_id_length) :: filename
     TYPE(jobid_type) :: jobid
     TYPE(sdf_block_type), POINTER :: blocklist, current_block
   END TYPE sdf_file_handle
@@ -177,39 +182,45 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_endianness = 16911887
 
   INTEGER(KIND=MPI_OFFSET_KIND), PARAMETER :: c_off0 = 0
-  INTEGER, PARAMETER :: max_mpi_error_codes = 20
+  INTEGER, PARAMETER :: max_mpi_error_codes = 21
   INTEGER, PARAMETER :: mpi_error_codes(max_mpi_error_codes) = (/ &
       MPI_ERR_ACCESS, MPI_ERR_AMODE, MPI_ERR_BAD_FILE, MPI_ERR_CONVERSION, &
       MPI_ERR_DUP_DATAREP, MPI_ERR_FILE, MPI_ERR_FILE_EXISTS, &
       MPI_ERR_FILE_IN_USE, MPI_ERR_INFO, MPI_ERR_INFO_KEY, MPI_ERR_INFO_NOKEY, &
       MPI_ERR_INFO_VALUE, MPI_ERR_IO, MPI_ERR_NOT_SAME, MPI_ERR_NO_SPACE, &
       MPI_ERR_NO_SUCH_FILE, MPI_ERR_QUOTA, MPI_ERR_READ_ONLY, &
-      MPI_ERR_UNSUPPORTED_DATAREP, MPI_ERR_UNSUPPORTED_OPERATION /)
+      MPI_ERR_UNSUPPORTED_DATAREP, MPI_ERR_UNSUPPORTED_OPERATION, MPI_ERR_TYPE /)
 
+  ! SDF errors
   INTEGER, PARAMETER :: c_err_success = 0
-  INTEGER, PARAMETER :: c_err_access = 1
-  INTEGER, PARAMETER :: c_err_amode = 2
-  INTEGER, PARAMETER :: c_err_bad_file = 3
-  INTEGER, PARAMETER :: c_err_conversion = 4
-  INTEGER, PARAMETER :: c_err_dup_datarep = 5
-  INTEGER, PARAMETER :: c_err_file = 6
-  INTEGER, PARAMETER :: c_err_file_exists = 7
-  INTEGER, PARAMETER :: c_err_file_in_use = 8
-  INTEGER, PARAMETER :: c_err_info = 9
-  INTEGER, PARAMETER :: c_err_info_key = 10
-  INTEGER, PARAMETER :: c_err_info_nokey = 11
-  INTEGER, PARAMETER :: c_err_info_value = 12
-  INTEGER, PARAMETER :: c_err_io = 13
-  INTEGER, PARAMETER :: c_err_not_same = 14
-  INTEGER, PARAMETER :: c_err_no_space = 15
-  INTEGER, PARAMETER :: c_err_no_such_file = 16
-  INTEGER, PARAMETER :: c_err_quota = 17
-  INTEGER, PARAMETER :: c_err_read_only = 18
-  INTEGER, PARAMETER :: c_err_unsupported_datarep = 19
-  INTEGER, PARAMETER :: c_err_unsupported_operation = 20
-  INTEGER, PARAMETER :: c_err_unknown = 21
-  INTEGER, PARAMETER :: c_err_unsupported_file = 22
-  INTEGER, PARAMETER :: c_err_sdf = 23
+  INTEGER, PARAMETER :: c_err_unknown = 1
+  INTEGER, PARAMETER :: c_err_unsupported_file = 2
+  INTEGER, PARAMETER :: c_err_sdf = 3
+
+  ! MPI errors
+  INTEGER, PARAMETER :: c_mpi_error_start = 31
+  INTEGER, PARAMETER :: c_err_access = 31
+  INTEGER, PARAMETER :: c_err_amode = 32
+  INTEGER, PARAMETER :: c_err_bad_file = 33
+  INTEGER, PARAMETER :: c_err_conversion = 34
+  INTEGER, PARAMETER :: c_err_dup_datarep = 35
+  INTEGER, PARAMETER :: c_err_file = 36
+  INTEGER, PARAMETER :: c_err_file_exists = 37
+  INTEGER, PARAMETER :: c_err_file_in_use = 38
+  INTEGER, PARAMETER :: c_err_info = 39
+  INTEGER, PARAMETER :: c_err_info_key = 40
+  INTEGER, PARAMETER :: c_err_info_nokey = 41
+  INTEGER, PARAMETER :: c_err_info_value = 42
+  INTEGER, PARAMETER :: c_err_io = 43
+  INTEGER, PARAMETER :: c_err_not_same = 44
+  INTEGER, PARAMETER :: c_err_no_space = 45
+  INTEGER, PARAMETER :: c_err_no_such_file = 46
+  INTEGER, PARAMETER :: c_err_quota = 47
+  INTEGER, PARAMETER :: c_err_read_only = 48
+  INTEGER, PARAMETER :: c_err_unsupported_datarep = 49
+  INTEGER, PARAMETER :: c_err_unsupported_operation = 50
+  INTEGER, PARAMETER :: c_err_type = 51
+  INTEGER, PARAMETER :: c_err_max = 51
 
   CHARACTER(LEN=*), PARAMETER :: c_blocktypes_char(-1:c_blocktype_max) = (/ &
       'SDF_BLOCKTYPE_SCRUBBED               ', &
@@ -251,6 +262,60 @@ MODULE sdf_common
       'SDF_DATATYPE_CHARACTER', &
       'SDF_DATATYPE_LOGICAL  ', &
       'SDF_DATATYPE_OTHER    ' /)
+
+  CHARACTER(LEN=*), PARAMETER :: c_errcodes_char(0:c_err_max) = (/ &
+      'SDF_ERR_SUCCESS              ', &
+      'SDF_ERR_UNKNOWN              ', &
+      'SDF_ERR_UNSUPPORTED_FILE     ', &
+      'SDF_ERR_SDF                  ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      '                             ', &
+      'MPI_ERR_ACCESS               ', &
+      'MPI_ERR_AMODE                ', &
+      'MPI_ERR_BAD_FILE             ', &
+      'MPI_ERR_CONVERSION           ', &
+      'MPI_ERR_DUP_DATAREP          ', &
+      'MPI_ERR_FILE                 ', &
+      'MPI_ERR_FILE_EXISTS          ', &
+      'MPI_ERR_FILE_IN_USE          ', &
+      'MPI_ERR_INFO                 ', &
+      'MPI_ERR_INFO_KEY             ', &
+      'MPI_ERR_INFO_NOKEY           ', &
+      'MPI_ERR_INFO_VALUE           ', &
+      'MPI_ERR_IO                   ', &
+      'MPI_ERR_NOT_SAME             ', &
+      'MPI_ERR_NO_SPACE             ', &
+      'MPI_ERR_NO_SUCH_FILE         ', &
+      'MPI_ERR_QUOTA                ', &
+      'MPI_ERR_READ_ONLY            ', &
+      'MPI_ERR_UNSUPPORTED_DATAREP  ', &
+      'MPI_ERR_UNSUPPORTED_OPERATION', &
+      'MPI_ERR_TYPE                 ' /)
 
   INTERFACE sdf_set_point_array_size
     MODULE PROCEDURE &
@@ -465,7 +530,7 @@ CONTAINS
     CHARACTER(LEN=c_id_length), INTENT(OUT) :: new_id
 
     IF (LEN_TRIM(id) .GT. c_id_length) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
         PRINT*, '*** WARNING ***'
         PRINT*, 'SDF ID string "' // TRIM(id) // '" was truncated.'
       ENDIF
@@ -491,7 +556,7 @@ CONTAINS
       b%truncated_id = .TRUE.
       CALL safe_copy_string(id, b%long_id)
       IF (LEN_TRIM(id) .GT. c_long_id_length) THEN
-        IF (h%rank .EQ. h%rank_master) THEN
+        IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
           PRINT*, '*** WARNING ***'
           PRINT*, 'SDF ID string "' // TRIM(id) // '" was truncated.'
         ENDIF
@@ -601,6 +666,9 @@ CONTAINS
     var%handled_error = .FALSE.
     var%station_file = .FALSE.
     var%first = .TRUE.
+    var%print_errors = print_errors
+    var%print_warnings = print_warnings
+    var%exit_on_error = exit_on_error
     var%nblocks = 0
     var%error_code = 0
     var%errhandler = 0
@@ -642,7 +710,7 @@ CONTAINS
     errcode = c_err_unknown
     DO i = 1, max_mpi_error_codes
       IF (error_code .EQ. mpi_error_codes(i)) THEN
-        errcode = i
+        errcode = i + c_mpi_error_start - 1
         RETURN
       ENDIF
     ENDDO
@@ -655,18 +723,76 @@ CONTAINS
 
     INTEGER :: filehandle, error_code
     TYPE(sdf_file_handle), POINTER :: h
-    INTEGER :: i
+    CHARACTER(LEN=MPI_MAX_ERROR_STRING) :: message
+    CHARACTER(LEN=MPI_MAX_INFO_KEY) :: key
+    CHARACTER(LEN=MPI_MAX_INFO_VAL) :: info_value
+    INTEGER(KIND=MPI_OFFSET_KIND) :: filepos
+    CHARACTER(LEN=1024) :: message_buffer
+    INTEGER :: sdf_error, message_len, info, nkeys, i, ierr
+    LOGICAL :: found, print_error, abort
+    REAL :: zz
 
+    found = .FALSE.
     DO i = 1, max_handles
       IF (sdf_handles(i)%filehandle .EQ. filehandle) THEN
         h => sdf_handles(i)%handle
-        IF (.NOT.h%handled_error) THEN
-          h%error_code = map_error_code(error_code) + 64 * h%nblocks
-          h%handled_error = .TRUE.
-        ENDIF
+        found = .TRUE.
         EXIT
       ENDIF
     ENDDO
+
+    sdf_error = map_error_code(error_code)
+
+    print_error = print_errors
+    abort = exit_on_error
+
+    IF (found) THEN
+      print_error = .FALSE.
+      abort = h%exit_on_error
+      IF (.NOT.h%handled_error) THEN
+        h%error_code = sdf_error + 64 * h%nblocks
+        h%handled_error = .TRUE.
+        print_error = h%print_errors
+      ENDIF
+    ENDIF
+
+    IF (print_error) THEN
+      CALL MPI_ERROR_STRING(error_code, message, message_len, ierr)
+      CALL MPI_FILE_GET_POSITION(filehandle, filepos, ierr)
+
+      WRITE(0,*) 'An MPI-I/O error has occurred'
+      IF (found) THEN
+        WRITE(0,*) 'Process:     ', h%rank
+        WRITE(0,*) 'Filename:    ' // TRIM(h%filename)
+      ENDIF
+      WRITE(0,*) 'File handle: ', filehandle
+      WRITE(0,*) 'Error code:  ', error_code
+      WRITE(0,*) 'SDF error:   ' // TRIM(c_errcodes_char(sdf_error))
+      WRITE(0,*) 'Message:     ' // TRIM(message)
+      WRITE(0,*) 'Position:    ', filepos
+
+      CALL MPI_FILE_GET_INFO(filehandle, info, ierr)
+      CALL MPI_INFO_GET_NKEYS(info, nkeys, ierr)
+      IF (nkeys .GT. 0) THEN
+        WRITE(0,*) 'Info:'
+        DO i = 0,nkeys-1
+          CALL MPI_INFO_GET_NTHKEY(info, i, key, ierr)
+          CALL MPI_INFO_GET(info, key, MPI_MAX_INFO_VAL, info_value, &
+                            found, ierr)
+          WRITE(0,'(10X,A,": ",A)') TRIM(key), TRIM(info_value)
+        ENDDO
+      ENDIF
+      CALL MPI_INFO_FREE(info, ierr)
+    ENDIF
+
+    IF (abort) THEN
+      ! First try to generate a floating-point error.
+      ! This sometimes allows us to get a backtrace.
+      zz = -1.0
+      zz = SQRT(zz)
+      CALL MPI_ABORT(MPI_COMM_WORLD, 10, ierr)
+      STOP
+    ENDIF
 
   END SUBROUTINE error_handler
 

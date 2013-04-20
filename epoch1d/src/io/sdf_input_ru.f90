@@ -78,7 +78,7 @@ CONTAINS
     INTEGER :: errcode
 
     IF (h%done_header) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'SDF header already read. Ignoring extra call.'
       ENDIF
@@ -127,7 +127,7 @@ CONTAINS
     INTEGER :: errcode
 
     IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'SDF block not initialised. Ignoring call.'
       ENDIF
@@ -1377,7 +1377,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
 
     IF (.NOT. h%done_header) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%print_errors .AND. h%rank .EQ. h%rank_master) THEN
         PRINT*,'*** ERROR ***'
         PRINT*,'SDF header has not been read. Unable to read block.'
       ENDIF
@@ -1398,7 +1398,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
 
     IF (.NOT. ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%print_errors .AND. h%rank .EQ. h%rank_master) THEN
         PRINT*,'*** ERROR ***'
         PRINT*,'SDF block header has not been read. Ignoring call.'
       ENDIF

@@ -16,6 +16,7 @@ CONTAINS
     CALL initialise_file_handle(h)
     CALL sdf_set_default_rank(h, 0)
 
+    h%filename = TRIM(filename)
     h%comm = sdf_comm_in
     CALL MPI_COMM_RANK(sdf_comm_in, h%rank, errcode)
 

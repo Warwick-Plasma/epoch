@@ -21,7 +21,7 @@ CONTAINS
     CHARACTER(LEN=6) :: padding
 
     IF (h%done_header) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'SDF header already written. Ignoring extra call.'
       ENDIF
@@ -224,7 +224,7 @@ CONTAINS
     ! must be changed accordingly in sdf_open_clobber
 
     IF (.NOT. h%done_header) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'SDF header not yet written. Ignoring write call.'
       ENDIF
@@ -232,7 +232,7 @@ CONTAINS
     ENDIF
 
     IF (b%done_header) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'SDF block header already written. Ignoring extra call.'
       ENDIF
@@ -268,7 +268,8 @@ CONTAINS
 
     len_s = LEN_TRIM(string)
 
-    IF (len_s .GT. length .AND. h%rank .EQ. h%rank_master) THEN
+    IF (h%print_warnings .AND. len_s .GT. length &
+        .AND. h%rank .EQ. h%rank_master) THEN
       PRINT*, '*** WARNING ***'
       PRINT*, 'Output string "' // TRIM(string) // '" has been truncated'
     ENDIF

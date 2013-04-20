@@ -21,8 +21,8 @@ CONTAINS
     INTEGER :: errcode
 
     IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
+      IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** WARNING ***'
         PRINT*,'SDF block cannot be found. Ignoring call.'
       ENDIF
       RETURN
@@ -30,8 +30,8 @@ CONTAINS
 
     b => h%current_block
     IF (b%blocktype .NE. c_blocktype_station) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
+      IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
+        PRINT*,'*** WARNING ***'
         PRINT*,'SDF unable to write station data. Ignoring call.'
       ENDIF
       RETURN
