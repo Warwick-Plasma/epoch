@@ -473,6 +473,12 @@ PRO SDFGetPointVar, file_header, block_header, output_struct, offset, $
       SDF_Datatypes.REAL8: BEGIN
         datastruct = CREATE_STRUCT(struct_name, DBLARR(var_header.npoints))
       END
+      SDF_Datatypes.INTEGER4: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, LONARR(var_header.npoints))
+      END
+      SDF_Datatypes.INTEGER8: BEGIN
+        datastruct = CREATE_STRUCT(struct_name, LON64ARR(var_header.npoints))
+      END
     ENDCASE
 
     offset = block_header.data_location
