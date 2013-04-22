@@ -178,8 +178,9 @@ struct sdf_block {
     uint32_t ndims, geometry, datatype, blocktype, info_length;
     uint32_t type_size, stagger, datatype_out, type_size_out;
     uint32_t nstations, nvariables, step, step_increment;
-    uint32_t *dims_in, *station_nvars, *station_move, *variable_types;
-    uint32_t *station_index;
+    uint32_t *dims_in, *station_nvars;
+    int32_t *station_move;
+    uint32_t *variable_types, *station_index;
     uint64_t dims[3];
     int local_dims[3], nm, nelements_local, n_ids, opt, ng, nfaces;
     char const_value[16];
