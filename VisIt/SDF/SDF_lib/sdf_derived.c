@@ -1630,7 +1630,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
     sdf_block_t *mesh, *old_mesh, *vfm, *obst;
     sdf_block_t *current_block = h->current_block;
-    int i, n, stagger, dont_add, nappend = 0;
+    int i, n, stagger, add_grid, nappend = 0;
     size_t nd, len1, len2;
     char *str, *name1, *name2;
     char *boundary_names[] =
@@ -1748,13 +1748,13 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                     old_mesh = sdf_find_block_by_id(h, b->mesh_id);
                     // For now, only add the mesh if variables are the correct
                     // dimensions
-                    dont_add = 0;
+                    add_grid = 0;
                     for (n = 0; n < b->ndims; n++) {
                         nd = (size_t)old_mesh->dims[n];
                         if (n == i) nd += b->ng;
-                        if (b->dims[n] != nd) dont_add = 1;
+                        if (b->dims[n] != nd) add_grid++;
                     }
-                    if (dont_add) continue;
+                    if (!add_grid) continue;
 
                     name1 = b->mesh_id;
                     name2 = face_grid_ids[i];
