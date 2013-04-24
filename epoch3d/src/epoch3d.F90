@@ -39,6 +39,7 @@ PROGRAM pic
   INTEGER :: ispecies
   LOGICAL :: halt = .FALSE., push = .TRUE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
+  CHARACTER(LEN=64) :: timestring
   REAL(num) :: runtime
 
   step = 0
@@ -185,7 +186,10 @@ PROGRAM pic
 
   CALL output_routines(step)
 
-  IF (rank .EQ. 0) PRINT*, 'Final runtime of core = ', runtime
+  IF (rank .EQ. 0) THEN
+    CALL create_full_timestring(runtime, timestring)
+    WRITE(*,*) 'Final runtime of core = ' // TRIM(timestring)
+  ENDIF
 
   CALL close_files
   CALL MPI_FINALIZE(errcode)

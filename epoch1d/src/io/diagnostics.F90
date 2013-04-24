@@ -17,7 +17,7 @@ MODULE diagnostics
 
   PRIVATE
 
-  PUBLIC :: output_routines
+  PUBLIC :: output_routines, create_full_timestring
 
   TYPE(sdf_file_handle) :: sdf_handle
   INTEGER(i8), ALLOCATABLE :: species_offset(:)
@@ -61,6 +61,8 @@ CONTAINS
     LOGICAL, SAVE :: first_call = .TRUE.
     INTEGER :: ispecies, iprefix
     TYPE(particle_species), POINTER :: species
+    REAL(num) :: elapsed_time
+    CHARACTER(LEN=16) :: timestring
 
     CHARACTER(LEN=1), DIMENSION(3) :: dim_tags = (/'x', 'y', 'z'/)
     CHARACTER(LEN=5), DIMENSION(6) :: dir_tags = &
@@ -87,8 +89,10 @@ CONTAINS
       last_step = step
       IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
           .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
-        WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after '', &
-            & f8.1, '' seconds'')') time, step, MPI_WTIME() - walltime_start
+        elapsed_time = MPI_WTIME() - walltime_start
+        CALL create_timestring(elapsed_time, timestring)
+        WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after'', a)') &
+            time, step, timestring
       ENDIF
     ENDIF
 
@@ -1623,5 +1627,102 @@ CONTAINS
     ENDDO
 
   END FUNCTION lowercase
+
+
+
+  SUBROUTINE create_timestring(time, timestring)
+
+    REAL(num), INTENT(IN) :: time
+    CHARACTER(LEN=*), INTENT(INOUT) :: timestring ! length at least 15
+    INTEGER :: days, hours, minutes, seconds, frac_seconds
+
+    days = INT(time) / 60 / 60  / 24
+    hours = INT(time) / 60 / 60 - days * 24
+    minutes = INT(time) / 60 - (days * 24 + hours) * 60
+    seconds = INT(time) - ((days * 24 + hours) * 60 + minutes) * 60
+    frac_seconds = FLOOR((time - INT(time)) * 100)
+
+    WRITE(timestring, '(i3,'':'',i2.2,'':'',i2.2,'':'',i2.2,''.'',i2.2)') &
+        days, hours, minutes, seconds, frac_seconds
+
+  END SUBROUTINE create_timestring
+
+
+
+  SUBROUTINE create_full_timestring(time, timestring)
+
+    REAL(num), INTENT(IN) :: time
+    CHARACTER(LEN=*), INTENT(INOUT) :: timestring ! length at least 48
+    INTEGER :: days, hours, minutes, seconds, frac_seconds, var
+    CHARACTER(LEN=8) :: varstring
+    CHARACTER(LEN=4) :: intstring, fracstring
+    LOGICAL :: string_started
+
+    days = INT(time) / 60 / 60  / 24
+    hours = INT(time) / 60 / 60 - days * 24
+    minutes = INT(time) / 60 - (days * 24 + hours) * 60
+    seconds = INT(time) - ((days * 24 + hours) * 60 + minutes) * 60
+    frac_seconds = FLOOR((time - INT(time)) * 100)
+
+    timestring = ''
+    string_started = .FALSE.
+
+    var = days
+    varstring = ' day'
+    IF (var .GT. 0) THEN
+      CALL integer_as_string(var, intstring)
+      IF (string_started) THEN
+        timestring = TRIM(timestring) // ', ' // TRIM(intstring) &
+            // TRIM(varstring)
+      ELSE
+        timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
+      ENDIF
+      IF (var .GT. 1) timestring = TRIM(timestring) // 's'
+      string_started = .TRUE.
+    ENDIF
+
+    var = hours
+    varstring = ' hour'
+    IF (var .GT. 0) THEN
+      CALL integer_as_string(var, intstring)
+      IF (string_started) THEN
+        timestring = TRIM(timestring) // ', ' // TRIM(intstring) &
+            // TRIM(varstring)
+      ELSE
+        timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
+      ENDIF
+      IF (var .GT. 1) timestring = TRIM(timestring) // 's'
+      string_started = .TRUE.
+    ENDIF
+
+    var = minutes
+    varstring = ' minute'
+    IF (var .GT. 0) THEN
+      CALL integer_as_string(var, intstring)
+      IF (string_started) THEN
+        timestring = TRIM(timestring) // ', ' // TRIM(intstring) &
+            // TRIM(varstring)
+      ELSE
+        timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
+      ENDIF
+      IF (var .GT. 1) timestring = TRIM(timestring) // 's'
+      string_started = .TRUE.
+    ENDIF
+
+    var = seconds
+    varstring = ' seconds'
+    IF (var .GT. 0 .OR. frac_seconds .GT. 0 .OR. .NOT.string_started) THEN
+      CALL integer_as_string(var, intstring)
+      WRITE(fracstring, '(i2.2)') frac_seconds
+      IF (string_started) THEN
+        timestring = TRIM(timestring) // ', ' // TRIM(intstring) // '.' &
+            // TRIM(fracstring) // TRIM(varstring)
+      ELSE
+        timestring = TRIM(timestring) // TRIM(intstring) // '.' &
+            // TRIM(fracstring) // TRIM(varstring)
+      ENDIF
+    ENDIF
+
+  END SUBROUTINE create_full_timestring
 
 END MODULE diagnostics
