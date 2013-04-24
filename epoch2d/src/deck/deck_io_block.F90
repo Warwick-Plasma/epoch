@@ -151,7 +151,7 @@ CONTAINS
           CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         ENDIF
 
-        ALLOCATE(io_prefixes(n_io_blocks))
+        ALLOCATE(io_prefixes(n_io_blocks+1))
         nfile_prefixes = 1
         io_prefixes(1) = ''
 
