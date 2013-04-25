@@ -1645,6 +1645,7 @@ CONTAINS
     REAL(num) :: x_pos, x_pos_m, x_pos_ma
     REAL(num) :: y_pos, y_pos_m, y_pos_ma
     REAL(num) :: z_pos, z_pos_m, z_pos_ma
+    REAL(num) :: cpml_sigma_maxval
 
     ALLOCATE(cpml_kappa_ex(1-ng:nx+ng), cpml_kappa_bx(1-ng:nx+ng))
     ALLOCATE(cpml_a_ex(1-ng:nx+ng), cpml_a_bx(1-ng:nx+ng))
@@ -1682,7 +1683,7 @@ CONTAINS
     cpml_a_bz = 0.0_num
     cpml_sigma_bz = 0.0_num
 
-    cpml_sigma_max = cpml_sigma_max * c * 0.8_num * (cpml_m + 1.0_num) / dx
+    cpml_sigma_maxval = cpml_sigma_max * c * 0.8_num * (cpml_m + 1.0_num) / dx
 
     ! ============= x_min boundary =============
 
@@ -1718,7 +1719,7 @@ CONTAINS
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
           cpml_kappa_ex(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_sigma_ex(ix) = cpml_sigma_max * x_pos_m
+          cpml_sigma_ex(ix) = cpml_sigma_maxval * x_pos_m
           cpml_a_ex(ix) = cpml_a_max * x_pos_ma
 
           ! runs from nearly 1.0 to nearly 0.0 on the half intervals
@@ -1729,7 +1730,7 @@ CONTAINS
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
           cpml_kappa_bx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_sigma_bx(ix) = cpml_sigma_max * x_pos_m
+          cpml_sigma_bx(ix) = cpml_sigma_maxval * x_pos_m
           cpml_a_bx(ix) = cpml_a_max * x_pos_ma
         ENDDO
       ENDIF
@@ -1777,7 +1778,7 @@ CONTAINS
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
           cpml_kappa_ex(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_sigma_ex(ix) = cpml_sigma_max * x_pos_m
+          cpml_sigma_ex(ix) = cpml_sigma_maxval * x_pos_m
           cpml_a_ex(ix) = cpml_a_max * x_pos_ma
 
           ! runs from nearly 0.0 to nearly 1.0 on the half intervals
@@ -1788,7 +1789,7 @@ CONTAINS
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
           cpml_kappa_bx(ix-1) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_sigma_bx(ix-1) = cpml_sigma_max * x_pos_m
+          cpml_sigma_bx(ix-1) = cpml_sigma_maxval * x_pos_m
           cpml_a_bx(ix-1) = cpml_a_max * x_pos_ma
         ENDDO
       ENDIF
@@ -1836,7 +1837,7 @@ CONTAINS
           y_pos_ma = (1.0_num - y_pos)**cpml_ma
 
           cpml_kappa_ey(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
-          cpml_sigma_ey(iy) = cpml_sigma_max * y_pos_m
+          cpml_sigma_ey(iy) = cpml_sigma_maxval * y_pos_m
           cpml_a_ey(iy) = cpml_a_max * y_pos_ma
 
           ! runs from nearly 1.0 to nearly 0.0 on the half intervals
@@ -1847,7 +1848,7 @@ CONTAINS
           y_pos_ma = (1.0_num - y_pos)**cpml_ma
 
           cpml_kappa_by(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
-          cpml_sigma_by(iy) = cpml_sigma_max * y_pos_m
+          cpml_sigma_by(iy) = cpml_sigma_maxval * y_pos_m
           cpml_a_by(iy) = cpml_a_max * y_pos_ma
         ENDDO
       ENDIF
@@ -1895,7 +1896,7 @@ CONTAINS
           y_pos_ma = (1.0_num - y_pos)**cpml_ma
 
           cpml_kappa_ey(iy) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
-          cpml_sigma_ey(iy) = cpml_sigma_max * y_pos_m
+          cpml_sigma_ey(iy) = cpml_sigma_maxval * y_pos_m
           cpml_a_ey(iy) = cpml_a_max * y_pos_ma
 
           ! runs from nearly 0.0 to nearly 1.0 on the half intervals
@@ -1906,7 +1907,7 @@ CONTAINS
           y_pos_ma = (1.0_num - y_pos)**cpml_ma
 
           cpml_kappa_by(iy-1) = 1.0_num + (cpml_kappa_max - 1.0_num) * y_pos_m
-          cpml_sigma_by(iy-1) = cpml_sigma_max * y_pos_m
+          cpml_sigma_by(iy-1) = cpml_sigma_maxval * y_pos_m
           cpml_a_by(iy-1) = cpml_a_max * y_pos_ma
         ENDDO
       ENDIF
@@ -1954,7 +1955,7 @@ CONTAINS
           z_pos_ma = (1.0_num - z_pos)**cpml_ma
 
           cpml_kappa_ez(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
-          cpml_sigma_ez(iz) = cpml_sigma_max * z_pos_m
+          cpml_sigma_ez(iz) = cpml_sigma_maxval * z_pos_m
           cpml_a_ez(iz) = cpml_a_max * z_pos_ma
 
           ! runs from nearly 1.0 to nearly 0.0 on the half intervals
@@ -1965,7 +1966,7 @@ CONTAINS
           z_pos_ma = (1.0_num - z_pos)**cpml_ma
 
           cpml_kappa_bz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
-          cpml_sigma_bz(iz) = cpml_sigma_max * z_pos_m
+          cpml_sigma_bz(iz) = cpml_sigma_maxval * z_pos_m
           cpml_a_bz(iz) = cpml_a_max * z_pos_ma
         ENDDO
       ENDIF
@@ -2013,7 +2014,7 @@ CONTAINS
           z_pos_ma = (1.0_num - z_pos)**cpml_ma
 
           cpml_kappa_ez(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
-          cpml_sigma_ez(iz) = cpml_sigma_max * z_pos_m
+          cpml_sigma_ez(iz) = cpml_sigma_maxval * z_pos_m
           cpml_a_ez(iz) = cpml_a_max * z_pos_ma
 
           ! runs from nearly 0.0 to nearly 1.0 on the half intervals
@@ -2024,7 +2025,7 @@ CONTAINS
           z_pos_ma = (1.0_num - z_pos)**cpml_ma
 
           cpml_kappa_bz(iz-1) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
-          cpml_sigma_bz(iz-1) = cpml_sigma_max * z_pos_m
+          cpml_sigma_bz(iz-1) = cpml_sigma_maxval * z_pos_m
           cpml_a_bz(iz-1) = cpml_a_max * z_pos_ma
         ENDDO
       ENDIF

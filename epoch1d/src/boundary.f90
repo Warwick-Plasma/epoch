@@ -616,6 +616,7 @@ CONTAINS
     INTEGER, PARAMETER :: cpml_m = 3
     INTEGER, PARAMETER :: cpml_ma = 1
     REAL(num) :: x_pos, x_pos_m, x_pos_ma
+    REAL(num) :: cpml_sigma_maxval
 
     ALLOCATE(cpml_kappa_ex(1-ng:nx+ng), cpml_kappa_bx(1-ng:nx+ng))
     ALLOCATE(cpml_a_ex(1-ng:nx+ng), cpml_a_bx(1-ng:nx+ng))
@@ -629,7 +630,7 @@ CONTAINS
     cpml_a_bx = 0.0_num
     cpml_sigma_bx = 0.0_num
 
-    cpml_sigma_max = cpml_sigma_max * c * 0.8_num * (cpml_m + 1.0_num) / dx
+    cpml_sigma_maxval = cpml_sigma_max * c * 0.8_num * (cpml_m + 1.0_num) / dx
 
     ! ============= x_min boundary =============
 
@@ -665,7 +666,7 @@ CONTAINS
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
           cpml_kappa_ex(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_sigma_ex(ix) = cpml_sigma_max * x_pos_m
+          cpml_sigma_ex(ix) = cpml_sigma_maxval * x_pos_m
           cpml_a_ex(ix) = cpml_a_max * x_pos_ma
 
           ! runs from nearly 1.0 to nearly 0.0 on the half intervals
@@ -676,7 +677,7 @@ CONTAINS
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
           cpml_kappa_bx(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_sigma_bx(ix) = cpml_sigma_max * x_pos_m
+          cpml_sigma_bx(ix) = cpml_sigma_maxval * x_pos_m
           cpml_a_bx(ix) = cpml_a_max * x_pos_ma
         ENDDO
       ENDIF
@@ -724,7 +725,7 @@ CONTAINS
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
           cpml_kappa_ex(ix) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_sigma_ex(ix) = cpml_sigma_max * x_pos_m
+          cpml_sigma_ex(ix) = cpml_sigma_maxval * x_pos_m
           cpml_a_ex(ix) = cpml_a_max * x_pos_ma
 
           ! runs from nearly 0.0 to nearly 1.0 on the half intervals
@@ -735,7 +736,7 @@ CONTAINS
           x_pos_ma = (1.0_num - x_pos)**cpml_ma
 
           cpml_kappa_bx(ix-1) = 1.0_num + (cpml_kappa_max - 1.0_num) * x_pos_m
-          cpml_sigma_bx(ix-1) = cpml_sigma_max * x_pos_m
+          cpml_sigma_bx(ix-1) = cpml_sigma_maxval * x_pos_m
           cpml_a_bx(ix-1) = cpml_a_max * x_pos_ma
         ENDDO
       ENDIF
