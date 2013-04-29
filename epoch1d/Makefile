@@ -14,7 +14,7 @@ MODULEFLAG = -module $(OBJDIR)
 
 ifeq ($(strip $(MODE)),debug)
   FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-           -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
+           -C -g -heap-arrays 64 -warn -fpic # Debug
 endif
 
 # PGI
@@ -35,7 +35,7 @@ ifeq ($(strip $(COMPILER)),intel)
   #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-             -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
+             -C -g -heap-arrays 64 -warn -fpic # Debug
   endif
   MODULEFLAG = -module $(OBJDIR)
 endif
@@ -206,15 +206,14 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
 # Rule to build the fortran files
 
 %.o: %.f90
-	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
 
 %.o: %.F90
-	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
 epoch: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
+	@mkdir -p $(BINDIR)
 	$(FC) $(FFLAGS) $(MODULEFLAG) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
 opt_dont_build_sha1: ;
@@ -224,14 +223,13 @@ $(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(INCLUDES) \
 	./$(SRCDIR)/gen_src_module $@ $^
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
-	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
 
-clean: tidy
-	@rm -rf *~ $(BINDIR)
+clean:
+	@rm -rf $(BINDIR) $(OBJDIR)
 
 tidy:
-	@rm -rf $(OBJDIR) *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
+	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 
 visit:
 	@cd ../VisIt; ./build SDF
@@ -239,6 +237,11 @@ visit:
 visitclean:
 	@cd ../VisIt; make clean; \
 	  rm -rf .depend *.d *Info.C *Info.h CMake* cmake* Makefile
+
+$(OBJFILES): | $(OBJDIR)
+
+$(OBJDIR):
+	@mkdir -p $(OBJDIR)
 
 .PHONY: clean tidy visit visitclean epoch FORCE
 
