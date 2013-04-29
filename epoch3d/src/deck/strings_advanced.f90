@@ -153,8 +153,10 @@ CONTAINS
     ENDIF
 
     CALL tokenize(str_tmp, output, err)
-    IF (err .EQ. c_err_none) &
-        CALL evaluate_and_return_all(output, 0, 0, 0, ndim, array, err)
+    IF (err .EQ. c_err_none) THEN
+      NULLIFY(array)
+      CALL evaluate_and_return_all(output, 0, 0, 0, ndim, array, err)
+    ENDIF
     CALL deallocate_stack(output)
 
   END SUBROUTINE get_allocated_array_rnum
