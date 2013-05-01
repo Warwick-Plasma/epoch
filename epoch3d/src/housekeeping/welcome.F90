@@ -43,7 +43,7 @@ CONTAINS
     WRITE(*, *)
 
     CALL compiler_directives
-    CALL mpi_status
+    CALL mpi_status_message
 
   END SUBROUTINE welcome_message
 
@@ -124,7 +124,7 @@ CONTAINS
 
 
 
-  SUBROUTINE mpi_status
+  SUBROUTINE mpi_status_message
 
     CHARACTER(LEN=8) :: string
 
@@ -133,7 +133,7 @@ CONTAINS
     WRITE(*, *) 'Code is running on ', TRIM(string), ' processing elements'
     WRITE(*, *)
 
-  END SUBROUTINE mpi_status
+  END SUBROUTINE mpi_status_message
 
 
 
