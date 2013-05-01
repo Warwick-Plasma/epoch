@@ -425,26 +425,30 @@ CONTAINS
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
-    REAL(num) :: part_mc2
+    REAL(num) :: part_m, part_mc2, part_mcc
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
     ENDIF
 
     part_count = 0
-#ifndef PER_PARTICLE_CHARGE_MASS
-    part_mc2 = (current_species%mass * c)**2
-#endif
+
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
 #ifdef PHOTONS
       IF (current_species%species_type .NE. c_species_id_photon) THEN
 #endif
+        part_m   = current_species%mass
+        part_mcc = part_m * c**2
+        part_mc2 = (part_m * c)**2
+
         DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
           part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
-          part_mc2 = (cur%mass * c)**2
+          part_m   = cur%mass
+          part_mcc = part_m * c**2
+          part_mc2 = (part_m * c)**2
 #endif
-          array(part_count) = c * SQRT(SUM(cur%part_p**2) + part_mc2)
+          array(part_count) = c * SQRT(SUM(cur%part_p**2) + part_mc2) - part_mcc
           cur => cur%next
         ENDDO
 #ifdef PHOTONS
