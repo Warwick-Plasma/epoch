@@ -298,7 +298,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
-    INTEGER :: loop, elementselected, mask, mask_element, ierr, io
+    INTEGER :: loop, elementselected, mask, fullmask, mask_element, ierr, io
     INTEGER :: i, is, subset, n_list
     INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad, found
@@ -499,8 +499,9 @@ CONTAINS
       subset = subsets(is)
       IF (is .EQ. 1) THEN
         mask = subset
+        fullmask = mask
       ELSE
-        mask = subset_list(subset)%mask
+        mask = IOR(subset_list(subset)%mask,fullmask)
       ENDIF
 
       ! If setting dumpmask for features which haven't been compiled
