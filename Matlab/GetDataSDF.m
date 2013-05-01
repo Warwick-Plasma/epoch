@@ -95,6 +95,8 @@ for n = 1:nblocks
         block.var = GetPlainVariableSDF(h);
       case h.BLOCKTYPE.POINT_VARIABLE
         block.var = GetPointVariableSDF(h);
+      case h.BLOCKTYPE.CONSTANT
+        block.var = GetConstantSDF(h);
     end
 
     blocklist(n) = block;
@@ -125,6 +127,8 @@ for n = 1:nblocks
       case h.BLOCKTYPE.POINT_VARIABLE
           add = 1;
           hasgrid = h.BLOCKTYPE.POINT_MESH;
+      case h.BLOCKTYPE.CONSTANT
+          add = 1;
     end
 
     got = 0;
