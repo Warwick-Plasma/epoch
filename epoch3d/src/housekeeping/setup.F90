@@ -701,9 +701,6 @@ CONTAINS
     LOGICAL, ALLOCATABLE :: species_found(:)
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
-#if PARTICLE_ID || PARTICLE_ID4
-    TYPE(particle_list), POINTER :: partlist
-#endif
     INTEGER, POINTER :: species_subtypes(:)
 
     got_full = .FALSE.

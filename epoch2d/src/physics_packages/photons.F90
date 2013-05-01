@@ -762,10 +762,12 @@ CONTAINS
 
     ! Particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
 #elif  PARTICLE_SHAPE_TOPHAT
     REAL(num), PARAMETER :: fac = (1.0_num)**c_ndims
 #else
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 

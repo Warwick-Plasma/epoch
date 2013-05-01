@@ -90,7 +90,7 @@ CONTAINS
     REAL(num) :: idtyz, idtxz, idtxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, fac, dtfac, third, gamma, cf2
+    REAL(num) :: root, fac, dtfac, third, gamma
     REAL(num) :: delta_x, delta_y, delta_z
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
     INTEGER(i8) :: ipart
@@ -99,6 +99,9 @@ CONTAINS
 #endif
 #ifdef TRACER_PARTICLES
     LOGICAL :: not_tracer_species
+#endif
+#ifndef PARTICLE_SHAPE_TOPHAT
+    REAL(num) :: cf2
 #endif
 
     TYPE(particle), POINTER :: current, next

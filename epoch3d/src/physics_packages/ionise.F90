@@ -369,7 +369,7 @@ CONTAINS
     INTEGER :: iy, cell_y1, cell_y2, dcelly
     INTEGER :: iz, cell_z1, cell_z2, dcellz
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: dfac, cf2, weight, j_ion(3)
+    REAL(num) :: dfac, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
@@ -383,10 +383,12 @@ CONTAINS
 
     ! Particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
 #elif  PARTICLE_SHAPE_TOPHAT
     REAL(num), PARAMETER :: fac = 1.0_num
 #else
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 
@@ -670,7 +672,7 @@ CONTAINS
     INTEGER :: iy, cell_y1, cell_y2, dcelly
     INTEGER :: iz, cell_z1, cell_z2, dcellz
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: dfac, cf2, weight, j_ion(3)
+    REAL(num) :: dfac, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
@@ -684,10 +686,12 @@ CONTAINS
 
     ! Particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
 #elif  PARTICLE_SHAPE_TOPHAT
     REAL(num), PARAMETER :: fac = 1.0_num
 #else
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 
@@ -958,7 +962,7 @@ CONTAINS
     INTEGER :: iy, cell_y1, cell_y2, dcelly
     INTEGER :: iz, cell_z1, cell_z2, dcellz
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: dfac, cf2, weight, j_ion(3)
+    REAL(num) :: dfac, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
@@ -971,10 +975,12 @@ CONTAINS
 
     ! Particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
 #elif  PARTICLE_SHAPE_TOPHAT
     REAL(num), PARAMETER :: fac = 1.0_num
 #else
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 
@@ -1235,7 +1241,7 @@ CONTAINS
     INTEGER :: iy, cell_y1, cell_y2, dcelly
     INTEGER :: iz, cell_z1, cell_z2, dcellz
     REAL(num) :: rate, ex_part, ey_part, ez_part, e_part_mag, time_left, sample
-    REAL(num) :: dfac, cf2, weight, j_ion(3)
+    REAL(num) :: dfac, weight, j_ion(3)
     REAL(num) :: gx(sf_min:sf_max), hx(sf_min:sf_max)
     REAL(num) :: gy(sf_min:sf_max), hy(sf_min:sf_max)
     REAL(num) :: gz(sf_min:sf_max), hz(sf_min:sf_max)
@@ -1248,10 +1254,12 @@ CONTAINS
 
     ! Particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
 #elif  PARTICLE_SHAPE_TOPHAT
     REAL(num), PARAMETER :: fac = 1.0_num
 #else
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 

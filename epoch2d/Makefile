@@ -46,7 +46,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -fbounds-check -fbacktrace -Wall -O0 -g \
-             -Wextra -pedantic                             # Debug
+             -Wextra -pedantic -Wno-unused-dummy-argument -Wno-unused-parameter # Debug
   endif
   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
 endif

@@ -10,7 +10,9 @@ CONTAINS
 
     REAL(num), INTENT(IN) :: cell_frac
     REAL(num), DIMENSION(sf_min:sf_max), INTENT(OUT) :: gf
+#ifndef PARTICLE_SHAPE_TOPHAT
     REAL(num) :: cf2
+#endif
 #ifdef PARTICLE_SHAPE_BSPLINE3
     REAL(num), PARAMETER :: third = 1.0_num / 3.0_num
     REAL(num), PARAMETER :: fac1 = 0.125_num * third

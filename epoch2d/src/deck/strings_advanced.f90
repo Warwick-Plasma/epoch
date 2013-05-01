@@ -129,7 +129,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     TYPE(primitive_stack) :: output
     INTEGER :: ndim, i
-    CHARACTER*1 :: c
+    CHARACTER(LEN=1) :: c
     CHARACTER(LEN=string_length) :: str_tmp
     LOGICAL :: found
 

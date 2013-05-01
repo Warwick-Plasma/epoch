@@ -9,6 +9,9 @@ MODULE window
   LOGICAL, SAVE :: window_started
   REAL(num) :: density, temperature(3), drift(3)
   REAL(num), SAVE :: window_shift_fraction
+#ifndef PER_PARTICLE_WEIGHT
+  INTEGER :: ierr
+#endif
 
 CONTAINS
 
@@ -23,7 +26,7 @@ CONTAINS
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(comm, errcode, errcode)
+    CALL MPI_ABORT(comm, errcode, ierr)
 #endif
 
   END SUBROUTINE initialise_window
@@ -138,7 +141,7 @@ CONTAINS
 
     DO ispecies = 1, n_species
       CALL create_empty_partlist(append_list)
-      npart_per_cell = AINT(species_list(ispecies)%npart_per_cell, KIND=i8)
+      npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
       IF (npart_frac .GT. 0) THEN
         n0 = 0
@@ -256,7 +259,7 @@ CONTAINS
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(comm, errcode, errcode)
+    CALL MPI_ABORT(comm, errcode, ierr)
 #endif
 
   END SUBROUTINE moving_window

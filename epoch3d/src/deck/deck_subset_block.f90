@@ -347,6 +347,8 @@ CONTAINS
       subset_list(i)%use_charge_max = .FALSE.
       subset_list(i)%use_mass_min   = .FALSE.
       subset_list(i)%use_mass_max   = .FALSE.
+      subset_list(i)%use_id_min     = .FALSE.
+      subset_list(i)%use_id_max     = .FALSE.
       subset_list(i)%random_fraction = 0.0_num
       subset_list(i)%gamma_min  = -HUGE(1.0_num)
       subset_list(i)%gamma_max  =  HUGE(1.0_num)
@@ -368,6 +370,8 @@ CONTAINS
       subset_list(i)%charge_max =  HUGE(1.0_num)
       subset_list(i)%mass_min   = -HUGE(1.0_num)
       subset_list(i)%mass_max   =  HUGE(1.0_num)
+      subset_list(i)%id_min     = -HUGE(1)
+      subset_list(i)%id_max     =  HUGE(1)
       subset_list(i)%mask = c_io_always
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_never

@@ -383,7 +383,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'dump') .OR. str_cmp(element, 'dumpmask')) THEN
-      species_list(species_id)%dumpmask = species_dumpmask
+      species_list(species_id)%dumpmask = INT(species_dumpmask)
       RETURN
     ENDIF
 

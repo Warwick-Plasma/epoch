@@ -395,7 +395,6 @@ CONTAINS
     LOGICAL, SAVE :: warn = .TRUE.
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=filename_length) :: deck_filename, status_filename
-    CHARACTER(LEN=filename_length) :: list_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE., exists
     INTEGER :: errcode_deck, ierr, i, io, rank_check
