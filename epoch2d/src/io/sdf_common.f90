@@ -65,6 +65,7 @@ MODULE sdf_common
     INTEGER(i4) :: file_version, file_revision, code_io_version, step
     INTEGER(i4) :: datatype_integer, mpitype_integer
     INTEGER(i4) :: blocktype, summary_size_wrote, nblocks_wrote, step_wrote
+    INTEGER(i4) :: datatype
     INTEGER :: filehandle, comm, rank, rank_master, default_rank, mode
     INTEGER :: errhandler, nstations
     LOGICAL :: done_header, restart_flag, other_domains, writing, handled_error
@@ -547,6 +548,7 @@ CONTAINS
     var%use_mult = .FALSE.
     var%data_location = 0
     var%blocktype = c_blocktype_null
+    var%datatype = 0
     var%step = 0
     var%step_increment = 0
     var%time = 0

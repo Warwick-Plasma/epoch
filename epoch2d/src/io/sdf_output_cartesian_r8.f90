@@ -1775,6 +1775,8 @@ CONTAINS
       ENDIF
     ENDDO
 
+    h%datatype = datatype_real
+
     CALL sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
         material_names, variable_ids, nmat, data_length)
 
@@ -1864,6 +1866,8 @@ CONTAINS
         data_length = data_length + nsize
       ENDIF
     ENDDO
+
+    h%datatype = datatype_real
 
     CALL sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
         material_names, variable_ids, nmat, data_length)
@@ -1955,6 +1959,8 @@ CONTAINS
       ENDIF
     ENDDO
 
+    h%datatype = datatype_real
+
     CALL sdf_write_stitched_material(h, id, name, mesh_id, stagger, &
         material_names, variable_ids, nmat, data_length)
 
@@ -2044,6 +2050,8 @@ CONTAINS
         data_length = data_length + nsize
       ENDIF
     ENDDO
+
+    h%datatype = datatype_real
 
     CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids, nmat, data_length)
@@ -2135,6 +2143,8 @@ CONTAINS
       ENDIF
     ENDDO
 
+    h%datatype = datatype_real
+
     CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids, nmat, data_length)
 
@@ -2224,6 +2234,8 @@ CONTAINS
         data_length = data_length + nsize
       ENDIF
     ENDDO
+
+    h%datatype = datatype_real
 
     CALL sdf_write_stitched_matvar(h, id, name, mesh_id, stagger, &
         material_id, variable_ids, nmat, data_length)
@@ -2316,6 +2328,8 @@ CONTAINS
       ENDIF
     ENDDO
 
+    h%datatype = datatype_real
+
     CALL sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids, nmat, data_length)
 
@@ -2407,6 +2421,8 @@ CONTAINS
       ENDIF
     ENDDO
 
+    h%datatype = datatype_real
+
     CALL sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids, nmat, data_length)
 
@@ -2497,6 +2513,8 @@ CONTAINS
         data_length = data_length + nsize
       ENDIF
     ENDDO
+
+    h%datatype = datatype_real
 
     CALL sdf_write_stitched_species(h, id, name, mesh_id, stagger, &
         material_id, material_name, specnames, variable_ids, nmat, data_length)

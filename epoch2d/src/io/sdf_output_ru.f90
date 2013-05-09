@@ -527,7 +527,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    b%datatype = c_datatype_other
+    IF (h%datatype .GT. 0) b%datatype = h%datatype
 
     ! Metadata is
     ! - stagger   INTEGER(i4)
@@ -626,6 +626,8 @@ CONTAINS
         b%blocktype = c_blocktype_stitched_tensor
       ENDIF
     ENDIF
+
+    b%datatype = c_datatype_other
 
     CALL write_stitched(h, id, name, mesh_id, stagger, variable_ids, ndims, &
         data_length)
