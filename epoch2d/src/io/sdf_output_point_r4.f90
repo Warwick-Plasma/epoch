@@ -657,4 +657,114 @@ CONTAINS
 
   END SUBROUTINE write_point_variable_r4
 
+
+
+  !----------------------------------------------------------------------------
+  ! Code to write a point variable in parallel using a generic iterator
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE write_point_variable_gen_r4(h, id, name, species_id, units, &
+      npoint_global, mesh_id, iterator, param, offset, convert_in, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id, units
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    INTEGER, INTENT(IN) :: param
+    INTEGER(i8), INTENT(IN) :: offset
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
+    REAL(r4), INTENT(IN), OPTIONAL :: mult
+
+    INTERFACE
+      FUNCTION iterator(array, npoint_it, start, param)
+        USE sdf_common
+        REAL(r4) :: iterator
+        REAL(r4), DIMENSION(:), INTENT(OUT) :: array
+        INTEGER, INTENT(INOUT) :: npoint_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN) :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    INTEGER(MPI_OFFSET_KIND) :: file_offset
+    INTEGER(i8) :: nmax
+    INTEGER :: errcode, npoint_this_cycle
+    LOGICAL :: start, convert
+    REAL(r4), ALLOCATABLE, DIMENSION(:) :: array
+    REAL(r4), ALLOCATABLE, DIMENSION(:) :: r4array
+    TYPE(sdf_block_type), POINTER :: b
+    REAL(r4) :: ret
+
+    IF (npoint_global .LE. 0) RETURN
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    IF (PRESENT(convert_in)) THEN
+      convert = convert_in
+    ELSE
+      convert = .FALSE.
+    ENDIF
+
+    IF (convert) THEN
+      b%type_size = 4
+      b%datatype = c_datatype_real4
+      b%mpitype = MPI_REAL4
+    ELSE
+      b%type_size = sof
+      b%datatype = datatype_real
+      b%mpitype = mpitype_real
+    ENDIF
+    b%blocktype = c_blocktype_point_variable
+    b%ndims = 1
+    b%npoints = npoint_global
+
+    ! Write header
+
+    CALL write_point_variable_meta_r4(h, id, name, species_id, units, &
+        mesh_id, mult)
+
+    ! Write the real data
+
+    ALLOCATE(array(1:npoint_per_iteration))
+    IF (convert) ALLOCATE(r4array(1:npoint_per_iteration))
+
+    npoint_this_cycle = INT(npoint_per_iteration)
+    start = .TRUE.
+    file_offset = h%current_location + offset * b%type_size
+
+    DO
+      ret = iterator(array, npoint_this_cycle, start, param)
+      nmax = npoint_this_cycle
+      CALL MPI_ALLREDUCE(npoint_this_cycle, nmax, 1, h%mpitype_integer, &
+          MPI_MAX, h%comm, errcode)
+      IF (nmax .LE. 0) EXIT
+
+      IF (start) start = .FALSE.
+
+      CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, MPI_BYTE, &
+          b%mpitype, 'native', MPI_INFO_NULL, errcode)
+      IF (convert) THEN
+        r4array = REAL(array,r4)
+        CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, npoint_this_cycle, &
+            b%mpitype, MPI_STATUS_IGNORE, errcode)
+      ELSE
+        CALL MPI_FILE_WRITE_ALL(h%filehandle, array, npoint_this_cycle, &
+            b%mpitype, MPI_STATUS_IGNORE, errcode)
+      ENDIF
+
+      file_offset = file_offset + npoint_this_cycle * b%type_size
+    ENDDO
+
+    DEALLOCATE(array)
+    IF (convert) DEALLOCATE(r4array)
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    h%current_location = b%data_location + b%data_length
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_point_variable_gen_r4
+
 END MODULE sdf_output_point_r4
