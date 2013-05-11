@@ -162,11 +162,12 @@ CONTAINS
 
 
 
-  SUBROUTINE read_point_mesh_r8(h, npoint_local, distribution, iterator)
+  SUBROUTINE read_point_mesh_r8(h, npoint_local, distribution, iterator, param)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(IN) :: npoint_local
     INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER(i8) :: npoint_remain, npoint_per_it8, npoint_this_it8
     INTEGER :: direction, errcode, npoint_per_it, npoint_this_it
     LOGICAL :: start
@@ -175,13 +176,14 @@ CONTAINS
     TYPE(sdf_block_type), POINTER :: b
 
     INTERFACE
-      FUNCTION iterator(array, npoint_it, start, direction)
+      FUNCTION iterator(array, npoint_it, start, direction, param)
         USE sdf_common
         REAL(r8) :: iterator
         REAL(r8), DIMENSION(:), INTENT(INOUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN) :: direction
+        INTEGER, INTENT(IN), OPTIONAL :: param
       END FUNCTION iterator
     END INTERFACE
 
@@ -210,7 +212,7 @@ CONTAINS
             MPI_STATUS_IGNORE, errcode)
 
         npoint_remain = npoint_remain - npoint_this_it8
-        ret = iterator(array, npoint_this_it, start, direction)
+        ret = iterator(array, npoint_this_it, start, direction, param)
         start = .FALSE.
         npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
         npoint_this_it  = INT(npoint_this_it8)
@@ -218,6 +220,9 @@ CONTAINS
 
       h%current_location = h%current_location + b%npoints * b%type_size
     ENDDO
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
 
     DEALLOCATE(array)
 
@@ -247,11 +252,13 @@ CONTAINS
 
 
 
-  SUBROUTINE read_point_variable_r8(h, npoint_local, distribution, iterator)
+  SUBROUTINE read_point_variable_r8(h, npoint_local, distribution, iterator, &
+      param)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(IN) :: npoint_local
     INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER(i8) :: npoint_remain, npoint_per_it8, npoint_this_it8
     INTEGER :: errcode, npoint_per_it, npoint_this_it
     LOGICAL :: start
@@ -260,12 +267,13 @@ CONTAINS
     TYPE(sdf_block_type), POINTER :: b
 
     INTERFACE
-      FUNCTION iterator(array, npoint_it, start)
+      FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         REAL(r8) :: iterator
         REAL(r8), DIMENSION(:), INTENT(INOUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
       END FUNCTION iterator
     END INTERFACE
 
@@ -294,9 +302,12 @@ CONTAINS
           MPI_STATUS_IGNORE, errcode)
 
       npoint_remain = npoint_remain - npoint_this_it8
-      ret = iterator(array, npoint_this_it, start)
+      ret = iterator(array, npoint_this_it, start, param)
       start = .FALSE.
     ENDDO
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
 
     DEALLOCATE(array)
 
