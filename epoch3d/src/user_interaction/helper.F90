@@ -244,7 +244,7 @@ CONTAINS
       WRITE(*,*) 'non_uniform_load_particles() only available when using', &
           ' per species weighting'
     ENDIF
-    CALL MPI_ABORT(comm, errcode, ierr)
+    CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
 #endif
 
   END SUBROUTINE non_uniform_load_particles
@@ -309,7 +309,7 @@ CONTAINS
               // 'where particles may'
           WRITE(*,*) 'validly be placed for species "' // TRIM(species%name) &
               // '". ', 'Code will now terminate.'
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         ENDIF
       ENDIF
 
@@ -712,7 +712,7 @@ CONTAINS
       WRITE(*,*) 'setup_particle_density() only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(comm, errcode, errcode)
+    CALL MPI_ABORT(MPI_COMM_WORLD, errcode, errcode)
 #endif
 
   END SUBROUTINE setup_particle_density

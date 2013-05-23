@@ -243,7 +243,7 @@ CONTAINS
       intbuf(5) = n_sample_chi2
       intbuf(6) = n_sample_epsilon
 
-      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, comm, errcode)
 
       bufsize = n_sample_h * 2
       bufsize = bufsize + n_sample_t * 3
@@ -306,13 +306,13 @@ CONTAINS
         ENDDO
       ENDDO
 
-      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, MPI_COMM_WORLD, errcode)
+      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, comm, errcode)
 
       DEALLOCATE(realbuf)
     ELSE
       ! Unpack data from rank zero
 
-      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, comm, errcode)
 
       n_sample_h       = intbuf(1)
       n_sample_t       = intbuf(2)
@@ -332,7 +332,7 @@ CONTAINS
       ALLOCATE(realbuf(bufsize))
       n = 1
 
-      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, MPI_COMM_WORLD, errcode)
+      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, comm, errcode)
 
       ALLOCATE(log_hsokolov(n_sample_h,2))
       DO i = 1, 2

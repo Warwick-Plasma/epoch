@@ -34,7 +34,7 @@ CONTAINS
 
       IF (err .NE. c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(comm, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP
       ENDIF
     ENDDO
@@ -117,7 +117,7 @@ CONTAINS
 
       IF (err .NE. c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(comm, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP
       ENDIF
     ENDDO

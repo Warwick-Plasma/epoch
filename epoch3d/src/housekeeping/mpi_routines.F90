@@ -14,8 +14,9 @@ CONTAINS
   SUBROUTINE mpi_minimal_init
 
     CALL MPI_INIT(errcode)
-    CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nproc, errcode)
-    CALL MPI_COMM_RANK(MPI_COMM_WORLD, rank, errcode)
+    CALL MPI_COMM_DUP(MPI_COMM_WORLD, comm, errcode)
+    CALL MPI_COMM_SIZE(comm, nproc, errcode)
+    CALL MPI_COMM_RANK(comm, rank, errcode)
 #ifdef MPI_DEBUG
     CALL mpi_set_error_handler
 #endif
@@ -27,14 +28,12 @@ CONTAINS
   SUBROUTINE setup_communicator
 
     INTEGER, PARAMETER :: ndims = 3
-    INTEGER :: dims(ndims), idim
+    INTEGER :: dims(ndims), idim, old_comm
     LOGICAL :: periods(ndims), reorder, op
     INTEGER :: test_coords(ndims)
     INTEGER :: ix, iy, iz
     INTEGER :: nxsplit, nysplit, nzsplit
     INTEGER :: area, minarea, nprocyz
-
-    IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm, errcode)
 
     IF (MAX(nprocx,1) * MAX(nprocy,1) * MAX(nprocz,1) .GT. nproc) THEN
       IF (rank .EQ. 0) THEN
@@ -100,8 +99,9 @@ CONTAINS
         .OR. bc_particle(c_bd_z_min) .EQ. c_bc_periodic) &
             periods(c_ndims-2) = .TRUE.
 
-    CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
-        comm, errcode)
+    old_comm = comm
+    CALL MPI_CART_CREATE(old_comm, ndims, dims, periods, reorder, comm, errcode)
+    CALL MPI_COMM_FREE(old_comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
     CALL MPI_CART_COORDS(comm, rank, ndims, coordinates, errcode)
     CALL MPI_CART_SHIFT(comm, 2, 1, proc_x_min, proc_x_max, errcode)

@@ -2109,7 +2109,7 @@ CONTAINS
         part_proc = get_particle_processor(current)
         IF (part_proc .LT. 0) THEN
           PRINT *, 'Unlocatable particle on processor', rank, current%part_pos
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
         ENDIF
 #ifdef PARTICLE_DEBUG
