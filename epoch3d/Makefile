@@ -14,7 +14,7 @@ MODULEFLAG = -module $(OBJDIR)
 
 ifeq ($(strip $(MODE)),debug)
   FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-           -C -g -heap-arrays 64 -warn -fpic # Debug
+           -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
 endif
 
 # PGI
@@ -35,7 +35,7 @@ ifeq ($(strip $(COMPILER)),intel)
   #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-             -C -g -heap-arrays 64 -warn -fpic # Debug
+             -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
   endif
   MODULEFLAG = -module $(OBJDIR)
 endif
@@ -59,6 +59,18 @@ ifeq ($(strip $(COMPILER)),g95)
     FFLAGS = -O0 -g                                        # Debug
   endif
   MODULEFLAG = -fmod=$(OBJDIR)
+endif
+
+# Don't compile encoded source if MODE=debug or ENC=no
+# Do compile encoded source if MODE=debug and ENC=yes
+ifeq ($(strip $(ENC)),no)
+  ENCODED_SOURCE = dummy_encoded_source.o
+else
+  ifneq ($(strip $(ENC)),yes)
+    ifeq ($(strip $(MODE)),debug)
+      ENCODED_SOURCE = dummy_encoded_source.o
+    endif
+  endif
 endif
 
 # Set some of the build parameters
@@ -289,7 +301,7 @@ evaluate.o: evaluate.f90 evaluator_blocks.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
 helper.o: helper.F90 boundary.o partlist.o strings.o
-ic_module.o: ic_module.f90
+ic_module.o: ic_module.f90 shared_data.o
 ionise.o: ionise.F90 numerics.o partlist.o random_generator.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
