@@ -56,14 +56,14 @@ CONTAINS
         nprocyz = nproc / ix
         IF (ix * nprocyz .NE. nproc) CYCLE
 
-        nxsplit = nx_global / ix
+        nxsplit = (nx_global - 1) / ix + 1
 
         DO iy = 1, nprocyz
           iz = nprocyz / iy
           IF (iy * iz .NE. nprocyz) CYCLE
 
-          nysplit = ny_global / iy
-          nzsplit = nz_global / iz
+          nysplit = (ny_global - 1) / iy + 1
+          nzsplit = (nz_global - 1) / iz + 1
 
           area = nxsplit * nysplit + nysplit * nzsplit + nzsplit * nxsplit
           IF (area .LT. minarea) THEN

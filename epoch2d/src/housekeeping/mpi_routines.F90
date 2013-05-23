@@ -54,8 +54,8 @@ CONTAINS
         iy = nproc / ix
         IF (ix * iy .NE. nproc) CYCLE
 
-        nxsplit = nx_global / ix
-        nysplit = ny_global / iy
+        nxsplit = (nx_global - 1) / ix + 1
+        nysplit = (ny_global - 1) / iy + 1
 
         area = nxsplit + nysplit
         IF (area .LT. minarea) THEN
