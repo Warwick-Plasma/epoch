@@ -34,7 +34,10 @@ CONTAINS
     INTEGER :: ix, iy
     INTEGER :: nxsplit, nysplit
     INTEGER :: area, minarea
+    INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
+
+    nproc_orig = nproc
 
     IF (nx_global .LT. ng .OR. ny_global .LT. ng) THEN
       IF (rank .EQ. 0) THEN
@@ -67,27 +70,69 @@ CONTAINS
     ENDIF
 
     IF (nprocx * nprocy .EQ. 0) THEN
-      ! Find the processor split which minimizes surface area of
-      ! the resulting domain
+      DO WHILE (nproc .GT. 1)
+        ! Find the processor split which minimizes surface area of
+        ! the resulting domain
 
-      minarea = nx_global + ny_global
+        minarea = nx_global + ny_global
 
-      DO ix = 1, nproc
-        iy = nproc / ix
-        IF (ix * iy .NE. nproc) CYCLE
+        DO ix = 1, nproc
+          iy = nproc / ix
+          IF (ix * iy .NE. nproc) CYCLE
 
-        nxsplit = (nx_global - 1) / ix + 1
-        nysplit = (ny_global - 1) / iy + 1
-        ! Actual domain must be bigger than the number of ghostcells
-        IF (nxsplit .LT. ng .OR. nysplit .LT. ng) CYCLE
+          nxsplit = (nx_global - 1) / ix + 1
+          nysplit = (ny_global - 1) / iy + 1
+          ! Actual domain must be bigger than the number of ghostcells
+          IF (nxsplit .LT. ng .OR. nysplit .LT. ng) CYCLE
 
-        area = nxsplit + nysplit
-        IF (area .LT. minarea) THEN
-          nprocx = ix
-          nprocy = iy
-          minarea = area
-        ENDIF
+          area = nxsplit + nysplit
+          IF (area .LT. minarea) THEN
+            nprocx = ix
+            nprocy = iy
+            minarea = area
+          ENDIF
+        ENDDO
+
+        IF (nprocx .GT. 0) EXIT
+
+        ! If we get here then no suitable split could be found. Decrease the
+        ! number of processors and try again.
+
+        nproc = nproc - 1
       ENDDO
+    ENDIF
+
+    IF (nproc_orig .NE. nproc) THEN
+      IF (.NOT.allow_cpu_reduce) THEN
+        IF (rank .EQ. 0) THEN
+          CALL integer_as_string(nproc, str)
+          PRINT*,'*** ERROR ***'
+          PRINT*,'Cannot split the domain using the requested number of CPUs.'
+          PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
+        ENDIF
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        STOP
+      ENDIF
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(nproc, str)
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Cannot split the domain using the requested number of CPUs.'
+        PRINT*,'Reducing the number of CPUs to ',TRIM(str)
+      ENDIF
+      ranges(1,1) = nproc
+      ranges(2,1) = nproc_orig - 1
+      ranges(3,1) = 1
+      old_comm = comm
+      CALL MPI_COMM_GROUP(old_comm, oldgroup, errcode)
+      CALL MPI_GROUP_RANGE_EXCL(oldgroup, 1, ranges, newgroup, errcode)
+      CALL MPI_COMM_CREATE(old_comm, newgroup, comm, errcode)
+      IF (comm .EQ. MPI_COMM_NULL) THEN
+        CALL MPI_FINALIZE(errcode)
+        STOP
+      ENDIF
+      CALL MPI_GROUP_FREE(oldgroup, errcode)
+      CALL MPI_GROUP_FREE(newgroup, errcode)
+      CALL MPI_COMM_FREE(old_comm, errcode)
     ENDIF
 
     dims = (/nprocy, nprocx/)

@@ -818,6 +818,7 @@ MODULE shared_data
   LOGICAL :: ic_from_restart = .FALSE.
   LOGICAL :: need_random_state
   LOGICAL :: use_exact_restart
+  LOGICAL :: allow_cpu_reduce
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
   CHARACTER(LEN=c_id_length) :: restart_prefix

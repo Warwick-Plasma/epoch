@@ -11,7 +11,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 18 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 19 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -40,7 +40,8 @@ MODULE deck_control_block
           'particle_tstart   ', &
           'use_migration     ', &
           'migration_interval', &
-          'use_exact_restart ' /)
+          'use_exact_restart ', &
+          'allow_cpu_reduce  ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                ', &
@@ -68,7 +69,8 @@ MODULE deck_control_block
           'particle_tstart   ', &
           'migrate_particles ', &
           'migration_interval', &
-          'use_exact_restart ' /)
+          'use_exact_restart ', &
+          'allow_cpu_reduce  ' /)
 
 CONTAINS
 
@@ -77,6 +79,7 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) THEN
       control_block_done = .FALSE.
       use_exact_restart = .FALSE.
+      allow_cpu_reduce = .TRUE.
       restart_number = 0
       restart_prefix = ''
       restart_filename = ''
@@ -233,6 +236,8 @@ CONTAINS
       particle_migration_interval = as_integer(value, errcode)
     CASE(4*c_ndims+18)
       use_exact_restart = as_logical(value, errcode)
+    CASE(4*c_ndims+19)
+      allow_cpu_reduce = as_logical(value, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

@@ -34,7 +34,10 @@ CONTAINS
     INTEGER :: ix, iy, iz
     INTEGER :: nxsplit, nysplit, nzsplit
     INTEGER :: area, minarea, nprocyz
+    INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
+
+    nproc_orig = nproc
 
     IF (nx_global .LT. ng .OR. ny_global .LT. ng .OR. nz_global .LT. ng) THEN
       IF (rank .EQ. 0) THEN
@@ -70,38 +73,80 @@ CONTAINS
     ENDIF
 
     IF (nprocx * nprocy * nprocz .EQ. 0) THEN
-      ! Find the processor split which minimizes surface area of
-      ! the resulting domain
+      DO WHILE (nproc .GT. 1)
+        ! Find the processor split which minimizes surface area of
+        ! the resulting domain
 
-      minarea = nx_global * ny_global + ny_global * nz_global &
-          + nz_global * nx_global
+        minarea = nx_global * ny_global + ny_global * nz_global &
+            + nz_global * nx_global
 
-      DO ix = 1, nproc
-        nprocyz = nproc / ix
-        IF (ix * nprocyz .NE. nproc) CYCLE
+        DO ix = 1, nproc
+          nprocyz = nproc / ix
+          IF (ix * nprocyz .NE. nproc) CYCLE
 
-        nxsplit = (nx_global - 1) / ix + 1
-        ! Actual domain must be bigger than the number of ghostcells
-        IF (nxsplit .LT. ng) CYCLE
-
-        DO iy = 1, nprocyz
-          iz = nprocyz / iy
-          IF (iy * iz .NE. nprocyz) CYCLE
-
-          nysplit = (ny_global - 1) / iy + 1
-          nzsplit = (nz_global - 1) / iz + 1
+          nxsplit = (nx_global - 1) / ix + 1
           ! Actual domain must be bigger than the number of ghostcells
-          IF (nysplit .LT. ng .OR. nzsplit .LT. ng) CYCLE
+          IF (nxsplit .LT. ng) CYCLE
 
-          area = nxsplit * nysplit + nysplit * nzsplit + nzsplit * nxsplit
-          IF (area .LT. minarea) THEN
-            nprocx = ix
-            nprocy = iy
-            nprocz = iz
-            minarea = area
-          ENDIF
+          DO iy = 1, nprocyz
+            iz = nprocyz / iy
+            IF (iy * iz .NE. nprocyz) CYCLE
+
+            nysplit = (ny_global - 1) / iy + 1
+            nzsplit = (nz_global - 1) / iz + 1
+            ! Actual domain must be bigger than the number of ghostcells
+            IF (nysplit .LT. ng .OR. nzsplit .LT. ng) CYCLE
+
+            area = nxsplit * nysplit + nysplit * nzsplit + nzsplit * nxsplit
+            IF (area .LT. minarea) THEN
+              nprocx = ix
+              nprocy = iy
+              nprocz = iz
+              minarea = area
+            ENDIF
+          ENDDO
         ENDDO
+
+        IF (nprocx .GT. 0) EXIT
+
+        ! If we get here then no suitable split could be found. Decrease the
+        ! number of processors and try again.
+
+        nproc = nproc - 1
       ENDDO
+    ENDIF
+
+    IF (nproc_orig .NE. nproc) THEN
+      IF (.NOT.allow_cpu_reduce) THEN
+        IF (rank .EQ. 0) THEN
+          CALL integer_as_string(nproc, str)
+          PRINT*,'*** ERROR ***'
+          PRINT*,'Cannot split the domain using the requested number of CPUs.'
+          PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
+        ENDIF
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        STOP
+      ENDIF
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(nproc, str)
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Cannot split the domain using the requested number of CPUs.'
+        PRINT*,'Reducing the number of CPUs to ',TRIM(str)
+      ENDIF
+      ranges(1,1) = nproc
+      ranges(2,1) = nproc_orig - 1
+      ranges(3,1) = 1
+      old_comm = comm
+      CALL MPI_COMM_GROUP(old_comm, oldgroup, errcode)
+      CALL MPI_GROUP_RANGE_EXCL(oldgroup, 1, ranges, newgroup, errcode)
+      CALL MPI_COMM_CREATE(old_comm, newgroup, comm, errcode)
+      IF (comm .EQ. MPI_COMM_NULL) THEN
+        CALL MPI_FINALIZE(errcode)
+        STOP
+      ENDIF
+      CALL MPI_GROUP_FREE(oldgroup, errcode)
+      CALL MPI_GROUP_FREE(newgroup, errcode)
+      CALL MPI_COMM_FREE(old_comm, errcode)
     ENDIF
 
     dims = (/nprocz, nprocy, nprocx/)

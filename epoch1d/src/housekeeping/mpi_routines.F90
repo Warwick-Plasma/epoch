@@ -32,6 +32,8 @@ CONTAINS
     LOGICAL :: periods(ndims), reorder, op
     INTEGER :: test_coords(ndims)
     INTEGER :: ix
+    INTEGER :: nxsplit
+    INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
 
     IF (nx_global .LT. ng) THEN
@@ -43,6 +45,48 @@ CONTAINS
             ' cells in each direction.'
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
+
+    nproc_orig = nproc
+    DO WHILE (nproc .GT. 1)
+      nxsplit = (nx_global - 1) / nproc + 1
+      ! Actual domain must be bigger than the number of ghostcells
+      IF (nxsplit .GE. ng) EXIT
+      nproc  = nproc - 1
+      nprocx = nproc
+    ENDDO
+
+    IF (nproc_orig .NE. nproc) THEN
+      IF (.NOT.allow_cpu_reduce) THEN
+        IF (rank .EQ. 0) THEN
+          CALL integer_as_string(nproc, str)
+          PRINT*,'*** ERROR ***'
+          PRINT*,'Cannot split the domain using the requested number of CPUs.'
+          PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
+        ENDIF
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        STOP
+      ENDIF
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(nproc, str)
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Cannot split the domain using the requested number of CPUs.'
+        PRINT*,'Reducing the number of CPUs to ',TRIM(str)
+      ENDIF
+      ranges(1,1) = nproc
+      ranges(2,1) = nproc_orig - 1
+      ranges(3,1) = 1
+      old_comm = comm
+      CALL MPI_COMM_GROUP(old_comm, oldgroup, errcode)
+      CALL MPI_GROUP_RANGE_EXCL(oldgroup, 1, ranges, newgroup, errcode)
+      CALL MPI_COMM_CREATE(old_comm, newgroup, comm, errcode)
+      IF (comm .EQ. MPI_COMM_NULL) THEN
+        CALL MPI_FINALIZE(errcode)
+        STOP
+      ENDIF
+      CALL MPI_GROUP_FREE(oldgroup, errcode)
+      CALL MPI_GROUP_FREE(newgroup, errcode)
+      CALL MPI_COMM_FREE(old_comm, errcode)
     ENDIF
 
     dims = (/nprocx/)
