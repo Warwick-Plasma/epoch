@@ -28,14 +28,38 @@ CONTAINS
   SUBROUTINE setup_communicator
 
     INTEGER, PARAMETER :: ndims = 3
-    INTEGER :: dims(ndims), idim, old_comm
-    LOGICAL :: periods(ndims), reorder, op
+    INTEGER :: dims(ndims), idim, old_comm, ierr
+    LOGICAL :: periods(ndims), reorder, op, reset
     INTEGER :: test_coords(ndims)
     INTEGER :: ix, iy, iz
     INTEGER :: nxsplit, nysplit, nzsplit
     INTEGER :: area, minarea, nprocyz
+    CHARACTER(LEN=11) :: str
 
+    IF (nx_global .LT. ng .OR. ny_global .LT. ng .OR. nz_global .LT. ng) THEN
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(ng, str)
+        PRINT*,'*** ERROR ***'
+        PRINT*,'Simulation domain is too small.'
+        PRINT*,'There must be at least ' // TRIM(str) // &
+            ' cells in each direction.'
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
+
+    reset = .FALSE.
     IF (MAX(nprocx,1) * MAX(nprocy,1) * MAX(nprocz,1) .GT. nproc) THEN
+      reset = .TRUE.
+    ELSE
+      ! Sanity check
+      nxsplit = (nx_global - 1) / nprocx + 1
+      nysplit = (ny_global - 1) / nprocy + 1
+      nzsplit = (nz_global - 1) / nprocz + 1
+      IF (nxsplit .LT. ng .OR. nysplit .LT. ng .OR. nzsplit .LT. ng) &
+          reset = .TRUE.
+    ENDIF
+
+    IF (reset) THEN
       IF (rank .EQ. 0) THEN
         PRINT *, 'Unable to use requested processor subdivision. Using ' &
             // 'default division.'
@@ -57,6 +81,8 @@ CONTAINS
         IF (ix * nprocyz .NE. nproc) CYCLE
 
         nxsplit = (nx_global - 1) / ix + 1
+        ! Actual domain must be bigger than the number of ghostcells
+        IF (nxsplit .LT. ng) CYCLE
 
         DO iy = 1, nprocyz
           iz = nprocyz / iy
@@ -64,6 +90,8 @@ CONTAINS
 
           nysplit = (ny_global - 1) / iy + 1
           nzsplit = (nz_global - 1) / iz + 1
+          ! Actual domain must be bigger than the number of ghostcells
+          IF (nysplit .LT. ng .OR. nzsplit .LT. ng) CYCLE
 
           area = nxsplit * nysplit + nysplit * nzsplit + nzsplit * nxsplit
           IF (area .LT. minarea) THEN

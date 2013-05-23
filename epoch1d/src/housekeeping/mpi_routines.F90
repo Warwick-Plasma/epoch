@@ -28,10 +28,22 @@ CONTAINS
   SUBROUTINE setup_communicator
 
     INTEGER, PARAMETER :: ndims = 1
-    INTEGER :: dims(ndims), idim, old_comm
+    INTEGER :: dims(ndims), idim, old_comm, ierr
     LOGICAL :: periods(ndims), reorder, op
     INTEGER :: test_coords(ndims)
     INTEGER :: ix
+    CHARACTER(LEN=11) :: str
+
+    IF (nx_global .LT. ng) THEN
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(ng, str)
+        PRINT*,'*** ERROR ***'
+        PRINT*,'Simulation domain is too small.'
+        PRINT*,'There must be at least ' // TRIM(str) // &
+            ' cells in each direction.'
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
 
     dims = (/nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)

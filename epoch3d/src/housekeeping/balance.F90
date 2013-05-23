@@ -2008,7 +2008,7 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc
-      IF (maxs(proc) - old .LE. 0) THEN
+      IF (maxs(proc) - old .LE. ng-1) THEN
         maxs(proc) = old + 1
       ENDIF
       old = maxs(proc)
@@ -2017,7 +2017,7 @@ CONTAINS
     ! Backwards
     old = sz + 1
     DO proc = nproc, 1, -1
-      IF (old - maxs(proc) .LE. 0) THEN
+      IF (old - maxs(proc) .LE. ng-1) THEN
         maxs(proc) = old - 1
       ENDIF
       old = maxs(proc)
