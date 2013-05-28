@@ -487,8 +487,8 @@ CONTAINS
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
-          part_x  = current%part_pos(1) - x_min_local
-          part_y  = current%part_pos(2) - y_min_local
+          part_x  = current%part_pos(1) - x_grid_min_local
+          part_y  = current%part_pos(2) - y_grid_min_local
           part_ux = current%part_p(1) / mc0
           part_uy = current%part_p(2) / mc0
           part_uz = current%part_p(3) / mc0
@@ -527,8 +527,8 @@ CONTAINS
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
-          part_x  = current%part_pos(1) - x_min_local
-          part_y  = current%part_pos(2) - y_min_local
+          part_x  = current%part_pos(1) - x_grid_min_local
+          part_y  = current%part_pos(2) - y_grid_min_local
           part_ux = current%part_p(1) / mc0
           part_uy = current%part_p(2) / mc0
           part_uz = current%part_p(3) / mc0
@@ -569,8 +569,8 @@ CONTAINS
           DO WHILE(ASSOCIATED(current))
             ! Current may be deleted
             next_pt => current%next
-            part_x  = current%part_pos(1) - x_min_local
-            part_y  = current%part_pos(2) - y_min_local
+            part_x  = current%part_pos(1) - x_grid_min_local
+            part_y  = current%part_pos(2) - y_grid_min_local
             norm  = c / current%particle_energy
             dir_x = current%part_p(1) * norm
             dir_y = current%part_p(2) * norm

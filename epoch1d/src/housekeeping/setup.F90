@@ -54,6 +54,8 @@ CONTAINS
     cpml_kappa_max = 20.0_num
     cpml_a_max = 0.15_num
     cpml_sigma_max = 0.7_num
+    cpml_x_min_offset = 0
+    cpml_x_max_offset = 0
 
     window_shift = 0.0_num
     npart_global = -1
@@ -116,29 +118,22 @@ CONTAINS
 
     INTEGER :: iproc, ix
     REAL(num) :: xb_min
-    LOGICAL, SAVE :: first = .TRUE.
-
-    IF (first) THEN
-      length_x = x_max - x_min
-      dx = length_x / REAL(nx_global-2*cpml_thickness, num)
-      x_min = x_min - dx * cpml_thickness
-      x_max = x_max + dx * cpml_thickness
-
-      first = .FALSE.
-    ENDIF
 
     length_x = x_max - x_min
+    dx = length_x / REAL(nx_global-2*cpml_thickness, num)
+    x_grid_min = x_min - dx * cpml_thickness
+    x_grid_max = x_max + dx * cpml_thickness
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
 
-    xb_min = x_min
-    x_min = x_min + dx / 2.0_num
-    x_max = x_max - dx / 2.0_num
+    xb_min = x_grid_min
+    x_grid_min = x_grid_min + dx / 2.0_num
+    x_grid_max = x_grid_max - dx / 2.0_num
 
     ! Setup global grid
     DO ix = -2, nx_global + 3
-      x_global(ix) = x_min + (ix - 1) * dx
+      x_global(ix) = x_grid_min + (ix - 1) * dx
     ENDDO
     DO ix = 1, nx_global + 1
       xb_global(ix) = xb_min + (ix - 1) * dx
@@ -146,12 +141,15 @@ CONTAINS
     ENDDO
 
     DO iproc = 0, nprocx-1
-      x_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
+      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
 
-    x_min_local = x_mins(x_coords)
-    x_max_local = x_maxs(x_coords)
+    x_grid_min_local = x_grid_mins(x_coords)
+    x_grid_max_local = x_grid_maxs(x_coords)
+
+    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
 
     ! Setup local grid
     DO ix = -2, nx + 3

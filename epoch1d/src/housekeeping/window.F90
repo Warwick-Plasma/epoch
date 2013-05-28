@@ -51,10 +51,14 @@ CONTAINS
       CALL insert_particles
 
       ! Shift the box around
+      x_grid_min = x_grid_min + dx
+      x_grid_max = x_grid_max + dx
+      x_grid_mins = x_grid_mins + dx
+      x_grid_maxs = x_grid_maxs + dx
+      x_grid_min_local = x_grid_min_local + dx
+      x_grid_max_local = x_grid_max_local + dx
       x_min = x_min + dx
       x_max = x_max + dx
-      x_mins = x_mins + dx
-      x_maxs = x_maxs + dx
       x_min_local = x_min_local + dx
       x_max_local = x_max_local + dx
 
@@ -169,7 +173,7 @@ CONTAINS
         ENDIF
         ALLOCATE(current)
         CALL init_particle(current)
-        current%part_pos = x_max + dx + (random() - 0.5_num) * dx
+        current%part_pos = x_grid_max + dx + (random() - 0.5_num) * dx
 
         DO i = 1, 3
           temp_local = temperature(i)
@@ -204,7 +208,7 @@ CONTAINS
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           next => current%next
-          IF (current%part_pos .LT. x_min - 0.5_num * dx) THEN
+          IF (current%part_pos .LT. x_min) THEN
             CALL remove_particle_from_partlist(&
                 species_list(ispecies)%attached_list, current)
             DEALLOCATE(current)

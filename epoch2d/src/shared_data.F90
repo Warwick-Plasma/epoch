@@ -758,10 +758,10 @@ MODULE shared_data
 #endif
 
   INTEGER :: cpml_thickness
-  INTEGER :: cpml_x_min_start, cpml_x_min_end
-  INTEGER :: cpml_x_max_start, cpml_x_max_end
-  INTEGER :: cpml_y_min_start, cpml_y_min_end
-  INTEGER :: cpml_y_max_start, cpml_y_max_end
+  INTEGER :: cpml_x_min_start, cpml_x_min_end, cpml_x_min_offset
+  INTEGER :: cpml_x_max_start, cpml_x_max_end, cpml_x_max_offset
+  INTEGER :: cpml_y_min_start, cpml_y_min_end, cpml_y_min_offset
+  INTEGER :: cpml_y_max_start, cpml_y_max_end, cpml_y_max_offset
   ! Indicate that we have a boundary on the current processor
   LOGICAL :: cpml_x_min = .FALSE., cpml_x_max = .FALSE.
   LOGICAL :: cpml_y_min = .FALSE., cpml_y_max = .FALSE.
@@ -831,12 +831,19 @@ MODULE shared_data
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart
   REAL(num) :: dt_min_average, cfl
-  REAL(num) :: length_x, dx, x_min, x_max
-  REAL(num) :: x_min_local, x_max_local, length_x_local
-  REAL(num) :: length_y, dy, y_min, y_max
-  REAL(num) :: y_min_local, y_max_local, length_y_local
-  REAL(num), DIMENSION(:), ALLOCATABLE :: x_mins, x_maxs
-  REAL(num), DIMENSION(:), ALLOCATABLE :: y_mins, y_maxs
+  ! x_min is the left-hand edge of the simulation domain as specified in
+  ! the input deck.
+  ! x_grid_min is the location of x(1). Since the grid is cell-centred,
+  ! this is usually at x_min + dx/2.
+  ! If CPML boundaries are used then the whole grid is shifted along by
+  ! cpml_thicknes cells and then x(1) (and also x_grid_min) is at
+  ! the location x_min + dx*(1/2-cpml_thickness)
+  REAL(num) :: length_x, dx, x_grid_min, x_grid_max, x_min, x_max
+  REAL(num) :: x_grid_min_local, x_grid_max_local, x_min_local, x_max_local
+  REAL(num) :: length_y, dy, y_grid_min, y_grid_max, y_min, y_max
+  REAL(num) :: y_grid_min_local, y_grid_max_local, y_min_local, y_max_local
+  REAL(num), DIMENSION(:), ALLOCATABLE :: x_grid_mins, x_grid_maxs
+  REAL(num), DIMENSION(:), ALLOCATABLE :: y_grid_mins, y_grid_maxs
 
   REAL(num) :: total_ohmic_heating = 0.0_num
 

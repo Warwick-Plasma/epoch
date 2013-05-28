@@ -103,16 +103,19 @@ CONTAINS
       ALLOCATE(x(-2:nx+3))
       x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
 
-      ! Recalculate x_mins and x_maxs so that rebalancing works next time
+      ! Recalculate x_grid_mins/maxs so that rebalancing works next time
       DO iproc = 0, nprocx - 1
-        x_mins(iproc) = x_global(cell_x_min(iproc+1))
-        x_maxs(iproc) = x_global(cell_x_max(iproc+1))
+        x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+        x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
       ENDDO
 
       ! Set the lengths of the current domain so that the particle balancer
       ! works properly
-      x_min_local = x_mins(x_coords)
-      x_max_local = x_maxs(x_coords)
+      x_grid_min_local = x_grid_mins(x_coords)
+      x_grid_max_local = x_grid_maxs(x_coords)
+
+      x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+      x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
     ENDIF
 
     ! Redistribute the particles onto their new processors
@@ -708,8 +711,8 @@ CONTAINS
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
-        ! Want global position, so x_min, NOT x_min_local
-        cell = FLOOR((current%part_pos - x_min) / dx + 1.5_num)
+        ! Want global position, so x_grid_min, NOT x_grid_min_local
+        cell = FLOOR((current%part_pos - x_grid_min) / dx + 1.5_num)
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -811,8 +814,8 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx - 1
-      IF (a_particle%part_pos .GE. x_mins(iproc) - dx / 2.0_num &
-          .AND. a_particle%part_pos .LT. x_maxs(iproc) + dx / 2.0_num) THEN
+      IF (a_particle%part_pos .GE. x_grid_mins(iproc) - dx / 2.0_num &
+          .AND. a_particle%part_pos .LT. x_grid_maxs(iproc) + dx / 2.0_num) THEN
         coords(c_ndims) = iproc
         EXIT
       ENDIF

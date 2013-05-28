@@ -58,10 +58,14 @@ CONTAINS
       CALL insert_particles
 
       ! Shift the box around
+      x_grid_min = x_grid_min + dx
+      x_grid_max = x_grid_max + dx
+      x_grid_mins = x_grid_mins + dx
+      x_grid_maxs = x_grid_maxs + dx
+      x_grid_min_local = x_grid_min_local + dx
+      x_grid_max_local = x_grid_max_local + dx
       x_min = x_min + dx
       x_max = x_max + dx
-      x_mins = x_mins + dx
-      x_maxs = x_maxs + dx
       x_min_local = x_min_local + dx
       x_max_local = x_max_local + dx
 
@@ -199,11 +203,11 @@ CONTAINS
           ENDIF
           ALLOCATE(current)
           CALL init_particle(current)
-          current%part_pos(1) = x_max + dx + (random() - 0.5_num) * dx
+          current%part_pos(1) = x_grid_max + dx + (random() - 0.5_num) * dx
           current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
 
           ! Always use the triangle particle weighting for simplicity
-          cell_y_r = (current%part_pos(2) - y_min_local) / dy
+          cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy
           cell_y = FLOOR(cell_y_r + 0.5_num)
           cell_frac_y = REAL(cell_y, num) - cell_y_r
           cell_y = cell_y + 1
@@ -256,7 +260,7 @@ CONTAINS
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           next => current%next
-          IF (current%part_pos(1) .LT. x_min - 0.5_num * dx) THEN
+          IF (current%part_pos(1) .LT. x_min) THEN
             CALL remove_particle_from_partlist(&
                 species_list(ispecies)%attached_list, current)
             DEALLOCATE(current)

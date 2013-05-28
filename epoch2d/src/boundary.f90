@@ -749,27 +749,27 @@ CONTAINS
             .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
           IF (x_min_boundary) THEN
             ! Particle has left the system
-            IF (part_pos .LT. x_min + dx * (cpml_thickness - 0.5_num)) THEN
+            IF (part_pos .LT. x_min) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos .LT. x_min_local - dx / 2.0_num) xbd = -1
+            IF (part_pos .LT. x_min_local) xbd = -1
           ENDIF
         ELSE
           ! Particle has left this processor
-          IF (part_pos .LT. x_min_local - dx / 2.0_num) THEN
+          IF (part_pos .LT. x_min_local) THEN
             xbd = -1
             ! Particle has left the system
             IF (x_min_boundary) THEN
               xbd = 0
               IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
-                cur%part_pos(1) = 2.0_num * x_min - dx - part_pos
+                cur%part_pos(1) = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
-                cell_y_r = (cur%part_pos(2) - y_min_local) / dy
+                cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
                 cell_frac_y = REAL(cell_y, num) - cell_y_r
                 cell_y = cell_y + 1
@@ -802,7 +802,7 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(1) = 2.0_num * x_min - dx - part_pos
+                cur%part_pos(1) = 2.0_num * x_min - part_pos
 
               ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
                 xbd = -1
@@ -819,27 +819,27 @@ CONTAINS
             .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
           IF (x_max_boundary) THEN
             ! Particle has left the system
-            IF (part_pos .GE. x_max - dx * (cpml_thickness - 0.5_num)) THEN
+            IF (part_pos .GE. x_max) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos .GE. x_max_local + dx / 2.0_num) xbd =  1
+            IF (part_pos .GE. x_max_local) xbd =  1
           ENDIF
         ELSE
           ! Particle has left this processor
-          IF (part_pos .GE. x_max_local + dx / 2.0_num) THEN
+          IF (part_pos .GE. x_max_local) THEN
             xbd = 1
             ! Particle has left the system
             IF (x_max_boundary) THEN
               xbd = 0
               IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
-                cur%part_pos(1) = 2.0_num * x_max + dx - part_pos
+                cur%part_pos(1) = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
-                cell_y_r = (cur%part_pos(2) - y_min_local) / dy
+                cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
                 cell_frac_y = REAL(cell_y, num) - cell_y_r
                 cell_y = cell_y + 1
@@ -872,7 +872,7 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(1) = 2.0_num * x_max + dx - part_pos
+                cur%part_pos(1) = 2.0_num * x_max - part_pos
 
               ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
                 xbd = 1
@@ -890,27 +890,27 @@ CONTAINS
             .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
           IF (y_min_boundary) THEN
             ! Particle has left the system
-            IF (part_pos .LT. y_min + dy * (cpml_thickness - 0.5_num)) THEN
+            IF (part_pos .LT. y_min) THEN
               ybd = 0
               out_of_bounds = .TRUE.
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos .LT. y_min_local - dy / 2.0_num) ybd = -1
+            IF (part_pos .LT. y_min_local) ybd = -1
           ENDIF
         ELSE
           ! Particle has left this processor
-          IF (part_pos .LT. y_min_local - dy / 2.0_num) THEN
+          IF (part_pos .LT. y_min_local) THEN
             ybd = -1
             ! Particle has left the system
             IF (y_min_boundary) THEN
               ybd = 0
               IF (bc_particle(c_bd_y_min) .EQ. c_bc_reflect) THEN
-                cur%part_pos(2) = 2.0_num * y_min - dy - part_pos
+                cur%part_pos(2) = 2.0_num * y_min - part_pos
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
-                cell_x_r = (cur%part_pos(1) - x_min_local) / dx
+                cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
                 cell_frac_x = REAL(cell_x, num) - cell_x_r
                 cell_x = cell_x + 1
@@ -943,7 +943,7 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(2) = 2.0_num * y_min - dy - part_pos
+                cur%part_pos(2) = 2.0_num * y_min - part_pos
 
               ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_periodic) THEN
                 ybd = -1
@@ -960,27 +960,27 @@ CONTAINS
             .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
           IF (y_max_boundary) THEN
             ! Particle has left the system
-            IF (part_pos .GE. y_max - dy * (cpml_thickness - 0.5_num)) THEN
+            IF (part_pos .GE. y_max) THEN
               ybd = 0
               out_of_bounds = .TRUE.
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos .GE. y_max_local + dy / 2.0_num) ybd =  1
+            IF (part_pos .GE. y_max_local) ybd =  1
           ENDIF
         ELSE
           ! Particle has left this processor
-          IF (part_pos .GE. y_max_local + dy / 2.0_num) THEN
+          IF (part_pos .GE. y_max_local) THEN
             ybd = 1
             ! Particle has left the system
             IF (y_max_boundary) THEN
               ybd = 0
               IF (bc_particle(c_bd_y_max) .EQ. c_bc_reflect) THEN
-                cur%part_pos(2) = 2.0_num * y_max + dy - part_pos
+                cur%part_pos(2) = 2.0_num * y_max - part_pos
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
-                cell_x_r = (cur%part_pos(1) - x_min_local) / dx
+                cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
                 cell_frac_x = REAL(cell_x, num) - cell_x_r
                 cell_x = cell_x + 1
@@ -1013,7 +1013,7 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(2) = 2.0_num * y_max + dy - part_pos
+                cur%part_pos(2) = 2.0_num * y_max - part_pos
 
               ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_periodic) THEN
                 ybd = 1
@@ -1142,6 +1142,7 @@ CONTAINS
         .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
       cpml_x_min_start = nx+1
       cpml_x_min_end = 0
+      cpml_x_min_offset = 0
 
       IF (nx_global_min .LE. cpml_thickness) THEN
         cpml_x_min = .TRUE.
@@ -1154,8 +1155,10 @@ CONTAINS
           ! in local grid coordinates
           ! global -> local: ixl = ixg - nx_global_min + 1
           cpml_x_min_end = cpml_thickness - nx_global_min + 1
+          cpml_x_min_offset = cpml_thickness - nx_global_min + 1
         ELSE
           cpml_x_min_end = nx ! in local grid coordinates
+          cpml_x_min_offset = cpml_thickness
         ENDIF
 
         DO ix = cpml_x_min_start,cpml_x_min_end
@@ -1201,6 +1204,7 @@ CONTAINS
         .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
       cpml_x_max_start = nx+1
       cpml_x_max_end = 0
+      cpml_x_max_offset = 0
 
       IF (nx_global_max .GE. nx_global - cpml_thickness + 1) THEN
         cpml_x_max = .TRUE.
@@ -1213,8 +1217,10 @@ CONTAINS
           ! in local grid coordinates
           ! global -> local: ixl = ixg - nx_global_min + 1
           cpml_x_max_start = nx_global - cpml_thickness + 1 - nx_global_min + 1
+          cpml_x_max_offset = cpml_thickness - nx_global + nx_global_max
         ELSE
           cpml_x_max_start = 1 ! in local grid coordinates
+          cpml_x_max_offset = cpml_thickness
         ENDIF
 
         DO ix = cpml_x_max_start,cpml_x_max_end
@@ -1260,6 +1266,7 @@ CONTAINS
         .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
       cpml_y_min_start = ny+1
       cpml_y_min_end = 0
+      cpml_y_min_offset = 0
 
       IF (ny_global_min .LE. cpml_thickness) THEN
         cpml_y_min = .TRUE.
@@ -1272,8 +1279,10 @@ CONTAINS
           ! in local grid coordinates
           ! global -> local: iyl = iyg - ny_global_min + 1
           cpml_y_min_end = cpml_thickness - ny_global_min + 1
+          cpml_y_min_offset = cpml_thickness - ny_global_min + 1
         ELSE
           cpml_y_min_end = ny ! in local grid coordinates
+          cpml_y_min_offset = cpml_thickness
         ENDIF
 
         DO iy = cpml_y_min_start,cpml_y_min_end
@@ -1319,6 +1328,7 @@ CONTAINS
         .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
       cpml_y_max_start = ny+1
       cpml_y_max_end = 0
+      cpml_y_max_offset = 0
 
       IF (ny_global_max .GE. ny_global - cpml_thickness + 1) THEN
         cpml_y_max = .TRUE.
@@ -1331,8 +1341,10 @@ CONTAINS
           ! in local grid coordinates
           ! global -> local: iyl = iyg - ny_global_min + 1
           cpml_y_max_start = ny_global - cpml_thickness + 1 - ny_global_min + 1
+          cpml_y_max_offset = cpml_thickness - ny_global + ny_global_max
         ELSE
           cpml_y_max_start = 1 ! in local grid coordinates
+          cpml_y_max_offset = cpml_thickness
         ENDIF
 
         DO iy = cpml_y_max_start,cpml_y_max_end
@@ -1370,6 +1382,11 @@ CONTAINS
             ny_global - cpml_thickness - fng + 2 - ny_global_min
       ENDIF
     ENDIF
+
+    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+    y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
+    y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
 
   END SUBROUTINE set_cpml_helpers
 

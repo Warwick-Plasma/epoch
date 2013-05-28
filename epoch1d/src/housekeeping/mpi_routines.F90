@@ -150,7 +150,7 @@ CONTAINS
     CALL setup_communicator
 
     ALLOCATE(npart_each_rank(nproc))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
+    ALLOCATE(x_grid_mins(0:nprocx-1), x_grid_maxs(0:nprocx-1))
     ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
 
     nx_global = nx_global + 2 * cpml_thickness

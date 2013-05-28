@@ -216,8 +216,8 @@ CONTAINS
     CALL setup_communicator
 
     ALLOCATE(npart_each_rank(nproc))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
-    ALLOCATE(y_mins(0:nprocy-1), y_maxs(0:nprocy-1))
+    ALLOCATE(x_grid_mins(0:nprocx-1), x_grid_maxs(0:nprocx-1))
+    ALLOCATE(y_grid_mins(0:nprocy-1), y_grid_maxs(0:nprocy-1))
     ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
     ALLOCATE(cell_y_min(nprocy), cell_y_max(nprocy))
 
