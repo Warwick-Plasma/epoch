@@ -53,7 +53,7 @@ CONTAINS
     reset = .FALSE.
     IF (MAX(nprocx,1) * MAX(nprocy,1) .GT. nproc) THEN
       reset = .TRUE.
-    ELSE
+    ELSE IF (nprocx * nprocy .GT. 0) THEN
       ! Sanity check
       nxsplit = (nx_global - 1) / nprocx + 1
       nysplit = (ny_global - 1) / nprocy + 1
