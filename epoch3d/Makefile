@@ -14,7 +14,7 @@ MODULEFLAG = -module $(OBJDIR)
 
 ifeq ($(strip $(MODE)),debug)
   FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-           -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
+           -C -g -heap-arrays 64 -warn -fpic  -Wl,-no_pie # Debug
 endif
 
 # PGI
