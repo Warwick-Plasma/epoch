@@ -47,8 +47,6 @@ CONTAINS
       STOP
     ENDIF
 
-    comm = MPI_COMM_NULL
-
     dt_plasma_frequency = 0.0_num
     dt_multiplier = 0.95_num
     stdout_frequency = 0
@@ -56,6 +54,12 @@ CONTAINS
     cpml_kappa_max = 20.0_num
     cpml_a_max = 0.15_num
     cpml_sigma_max = 0.7_num
+    cpml_x_min_offset = 0
+    cpml_x_max_offset = 0
+    cpml_y_min_offset = 0
+    cpml_y_max_offset = 0
+    cpml_z_min_offset = 0
+    cpml_z_max_offset = 0
 
     window_shift = 0.0_num
     npart_global = -1
@@ -122,61 +126,52 @@ CONTAINS
 
     INTEGER :: iproc, ix, iy, iz
     REAL(num) :: xb_min, yb_min, zb_min
-    LOGICAL, SAVE :: first = .TRUE.
-
-    IF (first) THEN
-      length_x = x_max - x_min
-      dx = length_x / REAL(nx_global-2*cpml_thickness, num)
-      x_min = x_min - dx * cpml_thickness
-      x_max = x_max + dx * cpml_thickness
-
-      length_y = y_max - y_min
-      dy = length_y / REAL(ny_global-2*cpml_thickness, num)
-      y_min = y_min - dy * cpml_thickness
-      y_max = y_max + dy * cpml_thickness
-
-      length_z = z_max - z_min
-      dz = length_z / REAL(nz_global-2*cpml_thickness, num)
-      z_min = z_min - dz * cpml_thickness
-      z_max = z_max + dz * cpml_thickness
-
-      first = .FALSE.
-    ENDIF
 
     length_x = x_max - x_min
+    dx = length_x / REAL(nx_global-2*cpml_thickness, num)
+    x_grid_min = x_min - dx * cpml_thickness
+    x_grid_max = x_max + dx * cpml_thickness
+
     length_y = y_max - y_min
+    dy = length_y / REAL(ny_global-2*cpml_thickness, num)
+    y_grid_min = y_min - dy * cpml_thickness
+    y_grid_max = y_max + dy * cpml_thickness
+
     length_z = z_max - z_min
+    dz = length_z / REAL(nz_global-2*cpml_thickness, num)
+    z_grid_min = z_min - dz * cpml_thickness
+    z_grid_max = z_max + dz * cpml_thickness
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
 
-    xb_min = x_min
-    yb_min = y_min
-    zb_min = z_min
-    x_min = x_min + dx / 2.0_num
-    x_max = x_max - dx / 2.0_num
-    y_min = y_min + dy / 2.0_num
-    y_max = y_max - dy / 2.0_num
-    z_min = z_min + dz / 2.0_num
-    z_max = z_max - dz / 2.0_num
+    xb_min = x_grid_min
+    yb_min = y_grid_min
+    zb_min = z_grid_min
+    x_grid_min = x_grid_min + dx / 2.0_num
+    x_grid_max = x_grid_max - dx / 2.0_num
+    y_grid_min = y_grid_min + dy / 2.0_num
+    y_grid_max = y_grid_max - dy / 2.0_num
+    z_grid_min = z_grid_min + dz / 2.0_num
+    z_grid_max = z_grid_max - dz / 2.0_num
 
     ! Setup global grid
     DO ix = -2, nx_global + 3
-      x_global(ix) = x_min + (ix - 1) * dx
+      x_global(ix) = x_grid_min + (ix - 1) * dx
     ENDDO
     DO ix = 1, nx_global + 1
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
     DO iy = -2, ny_global + 3
-      y_global(iy) = y_min + (iy - 1) * dy
+      y_global(iy) = y_grid_min + (iy - 1) * dy
     ENDDO
     DO iy = 1, ny_global + 1
       yb_global(iy) = yb_min + (iy - 1) * dy
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
     DO iz = -2, nz_global + 3
-      z_global(iz) = z_min + (iz - 1) * dz
+      z_global(iz) = z_grid_min + (iz - 1) * dz
     ENDDO
     DO iz = 1, nz_global + 1
       zb_global(iz) = zb_min + (iz - 1) * dz
@@ -184,24 +179,31 @@ CONTAINS
     ENDDO
 
     DO iproc = 0, nprocx-1
-      x_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_maxs(iproc) = x_global(cell_x_max(iproc+1))
+      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
     ENDDO
     DO iproc = 0, nprocy-1
-      y_mins(iproc) = y_global(cell_y_min(iproc+1))
-      y_maxs(iproc) = y_global(cell_y_max(iproc+1))
+      y_grid_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_grid_maxs(iproc) = y_global(cell_y_max(iproc+1))
     ENDDO
     DO iproc = 0, nprocz-1
-      z_mins(iproc) = z_global(cell_z_min(iproc+1))
-      z_maxs(iproc) = z_global(cell_z_max(iproc+1))
+      z_grid_mins(iproc) = z_global(cell_z_min(iproc+1))
+      z_grid_maxs(iproc) = z_global(cell_z_max(iproc+1))
     ENDDO
 
-    x_min_local = x_mins(x_coords)
-    x_max_local = x_maxs(x_coords)
-    y_min_local = y_mins(y_coords)
-    y_max_local = y_maxs(y_coords)
-    z_min_local = z_mins(z_coords)
-    z_max_local = z_maxs(z_coords)
+    x_grid_min_local = x_grid_mins(x_coords)
+    x_grid_max_local = x_grid_maxs(x_coords)
+    y_grid_min_local = y_grid_mins(y_coords)
+    y_grid_max_local = y_grid_maxs(y_coords)
+    z_grid_min_local = z_grid_mins(z_coords)
+    z_grid_max_local = z_grid_maxs(z_coords)
+
+    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+    y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
+    y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
+    z_min_local = z_grid_min_local + (cpml_z_min_offset - 0.5_num) * dz
+    z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
 
     ! Setup local grid
     DO ix = -2, nx + 3
@@ -506,7 +508,7 @@ CONTAINS
         PRINT*, 'Cannot create "epoch3d.dat" output file. The most common ' &
             // 'cause of this problem '
         PRINT*, 'is that the ouput directory does not exist'
-        CALL MPI_ABORT(comm, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP
       ENDIF
       IF (ic_from_restart) THEN
@@ -701,9 +703,6 @@ CONTAINS
     LOGICAL, ALLOCATABLE :: species_found(:)
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
-#if PARTICLE_ID || PARTICLE_ID4
-    TYPE(particle_list), POINTER :: partlist
-#endif
     INTEGER, POINTER :: species_subtypes(:)
 
     got_full = .FALSE.
@@ -748,7 +747,7 @@ CONTAINS
         PRINT*, '*** ERROR ***'
         PRINT*, 'SDF file is not a restart dump. Unable to continue.'
       ENDIF
-      CALL MPI_ABORT(comm, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       STOP
     ENDIF
 
@@ -758,7 +757,7 @@ CONTAINS
         PRINT*, 'SDF restart file was not generated by Epoch3d. Unable to ', &
             'continue.'
       ENDIF
-      CALL MPI_ABORT(comm, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       STOP
     ENDIF
 
@@ -770,7 +769,7 @@ CONTAINS
         PRINT*, 'Please increase the size of "c_max_string_length" in ', &
             'shared_data.F90 to ','be at least ',TRIM(len_string)
       ENDIF
-      CALL MPI_ABORT(comm, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       STOP
     ENDIF
 
@@ -985,7 +984,7 @@ CONTAINS
             PRINT*, 'Restart dump grid: ', TRIM(str1), ',', TRIM(str2), &
                 ',', TRIM(str3)
           ENDIF
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
         ENDIF
 
@@ -1088,7 +1087,7 @@ CONTAINS
             PRINT*, 'Malformed restart dump. Number of particle variables', &
                 ' does not match grid.'
           ENDIF
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
         ENDIF
 
@@ -1129,7 +1128,7 @@ CONTAINS
             PRINT*, 'Cannot load dump file with per particle weight.'
             PRINT*, 'Please recompile with the -DPER_PARTICLE_WEIGHT option.'
           ENDIF
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
 #endif
 
@@ -1143,7 +1142,7 @@ CONTAINS
             PRINT*, 'Cannot load dump file with optical depths.'
             PRINT*, 'Please recompile with the -DPHOTONS option.'
           ENDIF
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
 #endif
 
@@ -1157,7 +1156,7 @@ CONTAINS
             PRINT*, 'Cannot load dump file with QED energies.'
             PRINT*, 'Please recompile with the -DPHOTONS option.'
           ENDIF
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
 #endif
 
@@ -1171,7 +1170,7 @@ CONTAINS
             PRINT*, 'Cannot load dump file with Trident optical depths.'
             PRINT*, 'Please recompile with the -DTRIDENT_PHOTONS option.'
           ENDIF
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
 #endif
         ENDIF
@@ -1197,7 +1196,7 @@ CONTAINS
     LOGICAL :: restart_flag
     TYPE(sdf_file_handle) :: sdf_handle
 
-    CALL sdf_open(sdf_handle, full_restart_filename, MPI_COMM_WORLD, c_sdf_read)
+    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read)
 
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)

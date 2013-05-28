@@ -14,7 +14,7 @@ MODULEFLAG = -module $(OBJDIR)
 
 ifeq ($(strip $(MODE)),debug)
   FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-           -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
+           -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
 endif
 
 # PGI
@@ -35,7 +35,7 @@ ifeq ($(strip $(COMPILER)),intel)
   #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-             -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
+             -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
   endif
   MODULEFLAG = -module $(OBJDIR)
 endif
@@ -46,7 +46,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -fbounds-check -fbacktrace -Wall -O0 -g \
-             -Wextra -pedantic                             # Debug
+             -Wextra -pedantic -Wno-unused-dummy-argument -Wno-unused-parameter # Debug
   endif
   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
 endif
@@ -59,6 +59,18 @@ ifeq ($(strip $(COMPILER)),g95)
     FFLAGS = -O0 -g                                        # Debug
   endif
   MODULEFLAG = -fmod=$(OBJDIR)
+endif
+
+# Don't compile encoded source if MODE=debug or ENC=no
+# Do compile encoded source if MODE=debug and ENC=yes
+ifeq ($(strip $(ENC)),no)
+  ENCODED_SOURCE = dummy_encoded_source.o
+else
+  ifneq ($(strip $(ENC)),yes)
+    ifeq ($(strip $(MODE)),debug)
+      ENCODED_SOURCE = dummy_encoded_source.o
+    endif
+  endif
 endif
 
 # Set some of the build parameters
@@ -164,15 +176,18 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   sdf_input_cartesian.f90 sdf_input_cartesian_r4.f90 \
   sdf_input_cartesian_r8.f90 sdf_input_cartesian_ru.f90 sdf_input_point.f90 \
   sdf_input_point_r4.f90 sdf_input_point_r8.f90 sdf_input_point_ru.f90 \
-  sdf_input_r4.f90 sdf_input_r8.f90 sdf_input_ru.f90 sdf_input_util.f90 \
-  sdf_job_info.f90 sdf_output.f90 sdf_output_cartesian.f90 \
+  sdf_input_r4.f90 sdf_input_r8.f90 sdf_input_ru.f90 sdf_input_station.f90 \
+  sdf_input_station_r4.f90 sdf_input_station_r8.f90 sdf_input_station_ru.f90 \
+  sdf_input_util.f90 sdf_job_info.f90 sdf_output.f90 sdf_output_cartesian.f90 \
   sdf_output_cartesian_r4.f90 sdf_output_cartesian_r8.f90 \
   sdf_output_cartesian_ru.f90 sdf_output_point.f90 sdf_output_point_r4.f90 \
   sdf_output_point_r8.f90 sdf_output_point_ru.f90 sdf_output_r4.f90 \
-  sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_util.f90 setup.F90 \
-  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
-  split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
-  tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
+  sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_station.f90 \
+  sdf_output_station_r4.f90 sdf_output_station_r8.f90 \
+  sdf_output_station_ru.f90 sdf_output_util.f90 setup.F90 shape_functions.F90 \
+  shared_data.F90 shunt.F90 simple_io.f90 split_particle.F90 stack.f90 \
+  strings.f90 strings_advanced.f90 tokenizer_blocks.f90 utilities.f90 \
+  version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -203,15 +218,14 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
 # Rule to build the fortran files
 
 %.o: %.f90
-	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
 
 %.o: %.F90
-	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
 epoch: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
+	@mkdir -p $(BINDIR)
 	$(FC) $(FFLAGS) $(MODULEFLAG) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
 opt_dont_build_sha1: ;
@@ -221,14 +235,13 @@ $(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(INCLUDES) \
 	./$(SRCDIR)/gen_src_module $@ $^
 
 encoded_source.o: $(OBJDIR)/encoded_source.f90
-	@mkdir -p $(BINDIR) $(OBJDIR)
 	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
 
-clean: tidy
-	@rm -rf *~ $(BINDIR)
+clean:
+	@rm -rf $(BINDIR) $(OBJDIR)
 
 tidy:
-	@rm -rf $(OBJDIR) *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
+	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 
 visit:
 	@cd ../VisIt; ./build SDF
@@ -236,6 +249,11 @@ visit:
 visitclean:
 	@cd ../VisIt; make clean; \
 	  rm -rf .depend *.d *Info.C *Info.h CMake* cmake* Makefile
+
+$(OBJFILES): | $(OBJDIR)
+
+$(OBJDIR):
+	@mkdir -p $(OBJDIR)
 
 .PHONY: clean tidy visit visitclean epoch FORCE
 
@@ -283,7 +301,7 @@ evaluate.o: evaluate.f90 evaluator_blocks.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
 helper.o: helper.F90 boundary.o partlist.o strings.o
-ic_module.o: ic_module.f90
+ic_module.o: ic_module.f90 shared_data.o
 ionise.o: ionise.F90 numerics.o partlist.o random_generator.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
@@ -302,8 +320,8 @@ probes.o: probes.F90 partlist.o
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
 sdf.o: sdf.f90 sdf_control.o sdf_input.o sdf_input_cartesian.o \
-  sdf_input_point.o sdf_input_util.o sdf_output.o sdf_output_cartesian.o \
-  sdf_output_point.o
+  sdf_input_point.o sdf_input_station.o sdf_input_util.o sdf_output.o \
+  sdf_output_cartesian.o sdf_output_point.o sdf_output_station.o
 sdf_common.o: sdf_common.f90 sdf_job_info.o
 sdf_control.o: sdf_control.f90 sdf_output_util.o
 sdf_input.o: sdf_input.f90 sdf_input_r4.o sdf_input_r8.o
@@ -319,8 +337,13 @@ sdf_input_point_ru.o: sdf_input_point_ru.f90 sdf_input_ru.o
 sdf_input_r4.o: sdf_input_r4.f90 sdf_input_ru.o
 sdf_input_r8.o: sdf_input_r8.f90 sdf_input_ru.o
 sdf_input_ru.o: sdf_input_ru.f90 sdf_common.o
+sdf_input_station.o: sdf_input_station.f90 sdf_input_station_r4.o \
+  sdf_input_station_r8.o sdf_input_station_ru.o
+sdf_input_station_r4.o: sdf_input_station_r4.f90 sdf_input_station_ru.o
+sdf_input_station_r8.o: sdf_input_station_r8.f90 sdf_input_station_ru.o
+sdf_input_station_ru.o: sdf_input_station_ru.f90 sdf_input_ru.o
 sdf_input_util.o: sdf_input_util.f90 sdf_input.o sdf_input_cartesian.o \
-  sdf_input_point.o
+  sdf_input_point.o sdf_input_station.o sdf_output_station_ru.o
 sdf_job_info.o: sdf_job_info.f90
 sdf_output.o: sdf_output.f90 sdf_output_r4.o sdf_output_r8.o
 sdf_output_cartesian.o: sdf_output_cartesian.f90 sdf_output_cartesian_r4.o \
@@ -338,6 +361,11 @@ sdf_output_point_ru.o: sdf_output_point_ru.f90 sdf_output_ru.o
 sdf_output_r4.o: sdf_output_r4.f90 sdf_output_ru.o
 sdf_output_r8.o: sdf_output_r8.f90 sdf_output_ru.o
 sdf_output_ru.o: sdf_output_ru.f90 sdf_common.o
+sdf_output_station.o: sdf_output_station.f90 sdf_output_station_r4.o \
+  sdf_output_station_r8.o
+sdf_output_station_r4.o: sdf_output_station_r4.f90 sdf_output_station_ru.o
+sdf_output_station_r8.o: sdf_output_station_r8.f90 sdf_output_station_ru.o
+sdf_output_station_ru.o: sdf_output_station_ru.f90 sdf_output_ru.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
   sdf_output_point_ru.o
 setup.o: setup.F90 fields.o laser.o mpi_subtype_control.o shunt.o \

@@ -243,7 +243,7 @@ CONTAINS
       intbuf(5) = n_sample_chi2
       intbuf(6) = n_sample_epsilon
 
-      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, comm, errcode)
 
       bufsize = n_sample_h * 2
       bufsize = bufsize + n_sample_t * 3
@@ -306,13 +306,13 @@ CONTAINS
         ENDDO
       ENDDO
 
-      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, MPI_COMM_WORLD, errcode)
+      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, comm, errcode)
 
       DEALLOCATE(realbuf)
     ELSE
       ! Unpack data from rank zero
 
-      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+      CALL MPI_BCAST(intbuf, 6, MPI_INTEGER, 0, comm, errcode)
 
       n_sample_h       = intbuf(1)
       n_sample_t       = intbuf(2)
@@ -332,7 +332,7 @@ CONTAINS
       ALLOCATE(realbuf(bufsize))
       n = 1
 
-      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, MPI_COMM_WORLD, errcode)
+      CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, comm, errcode)
 
       ALLOCATE(log_hsokolov(n_sample_h,2))
       DO i = 1, 2
@@ -487,7 +487,7 @@ CONTAINS
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
-          part_x  = current%part_pos - x_min_local
+          part_x  = current%part_pos - x_grid_min_local
           part_ux = current%part_p(1) / mc0
           part_uy = current%part_p(2) / mc0
           part_uz = current%part_p(3) / mc0
@@ -526,7 +526,7 @@ CONTAINS
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
-          part_x  = current%part_pos - x_min_local
+          part_x  = current%part_pos - x_grid_min_local
           part_ux = current%part_p(1) / mc0
           part_uy = current%part_p(2) / mc0
           part_uz = current%part_p(3) / mc0
@@ -567,7 +567,7 @@ CONTAINS
           DO WHILE(ASSOCIATED(current))
             ! Current may be deleted
             next_pt => current%next
-            part_x  = current%part_pos - x_min_local
+            part_x  = current%part_pos - x_grid_min_local
             norm  = c / current%particle_energy
             dir_x = current%part_p(1) * norm
             dir_y = current%part_p(2) * norm
@@ -759,10 +759,12 @@ CONTAINS
 
     ! Particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
 #elif  PARTICLE_SHAPE_TOPHAT
     REAL(num), PARAMETER :: fac = (1.0_num)**c_ndims
 #else
+    REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 

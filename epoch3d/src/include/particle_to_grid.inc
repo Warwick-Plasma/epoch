@@ -1,11 +1,11 @@
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx - 0.5_num
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy - 0.5_num
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz - 0.5_num
+        cell_x_r = (current%part_pos(1) - x_grid_min_local) / dx - 0.5_num
+        cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy - 0.5_num
+        cell_z_r = (current%part_pos(3) - z_grid_min_local) / dz - 0.5_num
 #else
-        cell_x_r = (current%part_pos(1) - x_min_local) / dx
-        cell_y_r = (current%part_pos(2) - y_min_local) / dy
-        cell_z_r = (current%part_pos(3) - z_min_local) / dz
+        cell_x_r = (current%part_pos(1) - x_grid_min_local) / dx
+        cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy
+        cell_z_r = (current%part_pos(3) - z_grid_min_local) / dz
 #endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_y = FLOOR(cell_y_r + 0.5_num)

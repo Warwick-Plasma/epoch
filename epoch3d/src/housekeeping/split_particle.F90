@@ -34,9 +34,9 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next => current%next
-        cell_x = FLOOR((current%part_pos(1) - x_min_local) / dx + 1.5_num)
-        cell_y = FLOOR((current%part_pos(2) - y_min_local) / dy + 1.5_num)
-        cell_z = FLOOR((current%part_pos(3) - z_min_local) / dz + 1.5_num)
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
+        cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz + 1.5_num)
 
         CALL remove_particle_from_partlist(&
             species_list(ispecies)%attached_list, current)

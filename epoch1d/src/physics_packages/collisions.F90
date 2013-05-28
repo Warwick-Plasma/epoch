@@ -1566,7 +1566,7 @@ CONTAINS
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
       DO ipart = 1, species_list(ispecies)%attached_list%count
-        part_x  = current%part_pos - x_min_local
+        part_x  = current%part_pos - x_grid_min_local
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)

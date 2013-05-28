@@ -395,7 +395,6 @@ CONTAINS
     LOGICAL, SAVE :: warn = .TRUE.
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=filename_length) :: deck_filename, status_filename
-    CHARACTER(LEN=filename_length) :: list_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE., exists
     INTEGER :: errcode_deck, ierr, i, io, rank_check
@@ -640,12 +639,12 @@ CONTAINS
           slen = 1
           deck_values(1)%value = TRIM(ADJUSTL(deck_values(1)%value))
           deck_values(2)%value = TRIM(ADJUSTL(deck_values(2)%value))
-          CALL MPI_BCAST(1, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
-          CALL MPI_BCAST(nbuffers, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+          CALL MPI_BCAST(1, 1, MPI_INTEGER, 0, comm, errcode)
+          CALL MPI_BCAST(nbuffers, 1, MPI_INTEGER, 0, comm, errcode)
           CALL MPI_BCAST(deck_values(1)%value, string_length, MPI_CHARACTER, &
-              0, MPI_COMM_WORLD, errcode)
+              0, comm, errcode)
           CALL MPI_BCAST(deck_values(2)%value, string_length, MPI_CHARACTER, &
-              0, MPI_COMM_WORLD, errcode)
+              0, comm, errcode)
           CALL handle_deck_element(deck_values(1)%value, deck_values(2)%value, &
               errcode_deck)
           deck_values(1)%value = ''
@@ -655,7 +654,7 @@ CONTAINS
           u0 = ' '
         ENDIF
         IF (got_eof) THEN
-          CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+          CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, comm, errcode)
           CLOSE(lun)
           EXIT
         ENDIF
@@ -665,13 +664,13 @@ CONTAINS
     ELSE
       DO
         errcode_deck = c_err_none
-        CALL MPI_BCAST(f, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+        CALL MPI_BCAST(f, 1, MPI_INTEGER, 0, comm, errcode)
         IF (f .EQ. 0) EXIT
-          CALL MPI_BCAST(nbuffers, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, errcode)
+          CALL MPI_BCAST(nbuffers, 1, MPI_INTEGER, 0, comm, errcode)
         CALL MPI_BCAST(deck_values(1)%value, string_length, MPI_CHARACTER, &
-              0, MPI_COMM_WORLD, errcode)
+              0, comm, errcode)
         CALL MPI_BCAST(deck_values(2)%value, string_length, MPI_CHARACTER, &
-              0, MPI_COMM_WORLD, errcode)
+              0, comm, errcode)
         CALL handle_deck_element(deck_values(1)%value, deck_values(2)%value, &
               errcode_deck)
         deck_values(1)%value = ''
@@ -681,7 +680,7 @@ CONTAINS
       ENDDO
     ENDIF
 
-    CALL MPI_BARRIER(MPI_COMM_WORLD, errcode)
+    CALL MPI_BARRIER(comm, errcode)
 !!$    IF (.NOT. first_call)  THEN
 !!$       RETURN
 !!$    ENDIF
@@ -707,7 +706,7 @@ CONTAINS
 
     IF (terminate) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
 
-    CALL MPI_BARRIER(MPI_COMM_WORLD, errcode)
+    CALL MPI_BARRIER(comm, errcode)
 
   END SUBROUTINE read_deck
 

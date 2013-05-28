@@ -73,12 +73,15 @@ CONTAINS
       ! Must be consistent with the c_summary_offset in sdf_common
       CALL MPI_FILE_WRITE(h%filehandle, h%summary_location, 1, &
           MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
+      h%summary_location_wrote = h%summary_location
 
       CALL MPI_FILE_WRITE(h%filehandle, h%summary_size, 1, &
           MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
+      h%summary_size_wrote = h%summary_size
 
       CALL MPI_FILE_WRITE(h%filehandle, h%nblocks, 1, &
           MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
+      h%nblocks_wrote = h%nblocks
 
       CALL MPI_FILE_WRITE(h%filehandle, h%block_header_length, 1, &
           MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
@@ -86,9 +89,11 @@ CONTAINS
       int4 = INT(step,i4)
       CALL MPI_FILE_WRITE(h%filehandle, int4, 1, &
           MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
+      h%step_wrote = h%step
 
       CALL MPI_FILE_WRITE(h%filehandle, time, 1, &
           MPI_REAL8, MPI_STATUS_IGNORE, errcode)
+      h%time_wrote = h%time
 
       CALL MPI_FILE_WRITE(h%filehandle, h%jobid%start_seconds, 1, &
           MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
@@ -522,7 +527,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    b%datatype = c_datatype_other
+    IF (h%datatype .GT. 0) b%datatype = h%datatype
 
     ! Metadata is
     ! - stagger   INTEGER(i4)
@@ -621,6 +626,8 @@ CONTAINS
         b%blocktype = c_blocktype_stitched_tensor
       ENDIF
     ENDIF
+
+    b%datatype = c_datatype_other
 
     CALL write_stitched(h, id, name, mesh_id, stagger, variable_ids, ndims, &
         data_length)
@@ -1783,5 +1790,71 @@ CONTAINS
     b%done_data = .TRUE.
 
   END SUBROUTINE write_2d_array_character
+
+
+
+  SUBROUTINE sdf_update(h)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(KIND=MPI_OFFSET_KIND) :: offset
+    INTEGER :: errcode
+    INTEGER(i4) :: int4
+
+    ! No open file or not writing
+    IF (h%filehandle .EQ. -1 .OR. .NOT.h%writing) RETURN
+
+    ! Update summary and nblocks info
+    IF (h%rank .EQ. h%rank_master) THEN
+      IF (h%error_code .NE. 0) THEN
+        h%nblocks = -h%error_code
+        h%summary_location = 0
+        h%summary_size = 0
+      ENDIF
+      IF (h%summary_location .NE. h%summary_location_wrote) THEN
+        offset = c_summary_offset
+        CALL MPI_FILE_WRITE_AT(h%filehandle, offset, h%summary_location, 1, &
+            MPI_INTEGER8, MPI_STATUS_IGNORE, errcode)
+        h%summary_location_wrote = h%summary_location
+      ENDIF
+      IF (h%summary_size .NE. h%summary_size_wrote) THEN
+        offset = c_summary_offset + 8
+        CALL MPI_FILE_WRITE_AT(h%filehandle, offset, h%summary_size, 1, &
+            MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
+        h%summary_size_wrote = h%summary_size
+      ENDIF
+      IF (h%nblocks .NE. h%nblocks_wrote) THEN
+        offset = c_summary_offset + 12
+        CALL MPI_FILE_WRITE_AT(h%filehandle, offset, h%nblocks, 1, &
+            MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
+        h%nblocks_wrote = h%nblocks
+      ENDIF
+      IF (h%step .NE. h%step_wrote) THEN
+        offset = c_summary_offset + 20
+        int4 = INT(h%step,i4)
+        CALL MPI_FILE_WRITE_AT(h%filehandle, offset, int4, 1, &
+            MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
+        h%step_wrote = h%step
+      ENDIF
+      IF (h%time .NE. h%time_wrote) THEN
+        offset = c_summary_offset + 24
+        CALL MPI_FILE_WRITE_AT(h%filehandle, offset, h%time, 1, &
+            MPI_REAL8, MPI_STATUS_IGNORE, errcode)
+        h%time_wrote = h%time
+      ENDIF
+    ENDIF
+
+  END SUBROUTINE sdf_update
+
+
+
+  SUBROUTINE sdf_flush(h)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER :: errcode
+
+    CALL sdf_update(h)
+    CALL MPI_FILE_SYNC(h%filehandle, errcode)
+
+  END SUBROUTINE sdf_flush
 
 END MODULE sdf_output_ru

@@ -129,7 +129,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     TYPE(primitive_stack) :: output
     INTEGER :: ndim, i
-    CHARACTER*1 :: c
+    CHARACTER(LEN=1) :: c
     CHARACTER(LEN=string_length) :: str_tmp
     LOGICAL :: found
 
@@ -153,8 +153,10 @@ CONTAINS
     ENDIF
 
     CALL tokenize(str_tmp, output, err)
-    IF (err .EQ. c_err_none) &
-        CALL evaluate_and_return_all(output, 0, 0, ndim, array, err)
+    IF (err .EQ. c_err_none) THEN
+      NULLIFY(array)
+      CALL evaluate_and_return_all(output, 0, 0, ndim, array, err)
+    ENDIF
     CALL deallocate_stack(output)
 
   END SUBROUTINE get_allocated_array_rnum

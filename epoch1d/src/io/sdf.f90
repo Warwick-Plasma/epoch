@@ -4,10 +4,12 @@ MODULE sdf
   USE sdf_input
   USE sdf_input_cartesian
   USE sdf_input_point
+  USE sdf_input_station
   USE sdf_input_util
   USE sdf_output
   USE sdf_output_cartesian
   USE sdf_output_point
+  USE sdf_output_station
 
   IMPLICIT NONE
 
@@ -17,6 +19,7 @@ MODULE sdf
 
   PUBLIC :: c_sdf_read
   PUBLIC :: c_sdf_write
+  PUBLIC :: c_sdf_append
   PUBLIC :: c_id_length
 
   PUBLIC :: c_blocktype_scrubbed
@@ -46,6 +49,7 @@ MODULE sdf
   PUBLIC :: c_blocktype_stitched
   PUBLIC :: c_blocktype_contiguous
   PUBLIC :: c_blocktype_lagrangian_mesh
+  PUBLIC :: c_blocktype_station
   PUBLIC :: c_blocktype_max
 
   PUBLIC :: c_datatype_null
@@ -80,6 +84,7 @@ MODULE sdf
 
   PUBLIC :: c_blocktypes_char
   PUBLIC :: c_datatypes_char
+  PUBLIC :: c_type_sizes
 
   PUBLIC :: sdf_open
   PUBLIC :: sdf_close
@@ -93,6 +98,9 @@ MODULE sdf
   PUBLIC :: sdf_get_block_id
   PUBLIC :: sdf_get_data_location
   PUBLIC :: sdf_set_data_location
+  PUBLIC :: sdf_get_all_stations
+  PUBLIC :: sdf_station_seek_time
+  PUBLIC :: sdf_flush
   PUBLIC :: sdf_read_header
   PUBLIC :: sdf_read_blocklist
   PUBLIC :: sdf_read_nblocks
@@ -119,6 +127,10 @@ MODULE sdf
   PUBLIC :: sdf_read_cpu_split_info
   PUBLIC :: sdf_read_srl_cpu_split
   PUBLIC :: sdf_read_run_info
+  PUBLIC :: sdf_read_station_info
+  PUBLIC :: sdf_read_station_info_arrays
+  PUBLIC :: sdf_read_station_info_arrays_all
+  PUBLIC :: sdf_read_station_array
   PUBLIC :: sdf_write_header
   PUBLIC :: sdf_write_run_info
   PUBLIC :: sdf_write_source_code
@@ -134,6 +146,11 @@ MODULE sdf
   PUBLIC :: sdf_write_srl_plain_mesh
   PUBLIC :: sdf_write_srl_point_mesh
   PUBLIC :: sdf_write_srl_point_variable
+  PUBLIC :: sdf_write_station_header
+  PUBLIC :: sdf_write_station_array
+  PUBLIC :: sdf_write_station_material
+  PUBLIC :: sdf_write_station_matvar
+  PUBLIC :: sdf_write_station_species
   PUBLIC :: sdf_write_stitched
   PUBLIC :: sdf_write_stitched_var
   PUBLIC :: sdf_write_stitched_tensor

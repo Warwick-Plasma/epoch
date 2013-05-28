@@ -61,26 +61,21 @@ CONTAINS
     INTEGER :: errcode, n1
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_array_info(h, dims)
 
-    h%current_location = b%data_location
-
     n1 = b%dims(1)
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
+    h%current_location = b%data_location
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, values, n1, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ_AT(h%filehandle, h%current_location, values, n1, &
+          b%mpitype, MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(values, n1, b%mpitype, h%rank_master, h%comm, errcode)
 
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
@@ -94,32 +89,24 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     REAL(r8), DIMENSION(:,:), INTENT(OUT) :: values
     INTEGER, DIMENSION(c_maxdims) :: dims
-    INTEGER :: errcode, i, n1, n2
+    INTEGER :: errcode, n1
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_array_info(h, dims)
 
+    n1 = b%dims(1) * b%dims(2)
+
     h%current_location = b%data_location
 
-    n1 = b%dims(1)
-    n2 = b%dims(2)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ_AT(h%filehandle, h%current_location, values, n1, &
+          b%mpitype, MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
-    DO i = 1,n2
-      CALL MPI_FILE_READ_ALL(h%filehandle, values(1,i), n1, b%mpitype, &
-          MPI_STATUS_IGNORE, errcode)
-    ENDDO
+    CALL MPI_BCAST(values, n1, b%mpitype, h%rank_master, h%comm, errcode)
 
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
@@ -133,35 +120,24 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     REAL(r8), DIMENSION(:,:,:), INTENT(OUT) :: values
     INTEGER, DIMENSION(c_maxdims) :: dims
-    INTEGER :: errcode, i, j, n1, n2, n3
+    INTEGER :: errcode, n1
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL sdf_read_array_info(h, dims)
 
+    n1 = b%dims(1) * b%dims(2) * b%dims(3)
+
     h%current_location = b%data_location
 
-    n1 = b%dims(1)
-    n2 = b%dims(2)
-    n3 = b%dims(3)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ_AT(h%filehandle, h%current_location, values, n1, &
+          b%mpitype, MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
-    DO j = 1,n3
-      DO i = 1,n2
-        CALL MPI_FILE_READ_ALL(h%filehandle, values(1,i,j), n1, b%mpitype, &
-            MPI_STATUS_IGNORE, errcode)
-      ENDDO
-    ENDDO
+    CALL MPI_BCAST(values, n1, b%mpitype, h%rank_master, h%comm, errcode)
 
     h%current_location = b%next_block_location
     b%done_data = .TRUE.

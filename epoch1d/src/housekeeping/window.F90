@@ -9,6 +9,9 @@ MODULE window
   LOGICAL, SAVE :: window_started
   REAL(num) :: density, temperature(3), drift(3)
   REAL(num), SAVE :: window_shift_fraction
+#ifndef PER_PARTICLE_WEIGHT
+  INTEGER :: ierr
+#endif
 
 CONTAINS
 
@@ -23,7 +26,7 @@ CONTAINS
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(comm, errcode, errcode)
+    CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
 #endif
 
   END SUBROUTINE initialise_window
@@ -48,10 +51,14 @@ CONTAINS
       CALL insert_particles
 
       ! Shift the box around
+      x_grid_min = x_grid_min + dx
+      x_grid_max = x_grid_max + dx
+      x_grid_mins = x_grid_mins + dx
+      x_grid_maxs = x_grid_maxs + dx
+      x_grid_min_local = x_grid_min_local + dx
+      x_grid_max_local = x_grid_max_local + dx
       x_min = x_min + dx
       x_max = x_max + dx
-      x_mins = x_mins + dx
-      x_maxs = x_maxs + dx
       x_min_local = x_min_local + dx
       x_max_local = x_max_local + dx
 
@@ -138,7 +145,7 @@ CONTAINS
 
     DO ispecies = 1, n_species
       CALL create_empty_partlist(append_list)
-      npart_per_cell = AINT(species_list(ispecies)%npart_per_cell, KIND=i8)
+      npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
       IF (npart_frac .GT. 0) THEN
         n0 = 0
@@ -166,7 +173,7 @@ CONTAINS
         ENDIF
         ALLOCATE(current)
         CALL init_particle(current)
-        current%part_pos = x_max + dx + (random() - 0.5_num) * dx
+        current%part_pos = x_grid_max + dx + (random() - 0.5_num) * dx
 
         DO i = 1, 3
           temp_local = temperature(i)
@@ -201,7 +208,7 @@ CONTAINS
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           next => current%next
-          IF (current%part_pos .LT. x_min - 0.5_num * dx) THEN
+          IF (current%part_pos .LT. x_min) THEN
             CALL remove_particle_from_partlist(&
                 species_list(ispecies)%attached_list, current)
             DEALLOCATE(current)
@@ -256,7 +263,7 @@ CONTAINS
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(comm, errcode, errcode)
+    CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
 #endif
 
   END SUBROUTINE moving_window

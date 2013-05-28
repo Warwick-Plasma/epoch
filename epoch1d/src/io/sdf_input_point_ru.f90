@@ -8,32 +8,6 @@ CONTAINS
 
   ! Mesh loading functions
 
-  SUBROUTINE sdf_info_init(h)
-
-    TYPE(sdf_file_handle) :: h
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
-
-    b => h%current_block
-    h%current_location = b%block_start + h%block_header_length
-
-    IF (.NOT. ASSOCIATED(h%buffer)) THEN
-      CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-          MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-    ENDIF
-
-  END SUBROUTINE sdf_info_init
-
-
-
   SUBROUTINE read_point_mesh_info_ru(h, npoints, geometry)
 
     TYPE(sdf_file_handle) :: h
@@ -51,7 +25,7 @@ CONTAINS
     ! - maxval    REAL(r8), DIMENSION(ndims)
     ! - npoints   INTEGER(i8)
 
-    CALL sdf_info_init(h)
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) THEN
@@ -116,7 +90,7 @@ CONTAINS
     ! - meshid    CHARACTER(id_length)
     ! - npoints   INTEGER(i8)
 
-    CALL sdf_info_init(h)
+    IF (sdf_info_init(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) THEN
@@ -153,13 +127,7 @@ CONTAINS
     INTEGER :: errcode, npoints
     TYPE(sdf_block_type), POINTER :: b
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_point_variable_info_ru(h)
@@ -168,12 +136,13 @@ CONTAINS
 
     ! Read the real data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     npoints = INT(b%npoints)
-    CALL MPI_FILE_READ_ALL(h%filehandle, array, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ_AT(h%filehandle, h%current_location, array, npoints, &
+          b%mpitype, MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(array, npoints, b%mpitype, h%rank_master, h%comm, errcode)
 
     h%current_location = b%next_block_location
     b%done_data = .TRUE.
@@ -190,13 +159,7 @@ CONTAINS
     TYPE(sdf_block_type), POINTER :: b
     CHARACTER(LEN=1), DIMENSION(:), ALLOCATABLE :: cvalues
 
-    IF (.NOT.ASSOCIATED(h%current_block)) THEN
-      IF (h%rank .EQ. h%rank_master) THEN
-        PRINT*,'*** ERROR ***'
-        PRINT*,'SDF block header has not been read. Ignoring call.'
-      ENDIF
-      RETURN
-    ENDIF
+    IF (sdf_check_block_header(h)) RETURN
 
     b => h%current_block
     IF (.NOT. b%done_info) CALL read_point_variable_info_ru(h)
@@ -205,14 +168,15 @@ CONTAINS
 
     ! Read the real data
 
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        MPI_BYTE, 'native', MPI_INFO_NULL, errcode)
-
     npoints = INT(b%npoints)
     ALLOCATE(cvalues(npoints))
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, cvalues, npoints, b%mpitype, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_READ_AT(h%filehandle, h%current_location, cvalues, &
+          npoints, b%mpitype, MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    CALL MPI_BCAST(cvalues, npoints, b%mpitype, h%rank_master, h%comm, errcode)
 
     DO i = 1,npoints
       IF (cvalues(i) .EQ. ACHAR(0)) THEN

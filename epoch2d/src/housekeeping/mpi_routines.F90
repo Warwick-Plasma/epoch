@@ -14,8 +14,9 @@ CONTAINS
   SUBROUTINE mpi_minimal_init
 
     CALL MPI_INIT(errcode)
-    CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nproc, errcode)
-    CALL MPI_COMM_RANK(MPI_COMM_WORLD, rank, errcode)
+    CALL MPI_COMM_DUP(MPI_COMM_WORLD, comm, errcode)
+    CALL MPI_COMM_SIZE(comm, nproc, errcode)
+    CALL MPI_COMM_RANK(comm, rank, errcode)
 #ifdef MPI_DEBUG
     CALL mpi_set_error_handler
 #endif
@@ -27,16 +28,39 @@ CONTAINS
   SUBROUTINE setup_communicator
 
     INTEGER, PARAMETER :: ndims = 2
-    INTEGER :: dims(ndims), idim
-    LOGICAL :: periods(ndims), reorder, op
+    INTEGER :: dims(ndims), idim, old_comm, ierr
+    LOGICAL :: periods(ndims), reorder, op, reset
     INTEGER :: test_coords(ndims)
     INTEGER :: ix, iy
     INTEGER :: nxsplit, nysplit
     INTEGER :: area, minarea
+    INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
+    CHARACTER(LEN=11) :: str
 
-    IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm, errcode)
+    nproc_orig = nproc
 
+    IF (nx_global .LT. ng .OR. ny_global .LT. ng) THEN
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(ng, str)
+        PRINT*,'*** ERROR ***'
+        PRINT*,'Simulation domain is too small.'
+        PRINT*,'There must be at least ' // TRIM(str) // &
+            ' cells in each direction.'
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
+
+    reset = .FALSE.
     IF (MAX(nprocx,1) * MAX(nprocy,1) .GT. nproc) THEN
+      reset = .TRUE.
+    ELSE
+      ! Sanity check
+      nxsplit = (nx_global - 1) / nprocx + 1
+      nysplit = (ny_global - 1) / nprocy + 1
+      IF (nxsplit .LT. ng .OR. nysplit .LT. ng) reset = .TRUE.
+    ENDIF
+
+    IF (reset) THEN
       IF (rank .EQ. 0) THEN
         PRINT *, 'Unable to use requested processor subdivision. Using ' &
             // 'default division.'
@@ -46,25 +70,69 @@ CONTAINS
     ENDIF
 
     IF (nprocx * nprocy .EQ. 0) THEN
-      ! Find the processor split which minimizes surface area of
-      ! the resulting domain
+      DO WHILE (nproc .GT. 1)
+        ! Find the processor split which minimizes surface area of
+        ! the resulting domain
 
-      minarea = nx_global + ny_global
+        minarea = nx_global + ny_global
 
-      DO ix = 1, nproc
-        iy = nproc / ix
-        IF (ix * iy .NE. nproc) CYCLE
+        DO ix = 1, nproc
+          iy = nproc / ix
+          IF (ix * iy .NE. nproc) CYCLE
 
-        nxsplit = nx_global / ix
-        nysplit = ny_global / iy
+          nxsplit = (nx_global - 1) / ix + 1
+          nysplit = (ny_global - 1) / iy + 1
+          ! Actual domain must be bigger than the number of ghostcells
+          IF (nxsplit .LT. ng .OR. nysplit .LT. ng) CYCLE
 
-        area = nxsplit + nysplit
-        IF (area .LT. minarea) THEN
-          nprocx = ix
-          nprocy = iy
-          minarea = area
-        ENDIF
+          area = nxsplit + nysplit
+          IF (area .LT. minarea) THEN
+            nprocx = ix
+            nprocy = iy
+            minarea = area
+          ENDIF
+        ENDDO
+
+        IF (nprocx .GT. 0) EXIT
+
+        ! If we get here then no suitable split could be found. Decrease the
+        ! number of processors and try again.
+
+        nproc = nproc - 1
       ENDDO
+    ENDIF
+
+    IF (nproc_orig .NE. nproc) THEN
+      IF (.NOT.allow_cpu_reduce) THEN
+        IF (rank .EQ. 0) THEN
+          CALL integer_as_string(nproc, str)
+          PRINT*,'*** ERROR ***'
+          PRINT*,'Cannot split the domain using the requested number of CPUs.'
+          PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
+        ENDIF
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        STOP
+      ENDIF
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(nproc, str)
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Cannot split the domain using the requested number of CPUs.'
+        PRINT*,'Reducing the number of CPUs to ',TRIM(str)
+      ENDIF
+      ranges(1,1) = nproc
+      ranges(2,1) = nproc_orig - 1
+      ranges(3,1) = 1
+      old_comm = comm
+      CALL MPI_COMM_GROUP(old_comm, oldgroup, errcode)
+      CALL MPI_GROUP_RANGE_EXCL(oldgroup, 1, ranges, newgroup, errcode)
+      CALL MPI_COMM_CREATE(old_comm, newgroup, comm, errcode)
+      IF (comm .EQ. MPI_COMM_NULL) THEN
+        CALL MPI_FINALIZE(errcode)
+        STOP
+      ENDIF
+      CALL MPI_GROUP_FREE(oldgroup, errcode)
+      CALL MPI_GROUP_FREE(newgroup, errcode)
+      CALL MPI_COMM_FREE(old_comm, errcode)
     ENDIF
 
     dims = (/nprocy, nprocx/)
@@ -86,8 +154,9 @@ CONTAINS
         .OR. bc_particle(c_bd_y_min) .EQ. c_bc_periodic) &
             periods(c_ndims-1) = .TRUE.
 
-    CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
-        comm, errcode)
+    old_comm = comm
+    CALL MPI_CART_CREATE(old_comm, ndims, dims, periods, reorder, comm, errcode)
+    CALL MPI_COMM_FREE(old_comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
     CALL MPI_CART_COORDS(comm, rank, ndims, coordinates, errcode)
     CALL MPI_CART_SHIFT(comm, 1, 1, proc_x_min, proc_x_max, errcode)
@@ -147,8 +216,8 @@ CONTAINS
     CALL setup_communicator
 
     ALLOCATE(npart_each_rank(nproc))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
-    ALLOCATE(y_mins(0:nprocy-1), y_maxs(0:nprocy-1))
+    ALLOCATE(x_grid_mins(0:nprocx-1), x_grid_maxs(0:nprocx-1))
+    ALLOCATE(y_grid_mins(0:nprocy-1), y_grid_maxs(0:nprocy-1))
     ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
     ALLOCATE(cell_y_min(nprocy), cell_y_max(nprocy))
 

@@ -25,7 +25,7 @@
 
 #define SDF_VERSION  1
 #define SDF_REVISION 2
-#define SDF_LIB_VERSION  2
+#define SDF_LIB_VERSION  3
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
@@ -62,6 +62,8 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_STITCHED,
     SDF_BLOCKTYPE_CONTIGUOUS,
     SDF_BLOCKTYPE_LAGRANGIAN_MESH,
+    SDF_BLOCKTYPE_STATION,
+    SDF_BLOCKTYPE_STATION_DERIVED,
 };
 
 enum sdf_geometry {
@@ -143,100 +145,17 @@ enum sdf_error_codes {
 #define SDF_WRITE 2
 
 
-static const char *sdf_blocktype_c[] = {
-    "SDF_BLOCKTYPE_NULL",
-    "SDF_BLOCKTYPE_PLAIN_MESH",
-    "SDF_BLOCKTYPE_POINT_MESH",
-    "SDF_BLOCKTYPE_PLAIN_VARIABLE",
-    "SDF_BLOCKTYPE_POINT_VARIABLE",
-    "SDF_BLOCKTYPE_CONSTANT",
-    "SDF_BLOCKTYPE_ARRAY",
-    "SDF_BLOCKTYPE_RUN_INFO",
-    "SDF_BLOCKTYPE_SOURCE",
-    "SDF_BLOCKTYPE_STITCHED_TENSOR",
-    "SDF_BLOCKTYPE_STITCHED_MATERIAL",
-    "SDF_BLOCKTYPE_STITCHED_MATVAR",
-    "SDF_BLOCKTYPE_STITCHED_SPECIES",
-    "SDF_BLOCKTYPE_SPECIES",
-    "SDF_BLOCKTYPE_PLAIN_DERIVED",
-    "SDF_BLOCKTYPE_POINT_DERIVED",
-    "SDF_BLOCKTYPE_CONTIGUOUS_TENSOR",
-    "SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL",
-    "SDF_BLOCKTYPE_CONTIGUOUS_MATVAR",
-    "SDF_BLOCKTYPE_CONTIGUOUS_SPECIES",
-    "SDF_BLOCKTYPE_CPU_SPLIT",
-    "SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP",
-    "SDF_BLOCKTYPE_UNSTRUCTURED_MESH",
-    "SDF_BLOCKTYPE_STITCHED",
-    "SDF_BLOCKTYPE_CONTIGUOUS",
-    "SDF_BLOCKTYPE_LAGRANGIAN_MESH",
-};
+extern const char *sdf_blocktype_c[];
+extern const char *sdf_geometry_c[];
+extern const char *sdf_stagger_c[];
+extern const char *sdf_datatype_c[];
+extern const char *sdf_error_codes_c[];
 
-static const char *sdf_geometry_c[] = {
-    "SDF_GEOMETRY_NULL",
-    "SDF_GEOMETRY_CARTESIAN",
-    "SDF_GEOMETRY_CYLINDRICAL",
-    "SDF_GEOMETRY_SPHERICAL",
-};
-
-static const char *sdf_stagger_c[] = {
-    "SDF_STAGGER_CELL_CENTRE",
-    "SDF_STAGGER_FACE_X",
-    "SDF_STAGGER_FACE_Y",
-    "SDF_STAGGER_EDGE_Z",
-    "SDF_STAGGER_FACE_Z",
-    "SDF_STAGGER_EDGE_Y",
-    "SDF_STAGGER_EDGE_X",
-    "SDF_STAGGER_VERTEX",
-};
-
-static const char *sdf_datatype_c[] = {
-    "SDF_DATATYPE_NULL",
-    "SDF_DATATYPE_INTEGER4",
-    "SDF_DATATYPE_INTEGER8",
-    "SDF_DATATYPE_REAL4",
-    "SDF_DATATYPE_REAL8",
-    "SDF_DATATYPE_REAL16",
-    "SDF_DATATYPE_CHARACTER",
-    "SDF_DATATYPE_LOGICAL",
-    "SDF_DATATYPE_OTHER",
-};
-
-static const char *sdf_error_codes_c[] = {
-    "SDF_ERR_SUCCESS",
-    "SDF_ERR_ACCESS",
-    "SDF_ERR_AMODE",
-    "SDF_ERR_BAD_FILE",
-    "SDF_ERR_CONVERSION",
-    "SDF_ERR_DUP_DATAREP",
-    "SDF_ERR_FILE",
-    "SDF_ERR_FILE_EXISTS",
-    "SDF_ERR_FILE_IN_USE",
-    "SDF_ERR_INFO",
-    "SDF_ERR_INFO_KEY",
-    "SDF_ERR_INFO_NOKEY",
-    "SDF_ERR_INFO_VALUE",
-    "SDF_ERR_IO",
-    "SDF_ERR_NOT_SAME",
-    "SDF_ERR_NO_SPACE",
-    "SDF_ERR_NO_SUCH_FILE",
-    "SDF_ERR_QUOTA",
-    "SDF_ERR_READ_ONLY",
-    "SDF_ERR_UNSUPPORTED_DATAREP",
-    "SDF_ERR_UNSUPPORTED_OPERATION",
-    "SDF_ERR_UNKNOWN",
-};
-
-static const int sdf_blocktype_len =
-        sizeof(sdf_blocktype_c) / sizeof(sdf_blocktype_c[0]);
-static const int sdf_geometry_len =
-        sizeof(sdf_geometry_c) / sizeof(sdf_geometry_c[0]);
-static const int sdf_stagger_len =
-        sizeof(sdf_stagger_c) / sizeof(sdf_stagger_c[0]);
-static const int sdf_datatype_len =
-        sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
-static const int sdf_error_codes_len =
-        sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
+extern const int sdf_blocktype_len;
+extern const int sdf_geometry_len;
+extern const int sdf_stagger_len;
+extern const int sdf_datatype_len;
+extern const int sdf_error_codes_len;
 
 #ifdef PARALLEL
     typedef MPI_Comm comm_t;
@@ -250,25 +169,30 @@ typedef struct sdf_file sdf_file_t;
 struct sdf_block {
     // This struct must be changed with care and the SDF_LIB_VERSION bumped
     // if the resulting struct is not aligned the same.
-    double *dim_mults, *extents, mult;
+    double *extents, *dim_mults;
+    double *station_x, *station_y, *station_z;
+    double mult, time, time_increment;
     uint64_t block_start;
     uint64_t next_block_location, data_location;
     uint64_t nelements, npoints, data_length;
-    uint32_t ndims, geometry, datatype, blocktype, block_info_length;
+    uint32_t ndims, geometry, datatype, blocktype, info_length;
     uint32_t type_size, stagger, datatype_out, type_size_out;
-    uint32_t *dims_in;
+    uint32_t nstations, nvariables, step, step_increment;
+    uint32_t *dims_in, *station_nvars, *station_move, *variable_types;
+    uint32_t *station_index;
     uint64_t dims[3];
-    int local_dims[3], nm, nlocal, n_ids, opt, ng, nfaces;
+    int local_dims[3], nm, nelements_local, n_ids, opt, ng, nfaces;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
-    char *vfm_id, *obstacle_id;
+    char *vfm_id, *obstacle_id, *station_id;
     char *name, *material_name, *must_read;
     char **dim_labels, **dim_units;
-    char **variable_ids, **material_names;
+    char **station_ids, **variable_ids;
+    char **station_names, **material_names;
     int *node_list, *boundary_cells;
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
-    char dont_own_data;
+    char dont_own_data, use_mult;
     sdf_block_t *next;
     sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
@@ -298,8 +222,8 @@ struct sdf_file {
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float, use_summary;
-    char use_random;
-    char *code_name;
+    char use_random, station_file;
+    char *code_name, *error_message;
     sdf_block_t *blocklist, *tail, *current_block;
     char *mmap;
     void *ext_data;
@@ -318,6 +242,7 @@ sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id);
 sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name);
 int sdf_read_header(sdf_file_t *h);
 int sdf_read_blocklist(sdf_file_t *h);
+int sdf_read_blocklist_all(sdf_file_t *h);
 int sdf_read_summary(sdf_file_t *h);
 int sdf_read_block_info(sdf_file_t *h);
 int sdf_read_data(sdf_file_t *h);
@@ -353,6 +278,7 @@ int sdf_read_point_mesh_info(sdf_file_t *h);
 int sdf_read_point_variable(sdf_file_t *h);
 int sdf_read_point_variable_info(sdf_file_t *h);
 int sdf_read_lagran_mesh(sdf_file_t *h);
+int sdf_read_station_info(sdf_file_t *h);
 
 void sdf_trim(char *str);
 
@@ -418,6 +344,16 @@ void sdf_trim(char *str);
                 for (_i=0; _i < 10; _i++, _d++) { \
                     if (_d == (len)) break; \
                     SDF_PRNT("%c", arr[_d]); \
+                } \
+            } \
+        } else if (b->datatype_out == SDF_DATATYPE_LOGICAL) { \
+            char *arr = (a); \
+            SDF_PRNT("l1 "); \
+            _d=0; while (_d<(len)) { \
+                SDF_PRNT("\n%i ",_d); \
+                for (_i=0; _i < 10; _i++, _d++) { \
+                    if (_d == (len)) break; \
+                    SDF_PRNT("%x ", arr[_d]); \
                 } \
             } \
         } else if (b->datatype_out == SDF_DATATYPE_INTEGER4) { \
@@ -493,8 +429,8 @@ void sdf_trim(char *str);
 
 #define SDF_READ_ENTRY_CONST(value) do { \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
-            b->type_size); \
-        h->current_location += b->type_size; \
+            SDF_TYPE_SIZES[b->datatype]); \
+        h->current_location += SDF_TYPE_SIZES[b->datatype]; \
         switch (b->datatype) { \
         case(SDF_DATATYPE_REAL4): \
           SDF_DPRNT(#value ": %g\n", *((float*)(value))); \

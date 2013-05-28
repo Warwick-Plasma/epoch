@@ -148,7 +148,7 @@ CONTAINS
         MPI_INTEGER8, MPI_SUM, comm, errcode)
 
     IF (species%npart_per_cell .GE. 0) THEN
-      npart_per_cell_average = AINT(species%npart_per_cell, num)
+      npart_per_cell_average = FLOOR(species%npart_per_cell, num)
     ELSE
       npart_per_cell_average = REAL(species%count, num) &
           / REAL(num_valid_cells_global, num)
@@ -259,9 +259,9 @@ CONTAINS
     ENDDO ! iy
 
     IF (species%npart_per_cell .GE. 0) THEN
-      npart_per_cell = AINT(species%npart_per_cell, KIND=i8)
+      npart_per_cell = FLOOR(species%npart_per_cell, KIND=i8)
       num_new_particles = &
-          AINT(species%npart_per_cell * num_valid_cells_local, KIND=i8)
+          FLOOR(species%npart_per_cell * num_valid_cells_local, KIND=i8)
     ELSE
       ALLOCATE(num_valid_cells_all(nproc), num_idx(nproc), num_frac(nproc))
 
@@ -281,14 +281,14 @@ CONTAINS
               // 'where particles may'
           WRITE(*,*) 'validly be placed for species "' // TRIM(species%name) &
               // '". ', 'Code will now terminate.'
-          CALL MPI_ABORT(comm, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         ENDIF
       ENDIF
 
       valid_cell_frac = REAL(num_valid_cells_local, num) &
           / REAL(num_valid_cells_global, num)
       num_real = npart_this_species * valid_cell_frac
-      num_new_particles = AINT(num_real, KIND=i8)
+      num_new_particles = FLOOR(num_real, KIND=i8)
 
       ! Work out which processors get the remaining fractional numbers
       ! of particles
@@ -300,7 +300,7 @@ CONTAINS
         valid_cell_frac = REAL(num_valid_cells_all(i), num) &
             / REAL(num_valid_cells_global, num)
         num_real = npart_this_species * valid_cell_frac
-        num_int = AINT(num_real, KIND=i8)
+        num_int = FLOOR(num_real, KIND=i8)
         num_frac(i) = num_real - num_int
         num_idx (i) = i - 1
         num_total = num_total + num_int
@@ -346,7 +346,7 @@ CONTAINS
 
       species%npart_per_cell = &
           REAL(npart_this_species,num) / num_valid_cells_global
-      npart_per_cell = AINT(species%npart_per_cell, KIND=i8)
+      npart_per_cell = FLOOR(species%npart_per_cell, KIND=i8)
     ENDIF
 
     partlist => species%attached_list

@@ -68,7 +68,7 @@ static void setup_mesh(sdf_file_t *h, PyObject *dict)
 {
     sdf_block_t *b = h->current_block;
     int i, n, ndims;
-    int l1, l2;
+    size_t l1, l2;
     char *label;
     void *grid;
     PyObject *sub;
@@ -77,7 +77,7 @@ static void setup_mesh(sdf_file_t *h, PyObject *dict)
     sdf_read_data(h);
 
     for (n = 0; n < b->ndims; n++) {
-        ndims = b->dims[n];
+        ndims = (int)b->dims[n];
 
         l1 = strlen(b->name);
         l2 = strlen(b->dim_labels[n]);
@@ -193,7 +193,7 @@ static PyObject* SDF_read(SDFObject *self, PyObject *args)
             break;
           case SDF_BLOCKTYPE_PLAIN_VARIABLE:
           case SDF_BLOCKTYPE_POINT_VARIABLE:
-            for (n = 0; n < b->ndims; n++) dims[n] = b->dims[n];
+            for (n = 0; n < b->ndims; n++) dims[n] = (int)b->dims[n];
             sdf_read_data(h);
             sub = PyArray_NewFromDescr(&PyArray_Type,
                 PyArray_DescrFromType(typemap[b->datatype_out]), b->ndims,

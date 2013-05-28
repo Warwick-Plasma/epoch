@@ -14,8 +14,9 @@ CONTAINS
   SUBROUTINE mpi_minimal_init
 
     CALL MPI_INIT(errcode)
-    CALL MPI_COMM_SIZE(MPI_COMM_WORLD, nproc, errcode)
-    CALL MPI_COMM_RANK(MPI_COMM_WORLD, rank, errcode)
+    CALL MPI_COMM_DUP(MPI_COMM_WORLD, comm, errcode)
+    CALL MPI_COMM_SIZE(comm, nproc, errcode)
+    CALL MPI_COMM_RANK(comm, rank, errcode)
 #ifdef MPI_DEBUG
     CALL mpi_set_error_handler
 #endif
@@ -27,12 +28,66 @@ CONTAINS
   SUBROUTINE setup_communicator
 
     INTEGER, PARAMETER :: ndims = 1
-    INTEGER :: dims(ndims), idim
+    INTEGER :: dims(ndims), idim, old_comm, ierr
     LOGICAL :: periods(ndims), reorder, op
     INTEGER :: test_coords(ndims)
     INTEGER :: ix
+    INTEGER :: nxsplit
+    INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
+    CHARACTER(LEN=11) :: str
 
-    IF (comm .NE. MPI_COMM_NULL) CALL MPI_COMM_FREE(comm, errcode)
+    IF (nx_global .LT. ng) THEN
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(ng, str)
+        PRINT*,'*** ERROR ***'
+        PRINT*,'Simulation domain is too small.'
+        PRINT*,'There must be at least ' // TRIM(str) // &
+            ' cells in each direction.'
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
+
+    nproc_orig = nproc
+    DO WHILE (nproc .GT. 1)
+      nxsplit = (nx_global - 1) / nproc + 1
+      ! Actual domain must be bigger than the number of ghostcells
+      IF (nxsplit .GE. ng) EXIT
+      nproc  = nproc - 1
+      nprocx = nproc
+    ENDDO
+
+    IF (nproc_orig .NE. nproc) THEN
+      IF (.NOT.allow_cpu_reduce) THEN
+        IF (rank .EQ. 0) THEN
+          CALL integer_as_string(nproc, str)
+          PRINT*,'*** ERROR ***'
+          PRINT*,'Cannot split the domain using the requested number of CPUs.'
+          PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
+        ENDIF
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        STOP
+      ENDIF
+      IF (rank .EQ. 0) THEN
+        CALL integer_as_string(nproc, str)
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Cannot split the domain using the requested number of CPUs.'
+        PRINT*,'Reducing the number of CPUs to ',TRIM(str)
+      ENDIF
+      ranges(1,1) = nproc
+      ranges(2,1) = nproc_orig - 1
+      ranges(3,1) = 1
+      old_comm = comm
+      CALL MPI_COMM_GROUP(old_comm, oldgroup, errcode)
+      CALL MPI_GROUP_RANGE_EXCL(oldgroup, 1, ranges, newgroup, errcode)
+      CALL MPI_COMM_CREATE(old_comm, newgroup, comm, errcode)
+      IF (comm .EQ. MPI_COMM_NULL) THEN
+        CALL MPI_FINALIZE(errcode)
+        STOP
+      ENDIF
+      CALL MPI_GROUP_FREE(oldgroup, errcode)
+      CALL MPI_GROUP_FREE(newgroup, errcode)
+      CALL MPI_COMM_FREE(old_comm, errcode)
+    ENDIF
 
     dims = (/nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
@@ -49,8 +104,9 @@ CONTAINS
         .OR. bc_particle(c_bd_x_min) .EQ. c_bc_periodic) &
             periods(c_ndims) = .TRUE.
 
-    CALL MPI_CART_CREATE(MPI_COMM_WORLD, ndims, dims, periods, reorder, &
-        comm, errcode)
+    old_comm = comm
+    CALL MPI_CART_CREATE(old_comm, ndims, dims, periods, reorder, comm, errcode)
+    CALL MPI_COMM_FREE(old_comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
     CALL MPI_CART_COORDS(comm, rank, ndims, coordinates, errcode)
     CALL MPI_CART_SHIFT(comm, 0, 1, proc_x_min, proc_x_max, errcode)
@@ -94,7 +150,7 @@ CONTAINS
     CALL setup_communicator
 
     ALLOCATE(npart_each_rank(nproc))
-    ALLOCATE(x_mins(0:nprocx-1), x_maxs(0:nprocx-1))
+    ALLOCATE(x_grid_mins(0:nprocx-1), x_grid_maxs(0:nprocx-1))
     ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
 
     nx_global = nx_global + 2 * cpml_thickness

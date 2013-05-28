@@ -1,7 +1,7 @@
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = (current%part_pos - x_min_local) / dx - 0.5_num
+        cell_x_r = (current%part_pos - x_grid_min_local) / dx - 0.5_num
 #else
-        cell_x_r = (current%part_pos - x_min_local) / dx
+        cell_x_r = (current%part_pos - x_grid_min_local) / dx
 #endif
         cell_x = FLOOR(cell_x_r + 0.5_num)
         cell_frac_x = REAL(cell_x, num) - cell_x_r

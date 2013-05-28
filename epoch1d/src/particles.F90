@@ -86,7 +86,7 @@ CONTAINS
     REAL(num) :: idtf, idxf
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
-    REAL(num) :: root, fac, dtfac, gamma, cf2
+    REAL(num) :: root, fac, dtfac, gamma
     REAL(num) :: delta_x, part_vy, part_vz
     INTEGER :: ispecies, ix, dcellx
     INTEGER(i8) :: ipart
@@ -95,6 +95,9 @@ CONTAINS
 #endif
 #ifdef TRACER_PARTICLES
     LOGICAL :: not_tracer_species
+#endif
+#ifndef PARTICLE_SHAPE_TOPHAT
+    REAL(num) :: cf2
 #endif
 
     TYPE(particle), POINTER :: current, next
@@ -188,7 +191,7 @@ CONTAINS
 #endif
 #endif
         ! Copy the particle properties out for speed
-        part_x  = current%part_pos - x_min_local
+        part_x  = current%part_pos - x_grid_min_local
         part_ux = current%part_p(1) * ipart_mc
         part_uy = current%part_p(2) * ipart_mc
         part_uz = current%part_p(3) * ipart_mc
@@ -302,7 +305,7 @@ CONTAINS
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
-        current%part_pos = part_x + x_min_local
+        current%part_pos = part_x + x_grid_min_local
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
 #ifdef PARTICLE_PROBES
