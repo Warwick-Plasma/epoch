@@ -20,8 +20,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
-    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
-    INTEGER :: errcode
+    INTEGER(i8) :: i, idx
+    INTEGER :: npoint_max, npoint_rem, errcode
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
@@ -96,8 +96,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
-    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
-    INTEGER :: errcode
+    INTEGER(i8) :: i, idx
+    INTEGER :: npoint_max, npoint_rem, errcode
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
@@ -185,8 +185,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
-    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
-    INTEGER :: errcode
+    INTEGER(i8) :: i, idx
+    INTEGER :: npoint_max, npoint_rem, errcode
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     TYPE(sdf_block_type), POINTER :: b
 
@@ -478,8 +478,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r4), INTENT(IN), OPTIONAL :: mult
-    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
-    INTEGER :: errcode
+    INTEGER(i8) :: i, idx
+    INTEGER :: npoint_max, npoint_rem, errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (npoint_global .LE. 0) RETURN
