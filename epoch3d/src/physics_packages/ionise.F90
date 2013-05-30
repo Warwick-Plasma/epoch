@@ -204,8 +204,8 @@ CONTAINS
           ! Constant in BSI equation
           bsi_constant(i) = (species_list(i)%ionisation_energy / hartree) &
               * SQRT(2.0_num * species_list(i)%ionisation_energy / hartree) &
-              / (pi * species_list(species_list(i)%ionise_to_species)%charge &
-              / ev)
+              / (2.0_num * pi &
+              * species_list(species_list(i)%ionise_to_species)%charge / ev)
           ! Electric field strength scaling in BSI
           bsi_scaling(i) = (species_list(i)%ionisation_energy / hartree)**2 &
               / (4.0_num &
