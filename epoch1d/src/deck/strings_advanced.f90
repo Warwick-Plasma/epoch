@@ -125,7 +125,7 @@ CONTAINS
   SUBROUTINE get_allocated_array_rnum(str_in, array, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
-    REAL(num), POINTER, INTENT(OUT) :: array(:)
+    REAL(num), POINTER :: array(:)
     INTEGER, INTENT(INOUT) :: err
     TYPE(primitive_stack) :: output
     INTEGER :: ndim, i
@@ -166,7 +166,7 @@ CONTAINS
   SUBROUTINE get_allocated_array_int(str_in, array, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
-    INTEGER, POINTER, INTENT(OUT) :: array(:)
+    INTEGER, POINTER :: array(:)
     INTEGER, INTENT(INOUT) :: err
     REAL(num), POINTER :: rarray(:)
 

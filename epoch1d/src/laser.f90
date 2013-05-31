@@ -276,7 +276,7 @@ CONTAINS
 
   SUBROUTINE calc_absorption(bd, lasers)
 
-    TYPE(laser_block), POINTER, OPTIONAL, INTENT(IN) :: lasers
+    TYPE(laser_block), POINTER, OPTIONAL :: lasers
     INTEGER, INTENT(IN) :: bd
     TYPE(laser_block), POINTER :: current
     REAL(num) :: t_env, dir
