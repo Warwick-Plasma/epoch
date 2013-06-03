@@ -15,6 +15,7 @@ MODULE collisions
   PUBLIC :: particle_collisions, setup_collisions
 
   REAL(num) :: collision_count, large_angle_collision
+  REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
 
   REAL(num) :: nu_avg
   INTEGER :: nu_count
@@ -337,7 +338,11 @@ CONTAINS
 #endif
 
     ! Two stationary particles can't collide, so don't try
-    IF (SUM(p1**2) .EQ. 0.0_num .AND. SUM(p2**2) .EQ. 0.0_num) RETURN
+    IF (SUM(p1**2) .LT. eps .AND. SUM(p2**2) .LT. eps) RETURN
+
+    ! Ditto for two particles with the same momentum
+    vc = (p1 - p2)
+    IF (DOT_PRODUCT(vc, vc) .LT. eps) RETURN
 
     ! Pre-collision energies
     e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
