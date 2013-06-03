@@ -48,8 +48,7 @@ int sdf_read_point_mesh_info(sdf_file_t *h)
     SDF_READ_ENTRY_ARRAY_REAL8(b->extents, 2*b->ndims);
 
     SDF_READ_ENTRY_INT8(b->nelements);
-    b->dims[0] = b->nelements;
-    for (i = 1; i < b->ndims; i++) b->dims[i] = 1;
+    for (i = 0; i < b->ndims; i++) b->dims[i] = b->nelements;
 
     b->stagger = SDF_STAGGER_VERTEX;
 
@@ -78,8 +77,7 @@ int sdf_read_point_variable_info(sdf_file_t *h)
     SDF_READ_ENTRY_ID(b->mesh_id);
 
     SDF_READ_ENTRY_INT8(b->nelements);
-    b->dims[0] = b->nelements;
-    for (i = 1; i < b->ndims; i++) b->dims[i] = 1;
+    for (i = 0; i < b->ndims; i++) b->dims[i] = b->nelements;
 
     return 0;
 }
