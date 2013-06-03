@@ -725,9 +725,9 @@ static int sdf_array_datatype(sdf_file_t *h)
 int sdf_read_run_info(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int version, revision, minor_rev, compdate, rundate, iodate;
-    uint64_t defines;
-    char *str = NULL;
+    struct run_info *run;
+
+    run = calloc(1, sizeof(*run));
 
     // Metadata is
     // - version   INTEGER(i4)
@@ -743,24 +743,22 @@ int sdf_read_run_info(sdf_file_t *h)
     // - minor_rev INTEGER(i4)
 
     SDF_COMMON_INFO();
-    SDF_READ_ENTRY_INT4(version);
-    SDF_READ_ENTRY_INT4(revision);
-    SDF_READ_ENTRY_STRING(str);
-    str = NULL;
-    SDF_READ_ENTRY_STRING(str);
-    str = NULL;
-    SDF_READ_ENTRY_STRING(str);
-    str = NULL;
-    SDF_READ_ENTRY_STRING(str);
-    str = NULL;
-    SDF_READ_ENTRY_INT8(defines);
-    SDF_READ_ENTRY_INT4(compdate);
-    SDF_READ_ENTRY_INT4(rundate);
-    SDF_READ_ENTRY_INT4(iodate);
+    SDF_READ_ENTRY_INT4(run->version);
+    SDF_READ_ENTRY_INT4(run->revision);
+    SDF_READ_ENTRY_STRING(run->commit_id);
+    SDF_READ_ENTRY_STRING(run->sha1sum);
+    SDF_READ_ENTRY_STRING(run->compile_machine);
+    SDF_READ_ENTRY_STRING(run->compile_flags);
+    SDF_READ_ENTRY_INT8(run->defines);
+    SDF_READ_ENTRY_INT4(run->compile_date);
+    SDF_READ_ENTRY_INT4(run->run_date);
+    SDF_READ_ENTRY_INT4(run->io_date);
     if (h->file_version == 1 && h->file_revision < 2)
-        minor_rev = 0;
+        run->minor_rev = 0;
     else
-        SDF_READ_ENTRY_INT4(minor_rev);
+        SDF_READ_ENTRY_INT4(run->minor_rev);
+
+    h->current_block->data = run;
 
     return 0;
 }

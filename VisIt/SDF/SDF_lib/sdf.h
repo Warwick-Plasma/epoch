@@ -144,7 +144,6 @@ enum sdf_error_codes {
 #define SDF_READ  1
 #define SDF_WRITE 2
 
-
 extern const char *sdf_blocktype_c[];
 extern const char *sdf_geometry_c[];
 extern const char *sdf_stagger_c[];
@@ -235,6 +234,13 @@ struct sdf_file {
 #endif
     comm_t comm;
 };
+
+struct run_info {
+    uint64_t defines;
+    uint32_t version, revision, compile_date, run_date, io_date, minor_rev;
+    char *commit_id, *sha1sum, *compile_machine, *compile_flags;
+};
+
 
 sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap);
 int sdf_close(sdf_file_t *h);
