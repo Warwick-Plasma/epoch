@@ -296,7 +296,7 @@ int sdf_read_data(sdf_file_t *h)
 int sdf_read_block_info(sdf_file_t *h)
 {
     sdf_block_t *b;
-    int ret;
+    int ret = 0;
 
     sdf_read_next_block_header(h);
     b = h->current_block;

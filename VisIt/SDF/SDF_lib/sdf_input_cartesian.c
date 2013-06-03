@@ -283,7 +283,7 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
     for (j = j0; j < j1; j++) {
         vptr = var + (i + nx * (j + ny * k)) * sz;
         fseeko(h->filehandle, h->current_location, SEEK_SET);
-        fread(vptr, sz, subsize, h->filehandle);
+        if (!fread(vptr, sz, subsize, h->filehandle)) return 1;
         h->current_location += subsize * sz;
     }}
 #endif
@@ -350,7 +350,7 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
             MPI_INFO_NULL);
 #else
     fseeko(h->filehandle, h->current_location, SEEK_SET);
-    fread(var, sz, count, h->filehandle);
+    if (!fread(var, sz, count, h->filehandle)) return 1;
 #endif
 
     if (convert) {

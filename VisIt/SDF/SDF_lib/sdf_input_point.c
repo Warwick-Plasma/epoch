@@ -146,7 +146,8 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
             MPI_INFO_NULL);
 #else
     fseeko(h->filehandle, h->current_location, SEEK_SET);
-    fread(*var, SDF_TYPE_SIZES[b->datatype], count, h->filehandle);
+    if (!fread(*var, SDF_TYPE_SIZES[b->datatype], count, h->filehandle))
+        return 1;
 #endif
 
     return 0;

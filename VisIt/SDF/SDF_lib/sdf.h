@@ -449,7 +449,7 @@ void sdf_trim(char *str);
           SDF_DPRNT(#value ": %i\n", *((int32_t*)(value))); \
           break; \
         case(SDF_DATATYPE_INTEGER8): \
-          SDF_DPRNT(#value ": %lli\n", *((int64_t*)(value))); \
+          SDF_DPRNT(#value ": %lli\n", *((long long int*)(value))); \
           break; \
         } \
     } while (0)
