@@ -14,7 +14,7 @@ MODULEFLAG = -module $(OBJDIR)
 
 ifeq ($(strip $(MODE)),debug)
   FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-           -C -g -heap-arrays 64 -warn -fpic  -Wl,-no_pie # Debug
+           -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
 endif
 
 # PGI
@@ -45,8 +45,11 @@ endif
 ifeq ($(strip $(COMPILER)),gfortran)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
-    FFLAGS = -fbounds-check -fbacktrace -Wall -O0 -g \
-             -Wextra -pedantic -Wno-unused-dummy-argument -Wno-unused-parameter # Debug
+    FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
+             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter \
+             -ffpe-trap=underflow,denormal
+    FFLAGS += -fbacktrace -fdump-core    # gfortran-4.3
+   #FFLAGS += -Wno-unused-dummy-argument # gfortran-4.6
   endif
   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
 endif

@@ -212,7 +212,7 @@ CONTAINS
   SUBROUTINE swap_lists(from_list, to_list, current)
 
     INTEGER, INTENT(IN) :: from_list, to_list
-    TYPE(particle), POINTER, INTENT(IN) :: current
+    TYPE(particle), POINTER :: current
 
     CALL remove_particle_from_partlist(species_list(from_list)%attached_list, &
         current)

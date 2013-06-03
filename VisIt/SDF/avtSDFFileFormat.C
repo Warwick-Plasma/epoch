@@ -1089,6 +1089,10 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
             for (int i = 0; i < b->n_ids; i++) {
                 if (b->must_read[i]) {
                     var = sdf_find_block_by_id(h, b->variable_ids[i]);
+                    // Make sure that contiguous block datatype matches that
+                    // of the stitched blocks
+                    b->datatype     = var->datatype;
+                    b->datatype_out = var->datatype_out;
                     if (var->data) stack_free_block(var);
                 }
             }

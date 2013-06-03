@@ -219,8 +219,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r8), INTENT(IN), OPTIONAL :: mult
-    INTEGER(i8) :: i, j, n, idx, npoint_max, npoint_rem
-    INTEGER :: errcode
+    INTEGER(i8) :: i, j, n, idx
+    INTEGER :: npoint_max, npoint_rem, errcode
     TYPE(sdf_block_type), POINTER :: b
     CHARACTER(LEN=1), ALLOCATABLE :: cvalues(:)
 
@@ -357,8 +357,8 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r8), INTENT(IN), OPTIONAL :: mult
-    INTEGER(i8) :: i, idx, npoint_max, npoint_rem
-    INTEGER :: errcode
+    INTEGER(i8) :: i, idx
+    INTEGER :: npoint_max, npoint_rem, errcode
     TYPE(sdf_block_type), POINTER :: b
 
     IF (npoint_global .LE. 0) RETURN
