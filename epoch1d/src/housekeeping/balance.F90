@@ -743,7 +743,7 @@ CONTAINS
     INTEGER(i8), INTENT(IN), DIMENSION(:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
-    INTEGER :: sz, idim, proc, old
+    INTEGER :: sz, idim, proc, old, nextra
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
 
     sz = SIZE(load)
@@ -753,7 +753,13 @@ CONTAINS
 
     proc = 1
     total = 0
+    old = 1
+    nextra = 0
     DO idim = 1, sz
+      IF (nextra .GT. 0) THEN
+        nextra = nextra - 1
+        CYCLE
+      ENDIF
       total_old = total
       total = total + load(idim)
       IF (total .GE. load_per_proc_ideal) THEN
@@ -764,27 +770,34 @@ CONTAINS
         ELSE
           maxs(proc) = idim
         ENDIF
+        ! To communicate ghost cell information correctly, each domain must
+        ! contain at least ng cells.
+        nextra = old - maxs(proc) + ng
+        IF (nextra .GT. 0) THEN
+          maxs(proc) = maxs(proc) + nextra
+        ENDIF
         proc = proc + 1
-        total = total - load_per_proc_ideal
         IF (proc .EQ. nproc) EXIT
+        total = 0
+        old = maxs(proc-1)
       ENDIF
     ENDDO
 
     ! Sanity check. Must be one cell of separation between each endpoint.
-    ! Forwards (unnecessary?)
-    old = 0
-    DO proc = 1, nproc
-      IF (maxs(proc) - old .LE. ng-1) THEN
-        maxs(proc) = old + 1
+    ! Backwards
+    old = sz + 1
+    DO proc = nproc, 1, -1
+      IF (old - maxs(proc) .LT. ng) THEN
+        maxs(proc) = old - ng
       ENDIF
       old = maxs(proc)
     ENDDO
 
-    ! Backwards
-    old = sz + 1
-    DO proc = nproc, 1, -1
-      IF (old - maxs(proc) .LE. ng-1) THEN
-        maxs(proc) = old - 1
+    ! Forwards (unnecessary?)
+    old = 0
+    DO proc = 1, nproc
+      IF (maxs(proc) - old .LT. ng) THEN
+        maxs(proc) = old + ng
       ENDIF
       old = maxs(proc)
     ENDDO
