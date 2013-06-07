@@ -17,6 +17,9 @@ ifeq ($(strip $(MODE)),debug)
            -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
 endif
 
+MPIF90 = mpif90
+D = -D
+
 # PGI
 # ===
 ifeq ($(strip $(COMPILER)),pgi)
@@ -64,6 +67,23 @@ ifeq ($(strip $(COMPILER)),g95)
   MODULEFLAG = -fmod=$(OBJDIR)
 endif
 
+# IBM Bluegene
+# ============
+ifeq ($(strip $(COMPILER)),ibm)
+  FFLAGS = -O5 -qhot -qipa # Optimised
+  ifeq ($(strip $(MODE)),debug)
+    FFLAGS = -O0 -C -g -qfullpath -qinfo #-qkeepparm -qflttrap \
+          -qnosmp -qxflag=dvz -Q! -qnounwind -qnounroll # Debug
+    #FFLAGS = -O0 -qarch=qp -qtune=qp
+    #FFLAGS = -qthreaded -qsmp=noauto -qsmp=omp # Hybrid stuff
+  endif
+  MODULEFLAG = -I$(OBJDIR) -qmoddir=$(OBJDIR)
+  MPIF90 = mpixlf90_r
+
+  # IBM compiler needs a -WF to recognise preprocessor directives
+  D = -WF,-D
+endif
+
 # Don't compile encoded source if MODE=debug or ENC=no
 # Do compile encoded source if MODE=debug and ENC=yes
 ifeq ($(strip $(ENC)),no)
@@ -80,57 +100,57 @@ endif
 TARGET = epoch1d
 
 # Set pre-processor defines
-DEFINES = -DPER_PARTICLE_WEIGHT -DPARTICLE_PROBES -DTRACER_PARTICLES
+DEFINES = $(D)PER_PARTICLE_WEIGHT $(D)PARTICLE_PROBES $(D)TRACER_PARTICLES
 
 # The following are a list of pre-processor defines which can be added to
 # the above line modifying the code behaviour at compile time.
 
 # Allow each pseudoparticle to represent a different number of real particles.
-# -DPER_PARTICLE_WEIGHT
+#DEFINES += $(D)PER_PARTICLE_WEIGHT
 
 # Specify charge and mass per particle rather than per species.
-# -DPER_PARTICLE_CHARGE_MASS
+#DEFINES += $(D)PER_PARTICLE_CHARGE_MASS
 
 # Turn on debugging.
-# -DPARSER_DEBUG -DPARTICLE_DEBUG -DMPI_DEBUG
+#DEFINES += $(D)PARSER_DEBUG $(D)PARTICLE_DEBUG $(D)MPI_DEBUG
 
 # Keep global particle counts up to date.
-# -DPARTICLE_COUNT_UPDATE
+#DEFINES += $(D)PARTICLE_COUNT_UPDATE
 
 # Enable particles which behave like normal particles but do not affect
 # the field, current or each other.
-# -DTRACER_PARTICLES
+#DEFINES += $(D)TRACER_PARTICLES
 
 # Include diagnostics which gather information on particles which cross a
 # plane in the simulation.
-# -DPARTICLE_PROBES
+#DEFINES += $(D)PARTICLE_PROBES
 
 # Use second order particle weighting (default is third order).
-# -DPARTICLE_SHAPE_TOPHAT
+#DEFINES += $(D)PARTICLE_SHAPE_TOPHAT
 
 # Use fifth order particle weighting (default is third order).
-# -DPARTICLE_SHAPE_BSPLINE3
+#DEFINES += $(D)PARTICLE_SHAPE_BSPLINE3
 
 # Don't generate any output at all. Useful for benchmarking.
-# -DNO_IO
+#DEFINES += $(D)NO_IO
 
 # Include a unique global particle ID. The first flag defines the ID using
 # an 8-byte integer, the second uses 4-bytes.
-# -DPARTICLE_ID
-# -DPARTICLE_ID4
+#DEFINES += $(D)PARTICLE_ID
+#DEFINES += $(D)PARTICLE_ID4
 
 # Bypass the main simulation and only perform collision tests.
-# -DCOLLISIONS_TEST
+#DEFINES += $(D)COLLISIONS_TEST
 
 # Include QED routines
-# -DPHOTONS
+#DEFINES += $(D)PHOTONS
 
 # Use the Trident process for pair production
-# -DTRIDENT_PHOTONS
+#DEFINES += $(D)TRIDENT_PHOTONS
 
 # Use Intel-specific 'mm_prefetch' calls to load next particle in the list
 # into cache ahead of time. Gives ~10% speed-up with Intel 12 compilers.
-# -DPREFETCH
+#DEFINES += $(D)PREFETCH
 
 
 # If you are having trouble compiling the encoded_source module or
@@ -157,11 +177,11 @@ SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
 INCDIR = $(SRCDIR)/include
-FC = mpif90
+FC = $(MPIF90)
 DATE := $(shell date +%s)
 MACHINE := $(shell uname -n)
-PREPROFLAGS = $(DEFINES) -D_COMMIT='"$(COMMIT)"' -D_DATE=$(DATE) \
-  -D_MACHINE='"$(MACHINE)"' -I$(INCDIR)
+PREPROFLAGS = $(DEFINES) $(D)_COMMIT='"$(COMMIT)"' $(D)_DATE=$(DATE) \
+  $(D)_MACHINE='"$(MACHINE)"' -I$(INCDIR)
 
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \

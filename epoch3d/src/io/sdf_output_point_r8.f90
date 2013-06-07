@@ -65,7 +65,7 @@ CONTAINS
       ! big enough for npoint_global which is an INTEGER*8
 
       npoint_max = HUGE(npoint_max)
-      npoint_rem = MOD(npoint_global, npoint_max)
+      npoint_rem = MOD(npoint_global, INT(npoint_max,i8))
 
       ! X-coordinates
       idx = 1
@@ -143,7 +143,7 @@ CONTAINS
       ! big enough for npoint_global which is an INTEGER*8
 
       npoint_max = HUGE(npoint_max)
-      npoint_rem = MOD(npoint_global, npoint_max)
+      npoint_rem = MOD(npoint_global, INT(npoint_max,i8))
 
       ! X-coordinates
       idx = 1
@@ -234,7 +234,7 @@ CONTAINS
       ! big enough for npoint_global which is an INTEGER*8
 
       npoint_max = HUGE(npoint_max)
-      npoint_rem = MOD(npoint_global, npoint_max)
+      npoint_rem = MOD(npoint_global, INT(npoint_max,i8))
 
       ! X-coordinates
       idx = 1
@@ -509,7 +509,7 @@ CONTAINS
       ! big enough for npoint_global which is an INTEGER*8
 
       npoint_max = HUGE(npoint_max)
-      npoint_rem = MOD(npoint_global, npoint_max)
+      npoint_rem = MOD(npoint_global, INT(npoint_max,i8))
 
       idx = 1
       DO i = 1, npoint_global / npoint_max
