@@ -2023,11 +2023,12 @@ CONTAINS
         old = maxs(proc-1)
       ENDIF
     ENDDO
+    maxs(nproc) = sz
 
     ! Sanity check. Must be one cell of separation between each endpoint.
     ! Backwards
-    old = sz + 1
-    DO proc = nproc, 1, -1
+    old = sz
+    DO proc = nproc-1, 1, -1
       IF (old - maxs(proc) .LT. ng) THEN
         maxs(proc) = old - ng
       ENDIF
@@ -2036,7 +2037,7 @@ CONTAINS
 
     ! Forwards (unnecessary?)
     old = 0
-    DO proc = 1, nproc
+    DO proc = 1, nproc-1
       IF (maxs(proc) - old .LT. ng) THEN
         maxs(proc) = old + ng
       ENDIF
