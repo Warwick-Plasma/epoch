@@ -387,7 +387,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
     TYPE(stack_element) :: block2
-    INTEGER :: ipoint
+    INTEGER :: ipoint, io, ierr
 
     IF (ICHAR(current(1:1)) .EQ. 0) RETURN
 
@@ -398,8 +398,13 @@ CONTAINS
 #endif
     IF (block%ptype .EQ. c_pt_bad) THEN
       IF (rank .EQ. 0) THEN
-        PRINT *, 'Unable to parse block with text ', TRIM(current)
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
+        ENDDO
         CALL check_deprecated(current)
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       ENDIF
       err = c_err_bad_value
       CALL deallocate_stack(stack)
@@ -523,7 +528,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: stack, output
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
-    INTEGER :: ipoint
+    INTEGER :: ipoint, io, ierr
 
     IF (ICHAR(current(1:1)) .EQ. 0) RETURN
 
@@ -534,9 +539,12 @@ CONTAINS
     PRINT *, block%ptype, TRIM(current)
 #endif
     IF (block%ptype .EQ. c_pt_bad) THEN
-      IF (rank .EQ. 0) THEN
-        PRINT *, 'Unable to parse block with text ', TRIM(current)
-      ENDIF
+      DO io = stdout, du, du - stdout ! Print to stdout and to file
+        WRITE(io,*)
+        WRITE(io,*) '*** ERROR ***'
+        WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
+      ENDDO
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       err = c_err_bad_value
       CALL deallocate_stack(stack)
       RETURN
