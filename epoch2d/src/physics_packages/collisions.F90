@@ -308,6 +308,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: idens, jdens, itemp, jtemp, log_lambda
     REAL(num), INTENT(IN) :: factor
     REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
+    REAL(num), DIMENSION(3) :: p1_norm, p2_norm ! Normalised momenta
     REAL(num), DIMENSION(3) :: vc ! Velocity of COM frame wrt lab frame
     REAL(num), DIMENSION(3) :: p3, p4
     REAL(num), DIMENSION(3) :: p5, p6
@@ -329,6 +330,17 @@ CONTAINS
     ! read names
     p1 = current%part_p
     p2 = impact%part_p
+    p1_norm = p1 / mc0
+    p2_norm = p2 / mc0
+
+    ! Two stationary particles can't collide, so don't try
+    IF (DOT_PRODUCT(p1_norm, p1_norm) .LT. eps &
+        .AND. DOT_PRODUCT(p2_norm, p2_norm) .LT. eps) RETURN
+
+    ! Ditto for two particles with the same momentum
+    vc = (p1_norm - p2_norm)
+    IF (DOT_PRODUCT(vc, vc) .LT. eps) RETURN
+
 #ifdef PER_PARTICLE_CHARGE_MASS
     m1 = current%mass
     m2 = impact%mass
@@ -340,13 +352,6 @@ CONTAINS
     q1 = charge1
     q2 = charge2
 #endif
-
-    ! Two stationary particles can't collide, so don't try
-    IF (SUM(p1**2) .LT. eps .AND. SUM(p2**2) .LT. eps) RETURN
-
-    ! Ditto for two particles with the same momentum
-    vc = (p1 - p2)
-    IF (DOT_PRODUCT(vc, vc) .LT. eps) RETURN
 
     ! Pre-collision energies
     e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)

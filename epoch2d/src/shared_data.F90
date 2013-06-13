@@ -117,11 +117,11 @@ MODULE constants
   ! atomic_electric_field = hartree / q0 / a0
   REAL(num), PARAMETER :: &
       atomic_electric_field = 5.142206538736485312185213306837419e11_num
+  ! m0 * c
+  REAL(num), PARAMETER :: mc0 = 2.73092429345209278e-22_num
 
   ! Constants used in pair production
 #ifdef PHOTONS
-  ! m0 * c
-  REAL(num), PARAMETER :: mc0 = 2.73092429345209278e-22_num
   ! b_s = mc0**2 / (h_bar * q0)
   REAL(num), PARAMETER :: b_s = 4.414005028109566589829741352306303e9_num
   ! e_s = b_s * c
