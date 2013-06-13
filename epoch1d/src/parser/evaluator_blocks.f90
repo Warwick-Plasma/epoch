@@ -375,6 +375,103 @@ CONTAINS
       RETURN
     ENDIF
 
+    ! Ignorable directions
+
+    IF (opcode .EQ. c_const_ly) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_lz) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_y) THEN
+      CALL push_on_eval(0.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_z) THEN
+      CALL push_on_eval(0.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_dy) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_dz) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_y_min) THEN
+      CALL push_on_eval(-0.5_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_z_min) THEN
+      CALL push_on_eval(-0.5_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_y_max) THEN
+      CALL push_on_eval(0.5_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_z_max) THEN
+      CALL push_on_eval(0.5_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_iy) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_iz) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_r_xy) THEN
+      CALL push_on_eval(ABS(x(ix)))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_r_xz) THEN
+      CALL push_on_eval(ABS(x(ix)))
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_r_yz) THEN
+      CALL push_on_eval(0.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_ny) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nz) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nprocy) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_nprocz) THEN
+      CALL push_on_eval(1.0_num)
+      RETURN
+    ENDIF
+
   END SUBROUTINE do_constant
 
 

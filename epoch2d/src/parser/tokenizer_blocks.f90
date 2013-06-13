@@ -185,6 +185,47 @@ CONTAINS
 
 
 
+  FUNCTION as_default_constant(name) RESULT(as_constant)
+
+    CHARACTER(LEN=*), INTENT(IN) :: name
+    INTEGER :: as_constant
+    INTEGER :: i, io
+    LOGICAL, SAVE :: warn = .TRUE.
+
+    as_constant = c_prc_not_this_type
+
+    IF (str_cmp(name, 'z'))  as_constant = c_const_z
+    IF (str_cmp(name, 'iz')) as_constant = c_const_iz
+    IF (str_cmp(name, 'nz')) as_constant = c_const_nz
+    IF (str_cmp(name, 'dz')) as_constant = c_const_dz
+    IF (str_cmp(name, 'z_min') .OR. str_cmp(name, 'z_start')) &
+        as_constant = c_const_z_min
+    IF (str_cmp(name, 'z_max') .OR. str_cmp(name, 'z_end')) &
+        as_constant = c_const_z_max
+    IF (str_cmp(name, 'lengthz') .OR. str_cmp(name, 'length_z')) &
+        as_constant = c_const_lz
+    IF (str_cmp(name, 'r_xy')) as_constant = c_const_r_xy
+    IF (str_cmp(name, 'r_yz')) as_constant = c_const_r_yz
+    IF (str_cmp(name, 'r_xz')) as_constant = c_const_r_xz
+    IF (str_cmp(name, 'nprocz')) as_constant = c_const_nprocz
+    IF (str_cmp(name, 'dir_z')) as_constant = c_const_dir_z
+
+    IF (warn .AND. as_constant .NE. c_prc_not_this_type) THEN
+      warn = .FALSE.
+      IF (rank .EQ. 0) THEN
+        DO io = stdout, du, du - stdout ! Print to stdout and to file
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'A default value was used for the constant "' &
+              // TRIM(name) // '"'
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+    ENDIF
+
+  END FUNCTION as_default_constant
+
+
+
   FUNCTION as_deck_constant(name)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
@@ -276,6 +317,7 @@ CONTAINS
     IF (str_cmp(name, '+')) THEN
       IF (last_block_type .EQ. c_pt_variable &
           .OR. last_block_type .EQ. c_pt_constant &
+          .OR. last_block_type .EQ. c_pt_default_constant &
           .OR. last_block_type .EQ. c_pt_deck_constant) THEN
         as_operator = c_opcode_plus
       ELSE
@@ -285,6 +327,7 @@ CONTAINS
     IF (str_cmp(name, '-'))  THEN
       IF (last_block_type .EQ. c_pt_variable &
           .OR. last_block_type .EQ. c_pt_constant &
+          .OR. last_block_type .EQ. c_pt_default_constant &
           .OR. last_block_type .EQ. c_pt_deck_constant) THEN
         as_operator = c_opcode_minus
       ELSE

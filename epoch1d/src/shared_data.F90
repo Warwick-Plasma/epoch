@@ -226,6 +226,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_pt_deck_constant = 8
   INTEGER, PARAMETER :: c_pt_species = 9
   INTEGER, PARAMETER :: c_pt_subset = 10
+  INTEGER, PARAMETER :: c_pt_default_constant = 11
   INTEGER, PARAMETER :: c_pt_bad = 1024
   INTEGER, PARAMETER :: c_pt_null = 1025
 

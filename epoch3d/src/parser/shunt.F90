@@ -69,6 +69,14 @@ CONTAINS
       RETURN
     ENDIF
 
+    work = as_default_constant(name)
+    IF (work .NE. 0) THEN
+      ! block is a named constant
+      block%ptype = c_pt_default_constant
+      block%value = work
+      RETURN
+    ENDIF
+
     work = as_operator(name)
     IF (work .NE. 0) THEN
       ! block is an operator
@@ -364,7 +372,8 @@ CONTAINS
 
     ! Check to see if the expression varies in time
     DO i = 1, output%stack_point
-      IF (output%entries(i)%ptype .EQ. c_pt_constant) THEN
+      IF (output%entries(i)%ptype .EQ. c_pt_constant &
+          .OR. output%entries(i)%ptype .EQ. c_pt_default_constant) THEN
         IF (output%entries(i)%value .EQ. c_const_time) THEN
           output%is_time_varying = .TRUE.
           EXIT
@@ -425,6 +434,7 @@ CONTAINS
 
     IF (block%ptype .EQ. c_pt_variable &
         .OR. block%ptype .EQ. c_pt_constant &
+        .OR. block%ptype .EQ. c_pt_default_constant &
         .OR. block%ptype .EQ. c_pt_species &
         .OR. block%ptype .EQ. c_pt_subset) THEN
       CALL push_to_stack(output, block)

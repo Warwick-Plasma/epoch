@@ -58,7 +58,8 @@ CONTAINS
 
     ! First issue a warning message if the name overrides a built-in one
     CALL load_block(element, block)
-    IF (block%ptype .NE. c_pt_bad .AND. block%ptype .NE. c_pt_null) THEN
+    IF (block%ptype .NE. c_pt_bad .AND. block%ptype .NE. c_pt_null &
+        .AND. block%ptype .NE. c_pt_default_constant) THEN
       IF (rank .EQ. 0) THEN
         DO io = stdout, du, du - stdout ! Print to stdout and to file
           WRITE(io,*) '*** WARNING ***'

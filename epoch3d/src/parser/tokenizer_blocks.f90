@@ -200,6 +200,17 @@ CONTAINS
 
 
 
+  FUNCTION as_default_constant(name) RESULT(as_constant)
+
+    CHARACTER(LEN=*), INTENT(IN) :: name
+    INTEGER :: as_constant
+
+    as_constant = c_prc_not_this_type
+
+  END FUNCTION as_default_constant
+
+
+
   FUNCTION as_deck_constant(name)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
@@ -291,6 +302,7 @@ CONTAINS
     IF (str_cmp(name, '+')) THEN
       IF (last_block_type .EQ. c_pt_variable &
           .OR. last_block_type .EQ. c_pt_constant &
+          .OR. last_block_type .EQ. c_pt_default_constant &
           .OR. last_block_type .EQ. c_pt_deck_constant) THEN
         as_operator = c_opcode_plus
       ELSE
@@ -300,6 +312,7 @@ CONTAINS
     IF (str_cmp(name, '-'))  THEN
       IF (last_block_type .EQ. c_pt_variable &
           .OR. last_block_type .EQ. c_pt_constant &
+          .OR. last_block_type .EQ. c_pt_default_constant &
           .OR. last_block_type .EQ. c_pt_deck_constant) THEN
         as_operator = c_opcode_minus
       ELSE

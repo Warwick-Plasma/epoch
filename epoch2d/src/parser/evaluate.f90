@@ -26,7 +26,8 @@ CONTAINS
         CALL do_species(block%value, ix, iy, err)
       ELSE IF (block%ptype .EQ. c_pt_operator) THEN
         CALL do_operator(block%value, ix, iy, err)
-      ELSE IF (block%ptype .EQ. c_pt_constant) THEN
+      ELSE IF (block%ptype .EQ. c_pt_constant &
+          .OR. block%ptype .EQ. c_pt_default_constant) THEN
         CALL do_constant(block%value, ix, iy, err)
       ELSE IF (block%ptype .EQ. c_pt_function) THEN
         CALL do_functions(block%value, ix, iy, err)
@@ -110,7 +111,8 @@ CONTAINS
       IF (block%ptype .EQ. c_pt_subset) THEN
         n_elements = n_elements + 1
         array(n_elements) = block%value
-      ELSE IF (block%ptype .EQ. c_pt_constant) THEN
+      ELSE IF (block%ptype .EQ. c_pt_constant &
+          .OR. block%ptype .EQ. c_pt_default_constant) THEN
         CALL do_constant(block%value, 1, 1, err)
         array(1) = array(1) + INT(pop_off_eval())
       ELSE IF (block%ptype .NE. c_pt_operator) THEN
