@@ -86,7 +86,7 @@ CONTAINS
     REAL(num) :: idtf, idxf
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
-    REAL(num) :: root, fac, dtfac, gamma
+    REAL(num) :: root, dtfac, gamma
     REAL(num) :: delta_x, part_vy, part_vz
     INTEGER :: ispecies, ix, dcellx
     INTEGER(i8) :: ipart
@@ -96,8 +96,15 @@ CONTAINS
 #ifdef TRACER_PARTICLES
     LOGICAL :: not_tracer_species
 #endif
-#ifndef PARTICLE_SHAPE_TOPHAT
+    ! Particle weighting multiplication factor
+#ifdef PARTICLE_SHAPE_BSPLINE3
     REAL(num) :: cf2
+    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
+#elif  PARTICLE_SHAPE_TOPHAT
+    REAL(num), PARAMETER :: fac = 1.0_num
+#else
+    REAL(num) :: cf2
+    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 
     TYPE(particle), POINTER :: current, next
@@ -122,14 +129,6 @@ CONTAINS
     idt = 1.0_num / dt
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
-    ! particle weighting multiplication factor
-#ifdef PARTICLE_SHAPE_BSPLINE3
-    fac = 1.0_num / 24.0_num
-#elif  PARTICLE_SHAPE_TOPHAT
-    fac = 1.0_num
-#else
-    fac = 0.5_num
-#endif
     dtfac = 0.5_num * dt * fac
 
     idtf = idt * fac
@@ -337,7 +336,7 @@ CONTAINS
           hx = 0.0_num
 
           dcellx = cell_x3 - cell_x1
-        ! NOTE: These weights require an additional multiplication factor!
+          ! NOTE: These weights require an additional multiplication factor!
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/hx_dcell.inc"
 #elif  PARTICLE_SHAPE_TOPHAT

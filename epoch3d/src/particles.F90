@@ -41,7 +41,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_z
     REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: part_q, part_mc, ipart_mc, part_mc2, part_weight
+    REAL(num) :: part_q, part_mc, ipart_mc, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifdef PARTICLE_PROBES
@@ -51,7 +51,7 @@ CONTAINS
     TYPE(particle_probe), POINTER :: current_probe
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: d_init, d_final
-    REAL(num) :: probe_energy
+    REAL(num) :: probe_energy, part_mc2
 #endif
 
     ! Contains the floating point version of the cell number (never actually
@@ -90,7 +90,7 @@ CONTAINS
     REAL(num) :: idtyz, idtxz, idtxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, fac, dtfac, third, gamma
+    REAL(num) :: root, dtfac, gamma, third
     REAL(num) :: delta_x, delta_y, delta_z
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
     INTEGER(i8) :: ipart
@@ -100,8 +100,15 @@ CONTAINS
 #ifdef TRACER_PARTICLES
     LOGICAL :: not_tracer_species
 #endif
-#ifndef PARTICLE_SHAPE_TOPHAT
+    ! Particle weighting multiplication factor
+#ifdef PARTICLE_SHAPE_BSPLINE3
     REAL(num) :: cf2
+    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
+#elif  PARTICLE_SHAPE_TOPHAT
+    REAL(num), PARAMETER :: fac = 1.0_num
+#else
+    REAL(num) :: cf2
+    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 
     TYPE(particle), POINTER :: current, next
@@ -130,20 +137,12 @@ CONTAINS
     idt = 1.0_num / dt
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
+    dtfac = 0.5_num * dt * fac
     third = 1.0_num / 3.0_num
-    ! particle weighting multiplication factor
-#ifdef PARTICLE_SHAPE_BSPLINE3
-    fac = 1.0_num / 24.0_num
-#elif  PARTICLE_SHAPE_TOPHAT
-    fac = 1.0_num
-#else
-    fac = 0.5_num
-#endif
-    dtfac = 0.5_num * dt * fac**3
 
-    idtyz = idt * idy * idz * fac**3
-    idtxz = idt * idx * idz * fac**3
-    idtxy = idt * idx * idy * fac**3
+    idtyz = idt * idy * idz * fac
+    idtxz = idt * idx * idz * fac
+    idtxy = idt * idx * idy * fac
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
@@ -156,8 +155,6 @@ CONTAINS
 #ifdef PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
-#else
-      probes_for_species = .FALSE.
 #endif
 #ifdef TRACER_PARTICLES
       not_tracer_species = .NOT. species_list(ispecies)%tracer
@@ -538,8 +535,6 @@ CONTAINS
 #ifdef PARTICLE_PROBES
     current_probe => species_list(ispecies)%attached_probes
     probes_for_species = ASSOCIATED(current_probe)
-#else
-    probes_for_species = .FALSE.
 #endif
     dtfac = dt * c**2
 

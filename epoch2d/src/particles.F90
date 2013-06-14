@@ -88,7 +88,7 @@ CONTAINS
     REAL(num) :: idty, idtx, idxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, fac, dtfac, third, gamma, igamma
+    REAL(num) :: root, dtfac, gamma, third, igamma
     REAL(num) :: delta_x, delta_y, part_vz
     INTEGER :: ispecies, ix, iy, dcellx, dcelly
     INTEGER(i8) :: ipart
@@ -98,8 +98,15 @@ CONTAINS
 #ifdef TRACER_PARTICLES
     LOGICAL :: not_tracer_species
 #endif
-#ifndef PARTICLE_SHAPE_TOPHAT
+    ! Particle weighting multiplication factor
+#ifdef PARTICLE_SHAPE_BSPLINE3
     REAL(num) :: cf2
+    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
+#elif  PARTICLE_SHAPE_TOPHAT
+    REAL(num), PARAMETER :: fac = 1.0_num
+#else
+    REAL(num) :: cf2
+    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
 
     TYPE(particle), POINTER :: current, next
@@ -126,20 +133,12 @@ CONTAINS
     idt = 1.0_num / dt
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
+    dtfac = 0.5_num * dt * fac
     third = 1.0_num / 3.0_num
-    ! particle weighting multiplication factor
-#ifdef PARTICLE_SHAPE_BSPLINE3
-    fac = 1.0_num / 24.0_num
-#elif  PARTICLE_SHAPE_TOPHAT
-    fac = 1.0_num
-#else
-    fac = 0.5_num
-#endif
-    dtfac = 0.5_num * dt * fac**2
 
-    idty = idt * idy * fac**2
-    idtx = idt * idx * fac**2
-    idxy = idx * idy * fac**2
+    idty = idt * idy * fac
+    idtx = idt * idx * fac
+    idxy = idx * idy * fac
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
@@ -329,7 +328,8 @@ CONTAINS
 
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
-        current%part_pos = (/ part_x + x_grid_min_local, part_y + y_grid_min_local /)
+        current%part_pos = (/ part_x + x_grid_min_local, &
+            part_y + y_grid_min_local /)
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
 #ifdef PARTICLE_PROBES
