@@ -170,7 +170,7 @@ CONTAINS
         CALL MPI_FILE_READ_AT(h%filehandle, offset, time4, 1, mpireal, &
             MPI_STATUS_IGNORE, errcode)
         nstep = i
-        IF (time4 .LT. time) EXIT
+        IF (time4 .LE. time) EXIT
       ENDDO
     ELSE
       DO i = ns+1, INT(b%nelements)
@@ -183,7 +183,7 @@ CONTAINS
     ENDIF
 
     h%current_block => b
-    b%nelements = nstep
+    b%nelements = nstep + 1
     b%data_length = b%nelements * b%type_size
     h%step = b%step + nstep
     h%time = time4
