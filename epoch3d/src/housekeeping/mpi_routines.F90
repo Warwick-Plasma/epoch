@@ -55,9 +55,9 @@ CONTAINS
       reset = .TRUE.
     ELSE IF (nprocx * nprocy * nprocz .GT. 0) THEN
       ! Sanity check
-      nxsplit = (nx_global - 1) / nprocx + 1
-      nysplit = (ny_global - 1) / nprocy + 1
-      nzsplit = (nz_global - 1) / nprocz + 1
+      nxsplit = nx_global / nprocx
+      nysplit = ny_global / nprocy
+      nzsplit = nz_global / nprocz
       IF (nxsplit .LT. ng .OR. nysplit .LT. ng .OR. nzsplit .LT. ng) &
           reset = .TRUE.
     ENDIF
@@ -84,7 +84,7 @@ CONTAINS
           nprocyz = nproc / ix
           IF (ix * nprocyz .NE. nproc) CYCLE
 
-          nxsplit = (nx_global - 1) / ix + 1
+          nxsplit = nx_global / ix
           ! Actual domain must be bigger than the number of ghostcells
           IF (nxsplit .LT. ng) CYCLE
 
@@ -92,8 +92,8 @@ CONTAINS
             iz = nprocyz / iy
             IF (iy * iz .NE. nprocyz) CYCLE
 
-            nysplit = (ny_global - 1) / iy + 1
-            nzsplit = (nz_global - 1) / iz + 1
+            nysplit = ny_global / iy
+            nzsplit = nz_global / iz
             ! Actual domain must be bigger than the number of ghostcells
             IF (nysplit .LT. ng .OR. nzsplit .LT. ng) CYCLE
 

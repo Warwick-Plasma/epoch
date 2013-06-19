@@ -49,7 +49,7 @@ CONTAINS
 
     nproc_orig = nproc
     DO WHILE (nproc .GT. 1)
-      nxsplit = (nx_global - 1) / nproc + 1
+      nxsplit = nx_global / nproc
       ! Actual domain must be bigger than the number of ghostcells
       IF (nxsplit .GE. ng) EXIT
       nproc  = nproc - 1
