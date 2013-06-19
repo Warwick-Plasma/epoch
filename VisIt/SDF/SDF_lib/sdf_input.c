@@ -113,6 +113,7 @@ int sdf_read_header(sdf_file_t *h)
     h->current_location += 4;
 
     SDF_READ_ENTRY_INT4(h->endianness);
+    if (h->endianness == 0x0f0e0201) h->swap = 1;
 
     SDF_READ_ENTRY_INT4(h->file_version);
     if (h->file_version > SDF_VERSION) {
@@ -387,11 +388,17 @@ static void build_summary_buffer(sdf_file_t *h)
             memcpy(&next_block_location, blockbuf->buffer, sizeof(uint64_t));
             memcpy(&data_location, (char*)blockbuf->buffer+8, sizeof(uint64_t));
 
+            if (h->swap) {
+                _SDF_BYTE_SWAP64(next_block_location);
+                _SDF_BYTE_SWAP64(data_location);
+            }
+
             // Older versions of the file did not contain the block
             // info length in the header.
             if (h->file_version + h->file_revision > 1) {
                 memcpy(&info_length, (char*)blockbuf->buffer+132,
                        sizeof(uint32_t));
+                if (h->swap) _SDF_BYTE_SWAP32(info_length);
             } else {
                 if (data_location > block_location)
                     info_length = (uint32_t)(data_location
@@ -844,6 +851,7 @@ int sdf_read_array(sdf_file_t *h)
         b->data = malloc(n);
         sdf_seek(h);
         sdf_read_bytes(h, b->data, n);
+        if (h->swap) sdf_convert_array_to_float(h, &b->data, n);
     }
 
     if (h->print) {

@@ -352,6 +352,25 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
     fseeko(h->filehandle, h->current_location, SEEK_SET);
     if (!fread(var, sz, count, h->filehandle)) return 1;
 #endif
+    if (h->swap) {
+        if (b->datatype == SDF_DATATYPE_INTEGER4
+                || b->datatype == SDF_DATATYPE_REAL4) {
+            int i;
+            uint32_t *v = (uint32_t*)*var_ptr;
+            for (i=0; i < count; i++) {
+                _SDF_BYTE_SWAP32(*v);
+                v++;
+            }
+        } else if (b->datatype == SDF_DATATYPE_INTEGER8
+                || b->datatype == SDF_DATATYPE_REAL8) {
+            int i;
+            uint64_t *v = (uint64_t*)*var_ptr;
+            for (i=0; i < count; i++) {
+                _SDF_BYTE_SWAP64(*v);
+                v++;
+            }
+        }
+    }
 
     if (convert) {
         int i;

@@ -649,6 +649,26 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
 {
     sdf_block_t *b = h->current_block;
 
+    if (h->swap) {
+        if (b->datatype == SDF_DATATYPE_INTEGER4
+                || b->datatype == SDF_DATATYPE_REAL4) {
+            int i;
+            uint32_t *v = *var_in;
+            for (i=0; i < count; i++) {
+                _SDF_BYTE_SWAP32(*v);
+                v++;
+            }
+        } else if (b->datatype == SDF_DATATYPE_INTEGER8
+                || b->datatype == SDF_DATATYPE_REAL8) {
+            int i;
+            uint64_t *v = *var_in;
+            for (i=0; i < count; i++) {
+                _SDF_BYTE_SWAP64(*v);
+                v++;
+            }
+        }
+    }
+
     if (h->use_float && b->datatype == SDF_DATATYPE_REAL8) {
         int i;
         float *r4;

@@ -222,7 +222,7 @@ struct sdf_file {
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float, use_summary;
-    char use_random, station_file;
+    char use_random, station_file, swap;
     char *code_name, *error_message;
     sdf_block_t *blocklist, *tail, *current_block;
     char *mmap;
@@ -395,9 +395,40 @@ void sdf_trim(char *str);
   #define SDF_DPRNTar(a,len) do {} while(0)
 #endif
 
+#define _SDF_CBYTE_SWAP32(val) do { \
+        char _c; \
+        _c = (val)[0]; (val)[0] = (val)[3]; (val)[3] = _c; \
+        _c = (val)[1]; (val)[1] = (val)[2]; (val)[2] = _c; \
+    } while(0)
+
+#define _SDF_CBYTE_SWAP64(val) do { \
+        char _c; \
+        _c = (val)[0]; (val)[0] = (val)[7]; (val)[7] = _c; \
+        _c = (val)[1]; (val)[1] = (val)[6]; (val)[6] = _c; \
+        _c = (val)[2]; (val)[2] = (val)[5]; (val)[5] = _c; \
+        _c = (val)[3]; (val)[3] = (val)[4]; (val)[4] = _c; \
+    } while(0)
+
+#define _SDF_BYTE_SWAP64(val) \
+    (val) = ((uint64_t)(val)&0xff00000000000000)>>56 | \
+            ((uint64_t)(val)&0xff000000000000)>>40 | \
+            ((uint64_t)(val)&0xff0000000000)>>24 | \
+            ((uint64_t)(val)&0xff00000000)>>8 | \
+            ((uint64_t)(val)&0xff000000)<<8 | \
+            ((uint64_t)(val)&0xff0000)<<24 | \
+            ((uint64_t)(val)&0xff00)<<40 | \
+            ((uint64_t)(val)&0xff)<<56
+
+#define _SDF_BYTE_SWAP32(val) \
+    (val) = ((uint32_t)(val)&0xff000000)>>24 | \
+            ((uint32_t)(val)&0xff0000)>>8 | \
+            ((uint32_t)(val)&0xff00)<<8 | \
+            ((uint32_t)(val)&0xff)<<24
+
 #define SDF_READ_ENTRY_INT4(value) do { \
         (value) = *((uint32_t *) \
             (h->buffer + h->current_location - h->start_location)); \
+        if (h->swap) _SDF_BYTE_SWAP32(value); \
         h->current_location += 4; \
         SDF_DPRNT(#value ": %i\n", (value)); \
     } while (0)
@@ -405,6 +436,7 @@ void sdf_trim(char *str);
 #define SDF_READ_ENTRY_INT8(value) do { \
         (value) = *((uint64_t *) \
             (h->buffer + h->current_location - h->start_location)); \
+        if (h->swap) _SDF_BYTE_SWAP64(value); \
         h->current_location += 8; \
         SDF_DPRNT(#value ": %lli\n", (long long int)(value)); \
     } while (0)
@@ -412,6 +444,7 @@ void sdf_trim(char *str);
 #define SDF_READ_ENTRY_REAL4(value) do { \
         (value) = *((float *) \
             (h->buffer + h->current_location - h->start_location)); \
+        if (h->swap) _SDF_CBYTE_SWAP32(((char*)&value)); \
         h->current_location += 4; \
         SDF_DPRNT(#value ": %g\n", (float)(value)); \
     } while (0)
@@ -419,6 +452,7 @@ void sdf_trim(char *str);
 #define SDF_READ_ENTRY_REAL8(value) do { \
         (value) = *((double *) \
             (h->buffer + h->current_location - h->start_location)); \
+        if (h->swap) _SDF_CBYTE_SWAP64(((char*)&value)); \
         h->current_location += 8; \
         SDF_DPRNT(#value ": %g\n", (double)(value)); \
     } while (0)
@@ -435,53 +469,106 @@ void sdf_trim(char *str);
     } while (0)
 
 #define SDF_READ_ENTRY_CONST(value) do { \
+        char _c; \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
             SDF_TYPE_SIZES[b->datatype]); \
         h->current_location += SDF_TYPE_SIZES[b->datatype]; \
         switch (b->datatype) { \
         case(SDF_DATATYPE_REAL4): \
+          if (h->swap) { \
+            _c = (value)[0]; (value)[0] = (value)[3]; (value)[3] = _c; \
+            _c = (value)[1]; (value)[1] = (value)[2]; (value)[2] = _c; \
+          } \
           SDF_DPRNT(#value ": %g\n", *((float*)(value))); \
           break; \
         case(SDF_DATATYPE_REAL8): \
+          if (h->swap) { \
+            _c = (value)[0]; (value)[0] = (value)[7]; (value)[7] = _c; \
+            _c = (value)[1]; (value)[1] = (value)[6]; (value)[6] = _c; \
+            _c = (value)[2]; (value)[2] = (value)[5]; (value)[5] = _c; \
+            _c = (value)[3]; (value)[3] = (value)[4]; (value)[4] = _c; \
+          } \
           SDF_DPRNT(#value ": %g\n", *((double*)(value))); \
           break; \
         case(SDF_DATATYPE_INTEGER4): \
+          if (h->swap) { \
+            _c = (value)[0]; (value)[0] = (value)[3]; (value)[3] = _c; \
+            _c = (value)[1]; (value)[1] = (value)[2]; (value)[2] = _c; \
+          } \
           SDF_DPRNT(#value ": %i\n", *((int32_t*)(value))); \
           break; \
         case(SDF_DATATYPE_INTEGER8): \
+          if (h->swap) { \
+            _c = (value)[0]; (value)[0] = (value)[7]; (value)[7] = _c; \
+            _c = (value)[1]; (value)[1] = (value)[6]; (value)[6] = _c; \
+            _c = (value)[2]; (value)[2] = (value)[5]; (value)[5] = _c; \
+            _c = (value)[3]; (value)[3] = (value)[4]; (value)[4] = _c; \
+          } \
           SDF_DPRNT(#value ": %lli\n", *((long long int*)(value))); \
           break; \
         } \
     } while (0)
 
 #define SDF_READ_ENTRY_ARRAY_INT4(value, length) do { \
+        uint32_t *val; int _i; \
         if (!(value)) value = calloc((length), sizeof(int32_t)); \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
             4 * (length)); \
+        if (h->swap) { \
+            val = (uint32_t*)(value); \
+            for (_i=0; _i<(length); _i++) { \
+                _SDF_BYTE_SWAP32(*val); \
+                val++; \
+            } \
+        } \
         h->current_location += 4 * (length); \
         SDF_DPRNTa(value, i, (length)); \
     } while (0)
 
 #define SDF_READ_ENTRY_ARRAY_INT8(value, length) do { \
+        uint64_t *val; int _i; \
         if (!(value)) value = calloc((length), sizeof(int64_t)); \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
             8 * (length)); \
+        if (h->swap) { \
+            val = (uint64_t*)(value); \
+            for (_i=0; _i<(length); _i++) { \
+                _SDF_BYTE_SWAP64(*val); \
+                val++; \
+            } \
+        } \
         h->current_location += 8 * (length); \
         SDF_DPRNTa(value, lli, (length)); \
     } while (0)
 
 #define SDF_READ_ENTRY_ARRAY_REAL4(value, length) do { \
+        uint32_t *val; int _i; \
         if (!(value)) value = calloc((length), sizeof(float)); \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
             4 * (length)); \
+        if (h->swap) { \
+            val = (uint32_t*)(value); \
+            for (_i=0; _i<(length); _i++) { \
+                _SDF_BYTE_SWAP32(*val); \
+                val++; \
+            } \
+        } \
         h->current_location += 4 * (length); \
         SDF_DPRNTa(value, g, (length)); \
     } while (0)
 
 #define SDF_READ_ENTRY_ARRAY_REAL8(value, length) do { \
+        uint64_t *val; int _i; \
         if (!(value)) value = calloc((length), sizeof(double)); \
         memcpy((value), (h->buffer + h->current_location - h->start_location), \
             8 * (length)); \
+        if (h->swap) { \
+            val = (uint64_t*)(value); \
+            for (_i=0; _i<(length); _i++) { \
+                _SDF_BYTE_SWAP64(*val); \
+                val++; \
+            } \
+        } \
         h->current_location += 8 * (length); \
         SDF_DPRNTa(value, g, (length)); \
     } while (0)
@@ -489,6 +576,7 @@ void sdf_trim(char *str);
 #define SDF_READ_ENTRY_TYPE(value) do { \
         (b->value) = *((uint32_t *) \
             (h->buffer + h->current_location - h->start_location)); \
+        if (h->swap) _SDF_BYTE_SWAP32(b->value); \
         h->current_location += 4; \
         if (b->value < sdf_ ## value ## _len) \
             SDF_DPRNT("b->" #value ": %s\n", sdf_ ## value ## _c[b->value]); \
