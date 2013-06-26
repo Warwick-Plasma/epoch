@@ -829,7 +829,6 @@ MODULE shared_data
   LOGICAL :: allow_cpu_reduce
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
-  CHARACTER(LEN=c_id_length) :: restart_prefix
   CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename
   CHARACTER(LEN=6+data_dir_max_length+c_max_zeros+c_id_length) :: &
       full_restart_filename

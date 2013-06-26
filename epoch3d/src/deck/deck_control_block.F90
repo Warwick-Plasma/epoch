@@ -89,7 +89,6 @@ CONTAINS
       use_exact_restart = .FALSE.
       allow_cpu_reduce = .TRUE.
       restart_number = 0
-      restart_prefix = ''
       restart_filename = ''
     ENDIF
 
@@ -105,10 +104,9 @@ CONTAINS
 
     IF (ic_from_restart) THEN
       IF (TRIM(restart_filename) .EQ. '') THEN
-        WRITE(filename_fmt, '(''(a, i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
+        WRITE(filename_fmt, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
             n_zeros, n_zeros
-        WRITE(restart_filename, filename_fmt) TRIM(restart_prefix), &
-            restart_number
+        WRITE(restart_filename, filename_fmt) restart_number
       ENDIF
       full_restart_filename = TRIM(data_dir) // '/' // TRIM(restart_filename)
     ENDIF
