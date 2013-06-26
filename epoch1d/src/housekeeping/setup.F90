@@ -571,6 +571,10 @@ CONTAINS
     npart_global = 0
     step = -1
 
+    IF (rank .EQ. 0) THEN
+      PRINT*,'Attempting to restart from file: ',TRIM(full_restart_filename)
+    ENDIF
+
     CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read)
 
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
