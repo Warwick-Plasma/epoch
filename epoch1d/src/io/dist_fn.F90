@@ -193,15 +193,15 @@ CONTAINS
 
       IF (direction(idim) .EQ. c_dir_px) THEN
         labels(idim) = 'Px'
-        units(idim)  = 'm/s'
+        units(idim)  = 'kg.m/s'
 
       ELSE IF (direction(idim) .EQ. c_dir_py) THEN
         labels(idim) = 'Py'
-        units(idim)  = 'm/s'
+        units(idim)  = 'kg.m/s'
 
       ELSE IF (direction(idim) .EQ. c_dir_pz) THEN
         labels(idim) = 'Pz'
-        units(idim)  = 'm/s'
+        units(idim)  = 'kg.m/s'
 
       ELSE IF (direction(idim) .EQ. c_dir_en) THEN
         labels(idim) = 'en'
