@@ -60,10 +60,20 @@ CONTAINS
     DO iz = 1, nz
     DO iy = 1, ny
     DO ix = 1, nx
-      wk_array(ix, iy, iz) = (6.0_num * array(ix, iy, iz) &
-          + array(ix-1, iy, iz) + array(ix+1, iy, iz) &
+      wk_array(ix, iy, iz) = 0.125_num * array(ix, iy, iz) &
+          + (array(ix-1, iy, iz) + array(ix+1, iy, iz) &
           + array(ix, iy-1, iz) + array(ix, iy+1, iz) &
-          + array(ix, iy, iz-1) + array(ix, iy, iz+1)) / 12.0_num
+          + array(ix, iy, iz-1) + array(ix, iy, iz+1)) * 0.0625_num &
+          + (array(ix-1, iy-1, iz) + array(ix+1, iy-1, iz) &
+          + array(ix-1, iy+1, iz) + array(ix+1, iy+1, iz) &
+          + array(ix-1, iy, iz-1) + array(ix+1, iy, iz-1) &
+          + array(ix-1, iy, iz+1) + array(ix+1, iy, iz+1) &
+          + array(ix, iy-1, iz-1) + array(ix, iy+1, iz-1) &
+          + array(ix, iy-1, iz+1) + array(ix, iy+1, iz+1)) * 0.03125_num &
+          + (array(ix-1, iy-1, iz-1) + array(ix+1, iy-1, iz-1) &
+          + array(ix-1, iy+1, iz-1) + array(ix+1, iy+1, iz-1) &
+          + array(ix-1, iy-1, iz+1) + array(ix+1, iy-1, iz+1) &
+          + array(ix-1, iy+1, iz+1) + array(ix+1, iy+1, iz+1)) * 0.015625_num
     ENDDO
     ENDDO
     ENDDO

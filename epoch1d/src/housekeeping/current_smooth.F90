@@ -48,8 +48,8 @@ CONTAINS
     ENDDO
 #else
     DO ix = 1, nx
-      wk_array(ix) = (2.0_num * array(ix) &
-          + array(ix-1) + array(ix+1)) * 0.25_num
+      wk_array(ix) = 0.5_num * array(ix) &
+          + (array(ix-1) + array(ix+1)) * 0.25_num
     ENDDO
 #endif
     array(1:nx) = wk_array

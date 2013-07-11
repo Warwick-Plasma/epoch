@@ -54,9 +54,11 @@ CONTAINS
 #else
     DO iy = 1, ny
     DO ix = 1, nx
-      wk_array(ix, iy) = (4.0_num * array(ix, iy) &
-          + array(ix-1, iy) + array(ix+1, iy) &
-          + array(ix, iy-1) + array(ix, iy+1)) * 0.125_num
+      wk_array(ix, iy) = 0.25_num * array(ix, iy) &
+          + (array(ix-1, iy) + array(ix+1, iy) &
+          + array(ix, iy-1) + array(ix, iy+1)) * 0.125_num &
+          + (array(ix-1, iy-1) + array(ix+1, iy-1) &
+          + array(ix-1, iy+1) + array(ix+1, iy+1)) * 0.0625_num
     ENDDO
     ENDDO
 #endif
