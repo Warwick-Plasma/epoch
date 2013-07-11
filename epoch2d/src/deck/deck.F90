@@ -431,12 +431,7 @@ CONTAINS
     ! found and everything beyond it is to be ignored
     ignore = .FALSE.
     continuation = .FALSE.
-
-#ifdef NO_IO
-    status_filename = '/dev/null'
-#else
     status_filename = TRIM(ADJUSTL(data_dir)) // '/deck.status'
-#endif
 
     ! rank 0 reads the file and then passes it out to the other nodes using
     ! MPI_BCAST
@@ -470,6 +465,7 @@ CONTAINS
         ALLOCATE(fbuf%buffer(fbuf%length))
       ENDIF
 
+#ifndef NO_IO
       ! Check whether or not the input deck file requested exists
       INQUIRE(file=deck_filename, exist=exists)
       IF (.NOT. exists .AND. rank .EQ. 0) THEN
@@ -497,6 +493,7 @@ CONTAINS
         WRITE(du,'(a,i3)') 'Deck state:', deck_state
         WRITE(du,*)
       ENDIF
+#endif
       deck_values(1)%value = ''
       deck_values(2)%value = ''
       slen = 1
@@ -705,10 +702,14 @@ CONTAINS
       ENDDO
       WRITE(*, *) 'Please read the output file "', TRIM(status_filename), &
           '" to check for errors.'
+#ifndef NO_IO
       WRITE(du,*) 'Please read this file and correct any errors mentioned.'
+#endif
     ENDIF
 
+#ifndef NO_IO
     IF (first_call) CLOSE(du)
+#endif
 
     IF (terminate) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
 
@@ -730,11 +731,13 @@ CONTAINS
 
     IF (str_cmp(element, 'import')) THEN
       invalid_block = .TRUE.
+#ifndef NO_IO
       IF (rank .EQ. rank_check) THEN
         WRITE(du,*)
         WRITE(du,*) 'Importing "' // TRIM(ADJUSTL(value)) // '" file'
         WRITE(du,*)
       ENDIF
+#endif
       CALL read_deck(TRIM(ADJUSTL(value)), .FALSE., deck_state)
       RETURN
     ENDIF
@@ -772,10 +775,12 @@ CONTAINS
       CALL start_block(value)
       err_count = 0
       current_block_name = value
+#ifndef NO_IO
       IF (rank .EQ. rank_check) THEN
         WRITE(du,*) 'Beginning "' // TRIM(ADJUSTL(value)) // '" block'
         WRITE(du,*)
       ENDIF
+#endif
       ! Reset errcode_deck here because reporting c_err_unknown_element is OK
       errcode_deck = c_err_none
       RETURN
@@ -783,6 +788,7 @@ CONTAINS
     IF (str_cmp(element, 'end')) THEN
       CALL end_block(current_block_name)
       invalid_block = .TRUE.
+#ifndef NO_IO
       IF (rank .EQ. rank_check) THEN
         WRITE(du,*)
         WRITE(du,*) 'Ending "' // TRIM(ADJUSTL(value)) // '" block'
@@ -793,6 +799,7 @@ CONTAINS
           WRITE(du,*)
         ENDIF
       ENDIF
+#endif
       RETURN
     ENDIF
 
@@ -804,12 +811,14 @@ CONTAINS
       RETURN
     ENDIF
 
+#ifndef NO_IO
     IF (errcode_deck .EQ. c_err_none) THEN
       IF (rank .EQ. rank_check) &
           WRITE(du, *) ACHAR(9), 'Element ', TRIM(ADJUSTL(element)), '=', &
               TRIM(ADJUSTL(value)), ' handled OK'
       RETURN
     ENDIF
+#endif
     ! Test for error conditions
     ! If an error is fatal then set terminate to .TRUE.
     IF (IAND(errcode_deck, c_err_unknown_element) .NE. 0) THEN

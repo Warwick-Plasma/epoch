@@ -487,12 +487,11 @@ CONTAINS
     INTEGER :: errcode, ierr
     LOGICAL :: exists
 
-    IF (rank .EQ. 0) THEN
 #ifdef NO_IO
-      stat_file = '/dev/null'
+    RETURN
 #else
+    IF (rank .EQ. 0) THEN
       WRITE(stat_file, '(a, ''/epoch3d.dat'')') TRIM(data_dir)
-#endif
       IF (ic_from_restart) THEN
         INQUIRE(file=stat_file, exist=exists)
         IF (exists) THEN
@@ -521,6 +520,7 @@ CONTAINS
         WRITE(stat_unit,*)
       ENDIF
     ENDIF
+#endif
 
   END SUBROUTINE open_files
 
@@ -530,11 +530,15 @@ CONTAINS
 
     INTEGER :: errcode
 
+#ifdef NO_IO
+    RETURN
+#else
     IF (rank .EQ. 0) THEN
       CLOSE(unit=stat_unit)
       OPEN(unit=stat_unit, status='OLD', position='APPEND', &
           file=stat_file, iostat=errcode)
     ENDIF
+#endif
 
   END SUBROUTINE flush_stat_file
 
@@ -542,7 +546,11 @@ CONTAINS
 
   SUBROUTINE close_files
 
+#ifdef NO_IO
+    RETURN
+#else
     IF (rank .EQ. 0) CLOSE(unit=stat_unit)
+#endif
 
   END SUBROUTINE close_files
 
@@ -784,8 +792,10 @@ CONTAINS
     IF (rank .EQ. 0) THEN
       PRINT*, 'Loading snapshot for time', time
       CALL create_ascii_header
+#ifndef NO_IO
       WRITE(stat_unit,*) ascii_header
       WRITE(stat_unit,*)
+#endif
     ENDIF
 
     ex = 0.0_num

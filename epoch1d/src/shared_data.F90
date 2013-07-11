@@ -25,7 +25,11 @@ MODULE constants
   INTEGER, PARAMETER :: stdout = 6
   INTEGER, PARAMETER :: du = 40
   INTEGER, PARAMETER :: lu = 41
+#ifdef NO_IO
+  INTEGER, PARAMETER :: io_units(1) = (/ stdout /)
+#else
   INTEGER, PARAMETER :: io_units(2) = (/ stdout,du /)
+#endif
   INTEGER, PARAMETER :: nio_units = SIZE(io_units)
 
   ! Boundary type codes

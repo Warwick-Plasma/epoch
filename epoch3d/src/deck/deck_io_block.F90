@@ -210,6 +210,7 @@ CONTAINS
         DEALLOCATE(io_prefixes)
       ENDIF
 
+#ifndef NO_IO
       ! Remove any left-over VisIt file lists
       IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
         list_filename = TRIM(ADJUSTL(data_dir)) // '/full.visit'
@@ -222,6 +223,7 @@ CONTAINS
         OPEN(unit=lu, status='UNKNOWN', file=list_filename)
         CLOSE(unit=lu, status='DELETE')
       ENDIF
+#endif
     ENDIF
 
   END SUBROUTINE io_deck_finalise
@@ -276,6 +278,7 @@ CONTAINS
       io_block%name = 'normal'
     ENDIF
 
+#ifndef NO_IO
     ! Delete any existing visit file lists
     IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
       list_filename = TRIM(ADJUSTL(data_dir)) // '/' &
@@ -283,6 +286,7 @@ CONTAINS
       OPEN(unit=lu, status='UNKNOWN', file=list_filename)
       CLOSE(unit=lu, status='DELETE')
     ENDIF
+#endif
     io_block%dumpmask(c_dump_jx) = IOR(io_block%dumpmask(c_dump_jx), c_io_field)
     io_block%dumpmask(c_dump_jy) = IOR(io_block%dumpmask(c_dump_jy), c_io_field)
     io_block%dumpmask(c_dump_jz) = IOR(io_block%dumpmask(c_dump_jz), c_io_field)

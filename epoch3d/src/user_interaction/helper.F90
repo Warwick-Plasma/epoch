@@ -67,9 +67,12 @@ CONTAINS
       DO ispecies = 1, n_species
         species => species_list(ispecies)
         IF (species%count .LT. 0) THEN
-          WRITE(*,*) 'No particles specified for species ', TRIM(species%name)
-          WRITE(stat_unit,*) &
-              'No particles specified for species ', TRIM(species%name)
+          WRITE(*,*) 'No particles specified for species ', &
+              '"' // TRIM(species%name) // '"'
+#ifndef NO_IO
+          WRITE(stat_unit,*) 'No particles specified for species ', &
+              '"' // TRIM(species%name) // '"'
+#endif
           species%count = 0
         ENDIF
       ENDDO
@@ -232,9 +235,11 @@ CONTAINS
     IF (rank .EQ. 0) THEN
       CALL integer_as_string(npart_this_species, string)
       WRITE(*,*) 'Loaded ', TRIM(ADJUSTL(string)), &
-          ' particles of species ', TRIM(species%name)
+          ' particles of species ', '"' // TRIM(species%name) // '"'
+#ifndef NO_IO
       WRITE(stat_unit,*) 'Loaded ', TRIM(ADJUSTL(string)), &
-          ' particles of species ', TRIM(species%name)
+          ' particles of species ', '"' // TRIM(species%name) // '"'
+#endif
     ENDIF
 
     CALL particle_bcs
@@ -477,9 +482,11 @@ CONTAINS
     IF (rank .EQ. 0) THEN
       CALL integer_as_string(npart_this_species, string)
       WRITE(*,*) 'Loaded ', TRIM(ADJUSTL(string)), &
-          ' particles of species ', TRIM(species%name)
+          ' particles of species ', '"' // TRIM(species%name) // '"'
+#ifndef NO_IO
       WRITE(stat_unit,*) 'Loaded ', TRIM(ADJUSTL(string)), &
-          ' particles of species ', TRIM(species%name)
+          ' particles of species ', '"' // TRIM(species%name) // '"'
+#endif
     ENDIF
 
     CALL particle_bcs
