@@ -91,7 +91,7 @@ CONTAINS
           .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
         elapsed_time = MPI_WTIME() - walltime_start
         CALL create_timestring(elapsed_time, timestring)
-        WRITE(*, '(''Time'', g20.12, '' and iteration'', i7, '' after'', a)') &
+        WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', a)') &
             time, step, timestring
       ENDIF
     ENDIF
