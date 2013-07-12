@@ -8,14 +8,42 @@ dir=unpacked_source
 output=$dir/epoch.tgz
 tmp=$dir/.__TMP__
 
+swap_long=0
+swap_bytes=0
+
 getint() {
-    od -td4 -N4 -j$off $file | head -1 | awk '{print$2}'
+    if [ $swap_bytes -ne 0 ]; then
+        n1=`od -tu1 -N1 -j$off $file | head -1 | awk '{print$2}'`
+        n2=`od -tu1 -N1 -j$((off+1)) $file | head -1 | awk '{print$2}'`
+        n3=`od -tu1 -N1 -j$((off+2)) $file | head -1 | awk '{print$2}'`
+        n4=`od -tu1 -N1 -j$((off+3)) $file | head -1 | awk '{print$2}'`
+        echo $((n4 + 256 * (n3 + 256 * (n2 + 256 * n1))))
+    else
+        od -td4 -N4 -j$off $file | head -1 | awk '{print$2}'
+    fi
 }
 
 getlong() {
-    n1=`od -td4 -N4 -j$off $file | head -1 | awk '{print$2}'`
-    n2=`od -td4 -N4 -j$((off+4)) $file | head -1 | awk '{print$2}'`
-    echo $((n1 + n2 * 4294967296))
+    if [ $swap_bytes -ne 0 ]; then
+        n1=`od -tu1 -N1 -j$off $file | head -1 | awk '{print$2}'`
+        n2=`od -tu1 -N1 -j$((off+1)) $file | head -1 | awk '{print$2}'`
+        n3=`od -tu1 -N1 -j$((off+2)) $file | head -1 | awk '{print$2}'`
+        n4=`od -tu1 -N1 -j$((off+3)) $file | head -1 | awk '{print$2}'`
+        n5=`od -tu1 -N1 -j$((off+4)) $file | head -1 | awk '{print$2}'`
+        n6=`od -tu1 -N1 -j$((off+5)) $file | head -1 | awk '{print$2}'`
+        n7=`od -tu1 -N1 -j$((off+6)) $file | head -1 | awk '{print$2}'`
+        n8=`od -tu1 -N1 -j$((off+7)) $file | head -1 | awk '{print$2}'`
+        echo $((n8 + 256 * (n7 + 256 * (n6 + 256 * (n5 + 256 * (n4 \
+            + 256 * (n3 + 256 * (n2 + 256 * n1))))))))
+    elif [ $swap_long -eq 0 ]; then
+        n1=`od -tu4 -N4 -j$off $file | head -1 | awk '{print$2}'`
+        n2=`od -tu4 -N4 -j$((off+4)) $file | head -1 | awk '{print$2}'`
+        echo $((n1 + n2 * 4294967296))
+    else
+        n1=`od -tu4 -N4 -j$off $file | head -1 | awk '{print$2}'`
+        n2=`od -tu4 -N4 -j$((off+4)) $file | head -1 | awk '{print$2}'`
+        echo $((n2 + n1 * 4294967296))
+    fi
 }
 
 # Sanity checking
@@ -44,7 +72,16 @@ fi
 
 # Read SDF header
 
-off=8
+off=4
+endian=$(od -tx1 -N1 -j$off $file | head -1 | awk '{print$2}')
+[ "$endian"x = "01"x ] && swap_long=1
+endian=$(getint); off=$((off+4))
+if [ $endian -ne 16911887 ]; then
+  swap_bytes=1
+  echo 'WARNING: file was generated on a machine of differing endianness.'
+  echo 'Unpacking process will be slower than usual.'
+fi
+
 version=$(getint); off=$((off+4))
 revision=$(getint)
 off=48; first_block_location=$(getlong)
