@@ -55,13 +55,14 @@ CONTAINS
   SUBROUTINE probe_block_end
 
     LOGICAL :: discard
-    INTEGER :: io, ierr
+    INTEGER :: io, iu, ierr
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
     IF (.NOT.got_name) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) '"probe" block does not have a "name" entry.'
         ENDDO
@@ -73,7 +74,8 @@ CONTAINS
 
     IF (discard) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout,du,du-stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Position of probe "' // TRIM(working_probe%name) &
               // '" ', 'not fully specified. ', 'It will be discarded.'
@@ -97,7 +99,7 @@ CONTAINS
   FUNCTION probe_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: errcode, ispecies, io
+    INTEGER :: errcode, ispecies, io, iu
 
     errcode = c_err_none
     IF (deck_state .EQ. c_ds_first) RETURN
@@ -142,7 +144,8 @@ CONTAINS
           working_probe%use_species(ispecies) = .TRUE.
         ELSE
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Unable to attach probe to non existant species ', &
                   ispecies

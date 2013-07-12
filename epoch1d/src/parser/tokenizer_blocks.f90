@@ -177,7 +177,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER :: as_constant
-    INTEGER :: i, io
+    INTEGER :: i, io, iu
     LOGICAL, SAVE :: warn = .TRUE.
 
     as_constant = c_prc_not_this_type
@@ -213,7 +213,8 @@ CONTAINS
     IF (warn .AND. as_constant .NE. c_prc_not_this_type) THEN
       warn = .FALSE.
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'A default value was used for the constant "' &
               // TRIM(name) // '"'

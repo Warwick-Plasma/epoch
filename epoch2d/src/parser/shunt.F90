@@ -396,7 +396,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
     TYPE(stack_element) :: block2
-    INTEGER :: ipoint, io, ierr
+    INTEGER :: ipoint, io, iu, ierr
 
     IF (ICHAR(current(1:1)) .EQ. 0) RETURN
 
@@ -407,7 +407,8 @@ CONTAINS
 #endif
     IF (block%ptype .EQ. c_pt_bad) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
@@ -538,7 +539,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: stack, output
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
-    INTEGER :: ipoint, io, ierr
+    INTEGER :: ipoint, io, iu, ierr
 
     IF (ICHAR(current(1:1)) .EQ. 0) RETURN
 
@@ -549,7 +550,8 @@ CONTAINS
     PRINT *, block%ptype, TRIM(current)
 #endif
     IF (block%ptype .EQ. c_pt_bad) THEN
-      DO io = stdout, du, du - stdout ! Print to stdout and to file
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
         WRITE(io,*)
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to parse block with text ', TRIM(current)

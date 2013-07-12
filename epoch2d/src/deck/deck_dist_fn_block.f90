@@ -56,7 +56,7 @@ CONTAINS
 
     CHARACTER(LEN=string_length) :: part1
     INTEGER :: part2, ispecies
-    INTEGER :: work, io
+    INTEGER :: work, io, iu
     REAL(num) :: work1, work2
 
     errcode = c_err_none
@@ -74,7 +74,8 @@ CONTAINS
         working_block%ndims = work
       ELSE
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Distribution functions can only be 1D, 2D or 3D'
           ENDDO
@@ -86,7 +87,8 @@ CONTAINS
 
     IF (working_block%ndims .EQ. -1) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Must set number of dimensions before setting other', &
               ' distribution'
@@ -145,7 +147,8 @@ CONTAINS
           working_block%use_species(ispecies) = .TRUE.
         ELSE
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Unable to apply dist_fn to non existant species ', &
                   ispecies

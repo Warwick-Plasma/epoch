@@ -31,14 +31,15 @@ CONTAINS
 
 #ifdef PHOTONS
     LOGICAL :: exists
-    INTEGER :: io, ierr
+    INTEGER :: io, iu, ierr
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
     IF (rank .EQ. 0 .AND. use_qed) THEN
       INQUIRE(file=TRIM(qed_table_location)//'/hsokolov.table', exist=exists)
       IF (.NOT.exists) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Unable to find QED tables in the ', &
               'directory "' // TRIM(qed_table_location) // '"'
@@ -126,7 +127,7 @@ CONTAINS
 
     INTEGER :: errcode
 #ifdef PHOTONS
-    INTEGER :: io
+    INTEGER :: io, iu
 #endif
 
     errcode = c_err_none
@@ -134,7 +135,8 @@ CONTAINS
 #ifdef PHOTONS
     IF (produce_pairs .AND. .NOT. photon_dynamics) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'You cannot set photon_dynamics=F when ', &

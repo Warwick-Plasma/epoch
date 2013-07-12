@@ -74,12 +74,13 @@ CONTAINS
   SUBROUTINE subset_block_end
 
     CHARACTER(LEN=8) :: id_string
-    INTEGER :: io
+    INTEGER :: io, iu
 
     IF (.NOT.got_name) THEN
       IF (rank .EQ. 0) THEN
         CALL integer_as_string(current_block, id_string)
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Restriction block number ', TRIM(id_string), &
               ' has no "name" element.'
@@ -97,7 +98,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-    INTEGER :: io, ispecies
+    INTEGER :: io, iu, ispecies
 
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
@@ -256,7 +257,8 @@ CONTAINS
           subset_list(subset_id)%use_species(ispecies) = .TRUE.
         ELSE
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Unable to apply subset to non existant ', &
                   'species ', ispecies

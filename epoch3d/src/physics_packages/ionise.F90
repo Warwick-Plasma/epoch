@@ -33,7 +33,7 @@ CONTAINS
 
   SUBROUTINE initialise_ionisation
 
-    INTEGER :: i, io, ierr, bessel_error, err_laser
+    INTEGER :: i, io, iu, ierr, bessel_error, err_laser
     LOGICAL :: laser_set
     TYPE(laser_block), POINTER :: current_laser
 
@@ -149,7 +149,8 @@ CONTAINS
       SELECT CASE (err_laser)
         CASE (1)
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Multiphoton ionisation model does not currently'
               WRITE(io,*) 'support lasers of differing frequencies attached to'
@@ -159,7 +160,8 @@ CONTAINS
           CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         CASE (2)
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Multiphoton ionisation model requires a single laser'
               WRITE(io,*) 'attached to a boundary. Please adjust your input ', &

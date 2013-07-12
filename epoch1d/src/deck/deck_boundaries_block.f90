@@ -141,7 +141,7 @@ CONTAINS
   FUNCTION boundary_block_check() RESULT(errcode)
 
     INTEGER :: errcode
-    INTEGER :: index, io, ierr
+    INTEGER :: index, io, iu, ierr
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
     LOGICAL :: error
 
@@ -158,7 +158,8 @@ CONTAINS
     DO index = 1, boundary_block_elements - 4
       IF (.NOT. boundary_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required boundary block element "' &
@@ -185,7 +186,8 @@ CONTAINS
 
     IF (error) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Periodic boundaries must be specified on both sides', &

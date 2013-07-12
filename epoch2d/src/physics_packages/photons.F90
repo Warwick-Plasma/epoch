@@ -37,7 +37,7 @@ CONTAINS
   FUNCTION check_qed_variables()
 
     INTEGER :: check_qed_variables
-    INTEGER :: io, ispecies
+    INTEGER :: io, iu, ispecies
     INTEGER :: first_electron = -1, first_positron = -1
 
     check_qed_variables = c_err_none
@@ -62,7 +62,8 @@ CONTAINS
 
     IF (first_electron .LT. 0 .AND. first_positron .LT. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'No electron or positron species specified.'
           WRITE(io,*) 'Specify using "identify:electron" or "identify:positron"'
@@ -76,7 +77,8 @@ CONTAINS
 
     IF (photon_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'No photon species specified. Specify using ', &
               '"identify:photon"'
@@ -92,7 +94,8 @@ CONTAINS
 
     IF (first_electron .LT. 0 .OR. first_positron .LT. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'To use pair production routines need at least one ', &
               'positron species and one ', 'electron species. Specify ', &
@@ -105,7 +108,8 @@ CONTAINS
 
     IF (breit_wheeler_positron_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'No Breit-Wheeler positron species specified.'
           WRITE(io,*) 'Specify using "identify:bw_positron".'
@@ -119,7 +123,8 @@ CONTAINS
 #ifdef TRIDENT_PHOTONS
     IF (trident_positron_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'No trident positron species specified.'
           WRITE(io,*) 'Specify using "identify:trident_positron".'
@@ -133,7 +138,8 @@ CONTAINS
 
     IF (breit_wheeler_electron_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'No Breit-Wheeler electron species specified.'
           WRITE(io,*) 'Specify using "identify:bw_electron".'
@@ -147,7 +153,8 @@ CONTAINS
 #ifdef TRIDENT_PHOTONS
     IF (trident_electron_species .LT. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'No trident electron species specified.'
           WRITE(io,*) 'Specify using "identify:trident_electron".'

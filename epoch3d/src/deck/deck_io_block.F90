@@ -139,7 +139,7 @@ CONTAINS
   SUBROUTINE io_deck_finalise
 
     CHARACTER(LEN=c_max_string_length) :: list_filename
-    INTEGER :: i, io, ierr
+    INTEGER :: i, io, iu, ierr
 
     n_io_blocks = block_number
     block_number = 0
@@ -148,7 +148,8 @@ CONTAINS
       IF (deck_state .EQ. c_ds_first) THEN
         IF (.NOT.new_style_io_block .AND. n_io_blocks .NE. 1) THEN
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Cannot have multiple unnamed "output" blocks.'
             ENDDO
@@ -176,7 +177,8 @@ CONTAINS
         DO i = 1, n_io_blocks
           IF (io_block_list(i)%dt_average .GT. t_end) THEN
             IF (rank .EQ. 0) THEN
-              DO io = stdout, du, du - stdout ! Print to stdout and to file
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
                 WRITE(io,*) '*** WARNING ***'
                 WRITE(io,*) 'Averaging time is longer than t_end, will set', &
                     ' averaging time equal'
@@ -187,7 +189,8 @@ CONTAINS
           ENDIF
           IF (io_block%dump_cycle_first_index .GT. io_block%dump_cycle) THEN
             IF (rank .EQ. 0) THEN
-              DO io = stdout, du, du - stdout ! Print to stdout and to file
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
                 WRITE(io,*) '*** WARNING ***'
                 WRITE(io,*) '"dump_cycle_first_index" cannot be greater ', &
                     'than "dump_cycle"'
@@ -248,7 +251,7 @@ CONTAINS
 
   SUBROUTINE io_block_end
 
-    INTEGER :: io, ierr
+    INTEGER :: io, iu, ierr
     CHARACTER(LEN=c_max_string_length) :: list_filename
 
     IF (deck_state .EQ. c_ds_first) RETURN
@@ -260,7 +263,8 @@ CONTAINS
     IF (.NOT. got_name) THEN
       IF (new_style_io_block) THEN
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Cannot mix old and new style output blocks.'
             WRITE(io,*) 'You can either have multiple, named output blocks ', &
@@ -303,7 +307,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
-    INTEGER :: loop, elementselected, mask, fullmask, mask_element, ierr, io
+    INTEGER :: loop, elementselected, mask, fullmask, mask_element, ierr, io, iu
     INTEGER :: i, is, subset, n_list
     INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad, found
@@ -317,7 +321,8 @@ CONTAINS
       IF (str_cmp(element, 'rolling_restart')) THEN
         IF (rolling_restart_io_block .GT. 0) THEN
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Cannot have multiple "rolling_restart" blocks.'
             ENDDO
@@ -380,7 +385,8 @@ CONTAINS
       use_offset_grid = as_logical(value, errcode)
     CASE(7)
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The "extended_io_file" option is no longer supported.'
           WRITE(io,*) 'Please use the "import" directive instead'
@@ -411,7 +417,8 @@ CONTAINS
       DO i = 1,block_number
         IF (TRIM(io_block_list(i)%name) .EQ. TRIM(value)) THEN
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Output block "' // TRIM(value) &
                   // '" already defined.'
@@ -458,7 +465,8 @@ CONTAINS
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "' &
@@ -470,7 +478,8 @@ CONTAINS
       ENDIF
     ELSE IF (style_error .EQ. c_err_new_style_ignore) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "' &
@@ -482,7 +491,8 @@ CONTAINS
       ENDIF
     ELSE IF (style_error .EQ. c_err_new_style_global) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "' &
@@ -548,7 +558,8 @@ CONTAINS
         IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
         IF (bad) THEN
           IF (rank .EQ. 0 .AND. IAND(mask, c_io_species) .NE. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** WARNING ***'
               WRITE(io,*) 'Attempting to set per species property for "' &
                   // TRIM(element) // '" which'
@@ -583,7 +594,8 @@ CONTAINS
         IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
         IF (bad) THEN
           IF (rank .EQ. 0) THEN
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*) '*** WARNING ***'
               WRITE(io,*) 'Attempting to set average property for "' &
                   // TRIM(element) // '" which'
@@ -619,7 +631,7 @@ CONTAINS
 
   FUNCTION io_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, io, i
+    INTEGER :: errcode, io, iu, i
 
     ! Just assume that anything not included except for the compulsory
     ! elements is not wanted
@@ -634,7 +646,8 @@ CONTAINS
 
     IF (.NOT. io_block_done(i+8) .AND. .NOT. io_block_done(i+9)) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Required output block element ', &
@@ -650,7 +663,8 @@ CONTAINS
 
     IF (io_block%dt_average .GT. io_block%dt_snapshot) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Averaging time is longer than dt_snapshot, will set', &
               ' averaging time equal'

@@ -133,7 +133,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: str_tmp
     CHARACTER(LEN=1) :: c
     INTEGER :: errcode
-    INTEGER :: loop, elementselected, field_order, ierr, io, i
+    INTEGER :: loop, elementselected, field_order, ierr, io, iu, i
     LOGICAL :: isnum
 
     errcode = c_err_none
@@ -199,7 +199,8 @@ CONTAINS
       use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The "icfile" option is no longer supported.'
           WRITE(io,*) 'Please use the "import" directive instead'
@@ -260,7 +261,7 @@ CONTAINS
 
   FUNCTION control_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, index, io
+    INTEGER :: errcode, index, io, iu
 
     errcode = c_err_none
 
@@ -279,7 +280,8 @@ CONTAINS
     DO index = 1, control_block_elements
       IF (.NOT. control_block_done(index)) THEN
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required control block element ', &
@@ -293,7 +295,8 @@ CONTAINS
 
     IF (.NOT. neutral_background) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The option "neutral_background=F" is not supported', &

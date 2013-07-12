@@ -49,13 +49,14 @@ CONTAINS
 
   SUBROUTINE io_global_block_start
 
-    INTEGER :: io, ierr
+    INTEGER :: io, iu, ierr
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
     IF (.NOT. new_style_io_block) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'You cannot use an "output_global" block in ', &
               'conjunction with ', 'unnamed "output" blocks.'

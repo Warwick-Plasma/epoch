@@ -59,7 +59,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
     REAL(num) :: dummy
-    INTEGER :: ierr, io
+    INTEGER :: ierr, io, iu
 
     errcode = c_err_none
     IF (deck_state .EQ. c_ds_first) RETURN
@@ -67,7 +67,8 @@ CONTAINS
 
     IF (str_cmp(element, 'boundary') .OR. str_cmp(element, 'direction')) THEN
       IF (rank .EQ. 0 .AND. str_cmp(element, 'direction')) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "direction" in the block "laser" is deprecated.'
           WRITE(io,*) 'Please use the element name "boundary" instead.'
@@ -83,7 +84,8 @@ CONTAINS
 
     IF (.NOT. boundary_set) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Cannot set laser properties before boundary is set'
         ENDDO
@@ -115,7 +117,8 @@ CONTAINS
 
     IF (str_cmp(element, 'omega') .OR. str_cmp(element, 'freq')) THEN
       IF (rank .EQ. 0 .AND. str_cmp(element, 'freq')) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "freq" in the block "laser" is deprecated.'
           WRITE(io,*) 'Please use the element name "omega" instead.'
@@ -206,7 +209,7 @@ CONTAINS
 
     INTEGER :: errcode
     TYPE(laser_block), POINTER :: current
-    INTEGER :: error, io
+    INTEGER :: error, io, iu
 
     errcode = c_err_none
 
@@ -255,7 +258,8 @@ CONTAINS
 
     IF (IAND(error,1) .NE. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Must define a "lambda" or "omega" for every laser.'
         ENDDO
@@ -265,7 +269,8 @@ CONTAINS
 
     IF (IAND(error,2) .NE. 0) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Must define an "amp" or "irradiance" for every laser.'
         ENDDO

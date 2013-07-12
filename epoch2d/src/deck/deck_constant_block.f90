@@ -40,7 +40,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-    INTEGER :: ix, io
+    INTEGER :: ix, io, iu
     TYPE(deck_constant), DIMENSION(:), ALLOCATABLE :: buffer
     TYPE(primitive_stack) :: temp
     TYPE(stack_element) :: block
@@ -61,7 +61,8 @@ CONTAINS
     IF (block%ptype .NE. c_pt_bad .AND. block%ptype .NE. c_pt_null &
         .AND. block%ptype .NE. c_pt_default_constant) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'The constant block variable "' // TRIM(element) &
               // '" conflicts with a'

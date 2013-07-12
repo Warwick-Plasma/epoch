@@ -154,7 +154,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: tstr1, tstr2
     CHARACTER(LEN=string_length) :: species1, species2
     REAL(num) :: collstate
-    INTEGER :: io, sp1, sp2
+    INTEGER :: io, iu, sp1, sp2
 
     IF (deck_state .NE. c_ds_last) RETURN
 
@@ -191,7 +191,8 @@ CONTAINS
     ENDIF
 
     IF (coll_pairs_touched(sp1, sp2) .AND. rank .EQ. 0) THEN
-      DO io = stdout, du, du - stdout ! Print to stdout and to file
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
         WRITE(io,*)
         WRITE(io,*) '*** WARNING ***'
         WRITE(io,*) 'The collide parameter for ' // TRIM(species1) // ' <-> ' &

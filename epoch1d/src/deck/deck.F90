@@ -202,7 +202,7 @@ CONTAINS
   FUNCTION handle_block(block_name, block_element, block_value)
 
     CHARACTER(LEN=*), INTENT(IN) :: block_name, block_element, block_value
-    INTEGER :: handle_block, io
+    INTEGER :: handle_block, io, iu
     LOGICAL, SAVE :: deo_warn = .TRUE.
 
     handle_block = c_err_none
@@ -210,7 +210,8 @@ CONTAINS
     IF (str_cmp(block_name, 'constant') &
             .OR. str_cmp(block_name, 'deo')) THEN
       IF (rank .EQ. 0 .AND. str_cmp(block_name, 'deo') .AND. deo_warn) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'The block name "deo" is deprecated.'
           WRITE(io,*) 'Please use the block name "constant" instead.'
@@ -293,7 +294,7 @@ CONTAINS
 
     LOGICAL :: problem_found
     INTEGER, INTENT(INOUT) :: errcode_deck
-    INTEGER :: io
+    INTEGER :: io, iu
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
@@ -328,7 +329,8 @@ CONTAINS
     IF (problem_found) THEN
       errcode_deck = IOR(errcode_deck, c_err_terminate)
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Not all required elements of input deck specified.'
@@ -337,7 +339,8 @@ CONTAINS
       ENDIF
     ELSE
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) 'Initial conditions complete and valid. Attempting' &
             // ' to load particles'
           WRITE(io,*)
@@ -397,7 +400,7 @@ CONTAINS
     CHARACTER(LEN=filename_length) :: deck_filename, status_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE., exists
-    INTEGER :: errcode_deck, ierr, i, io, rank_check
+    INTEGER :: errcode_deck, ierr, i, io, iu, rank_check
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
     TYPE(file_buffer), POINTER :: fbuf
     LOGICAL :: already_parsed, got_eor, got_eof
@@ -557,7 +560,8 @@ CONTAINS
         IF (continuation .AND. warn) THEN
           IF (u1 .NE. ' ' .AND. u1 .NE. ACHAR(9)) THEN ! ACHAR(9) = tab
             IF (rank .EQ. rank_check) THEN
-              DO io = stdout, du, du - stdout ! Print to stdout and to file
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
                 WRITE(io,*)
                 WRITE(io,*) '*** WARNING ***'
                 WRITE(io,*) 'Extra characters after continuation line in', &
@@ -617,7 +621,8 @@ CONTAINS
         IF (got_eor .AND. pos .GT. 1) THEN
           IF (slen .GT. string_length) THEN
             CALL integer_as_string(slen, len_string)
-            DO io = stdout, du, du - stdout ! Print to stdout and to file
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
               WRITE(io,*)
               WRITE(io,*) '*** ERROR ***'
               IF (flip .GT. 1) THEN
@@ -692,7 +697,8 @@ CONTAINS
     terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
     ! Fatal error, cause code to bomb
     IF (terminate .AND. rank .EQ. 0) THEN
-      DO io = stdout, du, du - stdout ! Print to stdout and to file
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
         WRITE(io,*)
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'The code cannot parse the input deck sufficiently to run.'
@@ -717,7 +723,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element
     CHARACTER(*), INTENT(IN) :: value
     INTEGER, INTENT(INOUT) :: errcode_deck
-    INTEGER :: rank_check, io
+    INTEGER :: rank_check, io, iu
     INTEGER, SAVE :: err_count
 
     rank_check = 0
@@ -740,7 +746,8 @@ CONTAINS
           c_err_pp_options_wrong) .NE. 0
       IF (invalid_block .AND. rank .EQ. rank_check) THEN
         IF(IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'The block "' // TRIM(value) &
@@ -753,7 +760,8 @@ CONTAINS
             WRITE(io,*)
           ENDDO
         ELSE
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'Unknown block "' // TRIM(value) &
@@ -806,7 +814,8 @@ CONTAINS
     ! If an error is fatal then set terminate to .TRUE.
     IF (IAND(errcode_deck, c_err_unknown_element) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Unrecognised element "' // TRIM(element) &
@@ -818,7 +827,8 @@ CONTAINS
     ENDIF
     IF (IAND(errcode_deck, c_err_preset_element) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "' // TRIM(element) &
@@ -830,7 +840,8 @@ CONTAINS
     ENDIF
     IF (IAND(errcode_deck, c_err_preset_element_use_later) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "' // TRIM(element) &
@@ -842,7 +853,8 @@ CONTAINS
     ENDIF
     IF (IAND(errcode_deck, c_err_bad_value) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
@@ -855,7 +867,8 @@ CONTAINS
     ENDIF
     IF (IAND(errcode_deck, c_err_warn_bad_value) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
@@ -869,7 +882,8 @@ CONTAINS
 
     IF (IAND(errcode_deck, c_err_required_element_not_set) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
@@ -884,7 +898,8 @@ CONTAINS
     ENDIF
     IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'The element "' // TRIM(element) // '" of block "' &
@@ -900,7 +915,8 @@ CONTAINS
     ENDIF
     IF (IAND(errcode_deck, c_err_generic_warning) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) TRIM(extended_error_string)
@@ -910,7 +926,8 @@ CONTAINS
     ENDIF
     IF (IAND(errcode_deck, c_err_generic_error) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) TRIM(extended_error_string)
@@ -921,7 +938,8 @@ CONTAINS
     ENDIF
     IF (IAND(errcode_deck, c_err_other) .NE. 0) THEN
       IF (rank .EQ. rank_check) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'You have managed to find an impossible situation in ' &

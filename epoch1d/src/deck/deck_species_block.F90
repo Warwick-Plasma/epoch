@@ -59,7 +59,7 @@ CONTAINS
 
   SUBROUTINE species_deck_finalise
 
-    INTEGER :: i, j, io, nlevels, nrelease
+    INTEGER :: i, j, io, iu, nlevels, nrelease
     CHARACTER(LEN=8) :: string
     INTEGER :: errcode
     TYPE(primitive_stack) :: stack
@@ -144,7 +144,8 @@ CONTAINS
               j = species_list(j)%ionise_to_species
             ENDDO
             IF (rank .EQ. 0) THEN
-              DO io = stdout, du, du - stdout ! Print to stdout and to file
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
                 WRITE(io,*) '*** WARNING ***'
                 WRITE(io,*) 'Incorrect number of release species specified ', &
                     'for ', TRIM(species_names(i)), '. Using only first ', &
@@ -197,12 +198,13 @@ CONTAINS
 
     CHARACTER(LEN=8) :: id_string
     CHARACTER(LEN=string_length) :: name
-    INTEGER :: i, io, block_species_id
+    INTEGER :: i, io, iu, block_species_id
 
     IF (.NOT.got_name) THEN
       IF (rank .EQ. 0) THEN
         CALL integer_as_string(current_block, id_string)
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Species block number ', TRIM(id_string), &
               ' has no "name" element.'
@@ -243,7 +245,7 @@ CONTAINS
     REAL(num) :: dmin, mult
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
-    INTEGER :: i, j, io, n
+    INTEGER :: i, j, io, iu, n
 
     errcode = c_err_none
     IF (value .EQ. blank .OR. element .EQ. blank) RETURN
@@ -330,7 +332,8 @@ CONTAINS
       ENDDO
       IF (species_list(species_id)%mass .LT. 0) THEN
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle species cannot have negative mass.'
           ENDDO
@@ -588,7 +591,7 @@ CONTAINS
   FUNCTION species_block_check() RESULT(errcode)
 
     INTEGER :: errcode
-    INTEGER :: i, io
+    INTEGER :: i, io, iu
 
     errcode = check_block
 
@@ -597,7 +600,8 @@ CONTAINS
     DO i = 1, n_species
       IF (species_list(i)%mass .LT. 0) THEN
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'No mass specified for particle species "', &
                 TRIM(species_list(i)%name), '"'
@@ -607,7 +611,8 @@ CONTAINS
       ENDIF
       IF (.NOT. species_charge_set(i)) THEN
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'No charge specified for particle species "', &
                 TRIM(species_list(i)%name), '"'
@@ -617,7 +622,8 @@ CONTAINS
       ENDIF
       IF (species_list(i)%npart_per_cell .GE. 0) THEN
         IF (species_list(i)%count .GE. 0 .AND. rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'Two forms of npart used for particle species "', &
                 TRIM(species_list(i)%name), '"'
@@ -636,7 +642,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: name
     INTEGER :: create_species_number_from_name
-    INTEGER :: i, io, ierr
+    INTEGER :: i, io, iu, ierr
     TYPE(stack_element) :: block
 
     DO i = 1, n_species
@@ -652,7 +658,8 @@ CONTAINS
     CALL load_block(name, block)
     IF (block%ptype .NE. c_pt_bad .AND. block%ptype .NE. c_pt_null) THEN
       IF (rank .EQ. 0) THEN
-        DO io = stdout, du, du - stdout ! Print to stdout and to file
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The species name "' // TRIM(name) // '" is not valid.'
           WRITE(io,*) 'Please choose a different name and try again.'
@@ -778,13 +785,14 @@ CONTAINS
     LOGICAL, INTENT(IN) :: got_file
     TYPE(stack_element) :: block
     TYPE(primitive_stack) :: stack
-    INTEGER :: io, ix, ierr
+    INTEGER :: io, iu, ix, ierr
 
     CALL initialise_stack(stack)
     IF (got_file) THEN
       IF (move_window) THEN
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Cannot load from file whilst using a moving window.'
           ENDDO
@@ -808,7 +816,8 @@ CONTAINS
       array(1) = evaluate_at_point(stack, 1, errcode)
       IF (errcode .NE. c_err_none) THEN
         IF (rank .EQ. 0) THEN
-          DO io = stdout, du, du - stdout ! Print to stdout and to file
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Unable to parse input deck.'
           ENDDO
