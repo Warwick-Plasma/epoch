@@ -405,6 +405,13 @@ CONTAINS
             'Absorption/Laser_enTotal', laser_injected)
       ENDIF
 
+      IF (IAND(iomask(c_dump_total_energy_sum), code) .NE. 0) THEN
+        CALL sdf_write_srl(sdf_handle, 'total_particle_energy', &
+            'Total Particle Energy in Simulation (J)', total_particle_energy)
+        CALL sdf_write_srl(sdf_handle, 'total_field_energy', &
+            'Total Field Energy in Simulation (J)', total_field_energy)
+      ENDIF
+
       ! close the file
       CALL sdf_close(sdf_handle)
 

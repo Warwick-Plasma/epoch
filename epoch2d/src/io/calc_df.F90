@@ -845,4 +845,79 @@ CONTAINS
 
   END SUBROUTINE calc_per_species_jz
 
+
+
+  SUBROUTINE calc_total_energy_sum
+
+    REAL(num) :: particle_energy, field_energy
+    REAL(num) :: part_ux, part_uy, part_uz
+    REAL(num) :: part_mc, l_weight, fac, gamma
+    REAL(num) :: sum_out(2), sum_in(2)
+    REAL(num), PARAMETER :: c2 = c**2
+    INTEGER :: ispecies, i, j
+    TYPE(particle), POINTER :: current
+
+    particle_energy = 0.0_num
+
+    ! Sum over all particles to calculate total kinetic energy
+    DO ispecies = 1, n_species
+#ifdef TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
+      current => species_list(ispecies)%attached_list%head
+      part_mc = c * species_list(ispecies)%mass
+      l_weight = species_list(ispecies)%weight
+      fac = part_mc * l_weight * c
+
+      DO WHILE (ASSOCIATED(current))
+        ! Copy the particle properties out for speed
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_mc = c * current%mass
+#ifdef PER_PARTICLE_WEIGHT
+        l_weight = current%weight
+#endif
+        fac = part_mc * l_weight * c
+#else
+#ifdef PER_PARTICLE_WEIGHT
+        l_weight = current%weight
+        fac = part_mc * l_weight * c
+#endif
+#endif
+
+#ifdef PHOTONS
+        IF (species_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+#endif
+          part_ux = current%part_p(1) / part_mc
+          part_uy = current%part_p(2) / part_mc
+          part_uz = current%part_p(3) / part_mc
+          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+          particle_energy = particle_energy + (gamma - 1.0_num) * fac
+#ifdef PHOTONS
+        ELSE
+          particle_energy = particle_energy + current%particle_energy * l_weight
+        ENDIF
+#endif
+
+        current => current%next
+      ENDDO
+    ENDDO
+
+    ! EM field energy
+    field_energy = 0.0_num
+    DO j = 1, ny
+    DO i = 1, nx
+      field_energy = field_energy + ex(i,j)**2 + ey(i,j)**2 &
+          + ez(i,j)**2 + c2 * (bx(i,j)**2 + by(i,j)**2 + bz(i,j)**2)
+    ENDDO
+    ENDDO
+    field_energy = 0.5_num * epsilon0 * field_energy * dx * dy
+
+    sum_out(1) = particle_energy
+    sum_out(2) = field_energy
+    CALL MPI_ALLREDUCE(sum_out, sum_in, 2, mpireal, MPI_SUM, comm, errcode)
+    total_particle_energy = sum_in(1)
+    total_field_energy = sum_in(2)
+
+  END SUBROUTINE calc_total_energy_sum
+
 END MODULE calc_df

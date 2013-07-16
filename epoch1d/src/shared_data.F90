@@ -637,7 +637,9 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_opdepth      = 39
   INTEGER, PARAMETER :: c_dump_part_qed_energy   = 40
   INTEGER, PARAMETER :: c_dump_part_opdepth_tri  = 41
-  INTEGER, PARAMETER :: num_vars_to_dump         = 41
+  INTEGER, PARAMETER :: c_dump_total_energy      = 42
+  INTEGER, PARAMETER :: c_dump_total_energy_sum  = 43
+  INTEGER, PARAMETER :: num_vars_to_dump         = 43
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -950,5 +952,8 @@ MODULE shared_data
   REAL(num) :: laser_absorb_local = 0.0_num
   REAL(num) :: laser_injected = 0.0_num
   REAL(num) :: laser_absorbed = 0.0_num
+
+  REAL(num) :: total_particle_energy = 0.0_num
+  REAL(num) :: total_field_energy = 0.0_num
 
 END MODULE shared_data
