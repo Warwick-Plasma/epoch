@@ -83,18 +83,10 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGE_MASS
       part_m  = io_list(ispecies)%mass
-#ifndef PER_PARTICLE_WEIGHT
-      fac = io_list(ispecies)%weight * idx
-#endif
-      wdata = part_m * fac
-#else
-#ifndef PER_PARTICLE_WEIGHT
       fac = io_list(ispecies)%weight * idx
       wdata = part_m * fac
-#endif
-#endif
+
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -170,18 +162,10 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = c * io_list(ispecies)%mass
-#ifndef PER_PARTICLE_WEIGHT
-      l_weight = io_list(ispecies)%weight
-#endif
-      fac = part_mc * l_weight * c
-#else
-#ifndef PER_PARTICLE_WEIGHT
       l_weight = io_list(ispecies)%weight
       fac = part_mc * l_weight * c
-#endif
-#endif
+
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -196,26 +180,13 @@ CONTAINS
         fac = part_mc * l_weight * c
 #endif
 #endif
+
 #ifdef PHOTONS
         IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
 #endif
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
-#ifdef PHOTONS
-        ELSE
-          wdata = c**2 / current%particle_energy
-          part_ux = current%part_p(1) * wdata
-          part_uy = current%part_p(2) * wdata
-          part_uz = current%part_p(3) * wdata
-        ENDIF
-#endif
-
-#include "particle_to_grid.inc"
-
-#ifdef PHOTONS
-        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
-#endif
           gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
           wdata = (gamma - 1.0_num) * fac
 #ifdef PHOTONS
@@ -223,6 +194,9 @@ CONTAINS
           wdata = current%particle_energy * l_weight
         ENDIF
 #endif
+
+#include "particle_to_grid.inc"
+
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
           data_array(cell_x+ix, cell_y+iy) = &
@@ -292,18 +266,10 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGE_MASS
       part_mc = c * io_list(ispecies)%mass
-#ifndef PER_PARTICLE_WEIGHT
-      l_weight = io_list(ispecies)%weight
-#endif
-      fac = part_mc * l_weight * c
-#else
-#ifndef PER_PARTICLE_WEIGHT
       l_weight = io_list(ispecies)%weight
       fac = part_mc * l_weight * c
-#endif
-#endif
+
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -318,26 +284,13 @@ CONTAINS
         fac = part_mc * l_weight * c
 #endif
 #endif
+
 #ifdef PHOTONS
         IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
 #endif
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
-#ifdef PHOTONS
-        ELSE
-          wdata = c**2 / current%particle_energy
-          part_ux = current%part_p(1) * wdata
-          part_uy = current%part_p(2) * wdata
-          part_uz = current%part_p(3) * wdata
-        ENDIF
-#endif
-
-#include "particle_to_grid.inc"
-
-#ifdef PHOTONS
-        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
-#endif
           gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
           ek = (gamma - 1.0_num) * fac
 #ifdef PHOTONS
@@ -373,6 +326,8 @@ CONTAINS
           part_flux = zfac * part_uz / gamma
           wdata =  ek * MAX(part_flux, 0.0_num)
         END SELECT
+
+#include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
@@ -483,18 +438,10 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = io_list(ispecies)%charge
-#ifndef PER_PARTICLE_WEIGHT
-      fac = io_list(ispecies)%weight * idx
-#endif
-      wdata = part_q * fac
-#else
-#ifndef PER_PARTICLE_WEIGHT
       fac = io_list(ispecies)%weight * idx
       wdata = part_q * fac
-#endif
-#endif
+
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -563,9 +510,8 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_WEIGHT
       wdata = io_list(ispecies)%weight * idx
-#endif
+
       DO WHILE (ASSOCIATED(current))
 #ifdef PER_PARTICLE_WEIGHT
         wdata = current%weight * idx
@@ -633,12 +579,9 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGE_MASS
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
-#endif
-#ifndef PER_PARTICLE_WEIGHT
       l_weight = io_list(ispecies)%weight
-#endif
+
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
         sqrt_part_m  = SQRT(current%mass)
@@ -687,9 +630,8 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-#ifndef PER_PARTICLE_CHARGE_MASS
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
-#endif
+
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
         sqrt_part_m  = SQRT(current%mass)
@@ -826,13 +768,10 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
 
-#ifndef PER_PARTICLE_WEIGHT
       part_weight = io_list(ispecies)%weight
-#endif
-#ifndef PER_PARTICLE_CHARGE_MASS
       part_q  = io_list(ispecies)%charge
       part_mc = c * io_list(ispecies)%mass
-#endif
+
       DO ipart = 1, io_list(ispecies)%attached_list%count
         next => current%next
 #ifdef PER_PARTICLE_WEIGHT
@@ -842,7 +781,6 @@ CONTAINS
         part_q  = current%charge
         part_mc = c * current%mass
 #endif
-#include "particle_to_grid.inc"
 
         ! Copy the particle properties out for speed
         part_px = current%part_p(1)
@@ -857,6 +795,8 @@ CONTAINS
           CASE(c_dir_z)
             part_j = part_q * part_pz * root * part_weight * idxyz
         END SELECT
+
+#include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
