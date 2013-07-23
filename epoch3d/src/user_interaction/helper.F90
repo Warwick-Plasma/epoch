@@ -502,7 +502,6 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
 #ifdef PER_PARTICLE_WEIGHT
-    REAL(num) :: weight_local
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: weight_fn
@@ -692,22 +691,14 @@ CONTAINS
 
     partlist => species%attached_list
     ! Second loop actually assigns weights to particles
-    ! Again assumes linear interpolation
     current => partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
-#include "particle_to_grid.inc"
+      cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
+      cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
+      cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz + 1.5_num)
 
-      weight_local = 0.0_num
-      DO isubz = sf_min, sf_max
-      DO isuby = sf_min, sf_max
-      DO isubx = sf_min, sf_max
-        weight_local = weight_local + gx(isubx) * gy(isuby) * gz(isubz) &
-            * weight_fn(cell_x+isubx, cell_y+isuby, cell_z+isubz)
-      ENDDO ! isubx
-      ENDDO ! isuby
-      ENDDO ! isubz
-      current%weight = weight_local
+      current%weight = weight_fn(cell_x,cell_y,cell_z)
 
       current => current%next
       ipart = ipart + 1
