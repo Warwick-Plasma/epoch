@@ -80,9 +80,10 @@ CONTAINS
         file_list(i)%count = 0
       ENDDO
       first_call = .FALSE.
-      ! Set point data buffer size to 64MB.
-      ! This makes particle output much faster.
-      CALL sdf_set_point_array_size(64*1024*1024)
+      ! Setting a large output buffer for point data can often make
+      ! output much faster.
+      ! The default value is set in deck_io_global_block.F90
+      CALL sdf_set_point_array_size(sdf_buffer_size)
     ENDIF
 
     IF (step .NE. last_step) THEN

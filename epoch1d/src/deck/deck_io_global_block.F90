@@ -20,6 +20,8 @@ CONTAINS
     nstep_stop  = HUGE(1)
     got_dump_first = .FALSE.
     got_dump_last = .FALSE.
+    ! Set point data buffer size to 64MB by default.
+    sdf_buffer_size = 64 * 1024 * 1024
 
   END SUBROUTINE io_global_deck_initialise
 
@@ -130,6 +132,11 @@ CONTAINS
         .OR. str_cmp(element, 'dump_final')) THEN
       got_dump_last = .TRUE.
       dump_last = as_logical(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'sdf_buffer_size')) THEN
+      sdf_buffer_size = as_long_integer(value, errcode)
       RETURN
     ENDIF
 

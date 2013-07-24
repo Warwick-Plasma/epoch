@@ -694,6 +694,7 @@ MODULE shared_data
   INTEGER :: nstep_start, nstep_stop
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: file_prefixes(:)
   INTEGER, ALLOCATABLE :: file_numbers(:)
+  INTEGER(i8) :: sdf_buffer_size
 
   !----------------------------------------------------------------------------
   ! Extended IO information
