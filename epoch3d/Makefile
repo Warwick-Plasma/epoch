@@ -13,8 +13,13 @@ FFLAGS = -O3
 MODULEFLAG = -module $(OBJDIR)
 
 ifeq ($(strip $(MODE)),debug)
+  # Autodetect OSX
+  SYSTEM := $(shell uname -s)
   FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-           -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
+           -C -g -heap-arrays 64 -warn -fpic
+  ifeq ($(strip $(SYSTEM)),Darwin)
+    FFLAGS += -Wl,-no_pie
+  endif
 endif
 
 MPIF90 = mpif90
@@ -38,7 +43,10 @@ ifeq ($(strip $(COMPILER)),intel)
   #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-             -C -g -heap-arrays 64 -warn -fpic #-Wl,-no_pie # Debug
+             -C -g -heap-arrays 64 -warn -fpic
+    ifeq ($(strip $(SYSTEM)),Darwin)
+      FFLAGS += -Wl,-no_pie
+    endif
   endif
   MODULEFLAG = -module $(OBJDIR)
 endif
