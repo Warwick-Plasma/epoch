@@ -100,7 +100,10 @@ endif
 TARGET = epoch3d
 
 # Set pre-processor defines
-DEFINES = $(D)PER_PARTICLE_WEIGHT $(D)PARTICLE_PROBES $(D)TRACER_PARTICLES
+DEFINES =
+DEFINES += $(D)PER_PARTICLE_WEIGHT
+DEFINES += $(D)PARTICLE_PROBES
+DEFINES += $(D)TRACER_PARTICLES
 
 # The following are a list of pre-processor defines which can be added to
 # the above line modifying the code behaviour at compile time.
