@@ -420,7 +420,7 @@ CONTAINS
         CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, MPI_BYTE, &
             b%mpitype, 'native', MPI_INFO_NULL, errcode)
         IF (convert) THEN
-          r4array = REAL(array,r4)
+          r4array(1:npoint_this_cycle) = REAL(array(1:npoint_this_cycle),r4)
           CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, npoint_this_cycle, &
               b%mpitype, MPI_STATUS_IGNORE, errcode)
         ELSE
@@ -629,7 +629,7 @@ CONTAINS
       CALL MPI_FILE_SET_VIEW(h%filehandle, file_offset, MPI_BYTE, &
           b%mpitype, 'native', MPI_INFO_NULL, errcode)
       IF (convert) THEN
-        r4array = REAL(array,r4)
+        r4array(1:npoint_this_cycle) = REAL(array(1:npoint_this_cycle),r4)
         CALL MPI_FILE_WRITE_ALL(h%filehandle, r4array, npoint_this_cycle, &
             b%mpitype, MPI_STATUS_IGNORE, errcode)
       ELSE
