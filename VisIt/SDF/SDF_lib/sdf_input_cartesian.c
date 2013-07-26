@@ -481,9 +481,9 @@ int sdf_read_lagran_mesh(sdf_file_t *h)
                 SDF_DPRNTar(b->grids[n], b->nelements_local);
             }
             h->current_location = h->current_location
-                    + b->type_size * nelements;
+                    + SDF_TYPE_SIZES[b->datatype] * nelements;
         } else {
-            b->grids[n] = calloc(1, b->type_size);
+            b->grids[n] = calloc(1, SDF_TYPE_SIZES[b->datatype]);
         }
     }
 
