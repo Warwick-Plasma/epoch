@@ -17,7 +17,7 @@
         printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0'; \
     } while (0)
 
-int metadata, contents, debug, single, mmap, ignore_summary;
+int metadata, contents, debug, single, use_mmap, ignore_summary;
 struct id_list {
   char *id;
   struct id_list *next;
@@ -61,7 +61,7 @@ char *parse_args(int *argc, char ***argv)
     };
 
     metadata = debug = 1;
-    contents = single = mmap = ignore_summary = 0;
+    contents = single = use_mmap = ignore_summary = 0;
     variable_ids = NULL;
     last_id = NULL;
 
@@ -91,7 +91,7 @@ char *parse_args(int *argc, char ***argv)
             memcpy(last_id->id, optarg, strlen(optarg)+1);
             break;
         case 'm':
-            mmap = 1;
+            use_mmap = 1;
             break;
         case 'i':
             ignore_summary = 1;
@@ -133,7 +133,7 @@ int main(int argc, char **argv)
     MPI_Comm_dup(MPI_COMM_WORLD, &comm);
 #endif
 
-    h = sdf_open(file, comm, SDF_READ, mmap);
+    h = sdf_open(file, comm, SDF_READ, use_mmap);
     if (!h) {
         fprintf(stderr, "Error opening file %s\n", file);
         return 1;
