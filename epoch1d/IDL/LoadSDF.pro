@@ -133,6 +133,7 @@ FUNCTION LoadSDFFile, filename, _variables=requestv, _silent=silent, $
     b = CREATE_STRUCT(b, 'start', offset)
     SWITCH b.blocktype OF
     SDF_Blocktypes.PLAIN_MESH:
+    SDF_Blocktypes.LAGRANGIAN_MESH:
     SDF_Blocktypes.POINT_MESH:
     SDF_Blocktypes.PLAIN_VARIABLE:
     SDF_Blocktypes.POINT_VARIABLE:
@@ -219,6 +220,10 @@ PRO SDFHandleBlock, file_header, block_header, outputobject, offset, $
     CASE block_header.blocktype OF
       SDF_Blocktypes.PLAIN_MESH: BEGIN
         SDFGetPlainMesh, file_header, block_header, outputobject, offset, $
+            md=md, retro=retro, only_md=only_md
+      END
+      SDF_Blocktypes.LAGRANGIAN_MESH: BEGIN
+        SDFGetLagranMesh, file_header, block_header, outputobject, offset, $
             md=md, retro=retro, only_md=only_md
       END
       SDF_Blocktypes.POINT_MESH: BEGIN
@@ -326,6 +331,92 @@ PRO SDFGetPlainMesh, file_header, block_header, output_struct, offset, md=md, $
     ENDIF
   ENDIF
 END
+
+; --------------------------------------------------------------------------
+
+PRO SDFGetLagranMesh, file_header, block_header, output_struct, offset, md=md, $
+    retro=retro, only_md=only_md
+
+  COMPILE_OPT idl2, hidden
+  COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
+      SDF_Datatypes, SDF_Error
+
+  mdflag = KEYWORD_SET(only_md)
+  id_length = SDF_Common.ID_LENGTH
+  offset = block_header.start + file_header.block_header_length
+  mesh_header = readvar(1, { mults:DBLARR(block_header.ndims), $
+      labels:BYTARR(block_header.ndims * id_length), $
+      units:BYTARR(block_header.ndims * id_length), geometry:0L, $
+      minval:DBLARR(block_header.ndims), maxval:DBLARR(block_header.ndims), $
+      dims:LONARR(block_header.ndims)}, offset)
+
+  ndims = block_header.ndims
+  labels = STRARR(ndims)
+  units = STRARR(ndims)
+  FOR iDim = 0, ndims-1 DO BEGIN
+    n0 = iDim * id_length
+    n1 = n0 + id_length - 1
+    labels[iDim] = STRTRIM(STRING(mesh_header.labels[n0:n1]))
+    units[iDim] = STRTRIM(STRING(mesh_header.units[n0:n1]))
+  ENDFOR
+  labelstr = labels
+  labels[0] = 'X'
+  IF (ndims GT 1) THEN labels[1] = 'Y'
+  IF (ndims GT 2) THEN labels[2] = 'Z'
+
+  IF (~mdflag) THEN BEGIN
+    CASE block_header.datatype OF
+      SDF_Datatypes.REAL4: BEGIN
+        datastruct = CREATE_STRUCT(labels[0], FLTARR(mesh_header.dims))
+        FOR iDim = 1, ndims-1 DO BEGIN
+          datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
+              FLTARR(mesh_header.dims))
+        ENDFOR
+      END
+      SDF_Datatypes.REAL8: BEGIN
+        datastruct = CREATE_STRUCT(labels[0], DBLARR(mesh_header.dims))
+        FOR iDim = 1, ndims-1 DO BEGIN
+          datastruct = CREATE_STRUCT(datastruct, labels[iDim], $
+              DBLARR(mesh_header.dims))
+        ENDFOR
+      END
+    ENDCASE
+    offset = block_header.data_location
+    d = readvar(1, datastruct, offset)
+  ENDIF ELSE BEGIN
+    d = CREATE_STRUCT('ONLYMD',1)
+  ENDELSE
+
+  d = CREATE_STRUCT(d,'LABELS', labelstr)
+  d = CREATE_STRUCT(d, 'UNITS', units)
+  d = CREATE_STRUCT(d, 'NPTS', mesh_header.dims)
+  mesh_header = CREATE_STRUCT(mesh_header, 'FRIENDLYNAME', $
+      STRTRIM(STRING(block_header.fname),2))
+
+  obj = CREATE_STRUCT('metadata', mesh_header, d)
+  md = mesh_header
+  IF (N_ELEMENTS(d) NE 0) THEN BEGIN
+    IF (KEYWORD_SET(retro)) THEN BEGIN
+      output_struct = CREATE_STRUCT(output_struct, block_header.idname, d)
+    ENDIF ELSE BEGIN
+      output_struct = CREATE_STRUCT(output_struct, block_header.name, obj)
+    ENDELSE
+    ; Hack to add a cell centred grid for plotting node-centred values
+    IF (block_header.idname EQ 'GRID' AND ~mdflag) THEN BEGIN
+      iDim = 0
+      nx = mesh_header.dims[iDim] - 1
+      x = 0.5 * (d.(iDim)[0:nx-1] + d.(iDim)[1:nx])
+      xc = CREATE_STRUCT(labels[iDim], x)
+      FOR iDim = 1, ndims-1 DO BEGIN
+        nx = mesh_header.dims[iDim] - 1
+        x = 0.5 * (d.(iDim)[0:nx-1] + d.(iDim)[1:nx])
+        xc = CREATE_STRUCT(xc, labels[iDim], x)
+      ENDFOR
+      output_struct = CREATE_STRUCT(output_struct, xc)
+    ENDIF
+  ENDIF
+END
+
 
 ; --------------------------------------------------------------------------
 

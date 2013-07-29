@@ -48,7 +48,8 @@ PRO init_SDFHelp
       STITCHED_MATERIAL:10L, $
       STITCHED_MATVAR:11L, $
       STITCHED_SPECIES:12L, $
-      FAMILY:13L }
+      FAMILY:13L,$
+      LAGRANGIAN_MESH:25L }
   
   SDF_Blocktype_names = [ $
       "Invalid block", $
@@ -64,7 +65,8 @@ PRO init_SDFHelp
       "Stitched material", $
       "Stitched material variable", $
       "Stitched species", $
-      "Particle family" ]
+      "Particle family", $
+      "Lagrangian mesh" ]
   
   SDF_Datatypes = { $
       NULL:0L, $
