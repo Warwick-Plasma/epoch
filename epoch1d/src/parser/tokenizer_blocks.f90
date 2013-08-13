@@ -177,7 +177,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER :: as_constant
-    INTEGER :: i, io, iu
+    INTEGER :: io, iu
     LOGICAL, SAVE :: warn = .TRUE.
 
     as_constant = c_prc_not_this_type

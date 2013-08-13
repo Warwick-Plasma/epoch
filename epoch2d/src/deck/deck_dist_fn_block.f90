@@ -108,36 +108,36 @@ CONTAINS
     IF (str_cmp(element, 'restrict_x')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
-      working_block%use_restrictions(1) = .TRUE.
-      working_block%restrictions(:,1) = (/work1, work2/)
+      working_block%use_restrictions(c_dir_x) = .TRUE.
+      working_block%restrictions(:,c_dir_x) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, 'restrict_y')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
-      working_block%use_restrictions(2) = .TRUE.
-      working_block%restrictions(:,2) = (/work1, work2/)
+      working_block%use_restrictions(c_dir_y) = .TRUE.
+      working_block%restrictions(:,c_dir_y) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, 'restrict_px')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
-      working_block%use_restrictions(3) = .TRUE.
-      working_block%restrictions(:,3) = (/work1, work2/)
+      working_block%use_restrictions(c_dir_px) = .TRUE.
+      working_block%restrictions(:,c_dir_px) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, 'restrict_py')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
-      working_block%use_restrictions(4) = .TRUE.
-      working_block%restrictions(:,4) = (/work1, work2/)
+      working_block%use_restrictions(c_dir_py) = .TRUE.
+      working_block%restrictions(:,c_dir_py) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, 'restrict_pz')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode .NE. c_err_none) RETURN
-      working_block%use_restrictions(5) = .TRUE.
-      working_block%restrictions(:,5) = (/work1, work2/)
+      working_block%use_restrictions(c_dir_pz) = .TRUE.
+      working_block%restrictions(:,c_dir_pz) = (/work1, work2/)
     ENDIF
 
     IF (str_cmp(element, 'include_species')) THEN
