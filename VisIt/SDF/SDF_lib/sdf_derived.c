@@ -1468,6 +1468,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 if (mesh->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) break;
                 mesh = mesh->next;
             }
+            if (!mesh) break;
 
             // First add CPU mesh
             append->next = calloc(1, sizeof(sdf_block_t));
@@ -1746,6 +1747,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                 stagger = 1<<i;
                 if (b->stagger == stagger) {
                     old_mesh = sdf_find_block_by_id(h, b->mesh_id);
+                    if (!old_mesh) break;
                     // For now, only add the mesh if variables are the correct
                     // dimensions
                     dont_add_grid = 0;
