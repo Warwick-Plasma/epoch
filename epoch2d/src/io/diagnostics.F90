@@ -24,6 +24,7 @@ MODULE diagnostics
   INTEGER(i8), ALLOCATABLE :: ejected_offset(:)
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   LOGICAL :: restart_flag, dump_source_code, dump_input_decks
+  LOGICAL :: dump_field_grid
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
@@ -132,6 +133,7 @@ CONTAINS
       IF (MOD(file_numbers(iprefix), full_dump_every) .EQ. 0 &
           .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
       IF (restart_flag) code = IOR(code, c_io_restartable)
+      dump_field_grid = .FALSE.
 
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
@@ -190,22 +192,6 @@ CONTAINS
       ENDIF
 
       iomask = iodumpmask(1,:)
-
-      ! Write the cartesian mesh
-      IF (IAND(iomask(c_dump_grid), code) .NE. 0) THEN
-        convert = (IAND(iomask(c_dump_grid), c_io_dump_single) .NE. 0 &
-            .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-            .OR. IAND(iomask(c_dump_grid), c_io_restartable) .EQ. 0))
-        IF (.NOT. use_offset_grid) THEN
-          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
-              xb_global, yb_global, convert)
-        ELSE
-          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
-              xb_offset_global, yb_offset_global, convert)
-          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid_full', &
-              'Grid/Grid_Full', xb_global, yb_global, convert)
-        ENDIF
-      ENDIF
 
       CALL write_field(c_dump_ex, code, 'ex', 'Electric Field/Ex', 'V/m', &
           c_stagger_ex, ex)
@@ -379,6 +365,27 @@ CONTAINS
           ENDDO
         ENDIF
       ENDDO
+
+      ! Write the cartesian mesh
+      IF (IAND(iomask(c_dump_grid), code) .NE. 0) &
+          dump_field_grid = .TRUE.
+      IF (IAND(iomask(c_dump_grid), c_io_never) .NE. 0) &
+          dump_field_grid = .FALSE.
+
+      IF (dump_field_grid) THEN
+        convert = (IAND(iomask(c_dump_grid), c_io_dump_single) .NE. 0 &
+            .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+            .OR. IAND(iomask(c_dump_grid), c_io_restartable) .EQ. 0))
+        IF (.NOT. use_offset_grid) THEN
+          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
+              xb_global, yb_global, convert)
+        ELSE
+          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
+              xb_offset_global, yb_offset_global, convert)
+          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid_full', &
+              'Grid/Grid_Full', xb_global, yb_global, convert)
+        ENDIF
+      ENDIF
 
       io_list => species_list
       iomask = iodumpmask(1,:)
@@ -890,6 +897,7 @@ CONTAINS
       CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id), &
           TRIM(name), TRIM(units), dims, stagger, 'grid', array, &
           subtype, subarray, convert)
+      dump_field_grid = .TRUE.
     ENDIF
 
     DO io = 1, n_io_blocks
@@ -916,6 +924,7 @@ CONTAINS
             avg%array = 0.0_num
           ENDIF
 
+          dump_field_grid = .TRUE.
           avg%real_time = 0.0_num
           avg%started = .FALSE.
         ENDIF
@@ -987,6 +996,7 @@ CONTAINS
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
             subtype, subarray, convert)
+        dump_field_grid = .TRUE.
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
@@ -1021,6 +1031,7 @@ CONTAINS
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
               subtype, subarray, convert)
+          dump_field_grid = .TRUE.
         ENDDO
       ENDIF
     ENDIF
@@ -1042,6 +1053,7 @@ CONTAINS
                   'Derived/' // TRIM(name) // '_averaged', &
                   TRIM(units), dims, stagger, 'grid', &
                   avg%r4array(:,:,1), subtype_field_r4, subarray_field_r4)
+              dump_field_grid = .TRUE.
             ENDIF
 
             IF (avg%n_species .GT. 0) THEN
@@ -1076,6 +1088,7 @@ CONTAINS
                     TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
                     avg%r4array(:,:,ispecies+avg%species_sum), &
                     subtype_field_r4, subarray_field_r4)
+                dump_field_grid = .TRUE.
               ENDDO
             ENDIF
 
@@ -1090,6 +1103,7 @@ CONTAINS
                   'Derived/' // TRIM(name) // '_averaged', &
                   TRIM(units), dims, stagger, 'grid', &
                   avg%array(:,:,1), subtype_field, subarray_field)
+              dump_field_grid = .TRUE.
             ENDIF
 
             IF (avg%n_species .GT. 0) THEN
@@ -1124,6 +1138,7 @@ CONTAINS
                     TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
                     avg%array(:,:,ispecies+avg%species_sum), &
                     subtype_field, subarray_field)
+                dump_field_grid = .TRUE.
               ENDDO
             ENDIF
 
@@ -1196,6 +1211,7 @@ CONTAINS
             TRIM(units), dims, stagger, 'grid', &
             array, subtype, subarray, convert)
       ENDDO
+      dump_field_grid = .TRUE.
     ENDIF
 
     ! Flux variables not currently averaged
@@ -1264,6 +1280,7 @@ CONTAINS
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
               subtype, subarray, convert)
         ENDDO
+        dump_field_grid = .TRUE.
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
@@ -1304,6 +1321,7 @@ CONTAINS
                 TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
                 subtype, subarray, convert)
           ENDDO
+          dump_field_grid = .TRUE.
         ENDDO
       ENDIF
     ENDIF
