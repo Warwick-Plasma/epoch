@@ -11,7 +11,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 25 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 26 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   LOGICAL :: got_check_walltime
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -32,6 +32,7 @@ MODULE deck_control_block
           'stdout_frequency         ', &
           'use_random_seed          ', &
           'smooth_currents          ', &
+          'field_ionisation         ', &
           'use_multiphoton          ', &
           'use_bsi                  ', &
           'particle_tstart          ', &
@@ -63,6 +64,7 @@ MODULE deck_control_block
           'stdout_frequency         ', &
           'use_random_seed          ', &
           'smooth_currents          ', &
+          'use_field_ionise         ', &
           'multiphoton              ', &
           'bsi                      ', &
           'particle_tstart          ', &
@@ -245,30 +247,32 @@ CONTAINS
     CASE(4*c_ndims+12)
       smooth_currents = as_logical(value, errcode)
     CASE(4*c_ndims+13)
-      use_multiphoton = as_logical(value, errcode)
+      use_field_ionisation = as_logical(value, errcode)
     CASE(4*c_ndims+14)
-      use_bsi = as_logical(value, errcode)
+      use_multiphoton = as_logical(value, errcode)
     CASE(4*c_ndims+15)
-      particle_push_start_time = as_real(value, errcode)
+      use_bsi = as_logical(value, errcode)
     CASE(4*c_ndims+16)
-      use_particle_migration = as_logical(value, errcode)
+      particle_push_start_time = as_real(value, errcode)
     CASE(4*c_ndims+17)
-      particle_migration_interval = as_integer(value, errcode)
+      use_particle_migration = as_logical(value, errcode)
     CASE(4*c_ndims+18)
-      use_exact_restart = as_logical(value, errcode)
+      particle_migration_interval = as_integer(value, errcode)
     CASE(4*c_ndims+19)
-      allow_cpu_reduce = as_logical(value, errcode)
+      use_exact_restart = as_logical(value, errcode)
     CASE(4*c_ndims+20)
-      check_stop_frequency = as_integer(value, errcode)
+      allow_cpu_reduce = as_logical(value, errcode)
     CASE(4*c_ndims+21)
+      check_stop_frequency = as_integer(value, errcode)
+    CASE(4*c_ndims+22)
       check_walltime_start = as_real(value, errcode)
       got_check_walltime = .TRUE.
-    CASE(4*c_ndims+22)
+    CASE(4*c_ndims+23)
       check_walltime_frequency = as_integer(value, errcode)
       got_check_walltime = .TRUE.
-    CASE(4*c_ndims+23)
-      stop_at_walltime = as_real(value, errcode)
     CASE(4*c_ndims+24)
+      stop_at_walltime = as_real(value, errcode)
+    CASE(4*c_ndims+25)
       IF (rank .EQ. 0) THEN
         OPEN(unit=lu, status='OLD', iostat=ierr, &
             file=TRIM(data_dir) // '/' // TRIM(value))
@@ -278,7 +282,7 @@ CONTAINS
         ENDIF
       ENDIF
       CALL MPI_BCAST(stop_at_walltime, 1, mpireal, 0, comm, errcode)
-    CASE(4*c_ndims+25)
+    CASE(4*c_ndims+26)
       simplify_deck = as_logical(value, errcode)
     END SELECT
 

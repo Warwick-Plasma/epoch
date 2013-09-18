@@ -198,7 +198,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_stagger_jz = c_stagger_ez
 
   ! Length of a standard string
-  INTEGER, PARAMETER :: string_length = 128
+  INTEGER, PARAMETER :: string_length = 256
 
   INTEGER, PARAMETER :: stat_unit = 20
 
@@ -558,6 +558,7 @@ MODULE shared_data
     REAL(num), DIMENSION(:), POINTER :: ext_temp_x_min, ext_temp_x_max
 
     ! Species_ionisation
+    LOGICAL :: electron
     LOGICAL :: ionise
     INTEGER :: ionise_to_species
     INTEGER :: release_species
@@ -859,7 +860,8 @@ MODULE shared_data
   REAL(num) :: coulomb_log
   LOGICAL :: coulomb_log_auto, use_collisions
 
-  LOGICAL :: use_ionisation, use_multiphoton, use_bsi
+  LOGICAL :: use_field_ionisation, use_collisional_ionisation
+  LOGICAL :: use_multiphoton, use_bsi
 
   !----------------------------------------------------------------------------
   ! Moving window
