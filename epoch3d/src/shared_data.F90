@@ -853,7 +853,7 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, y, z
 
   INTEGER, PARAMETER :: data_dir_max_length = 64
-  CHARACTER(LEN=data_dir_max_length) :: data_dir
+  CHARACTER(LEN=data_dir_max_length) :: data_dir, filesystem
   INTEGER, PARAMETER :: c_max_string_length = 64
 
   LOGICAL :: neutral_background = .TRUE.

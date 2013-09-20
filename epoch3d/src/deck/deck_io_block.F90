@@ -10,7 +10,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 26
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 27
   INTEGER :: block_number, full_io_block, restart_io_block, nfile_prefixes
   INTEGER :: rolling_restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
@@ -125,6 +125,7 @@ CONTAINS
     io_block_name (i+24) = 'file_prefix'
     io_block_name (i+25) = 'rolling_restart'
     io_block_name (i+26) = 'dump_cycle_first_index'
+    io_block_name (i+27) = 'filesystem'
 
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
@@ -465,6 +466,8 @@ CONTAINS
       ENDIF
     CASE(26)
       io_block%dump_cycle_first_index = as_integer(value, errcode)
+    CASE(27)
+      filesystem = TRIM(value) // ':'
     END SELECT
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN

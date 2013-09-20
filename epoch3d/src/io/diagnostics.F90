@@ -122,7 +122,8 @@ CONTAINS
           n_zeros, n_zeros
       WRITE(filename, filename_fmt) TRIM(file_prefixes(iprefix)), &
           file_numbers(iprefix)
-      full_filename = TRIM(data_dir) // '/' // TRIM(filename)
+      full_filename = TRIM(filesystem) &
+          // TRIM(data_dir) // '/' // TRIM(filename)
 
       ! Always dump the variables with the 'Every' attribute
       code = c_io_always

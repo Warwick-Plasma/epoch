@@ -92,7 +92,8 @@ CONTAINS
             n_zeros, n_zeros
         WRITE(restart_filename, filename_fmt) restart_number
       ENDIF
-      full_restart_filename = TRIM(data_dir) // '/' // TRIM(restart_filename)
+      full_restart_filename = TRIM(filesystem) &
+          // TRIM(data_dir) // '/' // TRIM(restart_filename)
     ENDIF
 
   END SUBROUTINE control_deck_finalise

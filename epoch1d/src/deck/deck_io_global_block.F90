@@ -22,6 +22,7 @@ CONTAINS
     got_dump_last = .FALSE.
     ! Set point data buffer size to 64MB by default.
     sdf_buffer_size = 64 * 1024 * 1024
+    filesystem = ''
 
   END SUBROUTINE io_global_deck_initialise
 
@@ -137,6 +138,11 @@ CONTAINS
 
     IF (str_cmp(element, 'sdf_buffer_size')) THEN
       sdf_buffer_size = as_long_integer(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'filesystem')) THEN
+      filesystem = TRIM(value) // ':'
       RETURN
     ENDIF
 
