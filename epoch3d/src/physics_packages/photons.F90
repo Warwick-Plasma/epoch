@@ -765,7 +765,6 @@ CONTAINS
     ! This is to deal with the grid stagger
     REAL(num), DIMENSION(sf_min:sf_max) :: hx, hy, hz
     ! Temporary variables
-    REAL(num) :: cf2
     INTEGER :: dcellx, dcelly, dcellz
     REAL(num) :: ex_part, ey_part, ez_part
     REAL(num) :: bx_part, by_part, bz_part

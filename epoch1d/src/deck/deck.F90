@@ -399,7 +399,10 @@ CONTAINS
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=filename_length) :: deck_filename, status_filename
     CHARACTER(LEN=string_length) :: len_string
-    LOGICAL :: terminate = .FALSE., exists
+    LOGICAL :: terminate = .FALSE.
+#ifndef NO_IO
+    LOGICAL :: exists
+#endif
     INTEGER :: errcode_deck, ierr, i, io, iu, rank_check
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
     TYPE(file_buffer), POINTER :: fbuf

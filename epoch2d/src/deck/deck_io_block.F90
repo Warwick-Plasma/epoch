@@ -135,8 +135,10 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
-    CHARACTER(LEN=c_max_string_length) :: list_filename
     INTEGER :: i, io, iu, ierr
+#ifndef NO_IO
+    CHARACTER(LEN=c_max_string_length) :: list_filename
+#endif
 
     n_io_blocks = block_number
     block_number = 0
@@ -251,7 +253,9 @@ CONTAINS
   SUBROUTINE io_block_end
 
     INTEGER :: io, iu, ierr
+#ifndef NO_IO
     CHARACTER(LEN=c_max_string_length) :: list_filename
+#endif
 
     IF (deck_state .EQ. c_ds_first) RETURN
 

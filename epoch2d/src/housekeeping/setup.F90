@@ -420,12 +420,12 @@ CONTAINS
 
   SUBROUTINE open_files
 
-    INTEGER :: errcode, ierr
-    LOGICAL :: exists
-
 #ifdef NO_IO
     RETURN
 #else
+    INTEGER :: errcode, ierr
+    LOGICAL :: exists
+
     IF (rank .EQ. 0) THEN
       WRITE(stat_file, '(a, ''/epoch2d.dat'')') TRIM(data_dir)
       IF (ic_from_restart) THEN
@@ -464,11 +464,11 @@ CONTAINS
 
   SUBROUTINE flush_stat_file
 
-    INTEGER :: errcode
-
 #ifdef NO_IO
     RETURN
 #else
+    INTEGER :: errcode
+
     IF (rank .EQ. 0) THEN
       CLOSE(unit=stat_unit)
       OPEN(unit=stat_unit, status='OLD', position='APPEND', &
