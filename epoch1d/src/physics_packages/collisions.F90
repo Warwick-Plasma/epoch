@@ -27,33 +27,35 @@ MODULE collisions
   INTEGER :: nu_count
 
   REAL(num), DIMENSION(3,0:2), PARAMETER :: a_bell = RESHAPE( &
-      (/ 5.25e-14_num, 5.3e-14_num, 1.3e-14_num, &
-         0.0_num,      6.0e-14_num, 3.88e-14_num, &
-         0.0_num,      0.0_num,     3.5e-14_num /), (/3,3/) )
+      (/ 0.5250_num, 0.5300_num, 0.1300_num, &
+         0.0000_num, 0.6000_num, 0.3880_num, &
+         0.0000_num, 0.0000_num, 0.3500_num /) * 1e-13_num, (/3,3/) )
+
   REAL(num), DIMENSION(3,0:2,7), PARAMETER :: b_bell = RESHAPE( &
-      (/-5.1e-14_num, -4.1e-14_num,  2.5e-14_num, &
-         0.0_num,     -4.0e-14_num, -2.0e-14_num, &
-         0.0_num,      0.0_num,      1.6e-13_num, &
-         2.0e-14_num,  1.5e-14_num, -1.5e-13_num, &
-         0.0_num,     -7.1e-14_num, -2.356e-14_num, &
-         0.0_num,      0.0_num,     -3.0e-13_num, &
-         5.0e-15_num,  1.5e-14_num,  2.4e-13_num, &
-         0.0_num,      6.55e-14_num, 5.355e-14_num, &
-         0.0_num,      0.0_num,      4.0e-13_num, &
-        -2.5e-15_num, -2.0e-14_num,  3.22e-13_num, &
-         0.0_num,      4.25e-14_num, 3.15e-13_num, &
-         0.0_num,      0.0_num,      2.0e-13_num, &
-        -1.0e-14_num, -1.5e-14_num, -3.667e-13_num, &
-         0.0_num,     -7.5e-14_num, -8.5e-13_num, &
-         0.0_num,      0.0_num,     -5.0e-13_num, &
-         0.0_num,      0.0_num,      0.0_num, &
-         0.0_num,      0.0_num,      5.05e-13_num, &
-         0.0_num,      0.0_num,     -1.5e-13_num, &
-         0.0_num,      0.0_num,      0.0_num, &
-         0.0_num,      0.0_num,      3.7e-14_num, &
-         0.0_num,      0.0_num,      3.5e-13_num /), (/3,3,7/) )
+      (/-0.5100_num, -0.4100_num,  0.2500_num, &
+         0.0000_num, -0.4000_num, -0.2000_num, &
+         0.0000_num,  0.0000_num,  1.6000_num, &
+         0.2000_num,  0.1500_num, -1.5000_num, &
+         0.0000_num, -0.7100_num, -0.2356_num, &
+         0.0000_num,  0.0000_num, -3.0000_num, &
+         0.0500_num,  0.1500_num,  2.4000_num, &
+         0.0000_num,  0.6550_num,  0.5355_num, &
+         0.0000_num,  0.0000_num,  4.0000_num, &
+        -0.0250_num, -0.2000_num,  3.2200_num, &
+         0.0000_num,  0.4250_num,  3.1500_num, &
+         0.0000_num,  0.0000_num,  2.0000_num, &
+        -0.1000_num, -0.1500_num, -3.6670_num, &
+         0.0000_num, -0.7500_num, -8.5000_num, &
+         0.0000_num,  0.0000_num, -5.0000_num, &
+         0.0000_num,  0.0000_num,  0.0000_num, &
+         0.0000_num,  0.0000_num,  5.0500_num, &
+         0.0000_num,  0.0000_num, -1.5000_num, &
+         0.0000_num,  0.0000_num,  0.0000_num, &
+         0.0000_num,  0.0000_num,  0.3700_num, &
+         0.0000_num,  0.0000_num,  3.5000_num /) * 1e-13_num, (/3,3,7/) )
+
   REAL(num), DIMENSION(0:2), PARAMETER :: &
-      l_bell = (/ 1.27e-13_num, 5.42e-14_num, 9.5e-14_num /)
+      l_bell = (/ 1.27_num, 0.542_num, 0.95_num /) * 1e-13_num
 
   REAL(num), DIMENSION(:), ALLOCATABLE :: meanx, meany, meanz, part_count
 
@@ -289,14 +291,16 @@ CONTAINS
           e_log_lambda = coulomb_log
         ENDIF
 
-        DO ix = 1, nx
-          IF (ispecies .EQ. jspecies) THEN
+        IF (ispecies .EQ. jspecies) THEN
+          DO ix = 1, nx
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix), &
                 m1, q1, w1, idens(ix), itemp(ix), &
                 log_lambda(ix), user_factor)
-          ELSE IF (species_list(ispecies)%ionise &
-              .AND. species_list(jspecies)%electron) THEN
+          ENDDO ! ix
+        ELSE IF (species_list(ispecies)%ionise &
+            .AND. species_list(jspecies)%electron) THEN
+          DO ix = 1, nx
             ! Perform collisional ionisation before calculating scatter
             CALL preionise(species_list(jspecies)%secondary_list(ix), &
                 species_list(ispecies)%secondary_list(ix), &
@@ -305,26 +309,32 @@ CONTAINS
                 ionisation_energy, n1, n2, l)
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
-            IF (e_user_factor .GT. 0.0_num) &
-                CALL inter_species_collisions(ejected_e, ionising_e, &
-                m_e, m2, q_e, q2, w1, w2, e_dens(ix), jdens(ix), &
-                e_temp(ix), jtemp(ix), e_log_lambda(ix), e_user_factor)
+            IF (e_user_factor .GT. 0.0_num) THEN
+              CALL inter_species_collisions( &
+                  ejected_e, ionising_e, &
+                  m_e, m2, q_e, q2, w1, w2, e_dens(ix), jdens(ix), &
+                  e_temp(ix), jtemp(ix), e_log_lambda(ix), &
+                  e_user_factor)
+            ENDIF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
-            IF (q1 .NE. 0.0_num) &
-                CALL inter_species_collisions( &
-                species_list(ispecies)%secondary_list(ix), &
-                species_list(jspecies)%secondary_list(ix), &
-                m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
-                itemp(ix), jtemp(ix), log_lambda(ix), &
-                user_factor)
+            IF (q1 .NE. 0.0_num) THEN
+              CALL inter_species_collisions( &
+                  species_list(ispecies)%secondary_list(ix), &
+                  species_list(jspecies)%secondary_list(ix), &
+                  m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
+                  itemp(ix), jtemp(ix), log_lambda(ix), &
+                  user_factor)
+            ENDIF
             ! Put ions and electrons into respective lists
             CALL append_partlist(species_list(jspecies)%secondary_list(ix), &
                 ionising_e)
             CALL append_partlist(species_list(jspecies)%secondary_list(ix), &
                 ejected_e)
-          ELSE IF (species_list(ispecies)%electron &
-              .AND. species_list(jspecies)%ionise) THEN
+          ENDDO ! ix
+        ELSE IF (species_list(ispecies)%electron &
+            .AND. species_list(jspecies)%ionise) THEN
+          DO ix = 1, nx
             ! Perform collisional ionisation before calculating scatter
             CALL preionise(species_list(ispecies)%secondary_list(ix), &
                 species_list(jspecies)%secondary_list(ix), &
@@ -333,39 +343,45 @@ CONTAINS
                 ionisation_energy, n1, n2, l)
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
-            IF (e_user_factor .GT. 0.0_num) &
-                CALL inter_species_collisions(ejected_e, ionising_e, &
-                m1, m_e, q1, q_e, w1, w2, idens(ix), e_dens(ix), &
-                e_temp(ix), jtemp(ix), e_log_lambda(ix), e_user_factor)
+            IF (e_user_factor .GT. 0.0_num) THEN
+              CALL inter_species_collisions( &
+                  ejected_e, ionising_e, &
+                  m1, m_e, q1, q_e, w1, w2, idens(ix), e_dens(ix), &
+                  e_temp(ix), jtemp(ix), e_log_lambda(ix), &
+                  e_user_factor)
+            ENDIF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
-            IF (q2 .NE. 0.0_num) &
-                CALL inter_species_collisions( &
-                species_list(ispecies)%secondary_list(ix), &
-                species_list(jspecies)%secondary_list(ix), &
-                m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
-                itemp(ix), jtemp(ix), log_lambda(ix), &
-                user_factor)
+            IF (q2 .NE. 0.0_num) THEN
+              CALL inter_species_collisions( &
+                  species_list(ispecies)%secondary_list(ix), &
+                  species_list(jspecies)%secondary_list(ix), &
+                  m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
+                  itemp(ix), jtemp(ix), log_lambda(ix), &
+                  user_factor)
+            ENDIF
             ! Put electrons into respective lists
             CALL append_partlist(species_list(ispecies)%secondary_list(ix), &
                 ionising_e)
             CALL append_partlist(species_list(ispecies)%secondary_list(ix), &
                 ejected_e)
-          ELSE
+          ENDDO ! ix
+        ELSE
+          DO ix = 1, nx
             CALL inter_species_collisions( &
                 species_list(ispecies)%secondary_list(ix), &
                 species_list(jspecies)%secondary_list(ix), &
                 m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
                 itemp(ix), jtemp(ix), log_lambda(ix), &
                 user_factor)
-          ENDIF
-        ENDDO ! ix
+          ENDDO ! ix
+        ENDIF
       ENDDO ! jspecies
     ENDDO ! ispecies
 
-    DEALLOCATE(idens, jdens, e_dens, itemp, jtemp, e_temp)
-    DEALLOCATE(log_lambda, e_log_lambda)
+    DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
+    DEALLOCATE(e_dens, e_temp, e_log_lambda)
 
   END SUBROUTINE collisional_ionisation
 #endif
@@ -456,19 +472,19 @@ CONTAINS
             electron%part_p(3) * DCOS(rot_y) - electron%part_p(1) &
             * DSIN(rot_y) /)
         ! Lorentz transform relativistic electron kinetic energy to ion frame
-        gamma_i = SQRT(i_p2 / (ion_mass * c)**2.0_num + 1.0_num)
-        beta_i = SQRT(1.0_num - 1.0_num / gamma_i**2.0_num)
+        gamma_i = SQRT(i_p2 / (ion_mass * c)**2 + 1.0_num)
+        beta_i = SQRT(1.0_num - 1.0_num / gamma_i**2)
         e_e = c * SQRT(DOT_PRODUCT(e_p_rot, e_p_rot) + e_mass * e_rest)
         e_ke_i = (gamma_i * (e_e - beta_i * e_p_rot(1) * c) - e_rest) / ev
         ! Lorentz transform electron momentum
         e_p_rot(1) = gamma_i * (e_p_rot(1) - beta_i * e_e / c)
         ! Find electron velocity in ion frame
         e_p2_i = DOT_PRODUCT(e_p_rot, e_p_rot)
-        e_v_i = SQRT(e_p2_i / (e_mass**2.0_num + e_p2_i / c**2.0_num))
+        e_v_i = SQRT(e_p2_i / (e_mass**2 + e_p2_i / c**2))
       ELSE
         e_p2_i = DOT_PRODUCT(electron%part_p, electron%part_p)
         e_ke_i = c * (SQRT(e_p2_i + e_mass * e_rest) - e_mass * c) / ev
-        e_v_i = SQRT(e_p2_i / (e_mass**2.0_num + e_p2_i / c**2.0_num))
+        e_v_i = SQRT(e_p2_i / (e_mass**2 + e_p2_i / c**2))
       ENDIF
       ! Must enforce that electrons with insufficient kinetic energies cannot
       ! cause ionisation, as all cross sectional models used show massively
@@ -476,18 +492,18 @@ CONTAINS
       ! tends to zero
       IF (e_ke_i .GE. ion%weight / electron%weight * ionisation_energy &
           .AND. .NOT. was_ionised(MOD(k - 1, ion_count) + 1)) THEN
-        !Find cross section
+        ! Find cross section
         red_inc = e_ke_i / ionisation_energy
         ! Use MBELL model for atomic number < 36
-        IF(n1 .LT. 4 .AND. l .LT. 3) THEN
+        IF (n1 .LT. 4 .AND. l .LT. 3) THEN
           red_ion = e_rest_ev / ionisation_energy
           ! Relativistic correction for high energy incident electrons
-          gr = ((1.0_num + 2.0_num * red_ion)/(red_inc + 2.0_num * red_ion)) &
-              * ((red_inc + red_ion) / (1.0_num + red_ion))**2.0_num &
+          gr = (1.0_num + 2.0_num * red_ion)/(red_inc + 2.0_num * red_ion) &
+              * ((red_inc + red_ion) / (1.0_num + red_ion))**2 &
               * ((1.0_num + red_inc) * (red_inc + 2.0_num * red_ion) &
-              * (1.0_num + red_ion)**2.0_num / (red_ion**2.0_num * (1.0_num &
+              * (1.0_num + red_ion)**2 / (red_ion**2 * (1.0_num &
               + 2.0_num * red_ion) + red_inc * (red_inc + 2.0_num * red_ion) &
-              * (1.0_num + red_ion)**2.0_num))**1.5_num
+              * (1.0_num + red_ion)**2))**1.5_num
           ! Ionic correction for effect of charge of ion target upon incident
           ! electron
           fion = 1.0_num + 3.0_num * (ion_charge / (full_ion_charge &
@@ -505,19 +521,19 @@ CONTAINS
         ELSE
           red_ion = ionisation_energy / e_rest_ev
           mrbeb_k = e_ke_i / e_rest_ev
-          mrbeb_bk2 = 1.0_num - 1.0_num / (1.0_num + mrbeb_k)**2.0_num
-          mrbeb_bl2 = 1.0_num - 1.0_num / (1.0_num + red_ion)**2.0_num
+          mrbeb_bk2 = 1.0_num - 1.0_num / (1.0_num + mrbeb_k)**2
+          mrbeb_bl2 = 1.0_num - 1.0_num / (1.0_num + red_ion)**2
           mrbeb_c = hartree / ionisation_energy &
-              * (0.3_num * (ion_charge / q0)**2.0_num / n1**2.0_num &
-              * 0.7_num * (ion_charge / q0 + 1.0_num)**2.0_num / n2**2.0_num)
+              * (0.3_num * (ion_charge / q0)**2 / n1**2 &
+              * 0.7_num * (ion_charge / q0 + 1.0_num)**2 / n2**2)
           eiics = mrbeb_const / (mrbeb_bk2 + mrbeb_c * mrbeb_bl2) &
               * (0.5_num * (LOG(mrbeb_bk2 / (1.0_num - mrbeb_bk2)) &
               - mrbeb_bk2 - LOG(2.0_num * mrbeb_k)) &
-              * (1.0_num - 1.0_num / red_inc**2.0_num) + 1.0_num &
+              * (1.0_num - 1.0_num / red_inc**2) + 1.0_num &
               - 1.0_num / red_inc - LOG(red_inc) / (red_inc + 1.0_num) &
               * (1.0_num + 2.0_num * mrbeb_k) &
-              / (1.0_num + mrbeb_k / 2.0_num)**2.0_num &
-              + mrbeb_k**2.0_num / (1.0_num + mrbeb_k / 2.0_num) &
+              / (1.0_num + mrbeb_k / 2.0_num)**2 &
+              + mrbeb_k**2 / (1.0_num + mrbeb_k / 2.0_num) &
               * (red_inc - 1.0_num) / 2.0_num)
         END IF
         IF (random() .LT. 1.0_num - EXP(-e_dens * np / factor * eiics &
@@ -528,7 +544,7 @@ CONTAINS
           IF(i_p2 .GT. 0.0_num) THEN
             ! Reduce electron momentum by ionisation energy
             e_p_rot = SQRT(((ev / c * (e_ke_i - ion%weight / electron%weight &
-                * ionisation_energy + e_rest_ev))**2.0_num - e_mass * e_rest) &
+                * ionisation_energy + e_rest_ev))**2 - e_mass * e_rest) &
                 / e_p2_i) * e_p_rot
             ! Inverse Lorentz transform electron momentum back into simulation
             ! frame
@@ -547,14 +563,14 @@ CONTAINS
             IF(DOT_PRODUCT(electron%part_p, electron%part_p) .LT. &
                 DOT_PRODUCT(e_p_rot, e_p_rot)) THEN
               electron%part_p = SQRT(((ev / c * (e_ke_i - ion%weight &
-                / electron%weight * ionisation_energy + e_rest_ev))**2.0_num &
+                / electron%weight * ionisation_energy + e_rest_ev))**2 &
                 - e_mass * e_rest) / e_p2_i) * electron%part_p
             ELSE
               electron%part_p = e_p_rot
             ENDIF
           ELSE
             electron%part_p = SQRT(((ev / c * (e_ke_i - ion%weight &
-                / electron%weight * ionisation_energy + e_rest_ev))**2.0_num &
+                / electron%weight * ionisation_energy + e_rest_ev))**2 &
                 - e_mass * e_rest) / e_p2_i) * electron%part_p
           ENDIF
         ENDIF
