@@ -22,7 +22,7 @@ ifeq ($(strip $(MODE)),debug)
   endif
 endif
 
-MPIF90 = mpif90
+MPIF90 ?= mpif90
 D = -D
 
 # PGI
@@ -90,6 +90,17 @@ ifeq ($(strip $(COMPILER)),ibm)
 
   # IBM compiler needs a -WF to recognise preprocessor directives
   D = -WF,-D
+endif
+
+# HECToR
+# ========
+ifeq ($(strip $(COMPILER)),hector)
+  FFLAGS = -O3
+  ifeq ($(strip $(MODE)),debug)
+    FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
+  endif
+  MODULEFLAG = -em -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
+  MPIF90 = ftn
 endif
 
 # Don't compile encoded source if MODE=debug or ENC=no
