@@ -522,6 +522,7 @@ CONTAINS
     ! ghost cell, so we use the cell-centred quantities in the first cell.
 
     dir = 1.0_num
+    mm = 1
 
     SELECT CASE(bd)
       CASE(c_bd_x_min, c_bd_x_max)
@@ -559,6 +560,8 @@ CONTAINS
                        + bz(1:nx  , ibc-1) + bz(1:nx  , ibc))
 
       CASE DEFAULT
+        ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
+
         dd = 0.0_num
         e1 = 0.0_num
         e2 = 0.0_num

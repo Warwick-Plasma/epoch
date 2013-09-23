@@ -1144,7 +1144,7 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: array
     CHARACTER(LEN=*), INTENT(IN) :: last
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER(i8) :: i, sz
+    INTEGER(i8) :: i, sz = 0
     INTEGER :: errcode, len1, len2
     TYPE(sdf_block_type), POINTER :: b
 
@@ -1386,7 +1386,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nmax1(:), nmax2(:,:)
     INTEGER, INTENT(IN), OPTIONAL :: nmax3(:,:,:)
     INTEGER, INTENT(IN), OPTIONAL :: rank_write
-    INTEGER :: errcode, n1, n2, n3, npt
+    INTEGER :: errcode, n1, n2, n3 = 0, npt
     TYPE(sdf_block_type), POINTER :: b
 
     CALL sdf_get_next_block(h)

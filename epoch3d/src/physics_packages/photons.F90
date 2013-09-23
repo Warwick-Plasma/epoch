@@ -1,5 +1,5 @@
-#ifdef PHOTONS
 MODULE photons
+#ifdef PHOTONS
 
   USE partlist
 
@@ -174,7 +174,8 @@ CONTAINS
     ! Reads files epsilon.table, log_chi.table, energy_split.table
     ! and sets up appropriate tables
 
-    REAL(num) :: etalog_min, etalog_max, etalog_dx, chi_min, chi_dx
+    REAL(num) :: etalog_min = 0.0_num, etalog_max = 0.0_num
+    REAL(num) :: etalog_dx, chi_min, chi_dx
     REAL(num), ALLOCATABLE :: realbuf(:)
     INTEGER :: i, n, ichi2, iepsilon, ieta, ichi, bufsize, intbuf(6)
 
@@ -1376,5 +1377,5 @@ CONTAINS
 
   END FUNCTION find_value_from_table
 
-END MODULE photons
 #endif
+END MODULE photons

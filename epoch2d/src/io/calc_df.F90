@@ -233,7 +233,7 @@ CONTAINS
     ! The weight of a particle
     REAL(num) :: l_weight
     ! The data to be weighted onto the grid
-    REAL(num) :: wdata
+    REAL(num) :: wdata = 0.0_num
     REAL(num) :: fac, gamma, ek, part_flux, xfac, yfac, zfac
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
@@ -295,6 +295,10 @@ CONTAINS
           ek = (gamma - 1.0_num) * fac
 #ifdef PHOTONS
         ELSE
+          fac = c / current%particle_energy
+          part_ux = current%part_p(1) * fac
+          part_uy = current%part_p(2) * fac
+          part_uz = current%part_p(3) * fac
           ek = current%particle_energy * l_weight
           gamma = 1.0_num
         ENDIF
@@ -738,7 +742,7 @@ CONTAINS
 
     REAL(num) :: part_px, part_py, part_pz
     REAL(num) :: part_q, part_mc, part_weight
-    REAL(num) :: part_j
+    REAL(num) :: part_j = 0.0_num
     REAL(num) :: idxyz, root
     INTEGER :: ispecies, spec_start, spec_end, ix, iy
     INTEGER(i8) :: ipart

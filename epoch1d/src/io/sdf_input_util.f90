@@ -199,7 +199,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     INTEGER, INTENT(OUT), OPTIONAL :: nstations
     CHARACTER(LEN=c_id_length), POINTER, OPTIONAL :: station_ids(:)
-    INTEGER :: i, m, n, nstat_max, nstat_list_max, nextra
+    INTEGER :: i, m, n, nstat_max, nstat_list_max = 0, nextra
     TYPE(sdf_block_type), POINTER :: b, next
     CHARACTER(LEN=c_id_length), POINTER :: ctmp(:)
     LOGICAL :: found

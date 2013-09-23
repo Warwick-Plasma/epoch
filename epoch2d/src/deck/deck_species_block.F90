@@ -714,6 +714,7 @@ CONTAINS
     ! assumption that shells are filled as they would be in the ground state
     ! e.g. 1s, 2s, 2p, 3s, 3p, 4s, 3d, 4p, 5s, 4d, 5p, 6s, 4f, 5d, 6p, 7s, etc
     n = 0
+    l = 0
     i = 0
     DO WHILE(n_electrons .GT. i)
       n = n + 1

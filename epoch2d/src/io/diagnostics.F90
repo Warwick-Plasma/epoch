@@ -537,7 +537,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iprefix, step
     LOGICAL, INTENT(OUT) :: print_arrays
     LOGICAL, INTENT(IN) :: force
-    INTEGER :: id, io, is, nstep_next
+    INTEGER :: id, io, is, nstep_next = 0
     REAL(num) :: t0, t1, time_first
     LOGICAL, SAVE :: first_call = .TRUE.
     LOGICAL :: last_call, dump

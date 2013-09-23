@@ -719,6 +719,7 @@ CONTAINS
         RETURN
       ENDIF
       m = MIN(INT(wminf - enu), iend)
+      itemp = 1
       DO i = 2, m
         t1 = bk1
         bk1 = bk2

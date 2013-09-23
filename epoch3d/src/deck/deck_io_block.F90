@@ -316,8 +316,8 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
-    INTEGER :: loop, elementselected, mask, fullmask, mask_element, ierr, io, iu
-    INTEGER :: i, is, subset, n_list
+    INTEGER :: loop, elementselected, mask, fullmask = 0, mask_element
+    INTEGER :: i, is, subset, n_list, ierr, io, iu
     INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad, found
     INTEGER, PARAMETER :: c_err_new_style_ignore = 1

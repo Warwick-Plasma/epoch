@@ -336,7 +336,7 @@ CONTAINS
     REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
     REAL(r8), DIMENSION(ndims) :: gmn, gmx
     REAL(r4), DIMENSION(:), ALLOCATABLE :: r4array
-    INTEGER :: i, errcode, intn
+    INTEGER :: i, errcode, intn = 0
     TYPE(sdf_block_type), POINTER :: b
     LOGICAL :: convert
 
