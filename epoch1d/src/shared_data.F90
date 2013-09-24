@@ -645,7 +645,9 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_opdepth_tri  = 41
   INTEGER, PARAMETER :: c_dump_total_energy      = 42
   INTEGER, PARAMETER :: c_dump_total_energy_sum  = 43
-  INTEGER, PARAMETER :: num_vars_to_dump         = 43
+  INTEGER, PARAMETER :: c_dump_part_rel_mass     = 44
+  INTEGER, PARAMETER :: c_dump_part_gamma        = 45
+  INTEGER, PARAMETER :: num_vars_to_dump         = 45
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------

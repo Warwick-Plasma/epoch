@@ -471,6 +471,85 @@ CONTAINS
 
 
 
+  ! iterator for particle gamma
+  FUNCTION iterate_gamma(array, n_points, start)
+
+    REAL(num) :: iterate_gamma
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: n_points
+    LOGICAL, INTENT(IN) :: start
+    TYPE(particle), POINTER, SAVE :: cur
+    TYPE(particle_list), POINTER, SAVE :: current_list
+    INTEGER :: part_count
+    REAL(num) :: part_mc
+
+    IF (start)  THEN
+      CALL start_particle_list(current_species, current_list, cur)
+    ENDIF
+
+    part_count = 0
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      part_mc = current_species%mass * c
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_mc = cur%mass * c
+#endif
+        array(part_count) = SQRT(SUM((cur%part_p/part_mc)**2) + 1.0_num)
+        cur => cur%next
+      ENDDO
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    ENDDO
+    n_points = part_count
+
+    iterate_gamma = 0
+
+  END FUNCTION iterate_gamma
+
+
+
+  ! iterator for relativistic particle mass
+  FUNCTION iterate_relative_mass(array, n_points, start)
+
+    REAL(num) :: iterate_relative_mass
+    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: n_points
+    LOGICAL, INTENT(IN) :: start
+    TYPE(particle), POINTER, SAVE :: cur
+    TYPE(particle_list), POINTER, SAVE :: current_list
+    INTEGER :: part_count
+    REAL(num) :: part_m, part_mc
+
+    IF (start)  THEN
+      CALL start_particle_list(current_species, current_list, cur)
+    ENDIF
+
+    part_count = 0
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      part_m  = current_species%mass
+      part_mc = part_m * c
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_m  = cur%mass
+        part_mc = part_m * c
+#endif
+        array(part_count) = &
+            part_m * SQRT(SUM((cur%part_p/part_mc)**2) + 1.0_num)
+        cur => cur%next
+      ENDDO
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
+    ENDDO
+    n_points = part_count
+
+    iterate_relative_mass = 0
+
+  END FUNCTION iterate_relative_mass
+
+
+
 #ifdef PARTICLE_DEBUG
   ! iterator for particle processor
   FUNCTION iterate_processor(array, n_points, start)
