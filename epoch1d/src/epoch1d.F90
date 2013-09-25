@@ -115,12 +115,12 @@ PROGRAM pic
   IF (use_particle_migration) CALL initialise_migration
 
   IF (rank .EQ. 0) PRINT *, 'Equilibrium set up OK, running code'
-
-  walltime_start = MPI_WTIME()
-  IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
+
+  walltime_start = MPI_WTIME()
+  IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
   IF (use_ionisation) CALL initialise_ionisation
 
   DO

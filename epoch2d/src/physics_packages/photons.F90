@@ -12,7 +12,38 @@ CONTAINS
 
   SUBROUTINE setup_qed_module
 
-    INTEGER :: ispecies
+    INTEGER :: ispecies, iu, io, ierr
+    LOGICAL :: found
+
+    ! Sanity check
+    IF (produce_photons .AND. .NOT.ic_from_restart) THEN
+      ! Identify if there exists any *populated* electron/positron species
+      found = .FALSE.
+      DO ispecies = 1, n_species
+        IF (species_list(ispecies)%count .GT. 0) THEN
+          IF (species_list(ispecies)%species_type &
+              .EQ. c_species_id_electron &
+              .OR. species_list(ispecies)%species_type &
+              .EQ. c_species_id_positron) THEN
+            found = .TRUE.
+            EXIT
+          ENDIF
+        ENDIF
+      ENDDO
+
+      IF (.NOT.found) THEN
+        IF (rank .EQ. 0) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*)
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Both electron and positron species are either ', &
+                'unspecified or contain no'
+            WRITE(io,*) 'particles. QED routines might not work as expected.'
+          ENDDO
+        ENDIF
+      ENDIF
+    ENDIF
 
     ! Load the tables for the QED routines
     CALL setup_tables_qed
