@@ -868,16 +868,16 @@ CONTAINS
 #else
       ! built with photon support but not trident support
       errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species ' &
-          // TRIM(species_list(species_id)%name) // ' as ' // TRIM(value) &
-          // ' as compiler option -DTRIDENT_PHOTONS has not been set.'
+      extended_error_string = 'Cannot identify species "' &
+          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
+          // '" because compiler option -DTRIDENT_PHOTONS has not been set.'
 #endif
 #else
       ! built with neither photon support nor trident support
       errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species ' &
-          // TRIM(species_list(species_id)%name) // ' as ' // TRIM(value) &
-          // ' as compiler option -DPHOTONS has not been set.'
+      extended_error_string = 'Cannot identify species "' &
+          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
+          // '" because compiler option -DPHOTONS has not been set.'
 #endif
       RETURN
     ENDIF
@@ -893,9 +893,9 @@ CONTAINS
 #else
       ! built without photon support
       errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species ' &
-          // TRIM(species_list(species_id)%name) // ' as ' // TRIM(value) &
-          // ' as compiler option -DPHOTONS has not been set.'
+      extended_error_string = 'Cannot identify species "' &
+          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
+          // '" because compiler option -DPHOTONS has not been set.'
 #endif
       RETURN
     ENDIF
@@ -939,16 +939,16 @@ CONTAINS
 #else
       ! built with photon support but not trident support
       errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species ' &
-          // TRIM(species_list(species_id)%name) // ' as ' // TRIM(value) &
-          // ' as compiler option -DTRIDENT_PHOTONS has not been set.'
+      extended_error_string = 'Cannot identify species "' &
+          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
+          // '" because compiler option -DTRIDENT_PHOTONS has not been set.'
 #endif
 #else
       ! built with neither photon support nor trident support
       errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species ' &
-          // TRIM(species_list(species_id)%name) // ' as ' // TRIM(value) &
-          // ' as compiler option -DPHOTONS has not been set.'
+      extended_error_string = 'Cannot identify species "' &
+          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
+          // '" because compiler option -DPHOTONS has not been set.'
 #endif
       RETURN
     ENDIF
@@ -962,9 +962,9 @@ CONTAINS
       IF (photon_species .EQ. -1) photon_species = species_id
 #else
       errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species ' &
-          // TRIM(species_list(species_id)%name) // ' as ' // TRIM(value) &
-          // ' as compiler option -DPHOTONS has not been set.'
+      extended_error_string = 'Cannot identify species "' &
+          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
+          // '" because compiler option -DPHOTONS has not been set.'
 #endif
       RETURN
     ENDIF
