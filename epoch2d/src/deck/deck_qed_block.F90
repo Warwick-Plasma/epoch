@@ -1,10 +1,6 @@
 MODULE deck_qed_block
 
-#ifdef PHOTONS
   USE strings_advanced
-#else
-  USE shared_data
-#endif
 
   IMPLICIT NONE
 
@@ -29,9 +25,9 @@ CONTAINS
 
   SUBROUTINE qed_deck_finalise
 
+    INTEGER :: io, iu, ierr
 #ifdef PHOTONS
     LOGICAL :: exists
-    INTEGER :: io, iu, ierr
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
@@ -49,6 +45,18 @@ CONTAINS
     ENDIF
 
     IF (use_qed) need_random_state = .TRUE.
+#else
+    IF (use_qed) THEN
+      IF (rank .EQ. 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Unable to set "use_qed=T" in the "qed" block.'
+          WRITE(io,*) 'Please recompile with the -DPHOTONS preprocessor flag.'
+        ENDDO
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    ENDIF
 #endif
 
   END SUBROUTINE qed_deck_finalise
@@ -76,12 +84,12 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) RETURN
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
-#ifdef PHOTONS
     IF (str_cmp(element, 'use_qed') .OR. str_cmp(element, 'qed')) THEN
       use_qed = as_logical(value, errcode)
       RETURN
     ENDIF
 
+#ifdef PHOTONS
     IF (str_cmp(element, 'qed_start_time')) THEN
       qed_start_time = as_real(value, errcode)
       RETURN
@@ -114,9 +122,6 @@ CONTAINS
     ENDIF
 
     errcode = c_err_unknown_element
-#else
-    extended_error_string = '-DPHOTONS'
-    errcode = c_err_pp_options_wrong
 #endif
 
   END FUNCTION qed_block_handle_element

@@ -136,12 +136,12 @@ CONTAINS
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
-#ifdef PHOTONS
       IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) THEN
+#ifdef PHOTONS
         IF (photon_dynamics) CALL push_photons(ispecies)
+#endif
         CYCLE
       ENDIF
-#endif
 #ifdef PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)

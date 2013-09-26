@@ -15,8 +15,8 @@ MODULE deck
   USE deck_collision_block
 #ifdef PHOTONS
   USE photons
-  USE deck_qed_block
 #endif
+  USE deck_qed_block
   ! Initial Condition Blocks
   USE deck_laser_block
   USE deck_fields_block
@@ -72,9 +72,7 @@ CONTAINS
 #ifdef PARTICLE_PROBES
     CALL probe_deck_initialise
 #endif
-#ifdef PHOTONS
     CALL qed_deck_initialise
-#endif
     CALL species_deck_initialise
     CALL window_deck_initialise
 
@@ -100,9 +98,7 @@ CONTAINS
 #ifdef PARTICLE_PROBES
     CALL probe_deck_finalise
 #endif
-#ifdef PHOTONS
     CALL qed_deck_finalise
-#endif
     CALL species_deck_finalise
     CALL window_deck_finalise
 
@@ -140,10 +136,8 @@ CONTAINS
     ELSE IF (str_cmp(block_name, 'probe')) THEN
       CALL probe_block_start
 #endif
-#ifdef PHOTONS
     ELSE IF (str_cmp(block_name, 'qed')) THEN
       CALL qed_block_start
-#endif
     ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_start
     ELSE IF (str_cmp(block_name, 'window')) THEN
@@ -185,10 +179,8 @@ CONTAINS
     ELSE IF (str_cmp(block_name, 'probe')) THEN
       CALL probe_block_end
 #endif
-#ifdef PHOTONS
     ELSE IF (str_cmp(block_name, 'qed')) THEN
       CALL qed_block_end
-#endif
     ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_end
     ELSE IF (str_cmp(block_name, 'window')) THEN
@@ -263,12 +255,7 @@ CONTAINS
 #endif
       RETURN
     ELSE IF (str_cmp(block_name, 'qed')) THEN
-#ifdef PHOTONS
       handle_block = qed_block_handle_element(block_element, block_value)
-#else
-      handle_block = IOR(handle_block, c_err_pp_options_wrong)
-      extended_error_string = '-DPHOTONS'
-#endif
       RETURN
     ELSE IF (str_cmp(block_name, 'species')) THEN
       handle_block = species_block_handle_element(block_element, block_value)
@@ -302,12 +289,12 @@ CONTAINS
 
     errcode_deck = c_err_none
     errcode_deck = IOR(errcode_deck, boundary_block_check())
-#ifdef PHOTONS
     IF (use_qed) THEN
+#ifdef PHOTONS
       errcode_deck = IOR(errcode_deck, check_qed_variables())
+#endif
       errcode_deck = IOR(errcode_deck, qed_block_check())
     ENDIF
-#endif
     errcode_deck = IOR(errcode_deck, constant_block_check())
     errcode_deck = IOR(errcode_deck, control_block_check())
     errcode_deck = IOR(errcode_deck, dist_fn_block_check())

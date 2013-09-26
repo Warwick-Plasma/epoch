@@ -158,19 +158,19 @@ CONTAINS
 #endif
 #endif
 
-#ifdef PHOTONS
         IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
-#endif
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
           gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
           wdata = (gamma - 1.0_num) * fac
-#ifdef PHOTONS
         ELSE
+#ifdef PHOTONS
           wdata = current%particle_energy * l_weight
-        ENDIF
+#else
+          wdata = 0.0_num
 #endif
+        ENDIF
 
 #include "particle_to_grid.inc"
 
@@ -258,24 +258,25 @@ CONTAINS
 #endif
 #endif
 
-#ifdef PHOTONS
         IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
-#endif
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
           gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
           ek = (gamma - 1.0_num) * fac
-#ifdef PHOTONS
         ELSE
+#ifdef PHOTONS
           fac = c / current%particle_energy
           part_ux = current%part_p(1) * fac
           part_uy = current%part_p(2) * fac
           part_uz = current%part_p(3) * fac
           ek = current%particle_energy * l_weight
           gamma = 1.0_num
-        ENDIF
+#else
+          ek = 0.0_num
+          gamma = 1.0_num
 #endif
+        ENDIF
 
         SELECT CASE(direction)
         CASE(-c_dir_x)
@@ -828,9 +829,7 @@ CONTAINS
 #endif
 #endif
 
-#ifdef PHOTONS
         IF (species_list(ispecies)%species_type .NE. c_species_id_photon) THEN
-#endif
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
@@ -839,8 +838,8 @@ CONTAINS
 #ifdef PHOTONS
         ELSE
           particle_energy = particle_energy + current%particle_energy * l_weight
-        ENDIF
 #endif
+        ENDIF
 
         current => current%next
       ENDDO

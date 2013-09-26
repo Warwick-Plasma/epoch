@@ -936,10 +936,11 @@ MODULE shared_data
 
   REAL(num) :: photon_energy_min = EPSILON(1.0_num)
   REAL(num) :: qed_start_time = 0.0_num
-  LOGICAL :: use_qed = .FALSE., produce_pairs = .FALSE.
+  LOGICAL :: produce_pairs = .FALSE.
   LOGICAL :: produce_photons = .FALSE., photon_dynamics = .FALSE.
   CHARACTER(LEN=string_length) :: qed_table_location
 #endif
+  LOGICAL :: use_qed = .FALSE.
 
   !----------------------------------------------------------------------------
   ! MPI data
