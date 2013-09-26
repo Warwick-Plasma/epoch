@@ -967,7 +967,7 @@ CONTAINS
       RETURN
     ENDIF
 
-    errcode = IAND(errcode, c_err_bad_value)
+    errcode = IOR(errcode, c_err_bad_value)
 
   END SUBROUTINE identify_species
 
