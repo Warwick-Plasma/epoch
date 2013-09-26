@@ -852,50 +852,6 @@ CONTAINS
       RETURN
     ENDIF
 
-    ! trident process electron
-    IF (str_cmp(value, 'trident_electron')) THEN
-#ifdef PHOTONS
-#ifdef TRIDENT_PHOTONS
-      species_list(species_id)%charge = -q0
-      species_list(species_id)%mass = m0
-      species_list(species_id)%species_type = c_species_id_electron
-      species_charge_set(species_id) = .TRUE.
-      trident_electron_species = species_id
-#else
-      ! built with photon support but not trident support
-      errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species "' &
-          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
-          // '" because compiler option -DTRIDENT_PHOTONS has not been set.'
-#endif
-#else
-      ! built with neither photon support nor trident support
-      errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species "' &
-          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
-          // '" because compiler option -DPHOTONS has not been set.'
-#endif
-      RETURN
-    ENDIF
-
-    ! Breit Wheeler process electron
-    IF (str_cmp(value, 'bw_electron')) THEN
-#ifdef PHOTONS
-      species_list(species_id)%charge = -q0
-      species_list(species_id)%mass = m0
-      species_list(species_id)%species_type = c_species_id_electron
-      species_charge_set(species_id) = .TRUE.
-      breit_wheeler_electron_species = species_id
-#else
-      ! built without photon support
-      errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species "' &
-          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
-          // '" because compiler option -DPHOTONS has not been set.'
-#endif
-      RETURN
-    ENDIF
-
     IF (str_cmp(value, 'proton')) THEN
       species_list(species_id)%charge = q0
       species_list(species_id)%mass = m0 * 1836.2_num
@@ -912,6 +868,46 @@ CONTAINS
       RETURN
     ENDIF
 
+#ifndef PHOTONS
+    extended_error_string = 'Cannot identify species "' &
+        // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
+        // '" because compiler option -DPHOTONS has not been set.'
+#else
+#ifndef TRIDENT_PHOTONS
+    extended_error_string = 'Cannot identify species "' &
+        // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
+        // '" because compiler option -DTRIDENT_PHOTONS has not been set.'
+#endif
+#endif
+
+    ! trident process electron
+    IF (str_cmp(value, 'trident_electron')) THEN
+      species_list(species_id)%charge = -q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_electron
+      species_charge_set(species_id) = .TRUE.
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
+      trident_electron_species = species_id
+#else
+      errcode = c_err_generic_warning
+#endif
+      RETURN
+    ENDIF
+
+    ! Breit Wheeler process electron
+    IF (str_cmp(value, 'bw_electron')) THEN
+      species_list(species_id)%charge = -q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_electron
+      species_charge_set(species_id) = .TRUE.
+#ifdef PHOTONS
+      breit_wheeler_electron_species = species_id
+#else
+      errcode = c_err_generic_warning
+#endif
+      RETURN
+    ENDIF
+
     IF (str_cmp(value, 'bw_positron')) THEN
       species_list(species_id)%charge = q0
       species_list(species_id)%mass = m0
@@ -925,42 +921,27 @@ CONTAINS
 
     ! trident process positron
     IF (str_cmp(value, 'trident_positron')) THEN
-#ifdef PHOTONS
-#ifdef TRIDENT_PHOTONS
       species_list(species_id)%charge = q0
       species_list(species_id)%mass = m0
       species_list(species_id)%species_type = c_species_id_positron
       species_charge_set(species_id) = .TRUE.
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
       trident_electron_species = species_id
 #else
-      ! built with photon support but not trident support
-      errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species "' &
-          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
-          // '" because compiler option -DTRIDENT_PHOTONS has not been set.'
-#endif
-#else
-      ! built with neither photon support nor trident support
-      errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species "' &
-          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
-          // '" because compiler option -DPHOTONS has not been set.'
+      errcode = c_err_generic_warning
 #endif
       RETURN
     ENDIF
 
     IF (str_cmp(value, 'photon')) THEN
-#ifdef PHOTONS
       species_list(species_id)%charge = 0.0_num
       species_list(species_id)%mass = 0.0_num
       species_list(species_id)%species_type = c_species_id_photon
       species_charge_set(species_id) = .TRUE.
+#ifdef PHOTONS
       IF (photon_species .EQ. -1) photon_species = species_id
 #else
-      errcode = c_err_generic_error
-      extended_error_string = 'Cannot identify species "' &
-          // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
-          // '" because compiler option -DPHOTONS has not been set.'
+      errcode = c_err_generic_warning
 #endif
       RETURN
     ENDIF
