@@ -513,7 +513,7 @@ CONTAINS
     TYPE(laser_block), POINTER, OPTIONAL :: lasers
     INTEGER, INTENT(IN) :: bd
     TYPE(laser_block), POINTER :: current
-    REAL(num) :: t_env, dir, dd
+    REAL(num) :: t_env, dir
     REAL(num), DIMENSION(:), ALLOCATABLE :: e1, e2, b1, b2
     INTEGER :: mm, ibc, icell
 
@@ -530,7 +530,6 @@ CONTAINS
         ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
 
         ibc = 1
-        dd = dy
         IF (bd .EQ. c_bd_x_max) THEN
           dir = -1.0_num
           ibc = nx
@@ -547,7 +546,6 @@ CONTAINS
         ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
 
         ibc = 1
-        dd = dx
         IF (bd .EQ. c_bd_y_max) THEN
           dir = -1.0_num
           ibc = ny
@@ -562,7 +560,6 @@ CONTAINS
       CASE DEFAULT
         ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
 
-        dd = 0.0_num
         e1 = 0.0_num
         e2 = 0.0_num
         b1 = 0.0_num
