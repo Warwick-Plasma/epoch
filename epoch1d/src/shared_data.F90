@@ -886,7 +886,7 @@ MODULE shared_data
 
   REAL(num) :: photon_energy_min = EPSILON(1.0_num)
   REAL(num) :: qed_start_time = 0.0_num
-  LOGICAL :: produce_pairs = .FALSE.
+  LOGICAL :: produce_pairs = .FALSE., use_radiation_reaction = .TRUE.
   LOGICAL :: produce_photons = .FALSE., photon_dynamics = .FALSE.
   CHARACTER(LEN=string_length) :: qed_table_location
 #endif

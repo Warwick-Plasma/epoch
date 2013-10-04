@@ -919,13 +919,14 @@ CONTAINS
     rand_temp = random()
     photon_energy = calculate_photon_energy(rand_temp, eta, generating_gamma)
 
-    ! Calculate electron recoil
+    IF (use_radiation_reaction) THEN
+      ! Calculate electron recoil
+      mag_p = mag_p - photon_energy / c
 
-    mag_p = mag_p - photon_energy / c
-
-    generating_electron%part_p(1) = dir_x * mag_p
-    generating_electron%part_p(2) = dir_y * mag_p
-    generating_electron%part_p(3) = dir_z * mag_p
+      generating_electron%part_p(1) = dir_x * mag_p
+      generating_electron%part_p(2) = dir_y * mag_p
+      generating_electron%part_p(3) = dir_z * mag_p
+    ENDIF
 
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always

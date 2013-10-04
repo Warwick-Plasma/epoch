@@ -16,6 +16,7 @@ CONTAINS
 #ifdef PHOTONS
     IF (deck_state .EQ. c_ds_first) THEN
       qed_table_location = 'src/physics_packages/TABLES'
+      use_radiation_reaction = .TRUE.
     ENDIF
 #endif
 
@@ -97,6 +98,11 @@ CONTAINS
 
     IF (str_cmp(element, 'produce_photons')) THEN
       produce_photons = as_logical(value, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'use_radiation_reaction')) THEN
+      use_radiation_reaction = as_logical(value, errcode)
       RETURN
     ENDIF
 
