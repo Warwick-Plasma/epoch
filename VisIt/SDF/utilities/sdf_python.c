@@ -175,6 +175,9 @@ static PyObject* SDF_read(SDFObject *self, PyObject *args)
     sdf_block_t *b;
     PyObject *dict, *sub;
     int i, n;
+    double dd;
+    long il;
+    long long ll;
     npy_intp dims[3] = {0,0,0};
 
     h = self->h;
@@ -199,6 +202,35 @@ static PyObject* SDF_read(SDFObject *self, PyObject *args)
                 PyArray_DescrFromType(typemap[b->datatype_out]), b->ndims,
                 dims, NULL, b->data, NPY_F_CONTIGUOUS, NULL);
             PyDict_SetItemString(dict, b->name, sub);
+            break;
+          case SDF_BLOCKTYPE_CONSTANT:
+            switch(b->datatype) {
+              case SDF_DATATYPE_REAL4:
+                dd = *((float*)b->const_value);
+                sub = PyFloat_FromDouble(dd);
+                PyDict_SetItemString(dict, b->name, sub);
+                Py_DECREF(sub);
+                break;
+              case SDF_DATATYPE_REAL8:
+                dd = *((double*)b->const_value);
+                sub = PyFloat_FromDouble(dd);
+                PyDict_SetItemString(dict, b->name, sub);
+                Py_DECREF(sub);
+                break;
+              case SDF_DATATYPE_INTEGER4:
+                il = *((int32_t*)b->const_value);
+                sub = PyInt_FromLong(il);
+                PyDict_SetItemString(dict, b->name, sub);
+                Py_DECREF(sub);
+                break;
+              case SDF_DATATYPE_INTEGER8:
+                ll = *((int64_t*)b->const_value);
+                sub = PyLong_FromLongLong(ll);
+                PyDict_SetItemString(dict, b->name, sub);
+                Py_DECREF(sub);
+                break;
+            }
+            break;
         }
         b = h->current_block = b->next;
     }
