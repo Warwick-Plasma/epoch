@@ -42,31 +42,27 @@ CONTAINS
   SUBROUTINE update_e_field
 
     INTEGER :: ix, iy
-    REAL(num) :: cpml_x, cpml_y, j_extra = 0
+    REAL(num) :: cpml_x, cpml_y
 
     IF (cpml_boundaries) THEN
-      CALL cpml_advance_e_currents(0.5_num * dt)
-
       cpml_x = cnx
       cpml_y = cny
 
       DO iy = 1, ny
         cpml_y = cny / cpml_kappa_ey(iy)
         DO ix = 1, nx
-          j_extra = -cpml_psi_exy(ix,iy) / mu0
           ex(ix, iy) = ex(ix, iy) &
               + cpml_y * SUM(const(1:order) * bz(ix, iy-large:iy+small)) &
-              - fac * (jx(ix, iy) + j_extra)
+              - fac * jx(ix, iy)
         ENDDO
       ENDDO
 
       DO iy = 1, ny
         DO ix = 1, nx
           cpml_x = cnx / cpml_kappa_ex(ix)
-          j_extra = cpml_psi_eyx(ix,iy) / mu0
           ey(ix, iy) = ey(ix, iy) &
               - cpml_x * SUM(const(1:order) * bz(ix-large:ix+small, iy)) &
-              - fac * (jy(ix, iy) + j_extra)
+              - fac * jy(ix, iy)
         ENDDO
       ENDDO
 
@@ -74,13 +70,14 @@ CONTAINS
         cpml_y = cny / cpml_kappa_ey(iy)
         DO ix = 1, nx
           cpml_x = cnx / cpml_kappa_ex(ix)
-          j_extra = (cpml_psi_ezy(ix,iy) - cpml_psi_ezx(ix,iy)) / mu0
           ez(ix, iy) = ez(ix, iy) &
               + cpml_x * SUM(const(1:order) * by(ix-large:ix+small, iy)) &
               - cpml_y * SUM(const(1:order) * bx(ix, iy-large:iy+small)) &
-              - fac * (jz(ix, iy) + j_extra)
+              - fac * jz(ix, iy)
         ENDDO
       ENDDO
+
+      CALL cpml_advance_e_currents(hdt)
     ELSE
       DO iy = 1, ny
         DO ix = 1, nx
@@ -115,31 +112,25 @@ CONTAINS
   SUBROUTINE update_b_field
 
     INTEGER :: ix, iy
-    REAL(num) :: cpml_x, cpml_y, j_extra = 0
+    REAL(num) :: cpml_x, cpml_y
 
     IF (cpml_boundaries) THEN
-      CALL cpml_advance_b_currents(0.5_num * dt)
-
       cpml_x = hdtx
       cpml_y = hdty
 
       DO iy = 1, ny
         cpml_y = hdty / cpml_kappa_by(iy)
         DO ix = 1, nx
-          j_extra = cpml_psi_bxy(ix,iy)
           bx(ix, iy) = bx(ix, iy) &
-              - cpml_y * SUM(const(1:order) * ez(ix, iy-small:iy+large)) &
-              - hdt * j_extra
+              - cpml_y * SUM(const(1:order) * ez(ix, iy-small:iy+large))
         ENDDO
       ENDDO
 
       DO iy = 1, ny
         DO ix = 1, nx
           cpml_x = hdtx / cpml_kappa_bx(ix)
-          j_extra = -cpml_psi_byx(ix,iy)
           by(ix, iy) = by(ix, iy) &
-              + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large, iy)) &
-              - hdt * j_extra
+              + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large, iy))
         ENDDO
       ENDDO
 
@@ -147,13 +138,13 @@ CONTAINS
         cpml_y = hdty / cpml_kappa_by(iy)
         DO ix = 1, nx
           cpml_x = hdtx / cpml_kappa_bx(ix)
-          j_extra = cpml_psi_bzx(ix,iy) - cpml_psi_bzy(ix,iy)
           bz(ix, iy) = bz(ix, iy) &
               - cpml_x * SUM(const(1:order) * ey(ix-small:ix+large, iy)) &
-              + cpml_y * SUM(const(1:order) * ex(ix, iy-small:iy+large)) &
-              - hdt * j_extra
+              + cpml_y * SUM(const(1:order) * ex(ix, iy-small:iy+large))
         ENDDO
       ENDDO
+
+      CALL cpml_advance_b_currents(hdt)
     ELSE
       DO iy = 1, ny
         DO ix = 1, nx

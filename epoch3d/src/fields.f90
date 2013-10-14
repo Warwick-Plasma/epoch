@@ -42,11 +42,9 @@ CONTAINS
   SUBROUTINE update_e_field
 
     INTEGER :: ix, iy, iz
-    REAL(num) :: cpml_x, cpml_y, cpml_z, j_extra = 0
+    REAL(num) :: cpml_x, cpml_y, cpml_z
 
     IF (cpml_boundaries) THEN
-      CALL cpml_advance_e_currents(0.5_num * dt)
-
       cpml_x = cnx
       cpml_y = cny
       cpml_z = cnz
@@ -56,11 +54,10 @@ CONTAINS
         DO iy = 1, ny
           cpml_y = cny / cpml_kappa_ey(iy)
           DO ix = 1, nx
-            j_extra = (cpml_psi_exz(ix,iy,iz) - cpml_psi_exy(ix,iy,iz)) / mu0
             ex(ix, iy, iz) = ex(ix, iy, iz) &
                 + cpml_y * SUM(const(1:order) * bz(ix, iy-large:iy+small, iz)) &
                 - cpml_z * SUM(const(1:order) * by(ix, iy, iz-large:iz+small)) &
-                - fac * (jx(ix, iy, iz) + j_extra)
+                - fac * jx(ix, iy, iz)
           ENDDO
         ENDDO
       ENDDO
@@ -70,11 +67,10 @@ CONTAINS
         DO iy = 1, ny
           DO ix = 1, nx
             cpml_x = cnx / cpml_kappa_ex(ix)
-            j_extra = (cpml_psi_eyx(ix,iy,iz) - cpml_psi_eyz(ix,iy,iz)) / mu0
             ey(ix, iy, iz) = ey(ix, iy, iz) &
                 + cpml_z * SUM(const(1:order) * bx(ix, iy, iz-large:iz+small)) &
                 - cpml_x * SUM(const(1:order) * bz(ix-large:ix+small, iy, iz)) &
-                - fac * (jy(ix, iy, iz) + j_extra)
+                - fac * jy(ix, iy, iz)
           ENDDO
         ENDDO
       ENDDO
@@ -84,14 +80,15 @@ CONTAINS
           cpml_y = cny / cpml_kappa_ey(iy)
           DO ix = 1, nx
             cpml_x = cnx / cpml_kappa_ex(ix)
-            j_extra = (cpml_psi_ezy(ix,iy,iz) - cpml_psi_ezx(ix,iy,iz)) / mu0
             ez(ix, iy, iz) = ez(ix, iy, iz) &
                 + cpml_x * SUM(const(1:order) * by(ix-large:ix+small, iy, iz)) &
                 - cpml_y * SUM(const(1:order) * bx(ix, iy-large:iy+small, iz)) &
-                - fac * (jz(ix, iy, iz) + j_extra)
+                - fac * jz(ix, iy, iz)
           ENDDO
         ENDDO
       ENDDO
+
+      CALL cpml_advance_e_currents(hdt)
     ELSE
       DO iz = 1, nz
         DO iy = 1, ny
@@ -134,11 +131,9 @@ CONTAINS
   SUBROUTINE update_b_field
 
     INTEGER :: ix, iy, iz
-    REAL(num) :: cpml_x, cpml_y, cpml_z, j_extra = 0
+    REAL(num) :: cpml_x, cpml_y, cpml_z
 
     IF (cpml_boundaries) THEN
-      CALL cpml_advance_b_currents(0.5_num * dt)
-
       cpml_x = hdtx
       cpml_y = hdty
       cpml_z = hdtz
@@ -148,11 +143,9 @@ CONTAINS
         DO iy = 1, ny
           cpml_y = hdty / cpml_kappa_by(iy)
           DO ix = 1, nx
-            j_extra = cpml_psi_bxy(ix,iy,iz) - cpml_psi_bxz(ix,iy,iz)
             bx(ix, iy, iz) = bx(ix, iy, iz) &
                 - cpml_y * SUM(const(1:order) * ez(ix, iy-small:iy+large, iz)) &
-                + cpml_z * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large)) &
-                - hdt * j_extra
+                + cpml_z * SUM(const(1:order) * ey(ix, iy, iz-small:iz+large))
           ENDDO
         ENDDO
       ENDDO
@@ -162,11 +155,9 @@ CONTAINS
         DO iy = 1, ny
           DO ix = 1, nx
             cpml_x = hdtx / cpml_kappa_bx(ix)
-            j_extra = cpml_psi_byz(ix,iy,iz) - cpml_psi_byx(ix,iy,iz)
             by(ix, iy, iz) = by(ix, iy, iz) &
                 - cpml_z * SUM(const(1:order) * ex(ix, iy, iz-small:iz+large)) &
-                + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz)) &
-                - hdt * j_extra
+                + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large, iy, iz))
           ENDDO
         ENDDO
       ENDDO
@@ -176,14 +167,14 @@ CONTAINS
           cpml_y = hdty / cpml_kappa_by(iy)
           DO ix = 1, nx
             cpml_x = hdtx / cpml_kappa_bx(ix)
-            j_extra = cpml_psi_bzx(ix,iy,iz) - cpml_psi_bzy(ix,iy,iz)
             bz(ix, iy, iz) = bz(ix, iy, iz) &
                 - cpml_x * SUM(const(1:order) * ey(ix-small:ix+large, iy, iz)) &
-                + cpml_y * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz)) &
-                - hdt * j_extra
+                + cpml_y * SUM(const(1:order) * ex(ix, iy-small:iy+large, iz))
           ENDDO
         ENDDO
       ENDDO
+
+      CALL cpml_advance_b_currents(hdt)
     ELSE
       DO iz = 1, nz
         DO iy = 1, ny

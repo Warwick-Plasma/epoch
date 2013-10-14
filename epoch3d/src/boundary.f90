@@ -2128,8 +2128,10 @@ CONTAINS
 
     REAL(num), INTENT(IN) :: tstep
     INTEGER :: ipos, ix, iy, iz
-    REAL(num) :: acoeff, bcoeff, ccoeff_d
+    REAL(num) :: acoeff, bcoeff, ccoeff_d, fac
     REAL(num) :: kappa, sigma
+
+    fac = tstep * c**2
 
     ! ============= x_min boundary =============
 
@@ -2147,8 +2149,11 @@ CONTAINS
 
             cpml_psi_eyx(ipos,iy,iz) = bcoeff * cpml_psi_eyx(ipos,iy,iz) &
                 + ccoeff_d * (bz(ipos,iy,iz) - bz(ipos-1,iy,iz))
+            ey(ipos,iy,iz) = ey(ipos,iy,iz) - fac * cpml_psi_eyx(ipos,iy,iz)
+
             cpml_psi_ezx(ipos,iy,iz) = bcoeff * cpml_psi_ezx(ipos,iy,iz) &
                 + ccoeff_d * (by(ipos,iy,iz) - by(ipos-1,iy,iz))
+            ez(ipos,iy,iz) = ez(ipos,iy,iz) + fac * cpml_psi_ezx(ipos,iy,iz)
           ENDDO
         ENDDO
       ENDDO
@@ -2170,8 +2175,11 @@ CONTAINS
 
             cpml_psi_eyx(ipos,iy,iz) = bcoeff * cpml_psi_eyx(ipos,iy,iz) &
                 + ccoeff_d * (bz(ipos,iy,iz) - bz(ipos-1,iy,iz))
+            ey(ipos,iy,iz) = ey(ipos,iy,iz) - fac * cpml_psi_eyx(ipos,iy,iz)
+
             cpml_psi_ezx(ipos,iy,iz) = bcoeff * cpml_psi_ezx(ipos,iy,iz) &
                 + ccoeff_d * (by(ipos,iy,iz) - by(ipos-1,iy,iz))
+            ez(ipos,iy,iz) = ez(ipos,iy,iz) + fac * cpml_psi_ezx(ipos,iy,iz)
           ENDDO
         ENDDO
       ENDDO
@@ -2193,8 +2201,11 @@ CONTAINS
           DO ix = 1,nx
             cpml_psi_exy(ix,ipos,iz) = bcoeff * cpml_psi_exy(ix,ipos,iz) &
                 + ccoeff_d * (bz(ix,ipos,iz) - bz(ix,ipos-1,iz))
+            ex(ix,ipos,iz) = ex(ix,ipos,iz) + fac * cpml_psi_exy(ix,ipos,iz)
+
             cpml_psi_ezy(ix,ipos,iz) = bcoeff * cpml_psi_ezy(ix,ipos,iz) &
                 + ccoeff_d * (bx(ix,ipos,iz) - bx(ix,ipos-1,iz))
+            ez(ix,ipos,iz) = ez(ix,ipos,iz) - fac * cpml_psi_ezy(ix,ipos,iz)
           ENDDO
         ENDDO
       ENDDO
@@ -2216,8 +2227,11 @@ CONTAINS
           DO ix = 1,nx
             cpml_psi_exy(ix,ipos,iz) = bcoeff * cpml_psi_exy(ix,ipos,iz) &
                 + ccoeff_d * (bz(ix,ipos,iz) - bz(ix,ipos-1,iz))
+            ex(ix,ipos,iz) = ex(ix,ipos,iz) + fac * cpml_psi_exy(ix,ipos,iz)
+
             cpml_psi_ezy(ix,ipos,iz) = bcoeff * cpml_psi_ezy(ix,ipos,iz) &
                 + ccoeff_d * (bx(ix,ipos,iz) - bx(ix,ipos-1,iz))
+            ez(ix,ipos,iz) = ez(ix,ipos,iz) - fac * cpml_psi_ezy(ix,ipos,iz)
           ENDDO
         ENDDO
       ENDDO
@@ -2239,8 +2253,11 @@ CONTAINS
           DO ix = 1,nx
             cpml_psi_exz(ix,iy,ipos) = bcoeff * cpml_psi_exz(ix,iy,ipos) &
                 + ccoeff_d * (by(ix,iy,ipos) - by(ix,iy,ipos-1))
+            ex(ix,iy,ipos) = ex(ix,iy,ipos) - fac * cpml_psi_exz(ix,iy,ipos)
+
             cpml_psi_eyz(ix,iy,ipos) = bcoeff * cpml_psi_eyz(ix,iy,ipos) &
                 + ccoeff_d * (bx(ix,iy,ipos) - bx(ix,iy,ipos-1))
+            ey(ix,iy,ipos) = ey(ix,iy,ipos) + fac * cpml_psi_eyz(ix,iy,ipos)
           ENDDO
         ENDDO
       ENDDO
@@ -2262,8 +2279,11 @@ CONTAINS
           DO ix = 1,nx
             cpml_psi_exz(ix,iy,ipos) = bcoeff * cpml_psi_exz(ix,iy,ipos) &
                 + ccoeff_d * (by(ix,iy,ipos) - by(ix,iy,ipos-1))
+            ex(ix,iy,ipos) = ex(ix,iy,ipos) - fac * cpml_psi_exz(ix,iy,ipos)
+
             cpml_psi_eyz(ix,iy,ipos) = bcoeff * cpml_psi_eyz(ix,iy,ipos) &
                 + ccoeff_d * (bx(ix,iy,ipos) - bx(ix,iy,ipos-1))
+            ey(ix,iy,ipos) = ey(ix,iy,ipos) + fac * cpml_psi_eyz(ix,iy,ipos)
           ENDDO
         ENDDO
       ENDDO
@@ -2296,8 +2316,11 @@ CONTAINS
 
             cpml_psi_byx(ipos,iy,iz) = bcoeff * cpml_psi_byx(ipos,iy,iz) &
                 + ccoeff_d * (ez(ipos+1,iy,iz) - ez(ipos,iy,iz))
+            by(ipos,iy,iz) = by(ipos,iy,iz) + tstep * cpml_psi_byx(ipos,iy,iz)
+
             cpml_psi_bzx(ipos,iy,iz) = bcoeff * cpml_psi_bzx(ipos,iy,iz) &
                 + ccoeff_d * (ey(ipos+1,iy,iz) - ey(ipos,iy,iz))
+            bz(ipos,iy,iz) = bz(ipos,iy,iz) - tstep * cpml_psi_bzx(ipos,iy,iz)
           ENDDO
         ENDDO
       ENDDO
@@ -2319,8 +2342,11 @@ CONTAINS
 
             cpml_psi_byx(ipos,iy,iz) = bcoeff * cpml_psi_byx(ipos,iy,iz) &
                 + ccoeff_d * (ez(ipos+1,iy,iz) - ez(ipos,iy,iz))
+            by(ipos,iy,iz) = by(ipos,iy,iz) + tstep * cpml_psi_byx(ipos,iy,iz)
+
             cpml_psi_bzx(ipos,iy,iz) = bcoeff * cpml_psi_bzx(ipos,iy,iz) &
                 + ccoeff_d * (ey(ipos+1,iy,iz) - ey(ipos,iy,iz))
+            bz(ipos,iy,iz) = bz(ipos,iy,iz) - tstep * cpml_psi_bzx(ipos,iy,iz)
           ENDDO
         ENDDO
       ENDDO
@@ -2342,8 +2368,11 @@ CONTAINS
           DO ix = 1,nx
             cpml_psi_bxy(ix,ipos,iz) = bcoeff * cpml_psi_bxy(ix,ipos,iz) &
                 + ccoeff_d * (ez(ix,ipos+1,iz) - ez(ix,ipos,iz))
+            bx(ix,ipos,iz) = bx(ix,ipos,iz) - tstep * cpml_psi_bxy(ix,ipos,iz)
+
             cpml_psi_bzy(ix,ipos,iz) = bcoeff * cpml_psi_bzy(ix,ipos,iz) &
                 + ccoeff_d * (ex(ix,ipos+1,iz) - ex(ix,ipos,iz))
+            bz(ix,ipos,iz) = bz(ix,ipos,iz) + tstep * cpml_psi_bzy(ix,ipos,iz)
           ENDDO
         ENDDO
       ENDDO
@@ -2365,8 +2394,11 @@ CONTAINS
           DO ix = 1,nx
             cpml_psi_bxy(ix,ipos,iz) = bcoeff * cpml_psi_bxy(ix,ipos,iz) &
                 + ccoeff_d * (ez(ix,ipos+1,iz) - ez(ix,ipos,iz))
+            bx(ix,ipos,iz) = bx(ix,ipos,iz) - tstep * cpml_psi_bxy(ix,ipos,iz)
+
             cpml_psi_bzy(ix,ipos,iz) = bcoeff * cpml_psi_bzy(ix,ipos,iz) &
                 + ccoeff_d * (ex(ix,ipos+1,iz) - ex(ix,ipos,iz))
+            bz(ix,ipos,iz) = bz(ix,ipos,iz) + tstep * cpml_psi_bzy(ix,ipos,iz)
           ENDDO
         ENDDO
       ENDDO
@@ -2388,8 +2420,11 @@ CONTAINS
           DO ix = 1,nx
             cpml_psi_bxz(ix,iy,ipos) = bcoeff * cpml_psi_bxz(ix,iy,ipos) &
                 + ccoeff_d * (ey(ix,iy,ipos+1) - ey(ix,iy,ipos))
+            bx(ix,iy,ipos) = bx(ix,iy,ipos) + tstep * cpml_psi_bxz(ix,iy,ipos)
+
             cpml_psi_byz(ix,iy,ipos) = bcoeff * cpml_psi_byz(ix,iy,ipos) &
                 + ccoeff_d * (ex(ix,iy,ipos+1) - ex(ix,iy,ipos))
+            by(ix,iy,ipos) = by(ix,iy,ipos) - tstep * cpml_psi_byz(ix,iy,ipos)
           ENDDO
         ENDDO
       ENDDO
@@ -2411,8 +2446,11 @@ CONTAINS
           DO ix = 1,nx
             cpml_psi_bxz(ix,iy,ipos) = bcoeff * cpml_psi_bxz(ix,iy,ipos) &
                 + ccoeff_d * (ey(ix,iy,ipos+1) - ey(ix,iy,ipos))
+            bx(ix,iy,ipos) = bx(ix,iy,ipos) + tstep * cpml_psi_bxz(ix,iy,ipos)
+
             cpml_psi_byz(ix,iy,ipos) = bcoeff * cpml_psi_byz(ix,iy,ipos) &
                 + ccoeff_d * (ex(ix,iy,ipos+1) - ex(ix,iy,ipos))
+            by(ix,iy,ipos) = by(ix,iy,ipos) - tstep * cpml_psi_byz(ix,iy,ipos)
           ENDDO
         ENDDO
       ENDDO
