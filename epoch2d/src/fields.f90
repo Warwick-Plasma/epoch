@@ -4,34 +4,25 @@ MODULE fields
 
   IMPLICIT NONE
 
-  REAL(num), DIMENSION(6) :: const
-  INTEGER :: large, small, order
+  INTEGER :: field_order
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx, hdty
   REAL(num) :: cnx, cny
 
 CONTAINS
 
-  SUBROUTINE set_field_order(field_order)
+  SUBROUTINE set_field_order(order)
 
-    INTEGER, INTENT(IN) :: field_order
+    INTEGER, INTENT(IN) :: order
 
-    order = field_order
-    large = order / 2
-    small = large - 1
-    fng = large
+    field_order = order
+    fng = field_order / 2
 
     IF (field_order .EQ. 2) THEN
-      const(1:2) = (/ -1.0_num, 1.0_num /)
       cfl = 1.0_num
     ELSE IF (field_order .EQ. 4) THEN
-      const(1:4) = (/ 1.0_num/24.0_num, -9.0_num/8.0_num, &
-          9.0_num/8.0_num, -1.0_num/24.0_num /)
       cfl = 6.0_num / 7.0_num
     ELSE
-      const(1:6) = (/ -3.0_num/640.0_num, 25.0_num/384.0_num, &
-          -75.0_num/64.0_num, 75.0_num/64.0_num, -25.0_num/384.0_num, &
-          3.0_num/640.0_num /)
       cfl = 120.0_num / 149.0_num
     ENDIF
 
@@ -43,66 +34,190 @@ CONTAINS
 
     INTEGER :: ix, iy
     REAL(num) :: cpml_x, cpml_y
+    REAL(num) :: c1, c2, c3
+    REAL(num) :: cx1, cx2, cx3
+    REAL(num) :: cy1, cy2, cy3
 
     IF (cpml_boundaries) THEN
       cpml_x = cnx
       cpml_y = cny
 
-      DO iy = 1, ny
-        cpml_y = cny / cpml_kappa_ey(iy)
-        DO ix = 1, nx
-          ex(ix, iy) = ex(ix, iy) &
-              + cpml_y * SUM(const(1:order) * bz(ix, iy-large:iy+small)) &
-              - fac * jx(ix, iy)
-        ENDDO
-      ENDDO
+      IF (field_order .EQ. 2) THEN
+        DO iy = 1, ny
+          cpml_y = cny / cpml_kappa_ey(iy)
+          DO ix = 1, nx
+            cpml_x = cnx / cpml_kappa_ex(ix)
 
-      DO iy = 1, ny
-        DO ix = 1, nx
-          cpml_x = cnx / cpml_kappa_ex(ix)
-          ey(ix, iy) = ey(ix, iy) &
-              - cpml_x * SUM(const(1:order) * bz(ix-large:ix+small, iy)) &
-              - fac * jy(ix, iy)
-        ENDDO
-      ENDDO
+            ex(ix, iy) = ex(ix, iy) &
+                + cpml_y * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
+                - fac * jx(ix, iy)
 
-      DO iy = 1, ny
-        cpml_y = cny / cpml_kappa_ey(iy)
-        DO ix = 1, nx
-          cpml_x = cnx / cpml_kappa_ex(ix)
-          ez(ix, iy) = ez(ix, iy) &
-              + cpml_x * SUM(const(1:order) * by(ix-large:ix+small, iy)) &
-              - cpml_y * SUM(const(1:order) * bx(ix, iy-large:iy+small)) &
-              - fac * jz(ix, iy)
+            ey(ix, iy) = ey(ix, iy) &
+                - cpml_x * (bz(ix  , iy  ) - bz(ix-1, iy  )) &
+                - fac * jy(ix, iy)
+
+            ez(ix, iy) = ez(ix, iy) &
+                + cpml_x * (by(ix  , iy  ) - by(ix-1, iy  )) &
+                - cpml_y * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
+                - fac * jz(ix, iy)
+          ENDDO
         ENDDO
-      ENDDO
+      ELSE IF (field_order .EQ. 4) THEN
+        c1 = 9.0_num / 8.0_num
+        c2 = -1.0_num / 24.0_num
+
+        DO iy = 1, ny
+          cpml_y = cny / cpml_kappa_ey(iy)
+          cy1 = c1 * cpml_y
+          cy2 = c2 * cpml_y
+          DO ix = 1, nx
+            cpml_x = cnx / cpml_kappa_ex(ix)
+            cx1 = c1 * cpml_x
+            cx2 = c2 * cpml_x
+
+            ex(ix, iy) = ex(ix, iy) &
+                + cy1 * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
+                + cy2 * (bz(ix  , iy+1) - bz(ix  , iy-2)) &
+                - fac * jx(ix, iy)
+
+            ey(ix, iy) = ey(ix, iy) &
+                - cx1 * (bz(ix  , iy  ) - bz(ix-1, iy  )) &
+                - cx2 * (bz(ix+1, iy  ) - bz(ix-2, iy  )) &
+                - fac * jy(ix, iy)
+
+            ez(ix, iy) = ez(ix, iy) &
+                + cx1 * (by(ix  , iy  ) - by(ix-1, iy  )) &
+                + cx2 * (by(ix+1, iy  ) - by(ix-2, iy  )) &
+                - cy1 * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
+                - cy2 * (bx(ix  , iy+1) - bx(ix  , iy-2)) &
+                - fac * jz(ix, iy)
+          ENDDO
+        ENDDO
+      ELSE
+        c1 = 75.0_num / 64.0_num
+        c2 = -25.0_num / 384.0_num
+        c3 = 3.0_num / 640.0_num
+
+        DO iy = 1, ny
+          cpml_y = cny / cpml_kappa_ey(iy)
+          cy1 = c1 * cpml_y
+          cy2 = c2 * cpml_y
+          cy3 = c3 * cpml_y
+          DO ix = 1, nx
+            cpml_x = cnx / cpml_kappa_ex(ix)
+            cx1 = c1 * cpml_x
+            cx2 = c2 * cpml_x
+            cx3 = c3 * cpml_x
+
+            ex(ix, iy) = ex(ix, iy) &
+                + cy1 * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
+                + cy2 * (bz(ix  , iy+1) - bz(ix  , iy-2)) &
+                + cy3 * (bz(ix  , iy+2) - bz(ix  , iy-3)) &
+                - fac * jx(ix, iy)
+
+            ey(ix, iy) = ey(ix, iy) &
+                - cx1 * (bz(ix  , iy  ) - bz(ix-1, iy  )) &
+                - cx2 * (bz(ix+1, iy  ) - bz(ix-2, iy  )) &
+                - cx3 * (bz(ix+2, iy  ) - bz(ix-3, iy  )) &
+                - fac * jy(ix, iy)
+
+            ez(ix, iy) = ez(ix, iy) &
+                + cx1 * (by(ix  , iy  ) - by(ix-1, iy  )) &
+                + cx2 * (by(ix+1, iy  ) - by(ix-2, iy  )) &
+                + cx3 * (by(ix+2, iy  ) - by(ix-3, iy  )) &
+                - cy1 * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
+                - cy2 * (bx(ix  , iy+1) - bx(ix  , iy-2)) &
+                - cy3 * (bx(ix  , iy+2) - bx(ix  , iy-3)) &
+                - fac * jz(ix, iy)
+          ENDDO
+        ENDDO
+      ENDIF
 
       CALL cpml_advance_e_currents(hdt)
     ELSE
-      DO iy = 1, ny
-        DO ix = 1, nx
-          ex(ix, iy) = ex(ix, iy) &
-              + cny * SUM(const(1:order) * bz(ix, iy-large:iy+small)) &
-              - fac * jx(ix, iy)
-        ENDDO
-      ENDDO
+      IF (field_order .EQ. 2) THEN
+        DO iy = 1, ny
+          DO ix = 1, nx
+            ex(ix, iy) = ex(ix, iy) &
+                + cny * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
+                - fac * jx(ix, iy)
 
-      DO iy = 1, ny
-        DO ix = 1, nx
-          ey(ix, iy) = ey(ix, iy) &
-              - cnx * SUM(const(1:order) * bz(ix-large:ix+small, iy)) &
-              - fac * jy(ix, iy)
-        ENDDO
-      ENDDO
+            ey(ix, iy) = ey(ix, iy) &
+                - cnx * (bz(ix  , iy  ) - bz(ix-1, iy  )) &
+                - fac * jy(ix, iy)
 
-      DO iy = 1, ny
-        DO ix = 1, nx
-          ez(ix, iy) = ez(ix, iy) &
-              + cnx * SUM(const(1:order) * by(ix-large:ix+small, iy)) &
-              - cny * SUM(const(1:order) * bx(ix, iy-large:iy+small)) &
-              - fac * jz(ix, iy)
+            ez(ix, iy) = ez(ix, iy) &
+                + cnx * (by(ix  , iy  ) - by(ix-1, iy  )) &
+                - cny * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
+                - fac * jz(ix, iy)
+          ENDDO
         ENDDO
-      ENDDO
+      ELSE IF (field_order .EQ. 4) THEN
+        c1 = 9.0_num / 8.0_num
+        c2 = -1.0_num / 24.0_num
+
+        DO iy = 1, ny
+          cy1 = c1 * cny
+          cy2 = c2 * cny
+          DO ix = 1, nx
+            cx1 = c1 * cnx
+            cx2 = c2 * cnx
+
+            ex(ix, iy) = ex(ix, iy) &
+                + cy1 * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
+                + cy2 * (bz(ix  , iy+1) - bz(ix  , iy-2)) &
+                - fac * jx(ix, iy)
+
+            ey(ix, iy) = ey(ix, iy) &
+                - cx1 * (bz(ix  , iy  ) - bz(ix-1, iy  )) &
+                - cx2 * (bz(ix+1, iy  ) - bz(ix-2, iy  )) &
+                - fac * jy(ix, iy)
+
+            ez(ix, iy) = ez(ix, iy) &
+                + cx1 * (by(ix  , iy  ) - by(ix-1, iy  )) &
+                + cx2 * (by(ix+1, iy  ) - by(ix-2, iy  )) &
+                - cy1 * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
+                - cy2 * (bx(ix  , iy+1) - bx(ix  , iy-2)) &
+                - fac * jz(ix, iy)
+          ENDDO
+        ENDDO
+      ELSE
+        c1 = 75.0_num / 64.0_num
+        c2 = -25.0_num / 384.0_num
+        c3 = 3.0_num / 640.0_num
+
+        DO iy = 1, ny
+          cy1 = c1 * cny
+          cy2 = c2 * cny
+          cy3 = c3 * cny
+          DO ix = 1, nx
+            cx1 = c1 * cnx
+            cx2 = c2 * cnx
+            cx3 = c3 * cnx
+
+            ex(ix, iy) = ex(ix, iy) &
+                + cy1 * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
+                + cy2 * (bz(ix  , iy+1) - bz(ix  , iy-2)) &
+                + cy3 * (bz(ix  , iy+2) - bz(ix  , iy-3)) &
+                - fac * jx(ix, iy)
+
+            ey(ix, iy) = ey(ix, iy) &
+                - cx1 * (bz(ix  , iy  ) - bz(ix-1, iy  )) &
+                - cx2 * (bz(ix+1, iy  ) - bz(ix-2, iy  )) &
+                - cx3 * (bz(ix+2, iy  ) - bz(ix-3, iy  )) &
+                - fac * jy(ix, iy)
+
+            ez(ix, iy) = ez(ix, iy) &
+                + cx1 * (by(ix  , iy  ) - by(ix-1, iy  )) &
+                + cx2 * (by(ix+1, iy  ) - by(ix-2, iy  )) &
+                + cx3 * (by(ix+2, iy  ) - by(ix-3, iy  )) &
+                - cy1 * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
+                - cy2 * (bx(ix  , iy+1) - bx(ix  , iy-2)) &
+                - cy3 * (bx(ix  , iy+2) - bx(ix  , iy-3)) &
+                - fac * jz(ix, iy)
+          ENDDO
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE update_e_field
@@ -113,60 +228,172 @@ CONTAINS
 
     INTEGER :: ix, iy
     REAL(num) :: cpml_x, cpml_y
+    REAL(num) :: c1, c2, c3
+    REAL(num) :: cx1, cx2, cx3
+    REAL(num) :: cy1, cy2, cy3
 
     IF (cpml_boundaries) THEN
       cpml_x = hdtx
       cpml_y = hdty
 
-      DO iy = 1, ny
-        cpml_y = hdty / cpml_kappa_by(iy)
-        DO ix = 1, nx
-          bx(ix, iy) = bx(ix, iy) &
-              - cpml_y * SUM(const(1:order) * ez(ix, iy-small:iy+large))
-        ENDDO
-      ENDDO
+      IF (field_order .EQ. 2) THEN
+        DO iy = 1, ny
+          cpml_y = hdty / cpml_kappa_by(iy)
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_bx(ix)
 
-      DO iy = 1, ny
-        DO ix = 1, nx
-          cpml_x = hdtx / cpml_kappa_bx(ix)
-          by(ix, iy) = by(ix, iy) &
-              + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large, iy))
-        ENDDO
-      ENDDO
+            bx(ix, iy) = bx(ix, iy) &
+                - cpml_y * (ez(ix  , iy+1) - ez(ix  , iy  ))
 
-      DO iy = 1, ny
-        cpml_y = hdty / cpml_kappa_by(iy)
-        DO ix = 1, nx
-          cpml_x = hdtx / cpml_kappa_bx(ix)
-          bz(ix, iy) = bz(ix, iy) &
-              - cpml_x * SUM(const(1:order) * ey(ix-small:ix+large, iy)) &
-              + cpml_y * SUM(const(1:order) * ex(ix, iy-small:iy+large))
+            by(ix, iy) = by(ix, iy) &
+                + cpml_x * (ez(ix+1, iy  ) - ez(ix  , iy  ))
+
+            bz(ix, iy) = bz(ix, iy) &
+                - cpml_x * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
+                + cpml_y * (ex(ix  , iy+1) - ex(ix  , iy  ))
+          ENDDO
         ENDDO
-      ENDDO
+      ELSE IF (field_order .EQ. 4) THEN
+        c1 = 9.0_num / 8.0_num
+        c2 = -1.0_num / 24.0_num
+
+        DO iy = 1, ny
+          cpml_y = hdty / cpml_kappa_by(iy)
+          cy1 = c1 * cpml_y
+          cy2 = c2 * cpml_y
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_bx(ix)
+            cx1 = c1 * cpml_x
+            cx2 = c2 * cpml_x
+
+            bx(ix, iy) = bx(ix, iy) &
+                - cy1 * (ez(ix  , iy+1) - ez(ix  , iy  )) &
+                - cy2 * (ez(ix  , iy+2) - ez(ix  , iy-1))
+
+            by(ix, iy) = by(ix, iy) &
+                + cx1 * (ez(ix+1, iy  ) - ez(ix  , iy  )) &
+                + cx2 * (ez(ix+2, iy  ) - ez(ix-1, iy  ))
+
+            bz(ix, iy) = bz(ix, iy) &
+                - cx1 * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
+                - cx2 * (ey(ix+2, iy  ) - ey(ix-1, iy  )) &
+                + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  )) &
+                + cy2 * (ex(ix  , iy+2) - ex(ix  , iy-1))
+          ENDDO
+        ENDDO
+      ELSE
+        c1 = 75.0_num / 64.0_num
+        c2 = -25.0_num / 384.0_num
+        c3 = 3.0_num / 640.0_num
+
+        DO iy = 1, ny
+          cpml_y = hdty / cpml_kappa_by(iy)
+          cy1 = c1 * cpml_y
+          cy2 = c2 * cpml_y
+          cy3 = c3 * cpml_y
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_bx(ix)
+            cx1 = c1 * cpml_x
+            cx2 = c2 * cpml_x
+            cx3 = c3 * cpml_x
+
+            bx(ix, iy) = bx(ix, iy) &
+                - cy1 * (ez(ix  , iy+1) - ez(ix  , iy  )) &
+                - cy2 * (ez(ix  , iy+2) - ez(ix  , iy-1)) &
+                - cy3 * (ez(ix  , iy+3) - ez(ix  , iy-2))
+
+            by(ix, iy) = by(ix, iy) &
+                + cx1 * (ez(ix+1, iy  ) - ez(ix  , iy  )) &
+                + cx2 * (ez(ix+2, iy  ) - ez(ix-1, iy  )) &
+                + cx3 * (ez(ix+3, iy  ) - ez(ix-2, iy  ))
+
+            bz(ix, iy) = bz(ix, iy) &
+                - cx1 * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
+                - cx2 * (ey(ix+2, iy  ) - ey(ix-1, iy  )) &
+                - cx3 * (ey(ix+3, iy  ) - ey(ix-2, iy  )) &
+                + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  )) &
+                + cy2 * (ex(ix  , iy+2) - ex(ix  , iy-1)) &
+                + cy3 * (ex(ix  , iy+3) - ex(ix  , iy-2))
+          ENDDO
+        ENDDO
+      ENDIF
 
       CALL cpml_advance_b_currents(hdt)
     ELSE
-      DO iy = 1, ny
-        DO ix = 1, nx
-          bx(ix, iy) = bx(ix, iy) &
-              - hdty * SUM(const(1:order) * ez(ix, iy-small:iy+large))
-        ENDDO
-      ENDDO
+      IF (field_order .EQ. 2) THEN
+        DO iy = 1, ny
+          DO ix = 1, nx
+            bx(ix, iy) = bx(ix, iy) &
+                - hdty * (ez(ix  , iy+1) - ez(ix  , iy  ))
 
-      DO iy = 1, ny
-        DO ix = 1, nx
-          by(ix, iy) = by(ix, iy) &
-              + hdtx * SUM(const(1:order) * ez(ix-small:ix+large, iy))
-        ENDDO
-      ENDDO
+            by(ix, iy) = by(ix, iy) &
+                + hdtx * (ez(ix+1, iy  ) - ez(ix  , iy  ))
 
-      DO iy = 1, ny
-        DO ix = 1, nx
-          bz(ix, iy) = bz(ix, iy) &
-              - hdtx * SUM(const(1:order) * ey(ix-small:ix+large, iy)) &
-              + hdty * SUM(const(1:order) * ex(ix, iy-small:iy+large))
+            bz(ix, iy) = bz(ix, iy) &
+                - hdtx * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
+                + hdty * (ex(ix  , iy+1) - ex(ix  , iy  ))
+          ENDDO
         ENDDO
-      ENDDO
+      ELSE IF (field_order .EQ. 4) THEN
+        c1 = 9.0_num / 8.0_num
+        c2 = -1.0_num / 24.0_num
+
+        DO iy = 1, ny
+          cy1 = c1 * hdty
+          cy2 = c2 * hdty
+          DO ix = 1, nx
+            cx1 = c1 * hdtx
+            cx2 = c2 * hdtx
+
+            bx(ix, iy) = bx(ix, iy) &
+                - cy1 * (ez(ix  , iy+1) - ez(ix  , iy  )) &
+                - cy2 * (ez(ix  , iy+2) - ez(ix  , iy-1))
+
+            by(ix, iy) = by(ix, iy) &
+                + cx1 * (ez(ix+1, iy  ) - ez(ix  , iy  )) &
+                + cx2 * (ez(ix+2, iy  ) - ez(ix-1, iy  ))
+
+            bz(ix, iy) = bz(ix, iy) &
+                - cx1 * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
+                - cx2 * (ey(ix+2, iy  ) - ey(ix-1, iy  )) &
+                + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  )) &
+                + cy2 * (ex(ix  , iy+2) - ex(ix  , iy-1))
+          ENDDO
+        ENDDO
+      ELSE
+        c1 = 75.0_num / 64.0_num
+        c2 = -25.0_num / 384.0_num
+        c3 = 3.0_num / 640.0_num
+
+        DO iy = 1, ny
+          cy1 = c1 * hdty
+          cy2 = c2 * hdty
+          cy3 = c3 * hdty
+          DO ix = 1, nx
+            cx1 = c1 * hdtx
+            cx2 = c2 * hdtx
+            cx3 = c3 * hdtx
+
+            bx(ix, iy) = bx(ix, iy) &
+                - cy1 * (ez(ix  , iy+1) - ez(ix  , iy  )) &
+                - cy2 * (ez(ix  , iy+2) - ez(ix  , iy-1)) &
+                - cy3 * (ez(ix  , iy+3) - ez(ix  , iy-2))
+
+            by(ix, iy) = by(ix, iy) &
+                + cx1 * (ez(ix+1, iy  ) - ez(ix  , iy  )) &
+                + cx2 * (ez(ix+2, iy  ) - ez(ix-1, iy  )) &
+                + cx3 * (ez(ix+3, iy  ) - ez(ix-2, iy  ))
+
+            bz(ix, iy) = bz(ix, iy) &
+                - cx1 * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
+                - cx2 * (ey(ix+2, iy  ) - ey(ix-1, iy  )) &
+                - cx3 * (ey(ix+3, iy  ) - ey(ix-2, iy  )) &
+                + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  )) &
+                + cy2 * (ex(ix  , iy+2) - ex(ix  , iy-1)) &
+                + cy3 * (ex(ix  , iy+3) - ex(ix  , iy-2))
+          ENDDO
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE update_b_field

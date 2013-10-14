@@ -4,34 +4,25 @@ MODULE fields
 
   IMPLICIT NONE
 
-  REAL(num), DIMENSION(6) :: const
-  INTEGER :: large, small, order
+  INTEGER :: field_order
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx
   REAL(num) :: cnx
 
 CONTAINS
 
-  SUBROUTINE set_field_order(field_order)
+  SUBROUTINE set_field_order(order)
 
-    INTEGER, INTENT(IN) :: field_order
+    INTEGER, INTENT(IN) :: order
 
-    order = field_order
-    large = order / 2
-    small = large - 1
-    fng = large
+    field_order = order
+    fng = field_order / 2
 
     IF (field_order .EQ. 2) THEN
-      const(1:2) = (/ -1.0_num, 1.0_num /)
       cfl = 1.0_num
     ELSE IF (field_order .EQ. 4) THEN
-      const(1:4) = (/ 1.0_num/24.0_num, -9.0_num/8.0_num, &
-          9.0_num/8.0_num, -1.0_num/24.0_num /)
       cfl = 6.0_num / 7.0_num
     ELSE
-      const(1:6) = (/ -3.0_num/640.0_num, 25.0_num/384.0_num, &
-          -75.0_num/64.0_num, 75.0_num/64.0_num, -25.0_num/384.0_num, &
-          3.0_num/640.0_num /)
       cfl = 120.0_num / 149.0_num
     ENDIF
 
@@ -43,47 +34,139 @@ CONTAINS
 
     INTEGER :: ix
     REAL(num) :: cpml_x
+    REAL(num) :: c1, c2, c3
+    REAL(num) :: cx1, cx2, cx3
 
     IF (cpml_boundaries) THEN
       cpml_x = cnx
 
-      DO ix = 1, nx
-        ex(ix) = ex(ix) &
-            - fac * jx(ix)
-      ENDDO
+      IF (field_order .EQ. 2) THEN
+        DO ix = 1, nx
+          cpml_x = cnx / cpml_kappa_ex(ix)
 
-      DO ix = 1, nx
-        cpml_x = cnx / cpml_kappa_ex(ix)
-        ey(ix) = ey(ix) &
-            - cpml_x * SUM(const(1:order) * bz(ix-large:ix+small)) &
-            - fac * jy(ix)
-      ENDDO
+          ex(ix) = ex(ix) &
+              - fac * jx(ix)
 
-      DO ix = 1, nx
-        cpml_x = cnx / cpml_kappa_ex(ix)
-        ez(ix) = ez(ix) &
-            + cpml_x * SUM(const(1:order) * by(ix-large:ix+small)) &
-            - fac * jz(ix)
-      ENDDO
+          ey(ix) = ey(ix) &
+              - cpml_x * (bz(ix  ) - bz(ix-1)) &
+              - fac * jy(ix)
+
+          ez(ix) = ez(ix) &
+              + cpml_x * (by(ix  ) - by(ix-1)) &
+              - fac * jz(ix)
+        ENDDO
+      ELSE IF (field_order .EQ. 4) THEN
+        c1 = 9.0_num / 8.0_num
+        c2 = -1.0_num / 24.0_num
+
+        DO ix = 1, nx
+          cpml_x = cnx / cpml_kappa_ex(ix)
+          cx1 = c1 * cpml_x
+          cx2 = c2 * cpml_x
+
+          ex(ix) = ex(ix) &
+              - fac * jx(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - cx2 * (bz(ix+1) - bz(ix-2)) &
+              - fac * jy(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              + cx2 * (by(ix+1) - by(ix-2)) &
+              - fac * jz(ix)
+        ENDDO
+      ELSE
+        c1 = 75.0_num / 64.0_num
+        c2 = -25.0_num / 384.0_num
+        c3 = 3.0_num / 640.0_num
+
+        DO ix = 1, nx
+          cpml_x = cnx / cpml_kappa_ex(ix)
+          cx1 = c1 * cpml_x
+          cx2 = c2 * cpml_x
+          cx3 = c3 * cpml_x
+
+          ex(ix) = ex(ix) &
+              - fac * jx(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - cx2 * (bz(ix+1) - bz(ix-2)) &
+              - cx3 * (bz(ix+2) - bz(ix-3)) &
+              - fac * jy(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              + cx2 * (by(ix+1) - by(ix-2)) &
+              + cx3 * (by(ix+2) - by(ix-3)) &
+              - fac * jz(ix)
+        ENDDO
+      ENDIF
 
       CALL cpml_advance_e_currents(hdt)
     ELSE
-      DO ix = 1, nx
-        ex(ix) = ex(ix) &
-            - fac * jx(ix)
-      ENDDO
+      IF (field_order .EQ. 2) THEN
+        DO ix = 1, nx
+          ex(ix) = ex(ix) &
+              - fac * jx(ix)
 
-      DO ix = 1, nx
-        ey(ix) = ey(ix) &
-            - cnx * SUM(const(1:order) * bz(ix-large:ix+small)) &
-            - fac * jy(ix)
-      ENDDO
+          ey(ix) = ey(ix) &
+              - cnx * (bz(ix  ) - bz(ix-1)) &
+              - fac * jy(ix)
 
-      DO ix = 1, nx
-        ez(ix) = ez(ix) &
-            + cnx * SUM(const(1:order) * by(ix-large:ix+small)) &
-            - fac * jz(ix)
-      ENDDO
+          ez(ix) = ez(ix) &
+              + cnx * (by(ix  ) - by(ix-1)) &
+              - fac * jz(ix)
+        ENDDO
+      ELSE IF (field_order .EQ. 4) THEN
+        c1 = 9.0_num / 8.0_num
+        c2 = -1.0_num / 24.0_num
+
+        DO ix = 1, nx
+          cx1 = c1 * cnx
+          cx2 = c2 * cnx
+
+          ex(ix) = ex(ix) &
+              - fac * jx(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - cx2 * (bz(ix+1) - bz(ix-2)) &
+              - fac * jy(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              + cx2 * (by(ix+1) - by(ix-2)) &
+              - fac * jz(ix)
+        ENDDO
+      ELSE
+        c1 = 75.0_num / 64.0_num
+        c2 = -25.0_num / 384.0_num
+        c3 = 3.0_num / 640.0_num
+
+        DO ix = 1, nx
+          cx1 = c1 * cnx
+          cx2 = c2 * cnx
+          cx3 = c3 * cnx
+
+          ex(ix) = ex(ix) &
+              - fac * jx(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - cx2 * (bz(ix+1) - bz(ix-2)) &
+              - cx3 * (bz(ix+2) - bz(ix-3)) &
+              - fac * jy(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              + cx2 * (by(ix+1) - by(ix-2)) &
+              + cx3 * (by(ix+2) - by(ix-3)) &
+              - fac * jz(ix)
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE update_e_field
@@ -94,33 +177,109 @@ CONTAINS
 
     INTEGER :: ix
     REAL(num) :: cpml_x
+    REAL(num) :: c1, c2, c3
+    REAL(num) :: cx1, cx2, cx3
 
     IF (cpml_boundaries) THEN
       cpml_x = hdtx
 
-      DO ix = 1, nx
-        cpml_x = hdtx / cpml_kappa_bx(ix)
-        by(ix) = by(ix) &
-            + cpml_x * SUM(const(1:order) * ez(ix-small:ix+large))
-      ENDDO
+      IF (field_order .EQ. 2) THEN
+        DO ix = 1, nx
+          cpml_x = hdtx / cpml_kappa_bx(ix)
 
-      DO ix = 1, nx
-        cpml_x = hdtx / cpml_kappa_bx(ix)
-        bz(ix) = bz(ix) &
-            - cpml_x * SUM(const(1:order) * ey(ix-small:ix+large))
-      ENDDO
+          by(ix) = by(ix) &
+              + cpml_x * (ez(ix+1) - ez(ix  ))
+
+          bz(ix) = bz(ix) &
+              - cpml_x * (ey(ix+1) - ey(ix  ))
+        ENDDO
+      ELSE IF (field_order .EQ. 4) THEN
+        c1 = 9.0_num / 8.0_num
+        c2 = -1.0_num / 24.0_num
+
+        DO ix = 1, nx
+          cpml_x = hdtx / cpml_kappa_bx(ix)
+          cx1 = c1 * cpml_x
+          cx2 = c2 * cpml_x
+
+          by(ix) = by(ix) &
+              + cx1 * (ez(ix+1) - ez(ix  )) &
+              + cx2 * (ez(ix+2) - ez(ix-1))
+
+          bz(ix) = bz(ix) &
+              - cx1 * (ey(ix+1) - ey(ix  )) &
+              - cx2 * (ey(ix+2) - ey(ix-1))
+        ENDDO
+      ELSE
+        c1 = 75.0_num / 64.0_num
+        c2 = -25.0_num / 384.0_num
+        c3 = 3.0_num / 640.0_num
+
+        DO ix = 1, nx
+          cpml_x = hdtx / cpml_kappa_bx(ix)
+          cx1 = c1 * cpml_x
+          cx2 = c2 * cpml_x
+          cx3 = c3 * cpml_x
+
+          by(ix) = by(ix) &
+              + cx1 * (ez(ix+1) - ez(ix  )) &
+              + cx2 * (ez(ix+2) - ez(ix-1)) &
+              + cx3 * (ez(ix+3) - ez(ix-2))
+
+          bz(ix) = bz(ix) &
+              - cx1 * (ey(ix+1) - ey(ix  )) &
+              - cx2 * (ey(ix+2) - ey(ix-1)) &
+              - cx3 * (ey(ix+3) - ey(ix-2))
+        ENDDO
+      ENDIF
 
       CALL cpml_advance_b_currents(hdt)
     ELSE
-      DO ix = 1, nx
-        by(ix) = by(ix) &
-            + hdtx * SUM(const(1:order) * ez(ix-small:ix+large))
-      ENDDO
+      IF (field_order .EQ. 2) THEN
+        DO ix = 1, nx
+          by(ix) = by(ix) &
+              + hdtx * (ez(ix+1) - ez(ix  ))
 
-      DO ix = 1, nx
-        bz(ix) = bz(ix) &
-            - hdtx * SUM(const(1:order) * ey(ix-small:ix+large))
-      ENDDO
+          bz(ix) = bz(ix) &
+              - hdtx * (ey(ix+1) - ey(ix  ))
+        ENDDO
+      ELSE IF (field_order .EQ. 4) THEN
+        c1 = 9.0_num / 8.0_num
+        c2 = -1.0_num / 24.0_num
+
+        DO ix = 1, nx
+          cx1 = c1 * hdtx
+          cx2 = c2 * hdtx
+
+          by(ix) = by(ix) &
+              + cx1 * (ez(ix+1) - ez(ix  )) &
+              + cx2 * (ez(ix+2) - ez(ix-1))
+
+          bz(ix) = bz(ix) &
+              - cx1 * (ey(ix+1) - ey(ix  )) &
+              - cx2 * (ey(ix+2) - ey(ix-1))
+        ENDDO
+      ELSE
+        c1 = 75.0_num / 64.0_num
+        c2 = -25.0_num / 384.0_num
+        c3 = 3.0_num / 640.0_num
+
+        DO ix = 1, nx
+          cx1 = c1 * hdtx
+          cx2 = c2 * hdtx
+          cx3 = c3 * hdtx
+
+          by(ix) = by(ix) &
+              + cx1 * (ez(ix+1) - ez(ix  )) &
+              + cx2 * (ez(ix+2) - ez(ix-1)) &
+              + cx3 * (ez(ix+3) - ez(ix-2))
+
+          bz(ix) = bz(ix) &
+              - cx1 * (ey(ix+1) - ey(ix  )) &
+              - cx2 * (ey(ix+2) - ey(ix-1)) &
+              - cx3 * (ey(ix+3) - ey(ix-2))
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE update_b_field
