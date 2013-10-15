@@ -5,13 +5,14 @@ EXTDIR=../extension
 
 clean=0
 DBG=""
+PYDBG=""
 
 while getopts crdph name
 do
    case $name in
       c) clean=2 ;;
       r) clean=1 ;;
-      d) DBG="-g -O0" ;;
+      d) DBG="-g -O0"; PYDBG="-g" ;;
       h) cat <<EOF
 build script options:
   -c: Clean up files. Do not build anything.
@@ -37,5 +38,5 @@ if [ $clean -le 1 ] ; then
       $SDFDIR/sdf_control.c $SDFDIR/sdf_input.c $SDFDIR/sdf_input_cartesian.c \
       $SDFDIR/sdf_input_point.c $SDFDIR/sdf_input_station.c $SDFDIR/sdf_util.c \
       $SDFDIR/sdf_extension_util.c $SDFDIR/sdf_derived.c -ldl
-  CFLAGS="-Wno-unused-function" python setup.py build -b pybuild install --prefix= --user --record pybuild/files.txt
+  CFLAGS="-Wno-unused-function $DBG" python setup.py build $PYDBG -b pybuild install --prefix= --user --record pybuild/files.txt
 fi

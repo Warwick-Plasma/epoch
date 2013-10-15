@@ -118,6 +118,7 @@ static void setup_mesh(sdf_file_t *h, PyObject *dict)
                 PyArray_DescrFromType(typemap[b->datatype_out]), 1,
                 dims, NULL, grid, NPY_F_CONTIGUOUS, NULL);
             PyDict_SetItemString(dict, label, sub);
+            Py_DECREF(sub);
 
             /* Now add the original grid with "_node" appended */
             ndims++;
@@ -137,12 +138,17 @@ static void setup_mesh(sdf_file_t *h, PyObject *dict)
             PyArray_DescrFromType(typemap[b->datatype_out]), 1,
             dims, NULL, grid, NPY_F_CONTIGUOUS, NULL);
         PyDict_SetItemString(dict, label, sub);
+        Py_DECREF(sub);
     }
 }
 
 
-#define SET_ENTRY(type,value) \
-    PyDict_SetItemString(dict, #value, Py_BuildValue(#type, h->value))
+#define SET_ENTRY(type,value) do { \
+        PyObject *sub; \
+        sub = Py_BuildValue(#type, h->value); \
+        PyDict_SetItemString(dict, #value, sub); \
+        Py_DECREF(sub); \
+    } while (0)
 
 #define SET_BOOL(value) \
     if (h->value) PyDict_SetItemString(dict, #value, Py_True); \
@@ -165,7 +171,6 @@ static PyObject *fill_header(sdf_file_t *h)
     SET_BOOL(restart_flag);
     SET_BOOL(other_domains);
 
-    Py_INCREF(dict);
     return dict;
 }
 
@@ -185,7 +190,9 @@ static PyObject* SDF_read(SDFObject *self, PyObject *args)
     dict = PyDict_New();
 
     // Add header
-    PyDict_SetItemString(dict, "Header", fill_header(h));
+    sub = fill_header(h);
+    PyDict_SetItemString(dict, "Header", sub);
+    Py_DECREF(sub);
 
     b = h->current_block = h->blocklist;
     for (i = 0; i < h->nblocks; i++) {
@@ -202,6 +209,7 @@ static PyObject* SDF_read(SDFObject *self, PyObject *args)
                 PyArray_DescrFromType(typemap[b->datatype_out]), b->ndims,
                 dims, NULL, b->data, NPY_F_CONTIGUOUS, NULL);
             PyDict_SetItemString(dict, b->name, sub);
+            Py_DECREF(sub);
             break;
           case SDF_BLOCKTYPE_CONSTANT:
             switch(b->datatype) {
@@ -235,7 +243,6 @@ static PyObject* SDF_read(SDFObject *self, PyObject *args)
         b = h->current_block = b->next;
     }
 
-    Py_INCREF(dict);
     return dict;
 }
 
