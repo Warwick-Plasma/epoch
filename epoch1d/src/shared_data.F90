@@ -113,10 +113,14 @@ MODULE constants
   ! Derived physical parameters used in ionisation
   ! h_bar = h_planck / 2.0_num / pi
   REAL(num), PARAMETER :: h_bar = 1.054571725336289397963133257349698e-34_num
+  ! Bohr radius
   ! a0 = 4.0_num * pi * epsilon0 * (h_bar / q0)**2.0_num / m0
   REAL(num), PARAMETER :: a0 = 5.291772101121111395947216558438464e-11_num
+  ! Hartree energy = 2 * Rydberg energy
   ! hartree = (h_bar / a0)**2.0_num / m0
   REAL(num), PARAMETER :: hartree = 4.359744350823120007758594450644308e-18_num
+  ! Fine structure constant, alpha = h_bar / a0 / m0 / c
+  REAL(num), PARAMETER :: alpha = 7.2973525755230202568508027295271584628e-3_num
   ! atomic_time = h_bar / hartree
   REAL(num), PARAMETER :: &
       atomic_time = 2.418884320905619591809404261549867e-17_num

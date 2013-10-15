@@ -21,9 +21,9 @@ MODULE collisions
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
 
   REAL(num) :: nu_avg
-  REAL(num), PARAMETER :: e_rest_ev = m0 * c**2 / ev
   REAL(num), PARAMETER :: e_rest = m0 * c**2
-  REAL(num), PARAMETER :: mrbeb_const = 4.0_num * pi * a0**2
+  REAL(num), PARAMETER :: e_rest_ev = e_rest / ev
+  REAL(num), PARAMETER :: mrbeb_const = 2.0_num * pi * a0**2 * alpha**4
   INTEGER :: nu_count
 
   REAL(num), DIMENSION(3,0:2), PARAMETER :: a_bell = RESHAPE( &
@@ -174,6 +174,7 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: log_lambda, e_log_lambda
     REAL(num) :: user_factor, e_user_factor, q1, q2, m1, m2, w1, w2
     REAL(num) :: q_e, m_e, w_e, q_full, ionisation_energy
+    LOGICAL :: use_coulomb_log_auto_i, use_coulomb_log_auto
 
     DO ix = 1, nx
       DO ispecies = 1, n_species
@@ -204,8 +205,11 @@ CONTAINS
           CYCLE
       ! Currently no support for collisions involving chargeless particles
       ! unless ionisation occurs
-      IF (species_list(ispecies)%charge .EQ. 0.0_num &
-          .AND. .NOT. species_list(ispecies)%ionise) CYCLE
+      use_coulomb_log_auto_i = .TRUE.
+      IF (species_list(ispecies)%charge .EQ. 0.0_num) THEN
+        IF (.NOT. species_list(ispecies)%ionise) CYCLE
+        use_coulomb_log_auto_i = .FALSE.
+      ENDIF
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
 
@@ -240,9 +244,12 @@ CONTAINS
             CYCLE
         ! Currently no support for collisions involving chargeless particles
         ! unless ionisation occurs
-        IF (species_list(jspecies)%charge .EQ. 0.0_num &
-            .AND. .NOT. (species_list(ispecies)%electron &
-            .AND. species_list(jspecies)%ionise)) CYCLE
+        use_coulomb_log_auto = use_coulomb_log_auto_i
+        IF (species_list(jspecies)%charge .EQ. 0.0_num) THEN
+          IF (.NOT. (species_list(ispecies)%electron &
+              .AND. species_list(jspecies)%ionise)) CYCLE
+          use_coulomb_log_auto = .FALSE.
+        ENDIF
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor .LE. 0) CYCLE
 
@@ -276,7 +283,11 @@ CONTAINS
         ENDIF
 
         IF (coulomb_log_auto) THEN
-          log_lambda = calc_coulomb_log(itemp, jdens, q1, q2)
+          IF (use_coulomb_log_auto) THEN
+            log_lambda = calc_coulomb_log(itemp, jdens, q1, q2)
+          ELSE
+            log_lambda = 0
+          ENDIF
           IF (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise) THEN
             e_log_lambda = calc_coulomb_log(itemp, e_dens, q1, q_e)
@@ -312,7 +323,7 @@ CONTAINS
             IF (e_user_factor .GT. 0.0_num) THEN
               CALL inter_species_collisions( &
                   ejected_e, ionising_e, &
-                  m_e, m2, q_e, q2, w1, w2, e_dens(ix), jdens(ix), &
+                  m_e, m2, q_e, q2, w_e, w2, e_dens(ix), jdens(ix), &
                   e_temp(ix), jtemp(ix), e_log_lambda(ix), &
                   e_user_factor)
             ENDIF
@@ -346,8 +357,8 @@ CONTAINS
             IF (e_user_factor .GT. 0.0_num) THEN
               CALL inter_species_collisions( &
                   ejected_e, ionising_e, &
-                  m1, m_e, q1, q_e, w1, w2, idens(ix), e_dens(ix), &
-                  e_temp(ix), jtemp(ix), e_log_lambda(ix), &
+                  m1, m_e, q1, q_e, w1, w_e, idens(ix), e_dens(ix), &
+                  itemp(ix), e_temp(ix), e_log_lambda(ix), &
                   e_user_factor)
             ENDIF
             ! Scatter non-ionising impact electrons off of remaining unionised
@@ -406,7 +417,8 @@ CONTAINS
 
     REAL(num) :: factor, np, eiics, reduced_energy, fion, gr, red_inc, red_ion,&
         i_p2, rot_y, rot_z, e_p2_i, e_e, beta_i, gamma_i, e_p_rot(3), e_ke_i, &
-        e_v_i, gamma_e_i, mrbeb_bk2, mrbeb_bl2, mrbeb_c, mrbeb_k
+        e_v_i, gamma_e_i, mrbeb_c, t, tp, bp, bt2, bb2
+    REAL(num) :: ionisation_energy_inv, red_ion_inv, prob_factor
     INTEGER(KIND=8) :: e_count, ion_count, pcount, i, k
 
     ! Inter-species collisions
@@ -439,6 +451,12 @@ CONTAINS
 
     electron => electrons%head
     ion => ions%head
+
+    ionisation_energy_inv = 1.0_num / ionisation_energy
+    red_ion = e_rest_ev * ionisation_energy_inv
+    red_ion_inv = 1.0_num / red_ion
+    ! Area must be multiplied by 1e-4 to convert from cm^2 to m^2
+    prob_factor = -e_dens * np / factor * dt * 1e-4_num
 
     DO k = 1, pcount
       i_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
@@ -493,17 +511,18 @@ CONTAINS
       IF (e_ke_i .GE. ion%weight / electron%weight * ionisation_energy &
           .AND. .NOT. was_ionised(MOD(k - 1, ion_count) + 1)) THEN
         ! Find cross section
-        red_inc = e_ke_i / ionisation_energy
+        red_inc = e_ke_i * ionisation_energy_inv
         ! Use MBELL model for atomic number < 36
         IF (n1 .LT. 4 .AND. l .LT. 3) THEN
-          red_ion = e_rest_ev / ionisation_energy
           ! Relativistic correction for high energy incident electrons
-          gr = (1.0_num + 2.0_num * red_ion)/(red_inc + 2.0_num * red_ion) &
+          gr = (1.0_num + 2.0_num * red_ion) / (red_inc + 2.0_num * red_ion) &
               * ((red_inc + red_ion) / (1.0_num + red_ion))**2 &
               * ((1.0_num + red_inc) * (red_inc + 2.0_num * red_ion) &
-              * (1.0_num + red_ion)**2 / (red_ion**2 * (1.0_num &
-              + 2.0_num * red_ion) + red_inc * (red_inc + 2.0_num * red_ion) &
+              * (1.0_num + red_ion)**2 &
+              / (red_ion**2 * (1.0_num + 2.0_num * red_ion) &
+              + red_inc * (red_inc + 2.0_num * red_ion) &
               * (1.0_num + red_ion)**2))**1.5_num
+
           ! Ionic correction for effect of charge of ion target upon incident
           ! electron
           fion = 1.0_num + 3.0_num * (ion_charge / (full_ion_charge &
@@ -515,29 +534,30 @@ CONTAINS
           ! BELL cross section (cm^2)
           eiics = (a_bell(n1,l) * LOG(red_inc) + eiics) / (e_ke_i &
               * ionisation_energy)
-          ! Relativisitic MBELL cross section (m^2)
+          ! Relativisitic MBELL cross section (cm^2)
           eiics = fion * gr * eiics
         ! Use MRBEB model everywhere else
         ELSE
-          red_ion = ionisation_energy / e_rest_ev
-          mrbeb_k = e_ke_i / e_rest_ev
-          mrbeb_bk2 = 1.0_num - 1.0_num / (1.0_num + mrbeb_k)**2
-          mrbeb_bl2 = 1.0_num - 1.0_num / (1.0_num + red_ion)**2
-          mrbeb_c = hartree / ionisation_energy &
-              * (0.3_num * (ion_charge / q0)**2 / n1**2 &
-              * 0.7_num * (ion_charge / q0 + 1.0_num)**2 / n2**2)
-          eiics = mrbeb_const / (mrbeb_bk2 + mrbeb_c * mrbeb_bl2) &
-              * (0.5_num * (LOG(mrbeb_bk2 / (1.0_num - mrbeb_bk2)) &
-              - mrbeb_bk2 - LOG(2.0_num * mrbeb_k)) &
-              * (1.0_num - 1.0_num / red_inc**2) + 1.0_num &
-              - 1.0_num / red_inc - LOG(red_inc) / (red_inc + 1.0_num) &
-              * (1.0_num + 2.0_num * mrbeb_k) &
-              / (1.0_num + mrbeb_k / 2.0_num)**2 &
-              + mrbeb_k**2 / (1.0_num + mrbeb_k / 2.0_num) &
-              * (red_inc - 1.0_num) / 2.0_num)
+          t  = red_inc
+          tp = e_ke_i / e_rest_ev
+          bp = red_ion_inv
+          bt2 = 1.0_num - 1.0_num / (1.0_num + tp)**2
+          bb2 = 1.0_num - 1.0_num / (1.0_num + bp)**2
+
+          mrbeb_c = hartree / ionisation_energy / 2.0_num &
+              * (0.3_num * (ion_charge / q0 / n1)**2 &
+              * 0.7_num * ((ion_charge / q0 + 1.0_num) / n2)**2)
+
+          ! MRBEB cross section (cm^2)
+          eiics = mrbeb_const / (bt2 + mrbeb_c * bb2) / bp &
+              * (0.5_num * (LOG(bt2 / (1.0_num - bt2)) - bt2 &
+              - LOG(2.0_num * bp)) * (1.0_num - 1.0_num / t**2) &
+              + 1.0_num - 1.0_num / t &
+              - LOG(t) / (t + 1.0_num) * (1.0_num + 2.0_num * tp) &
+              / (1.0_num + 0.5_num * tp)**2 &
+              + bp**2 / (1.0_num + 0.5_num * tp)**2 * (t - 1.0_num) / 2.0_num)
         END IF
-        IF (random() .LT. 1.0_num - EXP(-e_dens * np / factor * eiics &
-             * 1e-4_num * e_v_i * dt)) THEN
+        IF (random() .LT. 1.0_num - EXP(prob_factor * eiics * e_v_i)) THEN
           ! Mark ionisation as occurring
           was_ionised(MOD(k - 1, ion_count) + 1) = .TRUE.
           lost_ke(MOD(k - 1, e_count) + 1) = .TRUE.
