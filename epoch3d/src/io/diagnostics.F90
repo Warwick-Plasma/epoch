@@ -229,6 +229,9 @@ CONTAINS
           c_stagger_jz, jz)
 
       IF (cpml_boundaries) THEN
+        CALL sdf_write_srl(sdf_handle, 'boundary_thickness', &
+            'Boundary thickness', cpml_thickness)
+
         CALL write_field(c_dump_cpml_psi_eyx, code, 'cpml_psi_eyx', &
             'CPML/Ey_x', 'A/m^2', c_stagger_cell_centre, cpml_psi_eyx)
         CALL write_field(c_dump_cpml_psi_ezx, code, 'cpml_psi_ezx', &
