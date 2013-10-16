@@ -134,7 +134,7 @@ PROGRAM pic
 
   walltime_start = MPI_WTIME()
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
-  IF (use_ionisation) CALL initialise_ionisation
+  IF (use_field_ionisation) CALL initialise_ionisation
 
   DO
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
@@ -156,7 +156,13 @@ PROGRAM pic
         CALL reorder_particles_to_grid
 
         ! call collision operator
-        IF (use_collisions) CALL particle_collisions
+        IF (use_collisions) THEN
+          IF (use_collisional_ionisation) THEN
+            CALL collisional_ionisation
+          ELSE
+            CALL particle_collisions
+          ENDIF
+        ENDIF
 
         ! Early beta version of particle splitting operator
         IF (use_split) CALL split_particles
@@ -164,7 +170,7 @@ PROGRAM pic
         CALL reattach_particles_to_mainlist
       ENDIF
       IF (use_particle_migration) CALL migrate_particles(step)
-      IF (use_ionisation) CALL ionise_particles
+      IF (use_field_ionisation) CALL ionise_particles
     ENDIF
 
     CALL check_for_stop_condition(halt, force_dump)

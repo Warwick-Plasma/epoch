@@ -111,7 +111,7 @@ CONTAINS
       DO ix = 1, nx
         p_list1 => species_list(ispecies)%secondary_list(ix)
         CALL shuffle_particle_list_random(p_list1)
-      ENDDO
+      ENDDO ! ix
 
       DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
@@ -181,7 +181,7 @@ CONTAINS
         p_list1 => species_list(ispecies)%secondary_list(ix)
         CALL shuffle_particle_list_random(p_list1)
       ENDDO
-    ENDDO
+    ENDDO ! ix
 
     ALLOCATE(idens(-2:nx+3))
     ALLOCATE(jdens(-2:nx+3))
@@ -316,8 +316,8 @@ CONTAINS
             CALL preionise(species_list(jspecies)%secondary_list(ix), &
                 species_list(ispecies)%secondary_list(ix), &
                 species_list(ion_species)%secondary_list(ix), &
-                ionising_e, ejected_e, m2, m1, q2, q1, jdens(ix), q_full, &
-                ionisation_energy, n1, n2, l)
+                ionising_e, ejected_e, m2, m1, q2, q1, jdens(ix), &
+                q_full, ionisation_energy, n1, n2, l)
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor .GT. 0.0_num) THEN
@@ -338,10 +338,10 @@ CONTAINS
                   user_factor)
             ENDIF
             ! Put ions and electrons into respective lists
-            CALL append_partlist(species_list(jspecies)%secondary_list(ix), &
-                ionising_e)
-            CALL append_partlist(species_list(jspecies)%secondary_list(ix), &
-                ejected_e)
+            CALL append_partlist( &
+                species_list(jspecies)%secondary_list(ix), ionising_e)
+            CALL append_partlist( &
+                species_list(jspecies)%secondary_list(ix), ejected_e)
           ENDDO ! ix
         ELSE IF (species_list(ispecies)%electron &
             .AND. species_list(jspecies)%ionise) THEN
@@ -350,8 +350,8 @@ CONTAINS
             CALL preionise(species_list(ispecies)%secondary_list(ix), &
                 species_list(jspecies)%secondary_list(ix), &
                 species_list(ion_species)%secondary_list(ix), &
-                ionising_e, ejected_e, m1, m2, q1, q2, idens(ix), q_full, &
-                ionisation_energy, n1, n2, l)
+                ionising_e, ejected_e, m1, m2, q1, q2, idens(ix), &
+                q_full, ionisation_energy, n1, n2, l)
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor .GT. 0.0_num) THEN
@@ -372,10 +372,10 @@ CONTAINS
                   user_factor)
             ENDIF
             ! Put electrons into respective lists
-            CALL append_partlist(species_list(ispecies)%secondary_list(ix), &
-                ionising_e)
-            CALL append_partlist(species_list(ispecies)%secondary_list(ix), &
-                ejected_e)
+            CALL append_partlist( &
+                species_list(ispecies)%secondary_list(ix), ionising_e)
+            CALL append_partlist( &
+                species_list(ispecies)%secondary_list(ix), ejected_e)
           ENDDO ! ix
         ELSE
           DO ix = 1, nx
@@ -1224,7 +1224,7 @@ CONTAINS
 
   PURE FUNCTION calc_coulomb_log(temp, dens, q1, q2)
 
-    REAL(num), DIMENSION(-2:nx+3), INTENT(IN) :: temp, dens
+    REAL(num), DIMENSION(-2:), INTENT(IN) :: temp, dens
     REAL(num), INTENT(IN) :: q1, q2
     REAL(num), DIMENSION(-2:nx+3) :: calc_coulomb_log
     REAL(num), PARAMETER :: cfac = 4.13d6 * SQRT((q0 / kb)**3)
@@ -1291,11 +1291,11 @@ CONTAINS
 
         DO ix = sf_min, sf_max
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
-        ENDDO
+        ENDDO ! ix
 
         current => current%next
       ENDDO
-    ENDDO
+    ENDDO ! jx
 
     CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
@@ -1359,10 +1359,10 @@ CONTAINS
           meany(cell_x+ix) = meany(cell_x+ix) + gf * part_pmy
           meanz(cell_x+ix) = meanz(cell_x+ix) + gf * part_pmz
           part_count(cell_x+ix) = part_count(cell_x+ix) + gf
-        ENDDO
+        ENDDO ! ix
         current => current%next
       ENDDO
-    ENDDO
+    ENDDO ! jx
 
     CALL calc_boundary(meanx)
     CALL calc_boundary(meany)
@@ -1396,10 +1396,10 @@ CONTAINS
               + (part_pmy - meany(cell_x+ix))**2 &
               + (part_pmz - meanz(cell_x+ix))**2)
           part_count(cell_x+ix) = part_count(cell_x+ix) + gf
-        ENDDO
+        ENDDO ! ix
         current => current%next
       ENDDO
-    ENDDO
+    ENDDO ! jx
 
     CALL calc_boundary(sigma)
     CALL calc_boundary(part_count)
