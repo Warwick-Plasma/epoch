@@ -131,7 +131,7 @@ CONTAINS
     LOGICAL :: found
     INTEGER :: i, ns, nstep, errcode, mpireal
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset
-    REAL(r4) :: time4
+    REAL(r8) :: time8
     TYPE(sdf_block_type), POINTER :: b, station_block
 
     IF (.NOT.ASSOCIATED(h%blocklist)) CALL sdf_read_blocklist(h)
@@ -160,24 +160,28 @@ CONTAINS
     nstep = ns
 
     offset = b%data_location + ns * b%type_size
-    mpireal = MPI_REAL4
+    mpireal = MPI_REAL8
+    IF ( b%variable_types(1) == c_datatype_real4 ) mpireal = MPI_REAL4
 
-    CALL MPI_FILE_READ_AT(h%filehandle, offset, time4, 1, mpireal, &
+    CALL MPI_FILE_READ_AT(h%filehandle, offset, time8, 1, mpireal, &
         MPI_STATUS_IGNORE, errcode)
-    IF (time4 .GT. time) THEN
+    IF ( mpireal == MPI_REAL4 ) time8 = REAL( TRANSFER( time8, 0.0 ), r8 )
+    IF (time8 .GT. time) THEN
       DO i = ns-1, 0, -1
         offset = offset - b%type_size
-        CALL MPI_FILE_READ_AT(h%filehandle, offset, time4, 1, mpireal, &
+        CALL MPI_FILE_READ_AT(h%filehandle, offset, time8, 1, mpireal, &
             MPI_STATUS_IGNORE, errcode)
+        IF ( mpireal == MPI_REAL4 ) time8 = REAL( TRANSFER( time8, 0.0 ), r8 )
         nstep = i
-        IF (time4 .LE. time) EXIT
+        IF (time8 .LE. time) EXIT
       ENDDO
     ELSE
       DO i = ns+1, INT(b%nelements)
         offset = offset + b%type_size
-        CALL MPI_FILE_READ_AT(h%filehandle, offset, time4, 1, mpireal, &
+        CALL MPI_FILE_READ_AT(h%filehandle, offset, time8, 1, mpireal, &
             MPI_STATUS_IGNORE, errcode)
-        IF (time4 .GT. time) EXIT
+        IF ( mpireal == MPI_REAL4 ) time8 = REAL( TRANSFER( time8, 0.0 ), r8 )
+        IF (time8 .GT. time) EXIT
         nstep = i
       ENDDO
     ENDIF
@@ -186,7 +190,7 @@ CONTAINS
     b%nelements = nstep + 1
     b%data_length = b%nelements * b%type_size
     h%step = b%step + nstep
-    h%time = time4
+    h%time = time8
 
     CALL write_station_update(h)
 
