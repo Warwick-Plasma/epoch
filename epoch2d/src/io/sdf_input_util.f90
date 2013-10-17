@@ -175,7 +175,7 @@ CONTAINS
         nstep = i
         IF (time8 .LE. time) EXIT
       ENDDO
-    ELSE
+    ELSE IF (time8 .LT. time) THEN
       DO i = ns+1, INT(b%nelements)
         offset = offset + b%type_size
         CALL MPI_FILE_READ_AT(h%filehandle, offset, time8, 1, mpireal, &
