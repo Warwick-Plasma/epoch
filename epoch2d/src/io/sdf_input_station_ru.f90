@@ -7,7 +7,8 @@ MODULE sdf_input_station_ru
 CONTAINS
 
   SUBROUTINE sdf_read_station_info(h, nelements, type_size, nstations, &
-      nvariables, step, step_increment, time, time_increment, use_mult)
+      nvariables, step, step_increment, time, time_increment, use_mult, &
+      variable_ids, variable_names, station_ids)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT), OPTIONAL :: nelements
@@ -15,6 +16,7 @@ CONTAINS
     INTEGER, INTENT(OUT), OPTIONAL :: step, step_increment
     REAL(r8), INTENT(OUT), OPTIONAL :: time, time_increment
     LOGICAL, INTENT(OUT), OPTIONAL :: use_mult
+    CHARACTER(LEN=*), INTENT(OUT), DIMENSION(:), OPTIONAL :: variable_ids, variable_names, station_ids
     INTEGER :: i
     CHARACTER(LEN=4) :: padding
     TYPE(sdf_block_type), POINTER :: b
@@ -103,6 +105,18 @@ CONTAINS
     IF (PRESENT(time          )) time           = b%time
     IF (PRESENT(time_increment)) time_increment = b%time_increment
     IF (PRESENT(use_mult      )) use_mult       = b%use_mult
+    IF (PRESENT(variable_ids)) THEN
+       i = MIN(SIZE(variable_ids),b%nvariables)
+       variable_ids(1:i) = b%variable_ids(1:i)
+    ENDIF
+    IF (PRESENT(variable_names)) THEN
+       i = MIN(SIZE(variable_names),b%nvariables)
+       variable_names(1:i) = b%material_names(1:i)
+    ENDIF
+    IF (PRESENT(station_ids)) THEN
+       i = MIN(SIZE(station_ids),b%nvariables)
+       station_ids(1:i) = b%station_ids(1:i)
+    ENDIF
 
     h%current_location = b%data_location
     b%done_info = .TRUE.
