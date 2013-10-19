@@ -41,7 +41,36 @@ CONTAINS
 
   SUBROUTINE dist_fn_block_end
 
+    INTEGER :: i, dir, n
+    REAL(num) :: r1, r2
+    REAL(num), PARAMETER :: pi2 = 2.0_num * pi
+
     IF (deck_state .EQ. c_ds_first) RETURN
+
+    DO i = 1, working_block%ndims
+      dir = working_block%directions(i)
+      IF (dir .NE. c_dir_xy_angle &
+          .AND. dir .NE. c_dir_yz_angle .AND. dir .NE. c_dir_zx_angle) CYCLE
+
+      r1 = working_block%ranges(1,i)
+      r2 = working_block%ranges(2,i)
+      IF (r1 .EQ. r2) CYCLE
+
+      ! If direction is an angle, set start angle to lie in the range [-pi,pi)
+      n = INT(r1 / pi2)
+      r1 = r1 - pi2 * n
+      IF (r1 .GE.  pi) r1 = r1 - pi2
+      IF (r1 .LT. -pi) r1 = r1 + pi2
+      working_block%ranges(1,i) = r1
+
+      ! Set end angle to be less than 2*pi greater than start angle
+      n = INT(r2 / pi2)
+      r2 = r2 - pi2 * n
+      IF (r2 .GE.  pi) r2 = r2 - pi2
+      IF (r2 .LT. -pi) r2 = r2 + pi2
+      IF (r2 .LE.  r1) r2 = r2 + pi2
+      working_block%ranges(2,i) = r2
+    ENDDO
 
     CALL attach_dist_fn(working_block)
 

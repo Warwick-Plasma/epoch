@@ -131,6 +131,8 @@ CONTAINS
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
     INTEGER, DIMENSION(c_df_maxdims) :: cell
     REAL(num) :: part_weight, part_mc, part_mc2, gamma_m1, start
+    REAL(num) :: xy_max, yz_max, zx_max
+    REAL(num), PARAMETER :: pi2 = 2.0_num * pi
 
     TYPE(particle), POINTER :: current, next
     CHARACTER(LEN=string_length) :: var_name
@@ -317,16 +319,8 @@ CONTAINS
           IF (p .LT. c_non_zero) CYCLE
 
           theta = ASIN(py / p)
-          IF (px .GE. 0.0_num) THEN
-            IF (py .GE. 0.0_num) THEN
-              temp_data = theta
-            ELSE
-              temp_data = theta + 2.0_num * pi
-            ENDIF
-          ELSE
-            temp_data = pi - theta
-          ENDIF
-          particle_data(c_dir_xy_angle) = temp_data
+          IF (px .LT. 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
+          particle_data(c_dir_xy_angle) = theta
         ENDIF
 
         IF (use_yz_angle) THEN
@@ -334,16 +328,8 @@ CONTAINS
           IF (p .LT. c_non_zero) CYCLE
 
           theta = ASIN(pz / p)
-          IF (px .GE. 0.0_num) THEN
-            IF (py .GE. 0.0_num) THEN
-              temp_data = theta
-            ELSE
-              temp_data = theta + 2.0_num * pi
-            ENDIF
-          ELSE
-            temp_data = pi - theta
-          ENDIF
-          particle_data(c_dir_yz_angle) = temp_data
+          IF (py .LT. 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
+          particle_data(c_dir_yz_angle) = theta
         ENDIF
 
         IF (use_zx_angle) THEN
@@ -351,16 +337,8 @@ CONTAINS
           IF (p .LT. c_non_zero) CYCLE
 
           theta = ASIN(px / p)
-          IF (px .GE. 0.0_num) THEN
-            IF (py .GE. 0.0_num) THEN
-              temp_data = theta
-            ELSE
-              temp_data = theta + 2.0_num * pi
-            ENDIF
-          ELSE
-            temp_data = pi - theta
-          ENDIF
-          particle_data(c_dir_zx_angle) = temp_data
+          IF (pz .LT. 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
+          particle_data(c_dir_zx_angle) = theta
         ENDIF
 
         DO idim = 1, curdims
@@ -398,6 +376,14 @@ CONTAINS
       IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
         ranges(1,idim) = -1.0_num
         ranges(2,idim) = 1.0_num
+      ENDIF
+
+      IF (direction(idim) .EQ. c_dir_xy_angle) THEN
+        xy_max = ranges(2,idim)
+      ELSE IF (direction(idim) .EQ. c_dir_yz_angle) THEN
+        yz_max = ranges(2,idim)
+      ELSE IF (direction(idim) .EQ. c_dir_zx_angle) THEN
+        zx_max = ranges(2,idim)
       ENDIF
 
       ! Calculate grid spacing
@@ -453,16 +439,9 @@ CONTAINS
         IF (p .LT. c_non_zero) CYCLE
 
         theta = ASIN(py / p)
-        IF (px .GE. 0.0_num) THEN
-          IF (py .GE. 0.0_num) THEN
-            temp_data = theta
-          ELSE
-            temp_data = theta + 2.0_num * pi
-          ENDIF
-        ELSE
-          temp_data = pi - theta
-        ENDIF
-        particle_data(c_dir_xy_angle) = temp_data
+        IF (px .LT. 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
+        IF ((theta + pi2) .LT. xy_max) theta = theta + pi2
+        particle_data(c_dir_xy_angle) = theta
       ENDIF
 
       IF (use_yz_angle) THEN
@@ -470,16 +449,9 @@ CONTAINS
         IF (p .LT. c_non_zero) CYCLE
 
         theta = ASIN(pz / p)
-        IF (px .GE. 0.0_num) THEN
-          IF (py .GE. 0.0_num) THEN
-            temp_data = theta
-          ELSE
-            temp_data = theta + 2.0_num * pi
-          ENDIF
-        ELSE
-          temp_data = pi - theta
-        ENDIF
-        particle_data(c_dir_yz_angle) = temp_data
+        IF (py .LT. 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
+        IF ((theta + pi2) .LT. yz_max) theta = theta + pi2
+        particle_data(c_dir_yz_angle) = theta
       ENDIF
 
       IF (use_zx_angle) THEN
@@ -487,16 +459,9 @@ CONTAINS
         IF (p .LT. c_non_zero) CYCLE
 
         theta = ASIN(px / p)
-        IF (px .GE. 0.0_num) THEN
-          IF (py .GE. 0.0_num) THEN
-            temp_data = theta
-          ELSE
-            temp_data = theta + 2.0_num * pi
-          ENDIF
-        ELSE
-          temp_data = pi - theta
-        ENDIF
-        particle_data(c_dir_zx_angle) = temp_data
+        IF (pz .LT. 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
+        IF ((theta + pi2) .LT. zx_max) theta = theta + pi2
+        particle_data(c_dir_zx_angle) = theta
       ENDIF
 
       DO idir = 1, c_df_maxdirs
