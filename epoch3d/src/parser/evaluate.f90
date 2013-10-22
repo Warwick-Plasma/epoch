@@ -20,12 +20,10 @@ CONTAINS
       block = input_stack%entries(i)
       IF (block%ptype .EQ. c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
-      ENDIF
-
-      IF (block%ptype .EQ. c_pt_species) THEN
-        CALL do_species(block%value, ix, iy, iz, err)
+      ELSE IF (block%ptype .EQ. c_pt_species) THEN
+        CALL do_species(block%value, err)
       ELSE IF (block%ptype .EQ. c_pt_operator) THEN
-        CALL do_operator(block%value, ix, iy, iz, err)
+        CALL do_operator(block%value, err)
       ELSE IF (block%ptype .EQ. c_pt_constant &
           .OR. block%ptype .EQ. c_pt_default_constant) THEN
         CALL do_constant(block%value, ix, iy, iz, err)
