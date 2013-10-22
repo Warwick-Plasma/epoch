@@ -218,7 +218,7 @@ CONTAINS
       ! Currently no support for collisions involving chargeless particles
       ! unless ionisation occurs
       use_coulomb_log_auto_i = .TRUE.
-      IF (species_list(ispecies)%charge .EQ. 0.0_num) THEN
+      IF (ABS(species_list(ispecies)%charge) .GE. c_tiny) THEN
         IF (.NOT. species_list(ispecies)%ionise) CYCLE
         use_coulomb_log_auto_i = .FALSE.
       ENDIF
@@ -257,7 +257,7 @@ CONTAINS
         ! Currently no support for collisions involving chargeless particles
         ! unless ionisation occurs
         use_coulomb_log_auto = use_coulomb_log_auto_i
-        IF (species_list(jspecies)%charge .EQ. 0.0_num) THEN
+        IF (ABS(species_list(jspecies)%charge) .GE. c_tiny) THEN
           IF (.NOT. (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise)) CYCLE
           use_coulomb_log_auto = .FALSE.
@@ -347,7 +347,7 @@ CONTAINS
             ENDIF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
-            IF (q1 .NE. 0.0_num) THEN
+            IF (ABS(q1) .GE. c_tiny) THEN
               CALL inter_species_collisions( &
                   species_list(ispecies)%secondary_list(ix,iy,iz), &
                   species_list(jspecies)%secondary_list(ix,iy,iz), &
@@ -385,7 +385,7 @@ CONTAINS
             ENDIF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
-            IF (q2 .NE. 0.0_num) THEN
+            IF (ABS(q2) .GE. c_tiny) THEN
               CALL inter_species_collisions( &
                   species_list(ispecies)%secondary_list(ix,iy,iz), &
                   species_list(jspecies)%secondary_list(ix,iy,iz), &
@@ -443,10 +443,10 @@ CONTAINS
 
     LOGICAL, DIMENSION(:), ALLOCATABLE :: lost_ke, was_ionised
 
-    REAL(num) :: factor, np, eiics, reduced_energy, fion, gr, red_inc, red_ion,&
+    REAL(num) :: factor, np, eiics, fion, gr, red_inc, red_ion,&
         i_p2, rot_y, rot_z, e_p2_i, e_e, beta_i, gamma_i, e_p_rot(3), e_ke_i, &
-        e_v_i, gamma_e_i, mrbeb_c, t, tp, bp, bt2, bb2
-    REAL(num) :: ionisation_energy_inv, red_ion_inv, prob_factor
+        e_v_i, mrbeb_c, t, tp, bp, bt2, bb2
+    REAL(num) :: ionisation_energy_inv, red_ion_inv, prob_factor, denominator
     INTEGER(KIND=8) :: e_count, ion_count, pcount, i, k
 
     ! Inter-species collisions
@@ -490,15 +490,14 @@ CONTAINS
       i_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
       ! Angles for rotation such that ion velocity |v| = v_x
       IF(i_p2 .GT. 0.0_num) THEN
-        IF(ion%part_p(1) .NE. 0.0_num) THEN
+        IF(ABS(ion%part_p(1)) .GE. c_tiny) THEN
           rot_y = DATAN(ion%part_p(3) / ion%part_p(1))
         ELSE
           rot_y = pi / 2.0_num
         ENDIF
-        IF(ion%part_p(1) * DCOS(rot_y) + ion%part_p(3) * DSIN(rot_y) &
-            .NE. 0.0_num) THEN
-          rot_z = DATAN(-ion%part_p(2) / (ion%part_p(1) * DCOS(rot_y) &
-              + ion%part_p(3) * DSIN(rot_y)))
+        denominator = ion%part_p(1) * DCOS(rot_y) + ion%part_p(3) * DSIN(rot_y)
+        IF (ABS(denominator) .GE. c_tiny) THEN
+          rot_z = DATAN(-ion%part_p(2) / denominator)
         ELSE
           rot_z = pi / 2.0_num
         ENDIF
