@@ -12,6 +12,8 @@ MODULE deck_dist_fn_block
   PUBLIC :: dist_fn_block_handle_element, dist_fn_block_check
 
   TYPE(distribution_function_block), POINTER :: working_block
+  LOGICAL :: got_name
+  INTEGER :: ndims
 
 CONTAINS
 
@@ -34,6 +36,8 @@ CONTAINS
     ! Every new laser uses the internal time function
     ALLOCATE(working_block)
     CALL init_dist_fn(working_block)
+    ndims = 0
+    got_name = .FALSE.
 
   END SUBROUTINE dist_fn_block_start
 
@@ -41,11 +45,51 @@ CONTAINS
 
   SUBROUTINE dist_fn_block_end
 
-    INTEGER :: i, dir, n
+    INTEGER :: i, dir, n, iu, io, ierr
     REAL(num) :: r1, r2
     REAL(num), PARAMETER :: pi2 = 2.0_num * pi
 
     IF (deck_state .EQ. c_ds_first) RETURN
+
+    IF (.NOT.got_name) THEN
+      IF (rank .EQ. 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'name not set for "dist_fn" block.'
+        ENDDO
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      RETURN
+    ENDIF
+
+    IF (working_block%ndims .EQ. -1) THEN
+      IF (rank .EQ. 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'ndims not set for "dist_fn" block "' &
+              // TRIM(working_block%name) // '"'
+        ENDDO
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      RETURN
+    ENDIF
+
+    IF (ndims .GT. working_block%ndims) THEN
+      IF (rank .EQ. 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The parameters in "dist_fn" block "' &
+              // TRIM(working_block%name) // '"'
+          WRITE(io,*) 'exceed the number of dimensions for the ', &
+              'distribution function.'
+        ENDDO
+      ENDIF
+      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      RETURN
+    ENDIF
 
     DO i = 1, working_block%ndims
       dir = working_block%directions(i)
@@ -94,6 +138,7 @@ CONTAINS
 
     IF (str_cmp(element, 'name')) THEN
       working_block%name = value
+      got_name = .TRUE.
       RETURN
     ENDIF
 
@@ -111,21 +156,6 @@ CONTAINS
         ENDIF
         errcode = c_err_bad_value
       ENDIF
-      RETURN
-    ENDIF
-
-    IF (working_block%ndims .EQ. -1) THEN
-      IF (rank .EQ. 0) THEN
-        DO iu = 1, nio_units ! Print to stdout and to file
-          io = io_units(iu)
-          WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Must set number of dimensions before setting other', &
-              ' distribution'
-          WRITE(io,*) 'function properties.'
-        ENDDO
-      ENDIF
-      extended_error_string = 'ndims'
-      errcode = c_err_required_element_not_set
       RETURN
     ENDIF
 
@@ -183,6 +213,7 @@ CONTAINS
     ENDIF
 
     CALL split_off_int(element, part1, part2, errcode)
+    IF (part2 .GT. ndims) ndims = part2
 
     IF (errcode .NE. c_err_none) THEN
       errcode = c_err_unknown_element
