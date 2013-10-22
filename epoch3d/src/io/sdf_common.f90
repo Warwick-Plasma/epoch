@@ -18,6 +18,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_max_string_length = 64
   INTEGER(i8) :: npoint_per_iteration = 10000
   CHARACTER(LEN=4), PARAMETER :: c_sdf_magic = 'SDF1'
+  REAL(r8), PARAMETER :: c_tiny = TINY(1.0_r8)
 
   TYPE sdf_run_type
     INTEGER(i4) :: version, revision, minor_rev, compile_date, run_date, io_date

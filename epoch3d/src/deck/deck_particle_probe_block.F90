@@ -104,7 +104,7 @@ CONTAINS
         working_probe%normal = (/r1(2)*r2(3) - r1(3)*r2(2), &
             r1(3)*r2(1) - r1(1)*r2(3), r1(1)*r2(2) - r1(2)*r2(1)/)
 
-        IF (SUM(ABS(working_probe%normal)) .EQ. 0) discard = .TRUE.
+        IF (SUM(ABS(working_probe%normal)) .LE. c_tiny) discard = .TRUE.
       ENDIF
     ENDIF
 

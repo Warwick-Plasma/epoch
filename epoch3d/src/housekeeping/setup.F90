@@ -605,7 +605,7 @@ CONTAINS
               + 3.0_num * k_max**2 * kb &
               * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:)) &
               / species_list(ispecies)%mass)
-          IF (omega .EQ. 0.0_num) CYCLE
+          IF (ABS(omega) .LE. c_tiny) CYCLE
           IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
         ENDDO ! ix
         ENDDO ! iy
@@ -630,8 +630,8 @@ CONTAINS
     CALL set_laser_dt
 
     dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
-    IF (dt_plasma_frequency .NE. 0.0_num) dt = MIN(dt, dt_plasma_frequency)
-    IF (dt_laser .NE. 0.0_num) dt = MIN(dt, dt_laser)
+    IF (ABS(dt_plasma_frequency) .GE. c_tiny) dt = MIN(dt, dt_plasma_frequency)
+    IF (ABS(dt_laser) .GE. c_tiny) dt = MIN(dt, dt_laser)
     dt = dt_multiplier * dt
 
     IF (.NOT. any_average) RETURN

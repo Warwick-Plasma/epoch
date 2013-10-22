@@ -483,18 +483,21 @@ CONTAINS
     LOGICAL :: compare_particles
 
     compare_particles = .TRUE.
-    IF (MAXVAL(ABS(part1%part_pos-part2%part_pos)) .NE. 0.0_num) &
+    IF (MAXVAL(ABS(part1%part_pos-part2%part_pos)) .GE. c_tiny) &
         compare_particles = .FALSE.
-    IF (MAXVAL(ABS(part1%part_p - part2%part_p)) .NE. 0.0_num) &
+    IF (MAXVAL(ABS(part1%part_p - part2%part_p)) .GE. c_tiny) &
         compare_particles = .FALSE.
 
 #ifdef PER_PARTICLE_WEIGHT
-    IF (part1%weight .NE. part2%weight) compare_particles = .FALSE.
+    IF (ABS(part1%weight - part2%weight) .GE. c_tiny) &
+        compare_particles = .FALSE.
 #endif
 
 #ifdef PER_PARTICLE_CHARGE_MASS
-    IF (part1%charge .NE. part2%charge) compare_particles = .FALSE.
-    IF (part1%mass   .NE. part2%mass  ) compare_particles = .FALSE.
+    IF (ABS(part1%charge - part2%charge) .GE. c_tiny) &
+        compare_particles = .FALSE.
+    IF (ABS(part1%mass - part2%mass) .GE. c_tiny) &
+        compare_particles = .FALSE.
 #endif
 
     IF (.NOT. compare_particles) THEN

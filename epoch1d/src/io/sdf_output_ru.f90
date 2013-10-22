@@ -1835,7 +1835,7 @@ CONTAINS
             MPI_INTEGER4, MPI_STATUS_IGNORE, errcode)
         h%step_wrote = h%step
       ENDIF
-      IF (h%time .NE. h%time_wrote) THEN
+      IF (ABS(h%time - h%time_wrote) .LT. c_tiny) THEN
         offset = c_summary_offset + 24
         CALL MPI_FILE_WRITE_AT(h%filehandle, offset, h%time, 1, &
             MPI_REAL8, MPI_STATUS_IGNORE, errcode)

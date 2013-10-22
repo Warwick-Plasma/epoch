@@ -13,7 +13,7 @@ MODULE constants
   INTEGER, PARAMETER :: r4  = SELECTED_REAL_KIND(r=30)
   INTEGER, PARAMETER :: i4  = SELECTED_INT_KIND(9)  ! 4-byte 2^31 ~ 10^9
   INTEGER, PARAMETER :: i8  = SELECTED_INT_KIND(18) ! 8-byte 2^63 ~ 10^18
-  REAL(num), PARAMETER :: c_non_zero = TINY(1.0_num)
+  REAL(num), PARAMETER :: c_tiny = TINY(1.0_num)
   REAL(num), PARAMETER :: c_largest_number = HUGE(1.0_num)
   REAL(num), PARAMETER :: c_maxexponent = MAXEXPONENT(1.0_num)
   REAL(num), PARAMETER :: c_log2 = 0.69314718055994530941723212145817657_num

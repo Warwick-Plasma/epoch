@@ -256,9 +256,10 @@ CONTAINS
 
 #ifndef PER_PARTICLE_CHARGE_MASS
       IF (species_list(ispecies)%migrate%promoteable) THEN
-        IF (species_list(ispecies)%mass .NE. species_list(ipromote)%mass &
-            .OR. species_list(ispecies)%charge .NE. &
-            species_list(ipromote)%charge) THEN
+        IF (ABS(species_list(ispecies)%mass &
+            - species_list(ipromote)%mass) .GE. c_tiny &
+            .OR. ABS(species_list(ispecies)%charge &
+            - species_list(ipromote)%charge) .GE. c_tiny) THEN
           species_list(ispecies)%migrate%promoteable = .FALSE.
           IF (rank .EQ. 0) THEN
             WRITE(stdout, *) '*** WARNING ***'
@@ -271,9 +272,10 @@ CONTAINS
       ENDIF
 
       IF (species_list(ispecies)%migrate%demoteable) THEN
-        IF (species_list(ispecies)%mass .NE. species_list(idemote)%mass &
-            .OR. species_list(ispecies)%charge .NE. &
-            species_list(idemote)%charge) THEN
+        IF (ABS(species_list(ispecies)%mass &
+            - species_list(idemote)%mass) .GE. c_tiny &
+            .OR. ABS(species_list(ispecies)%charge &
+            - species_list(idemote)%charge) .GE. c_tiny) THEN
           species_list(ispecies)%migrate%demoteable = .FALSE.
           IF (rank .EQ. 0) THEN
             WRITE(stdout, *) '*** WARNING ***'

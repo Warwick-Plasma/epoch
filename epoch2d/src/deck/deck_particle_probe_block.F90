@@ -101,7 +101,7 @@ CONTAINS
         ! r1 (cross) z
         working_probe%normal = (/ r1(2), -r1(1) /)
 
-        IF (SUM(ABS(working_probe%normal)) .EQ. 0) discard = .TRUE.
+        IF (SUM(ABS(working_probe%normal)) .LE. c_tiny) discard = .TRUE.
       ENDIF
     ENDIF
 

@@ -251,7 +251,7 @@ CONTAINS
       ! big enough for npoint_global which is an INTEGER*8
 
       npoint_max = HUGE(npoint_max)
-      npoint_rem = MOD(npoint_global, INT(npoint_max,i8))
+      npoint_rem = INT(MOD(npoint_global, INT(npoint_max,i8)),i4)
 
       IF ((npoint_global / npoint_max) .GT. 0) THEN
         ALLOCATE(cvalues(npoint_max))
@@ -388,7 +388,7 @@ CONTAINS
       ! big enough for npoint_global which is an INTEGER*8
 
       npoint_max = HUGE(npoint_max)
-      npoint_rem = MOD(npoint_global, INT(npoint_max,i8))
+      npoint_rem = INT(MOD(npoint_global, INT(npoint_max,i8)),i4)
 
       idx = 1
       DO i = 1, npoint_global / npoint_max

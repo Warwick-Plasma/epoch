@@ -247,7 +247,7 @@ CONTAINS
     CALL calc_boundary(data_array)
     CALL calc_boundary(wt)
 
-    data_array = data_array / MAX(wt, c_non_zero)
+    data_array = data_array / MAX(wt, c_tiny)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -388,7 +388,7 @@ CONTAINS
     CALL calc_boundary(data_array)
     CALL calc_boundary(wt)
 
-    data_array = data_array / MAX(wt, c_non_zero)
+    data_array = data_array / MAX(wt, c_tiny)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO

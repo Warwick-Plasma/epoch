@@ -44,14 +44,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_x_min)) THEN
         current_laser => laser_x_min
-        IF (laser_set .AND. current_laser%omega .NE. omega) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) .GE. c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (current_laser%omega .NE. omega) THEN
+          IF (ABS(current_laser%omega - omega) .GE. c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -61,14 +61,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_x_max)) THEN
         current_laser => laser_x_max
-        IF (laser_set .AND. current_laser%omega .NE. omega) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) .GE. c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (current_laser%omega .NE. omega) THEN
+          IF (ABS(current_laser%omega - omega) .GE. c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -175,7 +175,7 @@ CONTAINS
 
           ! Constant in multiphoton equations, calculated like this to trap any
           ! floating underflow
-          IF (multi_constant(i) .NE. 0.0_num) THEN
+          IF (ABS(multi_constant(i)) .GE. c_tiny) THEN
             multi_constant(i) = 4.8_num * (1.3_num * c * (atomic_time / a0) &
                 / (8.0_num * pi * omega * atomic_time))**k_photons_exponent(i) &
                 / multi_constant(i)
@@ -226,7 +226,7 @@ CONTAINS
           ! calculated to the largest machine number. Otherwise calculate the
           ! smallest electric field strength for which multiphoton can be
           ! calculated
-          IF (multi_constant(i) .EQ. 0.0_num) THEN
+          IF (ABS(multi_constant(i)) .GE. c_tiny) THEN
             smallest_e_mag(i) = c_largest_number
           ELSE
             smallest_e_mag(i) = (TINY(0.0_num) &
@@ -534,8 +534,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
-              j_ion(3) .NE. 0.0_num) THEN
+          IF (ABS(j_ion(1)) .GE. c_tiny .OR. ABS(j_ion(2)) .GE. c_tiny .OR. &
+              ABS(j_ion(3)) .GE. c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -782,8 +782,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
-              j_ion(3) .NE. 0.0_num) THEN
+          IF (ABS(j_ion(1)) .GE. c_tiny .OR. ABS(j_ion(2)) .GE. c_tiny .OR. &
+              ABS(j_ion(3)) .GE. c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -1019,8 +1019,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
-              j_ion(3) .NE. 0.0_num) THEN
+          IF (ABS(j_ion(1)) .GE. c_tiny .OR. ABS(j_ion(2)) .GE. c_tiny .OR. &
+              ABS(j_ion(3)) .GE. c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -1242,8 +1242,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (j_ion(1) .NE. 0.0_num .OR. j_ion(2) .NE. 0.0_num .OR. &
-              j_ion(3) .NE. 0.0_num) THEN
+          IF (ABS(j_ion(1)) .GE. c_tiny .OR. ABS(j_ion(2)) .GE. c_tiny .OR. &
+              ABS(j_ion(3)) .GE. c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)

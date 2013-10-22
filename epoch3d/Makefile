@@ -61,6 +61,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
              -ffpe-trap=underflow,denormal
     FFLAGS += -fbacktrace -fdump-core    # gfortran-4.3
    #FFLAGS += -Wno-unused-dummy-argument # gfortran-4.6
+   #FFLAGS += -Wno-target-lifetime       # gfortran-4.8
   endif
   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
 endif
@@ -330,7 +331,7 @@ deck_io_global_block.o: deck_io_global_block.F90 strings_advanced.o
 deck_laser_block.o: deck_laser_block.f90 laser.o strings_advanced.o
 deck_particle_probe_block.o: deck_particle_probe_block.F90 probes.o \
   strings_advanced.o
-deck_qed_block.o: deck_qed_block.F90 shared_data.o strings_advanced.o
+deck_qed_block.o: deck_qed_block.F90 strings_advanced.o
 deck_species_block.o: deck_species_block.F90 partlist.o setup.o simple_io.o \
   strings_advanced.o utilities.o
 deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o

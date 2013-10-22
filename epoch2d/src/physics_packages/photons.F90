@@ -699,7 +699,7 @@ CONTAINS
 
     CALL field_at_particle(part_x, part_y, e_at_part, b_at_part)
 
-    moduclip2 = MAX(part_ux**2 + part_uy**2 + part_uz**2, c_non_zero)
+    moduclip2 = MAX(part_ux**2 + part_uy**2 + part_uz**2, c_tiny)
     moduclip = SQRT(moduclip2)
 
     beta_x = part_ux / gamma
@@ -906,7 +906,7 @@ CONTAINS
 
     mag_p = MAX(SQRT(generating_electron%part_p(1)**2 &
         + generating_electron%part_p(2)**2 &
-        + generating_electron%part_p(3)**2), c_non_zero)
+        + generating_electron%part_p(3)**2), c_tiny)
 
     dir_x = generating_electron%part_p(1) / mag_p
     dir_y = generating_electron%part_p(2) / mag_p
@@ -932,7 +932,7 @@ CONTAINS
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
     IF (photon_energy .GT. photon_energy_min .AND. produce_photons) THEN
-      IF (photon_energy .LT. c_non_zero) photon_energy = c_non_zero
+      IF (photon_energy .LT. c_tiny) photon_energy = c_tiny
 
       ALLOCATE(new_photon)
       new_photon%part_pos = generating_electron%part_pos
@@ -999,7 +999,7 @@ CONTAINS
     epsilon_frac = find_value_from_table(chi_val, probability_split, &
         n_sample_chi2, n_sample_epsilon, log_chi2, epsilon_split, p_energy)
 
-    mag_p = MAX(generating_photon%particle_energy / c, c_non_zero)
+    mag_p = MAX(generating_photon%particle_energy / c, c_tiny)
 
     new_electron%part_p(1) = epsilon_frac * mag_p * dir_x
     new_electron%part_p(2) = epsilon_frac * mag_p * dir_y
@@ -1081,7 +1081,7 @@ CONTAINS
     INTEGER :: i1, i2, im
     LOGICAL, SAVE :: warning = .TRUE.
 
-    x_value = LOG10(MAX(x_in,c_non_zero))
+    x_value = LOG10(MAX(x_in,c_tiny))
 
     i1 = 1
     i2 = nx

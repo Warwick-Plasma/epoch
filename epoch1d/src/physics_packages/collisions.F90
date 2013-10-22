@@ -52,7 +52,7 @@ CONTAINS
       IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) &
           CYCLE
       ! Currently no support for collisions involving chargeless particles
-      IF (species_list(ispecies)%charge .EQ. 0.0_num) &
+      IF (ABS(species_list(ispecies)%charge) .GE. c_tiny) &
           CYCLE
 
       collide_species = .FALSE.
@@ -84,7 +84,7 @@ CONTAINS
         IF (species_list(jspecies)%species_type .EQ. c_species_id_photon) &
             CYCLE
         ! Currently no support for collisions involving chargeless particles
-        IF (species_list(jspecies)%charge .EQ. 0.0_num) &
+        IF (ABS(species_list(jspecies)%charge) .GE. c_tiny) &
             CYCLE
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor .LE. 0) CYCLE
@@ -150,7 +150,7 @@ CONTAINS
     IF (icount .LE. 1) RETURN
 
     ! No collisions in cold plasma so return
-    IF (temp .EQ. 0.0_num) RETURN
+    IF (temp .LE. c_tiny) RETURN
 
 #ifndef PER_PARTICLE_WEIGHT
     np = icount * weight
@@ -236,7 +236,7 @@ CONTAINS
     np = 0.0_num
 
     ! No collisions in cold plasma so return
-    IF (itemp .EQ. 0.0_num .AND. jtemp .EQ. 0.0_num) RETURN
+    IF (itemp .LE. c_tiny .AND. jtemp .LE. c_tiny) RETURN
 
     ! Inter-species collisions
     icount = p_list1%count
@@ -365,9 +365,9 @@ CONTAINS
     ! Lorentz momentum transform to get into COM frame
     p1_vc = DOT_PRODUCT(p1, vc)
     p2_vc = DOT_PRODUCT(p2, vc)
-    tvar = p1_vc * (gc - 1.0_num) / (vc_sq + c_non_zero)
+    tvar = p1_vc * (gc - 1.0_num) / (vc_sq + c_tiny)
     p3 = p1 + vc * (tvar - gc * e1 / c**2)
-    tvar = p2_vc * (gc - 1.0_num) / (vc_sq + c_non_zero)
+    tvar = p2_vc * (gc - 1.0_num) / (vc_sq + c_tiny)
     p4 = p2 + vc * (tvar - gc * e2 / c**2)
 
     p3_mag = SQRT(DOT_PRODUCT(p3, p3))
@@ -512,7 +512,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: itemp, log_lambda, mu, q1, q2, jdens
     REAL(num) :: temperature_collisions
 
-    IF (itemp .NE. 0.0_num) THEN
+    IF (itemp .GE. c_tiny) THEN
       temperature_collisions = ((q1 * q2)**2 * jdens * log_lambda) &
           / (3.0_num * epsilon0**2 * SQRT(mu) &
           * (2.0_num * pi * q0 * itemp)**1.5_num)
@@ -541,14 +541,14 @@ CONTAINS
       IF (ek .LE. 0.0_num) THEN
         manheimer_collisions = 0.0_num
       ELSE
-        manheimer_collisions = 3.9d-6 / (SQRT(ek**3) + c_non_zero)
+        manheimer_collisions = 3.9d-6 / (SQRT(ek**3) + c_tiny)
       ENDIF
     ELSE
       IF (ek .LE. 0.0_num) THEN
-        manheimer_collisions = 0.23_num * SQRT((mu / (jtemp + c_non_zero))**3)
+        manheimer_collisions = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
       ELSE
-        slow = 0.23_num * SQRT((mu / (jtemp + c_non_zero))**3)
-        fast = 3.9d-6 / (SQRT(ek**3) + c_non_zero)
+        slow = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
+        fast = 3.9d-6 / (SQRT(ek**3) + c_tiny)
         manheimer_collisions = slow / (1.0_num + slow / fast)
       ENDIF
     ENDIF
@@ -620,7 +620,7 @@ CONTAINS
     vmag = SQRT(DOT_PRODUCT(vector, vector))
     vtrans = SQRT(vector(2)**2 + vector(3)**2)
 
-    IF (vtrans .NE. 0.0_num) THEN
+    IF (vtrans .GE. c_tiny) THEN
       c1 = vector / vmag
       c2 = (/ 0.0_num, vector(3), -vector(2) /)
       c2 = c2 / vtrans

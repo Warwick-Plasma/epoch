@@ -127,8 +127,8 @@ CONTAINS
 !----------------------------------------------------------------------
 
     REAL(num), INTENT(IN) :: x
-    INTEGER :: i, n
-    LOGICAL :: parity
+    INTEGER :: i, n, iy
+    LOGICAL :: parity, inv
     REAL(num) :: c(7), fact, p(8), q(8), res, sum, xden, xnum, y, y1, ysq, z
 
 !----------------------------------------------------------------------
@@ -172,6 +172,7 @@ CONTAINS
 !----------------------------------------------------------------------
 
     parity = .FALSE.
+    inv = .FALSE.
     fact = 1.0_num
     n = 0
     y = x
@@ -181,9 +182,11 @@ CONTAINS
 !----------------------------------------------------------------------
       y = -x
       y1 = AINT(y)
+      iy = FLOOR(y1)
       res = y - y1
-      IF (res .NE. 0.0_num) THEN
-        IF (y1 .NE. AINT(y1 * 0.5_num) * 2.0_num) parity = .TRUE.
+      IF (res .GE. c_tiny) THEN
+        IF (iy .NE. (iy / 2) * 2) parity = .TRUE.
+        inv = .TRUE.
         fact = -pi / SIN(pi * res)
         y = y + 1.0_num
       ELSE
@@ -266,7 +269,7 @@ CONTAINS
 !  Final adjustments and return
 !----------------------------------------------------------------------
     IF (parity) res = -res
-    IF (fact .NE. 1.0_num) res = fact / res
+    IF (inv) res = fact / res
     gamma_fn = res
 ! ---------- Last line of GAMMA ----------
   END FUNCTION gamma_fn
@@ -429,7 +432,7 @@ CONTAINS
 !  Machine dependent parameters
 !---------------------------------------------------------------------
 
-    REAL(num), PARAMETER :: eps = EPSILON(1.0_num), sqxmin = SQRT(c_non_zero)
+    REAL(num), PARAMETER :: eps = EPSILON(1.0_num), sqxmin = SQRT(c_tiny)
 
 !---------------------------------------------------------------------
 !  P, Q - Approximation for LOG(GAMMA(1+ALPHA))/ALPHA
@@ -652,9 +655,9 @@ CONTAINS
           c = ABS(enu)
           d3 = c + c
           d1 = d3 - 1.0_num
-          f1 = c_non_zero
+          f1 = c_tiny
           f0 = (2.0_num * (c + d2) / ex + 0.5_num * ex / (c + d2 + 1.0_num)) &
-              * c_non_zero
+              * c_tiny
           DO i = 3, m
             d2 = d2 - 1.0_num
             f2 = (d3 + d2 + d2) * f0

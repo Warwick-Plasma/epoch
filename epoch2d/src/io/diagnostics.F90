@@ -835,12 +835,6 @@ CONTAINS
 
 
 
-  SUBROUTINE energy_account()
-
-  END SUBROUTINE energy_account
-
-
-
   SUBROUTINE write_field(id, code, block_id, name, units, stagger, array)
 
     INTEGER, INTENT(IN) :: id, code

@@ -9,13 +9,14 @@ MODULE window
   LOGICAL, SAVE :: window_started
   REAL(num), ALLOCATABLE :: density(:), temperature(:,:), drift(:,:)
   REAL(num), SAVE :: window_shift_fraction
-#ifndef PER_PARTICLE_WEIGHT
-  INTEGER :: ierr
-#endif
 
 CONTAINS
 
   SUBROUTINE initialise_window
+
+#ifndef PER_PARTICLE_WEIGHT
+    INTEGER :: ierr
+#endif
 
     IF (.NOT. move_window) RETURN
 
@@ -280,6 +281,8 @@ CONTAINS
 #ifdef PER_PARTICLE_WEIGHT
     REAL(num) :: window_shift_real
     INTEGER :: window_shift_cells
+#else
+    INTEGER :: ierr
 #endif
 
     IF (.NOT. move_window) RETURN

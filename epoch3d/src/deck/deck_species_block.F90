@@ -808,11 +808,12 @@ CONTAINS
       CALL push_to_stack(stack, block)
       CALL load_block(element, block)
       CALL push_to_stack(stack, block)
-      IF (mult .NE. 1) array = mult * array
+      IF (ABS(mult - 1.0_num) .GE. c_tiny) array = mult * array
     ELSE
       CALL tokenize(value, stack, errcode)
-      IF (mult .NE. 1) CALL tokenize(mult_string, stack, errcode)
- 
+      IF (ABS(mult - 1.0_num) .GE. c_tiny) &
+          CALL tokenize(mult_string, stack, errcode)
+
       ! Sanity check
       array(1,1,1) = evaluate_at_point(stack, 1, 1, 1, errcode)
       IF (errcode .NE. c_err_none) THEN
@@ -827,11 +828,11 @@ CONTAINS
       ENDIF
 
       DO iz = -2, nz+3
-        DO iy = -2, ny+3
-          DO ix = -2, nx+3
-            array(ix,iy,iz) = evaluate_at_point(stack, ix, iy, iz, errcode)
-          ENDDO
-        ENDDO
+      DO iy = -2, ny+3
+      DO ix = -2, nx+3
+        array(ix,iy,iz) = evaluate_at_point(stack, ix, iy, iz, errcode)
+      ENDDO
+      ENDDO
       ENDDO
     ENDIF
 

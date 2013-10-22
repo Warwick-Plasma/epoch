@@ -204,7 +204,7 @@ CONTAINS
 
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
-      IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
+      IF (ABS(ranges(1,idim) - ranges(2,idim)) .GE. c_tiny) THEN
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
@@ -302,7 +302,7 @@ CONTAINS
 
         IF (use_xy_angle) THEN
           p = SQRT(px**2 + py**2)
-          IF (p .LT. c_non_zero) CYCLE
+          IF (p .LT. c_tiny) CYCLE
 
           theta = ASIN(py / p)
           IF (px .LT. 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
@@ -311,7 +311,7 @@ CONTAINS
 
         IF (use_yz_angle) THEN
           p = SQRT(py**2 + pz**2)
-          IF (p .LT. c_non_zero) CYCLE
+          IF (p .LT. c_tiny) CYCLE
 
           theta = ASIN(pz / p)
           IF (py .LT. 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
@@ -320,7 +320,7 @@ CONTAINS
 
         IF (use_zx_angle) THEN
           p = SQRT(pz**2 + px**2)
-          IF (p .LT. c_non_zero) CYCLE
+          IF (p .LT. c_tiny) CYCLE
 
           theta = ASIN(px / p)
           IF (pz .LT. 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
@@ -359,7 +359,7 @@ CONTAINS
     DO idim = 1, curdims
       ! Fix so that if distribution function is zero then it picks an arbitrary
       ! scale in that direction
-      IF (ranges(1,idim) .EQ. ranges(2,idim)) THEN
+      IF (ABS(ranges(1,idim) - ranges(2,idim)) .GE. c_tiny) THEN
         ranges(1,idim) = -1.0_num
         ranges(2,idim) = 1.0_num
       ENDIF
@@ -422,7 +422,7 @@ CONTAINS
 
       IF (use_xy_angle) THEN
         p = SQRT(px**2 + py**2)
-        IF (p .LT. c_non_zero) CYCLE
+        IF (p .LT. c_tiny) CYCLE
 
         theta = ASIN(py / p)
         IF (px .LT. 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
@@ -432,7 +432,7 @@ CONTAINS
 
       IF (use_yz_angle) THEN
         p = SQRT(py**2 + pz**2)
-        IF (p .LT. c_non_zero) CYCLE
+        IF (p .LT. c_tiny) CYCLE
 
         theta = ASIN(pz / p)
         IF (py .LT. 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
@@ -442,7 +442,7 @@ CONTAINS
 
       IF (use_zx_angle) THEN
         p = SQRT(pz**2 + px**2)
-        IF (p .LT. c_non_zero) CYCLE
+        IF (p .LT. c_tiny) CYCLE
 
         theta = ASIN(px / p)
         IF (pz .LT. 0.0_num) theta = SIGN(1.0_num,px) * pi - theta

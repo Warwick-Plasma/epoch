@@ -98,7 +98,7 @@ CONTAINS
 
       r1 = working_block%ranges(1,i)
       r2 = working_block%ranges(2,i)
-      IF (r1 .EQ. r2) CYCLE
+      IF (ABS(r1 - r2) .LE. c_tiny) CYCLE
 
       ! If direction is an angle, set start angle to lie in the range [-pi,pi)
       n = INT(r1 / pi2)

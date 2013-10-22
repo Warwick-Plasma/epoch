@@ -96,7 +96,7 @@ CONTAINS
 
     IF (opcode .EQ. c_opcode_eq) THEN
       CALL get_values(2, values)
-      comp = values(1) .EQ. values(2)
+      comp = (ABS(values(1) - values(2)) .LE. c_tiny)
       val = 0.0_num
       IF (comp) val = 1.0_num
       CALL push_on_eval(val)
@@ -105,7 +105,7 @@ CONTAINS
 
     IF (opcode .EQ. c_opcode_or) THEN
       CALL get_values(2, values)
-      comp = (values(1) .NE. 0 .OR. values(2) .NE. 0)
+      comp = (FLOOR(values(1)) .NE. 0 .OR. FLOOR(values(2)) .NE. 0)
       val = 0.0_num
       IF (comp)val = 1.0_num
       CALL push_on_eval(val)
@@ -114,7 +114,7 @@ CONTAINS
 
     IF (opcode .EQ. c_opcode_and) THEN
       CALL get_values(2, values)
-      comp = (values(1) .NE. 0 .AND. values(2) .NE. 0)
+      comp = (FLOOR(values(1)) .NE. 0 .AND. FLOOR(values(2)) .NE. 0)
       val = 0.0_num
       IF (comp)val = 1.0_num
       CALL push_on_eval(val)
@@ -561,7 +561,7 @@ CONTAINS
 
     IF (opcode .EQ. c_func_if) THEN
       CALL get_values(3, values)
-      IF (values(1) .NE. 0) THEN
+      IF (FLOOR(values(1)) .NE. 0) THEN
         val = values(2)
       ELSE
         val = values(3)
