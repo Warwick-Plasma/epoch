@@ -5,16 +5,6 @@ MODULE evaluator_blocks
 
   IMPLICIT NONE
 
-  ! Subroutine behaviour modifier
-  INTEGER, PARAMETER :: c_eval_all = 0
-  INTEGER, PARAMETER :: c_eval_no_time = 1
-  INTEGER, PARAMETER :: c_eval_no_x = 2
-  INTEGER, PARAMETER :: c_eval_no_y = 4
-  INTEGER, PARAMETER :: c_eval_no_z = 8
-  INTEGER, PARAMETER :: c_eval_no_space = &
-      c_eval_no_x + c_eval_no_y + c_eval_no_z
-  INTEGER, PARAMETER :: c_eval_none = c_eval_no_time + c_eval_no_space
-
 CONTAINS
 
   SUBROUTINE do_species(opcode, err)
@@ -138,51 +128,28 @@ CONTAINS
 
 
 
-  SUBROUTINE do_constant(opcode, modify, ix, iy, iz, err)
+  SUBROUTINE do_constant(opcode, simplify, ix, iy, iz, err)
 
-    INTEGER, INTENT(IN) :: opcode, modify, ix, iy, iz
+    INTEGER, INTENT(IN) :: opcode, ix, iy, iz
+    LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     REAL(num) :: val
 
     err = c_err_none
 
-    IF (IAND(modify, c_eval_no_time) .NE. 0) THEN
+    IF (simplify) THEN
       IF (opcode .EQ. c_const_time &
-          .OR. opcode .GE. c_const_custom_lowbound) THEN
-        err = -c_eval_no_time
-        RETURN
-      ENDIF
-    ENDIF
-
-    IF (IAND(modify, c_eval_no_x) .NE. 0) THEN
-      IF (opcode .EQ. c_const_x &
+          .OR. opcode .EQ. c_const_x &
           .OR. opcode .EQ. c_const_ix &
-          .OR. opcode .EQ. c_const_r_xy &
-          .OR. opcode .EQ. c_const_r_xz &
-          .OR. opcode .GE. c_const_custom_lowbound) THEN
-        err = -c_eval_no_x
-        RETURN
-      ENDIF
-    ENDIF
-
-    IF (IAND(modify, c_eval_no_y) .NE. 0) THEN
-      IF (opcode .EQ. c_const_y &
+          .OR. opcode .EQ. c_const_y &
           .OR. opcode .EQ. c_const_iy &
-          .OR. opcode .EQ. c_const_r_xy &
-          .OR. opcode .EQ. c_const_r_yz &
-          .OR. opcode .GE. c_const_custom_lowbound) THEN
-        err = -c_eval_no_y
-        RETURN
-      ENDIF
-    ENDIF
-
-    IF (IAND(modify, c_eval_no_z) .NE. 0) THEN
-      IF (opcode .EQ. c_const_z &
+          .OR. opcode .EQ. c_const_z &
           .OR. opcode .EQ. c_const_iz &
+          .OR. opcode .EQ. c_const_r_xy &
           .OR. opcode .EQ. c_const_r_xz &
           .OR. opcode .EQ. c_const_r_yz &
           .OR. opcode .GE. c_const_custom_lowbound) THEN
-        err = -c_eval_no_z
+        err = c_err_other
         RETURN
       ENDIF
     ENDIF
@@ -530,9 +497,10 @@ CONTAINS
 
 
 
-  SUBROUTINE do_functions(opcode, modify, ix, iy, iz, err)
+  SUBROUTINE do_functions(opcode, simplify, ix, iy, iz, err)
 
-    INTEGER, INTENT(IN) :: opcode, modify, ix, iy, iz
+    INTEGER, INTENT(IN) :: opcode, ix, iy, iz
+    LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
     REAL(num) :: val
@@ -543,7 +511,7 @@ CONTAINS
 
     err = c_err_none
 
-    IF (IAND(modify, c_eval_no_space) .NE. 0) THEN
+    IF (simplify) THEN
       IF (opcode .EQ. c_func_rho &
           .OR. opcode .EQ. c_func_tempx &
           .OR. opcode .EQ. c_func_tempy &
@@ -552,7 +520,7 @@ CONTAINS
           .OR. opcode .EQ. c_func_tempy_ev &
           .OR. opcode .EQ. c_func_tempz_ev &
           .OR. opcode .GE. c_func_custom_lowbound) THEN
-        err = -c_eval_no_space
+        err = c_err_other
         RETURN
       ENDIF
     ENDIF
