@@ -5,6 +5,16 @@ MODULE evaluator_blocks
 
   IMPLICIT NONE
 
+  ! Subroutine behaviour modifier
+  INTEGER, PARAMETER :: c_eval_all = 0
+  INTEGER, PARAMETER :: c_eval_no_time = 1
+  INTEGER, PARAMETER :: c_eval_no_x = 2
+  INTEGER, PARAMETER :: c_eval_no_y = 4
+  INTEGER, PARAMETER :: c_eval_no_z = 8
+  INTEGER, PARAMETER :: c_eval_no_space = &
+      c_eval_no_x + c_eval_no_y + c_eval_no_z
+  INTEGER, PARAMETER :: c_eval_none = c_eval_no_time + c_eval_no_space
+
 CONTAINS
 
   SUBROUTINE do_species(opcode, err)
@@ -128,13 +138,32 @@ CONTAINS
 
 
 
-  SUBROUTINE do_constant(opcode, ix, err)
+  SUBROUTINE do_constant(opcode, modify, ix, err)
 
-    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(IN) :: opcode, modify, ix
     INTEGER, INTENT(INOUT) :: err
     REAL(num) :: val
 
     err = c_err_none
+
+    IF (IAND(modify, c_eval_no_time) .NE. 0) THEN
+      IF (opcode .EQ. c_const_time &
+          .OR. opcode .GE. c_const_custom_lowbound) THEN
+        err = -c_eval_no_time
+        RETURN
+      ENDIF
+    ENDIF
+
+    IF (IAND(modify, c_eval_no_x) .NE. 0) THEN
+      IF (opcode .EQ. c_const_x &
+          .OR. opcode .EQ. c_const_ix &
+          .OR. opcode .EQ. c_const_r_xy &
+          .OR. opcode .EQ. c_const_r_xz &
+          .OR. opcode .GE. c_const_custom_lowbound) THEN
+        err = -c_eval_no_x
+        RETURN
+      ENDIF
+    ENDIF
 
     IF (opcode .EQ. c_const_time) THEN
       CALL push_on_eval(time)
@@ -481,9 +510,9 @@ CONTAINS
 
 
 
-  SUBROUTINE do_functions(opcode, ix, err)
+  SUBROUTINE do_functions(opcode, modify, ix, err)
 
-    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(IN) :: opcode, modify, ix
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
     REAL(num) :: val
@@ -493,6 +522,20 @@ CONTAINS
     REAL(num) :: point, t0
 
     err = c_err_none
+
+    IF (IAND(modify, c_eval_no_space) .NE. 0) THEN
+      IF (opcode .EQ. c_func_rho &
+          .OR. opcode .EQ. c_func_tempx &
+          .OR. opcode .EQ. c_func_tempy &
+          .OR. opcode .EQ. c_func_tempz &
+          .OR. opcode .EQ. c_func_tempx_ev &
+          .OR. opcode .EQ. c_func_tempy_ev &
+          .OR. opcode .EQ. c_func_tempz_ev &
+          .OR. opcode .GE. c_func_custom_lowbound) THEN
+        err = -c_eval_no_space
+        RETURN
+      ENDIF
+    ENDIF
 
     IF (opcode .EQ. c_func_rho) THEN
       CALL get_values(1, values)

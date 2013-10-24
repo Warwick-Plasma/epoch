@@ -26,9 +26,9 @@ CONTAINS
         CALL do_operator(block%value, err)
       ELSE IF (block%ptype .EQ. c_pt_constant &
           .OR. block%ptype .EQ. c_pt_default_constant) THEN
-        CALL do_constant(block%value, ix, iy, err)
+        CALL do_constant(block%value, c_eval_all, ix, iy, err)
       ELSE IF (block%ptype .EQ. c_pt_function) THEN
-        CALL do_functions(block%value, ix, iy, err)
+        CALL do_functions(block%value, c_eval_all, ix, iy, err)
       ENDIF
 
       IF (err .NE. c_err_none) THEN
@@ -111,7 +111,7 @@ CONTAINS
         array(n_elements) = block%value
       ELSE IF (block%ptype .EQ. c_pt_constant &
           .OR. block%ptype .EQ. c_pt_default_constant) THEN
-        CALL do_constant(block%value, 1, 1, err)
+        CALL do_constant(block%value, c_eval_all, 1, 1, err)
         array(1) = array(1) + INT(pop_off_eval())
       ELSE IF (block%ptype .NE. c_pt_operator) THEN
         err = c_err_bad_value
