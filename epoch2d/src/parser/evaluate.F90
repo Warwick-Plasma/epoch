@@ -15,6 +15,83 @@ MODULE evaluator
 
 CONTAINS
 
+#ifdef SIMPLIFY_DEBUG
+  SUBROUTINE basic_evaluate(input_stack, ix, iy, err)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: input_stack
+    INTEGER, INTENT(IN) :: ix, iy
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: i, n_elements
+    REAL(num), ALLOCATABLE :: array(:)
+
+    IF (input_stack%should_simplify) THEN
+      CALL basic_evaluate_standard(input_stack, ix, iy, err)
+
+      n_elements = eval_stack%stack_point
+      ALLOCATE(array(1:n_elements))
+
+      ! Pop off the final answers
+      DO i = n_elements,1,-1
+        array(i) = pop_off_eval()
+      ENDDO
+
+      CALL simplify_stack(input_stack, err)
+
+      CALL basic_evaluate_standard(input_stack, ix, iy, err)
+
+      ! Check the final answers
+      DO i = 1, n_elements
+        IF (eval_stack%entries(i) .NE. array(i)) THEN
+          PRINT*,i,eval_stack%entries(i),array(i),eval_stack%entries(i)-array(i)
+        ENDIF
+      ENDDO
+
+      DEALLOCATE(array)
+    ELSE
+      CALL basic_evaluate_standard(input_stack, ix, iy, err)
+    ENDIF
+
+  END SUBROUTINE basic_evaluate
+
+
+
+  SUBROUTINE basic_evaluate_standard(input_stack, ix, iy, err)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: input_stack
+    INTEGER, INTENT(IN) :: ix, iy
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: i, ierr
+    TYPE(stack_element) :: block
+
+    CALL eval_reset()
+
+    DO i = 1, input_stack%stack_point
+      block = input_stack%entries(i)
+      IF (block%ptype .EQ. c_pt_variable) THEN
+        CALL push_on_eval(block%numerical_data)
+      ELSE IF (block%ptype .EQ. c_pt_species) THEN
+        CALL do_species(block%value, err)
+      ELSE IF (block%ptype .EQ. c_pt_operator) THEN
+        CALL do_operator(block%value, err)
+      ELSE IF (block%ptype .EQ. c_pt_constant &
+          .OR. block%ptype .EQ. c_pt_default_constant) THEN
+        CALL do_constant(block%value, ix, iy, .FALSE., err)
+      ELSE IF (block%ptype .EQ. c_pt_function) THEN
+        CALL do_functions(block%value, ix, iy, .FALSE., err)
+      ENDIF
+
+      IF (err .NE. c_err_none) THEN
+        PRINT *, 'BAD block', err, block%ptype, i, block%value
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        STOP
+      ENDIF
+    ENDDO
+
+  END SUBROUTINE basic_evaluate_standard
+
+
+
+#else
   SUBROUTINE basic_evaluate(input_stack, ix, iy, err)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
@@ -53,6 +130,7 @@ CONTAINS
 
 
 
+#endif
   SUBROUTINE sl_append
 
     TYPE(stack_list), POINTER :: sl_tmp
