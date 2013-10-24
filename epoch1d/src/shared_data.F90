@@ -402,6 +402,7 @@ MODULE shared_parser_data
     INTEGER :: stack_point, stack_size
     LOGICAL :: init = .FALSE.
     LOGICAL :: is_time_varying = .FALSE.
+    LOGICAL :: should_simplify
   END TYPE primitive_stack
 
   TYPE deck_constant
@@ -840,6 +841,7 @@ MODULE shared_data
   LOGICAL :: need_random_state
   LOGICAL :: use_exact_restart
   LOGICAL :: allow_cpu_reduce
+  LOGICAL :: simplify_deck
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
   CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename

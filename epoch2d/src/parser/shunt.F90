@@ -166,6 +166,7 @@ CONTAINS
     CALL initialise_stack_element(stack%entries(1))
     stack%init = .TRUE.
     stack%is_time_varying = .FALSE.
+    stack%should_simplify = simplify_deck
 
   END SUBROUTINE initialise_stack
 
@@ -185,6 +186,7 @@ CONTAINS
     IF (stack%init) DEALLOCATE(stack%entries)
     stack%init = .FALSE.
     stack%is_time_varying = .FALSE.
+    stack%should_simplify = simplify_deck
 
   END SUBROUTINE deallocate_stack
 
@@ -199,8 +201,44 @@ CONTAINS
     ALLOCATE(copy%entries(copy%stack_size))
     copy%entries(1:copy%stack_point) = stack%entries(1:copy%stack_point)
     copy%is_time_varying = stack%is_time_varying
+    copy%should_simplify = stack%should_simplify
 
   END SUBROUTINE copy_stack
+
+
+
+  SUBROUTINE append_stack(stack, append)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: stack, append
+    TYPE(stack_element), POINTER :: old_buffer(:)
+    INTEGER :: i, n, old_size, old_stack_point
+
+    old_stack_point = stack%stack_point
+    stack%stack_point = old_stack_point + append%stack_point
+
+    IF (stack%stack_point .GT. stack%stack_size) THEN
+      old_size = stack%stack_size
+      stack%stack_size = 2 * stack%stack_point
+      old_buffer => stack%entries
+      ALLOCATE(stack%entries(stack%stack_size))
+      stack%entries(1:old_size) = old_buffer(1:old_size)
+      DO i = old_stack_point+1,stack%stack_size
+        CALL initialise_stack_element(stack%entries(i))
+      ENDDO
+      DEALLOCATE(old_buffer)
+    ENDIF
+
+    n = old_stack_point + 1
+    DO i = 1,append%stack_point
+      stack%entries(n) = append%entries(i)
+      n = n + 1
+    ENDDO
+
+    IF (append%is_time_varying) stack%is_time_varying = .TRUE.
+
+    CALL deallocate_stack(append)
+
+  END SUBROUTINE append_stack
 
 
 

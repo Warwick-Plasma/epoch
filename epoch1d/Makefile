@@ -358,7 +358,7 @@ dist_fn.o: dist_fn.F90 mpi_subtype_control.o
 epoch1d.o: epoch1d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
   helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
   particles.o photons.o setup.o split_particle.o welcome.o window.o
-evaluate.o: evaluate.f90 evaluator_blocks.o
+evaluate.o: evaluate.f90 evaluator_blocks.o shunt.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
 helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o
