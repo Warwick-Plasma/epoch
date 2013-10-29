@@ -54,7 +54,8 @@ CONTAINS
 
     b => h%current_block
 
-    IF (b%blocktype .EQ. c_blocktype_plain_mesh) THEN
+    IF (b%blocktype .EQ. c_blocktype_plain_mesh &
+        .OR. b%blocktype .EQ. c_blocktype_lagrangian_mesh) THEN
       CALL write_mesh_meta_r8(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_point_mesh) THEN
       CALL write_point_mesh_meta_r8(h)

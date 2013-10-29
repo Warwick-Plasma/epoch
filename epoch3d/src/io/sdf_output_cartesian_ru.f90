@@ -18,14 +18,19 @@ CONTAINS
 
     b => h%current_block
 
-    IF (b%blocktype .NE. c_blocktype_lagrangian_mesh) &
-        b%blocktype = c_blocktype_plain_mesh
     ndims = b%ndims
-
-    b%nelements = 0
-    DO i = 1,ndims
-      b%nelements = b%nelements + b%dims(i)
-    ENDDO
+    IF (b%blocktype .EQ. c_blocktype_lagrangian_mesh) THEN
+      b%nelements = ndims
+      DO i = 1,ndims
+        b%nelements = b%nelements * b%dims(i)
+      ENDDO
+    ELSE
+      b%blocktype = c_blocktype_plain_mesh
+      b%nelements = 0
+      DO i = 1,ndims
+        b%nelements = b%nelements + b%dims(i)
+      ENDDO
+    ENDIF
 
     ! Metadata is
     ! - mults     REAL(r8), DIMENSION(ndims)
