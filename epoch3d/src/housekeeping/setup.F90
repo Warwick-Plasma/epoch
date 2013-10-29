@@ -681,6 +681,70 @@ CONTAINS
 
 
 
+  SUBROUTINE find_species_by_id(species_id, species_number)
+
+    CHARACTER(LEN=*), INTENT(IN) :: species_id
+    INTEGER, INTENT(OUT) :: species_number
+    INTEGER :: ispecies
+
+    species_number = 0
+    DO ispecies = 1,n_species
+      IF (str_cmp(species_id, species_list(ispecies)%name)) THEN
+        species_number = ispecies
+        EXIT
+      ENDIF
+    ENDDO
+
+  END SUBROUTINE find_species_by_id
+
+
+
+  SUBROUTINE copy_string(str_in, str_out)
+
+    CHARACTER(LEN=*), INTENT(IN) :: str_in
+    CHARACTER(LEN=*), INTENT(INOUT) :: str_out
+    INTEGER :: len1, len2, olen, i
+
+    len1 = LEN_TRIM(str_in)
+    len2 = LEN(str_out)
+    olen = MIN(len1,len2)
+    IF (olen .GT. 0) THEN
+      str_out(1:olen) = str_in(1:olen)
+      DO i = olen+1,len2
+        str_out(i:i) = ' '
+      ENDDO
+    ELSE
+      DO i = 1,len2
+        str_out(i:i) = ' '
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE copy_string
+
+
+
+  SUBROUTINE find_species_by_id_or_blockid(species_id, block_id, species_number)
+
+    CHARACTER(LEN=*), INTENT(INOUT) :: species_id
+    CHARACTER(LEN=*), INTENT(IN) :: block_id
+    INTEGER, INTENT(OUT) :: species_number
+    INTEGER :: i1, i2
+
+    IF (str_cmp(species_id, '__unknown__')) THEN
+      CALL strip_species_blockid(block_id, i1, i2)
+      IF (i2 .LE. LEN_TRIM(species_id)) THEN
+        CALL copy_string(block_id(i1:i2), species_id)
+      ELSE
+        CALL copy_string('__unknown__', species_id)
+      ENDIF
+    ENDIF
+
+    CALL find_species_by_id(species_id, species_number)
+
+  END SUBROUTINE find_species_by_id_or_blockid
+
+
+
   SUBROUTINE strip_species_blockid(name, i1, i2)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
@@ -703,9 +767,10 @@ CONTAINS
 
     INTEGER, INTENT(OUT) :: step
     CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2, str3
+    CHARACTER(LEN=c_id_length) :: species_id
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: ierr, i, is, i1, i2, iblock, nblocks, ndims, geometry
+    INTEGER :: ierr, i, is, iblock, nblocks, ndims, geometry
     INTEGER(i8) :: npart, npart_local
     INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
@@ -835,13 +900,13 @@ CONTAINS
         CYCLE
       ENDIF
 
-      CALL find_species_by_blockid(block_id, ispecies)
+      CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
+      CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
       IF (ispecies .EQ. 0) THEN
         IF (rank .EQ. 0) THEN
-          CALL strip_species_blockid(block_id, i1, i2)
-          IF (.NOT. str_cmp(block_id(i1:i1+5), 'subset')) THEN
+          IF (.NOT. str_cmp(species_id(1:6), 'subset')) THEN
             PRINT*, '*** WARNING ***'
-            PRINT*, 'Particle species "', block_id(i1:i2), &
+            PRINT*, 'Particle species "', TRIM(species_id), &
                 '" from restart dump ', 'not found in input deck. Ignoring.'
           ENDIF
         ENDIF
@@ -970,9 +1035,9 @@ CONTAINS
           ENDIF
         ENDIF
       CASE(c_blocktype_point_mesh)
-        CALL sdf_read_point_mesh_info(sdf_handle, npart)
+        CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
 
-        CALL find_species_by_blockid(block_id, ispecies)
+        CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
         IF (ispecies .EQ. 0) CYClE
         species => species_list(ispecies)
 
@@ -1095,9 +1160,10 @@ CONTAINS
         ENDIF
 
       CASE(c_blocktype_point_variable)
-        CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id)
+        CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id, &
+            str1, species_id)
 
-        CALL find_species_by_blockid(mesh_id, ispecies)
+        CALL find_species_by_id_or_blockid(species_id, mesh_id, ispecies)
         IF (ispecies .EQ. 0) CYClE
         species => species_list(ispecies)
 
