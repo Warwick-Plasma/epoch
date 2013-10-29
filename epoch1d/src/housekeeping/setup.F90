@@ -522,13 +522,13 @@ CONTAINS
 
 
 
-  SUBROUTINE find_species_by_name(specname, species_number)
+  SUBROUTINE find_species_by_blockid(specname, species_number)
 
     CHARACTER(LEN=*), INTENT(IN) :: specname
     INTEGER, INTENT(OUT) :: species_number
     INTEGER :: ispecies, i1, i2
 
-    CALL strip_species_name(specname, i1, i2)
+    CALL strip_species_blockid(specname, i1, i2)
 
     species_number = 0
     DO ispecies = 1,n_species
@@ -538,23 +538,25 @@ CONTAINS
       ENDIF
     ENDDO
 
-  END SUBROUTINE find_species_by_name
+  END SUBROUTINE find_species_by_blockid
 
 
 
-  SUBROUTINE strip_species_name(name, i1, i2)
+  SUBROUTINE strip_species_blockid(name, i1, i2)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER, INTENT(OUT) :: i1, i2
     INTEGER :: ii
 
+    i1 = 2
     i2 = LEN_TRIM(name)
-    DO ii = i2, 1, -1
+    DO ii = 1, i2
       IF (name(ii:ii) .EQ. '/') RETURN
-      i1 = ii
+      i1 = i1 + 1
     ENDDO
+    i1 = 1
 
-  END SUBROUTINE strip_species_name
+  END SUBROUTINE strip_species_blockid
 
 
 
@@ -694,13 +696,13 @@ CONTAINS
         CYCLE
       ENDIF
 
-      CALL find_species_by_name(name, ispecies)
+      CALL find_species_by_blockid(block_id, ispecies)
       IF (ispecies .EQ. 0) THEN
         IF (rank .EQ. 0) THEN
-          CALL strip_species_name(name, i1, i2)
+          CALL strip_species_blockid(block_id, i1, i2)
           PRINT*, '*** WARNING ***'
-          PRINT*, 'Particle species "', name(i1:i2), '" from restart dump ', &
-              'not found in input deck. Ignoring.'
+          PRINT*, 'Particle species "', block_id(i1:i2), &
+              '" from restart dump ', 'not found in input deck. Ignoring.'
         ENDIF
         CYCLE
       ENDIF
@@ -790,11 +792,11 @@ CONTAINS
         ELSE IF (str_cmp(block_id, 'window_shift_fraction')) THEN
           CALL sdf_read_srl(sdf_handle, window_shift_fraction)
         ELSE IF (block_id(1:7) .EQ. 'weight/') THEN
-          CALL find_species_by_name(block_id, ispecies)
+          CALL find_species_by_blockid(block_id, ispecies)
           IF (ispecies .EQ. 0) CYClE
           CALL sdf_read_srl(sdf_handle, species_list(ispecies)%weight)
         ELSE IF (block_id(1:5) .EQ. 'nppc/') THEN
-          CALL find_species_by_name(block_id, ispecies)
+          CALL find_species_by_blockid(block_id, ispecies)
           IF (ispecies .EQ. 0) CYClE
           CALL sdf_read_srl(sdf_handle, species_list(ispecies)%npart_per_cell)
         ELSE IF (block_id(1:10) .EQ. 'time_prev/') THEN
@@ -825,7 +827,7 @@ CONTAINS
       CASE(c_blocktype_point_mesh)
         CALL sdf_read_point_mesh_info(sdf_handle, npart)
 
-        CALL find_species_by_name(name, ispecies)
+        CALL find_species_by_blockid(block_id, ispecies)
         IF (ispecies .EQ. 0) CYClE
         species => species_list(ispecies)
 
@@ -911,7 +913,7 @@ CONTAINS
       CASE(c_blocktype_point_variable)
         CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id)
 
-        CALL find_species_by_name(mesh_id, ispecies)
+        CALL find_species_by_blockid(mesh_id, ispecies)
         IF (ispecies .EQ. 0) CYClE
         species => species_list(ispecies)
 
