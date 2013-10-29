@@ -838,9 +838,11 @@ CONTAINS
       IF (ispecies .EQ. 0) THEN
         IF (rank .EQ. 0) THEN
           CALL strip_species_blockid(block_id, i1, i2)
-          PRINT*, '*** WARNING ***'
-          PRINT*, 'Particle species "', block_id(i1:i2), &
-              '" from restart dump ', 'not found in input deck. Ignoring.'
+          IF (.NOT. str_cmp(block_id(i1:i1+5), 'subset')) THEN
+            PRINT*, '*** WARNING ***'
+            PRINT*, 'Particle species "', block_id(i1:i2), &
+                '" from restart dump ', 'not found in input deck. Ignoring.'
+          ENDIF
         ENDIF
         CYCLE
       ENDIF
