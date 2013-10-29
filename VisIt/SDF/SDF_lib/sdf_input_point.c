@@ -34,6 +34,7 @@ int sdf_read_point_mesh_info(sdf_file_t *h)
     // - minval    REAL(r8), DIMENSION(ndims)
     // - maxval    REAL(r8), DIMENSION(ndims)
     // - npoints   INTEGER(i8)
+    // - speciesid CHARACTER(id_length)
 
     SDF_COMMON_MESH_INFO();
 
@@ -49,6 +50,10 @@ int sdf_read_point_mesh_info(sdf_file_t *h)
 
     SDF_READ_ENTRY_INT8(b->nelements);
     for (i = 0; i < b->ndims; i++) b->dims[i] = b->nelements;
+
+    // species_id field added in version 1.3
+    if (1000 * h->file_version + h->file_revision > 1002)
+        SDF_READ_ENTRY_ID(b->material_id);
 
     b->stagger = SDF_STAGGER_VERTEX;
 
@@ -67,6 +72,7 @@ int sdf_read_point_variable_info(sdf_file_t *h)
     // - units     CHARACTER(id_length)
     // - meshid    CHARACTER(id_length)
     // - npoints   INTEGER(i8)
+    // - speciesid CHARACTER(id_length)
 
     SDF_COMMON_MESH_INFO();
 
@@ -78,6 +84,10 @@ int sdf_read_point_variable_info(sdf_file_t *h)
 
     SDF_READ_ENTRY_INT8(b->nelements);
     for (i = 0; i < b->ndims; i++) b->dims[i] = b->nelements;
+
+    // species_id field added in version 1.3
+    if (1000 * h->file_version + h->file_revision > 1002)
+        SDF_READ_ENTRY_ID(b->material_id);
 
     return 0;
 }

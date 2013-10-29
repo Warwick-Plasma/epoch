@@ -10,12 +10,12 @@ MODULE sdf_output_point_r4
 
 CONTAINS
 
-  SUBROUTINE write_srl_1d_pt_mesh_i8_r4(h, id, name, x, &
+  SUBROUTINE write_srl_1d_pt_mesh_i8_r4(h, id, name, species_id, x, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 1
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id
     REAL(r4), DIMENSION(:), INTENT(IN) :: x
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
@@ -50,7 +50,8 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_mesh_meta_r4(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_point_mesh_meta_r4(h, id, name, species_id, dim_labels, &
+        dim_units, dim_mults)
 
     ! Write the real data
 
@@ -86,12 +87,12 @@ CONTAINS
 
 
 
-  SUBROUTINE write_srl_2d_pt_mesh_i8_r4(h, id, name, x, y, &
+  SUBROUTINE write_srl_2d_pt_mesh_i8_r4(h, id, name, species_id, x, y, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 2
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id
     REAL(r4), DIMENSION(:), INTENT(IN) :: x, y
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
@@ -128,7 +129,8 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_mesh_meta_r4(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_point_mesh_meta_r4(h, id, name, species_id, dim_labels, &
+        dim_units, dim_mults)
 
     ! Write the real data
 
@@ -175,12 +177,12 @@ CONTAINS
 
 
 
-  SUBROUTINE write_srl_3d_pt_mesh_i8_r4(h, id, name, x, y, z, &
+  SUBROUTINE write_srl_3d_pt_mesh_i8_r4(h, id, name, species_id, x, y, z, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     INTEGER, PARAMETER :: ndims = 3
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id
     REAL(r4), DIMENSION(:), INTENT(IN) :: x, y, z
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
@@ -219,7 +221,8 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_mesh_meta_r4(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_point_mesh_meta_r4(h, id, name, species_id, dim_labels, &
+        dim_units, dim_mults)
 
     ! Write the real data
 
@@ -277,51 +280,51 @@ CONTAINS
 
 
 
-  SUBROUTINE write_srl_1d_pt_mesh_i4_r4(h, id, name, x, &
+  SUBROUTINE write_srl_1d_pt_mesh_i4_r4(h, id, name, species_id, x, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id
     REAL(r4), DIMENSION(:), INTENT(IN) :: x
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
-    CALL write_srl_1d_pt_mesh_i8_r4(h, id, name, x, &
+    CALL write_srl_1d_pt_mesh_i8_r4(h, id, name, species_id, x, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
 
   END SUBROUTINE write_srl_1d_pt_mesh_i4_r4
 
 
 
-  SUBROUTINE write_srl_2d_pt_mesh_i4_r4(h, id, name, x, y, &
+  SUBROUTINE write_srl_2d_pt_mesh_i4_r4(h, id, name, species_id, x, y, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id
     REAL(r4), DIMENSION(:), INTENT(IN) :: x, y
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
-    CALL write_srl_2d_pt_mesh_i8_r4(h, id, name, x, y, &
+    CALL write_srl_2d_pt_mesh_i8_r4(h, id, name, species_id, x, y, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
 
   END SUBROUTINE write_srl_2d_pt_mesh_i4_r4
 
 
 
-  SUBROUTINE write_srl_3d_pt_mesh_i4_r4(h, id, name, x, y, z, &
+  SUBROUTINE write_srl_3d_pt_mesh_i4_r4(h, id, name, species_id, x, y, z, &
       npoint_global, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id
     REAL(r4), DIMENSION(:), INTENT(IN) :: x, y, z
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
     REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
 
-    CALL write_srl_3d_pt_mesh_i8_r4(h, id, name, x, y, z, &
+    CALL write_srl_3d_pt_mesh_i8_r4(h, id, name, species_id, x, y, z, &
         INT(npoint_global,i8), dim_labels, dim_units, dim_mults)
 
   END SUBROUTINE write_srl_3d_pt_mesh_i4_r4
@@ -332,11 +335,11 @@ CONTAINS
   ! Code to write a nD point mesh in parallel using an iterator
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_point_mesh_r4(h, id, name, npoint_global, ndims, iterator, &
-      offset, convert_in, dim_labels, dim_units, dim_mults)
+  SUBROUTINE write_point_mesh_r4(h, id, name, species_id, npoint_global, &
+      ndims, iterator, offset, convert_in, dim_labels, dim_units, dim_mults)
 
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id
     INTEGER(i8), INTENT(IN) :: npoint_global
     INTEGER(i4), INTENT(IN) :: ndims
     INTEGER(i8), INTENT(IN) :: offset
@@ -394,7 +397,8 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_mesh_meta_r4(h, id, name, dim_labels, dim_units, dim_mults)
+    CALL write_point_mesh_meta_r4(h, id, name, species_id, dim_labels, &
+        dim_units, dim_mults)
 
     ! Write the real data
 
@@ -469,11 +473,11 @@ CONTAINS
 
 
 
-  SUBROUTINE write_srl_pt_var_flt_i8_r4(h, id, name, units, array, &
+  SUBROUTINE write_srl_pt_var_flt_i8_r4(h, id, name, species_id, units, array, &
       npoint_global, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id, units
     REAL(r4), DIMENSION(:), INTENT(IN) :: array
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
@@ -495,7 +499,8 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_variable_meta_r4(h, id, name, units, mesh_id, mult)
+    CALL write_point_variable_meta_r4(h, id, name, species_id, units, &
+        mesh_id, mult)
 
     ! Write the real data
 
@@ -529,17 +534,17 @@ CONTAINS
 
 
 
-  SUBROUTINE write_srl_pt_var_flt_i4_r4(h, id, name, units, array, &
+  SUBROUTINE write_srl_pt_var_flt_i4_r4(h, id, name, species_id, units, array, &
       npoint_global, mesh_id, mult)
 
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id, units
     REAL(r4), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     REAL(r4), INTENT(IN), OPTIONAL :: mult
 
-    CALL write_srl_pt_var_flt_i8_r4(h, id, name, units, array, &
+    CALL write_srl_pt_var_flt_i8_r4(h, id, name, species_id, units, array, &
         INT(npoint_global,i8), mesh_id, mult)
 
   END SUBROUTINE write_srl_pt_var_flt_i4_r4
@@ -550,11 +555,11 @@ CONTAINS
   ! Code to write a point variable in parallel using an iterator
   !----------------------------------------------------------------------------
 
-  SUBROUTINE write_point_variable_r4(h, id, name, units, npoint_global, &
-      mesh_id, iterator, offset, convert_in, mult)
+  SUBROUTINE write_point_variable_r4(h, id, name, species_id, units, &
+      npoint_global, mesh_id, iterator, offset, convert_in, mult)
 
     TYPE(sdf_file_handle) :: h
-    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, species_id, units
     INTEGER(i8), INTENT(IN) :: npoint_global
     CHARACTER(LEN=*), INTENT(IN) :: mesh_id
     INTEGER(i8), INTENT(IN) :: offset
@@ -606,7 +611,8 @@ CONTAINS
 
     ! Write header
 
-    CALL write_point_variable_meta_r4(h, id, name, units, mesh_id, mult)
+    CALL write_point_variable_meta_r4(h, id, name, species_id, units, &
+        mesh_id, mult)
 
     ! Write the real data
 
