@@ -59,9 +59,24 @@ ifeq ($(strip $(COMPILER)),gfortran)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
              -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter \
              -ffpe-trap=underflow,denormal
-    FFLAGS += -fbacktrace -fdump-core    # gfortran-4.3
-   #FFLAGS += -Wno-unused-dummy-argument # gfortran-4.6
-   #FFLAGS += -Wno-target-lifetime       # gfortran-4.8
+    # gfortran-4.3
+    GNUGE43 := $(shell expr `gfortran -dumpversion | cut -f1 -d\.` \>= 4 \
+        \& `gfortran -dumpversion | cut -f2 -d\.` \>= 3)
+    ifeq "$(GNUGE43)" "1"
+      FFLAGS += -fbacktrace -fdump-core
+
+      # gfortran-4.6
+      GNUGE46 := $(shell expr `gfortran -dumpversion | cut -f2 -d\.` \>= 6)
+      ifeq "$(GNUGE46)" "1"
+        FFLAGS += -Wno-unused-dummy-argument
+
+        # gfortran-4.8
+        GNUGE48 := $(shell expr `gfortran -dumpversion | cut -f2 -d\.` \>= 8)
+        ifeq "$(GNUGE48)" "1"
+          FFLAGS += -Wno-target-lifetime
+        endif
+      endif
+    endif
   endif
   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
 endif
