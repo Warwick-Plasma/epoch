@@ -10,7 +10,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 27
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 28
   INTEGER :: block_number, full_io_block, restart_io_block, nfile_prefixes
   INTEGER :: rolling_restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
@@ -125,6 +125,7 @@ CONTAINS
     io_block_name (i+25) = 'rolling_restart'
     io_block_name (i+26) = 'dump_cycle_first_index'
     io_block_name (i+27) = 'filesystem'
+    io_block_name (i+28) = 'disabled'
 
     track_ejected_particles = .FALSE.
     averaged_var_block = 0
@@ -147,6 +148,7 @@ CONTAINS
     block_number = 0
 
     IF (n_io_blocks .GT. 0) THEN
+      ! First pass
       IF (deck_state .EQ. c_ds_first) THEN
         IF (.NOT.new_style_io_block .AND. n_io_blocks .NE. 1) THEN
           IF (rank .EQ. 0) THEN
@@ -175,8 +177,11 @@ CONTAINS
             io_prefixes(2) = 'roll'
           ENDIF
         ENDDO
+      ! Second pass
       ELSE
         DO i = 1, n_io_blocks
+          IF (io_block_list(i)%disabled) CYCLE
+
           IF (io_block_list(i)%dt_average .GT. t_end) THEN
             IF (rank .EQ. 0) THEN
               DO iu = 1, nio_units ! Print to stdout and to file
@@ -262,6 +267,8 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
+    IF (io_block%disabled) RETURN
+
     IF (io_block%dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
       track_ejected_particles = .TRUE.
     ENDIF
@@ -324,6 +331,8 @@ CONTAINS
     INTEGER, PARAMETER :: c_err_old_style_ignore = 3
 
     errcode = c_err_none
+    IF (value .EQ. blank) RETURN
+
     IF (deck_state .EQ. c_ds_first) THEN
       IF (str_cmp(element, 'name')) new_style_io_block = .TRUE.
       IF (str_cmp(element, 'rolling_restart')) THEN
@@ -339,6 +348,11 @@ CONTAINS
         ENDIF
         rolling_restart_io_block = block_number
       ENDIF
+      RETURN
+    ENDIF
+
+    IF (io_block%disabled) THEN
+      errcode = c_err_none
       RETURN
     ENDIF
 
@@ -471,6 +485,8 @@ CONTAINS
       io_block%dump_cycle_first_index = as_integer(value, errcode)
     CASE(27)
       filesystem = TRIM(value) // ':'
+    CASE(28)
+      io_block%disabled = as_logical(value, errcode)
     END SELECT
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN
@@ -721,6 +737,7 @@ CONTAINS
     io_block%dump_cycle_first_index = 0
     io_block%prefix_index = 1
     io_block%rolling_restart = .FALSE.
+    io_block%disabled = .FALSE.
     NULLIFY(io_block%dump_at_nsteps)
     NULLIFY(io_block%dump_at_times)
     DO i = 1, num_vars_to_dump

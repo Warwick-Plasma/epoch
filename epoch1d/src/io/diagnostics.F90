@@ -559,6 +559,7 @@ CONTAINS
     DO io = 1, n_io_blocks
       io_block_list(io)%dump = .FALSE.
 
+      IF (io_block_list(io)%disabled) CYCLE
       IF (io_block_list(io)%prefix_index .NE. iprefix) CYCLE
 
       IF (last_call .AND. io_block_list(io)%dump_last) &
