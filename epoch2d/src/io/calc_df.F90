@@ -13,14 +13,16 @@ CONTAINS
 
     CALL processor_summation_bcs(data_array, ng)
 
-    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic .AND. x_min_boundary) THEN
+    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) .NE. c_bc_periodic &
+        .AND. bc_particle(c_bd_x_min) .NE. c_bc_reflect) THEN
       DO j = -2, ny+3
         data_array(1,j) = data_array(1,j) + data_array( 0,j)
         data_array(2,j) = data_array(2,j) + data_array(-1,j)
         data_array(3,j) = data_array(3,j) + data_array(-2,j)
       ENDDO
     ENDIF
-    IF (bc_particle(c_bd_x_max) .NE. c_bc_periodic .AND. x_max_boundary) THEN
+    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) .NE. c_bc_periodic &
+        .AND. bc_particle(c_bd_x_max) .NE. c_bc_reflect) THEN
       DO j = -2, ny+3
         data_array(nx-2,j) = data_array(nx-2,j) + data_array(nx+3,j)
         data_array(nx-1,j) = data_array(nx-1,j) + data_array(nx+2,j)
@@ -28,14 +30,16 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic .AND. y_min_boundary) THEN
+    IF (y_min_boundary .AND. bc_particle(c_bd_y_min) .NE. c_bc_periodic &
+        .AND. bc_particle(c_bd_y_min) .NE. c_bc_reflect) THEN
       DO i = -2, nx+3
         data_array(i,1) = data_array(i,1) + data_array(i, 0)
         data_array(i,2) = data_array(i,2) + data_array(i,-1)
         data_array(i,3) = data_array(i,3) + data_array(i,-2)
       ENDDO
     ENDIF
-    IF (bc_particle(c_bd_y_max) .NE. c_bc_periodic .AND. y_max_boundary) THEN
+    IF (y_max_boundary .AND. bc_particle(c_bd_y_max) .NE. c_bc_periodic &
+        .AND. bc_particle(c_bd_y_max) .NE. c_bc_reflect) THEN
       DO i = -2, nx+3
         data_array(i,ny-2) = data_array(i,ny-2) + data_array(i,ny+3)
         data_array(i,ny-1) = data_array(i,ny-1) + data_array(i,ny+2)
@@ -84,7 +88,7 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
       part_m  = io_list(ispecies)%mass
-      fac = io_list(ispecies)%weight * idx
+      fac = io_list(ispecies)%weight
       wdata = part_m * fac
 
       DO WHILE (ASSOCIATED(current))
@@ -92,12 +96,12 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_m  = current%mass
 #ifdef PER_PARTICLE_WEIGHT
-        fac = current%weight * idx
+        fac = current%weight
 #endif
         wdata = part_m * fac
 #else
 #ifdef PER_PARTICLE_WEIGHT
-        fac = current%weight * idx
+        fac = current%weight
         wdata = part_m * fac
 #endif
 #endif
@@ -115,6 +119,8 @@ CONTAINS
       ENDDO
     ENDDO
 
+    data_array = data_array * idx
+
     CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
@@ -131,7 +137,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc
     ! The weight of a particle
-    REAL(num) :: l_weight
+    REAL(num) :: part_w
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num) :: fac, gamma
@@ -145,7 +151,7 @@ CONTAINS
     data_array = 0.0_num
     wt = 0.0_num
     part_mc  = 1.0_num
-    l_weight = 1.0_num
+    part_w = 1.0_num
 
     spec_start = current_species
     spec_end = current_species
@@ -163,21 +169,21 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
       part_mc = c * io_list(ispecies)%mass
-      l_weight = io_list(ispecies)%weight
-      fac = part_mc * l_weight * c
+      part_w = io_list(ispecies)%weight
+      fac = part_mc * part_w * c
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc = c * current%mass
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
+        part_w = current%weight
 #endif
-        fac = part_mc * l_weight * c
+        fac = part_mc * part_w * c
 #else
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
-        fac = part_mc * l_weight * c
+        part_w = current%weight
+        fac = part_mc * part_w * c
 #endif
 #endif
 
@@ -189,7 +195,7 @@ CONTAINS
           wdata = (gamma - 1.0_num) * fac
         ELSE
 #ifdef PHOTONS
-          wdata = current%particle_energy * l_weight
+          wdata = current%particle_energy * part_w
 #else
           wdata = 0.0_num
 #endif
@@ -202,7 +208,7 @@ CONTAINS
           data_array(cell_x+ix, cell_y+iy) = &
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
           wt(cell_x+ix, cell_y+iy) = &
-              wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
+              wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_w
         ENDDO
         ENDDO
 
@@ -231,7 +237,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc
     ! The weight of a particle
-    REAL(num) :: l_weight
+    REAL(num) :: part_w
     ! The data to be weighted onto the grid
     REAL(num) :: wdata = 0.0_num
     REAL(num) :: fac, gamma, ek, part_flux, xfac, yfac, zfac
@@ -245,7 +251,7 @@ CONTAINS
     data_array = 0.0_num
     wt = 0.0_num
     part_mc  = 1.0_num
-    l_weight = 1.0_num
+    part_w = 1.0_num
 
     xfac = c * dy
     yfac = c * dx
@@ -267,21 +273,21 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
       part_mc = c * io_list(ispecies)%mass
-      l_weight = io_list(ispecies)%weight
-      fac = part_mc * l_weight * c
+      part_w = io_list(ispecies)%weight
+      fac = part_mc * part_w * c
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc = c * current%mass
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
+        part_w = current%weight
 #endif
-        fac = part_mc * l_weight * c
+        fac = part_mc * part_w * c
 #else
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
-        fac = part_mc * l_weight * c
+        part_w = current%weight
+        fac = part_mc * part_w * c
 #endif
 #endif
 
@@ -297,7 +303,7 @@ CONTAINS
           part_ux = current%part_p(1) * fac
           part_uy = current%part_p(2) * fac
           part_uz = current%part_p(3) * fac
-          ek = current%particle_energy * l_weight
+          ek = current%particle_energy * part_w
           gamma = 1.0_num
 #else
           ek = 0.0_num
@@ -339,7 +345,7 @@ CONTAINS
           data_array(cell_x+ix, cell_y+iy) = &
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
           wt(cell_x+ix, cell_y+iy) = &
-              wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * l_weight
+              wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_w
         ENDDO
         ENDDO
 
@@ -372,9 +378,9 @@ CONTAINS
     CASE(c_dir_x)
       DO iy = 1, ny
       DO ix = 1, nx
-        ey_cc = 0.5_num  * (ey(ix  , iy-1) + ey(ix, iy))
+        ey_cc = 0.5_num  * (ey(ix  , iy-1) + ey(ix, iy  ))
         ez_cc = ez(ix, iy)
-        by_cc = 0.5_num  * (by(ix-1, iy  ) + by(ix, iy))
+        by_cc = 0.5_num  * (by(ix-1, iy  ) + by(ix, iy  ))
         bz_cc = 0.25_num * (bz(ix-1, iy-1) + bz(ix, iy-1) &
                          +  bz(ix-1, iy  ) + bz(ix, iy  ))
         data_array(ix,iy) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
@@ -383,9 +389,9 @@ CONTAINS
     CASE(c_dir_y)
       DO iy = 1, ny
       DO ix = 1, nx
-        ex_cc = 0.5_num  * (ex(ix-1, iy  ) + ex(ix, iy))
+        ex_cc = 0.5_num  * (ex(ix-1, iy  ) + ex(ix, iy  ))
         ez_cc = ez(ix, iy)
-        bx_cc = 0.5_num  * (bx(ix  , iy-1) + bx(ix, iy))
+        bx_cc = 0.5_num  * (bx(ix  , iy-1) + bx(ix, iy  ))
         bz_cc = 0.25_num * (bz(ix-1, iy-1) + bz(ix, iy-1) &
                          +  bz(ix-1, iy  ) + bz(ix, iy  ))
         data_array(ix,iy) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
@@ -444,7 +450,7 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
       part_q  = io_list(ispecies)%charge
-      fac = io_list(ispecies)%weight * idx
+      fac = io_list(ispecies)%weight
       wdata = part_q * fac
 
       DO WHILE (ASSOCIATED(current))
@@ -452,12 +458,12 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_q  = current%charge
 #ifdef PER_PARTICLE_WEIGHT
-        fac = current%weight * idx
+        fac = current%weight
 #endif
         wdata = part_q * fac
 #else
 #ifdef PER_PARTICLE_WEIGHT
-        fac = current%weight * idx
+        fac = current%weight
         wdata = part_q * fac
 #endif
 #endif
@@ -474,6 +480,8 @@ CONTAINS
         current => current%next
       ENDDO
     ENDDO
+
+    data_array = data_array * idx
 
     CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
@@ -498,7 +506,7 @@ CONTAINS
 
     data_array = 0.0_num
 
-    idx   = 1.0_num / dx / dy
+    idx = 1.0_num / dx / dy
 
     spec_start = current_species
     spec_end = current_species
@@ -515,11 +523,11 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-      wdata = io_list(ispecies)%weight * idx
+      wdata = io_list(ispecies)%weight
 
       DO WHILE (ASSOCIATED(current))
 #ifdef PER_PARTICLE_WEIGHT
-        wdata = current%weight * idx
+        wdata = current%weight
 #endif
 
 #include "particle_to_grid.inc"
@@ -534,6 +542,8 @@ CONTAINS
         current => current%next
       ENDDO
     ENDDO
+
+    data_array = data_array * idx
 
     CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
@@ -551,7 +561,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
     ! The weight of a particle
-    REAL(num) :: l_weight
+    REAL(num) :: part_w
     REAL(num) :: gf
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: part_count, meanx, meany, meanz
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
@@ -585,14 +595,14 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
-      l_weight = io_list(ispecies)%weight
+      part_w = io_list(ispecies)%weight
 
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
         sqrt_part_m  = SQRT(current%mass)
 #endif
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
+        part_w = current%weight
 #endif
         ! Copy the particle properties out for speed
         part_pmx = current%part_p(1) / sqrt_part_m
@@ -603,7 +613,7 @@ CONTAINS
 
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy) * l_weight
+          gf = gx(ix) * gy(iy) * part_w
           meanx(cell_x+ix, cell_y+iy) = &
               meanx(cell_x+ix, cell_y+iy) + gf * part_pmx
           meany(cell_x+ix, cell_y+iy) = &
@@ -742,9 +752,9 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species, direction
 
     REAL(num) :: part_px, part_py, part_pz
-    REAL(num) :: part_q, part_mc, part_weight
+    REAL(num) :: part_q, part_mc, part_w
     REAL(num) :: part_j = 0.0_num
-    REAL(num) :: idxyz, root
+    REAL(num) :: idx, root, fac
     INTEGER :: ispecies, spec_start, spec_end, ix, iy
     INTEGER(i8) :: ipart
     LOGICAL :: spec_sum
@@ -754,7 +764,7 @@ CONTAINS
 
     data_array = 0.0_num
 
-    idxyz = 1.0_num / (dx * dy)
+    idx = 1.0_num / dx / dy
 
     spec_start = current_species
     spec_end = current_species
@@ -773,32 +783,40 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
 
-      part_weight = io_list(ispecies)%weight
+      part_w = io_list(ispecies)%weight
       part_q  = io_list(ispecies)%charge
       part_mc = c * io_list(ispecies)%mass
+      fac = part_q * part_w
 
       DO ipart = 1, io_list(ispecies)%attached_list%count
         next => current%next
 #ifdef PER_PARTICLE_WEIGHT
-        part_weight = current%weight
-#endif
+        part_w = current%weight
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_q  = current%charge
         part_mc = c * current%mass
+#endif
+        fac = part_q * part_w
+#else
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_q  = current%charge
+        part_mc = c * current%mass
+        fac = part_q * part_w
+#endif
 #endif
 
         ! Copy the particle properties out for speed
         part_px = current%part_p(1)
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
-        root = c / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
+        root = 1.0_num / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
         SELECT CASE (direction)
           CASE(c_dir_x)
-            part_j = part_q * part_px * root * part_weight * idxyz
+            part_j = fac * part_px * root
           CASE(c_dir_y)
-            part_j = part_q * part_py * root * part_weight * idxyz
+            part_j = fac * part_py * root
           CASE(c_dir_z)
-            part_j = part_q * part_pz * root * part_weight * idxyz
+            part_j = fac * part_pz * root
         END SELECT
 
 #include "particle_to_grid.inc"
@@ -813,6 +831,8 @@ CONTAINS
       ENDDO
     ENDDO
 
+    fac = c * idx
+    data_array = data_array * fac
     CALL processor_summation_bcs(data_array, ng, direction)
 
   END SUBROUTINE calc_per_species_current
@@ -856,7 +876,7 @@ CONTAINS
 
     REAL(num) :: particle_energy, field_energy
     REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: part_mc, l_weight, fac, gamma
+    REAL(num) :: part_mc, part_w, fac, gamma
     REAL(num) :: sum_out(2), sum_in(2)
     REAL(num), PARAMETER :: c2 = c**2
     INTEGER :: ispecies, i, j
@@ -871,21 +891,21 @@ CONTAINS
 #endif
       current => species_list(ispecies)%attached_list%head
       part_mc = c * species_list(ispecies)%mass
-      l_weight = species_list(ispecies)%weight
-      fac = part_mc * l_weight * c
+      part_w = species_list(ispecies)%weight
+      fac = part_mc * part_w * c
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc = c * current%mass
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
+        part_w = current%weight
 #endif
-        fac = part_mc * l_weight * c
+        fac = part_mc * part_w * c
 #else
 #ifdef PER_PARTICLE_WEIGHT
-        l_weight = current%weight
-        fac = part_mc * l_weight * c
+        part_w = current%weight
+        fac = part_mc * part_w * c
 #endif
 #endif
 
@@ -897,7 +917,7 @@ CONTAINS
           particle_energy = particle_energy + (gamma - 1.0_num) * fac
 #ifdef PHOTONS
         ELSE
-          particle_energy = particle_energy + current%particle_energy * l_weight
+          particle_energy = particle_energy + current%particle_energy * part_w
 #endif
         ENDIF
 
