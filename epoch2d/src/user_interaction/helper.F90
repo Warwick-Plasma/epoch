@@ -3,6 +3,7 @@ MODULE helper
   USE boundary
   USE strings
   USE partlist
+  USE calc_df
 
   IMPLICIT NONE
 
@@ -488,38 +489,6 @@ CONTAINS
     ENDDO ! ix
     ENDDO ! iy
 
-    IF (proc_x_min .EQ. MPI_PROC_NULL) THEN
-      DO iy = 1, ny
-      DO ix = -2, 0
-        density_map(ix,iy) = .FALSE.
-      ENDDO ! ix
-      ENDDO ! iy
-    ENDIF
-
-    IF (proc_x_max .EQ. MPI_PROC_NULL) THEN
-      DO iy = 1, ny
-      DO ix = nx+1, nx+3
-        density_map(ix,iy) = .FALSE.
-      ENDDO ! ix
-      ENDDO ! iy
-    ENDIF
-
-    IF (proc_y_min .EQ. MPI_PROC_NULL) THEN
-      DO iy = -2, 0
-      DO ix = 1, nx
-        density_map(ix,iy) = .FALSE.
-      ENDDO ! ix
-      ENDDO ! iy
-    ENDIF
-
-    IF (proc_y_max .EQ. MPI_PROC_NULL) THEN
-      DO iy = ny+1, ny+3
-      DO ix = 1, nx
-        density_map(ix,iy) = .FALSE.
-      ENDDO ! ix
-      ENDDO ! iy
-    ENDIF
-
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
 
@@ -544,40 +513,42 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
         IF (.NOT. density_map(i,j)) j = cell_y + 1 - isuby
 #else
-        IF (.NOT. density_map(i,j)) j = cell_y - isuby / 2
+        IF (.NOT. density_map(i,j)) THEN
+          j = cell_y + isuby / 2
+#ifdef PARTICLE_SHAPE_BSPLINE3
+          IF (.NOT. density_map(i,j)) j = cell_y - isuby / 2
+#endif
+        ENDIF
 #endif
         DO isubx = sf_min, sf_max
           i = cell_x + isubx
 #ifdef PARTICLE_SHAPE_TOPHAT
           IF (.NOT. density_map(i,j)) i = cell_x + 1 - isubx
 #else
-          IF (.NOT. density_map(i,j)) i = cell_x - isubx / 2
+          IF (.NOT. density_map(i,j)) THEN
+            i = cell_x + isubx / 2
+#ifdef PARTICLE_SHAPE_BSPLINE3
+            IF (.NOT. density_map(i,j)) i = cell_x - isubx / 2
+#endif
+          ENDIF
 #endif
           weight_fn(i,j) = weight_fn(i,j) + gx(isubx) * gy(isuby)
-        ENDDO
-      ENDDO
+        ENDDO ! isubx
+      ENDDO ! isuby
 
       current => current%next
       ipart = ipart + 1
     ENDDO
     DEALLOCATE(density_map)
 
-    CALL processor_summation_bcs(weight_fn, ng)
-    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
-      IF (x_min_boundary) weight_fn(0   ,:) = weight_fn(1 ,:)
-      IF (x_max_boundary) weight_fn(nx+1,:) = weight_fn(nx,:)
-    ENDIF
-    IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic) THEN
-      IF (y_min_boundary) weight_fn(:,0   ) = weight_fn(:,1 )
-      IF (y_max_boundary) weight_fn(:,ny+1) = weight_fn(:,ny)
-    ENDIF
+    CALL calc_boundary(weight_fn)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
     ENDDO
 
     wdata = dx * dy
-    DO iy = -2, ny+3
-    DO ix = -2, nx+3
+    DO iy = 1, ny
+    DO ix = 1, nx
       IF (weight_fn(ix, iy) .GT. 0.0_num) THEN
         weight_fn(ix, iy) = wdata * density(ix, iy) / weight_fn(ix, iy)
       ELSE
@@ -586,18 +557,6 @@ CONTAINS
     ENDDO ! ix
     ENDDO ! iy
     DEALLOCATE(density)
-
-    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
-      IF (x_min_boundary) weight_fn(0   ,:) = weight_fn(1 ,:)
-      IF (x_max_boundary) weight_fn(nx+1,:) = weight_fn(nx,:)
-    ENDIF
-    IF (bc_particle(c_bd_y_min) .NE. c_bc_periodic) THEN
-      IF (y_min_boundary) weight_fn(:,0   ) = weight_fn(:,1 )
-      IF (y_max_boundary) weight_fn(:,ny+1) = weight_fn(:,ny)
-    ENDIF
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
-    ENDDO
 
     partlist => species%attached_list
     ! Second loop actually assigns weights to particles

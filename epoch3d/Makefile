@@ -361,7 +361,7 @@ epoch3d.o: epoch3d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
 evaluate.o: evaluate.f90 evaluator_blocks.o
 evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
-helper.o: helper.F90 boundary.o partlist.o strings.o
+helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o
 ic_module.o: ic_module.f90 shared_data.o
 ionise.o: ionise.F90 numerics.o partlist.o random_generator.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o

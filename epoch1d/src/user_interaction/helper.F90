@@ -3,6 +3,7 @@ MODULE helper
   USE boundary
   USE strings
   USE partlist
+  USE calc_df
 
   IMPLICIT NONE
 
@@ -456,18 +457,6 @@ CONTAINS
       IF (density(ix) .GE. density_min) density_map(ix) = .TRUE.
     ENDDO ! ix
 
-    IF (proc_x_min .EQ. MPI_PROC_NULL) THEN
-      DO ix = -2, 0
-        density_map(ix) = .FALSE.
-      ENDDO ! ix
-    ENDIF
-
-    IF (proc_x_max .EQ. MPI_PROC_NULL) THEN
-      DO ix = nx+1, nx+3
-        density_map(ix) = .FALSE.
-      ENDDO ! ix
-    ENDIF
-
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
 
@@ -491,27 +480,28 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
         IF (.NOT. density_map(i)) i = cell_x + 1 - isubx
 #else
-        IF (.NOT. density_map(i)) i = cell_x - isubx / 2
+        IF (.NOT. density_map(i)) THEN
+          i = cell_x + isubx / 2
+#ifdef PARTICLE_SHAPE_BSPLINE3
+          IF (.NOT. density_map(i)) i = cell_x - isubx / 2
+#endif
+        ENDIF
 #endif
         weight_fn(i) = weight_fn(i) + gx(isubx)
-      ENDDO
+      ENDDO ! isubx
 
       current => current%next
       ipart = ipart + 1
     ENDDO
     DEALLOCATE(density_map)
 
-    CALL processor_summation_bcs(weight_fn, ng)
-    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
-      IF (x_min_boundary) weight_fn(0   ) = weight_fn(1 )
-      IF (x_max_boundary) weight_fn(nx+1) = weight_fn(nx)
-    ENDIF
+    CALL calc_boundary(weight_fn)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
     ENDDO
 
     wdata = dx
-    DO ix = -2, nx+3
+    DO ix = 1, nx
       IF (weight_fn(ix) .GT. 0.0_num) THEN
         weight_fn(ix) = wdata * density(ix) / weight_fn(ix)
       ELSE
@@ -519,14 +509,6 @@ CONTAINS
       ENDIF
     ENDDO ! ix
     DEALLOCATE(density)
-
-    IF (bc_particle(c_bd_x_min) .NE. c_bc_periodic) THEN
-      IF (x_min_boundary) weight_fn(0   ) = weight_fn(1 )
-      IF (x_max_boundary) weight_fn(nx+1) = weight_fn(nx)
-    ENDIF
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
-    ENDDO
 
     partlist => species%attached_list
     ! Second loop actually assigns weights to particles
