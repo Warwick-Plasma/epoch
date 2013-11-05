@@ -985,7 +985,7 @@ MODULE shared_data
   INTEGER(i8) :: defines
 
   REAL(num) :: walltime_start
-  INTEGER :: stdout_frequency
+  INTEGER :: stdout_frequency, check_stop_frequency
 
   LOGICAL, DIMENSION(c_dir_x:c_dir_z,0:c_stagger_max) :: stagger
   INTEGER(i8) :: push_per_field = 5

@@ -38,8 +38,11 @@ PROGRAM pic
 
   INTEGER :: ispecies, ierr
   LOGICAL :: halt = .FALSE., push = .TRUE.
+  LOGICAL :: force_dump
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
+  CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
+  CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
   CHARACTER(LEN=64) :: timestring
   REAL(num) :: runtime
 
@@ -67,6 +70,7 @@ PROGRAM pic
       PRINT*, 'Specify output directory'
       READ(*,'(A)') data_dir
     ENDIF
+    CALL cleanup_stop_files
   ENDIF
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
@@ -162,6 +166,7 @@ PROGRAM pic
       IF (use_ionisation) CALL ionise_particles
     ENDIF
 
+    CALL check_for_stop_condition(halt, force_dump)
     IF (halt) EXIT
     step = step + 1
     time = time + dt / 2.0_num
@@ -192,7 +197,7 @@ PROGRAM pic
   IF (use_qed) CALL shutdown_qed_module()
 #endif
 
-  CALL output_routines(step)
+  CALL output_routines(step, force_dump)
 
   IF (rank .EQ. 0) THEN
     CALL create_full_timestring(runtime, timestring)
@@ -201,5 +206,76 @@ PROGRAM pic
 
   CALL close_files
   CALL MPI_FINALIZE(errcode)
+
+CONTAINS
+
+  SUBROUTINE cleanup_stop_files()
+
+    INTEGER :: ierr
+
+    IF (rank .NE. 0) RETURN
+
+    OPEN(unit=lu, status='OLD', &
+        file=TRIM(data_dir) // '/' // TRIM(stop_file), iostat=ierr)
+    IF (ierr .EQ. 0) CLOSE(lu, status='DELETE')
+
+    OPEN(unit=lu, status='OLD', &
+        file=TRIM(data_dir) // '/' // TRIM(stop_file_nodump), iostat=ierr)
+    IF (ierr .EQ. 0) CLOSE(lu, status='DELETE')
+
+  END SUBROUTINE cleanup_stop_files
+
+
+
+  SUBROUTINE check_for_stop_condition(halt, force_dump)
+
+    LOGICAL, INTENT(OUT) :: halt, force_dump
+    INTEGER :: ierr
+    INTEGER, SAVE :: check_counter = 0
+    LOGICAL :: buffer(2), got_stop_condition, got_stop_file
+
+    IF (check_stop_frequency .LE. 0) RETURN
+
+    got_stop_condition = .FALSE.
+    force_dump = .FALSE.
+    check_counter = check_counter + 1
+
+    IF (check_counter .LT. check_stop_frequency) RETURN
+    check_counter = 0
+
+    IF (rank .EQ. 0) THEN
+      OPEN(unit=lu, status='OLD', iostat=ierr, &
+          file=TRIM(data_dir) // '/' // TRIM(stop_file))
+      IF (ierr .EQ. 0) THEN
+        got_stop_file = .TRUE.
+        got_stop_condition = .TRUE.
+        force_dump = .TRUE.
+        CLOSE(lu, status='DELETE')
+      ELSE
+        OPEN(unit=lu, status='OLD', iostat=ierr, &
+            file=TRIM(data_dir) // '/' // TRIM(stop_file_nodump))
+        IF (ierr .EQ. 0) THEN
+          got_stop_file = .TRUE.
+          got_stop_condition = .TRUE.
+          force_dump = .FALSE.
+          CLOSE(lu, status='DELETE')
+        ELSE
+          got_stop_file = .FALSE.
+        ENDIF
+      ENDIF
+
+      IF (got_stop_file) PRINT*,'Stopping because "STOP" file has been found.'
+
+      buffer(1) = got_stop_condition
+      buffer(2) = force_dump
+    ENDIF
+
+    CALL MPI_BCAST(buffer, 2, MPI_LOGICAL, 0, comm, errcode)
+    got_stop_condition = buffer(1)
+    force_dump = buffer(2)
+
+    IF (got_stop_condition) halt = .TRUE.
+
+  END SUBROUTINE check_for_stop_condition
 
 END PROGRAM pic

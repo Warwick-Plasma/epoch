@@ -585,7 +585,10 @@ CONTAINS
       IF (first_call .AND. io_block_list(io)%dump_first) &
           io_block_list(io)%dump = .TRUE.
 
-      IF (force) io_block_list(io)%dump = .TRUE.
+      IF (force) THEN
+        io_block_list(io)%dump = .TRUE.
+        restart_flag = .TRUE.
+      ENDIF
 
       IF (ASSOCIATED(io_block_list(io)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_nsteps)

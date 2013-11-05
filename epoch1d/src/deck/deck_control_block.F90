@@ -11,58 +11,60 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 19 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 20 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
-          'nx                ', &
-          'x_min             ', &
-          'x_max             ', &
-          'nprocx            ', &
-          'npart             ', &
-          'nsteps            ', &
-          't_end             ', &
-          'dt_multiplier     ', &
-          'dlb_threshold     ', &
-          'icfile            ', &
-          'restart_snapshot  ', &
-          'neutral_background', &
-          'field_order       ', &
-          'stdout_frequency  ', &
-          'use_random_seed   ', &
-          'smooth_currents   ', &
-          'use_multiphoton   ', &
-          'use_bsi           ', &
-          'particle_tstart   ', &
-          'use_migration     ', &
-          'migration_interval', &
-          'use_exact_restart ', &
-          'allow_cpu_reduce  ' /)
+          'nx                       ', &
+          'x_min                    ', &
+          'x_max                    ', &
+          'nprocx                   ', &
+          'npart                    ', &
+          'nsteps                   ', &
+          't_end                    ', &
+          'dt_multiplier            ', &
+          'dlb_threshold            ', &
+          'icfile                   ', &
+          'restart_snapshot         ', &
+          'neutral_background       ', &
+          'field_order              ', &
+          'stdout_frequency         ', &
+          'use_random_seed          ', &
+          'smooth_currents          ', &
+          'use_multiphoton          ', &
+          'use_bsi                  ', &
+          'particle_tstart          ', &
+          'use_migration            ', &
+          'migration_interval       ', &
+          'use_exact_restart        ', &
+          'allow_cpu_reduce         ', &
+          'check_stop_file_frequency' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
-          'nx                ', &
-          'x_start           ', &
-          'x_end             ', &
-          'nprocx            ', &
-          'npart             ', &
-          'nsteps            ', &
-          't_end             ', &
-          'dt_multiplier     ', &
-          'dlb_threshold     ', &
-          'icfile            ', &
-          'restart_snapshot  ', &
-          'neutral_background', &
-          'field_order       ', &
-          'stdout_frequency  ', &
-          'use_random_seed   ', &
-          'smooth_currents   ', &
-          'multiphoton       ', &
-          'bsi               ', &
-          'particle_tstart   ', &
-          'migrate_particles ', &
-          'migration_interval', &
-          'use_exact_restart ', &
-          'allow_cpu_reduce  ' /)
+          'nx                       ', &
+          'x_start                  ', &
+          'x_end                    ', &
+          'nprocx                   ', &
+          'npart                    ', &
+          'nsteps                   ', &
+          't_end                    ', &
+          'dt_multiplier            ', &
+          'dlb_threshold            ', &
+          'icfile                   ', &
+          'restart_snapshot         ', &
+          'neutral_background       ', &
+          'field_order              ', &
+          'stdout_frequency         ', &
+          'use_random_seed          ', &
+          'smooth_currents          ', &
+          'multiphoton              ', &
+          'bsi                      ', &
+          'particle_tstart          ', &
+          'migrate_particles        ', &
+          'migration_interval       ', &
+          'use_exact_restart        ', &
+          'allow_cpu_reduce         ', &
+          'check_stop_frequency     ' /)
 
 CONTAINS
 
@@ -73,6 +75,7 @@ CONTAINS
       use_exact_restart = .FALSE.
       allow_cpu_reduce = .TRUE.
       restart_number = 0
+      check_stop_frequency = 10
       restart_filename = ''
     ENDIF
 
@@ -222,6 +225,8 @@ CONTAINS
       use_exact_restart = as_logical(value, errcode)
     CASE(4*c_ndims+19)
       allow_cpu_reduce = as_logical(value, errcode)
+    CASE(4*c_ndims+20)
+      check_stop_frequency = as_integer(value, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
