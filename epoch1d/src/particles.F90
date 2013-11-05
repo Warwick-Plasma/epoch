@@ -136,6 +136,7 @@ CONTAINS
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
+      IF (species_list(ispecies)%immobile) CYCLE
       IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) THEN
 #ifdef PHOTONS
         IF (photon_dynamics) CALL push_photons(ispecies)

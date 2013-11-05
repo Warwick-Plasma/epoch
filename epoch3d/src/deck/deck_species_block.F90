@@ -390,6 +390,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'immobile')) THEN
+      species_list(species_id)%immobile = as_logical(value, errcode)
+      RETURN
+    ENDIF
+
     ! *************************************************************
     ! This section sets properties for tracer particles
     ! *************************************************************

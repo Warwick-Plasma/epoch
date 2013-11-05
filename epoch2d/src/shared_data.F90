@@ -532,6 +532,7 @@ MODULE shared_data
     REAL(num) :: weight
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
+    LOGICAL :: immobile
 
 #ifdef TRACER_PARTICLES
     LOGICAL :: tracer
