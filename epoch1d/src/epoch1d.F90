@@ -36,9 +36,10 @@ PROGRAM pic
 
   IMPLICIT NONE
 
-  INTEGER :: ispecies
+  INTEGER :: ispecies, ierr
   LOGICAL :: halt = .FALSE., push = .TRUE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
+  CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
   REAL(num) :: runtime
 
@@ -57,8 +58,15 @@ PROGRAM pic
   CALL register_objects ! custom.f90
 
   IF (rank .EQ. 0) THEN
-    PRINT *, 'Specify output directory'
-    READ(*,'(A)') data_dir
+    OPEN(unit=lu, status='OLD', file=TRIM(data_dir_file), iostat=ierr)
+    IF (ierr .EQ. 0) THEN
+      READ(lu,'(A)') data_dir
+      CLOSE(lu)
+      PRINT*, 'Using data directory "' // TRIM(data_dir) // '"'
+    ELSE
+      PRINT*, 'Specify output directory'
+      READ(*,'(A)') data_dir
+    ENDIF
   ENDIF
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
