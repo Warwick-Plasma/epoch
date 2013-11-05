@@ -44,7 +44,7 @@ PROGRAM pic
   CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
   CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
   CHARACTER(LEN=64) :: timestring
-  REAL(num) :: runtime
+  REAL(num) :: runtime, real_walltime_start
 
   step = 0
 #ifdef COLLISIONS_TEST
@@ -54,6 +54,7 @@ PROGRAM pic
 #endif
 
   CALL mpi_minimal_init ! mpi_routines.f90
+  real_walltime_start = MPI_WTIME()
   CALL minimal_init     ! setup.f90
   CALL setup_partlists  ! partlist.f90
   CALL get_job_id(jobid)
@@ -232,9 +233,26 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: halt, force_dump
     INTEGER :: ierr
     INTEGER, SAVE :: check_counter = 0
+    LOGICAL, SAVE :: adjust_frequency = .TRUE.
+    LOGICAL, SAVE :: check_walltime_started = .FALSE.
     LOGICAL :: buffer(2), got_stop_condition, got_stop_file
+    REAL(num) :: walltime
 
-    IF (check_stop_frequency .LE. 0) RETURN
+    IF (check_stop_frequency .LE. 0 &
+        .AND. check_walltime_frequency .LE. 0) RETURN
+
+    ! Once we've started checking the walltime, we may as well check for
+    ! stop files as well since it is the broadcast which slows things down.
+    IF (adjust_frequency) THEN
+      IF (check_walltime_frequency .LE. 0) THEN
+        adjust_frequency = .FALSE.
+      ELSE IF (time .GE. check_walltime_start) THEN
+        adjust_frequency = .FALSE.
+        check_walltime_started = .TRUE.
+        IF (check_walltime_frequency .LT. check_stop_frequency) &
+            check_stop_frequency = check_walltime_frequency
+      ENDIF
+    ENDIF
 
     got_stop_condition = .FALSE.
     force_dump = .FALSE.
@@ -244,6 +262,17 @@ CONTAINS
     check_counter = 0
 
     IF (rank .EQ. 0) THEN
+      ! First check walltime, if specified
+      IF (check_walltime_started) THEN
+        walltime = MPI_WTIME()
+        IF (walltime - real_walltime_start .GE. stop_at_walltime) THEN
+          got_stop_condition = .TRUE.
+          force_dump = .TRUE.
+          PRINT*,'Stopping because "stop_at_walltime" has been exceeded.'
+        ENDIF
+      ENDIF
+
+      ! Next check if stop file exists
       OPEN(unit=lu, status='OLD', iostat=ierr, &
           file=TRIM(data_dir) // '/' // TRIM(stop_file))
       IF (ierr .EQ. 0) THEN
