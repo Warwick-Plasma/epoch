@@ -135,7 +135,7 @@ endif
 TARGET = epoch3d
 
 # Set pre-processor defines
-DEFINES =
+DEFINES := $(DEF)
 DEFINES += $(D)PER_PARTICLE_WEIGHT
 DEFINES += $(D)PARTICLE_PROBES
 DEFINES += $(D)TRACER_PARTICLES
