@@ -246,7 +246,6 @@ CONTAINS
     block_number = block_number + 1
     IF (deck_state .NE. c_ds_first .AND. block_number .GT. 0) THEN
       io_block => io_block_list(block_number)
-      io_block%dump_first = .FALSE.
       IF (io_block%rolling_restart) THEN
         io_block_done(num_vars_to_dump+15) = .TRUE.
         io_block_done(num_vars_to_dump+23) = .TRUE.
@@ -724,7 +723,7 @@ CONTAINS
     io_block%restart = .FALSE.
     io_block%dump = .FALSE.
     io_block%any_average = .FALSE.
-    io_block%dump_first = .FALSE.
+    io_block%dump_first = .TRUE.
     io_block%dump_last = .TRUE.
     io_block%dump_source_code = .FALSE.
     io_block%dump_input_decks = .FALSE.
