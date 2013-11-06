@@ -3,6 +3,7 @@ MODULE ionise
   USE numerics
   USE random_generator
   USE partlist
+  USE mpi
 
   IMPLICIT NONE
 
