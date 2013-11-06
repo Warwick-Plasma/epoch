@@ -76,7 +76,7 @@ CONTAINS
       ENDIF
       ! If the boundary has already been set, simply ignore further calls to it
       IF (boundary_set) RETURN
-      boundary = as_boundary(value, errcode)
+      boundary = as_boundary_print(value, element, errcode)
       boundary_set = .TRUE.
       CALL init_laser(boundary, working_laser)
       RETURN
@@ -97,20 +97,20 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'amp')) THEN
-      working_laser%amp = as_real(value, errcode)
+      working_laser%amp = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     ! SI (W/m^2)
     IF (str_cmp(element, 'irradiance') .OR. str_cmp(element, 'intensity')) THEN
-      working_laser%amp = SQRT(as_real(value, errcode) &
+      working_laser%amp = SQRT(as_real_print(value, element, errcode) &
           / (c*epsilon0/2.0_num))
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'irradiance_w_cm2') &
         .OR. str_cmp(element, 'intensity_w_cm2')) THEN
-      working_laser%amp = SQRT(as_real(value, errcode) &
+      working_laser%amp = SQRT(as_real_print(value, element, errcode) &
           / (c*epsilon0/2.0_num)) * 100_num
       RETURN
     ENDIF
@@ -124,17 +124,19 @@ CONTAINS
           WRITE(io,*) 'Please use the element name "omega" instead.'
         ENDDO
       ENDIF
-      working_laser%omega = as_real(value, errcode)
+      working_laser%omega = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'frequency')) THEN
-      working_laser%omega = 2.0_num * pi * as_real(value, errcode)
+      working_laser%omega = &
+          2.0_num * pi * as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'lambda')) THEN
-      working_laser%omega = 2.0_num * pi * c / as_real(value, errcode)
+      working_laser%omega = &
+          2.0_num * pi * c / as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -165,12 +167,12 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 't_start')) THEN
-      working_laser%t_start = as_time(value, errcode)
+      working_laser%t_start = as_time_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 't_end')) THEN
-      working_laser%t_end = as_time(value, errcode)
+      working_laser%t_end = as_time_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -184,18 +186,19 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'pol_angle')) THEN
-      working_laser%pol_angle = as_real(value, errcode)
+      working_laser%pol_angle = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'pol')) THEN
       ! Convert from degrees to radians
-      working_laser%pol_angle = pi * as_real(value, errcode) / 180.0_num
+      working_laser%pol_angle = &
+          pi * as_real_print(value, element, errcode) / 180.0_num
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'id')) THEN
-      working_laser%id = as_integer(value, errcode)
+      working_laser%id = as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -301,5 +304,21 @@ CONTAINS
     as_time = as_real(value, err)
 
   END FUNCTION as_time
+
+
+
+  FUNCTION as_time_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: res
+
+    res = as_time(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+
+    WRITE(du,'(A,G18.11)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_time_print
 
 END MODULE deck_laser_block

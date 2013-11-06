@@ -109,6 +109,11 @@ CONTAINS
     stagger(c_dir_y,c_stagger_by) = .FALSE.
     stagger(c_dir_z,c_stagger_bz) = .FALSE.
 
+    ALLOCATE(x(1), y(1), z(1))
+    x = 0.0_num
+    y = 0.0_num
+    z = 0.0_num
+
   END SUBROUTINE minimal_init
 
 

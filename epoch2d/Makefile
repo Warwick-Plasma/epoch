@@ -337,7 +337,7 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   strings.o version_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o
 deck_collision_block.o: deck_collision_block.f90 collisions.o strings_advanced.o
-deck_constant_block.o: deck_constant_block.f90 shunt.o
+deck_constant_block.o: deck_constant_block.f90 evaluate.o shunt.o
 deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o

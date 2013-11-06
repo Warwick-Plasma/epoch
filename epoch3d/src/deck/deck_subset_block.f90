@@ -118,152 +118,153 @@ CONTAINS
     IF (deck_state .EQ. c_ds_first) RETURN
 
     IF (str_cmp(element, 'random_fraction')) THEN
-      subset_list(subset_id)%random_fraction = as_real(value, errcode)
+      subset_list(subset_id)%random_fraction = &
+          as_real_print(value, element, errcode)
       subset_list(subset_id)%use_random = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'gamma_min')) THEN
-      subset_list(subset_id)%gamma_min = as_real(value, errcode)
+      subset_list(subset_id)%gamma_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_gamma_min = .TRUE.
       subset_list(subset_id)%use_gamma = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'gamma_max')) THEN
-      subset_list(subset_id)%gamma_max = as_real(value, errcode)
+      subset_list(subset_id)%gamma_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_gamma_max = .TRUE.
       subset_list(subset_id)%use_gamma = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'x_min')) THEN
-      subset_list(subset_id)%x_min = as_real(value, errcode)
+      subset_list(subset_id)%x_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_x_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'x_max')) THEN
-      subset_list(subset_id)%x_max = as_real(value, errcode)
+      subset_list(subset_id)%x_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_x_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'y_min')) THEN
-      subset_list(subset_id)%y_min = as_real(value, errcode)
+      subset_list(subset_id)%y_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_y_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'y_max')) THEN
-      subset_list(subset_id)%y_max = as_real(value, errcode)
+      subset_list(subset_id)%y_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_y_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'z_min')) THEN
-      subset_list(subset_id)%z_min = as_real(value, errcode)
+      subset_list(subset_id)%z_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_z_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'z_max')) THEN
-      subset_list(subset_id)%z_max = as_real(value, errcode)
+      subset_list(subset_id)%z_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_z_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'px_min')) THEN
-      subset_list(subset_id)%px_min = as_real(value, errcode)
+      subset_list(subset_id)%px_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_px_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'px_max')) THEN
-      subset_list(subset_id)%px_max = as_real(value, errcode)
+      subset_list(subset_id)%px_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_px_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'py_min')) THEN
-      subset_list(subset_id)%py_min = as_real(value, errcode)
+      subset_list(subset_id)%py_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_py_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'py_max')) THEN
-      subset_list(subset_id)%py_max = as_real(value, errcode)
+      subset_list(subset_id)%py_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_py_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'pz_min')) THEN
-      subset_list(subset_id)%pz_min = as_real(value, errcode)
+      subset_list(subset_id)%pz_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_pz_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'pz_max')) THEN
-      subset_list(subset_id)%pz_max = as_real(value, errcode)
+      subset_list(subset_id)%pz_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_pz_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'weight_min')) THEN
-      subset_list(subset_id)%weight_min = as_real(value, errcode)
+      subset_list(subset_id)%weight_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_weight_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'weight_max')) THEN
-      subset_list(subset_id)%weight_max = as_real(value, errcode)
+      subset_list(subset_id)%weight_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_weight_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'charge_min')) THEN
-      subset_list(subset_id)%charge_min = as_real(value, errcode)
+      subset_list(subset_id)%charge_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_charge_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'charge_max')) THEN
-      subset_list(subset_id)%charge_max = as_real(value, errcode)
+      subset_list(subset_id)%charge_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_charge_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'mass_min')) THEN
-      subset_list(subset_id)%mass_min = as_real(value, errcode)
+      subset_list(subset_id)%mass_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_mass_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'mass_max')) THEN
-      subset_list(subset_id)%mass_max = as_real(value, errcode)
+      subset_list(subset_id)%mass_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_mass_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'id_min')) THEN
-      subset_list(subset_id)%id_min = as_integer(value, errcode)
+      subset_list(subset_id)%id_min = as_integer_print(value, element, errcode)
       subset_list(subset_id)%use_id_min = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'id_max')) THEN
-      subset_list(subset_id)%id_max = as_integer(value, errcode)
+      subset_list(subset_id)%id_max = as_integer_print(value, element, errcode)
       subset_list(subset_id)%use_id_max = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'dumpmask')) THEN
-      subset_list(subset_id)%mask = as_integer(value, errcode)
+      subset_list(subset_id)%mask = as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'include_species')) THEN
-      ispecies = as_integer(value, errcode)
+      ispecies = as_integer_print(value, element, errcode)
       IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           subset_list(subset_id)%use_species(ispecies) = .TRUE.

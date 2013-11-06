@@ -268,4 +268,52 @@ CONTAINS
 
   END FUNCTION as_domain
 
+
+
+  FUNCTION as_bc_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: res
+
+    res = as_bc(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+
+    WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_bc_print
+
+
+
+  FUNCTION as_boundary_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: res
+
+    res = as_boundary(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+
+    WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_boundary_print
+
+
+
+  FUNCTION as_logical_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    LOGICAL :: res
+
+    res = as_logical(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+
+    WRITE(du,'(A,L1)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_logical_print
+
 END MODULE strings

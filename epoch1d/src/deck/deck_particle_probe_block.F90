@@ -109,24 +109,24 @@ CONTAINS
     ! pass through a given region of real space (defined by a point on a plane
     ! and the normal to that plane.
     IF (str_cmp(element, 'dumpmask') .OR. str_cmp(element, 'dump')) THEN
-      working_probe%dumpmask = as_integer(value, errcode)
+      working_probe%dumpmask = as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'point') .OR. str_cmp(element, 'probe_point')) THEN
       got_point = .TRUE.
-      working_probe%point = as_real(value, errcode)
+      working_probe%point = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'normal')) THEN
       got_normal = .TRUE.
-      working_probe%normal = as_real(value, errcode)
+      working_probe%normal = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'left_to_right')) THEN
-      got_normal = as_logical(value, errcode)
+      got_normal = as_logical_print(value, element, errcode)
       IF (got_normal) THEN
         working_probe%normal = 1.0_num
       ELSE
@@ -138,7 +138,7 @@ CONTAINS
 
     IF (str_cmp(element, 'include_species') &
         .OR. str_cmp(element, 'probe_species')) THEN
-      ispecies = as_integer(value, errcode)
+      ispecies = as_integer_print(value, element, errcode)
       IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_probe%use_species(ispecies) = .TRUE.
@@ -158,12 +158,12 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'ek_min')) THEN
-      working_probe%ek_min = as_real(value, errcode)
+      working_probe%ek_min = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'ek_max')) THEN
-      working_probe%ek_max = as_real(value, errcode)
+      working_probe%ek_max = as_real_print(value, element, errcode)
       IF (working_probe%ek_max .LT. 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
     ENDIF

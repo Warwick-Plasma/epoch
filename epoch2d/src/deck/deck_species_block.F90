@@ -285,15 +285,15 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'mass')) THEN
-      species_mass = as_real(value, errcode) * m0
+      species_mass = as_real_print(value, element, errcode) * m0
     ENDIF
 
     IF (str_cmp(element, 'charge')) THEN
-      species_charge = as_real(value, errcode) * q0
+      species_charge = as_real_print(value, element, errcode) * q0
     ENDIF
 
     IF (str_cmp(element, 'dump')) THEN
-      dump = as_logical(value, errcode)
+      dump = as_logical_print(value, element, errcode)
       IF (dump) THEN
         species_dumpmask = c_io_always
       ELSE
@@ -302,7 +302,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'dumpmask')) THEN
-      species_dumpmask = as_integer(value, errcode)
+      species_dumpmask = as_integer_print(value, element, errcode)
     ENDIF
 
     IF (deck_state .EQ. c_ds_first) RETURN
@@ -370,7 +370,7 @@ CONTAINS
     IF (str_cmp(element, 'frac') .OR. str_cmp(element, 'fraction')) THEN
       IF (npart_global .GE. 0) THEN
         species_list(species_id)%count = &
-            INT(as_real(value, errcode) * npart_global)
+            INT(as_real_print(value, element, errcode) * npart_global)
       ELSE
         species_list(species_id)%count = 0
       ENDIF
@@ -378,12 +378,14 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'npart')) THEN
-      species_list(species_id)%count = as_long_integer(value, errcode)
+      species_list(species_id)%count = &
+          as_long_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'npart_per_cell')) THEN
-      species_list(species_id)%npart_per_cell = as_real(value, errcode)
+      species_list(species_id)%npart_per_cell = &
+          as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -393,7 +395,8 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'immobile')) THEN
-      species_list(species_id)%immobile = as_logical(value, errcode)
+      species_list(species_id)%immobile = &
+          as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -402,9 +405,10 @@ CONTAINS
     ! *************************************************************
     IF (str_cmp(element, 'tracer')) THEN
 #ifdef TRACER_PARTICLES
-      species_list(species_id)%tracer = as_logical(value, errcode)
+      species_list(species_id)%tracer = &
+          as_logical_print(value, element, errcode)
 #else
-      IF (as_logical(value, errcode)) THEN
+      IF (as_logical_print(value, element, errcode)) THEN
         errcode = c_err_pp_options_wrong
         extended_error_string = '-DTRACER_PARTICLES'
       ENDIF
@@ -416,12 +420,13 @@ CONTAINS
     ! This section sets properties for particle splitting
     ! *************************************************************
     IF (str_cmp(element, 'split')) THEN
-      species_list(species_id)%split = as_logical(value, errcode)
+      species_list(species_id)%split = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'npart_max')) THEN
-      species_list(species_id)%npart_max = as_long_integer(value, errcode)
+      species_list(species_id)%npart_max = &
+          as_long_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -431,62 +436,63 @@ CONTAINS
 
     IF (str_cmp(element, 'migrate')) THEN
       species_list(species_id)%migrate%this_species = &
-          as_logical(value, errcode)
+          as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'promote_to')) THEN
       species_list(species_id)%migrate%promote_to_species = &
-          as_integer(value, errcode)
+          as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'demote_to')) THEN
       species_list(species_id)%migrate%demote_to_species = &
-          as_integer(value, errcode)
+          as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'promote_multiplier')) THEN
       species_list(species_id)%migrate%promotion_energy_factor = &
-          as_real(value, errcode)
+          as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'demote_multiplier')) THEN
       species_list(species_id)%migrate%demotion_energy_factor = &
-          as_real(value, errcode)
+          as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'promote_density')) THEN
       species_list(species_id)%migrate%promotion_density = &
-          as_real(value, errcode)
+          as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'demote_density')) THEN
       species_list(species_id)%migrate%demotion_density = &
-          as_real(value, errcode)
+          as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     ! Initial conditions
 
     IF (str_cmp(element, 'offset')) THEN
-      offset = as_long_integer_simple(value, errcode)
+      offset = as_long_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho')) THEN
-      dmin = as_real(value, errcode)
+      dmin = as_real_print(value, element, errcode)
       IF (dmin .LE. 0.0_num) dmin = EPSILON(1.0_num)
       initial_conditions(species_id)%density_min = dmin
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho')) THEN
-      initial_conditions(species_id)%density_max = as_real(value, errcode)
+      initial_conditions(species_id)%density_max = &
+          as_real_print(value, element, errcode)
       RETURN
     ENDIF
 

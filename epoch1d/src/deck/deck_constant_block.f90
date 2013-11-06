@@ -1,6 +1,7 @@
 MODULE deck_constant_block
 
   USE shunt
+  USE evaluator
 
   IMPLICIT NONE
   SAVE
@@ -19,6 +20,26 @@ CONTAINS
 
 
   SUBROUTINE constant_deck_finalise
+
+    INTEGER :: i, errcode
+    REAL(num) :: dc
+
+    IF (.NOT.print_deck_constants) RETURN
+    IF (rank .NE. 0) RETURN
+
+    IF (deck_state .EQ. c_ds_first) THEN
+      WRITE(du,*) "Constant block values after first pass:"
+    ELSE
+      WRITE(du,*) "Constant block values after second pass:"
+    ENDIF
+    WRITE(du,*)
+
+    DO i = 1, n_deck_constants
+      errcode = 0
+      dc = evaluate_at_point(deck_constant_list(i)%execution_stream, &
+          1, errcode)
+      WRITE(du,'("  ", A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
+    ENDDO
 
   END SUBROUTINE constant_deck_finalise
 

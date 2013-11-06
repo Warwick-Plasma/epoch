@@ -195,6 +195,7 @@ CONTAINS
 
     subtype_field = 0
 
+    DEALLOCATE(x)
     ALLOCATE(x(1-ng:nx+ng))
     ALLOCATE(x_global(1-ng:nx_global+ng))
     ALLOCATE(xb_global(nx_global+1))

@@ -84,7 +84,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'use_collisions')) THEN
-      use_collisions = as_logical(value, errcode)
+      use_collisions = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -93,13 +93,13 @@ CONTAINS
         coulomb_log_auto = .TRUE.
       ELSE
         coulomb_log_auto = .FALSE.
-        coulomb_log = as_real(value, errcode)
+        coulomb_log = as_real_print(value, element, errcode)
       ENDIF
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'collisional_ionisation')) THEN
-      use_collisional_ionisation = as_logical(value, errcode)
+      use_collisional_ionisation = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 

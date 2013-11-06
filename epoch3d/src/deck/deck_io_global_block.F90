@@ -88,56 +88,56 @@ CONTAINS
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, 'force_first_to_be_restartable')) THEN
-      force_first_to_be_restartable = as_logical(value, errcode)
+      force_first_to_be_restartable = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'force_final_to_be_restartable') &
         .OR. str_cmp(element, 'force_last_to_be_restartable')) THEN
-      force_final_to_be_restartable = as_logical(value, errcode)
+      force_final_to_be_restartable = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'use_offset_grid')) THEN
-      use_offset_grid = as_logical(value, errcode)
+      use_offset_grid = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'time_start')) THEN
-      time_start = as_real(value, errcode)
+      time_start = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'time_stop')) THEN
-      time_stop = as_real(value, errcode)
+      time_stop = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'nstep_start')) THEN
-      nstep_start = as_integer(value, errcode)
+      nstep_start = as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'nstep_stop')) THEN
-      nstep_stop = as_integer(value, errcode)
+      nstep_stop = as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'dump_first')) THEN
       got_dump_first = .TRUE.
-      dump_first = as_logical(value, errcode)
+      dump_first = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'dump_last') &
         .OR. str_cmp(element, 'dump_final')) THEN
       got_dump_last = .TRUE.
-      dump_last = as_logical(value, errcode)
+      dump_last = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'sdf_buffer_size')) THEN
-      sdf_buffer_size = as_long_integer(value, errcode)
+      sdf_buffer_size = as_long_integer_print(value, element, errcode)
       RETURN
     ENDIF
 

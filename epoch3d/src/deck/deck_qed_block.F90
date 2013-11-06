@@ -86,34 +86,34 @@ CONTAINS
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, 'use_qed') .OR. str_cmp(element, 'qed')) THEN
-      use_qed = as_logical(value, errcode)
+      use_qed = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
 #ifdef PHOTONS
     IF (str_cmp(element, 'qed_start_time')) THEN
-      qed_start_time = as_real(value, errcode)
+      qed_start_time = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'produce_photons')) THEN
-      produce_photons = as_logical(value, errcode)
+      produce_photons = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'use_radiation_reaction')) THEN
-      use_radiation_reaction = as_logical(value, errcode)
+      use_radiation_reaction = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'photon_energy_min') &
         .OR. str_cmp(element, 'min_photon_energy')) THEN
-      photon_energy_min = as_real(value, errcode)
+      photon_energy_min = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'produce_pairs')) THEN
-      produce_pairs = as_logical(value, errcode)
+      produce_pairs = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -123,7 +123,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'photon_dynamics')) THEN
-      photon_dynamics = as_logical(value, errcode)
+      photon_dynamics = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 

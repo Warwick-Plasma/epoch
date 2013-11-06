@@ -105,33 +105,33 @@ CONTAINS
 
     SELECT CASE (elementselected)
     CASE(1)
-      itmp = as_bc(value, errcode)
+      itmp = as_bc_print(value, element, errcode)
       bc_field(c_bd_x_min) = itmp
       bc_particle(c_bd_x_min) = itmp
     CASE(2)
-      itmp = as_bc(value, errcode)
+      itmp = as_bc_print(value, element, errcode)
       bc_field(c_bd_x_max) = itmp
       bc_particle(c_bd_x_max) = itmp
     CASE(nbase+1)
-      bc_field(c_bd_x_min) = as_bc(value, errcode)
+      bc_field(c_bd_x_min) = as_bc_print(value, element, errcode)
       boundary_block_done(1)  = .TRUE.
     CASE(nbase+2)
-      bc_field(c_bd_x_max) = as_bc(value, errcode)
+      bc_field(c_bd_x_max) = as_bc_print(value, element, errcode)
       boundary_block_done(2)  = .TRUE.
     CASE(2*nbase+1)
-      bc_particle(c_bd_x_min) = as_bc(value, errcode)
+      bc_particle(c_bd_x_min) = as_bc_print(value, element, errcode)
       boundary_block_done(1)  = .TRUE.
     CASE(2*nbase+2)
-      bc_particle(c_bd_x_max) = as_bc(value, errcode)
+      bc_particle(c_bd_x_max) = as_bc_print(value, element, errcode)
       boundary_block_done(2)  = .TRUE.
     CASE(3*nbase+1)
-      cpml_thickness = as_integer(value, errcode)
+      cpml_thickness = as_integer_print(value, element, errcode)
     CASE(3*nbase+2)
-      cpml_kappa_max = as_real(value, errcode)
+      cpml_kappa_max = as_real_print(value, element, errcode)
     CASE(3*nbase+3)
-      cpml_a_max = as_real(value, errcode)
+      cpml_a_max = as_real_print(value, element, errcode)
     CASE(3*nbase+4)
-      cpml_sigma_max = as_real(value, errcode)
+      cpml_sigma_max = as_real_print(value, element, errcode)
     END SELECT
 
   END FUNCTION boundary_block_handle_element

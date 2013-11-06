@@ -163,7 +163,7 @@ CONTAINS
     ! pass through a given region of real space (defined by a point on a plane
     ! and the normal to that plane.
     IF (str_cmp(element, 'dumpmask') .OR. str_cmp(element, 'dump')) THEN
-      working_probe%dumpmask = as_integer(value, errcode)
+      working_probe%dumpmask = as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -181,31 +181,31 @@ CONTAINS
 
     IF (str_cmp(element, 'x1')) THEN
       got_x = IOR(got_x,2**0)
-      working_probe%point(1) = as_real(value, errcode)
+      working_probe%point(1) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'y1')) THEN
       got_x = IOR(got_x,2**1)
-      working_probe%point(2) = as_real(value, errcode)
+      working_probe%point(2) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'x2')) THEN
       got_x = IOR(got_x,2**2)
-      point2(1) = as_real(value, errcode)
+      point2(1) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'y2')) THEN
       got_x = IOR(got_x,2**3)
-      point2(2) = as_real(value, errcode)
+      point2(2) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'include_species') &
         .OR. str_cmp(element, 'probe_species')) THEN
-      ispecies = as_integer(value, errcode)
+      ispecies = as_integer_print(value, element, errcode)
       IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_probe%use_species(ispecies) = .TRUE.
@@ -225,12 +225,12 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'ek_min')) THEN
-      working_probe%ek_min = as_real(value, errcode)
+      working_probe%ek_min = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'ek_max')) THEN
-      working_probe%ek_max = as_real(value, errcode)
+      working_probe%ek_max = as_real_print(value, element, errcode)
       IF (working_probe%ek_max .LT. 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
     ENDIF

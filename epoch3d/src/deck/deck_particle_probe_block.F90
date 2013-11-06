@@ -166,7 +166,7 @@ CONTAINS
     ! pass through a given region of real space (defined by a point on a plane
     ! and the normal to that plane.
     IF (str_cmp(element, 'dumpmask') .OR. str_cmp(element, 'dump')) THEN
-      working_probe%dumpmask = as_integer(value, errcode)
+      working_probe%dumpmask = as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -185,57 +185,57 @@ CONTAINS
     ! Top left
     IF (str_cmp(element, 'x_tl')) THEN
       got_x = IOR(got_x,2**0)
-      working_probe%point(1) = as_real(value, errcode)
+      working_probe%point(1) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'y_tl')) THEN
       got_x = IOR(got_x,2**1)
-      working_probe%point(2) = as_real(value, errcode)
+      working_probe%point(2) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'z_tl')) THEN
       got_x = IOR(got_x,2**2)
-      working_probe%point(3) = as_real(value, errcode)
+      working_probe%point(3) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     ! Bottom right
     IF (str_cmp(element, 'x_br')) THEN
       got_x = IOR(got_x,2**3)
-      point2(1) = as_real(value, errcode)
+      point2(1) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'y_br')) THEN
       got_x = IOR(got_x,2**4)
-      point2(2) = as_real(value, errcode)
+      point2(2) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'z_br')) THEN
       got_x = IOR(got_x,2**5)
-      point2(3) = as_real(value, errcode)
+      point2(3) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     ! Top right
     IF (str_cmp(element, 'x_tr')) THEN
       got_x = IOR(got_x,2**6)
-      point3(1) = as_real(value, errcode)
+      point3(1) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'y_tr')) THEN
       got_x = IOR(got_x,2**7)
-      point3(2) = as_real(value, errcode)
+      point3(2) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
     IF (str_cmp(element, 'z_tr')) THEN
       got_x = IOR(got_x,2**8)
-      point3(3) = as_real(value, errcode)
+      point3(3) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'include_species') &
         .OR. str_cmp(element, 'probe_species')) THEN
-      ispecies = as_integer(value, errcode)
+      ispecies = as_integer_print(value, element, errcode)
       IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_probe%use_species(ispecies) = .TRUE.
@@ -255,12 +255,12 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'ek_min')) THEN
-      working_probe%ek_min = as_real(value, errcode)
+      working_probe%ek_min = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'ek_max')) THEN
-      working_probe%ek_max = as_real(value, errcode)
+      working_probe%ek_max = as_real_print(value, element, errcode)
       IF (working_probe%ek_max .LT. 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
     ENDIF

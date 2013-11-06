@@ -383,31 +383,31 @@ CONTAINS
 
     SELECT CASE (elementselected-num_vars_to_dump)
     CASE(1)
-      io_block%dt_snapshot = as_real(value, errcode)
+      io_block%dt_snapshot = as_real_print(value, element, errcode)
       IF (io_block%dt_snapshot .LT. 0.0_num) io_block%dt_snapshot = 0.0_num
     CASE(2)
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
       ELSE
-        full_dump_every = as_integer(value, errcode)
+        full_dump_every = as_integer_print(value, element, errcode)
         IF (full_dump_every .EQ. 0) full_dump_every = 1
       ENDIF
     CASE(3)
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
       ELSE
-        restart_dump_every = as_integer(value, errcode)
+        restart_dump_every = as_integer_print(value, element, errcode)
         IF (restart_dump_every .EQ. 0) restart_dump_every = 1
       ENDIF
     CASE(4)
       IF (new_style_io_block) style_error = c_err_new_style_global
-      force_first_to_be_restartable = as_logical(value, errcode)
+      force_first_to_be_restartable = as_logical_print(value, element, errcode)
     CASE(5)
       IF (new_style_io_block) style_error = c_err_new_style_global
-      force_final_to_be_restartable = as_logical(value, errcode)
+      force_final_to_be_restartable = as_logical_print(value, element, errcode)
     CASE(6)
       IF (new_style_io_block) style_error = c_err_new_style_global
-      use_offset_grid = as_logical(value, errcode)
+      use_offset_grid = as_logical_print(value, element, errcode)
     CASE(7)
       IF (rank .EQ. 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -419,25 +419,25 @@ CONTAINS
       ENDIF
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     CASE(8)
-      io_block%dt_average = as_real(value, errcode)
+      io_block%dt_average = as_real_print(value, element, errcode)
     CASE(9)
-      io_block%nstep_average = as_integer(value, errcode)
+      io_block%nstep_average = as_integer_print(value, element, errcode)
     CASE(10)
-      io_block%nstep_snapshot = as_integer(value, errcode)
+      io_block%nstep_snapshot = as_integer_print(value, element, errcode)
       IF (io_block%nstep_snapshot .LT. 0) io_block%nstep_snapshot = 0
     CASE(11)
-      io_block%dump_source_code = as_logical(value, errcode)
+      io_block%dump_source_code = as_logical_print(value, element, errcode)
       got_dump_source_code = .TRUE.
     CASE(12)
-      io_block%dump_input_decks = as_logical(value, errcode)
+      io_block%dump_input_decks = as_logical_print(value, element, errcode)
       got_dump_input_decks = .TRUE.
     CASE(13)
-      io_block%dump_first = as_logical(value, errcode)
+      io_block%dump_first = as_logical_print(value, element, errcode)
     CASE(14)
-      io_block%dump_last = as_logical(value, errcode)
+      io_block%dump_last = as_logical_print(value, element, errcode)
     CASE(15)
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
-      io_block%restart = as_logical(value, errcode)
+      io_block%restart = as_logical_print(value, element, errcode)
     CASE(16)
       DO i = 1,block_number
         IF (TRIM(io_block_list(i)%name) .EQ. TRIM(value)) THEN
@@ -455,13 +455,13 @@ CONTAINS
       io_block%name = value
       got_name = .TRUE.
     CASE(17)
-      io_block%time_start = as_real(value, errcode)
+      io_block%time_start = as_real_print(value, element, errcode)
     CASE(18)
-      io_block%time_stop = as_real(value, errcode)
+      io_block%time_stop = as_real_print(value, element, errcode)
     CASE(19)
-      io_block%nstep_start = as_integer(value, errcode)
+      io_block%nstep_start = as_integer_print(value, element, errcode)
     CASE(20)
-      io_block%nstep_stop = as_integer(value, errcode)
+      io_block%nstep_stop = as_integer_print(value, element, errcode)
     CASE(21)
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       CALL get_allocated_array(value, io_block%dump_at_nsteps, errcode)
@@ -469,7 +469,7 @@ CONTAINS
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       CALL get_allocated_array(value, io_block%dump_at_times, errcode)
     CASE(23)
-      io_block%dump_cycle = as_integer(value, errcode)
+      io_block%dump_cycle = as_integer_print(value, element, errcode)
     CASE(24)
       found = .FALSE.
       DO i = 1,nfile_prefixes
@@ -485,11 +485,12 @@ CONTAINS
         io_block%prefix_index = nfile_prefixes
       ENDIF
     CASE(26)
-      io_block%dump_cycle_first_index = as_integer(value, errcode)
+      io_block%dump_cycle_first_index = &
+          as_integer_print(value, element, errcode)
     CASE(27)
       filesystem = TRIM(value) // ':'
     CASE(28)
-      io_block%disabled = as_logical(value, errcode)
+      io_block%disabled = as_logical_print(value, element, errcode)
     END SELECT
 
     IF (style_error .EQ. c_err_old_style_ignore) THEN

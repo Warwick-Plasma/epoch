@@ -258,4 +258,52 @@ CONTAINS
 
   END SUBROUTINE evaluate_string_in_space
 
+
+
+  FUNCTION as_integer_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: res
+
+    res = as_integer(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+
+    WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_integer_print
+
+
+
+  FUNCTION as_long_integer_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER(i8) :: res
+
+    res = as_long_integer(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+
+    WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_long_integer_print
+
+
+
+  FUNCTION as_real_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: res
+
+    res = as_real(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+
+    WRITE(du,'(A,G18.11)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_real_print
+
 END MODULE strings_advanced

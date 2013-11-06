@@ -143,7 +143,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'ndims')) THEN
-      work = as_integer(value, errcode)
+      work = as_integer_print(value, element, errcode)
       IF (work .GE. 1 .AND. work .LE. 3) THEN
         working_block%ndims = work
       ELSE
@@ -160,7 +160,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'dumpmask')) THEN
-      working_block%dumpmask = as_integer(value, errcode)
+      working_block%dumpmask = as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -207,7 +207,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'include_species')) THEN
-      ispecies = as_integer(value, errcode)
+      ispecies = as_integer_print(value, element, errcode)
       IF (errcode .EQ. c_err_none) THEN
         IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
           working_block%use_species(ispecies) = .TRUE.
@@ -235,7 +235,8 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(part1, 'direction')) THEN
-      working_block%directions(part2) = as_integer(value, errcode)
+      working_block%directions(part2) = &
+          as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -252,7 +253,8 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(part1, 'resolution')) THEN
-      working_block%resolution(part2) = as_integer(value, errcode)
+      working_block%resolution(part2) = &
+          as_integer_print(value, element, errcode)
       RETURN
     ENDIF
 

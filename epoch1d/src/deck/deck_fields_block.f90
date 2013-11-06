@@ -54,7 +54,7 @@ CONTAINS
     IF (element .EQ. blank .OR. value .EQ. blank) RETURN
 
     IF (str_cmp(element, 'offset')) THEN
-      offset = as_long_integer_simple(value, errcode)
+      offset = as_long_integer_print(value, element, errcode)
       RETURN
     ENDIF
 

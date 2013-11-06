@@ -11,7 +11,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 26 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 27 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   LOGICAL :: got_check_walltime
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -45,7 +45,8 @@ MODULE deck_control_block
           'check_walltime_frequency ', &
           'stop_at_walltime         ', &
           'stop_at_walltime_file    ', &
-          'simplify_deck            ' /)
+          'simplify_deck            ', &
+          'print_constants          ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -77,7 +78,8 @@ MODULE deck_control_block
           'check_walltime_frequency ', &
           'stop_at_walltime         ', &
           'stop_at_walltime_file    ', &
-          'simplify_deck            ' /)
+          'simplify_deck            ', &
+          'print_constants          ' /)
 
 CONTAINS
 
@@ -89,6 +91,7 @@ CONTAINS
       allow_cpu_reduce = .TRUE.
       got_check_walltime = .FALSE.
       simplify_deck = .TRUE.
+      print_deck_constants = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       check_walltime_start = 0.0_num
@@ -186,23 +189,23 @@ CONTAINS
 
     SELECT CASE (elementselected)
     CASE(1)
-      nx_global = as_integer(value, errcode)
+      nx_global = as_integer_print(value, element, errcode)
     CASE(c_ndims+1)
-      x_min = as_real(value, errcode)
+      x_min = as_real_print(value, element, errcode)
     CASE(c_ndims+2)
-      x_max = as_real(value, errcode)
+      x_max = as_real_print(value, element, errcode)
     CASE(3*c_ndims+1)
-      nprocx = as_integer(value, errcode)
+      nprocx = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+1)
-      npart_global = as_long_integer(value, errcode)
+      npart_global = as_long_integer_print(value, element, errcode)
     CASE(4*c_ndims+2)
-      nsteps = as_integer(value, errcode)
+      nsteps = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+3)
-      t_end = as_real(value, errcode)
+      t_end = as_real_print(value, element, errcode)
     CASE(4*c_ndims+4)
-      dt_multiplier = as_real(value, errcode)
+      dt_multiplier = as_real_print(value, element, errcode)
     CASE(4*c_ndims+5)
-      dlb_threshold = as_real(value, errcode)
+      dlb_threshold = as_real_print(value, element, errcode)
       use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank .EQ. 0) THEN
@@ -225,15 +228,15 @@ CONTAINS
         ENDIF
       ENDDO
       IF (isnum) THEN
-        restart_number = as_integer(value, errcode)
+        restart_number = as_integer_print(value, element, errcode)
       ELSE
         restart_filename = TRIM(str_tmp)
       ENDIF
       ic_from_restart = .TRUE.
     CASE(4*c_ndims+8)
-      neutral_background = as_logical(value, errcode)
+      neutral_background = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+9)
-      field_order = as_integer(value, errcode)
+      field_order = as_integer_print(value, element, errcode)
       IF (field_order .NE. 2 .AND. field_order .NE. 4 &
           .AND. field_order .NE. 6) THEN
         errcode = c_err_bad_value
@@ -241,37 +244,37 @@ CONTAINS
         CALL set_field_order(field_order)
       ENDIF
     CASE(4*c_ndims+10)
-      stdout_frequency = as_integer(value, errcode)
+      stdout_frequency = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+11)
-      use_random_seed = as_logical(value, errcode)
+      use_random_seed = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+12)
-      smooth_currents = as_logical(value, errcode)
+      smooth_currents = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+13)
-      use_field_ionisation = as_logical(value, errcode)
+      use_field_ionisation = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+14)
-      use_multiphoton = as_logical(value, errcode)
+      use_multiphoton = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+15)
-      use_bsi = as_logical(value, errcode)
+      use_bsi = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+16)
-      particle_push_start_time = as_real(value, errcode)
+      particle_push_start_time = as_real_print(value, element, errcode)
     CASE(4*c_ndims+17)
-      use_particle_migration = as_logical(value, errcode)
+      use_particle_migration = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+18)
-      particle_migration_interval = as_integer(value, errcode)
+      particle_migration_interval = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+19)
-      use_exact_restart = as_logical(value, errcode)
+      use_exact_restart = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+20)
-      allow_cpu_reduce = as_logical(value, errcode)
+      allow_cpu_reduce = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+21)
-      check_stop_frequency = as_integer(value, errcode)
+      check_stop_frequency = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+22)
-      check_walltime_start = as_real(value, errcode)
+      check_walltime_start = as_real_print(value, element, errcode)
       got_check_walltime = .TRUE.
     CASE(4*c_ndims+23)
-      check_walltime_frequency = as_integer(value, errcode)
+      check_walltime_frequency = as_integer_print(value, element, errcode)
       got_check_walltime = .TRUE.
     CASE(4*c_ndims+24)
-      stop_at_walltime = as_real(value, errcode)
+      stop_at_walltime = as_real_print(value, element, errcode)
     CASE(4*c_ndims+25)
       IF (rank .EQ. 0) THEN
         OPEN(unit=lu, status='OLD', iostat=ierr, &
@@ -283,7 +286,9 @@ CONTAINS
       ENDIF
       CALL MPI_BCAST(stop_at_walltime, 1, mpireal, 0, comm, errcode)
     CASE(4*c_ndims+26)
-      simplify_deck = as_logical(value, errcode)
+      simplify_deck = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+27)
+      print_deck_constants = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
