@@ -813,10 +813,10 @@ CONTAINS
       CALL push_to_stack(stack, block)
       CALL load_block(element, block)
       CALL push_to_stack(stack, block)
-      IF (ABS(mult - 1.0_num) .GE. c_tiny) array = mult * array
+      IF (ABS(mult - 1.0_num) .GT. c_tiny) array = mult * array
     ELSE
       CALL tokenize(value, stack, errcode)
-      IF (ABS(mult - 1.0_num) .GE. c_tiny) &
+      IF (ABS(mult - 1.0_num) .GT. c_tiny) &
           CALL tokenize(mult_string, stack, errcode)
 
       ! Sanity check

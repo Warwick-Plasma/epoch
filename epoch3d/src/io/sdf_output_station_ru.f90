@@ -58,7 +58,7 @@ CONTAINS
 
       b%nvariables = 0
       IF (b%step_increment .NE. 1) b%nvariables = b%nvariables + 1
-      IF (ABS(b%time_increment - 1.0_r8) .LT. c_tiny) &
+      IF (ABS(b%time_increment - 1.0_r8) .GT. c_tiny) &
           b%nvariables = b%nvariables + 1
       DO i = 1,b%nstations
         CALL safe_copy_id(h, station_ids(i), b%station_ids(i))

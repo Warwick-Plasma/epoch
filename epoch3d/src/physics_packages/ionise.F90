@@ -44,14 +44,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_x_min)) THEN
         current_laser => laser_x_min
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -61,14 +61,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_x_max)) THEN
         current_laser => laser_x_max
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -78,14 +78,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_y_min)) THEN
         current_laser => laser_y_min
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -95,14 +95,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_y_max)) THEN
         current_laser => laser_y_max
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -112,14 +112,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_z_min)) THEN
         current_laser => laser_z_min
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -129,14 +129,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_z_max)) THEN
         current_laser => laser_z_max
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GE. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -243,7 +243,7 @@ CONTAINS
 
           ! Constant in multiphoton equations, calculated like this to trap any
           ! floating underflow
-          IF (ABS(multi_constant(i)) .GE. c_tiny) THEN
+          IF (ABS(multi_constant(i)) .GT. c_tiny) THEN
             multi_constant(i) = 4.8_num * (1.3_num * c * (atomic_time / a0) &
                 / (8.0_num * pi * omega * atomic_time))**k_photons_exponent(i) &
                 / multi_constant(i)
@@ -294,7 +294,7 @@ CONTAINS
           ! calculated to the largest machine number. Otherwise calculate the
           ! smallest electric field strength for which multiphoton can be
           ! calculated
-          IF (ABS(multi_constant(i)) .GE. c_tiny) THEN
+          IF (ABS(multi_constant(i)) .LE. c_tiny) THEN
             smallest_e_mag(i) = c_largest_number
           ELSE
             smallest_e_mag(i) = (TINY(0.0_num) &
@@ -634,8 +634,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) .GE. c_tiny .OR. ABS(j_ion(2)) .GE. c_tiny .OR. &
-              ABS(j_ion(3)) .GE. c_tiny) THEN
+          IF (ABS(j_ion(1)) .GT. c_tiny .OR. ABS(j_ion(2)) .GT. c_tiny .OR. &
+              ABS(j_ion(3)) .GT. c_tiny) THEN
             DO iz = sf_min, sf_max
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
@@ -924,8 +924,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) .GE. c_tiny .OR. ABS(j_ion(2)) .GE. c_tiny .OR. &
-              ABS(j_ion(3)) .GE. c_tiny) THEN
+          IF (ABS(j_ion(1)) .GT. c_tiny .OR. ABS(j_ion(2)) .GT. c_tiny .OR. &
+              ABS(j_ion(3)) .GT. c_tiny) THEN
             DO iz = sf_min, sf_max
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
@@ -1203,8 +1203,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) .GE. c_tiny .OR. ABS(j_ion(2)) .GE. c_tiny .OR. &
-              ABS(j_ion(3)) .GE. c_tiny) THEN
+          IF (ABS(j_ion(1)) .GT. c_tiny .OR. ABS(j_ion(2)) .GT. c_tiny .OR. &
+              ABS(j_ion(3)) .GT. c_tiny) THEN
             DO iz = sf_min, sf_max
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
@@ -1468,8 +1468,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) .GE. c_tiny .OR. ABS(j_ion(2)) .GE. c_tiny .OR. &
-              ABS(j_ion(3)) .GE. c_tiny) THEN
+          IF (ABS(j_ion(1)) .GT. c_tiny .OR. ABS(j_ion(2)) .GT. c_tiny .OR. &
+              ABS(j_ion(3)) .GT. c_tiny) THEN
             DO iz = sf_min, sf_max
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max

@@ -52,7 +52,7 @@ CONTAINS
       IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) &
           CYCLE
       ! Currently no support for collisions involving chargeless particles
-      IF (ABS(species_list(ispecies)%charge) .GE. c_tiny) &
+      IF (ABS(species_list(ispecies)%charge) .LE. c_tiny) &
           CYCLE
 
       collide_species = .FALSE.
@@ -86,7 +86,7 @@ CONTAINS
         IF (species_list(jspecies)%species_type .EQ. c_species_id_photon) &
             CYCLE
         ! Currently no support for collisions involving chargeless particles
-        IF (ABS(species_list(jspecies)%charge) .GE. c_tiny) &
+        IF (ABS(species_list(jspecies)%charge) .LE. c_tiny) &
             CYCLE
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor .LE. 0) CYCLE
@@ -516,7 +516,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: itemp, log_lambda, mu, q1, q2, jdens
     REAL(num) :: temperature_collisions
 
-    IF (itemp .GE. c_tiny) THEN
+    IF (itemp .GT. c_tiny) THEN
       temperature_collisions = ((q1 * q2)**2 * jdens * log_lambda) &
           / (3.0_num * epsilon0**2 * SQRT(mu) &
           * (2.0_num * pi * q0 * itemp)**1.5_num)
@@ -624,7 +624,7 @@ CONTAINS
     vmag = SQRT(DOT_PRODUCT(vector, vector))
     vtrans = SQRT(vector(2)**2 + vector(3)**2)
 
-    IF (vtrans .GE. c_tiny) THEN
+    IF (vtrans .GT. c_tiny) THEN
       c1 = vector / vmag
       c2 = (/ 0.0_num, vector(3), -vector(2) /)
       c2 = c2 / vtrans

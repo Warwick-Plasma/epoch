@@ -184,7 +184,7 @@ CONTAINS
       y1 = AINT(y)
       iy = FLOOR(y1)
       res = y - y1
-      IF (res .GE. c_tiny) THEN
+      IF (res .GT. c_tiny) THEN
         IF (iy .NE. (iy / 2) * 2) parity = .TRUE.
         inv = .TRUE.
         fact = -pi / SIN(pi * res)

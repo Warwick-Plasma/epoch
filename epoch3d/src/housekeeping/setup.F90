@@ -631,8 +631,8 @@ CONTAINS
     CALL set_laser_dt
 
     dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
-    IF (ABS(dt_plasma_frequency) .GE. c_tiny) dt = MIN(dt, dt_plasma_frequency)
-    IF (ABS(dt_laser) .GE. c_tiny) dt = MIN(dt, dt_laser)
+    IF (dt_plasma_frequency .GT. c_tiny) dt = MIN(dt, dt_plasma_frequency)
+    IF (dt_laser .GT. c_tiny) dt = MIN(dt, dt_laser)
     dt = dt_multiplier * dt
 
     IF (.NOT. any_average) RETURN

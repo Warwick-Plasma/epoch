@@ -188,7 +188,7 @@ CONTAINS
 
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
-      IF (ABS(ranges(1,idim) - ranges(2,idim)) .GE. c_tiny) THEN
+      IF (ABS(ranges(1,idim) - ranges(2,idim)) .LE. c_tiny) THEN
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
@@ -343,7 +343,7 @@ CONTAINS
     DO idim = 1, curdims
       ! Fix so that if distribution function is zero then it picks an arbitrary
       ! scale in that direction
-      IF (ABS(ranges(1,idim) - ranges(2,idim)) .GE. c_tiny) THEN
+      IF (ABS(ranges(1,idim) - ranges(2,idim)) .LE. c_tiny) THEN
         ranges(1,idim) = -1.0_num
         ranges(2,idim) = 1.0_num
       ENDIF
