@@ -11,7 +11,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 24 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 25 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   LOGICAL :: got_check_walltime
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
@@ -43,7 +43,8 @@ MODULE deck_control_block
           'check_walltime_start     ', &
           'check_walltime_frequency ', &
           'stop_at_walltime         ', &
-          'stop_at_walltime_file    ' /)
+          'stop_at_walltime_file    ', &
+          'simplify_deck            ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -73,7 +74,8 @@ MODULE deck_control_block
           'check_walltime_start     ', &
           'check_walltime_frequency ', &
           'stop_at_walltime         ', &
-          'stop_at_walltime_file    ' /)
+          'stop_at_walltime_file    ', &
+          'simplify_deck            ' /)
 
 CONTAINS
 
@@ -84,6 +86,7 @@ CONTAINS
       use_exact_restart = .FALSE.
       allow_cpu_reduce = .TRUE.
       got_check_walltime = .FALSE.
+      simplify_deck = .TRUE.
       restart_number = 0
       check_stop_frequency = 10
       check_walltime_start = 0.0_num
@@ -275,6 +278,8 @@ CONTAINS
         ENDIF
       ENDIF
       CALL MPI_BCAST(stop_at_walltime, 1, mpireal, 0, comm, errcode)
+    CASE(4*c_ndims+25)
+      simplify_deck = as_logical(value, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
