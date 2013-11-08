@@ -8,12 +8,13 @@ CONTAINS
 
   ! Mesh loading functions
 
-  SUBROUTINE read_point_mesh_info_ru(h, npoints, geometry)
+  SUBROUTINE read_point_mesh_info_ru(h, npoints, geometry, species_id)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT), OPTIONAL :: npoints
     INTEGER, INTENT(OUT), OPTIONAL :: geometry
-    INTEGER :: i
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: species_id
+    INTEGER :: i, clen
     TYPE(sdf_block_type), POINTER :: b
 
     ! Metadata is
@@ -24,6 +25,7 @@ CONTAINS
     ! - minval    REAL(r8), DIMENSION(ndims)
     ! - maxval    REAL(r8), DIMENSION(ndims)
     ! - npoints   INTEGER(i8)
+    ! - speciesid CHARACTER(id_length)
 
     IF (sdf_info_init(h)) RETURN
 
@@ -48,10 +50,21 @@ CONTAINS
       CALL read_entry_array_real8(h, b%extents, INT(2*b%ndims))
 
       CALL read_entry_int8(h, b%npoints)
+
+      ! species_id field added in version 1.3
+      IF (1000 * h%file_version + h%file_revision .GT. 1002) THEN
+        CALL read_entry_id(h, b%species_id)
+      ELSE
+        CALL safe_copy_id(h, '__unknown__', b%species_id)
+      ENDIF
     ENDIF
 
     IF (PRESENT(geometry)) geometry = b%geometry
     IF (PRESENT(npoints)) npoints = b%npoints
+    IF (PRESENT(species_id)) THEN
+      clen = MIN(LEN(species_id),INT(c_id_length))
+      species_id(1:clen) = b%species_id(1:clen)
+    ENDIF
 
     h%current_location = b%block_start + h%block_header_length
     b%done_info = .TRUE.
@@ -60,14 +73,15 @@ CONTAINS
 
 
 
-  SUBROUTINE read_point_mesh_info_i4_ru(h, npoints, geometry)
+  SUBROUTINE read_point_mesh_info_i4_ru(h, npoints, geometry, species_id)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i4), INTENT(OUT) :: npoints
     INTEGER, INTENT(OUT), OPTIONAL :: geometry
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: species_id
     INTEGER(i8) :: npoints8
 
-    CALL read_point_mesh_info_ru(h, npoints8, geometry)
+    CALL read_point_mesh_info_ru(h, npoints8, geometry, species_id)
     npoints = INT(npoints8,i4)
 
   END SUBROUTINE read_point_mesh_info_i4_ru
@@ -76,11 +90,11 @@ CONTAINS
 
   ! Variable loading functions
 
-  SUBROUTINE read_point_variable_info_ru(h, npoints, mesh_id, units)
+  SUBROUTINE read_point_variable_info_ru(h, npoints, mesh_id, units, species_id)
 
     TYPE(sdf_file_handle) :: h
     INTEGER(i8), INTENT(OUT), OPTIONAL :: npoints
-    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: mesh_id, units
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: mesh_id, units, species_id
     INTEGER :: clen
     TYPE(sdf_block_type), POINTER :: b
 
@@ -89,6 +103,7 @@ CONTAINS
     ! - units     CHARACTER(id_length)
     ! - meshid    CHARACTER(id_length)
     ! - npoints   INTEGER(i8)
+    ! - speciesid CHARACTER(id_length)
 
     IF (sdf_info_init(h)) RETURN
 
@@ -101,6 +116,13 @@ CONTAINS
       CALL read_entry_id(h, b%mesh_id)
 
       CALL read_entry_int8(h, b%npoints)
+
+      ! species_id field added in version 1.3
+      IF (1000 * h%file_version + h%file_revision .GT. 1002) THEN
+        CALL read_entry_id(h, b%species_id)
+      ELSE
+        CALL safe_copy_id(h, '__unknown__', b%species_id)
+      ENDIF
     ENDIF
 
     IF (PRESENT(npoints)) npoints = b%npoints
@@ -111,6 +133,10 @@ CONTAINS
     IF (PRESENT(mesh_id)) THEN
       clen = MIN(LEN(mesh_id),INT(c_id_length))
       mesh_id(1:clen) = b%mesh_id(1:clen)
+    ENDIF
+    IF (PRESENT(species_id)) THEN
+      clen = MIN(LEN(species_id),INT(c_id_length))
+      species_id(1:clen) = b%species_id(1:clen)
     ENDIF
 
     h%current_location = b%block_start + h%block_header_length

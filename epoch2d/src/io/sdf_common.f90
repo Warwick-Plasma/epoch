@@ -43,7 +43,7 @@ MODULE sdf_common
     INTEGER(i4), POINTER :: station_index(:)
     CHARACTER(LEN=8) :: const_value
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
-    CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id
+    CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id, species_id
     CHARACTER(LEN=c_long_id_length) :: long_id
     CHARACTER(LEN=c_id_length), POINTER :: station_ids(:), variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
@@ -158,7 +158,7 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_stagger_vertex = &
       c_stagger_face_x + c_stagger_face_y + c_stagger_face_z
 
-  INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 2
+  INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 3
 
   INTEGER(i4), PARAMETER :: soi4 = 4 ! Size of 4-byte integer
   INTEGER(i4), PARAMETER :: soi8 = 8 ! Size of 8-byte integer

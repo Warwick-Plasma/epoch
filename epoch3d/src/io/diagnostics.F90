@@ -1569,6 +1569,7 @@ CONTAINS
           CALL sdf_write_point_mesh(sdf_handle, &
               'grid/' // TRIM(current_species%name), &
               'Grid/Particles/' // TRIM(current_species%name), &
+              TRIM(current_species%name), &
               io_list(ispecies)%count, c_dimension_3d, &
               iterate_particles, species_offset(ispecies), convert)
         ENDIF
@@ -1592,6 +1593,7 @@ CONTAINS
         CALL sdf_write_point_mesh(sdf_handle, &
             'grid/' // TRIM(current_species%name), &
             'Grid/Particles/' // TRIM(current_species%name), &
+            TRIM(current_species%name), &
             ejected_list(ispecies)%count, c_dimension_3d, &
             iterate_particles, ejected_offset(ispecies), convert)
       ENDDO
@@ -1641,6 +1643,7 @@ CONTAINS
           CALL sdf_write_point_variable(sdf_handle, &
               lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
               'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
+              TRIM(current_species%name), &
               TRIM(units), io_list(ispecies)%count, temp_block_id, &
               iterator, species_offset(ispecies), convert)
         ENDIF
@@ -1664,6 +1667,7 @@ CONTAINS
         CALL sdf_write_point_variable(sdf_handle, &
             lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
             'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
+            TRIM(current_species%name), &
             TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
             iterator, ejected_offset(ispecies), convert)
       ENDDO
