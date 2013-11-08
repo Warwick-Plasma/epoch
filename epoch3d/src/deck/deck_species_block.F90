@@ -122,6 +122,7 @@ CONTAINS
           ! If there's only one release species use it for all ionisation levels
           IF (SIZE(stack%entries) .EQ. 1) THEN
             j = i
+            species_list(stack%entries(1)%value)%electron = .TRUE.
             DO WHILE(species_list(j)%ionise)
               species_list(j)%release_species = stack%entries(1)%value
               j = species_list(j)%ionise_to_species
@@ -132,6 +133,7 @@ CONTAINS
             j = i
             DO WHILE(species_list(j)%ionise)
               species_list(j)%release_species = stack%entries(nlevels)%value
+              species_list(stack%entries(nlevels)%value)%electron = .TRUE.
               nlevels = nlevels + 1
               j = species_list(j)%ionise_to_species
             ENDDO
@@ -139,6 +141,7 @@ CONTAINS
           ! first one only and throw an error
           ELSE
             j = i
+            species_list(stack%entries(1)%value)%electron = .TRUE.
             DO WHILE(species_list(j)%ionise)
               species_list(j)%release_species = stack%entries(1)%value
               j = species_list(j)%ionise_to_species
@@ -174,7 +177,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (use_ionisation) need_random_state = .TRUE.
+    IF (use_field_ionisation) need_random_state = .TRUE.
 
   END SUBROUTINE species_deck_finalise
 
@@ -270,7 +273,6 @@ CONTAINS
         CALL tokenize(value, stack, errcode)
         CALL evaluate_and_return_all(stack, 0, 0, 0, &
             n_secondary_species_in_block, species_ionisation_energies, errcode)
-        use_ionisation = .TRUE.
       ENDIF
       RETURN
     ENDIF

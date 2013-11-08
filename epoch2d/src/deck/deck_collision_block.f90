@@ -19,6 +19,7 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_first) THEN
       use_collisions = .FALSE.
+      use_collisional_ionisation = .FALSE.
     ELSE
       ALLOCATE(coll_pairs_touched(1:n_species, 1:n_species))
       coll_pairs_touched = .FALSE.
@@ -94,6 +95,11 @@ CONTAINS
         coulomb_log_auto = .FALSE.
         coulomb_log = as_real(value, errcode)
       ENDIF
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'collisional_ionisation')) THEN
+      use_collisional_ionisation = as_logical(value, errcode)
       RETURN
     ENDIF
 

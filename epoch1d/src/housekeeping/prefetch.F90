@@ -4,7 +4,7 @@ MODULE prefetch
 
 CONTAINS
 
-  !Uses Intel 12 prefetch call to move particle data into cache.
+  ! Uses Intel 12 prefetch call to move particle data into cache.
   SUBROUTINE prefetch_particle(p)
 
     TYPE(particle), INTENT(INOUT) :: p
