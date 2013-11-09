@@ -76,7 +76,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_ds_last = 2
 
   ! IO codes
-  INTEGER, PARAMETER :: c_io_never = 0
+  INTEGER, PARAMETER :: c_io_none = 0
   INTEGER, PARAMETER :: c_io_always = 2**0
   INTEGER, PARAMETER :: c_io_full = 2**1
   INTEGER, PARAMETER :: c_io_restartable = 2**2
@@ -87,6 +87,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_field = 2**7
   INTEGER, PARAMETER :: c_io_dump_single = 2**8
   INTEGER, PARAMETER :: c_io_average_single = 2**9
+  INTEGER, PARAMETER :: c_io_never = 2**10
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0

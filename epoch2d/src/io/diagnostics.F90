@@ -556,8 +556,8 @@ CONTAINS
     dump_source_code = .FALSE.
     dump_input_decks = .FALSE.
     print_arrays = .FALSE.
-    iomask = c_io_never
-    iodumpmask = c_io_never
+    iomask = c_io_none
+    iodumpmask = c_io_none
 
     IF (time .GE. t_end .OR. step .EQ. nsteps) THEN
       last_call = .TRUE.

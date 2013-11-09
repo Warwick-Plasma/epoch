@@ -243,18 +243,18 @@ CONTAINS
       cpml_a_max = 0.0_num
       cpml_sigma_max = 0.0_num
       DO i = 1, n_io_blocks
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_eyx) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_ezx) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_byx) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_bzx) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_exy) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_ezy) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_bxy) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_bzy) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_exz) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_eyz) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_bxz) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_byz) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_eyx) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_ezx) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_byx) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bzx) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_exy) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_ezy) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bxy) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bzy) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_exz) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_eyz) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bxz) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_byz) = c_io_never
       ENDDO
     ENDIF
 

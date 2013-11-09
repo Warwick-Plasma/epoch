@@ -263,7 +263,7 @@ CONTAINS
 
   SUBROUTINE io_block_end
 
-    INTEGER :: io, iu, ierr
+    INTEGER :: io, iu, ierr, mask
 #ifndef NO_IO
     CHARACTER(LEN=c_max_string_length) :: list_filename
 #endif
@@ -272,9 +272,9 @@ CONTAINS
 
     IF (io_block%disabled) RETURN
 
-    IF (io_block%dumpmask(c_dump_ejected_particles) .NE. c_io_never) THEN
-      track_ejected_particles = .TRUE.
-    ENDIF
+    mask = io_block%dumpmask(c_dump_ejected_particles)
+    IF (mask .NE. c_io_none .AND. IAND(mask,c_io_never) .EQ. 0) &
+        track_ejected_particles = .TRUE.
 
     IF (.NOT. got_name) THEN
       IF (new_style_io_block) THEN
@@ -552,7 +552,8 @@ CONTAINS
       ! If setting dumpmask for features which haven't been compiled
       ! in then issue a warning
 #ifndef PARTICLE_PROBES
-      IF (mask_element .EQ. c_dump_probes .AND. mask .NE. c_io_never) THEN
+      IF (mask_element .EQ. c_dump_probes &
+          .AND. mask .NE. c_io_none .AND. IAND(mask,c_io_never) .NE. 0) THEN
         errcode = c_err_pp_options_wrong
         extended_error_string = '-DPARTICLE_PROBES'
         mask = c_io_never
@@ -563,7 +564,8 @@ CONTAINS
 #define PARTICLE_ID
 #endif
 #ifndef PARTICLE_ID
-      IF (mask_element .EQ. c_dump_part_id .AND. mask .NE. c_io_never) THEN
+      IF (mask_element .EQ. c_dump_part_id &
+          .AND. mask .NE. c_io_none .AND. IAND(mask,c_io_never) .NE. 0) THEN
         errcode = c_err_pp_options_wrong
         extended_error_string = '-DPARTICLE_ID'
         mask = c_io_never
@@ -732,7 +734,7 @@ CONTAINS
     io_block%dump_last = .TRUE.
     io_block%dump_source_code = .FALSE.
     io_block%dump_input_decks = .FALSE.
-    io_block%dumpmask = 0
+    io_block%dumpmask = c_io_none
     io_block%time_start = -1.0_num
     io_block%time_stop  = HUGE(1.0_num)
     io_block%nstep_start = -1
