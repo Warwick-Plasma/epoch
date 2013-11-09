@@ -134,9 +134,17 @@ PROGRAM pic
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
   IF (use_field_ionisation) CALL initialise_ionisation
 
+  CALL timer_init
+  IF (timer_collect) CALL timer_start(c_timer_step)
+
   DO
     IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
         .OR. (time .GE. t_end) .OR. halt) EXIT
+    IF (timer_collect) THEN
+      CALL timer_stop(c_timer_step)
+      CALL timer_reset
+      timer_first(c_timer_step) = timer_walltime
+    ENDIF
     push = (time .GE. particle_push_start_time)
 #ifdef PHOTONS
     IF (push .AND. use_qed .AND. time .GT. qed_start_time) THEN

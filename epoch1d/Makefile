@@ -247,8 +247,8 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   sdf_output_station_r4.f90 sdf_output_station_r8.f90 \
   sdf_output_station_ru.f90 sdf_output_util.f90 setup.F90 shape_functions.F90 \
   shared_data.F90 shunt.F90 simple_io.f90 split_particle.F90 stack.f90 \
-  strings.f90 strings_advanced.f90 tokenizer_blocks.f90 utilities.f90 \
-  version_data.F90 welcome.F90 window.F90
+  strings.f90 strings_advanced.f90 timer.f90 tokenizer_blocks.f90 \
+  utilities.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -320,7 +320,8 @@ $(OBJDIR):
 
 # All the dependencies
 
-balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o
+balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o \
+  timer.o
 boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
   partlist.o
 calc_df.o: calc_df.F90 boundary.o shared_data.o
@@ -352,8 +353,8 @@ deck_species_block.o: deck_species_block.F90 partlist.o setup.o simple_io.o \
 deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
-  random_generator.o sdf.o setup.o shared_data.o strings.o version_data.o \
-  window.o $(ENCODED_SOURCE)
+  random_generator.o sdf.o setup.o shared_data.o strings.o timer.o \
+  version_data.o window.o $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o
 epoch1d.o: epoch1d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
   helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
@@ -430,7 +431,7 @@ sdf_output_station_ru.o: sdf_output_station_ru.f90 sdf_output_ru.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
   sdf_output_point_ru.o
 setup.o: setup.F90 fields.o laser.o mpi_subtype_control.o shunt.o \
-  split_particle.o version_data.o welcome.o window.o $(ENCODED_SOURCE)
+  split_particle.o timer.o version_data.o welcome.o window.o $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o
@@ -439,6 +440,7 @@ split_particle.o: split_particle.F90 boundary.o
 stack.o: stack.f90 shared_data.o
 strings.o: strings.f90 shared_data.o
 strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
+timer.o: timer.f90 shared_data.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90 COMMIT

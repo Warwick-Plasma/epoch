@@ -12,6 +12,7 @@ MODULE diagnostics
   USE random_generator
   USE strings
   USE window
+  USE timer
 
   IMPLICIT NONE
 
@@ -92,11 +93,13 @@ CONTAINS
       CALL sdf_set_point_array_size(sdf_buffer_size)
     ENDIF
 
+    timer_walltime = -1.0_num
     IF (step .NE. last_step) THEN
       last_step = step
       IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
           .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
-        elapsed_time = MPI_WTIME() - walltime_start
+        timer_walltime = MPI_WTIME()
+        elapsed_time = timer_walltime - walltime_start
         CALL create_timestring(elapsed_time, timestring)
         WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', a)') &
             time, step, timestring
@@ -120,6 +123,13 @@ CONTAINS
         ALLOCATE(array(-2:nx+3))
         CALL create_subtypes(code)
         any_written = .TRUE.
+        IF (timer_collect) THEN
+          IF (timer_walltime .LT. 0.0_num) THEN
+            CALL timer_start(c_timer_io)
+          ELSE
+            CALL timer_start(c_timer_io, .TRUE.)
+          ENDIF
+        ENDIF
       ENDIF
 
       ! Allows a maximum of 10^999 output dumps, should be enough for anyone
@@ -463,6 +473,8 @@ CONTAINS
         CALL destroy_partlist(ejected_list(i)%attached_list)
       ENDDO
     ENDIF
+
+    IF (timer_collect) CALL timer_stop(c_timer_io)
 
   END SUBROUTINE output_routines
 
