@@ -995,7 +995,7 @@ MODULE shared_data
   INTEGER(i4) :: run_date
   INTEGER(i8) :: defines
 
-  REAL(num) :: walltime_start
+  REAL(num) :: walltime_start, real_walltime_start
   REAL(num) :: check_walltime_start, stop_at_walltime
   INTEGER :: stdout_frequency, check_stop_frequency
   INTEGER :: check_walltime_frequency
