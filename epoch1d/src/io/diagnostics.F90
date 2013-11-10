@@ -1820,8 +1820,6 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: halt, force_dump
     INTEGER :: ierr
     INTEGER, SAVE :: check_counter = 0
-    LOGICAL, SAVE :: adjust_frequency = .TRUE.
-    LOGICAL, SAVE :: check_walltime_started = .FALSE.
     LOGICAL :: buffer(2), got_stop_condition, got_stop_file
     REAL(num) :: walltime
 
@@ -1830,22 +1828,10 @@ CONTAINS
     walltime = -1.0_num
     IF (check_walltime) &
         CALL check_walltime_auto(walltime, halt)
+
     IF (halt) THEN
       force_dump = .TRUE.
       RETURN
-    ENDIF
-
-    ! Once we've started checking the walltime, we may as well check for
-    ! stop files as well since it is the broadcast which slows things down.
-    IF (adjust_frequency) THEN
-      IF (check_walltime_frequency .LE. 0) THEN
-        adjust_frequency = .FALSE.
-      ELSE IF (time .GE. check_walltime_start) THEN
-        adjust_frequency = .FALSE.
-        check_walltime_started = .TRUE.
-        IF (check_walltime_frequency .LT. check_stop_frequency) &
-            check_stop_frequency = check_walltime_frequency
-      ENDIF
     ENDIF
 
     IF (check_stop_frequency .LT. 0) RETURN
@@ -1858,8 +1844,9 @@ CONTAINS
     check_counter = 0
 
     IF (rank .EQ. 0) THEN
-      ! First check walltime, if specified
-      IF (check_walltime_started) THEN
+      ! Since we're checking for a STOP file, we might as well check the
+      ! walltime as well
+      IF (check_walltime) THEN
         IF (walltime .LT. 0.0_num) walltime = MPI_WTIME()
         IF (walltime - real_walltime_start .GE. stop_at_walltime) THEN
           got_stop_condition = .TRUE.

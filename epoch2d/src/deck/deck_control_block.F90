@@ -12,9 +12,8 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 27 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 25 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
-  LOGICAL :: got_check_walltime
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           'nx                       ', &
@@ -46,8 +45,6 @@ MODULE deck_control_block
           'use_exact_restart        ', &
           'allow_cpu_reduce         ', &
           'check_stop_file_frequency', &
-          'check_walltime_start     ', &
-          'check_walltime_frequency ', &
           'stop_at_walltime         ', &
           'stop_at_walltime_file    ', &
           'simplify_deck            ', &
@@ -83,8 +80,6 @@ MODULE deck_control_block
           'use_exact_restart        ', &
           'allow_cpu_reduce         ', &
           'check_stop_frequency     ', &
-          'check_walltime_start     ', &
-          'check_walltime_frequency ', &
           'stop_at_walltime         ', &
           'stop_at_walltime_file    ', &
           'simplify_deck            ', &
@@ -98,14 +93,11 @@ CONTAINS
       control_block_done = .FALSE.
       use_exact_restart = .FALSE.
       allow_cpu_reduce = .TRUE.
-      got_check_walltime = .FALSE.
       check_walltime = .FALSE.
       simplify_deck = .TRUE.
       print_deck_constants = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
-      check_walltime_start = 0.0_num
-      check_walltime_frequency = -1
       stop_at_walltime = -1.0_num
       restart_filename = ''
     ENDIF
@@ -117,7 +109,6 @@ CONTAINS
   SUBROUTINE control_deck_finalise
 
     CHARACTER(LEN=22) :: filename_fmt
-    INTEGER :: io, iu
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
 
@@ -133,21 +124,7 @@ CONTAINS
 
     IF (deck_state .EQ. c_ds_first) RETURN
 
-    IF (check_walltime_frequency .LE. 0) got_check_walltime = .FALSE.
-
-    IF (got_check_walltime .AND. stop_at_walltime .LT. 0.0_num) THEN
-      check_walltime_frequency = -1
-      IF (rank .EQ. 0) THEN
-        DO iu = 1, nio_units ! Print to stdout and to file
-          io = io_units(iu)
-          WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'Must specify a positive value for "stop_at_walltime"'
-          WRITE(io,*) 'Ignoring.'
-        ENDDO
-      ENDIF
-    ENDIF
-
-    IF (check_walltime_frequency .GT. 0) THEN
+    IF (stop_at_walltime .GE. 0.0_num) THEN
       check_walltime = .TRUE.
       timer_collect = .TRUE.
     ENDIF
@@ -291,14 +268,8 @@ CONTAINS
     CASE(4*c_ndims+21)
       check_stop_frequency = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+22)
-      check_walltime_start = as_real_print(value, element, errcode)
-      got_check_walltime = .TRUE.
-    CASE(4*c_ndims+23)
-      check_walltime_frequency = as_integer_print(value, element, errcode)
-      got_check_walltime = .TRUE.
-    CASE(4*c_ndims+24)
       stop_at_walltime = as_real_print(value, element, errcode)
-    CASE(4*c_ndims+25)
+    CASE(4*c_ndims+23)
       IF (rank .EQ. 0) THEN
         OPEN(unit=lu, status='OLD', iostat=ierr, &
             file=TRIM(data_dir) // '/' // TRIM(value))
@@ -308,9 +279,9 @@ CONTAINS
         ENDIF
       ENDIF
       CALL MPI_BCAST(stop_at_walltime, 1, mpireal, 0, comm, errcode)
-    CASE(4*c_ndims+26)
+    CASE(4*c_ndims+24)
       simplify_deck = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+27)
+    CASE(4*c_ndims+25)
       print_deck_constants = as_logical_print(value, element, errcode)
     END SELECT
 
