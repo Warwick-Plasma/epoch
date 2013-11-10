@@ -2,6 +2,7 @@ MODULE deck_control_block
 
   USE strings_advanced
   USE fields
+  USE timer
 
   IMPLICIT NONE
   SAVE
@@ -106,6 +107,7 @@ CONTAINS
       use_exact_restart = .FALSE.
       allow_cpu_reduce = .TRUE.
       got_check_walltime = .FALSE.
+      check_walltime = .FALSE.
       simplify_deck = .TRUE.
       print_deck_constants = .FALSE.
       restart_number = 0
@@ -151,6 +153,11 @@ CONTAINS
           WRITE(io,*) 'Ignoring.'
         ENDDO
       ENDIF
+    ENDIF
+
+    IF (check_walltime_frequency .GT. 0) THEN
+      check_walltime = .TRUE.
+      timer_collect = .TRUE.
     ENDIF
 
   END SUBROUTINE control_deck_finalise

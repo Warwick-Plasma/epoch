@@ -1845,8 +1845,15 @@ CONTAINS
     LOGICAL :: buffer(2), got_stop_condition, got_stop_file
     REAL(num) :: walltime
 
-    IF (check_stop_frequency .LE. 0 &
-        .AND. check_walltime_frequency .LE. 0) RETURN
+    IF (check_stop_frequency .LE. 0 .AND. .NOT.check_walltime) RETURN
+
+    walltime = -1.0_num
+    IF (check_walltime) &
+        CALL check_walltime_auto(walltime, halt)
+    IF (halt) THEN
+      force_dump = .TRUE.
+      RETURN
+    ENDIF
 
     ! Once we've started checking the walltime, we may as well check for
     ! stop files as well since it is the broadcast which slows things down.
@@ -1861,6 +1868,8 @@ CONTAINS
       ENDIF
     ENDIF
 
+    IF (check_stop_frequency .LT. 0) RETURN
+
     got_stop_condition = .FALSE.
     force_dump = .FALSE.
     check_counter = check_counter + 1
@@ -1871,7 +1880,7 @@ CONTAINS
     IF (rank .EQ. 0) THEN
       ! First check walltime, if specified
       IF (check_walltime_started) THEN
-        walltime = MPI_WTIME()
+        IF (walltime .LT. 0.0_num) walltime = MPI_WTIME()
         IF (walltime - real_walltime_start .GE. stop_at_walltime) THEN
           got_stop_condition = .TRUE.
           force_dump = .TRUE.
@@ -1913,5 +1922,90 @@ CONTAINS
     IF (got_stop_condition) halt = .TRUE.
 
   END SUBROUTINE check_for_stop_condition
+
+
+
+  SUBROUTINE check_walltime_auto(walltime, halt)
+
+    REAL(num), INTENT(INOUT) :: walltime
+    LOGICAL, INTENT(OUT) :: halt
+    INTEGER, PARAMETER :: tag = 2001
+    INTEGER :: msg, request, i
+    LOGICAL :: flag
+    LOGICAL, ALLOCATABLE, SAVE :: completed(:)
+    LOGICAL, SAVE :: yet_to_sync = .TRUE.
+    LOGICAL, SAVE :: first = .TRUE.
+    LOGICAL, SAVE :: all_completed = .FALSE.
+    REAL(num), SAVE :: wall0
+    REAL(num), PARAMETER :: frac = 1.0_num
+    REAL(num) :: timeout
+
+    halt = all_completed
+    IF (all_completed) RETURN
+
+    IF (walltime .LT. 0) walltime = MPI_WTIME()
+    IF ((walltime + timer_average(c_timer_dt) + timer_average(c_timer_io) &
+        + timer_average(c_timer_balance) - real_walltime_start) &
+        .LT. frac * stop_at_walltime) RETURN
+
+    IF (rank .EQ. 0) THEN
+      IF (first) THEN
+        ALLOCATE(completed(nproc-1))
+        completed = .FALSE.
+        first = .FALSE.
+      ENDIF
+      wall0 = walltime
+      timeout = 2.0_num * timer_average(c_timer_step)
+      DO
+        all_completed = .TRUE.
+        DO i = 1,nproc-1
+          IF (.NOT.completed(i)) THEN
+            CALL MPI_IPROBE(i, tag, comm, flag, MPI_STATUS_IGNORE, errcode)
+            completed(i) = flag
+            IF (flag) THEN
+              CALL MPI_RECV(0, 0, MPI_INTEGER, i, tag, comm, &
+                  MPI_STATUS_IGNORE, errcode)
+            ELSE
+              all_completed = .FALSE.
+            ENDIF
+          ENDIF
+        ENDDO
+        IF (all_completed) THEN
+          DEALLOCATE(completed)
+          msg = -1
+          DO i = 1,nproc-1
+            CALL MPI_ISEND(msg, 1, MPI_INTEGER, i, tag, comm, request, errcode)
+            CALL MPI_REQUEST_FREE(request, errcode)
+          ENDDO
+          halt = all_completed
+          PRINT*,'Stopping because "stop_at_walltime" has been exceeded.'
+          RETURN
+        ENDIF
+        walltime = MPI_WTIME()
+        IF (walltime - wall0 .GT. timeout) THEN
+          msg = 1
+          DO i = 1,nproc-1
+            IF (completed(i)) THEN
+              CALL MPI_ISEND(msg, 1, MPI_INTEGER, i, tag, comm, request, errcode)
+              CALL MPI_REQUEST_FREE(request, errcode)
+            ENDIF
+          ENDDO
+          RETURN
+        ENDIF
+      ENDDO
+      RETURN
+    ENDIF
+
+    IF (yet_to_sync) THEN
+      CALL MPI_ISEND(0, 0, MPI_INTEGER, 0, tag, comm, request, errcode)
+      CALL MPI_REQUEST_FREE(request, errcode)
+      yet_to_sync = .FALSE.
+    ENDIF
+    CALL MPI_RECV(msg, 1, MPI_INTEGER, 0, tag, comm, &
+        MPI_STATUS_IGNORE, errcode)
+    IF (msg .LT. 0) all_completed = .TRUE.
+    halt = all_completed
+
+  END SUBROUTINE check_walltime_auto
 
 END MODULE diagnostics
