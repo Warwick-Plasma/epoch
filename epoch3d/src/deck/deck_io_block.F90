@@ -32,7 +32,9 @@ CONTAINS
 
     alternate_name = ''
     io_block_name (c_dump_part_grid        ) = 'particles'
+    alternate_name(c_dump_part_grid        ) = 'particle_grid'
     io_block_name (c_dump_grid             ) = 'grid'
+    alternate_name(c_dump_grid             ) = 'field_grid'
     io_block_name (c_dump_part_species     ) = 'species_id'
     io_block_name (c_dump_part_weight      ) = 'particle_weight'
     io_block_name (c_dump_part_px          ) = 'px'
