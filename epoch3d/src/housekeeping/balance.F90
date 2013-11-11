@@ -3,6 +3,7 @@ MODULE balance
   USE boundary
   USE mpi_subtype_control
   USE redblack_module
+  USE timer
 
   IMPLICIT NONE
 
@@ -60,6 +61,8 @@ CONTAINS
       IF (balance_frac .GT. dlb_threshold) RETURN
       IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
+
+    IF (timer_collect) CALL timer_start(c_timer_balance)
 
     IF (.NOT.use_exact_restart) THEN
       overriding = over_ride
@@ -265,6 +268,8 @@ CONTAINS
 #endif
 
     use_exact_restart = .FALSE.
+
+    IF (timer_collect) CALL timer_stop(c_timer_balance)
 
   END SUBROUTINE balance_workload
 

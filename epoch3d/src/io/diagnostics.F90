@@ -12,12 +12,17 @@ MODULE diagnostics
   USE random_generator
   USE strings
   USE window
+  USE timer
 
   IMPLICIT NONE
 
   PRIVATE
 
   PUBLIC :: output_routines, create_full_timestring
+  PUBLIC :: cleanup_stop_files, check_for_stop_condition
+
+  CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
+  CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
 
   TYPE(sdf_file_handle) :: sdf_handle
   INTEGER(i8), ALLOCATABLE :: species_offset(:)
@@ -88,11 +93,13 @@ CONTAINS
       CALL sdf_set_point_array_size(sdf_buffer_size)
     ENDIF
 
+    timer_walltime = -1.0_num
     IF (step .NE. last_step) THEN
       last_step = step
       IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
           .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
-        elapsed_time = MPI_WTIME() - walltime_start
+        timer_walltime = MPI_WTIME()
+        elapsed_time = timer_walltime - walltime_start
         CALL create_timestring(elapsed_time, timestring)
         WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', a)') &
             time, step, timestring
@@ -116,6 +123,13 @@ CONTAINS
         ALLOCATE(array(-2:nx+3,-2:ny+3,-2:nz+3))
         CALL create_subtypes(code)
         any_written = .TRUE.
+        IF (timer_collect) THEN
+          IF (timer_walltime .LT. 0.0_num) THEN
+            CALL timer_start(c_timer_io)
+          ELSE
+            CALL timer_start(c_timer_io, .TRUE.)
+          ENDIF
+        ENDIF
       ENDIF
 
       ! Allows a maximum of 10^999 output dumps, should be enough for anyone
@@ -477,6 +491,8 @@ CONTAINS
         CALL destroy_partlist(ejected_list(i)%attached_list)
       ENDDO
     ENDIF
+
+    IF (timer_collect) CALL timer_stop(c_timer_io)
 
   END SUBROUTINE output_routines
 
@@ -1818,5 +1834,185 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE create_full_timestring
+
+
+
+  SUBROUTINE cleanup_stop_files()
+
+    INTEGER :: ierr
+
+    IF (rank .NE. 0) RETURN
+
+    OPEN(unit=lu, status='OLD', &
+        file=TRIM(data_dir) // '/' // TRIM(stop_file), iostat=ierr)
+    IF (ierr .EQ. 0) CLOSE(lu, status='DELETE')
+
+    OPEN(unit=lu, status='OLD', &
+        file=TRIM(data_dir) // '/' // TRIM(stop_file_nodump), iostat=ierr)
+    IF (ierr .EQ. 0) CLOSE(lu, status='DELETE')
+
+  END SUBROUTINE cleanup_stop_files
+
+
+
+  SUBROUTINE check_for_stop_condition(halt, force_dump)
+
+    LOGICAL, INTENT(OUT) :: halt, force_dump
+    INTEGER :: ierr
+    INTEGER, SAVE :: check_counter = 0
+    LOGICAL :: buffer(2), got_stop_condition, got_stop_file
+    REAL(num) :: walltime
+
+    IF (check_stop_frequency .LE. 0 .AND. .NOT.check_walltime) RETURN
+
+    walltime = -1.0_num
+    IF (check_walltime) &
+        CALL check_walltime_auto(walltime, halt)
+
+    IF (halt) THEN
+      force_dump = .TRUE.
+      RETURN
+    ENDIF
+
+    IF (check_stop_frequency .LT. 0) RETURN
+
+    got_stop_condition = .FALSE.
+    force_dump = .FALSE.
+    check_counter = check_counter + 1
+
+    IF (check_counter .LT. check_stop_frequency) RETURN
+    check_counter = 0
+
+    IF (rank .EQ. 0) THEN
+      ! Since we're checking for a STOP file, we might as well check the
+      ! walltime as well
+      IF (check_walltime) THEN
+        IF (walltime .LT. 0.0_num) walltime = MPI_WTIME()
+        IF (walltime - real_walltime_start .GE. stop_at_walltime) THEN
+          got_stop_condition = .TRUE.
+          force_dump = .TRUE.
+          PRINT*,'Stopping because "stop_at_walltime" has been exceeded.'
+        ENDIF
+      ENDIF
+
+      ! Next check if stop file exists
+      OPEN(unit=lu, status='OLD', iostat=ierr, &
+          file=TRIM(data_dir) // '/' // TRIM(stop_file))
+      IF (ierr .EQ. 0) THEN
+        got_stop_file = .TRUE.
+        got_stop_condition = .TRUE.
+        force_dump = .TRUE.
+        CLOSE(lu, status='DELETE')
+      ELSE
+        OPEN(unit=lu, status='OLD', iostat=ierr, &
+            file=TRIM(data_dir) // '/' // TRIM(stop_file_nodump))
+        IF (ierr .EQ. 0) THEN
+          got_stop_file = .TRUE.
+          got_stop_condition = .TRUE.
+          force_dump = .FALSE.
+          CLOSE(lu, status='DELETE')
+        ELSE
+          got_stop_file = .FALSE.
+        ENDIF
+      ENDIF
+
+      IF (got_stop_file) PRINT*,'Stopping because "STOP" file has been found.'
+
+      buffer(1) = got_stop_condition
+      buffer(2) = force_dump
+    ENDIF
+
+    CALL MPI_BCAST(buffer, 2, MPI_LOGICAL, 0, comm, errcode)
+    got_stop_condition = buffer(1)
+    force_dump = buffer(2)
+
+    IF (got_stop_condition) halt = .TRUE.
+
+  END SUBROUTINE check_for_stop_condition
+
+
+
+  SUBROUTINE check_walltime_auto(walltime, halt)
+
+    REAL(num), INTENT(INOUT) :: walltime
+    LOGICAL, INTENT(OUT) :: halt
+    INTEGER, PARAMETER :: tag = 2001
+    INTEGER :: msg, request, i
+    LOGICAL :: flag
+    LOGICAL, ALLOCATABLE, SAVE :: completed(:)
+    LOGICAL, SAVE :: yet_to_sync = .TRUE.
+    LOGICAL, SAVE :: first = .TRUE.
+    LOGICAL, SAVE :: all_completed = .FALSE.
+    REAL(num), SAVE :: wall0
+    REAL(num), PARAMETER :: frac = 1.0_num
+    REAL(num) :: timeout
+
+    halt = all_completed
+    IF (all_completed) RETURN
+
+    IF (walltime .LT. 0) walltime = MPI_WTIME()
+    IF ((walltime + timer_average(c_timer_dt) + timer_average(c_timer_io) &
+        + timer_average(c_timer_balance) - real_walltime_start) &
+        .LT. frac * stop_at_walltime) RETURN
+
+    IF (rank .EQ. 0) THEN
+      IF (first) THEN
+        ALLOCATE(completed(nproc-1))
+        completed = .FALSE.
+        first = .FALSE.
+      ENDIF
+      wall0 = walltime
+      timeout = 2.0_num * timer_average(c_timer_step)
+      DO
+        all_completed = .TRUE.
+        DO i = 1,nproc-1
+          IF (.NOT.completed(i)) THEN
+            CALL MPI_IPROBE(i, tag, comm, flag, MPI_STATUS_IGNORE, errcode)
+            completed(i) = flag
+            IF (flag) THEN
+              CALL MPI_RECV(0, 0, MPI_INTEGER, i, tag, comm, &
+                  MPI_STATUS_IGNORE, errcode)
+            ELSE
+              all_completed = .FALSE.
+            ENDIF
+          ENDIF
+        ENDDO
+        IF (all_completed) THEN
+          DEALLOCATE(completed)
+          msg = -1
+          DO i = 1,nproc-1
+            CALL MPI_ISEND(msg, 1, MPI_INTEGER, i, tag, comm, request, errcode)
+            CALL MPI_REQUEST_FREE(request, errcode)
+          ENDDO
+          halt = all_completed
+          PRINT*,'Stopping because "stop_at_walltime" has been exceeded.'
+          RETURN
+        ENDIF
+        walltime = MPI_WTIME()
+        IF (walltime - wall0 .GT. timeout) THEN
+          msg = 1
+          DO i = 1,nproc-1
+            IF (completed(i)) THEN
+              CALL MPI_ISEND(msg, 1, MPI_INTEGER, i, tag, comm, request, errcode)
+              CALL MPI_REQUEST_FREE(request, errcode)
+            ENDIF
+          ENDDO
+          RETURN
+        ENDIF
+      ENDDO
+      RETURN
+    ENDIF
+
+    IF (yet_to_sync) THEN
+      CALL MPI_ISEND(0, 0, MPI_INTEGER, 0, tag, comm, request, errcode)
+      CALL MPI_REQUEST_FREE(request, errcode)
+      yet_to_sync = .FALSE.
+    ENDIF
+    CALL MPI_RECV(msg, 1, MPI_INTEGER, 0, tag, comm, &
+        MPI_STATUS_IGNORE, errcode)
+    IF (msg .LT. 0) all_completed = .TRUE.
+    halt = all_completed
+
+  END SUBROUTINE check_walltime_auto
 
 END MODULE diagnostics

@@ -9,6 +9,7 @@ MODULE setup
   USE shunt
   USE laser
   USE window
+  USE timer
 
   IMPLICIT NONE
 
@@ -86,6 +87,7 @@ CONTAINS
     CALL set_field_order(2)
 
     CALL init_source_code()
+    CALL timer_init
 
     ! This array is true if a field component is staggered in the
     ! given direction.
