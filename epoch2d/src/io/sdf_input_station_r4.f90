@@ -19,6 +19,7 @@ CONTAINS
     TYPE(sdf_block_type), POINTER :: b
     INTEGER :: errcode
     INTEGER(i8) :: bstart, bstop
+    REAL(r8), DIMENSION(:), ALLOCATABLE :: real8_data
 
     IF (sdf_check_block_header(h)) RETURN
 
@@ -37,10 +38,19 @@ CONTAINS
     ENDIF
 
     IF (h%rank .EQ. h%rank_master) THEN
-      CALL MPI_FILE_READ(h%filehandle, time, 1, mpitype_real, &
-            MPI_STATUS_IGNORE, errcode)
-      CALL MPI_FILE_READ(h%filehandle, array, b%nvariables-1, mpitype_real, &
-            MPI_STATUS_IGNORE, errcode)
+      IF ( b%variable_types(1) == c_datatype_real4 ) THEN
+         CALL MPI_FILE_READ(h%filehandle, time, 1, mpitype_real, &
+               MPI_STATUS_IGNORE, errcode)
+         CALL MPI_FILE_READ(h%filehandle, array, b%nvariables-1, mpitype_real, &
+               MPI_STATUS_IGNORE, errcode)
+      ELSE
+         ALLOCATE( real8_data(b%nvariables) )
+         CALL MPI_FILE_READ(h%filehandle, real8_data, b%nvariables, MPI_REAL8, &
+               MPI_STATUS_IGNORE, errcode)
+         time = REAL( real8_data(1), r4 )
+         array = REAL( real8_data(2:), r4 )
+         DEALLOCATE( real8_data )
+      ENDIF
       h%current_location = h%current_location + b%type_size
     ENDIF
 
