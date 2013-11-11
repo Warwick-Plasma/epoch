@@ -25,6 +25,7 @@ MODULE diagnostics
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   LOGICAL :: restart_flag, dump_source_code, dump_input_decks
   LOGICAL :: dump_field_grid
+  LOGICAL, ALLOCATABLE :: dump_point_grid(:)
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
@@ -237,10 +238,9 @@ CONTAINS
       DO isubset = 1, n_subsets + 1
         done_species_offset_init = .FALSE.
         done_subset_init = .FALSE.
+        dump_point_grid = .FALSE.
         IF (isubset .GT. 1) io_list => io_list_data
         iomask = iodumpmask(isubset,:)
-
-        CALL write_particle_grid(code)
 
 #ifdef PER_PARTICLE_WEIGHT
         CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
@@ -303,6 +303,7 @@ CONTAINS
             'Trident Depth', '', iterate_optical_depth_trident)
 #endif
 #endif
+        CALL write_particle_grid(code)
 
         ! These are derived variables from the particles
         CALL write_nspecies_field(c_dump_ekbar, code, &
@@ -448,8 +449,9 @@ CONTAINS
     IF (.NOT.any_written) RETURN
 
     DEALLOCATE(array)
-    IF (ALLOCATED(species_offset)) DEALLOCATE(species_offset)
-    IF (ALLOCATED(ejected_offset)) DEALLOCATE(ejected_offset)
+    IF (ALLOCATED(species_offset))  DEALLOCATE(species_offset)
+    IF (ALLOCATED(dump_point_grid)) DEALLOCATE(dump_point_grid)
+    IF (ALLOCATED(ejected_offset))  DEALLOCATE(ejected_offset)
     CALL free_subtypes()
 
     IF (reset_ejected) THEN
@@ -1467,7 +1469,8 @@ CONTAINS
     IF (done_species_offset_init) RETURN
     done_species_offset_init = .TRUE.
 
-    IF (.NOT.ALLOCATED(species_offset)) ALLOCATE(species_offset(n_species))
+    IF (.NOT.ALLOCATED(species_offset))  ALLOCATE(species_offset(n_species))
+    IF (.NOT.ALLOCATED(dump_point_grid)) ALLOCATE(dump_point_grid(n_species))
 
     CALL build_species_subset
 
@@ -1525,8 +1528,8 @@ CONTAINS
   SUBROUTINE write_particle_grid(code)
 
     INTEGER, INTENT(IN) :: code
-    INTEGER :: ispecies, id
-    LOGICAL :: convert
+    INTEGER :: ispecies, id, mask
+    LOGICAL :: convert, dump_grid
 
     id = c_dump_part_grid
     IF (IAND(iomask(id), code) .NE. 0) THEN
@@ -1539,8 +1542,14 @@ CONTAINS
       DO ispecies = 1, n_species
         current_species => io_list(ispecies)
 
-        IF (IAND(current_species%dumpmask, code) .NE. 0 &
-            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        mask = current_species%dumpmask
+        dump_grid = dump_point_grid(ispecies)
+
+        IF (IAND(mask, code) .NE. 0) dump_grid = .TRUE.
+        IF (IAND(code, c_io_restartable) .NE. 0) dump_grid = .TRUE.
+        IF (IAND(mask, c_io_never) .NE. 0) dump_grid = .FALSE.
+
+        IF (dump_grid) THEN
           CALL species_offset_init()
           IF (npart_global .EQ. 0) RETURN
 
@@ -1624,6 +1633,7 @@ CONTAINS
               TRIM(current_species%name), &
               TRIM(units), io_list(ispecies)%count, temp_block_id, &
               iterator, species_offset(ispecies), convert)
+          dump_point_grid(ispecies) = .TRUE.
         ENDIF
       ENDDO
     ENDIF
