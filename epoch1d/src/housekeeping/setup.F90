@@ -180,10 +180,10 @@ CONTAINS
       cpml_a_max = 0.0_num
       cpml_sigma_max = 0.0_num
       DO i = 1, n_io_blocks
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_eyx) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_ezx) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_byx) = 0
-        io_block_list(i)%dumpmask(c_dump_cpml_psi_bzx) = 0
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_eyx) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_ezx) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_byx) = c_io_never
+        io_block_list(i)%dumpmask(c_dump_cpml_psi_bzx) = c_io_never
       ENDDO
     ENDIF
 

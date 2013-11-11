@@ -262,7 +262,7 @@ CONTAINS
         + dt_eps * jz(laserpos) &
         + diff * by(laserpos-1))
 
-    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+    IF (dumpmask(c_dump_absorption) .NE. c_io_none) THEN
       IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_x_max, lasers = laser_x_max)
       ELSE

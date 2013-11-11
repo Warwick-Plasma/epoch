@@ -24,6 +24,8 @@ MODULE diagnostics
   INTEGER(i8), ALLOCATABLE :: ejected_offset(:)
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   LOGICAL :: restart_flag, dump_source_code, dump_input_decks
+  LOGICAL :: dump_field_grid
+  LOGICAL, ALLOCATABLE :: dump_point_grid(:)
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
@@ -132,6 +134,7 @@ CONTAINS
       IF (MOD(file_numbers(iprefix), full_dump_every) .EQ. 0 &
           .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
       IF (restart_flag) code = IOR(code, c_io_restartable)
+      dump_field_grid = .FALSE.
 
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
@@ -190,22 +193,6 @@ CONTAINS
       ENDIF
 
       iomask = iodumpmask(1,:)
-
-      ! Write the cartesian mesh
-      IF (IAND(iomask(c_dump_grid), code) .NE. 0) THEN
-        convert = (IAND(iomask(c_dump_grid), c_io_dump_single) .NE. 0 &
-            .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-            .OR. IAND(iomask(c_dump_grid), c_io_restartable) .EQ. 0))
-        IF (.NOT. use_offset_grid) THEN
-          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
-              xb_global, yb_global, zb_global, convert)
-        ELSE
-          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
-              xb_offset_global, yb_offset_global, zb_offset_global, convert)
-          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid_full', &
-              'Grid/Grid_Full', xb_global, yb_global, zb_global, convert)
-        ENDIF
-      ENDIF
 
       CALL write_field(c_dump_ex, code, 'ex', 'Electric Field/Ex', 'V/m', &
           c_stagger_ex, ex)
@@ -269,10 +256,9 @@ CONTAINS
       DO isubset = 1, n_subsets + 1
         done_species_offset_init = .FALSE.
         done_subset_init = .FALSE.
+        dump_point_grid = .FALSE.
         IF (isubset .GT. 1) io_list => io_list_data
         iomask = iodumpmask(isubset,:)
-
-        CALL write_particle_grid(code)
 
 #ifdef PER_PARTICLE_WEIGHT
         CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
@@ -335,6 +321,7 @@ CONTAINS
             'Trident Depth', '', iterate_optical_depth_trident)
 #endif
 #endif
+        CALL write_particle_grid(code)
 
         ! These are derived variables from the particles
         CALL write_nspecies_field(c_dump_ekbar, code, &
@@ -388,6 +375,27 @@ CONTAINS
           ENDDO
         ENDIF
       ENDDO
+
+      ! Write the cartesian mesh
+      IF (IAND(iomask(c_dump_grid), code) .NE. 0) &
+          dump_field_grid = .TRUE.
+      IF (IAND(iomask(c_dump_grid), c_io_never) .NE. 0) &
+          dump_field_grid = .FALSE.
+
+      IF (dump_field_grid) THEN
+        convert = (IAND(iomask(c_dump_grid), c_io_dump_single) .NE. 0 &
+            .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+            .OR. IAND(iomask(c_dump_grid), c_io_restartable) .EQ. 0))
+        IF (.NOT. use_offset_grid) THEN
+          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
+              xb_global, yb_global, zb_global, convert)
+        ELSE
+          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
+              xb_offset_global, yb_offset_global, zb_offset_global, convert)
+          CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid_full', &
+              'Grid/Grid_Full', xb_global, yb_global, zb_global, convert)
+        ENDIF
+      ENDIF
 
       io_list => species_list
       iomask = iodumpmask(1,:)
@@ -459,8 +467,9 @@ CONTAINS
     IF (.NOT.any_written) RETURN
 
     DEALLOCATE(array)
-    IF (ALLOCATED(species_offset)) DEALLOCATE(species_offset)
-    IF (ALLOCATED(ejected_offset)) DEALLOCATE(ejected_offset)
+    IF (ALLOCATED(species_offset))  DEALLOCATE(species_offset)
+    IF (ALLOCATED(dump_point_grid)) DEALLOCATE(dump_point_grid)
+    IF (ALLOCATED(ejected_offset))  DEALLOCATE(ejected_offset)
     CALL free_subtypes()
 
     IF (reset_ejected) THEN
@@ -565,8 +574,8 @@ CONTAINS
     dump_source_code = .FALSE.
     dump_input_decks = .FALSE.
     print_arrays = .FALSE.
-    iomask = c_io_never
-    iodumpmask = c_io_never
+    iomask = c_io_none
+    iodumpmask = c_io_none
 
     IF (time .GE. t_end .OR. step .EQ. nsteps) THEN
       last_call = .TRUE.
@@ -902,6 +911,7 @@ CONTAINS
       CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id), &
           TRIM(name), TRIM(units), dims, stagger, 'grid', array, &
           subtype, subarray, convert)
+      dump_field_grid = .TRUE.
     ENDIF
 
     DO io = 1, n_io_blocks
@@ -928,6 +938,7 @@ CONTAINS
             avg%array = 0.0_num
           ENDIF
 
+          dump_field_grid = .TRUE.
           avg%real_time = 0.0_num
           avg%started = .FALSE.
         ENDIF
@@ -999,6 +1010,7 @@ CONTAINS
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
             subtype, subarray, convert)
+        dump_field_grid = .TRUE.
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
@@ -1033,6 +1045,7 @@ CONTAINS
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
               subtype, subarray, convert)
+          dump_field_grid = .TRUE.
         ENDDO
       ENDIF
     ENDIF
@@ -1054,6 +1067,7 @@ CONTAINS
                   'Derived/' // TRIM(name) // '_averaged', &
                   TRIM(units), dims, stagger, 'grid', &
                   avg%r4array(:,:,:,1), subtype_field_r4, subarray_field_r4)
+              dump_field_grid = .TRUE.
             ENDIF
 
             IF (avg%n_species .GT. 0) THEN
@@ -1088,6 +1102,7 @@ CONTAINS
                     TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
                     avg%r4array(:,:,:,ispecies+avg%species_sum), &
                     subtype_field_r4, subarray_field_r4)
+                dump_field_grid = .TRUE.
               ENDDO
             ENDIF
 
@@ -1102,6 +1117,7 @@ CONTAINS
                   'Derived/' // TRIM(name) // '_averaged', &
                   TRIM(units), dims, stagger, 'grid', &
                   avg%array(:,:,:,1), subtype_field, subarray_field)
+              dump_field_grid = .TRUE.
             ENDIF
 
             IF (avg%n_species .GT. 0) THEN
@@ -1136,6 +1152,7 @@ CONTAINS
                     TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
                     avg%array(:,:,:,ispecies+avg%species_sum), &
                     subtype_field, subarray_field)
+                dump_field_grid = .TRUE.
               ENDDO
             ENDIF
 
@@ -1208,6 +1225,7 @@ CONTAINS
             TRIM(units), dims, stagger, 'grid', &
             array, subtype, subarray, convert)
       ENDDO
+      dump_field_grid = .TRUE.
     ENDIF
 
     ! Flux variables not currently averaged
@@ -1276,6 +1294,7 @@ CONTAINS
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
               subtype, subarray, convert)
         ENDDO
+        dump_field_grid = .TRUE.
       ENDIF
 
       IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
@@ -1316,6 +1335,7 @@ CONTAINS
                 TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
                 subtype, subarray, convert)
           ENDDO
+          dump_field_grid = .TRUE.
         ENDDO
       ENDIF
     ENDIF
@@ -1489,7 +1509,8 @@ CONTAINS
     IF (done_species_offset_init) RETURN
     done_species_offset_init = .TRUE.
 
-    IF (.NOT.ALLOCATED(species_offset)) ALLOCATE(species_offset(n_species))
+    IF (.NOT.ALLOCATED(species_offset))  ALLOCATE(species_offset(n_species))
+    IF (.NOT.ALLOCATED(dump_point_grid)) ALLOCATE(dump_point_grid(n_species))
 
     CALL build_species_subset
 
@@ -1547,8 +1568,8 @@ CONTAINS
   SUBROUTINE write_particle_grid(code)
 
     INTEGER, INTENT(IN) :: code
-    INTEGER :: ispecies, id
-    LOGICAL :: convert
+    INTEGER :: ispecies, id, mask
+    LOGICAL :: convert, dump_grid
 
     id = c_dump_part_grid
     IF (IAND(iomask(id), code) .NE. 0) THEN
@@ -1561,8 +1582,14 @@ CONTAINS
       DO ispecies = 1, n_species
         current_species => io_list(ispecies)
 
-        IF (IAND(current_species%dumpmask, code) .NE. 0 &
-            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        mask = current_species%dumpmask
+        dump_grid = dump_point_grid(ispecies)
+
+        IF (IAND(mask, code) .NE. 0) dump_grid = .TRUE.
+        IF (IAND(code, c_io_restartable) .NE. 0) dump_grid = .TRUE.
+        IF (IAND(mask, c_io_never) .NE. 0) dump_grid = .FALSE.
+
+        IF (dump_grid) THEN
           CALL species_offset_init()
           IF (npart_global .EQ. 0) RETURN
 
@@ -1646,6 +1673,7 @@ CONTAINS
               TRIM(current_species%name), &
               TRIM(units), io_list(ispecies)%count, temp_block_id, &
               iterator, species_offset(ispecies), convert)
+          dump_point_grid(ispecies) = .TRUE.
         ENDIF
       ENDDO
     ENDIF

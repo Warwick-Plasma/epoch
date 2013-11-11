@@ -320,7 +320,7 @@ CONTAINS
 
     DEALLOCATE(source1, source2)
 
-    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+    IF (dumpmask(c_dump_absorption) .NE. c_io_none) THEN
       IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_x_min, lasers = laser_x_min)
       ELSE
