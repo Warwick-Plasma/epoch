@@ -124,15 +124,23 @@ CONTAINS
 
 
 
-  FUNCTION sdf_station_seek_time(h, time) RESULT(found)
+  FUNCTION sdf_station_seek_time(h, time, overwrite) RESULT(found)
+
+    ! overwrite == .TRUE. if we intend to write new data after
+    ! after the current time step. Used for restarting a run.
+    !
+    ! overwrite == .FALSE. otherwise. Used for quickly finding
+    ! a timestep to read.
 
     TYPE(sdf_file_handle) :: h
     REAL(r8), INTENT(IN) :: time
+    LOGICAL, INTENT(IN), OPTIONAL :: overwrite
     LOGICAL :: found
     INTEGER :: i, ns, nstep, errcode, mpireal
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset
     REAL(r8) :: time8
     TYPE(sdf_block_type), POINTER :: b, station_block
+    LOGICAL :: ovw
 
     IF (.NOT.ASSOCIATED(h%blocklist)) CALL sdf_read_blocklist(h)
 
@@ -187,12 +195,19 @@ CONTAINS
     ENDIF
 
     h%current_block => b
-    b%nelements = nstep + 1
-    b%data_length = b%nelements * b%type_size
-    h%step = b%step + nstep
-    h%time = time8
+    ovw = .TRUE.
+    IF ( PRESENT(overwrite) ) ovw = overwrite
+    IF ( ovw ) THEN
+       b%nelements = nstep + 1
+       b%data_length = b%nelements * b%type_size
+       h%step = b%step + nstep
+       h%time = time8
+       CALL write_station_update(h)
+    ELSE
+       CALL MPI_FILE_SEEK(h%filehandle, offset, MPI_SEEK_SET, errcode)
+       h%current_location = offset
+    ENDIF
 
-    CALL write_station_update(h)
 
   END FUNCTION sdf_station_seek_time
 
