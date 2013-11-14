@@ -27,7 +27,7 @@ CONTAINS
 
     bstart = b%data_location
     bstop = bstart + b%data_length
-    IF (.NOT. (h%current_location .GE. bstart &
+    IF (.NOT. (h%current_location .GT. bstart &
         .AND. h%current_location .LT. bstop)) THEN
       h%current_location = b%data_location
       IF (h%rank .EQ. h%rank_master) THEN
