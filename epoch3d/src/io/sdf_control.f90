@@ -11,7 +11,7 @@ CONTAINS
     TYPE(sdf_file_handle), TARGET :: h
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER, INTENT(IN) :: sdf_comm_in, mode
-    INTEGER :: errcode, ierr, i
+    INTEGER :: errcode, ierr, i, info
 
     CALL initialise_file_handle(h)
     CALL sdf_set_default_rank(h, 0)
@@ -51,9 +51,12 @@ CONTAINS
       h%mode = MPI_MODE_RDONLY
     ENDIF
 
-    CALL MPI_FILE_OPEN(h%comm, TRIM(filename), h%mode, MPI_INFO_NULL, &
+    CALL MPI_INFO_CREATE(info, errcode)
+    CALL MPI_INFO_SET(info, 'romio_cb_write', 'enable', errcode)
+    CALL MPI_FILE_OPEN(h%comm, TRIM(filename), h%mode, info, &
         h%filehandle, errcode)
     IF (errcode .NE. 0) h%error_code = map_error_code(errcode)
+    CALL MPI_INFO_FREE(info, errcode)
 
     IF (h%rank .EQ. h%rank_master .AND. h%filehandle .NE. 0) THEN
       CALL MPI_FILE_CREATE_ERRHANDLER(error_handler, h%errhandler, errcode)
