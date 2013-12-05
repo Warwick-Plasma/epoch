@@ -124,23 +124,24 @@ CONTAINS
 
 
 
-  FUNCTION sdf_station_seek_time(h, time, overwrite) RESULT(found)
+  FUNCTION sdf_station_seek_time(h, time, overwrite_in) RESULT(found)
 
-    ! overwrite == .TRUE. if we intend to write new data after
+    ! overwrite_in .EQ. .TRUE. if we intend to write new data after
     ! after the current time step. Used for restarting a run.
     !
-    ! overwrite == .FALSE. otherwise. Used for quickly finding
+    ! overwrite_in .EQ. .FALSE. otherwise. Used for quickly finding
     ! a timestep to read.
 
     TYPE(sdf_file_handle) :: h
     REAL(r8), INTENT(IN) :: time
-    LOGICAL, INTENT(IN), OPTIONAL :: overwrite
+    LOGICAL, INTENT(IN), OPTIONAL :: overwrite_in
     LOGICAL :: found
     INTEGER :: i, ns, nstep, errcode, mpireal
     INTEGER(KIND=MPI_OFFSET_KIND) :: offset
     REAL(r8) :: time8
+    REAL(r4) :: real4
     TYPE(sdf_block_type), POINTER :: b, station_block
-    LOGICAL :: ovw
+    LOGICAL :: overwrite
 
     IF (.NOT.ASSOCIATED(h%blocklist)) CALL sdf_read_blocklist(h)
 
@@ -169,17 +170,19 @@ CONTAINS
 
     offset = b%data_location + ns * b%type_size
     mpireal = MPI_REAL8
-    IF ( b%variable_types(1) == c_datatype_real4 ) mpireal = MPI_REAL4
+    IF (b%variable_types(1) .EQ. c_datatype_real4) mpireal = MPI_REAL4
 
     CALL MPI_FILE_READ_AT(h%filehandle, offset, time8, 1, mpireal, &
         MPI_STATUS_IGNORE, errcode)
-    IF ( mpireal == MPI_REAL4 ) time8 = REAL( TRANSFER( time8, 0.0 ), r8 )
+
+    IF (mpireal .EQ. MPI_REAL4) time8 = REAL(TRANSFER(time8, real4), r8)
+
     IF (time8 .GT. time) THEN
       DO i = ns-1, 0, -1
         offset = offset - b%type_size
         CALL MPI_FILE_READ_AT(h%filehandle, offset, time8, 1, mpireal, &
             MPI_STATUS_IGNORE, errcode)
-        IF ( mpireal == MPI_REAL4 ) time8 = REAL( TRANSFER( time8, 0.0 ), r8 )
+        IF (mpireal .EQ. MPI_REAL4) time8 = REAL(TRANSFER(time8, real4), r8)
         nstep = i
         IF (time8 .LE. time) EXIT
       ENDDO
@@ -188,16 +191,17 @@ CONTAINS
         offset = offset + b%type_size
         CALL MPI_FILE_READ_AT(h%filehandle, offset, time8, 1, mpireal, &
             MPI_STATUS_IGNORE, errcode)
-        IF ( mpireal == MPI_REAL4 ) time8 = REAL( TRANSFER( time8, 0.0 ), r8 )
+        IF (mpireal .EQ. MPI_REAL4) time8 = REAL(TRANSFER(time8, real4), r8)
         IF (time8 .GT. time) EXIT
         nstep = i
       ENDDO
     ENDIF
 
     h%current_block => b
-    ovw = .TRUE.
-    IF ( PRESENT(overwrite) ) ovw = overwrite
-    IF ( ovw ) THEN
+    overwrite = .TRUE.
+    IF (PRESENT(overwrite_in)) overwrite = overwrite_in
+
+    IF (overwrite) THEN
        b%nelements = nstep + 1
        b%data_length = b%nelements * b%type_size
        h%step = b%step + nstep

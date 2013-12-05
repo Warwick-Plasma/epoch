@@ -1993,7 +1993,8 @@ CONTAINS
           msg = 1
           DO i = 1,nproc-1
             IF (completed(i)) THEN
-              CALL MPI_ISEND(msg, 1, MPI_INTEGER, i, tag, comm, request, errcode)
+              CALL MPI_ISEND(msg, 1, MPI_INTEGER, i, tag, comm, request, &
+                  errcode)
               CALL MPI_REQUEST_FREE(request, errcode)
             ENDIF
           ENDDO

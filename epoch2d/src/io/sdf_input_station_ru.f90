@@ -16,7 +16,8 @@ CONTAINS
     INTEGER, INTENT(OUT), OPTIONAL :: step, step_increment
     REAL(r8), INTENT(OUT), OPTIONAL :: time, time_increment
     LOGICAL, INTENT(OUT), OPTIONAL :: use_mult
-    CHARACTER(LEN=*), INTENT(OUT), DIMENSION(:), OPTIONAL :: variable_ids, variable_names, station_ids
+    CHARACTER(LEN=*), INTENT(OUT), OPTIONAL :: &
+        variable_ids(:), variable_names(:), station_ids(:)
     INTEGER :: i
     CHARACTER(LEN=4) :: padding
     TYPE(sdf_block_type), POINTER :: b
