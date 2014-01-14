@@ -8,10 +8,4 @@ MODULE encoded_source
 
   CHARACTER(LEN=76), DIMENSION(0) :: source_code
 
-CONTAINS
-
-  SUBROUTINE init_source_code()
-
-  END SUBROUTINE init_source_code
-
 END MODULE encoded_source

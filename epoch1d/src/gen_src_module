@@ -14,6 +14,9 @@ tmp=$dir/tmp
 tmp2=$dir/tmp2
 tmp3=$dir/tmp3
 
+column_width=76
+continuation_lines=40
+
 [ -d $dir ] || mkdir $dir
 
 if [ "$1"x = "opt_dont_build_sha1"x ]; then
@@ -63,10 +66,10 @@ if [ $embed_source -eq 1 ]; then
   tar czf $tmp $*
   if [ $? -eq 0 ]; then
     # First try GNU-style wrapping options for base64
-    base64 -w76 $tmp > $tmp2 2>/dev/null
+    base64 -w$column_width $tmp > $tmp2 2>/dev/null
     if [ $? -ne 0 ]; then
       # Next try BSD-style wrapping options for base64
-      base64 $tmp | fold -w76 > $tmp2 2>/dev/null
+      base64 $tmp | fold -w$column_width > $tmp2 2>/dev/null
     fi
     if [ $? -ne 0 ]; then
       #echo base64 failed. Trying mimencode.
@@ -101,51 +104,54 @@ MODULE encoded_source
 
   IMPLICIT NONE
 
-  CHARACTER(LEN=*), PARAMETER :: sha1sum = "$sha"
+  CHARACTER(LEN=*), PARAMETER :: sha1sum = '$sha'
 
 EOF
 
 
 if [ $nlines -gt 0 ]; then
   echo "  CHARACTER(LEN=*), PARAMETER :: last_line = &" >> $file
-  tail -n 1 $tmp2 | sed 's/^/      "/; s/$/"/' >> $file
+  tail -n 1 $tmp2 | sed 's/^/      '\''/; s/$/'\''/' >> $file
 
 cat >> $file <<EOF
 
-  CHARACTER(LEN=76), DIMENSION($nlines) :: source_code
+  CHARACTER(LEN=$column_width), DIMENSION($nlines) :: source_code
 
-CONTAINS
+! F95 maximum line with of 132 characters, maximum of 39 continuation lines
 
-  SUBROUTINE init_source_code()
+  INTEGER :: i
 
 EOF
 
 IFS="
 "
   i=1
+  i0=1
+  i1=$((i0+continuation_lines-1))
   for ln in `head -n $nlines $tmp2`; do
-    echo "    source_code($i) = \"$ln\"" >> $file
+    if [ $i -eq $i0 ]; then
+      echo "  DATA (source_code(i), i=$i0,$i1) / '$ln', &" >> $file
+    elif [ $i -ge $i1 ]; then
+      echo "      '$ln' /" >> $file
+      i0=$((i1+1))
+      i1=$((i0+continuation_lines-1))
+      [ $i1 -gt $nlines ] && i1=$nlines
+    else
+      echo "      '$ln', &" >> $file
+    fi
     i=$((i+1))
   done
 
 cat >> $file <<EOF
-
-  END SUBROUTINE init_source_code
 
 END MODULE encoded_source
 EOF
 
 else
 cat >> $file <<EOF
-  CHARACTER(LEN=*), PARAMETER :: last_line = ""
+  CHARACTER(LEN=*), PARAMETER :: last_line = ''
 
-  CHARACTER(LEN=76), DIMENSION($nlines) :: source_code
-
-CONTAINS
-
-  SUBROUTINE init_source_code()
-
-  END SUBROUTINE init_source_code
+  CHARACTER(LEN=$column_width), DIMENSION(0) :: source_code
 
 END MODULE encoded_source
 EOF
