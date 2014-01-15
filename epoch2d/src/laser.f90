@@ -274,7 +274,7 @@ CONTAINS
 
     DEALLOCATE(source1, source2)
 
-    IF (dumpmask(c_dump_absorption) .NE. c_io_none) THEN
+    IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_x_min, lasers = laser_x_min)
       ELSE
@@ -348,7 +348,7 @@ CONTAINS
 
     DEALLOCATE(source1, source2)
 
-    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+    IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_x_max, lasers = laser_x_max)
       ELSE
@@ -422,7 +422,7 @@ CONTAINS
 
     DEALLOCATE(source1, source2)
 
-    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+    IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_y_min, lasers = laser_y_min)
       ELSE
@@ -496,7 +496,7 @@ CONTAINS
 
     DEALLOCATE(source1, source2)
 
-    IF (dumpmask(c_dump_absorption) .GT. 0) THEN
+    IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_y_max, lasers = laser_y_max)
       ELSE

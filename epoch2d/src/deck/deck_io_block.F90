@@ -130,6 +130,7 @@ CONTAINS
     io_block_name (i+28) = 'disabled'
 
     track_ejected_particles = .FALSE.
+    dump_absorption = .FALSE.
     averaged_var_block = 0
     new_style_io_block = .FALSE.
     n_io_blocks = 0
@@ -273,6 +274,10 @@ CONTAINS
     mask = io_block%dumpmask(c_dump_ejected_particles)
     IF (mask .NE. c_io_none .AND. IAND(mask,c_io_never) .EQ. 0) &
         track_ejected_particles = .TRUE.
+
+    IF (io_block%dumpmask(c_dump_absorption) .NE. c_io_never) THEN
+      dump_absorption = .TRUE.
+    ENDIF
 
     IF (.NOT. got_name) THEN
       IF (new_style_io_block) THEN
