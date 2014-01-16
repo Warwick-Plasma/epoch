@@ -158,16 +158,28 @@ int sdf_broadcast(sdf_file_t *h, void *buf, int size)
 
 
 
-int sdf_fopen(sdf_file_t *h)
+int sdf_fopen(sdf_file_t *h, int mode)
 {
     int ret = 0;
 
 #ifdef PARALLEL
-    ret = MPI_File_open(h->comm, (char*)h->filename, MPI_MODE_RDONLY,
-        MPI_INFO_NULL, &h->filehandle);
+    if (mode == SDF_READ)
+        ret = MPI_File_open(h->comm, (char*)h->filename, MPI_MODE_RDONLY,
+            MPI_INFO_NULL, &h->filehandle);
+    else if (mode == SDF_WRITE)
+        ret = MPI_File_open(h->comm, (char*)h->filename,
+            MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &h->filehandle);
+    else
+        ret = MPI_File_open(h->comm, (char*)h->filename,
+            MPI_MODE_RDWR, MPI_INFO_NULL, &h->filehandle);
     if (ret) h->filehandle = 0;
 #else
-    h->filehandle = fopen(h->filename, "r");
+    if (mode == SDF_READ)
+        h->filehandle = fopen(h->filename, "r");
+    else if (mode == SDF_WRITE)
+        h->filehandle = fopen(h->filename, "w");
+    else
+        h->filehandle = fopen(h->filename, "r+");
 #endif
     if (!h->filehandle) ret = 1;
 
@@ -208,7 +220,7 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
     h->filename = malloc(strlen(filename)+1);
     memcpy(h->filename, filename, strlen(filename)+1);
 
-    sdf_fopen(h);
+    sdf_fopen(h, mode);
     if (!h->filehandle) {
         free(h->filename);
         free(h);
@@ -222,6 +234,8 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
     else
 #endif
         h->mmap = NULL;
+
+    if (mode != SDF_READ) return h;
 
     ret = sdf_read_header(h);
     if (ret) {
