@@ -262,6 +262,7 @@ int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen);
 int sdf_free_blocklist_data(sdf_file_t *h);
 int sdf_broadcast(sdf_file_t *h, void *buf, int size);
 int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local);
+int sdf_write(sdf_file_t *h);
 
 // internal routines
 
@@ -293,6 +294,7 @@ int sdf_read_lagran_mesh(sdf_file_t *h);
 int sdf_read_station_info(sdf_file_t *h);
 
 void sdf_trim(char *str);
+int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out);
 
 
 #ifdef SDF_DEBUG

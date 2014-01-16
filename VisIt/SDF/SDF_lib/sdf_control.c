@@ -756,6 +756,39 @@ int sdf_randomize_array(sdf_file_t *h, void **var_in, int count)
 
 
 
+int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out)
+{
+    sdf_file_t *h_tmp;
+
+    if (h_in == h_out) return 1;
+
+    h_tmp = malloc(sizeof(*h_tmp));
+    memcpy(h_tmp, h_out, sizeof(*h_out));
+    memcpy(h_out, h_in, sizeof(*h_in));
+
+    h_out->dbg_count        = h_tmp->dbg_count;
+    h_out->dbg              = h_tmp->dbg;
+    h_out->dbg_buf          = h_tmp->dbg_buf;
+    h_out->string_length    = h_tmp->string_length;
+    h_out->indent           = h_tmp->indent;
+    h_out->done_header      = h_tmp->done_header;
+    h_out->use_summary      = h_tmp->use_summary;
+    h_out->sdf_lib_version  = h_tmp->sdf_lib_version;
+    h_out->sdf_lib_revision = h_tmp->sdf_lib_revision;
+    h_out->comm             = h_tmp->comm;
+    h_out->rank             = h_tmp->rank;
+    h_out->ncpus            = h_tmp->ncpus;
+    h_out->filename         = h_tmp->filename;
+    h_out->filehandle       = h_tmp->filehandle;
+    h_out->mmap             = h_tmp->mmap;
+
+    free(h_tmp);
+
+    return 0;
+}
+
+
+
 static uint32_t Q[41790], indx, carry, xcng, xs;
 
 #define CNG (xcng = 69609 * xcng + 123)
