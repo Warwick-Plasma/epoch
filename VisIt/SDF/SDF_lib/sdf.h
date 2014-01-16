@@ -25,7 +25,7 @@
 
 #define SDF_VERSION  1
 #define SDF_REVISION 2
-#define SDF_LIB_VERSION  3
+#define SDF_LIB_VERSION  4
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
@@ -171,16 +171,14 @@ struct sdf_block {
     double *extents, *dim_mults;
     double *station_x, *station_y, *station_z;
     double mult, time, time_increment;
-    uint64_t block_start;
-    uint64_t next_block_location, data_location;
-    uint64_t nelements, npoints, data_length;
+    uint64_t dims[3];
+    uint64_t block_start, next_block_location, data_location;
+    uint64_t nelements, data_length, *nelements_blocks, *data_length_blocks;
     uint32_t ndims, geometry, datatype, blocktype, info_length;
     uint32_t type_size, stagger, datatype_out, type_size_out;
     uint32_t nstations, nvariables, step, step_increment;
-    uint32_t *dims_in, *station_nvars;
+    uint32_t *dims_in, *station_nvars, *variable_types, *station_index;
     int32_t *station_move;
-    uint32_t *variable_types, *station_index;
-    uint64_t dims[3];
     int local_dims[3], nm, nelements_local, n_ids, opt, ng, nfaces;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
@@ -193,7 +191,7 @@ struct sdf_block {
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
     char dont_own_data, use_mult;
-    sdf_block_t *next;
+    sdf_block_t *next, *prev;
     sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
 #ifdef PARALLEL
@@ -218,7 +216,7 @@ struct sdf_file {
     uint32_t jobid1, jobid2, endianness, summary_size;
     uint32_t block_header_length, string_length;
     uint32_t code_io_version, step;
-    int32_t nblocks;
+    int32_t nblocks, error_code;
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float, use_summary;

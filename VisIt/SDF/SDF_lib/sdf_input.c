@@ -56,6 +56,7 @@ static inline int sdf_get_next_block(sdf_file_t *h)
             else
                 block->block_start = h->current_location;
             h->tail->next = block;
+            h->tail->next->prev = h->tail;
             h->current_block = h->tail = block;
         }
     } else {

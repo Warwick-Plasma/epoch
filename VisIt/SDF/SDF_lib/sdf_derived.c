@@ -7,6 +7,13 @@
 #define IJK1(i,j,k) ((i) + (nx+1) * ((j) + (ny+1) * (k)))
 #define IJK2(i,j,k) ((i)+1 + (nx+2) * ((j)+1 + (ny+2) * ((k)+1)))
 
+#define APPEND_BLOCK(b) do { \
+        (b)->next = calloc(1, sizeof(sdf_block_t)); \
+        (b)->next->prev = (b); \
+        (b) = (b)->next; \
+        (b)->next = NULL; \
+    } while (0)
+
 
 static char *strcat_alloc(char *base, char *sfx)
 {
@@ -959,11 +966,9 @@ static void add_surface_variables(sdf_file_t *h, sdf_block_t *surf,
                 b->dont_display || b->stagger != SDF_STAGGER_CELL_CENTRE)
                     continue;
 
-        append->next = calloc(1, sizeof(sdf_block_t));
-
+        APPEND_BLOCK(append);
         nappend++;
-        append = append_tail = append->next;
-        append->next = NULL;
+        append_tail = append;
 
         name1 = surf->id;
         name2 = b->id;
@@ -1057,9 +1062,10 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
     }
 
     /* Add global time mesh */
-    global_mesh = mesh = (*append)->next = calloc(1, sizeof(sdf_block_t));
+    APPEND_BLOCK(*append);
     (*nappend)++;
-    (*append) = (*append_tail) = (*append)->next;
+    *append_tail = *append;
+    global_mesh = mesh = *append;
 
     SDF_SET_ENTRY_ID(mesh->id, meshid);
     SDF_SET_ENTRY_ID(mesh->units, "s");
@@ -1079,9 +1085,10 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
     nsofar = 0;
     b = list_start(station_blocks);
     for (i = 0; i < station_blocks->count; i++) {
-        mesh = (*append)->next = calloc(1, sizeof(sdf_block_t));
+        APPEND_BLOCK(*append);
         (*nappend)++;
-        (*append) = (*append_tail) = (*append)->next;
+        *append_tail = *append;
+        mesh = *append;
 
         mesh->id = strcat_alloc(meshid, b->id);
         mesh->name = strcat_alloc(meshname, b->name);
@@ -1123,9 +1130,10 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
             sb = list_next(station_blocks);
         }
         for (j = 0; j < station->station_nvars[i]; j++) {
-            b = (*append)->next = calloc(1, sizeof(sdf_block_t));
+            APPEND_BLOCK(*append);
             (*nappend)++;
-            (*append) = (*append_tail) = (*append)->next;
+            *append_tail = *append;
+            b = *append;
 
             b->id = strcat_alloc(station->station_ids[i],
                     station->variable_ids[var]);
@@ -1162,9 +1170,10 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
 
     list_destroy(&station_blocks);
 /*
-    b = (*append)->next = calloc(1, sizeof(sdf_block_t));
+    APPEND_BLOCK(*append);
     (*nappend)++;
-    (*append) = (*append_tail) = (*append)->next;
+    *append_tail = *append;
+    b = *append;
 
     b->blocktype == SDF_BLOCKTYPE_STATION_DERIVED;
     SDF_SET_ENTRY_ID(b->id, "stat");
@@ -1186,9 +1195,10 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
     list_t *station_blocks;
 
     // Create the new derived block and add it to the list
-    new = (*append)->next = calloc(1, sizeof(sdf_block_t));
+    APPEND_BLOCK(*append);
     (*nappend)++;
-    (*append) = (*append_tail) = (*append)->next;
+    *append_tail = *append;
+    new = *append;
 
     new->blocktype = SDF_BLOCKTYPE_STATION_DERIVED;
     SDF_SET_ENTRY_ID(new->id, "global_stations");
@@ -1408,11 +1418,9 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 // Add 1d arrays for each coordinate dimension of the
                 // particles. (ie. all the x's, all the y's, all the z's).
                 // These are required in order to perform scatter plots.
-                append->next = calloc(1, sizeof(sdf_block_t));
-
+                APPEND_BLOCK(append);
                 nappend++;
-                append = append_tail = append->next;
-                append->next = NULL;
+                append_tail = append;
 
                 if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
                     name1 = b->id;
@@ -1471,10 +1479,9 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             if (!mesh) break;
 
             // First add CPU mesh
-            append->next = calloc(1, sizeof(sdf_block_t));
-
+            APPEND_BLOCK(append);
             nappend++;
-            append = append_tail = append->next;
+            append_tail = append;
 
             len1 = strlen(b->id);
             str = malloc(len1+6);
@@ -1512,11 +1519,9 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             mesh = append;
 
             // Now add CPU data block
-            append->next = calloc(1, sizeof(sdf_block_t));
-
+            APPEND_BLOCK(append);
             nappend++;
-            append = append_tail = append->next;
-            append->next = NULL;
+            append_tail = append;
 
             // Rename original block so that we can use the original name
             // for plotting
@@ -1561,10 +1566,9 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 
     if (first_mesh) {
         // First add CPU mesh
-        append->next = calloc(1, sizeof(sdf_block_t));
-
+        APPEND_BLOCK(append);
         nappend++;
-        append = append_tail = append->next;
+        append_tail = append;
 
         SDF_SET_ENTRY_ID(append->id, "grid_cpus_current");
         SDF_SET_ENTRY_STRING(append->name, "Grid/CPUs/Current rank");
@@ -1589,11 +1593,9 @@ int sdf_add_derived_blocks(sdf_file_t *h)
         mesh = append;
 
         // Now add CPU data block
-        append->next = calloc(1, sizeof(sdf_block_t));
-
+        APPEND_BLOCK(append);
         nappend++;
-        append = append_tail = append->next;
-        append->next = NULL;
+        append_tail = append;
 
         SDF_SET_ENTRY_ID(append->id, "cpus_current");
         SDF_SET_ENTRY_ID(append->name, "CPUs/Current rank");
@@ -1615,6 +1617,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 
     if (nappend) {
         h->tail->next = append_head->next;
+        h->tail->next->prev = h->tail;
         h->tail = append_tail;
         h->nblocks += nappend;
     }
@@ -1668,11 +1671,9 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
             }
 
             for (i = 0; i < b->ndims; i++) {
-                append->next = calloc(1, sizeof(sdf_block_t));
-
+                APPEND_BLOCK(append);
                 nappend++;
-                append = append_tail = append->next;
-                append->next = NULL;
+                append_tail = append;
 
                 append->blocktype = SDF_BLOCKTYPE_UNSTRUCTURED_MESH;
                 append->ndims = obst->ndims;
@@ -1705,11 +1706,9 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
             }
 
             for (i = 0; i < 7; i++) {
-                append->next = calloc(1, sizeof(sdf_block_t));
-
+                APPEND_BLOCK(append);
                 nappend++;
-                append = append_tail = append->next;
-                append->next = NULL;
+                append_tail = append;
 
                 append->blocktype = SDF_BLOCKTYPE_UNSTRUCTURED_MESH;
                 append->ndims = obst->ndims;
@@ -1773,10 +1772,9 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                     // Add new face grid if it doesn't exist
                     mesh = sdf_find_block_by_id(h, b->mesh_id);
                     if (!mesh) {
-                        append->next = calloc(1, sizeof(sdf_block_t));
-
+                        APPEND_BLOCK(append);
                         nappend++;
-                        append = append_tail = append->next;
+                        append_tail = append;
 
                         memcpy(append, old_mesh, sizeof(sdf_block_t));
                         append->next = NULL;
@@ -1822,6 +1820,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
 
     if (nappend) {
         h->tail->next = append_head->next;
+        h->tail->next->prev = h->tail;
         h->tail = append_tail;
         h->nblocks += nappend;
     }
