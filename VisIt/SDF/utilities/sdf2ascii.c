@@ -121,7 +121,7 @@ char *parse_args(int *argc, char ***argv)
 int main(int argc, char **argv)
 {
     char *file = NULL;
-    int i, buflen, block, err;
+    int i, block, err;
     sdf_file_t *h;
     sdf_block_t *b;
     comm_t comm;
@@ -131,6 +131,8 @@ int main(int argc, char **argv)
 #ifdef PARALLEL
     MPI_Init(&argc, &argv);
     MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+#else
+    comm = 0;
 #endif
 
     h = sdf_open(file, comm, SDF_READ, use_mmap);

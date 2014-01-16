@@ -217,6 +217,8 @@ int main(int argc, char **argv)
 #ifdef PARALLEL
     MPI_Init(&argc, &argv);
     MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+#else
+    comm = 0;
 #endif
 
     h = sdf_open(file, comm, SDF_READ, use_mmap);

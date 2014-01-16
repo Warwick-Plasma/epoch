@@ -11,6 +11,7 @@ static void *sdf_global_extension_dlhandle = NULL;
 void *sdf_extension_load(sdf_file_t *h)
 {
     sdf_extension_create_t *sdf_extension_create;
+    void *p;
 
     if (sdf_global_extension) return sdf_global_extension;
 
@@ -21,9 +22,9 @@ void *sdf_extension_load(sdf_file_t *h)
         return NULL;
     }
 
-    sdf_extension_create =
-            (sdf_extension_create_t *)dlsym(sdf_global_extension_dlhandle,
-            "sdf_extension_create");
+    // Weird pointer copying required by ISO C
+    p = dlsym(sdf_global_extension_dlhandle, "sdf_extension_create");
+    memcpy(&sdf_extension_create, &p, sizeof(p));
 
     sdf_global_extension = sdf_extension_create(h);
 
@@ -34,13 +35,14 @@ void *sdf_extension_load(sdf_file_t *h)
 void sdf_extension_unload(void)
 {
     sdf_extension_destroy_t *sdf_extension_destroy;
+    void *p;
 
     if (!sdf_global_extension_dlhandle) return;
 
     if (sdf_global_extension) {
-        sdf_extension_destroy =
-                (sdf_extension_destroy_t *)dlsym(sdf_global_extension_dlhandle,
-                "sdf_extension_destroy");
+        // Weird pointer copying required by ISO C
+        p = dlsym(sdf_global_extension_dlhandle, "sdf_extension_destroy");
+        memcpy(&sdf_extension_destroy, &p, sizeof(p));
 
         sdf_extension_destroy(sdf_global_extension);
     }

@@ -129,13 +129,20 @@ int sdf_abort(sdf_file_t *h)
 
 
 
-int sdf_seek(sdf_file_t *h)
+int sdf_seek_set(sdf_file_t *h, off_t offset)
 {
 #ifdef PARALLEL
-    return MPI_File_seek(h->filehandle, h->current_location, MPI_SEEK_SET);
+    return MPI_File_seek(h->filehandle, offset, MPI_SEEK_SET);
 #else
-    return fseeko(h->filehandle, h->current_location, SEEK_SET);
+    return fseeko(h->filehandle, offset, SEEK_SET);
 #endif
+}
+
+
+
+int sdf_seek(sdf_file_t *h)
+{
+    return sdf_seek_set(h, h->current_location);
 }
 
 

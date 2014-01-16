@@ -12,7 +12,7 @@ do
    case $name in
       c) clean=2 ;;
       r) clean=1 ;;
-      d) DBG="-g -O0"; PYDBG="-g" ;;
+      d) DBG="-g -O0 -Wall -Wno-unused-function -std=c99 -pedantic"; PYDBG="-g" ;;
       h) cat <<EOF
 build script options:
   -c: Clean up files. Do not build anything.
