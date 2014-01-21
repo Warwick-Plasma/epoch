@@ -4,7 +4,7 @@ MODULE version_data
   INTEGER, PARAMETER :: i4  = SELECTED_INT_KIND(9)  ! 4-byte 2^31 ~ 10^9
 
   CHARACTER(LEN=*), PARAMETER :: c_code_name = 'EPOCH3D'
-  INTEGER(i4), PARAMETER :: c_version = 4, c_revision = 2, c_minor_rev = 13
+  INTEGER(i4), PARAMETER :: c_version = 4, c_revision = 3, c_minor_rev = 0
   INTEGER(i4), PARAMETER :: c_code_io_version = 1
   CHARACTER(LEN=*), PARAMETER :: c_commit_id = _COMMIT
   CHARACTER(LEN=*), PARAMETER :: c_compile_machine = _MACHINE
