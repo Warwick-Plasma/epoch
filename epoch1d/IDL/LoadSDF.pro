@@ -95,8 +95,11 @@ FUNCTION LoadSDFFile, filename, _variables=requestv, _silent=silent, $
 
   IF (file_header.revision GT SDF_Common.REVISION) THEN BEGIN
     PRINT, "WARNING : The file ", filename, $
-        " has a higher revision number than this reader"
+        " has a higher revision number than this reader."
     PRINT, "Not all data in the file will be available"
+    PRINT, FORMAT='("File version:", I2, ".", I-2, ", Reader version:",' $
+        + 'I2, ".", I-2)', file_header.version, file_header.revision, $
+        SDF_Common.VERSION, SDF_Common.REVISION
     PRINT, "Please contact the CFSA, University of Warwick " $
         + "to obtain a new version"
   ENDIF

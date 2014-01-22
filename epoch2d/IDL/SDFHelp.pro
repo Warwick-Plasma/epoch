@@ -30,7 +30,7 @@ PRO init_SDFHelp
       ID_LENGTH:32L, $
       ENDIANNESS:16911887L, $
       VERSION:1L, $
-      REVISION:2L, $
+      REVISION:3L, $
       MAGIC:"SDF1" }
   
   SDF_Blocktypes = { $
