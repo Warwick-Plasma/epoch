@@ -1,3 +1,916 @@
+24-01-2014 Changes for version 4.3
+
+ * Added 'restart' dumpmask constant.
+
+ * Ionization species inherit "dumpmask".
+   The species which are automatically created for each ionization
+   level are now given the same "dumpmask" or "dump" parameter as
+   the parent species. This behaviour can be overridden by explicitly
+   adding a species block of the same name with a differing dumpmask.
+   eg.
+
+   begin:species
+     name = Helium
+     ionisation_energies = (24.6*ev,54.4*ev)
+     dump = F
+   end:species
+
+   begin:species
+     name = Helium1
+     dump = T
+   end:species
+
+ * Rationalised the usage of multiple "output" blocks.
+   This set of changes introduces a clear distinction between the
+   old style of output block and the new style.
+
+   With the old method, there is a single unnamed output block. It
+   has three levels of dump frequency: "normal", "full" and
+   "restart". There is a single dump interval specified by either
+   "dt_snapshot" or "nstep_snapshot" and the frequency between full
+   and restart dumps is specified in relation to this interval using
+   "full_dump_every" and "restart_dump_every".
+
+   With the new method, there can be multiple output blocks and each
+   one has a "name" field to distinguish it. It is the existence or
+   absence of this field which determines whether it is a new or old
+   style output block. Each output block has a single dump frequency.
+   In order to have multiple dump levels you must create a separate
+   output block for each level. Since there is no longer the notion
+   of multiple dump levels, the "full_dump_every", etc. flags are
+   not supported.
+   There are a few output parameters which only make sense globally.
+   When using the new style of output block, these are now specified
+   by placing them in their own "output_global" block.
+   The list of fields which are now specified globally are:
+     force_first_to_be_restartable
+     force_final_to_be_restartable
+     use_offset_grid
+
+ * Made "dump_source_code" a per-output block parameter.
+   The flags "dump_source_code" and "dump_input_decks" parameters
+   can now be specified individually for each named output block.
+   If the flags are not present, they default to "T" for restartable
+   output blocks and "F" for non-restartable ones.
+
+ * Added start and stop times to the "output" blocks.
+   "output" blocks in the input deck now accept the parameters
+   "time_start", "time_stop", "nstep_start" and "nstep_stop".
+   These determine the time or step number at which to start
+   considering output for a block and similarly the time or step
+   number at which to stop considering output for a block.
+   For example:
+   begin:output
+     nstep_snapshot = 4
+     nstep_start = 5
+     nstep_stop = 12
+   end:output
+
+   With this block, the first output will occur at step number 8
+   since this is the first multiple of 4 to occur after 5. The last
+   dump will occur at step number 12 regardless of how many steps
+   the simulation continues to run for.
+   Note that if "dump_first" or "dump_last" are set to true for this
+   block then dumps will occur first or last regardless of the values
+   of "time_start", etc.
+   Note also that the flags are applied on a per-output block basis
+   in the case of multiple output blocks. A subsequent patch will
+   add global applied variants.
+
+ * Added global versions of "time_start", etc. flags.
+   This changeset adds "time_start", "time_stop", "nstep_start"
+   and "nstep_stop" parameters to the "output_global" input deck
+   block.
+   These have the same semantics as the per-output block versions
+   added in the previous changeset, except that they apply to all
+   output blocks in the input deck.
+   The per-output block parameters are still honoured and the most
+   restrictive version applies.
+   For example:
+   begin:output_global
+     nstep_start = 5
+     nstep_stop = 8
+   end:output_global
+
+   begin:output
+     name = block1
+     nstep_snapshot = 1
+     nstep_start = 4
+     nstep_stop = 7
+   end:output
+
+   begin:output
+     name = block2
+     nstep_snapshot = 1
+     nstep_start = 6
+     nstep_stop = 9
+   end:output
+
+   In this example, the first "block1" output will occur at step 5
+   due to the global restriction and the first "block2" output will
+   occur at step 6 due to the per-block restriction.
+   Meanwhile, the last "block1" output will occur at step 7 due to
+   the per-block restriction and the last "block2" output will occur
+   at step 8 due to the global restriction.
+
+ * Added global variants of "dump_first", "dump_last"
+   This adds "dump_first" and "dump_last" parameters to the
+   "output_global" block of the input deck.
+   If specified, they override the values of any per-output block
+   or default values of these parameters.
+
+ * Added "t_end" and "nsteps" to the deck parser.
+   This changeset adds the "t_end" and "nsteps" parameters from the
+   "control" block to the input deck parser.
+   This enables them to be used within maths expressions elsewhere
+   in the input deck. For example, you can now specify that there
+   should be 10 output dumps at equal intervals using:
+
+   begin:output
+     dt_snapshot = t_end / 10
+     nstep_snapshot = nstep / 10
+   end:output
+
+   The change also exposes the "nprocx/y/z" parameters although since
+   these may be redefined when the MPI grid is setup, they may not
+   always give the correct values.
+
+ * Added dump_at_times flag to the "output" block.
+   This change adds both the "dump_at_times" and "dump_at_nsteps"
+   parameters to "output" blocks in the input deck.
+   These specify a list of times/nsteps at which to write the
+   current output block. They act in addition to other output
+   frequency parameters.
+   eg.
+   begin:output
+     name = test
+     nstep_snapshot = 10
+     dump_at_nsteps = 3,9,10,18,22
+     nstep_start = 7
+     ex = always
+   end:output
+
+   This will output the "test" block at nsteps 9,10,18,20,22,30,40...
+
+ * Added "dump_cycle" parameter to the "output" block.
+   This adds the "dump_cycle" integer parameter to the "output"
+   block in the input deck.
+   If set to a positive integer then the output file number will
+   be reset to zero after the specified cycle number is reached.
+   The default is "0", so dump cycling never occurs.
+   eg.
+   block:output
+     nstep_snapshot = 10
+     dump_cycle = 2
+     ex = always
+   end:output
+
+   With this block, output will be written at step 10 to the output
+   file "0000.sdf", step 20 to "0001.sdf", step 30 to "0002.sdf",
+   step 40 to "0000.sdf", step 50 to "0001.sdf", etc.
+
+ * Allow "restart_snapshot" to accept filenames.
+   The "restart_snapshot" parameter in the "control" block of the
+   input deck will now accept a filename instead of a cycle
+   number.
+   If you want to restart from "0012.sdf" then it can either be
+   specified using:
+     restart_snapshot = 12
+
+   as in previous versions, or alternatively it can be specified
+   using:
+     restart_snapshot = 0012.sdf
+
+   This syntax will be useful once output file prefixes have been
+   implemented.
+
+ * Added the "file_prefix" parameter to output blocks.
+   It is now possible to separate output files generated by
+   different output blocks by specifying a prefix.
+   This is done using the "file_prefix" parameter in an "output"
+   block of the input deck.
+   If "file_prefix = aa" is specified then the files generated by
+   the output block will be named "aa0000.sdf", etc. instead of
+   just "0000.sdf". The prefix is not applied to output files
+   generated by other output blocks.
+
+   The reason for introducing this change, is that you can now
+   write different variables to separate files which was not
+   previously possible.
+
+   For example, here are two output blocks which do not use file
+   prefixes:
+   begin:output
+     name = o1
+     nstep_snapshot = 1
+     charge_density = always
+   end:output
+
+   begin:output
+     name = o2
+     dump_at_nsteps = 10
+     restartable = T
+   end:output
+
+   With this input deck, we want to have the "charge_density"
+   derived variable at every snapshot and then periodically write a
+   restart dump. The problem is that the dump file "0010.sdf"
+   contains both the restart information and the "charge_density"
+   variable. At the end of the run we can't just delete the large
+   restart dumps without losing the smaller variables at that
+   time step.
+
+   With the new version we would add a prefix to one or both
+   blocks:
+   begin:output
+     name = o1
+     file_prefix = small
+     nstep_snapshot = 1
+     charge_density = always
+   end:output
+
+   begin:output
+     name = o2
+     nstep_snapshot = 10
+     restartable = T
+   end:output
+
+   Now the "charge_density" will be written to "small0000.sdf", etc.
+   At step 10, two files will be written: "small0010.sdf" containing
+   just the charge_density and "0000.sdf" containing all the restart
+   variables.
+
+   Note that some care must be taken, since if the same variable is
+   in the output block for multiple file prefixes then multiple
+   copies will be written to file. This obviously uses more disk
+   space and is more time consuming than necessary.
+
+   It should also be noted that if multiple output blocks use the
+   same file stem then their output will be combined. eg:
+   begin:output
+     name = o1
+     file_prefix = a
+     dump_at_nsteps = 2,4
+     ex = always
+   end:output
+
+   begin:output
+     name = o2
+     file_prefix = a
+     dump_at_nsteps = 3,4
+     ey = always
+   end:output
+
+   begin:output
+     name = o3
+     file_prefix = b
+     dump_at_nsteps = 4
+     ez = always
+   end:output
+
+   In this example, at step 2 a0000.sdf contains ex, step 3 a0001.sdf
+   contains ey, step 4 a0002.sdf contains ex,ey and b0000.sdf
+   contains ez.
+
+ * Added "rolling_restart" flag to the output block.
+   If the "rolling_restart" flag is set to "T" in a named output
+   block then it automatically sets the output block to have the
+   properties required for performing rolling restarts.
+   It is currently just a shorthand for setting the following flags:
+     dump_cycle = 1
+     restartable = T
+     file_prefix = roll
+
+   In the future, there may be some additional properties attached
+   to rolling restart dumps and these will also be enabled using
+   this flag.
+
+ * Added "dump_cycle_first_index" flag to output block.
+   This parameter can be used to specify the starting number used
+   when output numbering is reset due to the "dump_cycle" parameter.
+
+ * Added command-line options for Makefile.
+
+ * Allow the "phase" parameter to be time varying.
+
+ * Allow the "profile" parameter to be time varying.
+
+ * Added "sdffilter" utility for manipulating SDF files.
+   The "sdf2ascii" utility has been developed primarily as a debugging
+   tool. Its purpose is to spit out the exact contents of a file.
+   Rather than extend this to handle more complex post-processing
+   tasks, I have instead added the "sdffilter" utility.
+   At the moment it is fairly basic and just handles station data.
+   In the future it will handle tasks such as rewriting SDF files,
+   performing lineouts, generating derived variables, etc.
+
+ * Added support for constants to the Matlab reader.
+
+ * Added a makefile flag for disabling encoded source.
+
+ * Reduce the number of CPUs if necessary.
+   The previous patches enforce a minimum domain size. In some
+   situations it may not be possible to divide the simulation
+   amongst all the processors and still meet this restriction.
+   In such circumstances, we keep reducing the number of processes
+   until we find a suitable split.
+   On a typical large unattended run this behaviour is better than
+   exiting and losing allocation slot.
+
+   To have the simulation exit under such circumstances, add the
+   flag "allow_cpu_reduce = F" to the control block.
+
+ * Fixed compilation on IBM Bluegene machines.
+   To compile on a Bluegene machine, use the command
+   "make COMPILER=ibm"
+
+ * Added default values for ignorable directions.
+   This change allows submitting 3D or 2D input decks to a 1D
+   version of EPOCH and 3D input decks to a 2D version of EPOCH.
+   Any references to y/z will be set equal to zero unless overridden
+   by a deck constant. Other y/z values also assume sensible
+   defaults, eg. 1 grid cell, 1 metre thick, etc.
+
+ * Added automatic byteswapping to the SDF library.
+   The library now checks the endianness of the SDF file and
+   byteswaps the data if required.
+
+ * Fixed unpacking script on big-endian machines.
+
+ * Added "sdf_buffer_size" parameter to output_global.
+   This adds an input deck parameter to the "output_global" block,
+   allowing users to control the size of the buffer used when
+   writing point data to SDF files.
+
+ * Added "filesystem" option to output blocks.
+   Some filesystems can be unreliable when performing parallel I/O.
+   Often this is fixable by prefixing the filename with 'ufs' or
+   'nfs'. This change adds an option to both the "output" block
+   and "output_global" block enabling the filesystem prefix to be
+   used. eg:
+
+   begin:output_global
+     filesystem = ufs
+   end:output_global
+
+ * Added Makefile flag for compiling on HECToR
+
+ * Added particle gamma and relativistic mass output.
+   It is now possible to output per-particle gamma and per-particle
+   relativistic mass. These are specified in the same way as other
+   particle variables in the "output" block using the parameters
+   "gamma" and "relativistic_mass". eg.
+
+   begin:output
+     dt_snapshot = 1e-15
+     particles = always
+     gamma = always
+     relativistic_mass = always
+   end:output
+
+   There is also now a "rest_mass" parameter which is just an alias
+   for "mass", controlling the output of per-particle rest mass.
+
+ * Allow "qed" blocks when -DPHOTONS is not used.
+   Previous versions of the code would halt execution if a "qed"
+   block was found in the input deck for code which was not compiled
+   using the -DPHOTONS preprocessor flag. This can make it difficult
+   to use the same input deck with and without QED enabled.
+   The code now only halts if "use_qed=T" inside the "qed" block.
+
+ * Added option for QED radiation reaction.
+   The "qed" block now accepts the logical flag
+   "use_radiation_reaction". If set to "T", the radiation reaction
+   force is calculated. If set to "F", it is not calculated.
+   The default value is "T".
+
+ * Output boundary thickness to SDF dumps.
+
+ * Added constants to the SDF python reader.
+
+ * Added "disabled" flag for output blocks.
+   If "disabled=T" is set in an output block then the block is
+   ignored and never generates any output.
+
+ * Add reading of the data directory name from a file.
+   EPOCH now first checks for the existence of a file named
+   "USE_DATA_DIRECTORY" in the current working directory. If such
+   a file exists, it reads it to obtain the name of the data
+   directory to use. If no such file exists, it prompts for a
+   data directory name as before.
+   This is useful for cluster setups in which it is difficult or
+   impossible to pipe in the directory name using a job script.
+
+ * Check for the existence of a "STOP" file.
+   EPOCH will now check for the existence of a file named either
+   "STOP" or "STOP_NODUMP" in the simulation output directory.
+   The check is performed at regular intervals and if such a file
+   is found then the code exits immediately. If "STOP" is found
+   then a restart dump is written before exiting. If "STOP_NODUMP"
+   is found then no I/O is performed.
+
+   The interval between checks is controlled by the integer parameter
+   "check_stop_frequency" which can be specified in the "control"
+   block of the input deck. If it is less than or equal to zero then
+   the check is never performed.
+   The default value is 10.
+
+ * Stop execution after a given elapsed walltime.
+   This adds a two parameters to the "control" block of the input
+   deck which allow the code to halt execution and create a
+   restart dump after a specified walltime has elapsed.
+
+   Two parameters have been added:
+
+   "stop_at_walltime" is the walltime at which to halt the simulation.
+   This is specified as the number of seconds since the start of the
+   simulation.
+
+   "stop_at_walltime_file" is the filename from which to read the
+   value for "stop_at_walltime". Since the walltime will often be
+   found by querying the queuing system in a job script, it may be
+   more convenient to pipe this value into a text file rather than
+   modifying the input deck.
+
+ * Added "immobile" particle species property.
+   "species" blocks now accept the logical flag "immobile". If set
+   to "T", the species will be ignored during the particle push.
+   The default value is "F".
+
+ * Changed the default value of "dump_first" to "T".
+
+ * Added collisional ionisation
+
+ * Added an option for outputting deck constants.
+   This adds a logical flag "print_constants" to the "control"
+   block of an input deck. If set to "T", deck constants are printed
+   to the "deck.status" file as they are parsed.
+
+ * Automatically write the field grid if needed.
+   If any grid variables are written to file then the grid will
+   automatically written as well. This can be disabled by adding
+   a "grid = never" entry in the output block.
+
+ * Automatically write the particle grid if needed.
+   As with field variables, if any particle variable is written to
+   file then the corresponding particle grid will automatically
+   written as well. This can be disabled by adding a
+   "particles = never" entry in the output block.
+
+ * Added "total_energy_sum" diagnostic.
+
+Bugfixes:
+
+ * Bug fix for reading in minor revision numbers.
+
+ * Added SDF compatibility interface for old codes.
+   The addition of the minor revision field to sdf_write_run_info()
+   meant that codes could not switch between the two versions.
+   This patch adds an interface so that old codes do not have to be
+   changed.
+
+ * Fix compiler warnings related to the TRANSFER() function.
+
+ * Updated the ASCII EPOCH logo.
+
+ * Reduce module USE's to make ifort-13.x happy.
+   Recent versions of the Intel Fortran compiler take hours to
+   compile the code if there are recursively included modules.
+   Although this is quite clearly a compiler bug, it is not too
+   painful to work around.
+   It may turn out that this causes issues with other compilers and
+   may need to be reverted.
+
+ * Fixed the gen_src_module on OSX 10.8
+   The new version of "base64" on OSX-10.8 machines segfaults
+   when using the command-line option for folding long lines.
+   This change works around the issue by piping the output through
+   the "fold" command instead.
+
+ * Fixes for building the COMMIT file.
+
+ * Fix building the reader with VisIt-2.6.1
+
+ * Added commit info to SDF reader plugin.
+
+ * Changed multiplication factor in the Bohm-Gross relation.
+
+ * Made date commands in build scripts more portable.
+
+ * Ignore non-dumped species for derived variables.
+   If a particle species has its dumpmask set to "never" or dump=F
+   then it should be ignored when writing per-species derived
+   variables.
+
+ * Added a couple of aliases to the output blocks.
+
+ * Dump all the information required for QED restart.
+
+ * Various fixes to make restart dumps work correctly.
+   Dumps are now performed at the half-timestep to ensure that we
+   have all the information required for applying the laser boundary
+   conditions.
+   We also dump some extra state information for moving windows.
+
+ * Fixed bug in which restart variables were ommitted.
+   The list of variables which need to be written into restart files
+   was not always being set. This would occasionally lead to restart
+   dumps which did not contain all the variables required for a
+   restart to occur.
+
+ * Write a unique list to the "*.visit" files.
+   Each time an output dump is written, the name of the output
+   dump gets written to a "<name>.visit" file, where <name> is
+   the name of the corresponding output block.
+   When dump cycling is enabled, this could lead to multiple
+   repetitions of the same output files in the list.
+   The diagnostic routine now keeps a list of the filenames already
+   written and checks for duplicates before writing to the *.visit
+   file.
+
+ * Don't allow multiple "output" blocks with same name.
+   It is an error for the input deck to contain multiple output
+   blocks which share the same name. The current changeset properly
+   enforces this restriction.
+
+ * Added a more efficient particle shuffling algorithm.
+
+ * Made date commands in build scripts more portable.
+
+ * Ignore non-dumped species for derived variables.
+   If a particle species has its dumpmask set to "never" or dump=F
+   then it should be ignored when writing per-species derived
+   variables.
+
+ * Only write to the status file from rank zero.
+
+ * Added a couple of aliases to the output blocks.
+
+ * Possible fix for generating correct COMMIT string.
+
+ * Ensure that dist_fn gets the right species count.
+
+ * Check for valid species names during deck parse.
+
+ * Prevent possible infinite looping in dist_fn.
+
+ * Fixed bug setting up initial density in parallel.
+
+ * Made laser driven boundaries slightly faster.
+
+ * Fixed per-species field averaging.
+
+ * Stop the output dump times from drifting.
+
+ * Fix per-output block averaging start times.
+
+ * Only read SDF serial input using one process.
+   Many of the SDF input routines read in the same data on all
+   processes. However, it is much more efficient to read the data
+   using one process and then broadcast it to all the others.
+
+ * Added support for station files to the SDF library and VisIt reader.
+
+ * Fix re-init of CPML boundaries during load balance.
+
+ * Fixed the per-particle kinetic energy diagnostic.
+
+ * IOR subset dumpmasks with non-subset ones.
+   This change allows 'var = subset_name + species' to work in an
+   output block. However, there may be unintended consequences.
+
+ * Fixed compilation issues with MPICH.
+
+ * Check for a minimum size when splitting the domain.
+   Communication of the ghost cells is incorrect if the simulation
+   domain is smaller than the number of ghost cells. This is fixable
+   but it is easier just to ensure that the domain sizes are never
+   that small.
+
+ * Fixed missing factor of 2 from BSI ionization.
+
+ * Fixed compilation with some compilers.
+   It would seem that it is against the F90 standard to declare
+   variables with both POINTER and INTENT attributes.
+
+ * In collisions, skip particles with same momentum.
+
+ * Use normalised momentum for collision tests.
+
+ * Honour the minimum domain size when load balancing.
+
+ * Added integer point variable types to the IDL reader.
+
+ * Exit on unparsable input decks.
+
+ * Fix the units of momenta in distribution functions.
+
+ * Output simulation time in a more user-friendly way.
+
+ * Use Buneman's form of current smoothing.
+
+ * Bugfixes for the collision tests.
+
+ * Avoid issues due to interpolating particle weights.
+
+ * Only convert point data when necessary.
+   There was a bug when the SDF library was instructed to convert
+   point arrays from double to single precision before writing to
+   file. The entire buffer array was converted even though it is
+   only necessary to convert the data being written. This led to
+   output dumps being much slower than they should be.
+
+ * Add extra debugging flags on OSX.
+
+ * Bug fixes for the lagrangian mesh SDF blocktype.
+
+ * Added lagrangian mesh support to the IDL reader.
+
+ * Fixed the use of mmap by command-line tools.
+
+ * Fix "restrict_z" parameter in EPOCH3D.
+
+ * Fixed typo when sanity checking species block.
+   The sanity check for the "identify:" parameter in the species
+   block contained a typo which meant that an error was never raised.
+   This has now been fixed.
+
+ * Added an additional warning message for QED.
+   The code now prints a warning message if QED is turned on and
+   both electron and positron species are empty.
+
+ * Only issue a warning on an unrecognised "identify"
+   In previous versions, if an unrecognised "identify:" parameter
+   was found in the species block, the code would issue an error
+   message and halt execution. This can be a bit annoying when
+   turning on/off flags such as -DPHOTONS. The code now just issues
+   a warning and continues execution.
+
+ * Fix reference counting in the SDF python reader
+
+ * Fixes for angular distribution functions.
+
+ * Added better sanity checks to dist_fn parser.
+
+ * Autodetect gfortran compiler version in Makefile.
+
+ * Allow the VisIt reader to cope with missing grids.
+
+ * Improved performance of CPML boundaries.
+
+ * Improved performance of the field solver.
+   The generic form for the arbitrary-order field solver was a fair
+   bit slower than explicitly having separate loops for each.
+
+ * Fix {time/nstep}_start for io blocks.
+   This change fixes an issue where {time,nstep}_start were not
+   both being tested for when calculating output dump times.
+   Similarly for {time,nstep}_stop
+
+ * Fixed occasional spikes in autoloaded particles.
+   The calculation of per-particle weights was being carried out
+   incorrectly at the corners where parallel interfaces intersected
+   with the domain boundary. This has now been fixed.
+
+ * Fix derived output variables at domain boundaries.
+
+ * Fixed a few serious regressions in v4.2.12
+   Some of the tests for equality which had been changed in commit
+   3cd93e3 (SVN 1080) were the wrong way around. This completely broke
+   a few things.
+
+ * Added "USE mpi" to ionise.F90, needed by some compilers.
+
+ * Added "species_id" field to SDF point blocks.
+   This adds read/write support to the fortran SDF library for
+   adding a "species_id" field to the metadata of all point blocks.
+   It also adds read support for this field to the C-library.
+
+ * Fixed EPOCH to work with new "species_id" fields.
+   The SDF library now requires the use of a "species_id" field
+   on all point blocks.
+
+ * Added stack simplifier routines.
+
+ * Added "c_io_never" dumpmask constant.
+   Previously, the dumpmask flag "never" was assigned to zero.
+   The problem with this is it makes it impossible to tell whether
+   the "never" flag was explicitly used in a dumpmask.
+   This change might lead to some breakage.
+
+ * Added generic timing routines.
+
+ * Hack to work around issues on filesystems without flock().
+   If a filesystem is mounted without support for the flock()
+   system call then non-interleaved parallel writes will fail.
+   This patch enables a ROMIO hint which is known to work around
+   the issue on some systems.
+   It is not a true fix because the underlying problem is with the
+   filesystem and not EPOCH. It is a bit of a cludge and is not
+   guaranteed to work on all MPI implementations.
+
+ * Speeded up encoded source for certain compilers.
+
+ * Fix laser absorption diagnostic.
+
+ * Updated MatLab and IDL readers for new file revision.
+
+24-01-2014 Changes for version 4.2
+
+ * Allow the data directory to contain a '/' character.
+
+ * Added unary plus to the deck parser.
+
+ * Added per-particle kinetic energy diagnostic.
+   This can be requested using "ek = <dumpmask>".
+
+ * Added an optional error handler for MPI debugging.
+
+ * Allow dump frequency to be reset during restart.
+   The code now outputs the time an step number of the last dump for each
+   output block, rather than the next one. This allows the calculation of
+   the next dump time to be reset immediately after restarting rather than
+   only being reset once the next dump occurs.
+
+Bugfixes:
+
+ * Fixed preventing EPOCH3D from running in parallel.
+   This fixes a typo which was introduced by the patch applied on Mon Oct
+   22 05:41:01 2012.
+
+ * Don't calculate dist_fn for empty species.
+
+ * Fix dumping of particle species subsets.
+
+ * Trim whitespace from the end of ID strings.
+
+ * Added a "long_id" field to the SDF block type.
+   If a block ID is longer than "c_id_length" then it will be truncated.
+   Once this occurs, it is possible that the shortened ID string does not
+   contain enough information to find it again. With this change, the
+   original string is stored in the block structure so that up until the
+   SDF file is closed the block can still be retrieved.
+
+ * Use an untruncated ID string to find point meshes.
+   When writing point variables, we also pass through the ID string of the
+   associated point mesh. If this was too long and has been truncated, the
+   shortened version may no longer uniquely identify the correct mesh
+   block. To avoid this problem, we use the untruncated version of the
+   string to request the shortened version from the SDF library
+
+24-01-2014 Changes for version 4.1
+
+ * Changed the default for "dump_first" back to "T".
+
+ * Made sample_dist_function significantly faster.
+
+ * Added an option randomise particles in VisIt.
+
+ * Revert to previous default behaviour for IDL.
+   The new GUI routines for IDL make use of a more complex hierarchical
+   data structure. This was the new default behaviour and broke many
+   peoples existing scripts. With this patch, the old behaviour is now the
+   default. Two new functions have been introduced:
+   "getstruct()" and "explore_struct()" are the same as "getdata()" and
+   "explore_data()" except that they return the new style data structure.
+
+ * Allow sdf2ascii to accept multiple variable ids.
+   When filtering the output of sdf2ascii using the "-v" flag, it is now
+   possible to use the flag multiple times to enable multiple variables to
+   be output. Also added a few bugfixes and some tidying.
+
+ * Enable reading of constants in the IDL SDF reader.
+
+ * Added node-centred grid to the python interface.
+
+ * Added drift to the moving window species.
+
+ * Added current CPU split to VisIt reader
+
+ * Added the "use_exact_restart" control block parameter.
+   This logical flag may be set to "T" or "F". By default it is "F". If
+   this flag is set in conjunction with "restart_snapshot", EPOCH will
+   attempt to restart the code using the exact configuration it was using
+   when the restart dump was produced. The domain split amongst processors
+   will be identical, as will the particle lists. The code will also reset
+   the status of the random number generator on each process. Note that the
+   flag will be ignored if the number of processors does not match that
+   used in the original run.
+
+Bugfixes:
+
+ * Fix final output dump to be non-empty.
+   The recent multiple output block support broke the final output dump
+   such that it was written but contained no data.
+
+ * Fixed floating overflow bug in collisions routine.
+
+ * Allow restart to work with missing particle species.
+
+ * Rebalance ghost cells as well as computational domain.
+   This fixes several problems with boundary conditions, including the
+   ability to have an imposed electromagnetic field and also correctly
+   calculating laser driven boundaries.
+
+ * Fix current BCs for BSPLINE3 particle weighting.
+
+ * Use correct grid stagger for reflecting BCs.
+   When particles are set to reflect from the boundary, the current arrays
+   are flipped in the direction perpendicular to that boundary. The
+   routines which do this were not taking account of grid staggering
+   correctly which led to electron depletion at the boundary. This has now
+   been fixed.
+
+ * Fixed VisIt reader build script for older versions.
+   Also removed a few compiler warnings and added a fallback to build the
+   serial version of the reader if all else fails.
+
+ * Bugfix for rebalancing ghost cells.
+
+ * Fix the "dump_first" flag in "output" blocks.
+
+ * Bugfixes for per-output block data averaging.
+
+ * Fix load balancing in only one direction.
+
+ * Improved logging messages in VisIt reader.
+
+ * Added "cpu_split" block to the output dumps.
+
+ * Allow ionisation to compile without PER_PARTICLE_WEIGHT
+
+ * Sanity checks for multiphoton ionisation.
+   The code exits with an error when multiphoton ionisation is requested
+   and there are either no lasers or multiple lasers with different
+   frequencies.
+
+ * Fix typo in 3d rebalancing of ghost cells.
+   This fixes the bug which was found and diagnosed by Anupam Karmakar on
+   the CCPForge help forum, 2012-09-11.
+
+ * Fix MPI_Send/Recv so that they use an integer count.
+   The send/receive count in the particle transfer calls was using an
+   8-byte integer, whereas the MPI standard states that it is a plain
+   integer. This broke things on Juelich's BlueGene machine.
+
+ * Ensure correct output dump times for restarted runs.
+   Information about when the next output dump should occur must be written
+   to the restart dump in order for restarts to behave correctly.
+
+ * Read domain extents from dump file when restarting.
+   Restarting from simulations with a moving window broke because the
+   domain extents differ from that found in the input deck. This change
+   fixes it.
+
+ * Fix broken diagnostics output.
+   Laser absorption and poynting flux arrays were not using the iomask
+   array which has replaced dumpmask. This patch addresses the issue.
+
+ * Fix for per-species averaging.
+
+ * Fixes for restarting from a previous snapshot.
+   When restarting, a load balance call is not immediately followed by the
+   particle push so we have to explicitly rebalance the current arrays.
+
+ * Fix for overlapping regions in MPI_Sendrecv.
+   When the simulation domain is smaller than the number of ghostcells, the
+   memory region being sent from the simulation domain overlaps with the
+   memory region occupied by the receiving ghost cells. This was causing
+   random errors during communications for some problems. (eg. Bug #782 on
+   CCPForge)
+
+ * Removed a few MPI-related memory leaks.
+
+ * Species block "temp" now sets temperature in 3D.
+
+ * Removed "dof" (degrees of freedom) variable.
+   The calculation of temperature depends on the degrees of freedom of the
+   code. The presence of collisions, initial temperature conditions, etc.
+   mean that the degrees of freedom is not always the same as the
+   dimensions of the code. To avoid confusion, the parameter has now been
+   removed entirely.
+
+ * Fixed the IDL quick_view for multiple timesteps.
+
+ * Fixed the "full_dump_every" flag.
+
+ * Added script for generating tarballs from git.
+
+ * Read initial conditions when restarting.
+
+ * Fix for restarting with moving windows.
+
+ * Added a more helpful error message to the autoloader.
+
+ * Allow species with no particles specified.
+   If no particles are specified for a species, the code now prints a
+   message indicating that no particles have been loaded and continues to
+   run. The previous behaviour was to exit with an error message.
+
+ * Fix automatically calculated dist_fn ranges.
+
+ * Various other minor bugfixes and tweaks
+
 25-07-2012 Changes for version 4.0
 
 Additions and changes:
@@ -1106,3 +2019,4 @@ Additions and changes:
    39 continuation lines.
 
  * Dump files at end of timestep.
+
