@@ -119,7 +119,9 @@ CONTAINS
     IF (str_cmp(name, 'mev')) as_constant = c_const_mev
     IF (str_cmp(name, 'milli')) as_constant = c_const_milli
     IF (str_cmp(name, 'micro') &
-        .OR. str_cmp(name, 'micron')) as_constant = c_const_micro
+        .OR. str_cmp(name, 'micron') &
+        .OR. str_cmp(name, 'cm3') &
+        .OR. str_cmp(name, 'cc')) as_constant = c_const_micro
     IF (str_cmp(name, 'nano')) as_constant = c_const_nano
     IF (str_cmp(name, 'pico')) as_constant = c_const_pico
     IF (str_cmp(name, 'femto')) as_constant = c_const_femto
