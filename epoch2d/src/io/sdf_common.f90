@@ -727,7 +727,6 @@ CONTAINS
     CHARACTER(LEN=MPI_MAX_INFO_KEY) :: key
     CHARACTER(LEN=MPI_MAX_INFO_VAL) :: info_value
     INTEGER(KIND=MPI_OFFSET_KIND) :: filepos
-    CHARACTER(LEN=1024) :: message_buffer
     INTEGER :: sdf_error, message_len, info, nkeys, i, ierr
     LOGICAL :: found, print_error, abort
     REAL :: zz

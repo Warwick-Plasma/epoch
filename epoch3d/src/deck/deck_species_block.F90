@@ -61,7 +61,7 @@ CONTAINS
 
     INTEGER :: i, j, io, iu, nlevels, nrelease
     CHARACTER(LEN=8) :: string
-    INTEGER :: errcode
+    INTEGER :: errcode, ierr
     TYPE(primitive_stack) :: stack
 
     IF (deck_state .EQ. c_ds_first) THEN
@@ -164,6 +164,21 @@ CONTAINS
     ELSE
       DEALLOCATE(species_charge_set)
       DEALLOCATE(species_blocks)
+
+      ! Sanity check
+      DO i = 1, n_species
+        IF (species_list(i)%species_type .EQ. c_species_id_photon) CYCLE
+        IF (species_list(i)%mass .GT. c_tiny) CYCLE
+        IF (rank .EQ. 0) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'The species named "' // TRIM(species_list(i)%name) &
+                // '" must have a positive mass.'
+          ENDDO
+        ENDIF
+        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      ENDDO
 
       IF (track_ejected_particles) THEN
         ALLOCATE(ejected_list(n_species))
