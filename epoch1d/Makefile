@@ -146,15 +146,6 @@ DEFINES += $(D)TRACER_PARTICLES
 # Allow each pseudoparticle to represent a different number of real particles.
 #DEFINES += $(D)PER_PARTICLE_WEIGHT
 
-# Specify charge and mass per particle rather than per species.
-#DEFINES += $(D)PER_PARTICLE_CHARGE_MASS
-
-# Turn on debugging.
-#DEFINES += $(D)PARSER_DEBUG $(D)PARTICLE_DEBUG $(D)MPI_DEBUG $(D)SIMPLIFY_DEBUG
-
-# Keep global particle counts up to date.
-#DEFINES += $(D)PARTICLE_COUNT_UPDATE
-
 # Enable particles which behave like normal particles but do not affect
 # the field, current or each other.
 #DEFINES += $(D)TRACER_PARTICLES
@@ -169,16 +160,13 @@ DEFINES += $(D)TRACER_PARTICLES
 # Use fifth order particle weighting (default is third order).
 #DEFINES += $(D)PARTICLE_SHAPE_BSPLINE3
 
-# Don't generate any output at all. Useful for benchmarking.
-#DEFINES += $(D)NO_IO
-
 # Include a unique global particle ID. The first flag defines the ID using
 # an 8-byte integer, the second uses 4-bytes.
 #DEFINES += $(D)PARTICLE_ID
 #DEFINES += $(D)PARTICLE_ID4
 
-# Bypass the main simulation and only perform collision tests.
-#DEFINES += $(D)COLLISIONS_TEST
+# Keep global particle counts up to date.
+#DEFINES += $(D)PARTICLE_COUNT_UPDATE
 
 # Include QED routines
 #DEFINES += $(D)PHOTONS
@@ -189,6 +177,20 @@ DEFINES += $(D)TRACER_PARTICLES
 # Use Intel-specific 'mm_prefetch' calls to load next particle in the list
 # into cache ahead of time. Gives ~10% speed-up with Intel 12 compilers.
 #DEFINES += $(D)PREFETCH
+
+# Turn on debugging.
+#DEFINES += $(D)PARSER_DEBUG $(D)PARTICLE_DEBUG $(D)MPI_DEBUG $(D)SIMPLIFY_DEBUG
+
+# Don't generate any output at all. Useful for benchmarking.
+#DEFINES += $(D)NO_IO
+
+# Bypass the main simulation and only perform collision tests.
+# This flag should only ever be used for testing purposes.
+#DEFINES += $(D)COLLISIONS_TEST
+
+# Specify charge and mass per particle rather than per species.
+# This is a legacy option which will be removed soon.
+#DEFINES += $(D)PER_PARTICLE_CHARGE_MASS
 
 
 # If you are having trouble compiling the encoded_source module or
