@@ -529,7 +529,7 @@ CONTAINS
   SUBROUTINE set_plasma_frequency_dt
 
     INTEGER :: ispecies, ix, iy
-    REAL(num) :: min_dt, omega, k_max
+    REAL(num) :: min_dt, omega2, omega, k_max
 
     IF (ic_from_restart) RETURN
 
@@ -542,12 +542,13 @@ CONTAINS
       IF (species_list(ispecies)%species_type .NE. c_species_id_photon) THEN
         DO iy = 1, ny
         DO ix = 1, nx
-          omega = SQRT(initial_conditions(ispecies)%density(ix,iy) * q0**2 &
+          omega2 = initial_conditions(ispecies)%density(ix,iy) * q0**2 &
               / species_list(ispecies)%mass / epsilon0 &
               + 3.0_num * k_max**2 * kb &
               * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:)) &
-              / species_list(ispecies)%mass)
-          IF (ABS(omega) .LE. c_tiny) CYCLE
+              / species_list(ispecies)%mass
+          IF (omega2 .LE. c_tiny) CYCLE
+          omega = SQRT(omega2)
           IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
         ENDDO ! ix
         ENDDO ! iy
