@@ -1,6 +1,7 @@
 MODULE ic_module
 
   USE shared_data
+  USE helper
 
   IMPLICIT NONE
 

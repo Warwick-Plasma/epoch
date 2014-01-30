@@ -100,6 +100,7 @@ CONTAINS
 
     IF (str_cmp(element, 'collisional_ionisation')) THEN
       use_collisional_ionisation = as_logical_print(value, element, errcode)
+      IF (use_collisional_ionisation) use_collisions = .TRUE.
       RETURN
     ENDIF
 
