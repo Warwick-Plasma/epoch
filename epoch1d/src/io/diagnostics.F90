@@ -421,10 +421,10 @@ CONTAINS
         ELSE
           laser_absorbed = 0.0_num
         ENDIF
-        CALL sdf_write_srl(sdf_handle, 'abs_frac', 'Absorption/Abs_frac', &
-            laser_absorbed)
         CALL sdf_write_srl(sdf_handle, 'laser_enTotal', &
-            'Absorption/Laser_enTotal', laser_injected)
+            'Absorption/Total Laser Energy Injected (J)', laser_injected)
+        CALL sdf_write_srl(sdf_handle, 'abs_frac', &
+            'Absorption/Fraction of Laser Energy Absorbed (%)', laser_absorbed)
       ENDIF
 
       IF (IAND(iomask(c_dump_total_energy_sum), code) .NE. 0) THEN
