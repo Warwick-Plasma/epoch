@@ -261,7 +261,7 @@ int main(int argc, char **argv)
     mesh0 = NULL;
     found = 1;
     next = h->blocklist;
-    for (i = 0, idx = 1; i < h->nblocks; i++, idx++) {
+    for (i = 0, idx = 1; next; i++, idx++) {
         h->current_block = b = next;
         next = b->next;
 
@@ -347,6 +347,7 @@ int main(int argc, char **argv)
     }
 
     list_destroy(&station_blocks);
+    if (range_list) free(range_list);
 
     return close_files(h);
 }

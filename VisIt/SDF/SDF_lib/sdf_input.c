@@ -766,6 +766,7 @@ int sdf_read_run_info(sdf_file_t *h)
         SDF_READ_ENTRY_INT4(run->minor_rev);
 
     h->current_block->data = run;
+    b->done_data = 1;
 
     return 0;
 }

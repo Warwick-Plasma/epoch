@@ -273,6 +273,7 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 {
     int i;
+    struct run_info *run;
 
     if (!b) return 1;
 
@@ -282,6 +283,13 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
         free(b->grids);
     }
     if (!h->mmap && b->data && b->done_data && !b->dont_own_data) {
+        if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO) {
+            run = b->data;
+            if (run->commit_id)       free(run->commit_id);
+            if (run->sha1sum)         free(run->sha1sum);
+            if (run->compile_machine) free(run->compile_machine);
+            if (run->compile_flags)   free(run->compile_flags);
+        }
         free(b->data);
     }
     if (b->node_list) free(b->node_list);
@@ -319,6 +327,8 @@ static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
     FREE_ARRAY(b->station_names);
     FREE_ARRAY(b->variable_ids);
     FREE_ARRAY(b->material_names);
+    FREE_ARRAY(b->dim_labels);
+    FREE_ARRAY(b->dim_units);
     sdf_free_block_data(h, b);
 
     free(b);
@@ -356,15 +366,15 @@ static int sdf_free_handle(sdf_file_t *h)
     sdf_block_t *b, *next;
     int i;
 
-    if (!h || !h->filehandle) return 1;
+    if (!h) return 1;
 
     // Destroy blocklist
     if (h->blocklist) {
         b = h->blocklist;
         for (i=0; i < h->nblocks; i++) {
-            if (!b->next) break;
             next = b->next;
             sdf_free_block(h, b);
+            if (!next) break;
             b = next;
         }
     }
@@ -372,6 +382,7 @@ static int sdf_free_handle(sdf_file_t *h)
     if (h->buffer) free(h->buffer);
     if (h->code_name) free(h->code_name);
     if (h->filename) free(h->filename);
+    if (h->dbg_buf) free(h->dbg_buf);
     memset(h, 0, sizeof(sdf_file_t));
     free(h);
     h = NULL;
