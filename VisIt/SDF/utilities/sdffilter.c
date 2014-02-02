@@ -11,7 +11,7 @@
 #endif
 
 int metadata, contents, debug, single, use_mmap, ignore_summary;
-int exclude_variables;
+int exclude_variables, derived;
 char *output_file;
 struct id_list {
   char *id;
@@ -39,6 +39,7 @@ void usage(int err)
   -x --exclude=id     Exclude the block with id matching 'id'\n\
   -m --mmap           Use mmap'ed file I/O\n\
   -i --no-summary     Ignore the metadata summary\n\
+  -d --derived        Add derived blocks\n\
 ");
 /*
   -o --output         Output filename\n\
@@ -73,12 +74,14 @@ char *parse_args(int *argc, char ***argv)
         { "exclude",  required_argument, NULL,      'x' },
         { "mmap",     no_argument,       NULL,      'm' },
         { "no-summary", no_argument,     NULL,      'i' },
+        { "derived",    no_argument,     NULL,      'd' },
         //{ "output", required_argument,   NULL,      'o' },
         { NULL,       0,                 NULL,       0  }
     };
 
     metadata = debug = 1;
     contents = single = use_mmap = ignore_summary = exclude_variables = 0;
+    derived = 0;
     variable_ids = NULL;
     variable_last_id = NULL;
     output_file = NULL;
@@ -88,7 +91,7 @@ char *parse_args(int *argc, char ***argv)
     got_include = got_exclude = 0;
 
     while ((c = getopt_long(*argc, *argv,
-            "hncsmiv:x:", longopts, NULL)) != -1) {
+            "hncsmidv:x:", longopts, NULL)) != -1) {
         switch (c) {
         case 'h':
             usage(0);
@@ -183,6 +186,9 @@ char *parse_args(int *argc, char ***argv)
         case 'i':
             ignore_summary = 1;
             break;
+        case 'd':
+            derived = 1;
+            break;
         default:
             usage(1);
         }
@@ -273,7 +279,10 @@ int main(int argc, char **argv)
 
     if (!metadata && !contents) return close_files(h);
 
-    sdf_read_blocklist_all(h);
+    if (derived)
+        sdf_read_blocklist_all(h);
+    else
+        sdf_read_blocklist(h);
 
     list_init(&station_blocks);
 
