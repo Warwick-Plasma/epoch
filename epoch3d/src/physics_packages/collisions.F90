@@ -170,9 +170,9 @@ CONTAINS
 
 
 
-#ifdef PER_PARTICLE_WEIGHT
   SUBROUTINE collisional_ionisation
 
+#ifdef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies, jspecies, ion_species, e_species, n1, n2, l
     INTEGER(i8) :: ix, iy, iz
     TYPE(particle_list), POINTER :: p_list1
@@ -421,12 +421,13 @@ CONTAINS
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
     DEALLOCATE(e_dens, e_temp, e_log_lambda)
-
-  END SUBROUTINE collisional_ionisation
 #endif
 
+  END SUBROUTINE collisional_ionisation
 
 
+
+#ifdef PER_PARTICLE_WEIGHT
   SUBROUTINE preionise(electrons, ions, ionised, ionising_e, &
       ejected_e, e_mass, ion_mass, e_charge, ion_charge, e_dens, &
       full_ion_charge, ionisation_energy, n1, n2, l)
@@ -672,6 +673,7 @@ CONTAINS
     DEALLOCATE(lost_ke, was_ionised)
 
   END SUBROUTINE preionise
+#endif
 
 
 
