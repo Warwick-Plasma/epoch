@@ -330,9 +330,9 @@ CONTAINS
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor .GT. 0.0_num) THEN
-              CALL inter_species_collisions( &
-                  ejected_e, ionising_e, &
-                  m_e, m2, q_e, q2, w_e, w2, e_dens(ix,iy), jdens(ix,iy), &
+              CALL inter_species_collisions(ejected_e, ionising_e, &
+                  m_e, m2, q_e, q2, w_e, w2, &
+                  e_dens(ix,iy), jdens(ix,iy), &
                   e_temp(ix,iy), jtemp(ix,iy), e_log_lambda(ix,iy), &
                   e_user_factor)
             ENDIF
@@ -366,9 +366,9 @@ CONTAINS
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor .GT. 0.0_num) THEN
-              CALL inter_species_collisions( &
-                  ejected_e, ionising_e, &
-                  m1, m_e, q1, q_e, w1, w_e, idens(ix,iy), e_dens(ix,iy), &
+              CALL inter_species_collisions(ejected_e, ionising_e, &
+                  m1, m_e, q1, q_e, w1, w_e, &
+                  idens(ix,iy), e_dens(ix,iy), &
                   itemp(ix,iy), e_temp(ix,iy), e_log_lambda(ix,iy), &
                   e_user_factor)
             ENDIF
