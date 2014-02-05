@@ -975,7 +975,7 @@ MODULE shared_data
   REAL(num) :: walltime_start, real_walltime_start
   REAL(num) :: stop_at_walltime
   INTEGER :: stdout_frequency, check_stop_frequency
-  LOGICAL :: check_walltime
+  LOGICAL :: check_walltime, print_eta_string
 
   LOGICAL, DIMENSION(c_dir_x:c_dir_z,0:c_stagger_max) :: stagger
   INTEGER(i8) :: push_per_field = 5

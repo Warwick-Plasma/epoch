@@ -12,7 +12,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 26 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 27 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -53,7 +53,8 @@ MODULE deck_control_block
           'stop_at_walltime_file    ', &
           'simplify_deck            ', &
           'print_constants          ', &
-          'allow_missing_restart    ' /)
+          'allow_missing_restart    ', &
+          'print_eta_string         ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -93,7 +94,8 @@ MODULE deck_control_block
           'stop_at_walltime_file    ', &
           'simplify_deck            ', &
           'print_constants          ', &
-          'allow_missing_restart    ' /)
+          'allow_missing_restart    ', &
+          'print_eta_string         ' /)
 
 CONTAINS
 
@@ -107,6 +109,7 @@ CONTAINS
       simplify_deck = .TRUE.
       print_deck_constants = .FALSE.
       allow_missing_restart = .FALSE.
+      print_eta_string = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -306,6 +309,8 @@ CONTAINS
       print_deck_constants = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+26)
       allow_missing_restart = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+27)
+      print_eta_string = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

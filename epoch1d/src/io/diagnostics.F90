@@ -84,7 +84,7 @@ CONTAINS
     LOGICAL, SAVE :: first_call = .TRUE.
     TYPE(particle_species), POINTER :: species
     TYPE(subset), POINTER :: sub
-    CHARACTER(LEN=16) :: timestring
+    CHARACTER(LEN=16) :: timestring, eta_timestring
     CHARACTER(LEN=1), DIMENSION(3) :: dim_tags = (/'x', 'y', 'z'/)
     CHARACTER(LEN=5), DIMENSION(6) :: dir_tags = &
         (/'x_max', 'y_max', 'z_max', 'x_min', 'y_min', 'z_min'/)
@@ -103,8 +103,18 @@ CONTAINS
         timer_walltime = MPI_WTIME()
         elapsed_time = timer_walltime - walltime_start
         CALL create_timestring(elapsed_time, timestring)
-        WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', a)') &
-            time, step, timestring
+        IF (print_eta_string) THEN
+          eta_timestring = ''
+          IF (time .GT. 0.0_num) THEN
+            elapsed_time = (t_end - time) * elapsed_time / time
+            CALL create_timestring(elapsed_time, eta_timestring)
+          ENDIF
+          WRITE(*, '(''Time'', g14.6, '' and iteration'', i9, '' after'', &
+              & a, ''ETA'',a)') time, step, timestring, eta_timestring
+        ELSE
+          WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', &
+              & a)') time, step, timestring
+        ENDIF
       ENDIF
     ENDIF
 
@@ -2372,7 +2382,7 @@ CONTAINS
     seconds = INT(time) - ((days * 24 + hours) * 60 + minutes) * 60
     frac_seconds = FLOOR((time - INT(time)) * 100)
 
-    WRITE(timestring, '(i3,'':'',i2.2,'':'',i2.2,'':'',i2.2,''.'',i2.2)') &
+    WRITE(timestring, '(i2,'':'',i2.2,'':'',i2.2,'':'',i2.2,''.'',i2.2)') &
         days, hours, minutes, seconds, frac_seconds
 
   END SUBROUTINE create_timestring
