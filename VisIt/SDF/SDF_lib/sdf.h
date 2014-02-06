@@ -248,20 +248,20 @@ struct run_info {
 
 sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap);
 int sdf_close(sdf_file_t *h);
-int sdf_seek(sdf_file_t *h);
-int sdf_seek_set(sdf_file_t *h, off_t offset);
+int sdf_free_blocklist_data(sdf_file_t *h);
 sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id);
 sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name);
 int sdf_read_header(sdf_file_t *h);
+int sdf_read_summary(sdf_file_t *h);
 int sdf_read_blocklist(sdf_file_t *h);
 int sdf_read_blocklist_all(sdf_file_t *h);
-int sdf_read_summary(sdf_file_t *h);
 int sdf_read_block_info(sdf_file_t *h);
 int sdf_read_data(sdf_file_t *h);
-int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen);
-int sdf_free_blocklist_data(sdf_file_t *h);
-int sdf_broadcast(sdf_file_t *h, void *buf, int size);
 int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local);
+int sdf_seek(sdf_file_t *h);
+int sdf_seek_set(sdf_file_t *h, off_t offset);
+int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen);
+int sdf_broadcast(sdf_file_t *h, void *buf, int size);
 int sdf_write(sdf_file_t *h);
 
 // internal routines

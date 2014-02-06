@@ -26,6 +26,7 @@ int sdf_read_array_info(sdf_file_t *h);
 int sdf_read_run_info(sdf_file_t *h);
 int sdf_read_array(sdf_file_t *h);
 static int sdf_read_cpu_split_info(sdf_file_t *h);
+static void build_summary_buffer(sdf_file_t *h);
 
 
 
@@ -164,6 +165,164 @@ int sdf_read_header(sdf_file_t *h)
 
 
 
+int sdf_read_summary(sdf_file_t *h)
+{
+    if (h->blocklist) {
+        h->current_block = h->blocklist;
+        return 0;
+    }
+
+    if (!h->done_header) sdf_read_header(h);
+    h->current_block = NULL;
+
+    // Read the whole summary block into a temporary buffer on rank 0
+    if (h->use_summary > 0) {
+        h->current_location = h->start_location = h->summary_location;
+        h->buffer = malloc(h->summary_size);
+
+        if (h->rank == h->rank_master) {
+            sdf_seek(h);
+            sdf_read_bytes(h, h->buffer, h->summary_size);
+        }
+    } else {
+        build_summary_buffer(h);
+    }
+
+    // Send the temporary buffer to all processors
+    sdf_broadcast(h, h->buffer, h->summary_size);
+
+    return 0;
+}
+
+
+
+int sdf_read_blocklist(sdf_file_t *h)
+{
+    int i;
+#ifdef PARALLEL
+    int fix;
+    sdf_block_t *b, *next, *mesh;
+#endif
+
+    sdf_read_summary(h);
+
+    // Construct the metadata blocklist using the contents of the buffer
+    for (i = 0; i < h->nblocks; i++) {
+        SDF_DPRNT("\n");
+        sdf_read_block_info(h);
+    }
+
+    free(h->buffer);
+
+    h->buffer = NULL;
+    h->current_block = h->blocklist;
+
+#ifdef PARALLEL
+    // Hack to fix cartesian blocks whose mesh sizes don't match the stagger
+    next = h->blocklist;
+    while (next) {
+        b = next;
+        next = b->next;
+        if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE && b->stagger) {
+            fix = 0;
+            mesh = sdf_find_block_by_id(h, b->mesh_id);
+            for (i = 0; i < b->ndims; i++) {
+                if (b->const_value[i] && b->dims[i] != mesh->dims[i]) {
+                    fix = 1;
+                    b->const_value[i] = 0;
+                }
+            }
+            if (fix) {
+                // Re-calculate per block parallel factorisation
+                sdf_factor(h);
+            }
+        }
+    }
+#endif
+    return 0;
+}
+
+
+
+int sdf_read_block_info(sdf_file_t *h)
+{
+    sdf_block_t *b;
+    int ret = 0;
+
+    sdf_read_next_block_header(h);
+    b = h->current_block;
+    if (b->done_info) return 0;
+
+    h->indent += 2;
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH
+            || b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
+        ret = sdf_read_plain_mesh_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
+        ret = sdf_read_point_mesh_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
+        ret = sdf_read_plain_variable_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
+        ret = sdf_read_point_variable_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_CONSTANT)
+        ret = sdf_read_constant(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_ARRAY)
+        ret = sdf_read_array_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_CPU_SPLIT)
+        ret = sdf_read_cpu_split_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO)
+        ret = sdf_read_run_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS
+            || b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_TENSOR)
+        ret = sdf_read_stitched(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL)
+        ret = sdf_read_stitched_material(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATVAR)
+        ret = sdf_read_stitched_matvar(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
+            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_SPECIES)
+        ret = sdf_read_stitched_species(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP)
+        ret = sdf_read_stitched_obstacle_group(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_STATION)
+        ret = sdf_read_station_info(h);
+
+    return ret;
+}
+
+
+
+int sdf_read_data(sdf_file_t *h)
+{
+    sdf_block_t *b;
+
+    b = h->current_block;
+
+    if (b->populate_data) {
+        b->populate_data(h, b);
+        return 0;
+    } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
+        return sdf_read_plain_mesh(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
+        return sdf_read_lagran_mesh(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
+        return sdf_read_point_mesh(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
+        return sdf_read_plain_variable(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
+        return sdf_read_point_variable(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_ARRAY
+            || b->blocktype == SDF_BLOCKTYPE_CPU_SPLIT)
+        return sdf_read_array(h);
+
+    return 1;
+}
+
+
+
 // Read the block header into the current block
 int sdf_read_next_block_header(sdf_file_t *h)
 {
@@ -261,85 +420,6 @@ int sdf_read_next_block_header(sdf_file_t *h)
 #endif
 
     return 0;
-}
-
-
-
-int sdf_read_data(sdf_file_t *h)
-{
-    sdf_block_t *b;
-
-    b = h->current_block;
-
-    if (b->populate_data) {
-        b->populate_data(h, b);
-        return 0;
-    } else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH)
-        return sdf_read_plain_mesh(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
-        return sdf_read_lagran_mesh(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
-        return sdf_read_point_mesh(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
-        return sdf_read_plain_variable(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
-        return sdf_read_point_variable(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_ARRAY
-            || b->blocktype == SDF_BLOCKTYPE_CPU_SPLIT)
-        return sdf_read_array(h);
-
-    return 1;
-}
-
-
-
-int sdf_read_block_info(sdf_file_t *h)
-{
-    sdf_block_t *b;
-    int ret = 0;
-
-    sdf_read_next_block_header(h);
-    b = h->current_block;
-    if (b->done_info) return 0;
-
-    h->indent += 2;
-    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH
-            || b->blocktype == SDF_BLOCKTYPE_LAGRANGIAN_MESH)
-        ret = sdf_read_plain_mesh_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
-        ret = sdf_read_point_mesh_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE)
-        ret = sdf_read_plain_variable_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE)
-        ret = sdf_read_point_variable_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_CONSTANT)
-        ret = sdf_read_constant(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_ARRAY)
-        ret = sdf_read_array_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_CPU_SPLIT)
-        ret = sdf_read_cpu_split_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO)
-        ret = sdf_read_run_info(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED
-            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS
-            || b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR
-            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_TENSOR)
-        ret = sdf_read_stitched(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
-            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL)
-        ret = sdf_read_stitched_material(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR
-            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATVAR)
-        ret = sdf_read_stitched_matvar(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES
-            || b->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_SPECIES)
-        ret = sdf_read_stitched_species(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP)
-        ret = sdf_read_stitched_obstacle_group(h);
-    else if (b->blocktype == SDF_BLOCKTYPE_STATION)
-        ret = sdf_read_station_info(h);
-
-    return ret;
 }
 
 
@@ -464,85 +544,6 @@ static void build_summary_buffer(sdf_file_t *h)
 
     h->summary_size = buflen;
     h->current_location = 0;
-}
-
-
-
-int sdf_read_summary(sdf_file_t *h)
-{
-    if (h->blocklist) {
-        h->current_block = h->blocklist;
-        return 0;
-    }
-
-    if (!h->done_header) sdf_read_header(h);
-    h->current_block = NULL;
-
-    // Read the whole summary block into a temporary buffer on rank 0
-    if (h->use_summary > 0) {
-        h->current_location = h->start_location = h->summary_location;
-        h->buffer = malloc(h->summary_size);
-
-        if (h->rank == h->rank_master) {
-            sdf_seek(h);
-            sdf_read_bytes(h, h->buffer, h->summary_size);
-        }
-    } else {
-        build_summary_buffer(h);
-    }
-
-    // Send the temporary buffer to all processors
-    sdf_broadcast(h, h->buffer, h->summary_size);
-
-    return 0;
-}
-
-
-
-int sdf_read_blocklist(sdf_file_t *h)
-{
-    int i;
-#ifdef PARALLEL
-    int fix;
-    sdf_block_t *b, *next, *mesh;
-#endif
-
-    sdf_read_summary(h);
-
-    // Construct the metadata blocklist using the contents of the buffer
-    for (i = 0; i < h->nblocks; i++) {
-        SDF_DPRNT("\n");
-        sdf_read_block_info(h);
-    }
-
-    free(h->buffer);
-
-    h->buffer = NULL;
-    h->current_block = h->blocklist;
-
-#ifdef PARALLEL
-    // Hack to fix cartesian blocks whose mesh sizes don't match the stagger
-    next = h->blocklist;
-    while (next) {
-        b = next;
-        next = b->next;
-        if (b->blocktype == SDF_BLOCKTYPE_PLAIN_VARIABLE && b->stagger) {
-            fix = 0;
-            mesh = sdf_find_block_by_id(h, b->mesh_id);
-            for (i = 0; i < b->ndims; i++) {
-                if (b->const_value[i] && b->dims[i] != mesh->dims[i]) {
-                    fix = 1;
-                    b->const_value[i] = 0;
-                }
-            }
-            if (fix) {
-                // Re-calculate per block parallel factorisation
-                sdf_factor(h);
-            }
-        }
-    }
-#endif
-    return 0;
 }
 
 

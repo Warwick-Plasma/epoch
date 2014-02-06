@@ -7,8 +7,18 @@
 #include <mpi.h>
 #endif
 
+static int sdf_write_bytes(sdf_file_t *h, void *buf, int buflen);
+static int sdf_write_at(sdf_file_t *h, off_t offset, void *buf, int buflen);
+static int sdf_flush(sdf_file_t *h);
+static size_t trimwhitespace(const char *str_in, char *str_out, size_t len);
+static int safe_copy_string(char *s1, char *s2);
+static int sdf_safe_write_string_len(sdf_file_t *h, char *string, int length);
+static int sdf_safe_write_string(sdf_file_t *h, char *string);
+static int sdf_safe_write_id(sdf_file_t *h, char *string);
+
 static int write_block(sdf_file_t *h);
 static int write_header(sdf_file_t *h);
+static int write_block_header(sdf_file_t *h);
 static int write_constant(sdf_file_t *h);
 static int write_array_meta(sdf_file_t *h);
 static int write_cpu_split_meta(sdf_file_t *h);
@@ -19,9 +29,9 @@ static int write_stitched_species(sdf_file_t *h);
 static int write_run_info_meta(sdf_file_t *h);
 static int write_plain_mesh_meta(sdf_file_t *h);
 static int write_plain_variable_meta(sdf_file_t *h);
+static int write_meta(sdf_file_t *h);
 static int write_data(sdf_file_t *h);
-static int sdf_safe_write_id(sdf_file_t *h, char *string);
-static int sdf_safe_write_string(sdf_file_t *h, char *string);
+
 
 
 static int sdf_write_bytes(sdf_file_t *h, void *buf, int buflen)
@@ -61,23 +71,6 @@ static int sdf_flush(sdf_file_t *h)
 
 
 
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-
-static int safe_copy_string(char *s1, char *s2)
-{
-    int len1, len2;
-
-    len1 = strlen(s1);
-    len2 = strlen(s2);
-
-    memset(s2, 0, len2);
-    memcpy(s2, s1, len1);
-
-    return 0;
-}
-
-
-
 static size_t trimwhitespace(const char *str_in, char *str_out, size_t len)
 {
     size_t out_size;
@@ -107,6 +100,21 @@ static size_t trimwhitespace(const char *str_in, char *str_out, size_t len)
     str_out[out_size] = 0;
 
     return out_size;
+}
+
+
+
+static int safe_copy_string(char *s1, char *s2)
+{
+    int len1, len2;
+
+    len1 = strlen(s1);
+    len2 = strlen(s2);
+
+    memset(s2, 0, len2);
+    memcpy(s2, s1, len1);
+
+    return 0;
 }
 
 
@@ -141,28 +149,6 @@ static int sdf_safe_write_id(sdf_file_t *h, char *string)
 {
     int length = SDF_ID_LENGTH;
     return sdf_safe_write_string_len(h, string, length);
-}
-
-
-
-int sdf_write(sdf_file_t *h)
-{
-    int errcode;
-    sdf_block_t *b;
-
-    errcode = write_header(h);
-    sdf_flush(h);
-
-    b = h->blocklist;
-    while (b) {
-        h->current_block = b;
-        b->done_header = b->done_info = b->done_data = 0;
-        errcode += write_block(h);
-        //sdf_flush(h);
-        b = b->next;
-    }
-
-    return errcode;
 }
 
 
@@ -306,30 +292,6 @@ static int write_header(sdf_file_t *h)
     h->done_header = 1;
 
     return 0;
-}
-
-
-
-int sdf_write_header(sdf_file_t *h, char *code_name, int code_io_version,
-        int step, double time, char restart, int jobid1, int jobid2)
-{
-    int errcode = 0;
-
-    // header length - must be updated if sdf_write_header changes
-    h->first_block_location = SDF_HEADER_LENGTH;
-    // block header length - must be updated if sdf_write_block_header changes
-    h->block_header_length = SDF_BLOCK_HEADER_LENGTH;
-
-    if (h->code_name) free(h->code_name);
-    errcode += safe_copy_string(code_name, h->code_name);
-
-    h->step = step;
-    h->time = time;
-    h->restart_flag = restart;
-    h->jobid1 = jobid1;
-    h->jobid2 = jobid2;
-
-    return write_header(h);
 }
 
 
@@ -865,6 +827,52 @@ static int write_data(sdf_file_t *h)
 
     h->current_location = b->data_location + b->data_length;
     b->done_data = 1;
+
+    return errcode;
+}
+
+
+
+int sdf_write_header(sdf_file_t *h, char *code_name, int code_io_version,
+        int step, double time, char restart, int jobid1, int jobid2)
+{
+    int errcode = 0;
+
+    // header length - must be updated if sdf_write_header changes
+    h->first_block_location = SDF_HEADER_LENGTH;
+    // block header length - must be updated if sdf_write_block_header changes
+    h->block_header_length = SDF_BLOCK_HEADER_LENGTH;
+
+    if (h->code_name) free(h->code_name);
+    errcode += safe_copy_string(code_name, h->code_name);
+
+    h->step = step;
+    h->time = time;
+    h->restart_flag = restart;
+    h->jobid1 = jobid1;
+    h->jobid2 = jobid2;
+
+    return write_header(h);
+}
+
+
+
+int sdf_write(sdf_file_t *h)
+{
+    int errcode;
+    sdf_block_t *b;
+
+    errcode = write_header(h);
+    sdf_flush(h);
+
+    b = h->blocklist;
+    while (b) {
+        h->current_block = b;
+        b->done_header = b->done_info = b->done_data = 0;
+        errcode += write_block(h);
+        //sdf_flush(h);
+        b = b->next;
+    }
 
     return errcode;
 }
