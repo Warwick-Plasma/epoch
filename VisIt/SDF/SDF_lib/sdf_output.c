@@ -7,9 +7,6 @@
 #include <mpi.h>
 #endif
 
-static int sdf_write_bytes(sdf_file_t *h, void *buf, int buflen);
-static int sdf_write_at(sdf_file_t *h, off_t offset, void *buf, int buflen);
-static int sdf_flush(sdf_file_t *h);
 static size_t trimwhitespace(const char *str_in, char *str_out, size_t len);
 static int safe_copy_string(char *s1, char *s2);
 static int sdf_safe_write_string_len(sdf_file_t *h, char *string, int length);
@@ -34,7 +31,7 @@ static int write_data(sdf_file_t *h);
 
 
 
-static int sdf_write_bytes(sdf_file_t *h, void *buf, int buflen)
+int sdf_write_bytes(sdf_file_t *h, void *buf, int buflen)
 {
 #ifdef PARALLEL
     return MPI_File_write(h->filehandle, buf, buflen, MPI_BYTE,
@@ -46,7 +43,7 @@ static int sdf_write_bytes(sdf_file_t *h, void *buf, int buflen)
 
 
 
-static int sdf_write_at(sdf_file_t *h, off_t offset, void *buf, int buflen)
+int sdf_write_at(sdf_file_t *h, off_t offset, void *buf, int buflen)
 {
     sdf_seek_set(h, offset);
 #ifdef PARALLEL
@@ -59,7 +56,7 @@ static int sdf_write_at(sdf_file_t *h, off_t offset, void *buf, int buflen)
 
 
 
-static int sdf_flush(sdf_file_t *h)
+int sdf_flush(sdf_file_t *h)
 {
     //errcode += sdf_update(h);
 #ifdef PARALLEL

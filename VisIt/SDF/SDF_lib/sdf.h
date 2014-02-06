@@ -293,9 +293,18 @@ int sdf_read_point_variable_info(sdf_file_t *h);
 int sdf_read_lagran_mesh(sdf_file_t *h);
 int sdf_read_station_info(sdf_file_t *h);
 
+int sdf_write_bytes(sdf_file_t *h, void *buf, int buflen);
+int sdf_write_at(sdf_file_t *h, off_t offset, void *buf, int buflen);
+int sdf_flush(sdf_file_t *h);
+
 void sdf_trim(char *str);
 int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out);
 
+int sdf_modify_array(sdf_file_t *h, sdf_block_t *b, void *data);
+int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
+                             uint64_t *starts, uint64_t *ends);
+int sdf_modify_array_element(sdf_file_t *h, sdf_block_t *b, void *data,
+                             uint64_t *index);
 
 #ifdef SDF_DEBUG
   #define DBG_CHUNK 256
