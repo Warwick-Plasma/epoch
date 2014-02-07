@@ -11,7 +11,7 @@
 #endif
 
 int metadata, contents, debug, single, use_mmap, ignore_summary;
-int exclude_variables, derived;
+int exclude_variables, derived, index_offset;
 char *output_file;
 struct id_list {
   char *id;
@@ -41,6 +41,8 @@ void usage(int err)
   -m --mmap            Use mmap'ed file I/O\n\
   -i --no-summary      Ignore the metadata summary\n\
   -d --derived         Add derived blocks\n\
+  -I --c-indexing      Array indexing starts from 1 by default. If this flag\
+                       is used then the indexing starts from 0.\n\
 ");
 /*
   -o --output          Output filename\n\
@@ -71,6 +73,7 @@ char *parse_args(int *argc, char ***argv)
         { "derived",       no_argument,       NULL, 'd' },
         { "help",          no_argument,       NULL, 'h' },
         { "no-summary",    no_argument,       NULL, 'i' },
+        { "c-indexing",    no_argument,       NULL, 'I' },
         { "mmap",          no_argument,       NULL, 'm' },
         { "no-metadata",   no_argument,       NULL, 'n' },
         { "single",        no_argument,       NULL, 's' },
@@ -81,7 +84,7 @@ char *parse_args(int *argc, char ***argv)
         //{ "output",        required_argument, NULL, 'o' },
     };
 
-    metadata = debug = 1;
+    metadata = debug = index_offset = 1;
     contents = single = use_mmap = ignore_summary = exclude_variables = 0;
     derived = 0;
     variable_ids = NULL;
@@ -93,7 +96,7 @@ char *parse_args(int *argc, char ***argv)
     got_include = got_exclude = 0;
 
     while ((c = getopt_long(*argc, *argv,
-            "cdhimnsv:x:", longopts, NULL)) != -1) {
+            "cdhiImnsv:x:", longopts, NULL)) != -1) {
         switch (c) {
         case 'c':
             contents = 1;
@@ -106,6 +109,9 @@ char *parse_args(int *argc, char ***argv)
             break;
         case 'i':
             ignore_summary = 1;
+            break;
+        case 'I':
+            index_offset = 0;
             break;
         case 'm':
             use_mmap = 1;
@@ -231,6 +237,73 @@ char *parse_args(int *argc, char ***argv)
 }
 
 
+static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
+{
+    int *idx, *fac;
+    int i, n, rem, sz, left, digit;
+    char *ptr;
+    static const int fmtlen = 32;
+    char **fmt;
+
+    idx = malloc(b->ndims * sizeof(*idx));
+    fac = malloc(b->ndims * sizeof(*fac));
+    fmt = malloc(b->ndims * sizeof(*fmt));
+
+    rem = 1;
+    for (i = 0; i < b->ndims; i++) {
+        left = b->local_dims[i];
+        fac[i] = rem;
+        rem *= left;
+        digit = 0;
+        while (left) {
+            left /= 10;
+            digit++;
+        }
+        if (!digit) digit = 1;
+        fmt[i] = malloc(fmtlen * sizeof(**fmt));
+        if (i == 0)
+            snprintf(fmt[i], fmtlen, "%i %%%i.%ii", idnum, digit, digit);
+        else
+            snprintf(fmt[i], fmtlen, ",%%%i.%ii", digit, digit);
+    }
+
+    sz = SDF_TYPE_SIZES[b->datatype_out];
+
+    ptr = b->data;
+    for (n = 0; n < b->nelements_local; n++) {
+        rem = n;
+        for (i = b->ndims-1; i >= 0; i--) {
+            idx[i] = rem / fac[i];
+            rem -= idx[i] * fac[i];
+        }
+        for (i = 0; i < b->ndims; i++)
+            printf(fmt[i], idx[i]+index_offset);
+
+        switch (b->datatype_out) {
+        case SDF_DATATYPE_INTEGER4:
+            printf(":  %i\n", *((uint32_t*)ptr));
+            break;
+        case SDF_DATATYPE_INTEGER8:
+            printf(":  %llu\n", *((uint64_t*)ptr));
+            break;
+        case SDF_DATATYPE_REAL4:
+            printf(":  %12.6E\n", *((float*)ptr));
+            break;
+        case SDF_DATATYPE_REAL8:
+            printf(":  %12.6E\n", *((double*)ptr));
+            break;
+        }
+        ptr += sz;
+    }
+    if (ncount) printf("\n");
+
+    free(idx);
+    free(fac);
+    for (i = 0; i < b->ndims; i++) free(fmt[i]);
+    free(fmt);
+}
+
+
 int main(int argc, char **argv)
 {
     char *file = NULL;
@@ -330,9 +403,12 @@ int main(int argc, char **argv)
             printf("%4i id: %s\n", i+1, b->id);
         }
 
-        if (contents) {
-            sdf_read_data(h);
-            if (b->blocktype == SDF_BLOCKTYPE_PLAIN_DERIVED && b->station_id) {
+        if (!contents) continue;
+
+        switch (b->blocktype) {
+        case SDF_BLOCKTYPE_PLAIN_DERIVED:
+            if (b->station_id) {
+                sdf_read_data(h);
                 mesh = sdf_find_block_by_id(h, b->mesh_id);
                 if (!mesh) continue;
                 if (mesh->nelements > nelements_max) {
@@ -347,6 +423,10 @@ int main(int argc, char **argv)
 
                 list_append(station_blocks, b);
             }
+        case SDF_BLOCKTYPE_PLAIN_VARIABLE:
+            sdf_read_data(h);
+            pretty_print(h, b, idx);
+            break;
         }
     }
 
