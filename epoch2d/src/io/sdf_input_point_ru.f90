@@ -219,4 +219,138 @@ CONTAINS
 
   END SUBROUTINE read_srl_pt_var_logical_array
 
+
+
+  SUBROUTINE read_point_variable_i4(h, npoint_local, distribution, &
+      iterator, param)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i8), INTENT(IN) :: npoint_local
+    INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER(i8) :: npoint_remain, npoint_per_it8, npoint_this_it8
+    INTEGER :: errcode, npoint_per_it, npoint_this_it
+    LOGICAL :: start
+    INTEGER(i4), DIMENSION(:), ALLOCATABLE :: array
+    INTEGER(i4) :: ret
+    TYPE(sdf_block_type), POINTER :: b
+
+    INTERFACE
+      FUNCTION iterator(array, npoint_it, start, param)
+        USE sdf_common
+        INTEGER(i4) :: iterator
+        INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER, INTENT(INOUT) :: npoint_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    IF (sdf_check_block_header(h)) RETURN
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_point_variable_info_ru(h)
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    start = .TRUE.
+    npoint_per_it8 = MIN(npoint_local, npoint_per_iteration)
+    npoint_per_it  = INT(npoint_per_it8)
+    ALLOCATE(array(1:npoint_per_it))
+    npoint_remain = npoint_local
+    npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
+    npoint_this_it  = INT(npoint_this_it8)
+
+    DO WHILE (npoint_this_it .GT. 0)
+      npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
+      npoint_this_it  = INT(npoint_this_it8)
+      CALL MPI_FILE_READ(h%filehandle, array, npoint_this_it, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+
+      npoint_remain = npoint_remain - npoint_this_it8
+      ret = iterator(array, npoint_this_it, start, param)
+      start = .FALSE.
+    ENDDO
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    DEALLOCATE(array)
+
+    h%current_location = b%next_block_location
+    b%block_start = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_point_variable_i4
+
+
+
+  SUBROUTINE read_point_variable_i8(h, npoint_local, distribution, &
+      iterator, param)
+
+    TYPE(sdf_file_handle) :: h
+    INTEGER(i8), INTENT(IN) :: npoint_local
+    INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER(i8) :: npoint_remain, npoint_per_it8, npoint_this_it8
+    INTEGER :: errcode, npoint_per_it, npoint_this_it
+    LOGICAL :: start
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: array
+    INTEGER(i8) :: ret
+    TYPE(sdf_block_type), POINTER :: b
+
+    INTERFACE
+      FUNCTION iterator(array, npoint_it, start, param)
+        USE sdf_common
+        INTEGER(i8) :: iterator
+        INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER, INTENT(INOUT) :: npoint_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    IF (sdf_check_block_header(h)) RETURN
+
+    b => h%current_block
+    IF (.NOT. b%done_info) CALL read_point_variable_info_ru(h)
+
+    h%current_location = b%data_location
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
+        distribution, 'native', MPI_INFO_NULL, errcode)
+
+    start = .TRUE.
+    npoint_per_it8 = MIN(npoint_local, npoint_per_iteration)
+    npoint_per_it  = INT(npoint_per_it8)
+    ALLOCATE(array(1:npoint_per_it))
+    npoint_remain = npoint_local
+    npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
+    npoint_this_it  = INT(npoint_this_it8)
+
+    DO WHILE (npoint_this_it .GT. 0)
+      npoint_this_it8 = MIN(npoint_remain, npoint_per_it8)
+      npoint_this_it  = INT(npoint_this_it8)
+      CALL MPI_FILE_READ(h%filehandle, array, npoint_this_it, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+
+      npoint_remain = npoint_remain - npoint_this_it8
+      ret = iterator(array, npoint_this_it, start, param)
+      start = .FALSE.
+    ENDDO
+
+    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
+        MPI_INFO_NULL, errcode)
+
+    DEALLOCATE(array)
+
+    h%current_location = b%next_block_location
+    b%block_start = b%next_block_location
+    b%done_data = .TRUE.
+
+  END SUBROUTINE read_point_variable_i8
+
 END MODULE sdf_input_point_ru

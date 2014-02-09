@@ -29,7 +29,9 @@ MODULE sdf_input_point
   INTERFACE sdf_read_point_variable
     MODULE PROCEDURE &
         read_point_variable_r4, &
-        read_point_variable_r8
+        read_point_variable_r8, &
+        read_point_variable_i4, &
+        read_point_variable_i8
   END INTERFACE sdf_read_point_variable
 
   INTERFACE sdf_read_srl_point_mesh

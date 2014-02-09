@@ -17,8 +17,12 @@ MODULE sdf_output_point
     MODULE PROCEDURE &
         write_point_variable_r4, &
         write_point_variable_r8, &
+        write_point_variable_i4, &
+        write_point_variable_i8, &
         write_point_variable_gen_r4, &
-        write_point_variable_gen_r8
+        write_point_variable_gen_r8, &
+        write_point_variable_gen_i4, &
+        write_point_variable_gen_i8
   END INTERFACE sdf_write_point_variable
 
   INTERFACE sdf_write_srl_point_mesh
