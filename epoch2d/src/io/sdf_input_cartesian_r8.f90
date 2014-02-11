@@ -166,7 +166,8 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     REAL(r8), DIMENSION(:), INTENT(OUT) :: x
-    INTEGER, INTENT(IN) :: distribution(:), subarray(:)
+    INTEGER, INTENT(IN) :: distribution(:)
+    INTEGER, INTENT(IN), OPTIONAL :: subarray(:)
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -182,8 +183,13 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray(1), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, SIZE(x), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -200,7 +206,8 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     REAL(r8), DIMENSION(:), INTENT(OUT) :: x, y
-    INTEGER, INTENT(IN) :: distribution(:), subarray(:)
+    INTEGER, INTENT(IN) :: distribution(:)
+    INTEGER, INTENT(IN), OPTIONAL :: subarray(:)
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -216,14 +223,24 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray(1), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, SIZE(x), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(2), 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray(2), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray(2), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, y, SIZE(y), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -240,7 +257,8 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     REAL(r8), DIMENSION(:), INTENT(OUT) :: x, y, z
-    INTEGER, INTENT(IN) :: distribution(:), subarray(:)
+    INTEGER, INTENT(IN) :: distribution(:)
+    INTEGER, INTENT(IN), OPTIONAL :: subarray(:)
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -256,20 +274,35 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(1), 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray(1), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray(1), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, SIZE(x), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(2), 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray(2), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray(2), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, y, SIZE(y), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution(3), 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, z, 1, subarray(3), &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, z, 1, subarray(3), &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, z, SIZE(z), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -286,7 +319,8 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     REAL(r8), DIMENSION(:), INTENT(OUT) :: x
-    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN), OPTIONAL :: subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -302,8 +336,13 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, SIZE(x), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -320,7 +359,8 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     REAL(r8), DIMENSION(:,:), INTENT(OUT) :: x, y
-    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN), OPTIONAL :: subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -336,11 +376,19 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+      CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, SIZE(x), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_READ_ALL(h%filehandle, y, SIZE(y), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
@@ -357,7 +405,8 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: h
     REAL(r8), DIMENSION(:,:,:), INTENT(OUT) :: x, y, z
-    INTEGER, INTENT(IN) :: distribution, subarray
+    INTEGER, INTENT(IN) :: distribution
+    INTEGER, INTENT(IN), OPTIONAL :: subarray
     INTEGER :: errcode
     TYPE(sdf_block_type), POINTER :: b
 
@@ -373,14 +422,25 @@ CONTAINS
     CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
         distribution, 'native', MPI_INFO_NULL, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+    IF (PRESENT(subarray)) THEN
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+      CALL MPI_FILE_READ_ALL(h%filehandle, y, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
 
-    CALL MPI_FILE_READ_ALL(h%filehandle, z, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
+      CALL MPI_FILE_READ_ALL(h%filehandle, z, 1, subarray, &
+          MPI_STATUS_IGNORE, errcode)
+    ELSE
+      CALL MPI_FILE_READ_ALL(h%filehandle, x, SIZE(x), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_READ_ALL(h%filehandle, y, SIZE(y), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+
+      CALL MPI_FILE_READ_ALL(h%filehandle, z, SIZE(z), b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
 
     CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
         MPI_INFO_NULL, errcode)
