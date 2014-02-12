@@ -740,4 +740,319 @@ CONTAINS
 
   END SUBROUTINE write_point_variable_gen_i8
 
+
+
+  ! Calls without the species_id argument for backwards compatibility
+  SUBROUTINE write_nospec_point_mesh_meta_r8(h, id, name, dim_labels, &
+      dim_units, dim_mults)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
+    REAL(r8), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+
+    CALL write_point_mesh_meta_r8(h, id, name, 'nospec', dim_labels, &
+        dim_units, dim_mults)
+
+  END SUBROUTINE write_nospec_point_mesh_meta_r8
+
+
+
+  SUBROUTINE write_nospec_point_mesh_meta_r4(h, id, name, dim_labels, &
+      dim_units, dim_mults)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: dim_labels(:), dim_units(:)
+    REAL(r4), DIMENSION(:), INTENT(IN), OPTIONAL :: dim_mults
+
+    CALL write_point_mesh_meta_r4(h, id, name, 'nospec', dim_labels, &
+        dim_units, dim_mults)
+
+  END SUBROUTINE write_nospec_point_mesh_meta_r4
+
+
+
+  SUBROUTINE write_nospec_point_variable_meta_r8(h, id, name, units, &
+      mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: mesh_id
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    CALL write_point_variable_meta_r8(h, id, name, 'nospec', units, &
+        mesh_id, mult)
+
+  END SUBROUTINE write_nospec_point_variable_meta_r8
+
+
+
+  SUBROUTINE write_nospec_point_variable_meta_r4(h, id, name, units, &
+      mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name, units
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: mesh_id
+    REAL(r4), INTENT(IN), OPTIONAL :: mult
+
+    CALL write_point_variable_meta_r4(h, id, name, 'nospec', units, &
+        mesh_id, mult)
+
+  END SUBROUTINE write_nospec_point_variable_meta_r4
+
+
+
+  SUBROUTINE write_nospec_srl_pt_var_logical_i8_r8(h, id, name, units, &
+      array, npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    CALL write_srl_pt_var_logical_i8_r8(h, id, name, 'nospec', units, &
+        array, npoint_global, mesh_id, mult)
+
+  END SUBROUTINE write_nospec_srl_pt_var_logical_i8_r8
+
+
+
+  SUBROUTINE write_nospec_srl_pt_var_logical_i4_r8(h, id, name, units, &
+      array, npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i4), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    CALL write_srl_pt_var_logical_i4_r8(h, id, name, 'nospec', units, &
+        array, npoint_global, mesh_id, mult)
+
+  END SUBROUTINE write_nospec_srl_pt_var_logical_i4_r8
+
+
+
+  SUBROUTINE write_nospec_srl_pt_var_logical_i8_r4(h, id, name, units, &
+      array, npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_srl_pt_var_logical_i8_r4(h, id, name, 'nospec', units, &
+        array, npoint_global, mesh_id, mult)
+
+  END SUBROUTINE write_nospec_srl_pt_var_logical_i8_r4
+
+
+
+  SUBROUTINE write_nospec_srl_pt_var_logical_i4_r4(h, id, name, units, &
+      array, npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    LOGICAL, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i4), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_srl_pt_var_logical_i4_r4(h, id, name, 'nospec', units, &
+        array, npoint_global, mesh_id, mult)
+
+  END SUBROUTINE write_nospec_srl_pt_var_logical_i4_r4
+
+
+
+  SUBROUTINE write_nospec_srl_pt_var_int_i8_r8(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    CALL write_srl_pt_var_int_i8_r8(h, id, name, 'nospec', units, array, &
+        npoint_global, mesh_id, mult)
+
+  END SUBROUTINE write_nospec_srl_pt_var_int_i8_r8
+
+
+
+  SUBROUTINE write_nospec_srl_pt_var_int_i4_r8(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    CALL write_srl_pt_var_int_i4_r8(h, id, name, 'nospec', units, array, &
+        npoint_global, mesh_id, mult)
+
+  END SUBROUTINE write_nospec_srl_pt_var_int_i4_r8
+
+
+
+  SUBROUTINE write_nospec_srl_pt_var_int_i8_r4(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_srl_pt_var_int_i8_r4(h, id, name, 'nospec', units, array, &
+        npoint_global, mesh_id, mult)
+
+  END SUBROUTINE write_nospec_srl_pt_var_int_i8_r4
+
+
+
+  SUBROUTINE write_nospec_srl_pt_var_int_i4_r4(h, id, name, units, array, &
+      npoint_global, mesh_id, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER, DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    REAL(r4), INTENT(IN) :: mult
+
+    CALL write_srl_pt_var_int_i4_r4(h, id, name, 'nospec', units, array, &
+        npoint_global, mesh_id, mult)
+
+  END SUBROUTINE write_nospec_srl_pt_var_int_i4_r4
+
+
+
+  SUBROUTINE write_nospec_point_variable_i4(h, id, name, units, &
+      npoint_global, mesh_id, iterator, offset, convert_in, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    INTEGER(i8), INTENT(IN) :: offset
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    INTERFACE
+      FUNCTION iterator(array, npoint_it, start, param)
+        USE sdf_common
+        INTEGER(i4) :: iterator
+        INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER, INTENT(INOUT) :: npoint_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    CALL write_point_variable_i4(h, id, name, 'nospec', units, &
+        npoint_global, mesh_id, iterator, offset, convert_in, mult)
+
+  END SUBROUTINE write_nospec_point_variable_i4
+
+
+
+  SUBROUTINE write_nospec_point_variable_gen_i4(h, id, name, units, &
+      npoint_global, mesh_id, iterator, param, offset, convert_in, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    INTEGER, INTENT(IN) :: param
+    INTEGER(i8), INTENT(IN) :: offset
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    INTERFACE
+      FUNCTION iterator(array, npoint_it, start, param)
+        USE sdf_common
+        INTEGER(i4) :: iterator
+        INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER, INTENT(INOUT) :: npoint_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    CALL write_point_variable_gen_i4(h, id, name, 'nospec', units, &
+        npoint_global, mesh_id, iterator, param, offset, convert_in, mult)
+
+  END SUBROUTINE write_nospec_point_variable_gen_i4
+
+
+
+  SUBROUTINE write_nospec_point_variable_i8(h, id, name, units, &
+      npoint_global, mesh_id, iterator, offset, convert_in, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    INTEGER(i8), INTENT(IN) :: offset
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    INTERFACE
+      FUNCTION iterator(array, npoint_it, start, param)
+        USE sdf_common
+        INTEGER(i8) :: iterator
+        INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER, INTENT(INOUT) :: npoint_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    CALL write_point_variable_i8(h, id, name, 'nospec', units, &
+        npoint_global, mesh_id, iterator, offset, convert_in, mult)
+
+  END SUBROUTINE write_nospec_point_variable_i8
+
+
+
+  SUBROUTINE write_nospec_point_variable_gen_i8(h, id, name, units, &
+      npoint_global, mesh_id, iterator, param, offset, convert_in, mult)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, units
+    INTEGER(i8), INTENT(IN) :: npoint_global
+    CHARACTER(LEN=*), INTENT(IN) :: mesh_id
+    INTEGER, INTENT(IN) :: param
+    INTEGER(i8), INTENT(IN) :: offset
+    LOGICAL, INTENT(IN), OPTIONAL :: convert_in
+    REAL(r8), INTENT(IN), OPTIONAL :: mult
+
+    INTERFACE
+      FUNCTION iterator(array, npoint_it, start, param)
+        USE sdf_common
+        INTEGER(i8) :: iterator
+        INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER, INTENT(INOUT) :: npoint_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    CALL write_point_variable_gen_i8(h, id, name, 'nospec', units, &
+        npoint_global, mesh_id, iterator, param, offset, convert_in, mult)
+
+  END SUBROUTINE write_nospec_point_variable_gen_i8
+
 END MODULE sdf_output_point_ru
