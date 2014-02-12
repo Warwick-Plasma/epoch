@@ -482,40 +482,19 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
     REAL(r4), DIMENSION(:), INTENT(OUT) :: variable
     INTEGER, INTENT(IN) :: distribution, subarray
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
 
-    IF (sdf_check_block_header(h)) RETURN
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
-
-    ! Read the actual data
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        distribution, 'native', MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
-        MPI_INFO_NULL, errcode)
-
-    h%current_location = b%data_location + b%data_length
-    b%done_data = .TRUE.
+    CALL read_nd_float_r4(h, variable(1), distribution, subarray)
 
   END SUBROUTINE read_1d_float_r4
 
 
 
   !----------------------------------------------------------------------------
-  ! Code to read a 2D cartesian variable in parallel
+  ! Code to read a nD cartesian variable in parallel
   ! using the mpitype {distribution} for distribution of data
   !----------------------------------------------------------------------------
 
-  SUBROUTINE read_2d_float_r4(h, variable, distribution, subarray)
+  SUBROUTINE read_nd_float_r4(h, variable, distribution, subarray)
 
     TYPE(sdf_file_handle) :: h
     REAL(r4), INTENT(OUT) :: variable
@@ -544,83 +523,7 @@ CONTAINS
     h%current_location = b%data_location + b%data_length
     b%done_data = .TRUE.
 
-  END SUBROUTINE read_2d_float_r4
-
-
-
-  !----------------------------------------------------------------------------
-  ! Code to read a 3D cartesian variable in parallel
-  ! using the mpitype {distribution} for distribution of data
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE read_3d_float_r4(h, variable, distribution, subarray)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(r4), INTENT(OUT) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (sdf_check_block_header(h)) RETURN
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
-
-    ! Read the actual data
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        distribution, 'native', MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
-        MPI_INFO_NULL, errcode)
-
-    h%current_location = b%data_location + b%data_length
-    b%done_data = .TRUE.
-
-  END SUBROUTINE read_3d_float_r4
-
-
-
-  !----------------------------------------------------------------------------
-  ! Code to read a 4D cartesian variable in parallel
-  ! using the mpitype {distribution} for distribution of data
-  !----------------------------------------------------------------------------
-
-  SUBROUTINE read_4d_float_r4(h, variable, distribution, subarray)
-
-    TYPE(sdf_file_handle) :: h
-    REAL(r4), INTENT(OUT) :: variable
-    INTEGER, INTENT(IN) :: distribution, subarray
-    INTEGER :: errcode
-    TYPE(sdf_block_type), POINTER :: b
-
-    IF (sdf_check_block_header(h)) RETURN
-
-    b => h%current_block
-    IF (.NOT. b%done_info) CALL read_plain_variable_info_ru(h)
-
-    ! Read the actual data
-
-    h%current_location = b%data_location
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, h%current_location, MPI_BYTE, &
-        distribution, 'native', MPI_INFO_NULL, errcode)
-
-    CALL MPI_FILE_READ_ALL(h%filehandle, variable, 1, subarray, &
-        MPI_STATUS_IGNORE, errcode)
-
-    CALL MPI_FILE_SET_VIEW(h%filehandle, c_off0, MPI_BYTE, MPI_BYTE, 'native', &
-        MPI_INFO_NULL, errcode)
-
-    h%current_location = b%data_location + b%data_length
-    b%done_data = .TRUE.
-
-  END SUBROUTINE read_4d_float_r4
+  END SUBROUTINE read_nd_float_r4
 
 
 
@@ -638,7 +541,7 @@ CONTAINS
     REAL(r4), INTENT(OUT) :: variable(:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL read_2d_float_r4(h, variable(idx,1), distribution, subarray)
+    CALL read_nd_float_r4(h, variable(idx,1), distribution, subarray)
 
   END SUBROUTINE read_1d_var_first_r4
 
@@ -658,7 +561,7 @@ CONTAINS
     REAL(r4), INTENT(OUT) :: variable(:,:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL read_3d_float_r4(h, variable(idx,1,1), distribution, subarray)
+    CALL read_nd_float_r4(h, variable(idx,1,1), distribution, subarray)
 
   END SUBROUTINE read_2d_var_first_r4
 
@@ -678,7 +581,7 @@ CONTAINS
     REAL(r4), INTENT(OUT) :: variable(:,:,:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL read_4d_float_r4(h, variable(idx,1,1,1), distribution, subarray)
+    CALL read_nd_float_r4(h, variable(idx,1,1,1), distribution, subarray)
 
   END SUBROUTINE read_3d_var_first_r4
 
@@ -698,7 +601,7 @@ CONTAINS
     REAL(r4), INTENT(OUT) :: variable(:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL read_2d_float_r4(h, variable(1,idx), distribution, subarray)
+    CALL read_nd_float_r4(h, variable(1,idx), distribution, subarray)
 
   END SUBROUTINE read_1d_var_last_r4
 
@@ -718,7 +621,7 @@ CONTAINS
     REAL(r4), INTENT(OUT) :: variable(:,:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL read_3d_float_r4(h, variable(1,1,idx), distribution, subarray)
+    CALL read_nd_float_r4(h, variable(1,1,idx), distribution, subarray)
 
   END SUBROUTINE read_2d_var_last_r4
 
@@ -738,7 +641,7 @@ CONTAINS
     REAL(r4), INTENT(OUT) :: variable(:,:,:,:)
     INTEGER, INTENT(IN) :: idx, distribution, subarray
 
-    CALL read_4d_float_r4(h, variable(1,1,1,idx), distribution, subarray)
+    CALL read_nd_float_r4(h, variable(1,1,1,idx), distribution, subarray)
 
   END SUBROUTINE read_3d_var_last_r4
 
@@ -930,7 +833,7 @@ CONTAINS
 
     b => h%current_block
     IF (b%blocktype .EQ. c_blocktype_plain_variable) THEN
-      CALL read_2d_float_r4(h, variable(1,1), distribution, subarray)
+      CALL read_nd_float_r4(h, variable(1,1), distribution, subarray)
     ELSE
       CALL read_1d_material_r4(h, variable, distribution, subarray, last_in)
     ENDIF
@@ -954,7 +857,7 @@ CONTAINS
 
     b => h%current_block
     IF (b%blocktype .EQ. c_blocktype_plain_variable) THEN
-      CALL read_3d_float_r4(h, variable(1,1,1), distribution, subarray)
+      CALL read_nd_float_r4(h, variable(1,1,1), distribution, subarray)
     ELSE
       CALL read_2d_material_r4(h, variable, distribution, subarray, last_in)
     ENDIF
