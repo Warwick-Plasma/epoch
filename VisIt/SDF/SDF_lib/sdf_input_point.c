@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sdf.h>
+#include "sdf_input.h"
+#include "sdf_input_point.h"
+#include "sdf_control.h"
 
 //#define SDF_COMMON_MESH_LENGTH (4 + 8 + h->id_length + 4 * b->ndims)
 

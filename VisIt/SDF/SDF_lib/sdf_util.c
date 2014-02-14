@@ -1,5 +1,6 @@
 #include <string.h>
 #include <sdf.h>
+#include "sdf_util.h"
 
 
 sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id)

@@ -4,6 +4,23 @@
 #include <sdf_vector_type.h>
 #include <sdf_list_type.h>
 #include <sdf.h>
+#include "sdf_control.h"
+#include "sdf_input.h"
+
+#define SDF_SET_ENTRY_STRINGLEN(value, strvalue, length) do { \
+        if (!(value)) value = malloc(h->string_length+1); \
+        strncpy((value), (strvalue), (length)); \
+    } while (0)
+
+#define SDF_SET_ENTRY_ID(value, strvalue) do { \
+        SDF_SET_ENTRY_STRINGLEN(value, strvalue, h->id_length); \
+        SDF_DPRNT(#value ": %s\n", (value)); \
+    } while (0)
+
+#define SDF_SET_ENTRY_STRING(value, strvalue) do { \
+        SDF_SET_ENTRY_STRINGLEN(value, strvalue, h->string_length); \
+        SDF_DPRNT(#value ": %s\n", (value)); \
+    } while (0)
 
 #define IJK(i,j,k) ((i) + nx * ((j) + ny * (k)))
 #define IJK1(i,j,k) ((i) + (nx+1) * ((j) + (ny+1) * (k)))

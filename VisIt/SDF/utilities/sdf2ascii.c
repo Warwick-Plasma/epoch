@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 
     // Construct the metadata blocklist using the contents of the buffer
     for (i = 0; i < h->nblocks; i++) {
-        if (print_block) SDF_PRNT("\n  Block number: %i\n", i+1);
+        if (print_block) printf("\n  Block number: %i\n", i+1);
         sdf_read_block_info(h);
 
         if (print_block) {

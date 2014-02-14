@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <sdf.h>
+#include "sdf_output.h"
+#include "sdf_control.h"
+#include "sdf_util.h"
 #ifdef PARALLEL
 #include <mpi.h>
 #endif

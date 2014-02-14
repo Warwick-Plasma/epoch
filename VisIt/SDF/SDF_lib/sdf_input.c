@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <sdf.h>
+#include "sdf_input.h"
+#include "sdf_input_cartesian.h"
+#include "sdf_input_point.h"
+#include "sdf_input_station.h"
+#include "sdf_control.h"
 #ifdef PARALLEL
 #include <mpi.h>
 #endif
