@@ -94,7 +94,7 @@ int sdf_read_header(sdf_file_t *h)
 
     if (h->done_header) return 1;
 
-    buflen = SDF_HEADER_LENGTH;
+    buflen = h->first_block_location;
     h->buffer = malloc(buflen);
 
     h->current_location = h->start_location = 0;
@@ -155,7 +155,7 @@ int sdf_read_header(sdf_file_t *h)
     free(h->buffer);
     h->buffer = NULL;
 
-    h->current_location = SDF_HEADER_LENGTH;
+    h->current_location = h->first_block_location;
     h->done_header = 1;
 
     if (h->summary_size == 0) h->use_summary = 0;

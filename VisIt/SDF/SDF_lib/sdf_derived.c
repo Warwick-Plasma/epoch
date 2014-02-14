@@ -908,7 +908,7 @@ sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
 
     for (i = 0; i < station_blocks->count; i++) {
         for (j = 0; j < block->nstations; j++) {
-            if (strncmp(block->station_ids[j], b->station_id, SDF_ID_LENGTH))
+            if (strncmp(block->station_ids[j], b->station_id, h->id_length))
                 continue;
             if (block->station_move[j] < 0) continue;
 
@@ -918,7 +918,7 @@ sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
 
             for (k = 0; k < block->station_nvars[j]; k++, vidx++) {
                 if (strncmp(block->variable_ids[vidx], varid,
-                    SDF_ID_LENGTH) == 0) break;
+                        h->id_length) == 0) break;
             }
 
             // Now read the data.
@@ -1123,7 +1123,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
         for (is = 0; is < station_blocks->count; is++) {
             for (n = 0; n < sb->nstations; n++) {
                 if (strncmp(sb->station_ids[n], station->station_ids[i],
-                        SDF_ID_LENGTH) == 0) {
+                        h->id_length) == 0) {
                     if (sb->station_move[n] >= 0)
                         nelements += sb->nelements;
                     break;
@@ -1157,7 +1157,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
             for (is = 0; is < station_blocks->count; is++) {
                 for (n = 0; n < sb->nstations; n++) {
                     if (strncmp(sb->station_ids[n], b->station_id,
-                            SDF_ID_LENGTH) != 0) continue;
+                            h->id_length) != 0) continue;
                     if (sb->station_move[n] < 0) continue;
                     b->mesh_id = strcat_alloc(meshid, sb->id);
                     break;
@@ -1236,7 +1236,7 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
             for (m = 0; m < new->nstations; m++) {
                 if (found_id[m]) continue;
                 if (strncmp(b->station_ids[n], new->station_ids[m],
-                        SDF_ID_LENGTH)) continue;
+                        h->id_length)) continue;
                 b->station_index[n] = m;
                 found = 1;
                 found_id[m] = 1;

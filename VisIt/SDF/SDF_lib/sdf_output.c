@@ -147,7 +147,7 @@ static int sdf_safe_write_string(sdf_file_t *h, char *string)
 
 static int sdf_safe_write_id(sdf_file_t *h, char *string)
 {
-    int length = SDF_ID_LENGTH;
+    int length = h->id_length;
     return sdf_safe_write_string_len(h, string, length);
 }
 
@@ -227,11 +227,6 @@ static int write_header(sdf_file_t *h)
         }
         return errcode;
     }
-
-    // header length - must be updated if sdf_write_header changes
-    h->first_block_location = SDF_HEADER_LENGTH;
-    // block header length - must be updated if sdf_write_block_header changes
-    h->block_header_length = SDF_BLOCK_HEADER_LENGTH;
 
     // Currently no blocks written
     h->nblocks = 0;
@@ -454,7 +449,7 @@ static int write_stitched(sdf_file_t *h)
     // - varids    ndims*CHARACTER(id_length)
 
     b->info_length = h->block_header_length + SOI4 +
-            (b->ndims + 1) * SDF_ID_LENGTH;
+            (b->ndims + 1) * h->id_length;
     if (b->blocktype == SDF_BLOCKTYPE_STITCHED ||
             b->blocktype == SDF_BLOCKTYPE_STITCHED_TENSOR) b->data_length = 0;
 
@@ -492,7 +487,7 @@ static int write_stitched_material(sdf_file_t *h)
     // - varids    ndims*CHARACTER(id_length)
 
     //b->info_length = h->block_header_length + SOI4 +
-    //        (b->ndims + 1) * SDF_ID_LENGTH + b->ndims * h->string_length;
+    //        (b->ndims + 1) * h->id_length + b->ndims * h->string_length;
     if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL) b->data_length = 0;
 
     // Write header
@@ -532,7 +527,7 @@ static int write_stitched_matvar(sdf_file_t *h)
     // - varids    ndims*CHARACTER(id_length)
 
     b->info_length = h->block_header_length + SOI4 +
-            (b->ndims + 2) * SDF_ID_LENGTH;
+            (b->ndims + 2) * h->id_length;
     if (b->blocktype == SDF_BLOCKTYPE_STITCHED_MATVAR) b->data_length = 0;
 
     // Write header
@@ -573,7 +568,7 @@ static int write_stitched_species(sdf_file_t *h)
     // - varids    ndims*CHARACTER(id_length)
 
     b->info_length = h->block_header_length + SOI4 +
-            (b->ndims + 2) * SDF_ID_LENGTH + (b->ndims + 1) * h->string_length;
+            (b->ndims + 2) * h->id_length + (b->ndims + 1) * h->string_length;
     if (b->blocktype == SDF_BLOCKTYPE_STITCHED_SPECIES) b->data_length = 0;
 
     // Write header
@@ -689,7 +684,7 @@ static int write_plain_mesh_meta(sdf_file_t *h)
     // - dims      INTEGER(i4), DIMENSION(ndims)
 
     b->info_length = h->block_header_length + (b->ndims + 1) * SOI4 +
-            (3 * b->ndims) * SOF8 + 2 * b->ndims * SDF_ID_LENGTH;
+            (3 * b->ndims) * SOF8 + 2 * b->ndims * h->id_length;
     b->data_length = b->nelements * SDF_TYPE_SIZES[b->datatype];
 
     // Write header
@@ -743,7 +738,7 @@ static int write_plain_variable_meta(sdf_file_t *h)
     // - stagger   INTEGER(i4)
 
     b->info_length = h->block_header_length + (b->ndims + 1) * SOI4 + SOF8 +
-            2 * SDF_ID_LENGTH;
+            2 * h->id_length;
     b->data_length = b->nelements * SDF_TYPE_SIZES[b->datatype];
 
     // Write header
@@ -837,11 +832,6 @@ int sdf_write_header(sdf_file_t *h, char *code_name, int code_io_version,
         int step, double time, char restart, int jobid1, int jobid2)
 {
     int errcode = 0;
-
-    // header length - must be updated if sdf_write_header changes
-    h->first_block_location = SDF_HEADER_LENGTH;
-    // block header length - must be updated if sdf_write_block_header changes
-    h->block_header_length = SDF_BLOCK_HEADER_LENGTH;
 
     if (h->code_name) free(h->code_name);
     errcode += safe_copy_string(code_name, h->code_name);

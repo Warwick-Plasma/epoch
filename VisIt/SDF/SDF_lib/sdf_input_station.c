@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sdf.h>
 
-//#define SDF_COMMON_MESH_LENGTH (4 + 8 + SDF_ID_LENGTH + 4 * b->ndims)
+//#define SDF_COMMON_MESH_LENGTH (4 + 8 + h->id_length + 4 * b->ndims)
 
 #define SDF_COMMON_MESH_INFO() do { \
     if (!h->current_block || !h->current_block->done_header) { \

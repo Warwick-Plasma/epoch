@@ -212,6 +212,12 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
     h->sdf_lib_version  = SDF_LIB_VERSION;
     h->sdf_lib_revision = SDF_LIB_REVISION;
 
+    h->id_length = SDF_ID_LENGTH;
+    // header length - must be updated if sdf_write_header changes
+    h->first_block_location = SDF_HEADER_LENGTH;
+    // block header length - must be updated if sdf_write_block_header changes
+    h->block_header_length = SDF_BLOCK_HEADER_LENGTH;
+
 #ifdef PARALLEL
     h->comm = comm;
     MPI_Comm_rank(h->comm, &h->rank);

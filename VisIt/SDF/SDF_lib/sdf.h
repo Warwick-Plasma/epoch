@@ -23,10 +23,9 @@
 
 #define SDF_MAXDIMS 4
 #define SDF_ID_LENGTH 32
-#define SDF_HEADER_LENGTH (11 * SOI4 + 2 * SOI8 + SOF8 + 12 + SDF_ID_LENGTH)
+#define SDF_HEADER_LENGTH (11 * SOI4 + 2 * SOI8 + SOF8 + 12 + h->id_length)
 #define SDF_BLOCK_HEADER_LENGTH \
-    (4 + 3 * SOI4 + 3 * SOI8 + SDF_ID_LENGTH + h->string_length)
-#define SDF_SUMMARY_OFFSET (4 + 3 * SOI4 + SDF_ID_LENGTH + SOI8)
+    (4 + 3 * SOI4 + 3 * SOI8 + h->id_length + h->string_length)
 #define SDF_ENDIANNESS 16911887
 
 #define SDF_VERSION  1
@@ -220,7 +219,7 @@ struct sdf_file {
     uint64_t first_block_location, summary_location, start_location, soi, sof;
     uint64_t current_location;
     uint32_t jobid1, jobid2, endianness, summary_size;
-    uint32_t block_header_length, string_length;
+    uint32_t block_header_length, string_length, id_length;
     uint32_t code_io_version, step;
     int32_t nblocks, error_code;
     int rank, ncpus, ndomains, rank_master, indent, print;
@@ -611,12 +610,12 @@ int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out);
     } while (0)
 
 #define SDF_READ_ENTRY_ID(value) do { \
-        SDF_READ_ENTRY_STRINGLEN(value, SDF_ID_LENGTH); \
+        SDF_READ_ENTRY_STRINGLEN(value, h->id_length); \
         SDF_DPRNT(#value ": %s\n", (value)); \
     } while (0)
 
 #define SDF_READ_ENTRY_ARRAY_ID(value, length) \
-        SDF_READ_ENTRY_ARRAY_STRINGLEN(value, length, SDF_ID_LENGTH)
+        SDF_READ_ENTRY_ARRAY_STRINGLEN(value, length, h->id_length)
 
 #define SDF_READ_ENTRY_STRING(value) do { \
         SDF_READ_ENTRY_STRINGLEN(value, h->string_length); \
@@ -632,7 +631,7 @@ int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out);
     } while (0)
 
 #define SDF_SET_ENTRY_ID(value, strvalue) do { \
-        SDF_SET_ENTRY_STRINGLEN(value, strvalue, SDF_ID_LENGTH); \
+        SDF_SET_ENTRY_STRINGLEN(value, strvalue, h->id_length); \
         SDF_DPRNT(#value ": %s\n", (value)); \
     } while (0)
 
