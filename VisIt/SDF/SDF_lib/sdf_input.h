@@ -1,3 +1,13 @@
+/**
+   @file sdf_input.h
+
+   @brief Declarations for the SDF C-library.
+   @details Routines for reading and writing SDF files.
+   @author Dr Keith Bennett
+   @date 15/02/2014
+   @version 5.0
+*/
+
 #ifndef _SDF_INPUT_H_
 #define _SDF_INPUT_H_
 

@@ -11,6 +11,11 @@
 #include <mpi.h>
 #endif
 
+/*
+ * @defgroup output
+ * @brief Routines for writing to an SDF file
+ */
+
 static int write_constant(sdf_file_t *h);
 static int write_stitched(sdf_file_t *h);
 static int write_stitched_material(sdf_file_t *h);

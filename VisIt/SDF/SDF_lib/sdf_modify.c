@@ -11,6 +11,11 @@
 #include <mpi.h>
 #endif
 
+/**
+ * @defgroup modify
+ * @brief Routines for modifying an SDF file in-place
+ */
+
 #define COPY_ENTRY(copy, original, count) do { \
         size_t _len; \
         if ((copy)) { \
@@ -206,6 +211,10 @@ static sdf_block_t *append_block_to_blocklist(sdf_file_t *h, sdf_block_t *b)
 
 
 
+/**
+ * @ingroup modify
+ * @{
+ */
 int sdf_modify_array(sdf_file_t *h, sdf_block_t *b, void *data)
 {
     if (!b) return 1;
@@ -639,3 +648,4 @@ int sdf_modify_rewrite_metadata(sdf_file_t *h)
 
     return 0;
 }
+/** @} */

@@ -12,6 +12,11 @@
 #include <sys/mman.h>
 #endif
 
+/**
+ * @defgroup control
+ * @brief Routines for controlling an SDF file
+ */
+
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define ABS(a) (((a) > 0) ? (a) : (-(a)))
@@ -193,6 +198,8 @@ static int sdf_fopen(sdf_file_t *h, int mode)
 
 
 
+/** @ingroup control
+ */
 sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 {
     sdf_file_t *h;
@@ -265,6 +272,8 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 
 
 
+/** @ingroup control
+ */
 int sdf_close(sdf_file_t *h)
 {
     // No open file
@@ -364,6 +373,8 @@ int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
 
 
 
+/** @ingroup control
+ */
 int sdf_free_blocklist_data(sdf_file_t *h)
 {
     sdf_block_t *b, *next;
@@ -591,6 +602,8 @@ static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
 
 
 
+/** @ingroup control
+ */
 int sdf_get_domain_bounds(sdf_file_t *h, int rank, int *starts, int *local_dims)
 {
     sdf_block_t *b = h->current_block;

@@ -1411,6 +1411,7 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
 
 
 
+/** @ingroup derived */
 int sdf_add_derived_blocks(sdf_file_t *h)
 {
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
@@ -1648,6 +1649,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 
 
 
+/** @ingroup derived */
 int sdf_add_derived_blocks_final(sdf_file_t *h)
 {
     sdf_block_t *b, *next, *append, *append_head, *append_tail;

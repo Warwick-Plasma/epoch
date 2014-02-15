@@ -1,3 +1,13 @@
+/**
+   @internal
+   @file sdf_derived.h
+
+   @brief Declarations for the SDF C-library.
+   @details Routines for reading and writing SDF files.
+   @author Dr Keith Bennett
+   @date 15/02/2014
+*/
+
 #ifndef _SDF_DERIVED_H_
 #define _SDF_DERIVED_H_
 #include <sdf.h>

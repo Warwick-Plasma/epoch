@@ -11,6 +11,10 @@
 #include <mpi.h>
 #endif
 
+/**
+ * @defgroup input
+ * @brief Routines for reading from an SDF file
+ */
 
 #define SDF_COMMON_INFO() do { \
     if (!h->current_block || !h->current_block->done_header) { \
@@ -103,6 +107,9 @@ int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen)
 
 
 
+/** @ingroup input
+ *  @{
+ */
 int sdf_read_header(sdf_file_t *h)
 {
     int buflen;
@@ -352,6 +359,7 @@ int sdf_read_data(sdf_file_t *h)
 
     return 1;
 }
+/** @} */
 
 
 
