@@ -257,7 +257,8 @@ int sdf_read_blocklist(sdf_file_t *h);
 int sdf_read_blocklist_all(sdf_file_t *h);
 int sdf_read_block_info(sdf_file_t *h);
 int sdf_read_data(sdf_file_t *h);
-int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local);
+int sdf_get_domain_bounds(sdf_file_t *h, int rank,
+                          int *starts, int *local_dims);
 int sdf_seek(sdf_file_t *h);
 int sdf_seek_set(sdf_file_t *h, off_t offset);
 int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen);

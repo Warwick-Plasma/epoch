@@ -583,7 +583,7 @@ static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
 
 
 
-int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
+int sdf_get_domain_bounds(sdf_file_t *h, int rank, int *starts, int *local_dims)
 {
     sdf_block_t *b = h->current_block;
     int n;
@@ -598,7 +598,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
         if (b->dims[n] < 1) b->dims[n] = 1;
     }
 
-    memset(start, 0, 3*sizeof(int));
+    memset(starts, 0, 3*sizeof(int));
 
     div = 1;
     for (n = 0; n < b->ndims; n++) {
@@ -618,12 +618,12 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
         npoint_min = (int)b->dims[n] / b->cpu_split[n];
         split_big = (int)(b->dims[n] - b->cpu_split[n] * npoint_min);
         if (coords >= split_big) {
-            start[n] = split_big * (npoint_min + 1)
+            starts[n] = split_big * (npoint_min + 1)
                 + (coords - split_big) * npoint_min;
-            local[n] = npoint_min;
+            local_dims[n] = npoint_min;
         } else {
-            start[n] = coords * (npoint_min + 1);
-            local[n] = npoint_min + 1;
+            starts[n] = coords * (npoint_min + 1);
+            local_dims[n] = npoint_min + 1;
         }
     }
 
@@ -631,13 +631,13 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     for (n = 0; n < b->ndims; n++) {
         b->dims[n] = old_dims[n];
         // Add extra staggered value if required
-        if (b->const_value[n]) local[n]++;
+        if (b->const_value[n]) local_dims[n]++;
     }
 #else
-    memset(start, 0, 3*sizeof(int));
-    for (n=0; n < b->ndims; n++) local[n] = (int)b->dims[n];
+    memset(starts, 0, 3*sizeof(int));
+    for (n=0; n < b->ndims; n++) local_dims[n] = (int)b->dims[n];
 #endif
-    for (n=b->ndims; n < 3; n++) local[n] = 1;
+    for (n=b->ndims; n < 3; n++) local_dims[n] = 1;
 
     return 0;
 }
@@ -667,7 +667,7 @@ int sdf_factor(sdf_file_t *h)
     for (n = 0; n < b->ndims; n++)
         b->dims[n] = old_dims[n];
 
-    sdf_get_domain_extents(h, h->rank, b->starts, b->local_dims);
+    sdf_get_domain_bounds(h, h->rank, b->starts, b->local_dims);
 #else
     for (n = 0; n < 3; n++) b->local_dims[n] = (int)b->dims[n];
 #endif

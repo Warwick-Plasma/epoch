@@ -1332,26 +1332,24 @@ avtSDFFileFormat::SetUpDomainConnectivity(void)
 
     rdb->SetNumDomains(ndomains);
 
-    int start[3], local[3];
+    int starts[3], local_dims[3], extents[6];
 
-    for(int n=0; n < ndomains; n++) {
-        int extents[6];
+    for(int rank = 0; rank < ndomains; rank++) {
+        sdf_get_domain_bounds(h, rank, starts, local_dims);
 
-        sdf_get_domain_extents(h, n, start, local);
-
-        debug1 << "avtSDFFileFormat:: Connectivity0 (" << n << ": ";
+        debug1 << "avtSDFFileFormat:: Connectivity0 (" << rank << ": ";
         for (int i = 0; i < 3; i++) {
-            extents[2*i] = start[i];
-            extents[2*i+1] = start[i] + local[i] - 1;
-        debug1 << start[i] << "," << local[i] << " ";
+            extents[2*i] = starts[i];
+            extents[2*i+1] = starts[i] + local_dims[i] - 1;
+        debug1 << starts[i] << "," << local_dims[i] << " ";
         }
         debug1 << ")" << endl;
 
-        debug1 << "avtSDFFileFormat:: Connectivity1 (" << n << ": ";
+        debug1 << "avtSDFFileFormat:: Connectivity1 (" << rank << ": ";
         for (int i = 0; i < 6; i++) debug1 << extents[i] << " ";
         debug1 << ")" << endl;
 
-        rdb->SetIndicesForRectGrid(n, extents);
+        rdb->SetIndicesForRectGrid(rank, extents);
     }
     rdb->CalculateBoundaries();
 
