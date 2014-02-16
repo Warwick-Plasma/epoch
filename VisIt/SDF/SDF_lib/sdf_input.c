@@ -22,11 +22,18 @@
     b->done_info = 1; } while(0)
 
 
-int sdf_read_array_info(sdf_file_t *h);
-int sdf_read_run_info(sdf_file_t *h);
-int sdf_read_array(sdf_file_t *h);
+static int sdf_read_constant(sdf_file_t *h);
+static int sdf_read_stitched(sdf_file_t *h);
+static int sdf_read_stitched_material(sdf_file_t *h);
+static int sdf_read_stitched_matvar(sdf_file_t *h);
+static int sdf_read_stitched_species(sdf_file_t *h);
+static int sdf_read_stitched_obstacle_group(sdf_file_t *h);
+static int sdf_read_array(sdf_file_t *h);
+static int sdf_read_array_info(sdf_file_t *h);
 static int sdf_read_cpu_split_info(sdf_file_t *h);
+static int sdf_read_run_info(sdf_file_t *h);
 static void build_summary_buffer(sdf_file_t *h);
+static int sdf_read_next_block_header(sdf_file_t *h);
 
 
 
@@ -324,7 +331,7 @@ int sdf_read_data(sdf_file_t *h)
 
 
 // Read the block header into the current block
-int sdf_read_next_block_header(sdf_file_t *h)
+static int sdf_read_next_block_header(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
@@ -548,7 +555,7 @@ static void build_summary_buffer(sdf_file_t *h)
 
 
 
-int sdf_read_stitched(sdf_file_t *h)
+static int sdf_read_stitched(sdf_file_t *h)
 {
     sdf_block_t *b;
 
@@ -572,7 +579,7 @@ int sdf_read_stitched(sdf_file_t *h)
 
 
 
-int sdf_read_stitched_material(sdf_file_t *h)
+static int sdf_read_stitched_material(sdf_file_t *h)
 {
     sdf_block_t *b;
 
@@ -599,7 +606,7 @@ int sdf_read_stitched_material(sdf_file_t *h)
 
 
 
-int sdf_read_stitched_matvar(sdf_file_t *h)
+static int sdf_read_stitched_matvar(sdf_file_t *h)
 {
     sdf_block_t *b;
 
@@ -626,7 +633,7 @@ int sdf_read_stitched_matvar(sdf_file_t *h)
 
 
 
-int sdf_read_stitched_species(sdf_file_t *h)
+static int sdf_read_stitched_species(sdf_file_t *h)
 {
     sdf_block_t *b;
 
@@ -659,7 +666,7 @@ int sdf_read_stitched_species(sdf_file_t *h)
 
 
 
-int sdf_read_stitched_obstacle_group(sdf_file_t *h)
+static int sdf_read_stitched_obstacle_group(sdf_file_t *h)
 {
     sdf_block_t *b;
 
@@ -686,7 +693,7 @@ int sdf_read_stitched_obstacle_group(sdf_file_t *h)
 
 
 
-int sdf_read_constant(sdf_file_t *h)
+static int sdf_read_constant(sdf_file_t *h)
 {
     sdf_block_t *b;
 
@@ -730,7 +737,7 @@ static int sdf_array_datatype(sdf_file_t *h)
 
 
 
-int sdf_read_run_info(sdf_file_t *h)
+static int sdf_read_run_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     struct run_info *run;
@@ -774,7 +781,7 @@ int sdf_read_run_info(sdf_file_t *h)
 
 
 
-int sdf_read_array_info(sdf_file_t *h)
+static int sdf_read_array_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
@@ -834,7 +841,7 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
 
 
 
-int sdf_read_array(sdf_file_t *h)
+static int sdf_read_array(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
     char *p;

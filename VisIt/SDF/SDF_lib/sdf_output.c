@@ -7,26 +7,12 @@
 #include <mpi.h>
 #endif
 
-static size_t trimwhitespace(const char *str_in, char *str_out, size_t len);
-static int safe_copy_string(char *s1, char *s2);
-static int sdf_safe_write_string_len(sdf_file_t *h, char *string, int length);
-static int sdf_safe_write_string(sdf_file_t *h, char *string);
-static int sdf_safe_write_id(sdf_file_t *h, char *string);
-
-static int write_block(sdf_file_t *h);
-static int write_header(sdf_file_t *h);
-static int write_block_header(sdf_file_t *h);
 static int write_constant(sdf_file_t *h);
-static int write_array_meta(sdf_file_t *h);
-static int write_cpu_split_meta(sdf_file_t *h);
 static int write_stitched(sdf_file_t *h);
 static int write_stitched_material(sdf_file_t *h);
 static int write_stitched_matvar(sdf_file_t *h);
 static int write_stitched_species(sdf_file_t *h);
 static int write_run_info_meta(sdf_file_t *h);
-static int write_plain_mesh_meta(sdf_file_t *h);
-static int write_plain_variable_meta(sdf_file_t *h);
-static int write_meta(sdf_file_t *h);
 static int write_data(sdf_file_t *h);
 
 
@@ -825,7 +811,7 @@ static int write_data(sdf_file_t *h)
 
 
 
-int sdf_write_header(sdf_file_t *h, char *code_name, int code_io_version,
+static int sdf_write_header(sdf_file_t *h, char *code_name, int code_io_version,
         int step, double time, char restart, int jobid1, int jobid2)
 {
     int errcode = 0;

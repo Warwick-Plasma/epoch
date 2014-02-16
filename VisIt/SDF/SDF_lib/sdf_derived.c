@@ -31,7 +31,7 @@ static char *strcat_alloc(char *base, char *sfx)
 
 
 
-sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *grid = sdf_find_block_by_id(h, b->subblock->mesh_id);
     sdf_block_t *current_block = h->current_block;
@@ -293,7 +293,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     int grp = b->nm + 1;
     sdf_block_t *grid = sdf_find_block_by_id(h, b->subblock->mesh_id);
@@ -465,7 +465,7 @@ sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
     sdf_block_t *current_block = h->current_block;
@@ -495,7 +495,7 @@ sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
     sdf_block_t *current_block = h->current_block;
@@ -519,7 +519,7 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 {
     int i, n, sz;
     sdf_block_t *old = b->subblock;
@@ -588,7 +588,7 @@ sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     int i, n, sz, np, nx;
     int i0, i1, idx;
@@ -686,7 +686,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     int n, nx, sz, idx, i0 = 0, pmax = -2;
     char *x;
@@ -760,7 +760,7 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
 {
     int n, *var = b->data;
 
@@ -775,7 +775,7 @@ sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
 {
     int i, n, idx, sz, data_offset0, varoffset;
     float *r4, dt4, time4;
@@ -868,7 +868,7 @@ sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
 {
     int i, j, k, sz, len, vidx, varoffset;
     int data_offset0, data_offset;

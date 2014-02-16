@@ -20,7 +20,7 @@
     b->done_info = 1; } while(0)
 
 
-int sdf_point_factor(sdf_file_t *h, int *nelements_local);
+static int sdf_point_factor(sdf_file_t *h, int *nelements_local);
 
 
 int sdf_read_point_mesh_info(sdf_file_t *h)
@@ -214,7 +214,7 @@ int sdf_read_point_mesh(sdf_file_t *h)
 
 
 
-int sdf_point_factor(sdf_file_t *h, int *nelements_local)
+static int sdf_point_factor(sdf_file_t *h, int *nelements_local)
 {
     sdf_block_t *b = h->current_block;
 #ifdef PARALLEL

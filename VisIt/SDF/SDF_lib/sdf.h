@@ -269,17 +269,6 @@ int sdf_write(sdf_file_t *h);
 int sdf_factor(sdf_file_t *h);
 int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count);
 int sdf_randomize_array(sdf_file_t *h, void **var_in, int count);
-int sdf_set_rank_master(sdf_file_t *h, int rank);
-int sdf_read_nblocks(sdf_file_t *h);
-
-int sdf_abort(sdf_file_t *h);
-int sdf_read_next_block_header(sdf_file_t *h);
-int sdf_read_stitched_material(sdf_file_t *h);
-int sdf_read_stitched_matvar(sdf_file_t *h);
-int sdf_read_stitched_species(sdf_file_t *h);
-int sdf_read_stitched_obstacle_group(sdf_file_t *h);
-int sdf_read_stitched(sdf_file_t *h);
-int sdf_read_constant(sdf_file_t *h);
 
 int sdf_read_plain_mesh(sdf_file_t *h);
 int sdf_read_plain_mesh_info(sdf_file_t *h);
@@ -298,7 +287,6 @@ int sdf_write_at(sdf_file_t *h, off_t offset, void *buf, int buflen);
 int sdf_flush(sdf_file_t *h);
 
 void sdf_trim(char *str);
-int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out);
 
 int sdf_modify_array(sdf_file_t *h, sdf_block_t *b, void *data);
 int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,

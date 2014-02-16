@@ -121,7 +121,7 @@ const int sdf_error_codes_len =
 
 
 
-int sdf_abort(sdf_file_t *h)
+static int sdf_abort(sdf_file_t *h)
 {
 #ifdef PARALLEL
     MPI_Abort(h->comm, 1);
@@ -161,7 +161,7 @@ int sdf_broadcast(sdf_file_t *h, void *buf, int size)
 
 
 
-int sdf_fopen(sdf_file_t *h, int mode)
+static int sdf_fopen(sdf_file_t *h, int mode)
 {
     int ret = 0;
 
@@ -293,7 +293,7 @@ int sdf_close(sdf_file_t *h)
 
 
 
-static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
+int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 {
     int i;
     struct run_info *run;
@@ -434,7 +434,7 @@ static int sdf_fclose(sdf_file_t *h)
 
 
 
-int sdf_set_rank_master(sdf_file_t *h, int rank)
+static int sdf_set_rank_master(sdf_file_t *h, int rank)
 {
     if (h)
         h->rank_master = rank;
@@ -446,7 +446,7 @@ int sdf_set_rank_master(sdf_file_t *h, int rank)
 
 
 
-int sdf_read_nblocks(sdf_file_t *h)
+static int sdf_read_nblocks(sdf_file_t *h)
 {
     if (h)
         return h->nblocks;
@@ -457,7 +457,7 @@ int sdf_read_nblocks(sdf_file_t *h)
 
 
 /*
-int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
+static int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
 {
     if (h && jobid)
         memcpy(jobid, &h->jobid, sizeof(jobid));
@@ -764,7 +764,7 @@ int sdf_randomize_array(sdf_file_t *h, void **var_in, int count)
 
 
 
-int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out)
+static int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out)
 {
     sdf_file_t *h_tmp;
 
