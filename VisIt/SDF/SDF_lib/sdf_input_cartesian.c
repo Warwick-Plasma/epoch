@@ -49,7 +49,11 @@ int sdf_read_plain_mesh_info(sdf_file_t *h)
     SDF_READ_ENTRY_ARRAY_REAL8(b->extents, 2*b->ndims);
 
     SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
-    for (i = 0; i < b->ndims; i++) b->dims[i] = dims_in[i];
+    b->nelements = 0;
+    for (i = 0; i < b->ndims; i++) {
+        b->dims[i] = dims_in[i];
+        b->nelements += b->dims[i];
+    }
 
     b->stagger = SDF_STAGGER_VERTEX;
     for (i = 0; i < b->ndims; i++) b->const_value[i] = 1;
@@ -82,7 +86,11 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
     SDF_READ_ENTRY_ID(b->mesh_id);
 
     SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
-    for (i = 0; i < b->ndims; i++) b->dims[i] = dims_in[i];
+    b->nelements = 1;
+    for (i = 0; i < b->ndims; i++) {
+        b->dims[i] = dims_in[i];
+        b->nelements *= b->dims[i];
+    }
 
     SDF_READ_ENTRY_INT4(b->stagger);
     for (i = 0; i < b->ndims; i++) b->const_value[i] = (b->stagger & 1<<i);

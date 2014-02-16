@@ -178,6 +178,8 @@ struct sdf_block {
     double mult, time, time_increment;
     uint64_t dims[3];
     uint64_t block_start, next_block_location, data_location;
+    uint64_t inline_block_start, inline_next_block_location;
+    uint64_t summary_block_start, summary_next_block_location;
     uint64_t nelements, data_length, *nelements_blocks, *data_length_blocks;
     uint32_t ndims, geometry, datatype, blocktype, info_length;
     uint32_t type_size, stagger, datatype_out, type_size_out;
@@ -196,6 +198,7 @@ struct sdf_block {
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
     char dont_own_data, use_mult;
+    char in_file;
     sdf_block_t *next, *prev;
     sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
@@ -221,7 +224,7 @@ struct sdf_file {
     uint32_t jobid1, jobid2, endianness, summary_size;
     uint32_t block_header_length, string_length, id_length;
     uint32_t code_io_version, step;
-    int32_t nblocks, error_code;
+    int32_t nblocks, nblocks_file, error_code;
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float, use_summary;

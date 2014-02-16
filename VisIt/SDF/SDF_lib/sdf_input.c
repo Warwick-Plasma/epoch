@@ -58,10 +58,11 @@ static inline int sdf_get_next_block(sdf_file_t *h)
         else {
             sdf_block_t *block = malloc(sizeof(sdf_block_t));
             memset(block, 0, sizeof(sdf_block_t));
+            block->block_start = h->tail->next_block_location;
             if (h->use_summary)
-                block->block_start = h->tail->next_block_location;
+                block->summary_block_start = block->block_start;
             else
-                block->block_start = h->current_location;
+                block->inline_block_start = block->block_start;
             h->tail->next = block;
             h->tail->next->prev = h->tail;
             h->current_block = h->tail = block;
@@ -70,11 +71,15 @@ static inline int sdf_get_next_block(sdf_file_t *h)
         sdf_block_t *block = malloc(sizeof(sdf_block_t));
         memset(block, 0, sizeof(sdf_block_t));
         if (h->use_summary)
-            block->block_start = h->summary_location;
+            block->summary_block_start = block->block_start =
+                h->summary_location;
         else
-            block->block_start = 0;
+            block->inline_block_start = block->block_start =
+                h->first_block_location;
         h->blocklist = h->tail = h->current_block = block;
     }
+
+    h->current_block->in_file = 1;
 
     return 0;
 }
@@ -139,7 +144,7 @@ int sdf_read_header(sdf_file_t *h)
 
     SDF_READ_ENTRY_INT4(h->summary_size);
 
-    SDF_READ_ENTRY_INT4(h->nblocks);
+    SDF_READ_ENTRY_INT4(h->nblocks_file);
 
     SDF_READ_ENTRY_INT4(h->block_header_length);
 
@@ -164,6 +169,7 @@ int sdf_read_header(sdf_file_t *h)
 
     h->current_location = h->first_block_location;
     h->done_header = 1;
+    h->nblocks = h->nblocks_file;
 
     if (h->summary_size == 0) h->use_summary = 0;
 
@@ -193,6 +199,7 @@ int sdf_read_summary(sdf_file_t *h)
         }
     } else {
         build_summary_buffer(h);
+        h->current_location = h->start_location = h->first_block_location;
     }
 
     // Send the temporary buffer to all processors
@@ -297,6 +304,14 @@ int sdf_read_block_info(sdf_file_t *h)
     else if (b->blocktype == SDF_BLOCKTYPE_STATION)
         ret = sdf_read_station_info(h);
 
+    // Fix up block_start values for inline metadata
+    if (!h->use_summary) {
+        if (b->prev)
+            b->block_start = b->prev->next_block_location;
+        else if (b == h->blocklist)
+            b->block_start = h->first_block_location;
+    }
+
     return ret;
 }
 
@@ -362,8 +377,7 @@ static int sdf_read_next_block_header(sdf_file_t *h)
 
     h->indent = 2;
 
-    if (h->use_summary)
-        h->current_location = b->block_start;
+    h->current_location = b->block_start;
 
     SDF_READ_ENTRY_INT8(b->next_block_location);
 
@@ -385,6 +399,14 @@ static int sdf_read_next_block_header(sdf_file_t *h)
     // info length in the header.
     if (h->file_version + h->file_revision > 1)
         SDF_READ_ENTRY_INT4(b->info_length);
+
+    if (h->use_summary) {
+        b->summary_next_block_location = b->next_block_location;
+    } else {
+        b->inline_next_block_location = b->next_block_location;
+        b->next_block_location = b->block_start
+                + h->block_header_length + b->info_length;
+    }
 
     if (b->blocktype == SDF_BLOCKTYPE_POINT_VARIABLE
             || b->blocktype == SDF_BLOCKTYPE_POINT_MESH)
@@ -794,11 +816,12 @@ static int sdf_read_array_info(sdf_file_t *h)
     SDF_COMMON_INFO();
 
     SDF_READ_ENTRY_ARRAY_INT4(dims_ptr, b->ndims);
-    b->nelements_local = 1;
+    b->nelements = 1;
     for (i = 0; i < b->ndims; i++) {
         b->local_dims[i] = b->dims[i] = dims_in[i];
-        b->nelements_local *= b->dims[i];
+        b->nelements *= b->dims[i];
     }
+    b->nelements_local = b->nelements;
 
     return 0;
 }

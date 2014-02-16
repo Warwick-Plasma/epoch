@@ -103,7 +103,7 @@ int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
                 memcpy((char*)b->data + offset,
                        (char*)data + data_offset, length);
                 // Only need to update file if this block is present
-                if (b->block_start > 0)
+                if (b->in_file)
                     sdf_write_at(h, b->data_location+offset,
                                  (char*)data+data_offset, length);
                 data_offset += length;
