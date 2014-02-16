@@ -479,6 +479,97 @@ int sdf_modify_remove_block_name(sdf_file_t *h, const char *name)
 
 
 
+int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
+        sdf_block_t *material)
+{
+    sdf_block_t *b = stitched;
+    char **new_material_names, **new_variable_ids;
+    uint64_t info_length;
+    int i;
+
+    if (!stitched || !material) return 1;
+
+    sdf_modify_add_block_copy(h, material);
+
+    new_material_names = malloc((b->ndims+1) * sizeof(char*));
+    new_variable_ids   = malloc((b->ndims+1) * sizeof(char*));
+
+    for (i=0; i < b->ndims; i++) {
+        new_material_names[i] = strdup(b->material_names[i]);
+        free(b->material_names[i]);
+
+        new_variable_ids[i] = strdup(b->variable_ids[i]);
+        free(b->variable_ids[i]);
+    }
+
+    new_material_names[i] = strdup(material->name);
+    new_variable_ids[i] = strdup(material->id);
+
+    free(b->material_names);
+    free(b->variable_ids);
+    b->material_names = new_material_names;
+    b->variable_ids = new_variable_ids;
+    b->ndims++;
+    b->blocktype = SDF_BLOCKTYPE_STITCHED_MATERIAL;
+
+    info_length = SOI4 + (b->ndims + 1) * SDF_ID_LENGTH
+        + b->ndims * h->string_length;
+
+    // Allow for the possibility that info_length was padded
+    if (info_length > b->info_length) {
+        b->info_length = info_length;
+        modify_remove_block(h, b, 0);
+        sdf_modify_add_block(h, b);
+    }
+
+    return 0;
+}
+
+
+
+int sdf_modify_remove_material(sdf_file_t *h, sdf_block_t *stitched,
+        sdf_block_t *material)
+{
+    int i, len1, len2;
+    char **names, **ids;
+    if (!stitched || !material) return 1;
+
+    names = malloc((stitched->ndims-1) * sizeof(char*));
+    ids = malloc((stitched->ndims-1) * sizeof(char*));
+
+    len1 = strlen(material->id) + 1;
+    for (i = 0; i < stitched->ndims; i++) {
+        len2 = strlen(stitched->variable_ids[i]) + 1;
+        if (len1 == len2) {
+            if (!memcmp(material->id, stitched->variable_ids[i], len1)) {
+                free(stitched->variable_ids[i]);
+                break;
+            }
+        }
+        names[i] = stitched->material_names[i];
+        ids[i] = stitched->variable_ids[i];
+    }
+
+    for (i++; i < stitched->ndims; i++) {
+        names[i-1] = stitched->material_names[i];
+        ids[i-1] = stitched->variable_ids[i];
+    }
+
+    stitched->ndims--;
+    free(stitched->material_names);
+    free(stitched->variable_ids);
+    stitched->material_names = names;
+    stitched->variable_ids = ids;
+    stitched->rewrite_metadata = 1;
+    stitched->blocktype = SDF_BLOCKTYPE_STITCHED_MATERIAL;
+
+    sdf_modify_remove_block(h, material);
+
+    return 0;
+}
+
+
+
 int sdf_modify_rewrite_metadata(sdf_file_t *h)
 {
     sdf_block_t *b, *next;

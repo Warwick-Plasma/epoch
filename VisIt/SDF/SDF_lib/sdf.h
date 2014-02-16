@@ -307,6 +307,10 @@ int sdf_modify_add_block_copy(sdf_file_t *h, sdf_block_t *block);
 int sdf_modify_remove_block(sdf_file_t *h, sdf_block_t *block);
 int sdf_modify_remove_block_id(sdf_file_t *h, const char *id);
 int sdf_modify_remove_block_name(sdf_file_t *h, const char *name);
+int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
+        sdf_block_t *material);
+int sdf_modify_remove_material(sdf_file_t *h, sdf_block_t *stitched,
+        sdf_block_t *material);
 int sdf_modify_rewrite_metadata(sdf_file_t *h);
 
 
