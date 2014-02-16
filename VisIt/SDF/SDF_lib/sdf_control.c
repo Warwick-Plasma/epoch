@@ -328,7 +328,7 @@ int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 
 
 
-static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
+int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
 {
     if (!b) return 1;
 

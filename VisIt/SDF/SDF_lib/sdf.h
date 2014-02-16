@@ -30,7 +30,7 @@
 
 #define SDF_VERSION  1
 #define SDF_REVISION 2
-#define SDF_LIB_VERSION  4
+#define SDF_LIB_VERSION  5
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
@@ -197,7 +197,7 @@ struct sdf_block {
     int *node_list, *boundary_cells;
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
-    char dont_own_data, use_mult;
+    char dont_own_data, use_mult, next_block_modified, rewrite_metadata;
     char in_file;
     sdf_block_t *next, *prev;
     sdf_block_t *subblock, *subblock2;
@@ -229,8 +229,11 @@ struct sdf_file {
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float, use_summary;
     char use_random, station_file, swap;
+    char inline_metadata_read, summary_metadata_read;
+    char inline_metadata_invalid, summary_metadata_invalid, tmp_flag;
+    char metadata_modified, can_truncate, first_block_modified;
     char *code_name, *error_message;
-    sdf_block_t *blocklist, *tail, *current_block;
+    sdf_block_t *blocklist, *tail, *current_block, *last_block_in_file;
     char *mmap;
     void *ext_data;
 #ifdef PARALLEL
@@ -266,12 +269,14 @@ int sdf_seek_set(sdf_file_t *h, off_t offset);
 int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen);
 int sdf_broadcast(sdf_file_t *h, void *buf, int size);
 int sdf_write(sdf_file_t *h);
+int sdf_write_meta(sdf_file_t *h);
 
 // internal routines
 
 int sdf_factor(sdf_file_t *h);
 int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count);
 int sdf_randomize_array(sdf_file_t *h, void **var_in, int count);
+int sdf_free_block(sdf_file_t *h, sdf_block_t *b);
 
 int sdf_read_plain_mesh(sdf_file_t *h);
 int sdf_read_plain_mesh_info(sdf_file_t *h);
@@ -290,12 +295,18 @@ int sdf_write_at(sdf_file_t *h, off_t offset, void *buf, int buflen);
 int sdf_flush(sdf_file_t *h);
 
 void sdf_trim(char *str);
+uint64_t sdf_write_new_summary(sdf_file_t *h);
 
 int sdf_modify_array(sdf_file_t *h, sdf_block_t *b, void *data);
 int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
                              uint64_t *starts, uint64_t *ends);
 int sdf_modify_array_element(sdf_file_t *h, sdf_block_t *b, void *data,
                              uint64_t *index);
+int sdf_modify_remove_block(sdf_file_t *h, sdf_block_t *block);
+int sdf_modify_remove_block_id(sdf_file_t *h, const char *id);
+int sdf_modify_remove_block_name(sdf_file_t *h, const char *name);
+int sdf_modify_rewrite_metadata(sdf_file_t *h);
+
 
 #ifdef SDF_DEBUG
   #define DBG_CHUNK 256

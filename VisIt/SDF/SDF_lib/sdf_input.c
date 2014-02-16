@@ -171,7 +171,10 @@ int sdf_read_header(sdf_file_t *h)
     h->done_header = 1;
     h->nblocks = h->nblocks_file;
 
-    if (h->summary_size == 0) h->use_summary = 0;
+    if (h->summary_size == 0) {
+        h->use_summary = 0;
+        h->summary_metadata_invalid = 1;
+    }
 
     return 0;
 }
@@ -180,7 +183,7 @@ int sdf_read_header(sdf_file_t *h)
 
 int sdf_read_summary(sdf_file_t *h)
 {
-    if (h->blocklist) {
+    if (h->blocklist && !h->tmp_flag) {
         h->current_block = h->blocklist;
         return 0;
     }
@@ -197,6 +200,7 @@ int sdf_read_summary(sdf_file_t *h)
             sdf_seek(h);
             sdf_read_bytes(h, h->buffer, h->summary_size);
         }
+        h->summary_metadata_read = 1;
     } else {
         build_summary_buffer(h);
         h->current_location = h->start_location = h->first_block_location;
@@ -230,6 +234,7 @@ int sdf_read_blocklist(sdf_file_t *h)
 
     h->buffer = NULL;
     h->current_block = h->blocklist;
+    h->last_block_in_file = h->tail;
 
 #ifdef PARALLEL
     // Hack to fix cartesian blocks whose mesh sizes don't match the stagger
@@ -573,6 +578,7 @@ static void build_summary_buffer(sdf_file_t *h)
 
     h->summary_size = buflen;
     h->current_location = 0;
+    h->inline_metadata_read = 1;
 }
 
 
