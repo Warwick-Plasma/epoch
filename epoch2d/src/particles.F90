@@ -42,7 +42,7 @@ CONTAINS
     REAL(num) :: part_q, part_mc, ipart_mc, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     REAL(num) :: init_part_x, final_part_x
     REAL(num) :: init_part_y, final_part_y
     TYPE(particle_probe), POINTER :: current_probe
@@ -92,10 +92,10 @@ CONTAINS
     REAL(num) :: hy_iy, xfac1, yfac1, yfac2
     INTEGER :: ispecies, ix, iy, dcellx, dcelly, cx, cy
     INTEGER(i8) :: ipart
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
 #endif
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
     LOGICAL :: not_tracer_species
 #endif
     ! Particle weighting multiplication factor
@@ -145,15 +145,15 @@ CONTAINS
 #endif
         CYCLE
       ENDIF
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
 #endif
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       not_tracer_species = .NOT. species_list(ispecies)%tracer
 #endif
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
       part_weight = species_list(ispecies)%weight
       fcx = idty * part_weight
       fcy = idtx * part_weight
@@ -165,7 +165,7 @@ CONTAINS
       ipart_mc = 1.0_num / part_mc
       cmratio  = part_q * dtfac * ipart_mc
       ccmratio = c * cmratio
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       part_mc2 = c * part_mc
 #endif
 #endif
@@ -175,13 +175,13 @@ CONTAINS
 #ifdef PREFETCH
         CALL prefetch_particle(next)
 #endif
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_weight = current%weight
         fcx = idty * part_weight
         fcy = idtx * part_weight
         fcz = idxy * part_weight
 #endif
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
         init_part_x = current%part_pos(1)
         init_part_y = current%part_pos(2)
 #endif
@@ -191,7 +191,7 @@ CONTAINS
         ipart_mc = 1.0_num / part_mc
         cmratio  = part_q * dtfac * ipart_mc
         ccmratio = c * cmratio
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
         part_mc2 = c * part_mc
 #endif
 #endif
@@ -329,7 +329,7 @@ CONTAINS
             part_y + y_grid_min_local /)
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
         final_part_x = current%part_pos(1)
         final_part_y = current%part_pos(2)
 #endif
@@ -338,7 +338,7 @@ CONTAINS
 
         ! If the code is compiled with tracer particle support then put in an
         ! IF statement so that the current is not calculated for this species
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
         IF (not_tracer_species) THEN
 #endif
           ! Now advance to t+1.5dt to calculate current. This is detailed in
@@ -422,10 +422,10 @@ CONTAINS
               jz(cx, cy) = jz(cx, cy) + jzh
             ENDDO
           ENDDO
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
         ENDIF
 #endif
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
         IF (probes_for_species) THEN
           ! Compare the current particle with the parameters of any probes in
           ! the system. These particles are copied into a separate part of the
@@ -484,7 +484,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
 
     ! Used for particle probes (to see of probe conditions are satisfied)
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     REAL(num) :: init_part_x, final_part_x
     REAL(num) :: init_part_y, final_part_y
     TYPE(particle_probe), POINTER :: current_probe
@@ -494,7 +494,7 @@ CONTAINS
     LOGICAL :: probes_for_species
 #endif
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     current_probe => species_list(ispecies)%attached_probes
     probes_for_species = ASSOCIATED(current_probe)
 #endif
@@ -511,17 +511,17 @@ CONTAINS
       fac = dtfac / probe_energy
       delta_x = current%part_p(1) * fac
       delta_y = current%part_p(2) * fac
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       init_part_x = current%part_pos(1)
       init_part_y = current%part_pos(2)
 #endif
       current%part_pos = current%part_pos + (/delta_x, delta_y/)
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       final_part_x = current%part_pos(1)
       final_part_y = current%part_pos(2)
 #endif
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       IF (probes_for_species) THEN
         ! Compare the current particle with the parameters of any probes in
         ! the system. These particles are copied into a separate part of the

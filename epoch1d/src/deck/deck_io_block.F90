@@ -559,11 +559,11 @@ CONTAINS
 
       ! If setting dumpmask for features which haven't been compiled
       ! in then issue a warning
-#ifndef PARTICLE_PROBES
+#ifdef NO_PARTICLE_PROBES
       IF (mask_element == c_dump_probes &
           .AND. mask /= c_io_none .AND. IAND(mask,c_io_never) == 0) THEN
         errcode = c_err_pp_options_wrong
-        extended_error_string = '-DPARTICLE_PROBES'
+        extended_error_string = '-NO_DPARTICLE_PROBES'
         mask = c_io_never
       ENDIF
 #endif
@@ -574,7 +574,7 @@ CONTAINS
 #ifndef PARTICLE_ID
       IF (mask_element == c_dump_part_id &
           .AND. mask /= c_io_none .AND. IAND(mask,c_io_never) == 0) THEN
-        errcode = c_err_pp_options_wrong
+        errcode = c_err_pp_options_missing
         extended_error_string = '-DPARTICLE_ID'
         mask = c_io_never
       ENDIF

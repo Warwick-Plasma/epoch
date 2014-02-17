@@ -64,7 +64,7 @@ CONTAINS
 
   SUBROUTINE setup_split_particles
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     INTEGER :: ispecies
 
     use_split = .FALSE.
@@ -85,7 +85,7 @@ CONTAINS
 
   SUBROUTINE split_particles
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     INTEGER :: ispecies, ix
     INTEGER(i8) :: count
     TYPE(particle), POINTER :: current, new_particle
@@ -111,7 +111,7 @@ CONTAINS
             current%weight = 0.5_num * current%weight
             ALLOCATE(new_particle)
             new_particle = current
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
             new_particle%id = 0
 #endif
             new_particle%part_pos = current%part_pos + jitter_x

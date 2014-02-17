@@ -325,7 +325,7 @@ CONTAINS
     ENDDO
     DO ispecies = 1, n_species
       species_list(ispecies)%id = ispecies
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       NULLIFY(species_list(ispecies)%attached_probes)
 #endif
       NULLIFY(species_list(ispecies)%attached_list%next)

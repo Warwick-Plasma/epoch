@@ -166,7 +166,7 @@ CONTAINS
     part_mc  = io_list(species)%mass * c
     part_mc2 = part_mc * c
 #endif
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
     part_weight = io_list(species)%weight
 #endif
 
@@ -374,7 +374,7 @@ CONTAINS
       part_mc  = current%mass * c
       part_mc2 = part_mc * c
 #endif
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
       part_weight = current%weight
 #endif
       gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num

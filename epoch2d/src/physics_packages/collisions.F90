@@ -166,7 +166,7 @@ CONTAINS
 
   SUBROUTINE collisional_ionisation
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     INTEGER :: ispecies, jspecies, ion_species, e_species, n1, n2, l
     INTEGER(i8) :: ix, iy
     TYPE(particle_list), POINTER :: p_list1
@@ -411,7 +411,7 @@ CONTAINS
 
 
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
   SUBROUTINE preionise(electrons, ions, ionised, ionising_e, &
       ejected_e, e_mass, ion_mass, e_charge, ion_charge, e_dens, &
       full_ion_charge, ionisation_energy, n1, n2, l)
@@ -685,7 +685,7 @@ CONTAINS
     ! No collisions in cold plasma so return
     IF (temp <= c_tiny) RETURN
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
     np = icount * weight
     factor = user_factor
 #else
@@ -781,7 +781,7 @@ CONTAINS
       p_list1%tail%next => p_list1%head
       p_list2%tail%next => p_list2%head
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
       np = pcount * weight1
       factor = pcount * MIN(weight1, weight2)
 #else
@@ -975,7 +975,7 @@ CONTAINS
     e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
     e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     w1 = current%weight
     w2 = impact%weight
 #else
@@ -1292,14 +1292,14 @@ CONTAINS
 
     idx   = 1.0_num / dx / dy
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
     wdata = species_list(ispecies)%weight * idx
 #endif
     DO jy = 1, ny
     DO jx = 1, nx
       current => species_list(ispecies)%secondary_list(jx,jy)%head
       DO WHILE (ASSOCIATED(current))
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         wdata = current%weight * idx
 #endif
 
@@ -1354,7 +1354,7 @@ CONTAINS
 #ifndef PER_PARTICLE_CHARGE_MASS
     sqrt_part_m  = SQRT(species_list(ispecies)%mass)
 #endif
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
     l_weight = species_list(ispecies)%weight
 #endif
     DO jy = 1, ny
@@ -1364,7 +1364,7 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGE_MASS
         sqrt_part_m  = SQRT(current%mass)
 #endif
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         l_weight = current%weight
 #endif
         ! Copy the particle properties out for speed

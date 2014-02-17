@@ -145,24 +145,26 @@ LDFLAGS = $(FFLAGS) -L$(SDF)/lib -lsdf
 TARGET = epoch1d
 
 # Set pre-processor defines
-DEFINES := $(DEF)
-DEFINES += $(D)PER_PARTICLE_WEIGHT
-DEFINES += $(D)PARTICLE_PROBES
-DEFINES += $(D)TRACER_PARTICLES
+DEFINES := $(DEFINE)
 
 # The following are a list of pre-processor defines which can be added to
 # the above line modifying the code behaviour at compile time.
 
-# Allow each pseudoparticle to represent a different number of real particles.
-#DEFINES += $(D)PER_PARTICLE_WEIGHT
+# Set every pseudoparticle in a species to represent the same number of
+# real particles.
+#DEFINES += $(D)PER_SPECIES_WEIGHT
 
-# Enable particles which behave like normal particles but do not affect
+# Don't enable support for tracer particles (in order to make the particle
+# push slightly faster).
+# Tracer particles which behave like normal particles but do not affect
 # the field, current or each other.
-#DEFINES += $(D)TRACER_PARTICLES
+#DEFINES += $(D)NO_TRACER_PARTICLES
 
-# Include diagnostics which gather information on particles which cross a
-# plane in the simulation.
-#DEFINES += $(D)PARTICLE_PROBES
+# Don't enable support for particle probes (in order to make the particle
+# push slightly faster).
+# Particle probes are diagnostics which gather information on particles which
+# cross a plane in the simulation.
+#DEFINES += $(D)NO_PARTICLE_PROBES
 
 # Use second order particle weighting (default is third order).
 #DEFINES += $(D)PARTICLE_SHAPE_TOPHAT

@@ -66,12 +66,13 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_missing_elements = 2**5
   INTEGER, PARAMETER :: c_err_terminate = 2**6
   INTEGER, PARAMETER :: c_err_required_element_not_set = 2**7
-  INTEGER, PARAMETER :: c_err_pp_options_wrong = 2**8
+  INTEGER, PARAMETER :: c_err_pp_options_missing = 2**8
   INTEGER, PARAMETER :: c_err_bad_array_length = 2**9
   INTEGER, PARAMETER :: c_err_other = 2**10
   INTEGER, PARAMETER :: c_err_warn_bad_value = 2**11
   INTEGER, PARAMETER :: c_err_generic_warning = 2**12
   INTEGER, PARAMETER :: c_err_generic_error = 2**13
+  INTEGER, PARAMETER :: c_err_pp_options_wrong = 2**14
 
   INTEGER, PARAMETER :: c_ds_first = 1
   INTEGER, PARAMETER :: c_ds_last = 2
@@ -472,7 +473,7 @@ MODULE shared_data
   TYPE particle
     REAL(num), DIMENSION(3) :: part_p
     REAL(num) :: part_pos
-#if PER_PARTICLE_WEIGHT || PHOTONS
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     REAL(num) :: weight
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -543,7 +544,7 @@ MODULE shared_data
     TYPE(particle_list) :: attached_list
     LOGICAL :: immobile
 
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
 #endif
 
@@ -575,7 +576,7 @@ MODULE shared_data
     REAL(num) :: ionisation_energy
 
     ! Attached probes for this species
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     TYPE(particle_probe), POINTER :: attached_probes
 #endif
 
@@ -764,7 +765,7 @@ MODULE shared_data
   TYPE(subset), DIMENSION(:), POINTER :: subset_list
   INTEGER :: n_subsets
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
   TYPE particle_probe
     ! Arbitrary point on the plane
     REAL(num) :: point

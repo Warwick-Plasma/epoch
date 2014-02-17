@@ -1,6 +1,6 @@
 MODULE probes
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
   USE partlist
 
   IMPLICIT NONE
@@ -125,7 +125,7 @@ CONTAINS
 
           ! dump particle weight function
           WRITE(temp_name, '(a, ''/weight'')') TRIM(probe_name)
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
               TRIM(temp_name), TRIM(probe_name), '', npart_probe_global, &
               TRIM(probe_name), it_probe_real, c_dump_part_weight, &
@@ -197,7 +197,7 @@ CONTAINS
     part_count = 0
 
     SELECT CASE (param)
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     CASE (c_dump_part_weight)
       DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
         part_count = part_count+1

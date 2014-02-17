@@ -1,6 +1,6 @@
 MODULE deck_particle_probe_block
 
-#ifndef PARTICLE_PROBES
+#ifdef NO_PARTICLE_PROBES
   IMPLICIT NONE
 
 CONTAINS

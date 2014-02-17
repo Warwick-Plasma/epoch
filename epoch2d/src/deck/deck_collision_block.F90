@@ -101,12 +101,12 @@ CONTAINS
     IF (str_cmp(element, 'collisional_ionisation')) THEN
       use_collisional_ionisation = as_logical_print(value, element, errcode)
       IF (use_collisional_ionisation) THEN
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         use_collisions = .TRUE.
 #else
         IF (as_logical_print(value, element, errcode)) THEN
           errcode = c_err_pp_options_wrong
-          extended_error_string = '-DPER_PARTICLE_WEIGHT'
+          extended_error_string = '-DPER_SPECIES_WEIGHT'
         ENDIF
         use_collisional_ionisation = .FALSE.
 #endif

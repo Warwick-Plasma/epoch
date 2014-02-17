@@ -25,7 +25,7 @@ CONTAINS
   SUBROUTINE setup_partlists
 
     nvar = 3 + c_ndims
-#if PER_PARTICLE_WEIGHT || PHOTONS
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     nvar = nvar+1
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -34,7 +34,7 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
     nvar = nvar+2
 #endif
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     nvar = nvar+1
 #endif
 #ifdef COLLISIONS_TEST
@@ -344,7 +344,7 @@ CONTAINS
     cpos = cpos+c_ndims
     array(cpos:cpos+2) = a_particle%part_p
     cpos = cpos+3
-#if PER_PARTICLE_WEIGHT || PHOTONS
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     array(cpos) = a_particle%weight
     cpos = cpos+1
 #endif
@@ -358,7 +358,7 @@ CONTAINS
     array(cpos+1) = REAL(a_particle%processor_at_t0, num)
     cpos = cpos+2
 #endif
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     array(cpos) = REAL(a_particle%id, num)
     cpos = cpos+1
 #endif
@@ -391,7 +391,7 @@ CONTAINS
     cpos = cpos+c_ndims
     a_particle%part_p = array(cpos:cpos+2)
     cpos = cpos+3
-#if PER_PARTICLE_WEIGHT || PHOTONS
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     a_particle%weight = array(cpos)
     cpos = cpos+1
 #endif
@@ -436,7 +436,7 @@ CONTAINS
 
     new_particle%part_p = 0.0_num
     new_particle%part_pos = 0.0_num
-#if PER_PARTICLE_WEIGHT || PHOTONS
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     new_particle%weight = 0.0_num
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -447,7 +447,7 @@ CONTAINS
     new_particle%processor = 0
     new_particle%processor_at_t0 = 0
 #endif
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     new_particle%id = 0
 #endif
 #ifdef COLLISIONS_TEST
@@ -488,7 +488,7 @@ CONTAINS
     IF (MAXVAL(ABS(part1%part_p - part2%part_p)) > c_tiny) &
         compare_particles = .FALSE.
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     IF (ABS(part1%weight - part2%weight) > c_tiny) &
         compare_particles = .FALSE.
 #endif
@@ -717,7 +717,7 @@ CONTAINS
     USE constants
 
     TYPE(particle_list) :: partlist
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(i8), ALLOCATABLE :: nid_all(:)
     INTEGER(i8) :: nid, part_id
     INTEGER :: i, id_update

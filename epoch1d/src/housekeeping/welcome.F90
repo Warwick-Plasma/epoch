@@ -79,21 +79,24 @@ CONTAINS
     defines = IOR(defines, c_def_particle_shape_tophat)
     WRITE(*,*) 'Top-hat particle shape -DPARTICLE_SHAPE_TOPHAT'
 #endif
-#ifdef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
+    WRITE(*, *) 'Per species weighting -DPER_SPECIES_WEIGHT'
+#else
     defines = IOR(defines, c_def_per_particle_weight)
-    WRITE(*,*) 'Per particle weighting -DPER_PARTICLE_WEIGHT'
 #endif
 #ifdef PARTICLE_COUNT_UPDATE
     defines = IOR(defines, c_def_particle_count_update)
     WRITE(*,*) 'Global particle counting -DPARTICLE_COUNT_UPDATE'
 #endif
-#ifdef TRACER_PARTICLES
+#ifdef NO_TRACER_PARTICLES
+    WRITE(*, *) 'No tracer particle support -DNO_TRACER_PARTICLES'
+#else
     defines = IOR(defines, c_def_tracer_particles)
-    WRITE(*,*) 'Tracer particle support -DTRACER_PARTICLES'
 #endif
-#ifdef PARTICLE_PROBES
+#ifdef NO_PARTICLE_PROBES
+    WRITE(*, *) 'No particle probe support -DNO_PARTICLE_PROBES'
+#else
     defines = IOR(defines, c_def_particle_probes)
-    WRITE(*,*) 'Particle probe support -DPARTICLE_PROBES'
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     defines = IOR(defines, c_def_per_particle_chargemass)

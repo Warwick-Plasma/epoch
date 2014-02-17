@@ -300,7 +300,7 @@ CONTAINS
         IF (isubset > 1) io_list => io_list_data
         iomask = iodumpmask(isubset,:)
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
             it_output_real)
 #else
@@ -535,7 +535,7 @@ CONTAINS
         CALL write_dist_fns(sdf_handle, code)
       ENDIF
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       IF (IAND(iomask(c_dump_probes), code) /= 0) THEN
         CALL write_probes(sdf_handle, code)
       ENDIF
@@ -1984,7 +1984,7 @@ CONTAINS
             .AND. current%part_p(3) > subset_list(l)%pz_max) &
                 use_particle = .FALSE.
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         IF (subset_list(l)%use_weight_min &
             .AND. current%weight < subset_list(l)%weight_min) &
                 use_particle = .FALSE.
@@ -2012,7 +2012,7 @@ CONTAINS
                 use_particle = .FALSE.
 
 #endif
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
         IF (subset_list(l)%use_id_min &
             .AND. current%id < subset_list(l)%id_min) &
                 use_particle = .FALSE.
