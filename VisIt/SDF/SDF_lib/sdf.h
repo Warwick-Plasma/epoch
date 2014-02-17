@@ -302,6 +302,8 @@ int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
                              uint64_t *starts, uint64_t *ends);
 int sdf_modify_array_element(sdf_file_t *h, sdf_block_t *b, void *data,
                              uint64_t *index);
+int sdf_modify_add_block(sdf_file_t *h, sdf_block_t *block);
+int sdf_modify_add_block_copy(sdf_file_t *h, sdf_block_t *block);
 int sdf_modify_remove_block(sdf_file_t *h, sdf_block_t *block);
 int sdf_modify_remove_block_id(sdf_file_t *h, const char *id);
 int sdf_modify_remove_block_name(sdf_file_t *h, const char *name);

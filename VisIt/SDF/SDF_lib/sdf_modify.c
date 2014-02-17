@@ -8,6 +8,43 @@
 #include <mpi.h>
 #endif
 
+#define COPY_ENTRY(copy, original, count) do { \
+        size_t _len; \
+        if ((copy)) { \
+            _len = (count) * sizeof(*(copy)); \
+            (copy) = malloc(_len); \
+            memcpy((copy), (original), _len); \
+        } \
+    } while(0)
+
+#define COPY_ENTRY_NAME(copyname, count) \
+   COPY_ENTRY((copy->copyname), (original->copyname), (count))
+
+#define COPY_ENTRY_STR(copyob, originalob) do { \
+        size_t _len; \
+        if ((copyob)) { \
+            _len = strlen((copyob)) * sizeof(char) + 1; \
+            (copyob) = malloc(_len); \
+            memcpy((copyob), (originalob), _len); \
+        } \
+    } while(0)
+
+#define COPY_ENTRY_STRING(copyname) \
+    COPY_ENTRY_STR(copy->copyname, original->copyname)
+
+#define COPY_ENTRY_STRING_ARRAY(copyname, count) do { \
+        size_t _len, _i; \
+        char **_ptr; \
+        if (copy->copyname) { \
+            _len = (count) * sizeof(char*); \
+            _ptr = copy->copyname = malloc(_len); \
+            for (_i = 0; _i < (count); _i++) {\
+                COPY_ENTRY_STR(*_ptr, original->copyname); \
+                _ptr++; \
+            } \
+        } \
+    } while(0)
+
 
 
 static int sdf_read_inline_block_locations(sdf_file_t *h)
@@ -92,6 +129,76 @@ static void sdf_modify_rewrite_header(sdf_file_t *h)
     sdf_write_at(h, offset, &h->summary_size, SOI4); offset += SOI4;
 
     sdf_write_at(h, offset, &h->nblocks_file, SOI4); offset += SOI4;
+}
+
+
+
+static int copy_block(sdf_block_t *copy, const sdf_block_t *original)
+{
+    const sdf_block_t *b = original;
+
+    memcpy(copy, original, sizeof(*original));
+
+    COPY_ENTRY_NAME(extents, 2*b->ndims);
+    if (b->blocktype == SDF_BLOCKTYPE_STATION) {
+        COPY_ENTRY_NAME(dim_mults, b->nvariables);
+        COPY_ENTRY_STRING_ARRAY(dim_units, b->nvariables);
+        COPY_ENTRY_STRING_ARRAY(variable_ids, b->nvariables);
+        COPY_ENTRY_STRING_ARRAY(material_names, b->nvariables);
+    } else {
+        COPY_ENTRY_NAME(dim_mults, b->ndims);
+        COPY_ENTRY_STRING_ARRAY(dim_units, b->ndims);
+        COPY_ENTRY_STRING_ARRAY(variable_ids, b->ndims);
+        COPY_ENTRY_STRING_ARRAY(material_names, b->ndims);
+    }
+    COPY_ENTRY_NAME(station_x, b->nstations);
+    COPY_ENTRY_NAME(station_y, b->nstations);
+    COPY_ENTRY_NAME(station_z, b->nstations);
+    COPY_ENTRY_NAME(station_nvars, b->nstations);
+    COPY_ENTRY_NAME(variable_types, b->nvariables);
+    COPY_ENTRY_NAME(station_move, b->nstations);
+    COPY_ENTRY_STRING(id);
+    COPY_ENTRY_STRING(units);
+    COPY_ENTRY_STRING(mesh_id);
+    COPY_ENTRY_STRING(material_id);
+    COPY_ENTRY_STRING(vfm_id);
+    COPY_ENTRY_STRING(obstacle_id);
+    COPY_ENTRY_STRING(name);
+    COPY_ENTRY_STRING(material_name);
+    COPY_ENTRY_STRING_ARRAY(dim_labels, b->ndims);
+    COPY_ENTRY_STRING_ARRAY(station_ids, b->nstations);
+    COPY_ENTRY_STRING_ARRAY(station_names, b->nstations);
+    copy->nelements_blocks = NULL;
+    copy->data_length_blocks = NULL;
+    copy->dims_in = NULL;
+    copy->station_index = NULL;
+    copy->station_id = NULL;
+    copy->must_read = NULL;
+    copy->node_list = NULL;
+    copy->boundary_cells = NULL;
+    copy->grids = NULL;
+    copy->data = NULL;
+    copy->next = NULL;
+    copy->prev = NULL;
+    copy->subblock = NULL;
+    copy->subblock2 = NULL;
+    copy->block_start = copy->next_block_location = copy->data_location
+            = copy->inline_block_start = copy->inline_next_block_location = 0;
+
+    return 0;
+}
+
+
+
+static sdf_block_t *append_block_to_blocklist(sdf_file_t *h, sdf_block_t *b)
+{
+    h->tail->next = b;
+    b->prev = h->tail;
+    b->next = NULL;
+    h->tail = b;
+    h->nblocks++;
+
+    return b;
 }
 
 
@@ -223,6 +330,67 @@ int sdf_modify_array_element(sdf_file_t *h, sdf_block_t *b, void *data,
     for (i = 0; i < b->ndims; i++) index1[i] = index[i] + 1;
 
     return sdf_modify_array_section(h, b, data, index, index1);
+}
+
+
+
+int sdf_modify_add_block(sdf_file_t *h, sdf_block_t *block)
+{
+    sdf_block_t *b, *next;
+    uint64_t extent = h->first_block_location;
+    uint64_t sz;
+
+    append_block_to_blocklist(h, block);
+
+    block->rewrite_metadata = h->metadata_modified = 1;
+
+    if (!h->inline_metadata_read && !h->inline_metadata_invalid)
+        sdf_read_inline_block_locations(h);
+
+    if (!h->summary_metadata_read && !h->summary_metadata_invalid)
+        sdf_read_summary_block_locations(h);
+
+    // First find the furthest extent of the inline metadata and/or data
+    next = h->blocklist;
+    while (next) {
+        b = next;
+        next = b->next;
+        if (!b->in_file) continue;
+
+        sz = b->inline_block_start + h->block_header_length + b->info_length;
+        if (sz > extent) extent = sz;
+
+        sz = b->data_location + b->data_length;
+        if (sz > extent) extent = sz;
+    }
+
+    b = h->last_block_in_file;
+    block->block_start = b->next_block_location =
+            b->block_start + h->block_header_length + b->info_length;
+    block->inline_block_start = b->inline_next_block_location = extent;
+    block->data_location = extent + h->block_header_length +
+            block->info_length;
+    h->summary_location = block->inline_next_block_location =
+            block->data_location + block->data_length;
+    block->rewrite_metadata = 1;
+    block->in_file = 1;
+    h->last_block_in_file = block;
+
+    h->metadata_modified = 1;
+    h->nblocks_file++;
+
+    return 0;
+}
+
+
+
+int sdf_modify_add_block_copy(sdf_file_t *h, sdf_block_t *copy)
+{
+    sdf_block_t *new = malloc(sizeof(sdf_block_t));
+
+    copy_block(new, copy);
+
+    return sdf_modify_add_block(h, new);
 }
 
 
