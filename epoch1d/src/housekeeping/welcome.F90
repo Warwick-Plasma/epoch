@@ -61,6 +61,66 @@ CONTAINS
 
   SUBROUTINE compiler_directives
 
+    LOGICAL :: found = .FALSE.
+
+#ifdef PARTICLE_DEBUG
+    found = .TRUE.
+#endif
+#ifdef PARSER_DEBUG
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_SHAPE_TOPHAT
+    found = .TRUE.
+#endif
+#ifdef PER_SPECIES_WEIGHT
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_COUNT_UPDATE
+    found = .TRUE.
+#endif
+#ifdef NO_TRACER_PARTICLES
+    found = .TRUE.
+#endif
+#ifdef NO_PARTICLE_PROBES
+    found = .TRUE.
+#endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+    found = .TRUE.
+#endif
+#ifdef HIGH_ORDER_SMOOTHING
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_ID4
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_ID
+    found = .TRUE.
+#endif
+#ifdef PHOTONS
+    found = .TRUE.
+#ifdef TRIDENT_PHOTONS
+    found = .TRUE.
+#endif
+#endif
+#ifdef PREFETCH
+    found = .TRUE.
+#endif
+#ifdef MPI_DEBUG
+    found = .TRUE.
+#endif
+#ifdef NO_IO
+    found = .TRUE.
+#endif
+
+    IF (.NOT.found) THEN
+      WRITE(*,*) 'The code was compiled with no compile time options'
+      WRITE(*,*)
+      RETURN
+    ENDIF
+
     WRITE(*,*) 'The code was compiled with the following compile time options'
     WRITE(*,*) '*************************************************************'
 #ifdef PARTICLE_DEBUG
