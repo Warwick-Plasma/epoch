@@ -118,6 +118,10 @@ CONTAINS
     defines = IOR(defines, c_def_mpi_debug)
     WRITE(*, *) 'MPI error handling -DMPI_DEBUG'
 #endif
+#ifdef NO_IO
+    ! There is no need to add a c_def for this since no I/O occurs.
+    WRITE(*, *) 'Perform no I/O -DNO_IO'
+#endif
     WRITE(*, *) '*************************************************************'
 
   END SUBROUTINE compiler_directives
