@@ -192,6 +192,7 @@ static int copy_block(sdf_block_t *copy, const sdf_block_t *original)
     copy->subblock2 = NULL;
     copy->block_start = copy->next_block_location = copy->data_location
             = copy->inline_block_start = copy->inline_next_block_location = 0;
+    copy->in_file = 0;
 
     return 0;
 }
@@ -354,6 +355,7 @@ int sdf_modify_add_block(sdf_file_t *h, sdf_block_t *block)
 
     append_block_to_blocklist(h, block);
 
+    block->in_file = 0;
     block->rewrite_metadata = h->metadata_modified = 1;
 
     if (!h->inline_metadata_read && !h->inline_metadata_invalid)
@@ -496,36 +498,60 @@ int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
 {
     sdf_block_t *b = stitched;
     char **new_material_names, **new_variable_ids;
-    uint64_t info_length;
-    int i;
+    uint64_t info_length, ndims;
+    int i, errcode = 1;
 
-    if (!stitched || !material) return 1;
+    if (!stitched || !material) return errcode;
+
+    // Check that the blocks are valid for this operation
+    switch (stitched->blocktype) {
+    case SDF_BLOCKTYPE_STITCHED_MATERIAL:
+    case SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL:
+    case SDF_BLOCKTYPE_STITCHED_MATVAR:
+    case SDF_BLOCKTYPE_CONTIGUOUS_MATVAR:
+        break;
+    default:
+        return errcode;
+    }
+
+    if (material->blocktype != SDF_BLOCKTYPE_PLAIN_VARIABLE) return errcode;
 
     sdf_modify_add_block_copy(h, material);
 
-    new_material_names = malloc((b->ndims+1) * sizeof(char*));
-    new_variable_ids   = malloc((b->ndims+1) * sizeof(char*));
+    ndims = b->ndims;
+    b->ndims++;
 
-    for (i=0; i < b->ndims; i++) {
-        new_material_names[i] = strdup(b->material_names[i]);
-        free(b->material_names[i]);
+    new_variable_ids   = malloc(b->ndims * sizeof(char*));
 
+    for (i=0; i < ndims; i++) {
         new_variable_ids[i] = strdup(b->variable_ids[i]);
         free(b->variable_ids[i]);
     }
 
-    new_material_names[i] = strdup(material->name);
     new_variable_ids[i] = strdup(material->id);
-
-    free(b->material_names);
     free(b->variable_ids);
-    b->material_names = new_material_names;
     b->variable_ids = new_variable_ids;
-    b->ndims++;
-    b->blocktype = SDF_BLOCKTYPE_STITCHED_MATERIAL;
+    b->blocktype = SDF_BLOCKTYPE_STITCHED_MATVAR;
 
-    info_length = SOI4 + (b->ndims + 1) * SDF_ID_LENGTH
-        + b->ndims * h->string_length;
+    info_length = SOI4 + (b->ndims + 2) * h->id_length;
+
+    if (stitched->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
+            || stitched->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL) {
+        new_material_names = malloc((b->ndims+1) * sizeof(char*));
+
+        for (i=0; i < ndims; i++) {
+            new_material_names[i] = strdup(b->material_names[i]);
+            free(b->material_names[i]);
+        }
+
+        new_material_names[i] = strdup(material->name);
+        free(b->material_names);
+        b->material_names = new_material_names;
+        b->blocktype = SDF_BLOCKTYPE_STITCHED_MATERIAL;
+
+        info_length = SOI4 + (b->ndims + 1) * h->id_length
+            + b->ndims * h->string_length;
+    }
 
     // Allow for the possibility that info_length was padded
     if (info_length > b->info_length) {
@@ -542,38 +568,72 @@ int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
 int sdf_modify_remove_material(sdf_file_t *h, sdf_block_t *stitched,
         sdf_block_t *material)
 {
-    int i, len1, len2;
+    int i, n, len1, len2, matnum = -1;
     char **names, **ids;
-    if (!stitched || !material) return 1;
+    int errcode = 1;
 
-    names = malloc((stitched->ndims-1) * sizeof(char*));
-    ids = malloc((stitched->ndims-1) * sizeof(char*));
+    if (!stitched || !material) return errcode;
 
+    // Check that the blocks are valid for this operation
+    switch (stitched->blocktype) {
+    case SDF_BLOCKTYPE_STITCHED_MATERIAL:
+    case SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL:
+    case SDF_BLOCKTYPE_STITCHED_MATVAR:
+    case SDF_BLOCKTYPE_CONTIGUOUS_MATVAR:
+        break;
+    default:
+        return errcode;
+    }
+
+    if (material->blocktype != SDF_BLOCKTYPE_PLAIN_VARIABLE) return errcode;
+
+    // Find the material to be removed
     len1 = strlen(material->id) + 1;
     for (i = 0; i < stitched->ndims; i++) {
         len2 = strlen(stitched->variable_ids[i]) + 1;
         if (len1 == len2) {
             if (!memcmp(material->id, stitched->variable_ids[i], len1)) {
-                free(stitched->variable_ids[i]);
+                matnum = i;
                 break;
             }
         }
-        names[i] = stitched->material_names[i];
-        ids[i] = stitched->variable_ids[i];
     }
 
-    for (i++; i < stitched->ndims; i++) {
-        names[i-1] = stitched->material_names[i];
-        ids[i-1] = stitched->variable_ids[i];
+    if (matnum < 0) return errcode;
+
+    ids = malloc((stitched->ndims-1) * sizeof(char*));
+
+    for (i = 0, n = 0; i < stitched->ndims; i++) {
+        if (i == matnum)
+            free(stitched->variable_ids[i]);
+        else
+            ids[n++] = stitched->variable_ids[i];
+    }
+
+    free(stitched->variable_ids);
+    stitched->variable_ids = ids;
+
+    stitched->blocktype = SDF_BLOCKTYPE_STITCHED_MATVAR;
+
+    if (stitched->blocktype == SDF_BLOCKTYPE_STITCHED_MATERIAL
+            || stitched->blocktype == SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL) {
+        names = malloc((stitched->ndims-1) * sizeof(char*));
+
+        for (i = 0, n = 0; i < stitched->ndims; i++) {
+            if (i == matnum)
+                free(stitched->material_names[i]);
+            else
+                ids[n++] = stitched->material_names[i];
+        }
+
+        free(stitched->material_names);
+        stitched->material_names = names;
+
+        stitched->blocktype = SDF_BLOCKTYPE_STITCHED_MATERIAL;
     }
 
     stitched->ndims--;
-    free(stitched->material_names);
-    free(stitched->variable_ids);
-    stitched->material_names = names;
-    stitched->variable_ids = ids;
     stitched->rewrite_metadata = 1;
-    stitched->blocktype = SDF_BLOCKTYPE_STITCHED_MATERIAL;
 
     sdf_modify_remove_block(h, material);
 
