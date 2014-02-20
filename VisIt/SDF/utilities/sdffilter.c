@@ -12,6 +12,7 @@
 
 int metadata, contents, debug, single, use_mmap, ignore_summary;
 int exclude_variables, derived, index_offset;
+int64_t array_ndims, *array_starts, *array_ends, *array_strides;
 char *output_file;
 struct id_list {
   char *id;
@@ -40,8 +41,10 @@ void usage(int err)
   -x --exclude=id      Exclude the block with id matching 'id'\n\
   -m --mmap            Use mmap'ed file I/O\n\
   -i --no-summary      Ignore the metadata summary\n\
+  -a --array-section=s Read in the specified array section. The array section\n\
+                       's' mimics Python's slicing notation.\n\
   -d --derived         Add derived blocks\n\
-  -I --c-indexing      Array indexing starts from 1 by default. If this flag\
+  -I --c-indexing      Array indexing starts from 1 by default. If this flag\n\
                        is used then the indexing starts from 0.\n\
 ");
 /*
@@ -62,6 +65,60 @@ int range_sort(const void *v1, const void *v2)
 }
 
 
+void parse_array_section(char *array_section)
+{
+    int ndim, i, len = strlen(array_section), done_start, done_end;
+    char *ptr, *old;
+
+    if (array_starts) free(array_starts);
+    if (array_ends) free(array_ends);
+    if (array_strides) free(array_strides);
+
+    array_ndims = 1;
+    for (i = 0, ptr = array_section; i < len; i++, ptr++)
+        if (*ptr == ',') array_ndims++;
+
+    array_starts  = calloc(array_ndims, sizeof(*array_starts));
+    array_ends    = malloc(array_ndims * sizeof(*array_ends));
+    array_strides = malloc(array_ndims * sizeof(*array_strides));
+
+    for (i = 0; i < array_ndims; i++)
+        array_strides[i] = 1;
+
+    done_start = done_end = ndim = 0;
+    for (i = 0, old = ptr = array_section; i < len+1; i++, ptr++) {
+        if (*ptr == ':' || *ptr == ',' || *ptr == '\0') {
+            if (done_end) {
+                array_strides[ndim] = strtol(old, NULL, 10);
+                if (array_strides[ndim] == 0) array_strides[ndim] = 1;
+                if (array_strides[ndim] < 0) {
+                    fprintf(stderr, "ERROR: negative stride values not"
+                                    " supported.\n");
+                    exit(1);
+                }
+            } else if (done_start) {
+                if (ptr - old > 0) {
+                    array_ends[ndim] = strtol(old, NULL, 10);
+                    if (array_ends[ndim] > 0) array_ends[ndim] -= index_offset;
+                } else
+                    array_ends[ndim] = INT64_MAX;
+                done_end = 1;
+            } else {
+                array_starts[ndim] = strtol(old, NULL, 10);
+                if (array_starts[ndim] > 0) array_starts[ndim] -= index_offset;
+                array_ends[ndim] = array_starts[ndim] + 1;
+                done_start = 1;
+            }
+            old = ptr + 1;
+            if (*ptr == ',') {
+                done_start = done_end = 0;
+                ndim++;
+            }
+        }
+    }
+}
+
+
 char *parse_args(int *argc, char ***argv)
 {
     char *ptr, *file = NULL;
@@ -69,6 +126,7 @@ char *parse_args(int *argc, char ***argv)
     struct range_type *range_tmp;
     struct stat statbuf;
     static struct option longopts[] = {
+        { "array-section", required_argument, NULL, 'a' },
         { "contents",      no_argument,       NULL, 'c' },
         { "derived",       no_argument,       NULL, 'd' },
         { "help",          no_argument,       NULL, 'h' },
@@ -90,14 +148,18 @@ char *parse_args(int *argc, char ***argv)
     variable_ids = NULL;
     variable_last_id = NULL;
     output_file = NULL;
-    nrange_max = nrange = 0;
+    array_starts = array_ends = array_strides = NULL;
+    array_ndims = nrange_max = nrange = 0;
     sz = sizeof(struct range_type);
 
     got_include = got_exclude = 0;
 
     while ((c = getopt_long(*argc, *argv,
-            "cdhiImnsv:x:", longopts, NULL)) != -1) {
+            "a:cdhiImnsv:x:", longopts, NULL)) != -1) {
         switch (c) {
+        case 'a':
+            parse_array_section(optarg);
+            break;
         case 'c':
             contents = 1;
             break;
@@ -295,7 +357,6 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
         }
         ptr += sz;
     }
-    if (ncount) printf("\n");
 
     free(idx);
     free(fac);
