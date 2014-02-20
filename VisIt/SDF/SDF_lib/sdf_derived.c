@@ -1795,10 +1795,12 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                     if (!mesh) {
                         APPEND_BLOCK(append);
                         nappend++;
-                        append_tail = append;
+                        append_tail = append->prev;
 
                         memcpy(append, old_mesh, sizeof(sdf_block_t));
                         append->next = NULL;
+                        append->prev = append_tail;
+                        append_tail = append;
 
                         str = (char*)malloc(len1 + len2 + 2);
                         memcpy(str, b->mesh_id, len1+len2+2);

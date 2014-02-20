@@ -531,7 +531,6 @@ int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
     new_variable_ids[i] = strdup(material->id);
     free(b->variable_ids);
     b->variable_ids = new_variable_ids;
-    b->blocktype = SDF_BLOCKTYPE_STITCHED_MATVAR;
 
     info_length = SOI4 + (b->ndims + 2) * h->id_length;
 
@@ -551,7 +550,8 @@ int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
 
         info_length = SOI4 + (b->ndims + 1) * h->id_length
             + b->ndims * h->string_length;
-    }
+    } else
+        b->blocktype = SDF_BLOCKTYPE_STITCHED_MATVAR;
 
     // Allow for the possibility that info_length was padded
     if (info_length > b->info_length) {

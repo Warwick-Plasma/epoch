@@ -61,6 +61,16 @@ int sdf_read_plain_mesh_info(sdf_file_t *h)
     b->stagger = SDF_STAGGER_VERTEX;
     for (i = 0; i < b->ndims; i++) b->const_value[i] = 1;
 
+    // Calculate per block parallel factorisation
+    // This will be fixed up later once we have the whole block list.
+    sdf_factor(h);
+
+    b->nelements = b->nelements_local = 0;
+    for (i = 0; i < b->ndims; i++) {
+        b->nelements += b->dims[i];
+        b->nelements_local += b->local_dims[i];
+    }
+
     return 0;
 }
 
@@ -98,18 +108,9 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
     SDF_READ_ENTRY_INT4(b->stagger);
     for (i = 0; i < b->ndims; i++) b->const_value[i] = (b->stagger & 1<<i);
 
-#ifdef PARALLEL
     // Calculate per block parallel factorisation
     // This will be fixed up later once we have the whole block list.
     sdf_factor(h);
-#else
-    b->nelements_local = 1;
-    for (i=0; i < b->ndims; i++) {
-        b->local_dims[i] = (int)b->dims[i];
-        b->nelements_local *= b->dims[i];
-    }
-    for (i=b->ndims; i < 3; i++) b->local_dims[i] = 1;
-#endif
 
     return 0;
 }

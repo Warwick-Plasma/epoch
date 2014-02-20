@@ -10,11 +10,15 @@
 #endif
 
 #define DBG_FLUSH() do { \
-        h->dbg = h->dbg_buf; *h->dbg = '\0'; \
+        if (h && h->dbg_buf) { \
+            h->dbg = h->dbg_buf; *h->dbg = '\0'; \
+        } \
     } while (0)
 
 #define DBG_PRINT_FLUSH() do { \
-        printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0'; \
+        if (h && h->dbg_buf) { \
+            printf("%s", h->dbg_buf); h->dbg = h->dbg_buf; *h->dbg = '\0'; \
+        } \
     } while (0)
 
 int metadata, contents, debug, single, use_mmap, ignore_summary;
