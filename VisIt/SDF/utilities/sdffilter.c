@@ -158,6 +158,7 @@ char *parse_args(int *argc, char ***argv)
             "a:cdhiImnsv:x:", longopts, NULL)) != -1) {
         switch (c) {
         case 'a':
+            contents = 1;
             parse_array_section(optarg);
             break;
         case 'c':
@@ -301,8 +302,8 @@ char *parse_args(int *argc, char ***argv)
 
 static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
 {
-    int *idx, *fac;
-    int i, n, rem, sz, left, digit;
+    int *idx, *fac, *printed, *starts = NULL, *ends = NULL;
+    int i, n, rem, sz, left, digit, idx0, min_ndims, print;
     char *ptr;
     static const int fmtlen = 32;
     char **fmt;
@@ -310,6 +311,14 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
     idx = malloc(b->ndims * sizeof(*idx));
     fac = malloc(b->ndims * sizeof(*fac));
     fmt = malloc(b->ndims * sizeof(*fmt));
+    printed = malloc(b->ndims * sizeof(*printed));
+
+    min_ndims = (array_ndims < b->ndims) ? array_ndims : b->ndims;
+
+    if (min_ndims > 0) {
+        starts = malloc(array_ndims * sizeof(*starts));
+        ends   = malloc(array_ndims * sizeof(*ends));
+    }
 
     rem = 1;
     for (i = 0; i < b->ndims; i++) {
@@ -329,37 +338,73 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
             snprintf(fmt[i], fmtlen, ",%%%i.%ii", digit, digit);
     }
 
+    for (i = 0; i < min_ndims; i++) {
+        starts[i] = array_starts[i];
+        ends[i] = array_ends[i];
+        if (starts[i] < 0) {
+            starts[i] += b->local_dims[i];
+            if (ends[i] == 0) ends[i] = b->local_dims[i];
+        }
+        if (ends[i] < 0) ends[i] += b->local_dims[i];
+        printed[i] = -array_strides[i];
+    }
+
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
     ptr = b->data;
     for (n = 0; n < b->nelements_local; n++) {
         rem = n;
         for (i = b->ndims-1; i >= 0; i--) {
-            idx[i] = rem / fac[i];
-            rem -= idx[i] * fac[i];
+            idx0 = idx[i] = rem / fac[i];
+            if (i < array_ndims) idx[i] += starts[i];
+            rem -= idx0 * fac[i];
         }
-        for (i = 0; i < b->ndims; i++)
-            printf(fmt[i], idx[i]+index_offset);
 
-        switch (b->datatype_out) {
-        case SDF_DATATYPE_INTEGER4:
-            printf(":  %i\n", *((uint32_t*)ptr));
-            break;
-        case SDF_DATATYPE_INTEGER8:
-            printf(":  %llu\n", *((uint64_t*)ptr));
-            break;
-        case SDF_DATATYPE_REAL4:
-            printf(":  %12.6E\n", *((float*)ptr));
-            break;
-        case SDF_DATATYPE_REAL8:
-            printf(":  %12.6E\n", *((double*)ptr));
-            break;
+        print = 1;
+        for (i = 0; i < min_ndims; i++) {
+            if (idx[i] < starts[i]) {
+                print = 0;
+                break;
+            }
+            if (idx[i] >= ends[i]) {
+                print = 0;
+                break;
+            }
+            if ((idx[i] - printed[i]) > 0 &&
+                (idx[i] - printed[i]) < array_strides[i]) {
+                print = 0;
+                break;
+            }
+        }
+        if (print) {
+            for (i = 0; i < b->ndims; i++) {
+                printf(fmt[i], idx[i]+index_offset);
+                printed[i] = idx[i];
+            }
+            switch (b->datatype_out) {
+            case SDF_DATATYPE_INTEGER4:
+                printf(":  %i\n", *((uint32_t*)ptr));
+                break;
+            case SDF_DATATYPE_INTEGER8:
+                printf(":  %llu\n", *((uint64_t*)ptr));
+                break;
+            case SDF_DATATYPE_REAL4:
+                printf(":  %12.6E\n", *((float*)ptr));
+                break;
+            case SDF_DATATYPE_REAL8:
+                printf(":  %12.6E\n", *((double*)ptr));
+                break;
+            }
         }
         ptr += sz;
     }
 
     free(idx);
     free(fac);
+    free(printed);
+    if (starts) free(starts);
+    if (ends) free(ends);
+
     for (i = 0; i < b->ndims; i++) free(fmt[i]);
     free(fmt);
 }
