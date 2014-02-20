@@ -168,7 +168,7 @@ char *parse_args(int *argc, char ***argv)
 
     if ((optind+1) == *argc) {
         file = (*argv)[optind];
-        err = lstat(file, &statbuf);
+        err = stat(file, &statbuf);
         if (err) {
             fprintf(stderr, "Error opening file %s\n", file);
             exit(1);

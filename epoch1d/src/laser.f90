@@ -279,7 +279,7 @@ CONTAINS
     TYPE(laser_block), POINTER, OPTIONAL :: lasers
     INTEGER, INTENT(IN) :: bd
     TYPE(laser_block), POINTER :: current
-    REAL(num) :: t_env, dir
+    REAL(num) :: t_env, dir, dd, factor, lfactor, laser_inject_sum
     REAL(num) :: e1, e2, b1, b2
     INTEGER :: ibc
 
@@ -288,6 +288,7 @@ CONTAINS
     ! ghost cell, so we use the cell-centred quantities in the first cell.
 
     dir = 1.0_num
+    dd = 1.0_num
 
     ibc = 1
     IF (bd .EQ. c_bd_x_max) THEN
@@ -300,16 +301,18 @@ CONTAINS
     b1 = 0.5_num * (bz(ibc-1) + bz(ibc))
     b2 = 0.5_num * (by(ibc-1) + by(ibc))
 
+    factor = dt * dd * dir
     laser_absorb_local = laser_absorb_local &
-        + dt * dir * (e1 * b1 - e2 * b2) / mu0
+        + (factor / mu0) * (e1 * b1 - e2 * b2)
 
     IF (PRESENT(lasers)) THEN
       current => lasers
       DO WHILE(ASSOCIATED(current))
+        laser_inject_sum = 0.0_num
+        laser_inject_sum = laser_inject_sum + current%profile**2
         t_env = laser_time_profile(current)
-        laser_inject_local = laser_inject_local &
-            + dir * dt * 0.5_num * epsilon0 * c &
-            * (t_env * current%amp * current%profile)**2
+        lfactor = 0.5_num * epsilon0 * c * factor * (t_env * current%amp)**2
+        laser_inject_local = laser_inject_local + lfactor * laser_inject_sum
         current => current%next
       ENDDO
     ENDIF

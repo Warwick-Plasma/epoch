@@ -1565,11 +1565,11 @@ CONTAINS
 
 
 
-  FUNCTION get_particle_processor(a_particle)
+  FUNCTION get_particle_processor(part)
 
     ! This subroutine calculates which processor a given particles resides on
 
-    TYPE(particle), INTENT(IN) :: a_particle
+    TYPE(particle), INTENT(IN) :: part
     INTEGER :: get_particle_processor
     INTEGER :: iproc, coords(c_ndims)
 
@@ -1580,16 +1580,16 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx - 1
-      IF (a_particle%part_pos(1) .GE. x_grid_mins(iproc) - dx / 2.0_num &
-          .AND. a_particle%part_pos(1) .LT. x_grid_maxs(iproc) + dx / 2.0_num) THEN
+      IF (part%part_pos(1) .GE. x_grid_mins(iproc) - dx / 2.0_num &
+          .AND. part%part_pos(1) .LT. x_grid_maxs(iproc) + dx / 2.0_num) THEN
         coords(c_ndims) = iproc
         EXIT
       ENDIF
     ENDDO
 
     DO iproc = 0, nprocy - 1
-      IF (a_particle%part_pos(2) .GE. y_grid_mins(iproc) - dy / 2.0_num &
-          .AND. a_particle%part_pos(2) .LT. y_grid_maxs(iproc) + dy / 2.0_num) THEN
+      IF (part%part_pos(2) .GE. y_grid_mins(iproc) - dy / 2.0_num &
+          .AND. part%part_pos(2) .LT. y_grid_maxs(iproc) + dy / 2.0_num) THEN
         coords(c_ndims-1) = iproc
         EXIT
       ENDIF

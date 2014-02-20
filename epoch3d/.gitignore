@@ -1,3 +1,4 @@
 bin
 obj
 COMMIT
+USE_DATA_DIRECTORY

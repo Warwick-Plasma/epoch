@@ -162,9 +162,9 @@ CONTAINS
 
 
 
-#ifdef PER_PARTICLE_WEIGHT
   SUBROUTINE collisional_ionisation
 
+#ifdef PER_PARTICLE_WEIGHT
     INTEGER :: ispecies, jspecies, ion_species, e_species, n1, n2, l
     INTEGER(i8) :: ix
     TYPE(particle_list), POINTER :: p_list1
@@ -321,9 +321,9 @@ CONTAINS
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor .GT. 0.0_num) THEN
-              CALL inter_species_collisions( &
-                  ejected_e, ionising_e, &
-                  m_e, m2, q_e, q2, w_e, w2, e_dens(ix), jdens(ix), &
+              CALL inter_species_collisions(ejected_e, ionising_e, &
+                  m_e, m2, q_e, q2, w_e, w2, &
+                  e_dens(ix), jdens(ix), &
                   e_temp(ix), jtemp(ix), e_log_lambda(ix), &
                   e_user_factor)
             ENDIF
@@ -355,9 +355,9 @@ CONTAINS
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor .GT. 0.0_num) THEN
-              CALL inter_species_collisions( &
-                  ejected_e, ionising_e, &
-                  m1, m_e, q1, q_e, w1, w_e, idens(ix), e_dens(ix), &
+              CALL inter_species_collisions(ejected_e, ionising_e, &
+                  m1, m_e, q1, q_e, w1, w_e, &
+                  idens(ix), e_dens(ix), &
                   itemp(ix), e_temp(ix), e_log_lambda(ix), &
                   e_user_factor)
             ENDIF
@@ -393,12 +393,13 @@ CONTAINS
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
     DEALLOCATE(e_dens, e_temp, e_log_lambda)
-
-  END SUBROUTINE collisional_ionisation
 #endif
 
+  END SUBROUTINE collisional_ionisation
 
 
+
+#ifdef PER_PARTICLE_WEIGHT
   SUBROUTINE preionise(electrons, ions, ionised, ionising_e, &
       ejected_e, e_mass, ion_mass, e_charge, ion_charge, e_dens, &
       full_ion_charge, ionisation_energy, n1, n2, l)
@@ -644,6 +645,7 @@ CONTAINS
     DEALLOCATE(lost_ke, was_ionised)
 
   END SUBROUTINE preionise
+#endif
 
 
 

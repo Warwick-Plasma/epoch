@@ -189,7 +189,8 @@ MODULE sdf_common
       MPI_ERR_FILE_IN_USE, MPI_ERR_INFO, MPI_ERR_INFO_KEY, MPI_ERR_INFO_NOKEY, &
       MPI_ERR_INFO_VALUE, MPI_ERR_IO, MPI_ERR_NOT_SAME, MPI_ERR_NO_SPACE, &
       MPI_ERR_NO_SUCH_FILE, MPI_ERR_QUOTA, MPI_ERR_READ_ONLY, &
-      MPI_ERR_UNSUPPORTED_DATAREP, MPI_ERR_UNSUPPORTED_OPERATION, MPI_ERR_TYPE /)
+      MPI_ERR_UNSUPPORTED_DATAREP, MPI_ERR_UNSUPPORTED_OPERATION, &
+      MPI_ERR_TYPE /)
 
   ! SDF errors
   INTEGER, PARAMETER :: c_err_success = 0
@@ -264,58 +265,32 @@ MODULE sdf_common
       'SDF_DATATYPE_OTHER    ' /)
 
   CHARACTER(LEN=*), PARAMETER :: c_errcodes_char(0:c_err_max) = (/ &
-      'SDF_ERR_SUCCESS              ', &
-      'SDF_ERR_UNKNOWN              ', &
-      'SDF_ERR_UNSUPPORTED_FILE     ', &
-      'SDF_ERR_SDF                  ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      '                             ', &
-      'MPI_ERR_ACCESS               ', &
-      'MPI_ERR_AMODE                ', &
-      'MPI_ERR_BAD_FILE             ', &
-      'MPI_ERR_CONVERSION           ', &
-      'MPI_ERR_DUP_DATAREP          ', &
-      'MPI_ERR_FILE                 ', &
-      'MPI_ERR_FILE_EXISTS          ', &
-      'MPI_ERR_FILE_IN_USE          ', &
-      'MPI_ERR_INFO                 ', &
-      'MPI_ERR_INFO_KEY             ', &
-      'MPI_ERR_INFO_NOKEY           ', &
-      'MPI_ERR_INFO_VALUE           ', &
-      'MPI_ERR_IO                   ', &
-      'MPI_ERR_NOT_SAME             ', &
-      'MPI_ERR_NO_SPACE             ', &
-      'MPI_ERR_NO_SUCH_FILE         ', &
-      'MPI_ERR_QUOTA                ', &
-      'MPI_ERR_READ_ONLY            ', &
-      'MPI_ERR_UNSUPPORTED_DATAREP  ', &
-      'MPI_ERR_UNSUPPORTED_OPERATION', &
-      'MPI_ERR_TYPE                 ' /)
+      'SDF_ERR_SUCCESS              ', 'SDF_ERR_UNKNOWN              ', &
+      'SDF_ERR_UNSUPPORTED_FILE     ', 'SDF_ERR_SDF                  ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', '                             ', &
+      '                             ', 'MPI_ERR_ACCESS               ', &
+      'MPI_ERR_AMODE                ', 'MPI_ERR_BAD_FILE             ', &
+      'MPI_ERR_CONVERSION           ', 'MPI_ERR_DUP_DATAREP          ', &
+      'MPI_ERR_FILE                 ', 'MPI_ERR_FILE_EXISTS          ', &
+      'MPI_ERR_FILE_IN_USE          ', 'MPI_ERR_INFO                 ', &
+      'MPI_ERR_INFO_KEY             ', 'MPI_ERR_INFO_NOKEY           ', &
+      'MPI_ERR_INFO_VALUE           ', 'MPI_ERR_IO                   ', &
+      'MPI_ERR_NOT_SAME             ', 'MPI_ERR_NO_SPACE             ', &
+      'MPI_ERR_NO_SUCH_FILE         ', 'MPI_ERR_QUOTA                ', &
+      'MPI_ERR_READ_ONLY            ', 'MPI_ERR_UNSUPPORTED_DATAREP  ', &
+      'MPI_ERR_UNSUPPORTED_OPERATION', 'MPI_ERR_TYPE                 ' /)
 
   INTERFACE sdf_set_point_array_size
     MODULE PROCEDURE &

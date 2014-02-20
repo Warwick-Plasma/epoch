@@ -59,19 +59,24 @@ ifeq ($(strip $(COMPILER)),gfortran)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
              -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter \
              -ffpe-trap=underflow,denormal
+
+    GNUVER := $(shell gfortran -dumpversion | head -1 \
+        | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
+    GNUMAJOR := $(shell echo $(GNUVER) | cut -f1 -d\.)
+    GNUMINOR := $(shell echo $(GNUVER) | cut -f2 -d\.)
+
     # gfortran-4.3
-    GNUGE43 := $(shell expr `gfortran -dumpversion | cut -f1 -d\.` \>= 4 \
-        \& `gfortran -dumpversion | cut -f2 -d\.` \>= 3)
+    GNUGE43 := $(shell expr $(GNUMAJOR) \>= 4 \& $(GNUMINOR) \>= 3)
     ifeq "$(GNUGE43)" "1"
       FFLAGS += -fbacktrace -fdump-core
 
       # gfortran-4.6
-      GNUGE46 := $(shell expr `gfortran -dumpversion | cut -f2 -d\.` \>= 6)
+      GNUGE46 := $(shell expr $(GNUMINOR) \>= 6)
       ifeq "$(GNUGE46)" "1"
         FFLAGS += -Wno-unused-dummy-argument
 
         # gfortran-4.8
-        GNUGE48 := $(shell expr `gfortran -dumpversion | cut -f2 -d\.` \>= 8)
+        GNUGE48 := $(shell expr $(GNUMINOR) \>= 8)
         ifeq "$(GNUGE48)" "1"
           FFLAGS += -Wno-target-lifetime
         endif
@@ -225,7 +230,7 @@ PREPROFLAGS = $(DEFINES) $(D)_COMMIT='"$(COMMIT)"' $(D)_DATE=$(DATE) \
 
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
-  deck.F90 deck_boundaries_block.f90 deck_collision_block.f90 \
+  deck.F90 deck_boundaries_block.f90 deck_collision_block.F90 \
   deck_constant_block.f90 deck_control_block.F90 deck_dist_fn_block.f90 \
   deck_fields_block.f90 deck_io_block.F90 deck_io_global_block.F90 \
   deck_laser_block.f90 deck_particle_probe_block.F90 deck_qed_block.F90 \
@@ -339,7 +344,7 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   deck_species_block.o deck_subset_block.o deck_window_block.o photons.o \
   strings.o version_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o
-deck_collision_block.o: deck_collision_block.f90 collisions.o strings_advanced.o
+deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
 deck_constant_block.o: deck_constant_block.f90 evaluate.o shunt.o
 deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o timer.o
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o

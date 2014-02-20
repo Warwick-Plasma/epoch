@@ -4,15 +4,16 @@ SDFDIR=../SDF_lib
 EXTDIR=../extension
 
 clean=0
-DBG=""
-PYDBG=""
+CFLAGS="-DSDF_DEBUG_ALL -D_XOPEN_SOURCE=600 -I$SDFDIR -I$EXTDIR"
+OPT="$CFLAGS -O3"
 
 while getopts crdph name
 do
    case $name in
       c) clean=2 ;;
       r) clean=1 ;;
-      d) DBG="-g -O0 -Wall -Wno-unused-function -std=c99 -pedantic"; PYDBG="-g" ;;
+      d) OPT="$CFLAGS -g -O0 -Wall -Wno-unused-function -std=c99 -pedantic";
+         PYDBG="-g" ;;
       h) cat <<EOF
 build script options:
   -c: Clean up files. Do not build anything.
@@ -31,14 +32,15 @@ if [ $clean -ge 1 ] ; then
   rm -rf pybuild
 fi
 if [ $clean -le 1 ] ; then
-  gcc -DSDF_DEBUG_ALL $DBG -I$SDFDIR -o sdf2ascii sdf2ascii.c \
+  gcc $OPT -o sdf2ascii sdf2ascii.c \
       $SDFDIR/sdf_control.c $SDFDIR/sdf_input.c $SDFDIR/sdf_input_cartesian.c \
       $SDFDIR/sdf_input_point.c $SDFDIR/sdf_input_station.c $SDFDIR/sdf_util.c \
       -ldl
-  gcc -DSDF_DEBUG_ALL $DBG -I$SDFDIR -I$EXTDIR -o sdffilter sdffilter.c \
+  gcc $OPT -o sdffilter sdffilter.c \
       $SDFDIR/sdf_control.c $SDFDIR/sdf_input.c $SDFDIR/sdf_input_cartesian.c \
       $SDFDIR/sdf_input_point.c $SDFDIR/sdf_input_station.c $SDFDIR/sdf_util.c \
       $SDFDIR/sdf_extension_util.c $SDFDIR/sdf_derived.c \
       -ldl
-  CFLAGS="-Wno-unused-function $DBG" python setup.py build $PYDBG -b pybuild install --prefix= --user --record pybuild/files.txt
+  CFLAGS="$OPT" python setup.py build $PYDBG -b pybuild install \
+      --prefix= --user --record pybuild/files.txt
 fi

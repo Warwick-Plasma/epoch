@@ -513,7 +513,7 @@ CONTAINS
     TYPE(laser_block), POINTER, OPTIONAL :: lasers
     INTEGER, INTENT(IN) :: bd
     TYPE(laser_block), POINTER :: current
-    REAL(num) :: t_env, dir
+    REAL(num) :: t_env, dir, dd, factor, lfactor, laser_inject_sum
     REAL(num), DIMENSION(:), ALLOCATABLE :: e1, e2, b1, b2
     INTEGER :: mm, ibc, icell
 
@@ -526,6 +526,7 @@ CONTAINS
 
     SELECT CASE(bd)
       CASE(c_bd_x_min, c_bd_x_max)
+        dd = dy
         mm = ny
         ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
 
@@ -542,6 +543,7 @@ CONTAINS
         b2 = 0.5_num  * (by(ibc-1, 1:ny  ) + by(ibc, 1:ny  ))
 
       CASE(c_bd_y_min, c_bd_y_max)
+        dd = dx
         mm = nx
         ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
 
@@ -552,12 +554,13 @@ CONTAINS
         ENDIF
 
         e1 = ez(1:nx, ibc)
-        e2 = 0.5_num  * (ez(0:nx-1, ibc  ) + ex(1:nx  , ibc))
+        e2 = 0.5_num  * (ex(0:nx-1, ibc  ) + ex(1:nx  , ibc))
         b1 = 0.5_num  * (bx(1:nx  , ibc-1) + bx(1:nx  , ibc))
         b2 = 0.25_num * (bz(0:nx-1, ibc-1) + bz(0:nx-1, ibc) &
                        + bz(1:nx  , ibc-1) + bz(1:nx  , ibc))
 
       CASE DEFAULT
+        dd = 0.0_num
         ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
 
         e1 = 0.0_num
@@ -566,18 +569,20 @@ CONTAINS
         b2 = 0.0_num
     END SELECT
 
+    factor = dt * dd * dir
     laser_absorb_local = laser_absorb_local &
-        + dt * dir * SUM(e1 * b1 - e2 * b2) / mu0
+        + (factor / mu0) * SUM(e1 * b1 - e2 * b2)
 
     IF (PRESENT(lasers)) THEN
       current => lasers
       DO WHILE(ASSOCIATED(current))
-        t_env = laser_time_profile(current)
+        laser_inject_sum = 0.0_num
         DO icell = 1, mm
-          laser_inject_local = laser_inject_local &
-              + dir * dt * 0.5_num * epsilon0 * c &
-              * (t_env * current%amp * current%profile(icell))**2
+          laser_inject_sum = laser_inject_sum + current%profile(icell)**2
         ENDDO
+        t_env = laser_time_profile(current)
+        lfactor = 0.5_num * epsilon0 * c * factor * (t_env * current%amp)**2
+        laser_inject_local = laser_inject_local + lfactor * laser_inject_sum
         current => current%next
       ENDDO
     ENDIF

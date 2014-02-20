@@ -387,9 +387,7 @@ CONTAINS
     CHARACTER(LEN=filename_length) :: deck_filename, status_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE.
-#ifndef NO_IO
     LOGICAL :: exists
-#endif
     INTEGER :: errcode_deck, ierr, i, io, iu, rank_check
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
     TYPE(file_buffer), POINTER :: fbuf
@@ -455,7 +453,6 @@ CONTAINS
         ALLOCATE(fbuf%buffer(fbuf%length))
       ENDIF
 
-#ifndef NO_IO
       ! Check whether or not the input deck file requested exists
       INQUIRE(file=deck_filename, exist=exists)
       IF (.NOT. exists .AND. rank .EQ. 0) THEN
@@ -469,6 +466,7 @@ CONTAINS
       ! Get a free lun. Don't use a constant lun to allow for recursion
       lun = get_free_lun()
       OPEN(unit=lun, file=TRIM(ADJUSTL(deck_filename)))
+#ifndef NO_IO
       IF (first_call .AND. rank .EQ. 0) THEN
         ! Create a new file on first pass, otherwise append
         IF (deck_state .EQ. c_ds_first) THEN

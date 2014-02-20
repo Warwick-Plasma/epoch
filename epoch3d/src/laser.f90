@@ -727,7 +727,7 @@ CONTAINS
     TYPE(laser_block), POINTER, OPTIONAL :: lasers
     INTEGER, INTENT(IN) :: bd
     TYPE(laser_block), POINTER :: current
-    REAL(num) :: t_env, dir
+    REAL(num) :: t_env, dir, dd, factor, lfactor, laser_inject_sum
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: e1, e2, b1, b2
     INTEGER :: mm, nn, ibc, icell, jcell
 
@@ -741,6 +741,7 @@ CONTAINS
 
     SELECT CASE(bd)
       CASE(c_bd_x_min, c_bd_x_max)
+        dd = dy * dz
         mm = ny
         nn = nz
         ALLOCATE(e1(mm, nn), e2(mm, nn), b1(mm, nn), b2(mm, nn))
@@ -759,6 +760,7 @@ CONTAINS
                        + by(ibc-1, 1:ny  , 1:nz  ) + by(ibc, 1:ny  , 1:nz  ))
 
       CASE(c_bd_y_min, c_bd_y_max)
+        dd = dx * dz
         mm = nx
         nn = nz
         ALLOCATE(e1(mm, nn), e2(mm, nn), b1(mm, nn), b2(mm, nn))
@@ -770,13 +772,14 @@ CONTAINS
         ENDIF
 
         e1 = 0.5_num  * (ez(1:nx  , ibc  , 0:nz-1) + ez(1:nx  , ibc, 1:nz  ))
-        e2 = 0.5_num  * (ez(0:nx-1, ibc  , 1:nx  ) + ex(1:nx  , ibc, 1:nz  ))
+        e2 = 0.5_num  * (ex(0:nx-1, ibc  , 1:nx  ) + ex(1:nx  , ibc, 1:nz  ))
         b1 = 0.25_num * (bx(1:nx  , ibc-1, 0:nz-1) + bx(1:nx  , ibc, 0:nz-1) &
                        + bx(1:nx  , ibc-1, 1:nz  ) + bx(1:nx  , ibc, 1:nz  ))
         b2 = 0.25_num * (bz(0:nx-1, ibc-1, 1:nz  ) + bz(0:nx-1, ibc, 1:nz  ) &
                        + bz(1:nx  , ibc-1, 1:nz  ) + bz(1:nx  , ibc, 1:nz  ))
 
       CASE(c_bd_z_min, c_bd_z_max)
+        dd = dx * dy
         mm = nx
         nn = ny
         ALLOCATE(e1(mm, nn), e2(mm, nn), b1(mm, nn), b2(mm, nn))
@@ -795,6 +798,7 @@ CONTAINS
                        + bx(1:nx  , 1:ny  , ibc-1) + bx(1:nx  , 1:ny  , ibc))
 
       CASE DEFAULT
+        dd = 0.0_num
         ALLOCATE(e1(mm, nn), e2(mm, nn), b1(mm, nn), b2(mm, nn))
 
         e1 = 0.0_num
@@ -803,20 +807,22 @@ CONTAINS
         b2 = 0.0_num
     END SELECT
 
+    factor = dt * dd * dir
     laser_absorb_local = laser_absorb_local &
-        + dt * dir * SUM(e1 * b1 - e2 * b2) / mu0
+        + (factor / mu0) * SUM(e1 * b1 - e2 * b2)
 
     IF (PRESENT(lasers)) THEN
       current => lasers
       DO WHILE(ASSOCIATED(current))
-        t_env = laser_time_profile(current)
+        laser_inject_sum = 0.0_num
         DO jcell = 1, nn
-          DO icell = 1, mm
-            laser_inject_local = laser_inject_local &
-                + dir * dt * 0.5_num * epsilon0 * c &
-                * (t_env * current%amp * current%profile(icell, jcell))**2
-          ENDDO
+        DO icell = 1, mm
+          laser_inject_sum = laser_inject_sum + current%profile(icell, jcell)**2
         ENDDO
+        ENDDO
+        t_env = laser_time_profile(current)
+        lfactor = 0.5_num * epsilon0 * c * factor * (t_env * current%amp)**2
+        laser_inject_local = laser_inject_local + lfactor * laser_inject_sum
         current => current%next
       ENDDO
     ENDIF
