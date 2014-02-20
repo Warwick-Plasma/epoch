@@ -1973,7 +1973,7 @@ CONTAINS
             CALL MPI_IPROBE(i, tag, comm, flag, MPI_STATUS_IGNORE, errcode)
             completed(i) = flag
             IF (flag) THEN
-              CALL MPI_RECV(0, 0, MPI_INTEGER, i, tag, comm, &
+              CALL MPI_RECV(msg, 0, MPI_INTEGER, i, tag, comm, &
                   MPI_STATUS_IGNORE, errcode)
             ELSE
               all_completed = .FALSE.
