@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 #include "sdf.h"
 #include "sdf_list_type.h"
+#include "sdf_helper.h"
+#include "stack_allocator.h"
 
 #ifdef PARALLEL
 #include <mpi.h>
@@ -389,7 +391,6 @@ char *parse_args(int *argc, char ***argv)
 
 static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
 {
-    sdf_block_t *cur;
     static sdf_block_t *mesh = NULL;
     int *idx, *fac, dim[3];
     int i, n, rem, sz, print, errcode = 0;
@@ -409,12 +410,8 @@ static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
             exit(1);
         }
 
-        cur = h->current_block;
-        h->current_block = mesh;
+        sdf_helper_read_data(h, mesh);
 
-        sdf_read_data(h);
-
-        h->current_block = cur;
         if (!mesh->grids) {
             fprintf(stderr, "ERROR: unable to read mesh.\n");
             exit(1);
@@ -708,6 +705,7 @@ int main(int argc, char **argv)
     h->use_float = single;
     h->print = debug;
     if (ignore_summary) h->use_summary = 0;
+    stack_init();
 
     sdf_read_header(h);
     h->current_block = NULL;
@@ -784,8 +782,8 @@ int main(int argc, char **argv)
 
         switch (b->blocktype) {
         case SDF_BLOCKTYPE_PLAIN_DERIVED:
+            sdf_helper_read_data(h, b);
             if (b->station_id) {
-                sdf_read_data(h);
                 mesh = sdf_find_block_by_id(h, b->mesh_id);
                 if (!mesh) continue;
                 if (mesh->nelements > nelements_max) {
@@ -793,17 +791,20 @@ int main(int argc, char **argv)
                     mesh0 = mesh;
                 }
 
-                if (!mesh->done_data) {
-                    h->current_block = mesh;
-                    sdf_read_data(h);
-                }
+                if (!mesh->done_data)
+                    sdf_helper_read_data(h, mesh);
 
                 list_append(station_blocks, b);
-            }
+            } else
+                pretty_print(h, b, idx);
+            break;
         case SDF_BLOCKTYPE_PLAIN_VARIABLE:
-            sdf_read_data(h);
+            sdf_helper_read_data(h, b);
             pretty_print(h, b, idx);
             break;
+        default:
+            printf("Unsupported blocktype %s\n",
+                   sdf_blocktype_c[b->blocktype]);
         }
     }
 

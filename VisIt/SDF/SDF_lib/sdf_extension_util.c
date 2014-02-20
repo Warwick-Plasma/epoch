@@ -8,6 +8,7 @@
 
 static void *sdf_global_extension = NULL;
 static void *sdf_global_extension_dlhandle = NULL;
+static int   sdf_global_extension_failed = 0;
 
 
 void *sdf_extension_load(sdf_file_t *h)
@@ -15,11 +16,20 @@ void *sdf_extension_load(sdf_file_t *h)
     sdf_extension_create_t *sdf_extension_create;
     void *p;
 
+    h->sdf_extension_version  = SDF_EXTENSION_VERSION;
+    h->sdf_extension_revision = SDF_EXTENSION_REVISION;
+
+    if (sdf_global_extension_failed) {
+        h->error_message = "sdf_extension_load: failed to load extension.";
+        return NULL;
+    }
+
     if (sdf_global_extension) return sdf_global_extension;
 
     sdf_global_extension_dlhandle = dlopen("sdf_extension.so", RTLD_LAZY);
 
     if (!sdf_global_extension_dlhandle) {
+        sdf_global_extension_failed = 1;
         h->error_message = dlerror();
         return NULL;
     }
@@ -54,6 +64,7 @@ void sdf_extension_unload(void)
     sdf_extension_destroy = NULL;
     sdf_global_extension = NULL;
     sdf_global_extension_dlhandle = NULL;
+    sdf_global_extension_failed = 0;
 
     return;
 }
@@ -67,13 +78,18 @@ int sdf_read_blocklist_all(sdf_file_t *h)
 
     // Retrieve the extended interface library from the plugin manager
     sdf_extension_load(h);
+    ext = sdf_global_extension;
+
+    if (h->blocklist) {
+        if (ext) ext->timestate_update(ext, h);
+        return 0;
+    }
 
     sdf_read_blocklist(h);
 
     // Append derived data to the blocklist using built-in library.
     sdf_add_derived_blocks(h);
 
-    ext = sdf_global_extension;
     if (ext) {
         preload = ext->preload(ext, h);
         // For each entry in the preload array, try to find the block
