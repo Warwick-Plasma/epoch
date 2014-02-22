@@ -253,6 +253,8 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 #endif
         h->mmap = NULL;
 
+    h->array_count = 20;
+
     if (mode != SDF_READ) return h;
 
     ret = sdf_read_header(h);

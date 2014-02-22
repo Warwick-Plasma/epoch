@@ -78,7 +78,7 @@
             SDF_PRNT("r4 "); \
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
+                for (_i=0; _i < h->array_count; _i++, _d++) { \
                     if (_d == (len)) break; \
                     SDF_PRNT(" %g", arr[_d]); \
                 } \
@@ -88,7 +88,7 @@
             SDF_PRNT("r8 "); \
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
+                for (_i=0; _i < h->array_count; _i++, _d++) { \
                     if (_d == (len)) break; \
                     SDF_PRNT(" %g", arr[_d]); \
                 } \
@@ -98,7 +98,7 @@
             SDF_PRNT("c1 "); \
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
+                for (_i=0; _i < h->array_count; _i++, _d++) { \
                     if (_d == (len)) break; \
                     SDF_PRNT("%c", arr[_d]); \
                 } \
@@ -108,7 +108,7 @@
             SDF_PRNT("l1 "); \
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
+                for (_i=0; _i < h->array_count; _i++, _d++) { \
                     if (_d == (len)) break; \
                     SDF_PRNT("%x ", arr[_d]); \
                 } \
@@ -118,7 +118,7 @@
             SDF_PRNT("i4 "); \
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
+                for (_i=0; _i < h->array_count; _i++, _d++) { \
                     if (_d == (len)) break; \
                     SDF_PRNT(" %i", arr[_d]); \
                 } \
@@ -128,7 +128,7 @@
             SDF_PRNT("i8 "); \
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
+                for (_i=0; _i < h->array_count; _i++, _d++) { \
                     if (_d == (len)) break; \
                     SDF_PRNT(" %" PRIu64, arr[_d]); \
                 } \

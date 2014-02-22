@@ -3,6 +3,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <sys/stat.h>
+#include <math.h>
 #include "sdf.h"
 #include "sdf_list_type.h"
 #include "sdf_helper.h"
@@ -15,10 +16,17 @@
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
 int metadata, contents, debug, single, use_mmap, ignore_summary, ascii_header;
-int exclude_variables, derived, index_offset;
+int exclude_variables, derived, index_offset, element_count;
+int format_rowindex, format_index, format_number;
 int64_t array_ndims, *array_starts, *array_ends, *array_strides;
 int slice_direction, slice_dim[3];
 char *output_file;
+char *format_float, *format_int, *format_space;
+//static char *default_float = "%3.2fE%d";
+static char *default_float = "%14.6E";
+static char *default_int   = "%" PRIi64;
+static char *default_space = "    ";
+
 struct id_list {
   char *id;
   struct id_list *next;
@@ -62,6 +70,16 @@ void usage(int err)
   -H --no-ascii-header When writing multi-column ascii data, a header is\n\
                        included for use by gnuplot or other plotting\n\
                        utilities. This flag disables the header.\n\
+  -C --count=n         When pretty-printing array contents, write 'n'\n\
+                       elements per line.\n\
+  -F --format-float=f  Use specified format for printing floating-point array\n\
+                       contents.\n\
+  -N --format-int=f    Use specified format for printing integer array\n\
+                       contents.\n\
+  -S --format-space=f  Use specified spacing between array elements.\n\
+  -K --format-number   Show block number before each row of array elements.\n\
+  -R --format-rowindex Show array indices before each row of array elements.\n\
+  -J --format-index    Show array indices before each array element.\n\
 ");
 /*
   -o --output          Output filename\n\
@@ -206,14 +224,21 @@ char *parse_args(int *argc, char ***argv)
         { "1dslice",       required_argument, NULL, '1' },
         { "array-section", required_argument, NULL, 'a' },
         { "contents",      no_argument,       NULL, 'c' },
+        { "count",         required_argument, NULL, 'C' },
         { "derived",       no_argument,       NULL, 'd' },
         { "help",          no_argument,       NULL, 'h' },
         { "no-ascii-header",no_argument,      NULL, 'H' },
+        { "format-float",  required_argument, NULL, 'F' },
         { "no-summary",    no_argument,       NULL, 'i' },
         { "c-indexing",    no_argument,       NULL, 'I' },
+        { "format-index",  no_argument,       NULL, 'J' },
+        { "format-number", no_argument,       NULL, 'K' },
         { "mmap",          no_argument,       NULL, 'm' },
         { "no-metadata",   no_argument,       NULL, 'n' },
+        { "format-int",    required_argument, NULL, 'N' },
+        { "format-rowindex",no_argument,      NULL, 'R' },
         { "single",        no_argument,       NULL, 's' },
+        { "format-space",  required_argument, NULL, 'S' },
         { "variable",      required_argument, NULL, 'v' },
         { "exclude",       required_argument, NULL, 'x' },
         { NULL,            0,                 NULL,  0  }
@@ -221,10 +246,10 @@ char *parse_args(int *argc, char ***argv)
         //{ "output",        required_argument, NULL, 'o' },
     };
 
-    metadata = debug = index_offset = 1;
+    metadata = debug = index_offset = element_count = 1;
     ascii_header = 1;
     contents = single = use_mmap = ignore_summary = exclude_variables = 0;
-    derived = 0;
+    derived = format_rowindex = format_index = format_number = 0;
     slice_direction = -1;
     variable_ids = NULL;
     variable_last_id = NULL;
@@ -233,10 +258,19 @@ char *parse_args(int *argc, char ***argv)
     array_ndims = nrange_max = nrange = 0;
     sz = sizeof(struct range_type);
 
+    format_int = malloc(strlen(default_int)+1);
+    memcpy(format_int, default_int, strlen(default_int)+1);
+
+    format_float = malloc(strlen(default_float)+1);
+    memcpy(format_float, default_float, strlen(default_float)+1);
+
+    format_space = malloc(strlen(default_space)+1);
+    memcpy(format_space, default_space, strlen(default_space)+1);
+
     got_include = got_exclude = 0;
 
     while ((c = getopt_long(*argc, *argv,
-            "1:a:cdhHiImnsv:x:", longopts, NULL)) != -1) {
+            "1:a:cC:dF:hHiIJKmnN:RsS:v:x:", longopts, NULL)) != -1) {
         switch (c) {
         case '1':
             contents = 1;
@@ -249,8 +283,17 @@ char *parse_args(int *argc, char ***argv)
         case 'c':
             contents = 1;
             break;
+        case 'C':
+            element_count = strtol(optarg, NULL, 10);
+            if (element_count < 1) element_count = 1;
+            break;
         case 'd':
             derived = 1;
+            break;
+        case 'F':
+            free(format_float);
+            format_float = malloc(strlen(optarg)+1);
+            memcpy(format_float, optarg, strlen(optarg)+1);
             break;
         case 'h':
             usage(0);
@@ -264,19 +307,38 @@ char *parse_args(int *argc, char ***argv)
         case 'I':
             index_offset = 0;
             break;
+        case 'J':
+            format_index = 1;
+            break;
+        case 'K':
+            format_number = 1;
+            break;
         case 'm':
             use_mmap = 1;
             break;
         case 'n':
             metadata = 0;
             break;
+        case 'N':
+            free(format_int);
+            format_int = malloc(strlen(optarg)+1);
+            memcpy(format_int, optarg, strlen(optarg)+1);
+            break;
         case 'o':
             if (output_file) free(output_file);
             output_file = malloc(strlen(optarg)+1);
             memcpy(output_file, optarg, strlen(optarg)+1);
             break;
+        case 'R':
+            format_rowindex = 1;
+            break;
         case 's':
             single = 1;
+            break;
+        case 'S':
+            free(format_space);
+            format_space = malloc(strlen(optarg)+1);
+            memcpy(format_space, optarg, strlen(optarg)+1);
             break;
         case 'v':
         case 'x':
@@ -383,6 +445,10 @@ char *parse_args(int *argc, char ***argv)
         free(range_list);
         range_list = range_tmp;
     }
+
+    special_format = 0;
+    if (format_float[strlen(format_float)-1] == 'd')
+        special_format = 1;
 
     return file;
 }
@@ -530,30 +596,56 @@ cleanup:
 static void pretty_print_slice_finish(void)
 {
     int i;
+    int exponent, special_format = 0;
     struct slice_list *sl;
     char *ptr;
+    double r8;
 
     if (!slice_head) return;
 
     if (ascii_header) printf("#\n");
 
+    special_format = 0;
+    if (format_float[strlen(format_float)-1] == 'd')
+        special_format = 1;
+
     for (i = 0; i < slice_head->nelements; i++) {
         sl = slice_head;
         while (sl) {
-            if (sl != slice_head) printf("    ");
+            if (sl != slice_head) printf(format_space,1);
             ptr = sl->data + i * sl->sz;
             switch (sl->datatype) {
             case SDF_DATATYPE_INTEGER4:
-                printf("%i", *((int32_t*)ptr));
+                printf(format_int, *((uint32_t*)ptr));
                 break;
             case SDF_DATATYPE_INTEGER8:
-                printf("%" PRIi64, *((int64_t*)ptr));
+                printf(format_int, *((uint64_t*)ptr));
                 break;
             case SDF_DATATYPE_REAL4:
-                printf("%14.6E", *((float*)ptr));
+                if (special_format) {
+                    r8 = *((float*)ptr);
+                    if (r8 == 0)
+                        exponent = 0;
+                    else {
+                        exponent = (int)floor(log10(fabs(r8)));
+                        r8 *= pow(10, -1.0 * exponent);
+                    }
+                    printf(format_float, r8, exponent);
+                } else
+                    printf(format_float, *((float*)ptr));
                 break;
             case SDF_DATATYPE_REAL8:
-                printf("%14.6E", *((double*)ptr));
+                if (special_format) {
+                    r8 = *((double*)ptr);
+                    if (r8 == 0)
+                        exponent = 0;
+                    else {
+                        exponent = (int)floor(log10(fabs(r8)));
+                        r8 *= pow(10, -1.0 * exponent);
+                    }
+                    printf(format_float, r8, exponent);
+                } else
+                    printf(format_float, *((double*)ptr));
                 break;
             }
             sl = sl->next;
@@ -566,10 +658,12 @@ static void pretty_print_slice_finish(void)
 static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
 {
     int *idx, *fac, *printed, *starts = NULL, *ends = NULL;
-    int i, n, rem, sz, left, digit, idx0, min_ndims, print;
+    int i, n, rem, sz, left, digit, ncount, idx0, min_ndims, print;
+    int exponent, special_format = 0;
     char *ptr;
     static const int fmtlen = 32;
     char **fmt;
+    double r8;
 
     if (slice_direction != -1) {
         pretty_print_slice(h, b);
@@ -586,6 +680,17 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
     if (min_ndims > 0) {
         starts = malloc(array_ndims * sizeof(*starts));
         ends   = malloc(array_ndims * sizeof(*ends));
+
+        for (i = 0; i < min_ndims; i++) {
+            starts[i] = array_starts[i];
+            ends[i] = array_ends[i];
+            if (starts[i] < 0) {
+                starts[i] += b->local_dims[i];
+                if (ends[i] == 0) ends[i] = b->local_dims[i];
+            }
+            if (ends[i] < 0) ends[i] += b->local_dims[i];
+            printed[i] = -array_strides[i];
+        }
     }
 
     rem = 1;
@@ -599,27 +704,26 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
             digit++;
         }
         if (!digit) digit = 1;
-        fmt[i] = malloc(fmtlen * sizeof(**fmt));
-        if (i == 0)
-            snprintf(fmt[i], fmtlen, "%i %%%i.%ii", idnum, digit, digit);
-        else
-            snprintf(fmt[i], fmtlen, ",%%%i.%ii", digit, digit);
+        if (format_rowindex || format_index) {
+            fmt[i] = malloc(fmtlen * sizeof(**fmt));
+            if (i == 0)
+                snprintf(fmt[i], fmtlen, "%%%i.%ii", digit, digit);
+            else if (i == b->ndims-1)
+                snprintf(fmt[i], fmtlen, ",%%%i.%ii)", digit, digit);
+            else
+                snprintf(fmt[i], fmtlen, ",%%%i.%ii", digit, digit);
+        } else
+            fmt[i] = calloc(1, sizeof(**fmt));
     }
 
-    for (i = 0; i < min_ndims; i++) {
-        starts[i] = array_starts[i];
-        ends[i] = array_ends[i];
-        if (starts[i] < 0) {
-            starts[i] += b->local_dims[i];
-            if (ends[i] == 0) ends[i] = b->local_dims[i];
-        }
-        if (ends[i] < 0) ends[i] += b->local_dims[i];
-        printed[i] = -array_strides[i];
-    }
+    special_format = 0;
+    if (format_float[strlen(format_float)-1] == 'd')
+        special_format = 1;
 
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
     ptr = b->data;
+    ncount = 0;
     for (n = 0; n < b->nelements_local; n++) {
         rem = n;
         for (i = b->ndims-1; i >= 0; i--) {
@@ -645,27 +749,65 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
             }
         }
         if (print) {
-            for (i = 0; i < b->ndims; i++) {
-                printf(fmt[i], idx[i]+index_offset);
-                printed[i] = idx[i];
+            ncount++;
+            if (ncount == 1) {
+                if (format_number)
+                    printf("%i ", idnum);
+                for (i = 0; i < b->ndims; i++) {
+                    printf(fmt[i], idx[i]+index_offset);
+                    printed[i] = idx[i];
+                }
+            } else {
+                if (format_index) {
+                    printf(" ");
+                    for (i = 0; i < b->ndims; i++)
+                        printf(fmt[i], idx[i]+index_offset);
+                }
+                printf(format_space,1);
             }
+
             switch (b->datatype_out) {
             case SDF_DATATYPE_INTEGER4:
-                printf(":  %i\n", *((int32_t*)ptr));
+                printf(format_int, *((uint32_t*)ptr));
                 break;
             case SDF_DATATYPE_INTEGER8:
-                printf(":  %" PRIi64 "\n", *((int64_t*)ptr));
+                printf(format_int, *((uint64_t*)ptr));
                 break;
             case SDF_DATATYPE_REAL4:
-                printf(":  %12.6E\n", *((float*)ptr));
+                if (special_format) {
+                    r8 = *((float*)ptr);
+                    if (r8 == 0)
+                        exponent = 0;
+                    else {
+                        exponent = (int)floor(log10(fabs(r8)));
+                        r8 *= pow(10, -1.0 * exponent);
+                    }
+                    printf(format_float, r8, exponent);
+                } else
+                    printf(format_float, *((float*)ptr));
                 break;
             case SDF_DATATYPE_REAL8:
-                printf(":  %12.6E\n", *((double*)ptr));
+                if (special_format) {
+                    r8 = *((double*)ptr);
+                    if (r8 == 0)
+                        exponent = 0;
+                    else {
+                        exponent = (int)floor(log10(fabs(r8)));
+                        r8 *= pow(10, -1.0 * exponent);
+                    }
+                    printf(format_float, r8, exponent);
+                } else
+                    printf(format_float, *((double*)ptr));
                 break;
+            }
+            if (ncount == element_count) {
+                printf("\n");
+                ncount = 0;
             }
         }
         ptr += sz;
     }
+    if (ncount) printf("\n");
 
     free(idx);
     free(fac);

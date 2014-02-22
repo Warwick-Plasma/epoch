@@ -22,6 +22,7 @@
     } while (0)
 
 int metadata, contents, debug, single, use_mmap, ignore_summary;
+int element_count;
 struct id_list {
   char *id;
   struct id_list *next;
@@ -45,6 +46,8 @@ void usage(int err)
   -v --variable=id     Find the block with id matching 'id'\n\
   -m --mmap            Use mmap'ed file I/O\n\
   -i --no-summary      Ignore the metadata summary\n\
+  -C --count=n         When printing array contents, write 'n' elements per\n\
+                       line.\n\
 ");
 /*
   -D --debug           Show the contents of the debug buffer\n\
@@ -71,6 +74,7 @@ char *parse_args(int *argc, char ***argv)
     struct stat statbuf;
     static struct option longopts[] = {
         { "contents",      no_argument,       NULL, 'c' },
+        { "count",         required_argument, NULL, 'C' },
         { "help",          no_argument,       NULL, 'h' },
         { "no-summary",    no_argument,       NULL, 'i' },
         { "mmap",          no_argument,       NULL, 'm' },
@@ -85,14 +89,18 @@ char *parse_args(int *argc, char ***argv)
     contents = single = use_mmap = ignore_summary = 0;
     variable_ids = NULL;
     last_id = NULL;
-    nbuf = nrange = 0;
+    nbuf = nrange = element_count = 0;
     sz = sizeof(struct range_type);
 
     while ((c = getopt_long(*argc, *argv,
-            "chimnsv:", longopts, NULL)) != -1) {
+            "cC:himnsv:", longopts, NULL)) != -1) {
         switch (c) {
         case 'c':
             contents = 1;
+            break;
+        case 'C':
+            element_count = strtol(optarg, NULL, 10);
+            if (element_count < 1) element_count = 1;
             break;
         case 'h':
             usage(0);
@@ -225,6 +233,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "Error opening file %s\n", file);
         return 1;
     }
+    if (element_count > 0) h->array_count = element_count;
+
     h->use_float = single;
     h->print = debug;
     if (ignore_summary) h->use_summary = 0;
