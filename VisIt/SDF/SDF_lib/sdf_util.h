@@ -1,10 +1,6 @@
 #ifndef _SDF_UTIL_H_
 #define _SDF_UTIL_H_
 
-#ifdef SDF_DEBUG_ALL
-#define SDF_DEBUG
-#endif
-
 #define SOI4  4
 #define SOI8  8
 #define SOF4  4

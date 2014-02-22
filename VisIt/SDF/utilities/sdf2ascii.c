@@ -38,16 +38,16 @@ void usage(int err)
 {
     fprintf(stderr, "usage: sdf2ascii [options] <sdf_filename>\n");
     fprintf(stderr, "\noptions:\n\
-  -h --help           Show this usage message\n\
-  -n --no-metadata    Don't show metadata blocks (shown by default)\n\
-  -c --contents       Show block's data content\n\
-  -s --single         Convert block data to single precision\n\
-  -v --variable=id    Find the block with id matching 'id'\n\
-  -m --mmap           Use mmap'ed file I/O\n\
-  -i --no-summary     Ignore the metadata summary\n\
+  -h --help            Show this usage message\n\
+  -n --no-metadata     Don't show metadata blocks (shown by default)\n\
+  -c --contents        Show block's data content\n\
+  -s --single          Convert block data to single precision\n\
+  -v --variable=id     Find the block with id matching 'id'\n\
+  -m --mmap            Use mmap'ed file I/O\n\
+  -i --no-summary      Ignore the metadata summary\n\
 ");
 /*
-  -d --debug          Show the contents of the debug buffer\n\
+  -D --debug           Show the contents of the debug buffer\n\
 */
 
     exit(err);
@@ -70,14 +70,15 @@ char *parse_args(int *argc, char ***argv)
     struct range_type *range_tmp;
     struct stat statbuf;
     static struct option longopts[] = {
-        { "no-metadata", no_argument,    NULL,      'n' },
-        { "contents", no_argument,       NULL,      'c' },
-        //{ "debug",    no_argument,       NULL,      'd' },
-        { "help",     no_argument,       NULL,      'h' },
-        { "variable", required_argument, NULL,      'v' },
-        { "mmap",     no_argument,       NULL,      'm' },
-        { "no-summary", no_argument,     NULL,      'i' },
-        { NULL,       0,                 NULL,       0  }
+        { "contents",      no_argument,       NULL, 'c' },
+        { "help",          no_argument,       NULL, 'h' },
+        { "no-summary",    no_argument,       NULL, 'i' },
+        { "mmap",          no_argument,       NULL, 'm' },
+        { "no-metadata",   no_argument,       NULL, 'n' },
+        { "single",        no_argument,       NULL, 's' },
+        { "variable",      required_argument, NULL, 'v' },
+        { NULL,            0,                 NULL,  0  }
+        //{ "debug",         no_argument,       NULL, 'D' },
     };
 
     metadata = debug = 1;
@@ -88,16 +89,22 @@ char *parse_args(int *argc, char ***argv)
     sz = sizeof(struct range_type);
 
     while ((c = getopt_long(*argc, *argv,
-            "hncsmiv:", longopts, NULL)) != -1) {
+            "chimnsv:", longopts, NULL)) != -1) {
         switch (c) {
+        case 'c':
+            contents = 1;
+            break;
         case 'h':
             usage(0);
             break;
+        case 'i':
+            ignore_summary = 1;
+            break;
+        case 'm':
+            use_mmap = 1;
+            break;
         case 'n':
             metadata = 0;
-            break;
-        case 'c':
-            contents = 1;
             break;
         case 's':
             single = 1;
@@ -155,12 +162,6 @@ char *parse_args(int *argc, char ***argv)
                 memcpy(last_id->id, optarg, strlen(optarg)+1);
             }
             break;
-        case 'm':
-            use_mmap = 1;
-            break;
-        case 'i':
-            ignore_summary = 1;
-            break;
         default:
             usage(1);
         }
@@ -168,7 +169,7 @@ char *parse_args(int *argc, char ***argv)
 
     if ((optind+1) == *argc) {
         file = (*argv)[optind];
-        err = stat(file, &statbuf);
+        err = lstat(file, &statbuf);
         if (err) {
             fprintf(stderr, "Error opening file %s\n", file);
             exit(1);
