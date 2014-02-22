@@ -10,9 +10,12 @@
 #include <mpi.h>
 #endif
 
-int metadata, contents, debug, single, use_mmap, ignore_summary;
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+
+int metadata, contents, debug, single, use_mmap, ignore_summary, ascii_header;
 int exclude_variables, derived, index_offset;
 int64_t array_ndims, *array_starts, *array_ends, *array_strides;
+int slice_direction, slice_dim[3];
 char *output_file;
 struct id_list {
   char *id;
@@ -24,6 +27,12 @@ int nrange;
 struct range_type {
   unsigned int start, end;
 } *range_list;
+
+struct slice_list {
+    char *data;
+    int datatype, nelements, sz;
+    struct slice_list *next;
+} *slice_head, *slice_tail;
 
 
 int close_files(sdf_file_t *h);
@@ -46,6 +55,11 @@ void usage(int err)
   -d --derived         Add derived blocks\n\
   -I --c-indexing      Array indexing starts from 1 by default. If this flag\n\
                        is used then the indexing starts from 0.\n\
+  -1 --1dslice=arg     Output 1D slice as a multi-column gnuplot file.\n\
+                       The argument is 1,2 or 3 integers separated by commas.\n\
+  -H --no-ascii-header When writing multi-column ascii data, a header is\n\
+                       included for use by gnuplot or other plotting\n\
+                       utilities. This flag disables the header.\n\
 ");
 /*
   -o --output          Output filename\n\
@@ -62,6 +76,67 @@ int range_sort(const void *v1, const void *v2)
     struct range_type *b = (struct range_type *)v2;
 
     return (a->start - b->start);
+}
+
+
+void parse_1d_slice(char *slice)
+{
+    int i, len = strlen(slice);
+    int done_direction, done_dim1, dim;
+    char *old, *ptr;
+
+    done_direction = done_dim1 = 0;
+    slice_direction = 0;
+
+    for (i = 0, old = ptr = slice; i < len+1; i++, ptr++) {
+        if (*ptr == ',' || *ptr == '\0') {
+            if (done_dim1) {
+                dim = strtol(old, NULL, 10);
+                if (dim > 0) dim -= index_offset;
+                if (slice_direction == 2)
+                    slice_dim[1] = dim;
+                else
+                    slice_dim[2] = dim;
+            } else if (done_direction) {
+                dim = strtol(old, NULL, 10);
+                if (dim > 0) dim -= index_offset;
+                if (slice_direction == 0)
+                    slice_dim[1] = dim;
+                else
+                    slice_dim[0] = dim;
+                done_dim1 = 1;
+            } else {
+                slice_direction = strtol(old, NULL, 10) - index_offset;
+                if (slice_direction < 0 || slice_direction > 2) {
+                    fprintf(stderr, "ERROR: invalid slice direction.\n");
+                    exit(1);
+                }
+                done_direction = 1;
+            }
+            old = ptr + 1;
+        }
+    }
+
+    if (array_starts) free(array_starts);
+    if (array_ends) free(array_ends);
+    if (array_strides) free(array_strides);
+
+    array_ndims = 3;
+
+    array_starts  = calloc(array_ndims, sizeof(*array_starts));
+    array_ends    = malloc(array_ndims * sizeof(*array_ends));
+    array_strides = malloc(array_ndims * sizeof(*array_strides));
+
+    for (i = 0; i < array_ndims; i++) {
+        array_strides[i] = 1;
+        if (i == slice_direction) {
+            array_starts[i] = 0;
+            array_ends[i] = INT64_MAX;
+        } else {
+            array_starts[i] = slice_dim[i];
+            array_ends[i] = array_starts[i] + 1;
+        }
+    }
 }
 
 
@@ -126,10 +201,12 @@ char *parse_args(int *argc, char ***argv)
     struct range_type *range_tmp;
     struct stat statbuf;
     static struct option longopts[] = {
+        { "1dslice",       required_argument, NULL, '1' },
         { "array-section", required_argument, NULL, 'a' },
         { "contents",      no_argument,       NULL, 'c' },
         { "derived",       no_argument,       NULL, 'd' },
         { "help",          no_argument,       NULL, 'h' },
+        { "no-ascii-header",no_argument,      NULL, 'H' },
         { "no-summary",    no_argument,       NULL, 'i' },
         { "c-indexing",    no_argument,       NULL, 'I' },
         { "mmap",          no_argument,       NULL, 'm' },
@@ -143,8 +220,10 @@ char *parse_args(int *argc, char ***argv)
     };
 
     metadata = debug = index_offset = 1;
+    ascii_header = 1;
     contents = single = use_mmap = ignore_summary = exclude_variables = 0;
     derived = 0;
+    slice_direction = -1;
     variable_ids = NULL;
     variable_last_id = NULL;
     output_file = NULL;
@@ -155,8 +234,12 @@ char *parse_args(int *argc, char ***argv)
     got_include = got_exclude = 0;
 
     while ((c = getopt_long(*argc, *argv,
-            "a:cdhiImnsv:x:", longopts, NULL)) != -1) {
+            "1:a:cdhHiImnsv:x:", longopts, NULL)) != -1) {
         switch (c) {
+        case '1':
+            contents = 1;
+            parse_1d_slice(optarg);
+            break;
         case 'a':
             contents = 1;
             parse_array_section(optarg);
@@ -169,6 +252,9 @@ char *parse_args(int *argc, char ***argv)
             break;
         case 'h':
             usage(0);
+            break;
+        case 'H':
+            ascii_header = 0;
             break;
         case 'i':
             ignore_summary = 1;
@@ -300,6 +386,186 @@ char *parse_args(int *argc, char ***argv)
 }
 
 
+
+static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
+{
+    sdf_block_t *cur;
+    static sdf_block_t *mesh = NULL;
+    int *idx, *fac, dim[3];
+    int i, n, rem, sz, print, errcode = 0;
+    char *ptr, *dptr;
+    float r4;
+    double r8;
+
+    if (b->blocktype != SDF_BLOCKTYPE_PLAIN_VARIABLE &&
+            b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED) return errcode;
+
+    if (slice_direction >= b->ndims) return 0;
+
+    if (!mesh) {
+        mesh = sdf_find_block_by_id(h, b->mesh_id);
+        if (!mesh) {
+            fprintf(stderr, "ERROR: unable to find mesh.\n");
+            exit(1);
+        }
+
+        cur = h->current_block;
+        h->current_block = mesh;
+
+        sdf_read_data(h);
+
+        h->current_block = cur;
+        if (!mesh->grids) {
+            fprintf(stderr, "ERROR: unable to read mesh.\n");
+            exit(1);
+        }
+
+        sz = SDF_TYPE_SIZES[mesh->datatype_out];
+
+        slice_head = slice_tail = calloc(1, sizeof(*slice_head));
+        slice_tail->datatype = mesh->datatype_out;
+        slice_tail->sz = SDF_TYPE_SIZES[slice_tail->datatype];
+        slice_tail->nelements = b->local_dims[slice_direction];
+        dptr = slice_tail->data = calloc(slice_tail->nelements, sz);
+
+        ptr = mesh->grids[slice_direction];
+
+        // Center grid if necessary
+        if (slice_tail->nelements == (mesh->local_dims[slice_direction]-1)) {
+            if (slice_tail->datatype == SDF_DATATYPE_REAL4) {
+                for (n = 0; n < slice_tail->nelements; n++) {
+                    r4 = 0.5 * (*((float*)ptr) + *((float*)ptr+1));
+                    memcpy(dptr, &r4, sz);
+                    dptr += sz;
+                    ptr += sz;
+                }
+            } else if (slice_tail->datatype == SDF_DATATYPE_REAL8) {
+                for (n = 0; n < slice_tail->nelements; n++) {
+                    r8 = 0.5 * (*((double*)ptr) + *((double*)ptr+1));
+                    memcpy(dptr, &r8, sz);
+                    dptr += sz;
+                    ptr += sz;
+                }
+            }
+        } else {
+            for (n = 0; n < slice_tail->nelements; n++) {
+                memcpy(dptr, ptr, sz);
+                dptr += sz;
+                ptr += sz;
+            }
+        }
+
+        if (ascii_header) {
+            printf("# 1D array slice through (");
+            for (n = 0; n < 3; n++) {
+                if (n != 0) printf(",");
+                if (n == slice_direction)
+                    printf(":");
+                else
+                    printf("%i", slice_dim[n]+index_offset);
+            }
+            printf(")\n#\n# %s\t%s\t(%s)\n", mesh->id,
+                   mesh->dim_labels[slice_direction],
+                   mesh->dim_units[slice_direction]);
+        }
+    }
+
+    idx = malloc(b->ndims * sizeof(*idx));
+    fac = malloc(b->ndims * sizeof(*fac));
+
+    rem = 1;
+    for (i = 0; i < b->ndims; i++) {
+        fac[i] = rem;
+        rem *= b->local_dims[i];
+    }
+
+    for (i = 0; i < b->ndims; i++) {
+        if (slice_dim[i] >= b->local_dims[i]) {
+            errcode = 1;
+            fprintf(stderr, "ERROR: slice dimension lies outside array.\n");
+            goto cleanup;
+        } 
+        dim[i] = slice_dim[i];
+        if (dim[i] < 0) dim[i] += b->local_dims[i];
+    }
+
+    sz = SDF_TYPE_SIZES[b->datatype_out];
+
+    slice_tail = slice_tail->next = calloc(1, sizeof(*slice_tail));
+    slice_tail->datatype = b->datatype_out;
+    slice_tail->sz = SDF_TYPE_SIZES[slice_tail->datatype];
+    slice_tail->nelements = b->local_dims[slice_direction];
+    dptr = slice_tail->data = calloc(slice_tail->nelements, sz);
+
+    ptr = b->data;
+    for (n = 0; n < b->nelements_local; n++) {
+        rem = n;
+        for (i = b->ndims-1; i >= 0; i--) {
+            idx[i] = rem / fac[i];
+            rem -= idx[i] * fac[i];
+        }
+
+        print = 1;
+        for (i = 0; i < b->ndims; i++) {
+            if (i == slice_direction) continue;
+            if (idx[i] == dim[i]) continue;
+            print = 0;
+        }
+
+        if (print) {
+            memcpy(dptr, ptr, sz);
+            dptr += sz;
+        }
+        ptr += sz;
+    }
+
+    if (ascii_header)
+        printf("# %s\t%s\t(%s)\n", b->id, b->name, b->units);
+
+cleanup:
+    if (idx) free(idx);
+    if (fac) free(fac);
+
+    return errcode;
+}
+
+
+static void pretty_print_slice_finish(void)
+{
+    int i;
+    struct slice_list *sl;
+    char *ptr;
+
+    if (!slice_head) return;
+
+    if (ascii_header) printf("#\n");
+
+    for (i = 0; i < slice_head->nelements; i++) {
+        sl = slice_head;
+        while (sl) {
+            if (sl != slice_head) printf("    ");
+            ptr = sl->data + i * sl->sz;
+            switch (sl->datatype) {
+            case SDF_DATATYPE_INTEGER4:
+                printf("%i", *((uint32_t*)ptr));
+                break;
+            case SDF_DATATYPE_INTEGER8:
+                printf("%llu", *((uint64_t*)ptr));
+                break;
+            case SDF_DATATYPE_REAL4:
+                printf("%14.6E", *((float*)ptr));
+                break;
+            case SDF_DATATYPE_REAL8:
+                printf("%14.6E", *((double*)ptr));
+                break;
+            }
+            sl = sl->next;
+        }
+        printf("\n");
+    }
+}
+
+
 static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
 {
     int *idx, *fac, *printed, *starts = NULL, *ends = NULL;
@@ -308,12 +574,17 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
     static const int fmtlen = 32;
     char **fmt;
 
+    if (slice_direction != -1) {
+        pretty_print_slice(h, b);
+        return;
+    }
+
     idx = malloc(b->ndims * sizeof(*idx));
     fac = malloc(b->ndims * sizeof(*fac));
     fmt = malloc(b->ndims * sizeof(*fmt));
     printed = malloc(b->ndims * sizeof(*printed));
 
-    min_ndims = (array_ndims < b->ndims) ? array_ndims : b->ndims;
+    min_ndims = MIN(array_ndims, b->ndims);
 
     if (min_ndims > 0) {
         starts = malloc(array_ndims * sizeof(*starts));
@@ -505,7 +776,7 @@ int main(int argc, char **argv)
             if (!found) continue;
         }
 
-        if (metadata) {
+        if (metadata && slice_direction == -1) {
             printf("%4i id: %s\n", i+1, b->id);
         }
 
@@ -536,19 +807,30 @@ int main(int argc, char **argv)
         }
     }
 
+    pretty_print_slice_finish();
+
     if (mesh0 && (variable_ids || nrange > 0)) {
-        printf("# Stations Time History File\n");
+        if (ascii_header) {
+            printf("# Stations Time History File\n#\n");
+            // This gives garbage output
+            //printf("# %s\t%s\t(%s)\n", mesh0->id, mesh0->name, mesh0->units);
+            printf("# time\tTime\t(%s)\n", mesh0->units);
+        }
 
         nelements_max = 0;
         b = list_start(station_blocks);
         for (i = 0; i < station_blocks->count; i++) {
             len = strlen(b->station_id);
-            printf("# %s\t%s\t(%s)\n", b->id, &b->name[len+1], b->units);
+            if (ascii_header)
+                printf("# %s\t%s\t(%s)\n", &b->id[len+1],
+                       &b->name[len+1], b->units);
             idx = b->opt + b->nelements - mesh0->opt;
             if (idx > nelements_max)
                 nelements_max = idx;
             b = list_next(station_blocks);
         }
+
+        if (ascii_header) printf("#\n");
 
         for (n = 0; n < nelements_max; n++) {
             printf("%12.6g", ((float*)mesh0->data)[n]);
