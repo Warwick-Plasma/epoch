@@ -1921,6 +1921,7 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: halt
     INTEGER, PARAMETER :: tag = 2001
     INTEGER :: msg, request, i
+    INTEGER :: status_ignore(MPI_STATUS_SIZE)
     LOGICAL :: flag
     LOGICAL, ALLOCATABLE, SAVE :: completed(:)
     LOGICAL, SAVE :: yet_to_sync = .TRUE.
@@ -1950,7 +1951,9 @@ CONTAINS
         all_completed = .TRUE.
         DO i = 1,nproc-1
           IF (.NOT.completed(i)) THEN
-            CALL MPI_IPROBE(i, tag, comm, flag, MPI_STATUS_IGNORE, errcode)
+            ! The Platform-MPI interface for MPI_IPROBE is broken and will not
+            ! allow us to use MPI_STATUS_IGNORE
+            CALL MPI_IPROBE(i, tag, comm, flag, status_ignore, errcode)
             completed(i) = flag
             IF (flag) THEN
               CALL MPI_RECV(msg, 0, MPI_INTEGER, i, tag, comm, &
