@@ -30,6 +30,7 @@ static char *default_int   = "%" PRIi64;
 static char *default_space = "    ";
 static char *default_indent = "  ";
 static char indent[64];
+static list_t *slice_list;
 
 struct id_list {
   char *id;
@@ -42,11 +43,10 @@ struct range_type {
   unsigned int start, end;
 } *range_list;
 
-struct slice_list {
+struct slice_block {
     char *data;
-    int datatype, nelements, sz;
-    struct slice_list *next;
-} *slice_head, *slice_tail;
+    int datatype, nelements, free_data;
+};
 
 static char width_fmt[16];
 #define SET_WIDTH(string) do { \
@@ -513,14 +513,14 @@ static int set_array_section(sdf_block_t *b)
 static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
 {
     static sdf_block_t *mesh = NULL;
-    int *idx, *fac, dim[3];
-    int i, n, rem, sz, print, errcode = 0;
+    int n, sz;
     char *ptr, *dptr;
     float r4;
     double r8;
+    struct slice_block *sb;
 
     if (b->blocktype != SDF_BLOCKTYPE_PLAIN_VARIABLE &&
-            b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED) return errcode;
+            b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED) return 0;
 
     if (slice_direction >= b->ndims) return 0;
 
@@ -539,36 +539,32 @@ static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
             exit(1);
         }
 
-        sz = SDF_TYPE_SIZES[mesh->datatype_out];
 
-        slice_head = slice_tail = calloc(1, sizeof(*slice_head));
-        slice_tail->datatype = mesh->datatype_out;
-        slice_tail->sz = SDF_TYPE_SIZES[slice_tail->datatype];
-        slice_tail->nelements = b->local_dims[slice_direction];
-        dptr = slice_tail->data = calloc(slice_tail->nelements, sz);
+        sb = calloc(1, sizeof(*sb));
+        sb->datatype = mesh->datatype_out;
+        sb->nelements = mesh->array_ends[slice_direction] -
+                mesh->array_starts[slice_direction] - 1;
+        sz = SDF_TYPE_SIZES[sb->datatype];
 
+        list_init(&slice_list);
+        list_append(slice_list, sb);
+
+        // Create a new cell-centered grid array
         ptr = mesh->grids[slice_direction];
+        dptr = sb->data = calloc(sb->nelements, sz);
+        sb->free_data = 1;
 
-        // Center grid if necessary
-        if (slice_tail->nelements == (mesh->local_dims[slice_direction]-1)) {
-            if (slice_tail->datatype == SDF_DATATYPE_REAL4) {
-                for (n = 0; n < slice_tail->nelements; n++) {
-                    r4 = 0.5 * (*((float*)ptr) + *((float*)ptr+1));
-                    memcpy(dptr, &r4, sz);
-                    dptr += sz;
-                    ptr += sz;
-                }
-            } else if (slice_tail->datatype == SDF_DATATYPE_REAL8) {
-                for (n = 0; n < slice_tail->nelements; n++) {
-                    r8 = 0.5 * (*((double*)ptr) + *((double*)ptr+1));
-                    memcpy(dptr, &r8, sz);
-                    dptr += sz;
-                    ptr += sz;
-                }
+        if (sb->datatype == SDF_DATATYPE_REAL4) {
+            for (n = 0; n < sb->nelements; n++) {
+                r4 = 0.5 * (*((float*)ptr) + *((float*)ptr+1));
+                memcpy(dptr, &r4, sz);
+                dptr += sz;
+                ptr += sz;
             }
-        } else {
-            for (n = 0; n < slice_tail->nelements; n++) {
-                memcpy(dptr, ptr, sz);
+        } else if (sb->datatype == SDF_DATATYPE_REAL8) {
+            for (n = 0; n < sb->nelements; n++) {
+                r8 = 0.5 * (*((double*)ptr) + *((double*)ptr+1));
+                memcpy(dptr, &r8, sz);
                 dptr += sz;
                 ptr += sz;
             }
@@ -576,7 +572,7 @@ static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
 
         if (ascii_header) {
             printf("# 1D array slice through (");
-            for (n = 0; n < 3; n++) {
+            for (n = 0; n < mesh->ndims; n++) {
                 if (n != 0) printf(",");
                 if (n == slice_direction)
                     printf(":");
@@ -589,63 +585,17 @@ static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
         }
     }
 
-    idx = malloc(b->ndims * sizeof(*idx));
-    fac = malloc(b->ndims * sizeof(*fac));
+    sb = calloc(1, sizeof(*sb));
+    sb->datatype = b->datatype_out;
+    sb->nelements = b->nelements_local;
+    sb->data = b->data;
 
-    rem = 1;
-    for (i = 0; i < b->ndims; i++) {
-        fac[i] = rem;
-        rem *= b->local_dims[i];
-    }
-
-    for (i = 0; i < b->ndims; i++) {
-        if (slice_dim[i] >= b->local_dims[i]) {
-            errcode = 1;
-            fprintf(stderr, "ERROR: slice dimension lies outside array.\n");
-            goto cleanup;
-        } 
-        dim[i] = slice_dim[i];
-        if (dim[i] < 0) dim[i] += b->local_dims[i];
-    }
-
-    sz = SDF_TYPE_SIZES[b->datatype_out];
-
-    slice_tail = slice_tail->next = calloc(1, sizeof(*slice_tail));
-    slice_tail->datatype = b->datatype_out;
-    slice_tail->sz = SDF_TYPE_SIZES[slice_tail->datatype];
-    slice_tail->nelements = b->local_dims[slice_direction];
-    dptr = slice_tail->data = calloc(slice_tail->nelements, sz);
-
-    ptr = b->data;
-    for (n = 0; n < b->nelements_local; n++) {
-        rem = n;
-        for (i = b->ndims-1; i >= 0; i--) {
-            idx[i] = rem / fac[i];
-            rem -= idx[i] * fac[i];
-        }
-
-        print = 1;
-        for (i = 0; i < b->ndims; i++) {
-            if (i == slice_direction) continue;
-            if (idx[i] == dim[i]) continue;
-            print = 0;
-        }
-
-        if (print) {
-            memcpy(dptr, ptr, sz);
-            dptr += sz;
-        }
-        ptr += sz;
-    }
+    list_append(slice_list, sb);
 
     if (ascii_header)
         printf("# %s\t%s\t(%s)\n", b->id, b->name, b->units);
 
-cleanup:
-    if (idx) free(idx);
-    if (fac) free(fac);
-
-    return errcode;
+    return 0;
 }
 
 
@@ -653,11 +603,11 @@ static void pretty_print_slice_finish(void)
 {
     int i;
     int exponent, special_format = 0;
-    struct slice_list *sl;
+    struct slice_block *sb, *first;
     char *ptr;
     double r8;
 
-    if (!slice_head) return;
+    if (!slice_list) return;
 
     if (ascii_header) printf("#\n");
 
@@ -665,12 +615,16 @@ static void pretty_print_slice_finish(void)
     if (format_float[strlen(format_float)-1] == 'd')
         special_format = 1;
 
-    for (i = 0; i < slice_head->nelements; i++) {
-        sl = slice_head;
-        while (sl) {
-            if (sl != slice_head) printf(format_space,1);
-            ptr = sl->data + i * sl->sz;
-            switch (sl->datatype) {
+    first = list_start(slice_list);
+
+    for (i = 0; i < first->nelements; i++) {
+        sb = list_start(slice_list);
+        while (sb) {
+            if (sb != first) printf(format_space,1);
+
+            ptr = sb->data + i * SDF_TYPE_SIZES[sb->datatype];
+
+            switch (sb->datatype) {
             case SDF_DATATYPE_INTEGER4:
                 printf(format_int, *((uint32_t*)ptr));
                 break;
@@ -704,10 +658,19 @@ static void pretty_print_slice_finish(void)
                     printf(format_float, *((double*)ptr));
                 break;
             }
-            sl = sl->next;
+            sb = list_next(slice_list);
         }
         printf("\n");
     }
+
+    // Cleanup
+    sb = list_start(slice_list);
+    while (sb) {
+        if (sb->free_data) free(sb->data);
+        sb = list_next(slice_list);
+    }
+
+    list_destroy(&slice_list);
 }
 
 

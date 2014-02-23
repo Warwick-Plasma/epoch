@@ -44,4 +44,9 @@ if [ $clean -le 1 ] ; then
       -ldl -lm
   CFLAGS="$OPT" python setup.py build $PYDBG -b pybuild install \
       --prefix= --user --record pybuild/files.txt
+  which a2x > /dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    a2x -d manpage -f manpage sdffilter.adoc
+    a2x -d manpage -f manpage sdf2ascii.adoc
+  fi
 fi
