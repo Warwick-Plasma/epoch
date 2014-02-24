@@ -339,7 +339,13 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
     char **var_ptr = (char**)var_in;
     char *var = *var_ptr;
     char convert;
-    int sz;
+    int i, sz;
+#ifndef PARALLEL
+    int *loop_counts = NULL, *idx = NULL;
+    int64_t *offset_starts = NULL, *offset_ends = NULL;
+    int64_t length, ncount, offset, nreads;
+    int n, ndims, combined_reads = 0;
+#endif
 
     if (b->ng) return sdf_helper_read_array_halo(h, var_in);
 
@@ -365,8 +371,72 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
     MPI_File_set_view(h->filehandle, 0, MPI_BYTE, MPI_BYTE, "native",
             MPI_INFO_NULL);
 #else
-    fseeko(h->filehandle, h->current_location, SEEK_SET);
-    if (!fread(var, sz, count, h->filehandle)) return 1;
+    sz = SDF_TYPE_SIZES[b->datatype];
+    nreads = 1;
+    ndims = 0;
+    length = sz * count;
+
+    if (b->array_starts) {
+        // First check for any reads which can be combined
+        length = sz;
+        for (i = 0; i < b->ndims; i++) {
+            ncount = b->array_ends[i] - b->array_starts[i];
+            length *= ncount;
+            if (ncount == b->dims[i]) {
+                combined_reads++;
+                sz *= b->dims[i];
+            } else
+                break;
+        }
+
+        nreads = 1;
+        ndims = b->ndims - combined_reads;
+        if (ndims > 0) {
+            offset_starts = malloc(ndims * sizeof(*offset_starts));
+            offset_ends   = malloc(ndims * sizeof(*offset_ends));
+            loop_counts   = malloc(ndims * sizeof(*loop_counts));
+            idx           = malloc(ndims * sizeof(*idx));
+
+            n = combined_reads;
+            for (i = 0; i < ndims; i++) {
+                offset_starts[i] = b->array_starts[n] * sz;
+                offset_ends[i] = (b->dims[n] - b->array_ends[n]) * sz;
+                sz *= b->dims[n];
+                n++;
+                if (n < ndims)
+                    loop_counts[i] = b->array_ends[n] - b->array_starts[n];
+                else
+                    loop_counts[i] = 1;
+                nreads *= loop_counts[i];
+                idx[i] = 0;
+            }
+        }
+    }
+
+    // Loop over an arbitrary number of dimensions reading array chunks
+
+    offset = h->current_location;
+
+    for (n = 0; n < nreads; n++) {
+        for (i = 0; i < ndims; i++) {
+            offset += offset_starts[i];
+            if (idx[i] != 0)
+                break;
+        }
+
+        fseeko(h->filehandle, offset, SEEK_SET);
+        if (!fread(var, 1, length, h->filehandle)) return 1;
+
+        var += length;
+        offset += length;
+
+        for (i = 0; i < ndims; i++) {
+            offset += offset_ends[i];
+            idx[i]++;
+            if (idx[i] != loop_counts[i]) break;
+            idx[i] = 0;
+        }
+    }
 #endif
     if (h->swap) {
         if (b->datatype == SDF_DATATYPE_INTEGER4
