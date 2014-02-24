@@ -230,11 +230,12 @@ int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
         int64_t *starts, int64_t *ends)
 {
     int64_t *data_starts, *data_ends;
-    int i, j, k, alloc_starts = 0, alloc_ends = 0, combined_writes = 0;
-    int loop_counts[3] = {1, 1, 1};
-    int64_t offset_starts[3] = {0}, offset_ends[3] = {0};
-    int64_t length, count, offset, data_offset;
-    int errcode = 1, sz;
+    int i, n, alloc_starts = 0, alloc_ends = 0, combined_writes = 0;
+    int *loop_counts = NULL, *idx = NULL;
+    int64_t *offset_starts = NULL, *offset_ends = NULL;
+    int64_t length, count, offset, nwrites, data_location;
+    int errcode = 1, sz, ndims;
+    char *copy_data_ptr, *block_data_ptr;
 
     // Sanity checks
     if (!b || b->data_location < h->first_block_location
@@ -287,45 +288,73 @@ int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
             break;
     }
 
-    for (i = combined_writes, j = 0; i < b->ndims; i++, j++) {
-        offset_starts[j] = data_starts[i] * sz;
-        offset_ends[j] = (b->dims[i] - data_ends[i]) * sz;
-        sz *= b->dims[i];
+    nwrites = 1;
+    ndims = b->ndims - combined_writes;
+    if (ndims > 0) {
+        offset_starts = malloc(ndims * sizeof(*offset_starts));
+        offset_ends   = malloc(ndims * sizeof(*offset_ends));
+        loop_counts   = malloc(ndims * sizeof(*loop_counts));
+        idx           = malloc(ndims * sizeof(*idx));
+
+        n = combined_writes;
+        for (i = 0; i < ndims; i++) {
+            offset_starts[i] = data_starts[n] * sz;
+            offset_ends[i] = (b->dims[n] - data_ends[n]) * sz;
+            sz *= b->dims[n];
+            n++;
+            if (n < ndims)
+                loop_counts[i] = data_ends[n] - data_starts[n];
+            else
+                loop_counts[i] = 1;
+            nwrites *= loop_counts[i];
+            idx[i] = 0;
+        }
     }
 
-    for (i = combined_writes+1, j = 0; i < b->ndims; i++, j++)
-        loop_counts[j] = data_ends[i] - data_starts[i];
+    // Loop over an arbitrary number of dimensions writing array chunks
 
-    // Dumb implementation, but I can't think of anything clever right now
-    // Loop over a maximum of 3-dimensions writing array chunks
-    // (allows a 4D array to be written)
+    offset = 0;
+    copy_data_ptr = data;
+    block_data_ptr = b->data;
+    data_location = b->data_location;
 
-    offset = data_offset = 0;
-    for (k = 0; k < loop_counts[2]; k++) {
-        offset += offset_starts[2];
-        for (j = 0; j < loop_counts[1]; j++) {
-            offset += offset_starts[1];
-            for (i = 0; i < loop_counts[0]; i++) {
-                offset += offset_starts[0];
-                memcpy((char*)b->data + offset,
-                       (char*)data + data_offset, length);
-                // Only need to update file if this block is present
-                if (b->in_file)
-                    sdf_write_at(h, b->data_location+offset,
-                                 (char*)data+data_offset, length);
-                data_offset += length;
-                offset += length + offset_ends[0];
-            }
-            offset += offset_ends[1];
+    for (n = 0; n < nwrites; n++) {
+        for (i = 0; i < ndims; i++) {
+            offset += offset_starts[i];
+            if (idx[i] != 0)
+                break;
         }
-        offset += offset_ends[2];
+
+        block_data_ptr += offset;
+        memcpy(block_data_ptr, copy_data_ptr, length);
+
+        // Only need to update file if this block is present
+        if (b->in_file) {
+            data_location += offset;
+            sdf_write_at(h, data_location, copy_data_ptr, length);
+        }
+
+        copy_data_ptr += length;
+        offset = length;
+
+        for (i = 0; i < ndims; i++) {
+            offset += offset_ends[i];
+            idx[i]++;
+            if (idx[i] != loop_counts[i]) break;
+            idx[i] = 0;
+        }
     }
 
     errcode = 0;
 cleanup:
 
-    if (alloc_starts) free(data_starts);
-    if (alloc_ends) free(data_ends);
+    if (alloc_starts)  free(data_starts);
+    if (alloc_ends)    free(data_ends);
+
+    if (offset_starts) free(offset_starts);
+    if (offset_ends)   free(offset_ends);
+    if (loop_counts)   free(loop_counts);
+    if (idx)           free(idx);
 
     return errcode;
 }
