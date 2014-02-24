@@ -74,7 +74,8 @@ int sdf_read_blocklist_all(sdf_file_t *h)
 {
     sdf_extension_t *ext;
     char **preload;
-    sdf_block_t *b, *cur;
+    sdf_block_t *b, *next, *cur, *block;
+    int i;
 
     // Retrieve the extended interface library from the plugin manager
     sdf_extension_load(h);
@@ -121,6 +122,37 @@ int sdf_read_blocklist_all(sdf_file_t *h)
 
     // Append additional derived data for blocks added by the extension.
     sdf_add_derived_blocks_final(h);
+
+    // Fill in dimensions for derived blocks
+    next = h->last_block_in_file;
+    while (next) {
+        b = next;
+        next = b->next;
+
+        if (b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED &&
+                b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) continue;
+
+        if (b->ndims > 0 || !b->mesh_id) continue;
+
+        block = sdf_find_block_by_id(h, b->mesh_id);
+        b->ndims = block->ndims;
+        memcpy(b->local_dims, block->local_dims,
+               b->ndims * sizeof(*b->local_dims));
+
+        if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
+            b->nelements_local = block->dims[0];
+        } else {
+            b->nelements_local = 1;
+            for (i = 0; i < b->ndims; i++) {
+                if (b->stagger == SDF_STAGGER_CELL_CENTRE)
+                    b->local_dims[i]--;
+                b->nelements_local *= b->local_dims[i];
+            }
+        }
+
+        if (!b->datatype_out)
+            b->datatype_out = block->datatype_out;
+    }
 
     return 0;
 }

@@ -15,33 +15,17 @@ int sdf_helper_read_data(sdf_file_t *h, sdf_block_t *b)
             // Fill in derived components which are not already cached
             if (b->must_read[i]) {
                 block = sdf_find_block_by_id(h, b->variable_ids[i]);
-                if (block && !block->data) sdf_helper_read_data(h, block);
+                if (block && !block->data) {
+                    sdf_block_set_array_section(block, b->ndims,
+                            b->array_starts, b->array_ends, b->array_strides);
+                    sdf_helper_read_data(h, block);
+                }
             }
         }
 
         // Allocate derived variable data if required
-        if (!b->data && !b->dont_allocate) {
-            block = sdf_find_block_by_id(h, b->mesh_id);
-            b->ndims = block->ndims;
-            memcpy(b->local_dims, block->local_dims,
-                   b->ndims * sizeof(*b->local_dims));
-
-            if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
-                b->nelements_local = block->dims[0];
-            } else {
-                b->nelements_local = 1;
-                for (i = 0; i < b->ndims; i++) {
-                    if (b->stagger == SDF_STAGGER_CELL_CENTRE)
-                        b->local_dims[i]--;
-                    b->nelements_local *= b->local_dims[i];
-                }
-            }
-
-            if (!b->datatype_out)
-                b->datatype_out = block->datatype_out;
-
+        if (!b->data && !b->dont_allocate)
             stack_alloc(b);
-        }
 
         // Execute callback to fill in the derived variable
         if (b->populate_data) b->populate_data(h, b);

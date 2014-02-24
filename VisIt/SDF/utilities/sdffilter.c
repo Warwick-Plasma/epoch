@@ -503,6 +503,12 @@ char *parse_args(int *argc, char ***argv)
 }
 
 
+static int set_array_section(sdf_block_t *b)
+{
+    return sdf_block_set_array_section(b, array_ndims, array_starts,
+                                       array_ends, array_strides);
+}
+
 
 static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
 {
@@ -525,6 +531,7 @@ static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
             exit(1);
         }
 
+        set_array_section(mesh);
         sdf_helper_read_data(h, mesh);
 
         if (!mesh->grids) {
@@ -706,8 +713,8 @@ static void pretty_print_slice_finish(void)
 
 static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
 {
-    int *idx, *fac, *printed, *starts = NULL, *ends = NULL;
-    int i, n, rem, sz, left, digit, ncount, idx0, min_ndims, print;
+    int *idx, *fac;
+    int i, n, rem, sz, left, digit, ncount, idx0;
     int exponent, special_format = 0;
     char *ptr;
     static const int fmtlen = 32;
@@ -722,32 +729,18 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
     idx = malloc(b->ndims * sizeof(*idx));
     fac = malloc(b->ndims * sizeof(*fac));
     fmt = malloc(b->ndims * sizeof(*fmt));
-    printed = malloc(b->ndims * sizeof(*printed));
-
-    min_ndims = MIN(array_ndims, b->ndims);
-
-    if (min_ndims > 0) {
-        starts = malloc(array_ndims * sizeof(*starts));
-        ends   = malloc(array_ndims * sizeof(*ends));
-
-        for (i = 0; i < min_ndims; i++) {
-            starts[i] = array_starts[i];
-            ends[i] = array_ends[i];
-            if (starts[i] < 0) {
-                starts[i] += b->local_dims[i];
-                if (ends[i] == 0) ends[i] = b->local_dims[i];
-            }
-            if (ends[i] < 0) ends[i] += b->local_dims[i];
-            printed[i] = -array_strides[i];
-        }
-    }
 
     rem = 1;
     for (i = 0; i < b->ndims; i++) {
-        left = b->local_dims[i];
+        if (b->array_starts)
+            left = b->array_ends[i] - b->array_starts[i];
+        else
+            left = b->local_dims[i];
         fac[i] = rem;
         rem *= left;
         digit = 0;
+        if (b->array_ends)
+            left = b->array_ends[i] + index_offset - 1;
         while (left) {
             left /= 10;
             digit++;
@@ -777,82 +770,62 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
         rem = n;
         for (i = b->ndims-1; i >= 0; i--) {
             idx0 = idx[i] = rem / fac[i];
-            if (i < array_ndims) idx[i] += starts[i];
+            if (b->array_starts) idx[i] += b->array_starts[i];
             rem -= idx0 * fac[i];
         }
 
-        print = 1;
-        for (i = 0; i < min_ndims; i++) {
-            if (idx[i] < starts[i]) {
-                print = 0;
-                break;
-            }
-            if (idx[i] >= ends[i]) {
-                print = 0;
-                break;
-            }
-            if ((idx[i] - printed[i]) > 0 &&
-                (idx[i] - printed[i]) < array_strides[i]) {
-                print = 0;
-                break;
-            }
-        }
-        if (print) {
-            ncount++;
-            if (ncount == 1) {
-                if (format_number)
-                    printf("%i ", idnum);
-                for (i = 0; i < b->ndims; i++) {
+        ncount++;
+        if (ncount == 1) {
+            if (format_number)
+                printf("%i ", idnum);
+            for (i = 0; i < b->ndims; i++)
+                printf(fmt[i], idx[i]+index_offset);
+        } else {
+            if (format_index) {
+                printf(" ");
+                for (i = 0; i < b->ndims; i++)
                     printf(fmt[i], idx[i]+index_offset);
-                    printed[i] = idx[i];
-                }
-            } else {
-                if (format_index) {
-                    printf(" ");
-                    for (i = 0; i < b->ndims; i++)
-                        printf(fmt[i], idx[i]+index_offset);
-                }
-                printf(format_space,1);
             }
+            printf(format_space,1);
+        }
 
-            switch (b->datatype_out) {
-            case SDF_DATATYPE_INTEGER4:
-                printf(format_int, *((uint32_t*)ptr));
-                break;
-            case SDF_DATATYPE_INTEGER8:
-                printf(format_int, *((uint64_t*)ptr));
-                break;
-            case SDF_DATATYPE_REAL4:
-                if (special_format) {
-                    r8 = *((float*)ptr);
-                    if (r8 == 0)
-                        exponent = 0;
-                    else {
-                        exponent = (int)floor(log10(fabs(r8)));
-                        r8 *= pow(10, -1.0 * exponent);
-                    }
-                    printf(format_float, r8, exponent);
-                } else
-                    printf(format_float, *((float*)ptr));
-                break;
-            case SDF_DATATYPE_REAL8:
-                if (special_format) {
-                    r8 = *((double*)ptr);
-                    if (r8 == 0)
-                        exponent = 0;
-                    else {
-                        exponent = (int)floor(log10(fabs(r8)));
-                        r8 *= pow(10, -1.0 * exponent);
-                    }
-                    printf(format_float, r8, exponent);
-                } else
-                    printf(format_float, *((double*)ptr));
-                break;
-            }
-            if (ncount == element_count) {
-                printf("\n");
-                ncount = 0;
-            }
+        switch (b->datatype_out) {
+        case SDF_DATATYPE_INTEGER4:
+            printf(format_int, *((uint32_t*)ptr));
+            break;
+        case SDF_DATATYPE_INTEGER8:
+            printf(format_int, *((uint64_t*)ptr));
+            break;
+        case SDF_DATATYPE_REAL4:
+            if (special_format) {
+                r8 = *((float*)ptr);
+                if (r8 == 0)
+                    exponent = 0;
+                else {
+                    exponent = (int)floor(log10(fabs(r8)));
+                    r8 *= pow(10, -1.0 * exponent);
+                }
+                printf(format_float, r8, exponent);
+            } else
+                printf(format_float, *((float*)ptr));
+            break;
+        case SDF_DATATYPE_REAL8:
+            if (special_format) {
+                r8 = *((double*)ptr);
+                if (r8 == 0)
+                    exponent = 0;
+                else {
+                    exponent = (int)floor(log10(fabs(r8)));
+                    r8 *= pow(10, -1.0 * exponent);
+                }
+                printf(format_float, r8, exponent);
+            } else
+                printf(format_float, *((double*)ptr));
+            break;
+        }
+        if (ncount == element_count) {
+            printf("\n");
+            ncount = 0;
         }
         ptr += sz;
     }
@@ -860,9 +833,6 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
 
     free(idx);
     free(fac);
-    free(printed);
-    if (starts) free(starts);
-    if (ends) free(ends);
 
     for (i = 0; i < b->ndims; i++) free(fmt[i]);
     free(fmt);
@@ -1394,6 +1364,7 @@ int main(int argc, char **argv)
 
         switch (b->blocktype) {
         case SDF_BLOCKTYPE_PLAIN_DERIVED:
+            set_array_section(b);
             sdf_helper_read_data(h, b);
             if (b->station_id) {
                 mesh = sdf_find_block_by_id(h, b->mesh_id);
@@ -1411,6 +1382,7 @@ int main(int argc, char **argv)
                 pretty_print(h, b, idx);
             break;
         case SDF_BLOCKTYPE_PLAIN_VARIABLE:
+            set_array_section(b);
             sdf_helper_read_data(h, b);
             pretty_print(h, b, idx);
             break;
