@@ -296,6 +296,8 @@ struct sdf_block {
     sdf_block_t *next, *prev;
     sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
+    int64_t *array_starts, *array_ends, *array_strides;
+    int64_t *global_array_starts, *global_array_ends, *global_array_strides;
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;
     int cpu_split[SDF_MAXDIMS], starts[SDF_MAXDIMS];
@@ -705,6 +707,25 @@ int sdf_modify_remove_material(sdf_file_t *h, sdf_block_t *stitched,
  @return 0 on success, 1 on error
  */
 int sdf_modify_rewrite_metadata(sdf_file_t *h);
+
+
+/**
+ @brief Set the array section to use for a block.
+
+ This routine sets up parameters for a block so that only a subsection of
+ the total array is read into the data block.
+
+ @param[in] b        SDF block on which to act
+ @param[in] ndims    Size of starts, ends and strides arrays
+ @param[in] starts   Array of start indices
+ @param[in] ends     Array of end indices
+ @param[in] strides  Array of strides
+
+ @return 0 on success, 1 on error
+ */
+int sdf_block_set_array_section(sdf_block_t *b, const int ndims,
+                                const int64_t *starts, const int64_t *ends,
+                                const int64_t *strides);
 
 #ifdef __cplusplus
 }

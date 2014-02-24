@@ -289,6 +289,13 @@ int sdf_close(sdf_file_t *h)
 
 
 
+#define FREE_ITEM(value) do { \
+        if ((value)) { \
+            free((value)); \
+            (value) = NULL; \
+        } \
+    } while(0)
+
 #define FREE_ARRAY(value) do { \
     if (value) { \
         int i; \
@@ -343,26 +350,31 @@ int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
 {
     if (!b) return 1;
 
-    if (b->id) free(b->id);
-    if (b->units) free(b->units);
-    if (b->mesh_id) free(b->mesh_id);
-    if (b->material_id) free(b->material_id);
-    if (b->name) free(b->name);
-    if (b->material_name) free(b->material_name);
-    if (b->dim_mults) free(b->dim_mults);
-    if (b->extents) free(b->extents);
-    if (b->station_nvars) free(b->station_nvars);
-    if (b->station_move) free(b->station_move);
-    if (b->station_x) free(b->station_x);
-    if (b->station_y) free(b->station_y);
-    if (b->station_z) free(b->station_z);
-    if (b->variable_types) free(b->variable_types);
+    FREE_ITEM(b->id);
+    FREE_ITEM(b->units);
+    FREE_ITEM(b->mesh_id);
+    FREE_ITEM(b->material_id);
+    FREE_ITEM(b->name);
+    FREE_ITEM(b->material_name);
+    FREE_ITEM(b->dim_mults);
+    FREE_ITEM(b->extents);
+    FREE_ITEM(b->station_nvars);
+    FREE_ITEM(b->station_move);
+    FREE_ITEM(b->station_x);
+    FREE_ITEM(b->station_y);
+    FREE_ITEM(b->station_z);
+    FREE_ITEM(b->variable_types);
+    FREE_ITEM(b->array_starts);
+    FREE_ITEM(b->array_ends);
+    FREE_ITEM(b->array_strides);
+
     FREE_ARRAY(b->station_ids);
     FREE_ARRAY(b->station_names);
     FREE_ARRAY(b->variable_ids);
     FREE_ARRAY(b->material_names);
     FREE_ARRAY(b->dim_labels);
     FREE_ARRAY(b->dim_units);
+
     sdf_free_block_data(h, b);
 
     free(b);
@@ -850,4 +862,92 @@ static void sdf_random_init(void)
     xs = 521288629;
     for (i=0; i<41790; i++) Q[i] = CNG + XS;
     for (i=0; i<41790; i++) sdf_random();
+}
+
+
+
+// Currently only works in serial
+int sdf_block_set_array_section(sdf_block_t *b, const int ndims,
+                                const int64_t *starts, const int64_t *ends,
+                                const int64_t *strides)
+{
+    int i, nelements_local, ndims_min;
+
+    if (b->ndims < 1) return 1;
+
+    if (b->blocktype != SDF_BLOCKTYPE_PLAIN_VARIABLE &&
+            b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED) return 1;
+
+    nelements_local = 1;
+    for (i = 0; i < b->ndims; i++)
+        nelements_local *= b->local_dims[i];
+
+    if (!starts && !ends) {
+        b->nelements_local = nelements_local;
+        FREE_ITEM(b->array_starts);
+        FREE_ITEM(b->array_ends);
+        FREE_ITEM(b->array_strides);
+
+        return 0;
+    }
+
+    if (!b->array_starts) {
+        b->array_starts  = calloc(b->ndims, sizeof(*b->array_starts));
+        b->array_ends    = malloc(b->ndims * sizeof(*b->array_ends));
+        b->array_strides = malloc(b->ndims * sizeof(*b->array_strides));
+
+        for (i = 0; i < b->ndims; i++) {
+            b->array_ends[i] = b->local_dims[i];
+            b->array_strides[i] = 1;
+        }
+    }
+
+    ndims_min = (ndims < b->ndims) ? ndims : b->ndims;
+
+    if (starts) {
+        for (i = 0; i < ndims_min; i++) {
+            if (starts[i] < 0)
+                b->array_starts[i] = starts[i] + b->local_dims[i];
+            else if (starts[i] > b->local_dims[i])
+                b->array_starts[i] = b->local_dims[i];
+            else
+                b->array_starts[i] = starts[i];
+        }
+    }
+
+    if (ends) {
+        for (i = 0; i < ndims_min; i++) {
+            if (ends[i] < 0)
+                b->array_ends[i] = ends[i] + b->local_dims[i];
+            else if (ends[i] == 0 && starts && starts[i] == -1)
+                b->array_ends[i] = b->local_dims[i];
+            else if (ends[i] < b->local_dims[i])
+                b->array_ends[i] = ends[i];
+        }
+    } else {
+        for (i = 0; i < ndims_min; i++)
+            b->array_ends[i] = b->array_starts[i] + 1;
+    }
+
+    if (strides) {
+        for (i = 0; i < ndims_min; i++) {
+            if (strides[i] != 1) {
+                fprintf(stderr,
+                        "Array section striding is not yet implemented\n");
+                break;
+            }
+        }
+    }
+
+    b->nelements_local = 1;
+    for (i = 0; i < b->ndims; i++)
+        b->nelements_local *= (b->array_ends[i] - b->array_starts[i]);
+
+    if (b->nelements_local == nelements_local) {
+        FREE_ITEM(b->array_starts);
+        FREE_ITEM(b->array_ends);
+        FREE_ITEM(b->array_strides);
+    }
+
+    return 0;
 }
