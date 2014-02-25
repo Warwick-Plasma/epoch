@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <time.h>
 #include "sdf.h"
 #include "sdf_list_type.h"
 #include "sdf_helper.h"
@@ -17,6 +18,7 @@
 
 int metadata, contents, debug, single, use_mmap, ignore_summary, ascii_header;
 int exclude_variables, derived, index_offset, element_count;
+int just_id, verbose_metadata;
 int format_rowindex, format_index, format_number;
 int64_t array_ndims, *array_starts, *array_ends, *array_strides;
 int slice_direction, slice_dim[3];
@@ -26,6 +28,8 @@ char *format_float, *format_int, *format_space;
 static char *default_float = "%14.6E";
 static char *default_int   = "%" PRIi64;
 static char *default_space = "    ";
+static char *default_indent = "  ";
+static char indent[64];
 
 struct id_list {
   char *id;
@@ -44,6 +48,30 @@ struct slice_list {
     struct slice_list *next;
 } *slice_head, *slice_tail;
 
+static char width_fmt[16];
+#define SET_WIDTH(string) do { \
+        int _l = strlen((string)); \
+        snprintf(width_fmt, 16, "%%-%is", _l); \
+    } while(0)
+
+#define PRINT(name,variable,fmt) do { \
+        if (!(variable)) break; \
+        printf(indent, 1); \
+        printf(width_fmt, (name)); \
+        printf(" " fmt, (variable)); \
+        printf("\n"); \
+    } while(0)
+
+#define PRINTAR(name,array,fmt,len) do { \
+        int _i; \
+        if (!(array)) break; \
+        printf(indent, 1); \
+        printf(width_fmt, (name)); \
+        printf(" (" fmt, (array)[0]); \
+        for (_i = 1; _i < (len); _i++) printf("," fmt, (array)[_i]); \
+        printf(")\n"); \
+    } while(0)
+
 
 int close_files(sdf_file_t *h);
 
@@ -54,6 +82,8 @@ void usage(int err)
     fprintf(stderr, "\noptions:\n\
   -h --help            Show this usage message\n\
   -n --no-metadata     Don't show metadata blocks (shown by default)\n\
+  -j --just-id         Only show ID and number for metadata blocks\n\
+  -l --less-verbose    Print metadata less verbosely\n\
   -c --contents        Show block's data content\n\
   -s --single          Convert block data to single precision\n\
   -v --variable=id     Find the block with id matching 'id'\n\
@@ -231,8 +261,10 @@ char *parse_args(int *argc, char ***argv)
         { "format-float",  required_argument, NULL, 'F' },
         { "no-summary",    no_argument,       NULL, 'i' },
         { "c-indexing",    no_argument,       NULL, 'I' },
+        { "just-id",       no_argument,       NULL, 'j' },
         { "format-index",  no_argument,       NULL, 'J' },
         { "format-number", no_argument,       NULL, 'K' },
+        { "less-verbose",  no_argument,       NULL, 'l' },
         { "mmap",          no_argument,       NULL, 'm' },
         { "no-metadata",   no_argument,       NULL, 'n' },
         { "format-int",    required_argument, NULL, 'N' },
@@ -246,10 +278,10 @@ char *parse_args(int *argc, char ***argv)
         //{ "output",        required_argument, NULL, 'o' },
     };
 
-    metadata = debug = index_offset = element_count = 1;
+    metadata = debug = index_offset = element_count = verbose_metadata = 1;
     ascii_header = 1;
     contents = single = use_mmap = ignore_summary = exclude_variables = 0;
-    derived = format_rowindex = format_index = format_number = 0;
+    derived = format_rowindex = format_index = format_number = just_id = 0;
     slice_direction = -1;
     variable_ids = NULL;
     variable_last_id = NULL;
@@ -270,7 +302,7 @@ char *parse_args(int *argc, char ***argv)
     got_include = got_exclude = 0;
 
     while ((c = getopt_long(*argc, *argv,
-            "1:a:cC:dF:hHiIJKmnN:RsS:v:x:", longopts, NULL)) != -1) {
+            "1:a:cC:dF:hHiIjJKlmnN:RsS:v:x:", longopts, NULL)) != -1) {
         switch (c) {
         case '1':
             contents = 1;
@@ -307,11 +339,17 @@ char *parse_args(int *argc, char ***argv)
         case 'I':
             index_offset = 0;
             break;
+        case 'j':
+            just_id = 1;
+            break;
         case 'J':
             format_index = 1;
             break;
         case 'K':
             format_number = 1;
+            break;
+        case 'l':
+            verbose_metadata = 0;
             break;
         case 'm':
             use_mmap = 1;
@@ -820,6 +858,428 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
 }
 
 
+static void print_metadata_plain_mesh(sdf_block_t *b)
+{
+    // Metadata is
+    // - mults     REAL(r8), DIMENSION(ndims)
+    // - labels    CHARACTER(id_length), DIMENSION(ndims)
+    // - units     CHARACTER(id_length), DIMENSION(ndims)
+    // - geometry  INTEGER(i4)
+    // - minval    REAL(r8), DIMENSION(ndims)
+    // - maxval    REAL(r8), DIMENSION(ndims)
+    // - dims      INTEGER(i4), DIMENSION(ndims)
+
+    SET_WIDTH("dim_labels:");
+    PRINTAR("dim_mults:", b->dim_mults, "%g", b->ndims);
+    PRINTAR("dim_labels:", b->dim_labels, "%s", b->ndims);
+    PRINTAR("dim_units:", b->dim_units, "%s", b->ndims);
+    PRINT("geometry:", sdf_geometry_c[b->geometry], "%s");
+    PRINTAR("extents:", b->extents, "%g", 2*b->ndims);
+    PRINTAR("dims:", b->dims, "%" PRIi64, b->ndims);
+}
+
+
+static void print_metadata_point_mesh(sdf_block_t *b)
+{
+    // Metadata is
+    // - mults     REAL(r8), DIMENSION(ndims)
+    // - labels    CHARACTER(id_length), DIMENSION(ndims)
+    // - units     CHARACTER(id_length), DIMENSION(ndims)
+    // - geometry  INTEGER(i4)
+    // - minval    REAL(r8), DIMENSION(ndims)
+    // - maxval    REAL(r8), DIMENSION(ndims)
+    // - npoints   INTEGER(i8)
+    // - speciesid CHARACTER(id_length)
+
+    SET_WIDTH("dim_labels:");
+    PRINTAR("dim_mults", b->dim_mults, "%g", b->ndims);
+    PRINTAR("dim_labels", b->dim_labels, "%s", b->ndims);
+    PRINTAR("dim_units", b->dim_units, "%s", b->ndims);
+    PRINT("geometry:", sdf_geometry_c[b->geometry], "%s");
+    PRINTAR("extents", b->extents, "%g", 2*b->ndims);
+    //PRINTAR("dims", b->dims, "%" PRIi64, b->ndims);
+    PRINT("nelements:", b->nelements, "%" PRIi64);
+    if (b->material_id)
+        PRINT("species id:", b->material_id, "%s");
+}
+
+
+static void print_metadata_plain_variable(sdf_block_t *b)
+{
+    // Metadata is
+    // - mult      REAL(r8)
+    // - units     CHARACTER(id_length)
+    // - meshid    CHARACTER(id_length)
+    // - dims      INTEGER(i4), DIMENSION(ndims)
+    // - stagger   INTEGER(i4)
+
+    SET_WIDTH("mesh id:");
+    PRINT("mult:", b->mult, "%g");
+    PRINT("units:", b->units, "%s");
+    PRINT("mesh id:", b->mesh_id, "%s");
+    PRINTAR("dims:", b->dims, "%" PRIi64, b->ndims);
+    PRINT("stagger:", sdf_stagger_c[b->stagger], "%s");
+}
+
+
+static void print_metadata_point_variable(sdf_block_t *b)
+{
+    // Metadata is
+    // - mult      REAL(r8)
+    // - units     CHARACTER(id_length)
+    // - meshid    CHARACTER(id_length)
+    // - npoints   INTEGER(i8)
+    // - speciesid CHARACTER(id_length)
+
+    SET_WIDTH("species id:");
+    PRINT("mult:", b->mult, "%g");
+    PRINT("units:", b->units, "%s");
+    PRINT("mesh id:", b->mesh_id, "%s");
+    PRINT("nelements:", b->nelements, "%" PRIi64);
+    if (b->material_id)
+        PRINT("species id:", b->material_id, "%s");
+}
+
+
+static void print_metadata_constant(sdf_block_t *b)
+{
+    int32_t i4;
+    int64_t i8;
+    float r4;
+    double r8;
+
+    // Metadata is
+    // - value     TYPE_SIZE
+
+    printf("%svalue: ", indent);
+
+    switch (b->datatype) {
+    case SDF_DATATYPE_INTEGER4:
+        memcpy(&i4, b->const_value, sizeof(i4));
+        printf("%i", i4);
+        break;
+    case SDF_DATATYPE_INTEGER8:
+        memcpy(&i8, b->const_value, sizeof(i8));
+        printf("%" PRIi64, i8);
+        break;
+    case SDF_DATATYPE_REAL4:
+        memcpy(&r4, b->const_value, sizeof(r4));
+        printf("%g", r4);
+        break;
+    case SDF_DATATYPE_REAL8:
+        memcpy(&r8, b->const_value, sizeof(r8));
+        printf("%g", r8);
+        break;
+    //case SDF_DATATYPE_REAL16:
+    //    printf("%g", (double)b->const_value);
+    //    break;
+    case SDF_DATATYPE_CHARACTER:
+        printf("%c", *b->const_value);
+        break;
+    case SDF_DATATYPE_LOGICAL:
+        if (*b->const_value)
+            printf("True");
+        else
+            printf("False");
+        break;
+    }
+
+    printf("\n");
+}
+
+
+static void print_metadata_array(sdf_block_t *b)
+{
+    // Metadata is
+    // - dims      INTEGER(i4), DIMENSION(ndims)
+
+    SET_WIDTH("dims:");
+    PRINTAR("dims:", b->dims, "%" PRIi64, b->ndims);
+}
+
+
+static void print_metadata_cpu_split(sdf_block_t *b)
+{
+    // Metadata is
+    // - dims      INTEGER(i4), DIMENSION(ndims)
+
+    SET_WIDTH("geometry:");
+    PRINT("geometry:", sdf_geometry_c[b->geometry], "%s");
+    PRINTAR("dims:", b->dims, "%" PRIi64, b->ndims);
+}
+
+
+static void print_metadata_run(sdf_block_t *b)
+{
+    struct run_info *run = b->data;
+    time_t time;
+    char *stime;
+    char version[32];
+
+    // Metadata is
+    // - version   INTEGER(i4)
+    // - revision  INTEGER(i4)
+    // - commit_id CHARACTER(string_length)
+    // - sha1sum   CHARACTER(string_length)
+    // - compmac   CHARACTER(string_length)
+    // - compflag  CHARACTER(string_length)
+    // - defines   INTEGER(i8)
+    // - compdate  INTEGER(i4)
+    // - rundate   INTEGER(i4)
+    // - iodate    INTEGER(i4)
+    // - minor_rev INTEGER(i4)
+
+    SET_WIDTH("compile_machine:");
+    snprintf(version, 32, "%i.%i.%i",
+             run->version, run->revision, run->minor_rev);
+    stime = version;
+    PRINT("version:", stime, "%s");
+    PRINT("commit id:", run->commit_id, "%s");
+    PRINT("sha1sum:", run->sha1sum, "%s");
+    PRINT("compile_machine:", run->compile_machine, "%s");
+    PRINT("compile_flags:", run->compile_flags, "%s");
+    PRINT("defines:", run->defines, "%" PRIi64);
+    time = run->compile_date; stime = ctime(&time); stime[strlen(stime)-1]='\0';
+    PRINT("compile_date:", stime, "%s");
+    time = run->run_date; stime = ctime(&time); stime[strlen(stime)-1] = '\0';
+    PRINT("run_date:", stime, "%s");
+    time = run->io_date; stime = ctime(&time); stime[strlen(stime)-1] = '\0';
+    PRINT("io_date:", stime, "%s");
+}
+
+
+static void print_metadata_stitched(sdf_block_t *b)
+{
+    // Metadata is
+    // - stagger   INTEGER(i4)
+    // - meshid    CHARACTER(id_length)
+    // - varids    ndims*CHARACTER(id_length)
+
+    SET_WIDTH("variable ids:");
+    PRINT("stagger:", sdf_stagger_c[b->stagger], "%s");
+    PRINT("mesh id:", b->mesh_id, "%s");
+    PRINTAR("variable ids:", b->variable_ids, "%s", b->ndims);
+}
+
+
+static void print_metadata_stitched_material(sdf_block_t *b)
+{
+    // Metadata is
+    // - stagger   INTEGER(i4)
+    // - meshid    CHARACTER(id_length)
+    // - matnames  ndims*CHARACTER(string_length)
+    // - varids    ndims*CHARACTER(id_length)
+
+    SET_WIDTH("material names:");
+    PRINT("stagger:", sdf_stagger_c[b->stagger], "%s");
+    PRINT("mesh id:", b->mesh_id, "%s");
+    PRINTAR("material names:", b->material_names, "%s", b->ndims);
+    PRINTAR("variable ids:", b->variable_ids, "%s", b->ndims);
+}
+
+
+static void print_metadata_stitched_matvar(sdf_block_t *b)
+{
+    // Metadata is
+    // - stagger   INTEGER(i4)
+    // - meshid    CHARACTER(id_length)
+    // - matid     CHARACTER(id_length)
+    // - varids    ndims*CHARACTER(id_length)
+
+    SET_WIDTH("variable ids:");
+    PRINT("stagger:", sdf_stagger_c[b->stagger], "%s");
+    PRINT("mesh id:", b->mesh_id, "%s");
+    PRINT("material id:", b->material_id, "%s");
+    PRINTAR("variable ids:", b->variable_ids, "%s", b->ndims);
+}
+
+
+static void print_metadata_stitched_species(sdf_block_t *b)
+{
+    // Metadata is
+    // - stagger   INTEGER(i4)
+    // - meshid    CHARACTER(id_length)
+    // - matid     CHARACTER(id_length)
+    // - matname   CHARACTER(string_length)
+    // - specnames ndims*CHARACTER(string_length)
+    // - varids    ndims*CHARACTER(id_length)
+
+    SET_WIDTH("species names:");
+    PRINT("stagger:", sdf_stagger_c[b->stagger], "%s");
+    PRINT("mesh id:", b->mesh_id, "%s");
+    PRINT("material id:", b->material_id, "%s");
+    PRINT("material name:", b->material_name, "%s");
+    PRINTAR("species names:", b->material_names, "%s", b->ndims);
+    PRINTAR("variable ids:", b->variable_ids, "%s", b->ndims);
+}
+
+
+static void print_metadata_stitched_obstacle_group(sdf_block_t *b)
+{
+    // Metadata is
+    // - stagger         INTEGER(i4)
+    // - obstacle_id     CHARACTER(id_length)
+    // - vfm_id          CHARACTER(id_length)
+    // - obstacle_names  ndims*CHARACTER(string_length)
+
+    SET_WIDTH("volume fraction id:");
+    PRINT("stagger:", sdf_stagger_c[b->stagger], "%s");
+    PRINT("obstacle id:", b->obstacle_id, "%s");
+    PRINT("volume fraction id:", b->vfm_id, "%s");
+    PRINTAR("obstacle names:", b->material_names, "%s", b->ndims);
+}
+
+
+static void print_metadata_station(sdf_block_t *b)
+{
+    // Metadata is
+    // - nelements INTEGER(i8)
+    // - entry_len INTEGER(i4)
+    // - nstations INTEGER(i4)
+    // - nvars     INTEGER(i4)
+    // - step0     INTEGER(i4)
+    // - step_inc  INTEGER(i4)
+    // - time0     REAL(r8)
+    // - time_inc  REAL(r8)
+    // - use_mult  CHARACTER(1)
+    // - padding   CHARACTER(3)
+    // - statids   CHARACTER(id_length), DIMENSION(nstations)
+    // - statnames CHARACTER(string_length), DIMENSION(nstations)
+    // - statnvars INTEGER(i4), DIMENSION(nstations)
+    // - statmove  INTEGER(i4), DIMENSION(nstations)
+    // - statx0    REAL(r8), DIMENSION(nstations*ndims)
+    // - varids    CHARACTER(id_length), DIMENSION(nvars)
+    // - varnames  CHARACTER(string_length), DIMENSION(nvars)
+    // - vartypes  INTEGER(i4), DIMENSION(nvars)
+    // - varunits  CHARACTER(id_length), DIMENSION(nvars)
+    // - varmults  REAL(r8), DIMENSION(use_mult*nvars)
+
+    SET_WIDTH("time_increment:");
+    PRINT("nelements:", b->nelements, "%" PRIi64);
+    PRINT("entry_len:", b->type_size, "%i");
+    PRINT("nstations:", b->nstations, "%i");
+    PRINT("nvariables:", b->nvariables, "%i");
+    PRINT("step0:", b->step, "%i");
+    PRINT("step_increment:", b->step_increment, "%i");
+    PRINT("time0:", b->time, "%g");
+    PRINT("time_increment:", b->time_increment, "%g");
+    PRINTAR("station_ids:", b->station_ids, "%s", b->nstations);
+    PRINTAR("station_names:", b->station_names, "%s", b->nstations);
+    PRINTAR("station_nvars:", b->station_nvars, "%i", b->nstations);
+    PRINTAR("station_move:", b->station_move, "%i", b->nstations);
+    PRINTAR("station_x:", b->station_x, "%g", b->nstations);
+    if (b->ndims > 1)
+        PRINTAR("station_y:", b->station_y, "%g", b->nstations);
+    if (b->ndims > 2)
+        PRINTAR("station_z:", b->station_z, "%g", b->nstations);
+    PRINTAR("variable_ids:", b->variable_ids, "%s", b->nvariables);
+    PRINTAR("variable_names:", b->material_names, "%s", b->nvariables);
+    PRINTAR("variable_types:", b->variable_types, "%i", b->nvariables);
+    PRINTAR("variable_units:", b->dim_units, "%s", b->nvariables);
+    if (b->dim_mults)
+        PRINTAR("variable_mults:", b->dim_mults, "%g", b->nvariables);
+}
+
+
+static void print_metadata(sdf_block_t *b, int inum, int nblocks)
+{
+    int digit = 0;
+    static const int fmtlen = 32;
+    char fmt[fmtlen];
+
+    while (nblocks) {
+        nblocks /= 10;
+        digit++;
+    }
+
+    snprintf(fmt, fmtlen, "Block %%%ii, ID: %%s", digit);
+    printf(fmt, inum, b->id);
+    if (!b->in_file)
+        printf("  (derived)");
+    printf("\n");
+    if (just_id) return;
+
+    sprintf(indent, default_indent, 1);
+
+    if (verbose_metadata)
+        SET_WIDTH("block_location:");
+    else
+        SET_WIDTH("blocktype:");
+
+    PRINT("name:", b->name, "%s");
+    PRINT("blocktype:", sdf_blocktype_c[b->blocktype], "%s");
+    PRINT("datatype:", sdf_datatype_c[b->datatype], "%s");
+
+    if (verbose_metadata) {
+        PRINT("ndims:", b->ndims, "%i");
+        PRINT("data_length:", b->data_length, "%" PRIi64);
+        PRINT("info_length:", b->info_length, "%i");
+        PRINT("data_location:", b->data_location, "%" PRIi64);
+        PRINT("block_location:", b->block_start, "%" PRIi64);
+        PRINT("next_block:", b->next_block_location, "%" PRIi64);
+    }
+
+    sprintf(indent+strlen(indent), default_indent, 1);
+
+    switch (b->blocktype) {
+    case SDF_BLOCKTYPE_PLAIN_MESH:
+    case SDF_BLOCKTYPE_LAGRANGIAN_MESH:
+        print_metadata_plain_mesh(b);
+        break;
+    case SDF_BLOCKTYPE_POINT_MESH:
+        print_metadata_point_mesh(b);
+        break;
+    case SDF_BLOCKTYPE_PLAIN_VARIABLE:
+    case SDF_BLOCKTYPE_PLAIN_DERIVED:
+        print_metadata_plain_variable(b);
+        break;
+    case SDF_BLOCKTYPE_POINT_VARIABLE:
+    case SDF_BLOCKTYPE_POINT_DERIVED:
+        print_metadata_point_variable(b);
+        break;
+    case SDF_BLOCKTYPE_CONSTANT:
+        print_metadata_constant(b);
+        break;
+    case SDF_BLOCKTYPE_ARRAY:
+        print_metadata_array(b);
+        break;
+    case SDF_BLOCKTYPE_CPU_SPLIT:
+        print_metadata_cpu_split(b);
+        break;
+    case SDF_BLOCKTYPE_RUN_INFO:
+        print_metadata_run(b);
+        break;
+    case SDF_BLOCKTYPE_STITCHED:
+    case SDF_BLOCKTYPE_CONTIGUOUS:
+    case SDF_BLOCKTYPE_STITCHED_TENSOR:
+    case SDF_BLOCKTYPE_CONTIGUOUS_TENSOR:
+        print_metadata_stitched(b);
+        break;
+    case SDF_BLOCKTYPE_STITCHED_MATERIAL:
+    case SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL:
+        print_metadata_stitched_material(b);
+        break;
+    case SDF_BLOCKTYPE_STITCHED_MATVAR:
+    case SDF_BLOCKTYPE_CONTIGUOUS_MATVAR:
+        print_metadata_stitched_matvar(b);
+        break;
+    case SDF_BLOCKTYPE_STITCHED_SPECIES:
+    case SDF_BLOCKTYPE_CONTIGUOUS_SPECIES:
+        print_metadata_stitched_species(b);
+        break;
+    case SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP:
+        print_metadata_stitched_obstacle_group(b);
+        break;
+    case SDF_BLOCKTYPE_STATION:
+    case SDF_BLOCKTYPE_STATION_DERIVED:
+        print_metadata_station(b);
+        break;
+    }
+
+    printf("\n");
+}
+
+
 int main(int argc, char **argv)
 {
     char *file = NULL;
@@ -916,9 +1376,8 @@ int main(int argc, char **argv)
             if (!found) continue;
         }
 
-        if (metadata && slice_direction == -1) {
-            printf("%4i id: %s\n", i+1, b->id);
-        }
+        if (metadata && slice_direction == -1)
+            print_metadata(b, idx, h->nblocks);
 
         if (!contents) continue;
 
