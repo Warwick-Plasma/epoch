@@ -1059,7 +1059,7 @@ static int write_data(sdf_file_t *h)
         if (b->data) {
             errcode += sdf_write_bytes(h, b->data, b->data_length);
         } else if (b->grids) {
-            for (i=0; i < b->ndims; i++)
+            for (i=0; i < b->ngrids; i++)
                 errcode += sdf_write_bytes(h, b->grids[i],
                         b->dims[i] * SDF_TYPE_SIZES[b->datatype]);
         }

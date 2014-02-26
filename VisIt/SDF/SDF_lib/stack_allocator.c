@@ -22,14 +22,50 @@ static int64_t memory_size = 0;
 
 void stack_alloc(sdf_block_t *b)
 {
+    int i;
+    uint64_t sz;
     struct stack *tail;
     if (b->done_data || b->dont_own_data) return;
-    b->data = calloc(b->nelements_local, SDF_TYPE_SIZES[b->datatype_out]);
-    memory_size += b->nelements_local * SDF_TYPE_SIZES[b->datatype_out];
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
+            b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+        b->ngrids = b->ndims;
+        sz = b->ngrids * sizeof(*b->grids);
+        b->grids = calloc(1, sz);
+        memory_size += sz;
+        for (i = 0; i < b->ngrids; i++) {
+            sz = b->local_dims[i] * SDF_TYPE_SIZES[b->datatype_out];
+            b->grids[i] = calloc(1, sz);
+            memory_size += sz;
+        }
+    } else {
+        sz = b->nelements_local * SDF_TYPE_SIZES[b->datatype_out];
+        b->data = calloc(1, sz);
+        memory_size += sz;
+    }
     stack_tail->next = tail = (struct stack*)malloc(sizeof(struct stack));
     tail->block = b;
     tail->next = NULL;
     stack_tail = tail;
+}
+
+
+static void stack_free_data_or_grid(sdf_block_t *b)
+{
+    int i;
+
+    if (b->grids) {
+        for (i = 0; i < b->ngrids; i++) {
+            free(b->grids[i]);
+            memory_size -= b->local_dims[i] * SDF_TYPE_SIZES[b->datatype_out];
+        }
+        memory_size -= b->ngrids * sizeof(*b->grids);
+    } else {
+        free(b->data);
+        memory_size -= b->nelements_local * SDF_TYPE_SIZES[b->datatype_out];
+    }
+    b->grids = NULL;
+    b->data = NULL;
+    b->done_data = 0;
 }
 
 
@@ -40,10 +76,7 @@ void stack_free_block(sdf_block_t *b)
 
     while (stack_entry) {
         if (stack_entry->block == b) {
-            free(b->data);
-            b->data = NULL;
-            b->done_data = 0;
-            memory_size -= b->nelements_local * SDF_TYPE_SIZES[b->datatype_out];
+            stack_free_data_or_grid(b);
             old_stack_entry->next = stack_entry->next;
             if (stack_entry == stack_tail) stack_tail = old_stack_entry;
             free(stack_entry);
@@ -87,10 +120,7 @@ void stack_freeup_memory(void)
         free(head);
         b = stack_head->block;
         stack_head->block = NULL;
-        free(b->data);
-        b->data = NULL;
-        b->done_data = 0;
-        memory_size -= b->nelements_local * SDF_TYPE_SIZES[b->datatype_out];
+        stack_free_data_or_grid(b);
         if (memory_size < MAX_MEMORY) break;
     }
 }
@@ -107,9 +137,7 @@ void stack_free(void)
         free(head);
         b = stack_head->block;
         stack_head->block = NULL;
-        free(b->data);
-        b->data = NULL;
-        b->done_data = 0;
+        stack_free_data_or_grid(b);
     }
     memory_size = 0;
 }

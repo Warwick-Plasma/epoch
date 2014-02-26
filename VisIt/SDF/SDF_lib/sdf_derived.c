@@ -517,7 +517,10 @@ static sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
     sdf_block_t *current_block = h->current_block;
 
-    if (!b->grids) b->grids = calloc(1, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 1;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
 
     if (!mesh->done_data) {
         h->current_block = mesh;
@@ -552,7 +555,10 @@ static sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 
     memcpy(b->local_dims, old->local_dims, 3 * sizeof(*b->local_dims));
 
-    b->grids = calloc(3, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 3;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
     for (i = 0; i < 3; i++) {
         if (i != b->stagger) {
             sz = b->local_dims[i] * SDF_TYPE_SIZES[b->datatype_out];
@@ -636,7 +642,10 @@ static sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 #endif
 
     b->datatype_out = mesh->datatype_out;
-    b->grids = calloc(3, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 3;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
     if (split->geometry == 1) {
@@ -726,7 +735,10 @@ static sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 #endif
 
     b->datatype_out = mesh->datatype_out;
-    b->grids = malloc(3 * sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 3;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
     b->nelements_local = 1;
@@ -815,7 +827,10 @@ static sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
         else
             b->data = (double*)mesh->data + b->opt;
 
-        if (!b->grids) b->grids = malloc(sizeof(void**));
+        if (!b->grids) {
+            b->ngrids = 1;
+            b->grids = calloc(b->ngrids, sizeof(float*));
+        }
         b->grids[0] = b->data;
 
         b->done_data = 1;

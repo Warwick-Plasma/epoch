@@ -424,7 +424,10 @@ int sdf_read_plain_mesh(sdf_file_t *h)
 
     h->current_location = b->data_location;
 
-    if (!b->grids) b->grids = calloc(3, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 3;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
 
     if (h->print) {
         h->indent = 0;
@@ -473,7 +476,10 @@ int sdf_read_lagran_mesh(sdf_file_t *h)
 
     h->current_location = b->data_location;
 
-    if (!b->grids) b->grids = calloc(3, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 3;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
 
     if (h->print) {
         h->indent = 0;
