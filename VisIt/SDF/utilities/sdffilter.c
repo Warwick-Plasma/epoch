@@ -711,6 +711,157 @@ static void pretty_print_slice_finish(void)
 }
 
 
+static void pretty_print_mesh(sdf_file_t *h, sdf_block_t *b, int idnum)
+{
+    int *idx, *fac;
+    int i, n, rem, sz, left, digit, ncount, dim;
+    int exponent, special_format = 0;
+    char *ptr;
+    static const int fmtlen = 32;
+    char **fmt;
+    double r8;
+
+    if (slice_direction != -1) {
+        pretty_print_slice(h, b);
+        return;
+    }
+
+    idx = malloc(b->ndims * sizeof(*idx));
+    fac = malloc(b->ndims * sizeof(*fac));
+    fmt = malloc(b->ndims * sizeof(*fmt));
+
+    rem = 1;
+    for (i = 0; i < b->ndims; i++) {
+        if (b->array_starts)
+            left = b->array_ends[i] - b->array_starts[i];
+        else
+            left = b->local_dims[i];
+        fac[i] = rem;
+        rem *= left;
+        digit = 0;
+        if (b->array_ends)
+            left = b->array_ends[i] + index_offset - 1;
+        while (left) {
+            left /= 10;
+            digit++;
+        }
+        if (!digit) digit = 1;
+        if (format_rowindex || format_index) {
+            ptr = fmt[i] = malloc(fmtlen * sizeof(**fmt));
+            if (i != 0) *ptr++ = ',';
+            sz = snprintf(ptr, fmtlen-2, "%%%i.%ii", digit, digit);
+            if (i == b->ndims-1) {
+                ptr += sz;
+                *ptr++ = ')';
+                *ptr++ = '\0';
+            }
+        } else
+            fmt[i] = calloc(1, sizeof(**fmt));
+    }
+
+    special_format = 0;
+    if (format_float[strlen(format_float)-1] == 'd')
+        special_format = 1;
+
+    sz = SDF_TYPE_SIZES[b->datatype_out];
+
+    ncount = 0;
+    dim = 0;
+    if (b->array_starts) {
+        for (i = 0; i < b->ndims; i++)
+            idx[i] = b->array_starts[i];
+        for (i = 0; i < b->ndims; i++) {
+            if (b->array_ends[i] > b->array_starts[i])
+                break;
+            dim++;
+        }
+    }
+    ptr = b->grids[dim];
+
+    for (n = 0; n < b->nelements_local; n++) {
+        ncount++;
+        if (ncount == 1) {
+            if (format_number) printf("%i ", idnum);
+        } else {
+            if (format_index) printf(" ");
+        }
+
+        if ((ncount ==1 && format_rowindex) || format_index) {
+            for (i = 0; i < b->ndims; i++) {
+                if (i == dim) {
+                    printf(fmt[i], idx[i]+index_offset);
+                } else {
+                    if (i != 0) printf(",");
+                    printf("0");
+                    if (i == b->ndims-1) printf(")");
+                }
+            }
+        }
+
+        if (ncount != 1 && format_index) printf(format_space,1);
+
+        switch (b->datatype_out) {
+        case SDF_DATATYPE_INTEGER4:
+            printf(format_int, *((uint32_t*)ptr));
+            break;
+        case SDF_DATATYPE_INTEGER8:
+            printf(format_int, *((uint64_t*)ptr));
+            break;
+        case SDF_DATATYPE_REAL4:
+            if (special_format) {
+                r8 = *((float*)ptr);
+                if (r8 == 0)
+                    exponent = 0;
+                else {
+                    exponent = (int)floor(log10(fabs(r8)));
+                    r8 *= pow(10, -1.0 * exponent);
+                }
+                printf(format_float, r8, exponent);
+            } else
+                printf(format_float, *((float*)ptr));
+            break;
+        case SDF_DATATYPE_REAL8:
+            if (special_format) {
+                r8 = *((double*)ptr);
+                if (r8 == 0)
+                    exponent = 0;
+                else {
+                    exponent = (int)floor(log10(fabs(r8)));
+                    r8 *= pow(10, -1.0 * exponent);
+                }
+                printf(format_float, r8, exponent);
+            } else
+                printf(format_float, *((double*)ptr));
+            break;
+        }
+        idx[dim]++;
+        ptr += sz;
+        if (b->array_ends && idx[dim] >= b->array_ends[dim]) {
+            idx[dim] = 0;
+            dim++;
+            ptr = b->grids[dim];
+            ncount = element_count;
+        } else if (idx[dim] >= b->local_dims[dim]) {
+            idx[dim] = 0;
+            dim++;
+            ptr = b->grids[dim];
+            ncount = element_count;
+        }
+        if (ncount == element_count) {
+            printf("\n");
+            ncount = 0;
+        }
+    }
+    if (ncount) printf("\n");
+
+    free(idx);
+    free(fac);
+
+    for (i = 0; i < b->ndims; i++) free(fmt[i]);
+    free(fmt);
+}
+
+
 static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
 {
     int *idx, *fac;
@@ -720,6 +871,12 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
     static const int fmtlen = 32;
     char **fmt;
     double r8;
+
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
+            b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+        pretty_print_mesh(h, b, idnum);
+        return;
+    }
 
     if (slice_direction != -1) {
         pretty_print_slice(h, b);
@@ -1382,6 +1539,9 @@ int main(int argc, char **argv)
                 pretty_print(h, b, idx);
             break;
         case SDF_BLOCKTYPE_PLAIN_VARIABLE:
+        case SDF_BLOCKTYPE_PLAIN_MESH:
+        case SDF_BLOCKTYPE_POINT_VARIABLE:
+        case SDF_BLOCKTYPE_POINT_MESH:
             set_array_section(b);
             sdf_helper_read_data(h, b);
             pretty_print(h, b, idx);

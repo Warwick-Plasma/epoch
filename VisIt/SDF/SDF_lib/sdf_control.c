@@ -710,8 +710,13 @@ int sdf_factor(sdf_file_t *h)
     for (n = 0; n < 3; n++) b->local_dims[n] = b->dims[n];
 #endif
 
-    b->nelements_local = 1;
-    for (n = 0; n < b->ndims; n++) b->nelements_local *= b->local_dims[n];
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
+        b->nelements_local = 0;
+        for (n = 0; n < b->ndims; n++) b->nelements_local += b->local_dims[n];
+    } else {
+        b->nelements_local = 1;
+        for (n = 0; n < b->ndims; n++) b->nelements_local *= b->local_dims[n];
+    }
 
     return 0;
 }
@@ -881,12 +886,16 @@ int sdf_block_set_array_section(sdf_block_t *b, const int ndims,
 
     if (b->ndims < 1) return 1;
 
-    if (b->blocktype != SDF_BLOCKTYPE_PLAIN_VARIABLE &&
-            b->blocktype != SDF_BLOCKTYPE_PLAIN_DERIVED) return 1;
-
-    nelements_local = 1;
-    for (i = 0; i < b->ndims; i++)
-        nelements_local *= b->local_dims[i];
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
+            b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+        nelements_local = 0;
+        for (i = 0; i < b->ndims; i++)
+            nelements_local += b->local_dims[i];
+    } else {
+        nelements_local = 1;
+        for (i = 0; i < b->ndims; i++)
+            nelements_local *= b->local_dims[i];
+    }
 
     if (!starts && !ends) {
         b->nelements_local = nelements_local;
@@ -945,9 +954,16 @@ int sdf_block_set_array_section(sdf_block_t *b, const int ndims,
         }
     }
 
-    b->nelements_local = 1;
-    for (i = 0; i < b->ndims; i++)
-        b->nelements_local *= (b->array_ends[i] - b->array_starts[i]);
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
+            b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+        b->nelements_local = 0;
+        for (i = 0; i < b->ndims; i++)
+            b->nelements_local += (b->array_ends[i] - b->array_starts[i]);
+    } else {
+        b->nelements_local = 1;
+        for (i = 0; i < b->ndims; i++)
+            b->nelements_local *= (b->array_ends[i] - b->array_starts[i]);
+    }
 
     if (b->nelements_local == nelements_local) {
         FREE_ITEM(b->array_starts);
