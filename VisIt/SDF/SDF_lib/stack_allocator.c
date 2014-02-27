@@ -17,7 +17,7 @@ static struct stack *stack_head = NULL;
 static struct stack *stack_tail = NULL;
 
 #define MAX_MEMORY 2147483648 // 2GB
-static uint64_t memory_size = 0;
+static int64_t memory_size = 0;
 
 
 void stack_alloc(sdf_block_t *b)

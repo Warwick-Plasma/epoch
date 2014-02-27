@@ -66,7 +66,7 @@
             int _b, _c; \
             for (_b=0; _b<len; _b++) { \
                 for (_c=0; _c<h->indent; _c++) SDF_PRNT(" "); \
-                SDF_PRNT(#a "[%i]: %" #f "\n", _b, a[_b]); \
+                SDF_PRNT(#a "[%i]: %" f "\n", _b, a[_b]); \
             } \
         }
 
@@ -124,7 +124,7 @@
                 } \
             } \
         } else if (b->datatype_out == SDF_DATATYPE_INTEGER8) { \
-            uint64_t *arr = (a); \
+            int64_t *arr = (a); \
             SDF_PRNT("i8 "); \
             _d=0; while (_d<(len)) { \
                 SDF_PRNT("\n%i ",_d); \

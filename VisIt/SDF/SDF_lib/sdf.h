@@ -20,7 +20,7 @@
 
 #define SDF_VERSION  1
 #define SDF_REVISION 2
-#define SDF_LIB_VERSION  5
+#define SDF_LIB_VERSION  6
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
@@ -270,17 +270,20 @@ struct sdf_block {
     double *extents, *dim_mults;
     double *station_x, *station_y, *station_z;
     double mult, time, time_increment;
-    uint64_t dims[3];
-    uint64_t block_start, next_block_location, data_location;
-    uint64_t inline_block_start, inline_next_block_location;
-    uint64_t summary_block_start, summary_next_block_location;
-    uint64_t nelements, data_length, *nelements_blocks, *data_length_blocks;
-    uint32_t ndims, geometry, datatype, blocktype, info_length;
-    uint32_t type_size, stagger, datatype_out, type_size_out;
-    uint32_t nstations, nvariables, step, step_increment;
-    uint32_t *dims_in, *station_nvars, *variable_types, *station_index;
+    int64_t dims[3], local_dims[3];
+    int64_t block_start, next_block_location, data_location;
+    int64_t inline_block_start, inline_next_block_location;
+    int64_t summary_block_start, summary_next_block_location;
+    int64_t nelements, nelements_local, data_length;
+    int64_t *nelements_blocks, *data_length_blocks;
+    int64_t *array_starts, *array_ends, *array_strides;
+    int64_t *global_array_starts, *global_array_ends, *global_array_strides;
+    int32_t ndims, geometry, datatype, blocktype, info_length;
+    int32_t type_size, stagger, datatype_out, type_size_out;
+    int32_t nstations, nvariables, step, step_increment;
+    int32_t *dims_in, *station_nvars, *variable_types, *station_index;
     int32_t *station_move;
-    int local_dims[3], nm, nelements_local, n_ids, opt, ng, nfaces;
+    int nm, n_ids, opt, ng, nfaces, ngrids;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
     char *vfm_id, *obstacle_id, *station_id;
@@ -296,30 +299,28 @@ struct sdf_block {
     sdf_block_t *next, *prev;
     sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
-    int64_t *array_starts, *array_ends, *array_strides;
-    int64_t *global_array_starts, *global_array_ends, *global_array_strides;
-#ifdef PARALLEL
-    MPI_Datatype mpitype, distribution, mpitype_out;
     int cpu_split[SDF_MAXDIMS], starts[SDF_MAXDIMS];
     int proc_min[3], proc_max[3];
+#ifdef PARALLEL
+    MPI_Datatype mpitype, distribution, mpitype_out;
 #endif
 };
 
 struct sdf_file {
-    uint64_t dbg_count;
-    uint32_t sdf_lib_version, sdf_lib_revision;
-    uint32_t sdf_extension_version, sdf_extension_revision;
-    uint32_t file_version, file_revision;
+    int64_t dbg_count;
+    int32_t sdf_lib_version, sdf_lib_revision;
+    int32_t sdf_extension_version, sdf_extension_revision;
+    int32_t file_version, file_revision;
     char *dbg, *dbg_buf, **extension_names;
     // Lines above should never be changed.
     // Lines below must be changed with care and the SDF_LIB_VERSION bumped
     // if the resulting struct is not aligned the same.
     double time;
-    uint64_t first_block_location, summary_location, start_location, soi, sof;
-    uint64_t current_location;
-    uint32_t jobid1, jobid2, endianness, summary_size;
-    uint32_t block_header_length, string_length, id_length;
-    uint32_t code_io_version, step;
+    int64_t first_block_location, summary_location, start_location, soi, sof;
+    int64_t current_location;
+    int32_t jobid1, jobid2, endianness, summary_size;
+    int32_t block_header_length, string_length, id_length;
+    int32_t code_io_version, step;
     int32_t nblocks, nblocks_file, error_code;
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
@@ -332,6 +333,7 @@ struct sdf_file {
     sdf_block_t *blocklist, *tail, *current_block, *last_block_in_file;
     char *mmap;
     void *ext_data;
+    int array_count;
 #ifdef PARALLEL
     MPI_File filehandle;
 #else
@@ -341,8 +343,8 @@ struct sdf_file {
 };
 
 struct run_info {
-    uint64_t defines;
-    uint32_t version, revision, compile_date, run_date, io_date, minor_rev;
+    int64_t defines;
+    int32_t version, revision, compile_date, run_date, io_date, minor_rev;
     char *commit_id, *sha1sum, *compile_machine, *compile_flags;
 };
 
@@ -560,7 +562,7 @@ int sdf_modify_array(sdf_file_t *h, sdf_block_t *b, void *data);
  @endcode
  */
 int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
-                             uint64_t *starts, uint64_t *ends);
+                             int64_t *starts, int64_t *ends);
 
 
 /**
@@ -578,12 +580,12 @@ int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
  Example usage:
  @code
     double value = 2;
-    uint64_t index[] = {1,2,3};
+    int64_t index[] = {1,2,3};
     sdf_modify_array_element(h, b, &value, index);
  @endcode
  */
 int sdf_modify_array_element(sdf_file_t *h, sdf_block_t *b, void *data,
-                             uint64_t *index);
+                             int64_t *index);
 
 
 /**

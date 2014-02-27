@@ -496,7 +496,7 @@ static int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
 
 
 #ifdef PARALLEL
-static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
+static int factor2d(int ncpus, int64_t *dims, int *cpu_split)
 {
     const int ndims = 2;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
@@ -553,7 +553,7 @@ static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
 
 
 
-static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
+static int factor3d(int ncpus, int64_t *dims, int *cpu_split)
 {
     const int ndims = 3;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
@@ -622,7 +622,7 @@ int sdf_get_domain_bounds(sdf_file_t *h, int rank, int *starts, int *local_dims)
     int n;
 #ifdef PARALLEL
     int npoint_min, split_big, coords, div;
-    uint64_t old_dims[6];
+    int64_t old_dims[6];
 
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
@@ -631,7 +631,7 @@ int sdf_get_domain_bounds(sdf_file_t *h, int rank, int *starts, int *local_dims)
         if (b->dims[n] < 1) b->dims[n] = 1;
     }
 
-    memset(starts, 0, 3*sizeof(int));
+    memset(starts, 0, 3*sizeof(*starts));
 
     div = 1;
     for (n = 0; n < b->ndims; n++) {
@@ -667,8 +667,8 @@ int sdf_get_domain_bounds(sdf_file_t *h, int rank, int *starts, int *local_dims)
         if (b->const_value[n]) local_dims[n]++;
     }
 #else
-    memset(starts, 0, 3*sizeof(int));
-    for (n=0; n < b->ndims; n++) local_dims[n] = (int)b->dims[n];
+    memset(starts, 0, 3*sizeof(*starts));
+    for (n=0; n < b->ndims; n++) local_dims[n] = b->dims[n];
 #endif
     for (n=b->ndims; n < 3; n++) local_dims[n] = 1;
 
@@ -682,7 +682,8 @@ int sdf_factor(sdf_file_t *h)
     sdf_block_t *b = h->current_block;
     int n;
 #ifdef PARALLEL
-    uint64_t old_dims[6];
+    int64_t old_dims[6];
+    int local_dims[SDF_MAXDIMS];
 
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
@@ -700,9 +701,11 @@ int sdf_factor(sdf_file_t *h)
     for (n = 0; n < b->ndims; n++)
         b->dims[n] = old_dims[n];
 
-    sdf_get_domain_bounds(h, h->rank, b->starts, b->local_dims);
+    sdf_get_domain_bounds(h, h->rank, b->starts, local_dims);
+    for (n = 0; n < b->ndims; n++)
+        b->local_dims[n] = local_dims[n];
 #else
-    for (n = 0; n < 3; n++) b->local_dims[n] = (int)b->dims[n];
+    for (n = 0; n < 3; n++) b->local_dims[n] = b->dims[n];
 #endif
 
     b->nelements_local = 1;
@@ -721,7 +724,7 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
         if (b->datatype == SDF_DATATYPE_INTEGER4
                 || b->datatype == SDF_DATATYPE_REAL4) {
             int i;
-            uint32_t *v = *var_in;
+            int32_t *v = *var_in;
             for (i=0; i < count; i++) {
                 _SDF_BYTE_SWAP32(*v);
                 v++;
@@ -729,7 +732,7 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
         } else if (b->datatype == SDF_DATATYPE_INTEGER8
                 || b->datatype == SDF_DATATYPE_REAL8) {
             int i;
-            uint64_t *v = *var_in;
+            int64_t *v = *var_in;
             for (i=0; i < count; i++) {
                 _SDF_BYTE_SWAP64(*v);
                 v++;
@@ -871,7 +874,8 @@ int sdf_block_set_array_section(sdf_block_t *b, const int ndims,
                                 const int64_t *starts, const int64_t *ends,
                                 const int64_t *strides)
 {
-    int i, nelements_local, ndims_min;
+    int64_t nelements_local;
+    int i, ndims_min;
 
     if (b->ndims < 1) return 1;
 

@@ -27,8 +27,8 @@ int sdf_read_plain_mesh_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
-    uint32_t dims_in[SDF_MAXDIMS];
-    uint32_t *dims_ptr = dims_in;
+    int32_t dims_in[SDF_MAXDIMS];
+    int32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - mults     REAL(r8), DIMENSION(ndims)
@@ -80,8 +80,8 @@ int sdf_read_plain_variable_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
-    uint32_t dims_in[SDF_MAXDIMS];
-    uint32_t *dims_ptr = dims_in;
+    int32_t dims_in[SDF_MAXDIMS];
+    int32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - mult      REAL(r8)
@@ -149,18 +149,19 @@ static int sdf_plain_mesh_distribution(sdf_file_t *h)
 #ifdef PARALLEL
     sdf_block_t *b = h->current_block;
     int n;
-    int sizes[SDF_MAXDIMS];
+    int sizes[SDF_MAXDIMS], subsizes[SDF_MAXDIMS];
 
     for (n=0; n < b->ndims; n++) {
         b->dims[n] -= 2 * b->ng;
         b->local_dims[n] -= 2 * b->ng;
         sizes[n] = (int)b->dims[n];
+        subsizes[n] = (int)b->local_dims[n];
     }
 
     // Get starts for creating subarray
     sdf_factor(h);
 
-    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, b->starts,
+    MPI_Type_create_subarray(b->ndims, sizes, subsizes, b->starts,
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 
@@ -200,10 +201,10 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
     int count, sz;
 #ifdef PARALLEL
     MPI_Datatype distribution, facetype;
-    int subsizes[SDF_MAXDIMS];
+    int sizes[SDF_MAXDIMS], subsizes[SDF_MAXDIMS];
     int face[SDF_MAXDIMS];
     int i, tag;
-    uint64_t offset;
+    int64_t offset;
     char *p1, *p2;
 #else
     char *vptr;
@@ -221,13 +222,14 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
 
 #ifdef PARALLEL
     for (i=0; i < b->ndims; i++) {
-        subsizes[i] = b->local_dims[i] - 2 * b->ng;
+        sizes[i] = b->local_dims[i];
+        subsizes[i] = sizes[i] - 2 * b->ng;
         b->starts[i] = b->ng;
     }
     for (i=b->ndims; i < SDF_MAXDIMS; i++)
         subsizes[i] = 1;
 
-    MPI_Type_create_subarray(b->ndims, b->local_dims, subsizes, b->starts,
+    MPI_Type_create_subarray(b->ndims, sizes, subsizes, b->starts,
         MPI_ORDER_FORTRAN, b->mpitype, &distribution);
 
     MPI_Type_commit(&distribution);
@@ -243,7 +245,7 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
 
     // Swap ghostcell faces
     for (i=0; i < b->ndims; i++) {
-        face[i] = b->local_dims[i] - 2 * b->ng;
+        face[i] = sizes[i] - 2 * b->ng;
         b->starts[i] = b->ng;
     }
 
@@ -253,17 +255,17 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
         face[i] = b->ng;
         b->starts[i] = 0;
 
-        MPI_Type_create_subarray(b->ndims, b->local_dims, face, b->starts,
+        MPI_Type_create_subarray(b->ndims, sizes, face, b->starts,
             MPI_ORDER_FORTRAN, b->mpitype, &facetype);
         MPI_Type_commit(&facetype);
 
         p1 = (char*)b->data + b->ng * offset;
-        p2 = (char*)b->data + (b->local_dims[i] - b->ng) * offset;
+        p2 = (char*)b->data + (sizes[i] - b->ng) * offset;
         MPI_Sendrecv(p1, 1, facetype, b->proc_min[i], tag, p2, 1, facetype,
             b->proc_max[i], tag, h->comm, MPI_STATUS_IGNORE);
         tag++;
 
-        p1 = (char*)b->data + (b->local_dims[i] - 2 * b->ng) * offset;
+        p1 = (char*)b->data + (sizes[i] - 2 * b->ng) * offset;
         p2 = b->data;
         MPI_Sendrecv(p1, 1, facetype, b->proc_max[i], tag, p2, 1, facetype,
             b->proc_min[i], tag, h->comm, MPI_STATUS_IGNORE);
@@ -271,7 +273,7 @@ static int sdf_helper_read_array_halo(sdf_file_t *h, void **var_in)
 
         MPI_Type_free(&facetype);
 
-        face[i] = b->local_dims[i];
+        face[i] = sizes[i];
         offset *= b->local_dims[i];
     }
 #else
@@ -370,7 +372,7 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
         if (b->datatype == SDF_DATATYPE_INTEGER4
                 || b->datatype == SDF_DATATYPE_REAL4) {
             int i;
-            uint32_t *v = (uint32_t*)*var_ptr;
+            int32_t *v = (int32_t*)*var_ptr;
             for (i=0; i < count; i++) {
                 _SDF_BYTE_SWAP32(*v);
                 v++;
@@ -378,7 +380,7 @@ static int sdf_helper_read_array(sdf_file_t *h, void **var_in, int count)
         } else if (b->datatype == SDF_DATATYPE_INTEGER8
                 || b->datatype == SDF_DATATYPE_REAL8) {
             int i;
-            uint64_t *v = (uint64_t*)*var_ptr;
+            int64_t *v = (int64_t*)*var_ptr;
             for (i=0; i < count; i++) {
                 _SDF_BYTE_SWAP64(*v);
                 v++;
@@ -428,15 +430,15 @@ int sdf_read_plain_mesh(sdf_file_t *h)
         h->indent = 0;
         SDF_DPRNT("\n");
         SDF_DPRNT("b->name: %s ", b->name);
-        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%" PRIi64 " ",b->local_dims[n]);
         SDF_DPRNT("\n");
         h->indent = 2;
     }
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) {
 #ifdef PARALLEL
-            sdf_create_1d_distribution(h, (int)b->dims[n], b->local_dims[n],
-                    b->starts[n]);
+            sdf_create_1d_distribution(h, (int)b->dims[n],
+                    (int)b->local_dims[n], b->starts[n]);
 #endif
             sdf_helper_read_array(h, &b->grids[n], b->local_dims[n]);
             sdf_free_distribution(h);
@@ -462,7 +464,7 @@ int sdf_read_lagran_mesh(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
     int n;
-    uint64_t nelements = 1;
+    int64_t nelements = 1;
 
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_blocklist(h);
@@ -477,7 +479,7 @@ int sdf_read_lagran_mesh(sdf_file_t *h)
         h->indent = 0;
         SDF_DPRNT("\n");
         SDF_DPRNT("b->name: %s ", b->name);
-        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%" PRIi64 " ",b->local_dims[n]);
         SDF_DPRNT("\n");
         h->indent = 2;
     }
@@ -530,7 +532,7 @@ int sdf_read_plain_variable(sdf_file_t *h)
         h->indent = 0;
         SDF_DPRNT("\n");
         SDF_DPRNT("b->name: %s ", b->name);
-        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%" PRIi64 " ",b->local_dims[n]);
         SDF_DPRNT("\n  ");
         SDF_DPRNTar(b->data, b->nelements_local);
     }

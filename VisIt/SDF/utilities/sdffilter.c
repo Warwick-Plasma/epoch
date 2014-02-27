@@ -544,10 +544,10 @@ static void pretty_print_slice_finish(void)
             ptr = sl->data + i * sl->sz;
             switch (sl->datatype) {
             case SDF_DATATYPE_INTEGER4:
-                printf("%i", *((uint32_t*)ptr));
+                printf("%i", *((int32_t*)ptr));
                 break;
             case SDF_DATATYPE_INTEGER8:
-                printf("%llu", *((uint64_t*)ptr));
+                printf("%" PRIi64, *((int64_t*)ptr));
                 break;
             case SDF_DATATYPE_REAL4:
                 printf("%14.6E", *((float*)ptr));
@@ -651,10 +651,10 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
             }
             switch (b->datatype_out) {
             case SDF_DATATYPE_INTEGER4:
-                printf(":  %i\n", *((uint32_t*)ptr));
+                printf(":  %i\n", *((int32_t*)ptr));
                 break;
             case SDF_DATATYPE_INTEGER8:
-                printf(":  %llu\n", *((uint64_t*)ptr));
+                printf(":  %" PRIi64 "\n", *((int64_t*)ptr));
                 break;
             case SDF_DATATYPE_REAL4:
                 printf(":  %12.6E\n", *((float*)ptr));

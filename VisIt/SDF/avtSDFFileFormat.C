@@ -772,7 +772,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         zz->SetVoidArray(b->grids[2], b->local_dims[2], 1);
 
         vtkRectilinearGrid *rgrid = vtkRectilinearGrid::New();
-        rgrid->SetDimensions(b->local_dims);
+        rgrid->SetDimensions((int)b->local_dims[0], (int)b->local_dims[1],
+                             (int)b->local_dims[2]);
         rgrid->SetXCoordinates(xx);
         rgrid->SetYCoordinates(yy);
         rgrid->SetZCoordinates(zz);
@@ -795,7 +796,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         vtkStructuredGrid *sgrid = vtkStructuredGrid::New();
 
         points->SetNumberOfPoints(b->nelements_local);
-        sgrid->SetDimensions(b->local_dims);
+        sgrid->SetDimensions((int)b->local_dims[0], (int)b->local_dims[1],
+                             (int)b->local_dims[2]);
         sgrid->SetPoints(points);
 
         if (b->datatype_out == SDF_DATATYPE_REAL4) {
@@ -1028,7 +1030,8 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
         if (!b->data && !b->dont_allocate) {
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             b->ndims = mesh->ndims;
-            memcpy(b->local_dims, mesh->local_dims, b->ndims*sizeof(int));
+            memcpy(b->local_dims, mesh->local_dims,
+                   b->ndims * sizeof(*b->local_dims));
 
             if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
                 b->nelements_local = mesh->dims[0];
@@ -1397,11 +1400,15 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
         mix_next[mix_index-2] = 0;
     }
 
+    int local_dims[3];
+    for (int n = 0; n < ndims; n++)
+        local_dims[n] = v->local_dims[n];
+
     char dom_string[128];
     sprintf(dom_string, "Domain %d", domain);
 
     avtMaterial *mat = new avtMaterial(nmat, mat_numbers,
-            mat_names, ndims, v->local_dims, 0, material_list, mixed_size,
+            mat_names, ndims, local_dims, 0, material_list, mixed_size,
             mix_mat, mix_next, mix_zone, mix_vf, dom_string, 0);
 
     delete [] mix_vf;

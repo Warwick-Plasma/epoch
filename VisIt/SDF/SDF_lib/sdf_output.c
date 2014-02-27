@@ -63,7 +63,7 @@ int sdf_flush(sdf_file_t *h)
 
 
 
-static int sdf_truncate(sdf_file_t *h, uint64_t size)
+static int sdf_truncate(sdf_file_t *h, int64_t size)
 {
 #ifdef PARALLEL
     MPI_Offset length = size;
@@ -219,7 +219,7 @@ static int write_block(sdf_file_t *h)
 
 static int write_header(sdf_file_t *h)
 {
-    uint32_t int4;
+    int32_t int4;
     int errcode;
     char padding[6];
 
@@ -382,7 +382,7 @@ static int write_constant(sdf_file_t *h)
 static int write_array_meta(sdf_file_t *h)
 {
     int errcode, i;
-    uint32_t int4;
+    int32_t int4;
     sdf_block_t *b = h->current_block;
 
     if (!b || !b->in_file) return 0;
@@ -419,7 +419,7 @@ static int write_array_meta(sdf_file_t *h)
 static int write_cpu_split_meta(sdf_file_t *h)
 {
     int errcode, i;
-    uint32_t int4;
+    int32_t int4;
     sdf_block_t *b = h->current_block;
 
     if (!b || !b->in_file) return 0;
@@ -751,7 +751,7 @@ static int write_run_info_meta(sdf_file_t *h)
 static int write_plain_mesh_meta(sdf_file_t *h)
 {
     int errcode, i;
-    uint32_t int4;
+    int32_t int4;
     sdf_block_t *b = h->current_block;
 
     if (!b || !b->in_file) return 0;
@@ -816,7 +816,7 @@ static int write_plain_mesh_meta(sdf_file_t *h)
 static int write_plain_variable_meta(sdf_file_t *h)
 {
     int errcode, i;
-    uint32_t int4;
+    int32_t int4;
     sdf_block_t *b = h->current_block;
 
     if (!b || !b->in_file) return 0;
@@ -1073,11 +1073,11 @@ static int write_data(sdf_file_t *h)
 
 
 
-uint64_t sdf_write_new_summary(sdf_file_t *h)
+int64_t sdf_write_new_summary(sdf_file_t *h)
 {
     sdf_block_t *b, *next;
-    uint64_t total_summary_size = 0, extent = h->first_block_location;
-    uint64_t summary_size, sz;
+    int64_t total_summary_size = 0, extent = h->first_block_location;
+    int64_t summary_size, sz;
     int errcode = 0, use_summary;
 
     // First find the furthest extent of the inline metadata and/or data

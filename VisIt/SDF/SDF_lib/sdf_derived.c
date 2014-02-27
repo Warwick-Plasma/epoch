@@ -550,7 +550,7 @@ static sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
         h->current_block = current_block;
     }
 
-    memcpy(b->local_dims, old->local_dims, 3 * sizeof(int));
+    memcpy(b->local_dims, old->local_dims, 3 * sizeof(*b->local_dims));
 
     b->grids = calloc(3, sizeof(float*));
     for (i = 0; i < 3; i++) {
@@ -632,7 +632,7 @@ static sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         h->current_block = current_block;
     }
 #ifdef PARALLEL
-    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(int));
+    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(*b->cpu_split));
 #endif
 
     b->datatype_out = mesh->datatype_out;
@@ -647,7 +647,7 @@ static sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         for (n=0; n < b->ndims; n++) {
             xmesh = mesh->grids[n];
 
-            nx = b->local_dims[n] = (int)b->dims[n];
+            nx = b->local_dims[n] = b->dims[n];
             x = calloc(nx, sz);
 #ifdef PARALLEL
             i0 = mesh->starts[n];
@@ -722,7 +722,7 @@ static sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         h->current_block = current_block;
     }
 #ifdef PARALLEL
-    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(int));
+    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(*b->cpu_split));
 #endif
 
     b->datatype_out = mesh->datatype_out;
@@ -1064,7 +1064,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
     }
 
     // Build list of nelements for each station block in the file
-    nelements_array = calloc(station_blocks->count, sizeof(int));
+    nelements_array = calloc(station_blocks->count, sizeof(*nelements_array));
     b = list_start(station_blocks);
     for (i = 0; i < station_blocks->count; i++) {
         nelements_array[i] = b->nelements;
@@ -1224,8 +1224,8 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
     SDF_SET_ENTRY_STRING(new->name, "Global Stations");
 
     nelements = 0;
-    extra_id = calloc(nstat_max, sizeof(int));
-    found_id = malloc(sizeof(char));
+    extra_id = calloc(nstat_max, sizeof(*extra_id));
+    found_id = malloc(sizeof(*found_id));
     list_init(&station_blocks);
 
     // Build list of globally unique station_ids and for each
@@ -1242,10 +1242,10 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         if (b->nstations > nstat_max) {
             nstat_max = b->nstations * 11 / 10 + 2;
             free(extra_id);
-            extra_id = calloc(nstat_max, sizeof(int));
+            extra_id = calloc(nstat_max, sizeof(*extra_id));
         }
 
-        b->station_index = calloc(b->nstations, sizeof(int));
+        b->station_index = calloc(b->nstations, sizeof(*b->station_index));
         memset(found_id, 0, new->nstations);
         nextra = 0;
         for (n = 0; n < b->nstations; n++) {
@@ -1311,15 +1311,20 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         new->nelements_local = new->nelements = nelements;
 
         // Allocate the stations
-        new->station_names = calloc(new->nstations, sizeof(char*));
-        new->station_nvars = calloc(new->nstations, sizeof(int*));
-        new->station_move = calloc(new->nstations, sizeof(int*));
-        new->station_index = calloc(new->nstations, sizeof(int*));
-        new->station_x = calloc(new->nstations, sizeof(double*));
+        new->station_names =
+            calloc(new->nstations, sizeof(*new->station_names));
+        new->station_nvars =
+            calloc(new->nstations, sizeof(*new->station_nvars));
+        new->station_move =
+            calloc(new->nstations, sizeof(*new->station_move));
+        new->station_index =
+            calloc(new->nstations, sizeof(*new->station_index));
+        new->station_x =
+            calloc(new->nstations, sizeof(*new->station_x));
         if (new->ndims > 1)
-            new->station_y = calloc(new->nstations, sizeof(double*));
+            new->station_y = calloc(new->nstations, sizeof(*new->station_y));
         if (new->ndims > 2)
-            new->station_z = calloc(new->nstations, sizeof(double*));
+            new->station_z = calloc(new->nstations, sizeof(*new->station_z));
 
         // Assign the stations
         nstat_total = new->nstations;
@@ -1348,12 +1353,14 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         }
 
         // Allocate the variables
-        new->variable_ids = calloc(new->nvariables, sizeof(char*));
-        new->dim_units = calloc(new->nvariables, sizeof(char*));
-        new->material_names = calloc(new->nvariables, sizeof(char*));
-        new->variable_types = calloc(new->nvariables, sizeof(int*));
+        new->variable_ids = calloc(new->nvariables, sizeof(*new->variable_ids));
+        new->dim_units = calloc(new->nvariables, sizeof(*new->dim_units));
+        new->material_names =
+            calloc(new->nvariables, sizeof(*new->material_names));
+        new->variable_types =
+            calloc(new->nvariables, sizeof(*new->variable_types));
         if (new->use_mult)
-            new->dim_mults = calloc(new->nvariables, sizeof(double*));
+            new->dim_mults = calloc(new->nvariables, sizeof(*new->dim_mults));
 
         // Assign starting variables (time, step)
         b = list_start(station_blocks);
@@ -1569,7 +1576,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             append->nelements_local = 1;
             for (i=0; i<b->ndims; i++) {
                 append->dims[i] = b->dims[i] + 1;
-                append->local_dims[i] = (int)append->dims[i];
+                append->local_dims[i] = append->dims[i];
                 append->nelements_local *= append->local_dims[i];
             }
             for (i=b->ndims; i<3; i++)

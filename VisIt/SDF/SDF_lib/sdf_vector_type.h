@@ -19,7 +19,7 @@ static vector_t *vector_new(void)
     vector = (vector_t*)malloc(sizeof(vector_t));
     vector->allocated = 32;
     vector->size = 0;
-    vector->data = (int*)malloc(vector->allocated * sizeof(int));
+    vector->data = (int*)malloc(vector->allocated * sizeof(*vector->data));
 
     return vector;
 }
@@ -31,8 +31,8 @@ static void vector_push_back(vector_t *vector, int val)
     // Grow vector if necessary
     if (vector->size == vector->allocated) {
         vector->allocated = vector->allocated << 1;
-        data = (int*)malloc(vector->allocated * sizeof(int));
-        memcpy(data, vector->data, vector->size * sizeof(int));
+        data = (int*)malloc(vector->allocated * sizeof(*data));
+        memcpy(data, vector->data, vector->size * sizeof(*data));
         free(vector->data);
         vector->data = data;
     }
@@ -45,8 +45,8 @@ static void vector_truncate(vector_t *vector)
     int *data;
 
     vector->allocated = vector->size;
-    data = (int*)malloc(vector->allocated * sizeof(int));
-    memcpy(data, vector->data, vector->size * sizeof(int));
+    data = (int*)malloc(vector->allocated * sizeof(*data));
+    memcpy(data, vector->data, vector->size * sizeof(*data));
     free(vector->data);
     vector->data = data;
 }

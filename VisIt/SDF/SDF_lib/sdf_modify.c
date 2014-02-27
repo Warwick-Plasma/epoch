@@ -58,7 +58,7 @@
 static int sdf_read_inline_block_locations(sdf_file_t *h)
 {
     sdf_block_t *b;
-    uint64_t next_location;
+    int64_t next_location;
 
     h->use_summary = 0;
     h->tmp_flag = 1; // set tmp_flag to force reread
@@ -89,7 +89,7 @@ static int sdf_read_inline_block_locations(sdf_file_t *h)
 static int sdf_read_summary_block_locations(sdf_file_t *h)
 {
     sdf_block_t *b;
-    uint64_t next_location;
+    int64_t next_location;
 
     h->use_summary = 1;
     h->tmp_flag = 1; // set tmp_flag to force reread
@@ -225,14 +225,15 @@ int sdf_modify_array(sdf_file_t *h, sdf_block_t *b, void *data)
 
 
 
+// Should be updated to mimic Python's array slice notation
 int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
-        uint64_t *starts, uint64_t *ends)
+        int64_t *starts, int64_t *ends)
 {
-    uint64_t *data_starts, *data_ends;
+    int64_t *data_starts, *data_ends;
     int i, j, k, alloc_starts = 0, alloc_ends = 0, combined_writes = 0;
     int loop_counts[3] = {1, 1, 1};
-    uint64_t offset_starts[3] = {0}, offset_ends[3] = {0};
-    uint64_t length, count, offset, data_offset;
+    int64_t offset_starts[3] = {0}, offset_ends[3] = {0};
+    int64_t length, count, offset, data_offset;
     int errcode = 1, sz;
 
     // Sanity checks
@@ -270,7 +271,6 @@ int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
     }
 
     // Sanity check
-    // data_starts[i] < 0 not required since it is unsigned
     for (i = 0; i < b->ndims; i++)
         if (data_ends[i] > b->dims[i] ||
                 data_starts[i] > data_ends[i]) goto cleanup;
@@ -333,9 +333,9 @@ cleanup:
 
 
 int sdf_modify_array_element(sdf_file_t *h, sdf_block_t *b, void *data,
-        uint64_t *index)
+        int64_t *index)
 {
-    uint64_t index1[4] = {0};
+    int64_t index1[4] = {0};
     int i;
 
     if (!b) return 1;
@@ -350,8 +350,8 @@ int sdf_modify_array_element(sdf_file_t *h, sdf_block_t *b, void *data,
 int sdf_modify_add_block(sdf_file_t *h, sdf_block_t *block)
 {
     sdf_block_t *b, *next;
-    uint64_t extent = h->first_block_location;
-    uint64_t sz;
+    int64_t extent = h->first_block_location;
+    int64_t sz;
 
     append_block_to_blocklist(h, block);
 
@@ -498,7 +498,7 @@ int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
 {
     sdf_block_t *b = stitched;
     char **new_material_names, **new_variable_ids;
-    uint64_t info_length, ndims;
+    int64_t info_length, ndims;
     int i, errcode = 1;
 
     if (!stitched || !material) return errcode;

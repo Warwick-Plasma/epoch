@@ -23,7 +23,8 @@ int sdf_helper_read_data(sdf_file_t *h, sdf_block_t *b)
         if (!b->data && !b->dont_allocate) {
             block = sdf_find_block_by_id(h, b->mesh_id);
             b->ndims = block->ndims;
-            memcpy(b->local_dims, block->local_dims, b->ndims*sizeof(int));
+            memcpy(b->local_dims, block->local_dims,
+                   b->ndims * sizeof(*b->local_dims));
 
             if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
                 b->nelements_local = block->dims[0];

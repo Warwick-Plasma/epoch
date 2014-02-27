@@ -476,8 +476,8 @@ static int sdf_read_next_block_header(sdf_file_t *h)
 static void build_summary_buffer(sdf_file_t *h)
 {
     int i, buflen;
-    uint64_t data_location, block_location, next_block_location;
-    uint32_t info_length;
+    int64_t data_location, block_location, next_block_location;
+    int32_t info_length;
     char *bufptr;
     char skip_summary;
 
@@ -511,8 +511,10 @@ static void build_summary_buffer(sdf_file_t *h)
             i = sdf_read_bytes(h, blockbuf->buffer, blockbuf->len);
             if (i != 0) break;
 
-            memcpy(&next_block_location, blockbuf->buffer, sizeof(uint64_t));
-            memcpy(&data_location, (char*)blockbuf->buffer+8, sizeof(uint64_t));
+            memcpy(&next_block_location, blockbuf->buffer,
+                   sizeof(next_block_location));
+            memcpy(&data_location, (char*)blockbuf->buffer+8,
+                   sizeof(data_location));
 
             if (h->swap) {
                 _SDF_BYTE_SWAP64(next_block_location);
@@ -523,14 +525,14 @@ static void build_summary_buffer(sdf_file_t *h)
             // info length in the header.
             if (h->file_version + h->file_revision > 1) {
                 memcpy(&info_length, (char*)blockbuf->buffer+132,
-                       sizeof(uint32_t));
+                       sizeof(info_length));
                 if (h->swap) _SDF_BYTE_SWAP32(info_length);
             } else {
                 if (data_location > block_location)
-                    info_length = (uint32_t)(data_location
+                    info_length = (int32_t)(data_location
                         - block_location) - h->block_header_length;
                 else
-                    info_length = (uint32_t)(next_block_location
+                    info_length = (int32_t)(next_block_location
                         - block_location) - h->block_header_length;
             }
 
@@ -757,16 +759,19 @@ static int sdf_array_datatype(sdf_file_t *h)
     int n;
 
 #ifdef PARALLEL
-    int sizes[SDF_MAXDIMS];
-    for (n=0; n < b->ndims; n++) sizes[n] = (int)b->dims[n];
+    int sizes[SDF_MAXDIMS], subsizes[SDF_MAXDIMS];
+    for (n=0; n < b->ndims; n++) {
+        sizes[n] = (int)b->dims[n];
+        subsizes[n] = (int)b->local_dims[n];
+    }
 
     sdf_factor(h);
 
-    MPI_Type_create_subarray(b->ndims, sizes, b->local_dims, b->starts,
+    MPI_Type_create_subarray(b->ndims, sizes, subsizes, b->starts,
         MPI_ORDER_FORTRAN, b->mpitype, &b->distribution);
     MPI_Type_commit(&b->distribution);
 #else
-    for (n=0; n < b->ndims; n++) b->local_dims[n] = (int)b->dims[n];
+    for (n=0; n < b->ndims; n++) b->local_dims[n] = b->dims[n];
 #endif
     for (n=b->ndims; n < 3; n++) b->local_dims[n] = 1;
 
@@ -826,8 +831,8 @@ static int sdf_read_array_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
-    uint32_t dims_in[SDF_MAXDIMS];
-    uint32_t *dims_ptr = dims_in;
+    int32_t dims_in[SDF_MAXDIMS];
+    int32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - dims      INTEGER(i4), DIMENSION(ndims)
@@ -851,8 +856,8 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
 {
     sdf_block_t *b;
     int i;
-    uint32_t dims_in[SDF_MAXDIMS];
-    uint32_t *dims_ptr = dims_in;
+    int32_t dims_in[SDF_MAXDIMS];
+    int32_t *dims_ptr = dims_in;
 
     // Metadata is
     // - dims      INTEGER(i4), DIMENSION(ndims)
@@ -909,7 +914,7 @@ static int sdf_read_array(sdf_file_t *h)
         h->indent = 0;
         SDF_DPRNT("\n");
         SDF_DPRNT("b->name: %s ", b->name);
-        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->local_dims[n]);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%" PRIi64 " ",b->local_dims[n]);
         SDF_DPRNT("\n  ");
         if (b->datatype_out == SDF_DATATYPE_CHARACTER) {
             p = b->data;
@@ -921,7 +926,7 @@ static int sdf_read_array(sdf_file_t *h)
                     if (*p != ' ') count++;
                     p++;
                 }
-                SDF_DPRNT("c*%i[%i] ", b->local_dims[0], n);
+                SDF_DPRNT("c*%" PRIi64 "[%i] ", b->local_dims[0], n);
                 p = (char*)b->data + n * b->local_dims[0];
                 for (i=0; i < count; i++) {
                     SDF_DPRNT("%c", *p);
