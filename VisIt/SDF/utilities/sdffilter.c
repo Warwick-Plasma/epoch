@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <time.h>
+#include <float.h>
 #include "sdf.h"
 #include "sdf_list_type.h"
 #include "sdf_helper.h"
@@ -18,14 +19,14 @@
 
 int metadata, contents, debug, single, use_mmap, ignore_summary, ascii_header;
 int exclude_variables, derived, index_offset, element_count;
-int just_id, verbose_metadata;
+int just_id, verbose_metadata, special_format, scale_factor;
 int format_rowindex, format_index, format_number;
 int64_t array_ndims, *array_starts, *array_ends, *array_strides;
 int slice_direction, slice_dim[3];
 char *output_file;
 char *format_float, *format_int, *format_space;
-//static char *default_float = "%3.2fE%d";
-static char *default_float = "%14.6E";
+//static char *default_float = "%9.6fE%+2.2d1p";
+static char *default_float = "%13.6E";
 static char *default_int   = "%" PRIi64;
 static char *default_space = "    ";
 static char *default_indent = "  ";
@@ -252,6 +253,28 @@ void parse_array_section(char *array_section)
             }
         }
     }
+}
+
+
+void parse_format(void)
+{
+    char cc;
+    int len = strlen(format_float) - 1;
+
+    scale_factor = 1;
+    if (format_float[len] == 'p') {
+        format_float[len] = '\0';
+        for (; len > 1; len--) {
+            cc = format_float[len-1];
+            if (cc < '0' || cc > '9') break;
+        }
+        scale_factor = (int)strtol(&format_float[len], NULL, 10);
+        format_float[len--] = '\0';
+    }
+
+    special_format = 0;
+    if (format_float[len] == 'd')
+        special_format = 1;
 }
 
 
@@ -495,9 +518,7 @@ char *parse_args(int *argc, char ***argv)
         range_list = range_tmp;
     }
 
-    special_format = 0;
-    if (format_float[strlen(format_float)-1] == 'd')
-        special_format = 1;
+    parse_format();
 
     return file;
 }
@@ -507,6 +528,87 @@ static int set_array_section(sdf_block_t *b)
 {
     return sdf_block_set_array_section(b, array_ndims, array_starts,
                                        array_ends, array_strides);
+}
+
+
+static void print_value(void *data, int datatype)
+{
+    int exponent;
+    double r8;
+
+    switch (datatype) {
+    case SDF_DATATYPE_INTEGER4:
+        printf(format_int, *((uint32_t*)data));
+        break;
+    case SDF_DATATYPE_INTEGER8:
+        printf(format_int, *((uint64_t*)data));
+        break;
+    case SDF_DATATYPE_REAL4:
+        if (special_format) {
+            r8 = *((float*)data);
+            if (r8 == 0)
+                exponent = 0;
+            else {
+                exponent = (int)floor(log10(fabs(r8))+FLT_EPSILON) + 1;
+                exponent -= scale_factor;
+                r8 *= pow(10, -1.0 * exponent);
+            }
+            if (r8 == INFINITY)
+                printf("Infinity");
+            else
+                printf(format_float, r8, exponent);
+        } else
+            printf(format_float, *((float*)data));
+        break;
+    case SDF_DATATYPE_REAL8:
+        if (special_format) {
+            r8 = *((double*)data);
+            if (r8 == 0)
+                exponent = 0;
+            else {
+                exponent = (int)floor(log10(fabs(r8))+FLT_EPSILON) + 1;
+                exponent -= scale_factor;
+                r8 *= pow(10, -1.0 * exponent);
+            }
+            if (r8 == INFINITY)
+                printf("Infinity");
+            else
+                printf(format_float, r8, exponent);
+        } else
+            printf(format_float, *((double*)data));
+        break;
+    //case SDF_DATATYPE_REAL16:
+    //    printf("%g", (double)b->const_value);
+    //    break;
+    case SDF_DATATYPE_CHARACTER:
+        printf("%c", *((char*)data));
+        break;
+    case SDF_DATATYPE_LOGICAL:
+        if (*((char*)data))
+            printf("T");
+        else
+            printf("F");
+        break;
+    }
+}
+
+
+static void print_value_element(char *data, int datatype, int n)
+{
+    switch (datatype) {
+    case SDF_DATATYPE_INTEGER4:
+    case SDF_DATATYPE_REAL4:
+        print_value(data + 4*n, datatype);
+        break;
+    case SDF_DATATYPE_INTEGER8:
+    case SDF_DATATYPE_REAL8:
+        print_value(data + 8*n, datatype);
+        break;
+    case SDF_DATATYPE_CHARACTER:
+    case SDF_DATATYPE_LOGICAL:
+        print_value(data + n, datatype);
+        break;
+    }
 }
 
 
@@ -602,18 +704,11 @@ static int pretty_print_slice(sdf_file_t *h, sdf_block_t *b)
 static void pretty_print_slice_finish(void)
 {
     int i;
-    int exponent, special_format = 0;
     struct slice_block *sb, *first;
-    char *ptr;
-    double r8;
 
     if (!slice_list) return;
 
     if (ascii_header) printf("#\n");
-
-    special_format = 0;
-    if (format_float[strlen(format_float)-1] == 'd')
-        special_format = 1;
 
     first = list_start(slice_list);
 
@@ -621,43 +716,7 @@ static void pretty_print_slice_finish(void)
         sb = list_start(slice_list);
         while (sb) {
             if (sb != first) printf(format_space,1);
-
-            ptr = sb->data + i * SDF_TYPE_SIZES[sb->datatype];
-
-            switch (sb->datatype) {
-            case SDF_DATATYPE_INTEGER4:
-                printf(format_int, *((uint32_t*)ptr));
-                break;
-            case SDF_DATATYPE_INTEGER8:
-                printf(format_int, *((uint64_t*)ptr));
-                break;
-            case SDF_DATATYPE_REAL4:
-                if (special_format) {
-                    r8 = *((float*)ptr);
-                    if (r8 == 0)
-                        exponent = 0;
-                    else {
-                        exponent = (int)floor(log10(fabs(r8)));
-                        r8 *= pow(10, -1.0 * exponent);
-                    }
-                    printf(format_float, r8, exponent);
-                } else
-                    printf(format_float, *((float*)ptr));
-                break;
-            case SDF_DATATYPE_REAL8:
-                if (special_format) {
-                    r8 = *((double*)ptr);
-                    if (r8 == 0)
-                        exponent = 0;
-                    else {
-                        exponent = (int)floor(log10(fabs(r8)));
-                        r8 *= pow(10, -1.0 * exponent);
-                    }
-                    printf(format_float, r8, exponent);
-                } else
-                    printf(format_float, *((double*)ptr));
-                break;
-            }
+            print_value_element(sb->data, sb->datatype, i);
             sb = list_next(slice_list);
         }
         printf("\n");
@@ -678,11 +737,9 @@ static void pretty_print_mesh(sdf_file_t *h, sdf_block_t *b, int idnum)
 {
     int *idx, *fac;
     int i, n, rem, sz, left, digit, ncount, dim;
-    int exponent, special_format = 0;
     char *ptr;
     static const int fmtlen = 32;
     char **fmt;
-    double r8;
 
     if (slice_direction != -1) {
         pretty_print_slice(h, b);
@@ -722,10 +779,6 @@ static void pretty_print_mesh(sdf_file_t *h, sdf_block_t *b, int idnum)
             fmt[i] = calloc(1, sizeof(**fmt));
     }
 
-    special_format = 0;
-    if (format_float[strlen(format_float)-1] == 'd')
-        special_format = 1;
-
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
     ncount = 0;
@@ -763,40 +816,8 @@ static void pretty_print_mesh(sdf_file_t *h, sdf_block_t *b, int idnum)
 
         if (ncount != 1 && format_index) printf(format_space,1);
 
-        switch (b->datatype_out) {
-        case SDF_DATATYPE_INTEGER4:
-            printf(format_int, *((uint32_t*)ptr));
-            break;
-        case SDF_DATATYPE_INTEGER8:
-            printf(format_int, *((uint64_t*)ptr));
-            break;
-        case SDF_DATATYPE_REAL4:
-            if (special_format) {
-                r8 = *((float*)ptr);
-                if (r8 == 0)
-                    exponent = 0;
-                else {
-                    exponent = (int)floor(log10(fabs(r8)));
-                    r8 *= pow(10, -1.0 * exponent);
-                }
-                printf(format_float, r8, exponent);
-            } else
-                printf(format_float, *((float*)ptr));
-            break;
-        case SDF_DATATYPE_REAL8:
-            if (special_format) {
-                r8 = *((double*)ptr);
-                if (r8 == 0)
-                    exponent = 0;
-                else {
-                    exponent = (int)floor(log10(fabs(r8)));
-                    r8 *= pow(10, -1.0 * exponent);
-                }
-                printf(format_float, r8, exponent);
-            } else
-                printf(format_float, *((double*)ptr));
-            break;
-        }
+        print_value(ptr, b->datatype_out);
+
         idx[dim]++;
         ptr += sz;
         if (b->array_ends && idx[dim] >= b->array_ends[dim]) {
@@ -829,11 +850,9 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
 {
     int *idx, *fac;
     int i, n, rem, sz, left, digit, ncount, idx0;
-    int exponent, special_format = 0;
     char *ptr;
     static const int fmtlen = 32;
     char **fmt;
-    double r8;
 
     if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
             b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
@@ -878,10 +897,6 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
             fmt[i] = calloc(1, sizeof(**fmt));
     }
 
-    special_format = 0;
-    if (format_float[strlen(format_float)-1] == 'd')
-        special_format = 1;
-
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
     ptr = b->data;
@@ -909,40 +924,8 @@ static void pretty_print(sdf_file_t *h, sdf_block_t *b, int idnum)
             printf(format_space,1);
         }
 
-        switch (b->datatype_out) {
-        case SDF_DATATYPE_INTEGER4:
-            printf(format_int, *((uint32_t*)ptr));
-            break;
-        case SDF_DATATYPE_INTEGER8:
-            printf(format_int, *((uint64_t*)ptr));
-            break;
-        case SDF_DATATYPE_REAL4:
-            if (special_format) {
-                r8 = *((float*)ptr);
-                if (r8 == 0)
-                    exponent = 0;
-                else {
-                    exponent = (int)floor(log10(fabs(r8)));
-                    r8 *= pow(10, -1.0 * exponent);
-                }
-                printf(format_float, r8, exponent);
-            } else
-                printf(format_float, *((float*)ptr));
-            break;
-        case SDF_DATATYPE_REAL8:
-            if (special_format) {
-                r8 = *((double*)ptr);
-                if (r8 == 0)
-                    exponent = 0;
-                else {
-                    exponent = (int)floor(log10(fabs(r8)));
-                    r8 *= pow(10, -1.0 * exponent);
-                }
-                printf(format_float, r8, exponent);
-            } else
-                printf(format_float, *((double*)ptr));
-            break;
-        }
+        print_value(ptr, b->datatype_out);
+
         if (ncount == element_count) {
             printf("\n");
             ncount = 0;
@@ -1390,6 +1373,7 @@ int main(int argc, char **argv)
     sdf_block_t *b, *next, *mesh, *mesh0;
     list_t *station_blocks;
     comm_t comm;
+    char zero[16] = {0};
 
     file = parse_args(&argc, &argv);
 
@@ -1541,15 +1525,16 @@ int main(int argc, char **argv)
         if (ascii_header) printf("#\n");
 
         for (n = 0; n < nelements_max; n++) {
-            printf("%12.6g", ((float*)mesh0->data)[n]);
+            print_value_element(mesh0->data, mesh0->datatype, n);
 
             b = list_start(station_blocks);
             for (i = 0; i < station_blocks->count; i++) {
                 idx = n + mesh0->opt - b->opt;
+                printf(format_space,1);
                 if (idx >= 0 && idx < b->nelements)
-                    printf("    %12.6g", ((float*)b->data)[idx]);
+                    print_value_element(b->data, b->datatype_out, n);
                 else
-                    printf("    %12.6g", 0.0);
+                    print_value(zero, b->datatype_out);
                 b = list_next(station_blocks);
             }
 

@@ -1112,7 +1112,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
     SDF_SET_ENTRY_ID(mesh->dim_labels[0], "Time");
     mesh->populate_data = sdf_callback_station_time;
     mesh->nelements_local = mesh->nelements = station->nelements;
-    mesh->dims[0] = mesh->nelements;
+    mesh->local_dims[0] = mesh->dims[0] = mesh->nelements;
     mesh->datatype = mesh->datatype_out = mesh_datatype;
 
     /* Add per-station-block time meshes */
@@ -1135,7 +1135,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
         SDF_SET_ENTRY_ID(mesh->dim_labels[0], "Time");
         mesh->populate_data = sdf_callback_station_time;
         mesh->nelements_local = mesh->nelements = nelements_array[i];
-        mesh->dims[0] = mesh->nelements;
+        mesh->local_dims[0] = mesh->dims[0] = mesh->nelements;
         mesh->datatype = mesh->datatype_out = mesh_datatype;
         mesh->subblock = global_mesh;
         mesh->opt = nsofar;
@@ -1180,7 +1180,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
             b->populate_data = sdf_callback_station;
             b->datatype = b->datatype_out = station->variable_types[var];
             b->nelements_local = b->nelements = nelements;
-            b->dims[0] = b->nelements;
+            b->local_dims[0] = b->dims[0] = b->nelements;
             var++;
 
             // Find the first station block which contains this station id
@@ -1324,6 +1324,7 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         if (new->time_increment <= 0.0) varoffset++;
         new->nvariables = varoffset;
         new->nelements_local = new->nelements = nelements;
+        new->local_dims[0] = new->nelements_local;
 
         // Allocate the stations
         new->station_names =
