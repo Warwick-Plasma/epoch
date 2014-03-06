@@ -1491,7 +1491,7 @@ CONTAINS
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_id_max &
-            .AND. current%id .LT. subset_list(l)%id_max) &
+            .AND. current%id .GT. subset_list(l)%id_max) &
                 use_particle = .FALSE.
 #endif
 
