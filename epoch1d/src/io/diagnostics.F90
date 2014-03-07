@@ -249,10 +249,16 @@ CONTAINS
         ENDDO
       ENDIF
 
+      IF (n_species .GT. 0) THEN
+        ALLOCATE(dump_point_grid(n_species))
+      ELSE
+        ALLOCATE(dump_point_grid(1))
+      ENDIF
+
       DO isubset = 1, n_subsets + 1
         done_species_offset_init = .FALSE.
         done_subset_init = .FALSE.
-        IF (ALLOCATED(dump_point_grid)) dump_point_grid = .FALSE.
+        dump_point_grid = .FALSE.
         IF (isubset .GT. 1) io_list => io_list_data
         iomask = iodumpmask(isubset,:)
 
@@ -1486,10 +1492,6 @@ CONTAINS
     done_species_offset_init = .TRUE.
 
     IF (.NOT.ALLOCATED(species_offset))  ALLOCATE(species_offset(n_species))
-    IF (.NOT.ALLOCATED(dump_point_grid)) THEN
-      ALLOCATE(dump_point_grid(n_species))
-      dump_point_grid = .FALSE.
-    ENDIF
 
     CALL build_species_subset
 
