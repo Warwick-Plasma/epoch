@@ -321,6 +321,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_nprocz = 52
   INTEGER, PARAMETER :: c_const_nsteps = 53
   INTEGER, PARAMETER :: c_const_t_end = 54
+  INTEGER, PARAMETER :: c_const_ndims = 55
 
   INTEGER, PARAMETER :: c_const_io_never = 60
   INTEGER, PARAMETER :: c_const_io_always = 61

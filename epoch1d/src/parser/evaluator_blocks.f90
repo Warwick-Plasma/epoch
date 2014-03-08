@@ -396,6 +396,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_ndims) THEN
+      CALL push_on_eval(REAL(c_ndims, num))
+      RETURN
+    ENDIF
+
     IF (opcode .EQ. c_const_lx) THEN
       CALL push_on_eval(length_x)
       RETURN
