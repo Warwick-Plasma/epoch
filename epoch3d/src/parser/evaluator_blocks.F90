@@ -128,9 +128,9 @@ CONTAINS
 
 
 
-  SUBROUTINE do_constant(opcode, simplify, ix, err)
+  SUBROUTINE do_constant(opcode, simplify, ix, iy, iz, err)
 
-    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(IN) :: opcode, ix, iy, iz
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: err_simplify
@@ -160,51 +160,56 @@ CONTAINS
     ENDIF
 
     IF (opcode .EQ. c_const_y) THEN
-      CALL push_on_eval(0.0_num)
+      CALL push_on_eval(y(iy))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_iy) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(REAL(iy, num))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_z) THEN
-      CALL push_on_eval(0.0_num)
+      CALL push_on_eval(z(iz))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_iz) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(REAL(iz, num))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_xy) THEN
-      CALL push_on_eval(ABS(x(ix)))
+      CALL push_on_eval(SQRT(x(ix)**2 + y(iy)**2))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_xz) THEN
-      CALL push_on_eval(ABS(x(ix)))
+      CALL push_on_eval(SQRT(x(ix)**2 + z(iz)**2))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_yz) THEN
-      CALL push_on_eval(0.0_num)
+      CALL push_on_eval(SQRT(y(iy)**2 + z(iz)**2))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_xyz) THEN
-      CALL push_on_eval(ABS(x(ix)))
+      CALL push_on_eval(SQRT(x(ix)**2 + y(iy)**2 + z(iz)**2))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .GE. c_const_custom_lowbound) THEN
       ! Check for custom constants
-      val = custom_constant(opcode, ix, err)
+      val = custom_constant(opcode, ix, iy, iz, err)
       IF (IAND(err, c_err_unknown_element) .EQ. 0) CALL push_on_eval(val)
       err = err_simplify
       RETURN
@@ -435,65 +440,63 @@ CONTAINS
       RETURN
     ENDIF
 
-    ! Ignorable directions
-
     IF (opcode .EQ. c_const_ly) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(length_y)
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_dy) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(dy)
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_y_min) THEN
-      CALL push_on_eval(-0.5_num)
+      CALL push_on_eval(y_min)
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_y_max) THEN
-      CALL push_on_eval(0.5_num)
+      CALL push_on_eval(y_max)
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_ny) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(REAL(ny_global, num))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_nprocy) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(REAL(nprocy, num))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_lz) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(length_z)
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_dz) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(dz)
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_z_min) THEN
-      CALL push_on_eval(-0.5_num)
+      CALL push_on_eval(z_min)
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_z_max) THEN
-      CALL push_on_eval(0.5_num)
+      CALL push_on_eval(z_max)
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_nz) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(REAL(nz_global, num))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_nprocz) THEN
-      CALL push_on_eval(1.0_num)
+      CALL push_on_eval(REAL(nprocz, num))
       RETURN
     ENDIF
 
@@ -503,9 +506,9 @@ CONTAINS
 
 
 
-  SUBROUTINE do_functions(opcode, simplify, ix, err)
+  SUBROUTINE do_functions(opcode, simplify, ix, iy, iz, err)
 
-    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(IN) :: opcode, ix, iy, iz
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
@@ -522,28 +525,28 @@ CONTAINS
 
     IF (opcode .EQ. c_func_rho) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%density(ix))
+      CALL push_on_eval(initial_conditions(NINT(values(1)))%density(ix, iy, iz))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_tempx) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, 1))
+      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 1))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_tempy) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, 2))
+      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 2))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_tempz) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, 3))
+      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 3))
       err = err_simplify
       RETURN
     ENDIF
@@ -551,7 +554,7 @@ CONTAINS
     IF (opcode .EQ. c_func_tempx_ev) THEN
       CALL get_values(1, values)
       CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, 1))
+          * initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 1))
       err = err_simplify
       RETURN
     ENDIF
@@ -559,7 +562,7 @@ CONTAINS
     IF (opcode .EQ. c_func_tempy_ev) THEN
       CALL get_values(1, values)
       CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, 2))
+          * initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 2))
       err = err_simplify
       RETURN
     ENDIF
@@ -567,14 +570,14 @@ CONTAINS
     IF (opcode .EQ. c_func_tempz_ev) THEN
       CALL get_values(1, values)
       CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, 3))
+          * initial_conditions(NINT(values(1)))%temp(ix, iy, iz, 3))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .GE. c_func_custom_lowbound) THEN
       ! Check for custom functions
-      val = custom_function(opcode, ix, err)
+      val = custom_function(opcode, ix, iy, iz, err)
       IF (IAND(err, c_err_unknown_element) .EQ. 0) CALL push_on_eval(val)
       err = err_simplify
       RETURN
@@ -600,7 +603,15 @@ CONTAINS
 
     IF (opcode .EQ. c_func_sqrt) THEN
       CALL get_values(1, values)
+#ifdef PARSER_CHECKING
+      IF (values(1) .LT. 0) THEN
+        CALL push_on_eval(0.0_num)
+      ELSE
+        CALL push_on_eval(SQRT(values(1)))
+      ENDIF
+#else
       CALL push_on_eval(SQRT(values(1)))
+#endif
       RETURN
     ENDIF
 
@@ -624,7 +635,15 @@ CONTAINS
 
     IF (opcode .EQ. c_func_exp) THEN
       CALL get_values(1, values)
+#ifdef PARSER_CHECKING
+      IF (values(1) .LT. c_smallest_exp) THEN
+        CALL push_on_eval(0.0_num)
+      ELSE
+        CALL push_on_eval(EXP(values(1)))
+      ENDIF
+#else
       CALL push_on_eval(EXP(values(1)))
+#endif
       RETURN
     ENDIF
 
@@ -714,37 +733,37 @@ CONTAINS
 
     IF (opcode .EQ. c_func_ex) THEN
       CALL get_values(c_ndims, values)
-      CALL push_on_eval(ex(NINT(values(1))))
+      CALL push_on_eval(ex(NINT(values(1)), NINT(values(2)), NINT(values(3))))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_ey) THEN
       CALL get_values(c_ndims, values)
-      CALL push_on_eval(ey(NINT(values(1))))
+      CALL push_on_eval(ey(NINT(values(1)), NINT(values(2)), NINT(values(3))))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_ez) THEN
       CALL get_values(c_ndims, values)
-      CALL push_on_eval(ez(NINT(values(1))))
+      CALL push_on_eval(ez(NINT(values(1)), NINT(values(2)), NINT(values(3))))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_bx) THEN
       CALL get_values(c_ndims, values)
-      CALL push_on_eval(bx(NINT(values(1))))
+      CALL push_on_eval(bx(NINT(values(1)), NINT(values(2)), NINT(values(3))))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_by) THEN
       CALL get_values(c_ndims, values)
-      CALL push_on_eval(by(NINT(values(1))))
+      CALL push_on_eval(by(NINT(values(1)), NINT(values(2)), NINT(values(3))))
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_bz) THEN
       CALL get_values(c_ndims, values)
-      CALL push_on_eval(bz(NINT(values(1))))
+      CALL push_on_eval(bz(NINT(values(1)), NINT(values(2)), NINT(values(3))))
       RETURN
     ENDIF
 

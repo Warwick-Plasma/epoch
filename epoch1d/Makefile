@@ -197,6 +197,11 @@ DEFINES += $(D)TRACER_PARTICLES
 # This is a legacy option which will be removed soon.
 #DEFINES += $(D)PER_PARTICLE_CHARGE_MASS
 
+# Perform checks on evaluated deck expressions.
+# This slows down the code but may be required if floating point exceptions
+# are enabled.
+#DEFINES += $(D)PARSER_CHECKING
+
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
@@ -235,7 +240,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   deck_fields_block.f90 deck_io_block.F90 deck_io_global_block.F90 \
   deck_laser_block.f90 deck_particle_probe_block.F90 deck_qed_block.F90 \
   deck_species_block.F90 deck_subset_block.f90 deck_window_block.f90 \
-  diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.F90 evaluator_blocks.f90 \
+  diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.F90 evaluator_blocks.F90 \
   fields.f90 helper.F90 ic_module.f90 ionise.F90 iterators.F90 laser.f90 \
   mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 particle_migration.F90 \
   particle_pointer_advance.f90 particle_temperature.F90 particles.F90 \
@@ -367,7 +372,7 @@ epoch1d.o: epoch1d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
   helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
   particles.o photons.o setup.o split_particle.o welcome.o window.o
 evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o
-evaluator_blocks.o: evaluator_blocks.f90 custom_parser.o stack.o
+evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
 helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
