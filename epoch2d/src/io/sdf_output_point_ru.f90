@@ -497,7 +497,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         INTEGER(i4) :: iterator
-        INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER(i4), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param
@@ -531,7 +531,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         INTEGER(i4) :: iterator
-        INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER(i4), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param
@@ -619,7 +619,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         INTEGER(i8) :: iterator
-        INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER(i8), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param
@@ -653,7 +653,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         INTEGER(i8) :: iterator
-        INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER(i8), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param
@@ -954,7 +954,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         INTEGER(i4) :: iterator
-        INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER(i4), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param
@@ -984,7 +984,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         INTEGER(i4) :: iterator
-        INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER(i4), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param
@@ -1013,7 +1013,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         INTEGER(i8) :: iterator
-        INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER(i8), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param
@@ -1043,7 +1043,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         INTEGER(i8) :: iterator
-        INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: array
+        INTEGER(i8), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param

@@ -179,7 +179,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, direction, param)
         USE sdf_common
         REAL(r4) :: iterator
-        REAL(r4), DIMENSION(:), INTENT(INOUT) :: array
+        REAL(r4), DIMENSION(:), INTENT(IN) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN) :: direction
@@ -270,7 +270,7 @@ CONTAINS
       FUNCTION iterator(array, npoint_it, start, param)
         USE sdf_common
         REAL(r4) :: iterator
-        REAL(r4), DIMENSION(:), INTENT(INOUT) :: array
+        REAL(r4), DIMENSION(:), INTENT(IN) :: array
         INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
         INTEGER, INTENT(IN), OPTIONAL :: param
