@@ -1202,8 +1202,17 @@ CONTAINS
 
         ELSE IF (block_id(1:3) .EQ. 'id/') THEN
 #if PARTICLE_ID || PARTICLE_ID4
-          CALL sdf_read_point_variable(sdf_handle, npart_local, &
-              species_subtypes(ispecies), it_id)
+          ! Particle IDs may either be 4 or 8-byte integers, depending on the
+          ! PARTICLE_ID[4] flag used when writing the file. We must read in
+          ! the data using the precision written to file and then convert to
+          ! the currently used precision.
+          IF (datatype .EQ. c_datatype_integer8) THEN
+            CALL sdf_read_point_variable(sdf_handle, npart_local, &
+                species_subtypes(ispecies), it_id8)
+          ELSE
+            CALL sdf_read_point_variable(sdf_handle, npart_local, &
+                species_subtypes(ispecies), it_id4)
+          ENDIF
 #else
           IF (rank .EQ. 0) THEN
             PRINT*, '*** WARNING ***'
@@ -1464,27 +1473,53 @@ CONTAINS
 
 
 #if PARTICLE_ID || PARTICLE_ID4
-  FUNCTION it_id(array, npart_this_it, start, param)
+  FUNCTION it_id4(array, npart_this_it, start, param)
 
-    REAL(num) :: it_id
-    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    USE constants
+    INTEGER(i4) :: it_id4
+    INTEGER(i4), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
-#ifdef PARTICLE_ID4
-      iterator_list%id = NINT(array(ipart))
+#if PARTICLE_ID
+      iterator_list%id = INT(array(ipart),i8)
 #else
-      iterator_list%id = NINT(array(ipart),i8)
+      iterator_list%id = array(ipart)
 #endif
       iterator_list => iterator_list%next
     ENDDO
 
-    it_id = 0
+    it_id4 = 0
 
-  END FUNCTION it_id
+  END FUNCTION it_id4
+
+
+
+  FUNCTION it_id8(array, npart_this_it, start, param)
+
+    USE constants
+    INTEGER(i8) :: it_id8
+    INTEGER(i8), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+#if PARTICLE_ID
+      iterator_list%id = array(ipart)
+#else
+      iterator_list%id = INT(array(ipart),i4)
+#endif
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_id8 = 0
+
+  END FUNCTION it_id8
 #endif
 
 

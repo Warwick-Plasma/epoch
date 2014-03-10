@@ -559,8 +559,8 @@ CONTAINS
   ! iterator for particle processor
   FUNCTION iterate_processor(array, n_points, start, param)
 
-    REAL(num) :: iterate_processor
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER(i4) :: iterate_processor
+    INTEGER(i4), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN), OPTIONAL :: param
@@ -576,7 +576,7 @@ CONTAINS
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
-        array(part_count) = REAL(cur%processor, num)
+        array(part_count) = cur%processor
         IF (cur%processor .GE. nproc) PRINT *, 'Bad Processor'
         cur => cur%next
       ENDDO
@@ -593,8 +593,8 @@ CONTAINS
 
   FUNCTION iterate_processor0(array, n_points, start, param)
 
-    REAL(num) :: iterate_processor0
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER(i4) :: iterate_processor0
+    INTEGER(i4), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN), OPTIONAL :: param
@@ -610,7 +610,7 @@ CONTAINS
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
-        array(part_count) = REAL(cur%processor_at_t0, num)
+        array(part_count) = cur%processor_at_t0
         IF (cur%processor .GE. nproc) PRINT *, 'Bad Processor'
         cur => cur%next
       ENDDO
@@ -626,12 +626,12 @@ CONTAINS
 
 
 
-#if PARTICLE_ID || PARTICLE_ID4
+#ifdef PARTICLE_ID4
   ! iterator for particle id
   FUNCTION iterate_id(array, n_points, start, param)
 
-    REAL(num) :: iterate_id
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER(i4) :: iterate_id
+    INTEGER(i4), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN), OPTIONAL :: param
@@ -648,7 +648,47 @@ CONTAINS
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
       DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
         part_count = part_count + 1
-        array(part_count) = REAL(cur%id, num)
+        array(part_count) = cur%id
+        cur => cur%next
+      ENDDO
+      ! If the current partlist is exhausted, switch to the next one
+      IF (.NOT. ASSOCIATED(cur)) THEN
+        CALL advance_particle_list(current_list, cur)
+        IF (ASSOCIATED(current_list)) CALL generate_particle_ids(current_list)
+      ENDIF
+    ENDDO
+    n_points = part_count
+
+    iterate_id = 0
+
+  END FUNCTION iterate_id
+#endif
+
+
+
+#if PARTICLE_ID
+  ! iterator for particle id
+  FUNCTION iterate_id(array, n_points, start, param)
+
+    INTEGER(i8) :: iterate_id
+    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, INTENT(INOUT) :: n_points
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    TYPE(particle), POINTER, SAVE :: cur
+    TYPE(particle_list), POINTER, SAVE :: current_list
+    INTEGER :: part_count
+
+    IF (start)  THEN
+      CALL start_particle_list(current_species, current_list, cur)
+      CALL generate_particle_ids(current_list)
+    ENDIF
+
+    part_count = 0
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. n_points))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+        part_count = part_count + 1
+        array(part_count) = cur%id
         cur => cur%next
       ENDDO
       ! If the current partlist is exhausted, switch to the next one
