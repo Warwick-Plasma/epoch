@@ -594,7 +594,7 @@ CONTAINS
   SUBROUTINE set_plasma_frequency_dt
 
     INTEGER :: ispecies, ix, iy, iz
-    REAL(num) :: min_dt, omega2, omega, k_max
+    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2
 
     IF (ic_from_restart) RETURN
 
@@ -605,14 +605,13 @@ CONTAINS
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+        fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
+        fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
         DO iz = 1, nz
         DO iy = 1, ny
         DO ix = 1, nx
-          omega2 = initial_conditions(ispecies)%density(ix,iy,iz) * q0**2 &
-              / species_list(ispecies)%mass / epsilon0 &
-              + 3.0_num * k_max**2 * kb &
-              * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:)) &
-              / species_list(ispecies)%mass
+          omega2 = fac1 * initial_conditions(ispecies)%density(ix,iy,iz) &
+              + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:))
           IF (omega2 .LE. c_tiny) CYCLE
           omega = SQRT(omega2)
           IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
