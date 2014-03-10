@@ -1658,12 +1658,13 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: temp_block_id
 
     INTERFACE
-      FUNCTION iterator(array, npart_it, start)
+      FUNCTION iterator(array, npart_it, start, param)
         USE constants
         REAL(num) :: iterator
         REAL(num), DIMENSION(:), INTENT(OUT) :: array
         INTEGER, INTENT(INOUT) :: npart_it
         LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
       END FUNCTION iterator
     END INTERFACE
 

@@ -14,13 +14,14 @@ MODULE iterators
 CONTAINS
 
   ! iterator for particle positions
-  FUNCTION iterate_particles(array, n_points, start, direction)
+  FUNCTION iterate_particles(array, n_points, start, direction, param)
 
     REAL(num) :: iterate_particles
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -51,12 +52,13 @@ CONTAINS
   ! iterator for particle weight
   ! Only present if you are using the PER_PARTICLE_WEIGHT
   ! Precompiler option
-  FUNCTION iterate_weight(array, n_points, start)
+  FUNCTION iterate_weight(array, n_points, start, param)
 
     REAL(num) :: iterate_weight
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -85,12 +87,13 @@ CONTAINS
 
 
   ! iterator for particle momenta
-  FUNCTION iterate_px(array, n_points, start)
+  FUNCTION iterate_px(array, n_points, start, param)
 
     REAL(num) :: iterate_px
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -117,12 +120,13 @@ CONTAINS
 
 
 
-  FUNCTION iterate_py(array, n_points, start)
+  FUNCTION iterate_py(array, n_points, start, param)
 
     REAL(num) :: iterate_py
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -149,12 +153,13 @@ CONTAINS
 
 
 
-  FUNCTION iterate_pz(array, n_points, start)
+  FUNCTION iterate_pz(array, n_points, start, param)
 
     REAL(num) :: iterate_pz
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -182,12 +187,13 @@ CONTAINS
 
 
   ! iterator for particle velocities
-  FUNCTION iterate_vx(array, n_points, start)
+  FUNCTION iterate_vx(array, n_points, start, param)
 
     REAL(num) :: iterate_vx
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -233,12 +239,13 @@ CONTAINS
 
 
 
-  FUNCTION iterate_vy(array, n_points, start)
+  FUNCTION iterate_vy(array, n_points, start, param)
 
     REAL(num) :: iterate_vy
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -284,12 +291,13 @@ CONTAINS
 
 
 
-  FUNCTION iterate_vz(array, n_points, start)
+  FUNCTION iterate_vz(array, n_points, start, param)
 
     REAL(num) :: iterate_vz
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -336,12 +344,13 @@ CONTAINS
 
 
   ! iterator for particle charge
-  FUNCTION iterate_charge(array, n_points, start)
+  FUNCTION iterate_charge(array, n_points, start, param)
 
     REAL(num) :: iterate_charge
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -373,12 +382,13 @@ CONTAINS
 
 
   ! iterator for particle mass
-  FUNCTION iterate_mass(array, n_points, start)
+  FUNCTION iterate_mass(array, n_points, start, param)
 
     REAL(num) :: iterate_mass
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -410,12 +420,13 @@ CONTAINS
 
 
   ! iterator for particle energy
-  FUNCTION iterate_ek(array, n_points, start)
+  FUNCTION iterate_ek(array, n_points, start, param)
 
     REAL(num) :: iterate_ek
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -464,12 +475,13 @@ CONTAINS
 
 
   ! iterator for particle gamma
-  FUNCTION iterate_gamma(array, n_points, start)
+  FUNCTION iterate_gamma(array, n_points, start, param)
 
     REAL(num) :: iterate_gamma
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -502,12 +514,13 @@ CONTAINS
 
 
   ! iterator for relativistic particle mass
-  FUNCTION iterate_relative_mass(array, n_points, start)
+  FUNCTION iterate_relative_mass(array, n_points, start, param)
 
     REAL(num) :: iterate_relative_mass
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -544,12 +557,13 @@ CONTAINS
 
 #ifdef PARTICLE_DEBUG
   ! iterator for particle processor
-  FUNCTION iterate_processor(array, n_points, start)
+  FUNCTION iterate_processor(array, n_points, start, param)
 
     REAL(num) :: iterate_processor
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -577,12 +591,13 @@ CONTAINS
 
 
 
-  FUNCTION iterate_processor0(array, n_points, start)
+  FUNCTION iterate_processor0(array, n_points, start, param)
 
     REAL(num) :: iterate_processor0
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -613,12 +628,13 @@ CONTAINS
 
 #if PARTICLE_ID || PARTICLE_ID4
   ! iterator for particle id
-  FUNCTION iterate_id(array, n_points, start)
+  FUNCTION iterate_id(array, n_points, start, param)
 
     REAL(num) :: iterate_id
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -651,12 +667,13 @@ CONTAINS
 
 
 #ifdef PHOTONS
-  FUNCTION iterate_optical_depth(array, n_points, start)
+  FUNCTION iterate_optical_depth(array, n_points, start, param)
 
     REAL(num) :: iterate_optical_depth
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -683,12 +700,13 @@ CONTAINS
 
 
 
-  FUNCTION iterate_qed_energy(array, n_points, start)
+  FUNCTION iterate_qed_energy(array, n_points, start, param)
 
     REAL(num) :: iterate_qed_energy
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
@@ -716,12 +734,13 @@ CONTAINS
 
 
 #ifdef TRIDENT_PHOTONS
-  FUNCTION iterate_optical_depth_trident(array, n_points, start)
+  FUNCTION iterate_optical_depth_trident(array, n_points, start, param)
 
     REAL(num) :: iterate_optical_depth_trident
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(INOUT) :: n_points
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count

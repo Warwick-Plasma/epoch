@@ -1166,13 +1166,14 @@ CONTAINS
 
 
 
-  FUNCTION it_part(array, npart_this_it, start, direction)
+  FUNCTION it_part(array, npart_this_it, start, direction, param)
 
     REAL(num) :: it_part
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
+    INTEGER, INTENT(IN), OPTIONAL :: param
 
     INTEGER(i8) :: ipart
     TYPE(particle), POINTER, SAVE :: cur
@@ -1190,12 +1191,13 @@ CONTAINS
 
 
 
-  FUNCTION it_px(array, npart_this_it, start)
+  FUNCTION it_px(array, npart_this_it, start, param)
 
     REAL(num) :: it_px
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1209,12 +1211,13 @@ CONTAINS
 
 
 
-  FUNCTION it_py(array, npart_this_it, start)
+  FUNCTION it_py(array, npart_this_it, start, param)
 
     REAL(num) :: it_py
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1228,12 +1231,13 @@ CONTAINS
 
 
 
-  FUNCTION it_pz(array, npart_this_it, start)
+  FUNCTION it_pz(array, npart_this_it, start, param)
 
     REAL(num) :: it_pz
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1248,12 +1252,13 @@ CONTAINS
 
 
 #ifdef PER_PARTICLE_WEIGHT
-  FUNCTION it_weight(array, npart_this_it, start)
+  FUNCTION it_weight(array, npart_this_it, start, param)
 
     REAL(num) :: it_weight
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1269,12 +1274,13 @@ CONTAINS
 
 
 #if PARTICLE_ID || PARTICLE_ID4
-  FUNCTION it_id(array, npart_this_it, start)
+  FUNCTION it_id(array, npart_this_it, start, param)
 
     REAL(num) :: it_id
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1294,12 +1300,13 @@ CONTAINS
 
 
 #ifdef PHOTONS
-  FUNCTION it_optical_depth(array, npart_this_it, start)
+  FUNCTION it_optical_depth(array, npart_this_it, start, param)
 
     REAL(num) :: it_optical_depth
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1313,12 +1320,13 @@ CONTAINS
 
 
 
-  FUNCTION it_qed_energy(array, npart_this_it, start)
+  FUNCTION it_qed_energy(array, npart_this_it, start, param)
 
     REAL(num) :: it_qed_energy
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1333,12 +1341,13 @@ CONTAINS
 
 
 #ifdef TRIDENT_PHOTONS
-  FUNCTION it_optical_depth_trident(array, npart_this_it, start)
+  FUNCTION it_optical_depth_trident(array, npart_this_it, start, param)
 
     REAL(num) :: it_optical_depth_trident
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
