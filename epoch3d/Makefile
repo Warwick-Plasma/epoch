@@ -402,7 +402,7 @@ sdf_input_cartesian_ru.o: sdf_input_cartesian_ru.f90 sdf_input_ru.o
 sdf_input_point.o: sdf_input_point.f90 sdf_input_point_r4.o sdf_input_point_r8.o
 sdf_input_point_r4.o: sdf_input_point_r4.f90 sdf_common.o sdf_input_point_ru.o
 sdf_input_point_r8.o: sdf_input_point_r8.f90 sdf_common.o sdf_input_point_ru.o
-sdf_input_point_ru.o: sdf_input_point_ru.f90 sdf_input_ru.o
+sdf_input_point_ru.o: sdf_input_point_ru.f90 sdf_common.o sdf_input_ru.o
 sdf_input_r4.o: sdf_input_r4.f90 sdf_input_ru.o
 sdf_input_r8.o: sdf_input_r8.f90 sdf_input_ru.o
 sdf_input_ru.o: sdf_input_ru.f90 sdf_common.o
@@ -426,7 +426,7 @@ sdf_output_point_r4.o: sdf_output_point_r4.f90 sdf_common.o \
   sdf_output_point_ru.o
 sdf_output_point_r8.o: sdf_output_point_r8.f90 sdf_common.o \
   sdf_output_point_ru.o
-sdf_output_point_ru.o: sdf_output_point_ru.f90 sdf_output_ru.o
+sdf_output_point_ru.o: sdf_output_point_ru.f90 sdf_common.o sdf_output_ru.o
 sdf_output_r4.o: sdf_output_r4.f90 sdf_output_ru.o
 sdf_output_r8.o: sdf_output_r8.f90 sdf_output_ru.o
 sdf_output_ru.o: sdf_output_ru.f90 sdf_common.o
