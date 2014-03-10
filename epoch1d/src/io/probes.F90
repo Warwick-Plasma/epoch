@@ -99,34 +99,37 @@ CONTAINS
           ! dump particle Positions
           CALL sdf_write_point_mesh(sdf_handle, TRIM(probe_name), &
               'Grid/Probe/' // TRIM(probe_name), TRIM(probe_name), &
-              npart_probe_global, c_dimension_1d, iterate_probe_particles, &
+              npart_probe_global, c_dimension_2d, it_probe_position, &
               part_probe_offset, convert)
 
           ! dump Px
           WRITE(temp_name, '(a, ''/Px'')') TRIM(probe_name)
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
               TRIM(temp_name), TRIM(probe_name), 'kg.m/s', npart_probe_global, &
-              TRIM(probe_name), iterate_probe_px, part_probe_offset, convert)
+              TRIM(probe_name), it_probe_real, c_dump_part_px, &
+              part_probe_offset, convert)
 
           ! dump Py
           WRITE(temp_name, '(a, ''/Py'')') TRIM(probe_name)
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
               TRIM(temp_name), TRIM(probe_name), 'kg.m/s', npart_probe_global, &
-              TRIM(probe_name), iterate_probe_py, part_probe_offset, convert)
+              TRIM(probe_name), it_probe_real, c_dump_part_py, &
+              part_probe_offset, convert)
 
           ! dump Pz
           WRITE(temp_name, '(a, ''/Pz'')') TRIM(probe_name)
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
               TRIM(temp_name), TRIM(probe_name), 'kg.m/s', npart_probe_global, &
-              TRIM(probe_name), iterate_probe_pz, part_probe_offset, convert)
+              TRIM(probe_name), it_probe_real, c_dump_part_pz, &
+              part_probe_offset, convert)
 
           ! dump particle weight function
           WRITE(temp_name, '(a, ''/weight'')') TRIM(probe_name)
 #ifdef PER_PARTICLE_WEIGHT
           CALL sdf_write_point_variable(sdf_handle, TRIM(temp_name), &
               TRIM(temp_name), TRIM(probe_name), '', npart_probe_global, &
-              TRIM(probe_name), iterate_probe_weight, part_probe_offset, &
-              convert)
+              TRIM(probe_name), it_probe_real, c_dump_part_weight, &
+              part_probe_offset, convert)
 #else
           CALL sdf_write_srl(sdf_handle, TRIM(temp_name), TRIM(probe_name), &
               species_list(ispecies)%weight)
@@ -148,11 +151,11 @@ CONTAINS
 
 
   ! iterator for particle positions
-  FUNCTION iterate_probe_particles(array, n_points, start, direction, param)
+  FUNCTION it_probe_position(array, npoint_it, start, direction, param)
 
-    REAL(num) :: iterate_probe_particles
+    REAL(num) :: it_probe_position
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    INTEGER, INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: npoint_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
     INTEGER, INTENT(IN), OPTIONAL :: param
@@ -164,133 +167,76 @@ CONTAINS
     ENDIF
     part_count = 0
 
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
       part_count = part_count+1
       array(part_count) = cur%part_pos - window_shift
       cur => cur%next
     ENDDO
 
-    n_points = part_count
+    npoint_it = part_count
 
-    iterate_probe_particles = 0
+    it_probe_position = 0
 
-  END FUNCTION iterate_probe_particles
+  END FUNCTION it_probe_position
 
 
 
-  ! iterator for particle momenta
-  FUNCTION iterate_probe_px(array, n_points, start, param)
+  FUNCTION it_probe_real(array, npoint_it, start, param)
 
-    REAL(num) :: iterate_probe_px
+    REAL(num) :: it_probe_real
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    INTEGER, INTENT(INOUT) :: n_points
+    INTEGER, INTENT(INOUT) :: npoint_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN), OPTIONAL :: param
     TYPE(particle), POINTER, SAVE :: cur
-    INTEGER :: part_count
+    INTEGER :: part_count, ndim
 
     IF (start)  THEN
       cur => current_list%head
     ENDIF
     part_count = 0
 
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-      part_count = part_count + 1
-      array(part_count) = cur%part_p(1)
-      cur => cur%next
-    ENDDO
-    n_points = part_count
-
-    iterate_probe_px = 0
-
-  END FUNCTION iterate_probe_px
-
-
-
-  FUNCTION iterate_probe_py(array, n_points, start, param)
-
-    REAL(num) :: iterate_probe_py
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    INTEGER, INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    INTEGER, INTENT(IN), OPTIONAL :: param
-    TYPE(particle), POINTER, SAVE :: cur
-    INTEGER :: part_count
-
-    IF (start)  THEN
-      cur => current_list%head
-    ENDIF
-    part_count = 0
-
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-      part_count = part_count + 1
-      array(part_count) = cur%part_p(2)
-      cur => cur%next
-    ENDDO
-    n_points = part_count
-
-    iterate_probe_py = 0
-
-  END FUNCTION iterate_probe_py
-
-
-
-  FUNCTION iterate_probe_pz(array, n_points, start, param)
-
-    REAL(num) :: iterate_probe_pz
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    INTEGER, INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    INTEGER, INTENT(IN), OPTIONAL :: param
-    TYPE(particle), POINTER, SAVE :: cur
-    INTEGER :: part_count
-
-    IF (start)  THEN
-      cur => current_list%head
-    ENDIF
-    part_count = 0
-
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-      part_count = part_count + 1
-      array(part_count) = cur%part_p(3)
-      cur => cur%next
-    ENDDO
-    n_points = part_count
-
-    iterate_probe_pz = 0
-
-  END FUNCTION iterate_probe_pz
-
-
-
+    SELECT CASE (param)
 #ifdef PER_PARTICLE_WEIGHT
-  FUNCTION iterate_probe_weight(array, n_points, start, param)
-
-    REAL(num) :: iterate_probe_weight
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    INTEGER, INTENT(INOUT) :: n_points
-    LOGICAL, INTENT(IN) :: start
-    INTEGER, INTENT(IN), OPTIONAL :: param
-    TYPE(particle), POINTER, SAVE :: cur
-    INTEGER :: part_count
-
-    IF (start)  THEN
-      cur => current_list%head
-    ENDIF
-    part_count = 0
-
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. n_points))
-      part_count = part_count+1
-      array(part_count) = cur%weight
-      cur => cur%next
-    ENDDO
-
-    n_points = part_count
-
-    iterate_probe_weight = 0
-
-  END FUNCTION iterate_probe_weight
+    CASE (c_dump_part_weight)
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        part_count = part_count+1
+        array(part_count) = cur%weight
+        cur => cur%next
+      ENDDO
 #endif
+
+    CASE (c_dump_part_px)
+      ndim = 1
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(ndim)
+        cur => cur%next
+      ENDDO
+
+    CASE (c_dump_part_py)
+      ndim = 2
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(ndim)
+        cur => cur%next
+      ENDDO
+
+    CASE (c_dump_part_pz)
+      ndim = 3
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        part_count = part_count + 1
+        array(part_count) = cur%part_p(ndim)
+        cur => cur%next
+      ENDDO
+
+    END SELECT
+
+    npoint_it = part_count
+
+    it_probe_real = 0
+
+  END FUNCTION it_probe_real
 #endif
 
 END MODULE probes
