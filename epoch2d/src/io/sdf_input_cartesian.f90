@@ -61,9 +61,12 @@ MODULE sdf_input_cartesian
         read_2d_variable_r8, &
         read_3d_variable_r8, &
         read_3d_material_r8, &
-        read_1d_integer, &
-        read_2d_integer, &
-        read_3d_integer, &
+        read_1d_integer_i4, &
+        read_2d_integer_i4, &
+        read_3d_integer_i4, &
+        read_1d_integer_i8, &
+        read_2d_integer_i8, &
+        read_3d_integer_i8, &
         read_1d_character, &
         read_2d_character, &
         read_3d_character

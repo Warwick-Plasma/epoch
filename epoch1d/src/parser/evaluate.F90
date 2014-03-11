@@ -283,6 +283,7 @@ CONTAINS
       CALL push_eval_flag()
       CALL sl_append()
       CALL push_to_stack(sl_tail%stack, block)
+      IF (block%value .EQ. c_const_time) sl_tail%stack%is_time_varying = .TRUE.
       RETURN
     ENDIF
 

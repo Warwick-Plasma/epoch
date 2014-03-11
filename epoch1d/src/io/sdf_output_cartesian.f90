@@ -57,12 +57,18 @@ MODULE sdf_output_cartesian
         write_1d_character_r8, &
         write_2d_character_r8, &
         write_3d_character_r8, &
-        write_1d_integer_r4, &
-        write_2d_integer_r4, &
-        write_3d_integer_r4, &
-        write_1d_integer_r8, &
-        write_2d_integer_r8, &
-        write_3d_integer_r8
+        write_1d_integer_i4_r4, &
+        write_2d_integer_i4_r4, &
+        write_3d_integer_i4_r4, &
+        write_1d_integer_i4_r8, &
+        write_2d_integer_i4_r8, &
+        write_3d_integer_i4_r8, &
+        write_1d_integer_i8_r4, &
+        write_2d_integer_i8_r4, &
+        write_3d_integer_i8_r4, &
+        write_1d_integer_i8_r8, &
+        write_2d_integer_i8_r8, &
+        write_3d_integer_i8_r8
   END INTERFACE sdf_write_plain_variable
 
   INTERFACE sdf_write_material

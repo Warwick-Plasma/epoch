@@ -714,6 +714,8 @@ CONTAINS
 
   SUBROUTINE generate_particle_ids(partlist)
 
+    USE constants
+
     TYPE(particle_list) :: partlist
 #if PARTICLE_ID || PARTICLE_ID4
     INTEGER(i8), ALLOCATABLE :: nid_all(:)
@@ -772,7 +774,11 @@ CONTAINS
     idcurrent => idlist%head%next
     DO WHILE(ASSOCIATED(idcurrent))
       part_id = part_id + 1
+#if PARTICLE_ID
       idcurrent%part%id = part_id
+#else
+      idcurrent%part%id = INT(part_id,i4)
+#endif
       idnext => idcurrent%next
       DEALLOCATE(idcurrent)
       idcurrent => idnext

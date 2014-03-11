@@ -49,6 +49,17 @@ MODULE diagnostics
 
   TYPE(string_list), POINTER :: file_list(:)
 
+  INTERFACE write_particle_variable
+    MODULE PROCEDURE &
+#if defined(PARTICLE_ID4) || defined(PARTICLE_DEBUG)
+        write_particle_variable_i4, &
+#endif
+#if defined(PARTICLE_ID)
+        write_particle_variable_i8, &
+#endif
+        write_particle_variable_num
+  END INTERFACE write_particle_variable
+
 CONTAINS
 
   SUBROUTINE output_routines(step, force_write)   ! step = step index
@@ -249,16 +260,22 @@ CONTAINS
         ENDDO
       ENDIF
 
+      IF (n_species .GT. 0) THEN
+        ALLOCATE(dump_point_grid(n_species))
+      ELSE
+        ALLOCATE(dump_point_grid(1))
+      ENDIF
+
       DO isubset = 1, n_subsets + 1
         done_species_offset_init = .FALSE.
         done_subset_init = .FALSE.
-        IF (ALLOCATED(dump_point_grid)) dump_point_grid = .FALSE.
+        dump_point_grid = .FALSE.
         IF (isubset .GT. 1) io_list => io_list_data
         iomask = iodumpmask(isubset,:)
 
 #ifdef PER_PARTICLE_WEIGHT
         CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
-            iterate_weight)
+            it_output_real)
 #else
         IF (IAND(iomask(c_dump_part_weight), code) .NE. 0) THEN
           CALL build_species_subset
@@ -274,47 +291,50 @@ CONTAINS
         ENDIF
 #endif
         CALL write_particle_variable(c_dump_part_px, code, &
-            'Px', 'kg.m/s', iterate_px)
+            'Px', 'kg.m/s', it_output_real)
         CALL write_particle_variable(c_dump_part_py, code, &
-            'Py', 'kg.m/s', iterate_py)
+            'Py', 'kg.m/s', it_output_real)
         CALL write_particle_variable(c_dump_part_pz, code, &
-            'Pz', 'kg.m/s', iterate_pz)
+            'Pz', 'kg.m/s', it_output_real)
 
         CALL write_particle_variable(c_dump_part_vx, code, &
-            'Vx', 'm/s', iterate_vx)
+            'Vx', 'm/s', it_output_real)
         CALL write_particle_variable(c_dump_part_vy, code, &
-            'Vy', 'm/s', iterate_vy)
+            'Vy', 'm/s', it_output_real)
         CALL write_particle_variable(c_dump_part_vz, code, &
-            'Vz', 'm/s', iterate_vz)
+            'Vz', 'm/s', it_output_real)
 
         CALL write_particle_variable(c_dump_part_charge, code, &
-            'Q', 'C', iterate_charge)
+            'Q', 'C', it_output_real)
         CALL write_particle_variable(c_dump_part_mass, code, &
-            'Mass', 'kg', iterate_mass)
+            'Mass', 'kg', it_output_real)
         CALL write_particle_variable(c_dump_part_ek, code, &
-            'Ek', 'J', iterate_ek)
+            'Ek', 'J', it_output_real)
         CALL write_particle_variable(c_dump_part_rel_mass, code, &
-            'Relativistic Mass', 'kg', iterate_relative_mass)
+            'Relativistic Mass', 'kg', it_output_real)
         CALL write_particle_variable(c_dump_part_gamma, code, &
-            'Gamma', '', iterate_gamma)
+            'Gamma', '', it_output_real)
 #ifdef PARTICLE_DEBUG
-        CALL write_particle_variable(c_dump_part_grid, code, &
-            'Processor', '', iterate_processor)
-        CALL write_particle_variable(c_dump_part_grid, code, &
-            'Processor_at_t0', '', iterate_processor0)
+        CALL write_particle_variable(c_dump_part_proc, code, &
+            'Processor', '', it_output_integer4)
+        CALL write_particle_variable(c_dump_part_proc0, code, &
+            'Processor_at_t0', '', it_output_integer4)
 #endif
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID)
         CALL write_particle_variable(c_dump_part_id, code, &
-            'ID', '#', iterate_id)
+            'ID', '#', it_output_integer8)
+#elif defined(PARTICLE_ID4)
+        CALL write_particle_variable(c_dump_part_id, code, &
+            'ID', '#', it_output_integer4)
 #endif
 #ifdef PHOTONS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
-            'Optical depth', '', iterate_optical_depth)
+            'Optical depth', '', it_output_real)
         CALL write_particle_variable(c_dump_part_qed_energy, code, &
-            'QED energy', 'J', iterate_qed_energy)
+            'QED energy', 'J', it_output_real)
 #ifdef TRIDENT_PHOTONS
         CALL write_particle_variable(c_dump_part_opdepth_tri, code, &
-            'Trident Depth', '', iterate_optical_depth_trident)
+            'Trident Depth', '', it_output_real)
 #endif
 #endif
         CALL write_particle_grid(code)
@@ -1451,7 +1471,7 @@ CONTAINS
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_id_max &
-            .AND. current%id .LT. subset_list(l)%id_max) &
+            .AND. current%id .GT. subset_list(l)%id_max) &
                 use_particle = .FALSE.
 #endif
 
@@ -1486,10 +1506,6 @@ CONTAINS
     done_species_offset_init = .TRUE.
 
     IF (.NOT.ALLOCATED(species_offset))  ALLOCATE(species_offset(n_species))
-    IF (.NOT.ALLOCATED(dump_point_grid)) THEN
-      ALLOCATE(dump_point_grid(n_species))
-      dump_point_grid = .FALSE.
-    ENDIF
 
     CALL build_species_subset
 
@@ -1577,7 +1593,7 @@ CONTAINS
               'Grid/Particles/' // TRIM(current_species%name), &
               TRIM(current_species%name), &
               io_list(ispecies)%count, c_dimension_1d, &
-              iterate_particles, species_offset(ispecies), convert)
+              it_output_position, species_offset(ispecies), convert)
         ENDIF
       ENDDO
     ENDIF
@@ -1601,7 +1617,7 @@ CONTAINS
             'Grid/Particles/' // TRIM(current_species%name), &
             TRIM(current_species%name), &
             ejected_list(ispecies)%count, c_dimension_1d, &
-            iterate_particles, ejected_offset(ispecies), convert)
+            it_output_position, ejected_offset(ispecies), convert)
       ENDDO
     ENDIF
 
@@ -1609,19 +1625,20 @@ CONTAINS
 
 
 
-  SUBROUTINE write_particle_variable(id_in, code, name, units, iterator)
+  SUBROUTINE write_particle_variable_num(id_in, code, name, units, iterator)
 
     INTEGER, INTENT(IN) :: id_in, code
     CHARACTER(LEN=*), INTENT(IN) :: name, units
     CHARACTER(LEN=c_id_length) :: temp_block_id
 
     INTERFACE
-      FUNCTION iterator(array, npart_it, start)
+      FUNCTION iterator(array, npoint_it, start, param)
         USE constants
         REAL(num) :: iterator
         REAL(num), DIMENSION(:), INTENT(OUT) :: array
-        INTEGER, INTENT(INOUT) :: npart_it
+        INTEGER, INTENT(INOUT) :: npoint_it
         LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
       END FUNCTION iterator
     END INTERFACE
 
@@ -1651,7 +1668,7 @@ CONTAINS
               'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
               TRIM(current_species%name), &
               TRIM(units), io_list(ispecies)%count, temp_block_id, &
-              iterator, species_offset(ispecies), convert)
+              iterator, id_in, species_offset(ispecies), convert)
           dump_point_grid(ispecies) = .TRUE.
         ENDIF
       ENDDO
@@ -1676,11 +1693,167 @@ CONTAINS
             'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
             TRIM(current_species%name), &
             TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
-            iterator, ejected_offset(ispecies), convert)
+            iterator, id_in, ejected_offset(ispecies), convert)
       ENDDO
     ENDIF
 
-  END SUBROUTINE write_particle_variable
+  END SUBROUTINE write_particle_variable_num
+
+
+
+#if defined(PARTICLE_ID4) || defined(PARTICLE_DEBUG)
+  SUBROUTINE write_particle_variable_i4(id_in, code, name, units, iterator)
+
+    INTEGER, INTENT(IN) :: id_in, code
+    CHARACTER(LEN=*), INTENT(IN) :: name, units
+    CHARACTER(LEN=c_id_length) :: temp_block_id
+
+    INTERFACE
+      FUNCTION iterator(array, npart_it, start, param)
+        USE constants
+        INTEGER(i4) :: iterator
+        INTEGER(i4), DIMENSION(:), INTENT(OUT) :: array
+        INTEGER, INTENT(INOUT) :: npart_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    INTEGER :: ispecies, id
+    LOGICAL :: convert, found
+
+    id = id_in
+    IF (IAND(iomask(id), code) .NE. 0) THEN
+      CALL build_species_subset
+
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+
+      DO ispecies = 1, n_species
+        current_species => io_list(ispecies)
+
+        IF (IAND(current_species%dumpmask, code) .NE. 0 &
+            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL species_offset_init()
+          IF (npart_global .EQ. 0) RETURN
+
+          found = sdf_get_block_id(sdf_handle, &
+              'grid/' // TRIM(current_species%name), temp_block_id)
+          CALL sdf_write_point_variable(sdf_handle, &
+              lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
+              'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
+              TRIM(current_species%name), &
+              TRIM(units), io_list(ispecies)%count, temp_block_id, &
+              iterator, id_in, species_offset(ispecies), convert)
+          dump_point_grid(ispecies) = .TRUE.
+        ENDIF
+      ENDDO
+    ENDIF
+
+    id = c_dump_ejected_particles
+    IF (IAND(iomask(id), code) .NE. 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+      reset_ejected = .TRUE.
+
+      DO ispecies = 1, n_species
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
+        current_species => ejected_list(ispecies)
+        found = sdf_get_block_id(sdf_handle, &
+            'grid/' // TRIM(current_species%name), temp_block_id)
+        CALL sdf_write_point_variable(sdf_handle, &
+            lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
+            'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
+            TRIM(current_species%name), &
+            TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
+            iterator, id_in, ejected_offset(ispecies), convert)
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE write_particle_variable_i4
+#endif
+
+
+
+#if defined(PARTICLE_ID)
+  SUBROUTINE write_particle_variable_i8(id_in, code, name, units, iterator)
+
+    INTEGER, INTENT(IN) :: id_in, code
+    CHARACTER(LEN=*), INTENT(IN) :: name, units
+    CHARACTER(LEN=c_id_length) :: temp_block_id
+
+    INTERFACE
+      FUNCTION iterator(array, npart_it, start, param)
+        USE constants
+        INTEGER(i8) :: iterator
+        INTEGER(i8), DIMENSION(:), INTENT(OUT) :: array
+        INTEGER, INTENT(INOUT) :: npart_it
+        LOGICAL, INTENT(IN) :: start
+        INTEGER, INTENT(IN), OPTIONAL :: param
+      END FUNCTION iterator
+    END INTERFACE
+
+    INTEGER :: ispecies, id
+    LOGICAL :: convert, found
+
+    id = id_in
+    IF (IAND(iomask(id), code) .NE. 0) THEN
+      CALL build_species_subset
+
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+
+      DO ispecies = 1, n_species
+        current_species => io_list(ispecies)
+
+        IF (IAND(current_species%dumpmask, code) .NE. 0 &
+            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+          CALL species_offset_init()
+          IF (npart_global .EQ. 0) RETURN
+
+          found = sdf_get_block_id(sdf_handle, &
+              'grid/' // TRIM(current_species%name), temp_block_id)
+          CALL sdf_write_point_variable(sdf_handle, &
+              lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
+              'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
+              TRIM(current_species%name), &
+              TRIM(units), io_list(ispecies)%count, temp_block_id, &
+              iterator, id_in, species_offset(ispecies), convert)
+          dump_point_grid(ispecies) = .TRUE.
+        ENDIF
+      ENDDO
+    ENDIF
+
+    id = c_dump_ejected_particles
+    IF (IAND(iomask(id), code) .NE. 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
+          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
+          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+      reset_ejected = .TRUE.
+
+      DO ispecies = 1, n_species
+        CALL species_offset_init()
+        IF (npart_global .EQ. 0) RETURN
+
+        current_species => ejected_list(ispecies)
+        found = sdf_get_block_id(sdf_handle, &
+            'grid/' // TRIM(current_species%name), temp_block_id)
+        CALL sdf_write_point_variable(sdf_handle, &
+            lowercase(TRIM(name) // '/' // TRIM(current_species%name)), &
+            'Particles/' // TRIM(name) // '/' // TRIM(current_species%name), &
+            TRIM(current_species%name), &
+            TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
+            iterator, id_in, ejected_offset(ispecies), convert)
+      ENDDO
+    ENDIF
+
+  END SUBROUTINE write_particle_variable_i8
+#endif
 
 
 
@@ -1901,6 +2074,7 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: halt
     INTEGER, PARAMETER :: tag = 2001
     INTEGER :: msg, request, i
+    INTEGER :: status_ignore(MPI_STATUS_SIZE)
     LOGICAL :: flag
     LOGICAL, ALLOCATABLE, SAVE :: completed(:)
     LOGICAL, SAVE :: yet_to_sync = .TRUE.
@@ -1930,7 +2104,9 @@ CONTAINS
         all_completed = .TRUE.
         DO i = 1,nproc-1
           IF (.NOT.completed(i)) THEN
-            CALL MPI_IPROBE(i, tag, comm, flag, MPI_STATUS_IGNORE, errcode)
+            ! The Platform-MPI interface for MPI_IPROBE is broken and will not
+            ! allow us to use MPI_STATUS_IGNORE
+            CALL MPI_IPROBE(i, tag, comm, flag, status_ignore, errcode)
             completed(i) = flag
             IF (flag) THEN
               CALL MPI_RECV(msg, 0, MPI_INTEGER, i, tag, comm, &

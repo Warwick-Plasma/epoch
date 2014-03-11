@@ -151,6 +151,7 @@ CONTAINS
     IF (str_cmp(name, 'nprocy')) as_constant = c_const_nprocy
     IF (str_cmp(name, 'nsteps')) as_constant = c_const_nsteps
     IF (str_cmp(name, 't_end')) as_constant = c_const_t_end
+    IF (str_cmp(name, 'ndims')) as_constant = c_const_ndims
 
     ! Dumpmask constants
     IF (str_cmp(name, 'never')) as_constant = c_const_io_never

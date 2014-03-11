@@ -552,7 +552,7 @@ CONTAINS
       ! in then issue a warning
 #ifndef PARTICLE_PROBES
       IF (mask_element .EQ. c_dump_probes &
-          .AND. mask .NE. c_io_none .AND. IAND(mask,c_io_never) .NE. 0) THEN
+          .AND. mask .NE. c_io_none .AND. IAND(mask,c_io_never) .EQ. 0) THEN
         errcode = c_err_pp_options_wrong
         extended_error_string = '-DPARTICLE_PROBES'
         mask = c_io_never
@@ -564,7 +564,7 @@ CONTAINS
 #endif
 #ifndef PARTICLE_ID
       IF (mask_element .EQ. c_dump_part_id &
-          .AND. mask .NE. c_io_none .AND. IAND(mask,c_io_never) .NE. 0) THEN
+          .AND. mask .NE. c_io_none .AND. IAND(mask,c_io_never) .EQ. 0) THEN
         errcode = c_err_pp_options_wrong
         extended_error_string = '-DPARTICLE_ID'
         mask = c_io_never

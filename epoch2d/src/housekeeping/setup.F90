@@ -529,7 +529,7 @@ CONTAINS
   SUBROUTINE set_plasma_frequency_dt
 
     INTEGER :: ispecies, ix, iy
-    REAL(num) :: min_dt, omega2, omega, k_max
+    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2
 
     IF (ic_from_restart) RETURN
 
@@ -540,13 +540,12 @@ CONTAINS
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+        fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
+        fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
         DO iy = 1, ny
         DO ix = 1, nx
-          omega2 = initial_conditions(ispecies)%density(ix,iy) * q0**2 &
-              / species_list(ispecies)%mass / epsilon0 &
-              + 3.0_num * k_max**2 * kb &
-              * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:)) &
-              / species_list(ispecies)%mass
+          omega2 = fac1 * initial_conditions(ispecies)%density(ix,iy) &
+              + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:))
           IF (omega2 .LE. c_tiny) CYCLE
           omega = SQRT(omega2)
           IF (2.0_num * pi / omega .LT. min_dt) min_dt = 2.0_num * pi / omega
@@ -1112,8 +1111,17 @@ CONTAINS
 
         ELSE IF (block_id(1:3) .EQ. 'id/') THEN
 #if PARTICLE_ID || PARTICLE_ID4
-          CALL sdf_read_point_variable(sdf_handle, npart_local, &
-              species_subtypes(ispecies), it_id)
+          ! Particle IDs may either be 4 or 8-byte integers, depending on the
+          ! PARTICLE_ID[4] flag used when writing the file. We must read in
+          ! the data using the precision written to file and then convert to
+          ! the currently used precision.
+          IF (datatype .EQ. c_datatype_integer8) THEN
+            CALL sdf_read_point_variable(sdf_handle, npart_local, &
+                species_subtypes(ispecies), it_id8)
+          ELSE
+            CALL sdf_read_point_variable(sdf_handle, npart_local, &
+                species_subtypes(ispecies), it_id4)
+          ENDIF
 #else
           IF (rank .EQ. 0) THEN
             PRINT*, '*** WARNING ***'
@@ -1262,13 +1270,14 @@ CONTAINS
 
 
 
-  FUNCTION it_part(array, npart_this_it, start, direction)
+  FUNCTION it_part(array, npart_this_it, start, direction, param)
 
     REAL(num) :: it_part
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
+    INTEGER, INTENT(IN), OPTIONAL :: param
 
     INTEGER(i8) :: ipart
     TYPE(particle), POINTER, SAVE :: cur
@@ -1286,12 +1295,13 @@ CONTAINS
 
 
 
-  FUNCTION it_px(array, npart_this_it, start)
+  FUNCTION it_px(array, npart_this_it, start, param)
 
     REAL(num) :: it_px
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1305,12 +1315,13 @@ CONTAINS
 
 
 
-  FUNCTION it_py(array, npart_this_it, start)
+  FUNCTION it_py(array, npart_this_it, start, param)
 
     REAL(num) :: it_py
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1324,12 +1335,13 @@ CONTAINS
 
 
 
-  FUNCTION it_pz(array, npart_this_it, start)
+  FUNCTION it_pz(array, npart_this_it, start, param)
 
     REAL(num) :: it_pz
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1344,12 +1356,13 @@ CONTAINS
 
 
 #ifdef PER_PARTICLE_WEIGHT
-  FUNCTION it_weight(array, npart_this_it, start)
+  FUNCTION it_weight(array, npart_this_it, start, param)
 
     REAL(num) :: it_weight
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1365,37 +1378,65 @@ CONTAINS
 
 
 #if PARTICLE_ID || PARTICLE_ID4
-  FUNCTION it_id(array, npart_this_it, start)
+  FUNCTION it_id4(array, npart_this_it, start, param)
 
-    REAL(num) :: it_id
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    USE constants
+    INTEGER(i4) :: it_id4
+    INTEGER(i4), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
-#ifdef PARTICLE_ID4
-      iterator_list%id = NINT(array(ipart))
+#if PARTICLE_ID
+      iterator_list%id = INT(array(ipart),i8)
 #else
-      iterator_list%id = NINT(array(ipart),i8)
+      iterator_list%id = array(ipart)
 #endif
       iterator_list => iterator_list%next
     ENDDO
 
-    it_id = 0
+    it_id4 = 0
 
-  END FUNCTION it_id
+  END FUNCTION it_id4
+
+
+
+  FUNCTION it_id8(array, npart_this_it, start, param)
+
+    USE constants
+    INTEGER(i8) :: it_id8
+    INTEGER(i8), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+#if PARTICLE_ID
+      iterator_list%id = array(ipart)
+#else
+      iterator_list%id = INT(array(ipart),i4)
+#endif
+      iterator_list => iterator_list%next
+    ENDDO
+
+    it_id8 = 0
+
+  END FUNCTION it_id8
 #endif
 
 
 
 #ifdef PHOTONS
-  FUNCTION it_optical_depth(array, npart_this_it, start)
+  FUNCTION it_optical_depth(array, npart_this_it, start, param)
 
     REAL(num) :: it_optical_depth
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1409,12 +1450,13 @@ CONTAINS
 
 
 
-  FUNCTION it_qed_energy(array, npart_this_it, start)
+  FUNCTION it_qed_energy(array, npart_this_it, start, param)
 
     REAL(num) :: it_qed_energy
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
@@ -1429,12 +1471,13 @@ CONTAINS
 
 
 #ifdef TRIDENT_PHOTONS
-  FUNCTION it_optical_depth_trident(array, npart_this_it, start)
+  FUNCTION it_optical_depth_trident(array, npart_this_it, start, param)
 
     REAL(num) :: it_optical_depth_trident
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it

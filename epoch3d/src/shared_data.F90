@@ -321,6 +321,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_nprocz = 52
   INTEGER, PARAMETER :: c_const_nsteps = 53
   INTEGER, PARAMETER :: c_const_t_end = 54
+  INTEGER, PARAMETER :: c_const_ndims = 55
 
   INTEGER, PARAMETER :: c_const_io_never = 60
   INTEGER, PARAMETER :: c_const_io_always = 61
@@ -665,7 +666,9 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_total_energy_sum  = 51
   INTEGER, PARAMETER :: c_dump_part_rel_mass     = 52
   INTEGER, PARAMETER :: c_dump_part_gamma        = 53
-  INTEGER, PARAMETER :: num_vars_to_dump         = 53
+  INTEGER, PARAMETER :: c_dump_part_proc         = 54
+  INTEGER, PARAMETER :: c_dump_part_proc0        = 55
+  INTEGER, PARAMETER :: num_vars_to_dump         = 55
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
