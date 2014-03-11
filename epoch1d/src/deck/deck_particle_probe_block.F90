@@ -70,7 +70,7 @@ CONTAINS
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
     ENDIF
 
-    discard = got_point .AND. got_normal
+    discard = .NOT.(got_point .AND. got_normal)
 
     IF (discard) THEN
       IF (rank .EQ. 0) THEN
