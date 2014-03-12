@@ -902,8 +902,8 @@ static sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
 
 static sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
 {
-    int i, j, k, sz, len, vidx, varoffset;
-    int data_offset0, data_offset;
+    int i, j, k, sz, len, vidx;
+    int data_offset;
     list_t *station_blocks;
     char *varid, *ptr = b->data;
     sdf_block_t *block;
@@ -927,16 +927,6 @@ static sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
 
     // Find station blocks containing this station id.
     block = list_start(station_blocks);
-    varoffset = 0;
-    data_offset0 = 0;
-    if (block->step_increment <= 0) {
-        data_offset0 += SDF_TYPE_SIZES[block->variable_types[varoffset]];
-        varoffset++;
-    }
-    if (block->time_increment <= 0.0) {
-        data_offset0 += SDF_TYPE_SIZES[block->variable_types[varoffset]];
-        varoffset++;
-    }
 
     for (i = 0; i < station_blocks->count; i++) {
         for (j = 0; j < block->nstations; j++) {
@@ -945,7 +935,7 @@ static sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
             if (block->station_move[j] < 0) continue;
 
             // Found station block. Now find the variable.
-            vidx = varoffset;
+            vidx = 0;
             for (k = 0; k < j; k++) vidx += block->station_nvars[k];
 
             for (k = 0; k < block->station_nvars[j]; k++, vidx++) {
@@ -954,7 +944,7 @@ static sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
             }
 
             // Now read the data.
-            data_offset = data_offset0;
+            data_offset = 0;
             for (k = 0; k < vidx; k++)
                 data_offset += SDF_TYPE_SIZES[block->variable_types[k]];
 
