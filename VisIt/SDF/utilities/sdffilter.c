@@ -72,6 +72,17 @@ static char width_fmt[16];
         printf(")\n"); \
     } while(0)
 
+#define PRINTDAR(name,array,fmt,len) do { \
+        int _i; \
+        if (!(array)) break; \
+        printf(indent, 1); \
+        printf(width_fmt, (name)); \
+        printf(" (" fmt, sdf_datatype_c[(array)[0]]); \
+        for (_i = 1; _i < (len); _i++) \
+            printf("," fmt, sdf_datatype_c[(array)[_i]]); \
+        printf(")\n"); \
+    } while(0)
+
 
 int close_files(sdf_file_t *h);
 
@@ -1174,7 +1185,7 @@ static void print_metadata_station(sdf_block_t *b)
         PRINTAR("station_z:", b->station_z, "%g", b->nstations);
     PRINTAR("variable_ids:", b->variable_ids, "%s", b->nvariables);
     PRINTAR("variable_names:", b->material_names, "%s", b->nvariables);
-    PRINTAR("variable_types:", b->variable_types, "%i", b->nvariables);
+    PRINTDAR("variable_types:", b->variable_types, "%s", b->nvariables);
     PRINTAR("variable_units:", b->dim_units, "%s", b->nvariables);
     if (b->dim_mults)
         PRINTAR("variable_mults:", b->dim_mults, "%g", b->nvariables);
