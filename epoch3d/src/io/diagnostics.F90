@@ -1621,8 +1621,8 @@ CONTAINS
         dump_grid = dump_point_grid(ispecies)
 
         IF (IAND(mask, code) .NE. 0) dump_grid = .TRUE.
-        IF (IAND(code, c_io_restartable) .NE. 0) dump_grid = .TRUE.
         IF (IAND(mask, c_io_never) .NE. 0) dump_grid = .FALSE.
+        IF (IAND(code, c_io_restartable) .NE. 0) dump_grid = .TRUE.
 
         IF (dump_grid) THEN
           CALL species_offset_init()
