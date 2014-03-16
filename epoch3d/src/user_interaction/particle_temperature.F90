@@ -88,17 +88,25 @@ CONTAINS
     ELSE
       cached = .TRUE.
 
-      DO
-        rand1 = random()
-        rand2 = random()
+      rand1 = random()
+      rand2 = random()
 
-        rand1 = 2.0_num * rand1 - 1.0_num
-        rand2 = 2.0_num * rand2 - 1.0_num
+      rand1 = 2.0_num * rand1 - 1.0_num
+      rand2 = 2.0_num * rand2 - 1.0_num
 
-        w = rand1**2 + rand2**2
+      w = rand1**2 + rand2**2
 
-        IF (w .LT. 1.0_num) EXIT
-      ENDDO
+      IF (w .LE. c_tiny .OR. w .GE. 1.0_num) THEN
+        DO
+          rand1 = rand2
+          rand2 = random()
+          rand2 = 2.0_num * rand2 - 1.0_num
+
+          w = rand1**2 + rand2**2
+
+          IF (w .GT. c_tiny .AND. w .LT. 1.0_num) EXIT
+        ENDDO
+      ENDIF
 
       w = SQRT((-2.0_num * LOG(w)) / w)
 
