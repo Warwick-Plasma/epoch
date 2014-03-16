@@ -729,6 +729,7 @@ CONTAINS
         .AND. restart_dump_every .GT. -1) restart_flag = .TRUE.
     IF (first_call .AND. force_first_to_be_restartable) restart_flag = .TRUE.
     IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
+    IF (force) restart_flag = .TRUE.
 
     IF (.NOT.restart_flag .AND. .NOT.new_style_io_block) THEN
       dump_source_code = .FALSE.
