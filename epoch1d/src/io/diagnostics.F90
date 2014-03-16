@@ -2088,7 +2088,7 @@ CONTAINS
     IF (all_completed) RETURN
 
     IF (walltime .LT. 0) walltime = MPI_WTIME()
-    IF ((walltime + timer_average(c_timer_dt) + timer_average(c_timer_io) &
+    IF ((walltime + timer_average(c_timer_step) + timer_average(c_timer_io) &
         + timer_average(c_timer_balance) - real_walltime_start) &
         .LT. frac * stop_at_walltime) RETURN
 

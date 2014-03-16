@@ -54,6 +54,7 @@ PROGRAM pic
   CALL mpi_minimal_init ! mpi_routines.f90
   real_walltime_start = MPI_WTIME()
   CALL minimal_init     ! setup.f90
+  CALL timer_init
   CALL setup_partlists  ! partlist.f90
   CALL get_job_id(jobid)
   CALL welcome_message  ! welcome.f90
@@ -134,7 +135,6 @@ PROGRAM pic
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
   IF (use_field_ionisation) CALL initialise_ionisation
 
-  CALL timer_init
   IF (timer_collect) CALL timer_start(c_timer_step)
 
   DO
