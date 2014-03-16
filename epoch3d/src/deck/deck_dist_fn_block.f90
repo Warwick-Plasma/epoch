@@ -169,6 +169,7 @@ CONTAINS
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(c_dir_x) = .TRUE.
       working_block%restrictions(:,c_dir_x) = (/work1, work2/)
+      RETURN
     ENDIF
 
     IF (str_cmp(element, 'restrict_y')) THEN
@@ -176,6 +177,7 @@ CONTAINS
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(c_dir_y) = .TRUE.
       working_block%restrictions(:,c_dir_y) = (/work1, work2/)
+      RETURN
     ENDIF
 
     IF (str_cmp(element, 'restrict_z')) THEN
@@ -183,6 +185,7 @@ CONTAINS
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(c_dir_z) = .TRUE.
       working_block%restrictions(:,c_dir_z) = (/work1, work2/)
+      RETURN
     ENDIF
 
     IF (str_cmp(element, 'restrict_px')) THEN
@@ -190,6 +193,7 @@ CONTAINS
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(c_dir_px) = .TRUE.
       working_block%restrictions(:,c_dir_px) = (/work1, work2/)
+      RETURN
     ENDIF
 
     IF (str_cmp(element, 'restrict_py')) THEN
@@ -197,6 +201,7 @@ CONTAINS
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(c_dir_py) = .TRUE.
       working_block%restrictions(:,c_dir_py) = (/work1, work2/)
+      RETURN
     ENDIF
 
     IF (str_cmp(element, 'restrict_pz')) THEN
@@ -204,6 +209,7 @@ CONTAINS
       IF (errcode .NE. c_err_none) RETURN
       working_block%use_restrictions(c_dir_pz) = .TRUE.
       working_block%restrictions(:,c_dir_pz) = (/work1, work2/)
+      RETURN
     ENDIF
 
     IF (str_cmp(element, 'include_species')) THEN

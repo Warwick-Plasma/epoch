@@ -772,7 +772,7 @@ CONTAINS
         ENDIF
 
         e1 = 0.5_num  * (ez(1:nx  , ibc  , 0:nz-1) + ez(1:nx  , ibc, 1:nz  ))
-        e2 = 0.5_num  * (ex(0:nx-1, ibc  , 1:nx  ) + ex(1:nx  , ibc, 1:nz  ))
+        e2 = 0.5_num  * (ex(0:nx-1, ibc  , 1:nz  ) + ex(1:nx  , ibc, 1:nz  ))
         b1 = 0.25_num * (bx(1:nx  , ibc-1, 0:nz-1) + bx(1:nx  , ibc, 0:nz-1) &
                        + bx(1:nx  , ibc-1, 1:nz  ) + bx(1:nx  , ibc, 1:nz  ))
         b2 = 0.25_num * (bz(0:nx-1, ibc-1, 1:nz  ) + bz(0:nx-1, ibc, 1:nz  ) &

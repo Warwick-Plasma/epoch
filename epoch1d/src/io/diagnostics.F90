@@ -729,6 +729,7 @@ CONTAINS
         .AND. restart_dump_every .GT. -1) restart_flag = .TRUE.
     IF (first_call .AND. force_first_to_be_restartable) restart_flag = .TRUE.
     IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
+    IF (force) restart_flag = .TRUE.
 
     IF (.NOT.restart_flag .AND. .NOT.new_style_io_block) THEN
       dump_source_code = .FALSE.
@@ -1581,8 +1582,8 @@ CONTAINS
         dump_grid = dump_point_grid(ispecies)
 
         IF (IAND(mask, code) .NE. 0) dump_grid = .TRUE.
-        IF (IAND(code, c_io_restartable) .NE. 0) dump_grid = .TRUE.
         IF (IAND(mask, c_io_never) .NE. 0) dump_grid = .FALSE.
+        IF (IAND(code, c_io_restartable) .NE. 0) dump_grid = .TRUE.
 
         IF (dump_grid) THEN
           CALL species_offset_init()
@@ -2088,7 +2089,7 @@ CONTAINS
     IF (all_completed) RETURN
 
     IF (walltime .LT. 0) walltime = MPI_WTIME()
-    IF ((walltime + timer_average(c_timer_dt) + timer_average(c_timer_io) &
+    IF ((walltime + timer_average(c_timer_step) + timer_average(c_timer_io) &
         + timer_average(c_timer_balance) - real_walltime_start) &
         .LT. frac * stop_at_walltime) RETURN
 

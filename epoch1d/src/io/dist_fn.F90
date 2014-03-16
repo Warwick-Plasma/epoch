@@ -243,8 +243,8 @@ CONTAINS
     IF (calc_ranges) THEN
       DO idim = 1, curdims
         IF (calc_range(idim)) THEN
-          ranges(1,idim) =  HUGE(1.0_num)
-          ranges(2,idim) = -HUGE(1.0_num)
+          ranges(1,idim) =  HUGE(1.0_num) * 0.4_num
+          ranges(2,idim) = -HUGE(1.0_num) * 0.4_num
         ENDIF
       ENDDO
       next => io_list(species)%attached_list%head

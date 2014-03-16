@@ -75,9 +75,9 @@ CONTAINS
         CALL do_operator(block%value, err)
       ELSE IF (block%ptype .EQ. c_pt_constant &
           .OR. block%ptype .EQ. c_pt_default_constant) THEN
-        CALL do_constant(block%value, ix, .FALSE., err)
+        CALL do_constant(block%value, .FALSE., ix, err)
       ELSE IF (block%ptype .EQ. c_pt_function) THEN
-        CALL do_functions(block%value, ix, .FALSE., err)
+        CALL do_functions(block%value, .FALSE., ix, err)
       ENDIF
 
       IF (err .NE. c_err_none) THEN
