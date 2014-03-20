@@ -40,7 +40,6 @@ CONTAINS
   SUBROUTINE push_eval_flag()
 
     eval_stack%stack_point = eval_stack%stack_point + 1
-    eval_stack%entries(eval_stack%stack_point) = 1.010101
     eval_stack%flags(eval_stack%stack_point) = 1
 
   END SUBROUTINE push_eval_flag
@@ -99,5 +98,16 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE get_values
+
+
+
+  SUBROUTINE stack_point_fix()
+
+    IF (eval_stack%nvalues .GT. 0) THEN
+      eval_stack%nvalues = eval_stack%nvalues + 1
+      eval_stack%stack_point = eval_stack%stack_point + 1
+    ENDIF
+
+  END SUBROUTINE stack_point_fix
 
 END MODULE stack

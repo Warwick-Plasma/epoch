@@ -133,34 +133,29 @@ CONTAINS
     INTEGER, INTENT(IN) :: opcode, ix
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
+    INTEGER :: err_simplify
     REAL(num) :: val
 
     err = c_err_none
+    err_simplify = c_err_none
 
-    IF (simplify) THEN
-      IF (opcode .EQ. c_const_time &
-          .OR. opcode .EQ. c_const_x &
-          .OR. opcode .EQ. c_const_ix &
-          .OR. opcode .EQ. c_const_r_xy &
-          .OR. opcode .EQ. c_const_r_xz &
-          .OR. opcode .GE. c_const_custom_lowbound) THEN
-        err = c_err_other
-        RETURN
-      ENDIF
-    ENDIF
+    IF (simplify) err_simplify = c_err_other
 
     IF (opcode .EQ. c_const_time) THEN
       CALL push_on_eval(time)
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_x) THEN
       CALL push_on_eval(x(ix))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_ix) THEN
       CALL push_on_eval(REAL(ix, num))
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -186,11 +181,13 @@ CONTAINS
 
     IF (opcode .EQ. c_const_r_xy) THEN
       CALL push_on_eval(ABS(x(ix)**2))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_xz) THEN
       CALL push_on_eval(ABS(x(ix)**2))
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -203,6 +200,7 @@ CONTAINS
       ! Check for custom constants
       val = custom_constant(opcode, ix, err)
       IF (IAND(err, c_err_unknown_element) .EQ. 0) CALL push_on_eval(val)
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -506,48 +504,41 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
     REAL(num) :: val
-    INTEGER :: count, ipoint, n
+    INTEGER :: count, ipoint, n, err_simplify
     LOGICAL :: done
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
     REAL(num) :: point, t0
 
     err = c_err_none
+    err_simplify = c_err_none
 
-    IF (simplify) THEN
-      IF (opcode .EQ. c_func_rho &
-          .OR. opcode .EQ. c_func_tempx &
-          .OR. opcode .EQ. c_func_tempy &
-          .OR. opcode .EQ. c_func_tempz &
-          .OR. opcode .EQ. c_func_tempx_ev &
-          .OR. opcode .EQ. c_func_tempy_ev &
-          .OR. opcode .EQ. c_func_tempz_ev &
-          .OR. opcode .GE. c_func_custom_lowbound) THEN
-        err = c_err_other
-        RETURN
-      ENDIF
-    ENDIF
+    IF (simplify) err_simplify = c_err_other
 
     IF (opcode .EQ. c_func_rho) THEN
       CALL get_values(1, values)
       CALL push_on_eval(initial_conditions(NINT(values(1)))%density(ix))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_tempx) THEN
       CALL get_values(1, values)
       CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, 1))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_tempy) THEN
       CALL get_values(1, values)
       CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, 2))
+      err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_func_tempz) THEN
       CALL get_values(1, values)
       CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, 3))
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -555,6 +546,7 @@ CONTAINS
       CALL get_values(1, values)
       CALL push_on_eval(kb / ev &
           * initial_conditions(NINT(values(1)))%temp(ix, 1))
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -562,6 +554,7 @@ CONTAINS
       CALL get_values(1, values)
       CALL push_on_eval(kb / ev &
           * initial_conditions(NINT(values(1)))%temp(ix, 2))
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -569,6 +562,7 @@ CONTAINS
       CALL get_values(1, values)
       CALL push_on_eval(kb / ev &
           * initial_conditions(NINT(values(1)))%temp(ix, 3))
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -576,6 +570,7 @@ CONTAINS
       ! Check for custom functions
       val = custom_function(opcode, ix, err)
       IF (IAND(err, c_err_unknown_element) .EQ. 0) CALL push_on_eval(val)
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -667,6 +662,8 @@ CONTAINS
       count = NINT(values(1))
       ALLOCATE(var_length_values(0:count*2))
       CALL get_values(count*2+1, var_length_values)
+      ! Need to account for get_values() split into two calls
+      CALL stack_point_fix()
       ! This could be replaced by a bisection algorithm, change at some point
       ! For now, not too bad for small count
 
