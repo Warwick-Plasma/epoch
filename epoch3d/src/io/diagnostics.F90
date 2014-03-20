@@ -125,6 +125,12 @@ CONTAINS
     reset_ejected = .FALSE.
     any_written = .FALSE.
 
+    IF (n_species .GT. 0) THEN
+      ALLOCATE(dump_point_grid(n_species))
+    ELSE
+      ALLOCATE(dump_point_grid(1))
+    ENDIF
+
     DO iprefix = 1,SIZE(file_prefixes)
       CALL io_test(iprefix, step, print_arrays, force)
 
@@ -276,12 +282,6 @@ CONTAINS
         DO i = 1, n_species
           CALL create_empty_partlist(io_list_data(i)%attached_list)
         ENDDO
-      ENDIF
-
-      IF (n_species .GT. 0) THEN
-        ALLOCATE(dump_point_grid(n_species))
-      ELSE
-        ALLOCATE(dump_point_grid(1))
       ENDIF
 
       DO isubset = 1, n_subsets + 1
@@ -498,11 +498,12 @@ CONTAINS
       ENDIF
     ENDDO
 
+    DEALLOCATE(dump_point_grid)
+
     IF (.NOT.any_written) RETURN
 
     DEALLOCATE(array)
     IF (ALLOCATED(species_offset))  DEALLOCATE(species_offset)
-    IF (ALLOCATED(dump_point_grid)) DEALLOCATE(dump_point_grid)
     IF (ALLOCATED(ejected_offset))  DEALLOCATE(ejected_offset)
     CALL free_subtypes()
 
