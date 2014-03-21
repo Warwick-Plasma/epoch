@@ -280,6 +280,8 @@ CONTAINS
 
     IF (err .EQ. c_err_other) THEN
       err = c_err_none
+      ! Operator just pushed a bogus value to stack, so we'll ignore it
+      eval_stack%stack_point = eval_stack%stack_point - 1
       CALL push_eval_flag()
       CALL sl_append()
       CALL push_to_stack(sl_tail%stack, block)
