@@ -614,6 +614,7 @@ static int sdf_read_stitched(sdf_file_t *h)
     SDF_READ_ENTRY_ID(b->mesh_id);
 
     SDF_READ_ENTRY_ARRAY_ID(b->variable_ids, b->ndims);
+    b->nvariable_ids = b->ndims;
 
     b->done_data = 1;
 
@@ -641,6 +642,7 @@ static int sdf_read_stitched_material(sdf_file_t *h)
     SDF_READ_ENTRY_ARRAY_STRING(b->material_names, b->ndims);
 
     SDF_READ_ENTRY_ARRAY_ID(b->variable_ids, b->ndims);
+    b->nmaterial_names = b->nvariable_ids = b->ndims;
 
     b->done_data = 1;
 
@@ -668,6 +670,7 @@ static int sdf_read_stitched_matvar(sdf_file_t *h)
     SDF_READ_ENTRY_ID(b->material_id);
 
     SDF_READ_ENTRY_ARRAY_ID(b->variable_ids, b->ndims);
+    b->nvariable_ids = b->ndims;
 
     b->done_data = 1;
 
@@ -701,6 +704,7 @@ static int sdf_read_stitched_species(sdf_file_t *h)
     SDF_READ_ENTRY_ARRAY_STRING(b->material_names, b->ndims);
 
     SDF_READ_ENTRY_ARRAY_ID(b->variable_ids, b->ndims);
+    b->nvariable_ids = b->nmaterial_names = b->ndims;
 
     b->done_data = 1;
 
@@ -728,6 +732,7 @@ static int sdf_read_stitched_obstacle_group(sdf_file_t *h)
     SDF_READ_ENTRY_ID(b->vfm_id);
 
     SDF_READ_ENTRY_ARRAY_STRING(b->material_names, b->ndims);
+    b->nmaterial_names = b->ndims;
 
     b->done_data = 1;
 

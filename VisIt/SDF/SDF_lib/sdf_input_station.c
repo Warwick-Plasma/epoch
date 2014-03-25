@@ -81,5 +81,7 @@ int sdf_read_station_info(sdf_file_t *h)
 
     b->stagger = SDF_STAGGER_VERTEX;
 
+    b->nstation_ids = b->nstation_names = b->nstations;
+    b->ndim_units = b->nvariable_ids = b->nmaterial_names = b->nvariables;
     return 0;
 }

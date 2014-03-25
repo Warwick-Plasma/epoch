@@ -61,6 +61,8 @@ int sdf_read_plain_mesh_info(sdf_file_t *h)
     b->stagger = SDF_STAGGER_VERTEX;
     for (i = 0; i < b->ndims; i++) b->const_value[i] = 1;
 
+    b->ndim_labels = b->ndim_units = b->ndims;
+
     // Calculate per block parallel factorisation
     // This will be fixed up later once we have the whole block list.
     sdf_factor(h);

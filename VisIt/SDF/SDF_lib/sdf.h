@@ -301,6 +301,9 @@ struct sdf_block {
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
     int cpu_split[SDF_MAXDIMS], starts[SDF_MAXDIMS];
     int proc_min[3], proc_max[3];
+    int ndim_labels, ndim_units;
+    int nstation_ids, nvariable_ids;
+    int nstation_names, nmaterial_names;
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;
 #endif

@@ -1105,7 +1105,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
     SDF_SET_ENTRY_ID(mesh->units, "s");
     SDF_SET_ENTRY_STRING(mesh->name, meshname);
     mesh->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
-    mesh->ndims = 1;
+    mesh->ndim_units = mesh->ndim_labels = mesh->ndims = 1;
     mesh->dim_units = calloc(mesh->ndims, sizeof(char*));
     mesh->dim_labels = calloc(mesh->ndims, sizeof(char*));
     SDF_SET_ENTRY_ID(mesh->dim_units[0], "s");
@@ -1128,7 +1128,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
         mesh->name = strcat_alloc(meshname, b->name);
         SDF_SET_ENTRY_ID(mesh->units, "s");
         mesh->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
-        mesh->ndims = 1;
+        mesh->ndim_units = mesh->ndim_labels = mesh->ndims = 1;
         mesh->dim_units = calloc(mesh->ndims, sizeof(char*));
         mesh->dim_labels = calloc(mesh->ndims, sizeof(char*));
         SDF_SET_ENTRY_ID(mesh->dim_units[0], "s");
@@ -1287,11 +1287,13 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
 
         if (new->nstations == 0) {
             new->station_ids = calloc(nstat_total, sizeof(char*));
+            new->nstation_ids = nstat_total;
         } else {
             ctmp = malloc(new->nstations);
             memcpy(ctmp, new->station_ids, new->nstations * sizeof(char*));
             free(new->station_ids);
             new->station_ids = calloc(nstat_total, sizeof(char*));
+            new->nstation_ids = nstat_total;
             memcpy(new->station_ids, ctmp, new->nstations * sizeof(char*));
             free(ctmp);
         }
@@ -1325,6 +1327,7 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         new->nvariables = varoffset;
         new->nelements_local = new->nelements = nelements;
         new->local_dims[0] = new->nelements_local;
+        new->nstation_names = new->nstations;
 
         // Allocate the stations
         new->station_names =
@@ -1369,8 +1372,13 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         }
 
         // Allocate the variables
-        new->variable_ids = calloc(new->nvariables, sizeof(*new->variable_ids));
-        new->dim_units = calloc(new->nvariables, sizeof(*new->dim_units));
+        new->nvariable_ids = new->ndim_units =
+                new->nmaterial_names = new->nvariables;
+
+        new->variable_ids =
+            calloc(new->nvariables, sizeof(*new->variable_ids));
+        new->dim_units =
+            calloc(new->nvariables, sizeof(*new->dim_units));
         new->material_names =
             calloc(new->nvariables, sizeof(*new->material_names));
         new->variable_types =
@@ -1504,6 +1512,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append->ndims = 1;
                 append->n_ids = 1;
                 append->variable_ids = calloc(append->n_ids, sizeof(char*));
+                append->nvariable_ids = append->n_ids;
                 SDF_SET_ENTRY_ID(append->variable_ids[0], b->id);
                 append->must_read = calloc(append->n_ids, sizeof(char*));
                 append->must_read[0] = 1;
@@ -1551,6 +1560,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             len1 = 2 * nd * sizeof(double*);
             append->extents = malloc(len1);
             memcpy(append->extents, mesh->extents, len1);
+            append->ndim_labels = append->ndim_units = nd;
             append->dim_labels = calloc(nd, sizeof(char*));
             append->dim_units = calloc(nd, sizeof(char*));
             for (n = 0; n < nd; n++) {
@@ -1599,6 +1609,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append->local_dims[i] = append->dims[i] = 1;
             append->n_ids = 1;
             append->variable_ids = calloc(append->n_ids, sizeof(char*));
+            append->nvariable_ids = append->n_ids;
             SDF_SET_ENTRY_ID(append->variable_ids[0], b->id);
             append->must_read = calloc(append->n_ids, sizeof(char*));
             append->must_read[0] = 1;
@@ -1625,6 +1636,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
         len1 = 2 * nd * sizeof(double*);
         append->extents = malloc(len1);
         memcpy(append->extents, first_mesh->extents, len1);
+        append->ndim_labels = append->ndim_units = nd;
         append->dim_labels = calloc(nd, sizeof(char*));
         append->dim_units = calloc(nd, sizeof(char*));
         for (n = 0; n < nd; n++) {
@@ -1850,6 +1862,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                         len1 = 2 * nd * sizeof(double*);
                         append->extents = malloc(len1);
                         memcpy(append->extents, old_mesh->extents, len1);
+                        append->ndim_labels = append->ndim_units = nd;
                         append->dim_labels = calloc(nd, sizeof(char*));
                         append->dim_units = calloc(nd, sizeof(char*));
                         for (n = 0; n < nd; n++) {

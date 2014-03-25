@@ -144,22 +144,23 @@ static void sdf_modify_rewrite_header(sdf_file_t *h)
 
 static int copy_block(sdf_block_t *copy, const sdf_block_t *original)
 {
+    int ndims;
     const sdf_block_t *b = original;
 
     memcpy(copy, original, sizeof(*original));
 
     COPY_ENTRY_NAME(extents, 2*b->ndims);
-    if (b->blocktype == SDF_BLOCKTYPE_STATION) {
-        COPY_ENTRY_NAME(dim_mults, b->nvariables);
-        COPY_ENTRY_STRING_ARRAY(dim_units, b->nvariables);
-        COPY_ENTRY_STRING_ARRAY(variable_ids, b->nvariables);
-        COPY_ENTRY_STRING_ARRAY(material_names, b->nvariables);
-    } else {
-        COPY_ENTRY_NAME(dim_mults, b->ndims);
-        COPY_ENTRY_STRING_ARRAY(dim_units, b->ndims);
-        COPY_ENTRY_STRING_ARRAY(variable_ids, b->ndims);
-        COPY_ENTRY_STRING_ARRAY(material_names, b->ndims);
-    }
+    if (b->blocktype == SDF_BLOCKTYPE_STATION)
+        ndims = b->nvariables;
+    else
+        ndims = b->ndims;
+
+    COPY_ENTRY_NAME(dim_mults, ndims);
+    COPY_ENTRY_STRING_ARRAY(dim_units, ndims);
+    COPY_ENTRY_STRING_ARRAY(variable_ids, ndims);
+    COPY_ENTRY_STRING_ARRAY(material_names, ndims);
+    copy->ndim_units = copy->nvariable_ids = copy->nmaterial_names = ndims;
+
     COPY_ENTRY_NAME(station_x, b->nstations);
     COPY_ENTRY_NAME(station_y, b->nstations);
     COPY_ENTRY_NAME(station_z, b->nstations);
@@ -177,6 +178,9 @@ static int copy_block(sdf_block_t *copy, const sdf_block_t *original)
     COPY_ENTRY_STRING_ARRAY(dim_labels, b->ndims);
     COPY_ENTRY_STRING_ARRAY(station_ids, b->nstations);
     COPY_ENTRY_STRING_ARRAY(station_names, b->nstations);
+    copy->ndim_labels = b->ndims;
+    copy->nstation_ids = b->nstations;
+    copy->nstation_names = b->nstations;
     copy->nelements_blocks = NULL;
     copy->data_length_blocks = NULL;
     copy->dims_in = NULL;
@@ -561,6 +565,7 @@ int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
     new_variable_ids[i] = strdup(material->id);
     free(b->variable_ids);
     b->variable_ids = new_variable_ids;
+    b->nvariable_ids = b->ndims;
 
     info_length = SOI4 + (b->ndims + 2) * h->id_length;
 
@@ -576,6 +581,7 @@ int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
         new_material_names[i] = strdup(material->name);
         free(b->material_names);
         b->material_names = new_material_names;
+        b->nmaterial_names = b->ndims+1;
         b->blocktype = SDF_BLOCKTYPE_STITCHED_MATERIAL;
 
         info_length = SOI4 + (b->ndims + 1) * h->id_length
@@ -642,6 +648,7 @@ int sdf_modify_remove_material(sdf_file_t *h, sdf_block_t *stitched,
 
     free(stitched->variable_ids);
     stitched->variable_ids = ids;
+    stitched->nvariable_ids = stitched->ndims-1;
 
     stitched->blocktype = SDF_BLOCKTYPE_STITCHED_MATVAR;
 
@@ -658,6 +665,7 @@ int sdf_modify_remove_material(sdf_file_t *h, sdf_block_t *stitched,
 
         free(stitched->material_names);
         stitched->material_names = names;
+        stitched->nmaterial_names = stitched->ndims-1;
 
         stitched->blocktype = SDF_BLOCKTYPE_STITCHED_MATERIAL;
     }

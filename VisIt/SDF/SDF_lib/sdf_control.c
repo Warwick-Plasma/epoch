@@ -298,17 +298,12 @@ int sdf_close(sdf_file_t *h)
         } \
     } while(0)
 
-#define FREE_ARRAY(value) do { \
-    if (value) { \
-        int i; \
-        if (b->n_ids) { \
-            for (i = 0; i < b->n_ids; i++) \
-                if (value[i]) free(value[i]); \
-        } else { \
-            for (i = 0; i < b->ndims; i++) \
-                if (value[i]) free(value[i]); \
-        } \
-        free(value); \
+#define FREE_ARRAY(block, value) do { \
+    if (block->value) { \
+        int _i; \
+        for (_i = 0; _i < b->n##value; _i++) \
+            if (block->value[_i]) free(block->value[_i]); \
+        free(block->value); \
     }} while(0)
 
 
@@ -370,12 +365,12 @@ int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
     FREE_ITEM(b->array_ends);
     FREE_ITEM(b->array_strides);
 
-    FREE_ARRAY(b->station_ids);
-    FREE_ARRAY(b->station_names);
-    FREE_ARRAY(b->variable_ids);
-    FREE_ARRAY(b->material_names);
-    FREE_ARRAY(b->dim_labels);
-    FREE_ARRAY(b->dim_units);
+    FREE_ARRAY(b, station_ids);
+    FREE_ARRAY(b, station_names);
+    FREE_ARRAY(b, variable_ids);
+    FREE_ARRAY(b, material_names);
+    FREE_ARRAY(b, dim_labels);
+    FREE_ARRAY(b, dim_units);
 
     sdf_free_block_data(h, b);
 

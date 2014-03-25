@@ -62,6 +62,8 @@ int sdf_read_point_mesh_info(sdf_file_t *h)
 
     b->stagger = SDF_STAGGER_VERTEX;
 
+    b->ndim_labels = b->ndim_units = b->ndims;
+
     return 0;
 }
 
