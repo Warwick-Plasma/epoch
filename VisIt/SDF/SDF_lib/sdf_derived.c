@@ -1313,6 +1313,7 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         new->time = b->time;
         new->time_increment = b->time_increment;
         new->use_mult = b->use_mult;
+        new->ndims = b->ndims;
 
         varoffset = 0;
         if (new->step_increment <= 0) varoffset++;

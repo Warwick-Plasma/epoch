@@ -144,7 +144,7 @@ int sdf_read_blocklist_all(sdf_file_t *h)
         } else {
             b->nelements_local = 1;
             for (i = 0; i < b->ndims; i++) {
-                if (b->stagger == SDF_STAGGER_CELL_CENTRE)
+                if (b->stagger == SDF_STAGGER_CELL_CENTRE && !b->station_id)
                     b->local_dims[i]--;
                 b->nelements_local *= b->local_dims[i];
             }
