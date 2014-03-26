@@ -20,7 +20,7 @@
 
 #define SDF_VERSION  1
 #define SDF_REVISION 2
-#define SDF_LIB_VERSION  6
+#define SDF_LIB_VERSION  7
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
@@ -304,6 +304,7 @@ struct sdf_block {
     int ndim_labels, ndim_units;
     int nstation_ids, nvariable_ids;
     int nstation_names, nmaterial_names;
+    int option;
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;
 #endif
