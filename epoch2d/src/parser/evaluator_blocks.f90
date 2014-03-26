@@ -188,13 +188,13 @@ CONTAINS
     ENDIF
 
     IF (opcode .EQ. c_const_r_xz) THEN
-      CALL push_on_eval(ABS(x(ix)**2))
+      CALL push_on_eval(ABS(x(ix)))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_yz) THEN
-      CALL push_on_eval(ABS(y(iy)**2))
+      CALL push_on_eval(ABS(y(iy)))
       err = err_simplify
       RETURN
     ENDIF
