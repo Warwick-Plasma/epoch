@@ -1678,8 +1678,8 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
     sdf_block_t *mesh, *old_mesh, *vfm, *obst;
     sdf_block_t *current_block = h->current_block;
-    int i, n, stagger, dont_add_grid, nappend = 0;
-    size_t nd, len1, len2;
+    int i, n, stagger, dont_add_grid, nd, nappend = 0;
+    size_t len1, len2;
     char *str, *name1, *name2;
     char *boundary_names[] =
         { "", "_x_min", "_x_max", "_y_min", "_y_max", "_z_min", "_z_max" };
@@ -1795,7 +1795,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                     // dimensions
                     dont_add_grid = 0;
                     for (n = 0; n < b->ndims; n++) {
-                        nd = (size_t)old_mesh->dims[n];
+                        nd = old_mesh->dims[n];
                         if (n == i) nd += b->ng + 1;
                         if (b->dims[n]+1 != nd) dont_add_grid++;
                     }

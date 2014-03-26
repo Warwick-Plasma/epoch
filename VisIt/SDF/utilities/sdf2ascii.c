@@ -24,14 +24,14 @@
 int metadata, contents, debug, single, use_mmap, ignore_summary;
 int element_count;
 struct id_list {
-  char *id;
-  struct id_list *next;
+    char *id;
+    struct id_list *next;
 } *variable_ids, *last_id;
 
 int nrange;
 
 struct range_type {
-  unsigned int start, end;
+    int start, end;
 } *range_list;
 
 

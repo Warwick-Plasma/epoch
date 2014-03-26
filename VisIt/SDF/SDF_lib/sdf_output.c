@@ -78,7 +78,7 @@ static int sdf_truncate(sdf_file_t *h, int64_t size)
 
 static size_t trimwhitespace(const char *str_in, char *str_out, size_t len)
 {
-    size_t out_size;
+    size_t out_size, i1, i2;
     const char *end;
 
     if (len == 0) return 0;
@@ -98,7 +98,9 @@ static size_t trimwhitespace(const char *str_in, char *str_out, size_t len)
 
     // Set output size to minimum of trimmed string length and
     // buffer size minus 1
-    out_size = (end - str_in) < len-1 ? (end - str_in) : len-1;
+    i1 = end - str_in;
+    i2 = len - 1;
+    out_size = i1 < i2 ? i1 : i2;
 
     // Copy trimmed string and add null terminator
     memcpy(str_out, str_in, out_size);

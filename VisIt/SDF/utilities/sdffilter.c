@@ -34,14 +34,14 @@ static char indent[64];
 static list_t *slice_list;
 
 struct id_list {
-  char *id;
-  struct id_list *next;
+    char *id;
+    struct id_list *next;
 } *variable_ids, *variable_last_id;
 
 int nrange;
 
 struct range_type {
-  unsigned int start, end;
+    int start, end;
 } *range_list;
 
 struct slice_block {

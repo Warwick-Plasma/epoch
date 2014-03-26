@@ -41,7 +41,8 @@
     COPY_ENTRY_STR(copy->copyname, original->copyname)
 
 #define COPY_ENTRY_STRING_ARRAY(copyname, count) do { \
-        size_t _len, _i; \
+        size_t _len; \
+        int _i; \
         char **_ptr; \
         if (copy->copyname) { \
             _len = (count) * sizeof(char*); \
