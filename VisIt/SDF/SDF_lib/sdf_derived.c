@@ -823,9 +823,9 @@ static sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
         }
 
         if (b->datatype_out == SDF_DATATYPE_REAL4)
-            b->data = (float*)mesh->data + b->opt;
+            b->data = (float*)mesh->data + b->ng;
         else
-            b->data = (double*)mesh->data + b->opt;
+            b->data = (double*)mesh->data + b->ng;
 
         if (!b->grids) {
             b->ngrids = 1;
@@ -1138,7 +1138,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
         mesh->local_dims[0] = mesh->dims[0] = mesh->nelements;
         mesh->datatype = mesh->datatype_out = mesh_datatype;
         mesh->subblock = global_mesh;
-        mesh->opt = nsofar;
+        mesh->ng = nsofar;
         mesh->dont_own_data = 1;
 
         nsofar += b->nelements;
@@ -1198,7 +1198,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
                 nsofar += sb->nelements;
                 sb = list_next(station_blocks);
             }
-            b->opt = nsofar;
+            b->ng = nsofar;
         }
     }
 

@@ -1516,7 +1516,7 @@ int main(int argc, char **argv)
             if (ascii_header)
                 printf("# %s\t%s\t(%s)\n", &b->id[len+1],
                        &b->name[len+1], b->units);
-            idx = b->opt + b->nelements - mesh0->opt;
+            idx = b->ng + b->nelements_local - mesh0->ng;
             if (idx > nelements_max)
                 nelements_max = idx;
             b = list_next(station_blocks);
@@ -1529,9 +1529,9 @@ int main(int argc, char **argv)
 
             b = list_start(station_blocks);
             for (i = 0; i < station_blocks->count; i++) {
-                idx = n + mesh0->opt - b->opt;
+                idx = n + mesh0->ng - b->ng;
                 printf(format_space,1);
-                if (idx >= 0 && idx < b->nelements)
+                if (idx >= 0 && idx < b->nelements_local)
                     print_value_element(b->data, b->datatype_out, n);
                 else
                     print_value(zero, b->datatype_out);
