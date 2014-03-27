@@ -201,6 +201,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_r_xyz) THEN
+      CALL push_on_eval(SQRT(x(ix)**2 + y(iy)**2 + z(iz)**2))
+      err = err_simplify
+      RETURN
+    ENDIF
+
     IF (opcode .GE. c_const_custom_lowbound) THEN
       ! Check for custom constants
       val = custom_constant(opcode, ix, iy, iz, err)

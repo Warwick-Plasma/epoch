@@ -196,6 +196,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_r_xyz) THEN
+      CALL push_on_eval(ABS(x(ix)))
+      err = err_simplify
+      RETURN
+    ENDIF
+
     IF (opcode .GE. c_const_custom_lowbound) THEN
       ! Check for custom constants
       val = custom_constant(opcode, ix, err)

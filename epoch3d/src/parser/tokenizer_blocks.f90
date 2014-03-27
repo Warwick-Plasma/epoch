@@ -160,6 +160,7 @@ CONTAINS
     IF (str_cmp(name, 'r_xy')) as_constant = c_const_r_xy
     IF (str_cmp(name, 'r_yz')) as_constant = c_const_r_yz
     IF (str_cmp(name, 'r_xz')) as_constant = c_const_r_xz
+    IF (str_cmp(name, 'r_xyz')) as_constant = c_const_r_xyz
     IF (str_cmp(name, 'nprocx')) as_constant = c_const_nprocx
     IF (str_cmp(name, 'nprocy')) as_constant = c_const_nprocy
     IF (str_cmp(name, 'nprocz')) as_constant = c_const_nprocz
