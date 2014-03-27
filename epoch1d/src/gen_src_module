@@ -130,7 +130,11 @@ IFS="
   i1=$((i0+continuation_lines-1))
   for ln in `head -n $nlines $tmp2`; do
     if [ $i -eq $i0 ]; then
-      echo "  DATA (source_code(i), i=$i0,$i1) / '$ln', &" >> $file
+      if [ $i0 -eq $i1 ]; then
+        echo "  DATA (source_code(i), i=$i0,$i1) / '$ln' /" >> $file
+      else
+        echo "  DATA (source_code(i), i=$i0,$i1) / '$ln', &" >> $file
+      fi
     elif [ $i -ge $i1 ]; then
       echo "      '$ln' /" >> $file
       i0=$((i1+1))
