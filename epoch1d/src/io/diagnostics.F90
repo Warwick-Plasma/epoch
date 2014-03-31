@@ -393,6 +393,9 @@ CONTAINS
         ENDIF
       ENDDO
 
+      io_list => species_list
+      iomask = iodumpmask(1,:)
+
       ! Write the cartesian mesh
       IF (IAND(iomask(c_dump_grid), code) .NE. 0) &
           dump_field_grid = .TRUE.
@@ -413,9 +416,6 @@ CONTAINS
               'Grid/Grid_Full', xb_global, convert)
         ENDIF
       ENDIF
-
-      io_list => species_list
-      iomask = iodumpmask(1,:)
 
       IF (IAND(iomask(c_dump_dist_fns), code) .NE. 0) THEN
         CALL write_dist_fns(sdf_handle, code)
@@ -1597,7 +1597,7 @@ CONTAINS
     LOGICAL :: convert, dump_grid
 
     id = c_dump_part_grid
-    IF (IAND(iomask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) .NE. 0 .OR. ANY(dump_point_grid)) THEN
       CALL build_species_subset
 
       convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
