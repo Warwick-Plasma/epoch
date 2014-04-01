@@ -122,7 +122,8 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_contiguous = 24
   INTEGER(i4), PARAMETER :: c_blocktype_lagrangian_mesh = 25
   INTEGER(i4), PARAMETER :: c_blocktype_station = 26
-  INTEGER(i4), PARAMETER :: c_blocktype_max = 26
+  INTEGER(i4), PARAMETER :: c_blocktype_station_derived = 27
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 27
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
@@ -251,7 +252,8 @@ MODULE sdf_common
       'SDF_BLOCKTYPE_STITCHED               ', &
       'SDF_BLOCKTYPE_CONTIGUOUS             ', &
       'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ', &
-      'SDF_BLOCKTYPE_STATION                ' /)
+      'SDF_BLOCKTYPE_STATION                ', &
+      'SDF_BLOCKTYPE_STATION_DERIVED        ' /)
 
   CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
       'SDF_DATATYPE_NULL     ', &

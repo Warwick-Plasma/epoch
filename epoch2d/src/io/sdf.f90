@@ -50,6 +50,7 @@ MODULE sdf
   PUBLIC :: c_blocktype_contiguous
   PUBLIC :: c_blocktype_lagrangian_mesh
   PUBLIC :: c_blocktype_station
+  PUBLIC :: c_blocktype_station_derived
   PUBLIC :: c_blocktype_max
 
   PUBLIC :: c_datatype_null
