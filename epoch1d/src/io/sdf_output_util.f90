@@ -73,6 +73,8 @@ CONTAINS
       CALL write_run_info_meta(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_source) THEN
       CALL write_block_header(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_datablock) THEN
+      CALL write_datablock_meta(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched &
         .OR. b%blocktype .EQ. c_blocktype_contiguous &
         .OR. b%blocktype .EQ. c_blocktype_stitched_tensor &

@@ -244,7 +244,7 @@ CONTAINS
       b%next_block_location = b%block_start + b%info_length
     ELSE
       b%data_location = b%block_start + b%info_length
-      b%next_block_location = b%data_location + b%data_length
+      b%next_block_location = b%data_location + b%data_length + b%padding
     ENDIF
 
     CALL safe_copy_unique_id(h, b, id)
@@ -1194,6 +1194,104 @@ CONTAINS
     b%done_data = .TRUE.
 
   END SUBROUTINE sdf_write_source_code
+
+
+
+  SUBROUTINE write_datablock_meta(h, id, name)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
+    TYPE(sdf_block_type), POINTER :: b
+
+    b => h%current_block
+
+    b%blocktype = c_blocktype_datablock
+
+    ! Metadata is
+    ! - mimetype       CHARACTER(id_length)
+    ! - checksum_type  CHARACTER(id_length)
+    ! - checksum       CHARACTER(string_length)
+
+    ! Write header
+    IF (PRESENT(id)) THEN
+      CALL sdf_write_block_header(h, id, name)
+    ELSE
+      CALL write_block_header(h)
+    ENDIF
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      ! Write metadata
+      CALL sdf_safe_write_id(h, b%mimetype)
+      CALL sdf_safe_write_id(h, b%checksum_type)
+      CALL sdf_safe_write_string(h, b%checksum)
+    ENDIF
+
+    h%current_location = b%block_start + b%info_length
+    b%done_info = .TRUE.
+
+  END SUBROUTINE write_datablock_meta
+
+
+
+  SUBROUTINE sdf_write_datablock(h, id, name, array, padding, mimetype, &
+      checksum_type, checksum)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    INTEGER(i8), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(IN) :: padding
+    CHARACTER(LEN=*), INTENT(IN) :: mimetype, checksum_type, checksum
+    INTEGER :: errcode, n1
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = 1
+    b%datatype = c_datatype_character
+    b%mpitype = MPI_INTEGER8
+    b%blocktype = c_blocktype_datablock
+    b%ndims = 0
+    b%padding = padding
+
+    ! Metadata is
+    ! - mimetype       CHARACTER(id_length)
+    ! - checksum_type  CHARACTER(id_length)
+    ! - checksum       CHARACTER(string_length)
+
+    b%info_length = h%block_header_length + 2 * c_id_length + h%string_length
+    IF (h%rank .EQ. h%rank_master) THEN
+      n1 = SIZE(array)
+      b%data_length = n1 * soi8 - b%padding
+    ENDIF
+
+    CALL MPI_BCAST(b%data_length, 1, MPI_INTEGER8, 0, h%comm, errcode)
+    b%nelements = b%data_length
+
+    CALL safe_copy_id(h, mimetype, b%mimetype)
+    CALL safe_copy_id(h, checksum_type, b%checksum_type)
+    CALL safe_copy_string(checksum, b%checksum)
+
+    CALL write_datablock_meta(h, id, name)
+
+    h%current_location = b%data_location
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! Write data
+      CALL MPI_FILE_WRITE(h%filehandle, array, n1, b%mpitype, &
+          MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%data_location + b%data_length + b%padding
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE sdf_write_datablock
+
 
 
 

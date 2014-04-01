@@ -42,16 +42,18 @@ MODULE sdf_common
     INTEGER(i4) :: ndims, geometry, datatype, blocktype
     INTEGER(i4) :: mpitype, type_size, stagger
     INTEGER(i4) :: nstations, nvariables, step, step_increment
+    INTEGER(i4) :: padding
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     INTEGER(i4), POINTER :: station_nvars(:), station_move(:), variable_types(:)
     INTEGER(i4), POINTER :: station_index(:)
     CHARACTER(LEN=8) :: const_value
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id, species_id
+    CHARACTER(LEN=c_id_length) :: mimetype, checksum_type
     CHARACTER(LEN=c_long_id_length) :: long_id
     CHARACTER(LEN=c_id_length), POINTER :: station_ids(:), variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
-    CHARACTER(LEN=c_max_string_length) :: name, material_name
+    CHARACTER(LEN=c_max_string_length) :: name, material_name, checksum
     CHARACTER(LEN=c_max_string_length), POINTER :: station_names(:)
     CHARACTER(LEN=c_max_string_length), POINTER :: material_names(:)
     LOGICAL :: done_header, done_info, done_data, truncated_id, use_mult
@@ -123,7 +125,8 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_lagrangian_mesh = 25
   INTEGER(i4), PARAMETER :: c_blocktype_station = 26
   INTEGER(i4), PARAMETER :: c_blocktype_station_derived = 27
-  INTEGER(i4), PARAMETER :: c_blocktype_max = 27
+  INTEGER(i4), PARAMETER :: c_blocktype_datablock = 28
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 28
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
@@ -163,6 +166,11 @@ MODULE sdf_common
       c_stagger_face_x + c_stagger_face_y
   INTEGER(i4), PARAMETER :: c_stagger_vertex = &
       c_stagger_face_x + c_stagger_face_y + c_stagger_face_z
+
+  CHARACTER(LEN=*), PARAMETER :: c_checksum_null = ''
+  CHARACTER(LEN=*), PARAMETER :: c_checksum_md5 = 'md5'
+  CHARACTER(LEN=*), PARAMETER :: c_checksum_sha1 = 'sha1'
+  CHARACTER(LEN=*), PARAMETER :: c_checksum_sha256 = 'sha256'
 
   INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 3
 
@@ -253,7 +261,8 @@ MODULE sdf_common
       'SDF_BLOCKTYPE_CONTIGUOUS             ', &
       'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ', &
       'SDF_BLOCKTYPE_STATION                ', &
-      'SDF_BLOCKTYPE_STATION_DERIVED        ' /)
+      'SDF_BLOCKTYPE_STATION_DERIVED        ', &
+      'SDF_BLOCKTYPE_DATABLOCK              ' /)
 
   CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
       'SDF_DATATYPE_NULL     ', &
@@ -596,6 +605,7 @@ CONTAINS
     var%step_increment = 0
     var%time = 0
     var%time_increment = 0
+    var%padding = 0
 
   END SUBROUTINE initialise_block_type
 
