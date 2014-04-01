@@ -41,6 +41,8 @@ static int sdf_read_array(sdf_file_t *h);
 static int sdf_read_array_info(sdf_file_t *h);
 static int sdf_read_cpu_split_info(sdf_file_t *h);
 static int sdf_read_run_info(sdf_file_t *h);
+static int sdf_read_datablock_info(sdf_file_t *h);
+static int sdf_read_datablock(sdf_file_t *h);
 static void build_summary_buffer(sdf_file_t *h);
 static int sdf_read_next_block_header(sdf_file_t *h);
 
@@ -320,6 +322,8 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_stitched_obstacle_group(h);
     else if (b->blocktype == SDF_BLOCKTYPE_STATION)
         ret = sdf_read_station_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_DATABLOCK)
+        ret = sdf_read_datablock_info(h);
 
     // Fix up block_start values for inline metadata
     if (!h->use_summary) {
@@ -356,6 +360,8 @@ int sdf_read_data(sdf_file_t *h)
     else if (b->blocktype == SDF_BLOCKTYPE_ARRAY
             || b->blocktype == SDF_BLOCKTYPE_CPU_SPLIT)
         return sdf_read_array(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_DATABLOCK)
+        return sdf_read_datablock(h);
 
     return 1;
 }
@@ -893,6 +899,26 @@ static int sdf_read_cpu_split_info(sdf_file_t *h)
 
 
 
+static int sdf_read_datablock_info(sdf_file_t *h)
+{
+    sdf_block_t *b;
+
+    // Metadata is
+    // - mimetype       CHARACTER(id_length)
+    // - checksum_type  CHARACTER(id_length)
+    // - checksum       CHARACTER(string_length)
+
+    SDF_COMMON_INFO();
+
+    SDF_READ_ENTRY_ID(b->mimetype);
+    SDF_READ_ENTRY_ID(b->checksum_type);
+    SDF_READ_ENTRY_STRING(b->checksum);
+
+    return 0;
+}
+
+
+
 static int sdf_read_array(sdf_file_t *h)
 {
     sdf_block_t *b = h->current_block;
@@ -942,6 +968,31 @@ static int sdf_read_array(sdf_file_t *h)
         } else {
             SDF_DPRNTar(b->data, b->nelements_local);
         }
+    }
+
+    b->done_data = 1;
+
+    return 0;
+}
+
+
+
+static int sdf_read_datablock(sdf_file_t *h)
+{
+    sdf_block_t *b = h->current_block;
+
+    if (b->done_data) return 0;
+    if (!b->done_info) sdf_read_datablock_info(h);
+
+    h->current_location = b->data_location;
+
+    if (h->mmap) {
+        b->data = h->mmap + h->current_location;
+    } else {
+        if (b->data) free(b->data);
+        b->data = malloc(b->data_length);
+        sdf_seek(h);
+        sdf_read_bytes(h, b->data, b->data_length);
     }
 
     b->done_data = 1;

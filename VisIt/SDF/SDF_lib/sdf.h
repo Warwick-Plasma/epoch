@@ -106,6 +106,8 @@ enum sdf_blocktype {
       * SDF_BLOCKTYPE_PLAIN_DERIVED, except the variable is defined as a
       * station variable. */
     SDF_BLOCKTYPE_STATION_DERIVED,
+    /** Raw data with a checksum. */
+    SDF_BLOCKTYPE_DATABLOCK,
 };
 
 
@@ -305,6 +307,7 @@ struct sdf_block {
     int nstation_ids, nvariable_ids;
     int nstation_names, nmaterial_names;
     int option;
+    char *mimetype, *checksum_type, *checksum;
 #ifdef PARALLEL
     MPI_Datatype mpitype, distribution, mpitype_out;
 #endif

@@ -58,6 +58,7 @@ const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_LAGRANGIAN_MESH",
     "SDF_BLOCKTYPE_STATION",
     "SDF_BLOCKTYPE_STATION_DERIVED",
+    "SDF_BLOCKTYPE_DATABLOCK",
 };
 
 const char *sdf_geometry_c[] = {
@@ -125,7 +126,6 @@ const int sdf_datatype_len =
         sizeof(sdf_datatype_c) / sizeof(sdf_datatype_c[0]);
 const int sdf_error_codes_len =
         sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
-
 
 
 static int sdf_abort(sdf_file_t *h)
@@ -364,6 +364,9 @@ int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
     FREE_ITEM(b->array_starts);
     FREE_ITEM(b->array_ends);
     FREE_ITEM(b->array_strides);
+    FREE_ITEM(b->mimetype);
+    FREE_ITEM(b->checksum_type);
+    FREE_ITEM(b->checksum);
 
     FREE_ARRAY(b, station_ids);
     FREE_ARRAY(b, station_names);
