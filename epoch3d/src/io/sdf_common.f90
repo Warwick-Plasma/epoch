@@ -421,9 +421,9 @@ CONTAINS
 
     found = sdf_find_block(h, b, long_id)
     IF (found) THEN
-      CALL safe_copy_string(b%id, block_id)
+      CALL sdf_safe_copy_string(b%id, block_id)
     ELSE
-      CALL safe_copy_string(long_id, block_id)
+      CALL sdf_safe_copy_string(long_id, block_id)
     ENDIF
 
   END FUNCTION sdf_get_block_id
@@ -493,7 +493,7 @@ CONTAINS
 
 
 
-  SUBROUTINE safe_copy_string(s1, s2)
+  SUBROUTINE sdf_safe_copy_string(s1, s2)
 
     CHARACTER(LEN=*), INTENT(IN) :: s1
     CHARACTER(LEN=*), INTENT(OUT) :: s2
@@ -513,11 +513,11 @@ CONTAINS
       ENDDO
     ENDIF
 
-  END SUBROUTINE safe_copy_string
+  END SUBROUTINE sdf_safe_copy_string
 
 
 
-  SUBROUTINE safe_copy_id(h, id, new_id)
+  SUBROUTINE sdf_safe_copy_id(h, id, new_id)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id
@@ -530,13 +530,13 @@ CONTAINS
       ENDIF
     ENDIF
 
-    CALL safe_copy_string(id, new_id)
+    CALL sdf_safe_copy_string(id, new_id)
 
-  END SUBROUTINE safe_copy_id
+  END SUBROUTINE sdf_safe_copy_id
 
 
 
-  SUBROUTINE safe_copy_unique_id(h, b, id)
+  SUBROUTINE sdf_safe_copy_unique_id(h, b, id)
 
     TYPE(sdf_file_handle) :: h
     TYPE(sdf_block_type), POINTER :: b
@@ -548,7 +548,7 @@ CONTAINS
 
     IF (LEN_TRIM(id) .GT. c_id_length) THEN
       b%truncated_id = .TRUE.
-      CALL safe_copy_string(id, b%long_id)
+      CALL sdf_safe_copy_string(id, b%long_id)
       IF (LEN_TRIM(id) .GT. c_long_id_length) THEN
         IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
           PRINT*, '*** WARNING ***'
@@ -557,7 +557,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    CALL safe_copy_string(id, b%id)
+    CALL sdf_safe_copy_string(id, b%id)
     found = sdf_find_block(h, tmp, b%id)
     i = 1
     DO WHILE(found)
@@ -579,7 +579,7 @@ CONTAINS
       i = i + 1
     ENDDO
 
-  END SUBROUTINE safe_copy_unique_id
+  END SUBROUTINE sdf_safe_copy_unique_id
 
 
 

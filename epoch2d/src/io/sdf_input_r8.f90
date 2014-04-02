@@ -22,7 +22,7 @@ CONTAINS
     IF (PRESENT(code_io_version)) code_io_version = h%code_io_version
     IF (PRESENT(restart_flag)) restart_flag = h%restart_flag
     IF (PRESENT(other_domains)) other_domains = h%other_domains
-    IF (PRESENT(code_name)) CALL safe_copy_string(h%code_name, code_name)
+    IF (PRESENT(code_name)) CALL sdf_safe_copy_string(h%code_name, code_name)
     IF (PRESENT(string_length)) string_length = h%string_length
 
   END SUBROUTINE read_header_r8

@@ -247,8 +247,8 @@ CONTAINS
       b%next_block_location = b%data_location + b%data_length + b%padding
     ENDIF
 
-    CALL safe_copy_unique_id(h, b, id)
-    CALL safe_copy_string(name, b%name)
+    CALL sdf_safe_copy_unique_id(h, b, id)
+    CALL sdf_safe_copy_string(name, b%name)
 
     CALL write_block_header(h)
 
@@ -469,10 +469,10 @@ CONTAINS
     b%run%version = version
     b%run%revision = revision
     b%run%minor_rev = minor_rev
-    CALL safe_copy_string(commit_id, b%run%commit_id)
-    CALL safe_copy_string(sha1sum, b%run%sha1sum)
-    CALL safe_copy_string(compile_machine, b%run%compile_machine)
-    CALL safe_copy_string(compile_flags, b%run%compile_flags)
+    CALL sdf_safe_copy_string(commit_id, b%run%commit_id)
+    CALL sdf_safe_copy_string(sha1sum, b%run%sha1sum)
+    CALL sdf_safe_copy_string(compile_machine, b%run%compile_machine)
+    CALL sdf_safe_copy_string(compile_flags, b%run%compile_flags)
     b%run%defines = defines
     b%run%compile_date = compile_date
     b%run%run_date = run_date
@@ -540,11 +540,11 @@ CONTAINS
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
-      CALL safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL sdf_safe_copy_id(h, mesh_id, b%mesh_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
+        CALL sdf_safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -746,13 +746,13 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_material
       ENDIF
-      CALL safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL sdf_safe_copy_id(h, mesh_id, b%mesh_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%material_names(b%ndims))
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_string(material_names(i), b%material_names(i))
-        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
+        CALL sdf_safe_copy_string(material_names(i), b%material_names(i))
+        CALL sdf_safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -831,12 +831,12 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_matvar
       ENDIF
-      CALL safe_copy_id(h, mesh_id, b%mesh_id)
-      CALL safe_copy_id(h, material_id, b%material_id)
+      CALL sdf_safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL sdf_safe_copy_id(h, material_id, b%material_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
+        CALL sdf_safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -917,14 +917,14 @@ CONTAINS
         b%data_length = 0
         b%blocktype = c_blocktype_stitched_species
       ENDIF
-      CALL safe_copy_id(h, mesh_id, b%mesh_id)
-      CALL safe_copy_id(h, material_id, b%material_id)
-      CALL safe_copy_string(material_name, b%material_name)
+      CALL sdf_safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL sdf_safe_copy_id(h, material_id, b%material_id)
+      CALL sdf_safe_copy_string(material_name, b%material_name)
       ALLOCATE(b%material_names(b%ndims))
       ALLOCATE(b%variable_ids(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_string(specnames(i), b%material_names(i))
-        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
+        CALL sdf_safe_copy_string(specnames(i), b%material_names(i))
+        CALL sdf_safe_copy_id(h, variable_ids(i), b%variable_ids(i))
       ENDDO
       CALL sdf_write_block_header(h, id, name)
     ELSE
@@ -1006,12 +1006,12 @@ CONTAINS
     ! Write header
     IF (PRESENT(id)) THEN
       b%stagger = stagger
-      CALL safe_copy_id(h, obstacle_id, b%obstacle_id)
-      CALL safe_copy_id(h, vfm_id, b%vfm_id)
+      CALL sdf_safe_copy_id(h, obstacle_id, b%obstacle_id)
+      CALL sdf_safe_copy_id(h, vfm_id, b%vfm_id)
       CALL sdf_write_block_header(h, id, name)
       ALLOCATE(b%material_names(b%ndims))
       DO i = 1, b%ndims
-        CALL safe_copy_string(obstacle_names(i), b%material_names(i))
+        CALL sdf_safe_copy_string(obstacle_names(i), b%material_names(i))
       ENDDO
     ELSE
       CALL write_block_header(h)
@@ -1268,9 +1268,9 @@ CONTAINS
     CALL MPI_BCAST(b%data_length, 1, MPI_INTEGER8, 0, h%comm, errcode)
     b%nelements = b%data_length
 
-    CALL safe_copy_id(h, mimetype, b%mimetype)
-    CALL safe_copy_id(h, checksum_type, b%checksum_type)
-    CALL safe_copy_string(checksum, b%checksum)
+    CALL sdf_safe_copy_id(h, mimetype, b%mimetype)
+    CALL sdf_safe_copy_id(h, checksum_type, b%checksum_type)
+    CALL sdf_safe_copy_string(checksum, b%checksum)
 
     CALL write_datablock_meta(h, id, name)
 
@@ -1332,9 +1332,9 @@ CONTAINS
     CALL MPI_BCAST(b%data_length, 1, MPI_INTEGER8, 0, h%comm, errcode)
     b%nelements = b%data_length
 
-    CALL safe_copy_id(h, mimetype, b%mimetype)
-    CALL safe_copy_id(h, checksum_type, b%checksum_type)
-    CALL safe_copy_string(checksum, b%checksum)
+    CALL sdf_safe_copy_id(h, mimetype, b%mimetype)
+    CALL sdf_safe_copy_id(h, checksum_type, b%checksum_type)
+    CALL sdf_safe_copy_string(checksum, b%checksum)
 
     CALL write_datablock_meta(h, id, name)
 
@@ -1458,7 +1458,7 @@ CONTAINS
     ALLOCATE(b%material_names(b%ndims))
     ALLOCATE(b%i4_array(b%ndims))
     DO i = 1, b%ndims
-      CALL safe_copy_string(names(i), b%material_names(i))
+      CALL sdf_safe_copy_string(names(i), b%material_names(i))
       b%i4_array(i) = values(i)
     ENDDO
 
@@ -1494,7 +1494,7 @@ CONTAINS
     ALLOCATE(b%material_names(b%ndims))
     ALLOCATE(b%i8_array(b%ndims))
     DO i = 1, b%ndims
-      CALL safe_copy_string(names(i), b%material_names(i))
+      CALL sdf_safe_copy_string(names(i), b%material_names(i))
       b%i8_array(i) = values(i)
     ENDDO
 
@@ -1530,7 +1530,7 @@ CONTAINS
     ALLOCATE(b%material_names(b%ndims))
     ALLOCATE(b%r4_array(b%ndims))
     DO i = 1, b%ndims
-      CALL safe_copy_string(names(i), b%material_names(i))
+      CALL sdf_safe_copy_string(names(i), b%material_names(i))
       b%r4_array(i) = values(i)
     ENDDO
 
@@ -1566,7 +1566,7 @@ CONTAINS
     ALLOCATE(b%material_names(b%ndims))
     ALLOCATE(b%r8_array(b%ndims))
     DO i = 1, b%ndims
-      CALL safe_copy_string(names(i), b%material_names(i))
+      CALL sdf_safe_copy_string(names(i), b%material_names(i))
       b%r8_array(i) = values(i)
     ENDDO
 
@@ -1602,7 +1602,7 @@ CONTAINS
     ALLOCATE(b%material_names(b%ndims))
     ALLOCATE(b%logical_array(b%ndims))
     DO i = 1, b%ndims
-      CALL safe_copy_string(names(i), b%material_names(i))
+      CALL sdf_safe_copy_string(names(i), b%material_names(i))
       IF (values(i)) THEN
         b%logical_array(i) = ACHAR(1)
       ELSE
@@ -1642,8 +1642,8 @@ CONTAINS
     ALLOCATE(b%material_names(b%ndims))
     ALLOCATE(b%string_array(b%ndims))
     DO i = 1, b%ndims
-      CALL safe_copy_string(names(i), b%material_names(i))
-      CALL safe_copy_string(values(i), b%string_array(i))
+      CALL sdf_safe_copy_string(names(i), b%material_names(i))
+      CALL sdf_safe_copy_string(values(i), b%string_array(i))
     ENDDO
 
     CALL write_namevalue_meta(h, id, name)

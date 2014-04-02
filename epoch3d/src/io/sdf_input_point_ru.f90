@@ -55,7 +55,7 @@ CONTAINS
       IF (1000 * h%file_version + h%file_revision .GT. 1002) THEN
         CALL read_entry_id(h, b%species_id)
       ELSE
-        CALL safe_copy_id(h, '__unknown__', b%species_id)
+        CALL sdf_safe_copy_id(h, '__unknown__', b%species_id)
       ENDIF
     ENDIF
 
@@ -121,7 +121,7 @@ CONTAINS
       IF (1000 * h%file_version + h%file_revision .GT. 1002) THEN
         CALL read_entry_id(h, b%species_id)
       ELSE
-        CALL safe_copy_id(h, '__unknown__', b%species_id)
+        CALL sdf_safe_copy_id(h, '__unknown__', b%species_id)
       ENDIF
     ENDIF
 

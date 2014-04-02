@@ -171,5 +171,7 @@ MODULE sdf
   PUBLIC :: sdf_write_datablock
   PUBLIC :: sdf_write_namevalue
   PUBLIC :: sdf_errorcode
+  PUBLIC :: sdf_safe_copy_id
+  PUBLIC :: sdf_safe_copy_string
 
 END MODULE sdf
