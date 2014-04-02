@@ -10,6 +10,7 @@ MODULE sdf
   USE sdf_output_cartesian
   USE sdf_output_point
   USE sdf_output_station
+  USE sdf_output_source
 
   IMPLICIT NONE
 
@@ -170,6 +171,7 @@ MODULE sdf
   PUBLIC :: sdf_write_cpu_split
   PUBLIC :: sdf_write_datablock
   PUBLIC :: sdf_write_namevalue
+  PUBLIC :: sdf_write_source_info
   PUBLIC :: sdf_errorcode
   PUBLIC :: sdf_safe_copy_id
   PUBLIC :: sdf_safe_copy_string

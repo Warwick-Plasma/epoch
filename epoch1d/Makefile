@@ -250,12 +250,12 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   sdf_output_cartesian_r4.f90 sdf_output_cartesian_r8.f90 \
   sdf_output_cartesian_ru.f90 sdf_output_point.f90 sdf_output_point_r4.f90 \
   sdf_output_point_r8.f90 sdf_output_point_ru.f90 sdf_output_r4.f90 \
-  sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_station.f90 \
-  sdf_output_station_r4.f90 sdf_output_station_r8.f90 \
-  sdf_output_station_ru.f90 sdf_output_util.f90 setup.F90 shape_functions.F90 \
-  shared_data.F90 shunt.F90 simple_io.f90 split_particle.F90 stack.f90 \
-  strings.f90 strings_advanced.f90 timer.f90 tokenizer_blocks.f90 \
-  utilities.f90 version_data.F90 welcome.F90 window.F90
+  sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_source.f90 \
+  sdf_output_station.f90 sdf_output_station_r4.f90 sdf_output_station_r8.f90 \
+  sdf_output_station_ru.f90 sdf_output_util.f90 sdf_source_info.f90 setup.F90 \
+  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
+  split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 timer.f90 \
+  tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -390,7 +390,8 @@ random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
 sdf.o: sdf.f90 sdf_control.o sdf_input.o sdf_input_cartesian.o \
   sdf_input_point.o sdf_input_station.o sdf_input_util.o sdf_output.o \
-  sdf_output_cartesian.o sdf_output_point.o sdf_output_station.o
+  sdf_output_cartesian.o sdf_output_point.o sdf_output_source.o \
+  sdf_output_station.o
 sdf_common.o: sdf_common.f90 sdf_job_info.o
 sdf_control.o: sdf_control.f90 sdf_output_util.o
 sdf_input.o: sdf_input.f90 sdf_input_r4.o sdf_input_r8.o
@@ -430,6 +431,8 @@ sdf_output_point_ru.o: sdf_output_point_ru.f90 sdf_common.o sdf_output_ru.o
 sdf_output_r4.o: sdf_output_r4.f90 sdf_output_ru.o
 sdf_output_r8.o: sdf_output_r8.f90 sdf_output_ru.o
 sdf_output_ru.o: sdf_output_ru.f90 sdf_common.o
+sdf_output_source.o: sdf_output_source.f90 sdf_common.o sdf_output.o \
+  sdf_source_info.o
 sdf_output_station.o: sdf_output_station.f90 sdf_output_station_r4.o \
   sdf_output_station_r8.o
 sdf_output_station_r4.o: sdf_output_station_r4.f90 sdf_output_station_ru.o
@@ -437,6 +440,7 @@ sdf_output_station_r8.o: sdf_output_station_r8.f90 sdf_output_station_ru.o
 sdf_output_station_ru.o: sdf_output_station_ru.f90 sdf_output_ru.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
   sdf_output_point_ru.o
+sdf_source_info.o: sdf_source_info.f90
 setup.o: setup.F90 fields.o laser.o mpi_subtype_control.o shared_data.o \
   shunt.o split_particle.o timer.o version_data.o welcome.o window.o \
   $(ENCODED_SOURCE)
