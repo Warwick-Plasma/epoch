@@ -108,6 +108,8 @@ enum sdf_blocktype {
     SDF_BLOCKTYPE_STATION_DERIVED,
     /** Raw data with a checksum. */
     SDF_BLOCKTYPE_DATABLOCK,
+    /** Name/value pairs. */
+    SDF_BLOCKTYPE_NAMEVALUE,
 };
 
 

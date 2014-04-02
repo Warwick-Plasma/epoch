@@ -43,6 +43,7 @@ static int sdf_read_cpu_split_info(sdf_file_t *h);
 static int sdf_read_run_info(sdf_file_t *h);
 static int sdf_read_datablock_info(sdf_file_t *h);
 static int sdf_read_datablock(sdf_file_t *h);
+static int sdf_read_namevalue(sdf_file_t *h);
 static void build_summary_buffer(sdf_file_t *h);
 static int sdf_read_next_block_header(sdf_file_t *h);
 
@@ -324,6 +325,8 @@ int sdf_read_block_info(sdf_file_t *h)
         ret = sdf_read_station_info(h);
     else if (b->blocktype == SDF_BLOCKTYPE_DATABLOCK)
         ret = sdf_read_datablock_info(h);
+    else if (b->blocktype == SDF_BLOCKTYPE_NAMEVALUE)
+        ret = sdf_read_namevalue(h);
 
     // Fix up block_start values for inline metadata
     if (!h->use_summary) {
@@ -913,6 +916,55 @@ static int sdf_read_datablock_info(sdf_file_t *h)
     SDF_READ_ENTRY_ID(b->mimetype);
     SDF_READ_ENTRY_ID(b->checksum_type);
     SDF_READ_ENTRY_STRING(b->checksum);
+
+    return 0;
+}
+
+
+
+static int sdf_read_namevalue(sdf_file_t *h)
+{
+    sdf_block_t *b;
+    int32_t *i4 = NULL;
+    int64_t *i8 = NULL;
+    float *r4 = NULL;
+    double *r8 = NULL;
+    char *logical = NULL;
+    char **string = NULL;
+
+    // Metadata is
+    // - names     ndims*CHARACTER(string_length)
+    // - values    ndims*DATATYPE
+
+    SDF_COMMON_INFO();
+
+    SDF_READ_ENTRY_ARRAY_STRING(b->material_names, b->ndims);
+    switch (b->datatype) {
+    case(SDF_DATATYPE_INTEGER4):
+        SDF_READ_ENTRY_ARRAY_INT4(i4, b->ndims);
+        b->data = i4;
+        break;
+    case(SDF_DATATYPE_INTEGER8):
+        SDF_READ_ENTRY_ARRAY_INT8(i8, b->ndims);
+        b->data = i8;
+        break;
+    case(SDF_DATATYPE_REAL4):
+        SDF_READ_ENTRY_ARRAY_REAL4(r4, b->ndims);
+        b->data = r4;
+        break;
+    case(SDF_DATATYPE_REAL8):
+        SDF_READ_ENTRY_ARRAY_REAL8(r8, b->ndims);
+        b->data = r8;
+        break;
+    case(SDF_DATATYPE_LOGICAL):
+        SDF_READ_ENTRY_ARRAY_LOGICAL(logical, b->ndims);
+        b->data = logical;
+        break;
+    case(SDF_DATATYPE_CHARACTER):
+        SDF_READ_ENTRY_ARRAY_STRING(string, b->ndims);
+        b->data = string;
+        break;
+    }
 
     return 0;
 }

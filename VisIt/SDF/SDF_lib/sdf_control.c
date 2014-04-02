@@ -59,6 +59,7 @@ const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_STATION",
     "SDF_BLOCKTYPE_STATION_DERIVED",
     "SDF_BLOCKTYPE_DATABLOCK",
+    "SDF_BLOCKTYPE_NAMEVALUE",
 };
 
 const char *sdf_geometry_c[] = {

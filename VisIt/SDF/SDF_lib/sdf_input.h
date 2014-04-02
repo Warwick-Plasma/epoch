@@ -165,6 +165,14 @@
         SDF_DPRNTa(value, "g", (length)); \
     } while (0)
 
+#define SDF_READ_ENTRY_ARRAY_LOGICAL(value, length) do { \
+        if (!(value)) value = calloc((length), sizeof(char)); \
+        memcpy((value), (h->buffer + h->current_location - h->start_location), \
+            (length)); \
+        h->current_location += (length); \
+        SDF_DPRNTa(value, "c", (length)); \
+    } while (0)
+
 #define SDF_READ_ENTRY_TYPE(value) do { \
         (b->value) = *((int32_t *) \
             (h->buffer + h->current_location - h->start_location)); \
