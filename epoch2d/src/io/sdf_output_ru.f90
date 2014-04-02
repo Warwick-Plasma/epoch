@@ -1362,6 +1362,295 @@ CONTAINS
 
 
 
+  SUBROUTINE write_namevalue_meta(h, id, name)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN), OPTIONAL :: id, name
+    INTEGER :: i, errcode
+    TYPE(sdf_block_type), POINTER :: b
+
+    b => h%current_block
+    b%blocktype = c_blocktype_namevalue
+
+    ! Metadata is
+    ! - names     ndims*CHARACTER(string_length)
+    ! - values    ndims*DATATYPE
+
+    b%info_length = h%block_header_length + b%ndims * h%string_length &
+        + b%ndims * b%type_size
+    b%data_length = 0
+
+    ! Write header
+    IF (PRESENT(id)) THEN
+      CALL sdf_write_block_header(h, id, name)
+    ELSE
+      CALL write_block_header(h)
+    ENDIF
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      ! Write metadata
+      DO i = 1, b%ndims
+        CALL sdf_safe_write_string(h, b%material_names(i))
+      ENDDO
+
+      IF (b%datatype .EQ. c_datatype_integer4) THEN
+        CALL MPI_FILE_WRITE(h%filehandle, b%i4_array, b%ndims, &
+            b%mpitype, MPI_STATUS_IGNORE, errcode)
+
+      ELSE IF (b%datatype .EQ. c_datatype_integer8) THEN
+        CALL MPI_FILE_WRITE(h%filehandle, b%i8_array, b%ndims, &
+            b%mpitype, MPI_STATUS_IGNORE, errcode)
+
+      ELSE IF (b%datatype .EQ. c_datatype_real4) THEN
+        CALL MPI_FILE_WRITE(h%filehandle, b%r4_array, b%ndims, &
+            b%mpitype, MPI_STATUS_IGNORE, errcode)
+
+      ELSE IF (b%datatype .EQ. c_datatype_real8) THEN
+        CALL MPI_FILE_WRITE(h%filehandle, b%r8_array, b%ndims, &
+            b%mpitype, MPI_STATUS_IGNORE, errcode)
+
+      ELSE IF (b%datatype .EQ. c_datatype_logical) THEN
+        CALL MPI_FILE_WRITE(h%filehandle, b%logical_array, b%ndims, &
+            b%mpitype, MPI_STATUS_IGNORE, errcode)
+
+      ELSE IF (b%datatype .EQ. c_datatype_character) THEN
+        CALL MPI_FILE_WRITE(h%filehandle, b%string_array, &
+            b%ndims * h%string_length, b%mpitype, MPI_STATUS_IGNORE, errcode)
+      ENDIF
+    ENDIF
+
+    h%rank_master = h%default_rank
+    IF (b%data_length .GT. 0) THEN
+      h%current_location = b%next_block_location
+    ELSE
+      h%current_location = b%block_start + b%info_length
+    ENDIF
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_namevalue_meta
+
+
+
+  SUBROUTINE write_namevalue_i4(h, id, name, names, values, ndims)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, names(:)
+    INTEGER(i4), INTENT(IN) :: values(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER :: i
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+    IF (PRESENT(ndims)) THEN
+      b%ndims = ndims
+    ELSE
+      b%ndims = INT(SIZE(names),i4)
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_integer4
+    b%type_size = soi4
+    b%mpitype = MPI_INTEGER4
+
+    ALLOCATE(b%material_names(b%ndims))
+    ALLOCATE(b%i4_array(b%ndims))
+    DO i = 1, b%ndims
+      CALL safe_copy_string(names(i), b%material_names(i))
+      b%i4_array(i) = values(i)
+    ENDDO
+
+    CALL write_namevalue_meta(h, id, name)
+
+  END SUBROUTINE write_namevalue_i4
+
+
+
+  SUBROUTINE write_namevalue_i8(h, id, name, names, values, ndims)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, names(:)
+    INTEGER(i8), INTENT(IN) :: values(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER :: i
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+    IF (PRESENT(ndims)) THEN
+      b%ndims = ndims
+    ELSE
+      b%ndims = INT(SIZE(names),i4)
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_integer8
+    b%type_size = soi8
+    b%mpitype = MPI_INTEGER8
+
+    ALLOCATE(b%material_names(b%ndims))
+    ALLOCATE(b%i8_array(b%ndims))
+    DO i = 1, b%ndims
+      CALL safe_copy_string(names(i), b%material_names(i))
+      b%i8_array(i) = values(i)
+    ENDDO
+
+    CALL write_namevalue_meta(h, id, name)
+
+  END SUBROUTINE write_namevalue_i8
+
+
+
+  SUBROUTINE write_namevalue_r4(h, id, name, names, values, ndims)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, names(:)
+    REAL(r4), INTENT(IN) :: values(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER :: i
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+    IF (PRESENT(ndims)) THEN
+      b%ndims = ndims
+    ELSE
+      b%ndims = INT(SIZE(names),i4)
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_real4
+    b%type_size = sof4
+    b%mpitype = MPI_REAL4
+
+    ALLOCATE(b%material_names(b%ndims))
+    ALLOCATE(b%r4_array(b%ndims))
+    DO i = 1, b%ndims
+      CALL safe_copy_string(names(i), b%material_names(i))
+      b%r4_array(i) = values(i)
+    ENDDO
+
+    CALL write_namevalue_meta(h, id, name)
+
+  END SUBROUTINE write_namevalue_r4
+
+
+
+  SUBROUTINE write_namevalue_r8(h, id, name, names, values, ndims)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, names(:)
+    REAL(r8), INTENT(IN) :: values(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER :: i
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+    IF (PRESENT(ndims)) THEN
+      b%ndims = ndims
+    ELSE
+      b%ndims = INT(SIZE(names),i4)
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_real8
+    b%type_size = sof8
+    b%mpitype = MPI_REAL8
+
+    ALLOCATE(b%material_names(b%ndims))
+    ALLOCATE(b%r8_array(b%ndims))
+    DO i = 1, b%ndims
+      CALL safe_copy_string(names(i), b%material_names(i))
+      b%r8_array(i) = values(i)
+    ENDDO
+
+    CALL write_namevalue_meta(h, id, name)
+
+  END SUBROUTINE write_namevalue_r8
+
+
+
+  SUBROUTINE write_namevalue_logical(h, id, name, names, values, ndims)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, names(:)
+    LOGICAL, INTENT(IN) :: values(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER :: i
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+    IF (PRESENT(ndims)) THEN
+      b%ndims = ndims
+    ELSE
+      b%ndims = INT(SIZE(names),i4)
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_logical
+    b%type_size = 1
+    b%mpitype = MPI_CHARACTER
+
+    ALLOCATE(b%material_names(b%ndims))
+    ALLOCATE(b%logical_array(b%ndims))
+    DO i = 1, b%ndims
+      CALL safe_copy_string(names(i), b%material_names(i))
+      IF (values(i)) THEN
+        b%logical_array(i) = ACHAR(1)
+      ELSE
+        b%logical_array(i) = ACHAR(0)
+      ENDIF
+    ENDDO
+
+    CALL write_namevalue_meta(h, id, name)
+
+  END SUBROUTINE write_namevalue_logical
+
+
+
+  SUBROUTINE write_namevalue_string(h, id, name, names, values, ndims)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name, names(:)
+    CHARACTER(LEN=*), INTENT(IN) :: values(:)
+    INTEGER, INTENT(IN), OPTIONAL :: ndims
+    INTEGER :: i
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+    IF (PRESENT(ndims)) THEN
+      b%ndims = ndims
+    ELSE
+      b%ndims = INT(SIZE(names),i4)
+    ENDIF
+
+    b => h%current_block
+
+    b%datatype = c_datatype_character
+    b%type_size = h%string_length
+    b%mpitype = MPI_CHARACTER
+
+    ALLOCATE(b%material_names(b%ndims))
+    ALLOCATE(b%string_array(b%ndims))
+    DO i = 1, b%ndims
+      CALL safe_copy_string(names(i), b%material_names(i))
+      CALL safe_copy_string(values(i), b%string_array(i))
+    ENDDO
+
+    CALL write_namevalue_meta(h, id, name)
+
+  END SUBROUTINE write_namevalue_string
+
+
 
   SUBROUTINE write_cpu_split_meta(h, id, name)
 

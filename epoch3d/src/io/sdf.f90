@@ -52,6 +52,7 @@ MODULE sdf
   PUBLIC :: c_blocktype_station
   PUBLIC :: c_blocktype_station_derived
   PUBLIC :: c_blocktype_datablock
+  PUBLIC :: c_blocktype_namevalue
   PUBLIC :: c_blocktype_max
 
   PUBLIC :: c_datatype_null
@@ -168,6 +169,7 @@ MODULE sdf
   PUBLIC :: sdf_write_stitched_obstacle_group
   PUBLIC :: sdf_write_cpu_split
   PUBLIC :: sdf_write_datablock
+  PUBLIC :: sdf_write_namevalue
   PUBLIC :: sdf_errorcode
 
 END MODULE sdf

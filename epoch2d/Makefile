@@ -414,7 +414,7 @@ sdf_input_station_ru.o: sdf_input_station_ru.f90 sdf_input_ru.o
 sdf_input_util.o: sdf_input_util.f90 sdf_input.o sdf_input_cartesian.o \
   sdf_input_point.o sdf_input_station.o sdf_output_station_ru.o
 sdf_job_info.o: sdf_job_info.f90
-sdf_output.o: sdf_output.f90 sdf_output_r4.o sdf_output_r8.o
+sdf_output.o: sdf_output.f90 sdf_output_r4.o sdf_output_r8.o sdf_output_ru.o
 sdf_output_cartesian.o: sdf_output_cartesian.f90 sdf_output_cartesian_r4.o \
   sdf_output_cartesian_r8.o
 sdf_output_cartesian_r4.o: sdf_output_cartesian_r4.f90 sdf_output_cartesian_ru.o

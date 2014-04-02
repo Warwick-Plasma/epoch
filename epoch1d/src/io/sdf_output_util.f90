@@ -91,6 +91,8 @@ CONTAINS
       CALL sdf_write_stitched_species(h)
     ELSE IF (b%blocktype .EQ. c_blocktype_stitched_obstacle_group) THEN
       CALL sdf_write_stitched_obstacle_group(h)
+    ELSE IF (b%blocktype .EQ. c_blocktype_namevalue) THEN
+      CALL write_namevalue_meta(h)
     ELSE
       CALL write_block_header(h)
     ENDIF

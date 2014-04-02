@@ -32,13 +32,16 @@ MODULE sdf_common
   END TYPE sdf_run_type
 
   TYPE sdf_block_type
+    REAL(r4), POINTER :: r4_array(:)
     REAL(r8), DIMENSION(2*c_maxdims) :: extents
     REAL(r8) :: mult, time, time_increment
     REAL(r8), DIMENSION(:), POINTER :: dim_mults
     REAL(r8), DIMENSION(:,:), POINTER :: station_grid
+    REAL(r8), POINTER :: r8_array(:)
     INTEGER(KIND=MPI_OFFSET_KIND) :: block_start
     INTEGER(i8) :: next_block_location, data_location
     INTEGER(i8) :: nelements, npoints, data_length, info_length
+    INTEGER(i8), POINTER :: i8_array(:)
     INTEGER(i4) :: ndims, geometry, datatype, blocktype
     INTEGER(i4) :: mpitype, type_size, stagger
     INTEGER(i4) :: nstations, nvariables, step, step_increment
@@ -46,6 +49,8 @@ MODULE sdf_common
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     INTEGER(i4), POINTER :: station_nvars(:), station_move(:), variable_types(:)
     INTEGER(i4), POINTER :: station_index(:)
+    INTEGER(i4), POINTER :: i4_array(:)
+    CHARACTER(LEN=1), POINTER :: logical_array(:)
     CHARACTER(LEN=8) :: const_value
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id, species_id
@@ -56,6 +61,7 @@ MODULE sdf_common
     CHARACTER(LEN=c_max_string_length) :: name, material_name, checksum
     CHARACTER(LEN=c_max_string_length), POINTER :: station_names(:)
     CHARACTER(LEN=c_max_string_length), POINTER :: material_names(:)
+    CHARACTER(LEN=c_max_string_length), POINTER :: string_array(:)
     LOGICAL :: done_header, done_info, done_data, truncated_id, use_mult
     TYPE(sdf_run_type), POINTER :: run
     TYPE(sdf_block_type), POINTER :: next_block
@@ -126,7 +132,8 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_station = 26
   INTEGER(i4), PARAMETER :: c_blocktype_station_derived = 27
   INTEGER(i4), PARAMETER :: c_blocktype_datablock = 28
-  INTEGER(i4), PARAMETER :: c_blocktype_max = 28
+  INTEGER(i4), PARAMETER :: c_blocktype_namevalue = 29
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 29
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
@@ -262,7 +269,8 @@ MODULE sdf_common
       'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ', &
       'SDF_BLOCKTYPE_STATION                ', &
       'SDF_BLOCKTYPE_STATION_DERIVED        ', &
-      'SDF_BLOCKTYPE_DATABLOCK              ' /)
+      'SDF_BLOCKTYPE_DATABLOCK              ', &
+      'SDF_BLOCKTYPE_NAMEVALUE              ' /)
 
   CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
       'SDF_DATATYPE_NULL     ', &
@@ -593,6 +601,12 @@ CONTAINS
     NULLIFY(var%station_grid)
     NULLIFY(var%station_index)
     NULLIFY(var%variable_types)
+    NULLIFY(var%i4_array)
+    NULLIFY(var%i8_array)
+    NULLIFY(var%r4_array)
+    NULLIFY(var%r8_array)
+    NULLIFY(var%logical_array)
+    NULLIFY(var%string_array)
     var%done_header = .FALSE.
     var%done_info = .FALSE.
     var%done_data = .FALSE.
@@ -628,6 +642,12 @@ CONTAINS
     IF (ASSOCIATED(var%station_grid))   DEALLOCATE(var%station_grid)
     IF (ASSOCIATED(var%station_index))  DEALLOCATE(var%station_index)
     IF (ASSOCIATED(var%variable_types)) DEALLOCATE(var%variable_types)
+    IF (ASSOCIATED(var%i4_array))       DEALLOCATE(var%i4_array)
+    IF (ASSOCIATED(var%i8_array))       DEALLOCATE(var%i8_array)
+    IF (ASSOCIATED(var%r4_array))       DEALLOCATE(var%r4_array)
+    IF (ASSOCIATED(var%r8_array))       DEALLOCATE(var%r8_array)
+    IF (ASSOCIATED(var%logical_array))  DEALLOCATE(var%logical_array)
+    IF (ASSOCIATED(var%string_array))   DEALLOCATE(var%string_array)
 
     CALL initialise_block_type(var)
 
