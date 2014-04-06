@@ -49,4 +49,10 @@ MODULE sdf_output
         write_run_info_minor
   END INTERFACE sdf_write_run_info
 
+  INTERFACE sdf_write_datablock
+    MODULE PROCEDURE &
+        write_datablock_bytearray, &
+        write_datablock_chararray
+  END INTERFACE sdf_write_datablock
+
 END MODULE sdf_output

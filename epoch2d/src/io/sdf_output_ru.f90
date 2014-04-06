@@ -1233,7 +1233,7 @@ CONTAINS
 
 
 
-  SUBROUTINE sdf_write_datablock(h, id, name, array, padding, mimetype, &
+  SUBROUTINE write_datablock_bytearray(h, id, name, array, padding, mimetype, &
       checksum_type, checksum)
 
     TYPE(sdf_file_handle) :: h
@@ -1290,7 +1290,75 @@ CONTAINS
     b%done_info = .TRUE.
     b%done_data = .TRUE.
 
-  END SUBROUTINE sdf_write_datablock
+  END SUBROUTINE write_datablock_bytearray
+
+
+
+  SUBROUTINE write_datablock_chararray(h, id, name, array, last, mimetype, &
+      checksum_type, checksum)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=*), INTENT(IN) :: id, name
+    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: array
+    CHARACTER(LEN=*), INTENT(IN) :: last
+    CHARACTER(LEN=*), INTENT(IN) :: mimetype, checksum_type, checksum
+    INTEGER(i8) :: i, sz = 0
+    INTEGER :: errcode, len1, len2
+    TYPE(sdf_block_type), POINTER :: b
+
+    CALL sdf_get_next_block(h)
+    b => h%current_block
+
+    b%type_size = 1
+    b%datatype = c_datatype_character
+    b%mpitype = MPI_CHARACTER
+    b%blocktype = c_blocktype_datablock
+    b%ndims = 0
+
+    ! Metadata is
+    ! - mimetype       CHARACTER(id_length)
+    ! - checksum_type  CHARACTER(id_length)
+    ! - checksum       CHARACTER(string_length)
+
+    b%info_length = h%block_header_length + 2 * c_id_length + h%string_length
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      sz   = SIZE(array)
+      len1 = LEN(array)
+      len2 = LEN(last)
+      b%data_length = sz*len1 + len2
+    ENDIF
+
+    CALL MPI_BCAST(b%data_length, 1, MPI_INTEGER8, 0, h%comm, errcode)
+    b%nelements = b%data_length
+
+    CALL safe_copy_id(h, mimetype, b%mimetype)
+    CALL safe_copy_id(h, checksum_type, b%checksum_type)
+    CALL safe_copy_string(checksum, b%checksum)
+
+    CALL write_datablock_meta(h, id, name)
+
+    h%current_location = b%data_location
+
+    IF (h%rank .EQ. h%rank_master) THEN
+      CALL MPI_FILE_SEEK(h%filehandle, h%current_location, MPI_SEEK_SET, &
+          errcode)
+
+      ! Write data
+      DO i = 1, sz
+        CALL MPI_FILE_WRITE(h%filehandle, array(i), len1, &
+            b%mpitype, MPI_STATUS_IGNORE, errcode)
+      ENDDO
+      CALL MPI_FILE_WRITE(h%filehandle, last, len2, &
+          b%mpitype, MPI_STATUS_IGNORE, errcode)
+    ENDIF
+
+    h%rank_master = h%default_rank
+    h%current_location = b%data_location + b%data_length
+    b%done_info = .TRUE.
+    b%done_data = .TRUE.
+
+  END SUBROUTINE write_datablock_chararray
 
 
 
