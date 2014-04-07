@@ -50,9 +50,13 @@ struct slice_block {
 };
 
 static char width_fmt[16];
+#define SET_WIDTH_LEN(len) do { \
+        snprintf(width_fmt, 16, "%%-%is", (len)); \
+    } while(0)
+
 #define SET_WIDTH(string) do { \
         int _l = strlen((string)); \
-        snprintf(width_fmt, 16, "%%-%is", _l); \
+        SET_WIDTH_LEN(_l); \
     } while(0)
 
 #define PRINT(name,variable,fmt) do { \
@@ -1265,6 +1269,89 @@ static void print_metadata_station(sdf_block_t *b)
 }
 
 
+static void print_metadata_datablock(sdf_block_t *b)
+{
+    // Metadata is
+    // - mimetype       CHARACTER(id_length)
+    // - checksum_type  CHARACTER(id_length)
+    // - checksum       CHARACTER(string_length)
+
+    SET_WIDTH("checksum_type:");
+    PRINT("mimetype:", b->mimetype, "%s");
+    PRINT("checksum_type:", b->checksum_type, "%s");
+    PRINT("checksum:", b->checksum, "%s");
+    PRINTAR("species names:", b->material_names, "%s", b->ndims);
+}
+
+
+static void print_metadata_namevalue(sdf_block_t *b)
+{
+    int i, len, max;
+    int32_t *i4;
+    int64_t *i8;
+    float *r4;
+    double *r8;
+    char *logical;
+    char **string;
+
+    // Metadata is
+    // - names     ndims*CHARACTER(string_length)
+    // - values    ndims*DATATYPE
+
+    max = 0;
+    for (i = 0; i < b->ndims; i++) {
+        len = strlen(b->material_names[i]);
+        if (len > max) max = len;
+    }
+
+    SET_WIDTH_LEN(max);
+    switch (b->datatype) {
+    case(SDF_DATATYPE_INTEGER4):
+        i4 = b->data;
+        for (i = 0; i < b->ndims; i++) {
+            PRINT(b->material_names[i], i4[i], "%i");
+        }
+        break;
+    case(SDF_DATATYPE_INTEGER8):
+        i8 = b->data;
+        for (i = 0; i < b->ndims; i++) {
+            PRINT(b->material_names[i], i8[i], "%" PRIi64);
+        }
+        break;
+    case(SDF_DATATYPE_REAL4):
+        r4 = b->data;
+        for (i = 0; i < b->ndims; i++) {
+            PRINT(b->material_names[i], r4[i], "%g");
+        }
+        break;
+    case(SDF_DATATYPE_REAL8):
+        r8 = b->data;
+        for (i = 0; i < b->ndims; i++) {
+            PRINT(b->material_names[i], r8[i], "%g");
+        }
+        break;
+    case(SDF_DATATYPE_LOGICAL):
+        logical = b->data;
+        for (i = 0; i < b->ndims; i++) {
+            printf(indent, 1);
+            printf(width_fmt, b->material_names[i]);
+            if (logical[i])
+                printf("True");
+            else
+                printf("False");
+            printf("\n");
+        }
+        break;
+    case(SDF_DATATYPE_CHARACTER):
+        string = b->data;
+        for (i = 0; i < b->ndims; i++) {
+            PRINT(b->material_names[i], string[i], "%s");
+        }
+        break;
+    }
+}
+
+
 static void print_metadata(sdf_block_t *b, int inum, int nblocks)
 {
     int digit = 0;
@@ -1358,9 +1445,24 @@ static void print_metadata(sdf_block_t *b, int inum, int nblocks)
     case SDF_BLOCKTYPE_STATION_DERIVED:
         print_metadata_station(b);
         break;
+    case SDF_BLOCKTYPE_DATABLOCK:
+        print_metadata_datablock(b);
+        break;
+    case SDF_BLOCKTYPE_NAMEVALUE:
+        print_metadata_namevalue(b);
+        break;
     }
 
     printf("\n");
+}
+
+
+static void print_data(sdf_block_t *b)
+{
+    if (!b->done_data)
+        fprintf(stderr, "Data not read.\n");
+    else
+        fwrite(b->data, 1, b->data_length, stdout);
 }
 
 
@@ -1492,6 +1594,10 @@ int main(int argc, char **argv)
             set_array_section(b);
             sdf_helper_read_data(h, b);
             pretty_print(h, b, idx);
+            break;
+        case SDF_BLOCKTYPE_DATABLOCK:
+            sdf_helper_read_data(h, b);
+            print_data(b);
             break;
         default:
             printf("Unsupported blocktype %s\n",
