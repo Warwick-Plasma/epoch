@@ -95,6 +95,7 @@ def print_character(name,value):
     wrapped("DATA %s/'%s'/" % (var,value))
   else:
     ilen = len(value)
+    if ilen == 0: ilen = 1
     wrapped("CHARACTER(LEN=%i) :: %s = '%s'" % (ilen,var,value))
 
 
@@ -205,6 +206,7 @@ def write_data_bytes(filename, varname):
 
 def print_integer_array(value):
   global of,nbytes,vname
+  if value == 0: value = 1
   if f77_output:
     of=inc_handle
     wrapped("INTEGER*%i %s(%s_len)" % (nbytes,vname,vname))
