@@ -205,6 +205,7 @@ static inline void stack_init(void)
 sdf_extension_t *avtSDFFileFormat::sdf_extension_load(sdf_file_t *h)
 {
     if (avtSDFFileFormat::extension_not_found) return NULL;
+    debug1 << "avtSDFFileFormat::sdf_extension_load " << h << endl;
 
     sdf_extension_handle = dlopen("sdf_extension.so", RTLD_LAZY);
 
@@ -215,6 +216,7 @@ sdf_extension_t *avtSDFFileFormat::sdf_extension_load(sdf_file_t *h)
         }
         return NULL;
     }
+    debug1 << "avtSDFFileFormat::sdf_extension_load success" << endl;
 
     sdf_extension_create_t *sdf_extension_create =
         (sdf_extension_create_t *)dlsym(sdf_extension_handle,

@@ -1,5 +1,7 @@
-#include "sdf.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sdf.h>
 
 //#define SDF_COMMON_MESH_LENGTH (4 + 8 + SDF_ID_LENGTH + 4 * b->ndims)
 

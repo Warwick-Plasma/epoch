@@ -121,7 +121,7 @@ char *parse_args(int *argc, char ***argv)
 int main(int argc, char **argv)
 {
     char *file = NULL;
-    int i, block, err;
+    int i, block, err, found;
     sdf_file_t *h;
     sdf_block_t *b;
     comm_t comm;
@@ -160,24 +160,36 @@ int main(int argc, char **argv)
     // to parse as we go
     sdf_read_summary(h);
 
+    found = 0;
+    if (metadata) {
+        if (variable_ids)
+            DBG_FLUSH();
+        else
+            DBG_PRINT_FLUSH();
+        found = 1;
+    }
+
     // Construct the metadata blocklist using the contents of the buffer
     for (i = 0; i < h->nblocks; i++) {
-        if (variable_ids && metadata) DBG_FLUSH();
-
         sdf_read_block_info(h);
 
         if (variable_ids && metadata) {
+            found = 0;
             last_id = variable_ids;
             while (last_id) {
                 if (!memcmp(h->current_block->id, last_id->id,
                         strlen(last_id->id)+1)) {
-                    DBG_PRINT_FLUSH();
+                    found = 1;
                     break;
                 }
                 last_id = last_id->next;
             }
-            DBG_FLUSH();
         }
+
+        if (found)
+            DBG_PRINT_FLUSH();
+        else
+            DBG_FLUSH();
     }
 
     free(h->buffer);
@@ -192,32 +204,31 @@ int main(int argc, char **argv)
 
     if (!contents) return 0;
 
+    found = 1;
     b = h->current_block = h->blocklist;
+
     for (i=0; i<h->nblocks; i++) {
         b = h->current_block;
         if (variable_ids) {
+            found = 0;
             h->print = 0;
             last_id = variable_ids;
             while (last_id) {
                 if (!memcmp(b->id, last_id->id, strlen(last_id->id)+1)) {
                     h->print = 1;
+                    found = 1;
                     sdf_read_data(h);
-#ifdef SDF_DEBUG
-                    DBG_PRINT_FLUSH();
-#endif
+                     
                     break;
                 }
                 last_id = last_id->next;
             }
-            DBG_FLUSH();
         } else
             sdf_read_data(h);
+
         h->current_block = b->next;
-#ifdef SDF_DEBUG_ALL
-#ifdef SDF_DEBUG
-        if (debug) DBG_PRINT_FLUSH();
-#endif
-#endif
+
+        if (found) DBG_PRINT_FLUSH();
     }
 #ifdef SDF_DEBUG_ALL
 #ifdef SDF_DEBUG

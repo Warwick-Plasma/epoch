@@ -1,13 +1,11 @@
 #ifndef _SDF_COMMON_H_
 #define _SDF_COMMON_H_
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
+
+#include <stdio.h>
 #include <inttypes.h>
 
 #ifdef PARALLEL

@@ -15,7 +15,7 @@ char *output_file;
 struct id_list {
   char *id;
   struct id_list *next;
-} *variable_ids, *last_id;
+} *variable_ids, *variable_last_id;
 
 int nrange;
 
@@ -59,7 +59,7 @@ int range_sort(const void *v1, const void *v2)
 char *parse_args(int *argc, char ***argv)
 {
     char *ptr, *file = NULL;
-    int c, i, err, range, sz, nbuf;
+    int c, i, err, range, sz, nrange_max;
     struct range_type *range_tmp;
     struct stat statbuf;
     static struct option longopts[] = {
@@ -77,9 +77,9 @@ char *parse_args(int *argc, char ***argv)
     metadata = debug = 1;
     contents = single = use_mmap = ignore_summary = 0;
     variable_ids = NULL;
-    last_id = NULL;
+    variable_last_id = NULL;
     output_file = NULL;
-    nbuf = nrange = 0;
+    nrange_max = nrange = 0;
     sz = sizeof(struct range_type);
 
     while ((c = getopt_long(*argc, *argv,
@@ -114,19 +114,19 @@ char *parse_args(int *argc, char ***argv)
                     } else {
                         nrange++;
                         // Grow array if necessary
-                        if (nrange > nbuf) {
-                            if (nbuf == 0) {
-                                nbuf = 128;
-                                range_list = malloc(nbuf * sz);
+                        if (nrange > nrange_max) {
+                            if (nrange_max == 0) {
+                                nrange_max = 128;
+                                range_list = malloc(nrange_max * sz);
                             } else {
-                                i = 2 * nbuf;
+                                i = 2 * nrange_max;
 
                                 range_tmp = malloc(i * sz);
-                                memcpy(range_tmp, range_list, nbuf * sz);
+                                memcpy(range_tmp, range_list, nrange_max * sz);
                                 free(range_list);
                                 range_list = range_tmp;
 
-                                nbuf = i;
+                                nrange_max = i;
                             }
                         }
 
@@ -140,14 +140,15 @@ char *parse_args(int *argc, char ***argv)
                 }
             } else {
                 if (!variable_ids) {
-                    last_id = variable_ids = malloc(sizeof(*variable_ids));
+                    variable_last_id =
+                            variable_ids = malloc(sizeof(*variable_ids));
                 } else {
-                    last_id->next = malloc(sizeof(*variable_ids));
-                    last_id = last_id->next;
+                    variable_last_id->next = malloc(sizeof(*variable_ids));
+                    variable_last_id = variable_last_id->next;
                 }
-                last_id->next = NULL;
-                last_id->id = malloc(strlen(optarg)+1);
-                memcpy(last_id->id, optarg, strlen(optarg)+1);
+                variable_last_id->next = NULL;
+                variable_last_id->id = malloc(strlen(optarg)+1);
+                memcpy(variable_last_id->id, optarg, strlen(optarg)+1);
             }
             break;
         case 'o':
@@ -277,13 +278,14 @@ int main(int argc, char **argv)
         }
 
         if (found == 0 && variable_ids) {
-            last_id = variable_ids;
-            while (last_id) {
-                if (!memcmp(b->id, last_id->id, strlen(last_id->id)+1)) {
+            variable_last_id = variable_ids;
+            while (variable_last_id) {
+                if (!memcmp(b->id, variable_last_id->id,
+                        strlen(variable_last_id->id)+1)) {
                     found = 1;
                     break;
                 }
-                last_id = last_id->next;
+                variable_last_id = variable_last_id->next;
             }
         }
 

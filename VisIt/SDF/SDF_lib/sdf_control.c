@@ -1,12 +1,13 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/mman.h>
-#include "sdf.h"
+#include <sdf.h>
 
 #ifdef PARALLEL
 #include <mpi.h>
+#else
+#include <sys/mman.h>
 #endif
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))

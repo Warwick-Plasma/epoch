@@ -1,7 +1,9 @@
+#include <stdlib.h>
+#include <string.h>
 #include <dlfcn.h>
-#include "sdf.h"
-#include "sdf_derived.h"
-#include "sdf_extension.h"
+#include <sdf_extension.h>
+#include <sdf_derived.h>
+#include <sdf.h>
 
 
 static void *sdf_global_extension = NULL;

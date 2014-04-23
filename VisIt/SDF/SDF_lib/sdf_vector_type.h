@@ -1,5 +1,7 @@
 #ifndef _SDF_VECTOR_TYPE_H_
 #define _SDF_VECTOR_TYPE_H_
+#include <stdlib.h>
+#include <string.h>
 
 /* Growable array datatype and helper routines */
 

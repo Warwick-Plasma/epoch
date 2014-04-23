@@ -1,5 +1,6 @@
 #ifndef _SDF_DERIVED_H_
 #define _SDF_DERIVED_H_
+#include <sdf.h>
 
 #ifdef __cplusplus
 extern "C" {

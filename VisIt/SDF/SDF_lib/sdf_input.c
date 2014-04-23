@@ -1,8 +1,7 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include "sdf.h"
+#include <sdf.h>
 #ifdef PARALLEL
 #include <mpi.h>
 #endif
@@ -196,7 +195,6 @@ int sdf_read_next_block_header(sdf_file_t *h)
     }
 
     h->indent = 2;
-    SDF_DPRNT("\n");
 
     if (h->use_summary)
         h->current_location = b->block_start;
@@ -513,6 +511,7 @@ int sdf_read_blocklist(sdf_file_t *h)
 
     // Construct the metadata blocklist using the contents of the buffer
     for (i = 0; i < h->nblocks; i++) {
+        SDF_DPRNT("\n");
         sdf_read_block_info(h);
     }
 

@@ -1,7 +1,9 @@
 #include <stdlib.h>
-#include "sdf.h"
-#include "sdf_vector_type.h"
-#include "sdf_list_type.h"
+#include <stdio.h>
+#include <string.h>
+#include <sdf_vector_type.h>
+#include <sdf_list_type.h>
+#include <sdf.h>
 
 #define IJK(i,j,k) ((i) + nx * ((j) + ny * (k)))
 #define IJK1(i,j,k) ((i) + (nx+1) * ((j) + (ny+1) * (k)))
