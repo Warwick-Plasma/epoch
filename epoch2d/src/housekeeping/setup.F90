@@ -1194,6 +1194,8 @@ CONTAINS
 
     CALL setup_grid
 
+    IF (rank .EQ. 0) PRINT*, 'Load from restart dump OK'
+
   END SUBROUTINE restart_data
 
 

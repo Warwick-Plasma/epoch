@@ -854,6 +854,7 @@ MODULE shared_data
   LOGICAL :: allow_cpu_reduce
   LOGICAL :: simplify_deck
   LOGICAL :: print_deck_constants
+  LOGICAL :: allow_missing_restart
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
   CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename

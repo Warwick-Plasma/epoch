@@ -45,6 +45,7 @@ PROGRAM pic
   REAL(num) :: runtime
 
   step = 0
+  time = 0.0_num
 #ifdef COLLISIONS_TEST
   ! used for testing
   CALL test_collisions
@@ -87,8 +88,7 @@ PROGRAM pic
 
   ! restart flag is set
   IF (ic_from_restart) THEN
-    CALL restart_data(step)    ! restart from data in file save.data
-    IF (rank .EQ. 0) PRINT *, 'Load from restart dump OK'
+    CALL restart_data(step)
   ELSE
     ! auto_load particles
     CALL auto_load
