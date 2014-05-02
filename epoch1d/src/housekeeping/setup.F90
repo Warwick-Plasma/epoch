@@ -598,7 +598,8 @@ CONTAINS
     INTEGER, INTENT(OUT) :: species_number
     INTEGER :: i1, i2
 
-    IF (str_cmp(species_id, '__unknown__')) THEN
+    IF (str_cmp(species_id, '__unknown__') &
+        .OR. ICHAR(species_id(1:1)) .EQ. 0) THEN
       CALL strip_species_blockid(block_id, i1, i2)
       IF (i2 .LE. LEN_TRIM(species_id)) THEN
         CALL copy_string(block_id(i1:i2), species_id)
@@ -663,34 +664,6 @@ CONTAINS
     CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
         string_len, restart_flag)
 
-    ! Reset io_block parameters
-    DO i = 1, n_io_blocks
-      IF (io_block_list(i)%dt_snapshot .GT. 0.0_num) THEN
-        io_block_list(i)%time_prev = time
-      ELSE
-        io_block_list(i)%time_prev = 0.0_num
-      ENDIF
-      IF (io_block_list(i)%nstep_snapshot .GT. 0) THEN
-        io_block_list(i)%nstep_prev = step
-      ELSE
-        io_block_list(i)%nstep_prev = 0
-      ENDIF
-      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
-        DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
-          IF (step .GE. io_block_list(i)%dump_at_nsteps(is)) THEN
-            io_block_list(i)%dump_at_nsteps(is) = HUGE(1)
-          ENDIF
-        ENDDO
-      ENDIF
-      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) THEN
-        DO is = 1, SIZE(io_block_list(i)%dump_at_times)
-          IF (time .GE. io_block_list(i)%dump_at_times(is)) THEN
-            io_block_list(i)%dump_at_times(is) = HUGE(1.0_num)
-          ENDIF
-        ENDDO
-      ENDIF
-    ENDDO
-
     IF (.NOT. restart_flag) THEN
       IF (rank .EQ. 0) THEN
         PRINT*, '*** ERROR ***'
@@ -721,6 +694,34 @@ CONTAINS
       CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
       STOP
     ENDIF
+
+    ! Reset io_block parameters
+    DO i = 1, n_io_blocks
+      IF (io_block_list(i)%dt_snapshot .GT. 0.0_num) THEN
+        io_block_list(i)%time_prev = time
+      ELSE
+        io_block_list(i)%time_prev = 0.0_num
+      ENDIF
+      IF (io_block_list(i)%nstep_snapshot .GT. 0) THEN
+        io_block_list(i)%nstep_prev = step
+      ELSE
+        io_block_list(i)%nstep_prev = 0
+      ENDIF
+      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
+          IF (step .GE. io_block_list(i)%dump_at_nsteps(is)) THEN
+            io_block_list(i)%dump_at_nsteps(is) = HUGE(1)
+          ENDIF
+        ENDDO
+      ENDIF
+      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_times)
+          IF (time .GE. io_block_list(i)%dump_at_times(is)) THEN
+            io_block_list(i)%dump_at_times(is) = HUGE(1.0_num)
+          ENDIF
+        ENDDO
+      ENDIF
+    ENDDO
 
     nblocks = sdf_read_nblocks(sdf_handle)
     jobid = sdf_read_jobid(sdf_handle)
