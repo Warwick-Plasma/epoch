@@ -446,9 +446,9 @@ sdf_output_station_ru.o: sdf_output_station_ru.f90 sdf_output_ru.o
 sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
   sdf_output_point_ru.o
 sdf_source_info.o: sdf_source_info.f90
-setup.o: setup.F90 fields.o laser.o mpi_subtype_control.o shared_data.o \
-  shunt.o split_particle.o timer.o version_data.o welcome.o window.o \
-  $(ENCODED_SOURCE)
+setup.o: setup.F90 fields.o helper.o laser.o mpi_subtype_control.o \
+  shared_data.o shunt.o split_particle.o timer.o version_data.o welcome.o \
+  window.o $(ENCODED_SOURCE)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
 shunt.o: shunt.F90 tokenizer_blocks.o

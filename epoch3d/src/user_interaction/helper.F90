@@ -9,7 +9,7 @@ MODULE helper
 
 CONTAINS
 
-  SUBROUTINE auto_load
+  SUBROUTINE set_thermal_bcs
 
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
@@ -43,6 +43,21 @@ CONTAINS
         species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,1:3) = &
             initial_conditions(ispecies)%temp(-2:nx+3,-2:ny+3,nz,1:3)
       ENDIF
+    ENDDO
+
+  END SUBROUTINE set_thermal_bcs
+
+
+
+  SUBROUTINE auto_load
+
+    INTEGER :: ispecies
+    TYPE(particle_species), POINTER :: species
+
+    CALL set_thermal_bcs
+
+    DO ispecies = 1, n_species
+      species => species_list(ispecies)
 
 #ifdef PER_PARTICLE_WEIGHT
       CALL setup_particle_density(initial_conditions(ispecies)%density, &

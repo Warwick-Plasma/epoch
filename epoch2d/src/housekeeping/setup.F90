@@ -10,6 +10,7 @@ MODULE setup
   USE laser
   USE window
   USE timer
+  USE helper
 
   IMPLICIT NONE
 
@@ -1193,6 +1194,7 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes)
 
     CALL setup_grid
+    CALL set_thermal_bcs
 
     IF (rank .EQ. 0) PRINT*, 'Load from restart dump OK'
 
