@@ -323,7 +323,9 @@ CONTAINS
       IF (last_block_type .EQ. c_pt_variable &
           .OR. last_block_type .EQ. c_pt_constant &
           .OR. last_block_type .EQ. c_pt_default_constant &
-          .OR. last_block_type .EQ. c_pt_deck_constant) THEN
+          .OR. last_block_type .EQ. c_pt_deck_constant &
+          .OR. last_block_type .EQ. c_pt_species &
+          .OR. last_block_type .EQ. c_pt_subset) THEN
         as_operator = c_opcode_plus
       ELSE
         as_operator = c_opcode_unary_plus
@@ -333,7 +335,9 @@ CONTAINS
       IF (last_block_type .EQ. c_pt_variable &
           .OR. last_block_type .EQ. c_pt_constant &
           .OR. last_block_type .EQ. c_pt_default_constant &
-          .OR. last_block_type .EQ. c_pt_deck_constant) THEN
+          .OR. last_block_type .EQ. c_pt_deck_constant &
+          .OR. last_block_type .EQ. c_pt_species &
+          .OR. last_block_type .EQ. c_pt_subset) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus
