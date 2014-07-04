@@ -310,6 +310,7 @@ CONTAINS
       species_list(ispecies)%split = .FALSE.
       species_list(ispecies)%npart_max = 0
       species_list(ispecies)%global_count = 0
+      species_list(ispecies)%count_update_step = 0
       species_list(ispecies)%species_type = c_species_id_generic
       species_list(ispecies)%immobile = .FALSE.
       NULLIFY(species_list(ispecies)%next)
