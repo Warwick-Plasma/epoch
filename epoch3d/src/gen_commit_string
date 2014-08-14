@@ -29,12 +29,7 @@ if [ $? -eq 0 ]; then
     gitdescribe=unknown-unknown-g$always
   fi
 
-  svnrev=$(git svn log -1 --oneline 2>/dev/null)
-  if [ $? -eq 0 ]; then
-    svnrev=$(echo $svnrev | cut -f1 -d' ' | cut -c2-)
-  else
-    svnrev=unknown
-  fi
+  svnrev=unknown
 
   git update-index -q --refresh
   test -z "$(git diff-index --name-only HEAD --)" || state='dirty'
