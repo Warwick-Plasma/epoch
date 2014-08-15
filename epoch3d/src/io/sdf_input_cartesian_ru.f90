@@ -469,7 +469,7 @@ CONTAINS
     b => h%current_block
 
     DO iloop = 1, b%ndims
-      CALL safe_copy_string(b%material_names(iloop), material_names(iloop))
+      CALL sdf_safe_copy_string(b%material_names(iloop), material_names(iloop))
     ENDDO
 
   END SUBROUTINE sdf_read_material_info

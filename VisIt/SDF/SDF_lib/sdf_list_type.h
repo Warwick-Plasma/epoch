@@ -1,5 +1,6 @@
 #ifndef _SDF_LIST_TYPE_H_
 #define _SDF_LIST_TYPE_H_
+#include <stdlib.h>
 
 /* Linked list datatype and helper routines */
 

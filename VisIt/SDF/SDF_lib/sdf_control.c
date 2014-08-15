@@ -1,13 +1,21 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/mman.h>
-#include "sdf.h"
+#include <sdf.h>
+#include "sdf_control.h"
+#include "sdf_util.h"
 
 #ifdef PARALLEL
 #include <mpi.h>
+#else
+#include <sys/mman.h>
 #endif
+
+/**
+ * @defgroup control
+ * @brief Routines for controlling an SDF file
+ */
 
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
@@ -18,6 +26,8 @@
 
 static uint32_t sdf_random(void);
 static void sdf_random_init(void);
+static int sdf_free_handle(sdf_file_t *h);
+static int sdf_fclose(sdf_file_t *h);
 
 const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_NULL",
@@ -48,6 +58,8 @@ const char *sdf_blocktype_c[] = {
     "SDF_BLOCKTYPE_LAGRANGIAN_MESH",
     "SDF_BLOCKTYPE_STATION",
     "SDF_BLOCKTYPE_STATION_DERIVED",
+    "SDF_BLOCKTYPE_DATABLOCK",
+    "SDF_BLOCKTYPE_NAMEVALUE",
 };
 
 const char *sdf_geometry_c[] = {
@@ -117,8 +129,7 @@ const int sdf_error_codes_len =
         sizeof(sdf_error_codes_c) / sizeof(sdf_error_codes_c[0]);
 
 
-
-int sdf_abort(sdf_file_t *h)
+static int sdf_abort(sdf_file_t *h)
 {
 #ifdef PARALLEL
     MPI_Abort(h->comm, 1);
@@ -158,7 +169,7 @@ int sdf_broadcast(sdf_file_t *h, void *buf, int size)
 
 
 
-int sdf_fopen(sdf_file_t *h, int mode)
+static int sdf_fopen(sdf_file_t *h, int mode)
 {
     int ret = 0;
 
@@ -188,6 +199,8 @@ int sdf_fopen(sdf_file_t *h, int mode)
 
 
 
+/** @ingroup control
+ */
 sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 {
     sdf_file_t *h;
@@ -208,6 +221,12 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
     h->use_summary = 1;
     h->sdf_lib_version  = SDF_LIB_VERSION;
     h->sdf_lib_revision = SDF_LIB_REVISION;
+
+    h->id_length = SDF_ID_LENGTH;
+    // header length - must be updated if sdf_write_header changes
+    h->first_block_location = SDF_HEADER_LENGTH;
+    // block header length - must be updated if sdf_write_block_header changes
+    h->block_header_length = SDF_BLOCK_HEADER_LENGTH;
 
 #ifdef PARALLEL
     h->comm = comm;
@@ -235,6 +254,8 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 #endif
         h->mmap = NULL;
 
+    h->array_count = 20;
+
     if (mode != SDF_READ) return h;
 
     ret = sdf_read_header(h);
@@ -254,33 +275,60 @@ sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap)
 
 
 
-#define FREE_ARRAY(value) do { \
-    if (value) { \
-        int i; \
-        if (b->n_ids) { \
-            for (i = 0; i < b->n_ids; i++) \
-                if (value[i]) free(value[i]); \
-        } else { \
-            for (i = 0; i < b->ndims; i++) \
-                if (value[i]) free(value[i]); \
+/** @ingroup control
+ */
+int sdf_close(sdf_file_t *h)
+{
+    // No open file
+    if (!h || !h->filehandle) return 1;
+
+    sdf_fclose(h);
+
+    // Destroy filehandle
+    sdf_free_handle(h);
+
+    return 0;
+}
+
+
+
+#define FREE_ITEM(value) do { \
+        if ((value)) { \
+            free((value)); \
+            (value) = NULL; \
         } \
-        free(value); \
+    } while(0)
+
+#define FREE_ARRAY(block, value) do { \
+    if (block->value) { \
+        int _i; \
+        for (_i = 0; _i < b->n##value; _i++) \
+            if (block->value[_i]) free(block->value[_i]); \
+        free(block->value); \
     }} while(0)
 
 
 
-static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
+int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 {
     int i;
+    struct run_info *run;
 
     if (!b) return 1;
 
     if (b->grids) {
         if (!h->mmap && b->done_data && !b->dont_own_data)
-            for (i = 0; i < b->ndims; i++) if (b->grids[i]) free(b->grids[i]);
+            for (i = 0; i < b->ngrids; i++) if (b->grids[i]) free(b->grids[i]);
         free(b->grids);
     }
     if (!h->mmap && b->data && b->done_data && !b->dont_own_data) {
+        if (b->blocktype == SDF_BLOCKTYPE_RUN_INFO) {
+            run = b->data;
+            if (run->commit_id)       free(run->commit_id);
+            if (run->sha1sum)         free(run->sha1sum);
+            if (run->compile_machine) free(run->compile_machine);
+            if (run->compile_flags)   free(run->compile_flags);
+        }
         free(b->data);
     }
     if (b->node_list) free(b->node_list);
@@ -296,28 +344,38 @@ static int sdf_free_block_data(sdf_file_t *h, sdf_block_t *b)
 
 
 
-static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
+int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
 {
     if (!b) return 1;
 
-    if (b->id) free(b->id);
-    if (b->units) free(b->units);
-    if (b->mesh_id) free(b->mesh_id);
-    if (b->material_id) free(b->material_id);
-    if (b->name) free(b->name);
-    if (b->material_name) free(b->material_name);
-    if (b->dim_mults) free(b->dim_mults);
-    if (b->extents) free(b->extents);
-    if (b->station_nvars) free(b->station_nvars);
-    if (b->station_move) free(b->station_move);
-    if (b->station_x) free(b->station_x);
-    if (b->station_y) free(b->station_y);
-    if (b->station_z) free(b->station_z);
-    if (b->variable_types) free(b->variable_types);
-    FREE_ARRAY(b->station_ids);
-    FREE_ARRAY(b->station_names);
-    FREE_ARRAY(b->variable_ids);
-    FREE_ARRAY(b->material_names);
+    FREE_ITEM(b->id);
+    FREE_ITEM(b->units);
+    FREE_ITEM(b->mesh_id);
+    FREE_ITEM(b->material_id);
+    FREE_ITEM(b->name);
+    FREE_ITEM(b->material_name);
+    FREE_ITEM(b->dim_mults);
+    FREE_ITEM(b->extents);
+    FREE_ITEM(b->station_nvars);
+    FREE_ITEM(b->station_move);
+    FREE_ITEM(b->station_x);
+    FREE_ITEM(b->station_y);
+    FREE_ITEM(b->station_z);
+    FREE_ITEM(b->variable_types);
+    FREE_ITEM(b->array_starts);
+    FREE_ITEM(b->array_ends);
+    FREE_ITEM(b->array_strides);
+    FREE_ITEM(b->mimetype);
+    FREE_ITEM(b->checksum_type);
+    FREE_ITEM(b->checksum);
+
+    FREE_ARRAY(b, station_ids);
+    FREE_ARRAY(b, station_names);
+    FREE_ARRAY(b, variable_ids);
+    FREE_ARRAY(b, material_names);
+    FREE_ARRAY(b, dim_labels);
+    FREE_ARRAY(b, dim_units);
+
     sdf_free_block_data(h, b);
 
     free(b);
@@ -328,6 +386,8 @@ static int sdf_free_block(sdf_file_t *h, sdf_block_t *b)
 
 
 
+/** @ingroup control
+ */
 int sdf_free_blocklist_data(sdf_file_t *h)
 {
     sdf_block_t *b, *next;
@@ -355,15 +415,15 @@ static int sdf_free_handle(sdf_file_t *h)
     sdf_block_t *b, *next;
     int i;
 
-    if (!h || !h->filehandle) return 1;
+    if (!h) return 1;
 
     // Destroy blocklist
     if (h->blocklist) {
         b = h->blocklist;
         for (i=0; i < h->nblocks; i++) {
-            if (!b->next) break;
             next = b->next;
             sdf_free_block(h, b);
+            if (!next) break;
             b = next;
         }
     }
@@ -371,6 +431,7 @@ static int sdf_free_handle(sdf_file_t *h)
     if (h->buffer) free(h->buffer);
     if (h->code_name) free(h->code_name);
     if (h->filename) free(h->filename);
+    if (h->dbg_buf) free(h->dbg_buf);
     memset(h, 0, sizeof(sdf_file_t));
     free(h);
     h = NULL;
@@ -380,7 +441,7 @@ static int sdf_free_handle(sdf_file_t *h)
 
 
 
-int sdf_fclose(sdf_file_t *h)
+static int sdf_fclose(sdf_file_t *h)
 {
     // No open file
     if (!h || !h->filehandle) return 1;
@@ -399,22 +460,7 @@ int sdf_fclose(sdf_file_t *h)
 
 
 
-int sdf_close(sdf_file_t *h)
-{
-    // No open file
-    if (!h || !h->filehandle) return 1;
-
-    sdf_fclose(h);
-
-    // Destroy filehandle
-    sdf_free_handle(h);
-
-    return 0;
-}
-
-
-
-int sdf_set_rank_master(sdf_file_t *h, int rank)
+static int sdf_set_rank_master(sdf_file_t *h, int rank)
 {
     if (h)
         h->rank_master = rank;
@@ -426,7 +472,7 @@ int sdf_set_rank_master(sdf_file_t *h, int rank)
 
 
 
-int sdf_read_nblocks(sdf_file_t *h)
+static int sdf_read_nblocks(sdf_file_t *h)
 {
     if (h)
         return h->nblocks;
@@ -437,7 +483,7 @@ int sdf_read_nblocks(sdf_file_t *h)
 
 
 /*
-int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
+static int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
 {
     if (h && jobid)
         memcpy(jobid, &h->jobid, sizeof(jobid));
@@ -451,7 +497,7 @@ int sdf_read_jobid(sdf_file_t *h, sdf_jobid_t *jobid)
 
 
 #ifdef PARALLEL
-static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
+static int factor2d(int ncpus, int64_t *dims, int *cpu_split)
 {
     const int ndims = 2;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
@@ -508,7 +554,7 @@ static int factor2d(int ncpus, uint64_t *dims, int *cpu_split)
 
 
 
-static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
+static int factor3d(int ncpus, int64_t *dims, int *cpu_split)
 {
     const int ndims = 3;
     int dmin[ndims], npoint_min[ndims], cpu_split_tmp[ndims], grids[ndims][2];
@@ -569,13 +615,15 @@ static int factor3d(int ncpus, uint64_t *dims, int *cpu_split)
 
 
 
-int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
+/** @ingroup control
+ */
+int sdf_get_domain_bounds(sdf_file_t *h, int rank, int *starts, int *local_dims)
 {
     sdf_block_t *b = h->current_block;
     int n;
 #ifdef PARALLEL
     int npoint_min, split_big, coords, div;
-    uint64_t old_dims[6];
+    int64_t old_dims[6];
 
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
@@ -584,7 +632,7 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
         if (b->dims[n] < 1) b->dims[n] = 1;
     }
 
-    memset(start, 0, 3*sizeof(int));
+    memset(starts, 0, 3*sizeof(*starts));
 
     div = 1;
     for (n = 0; n < b->ndims; n++) {
@@ -604,12 +652,12 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
         npoint_min = (int)b->dims[n] / b->cpu_split[n];
         split_big = (int)(b->dims[n] - b->cpu_split[n] * npoint_min);
         if (coords >= split_big) {
-            start[n] = split_big * (npoint_min + 1)
+            starts[n] = split_big * (npoint_min + 1)
                 + (coords - split_big) * npoint_min;
-            local[n] = npoint_min;
+            local_dims[n] = npoint_min;
         } else {
-            start[n] = coords * (npoint_min + 1);
-            local[n] = npoint_min + 1;
+            starts[n] = coords * (npoint_min + 1);
+            local_dims[n] = npoint_min + 1;
         }
     }
 
@@ -617,13 +665,13 @@ int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local)
     for (n = 0; n < b->ndims; n++) {
         b->dims[n] = old_dims[n];
         // Add extra staggered value if required
-        if (b->const_value[n]) local[n]++;
+        if (b->const_value[n]) local_dims[n]++;
     }
 #else
-    memset(start, 0, 3*sizeof(int));
-    for (n=0; n < b->ndims; n++) local[n] = (int)b->dims[n];
+    memset(starts, 0, 3*sizeof(*starts));
+    for (n=0; n < b->ndims; n++) local_dims[n] = b->dims[n];
 #endif
-    for (n=b->ndims; n < 3; n++) local[n] = 1;
+    for (n=b->ndims; n < 3; n++) local_dims[n] = 1;
 
     return 0;
 }
@@ -635,7 +683,8 @@ int sdf_factor(sdf_file_t *h)
     sdf_block_t *b = h->current_block;
     int n;
 #ifdef PARALLEL
-    uint64_t old_dims[6];
+    int64_t old_dims[6];
+    int local_dims[SDF_MAXDIMS];
 
     // Adjust dimensions to those of a cell-centred variable
     for (n = 0; n < b->ndims; n++) {
@@ -653,13 +702,20 @@ int sdf_factor(sdf_file_t *h)
     for (n = 0; n < b->ndims; n++)
         b->dims[n] = old_dims[n];
 
-    sdf_get_domain_extents(h, h->rank, b->starts, b->local_dims);
+    sdf_get_domain_bounds(h, h->rank, b->starts, local_dims);
+    for (n = 0; n < b->ndims; n++)
+        b->local_dims[n] = local_dims[n];
 #else
-    for (n = 0; n < 3; n++) b->local_dims[n] = (int)b->dims[n];
+    for (n = 0; n < 3; n++) b->local_dims[n] = b->dims[n];
 #endif
 
-    b->nelements_local = 1;
-    for (n = 0; n < b->ndims; n++) b->nelements_local *= b->local_dims[n];
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH) {
+        b->nelements_local = 0;
+        for (n = 0; n < b->ndims; n++) b->nelements_local += b->local_dims[n];
+    } else {
+        b->nelements_local = 1;
+        for (n = 0; n < b->ndims; n++) b->nelements_local *= b->local_dims[n];
+    }
 
     return 0;
 }
@@ -674,7 +730,7 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
         if (b->datatype == SDF_DATATYPE_INTEGER4
                 || b->datatype == SDF_DATATYPE_REAL4) {
             int i;
-            uint32_t *v = *var_in;
+            int32_t *v = *var_in;
             for (i=0; i < count; i++) {
                 _SDF_BYTE_SWAP32(*v);
                 v++;
@@ -682,7 +738,7 @@ int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count)
         } else if (b->datatype == SDF_DATATYPE_INTEGER8
                 || b->datatype == SDF_DATATYPE_REAL8) {
             int i;
-            uint64_t *v = *var_in;
+            int64_t *v = *var_in;
             for (i=0; i < count; i++) {
                 _SDF_BYTE_SWAP64(*v);
                 v++;
@@ -744,6 +800,39 @@ int sdf_randomize_array(sdf_file_t *h, void **var_in, int count)
 
 
 
+static int sdf_header_copy(const sdf_file_t *h_in, sdf_file_t *h_out)
+{
+    sdf_file_t *h_tmp;
+
+    if (h_in == h_out) return 1;
+
+    h_tmp = malloc(sizeof(*h_tmp));
+    memcpy(h_tmp, h_out, sizeof(*h_out));
+    memcpy(h_out, h_in, sizeof(*h_in));
+
+    h_out->dbg_count        = h_tmp->dbg_count;
+    h_out->dbg              = h_tmp->dbg;
+    h_out->dbg_buf          = h_tmp->dbg_buf;
+    h_out->string_length    = h_tmp->string_length;
+    h_out->indent           = h_tmp->indent;
+    h_out->done_header      = h_tmp->done_header;
+    h_out->use_summary      = h_tmp->use_summary;
+    h_out->sdf_lib_version  = h_tmp->sdf_lib_version;
+    h_out->sdf_lib_revision = h_tmp->sdf_lib_revision;
+    h_out->comm             = h_tmp->comm;
+    h_out->rank             = h_tmp->rank;
+    h_out->ncpus            = h_tmp->ncpus;
+    h_out->filename         = h_tmp->filename;
+    h_out->filehandle       = h_tmp->filehandle;
+    h_out->mmap             = h_tmp->mmap;
+
+    free(h_tmp);
+
+    return 0;
+}
+
+
+
 static uint32_t Q[41790], indx, carry, xcng, xs;
 
 #define CNG (xcng = 69609 * xcng + 123)
@@ -782,4 +871,104 @@ static void sdf_random_init(void)
     xs = 521288629;
     for (i=0; i<41790; i++) Q[i] = CNG + XS;
     for (i=0; i<41790; i++) sdf_random();
+}
+
+
+
+// Currently only works in serial
+int sdf_block_set_array_section(sdf_block_t *b, const int ndims,
+                                const int64_t *starts, const int64_t *ends,
+                                const int64_t *strides)
+{
+    int64_t nelements_local;
+    int i, ndims_min;
+
+    if (b->ndims < 1) return 1;
+
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
+            b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+        nelements_local = 0;
+        for (i = 0; i < b->ndims; i++)
+            nelements_local += b->local_dims[i];
+    } else {
+        nelements_local = 1;
+        for (i = 0; i < b->ndims; i++)
+            nelements_local *= b->local_dims[i];
+    }
+
+    if (!starts && !ends) {
+        b->nelements_local = nelements_local;
+        FREE_ITEM(b->array_starts);
+        FREE_ITEM(b->array_ends);
+        FREE_ITEM(b->array_strides);
+
+        return 0;
+    }
+
+    if (!b->array_starts) {
+        b->array_starts  = calloc(b->ndims, sizeof(*b->array_starts));
+        b->array_ends    = malloc(b->ndims * sizeof(*b->array_ends));
+        b->array_strides = malloc(b->ndims * sizeof(*b->array_strides));
+
+        for (i = 0; i < b->ndims; i++) {
+            b->array_ends[i] = b->local_dims[i];
+            b->array_strides[i] = 1;
+        }
+    }
+
+    ndims_min = (ndims < b->ndims) ? ndims : b->ndims;
+
+    if (starts) {
+        for (i = 0; i < ndims_min; i++) {
+            if (starts[i] < 0)
+                b->array_starts[i] = starts[i] + b->local_dims[i];
+            else if (starts[i] > b->local_dims[i])
+                b->array_starts[i] = b->local_dims[i];
+            else
+                b->array_starts[i] = starts[i];
+        }
+    }
+
+    if (ends) {
+        for (i = 0; i < ndims_min; i++) {
+            if (ends[i] < 0)
+                b->array_ends[i] = ends[i] + b->local_dims[i];
+            else if (ends[i] == 0 && starts && starts[i] == -1)
+                b->array_ends[i] = b->local_dims[i];
+            else if (ends[i] < b->local_dims[i])
+                b->array_ends[i] = ends[i];
+        }
+    } else {
+        for (i = 0; i < ndims_min; i++)
+            b->array_ends[i] = b->array_starts[i] + 1;
+    }
+
+    if (strides) {
+        for (i = 0; i < ndims_min; i++) {
+            if (strides[i] != 1) {
+                fprintf(stderr,
+                        "Array section striding is not yet implemented\n");
+                break;
+            }
+        }
+    }
+
+    if (b->blocktype == SDF_BLOCKTYPE_PLAIN_MESH ||
+            b->blocktype == SDF_BLOCKTYPE_POINT_MESH) {
+        b->nelements_local = 0;
+        for (i = 0; i < b->ndims; i++)
+            b->nelements_local += (b->array_ends[i] - b->array_starts[i]);
+    } else {
+        b->nelements_local = 1;
+        for (i = 0; i < b->ndims; i++)
+            b->nelements_local *= (b->array_ends[i] - b->array_starts[i]);
+    }
+
+    if (b->nelements_local == nelements_local) {
+        FREE_ITEM(b->array_starts);
+        FREE_ITEM(b->array_ends);
+        FREE_ITEM(b->array_strides);
+    }
+
+    return 0;
 }

@@ -10,6 +10,7 @@ MODULE sdf
   USE sdf_output_cartesian
   USE sdf_output_point
   USE sdf_output_station
+  USE sdf_output_source
 
   IMPLICIT NONE
 
@@ -50,6 +51,9 @@ MODULE sdf
   PUBLIC :: c_blocktype_contiguous
   PUBLIC :: c_blocktype_lagrangian_mesh
   PUBLIC :: c_blocktype_station
+  PUBLIC :: c_blocktype_station_derived
+  PUBLIC :: c_blocktype_datablock
+  PUBLIC :: c_blocktype_namevalue
   PUBLIC :: c_blocktype_max
 
   PUBLIC :: c_datatype_null
@@ -81,6 +85,11 @@ MODULE sdf
   PUBLIC :: c_stagger_edge_y
   PUBLIC :: c_stagger_edge_z
   PUBLIC :: c_stagger_vertex
+
+  PUBLIC :: c_checksum_null
+  PUBLIC :: c_checksum_md5
+  PUBLIC :: c_checksum_sha1
+  PUBLIC :: c_checksum_sha256
 
   PUBLIC :: c_blocktypes_char
   PUBLIC :: c_datatypes_char
@@ -160,6 +169,11 @@ MODULE sdf
   PUBLIC :: sdf_write_stitched_species
   PUBLIC :: sdf_write_stitched_obstacle_group
   PUBLIC :: sdf_write_cpu_split
+  PUBLIC :: sdf_write_datablock
+  PUBLIC :: sdf_write_namevalue
+  PUBLIC :: sdf_write_source_info
   PUBLIC :: sdf_errorcode
+  PUBLIC :: sdf_safe_copy_id
+  PUBLIC :: sdf_safe_copy_string
 
 END MODULE sdf

@@ -18,6 +18,7 @@ MODULE constants
   REAL(num), PARAMETER :: c_maxexponent = MAXEXPONENT(1.0_num)
   REAL(num), PARAMETER :: c_log2 = 0.69314718055994530941723212145817657_num
   REAL(num), PARAMETER :: c_largest_exp = c_maxexponent * c_log2
+  REAL(num), PARAMETER :: c_smallest_exp = (MINEXPONENT(1.0_num)-1.0_num) * c_log2
 
   INTEGER, PARAMETER :: c_ndims = 3
 
@@ -322,6 +323,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_nsteps = 53
   INTEGER, PARAMETER :: c_const_t_end = 54
   INTEGER, PARAMETER :: c_const_ndims = 55
+  INTEGER, PARAMETER :: c_const_r_xyz = 56
 
   INTEGER, PARAMETER :: c_const_io_never = 60
   INTEGER, PARAMETER :: c_const_io_always = 61
@@ -902,6 +904,7 @@ MODULE shared_data
   LOGICAL :: allow_cpu_reduce
   LOGICAL :: simplify_deck
   LOGICAL :: print_deck_constants
+  LOGICAL :: allow_missing_restart
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
   CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename

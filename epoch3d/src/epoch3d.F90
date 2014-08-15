@@ -45,6 +45,7 @@ PROGRAM pic
   REAL(num) :: runtime
 
   step = 0
+  time = 0.0_num
 #ifdef COLLISIONS_TEST
   ! used for testing
   CALL test_collisions
@@ -87,8 +88,7 @@ PROGRAM pic
 
   ! restart flag is set
   IF (ic_from_restart) THEN
-    CALL restart_data(step)    ! restart from data in file save.data
-    IF (rank .EQ. 0) PRINT *, 'Load from restart dump OK'
+    CALL restart_data(step)
   ELSE
     ! auto_load particles
     CALL auto_load
@@ -113,14 +113,10 @@ PROGRAM pic
   IF (ic_from_restart) THEN
     CALL bfield_bcs(.TRUE.)
     CALL update_eb_fields_final
-    IF (dt_from_restart .GT. 0) THEN
-      time = time + dt_from_restart / 2.0_num
-    ELSE
-      time = time + dt / 2.0_num
-    ENDIF
     CALL moving_window
   ELSE
     CALL bfield_final_bcs
+    time = time + dt / 2.0_num
   ENDIF
 
   ! Setup particle migration between species

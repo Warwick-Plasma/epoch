@@ -218,22 +218,22 @@ CONTAINS
           file_numbers(i) = 0
         ENDDO
         DEALLOCATE(io_prefixes)
-      ENDIF
 
 #ifndef NO_IO
-      ! Remove any left-over VisIt file lists
-      IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
-        list_filename = TRIM(ADJUSTL(data_dir)) // '/full.visit'
-        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
-        CLOSE(unit=lu, status='DELETE')
-        list_filename = TRIM(ADJUSTL(data_dir)) // '/normal.visit'
-        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
-        CLOSE(unit=lu, status='DELETE')
-        list_filename = TRIM(ADJUSTL(data_dir)) // '/restart.visit'
-        OPEN(unit=lu, status='UNKNOWN', file=list_filename)
-        CLOSE(unit=lu, status='DELETE')
-      ENDIF
+        ! Remove any left-over VisIt file lists
+        IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
+          list_filename = TRIM(ADJUSTL(data_dir)) // '/full.visit'
+          OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+          CLOSE(unit=lu, status='DELETE')
+          list_filename = TRIM(ADJUSTL(data_dir)) // '/normal.visit'
+          OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+          CLOSE(unit=lu, status='DELETE')
+          list_filename = TRIM(ADJUSTL(data_dir)) // '/restart.visit'
+          OPEN(unit=lu, status='UNKNOWN', file=list_filename)
+          CLOSE(unit=lu, status='DELETE')
+        ENDIF
 #endif
+      ENDIF
     ENDIF
 
   END SUBROUTINE io_deck_finalise

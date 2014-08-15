@@ -10,15 +10,8 @@ END
 FUNCTION generate_filename, wkdir, snapshot
   COMPILE_OPT idl2, hidden
 
-  file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".cfd")')
-  info = FILE_INFO(file)
-
-  IF info.exists EQ 1 THEN BEGIN
-    RETURN, file
-  ENDIF ELSE BEGIN
-    file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".sdf")')
-    RETURN, file
-  ENDELSE
+  file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".sdf")')
+  RETURN, file
 END
 
 ; --------------------------------------------------------------------------
@@ -27,14 +20,8 @@ FUNCTION count_files, wkdir
   COMPILE_OPT idl2, hidden
 
   sdf = FLOOR(TOTAL(FILE_SEARCH(wkdir+'/*.sdf') NE ''))
-  cfd = FLOOR(TOTAL(FILE_SEARCH(wkdir+'/*.cfd') NE ''))
 
-  IF (sdf NE 0 AND cfd NE 0) THEN BEGIN
-    PRINT ,'Cannot use explorer on directory containing both CFD and SDF files'
-    RETURN, 0
-  END
-
-  RETURN, MAX([sdf,cfd])
+  RETURN, sdf
 END
 
 ; --------------------------------------------------------------------------
@@ -42,12 +29,7 @@ END
 FUNCTION load_raw, filename, idstruct, only_md=only_md
   COMPILE_OPT idl2, hidden
 
-  IF (STRUPCASE(STRMID(filename, STRLEN(filename) - 3)) EQ 'CFD') THEN BEGIN
-    RETURN, LoadCFDFile(filename, _extra=idstruct, _only_md=only_md)
-  ENDIF ELSE BEGIN
-    RETURN, LoadSDFFile(filename, _extra=idstruct, _only_md=only_md)
-  ENDELSE
-
+  RETURN, LoadSDFFile(filename, _extra=idstruct, _only_md=only_md)
 END
 
 ; --------------------------------------------------------------------------
@@ -428,14 +410,8 @@ PRO load_meta_and_populate_sdf, viewer, accepted_types
 
   WIDGET_CONTROL, /hourglass
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
-  IF (obj_data.cfdfile EQ 1) THEN BEGIN
-    data = LoadCFDFile(*obj_data.filename, /_silent, /_variables, _var_list=v, $
-        _block_types=types, _block_dims=dims)
-    names = v
-  ENDIF ELSE BEGIN
-    data = LoadSDFFile(*obj_data.filename, /_silent, /_variables, _var_list=v, $
-        _block_types=types, _block_dims=dims, _name_list=names, _retro=0)
-  ENDELSE
+  data = LoadSDFFile(*obj_data.filename, /_silent, /_variables, _var_list=v, $
+      _block_types=types, _block_dims=dims, _name_list=names, _retro=0)
 
   IF (N_ELEMENTS(accepted_types) EQ 0) THEN BEGIN
     n_valid = N_ELEMENTS(v)
@@ -513,9 +489,6 @@ FUNCTION sdf_explorer, wkdir, snapshot=snapshot, _struct=struct
   COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
-  ; common info for the older CFD file format
-  COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
-      TYPE_SNAPSHOT
 
   Loaded_Data = 'Load Cancelled'
 
@@ -545,13 +518,7 @@ FUNCTION sdf_explorer, wkdir, snapshot=snapshot, _struct=struct
 
   ; Base data that all objects need access to
   base_data = {type:0, filename:PTR_NEW(filename), wkdir:wkdir, viewer:main, $
-      list:list_id, cfdfile:0, label:label_id, panel:panel_id, slide:slide_id}
-
-  IF (STRUPCASE(STRMID(filename, STRLEN(filename) - 3)) EQ 'CFD') THEN BEGIN
-    base_data.cfdfile = 1
-  ENDIF ELSE BEGIN
-    base_data.cfdfile = 0
-  ENDELSE
+      list:list_id, label:label_id, panel:panel_id, slide:slide_id}
 
   ct_button_id = WIDGET_BUTTON(main, value='Load Data', $
       xsize=200, ysize=20, xoffset=0, yoffset=385, $
@@ -566,11 +533,8 @@ FUNCTION sdf_explorer, wkdir, snapshot=snapshot, _struct=struct
       PTR_NEW(), 'valid_dims', PTR_NEW())
   WIDGET_CONTROL, list_id, set_uvalue=CREATE_STRUCT(base_data, 'name', 'list')
 
-  IF (base_data.cfdfile) THEN BEGIN
-    load_meta_and_populate_sdf, main, INDGEN(12)+1
-  ENDIF ELSE BEGIN
-    load_meta_and_populate_sdf, main, INDGEN(12)+1
-  ENDELSE
+  load_meta_and_populate_sdf, main, INDGEN(12)+1
+
   WIDGET_CONTROL, main, /realize
   XMANAGER, filename, main, event_handler='explorer_event_handler'
 
@@ -585,22 +549,14 @@ PRO explorer_load_new_file, viewer, filename
   COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
-  ; common info for the older CFD file format
-  COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
-      TYPE_SNAPSHOT
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
   PTR_FREE, obj_data.filename
   obj_data.filename = PTR_NEW(filename)
   WIDGET_CONTROL, viewer, set_uvalue=obj_data
 
-  IF (obj_data.cfdfile) THEN BEGIN
-    load_meta_and_populate_sdf, viewer, TYPE_MESH_VARIABLE
-  ENDIF ELSE BEGIN
-    load_meta_and_populate_sdf, viewer, $
-        [SDF_BlockTypes.PLAIN_VARIABLE, SDF_BlockTypes.POINT_VARIABLE]
-  ENDELSE
-
+  load_meta_and_populate_sdf, viewer, $
+      [SDF_BlockTypes.PLAIN_VARIABLE, SDF_BlockTypes.POINT_VARIABLE]
 END
 
 ; --------------------------------------------------------------------------
@@ -610,9 +566,6 @@ FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
   COMPILE_OPT idl2, hidden
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
-  ; common info for the older CFD file format
-  COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
-      TYPE_SNAPSHOT
   COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
 
   Loaded_Data = 'No Data Loaded'
@@ -639,14 +592,8 @@ FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
   ; Base data that all objects need access to
   base_data = {type:1, filename:PTR_NEW(filename), viewer:main, list:list_id, $
       surface:draw_id, label:label_id, slide:slide_id, auto_update:1, $
-      logscale:0, minval:0.0d, maxval:0.0d, use_min:0, use_max:0, cfdfile:0, $
+      logscale:0, minval:0.0d, maxval:0.0d, use_min:0, use_max:0, $
       iso:1, wkdir:wkdir}
-
-  IF (STRUPCASE(STRMID(filename, STRLEN(filename) - 3)) EQ 'CFD') THEN BEGIN
-    base_data.cfdfile = 1
-  ENDIF ELSE BEGIN
-    base_data.cfdfile = 0
-  ENDELSE
 
   WIDGET_CONTROL, main, set_uvalue=CREATE_STRUCT(base_data, 'name', $
       'base' + filename, 'valid_names', PTR_NEW(), 'friendly_names', $
@@ -706,11 +653,7 @@ FUNCTION create_sdf_visualizer, wkdir, snapshot=snapshot
       event_handler='viewer_event_handler'
 
   clear_draw_surface, main
-  IF (base_data.cfdfile) THEN BEGIN
-    load_meta_and_populate_sdf, main, TYPE_MESH_VARIABLE
-  ENDIF ELSE BEGIN
-    load_meta_and_populate_sdf, main, SDF_BlockTypes.PLAIN_VARIABLE
-  ENDELSE
+  load_meta_and_populate_sdf, main, SDF_BlockTypes.PLAIN_VARIABLE
 
   RETURN, loaded_data
 END
@@ -723,9 +666,6 @@ PRO viewer_load_new_file, viewer, filename
   COMMON SDF_View_Internal_data, Loaded_Data, newline, use_retro
   COMMON SDF_Common_data, SDF_Common, SDF_Blocktypes, SDF_Blocktype_names, $
       SDF_Datatypes, SDF_Error
-  ; common info for the older CFD file format
-  COMMON BlockTypes, TYPE_ADDITIONAL, TYPE_MESH, TYPE_MESH_VARIABLE, $
-      TYPE_SNAPSHOT
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
   element = WIDGET_INFO(obj_data.list, /list_select)
@@ -738,11 +678,7 @@ PRO viewer_load_new_file, viewer, filename
   obj_data.filename = PTR_NEW(filename)
   WIDGET_CONTROL, viewer, set_uvalue=obj_data
 
-  IF (obj_data.cfdfile) THEN BEGIN
-    load_meta_and_populate_sdf, viewer, TYPE_MESH_VARIABLE
-  ENDIF ELSE BEGIN
-    load_meta_and_populate_sdf, viewer, SDF_BlockTypes.PLAIN_VARIABLE
-  ENDELSE
+  load_meta_and_populate_sdf, viewer, SDF_BlockTypes.PLAIN_VARIABLE
 
   WIDGET_CONTROL, viewer, get_uvalue=obj_data
 

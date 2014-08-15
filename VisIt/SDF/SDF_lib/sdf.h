@@ -1,108 +1,201 @@
+/**
+   @file sdf.h
+
+   @brief Declarations for the SDF C-library.
+   @details Routines for reading and writing SDF files.
+   @author Dr Keith Bennett
+   @date 15/02/2014
+   @version 5.0
+*/
+
 #ifndef _SDF_COMMON_H_
 #define _SDF_COMMON_H_
 
-#include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
 #include <inttypes.h>
 
 #ifdef PARALLEL
 #include <mpi.h>
 #endif
 
-#ifdef SDF_DEBUG_ALL
-#define SDF_DEBUG
-#endif
-
-#define SOI4  4
-#define SOI8  8
-#define SOF4  4
-#define SOF8  8
-
-#define SDF_MAXDIMS 4
-#define SDF_ID_LENGTH 32
-#define SDF_HEADER_LENGTH (11 * SOI4 + 2 * SOI8 + SOF8 + 12 + SDF_ID_LENGTH)
-#define SDF_BLOCK_HEADER_LENGTH \
-    (4 + 3 * SOI4 + 3 * SOI8 + SDF_ID_LENGTH + h->string_length)
-#define SDF_SUMMARY_OFFSET (4 + 3 * SOI4 + SDF_ID_LENGTH + SOI8)
-#define SDF_ENDIANNESS 16911887
-
 #define SDF_VERSION  1
 #define SDF_REVISION 2
-#define SDF_LIB_VERSION  4
+#define SDF_LIB_VERSION  7
 #define SDF_LIB_REVISION 0
 
 #define SDF_MAGIC "SDF1"
+
+#define SDF_MAXDIMS 4
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+  Constants used for identifying the block's type
+ */
 enum sdf_blocktype {
+    /** Deleted block. Should be ignored. */
     SDF_BLOCKTYPE_SCRUBBED = -1,
+    /** Unknown block type. This is an error. */
     SDF_BLOCKTYPE_NULL = 0,
+    /** Block describing a plain mesh or grid. */
     SDF_BLOCKTYPE_PLAIN_MESH,
+    /** Block describing a point mesh or grid. */
     SDF_BLOCKTYPE_POINT_MESH,
+    /** Block describing a variable on a plain mesh. */
     SDF_BLOCKTYPE_PLAIN_VARIABLE,
+    /** Block describing a variable on a point mesh. */
     SDF_BLOCKTYPE_POINT_VARIABLE,
+    /** A simple constant not associated with a grid. */
     SDF_BLOCKTYPE_CONSTANT,
+    /** A simple array not associated with a grid. */
     SDF_BLOCKTYPE_ARRAY,
+    /** Information about the simulation. */
     SDF_BLOCKTYPE_RUN_INFO,
+    /** Embedded source code block. */
     SDF_BLOCKTYPE_SOURCE,
+    /** List of blocks to combine as a tensor or vector. */
     SDF_BLOCKTYPE_STITCHED_TENSOR,
+    /** List of blocks to combine as a multi-material mesh. */
     SDF_BLOCKTYPE_STITCHED_MATERIAL,
+    /** List of blocks to combine as a multi-material variable. */
     SDF_BLOCKTYPE_STITCHED_MATVAR,
+    /** List of blocks to combine as a species mesh. This is similar to a
+      * multi-material mesh except there is no interface in a mixed cell. */
     SDF_BLOCKTYPE_STITCHED_SPECIES,
+    /** Information about a particle species. */
     SDF_BLOCKTYPE_SPECIES,
+    /** This blocktype is never actually written to an SDF file. It is used
+      * within the C-library and VisIt to represent a plain variable whose
+      * content is generated dynamically based on other data in the file. */
     SDF_BLOCKTYPE_PLAIN_DERIVED,
+    /** As above, this blocktype is never actually written to an SDF file. It
+      * serves the same purpose as SDF_BLOCKTYPE_PLAIN_DERIVED, except the
+      * variable is defined on a point mesh. */
     SDF_BLOCKTYPE_POINT_DERIVED,
+    /** This is the same as SDF_BLOCKTYPE_STITCHED_TENSOR, except that all the
+      * data for the stitched variables is contained in the data section of
+      * this block rather than the blocks which are referenced. */
     SDF_BLOCKTYPE_CONTIGUOUS_TENSOR,
+    /** Same as above, for SDF_BLOCKTYPE_STITCHED_MATERIAL */
     SDF_BLOCKTYPE_CONTIGUOUS_MATERIAL,
+    /** Same as above, for SDF_BLOCKTYPE_STITCHED_MATVAR */
     SDF_BLOCKTYPE_CONTIGUOUS_MATVAR,
+    /** Same as above, for SDF_BLOCKTYPE_STITCHED_SPECIES */
     SDF_BLOCKTYPE_CONTIGUOUS_SPECIES,
+    /** Information about the parallel domain decomposition. */
     SDF_BLOCKTYPE_CPU_SPLIT,
+    /** List of blocks to combine as an obstacle mesh. */
     SDF_BLOCKTYPE_STITCHED_OBSTACLE_GROUP,
+    /** Block describing an unstructured mesh or grid. */
     SDF_BLOCKTYPE_UNSTRUCTURED_MESH,
+    /** Block describing a stitched variable.
+      * This allows any arbitrary set of variables to be grouped together. */
     SDF_BLOCKTYPE_STITCHED,
+    /** This is the same as SDF_BLOCKTYPE_STITCHED, except that all the
+      * data for the stitched variables is contained in the data section of
+      * this block rather than the blocks which are referenced. */
     SDF_BLOCKTYPE_CONTIGUOUS,
+    /** Block describing a Lagrangian mesh or grid. */
     SDF_BLOCKTYPE_LAGRANGIAN_MESH,
+    /** Block describing a station point. */
     SDF_BLOCKTYPE_STATION,
+    /** As with SDF_BLOCKTYPE_PLAIN_DERIVED, this blocktype is never actually
+      * written to an SDF file. It serves the same purpose as
+      * SDF_BLOCKTYPE_PLAIN_DERIVED, except the variable is defined as a
+      * station variable. */
     SDF_BLOCKTYPE_STATION_DERIVED,
+    /** Raw data with a checksum. */
+    SDF_BLOCKTYPE_DATABLOCK,
+    /** Name/value pairs. */
+    SDF_BLOCKTYPE_NAMEVALUE,
 };
 
+
+/**
+The "geometry_type" specifies the geometry of the current block and it can
+take one of the following values:
+*/
 enum sdf_geometry {
-    SDF_GEOMETRY_NULL = 0,
-    SDF_GEOMETRY_CARTESIAN,
-    SDF_GEOMETRY_CYLINDRICAL,
-    SDF_GEOMETRY_SPHERICAL,
+    SDF_GEOMETRY_NULL = 0,    /**< Unspecified geometry. This is an error. */
+    SDF_GEOMETRY_CARTESIAN,   /**< Cartesian geometry. */
+    SDF_GEOMETRY_CYLINDRICAL, /**< Cylindrical geometry. */
+    SDF_GEOMETRY_SPHERICAL,   /**< Spherical geometry. */
 };
 
+
+/**
+The mesh associated with a variable is always node-centred, ie. the values
+written as mesh data specify the nodal values of a grid. Variables may be
+defined at points which are offset from this grid due to grid staggering in
+the code. The "stagger" entry specifies where the variable is defined
+relative to the mesh. Since we have already defined the number of points
+that the associated mesh contains, this determines how many points are required
+to display the variable. The entry is represented by a bit-mask where each
+bit corresponds to a shift in coordinates by half a grid cell in the direction
+given by the bit position. Therefore the value "1" (or "0001" in binary)
+is a shift by \e dx/2 in the \e x direction, "2" (or "0010" in binary) is
+a shift by \e dy/2 in the \e y direction and "4" (or "0100" in binary) is
+a shift by \e dz/2 in the \e z direction. These can be combined to give shifts
+in more than one direction. The system can also be extended to account for
+more than three directions (eg. "8" for direction 4).
+
+For convenience, a list of pre-defined constants are defined for the typical
+cases.
+ */
 enum sdf_stagger {
+    /** Cell centred. At the midpoint between nodes.
+      * Implies an <em>(nx,ny,nz)</em> grid. */
     SDF_STAGGER_CELL_CENTRE = 0,
+    /** Face centred in X. Located at the midpoint between nodes on the Y-Z
+      * plane.
+      * Implies an <em>(nx+1,ny,nz)</em> grid. */
     SDF_STAGGER_FACE_X,
+    /** Face centred in Y. Located at the midpoint between nodes on the X-Z
+      * plane.
+      * Implies an <em>(nx,ny+1,nz)</em> grid. */
     SDF_STAGGER_FACE_Y,
+    /** Face centred in Z. Located at the midpoint between nodes on the X-Y
+      * plane.
+      * Implies an <em>(nx,ny,nz+1)</em> grid. */
     SDF_STAGGER_EDGE_Z,
+    /** Edge centred along X. Located at the midpoint between nodes along the
+      * X-axis.
+      * Implies an <em>(nx,ny+1,nz+1)</em> grid. */
     SDF_STAGGER_FACE_Z,
+    /** Edge centred along Y. Located at the midpoint between nodes along the
+      * Y-axis.
+      * Implies an <em>(nx+1,ny,nz+1)</em> grid. */
     SDF_STAGGER_EDGE_Y,
+    /** Edge centred along Z. Located at the midpoint between nodes along the
+      * Z-axis.
+      * Implies an <em>(nx+1,ny+1,nz)</em> grid. */
     SDF_STAGGER_EDGE_X,
+    /** Node centred. At the same place as the mesh.
+      * Implies an <em>(nx+1,ny+1,nz+1)</em> grid. */
     SDF_STAGGER_VERTEX,
 };
 
+
+/**
+ * The datatype specifies the numberical representation of the block's data
+ * array.
+ */
 enum sdf_datatype {
-    SDF_DATATYPE_NULL = 0,
-    SDF_DATATYPE_INTEGER4,
-    SDF_DATATYPE_INTEGER8,
-    SDF_DATATYPE_REAL4,
-    SDF_DATATYPE_REAL8,
-    SDF_DATATYPE_REAL16,
-    SDF_DATATYPE_CHARACTER,
-    SDF_DATATYPE_LOGICAL,
-    SDF_DATATYPE_OTHER,
+    SDF_DATATYPE_NULL = 0, /**< No datatype specified. This is an error. */
+    SDF_DATATYPE_INTEGER4, /**< 4-byte integers. */
+    SDF_DATATYPE_INTEGER8, /**< 8-byte integers. */
+    SDF_DATATYPE_REAL4,    /**< 4-byte floating point (ie. single precision). */
+    SDF_DATATYPE_REAL8,    /**< 8-byte floating point (ie. double precision). */
+    SDF_DATATYPE_REAL16,   /**< 16-byte floating point (ie. quad precision). */
+    SDF_DATATYPE_CHARACTER,/**< 1-byte characters. */
+    SDF_DATATYPE_LOGICAL,  /**< Logical variables. (Represented as 1-byte
+                               characters */
+    SDF_DATATYPE_OTHER,    /**< Unspecified datatype. The type of data in the
+                                block must be inferred from the block type. */
 };
+
 
 static const int SDF_TYPE_SIZES[] = {
     0,  // SDF_DATATYPE_NULL = 0,
@@ -116,12 +209,14 @@ static const int SDF_TYPE_SIZES[] = {
     0,  // SDF_DATATYPE_OTHER,
 };
 
+
 enum sdf_dimension {
     SDF_DIMENSION_IRRELEVANT = 0,
     SDF_DIMENSION_1D,
     SDF_DIMENSION_2D,
     SDF_DIMENSION_3D,
 };
+
 
 enum sdf_error_codes {
     SDF_ERR_SUCCESS = 0,
@@ -179,15 +274,20 @@ struct sdf_block {
     double *extents, *dim_mults;
     double *station_x, *station_y, *station_z;
     double mult, time, time_increment;
-    uint64_t dims[3];
-    uint64_t block_start, next_block_location, data_location;
-    uint64_t nelements, data_length, *nelements_blocks, *data_length_blocks;
-    uint32_t ndims, geometry, datatype, blocktype, info_length;
-    uint32_t type_size, stagger, datatype_out, type_size_out;
-    uint32_t nstations, nvariables, step, step_increment;
-    uint32_t *dims_in, *station_nvars, *variable_types, *station_index;
+    int64_t dims[3], local_dims[3];
+    int64_t block_start, next_block_location, data_location;
+    int64_t inline_block_start, inline_next_block_location;
+    int64_t summary_block_start, summary_next_block_location;
+    int64_t nelements, nelements_local, data_length;
+    int64_t *nelements_blocks, *data_length_blocks;
+    int64_t *array_starts, *array_ends, *array_strides;
+    int64_t *global_array_starts, *global_array_ends, *global_array_strides;
+    int32_t ndims, geometry, datatype, blocktype, info_length;
+    int32_t type_size, stagger, datatype_out, type_size_out;
+    int32_t nstations, nvariables, step, step_increment;
+    int32_t *dims_in, *station_nvars, *variable_types, *station_index;
     int32_t *station_move;
-    int local_dims[3], nm, nelements_local, n_ids, opt, ng, nfaces;
+    int nm, n_ids, opt, ng, nfaces, ngrids;
     char const_value[16];
     char *id, *units, *mesh_id, *material_id;
     char *vfm_id, *obstacle_id, *station_id;
@@ -198,41 +298,51 @@ struct sdf_block {
     int *node_list, *boundary_cells;
     void **grids, *data;
     char done_header, done_info, done_data, dont_allocate, dont_display;
-    char dont_own_data, use_mult;
+    char dont_own_data, use_mult, next_block_modified, rewrite_metadata;
+    char in_file;
     sdf_block_t *next, *prev;
     sdf_block_t *subblock, *subblock2;
     sdf_block_t *(*populate_data)(sdf_file_t *, sdf_block_t *);
-#ifdef PARALLEL
-    MPI_Datatype mpitype, distribution, mpitype_out;
     int cpu_split[SDF_MAXDIMS], starts[SDF_MAXDIMS];
     int proc_min[3], proc_max[3];
+    int ndim_labels, ndim_units;
+    int nstation_ids, nvariable_ids;
+    int nstation_names, nmaterial_names;
+    int option;
+    char *mimetype, *checksum_type, *checksum;
+#ifdef PARALLEL
+    MPI_Datatype mpitype, distribution, mpitype_out;
 #endif
 };
 
 struct sdf_file {
-    uint64_t dbg_count;
-    uint32_t sdf_lib_version, sdf_lib_revision;
-    uint32_t sdf_extension_version, sdf_extension_revision;
-    uint32_t file_version, file_revision;
+    int64_t dbg_count;
+    int32_t sdf_lib_version, sdf_lib_revision;
+    int32_t sdf_extension_version, sdf_extension_revision;
+    int32_t file_version, file_revision;
     char *dbg, *dbg_buf, **extension_names;
     // Lines above should never be changed.
     // Lines below must be changed with care and the SDF_LIB_VERSION bumped
     // if the resulting struct is not aligned the same.
     double time;
-    uint64_t first_block_location, summary_location, start_location, soi, sof;
-    uint64_t current_location;
-    uint32_t jobid1, jobid2, endianness, summary_size;
-    uint32_t block_header_length, string_length;
-    uint32_t code_io_version, step;
-    int32_t nblocks, error_code;
+    int64_t first_block_location, summary_location, start_location, soi, sof;
+    int64_t current_location;
+    int32_t jobid1, jobid2, endianness, summary_size;
+    int32_t block_header_length, string_length, id_length;
+    int32_t code_io_version, step;
+    int32_t nblocks, nblocks_file, error_code;
     int rank, ncpus, ndomains, rank_master, indent, print;
     char *buffer, *filename;
     char done_header, restart_flag, other_domains, use_float, use_summary;
     char use_random, station_file, swap;
+    char inline_metadata_read, summary_metadata_read;
+    char inline_metadata_invalid, summary_metadata_invalid, tmp_flag;
+    char metadata_modified, can_truncate, first_block_modified;
     char *code_name, *error_message;
-    sdf_block_t *blocklist, *tail, *current_block;
+    sdf_block_t *blocklist, *tail, *current_block, *last_block_in_file;
     char *mmap;
     void *ext_data;
+    int array_count;
 #ifdef PARALLEL
     MPI_File filehandle;
 #else
@@ -242,403 +352,391 @@ struct sdf_file {
 };
 
 struct run_info {
-    uint64_t defines;
-    uint32_t version, revision, compile_date, run_date, io_date, minor_rev;
+    int64_t defines;
+    int32_t version, revision, compile_date, run_date, io_date, minor_rev;
     char *commit_id, *sha1sum, *compile_machine, *compile_flags;
 };
 
 
+/**
+ @brief Open an SDF file and return a file handle.
+
+ This routine attempts to open the given filename as an SDF file.
+
+ @param[in] filename Name of the SDF file to open
+ @param[in] comm     MPI communicator to use
+ @param[in] mode     File mode
+ @param[in] use_mmap Flag which specifies wether mmap should be used
+
+ @return SDF filehandle on success, NULL on error
+
+ Example usage:
+ @code
+    sdf_file_t *h = sdf_open("myfile.sdf", MPI_COMM_WORLD, SDF_READ, 0);
+ @endcode
+ */
 sdf_file_t *sdf_open(const char *filename, comm_t comm, int mode, int use_mmap);
+
+
+/**
+ @brief Close an SDF file and free the filehandle
+
+ This routine closes the SDF file associated with this file handle
+ and frees the file handle along with all associated data.
+
+ @param[in] h        SDF file handle
+
+ @return 0 on success, 1 on error
+ */
 int sdf_close(sdf_file_t *h);
-int sdf_seek(sdf_file_t *h);
-int sdf_seek_set(sdf_file_t *h, off_t offset);
-sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id);
-sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name);
-int sdf_read_header(sdf_file_t *h);
-int sdf_read_blocklist(sdf_file_t *h);
-int sdf_read_blocklist_all(sdf_file_t *h);
-int sdf_read_summary(sdf_file_t *h);
-int sdf_read_block_info(sdf_file_t *h);
-int sdf_read_data(sdf_file_t *h);
-int sdf_read_bytes(sdf_file_t *h, char *buf, int buflen);
+
+
+/**
+ @brief Free all data blocks in the blocklist.
+
+ This routine cycles through the blocklist and frees any data blocks that
+ have been allocated, whilst leaving the metadata intact.
+
+ @param[in] h        SDF file handle
+
+ @return 0 on success, 1 on error
+ */
 int sdf_free_blocklist_data(sdf_file_t *h);
-int sdf_broadcast(sdf_file_t *h, void *buf, int size);
-int sdf_get_domain_extents(sdf_file_t *h, int rank, int *start, int *local);
-
-// internal routines
-
-int sdf_factor(sdf_file_t *h);
-int sdf_convert_array_to_float(sdf_file_t *h, void **var_in, int count);
-int sdf_randomize_array(sdf_file_t *h, void **var_in, int count);
-int sdf_set_rank_master(sdf_file_t *h, int rank);
-int sdf_read_nblocks(sdf_file_t *h);
-
-int sdf_abort(sdf_file_t *h);
-int sdf_read_next_block_header(sdf_file_t *h);
-int sdf_read_stitched_material(sdf_file_t *h);
-int sdf_read_stitched_matvar(sdf_file_t *h);
-int sdf_read_stitched_species(sdf_file_t *h);
-int sdf_read_stitched_obstacle_group(sdf_file_t *h);
-int sdf_read_stitched(sdf_file_t *h);
-int sdf_read_constant(sdf_file_t *h);
-
-int sdf_read_plain_mesh(sdf_file_t *h);
-int sdf_read_plain_mesh_info(sdf_file_t *h);
-int sdf_read_plain_variable(sdf_file_t *h);
-int sdf_read_plain_variable_info(sdf_file_t *h);
-
-int sdf_read_point_mesh(sdf_file_t *h);
-int sdf_read_point_mesh_info(sdf_file_t *h);
-int sdf_read_point_variable(sdf_file_t *h);
-int sdf_read_point_variable_info(sdf_file_t *h);
-int sdf_read_lagran_mesh(sdf_file_t *h);
-int sdf_read_station_info(sdf_file_t *h);
-
-void sdf_trim(char *str);
 
 
-#ifdef SDF_DEBUG
-  #define DBG_CHUNK 256
+/**
+ @brief Find a block with the given ID
 
-  #define SDF_RANK0 if (h->rank == h->rank_master)
+ This function finds a block in file's blocklist whose ID field matches the
+ one given.
 
-  #define SDF_PRNT(...) SDF_RANK0 do { \
-    sprintf(h->dbg, __VA_ARGS__); \
-    h->dbg += strlen(h->dbg); \
-    if (h->dbg_count - (h->dbg - h->dbg_buf) < DBG_CHUNK) { \
-        char *old = h->dbg_buf; \
-        h->dbg_buf = malloc(2 * h->dbg_count); \
-        memcpy(h->dbg_buf, old, h->dbg_count); \
-        h->dbg_count *= 2; \
-        h->dbg = h->dbg_buf + (h->dbg - old); \
-        free(old); \
-    }} while (0)
+ @param[in] h        SDF file handle
+ @param[in] id       ID of the block to find
 
-  #define SDF_DPRNT(...) do { \
-        int _a; for (_a=0; _a<h->indent; _a++) SDF_PRNT(" "); \
-        SDF_PRNT(__VA_ARGS__); \
-    } while (0)
+ @return Pointer to SDF block on success, NULL on error
+ */
+sdf_block_t *sdf_find_block_by_id(sdf_file_t *h, const char *id);
 
-  #define SDF_DPRNTa(a,f,len) SDF_RANK0 { \
-            int _b, _c; \
-            for (_b=0; _b<len; _b++) { \
-                for (_c=0; _c<h->indent; _c++) SDF_PRNT(" "); \
-                SDF_PRNT(#a "[%i]: %" #f "\n", _b, a[_b]); \
-            } \
-        }
 
- #ifdef SDF_DEBUG_ALL
-  #define SDF_DPRNTar(a,len) SDF_RANK0 { \
-        int _d, _i; \
-        if (b->datatype_out == SDF_DATATYPE_REAL4) { \
-            float *arr = (a); \
-            SDF_PRNT("r4 "); \
-            _d=0; while (_d<(len)) { \
-                SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
-                    if (_d == (len)) break; \
-                    SDF_PRNT(" %g", arr[_d]); \
-                } \
-            } \
-        } else if (b->datatype_out == SDF_DATATYPE_REAL8) { \
-            double *arr = (a); \
-            SDF_PRNT("r8 "); \
-            _d=0; while (_d<(len)) { \
-                SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
-                    if (_d == (len)) break; \
-                    SDF_PRNT(" %g", arr[_d]); \
-                } \
-            } \
-        } else if (b->datatype_out == SDF_DATATYPE_CHARACTER) { \
-            char *arr = (a); \
-            SDF_PRNT("c1 "); \
-            _d=0; while (_d<(len)) { \
-                SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
-                    if (_d == (len)) break; \
-                    SDF_PRNT("%c", arr[_d]); \
-                } \
-            } \
-        } else if (b->datatype_out == SDF_DATATYPE_LOGICAL) { \
-            char *arr = (a); \
-            SDF_PRNT("l1 "); \
-            _d=0; while (_d<(len)) { \
-                SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
-                    if (_d == (len)) break; \
-                    SDF_PRNT("%x ", arr[_d]); \
-                } \
-            } \
-        } else if (b->datatype_out == SDF_DATATYPE_INTEGER4) { \
-            int *arr = (a); \
-            SDF_PRNT("i4 "); \
-            _d=0; while (_d<(len)) { \
-                SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
-                    if (_d == (len)) break; \
-                    SDF_PRNT(" %i", arr[_d]); \
-                } \
-            } \
-        } else if (b->datatype_out == SDF_DATATYPE_INTEGER8) { \
-            uint64_t *arr = (a); \
-            SDF_PRNT("i8 "); \
-            _d=0; while (_d<(len)) { \
-                SDF_PRNT("\n%i ",_d); \
-                for (_i=0; _i < 10; _i++, _d++) { \
-                    if (_d == (len)) break; \
-                    SDF_PRNT(" %" PRIu64, arr[_d]); \
-                } \
-            } \
-        } \
-        SDF_PRNT("\n"); \
-    }
- #else
-  #define SDF_DPRNTar(a,len) do {} while(0)
- #endif
-#else
-  #define SDF_DPRNT(...) do {} while(0)
-  #define SDF_DPRNTa(a,f,len) do {} while(0)
-  #define SDF_DPRNTar(a,len) do {} while(0)
-#endif
+/**
+ @brief Find a block with the given name
 
-#define _SDF_CBYTE_SWAP32(val) do { \
-        char _c; \
-        _c = (val)[0]; (val)[0] = (val)[3]; (val)[3] = _c; \
-        _c = (val)[1]; (val)[1] = (val)[2]; (val)[2] = _c; \
-    } while(0)
+ This function finds a block in file's blocklist whose name matches the
+ one given.
 
-#define _SDF_CBYTE_SWAP64(val) do { \
-        char _c; \
-        _c = (val)[0]; (val)[0] = (val)[7]; (val)[7] = _c; \
-        _c = (val)[1]; (val)[1] = (val)[6]; (val)[6] = _c; \
-        _c = (val)[2]; (val)[2] = (val)[5]; (val)[5] = _c; \
-        _c = (val)[3]; (val)[3] = (val)[4]; (val)[4] = _c; \
-    } while(0)
+ @param[in] h        SDF file handle
+ @param[in] name     Name of the block to find
 
-#define _SDF_BYTE_SWAP64(val) \
-    (val) = ((uint64_t)(val)&0xff00000000000000)>>56 | \
-            ((uint64_t)(val)&0xff000000000000)>>40 | \
-            ((uint64_t)(val)&0xff0000000000)>>24 | \
-            ((uint64_t)(val)&0xff00000000)>>8 | \
-            ((uint64_t)(val)&0xff000000)<<8 | \
-            ((uint64_t)(val)&0xff0000)<<24 | \
-            ((uint64_t)(val)&0xff00)<<40 | \
-            ((uint64_t)(val)&0xff)<<56
+ @return Pointer to SDF block on success, NULL on error
+ */
+sdf_block_t *sdf_find_block_by_name(sdf_file_t *h, const char *name);
 
-#define _SDF_BYTE_SWAP32(val) \
-    (val) = ((uint32_t)(val)&0xff000000)>>24 | \
-            ((uint32_t)(val)&0xff0000)>>8 | \
-            ((uint32_t)(val)&0xff00)<<8 | \
-            ((uint32_t)(val)&0xff)<<24
 
-#define SDF_READ_ENTRY_INT4(value) do { \
-        (value) = *((uint32_t *) \
-            (h->buffer + h->current_location - h->start_location)); \
-        if (h->swap) _SDF_BYTE_SWAP32(value); \
-        h->current_location += 4; \
-        SDF_DPRNT(#value ": %i\n", (value)); \
-    } while (0)
+/**
+ @ingroup input
+ @{
+ @brief Read the header of an SDF file
 
-#define SDF_READ_ENTRY_INT8(value) do { \
-        (value) = *((uint64_t *) \
-            (h->buffer + h->current_location - h->start_location)); \
-        if (h->swap) _SDF_BYTE_SWAP64(value); \
-        h->current_location += 8; \
-        SDF_DPRNT(#value ": %lli\n", (long long int)(value)); \
-    } while (0)
+ The sdf_open reads just enough information to check that the file is a
+ valid SDF file. This routine populates information about the file such as
+ the number of blocks, etc.
+ This information is required in order to read the rest of the file's contents.
 
-#define SDF_READ_ENTRY_REAL4(value) do { \
-        (value) = *((float *) \
-            (h->buffer + h->current_location - h->start_location)); \
-        if (h->swap) _SDF_CBYTE_SWAP32(((char*)&value)); \
-        h->current_location += 4; \
-        SDF_DPRNT(#value ": %g\n", (float)(value)); \
-    } while (0)
+ @param[in] h        SDF file handle
 
-#define SDF_READ_ENTRY_REAL8(value) do { \
-        (value) = *((double *) \
-            (h->buffer + h->current_location - h->start_location)); \
-        if (h->swap) _SDF_CBYTE_SWAP64(((char*)&value)); \
-        h->current_location += 8; \
-        SDF_DPRNT(#value ": %g\n", (double)(value)); \
-    } while (0)
+ @return 0 on success, 1 on error
+ */
+int sdf_read_header(sdf_file_t *h);
 
-#define SDF_READ_ENTRY_LOGICAL(value) do { \
-        (value) = *((char *) \
-            (h->buffer + h->current_location - h->start_location)); \
-        h->current_location += 1; \
-        if ((value)) { \
-            SDF_DPRNT(#value ": true\n"); \
-        } else { \
-            SDF_DPRNT(#value ": false\n"); \
-        } \
-    } while (0)
 
-#define SDF_READ_ENTRY_CONST(value) do { \
-        char _c; \
-        memcpy((value), (h->buffer + h->current_location - h->start_location), \
-            SDF_TYPE_SIZES[b->datatype]); \
-        h->current_location += SDF_TYPE_SIZES[b->datatype]; \
-        switch (b->datatype) { \
-        case(SDF_DATATYPE_REAL4): \
-          if (h->swap) { \
-            _c = (value)[0]; (value)[0] = (value)[3]; (value)[3] = _c; \
-            _c = (value)[1]; (value)[1] = (value)[2]; (value)[2] = _c; \
-          } \
-          SDF_DPRNT(#value ": %g\n", *((float*)(value))); \
-          break; \
-        case(SDF_DATATYPE_REAL8): \
-          if (h->swap) { \
-            _c = (value)[0]; (value)[0] = (value)[7]; (value)[7] = _c; \
-            _c = (value)[1]; (value)[1] = (value)[6]; (value)[6] = _c; \
-            _c = (value)[2]; (value)[2] = (value)[5]; (value)[5] = _c; \
-            _c = (value)[3]; (value)[3] = (value)[4]; (value)[4] = _c; \
-          } \
-          SDF_DPRNT(#value ": %g\n", *((double*)(value))); \
-          break; \
-        case(SDF_DATATYPE_INTEGER4): \
-          if (h->swap) { \
-            _c = (value)[0]; (value)[0] = (value)[3]; (value)[3] = _c; \
-            _c = (value)[1]; (value)[1] = (value)[2]; (value)[2] = _c; \
-          } \
-          SDF_DPRNT(#value ": %i\n", *((int32_t*)(value))); \
-          break; \
-        case(SDF_DATATYPE_INTEGER8): \
-          if (h->swap) { \
-            _c = (value)[0]; (value)[0] = (value)[7]; (value)[7] = _c; \
-            _c = (value)[1]; (value)[1] = (value)[6]; (value)[6] = _c; \
-            _c = (value)[2]; (value)[2] = (value)[5]; (value)[5] = _c; \
-            _c = (value)[3]; (value)[3] = (value)[4]; (value)[4] = _c; \
-          } \
-          SDF_DPRNT(#value ": %lli\n", *((long long int*)(value))); \
-          break; \
-        } \
-    } while (0)
+/**
+ @brief Read the summary section of an SDF file
 
-#define SDF_READ_ENTRY_ARRAY_INT4(value, length) do { \
-        uint32_t *val; int _i; \
-        if (!(value)) value = calloc((length), sizeof(int32_t)); \
-        memcpy((value), (h->buffer + h->current_location - h->start_location), \
-            4 * (length)); \
-        if (h->swap) { \
-            val = (uint32_t*)(value); \
-            for (_i=0; _i<(length); _i++) { \
-                _SDF_BYTE_SWAP32(*val); \
-                val++; \
-            } \
-        } \
-        h->current_location += 4 * (length); \
-        SDF_DPRNTa(value, i, (length)); \
-    } while (0)
+ This routine reads the entire summary section of an SDF file into a buffer.
+ No parsing is done. If the file does not contain a summary section then the
+ buffer is populated by reading the inline metadata blocks.
 
-#define SDF_READ_ENTRY_ARRAY_INT8(value, length) do { \
-        uint64_t *val; int _i; \
-        if (!(value)) value = calloc((length), sizeof(int64_t)); \
-        memcpy((value), (h->buffer + h->current_location - h->start_location), \
-            8 * (length)); \
-        if (h->swap) { \
-            val = (uint64_t*)(value); \
-            for (_i=0; _i<(length); _i++) { \
-                _SDF_BYTE_SWAP64(*val); \
-                val++; \
-            } \
-        } \
-        h->current_location += 8 * (length); \
-        SDF_DPRNTa(value, lli, (length)); \
-    } while (0)
+ @param[in] h        SDF file handle
 
-#define SDF_READ_ENTRY_ARRAY_REAL4(value, length) do { \
-        uint32_t *val; int _i; \
-        if (!(value)) value = calloc((length), sizeof(float)); \
-        memcpy((value), (h->buffer + h->current_location - h->start_location), \
-            4 * (length)); \
-        if (h->swap) { \
-            val = (uint32_t*)(value); \
-            for (_i=0; _i<(length); _i++) { \
-                _SDF_BYTE_SWAP32(*val); \
-                val++; \
-            } \
-        } \
-        h->current_location += 4 * (length); \
-        SDF_DPRNTa(value, g, (length)); \
-    } while (0)
+ @return 0 on success, 1 on error
+ */
+int sdf_read_summary(sdf_file_t *h);
 
-#define SDF_READ_ENTRY_ARRAY_REAL8(value, length) do { \
-        uint64_t *val; int _i; \
-        if (!(value)) value = calloc((length), sizeof(double)); \
-        memcpy((value), (h->buffer + h->current_location - h->start_location), \
-            8 * (length)); \
-        if (h->swap) { \
-            val = (uint64_t*)(value); \
-            for (_i=0; _i<(length); _i++) { \
-                _SDF_BYTE_SWAP64(*val); \
-                val++; \
-            } \
-        } \
-        h->current_location += 8 * (length); \
-        SDF_DPRNTa(value, g, (length)); \
-    } while (0)
 
-#define SDF_READ_ENTRY_TYPE(value) do { \
-        (b->value) = *((uint32_t *) \
-            (h->buffer + h->current_location - h->start_location)); \
-        if (h->swap) _SDF_BYTE_SWAP32(b->value); \
-        h->current_location += 4; \
-        if (b->value < sdf_ ## value ## _len) \
-            SDF_DPRNT("b->" #value ": %s\n", sdf_ ## value ## _c[b->value]); \
-        else \
-            SDF_DPRNT("b->" #value ": %i (UNKNOWN)\n", b->value); \
-    } while (0)
+/**
+ @brief Reads the metadata contents of the SDF file and populates a blocklist
 
-#define SDF_READ_ENTRY_STRINGLEN(value, length) do { \
-        if (!(value)) value = calloc(length+1, sizeof(char)); \
-        memcpy((value), (h->buffer + h->current_location - h->start_location), \
-            (length)); \
-        value[length] = '\0'; \
-        sdf_trim(value); \
-        h->current_location += (length); \
-    } while (0)
+ This routine reads the summary from an SDF file and then parses each of
+ the metadata blocks. It builds a linked list of SDF block structures which
+ contains the metadata information.
 
-#define SDF_READ_ENTRY_ARRAY_STRINGLEN(value, length, clen) do { \
-        int _e; \
-        if (!(value)) value = calloc((length+1), sizeof(char*)); \
-        for (_e=0; _e<(length); _e++) { \
-            SDF_READ_ENTRY_STRINGLEN(value[_e], clen); \
-            SDF_DPRNT(#value "[%i]: %s\n", _e, (value[_e])); \
-        } \
-    } while (0)
+ @param[in] h        SDF file handle
 
-#define SDF_READ_ENTRY_ID(value) do { \
-        SDF_READ_ENTRY_STRINGLEN(value, SDF_ID_LENGTH); \
-        SDF_DPRNT(#value ": %s\n", (value)); \
-    } while (0)
+ @return 0 on success, 1 on error
+ */
+int sdf_read_blocklist(sdf_file_t *h);
 
-#define SDF_READ_ENTRY_ARRAY_ID(value, length) \
-        SDF_READ_ENTRY_ARRAY_STRINGLEN(value, length, SDF_ID_LENGTH)
 
-#define SDF_READ_ENTRY_STRING(value) do { \
-        SDF_READ_ENTRY_STRINGLEN(value, h->string_length); \
-        SDF_DPRNT(#value ": %s\n", (value)); \
-    } while (0)
+/**
+ @brief Reads the metadata contents of the SDF file and populates a blocklist
+        containing both file contents and any derived blocks.
 
-#define SDF_READ_ENTRY_ARRAY_STRING(value, length) \
-        SDF_READ_ENTRY_ARRAY_STRINGLEN(value, length, h->string_length)
+ This routine reads the summary from an SDF file and then parses each of
+ the metadata blocks. It builds a linked list of SDF block structures which
+ contains the metadata information.
+ In addition, any derived variables which can be calculated based on the files
+ contents are added to the blocklist.
 
-#define SDF_SET_ENTRY_STRINGLEN(value, strvalue, length) do { \
-        if (!(value)) value = malloc(h->string_length+1); \
-        strncpy((value), (strvalue), (length)); \
-    } while (0)
+ @param[in] h        SDF file handle
 
-#define SDF_SET_ENTRY_ID(value, strvalue) do { \
-        SDF_SET_ENTRY_STRINGLEN(value, strvalue, SDF_ID_LENGTH); \
-        SDF_DPRNT(#value ": %s\n", (value)); \
-    } while (0)
+ @return 0 on success, 1 on error
+ */
+int sdf_read_blocklist_all(sdf_file_t *h);
 
-#define SDF_SET_ENTRY_STRING(value, strvalue) do { \
-        SDF_SET_ENTRY_STRINGLEN(value, strvalue, h->string_length); \
-        SDF_DPRNT(#value ": %s\n", (value)); \
-    } while (0)
+
+/**
+ @brief Reads the metadata for a single block in the SDF file
+
+ This routine reads and parses the metadata for the current block pointer.
+
+ @param[in] h        SDF file handle
+
+ @return 0 on success, 1 on error
+ */
+int sdf_read_block_info(sdf_file_t *h);
+
+
+/**
+ @brief Reads the data for a single block in the SDF file
+
+ This routine reads the data block for the current block pointer.
+
+ @param[in] h        SDF file handle
+
+ @return 0 on success, 1 on error
+ */
+int sdf_read_data(sdf_file_t *h);
+/**@}*/
+
+
+/**
+ @brief Returns the bounds for the current parallel domain decomposition.
+
+ @param[in]  h          SDF file handle
+ @param[in]  rank       The processor rank to return the extents for
+ @param[out] starts     The starting index within the global domain for each
+                        dimension.
+ @param[out] local_dims The length of the local domain in each dimension.
+
+ @return 0 on success, 1 on error
+ */
+int sdf_get_domain_bounds(sdf_file_t *h, int rank,
+                          int *starts, int *local_dims);
+
+
+/**
+ @brief Modify an array in-place.
+
+ This function modifies an entire array in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] b        SDF block on which to act
+ @param[in] data     Supplied data array
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_array(sdf_file_t *h, sdf_block_t *b, void *data);
+
+
+/**
+ @brief Modify an array slice in-place.
+
+ This function allows an array to be modified in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] b        SDF block on which to act
+ @param[in] data     Supplied data array
+ @param[in] starts   Array of starts
+ @param[in] ends     Array of ends
+
+ @return 0 on success, 1 on error
+
+ Example usage:
+ @code
+    memcpy(starts, b->dims, sizeof(*starts));
+    memcpy(ends, b->dims, sizeof(*ends));
+    starts[2] = 3;
+    ends[2] = 4;
+    sdf_modify_array_section(h, b, data, starts, ends);
+ @endcode
+ */
+int sdf_modify_array_section(sdf_file_t *h, sdf_block_t *b, void *data,
+                             int64_t *starts, int64_t *ends);
+
+
+/**
+ @brief Modify an array element in-place.
+
+ This function modifies a single element of an array in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] b        SDF block on which to act
+ @param[in] data     Supplied data array
+ @param[in] index    Array containing the element index
+
+ @return 0 on success, 1 on error
+
+ Example usage:
+ @code
+    double value = 2;
+    int64_t index[] = {1,2,3};
+    sdf_modify_array_element(h, b, &value, index);
+ @endcode
+ */
+int sdf_modify_array_element(sdf_file_t *h, sdf_block_t *b, void *data,
+                             int64_t *index);
+
+
+/**
+ @brief Add a block in-place.
+
+ This function adds the specified block to the SDF file.
+ The block is appended to the end of both the file and blocklist and the
+ SDF file headers are updated in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] block    The block to add to the file
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_add_block(sdf_file_t *h, sdf_block_t *block);
+
+
+/**
+ @brief Add the copy of a block in-place.
+
+ This function copies the specified block and adds it to the SDF file.
+ The block copy is appended to the end of both the file and blocklist and the
+ SDF file headers are updated in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] block    The block to copy and add to the file
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_add_block_copy(sdf_file_t *h, sdf_block_t *block);
+
+
+/**
+ @brief Remove a block in-place.
+
+ This function removes a block from an SDF file.
+ The block's associated pointers are removed and deallocated and the SDF
+ file headers are updated in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] block    The block to remove from the file
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_remove_block(sdf_file_t *h, sdf_block_t *block);
+
+
+/**
+ @brief Remove a block in-place by ID.
+
+ This function removes a block from an SDF file.
+ The block's associated pointers are removed and deallocated and the SDF
+ file headers are updated in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] id       The ID string for the block to remove
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_remove_block_id(sdf_file_t *h, const char *id);
+
+
+/**
+ @brief Remove a block in-place by name.
+
+ This function removes a block from an SDF file.
+ The block's associated pointers are removed and deallocated and the SDF
+ file headers are updated in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] name     The name of the block to remove
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_remove_block_name(sdf_file_t *h, const char *name);
+
+
+/**
+ @brief Add a single material in-place.
+
+ This function adds a single material to a stitched block.
+ The block pointer for the material is added to the blocklist
+ and the SDF file headers are updated in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] stitched The stitched material block to remove the material from
+ @param[in] material The material to remove
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_add_material(sdf_file_t *h, sdf_block_t *stitched,
+        sdf_block_t *material);
+
+
+/**
+ @brief Remove a single material in-place.
+
+ This function removes a single material from a stitched block.
+ The material's associated block pointers are removed and deallocated
+ and the SDF file headers are updated in-place.
+
+ @param[in] h        SDF file handle
+ @param[in] stitched The stitched material block to remove the material from
+ @param[in] material The material to remove
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_remove_material(sdf_file_t *h, sdf_block_t *stitched,
+        sdf_block_t *material);
+
+
+/**
+ @brief Rewrites the metadata for the file.
+
+ The sdf_modify_* routines merely update the blocklist for the file and do
+ not actually perform any changes on the file itself. This routine runs through
+ the blocklist and updates the metadata in the file where necessary.
+
+ @param[in] h        SDF file handle
+
+ @return 0 on success, 1 on error
+ */
+int sdf_modify_rewrite_metadata(sdf_file_t *h);
+
+
+/**
+ @brief Set the array section to use for a block.
+
+ This routine sets up parameters for a block so that only a subsection of
+ the total array is read into the data block.
+
+ @param[in] b        SDF block on which to act
+ @param[in] ndims    Size of starts, ends and strides arrays
+ @param[in] starts   Array of start indices
+ @param[in] ends     Array of end indices
+ @param[in] strides  Array of strides
+
+ @return 0 on success, 1 on error
+ */
+int sdf_block_set_array_section(sdf_block_t *b, const int ndims,
+                                const int64_t *starts, const int64_t *ends,
+                                const int64_t *strides);
 
 #ifdef __cplusplus
 }

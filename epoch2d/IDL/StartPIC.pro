@@ -54,15 +54,8 @@ FUNCTION getdata, snapshot_in, wkdir_in, _EXTRA=extra
   IF (wkdir EQ '') THEN wkdir = wkdir_global
   IF (retro EQ -1) THEN retro = retro_global
 
-  file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".cfd")')
-  info = FILE_INFO(file)
-
-  IF info.exists EQ 1 THEN BEGIN
-    RETURN, LoadCFDFile(file, _retro=retro, _EXTRA=new_extra)
-  ENDIF ELSE BEGIN
-    file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".sdf")')
-    RETURN, LoadSDFFile(file, _retro=retro, _EXTRA=new_extra)
-  ENDELSE
+  file = wkdir + STRING(snapshot, FORMAT='("/",I04.04,".sdf")')
+  RETURN, LoadSDFFile(file, _retro=retro, _EXTRA=new_extra)
 END
 
 ; --------------------------------------------------------------------------
@@ -157,7 +150,6 @@ PRO init_StartPIC
   DEFSYSV, '!GDL', EXISTS=gdl
 
   init_widget
-  init_cfdhelp
   init_SDFHelp
 
   retro_global = 1

@@ -1,5 +1,6 @@
 MODULE sdf_output
 
+  USE sdf_output_ru
   USE sdf_output_r4
   USE sdf_output_r8
 
@@ -48,5 +49,21 @@ MODULE sdf_output
         write_run_info_old, &
         write_run_info_minor
   END INTERFACE sdf_write_run_info
+
+  INTERFACE sdf_write_datablock
+    MODULE PROCEDURE &
+        write_datablock_bytearray, &
+        write_datablock_chararray
+  END INTERFACE sdf_write_datablock
+
+  INTERFACE sdf_write_namevalue
+    MODULE PROCEDURE &
+        write_namevalue_i4, &
+        write_namevalue_i8, &
+        write_namevalue_r4, &
+        write_namevalue_r8, &
+        write_namevalue_logical, &
+        write_namevalue_string
+  END INTERFACE sdf_write_namevalue
 
 END MODULE sdf_output

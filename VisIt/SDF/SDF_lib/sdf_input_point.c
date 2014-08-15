@@ -1,7 +1,12 @@
-#include "sdf.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sdf.h>
+#include "sdf_input.h"
+#include "sdf_input_point.h"
+#include "sdf_control.h"
 
-//#define SDF_COMMON_MESH_LENGTH (4 + 8 + SDF_ID_LENGTH + 4 * b->ndims)
+//#define SDF_COMMON_MESH_LENGTH (4 + 8 + h->id_length + 4 * b->ndims)
 
 #define SDF_COMMON_MESH_INFO() do { \
     if (!h->current_block || !h->current_block->done_header) { \
@@ -18,7 +23,7 @@
     b->done_info = 1; } while(0)
 
 
-int sdf_point_factor(sdf_file_t *h, int *nelements_local);
+static int sdf_point_factor(sdf_file_t *h, int64_t *nelements_local);
 
 
 int sdf_read_point_mesh_info(sdf_file_t *h)
@@ -56,6 +61,8 @@ int sdf_read_point_mesh_info(sdf_file_t *h)
         SDF_READ_ENTRY_ID(b->material_id);
 
     b->stagger = SDF_STAGGER_VERTEX;
+
+    b->ndim_labels = b->ndim_units = b->ndims;
 
     return 0;
 }
@@ -171,22 +178,32 @@ int sdf_read_point_mesh(sdf_file_t *h)
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_point_mesh_info(h);
 
-    sdf_point_factor(h, &b->nelements_local);
+    sdf_point_factor(h, &b->local_dims[0]);
+    for (n = 1; n < 3; n++)
+        b->local_dims[n] = b->local_dims[0];
+    if (!b->array_starts)
+        b->nelements_local = b->local_dims[0];
 
     h->current_location = b->data_location;
 
-    if (!b->grids) b->grids = calloc(b->ndims, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = b->ndims;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
 
     if (h->print) {
         h->indent = 0;
         SDF_DPRNT("\n");
         SDF_DPRNT("b->name: %s ", b->name);
-        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nelements_local);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%" PRIi64 " ",b->nelements_local);
         SDF_DPRNT("\n");
         h->indent = 2;
     }
     for (n = 0; n < 3; n++) {
         if (b->ndims > n) {
+            if (b->array_starts)
+                h->current_location +=
+                    b->array_starts[n] * SDF_TYPE_SIZES[b->datatype];
 #ifdef PARALLEL
             sdf_create_1d_distribution(h, b->dims[0], b->nelements_local,
                     b->starts[0]);
@@ -200,8 +217,10 @@ int sdf_read_point_mesh(sdf_file_t *h)
                 SDF_DPRNT("%s: ", b->dim_labels[n]);
                 SDF_DPRNTar(b->grids[n], b->nelements_local);
             }
-            h->current_location = h->current_location
-                    + SDF_TYPE_SIZES[b->datatype] * b->dims[0];
+            h->current_location += SDF_TYPE_SIZES[b->datatype] * b->dims[0];
+            if (b->array_starts)
+                h->current_location -=
+                    b->array_starts[n] * SDF_TYPE_SIZES[b->datatype];
         }
     }
 
@@ -212,14 +231,14 @@ int sdf_read_point_mesh(sdf_file_t *h)
 
 
 
-int sdf_point_factor(sdf_file_t *h, int *nelements_local)
+static int sdf_point_factor(sdf_file_t *h, int64_t *nelements_local)
 {
     sdf_block_t *b = h->current_block;
 #ifdef PARALLEL
-    int npoint_min, split_big;
+    int64_t npoint_min, split_big;
 
-    npoint_min = (int)b->dims[0] / h->ncpus;
-    split_big = (int)b->dims[0] - h->ncpus * npoint_min;
+    npoint_min = b->dims[0] / h->ncpus;
+    split_big = b->dims[0] - h->ncpus * npoint_min;
 
     if (h->rank >= split_big) {
         b->starts[0] = split_big * (npoint_min + 1)
@@ -230,7 +249,7 @@ int sdf_point_factor(sdf_file_t *h, int *nelements_local)
         *nelements_local = npoint_min + 1;
     }
 #else
-    *nelements_local = (int)b->dims[0];
+    *nelements_local = b->dims[0];
 #endif
 
     return 0;
@@ -246,9 +265,13 @@ int sdf_read_point_variable(sdf_file_t *h)
     if (b->done_data) return 0;
     if (!b->done_info) sdf_read_blocklist(h);
 
-    sdf_point_factor(h, &b->nelements_local);
+    sdf_point_factor(h, &b->local_dims[0]);
+    if (!b->array_starts)
+        b->nelements_local = b->local_dims[0];
 
     h->current_location = b->data_location;
+    if (b->array_starts)
+        h->current_location += b->array_starts[0] * SDF_TYPE_SIZES[b->datatype];
 
 #ifdef PARALLEL
     sdf_create_1d_distribution(h, b->dims[0], b->nelements_local,
@@ -265,7 +288,7 @@ int sdf_read_point_variable(sdf_file_t *h)
         h->indent = 0;
         SDF_DPRNT("\n");
         SDF_DPRNT("b->name: %s ", b->name);
-        for (n=0; n<b->ndims; n++) SDF_DPRNT("%i ",b->nelements_local);
+        for (n=0; n<b->ndims; n++) SDF_DPRNT("%" PRIi64 " ",b->nelements_local);
         SDF_DPRNT("\n  ");
         SDF_DPRNTar(b->data, b->nelements_local);
     }

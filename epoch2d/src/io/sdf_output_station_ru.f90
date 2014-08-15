@@ -61,8 +61,8 @@ CONTAINS
       IF (ABS(b%time_increment - 1.0_r8) .GT. c_tiny) &
           b%nvariables = b%nvariables + 1
       DO i = 1,b%nstations
-        CALL safe_copy_id(h, station_ids(i), b%station_ids(i))
-        CALL safe_copy_string(station_names(i), b%station_names(i))
+        CALL sdf_safe_copy_id(h, station_ids(i), b%station_ids(i))
+        CALL sdf_safe_copy_string(station_names(i), b%station_names(i))
         b%station_nvars(i) = station_nvars(i)
         b%station_move(i) = station_move(i)
         b%station_grid(i,1) = station_x(i)
@@ -82,9 +82,9 @@ CONTAINS
 
       b%type_size = 0
       DO i = 1,b%nvariables
-        CALL safe_copy_id(h, variable_ids(i), b%variable_ids(i))
-        CALL safe_copy_id(h, variable_units(i), b%dim_units(i))
-        CALL safe_copy_string(variable_names(i), b%material_names(i))
+        CALL sdf_safe_copy_id(h, variable_ids(i), b%variable_ids(i))
+        CALL sdf_safe_copy_id(h, variable_units(i), b%dim_units(i))
+        CALL sdf_safe_copy_string(variable_names(i), b%material_names(i))
         b%variable_types(i) = variable_types(i)
         IF (b%use_mult) b%dim_mults(i) = variable_mults(i)
         b%type_size = b%type_size + c_type_sizes(b%variable_types(i))

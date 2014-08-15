@@ -201,6 +201,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode .EQ. c_const_r_xyz) THEN
+      CALL push_on_eval(SQRT(x(ix)**2 + y(iy)**2 + z(iz)**2))
+      err = err_simplify
+      RETURN
+    ENDIF
+
     IF (opcode .GE. c_const_custom_lowbound) THEN
       ! Check for custom constants
       val = custom_constant(opcode, ix, iy, iz, err)
@@ -597,7 +603,15 @@ CONTAINS
 
     IF (opcode .EQ. c_func_sqrt) THEN
       CALL get_values(1, values)
+#ifdef PARSER_CHECKING
+      IF (values(1) .LT. 0) THEN
+        CALL push_on_eval(0.0_num)
+      ELSE
+        CALL push_on_eval(SQRT(values(1)))
+      ENDIF
+#else
       CALL push_on_eval(SQRT(values(1)))
+#endif
       RETURN
     ENDIF
 
@@ -621,7 +635,15 @@ CONTAINS
 
     IF (opcode .EQ. c_func_exp) THEN
       CALL get_values(1, values)
+#ifdef PARSER_CHECKING
+      IF (values(1) .LT. c_smallest_exp) THEN
+        CALL push_on_eval(0.0_num)
+      ELSE
+        CALL push_on_eval(EXP(values(1)))
+      ENDIF
+#else
       CALL push_on_eval(EXP(values(1)))
+#endif
       RETURN
     ENDIF
 

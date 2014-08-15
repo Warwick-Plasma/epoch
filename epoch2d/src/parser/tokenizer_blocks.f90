@@ -147,6 +147,7 @@ CONTAINS
         as_constant = c_const_lx
     IF (str_cmp(name, 'lengthy') .OR. str_cmp(name, 'length_y')) &
         as_constant = c_const_ly
+    IF (str_cmp(name, 'r_xy')) as_constant = c_const_r_xy
     IF (str_cmp(name, 'nprocx')) as_constant = c_const_nprocx
     IF (str_cmp(name, 'nprocy')) as_constant = c_const_nprocy
     IF (str_cmp(name, 'nsteps')) as_constant = c_const_nsteps
@@ -207,9 +208,9 @@ CONTAINS
         as_constant = c_const_z_max
     IF (str_cmp(name, 'lengthz') .OR. str_cmp(name, 'length_z')) &
         as_constant = c_const_lz
-    IF (str_cmp(name, 'r_xy')) as_constant = c_const_r_xy
     IF (str_cmp(name, 'r_yz')) as_constant = c_const_r_yz
     IF (str_cmp(name, 'r_xz')) as_constant = c_const_r_xz
+    IF (str_cmp(name, 'r_xyz')) as_constant = c_const_r_xyz
     IF (str_cmp(name, 'nprocz')) as_constant = c_const_nprocz
     IF (str_cmp(name, 'dir_z')) as_constant = c_const_dir_z
 
@@ -219,7 +220,7 @@ CONTAINS
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'A default value was used for the constant "' &
+          WRITE(io,*) 'A default value (set z to 0) was used for the constant "' &
               // TRIM(name) // '"'
           WRITE(io,*)
         ENDDO
@@ -322,7 +323,9 @@ CONTAINS
       IF (last_block_type .EQ. c_pt_variable &
           .OR. last_block_type .EQ. c_pt_constant &
           .OR. last_block_type .EQ. c_pt_default_constant &
-          .OR. last_block_type .EQ. c_pt_deck_constant) THEN
+          .OR. last_block_type .EQ. c_pt_deck_constant &
+          .OR. last_block_type .EQ. c_pt_species &
+          .OR. last_block_type .EQ. c_pt_subset) THEN
         as_operator = c_opcode_plus
       ELSE
         as_operator = c_opcode_unary_plus
@@ -332,7 +335,9 @@ CONTAINS
       IF (last_block_type .EQ. c_pt_variable &
           .OR. last_block_type .EQ. c_pt_constant &
           .OR. last_block_type .EQ. c_pt_default_constant &
-          .OR. last_block_type .EQ. c_pt_deck_constant) THEN
+          .OR. last_block_type .EQ. c_pt_deck_constant &
+          .OR. last_block_type .EQ. c_pt_species &
+          .OR. last_block_type .EQ. c_pt_subset) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus

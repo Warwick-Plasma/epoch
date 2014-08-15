@@ -226,8 +226,8 @@ CONTAINS
       b%done_header = .TRUE.
     ENDIF
 
-    IF (PRESENT(id)) CALL safe_copy_string(b%id, id)
-    IF (PRESENT(name)) CALL safe_copy_string(b%name, name)
+    IF (PRESENT(id)) CALL sdf_safe_copy_string(b%id, id)
+    IF (PRESENT(name)) CALL sdf_safe_copy_string(b%name, name)
     IF (PRESENT(blocktype)) blocktype = b%blocktype
     IF (PRESENT(ndims)) ndims = b%ndims
     IF (PRESENT(datatype)) datatype = b%datatype
@@ -316,12 +316,13 @@ CONTAINS
     version = b%run%version
     revision = b%run%revision
     minor_rev = b%run%minor_rev
-    IF (PRESENT(commit_id)) CALL safe_copy_string(b%run%commit_id, commit_id)
-    IF (PRESENT(sha1sum)) CALL safe_copy_string(b%run%sha1sum, sha1sum)
+    IF (PRESENT(commit_id)) &
+        CALL sdf_safe_copy_string(b%run%commit_id, commit_id)
+    IF (PRESENT(sha1sum)) CALL sdf_safe_copy_string(b%run%sha1sum, sha1sum)
     IF (PRESENT(compile_machine)) &
-        CALL safe_copy_string(b%run%compile_machine, compile_machine)
+        CALL sdf_safe_copy_string(b%run%compile_machine, compile_machine)
     IF (PRESENT(compile_flags)) &
-        CALL safe_copy_string(b%run%compile_flags, compile_flags)
+        CALL sdf_safe_copy_string(b%run%compile_flags, compile_flags)
     IF (PRESENT(defines)) defines = b%run%defines
     IF (PRESENT(compile_date)) compile_date = b%run%compile_date
     IF (PRESENT(run_date)) run_date = b%run%run_date
@@ -961,7 +962,7 @@ CONTAINS
     b => h%current_block
 
     DO iloop = 1, b%ndims
-      CALL safe_copy_string(b%material_names(iloop), material_names(iloop))
+      CALL sdf_safe_copy_string(b%material_names(iloop), material_names(iloop))
     ENDDO
 
   END SUBROUTINE sdf_read_obstacle_group_info

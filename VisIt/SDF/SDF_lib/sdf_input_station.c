@@ -1,7 +1,11 @@
-#include "sdf.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sdf.h>
+#include "sdf_input.h"
+#include "sdf_input_station.h"
 
-//#define SDF_COMMON_MESH_LENGTH (4 + 8 + SDF_ID_LENGTH + 4 * b->ndims)
+//#define SDF_COMMON_MESH_LENGTH (4 + 8 + h->id_length + 4 * b->ndims)
 
 #define SDF_COMMON_MESH_INFO() do { \
     if (!h->current_block || !h->current_block->done_header) { \
@@ -77,5 +81,7 @@ int sdf_read_station_info(sdf_file_t *h)
 
     b->stagger = SDF_STAGGER_VERTEX;
 
+    b->nstation_ids = b->nstation_names = b->nstations;
+    b->ndim_units = b->nvariable_ids = b->nmaterial_names = b->nvariables;
     return 0;
 }

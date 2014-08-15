@@ -32,28 +32,36 @@ MODULE sdf_common
   END TYPE sdf_run_type
 
   TYPE sdf_block_type
+    REAL(r4), POINTER :: r4_array(:)
     REAL(r8), DIMENSION(2*c_maxdims) :: extents
     REAL(r8) :: mult, time, time_increment
     REAL(r8), DIMENSION(:), POINTER :: dim_mults
     REAL(r8), DIMENSION(:,:), POINTER :: station_grid
+    REAL(r8), POINTER :: r8_array(:)
     INTEGER(KIND=MPI_OFFSET_KIND) :: block_start
     INTEGER(i8) :: next_block_location, data_location
     INTEGER(i8) :: nelements, npoints, data_length, info_length
+    INTEGER(i8), POINTER :: i8_array(:)
     INTEGER(i4) :: ndims, geometry, datatype, blocktype
     INTEGER(i4) :: mpitype, type_size, stagger
     INTEGER(i4) :: nstations, nvariables, step, step_increment
+    INTEGER(i4) :: padding
     INTEGER(i4), DIMENSION(c_maxdims) :: dims
     INTEGER(i4), POINTER :: station_nvars(:), station_move(:), variable_types(:)
     INTEGER(i4), POINTER :: station_index(:)
+    INTEGER(i4), POINTER :: i4_array(:)
+    CHARACTER(LEN=1), POINTER :: logical_array(:)
     CHARACTER(LEN=8) :: const_value
     CHARACTER(LEN=c_id_length) :: id, units, mesh_id, material_id
     CHARACTER(LEN=c_id_length) :: vfm_id, obstacle_id, species_id
+    CHARACTER(LEN=c_id_length) :: mimetype, checksum_type
     CHARACTER(LEN=c_long_id_length) :: long_id
     CHARACTER(LEN=c_id_length), POINTER :: station_ids(:), variable_ids(:)
     CHARACTER(LEN=c_id_length), POINTER :: dim_labels(:), dim_units(:)
-    CHARACTER(LEN=c_max_string_length) :: name, material_name
+    CHARACTER(LEN=c_max_string_length) :: name, material_name, checksum
     CHARACTER(LEN=c_max_string_length), POINTER :: station_names(:)
     CHARACTER(LEN=c_max_string_length), POINTER :: material_names(:)
+    CHARACTER(LEN=c_max_string_length), POINTER :: string_array(:)
     LOGICAL :: done_header, done_info, done_data, truncated_id, use_mult
     TYPE(sdf_run_type), POINTER :: run
     TYPE(sdf_block_type), POINTER :: next_block
@@ -122,7 +130,10 @@ MODULE sdf_common
   INTEGER(i4), PARAMETER :: c_blocktype_contiguous = 24
   INTEGER(i4), PARAMETER :: c_blocktype_lagrangian_mesh = 25
   INTEGER(i4), PARAMETER :: c_blocktype_station = 26
-  INTEGER(i4), PARAMETER :: c_blocktype_max = 26
+  INTEGER(i4), PARAMETER :: c_blocktype_station_derived = 27
+  INTEGER(i4), PARAMETER :: c_blocktype_datablock = 28
+  INTEGER(i4), PARAMETER :: c_blocktype_namevalue = 29
+  INTEGER(i4), PARAMETER :: c_blocktype_max = 29
 
   INTEGER(i4), PARAMETER :: c_datatype_null = 0
   INTEGER(i4), PARAMETER :: c_datatype_integer4 = 1
@@ -162,6 +173,11 @@ MODULE sdf_common
       c_stagger_face_x + c_stagger_face_y
   INTEGER(i4), PARAMETER :: c_stagger_vertex = &
       c_stagger_face_x + c_stagger_face_y + c_stagger_face_z
+
+  CHARACTER(LEN=*), PARAMETER :: c_checksum_null = ''
+  CHARACTER(LEN=*), PARAMETER :: c_checksum_md5 = 'md5'
+  CHARACTER(LEN=*), PARAMETER :: c_checksum_sha1 = 'sha1'
+  CHARACTER(LEN=*), PARAMETER :: c_checksum_sha256 = 'sha256'
 
   INTEGER(i4), PARAMETER :: sdf_version = 1, sdf_revision = 3
 
@@ -251,7 +267,10 @@ MODULE sdf_common
       'SDF_BLOCKTYPE_STITCHED               ', &
       'SDF_BLOCKTYPE_CONTIGUOUS             ', &
       'SDF_BLOCKTYPE_LAGRANGIAN_MESH        ', &
-      'SDF_BLOCKTYPE_STATION                ' /)
+      'SDF_BLOCKTYPE_STATION                ', &
+      'SDF_BLOCKTYPE_STATION_DERIVED        ', &
+      'SDF_BLOCKTYPE_DATABLOCK              ', &
+      'SDF_BLOCKTYPE_NAMEVALUE              ' /)
 
   CHARACTER(LEN=*), PARAMETER :: c_datatypes_char(0:c_datatype_max) = (/ &
       'SDF_DATATYPE_NULL     ', &
@@ -402,9 +421,9 @@ CONTAINS
 
     found = sdf_find_block(h, b, long_id)
     IF (found) THEN
-      CALL safe_copy_string(b%id, block_id)
+      CALL sdf_safe_copy_string(b%id, block_id)
     ELSE
-      CALL safe_copy_string(long_id, block_id)
+      CALL sdf_safe_copy_string(long_id, block_id)
     ENDIF
 
   END FUNCTION sdf_get_block_id
@@ -474,7 +493,7 @@ CONTAINS
 
 
 
-  SUBROUTINE safe_copy_string(s1, s2)
+  SUBROUTINE sdf_safe_copy_string(s1, s2)
 
     CHARACTER(LEN=*), INTENT(IN) :: s1
     CHARACTER(LEN=*), INTENT(OUT) :: s2
@@ -494,11 +513,11 @@ CONTAINS
       ENDDO
     ENDIF
 
-  END SUBROUTINE safe_copy_string
+  END SUBROUTINE sdf_safe_copy_string
 
 
 
-  SUBROUTINE safe_copy_id(h, id, new_id)
+  SUBROUTINE sdf_safe_copy_id(h, id, new_id)
 
     TYPE(sdf_file_handle) :: h
     CHARACTER(LEN=*), INTENT(IN) :: id
@@ -511,13 +530,13 @@ CONTAINS
       ENDIF
     ENDIF
 
-    CALL safe_copy_string(id, new_id)
+    CALL sdf_safe_copy_string(id, new_id)
 
-  END SUBROUTINE safe_copy_id
+  END SUBROUTINE sdf_safe_copy_id
 
 
 
-  SUBROUTINE safe_copy_unique_id(h, b, id)
+  SUBROUTINE sdf_safe_copy_unique_id(h, b, id)
 
     TYPE(sdf_file_handle) :: h
     TYPE(sdf_block_type), POINTER :: b
@@ -529,7 +548,7 @@ CONTAINS
 
     IF (LEN_TRIM(id) .GT. c_id_length) THEN
       b%truncated_id = .TRUE.
-      CALL safe_copy_string(id, b%long_id)
+      CALL sdf_safe_copy_string(id, b%long_id)
       IF (LEN_TRIM(id) .GT. c_long_id_length) THEN
         IF (h%print_warnings .AND. h%rank .EQ. h%rank_master) THEN
           PRINT*, '*** WARNING ***'
@@ -538,7 +557,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    CALL safe_copy_string(id, b%id)
+    CALL sdf_safe_copy_string(id, b%id)
     found = sdf_find_block(h, tmp, b%id)
     i = 1
     DO WHILE(found)
@@ -560,7 +579,7 @@ CONTAINS
       i = i + 1
     ENDDO
 
-  END SUBROUTINE safe_copy_unique_id
+  END SUBROUTINE sdf_safe_copy_unique_id
 
 
 
@@ -582,6 +601,12 @@ CONTAINS
     NULLIFY(var%station_grid)
     NULLIFY(var%station_index)
     NULLIFY(var%variable_types)
+    NULLIFY(var%i4_array)
+    NULLIFY(var%i8_array)
+    NULLIFY(var%r4_array)
+    NULLIFY(var%r8_array)
+    NULLIFY(var%logical_array)
+    NULLIFY(var%string_array)
     var%done_header = .FALSE.
     var%done_info = .FALSE.
     var%done_data = .FALSE.
@@ -594,6 +619,7 @@ CONTAINS
     var%step_increment = 0
     var%time = 0
     var%time_increment = 0
+    var%padding = 0
 
   END SUBROUTINE initialise_block_type
 
@@ -616,6 +642,12 @@ CONTAINS
     IF (ASSOCIATED(var%station_grid))   DEALLOCATE(var%station_grid)
     IF (ASSOCIATED(var%station_index))  DEALLOCATE(var%station_index)
     IF (ASSOCIATED(var%variable_types)) DEALLOCATE(var%variable_types)
+    IF (ASSOCIATED(var%i4_array))       DEALLOCATE(var%i4_array)
+    IF (ASSOCIATED(var%i8_array))       DEALLOCATE(var%i8_array)
+    IF (ASSOCIATED(var%r4_array))       DEALLOCATE(var%r4_array)
+    IF (ASSOCIATED(var%r8_array))       DEALLOCATE(var%r8_array)
+    IF (ASSOCIATED(var%logical_array))  DEALLOCATE(var%logical_array)
+    IF (ASSOCIATED(var%string_array))   DEALLOCATE(var%string_array)
 
     CALL initialise_block_type(var)
 

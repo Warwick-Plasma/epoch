@@ -1,12 +1,9 @@
 
-.r IDL/CFDPlots.pro
-.r IDL/IsoPlot.pro
-.r IDL/LoadCFD.pro
-.r IDL/LoadSDF.pro
-.r IDL/SDFHelp.pro
-.r IDL/StartPIC.pro
-.r IDL/cfdhelp.pro
-.r IDL/widget.pro
+.r IsoPlot.pro
+.r LoadSDF.pro
+.r SDFHelp.pro
+.r StartPIC.pro
+.r widget.pro
 
 init_StartPIC
 

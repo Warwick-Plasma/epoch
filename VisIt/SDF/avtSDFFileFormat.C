@@ -75,6 +75,7 @@
 #include <dlfcn.h>
 #include "commit_info.h"
 #include "build_date.h"
+#include "stack_allocator.h"
 
 using std::string;
 using namespace SDFDBOptions;
@@ -82,129 +83,11 @@ int avtSDFFileFormat::extension_not_found = 0;
 
 #define IJK2(i,j,k) ((i)+ng + (nx+2*ng) * ((j)+ng + (ny+2*ng) * ((k)+ng)))
 
-// ****************************************************************************
-//  Memory management stack
-// ****************************************************************************
-
-struct stack;
-
-struct stack {
-    sdf_block_t *block;
-    struct stack *next;
-};
-
-static struct stack *stack_head = NULL;
-static struct stack *stack_tail = NULL;
-
-#define MAX_MEMORY 2147483648 // 2GB
-static uint64_t memory_size = 0;
-
-
-static inline void stack_alloc(sdf_block_t *b)
-{
-    struct stack *tail;
-    if (b->done_data || b->dont_own_data) return;
-    b->data = calloc(b->nelements_local, SDF_TYPE_SIZES[b->datatype_out]);
-    memory_size += b->nelements_local * SDF_TYPE_SIZES[b->datatype_out];
-    stack_tail->next = tail = (struct stack*)malloc(sizeof(struct stack));
-    tail->block = b;
-    tail->next = NULL;
-    stack_tail = tail;
-}
-
-
-static inline void stack_free_block(sdf_block_t *b)
-{
-    struct stack *old_stack_entry = stack_head;
-    struct stack *stack_entry = stack_head;
-
-    while (stack_entry) {
-        if (stack_entry->block == b) {
-            free(b->data);
-            b->data = NULL;
-            b->done_data = 0;
-            memory_size -= b->nelements_local * SDF_TYPE_SIZES[b->datatype_out];
-            old_stack_entry->next = stack_entry->next;
-            if (stack_entry == stack_tail) stack_tail = old_stack_entry;
-            free(stack_entry);
-            return;
-        }
-        old_stack_entry = stack_entry;
-        stack_entry = stack_entry->next;
-    }
-}
-
-
-static inline void stack_push_to_bottom(sdf_block_t *b)
-{
-    struct stack *old_stack_entry = stack_head;
-    struct stack *stack_entry = stack_head;
-
-    while (stack_entry) {
-        if (stack_entry->block == b) {
-            old_stack_entry->next = stack_entry->next;
-            stack_tail->next = stack_entry;
-            stack_tail = stack_entry;
-            stack_tail->next = NULL;
-            return;
-        }
-        old_stack_entry = stack_entry;
-        stack_entry = stack_entry->next;
-    }
-}
-
-
-static inline void stack_freeup_memory(void)
-{
-    sdf_block_t *b;
-    struct stack *head;
-
-    if (memory_size < MAX_MEMORY) return;
-
-    while (stack_head->next) {
-        head = stack_head;
-        stack_head = stack_head->next;
-        free(head);
-        b = stack_head->block;
-        stack_head->block = NULL;
-        free(b->data);
-        b->data = NULL;
-        b->done_data = 0;
-        memory_size -= b->nelements_local * SDF_TYPE_SIZES[b->datatype_out];
-        if (memory_size < MAX_MEMORY) break;
-    }
-}
-
-
-static inline void stack_free(void)
-{
-    sdf_block_t *b;
-    struct stack *head;
-
-    while (stack_head->next) {
-        head = stack_head;
-        stack_head = stack_head->next;
-        free(head);
-        b = stack_head->block;
-        stack_head->block = NULL;
-        free(b->data);
-        b->data = NULL;
-        b->done_data = 0;
-    }
-    memory_size = 0;
-}
-
-
-static inline void stack_init(void)
-{
-    if (!stack_head) stack_head =
-        stack_tail = (struct stack*)calloc(1, sizeof(struct stack));
-}
-
 
 sdf_extension_t *avtSDFFileFormat::sdf_extension_load(sdf_file_t *h)
 {
     if (avtSDFFileFormat::extension_not_found) return NULL;
+    debug1 << "avtSDFFileFormat::sdf_extension_load " << h << endl;
 
     sdf_extension_handle = dlopen("sdf_extension.so", RTLD_LAZY);
 
@@ -215,6 +98,7 @@ sdf_extension_t *avtSDFFileFormat::sdf_extension_load(sdf_file_t *h)
         }
         return NULL;
     }
+    debug1 << "avtSDFFileFormat::sdf_extension_load success" << endl;
 
     sdf_extension_create_t *sdf_extension_create =
         (sdf_extension_create_t *)dlsym(sdf_extension_handle,
@@ -888,7 +772,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         zz->SetVoidArray(b->grids[2], b->local_dims[2], 1);
 
         vtkRectilinearGrid *rgrid = vtkRectilinearGrid::New();
-        rgrid->SetDimensions(b->local_dims);
+        rgrid->SetDimensions((int)b->local_dims[0], (int)b->local_dims[1],
+                             (int)b->local_dims[2]);
         rgrid->SetXCoordinates(xx);
         rgrid->SetYCoordinates(yy);
         rgrid->SetZCoordinates(zz);
@@ -911,7 +796,8 @@ avtSDFFileFormat::GetMesh(int domain, const char *meshname)
         vtkStructuredGrid *sgrid = vtkStructuredGrid::New();
 
         points->SetNumberOfPoints(b->nelements_local);
-        sgrid->SetDimensions(b->local_dims);
+        sgrid->SetDimensions((int)b->local_dims[0], (int)b->local_dims[1],
+                             (int)b->local_dims[2]);
         sgrid->SetPoints(points);
 
         if (b->datatype_out == SDF_DATATYPE_REAL4) {
@@ -1144,7 +1030,8 @@ avtSDFFileFormat::GetArray(int domain, const char *varname)
         if (!b->data && !b->dont_allocate) {
             sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
             b->ndims = mesh->ndims;
-            memcpy(b->local_dims, mesh->local_dims, b->ndims*sizeof(int));
+            memcpy(b->local_dims, mesh->local_dims,
+                   b->ndims * sizeof(*b->local_dims));
 
             if (b->blocktype == SDF_BLOCKTYPE_POINT_DERIVED) {
                 b->nelements_local = mesh->dims[0];
@@ -1330,26 +1217,24 @@ avtSDFFileFormat::SetUpDomainConnectivity(void)
 
     rdb->SetNumDomains(ndomains);
 
-    int start[3], local[3];
+    int starts[3], local_dims[3], extents[6];
 
-    for(int n=0; n < ndomains; n++) {
-        int extents[6];
+    for(int rank = 0; rank < ndomains; rank++) {
+        sdf_get_domain_bounds(h, rank, starts, local_dims);
 
-        sdf_get_domain_extents(h, n, start, local);
-
-        debug1 << "avtSDFFileFormat:: Connectivity0 (" << n << ": ";
+        debug1 << "avtSDFFileFormat:: Connectivity0 (" << rank << ": ";
         for (int i = 0; i < 3; i++) {
-            extents[2*i] = start[i];
-            extents[2*i+1] = start[i] + local[i] - 1;
-        debug1 << start[i] << "," << local[i] << " ";
+            extents[2*i] = starts[i];
+            extents[2*i+1] = starts[i] + local_dims[i] - 1;
+        debug1 << starts[i] << "," << local_dims[i] << " ";
         }
         debug1 << ")" << endl;
 
-        debug1 << "avtSDFFileFormat:: Connectivity1 (" << n << ": ";
+        debug1 << "avtSDFFileFormat:: Connectivity1 (" << rank << ": ";
         for (int i = 0; i < 6; i++) debug1 << extents[i] << " ";
         debug1 << ")" << endl;
 
-        rdb->SetIndicesForRectGrid(n, extents);
+        rdb->SetIndicesForRectGrid(rank, extents);
     }
     rdb->CalculateBoundaries();
 
@@ -1515,11 +1400,15 @@ avtSDFFileFormat::GetMaterialType(sdf_block_t *sblock, int domain)
         mix_next[mix_index-2] = 0;
     }
 
+    int local_dims[3];
+    for (int n = 0; n < ndims; n++)
+        local_dims[n] = v->local_dims[n];
+
     char dom_string[128];
     sprintf(dom_string, "Domain %d", domain);
 
     avtMaterial *mat = new avtMaterial(nmat, mat_numbers,
-            mat_names, ndims, v->local_dims, 0, material_list, mixed_size,
+            mat_names, ndims, local_dims, 0, material_list, mixed_size,
             mix_mat, mix_next, mix_zone, mix_vf, dom_string, 0);
 
     delete [] mix_vf;

@@ -180,19 +180,25 @@ CONTAINS
     ENDIF
 
     IF (opcode .EQ. c_const_r_xy) THEN
-      CALL push_on_eval(ABS(x(ix)**2))
+      CALL push_on_eval(ABS(x(ix)))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_xz) THEN
-      CALL push_on_eval(ABS(x(ix)**2))
+      CALL push_on_eval(ABS(x(ix)))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode .EQ. c_const_r_yz) THEN
       CALL push_on_eval(0.0_num)
+      RETURN
+    ENDIF
+
+    IF (opcode .EQ. c_const_r_xyz) THEN
+      CALL push_on_eval(ABS(x(ix)))
+      err = err_simplify
       RETURN
     ENDIF
 
@@ -594,7 +600,15 @@ CONTAINS
 
     IF (opcode .EQ. c_func_sqrt) THEN
       CALL get_values(1, values)
+#ifdef PARSER_CHECKING
+      IF (values(1) .LT. 0) THEN
+        CALL push_on_eval(0.0_num)
+      ELSE
+        CALL push_on_eval(SQRT(values(1)))
+      ENDIF
+#else
       CALL push_on_eval(SQRT(values(1)))
+#endif
       RETURN
     ENDIF
 
@@ -618,7 +632,15 @@ CONTAINS
 
     IF (opcode .EQ. c_func_exp) THEN
       CALL get_values(1, values)
+#ifdef PARSER_CHECKING
+      IF (values(1) .LT. c_smallest_exp) THEN
+        CALL push_on_eval(0.0_num)
+      ELSE
+        CALL push_on_eval(EXP(values(1)))
+      ENDIF
+#else
       CALL push_on_eval(EXP(values(1)))
+#endif
       RETURN
     ENDIF
 

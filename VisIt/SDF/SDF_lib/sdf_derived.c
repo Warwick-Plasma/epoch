@@ -1,7 +1,26 @@
 #include <stdlib.h>
-#include "sdf.h"
-#include "sdf_vector_type.h"
-#include "sdf_list_type.h"
+#include <stdio.h>
+#include <string.h>
+#include <sdf_vector_type.h>
+#include <sdf_list_type.h>
+#include <sdf.h>
+#include "sdf_control.h"
+#include "sdf_input.h"
+
+#define SDF_SET_ENTRY_STRINGLEN(value, strvalue, length) do { \
+        if (!(value)) value = malloc(h->string_length+1); \
+        strncpy((value), (strvalue), (length)); \
+    } while (0)
+
+#define SDF_SET_ENTRY_ID(value, strvalue) do { \
+        SDF_SET_ENTRY_STRINGLEN(value, strvalue, h->id_length); \
+        SDF_DPRNT(#value ": %s\n", (value)); \
+    } while (0)
+
+#define SDF_SET_ENTRY_STRING(value, strvalue) do { \
+        SDF_SET_ENTRY_STRINGLEN(value, strvalue, h->string_length); \
+        SDF_DPRNT(#value ": %s\n", (value)); \
+    } while (0)
 
 #define IJK(i,j,k) ((i) + nx * ((j) + ny * (k)))
 #define IJK1(i,j,k) ((i) + (nx+1) * ((j) + (ny+1) * (k)))
@@ -29,7 +48,7 @@ static char *strcat_alloc(char *base, char *sfx)
 
 
 
-sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *grid = sdf_find_block_by_id(h, b->subblock->mesh_id);
     sdf_block_t *current_block = h->current_block;
@@ -291,7 +310,7 @@ sdf_block_t *sdf_callback_boundary_mesh(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     int grp = b->nm + 1;
     sdf_block_t *grid = sdf_find_block_by_id(h, b->subblock->mesh_id);
@@ -463,7 +482,7 @@ sdf_block_t *sdf_callback_surface_mesh(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
     sdf_block_t *current_block = h->current_block;
@@ -493,12 +512,15 @@ sdf_block_t *sdf_callback_surface(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 {
     sdf_block_t *mesh = sdf_find_block_by_id(h, b->mesh_id);
     sdf_block_t *current_block = h->current_block;
 
-    if (!b->grids) b->grids = calloc(1, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 1;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
 
     if (!mesh->done_data) {
         h->current_block = mesh;
@@ -517,7 +539,7 @@ sdf_block_t *sdf_callback_grid_component(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 {
     int i, n, sz;
     sdf_block_t *old = b->subblock;
@@ -531,9 +553,12 @@ sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
         h->current_block = current_block;
     }
 
-    memcpy(b->local_dims, old->local_dims, 3 * sizeof(int));
+    memcpy(b->local_dims, old->local_dims, 3 * sizeof(*b->local_dims));
 
-    b->grids = calloc(3, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 3;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
     for (i = 0; i < 3; i++) {
         if (i != b->stagger) {
             sz = b->local_dims[i] * SDF_TYPE_SIZES[b->datatype_out];
@@ -586,7 +611,7 @@ sdf_block_t *sdf_callback_face_grid(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     int i, n, sz, np, nx;
     int i0, i1, idx;
@@ -613,11 +638,14 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         h->current_block = current_block;
     }
 #ifdef PARALLEL
-    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(int));
+    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(*b->cpu_split));
 #endif
 
     b->datatype_out = mesh->datatype_out;
-    b->grids = calloc(3, sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 3;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
     if (split->geometry == 1) {
@@ -628,7 +656,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         for (n=0; n < b->ndims; n++) {
             xmesh = mesh->grids[n];
 
-            nx = b->local_dims[n] = (int)b->dims[n];
+            nx = b->local_dims[n] = b->dims[n];
             x = calloc(nx, sz);
 #ifdef PARALLEL
             i0 = mesh->starts[n];
@@ -684,7 +712,7 @@ sdf_block_t *sdf_callback_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 {
     int n, nx, sz, idx, i0 = 0, pmax = -2;
     char *x;
@@ -703,11 +731,14 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
         h->current_block = current_block;
     }
 #ifdef PARALLEL
-    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(int));
+    memcpy(b->cpu_split, mesh->cpu_split, SDF_MAXDIMS * sizeof(*b->cpu_split));
 #endif
 
     b->datatype_out = mesh->datatype_out;
-    b->grids = malloc(3 * sizeof(float*));
+    if (!b->grids) {
+        b->ngrids = 3;
+        b->grids = calloc(b->ngrids, sizeof(float*));
+    }
     sz = SDF_TYPE_SIZES[b->datatype_out];
 
     b->nelements_local = 1;
@@ -758,7 +789,7 @@ sdf_block_t *sdf_callback_current_cpu_mesh(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
 {
     int n, *var = b->data;
 
@@ -773,7 +804,7 @@ sdf_block_t *sdf_callback_cpu_data(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
 {
     int i, n, idx, sz, data_offset0, varoffset;
     float *r4, dt4, time4;
@@ -792,11 +823,14 @@ sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
         }
 
         if (b->datatype_out == SDF_DATATYPE_REAL4)
-            b->data = (float*)mesh->data + b->opt;
+            b->data = (float*)mesh->data + b->ng;
         else
-            b->data = (double*)mesh->data + b->opt;
+            b->data = (double*)mesh->data + b->ng;
 
-        if (!b->grids) b->grids = malloc(sizeof(void**));
+        if (!b->grids) {
+            b->ngrids = 1;
+            b->grids = calloc(b->ngrids, sizeof(float*));
+        }
         b->grids[0] = b->data;
 
         b->done_data = 1;
@@ -866,10 +900,10 @@ sdf_block_t *sdf_callback_station_time(sdf_file_t *h, sdf_block_t *b)
 
 
 
-sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
+static sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
 {
-    int i, j, k, sz, len, vidx, varoffset;
-    int data_offset0, data_offset;
+    int i, j, k, sz, len, vidx;
+    int data_offset;
     list_t *station_blocks;
     char *varid, *ptr = b->data;
     sdf_block_t *block;
@@ -893,34 +927,24 @@ sdf_block_t *sdf_callback_station(sdf_file_t *h, sdf_block_t *b)
 
     // Find station blocks containing this station id.
     block = list_start(station_blocks);
-    varoffset = 0;
-    data_offset0 = 0;
-    if (block->step_increment <= 0) {
-        data_offset0 += SDF_TYPE_SIZES[block->variable_types[varoffset]];
-        varoffset++;
-    }
-    if (block->time_increment <= 0.0) {
-        data_offset0 += SDF_TYPE_SIZES[block->variable_types[varoffset]];
-        varoffset++;
-    }
 
     for (i = 0; i < station_blocks->count; i++) {
         for (j = 0; j < block->nstations; j++) {
-            if (strncmp(block->station_ids[j], b->station_id, SDF_ID_LENGTH))
+            if (strncmp(block->station_ids[j], b->station_id, h->id_length))
                 continue;
             if (block->station_move[j] < 0) continue;
 
             // Found station block. Now find the variable.
-            vidx = varoffset;
+            vidx = 0;
             for (k = 0; k < j; k++) vidx += block->station_nvars[k];
 
             for (k = 0; k < block->station_nvars[j]; k++, vidx++) {
                 if (strncmp(block->variable_ids[vidx], varid,
-                    SDF_ID_LENGTH) == 0) break;
+                        h->id_length) == 0) break;
             }
 
             // Now read the data.
-            data_offset = data_offset0;
+            data_offset = 0;
             for (k = 0; k < vidx; k++)
                 data_offset += SDF_TYPE_SIZES[block->variable_types[k]];
 
@@ -1045,7 +1069,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
     }
 
     // Build list of nelements for each station block in the file
-    nelements_array = calloc(station_blocks->count, sizeof(int));
+    nelements_array = calloc(station_blocks->count, sizeof(*nelements_array));
     b = list_start(station_blocks);
     for (i = 0; i < station_blocks->count; i++) {
         nelements_array[i] = b->nelements;
@@ -1071,15 +1095,16 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
     SDF_SET_ENTRY_ID(mesh->units, "s");
     SDF_SET_ENTRY_STRING(mesh->name, meshname);
     mesh->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
-    mesh->ndims = 1;
+    mesh->ndim_units = mesh->ndim_labels = mesh->ndims = 1;
     mesh->dim_units = calloc(mesh->ndims, sizeof(char*));
     mesh->dim_labels = calloc(mesh->ndims, sizeof(char*));
     SDF_SET_ENTRY_ID(mesh->dim_units[0], "s");
     SDF_SET_ENTRY_ID(mesh->dim_labels[0], "Time");
     mesh->populate_data = sdf_callback_station_time;
     mesh->nelements_local = mesh->nelements = station->nelements;
-    mesh->dims[0] = mesh->nelements;
+    mesh->local_dims[0] = mesh->dims[0] = mesh->nelements;
     mesh->datatype = mesh->datatype_out = mesh_datatype;
+    mesh->option = station->ndims;
 
     /* Add per-station-block time meshes */
     nsofar = 0;
@@ -1094,18 +1119,19 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
         mesh->name = strcat_alloc(meshname, b->name);
         SDF_SET_ENTRY_ID(mesh->units, "s");
         mesh->blocktype = SDF_BLOCKTYPE_PLAIN_DERIVED;
-        mesh->ndims = 1;
+        mesh->ndim_units = mesh->ndim_labels = mesh->ndims = 1;
         mesh->dim_units = calloc(mesh->ndims, sizeof(char*));
         mesh->dim_labels = calloc(mesh->ndims, sizeof(char*));
         SDF_SET_ENTRY_ID(mesh->dim_units[0], "s");
         SDF_SET_ENTRY_ID(mesh->dim_labels[0], "Time");
         mesh->populate_data = sdf_callback_station_time;
         mesh->nelements_local = mesh->nelements = nelements_array[i];
-        mesh->dims[0] = mesh->nelements;
+        mesh->local_dims[0] = mesh->dims[0] = mesh->nelements;
         mesh->datatype = mesh->datatype_out = mesh_datatype;
         mesh->subblock = global_mesh;
-        mesh->opt = nsofar;
+        mesh->ng = nsofar;
         mesh->dont_own_data = 1;
+        mesh->option = b->ndims;
 
         nsofar += b->nelements;
         b = list_next(station_blocks);
@@ -1121,7 +1147,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
         for (is = 0; is < station_blocks->count; is++) {
             for (n = 0; n < sb->nstations; n++) {
                 if (strncmp(sb->station_ids[n], station->station_ids[i],
-                        SDF_ID_LENGTH) == 0) {
+                        h->id_length) == 0) {
                     if (sb->station_move[n] >= 0)
                         nelements += sb->nelements;
                     break;
@@ -1146,7 +1172,8 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
             b->populate_data = sdf_callback_station;
             b->datatype = b->datatype_out = station->variable_types[var];
             b->nelements_local = b->nelements = nelements;
-            b->dims[0] = b->nelements;
+            b->local_dims[0] = b->dims[0] = b->nelements;
+            b->option = station->ndims;
             var++;
 
             // Find the first station block which contains this station id
@@ -1155,7 +1182,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
             for (is = 0; is < station_blocks->count; is++) {
                 for (n = 0; n < sb->nstations; n++) {
                     if (strncmp(sb->station_ids[n], b->station_id,
-                            SDF_ID_LENGTH) != 0) continue;
+                            h->id_length) != 0) continue;
                     if (sb->station_move[n] < 0) continue;
                     b->mesh_id = strcat_alloc(meshid, sb->id);
                     break;
@@ -1164,7 +1191,7 @@ static void add_station_variables(sdf_file_t *h, sdf_block_t **append,
                 nsofar += sb->nelements;
                 sb = list_next(station_blocks);
             }
-            b->opt = nsofar;
+            b->ng = nsofar;
         }
     }
 
@@ -1205,8 +1232,8 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
     SDF_SET_ENTRY_STRING(new->name, "Global Stations");
 
     nelements = 0;
-    extra_id = calloc(nstat_max, sizeof(int));
-    found_id = malloc(sizeof(char));
+    extra_id = calloc(nstat_max, sizeof(*extra_id));
+    found_id = malloc(sizeof(*found_id));
     list_init(&station_blocks);
 
     // Build list of globally unique station_ids and for each
@@ -1223,10 +1250,10 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         if (b->nstations > nstat_max) {
             nstat_max = b->nstations * 11 / 10 + 2;
             free(extra_id);
-            extra_id = calloc(nstat_max, sizeof(int));
+            extra_id = calloc(nstat_max, sizeof(*extra_id));
         }
 
-        b->station_index = calloc(b->nstations, sizeof(int));
+        b->station_index = calloc(b->nstations, sizeof(*b->station_index));
         memset(found_id, 0, new->nstations);
         nextra = 0;
         for (n = 0; n < b->nstations; n++) {
@@ -1234,7 +1261,7 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
             for (m = 0; m < new->nstations; m++) {
                 if (found_id[m]) continue;
                 if (strncmp(b->station_ids[n], new->station_ids[m],
-                        SDF_ID_LENGTH)) continue;
+                        h->id_length)) continue;
                 b->station_index[n] = m;
                 found = 1;
                 found_id[m] = 1;
@@ -1253,11 +1280,13 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
 
         if (new->nstations == 0) {
             new->station_ids = calloc(nstat_total, sizeof(char*));
+            new->nstation_ids = nstat_total;
         } else {
             ctmp = malloc(new->nstations);
             memcpy(ctmp, new->station_ids, new->nstations * sizeof(char*));
             free(new->station_ids);
             new->station_ids = calloc(nstat_total, sizeof(char*));
+            new->nstation_ids = nstat_total;
             memcpy(new->station_ids, ctmp, new->nstations * sizeof(char*));
             free(ctmp);
         }
@@ -1284,23 +1313,31 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         new->time = b->time;
         new->time_increment = b->time_increment;
         new->use_mult = b->use_mult;
+        new->ndims = b->ndims;
 
         varoffset = 0;
         if (new->step_increment <= 0) varoffset++;
         if (new->time_increment <= 0.0) varoffset++;
         new->nvariables = varoffset;
         new->nelements_local = new->nelements = nelements;
+        new->local_dims[0] = new->nelements_local;
+        new->nstation_names = new->nstations;
 
         // Allocate the stations
-        new->station_names = calloc(new->nstations, sizeof(char*));
-        new->station_nvars = calloc(new->nstations, sizeof(int*));
-        new->station_move = calloc(new->nstations, sizeof(int*));
-        new->station_index = calloc(new->nstations, sizeof(int*));
-        new->station_x = calloc(new->nstations, sizeof(double*));
+        new->station_names =
+            calloc(new->nstations, sizeof(*new->station_names));
+        new->station_nvars =
+            calloc(new->nstations, sizeof(*new->station_nvars));
+        new->station_move =
+            calloc(new->nstations, sizeof(*new->station_move));
+        new->station_index =
+            calloc(new->nstations, sizeof(*new->station_index));
+        new->station_x =
+            calloc(new->nstations, sizeof(*new->station_x));
         if (new->ndims > 1)
-            new->station_y = calloc(new->nstations, sizeof(double*));
+            new->station_y = calloc(new->nstations, sizeof(*new->station_y));
         if (new->ndims > 2)
-            new->station_z = calloc(new->nstations, sizeof(double*));
+            new->station_z = calloc(new->nstations, sizeof(*new->station_z));
 
         // Assign the stations
         nstat_total = new->nstations;
@@ -1329,12 +1366,19 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
         }
 
         // Allocate the variables
-        new->variable_ids = calloc(new->nvariables, sizeof(char*));
-        new->dim_units = calloc(new->nvariables, sizeof(char*));
-        new->material_names = calloc(new->nvariables, sizeof(char*));
-        new->variable_types = calloc(new->nvariables, sizeof(int*));
+        new->nvariable_ids = new->ndim_units =
+                new->nmaterial_names = new->nvariables;
+
+        new->variable_ids =
+            calloc(new->nvariables, sizeof(*new->variable_ids));
+        new->dim_units =
+            calloc(new->nvariables, sizeof(*new->dim_units));
+        new->material_names =
+            calloc(new->nvariables, sizeof(*new->material_names));
+        new->variable_types =
+            calloc(new->nvariables, sizeof(*new->variable_types));
         if (new->use_mult)
-            new->dim_mults = calloc(new->nvariables, sizeof(double*));
+            new->dim_mults = calloc(new->nvariables, sizeof(*new->dim_mults));
 
         // Assign starting variables (time, step)
         b = list_start(station_blocks);
@@ -1392,6 +1436,7 @@ static void add_global_station(sdf_file_t *h, sdf_block_t **append,
 
 
 
+/** @ingroup derived */
 int sdf_add_derived_blocks(sdf_file_t *h)
 {
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
@@ -1461,6 +1506,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
                 append->ndims = 1;
                 append->n_ids = 1;
                 append->variable_ids = calloc(append->n_ids, sizeof(char*));
+                append->nvariable_ids = append->n_ids;
                 SDF_SET_ENTRY_ID(append->variable_ids[0], b->id);
                 append->must_read = calloc(append->n_ids, sizeof(char*));
                 append->must_read[0] = 1;
@@ -1508,6 +1554,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             len1 = 2 * nd * sizeof(double*);
             append->extents = malloc(len1);
             memcpy(append->extents, mesh->extents, len1);
+            append->ndim_labels = append->ndim_units = nd;
             append->dim_labels = calloc(nd, sizeof(char*));
             append->dim_units = calloc(nd, sizeof(char*));
             for (n = 0; n < nd; n++) {
@@ -1549,13 +1596,14 @@ int sdf_add_derived_blocks(sdf_file_t *h)
             append->nelements_local = 1;
             for (i=0; i<b->ndims; i++) {
                 append->dims[i] = b->dims[i] + 1;
-                append->local_dims[i] = (int)append->dims[i];
+                append->local_dims[i] = append->dims[i];
                 append->nelements_local *= append->local_dims[i];
             }
             for (i=b->ndims; i<3; i++)
                 append->local_dims[i] = append->dims[i] = 1;
             append->n_ids = 1;
             append->variable_ids = calloc(append->n_ids, sizeof(char*));
+            append->nvariable_ids = append->n_ids;
             SDF_SET_ENTRY_ID(append->variable_ids[0], b->id);
             append->must_read = calloc(append->n_ids, sizeof(char*));
             append->must_read[0] = 1;
@@ -1582,6 +1630,7 @@ int sdf_add_derived_blocks(sdf_file_t *h)
         len1 = 2 * nd * sizeof(double*);
         append->extents = malloc(len1);
         memcpy(append->extents, first_mesh->extents, len1);
+        append->ndim_labels = append->ndim_units = nd;
         append->dim_labels = calloc(nd, sizeof(char*));
         append->dim_units = calloc(nd, sizeof(char*));
         for (n = 0; n < nd; n++) {
@@ -1629,13 +1678,14 @@ int sdf_add_derived_blocks(sdf_file_t *h)
 
 
 
+/** @ingroup derived */
 int sdf_add_derived_blocks_final(sdf_file_t *h)
 {
     sdf_block_t *b, *next, *append, *append_head, *append_tail;
     sdf_block_t *mesh, *old_mesh, *vfm, *obst;
     sdf_block_t *current_block = h->current_block;
-    int i, n, stagger, dont_add_grid, nappend = 0;
-    size_t nd, len1, len2;
+    int i, n, stagger, dont_add_grid, nd, nappend = 0;
+    size_t len1, len2;
     char *str, *name1, *name2;
     char *boundary_names[] =
         { "", "_x_min", "_x_max", "_y_min", "_y_max", "_z_min", "_z_max" };
@@ -1751,7 +1801,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                     // dimensions
                     dont_add_grid = 0;
                     for (n = 0; n < b->ndims; n++) {
-                        nd = (size_t)old_mesh->dims[n];
+                        nd = old_mesh->dims[n];
                         if (n == i) nd += b->ng + 1;
                         if (b->dims[n]+1 != nd) dont_add_grid++;
                     }
@@ -1774,10 +1824,12 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                     if (!mesh) {
                         APPEND_BLOCK(append);
                         nappend++;
-                        append_tail = append;
+                        append_tail = append->prev;
 
                         memcpy(append, old_mesh, sizeof(sdf_block_t));
                         append->next = NULL;
+                        append->prev = append_tail;
+                        append_tail = append;
 
                         str = (char*)malloc(len1 + len2 + 2);
                         memcpy(str, b->mesh_id, len1+len2+2);
@@ -1804,6 +1856,7 @@ int sdf_add_derived_blocks_final(sdf_file_t *h)
                         len1 = 2 * nd * sizeof(double*);
                         append->extents = malloc(len1);
                         memcpy(append->extents, old_mesh->extents, len1);
+                        append->ndim_labels = append->ndim_units = nd;
                         append->dim_labels = calloc(nd, sizeof(char*));
                         append->dim_units = calloc(nd, sizeof(char*));
                         for (n = 0; n < nd; n++) {

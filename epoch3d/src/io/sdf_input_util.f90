@@ -117,7 +117,7 @@ CONTAINS
     b => h%current_block
 
     DO iloop = 1, b%ndims
-      CALL safe_copy_string(b%variable_ids(iloop), variable_ids(iloop))
+      CALL sdf_safe_copy_string(b%variable_ids(iloop), variable_ids(iloop))
     ENDDO
 
   END SUBROUTINE sdf_read_stitched_info

@@ -86,3 +86,19 @@ PRO init_SDFHelp
       BAD_VERSION:3L, $
       BAD_BLOCK_COUNT:4L }
 END
+
+; --------------------------------------------------------------------------
+
+; Takes the string provided by instring and replaces all occurences of
+; the character fromchar with the character tochar
+FUNCTION swapchr, instring, fromchar, tochar
+  COMPILE_OPT idl2, hidden
+
+  stringbytes = BYTE(instring)
+  frombytes = BYTE(fromchar)
+  occurences = WHERE(stringbytes EQ frombytes[0], nfound)
+  IF nfound EQ 0 THEN RETURN, instring
+  tobytes = BYTE(tochar)
+  stringbytes[occurences] = tobytes[0]
+  RETURN, STRING(stringbytes)
+END

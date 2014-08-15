@@ -1,0 +1,113 @@
+sdffilter(1)
+============
+
+NAME
+----
+sdffilter - Filter the contents of an SDF file
+
+SYNOPSIS
+--------
+*sdffilter* [OPTION] <sdf_filename>
+
+
+DESCRIPTION
+-----------
+This command filters the contents of an SDF file.
+
+
+OPTIONS
+-------
+*-h, --help*::
+	Generate a brief usage message.
+
+*-n, --no-metadata*::
+        Don't show metadata blocks (shown by default)
+
+*-j, --just-id*::
+        Only show ID and number for metadata blocks
+
+*-l, --less-verbose*::
+        Print metadata less verbosely
+
+*-c, --contents*::
+        Show block's data content
+
+*-s, --single*::
+	Convert block data to single precision
+
+*-v, --variable=<id>*::
+        Find the block with ID matching '<id>'.
+
+*-x, --exclude=<id>*::
+        Exclude the block with ID matching '<id>'.
+
+*-m, --mmap*::
+        Use mmap'ed file I/O
+
+*-i, --no-summary*::
+        Ignore the metadata summary
+
+*-a, --array-section=<section>*::
+        Read in the specified array section. The array section '<section>'
+        mimics Python's slicing notation.
+
+*-d, --derived*::
+        Add derived blocks
+
+*-I, --c-indexing*::
+        Array indexing starts from 1 by default. If this flag is used then
+        the indexing starts from 0.
+
+*-1, --1dslice=<slice>*::
+        Output 1D slice as a multi-column gnuplot file.  The argument is 1,
+        2 or 3 integers separated by commas.
++
+Some stuff about 1D slicing.
+
+*-H, --no-ascii-header*::
+        When writing multi-column ascii data, a header is included for use
+        by gnuplot or other plotting utilities. This flag disables the header.
+
+*-C, --count=<count>*::
+        When pretty-printing array contents, write '<count>' elements per line.
+
+*-F, --format-float=<format>*::
+        Use specified format for printing floating-point array contents.
+
+*-N, --format-int=<format>*::
+        Use specified format for printing integer array contents.
+
+*-S, --format-space=<format>*::
+        Use specified spacing between array elements.
+
+*-K, --format-number*::
+        Show the block number before each row of array elements.
+
+*-R, --format-rowindex*::
+        Show the array indices before each row of array elements.
+
+*-J, --format-index*::
+        Show the array indices before each array element.
+
+
+EXAMPLES
+--------
+
+* The following command prints a 1D slice of the variable "rhom_total" from
+the "eden0001.sdf" file:
++
+------------
+$ sdffilter -d -v rhom_total -1 2,10,-1 eden0001.sdf
+------------
++
+Now explain about slicing.
+
+
+SEE ALSO
+--------
+*sdf2ascii*(1)
+
+
+AUTHORS
+-------
+Keith Bennett <k.bennett@warwick.ac.uk>

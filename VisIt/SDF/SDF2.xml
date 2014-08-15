@@ -15,6 +15,7 @@
       SDF_lib/sdf_input_point.c
       SDF_lib/sdf_input_station.c
       SDF_lib/sdf_util.c
+      SDF_lib/stack_allocator.c
     </Files>
     <CXXFLAGS>-ISDF_lib -Iextension</CXXFLAGS>
     <Attribute name="" purpose="" persistent="true" keyframe="true" exportAPI="" exportInclude="">

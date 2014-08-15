@@ -44,21 +44,21 @@ CONTAINS
 
       IF (PRESENT(dim_labels)) THEN
         DO i = 1,ndims
-          CALL safe_copy_id(h, dim_labels(i), b%dim_labels(i))
+          CALL sdf_safe_copy_id(h, dim_labels(i), b%dim_labels(i))
         ENDDO
       ELSE
-        IF (ndims .GE. 1) CALL safe_copy_id(h, 'X', b%dim_labels(1))
-        IF (ndims .GE. 2) CALL safe_copy_id(h, 'Y', b%dim_labels(2))
-        IF (ndims .GE. 3) CALL safe_copy_id(h, 'Z', b%dim_labels(3))
+        IF (ndims .GE. 1) CALL sdf_safe_copy_id(h, 'X', b%dim_labels(1))
+        IF (ndims .GE. 2) CALL sdf_safe_copy_id(h, 'Y', b%dim_labels(2))
+        IF (ndims .GE. 3) CALL sdf_safe_copy_id(h, 'Z', b%dim_labels(3))
       ENDIF
 
       IF (PRESENT(dim_units)) THEN
         DO i = 1,ndims
-          CALL safe_copy_id(h, dim_units(i), b%dim_units(i))
+          CALL sdf_safe_copy_id(h, dim_units(i), b%dim_units(i))
         ENDDO
       ELSE
         DO i = 1,ndims
-          CALL safe_copy_id(h, 'm', b%dim_units(i))
+          CALL sdf_safe_copy_id(h, 'm', b%dim_units(i))
         ENDDO
       ENDIF
 
@@ -73,9 +73,9 @@ CONTAINS
       ENDIF
 
       IF (PRESENT(species_id)) THEN
-        CALL safe_copy_id(h, species_id, b%species_id)
+        CALL sdf_safe_copy_id(h, species_id, b%species_id)
       ELSE
-        CALL safe_copy_id(h, '__unknown__', b%species_id)
+        CALL sdf_safe_copy_id(h, '__unknown__', b%species_id)
       ENDIF
 
       CALL sdf_write_block_header(h, id, name)
@@ -171,9 +171,9 @@ CONTAINS
     ! Write header
 
     IF (PRESENT(id)) THEN
-      CALL safe_copy_id(h, units, b%units)
-      CALL safe_copy_id(h, mesh_id, b%mesh_id)
-      CALL safe_copy_id(h, species_id, b%species_id)
+      CALL sdf_safe_copy_id(h, units, b%units)
+      CALL sdf_safe_copy_id(h, mesh_id, b%mesh_id)
+      CALL sdf_safe_copy_id(h, species_id, b%species_id)
 
       IF (PRESENT(mult)) THEN
         b%mult = REAL(mult,r8)
