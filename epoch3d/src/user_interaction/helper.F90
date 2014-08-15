@@ -513,7 +513,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: density_min, density_max
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: weight_fn
+    INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: npart_in_cell
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, iy, iz, i, j, k, isubx, isuby, isubz
@@ -532,7 +532,11 @@ CONTAINS
     DO iy = -2, ny+3
     DO ix = -2, nx+3
       IF (density(ix,iy,iz) .GT. density_max) density(ix,iy,iz) = density_max
-      IF (density(ix,iy,iz) .GE. density_min) density_map(ix,iy,iz) = .TRUE.
+      IF (density(ix,iy,iz) .GE. density_min) THEN
+        density_map(ix,iy,iz) = .TRUE.
+      ELSE
+        density(ix,iy,iz) = 0.0_num
+      ENDIF
     ENDDO ! ix
     ENDDO ! iy
     ENDDO ! iz
@@ -540,21 +544,21 @@ CONTAINS
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
 
-    ALLOCATE(weight_fn(-2:nx+3,-2:ny+3,-2:nz+3))
-    CALL MPI_BARRIER(comm, errcode)
-    weight_fn = 0.0_num
+    ALLOCATE(npart_in_cell(-2:nx+3,-2:ny+3,-2:nz+3))
+    npart_in_cell = 0
 
     partlist => species%attached_list
     ! If using per particle weighing then use the weight function to match the
     ! uniform pseudoparticle density to the real particle density
     current => partlist%head
     ipart = 0
-    ! First loop converts number density into weight function
     DO WHILE(ipart .LT. partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, 'Bad Particle'
 
 #include "particle_to_grid.inc"
 
+      ! Calculate density at the particle position
+      wdata = 0.0_num
       DO isubz = sf_min, sf_max
         i = cell_x
         j = cell_y
@@ -594,39 +598,25 @@ CONTAINS
 #endif
             ENDIF
 #endif
-            weight_fn(i,j,k) = weight_fn(i,j,k) &
-                + gx(isubx) * gy(isuby) * gz(isubz)
+            wdata = wdata + gx(isubx) * gy(isuby) * gz(isubz) * density(i,j,k)
           ENDDO ! isubx
         ENDDO ! isuby
       ENDDO ! isubz
+
+      current%weight = wdata
+      npart_in_cell(cell_x,cell_y,cell_z) = &
+          npart_in_cell(cell_x,cell_y,cell_z) + 1
 
       current => current%next
       ipart = ipart + 1
     ENDDO
     DEALLOCATE(density_map)
-
-    CALL calc_boundary(weight_fn)
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(weight_fn, c_stagger_centre, ix)
-    ENDDO
-
-    wdata = dx * dy * dz
-    DO iz = 1, nz
-    DO iy = 1, ny
-    DO ix = 1, nx
-      IF (weight_fn(ix, iy, iz) .GT. 0.0_num) THEN
-        weight_fn(ix, iy, iz) = &
-            wdata * density(ix, iy, iz) / weight_fn(ix, iy, iz)
-      ELSE
-        weight_fn(ix, iy, iz) = 0.0_num
-      ENDIF
-    ENDDO ! ix
-    ENDDO ! iy
-    ENDDO ! iz
     DEALLOCATE(density)
 
+    wdata = dx * dy * dz
+
     partlist => species%attached_list
-    ! Second loop actually assigns weights to particles
+    ! Second loop renormalises particle weights
     current => partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
@@ -634,13 +624,14 @@ CONTAINS
       cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
       cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz + 1.5_num)
 
-      current%weight = weight_fn(cell_x,cell_y,cell_z)
+      current%weight = current%weight * wdata &
+          / npart_in_cell(cell_x,cell_y,cell_z)
 
       current => current%next
       ipart = ipart + 1
     ENDDO
 
-    DEALLOCATE(weight_fn)
+    DEALLOCATE(npart_in_cell)
 
   END SUBROUTINE setup_particle_density
 #endif
