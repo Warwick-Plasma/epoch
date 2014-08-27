@@ -1,9 +1,0 @@
-#! /bin/sh
-
-formats="$1"
-[ "$formats"x = x ] && formats="CFD SDF"
-
-for fmt in $formats; do
-  (cd $fmt
-  ./build)
-done

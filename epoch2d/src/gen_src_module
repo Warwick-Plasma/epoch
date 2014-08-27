@@ -63,7 +63,19 @@ rm -f $tmp $tmp2 $tmp3
 nlines=0
 
 if [ $embed_source -eq 1 ]; then
-  tar czf $tmp $*
+  pwd=$(pwd)
+  basedir=$(basename $pwd)
+  file_list=""
+  for f in $*; do
+    newfile=${f#../}
+    if [ "$newfile"x = "$f"x ]; then
+      file_list="$file_list $basedir/$f"
+    else
+      file_list="$file_list $newfile"
+    fi
+  done
+
+  tar -czf $tmp -C.. $file_list
   if [ $? -eq 0 ]; then
     # First try GNU-style wrapping options for base64
     base64 -w$column_width $tmp > $tmp2 2>/dev/null
