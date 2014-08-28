@@ -8,6 +8,7 @@ git init -q $dir/$repo
 git push -q --tags $dir/$repo HEAD:tmp
 cd $dir/$repo
 git checkout -q tmp
+git submodule update --init --recursive
 cstring=$(git describe --abbrev=0 --match v[0-9]* HEAD | cut -c2-)
 fullstring=$(git describe --match v[0-9]* HEAD | cut -c2-)
 
@@ -21,7 +22,7 @@ if [ "$cstring"x != "$fullstring"x ]; then
   fi
 fi
 
-(cd VisIt/SDF
+(cd SDF/VisIt
 /bin/sh gen_commit_string)
 /bin/sh epoch1d/src/gen_commit_string
 cp COMMIT epoch1d/
