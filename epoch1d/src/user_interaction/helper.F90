@@ -526,7 +526,11 @@ CONTAINS
     current => partlist%head
     ipart = 0
     DO WHILE(ipart .LT. partlist%count)
+#ifdef PARTICLE_SHAPE_TOPHAT
+      cell_x = FLOOR((current%part_pos - x_grid_min_local) / dx) + 1
+#else
       cell_x = FLOOR((current%part_pos - x_grid_min_local) / dx + 1.5_num)
+#endif
 
       current%weight = current%weight * wdata / npart_in_cell(cell_x)
 
