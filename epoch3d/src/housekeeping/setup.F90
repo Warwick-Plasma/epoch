@@ -601,7 +601,7 @@ CONTAINS
     IF (ic_from_restart) RETURN
 
     min_dt = 1000000.0_num
-    k_max = 2.0_num * pi / MIN(dx, dy)
+    k_max = 2.0_num * pi / MIN(dx, dy, dz)
 
     ! Identify the plasma frequency (Bohm-Gross dispersion relation)
     ! Note that this doesn't get strongly relativistic plasmas right
