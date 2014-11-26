@@ -937,7 +937,7 @@ CONTAINS
 
     sum_out(1) = particle_energy
     sum_out(2) = field_energy
-    CALL MPI_ALLREDUCE(sum_out, sum_in, 2, mpireal, MPI_SUM, comm, errcode)
+    CALL MPI_REDUCE(sum_out, sum_in, 2, mpireal, MPI_SUM, 0, comm, errcode)
     total_particle_energy = sum_in(1)
     total_field_energy = sum_in(2)
 

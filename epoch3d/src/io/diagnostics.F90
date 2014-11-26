@@ -466,6 +466,8 @@ CONTAINS
       ENDIF
 
       IF (IAND(iomask(c_dump_total_energy_sum), code) .NE. 0) THEN
+        CALL calc_total_energy_sum
+
         CALL sdf_write_srl(sdf_handle, 'total_particle_energy', &
             'Total Particle Energy in Simulation (J)', total_particle_energy)
         CALL sdf_write_srl(sdf_handle, 'total_field_energy', &
