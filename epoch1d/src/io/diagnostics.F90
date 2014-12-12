@@ -138,7 +138,7 @@ CONTAINS
 
       IF (.NOT.any_written) THEN
         ALLOCATE(array(-2:nx+3))
-        CALL create_subtypes(code)
+        CALL create_subtypes
         any_written = .TRUE.
         IF (timer_collect) THEN
           IF (timer_walltime .LT. 0.0_num) THEN
