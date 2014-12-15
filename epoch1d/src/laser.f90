@@ -31,6 +31,44 @@ CONTAINS
 
 
 
+  SUBROUTINE deallocate_laser(laser)
+
+    TYPE(laser_block), POINTER, INTENT(INOUT) :: laser
+
+    IF (laser%use_profile_function) &
+        CALL deallocate_stack(laser%profile_function)
+    IF (laser%use_phase_function) &
+        CALL deallocate_stack(laser%phase_function)
+    IF (laser%use_time_function) &
+        CALL deallocate_stack(laser%time_function)
+    DEALLOCATE(laser)
+
+  END SUBROUTINE deallocate_laser
+
+
+
+  SUBROUTINE deallocate_lasers
+
+    TYPE(laser_block), POINTER :: current, next
+
+    current => laser_x_min
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      CALL deallocate_laser(current)
+      current => next
+    ENDDO
+
+    current => laser_x_max
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      CALL deallocate_laser(current)
+      current => next
+    ENDDO
+
+  END SUBROUTINE deallocate_lasers
+
+
+
   ! Subroutine to attach a created laser object to the correct boundary
   SUBROUTINE attach_laser(laser)
 

@@ -13,6 +13,7 @@ MODULE collisions
 
   PRIVATE
   PUBLIC :: particle_collisions, setup_collisions, collisional_ionisation
+  PUBLIC :: deallocate_collisions
 #ifdef COLLISIONS_TEST
   PUBLIC :: test_collisions
 #endif
@@ -1454,6 +1455,16 @@ CONTAINS
     ALLOCATE(coll_sort_array(coll_sort_array_size))
 
   END SUBROUTINE setup_collisions
+
+
+
+  SUBROUTINE deallocate_collisions
+
+    INTEGER :: stat
+
+    DEALLOCATE(coll_pairs, coll_sort_array, STAT=stat)
+
+  END SUBROUTINE deallocate_collisions
 
 
 

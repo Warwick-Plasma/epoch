@@ -24,6 +24,7 @@ PROGRAM pic
   USE mpi_routines
   USE particles
   USE setup
+  USE finish
   USE welcome
   USE window
   USE split_particle
@@ -213,7 +214,6 @@ PROGRAM pic
     WRITE(*,*) 'Final runtime of core = ' // TRIM(timestring)
   ENDIF
 
-  CALL close_files
-  CALL MPI_FINALIZE(errcode)
+  CALL finalise
 
 END PROGRAM pic

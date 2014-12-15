@@ -33,7 +33,7 @@ MODULE deck
 
   PRIVATE
 
-  PUBLIC :: read_deck, write_input_decks
+  PUBLIC :: read_deck, write_input_decks, deallocate_input_deck_buffer
 
   SAVE
   CHARACTER(LEN=string_length) :: current_block_name
@@ -979,5 +979,26 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE write_input_decks
+
+
+
+  SUBROUTINE deallocate_input_deck_buffer
+
+    TYPE(file_buffer), POINTER :: fbuf, next
+    INTEGER :: i, stat
+
+    IF (.NOT. ASSOCIATED(file_buffer_head)) RETURN
+
+    fbuf => file_buffer_head%next
+    DO WHILE (ASSOCIATED(fbuf))
+      next => fbuf%next
+
+      DEALLOCATE(fbuf%buffer, STAT=stat)
+      DEALLOCATE(fbuf, STAT=stat)
+
+      fbuf => next
+    ENDDO
+
+  END SUBROUTINE deallocate_input_deck_buffer
 
 END MODULE deck

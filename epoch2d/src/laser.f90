@@ -35,14 +35,58 @@ CONTAINS
 
 
 
-  SUBROUTINE delete_laser(laser)
+  SUBROUTINE deallocate_laser(laser)
 
-    TYPE(laser_block), INTENT(INOUT) :: laser
+    TYPE(laser_block), POINTER, INTENT(INOUT) :: laser
 
     IF (ASSOCIATED(laser%profile)) DEALLOCATE(laser%profile)
     IF (ASSOCIATED(laser%phase)) DEALLOCATE(laser%phase)
+    IF (ASSOCIATED(laser%phase)) DEALLOCATE(laser%phase)
+    IF (laser%use_profile_function) &
+        CALL deallocate_stack(laser%profile_function)
+    IF (laser%use_phase_function) &
+        CALL deallocate_stack(laser%phase_function)
+    IF (laser%use_time_function) &
+        CALL deallocate_stack(laser%time_function)
+    DEALLOCATE(laser)
 
-  END SUBROUTINE delete_laser
+  END SUBROUTINE deallocate_laser
+
+
+
+  SUBROUTINE deallocate_lasers
+
+    TYPE(laser_block), POINTER :: current, next
+
+    current => laser_x_min
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      CALL deallocate_laser(current)
+      current => next
+    ENDDO
+
+    current => laser_x_max
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      CALL deallocate_laser(current)
+      current => next
+    ENDDO
+
+    current => laser_y_min
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      CALL deallocate_laser(current)
+      current => next
+    ENDDO
+
+    current => laser_y_max
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      CALL deallocate_laser(current)
+      current => next
+    ENDDO
+
+  END SUBROUTINE deallocate_lasers
 
 
 

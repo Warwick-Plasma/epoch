@@ -20,6 +20,7 @@ MODULE diagnostics
 
   PUBLIC :: output_routines, create_full_timestring
   PUBLIC :: cleanup_stop_files, check_for_stop_condition
+  PUBLIC :: deallocate_file_list
 
   CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
   CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
@@ -584,6 +585,31 @@ CONTAINS
     CLOSE(lu)
 
   END SUBROUTINE setup_file_list
+
+
+
+  SUBROUTINE deallocate_file_list
+
+    INTEGER :: i, n, nlist, stat
+    TYPE(string_entry), POINTER :: current, next
+
+    IF (ASSOCIATED(file_list)) THEN
+      DO i = 1, n_io_blocks+2
+        nlist = file_list(i)%count
+        IF (nlist .GT. 0) THEN
+          current => file_list(i)%head
+          DO n = 1, nlist
+            next => current%next
+            DEALLOCATE(current, STAT=stat)
+            current => next
+          ENDDO
+        ENDIF
+      ENDDO
+      DEALLOCATE(file_list, STAT=stat)
+    ENDIF
+    DEALLOCATE(iodumpmask, STAT=stat)
+
+  END SUBROUTINE deallocate_file_list
 
 
 
