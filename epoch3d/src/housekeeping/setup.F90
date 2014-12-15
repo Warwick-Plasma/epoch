@@ -22,7 +22,9 @@ MODULE setup
   PUBLIC :: read_cpu_split
 
   TYPE(particle), POINTER, SAVE :: iterator_list
+#ifndef NO_IO
   CHARACTER(LEN=11+data_dir_max_length), SAVE :: stat_file
+#endif
 
 CONTAINS
 
@@ -327,7 +329,7 @@ CONTAINS
 
   SUBROUTINE setup_species
 
-    INTEGER :: ispecies
+    INTEGER :: ispecies, n
 
     ALLOCATE(species_list(n_species))
     ALLOCATE(io_list_data(n_species))
@@ -361,19 +363,13 @@ CONTAINS
 
     DO ispecies = 1, n_species
       CALL initialise_stack(species_list(ispecies)%density_function)
-      CALL initialise_stack(species_list(ispecies)%temperature_function(1))
-      CALL initialise_stack(species_list(ispecies)%temperature_function(2))
-      CALL initialise_stack(species_list(ispecies)%temperature_function(3))
-      CALL initialise_stack(species_list(ispecies)%drift_function(1))
-      CALL initialise_stack(species_list(ispecies)%drift_function(2))
-      CALL initialise_stack(species_list(ispecies)%drift_function(3))
-      CALL set_stack_zero(species_list(ispecies)%density_function)
-      CALL set_stack_zero(species_list(ispecies)%temperature_function(1))
-      CALL set_stack_zero(species_list(ispecies)%temperature_function(2))
-      CALL set_stack_zero(species_list(ispecies)%temperature_function(3))
-      CALL set_stack_zero(species_list(ispecies)%drift_function(1))
-      CALL set_stack_zero(species_list(ispecies)%drift_function(2))
-      CALL set_stack_zero(species_list(ispecies)%drift_function(3))
+      CALL set_stack_zero  (species_list(ispecies)%density_function)
+      DO n = 1, 3
+        CALL initialise_stack(species_list(ispecies)%temperature_function(n))
+        CALL set_stack_zero  (species_list(ispecies)%temperature_function(n))
+        CALL initialise_stack(species_list(ispecies)%drift_function(n))
+        CALL set_stack_zero  (species_list(ispecies)%drift_function(n))
+      ENDDO
       species_list(ispecies)%electron = .FALSE.
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1
