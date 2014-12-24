@@ -1,6 +1,5 @@
 MODULE setup
 
-  USE encoded_source
   USE fields
   USE mpi_subtype_control
   USE version_data

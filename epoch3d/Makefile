@@ -84,6 +84,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
     endif
   endif
   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
+  INFO_FLAGS = -Wno-conversion -fno-range-check
 endif
 
 # g95
@@ -127,11 +128,11 @@ endif
 # Don't compile encoded source if MODE=debug or ENC=no
 # Do compile encoded source if MODE=debug and ENC=yes
 ifeq ($(strip $(ENC)),no)
-  ENCODED_SOURCE = dummy_encoded_source.o
+  ENCODED_SOURCE = epoch_source_info_dummy.o
 else
   ifneq ($(strip $(ENC)),yes)
     ifeq ($(strip $(MODE)),debug)
-      ENCODED_SOURCE = dummy_encoded_source.o
+      ENCODED_SOURCE = epoch_source_info_dummy.o
     endif
   endif
 endif
@@ -210,7 +211,7 @@ DEFINES += $(D)TRACER_PARTICLES
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.
-#ENCODED_SOURCE = dummy_encoded_source.o
+#ENCODED_SOURCE = epoch_source_info_dummy.o
 
 
 
@@ -218,8 +219,7 @@ DEFINES += $(D)TRACER_PARTICLES
 # Shouldn't need to touch below here
 # --------------------------------------------------
 
-#BUILDOPT += opt_dont_build_sha1
-#BUILDOPT += opt_dont_build_embedded_source
+ENCODED_SOURCE ?= epoch_source_info.o
 
 all: epoch
 
@@ -270,10 +270,12 @@ INCLUDES = $(INCDIR)/particle_head.inc $(INCDIR)/particle_to_grid.inc \
   $(INCDIR)/triangle/gx.inc $(INCDIR)/triangle/gxfac.inc \
   $(INCDIR)/triangle/hx_dcell.inc
 
-ENCODED_SOURCE ?= encoded_source.o
 OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)
 
 FULLTARGET = $(BINDIR)/$(TARGET)
+
+SOURCE_ALL := Makefile $(SRCFILES) $(INCLUDES) pack.py pack.sh COMMIT \
+  epoch_source_info_dummy.f90 gen_commit_string
 
 #vpath %.f90 $(SRCDIR)
 #vpath %.o $(OBJDIR)
@@ -281,6 +283,18 @@ VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
   $(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:\
   $(SDF)/src:$(OBJDIR)
 
+PACK_SDF = $(SRCDIR)/pack.sh
+
+GIT_WORK_TREE = ".."
+PACK_PREFIX = epoch
+PACK_SOURCE_CODE = 1
+PACK_GIT_DIFF = 1
+PACK_GIT_DIFF_FROM_ORIGIN = 1
+GENERATE_CHECKSUM = 1
+F77_OUTPUT = 0
+PACK_OPTS = $(GIT_WORK_TREE) $(PACK_PREFIX) $(PACK_SOURCE_CODE) \
+    $(PACK_GIT_DIFF) $(PACK_GIT_DIFF_FROM_ORIGIN) $(GENERATE_CHECKSUM) \
+    $(F77_OUTPUT)
 
 # Rule to build the fortran files
 
@@ -295,14 +309,10 @@ $(FULLTARGET): $(OBJFILES)
 	@mkdir -p $(BINDIR)
 	$(FC) $(LDFLAGS) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
-opt_dont_build_sha1: ;
-opt_dont_build_embedded_source: ;
-$(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(INCLUDES) \
-  $(SRCDIR)/gen_src_module $(SRCDIR)/gen_commit_string Makefile COMMIT
-	./$(SRCDIR)/gen_src_module $@ $^
-
-encoded_source.o: $(OBJDIR)/encoded_source.f90
-	$(FC) -c $(FFLAGS) -o $(OBJDIR)/$@ $<
+$(OBJDIR)/epoch_source_info.f90: $(SOURCE_ALL)
+	sh $(PACK_SDF) $(PACK_OPTS) $@ "$(FC_INFO)" "$(FFLAGS)" $^
+epoch_source_info.o: $(OBJDIR)/epoch_source_info.f90 $(SOURCE_ALL)
+	$(FC) -c $(FFLAGS) $(INFO_FLAGS) -o $(OBJDIR)/$@ $<
 
 $(SDFMOD):
 	$(MAKE) -C $(SDF)
@@ -397,7 +407,7 @@ random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
 setup.o: setup.F90 fields.o helper.o laser.o mpi_subtype_control.o \
   shared_data.o shunt.o split_particle.o timer.o version_data.o welcome.o \
-  window.o $(ENCODED_SOURCE)
+  window.o
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 $(SDFMOD)
 shunt.o: shunt.F90 tokenizer_blocks.o

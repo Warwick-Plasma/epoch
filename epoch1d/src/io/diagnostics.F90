@@ -4,7 +4,7 @@ MODULE diagnostics
   USE sdf
   USE deck
   USE dist_fn
-  USE encoded_source
+  USE epoch_source_info
   USE iterators
   USE probes
   USE version_data
@@ -173,8 +173,8 @@ CONTAINS
       CALL sdf_write_header(sdf_handle, 'Epoch1d', 1, step, time, &
           restart_flag, jobid)
       CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_minor_rev, &
-          c_commit_id, sha1sum, c_compile_machine, c_compile_flags, defines, &
-          c_compile_date, run_date)
+          c_commit_id, epoch_bytes_checksum, c_compile_machine, &
+          c_compile_flags, defines, c_compile_date, run_date)
       CALL sdf_write_cpu_split(sdf_handle, 'cpu_rank', 'CPUs/Original rank', &
           cell_x_max)
 
@@ -428,9 +428,8 @@ CONTAINS
 #endif
 
       IF (dump_input_decks) CALL write_input_decks(sdf_handle)
-      IF (dump_source_code .AND. SIZE(source_code) .GT. 0) &
-          CALL sdf_write_source_code(sdf_handle, 'code', &
-              'base64_packed_source_code', source_code, last_line, 0)
+      IF (dump_source_code .AND. epoch_bytes_len .GT. 0) &
+          CALL write_source_info(sdf_handle)
 
       IF (IAND(iomask(c_dump_absorption), code) .NE. 0) THEN
         CALL MPI_ALLREDUCE(laser_absorb_local, laser_absorbed, 1, mpireal, &
@@ -2184,5 +2183,74 @@ CONTAINS
     halt = all_completed
 
   END SUBROUTINE check_walltime_auto
+
+
+
+  SUBROUTINE epoch_write_source_info(h)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=c_id_length) :: stitched_ids(3)
+    CHARACTER(LEN=c_id_length) :: time_string
+    CHARACTER(LEN=512) :: string_array(6)
+    INTEGER :: n
+
+    n = 0
+
+    IF (SIZE(epoch_bytes) .GT. 1 .OR. &
+          (TRIM(epoch_bytes_checksum_type) .NE. '' .AND. &
+          ICHAR(epoch_bytes_checksum_type(1:1)) .NE. 0)) THEN
+      n = n + 1
+      CALL sdf_safe_copy_id(h, 'epoch_source/source', stitched_ids(n))
+      CALL sdf_write_datablock(h, stitched_ids(n), &
+          'EPOCH source code', epoch_bytes, &
+          epoch_bytes_padding, epoch_bytes_mimetype, &
+          epoch_bytes_checksum_type, epoch_bytes_checksum)
+    ENDIF
+
+    IF (SIZE(epoch_bytes) .EQ. 1 .AND. SIZE(epoch_diff_bytes) .GT. 1) THEN
+      n = n + 1
+      CALL sdf_safe_copy_id(h, 'epoch_source/diff', stitched_ids(n))
+      CALL sdf_write_datablock(h, stitched_ids(n), &
+          'EPOCH repository differences', epoch_diff_bytes, &
+          epoch_diff_bytes_padding, epoch_diff_bytes_mimetype, &
+          epoch_diff_bytes_checksum_type, epoch_diff_bytes_checksum)
+    ENDIF
+
+    n = n + 1
+    CALL sdf_safe_copy_id(h, 'epoch_source/info', stitched_ids(n))
+    WRITE(time_string, '(I20)') epoch_bytes_compile_date
+
+    string_array(1) = TRIM(epoch_bytes_git_version)
+    string_array(2) = TRIM(epoch_bytes_compile_date_string)
+    string_array(3) = TRIM(ADJUSTL(time_string))
+    string_array(4) = TRIM(epoch_bytes_compile_machine_info)
+    string_array(5) = TRIM(epoch_bytes_compiler_info)
+    string_array(6) = TRIM(epoch_bytes_compiler_flags)
+
+    CALL sdf_write_namevalue(h, stitched_ids(n), &
+        'EPOCH repository information', &
+        (/'git_version         ', &
+          'compile_date_string ', &
+          'compile_date_seconds', &
+          'compile_machine_info', &
+          'compiler_info       ', &
+          'compiler_flags      '/), string_array)
+
+    CALL sdf_write_stitched(h, 'epoch_source', 'EPOCH source', &
+        stitched_ids(1), c_stagger_cell_centre, stitched_ids, n)
+
+  END SUBROUTINE epoch_write_source_info
+
+
+
+  SUBROUTINE write_source_info(h)
+
+    TYPE(sdf_file_handle) :: h
+
+    CALL sdf_write_source_info(h)
+    CALL epoch_write_source_info(h)
+    !CALL write_input_decks(h)
+
+  END SUBROUTINE write_source_info
 
 END MODULE diagnostics
