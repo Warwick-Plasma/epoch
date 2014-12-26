@@ -11,7 +11,7 @@
 # If any of these fields is unavailable then the tag 'unknown' will be
 # used. If none of the tags are known then the COMMIT file is left untouched
 
-COMMIT_FILE=COMMIT
+COMMIT_FILE=src/COMMIT
 
 LF='
 '
@@ -29,26 +29,13 @@ if [ $? -eq 0 ]; then
     gitdescribe=unknown-unknown-g$always
   fi
 
-  svnrev=unknown
-
   git update-index -q --refresh
   test -z "$(git diff-index --name-only HEAD --)" || state='dirty'
 
-  commit_string=$gitdescribe-$svnrev-$state
+  commit_string=$gitdescribe-$state
 else
 # not in a git repo
   gitdescribe=unknown-unknown-unknown
-
-  svnrev=$(svn info 2>/dev/null | grep '^Last Changed Rev:')
-
-  if [ $? -eq 0 ]; then
-    svnrev=$(echo $svnrev | sed 's/Last Changed Rev: *//')
-
-    n=$(svn status 2>/dev/null | grep -v '?' | wc -l)
-    [ $n -ne 0 ] && state='dirty'
-
-    commit_string=$gitdescribe-$svnrev-$state
-  fi
 fi
 
 [ -z $commit_string ] && exit
@@ -57,6 +44,6 @@ grep "$commit_string" $COMMIT_FILE > /dev/null 2>&1
 if [ $? -eq 0 ]; then
   exit
 else
-  echo "COMMIT = $commit_string" > $COMMIT_FILE
+  echo "COMMIT=$commit_string" > $COMMIT_FILE
   exit 1
 fi

@@ -223,10 +223,6 @@ ENCODED_SOURCE ?= epoch_source_info.o
 
 all: epoch
 
-COMMIT: FORCE
-	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
--include COMMIT
-
 SDF := ../SDF/FORTRAN
 SDFMOD = $(SDF)/include/sdf.mod
 SRCDIR = src
@@ -274,8 +270,8 @@ OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)
 
 FULLTARGET = $(BINDIR)/$(TARGET)
 
-SOURCE_ALL := Makefile $(SRCFILES) $(INCLUDES) pack.py pack.sh COMMIT \
-  epoch_source_info_dummy.f90 gen_commit_string
+SOURCE_ALL := Makefile $(SRCFILES) $(INCLUDES) pack.py pack.sh \
+  $(SRCDIR)/COMMIT epoch_source_info_dummy.f90 gen_commit_string
 
 #vpath %.f90 $(SRCDIR)
 #vpath %.o $(OBJDIR)
@@ -295,6 +291,10 @@ F77_OUTPUT = 0
 PACK_OPTS = $(GIT_WORK_TREE) $(PACK_PREFIX) $(PACK_SOURCE_CODE) \
     $(PACK_GIT_DIFF) $(PACK_GIT_DIFF_FROM_ORIGIN) $(GENERATE_CHECKSUM) \
     $(F77_OUTPUT)
+
+$(SRCDIR)/COMMIT: FORCE
+	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
+-include $(SRCDIR)/COMMIT
 
 # Rule to build the fortran files
 
@@ -420,6 +420,6 @@ strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
 timer.o: timer.f90 shared_data.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
-version_data.o: version_data.F90 COMMIT
+version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 strings.o version_data.o
 window.o: window.F90 boundary.o evaluate.o partlist.o
