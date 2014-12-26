@@ -28,6 +28,7 @@ MODULE deck
   ! Custom blocks
   USE custom_deck
   USE version_data
+  USE md5
 
   IMPLICIT NONE
 
@@ -44,6 +45,7 @@ MODULE deck
   TYPE :: file_buffer
     CHARACTER(LEN=filename_length) :: filename
     CHARACTER(LEN=buffer_size), DIMENSION(:), POINTER :: buffer
+    CHARACTER(LEN=32) :: md5sum
     INTEGER :: pos, idx, length
     TYPE(file_buffer), POINTER :: next
   END TYPE file_buffer
@@ -511,7 +513,7 @@ CONTAINS
           ! contents to a restart dump
           IF (f .EQ. 0) THEN
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = u1
-          ELSE IF (got_eor) THEN
+          ELSE IF (got_eor .AND. .NOT.got_eof) THEN
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(10) ! new line
           ELSE
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(0)  ! null
@@ -651,6 +653,15 @@ CONTAINS
         terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
         IF (terminate) EXIT
       ENDDO
+
+      IF (.NOT. already_parsed) THEN
+        CALL md5_init()
+        DO i = 1, fbuf%idx - 1
+           fbuf%md5sum = md5_append(fbuf%buffer(i)(1:buffer_size))
+        ENDDO
+        fbuf%md5sum = md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
+        IF (MOD(fbuf%pos-1, 64) .EQ. 0) fbuf%md5sum = md5_append("")
+      ENDIF
     ELSE
       DO
         errcode_deck = c_err_none
@@ -967,14 +978,10 @@ CONTAINS
       DO i = 1,nbuffers
         fbuf => fbuf%next
 
-        CALL sdf_write_source_code(handle, TRIM(fbuf%filename), &
-            'Embedded_input_deck', fbuf%buffer(1:fbuf%idx-1), &
-            fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), 0)
-      ENDDO
-    ELSE
-      DO i = 1,nbuffers
-        CALL sdf_write_source_code(handle, '', 'Embedded_input_deck', dummy1, &
-            dummy2, 0)
+        CALL sdf_write_datablock(handle, 'input_deck/' // TRIM(fbuf%filename), &
+            'EPOCH input deck: ' // TRIM(fbuf%filename), &
+            fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), &
+            'text/plain', 'md5', fbuf%md5sum)
       ENDDO
     ENDIF
 
