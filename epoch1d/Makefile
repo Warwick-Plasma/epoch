@@ -326,6 +326,9 @@ tidy:
 	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 	$(MAKE) -C $(SDF) cleanall
 
+tarball:
+	@cd ..; sh make_tarball.sh
+
 visit:
 	@cd ../SDF/VisIt; ./build
 

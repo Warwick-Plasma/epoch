@@ -2,7 +2,7 @@
 
 repo=epoch
 cur=`pwd`
-dir=$(mktemp -d -tepoch)
+dir=$(mktemp -d -t$repo)
 
 git init -q $dir/$repo
 git push -q --tags $dir/$repo HEAD:tmp
