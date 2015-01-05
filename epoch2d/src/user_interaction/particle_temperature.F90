@@ -86,25 +86,17 @@ CONTAINS
     ELSE
       cached = .TRUE.
 
-      rand1 = random()
-      rand2 = random()
+      DO
+        rand1 = random()
+        rand2 = random()
 
-      rand1 = 2.0_num * rand1 - 1.0_num
-      rand2 = 2.0_num * rand2 - 1.0_num
+        rand1 = 2.0_num * rand1 - 1.0_num
+        rand2 = 2.0_num * rand2 - 1.0_num
 
-      w = rand1**2 + rand2**2
+        w = rand1**2 + rand2**2
 
-      IF (w <= c_tiny .OR. w >= 1.0_num) THEN
-        DO
-          rand1 = rand2
-          rand2 = random()
-          rand2 = 2.0_num * rand2 - 1.0_num
-
-          w = rand1**2 + rand2**2
-
-          IF (w > c_tiny .AND. w < 1.0_num) EXIT
-        ENDDO
-      ENDIF
+        IF (w > c_tiny .AND. w < 1.0_num) EXIT
+      ENDDO
 
       w = SQRT((-2.0_num * LOG(w)) / w)
 
