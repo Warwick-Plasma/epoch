@@ -45,7 +45,7 @@ CONTAINS
 
   SUBROUTINE probe_block_start
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     ALLOCATE(working_probe)
     CALL init_probe(working_probe)
@@ -64,10 +64,10 @@ CONTAINS
     REAL(num), DIMENSION(c_ndims) :: r1, r2
     INTEGER :: io, iu, i, ierr, scount, sarr(ndim)
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     IF (.NOT.got_name) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -79,8 +79,8 @@ CONTAINS
 
     discard = .FALSE.
     IF (got_point) THEN
-      IF (rank .EQ. 0) THEN
-        IF (got_x .NE. 0) THEN
+      IF (rank == 0) THEN
+        IF (got_x /= 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** WARNING ***'
@@ -92,7 +92,7 @@ CONTAINS
       ENDIF
       IF (.NOT. got_normal) discard = .TRUE.
     ELSE
-      IF (got_x .NE. 2**ndim-1) THEN
+      IF (got_x /= 2**ndim-1) THEN
         discard = .TRUE.
       ELSE
         ! Old style configuration supplied. Need to calculate the normal.
@@ -104,29 +104,29 @@ CONTAINS
         working_probe%normal = (/r1(2)*r2(3) - r1(3)*r2(2), &
             r1(3)*r2(1) - r1(1)*r2(3), r1(1)*r2(2) - r1(2)*r2(1)/)
 
-        IF (SUM(ABS(working_probe%normal)) .LE. c_tiny) discard = .TRUE.
+        IF (SUM(ABS(working_probe%normal)) <= c_tiny) discard = .TRUE.
       ENDIF
     ENDIF
 
     IF (discard) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Position of probe "' // TRIM(working_probe%name) &
               // '" ', 'not fully specified. ', 'It will be discarded.'
-          IF (got_point .OR. got_normal .OR. got_x .EQ. 0) THEN
+          IF (got_point .OR. got_normal .OR. got_x == 0) THEN
             WRITE(io,*) 'Both "point" and "normal" are required.'
           ELSE
             scount = 0
             sarr = 0
             DO i = 0,ndim-1
-              IF (IAND(got_x,2**i) .EQ. 0) THEN
+              IF (IAND(got_x,2**i) == 0) THEN
                 scount = scount + 1
                 sarr(scount) = i + 1
               ENDIF
             ENDDO
-            IF (scount .GT. 1) THEN
+            IF (scount > 1) THEN
               DO i = 1, scount-2
                 WRITE(io,'(A)',ADVANCE='NO') ' "' // xs(sarr(i)) // '",'
               ENDDO
@@ -159,8 +159,8 @@ CONTAINS
     INTEGER :: errcode, ispecies, io, iu
 
     errcode = c_err_none
-    IF (deck_state .EQ. c_ds_first) RETURN
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (deck_state == c_ds_first) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     ! get particle probe diagnostics (rolling total of all particles which
     ! pass through a given region of real space (defined by a point on a plane
@@ -236,11 +236,11 @@ CONTAINS
     IF (str_cmp(element, 'include_species') &
         .OR. str_cmp(element, 'probe_species')) THEN
       ispecies = as_integer_print(value, element, errcode)
-      IF (errcode .EQ. c_err_none) THEN
-        IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
+      IF (errcode == c_err_none) THEN
+        IF (ispecies > 0 .AND. ispecies <= n_species) THEN
           working_probe%use_species(ispecies) = .TRUE.
         ELSE
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
@@ -261,7 +261,7 @@ CONTAINS
 
     IF (str_cmp(element, 'ek_max')) THEN
       working_probe%ek_max = as_real_print(value, element, errcode)
-      IF (working_probe%ek_max .LT. 0) working_probe%ek_max = HUGE(1.0_num)
+      IF (working_probe%ek_max < 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
     ENDIF
 

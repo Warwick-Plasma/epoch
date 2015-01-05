@@ -31,7 +31,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: iproc
 
-    IF (sendcounts(iproc) .GT. 0) THEN
+    IF (sendcounts(iproc) > 0) THEN
       CALL partlist_send_nocount(pointers_send(iproc), iproc)
       CALL destroy_partlist(pointers_send(iproc))
     ENDIF
@@ -44,7 +44,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: iproc
 
-    IF (recvcounts(iproc) .GT. 0) THEN
+    IF (recvcounts(iproc) > 0) THEN
       CALL partlist_recv_nocount(pointers_recv(iproc), iproc, &
           recvcounts(iproc))
     ENDIF
@@ -58,7 +58,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (sendtypes(iproc) .NE. 0) THEN
+    IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in1d, 1, sendtypes(iproc), iproc, tag, comm, ierr)
     ENDIF
 
@@ -71,7 +71,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (recvtypes(iproc) .NE. 0) THEN
+    IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out1d, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
     ENDIF
@@ -85,7 +85,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (sendtypes(iproc) .NE. 0) THEN
+    IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in2d, 1, sendtypes(iproc), iproc, tag, comm, ierr)
     ENDIF
 
@@ -98,7 +98,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (recvtypes(iproc) .NE. 0) THEN
+    IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out2d, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
     ENDIF
@@ -112,7 +112,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (sendtypes(iproc) .NE. 0) THEN
+    IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in3d, 1, sendtypes(iproc), iproc, tag, comm, ierr)
     ENDIF
 
@@ -125,7 +125,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (recvtypes(iproc) .NE. 0) THEN
+    IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out3d, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
     ENDIF
@@ -139,7 +139,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (sendtypes(iproc) .NE. 0) THEN
+    IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in1dr4, 1, sendtypes(iproc), iproc, tag, comm, ierr)
     ENDIF
 
@@ -152,7 +152,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (recvtypes(iproc) .NE. 0) THEN
+    IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out1dr4, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
     ENDIF
@@ -166,7 +166,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (sendtypes(iproc) .NE. 0) THEN
+    IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in2dr4, 1, sendtypes(iproc), iproc, tag, comm, ierr)
     ENDIF
 
@@ -179,7 +179,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (recvtypes(iproc) .NE. 0) THEN
+    IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out2dr4, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
     ENDIF
@@ -193,7 +193,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (sendtypes(iproc) .NE. 0) THEN
+    IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in3dr4, 1, sendtypes(iproc), iproc, tag, comm, ierr)
     ENDIF
 
@@ -206,7 +206,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: iproc
     INTEGER :: ierr
 
-    IF (recvtypes(iproc) .NE. 0) THEN
+    IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out3dr4, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
     ENDIF
@@ -359,12 +359,12 @@ CONTAINS
       evnlist(i) = 2 * i
       oddlist(i) = 2 * i + 1
     ENDDO
-    IF (nevn .NE. nodd) evnlist(nevn-1) = nproc - 1
+    IF (nevn /= nodd) evnlist(nevn-1) = nproc - 1
 
-    DO WHILE(nodd .GT. 0)
+    DO WHILE(nodd > 0)
       is_evn = .TRUE.
       DO i = 0, nodd - 1
-        IF (oddlist(i) .EQ. rank) THEN
+        IF (oddlist(i) == rank) THEN
           is_evn = .FALSE.
           EXIT
         ENDIF
@@ -387,7 +387,7 @@ CONTAINS
           evnlist(i) = evnlist(2*i)
           oddlist(i) = evnlist(2*i+1)
         ENDDO
-        IF (nevn .NE. nodd) evnlist(nevn-1) = evnlist(2*nevn-2)
+        IF (nevn /= nodd) evnlist(nevn-1) = evnlist(2*nevn-2)
       ELSE
         DO i = 0, nevn - 1
           iproc = evnlist(i)
@@ -405,7 +405,7 @@ CONTAINS
           evnlist(i) = oddlist(2*i)
           oddlist(i) = oddlist(2*i+1)
         ENDDO
-        IF (nevn .NE. nodd) evnlist(nevn-1) = oddlist(2*nevn-2)
+        IF (nevn /= nodd) evnlist(nevn-1) = oddlist(2*nevn-2)
       ENDIF
     ENDDO
 

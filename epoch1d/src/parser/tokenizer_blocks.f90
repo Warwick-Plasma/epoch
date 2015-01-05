@@ -25,7 +25,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER :: register_function
 
-    IF (n_new_func .EQ. c_max_new_func) THEN
+    IF (n_new_func == c_max_new_func) THEN
       register_function = -1
       RETURN
     ENDIF
@@ -43,7 +43,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER :: register_constant
 
-    IF (n_new_constant .EQ. c_max_new_const) THEN
+    IF (n_new_constant == c_max_new_const) THEN
       register_constant = -1
       RETURN
     ENDIF
@@ -214,9 +214,9 @@ CONTAINS
     IF (str_cmp(name, 'dir_y')) as_constant = c_const_dir_y
     IF (str_cmp(name, 'dir_z')) as_constant = c_const_dir_z
 
-    IF (warn .AND. as_constant .NE. c_prc_not_this_type) THEN
+    IF (warn .AND. as_constant /= c_prc_not_this_type) THEN
       warn = .FALSE.
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -320,24 +320,24 @@ CONTAINS
     as_operator = c_prc_not_this_type
 
     IF (str_cmp(name, '+')) THEN
-      IF (last_block_type .EQ. c_pt_variable &
-          .OR. last_block_type .EQ. c_pt_constant &
-          .OR. last_block_type .EQ. c_pt_default_constant &
-          .OR. last_block_type .EQ. c_pt_deck_constant &
-          .OR. last_block_type .EQ. c_pt_species &
-          .OR. last_block_type .EQ. c_pt_subset) THEN
+      IF (last_block_type == c_pt_variable &
+          .OR. last_block_type == c_pt_constant &
+          .OR. last_block_type == c_pt_default_constant &
+          .OR. last_block_type == c_pt_deck_constant &
+          .OR. last_block_type == c_pt_species &
+          .OR. last_block_type == c_pt_subset) THEN
         as_operator = c_opcode_plus
       ELSE
         as_operator = c_opcode_unary_plus
       ENDIF
     ENDIF
     IF (str_cmp(name, '-'))  THEN
-      IF (last_block_type .EQ. c_pt_variable &
-          .OR. last_block_type .EQ. c_pt_constant &
-          .OR. last_block_type .EQ. c_pt_default_constant &
-          .OR. last_block_type .EQ. c_pt_deck_constant &
-          .OR. last_block_type .EQ. c_pt_species &
-          .OR. last_block_type .EQ. c_pt_subset) THEN
+      IF (last_block_type == c_pt_variable &
+          .OR. last_block_type == c_pt_constant &
+          .OR. last_block_type == c_pt_default_constant &
+          .OR. last_block_type == c_pt_deck_constant &
+          .OR. last_block_type == c_pt_species &
+          .OR. last_block_type == c_pt_subset) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus

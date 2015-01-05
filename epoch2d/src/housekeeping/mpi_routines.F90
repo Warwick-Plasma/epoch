@@ -39,8 +39,8 @@ CONTAINS
 
     nproc_orig = nproc
 
-    IF (nx_global .LT. ng .OR. ny_global .LT. ng) THEN
-      IF (rank .EQ. 0) THEN
+    IF (nx_global < ng .OR. ny_global < ng) THEN
+      IF (rank == 0) THEN
         CALL integer_as_string(ng, str)
         PRINT*,'*** ERROR ***'
         PRINT*,'Simulation domain is too small.'
@@ -51,17 +51,17 @@ CONTAINS
     ENDIF
 
     reset = .FALSE.
-    IF (MAX(nprocx,1) * MAX(nprocy,1) .GT. nproc) THEN
+    IF (MAX(nprocx,1) * MAX(nprocy,1) > nproc) THEN
       reset = .TRUE.
-    ELSE IF (nprocx * nprocy .GT. 0) THEN
+    ELSE IF (nprocx * nprocy > 0) THEN
       ! Sanity check
       nxsplit = nx_global / nprocx
       nysplit = ny_global / nprocy
-      IF (nxsplit .LT. ng .OR. nysplit .LT. ng) reset = .TRUE.
+      IF (nxsplit < ng .OR. nysplit < ng) reset = .TRUE.
     ENDIF
 
     IF (reset) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         PRINT *, 'Unable to use requested processor subdivision. Using ' &
             // 'default division.'
       ENDIF
@@ -69,8 +69,8 @@ CONTAINS
       nprocy = 0
     ENDIF
 
-    IF (nprocx * nprocy .EQ. 0) THEN
-      DO WHILE (nproc .GT. 1)
+    IF (nprocx * nprocy == 0) THEN
+      DO WHILE (nproc > 1)
         ! Find the processor split which minimizes surface area of
         ! the resulting domain
 
@@ -78,22 +78,22 @@ CONTAINS
 
         DO ix = 1, nproc
           iy = nproc / ix
-          IF (ix * iy .NE. nproc) CYCLE
+          IF (ix * iy /= nproc) CYCLE
 
           nxsplit = nx_global / ix
           nysplit = ny_global / iy
           ! Actual domain must be bigger than the number of ghostcells
-          IF (nxsplit .LT. ng .OR. nysplit .LT. ng) CYCLE
+          IF (nxsplit < ng .OR. nysplit < ng) CYCLE
 
           area = nxsplit + nysplit
-          IF (area .LT. minarea) THEN
+          IF (area < minarea) THEN
             nprocx = ix
             nprocy = iy
             minarea = area
           ENDIF
         ENDDO
 
-        IF (nprocx .GT. 0) EXIT
+        IF (nprocx > 0) EXIT
 
         ! If we get here then no suitable split could be found. Decrease the
         ! number of processors and try again.
@@ -102,9 +102,9 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (nproc_orig .NE. nproc) THEN
+    IF (nproc_orig /= nproc) THEN
       IF (.NOT.allow_cpu_reduce) THEN
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           CALL integer_as_string(nproc, str)
           PRINT*,'*** ERROR ***'
           PRINT*,'Cannot split the domain using the requested number of CPUs.'
@@ -113,7 +113,7 @@ CONTAINS
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP
       ENDIF
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         CALL integer_as_string(nproc, str)
         PRINT*,'*** WARNING ***'
         PRINT*,'Cannot split the domain using the requested number of CPUs.'
@@ -126,7 +126,7 @@ CONTAINS
       CALL MPI_COMM_GROUP(old_comm, oldgroup, errcode)
       CALL MPI_GROUP_RANGE_EXCL(oldgroup, 1, ranges, newgroup, errcode)
       CALL MPI_COMM_CREATE(old_comm, newgroup, comm, errcode)
-      IF (comm .EQ. MPI_COMM_NULL) THEN
+      IF (comm == MPI_COMM_NULL) THEN
         CALL MPI_FINALIZE(errcode)
         STOP
       ENDIF
@@ -145,13 +145,13 @@ CONTAINS
     ! Once there are per-species boundary conditions then this will be true
     ! if any of the species are periodic
 
-    IF (bc_field(c_bd_x_min) .EQ. c_bc_periodic &
-        .OR. bc_x_min_after_move .EQ. c_bc_periodic &
-        .OR. bc_particle(c_bd_x_min) .EQ. c_bc_periodic) &
+    IF (bc_field(c_bd_x_min) == c_bc_periodic &
+        .OR. bc_x_min_after_move == c_bc_periodic &
+        .OR. bc_particle(c_bd_x_min) == c_bc_periodic) &
             periods(c_ndims) = .TRUE.
 
-    IF (bc_field(c_bd_y_min) .EQ. c_bc_periodic &
-        .OR. bc_particle(c_bd_y_min) .EQ. c_bc_periodic) &
+    IF (bc_field(c_bd_y_min) == c_bc_periodic &
+        .OR. bc_particle(c_bd_y_min) == c_bc_periodic) &
             periods(c_ndims-1) = .TRUE.
 
     old_comm = comm
@@ -166,21 +166,21 @@ CONTAINS
     nprocy = dims(1)
     nprocdir = dims
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       PRINT *, 'Processor subdivision is ', (/nprocx, nprocy/)
     ENDIF
 
     x_coords = coordinates(c_ndims)
     x_min_boundary = .FALSE.
     x_max_boundary = .FALSE.
-    IF (x_coords .EQ. 0) x_min_boundary = .TRUE.
-    IF (x_coords .EQ. nprocx - 1) x_max_boundary = .TRUE.
+    IF (x_coords == 0) x_min_boundary = .TRUE.
+    IF (x_coords == nprocx - 1) x_max_boundary = .TRUE.
 
     y_coords = coordinates(c_ndims-1)
     y_min_boundary = .FALSE.
     y_max_boundary = .FALSE.
-    IF (y_coords .EQ. 0) y_min_boundary = .TRUE.
-    IF (y_coords .EQ. nprocy - 1) y_max_boundary = .TRUE.
+    IF (y_coords == 0) y_min_boundary = .TRUE.
+    IF (y_coords == nprocy - 1) y_max_boundary = .TRUE.
 
     neighbour = MPI_PROC_NULL
     DO iy = -1, 1
@@ -193,8 +193,8 @@ CONTAINS
         ! For some stupid reason MPI_CART_RANK returns an error rather than
         ! MPI_PROC_NULL if the coords are out of range.
         DO idim = 1, ndims
-          IF ((test_coords(idim) .LT. 0 &
-              .OR. test_coords(idim) .GE. dims(idim)) &
+          IF ((test_coords(idim) < 0 &
+              .OR. test_coords(idim) >= dims(idim)) &
               .AND. .NOT. periods(idim)) op = .FALSE.
         ENDDO
         IF (op) CALL MPI_CART_RANK(comm, test_coords, neighbour(ix,iy), errcode)
@@ -249,13 +249,13 @@ CONTAINS
       ! If the number of gridpoints cannot be exactly subdivided then fix
       ! The first nxp processors have nx0 grid points
       ! The remaining processors have nx0+1 grid points
-      IF (nx0 * nprocx .NE. nx_global) THEN
+      IF (nx0 * nprocx /= nx_global) THEN
         nxp = (nx0 + 1) * nprocx - nx_global
       ELSE
         nxp = nprocx
       ENDIF
 
-      IF (ny0 * nprocy .NE. ny_global) THEN
+      IF (ny0 * nprocy /= ny_global) THEN
         nyp = (ny0 + 1) * nprocy - ny_global
       ELSE
         nyp = nprocy
@@ -315,7 +315,7 @@ CONTAINS
     ALLOCATE(jz(1-jng:nx+jng, 1-jng:ny+jng))
 
     ! Setup the particle lists
-    IF (n_species .GT. 0) &
+    IF (n_species > 0) &
         NULLIFY(species_list(1)%prev, species_list(n_species)%next)
     DO ispecies = 1, n_species-1
       species_list(ispecies)%next => species_list(ispecies+1)
@@ -332,16 +332,16 @@ CONTAINS
       NULLIFY(species_list(ispecies)%attached_list%prev)
       CALL create_empty_partlist(species_list(ispecies)%attached_list)
 
-      IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+      IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_min(1-ng:ny+ng,1:3))
       ENDIF
-      IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+      IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1-ng:ny+ng,1:3))
       ENDIF
-      IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
+      IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_y_min(1-ng:nx+ng,1:3))
       ENDIF
-      IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
+      IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_y_max(1-ng:nx+ng,1:3))
       ENDIF
     ENDDO
@@ -358,7 +358,7 @@ CONTAINS
 
     INTEGER :: seconds, minutes, hours, total
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       end_time = MPI_WTIME()
       total = INT(end_time - start_time)
       seconds = MOD(total, 60)
@@ -453,7 +453,7 @@ CONTAINS
     errstring(MPI_ERR_LASTCODE             ) = 'MPI_ERR_LASTCODE             '
 
     PRINT*, "Caught MPI error: ", TRIM(errstring(error_code))
-    IF (comm .EQ. MPI_COMM_WORLD) THEN
+    IF (comm == MPI_COMM_WORLD) THEN
       PRINT*, "Communicator MPI_COMM_WORLD"
     ELSE
       PRINT*, "Communicator ", comm, "(Not MPI_COMM_WORLD)"

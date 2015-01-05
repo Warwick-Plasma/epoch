@@ -31,7 +31,7 @@ CONTAINS
 
   SUBROUTINE laser_block_start
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     ! Every new laser uses the internal time function
     ALLOCATE(working_laser)
@@ -45,7 +45,7 @@ CONTAINS
 
   SUBROUTINE laser_block_end
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     CALL attach_laser(working_laser)
     boundary_set = .FALSE.
@@ -62,11 +62,11 @@ CONTAINS
     INTEGER :: ierr, io, iu
 
     errcode = c_err_none
-    IF (deck_state .EQ. c_ds_first) RETURN
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (deck_state == c_ds_first) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'boundary') .OR. str_cmp(element, 'direction')) THEN
-      IF (rank .EQ. 0 .AND. str_cmp(element, 'direction')) THEN
+      IF (rank == 0 .AND. str_cmp(element, 'direction')) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -83,7 +83,7 @@ CONTAINS
     ENDIF
 
     IF (.NOT. boundary_set) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -116,7 +116,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'omega') .OR. str_cmp(element, 'freq')) THEN
-      IF (rank .EQ. 0 .AND. str_cmp(element, 'freq')) THEN
+      IF (rank == 0 .AND. str_cmp(element, 'freq')) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -219,34 +219,34 @@ CONTAINS
     error = 0
     current => laser_x_min
     DO WHILE(ASSOCIATED(current))
-      IF (current%omega .LT. 0.0_num) error = IOR(error, 1)
-      IF (current%amp .LT. 0.0_num) error = IOR(error, 2)
+      IF (current%omega < 0.0_num) error = IOR(error, 1)
+      IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
     ENDDO
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
-      IF (current%omega .LT. 0.0_num) error = IOR(error, 1)
-      IF (current%amp .LT. 0.0_num) error = IOR(error, 2)
+      IF (current%omega < 0.0_num) error = IOR(error, 1)
+      IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
     ENDDO
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
-      IF (current%omega .LT. 0.0_num) error = IOR(error, 1)
-      IF (current%amp .LT. 0.0_num) error = IOR(error, 2)
+      IF (current%omega < 0.0_num) error = IOR(error, 1)
+      IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
     ENDDO
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
-      IF (current%omega .LT. 0.0_num) error = IOR(error, 1)
-      IF (current%amp .LT. 0.0_num) error = IOR(error, 2)
+      IF (current%omega < 0.0_num) error = IOR(error, 1)
+      IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
     ENDDO
 
-    IF (IAND(error,1) .NE. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (IAND(error,1) /= 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -256,8 +256,8 @@ CONTAINS
       errcode = c_err_missing_elements
     ENDIF
 
-    IF (IAND(error,2) .NE. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (IAND(error,2) /= 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -301,7 +301,7 @@ CONTAINS
 
     res = as_time(str_in, err)
 
-    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
 
     WRITE(du,'(A,G18.11)') TRIM(element) // ' = ', res
 

@@ -25,7 +25,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER :: register_function
 
-    IF (n_new_func .EQ. c_max_new_func) THEN
+    IF (n_new_func == c_max_new_func) THEN
       register_function = -1
       RETURN
     ENDIF
@@ -43,7 +43,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: name
     INTEGER :: register_constant
 
-    IF (n_new_constant .EQ. c_max_new_const) THEN
+    IF (n_new_constant == c_max_new_const) THEN
       register_constant = -1
       RETURN
     ENDIF
@@ -304,24 +304,24 @@ CONTAINS
     as_operator = c_prc_not_this_type
 
     IF (str_cmp(name, '+')) THEN
-      IF (last_block_type .EQ. c_pt_variable &
-          .OR. last_block_type .EQ. c_pt_constant &
-          .OR. last_block_type .EQ. c_pt_default_constant &
-          .OR. last_block_type .EQ. c_pt_deck_constant &
-          .OR. last_block_type .EQ. c_pt_species &
-          .OR. last_block_type .EQ. c_pt_subset) THEN
+      IF (last_block_type == c_pt_variable &
+          .OR. last_block_type == c_pt_constant &
+          .OR. last_block_type == c_pt_default_constant &
+          .OR. last_block_type == c_pt_deck_constant &
+          .OR. last_block_type == c_pt_species &
+          .OR. last_block_type == c_pt_subset) THEN
         as_operator = c_opcode_plus
       ELSE
         as_operator = c_opcode_unary_plus
       ENDIF
     ENDIF
     IF (str_cmp(name, '-'))  THEN
-      IF (last_block_type .EQ. c_pt_variable &
-          .OR. last_block_type .EQ. c_pt_constant &
-          .OR. last_block_type .EQ. c_pt_default_constant &
-          .OR. last_block_type .EQ. c_pt_deck_constant &
-          .OR. last_block_type .EQ. c_pt_species &
-          .OR. last_block_type .EQ. c_pt_subset) THEN
+      IF (last_block_type == c_pt_variable &
+          .OR. last_block_type == c_pt_constant &
+          .OR. last_block_type == c_pt_default_constant &
+          .OR. last_block_type == c_pt_deck_constant &
+          .OR. last_block_type == c_pt_species &
+          .OR. last_block_type == c_pt_subset) THEN
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus

@@ -18,9 +18,9 @@ CONTAINS
     field_order = order
     fng = field_order / 2
 
-    IF (field_order .EQ. 2) THEN
+    IF (field_order == 2) THEN
       cfl = 1.0_num
-    ELSE IF (field_order .EQ. 4) THEN
+    ELSE IF (field_order == 4) THEN
       cfl = 6.0_num / 7.0_num
     ELSE
       cfl = 120.0_num / 149.0_num
@@ -42,7 +42,7 @@ CONTAINS
       cpml_x = cnx
       cpml_y = cny
 
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO iy = 1, ny
           cpml_y = cny / cpml_kappa_ey(iy)
           DO ix = 1, nx
@@ -62,7 +62,7 @@ CONTAINS
                 - fac * jz(ix, iy)
           ENDDO
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -135,7 +135,7 @@ CONTAINS
 
       CALL cpml_advance_e_currents(hdt)
     ELSE
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO iy = 1, ny
           DO ix = 1, nx
             ex(ix, iy) = ex(ix, iy) &
@@ -152,7 +152,7 @@ CONTAINS
                 - fac * jz(ix, iy)
           ENDDO
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -236,7 +236,7 @@ CONTAINS
       cpml_x = hdtx
       cpml_y = hdty
 
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO iy = 1, ny
           cpml_y = hdty / cpml_kappa_by(iy)
           DO ix = 1, nx
@@ -253,7 +253,7 @@ CONTAINS
                 + cpml_y * (ex(ix  , iy+1) - ex(ix  , iy  ))
           ENDDO
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -320,7 +320,7 @@ CONTAINS
 
       CALL cpml_advance_b_currents(hdt)
     ELSE
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO iy = 1, ny
           DO ix = 1, nx
             bx(ix, iy) = bx(ix, iy) &
@@ -334,7 +334,7 @@ CONTAINS
                 + hdty * (ex(ix  , iy+1) - ex(ix  , iy  ))
           ENDDO
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 

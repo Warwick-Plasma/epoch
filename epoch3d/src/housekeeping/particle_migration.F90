@@ -21,7 +21,7 @@ CONTAINS
     INTEGER :: ispecies
 
     ! Is it time to migrate particles?
-    IF (MOD(step, particle_migration_interval) .NE. 0) RETURN
+    IF (MOD(step, particle_migration_interval) /= 0) RETURN
 
     ! Update fluid energies & densities
     io_list = species_list
@@ -144,8 +144,8 @@ CONTAINS
       ENDDO
       ENDDO
 
-      IF (part_ke .GT. ke_multiplier * 3.0_num * kb * local_te &
-          .AND. local_ne .LT. density_condition) &
+      IF (part_ke > ke_multiplier * 3.0_num * kb * local_te &
+          .AND. local_ne < density_condition) &
           CALL swap_lists(from_list, to_list, current)
 
       current => next
@@ -202,8 +202,8 @@ CONTAINS
       ENDDO
       ENDDO
 
-      IF (part_ke .LT. ke_multiplier * 3.0_num * kb * local_te &
-          .AND. local_ne .GE. density_condition) &
+      IF (part_ke < ke_multiplier * 3.0_num * kb * local_te &
+          .AND. local_ne >= density_condition) &
           CALL swap_lists(from_list, to_list, current)
 
       current => next
@@ -237,15 +237,15 @@ CONTAINS
       ipromote = species_list(ispecies)%migrate%promote_to_species
       idemote = species_list(ispecies)%migrate%demote_to_species
 
-      IF ((ipromote .GE. 1) .AND. (ipromote .LE. n_species)) &
+      IF ((ipromote >= 1) .AND. (ipromote <= n_species)) &
           species_list(ispecies)%migrate%promoteable = .TRUE.
-      IF ((idemote .GE. 1) .AND. (idemote .LE. n_species)) &
+      IF ((idemote >= 1) .AND. (idemote <= n_species)) &
           species_list(ispecies)%migrate%demoteable = .TRUE.
 
       IF ((.NOT. species_list(ispecies)%migrate%promoteable) &
           .AND. (.NOT. species_list(ispecies)%migrate%demoteable)) THEN
         species_list(ispecies)%migrate%this_species = .FALSE.
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           WRITE(stdout, *) '*** WARNING ***'
           WRITE(stdout, *) 'No valid promotion or demotion species specified.'
           WRITE(stdout, *) 'Migration turned off for species ', &
@@ -257,11 +257,11 @@ CONTAINS
 #ifndef PER_PARTICLE_CHARGE_MASS
       IF (species_list(ispecies)%migrate%promoteable) THEN
         IF (ABS(species_list(ispecies)%mass &
-            - species_list(ipromote)%mass) .GT. c_tiny &
+            - species_list(ipromote)%mass) > c_tiny &
             .OR. ABS(species_list(ispecies)%charge &
-            - species_list(ipromote)%charge) .GT. c_tiny) THEN
+            - species_list(ipromote)%charge) > c_tiny) THEN
           species_list(ispecies)%migrate%promoteable = .FALSE.
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             WRITE(stdout, *) '*** WARNING ***'
             WRITE(stdout, *) 'Attempting to promote between species with'
             WRITE(stdout, *) 'different charge and/or mass.'
@@ -273,11 +273,11 @@ CONTAINS
 
       IF (species_list(ispecies)%migrate%demoteable) THEN
         IF (ABS(species_list(ispecies)%mass &
-            - species_list(idemote)%mass) .GT. c_tiny &
+            - species_list(idemote)%mass) > c_tiny &
             .OR. ABS(species_list(ispecies)%charge &
-            - species_list(idemote)%charge) .GT. c_tiny) THEN
+            - species_list(idemote)%charge) > c_tiny) THEN
           species_list(ispecies)%migrate%demoteable = .FALSE.
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             WRITE(stdout, *) '*** WARNING ***'
             WRITE(stdout, *) 'Attempting to demote between species with'
             WRITE(stdout, *) 'different charge and/or mass.'
@@ -309,8 +309,8 @@ CONTAINS
       current_list = ispecies
       DO WHILE(species_list(current_list)%migrate%promoteable)
         next_list = species_list(current_list)%migrate%promote_to_species
-        IF (next_list .EQ. ispecies) THEN
-          IF (rank .EQ. 0) THEN
+        IF (next_list == ispecies) THEN
+          IF (rank == 0) THEN
             WRITE(stdout, *) '*** WARNING ***'
             WRITE(stdout, *) 'Looped promotion chain.'
             WRITE(stdout, *) 'Promotion from species ', &
@@ -327,8 +327,8 @@ CONTAINS
       current_list = ispecies
       DO WHILE(species_list(current_list)%migrate%demoteable)
         next_list = species_list(current_list)%migrate%demote_to_species
-        IF (next_list .EQ. ispecies) THEN
-          IF (rank .EQ. 0) THEN
+        IF (next_list == ispecies) THEN
+          IF (rank == 0) THEN
             WRITE(stdout, *) '*** WARNING ***'
             WRITE(stdout, *) 'Looped demotion chain.'
             WRITE(stdout, *) 'Demotion from species ', &
@@ -345,7 +345,7 @@ CONTAINS
       IF ((.NOT. species_list(ispecies)%migrate%promoteable) &
           .AND. (.NOT. species_list(ispecies)%migrate%demoteable)) THEN
         species_list(ispecies)%migrate%this_species = .FALSE.
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           WRITE(stdout, *) '*** WARNING ***'
           WRITE(stdout, *) 'No valid promotion or demotion species specified.'
           WRITE(stdout, *) 'Migration turned off for species ', &
@@ -357,7 +357,7 @@ CONTAINS
     ! After all that, do we still need migration at all?
     IF (.NOT. ANY(species_list(:)%migrate%this_species)) THEN
       use_particle_migration = .FALSE.
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         WRITE(stdout, *) '*** WARNING ***'
         WRITE(stdout, *) 'All particle migration has been disabled.'
       ENDIF

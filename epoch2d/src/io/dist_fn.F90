@@ -73,12 +73,12 @@ CONTAINS
     ! Write the distribution functions
     current => dist_fns
     DO WHILE(ASSOCIATED(current))
-      IF (IAND(current%dumpmask, code) .NE. 0) THEN
+      IF (IAND(current%dumpmask, code) /= 0) THEN
         DO ispecies = 1, n_species
           IF (.NOT. current%use_species(ispecies)) CYCLE
 
           convert = (IAND(IOR(dumpmask(c_dump_dist_fns),current%dumpmask), &
-                          c_io_dump_single) .NE. 0)
+                          c_io_dump_single) /= 0)
 
           CALL general_dist_fn(sdf_handle, current%name, current%directions, &
               current%ranges, current%resolution, ispecies, &
@@ -86,7 +86,7 @@ CONTAINS
               convert, errcode)
 
           ! If there was an error writing the dist_fn then ignore it in future
-          IF (errcode .NE. 0) current%dumpmask = c_io_never
+          IF (errcode /= 0) current%dumpmask = c_io_never
         ENDDO
       ENDIF
       current => current%next
@@ -141,14 +141,14 @@ CONTAINS
 
     errcode = 0
     ! Update species count if necessary
-    IF (io_list(species)%count_update_step .LT. step) THEN
+    IF (io_list(species)%count_update_step < step) THEN
       CALL MPI_ALLREDUCE(io_list(species)%attached_list%count, &
           io_list(species)%count, 1, MPI_INTEGER8, MPI_SUM, &
           comm, errcode)
       io_list(species)%count_update_step = step
     ENDIF
 
-    IF (io_list(species)%count .LT. 1) RETURN
+    IF (io_list(species)%count < 1) RETURN
 
     use_x = .FALSE.
     use_y = .FALSE.
@@ -174,7 +174,7 @@ CONTAINS
 #endif
 
     DO idim = 1, curdims
-      IF (direction(idim) .EQ. c_dir_x) THEN
+      IF (direction(idim) == c_dir_x) THEN
         use_x = .TRUE.
         resolution(idim) = nx
         ranges(1,idim) = x_grid_min_local - 0.5_num * dx
@@ -187,7 +187,7 @@ CONTAINS
         parallel(idim) = .TRUE.
         CYCLE
 
-      ELSE IF (direction(idim) .EQ. c_dir_y) THEN
+      ELSE IF (direction(idim) == c_dir_y) THEN
         use_y = .TRUE.
         resolution(idim) = ny
         ranges(1,idim) = y_grid_min_local - 0.5_num * dy
@@ -204,48 +204,48 @@ CONTAINS
 
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
-      IF (ABS(ranges(1,idim) - ranges(2,idim)) .LE. c_tiny) THEN
+      IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
       ENDIF
 
-      IF (direction(idim) .EQ. c_dir_px) THEN
+      IF (direction(idim) == c_dir_px) THEN
         labels(idim) = 'Px'
         units(idim)  = 'kg.m/s'
 
-      ELSE IF (direction(idim) .EQ. c_dir_py) THEN
+      ELSE IF (direction(idim) == c_dir_py) THEN
         labels(idim) = 'Py'
         units(idim)  = 'kg.m/s'
 
-      ELSE IF (direction(idim) .EQ. c_dir_pz) THEN
+      ELSE IF (direction(idim) == c_dir_pz) THEN
         labels(idim) = 'Pz'
         units(idim)  = 'kg.m/s'
 
-      ELSE IF (direction(idim) .EQ. c_dir_en) THEN
+      ELSE IF (direction(idim) == c_dir_en) THEN
         labels(idim) = 'en'
         units(idim)  = 'J'
 
-      ELSE IF (direction(idim) .EQ. c_dir_gamma_m1) THEN
+      ELSE IF (direction(idim) == c_dir_gamma_m1) THEN
         labels(idim) = 'gamma-1'
         units(idim)  = ''
 
-      ELSE IF (direction(idim) .EQ. c_dir_xy_angle) THEN
+      ELSE IF (direction(idim) == c_dir_xy_angle) THEN
         use_xy_angle = .TRUE.
         labels(idim) = 'xy_angle'
         units(idim)  = 'radians'
 
-      ELSE IF (direction(idim) .EQ. c_dir_yz_angle) THEN
+      ELSE IF (direction(idim) == c_dir_yz_angle) THEN
         use_yz_angle = .TRUE.
         labels(idim) = 'yz_angle'
         units(idim)  = 'radians'
 
-      ELSE IF (direction(idim) .EQ. c_dir_zx_angle) THEN
+      ELSE IF (direction(idim) == c_dir_zx_angle) THEN
         use_zx_angle = .TRUE.
         labels(idim) = 'zx_angle'
         units(idim)  = 'radians'
 
       ELSE
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           WRITE(*,*) '*** WARNING ***'
           WRITE(*,*) 'Unable to write dist_fn. Ignoring.'
         ENDIF
@@ -279,7 +279,7 @@ CONTAINS
         pz = current%part_p(3)
 
         particle_data(1:c_ndims) = current%part_pos
-        IF (io_list(species)%species_type .EQ. c_species_id_photon) THEN
+        IF (io_list(species)%species_type == c_species_id_photon) THEN
           particle_data(c_dir_gamma_m1) = 0.0_num
 #ifdef PHOTONS
           particle_data(c_dir_px) = px
@@ -302,28 +302,28 @@ CONTAINS
 
         IF (use_xy_angle) THEN
           p = SQRT(px**2 + py**2)
-          IF (p .LT. c_tiny) CYCLE
+          IF (p < c_tiny) CYCLE
 
           theta = ASIN(py / p)
-          IF (px .LT. 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
+          IF (px < 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
           particle_data(c_dir_xy_angle) = theta
         ENDIF
 
         IF (use_yz_angle) THEN
           p = SQRT(py**2 + pz**2)
-          IF (p .LT. c_tiny) CYCLE
+          IF (p < c_tiny) CYCLE
 
           theta = ASIN(pz / p)
-          IF (py .LT. 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
+          IF (py < 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
           particle_data(c_dir_yz_angle) = theta
         ENDIF
 
         IF (use_zx_angle) THEN
           p = SQRT(pz**2 + px**2)
-          IF (p .LT. c_tiny) CYCLE
+          IF (p < c_tiny) CYCLE
 
           theta = ASIN(px / p)
-          IF (pz .LT. 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
+          IF (pz < 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
           particle_data(c_dir_zx_angle) = theta
         ENDIF
 
@@ -331,14 +331,14 @@ CONTAINS
           IF (calc_range(idim)) THEN
             DO idir = 1, c_df_maxdirs
               IF (use_restrictions(idir) &
-                  .AND. (particle_data(idir) .LT. restrictions(1,idir) &
-                  .OR. particle_data(idir) .GT. restrictions(2,idir))) &
+                  .AND. (particle_data(idir) < restrictions(1,idir) &
+                  .OR. particle_data(idir) > restrictions(2,idir))) &
                       CYCLE out1
             ENDDO
 
             current_data = particle_data(direction(idim))
-            IF (current_data .LT. ranges(1,idim)) ranges(1,idim) = current_data
-            IF (current_data .GT. ranges(2,idim)) ranges(2,idim) = current_data
+            IF (current_data < ranges(1,idim)) ranges(1,idim) = current_data
+            IF (current_data > ranges(2,idim)) ranges(2,idim) = current_data
           ENDIF
         ENDDO
       ENDDO out1
@@ -359,16 +359,16 @@ CONTAINS
     DO idim = 1, curdims
       ! Fix so that if distribution function is zero then it picks an arbitrary
       ! scale in that direction
-      IF (ABS(ranges(1,idim) - ranges(2,idim)) .LE. c_tiny) THEN
+      IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
         ranges(1,idim) = -1.0_num
         ranges(2,idim) = 1.0_num
       ENDIF
 
-      IF (direction(idim) .EQ. c_dir_xy_angle) THEN
+      IF (direction(idim) == c_dir_xy_angle) THEN
         xy_max = ranges(2,idim)
-      ELSE IF (direction(idim) .EQ. c_dir_yz_angle) THEN
+      ELSE IF (direction(idim) == c_dir_yz_angle) THEN
         yz_max = ranges(2,idim)
-      ELSE IF (direction(idim) .EQ. c_dir_zx_angle) THEN
+      ELSE IF (direction(idim) == c_dir_zx_angle) THEN
         zx_max = ranges(2,idim)
       ENDIF
 
@@ -399,7 +399,7 @@ CONTAINS
       pz = current%part_p(3)
 
       particle_data(1:c_ndims) = current%part_pos
-      IF (io_list(species)%species_type .EQ. c_species_id_photon) THEN
+      IF (io_list(species)%species_type == c_species_id_photon) THEN
         particle_data(c_dir_gamma_m1) = 0.0_num
 #ifdef PHOTONS
         particle_data(c_dir_px) = px
@@ -422,38 +422,38 @@ CONTAINS
 
       IF (use_xy_angle) THEN
         p = SQRT(px**2 + py**2)
-        IF (p .LT. c_tiny) CYCLE
+        IF (p < c_tiny) CYCLE
 
         theta = ASIN(py / p)
-        IF (px .LT. 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
-        IF ((theta + pi2) .LT. xy_max) theta = theta + pi2
+        IF (px < 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
+        IF ((theta + pi2) < xy_max) theta = theta + pi2
         particle_data(c_dir_xy_angle) = theta
       ENDIF
 
       IF (use_yz_angle) THEN
         p = SQRT(py**2 + pz**2)
-        IF (p .LT. c_tiny) CYCLE
+        IF (p < c_tiny) CYCLE
 
         theta = ASIN(pz / p)
-        IF (py .LT. 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
-        IF ((theta + pi2) .LT. yz_max) theta = theta + pi2
+        IF (py < 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
+        IF ((theta + pi2) < yz_max) theta = theta + pi2
         particle_data(c_dir_yz_angle) = theta
       ENDIF
 
       IF (use_zx_angle) THEN
         p = SQRT(pz**2 + px**2)
-        IF (p .LT. c_tiny) CYCLE
+        IF (p < c_tiny) CYCLE
 
         theta = ASIN(px / p)
-        IF (pz .LT. 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
-        IF ((theta + pi2) .LT. zx_max) theta = theta + pi2
+        IF (pz < 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
+        IF ((theta + pi2) < zx_max) theta = theta + pi2
         particle_data(c_dir_zx_angle) = theta
       ENDIF
 
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &
-            .AND. (particle_data(idir) .LT. restrictions(1,idir) &
-            .OR. particle_data(idir) .GT. restrictions(2,idir))) &
+            .AND. (particle_data(idir) < restrictions(1,idir) &
+            .OR. particle_data(idir) > restrictions(2,idir))) &
                 CYCLE out2
       ENDDO
 
@@ -461,7 +461,7 @@ CONTAINS
       DO idim = 1, curdims
         current_data = particle_data(direction(idim))
         cell(idim) = FLOOR((current_data - ranges(1,idim)) / dgrid(idim)) + 1
-        IF (cell(idim) .LT. 1 .OR. cell(idim) .GT. resolution(idim)) &
+        IF (cell(idim) < 1 .OR. cell(idim) > resolution(idim)) &
             CYCLE out2
       ENDDO
 
@@ -496,7 +496,7 @@ CONTAINS
       grid1(idir) = start + (idir - 1) * dgrid(1)
     ENDDO
 
-    IF (curdims .GE. 2) THEN
+    IF (curdims >= 2) THEN
       ALLOCATE(grid2(global_resolution(2)))
       start = ranges(1,2) + 0.5_num * dgrid(2)
       DO idir = 1, global_resolution(2)
@@ -504,7 +504,7 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (curdims .GE. 3) THEN
+    IF (curdims >= 3) THEN
       ALLOCATE(grid3(global_resolution(3)))
       start = ranges(1,3) + 0.5_num * dgrid(3)
       DO idir = 1, global_resolution(3)
@@ -515,15 +515,15 @@ CONTAINS
     var_name = TRIM(name) // '/' // TRIM(io_list(species)%name)
 
     IF (use_offset_grid) THEN
-      IF (curdims .EQ. 1) THEN
+      IF (curdims == 1) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
             grid1, convert, labels, units)
-      ELSE IF (curdims .EQ. 2) THEN
+      ELSE IF (curdims == 2) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
             grid1, grid2, convert, labels, units)
-      ELSE IF (curdims .EQ. 3) THEN
+      ELSE IF (curdims == 3) THEN
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
             grid1, grid2, grid3, convert, labels, units)
@@ -533,19 +533,19 @@ CONTAINS
       IF (parallel(3)) grid3 = grid3 - ranges(1,3)
     ENDIF
 
-    IF (curdims .EQ. 1) THEN
+    IF (curdims == 1) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, convert, labels, units)
       DEALLOCATE(grid1)
       new_type = create_1d_array_subtype(mpireal, resolution, &
           global_resolution, start_local)
-    ELSE IF (curdims .EQ. 2) THEN
+    ELSE IF (curdims == 2) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, grid2, convert, labels, units)
       DEALLOCATE(grid1, grid2)
       new_type = create_2d_array_subtype(mpireal, resolution, &
           global_resolution, start_local)
-    ELSE IF (curdims .EQ. 3) THEN
+    ELSE IF (curdims == 3) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, grid2, grid3, convert, labels, &
           units)

@@ -19,11 +19,11 @@ CONTAINS
 
       ! Set temperature at boundary for thermal bcs.
 
-      IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+      IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         species_list(ispecies)%ext_temp_x_min(1:3) = &
             initial_conditions(ispecies)%temp(1,1:3)
       ENDIF
-      IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+      IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         species_list(ispecies)%ext_temp_x_max(1:3) = &
             initial_conditions(ispecies)%temp(nx,1:3)
       ENDIF
@@ -63,10 +63,10 @@ CONTAINS
           initial_conditions(ispecies)%drift(:,3))
     ENDDO
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       DO ispecies = 1, n_species
         species => species_list(ispecies)
-        IF (species%count .LT. 0) THEN
+        IF (species%count < 0) THEN
           WRITE(*,*) 'No particles specified for species ', &
               '"' // TRIM(species%name) // '"'
 #ifndef NO_IO
@@ -141,11 +141,11 @@ CONTAINS
     density_total = 0.0_num
 
     DO ix = -2, nx+3
-      IF (density(ix) .GT. density_max) density(ix) = density_max
+      IF (density(ix) > density_max) density(ix) = density_max
     ENDDO ! ix
 
     DO ix = 1, nx
-      IF (density(ix) .GE. density_min) THEN
+      IF (density(ix) >= density_min) THEN
         num_valid_cells_local = num_valid_cells_local + 1
         density_total = density_total + density(ix)
       ENDIF
@@ -154,14 +154,14 @@ CONTAINS
     CALL MPI_ALLREDUCE(num_valid_cells_local, num_valid_cells_global, 1, &
         MPI_INTEGER8, MPI_SUM, comm, errcode)
 
-    IF (species%npart_per_cell .GE. 0) THEN
+    IF (species%npart_per_cell >= 0) THEN
       npart_per_cell_average = FLOOR(species%npart_per_cell, num)
     ELSE
       npart_per_cell_average = REAL(species%count, num) &
           / REAL(num_valid_cells_global, num)
     ENDIF
 
-    IF (npart_per_cell_average .LE. 0) RETURN
+    IF (npart_per_cell_average <= 0) RETURN
 
     CALL MPI_ALLREDUCE(density_total, density_total_global, 1, mpireal, &
         MPI_SUM, comm, errcode)
@@ -184,7 +184,7 @@ CONTAINS
           * npart_per_cell_average)
 
       ipart = 0
-      DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
+      DO WHILE(ASSOCIATED(current) .AND. ipart < npart_per_cell)
 #ifdef PER_PARTICLE_CHARGE_MASS
         ! Even if particles have per particle charge and mass, assume
         ! that initially they all have the same charge and mass (user
@@ -214,7 +214,7 @@ CONTAINS
     species%count = npart_this_species
     species%weight = density_total_global * dx / npart_this_species
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       CALL integer_as_string(npart_this_species, string)
       WRITE(*,*) 'Loaded ', TRIM(ADJUSTL(string)), &
           ' particles of species ', '"' // TRIM(species%name) // '"'
@@ -252,14 +252,14 @@ CONTAINS
     LOGICAL :: sweep
 
     npart_this_species = species%count
-    IF (npart_this_species .LE. 0) RETURN
+    IF (npart_this_species <= 0) RETURN
 
     num_valid_cells_local = 0
     DO ix = 1, nx
       IF (load_list(ix)) num_valid_cells_local = num_valid_cells_local + 1
     ENDDO ! ix
 
-    IF (species%npart_per_cell .GE. 0) THEN
+    IF (species%npart_per_cell >= 0) THEN
       npart_per_cell = FLOOR(species%npart_per_cell, KIND=i8)
       num_new_particles = &
           FLOOR(species%npart_per_cell * num_valid_cells_local, KIND=i8)
@@ -275,8 +275,8 @@ CONTAINS
         num_valid_cells_global = num_valid_cells_global + num_valid_cells_all(i)
       ENDDO
 
-      IF (num_valid_cells_global .EQ. 0) THEN
-        IF (rank .EQ. 0) THEN
+      IF (num_valid_cells_global == 0) THEN
+        IF (rank == 0) THEN
           WRITE(*,*) '*** ERROR ***'
           WRITE(*,*) 'Intial condition settings mean that there are no cells ' &
               // 'where particles may'
@@ -308,7 +308,7 @@ CONTAINS
       ENDDO
       num_total = npart_this_species - num_total
 
-      IF (num_total .GT. 0) THEN
+      IF (num_total > 0) THEN
         ! Sort the list of fractions into decreasing order using bubble sort
         sweep = .TRUE.
         DO WHILE(sweep)
@@ -316,7 +316,7 @@ CONTAINS
           f0 = num_frac(1)
           DO i = 2,nproc
             f1 = num_frac(i)
-            IF (f1 .GT. f0) THEN
+            IF (f1 > f0) THEN
               num_frac(i-1) = f1
               num_frac(i) = f0
               f1 = f0
@@ -334,12 +334,12 @@ CONTAINS
         ! add them and exit the loop.
 
         DO i = 1,nproc
-          IF (num_idx(i) .EQ. rank) THEN
+          IF (num_idx(i) == rank) THEN
             num_new_particles = num_new_particles + 1
             EXIT
           ENDIF
           num_total = num_total - 1
-          IF (num_total .LE. 0) EXIT
+          IF (num_total <= 0) EXIT
         ENDDO
       ENDIF
 
@@ -358,13 +358,13 @@ CONTAINS
     ! Randomly place npart_per_cell particles into each valid cell
     npart_left = num_new_particles
     current => partlist%head
-    IF (npart_per_cell .GT. 0) THEN
+    IF (npart_per_cell > 0) THEN
 
       DO ix = 1, nx
         IF (.NOT. load_list(ix)) CYCLE
 
         ipart = 0
-        DO WHILE(ASSOCIATED(current) .AND. ipart .LT. npart_per_cell)
+        DO WHILE(ASSOCIATED(current) .AND. ipart < npart_per_cell)
 #ifdef PER_PARTICLE_CHARGE_MASS
           ! Even if particles have per particle charge and mass, assume
           ! that initially they all have the same charge and mass (user
@@ -388,7 +388,7 @@ CONTAINS
     ! npart_per_cell * num_valid_cells_local there will be particles left
     ! over that didn't get placed.
     ! The following loop randomly place remaining particles into valid cells.
-    IF (npart_left .GT. 0) THEN
+    IF (npart_left > 0) THEN
       ALLOCATE(valid_cell_list(num_valid_cells_local))
 
       ipos = 0
@@ -427,7 +427,7 @@ CONTAINS
 
     species%count = npart_this_species
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       CALL integer_as_string(npart_this_species, string)
       WRITE(*,*) 'Loaded ', TRIM(ADJUSTL(string)), &
           ' particles of species ', '"' // TRIM(species%name) // '"'
@@ -468,8 +468,8 @@ CONTAINS
     CALL field_bc(density, ng)
 
     DO ix = -2, nx+3
-      IF (density(ix) .GT. density_max) density(ix) = density_max
-      IF (density(ix) .GE. density_min) THEN
+      IF (density(ix) > density_max) density(ix) = density_max
+      IF (density(ix) >= density_min) THEN
         density_map(ix) = .TRUE.
       ELSE
         density(ix) = 0.0_num
@@ -487,7 +487,7 @@ CONTAINS
     ! uniform pseudoparticle density to the real particle density
     current => partlist%head
     ipart = 0
-    DO WHILE(ipart .LT. partlist%count)
+    DO WHILE(ipart < partlist%count)
       IF (.NOT. ASSOCIATED(current)) PRINT *, 'Bad Particle'
 
 #include "particle_to_grid.inc"
@@ -525,8 +525,12 @@ CONTAINS
     ! Second loop renormalises particle weights
     current => partlist%head
     ipart = 0
-    DO WHILE(ipart .LT. partlist%count)
+    DO WHILE(ipart < partlist%count)
+#ifdef PARTICLE_SHAPE_TOPHAT
+      cell_x = FLOOR((current%part_pos - x_grid_min_local) / dx) + 1
+#else
       cell_x = FLOOR((current%part_pos - x_grid_min_local) / dx + 1.5_num)
+#endif
 
       current%weight = current%weight * wdata / npart_in_cell(cell_x)
 
@@ -567,7 +571,7 @@ CONTAINS
     current = (start + endpoint) / 2
 
     DO current = 1, n_points-1
-      IF (cdf(current) .LE. position .AND. cdf(current+1) .GE. position) THEN
+      IF (cdf(current) <= position .AND. cdf(current+1) >= position) THEN
         d_cdf = cdf(current+1) - cdf(current)
         sample_dist_function = (axis(current) * (position - cdf(current)) &
             + axis(current+1) * (cdf(current+1) - position)) / d_cdf

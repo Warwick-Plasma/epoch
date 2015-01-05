@@ -40,7 +40,7 @@ CONTAINS
 
   SUBROUTINE probe_block_start
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     ALLOCATE(working_probe)
     CALL init_probe(working_probe)
@@ -57,10 +57,10 @@ CONTAINS
     LOGICAL :: discard
     INTEGER :: io, iu, ierr
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     IF (.NOT.got_name) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -73,7 +73,7 @@ CONTAINS
     discard = .NOT.(got_point .AND. got_normal)
 
     IF (discard) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -102,8 +102,8 @@ CONTAINS
     INTEGER :: errcode, ispecies, io, iu
 
     errcode = c_err_none
-    IF (deck_state .EQ. c_ds_first) RETURN
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (deck_state == c_ds_first) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     ! get particle probe diagnostics (rolling total of all particles which
     ! pass through a given region of real space (defined by a point on a plane
@@ -139,11 +139,11 @@ CONTAINS
     IF (str_cmp(element, 'include_species') &
         .OR. str_cmp(element, 'probe_species')) THEN
       ispecies = as_integer_print(value, element, errcode)
-      IF (errcode .EQ. c_err_none) THEN
-        IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
+      IF (errcode == c_err_none) THEN
+        IF (ispecies > 0 .AND. ispecies <= n_species) THEN
           working_probe%use_species(ispecies) = .TRUE.
         ELSE
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
@@ -164,7 +164,7 @@ CONTAINS
 
     IF (str_cmp(element, 'ek_max')) THEN
       working_probe%ek_max = as_real_print(value, element, errcode)
-      IF (working_probe%ek_max .LT. 0) working_probe%ek_max = HUGE(1.0_num)
+      IF (working_probe%ek_max < 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
     ENDIF
 

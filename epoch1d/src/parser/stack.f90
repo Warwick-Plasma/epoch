@@ -70,7 +70,7 @@ CONTAINS
     value = eval_stack%entries(sp)
     eval_stack%stack_point = sp - 1
 
-    IF (eval_stack%flags(sp) .EQ. 0) THEN
+    IF (eval_stack%flags(sp) == 0) THEN
       flag_set = .FALSE.
     ELSE
       flag_set = .TRUE.
@@ -91,7 +91,7 @@ CONTAINS
       values(count-i+1) = pop_off_eval()
     ENDDO
 
-    IF (flag .NE. 0) THEN
+    IF (flag /= 0) THEN
       eval_stack%nvalues = count
       eval_stack%stack_point = eval_stack%stack_point + count
       flag = 0
@@ -103,7 +103,7 @@ CONTAINS
 
   SUBROUTINE stack_point_fix()
 
-    IF (eval_stack%nvalues .GT. 0) THEN
+    IF (eval_stack%nvalues > 0) THEN
       eval_stack%nvalues = eval_stack%nvalues + 1
       eval_stack%stack_point = eval_stack%stack_point + 1
     ENDIF

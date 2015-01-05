@@ -17,7 +17,7 @@ CONTAINS
 
   SUBROUTINE collision_deck_initialise
 
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       use_collisions = .FALSE.
       use_collisional_ionisation = .FALSE.
     ELSE
@@ -34,14 +34,14 @@ CONTAINS
 
     INTEGER :: i, j
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
     DEALLOCATE(coll_pairs_touched)
 
     IF (use_collisions) THEN
       use_collisions = .FALSE.
       DO j = 1, n_species
         DO i = 1, n_species
-          IF (coll_pairs(i,j) .GT. 0) THEN
+          IF (coll_pairs(i,j) > 0) THEN
             use_collisions = .TRUE.
             EXIT
           ENDIF
@@ -73,11 +73,11 @@ CONTAINS
     INTEGER :: errcode
 
     errcode = c_err_none
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     ! Performed on second parse to ensure that species are set up first.
     IF (str_cmp(element, 'collide')) THEN
-      IF (deck_state .NE. c_ds_first) THEN
+      IF (deck_state /= c_ds_first) THEN
         CALL set_collision_matrix(TRIM(ADJUSTL(value)), errcode)
       ENDIF
       RETURN
@@ -146,13 +146,13 @@ CONTAINS
 
     DO char = 1, str_len
       c = str_in(char:char)
-      IF (c .EQ. ' ')  THEN
+      IF (c == ' ')  THEN
         pos = char
         EXIT
       ENDIF
     ENDDO
 
-    IF (pos .LT. str_len) THEN
+    IF (pos < str_len) THEN
       str_out = TRIM(ADJUSTL(str_in(pos+1:str_len)))
     ELSE
       str_out = ''
@@ -173,7 +173,7 @@ CONTAINS
     REAL(num) :: collstate
     INTEGER :: io, iu, sp1, sp2
 
-    IF (deck_state .NE. c_ds_last) RETURN
+    IF (deck_state /= c_ds_last) RETURN
 
     IF (str_cmp(TRIM(str_in), 'all')) THEN
       coll_pairs = 1.0_num
@@ -186,16 +186,16 @@ CONTAINS
     ENDIF
 
     CALL get_token(str_in, tstr1, species1, errcode)
-    IF (errcode .NE. 0) RETURN
+    IF (errcode /= 0) RETURN
 
     sp1 = as_integer(species1, errcode)
-    IF (errcode .NE. 0) RETURN
+    IF (errcode /= 0) RETURN
 
     CALL get_token(tstr1, tstr2, species2, errcode)
-    IF (errcode .NE. 0) RETURN
+    IF (errcode /= 0) RETURN
 
     sp2 = as_integer(species2, errcode)
-    IF (errcode .NE. 0) RETURN
+    IF (errcode /= 0) RETURN
 
     collstate = 1.0_num
     IF (str_cmp(TRIM(tstr2), 'on') .OR. str_cmp(TRIM(tstr2), '')) THEN
@@ -204,10 +204,10 @@ CONTAINS
       collstate = -1.0_num
     ELSE
       collstate = as_real(tstr2, errcode)
-      IF (errcode .NE. 0) RETURN
+      IF (errcode /= 0) RETURN
     ENDIF
 
-    IF (coll_pairs_touched(sp1, sp2) .AND. rank .EQ. 0) THEN
+    IF (coll_pairs_touched(sp1, sp2) .AND. rank == 0) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*)

@@ -74,7 +74,7 @@ CONTAINS
       current_probe => species_list(ispecies)%attached_probes
       DO WHILE(ASSOCIATED(current_probe))
         ! If don't dump this probe currently then just cycle
-        IF (IAND(current_probe%dumpmask, code) .EQ. 0) THEN
+        IF (IAND(current_probe%dumpmask, code) == 0) THEN
           current_probe => current_probe%next
           CYCLE
         ENDIF
@@ -86,13 +86,13 @@ CONTAINS
 
         npart_probe_global = 0
         DO i = 1, nproc
-          IF (rank .EQ. i-1) part_probe_offset = npart_probe_global
+          IF (rank == i-1) part_probe_offset = npart_probe_global
           npart_probe_global = npart_probe_global + npart_probe_per_proc(i)
         ENDDO
 
-        IF (npart_probe_global .GT. 0) THEN
+        IF (npart_probe_global > 0) THEN
           convert = (IAND(IOR(dumpmask(c_dump_probes),current_probe%dumpmask), &
-                          c_io_dump_single) .NE. 0)
+                          c_io_dump_single) /= 0)
 
           probe_name =  TRIM(ADJUSTL(current_probe%name))
 
@@ -167,7 +167,7 @@ CONTAINS
     ENDIF
     part_count = 0
 
-    DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+    DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
       part_count = part_count+1
       array(part_count) = cur%part_pos(direction) - window_shift(direction)
       cur => cur%next
@@ -199,7 +199,7 @@ CONTAINS
     SELECT CASE (param)
 #ifdef PER_PARTICLE_WEIGHT
     CASE (c_dump_part_weight)
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
         part_count = part_count+1
         array(part_count) = cur%weight
         cur => cur%next
@@ -208,7 +208,7 @@ CONTAINS
 
     CASE (c_dump_part_px)
       ndim = 1
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
         part_count = part_count + 1
         array(part_count) = cur%part_p(ndim)
         cur => cur%next
@@ -216,7 +216,7 @@ CONTAINS
 
     CASE (c_dump_part_py)
       ndim = 2
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
         part_count = part_count + 1
         array(part_count) = cur%part_p(ndim)
         cur => cur%next
@@ -224,7 +224,7 @@ CONTAINS
 
     CASE (c_dump_part_pz)
       ndim = 3
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
         part_count = part_count + 1
         array(part_count) = cur%part_p(ndim)
         cur => cur%next

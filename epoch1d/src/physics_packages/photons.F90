@@ -20,11 +20,11 @@ CONTAINS
       ! Identify if there exists any *populated* electron/positron species
       found = .FALSE.
       DO ispecies = 1, n_species
-        IF (species_list(ispecies)%count .GT. 0) THEN
+        IF (species_list(ispecies)%count > 0) THEN
           IF (species_list(ispecies)%species_type &
-              .EQ. c_species_id_electron &
+              == c_species_id_electron &
               .OR. species_list(ispecies)%species_type &
-              .EQ. c_species_id_positron) THEN
+              == c_species_id_positron) THEN
             found = .TRUE.
             EXIT
           ENDIF
@@ -32,7 +32,7 @@ CONTAINS
       ENDDO
 
       IF (.NOT.found) THEN
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
@@ -81,18 +81,18 @@ CONTAINS
 
     ! Identify if there exists any electron species
     DO ispecies = 1, n_species
-      IF (species_list(ispecies)%species_type .EQ. c_species_id_electron &
-          .AND. first_electron .EQ. -1) THEN
+      IF (species_list(ispecies)%species_type == c_species_id_electron &
+          .AND. first_electron == -1) THEN
         first_electron = ispecies
       ENDIF
-      IF (species_list(ispecies)%species_type .EQ. c_species_id_positron &
-          .AND. first_positron .EQ. -1) THEN
+      IF (species_list(ispecies)%species_type == c_species_id_positron &
+          .AND. first_positron == -1) THEN
         first_positron = ispecies
       ENDIF
     ENDDO
 
-    IF (first_electron .LT. 0 .AND. first_positron .LT. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (first_electron < 0 .AND. first_positron < 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -106,8 +106,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (photon_species .LT. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (photon_species < 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -123,8 +123,8 @@ CONTAINS
     ! electron or positron species so just return
     IF (.NOT.produce_pairs) RETURN
 
-    IF (first_electron .LT. 0 .OR. first_positron .LT. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (first_electron < 0 .OR. first_positron < 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -137,8 +137,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (breit_wheeler_positron_species .LT. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (breit_wheeler_positron_species < 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -152,8 +152,8 @@ CONTAINS
     ENDIF
 
 #ifdef TRIDENT_PHOTONS
-    IF (trident_positron_species .LT. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (trident_positron_species < 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -167,8 +167,8 @@ CONTAINS
     ENDIF
 #endif
 
-    IF (breit_wheeler_electron_species .LT. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (breit_wheeler_electron_species < 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -182,8 +182,8 @@ CONTAINS
     ENDIF
 
 #ifdef TRIDENT_PHOTONS
-    IF (trident_electron_species .LT. 0) THEN
-      IF (rank .EQ. 0) THEN
+    IF (trident_electron_species < 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -210,7 +210,7 @@ CONTAINS
     REAL(num), ALLOCATABLE :: realbuf(:)
     INTEGER :: i, n, ichi2, iepsilon, ieta, ichi, bufsize, intbuf(6)
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       OPEN(unit=lu, file=TRIM(qed_table_location)//'/hsokolov.table', &
           status='OLD')
       READ(lu,*) n_sample_h
@@ -522,7 +522,7 @@ CONTAINS
     DO ispecies = 1, n_species
 
       ! First consider electrons
-      IF (species_list(ispecies)%species_type .EQ. c_species_id_electron) THEN
+      IF (species_list(ispecies)%species_type == c_species_id_electron) THEN
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
@@ -542,14 +542,14 @@ CONTAINS
               current%optical_depth_tri - delta_optical_depth_tri(eta, gamma)
 #endif
           ! If optical depth dropped below zero generate photon...
-          IF (current%optical_depth .LE. 0.0_num) THEN
+          IF (current%optical_depth <= 0.0_num) THEN
             CALL generate_photon(current, photon_species, eta)
             ! ... and reset optical depth
             current%optical_depth = reset_optical_depth()
           ENDIF
 
 #ifdef TRIDENT_PHOTONS
-          IF (current%optical_depth_tri .LE. 0.0_num) THEN
+          IF (current%optical_depth_tri <= 0.0_num) THEN
             CALL generate_pair_tri(current, trident_electron_species, &
                 trident_positron_species)
             ! ... and reset optical depth
@@ -561,7 +561,7 @@ CONTAINS
       ENDIF
 
       ! Next consider positrons
-      IF (species_list(ispecies)%species_type .EQ. c_species_id_positron) THEN
+      IF (species_list(ispecies)%species_type == c_species_id_positron) THEN
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
@@ -581,14 +581,14 @@ CONTAINS
               current%optical_depth_tri - delta_optical_depth_tri(eta, gamma)
 #endif
           ! If optical depth dropped below zero generate photon...
-          IF (current%optical_depth .LE. 0.0_num) THEN
+          IF (current%optical_depth <= 0.0_num) THEN
             CALL generate_photon(current, photon_species, eta)
             ! ... and reset optical depth
             current%optical_depth = reset_optical_depth()
           ENDIF
 
 #ifdef TRIDENT_PHOTONS
-          IF (current%optical_depth_tri .LE. 0.0_num) THEN
+          IF (current%optical_depth_tri <= 0.0_num) THEN
             CALL generate_pair_tri(current, trident_electron_species, &
                 trident_positron_species)
             ! ... and reset optical depth
@@ -600,7 +600,7 @@ CONTAINS
       ENDIF
 
       ! and finally photons
-      IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) THEN
+      IF (species_list(ispecies)%species_type == c_species_id_photon) THEN
         IF (produce_pairs) THEN
           current => species_list(ispecies)%attached_list%head
           DO WHILE(ASSOCIATED(current))
@@ -618,7 +618,7 @@ CONTAINS
             current%optical_depth = current%optical_depth &
                 - delta_optical_depth_photon(chi_val, part_e)
             ! If optical depth dropped below zero generate pair...
-            IF (current%optical_depth .LE. 0.0_num) THEN
+            IF (current%optical_depth <= 0.0_num) THEN
               CALL generate_pair(current, chi_val, photon_species, &
                   breit_wheeler_electron_species, &
                   breit_wheeler_positron_species)
@@ -917,8 +917,8 @@ CONTAINS
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
-    IF (photon_energy .GT. photon_energy_min .AND. produce_photons) THEN
-      IF (photon_energy .LT. c_tiny) photon_energy = c_tiny
+    IF (photon_energy > photon_energy_min .AND. produce_photons) THEN
+      IF (photon_energy < c_tiny) photon_energy = c_tiny
 
       ALLOCATE(new_photon)
       new_photon%part_pos = generating_electron%part_pos
@@ -1073,30 +1073,30 @@ CONTAINS
     i2 = nx
     xdif1 = x(i1) - x_value
     xdif2 = x(i2) - x_value
-    IF (xdif1 * xdif2 .LT. 0) THEN
+    IF (xdif1 * xdif2 < 0) THEN
       ! Use bisection to find the nearest cell
       DO
         im = (i1 + i2) / 2
         xdifm = x(im) - x_value
-        IF (xdif1 * xdifm .LT. 0) THEN
+        IF (xdif1 * xdifm < 0) THEN
           i2 = im
         ELSE
           i1 = im
           xdif1 = xdifm
         ENDIF
-        IF (i2 - i1 .EQ. 1) EXIT
+        IF (i2 - i1 == 1) EXIT
       ENDDO
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      IF (warning .AND. rank .EQ. 0) THEN
+      IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'Argument to "find_value_from_table_1d" outside the range ', &
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       ENDIF
-      IF (xdif1 .GE. 0) THEN
+      IF (xdif1 >= 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
@@ -1128,30 +1128,30 @@ CONTAINS
     i2 = nx
     xdif1 = x(i1) - x_value
     xdif2 = x(i2) - x_value
-    IF (xdif1 * xdif2 .LT. 0) THEN
+    IF (xdif1 * xdif2 < 0) THEN
       ! Use bisection to find the nearest cell
       DO
         im = (i1 + i2) / 2
         xdifm = x(im) - x_value
-        IF (xdif1 * xdifm .LT. 0) THEN
+        IF (xdif1 * xdifm < 0) THEN
           i2 = im
         ELSE
           i1 = im
           xdif1 = xdifm
         ENDIF
-        IF (i2 - i1 .EQ. 1) EXIT
+        IF (i2 - i1 == 1) EXIT
       ENDDO
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      IF (warning .AND. rank .EQ. 0) THEN
+      IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       ENDIF
-      IF (xdif1 .GE. 0) THEN
+      IF (xdif1 >= 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
@@ -1167,30 +1167,30 @@ CONTAINS
     i2 = ny
     xdif1 = p_table(ix,i1) - p_value
     xdif2 = p_table(ix,i2) - p_value
-    IF (xdif1 * xdif2 .LT. 0) THEN
+    IF (xdif1 * xdif2 < 0) THEN
       ! Use bisection to find the nearest cell
       DO
         im = (i1 + i2) / 2
         xdifm = p_table(ix,im) - p_value
-        IF (xdif1 * xdifm .LT. 0) THEN
+        IF (xdif1 * xdifm < 0) THEN
           i2 = im
         ELSE
           i1 = im
           xdif1 = xdifm
         ENDIF
-        IF (i2 - i1 .EQ. 1) EXIT
+        IF (i2 - i1 == 1) EXIT
       ENDDO
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      IF (warning .AND. rank .EQ. 0) THEN
+      IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       ENDIF
-      IF (xdif1 .GE. 0) THEN
+      IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
@@ -1205,30 +1205,30 @@ CONTAINS
     i2 = ny
     xdif1 = p_table(ix,i1) - p_value
     xdif2 = p_table(ix,i2) - p_value
-    IF (xdif1 * xdif2 .LT. 0) THEN
+    IF (xdif1 * xdif2 < 0) THEN
       ! Use bisection to find the nearest cell
       DO
         im = (i1 + i2) / 2
         xdifm = p_table(ix,im) - p_value
-        IF (xdif1 * xdifm .LT. 0) THEN
+        IF (xdif1 * xdifm < 0) THEN
           i2 = im
         ELSE
           i1 = im
           xdif1 = xdifm
         ENDIF
-        IF (i2 - i1 .EQ. 1) EXIT
+        IF (i2 - i1 == 1) EXIT
       ENDDO
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      IF (warning .AND. rank .EQ. 0) THEN
+      IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'Argument to "find_value_from_table_alt" outside the range ', &
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       ENDIF
-      IF (xdif1 .GE. 0) THEN
+      IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
@@ -1264,30 +1264,30 @@ CONTAINS
     i2 = nx
     xdif1 = x(i1) - x_value
     xdif2 = x(i2) - x_value
-    IF (xdif1 * xdif2 .LT. 0) THEN
+    IF (xdif1 * xdif2 < 0) THEN
       ! Use bisection to find the nearest cell
       DO
         im = (i1 + i2) / 2
         xdifm = x(im) - x_value
-        IF (xdif1 * xdifm .LT. 0) THEN
+        IF (xdif1 * xdifm < 0) THEN
           i2 = im
         ELSE
           i1 = im
           xdif1 = xdifm
         ENDIF
-        IF (i2 - i1 .EQ. 1) EXIT
+        IF (i2 - i1 == 1) EXIT
       ENDDO
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
-      IF (warning .AND. rank .EQ. 0) THEN
+      IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'Argument to "find_value_from_table" outside the range ', &
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       ENDIF
-      IF (xdif1 .GE. 0) THEN
+      IF (xdif1 >= 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
@@ -1303,30 +1303,30 @@ CONTAINS
     i2 = ny
     xdif1 = p_table(ix,i1) - p_value
     xdif2 = p_table(ix,i2) - p_value
-    IF (xdif1 * xdif2 .LT. 0) THEN
+    IF (xdif1 * xdif2 < 0) THEN
       ! Use bisection to find the nearest cell
       DO
         im = (i1 + i2) / 2
         xdifm = p_table(ix,im) - p_value
-        IF (xdif1 * xdifm .LT. 0) THEN
+        IF (xdif1 * xdifm < 0) THEN
           i2 = im
         ELSE
           i1 = im
           xdif1 = xdifm
         ENDIF
-        IF (i2 - i1 .EQ. 1) EXIT
+        IF (i2 - i1 == 1) EXIT
       ENDDO
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      IF (warning .AND. rank .EQ. 0) THEN
+      IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'Argument to "find_value_from_table" outside the range ', &
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       ENDIF
-      IF (xdif1 .GE. 0) THEN
+      IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
@@ -1341,30 +1341,30 @@ CONTAINS
     i2 = ny
     xdif1 = p_table(ix,i1) - p_value
     xdif2 = p_table(ix,i2) - p_value
-    IF (xdif1 * xdif2 .LT. 0) THEN
+    IF (xdif1 * xdif2 < 0) THEN
       ! Use bisection to find the nearest cell
       DO
         im = (i1 + i2) / 2
         xdifm = p_table(ix,im) - p_value
-        IF (xdif1 * xdifm .LT. 0) THEN
+        IF (xdif1 * xdifm < 0) THEN
           i2 = im
         ELSE
           i1 = im
           xdif1 = xdifm
         ENDIF
-        IF (i2 - i1 .EQ. 1) EXIT
+        IF (i2 - i1 == 1) EXIT
       ENDDO
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
-      IF (warning .AND. rank .EQ. 0) THEN
+      IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'Argument to "find_value_from_table" outside the range ', &
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       ENDIF
-      IF (xdif1 .GE. 0) THEN
+      IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num

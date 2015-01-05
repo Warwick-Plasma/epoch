@@ -35,7 +35,7 @@ CONTAINS
   SUBROUTINE species_deck_initialise
 
     current_block = 0
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       n_species = 0
       ALLOCATE(species_names(4))
       ALLOCATE(species_blocks(4))
@@ -64,14 +64,14 @@ CONTAINS
     INTEGER :: errcode, ierr
     TYPE(primitive_stack) :: stack
 
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       CALL setup_species
       ALLOCATE(species_charge_set(n_species))
       species_charge_set = .FALSE.
 
       DO i = 1, n_species
         species_list(i)%name = species_names(i)
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           CALL integer_as_string(i, string)
           PRINT*, 'Name of species ', TRIM(ADJUSTL(string)), ' is ', &
               TRIM(species_names(i))
@@ -86,7 +86,7 @@ CONTAINS
         species_list(i)%charge = charge(i)
         species_list(i)%count = INT(part_count(i),i8)
         species_list(i)%dumpmask = INT(dumpmask_array(i))
-        IF (species_list(i)%ionise_to_species .GT. 0) &
+        IF (species_list(i)%ionise_to_species > 0) &
             species_list(i)%ionise = .TRUE.
       ENDDO
 
@@ -99,7 +99,7 @@ CONTAINS
       DEALLOCATE(ionisation_energies)
 
       DO i = 1, n_species
-        IF (TRIM(release_species(i)) .NE. '') THEN
+        IF (TRIM(release_species(i)) /= '') THEN
           CALL initialise_stack(stack)
           CALL tokenize(release_species(i), stack, errcode)
           nlevels = 0
@@ -114,13 +114,13 @@ CONTAINS
           ! this because sometimes extra values are returned on the stack
           nrelease = 0
           DO j = 1, SIZE(stack%entries)
-            IF (stack%entries(j)%value .GT. 0 &
-                .AND. stack%entries(j)%value .LE. n_species) &
+            IF (stack%entries(j)%value > 0 &
+                .AND. stack%entries(j)%value <= n_species) &
                     nrelease = nrelease + 1
           ENDDO
 
           ! If there's only one release species use it for all ionisation levels
-          IF (SIZE(stack%entries) .EQ. 1) THEN
+          IF (SIZE(stack%entries) == 1) THEN
             j = i
             species_list(stack%entries(1)%value)%electron = .TRUE.
             DO WHILE(species_list(j)%ionise)
@@ -128,7 +128,7 @@ CONTAINS
               j = species_list(j)%ionise_to_species
             ENDDO
           ! If there's a list of release species use it
-          ELSEIF (nlevels .EQ. nrelease) THEN
+          ELSEIF (nlevels == nrelease) THEN
             nlevels = 1
             j = i
             DO WHILE(species_list(j)%ionise)
@@ -146,7 +146,7 @@ CONTAINS
               species_list(j)%release_species = stack%entries(1)%value
               j = species_list(j)%ionise_to_species
             ENDDO
-            IF (rank .EQ. 0) THEN
+            IF (rank == 0) THEN
               DO iu = 1, nio_units ! Print to stdout and to file
                 io = io_units(iu)
                 WRITE(io,*) '*** WARNING ***'
@@ -167,9 +167,9 @@ CONTAINS
 
       ! Sanity check
       DO i = 1, n_species
-        IF (species_list(i)%species_type .EQ. c_species_id_photon) CYCLE
-        IF (species_list(i)%mass .GT. c_tiny) CYCLE
-        IF (rank .EQ. 0) THEN
+        IF (species_list(i)%species_type == c_species_id_photon) CYCLE
+        IF (species_list(i)%mass > c_tiny) CYCLE
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
@@ -204,7 +204,7 @@ CONTAINS
     current_block = current_block + 1
     got_name = .FALSE.
     species_dumpmask = c_io_always
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
     species_id = species_blocks(current_block)
     offset = 0
 
@@ -219,7 +219,7 @@ CONTAINS
     INTEGER :: i, io, iu, block_species_id
 
     IF (.NOT.got_name) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         CALL integer_as_string(current_block, id_string)
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -232,11 +232,11 @@ CONTAINS
       check_block = c_err_missing_elements
     ENDIF
 
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       block_species_id = n_species
       charge(n_species) = species_charge
       mass(n_species) = species_mass
-      IF (n_secondary_species_in_block .GT. 0) THEN
+      IF (n_secondary_species_in_block > 0) THEN
         ! Create an empty species for each ionisation energy listed in species
         ! block
         release_species(n_species) = release_species_list
@@ -266,7 +266,7 @@ CONTAINS
     INTEGER :: i, j, io, iu, n
 
     errcode = c_err_none
-    IF (value .EQ. blank .OR. element .EQ. blank) RETURN
+    IF (value == blank .OR. element == blank) RETURN
 
     IF (str_cmp(element, 'name')) THEN
       IF (got_name) THEN
@@ -274,7 +274,7 @@ CONTAINS
         RETURN
       ENDIF
       got_name = .TRUE.
-      IF (deck_state .NE. c_ds_first) RETURN
+      IF (deck_state /= c_ds_first) RETURN
       CALL grow_array(species_blocks, current_block)
       species_blocks(current_block) = create_species_number_from_name(value)
       RETURN
@@ -282,7 +282,7 @@ CONTAINS
 
     ! Collect ionisation energies for the species
     IF (str_cmp(element, 'ionisation_energies')) THEN
-      IF (deck_state .EQ. c_ds_first) THEN
+      IF (deck_state == c_ds_first) THEN
         NULLIFY(species_ionisation_energies)
         CALL initialise_stack(stack)
         CALL tokenize(value, stack, errcode)
@@ -320,7 +320,7 @@ CONTAINS
       species_dumpmask = as_integer_print(value, element, errcode)
     ENDIF
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     ! *************************************************************
     ! This section identifies a species. Generic
@@ -329,7 +329,7 @@ CONTAINS
     IF (str_cmp(element, 'identify')) THEN
       CALL identify_species(value, errcode)
       RETURN
-    END IF
+    ENDIF
 
     IF (str_cmp(element, 'mass')) THEN
       species_list(species_id)%mass = species_mass
@@ -338,17 +338,17 @@ CONTAINS
       ! like this ensures the right number of electron masses is removed for
       ! each ion.
       DO i = 1, n_species
-        IF (species_id .EQ. species_list(i)%release_species) THEN
+        IF (species_id == species_list(i)%release_species) THEN
           j = species_list(i)%ionise_to_species
-          DO WHILE(j .GT. 0)
+          DO WHILE(j > 0)
             species_list(j)%mass = species_list(j)%mass &
                 - species_list(species_id)%mass
             j = species_list(j)%ionise_to_species
           ENDDO
         ENDIF
       ENDDO
-      IF (species_list(species_id)%mass .LT. 0) THEN
-        IF (rank .EQ. 0) THEN
+      IF (species_list(species_id)%mass < 0) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
@@ -369,9 +369,9 @@ CONTAINS
       ! each ion. The species charge is considered set for the derived ionised
       ! species if it is touched in this routine.
       DO i = 1, n_species
-        IF (species_id .EQ. species_list(i)%release_species) THEN
+        IF (species_id == species_list(i)%release_species) THEN
           j = species_list(i)%ionise_to_species
-          DO WHILE(j .GT. 0)
+          DO WHILE(j > 0)
             species_list(j)%charge = species_list(j)%charge &
                 - species_list(species_id)%charge
             species_charge_set(j) = .TRUE.
@@ -383,7 +383,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'frac') .OR. str_cmp(element, 'fraction')) THEN
-      IF (npart_global .GE. 0) THEN
+      IF (npart_global >= 0) THEN
         species_list(species_id)%count = &
             INT(as_real_print(value, element, errcode) * npart_global)
       ELSE
@@ -500,7 +500,7 @@ CONTAINS
 
     IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho')) THEN
       dmin = as_real_print(value, element, errcode)
-      IF (dmin .LE. 0.0_num) dmin = EPSILON(1.0_num)
+      IF (dmin <= 0.0_num) dmin = EPSILON(1.0_num)
       initial_conditions(species_id)%density_min = dmin
       RETURN
     ENDIF
@@ -623,11 +623,11 @@ CONTAINS
 
     errcode = check_block
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     DO i = 1, n_species
-      IF (species_list(i)%mass .LT. 0) THEN
-        IF (rank .EQ. 0) THEN
+      IF (species_list(i)%mass < 0) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
@@ -638,7 +638,7 @@ CONTAINS
         errcode = c_err_missing_elements
       ENDIF
       IF (.NOT. species_charge_set(i)) THEN
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
@@ -648,8 +648,8 @@ CONTAINS
         ENDIF
         errcode = c_err_missing_elements
       ENDIF
-      IF (species_list(i)%npart_per_cell .GE. 0) THEN
-        IF (species_list(i)%count .GE. 0 .AND. rank .EQ. 0) THEN
+      IF (species_list(i)%npart_per_cell >= 0) THEN
+        IF (species_list(i)%count >= 0 .AND. rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** WARNING ***'
@@ -684,8 +684,8 @@ CONTAINS
 
     ! First issue a warning message if the name overrides a built-in one
     CALL load_block(name, block)
-    IF (block%ptype .NE. c_pt_bad .AND. block%ptype .NE. c_pt_null) THEN
-      IF (rank .EQ. 0) THEN
+    IF (block%ptype /= c_pt_bad .AND. block%ptype /= c_pt_null) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -744,11 +744,11 @@ CONTAINS
     n = 0
     l = 0
     i = 0
-    DO WHILE(n_electrons .GT. i)
+    DO WHILE(n_electrons > i)
       n = n + 1
       DO l = (n - 1) / 2, 0, -1
         i = i + 4 * l + 2
-        IF (n_electrons .LE. i) THEN
+        IF (n_electrons <= i) THEN
           n = n - l
           EXIT
         ENDIF
@@ -819,7 +819,7 @@ CONTAINS
     CALL initialise_stack(stack)
     IF (got_file) THEN
       IF (move_window) THEN
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
@@ -836,16 +836,16 @@ CONTAINS
       CALL push_to_stack(stack, block)
       CALL load_block(element, block)
       CALL push_to_stack(stack, block)
-      IF (ABS(mult - 1.0_num) .GT. c_tiny) array = mult * array
+      IF (ABS(mult - 1.0_num) > c_tiny) array = mult * array
     ELSE
       CALL tokenize(value, stack, errcode)
-      IF (ABS(mult - 1.0_num) .GT. c_tiny) &
+      IF (ABS(mult - 1.0_num) > c_tiny) &
           CALL tokenize(mult_string, stack, errcode)
 
       ! Sanity check
       array(1,1) = evaluate_at_point(stack, 1, 1, errcode)
-      IF (errcode .NE. c_err_none) THEN
-        IF (rank .EQ. 0) THEN
+      IF (errcode /= c_err_none) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
@@ -970,7 +970,7 @@ CONTAINS
       species_list(species_id)%species_type = c_species_id_photon
       species_charge_set(species_id) = .TRUE.
 #ifdef PHOTONS
-      IF (photon_species .EQ. -1) photon_species = species_id
+      IF (photon_species == -1) photon_species = species_id
 #else
       errcode = c_err_generic_warning
 #endif

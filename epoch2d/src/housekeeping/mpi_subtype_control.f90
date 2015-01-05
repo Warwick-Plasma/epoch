@@ -39,21 +39,10 @@ CONTAINS
   ! Run just before output takes place
   !----------------------------------------------------------------------------
 
-  SUBROUTINE create_subtypes(dump_code)
+  SUBROUTINE create_subtypes
 
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when writing data
-    INTEGER, INTENT(IN) :: dump_code
-    INTEGER :: n_dump_species, ispecies
-
-    ! count the number of dumped particles of each species
-    n_dump_species = 0
-    DO ispecies = 1, n_species
-      IF (IAND(species_list(ispecies)%dumpmask, dump_code) .NE. 0 &
-          .OR. IAND(dump_code, c_io_restartable) .NE. 0) THEN
-        n_dump_species = n_dump_species + 1
-      ENDIF
-    ENDDO
 
     ! Actually create the subtypes
     subtype_field = create_current_field_subtype()

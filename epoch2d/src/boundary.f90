@@ -21,11 +21,11 @@ CONTAINS
 
     cpml_boundaries = .FALSE.
     DO i = 1, 2*c_ndims
-      IF (bc_particle(i) .EQ. c_bc_other) bc_particle(i) = c_bc_reflect
-      IF (bc_field(i) .EQ. c_bc_other) bc_field(i) = c_bc_clamp
-      IF (bc_field(i) .EQ. c_bc_cpml_laser &
-          .OR. bc_field(i) .EQ. c_bc_cpml_outflow) cpml_boundaries = .TRUE.
-      IF (bc_field(i) .EQ. c_bc_simple_laser) add_laser(i) = .TRUE.
+      IF (bc_particle(i) == c_bc_other) bc_particle(i) = c_bc_reflect
+      IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) == c_bc_cpml_laser &
+          .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
+      IF (bc_field(i) == c_bc_simple_laser) add_laser(i) = .TRUE.
     ENDDO
 
     ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
@@ -36,27 +36,27 @@ CONTAINS
 
     ! Laser boundaries assume open particles unless otherwise specified.
     DO i = 1, 2*c_ndims
-      IF (bc_particle(i) .EQ. c_bc_simple_laser &
-          .OR. bc_particle(i) .EQ. c_bc_simple_outflow &
-          .OR. bc_particle(i) .EQ. c_bc_cpml_laser &
-          .OR. bc_particle(i) .EQ. c_bc_cpml_outflow) &
+      IF (bc_particle(i) == c_bc_simple_laser &
+          .OR. bc_particle(i) == c_bc_simple_outflow &
+          .OR. bc_particle(i) == c_bc_cpml_laser &
+          .OR. bc_particle(i) == c_bc_cpml_outflow) &
               bc_particle(i) = c_bc_open
     ENDDO
 
     ! Note: reflecting EM boundaries not yet implemented.
     DO i = 1, 2*c_ndims
-      IF (bc_field(i) .EQ. c_bc_reflect) bc_field(i) = c_bc_clamp
-      IF (bc_field(i) .EQ. c_bc_open) bc_field(i) = c_bc_simple_outflow
+      IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
     ENDDO
 
     ! Sanity check on particle boundaries
     error = .FALSE.
     DO i = 1, 2*c_ndims
-      IF (bc_particle(i) .EQ. c_bc_periodic &
-          .OR. bc_particle(i) .EQ. c_bc_reflect &
-          .OR. bc_particle(i) .EQ. c_bc_thermal &
-          .OR. bc_particle(i) .EQ. c_bc_open) CYCLE
-      IF (rank .EQ. 0) THEN
+      IF (bc_particle(i) == c_bc_periodic &
+          .OR. bc_particle(i) == c_bc_reflect &
+          .OR. bc_particle(i) == c_bc_thermal &
+          .OR. bc_particle(i) == c_bc_open) CYCLE
+      IF (rank == 0) THEN
         WRITE(*,*)
         WRITE(*,*) '*** ERROR ***'
         WRITE(*,*) 'Unrecognised particle boundary condition on "', &
@@ -95,7 +95,7 @@ CONTAINS
 
     basetype = mpireal
 
-    IF (direction .EQ. c_dir_x) THEN
+    IF (direction == c_dir_x) THEN
       proc1_min = proc_y_min
       proc1_max = proc_y_max
     ELSE
@@ -108,7 +108,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1), ng, basetype, proc1_min, &
         tag, temp, ng, basetype, proc1_max, tag, comm, status, errcode)
 
-    IF (proc1_max .NE. MPI_PROC_NULL) THEN
+    IF (proc1_max /= MPI_PROC_NULL) THEN
       n = 1
       DO i = n1_local+1, ng+n1_local
         field(i) = temp(n)
@@ -119,7 +119,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(n1_local+1-ng), ng, basetype, proc1_max, &
         tag, temp, ng, basetype, proc1_min, tag, comm, status, errcode)
 
-    IF (proc1_min .NE. MPI_PROC_NULL) THEN
+    IF (proc1_min /= MPI_PROC_NULL) THEN
       n = 1
       DO i = 1-ng, 0
         field(i) = temp(n)
@@ -150,7 +150,7 @@ CONTAINS
 
     szmax = sizes(1) * ng
     sz = sizes(2) * ng
-    IF (sz .GT. szmax) szmax = sz
+    IF (sz > szmax) szmax = sz
 
     ALLOCATE(temp(szmax))
 
@@ -164,7 +164,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max .NE. MPI_PROC_NULL) THEN
+    IF (proc_x_max /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = nx_local+1, subsizes(1)+nx_local
@@ -177,7 +177,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
         tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min .NE. MPI_PROC_NULL) THEN
+    IF (proc_x_min /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
@@ -199,7 +199,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
-    IF (proc_y_max .NE. MPI_PROC_NULL) THEN
+    IF (proc_y_max /= MPI_PROC_NULL) THEN
       n = 1
       DO j = ny_local+1, subsizes(2)+ny_local
       DO i = 1-ng, subsizes(1)-ng
@@ -212,7 +212,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
         tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
-    IF (proc_y_min .NE. MPI_PROC_NULL) THEN
+    IF (proc_y_min /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
@@ -247,7 +247,7 @@ CONTAINS
 
     szmax = sizes(1) * ng
     sz = sizes(2) * ng
-    IF (sz .GT. szmax) szmax = sz
+    IF (sz > szmax) szmax = sz
 
     ALLOCATE(temp(szmax))
 
@@ -261,7 +261,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max .NE. MPI_PROC_NULL) THEN
+    IF (proc_x_max /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = nx_local+1, subsizes(1)+nx_local
@@ -274,7 +274,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
         tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min .NE. MPI_PROC_NULL) THEN
+    IF (proc_x_min /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
@@ -296,7 +296,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
-    IF (proc_y_max .NE. MPI_PROC_NULL) THEN
+    IF (proc_y_max /= MPI_PROC_NULL) THEN
       n = 1
       DO j = ny_local+1, subsizes(2)+ny_local
       DO i = 1-ng, subsizes(1)-ng
@@ -309,7 +309,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
         tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
-    IF (proc_y_min .NE. MPI_PROC_NULL) THEN
+    IF (proc_y_min /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
@@ -333,9 +333,9 @@ CONTAINS
     INTEGER, INTENT(IN) :: stagger_type, boundary
     INTEGER :: i, nn
 
-    IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
+    IF (bc_field(boundary) == c_bc_periodic) RETURN
 
-    IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
+    IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng
           field(i-ng,:) = field(ng-i,:)
@@ -345,7 +345,7 @@ CONTAINS
           field(i-ng,:) = field(ng+1-i,:)
         ENDDO
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
+    ELSE IF (boundary == c_bd_x_max .AND. x_max_boundary) THEN
       nn = nx
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng
@@ -357,7 +357,7 @@ CONTAINS
         ENDDO
       ENDIF
 
-    ELSE IF (boundary .EQ. c_bd_y_min .AND. y_min_boundary) THEN
+    ELSE IF (boundary == c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
         DO i = 1, ng
           field(:,i-ng) = field(:,ng-i)
@@ -367,7 +367,7 @@ CONTAINS
           field(:,i-ng) = field(:,ng+1-i)
         ENDDO
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_y_max .AND. y_max_boundary) THEN
+    ELSE IF (boundary == c_bd_y_max .AND. y_max_boundary) THEN
       nn = ny
       IF (stagger(c_dir_y,stagger_type)) THEN
         DO i = 1, ng
@@ -390,9 +390,9 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER :: i, nn
 
-    IF (bc_field(boundary) .EQ. c_bc_periodic) RETURN
+    IF (bc_field(boundary) == c_bc_periodic) RETURN
 
-    IF (boundary .EQ. c_bd_x_min .AND. x_min_boundary) THEN
+    IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng-1
           field(i-ng,:) = -field(ng-i,:)
@@ -403,7 +403,7 @@ CONTAINS
           field(i-ng,:) = -field(ng+1-i,:)
         ENDDO
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_x_max .AND. x_max_boundary) THEN
+    ELSE IF (boundary == c_bd_x_max .AND. x_max_boundary) THEN
       nn = nx
       IF (stagger(c_dir_x,stagger_type)) THEN
         field(nn,:) = 0.0_num
@@ -416,7 +416,7 @@ CONTAINS
         ENDDO
       ENDIF
 
-    ELSE IF (boundary .EQ. c_bd_y_min .AND. y_min_boundary) THEN
+    ELSE IF (boundary == c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
         DO i = 1, ng-1
           field(:,i-ng) = -field(:,ng-i)
@@ -427,7 +427,7 @@ CONTAINS
           field(:,i-ng) = -field(:,ng+1-i)
         ENDDO
       ENDIF
-    ELSE IF (boundary .EQ. c_bd_y_max .AND. y_max_boundary) THEN
+    ELSE IF (boundary == c_bd_y_max .AND. y_max_boundary) THEN
       nn = ny
       IF (stagger(c_dir_y,stagger_type)) THEN
         field(:,nn) = 0.0_num
@@ -475,8 +475,8 @@ CONTAINS
         neighbour(-1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_min) .EQ. c_bc_reflect .AND. x_min_boundary)) THEN
-      IF (flip_dir .EQ. c_dir_x) THEN
+    IF ((bc_particle(c_bd_x_min) == c_bc_reflect .AND. x_min_boundary)) THEN
+      IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(i,:) = array(i,:) - array(-i,:)
@@ -496,8 +496,8 @@ CONTAINS
         neighbour( 1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_max) .EQ. c_bc_reflect .AND. x_max_boundary)) THEN
-      IF (flip_dir .EQ. c_dir_x) THEN
+    IF ((bc_particle(c_bd_x_max) == c_bc_reflect .AND. x_max_boundary)) THEN
+      IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(nn-i,:) = array(nn-i,:) - array(nn+i,:)
@@ -529,8 +529,8 @@ CONTAINS
         neighbour(0,-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_y_min) .EQ. c_bc_reflect .AND. y_min_boundary)) THEN
-      IF (flip_dir .EQ. c_dir_y) THEN
+    IF ((bc_particle(c_bd_y_min) == c_bc_reflect .AND. y_min_boundary)) THEN
+      IF (flip_dir == c_dir_y) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(:,i) = array(:,i) - array(:,-i)
@@ -550,8 +550,8 @@ CONTAINS
         neighbour(0, 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_y_max) .EQ. c_bc_reflect .AND. y_max_boundary)) THEN
-      IF (flip_dir .EQ. c_dir_y) THEN
+    IF ((bc_particle(c_bd_y_max) == c_bc_reflect .AND. y_max_boundary)) THEN
+      IF (flip_dir == c_dir_y) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(:,nn-i) = array(:,nn-i) - array(:,nn+i)
@@ -585,14 +585,14 @@ CONTAINS
 
     ! Perfectly conducting boundaries
     DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
-      IF (bc_field(i) .EQ. c_bc_conduct) THEN
+      IF (bc_field(i) == c_bc_conduct) THEN
         CALL field_clamp_zero(ey, ng, c_stagger_ey, i)
         CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
       ENDIF
     ENDDO
 
     DO i = c_bd_y_min, c_bd_y_max, c_bd_y_max - c_bd_y_min
-      IF (bc_field(i) .EQ. c_bc_conduct) THEN
+      IF (bc_field(i) == c_bc_conduct) THEN
         CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
         CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
       ENDIF
@@ -600,18 +600,18 @@ CONTAINS
 
     DO i = 1, 2*c_ndims
       ! These apply zero field boundary conditions on the edges
-      IF (bc_field(i) .EQ. c_bc_clamp &
-          .OR. bc_field(i) .EQ. c_bc_simple_laser &
-          .OR. bc_field(i) .EQ. c_bc_simple_outflow) THEN
+      IF (bc_field(i) == c_bc_clamp &
+          .OR. bc_field(i) == c_bc_simple_laser &
+          .OR. bc_field(i) == c_bc_simple_outflow) THEN
         CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
         CALL field_clamp_zero(ey, ng, c_stagger_ey, i)
         CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
       ENDIF
 
       ! These apply zero gradient boundary conditions on the edges
-      IF (bc_field(i) .EQ. c_bc_zero_gradient &
-          .OR. bc_field(i) .EQ. c_bc_cpml_laser &
-          .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
+      IF (bc_field(i) == c_bc_zero_gradient &
+          .OR. bc_field(i) == c_bc_cpml_laser &
+          .OR. bc_field(i) == c_bc_cpml_outflow) THEN
         CALL field_zero_gradient(ex, c_stagger_ex, i)
         CALL field_zero_gradient(ey, c_stagger_ey, i)
         CALL field_zero_gradient(ez, c_stagger_ez, i)
@@ -636,7 +636,7 @@ CONTAINS
 
     ! Perfectly conducting boundaries
     DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
-      IF (bc_field(i) .EQ. c_bc_conduct) THEN
+      IF (bc_field(i) == c_bc_conduct) THEN
         CALL field_clamp_zero(bx, ng, c_stagger_bx, i)
         CALL field_zero_gradient(by, c_stagger_by, i)
         CALL field_zero_gradient(bz, c_stagger_bz, i)
@@ -644,7 +644,7 @@ CONTAINS
     ENDDO
 
     DO i = c_bd_y_min, c_bd_y_max, c_bd_y_max - c_bd_y_min
-      IF (bc_field(i) .EQ. c_bc_conduct) THEN
+      IF (bc_field(i) == c_bc_conduct) THEN
         CALL field_clamp_zero(by, ng, c_stagger_by, i)
         CALL field_zero_gradient(bx, c_stagger_bx, i)
         CALL field_zero_gradient(bz, c_stagger_bz, i)
@@ -653,18 +653,18 @@ CONTAINS
 
     DO i = 1, 2*c_ndims
       ! These apply zero field boundary conditions on the edges
-      IF (bc_field(i) .EQ. c_bc_clamp &
-          .OR. bc_field(i) .EQ. c_bc_simple_laser &
-          .OR. bc_field(i) .EQ. c_bc_simple_outflow) THEN
+      IF (bc_field(i) == c_bc_clamp &
+          .OR. bc_field(i) == c_bc_simple_laser &
+          .OR. bc_field(i) == c_bc_simple_outflow) THEN
         CALL field_clamp_zero(bx, ng, c_stagger_bx, i)
         CALL field_clamp_zero(by, ng, c_stagger_by, i)
         CALL field_clamp_zero(bz, ng, c_stagger_bz, i)
       ENDIF
 
       ! These apply zero gradient boundary conditions on the edges
-      IF (bc_field(i) .EQ. c_bc_zero_gradient &
-          .OR. bc_field(i) .EQ. c_bc_cpml_laser &
-          .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
+      IF (bc_field(i) == c_bc_zero_gradient &
+          .OR. bc_field(i) == c_bc_cpml_laser &
+          .OR. bc_field(i) == c_bc_cpml_outflow) THEN
         CALL field_zero_gradient(bx, c_stagger_bx, i)
         CALL field_zero_gradient(by, c_stagger_by, i)
         CALL field_zero_gradient(bz, c_stagger_bz, i)
@@ -683,25 +683,25 @@ CONTAINS
 
     IF (x_min_boundary) THEN
       i = c_bd_x_min
-      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+      IF (add_laser(i) .OR. bc_field(i) == c_bc_simple_outflow) &
           CALL outflow_bcs_x_min
     ENDIF
 
     IF (x_max_boundary) THEN
       i = c_bd_x_max
-      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+      IF (add_laser(i) .OR. bc_field(i) == c_bc_simple_outflow) &
           CALL outflow_bcs_x_max
     ENDIF
 
     IF (y_min_boundary) THEN
       i = c_bd_y_min
-      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+      IF (add_laser(i) .OR. bc_field(i) == c_bc_simple_outflow) &
           CALL outflow_bcs_y_min
     ENDIF
 
     IF (y_max_boundary) THEN
       i = c_bd_y_max
-      IF (add_laser(i) .OR. bc_field(i) .EQ. c_bc_simple_outflow) &
+      IF (add_laser(i) .OR. bc_field(i) == c_bc_simple_outflow) &
           CALL outflow_bcs_y_max
     ENDIF
 
@@ -731,7 +731,7 @@ CONTAINS
 
       DO iy = -1, 1
         DO ix = -1, 1
-          IF (ABS(ix) + ABS(iy) .EQ. 0) CYCLE
+          IF (ABS(ix) + ABS(iy) == 0) CYCLE
           CALL create_empty_partlist(send(ix, iy))
           CALL create_empty_partlist(recv(ix, iy))
         ENDDO
@@ -745,29 +745,29 @@ CONTAINS
         out_of_bounds = .FALSE.
 
         part_pos = cur%part_pos(1)
-        IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser &
-            .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
+        IF (bc_field(c_bd_x_min) == c_bc_cpml_laser &
+            .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
           IF (x_min_boundary) THEN
             ! Particle has left the system
-            IF (part_pos .LT. x_min) THEN
+            IF (part_pos < x_min) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos .LT. x_min_local) xbd = -1
+            IF (part_pos < x_min_local) xbd = -1
           ENDIF
         ELSE
           ! Particle has left this processor
-          IF (part_pos .LT. x_min_local) THEN
+          IF (part_pos < x_min_local) THEN
             xbd = -1
             ! Particle has left the system
             IF (x_min_boundary) THEN
               xbd = 0
-              IF (bc_particle(c_bd_x_min) .EQ. c_bc_reflect) THEN
+              IF (bc_particle(c_bd_x_min) == c_bc_reflect) THEN
                 cur%part_pos(1) = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+              ELSE IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
@@ -804,7 +804,7 @@ CONTAINS
 
                 cur%part_pos(1) = 2.0_num * x_min - part_pos
 
-              ELSE IF (bc_particle(c_bd_x_min) .EQ. c_bc_periodic) THEN
+              ELSE IF (bc_particle(c_bd_x_min) == c_bc_periodic) THEN
                 xbd = -1
                 cur%part_pos(1) = part_pos + length_x
               ELSE
@@ -815,29 +815,29 @@ CONTAINS
           ENDIF
         ENDIF
 
-        IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser &
-            .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
+        IF (bc_field(c_bd_x_max) == c_bc_cpml_laser &
+            .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
           IF (x_max_boundary) THEN
             ! Particle has left the system
-            IF (part_pos .GE. x_max) THEN
+            IF (part_pos >= x_max) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos .GE. x_max_local) xbd =  1
+            IF (part_pos >= x_max_local) xbd =  1
           ENDIF
         ELSE
           ! Particle has left this processor
-          IF (part_pos .GE. x_max_local) THEN
+          IF (part_pos >= x_max_local) THEN
             xbd = 1
             ! Particle has left the system
             IF (x_max_boundary) THEN
               xbd = 0
-              IF (bc_particle(c_bd_x_max) .EQ. c_bc_reflect) THEN
+              IF (bc_particle(c_bd_x_max) == c_bc_reflect) THEN
                 cur%part_pos(1) = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+              ELSE IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
@@ -874,7 +874,7 @@ CONTAINS
 
                 cur%part_pos(1) = 2.0_num * x_max - part_pos
 
-              ELSE IF (bc_particle(c_bd_x_max) .EQ. c_bc_periodic) THEN
+              ELSE IF (bc_particle(c_bd_x_max) == c_bc_periodic) THEN
                 xbd = 1
                 cur%part_pos(1) = part_pos - length_x
               ELSE
@@ -886,29 +886,29 @@ CONTAINS
         ENDIF
 
         part_pos = cur%part_pos(2)
-        IF (bc_field(c_bd_y_min) .EQ. c_bc_cpml_laser &
-            .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
+        IF (bc_field(c_bd_y_min) == c_bc_cpml_laser &
+            .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
           IF (y_min_boundary) THEN
             ! Particle has left the system
-            IF (part_pos .LT. y_min) THEN
+            IF (part_pos < y_min) THEN
               ybd = 0
               out_of_bounds = .TRUE.
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos .LT. y_min_local) ybd = -1
+            IF (part_pos < y_min_local) ybd = -1
           ENDIF
         ELSE
           ! Particle has left this processor
-          IF (part_pos .LT. y_min_local) THEN
+          IF (part_pos < y_min_local) THEN
             ybd = -1
             ! Particle has left the system
             IF (y_min_boundary) THEN
               ybd = 0
-              IF (bc_particle(c_bd_y_min) .EQ. c_bc_reflect) THEN
+              IF (bc_particle(c_bd_y_min) == c_bc_reflect) THEN
                 cur%part_pos(2) = 2.0_num * y_min - part_pos
                 cur%part_p(2) = -cur%part_p(2)
-              ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
+              ELSE IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -945,7 +945,7 @@ CONTAINS
 
                 cur%part_pos(2) = 2.0_num * y_min - part_pos
 
-              ELSE IF (bc_particle(c_bd_y_min) .EQ. c_bc_periodic) THEN
+              ELSE IF (bc_particle(c_bd_y_min) == c_bc_periodic) THEN
                 ybd = -1
                 cur%part_pos(2) = part_pos + length_y
               ELSE
@@ -956,29 +956,29 @@ CONTAINS
           ENDIF
         ENDIF
 
-        IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser &
-            .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
+        IF (bc_field(c_bd_y_max) == c_bc_cpml_laser &
+            .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
           IF (y_max_boundary) THEN
             ! Particle has left the system
-            IF (part_pos .GE. y_max) THEN
+            IF (part_pos >= y_max) THEN
               ybd = 0
               out_of_bounds = .TRUE.
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos .GE. y_max_local) ybd =  1
+            IF (part_pos >= y_max_local) ybd =  1
           ENDIF
         ELSE
           ! Particle has left this processor
-          IF (part_pos .GE. y_max_local) THEN
+          IF (part_pos >= y_max_local) THEN
             ybd = 1
             ! Particle has left the system
             IF (y_max_boundary) THEN
               ybd = 0
-              IF (bc_particle(c_bd_y_max) .EQ. c_bc_reflect) THEN
+              IF (bc_particle(c_bd_y_max) == c_bc_reflect) THEN
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
                 cur%part_p(2) = -cur%part_p(2)
-              ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
+              ELSE IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -1015,7 +1015,7 @@ CONTAINS
 
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
 
-              ELSE IF (bc_particle(c_bd_y_max) .EQ. c_bc_periodic) THEN
+              ELSE IF (bc_particle(c_bd_y_max) == c_bc_periodic) THEN
                 ybd = 1
                 cur%part_pos(2) = part_pos - length_y
               ELSE
@@ -1036,7 +1036,7 @@ CONTAINS
           ELSE
             DEALLOCATE(cur)
           ENDIF
-        ELSE IF (ABS(xbd) + ABS(ybd) .GT. 0) THEN
+        ELSE IF (ABS(xbd) + ABS(ybd) > 0) THEN
           ! Particle has left processor, send it to its neighbour
           CALL remove_particle_from_partlist(&
               species_list(ispecies)%attached_list, cur)
@@ -1050,7 +1050,7 @@ CONTAINS
       ! swap Particles
       DO iy = -1, 1
         DO ix = -1, 1
-          IF (ABS(ix) + ABS(iy) .EQ. 0) CYCLE
+          IF (ABS(ix) + ABS(iy) == 0) CYCLE
           ixp = -ix
           iyp = -iy
           CALL partlist_sendrecv(send(ix, iy), recv(ixp, iyp), &
@@ -1062,7 +1062,7 @@ CONTAINS
 
       DO iy = -1, 1
         DO ix = -1, 1
-          IF (ABS(ix) + ABS(iy) .EQ. 0) CYCLE
+          IF (ABS(ix) + ABS(iy) == 0) CYCLE
           CALL destroy_partlist(send(ix, iy))
           CALL destroy_partlist(recv(ix, iy))
         ENDDO
@@ -1084,7 +1084,7 @@ CONTAINS
     CALL processor_summation_bcs(jz, jng, c_dir_z)
 
     DO i = 1, 2*c_ndims
-      IF (bc_particle(i) .EQ. c_bc_reflect) THEN
+      IF (bc_particle(i) == c_bc_reflect) THEN
         CALL field_clamp_zero(jx, jng, c_stagger_jx, i)
         CALL field_clamp_zero(jy, jng, c_stagger_jy, i)
         CALL field_clamp_zero(jz, jng, c_stagger_jz, i)
@@ -1138,20 +1138,20 @@ CONTAINS
     ! ============= x_min boundary =============
 
     i = c_bd_x_min
-    IF (bc_field(i) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(i) == c_bc_cpml_laser &
+        .OR. bc_field(i) == c_bc_cpml_outflow) THEN
       cpml_x_min_start = nx+1
       cpml_x_min_end = 0
       cpml_x_min_offset = 0
 
-      IF (nx_global_min .LE. cpml_thickness) THEN
+      IF (nx_global_min <= cpml_thickness) THEN
         cpml_x_min = .TRUE.
         cpml_x_min_start = 1 ! in local grid coordinates
 
         ! The following distinction is necessary because, in principle, it is
         ! possible for the local domain to lie completely within the boundary
         ! layer.
-        IF (nx_global_max .GE. cpml_thickness) THEN
+        IF (nx_global_max >= cpml_thickness) THEN
           ! in local grid coordinates
           ! global -> local: ixl = ixg - nx_global_min + 1
           cpml_x_min_end = cpml_thickness - nx_global_min + 1
@@ -1189,8 +1189,8 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (nx_global_min .LE. cpml_thickness + fng + 1 &
-          .AND. nx_global_max .GE. cpml_thickness + fng + 1) THEN
+      IF (nx_global_min <= cpml_thickness + fng + 1 &
+          .AND. nx_global_max >= cpml_thickness + fng + 1) THEN
         add_laser(i) = .TRUE.
         cpml_x_min_laser_idx = cpml_thickness + fng + 1 - nx_global_min
       ENDIF
@@ -1200,20 +1200,20 @@ CONTAINS
 
     i = c_bd_x_max
     ! Same as x_min using the transformation ix -> nx_global - ix + 1
-    IF (bc_field(i) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(i) == c_bc_cpml_laser &
+        .OR. bc_field(i) == c_bc_cpml_outflow) THEN
       cpml_x_max_start = nx+1
       cpml_x_max_end = 0
       cpml_x_max_offset = 0
 
-      IF (nx_global_max .GE. nx_global - cpml_thickness + 1) THEN
+      IF (nx_global_max >= nx_global - cpml_thickness + 1) THEN
         cpml_x_max = .TRUE.
         cpml_x_max_end = nx ! in local grid coordinates
 
         ! The following distinction is necessary because, in principle, it is
         ! possible for the local domain to lie completely within the boundary
         ! layer.
-        IF (nx_global_min .LE. nx_global - cpml_thickness + 1) THEN
+        IF (nx_global_min <= nx_global - cpml_thickness + 1) THEN
           ! in local grid coordinates
           ! global -> local: ixl = ixg - nx_global_min + 1
           cpml_x_max_start = nx_global - cpml_thickness + 1 - nx_global_min + 1
@@ -1251,8 +1251,8 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (nx_global_min .LE. nx_global - cpml_thickness - fng + 2 &
-          .AND. nx_global_max .GE. nx_global - cpml_thickness - fng + 2) THEN
+      IF (nx_global_min <= nx_global - cpml_thickness - fng + 2 &
+          .AND. nx_global_max >= nx_global - cpml_thickness - fng + 2) THEN
         add_laser(i) = .TRUE.
         cpml_x_max_laser_idx = &
             nx_global - cpml_thickness - fng + 2 - nx_global_min
@@ -1262,20 +1262,20 @@ CONTAINS
     ! ============= y_min boundary =============
 
     i = c_bd_y_min
-    IF (bc_field(i) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(i) == c_bc_cpml_laser &
+        .OR. bc_field(i) == c_bc_cpml_outflow) THEN
       cpml_y_min_start = ny+1
       cpml_y_min_end = 0
       cpml_y_min_offset = 0
 
-      IF (ny_global_min .LE. cpml_thickness) THEN
+      IF (ny_global_min <= cpml_thickness) THEN
         cpml_y_min = .TRUE.
         cpml_y_min_start = 1 ! in local grid coordinates
 
         ! The following distinction is necessary because, in principle, it is
         ! possible for the local domain to lie completely within the boundary
         ! layer.
-        IF (ny_global_max .GE. cpml_thickness) THEN
+        IF (ny_global_max >= cpml_thickness) THEN
           ! in local grid coordinates
           ! global -> local: iyl = iyg - ny_global_min + 1
           cpml_y_min_end = cpml_thickness - ny_global_min + 1
@@ -1313,8 +1313,8 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (ny_global_min .LE. cpml_thickness + fng + 1 &
-          .AND. ny_global_max .GE. cpml_thickness + fng + 1) THEN
+      IF (ny_global_min <= cpml_thickness + fng + 1 &
+          .AND. ny_global_max >= cpml_thickness + fng + 1) THEN
         add_laser(i) = .TRUE.
         cpml_y_min_laser_idx = cpml_thickness + fng + 1 - ny_global_min
       ENDIF
@@ -1324,20 +1324,20 @@ CONTAINS
 
     i = c_bd_y_max
     ! Same as y_min using the transformation iy -> ny_global - iy + 1
-    IF (bc_field(i) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(i) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(i) == c_bc_cpml_laser &
+        .OR. bc_field(i) == c_bc_cpml_outflow) THEN
       cpml_y_max_start = ny+1
       cpml_y_max_end = 0
       cpml_y_max_offset = 0
 
-      IF (ny_global_max .GE. ny_global - cpml_thickness + 1) THEN
+      IF (ny_global_max >= ny_global - cpml_thickness + 1) THEN
         cpml_y_max = .TRUE.
         cpml_y_max_end = ny ! in local grid coordinates
 
         ! The following distinction is necessary because, in principle, it is
         ! possible for the local domain to lie completely within the boundary
         ! layer.
-        IF (ny_global_min .LE. ny_global - cpml_thickness + 1) THEN
+        IF (ny_global_min <= ny_global - cpml_thickness + 1) THEN
           ! in local grid coordinates
           ! global -> local: iyl = iyg - ny_global_min + 1
           cpml_y_max_start = ny_global - cpml_thickness + 1 - ny_global_min + 1
@@ -1375,8 +1375,8 @@ CONTAINS
       ENDIF
 
       ! Ghost cells start at the edge of the CPML boundary
-      IF (ny_global_min .LE. ny_global - cpml_thickness - fng + 2 &
-          .AND. ny_global_max .GE. ny_global - cpml_thickness - fng + 2) THEN
+      IF (ny_global_min <= ny_global - cpml_thickness - fng + 2 &
+          .AND. ny_global_max >= ny_global - cpml_thickness - fng + 2) THEN
         add_laser(i) = .TRUE.
         cpml_y_max_laser_idx = &
             ny_global - cpml_thickness - fng + 2 - ny_global_min
@@ -1445,8 +1445,8 @@ CONTAINS
 
     ! ============= x_min boundary =============
 
-    IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(c_bd_x_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
       DO iy = 1,ny
         DO ipos = cpml_x_min_start,cpml_x_min_end
           kappa = cpml_kappa_ex(ipos)
@@ -1469,8 +1469,8 @@ CONTAINS
 
     ! ============= x_max boundary =============
 
-    IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(c_bd_x_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
       DO iy = 1,ny
         DO ipos = cpml_x_max_start,cpml_x_max_end
           kappa = cpml_kappa_ex(ipos)
@@ -1493,8 +1493,8 @@ CONTAINS
 
     ! ============= y_min boundary =============
 
-    IF (bc_field(c_bd_y_min) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(c_bd_y_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
       DO ipos = cpml_y_min_start,cpml_y_min_end
         kappa = cpml_kappa_ey(ipos)
         sigma = cpml_sigma_ey(ipos)
@@ -1517,8 +1517,8 @@ CONTAINS
 
     ! ============= y_max boundary =============
 
-    IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(c_bd_y_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
       DO ipos = cpml_y_max_start,cpml_y_max_end
         kappa = cpml_kappa_ey(ipos)
         sigma = cpml_sigma_ey(ipos)
@@ -1552,8 +1552,8 @@ CONTAINS
 
     ! ============= x_min boundary =============
 
-    IF (bc_field(c_bd_x_min) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_x_min) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(c_bd_x_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
       DO iy = 1,ny
         DO ipos = cpml_x_min_start,cpml_x_min_end
           kappa = cpml_kappa_bx(ipos)
@@ -1576,8 +1576,8 @@ CONTAINS
 
     ! ============= x_max boundary =============
 
-    IF (bc_field(c_bd_x_max) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_x_max) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(c_bd_x_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
       DO iy = 1,ny
         DO ipos = cpml_x_max_start-1,cpml_x_max_end-1
           kappa = cpml_kappa_bx(ipos)
@@ -1600,8 +1600,8 @@ CONTAINS
 
     ! ============= y_min boundary =============
 
-    IF (bc_field(c_bd_y_min) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_y_min) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(c_bd_y_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
       DO ipos = cpml_y_min_start,cpml_y_min_end
         kappa = cpml_kappa_by(ipos)
         sigma = cpml_sigma_by(ipos)
@@ -1624,8 +1624,8 @@ CONTAINS
 
     ! ============= y_max boundary =============
 
-    IF (bc_field(c_bd_y_max) .EQ. c_bc_cpml_laser &
-        .OR. bc_field(c_bd_y_max) .EQ. c_bc_cpml_outflow) THEN
+    IF (bc_field(c_bd_y_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
       DO ipos = cpml_y_max_start-1,cpml_y_max_end-1
         kappa = cpml_kappa_by(ipos)
         sigma = cpml_sigma_by(ipos)

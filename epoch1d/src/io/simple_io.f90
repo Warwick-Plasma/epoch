@@ -26,8 +26,8 @@ CONTAINS
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
         MPI_INFO_NULL, fh, errcode)
 
-    IF (errcode .NE. 0) THEN
-      IF (rank .EQ. 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
+    IF (errcode /= 0) THEN
+      IF (rank == 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF

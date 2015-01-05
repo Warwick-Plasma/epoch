@@ -41,7 +41,7 @@ CONTAINS
 
       ! Check the final answers
       DO i = 1, n_elements
-        IF (eval_stack%entries(i) .NE. array(i)) THEN
+        IF (eval_stack%entries(i) /= array(i)) THEN
           PRINT*,i,eval_stack%entries(i),array(i),eval_stack%entries(i)-array(i)
         ENDIF
       ENDDO
@@ -67,20 +67,20 @@ CONTAINS
 
     DO i = 1, input_stack%stack_point
       block = input_stack%entries(i)
-      IF (block%ptype .EQ. c_pt_variable) THEN
+      IF (block%ptype == c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
-      ELSE IF (block%ptype .EQ. c_pt_species) THEN
+      ELSE IF (block%ptype == c_pt_species) THEN
         CALL do_species(block%value, err)
-      ELSE IF (block%ptype .EQ. c_pt_operator) THEN
+      ELSE IF (block%ptype == c_pt_operator) THEN
         CALL do_operator(block%value, err)
-      ELSE IF (block%ptype .EQ. c_pt_constant &
-          .OR. block%ptype .EQ. c_pt_default_constant) THEN
+      ELSE IF (block%ptype == c_pt_constant &
+          .OR. block%ptype == c_pt_default_constant) THEN
         CALL do_constant(block%value, .FALSE., ix, err)
-      ELSE IF (block%ptype .EQ. c_pt_function) THEN
+      ELSE IF (block%ptype == c_pt_function) THEN
         CALL do_functions(block%value, .FALSE., ix, err)
       ENDIF
 
-      IF (err .NE. c_err_none) THEN
+      IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP
@@ -106,20 +106,20 @@ CONTAINS
 
     DO i = 1, input_stack%stack_point
       block = input_stack%entries(i)
-      IF (block%ptype .EQ. c_pt_variable) THEN
+      IF (block%ptype == c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
-      ELSE IF (block%ptype .EQ. c_pt_species) THEN
+      ELSE IF (block%ptype == c_pt_species) THEN
         CALL do_species(block%value, err)
-      ELSE IF (block%ptype .EQ. c_pt_operator) THEN
+      ELSE IF (block%ptype == c_pt_operator) THEN
         CALL do_operator(block%value, err)
-      ELSE IF (block%ptype .EQ. c_pt_constant &
-          .OR. block%ptype .EQ. c_pt_default_constant) THEN
+      ELSE IF (block%ptype == c_pt_constant &
+          .OR. block%ptype == c_pt_default_constant) THEN
         CALL do_constant(block%value, .FALSE., ix, err)
-      ELSE IF (block%ptype .EQ. c_pt_function) THEN
+      ELSE IF (block%ptype == c_pt_function) THEN
         CALL do_functions(block%value, .FALSE., ix, err)
       ENDIF
 
-      IF (err .NE. c_err_none) THEN
+      IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP
@@ -135,7 +135,7 @@ CONTAINS
 
     TYPE(stack_list), POINTER :: sl_tmp
 
-    IF (sl_size .EQ. 0) THEN
+    IF (sl_size == 0) THEN
       ALLOCATE(sl_head)
       sl_tail => sl_head
     ELSE
@@ -180,23 +180,23 @@ CONTAINS
 
     DO i = 1, input_stack%stack_point
       block = input_stack%entries(i)
-      IF (block%ptype .EQ. c_pt_variable) THEN
+      IF (block%ptype == c_pt_variable) THEN
         CALL push_on_eval(block%numerical_data)
-      ELSE IF (block%ptype .EQ. c_pt_species) THEN
+      ELSE IF (block%ptype == c_pt_species) THEN
         CALL do_species(block%value, err)
-      ELSE IF (block%ptype .EQ. c_pt_operator) THEN
+      ELSE IF (block%ptype == c_pt_operator) THEN
         CALL do_operator(block%value, err)
         CALL update_stack_for_block(block, err)
-      ELSE IF (block%ptype .EQ. c_pt_constant &
-          .OR. block%ptype .EQ. c_pt_default_constant) THEN
+      ELSE IF (block%ptype == c_pt_constant &
+          .OR. block%ptype == c_pt_default_constant) THEN
         CALL do_constant(block%value, .TRUE., 1, err)
         CALL update_stack_for_block(block, err)
-      ELSE IF (block%ptype .EQ. c_pt_function) THEN
+      ELSE IF (block%ptype == c_pt_function) THEN
         CALL do_functions(block%value, .TRUE., 1, err)
         CALL update_stack_for_block(block, err)
       ENDIF
 
-      IF (err .NE. c_err_none) THEN
+      IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP
@@ -206,13 +206,13 @@ CONTAINS
     ! We may now just be left with a list of values on the eval_stack
     ! If so, push them onto sl_tail%stack
     i = eval_stack%stack_point
-    IF (i .GT. 0) CALL update_stack(i)
+    IF (i > 0) CALL update_stack(i)
 
     ! Now populate output_stack with the simplified expression
     CALL initialise_stack(output_stack)
     output_stack%should_simplify = .FALSE.
 
-    IF (sl_size .GT. 0) THEN
+    IF (sl_size > 0) THEN
       CALL append_stack(output_stack, sl_tail%stack)
       DEALLOCATE(sl_tail)
       sl_size = 0
@@ -245,7 +245,7 @@ CONTAINS
     DO i = 1, nvalues
       entries(n) = eval_stack%entries(sp)
       flags(n) = eval_stack%flags(sp)
-      IF (flags(n) .NE. 0) THEN
+      IF (flags(n) /= 0) THEN
         sl_size = sl_size - 1
         sl_part => sl_tail
         sl_tail => sl_tail%prev
@@ -257,7 +257,7 @@ CONTAINS
 
     CALL sl_append()
     DO i = 1, nvalues
-      IF (flags(i) .EQ. 0) THEN
+      IF (flags(i) == 0) THEN
         new_block%numerical_data = entries(i)
         CALL push_to_stack(sl_tail%stack, new_block)
       ELSE
@@ -278,20 +278,20 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: nvalues
 
-    IF (err .EQ. c_err_other) THEN
+    IF (err == c_err_other) THEN
       err = c_err_none
       ! Operator just pushed a bogus value to stack, so we'll ignore it
       eval_stack%stack_point = eval_stack%stack_point - 1
       CALL push_eval_flag()
       CALL sl_append()
       CALL push_to_stack(sl_tail%stack, block)
-      IF (block%value .EQ. c_const_time) sl_tail%stack%is_time_varying = .TRUE.
+      IF (block%value == c_const_time) sl_tail%stack%is_time_varying = .TRUE.
       RETURN
     ENDIF
 
     ! Number of eval_stack entries consumed by operator
     nvalues = eval_stack%nvalues
-    IF (nvalues .EQ. 0) RETURN
+    IF (nvalues == 0) RETURN
 
     eval_stack%nvalues = 0
     ! Operator just pushed a bogus value to stack, so we'll ignore it
@@ -318,7 +318,7 @@ CONTAINS
 
     CALL basic_evaluate(input_stack, ix, err)
 
-    IF (eval_stack%stack_point .NE. n_elements) err = IOR(err, c_err_bad_value)
+    IF (eval_stack%stack_point /= n_elements) err = IOR(err, c_err_bad_value)
 
     ! Pop off the final answers
     DO i = MIN(eval_stack%stack_point,n_elements),1,-1
@@ -370,18 +370,18 @@ CONTAINS
     DO i = 1, input_stack%stack_point
       block = input_stack%entries(i)
 
-      IF (block%ptype .EQ. c_pt_subset) THEN
+      IF (block%ptype == c_pt_subset) THEN
         n_elements = n_elements + 1
         array(n_elements) = block%value
-      ELSE IF (block%ptype .EQ. c_pt_constant &
-          .OR. block%ptype .EQ. c_pt_default_constant) THEN
+      ELSE IF (block%ptype == c_pt_constant &
+          .OR. block%ptype == c_pt_default_constant) THEN
         CALL do_constant(block%value, .FALSE., 1, err)
         array(1) = array(1) + INT(pop_off_eval())
-      ELSE IF (block%ptype .NE. c_pt_operator) THEN
+      ELSE IF (block%ptype /= c_pt_operator) THEN
         err = c_err_bad_value
       ENDIF
 
-      IF (err .NE. c_err_none) THEN
+      IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP

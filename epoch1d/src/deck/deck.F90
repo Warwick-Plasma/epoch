@@ -28,12 +28,13 @@ MODULE deck
   ! Custom blocks
   USE custom_deck
   USE version_data
+  USE md5
 
   IMPLICIT NONE
 
   PRIVATE
 
-  PUBLIC :: read_deck, write_input_decks
+  PUBLIC :: read_deck, write_input_decks, deallocate_input_deck_buffer
 
   SAVE
   CHARACTER(LEN=string_length) :: current_block_name
@@ -44,6 +45,7 @@ MODULE deck
   TYPE :: file_buffer
     CHARACTER(LEN=filename_length) :: filename
     CHARACTER(LEN=buffer_size), DIMENSION(:), POINTER :: buffer
+    CHARACTER(LEN=32) :: md5sum
     INTEGER :: pos, idx, length
     TYPE(file_buffer), POINTER :: next
   END TYPE file_buffer
@@ -201,7 +203,7 @@ CONTAINS
     ! Constants can be defined in any deck state, so put them here
     IF (str_cmp(block_name, 'constant') &
             .OR. str_cmp(block_name, 'deo')) THEN
-      IF (rank .EQ. 0 .AND. str_cmp(block_name, 'deo') .AND. deo_warn) THEN
+      IF (rank == 0 .AND. str_cmp(block_name, 'deo') .AND. deo_warn) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -283,7 +285,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: errcode_deck
     INTEGER :: io, iu
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     problem_found = .FALSE.
 
@@ -311,11 +313,11 @@ CONTAINS
 
     errcode_deck = IOR(errcode_deck, custom_blocks_check())
 
-    problem_found = (IAND(errcode_deck, c_err_missing_elements) .NE. 0)
+    problem_found = (IAND(errcode_deck, c_err_missing_elements) /= 0)
 
     IF (problem_found) THEN
       errcode_deck = IOR(errcode_deck, c_err_terminate)
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -325,7 +327,7 @@ CONTAINS
         ENDDO
       ENDIF
     ELSE
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) 'Initial conditions complete and valid. Attempting' &
@@ -359,8 +361,8 @@ CONTAINS
       INQUIRE(unit=lun, opened=is_open)
       IF (.NOT. is_open) EXIT
       lun = lun+1
-      IF (lun .GT. max_lun) THEN
-        IF (rank .EQ. 0) THEN
+      IF (lun > max_lun) THEN
+        IF (rank == 0) THEN
           WRITE(*,*) '*** ERROR ***'
           WRITE(*,*) 'Unable to open lun for input deck read'
         ENDIF
@@ -423,7 +425,7 @@ CONTAINS
 
     ! rank 0 reads the file and then passes it out to the other nodes using
     ! MPI_BCAST
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       IF (.NOT. ASSOCIATED(file_buffer_head)) THEN
         ALLOCATE(file_buffer_head)
         fbuf => file_buffer_head
@@ -436,7 +438,7 @@ CONTAINS
 
       DO WHILE (ASSOCIATED(fbuf%next))
         fbuf => fbuf%next
-        IF (fbuf%filename .EQ. deck_filename) THEN
+        IF (fbuf%filename == deck_filename) THEN
           already_parsed = .TRUE.
           EXIT
         ENDIF
@@ -455,7 +457,7 @@ CONTAINS
 
       ! Check whether or not the input deck file requested exists
       INQUIRE(file=deck_filename, exist=exists)
-      IF (.NOT. exists .AND. rank .EQ. 0) THEN
+      IF (.NOT. exists .AND. rank == 0) THEN
         PRINT *, '*** ERROR ***'
         PRINT *, 'Input deck file "' // TRIM(deck_filename) &
             // '" does not exist.'
@@ -467,9 +469,9 @@ CONTAINS
       lun = get_free_lun()
       OPEN(unit=lun, file=TRIM(ADJUSTL(deck_filename)))
 #ifndef NO_IO
-      IF (first_call .AND. rank .EQ. 0) THEN
+      IF (first_call .AND. rank == 0) THEN
         ! Create a new file on first pass, otherwise append
-        IF (deck_state .EQ. c_ds_first) THEN
+        IF (deck_state == c_ds_first) THEN
           OPEN(unit=du, status='REPLACE', file=status_filename, iostat=errcode)
           WRITE(du,*) ascii_header
           WRITE(du,*)
@@ -499,7 +501,7 @@ CONTAINS
         got_eof = .FALSE.
         READ(lun, '(A1)', advance='no', size=s, iostat=f, eor=10) u1
 
-        IF (f .LT. 0) THEN
+        IF (f < 0) THEN
           got_eor = .TRUE.
           got_eof = .TRUE.
         ELSE
@@ -509,9 +511,9 @@ CONTAINS
 10      IF (.NOT. already_parsed) THEN
           ! Store character in a buffer so that we can write the input deck
           ! contents to a restart dump
-          IF (f .EQ. 0) THEN
+          IF (f == 0) THEN
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = u1
-          ELSE IF (got_eor) THEN
+          ELSE IF (got_eor .AND. .NOT.got_eof) THEN
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(10) ! new line
           ELSE
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(0)  ! null
@@ -520,9 +522,9 @@ CONTAINS
 
           ! If we reached the end of the character string then move to the next
           ! element of the array
-          IF (fbuf%pos .EQ. buffer_size) THEN
+          IF (fbuf%pos == buffer_size) THEN
             ! If we reached the end of the array then allocate some more
-            IF (fbuf%idx .EQ. fbuf%length) THEN
+            IF (fbuf%idx == fbuf%length) THEN
               ALLOCATE(tmp_buffer(fbuf%length))
               DO i = 1,fbuf%length
                 tmp_buffer(i) = fbuf%buffer(i)
@@ -543,8 +545,8 @@ CONTAINS
         ENDIF
 
         IF (continuation .AND. warn) THEN
-          IF (u1 .NE. ' ' .AND. u1 .NE. ACHAR(9)) THEN ! ACHAR(9) = tab
-            IF (rank .EQ. rank_check) THEN
+          IF (u1 /= ' ' .AND. u1 /= ACHAR(9)) THEN ! ACHAR(9) = tab
+            IF (rank == rank_check) THEN
               DO iu = 1, nio_units ! Print to stdout and to file
                 io = io_units(iu)
                 WRITE(io,*)
@@ -559,9 +561,9 @@ CONTAINS
         ENDIF
 
         ! If the character is a # or \ then ignore the rest of the line
-        IF (u1 .EQ. '#') THEN
+        IF (u1 == '#') THEN
           ignore = .TRUE.
-        ELSE IF (u1 .EQ. ACHAR(92)) THEN ! ACHAR(92) = '\'
+        ELSE IF (u1 == ACHAR(92)) THEN ! ACHAR(92) = '\'
           ignore = .TRUE.
           continuation = .TRUE.
         ENDIF
@@ -571,20 +573,20 @@ CONTAINS
           ! If the current character isn't a special character then just stick
           ! it in the buffer
           ! ACHAR(9) = tab
-          IF (u1 .NE. '=' .AND. u1 .NE. ACHAR(9) .AND. u1 .NE. ':' &
-              .AND. f .EQ. 0) THEN
-            IF (u1 .NE. ' ' .OR. u0 .NE. ' ') THEN
+          IF (u1 /= '=' .AND. u1 /= ACHAR(9) .AND. u1 /= ':' &
+              .AND. f == 0) THEN
+            IF (u1 /= ' ' .OR. u0 /= ' ') THEN
               deck_values(flip)%value(pos:pos) = u1
               pos = pos + 1
               slen = slen + 1
               u0 = u1
-              IF (pos .GT. string_length) pos = string_length
+              IF (pos > string_length) pos = string_length
             ENDIF
           ENDIF
 
           ! If it's equals or : then you're parsing the other part of the
           ! expression
-          IF (u1 .EQ. '=' .OR. u1 .EQ. ':') THEN
+          IF (u1 == '=' .OR. u1 == ':') THEN
             flip = 2
             pos = 1
             slen = 1
@@ -603,14 +605,14 @@ CONTAINS
         ENDIF
 
         ! If you've not read a blank line then
-        IF (got_eor .AND. pos .GT. 1) THEN
-          IF (slen .GT. string_length) THEN
+        IF (got_eor .AND. pos > 1) THEN
+          IF (slen > string_length) THEN
             CALL integer_as_string(slen, len_string)
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*)
               WRITE(io,*) '*** ERROR ***'
-              IF (flip .GT. 1) THEN
+              IF (flip > 1) THEN
                 WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) // &
                     ' = ' // TRIM(deck_values(2)%value(1:pos-1))
               ELSE
@@ -648,14 +650,23 @@ CONTAINS
           CLOSE(lun)
           EXIT
         ENDIF
-        terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
+        terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) /= 0
         IF (terminate) EXIT
       ENDDO
+
+      IF (.NOT. already_parsed) THEN
+        CALL md5_init()
+        DO i = 1, fbuf%idx - 1
+           fbuf%md5sum = md5_append(fbuf%buffer(i)(1:buffer_size))
+        ENDDO
+        fbuf%md5sum = md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
+        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = md5_append("")
+      ENDIF
     ELSE
       DO
         errcode_deck = c_err_none
         CALL MPI_BCAST(f, 1, MPI_INTEGER, 0, comm, errcode)
-        IF (f .EQ. 0) EXIT
+        IF (f == 0) EXIT
           CALL MPI_BCAST(nbuffers, 1, MPI_INTEGER, 0, comm, errcode)
         CALL MPI_BCAST(deck_values(1)%value, string_length, MPI_CHARACTER, &
               0, comm, errcode)
@@ -665,7 +676,7 @@ CONTAINS
               errcode_deck)
         deck_values(1)%value = ''
         deck_values(2)%value = ''
-        terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
+        terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) /= 0
         IF (terminate) EXIT
       ENDDO
     ENDIF
@@ -679,9 +690,9 @@ CONTAINS
     ! the output file
     IF (.NOT. terminate .AND. first_call) CALL deck_finalise(errcode_deck)
 
-    terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) .NE. 0
+    terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) /= 0
     ! Fatal error, cause code to bomb
-    IF (terminate .AND. rank .EQ. 0) THEN
+    IF (terminate .AND. rank == 0) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*)
@@ -720,7 +731,7 @@ CONTAINS
     IF (str_cmp(element, 'import')) THEN
       invalid_block = .TRUE.
 #ifndef NO_IO
-      IF (rank .EQ. rank_check) THEN
+      IF (rank == rank_check) THEN
         WRITE(du,*)
         WRITE(du,*) 'Importing "' // TRIM(ADJUSTL(value)) // '" file'
         WRITE(du,*)
@@ -732,11 +743,11 @@ CONTAINS
 
     IF (str_cmp(element, 'begin')) THEN
       errcode_deck = handle_block(value, blank, blank)
-      invalid_block = IAND(errcode_deck, c_err_unknown_block) .NE. 0
+      invalid_block = IAND(errcode_deck, c_err_unknown_block) /= 0
       invalid_block = invalid_block .OR. IAND(errcode_deck, &
-          c_err_pp_options_wrong) .NE. 0
-      IF (invalid_block .AND. rank .EQ. rank_check) THEN
-        IF(IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
+          c_err_pp_options_wrong) /= 0
+      IF (invalid_block .AND. rank == rank_check) THEN
+        IF(IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
@@ -764,7 +775,7 @@ CONTAINS
       err_count = 0
       current_block_name = value
 #ifndef NO_IO
-      IF (rank .EQ. rank_check) THEN
+      IF (rank == rank_check) THEN
         WRITE(du,*) 'Beginning "' // TRIM(ADJUSTL(value)) // '" block'
         WRITE(du,*)
       ENDIF
@@ -777,11 +788,11 @@ CONTAINS
       CALL end_block(current_block_name)
       invalid_block = .TRUE.
 #ifndef NO_IO
-      IF (rank .EQ. rank_check) THEN
+      IF (rank == rank_check) THEN
         WRITE(du,*)
         WRITE(du,*) 'Ending "' // TRIM(ADJUSTL(value)) // '" block'
         WRITE(du,*)
-        IF (err_count .NE. 0) THEN
+        IF (err_count /= 0) THEN
           WRITE(du,*) '*** WARNING ***'
           WRITE(du,*) 'Block "' // TRIM(ADJUSTL(value)) // '" contains errors'
           WRITE(du,*)
@@ -800,8 +811,8 @@ CONTAINS
     ENDIF
 
 #ifndef NO_IO
-    IF (errcode_deck .EQ. c_err_none) THEN
-      IF (rank .EQ. rank_check) &
+    IF (errcode_deck == c_err_none) THEN
+      IF (rank == rank_check) &
           WRITE(du, *) ACHAR(9), 'Element ', TRIM(ADJUSTL(element)), '=', &
               TRIM(ADJUSTL(value)), ' handled OK'
       RETURN
@@ -809,8 +820,8 @@ CONTAINS
 #endif
     ! Test for error conditions
     ! If an error is fatal then set terminate to .TRUE.
-    IF (IAND(errcode_deck, c_err_unknown_element) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_unknown_element) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -822,8 +833,8 @@ CONTAINS
         ENDDO
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_preset_element) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_preset_element) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -835,8 +846,8 @@ CONTAINS
         ENDDO
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_preset_element_use_later) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_preset_element_use_later) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -848,8 +859,8 @@ CONTAINS
         ENDDO
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_bad_value) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_bad_value) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -862,8 +873,8 @@ CONTAINS
       ENDIF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
-    IF (IAND(errcode_deck, c_err_warn_bad_value) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_warn_bad_value) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -877,8 +888,8 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (IAND(errcode_deck, c_err_required_element_not_set) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_required_element_not_set) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -893,8 +904,8 @@ CONTAINS
       ENDIF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
-    IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -910,8 +921,8 @@ CONTAINS
         ENDDO
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_generic_warning) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_generic_warning) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -921,8 +932,8 @@ CONTAINS
         ENDDO
       ENDIF
     ENDIF
-    IF (IAND(errcode_deck, c_err_generic_error) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_generic_error) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -933,8 +944,8 @@ CONTAINS
       ENDIF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
-    IF (IAND(errcode_deck, c_err_other) .NE. 0) THEN
-      IF (rank .EQ. rank_check) THEN
+    IF (IAND(errcode_deck, c_err_other) /= 0) THEN
+      IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -962,22 +973,39 @@ CONTAINS
     CHARACTER(LEN=1) :: dummy1(1), dummy2
     INTEGER :: i
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       fbuf => file_buffer_head
       DO i = 1,nbuffers
         fbuf => fbuf%next
 
-        CALL sdf_write_source_code(handle, TRIM(fbuf%filename), &
-            'Embedded_input_deck', fbuf%buffer(1:fbuf%idx-1), &
-            fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), 0)
-      ENDDO
-    ELSE
-      DO i = 1,nbuffers
-        CALL sdf_write_source_code(handle, '', 'Embedded_input_deck', dummy1, &
-            dummy2, 0)
+        CALL sdf_write_datablock(handle, 'input_deck/' // TRIM(fbuf%filename), &
+            'EPOCH input deck: ' // TRIM(fbuf%filename), &
+            fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), &
+            'text/plain', 'md5', fbuf%md5sum)
       ENDDO
     ENDIF
 
   END SUBROUTINE write_input_decks
+
+
+
+  SUBROUTINE deallocate_input_deck_buffer
+
+    TYPE(file_buffer), POINTER :: fbuf, next
+    INTEGER :: i, stat
+
+    IF (.NOT. ASSOCIATED(file_buffer_head)) RETURN
+
+    fbuf => file_buffer_head%next
+    DO WHILE (ASSOCIATED(fbuf))
+      next => fbuf%next
+
+      DEALLOCATE(fbuf%buffer, STAT=stat)
+      DEALLOCATE(fbuf, STAT=stat)
+
+      fbuf => next
+    ENDDO
+
+  END SUBROUTINE deallocate_input_deck_buffer
 
 END MODULE deck

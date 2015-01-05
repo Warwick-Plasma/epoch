@@ -36,8 +36,8 @@ CONTAINS
     INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
 
-    IF (nx_global .LT. ng) THEN
-      IF (rank .EQ. 0) THEN
+    IF (nx_global < ng) THEN
+      IF (rank == 0) THEN
         CALL integer_as_string(ng, str)
         PRINT*,'*** ERROR ***'
         PRINT*,'Simulation domain is too small.'
@@ -48,17 +48,17 @@ CONTAINS
     ENDIF
 
     nproc_orig = nproc
-    DO WHILE (nproc .GT. 1)
+    DO WHILE (nproc > 1)
       nxsplit = nx_global / nproc
       ! Actual domain must be bigger than the number of ghostcells
-      IF (nxsplit .GE. ng) EXIT
+      IF (nxsplit >= ng) EXIT
       nproc  = nproc - 1
       nprocx = nproc
     ENDDO
 
-    IF (nproc_orig .NE. nproc) THEN
+    IF (nproc_orig /= nproc) THEN
       IF (.NOT.allow_cpu_reduce) THEN
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           CALL integer_as_string(nproc, str)
           PRINT*,'*** ERROR ***'
           PRINT*,'Cannot split the domain using the requested number of CPUs.'
@@ -67,7 +67,7 @@ CONTAINS
         CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         STOP
       ENDIF
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         CALL integer_as_string(nproc, str)
         PRINT*,'*** WARNING ***'
         PRINT*,'Cannot split the domain using the requested number of CPUs.'
@@ -80,7 +80,7 @@ CONTAINS
       CALL MPI_COMM_GROUP(old_comm, oldgroup, errcode)
       CALL MPI_GROUP_RANGE_EXCL(oldgroup, 1, ranges, newgroup, errcode)
       CALL MPI_COMM_CREATE(old_comm, newgroup, comm, errcode)
-      IF (comm .EQ. MPI_COMM_NULL) THEN
+      IF (comm == MPI_COMM_NULL) THEN
         CALL MPI_FINALIZE(errcode)
         STOP
       ENDIF
@@ -99,9 +99,9 @@ CONTAINS
     ! Once there are per-species boundary conditions then this will be true
     ! if any of the species are periodic
 
-    IF (bc_field(c_bd_x_min) .EQ. c_bc_periodic &
-        .OR. bc_x_min_after_move .EQ. c_bc_periodic &
-        .OR. bc_particle(c_bd_x_min) .EQ. c_bc_periodic) &
+    IF (bc_field(c_bd_x_min) == c_bc_periodic &
+        .OR. bc_x_min_after_move == c_bc_periodic &
+        .OR. bc_particle(c_bd_x_min) == c_bc_periodic) &
             periods(c_ndims) = .TRUE.
 
     old_comm = comm
@@ -117,8 +117,8 @@ CONTAINS
     x_coords = coordinates(c_ndims)
     x_min_boundary = .FALSE.
     x_max_boundary = .FALSE.
-    IF (x_coords .EQ. 0) x_min_boundary = .TRUE.
-    IF (x_coords .EQ. nprocx - 1) x_max_boundary = .TRUE.
+    IF (x_coords == 0) x_min_boundary = .TRUE.
+    IF (x_coords == nprocx - 1) x_max_boundary = .TRUE.
 
     neighbour = MPI_PROC_NULL
     DO ix = -1, 1
@@ -129,8 +129,8 @@ CONTAINS
       ! For some stupid reason MPI_CART_RANK returns an error rather than
       ! MPI_PROC_NULL if the coords are out of range.
       DO idim = 1, ndims
-        IF ((test_coords(idim) .LT. 0 &
-            .OR. test_coords(idim) .GE. dims(idim)) &
+        IF ((test_coords(idim) < 0 &
+            .OR. test_coords(idim) >= dims(idim)) &
             .AND. .NOT. periods(idim)) op = .FALSE.
       ENDDO
       IF (op) CALL MPI_CART_RANK(comm, test_coords, neighbour(ix), errcode)
@@ -170,7 +170,7 @@ CONTAINS
       ! If the number of gridpoints cannot be exactly subdivided then fix
       ! The first nxp processors have nx0 grid points
       ! The remaining processors have nx0+1 grid points
-      IF (nx0 * nprocx .NE. nx_global) THEN
+      IF (nx0 * nprocx /= nx_global) THEN
         nxp = (nx0 + 1) * nprocx - nx_global
       ELSE
         nxp = nprocx
@@ -212,7 +212,7 @@ CONTAINS
     ALLOCATE(jz(1-jng:nx+jng))
 
     ! Setup the particle lists
-    IF (n_species .GT. 0) &
+    IF (n_species > 0) &
         NULLIFY(species_list(1)%prev, species_list(n_species)%next)
     DO ispecies = 1, n_species-1
       species_list(ispecies)%next => species_list(ispecies+1)
@@ -229,10 +229,10 @@ CONTAINS
       NULLIFY(species_list(ispecies)%attached_list%prev)
       CALL create_empty_partlist(species_list(ispecies)%attached_list)
 
-      IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+      IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_min(1:3))
       ENDIF
-      IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+      IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1:3))
       ENDIF
     ENDDO
@@ -249,7 +249,7 @@ CONTAINS
 
     INTEGER :: seconds, minutes, hours, total
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       end_time = MPI_WTIME()
       total = INT(end_time - start_time)
       seconds = MOD(total, 60)
@@ -344,7 +344,7 @@ CONTAINS
     errstring(MPI_ERR_LASTCODE             ) = 'MPI_ERR_LASTCODE             '
 
     PRINT*, "Caught MPI error: ", TRIM(errstring(error_code))
-    IF (comm .EQ. MPI_COMM_WORLD) THEN
+    IF (comm == MPI_COMM_WORLD) THEN
       PRINT*, "Communicator MPI_COMM_WORLD"
     ELSE
       PRINT*, "Communicator ", comm, "(Not MPI_COMM_WORLD)"

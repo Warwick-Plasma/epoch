@@ -2,7 +2,7 @@
 
 repo=epoch
 cur=`pwd`
-dir=$(mktemp -d -tepoch)
+dir=$(mktemp -d -t$repo)
 
 git init -q $dir/$repo
 git push -q --tags $dir/$repo HEAD:tmp
@@ -24,11 +24,13 @@ fi
 
 (cd SDF/VisIt
 /bin/sh gen_commit_string)
-/bin/sh epoch1d/src/gen_commit_string
-cp COMMIT epoch1d/
-cp COMMIT epoch2d/
-cp COMMIT epoch3d/
-rm -rf COMMIT .git
+(cd SDF/FORTRAN
+/bin/sh src/gen_commit_string)
+(cd epoch1d
+/bin/sh src/gen_commit_string)
+cp epoch1d/src/COMMIT epoch2d/src/
+cp epoch1d/src/COMMIT epoch3d/src/
+rm -rf .git
 cd $dir
 mv $repo $repo-$cstring
 tar -cf - $repo-$cstring | gzip -c > $repo-$cstring.tar.gz

@@ -4,7 +4,7 @@ MODULE diagnostics
   USE sdf
   USE deck
   USE dist_fn
-  USE encoded_source
+  USE epoch_source_info
   USE iterators
   USE probes
   USE version_data
@@ -20,6 +20,7 @@ MODULE diagnostics
 
   PUBLIC :: output_routines, create_full_timestring
   PUBLIC :: cleanup_stop_files, check_for_stop_condition
+  PUBLIC :: deallocate_file_list
 
   CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
   CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
@@ -105,10 +106,10 @@ CONTAINS
     ENDIF
 
     timer_walltime = -1.0_num
-    IF (step .NE. last_step) THEN
+    IF (step /= last_step) THEN
       last_step = step
-      IF (rank .EQ. 0 .AND. stdout_frequency .GT. 0 &
-          .AND. MOD(step, stdout_frequency) .EQ. 0) THEN
+      IF (rank == 0 .AND. stdout_frequency > 0 &
+          .AND. MOD(step, stdout_frequency) == 0) THEN
         timer_walltime = MPI_WTIME()
         elapsed_time = timer_walltime - walltime_start
         CALL create_timestring(elapsed_time, timestring)
@@ -125,7 +126,7 @@ CONTAINS
     reset_ejected = .FALSE.
     any_written = .FALSE.
 
-    IF (n_species .GT. 0) THEN
+    IF (n_species > 0) THEN
       ALLOCATE(dump_point_grid(n_species))
     ELSE
       ALLOCATE(dump_point_grid(1))
@@ -138,10 +139,10 @@ CONTAINS
 
       IF (.NOT.any_written) THEN
         ALLOCATE(array(-2:nx+3,-2:ny+3))
-        CALL create_subtypes(code)
+        CALL create_subtypes
         any_written = .TRUE.
         IF (timer_collect) THEN
-          IF (timer_walltime .LT. 0.0_num) THEN
+          IF (timer_walltime < 0.0_num) THEN
             CALL timer_start(c_timer_io)
           ELSE
             CALL timer_start(c_timer_io, .TRUE.)
@@ -162,8 +163,8 @@ CONTAINS
       code = c_io_always
 
       ! Only dump variables with the 'FULL' attributre on full dump intervals
-      IF (MOD(file_numbers(iprefix), full_dump_every) .EQ. 0 &
-          .AND. full_dump_every .GT. -1) code = IOR(code, c_io_full)
+      IF (MOD(file_numbers(iprefix), full_dump_every) == 0 &
+          .AND. full_dump_every > -1) code = IOR(code, c_io_full)
       IF (restart_flag) code = IOR(code, c_io_restartable)
       dump_field_grid = .FALSE.
 
@@ -172,8 +173,8 @@ CONTAINS
       CALL sdf_write_header(sdf_handle, 'Epoch2d', 1, step, time, &
           restart_flag, jobid)
       CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_minor_rev, &
-          c_commit_id, sha1sum, c_compile_machine, c_compile_flags, defines, &
-          c_compile_date, run_date)
+          c_commit_id, epoch_bytes_checksum, c_compile_machine, &
+          c_compile_flags, defines, c_compile_date, run_date)
       CALL sdf_write_cpu_split(sdf_handle, 'cpu_rank', 'CPUs/Original rank', &
           cell_x_max, cell_y_max)
 
@@ -269,7 +270,7 @@ CONTAINS
             'CPML/Bz_y', 'A/m^2', c_stagger_cell_centre, cpml_psi_bzy)
       ENDIF
 
-      IF (n_subsets .GT. 0) THEN
+      IF (n_subsets > 0) THEN
         DO i = 1, n_species
           CALL create_empty_partlist(io_list_data(i)%attached_list)
         ENDDO
@@ -279,20 +280,20 @@ CONTAINS
         done_species_offset_init = .FALSE.
         done_subset_init = .FALSE.
         dump_point_grid = .FALSE.
-        IF (isubset .GT. 1) io_list => io_list_data
+        IF (isubset > 1) io_list => io_list_data
         iomask = iodumpmask(isubset,:)
 
 #ifdef PER_PARTICLE_WEIGHT
         CALL write_particle_variable(c_dump_part_weight, code, 'Weight', '', &
             it_output_real)
 #else
-        IF (IAND(iomask(c_dump_part_weight), code) .NE. 0) THEN
+        IF (IAND(iomask(c_dump_part_weight), code) /= 0) THEN
           CALL build_species_subset
 
           DO ispecies = 1, n_species
             species => io_list(ispecies)
-            IF (IAND(species%dumpmask, code) .NE. 0 &
-                .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+            IF (IAND(species%dumpmask, code) /= 0 &
+                .OR. IAND(code, c_io_restartable) /= 0) THEN
               CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
                   'Particles/Weight/' // TRIM(species%name), species%weight)
             ENDIF
@@ -390,7 +391,7 @@ CONTAINS
             c_stagger_cell_centre, calc_poynt_flux, array, fluxdir(1:3), &
             dim_tags)
 
-        IF (isubset .NE. 1) THEN
+        IF (isubset /= 1) THEN
           DO i = 1, n_species
             CALL append_partlist(species_list(i)%attached_list, &
                 io_list(i)%attached_list)
@@ -401,16 +402,19 @@ CONTAINS
         ENDIF
       ENDDO
 
+      io_list => species_list
+      iomask = iodumpmask(1,:)
+
       ! Write the cartesian mesh
-      IF (IAND(iomask(c_dump_grid), code) .NE. 0) &
+      IF (IAND(iomask(c_dump_grid), code) /= 0) &
           dump_field_grid = .TRUE.
-      IF (IAND(iomask(c_dump_grid), c_io_never) .NE. 0) &
+      IF (IAND(iomask(c_dump_grid), c_io_never) /= 0) &
           dump_field_grid = .FALSE.
 
       IF (dump_field_grid) THEN
-        convert = (IAND(iomask(c_dump_grid), c_io_dump_single) .NE. 0 &
-            .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-            .OR. IAND(iomask(c_dump_grid), c_io_restartable) .EQ. 0))
+        convert = (IAND(iomask(c_dump_grid), c_io_dump_single) /= 0 &
+            .AND. (IAND(code,c_io_restartable) == 0 &
+            .OR. IAND(iomask(c_dump_grid), c_io_restartable) == 0))
         IF (.NOT. use_offset_grid) THEN
           CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
               xb_global, yb_global, convert)
@@ -422,30 +426,26 @@ CONTAINS
         ENDIF
       ENDIF
 
-      io_list => species_list
-      iomask = iodumpmask(1,:)
-
-      IF (IAND(iomask(c_dump_dist_fns), code) .NE. 0) THEN
+      IF (IAND(iomask(c_dump_dist_fns), code) /= 0) THEN
         CALL write_dist_fns(sdf_handle, code)
       ENDIF
 
 #ifdef PARTICLE_PROBES
-      IF (IAND(iomask(c_dump_probes), code) .NE. 0) THEN
+      IF (IAND(iomask(c_dump_probes), code) /= 0) THEN
         CALL write_probes(sdf_handle, code)
       ENDIF
 #endif
 
       IF (dump_input_decks) CALL write_input_decks(sdf_handle)
-      IF (dump_source_code .AND. SIZE(source_code) .GT. 0) &
-          CALL sdf_write_source_code(sdf_handle, 'code', &
-              'base64_packed_source_code', source_code, last_line, 0)
+      IF (dump_source_code .AND. epoch_bytes_len > 0) &
+          CALL write_source_info(sdf_handle)
 
-      IF (IAND(iomask(c_dump_absorption), code) .NE. 0) THEN
+      IF (IAND(iomask(c_dump_absorption), code) /= 0) THEN
         CALL MPI_ALLREDUCE(laser_absorb_local, laser_absorbed, 1, mpireal, &
             MPI_SUM, comm, errcode)
         CALL MPI_ALLREDUCE(laser_inject_local, laser_injected, 1, mpireal, &
             MPI_SUM, comm, errcode)
-        IF (laser_injected .GT. 0.0_num) THEN
+        IF (laser_injected > 0.0_num) THEN
           laser_absorbed = laser_absorbed / laser_injected
         ELSE
           laser_absorbed = 0.0_num
@@ -456,7 +456,9 @@ CONTAINS
             'Absorption/Fraction of Laser Energy Absorbed (%)', laser_absorbed)
       ENDIF
 
-      IF (IAND(iomask(c_dump_total_energy_sum), code) .NE. 0) THEN
+      IF (IAND(iomask(c_dump_total_energy_sum), code) /= 0) THEN
+        CALL calc_total_energy_sum
+
         CALL sdf_write_srl(sdf_handle, 'total_particle_energy', &
             'Total Particle Energy in Simulation (J)', total_particle_energy)
         CALL sdf_write_srl(sdf_handle, 'total_field_energy', &
@@ -466,22 +468,22 @@ CONTAINS
       ! close the file
       CALL sdf_close(sdf_handle)
 
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO io = 1, n_io_blocks
           IF (io_block_list(io)%dump) THEN
             dump_type = TRIM(io_block_list(io)%name)
             CALL append_filename(dump_type, filename, io)
           ENDIF
         ENDDO
-        IF (IAND(code, c_io_restartable) .NE. 0) THEN
+        IF (IAND(code, c_io_restartable) /= 0) THEN
           dump_type = 'restart'
           CALL append_filename(dump_type, filename, n_io_blocks+1)
         ENDIF
-        IF (IAND(code, c_io_full) .NE. 0) THEN
+        IF (IAND(code, c_io_full) /= 0) THEN
           dump_type = 'full'
           CALL append_filename(dump_type, filename, n_io_blocks+2)
         ENDIF
-        IF (iprefix .GT. 1) dump_type = TRIM(file_prefixes(iprefix))
+        IF (iprefix > 1) dump_type = TRIM(file_prefixes(iprefix))
         WRITE(stat_unit, '(''Wrote '', a7, '' dump number'', i5, '' at time'', &
           & g20.12, '' and iteration'', i7)') dump_type, &
           file_numbers(iprefix)-1, time, step
@@ -527,7 +529,7 @@ CONTAINS
     listfile = TRIM(data_dir) // '/' // TRIM(listname) // '.visit'
     INQUIRE(file=listfile, exist=exists)
 
-    IF (list%count .EQ. 0) THEN
+    IF (list%count == 0) THEN
       ALLOCATE(list%head)
       list%tail => list%head
       IF (ic_from_restart .AND. exists) CALL setup_file_list(listfile, list)
@@ -536,12 +538,12 @@ CONTAINS
       list%tail => list%tail%next
     ENDIF
 
-    IF (list%count .GT. 0) THEN
+    IF (list%count > 0) THEN
       lcur  => list%head
-      IF (TRIM(lcur%text) .EQ. TRIM(filename)) RETURN
+      IF (TRIM(lcur%text) == TRIM(filename)) RETURN
       DO i = 2,list%count
         lcur  => lcur%next
-        IF (TRIM(lcur%text) .EQ. TRIM(filename)) RETURN
+        IF (TRIM(lcur%text) == TRIM(filename)) RETURN
       ENDDO
     ENDIF
 
@@ -573,7 +575,7 @@ CONTAINS
     OPEN(unit=lu, status='OLD', file=listfile, iostat=ierr)
     DO
       READ(lu, '(A)', iostat=ierr) str
-      IF (ierr .LT. 0) EXIT
+      IF (ierr < 0) EXIT
       list%tail%text = TRIM(str)
       list%count = list%count + 1
       ALLOCATE(list%tail%next)
@@ -582,6 +584,31 @@ CONTAINS
     CLOSE(lu)
 
   END SUBROUTINE setup_file_list
+
+
+
+  SUBROUTINE deallocate_file_list
+
+    INTEGER :: i, n, nlist, stat
+    TYPE(string_entry), POINTER :: current, next
+
+    IF (ASSOCIATED(file_list)) THEN
+      DO i = 1, n_io_blocks+2
+        nlist = file_list(i)%count
+        IF (nlist > 0) THEN
+          current => file_list(i)%head
+          DO n = 1, nlist
+            next => current%next
+            DEALLOCATE(current, STAT=stat)
+            current => next
+          ENDDO
+        ENDIF
+      ENDDO
+      DEALLOCATE(file_list, STAT=stat)
+    ENDIF
+    DEALLOCATE(iodumpmask, STAT=stat)
+
+  END SUBROUTINE deallocate_file_list
 
 
 
@@ -605,7 +632,7 @@ CONTAINS
     iomask = c_io_none
     iodumpmask = c_io_none
 
-    IF (time .GE. t_end .OR. step .EQ. nsteps) THEN
+    IF (time >= t_end .OR. step == nsteps) THEN
       last_call = .TRUE.
     ELSE
       last_call = .FALSE.
@@ -615,7 +642,7 @@ CONTAINS
       io_block_list(io)%dump = .FALSE.
 
       IF (io_block_list(io)%disabled) CYCLE
-      IF (io_block_list(io)%prefix_index .NE. iprefix) CYCLE
+      IF (io_block_list(io)%prefix_index /= iprefix) CYCLE
 
       IF (last_call .AND. io_block_list(io)%dump_last) &
           io_block_list(io)%dump = .TRUE.
@@ -629,7 +656,7 @@ CONTAINS
 
       IF (ASSOCIATED(io_block_list(io)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_nsteps)
-          IF (step .GE. io_block_list(io)%dump_at_nsteps(is)) THEN
+          IF (step >= io_block_list(io)%dump_at_nsteps(is)) THEN
             io_block_list(io)%dump = .TRUE.
             io_block_list(io)%dump_at_nsteps(is) = HUGE(1)
           ENDIF
@@ -638,7 +665,7 @@ CONTAINS
 
       IF (ASSOCIATED(io_block_list(io)%dump_at_times)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_times)
-          IF (time .GE. io_block_list(io)%dump_at_times(is)) THEN
+          IF (time >= io_block_list(io)%dump_at_times(is)) THEN
             io_block_list(io)%dump = .TRUE.
             io_block_list(io)%dump_at_times(is) = HUGE(1.0_num)
           ENDIF
@@ -649,56 +676,56 @@ CONTAINS
       ! current timestep
       t0 = HUGE(1.0_num)
       t1 = HUGE(1.0_num)
-      IF (io_block_list(io)%dt_snapshot .GE. 0.0_num) &
+      IF (io_block_list(io)%dt_snapshot >= 0.0_num) &
           t0 = io_block_list(io)%time_prev + io_block_list(io)%dt_snapshot
-      IF (io_block_list(io)%nstep_snapshot .GE. 0) THEN
+      IF (io_block_list(io)%nstep_snapshot >= 0) THEN
         nstep_next = io_block_list(io)%nstep_prev &
             + io_block_list(io)%nstep_snapshot
         t1 = time + dt * (nstep_next - step)
       ENDIF
 
-      IF (t0 .LT. t1) THEN
+      IF (t0 < t1) THEN
         ! Next I/O dump based on dt_snapshot
         time_first = t0
-        IF (io_block_list(io)%dt_snapshot .GT. 0 .AND. time .GE. t0) THEN
+        IF (io_block_list(io)%dt_snapshot > 0 .AND. time >= t0) THEN
           ! Store the most recent output time that qualifies
           DO
             t0 = io_block_list(io)%time_prev + io_block_list(io)%dt_snapshot
-            IF (t0 .GT. time) EXIT
+            IF (t0 > time) EXIT
             io_block_list(io)%time_prev = t0
           ENDDO
           dump = .TRUE.
-          IF (dump .AND. time .LT. io_block_list(io)%time_start)  dump = .FALSE.
-          IF (dump .AND. time .GT. io_block_list(io)%time_stop)   dump = .FALSE.
-          IF (dump .AND. step .LT. io_block_list(io)%nstep_start) dump = .FALSE.
-          IF (dump .AND. step .GT. io_block_list(io)%nstep_stop)  dump = .FALSE.
-          IF (dump .AND. time .LT. time_start)  dump = .FALSE.
-          IF (dump .AND. time .GT. time_stop)   dump = .FALSE.
-          IF (dump .AND. step .LT. nstep_start) dump = .FALSE.
-          IF (dump .AND. step .GT. nstep_stop)  dump = .FALSE.
+          IF (dump .AND. time < io_block_list(io)%time_start)  dump = .FALSE.
+          IF (dump .AND. time > io_block_list(io)%time_stop)   dump = .FALSE.
+          IF (dump .AND. step < io_block_list(io)%nstep_start) dump = .FALSE.
+          IF (dump .AND. step > io_block_list(io)%nstep_stop)  dump = .FALSE.
+          IF (dump .AND. time < time_start)  dump = .FALSE.
+          IF (dump .AND. time > time_stop)   dump = .FALSE.
+          IF (dump .AND. step < nstep_start) dump = .FALSE.
+          IF (dump .AND. step > nstep_stop)  dump = .FALSE.
           IF (dump) io_block_list(io)%dump = .TRUE.
         ENDIF
       ELSE
         ! Next I/O dump based on nstep_snapshot
         time_first = t1
-        IF (io_block_list(io)%nstep_snapshot .GT. 0 &
-            .AND. step .GE. nstep_next) THEN
+        IF (io_block_list(io)%nstep_snapshot > 0 &
+            .AND. step >= nstep_next) THEN
           ! Store the most recent output step that qualifies
           DO
             nstep_next = io_block_list(io)%nstep_prev &
                 + io_block_list(io)%nstep_snapshot
-            IF (nstep_next .GT. step) EXIT
+            IF (nstep_next > step) EXIT
             io_block_list(io)%nstep_prev = nstep_next
           ENDDO
           dump = .TRUE.
-          IF (dump .AND. time .LT. io_block_list(io)%time_start)  dump = .FALSE.
-          IF (dump .AND. time .GT. io_block_list(io)%time_stop)   dump = .FALSE.
-          IF (dump .AND. step .LT. io_block_list(io)%nstep_start) dump = .FALSE.
-          IF (dump .AND. step .GT. io_block_list(io)%nstep_stop)  dump = .FALSE.
-          IF (dump .AND. time .LT. time_start)  dump = .FALSE.
-          IF (dump .AND. time .GT. time_stop)   dump = .FALSE.
-          IF (dump .AND. step .LT. nstep_start) dump = .FALSE.
-          IF (dump .AND. step .GT. nstep_stop)  dump = .FALSE.
+          IF (dump .AND. time < io_block_list(io)%time_start)  dump = .FALSE.
+          IF (dump .AND. time > io_block_list(io)%time_stop)   dump = .FALSE.
+          IF (dump .AND. step < io_block_list(io)%nstep_start) dump = .FALSE.
+          IF (dump .AND. step > io_block_list(io)%nstep_stop)  dump = .FALSE.
+          IF (dump .AND. time < time_start)  dump = .FALSE.
+          IF (dump .AND. time > time_stop)   dump = .FALSE.
+          IF (dump .AND. step < nstep_start) dump = .FALSE.
+          IF (dump .AND. step > nstep_stop)  dump = .FALSE.
           IF (dump) io_block_list(io)%dump = .TRUE.
         ENDIF
       ENDIF
@@ -711,10 +738,10 @@ CONTAINS
         IF (io_block_list(io)%restart) restart_flag = .TRUE.
         IF (io_block_list(io)%dump_source_code) dump_source_code = .TRUE.
         IF (io_block_list(io)%dump_input_decks) dump_input_decks = .TRUE.
-        IF (file_numbers(iprefix) .GT. io_block_list(io)%dump_cycle) &
+        IF (file_numbers(iprefix) > io_block_list(io)%dump_cycle) &
             file_numbers(iprefix) = io_block_list(io)%dump_cycle_first_index
         iomask = IOR(iomask, io_block_list(io)%dumpmask)
-        IF (n_subsets .NE. 0) THEN
+        IF (n_subsets /= 0) THEN
           DO is = 1, n_subsets
             iodumpmask(1+is,:) = &
                 IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
@@ -726,17 +753,17 @@ CONTAINS
     DO io = 1, n_io_blocks
       IF (.NOT. io_block_list(io)%any_average) CYCLE
 
-      IF (time .GE. io_block_list(io)%average_time_start) THEN
+      IF (time >= io_block_list(io)%average_time_start) THEN
         DO id = 1, num_vars_to_dump
-          IF (IAND(io_block_list(io)%dumpmask(id), c_io_averaged) .NE. 0) THEN
+          IF (IAND(io_block_list(io)%dumpmask(id), c_io_averaged) /= 0) THEN
             CALL average_field(id, io_block_list(io)%averaged_data(id))
           ENDIF
         ENDDO
       ENDIF
     ENDDO
 
-    IF (MOD(file_numbers(1), restart_dump_every) .EQ. 0 &
-        .AND. restart_dump_every .GT. -1) restart_flag = .TRUE.
+    IF (MOD(file_numbers(1), restart_dump_every) == 0 &
+        .AND. restart_dump_every > -1) restart_flag = .TRUE.
     IF (first_call .AND. force_first_to_be_restartable) restart_flag = .TRUE.
     IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
     IF (force) restart_flag = .TRUE.
@@ -766,7 +793,7 @@ CONTAINS
 
     n_species_local = avg%n_species + avg%species_sum
 
-    IF (n_species_local .LE. 0) RETURN
+    IF (n_species_local <= 0) RETURN
 
     IF (avg%dump_single) THEN
       SELECT CASE(ioutput)
@@ -905,7 +932,7 @@ CONTAINS
     LOGICAL :: convert
     TYPE(averaged_data_block), POINTER :: avg
 
-    IF (IAND(iomask(id), code) .EQ. 0) RETURN
+    IF (IAND(iomask(id), code) == 0) RETURN
 
     dims = (/nx_global, ny_global/)
 
@@ -913,27 +940,27 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
-    convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-        .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-        .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+    convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+        .AND. (IAND(code,c_io_restartable) == 0 &
+        .OR. IAND(iomask(id), c_io_restartable) == 0))
 
     IF (convert) THEN
       subtype  = subtype_field_r4
-      IF (id .EQ. c_dump_jx .OR. id .EQ. c_dump_jy .OR. id .EQ. c_dump_jz) THEN
+      IF (id == c_dump_jx .OR. id == c_dump_jy .OR. id == c_dump_jz) THEN
         subarray = subarray_field_big_r4
       ELSE
         subarray = subarray_field_r4
       ENDIF
     ELSE
       subtype  = subtype_field
-      IF (id .EQ. c_dump_jx .OR. id .EQ. c_dump_jy .OR. id .EQ. c_dump_jz) THEN
+      IF (id == c_dump_jx .OR. id == c_dump_jy .OR. id == c_dump_jz) THEN
         subarray = subarray_field_big
       ELSE
         subarray = subarray_field
       ENDIF
     ENDIF
 
-    IF (IAND(iomask(id), should_dump) .NE. 0) THEN
+    IF (IAND(iomask(id), should_dump) /= 0) THEN
       CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id), &
           TRIM(name), TRIM(units), dims, stagger, 'grid', array, &
           subtype, subarray, convert)
@@ -943,7 +970,7 @@ CONTAINS
     DO io = 1, n_io_blocks
       IF (io_block_list(io)%dump) THEN
         avg => io_block_list(io)%averaged_data(id)
-        IF (IAND(iomask(id), c_io_averaged) .NE. 0 .AND. avg%started) THEN
+        IF (IAND(iomask(id), c_io_averaged) /= 0 .AND. avg%started) THEN
           IF (avg%dump_single) THEN
             avg%r4array = avg%r4array / REAL(avg%real_time, r4)
 
@@ -998,7 +1025,7 @@ CONTAINS
       END SUBROUTINE func
     END INTERFACE
 
-    IF (IAND(iomask(id), code) .EQ. 0) RETURN
+    IF (IAND(iomask(id), code) == 0) RETURN
 
     dims = (/nx_global, ny_global/)
 
@@ -1006,9 +1033,9 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
-    convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-        .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-        .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+    convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+        .AND. (IAND(code,c_io_restartable) == 0 &
+        .OR. IAND(iomask(id), c_io_restartable) == 0))
 
     IF (convert) THEN
       subtype  = subtype_field_r4
@@ -1018,12 +1045,12 @@ CONTAINS
       subarray = subarray_field
     ENDIF
 
-    IF (IAND(iomask(id), should_dump) .NE. 0) THEN
-      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
-          .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
+    IF (IAND(iomask(id), should_dump) /= 0) THEN
+      IF (IAND(iomask(id), c_io_no_sum) == 0 &
+          .AND. IAND(iomask(id), c_io_field) == 0) THEN
         CALL build_species_subset
 
-        IF (isubset .EQ. 1) THEN
+        IF (isubset == 1) THEN
           temp_block_id = TRIM(block_id)
           temp_name = 'Derived/' // TRIM(name)
         ELSE
@@ -1039,20 +1066,20 @@ CONTAINS
         dump_field_grid = .TRUE.
       ENDIF
 
-      IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
+      IF (IAND(iomask(id), c_io_species) /= 0) THEN
         CALL build_species_subset
 
         len1 = LEN_TRIM(block_id) + 1
         len2 = LEN_TRIM(name) + 9
         DO ispecies = 1, n_species
-          IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
+          IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
           len3 = LEN_TRIM(io_list(ispecies)%name)
           len4 = len3
           len5 = len3
           IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
           IF ((len2 + len3) > c_max_string_length) THEN
             len5 = c_max_string_length - len2
-            IF (rank .EQ. 0) THEN
+            IF (rank == 0) THEN
               CALL integer_as_string((len2+len3), len_string)
               PRINT*, '*** WARNING ***'
               PRINT*, 'Output block name ','Derived/' // TRIM(name) // '/' &
@@ -1076,18 +1103,18 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (isubset .NE. 1) RETURN
+    IF (isubset /= 1) RETURN
 
     ! Write averaged data
     DO io = 1, n_io_blocks
       IF (io_block_list(io)%dump) THEN
         avg => io_block_list(io)%averaged_data(id)
-        IF (IAND(iomask(id), c_io_averaged) .NE. 0 .AND. avg%started) THEN
+        IF (IAND(iomask(id), c_io_averaged) /= 0 .AND. avg%started) THEN
           IF (avg%dump_single) THEN
             avg%r4array = avg%r4array / REAL(avg%real_time, r4)
 
-            IF (avg%species_sum .GT. 0 &
-                .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
+            IF (avg%species_sum > 0 &
+                .AND. IAND(iomask(id), c_io_field) == 0) THEN
               CALL sdf_write_plain_variable(sdf_handle, &
                   TRIM(block_id) // '_averaged', &
                   'Derived/' // TRIM(name) // '_averaged', &
@@ -1096,19 +1123,19 @@ CONTAINS
               dump_field_grid = .TRUE.
             ENDIF
 
-            IF (avg%n_species .GT. 0) THEN
+            IF (avg%n_species > 0) THEN
               len1 = LEN_TRIM(block_id) + 10
               len2 = LEN_TRIM(name) + 18
 
               DO ispecies = 1, avg%n_species
-                IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
+                IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
                 len3 = LEN_TRIM(io_list(ispecies)%name)
                 len4 = len3
                 len5 = len3
                 IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
                 IF ((len2 + len3) > c_max_string_length) THEN
                   len5 = c_max_string_length - len2
-                  IF (rank .EQ. 0) THEN
+                  IF (rank == 0) THEN
                     CALL integer_as_string((len2+len3), len_string)
                     PRINT*, '*** WARNING ***'
                     PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
@@ -1136,8 +1163,8 @@ CONTAINS
           ELSE
             avg%array = avg%array / avg%real_time
 
-            IF (avg%species_sum .GT. 0 &
-                .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
+            IF (avg%species_sum > 0 &
+                .AND. IAND(iomask(id), c_io_field) == 0) THEN
               CALL sdf_write_plain_variable(sdf_handle, &
                   TRIM(block_id) // '_averaged', &
                   'Derived/' // TRIM(name) // '_averaged', &
@@ -1146,19 +1173,19 @@ CONTAINS
               dump_field_grid = .TRUE.
             ENDIF
 
-            IF (avg%n_species .GT. 0) THEN
+            IF (avg%n_species > 0) THEN
               len1 = LEN_TRIM(block_id) + 10
               len2 = LEN_TRIM(name) + 18
 
               DO ispecies = 1, avg%n_species
-                IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
+                IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
                 len3 = LEN_TRIM(io_list(ispecies)%name)
                 len4 = len3
                 len5 = len3
                 IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
                 IF ((len2 + len3) > c_max_string_length) THEN
                   len5 = c_max_string_length - len2
-                  IF (rank .EQ. 0) THEN
+                  IF (rank == 0) THEN
                     CALL integer_as_string((len2+len3), len_string)
                     PRINT*, '*** WARNING ***'
                     PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
@@ -1218,7 +1245,7 @@ CONTAINS
       END SUBROUTINE func
     END INTERFACE
 
-    IF (IAND(iomask(id), code) .EQ. 0) RETURN
+    IF (IAND(iomask(id), code) == 0) RETURN
 
     ndirs = SIZE(fluxdir)
     dims = (/nx_global, ny_global/)
@@ -1227,9 +1254,9 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
-    convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-        .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-        .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+    convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+        .AND. (IAND(code,c_io_restartable) == 0 &
+        .OR. IAND(iomask(id), c_io_restartable) == 0))
 
     IF (convert) THEN
       subtype  = subtype_field_r4
@@ -1239,7 +1266,7 @@ CONTAINS
       subarray = subarray_field
     ENDIF
 
-    IF (IAND(iomask(id), should_dump) .NE. 0) THEN
+    IF (IAND(iomask(id), should_dump) /= 0) THEN
       DO idir = 1, ndirs
         temp_block_id = TRIM(block_id) // '/' // &
             TRIM(dir_tags(idir))
@@ -1284,7 +1311,7 @@ CONTAINS
       END SUBROUTINE func
     END INTERFACE
 
-    IF (IAND(iomask(id), code) .EQ. 0) RETURN
+    IF (IAND(iomask(id), code) == 0) RETURN
 
     ndirs = SIZE(fluxdir)
     dims = (/nx_global, ny_global/)
@@ -1293,9 +1320,9 @@ CONTAINS
     ! requested by the user
     should_dump = IOR(c_io_snapshot, IAND(code,c_io_restartable))
     should_dump = IOR(should_dump, NOT(c_io_averaged))
-    convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-        .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-        .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+    convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+        .AND. (IAND(code,c_io_restartable) == 0 &
+        .OR. IAND(iomask(id), c_io_restartable) == 0))
 
     IF (convert) THEN
       subtype  = subtype_field_r4
@@ -1305,9 +1332,9 @@ CONTAINS
       subarray = subarray_field
     ENDIF
 
-    IF (IAND(iomask(id), should_dump) .NE. 0) THEN
-      IF (IAND(iomask(id), c_io_no_sum) .EQ. 0 &
-          .AND. IAND(iomask(id), c_io_field) .EQ. 0) THEN
+    IF (IAND(iomask(id), should_dump) /= 0) THEN
+      IF (IAND(iomask(id), c_io_no_sum) == 0 &
+          .AND. IAND(iomask(id), c_io_field) == 0) THEN
         CALL build_species_subset
 
         DO idir = 1, ndirs
@@ -1323,21 +1350,21 @@ CONTAINS
         dump_field_grid = .TRUE.
       ENDIF
 
-      IF (IAND(iomask(id), c_io_species) .NE. 0) THEN
+      IF (IAND(iomask(id), c_io_species) /= 0) THEN
         CALL build_species_subset
 
         len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 2
         len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 10
 
         DO ispecies = 1, n_species
-          IF (IAND(io_list(ispecies)%dumpmask, code) .EQ. 0) CYCLE
+          IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
           len3 = LEN_TRIM(io_list(ispecies)%name)
           len4 = len3
           len5 = len3
           IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
           IF ((len2 + len3) > c_max_string_length) THEN
             len5 = c_max_string_length - len2
-            IF (rank .EQ. 0) THEN
+            IF (rank == 0) THEN
               CALL integer_as_string((len2+len3), len_string)
               PRINT*, '*** WARNING ***'
               PRINT*, 'Output block name ','Derived/' // TRIM(name) // '_' &
@@ -1382,7 +1409,7 @@ CONTAINS
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
 
-    IF (isubset .EQ. 1) THEN
+    IF (isubset == 1) THEN
       io_list => species_list
       RETURN
     ENDIF
@@ -1414,92 +1441,92 @@ CONTAINS
 #endif
           gamma = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
           IF (subset_list(l)%use_gamma_min &
-              .AND. gamma .LT. subset_list(l)%gamma_min) use_particle = .FALSE.
+              .AND. gamma < subset_list(l)%gamma_min) use_particle = .FALSE.
           IF (subset_list(l)%use_gamma_max &
-              .AND. gamma .GT. subset_list(l)%gamma_max) use_particle = .FALSE.
+              .AND. gamma > subset_list(l)%gamma_max) use_particle = .FALSE.
         ENDIF
 
         IF (subset_list(l)%use_x_min &
-            .AND. current%part_pos(1) .LT. subset_list(l)%x_min) &
+            .AND. current%part_pos(1) < subset_list(l)%x_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_x_max &
-            .AND. current%part_pos(1) .GT. subset_list(l)%x_max) &
+            .AND. current%part_pos(1) > subset_list(l)%x_max) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_y_min &
-            .AND. current%part_pos(2) .LT. subset_list(l)%y_min) &
+            .AND. current%part_pos(2) < subset_list(l)%y_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_y_max &
-            .AND. current%part_pos(2) .GT. subset_list(l)%y_max) &
+            .AND. current%part_pos(2) > subset_list(l)%y_max) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_px_min &
-            .AND. current%part_p(1) .LT. subset_list(l)%px_min) &
+            .AND. current%part_p(1) < subset_list(l)%px_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_px_max &
-            .AND. current%part_p(1) .GT. subset_list(l)%px_max) &
+            .AND. current%part_p(1) > subset_list(l)%px_max) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_py_min &
-            .AND. current%part_p(2) .LT. subset_list(l)%py_min) &
+            .AND. current%part_p(2) < subset_list(l)%py_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_py_max &
-            .AND. current%part_p(2) .GT. subset_list(l)%py_max) &
+            .AND. current%part_p(2) > subset_list(l)%py_max) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_pz_min &
-            .AND. current%part_p(3) .LT. subset_list(l)%pz_min) &
+            .AND. current%part_p(3) < subset_list(l)%pz_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_pz_max &
-            .AND. current%part_p(3) .GT. subset_list(l)%pz_max) &
+            .AND. current%part_p(3) > subset_list(l)%pz_max) &
                 use_particle = .FALSE.
 
 #ifdef PER_PARTICLE_WEIGHT
         IF (subset_list(l)%use_weight_min &
-            .AND. current%weight .LT. subset_list(l)%weight_min) &
+            .AND. current%weight < subset_list(l)%weight_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_weight_max &
-            .AND. current%weight .GT. subset_list(l)%weight_max) &
+            .AND. current%weight > subset_list(l)%weight_max) &
                 use_particle = .FALSE.
 
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
         IF (subset_list(l)%use_charge_min &
-            .AND. current%charge .LT. subset_list(l)%charge_min) &
+            .AND. current%charge < subset_list(l)%charge_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_charge_max &
-            .AND. current%charge .GT. subset_list(l)%charge_max) &
+            .AND. current%charge > subset_list(l)%charge_max) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_mass_min &
-            .AND. current%mass .LT. subset_list(l)%mass_min) &
+            .AND. current%mass < subset_list(l)%mass_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_mass_max &
-            .AND. current%mass .GT. subset_list(l)%mass_max) &
+            .AND. current%mass > subset_list(l)%mass_max) &
                 use_particle = .FALSE.
 
 #endif
 #if PARTICLE_ID || PARTICLE_ID4
         IF (subset_list(l)%use_id_min &
-            .AND. current%id .LT. subset_list(l)%id_min) &
+            .AND. current%id < subset_list(l)%id_min) &
                 use_particle = .FALSE.
 
         IF (subset_list(l)%use_id_max &
-            .AND. current%id .GT. subset_list(l)%id_max) &
+            .AND. current%id > subset_list(l)%id_max) &
                 use_particle = .FALSE.
 #endif
 
         IF (subset_list(l)%use_random) THEN
           random_num = random()
-          IF (random_num .GT. subset_list(l)%random_fraction) &
+          IF (random_num > subset_list(l)%random_fraction) &
               use_particle = .FALSE.
         ENDIF
 
@@ -1542,7 +1569,7 @@ CONTAINS
           npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
       species_count = 0
       DO i = 1, nproc
-        IF (rank .EQ. i-1) species_offset(ispecies) = species_count
+        IF (rank == i-1) species_offset(ispecies) = species_count
         species_count = species_count + npart_species_per_proc(i)
       ENDDO
       spec%count = species_count
@@ -1565,7 +1592,7 @@ CONTAINS
             npart_species_per_proc, 1, MPI_INTEGER8, comm, errcode)
         species_count = 0
         DO i = 1, nproc
-          IF (rank .EQ. i-1) ejected_offset(ispecies) = species_count
+          IF (rank == i-1) ejected_offset(ispecies) = species_count
           species_count = species_count + npart_species_per_proc(i)
         ENDDO
         spec%count = species_count
@@ -1589,12 +1616,12 @@ CONTAINS
     LOGICAL :: convert, dump_grid
 
     id = c_dump_part_grid
-    IF (IAND(iomask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) /= 0 .OR. ANY(dump_point_grid)) THEN
       CALL build_species_subset
 
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+      convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+          .AND. (IAND(code,c_io_restartable) == 0 &
+          .OR. IAND(iomask(id), c_io_restartable) == 0))
 
       DO ispecies = 1, n_species
         current_species => io_list(ispecies)
@@ -1602,13 +1629,13 @@ CONTAINS
         mask = current_species%dumpmask
         dump_grid = dump_point_grid(ispecies)
 
-        IF (IAND(mask, code) .NE. 0) dump_grid = .TRUE.
-        IF (IAND(mask, c_io_never) .NE. 0) dump_grid = .FALSE.
-        IF (IAND(code, c_io_restartable) .NE. 0) dump_grid = .TRUE.
+        IF (IAND(mask, code) /= 0) dump_grid = .TRUE.
+        IF (IAND(mask, c_io_never) /= 0) dump_grid = .FALSE.
+        IF (IAND(code, c_io_restartable) /= 0) dump_grid = .TRUE.
 
         IF (dump_grid) THEN
           CALL species_offset_init()
-          IF (npart_global .EQ. 0) RETURN
+          IF (npart_global == 0) RETURN
 
           CALL sdf_write_point_mesh(sdf_handle, &
               'grid/' // TRIM(current_species%name), &
@@ -1620,18 +1647,18 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (isubset .NE. 1) RETURN
+    IF (isubset /= 1) RETURN
 
     id = c_dump_ejected_particles
-    IF (IAND(iomask(id), code) .NE. 0) THEN
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+    IF (IAND(iomask(id), code) /= 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+          .AND. (IAND(code,c_io_restartable) == 0 &
+          .OR. IAND(iomask(id), c_io_restartable) == 0))
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
         CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        IF (npart_global == 0) RETURN
 
         current_species => ejected_list(ispecies)
         CALL sdf_write_point_mesh(sdf_handle, &
@@ -1668,20 +1695,20 @@ CONTAINS
     LOGICAL :: convert, found
 
     id = id_in
-    IF (IAND(iomask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) /= 0) THEN
       CALL build_species_subset
 
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+      convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+          .AND. (IAND(code,c_io_restartable) == 0 &
+          .OR. IAND(iomask(id), c_io_restartable) == 0))
 
       DO ispecies = 1, n_species
         current_species => io_list(ispecies)
 
-        IF (IAND(current_species%dumpmask, code) .NE. 0 &
-            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        IF (IAND(current_species%dumpmask, code) /= 0 &
+            .OR. IAND(code, c_io_restartable) /= 0) THEN
           CALL species_offset_init()
-          IF (npart_global .EQ. 0) RETURN
+          IF (npart_global == 0) RETURN
 
           found = sdf_get_block_id(sdf_handle, &
               'grid/' // TRIM(current_species%name), temp_block_id)
@@ -1697,15 +1724,15 @@ CONTAINS
     ENDIF
 
     id = c_dump_ejected_particles
-    IF (IAND(iomask(id), code) .NE. 0) THEN
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+    IF (IAND(iomask(id), code) /= 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+          .AND. (IAND(code,c_io_restartable) == 0 &
+          .OR. IAND(iomask(id), c_io_restartable) == 0))
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
         CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        IF (npart_global == 0) RETURN
 
         current_species => ejected_list(ispecies)
         found = sdf_get_block_id(sdf_handle, &
@@ -1745,20 +1772,20 @@ CONTAINS
     LOGICAL :: convert, found
 
     id = id_in
-    IF (IAND(iomask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) /= 0) THEN
       CALL build_species_subset
 
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+      convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+          .AND. (IAND(code,c_io_restartable) == 0 &
+          .OR. IAND(iomask(id), c_io_restartable) == 0))
 
       DO ispecies = 1, n_species
         current_species => io_list(ispecies)
 
-        IF (IAND(current_species%dumpmask, code) .NE. 0 &
-            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        IF (IAND(current_species%dumpmask, code) /= 0 &
+            .OR. IAND(code, c_io_restartable) /= 0) THEN
           CALL species_offset_init()
-          IF (npart_global .EQ. 0) RETURN
+          IF (npart_global == 0) RETURN
 
           found = sdf_get_block_id(sdf_handle, &
               'grid/' // TRIM(current_species%name), temp_block_id)
@@ -1774,15 +1801,15 @@ CONTAINS
     ENDIF
 
     id = c_dump_ejected_particles
-    IF (IAND(iomask(id), code) .NE. 0) THEN
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+    IF (IAND(iomask(id), code) /= 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+          .AND. (IAND(code,c_io_restartable) == 0 &
+          .OR. IAND(iomask(id), c_io_restartable) == 0))
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
         CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        IF (npart_global == 0) RETURN
 
         current_species => ejected_list(ispecies)
         found = sdf_get_block_id(sdf_handle, &
@@ -1823,20 +1850,20 @@ CONTAINS
     LOGICAL :: convert, found
 
     id = id_in
-    IF (IAND(iomask(id), code) .NE. 0) THEN
+    IF (IAND(iomask(id), code) /= 0) THEN
       CALL build_species_subset
 
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+      convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+          .AND. (IAND(code,c_io_restartable) == 0 &
+          .OR. IAND(iomask(id), c_io_restartable) == 0))
 
       DO ispecies = 1, n_species
         current_species => io_list(ispecies)
 
-        IF (IAND(current_species%dumpmask, code) .NE. 0 &
-            .OR. IAND(code, c_io_restartable) .NE. 0) THEN
+        IF (IAND(current_species%dumpmask, code) /= 0 &
+            .OR. IAND(code, c_io_restartable) /= 0) THEN
           CALL species_offset_init()
-          IF (npart_global .EQ. 0) RETURN
+          IF (npart_global == 0) RETURN
 
           found = sdf_get_block_id(sdf_handle, &
               'grid/' // TRIM(current_species%name), temp_block_id)
@@ -1852,15 +1879,15 @@ CONTAINS
     ENDIF
 
     id = c_dump_ejected_particles
-    IF (IAND(iomask(id), code) .NE. 0) THEN
-      convert = (IAND(iomask(id), c_io_dump_single) .NE. 0 &
-          .AND. (IAND(code,c_io_restartable) .EQ. 0 &
-          .OR. IAND(iomask(id), c_io_restartable) .EQ. 0))
+    IF (IAND(iomask(id), code) /= 0) THEN
+      convert = (IAND(iomask(id), c_io_dump_single) /= 0 &
+          .AND. (IAND(code,c_io_restartable) == 0 &
+          .OR. IAND(iomask(id), c_io_restartable) == 0))
       reset_ejected = .TRUE.
 
       DO ispecies = 1, n_species
         CALL species_offset_init()
-        IF (npart_global .EQ. 0) RETURN
+        IF (npart_global == 0) RETURN
 
         current_species => ejected_list(ispecies)
         found = sdf_get_block_id(sdf_handle, &
@@ -1891,7 +1918,7 @@ CONTAINS
 
     DO i = 1, LEN(string_out)
       idx = INDEX(upr, string_out(i:i))
-      IF (idx .NE. 0) string_out(i:i) = lwr(idx:idx)
+      IF (idx /= 0) string_out(i:i) = lwr(idx:idx)
     ENDDO
 
   END FUNCTION lowercase
@@ -1937,7 +1964,7 @@ CONTAINS
 
     var = days
     varstring = ' day'
-    IF (var .GT. 0) THEN
+    IF (var > 0) THEN
       CALL integer_as_string(var, intstring)
       IF (string_started) THEN
         timestring = TRIM(timestring) // ', ' // TRIM(intstring) &
@@ -1945,13 +1972,13 @@ CONTAINS
       ELSE
         timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
       ENDIF
-      IF (var .GT. 1) timestring = TRIM(timestring) // 's'
+      IF (var > 1) timestring = TRIM(timestring) // 's'
       string_started = .TRUE.
     ENDIF
 
     var = hours
     varstring = ' hour'
-    IF (var .GT. 0) THEN
+    IF (var > 0) THEN
       CALL integer_as_string(var, intstring)
       IF (string_started) THEN
         timestring = TRIM(timestring) // ', ' // TRIM(intstring) &
@@ -1959,13 +1986,13 @@ CONTAINS
       ELSE
         timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
       ENDIF
-      IF (var .GT. 1) timestring = TRIM(timestring) // 's'
+      IF (var > 1) timestring = TRIM(timestring) // 's'
       string_started = .TRUE.
     ENDIF
 
     var = minutes
     varstring = ' minute'
-    IF (var .GT. 0) THEN
+    IF (var > 0) THEN
       CALL integer_as_string(var, intstring)
       IF (string_started) THEN
         timestring = TRIM(timestring) // ', ' // TRIM(intstring) &
@@ -1973,13 +2000,13 @@ CONTAINS
       ELSE
         timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
       ENDIF
-      IF (var .GT. 1) timestring = TRIM(timestring) // 's'
+      IF (var > 1) timestring = TRIM(timestring) // 's'
       string_started = .TRUE.
     ENDIF
 
     var = seconds
     varstring = ' seconds'
-    IF (var .GT. 0 .OR. frac_seconds .GT. 0 .OR. .NOT.string_started) THEN
+    IF (var > 0 .OR. frac_seconds > 0 .OR. .NOT.string_started) THEN
       CALL integer_as_string(var, intstring)
       WRITE(fracstring, '(i2.2)') frac_seconds
       IF (string_started) THEN
@@ -1999,15 +2026,15 @@ CONTAINS
 
     INTEGER :: ierr
 
-    IF (rank .NE. 0) RETURN
+    IF (rank /= 0) RETURN
 
     OPEN(unit=lu, status='OLD', &
         file=TRIM(data_dir) // '/' // TRIM(stop_file), iostat=ierr)
-    IF (ierr .EQ. 0) CLOSE(lu, status='DELETE')
+    IF (ierr == 0) CLOSE(lu, status='DELETE')
 
     OPEN(unit=lu, status='OLD', &
         file=TRIM(data_dir) // '/' // TRIM(stop_file_nodump), iostat=ierr)
-    IF (ierr .EQ. 0) CLOSE(lu, status='DELETE')
+    IF (ierr == 0) CLOSE(lu, status='DELETE')
 
   END SUBROUTINE cleanup_stop_files
 
@@ -2021,7 +2048,7 @@ CONTAINS
     LOGICAL :: buffer(2), got_stop_condition, got_stop_file
     REAL(num) :: walltime
 
-    IF (check_stop_frequency .LE. 0 .AND. .NOT.check_walltime) RETURN
+    IF (check_stop_frequency <= 0 .AND. .NOT.check_walltime) RETURN
 
     walltime = -1.0_num
     IF (check_walltime) &
@@ -2032,21 +2059,21 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (check_stop_frequency .LT. 0) RETURN
+    IF (check_stop_frequency < 0) RETURN
 
     got_stop_condition = .FALSE.
     force_dump = .FALSE.
     check_counter = check_counter + 1
 
-    IF (check_counter .LT. check_stop_frequency) RETURN
+    IF (check_counter < check_stop_frequency) RETURN
     check_counter = 0
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       ! Since we're checking for a STOP file, we might as well check the
       ! walltime as well
       IF (check_walltime) THEN
-        IF (walltime .LT. 0.0_num) walltime = MPI_WTIME()
-        IF (walltime - real_walltime_start .GE. stop_at_walltime) THEN
+        IF (walltime < 0.0_num) walltime = MPI_WTIME()
+        IF (walltime - real_walltime_start >= stop_at_walltime) THEN
           got_stop_condition = .TRUE.
           force_dump = .TRUE.
           PRINT*,'Stopping because "stop_at_walltime" has been exceeded.'
@@ -2056,7 +2083,7 @@ CONTAINS
       ! Next check if stop file exists
       OPEN(unit=lu, status='OLD', iostat=ierr, &
           file=TRIM(data_dir) // '/' // TRIM(stop_file))
-      IF (ierr .EQ. 0) THEN
+      IF (ierr == 0) THEN
         got_stop_file = .TRUE.
         got_stop_condition = .TRUE.
         force_dump = .TRUE.
@@ -2064,7 +2091,7 @@ CONTAINS
       ELSE
         OPEN(unit=lu, status='OLD', iostat=ierr, &
             file=TRIM(data_dir) // '/' // TRIM(stop_file_nodump))
-        IF (ierr .EQ. 0) THEN
+        IF (ierr == 0) THEN
           got_stop_file = .TRUE.
           got_stop_condition = .TRUE.
           force_dump = .FALSE.
@@ -2109,12 +2136,12 @@ CONTAINS
     halt = all_completed
     IF (all_completed) RETURN
 
-    IF (walltime .LT. 0) walltime = MPI_WTIME()
+    IF (walltime < 0) walltime = MPI_WTIME()
     IF ((walltime + timer_average(c_timer_step) + timer_average(c_timer_io) &
         + timer_average(c_timer_balance) - real_walltime_start) &
-        .LT. frac * stop_at_walltime) RETURN
+        < frac * stop_at_walltime) RETURN
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       IF (first) THEN
         ALLOCATE(completed(nproc-1))
         completed = .FALSE.
@@ -2150,7 +2177,7 @@ CONTAINS
           RETURN
         ENDIF
         walltime = MPI_WTIME()
-        IF (walltime - wall0 .GT. timeout) THEN
+        IF (walltime - wall0 > timeout) THEN
           msg = 1
           DO i = 1,nproc-1
             IF (completed(i)) THEN
@@ -2172,9 +2199,78 @@ CONTAINS
     ENDIF
     CALL MPI_RECV(msg, 1, MPI_INTEGER, 0, tag, comm, &
         MPI_STATUS_IGNORE, errcode)
-    IF (msg .LT. 0) all_completed = .TRUE.
+    IF (msg < 0) all_completed = .TRUE.
     halt = all_completed
 
   END SUBROUTINE check_walltime_auto
+
+
+
+  SUBROUTINE epoch_write_source_info(h)
+
+    TYPE(sdf_file_handle) :: h
+    CHARACTER(LEN=c_id_length) :: stitched_ids(3)
+    CHARACTER(LEN=c_id_length) :: time_string
+    CHARACTER(LEN=512) :: string_array(6)
+    INTEGER :: n
+
+    n = 0
+
+    IF (SIZE(epoch_bytes) > 1 .OR. &
+          (TRIM(epoch_bytes_checksum_type) /= '' .AND. &
+          ICHAR(epoch_bytes_checksum_type(1:1)) /= 0)) THEN
+      n = n + 1
+      CALL sdf_safe_copy_id(h, 'epoch_source/source', stitched_ids(n))
+      CALL sdf_write_datablock(h, stitched_ids(n), &
+          'EPOCH source code', epoch_bytes, &
+          epoch_bytes_padding, epoch_bytes_mimetype, &
+          epoch_bytes_checksum_type, epoch_bytes_checksum)
+    ENDIF
+
+    IF (SIZE(epoch_bytes) == 1 .AND. SIZE(epoch_diff_bytes) > 1) THEN
+      n = n + 1
+      CALL sdf_safe_copy_id(h, 'epoch_source/diff', stitched_ids(n))
+      CALL sdf_write_datablock(h, stitched_ids(n), &
+          'EPOCH repository differences', epoch_diff_bytes, &
+          epoch_diff_bytes_padding, epoch_diff_bytes_mimetype, &
+          epoch_diff_bytes_checksum_type, epoch_diff_bytes_checksum)
+    ENDIF
+
+    n = n + 1
+    CALL sdf_safe_copy_id(h, 'epoch_source/info', stitched_ids(n))
+    WRITE(time_string, '(I20)') epoch_bytes_compile_date
+
+    string_array(1) = TRIM(epoch_bytes_git_version)
+    string_array(2) = TRIM(epoch_bytes_compile_date_string)
+    string_array(3) = TRIM(ADJUSTL(time_string))
+    string_array(4) = TRIM(epoch_bytes_compile_machine_info)
+    string_array(5) = TRIM(epoch_bytes_compiler_info)
+    string_array(6) = TRIM(epoch_bytes_compiler_flags)
+
+    CALL sdf_write_namevalue(h, stitched_ids(n), &
+        'EPOCH repository information', &
+        (/'git_version         ', &
+          'compile_date_string ', &
+          'compile_date_seconds', &
+          'compile_machine_info', &
+          'compiler_info       ', &
+          'compiler_flags      '/), string_array)
+
+    CALL sdf_write_stitched(h, 'epoch_source', 'EPOCH source', &
+        stitched_ids(1), c_stagger_cell_centre, stitched_ids, n)
+
+  END SUBROUTINE epoch_write_source_info
+
+
+
+  SUBROUTINE write_source_info(h)
+
+    TYPE(sdf_file_handle) :: h
+
+    CALL sdf_write_source_info(h)
+    CALL epoch_write_source_info(h)
+    !CALL write_input_decks(h)
+
+  END SUBROUTINE write_source_info
 
 END MODULE diagnostics

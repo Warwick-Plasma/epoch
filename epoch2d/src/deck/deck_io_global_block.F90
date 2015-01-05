@@ -32,7 +32,7 @@ CONTAINS
 
     INTEGER :: i
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     IF (got_dump_first) THEN
       DO i = 1, n_io_blocks
@@ -54,10 +54,10 @@ CONTAINS
 
     INTEGER :: io, iu, ierr
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     IF (.NOT. new_style_io_block) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -84,8 +84,8 @@ CONTAINS
     INTEGER :: errcode
 
     errcode = c_err_none
-    IF (deck_state .EQ. c_ds_first) RETURN
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (deck_state == c_ds_first) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'force_first_to_be_restartable')) THEN
       force_first_to_be_restartable = as_logical_print(value, element, errcode)

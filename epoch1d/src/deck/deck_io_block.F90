@@ -28,7 +28,7 @@ CONTAINS
     INTEGER :: i
 
     block_number = 0
-    IF (deck_state .NE. c_ds_first) RETURN
+    IF (deck_state /= c_ds_first) RETURN
 
     alternate_name = ''
     io_block_name (c_dump_part_grid        ) = 'particles'
@@ -146,11 +146,11 @@ CONTAINS
     n_io_blocks = block_number
     block_number = 0
 
-    IF (n_io_blocks .GT. 0) THEN
+    IF (n_io_blocks > 0) THEN
       ! First pass
-      IF (deck_state .EQ. c_ds_first) THEN
-        IF (.NOT.new_style_io_block .AND. n_io_blocks .NE. 1) THEN
-          IF (rank .EQ. 0) THEN
+      IF (deck_state == c_ds_first) THEN
+        IF (.NOT.new_style_io_block .AND. n_io_blocks /= 1) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
@@ -167,7 +167,7 @@ CONTAINS
         ALLOCATE(io_block_list(n_io_blocks))
         DO i = 1, n_io_blocks
           CALL init_io_block(io_block_list(i))
-          IF (i .EQ. rolling_restart_io_block) THEN
+          IF (i == rolling_restart_io_block) THEN
             io_block_list(i)%rolling_restart = .TRUE.
             io_block_list(i)%dump_cycle = 1
             io_block_list(i)%restart = .TRUE.
@@ -181,8 +181,8 @@ CONTAINS
         DO i = 1, n_io_blocks
           IF (io_block_list(i)%disabled) CYCLE
 
-          IF (io_block_list(i)%dt_average .GT. t_end) THEN
-            IF (rank .EQ. 0) THEN
+          IF (io_block_list(i)%dt_average > t_end) THEN
+            IF (rank == 0) THEN
               DO iu = 1, nio_units ! Print to stdout and to file
                 io = io_units(iu)
                 WRITE(io,*) '*** WARNING ***'
@@ -193,8 +193,8 @@ CONTAINS
             ENDIF
             io_block_list(i)%dt_average = t_end
           ENDIF
-          IF (io_block%dump_cycle_first_index .GT. io_block%dump_cycle) THEN
-            IF (rank .EQ. 0) THEN
+          IF (io_block%dump_cycle_first_index > io_block%dump_cycle) THEN
+            IF (rank == 0) THEN
               DO iu = 1, nio_units ! Print to stdout and to file
                 io = io_units(iu)
                 WRITE(io,*) '*** WARNING ***'
@@ -217,7 +217,7 @@ CONTAINS
 
 #ifndef NO_IO
         ! Remove any left-over VisIt file lists
-        IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
+        IF (.NOT.ic_from_restart .AND. rank == 0) THEN
           list_filename = TRIM(ADJUSTL(data_dir)) // '/full.visit'
           OPEN(unit=lu, status='UNKNOWN', file=list_filename)
           CLOSE(unit=lu, status='DELETE')
@@ -243,7 +243,7 @@ CONTAINS
     got_dump_source_code = .FALSE.
     got_dump_input_decks = .FALSE.
     block_number = block_number + 1
-    IF (deck_state .NE. c_ds_first .AND. block_number .GT. 0) THEN
+    IF (deck_state /= c_ds_first .AND. block_number > 0) THEN
       io_block => io_block_list(block_number)
       IF (io_block%rolling_restart) THEN
         io_block_done(num_vars_to_dump+15) = .TRUE.
@@ -263,21 +263,21 @@ CONTAINS
     CHARACTER(LEN=c_max_string_length) :: list_filename
 #endif
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     IF (io_block%disabled) RETURN
 
     mask = io_block%dumpmask(c_dump_ejected_particles)
-    IF (mask .NE. c_io_none .AND. IAND(mask,c_io_never) .EQ. 0) &
+    IF (mask /= c_io_none .AND. IAND(mask,c_io_never) == 0) &
         track_ejected_particles = .TRUE.
 
-    IF (io_block%dumpmask(c_dump_absorption) .NE. c_io_never) THEN
+    IF (io_block%dumpmask(c_dump_absorption) /= c_io_never) THEN
       dump_absorption = .TRUE.
     ENDIF
 
     IF (.NOT. got_name) THEN
       IF (new_style_io_block) THEN
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
@@ -293,7 +293,7 @@ CONTAINS
 
 #ifndef NO_IO
     ! Delete any existing visit file lists
-    IF (.NOT.ic_from_restart .AND. rank .EQ. 0) THEN
+    IF (.NOT.ic_from_restart .AND. rank == 0) THEN
       list_filename = TRIM(ADJUSTL(data_dir)) // '/' &
           // TRIM(io_block%name) // '.visit'
       OPEN(unit=lu, status='UNKNOWN', file=list_filename)
@@ -333,13 +333,13 @@ CONTAINS
     INTEGER, PARAMETER :: c_err_old_style_ignore = 3
 
     errcode = c_err_none
-    IF (value .EQ. blank) RETURN
+    IF (value == blank) RETURN
 
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       IF (str_cmp(element, 'name')) new_style_io_block = .TRUE.
       IF (str_cmp(element, 'rolling_restart')) THEN
-        IF (rolling_restart_io_block .GT. 0) THEN
-          IF (rank .EQ. 0) THEN
+        IF (rolling_restart_io_block > 0) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
@@ -370,7 +370,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (elementselected .EQ. 0) RETURN
+    IF (elementselected == 0) RETURN
 
     IF (io_block_done(elementselected)) THEN
       errcode = c_err_preset_element
@@ -383,20 +383,20 @@ CONTAINS
     SELECT CASE (elementselected-num_vars_to_dump)
     CASE(1)
       io_block%dt_snapshot = as_real_print(value, element, errcode)
-      IF (io_block%dt_snapshot .LT. 0.0_num) io_block%dt_snapshot = 0.0_num
+      IF (io_block%dt_snapshot < 0.0_num) io_block%dt_snapshot = 0.0_num
     CASE(2)
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
       ELSE
         full_dump_every = as_integer_print(value, element, errcode)
-        IF (full_dump_every .EQ. 0) full_dump_every = 1
+        IF (full_dump_every == 0) full_dump_every = 1
       ENDIF
     CASE(3)
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
       ELSE
         restart_dump_every = as_integer_print(value, element, errcode)
-        IF (restart_dump_every .EQ. 0) restart_dump_every = 1
+        IF (restart_dump_every == 0) restart_dump_every = 1
       ENDIF
     CASE(4)
       IF (new_style_io_block) style_error = c_err_new_style_global
@@ -408,7 +408,7 @@ CONTAINS
       IF (new_style_io_block) style_error = c_err_new_style_global
       use_offset_grid = as_logical_print(value, element, errcode)
     CASE(7)
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -423,7 +423,7 @@ CONTAINS
       io_block%nstep_average = as_integer_print(value, element, errcode)
     CASE(10)
       io_block%nstep_snapshot = as_integer_print(value, element, errcode)
-      IF (io_block%nstep_snapshot .LT. 0) io_block%nstep_snapshot = 0
+      IF (io_block%nstep_snapshot < 0) io_block%nstep_snapshot = 0
     CASE(11)
       io_block%dump_source_code = as_logical_print(value, element, errcode)
       got_dump_source_code = .TRUE.
@@ -439,8 +439,8 @@ CONTAINS
       io_block%restart = as_logical_print(value, element, errcode)
     CASE(16)
       DO i = 1,block_number
-        IF (TRIM(io_block_list(i)%name) .EQ. TRIM(value)) THEN
-          IF (rank .EQ. 0) THEN
+        IF (TRIM(io_block_list(i)%name) == TRIM(value)) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
@@ -472,7 +472,7 @@ CONTAINS
     CASE(24)
       found = .FALSE.
       DO i = 1,nfile_prefixes
-        IF (TRIM(io_prefixes(i)) .EQ. TRIM(value)) THEN
+        IF (TRIM(io_prefixes(i)) == TRIM(value)) THEN
           found = .TRUE.
           io_block%prefix_index = i
           EXIT
@@ -492,8 +492,8 @@ CONTAINS
       io_block%disabled = as_logical_print(value, element, errcode)
     END SELECT
 
-    IF (style_error .EQ. c_err_old_style_ignore) THEN
-      IF (rank .EQ. 0) THEN
+    IF (style_error == c_err_old_style_ignore) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -505,8 +505,8 @@ CONTAINS
           WRITE(io,*)
         ENDDO
       ENDIF
-    ELSE IF (style_error .EQ. c_err_new_style_ignore) THEN
-      IF (rank .EQ. 0) THEN
+    ELSE IF (style_error == c_err_new_style_ignore) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -518,8 +518,8 @@ CONTAINS
           WRITE(io,*)
         ENDDO
       ENDIF
-    ELSE IF (style_error .EQ. c_err_new_style_global) THEN
-      IF (rank .EQ. 0) THEN
+    ELSE IF (style_error == c_err_new_style_global) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -533,7 +533,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (elementselected .GT. num_vars_to_dump) RETURN
+    IF (elementselected > num_vars_to_dump) RETURN
 
     mask_element = elementselected
     ALLOCATE(subsets(n_subsets+1))
@@ -541,7 +541,7 @@ CONTAINS
 
     DO is = 1, n_list
       subset = subsets(is)
-      IF (is .EQ. 1) THEN
+      IF (is == 1) THEN
         mask = subset
         fullmask = mask
       ELSE
@@ -551,8 +551,8 @@ CONTAINS
       ! If setting dumpmask for features which haven't been compiled
       ! in then issue a warning
 #ifndef PARTICLE_PROBES
-      IF (mask_element .EQ. c_dump_probes &
-          .AND. mask .NE. c_io_none .AND. IAND(mask,c_io_never) .EQ. 0) THEN
+      IF (mask_element == c_dump_probes &
+          .AND. mask /= c_io_none .AND. IAND(mask,c_io_never) == 0) THEN
         errcode = c_err_pp_options_wrong
         extended_error_string = '-DPARTICLE_PROBES'
         mask = c_io_never
@@ -563,8 +563,8 @@ CONTAINS
 #define PARTICLE_ID
 #endif
 #ifndef PARTICLE_ID
-      IF (mask_element .EQ. c_dump_part_id &
-          .AND. mask .NE. c_io_none .AND. IAND(mask,c_io_never) .EQ. 0) THEN
+      IF (mask_element == c_dump_part_id &
+          .AND. mask /= c_io_none .AND. IAND(mask,c_io_never) == 0) THEN
         errcode = c_err_pp_options_wrong
         extended_error_string = '-DPARTICLE_ID'
         mask = c_io_never
@@ -574,21 +574,21 @@ CONTAINS
       ! Setting some flags like species and average
       ! wastes memory if the parameters make no sense. Do sanity checking.
 
-      IF (IAND(mask, c_io_species) .NE. 0 &
-          .OR. IAND(mask, c_io_no_sum) .EQ. 0) THEN
+      IF (IAND(mask, c_io_species) /= 0 &
+          .OR. IAND(mask, c_io_no_sum) == 0) THEN
         bad = .TRUE.
         ! Check for sensible per species variables
-        IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_ekflux) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_jx) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_jy) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
+        IF (mask_element == c_dump_ekbar) bad = .FALSE.
+        IF (mask_element == c_dump_ekflux) bad = .FALSE.
+        IF (mask_element == c_dump_mass_density) bad = .FALSE.
+        IF (mask_element == c_dump_charge_density) bad = .FALSE.
+        IF (mask_element == c_dump_number_density) bad = .FALSE.
+        IF (mask_element == c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_jx) bad = .FALSE.
+        IF (mask_element == c_dump_jy) bad = .FALSE.
+        IF (mask_element == c_dump_jz) bad = .FALSE.
         IF (bad) THEN
-          IF (rank .EQ. 0 .AND. IAND(mask, c_io_species) .NE. 0) THEN
+          IF (rank == 0 .AND. IAND(mask, c_io_species) /= 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** WARNING ***'
@@ -602,29 +602,29 @@ CONTAINS
         ENDIF
       ENDIF
 
-      IF (IAND(mask, c_io_averaged) .NE. 0) THEN
+      IF (IAND(mask, c_io_averaged) /= 0) THEN
         bad = .TRUE.
         ! Check for sensible averaged variables
-        IF (mask_element .EQ. c_dump_ex) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_ey) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_ez) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_bx) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_by) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_bz) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_jx) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_jy) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_jz) bad = .FALSE.
+        IF (mask_element == c_dump_ex) bad = .FALSE.
+        IF (mask_element == c_dump_ey) bad = .FALSE.
+        IF (mask_element == c_dump_ez) bad = .FALSE.
+        IF (mask_element == c_dump_bx) bad = .FALSE.
+        IF (mask_element == c_dump_by) bad = .FALSE.
+        IF (mask_element == c_dump_bz) bad = .FALSE.
+        IF (mask_element == c_dump_jx) bad = .FALSE.
+        IF (mask_element == c_dump_jy) bad = .FALSE.
+        IF (mask_element == c_dump_jz) bad = .FALSE.
 
         ! Unset 'no_sum' dumpmask for grid variables
         IF (.NOT.bad) mask = IAND(mask, NOT(c_io_no_sum))
 
-        IF (mask_element .EQ. c_dump_ekbar) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_mass_density) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_charge_density) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_number_density) bad = .FALSE.
-        IF (mask_element .EQ. c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_ekbar) bad = .FALSE.
+        IF (mask_element == c_dump_mass_density) bad = .FALSE.
+        IF (mask_element == c_dump_charge_density) bad = .FALSE.
+        IF (mask_element == c_dump_number_density) bad = .FALSE.
+        IF (mask_element == c_dump_temperature) bad = .FALSE.
         IF (bad) THEN
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** WARNING ***'
@@ -637,17 +637,17 @@ CONTAINS
         ELSE
           any_average = .TRUE.
           io_block%any_average = .TRUE.
-          IF (IAND(mask, c_io_average_single) .NE. 0 .AND. num .NE. r4) THEN
+          IF (IAND(mask, c_io_average_single) /= 0 .AND. num /= r4) THEN
             io_block%averaged_data(mask_element)%dump_single = .TRUE.
           ENDIF
-          IF (averaged_var_block(mask_element) .NE. 0) THEN
+          IF (averaged_var_block(mask_element) /= 0) THEN
             PRINT*,'error ',mask_element,block_number
           ENDIF
           averaged_var_block(mask_element) = block_number
         ENDIF
       ENDIF
 
-      IF (is .EQ. 1) THEN
+      IF (is == 1) THEN
         io_block%dumpmask(mask_element) = mask
       ELSE
         subset_list(subset)%dumpmask(block_number,mask_element) = mask
@@ -676,7 +676,7 @@ CONTAINS
     IF (.NOT. any_average) io_block_done(i+8:i+9) = .TRUE.
 
     IF (.NOT. io_block_done(i+8) .AND. .NOT. io_block_done(i+9)) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -690,10 +690,10 @@ CONTAINS
     ENDIF
 
     ! Can't check the io_block if it hasn't been allocated.
-    IF (n_io_blocks .EQ. 0) RETURN
+    IF (n_io_blocks == 0) RETURN
 
-    IF (io_block%dt_average .GT. io_block%dt_snapshot) THEN
-      IF (rank .EQ. 0) THEN
+    IF (io_block%dt_average > io_block%dt_snapshot) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'

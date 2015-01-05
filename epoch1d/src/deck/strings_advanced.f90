@@ -27,19 +27,19 @@ CONTAINS
 
     c = ICHAR(str_in(1:1))
     ! ACHAR(39) = '\'', ACHAR(34) = '"'
-    IF (c .NE. 39 .AND. c .NE. 34) RETURN
+    IF (c /= 39 .AND. c /= 34) RETURN
 
     delimiter = c
 
     DO char = 2, str_len
       c = ICHAR(str_in(char:char))
-      IF (c .EQ. delimiter) THEN
+      IF (c == delimiter) THEN
         pos = char
         EXIT
       ENDIF
     ENDDO
 
-    IF (pos .LT. 0) THEN
+    IF (pos < 0) THEN
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF
@@ -65,13 +65,13 @@ CONTAINS
     DO char = 1, str_len
       c = ICHAR(str_in(char:char))
       ! ACHAR(48)-ACHAR(57) = '0'-'9'
-      IF (c .GT. 47 .AND. c .LT. 58) THEN
+      IF (c > 47 .AND. c < 58) THEN
         pos = char
         EXIT
       ENDIF
     ENDDO
 
-    IF (pos .LT. 0) THEN
+    IF (pos < 0) THEN
       err = IOR(err, c_err_bad_value)
       RETURN
     ENDIF
@@ -93,7 +93,7 @@ CONTAINS
 
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
-    IF (err .EQ. c_err_none) &
+    IF (err == c_err_none) &
         CALL evaluate_at_point_to_array(output, 0, 2, array, err)
     real1 = array(1)
     real2 = array(2)
@@ -114,7 +114,7 @@ CONTAINS
     ndim = SIZE(array)
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
-    IF (err .EQ. c_err_none) &
+    IF (err == c_err_none) &
         CALL evaluate_at_point_to_array(output, 0, ndim, array, err)
     CALL deallocate_stack(output)
 
@@ -137,11 +137,11 @@ CONTAINS
     found = .FALSE.
     DO i = 1, LEN(TRIM(str_in))
       c = str_in(i:i)
-      IF (c .EQ. '(') THEN
+      IF (c == '(') THEN
         found = .TRUE.
         EXIT
       ENDIF
-      IF (c .NE. ' ' .AND. IACHAR(c) .NE. 9) EXIT
+      IF (c /= ' ' .AND. IACHAR(c) /= 9) EXIT
     ENDDO
 
     CALL initialise_stack(output)
@@ -153,7 +153,7 @@ CONTAINS
     ENDIF
 
     CALL tokenize(str_tmp, output, err)
-    IF (err .EQ. c_err_none) THEN
+    IF (err == c_err_none) THEN
       NULLIFY(array)
       CALL evaluate_and_return_all(output, 0, ndim, array, err)
     ENDIF
@@ -229,7 +229,7 @@ CONTAINS
 
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
-    IF (err .EQ. c_err_none) &
+    IF (err == c_err_none) &
         CALL evaluate_as_list(output, array, n_elements, err)
     CALL deallocate_stack(output)
 
@@ -265,7 +265,7 @@ CONTAINS
 
     res = as_integer(str_in, err)
 
-    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
 
     WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
 
@@ -281,7 +281,7 @@ CONTAINS
 
     res = as_long_integer(str_in, err)
 
-    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
 
     WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
 
@@ -297,7 +297,7 @@ CONTAINS
 
     res = as_real(str_in, err)
 
-    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
 
     WRITE(du,'(A,G18.11)') TRIM(element) // ' = ', res
 

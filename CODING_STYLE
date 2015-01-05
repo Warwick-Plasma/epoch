@@ -30,8 +30,8 @@ Lines must not contain tab characters.
 
 Use 'ENDIF' and 'ENDDO' instead of 'END IF' and 'END DO'.
 
-Use F77-style binary operators instead of F90 ones. eg. use '.EQ.'
-instead of '=='.
+Use F90-style binary operators instead of F77 ones. eg. use '=='
+instead of '.EQ.'.
 
 Variable names must not clash with Fortran keywords.
 

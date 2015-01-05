@@ -31,7 +31,7 @@ CONTAINS
 
   SUBROUTINE dist_fn_block_start
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     ! Every new laser uses the internal time function
     ALLOCATE(working_block)
@@ -49,10 +49,10 @@ CONTAINS
     REAL(num) :: r1, r2
     REAL(num), PARAMETER :: pi2 = 2.0_num * pi
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     IF (.NOT.got_name) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -63,8 +63,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (working_block%ndims .EQ. -1) THEN
-      IF (rank .EQ. 0) THEN
+    IF (working_block%ndims == -1) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -76,8 +76,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (ndims .GT. working_block%ndims) THEN
-      IF (rank .EQ. 0) THEN
+    IF (ndims > working_block%ndims) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -93,26 +93,26 @@ CONTAINS
 
     DO i = 1, working_block%ndims
       dir = working_block%directions(i)
-      IF (dir .NE. c_dir_xy_angle &
-          .AND. dir .NE. c_dir_yz_angle .AND. dir .NE. c_dir_zx_angle) CYCLE
+      IF (dir /= c_dir_xy_angle &
+          .AND. dir /= c_dir_yz_angle .AND. dir /= c_dir_zx_angle) CYCLE
 
       r1 = working_block%ranges(1,i)
       r2 = working_block%ranges(2,i)
-      IF (ABS(r1 - r2) .LE. c_tiny) CYCLE
+      IF (ABS(r1 - r2) <= c_tiny) CYCLE
 
       ! If direction is an angle, set start angle to lie in the range [-pi,pi)
       n = INT(r1 / pi2)
       r1 = r1 - pi2 * n
-      IF (r1 .GE.  pi) r1 = r1 - pi2
-      IF (r1 .LT. -pi) r1 = r1 + pi2
+      IF (r1 >=  pi) r1 = r1 - pi2
+      IF (r1 < -pi) r1 = r1 + pi2
       working_block%ranges(1,i) = r1
 
       ! Set end angle to be less than 2*pi greater than start angle
       n = INT(r2 / pi2)
       r2 = r2 - pi2 * n
-      IF (r2 .GE.  pi) r2 = r2 - pi2
-      IF (r2 .LT. -pi) r2 = r2 + pi2
-      IF (r2 .LE.  r1) r2 = r2 + pi2
+      IF (r2 >=  pi) r2 = r2 - pi2
+      IF (r2 < -pi) r2 = r2 + pi2
+      IF (r2 <=  r1) r2 = r2 + pi2
       working_block%ranges(2,i) = r2
     ENDDO
 
@@ -133,8 +133,8 @@ CONTAINS
     REAL(num) :: work1, work2
 
     errcode = c_err_none
-    IF (deck_state .EQ. c_ds_first) RETURN
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (deck_state == c_ds_first) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'name')) THEN
       working_block%name = value
@@ -144,10 +144,10 @@ CONTAINS
 
     IF (str_cmp(element, 'ndims')) THEN
       work = as_integer_print(value, element, errcode)
-      IF (work .GE. 1 .AND. work .LE. 3) THEN
+      IF (work >= 1 .AND. work <= 3) THEN
         working_block%ndims = work
       ELSE
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
@@ -166,7 +166,7 @@ CONTAINS
 
     IF (str_cmp(element, 'restrict_x')) THEN
       CALL split_range(value, work1, work2, errcode)
-      IF (errcode .NE. c_err_none) RETURN
+      IF (errcode /= c_err_none) RETURN
       working_block%use_restrictions(c_dir_x) = .TRUE.
       working_block%restrictions(:,c_dir_x) = (/work1, work2/)
       RETURN
@@ -174,7 +174,7 @@ CONTAINS
 
     IF (str_cmp(element, 'restrict_y')) THEN
       CALL split_range(value, work1, work2, errcode)
-      IF (errcode .NE. c_err_none) RETURN
+      IF (errcode /= c_err_none) RETURN
       working_block%use_restrictions(c_dir_y) = .TRUE.
       working_block%restrictions(:,c_dir_y) = (/work1, work2/)
       RETURN
@@ -182,7 +182,7 @@ CONTAINS
 
     IF (str_cmp(element, 'restrict_px')) THEN
       CALL split_range(value, work1, work2, errcode)
-      IF (errcode .NE. c_err_none) RETURN
+      IF (errcode /= c_err_none) RETURN
       working_block%use_restrictions(c_dir_px) = .TRUE.
       working_block%restrictions(:,c_dir_px) = (/work1, work2/)
       RETURN
@@ -190,7 +190,7 @@ CONTAINS
 
     IF (str_cmp(element, 'restrict_py')) THEN
       CALL split_range(value, work1, work2, errcode)
-      IF (errcode .NE. c_err_none) RETURN
+      IF (errcode /= c_err_none) RETURN
       working_block%use_restrictions(c_dir_py) = .TRUE.
       working_block%restrictions(:,c_dir_py) = (/work1, work2/)
       RETURN
@@ -198,7 +198,7 @@ CONTAINS
 
     IF (str_cmp(element, 'restrict_pz')) THEN
       CALL split_range(value, work1, work2, errcode)
-      IF (errcode .NE. c_err_none) RETURN
+      IF (errcode /= c_err_none) RETURN
       working_block%use_restrictions(c_dir_pz) = .TRUE.
       working_block%restrictions(:,c_dir_pz) = (/work1, work2/)
       RETURN
@@ -206,11 +206,11 @@ CONTAINS
 
     IF (str_cmp(element, 'include_species')) THEN
       ispecies = as_integer_print(value, element, errcode)
-      IF (errcode .EQ. c_err_none) THEN
-        IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
+      IF (errcode == c_err_none) THEN
+        IF (ispecies > 0 .AND. ispecies <= n_species) THEN
           working_block%use_species(ispecies) = .TRUE.
         ELSE
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
@@ -225,9 +225,9 @@ CONTAINS
     ENDIF
 
     CALL split_off_int(element, part1, part2, errcode)
-    IF (part2 .GT. ndims) ndims = part2
+    IF (part2 > ndims) ndims = part2
 
-    IF (errcode .NE. c_err_none) THEN
+    IF (errcode /= c_err_none) THEN
       errcode = c_err_unknown_element
       RETURN
     ENDIF
@@ -240,7 +240,7 @@ CONTAINS
 
     IF (str_cmp(part1, 'range')) THEN
       CALL split_range(TRIM(value), work1, work2, errcode)
-      IF (IAND(errcode, c_err_bad_value) .NE. 0) THEN
+      IF (IAND(errcode, c_err_bad_value) /= 0) THEN
         errcode = IAND(errcode, NOT(c_err_bad_value))
         errcode = IOR(errcode, c_err_warn_bad_value)
         RETURN

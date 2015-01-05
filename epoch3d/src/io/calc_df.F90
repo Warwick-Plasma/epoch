@@ -13,8 +13,8 @@ CONTAINS
 
     CALL processor_summation_bcs(data_array, ng)
 
-    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) .NE. c_bc_periodic &
-        .AND. bc_particle(c_bd_x_min) .NE. c_bc_reflect) THEN
+    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) /= c_bc_periodic &
+        .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
       DO k = -2, nz+3
       DO j = -2, ny+3
         data_array(1,j,k) = data_array(1,j,k) + data_array( 0,j,k)
@@ -23,8 +23,8 @@ CONTAINS
       ENDDO
       ENDDO
     ENDIF
-    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) .NE. c_bc_periodic &
-        .AND. bc_particle(c_bd_x_max) .NE. c_bc_reflect) THEN
+    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) /= c_bc_periodic &
+        .AND. bc_particle(c_bd_x_max) /= c_bc_reflect) THEN
       DO k = -2, nz+3
       DO j = -2, ny+3
         data_array(nx-2,j,k) = data_array(nx-2,j,k) + data_array(nx+3,j,k)
@@ -34,8 +34,8 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (y_min_boundary .AND. bc_particle(c_bd_y_min) .NE. c_bc_periodic &
-        .AND. bc_particle(c_bd_y_min) .NE. c_bc_reflect) THEN
+    IF (y_min_boundary .AND. bc_particle(c_bd_y_min) /= c_bc_periodic &
+        .AND. bc_particle(c_bd_y_min) /= c_bc_reflect) THEN
       DO k = -2, nz+3
       DO i = -2, nx+3
         data_array(i,1,k) = data_array(i,1,k) + data_array(i, 0,k)
@@ -44,8 +44,8 @@ CONTAINS
       ENDDO
       ENDDO
     ENDIF
-    IF (y_max_boundary .AND. bc_particle(c_bd_y_max) .NE. c_bc_periodic &
-        .AND. bc_particle(c_bd_y_max) .NE. c_bc_reflect) THEN
+    IF (y_max_boundary .AND. bc_particle(c_bd_y_max) /= c_bc_periodic &
+        .AND. bc_particle(c_bd_y_max) /= c_bc_reflect) THEN
       DO k = -2, nz+3
       DO i = -2, nx+3
         data_array(i,ny-2,k) = data_array(i,ny-2,k) + data_array(i,ny+3,k)
@@ -55,8 +55,8 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (z_min_boundary .AND. bc_particle(c_bd_z_min) .NE. c_bc_periodic &
-        .AND. bc_particle(c_bd_z_min) .NE. c_bc_reflect) THEN
+    IF (z_min_boundary .AND. bc_particle(c_bd_z_min) /= c_bc_periodic &
+        .AND. bc_particle(c_bd_z_min) /= c_bc_reflect) THEN
       DO j = -2, ny+3
       DO i = -2, nx+3
         data_array(i,j,1) = data_array(i,j,1) + data_array(i,j, 0)
@@ -65,8 +65,8 @@ CONTAINS
       ENDDO
       ENDDO
     ENDIF
-    IF (z_max_boundary .AND. bc_particle(c_bd_z_max) .NE. c_bc_periodic &
-        .AND. bc_particle(c_bd_z_max) .NE. c_bc_reflect) THEN
+    IF (z_max_boundary .AND. bc_particle(c_bd_z_max) /= c_bc_periodic &
+        .AND. bc_particle(c_bd_z_max) /= c_bc_reflect) THEN
       DO j = -2, ny+3
       DO i = -2, nx+3
         data_array(i,j,nz-2) = data_array(i,j,nz-2) + data_array(i,j,nz+3)
@@ -104,14 +104,14 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type .EQ. c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifdef TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -189,7 +189,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -219,7 +219,7 @@ CONTAINS
 #endif
 #endif
 
-        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+        IF (io_list(ispecies)%species_type /= c_species_id_photon) THEN
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
@@ -297,7 +297,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -327,7 +327,7 @@ CONTAINS
 #endif
 #endif
 
-        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+        IF (io_list(ispecies)%species_type /= c_species_id_photon) THEN
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
@@ -487,14 +487,14 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type .EQ. c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifdef TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -565,7 +565,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -629,7 +629,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -772,7 +772,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -834,14 +834,14 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type .EQ. c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifdef TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -976,7 +976,7 @@ CONTAINS
 #endif
 #endif
 
-        IF (species_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+        IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
@@ -1006,7 +1006,7 @@ CONTAINS
 
     sum_out(1) = particle_energy
     sum_out(2) = field_energy
-    CALL MPI_ALLREDUCE(sum_out, sum_in, 2, mpireal, MPI_SUM, comm, errcode)
+    CALL MPI_REDUCE(sum_out, sum_in, 2, mpireal, MPI_SUM, 0, comm, errcode)
     total_particle_energy = sum_in(1)
     total_field_energy = sum_in(2)
 

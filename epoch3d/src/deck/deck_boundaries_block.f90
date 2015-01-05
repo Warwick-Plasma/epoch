@@ -66,7 +66,7 @@ CONTAINS
 
   SUBROUTINE boundary_deck_initialise
 
-    IF (deck_state .NE. c_ds_first) RETURN
+    IF (deck_state /= c_ds_first) RETURN
     boundary_block_done = .FALSE.
 
   END SUBROUTINE boundary_deck_initialise
@@ -99,7 +99,7 @@ CONTAINS
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
 
     errcode = c_err_none
-    IF (deck_state .NE. c_ds_first) RETURN
+    IF (deck_state /= c_ds_first) RETURN
 
     errcode = c_err_unknown_element
 
@@ -113,7 +113,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (elementselected .EQ. 0) RETURN
+    IF (elementselected == 0) RETURN
 
     IF (boundary_block_done(elementselected)) THEN
       errcode = c_err_preset_element
@@ -122,7 +122,7 @@ CONTAINS
     boundary_block_done(elementselected) = .TRUE.
     errcode = c_err_none
 
-    IF (elementselected .LE. nbase) THEN
+    IF (elementselected <= nbase) THEN
       boundary_block_done(elementselected+  nbase) = .TRUE.
       boundary_block_done(elementselected+2*nbase) = .TRUE.
     ENDIF
@@ -221,7 +221,7 @@ CONTAINS
 
     DO index = 1, boundary_block_elements - 4
       IF (.NOT. boundary_block_done(index)) THEN
-        IF (rank .EQ. 0) THEN
+        IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
@@ -238,18 +238,18 @@ CONTAINS
     ! Sanity check on periodic boundaries
     error = .FALSE.
     DO index = 1, c_ndims
-      IF (bc_field(2*index-1) .EQ. c_bc_periodic &
-          .AND. bc_field(2*index) .NE. c_bc_periodic) error = .TRUE.
-      IF (bc_field(2*index-1) .NE. c_bc_periodic &
-          .AND. bc_field(2*index) .EQ. c_bc_periodic) error = .TRUE.
-      IF (bc_particle(2*index-1) .EQ. c_bc_periodic &
-          .AND. bc_particle(2*index) .NE. c_bc_periodic) error = .TRUE.
-      IF (bc_particle(2*index-1) .NE. c_bc_periodic &
-          .AND. bc_particle(2*index) .EQ. c_bc_periodic) error = .TRUE.
+      IF (bc_field(2*index-1) == c_bc_periodic &
+          .AND. bc_field(2*index) /= c_bc_periodic) error = .TRUE.
+      IF (bc_field(2*index-1) /= c_bc_periodic &
+          .AND. bc_field(2*index) == c_bc_periodic) error = .TRUE.
+      IF (bc_particle(2*index-1) == c_bc_periodic &
+          .AND. bc_particle(2*index) /= c_bc_periodic) error = .TRUE.
+      IF (bc_particle(2*index-1) /= c_bc_periodic &
+          .AND. bc_particle(2*index) == c_bc_periodic) error = .TRUE.
     ENDDO
 
     IF (error) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)

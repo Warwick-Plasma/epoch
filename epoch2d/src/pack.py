@@ -3,19 +3,46 @@
 import binascii
 import struct
 import os
-import sys
 import time
 import subprocess as sp
 import tarfile
 import hashlib
 import platform
 import gzip
+import argparse
+import codecs
 
-prefix="sdf"
-pack_source_code = True
-pack_git_diff = True
-pack_git_diff_from_origin = True
-generate_checksum = True
+def str2bool(x):
+   if x.lower() not in {'true', 'yes', '1', 'false', 'no', '0'}:
+      raise TypeError
+   return x.lower() in {'true', 'yes', '1'}
+
+argp = argparse.ArgumentParser(
+      description="Pack source code for writing to SDF output")
+argp.add_argument("prefix", type=str, help="Package name")
+argp.add_argument("pack_source_code", type=str2bool,
+      help="Pack source code")
+argp.add_argument("pack_git_diff", type=str2bool,
+      help="Pack git diff")
+argp.add_argument("pack_git_diff_from_origin", type=str2bool,
+      help="Pack git diff from origin")
+argp.add_argument("generate_checksum", type=str2bool,
+      help="Generate checksum")
+argp.add_argument("f77_output", type=str2bool,
+      help="Fortran 77 output")
+argp.add_argument("outfile", type=str, help="Output file")
+argp.add_argument("compiler_info", type=str, help="Compiler info")
+argp.add_argument("compiler_flags", type=str, help="Compiler flags")
+argp.add_argument("filelist", type=str, nargs='*', help="Source files")
+args = argp.parse_args()
+
+prefix = args.prefix
+pack_source_code  = args.pack_source_code
+pack_git_diff  = args.pack_git_diff
+pack_git_diff_from_origin  = args.pack_git_diff_from_origin
+generate_checksum  = args.generate_checksum
+
+commitfile = os.path.join(os.environ['GIT_WORK_TREE'],'src','COMMIT')
 
 archive="source_info_archive.tgz"
 hexdump="source_info_hexdump.txt"
@@ -23,10 +50,10 @@ gitdiff="source_info_gitdiff.txt"
 varname="%s_bytes" % prefix
 diffname="%s_diff_bytes" % prefix
 module_name="%s_source_info" % prefix
-outfile=sys.argv[1]
+outfile=args.outfile
 incfile=outfile.split('.')[0] + '_include.inc'
 
-f77_output = False
+f77_output = args.f77_output
 nbytes = 8
 nelements = 0
 padding = 0
@@ -51,14 +78,14 @@ def byteswap4(s):
   s = binascii.unhexlify(s)
   a, = struct.unpack('>L',s)
   s = struct.pack('<L',a)
-  return binascii.hexlify(s)
+  return binascii.hexlify(s).decode('utf-8')
 
 
 def byteswap8(s):
   s = binascii.unhexlify(s)
   a, = struct.unpack('>Q',s)
   s = struct.pack('<Q',a)
-  return binascii.hexlify(s)
+  return binascii.hexlify(s).decode('utf-8')
 
 
 def wrapped(string):
@@ -126,7 +153,7 @@ def get_bytes_checksum(files):
       data = f.read(cksum.block_size)
       if not data:
         break
-      cksum.update(data)
+      cksum.update(data.encode('utf-8'))
   checksum_type = 'sha256'
   return cksum.hexdigest()
 
@@ -135,13 +162,13 @@ def write_data_bytes(filename, varname):
   global mimetype, of
   global linestart, linecont, suffix, ncolumns, ncontinuation
 
-  f=open(filename)
+  f=open(filename, 'rb')
   d=f.read()
-  dhex=d.encode('hex')
+  dhex=codecs.encode(d, 'hex_codec').decode('utf-8')
   f.close()
   os.remove(filename)
 
-  nelements = (len(d)+nbytes-1) / nbytes
+  nelements = (len(d)+nbytes-1) // nbytes
   padding = nelements * nbytes - len(d)
   dhex += '00' * padding
 
@@ -152,9 +179,9 @@ def write_data_bytes(filename, varname):
   print_integer_array(nelements)
 
   nwidth = len("z'',") + 2 * nbytes
-  nper_line_body = (ncolumns - 1) / nwidth
+  nper_line_body = (ncolumns - 1) // nwidth
   sdata = linestart + "DATA(%s(i),i=%i,%i)/" % (varname,nelements,nelements)
-  nper_line_first = (ncolumns - len(sdata) - 1) / nwidth
+  nper_line_first = (ncolumns - len(sdata) - 1) // nwidth
   nper_segment = nper_line_first + nper_line_body * ncontinuation
 
   i0 = 0
@@ -216,25 +243,52 @@ def print_integer_array(value):
     wrapped("INTEGER(%i) :: %s(%i)" % (nbytes,vname,value))
 
 
-fnull=open(os.devnull,'w')
 try:
-  git_version = sp.check_output("git describe --always --long --dirty",
-                  shell=True,stderr=fnull).rstrip()
+  cmd = sp.Popen("git describe --always --long --dirty",shell=True,
+                 stderr=sp.PIPE,stdout=sp.PIPE)
+  output = cmd.communicate()
+  if cmd.returncode == 127:
+    print('WARNING: Git command not found')
+    git_version = ''
+    pack_git_diff = False
+    try:
+      f = open(commitfile,"r")
+      string = f.readline().rstrip('\n')
+      f.close()
+      git_version = string.split('=')[1]
+    except:
+      pass
+  elif cmd.returncode != 0 and str(output[1]).find('ot a git repo') != -1:
+    print('WARNING: Not a git repository')
+    git_version = ''
+    pack_git_diff = False
+    try:
+      f = open(commitfile,"r")
+      string = f.readline().rstrip('\n')
+      f.close()
+      git_version = string.split('=')[1]
+    except:
+      pass
+  elif cmd.returncode != 0:
+    raise Exception('ERROR: unable to generate git diff')
+  else:
+    git_version = output[0].decode('utf-8').rstrip()
+    pack_git_diff = True
 except:
-  git_version = ''
-  pack_git_diff = False
+  raise Exception('ERROR: unable to generate git diff')
 
 tsec = time.time()
 compile_date = int(round(tsec))
 compile_date_string = time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime(tsec))
 compile_machine_info = ' '.join((platform.node(),platform.platform()))
-compiler_info=sys.argv[2]
-compiler_flags=sys.argv[3]
+compiler_info=args.compiler_info
+compiler_flags=args.compiler_flags
 
+#fnull=open(os.devnull,'w')
 #filelist = sp.check_output("git ls-files --cached --no-empty-directory "
 #                + "--full-name", shell=True, stderr=fnull).rstrip()
 
-filelist = sys.argv[4:]
+filelist = args.filelist
 if filelist == []:
   pack_source_code = False
 

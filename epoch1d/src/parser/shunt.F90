@@ -15,18 +15,18 @@ CONTAINS
 
     char_type = c_char_unknown
 
-    IF (char .EQ. ' ') THEN
+    IF (char == ' ') THEN
       char_type = c_char_space
-    ELSEIF (char .GE. '0' .AND. char .LE. '9' .OR. char .EQ. '.') THEN
+    ELSEIF (char >= '0' .AND. char <= '9' .OR. char == '.') THEN
       char_type = c_char_numeric
-    ELSEIF ((char .GE. 'A' .AND. char .LE. 'Z') &
-        .OR. (char .GE. 'a' .AND. char .LE. 'z') .OR. char .EQ. '_') THEN
+    ELSEIF ((char >= 'A' .AND. char <= 'Z') &
+        .OR. (char >= 'a' .AND. char <= 'z') .OR. char == '_') THEN
       char_type = c_char_alpha
-    ELSEIF (char .EQ. '(' .OR. char .EQ. ')' .OR. char .EQ. ',') THEN
+    ELSEIF (char == '(' .OR. char == ')' .OR. char == ',') THEN
       char_type = c_char_delimiter
     ! 92 is the ASCII code for backslash
-    ELSEIF (char .EQ. '+' .OR. char .EQ. '-' .OR. ICHAR(char) .EQ. 92 &
-        .OR. char .EQ. '/' .OR. char .EQ. '*' .OR. char .EQ. '^') THEN
+    ELSEIF (char == '+' .OR. char == '-' .OR. ICHAR(char) == 92 &
+        .OR. char == '/' .OR. char == '*' .OR. char == '^') THEN
       char_type = c_char_opcode
     ENDIF
 
@@ -46,7 +46,7 @@ CONTAINS
     block%numerical_data = 0.0_num
     work = 0
 
-    IF (LEN(TRIM(name)) .EQ. 0) THEN
+    IF (LEN(TRIM(name)) == 0) THEN
       block%ptype = c_pt_null
       block%value = 0
       block%numerical_data = 0.0_num
@@ -54,7 +54,7 @@ CONTAINS
     ENDIF
 
     work = as_constant(name)
-    IF (work .NE. 0) THEN
+    IF (work /= 0) THEN
       ! block is a named constant
       block%ptype = c_pt_constant
       block%value = work
@@ -62,7 +62,7 @@ CONTAINS
     ENDIF
 
     work = as_deck_constant(name)
-    IF (work .NE. 0) THEN
+    IF (work /= 0) THEN
       ! block is a deck constant
       block%ptype = c_pt_deck_constant
       block%value = work
@@ -70,7 +70,7 @@ CONTAINS
     ENDIF
 
     work = as_default_constant(name)
-    IF (work .NE. 0) THEN
+    IF (work /= 0) THEN
       ! block is a named constant
       block%ptype = c_pt_default_constant
       block%value = work
@@ -78,7 +78,7 @@ CONTAINS
     ENDIF
 
     work = as_operator(name)
-    IF (work .NE. 0) THEN
+    IF (work /= 0) THEN
       ! block is an operator
       block%ptype = c_pt_operator
       block%value = work
@@ -86,7 +86,7 @@ CONTAINS
     ENDIF
 
     work = as_function(name)
-    IF (work .NE. 0) THEN
+    IF (work /= 0) THEN
       ! block is a function
       block%ptype = c_pt_function
       block%value = work
@@ -94,7 +94,7 @@ CONTAINS
     ENDIF
 
     work = as_parenthesis(name)
-    IF (work .NE. 0) THEN
+    IF (work /= 0) THEN
       ! block is a parenthesis
       block%ptype = c_pt_parenthesis
       block%value = work
@@ -102,7 +102,7 @@ CONTAINS
     ENDIF
 
     work = as_species(name)
-    IF (work .NE. 0) THEN
+    IF (work /= 0) THEN
       ! block is a species name
       block%ptype = c_pt_species
       block%value = work
@@ -110,7 +110,7 @@ CONTAINS
     ENDIF
 
     work = as_subset(name)
-    IF (work .NE. 0) THEN
+    IF (work /= 0) THEN
       ! block is a subset name
       block%ptype = c_pt_subset
       block%value = work
@@ -125,7 +125,7 @@ CONTAINS
     ENDIF
 
     value = as_real_simple(name, work)
-    IF (IAND(work, c_err_bad_value) .EQ. 0) THEN
+    IF (IAND(work, c_err_bad_value) == 0) THEN
       ! block is a simple variable
       block%ptype = c_pt_variable
       block%value = 0
@@ -176,7 +176,7 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: stack
 
-    IF (.NOT.stack%init .AND. rank .EQ. 0) THEN
+    IF (.NOT.stack%init .AND. rank == 0) THEN
       PRINT*,'*** WARNING ***'
       PRINT*,'deallocate_stack not initialised'
     ENDIF
@@ -216,7 +216,7 @@ CONTAINS
     old_stack_point = stack%stack_point
     stack%stack_point = old_stack_point + append%stack_point
 
-    IF (stack%stack_point .GT. stack%stack_size) THEN
+    IF (stack%stack_point > stack%stack_size) THEN
       old_size = stack%stack_size
       stack%stack_size = 2 * stack%stack_point
       old_buffer => stack%entries
@@ -251,12 +251,12 @@ CONTAINS
 
     stack%stack_point = stack%stack_point + 1
 
-    IF (.NOT.stack%init .AND. rank .EQ. 0) THEN
+    IF (.NOT.stack%init .AND. rank == 0) THEN
       PRINT*,'*** WARNING ***'
       PRINT*,'push_to_stack not initialised'
     ENDIF
 
-    IF (stack%stack_point .GT. stack%stack_size) THEN
+    IF (stack%stack_point > stack%stack_size) THEN
       old_size = stack%stack_size
       stack%stack_size = 2 * stack%stack_size
       old_buffer => stack%entries
@@ -289,7 +289,7 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: stack
 
-    IF (.NOT.stack%init .AND. rank .EQ. 0) THEN
+    IF (.NOT.stack%init .AND. rank == 0) THEN
       PRINT*,'*** WARNING ***'
       PRINT*,'pop_to_null not initialised'
     ENDIF
@@ -305,7 +305,7 @@ CONTAINS
     TYPE(stack_element), INTENT(OUT) :: value
     TYPE(primitive_stack), INTENT(INOUT) :: stack
 
-    IF (.NOT.stack%init .AND. rank .EQ. 0) THEN
+    IF (.NOT.stack%init .AND. rank == 0) THEN
       PRINT*,'*** WARNING ***'
       PRINT*,'pop_from_stack not initialised'
     ENDIF
@@ -323,7 +323,7 @@ CONTAINS
     TYPE(stack_element), INTENT(OUT) :: value
     INTEGER, INTENT(IN) :: offset
 
-    IF (stack%stack_point-offset .LE. 0) THEN
+    IF (stack%stack_point-offset <= 0) THEN
       PRINT *, 'Unable to snoop stack', stack%stack_point
       STOP
     ENDIF
@@ -377,8 +377,8 @@ CONTAINS
       ! This is a bit of a hack.
       ! Allow numbers to follow letters in an expression *except* in the
       ! special case of a single 'e' character, to allow 10.0e5, etc.
-      IF (ptype .EQ. current_type .AND. .NOT. (ptype .EQ. c_char_delimiter) &
-        .OR. (ptype .EQ. c_char_numeric .AND. current_type .EQ. c_char_alpha &
+      IF (ptype == current_type .AND. .NOT. (ptype == c_char_delimiter) &
+        .OR. (ptype == c_char_numeric .AND. current_type == c_char_alpha &
         .AND. .NOT. str_cmp(current, 'e'))) THEN
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
@@ -388,7 +388,7 @@ CONTAINS
 #else
         CALL tokenize_subexpression_rpn(current, block, stack, output, err)
 #endif
-        IF (err .NE. c_err_none) RETURN
+        IF (err /= c_err_none) RETURN
         current(:) = ' '
         current_pointer = 2
         current(1:1) = expression(i:i)
@@ -401,7 +401,7 @@ CONTAINS
 #else
     CALL tokenize_subexpression_rpn(current, block, stack, output, err)
 #endif
-    IF (err .NE. c_err_none) RETURN
+    IF (err /= c_err_none) RETURN
 
     DO i = 1, stack%stack_point
       CALL pop_to_stack(stack, output)
@@ -410,9 +410,9 @@ CONTAINS
 
     ! Check to see if the expression varies in time
     DO i = 1, output%stack_point
-      IF (output%entries(i)%ptype .EQ. c_pt_constant &
-          .OR. output%entries(i)%ptype .EQ. c_pt_default_constant) THEN
-        IF (output%entries(i)%value .EQ. c_const_time) THEN
+      IF (output%entries(i)%ptype == c_pt_constant &
+          .OR. output%entries(i)%ptype == c_pt_default_constant) THEN
+        IF (output%entries(i)%value == c_const_time) THEN
           output%is_time_varying = .TRUE.
           EXIT
         ENDIF
@@ -436,15 +436,15 @@ CONTAINS
     TYPE(stack_element) :: block2
     INTEGER :: ipoint, io, iu, ierr
 
-    IF (ICHAR(current(1:1)) .EQ. 0) RETURN
+    IF (ICHAR(current(1:1)) == 0) RETURN
 
     ! Populate the block
     CALL load_block(current, block)
 #ifdef PARSER_DEBUG
     block%text = TRIM(current)
 #endif
-    IF (block%ptype .EQ. c_pt_bad) THEN
-      IF (rank .EQ. 0) THEN
+    IF (block%ptype == c_pt_bad) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
@@ -459,39 +459,39 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (block%ptype .EQ. c_pt_deck_constant) THEN
+    IF (block%ptype == c_pt_deck_constant) THEN
       const = deck_constant_list(block%value)
       DO ipoint = 1, const%execution_stream%stack_point
         CALL push_to_stack(output, const%execution_stream%entries(ipoint))
       ENDDO
     ENDIF
 
-    IF (block%ptype .NE. c_pt_parenthesis &
-        .AND. block%ptype .NE. c_pt_null) THEN
+    IF (block%ptype /= c_pt_parenthesis &
+        .AND. block%ptype /= c_pt_null) THEN
       last_block_type = block%ptype
     ENDIF
 
-    IF (block%ptype .EQ. c_pt_variable &
-        .OR. block%ptype .EQ. c_pt_constant &
-        .OR. block%ptype .EQ. c_pt_default_constant &
-        .OR. block%ptype .EQ. c_pt_species &
-        .OR. block%ptype .EQ. c_pt_subset) THEN
+    IF (block%ptype == c_pt_variable &
+        .OR. block%ptype == c_pt_constant &
+        .OR. block%ptype == c_pt_default_constant &
+        .OR. block%ptype == c_pt_species &
+        .OR. block%ptype == c_pt_subset) THEN
       CALL push_to_stack(output, block)
     ENDIF
 
-    IF (block%ptype .EQ. c_pt_parenthesis) THEN
-      IF (block%value .EQ. c_paren_left_bracket) THEN
+    IF (block%ptype == c_pt_parenthesis) THEN
+      IF (block%value == c_paren_left_bracket) THEN
         CALL push_to_stack(stack, block)
       ELSE
         DO
           CALL stack_snoop(stack, block2, 0)
-          IF (block2%ptype .EQ. c_pt_parenthesis &
-              .AND. block2%value .EQ. c_paren_left_bracket) THEN
+          IF (block2%ptype == c_pt_parenthesis &
+              .AND. block2%value == c_paren_left_bracket) THEN
             CALL pop_to_null(stack)
             ! If stack isn't empty then check for function
-            IF (stack%stack_point .NE. 0) THEN
+            IF (stack%stack_point /= 0) THEN
               CALL stack_snoop(stack, block2, 0)
-              IF (block2%ptype .EQ. c_pt_function) THEN
+              IF (block2%ptype == c_pt_function) THEN
                 CALL add_function_to_stack(block2%value, stack, output)
               ENDIF
             ENDIF
@@ -503,18 +503,18 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (block%ptype .EQ. c_pt_function) THEN
+    IF (block%ptype == c_pt_function) THEN
       ! Just push functions straight onto the stack
       CALL push_to_stack(stack, block)
     ENDIF
 
-    IF (block%ptype .EQ. c_pt_separator) THEN
+    IF (block%ptype == c_pt_separator) THEN
       DO
         CALL stack_snoop(stack, block2, 0)
-        IF (block2%ptype .NE. c_pt_parenthesis) THEN
+        IF (block2%ptype /= c_pt_parenthesis) THEN
           CALL pop_to_stack(stack, output)
         ELSE
-          IF (block2%value .NE. c_paren_left_bracket) THEN
+          IF (block2%value /= c_paren_left_bracket) THEN
             PRINT *, 'Bad function expression'
             STOP
           ENDIF
@@ -523,9 +523,9 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (block%ptype .EQ. c_pt_operator) THEN
+    IF (block%ptype == c_pt_operator) THEN
       DO
-        IF (stack%stack_point .EQ. 0) THEN
+        IF (stack%stack_point == 0) THEN
           ! stack is empty, so just push operator onto stack and
           ! leave loop
           CALL push_to_stack(stack, block)
@@ -533,17 +533,17 @@ CONTAINS
         ENDIF
         ! stack is not empty so check precedence etc.
         CALL stack_snoop(stack, block2, 0)
-        IF (block2%ptype .NE. c_pt_operator) THEN
+        IF (block2%ptype /= c_pt_operator) THEN
           ! Previous block is not an operator so push current operator
           ! to stack and leave loop
           CALL push_to_stack(stack, block)
           EXIT
         ELSE
-          IF (opcode_assoc(block%value) .EQ. c_assoc_la &
-              .OR. opcode_assoc(block%value) .EQ. c_assoc_a) THEN
+          IF (opcode_assoc(block%value) == c_assoc_la &
+              .OR. opcode_assoc(block%value) == c_assoc_a) THEN
             ! Operator is full associative or left associative
             IF (opcode_precedence(block%value) &
-                .LE. opcode_precedence(block2%value)) THEN
+                <= opcode_precedence(block2%value)) THEN
               CALL pop_to_stack(stack, output)
               CYCLE
             ELSE
@@ -552,7 +552,7 @@ CONTAINS
             ENDIF
           ELSE
             IF (opcode_precedence(block%value) &
-                .LT. opcode_precedence(block2%value)) THEN
+                < opcode_precedence(block2%value)) THEN
               CALL pop_to_stack(stack, output)
               CYCLE
             ELSE
@@ -579,7 +579,7 @@ CONTAINS
     TYPE(deck_constant) :: const
     INTEGER :: ipoint, io, iu, ierr
 
-    IF (ICHAR(current(1:1)) .EQ. 0) RETURN
+    IF (ICHAR(current(1:1)) == 0) RETURN
 
     ! Populate the block
     CALL load_block(current, block)
@@ -587,7 +587,7 @@ CONTAINS
     block%text = TRIM(current)
     PRINT *, block%ptype, TRIM(current)
 #endif
-    IF (block%ptype .EQ. c_pt_bad) THEN
+    IF (block%ptype == c_pt_bad) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*)
@@ -600,18 +600,18 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (block%ptype .NE. c_pt_parenthesis &
-        .AND. block%ptype .NE. c_pt_null) THEN
+    IF (block%ptype /= c_pt_parenthesis &
+        .AND. block%ptype /= c_pt_null) THEN
       last_block_type = block%ptype
       IF (debug_mode) PRINT *, 'Setting', block%ptype, TRIM(current)
     ENDIF
 
-    IF (block%ptype .EQ. c_pt_deck_constant) THEN
+    IF (block%ptype == c_pt_deck_constant) THEN
       const = deck_constant_list(block%value)
       DO ipoint = 1, const%execution_stream%stack_point
         CALL push_to_stack(output, const%execution_stream%entries(ipoint))
       ENDDO
-    ELSE IF (block%ptype .NE. c_pt_null) THEN
+    ELSE IF (block%ptype /= c_pt_null) THEN
       CALL push_to_stack(output, block)
     ENDIF
 
@@ -631,32 +631,32 @@ CONTAINS
     id = block%value
     func_stack%stack_point = 0
 
-    IF (opcode .EQ. c_func_rho) THEN
+    IF (opcode == c_func_rho) THEN
       CALL copy_stack(species_list(id)%density_function, func_stack)
-    ELSE IF (opcode .EQ. c_func_tempx) THEN
+    ELSE IF (opcode == c_func_tempx) THEN
       CALL copy_stack(species_list(id)%temperature_function(1), func_stack)
-    ELSE IF (opcode .EQ. c_func_tempy) THEN
+    ELSE IF (opcode == c_func_tempy) THEN
       CALL copy_stack(species_list(id)%temperature_function(2), func_stack)
-    ELSE IF (opcode .EQ. c_func_tempz) THEN
+    ELSE IF (opcode == c_func_tempz) THEN
       CALL copy_stack(species_list(id)%temperature_function(3), func_stack)
-    ELSE IF (opcode .EQ. c_func_tempx_ev) THEN
+    ELSE IF (opcode == c_func_tempx_ev) THEN
       CALL copy_stack(species_list(id)%temperature_function(1), func_stack)
       CALL tokenize('* kb / ev', func_stack, err)
-    ELSE IF (opcode .EQ. c_func_tempy_ev) THEN
+    ELSE IF (opcode == c_func_tempy_ev) THEN
       CALL copy_stack(species_list(id)%temperature_function(2), func_stack)
       CALL tokenize('* kb / ev', func_stack, err)
-    ELSE IF (opcode .EQ. c_func_tempz_ev) THEN
+    ELSE IF (opcode == c_func_tempz_ev) THEN
       CALL copy_stack(species_list(id)%temperature_function(3), func_stack)
       CALL tokenize('* kb / ev', func_stack, err)
-    ELSE IF (opcode .EQ. c_func_driftx) THEN
+    ELSE IF (opcode == c_func_driftx) THEN
       CALL copy_stack(species_list(id)%drift_function(1), func_stack)
-    ELSE IF (opcode .EQ. c_func_drifty) THEN
+    ELSE IF (opcode == c_func_drifty) THEN
       CALL copy_stack(species_list(id)%drift_function(2), func_stack)
-    ELSE IF (opcode .EQ. c_func_driftz) THEN
+    ELSE IF (opcode == c_func_driftz) THEN
       CALL copy_stack(species_list(id)%drift_function(3), func_stack)
     ENDIF
 
-    IF (func_stack%stack_point .GT. 0) THEN
+    IF (func_stack%stack_point > 0) THEN
       CALL pop_to_null(output)
       CALL pop_to_null(stack)
       DO i = 1, func_stack%stack_point
@@ -676,7 +676,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(IN) :: token_list
     INTEGER :: i
 
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       DO i = 1, token_list%stack_point
         PRINT *, 'Type', token_list%entries(i)%ptype
         PRINT *, 'Data', token_list%entries(i)%value

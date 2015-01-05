@@ -10,6 +10,7 @@ tmp=$dir/.__TMP__
 
 swap_long=0
 swap_bytes=0
+id_length=32
 
 getint() {
     if [ $swap_bytes -ne 0 ]; then
@@ -83,9 +84,12 @@ if [ $endian -ne 16911887 ]; then
 fi
 
 version=$(getint); off=$((off+4))
-revision=$(getint)
+revision=$(getint); off=$((off+4))
+code_name=$(dd if=$file bs=1 skip=$off count=$id_length 2>/dev/null | \
+    sed 's, *$,,g' | tr '[A-Z]' '[a-z]')
 off=48; first_block_location=$(getlong)
 off=68; nblocks=$(getint)
+off=72; block_header_length=$(getint)
 off=96; string_length=$(getint)
 
 # Read the blocks
@@ -106,23 +110,35 @@ while [ $i -lt $nblocks ]; do
 
   # Only care about type_source blocks
 
-  if [ $block_type -eq 8 ]; then
+  if [ $block_type -eq 8 -o $block_type -eq 28 ]; then
     rm -f $tmp
+    off=$((block_off+16)) # block_id location
+    dd if=$file of=$tmp bs=1 skip=$off count=$id_length > /dev/null 2>&1
+    id=$(cat $tmp | sed 's, *$,,g')
+
+    [ $? -ne 0 ] && continue
+
     off=$((block_off+68)) # block_name location
     dd if=$file of=$tmp bs=1 skip=$off count=$string_length > /dev/null 2>&1
 
     [ $? -ne 0 ] && continue
 
-    # Is it an input deck?
-    grep -abo Embedded_input_deck $tmp > /dev/null 2>&1
+    # Old-style block
+    if [ $block_type -eq 8 ]; then
+      # Is it an input deck?
+      grep -abo Embedded_input_deck $tmp > /dev/null 2>&1
+    else
+      # mimetype from new-style block
+      off=$((block_off+block_header_length)) # mimetype location
+      dd if=$file of=$tmp bs=1 skip=$off count=$id_length > /dev/null 2>&1
+      mimetype=$(cat $tmp | sed 's, *$,,g')
+      grep -abo 'text/plain' $tmp > /dev/null 2>&1
+    fi
 
     if [ $? -eq 0 ]; then
       found=1
-      off=$((block_off+16)) # block_id location
-      dd if=$file of=$tmp bs=1 skip=$off count=32 > /dev/null 2>&1
-      [ $? -ne 0 ] && continue
 
-      f=`sed 's, *$,,' $tmp`
+      f=`echo $id | sed 's, *$,,g; s,input_deck/,,'`
       d=`dirname $f`
 
       mkdir -p $dir/$d
@@ -135,7 +151,11 @@ while [ $i -lt $nblocks ]; do
       echo 'Unpacked input deck into "'"$dir/$f"'"'
     else
     # Is it an embedded source code block?
-      grep -abo base64_packed_source_code $tmp > /dev/null 2>&1
+      if [ $block_type -eq 8 ]; then
+        grep -abo base64_packed_source_code $tmp > /dev/null 2>&1
+      else
+        echo $mimetype | grep -abo 'application/x-tar-gz' > /dev/null 2>&1
+      fi
 
       [ $? -ne 0 ] && continue
 
@@ -148,15 +168,35 @@ while [ $i -lt $nblocks ]; do
         continue
       fi
 
-      which uudecode > /dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        (echo begin-base64 664 $output
-        fold $tmp
-        echo
-        echo ====) | uudecode -o $output
+      if [ $block_type -eq 8 ]; then
+        which uudecode > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+          (echo begin-base64 664 $output
+          fold $tmp
+          echo
+          echo ====) | uudecode -o $output
+        else
+          perl -MMIME::Base64 -0777 -ne \
+              'print decode_base64($_)' < $tmp > $output
+        fi
       else
-        perl -MMIME::Base64 -0777 -ne \
-            'print decode_base64($_)' < $tmp > $output
+        echo $id | grep -abo 'sdf_source' > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+          odir=$dir/SDF/FORTRAN
+        else
+          echo $id | grep -abo 'epoch_source' > /dev/null 2>&1
+          if [ $? -eq 0 ]; then
+            odir=$dir/$code_name
+          else
+            echo 'WARNING: failed to unpack source code'
+            continue
+          fi
+        fi
+        mkdir -p $odir
+        tmppath=`pwd`/$tmp
+        (cd $odir
+        tar xzf $tmppath)
+        rm $tmp
       fi
 
       if [ $? -ne 0 ]; then

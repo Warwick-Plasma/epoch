@@ -25,7 +25,7 @@ CONTAINS
     INTEGER :: i
 
     current_block = 0
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       n_subsets = 0
       ALLOCATE(subset_names(4))
       ALLOCATE(subset_blocks(4))
@@ -44,7 +44,7 @@ CONTAINS
 
     INTEGER :: i
 
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       CALL setup_subsets
 
       DO i = 1, n_subsets
@@ -63,7 +63,7 @@ CONTAINS
 
     current_block = current_block + 1
     got_name = .FALSE.
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
     subset_id = subset_blocks(current_block)
     offset = 0
 
@@ -77,7 +77,7 @@ CONTAINS
     INTEGER :: io, iu
 
     IF (.NOT.got_name) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         CALL integer_as_string(current_block, id_string)
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -101,7 +101,7 @@ CONTAINS
     INTEGER :: io, iu, ispecies
 
     errcode = c_err_none
-    IF (value .EQ. blank .OR. element .EQ. blank) RETURN
+    IF (value == blank .OR. element == blank) RETURN
 
     IF (str_cmp(element, 'name')) THEN
       IF (got_name) THEN
@@ -109,13 +109,13 @@ CONTAINS
         RETURN
       ENDIF
       got_name = .TRUE.
-      IF (deck_state .NE. c_ds_first) RETURN
+      IF (deck_state /= c_ds_first) RETURN
       CALL grow_array(subset_blocks, current_block)
       subset_blocks(current_block) = subset_number_from_name(value)
       RETURN
     ENDIF
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
     IF (str_cmp(element, 'random_fraction')) THEN
       subset_list(subset_id)%random_fraction = &
@@ -253,11 +253,11 @@ CONTAINS
 
     IF (str_cmp(element, 'include_species')) THEN
       ispecies = as_integer_print(value, element, errcode)
-      IF (errcode .EQ. c_err_none) THEN
-        IF (ispecies .GT. 0 .AND. ispecies .LE. n_species) THEN
+      IF (errcode == c_err_none) THEN
+        IF (ispecies > 0 .AND. ispecies <= n_species) THEN
           subset_list(subset_id)%use_species(ispecies) = .TRUE.
         ELSE
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'

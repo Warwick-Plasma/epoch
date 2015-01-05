@@ -147,7 +147,7 @@ CONTAINS
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
       IF (species_list(ispecies)%immobile) CYCLE
-      IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) THEN
+      IF (species_list(ispecies)%species_type == c_species_id_photon) THEN
 #ifdef PHOTONS
         IF (photon_dynamics) CALL push_photons(ispecies)
 #endif
@@ -478,14 +478,14 @@ CONTAINS
             probe_energy = (gamma - 1.0_num) * part_mc2
 
             ! Unidirectional probe
-            IF (probe_energy .GT. current_probe%ek_min) THEN
-              IF (probe_energy .LT. current_probe%ek_max) THEN
+            IF (probe_energy > current_probe%ek_min) THEN
+              IF (probe_energy < current_probe%ek_max) THEN
 
                 d_init  = SUM(current_probe%normal * (current_probe%point &
                     - (/init_part_x, init_part_y, init_part_z/)))
                 d_final = SUM(current_probe%normal * (current_probe%point &
                     - (/final_part_x, final_part_y, final_part_z/)))
-                IF (d_final .LT. 0.0_num .AND. d_init .GE. 0.0_num) THEN
+                IF (d_final < 0.0_num .AND. d_init >= 0.0_num) THEN
                   ! this particle is wanted so copy it to the list associated
                   ! with this probe
                   ALLOCATE(particle_copy)
@@ -574,14 +574,14 @@ CONTAINS
         ! Cycle through probes
         DO WHILE(ASSOCIATED(current_probe))
           ! Unidirectional probe
-          IF (probe_energy .GT. current_probe%ek_min) THEN
-            IF (probe_energy .LT. current_probe%ek_max) THEN
+          IF (probe_energy > current_probe%ek_min) THEN
+            IF (probe_energy < current_probe%ek_max) THEN
 
               d_init  = SUM(current_probe%normal * (current_probe%point &
                   - (/init_part_x, init_part_y, init_part_z/)))
               d_final = SUM(current_probe%normal * (current_probe%point &
                   - (/final_part_x, final_part_y, final_part_z/)))
-              IF (d_final .LT. 0.0_num .AND. d_init .GE. 0.0_num) THEN
+              IF (d_final < 0.0_num .AND. d_init >= 0.0_num) THEN
                 ! this particle is wanted so copy it to the list associated
                 ! with this probe
                 ALLOCATE(particle_copy)

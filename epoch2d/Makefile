@@ -84,6 +84,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
     endif
   endif
   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
+  INFO_FLAGS = -Wno-conversion -fno-range-check
 endif
 
 # g95
@@ -127,14 +128,18 @@ endif
 # Don't compile encoded source if MODE=debug or ENC=no
 # Do compile encoded source if MODE=debug and ENC=yes
 ifeq ($(strip $(ENC)),no)
-  ENCODED_SOURCE = dummy_encoded_source.o
+  ENCODED_SOURCE = epoch_source_info_dummy.o
 else
   ifneq ($(strip $(ENC)),yes)
     ifeq ($(strip $(MODE)),debug)
-      ENCODED_SOURCE = dummy_encoded_source.o
+      ENCODED_SOURCE = epoch_source_info_dummy.o
     endif
   endif
 endif
+
+FFLAGS += -I$(SDF)/include
+FFLAGS += $(MODULEFLAG)
+LDFLAGS = $(FFLAGS) -L$(SDF)/lib -lsdf
 
 # Set some of the build parameters
 TARGET = epoch2d
@@ -206,7 +211,7 @@ DEFINES += $(D)TRACER_PARTICLES
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.
-#ENCODED_SOURCE = dummy_encoded_source.o
+#ENCODED_SOURCE = epoch_source_info_dummy.o
 
 
 
@@ -214,16 +219,12 @@ DEFINES += $(D)TRACER_PARTICLES
 # Shouldn't need to touch below here
 # --------------------------------------------------
 
-#BUILDOPT += opt_dont_build_sha1
-#BUILDOPT += opt_dont_build_embedded_source
+ENCODED_SOURCE ?= epoch_source_info.o
 
 all: epoch
 
-COMMIT: FORCE
-	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
--include COMMIT
-
-SDFDIR = ../SDF/FORTRAN/src
+SDF := ../SDF/FORTRAN
+SDFMOD = $(SDF)/include/sdf.mod
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
@@ -242,26 +243,14 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   deck_laser_block.f90 deck_particle_probe_block.F90 deck_qed_block.F90 \
   deck_species_block.F90 deck_subset_block.f90 deck_window_block.f90 \
   diagnostics.F90 dist_fn.F90 epoch2d.F90 evaluate.F90 evaluator_blocks.F90 \
-  fields.f90 helper.F90 ic_module.f90 ionise.F90 iterators.F90 laser.f90 \
-  mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 particle_migration.F90 \
-  particle_pointer_advance.f90 particle_temperature.F90 particles.F90 \
-  partlist.F90 photons.F90 prefetch.F90 probes.F90 random_generator.f90 \
-  redblack_module.f90 sdf.f90 sdf_common.f90 sdf_control.f90 sdf_input.f90 \
-  sdf_input_cartesian.f90 sdf_input_cartesian_r4.f90 \
-  sdf_input_cartesian_r8.f90 sdf_input_cartesian_ru.f90 sdf_input_point.f90 \
-  sdf_input_point_r4.f90 sdf_input_point_r8.f90 sdf_input_point_ru.f90 \
-  sdf_input_r4.f90 sdf_input_r8.f90 sdf_input_ru.f90 sdf_input_station.f90 \
-  sdf_input_station_r4.f90 sdf_input_station_r8.f90 sdf_input_station_ru.f90 \
-  sdf_input_util.f90 sdf_job_info.f90 sdf_output.f90 sdf_output_cartesian.f90 \
-  sdf_output_cartesian_r4.f90 sdf_output_cartesian_r8.f90 \
-  sdf_output_cartesian_ru.f90 sdf_output_point.f90 sdf_output_point_r4.f90 \
-  sdf_output_point_r8.f90 sdf_output_point_ru.f90 sdf_output_r4.f90 \
-  sdf_output_r8.f90 sdf_output_ru.f90 sdf_output_source.f90 \
-  sdf_output_station.f90 sdf_output_station_r4.f90 sdf_output_station_r8.f90 \
-  sdf_output_station_ru.f90 sdf_output_util.f90 sdf_source_info_dummy.f90 \
-  setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
-  split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 timer.f90 \
-  tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
+  fields.f90 finish.f90 helper.F90 ic_module.f90 ionise.F90 iterators.F90 \
+  laser.f90 md5.f90 mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 \
+  particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
+  particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
+  random_generator.f90 redblack_module.f90 setup.F90 shape_functions.F90 \
+  shared_data.F90 shunt.F90 simple_io.f90 split_particle.F90 stack.f90 \
+  strings.f90 strings_advanced.f90 timer.f90 tokenizer_blocks.f90 \
+  utilities.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -277,45 +266,68 @@ INCLUDES = $(INCDIR)/particle_head.inc $(INCDIR)/particle_to_grid.inc \
   $(INCDIR)/triangle/gx.inc $(INCDIR)/triangle/gxfac.inc \
   $(INCDIR)/triangle/hx_dcell.inc
 
-ENCODED_SOURCE ?= encoded_source.o
 OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)
 
 FULLTARGET = $(BINDIR)/$(TARGET)
+
+SOURCE_ALL := Makefile $(SRCFILES) $(INCLUDES) pack.py pack.sh \
+  $(SRCDIR)/COMMIT epoch_source_info_dummy.f90 gen_commit_string
 
 #vpath %.f90 $(SRCDIR)
 #vpath %.o $(OBJDIR)
 VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
   $(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:\
-  $(SDFDIR):$(OBJDIR)
+  $(SDF)/src:$(OBJDIR)
 
+PACK_SDF = $(SRCDIR)/pack.sh
+
+GIT_WORK_TREE = ".."
+PACK_PREFIX = epoch
+PACK_SOURCE_CODE = 1
+PACK_GIT_DIFF = 1
+PACK_GIT_DIFF_FROM_ORIGIN = 1
+GENERATE_CHECKSUM = 1
+F77_OUTPUT = 0
+PACK_OPTS = $(GIT_WORK_TREE) $(PACK_PREFIX) $(PACK_SOURCE_CODE) \
+    $(PACK_GIT_DIFF) $(PACK_GIT_DIFF_FROM_ORIGIN) $(GENERATE_CHECKSUM) \
+    $(F77_OUTPUT)
+
+$(SRCDIR)/COMMIT: FORCE
+	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
+-include $(SRCDIR)/COMMIT
 
 # Rule to build the fortran files
 
 %.o: %.f90
-	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
+	$(FC) -c $(FFLAGS) -o $(OBJDIR)/$@ $<
 
 %.o: %.F90
-	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
+	$(FC) -c $(FFLAGS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
 epoch: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
 	@mkdir -p $(BINDIR)
-	$(FC) $(FFLAGS) $(MODULEFLAG) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
+	$(FC) $(LDFLAGS) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
 
-opt_dont_build_sha1: ;
-opt_dont_build_embedded_source: ;
-$(OBJDIR)/encoded_source.f90: $(BUILDOPT) $(SRCFILES) $(INCLUDES) \
-  $(SRCDIR)/gen_src_module $(SRCDIR)/gen_commit_string Makefile COMMIT
-	./$(SRCDIR)/gen_src_module $@ $^
+$(OBJDIR)/epoch_source_info.f90: $(SOURCE_ALL)
+	sh $(PACK_SDF) $(PACK_OPTS) $@ "$(FC_INFO)" "$(FFLAGS)" $^
+epoch_source_info.o: $(OBJDIR)/epoch_source_info.f90 $(SOURCE_ALL)
+	$(FC) -c $(FFLAGS) $(INFO_FLAGS) -o $(OBJDIR)/$@ $<
 
-encoded_source.o: $(OBJDIR)/encoded_source.f90
-	$(FC) -c $(FFLAGS) $(MODULEFLAG) -o $(OBJDIR)/$@ $<
+$(SDFMOD):
+	$(MAKE) -C $(SDF)
 
 clean:
 	@rm -rf $(BINDIR) $(OBJDIR)
 
+cleanall: tidy
+
 tidy:
 	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
+	$(MAKE) -C $(SDF) cleanall
+
+tarball:
+	@cd ..; sh make_tarball.sh
 
 visit:
 	@cd ../SDF/VisIt; ./build
@@ -329,7 +341,7 @@ $(OBJFILES): | $(OBJDIR)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 
-.PHONY: clean tidy visit visitclean epoch FORCE
+.PHONY: clean cleanall tidy visit visitclean epoch FORCE
 
 # All the dependencies
 
@@ -347,7 +359,7 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   deck_constant_block.o deck_control_block.o deck_dist_fn_block.o \
   deck_fields_block.o deck_io_block.o deck_io_global_block.o \
   deck_laser_block.o deck_particle_probe_block.o deck_qed_block.o \
-  deck_species_block.o deck_subset_block.o deck_window_block.o photons.o \
+  deck_species_block.o deck_subset_block.o deck_window_block.o md5.o photons.o \
   strings.o version_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o
 deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
@@ -366,20 +378,23 @@ deck_species_block.o: deck_species_block.F90 partlist.o setup.o simple_io.o \
 deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
-  random_generator.o sdf.o setup.o shared_data.o strings.o timer.o \
-  version_data.o window.o $(ENCODED_SOURCE)
+  random_generator.o setup.o shared_data.o strings.o timer.o version_data.o \
+  window.o $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o
 epoch2d.o: epoch2d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
-  helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
+  finish.o helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
   particles.o photons.o setup.o split_particle.o welcome.o window.o
 evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
+finish.o: finish.f90 collisions.o deck.o diagnostics.o laser.o partlist.o \
+  setup.o shared_data.o shunt.o window.o
 helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 ionise.o: ionise.F90 numerics.o partlist.o random_generator.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
+md5.o: md5.f90
 mpi_routines.o: mpi_routines.F90 helper.o
 mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 numerics.o: numerics.f90 shared_data.o
@@ -394,64 +409,11 @@ prefetch.o: prefetch.F90 shared_data.o
 probes.o: probes.F90 partlist.o
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
-sdf.o: sdf.f90 sdf_control.o sdf_input.o sdf_input_cartesian.o \
-  sdf_input_point.o sdf_input_station.o sdf_input_util.o sdf_output.o \
-  sdf_output_cartesian.o sdf_output_point.o sdf_output_source.o \
-  sdf_output_station.o
-sdf_common.o: sdf_common.f90 sdf_job_info.o
-sdf_control.o: sdf_control.f90 sdf_output_util.o
-sdf_input.o: sdf_input.f90 sdf_input_r4.o sdf_input_r8.o
-sdf_input_cartesian.o: sdf_input_cartesian.f90 sdf_input_cartesian_r4.o \
-  sdf_input_cartesian_r8.o
-sdf_input_cartesian_r4.o: sdf_input_cartesian_r4.f90 sdf_input_cartesian_ru.o
-sdf_input_cartesian_r8.o: sdf_input_cartesian_r8.f90 sdf_input_cartesian_ru.o
-sdf_input_cartesian_ru.o: sdf_input_cartesian_ru.f90 sdf_input_ru.o
-sdf_input_point.o: sdf_input_point.f90 sdf_input_point_r4.o sdf_input_point_r8.o
-sdf_input_point_r4.o: sdf_input_point_r4.f90 sdf_common.o sdf_input_point_ru.o
-sdf_input_point_r8.o: sdf_input_point_r8.f90 sdf_common.o sdf_input_point_ru.o
-sdf_input_point_ru.o: sdf_input_point_ru.f90 sdf_common.o sdf_input_ru.o
-sdf_input_r4.o: sdf_input_r4.f90 sdf_input_ru.o
-sdf_input_r8.o: sdf_input_r8.f90 sdf_input_ru.o
-sdf_input_ru.o: sdf_input_ru.f90 sdf_common.o
-sdf_input_station.o: sdf_input_station.f90 sdf_input_station_r4.o \
-  sdf_input_station_r8.o sdf_input_station_ru.o
-sdf_input_station_r4.o: sdf_input_station_r4.f90 sdf_input_station_ru.o
-sdf_input_station_r8.o: sdf_input_station_r8.f90 sdf_input_station_ru.o
-sdf_input_station_ru.o: sdf_input_station_ru.f90 sdf_input_ru.o
-sdf_input_util.o: sdf_input_util.f90 sdf_input.o sdf_input_cartesian.o \
-  sdf_input_point.o sdf_input_station.o sdf_output_station_ru.o
-sdf_job_info.o: sdf_job_info.f90
-sdf_output.o: sdf_output.f90 sdf_output_r4.o sdf_output_r8.o sdf_output_ru.o
-sdf_output_cartesian.o: sdf_output_cartesian.f90 sdf_output_cartesian_r4.o \
-  sdf_output_cartesian_r8.o
-sdf_output_cartesian_r4.o: sdf_output_cartesian_r4.f90 sdf_output_cartesian_ru.o
-sdf_output_cartesian_r8.o: sdf_output_cartesian_r8.f90 sdf_output_cartesian_ru.o
-sdf_output_cartesian_ru.o: sdf_output_cartesian_ru.f90 sdf_output_ru.o
-sdf_output_point.o: sdf_output_point.f90 sdf_output_point_r4.o \
-  sdf_output_point_r8.o
-sdf_output_point_r4.o: sdf_output_point_r4.f90 sdf_common.o \
-  sdf_output_point_ru.o
-sdf_output_point_r8.o: sdf_output_point_r8.f90 sdf_common.o \
-  sdf_output_point_ru.o
-sdf_output_point_ru.o: sdf_output_point_ru.f90 sdf_common.o sdf_output_ru.o
-sdf_output_r4.o: sdf_output_r4.f90 sdf_output_ru.o
-sdf_output_r8.o: sdf_output_r8.f90 sdf_output_ru.o
-sdf_output_ru.o: sdf_output_ru.f90 sdf_common.o
-sdf_output_source.o: sdf_output_source.f90 sdf_common.o sdf_output.o \
-  sdf_source_info_dummy.o
-sdf_output_station.o: sdf_output_station.f90 sdf_output_station_r4.o \
-  sdf_output_station_r8.o
-sdf_output_station_r4.o: sdf_output_station_r4.f90 sdf_output_station_ru.o
-sdf_output_station_r8.o: sdf_output_station_r8.f90 sdf_output_station_ru.o
-sdf_output_station_ru.o: sdf_output_station_ru.f90 sdf_output_ru.o
-sdf_output_util.o: sdf_output_util.f90 sdf_output_cartesian_ru.o \
-  sdf_output_point_ru.o
-sdf_source_info_dummy.o: sdf_source_info_dummy.f90
 setup.o: setup.F90 fields.o helper.o laser.o mpi_subtype_control.o \
   shared_data.o shunt.o split_particle.o timer.o version_data.o welcome.o \
-  window.o $(ENCODED_SOURCE)
+  window.o
 shape_functions.o: shape_functions.F90 shared_data.o
-shared_data.o: shared_data.F90 sdf.o sdf_job_info.o
+shared_data.o: shared_data.F90 $(SDFMOD)
 shunt.o: shunt.F90 tokenizer_blocks.o
 simple_io.o: simple_io.f90 boundary.o mpi_subtype_control.o
 split_particle.o: split_particle.F90 boundary.o
@@ -461,6 +423,6 @@ strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
 timer.o: timer.f90 shared_data.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
-version_data.o: version_data.F90 COMMIT
+version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 strings.o version_data.o
 window.o: window.F90 boundary.o evaluate.o partlist.o
