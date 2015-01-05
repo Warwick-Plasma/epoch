@@ -94,18 +94,18 @@ CONTAINS
 
     DO ispecies = 1, n_species
       IF (.NOT. species_list(ispecies)%split) CYCLE
-      IF (species_list(ispecies)%npart_max .GT. 0 &
+      IF (species_list(ispecies)%npart_max > 0 &
           .AND. species_list(ispecies)%global_count &
-          .GE. species_list(ispecies)%npart_max) CYCLE
+          >= species_list(ispecies)%npart_max) CYCLE
 
       CALL create_empty_partlist(append_list)
 
       DO ix = 1, nx
         count = species_list(ispecies)%secondary_list(ix)%count
-        IF (count .GT. 0 .AND. count .LE. npart_per_cell_min) THEN
+        IF (count > 0 .AND. count <= npart_per_cell_min) THEN
           current => species_list(ispecies)%secondary_list(ix)%head
-          DO WHILE(ASSOCIATED(current) .AND. count .LE. npart_per_cell_min &
-              .AND. current%weight .GE. 1.0_num)
+          DO WHILE(ASSOCIATED(current) .AND. count <= npart_per_cell_min &
+              .AND. current%weight >= 1.0_num)
             count = species_list(ispecies)%secondary_list(ix)%count
             jitter_x = (2 * random() - 1) * 0.25_num * dx
             current%weight = 0.5_num * current%weight

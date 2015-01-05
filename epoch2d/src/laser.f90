@@ -98,13 +98,13 @@ CONTAINS
 
     boundary = laser%boundary
 
-    IF (boundary .EQ. c_bd_x_min) THEN
+    IF (boundary == c_bd_x_min) THEN
       CALL attach_laser_to_list(laser_x_min, laser)
-    ELSE IF (boundary .EQ. c_bd_x_max) THEN
+    ELSE IF (boundary == c_bd_x_max) THEN
       CALL attach_laser_to_list(laser_x_max, laser)
-    ELSE IF (boundary .EQ. c_bd_y_min) THEN
+    ELSE IF (boundary == c_bd_y_min) THEN
       CALL attach_laser_to_list(laser_y_min, laser)
-    ELSE IF (boundary .EQ. c_bd_y_max) THEN
+    ELSE IF (boundary == c_bd_y_max) THEN
       CALL attach_laser_to_list(laser_y_max, laser)
     ENDIF
 
@@ -203,9 +203,9 @@ CONTAINS
     REAL(num), DIMENSION(:), POINTER :: array
     INTEGER, INTENT(IN) :: boundary
 
-    IF (boundary .EQ. c_bd_x_min .OR. boundary .EQ. c_bd_x_max) THEN
+    IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
       ALLOCATE(array(-2:ny+3))
-    ELSE IF (boundary .EQ. c_bd_y_min .OR. boundary .EQ. c_bd_y_max) THEN
+    ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
       ALLOCATE(array(-2:nx+3))
     ENDIF
 
@@ -267,7 +267,7 @@ CONTAINS
     n = c_bd_x_min
 
     laserpos = 1
-    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_x_min_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -288,7 +288,7 @@ CONTAINS
       current => laser_x_min
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+        IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
@@ -341,7 +341,7 @@ CONTAINS
     n = c_bd_x_max
 
     laserpos = nx
-    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_x_max_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -362,7 +362,7 @@ CONTAINS
       current => laser_x_max
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+        IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
@@ -415,7 +415,7 @@ CONTAINS
     n = c_bd_y_min
 
     laserpos = 1
-    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_y_min_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -436,7 +436,7 @@ CONTAINS
       current => laser_y_min
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+        IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
@@ -489,7 +489,7 @@ CONTAINS
     n = c_bd_y_max
 
     laserpos = ny
-    IF (bc_field(n) .EQ. c_bc_cpml_laser) THEN
+    IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_y_max_laser_idx
     ENDIF
     dtc2 = dt * c**2
@@ -510,7 +510,7 @@ CONTAINS
       current => laser_y_max
       DO WHILE(ASSOCIATED(current))
         ! evaluate the temporal evolution of the laser
-        IF (time .GE. current%t_start .AND. time .LE. current%t_end) THEN
+        IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
@@ -575,7 +575,7 @@ CONTAINS
         ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
 
         ibc = 1
-        IF (bd .EQ. c_bd_x_max) THEN
+        IF (bd == c_bd_x_max) THEN
           dir = -1.0_num
           ibc = nx
         ENDIF
@@ -592,7 +592,7 @@ CONTAINS
         ALLOCATE(e1(mm), e2(mm), b1(mm), b2(mm))
 
         ibc = 1
-        IF (bd .EQ. c_bd_y_max) THEN
+        IF (bd == c_bd_y_max) THEN
           dir = -1.0_num
           ibc = ny
         ENDIF

@@ -45,14 +45,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_x_min)) THEN
         current_laser => laser_x_min
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) > c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) > c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -62,14 +62,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_x_max)) THEN
         current_laser => laser_x_max
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) > c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) > c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -79,14 +79,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_y_min)) THEN
         current_laser => laser_y_min
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) > c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) > c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -96,14 +96,14 @@ CONTAINS
 
       IF (ASSOCIATED(laser_y_max)) THEN
         current_laser => laser_y_max
-        IF (laser_set .AND. ABS(current_laser%omega - omega) .GT. c_tiny) THEN
+        IF (laser_set .AND. ABS(current_laser%omega - omega) > c_tiny) THEN
           err_laser = 1
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
         ENDIF
         DO WHILE (ASSOCIATED(current_laser%next))
-          IF (ABS(current_laser%omega - omega) .GT. c_tiny) THEN
+          IF (ABS(current_laser%omega - omega) > c_tiny) THEN
             err_laser = 1
             EXIT
           ENDIF
@@ -115,7 +115,7 @@ CONTAINS
 
       SELECT CASE (err_laser)
         CASE (1)
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
@@ -126,7 +126,7 @@ CONTAINS
           ENDIF
           CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
         CASE (2)
-          IF (rank .EQ. 0) THEN
+          IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
@@ -197,7 +197,7 @@ CONTAINS
           multi_constant(i) = factorial(k_photons_exponent(i))
 
           ! If K! is too large then the multiphoton ionisation rate is zero
-          IF (multi_constant(i) .LT. SQRT(HUGE(0.0_num))) THEN
+          IF (multi_constant(i) < SQRT(HUGE(0.0_num))) THEN
             multi_constant(i) = c * (atomic_time / a0) * multi_constant(i)**2 &
                 * REAL(species_list(i)%n**5,num) &
                 * (omega * atomic_time)**((10.0_num &
@@ -210,7 +210,7 @@ CONTAINS
 
           ! Constant in multiphoton equations, calculated like this to trap any
           ! floating underflow
-          IF (ABS(multi_constant(i)) .GT. c_tiny) THEN
+          IF (ABS(multi_constant(i)) > c_tiny) THEN
             multi_constant(i) = 4.8_num * (1.3_num * c * (atomic_time / a0) &
                 / (8.0_num * pi * omega * atomic_time))**k_photons_exponent(i) &
                 / multi_constant(i)
@@ -261,7 +261,7 @@ CONTAINS
           ! calculated to the largest machine number. Otherwise calculate the
           ! smallest electric field strength for which multiphoton can be
           ! calculated
-          IF (ABS(multi_constant(i)) .LE. c_tiny) THEN
+          IF (ABS(multi_constant(i)) <= c_tiny) THEN
             smallest_e_mag(i) = c_largest_number
           ELSE
             smallest_e_mag(i) = (TINY(0.0_num) &
@@ -466,20 +466,20 @@ CONTAINS
 
         ! This cycles through every ionisation level for the particle until it
         ! is no longer ionising in the field
-        DO WHILE(time_left .GT. 0.0_num &
+        DO WHILE(time_left > 0.0_num &
             .AND. species_list(current_state)%ionise)
           ! If the electron is ionised in the multiphoton regime, the resultant
           ! velocity is different so we need to track this
           multiphoton_ionised = .FALSE.
           ! If we're past the maximum of the ADK rate then we're definitely in
           ! the BSI region...
-          IF (e_part_mag .GT. adk_maximum(current_state)) THEN
+          IF (e_part_mag > adk_maximum(current_state)) THEN
             rate = bsi_constant(current_state) * (1.0_num &
                 - bsi_scaling(current_state) / e_part_mag) &
                 + adk_bsi_cap(current_state)
           ! ... otherwise we need to check if we're in the tunnelling or
           ! multiphoton regime...
-          ELSEIF (e_part_mag .GT. keldysh(current_state)) THEN
+          ELSEIF (e_part_mag > keldysh(current_state)) THEN
             ! Calculate ADK ionisation rate
             rate = ionisation_constant(current_state) &
                 * (adk_scaling(current_state) &
@@ -492,13 +492,13 @@ CONTAINS
                 species_list(current_state)%l + 1, 1, bessel_error) - 1.0_num)
             ! If we're in the BSI regime, choose the smallest of either the ADK
             ! or BSI rate. This allows a smooth transition to BSI
-            IF (e_part_mag .GT. bsi_threshold(current_state)) &
+            IF (e_part_mag > bsi_threshold(current_state)) &
                 rate = MIN(bsi_constant(current_state) &
                 * (1.0_num - bsi_scaling(current_state) / e_part_mag) &
                 + adk_bsi_cap(current_state), rate)
           ! If we're in the multiphoton regime, make sure the electric field
           ! strength is larger than the minimum value for multiphoton
-          ELSEIF (e_part_mag .GT. smallest_e_mag(current_state)) THEN
+          ELSEIF (e_part_mag > smallest_e_mag(current_state)) THEN
             rate = MIN(adk_multiphoton_cap(current_state), &
                 multi_constant(current_state) &
                 * e_part_mag**k_photons_exponent(current_state))
@@ -512,8 +512,8 @@ CONTAINS
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample .LT. 1.0_num - exp(-1.0_num * rate * time_left)) THEN
-            IF (species_list(current_state)%release_species .GT. 0) THEN
+          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+            IF (species_list(current_state)%release_species > 0) THEN
               ALLOCATE(new)
               ! Create electron for release
 #ifdef PER_PARTICLE_WEIGHT
@@ -574,7 +574,7 @@ CONTAINS
 
         ! Finally the ion is moved to the ionised list following multiple
         ! ionisation, and current correction is applied
-        IF (current_state .NE. i) THEN
+        IF (current_state /= i) THEN
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
@@ -585,8 +585,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) .GT. c_tiny .OR. ABS(j_ion(2)) .GT. c_tiny .OR. &
-              ABS(j_ion(3)) .GT. c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
+              ABS(j_ion(3)) > c_tiny) THEN
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
               jx(cell_x2+ix, cell_y1+iy) = &
@@ -748,13 +748,13 @@ CONTAINS
 
         ! This cycles through every ionisation level for the particle until it
         ! is no longer ionising in the field
-        DO WHILE(time_left .GT. 0.0_num &
+        DO WHILE(time_left > 0.0_num &
             .AND. species_list(current_state)%ionise)
           ! If the electron is ionised in the multiphoton regime, the resultant
           ! velocity is different so we need to track this
           multiphoton_ionised = .FALSE.
           ! Check if we're in the tunnelling or multiphoton regime...
-          IF (e_part_mag .GT. keldysh(current_state)) THEN
+          IF (e_part_mag > keldysh(current_state)) THEN
             ! Calculate ADK ionisation rate
             rate = ionisation_constant(current_state) &
                 * (adk_scaling(current_state) &
@@ -767,7 +767,7 @@ CONTAINS
                 species_list(current_state)%l + 1, 1, bessel_error) - 1.0_num)
           ! If we're in the multiphoton regime, make sure the electric field
           ! strength is larger than the minimum value for multiphoton
-          ELSEIF (e_part_mag .GT. smallest_e_mag(current_state)) THEN
+          ELSEIF (e_part_mag > smallest_e_mag(current_state)) THEN
             rate = MIN(adk_multiphoton_cap(current_state), &
                 multi_constant(current_state) &
                 * e_part_mag**k_photons_exponent(current_state))
@@ -781,8 +781,8 @@ CONTAINS
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample .LT. 1.0_num - exp(-1.0_num * rate * time_left)) THEN
-            IF (species_list(current_state)%release_species .GT. 0) THEN
+          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+            IF (species_list(current_state)%release_species > 0) THEN
               ALLOCATE(new)
               ! Create electron for release
 #ifdef PER_PARTICLE_WEIGHT
@@ -843,7 +843,7 @@ CONTAINS
 
         ! Finally the ion is moved to the ionised list following multiple
         ! ionisation, and current correction is applied
-        IF (current_state .NE. i) THEN
+        IF (current_state /= i) THEN
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
@@ -854,8 +854,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) .GT. c_tiny .OR. ABS(j_ion(2)) .GT. c_tiny .OR. &
-              ABS(j_ion(3)) .GT. c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
+              ABS(j_ion(3)) > c_tiny) THEN
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
               jx(cell_x2+ix, cell_y1+iy) = &
@@ -1016,17 +1016,17 @@ CONTAINS
 
         ! This cycles through every ionisation level for the particle until it
         ! is no longer ionising in the field
-        DO WHILE(time_left .GT. 0.0_num &
+        DO WHILE(time_left > 0.0_num &
             .AND. species_list(current_state)%ionise)
           ! If we're past the maximum of the ADK rate then we're definitely in
           ! the BSI region...
-          IF (e_part_mag .GT. adk_maximum(current_state)) THEN
+          IF (e_part_mag > adk_maximum(current_state)) THEN
             rate = bsi_constant(current_state) * (1.0_num &
                 - bsi_scaling(current_state) / e_part_mag) &
                 + adk_bsi_cap(current_state)
           ! ... otherwise we check if the electric field is large enough for
           ! tunnelling ionisation...
-          ELSEIF (e_part_mag .GT. smallest_e_mag(current_state)) THEN
+          ELSEIF (e_part_mag > smallest_e_mag(current_state)) THEN
             ! Calculate ADK ionisation rate
             rate = ionisation_constant(current_state) &
                 * (adk_scaling(current_state) &
@@ -1040,7 +1040,7 @@ CONTAINS
             ! ... but we could still be in the lower part of the in the BSI
             ! regime, choose the smallest of either the ADK or BSI rate.
             ! This allows a smooth transition to BSI
-            IF (e_part_mag .GT. bsi_threshold(current_state)) &
+            IF (e_part_mag > bsi_threshold(current_state)) &
                 rate = MIN(bsi_constant(current_state) &
                 * (1.0_num - bsi_scaling(current_state) / e_part_mag) &
                 + adk_bsi_cap(current_state), rate)
@@ -1053,8 +1053,8 @@ CONTAINS
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample .LT. 1.0_num - exp(-1.0_num * rate * time_left)) THEN
-            IF (species_list(current_state)%release_species .GT. 0) THEN
+          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+            IF (species_list(current_state)%release_species > 0) THEN
               ALLOCATE(new)
               ! Create electron for release
 #ifdef PER_PARTICLE_WEIGHT
@@ -1101,7 +1101,7 @@ CONTAINS
 
         ! Finally the ion is moved to the ionised list following multiple
         ! ionisation, and current correction is applied
-        IF (current_state .NE. i) THEN
+        IF (current_state /= i) THEN
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
@@ -1112,8 +1112,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) .GT. c_tiny .OR. ABS(j_ion(2)) .GT. c_tiny .OR. &
-              ABS(j_ion(3)) .GT. c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
+              ABS(j_ion(3)) > c_tiny) THEN
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
               jx(cell_x2+ix, cell_y1+iy) = &
@@ -1274,11 +1274,11 @@ CONTAINS
 
         ! This cycles through every ionisation level for the particle until it
         ! is no longer ionising in the field
-        DO WHILE(time_left .GT. 0.0_num &
+        DO WHILE(time_left > 0.0_num &
             .AND. species_list(current_state)%ionise)
           ! Check if the electric field is strong enough for tunnelling
           ! ionisation
-          IF (e_part_mag .GT. smallest_e_mag(current_state)) THEN
+          IF (e_part_mag > smallest_e_mag(current_state)) THEN
             rate = ionisation_constant(current_state) &
                 * (adk_scaling(current_state) &
                 / e_part_mag)**effective_n_exponent(current_state) &
@@ -1297,8 +1297,8 @@ CONTAINS
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample .LT. 1.0_num - exp(-1.0_num * rate * time_left)) THEN
-            IF (species_list(current_state)%release_species .GT. 0) THEN
+          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+            IF (species_list(current_state)%release_species > 0) THEN
               ALLOCATE(new)
               ! Create electron for release
 #ifdef PER_PARTICLE_WEIGHT
@@ -1345,7 +1345,7 @@ CONTAINS
 
         ! Finally the ion is moved to the ionised list following multiple
         ! ionisation, and current correction is applied
-        IF (current_state .NE. i) THEN
+        IF (current_state /= i) THEN
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
@@ -1356,8 +1356,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) .GT. c_tiny .OR. ABS(j_ion(2)) .GT. c_tiny .OR. &
-              ABS(j_ion(3)) .GT. c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
+              ABS(j_ion(3)) > c_tiny) THEN
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
               jx(cell_x2+ix, cell_y1+iy) = &

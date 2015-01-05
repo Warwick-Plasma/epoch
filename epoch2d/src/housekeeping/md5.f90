@@ -13,7 +13,7 @@ CONTAINS
 
     DO i = 1, LEN(string)
       c = ICHAR(string(i:i))
-      IF (c .GT. 64 .AND. c .LT. 90) string(i:i) = CHAR(c+32)
+      IF (c > 64 .AND. c < 90) string(i:i) = CHAR(c+32)
     ENDDO
 
   END SUBROUTINE lowercase
@@ -58,7 +58,7 @@ CONTAINS
     j = LEN(string)+1
     new_string(:j) = string // CHAR(128) ! Append "1" bit to message
     i = MOD(j, 64)
-    DO WHILE(i .NE. 56)
+    DO WHILE(i /= 56)
       j = j + 1
       ! Pad with "0" until message length mod 512 bits equals 448 bits
       new_string(j:j) = CHAR(0)
@@ -97,16 +97,16 @@ CONTAINS
       d = h3
 
       DO j = 1, 64
-        IF (j .GE. 1 .AND. j .LE. 16) THEN
+        IF (j >= 1 .AND. j <= 16) THEN
           f = IOR(IAND(b, c), IAND(NOT(b), d))
           g = j
-        ELSE IF (j .GE. 17 .AND. j .LE. 32) THEN
+        ELSE IF (j >= 17 .AND. j <= 32) THEN
           f = IOR(IAND(d, b), IAND(NOT(d), c))
           g = MOD(5*(j-1) + 1, 16) + 1
-        ELSE IF (j .GE. 33 .AND. j .LE. 48) THEN
+        ELSE IF (j >= 33 .AND. j <= 48) THEN
           f = IEOR(b, IEOR(c, d))
           g = MOD(3*(j-1) + 5, 16) + 1
-        ELSE IF (j .GE. 49 .AND. j .LE. 64) THEN
+        ELSE IF (j >= 49 .AND. j <= 64) THEN
           f = IEOR(c, IOR(b, NOT(d)))
           g = MOD(7*(j-1), 16) + 1
         ENDIF
@@ -182,11 +182,11 @@ CONTAINS
     total_length = total_length + new_len
     new_string(:new_len) = string
 
-    IF (new_len .EQ. 0 .OR. MOD(new_len, 64) .NE. 0) THEN
+    IF (new_len == 0 .OR. MOD(new_len, 64) /= 0) THEN
       j = new_len + 1
       new_string(j:j) = CHAR(128) ! Append "1" bit to message
       i = MOD(j, 64)
-      DO WHILE(i .NE. 56)
+      DO WHILE(i /= 56)
         j = j + 1
         ! Pad with "0" until message length mod 512 bits equals 448 bits
         new_string(j:j) = CHAR(0)
@@ -226,16 +226,16 @@ CONTAINS
       d = h3
 
       DO j = 1, 64
-        IF (j .GE. 1 .AND. j .LE. 16) THEN
+        IF (j >= 1 .AND. j <= 16) THEN
           f = IOR(IAND(b, c), IAND(NOT(b), d))
           g = j
-        ELSE IF (j .GE. 17 .AND. j .LE. 32) THEN
+        ELSE IF (j >= 17 .AND. j <= 32) THEN
           f = IOR(IAND(d, b), IAND(NOT(d), c))
           g = MOD(5*(j-1) + 1, 16) + 1
-        ELSE IF (j .GE. 33 .AND. j .LE. 48) THEN
+        ELSE IF (j >= 33 .AND. j <= 48) THEN
           f = IEOR(b, IEOR(c, d))
           g = MOD(3*(j-1) + 5, 16) + 1
-        ELSE IF (j .GE. 49 .AND. j .LE. 64) THEN
+        ELSE IF (j >= 49 .AND. j <= 64) THEN
           f = IEOR(c, IOR(b, NOT(d)))
           g = MOD(7*(j-1), 16) + 1
         ENDIF

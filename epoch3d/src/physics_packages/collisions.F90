@@ -84,16 +84,16 @@ CONTAINS
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
-      IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) &
+      IF (species_list(ispecies)%species_type == c_species_id_photon) &
           CYCLE
       ! Currently no support for collisions involving chargeless particles
-      IF (ABS(species_list(ispecies)%charge) .LE. c_tiny) &
+      IF (ABS(species_list(ispecies)%charge) <= c_tiny) &
           CYCLE
 
       collide_species = .FALSE.
       DO jspecies = ispecies, n_species
         user_factor = coll_pairs(ispecies, jspecies)
-        IF (user_factor .GT. 0) THEN
+        IF (user_factor > 0) THEN
           collide_species = .TRUE.
           EXIT
         ENDIF
@@ -120,13 +120,13 @@ CONTAINS
 
       DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
-        IF (species_list(jspecies)%species_type .EQ. c_species_id_photon) &
+        IF (species_list(jspecies)%species_type == c_species_id_photon) &
             CYCLE
         ! Currently no support for collisions involving chargeless particles
-        IF (ABS(species_list(jspecies)%charge) .LE. c_tiny) &
+        IF (ABS(species_list(jspecies)%charge) <= c_tiny) &
             CYCLE
         user_factor = coll_pairs(ispecies, jspecies)
-        IF (user_factor .LE. 0) CYCLE
+        IF (user_factor <= 0) CYCLE
 
         CALL calc_coll_number_density(jdens, jspecies)
         CALL calc_coll_temperature(jtemp, jspecies)
@@ -145,7 +145,7 @@ CONTAINS
         DO iz = 1, nz
         DO iy = 1, ny
         DO ix = 1, nx
-          IF (ispecies .EQ. jspecies) THEN
+          IF (ispecies == jspecies) THEN
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy,iz), &
                 m1, q1, w1, idens(ix,iy,iz), itemp(ix,iy,iz), &
@@ -214,12 +214,12 @@ CONTAINS
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
-      IF (species_list(ispecies)%species_type .EQ. c_species_id_photon) &
+      IF (species_list(ispecies)%species_type == c_species_id_photon) &
           CYCLE
       ! Currently no support for collisions involving chargeless particles
       ! unless ionisation occurs
       use_coulomb_log_auto_i = .TRUE.
-      IF (ABS(species_list(ispecies)%charge) .GE. c_tiny) THEN
+      IF (ABS(species_list(ispecies)%charge) >= c_tiny) THEN
         IF (.NOT. species_list(ispecies)%ionise) CYCLE
         use_coulomb_log_auto_i = .FALSE.
       ENDIF
@@ -253,18 +253,18 @@ CONTAINS
 
       DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
-        IF (species_list(jspecies)%species_type .EQ. c_species_id_photon) &
+        IF (species_list(jspecies)%species_type == c_species_id_photon) &
             CYCLE
         ! Currently no support for collisions involving chargeless particles
         ! unless ionisation occurs
         use_coulomb_log_auto = use_coulomb_log_auto_i
-        IF (ABS(species_list(jspecies)%charge) .GE. c_tiny) THEN
+        IF (ABS(species_list(jspecies)%charge) >= c_tiny) THEN
           IF (.NOT. (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise)) CYCLE
           use_coulomb_log_auto = .FALSE.
         ENDIF
         user_factor = coll_pairs(ispecies, jspecies)
-        IF (user_factor .LE. 0) CYCLE
+        IF (user_factor <= 0) CYCLE
 
         CALL calc_coll_number_density(jdens, jspecies)
         CALL calc_coll_temperature(jtemp, jspecies)
@@ -315,7 +315,7 @@ CONTAINS
           e_log_lambda = coulomb_log
         ENDIF
 
-        IF (ispecies .EQ. jspecies) THEN
+        IF (ispecies == jspecies) THEN
           DO iz = 1, nz
           DO iy = 1, ny
           DO ix = 1, nx
@@ -339,7 +339,7 @@ CONTAINS
                 q_full, ionisation_energy, n1, n2, l)
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
-            IF (e_user_factor .GT. 0.0_num) THEN
+            IF (e_user_factor > 0.0_num) THEN
               CALL inter_species_collisions(ejected_e, ionising_e, &
                   m_e, m2, q_e, q2, w_e, w2, &
                   e_dens(ix,iy,iz), jdens(ix,iy,iz), &
@@ -348,7 +348,7 @@ CONTAINS
             ENDIF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
-            IF (ABS(q1) .GE. c_tiny) THEN
+            IF (ABS(q1) >= c_tiny) THEN
               CALL inter_species_collisions( &
                   species_list(ispecies)%secondary_list(ix,iy,iz), &
                   species_list(jspecies)%secondary_list(ix,iy,iz), &
@@ -377,7 +377,7 @@ CONTAINS
                 q_full, ionisation_energy, n1, n2, l)
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
-            IF (e_user_factor .GT. 0.0_num) THEN
+            IF (e_user_factor > 0.0_num) THEN
               CALL inter_species_collisions(ejected_e, ionising_e, &
                   m1, m_e, q1, q_e, w1, w_e, &
                   idens(ix,iy,iz), e_dens(ix,iy,iz), &
@@ -386,7 +386,7 @@ CONTAINS
             ENDIF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
-            IF (ABS(q2) .GE. c_tiny) THEN
+            IF (ABS(q2) >= c_tiny) THEN
               CALL inter_species_collisions( &
                   species_list(ispecies)%secondary_list(ix,iy,iz), &
                   species_list(jspecies)%secondary_list(ix,iy,iz), &
@@ -456,7 +456,7 @@ CONTAINS
     ion_count = ions%count
 
     ! If there aren't enough particles to collide, then don't bother
-    IF(e_count .EQ. 0 .OR. ion_count .EQ. 0) RETURN
+    IF(e_count == 0 .OR. ion_count == 0) RETURN
 
     pcount = MAX(e_count, ion_count)
     factor = 0.0_num
@@ -491,14 +491,14 @@ CONTAINS
     DO k = 1, pcount
       i_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
       ! Angles for rotation such that ion velocity |v| = v_x
-      IF(i_p2 .GT. 0.0_num) THEN
-        IF(ABS(ion%part_p(1)) .GE. c_tiny) THEN
+      IF(i_p2 > 0.0_num) THEN
+        IF(ABS(ion%part_p(1)) >= c_tiny) THEN
           rot_y = DATAN(ion%part_p(3) / ion%part_p(1))
         ELSE
           rot_y = pi / 2.0_num
         ENDIF
         denominator = ion%part_p(1) * DCOS(rot_y) + ion%part_p(3) * DSIN(rot_y)
-        IF (ABS(denominator) .GE. c_tiny) THEN
+        IF (ABS(denominator) >= c_tiny) THEN
           rot_z = DATAN(-ion%part_p(2) / denominator)
         ELSE
           rot_z = pi / 2.0_num
@@ -537,12 +537,12 @@ CONTAINS
       ! cause ionisation, as all cross sectional models used show massively
       ! increasing electron impact ionisation cross section as kinetic energy
       ! tends to zero
-      IF (e_ke_i .GE. ion%weight / electron%weight * ionisation_energy &
+      IF (e_ke_i >= ion%weight / electron%weight * ionisation_energy &
           .AND. .NOT. was_ionised(MOD(k - 1, ion_count) + 1)) THEN
         ! Find cross section
         red_inc = e_ke_i * ionisation_energy_inv
         ! Use MBELL model for atomic number < 36
-        IF (n1 .LT. 4 .AND. l .LT. 3) THEN
+        IF (n1 < 4 .AND. l < 3) THEN
           ! Relativistic correction for high energy incident electrons
           gr = (1.0_num + 2.0_num * red_ion) / (red_inc + 2.0_num * red_ion) &
               * ((red_inc + red_ion) / (1.0_num + red_ion))**2 &
@@ -585,12 +585,12 @@ CONTAINS
               - LOG(t) / (t + 1.0_num) * (1.0_num + 2.0_num * tp) &
               / (1.0_num + 0.5_num * tp)**2 &
               + bp**2 / (1.0_num + 0.5_num * tp)**2 * (t - 1.0_num) / 2.0_num)
-        END IF
-        IF (random() .LT. 1.0_num - EXP(prob_factor * eiics * e_v_i)) THEN
+        ENDIF
+        IF (random() < 1.0_num - EXP(prob_factor * eiics * e_v_i)) THEN
           ! Mark ionisation as occurring
           was_ionised(MOD(k - 1, ion_count) + 1) = .TRUE.
           lost_ke(MOD(k - 1, e_count) + 1) = .TRUE.
-          IF(i_p2 .GT. 0.0_num) THEN
+          IF(i_p2 > 0.0_num) THEN
             ! Reduce electron momentum by ionisation energy
             e_p_rot = SQRT(((ev / c * (e_ke_i - ion%weight / electron%weight &
                 * ionisation_energy + e_rest_ev))**2 - e_mass * e_rest) &
@@ -609,7 +609,7 @@ CONTAINS
                 * DCOS(rot_y) - e_p_rot(1) * DSIN(rot_y) /)
             ! If numerical error causes the electron to gain energy we catch it
             ! and apply the non-relativistic ionisation energy correction
-            IF(DOT_PRODUCT(electron%part_p, electron%part_p) .LT. &
+            IF(DOT_PRODUCT(electron%part_p, electron%part_p) < &
                 DOT_PRODUCT(e_p_rot, e_p_rot)) THEN
               electron%part_p = SQRT(((ev / c * (e_ke_i - ion%weight &
                 / electron%weight * ionisation_energy + e_rest_ev))**2 &
@@ -636,14 +636,14 @@ CONTAINS
     ion => ions%head
 
     DO k = 1, MAX(e_count, ion_count)
-      IF (k .LE. e_count) THEN
+      IF (k <= e_count) THEN
         next_e => electron%next
         IF (lost_ke(k)) THEN
           CALL remove_particle_from_partlist(electrons, electron)
           CALL add_particle_to_partlist(ionising_e, electron)
         ENDIF
       ENDIF
-      IF (k .LE. ion_count) THEN
+      IF (k <= ion_count) THEN
         next_ion => ion%next
         IF (was_ionised(k)) THEN
           ALLOCATE(ejected_electron)
@@ -697,10 +697,10 @@ CONTAINS
     icount = p_list%count
 
     ! If there aren't enough particles to collide, then don't bother
-    IF (icount .LE. 1) RETURN
+    IF (icount <= 1) RETURN
 
     ! No collisions in cold plasma so return
-    IF (temp .LE. c_tiny) RETURN
+    IF (temp <= c_tiny) RETURN
 
 #ifndef PER_PARTICLE_WEIGHT
     np = icount * weight
@@ -721,7 +721,7 @@ CONTAINS
     np = np + current%weight + impact%weight
     factor = factor + MIN(current%weight, impact%weight)
 
-    IF (MOD(icount, 2_i8) .NE. 0) THEN
+    IF (MOD(icount, 2_i8) /= 0) THEN
       np = np + impact%next%weight
       factor = factor + MIN(current%weight, impact%next%weight)
       factor = factor + MIN(impact%weight, impact%next%weight)
@@ -743,7 +743,7 @@ CONTAINS
 #endif
     ENDDO
 
-    IF (MOD(icount, 2_i8) .EQ. 0) THEN
+    IF (MOD(icount, 2_i8) == 0) THEN
       CALL scatter(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, temp, temp, log_lambda, factor)
     ELSE
@@ -786,14 +786,14 @@ CONTAINS
     np = 0.0_num
 
     ! No collisions in cold plasma so return
-    IF (itemp .LE. c_tiny .AND. jtemp .LE. c_tiny) RETURN
+    IF (itemp <= c_tiny .AND. jtemp <= c_tiny) RETURN
 
     ! Inter-species collisions
     icount = p_list1%count
     jcount = p_list2%count
     pcount = MAX(icount, jcount)
 
-    IF (icount .GT. 0 .AND. jcount .GT. 0) THEN
+    IF (icount > 0 .AND. jcount > 0) THEN
       ! temporarily join tail to the head of the lists to make them circular
       p_list1%tail%next => p_list1%head
       p_list2%tail%next => p_list2%head
@@ -883,12 +883,12 @@ CONTAINS
     p2_norm = p2 / mc0
 
     ! Two stationary particles can't collide, so don't try
-    IF (DOT_PRODUCT(p1_norm, p1_norm) .LT. eps &
-        .AND. DOT_PRODUCT(p2_norm, p2_norm) .LT. eps) RETURN
+    IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
+        .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) RETURN
 
     ! Ditto for two particles with the same momentum
     vc = (p1_norm - p2_norm)
-    IF (DOT_PRODUCT(vc, vc) .LT. eps) RETURN
+    IF (DOT_PRODUCT(vc, vc) < eps) RETURN
 
 #ifdef PER_PARTICLE_CHARGE_MASS
     m1 = current%mass
@@ -1000,9 +1000,9 @@ CONTAINS
     w2 = weight2
 #endif
 
-    IF (w1 .GT. w2) THEN
+    IF (w1 > w2) THEN
       CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-    ELSEIF (w2 .GT. w1) THEN
+    ELSEIF (w2 > w1) THEN
       CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
     ENDIF
 
@@ -1039,12 +1039,12 @@ CONTAINS
     REAL(num) :: numerator, denominator
     REAL(num) :: velocity_collisions
 
-    IF (vrabs .GT. 0.0_num) THEN
+    IF (vrabs > 0.0_num) THEN
       numerator = (q1 * q2)**2 * jdens * log_lambda
       denominator = fac * mu**2 * vrabs**3
-      IF (denominator .LE. 0.0_num &
+      IF (denominator <= 0.0_num &
           .OR. EXPONENT(numerator) - EXPONENT(denominator) &
-          .GE. c_maxexponent) THEN
+          >= c_maxexponent) THEN
         velocity_collisions = 0.0_num
       ELSE
         velocity_collisions = numerator / denominator
@@ -1062,7 +1062,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: itemp, log_lambda, mu, q1, q2, jdens
     REAL(num) :: temperature_collisions
 
-    IF (itemp .GT. c_tiny) THEN
+    IF (itemp > c_tiny) THEN
       temperature_collisions = ((q1 * q2)**2 * jdens * log_lambda) &
           / (3.0_num * epsilon0**2 * SQRT(mu) &
           * (2.0_num * pi * q0 * itemp)**1.5_num)
@@ -1087,14 +1087,14 @@ CONTAINS
     mu = m2 / 1.6726d-27
     ek = (gr - 1.0_num) * m1 * c**2 / q0
 
-    IF (jtemp .LE. 0.0_num) THEN
-      IF (ek .LE. 0.0_num) THEN
+    IF (jtemp <= 0.0_num) THEN
+      IF (ek <= 0.0_num) THEN
         manheimer_collisions = 0.0_num
       ELSE
         manheimer_collisions = 3.9d-6 / (SQRT(ek**3) + c_tiny)
       ENDIF
     ELSE
-      IF (ek .LE. 0.0_num) THEN
+      IF (ek <= 0.0_num) THEN
         manheimer_collisions = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
       ELSE
         slow = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
@@ -1135,7 +1135,7 @@ CONTAINS
 
     ! This if-statement is just to take care of possible rounding errors
     ! gamma_p should always be smaller than gamma_en
-    IF (gamma_p .LT. gamma_en) THEN
+    IF (gamma_p < gamma_en) THEN
       ! magnitude of the momentum correction
       delta_p = mass * c * SQRT(gamma_en**2 - gamma_p**2)
       p_trans_mag = SQRT(p_after(2)**2 + p_after(3)**2)
@@ -1170,7 +1170,7 @@ CONTAINS
     vmag = SQRT(DOT_PRODUCT(vector, vector))
     vtrans = SQRT(vector(2)**2 + vector(3)**2)
 
-    IF (vtrans .GT. c_tiny) THEN
+    IF (vtrans > c_tiny) THEN
       c1 = vector / vmag
       c2 = (/ 0.0_num, vector(3), -vector(2) /)
       c2 = c2 / vtrans
@@ -1199,11 +1199,11 @@ CONTAINS
     p_num = INT(p_list%count)
 
     ! Nothing to be done
-    IF (p_num .LE. 2) RETURN
+    IF (p_num <= 2) RETURN
 
     ! First make sure that the sorting array is large enough
     ! This should happen infrequently
-    IF (p_num .GT. coll_sort_array_size) THEN
+    IF (p_num > coll_sort_array_size) THEN
       DEALLOCATE(coll_sort_array)
 
       ! make the sort array somewhat larger to avoid frequent deallocation
@@ -1271,12 +1271,12 @@ CONTAINS
     DO i = -2, nx+3
       temp3 = temp(i,j,k)**3
       den = dens(i,j,k)
-      IF (den .LE. 0.0_num &
-          .OR. EXPONENT(temp3) - EXPONENT(den) .GE. c_maxexponent) THEN
+      IF (den <= 0.0_num &
+          .OR. EXPONENT(temp3) - EXPONENT(den) >= c_maxexponent) THEN
         calc_coulomb_log(i,j,k) = 1.0_num
       ELSE
         ratio = temp3 / den
-        IF (ratio .LE. efac) THEN
+        IF (ratio <= efac) THEN
           calc_coulomb_log(i,j,k) = 1.0_num
         ELSE
           calc_coulomb_log(i,j,k) = lfac + 0.5_num * LOG(ratio)
@@ -1641,7 +1641,7 @@ CONTAINS
       en_sqr = en_sqr + (en1_before + en2_before)**2
 
       ! alternate particle1 and particle2
-      IF (MOD(i, 2) .EQ. 0) THEN
+      IF (MOD(i, 2) == 0) THEN
         CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
       ELSE
@@ -1762,7 +1762,7 @@ CONTAINS
       en_sqr = en_sqr + (en1_before + en2_before)**2
 
       ! alternate particle1 and particle2
-      IF (MOD(i, 2) .EQ. 0) THEN
+      IF (MOD(i, 2) == 0) THEN
         CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
       ELSE
@@ -1879,7 +1879,7 @@ CONTAINS
       part => partlist1%head
       DO j = 1, partlist1%count
 !        WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
-        IF (part%coll_count .GT. histo1max) histo1max = part%coll_count
+        IF (part%coll_count > histo1max) histo1max = part%coll_count
         histo1(part%coll_count) = histo1(part%coll_count) + 1
         part => part%next
       ENDDO
@@ -1889,7 +1889,7 @@ CONTAINS
       part => partlist2%head
       DO WHILE (ASSOCIATED(part))
 !        WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
-        IF (part%coll_count .GT. histo2max) histo2max = part%coll_count
+        IF (part%coll_count > histo2max) histo2max = part%coll_count
         histo2(part%coll_count) = histo2(part%coll_count) + 1
         part => part%next
       ENDDO
@@ -1908,14 +1908,14 @@ CONTAINS
       ! performing check on histograms
 
       ! first, subtract expected values from the array
-      IF ((cnt1 .GT. 0) .AND. (cnt2 .GT. 0)) THEN
-        IF (cnt1 .GT. cnt2) THEN
+      IF ((cnt1 > 0) .AND. (cnt2 > 0)) THEN
+        IF (cnt1 > cnt2) THEN
           histo1(2) = histo1(2) - cnt1
           a = cnt1 / cnt2
           b = cnt1 - cnt2 * a
           histo2(2*a) = histo2(2*a) - (cnt2 - b)
           histo2(2*a+2) = histo2(2*a+2) - b
-        ELSE IF (cnt1 .LT. cnt2) THEN
+        ELSE IF (cnt1 < cnt2) THEN
           histo2(2) = histo2(2) - cnt2
           a = cnt2 / cnt1
           b = cnt2 - cnt1 * a
@@ -1930,13 +1930,13 @@ CONTAINS
       ! now check that both arrays are zero
       error = 0
       DO j = 1, histo1max
-        IF (histo1(j) .NE. 0) error = error + 1
+        IF (histo1(j) /= 0) error = error + 1
       ENDDO
       DO j = 1, histo2max
-        IF (histo2(j) .NE. 0) error = error + 1
+        IF (histo2(j) /= 0) error = error + 1
       ENDDO
 
-      IF (error .GT. 0) THEN
+      IF (error > 0) THEN
         WRITE(*,*) '  Error in inter species collisions'
         WRITE(*,'(''    Iteration:   '',I10)') i
         WRITE(*,'(''    List counts: '',I10,'', '',I10)') cnt1, cnt2
@@ -2019,7 +2019,7 @@ CONTAINS
       part => partlist%head
       DO j = 1, partlist%count
         ! WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
-        IF (part%coll_count .GT. histo_max) histo_max = part%coll_count
+        IF (part%coll_count > histo_max) histo_max = part%coll_count
         histo(part%coll_count) = histo(part%coll_count) + 1
         part => part%next
       ENDDO
@@ -2038,10 +2038,10 @@ CONTAINS
       ! now check that array is zero
       error = 0
       DO j = 1, histo_max
-        IF (histo(j) .NE. 0) error = error + 1
+        IF (histo(j) /= 0) error = error + 1
       ENDDO
 
-      IF (error .GT. 0) THEN
+      IF (error > 0) THEN
         WRITE(*,*) '  Error in intra species collisions'
         WRITE(*,'(''    Iteration:   '',I10)') i
         WRITE(*,'(''    List count: '',I10)') partlist%count
@@ -2136,8 +2136,8 @@ CONTAINS
         part => partlist%head
         DO j = 1, plist_length
           histo(j) = histo(j) + part%coll_count
-          if (minp(j) .GT. part%coll_count) minp(j) = part%coll_count
-          if (maxp(j) .LT. part%coll_count) maxp(j) = part%coll_count
+          if (minp(j) > part%coll_count) minp(j) = part%coll_count
+          if (maxp(j) < part%coll_count) maxp(j) = part%coll_count
           std_dev(j) = std_dev(j) + part%coll_count**2
           part => part%next
         ENDDO
@@ -2182,27 +2182,27 @@ CONTAINS
         part_py = current%part_p(2)
         part_pz = current%part_p(3)
 
-        IF (part_x .NE. part_x) THEN
+        IF (part_x /= part_x) THEN
           WRITE (*,*) 'WARNING x = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
-        IF (part_y .NE. part_y) THEN
+        IF (part_y /= part_y) THEN
           WRITE (*,*) 'WARNING y = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
-        IF (part_z .NE. part_z) THEN
+        IF (part_z /= part_z) THEN
           WRITE (*,*) 'WARNING z = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
-        IF (part_px .NE. part_px) THEN
+        IF (part_px /= part_px) THEN
           WRITE (*,*) 'WARNING px = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
-        IF (part_py .NE. part_py) THEN
+        IF (part_py /= part_py) THEN
           WRITE (*,*) 'WARNING py = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF
-        IF (part_pz .NE. part_pz) THEN
+        IF (part_pz /= part_pz) THEN
           WRITE (*,*) 'WARNING pz = NaN on node ', rank, ipart
           haveNaN = .TRUE.
         ENDIF

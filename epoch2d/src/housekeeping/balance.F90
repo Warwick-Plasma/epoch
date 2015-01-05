@@ -37,7 +37,7 @@ CONTAINS
 #endif
 
     ! On one processor do nothing to save time
-    IF (nproc .EQ. 1) RETURN
+    IF (nproc == 1) RETURN
 
     ! This parameter allows selecting the mode of the autobalancing between
     ! leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
@@ -51,13 +51,13 @@ CONTAINS
     IF (.NOT. over_ride) THEN
       CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
           comm, errcode)
-      IF (max_npart .LE. 0) RETURN
+      IF (max_npart <= 0) RETURN
       CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
           comm, errcode)
       npart_av = REAL(sum_npart, num) / nproc
       balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
-      IF (balance_frac .GT. dlb_threshold) RETURN
-      IF (rank .EQ. 0) PRINT *, 'Load balancing with fraction', balance_frac
+      IF (balance_frac > dlb_threshold) RETURN
+      IF (rank == 0) PRINT *, 'Load balancing with fraction', balance_frac
     ENDIF
 
     IF (timer_collect) CALL timer_start(c_timer_balance)
@@ -74,9 +74,9 @@ CONTAINS
       new_cell_y_max = cell_y_max
 
       ! Sweep in X
-      IF (nprocx .GT. 1) THEN
-        IF (IAND(balance_mode, c_lb_x) .NE. 0 &
-            .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+      IF (nprocx > 1) THEN
+        IF (IAND(balance_mode, c_lb_x) /= 0 &
+            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in X
           ALLOCATE(load_x(nx_global))
           CALL get_load_in_x(load_x)
@@ -85,9 +85,9 @@ CONTAINS
       ENDIF
 
       ! Sweep in Y
-      IF (nprocy .GT. 1) THEN
-        IF (IAND(balance_mode, c_lb_y) .NE. 0 &
-            .OR. IAND(balance_mode, c_lb_auto) .NE. 0) THEN
+      IF (nprocy > 1) THEN
+        IF (IAND(balance_mode, c_lb_y) /= 0 &
+            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in Y
           ALLOCATE(load_y(ny_global))
           CALL get_load_in_y(load_y)
@@ -97,29 +97,29 @@ CONTAINS
 
       ! In the autobalancer then determine whether to balance in X or Y
       ! Is this worth keeping?
-      IF (IAND(balance_mode, c_lb_auto) .NE. 0 ) THEN
+      IF (IAND(balance_mode, c_lb_auto) /= 0 ) THEN
 
         ! Code is auto load balancing
         max_x = 0
         min_x = npart_global
         DO iproc = 1, nprocx
           wk = SUM(load_x(new_cell_x_min(iproc):new_cell_x_max(iproc)))
-          IF (wk .GT. max_x) max_x = wk
-          IF (wk .LT. min_x) min_x = wk
+          IF (wk > max_x) max_x = wk
+          IF (wk < min_x) min_x = wk
         ENDDO
 
         max_y = 0
         min_y = npart_global
         DO iproc = 1, nprocy
           wk = SUM(load_y(new_cell_y_min(iproc):new_cell_y_max(iproc)))
-          IF (wk .GT. max_y) max_y = wk
-          IF (wk .LT. min_y) min_y = wk
+          IF (wk > max_y) max_y = wk
+          IF (wk < min_y) min_y = wk
         ENDDO
 
         balance_frac_x = REAL(min_x, num) / REAL(max_x, num)
         balance_frac_y = REAL(min_y, num) / REAL(max_y, num)
 
-        IF (balance_frac_x .LT. balance_frac_y) THEN
+        IF (balance_frac_x < balance_frac_y) THEN
           new_cell_x_min = cell_x_min
           new_cell_x_max = cell_x_max
         ELSE
@@ -381,16 +381,16 @@ CONTAINS
 
     DO id = 1, num_vars_to_dump
       io = averaged_var_block(id)
-      IF (io .EQ. 0) CYCLE
+      IF (io == 0) CYCLE
 
       mask = io_block_list(io)%dumpmask(id)
       nspec_local = 0
-      IF (IAND(mask, c_io_no_sum) .EQ. 0) &
+      IF (IAND(mask, c_io_no_sum) == 0) &
           nspec_local = 1
-      IF (IAND(mask, c_io_species) .NE. 0) &
+      IF (IAND(mask, c_io_species) /= 0) &
           nspec_local = nspec_local + n_species
 
-      IF (nspec_local .LE. 0) CYCLE
+      IF (nspec_local <= 0) CYCLE
 
       IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
@@ -625,7 +625,7 @@ CONTAINS
 
     ! Slice in X-direction with an additional index
 
-    IF (bc_particle(c_bd_x_min) .EQ. c_bc_thermal) THEN
+    IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
       IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:ny_new+3, 3))
 
       DO ispecies = 1, n_species
@@ -641,7 +641,7 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (bc_particle(c_bd_x_max) .EQ. c_bc_thermal) THEN
+    IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
       IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:ny_new+3, 3))
 
       DO ispecies = 1, n_species
@@ -661,7 +661,7 @@ CONTAINS
 
     ! Slice in Y-direction with an additional index
 
-    IF (bc_particle(c_bd_y_min) .EQ. c_bc_thermal) THEN
+    IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
       IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:nx_new+3, 3))
 
       DO ispecies = 1, n_species
@@ -677,7 +677,7 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (bc_particle(c_bd_y_max) .EQ. c_bc_thermal) THEN
+    IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
       IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(-2:nx_new+3, 3))
 
       DO ispecies = 1, n_species
@@ -712,12 +712,12 @@ CONTAINS
 
     n = 1
     DO i = 1, c_ndims
-      IF (i .EQ. direction) CYCLE
+      IF (i == direction) CYCLE
       cdim(n) = c_ndims + 1 - i
       n = n + 1
     ENDDO
 
-    IF (direction .EQ. c_dir_x) THEN
+    IF (direction == c_dir_x) THEN
       CALL redistribute_field_1d(field_in, field_out, cdim, &
           cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max)
     ELSE
@@ -835,26 +835,26 @@ CONTAINS
     ! Find the new processor on which the old x_min resides
     ! This could be sped up by using bisection.
     DO iproc = 1, nprocs(n)-1
-      IF (new_cell_min1(iproc) .LE. old_min(n) &
-          .AND. new_cell_max1(iproc) .GE. old_min(n)) EXIT
+      IF (new_cell_min1(iproc) <= old_min(n) &
+          .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
     ENDDO
 
-    DO WHILE(type_max(n) .LE. old_max(n))
+    DO WHILE(type_max(n) <= old_max(n))
       coord(cdim(n)) = iproc - 1
       type_max(n) = new_cell_max1(iproc)
-      IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
+      IF (type_max(n) > old_max(n)) type_max(n) = old_max(n)
 
       ng0 = 0
       ng1 = 0
-      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+      IF (type_min(n) == nmin(n)) ng0 = ng
+      IF (type_max(n) == nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
       CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
-      IF (rank .NE. irank) THEN
+      IF (rank /= irank) THEN
         sendtypes(irank) = create_1d_array_subtype(basetype, n_local, &
             n_global, start)
       ELSE
@@ -867,7 +867,7 @@ CONTAINS
       ENDIF
 
       n = 1
-      IF (type_max(n) .EQ. old_max(n)) EXIT
+      IF (type_max(n) == old_max(n)) EXIT
       iproc = iproc + 1
       type_min(n) = new_cell_min1(iproc)
     ENDDO
@@ -885,26 +885,26 @@ CONTAINS
     ! Find the old processor on which the new x_min resides
     ! This could be sped up by using bisection.
     DO iproc = 1, nprocs(n)-1
-      IF (old_cell_min1(iproc) .LE. new_min(n) &
-          .AND. old_cell_max1(iproc) .GE. new_min(n)) EXIT
+      IF (old_cell_min1(iproc) <= new_min(n) &
+          .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
     ENDDO
 
-    DO WHILE(type_max(n) .LE. new_max(n))
+    DO WHILE(type_max(n) <= new_max(n))
       coord(cdim(n)) = iproc - 1
       type_max(n) = old_cell_max1(iproc)
-      IF (type_max(n) .GT. new_max(n)) type_max(n) = new_max(n)
+      IF (type_max(n) > new_max(n)) type_max(n) = new_max(n)
 
       ng0 = 0
       ng1 = 0
-      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+      IF (type_min(n) == nmin(n)) ng0 = ng
+      IF (type_max(n) == nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
 
       CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
-      IF (rank .NE. irank) THEN
+      IF (rank /= irank) THEN
         recvtypes(irank) = create_1d_array_subtype(basetype, n_local, &
             n_global, start)
       ELSE
@@ -920,7 +920,7 @@ CONTAINS
       ENDIF
 
       n = 1
-      IF (type_max(n) .EQ. new_max(n)) EXIT
+      IF (type_max(n) == new_max(n)) EXIT
       iproc = iproc + 1
       type_min(n) = old_cell_min1(iproc)
     ENDDO
@@ -928,8 +928,8 @@ CONTAINS
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
     DO i = 0,nproc-1
-      IF (sendtypes(i) .NE. 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
-      IF (recvtypes(i) .NE. 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
+      IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
+      IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     ENDDO
 
     DEALLOCATE(sendtypes)
@@ -1007,19 +1007,19 @@ CONTAINS
     ! Find the new processor on which the old y_min resides
     ! This could be sped up by using bisection.
     DO jproc = 1, nprocs(n)-1
-      IF (new_cell_min2(jproc) .LE. old_min(n) &
-          .AND. new_cell_max2(jproc) .GE. old_min(n)) EXIT
+      IF (new_cell_min2(jproc) <= old_min(n) &
+          .AND. new_cell_max2(jproc) >= old_min(n)) EXIT
     ENDDO
 
-    DO WHILE(type_max(n) .LE. old_max(n))
+    DO WHILE(type_max(n) <= old_max(n))
       coord(cdim(n)) = jproc - 1
       type_max(n) = new_cell_max2(jproc)
-      IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
+      IF (type_max(n) > old_max(n)) type_max(n) = old_max(n)
 
       ng0 = 0
       ng1 = 0
-      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+      IF (type_min(n) == nmin(n)) ng0 = ng
+      IF (type_max(n) == nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
@@ -1031,26 +1031,26 @@ CONTAINS
       ! Find the new processor on which the old x_min resides
       ! This could be sped up by using bisection.
       DO iproc = 1, nprocs(n)-1
-        IF (new_cell_min1(iproc) .LE. old_min(n) &
-            .AND. new_cell_max1(iproc) .GE. old_min(n)) EXIT
+        IF (new_cell_min1(iproc) <= old_min(n) &
+            .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
       ENDDO
 
-      DO WHILE(type_max(n) .LE. old_max(n))
+      DO WHILE(type_max(n) <= old_max(n))
         coord(cdim(n)) = iproc - 1
         type_max(n) = new_cell_max1(iproc)
-        IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
+        IF (type_max(n) > old_max(n)) type_max(n) = old_max(n)
 
         ng0 = 0
         ng1 = 0
-        IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-        IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+        IF (type_min(n) == nmin(n)) ng0 = ng
+        IF (type_max(n) == nmax(n)) ng1 = ng
 
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
         CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
-        IF (rank .NE. irank) THEN
+        IF (rank /= irank) THEN
           sendtypes(irank) = create_2d_array_subtype(basetype, n_local, &
               n_global, start)
         ELSE
@@ -1063,13 +1063,13 @@ CONTAINS
         ENDIF
 
         n = 1
-        IF (type_max(n) .EQ. old_max(n)) EXIT
+        IF (type_max(n) == old_max(n)) EXIT
         iproc = iproc + 1
         type_min(n) = new_cell_min1(iproc)
       ENDDO
 
       n = 2
-      IF (type_max(n) .EQ. old_max(n)) EXIT
+      IF (type_max(n) == old_max(n)) EXIT
       jproc = jproc + 1
       type_min(n) = new_cell_min2(jproc)
     ENDDO
@@ -1087,19 +1087,19 @@ CONTAINS
     ! Find the old processor on which the new y_min resides
     ! This could be sped up by using bisection.
     DO jproc = 1, nprocs(n)-1
-      IF (old_cell_min2(jproc) .LE. new_min(n) &
-          .AND. old_cell_max2(jproc) .GE. new_min(n)) EXIT
+      IF (old_cell_min2(jproc) <= new_min(n) &
+          .AND. old_cell_max2(jproc) >= new_min(n)) EXIT
     ENDDO
 
-    DO WHILE(type_max(n) .LE. new_max(n))
+    DO WHILE(type_max(n) <= new_max(n))
       coord(cdim(n)) = jproc - 1
       type_max(n) = old_cell_max2(jproc)
-      IF (type_max(n) .GT. new_max(n)) type_max(n) = new_max(n)
+      IF (type_max(n) > new_max(n)) type_max(n) = new_max(n)
 
       ng0 = 0
       ng1 = 0
-      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+      IF (type_min(n) == nmin(n)) ng0 = ng
+      IF (type_max(n) == nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
@@ -1111,26 +1111,26 @@ CONTAINS
       ! Find the old processor on which the new x_min resides
       ! This could be sped up by using bisection.
       DO iproc = 1, nprocs(n)-1
-        IF (old_cell_min1(iproc) .LE. new_min(n) &
-            .AND. old_cell_max1(iproc) .GE. new_min(n)) EXIT
+        IF (old_cell_min1(iproc) <= new_min(n) &
+            .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
       ENDDO
 
-      DO WHILE(type_max(n) .LE. new_max(n))
+      DO WHILE(type_max(n) <= new_max(n))
         coord(cdim(n)) = iproc - 1
         type_max(n) = old_cell_max1(iproc)
-        IF (type_max(n) .GT. new_max(n)) type_max(n) = new_max(n)
+        IF (type_max(n) > new_max(n)) type_max(n) = new_max(n)
 
         ng0 = 0
         ng1 = 0
-        IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-        IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+        IF (type_min(n) == nmin(n)) ng0 = ng
+        IF (type_max(n) == nmax(n)) ng1 = ng
 
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
 
         CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
-        IF (rank .NE. irank) THEN
+        IF (rank /= irank) THEN
           recvtypes(irank) = create_2d_array_subtype(basetype, n_local, &
               n_global, start)
         ELSE
@@ -1149,13 +1149,13 @@ CONTAINS
         ENDIF
 
         n = 1
-        IF (type_max(n) .EQ. new_max(n)) EXIT
+        IF (type_max(n) == new_max(n)) EXIT
         iproc = iproc + 1
         type_min(n) = old_cell_min1(iproc)
       ENDDO
 
       n = 2
-      IF (type_max(n) .EQ. new_max(n)) EXIT
+      IF (type_max(n) == new_max(n)) EXIT
       jproc = jproc + 1
       type_min(n) = old_cell_min2(jproc)
     ENDDO
@@ -1163,8 +1163,8 @@ CONTAINS
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
     DO i = 0,nproc-1
-      IF (sendtypes(i) .NE. 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
-      IF (recvtypes(i) .NE. 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
+      IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
+      IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     ENDDO
 
     DEALLOCATE(sendtypes)
@@ -1242,19 +1242,19 @@ CONTAINS
     ! Find the new processor on which the old y_min resides
     ! This could be sped up by using bisection.
     DO jproc = 1, nprocs(n)-1
-      IF (new_cell_min2(jproc) .LE. old_min(n) &
-          .AND. new_cell_max2(jproc) .GE. old_min(n)) EXIT
+      IF (new_cell_min2(jproc) <= old_min(n) &
+          .AND. new_cell_max2(jproc) >= old_min(n)) EXIT
     ENDDO
 
-    DO WHILE(type_max(n) .LE. old_max(n))
+    DO WHILE(type_max(n) <= old_max(n))
       coord(cdim(n)) = jproc - 1
       type_max(n) = new_cell_max2(jproc)
-      IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
+      IF (type_max(n) > old_max(n)) type_max(n) = old_max(n)
 
       ng0 = 0
       ng1 = 0
-      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+      IF (type_min(n) == nmin(n)) ng0 = ng
+      IF (type_max(n) == nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
@@ -1266,26 +1266,26 @@ CONTAINS
       ! Find the new processor on which the old x_min resides
       ! This could be sped up by using bisection.
       DO iproc = 1, nprocs(n)-1
-        IF (new_cell_min1(iproc) .LE. old_min(n) &
-            .AND. new_cell_max1(iproc) .GE. old_min(n)) EXIT
+        IF (new_cell_min1(iproc) <= old_min(n) &
+            .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
       ENDDO
 
-      DO WHILE(type_max(n) .LE. old_max(n))
+      DO WHILE(type_max(n) <= old_max(n))
         coord(cdim(n)) = iproc - 1
         type_max(n) = new_cell_max1(iproc)
-        IF (type_max(n) .GT. old_max(n)) type_max(n) = old_max(n)
+        IF (type_max(n) > old_max(n)) type_max(n) = old_max(n)
 
         ng0 = 0
         ng1 = 0
-        IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-        IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+        IF (type_min(n) == nmin(n)) ng0 = ng
+        IF (type_max(n) == nmax(n)) ng1 = ng
 
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
 
         CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
-        IF (rank .NE. irank) THEN
+        IF (rank /= irank) THEN
           sendtypes(irank) = create_2d_array_subtype(basetype, n_local, &
               n_global, start)
         ELSE
@@ -1298,13 +1298,13 @@ CONTAINS
         ENDIF
 
         n = 1
-        IF (type_max(n) .EQ. old_max(n)) EXIT
+        IF (type_max(n) == old_max(n)) EXIT
         iproc = iproc + 1
         type_min(n) = new_cell_min1(iproc)
       ENDDO
 
       n = 2
-      IF (type_max(n) .EQ. old_max(n)) EXIT
+      IF (type_max(n) == old_max(n)) EXIT
       jproc = jproc + 1
       type_min(n) = new_cell_min2(jproc)
     ENDDO
@@ -1322,19 +1322,19 @@ CONTAINS
     ! Find the old processor on which the new y_min resides
     ! This could be sped up by using bisection.
     DO jproc = 1, nprocs(n)-1
-      IF (old_cell_min2(jproc) .LE. new_min(n) &
-          .AND. old_cell_max2(jproc) .GE. new_min(n)) EXIT
+      IF (old_cell_min2(jproc) <= new_min(n) &
+          .AND. old_cell_max2(jproc) >= new_min(n)) EXIT
     ENDDO
 
-    DO WHILE(type_max(n) .LE. new_max(n))
+    DO WHILE(type_max(n) <= new_max(n))
       coord(cdim(n)) = jproc - 1
       type_max(n) = old_cell_max2(jproc)
-      IF (type_max(n) .GT. new_max(n)) type_max(n) = new_max(n)
+      IF (type_max(n) > new_max(n)) type_max(n) = new_max(n)
 
       ng0 = 0
       ng1 = 0
-      IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-      IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+      IF (type_min(n) == nmin(n)) ng0 = ng
+      IF (type_max(n) == nmax(n)) ng1 = ng
 
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
@@ -1346,26 +1346,26 @@ CONTAINS
       ! Find the old processor on which the new x_min resides
       ! This could be sped up by using bisection.
       DO iproc = 1, nprocs(n)-1
-        IF (old_cell_min1(iproc) .LE. new_min(n) &
-            .AND. old_cell_max1(iproc) .GE. new_min(n)) EXIT
+        IF (old_cell_min1(iproc) <= new_min(n) &
+            .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
       ENDDO
 
-      DO WHILE(type_max(n) .LE. new_max(n))
+      DO WHILE(type_max(n) <= new_max(n))
         coord(cdim(n)) = iproc - 1
         type_max(n) = old_cell_max1(iproc)
-        IF (type_max(n) .GT. new_max(n)) type_max(n) = new_max(n)
+        IF (type_max(n) > new_max(n)) type_max(n) = new_max(n)
 
         ng0 = 0
         ng1 = 0
-        IF (type_min(n) .EQ. nmin(n)) ng0 = ng
-        IF (type_max(n) .EQ. nmax(n)) ng1 = ng
+        IF (type_min(n) == nmin(n)) ng0 = ng
+        IF (type_max(n) == nmax(n)) ng1 = ng
 
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
 
         CALL MPI_CART_RANK(comm, coord, irank, errcode)
 
-        IF (rank .NE. irank) THEN
+        IF (rank /= irank) THEN
           recvtypes(irank) = create_2d_array_subtype(basetype, n_local, &
               n_global, start)
         ELSE
@@ -1384,13 +1384,13 @@ CONTAINS
         ENDIF
 
         n = 1
-        IF (type_max(n) .EQ. new_max(n)) EXIT
+        IF (type_max(n) == new_max(n)) EXIT
         iproc = iproc + 1
         type_min(n) = old_cell_min1(iproc)
       ENDDO
 
       n = 2
-      IF (type_max(n) .EQ. new_max(n)) EXIT
+      IF (type_max(n) == new_max(n)) EXIT
       jproc = jproc + 1
       type_min(n) = old_cell_min2(jproc)
     ENDDO
@@ -1398,8 +1398,8 @@ CONTAINS
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
     DO i = 0,nproc-1
-      IF (sendtypes(i) .NE. 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
-      IF (recvtypes(i) .NE. 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
+      IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
+      IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     ENDDO
 
     DEALLOCATE(sendtypes)
@@ -1508,16 +1508,16 @@ CONTAINS
     old = 1
     nextra = 0
     DO idim = 1, sz
-      IF (nextra .GT. 0) THEN
+      IF (nextra > 0) THEN
         nextra = nextra - 1
         CYCLE
       ENDIF
       total_old = total
       total = total + load(idim)
-      IF (total .GE. load_per_proc_ideal) THEN
+      IF (total >= load_per_proc_ideal) THEN
         ! Pick the split that most closely matches the load
         IF (load_per_proc_ideal - total_old &
-            .LT. total - load_per_proc_ideal) THEN
+            < total - load_per_proc_ideal) THEN
           maxs(proc) = idim - 1
         ELSE
           maxs(proc) = idim
@@ -1525,11 +1525,11 @@ CONTAINS
         ! To communicate ghost cell information correctly, each domain must
         ! contain at least ng cells.
         nextra = old - maxs(proc) + ng
-        IF (nextra .GT. 0) THEN
+        IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         ENDIF
         proc = proc + 1
-        IF (proc .EQ. nproc) EXIT
+        IF (proc == nproc) EXIT
         total = 0
         old = maxs(proc-1)
       ENDIF
@@ -1540,7 +1540,7 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) .LT. ng) THEN
+      IF (old - maxs(proc) < ng) THEN
         maxs(proc) = old - ng
       ENDIF
       old = maxs(proc)
@@ -1549,7 +1549,7 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
-      IF (maxs(proc) - old .LT. ng) THEN
+      IF (maxs(proc) - old < ng) THEN
         maxs(proc) = old + ng
       ENDIF
       old = maxs(proc)
@@ -1580,27 +1580,27 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx - 1
-      IF (part%part_pos(1) .GE. x_grid_mins(iproc) - dx / 2.0_num &
-          .AND. part%part_pos(1) .LT. x_grid_maxs(iproc) + dx / 2.0_num) THEN
+      IF (part%part_pos(1) >= x_grid_mins(iproc) - dx / 2.0_num &
+          .AND. part%part_pos(1) < x_grid_maxs(iproc) + dx / 2.0_num) THEN
         coords(c_ndims) = iproc
         EXIT
       ENDIF
     ENDDO
 
     DO iproc = 0, nprocy - 1
-      IF (part%part_pos(2) .GE. y_grid_mins(iproc) - dy / 2.0_num &
-          .AND. part%part_pos(2) .LT. y_grid_maxs(iproc) + dy / 2.0_num) THEN
+      IF (part%part_pos(2) >= y_grid_mins(iproc) - dy / 2.0_num &
+          .AND. part%part_pos(2) < y_grid_maxs(iproc) + dy / 2.0_num) THEN
         coords(c_ndims-1) = iproc
         EXIT
       ENDIF
     ENDDO
 
-    IF (MINVAL(coords) .LT. 0) THEN
+    IF (MINVAL(coords) < 0) THEN
       WRITE(*,*) 'UNLOCATABLE PARTICLE', coords
       RETURN
     ENDIF
     CALL MPI_CART_RANK(comm, coords, get_particle_processor, errcode)
-    ! IF (get_particle_processor .NE. rank) PRINT *,
+    ! IF (get_particle_processor /= rank) PRINT *,
 
   END FUNCTION get_particle_processor
 
@@ -1631,7 +1631,7 @@ CONTAINS
       DO WHILE(ASSOCIATED(current))
         next => current%next
         part_proc = get_particle_processor(current)
-        IF (part_proc .LT. 0) THEN
+        IF (part_proc < 0) THEN
           PRINT *, 'Unlocatable particle on processor', rank, current%part_pos
           CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
@@ -1639,7 +1639,7 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
         current%processor = part_proc
 #endif
-        IF (part_proc .NE. rank) THEN
+        IF (part_proc /= rank) THEN
           CALL remove_particle_from_partlist(&
               species_list(ispecies)%attached_list, current)
           CALL add_particle_to_partlist(pointers_send(part_proc), current)

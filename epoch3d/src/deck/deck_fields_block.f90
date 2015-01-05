@@ -50,8 +50,8 @@ CONTAINS
     LOGICAL :: got_file
 
     errcode = c_err_none
-    IF (deck_state .EQ. c_ds_first) RETURN
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (deck_state == c_ds_first) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'offset')) THEN
       offset = as_long_integer_print(value, element, errcode)

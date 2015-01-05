@@ -13,7 +13,7 @@ CONTAINS
 
     factorial = 1.0_num
     DO i = 2, INT(x)
-      IF (factorial .LT. SQRT(HUGE(factorial))) THEN
+      IF (factorial < SQRT(HUGE(factorial))) THEN
         factorial = factorial * REAL(i, num)
       ELSE
         factorial = HUGE(0.0_num)
@@ -34,7 +34,7 @@ CONTAINS
 !   The program uses rational functions that approximate the GAMMA
 !   function to at least 20 significant decimal digits.  Coefficients
 !   for the approximation over the interval (1,2) are unpublished.
-!   Those for the approximation for X .GE. 12 are from reference 2.
+!   Those for the approximation for X >= 12 are from reference 2.
 !   The accuracy achieved depends on the arithmetic system, the
 !   compiler, the intrinsic functions, and proper selection of the
 !   machine-dependent constants.
@@ -53,7 +53,7 @@ CONTAINS
 ! XINF   - the largest machine representable floating-point number;
 !          approximately beta**maxexp
 ! EPS    - the smallest positive floating-point number such that
-!          1.0+EPS .GT. 1.0
+!          1.0+EPS > 1.0
 ! XMININ - the smallest positive floating-point number such that
 !          1/XMININ is machine representable
 !
@@ -176,7 +176,7 @@ CONTAINS
     fact = 1.0_num
     n = 0
     y = x
-    IF (y .LE. 0.0_num) THEN
+    IF (y <= 0.0_num) THEN
 !----------------------------------------------------------------------
 !  Argument is negative
 !----------------------------------------------------------------------
@@ -184,8 +184,8 @@ CONTAINS
       y1 = AINT(y)
       iy = FLOOR(y1)
       res = y - y1
-      IF (res .GT. c_tiny) THEN
-        IF (iy .NE. (iy / 2) * 2) parity = .TRUE.
+      IF (res > c_tiny) THEN
+        IF (iy /= (iy / 2) * 2) parity = .TRUE.
         inv = .TRUE.
         fact = -pi / SIN(pi * res)
         y = y + 1.0_num
@@ -197,34 +197,34 @@ CONTAINS
 !----------------------------------------------------------------------
 !  Argument is positive
 !----------------------------------------------------------------------
-    IF (y .LT. eps) THEN
+    IF (y < eps) THEN
 !----------------------------------------------------------------------
-!  Argument .LT. EPS
+!  Argument < EPS
 !----------------------------------------------------------------------
-      IF (y .GE. xminin) THEN
+      IF (y >= xminin) THEN
         res = 1.0_num / y
       ELSE
         gamma_fn = c_largest_number
         RETURN
       ENDIF
-    ELSEIF (y .LT. 12.0_num) THEN
+    ELSEIF (y < 12.0_num) THEN
       y1 = y
-      IF (y .LT. 1.0_num) THEN
+      IF (y < 1.0_num) THEN
 !----------------------------------------------------------------------
-!  0.0 .LT. argument .LT. 1.0
+!  0.0 < argument < 1.0
 !----------------------------------------------------------------------
         z = y
         y = y + 1.0_num
       ELSE
 !----------------------------------------------------------------------
-!  1.0 .LT. argument .LT. 12.0, reduce argument if necessary
+!  1.0 < argument < 12.0, reduce argument if necessary
 !----------------------------------------------------------------------
         n = INT(y) - 1
         y = y - REAL(n, num)
         z = y - 1.0_num
       ENDIF
 !----------------------------------------------------------------------
-!  Evaluate approximation for 1.0 .LT. argument .LT. 2.0
+!  Evaluate approximation for 1.0 < argument < 2.0
 !----------------------------------------------------------------------
       xnum = 0.0_num
       xden = 1.0_num
@@ -233,14 +233,14 @@ CONTAINS
          xden = xden * z + q(i)
       ENDDO
       res = xnum / xden + 1.0_num
-      IF (y1 .LT. y) THEN
+      IF (y1 < y) THEN
 !----------------------------------------------------------------------
-!  Adjust result for case  0.0 .LT. argument .LT. 1.0
+!  Adjust result for case  0.0 < argument < 1.0
 !----------------------------------------------------------------------
         res = res / y1
-      ELSEIF (y1 .GT. y) THEN
+      ELSEIF (y1 > y) THEN
 !----------------------------------------------------------------------
-!  Adjust result for case  2.0 .LT. argument .LT. 12.0
+!  Adjust result for case  2.0 < argument < 12.0
 !----------------------------------------------------------------------
         DO i = 1, n
           res = res * y
@@ -249,9 +249,9 @@ CONTAINS
       ENDIF
     ELSE
 !----------------------------------------------------------------------
-!  Evaluate for argument .GE. 12.0,
+!  Evaluate for argument >= 12.0,
 !----------------------------------------------------------------------
-      IF (y .LE. xbig) THEN
+      IF (y <= xbig) THEN
         ysq = y * y
         sum = c(7)
         DO i = 1, 6
@@ -294,8 +294,8 @@ CONTAINS
 !         X must not be greater than XMAX (see below).
 ! ALPHA - Working precision fractional part of order for which
 !         K's or exponentially scaled K's (K*EXP(X)) are
-!         to be calculated.  0 .LE. ALPHA .LT. 1.0.
-! NB    - Integer number of functions to be calculated, NB .GT. 0.
+!         to be calculated.  0 <= ALPHA < 1.0.
+! NB    - Integer number of functions to be calculated, NB > 0.
 !         The first function calculated is of order ALPHA, and the
 !         last is of order (NB - 1 + ALPHA).
 ! IZE   - Integer type.  IZE = 1 if unscaled K's are to be calculated,
@@ -304,8 +304,8 @@ CONTAINS
 !         routine terminates normally (NCALC=NB), the vector BK
 !         contains the functions K(ALPHA,X), ... , K(NB-1+ALPHA,X),
 !         or the corresponding exponentially scaled functions.
-!         If (0 .LT. NCALC .LT. NB), BK(I) contains correct function
-!         values for I .LE. NCALC, and contains the ratios
+!         If (0 < NCALC < NB), BK(I) contains correct function
+!         values for I <= NCALC, and contains the ratios
 !         K(ALPHA+I-1,X)/K(ALPHA+I-2,X) for the rest of the array.
 ! NCALC - Integer output variable indicating possible errors.
 !         Before using the vector BK, the user should check that
@@ -322,7 +322,7 @@ CONTAINS
 !   minexp = Smallest representable power of beta
 !   maxexp = Smallest power of beta that overflows
 !   EPS    = The smallest positive floating-point number such that
-!            1.0+EPS .GT. 1.0
+!            1.0+EPS > 1.0
 !   XMAX   = Upper limit on the magnitude of X when IZE=1;  Solution
 !            to equation:
 !               W(X) * (1-1/8X+9/128X**2) = beta**minexp
@@ -370,21 +370,21 @@ CONTAINS
 !
 ! Error returns
 !
-!  In case of an error, NCALC .NE. NB, and not all K's are
+!  In case of an error, NCALC /= NB, and not all K's are
 !  calculated to the desired accuracy.
 !
-!  NCALC .LT. -1:  An argument is out of range. For example,
-!       NB .LE. 0, IZE is not 1 or 2, or IZE=1 and ABS(X) .GE.
+!  NCALC < -1:  An argument is out of range. For example,
+!       NB <= 0, IZE is not 1 or 2, or IZE=1 and ABS(X) >=
 !       XMAX.  In this case, the B-vector is not calculated,
-!       and NCALC is set to MIN0(NB,0)-2  so that NCALC .NE. NB.
-!  NCALC = -1:  Either  K(ALPHA,X) .GE. XINF  or
-!       K(ALPHA+NB-1,X)/K(ALPHA+NB-2,X) .GE. XINF.  In this case,
+!       and NCALC is set to MIN0(NB,0)-2  so that NCALC /= NB.
+!  NCALC = -1:  Either  K(ALPHA,X) >= XINF  or
+!       K(ALPHA+NB-1,X)/K(ALPHA+NB-2,X) >= XINF.  In this case,
 !       the B-vector is not calculated.  Note that again
-!       NCALC .NE. NB.
+!       NCALC /= NB.
 !
-!  0 .LT. NCALC .LT. NB: Not all requested function values could
+!  0 < NCALC < NB: Not all requested function values could
 !       be calculated accurately.  BK(I) contains correct function
-!       values for I .LE. NCALC, and contains the ratios
+!       values for I <= NCALC, and contains the ratios
 !       K(ALPHA+I-1,X)/K(ALPHA+I-2,X) for the rest of the array.
 !
 !
@@ -467,13 +467,13 @@ CONTAINS
     ex = x
     enu = alpha
     ncalc = MIN(nb, 0) - 2
-    IF ((nb .GT. 0) .AND. ((enu .GE. 0.0_num) .AND. (enu .LT. 1.0_num)) &
-        .AND. ((ize .GE. 1) .AND. (ize .LE. 2)) &
-        .AND. ((ize .NE. 1) .OR. (ex .LE. c_largest_exp)) &
-        .AND. (ex .GT. 0.0_num)) THEN
+    IF ((nb > 0) .AND. ((enu >= 0.0_num) .AND. (enu < 1.0_num)) &
+        .AND. ((ize >= 1) .AND. (ize <= 2)) &
+        .AND. ((ize /= 1) .OR. (ex <= c_largest_exp)) &
+        .AND. (ex > 0.0_num)) THEN
       k = 0
-      IF (enu .LT. sqxmin) enu = 0.0_num
-      IF (enu .GT. 0.5_num) THEN
+      IF (enu < sqxmin) enu = 0.0_num
+      IF (enu > 0.5_num) THEN
         k = 1
         enu = enu - 1.0_num
       ENDIF
@@ -481,7 +481,7 @@ CONTAINS
       iend = nb + k - 1
       c = enu * enu
       d3 = -c
-      IF (ex .LE. 1.0_num) THEN
+      IF (ex <= 1.0_num) THEN
 !---------------------------------------------------------------------
 !  Calculation of P0 = GAMMA(1+ALPHA) * (2/X)**ALPHA
 !                 Q0 = GAMMA(1-ALPHA) * (X/2)**ALPHA
@@ -512,7 +512,7 @@ CONTAINS
           d1 = c * d1 + r(i)
           t1 = c * t1 + s(i)
         ENDDO
-        IF (ABS(f1) .LE. 0.5_num) THEN
+        IF (ABS(f1) <= 0.5_num) THEN
           f1 = f1 * f1
           d2 = 0.0_num
           DO i = 1, 6
@@ -523,22 +523,22 @@ CONTAINS
           d2 = SINH(f1) / enu
         ENDIF
         f0 = d2 - enu * d1 / (t1 * p0)
-        IF (ex .LE. tinyx) THEN
+        IF (ex <= tinyx) THEN
 !--------------------------------------------------------------------
-!  X.LE.1.0E-10
+!  X<=1.0E-10
 !  Calculation of K(ALPHA,X) and X*K(ALPHA+1,X)/K(ALPHA,X)
 !--------------------------------------------------------------------
           bk(1) = f0 + ex * f0
-          IF (ize .EQ. 1) bk(1) = bk(1) - ex * bk(1)
+          IF (ize == 1) bk(1) = bk(1) - ex * bk(1)
           ratio = p0 / f0
           c = ex * c_largest_number
-          IF (i .NE. 0) THEN
+          IF (i /= 0) THEN
 !--------------------------------------------------------------------
 !  Calculation of K(ALPHA,X) and X*K(ALPHA+1,X)/K(ALPHA,X),
-!  ALPHA .GE. 1/2
+!  ALPHA >= 1/2
 !--------------------------------------------------------------------
             ncalc = -1
-            IF (bk(1) .GE. c / ratio) THEN
+            IF (bk(1) >= c / ratio) THEN
               rkbesl = bk(nb)
               RETURN
             ENDIF
@@ -547,7 +547,7 @@ CONTAINS
             ratio = twonu
           ENDIF
           ncalc = 1
-          IF (nb .EQ. 1) THEN
+          IF (nb == 1) THEN
             rkbesl = bk(nb)
             RETURN
           ENDIF
@@ -556,7 +556,7 @@ CONTAINS
 !--------------------------------------------------------------------
           ncalc = -1
           DO i = 2, nb
-            IF (ratio .GE. c)  THEN
+            IF (ratio >= c)  THEN
               rkbesl = bk(nb)
               RETURN
             ENDIF
@@ -566,7 +566,7 @@ CONTAINS
           ENDDO
           ncalc = 1
           DO i = 2, nb
-            IF (bk(ncalc) .GE. c_largest_number / bk(i)) THEN
+            IF (bk(ncalc) >= c_largest_number / bk(i)) THEN
               rkbesl = bk(nb)
               RETURN
             ENDIF
@@ -577,7 +577,7 @@ CONTAINS
           RETURN
         ELSE
 !--------------------------------------------------------------------
-!  1.0E-10 .LT. X .LE. 1.0
+!  1.0E-10 < X <= 1.0
 !--------------------------------------------------------------------
           c = 1.0_num
           x2by4 = ex * ex / 4.0_num
@@ -602,21 +602,21 @@ CONTAINS
             t2 = c * (p0 - d2 * f0)
             bk1 = bk1 + t1
             bk2 = bk2 + t2
-            run = (ABS(t1 / (f1 + bk1)) .GT. eps) .OR. &
-                (ABS(t2 / (f2 + bk2)) .GT. eps)
+            run = (ABS(t1 / (f1 + bk1)) > eps) .OR. &
+                (ABS(t2 / (f2 + bk2)) > eps)
           ENDDO
           bk1 = f1 + bk1
           bk2 = 2.0_num * (f2 + bk2) / ex
-          IF (ize .EQ. 2) THEN
+          IF (ize == 2) THEN
             d1 = EXP(ex)
             bk1 = bk1 * d1
             bk2 = bk2 * d1
           ENDIF
           wminf = estf(1) * ex + estf(2)
         ENDIF
-      ELSEIF (eps * ex .GT. 1.0_num) THEN
+      ELSEIF (eps * ex > 1.0_num) THEN
 !--------------------------------------------------------------------
-!  X .GT. 1/EPS
+!  X > 1/EPS
 !--------------------------------------------------------------------
         ncalc = nb
         bk1 = 1.0_num / (d * SQRT(ex))
@@ -627,14 +627,14 @@ CONTAINS
         RETURN
       ELSE
 !--------------------------------------------------------------------
-!  X .GT. 1.0
+!  X > 1.0
 !--------------------------------------------------------------------
         twox = ex + ex
         blpha = 0.0_num
         ratio = 0.0_num
-        IF (ex .LE. 4.0_num) THEN
+        IF (ex <= 4.0_num) THEN
 !--------------------------------------------------------------------
-!  Calculation of K(ALPHA+1,X)/K(ALPHA,X),  1.0 .LE. X .LE. 4.0
+!  Calculation of K(ALPHA+1,X)/K(ALPHA,X),  1.0 <= X <= 4.0
 !--------------------------------------------------------------------
           d2 = AINT(estm(1) / ex + estm(2))
           m = INT(d2)
@@ -676,12 +676,12 @@ CONTAINS
           p0 = EXP(c * (a + c * (p(8) - c * d1 / t1) - log(ex))) / ex
           f2 = (c + 0.5_num - ratio) * f1 / ex
           bk1 = p0 + (d3 * f0 - f2 + f0 + blpha) / (f2 + f1 + f0) * p0
-          IF (ize .EQ. 1) bk1 = bk1 * EXP(-ex)
+          IF (ize == 1) bk1 = bk1 * EXP(-ex)
           wminf = estf(3) * ex + estf(4)
         ELSE
 !--------------------------------------------------------------------
 !  Calculation of K(ALPHA,X) and K(ALPHA+1,X)/K(ALPHA,X), by backward
-!  recurrence, for  X .GT. 4.0
+!  recurrence, for  X > 4.0
 !--------------------------------------------------------------------
           dm = AINT(estm(5) / ex + estm(6))
           m = INT(dm)
@@ -696,7 +696,7 @@ CONTAINS
             blpha = (ratio + ratio * blpha) / dm
           ENDDO
           bk1 = 1.0_num / ((d + d * blpha) * SQRT(ex))
-          IF (ize .EQ. 1) bk1 = bk1 * EXP(-ex)
+          IF (ize == 1) bk1 = bk1 * EXP(-ex)
           wminf = estf(5) * (ex - ABS(ex - estf(7))) + estf(6)
         ENDIF
 !--------------------------------------------------------------------
@@ -711,13 +711,13 @@ CONTAINS
 !--------------------------------------------------------------------
       ncalc = nb
       bk(1) = bk1
-      IF (iend .EQ. 0) THEN
+      IF (iend == 0) THEN
         rkbesl = bk(nb)
         RETURN
       ENDIF
       j = 2 - k
-      IF (j .GT. 0) bk(j) = bk2
-      IF (iend .EQ. 1) THEN
+      IF (j > 0) bk(j) = bk2
+      IF (iend == 1) THEN
         rkbesl = bk(nb)
         RETURN
       ENDIF
@@ -728,14 +728,14 @@ CONTAINS
         bk1 = bk2
         twonu = twonu + 2.0_num
         IF (bk1 / MIN(1.0_num, ex) &
-            .GE. (c_largest_number / twonu) * MIN(1.0_num, ex)) EXIT
+            >= (c_largest_number / twonu) * MIN(1.0_num, ex)) EXIT
         bk2 = twonu / ex * bk1 + t1
         itemp = i
         j = j + 1
-        IF (j .GT. 0) bk(j) = bk2
+        IF (j > 0) bk(j) = bk2
       ENDDO
       m = itemp
-      IF (m .EQ. iend) THEN
+      IF (m == iend) THEN
         rkbesl = bk(nb)
         RETURN
       ENDIF
@@ -746,10 +746,10 @@ CONTAINS
         twonu = twonu + 2.0_num
         ratio = twonu / ex + 1.0_num / ratio
         j = j + 1
-        IF (j .GT. 1) THEN
+        IF (j > 1) THEN
           bk(j) = ratio
         ELSE
-          IF (bk2 .GE. c_largest_number / ratio) THEN
+          IF (bk2 >= c_largest_number / ratio) THEN
             rkbesl = bk(nb)
             RETURN
           ENDIF
@@ -757,14 +757,14 @@ CONTAINS
         ENDIF
       ENDDO
       ncalc = MAX(mplus1 - k, 1)
-      IF (ncalc .EQ. 1) bk(1) = bk2
-      IF (nb .EQ. 1) THEN
+      IF (ncalc == 1) bk(1) = bk2
+      IF (nb == 1) THEN
         rkbesl = bk(nb)
         RETURN
       ENDIF
       j = ncalc + 1
       DO i = j, nb
-        IF (bk(ncalc) .GE. c_largest_number / bk(i)) THEN
+        IF (bk(ncalc) >= c_largest_number / bk(i)) THEN
           rkbesl = bk(nb)
           RETURN
         ENDIF

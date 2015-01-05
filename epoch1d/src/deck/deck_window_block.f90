@@ -27,7 +27,7 @@ CONTAINS
 
   SUBROUTINE window_block_start
 
-    IF (deck_state .NE. c_ds_first) RETURN
+    IF (deck_state /= c_ds_first) RETURN
 
     bc_x_min_after_move = bc_field(c_bd_x_min)
     bc_x_max_after_move = bc_field(c_bd_x_max)
@@ -48,8 +48,8 @@ CONTAINS
     INTEGER :: errcode
 
     errcode = c_err_none
-    IF (deck_state .NE. c_ds_first) RETURN
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (deck_state /= c_ds_first) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'move_window')) THEN
       move_window = as_logical_print(value, element, errcode)

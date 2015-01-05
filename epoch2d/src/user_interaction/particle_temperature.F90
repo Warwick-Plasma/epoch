@@ -26,7 +26,7 @@ CONTAINS
     partlist => part_species%attached_list
     current => partlist%head
     ipart = 0
-    DO WHILE(ipart .LT. partlist%count)
+    DO WHILE(ipart < partlist%count)
 #ifdef PER_PARTICLE_CHARGE_MASS
       mass = current%mass
 #else
@@ -47,13 +47,13 @@ CONTAINS
         ENDDO
       ENDDO
 
-      IF (direction .EQ. c_dir_x) current%part_p(1) = &
+      IF (direction == c_dir_x) current%part_p(1) = &
           momentum_from_temperature(mass, temp_local, drift_local)
 
-      IF (direction .EQ. c_dir_y) current%part_p(2) = &
+      IF (direction == c_dir_y) current%part_p(2) = &
           momentum_from_temperature(mass, temp_local, drift_local)
 
-      IF (direction .EQ. c_dir_z) current%part_p(3) = &
+      IF (direction == c_dir_z) current%part_p(3) = &
           momentum_from_temperature(mass, temp_local, drift_local)
 
       current => current%next
@@ -94,7 +94,7 @@ CONTAINS
 
       w = rand1**2 + rand2**2
 
-      IF (w .LE. c_tiny .OR. w .GE. 1.0_num) THEN
+      IF (w <= c_tiny .OR. w >= 1.0_num) THEN
         DO
           rand1 = rand2
           rand2 = random()
@@ -102,7 +102,7 @@ CONTAINS
 
           w = rand1**2 + rand2**2
 
-          IF (w .GT. c_tiny .AND. w .LT. 1.0_num) EXIT
+          IF (w > c_tiny .AND. w < 1.0_num) EXIT
         ENDDO
       ENDIF
 

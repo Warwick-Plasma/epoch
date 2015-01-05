@@ -20,7 +20,7 @@ CONTAINS
     INTEGER :: old_size, new_size, i
 
     old_size = SIZE(array)
-    IF (idx .LE. old_size) RETURN
+    IF (idx <= old_size) RETURN
 
     ALLOCATE(tmp_array(old_size))
     DO i = 1, old_size
@@ -49,7 +49,7 @@ CONTAINS
     INTEGER :: old_size, new_size, i
 
     old_size = SIZE(array)
-    IF (idx .LE. old_size) RETURN
+    IF (idx <= old_size) RETURN
 
     ALLOCATE(tmp_array(old_size))
     DO i = 1, old_size
@@ -78,7 +78,7 @@ CONTAINS
     INTEGER :: old_size, new_size, i
 
     old_size = SIZE(array)
-    IF (idx .LE. old_size) RETURN
+    IF (idx <= old_size) RETURN
 
     ALLOCATE(tmp_array(old_size))
     DO i = 1, old_size

@@ -20,7 +20,7 @@ CONTAINS
 
   SUBROUTINE welcome_message
 
-    IF (rank .NE. 0) RETURN
+    IF (rank /= 0) RETURN
 
     WRITE(*,*)
     WRITE(*,*)
@@ -168,7 +168,7 @@ CONTAINS
 
     ! Version
     DO i = strmin, MIN(strmax,strlen)
-      IF (c_commit_id(i:i) .EQ. '.') THEN
+      IF (c_commit_id(i:i) == '.') THEN
         str = c_commit_id(strmin:i-1)
         READ(str, '(i9)') c_version
         strmin = i + 1
@@ -179,7 +179,7 @@ CONTAINS
 
     ! Revision
     DO i = strmin, MIN(strmax,strlen)
-      IF (c_commit_id(i:i) .EQ. '.') THEN
+      IF (c_commit_id(i:i) == '.') THEN
         str = c_commit_id(strmin:i-1)
         READ(str, '(i9)') c_revision
         strmin = i + 1
@@ -190,7 +190,7 @@ CONTAINS
 
     ! Minor revision
     DO i = strmin, MIN(strmax,strlen)
-      IF (c_commit_id(i:i) .EQ. '-') THEN
+      IF (c_commit_id(i:i) == '-') THEN
         str = c_commit_id(strmin:i-1)
         READ(str, '(i9)') c_minor_rev
         strmax = i - 1
@@ -217,7 +217,7 @@ CONTAINS
     INTEGER :: n_nums
     CHARACTER(LEN=9) :: numfmt
 
-    IF (int_in .EQ. 0) THEN
+    IF (int_in == 0) THEN
       n_nums = 1
     ELSE
       n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))

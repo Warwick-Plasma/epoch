@@ -78,7 +78,7 @@ CONTAINS
     partlist%safe = .FALSE.
     current => a_particle
     ipart = 1
-    DO WHILE (ASSOCIATED(current) .AND. ipart .LT. n_elements)
+    DO WHILE (ASSOCIATED(current) .AND. ipart < n_elements)
       ipart = ipart+1
       current => current%next
     ENDDO
@@ -208,7 +208,7 @@ CONTAINS
       ENDIF
     ENDDO
 
-    IF (test_ct .NE. partlist%count) test_partlist = IOR(test_partlist, 4)
+    IF (test_ct /= partlist%count) test_partlist = IOR(test_partlist, 4)
 
   END FUNCTION test_partlist
 
@@ -223,7 +223,7 @@ CONTAINS
     ! Go through list and delete all the particles in the list
     new_particle => partlist%head
     ipart = 0
-    DO WHILE (ipart .LT. partlist%count)
+    DO WHILE (ipart < partlist%count)
       next => new_particle%next
       DEALLOCATE(new_particle)
       new_particle => next
@@ -254,7 +254,7 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: head, tail
 
     IF (.NOT. head%safe .OR. .NOT. tail%safe) THEN
-      IF (rank .EQ. 0) &
+      IF (rank == 0) &
           PRINT *, 'Unable to append partlists because one is not safe'
       RETURN
     ENDIF
@@ -483,20 +483,20 @@ CONTAINS
     LOGICAL :: compare_particles
 
     compare_particles = .TRUE.
-    IF (ABS(part1%part_pos-part2%part_pos) .GT. c_tiny) &
+    IF (ABS(part1%part_pos-part2%part_pos) > c_tiny) &
         compare_particles = .FALSE.
-    IF (MAXVAL(ABS(part1%part_p - part2%part_p)) .GT. c_tiny) &
+    IF (MAXVAL(ABS(part1%part_p - part2%part_p)) > c_tiny) &
         compare_particles = .FALSE.
 
 #ifdef PER_PARTICLE_WEIGHT
-    IF (ABS(part1%weight - part2%weight) .GT. c_tiny) &
+    IF (ABS(part1%weight - part2%weight) > c_tiny) &
         compare_particles = .FALSE.
 #endif
 
 #ifdef PER_PARTICLE_CHARGE_MASS
-    IF (ABS(part1%charge - part2%charge) .GT. c_tiny) &
+    IF (ABS(part1%charge - part2%charge) > c_tiny) &
         compare_particles = .FALSE.
-    IF (ABS(part1%mass - part2%mass) .GT. c_tiny) &
+    IF (ABS(part1%mass - part2%mass) > c_tiny) &
         compare_particles = .FALSE.
 #endif
 
@@ -521,12 +521,12 @@ CONTAINS
 
     test_packed_particles = .FALSE.
 
-    IF (npart_in_data * nvar .NE. SIZE(array)) THEN
+    IF (npart_in_data * nvar /= SIZE(array)) THEN
       PRINT *, 'Size of data array does not match specified on', rank, &
           npart_in_data, SIZE(array)
       RETURN
     ENDIF
-    IF (partlist%count .NE. npart_in_data) THEN
+    IF (partlist%count /= npart_in_data) THEN
       PRINT *, 'Size of data array does not match partlist on', rank
       RETURN
     ENDIF
@@ -566,7 +566,7 @@ CONTAINS
     current => partlist%head
     ipart = 0
     cpos = 0
-    DO WHILE (ipart .LT. partlist%count)
+    DO WHILE (ipart < partlist%count)
       cpos = ipart * nvar + 1
       CALL pack_particle(array(cpos:cpos+nvar-1), current)
       ipart = ipart + 1
@@ -672,7 +672,7 @@ CONTAINS
     ! Pack particles to send into buffer
     current => partlist_send%head
     ipart = 0
-    DO WHILE (ipart .LT. partlist_send%count)
+    DO WHILE (ipart < partlist_send%count)
       cpos = ipart*nvar+1
       CALL pack_particle(data_temp, current)
       data_send(cpos:cpos+nvar-1) = data_temp
@@ -730,7 +730,7 @@ CONTAINS
     CALL MPI_ALLREDUCE(id_update, partlist%id_update, 1, MPI_INTEGER, &
         MPI_MAX, comm, errcode)
 
-    IF (partlist%id_update .EQ. 0) RETURN
+    IF (partlist%id_update == 0) RETURN
 
     ALLOCATE(idlist%head)
     idlist%tail => idlist%head
@@ -742,7 +742,7 @@ CONTAINS
     nid = 0
     current => partlist%head
     DO WHILE(ASSOCIATED(current))
-      IF (current%id .EQ. 0) THEN
+      IF (current%id == 0) THEN
         nid = nid + 1
         CALL add_particle_to_list(current, idlist)
       ENDIF

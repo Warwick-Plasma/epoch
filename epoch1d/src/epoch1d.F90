@@ -62,9 +62,9 @@ PROGRAM pic
   CALL welcome_message  ! welcome.f90
   CALL register_objects ! custom.f90
 
-  IF (rank .EQ. 0) THEN
+  IF (rank == 0) THEN
     OPEN(unit=lu, status='OLD', file=TRIM(data_dir_file), iostat=ierr)
-    IF (ierr .EQ. 0) THEN
+    IF (ierr == 0) THEN
       READ(lu,'(A)') data_dir
       CLOSE(lu)
       PRINT*, 'Using data directory "' // TRIM(data_dir) // '"'
@@ -107,7 +107,7 @@ PROGRAM pic
   ENDDO
 
   ! .TRUE. to over_ride balance fraction check
-  IF (npart_global .GT. 0) CALL balance_workload(.TRUE.)
+  IF (npart_global > 0) CALL balance_workload(.TRUE.)
 
   CALL particle_bcs
   CALL efield_bcs
@@ -123,7 +123,7 @@ PROGRAM pic
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
 
-  IF (rank .EQ. 0) PRINT *, 'Equilibrium set up OK, running code'
+  IF (rank == 0) PRINT *, 'Equilibrium set up OK, running code'
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
@@ -135,16 +135,16 @@ PROGRAM pic
   IF (timer_collect) CALL timer_start(c_timer_step)
 
   DO
-    IF ((step .GE. nsteps .AND. nsteps .GE. 0) &
-        .OR. (time .GE. t_end) .OR. halt) EXIT
+    IF ((step >= nsteps .AND. nsteps >= 0) &
+        .OR. (time >= t_end) .OR. halt) EXIT
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
       timer_first(c_timer_step) = timer_walltime
     ENDIF
-    push = (time .GE. particle_push_start_time)
+    push = (time >= particle_push_start_time)
 #ifdef PHOTONS
-    IF (push .AND. use_qed .AND. time .GT. qed_start_time) THEN
+    IF (push .AND. use_qed .AND. time > qed_start_time) THEN
       CALL qed_update_optical_depth()
     ENDIF
 #endif
@@ -201,7 +201,7 @@ PROGRAM pic
 #endif
   ENDDO
 
-  IF (rank .EQ. 0) runtime = MPI_WTIME() - walltime_start
+  IF (rank == 0) runtime = MPI_WTIME() - walltime_start
 
 #ifdef PHOTONS
   IF (use_qed) CALL shutdown_qed_module()
@@ -209,7 +209,7 @@ PROGRAM pic
 
   CALL output_routines(step, force_dump)
 
-  IF (rank .EQ. 0) THEN
+  IF (rank == 0) THEN
     CALL create_full_timestring(runtime, timestring)
     WRITE(*,*) 'Final runtime of core = ' // TRIM(timestring)
   ENDIF

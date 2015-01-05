@@ -26,7 +26,7 @@ CONTAINS
     ALLOCATE(drift(-2:ny+3,-2:nz+3, 1:3))
     window_started = .FALSE.
 #else
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
@@ -164,8 +164,8 @@ CONTAINS
     ! Only processors on the right need do anything
     IF (.NOT.x_max_boundary) RETURN
 
-    IF (nproc .GT. 1) THEN
-      IF (SIZE(density,1) .NE. ny+6 .OR. SIZE(density,2) .NE. nz+6) THEN
+    IF (nproc > 1) THEN
+      IF (SIZE(density,1) /= ny+6 .OR. SIZE(density,2) /= nz+6) THEN
         DEALLOCATE(density, temperature, drift)
         ALLOCATE(density(-2:ny+3,-2:nz+3))
         ALLOCATE(temperature(-2:ny+3,-2:nz+3, 1:3))
@@ -179,7 +179,7 @@ CONTAINS
       CALL create_empty_partlist(append_list)
       npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
-      IF (npart_frac .GT. 0) THEN
+      IF (npart_frac > 0) THEN
         n0 = 0
       ELSE
         n0 = 1
@@ -201,19 +201,19 @@ CONTAINS
         DO iy = -2, ny+3
           density(iy,iz) = evaluate_at_point( &
               species_list(ispecies)%density_function, nx, iy, iz, errcode)
-          IF (density(iy,iz) .GT. initial_conditions(ispecies)%density_max) &
+          IF (density(iy,iz) > initial_conditions(ispecies)%density_max) &
               density(iy,iz) = initial_conditions(ispecies)%density_max
         ENDDO
       ENDDO
 
       DO iz = 1, nz
         DO iy = 1, ny
-          IF (density(iy,iz) .LT. initial_conditions(ispecies)%density_min) &
+          IF (density(iy,iz) < initial_conditions(ispecies)%density_min) &
               CYCLE
           DO ipart = n0, npart_per_cell
             ! Place extra particle based on probability
-            IF (ipart .EQ. 0) THEN
-              IF (npart_frac .LT. random()) CYCLE
+            IF (ipart == 0) THEN
+              IF (npart_frac < random()) CYCLE
             ENDIF
             ALLOCATE(current)
             CALL init_particle(current)
@@ -294,7 +294,7 @@ CONTAINS
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           next => current%next
-          IF (current%part_pos(1) .LT. x_min) THEN
+          IF (current%part_pos(1) < x_min) THEN
             CALL remove_particle_from_partlist(&
                 species_list(ispecies)%attached_list, current)
             DEALLOCATE(current)
@@ -322,7 +322,7 @@ CONTAINS
 
 #ifdef PER_PARTICLE_WEIGHT
     IF (.NOT. window_started) THEN
-      IF (time .GE. window_start_time) THEN
+      IF (time >= window_start_time) THEN
         bc_field(c_bd_x_min) = bc_x_min_after_move
         bc_field(c_bd_x_max) = bc_x_max_after_move
         CALL setup_particle_boundaries
@@ -336,7 +336,7 @@ CONTAINS
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
       ! Allow for posibility of having jumped two cells at once
-      IF (window_shift_cells .GT. 0) THEN
+      IF (window_shift_cells > 0) THEN
         window_shift_real = REAL(window_shift_cells, num)
         IF (use_offset_grid) THEN
           window_shift(1) = window_shift(1) + window_shift_real * dx
@@ -347,7 +347,7 @@ CONTAINS
       ENDIF
     ENDIF
 #else
-    IF (rank .EQ. 0) THEN
+    IF (rank == 0) THEN
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF

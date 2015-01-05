@@ -14,7 +14,7 @@ CONTAINS
   SUBROUTINE qed_deck_initialise
 
 #ifdef PHOTONS
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       qed_table_location = 'src/physics_packages/TABLES'
       use_radiation_reaction = .TRUE.
     ENDIF
@@ -30,9 +30,9 @@ CONTAINS
 #ifdef PHOTONS
     LOGICAL :: exists
 
-    IF (deck_state .EQ. c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
 
-    IF (rank .EQ. 0 .AND. use_qed) THEN
+    IF (rank == 0 .AND. use_qed) THEN
       INQUIRE(file=TRIM(qed_table_location)//'/hsokolov.table', exist=exists)
       IF (.NOT.exists) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -48,7 +48,7 @@ CONTAINS
     IF (use_qed) need_random_state = .TRUE.
 #else
     IF (use_qed) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
@@ -82,8 +82,8 @@ CONTAINS
     INTEGER :: errcode
 
     errcode = c_err_none
-    IF (deck_state .EQ. c_ds_first) RETURN
-    IF (element .EQ. blank .OR. value .EQ. blank) RETURN
+    IF (deck_state == c_ds_first) RETURN
+    IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'use_qed') .OR. str_cmp(element, 'qed')) THEN
       use_qed = as_logical_print(value, element, errcode)
@@ -145,7 +145,7 @@ CONTAINS
 
 #ifdef PHOTONS
     IF (produce_pairs .AND. .NOT. photon_dynamics) THEN
-      IF (rank .EQ. 0) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)

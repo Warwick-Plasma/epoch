@@ -25,9 +25,9 @@ CONTAINS
     REAL(num) :: dc
 
     IF (.NOT.print_deck_constants) RETURN
-    IF (rank .NE. 0) RETURN
+    IF (rank /= 0) RETURN
 
-    IF (deck_state .EQ. c_ds_first) THEN
+    IF (deck_state == c_ds_first) THEN
       WRITE(du,*) "Constant block values after first pass:"
     ELSE
       WRITE(du,*) "Constant block values after second pass:"
@@ -68,7 +68,7 @@ CONTAINS
 
     errcode = c_err_none
 
-    IF (value .EQ. blank) RETURN
+    IF (value == blank) RETURN
 
     ! First check whether constant already exists
     DO ix = 1, n_deck_constants
@@ -79,9 +79,9 @@ CONTAINS
 
     ! First issue a warning message if the name overrides a built-in one
     CALL load_block(element, block)
-    IF (block%ptype .NE. c_pt_bad .AND. block%ptype .NE. c_pt_null &
-        .AND. block%ptype .NE. c_pt_default_constant) THEN
-      IF (rank .EQ. 0) THEN
+    IF (block%ptype /= c_pt_bad .AND. block%ptype /= c_pt_null &
+        .AND. block%ptype /= c_pt_default_constant) THEN
+      IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
@@ -96,13 +96,13 @@ CONTAINS
 
     CALL initialise_stack(temp)
     CALL tokenize(value, temp, errcode)
-    IF (errcode .NE. c_err_none) THEN
+    IF (errcode /= c_err_none) THEN
       CALL deallocate_stack(temp)
       RETURN
     ENDIF
 
     ! Take a copy of the old list
-    IF (n_deck_constants .GT. 0) THEN
+    IF (n_deck_constants > 0) THEN
       ALLOCATE(buffer(1:n_deck_constants))
       buffer = deck_constant_list
 

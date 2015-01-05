@@ -31,8 +31,8 @@ CONTAINS
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. npoint_it))
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count < npoint_it))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
         part_count = part_count + 1
         array(part_count) = cur%part_pos(direction) - window_shift(direction)
         cur => cur%next
@@ -72,11 +72,11 @@ CONTAINS
     part_mc2 = part_mc**2
     part_mcc = part_m * c**2
 
-    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. npoint_it))
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count < npoint_it))
       SELECT CASE (param)
 #ifdef PER_PARTICLE_WEIGHT
       CASE (c_dump_part_weight) ! particle weight
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%weight
           cur => cur%next
@@ -85,7 +85,7 @@ CONTAINS
 
       CASE (c_dump_part_px)
         ndim = 1
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%part_p(ndim)
           cur => cur%next
@@ -93,7 +93,7 @@ CONTAINS
 
       CASE (c_dump_part_py)
         ndim = 2
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%part_p(ndim)
           cur => cur%next
@@ -101,7 +101,7 @@ CONTAINS
 
       CASE (c_dump_part_pz)
         ndim = 3
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%part_p(ndim)
           cur => cur%next
@@ -110,9 +110,9 @@ CONTAINS
       CASE (c_dump_part_vx)
         ndim = 1
 #ifdef PHOTONS
-        IF (current_species%species_type .NE. c_species_id_photon) THEN
+        IF (current_species%species_type /= c_species_id_photon) THEN
 #endif
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
             part_mc2 = (cur%mass * c)**2
@@ -123,7 +123,7 @@ CONTAINS
           ENDDO
 #ifdef PHOTONS
         ELSE
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
             array(part_count) = cur%part_p(ndim) * csqr / cur%particle_energy
             cur => cur%next
@@ -134,9 +134,9 @@ CONTAINS
       CASE (c_dump_part_vy)
         ndim = 2
 #ifdef PHOTONS
-        IF (current_species%species_type .NE. c_species_id_photon) THEN
+        IF (current_species%species_type /= c_species_id_photon) THEN
 #endif
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
             part_mc2 = (cur%mass * c)**2
@@ -147,7 +147,7 @@ CONTAINS
           ENDDO
 #ifdef PHOTONS
         ELSE
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
             array(part_count) = cur%part_p(ndim) * csqr / cur%particle_energy
             cur => cur%next
@@ -158,9 +158,9 @@ CONTAINS
       CASE (c_dump_part_vz)
         ndim = 3
 #ifdef PHOTONS
-        IF (current_species%species_type .NE. c_species_id_photon) THEN
+        IF (current_species%species_type /= c_species_id_photon) THEN
 #endif
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
             part_mc2 = (cur%mass * c)**2
@@ -171,7 +171,7 @@ CONTAINS
           ENDDO
 #ifdef PHOTONS
         ELSE
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
             array(part_count) = cur%part_p(ndim) * csqr / cur%particle_energy
             cur => cur%next
@@ -180,7 +180,7 @@ CONTAINS
 #endif
 
       CASE (c_dump_part_charge)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
           array(part_count) = cur%charge
@@ -191,7 +191,7 @@ CONTAINS
         ENDDO
 
       CASE (c_dump_part_mass)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
           array(part_count) = cur%mass
@@ -202,8 +202,8 @@ CONTAINS
         ENDDO
 
       CASE (c_dump_part_ek)
-        IF (current_species%species_type .NE. c_species_id_photon) THEN
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        IF (current_species%species_type /= c_species_id_photon) THEN
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
             part_m   = cur%mass
@@ -216,7 +216,7 @@ CONTAINS
           ENDDO
 #ifdef PHOTONS
         ELSE
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
             array(part_count) = cur%particle_energy
             cur => cur%next
@@ -225,7 +225,7 @@ CONTAINS
         ENDIF
 
       CASE (c_dump_part_gamma)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = cur%mass * c
@@ -235,7 +235,7 @@ CONTAINS
         ENDDO
 
       CASE (c_dump_part_rel_mass)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
           part_m  = cur%mass
@@ -248,14 +248,14 @@ CONTAINS
 
 #ifdef PHOTONS
       CASE (c_dump_part_opdepth)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%optical_depth
           cur => cur%next
         ENDDO
 
       CASE (c_dump_part_qed_energy)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%particle_energy
           cur => cur%next
@@ -263,7 +263,7 @@ CONTAINS
 
 #ifdef TRIDENT_PHOTONS
       CASE (c_dump_part_opdepth_tri)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%optical_depth_tri
           cur => cur%next
@@ -297,35 +297,35 @@ CONTAINS
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
 #if defined(PARTICLE_ID4)
-      IF (param .EQ. c_dump_part_id) THEN
+      IF (param == c_dump_part_id) THEN
         CALL generate_particle_ids(current_list)
       ENDIF
 #endif
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. npoint_it))
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count < npoint_it))
       SELECT CASE (param)
 #ifdef PARTICLE_DEBUG
       CASE (c_dump_part_proc)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%processor
-          IF (cur%processor .GE. nproc) PRINT *, 'Bad Processor'
+          IF (cur%processor >= nproc) PRINT *, 'Bad Processor'
           cur => cur%next
         ENDDO
 
       CASE (c_dump_part_proc0)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%processor_at_t0
-          IF (cur%processor .GE. nproc) PRINT *, 'Bad Processor'
+          IF (cur%processor >= nproc) PRINT *, 'Bad Processor'
           cur => cur%next
         ENDDO
 #endif
 #if defined(PARTICLE_ID4)
       CASE (c_dump_part_id)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%id
           cur => cur%next
@@ -336,7 +336,7 @@ CONTAINS
       IF (.NOT. ASSOCIATED(cur)) THEN
         CALL advance_particle_list(current_list, cur)
 #if defined(PARTICLE_ID4)
-        IF (param .EQ. c_dump_part_id .AND. ASSOCIATED(current_list)) THEN
+        IF (param == c_dump_part_id .AND. ASSOCIATED(current_list)) THEN
           CALL generate_particle_ids(current_list)
         ENDIF
 #endif
@@ -369,8 +369,8 @@ CONTAINS
     ENDIF
 
     part_count = 0
-    DO WHILE (ASSOCIATED(current_list) .AND. (part_count .LT. npoint_it))
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count .LT. npoint_it))
+    DO WHILE (ASSOCIATED(current_list) .AND. (part_count < npoint_it))
+      DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
         part_count = part_count + 1
         array(part_count) = cur%id
         cur => cur%next

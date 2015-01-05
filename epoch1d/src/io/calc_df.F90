@@ -12,14 +12,14 @@ CONTAINS
 
     CALL processor_summation_bcs(data_array, ng)
 
-    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) .NE. c_bc_periodic &
-        .AND. bc_particle(c_bd_x_min) .NE. c_bc_reflect) THEN
+    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) /= c_bc_periodic &
+        .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
       data_array(1) = data_array(1) + data_array( 0)
       data_array(2) = data_array(2) + data_array(-1)
       data_array(3) = data_array(3) + data_array(-2)
     ENDIF
-    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) .NE. c_bc_periodic &
-        .AND. bc_particle(c_bd_x_max) .NE. c_bc_reflect) THEN
+    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) /= c_bc_periodic &
+        .AND. bc_particle(c_bd_x_max) /= c_bc_reflect) THEN
       data_array(nx-2) = data_array(nx-2) + data_array(nx+3)
       data_array(nx-1) = data_array(nx-1) + data_array(nx+2)
       data_array(nx  ) = data_array(nx  ) + data_array(nx+1)
@@ -53,14 +53,14 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type .EQ. c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifdef TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -132,7 +132,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -162,7 +162,7 @@ CONTAINS
 #endif
 #endif
 
-        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+        IF (io_list(ispecies)%species_type /= c_species_id_photon) THEN
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
@@ -232,7 +232,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -262,7 +262,7 @@ CONTAINS
 #endif
 #endif
 
-        IF (io_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+        IF (io_list(ispecies)%species_type /= c_species_id_photon) THEN
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
@@ -396,14 +396,14 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type .EQ. c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifdef TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -468,7 +468,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -526,7 +526,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -655,7 +655,7 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
@@ -711,14 +711,14 @@ CONTAINS
     spec_end = current_species
     spec_sum = .FALSE.
 
-    IF (current_species .LE. 0) THEN
+    IF (current_species <= 0) THEN
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type .EQ. c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifdef TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -847,7 +847,7 @@ CONTAINS
 #endif
 #endif
 
-        IF (species_list(ispecies)%species_type .NE. c_species_id_photon) THEN
+        IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc

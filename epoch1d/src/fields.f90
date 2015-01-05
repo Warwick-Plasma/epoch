@@ -18,9 +18,9 @@ CONTAINS
     field_order = order
     fng = field_order / 2
 
-    IF (field_order .EQ. 2) THEN
+    IF (field_order == 2) THEN
       cfl = 1.0_num
-    ELSE IF (field_order .EQ. 4) THEN
+    ELSE IF (field_order == 4) THEN
       cfl = 6.0_num / 7.0_num
     ELSE
       cfl = 120.0_num / 149.0_num
@@ -40,7 +40,7 @@ CONTAINS
     IF (cpml_boundaries) THEN
       cpml_x = cnx
 
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO ix = 1, nx
           cpml_x = cnx / cpml_kappa_ex(ix)
 
@@ -55,7 +55,7 @@ CONTAINS
               + cpml_x * (by(ix  ) - by(ix-1)) &
               - fac * jz(ix)
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -107,7 +107,7 @@ CONTAINS
 
       CALL cpml_advance_e_currents(hdt)
     ELSE
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO ix = 1, nx
           ex(ix) = ex(ix) &
               - fac * jx(ix)
@@ -120,7 +120,7 @@ CONTAINS
               + cnx * (by(ix  ) - by(ix-1)) &
               - fac * jz(ix)
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -183,7 +183,7 @@ CONTAINS
     IF (cpml_boundaries) THEN
       cpml_x = hdtx
 
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO ix = 1, nx
           cpml_x = hdtx / cpml_kappa_bx(ix)
 
@@ -193,7 +193,7 @@ CONTAINS
           bz(ix) = bz(ix) &
               - cpml_x * (ey(ix+1) - ey(ix  ))
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -235,7 +235,7 @@ CONTAINS
 
       CALL cpml_advance_b_currents(hdt)
     ELSE
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO ix = 1, nx
           by(ix) = by(ix) &
               + hdtx * (ez(ix+1) - ez(ix  ))
@@ -243,7 +243,7 @@ CONTAINS
           bz(ix) = bz(ix) &
               - hdtx * (ey(ix+1) - ey(ix  ))
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 

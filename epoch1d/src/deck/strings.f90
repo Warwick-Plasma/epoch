@@ -20,7 +20,7 @@ CONTAINS
     INTEGER :: n_nums
     CHARACTER(LEN=9) :: numfmt
 
-    IF (int_in .EQ. 0) THEN
+    IF (int_in == 0) THEN
       n_nums = 1
     ELSE
       n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
@@ -40,7 +40,7 @@ CONTAINS
     INTEGER :: n_nums
     CHARACTER(LEN=12) :: numfmt
 
-    IF (int_in .EQ. 0) THEN
+    IF (int_in == 0) THEN
       n_nums = 1
     ELSE
       n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
@@ -63,19 +63,19 @@ CONTAINS
     test_len = LEN(TRIM(str_test))
     in_len = LEN(TRIM(str_trim))
 
-    IF (test_len .GT. 0) THEN
-      IF (IACHAR(str_test(test_len:test_len)) .EQ. 0) test_len = test_len - 1
+    IF (test_len > 0) THEN
+      IF (IACHAR(str_test(test_len:test_len)) == 0) test_len = test_len - 1
     ENDIF
-    IF (in_len .GT. 0) THEN
-      IF (IACHAR(str_trim(in_len:in_len)) .EQ. 0) in_len = in_len - 1
+    IF (in_len > 0) THEN
+      IF (IACHAR(str_trim(in_len:in_len)) == 0) in_len = in_len - 1
     ENDIF
 
-    IF (test_len .NE. in_len) THEN
+    IF (test_len /= in_len) THEN
       str_cmp = .FALSE.
       RETURN
     ENDIF
 
-    str_cmp = (str_trim(1:test_len) .EQ. str_test(1:test_len))
+    str_cmp = (str_trim(1:test_len) == str_test(1:test_len))
 
   END FUNCTION str_cmp
 
@@ -92,10 +92,10 @@ CONTAINS
 
     f = 1
     char = str_in(1:1)
-    IF (char .GE. '0' .AND. char .LE. '9' .OR. char .EQ. '.') THEN
+    IF (char >= '0' .AND. char <= '9' .OR. char == '.') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
     ENDIF
-    IF (f .NE. 0) err = IOR(err, c_err_bad_value)
+    IF (f /= 0) err = IOR(err, c_err_bad_value)
     as_real_simple = value
 
   END FUNCTION as_real_simple
@@ -112,10 +112,10 @@ CONTAINS
 
     f = 1
     char = str_in(1:1)
-    IF (char .GE. '0' .AND. char .LE. '9') THEN
+    IF (char >= '0' .AND. char <= '9') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
     ENDIF
-    IF (f .NE. 0) err = IOR(err, c_err_bad_value)
+    IF (f /= 0) err = IOR(err, c_err_bad_value)
     as_integer_simple = value
 
   END FUNCTION as_integer_simple
@@ -132,10 +132,10 @@ CONTAINS
 
     f = 1
     char = str_in(1:1)
-    IF (char .GE. '0' .AND. char .LE. '9') THEN
+    IF (char >= '0' .AND. char <= '9') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
     ENDIF
-    IF (f .NE. 0) err = IOR(err, c_err_bad_value)
+    IF (f /= 0) err = IOR(err, c_err_bad_value)
     as_long_integer_simple = value
 
   END FUNCTION as_long_integer_simple
@@ -155,7 +155,7 @@ CONTAINS
     IF (str_cmp(str_in, 'x_max') .OR. str_cmp(str_in, 'right')) &
         as_boundary = c_bd_x_max
 
-    IF (as_boundary .EQ. -1) err = IOR(err, c_err_bad_value)
+    IF (as_boundary == -1) err = IOR(err, c_err_bad_value)
 
   END FUNCTION as_boundary
 
@@ -278,7 +278,7 @@ CONTAINS
 
     res = as_bc(str_in, err)
 
-    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
 
     WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
 
@@ -294,7 +294,7 @@ CONTAINS
 
     res = as_boundary(str_in, err)
 
-    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
 
     WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
 
@@ -310,7 +310,7 @@ CONTAINS
 
     res = as_logical(str_in, err)
 
-    IF (.NOT.print_deck_constants .OR. rank .NE. 0) RETURN
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
 
     WRITE(du,'(A,L1)') TRIM(element) // ' = ', res
 

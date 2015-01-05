@@ -18,9 +18,9 @@ CONTAINS
     field_order = order
     fng = field_order / 2
 
-    IF (field_order .EQ. 2) THEN
+    IF (field_order == 2) THEN
       cfl = 1.0_num
-    ELSE IF (field_order .EQ. 4) THEN
+    ELSE IF (field_order == 4) THEN
       cfl = 6.0_num / 7.0_num
     ELSE
       cfl = 120.0_num / 149.0_num
@@ -44,7 +44,7 @@ CONTAINS
       cpml_y = cny
       cpml_z = cnz
 
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO iz = 1, nz
           cpml_z = cnz / cpml_kappa_ez(iz)
           DO iy = 1, ny
@@ -69,7 +69,7 @@ CONTAINS
             ENDDO
           ENDDO
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -163,7 +163,7 @@ CONTAINS
 
       CALL cpml_advance_e_currents(hdt)
     ELSE
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO iz = 1, nz
           DO iy = 1, ny
             DO ix = 1, nx
@@ -185,7 +185,7 @@ CONTAINS
             ENDDO
           ENDDO
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -290,7 +290,7 @@ CONTAINS
       cpml_y = hdty
       cpml_z = hdtz
 
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO iz = 1, nz
           cpml_z = hdtz / cpml_kappa_bz(iz)
           DO iy = 1, ny
@@ -312,7 +312,7 @@ CONTAINS
             ENDDO
           ENDDO
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
@@ -400,7 +400,7 @@ CONTAINS
 
       CALL cpml_advance_b_currents(hdt)
     ELSE
-      IF (field_order .EQ. 2) THEN
+      IF (field_order == 2) THEN
         DO iz = 1, nz
           DO iy = 1, ny
             DO ix = 1, nx
@@ -418,7 +418,7 @@ CONTAINS
             ENDDO
           ENDDO
         ENDDO
-      ELSE IF (field_order .EQ. 4) THEN
+      ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
