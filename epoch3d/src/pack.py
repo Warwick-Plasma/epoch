@@ -3,38 +3,57 @@
 import binascii
 import struct
 import os
+import sys
 import time
 import subprocess as sp
 import tarfile
 import hashlib
 import platform
 import gzip
-import argparse
 import codecs
+try:
+   import argparse
+   got_argparse = True
+except:
+   got_argparse = False
 
 def str2bool(x):
-   if x.lower() not in {'true', 'yes', '1', 'false', 'no', '0'}:
+   if x.lower() not in ['true', 'yes', '1', 'false', 'no', '0']:
       raise TypeError
-   return x.lower() in {'true', 'yes', '1'}
+   return x.lower() in ['true', 'yes', '1']
 
-argp = argparse.ArgumentParser(
-      description="Pack source code for writing to SDF output")
-argp.add_argument("prefix", type=str, help="Package name")
-argp.add_argument("pack_source_code", type=str2bool,
-      help="Pack source code")
-argp.add_argument("pack_git_diff", type=str2bool,
-      help="Pack git diff")
-argp.add_argument("pack_git_diff_from_origin", type=str2bool,
-      help="Pack git diff from origin")
-argp.add_argument("generate_checksum", type=str2bool,
-      help="Generate checksum")
-argp.add_argument("f77_output", type=str2bool,
-      help="Fortran 77 output")
-argp.add_argument("outfile", type=str, help="Output file")
-argp.add_argument("compiler_info", type=str, help="Compiler info")
-argp.add_argument("compiler_flags", type=str, help="Compiler flags")
-argp.add_argument("filelist", type=str, nargs='*', help="Source files")
-args = argp.parse_args()
+if got_argparse:
+   argp = argparse.ArgumentParser(
+         description="Pack source code for writing to SDF output")
+   argp.add_argument("prefix", type=str, help="Package name")
+   argp.add_argument("pack_source_code", type=str2bool,
+         help="Pack source code")
+   argp.add_argument("pack_git_diff", type=str2bool,
+         help="Pack git diff")
+   argp.add_argument("pack_git_diff_from_origin", type=str2bool,
+         help="Pack git diff from origin")
+   argp.add_argument("generate_checksum", type=str2bool,
+         help="Generate checksum")
+   argp.add_argument("f77_output", type=str2bool,
+         help="Fortran 77 output")
+   argp.add_argument("outfile", type=str, help="Output file")
+   argp.add_argument("compiler_info", type=str, help="Compiler info")
+   argp.add_argument("compiler_flags", type=str, help="Compiler flags")
+   argp.add_argument("filelist", type=str, nargs='*', help="Source files")
+   args = argp.parse_args()
+else:
+   args = type("", (), dict(dummy=1))()
+   i = 2
+   args.prefix = sys.argv[i]; i += 1
+   args.pack_source_code = str2bool(sys.argv[i]); i += 1
+   args.pack_git_diff = str2bool(sys.argv[i]); i += 1
+   args.pack_git_diff_from_origin = str2bool(sys.argv[i]); i += 1
+   args.generate_checksum = str2bool(sys.argv[i]); i += 1
+   args.f77_output = str2bool(sys.argv[i]); i += 1
+   args.outfile = sys.argv[i]; i += 1
+   args.compiler_info = sys.argv[i]; i += 1
+   args.compiler_flags = sys.argv[i]; i += 1
+   args.filelist = sys.argv[i:]
 
 prefix = args.prefix
 pack_source_code  = args.pack_source_code
