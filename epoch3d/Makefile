@@ -235,6 +235,9 @@ MACHINE := $(shell uname -n)
 PREPROFLAGS = $(DEFINES) $(D)_COMMIT='"$(COMMIT)"' $(D)_DATE=$(DATE) \
   $(D)_MACHINE='"$(MACHINE)"' -I$(INCDIR)
 
+FC_INFO := $(shell ${FC} --version 2>/dev/null \
+    || ${FC} -V 2>&1 | grep '[a-zA-Z]' | head -n 1)
+
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
   deck.F90 deck_boundaries_block.f90 deck_collision_block.F90 \
@@ -307,7 +310,7 @@ $(SRCDIR)/COMMIT: FORCE
 epoch: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
 	@mkdir -p $(BINDIR)
-	$(FC) $(LDFLAGS) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
+	$(FC) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES)) $(LDFLAGS)
 
 $(OBJDIR)/epoch_source_info.f90: $(SOURCE_ALL)
 	sh $(PACK_SDF) $(PACK_OPTS) $@ "$(FC_INFO)" "$(FFLAGS)" $^
