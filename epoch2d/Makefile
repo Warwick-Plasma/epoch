@@ -310,7 +310,7 @@ $(SRCDIR)/COMMIT: FORCE
 epoch: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
 	@mkdir -p $(BINDIR)
-	$(FC) $(LDFLAGS) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES))
+	$(FC) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES)) $(LDFLAGS)
 
 $(OBJDIR)/epoch_source_info.f90: $(SOURCE_ALL)
 	sh $(PACK_SDF) $(PACK_OPTS) $@ "$(FC_INFO)" "$(FFLAGS)" $^
