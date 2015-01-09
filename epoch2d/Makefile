@@ -221,7 +221,7 @@ DEFINES += $(D)TRACER_PARTICLES
 
 ENCODED_SOURCE ?= epoch_source_info.o
 
-all: epoch
+all: main
 
 SDF := ../SDF/FORTRAN
 SDFMOD = $(SDF)/include/sdf.mod
@@ -274,10 +274,8 @@ OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)
 FULLTARGET = $(BINDIR)/$(TARGET)
 
 SOURCE_ALL := Makefile $(SRCFILES) $(INCLUDES) pack.py pack.sh \
-  $(SRCDIR)/COMMIT epoch_source_info_dummy.f90 gen_commit_string
+  $(SRCDIR)/COMMIT $(SRCDIR)/gen_commit_string.sh epoch_source_info_dummy.f90
 
-#vpath %.f90 $(SRCDIR)
-#vpath %.o $(OBJDIR)
 VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
   $(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:\
   $(SDF)/src:$(OBJDIR)
@@ -296,7 +294,7 @@ PACK_OPTS = $(GIT_WORK_TREE) $(PACK_PREFIX) $(PACK_SOURCE_CODE) \
     $(F77_OUTPUT)
 
 $(SRCDIR)/COMMIT: FORCE
-	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
+	@sh $(SRCDIR)/gen_commit_string.sh || $(MAKE) $(MAKECMDGOALS)
 -include $(SRCDIR)/COMMIT
 
 # Rule to build the fortran files
@@ -307,7 +305,7 @@ $(SRCDIR)/COMMIT: FORCE
 %.o: %.F90
 	$(FC) -c $(FFLAGS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
-epoch: $(FULLTARGET)
+main: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
 	@mkdir -p $(BINDIR)
 	$(FC) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES)) $(LDFLAGS)
@@ -329,14 +327,17 @@ tidy:
 	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 	$(MAKE) -C $(SDF) cleanall
 
+datatidy:
+	@rm -rf Data/*
+
 tarball:
 	@cd ..; sh make_tarball.sh
 
 visit:
-	@cd ../SDF/VisIt; ./build
+	@cd $(SDF)/../VisIt; ./build
 
 visitclean:
-	@cd ../SDF/VisIt; make clean; ./build -c; \
+	@cd $(SDF)/../VisIt; make clean; ./build -c; \
 	  rm -rf .depend *.d *Info.C *Info.h CMake* cmake* Makefile
 
 $(OBJFILES): | $(OBJDIR)
@@ -344,7 +345,7 @@ $(OBJFILES): | $(OBJDIR)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 
-.PHONY: clean cleanall tidy visit visitclean epoch FORCE
+.PHONY: clean cleanall tidy datatidy visit visitclean main FORCE
 
 # All the dependencies
 
