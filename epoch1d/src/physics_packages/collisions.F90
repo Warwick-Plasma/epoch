@@ -18,14 +18,11 @@ MODULE collisions
   PUBLIC :: test_collisions
 #endif
 
-  REAL(num) :: collision_count, large_angle_collision
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
 
-  REAL(num) :: nu_avg
   REAL(num), PARAMETER :: e_rest = m0 * c**2
   REAL(num), PARAMETER :: e_rest_ev = e_rest / ev
   REAL(num), PARAMETER :: mrbeb_const = 2.0_num * pi * a0**2 * alpha**4
-  INTEGER :: nu_count
 
   REAL(num), DIMENSION(3,0:2), PARAMETER :: a_bell = RESHAPE( &
       (/ 0.5250_num, 0.5300_num, 0.1300_num, &

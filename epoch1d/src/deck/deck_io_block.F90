@@ -11,13 +11,12 @@ MODULE deck_io_block
   PUBLIC :: io_block_handle_element, io_block_check
 
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 28
-  INTEGER :: block_number, full_io_block, restart_io_block, nfile_prefixes
+  INTEGER :: block_number, nfile_prefixes
   INTEGER :: rolling_restart_io_block
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
-  CHARACTER(LEN=string_length) :: name
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
   TYPE(io_block_type), POINTER :: io_block
 

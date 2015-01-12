@@ -970,7 +970,6 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: handle
     TYPE(file_buffer), POINTER :: fbuf
-    CHARACTER(LEN=1) :: dummy1(1), dummy2
     INTEGER :: i
 
     IF (rank == 0) THEN
@@ -992,7 +991,7 @@ CONTAINS
   SUBROUTINE deallocate_input_deck_buffer
 
     TYPE(file_buffer), POINTER :: fbuf, next
-    INTEGER :: i, stat
+    INTEGER :: stat
 
     IF (.NOT. ASSOCIATED(file_buffer_head)) RETURN
 

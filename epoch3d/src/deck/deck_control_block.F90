@@ -366,7 +366,6 @@ CONTAINS
   SUBROUTINE check_valid_restart
 
     CHARACTER(LEN=c_id_length) :: code_name
-    CHARACTER(LEN=c_max_string_length) :: name
     INTEGER :: ierr, step, code_io_version, string_len
     REAL(num) :: time
     LOGICAL :: restart_flag
