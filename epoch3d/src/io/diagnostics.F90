@@ -521,6 +521,29 @@ CONTAINS
 
 
 
+  SUBROUTINE check_name_length(shorten, string)
+
+    CHARACTER(LEN=*), INTENT(IN) :: shorten, string
+    CHARACTER(LEN=c_max_string_length) :: len_string
+    INTEGER :: length
+
+    length = LEN_TRIM(string)
+
+    IF (length > c_max_string_length) THEN
+      IF (rank == 0) THEN
+        CALL integer_as_string(length, len_string)
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Output block name ', TRIM(string), ' is truncated.'
+        PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
+            'the size of "c_max_string_length" ', 'to at least ', &
+            TRIM(len_string)
+      ENDIF
+    ENDIF
+
+  END SUBROUTINE check_name_length
+
+
+
   SUBROUTINE append_filename(listname, filename, list_index)
     ! This routine updates a list of each output type (eg. full, dump, normal)
     ! that can be passed to VisIt to filter the output.
@@ -1022,10 +1045,9 @@ CONTAINS
     INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: array
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: should_dump, subtype, subarray, ispecies
-    INTEGER :: len1, len2, len3, len4, len5, io
+    INTEGER :: should_dump, subtype, subarray, ispecies, io
     CHARACTER(LEN=c_id_length) :: temp_block_id
-    CHARACTER(LEN=c_max_string_length) :: temp_name, len_string
+    CHARACTER(LEN=c_max_string_length) :: temp_name
     LOGICAL :: convert
     TYPE(averaged_data_block), POINTER :: avg
 
@@ -1081,31 +1103,15 @@ CONTAINS
       IF (IAND(iomask(id), c_io_species) /= 0) THEN
         CALL build_species_subset
 
-        len1 = LEN_TRIM(block_id) + 1
-        len2 = LEN_TRIM(name) + 9
         DO ispecies = 1, n_species
           IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
-          len3 = LEN_TRIM(io_list(ispecies)%name)
-          len4 = len3
-          len5 = len3
-          IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
-          IF ((len2 + len3) > c_max_string_length) THEN
-            len5 = c_max_string_length - len2
-            IF (rank == 0) THEN
-              CALL integer_as_string((len2+len3), len_string)
-              PRINT*, '*** WARNING ***'
-              PRINT*, 'Output block name ','Derived/' // TRIM(name) // '/' &
-                  // TRIM(io_list(ispecies)%name),' is truncated.'
-              PRINT*, 'Either shorten the species name or increase ', &
-                  'the size of "c_max_string_length" ', &
-                  'to at least ',TRIM(len_string)
-            ENDIF
-          ENDIF
 
-          temp_block_id = TRIM(block_id) // '/' // &
-              TRIM(io_list(ispecies)%name(1:len4))
-          temp_name = 'Derived/' // TRIM(name) // '/' // &
-              TRIM(io_list(ispecies)%name(1:len5))
+          CALL check_name_length('species', &
+              'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name))
+
+          temp_block_id = TRIM(block_id) // '/' // TRIM(io_list(ispecies)%name)
+          temp_name = &
+              'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name)
           CALL func(array, ispecies)
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
@@ -1136,33 +1142,17 @@ CONTAINS
             ENDIF
 
             IF (avg%n_species > 0) THEN
-              len1 = LEN_TRIM(block_id) + 10
-              len2 = LEN_TRIM(name) + 18
-
               DO ispecies = 1, avg%n_species
                 IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
-                len3 = LEN_TRIM(io_list(ispecies)%name)
-                len4 = len3
-                len5 = len3
-                IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
-                IF ((len2 + len3) > c_max_string_length) THEN
-                  len5 = c_max_string_length - len2
-                  IF (rank == 0) THEN
-                    CALL integer_as_string((len2+len3), len_string)
-                    PRINT*, '*** WARNING ***'
-                    PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
-                        '_averaged/' // TRIM(io_list(ispecies)%name), &
-                        ' is truncated.'
-                    PRINT*, 'Either shorten the species name or increase ', &
-                        'the size of "c_max_string_length" ', &
-                        'to at least ',TRIM(len_string)
-                  ENDIF
-                ENDIF
 
-                temp_block_id = TRIM(block_id) // '_averaged/' // &
-                    TRIM(io_list(ispecies)%name(1:len4))
-                temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
-                    TRIM(io_list(ispecies)%name(1:len5))
+                CALL check_name_length('species', 'Derived/' // TRIM(name) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name))
+
+                temp_block_id = TRIM(block_id) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+                temp_name = 'Derived/' // TRIM(name) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+
                 CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                     TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
                     avg%r4array(:,:,:,ispecies+avg%species_sum), &
@@ -1186,33 +1176,17 @@ CONTAINS
             ENDIF
 
             IF (avg%n_species > 0) THEN
-              len1 = LEN_TRIM(block_id) + 10
-              len2 = LEN_TRIM(name) + 18
-
               DO ispecies = 1, avg%n_species
                 IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
-                len3 = LEN_TRIM(io_list(ispecies)%name)
-                len4 = len3
-                len5 = len3
-                IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
-                IF ((len2 + len3) > c_max_string_length) THEN
-                  len5 = c_max_string_length - len2
-                  IF (rank == 0) THEN
-                    CALL integer_as_string((len2+len3), len_string)
-                    PRINT*, '*** WARNING ***'
-                    PRINT*, 'Output block name ','Derived/' // TRIM(name) // &
-                        '_averaged/' // TRIM(io_list(ispecies)%name), &
-                        ' is truncated.'
-                    PRINT*, 'Either shorten the species name or increase ', &
-                        'the size of "c_max_string_length" ', &
-                        'to at least ',TRIM(len_string)
-                  ENDIF
-                ENDIF
 
-                temp_block_id = TRIM(block_id) // '_averaged/' // &
-                    TRIM(io_list(ispecies)%name(1:len4))
-                temp_name = 'Derived/' // TRIM(name) // '_averaged/' // &
-                    TRIM(io_list(ispecies)%name(1:len5))
+                CALL check_name_length('species', 'Derived/' // TRIM(name) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name))
+
+                temp_block_id = TRIM(block_id) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+                temp_name = 'Derived/' // TRIM(name) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+
                 CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                     TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
                     avg%array(:,:,:,ispecies+avg%species_sum), &
@@ -1310,9 +1284,8 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: should_dump, subtype, subarray, ispecies, ndirs, idir
-    INTEGER :: len1, len2, len3, len4, len5
     CHARACTER(LEN=c_id_length) :: temp_block_id
-    CHARACTER(LEN=c_max_string_length) :: temp_name, len_string
+    CHARACTER(LEN=c_max_string_length) :: temp_name
     LOGICAL :: convert
 
     INTERFACE
@@ -1365,36 +1338,20 @@ CONTAINS
       IF (IAND(iomask(id), c_io_species) /= 0) THEN
         CALL build_species_subset
 
-        len1 = LEN_TRIM(block_id) + LEN_TRIM(dir_tags(1)) + 2
-        len2 = LEN_TRIM(name) + LEN_TRIM(dir_tags(1)) + 10
-
         DO ispecies = 1, n_species
           IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
-          len3 = LEN_TRIM(io_list(ispecies)%name)
-          len4 = len3
-          len5 = len3
-          IF ((len1 + len3) > c_id_length) len4 = c_id_length - len1
-          IF ((len2 + len3) > c_max_string_length) THEN
-            len5 = c_max_string_length - len2
-            IF (rank == 0) THEN
-              CALL integer_as_string((len2+len3), len_string)
-              PRINT*, '*** WARNING ***'
-              PRINT*, 'Output block name ','Derived/' // TRIM(name) // '_' &
-                  // TRIM(io_list(ispecies)%name) // '/' &
-                  // TRIM(dir_tags(1)),' is truncated.'
-              PRINT*, 'Either shorten the species name or increase ', &
-                  'the size of "c_max_string_length" ', &
-                  'to at least ',TRIM(len_string)
-            ENDIF
-          ENDIF
+
+          CALL check_name_length('species', 'Derived/' // TRIM(name) &
+              // '_' // TRIM(dir_tags(idir)) // '/' &
+              // TRIM(io_list(ispecies)%name))
 
           DO idir = 1, ndirs
-            temp_block_id = TRIM(block_id) // '_' // &
-                TRIM(dir_tags(idir)) // '/' // &
-                TRIM(io_list(ispecies)%name(1:len4))
-            temp_name = 'Derived/' // TRIM(name) // '_' // &
-                TRIM(dir_tags(idir)) // '/' // &
-                TRIM(io_list(ispecies)%name(1:len5))
+            temp_block_id = TRIM(block_id) &
+                // '_' // TRIM(dir_tags(idir)) // '/' &
+                // TRIM(io_list(ispecies)%name)
+            temp_name = 'Derived/' // TRIM(name) &
+                // '_' // TRIM(dir_tags(idir)) // '/' &
+                // TRIM(io_list(ispecies)%name)
             CALL func(array, ispecies, fluxdir(idir))
             CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                 TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
