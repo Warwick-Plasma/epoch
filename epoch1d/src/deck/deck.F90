@@ -28,7 +28,7 @@ MODULE deck
   ! Custom blocks
   USE custom_deck
   USE version_data
-  USE md5
+  USE sdf
 
   IMPLICIT NONE
 
@@ -655,12 +655,12 @@ CONTAINS
       ENDDO
 
       IF (.NOT. already_parsed) THEN
-        CALL md5_init()
+        CALL sdf_md5_init()
         DO i = 1, fbuf%idx - 1
-           fbuf%md5sum = md5_append(fbuf%buffer(i)(1:buffer_size))
+           fbuf%md5sum = sdf_md5_append(fbuf%buffer(i)(1:buffer_size))
         ENDDO
-        fbuf%md5sum = md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
-        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = md5_append("")
+        fbuf%md5sum = sdf_md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
+        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = sdf_md5_append("")
       ENDIF
     ELSE
       DO
