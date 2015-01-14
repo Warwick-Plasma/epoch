@@ -32,9 +32,7 @@ CONTAINS
     ! Improved, but at the moment, this is just a straight copy of
     ! The core of the PSC algorithm
     INTEGER, PARAMETER :: sf0 = sf_min, sf1 = sf_max
-    REAL(num), DIMENSION(sf0-2:sf1+1) :: jxh
-    REAL(num), DIMENSION(sf0-1:sf1+1) :: jyh
-    REAL(num), DIMENSION(sf0-1:sf1+1) :: jzh
+    REAL(num) :: jxh, jyh, jzh
 
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x
@@ -88,7 +86,7 @@ CONTAINS
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
     REAL(num) :: root, dtfac, gamma
     REAL(num) :: delta_x, part_vy, part_vz
-    INTEGER :: ispecies, ix, dcellx
+    INTEGER :: ispecies, ix, dcellx, cx
     INTEGER(i8) :: ipart
 #ifdef PARTICLE_PROBES
     LOGICAL :: probes_for_species
@@ -116,10 +114,6 @@ CONTAINS
     jx = 0.0_num
     jy = 0.0_num
     jz = 0.0_num
-
-    jxh = 0.0_num
-    jyh = 0.0_num
-    jzh = 0.0_num
 
     gx = 0.0_num
 
@@ -356,25 +350,25 @@ CONTAINS
           xmin = sf_min + (dcellx - 1) / 2
           xmax = sf_max + (dcellx + 1) / 2
 
-          ! Set these to zero due to diffential inside loop
-          jxh = 0.0_num
-
           fjx = fcx * part_q
           fjy = fcy * part_q * part_vy
           fjz = fcy * part_q * part_vz
 
+          jxh = 0.0_num
           DO ix = xmin, xmax
-            wx =  hx(ix)
-            wy =  gx(ix) + 0.5_num * hx(ix)
+            cx = cell_x1 + ix
+
+            wx = hx(ix)
+            wy = gx(ix) + 0.5_num * hx(ix)
 
             ! This is the bit that actually solves d(rho)/dt = -div(J)
-            jxh(ix) = jxh(ix-1) - fjx * wx
-            jyh(ix) = fjy * wy
-            jzh(ix) = fjz * wy
+            jxh = jxh - fjx * wx
+            jyh = fjy * wy
+            jzh = fjz * wy
 
-            jx(cell_x1+ix) = jx(cell_x1+ix) + jxh(ix)
-            jy(cell_x1+ix) = jy(cell_x1+ix) + jyh(ix)
-            jz(cell_x1+ix) = jz(cell_x1+ix) + jzh(ix)
+            jx(cx) = jx(cx) + jxh
+            jy(cx) = jy(cx) + jyh
+            jz(cx) = jz(cx) + jzh
           ENDDO
 #ifdef TRACER_PARTICLES
         ENDIF

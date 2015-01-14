@@ -34,9 +34,9 @@ CONTAINS
     ! Improved, but at the moment, this is just a straight copy of
     ! The core of the PSC algorithm
     INTEGER, PARAMETER :: sf0 = sf_min, sf1 = sf_max
-    REAL(num), DIMENSION(sf0-2:sf1+1,sf0-1:sf1+1,sf0-1:sf1+1) :: jxh
-    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-2:sf1+1,sf0-1:sf1+1) :: jyh
-    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-1:sf1+1,sf0-2:sf1+1) :: jzh
+    REAL(num) :: jxh
+    REAL(num), DIMENSION(sf0-1:sf1+1) :: jyh
+    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-1:sf1+1) :: jzh
 
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_z
@@ -92,7 +92,9 @@ CONTAINS
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
     REAL(num) :: root, dtfac, gamma, third
     REAL(num) :: delta_x, delta_y, delta_z
-    INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
+    REAL(num) :: xfac1, xfac2, yfac1, yfac2, zfac1, zfac2
+    REAL(num) :: gz_iz, hz_iz, hygz, hyhz, hzyfac1, hzyfac2, yzfac
+    INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz, cx, cy, cz
     INTEGER(i8) :: ipart
 #ifdef PARTICLE_PROBES
     LOGICAL :: probes_for_species
@@ -120,10 +122,6 @@ CONTAINS
     jx = 0.0_num
     jy = 0.0_num
     jz = 0.0_num
-
-    jxh = 0.0_num
-    jyh = 0.0_num
-    jzh = 0.0_num
 
     gx = 0.0_num
     gy = 0.0_num
@@ -427,36 +425,49 @@ CONTAINS
           zmin = sf_min + (dcellz - 1) / 2
           zmax = sf_max + (dcellz + 1) / 2
 
-          ! Set these to zero due to diffential inside loop
-          jxh = 0.0_num
-          jyh = 0.0_num
-          jzh = 0.0_num
-
           fjx = fcx * part_q
           fjy = fcy * part_q
           fjz = fcz * part_q
 
+          jzh = 0.0_num
           DO iz = zmin, zmax
+            cz = cell_z1 + iz
+            zfac1 =         gz(iz) + 0.5_num * hz(iz)
+            zfac2 = third * hz(iz) + 0.5_num * gz(iz)
+
+            gz_iz = hz(iz)
+            hz_iz = gz(iz)
+
+            jyh = 0.0_num
             DO iy = ymin, ymax
+              cy = cell_y1 + iy
+              yfac1 =         gy(iy) + 0.5_num * hy(iy)
+              yfac2 = third * hy(iy) + 0.5_num * gy(iy)
+
+              hygz = hy(iy) * gz_iz
+              hyhz = hy(iy) * hz_iz
+              yzfac = gy(iy) * zfac1 + hy(iy) * zfac2
+              hzyfac1 = hz_iz * yfac1
+              hzyfac2 = hz_iz * yfac2
+
+              jxh = 0.0_num
               DO ix = xmin, xmax
-                wx =  hx(ix) * (gy(iy) * (gz(iz) + 0.5_num * hz(iz)) &
-                    + hy(iy) * (third  *  hz(iz) + 0.5_num * gz(iz)))
-                wy =  hy(iy) * (gx(ix) * (gz(iz) + 0.5_num * hz(iz)) &
-                    + hx(ix) * (third  *  hz(iz) + 0.5_num * gz(iz)))
-                wz =  hz(iz) * (gx(ix) * (gy(iy) + 0.5_num * hy(iy)) &
-                    + hx(ix) * (third  *  hy(iy) + 0.5_num * gy(iy)))
+                cx = cell_x1 + ix
+                xfac1 =         gx(ix) + 0.5_num * hx(ix)
+                xfac2 = third * hx(ix) + 0.5_num * gx(ix)
+
+                wx = hx(ix) * yzfac
+                wy = xfac1 * hygz + xfac2 * hyhz
+                wz = gx(ix) * hzyfac1 + hx(ix) * hzyfac2
 
                 ! This is the bit that actually solves d(rho)/dt = -div(J)
-                jxh(ix, iy, iz) = jxh(ix-1, iy, iz) - fjx * wx
-                jyh(ix, iy, iz) = jyh(ix, iy-1, iz) - fjy * wy
-                jzh(ix, iy, iz) = jzh(ix, iy, iz-1) - fjz * wz
+                jxh = jxh - fjx * wx
+                jyh(ix) = jyh(ix) - fjy * wy
+                jzh(ix, iy) = jzh(ix, iy) - fjz * wz
 
-                jx(cell_x1+ix, cell_y1+iy, cell_z1+iz) = &
-                    jx(cell_x1+ix, cell_y1+iy, cell_z1+iz) + jxh(ix, iy, iz)
-                jy(cell_x1+ix, cell_y1+iy, cell_z1+iz) = &
-                    jy(cell_x1+ix, cell_y1+iy, cell_z1+iz) + jyh(ix, iy, iz)
-                jz(cell_x1+ix, cell_y1+iy, cell_z1+iz) = &
-                    jz(cell_x1+ix, cell_y1+iy, cell_z1+iz) + jzh(ix, iy, iz)
+                jx(cx, cy, cz) = jx(cx, cy, cz) + jxh
+                jy(cx, cy, cz) = jy(cx, cy, cz) + jyh(ix)
+                jz(cx, cy, cz) = jz(cx, cy, cz) + jzh(ix, iy)
               ENDDO
             ENDDO
           ENDDO

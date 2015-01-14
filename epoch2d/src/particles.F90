@@ -33,9 +33,8 @@ CONTAINS
     ! Improved, but at the moment, this is just a straight copy of
     ! The core of the PSC algorithm
     INTEGER, PARAMETER :: sf0 = sf_min, sf1 = sf_max
-    REAL(num), DIMENSION(sf0-2:sf1+1,sf0-1:sf1+1) :: jxh
-    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-2:sf1+1) :: jyh
-    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-1:sf1+1) :: jzh
+    REAL(num) :: jxh, jzh
+    REAL(num), DIMENSION(sf0-1:sf1+1) :: jyh
 
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y
@@ -90,7 +89,8 @@ CONTAINS
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
     REAL(num) :: root, dtfac, gamma, third, igamma
     REAL(num) :: delta_x, delta_y, part_vz
-    INTEGER :: ispecies, ix, iy, dcellx, dcelly
+    REAL(num) :: hy_iy, xfac1, yfac1, yfac2
+    INTEGER :: ispecies, ix, iy, dcellx, dcelly, cx, cy
     INTEGER(i8) :: ipart
 #ifdef PARTICLE_PROBES
     LOGICAL :: probes_for_species
@@ -118,10 +118,6 @@ CONTAINS
     jx = 0.0_num
     jy = 0.0_num
     jz = 0.0_num
-
-    jxh = 0.0_num
-    jyh = 0.0_num
-    jzh = 0.0_num
 
     gx = 0.0_num
     gy = 0.0_num
@@ -395,32 +391,35 @@ CONTAINS
           ymin = sf_min + (dcelly - 1) / 2
           ymax = sf_max + (dcelly + 1) / 2
 
-          ! Set these to zero due to diffential inside loop
-          jxh = 0.0_num
-          jyh = 0.0_num
-
           fjx = fcx * part_q
           fjy = fcy * part_q
           fjz = fcz * part_q * part_vz
 
+          jyh = 0.0_num
           DO iy = ymin, ymax
+            cy = cell_y1 + iy
+            yfac1 =         gy(iy) + 0.5_num * hy(iy)
+            yfac2 = third * hy(iy) + 0.5_num * gy(iy)
+
+            hy_iy = hy(iy)
+
+            jxh = 0.0_num
             DO ix = xmin, xmax
-              wx =  hx(ix) * (gy(iy) + 0.5_num * hy(iy))
-              wy =  hy(iy) * (gx(ix) + 0.5_num * hx(ix))
-              wz =  gx(ix) * (gy(iy) + 0.5_num * hy(iy)) &
-                  + hx(ix) * (third  *  hy(iy) + 0.5_num * gy(iy))
+              cx = cell_x1 + ix
+              xfac1 = gx(ix) + 0.5_num * hx(ix)
+
+              wx = hx(ix) * yfac1
+              wy = hy_iy  * xfac1
+              wz = gx(ix) * yfac1 + hx(ix) * yfac2
 
               ! This is the bit that actually solves d(rho)/dt = -div(J)
-              jxh(ix, iy) = jxh(ix-1, iy) - fjx * wx
-              jyh(ix, iy) = jyh(ix, iy-1) - fjy * wy
-              jzh(ix, iy) = fjz * wz
+              jxh = jxh - fjx * wx
+              jyh(ix) = jyh(ix) - fjy * wy
+              jzh = fjz * wz
 
-              jx(cell_x1+ix, cell_y1+iy) = &
-                  jx(cell_x1+ix, cell_y1+iy) + jxh(ix, iy)
-              jy(cell_x1+ix, cell_y1+iy) = &
-                  jy(cell_x1+ix, cell_y1+iy) + jyh(ix, iy)
-              jz(cell_x1+ix, cell_y1+iy) = &
-                  jz(cell_x1+ix, cell_y1+iy) + jzh(ix, iy)
+              jx(cx, cy) = jx(cx, cy) + jxh
+              jy(cx, cy) = jy(cx, cy) + jyh(ix)
+              jz(cx, cy) = jz(cx, cy) + jzh
             ENDDO
           ENDDO
 #ifdef TRACER_PARTICLES
