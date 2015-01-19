@@ -747,6 +747,7 @@ MODULE shared_data
     LOGICAL :: use_charge_min, use_charge_max
     LOGICAL :: use_mass_min, use_mass_max
     LOGICAL :: use_id_min, use_id_max
+    LOGICAL :: skip, dump_field_grid
     REAL(num) :: gamma_min, gamma_max, random_fraction
     REAL(num) :: x_min, x_max
     REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
@@ -754,6 +755,8 @@ MODULE shared_data
     REAL(num) :: charge_min, charge_max
     REAL(num) :: mass_min, mass_max
     INTEGER(i8) :: id_min, id_max
+    INTEGER :: subtype, subarray, subtype_r4, subarray_r4
+    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
