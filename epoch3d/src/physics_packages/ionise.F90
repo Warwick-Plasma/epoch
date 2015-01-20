@@ -635,8 +635,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO iz = sf_min, sf_max
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
@@ -925,8 +925,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO iz = sf_min, sf_max
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
@@ -1204,8 +1204,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO iz = sf_min, sf_max
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max
@@ -1469,8 +1469,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO iz = sf_min, sf_max
             DO iy = sf_min, sf_max
             DO ix = sf_min, sf_max

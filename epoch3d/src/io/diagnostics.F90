@@ -2193,9 +2193,8 @@ CONTAINS
 
     n = 0
 
-    IF (SIZE(epoch_bytes) > 1 .OR. &
-          (TRIM(epoch_bytes_checksum_type) /= '' .AND. &
-          ICHAR(epoch_bytes_checksum_type(1:1)) /= 0)) THEN
+    IF (SIZE(epoch_bytes) > 1 .OR. (TRIM(epoch_bytes_checksum_type) /= '' &
+        .AND. ICHAR(epoch_bytes_checksum_type(1:1)) /= 0)) THEN
       n = n + 1
       CALL sdf_safe_copy_id(h, 'epoch_source/source', stitched_ids(n))
       CALL sdf_write_datablock(h, stitched_ids(n), &

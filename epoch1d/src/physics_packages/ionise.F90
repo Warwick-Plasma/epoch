@@ -535,8 +535,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -783,8 +783,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -1020,8 +1020,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -1243,8 +1243,8 @@ CONTAINS
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)

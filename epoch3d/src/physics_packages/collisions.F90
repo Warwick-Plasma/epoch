@@ -453,7 +453,7 @@ CONTAINS
     ion_count = ions%count
 
     ! If there aren't enough particles to collide, then don't bother
-    IF(e_count == 0 .OR. ion_count == 0) RETURN
+    IF (e_count == 0 .OR. ion_count == 0) RETURN
 
     pcount = MAX(e_count, ion_count)
     factor = 0.0_num
@@ -488,8 +488,8 @@ CONTAINS
     DO k = 1, pcount
       i_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
       ! Angles for rotation such that ion velocity |v| = v_x
-      IF(i_p2 > 0.0_num) THEN
-        IF(ABS(ion%part_p(1)) >= c_tiny) THEN
+      IF (i_p2 > 0.0_num) THEN
+        IF (ABS(ion%part_p(1)) >= c_tiny) THEN
           rot_y = DATAN(ion%part_p(3) / ion%part_p(1))
         ELSE
           rot_y = pi / 2.0_num
@@ -587,7 +587,7 @@ CONTAINS
           ! Mark ionisation as occurring
           was_ionised(MOD(k - 1, ion_count) + 1) = .TRUE.
           lost_ke(MOD(k - 1, e_count) + 1) = .TRUE.
-          IF(i_p2 > 0.0_num) THEN
+          IF (i_p2 > 0.0_num) THEN
             ! Reduce electron momentum by ionisation energy
             e_p_rot = SQRT(((ev / c * (e_ke_i - ion%weight / electron%weight &
                 * ionisation_energy + e_rest_ev))**2 - e_mass * e_rest) &
@@ -606,8 +606,8 @@ CONTAINS
                 * DCOS(rot_y) - e_p_rot(1) * DSIN(rot_y) /)
             ! If numerical error causes the electron to gain energy we catch it
             ! and apply the non-relativistic ionisation energy correction
-            IF(DOT_PRODUCT(electron%part_p, electron%part_p) < &
-                DOT_PRODUCT(e_p_rot, e_p_rot)) THEN
+            IF (DOT_PRODUCT(electron%part_p, electron%part_p) &
+                < DOT_PRODUCT(e_p_rot, e_p_rot)) THEN
               electron%part_p = SQRT(((ev / c * (e_ke_i - ion%weight &
                 / electron%weight * ionisation_energy + e_rest_ev))**2 &
                 - e_mass * e_rest) / e_p2_i) * electron%part_p

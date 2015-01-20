@@ -747,7 +747,7 @@ CONTAINS
       invalid_block = invalid_block .OR. IAND(errcode_deck, &
           c_err_pp_options_wrong) /= 0
       IF (invalid_block .AND. rank == rank_check) THEN
-        IF(IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
+        IF (IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
