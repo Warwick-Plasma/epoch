@@ -78,6 +78,8 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: convert, force, any_written
     LOGICAL, SAVE :: first_call = .TRUE.
+    LOGICAL, ALLOCATABLE, DIMENSION(:), SAVE :: prefix_first_call
+
     INTEGER :: ispecies, iprefix
     TYPE(particle_species), POINTER :: species
     REAL(num) :: elapsed_time
@@ -95,6 +97,8 @@ CONTAINS
 
     IF (first_call) THEN
       ALLOCATE(file_list(n_io_blocks+2))
+      ALLOCATE(prefix_first_call(SIZE(file_prefixes)))
+      prefix_first_call = first_call
       DO i = 1,n_io_blocks+2
         file_list(i)%count = 0
       ENDDO
@@ -133,7 +137,7 @@ CONTAINS
     ENDIF
 
     DO iprefix = 1,SIZE(file_prefixes)
-      CALL io_test(iprefix, step, print_arrays, force)
+      CALL io_test(iprefix, step, print_arrays, force, prefix_first_call)
 
       IF (.NOT.print_arrays) CYCLE
 
@@ -635,14 +639,14 @@ CONTAINS
 
 
 
-  SUBROUTINE io_test(iprefix, step, print_arrays, force)
+  SUBROUTINE io_test(iprefix, step, print_arrays, force, first_call)
 
     INTEGER, INTENT(IN) :: iprefix, step
     LOGICAL, INTENT(OUT) :: print_arrays
     LOGICAL, INTENT(IN) :: force
+    LOGICAL, DIMENSION(:), INTENT(INOUT) :: first_call
     INTEGER :: id, io, is, nstep_next = 0
     REAL(num) :: t0, t1, time_first
-    LOGICAL, SAVE :: first_call = .TRUE.
     LOGICAL :: last_call, dump
 
     IF (.NOT.ALLOCATED(iodumpmask)) &
@@ -669,7 +673,7 @@ CONTAINS
 
       IF (last_call .AND. io_block_list(io)%dump_last) &
           io_block_list(io)%dump = .TRUE.
-      IF (first_call .AND. io_block_list(io)%dump_first) &
+      IF (first_call(iprefix) .AND. io_block_list(io)%dump_first) &
           io_block_list(io)%dump = .TRUE.
 
       IF (force) THEN
@@ -787,7 +791,8 @@ CONTAINS
 
     IF (MOD(file_numbers(1), restart_dump_every) == 0 &
         .AND. restart_dump_every > -1) restart_flag = .TRUE.
-    IF (first_call .AND. force_first_to_be_restartable) restart_flag = .TRUE.
+    IF (first_call(iprefix) .AND. force_first_to_be_restartable) &
+        restart_flag = .TRUE.
     IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
     IF (force) restart_flag = .TRUE.
 
@@ -796,7 +801,7 @@ CONTAINS
       dump_input_decks = .FALSE.
     ENDIF
 
-    IF (first_call) first_call = .FALSE.
+    IF (first_call(iprefix)) first_call(iprefix) = .FALSE.
 
     iodumpmask(1,:) = iomask
 
