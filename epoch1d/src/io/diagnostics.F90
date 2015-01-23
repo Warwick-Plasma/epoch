@@ -95,6 +95,21 @@ CONTAINS
     RETURN
 #endif
 
+    timer_walltime = -1.0_num
+    IF (step /= last_step) THEN
+      last_step = step
+      IF (rank == 0 .AND. stdout_frequency > 0 &
+          .AND. MOD(step, stdout_frequency) == 0) THEN
+        timer_walltime = MPI_WTIME()
+        elapsed_time = timer_walltime - walltime_start
+        CALL create_timestring(elapsed_time, timestring)
+        WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', a)') &
+            time, step, timestring
+      ENDIF
+    ENDIF
+
+    IF (n_io_blocks <= 0) RETURN
+
     IF (first_call) THEN
       ALLOCATE(file_list(n_io_blocks+2))
       ALLOCATE(prefix_first_call(SIZE(file_prefixes)))
@@ -107,19 +122,6 @@ CONTAINS
       ! output much faster.
       ! The default value is set in deck_io_global_block.F90
       CALL sdf_set_point_array_size(sdf_buffer_size)
-    ENDIF
-
-    timer_walltime = -1.0_num
-    IF (step /= last_step) THEN
-      last_step = step
-      IF (rank == 0 .AND. stdout_frequency > 0 &
-          .AND. MOD(step, stdout_frequency) == 0) THEN
-        timer_walltime = MPI_WTIME()
-        elapsed_time = timer_walltime - walltime_start
-        CALL create_timestring(elapsed_time, timestring)
-        WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', a)') &
-            time, step, timestring
-      ENDIF
     ENDIF
 
     force = .FALSE.
