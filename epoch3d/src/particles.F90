@@ -435,8 +435,8 @@ CONTAINS
             zfac1 =         gz(iz) + 0.5_num * hz(iz)
             zfac2 = third * hz(iz) + 0.5_num * gz(iz)
 
-            gz_iz = hz(iz)
-            hz_iz = gz(iz)
+            gz_iz = gz(iz)
+            hz_iz = hz(iz)
 
             jyh = 0.0_num
             DO iy = ymin, ymax
