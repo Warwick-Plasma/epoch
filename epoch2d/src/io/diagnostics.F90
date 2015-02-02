@@ -32,6 +32,7 @@ MODULE diagnostics
   LOGICAL :: restart_flag, dump_source_code, dump_input_decks
   LOGICAL :: dump_field_grid
   LOGICAL, ALLOCATABLE :: dump_point_grid(:)
+  LOGICAL, ALLOCATABLE, SAVE :: prefix_first_call(:)
   INTEGER :: isubset
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask
@@ -78,7 +79,6 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: convert, force, any_written
     LOGICAL, SAVE :: first_call = .TRUE.
-    LOGICAL, ALLOCATABLE, DIMENSION(:), SAVE :: prefix_first_call
 
     INTEGER :: ispecies, iprefix
     TYPE(particle_species), POINTER :: species
@@ -636,6 +636,7 @@ CONTAINS
       DEALLOCATE(file_list, STAT=stat)
     ENDIF
     DEALLOCATE(iodumpmask, STAT=stat)
+    DEALLOCATE(prefix_first_call, STAT=stat)
 
   END SUBROUTINE deallocate_file_list
 
