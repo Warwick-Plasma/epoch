@@ -1,5 +1,7 @@
 # Specify a particular compiler with "make COMPILER=pgi", etc.
 # Specify debugging flags with "make MODE=debug"
+# Alternatively, these options can be specified as environment variables
+# eg. "export COMPILER=gfortran" can be added to $HOME/.bashrc
 
 
 # Compiler specific flags
