@@ -347,6 +347,39 @@ CONTAINS
           ENDDO
         ENDIF
 #endif
+
+#ifdef PER_PARTICLE_CHARGE_MASS
+        CALL write_particle_variable(c_dump_part_charge, code, &
+            'Q', 'C', it_output_real)
+        CALL write_particle_variable(c_dump_part_mass, code, &
+            'Mass', 'kg', it_output_real)
+#else
+        IF (IAND(iomask(c_dump_part_charge), code) /= 0) THEN
+          CALL build_species_subset
+
+          DO ispecies = 1, n_species
+            species => io_list(ispecies)
+            IF (IAND(species%dumpmask, code) /= 0 &
+                .OR. IAND(code, c_io_restartable) /= 0) THEN
+              CALL sdf_write_srl(sdf_handle, 'charge/' // TRIM(species%name), &
+                  'Particles/Charge/' // TRIM(species%name), species%charge)
+            ENDIF
+          ENDDO
+        ENDIF
+
+        IF (IAND(iomask(c_dump_part_mass), code) /= 0) THEN
+          CALL build_species_subset
+
+          DO ispecies = 1, n_species
+            species => io_list(ispecies)
+            IF (IAND(species%dumpmask, code) /= 0 &
+                .OR. IAND(code, c_io_restartable) /= 0) THEN
+              CALL sdf_write_srl(sdf_handle, 'mass/' // TRIM(species%name), &
+                  'Particles/Mass/' // TRIM(species%name), species%mass)
+            ENDIF
+          ENDDO
+        ENDIF
+#endif
         CALL write_particle_variable(c_dump_part_px, code, &
             'Px', 'kg.m/s', it_output_real)
         CALL write_particle_variable(c_dump_part_py, code, &
@@ -361,10 +394,6 @@ CONTAINS
         CALL write_particle_variable(c_dump_part_vz, code, &
             'Vz', 'm/s', it_output_real)
 
-        CALL write_particle_variable(c_dump_part_charge, code, &
-            'Q', 'C', it_output_real)
-        CALL write_particle_variable(c_dump_part_mass, code, &
-            'Mass', 'kg', it_output_real)
         CALL write_particle_variable(c_dump_part_ek, code, &
             'Ek', 'J', it_output_real)
         CALL write_particle_variable(c_dump_part_rel_mass, code, &
