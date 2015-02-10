@@ -312,10 +312,10 @@ CONTAINS
       species_list(ispecies)%migrate%demotion_energy_factor = 1.0_num
       species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
       species_list(ispecies)%migrate%demotion_density = 0.0_num
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       species_list(ispecies)%tracer = .FALSE.
 #endif
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       NULLIFY(species_list(ispecies)%attached_probes)
 #endif
     ENDDO
@@ -1015,7 +1015,7 @@ CONTAINS
               species_subtypes(ispecies), it_pz)
 
         ELSE IF (block_id(1:3) == 'id/') THEN
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
           ! Particle IDs may either be 4 or 8-byte integers, depending on the
           ! PARTICLE_ID[4] flag used when writing the file. We must read in
           ! the data using the precision written to file and then convert to
@@ -1036,14 +1036,14 @@ CONTAINS
 #endif
 
         ELSE IF (block_id(1:7) == 'weight/') THEN
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
               species_subtypes(ispecies), it_weight)
 #else
           IF (rank == 0) THEN
             PRINT*, '*** ERROR ***'
             PRINT*, 'Cannot load dump file with per particle weight.'
-            PRINT*, 'Please recompile with the -DPER_PARTICLE_WEIGHT option.'
+            PRINT*, 'Please recompile without the -DPER_SPECIES_WEIGHT option.'
           ENDIF
           CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
           STOP
@@ -1260,7 +1260,7 @@ CONTAINS
 
 
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
   FUNCTION it_weight(array, npart_this_it, start, param)
 
     REAL(num) :: it_weight
@@ -1282,7 +1282,7 @@ CONTAINS
 
 
 
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   FUNCTION it_id4(array, npart_this_it, start, param)
 
     USE constants

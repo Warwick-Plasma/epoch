@@ -34,9 +34,9 @@ CONTAINS
     ! Improved, but at the moment, this is just a straight copy of
     ! The core of the PSC algorithm
     INTEGER, PARAMETER :: sf0 = sf_min, sf1 = sf_max
-    REAL(num), DIMENSION(sf0-2:sf1+1,sf0-1:sf1+1,sf0-1:sf1+1) :: jxh
-    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-2:sf1+1,sf0-1:sf1+1) :: jyh
-    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-1:sf1+1,sf0-2:sf1+1) :: jzh
+    REAL(num) :: jxh
+    REAL(num), DIMENSION(sf0-1:sf1+1) :: jyh
+    REAL(num), DIMENSION(sf0-1:sf1+1,sf0-1:sf1+1) :: jzh
 
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y, part_z
@@ -44,7 +44,7 @@ CONTAINS
     REAL(num) :: part_q, part_mc, ipart_mc, part_weight
 
     ! Used for particle probes (to see of probe conditions are satisfied)
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     REAL(num) :: init_part_x, final_part_x
     REAL(num) :: init_part_y, final_part_y
     REAL(num) :: init_part_z, final_part_z
@@ -92,12 +92,14 @@ CONTAINS
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
     REAL(num) :: root, dtfac, gamma, third
     REAL(num) :: delta_x, delta_y, delta_z
-    INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz
+    REAL(num) :: xfac1, xfac2, yfac1, yfac2, zfac1, zfac2
+    REAL(num) :: gz_iz, hz_iz, hygz, hyhz, hzyfac1, hzyfac2, yzfac
+    INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz, cx, cy, cz
     INTEGER(i8) :: ipart
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
 #endif
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
     LOGICAL :: not_tracer_species
 #endif
     ! Particle weighting multiplication factor
@@ -120,10 +122,6 @@ CONTAINS
     jx = 0.0_num
     jy = 0.0_num
     jz = 0.0_num
-
-    jxh = 0.0_num
-    jyh = 0.0_num
-    jzh = 0.0_num
 
     gx = 0.0_num
     gy = 0.0_num
@@ -153,15 +151,15 @@ CONTAINS
 #endif
         CYCLE
       ENDIF
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
 #endif
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       not_tracer_species = .NOT. species_list(ispecies)%tracer
 #endif
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
       part_weight = species_list(ispecies)%weight
       fcx = idtyz * part_weight
       fcy = idtxz * part_weight
@@ -173,7 +171,7 @@ CONTAINS
       ipart_mc = 1.0_num / part_mc
       cmratio  = part_q * dtfac * ipart_mc
       ccmratio = c * cmratio
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       part_mc2 = c * part_mc
 #endif
 #endif
@@ -183,13 +181,13 @@ CONTAINS
 #ifdef PREFETCH
         CALL prefetch_particle(next)
 #endif
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_weight = current%weight
         fcx = idtyz * part_weight
         fcy = idtxz * part_weight
         fcz = idtxy * part_weight
 #endif
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
         init_part_x = current%part_pos(1)
         init_part_y = current%part_pos(2)
         init_part_z = current%part_pos(3)
@@ -200,7 +198,7 @@ CONTAINS
         ipart_mc = 1.0_num / part_mc
         cmratio  = part_q * dtfac * ipart_mc
         ccmratio = c * cmratio
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
         part_mc2 = c * part_mc
 #endif
 #endif
@@ -351,7 +349,7 @@ CONTAINS
             part_y + y_grid_min_local, part_z + z_grid_min_local /)
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
         final_part_x = current%part_pos(1)
         final_part_y = current%part_pos(2)
         final_part_z = current%part_pos(3)
@@ -361,7 +359,7 @@ CONTAINS
 
         ! If the code is compiled with tracer particle support then put in an
         ! IF statement so that the current is not calculated for this species
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
         IF (not_tracer_species) THEN
 #endif
           ! Now advance to t+1.5dt to calculate current. This is detailed in
@@ -427,43 +425,56 @@ CONTAINS
           zmin = sf_min + (dcellz - 1) / 2
           zmax = sf_max + (dcellz + 1) / 2
 
-          ! Set these to zero due to diffential inside loop
-          jxh = 0.0_num
-          jyh = 0.0_num
-          jzh = 0.0_num
-
           fjx = fcx * part_q
           fjy = fcy * part_q
           fjz = fcz * part_q
 
+          jzh = 0.0_num
           DO iz = zmin, zmax
+            cz = cell_z1 + iz
+            zfac1 =         gz(iz) + 0.5_num * hz(iz)
+            zfac2 = third * hz(iz) + 0.5_num * gz(iz)
+
+            gz_iz = gz(iz)
+            hz_iz = hz(iz)
+
+            jyh = 0.0_num
             DO iy = ymin, ymax
+              cy = cell_y1 + iy
+              yfac1 =         gy(iy) + 0.5_num * hy(iy)
+              yfac2 = third * hy(iy) + 0.5_num * gy(iy)
+
+              hygz = hy(iy) * gz_iz
+              hyhz = hy(iy) * hz_iz
+              yzfac = gy(iy) * zfac1 + hy(iy) * zfac2
+              hzyfac1 = hz_iz * yfac1
+              hzyfac2 = hz_iz * yfac2
+
+              jxh = 0.0_num
               DO ix = xmin, xmax
-                wx =  hx(ix) * (gy(iy) * (gz(iz) + 0.5_num * hz(iz)) &
-                    + hy(iy) * (third  *  hz(iz) + 0.5_num * gz(iz)))
-                wy =  hy(iy) * (gx(ix) * (gz(iz) + 0.5_num * hz(iz)) &
-                    + hx(ix) * (third  *  hz(iz) + 0.5_num * gz(iz)))
-                wz =  hz(iz) * (gx(ix) * (gy(iy) + 0.5_num * hy(iy)) &
-                    + hx(ix) * (third  *  hy(iy) + 0.5_num * gy(iy)))
+                cx = cell_x1 + ix
+                xfac1 =         gx(ix) + 0.5_num * hx(ix)
+                xfac2 = third * hx(ix) + 0.5_num * gx(ix)
+
+                wx = hx(ix) * yzfac
+                wy = xfac1 * hygz + xfac2 * hyhz
+                wz = gx(ix) * hzyfac1 + hx(ix) * hzyfac2
 
                 ! This is the bit that actually solves d(rho)/dt = -div(J)
-                jxh(ix, iy, iz) = jxh(ix-1, iy, iz) - fjx * wx
-                jyh(ix, iy, iz) = jyh(ix, iy-1, iz) - fjy * wy
-                jzh(ix, iy, iz) = jzh(ix, iy, iz-1) - fjz * wz
+                jxh = jxh - fjx * wx
+                jyh(ix) = jyh(ix) - fjy * wy
+                jzh(ix, iy) = jzh(ix, iy) - fjz * wz
 
-                jx(cell_x1+ix, cell_y1+iy, cell_z1+iz) = &
-                    jx(cell_x1+ix, cell_y1+iy, cell_z1+iz) + jxh(ix, iy, iz)
-                jy(cell_x1+ix, cell_y1+iy, cell_z1+iz) = &
-                    jy(cell_x1+ix, cell_y1+iy, cell_z1+iz) + jyh(ix, iy, iz)
-                jz(cell_x1+ix, cell_y1+iy, cell_z1+iz) = &
-                    jz(cell_x1+ix, cell_y1+iy, cell_z1+iz) + jzh(ix, iy, iz)
+                jx(cx, cy, cz) = jx(cx, cy, cz) + jxh
+                jy(cx, cy, cz) = jy(cx, cy, cz) + jyh(ix)
+                jz(cx, cy, cz) = jz(cx, cy, cz) + jzh(ix, iy)
               ENDDO
             ENDDO
           ENDDO
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
         ENDIF
 #endif
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
         IF (probes_for_species) THEN
           ! Compare the current particle with the parameters of any probes in
           ! the system. These particles are copied into a separate part of the
@@ -522,7 +533,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
 
     ! Used for particle probes (to see of probe conditions are satisfied)
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     REAL(num) :: init_part_x, final_part_x
     REAL(num) :: init_part_y, final_part_y
     REAL(num) :: init_part_z, final_part_z
@@ -533,7 +544,7 @@ CONTAINS
     LOGICAL :: probes_for_species
 #endif
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     current_probe => species_list(ispecies)%attached_probes
     probes_for_species = ASSOCIATED(current_probe)
 #endif
@@ -551,19 +562,19 @@ CONTAINS
       delta_x = current%part_p(1) * fac
       delta_y = current%part_p(2) * fac
       delta_z = current%part_p(3) * fac
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       init_part_x = current%part_pos(1)
       init_part_y = current%part_pos(2)
       init_part_z = current%part_pos(3)
 #endif
       current%part_pos = current%part_pos + (/delta_x, delta_y, delta_z/)
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       final_part_x = current%part_pos(1)
       final_part_y = current%part_pos(2)
       final_part_z = current%part_pos(3)
 #endif
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       IF (probes_for_species) THEN
         ! Compare the current particle with the parameters of any probes in
         ! the system. These particles are copied into a separate part of the

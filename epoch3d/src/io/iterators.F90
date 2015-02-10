@@ -1,7 +1,7 @@
 MODULE iterators
 
   USE particle_pointer_advance
-#if PARTICLE_ID || PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   USE partlist
 #endif
 
@@ -74,7 +74,7 @@ CONTAINS
 
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count < npoint_it))
       SELECT CASE (param)
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
       CASE (c_dump_part_weight) ! particle weight
         DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1

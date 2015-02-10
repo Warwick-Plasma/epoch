@@ -61,6 +61,66 @@ CONTAINS
 
   SUBROUTINE compiler_directives
 
+    LOGICAL :: found = .FALSE.
+
+#ifdef PARTICLE_DEBUG
+    found = .TRUE.
+#endif
+#ifdef PARSER_DEBUG
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_SHAPE_TOPHAT
+    found = .TRUE.
+#endif
+#ifdef PER_SPECIES_WEIGHT
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_COUNT_UPDATE
+    found = .TRUE.
+#endif
+#ifdef NO_TRACER_PARTICLES
+    found = .TRUE.
+#endif
+#ifdef NO_PARTICLE_PROBES
+    found = .TRUE.
+#endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+    found = .TRUE.
+#endif
+#ifdef HIGH_ORDER_SMOOTHING
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_ID4
+    found = .TRUE.
+#endif
+#ifdef PARTICLE_ID
+    found = .TRUE.
+#endif
+#ifdef PHOTONS
+    found = .TRUE.
+#ifdef TRIDENT_PHOTONS
+    found = .TRUE.
+#endif
+#endif
+#ifdef PREFETCH
+    found = .TRUE.
+#endif
+#ifdef MPI_DEBUG
+    found = .TRUE.
+#endif
+#ifdef NO_IO
+    found = .TRUE.
+#endif
+
+    IF (.NOT.found) THEN
+      WRITE(*,*) 'The code was compiled with no compile time options'
+      WRITE(*,*)
+      RETURN
+    ENDIF
+
     WRITE(*,*) 'The code was compiled with the following compile time options'
     WRITE(*,*) '*************************************************************'
 #ifdef PARTICLE_DEBUG
@@ -79,21 +139,24 @@ CONTAINS
     defines = IOR(defines, c_def_particle_shape_tophat)
     WRITE(*,*) 'Top-hat particle shape -DPARTICLE_SHAPE_TOPHAT'
 #endif
-#ifdef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
+    WRITE(*, *) 'Per species weighting -DPER_SPECIES_WEIGHT'
+#else
     defines = IOR(defines, c_def_per_particle_weight)
-    WRITE(*,*) 'Per particle weighting -DPER_PARTICLE_WEIGHT'
 #endif
 #ifdef PARTICLE_COUNT_UPDATE
     defines = IOR(defines, c_def_particle_count_update)
     WRITE(*,*) 'Global particle counting -DPARTICLE_COUNT_UPDATE'
 #endif
-#ifdef TRACER_PARTICLES
+#ifdef NO_TRACER_PARTICLES
+    WRITE(*, *) 'No tracer particle support -DNO_TRACER_PARTICLES'
+#else
     defines = IOR(defines, c_def_tracer_particles)
-    WRITE(*,*) 'Tracer particle support -DTRACER_PARTICLES'
 #endif
-#ifdef PARTICLE_PROBES
+#ifdef NO_PARTICLE_PROBES
+    WRITE(*, *) 'No particle probe support -DNO_PARTICLE_PROBES'
+#else
     defines = IOR(defines, c_def_particle_probes)
-    WRITE(*,*) 'Particle probe support -DPARTICLE_PROBES'
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     defines = IOR(defines, c_def_per_particle_chargemass)

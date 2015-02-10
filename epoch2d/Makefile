@@ -1,5 +1,7 @@
 # Specify a particular compiler with "make COMPILER=pgi", etc.
 # Specify debugging flags with "make MODE=debug"
+# Alternatively, these options can be specified as environment variables
+# eg. "export COMPILER=gfortran" can be added to $HOME/.bashrc
 
 
 # Compiler specific flags
@@ -22,7 +24,6 @@ ifeq ($(strip $(MODE)),debug)
   endif
 endif
 
-MPIF90 ?= mpif90
 D = -D
 
 # PGI
@@ -108,7 +109,7 @@ ifeq ($(strip $(COMPILER)),ibm)
     #FFLAGS = -qthreaded -qsmp=noauto -qsmp=omp # Hybrid stuff
   endif
   MODULEFLAG = -I$(OBJDIR) -qmoddir=$(OBJDIR)
-  MPIF90 = mpixlf90_r
+  MPIF90 ?= mpixlf90_r
 
   # IBM compiler needs a -WF to recognise preprocessor directives
   D = -WF,-D
@@ -122,7 +123,7 @@ ifeq ($(strip $(COMPILER)),hector)
     FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
   endif
   MODULEFLAG = -em -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
-  MPIF90 = ftn
+  MPIF90 ?= ftn
 endif
 
 # Don't compile encoded source if MODE=debug or ENC=no
@@ -137,6 +138,7 @@ else
   endif
 endif
 
+MPIF90 ?= mpif90
 FFLAGS += -I$(SDF)/include
 FFLAGS += $(MODULEFLAG)
 LDFLAGS = $(FFLAGS) -L$(SDF)/lib -lsdf
@@ -145,24 +147,26 @@ LDFLAGS = $(FFLAGS) -L$(SDF)/lib -lsdf
 TARGET = epoch2d
 
 # Set pre-processor defines
-DEFINES := $(DEF)
-DEFINES += $(D)PER_PARTICLE_WEIGHT
-DEFINES += $(D)PARTICLE_PROBES
-DEFINES += $(D)TRACER_PARTICLES
+DEFINES := $(DEFINE)
 
 # The following are a list of pre-processor defines which can be added to
 # the above line modifying the code behaviour at compile time.
 
-# Allow each pseudoparticle to represent a different number of real particles.
-#DEFINES += $(D)PER_PARTICLE_WEIGHT
+# Set every pseudoparticle in a species to represent the same number of
+# real particles.
+#DEFINES += $(D)PER_SPECIES_WEIGHT
 
-# Enable particles which behave like normal particles but do not affect
+# Don't enable support for tracer particles (in order to make the particle
+# push slightly faster).
+# Tracer particles which behave like normal particles but do not affect
 # the field, current or each other.
-#DEFINES += $(D)TRACER_PARTICLES
+#DEFINES += $(D)NO_TRACER_PARTICLES
 
-# Include diagnostics which gather information on particles which cross a
-# plane in the simulation.
-#DEFINES += $(D)PARTICLE_PROBES
+# Don't enable support for particle probes (in order to make the particle
+# push slightly faster).
+# Particle probes are diagnostics which gather information on particles which
+# cross a plane in the simulation.
+#DEFINES += $(D)NO_PARTICLE_PROBES
 
 # Use second order particle weighting (default is third order).
 #DEFINES += $(D)PARTICLE_SHAPE_TOPHAT
@@ -221,7 +225,7 @@ DEFINES += $(D)TRACER_PARTICLES
 
 ENCODED_SOURCE ?= epoch_source_info.o
 
-all: epoch
+all: main
 
 SDF := ../SDF/FORTRAN
 SDFMOD = $(SDF)/include/sdf.mod
@@ -247,7 +251,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   deck_species_block.F90 deck_subset_block.f90 deck_window_block.f90 \
   diagnostics.F90 dist_fn.F90 epoch2d.F90 evaluate.F90 evaluator_blocks.F90 \
   fields.f90 finish.f90 helper.F90 ic_module.f90 ionise.F90 iterators.F90 \
-  laser.f90 md5.f90 mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 \
+  laser.f90 mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 \
   particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
   particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
   random_generator.f90 redblack_module.f90 setup.F90 shape_functions.F90 \
@@ -274,10 +278,8 @@ OBJFILES := $(OBJFILES) $(ENCODED_SOURCE)
 FULLTARGET = $(BINDIR)/$(TARGET)
 
 SOURCE_ALL := Makefile $(SRCFILES) $(INCLUDES) pack.py pack.sh \
-  $(SRCDIR)/COMMIT epoch_source_info_dummy.f90 gen_commit_string
+  $(SRCDIR)/COMMIT $(SRCDIR)/gen_commit_string.sh epoch_source_info_dummy.f90
 
-#vpath %.f90 $(SRCDIR)
-#vpath %.o $(OBJDIR)
 VPATH = $(SRCDIR):$(SRCDIR)/deck:$(SRCDIR)/housekeeping:$(SRCDIR)/io:\
   $(SRCDIR)/parser:$(SRCDIR)/physics_packages:$(SRCDIR)/user_interaction:\
   $(SDF)/src:$(OBJDIR)
@@ -296,7 +298,7 @@ PACK_OPTS = $(GIT_WORK_TREE) $(PACK_PREFIX) $(PACK_SOURCE_CODE) \
     $(F77_OUTPUT)
 
 $(SRCDIR)/COMMIT: FORCE
-	@./$(SRCDIR)/gen_commit_string || $(MAKE) $(MAKECMDGOALS)
+	@sh $(SRCDIR)/gen_commit_string.sh || $(MAKE) $(MAKECMDGOALS)
 -include $(SRCDIR)/COMMIT
 
 # Rule to build the fortran files
@@ -307,7 +309,7 @@ $(SRCDIR)/COMMIT: FORCE
 %.o: %.F90
 	$(FC) -c $(FFLAGS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
-epoch: $(FULLTARGET)
+main: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
 	@mkdir -p $(BINDIR)
 	$(FC) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES)) $(LDFLAGS)
@@ -329,14 +331,17 @@ tidy:
 	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
 	$(MAKE) -C $(SDF) cleanall
 
+datatidy:
+	@rm -rf Data/*
+
 tarball:
 	@cd ..; sh make_tarball.sh
 
 visit:
-	@cd ../SDF/VisIt; ./build
+	@cd $(SDF)/../VisIt; ./build
 
 visitclean:
-	@cd ../SDF/VisIt; make clean; ./build -c; \
+	@cd $(SDF)/../VisIt; make clean; ./build -c; \
 	  rm -rf .depend *.d *Info.C *Info.h CMake* cmake* Makefile
 
 $(OBJFILES): | $(OBJDIR)
@@ -344,7 +349,7 @@ $(OBJFILES): | $(OBJDIR)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 
-.PHONY: clean cleanall tidy visit visitclean epoch FORCE
+.PHONY: clean cleanall tidy datatidy visit visitclean main FORCE
 
 # All the dependencies
 
@@ -362,8 +367,8 @@ deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   deck_constant_block.o deck_control_block.o deck_dist_fn_block.o \
   deck_fields_block.o deck_io_block.o deck_io_global_block.o \
   deck_laser_block.o deck_particle_probe_block.o deck_qed_block.o \
-  deck_species_block.o deck_subset_block.o deck_window_block.o md5.o photons.o \
-  strings.o version_data.o
+  deck_species_block.o deck_subset_block.o deck_window_block.o photons.o \
+  strings.o version_data.o $(SDFMOD)
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o
 deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
 deck_constant_block.o: deck_constant_block.f90 evaluate.o shunt.o
@@ -397,7 +402,6 @@ ic_module.o: ic_module.f90 helper.o shared_data.o
 ionise.o: ionise.F90 numerics.o partlist.o random_generator.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
-md5.o: md5.f90
 mpi_routines.o: mpi_routines.F90 helper.o
 mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 numerics.o: numerics.f90 shared_data.o
@@ -427,5 +431,5 @@ timer.o: timer.f90 shared_data.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
-welcome.o: welcome.F90 strings.o version_data.o
+welcome.o: welcome.F90 shared_data.o version_data.o
 window.o: window.F90 boundary.o evaluate.o partlist.o

@@ -419,13 +419,13 @@ CONTAINS
     ! This section sets properties for tracer particles
     ! *************************************************************
     IF (str_cmp(element, 'tracer')) THEN
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       species_list(species_id)%tracer = &
           as_logical_print(value, element, errcode)
 #else
       IF (as_logical_print(value, element, errcode)) THEN
         errcode = c_err_pp_options_wrong
-        extended_error_string = '-DTRACER_PARTICLES'
+        extended_error_string = '-DNO_TRACER_PARTICLES'
       ENDIF
 #endif
       RETURN

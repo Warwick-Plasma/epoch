@@ -22,13 +22,13 @@ MODULE deck
   USE deck_fields_block
   ! Extended IO Blocks
   USE deck_dist_fn_block
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
   USE deck_particle_probe_block
 #endif
   ! Custom blocks
   USE custom_deck
   USE version_data
-  USE md5
+  USE sdf
 
   IMPLICIT NONE
 
@@ -71,7 +71,7 @@ CONTAINS
     CALL io_global_deck_initialise
     CALL laser_deck_initialise
     CALL subset_deck_initialise
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     CALL probe_deck_initialise
 #endif
     CALL qed_deck_initialise
@@ -97,7 +97,7 @@ CONTAINS
     CALL io_global_deck_finalise
     CALL laser_deck_finalise
     CALL subset_deck_finalise
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     CALL probe_deck_finalise
 #endif
     CALL qed_deck_finalise
@@ -134,7 +134,7 @@ CONTAINS
       CALL laser_block_start
     ELSE IF (str_cmp(block_name, 'subset')) THEN
       CALL subset_block_start
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     ELSE IF (str_cmp(block_name, 'probe')) THEN
       CALL probe_block_start
 #endif
@@ -177,7 +177,7 @@ CONTAINS
       CALL laser_block_end
     ELSE IF (str_cmp(block_name, 'subset')) THEN
       CALL subset_block_end
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     ELSE IF (str_cmp(block_name, 'probe')) THEN
       CALL probe_block_end
 #endif
@@ -249,11 +249,11 @@ CONTAINS
           subset_block_handle_element(block_element, block_value)
       RETURN
     ELSE IF (str_cmp(block_name, 'probe')) THEN
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
       handle_block = probe_block_handle_element(block_element, block_value)
 #else
       handle_block = IOR(handle_block, c_err_pp_options_wrong)
-      extended_error_string = '-DPARTICLE_PROBES'
+      extended_error_string = '-DNO_PARTICLE_PROBES'
 #endif
       RETURN
     ELSE IF (str_cmp(block_name, 'qed')) THEN
@@ -305,7 +305,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, io_global_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
     errcode_deck = IOR(errcode_deck, subset_block_check())
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     errcode_deck = IOR(errcode_deck, probe_block_check())
 #endif
     errcode_deck = IOR(errcode_deck, species_block_check())
@@ -655,12 +655,12 @@ CONTAINS
       ENDDO
 
       IF (.NOT. already_parsed) THEN
-        CALL md5_init()
+        CALL sdf_md5_init()
         DO i = 1, fbuf%idx - 1
-           fbuf%md5sum = md5_append(fbuf%buffer(i)(1:buffer_size))
+           fbuf%md5sum = sdf_md5_append(fbuf%buffer(i)(1:buffer_size))
         ENDDO
-        fbuf%md5sum = md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
-        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = md5_append("")
+        fbuf%md5sum = sdf_md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
+        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = sdf_md5_append("")
       ENDIF
     ELSE
       DO
@@ -744,10 +744,11 @@ CONTAINS
     IF (str_cmp(element, 'begin')) THEN
       errcode_deck = handle_block(value, blank, blank)
       invalid_block = IAND(errcode_deck, c_err_unknown_block) /= 0
-      invalid_block = invalid_block .OR. IAND(errcode_deck, &
-          c_err_pp_options_wrong) /= 0
+      invalid_block = invalid_block &
+          .OR. (IAND(errcode_deck, c_err_pp_options_missing) /= 0) &
+          .OR. (IAND(errcode_deck, c_err_pp_options_wrong) /= 0)
       IF (invalid_block .AND. rank == rank_check) THEN
-        IF(IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
+        IF (IAND(errcode_deck, c_err_pp_options_missing) /= 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
@@ -758,6 +759,20 @@ CONTAINS
                 // 'preprocessor options.'
             WRITE(io,*) 'Code will continue, but to use selected features, ' &
                 // 'please recompile with the'
+            WRITE(io,*) TRIM(extended_error_string) // ' option'
+            WRITE(io,*)
+          ENDDO
+        ELSE IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*)
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'The block "' // TRIM(value) &
+                // '" cannot be set because'
+            WRITE(io,*) 'the code has not been compiled with the correct ' &
+                // 'preprocessor options.'
+            WRITE(io,*) 'Code will continue, but to use selected features, ' &
+                // 'please recompile without the'
             WRITE(io,*) TRIM(extended_error_string) // ' option'
             WRITE(io,*)
           ENDDO
@@ -904,7 +919,7 @@ CONTAINS
       ENDIF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
     ENDIF
-    IF (IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
+    IF (IAND(errcode_deck, c_err_pp_options_missing) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -970,7 +985,6 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: handle
     TYPE(file_buffer), POINTER :: fbuf
-    CHARACTER(LEN=1) :: dummy1(1), dummy2
     INTEGER :: i
 
     IF (rank == 0) THEN
@@ -992,7 +1006,7 @@ CONTAINS
   SUBROUTINE deallocate_input_deck_buffer
 
     TYPE(file_buffer), POINTER :: fbuf, next
-    INTEGER :: i, stat
+    INTEGER :: stat
 
     IF (.NOT. ASSOCIATED(file_buffer_head)) RETURN
 

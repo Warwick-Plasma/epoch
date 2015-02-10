@@ -602,8 +602,7 @@ CONTAINS
             t2 = c * (p0 - d2 * f0)
             bk1 = bk1 + t1
             bk2 = bk2 + t2
-            run = (ABS(t1 / (f1 + bk1)) > eps) .OR. &
-                (ABS(t2 / (f2 + bk2)) > eps)
+            run = (ABS(t1 / (f1 + bk1)) > eps) .OR. (ABS(t2 / (f2 + bk2)) > eps)
           ENDDO
           bk1 = f1 + bk1
           bk2 = 2.0_num * (f2 + bk2) / ex

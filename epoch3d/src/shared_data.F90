@@ -66,12 +66,13 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_missing_elements = 2**5
   INTEGER, PARAMETER :: c_err_terminate = 2**6
   INTEGER, PARAMETER :: c_err_required_element_not_set = 2**7
-  INTEGER, PARAMETER :: c_err_pp_options_wrong = 2**8
+  INTEGER, PARAMETER :: c_err_pp_options_missing = 2**8
   INTEGER, PARAMETER :: c_err_bad_array_length = 2**9
   INTEGER, PARAMETER :: c_err_other = 2**10
   INTEGER, PARAMETER :: c_err_warn_bad_value = 2**11
   INTEGER, PARAMETER :: c_err_generic_warning = 2**12
   INTEGER, PARAMETER :: c_err_generic_error = 2**13
+  INTEGER, PARAMETER :: c_err_pp_options_wrong = 2**14
 
   INTEGER, PARAMETER :: c_ds_first = 1
   INTEGER, PARAMETER :: c_ds_last = 2
@@ -472,7 +473,7 @@ MODULE shared_data
   TYPE particle
     REAL(num), DIMENSION(3) :: part_p
     REAL(num), DIMENSION(c_ndims) :: part_pos
-#ifdef PER_PARTICLE_WEIGHT
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     REAL(num) :: weight
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -543,7 +544,7 @@ MODULE shared_data
     TYPE(particle_list) :: attached_list
     LOGICAL :: immobile
 
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
 #endif
 
@@ -577,7 +578,7 @@ MODULE shared_data
     REAL(num) :: ionisation_energy
 
     ! Attached probes for this species
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
     TYPE(particle_probe), POINTER :: attached_probes
 #endif
 
@@ -759,6 +760,7 @@ MODULE shared_data
     LOGICAL :: use_charge_min, use_charge_max
     LOGICAL :: use_mass_min, use_mass_max
     LOGICAL :: use_id_min, use_id_max
+    LOGICAL :: skip, dump_field_grid
     REAL(num) :: gamma_min, gamma_max, random_fraction
     REAL(num) :: x_min, x_max, y_min, y_max, z_min, z_max
     REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
@@ -766,6 +768,8 @@ MODULE shared_data
     REAL(num) :: charge_min, charge_max
     REAL(num) :: mass_min, mass_max
     INTEGER(i8) :: id_min, id_max
+    INTEGER :: subtype, subarray, subtype_r4, subarray_r4
+    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
@@ -773,7 +777,7 @@ MODULE shared_data
   TYPE(subset), DIMENSION(:), POINTER :: subset_list
   INTEGER :: n_subsets
 
-#ifdef PARTICLE_PROBES
+#ifndef NO_PARTICLE_PROBES
   TYPE particle_probe
     ! Arbitrary point on the plane
     REAL(num), DIMENSION(c_ndims) :: point
@@ -1036,7 +1040,7 @@ MODULE shared_data
   REAL(num) :: walltime_start, real_walltime_start
   REAL(num) :: stop_at_walltime
   INTEGER :: stdout_frequency, check_stop_frequency
-  LOGICAL :: check_walltime
+  LOGICAL :: check_walltime, print_eta_string
 
   LOGICAL, DIMENSION(c_dir_x:c_dir_z,0:c_stagger_max) :: stagger
   INTEGER(i8) :: push_per_field = 5

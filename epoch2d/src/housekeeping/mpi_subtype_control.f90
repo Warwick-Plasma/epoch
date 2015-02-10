@@ -41,6 +41,10 @@ CONTAINS
 
   SUBROUTINE create_subtypes
 
+    INTEGER :: i, j, rd, n_min, n_max, mpitype
+    INTEGER, DIMENSION(c_ndims) :: n_local, n_global, starts
+    TYPE(subset), POINTER :: sub
+
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when writing data
 
@@ -53,6 +57,56 @@ CONTAINS
     subarray_field_r4 = create_current_field_subarray(ng, MPI_REAL4)
     subarray_field_big_r4 = create_current_field_subarray(jng, MPI_REAL4)
 
+    n_local = (/nx, ny/)
+    n_global = (/nx_global, ny_global/)
+    starts = 0
+
+    DO i = 1, n_subsets
+      sub => subset_list(i)
+      sub%n_local = n_local
+      sub%n_global = n_global
+
+      IF (sub%skip) THEN
+        DO j = 1, c_ndims
+          rd = sub%skip_dir(j)
+          n_min = MOD(n_global_min(j)-1, rd)
+          n_max = MOD(n_global_max(j),   rd)
+          sub%n_local(j) = n_local(j) / rd + MIN(1, n_max)
+          n_max = MOD(n_global(j), rd)
+          sub%n_global(j) = n_global(j) / rd + MIN(1, n_max)
+          sub%n_start(j) = n_min
+        ENDDO
+
+        mpitype = MPI_DATATYPE_NULL
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+        CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+        sub%subtype = mpitype
+
+        mpitype = MPI_DATATYPE_NULL
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+        CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+        sub%subarray = mpitype
+
+        mpitype = MPI_DATATYPE_NULL
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+        CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+        sub%subtype_r4 = mpitype
+
+        mpitype = MPI_DATATYPE_NULL
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+        CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+        sub%subarray_r4 = mpitype
+      ENDIF
+    ENDDO
+
   END SUBROUTINE create_subtypes
 
 
@@ -63,6 +117,9 @@ CONTAINS
 
   SUBROUTINE free_subtypes
 
+    INTEGER :: i
+    TYPE(subset), POINTER :: sub
+
     CALL MPI_TYPE_FREE(subtype_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field_big, errcode)
@@ -70,6 +127,16 @@ CONTAINS
     CALL MPI_TYPE_FREE(subtype_field_r4, errcode)
     CALL MPI_TYPE_FREE(subarray_field_r4, errcode)
     CALL MPI_TYPE_FREE(subarray_field_big_r4, errcode)
+
+    DO i = 1, n_subsets
+      sub => subset_list(i)
+      IF (sub%skip) THEN
+        CALL MPI_TYPE_FREE(sub%subtype, errcode)
+        CALL MPI_TYPE_FREE(sub%subarray, errcode)
+        CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
+        CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
+      ENDIF
+    ENDDO
 
   END SUBROUTINE free_subtypes
 

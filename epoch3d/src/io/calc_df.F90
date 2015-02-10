@@ -112,7 +112,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -124,12 +124,12 @@ CONTAINS
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_m  = current%mass
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         fac = current%weight
 #endif
         wdata = part_m * fac
 #else
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         fac = current%weight
         wdata = part_m * fac
 #endif
@@ -196,7 +196,7 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -208,12 +208,12 @@ CONTAINS
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc = c * current%mass
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
 #endif
         fac = part_mc * part_w * c
 #else
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
         fac = part_mc * part_w * c
 #endif
@@ -304,7 +304,7 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -316,12 +316,12 @@ CONTAINS
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc = c * current%mass
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
 #endif
         fac = part_mc * part_w * c
 #else
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
         fac = part_mc * part_w * c
 #endif
@@ -495,7 +495,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -507,12 +507,12 @@ CONTAINS
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_q  = current%charge
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         fac = current%weight
 #endif
         wdata = part_q * fac
 #else
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         fac = current%weight
         wdata = part_q * fac
 #endif
@@ -572,14 +572,14 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       wdata = io_list(ispecies)%weight
 
       DO WHILE (ASSOCIATED(current))
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         wdata = current%weight
 #endif
 
@@ -646,7 +646,7 @@ CONTAINS
     sigma = 0.0_num
 
     DO ispecies = spec_start, spec_end
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -657,7 +657,7 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGE_MASS
         sqrt_part_m  = SQRT(current%mass)
 #endif
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
 #endif
         ! Copy the particle properties out for speed
@@ -699,7 +699,7 @@ CONTAINS
 
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -779,7 +779,7 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -842,7 +842,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -854,7 +854,7 @@ CONTAINS
 
       DO ipart = 1, io_list(ispecies)%attached_list%count
         next => current%next
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_q  = current%charge
@@ -953,7 +953,7 @@ CONTAINS
 
     ! Sum over all particles to calculate total kinetic energy
     DO ispecies = 1, n_species
-#ifdef TRACER_PARTICLES
+#ifndef NO_TRACER_PARTICLES
       IF (species_list(ispecies)%tracer) CYCLE
 #endif
       current => species_list(ispecies)%attached_list%head
@@ -965,12 +965,12 @@ CONTAINS
         ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc = c * current%mass
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
 #endif
         fac = part_mc * part_w * c
 #else
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
         fac = part_mc * part_w * c
 #endif

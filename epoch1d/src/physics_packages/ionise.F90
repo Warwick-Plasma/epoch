@@ -339,7 +339,7 @@ CONTAINS
       IF ( .NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
       weight = species_list(i)%weight
 #endif
 
@@ -466,7 +466,7 @@ CONTAINS
             IF (species_list(current_state)%release_species > 0) THEN
               ALLOCATE(new)
               ! Create electron for release
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
 #endif
               new%part_pos = current%part_pos
@@ -529,14 +529,14 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
           weight = current%weight
 #endif
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -600,7 +600,7 @@ CONTAINS
       IF ( .NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
       weight = species_list(i)%weight
 #endif
 
@@ -714,7 +714,7 @@ CONTAINS
             IF (species_list(current_state)%release_species > 0) THEN
               ALLOCATE(new)
               ! Create electron for release
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
 #endif
               new%part_pos = current%part_pos
@@ -777,14 +777,14 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
           weight = current%weight
 #endif
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -847,7 +847,7 @@ CONTAINS
       IF ( .NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
       weight = species_list(i)%weight
 #endif
 
@@ -965,7 +965,7 @@ CONTAINS
             IF (species_list(current_state)%release_species > 0) THEN
               ALLOCATE(new)
               ! Create electron for release
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
 #endif
               new%part_pos = current%part_pos
@@ -1014,14 +1014,14 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
           weight = current%weight
 #endif
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)
@@ -1084,7 +1084,7 @@ CONTAINS
       IF ( .NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
       weight = species_list(i)%weight
 #endif
 
@@ -1188,7 +1188,7 @@ CONTAINS
             IF (species_list(current_state)%release_species > 0) THEN
               ALLOCATE(new)
               ! Create electron for release
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
 #endif
               new%part_pos = current%part_pos
@@ -1237,14 +1237,14 @@ CONTAINS
               current)
           CALL add_particle_to_partlist(ionised_list(current_state), current)
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
           weight = current%weight
 #endif
           j_ion = dfac * j_ion * weight * (/ ex_part, ey_part, ez_part /) &
               / (atomic_electric_field * e_part_mag)**2
 
-          IF (ABS(j_ion(1)) > c_tiny .OR. ABS(j_ion(2)) > c_tiny .OR. &
-              ABS(j_ion(3)) > c_tiny) THEN
+          IF (ABS(j_ion(1)) > c_tiny &
+              .OR. ABS(j_ion(2)) > c_tiny .OR. ABS(j_ion(3)) > c_tiny) THEN
             DO ix = sf_min, sf_max
               jx(cell_x2+ix) = jx(cell_x2+ix) + hx(ix) * j_ion(1)
               jy(cell_x1+ix) = jy(cell_x1+ix) + gx(ix) * j_ion(2)

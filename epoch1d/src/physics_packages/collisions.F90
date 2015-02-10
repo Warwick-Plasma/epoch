@@ -18,14 +18,11 @@ MODULE collisions
   PUBLIC :: test_collisions
 #endif
 
-  REAL(num) :: collision_count, large_angle_collision
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
 
-  REAL(num) :: nu_avg
   REAL(num), PARAMETER :: e_rest = m0 * c**2
   REAL(num), PARAMETER :: e_rest_ev = e_rest / ev
   REAL(num), PARAMETER :: mrbeb_const = 2.0_num * pi * a0**2 * alpha**4
-  INTEGER :: nu_count
 
   REAL(num), DIMENSION(3,0:2), PARAMETER :: a_bell = RESHAPE( &
       (/ 0.5250_num, 0.5300_num, 0.1300_num, &
@@ -165,7 +162,7 @@ CONTAINS
 
   SUBROUTINE collisional_ionisation
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     INTEGER :: ispecies, jspecies, ion_species, e_species, n1, n2, l
     INTEGER(i8) :: ix
     TYPE(particle_list), POINTER :: p_list1
@@ -400,7 +397,7 @@ CONTAINS
 
 
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
   SUBROUTINE preionise(electrons, ions, ionised, ionising_e, &
       ejected_e, e_mass, ion_mass, e_charge, ion_charge, e_dens, &
       full_ion_charge, ionisation_energy, n1, n2, l)
@@ -428,7 +425,7 @@ CONTAINS
     ion_count = ions%count
 
     ! If there aren't enough particles to collide, then don't bother
-    IF(e_count == 0 .OR. ion_count == 0) RETURN
+    IF (e_count == 0 .OR. ion_count == 0) RETURN
 
     pcount = MAX(e_count, ion_count)
     factor = 0.0_num
@@ -463,8 +460,8 @@ CONTAINS
     DO k = 1, pcount
       i_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
       ! Angles for rotation such that ion velocity |v| = v_x
-      IF(i_p2 > 0.0_num) THEN
-        IF(ABS(ion%part_p(1)) > c_tiny) THEN
+      IF (i_p2 > 0.0_num) THEN
+        IF (ABS(ion%part_p(1)) > c_tiny) THEN
           rot_y = DATAN(ion%part_p(3) / ion%part_p(1))
         ELSE
           rot_y = pi / 2.0_num
@@ -562,7 +559,7 @@ CONTAINS
           ! Mark ionisation as occurring
           was_ionised(MOD(k - 1, ion_count) + 1) = .TRUE.
           lost_ke(MOD(k - 1, e_count) + 1) = .TRUE.
-          IF(i_p2 > 0.0_num) THEN
+          IF (i_p2 > 0.0_num) THEN
             ! Reduce electron momentum by ionisation energy
             e_p_rot = SQRT(((ev / c * (e_ke_i - ion%weight / electron%weight &
                 * ionisation_energy + e_rest_ev))**2 - e_mass * e_rest) &
@@ -581,8 +578,8 @@ CONTAINS
                 * DCOS(rot_y) - e_p_rot(1) * DSIN(rot_y) /)
             ! If numerical error causes the electron to gain energy we catch it
             ! and apply the non-relativistic ionisation energy correction
-            IF(DOT_PRODUCT(electron%part_p, electron%part_p) < &
-                DOT_PRODUCT(e_p_rot, e_p_rot)) THEN
+            IF (DOT_PRODUCT(electron%part_p, electron%part_p) &
+                < DOT_PRODUCT(e_p_rot, e_p_rot)) THEN
               electron%part_p = SQRT(((ev / c * (e_ke_i - ion%weight &
                 / electron%weight * ionisation_energy + e_rest_ev))**2 &
                 - e_mass * e_rest) / e_p2_i) * electron%part_p
@@ -674,7 +671,7 @@ CONTAINS
     ! No collisions in cold plasma so return
     IF (temp <= c_tiny) RETURN
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
     np = icount * weight
     factor = user_factor
 #else
@@ -770,7 +767,7 @@ CONTAINS
       p_list1%tail%next => p_list1%head
       p_list2%tail%next => p_list2%head
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
       np = pcount * weight1
       factor = pcount * MIN(weight1, weight2)
 #else
@@ -964,7 +961,7 @@ CONTAINS
     e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
     e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     w1 = current%weight
     w2 = impact%weight
 #else
@@ -1279,13 +1276,13 @@ CONTAINS
 
     idx   = 1.0_num / dx
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
     wdata = species_list(ispecies)%weight * idx
 #endif
     DO jx = 1, nx
       current => species_list(ispecies)%secondary_list(jx)%head
       DO WHILE (ASSOCIATED(current))
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         wdata = current%weight * idx
 #endif
 
@@ -1336,7 +1333,7 @@ CONTAINS
 #ifndef PER_PARTICLE_CHARGE_MASS
     sqrt_part_m  = SQRT(species_list(ispecies)%mass)
 #endif
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
     l_weight = species_list(ispecies)%weight
 #endif
     DO jx = 1, nx
@@ -1345,7 +1342,7 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGE_MASS
         sqrt_part_m  = SQRT(current%mass)
 #endif
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
         l_weight = current%weight
 #endif
         ! Copy the particle properties out for speed

@@ -59,7 +59,7 @@ CONTAINS
     DO ispecies = 1, n_species
       species => species_list(ispecies)
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
       CALL setup_particle_density(initial_conditions(ispecies)%density, &
           species, initial_conditions(ispecies)%density_min, &
           initial_conditions(ispecies)%density_max)
@@ -134,7 +134,7 @@ CONTAINS
 
 
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
   SUBROUTINE non_uniform_load_particles(density, species, density_min, &
       density_max)
 
@@ -504,7 +504,7 @@ CONTAINS
 
 
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
   SUBROUTINE setup_particle_density(density_in, species, density_min, &
       density_max)
 

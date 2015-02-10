@@ -53,6 +53,9 @@ CONTAINS
       DEALLOCATE(subset_names)
     ELSE
       DEALLOCATE(subset_blocks)
+      DO i = 1, n_subsets
+        subset_list(i)%skip = (SUM(subset_list(i)%skip_dir - 1) /= 0)
+      ENDDO
     ENDIF
 
   END SUBROUTINE subset_deck_finalise
@@ -263,6 +266,30 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'skip')) THEN
+      subset_list(subset_id)%skip_dir = &
+          as_integer_print(value, element, errcode) + 1
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'skip_x')) THEN
+      subset_list(subset_id)%skip_dir(1) = &
+          as_integer_print(value, element, errcode) + 1
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'skip_y')) THEN
+      subset_list(subset_id)%skip_dir(2) = &
+          as_integer_print(value, element, errcode) + 1
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'skip_z')) THEN
+      subset_list(subset_id)%skip_dir(3) = &
+          as_integer_print(value, element, errcode) + 1
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'include_species')) THEN
       ispecies = as_integer_print(value, element, errcode)
       IF (errcode == c_err_none) THEN
@@ -352,6 +379,9 @@ CONTAINS
       subset_list(i)%use_mass_max   = .FALSE.
       subset_list(i)%use_id_min     = .FALSE.
       subset_list(i)%use_id_max     = .FALSE.
+      subset_list(i)%skip           = .FALSE.
+      subset_list(i)%dump_field_grid = .FALSE.
+      subset_list(i)%skip_dir       = 1
       subset_list(i)%random_fraction = 0.0_num
       subset_list(i)%gamma_min  = -HUGE(1.0_num)
       subset_list(i)%gamma_max  =  HUGE(1.0_num)

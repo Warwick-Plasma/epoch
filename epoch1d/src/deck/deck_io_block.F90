@@ -10,14 +10,15 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + 28
-  INTEGER :: block_number, full_io_block, restart_io_block, nfile_prefixes
+  INTEGER, PARAMETER :: ov = 28
+  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + ov
+  INTEGER :: block_number, nfile_prefixes
   INTEGER :: rolling_restart_io_block
+  INTEGER :: o1, o2, o3, o4, o5, o6, o7, o8
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
-  CHARACTER(LEN=string_length) :: name
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
   TYPE(io_block_type), POINTER :: io_block
 
@@ -90,6 +91,7 @@ CONTAINS
     io_block_name (c_dump_total_energy_sum ) = 'total_energy_sum'
 
     i = num_vars_to_dump
+    o1 = 1
     io_block_name (i+1 ) = 'dt_snapshot'
     io_block_name (i+2 ) = 'full_dump_every'
     io_block_name (i+3 ) = 'restart_dump_every'
@@ -97,17 +99,22 @@ CONTAINS
     io_block_name (i+5 ) = 'force_final_to_be_restartable'
     alternate_name(i+5 ) = 'force_last_to_be_restartable'
     io_block_name (i+6 ) = 'use_offset_grid'
+    o2 = 7
     io_block_name (i+7 ) = 'extended_io_file'
+    o3 = 8
     io_block_name (i+8 ) = 'dt_average'
     alternate_name(i+8 ) = 'averaging_period'
+    o4 = 9
     io_block_name (i+9 ) = 'nstep_average'
     alternate_name(i+9 ) = 'min_cycles_per_average'
+    o5 = 10
     io_block_name (i+10) = 'nstep_snapshot'
     io_block_name (i+11) = 'dump_source_code'
     io_block_name (i+12) = 'dump_input_decks'
     io_block_name (i+13) = 'dump_first'
     io_block_name (i+14) = 'dump_last'
     alternate_name(i+14) = 'dump_final'
+    o6 = 15
     io_block_name (i+15) = 'restartable'
     io_block_name (i+16) = 'name'
     io_block_name (i+17) = 'time_start'
@@ -118,12 +125,14 @@ CONTAINS
     alternate_name(i+21) = 'nsteps_dump'
     io_block_name (i+22) = 'dump_at_times'
     alternate_name(i+22) = 'times_dump'
+    o7 = 23
     io_block_name (i+23) = 'dump_cycle'
+    o8 = 24
     io_block_name (i+24) = 'file_prefix'
     io_block_name (i+25) = 'rolling_restart'
     io_block_name (i+26) = 'dump_cycle_first_index'
     io_block_name (i+27) = 'filesystem'
-    io_block_name (i+28) = 'disabled'
+    io_block_name (i+ov) = 'disabled'
 
     track_ejected_particles = .FALSE.
     dump_absorption = .FALSE.
@@ -246,9 +255,9 @@ CONTAINS
     IF (deck_state /= c_ds_first .AND. block_number > 0) THEN
       io_block => io_block_list(block_number)
       IF (io_block%rolling_restart) THEN
-        io_block_done(num_vars_to_dump+15) = .TRUE.
-        io_block_done(num_vars_to_dump+23) = .TRUE.
-        io_block_done(num_vars_to_dump+24) = .TRUE.
+        io_block_done(num_vars_to_dump+o6) = .TRUE.
+        io_block_done(num_vars_to_dump+o7) = .TRUE.
+        io_block_done(num_vars_to_dump+o8) = .TRUE.
       ENDIF
     ENDIF
 
@@ -550,11 +559,11 @@ CONTAINS
 
       ! If setting dumpmask for features which haven't been compiled
       ! in then issue a warning
-#ifndef PARTICLE_PROBES
+#ifdef NO_PARTICLE_PROBES
       IF (mask_element == c_dump_probes &
           .AND. mask /= c_io_none .AND. IAND(mask,c_io_never) == 0) THEN
         errcode = c_err_pp_options_wrong
-        extended_error_string = '-DPARTICLE_PROBES'
+        extended_error_string = '-NO_DPARTICLE_PROBES'
         mask = c_io_never
       ENDIF
 #endif
@@ -565,7 +574,7 @@ CONTAINS
 #ifndef PARTICLE_ID
       IF (mask_element == c_dump_part_id &
           .AND. mask /= c_io_none .AND. IAND(mask,c_io_never) == 0) THEN
-        errcode = c_err_pp_options_wrong
+        errcode = c_err_pp_options_missing
         extended_error_string = '-DPARTICLE_ID'
         mask = c_io_never
       ENDIF
@@ -670,12 +679,12 @@ CONTAINS
 
     ! Other control parameters are optional
     i = num_vars_to_dump
-    io_block_done(i+1:i+7) = .TRUE.
-    io_block_done(i+10:io_block_elements) = .TRUE.
+    io_block_done(i+o1:i+o2) = .TRUE.
+    io_block_done(i+o5:io_block_elements) = .TRUE.
     ! Averaging info not compulsory unless averaged variable selected
-    IF (.NOT. any_average) io_block_done(i+8:i+9) = .TRUE.
+    IF (.NOT. any_average) io_block_done(i+o3:i+o4) = .TRUE.
 
-    IF (.NOT. io_block_done(i+8) .AND. .NOT. io_block_done(i+9)) THEN
+    IF (.NOT. io_block_done(i+o3) .AND. .NOT. io_block_done(i+o4)) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)

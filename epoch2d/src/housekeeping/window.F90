@@ -14,13 +14,13 @@ CONTAINS
 
   SUBROUTINE initialise_window
 
-#ifndef PER_PARTICLE_WEIGHT
+#ifdef PER_SPECIES_WEIGHT
     INTEGER :: ierr
 #endif
 
     IF (.NOT. move_window) RETURN
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     ALLOCATE(density(-2:ny+3))
     ALLOCATE(temperature(-2:ny+3, 1:3))
     ALLOCATE(drift(-2:ny+3, 1:3))
@@ -47,7 +47,7 @@ CONTAINS
 
 
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
   SUBROUTINE shift_window(window_shift_cells)
 
     INTEGER, INTENT(IN) :: window_shift_cells
@@ -278,7 +278,7 @@ CONTAINS
 
   SUBROUTINE moving_window
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
     INTEGER :: window_shift_cells
 #else
@@ -287,7 +287,7 @@ CONTAINS
 
     IF (.NOT. move_window) RETURN
 
-#ifdef PER_PARTICLE_WEIGHT
+#ifndef PER_SPECIES_WEIGHT
     IF (.NOT. window_started) THEN
       IF (time >= window_start_time) THEN
         bc_field(c_bd_x_min) = bc_x_min_after_move

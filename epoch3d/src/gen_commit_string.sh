@@ -35,7 +35,7 @@ if [ $? -eq 0 ]; then
   commit_string=$gitdescribe-$state
 else
 # not in a git repo
-  gitdescribe=unknown-unknown-unknown
+  commit_string=unknown-unknown-unknown-unknown
 fi
 
 [ -z $commit_string ] && exit
