@@ -47,5 +47,5 @@ if [ $? -eq 0 ]; then
   exit
 else
   echo "COMMIT=$commit_string" > $COMMIT_FILE
-  exit 1
+  exit
 fi
