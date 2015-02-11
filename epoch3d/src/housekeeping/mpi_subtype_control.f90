@@ -41,7 +41,7 @@ CONTAINS
 
   SUBROUTINE create_subtypes
 
-    INTEGER :: i, j, rd, n_min, n_max, mpitype
+    INTEGER :: i, j, rd, n_min, n_max, mpitype, npd, npdm, n0
     INTEGER, DIMENSION(c_ndims) :: n_local, n_global, starts
     TYPE(subset), POINTER :: sub
 
@@ -60,6 +60,7 @@ CONTAINS
     n_local = (/nx, ny, nz/)
     n_global = (/nx_global, ny_global, nz_global/)
     starts = 0
+    n0 = 1
 
     DO i = 1, n_subsets
       sub => subset_list(i)
@@ -69,12 +70,15 @@ CONTAINS
       IF (sub%skip) THEN
         DO j = 1, c_ndims
           rd = sub%skip_dir(j)
-          n_min = MOD(n_global_min(j)-1, rd)
-          n_max = MOD(n_global_max(j),   rd)
-          sub%n_local(j) = n_local(j) / rd + MIN(1, n_max)
-          n_max = MOD(n_global(j), rd)
-          sub%n_global(j) = n_global(j) / rd + MIN(1, n_max)
-          sub%n_start(j) = n_min
+          n_min = n_global_min(j)
+          n_max = n_global_max(j)
+          npd = (n_max - n0) / rd + 1
+          npdm = (n_min - 1 - n0) / rd + 1
+          IF (n_min < 2) npdm = 0
+          sub%n_global(j) = (n_global(j) - n0) / rd + 1
+          sub%n_local(j) = npd - npdm
+          sub%n_start(j) = n0 + npdm * rd - n_min
+          starts(j) = npdm
         ENDDO
 
         mpitype = MPI_DATATYPE_NULL
@@ -85,18 +89,19 @@ CONTAINS
         sub%subtype = mpitype
 
         mpitype = MPI_DATATYPE_NULL
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subarray = mpitype
-
-        mpitype = MPI_DATATYPE_NULL
         CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
             starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
         CALL MPI_TYPE_COMMIT(mpitype, errcode)
 
         sub%subtype_r4 = mpitype
+
+        starts = 0
+        mpitype = MPI_DATATYPE_NULL
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+        CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+        sub%subarray = mpitype
 
         mpitype = MPI_DATATYPE_NULL
         CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
