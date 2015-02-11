@@ -35,6 +35,8 @@ if [ $? -eq 0 ]; then
   commit_string=$gitdescribe-$state
 else
 # not in a git repo
+  grep "COMMIT=" $COMMIT_FILE > /dev/null 2>&1
+  [ $? -eq 0 ] && exit
   commit_string=unknown-unknown-unknown-unknown
 fi
 
@@ -45,5 +47,5 @@ if [ $? -eq 0 ]; then
   exit
 else
   echo "COMMIT=$commit_string" > $COMMIT_FILE
-  exit 1
+  exit
 fi
