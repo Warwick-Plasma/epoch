@@ -22,6 +22,10 @@ def str2bool(x):
       raise TypeError
    return x.lower() in ['true', 'yes', '1']
 
+
+def stripped(s):
+    return s.strip()
+
 if got_argparse:
    argp = argparse.ArgumentParser(
          description="Pack source code for writing to SDF output")
@@ -37,8 +41,8 @@ if got_argparse:
    argp.add_argument("f77_output", type=str2bool,
          help="Fortran 77 output")
    argp.add_argument("outfile", type=str, help="Output file")
-   argp.add_argument("compiler_info", type=str, help="Compiler info")
-   argp.add_argument("compiler_flags", type=str, help="Compiler flags")
+   argp.add_argument("compiler_info", type=stripped, help="Compiler info")
+   argp.add_argument("compiler_flags", type=stripped, help="Compiler flags")
    argp.add_argument("filelist", type=str, nargs='*', help="Source files")
    args = argp.parse_args()
 else:
@@ -51,8 +55,8 @@ else:
    args.generate_checksum = str2bool(sys.argv[i]); i += 1
    args.f77_output = str2bool(sys.argv[i]); i += 1
    args.outfile = sys.argv[i]; i += 1
-   args.compiler_info = sys.argv[i]; i += 1
-   args.compiler_flags = sys.argv[i]; i += 1
+   args.compiler_info = sys.argv[i].strip(); i += 1
+   args.compiler_flags = sys.argv[i].strip(); i += 1
    args.filelist = sys.argv[i:]
 
 prefix = args.prefix

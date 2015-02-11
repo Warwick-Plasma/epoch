@@ -1,10 +1,9 @@
 #! /bin/sh
 
 GIT_WORK_TREE=$1
-GIT_DIR=$1/.git
-if [ ! -d $GIT_DIR ] ; then
-   GIT_DIR=$(awk '/^gitdir:/ { print $2 }' $GIT_DIR)
-fi
+cd $GIT_WORK_TREE
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+cd $OLDPWD
 export GIT_WORK_TREE GIT_DIR
 shift
 
