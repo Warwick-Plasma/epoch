@@ -74,10 +74,10 @@ CONTAINS
     CHARACTER(LEN=6+data_dir_max_length+n_zeros+c_id_length) :: full_filename
     CHARACTER(LEN=c_max_string_length) :: dump_type, temp_name
     CHARACTER(LEN=c_id_length) :: temp_block_id
-    REAL(num) :: elapsed_time
+    REAL(num) :: elapsed_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced, y_reduced
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
-    INTEGER :: code, i, ii, io, ispecies, iprefix, mask, rn, dir, dumped
+    INTEGER :: code, i, ii, io, ispecies, iprefix, mask, rn, nr, dir, dumped
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
@@ -461,26 +461,26 @@ CONTAINS
         dumped_skip_dir(:,io) = sub%skip_dir
 
         dir = 1
-        rn = sub%n_local(dir) + 1
+        rn = sub%n_global(dir) + 1
         ALLOCATE(x_reduced(rn))
+        dr = sub%skip_dir(dir) * dx
+        i = sub%n_start(dir) + 1
+        r0 = xb_global(i) + 0.5_num * (dx - dr)
 
-        ii = sub%n_start(dir) + 1
         DO i = 1, rn
-          x_reduced(i) = xb_global(ii)
-          ii = ii + sub%skip_dir(dir)
+          x_reduced(i) = r0 + (i - 1) * dr
         ENDDO
-        x_reduced(rn) = xb_global(nx+1)
 
         dir = 2
-        rn = sub%n_local(dir) + 1
+        rn = sub%n_global(dir) + 1
         ALLOCATE(y_reduced(rn))
+        dr = sub%skip_dir(dir) * dy
+        i = sub%n_start(dir) + 1
+        r0 = yb_global(i) + 0.5_num * (dy - dr)
 
-        ii = sub%n_start(dir) + 1
         DO i = 1, rn
-          y_reduced(i) = yb_global(ii)
-          ii = ii + sub%skip_dir(dir)
+          y_reduced(i) = r0 + (i - 1) * dr
         ENDDO
-        y_reduced(rn) = yb_global(ny+1)
 
         IF (.NOT. use_offset_grid) THEN
           temp_block_id = 'grid/r_' // TRIM(sub%name)
@@ -508,23 +508,23 @@ CONTAINS
               'Grid/Reduced_' // TRIM(sub%name))
 
           dir = 1
-          rn = sub%n_local(dir)
-          ALLOCATE(x_reduced(rn))
+          rn = sub%n_global(dir) + 1
+          dr = sub%skip_dir(dir) * dx
+          i = sub%n_start(dir) + 1
+          r0 = xb_offset_global(i) + 0.5_num * (dx - dr)
 
-          ii = sub%n_start(dir) + 1
           DO i = 1, rn
-            x_reduced(i) = xb_offset_global(ii)
-            ii = ii + sub%skip_dir(dir)
+            x_reduced(i) = r0 + (i - 1) * dr
           ENDDO
 
           dir = 2
-          rn = sub%n_local(dir)
-          ALLOCATE(y_reduced(rn))
+          rn = sub%n_global(dir) + 1
+          dr = sub%skip_dir(dir) * dy
+          i = sub%n_start(dir) + 1
+          r0 = yb_offset_global(i) + 0.5_num * (dy - dr)
 
-          ii = sub%n_start(dir) + 1
           DO i = 1, rn
-            y_reduced(i) = yb_offset_global(ii)
-            ii = ii + sub%skip_dir(dir)
+            y_reduced(i) = r0 + (i - 1) * dr
           ENDDO
 
           CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
