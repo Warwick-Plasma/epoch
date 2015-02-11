@@ -1293,12 +1293,11 @@ CONTAINS
           rsubarray = sub%subarray
         ENDIF
 
-        CALL check_name_length('subset', &
-            TRIM(temp_name) // '/Reduced_' // TRIM(sub%name))
+        CALL check_name_length('subset', TRIM(temp_name) // '/Reduced')
 
         temp_grid_id = 'grid/r_' // TRIM(sub%name)
-        temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
-        temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
+        temp_block_id = TRIM(temp_block_id) // '/r'
+        temp_name = TRIM(temp_name) // '/Reduced'
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
