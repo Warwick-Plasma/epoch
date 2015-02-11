@@ -297,9 +297,13 @@ PACK_OPTS = $(GIT_WORK_TREE) $(PACK_PREFIX) $(PACK_SOURCE_CODE) \
     $(PACK_GIT_DIFF) $(PACK_GIT_DIFF_FROM_ORIGIN) $(GENERATE_CHECKSUM) \
     $(F77_OUTPUT)
 
-$(SRCDIR)/COMMIT: FORCE
-	@sh $(SRCDIR)/gen_commit_string.sh || $(MAKE) $(MAKECMDGOALS)
 -include $(SRCDIR)/COMMIT
+
+ifeq ($(DONE_COMMIT),)
+main: commit
+else
+main: $(FULLTARGET)
+endif
 
 # Rule to build the fortran files
 
@@ -309,7 +313,6 @@ $(SRCDIR)/COMMIT: FORCE
 %.o: %.F90
 	$(FC) -c $(FFLAGS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 
-main: $(FULLTARGET)
 $(FULLTARGET): $(OBJFILES)
 	@mkdir -p $(BINDIR)
 	$(FC) -o $@ $(addprefix $(OBJDIR)/,$(OBJFILES)) $(LDFLAGS)
@@ -349,7 +352,12 @@ $(OBJFILES): | $(OBJDIR)
 $(OBJDIR):
 	@mkdir -p $(OBJDIR)
 
-.PHONY: clean cleanall tidy datatidy visit visitclean main FORCE
+commit: FORCE
+	@sh $(SRCDIR)/gen_commit_string.sh && $(MAKE) $(MAKECMDGOALS) DONE_COMMIT=1
+
+FORCE:
+
+.PHONY: commit clean cleanall tidy datatidy visit visitclean main FORCE
 
 # All the dependencies
 
