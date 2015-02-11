@@ -563,11 +563,14 @@ CONTAINS
       CALL fill_array(species_list(species_id)%temperature_function(n), &
           initial_conditions(species_id)%temp(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
-
-      species_list(species_id)%temperature_function(2) = &
-          species_list(species_id)%temperature_function(n)
-      species_list(species_id)%temperature_function(3) = &
-          species_list(species_id)%temperature_function(n)
+      n = 2
+      CALL fill_array(species_list(species_id)%temperature_function(n), &
+          initial_conditions(species_id)%temp(:,:,:,n), &
+          mult, mult_string, element, value, filename, got_file)
+      n = 3
+      CALL fill_array(species_list(species_id)%temperature_function(n), &
+          initial_conditions(species_id)%temp(:,:,:,n), &
+          mult, mult_string, element, value, filename, got_file)
 
       debug_mode = .FALSE.
       initial_conditions(species_id)%temp(:,:,:,2) = &

@@ -772,7 +772,7 @@ CONTAINS
           current => file_list(i)%head
           DO n = 1, nlist
             next => current%next
-            DEALLOCATE(current, STAT=stat)
+            IF (ASSOCIATED(current)) DEALLOCATE(current, STAT=stat)
             current => next
           ENDDO
         ENDIF
