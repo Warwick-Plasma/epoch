@@ -37,6 +37,7 @@ MODULE diagnostics
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask, dumped_skip_dir
   INTEGER, SAVE :: last_step = -1
+  INTEGER, SAVE :: sdf_max_string_length, max_string_length
 
   ! Data structures for tracking the list of strings written to '.visit' files
   TYPE string_entry
@@ -133,6 +134,8 @@ CONTAINS
       ! output much faster.
       ! The default value is set in deck_io_global_block.F90
       CALL sdf_set_point_array_size(sdf_buffer_size)
+      sdf_max_string_length = sdf_get_max_string_length()
+      max_string_length = MIN(sdf_max_string_length, c_max_string_length)
     ENDIF
 
     force = .FALSE.
@@ -187,6 +190,7 @@ CONTAINS
 
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
+      CALL sdf_set_string_length(sdf_handle, c_max_string_length)
       CALL sdf_write_header(sdf_handle, 'Epoch3d', 1, step, time, &
           restart_flag, jobid)
       CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_minor_rev, &
@@ -655,14 +659,25 @@ CONTAINS
 
     length = LEN_TRIM(string)
 
-    IF (length > c_max_string_length) THEN
+    IF (length > max_string_length) THEN
       IF (rank == 0) THEN
         CALL integer_as_string(length, len_string)
         PRINT*, '*** WARNING ***'
         PRINT*, 'Output block name ', TRIM(string), ' is truncated.'
-        PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
-            'the size of "c_max_string_length" ', 'to at least ', &
-            TRIM(len_string)
+        IF (length > c_max_string_length &
+            .AND. length > sdf_max_string_length) THEN
+          PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
+              'the size of "c_max_string_length" ', 'in both EPOCH and the ', &
+              'SDF library to at least ', TRIM(len_string)
+        ELSE IF (length > sdf_max_string_length) THEN
+          PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
+              'the size of "c_max_string_length" ', 'in the ', &
+              'SDF library to at least ', TRIM(len_string)
+        ELSE
+          PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
+              'the size of "c_max_string_length" ', 'to at least ', &
+              TRIM(len_string)
+        ENDIF
       ENDIF
     ENDIF
 
