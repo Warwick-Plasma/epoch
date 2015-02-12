@@ -59,9 +59,13 @@ fi
 
 ncont=39 # Maximum continuation lines allowed in F95
 continuation_lines=39
+ncolumns=130
 nl=6
 nbytes=8
 nelements=0
+machine_info="${machine_info:0:ncolumns}"
+compiler_info="${compiler_info:0:ncolumns}"
+compiler_flags="${compiler_flags:0:ncolumns}"
 
 write_data_bytes () {
   filename=$1
@@ -96,6 +100,7 @@ cat >> $outfile <<EOF
   CHARACTER(LEN=*), PARAMETER :: ${vname}_mimetype = '$mimetype'
   INTEGER($nbytes) :: $varname($nelements)
   INTEGER, PARAMETER :: ${varname}_padding = $padding
+  INTEGER, PARAMETER :: ${varname}_len = $nelements
 EOF
 
   IFS="

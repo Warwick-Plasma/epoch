@@ -68,6 +68,7 @@ CONTAINS
 
     DO i = 1, n_subsets
       DEALLOCATE(subset_list(i)%dumpmask, STAT=stat)
+      DEALLOCATE(subset_list(i)%use_species, STAT=stat)
     ENDDO
     DEALLOCATE(subset_list, STAT=stat)
 

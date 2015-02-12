@@ -117,7 +117,6 @@ CONTAINS
 
     IF (.NOT.found) THEN
       WRITE(*,*) 'The code was compiled with no compile time options'
-      WRITE(*,*)
       RETURN
     ENDIF
 
@@ -140,7 +139,7 @@ CONTAINS
     WRITE(*,*) 'Top-hat particle shape -DPARTICLE_SHAPE_TOPHAT'
 #endif
 #ifdef PER_SPECIES_WEIGHT
-    WRITE(*, *) 'Per species weighting -DPER_SPECIES_WEIGHT'
+    WRITE(*,*) 'Per species weighting -DPER_SPECIES_WEIGHT'
 #else
     defines = IOR(defines, c_def_per_particle_weight)
 #endif
@@ -149,12 +148,12 @@ CONTAINS
     WRITE(*,*) 'Global particle counting -DPARTICLE_COUNT_UPDATE'
 #endif
 #ifdef NO_TRACER_PARTICLES
-    WRITE(*, *) 'No tracer particle support -DNO_TRACER_PARTICLES'
+    WRITE(*,*) 'No tracer particle support -DNO_TRACER_PARTICLES'
 #else
     defines = IOR(defines, c_def_tracer_particles)
 #endif
 #ifdef NO_PARTICLE_PROBES
-    WRITE(*, *) 'No particle probe support -DNO_PARTICLE_PROBES'
+    WRITE(*,*) 'No particle probe support -DNO_PARTICLE_PROBES'
 #else
     defines = IOR(defines, c_def_particle_probes)
 #endif

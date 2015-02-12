@@ -37,6 +37,7 @@ MODULE diagnostics
   INTEGER, DIMENSION(num_vars_to_dump) :: iomask
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask, dumped_skip_dir
   INTEGER, SAVE :: last_step = -1
+  INTEGER, SAVE :: sdf_max_string_length, max_string_length
 
   ! Data structures for tracking the list of strings written to '.visit' files
   TYPE string_entry
@@ -73,10 +74,10 @@ CONTAINS
     CHARACTER(LEN=6+data_dir_max_length+n_zeros+c_id_length) :: full_filename
     CHARACTER(LEN=c_max_string_length) :: dump_type, temp_name
     CHARACTER(LEN=c_id_length) :: temp_block_id
-    REAL(num) :: elapsed_time
+    REAL(num) :: elapsed_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced, y_reduced, z_reduced
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
-    INTEGER :: code, i, ii, io, ispecies, iprefix, mask, rn, dir, dumped
+    INTEGER :: code, i, ii, io, ispecies, iprefix, mask, rn, nr, dir, dumped
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
@@ -133,6 +134,8 @@ CONTAINS
       ! output much faster.
       ! The default value is set in deck_io_global_block.F90
       CALL sdf_set_point_array_size(sdf_buffer_size)
+      sdf_max_string_length = sdf_get_max_string_length()
+      max_string_length = MIN(sdf_max_string_length, c_max_string_length)
     ENDIF
 
     force = .FALSE.
@@ -187,6 +190,7 @@ CONTAINS
 
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
+      CALL sdf_set_string_length(sdf_handle, c_max_string_length)
       CALL sdf_write_header(sdf_handle, 'Epoch3d', 1, step, time, &
           restart_flag, jobid)
       CALL sdf_write_run_info(sdf_handle, c_version, c_revision, c_minor_rev, &
@@ -466,37 +470,37 @@ CONTAINS
         dumped_skip_dir(:,io) = sub%skip_dir
 
         dir = 1
-        rn = sub%n_local(dir) + 1
+        rn = sub%n_global(dir) + 1
         ALLOCATE(x_reduced(rn))
+        dr = sub%skip_dir(dir) * dx
+        i = sub%n_start(dir) + 1
+        r0 = xb_global(i) + 0.5_num * (dx - dr)
 
-        ii = sub%n_start(dir) + 1
         DO i = 1, rn
-          x_reduced(i) = xb_global(ii)
-          ii = ii + sub%skip_dir(dir)
+          x_reduced(i) = r0 + (i - 1) * dr
         ENDDO
-        x_reduced(rn) = xb_global(nx+1)
 
         dir = 2
-        rn = sub%n_local(dir) + 1
+        rn = sub%n_global(dir) + 1
         ALLOCATE(y_reduced(rn))
+        dr = sub%skip_dir(dir) * dy
+        i = sub%n_start(dir) + 1
+        r0 = yb_global(i) + 0.5_num * (dy - dr)
 
-        ii = sub%n_start(dir) + 1
         DO i = 1, rn
-          y_reduced(i) = yb_global(ii)
-          ii = ii + sub%skip_dir(dir)
+          y_reduced(i) = r0 + (i - 1) * dr
         ENDDO
-        y_reduced(rn) = yb_global(ny+1)
 
         dir = 3
-        rn = sub%n_local(dir) + 1
+        rn = sub%n_global(dir) + 1
         ALLOCATE(z_reduced(rn))
+        dr = sub%skip_dir(dir) * dz
+        i = sub%n_start(dir) + 1
+        r0 = zb_global(i) + 0.5_num * (dz - dr)
 
-        ii = sub%n_start(dir) + 1
         DO i = 1, rn
-          z_reduced(i) = zb_global(ii)
-          ii = ii + sub%skip_dir(dir)
+          z_reduced(i) = r0 + (i - 1) * dr
         ENDDO
-        z_reduced(rn) = zb_global(nz+1)
 
         IF (.NOT. use_offset_grid) THEN
           temp_block_id = 'grid/r_' // TRIM(sub%name)
@@ -524,33 +528,33 @@ CONTAINS
               'Grid/Reduced_' // TRIM(sub%name))
 
           dir = 1
-          rn = sub%n_local(dir)
-          ALLOCATE(x_reduced(rn))
+          rn = sub%n_global(dir) + 1
+          dr = sub%skip_dir(dir) * dx
+          i = sub%n_start(dir) + 1
+          r0 = xb_offset_global(i) + 0.5_num * (dx - dr)
 
-          ii = sub%n_start(dir) + 1
           DO i = 1, rn
-            x_reduced(i) = xb_offset_global(ii)
-            ii = ii + sub%skip_dir(dir)
+            x_reduced(i) = r0 + (i - 1) * dr
           ENDDO
 
           dir = 2
-          rn = sub%n_local(dir)
-          ALLOCATE(y_reduced(rn))
+          rn = sub%n_global(dir) + 1
+          dr = sub%skip_dir(dir) * dy
+          i = sub%n_start(dir) + 1
+          r0 = yb_offset_global(i) + 0.5_num * (dy - dr)
 
-          ii = sub%n_start(dir) + 1
           DO i = 1, rn
-            y_reduced(i) = yb_offset_global(ii)
-            ii = ii + sub%skip_dir(dir)
+            y_reduced(i) = r0 + (i - 1) * dr
           ENDDO
 
           dir = 3
-          rn = sub%n_local(dir)
-          ALLOCATE(z_reduced(rn))
+          rn = sub%n_global(dir) + 1
+          dr = sub%skip_dir(dir) * dz
+          i = sub%n_start(dir) + 1
+          r0 = zb_offset_global(i) + 0.5_num * (dz - dr)
 
-          ii = sub%n_start(dir) + 1
           DO i = 1, rn
-            z_reduced(i) = zb_global(ii)
-            ii = ii + sub%skip_dir(dir)
+            z_reduced(i) = r0 + (i - 1) * dr
           ENDDO
 
           CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
@@ -655,14 +659,25 @@ CONTAINS
 
     length = LEN_TRIM(string)
 
-    IF (length > c_max_string_length) THEN
+    IF (length > max_string_length) THEN
       IF (rank == 0) THEN
         CALL integer_as_string(length, len_string)
         PRINT*, '*** WARNING ***'
         PRINT*, 'Output block name ', TRIM(string), ' is truncated.'
-        PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
-            'the size of "c_max_string_length" ', 'to at least ', &
-            TRIM(len_string)
+        IF (length > c_max_string_length &
+            .AND. length > sdf_max_string_length) THEN
+          PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
+              'the size of "c_max_string_length" ', 'in both EPOCH and the ', &
+              'SDF library to at least ', TRIM(len_string)
+        ELSE IF (length > sdf_max_string_length) THEN
+          PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
+              'the size of "c_max_string_length" ', 'in the ', &
+              'SDF library to at least ', TRIM(len_string)
+        ELSE
+          PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
+              'the size of "c_max_string_length" ', 'to at least ', &
+              TRIM(len_string)
+        ENDIF
       ENDIF
     ENDIF
 
@@ -757,7 +772,7 @@ CONTAINS
           current => file_list(i)%head
           DO n = 1, nlist
             next => current%next
-            DEALLOCATE(current, STAT=stat)
+            IF (ASSOCIATED(current)) DEALLOCATE(current, STAT=stat)
             current => next
           ENDDO
         ENDIF
@@ -1364,12 +1379,11 @@ CONTAINS
           rsubarray = sub%subarray
         ENDIF
 
-        CALL check_name_length('subset', &
-            TRIM(temp_name) // '/Reduced_' // TRIM(sub%name))
+        CALL check_name_length('subset', TRIM(temp_name) // '/Reduced')
 
         temp_grid_id = 'grid/r_' // TRIM(sub%name)
-        temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
-        temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
+        temp_block_id = TRIM(temp_block_id) // '/r'
+        temp_name = TRIM(temp_name) // '/Reduced'
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
