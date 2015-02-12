@@ -58,8 +58,8 @@ ifeq ($(strip $(COMPILER)),gfortran)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
-             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter \
-             -ffpe-trap=underflow,denormal
+             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
+    #FFLAGS += -ffpe-trap=underflow,denormal
 
     GNUVER := $(shell gfortran -dumpversion | head -1 \
         | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
