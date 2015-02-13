@@ -2,7 +2,7 @@
 
 GIT_WORK_TREE=$1
 cd $GIT_WORK_TREE
-GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+GIT_DIR=$GIT_WORK_TREE/$(git rev-parse --git-dir 2>/dev/null)
 cd $OLDPWD
 export GIT_WORK_TREE GIT_DIR
 shift
