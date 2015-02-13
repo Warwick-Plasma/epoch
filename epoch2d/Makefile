@@ -6,22 +6,15 @@
 
 # Compiler specific flags
 
-# Use intel compatible flags by default
-FFLAGS = -O3
-#FFLAGS = -O3 -heap-arrays 64 -ipo -xHost # Optimised (B)
-#FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
-#FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-#         -C -g -heap-arrays 64 -warn -save-temps -fpic -Wl,-no_pie # Debug
-MODULEFLAG = -module $(OBJDIR)
+# Note: you MUST specify a COMPILER option. None are specified by default.
 
-ifeq ($(strip $(MODE)),debug)
-  # Autodetect OSX
-  SYSTEM := $(shell uname -s)
-  FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-           -C -g -heap-arrays 64 -warn -fpic
-  ifeq ($(strip $(SYSTEM)),Darwin)
-    FFLAGS += -Wl,-no_pie
-  endif
+ifeq ($(strip $(COMPILER)),)
+  MAKECMDGOALS = error
+error:
+	@echo '*** ERROR ***'
+	@echo 'You MUST set a value for the COMPILER variable'
+	@echo ' eg. "make COMPILER=intel"'
+	@echo 'Alternatively, you can add "export COMPILER=intel" to $$HOME/.bashrc'
 endif
 
 D = -D
