@@ -719,6 +719,7 @@ CONTAINS
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
     INTEGER, POINTER :: species_subtypes(:)
+    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
 
     got_full = .FALSE.
     npart_global = 0
@@ -901,7 +902,8 @@ CONTAINS
 
     DEALLOCATE(nparts, npart_locals)
 
-    CALL create_subtypes_for_load(species_subtypes)
+    CALL create_subtypes_for_load(species_subtypes, species_subtypes_i4, &
+        species_subtypes_i8)
 
     CALL sdf_seek_start(sdf_handle)
 
@@ -1115,10 +1117,10 @@ CONTAINS
           ! the currently used precision.
           IF (datatype == c_datatype_integer8) THEN
             CALL sdf_read_point_variable(sdf_handle, npart_local, &
-                species_subtypes(ispecies), it_id8)
+                species_subtypes_i8(ispecies), it_id8)
           ELSE
             CALL sdf_read_point_variable(sdf_handle, npart_local, &
-                species_subtypes(ispecies), it_id4)
+                species_subtypes_i4(ispecies), it_id4)
           ENDIF
 #else
           IF (rank == 0) THEN
@@ -1188,7 +1190,8 @@ CONTAINS
     ENDDO
 
     CALL sdf_close(sdf_handle)
-    CALL free_subtypes_for_load(species_subtypes)
+    CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
+        species_subtypes_i8)
 
     CALL setup_grid
     CALL set_thermal_bcs

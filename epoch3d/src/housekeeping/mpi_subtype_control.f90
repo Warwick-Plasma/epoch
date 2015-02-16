@@ -202,12 +202,14 @@ CONTAINS
   ! conditions from a file
   !----------------------------------------------------------------------------
 
-  SUBROUTINE create_subtypes_for_load(species_subtypes)
+  SUBROUTINE create_subtypes_for_load(species_subtypes, species_subtypes_i4, &
+      species_subtypes_i8)
 
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when reading data.
 
     INTEGER, POINTER :: species_subtypes(:)
+    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
     INTEGER :: i
 
     subtype_field = create_current_field_subtype()
@@ -219,9 +221,11 @@ CONTAINS
     subarray_field_big_r4 = create_current_field_subarray(jng, MPI_REAL4)
 
     ALLOCATE(species_subtypes(n_species))
+    ALLOCATE(species_subtypes_i4(n_species))
+    ALLOCATE(species_subtypes_i8(n_species))
     DO i = 1,n_species
-      species_subtypes(i) = &
-          create_particle_subtype(species_list(i)%attached_list%count)
+      CALL create_particle_subtypes(species_list(i)%attached_list%count, &
+          species_subtypes(i), species_subtypes_i4(i), species_subtypes_i8(i))
     ENDDO
 
   END SUBROUTINE create_subtypes_for_load
@@ -232,9 +236,11 @@ CONTAINS
   ! free_subtypes_for_load - Frees subtypes created by create_subtypes_for_load
   !----------------------------------------------------------------------------
 
-  SUBROUTINE free_subtypes_for_load(species_subtypes)
+  SUBROUTINE free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
+      species_subtypes_i8)
 
     INTEGER, POINTER :: species_subtypes(:)
+    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
     INTEGER :: i
 
     CALL MPI_TYPE_FREE(subtype_field, errcode)
@@ -246,8 +252,12 @@ CONTAINS
     CALL MPI_TYPE_FREE(subarray_field_big_r4, errcode)
     DO i = 1,n_species
       CALL MPI_TYPE_FREE(species_subtypes(i), errcode)
+      CALL MPI_TYPE_FREE(species_subtypes_i4(i), errcode)
+      CALL MPI_TYPE_FREE(species_subtypes_i8(i), errcode)
     ENDDO
     DEALLOCATE(species_subtypes)
+    DEALLOCATE(species_subtypes_i4)
+    DEALLOCATE(species_subtypes_i8)
 
   END SUBROUTINE free_subtypes_for_load
 
@@ -258,15 +268,16 @@ CONTAINS
   ! particles
   !----------------------------------------------------------------------------
 
-  FUNCTION create_particle_subtype(npart_in) RESULT(subtype)
+  SUBROUTINE create_particle_subtypes(npart_in, subtype, subtype_i4, subtype_i8)
 
     INTEGER(i8), INTENT(IN) :: npart_in
+    INTEGER, INTENT(OUT) :: subtype, subtype_i4, subtype_i8
     INTEGER(i8), DIMENSION(1) :: npart_local
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
     INTEGER, DIMENSION(3) :: lengths, types
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
     INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, total_particles
-    INTEGER :: i, subtype, basetype, typesize
+    INTEGER :: i, mpitype, basetype, typesize
 
     npart_local = npart_in
 
@@ -305,11 +316,54 @@ CONTAINS
     types(2) = basetype
     types(3) = MPI_UB
 
-    subtype = 0
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, subtype, errcode)
-    CALL MPI_TYPE_COMMIT(subtype, errcode)
+    mpitype = 0
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    subtype = mpitype
 
-  END FUNCTION create_particle_subtype
+    basetype = MPI_INTEGER4
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
+
+    ! If npart_in is bigger than an integer then the data will not
+    ! get written/read properly. This would require about 48GB per processor
+    ! so it is unlikely to be a problem any time soon.
+    lengths(1) = 1
+    lengths(2) = INT(npart_in)
+    lengths(3) = 1
+    disp(1) = 0
+    disp(2) = particles_to_skip * typesize
+    disp(3) = total_particles * typesize
+    types(1) = MPI_LB
+    types(2) = basetype
+    types(3) = MPI_UB
+
+    mpitype = 0
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    subtype_i4 = mpitype
+
+    basetype = MPI_INTEGER8
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
+
+    ! If npart_in is bigger than an integer then the data will not
+    ! get written/read properly. This would require about 48GB per processor
+    ! so it is unlikely to be a problem any time soon.
+    lengths(1) = 1
+    lengths(2) = INT(npart_in)
+    lengths(3) = 1
+    disp(1) = 0
+    disp(2) = particles_to_skip * typesize
+    disp(3) = total_particles * typesize
+    types(1) = MPI_LB
+    types(2) = basetype
+    types(3) = MPI_UB
+
+    mpitype = 0
+    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    subtype_i8 = mpitype
+
+  END SUBROUTINE create_particle_subtypes
 
 
 
