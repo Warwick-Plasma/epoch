@@ -77,7 +77,7 @@ CONTAINS
     REAL(num) :: elapsed_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced, y_reduced
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
-    INTEGER :: code, i, ii, io, ispecies, iprefix, mask, rn, nr, dir, dumped
+    INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
