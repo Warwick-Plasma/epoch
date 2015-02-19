@@ -1,8 +1,30 @@
 #! /bin/sh
 
 GIT_WORK_TREE=$1
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+
+# The following complicated section simulates the use of "readlink -f" to find
+# the source directory on platforms which don't support the "-f" flag (eg. OS X)
+curdir=$(pwd -P)
+target="$GIT_DIR"
+cd "$target"
+target=$(basename "$target")
+# Iterate down a (possible) chain of symlinks
+n=0
+while [ -L "$target" ]; do
+  n=$((n+1))
+  if [ $n -gt 1000 ]; then
+    echo "ERROR finding source directory."
+    exit 1
+  fi
+  target=$(readlink $target)
+  cd $(dirname "$target")
+  target=$(basename "$target")
+done
+GIT_DIR=$(pwd -P)
+cd "$curdir"
+
 cd $GIT_WORK_TREE
-GIT_DIR=$GIT_WORK_TREE/$(git rev-parse --git-dir 2>/dev/null)
 cd $OLDPWD
 export GIT_WORK_TREE GIT_DIR
 shift
