@@ -9,6 +9,7 @@ MODULE balance
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
   LOGICAL :: overriding
+  INTEGER, PARAMETER :: maximum_check_frequency = 200
 
 CONTAINS
 
@@ -23,9 +24,11 @@ CONTAINS
 
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
-    REAL(num) :: balance_frac, npart_av
+    REAL(num) :: balance_frac, balance_frac_final, balance_improvement, npart_av
     INTEGER(i8) :: npart_local, sum_npart, max_npart
     INTEGER :: iproc
+    INTEGER, SAVE :: balance_check_frequency = 1
+    INTEGER, SAVE :: last_check = -1
     INTEGER, DIMENSION(c_ndims,2) :: domain
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
@@ -34,6 +37,7 @@ CONTAINS
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
+    IF (step - last_check < balance_check_frequency) RETURN
 
     ! This parameter allows selecting the mode of the autobalancing between
     ! leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
@@ -44,17 +48,16 @@ CONTAINS
 
     ! The over_ride flag allows the code to force a load balancing sweep
     ! at t = 0
-    IF (.NOT. over_ride) THEN
-      CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
-          comm, errcode)
-      IF (max_npart <= 0) RETURN
-      CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
-          comm, errcode)
-      npart_av = REAL(sum_npart, num) / nproc
-      balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
-      IF (balance_frac > dlb_threshold) RETURN
-      IF (rank == 0) PRINT *, 'Load balancing with fraction', balance_frac
-    ENDIF
+    CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
+        comm, errcode)
+    IF (.NOT. over_ride .AND. max_npart <= 0) RETURN
+    CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
+        comm, errcode)
+    npart_av = REAL(sum_npart, num) / nproc
+    balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
+    IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) RETURN
+
+    last_check = step
 
     IF (timer_collect) CALL timer_start(c_timer_balance)
 
@@ -137,6 +140,32 @@ CONTAINS
       ENDDO
     ENDIF
 #endif
+
+    npart_local = get_total_local_particles()
+
+    CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
+        comm, errcode)
+    IF (max_npart <= 0) RETURN
+    CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
+        comm, errcode)
+    npart_av = REAL(sum_npart, num) / nproc
+    balance_frac_final = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
+    balance_improvement = (balance_frac_final - balance_frac) / balance_frac
+    ! Consider load balancing a success if the load imbalance improved by
+    ! more than 5 percent
+    IF (balance_improvement > 0.05_num) THEN
+      balance_check_frequency = 1
+    ELSE
+      balance_check_frequency = &
+          MIN(balance_check_frequency * 2, maximum_check_frequency)
+    ENDIF
+
+    IF (rank == 0) THEN
+      PRINT'(''Initial load imbalance: '', F5.3, '', final: '', F5.3, &
+          &'', improvement: '', F5.3, '', next: '', i8)', &
+          balance_frac, balance_frac_final, balance_improvement, &
+          (step + balance_check_frequency)
+    ENDIF
 
     use_exact_restart = .FALSE.
 
