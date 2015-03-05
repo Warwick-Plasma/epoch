@@ -77,6 +77,7 @@ CONTAINS
     CALL deallocate_file_list
     CALL deallocate_dist_fns
     CALL deallocate_ionisation
+    CALL deallocate_partlists
 
     CALL MPI_COMM_FREE(comm, errcode)
 

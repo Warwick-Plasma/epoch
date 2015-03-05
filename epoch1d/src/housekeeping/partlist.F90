@@ -20,6 +20,8 @@ MODULE partlist
     TYPE(pointer_item), POINTER :: head, tail
   END TYPE pointer_list
 
+  REAL(num), DIMENSION(:), ALLOCATABLE :: packed_particle_data
+
 CONTAINS
 
   SUBROUTINE setup_partlists
@@ -46,8 +48,20 @@ CONTAINS
     nvar = nvar+1
 #endif
 #endif
+    ALLOCATE(packed_particle_data(nvar))
 
   END SUBROUTINE setup_partlists
+
+
+
+  SUBROUTINE deallocate_partlists
+
+    INTEGER :: stat
+
+    IF (ALLOCATED(packed_particle_data)) &
+        DEALLOCATE(packed_particle_data, STAT=stat)
+
+  END SUBROUTINE deallocate_partlists
 
 
 
@@ -642,7 +656,7 @@ CONTAINS
 
     TYPE(particle_list), INTENT(INOUT) :: partlist_send, partlist_recv
     INTEGER, INTENT(IN) :: dest, src
-    REAL(num), DIMENSION(:), ALLOCATABLE :: data_send, data_recv, data_temp
+    REAL(num), DIMENSION(:), ALLOCATABLE :: data_send, data_recv
     INTEGER(i8) :: cpos = 0, ipart = 0
     INTEGER(i8) :: npart_recv, send_buf(2), recv_buf(2)
     INTEGER :: nsend, nrecv
@@ -667,16 +681,15 @@ CONTAINS
     ! Copy the data for the particles into a buffer
     ALLOCATE(data_send(nsend))
     ALLOCATE(data_recv(nrecv))
-    ALLOCATE(data_temp(nvar))
 
     ! Pack particles to send into buffer
     current => partlist_send%head
     ipart = 0
     DO WHILE (ipart < partlist_send%count)
-      cpos = ipart*nvar+1
-      CALL pack_particle(data_temp, current)
-      data_send(cpos:cpos+nvar-1) = data_temp
-      ipart = ipart+1
+      cpos = ipart * nvar + 1
+      CALL pack_particle(packed_particle_data, current)
+      data_send(cpos:cpos+nvar-1) = packed_particle_data
+      ipart = ipart + 1
       current => current%next
     ENDDO
 
