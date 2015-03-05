@@ -300,6 +300,38 @@ CONTAINS
 
 
 
+  SUBROUTINE deallocate_ionisation
+
+    INTEGER :: stat
+
+    IF (.NOT.use_field_ionisation) RETURN
+
+    DEALLOCATE(released_mass_fraction, STAT=stat)
+    DEALLOCATE(effective_n_exponent, STAT=stat)
+    DEALLOCATE(adk_scaling, STAT=stat)
+    DEALLOCATE(ionisation_constant, STAT=stat)
+    DEALLOCATE(smallest_e_mag, STAT=stat)
+
+    IF (use_bsi) THEN
+      DEALLOCATE(bsi_constant, STAT=stat)
+      DEALLOCATE(bsi_scaling, STAT=stat)
+      DEALLOCATE(bsi_threshold, STAT=stat)
+      DEALLOCATE(adk_maximum, STAT=stat)
+      DEALLOCATE(adk_bsi_cap, STAT=stat)
+    ENDIF
+
+    IF (use_multiphoton) THEN
+      DEALLOCATE(keldysh, STAT=stat)
+      DEALLOCATE(multi_constant, STAT=stat)
+      DEALLOCATE(k_photons_energy, STAT=stat)
+      DEALLOCATE(k_photons_exponent, STAT=stat)
+      DEALLOCATE(adk_multiphoton_cap, STAT=stat)
+    ENDIF
+
+  END SUBROUTINE deallocate_ionisation
+
+
+
   ! Redirect to correct routine; the only difference between these routines is
   ! in the rate calculated but it saves doing this logic for each ionisation
 

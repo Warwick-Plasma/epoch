@@ -17,6 +17,7 @@ MODULE deck_io_block
   INTEGER :: o1, o2, o3, o4, o5, o6, o7, o8
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
+  LOGICAL, PRIVATE :: warning_printed
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
@@ -31,6 +32,7 @@ CONTAINS
     block_number = 0
     IF (deck_state /= c_ds_first) RETURN
 
+    warning_printed = .FALSE.
     alternate_name = ''
     io_block_name (c_dump_part_grid        ) = 'particles'
     alternate_name(c_dump_part_grid        ) = 'particle_grid'
@@ -649,8 +651,19 @@ CONTAINS
           IF (IAND(mask, c_io_average_single) /= 0 .AND. num /= r4) THEN
             io_block%averaged_data(mask_element)%dump_single = .TRUE.
           ENDIF
-          IF (averaged_var_block(mask_element) /= 0) THEN
-            PRINT*,'error ',mask_element,block_number
+          i = averaged_var_block(mask_element)
+          IF (i /= 0 .AND. i /= block_number) THEN
+            IF (rank == 0 .AND. .NOT.warning_printed) THEN
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,*) 'Error occurred whilst assigning the averaging ', &
+                    'dumpmask of the variable'
+                WRITE(io,*) '"' // TRIM(io_block_name(mask_element)) &
+                    // '" in ', 'output block number ', block_number
+              ENDDO
+              warning_printed = .TRUE.
+            ENDIF
           ENDIF
           averaged_var_block(mask_element) = block_number
         ENDIF

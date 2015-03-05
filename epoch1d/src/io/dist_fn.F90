@@ -46,18 +46,20 @@ CONTAINS
 
 
 
-  SUBROUTINE clean_dist_fns()
+  SUBROUTINE deallocate_dist_fns
 
     TYPE(distribution_function_block), POINTER :: current, next
+    INTEGER :: stat
 
     current => dist_fns
     DO WHILE(ASSOCIATED(current))
       next => current%next
+      DEALLOCATE(current%use_species, STAT=stat)
       DEALLOCATE(current)
       current => next
     ENDDO
 
-  END SUBROUTINE clean_dist_fns
+  END SUBROUTINE deallocate_dist_fns
 
 
 
