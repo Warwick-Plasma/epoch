@@ -99,64 +99,66 @@ CONTAINS
       DEALLOCATE(ionisation_energies)
 
       DO i = 1, n_species
-        IF (TRIM(release_species(i)) /= '') THEN
-          CALL initialise_stack(stack)
-          CALL tokenize(release_species(i), stack, errcode)
-          nlevels = 0
+        IF (TRIM(release_species(i)) == '') CYCLE
+
+        CALL initialise_stack(stack)
+        CALL tokenize(release_species(i), stack, errcode)
+        nlevels = 0
+        j = i
+        ! Count number of ionisation levels of species i
+        DO WHILE(species_list(j)%ionise)
+          nlevels = nlevels + 1
+          j = species_list(j)%ionise_to_species
+        ENDDO
+
+        ! Count number of release species listed for species i; we need to do
+        ! this because sometimes extra values are returned on the stack
+        nrelease = 0
+        DO j = 1, SIZE(stack%entries)
+          IF (stack%entries(j)%value > 0 &
+              .AND. stack%entries(j)%value <= n_species) &
+                  nrelease = nrelease + 1
+        ENDDO
+
+        ! If there's only one release species use it for all ionisation levels
+        IF (SIZE(stack%entries) == 1) THEN
           j = i
-          ! Count number of ionisation levels of species i
+          species_list(stack%entries(1)%value)%electron = .TRUE.
           DO WHILE(species_list(j)%ionise)
+            species_list(j)%release_species = stack%entries(1)%value
+            j = species_list(j)%ionise_to_species
+          ENDDO
+        ! If there's a list of release species use it
+        ELSEIF (nlevels == nrelease) THEN
+          nlevels = 1
+          j = i
+          DO WHILE(species_list(j)%ionise)
+            species_list(j)%release_species = stack%entries(nlevels)%value
+            species_list(stack%entries(nlevels)%value)%electron = .TRUE.
             nlevels = nlevels + 1
             j = species_list(j)%ionise_to_species
           ENDDO
-
-          ! Count number of release species listed for species i; we need to do
-          ! this because sometimes extra values are returned on the stack
-          nrelease = 0
-          DO j = 1, SIZE(stack%entries)
-            IF (stack%entries(j)%value > 0 &
-                .AND. stack%entries(j)%value <= n_species) &
-                    nrelease = nrelease + 1
+        ! If there's too many or not enough release species specified use the
+        ! first one only and throw an error
+        ELSE
+          j = i
+          species_list(stack%entries(1)%value)%electron = .TRUE.
+          DO WHILE(species_list(j)%ionise)
+            species_list(j)%release_species = stack%entries(1)%value
+            j = species_list(j)%ionise_to_species
           ENDDO
-
-          ! If there's only one release species use it for all ionisation levels
-          IF (SIZE(stack%entries) == 1) THEN
-            j = i
-            species_list(stack%entries(1)%value)%electron = .TRUE.
-            DO WHILE(species_list(j)%ionise)
-              species_list(j)%release_species = stack%entries(1)%value
-              j = species_list(j)%ionise_to_species
+          IF (rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) '*** WARNING ***'
+              WRITE(io,*) 'Incorrect number of release species specified ', &
+                  'for ', TRIM(species_names(i)), '. Using only first ', &
+                  'specified.'
             ENDDO
-          ! If there's a list of release species use it
-          ELSEIF (nlevels == nrelease) THEN
-            nlevels = 1
-            j = i
-            DO WHILE(species_list(j)%ionise)
-              species_list(j)%release_species = stack%entries(nlevels)%value
-              species_list(stack%entries(nlevels)%value)%electron = .TRUE.
-              nlevels = nlevels + 1
-              j = species_list(j)%ionise_to_species
-            ENDDO
-          ! If there's too many or not enough release species specified use the
-          ! first one only and throw an error
-          ELSE
-            j = i
-            species_list(stack%entries(1)%value)%electron = .TRUE.
-            DO WHILE(species_list(j)%ionise)
-              species_list(j)%release_species = stack%entries(1)%value
-              j = species_list(j)%ionise_to_species
-            ENDDO
-            IF (rank == 0) THEN
-              DO iu = 1, nio_units ! Print to stdout and to file
-                io = io_units(iu)
-                WRITE(io,*) '*** WARNING ***'
-                WRITE(io,*) 'Incorrect number of release species specified ', &
-                    'for ', TRIM(species_names(i)), '. Using only first ', &
-                    'specified.'
-              ENDDO
-            ENDIF
           ENDIF
         ENDIF
+
+        CALL deallocate_stack(stack)
       ENDDO
       DEALLOCATE(release_species)
       DEALLOCATE(ionise_to_species)
@@ -288,6 +290,7 @@ CONTAINS
         CALL tokenize(value, stack, errcode)
         CALL evaluate_and_return_all(stack, 0, 0, 0, &
             n_secondary_species_in_block, species_ionisation_energies, errcode)
+        CALL deallocate_stack(stack)
       ENDIF
       RETURN
     ENDIF

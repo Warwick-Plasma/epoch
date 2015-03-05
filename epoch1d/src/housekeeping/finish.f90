@@ -9,6 +9,8 @@ MODULE finish
   USE window
   USE laser
   USE collisions
+  USE dist_fn
+  USE ionise
 
   IMPLICIT NONE
 
@@ -73,6 +75,8 @@ CONTAINS
     CALL deallocate_lasers
     CALL deallocate_collisions
     CALL deallocate_file_list
+    CALL deallocate_dist_fns
+    CALL deallocate_ionisation
 
     CALL MPI_COMM_FREE(comm, errcode)
 

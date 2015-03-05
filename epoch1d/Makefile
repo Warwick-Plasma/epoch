@@ -396,8 +396,8 @@ epoch1d.o: epoch1d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
 evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
-finish.o: finish.f90 collisions.o deck.o diagnostics.o laser.o partlist.o \
-  setup.o shared_data.o shunt.o window.o
+finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
+  laser.o partlist.o setup.o shared_data.o shunt.o window.o
 helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 ionise.o: ionise.F90 numerics.o partlist.o random_generator.o

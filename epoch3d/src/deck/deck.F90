@@ -1020,6 +1020,8 @@ CONTAINS
       fbuf => next
     ENDDO
 
+    DEALLOCATE(file_buffer_head, STAT=stat)
+
   END SUBROUTINE deallocate_input_deck_buffer
 
 END MODULE deck

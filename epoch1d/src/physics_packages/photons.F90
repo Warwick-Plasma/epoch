@@ -12,7 +12,7 @@ CONTAINS
 
   SUBROUTINE setup_qed_module
 
-    INTEGER :: ispecies, iu, io, ierr
+    INTEGER :: ispecies, iu, io
     LOGICAL :: found
 
     ! Sanity check
