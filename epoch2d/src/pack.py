@@ -24,6 +24,12 @@ def str2bool(x):
 
 
 def stripped(s):
+    try:
+      # python 2
+      s = unicode(s, 'ascii', 'ignore')
+    except(NameError):
+      # python 3
+      s = s.encode('ascii', 'ignore').decode()
     return s.strip()
 
 if got_argparse:
