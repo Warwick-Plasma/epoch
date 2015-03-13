@@ -12,7 +12,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 27 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 28 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -54,7 +54,8 @@ MODULE deck_control_block
           'simplify_deck            ', &
           'print_constants          ', &
           'allow_missing_restart    ', &
-          'print_eta_string         ' /)
+          'print_eta_string         ', &
+          'n_zeros                  ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -95,7 +96,8 @@ MODULE deck_control_block
           'simplify_deck            ', &
           'print_constants          ', &
           'allow_missing_restart    ', &
-          'print_eta_string         ' /)
+          'print_eta_string         ', &
+          'n_zeros                  ' /)
 
 CONTAINS
 
@@ -311,6 +313,8 @@ CONTAINS
       allow_missing_restart = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+27)
       print_eta_string = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+28)
+      n_zeros = MAX(as_integer_print(value, element, errcode), 4)
     END SELECT
 
   END FUNCTION control_block_handle_element

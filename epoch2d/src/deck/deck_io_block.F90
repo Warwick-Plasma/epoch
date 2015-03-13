@@ -398,7 +398,11 @@ CONTAINS
     SELECT CASE (elementselected-num_vars_to_dump)
     CASE(1)
       io_block%dt_snapshot = as_real_print(value, element, errcode)
-      IF (io_block%dt_snapshot < 0.0_num) io_block%dt_snapshot = 0.0_num
+      IF (io_block%dt_snapshot < 0.0_num) THEN
+        io_block%dt_snapshot = 0.0_num
+      ELSE IF (io_block%dt_snapshot > 0.0_num) THEN
+        n_zeros = MAX(n_zeros, FLOOR(LOG10(t_end / io_block%dt_snapshot)) + 1)
+      ENDIF
     CASE(2)
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
