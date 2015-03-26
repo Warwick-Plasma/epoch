@@ -69,7 +69,8 @@ fi
 
 compile_date=$(date "+%s")
 compile_date_string=$(date "+%Y-%m-%d-%H:%M:%S")
-compile_machine_info="$(uname -n) $(uname -s) $(uname -r) $(uname -m) $(uname -p)"
+compile_machine_info=\
+"$(uname -n) $(uname -s) $(uname -r) $(uname -m) $(uname -p)"
 compiler_info="$2"
 compiler_flags="$3"
 if [ "$compiler_info"x = x ]; then
@@ -219,7 +220,8 @@ MODULE $module_name
 
   CHARACTER(LEN=*), PARAMETER :: ${varname}_git_version = '$git_version'
   INTEGER, PARAMETER :: ${varname}_compile_date = $compile_date
-  CHARACTER(LEN=*), PARAMETER :: ${varname}_compile_date_string = '$compile_date_string'
+  CHARACTER(LEN=*), PARAMETER :: ${varname}_compile_date_string = &
+'$compile_date_string'
   CHARACTER(LEN=*), PARAMETER :: ${varname}_compile_machine_info = &
 '$compile_machine_info'
   CHARACTER(LEN=*), PARAMETER :: ${varname}_compiler_info = &

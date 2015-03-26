@@ -18,7 +18,8 @@ MODULE constants
   REAL(num), PARAMETER :: c_maxexponent = MAXEXPONENT(1.0_num)
   REAL(num), PARAMETER :: c_log2 = 0.69314718055994530941723212145817657_num
   REAL(num), PARAMETER :: c_largest_exp = c_maxexponent * c_log2
-  REAL(num), PARAMETER :: c_smallest_exp = (MINEXPONENT(1.0_num)-1.0_num) * c_log2
+  REAL(num), PARAMETER :: &
+      c_smallest_exp = (MINEXPONENT(1.0_num) - 1.0_num) * c_log2
 
   INTEGER, PARAMETER :: c_ndims = 2
 
