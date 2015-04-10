@@ -20,14 +20,13 @@ CONTAINS
       ! Identify if there exists any *populated* electron/positron species
       found = .FALSE.
       DO ispecies = 1, n_species
-        IF (species_list(ispecies)%count > 0) THEN
-          IF (species_list(ispecies)%species_type &
-              == c_species_id_electron &
-              .OR. species_list(ispecies)%species_type &
-              == c_species_id_positron) THEN
-            found = .TRUE.
-            EXIT
-          ENDIF
+        IF (species_list(ispecies)%count <= 0) CYCLE
+
+        IF (species_list(ispecies)%species_type == c_species_id_electron &
+            .OR. species_list(ispecies)%species_type == c_species_id_positron &
+            .OR. ispecies == photon_species ) THEN
+          found = .TRUE.
+          EXIT
         ENDIF
       ENDDO
 
@@ -37,9 +36,9 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Both electron and positron species are either ', &
+            WRITE(io,*) 'Electron, positron and photon species are either ', &
                 'unspecified or contain no'
-            WRITE(io,*) 'particles. QED routines might not work as expected.'
+            WRITE(io,*) 'particles. QED routines will do nothing.'
           ENDDO
         ENDIF
       ENDIF
@@ -84,8 +83,7 @@ CONTAINS
       IF (species_list(ispecies)%species_type == c_species_id_electron &
           .AND. first_electron == -1) THEN
         first_electron = ispecies
-      ENDIF
-      IF (species_list(ispecies)%species_type == c_species_id_positron &
+      ELSE IF (species_list(ispecies)%species_type == c_species_id_positron &
           .AND. first_positron == -1) THEN
         first_positron = ispecies
       ENDIF
@@ -521,8 +519,10 @@ CONTAINS
 
     DO ispecies = 1, n_species
 
-      ! First consider electrons
-      IF (species_list(ispecies)%species_type == c_species_id_electron) THEN
+      ! First consider electrons and positrons
+      IF (species_list(ispecies)%species_type == c_species_id_electron &
+          .OR. species_list(ispecies)%species_type == c_species_id_positron) &
+          THEN
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           ! Find eta at particle position
@@ -559,76 +559,33 @@ CONTAINS
 #endif
           current => current%next
         ENDDO
-      ENDIF
-
-      ! Next consider positrons
-      IF (species_list(ispecies)%species_type == c_species_id_positron) THEN
-        current => species_list(ispecies)%attached_list%head
-        DO WHILE(ASSOCIATED(current))
-          ! Find eta at particle position
-          part_x  = current%part_pos(1) - x_grid_min_local
-          part_y  = current%part_pos(2) - y_grid_min_local
-          part_ux = current%part_p(1) / mc0
-          part_uy = current%part_p(2) / mc0
-          part_uz = current%part_p(3) / mc0
-          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-
-          eta = calculate_eta(part_x, part_y, part_ux, part_uy, &
-              part_uz, gamma)
-
-          current%optical_depth = &
-              current%optical_depth - delta_optical_depth(eta, gamma)
-#ifdef TRIDENT_PHOTONS
-          current%optical_depth_tri = &
-              current%optical_depth_tri - delta_optical_depth_tri(eta, gamma)
-#endif
-          ! If optical depth dropped below zero generate photon...
-          IF (current%optical_depth <= 0.0_num) THEN
-            CALL generate_photon(current, photon_species, eta)
-            ! ... and reset optical depth
-            current%optical_depth = reset_optical_depth()
-          ENDIF
-
-#ifdef TRIDENT_PHOTONS
-          IF (current%optical_depth_tri <= 0.0_num) THEN
-            CALL generate_pair_tri(current, trident_electron_species, &
-                trident_positron_species)
-            ! ... and reset optical depth
-            current%optical_depth_tri = reset_optical_depth()
-          ENDIF
-#endif
-          current => current%next
-        ENDDO
-      ENDIF
 
       ! and finally photons
-      IF (species_list(ispecies)%species_type == c_species_id_photon) THEN
-        IF (produce_pairs) THEN
-          current => species_list(ispecies)%attached_list%head
-          DO WHILE(ASSOCIATED(current))
-            ! Current may be deleted
-            next_pt => current%next
-            part_x  = current%part_pos(1) - x_grid_min_local
-            part_y  = current%part_pos(2) - y_grid_min_local
-            norm  = c / current%particle_energy
-            dir_x = current%part_p(1) * norm
-            dir_y = current%part_p(2) * norm
-            dir_z = current%part_p(3) * norm
-            part_e  = current%particle_energy / m0 / c**2
-            chi_val = calculate_chi(part_x, part_y, dir_x, dir_y, &
-                dir_z, part_e)
+      ELSE IF (species_list(ispecies)%species_type == c_species_id_photon &
+          .AND. produce_pairs) THEN
+        current => species_list(ispecies)%attached_list%head
+        DO WHILE(ASSOCIATED(current))
+          ! Current may be deleted
+          next_pt => current%next
+          part_x  = current%part_pos(1) - x_grid_min_local
+          part_y  = current%part_pos(2) - y_grid_min_local
+          norm  = c / current%particle_energy
+          dir_x = current%part_p(1) * norm
+          dir_y = current%part_p(2) * norm
+          dir_z = current%part_p(3) * norm
+          part_e  = current%particle_energy / m0 / c**2
+          chi_val = calculate_chi(part_x, part_y, dir_x, dir_y, &
+              dir_z, part_e)
 
-            current%optical_depth = current%optical_depth &
-                - delta_optical_depth_photon(chi_val, part_e)
-            ! If optical depth dropped below zero generate pair...
-            IF (current%optical_depth <= 0.0_num) THEN
-              CALL generate_pair(current, chi_val, photon_species, &
-                  breit_wheeler_electron_species, &
-                  breit_wheeler_positron_species)
-            ENDIF
-            current => next_pt
-          ENDDO
-        ENDIF
+          current%optical_depth = current%optical_depth &
+              - delta_optical_depth_photon(chi_val, part_e)
+          ! If optical depth dropped below zero generate pair...
+          IF (current%optical_depth <= 0.0_num) THEN
+            CALL generate_pair(current, chi_val, photon_species, &
+                breit_wheeler_electron_species, breit_wheeler_positron_species)
+          ENDIF
+          current => next_pt
+        ENDDO
       ENDIF
     ENDDO
 
