@@ -819,10 +819,22 @@ CONTAINS
 
     ! Check invalid block to limit amount of rubbish that appears
     ! If the input deck is invalid
-    IF (.NOT. invalid_block) THEN
-      errcode_deck = handle_block(current_block_name, element, value)
-    ELSE
+    IF (invalid_block) THEN
+      IF (rank == rank_check) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
+              // TRIM(element) // '" is invalid and cannot be parsed.'
+          WRITE(io,*) 'Code will terminate'
+          WRITE(io,*)
+        ENDDO
+      ENDIF
+      errcode_deck = IOR(errcode_deck, c_err_terminate)
       RETURN
+    ELSE
+      errcode_deck = handle_block(current_block_name, element, value)
     ENDIF
 
 #ifndef NO_IO
