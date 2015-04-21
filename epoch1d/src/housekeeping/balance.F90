@@ -161,8 +161,8 @@ CONTAINS
     ENDIF
 
     IF (rank == 0) THEN
-      PRINT'(''Initial load imbalance: '', F5.3, '', final: '', F5.3, &
-          &'', improvement: '', F5.3, '', next: '', i8)', &
+      PRINT'(''Initial load imbalance:'', F6.3, '', final:'', F6.3, &
+          &'', improvement:'', F6.3, '', next: '', i8)', &
           balance_frac, balance_frac_final, balance_improvement, &
           (step + balance_check_frequency)
     ENDIF
