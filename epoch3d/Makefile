@@ -161,6 +161,7 @@ DEFINES := $(DEFINE)
 # Set every pseudoparticle in a species to represent the same number of
 # real particles.
 #DEFINES += $(D)PER_SPECIES_WEIGHT
+DEFINES += $(D)DELTAF_METHOD
 
 # Don't enable support for tracer particles (in order to make the particle
 # push slightly faster).
@@ -257,7 +258,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   deck_laser_block.f90 deck_particle_probe_block.F90 deck_qed_block.F90 \
   deck_species_block.F90 deck_subset_block.f90 deck_window_block.f90 \
   diagnostics.F90 dist_fn.F90 epoch3d.F90 evaluate.F90 evaluator_blocks.F90 \
-  fields.f90 finish.f90 helper.F90 ic_module.f90 ionise.F90 iterators.F90 \
+  fields.f90 finish.f90 helper.F90 ic_module.F90 ionise.F90 iterators.F90 \
   laser.f90 mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 \
   particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
   particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
@@ -427,7 +428,7 @@ fields.o: fields.f90 boundary.o
 finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
   laser.o partlist.o setup.o shared_data.o shunt.o window.o
 helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o
-ic_module.o: ic_module.f90 helper.o shared_data.o
+ic_module.o: ic_module.F90 helper.o particles.o shared_data.o
 ionise.o: ionise.F90 boundary.o current_smooth.o numerics.o partlist.o \
   random_generator.o utilities.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
