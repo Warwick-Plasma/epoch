@@ -2084,7 +2084,8 @@ Additions and changes:
      name=helium
      dump=T
 
-     rho=if(x gt 0.5e-5 and x lt 2.5e-5,den_min*exp((x-0.5e-5)/scale),rho(helium))
+     rho=if(x gt 0.5e-5 and x lt 2.5e-5,\
+	       den_min*exp((x-0.5e-5)/scale),rho(helium))
      rho=if(x gt 2.5e-5, den_max, rho(helium))
      rho=if(x lt 0.5e-5, 0.0, rho(helium))
      rho_min=den_min

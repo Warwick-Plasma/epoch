@@ -1,5 +1,4 @@
-DOWNLOADING AND BUILDING THE CODE
-=================================
+## DOWNLOADING AND BUILDING THE CODE
 
 The easiest method of downloading the code is to grab a copy of the latest
 release package, located in the "Releases" section of the CCPForge site.
@@ -9,7 +8,7 @@ details on this are provided below.
 
 The "Releases" section of the CCPForge site contains files in the form
 "epoch-4.4.5.tar.gz". These are tarred and gzipped packages of the code
-which can be unpacked with the command "tar xzf epoch-4.4.5.tar.gz".
+which can be unpacked with the command `tar xzf epoch-4.4.5.tar.gz`.
 This will create a directory called "epoch-4.4.5".
 
 Within this directory there are various epochXd subdirectories, each of which
@@ -27,18 +26,22 @@ option to the "make" command or as an environment variable.
 
 For example, to compile the code using Intel's "ifort" Fortran compiler, you
 can either type the following:
+```
   $> make COMPILER=intel
+```
 
 or alternatively:
+```
   $> export COMPILER=intel
   $> make
+```
 
-In these two examples '$>' represents the terminal's command-line prompt.
+In these two examples `$>` represents the terminal's command-line prompt.
 After compilation is complete, the binary file will be created in "bin/epochXd",
 where X is 1, 2 or 3.
 
 Since most people will always be using the same compiler on a specific machine,
-it is often easiest to just add the line "export COMPILER=intel" to your shell
+it is often easiest to just add the line `export COMPILER=intel` to your shell
 script initialisation file (ie. "$HOME/.bashrc" on most modern UNIX machines).
 
 The actual compiler command used is the MPI fortran wrapper. On nearly all
@@ -47,9 +50,11 @@ Occasionally, some machines will call it something different. For example,
 Intel's MPI wrapper script is sometimes called "mpiifort". If your machine has
 such a setup, you can set the name of the wrapper script using the variable
 MPIF90. For example:
+```
   $> make COMPILER=intel MPIF90=mpiifort
+```
 
-Again, it is often easiest to add the line "export MPIF90=mpiifort" to your
+Again, it is often easiest to add the line `export MPIF90=mpiifort` to your
 $HOME/.bashrc file.
 
 Finally, there are two more variables which can be used to control the options
@@ -65,11 +70,12 @@ with the lines beginning "#DEFINES += " and they are commented out by default.
 Rather than uncommenting these lines, it is possible to set them on the
 command-line using the "DEFINE" variable. For example, to compile a
 single-precision version with Qmono viscosity you would type:
+```
   $> make DEFINE="-DQMONO -DSINGLE"
+```
 
 
-COMPILING SDF AND THE VISIT READER
-==================================
+## COMPILING SDF AND THE VISIT READER
 
 The EPOCH codes use a self-describing file format called SDF. The routines
 used in reading and writing such files, along with reader plugins for Matlab,
@@ -88,32 +94,33 @@ it will then get rebuilt next time you type "make".
 In order to visualise data using the VisIt program, you must first build the
 SDF VisIt reader plugin. As a pre-requisite, you must have the VisIt binary
 in your shell's search path. You can check this by typing:
+```
   $> visit -version
+```
 which should return with a message such as "The current version of VisIt is .."
 If instead you get "visit: command not found" then you may need to edit your
 PATH environment variable appropriately. Your system administrator should be
 able to help.
 Next you will need to ensure that you have a C++ compiler (preferably GNU g++)
-and CMake. Again, you can check these using "g++ --version" and
-"cmake -version". Note that the appropriate version of these utilities may
+and CMake. Again, you can check these using `g++ --version` and
+`cmake -version`. Note that the appropriate version of these utilities may
 depend on the version of VisIt that you have installed.
 
 Once these pre-requisites have been met, you should be able to build the
-reader plugin by typing "make visit". You do not need to do this again unless
+reader plugin by typing `make visit`. You do not need to do this again unless
 you upgrade your version of the VisIt utility. It is rare that any changes to
 EPOCH will require an update of the VisIt reader, but if you do start to
 encounter errors when reading SDF files then you can try rebuilding the reader
-using the commands "make visitclean" followed by "make visit".
+using the commands `make visitclean` followed by `make visit`.
 
 Note that older versions of EPOCH used the CFD format. This is now obsolete
 and current versions of the code no longer contain any reader plugin for this
 format. However, existing installations of the VisIt CFD plugin will happily
-co-exist with the SDF plugin and issuing "make visitclean" will not remove
+co-exist with the SDF plugin and issuing `make visitclean` will not remove
 such plugins.
 
 
-WORKING WITH THE GIT REPOSITORY
-===============================
+## WORKING WITH THE GIT REPOSITORY
 
 For more advanced users, the code is also hosted on a git repository. Details
 can be found in the "Git" section on the CCPForge site. There is quite a
@@ -129,7 +136,9 @@ straightforward to work with.
 To perform an initial checkout of the code using git, you should issue the
 following command:
 
+```
   git clone --recursive ssh://<name>@ccpforge.cse.rl.ac.uk/gitroot/epoch
+```
 
 The "--recursive" flag ensures that not only the "epoch"
 repository is checked out, but also the "SDF" submodules.
@@ -137,13 +146,13 @@ repository is checked out, but also the "SDF" submodules.
 It is recommended that after checking out a copy of the git repository, users
 immediately create a new working branch and leave the default "master" branch
 untouched. A new branch can be created and switched to with the command
-"git checkout -b work".
+`git checkout -b work`.
 
 When you wish to update to the latest version, do the following sequence of
 actions. First, commit or stash any changes you have made in your "work"
 branch. Next, switch to the "master" branch with
-"git checkout master". Now pull the changes with "git pull",
-followed by "git submodule update --recursive".
+`git checkout master`. Now pull the changes with `git pull`,
+followed by `git submodule update --recursive`.
 At this stage your "master" branch should be fully up to date.
 
 Merging the new version in with your "work" branch is prone to error, so it
@@ -152,12 +161,12 @@ everything goes wrong. The command "git branch workold work" will
 create a branch named "workold" which is just a copy of "work". This branch
 can be deleted once the merge is completed successfully. If everything goes
 wrong in the "work" branch, you can reset it back to the original using the
-command "git reset --hard workold".
+command `git reset --hard workold`.
 
 In order to update your work branch, switch back to it with
-"git checkout work" and merge in the changes with "git merge master".
+`git checkout work` and merge in the changes with `git merge master`.
 After issuing this last command, there is a fair chance that you will encounter
 conflicts. You must now resolve those conflicts and commit the changes.
 After successfully merging in the changes, you can now delete the temporary
-copy of your work branch with "git branch -D workold".
+copy of your work branch with `git branch -D workold`.
 

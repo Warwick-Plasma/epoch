@@ -220,8 +220,8 @@ CONTAINS
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'A default value (set y and z to 0) was used for the constant "' &
-              // TRIM(name) // '"'
+          WRITE(io,*) 'A default value (set y and z to 0) was used for the ', &
+              'constant ', '"' // TRIM(name) // '"'
           WRITE(io,*)
         ENDDO
       ENDIF

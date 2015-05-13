@@ -1,5 +1,8 @@
 # Specify a particular compiler with "make COMPILER=pgi", etc.
 # Specify debugging flags with "make MODE=debug"
+# If floating-point consistency is required then set the flag "CONS=1"
+#   - This prevents the code from using extended 80-bit precision which is
+#     incapable of generating exactly reproducible results in parallel
 # Alternatively, these options can be specified as environment variables
 # eg. "export COMPILER=gfortran" can be added to $HOME/.bashrc
 
@@ -33,6 +36,9 @@ endif
 # =====
 ifeq ($(strip $(COMPILER)),intel)
   FFLAGS = -O3
+  ifeq ($(strip $(CONS)),1)
+    FLTCONS = -pc64 -fltconsistency
+  endif
   #FFLAGS = -O3 -heap-arrays 64 -ipo -xHost # Optimised (B)
   #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
   ifeq ($(strip $(MODE)),debug)
@@ -393,9 +399,11 @@ dist_fn.o: dist_fn.F90 mpi_subtype_control.o
 epoch2d.o: epoch2d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
   finish.o helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
   particles.o photons.o setup.o split_particle.o welcome.o window.o
+	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o
 fields.o: fields.f90 boundary.o
+	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
   laser.o partlist.o setup.o shared_data.o shunt.o window.o
 helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o
