@@ -1,12 +1,12 @@
 ## DOWNLOADING AND BUILDING THE CODE
 
 The easiest method of downloading the code is to grab a copy of the latest
-release package, located in the "Releases" section of the CCPForge site.
+release package, located in the "Downloads" wiki page on the GitLab site.
 
 For more advanced users, the code is also hosted on a git repository. Further
 details on this are provided below.
 
-The "Releases" section of the CCPForge site contains files in the form
+The "Downloads" section of the GitLab site contains files in the form
 "epoch-4.4.5.tar.gz". These are tarred and gzipped packages of the code
 which can be unpacked with the command `tar xzf epoch-4.4.5.tar.gz`.
 This will create a directory called "epoch-4.4.5".
@@ -122,9 +122,8 @@ such plugins.
 
 ## WORKING WITH THE GIT REPOSITORY
 
-For more advanced users, the code is also hosted on a git repository. Details
-can be found in the "Git" section on the CCPForge site. There is quite a
-steep learning curve for using git, so using this repository is only
+For more advanced users, the code is also hosted on a git repository. There is
+quite a steep learning curve for using git, so using this repository is only
 recommended for more advanced users who are comfortable that they can deal with
 a "git conflict".
 
@@ -137,7 +136,7 @@ To perform an initial checkout of the code using git, you should issue the
 following command:
 
 ```
-  git clone --recursive ssh://<name>@ccpforge.cse.rl.ac.uk/gitroot/epoch
+  git clone --recursive git@cfsa-pmw.warwick.ac.uk:EPOCH/epoch.git
 ```
 
 The "--recursive" flag ensures that not only the "epoch"
