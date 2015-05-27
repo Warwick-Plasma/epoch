@@ -81,6 +81,7 @@ CONTAINS
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
+    INTEGER, SAVE :: nstep_prev = 0
     LOGICAL :: convert, force, any_written, restart_id, print_arrays
     LOGICAL, SAVE :: first_call = .TRUE.
     TYPE(particle_species), POINTER :: species
@@ -120,6 +121,8 @@ CONTAINS
     ENDIF
 
     IF (n_io_blocks <= 0) RETURN
+
+    IF (step == nstep_prev) RETURN
 
     IF (first_call) THEN
       ALLOCATE(dumped_skip_dir(c_ndims,n_subsets))
@@ -187,6 +190,8 @@ CONTAINS
           .AND. full_dump_every > -1) code = IOR(code, c_io_full)
       IF (restart_flag) code = IOR(code, c_io_restartable)
       dump_field_grid = .FALSE.
+
+      IF (restart_flag) nstep_prev = step
 
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
