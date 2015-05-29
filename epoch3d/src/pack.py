@@ -19,7 +19,7 @@ except:
 
 def str2bool(x):
    if x.lower() not in ['true', 'yes', '1', 'false', 'no', '0']:
-      raise TypeError
+      raise TypeError("Argument is not a Boolean string")
    return x.lower() in ['true', 'yes', '1']
 
 
