@@ -4,10 +4,31 @@ repo=epoch
 cur=`pwd`
 dir=$(mktemp -d -t$repo)
 
+toplevel=$(git rev-parse --show-toplevel)
+cd $toplevel/SDF
+sdfdir=$(git rev-parse --git-dir)
+cd C
+subdir=$(git rev-parse --git-dir)
+subdir=$(dirname $subdir)
+cd $toplevel/manuals
+mandir=$(git rev-parse --git-dir)
+
+cd $cur
 git init -q $dir/$repo
 git push -q --tags $dir/$repo HEAD:tmp
 cd $dir/$repo
 git checkout -q tmp
+git submodule init
+git config --replace-all submodule.SDF.url $sdfdir
+git config --replace-all submodule.manuals.url $mandir
+git submodule update
+cd SDF
+git submodule init
+for d in $(git config --get-regexp 'submodule\.*' | cut -f2 -d\.); do
+  git config --replace-all submodule.${d}.url $subdir/$d
+done
+cd ..
+
 git submodule update --init --recursive
 cstring=$(git describe --abbrev=0 --match v[0-9]* HEAD | cut -c2-)
 fullstring=$(git describe --match v[0-9]* HEAD | cut -c2-)
@@ -26,6 +47,10 @@ fi
 /bin/sh gen_commit_string.sh)
 (cd SDF/FORTRAN
 /bin/sh src/gen_commit_string.sh)
+(cd SDF/C/src
+/bin/sh gen_commit_string.sh)
+(cd SDF/utilities
+/bin/sh gen_commit_string.sh)
 (cd epoch1d
 /bin/sh src/gen_commit_string.sh)
 cp epoch1d/src/COMMIT epoch2d/src/
