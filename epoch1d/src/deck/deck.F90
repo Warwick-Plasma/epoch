@@ -997,6 +997,7 @@ CONTAINS
 
     TYPE(sdf_file_handle) :: handle
     TYPE(file_buffer), POINTER :: fbuf
+    CHARACTER(LEN=1) :: buffer(1)
     INTEGER :: i
 
     IF (rank == 0) THEN
@@ -1008,6 +1009,13 @@ CONTAINS
             'EPOCH input deck: ' // TRIM(fbuf%filename), &
             fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), &
             'text/plain', 'md5', fbuf%md5sum)
+      ENDDO
+    ELSE
+      ! These calls are required since sdf_write_datablock() is a collective
+      ! operation
+      DO i = 1,nbuffers
+        CALL sdf_write_datablock(handle, 'input_deck/', 'EPOCH input deck: ', &
+            buffer, buffer(1), 'text/plain', 'md5', '')
       ENDDO
     ENDIF
 
