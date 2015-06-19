@@ -2,6 +2,10 @@
 
 The easiest method of downloading the code is to grab a copy of the latest
 release package, located in the "Downloads" wiki page on the GitLab site.
+To get there, click the "Wiki" link on the left-hand side of the EPOCH/epoch
+project page and then follow the "Downloads" link. You can also get there by
+following
+[this link](https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/wikis/Downloads).
 
 For more advanced users, the code is also hosted on a git repository. Further
 details on this are provided below.

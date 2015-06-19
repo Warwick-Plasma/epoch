@@ -20,7 +20,6 @@ error:
 	@echo 'Alternatively, you can add "export COMPILER=intel" to $$HOME/.bashrc'
 endif
 
-MPIF90 ?= mpif90
 D = -D
 
 # PGI
@@ -66,18 +65,21 @@ ifeq ($(strip $(COMPILER)),gfortran)
     GNUMAJOR := $(shell echo $(GNUVER) | cut -f1 -d\.)
     GNUMINOR := $(shell echo $(GNUVER) | cut -f2 -d\.)
 
+    # Allow for 99 minor revisions
+    GNUVER := $(shell expr 100 \* $(GNUMAJOR) + $(GNUMINOR))
+
     # gfortran-4.3
-    GNUGE43 := $(shell expr $(GNUMAJOR) \>= 4 \& $(GNUMINOR) \>= 3)
+    GNUGE43 := $(shell expr $(GNUVER) \>= 403)
     ifeq "$(GNUGE43)" "1"
       FFLAGS += -fbacktrace -fdump-core
 
       # gfortran-4.6
-      GNUGE46 := $(shell expr $(GNUMINOR) \>= 6)
+      GNUGE46 := $(shell expr $(GNUVER) \>= 406)
       ifeq "$(GNUGE46)" "1"
         FFLAGS += -Wno-unused-dummy-argument
 
         # gfortran-4.8
-        GNUGE48 := $(shell expr $(GNUMINOR) \>= 8)
+        GNUGE48 := $(shell expr $(GNUVER) \>= 408)
         ifeq "$(GNUGE48)" "1"
           FFLAGS += -Wno-target-lifetime
         endif
@@ -109,7 +111,7 @@ ifeq ($(strip $(COMPILER)),ibm)
     #FFLAGS = -qthreaded -qsmp=noauto -qsmp=omp # Hybrid stuff
   endif
   MODULEFLAG = -I$(OBJDIR) -qmoddir=$(OBJDIR)
-  MPIF90 = mpixlf90_r
+  MPIF90 ?= mpixlf90_r
 
   # IBM compiler needs a -WF to recognise preprocessor directives
   D = -WF,-D
@@ -123,7 +125,7 @@ ifeq ($(strip $(COMPILER)),hector)
     FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
   endif
   MODULEFLAG = -em -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
-  MPIF90 = ftn
+  MPIF90 ?= ftn
 endif
 
 # Don't compile encoded source if MODE=debug or ENC=no
@@ -138,6 +140,7 @@ else
   endif
 endif
 
+MPIF90 ?= mpif90
 FFLAGS += -I$(SDF)/include
 FFLAGS += $(MODULEFLAG)
 LDFLAGS = $(FFLAGS) -L$(SDF)/lib -lsdf

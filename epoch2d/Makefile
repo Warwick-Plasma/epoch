@@ -65,18 +65,21 @@ ifeq ($(strip $(COMPILER)),gfortran)
     GNUMAJOR := $(shell echo $(GNUVER) | cut -f1 -d\.)
     GNUMINOR := $(shell echo $(GNUVER) | cut -f2 -d\.)
 
+    # Allow for 99 minor revisions
+    GNUVER := $(shell expr 100 \* $(GNUMAJOR) + $(GNUMINOR))
+
     # gfortran-4.3
-    GNUGE43 := $(shell expr $(GNUMAJOR) \>= 4 \& $(GNUMINOR) \>= 3)
+    GNUGE43 := $(shell expr $(GNUVER) \>= 403)
     ifeq "$(GNUGE43)" "1"
       FFLAGS += -fbacktrace -fdump-core
 
       # gfortran-4.6
-      GNUGE46 := $(shell expr $(GNUMINOR) \>= 6)
+      GNUGE46 := $(shell expr $(GNUVER) \>= 406)
       ifeq "$(GNUGE46)" "1"
         FFLAGS += -Wno-unused-dummy-argument
 
         # gfortran-4.8
-        GNUGE48 := $(shell expr $(GNUMINOR) \>= 8)
+        GNUGE48 := $(shell expr $(GNUVER) \>= 408)
         ifeq "$(GNUGE48)" "1"
           FFLAGS += -Wno-target-lifetime
         endif

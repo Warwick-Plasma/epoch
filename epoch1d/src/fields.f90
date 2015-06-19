@@ -339,10 +339,8 @@ CONTAINS
 
     hdt  = 0.5_num * dt
     hdtx = hdt / dx
-    hdty = hdt / dy
 
     cnx = hdtx * c**2
-    cny = hdty * c**2
 
     fac = hdt / epsilon0
 
