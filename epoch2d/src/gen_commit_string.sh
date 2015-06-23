@@ -22,10 +22,10 @@ commit_string=""
 git show-ref > /dev/null 2>&1
 if [ $? -eq 0 ]; then
 # in a git repo
-  gitdescribe=$(git describe --long HEAD 2>/dev/null)
+  gitdescribe=$(git describe --match "v[0-9]*" --long HEAD 2>/dev/null)
 
   if [ $? -ne 0 ]; then
-    always=$(git describe --always --long HEAD 2>/dev/null)
+    always=$(git describe --match "v[0-9]*" --always --long HEAD 2>/dev/null)
     gitdescribe=unknown-unknown-g$always
   fi
 
