@@ -1,0 +1,17 @@
+before_script:
+  - git submodule update --recursive --init SDF
+
+epoch1d_compilation:
+  script:
+    - cd epoch1d
+    - make cleanall
+    - make -j8 COMPILER=gfortran
+    - cd ..
+    - cd epoch2d
+    - make clean
+    - make -j8 COMPILER=gfortran
+    - cd ..
+    - cd epoch3d
+    - make clean
+    - make -j8 COMPILER=gfortran
+    - cd ..
