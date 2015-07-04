@@ -7,11 +7,27 @@ epoch1d_compilation:
     - make cleanall
     - make -j8 COMPILER=gfortran
     - cd ..
+
+epoch2d_compilation:
+  script:
     - cd epoch2d
     - make clean
     - make -j8 COMPILER=gfortran
     - cd ..
+
+epoch3d_compilation:
     - cd epoch3d
     - make clean
     - make -j8 COMPILER=gfortran
     - cd ..
+
+SDF_C_compilation:
+    - cd SDF/C
+    - make clean
+    - make
+    - cd ../..
+
+SDF_utilities_compilation:
+    - cd SDF/utilities
+    - sh build -r
+    - cd ../..
