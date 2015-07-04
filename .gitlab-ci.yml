@@ -32,5 +32,11 @@ SDF_C_compilation:
 SDF_utilities_compilation:
   script:
     - cd SDF/utilities
-    - sh build -r
+    - sh -x build -r
+    - cd ../..
+
+SDF_VisIt_compilation:
+  script:
+    - cd SDF/VisIt
+    - sh -x build
     - cd ../..
