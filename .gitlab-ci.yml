@@ -16,18 +16,21 @@ epoch2d_compilation:
     - cd ..
 
 epoch3d_compilation:
+  script:
     - cd epoch3d
     - make clean
     - make -j8 COMPILER=gfortran
     - cd ..
 
 SDF_C_compilation:
+  script:
     - cd SDF/C
     - make clean
     - make
     - cd ../..
 
 SDF_utilities_compilation:
+  script:
     - cd SDF/utilities
     - sh build -r
     - cd ../..
