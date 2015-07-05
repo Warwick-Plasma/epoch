@@ -18,6 +18,7 @@ error:
 	@echo 'You MUST set a value for the COMPILER variable'
 	@echo ' eg. "make COMPILER=intel"'
 	@echo 'Alternatively, you can add "export COMPILER=intel" to $$HOME/.bashrc'
+	@exit 1
 endif
 
 D = -D
