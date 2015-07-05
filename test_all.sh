@@ -7,13 +7,15 @@ build_c=0
 build_utilities=0
 build_visit=0
 build_any=0
+run_tests=0
 
-while getopts euvh opt
+while getopts euvth opt
 do
    case $opt in
       e) build_epoch=1 ; build_any=1 ;;
       u) build_c=1 ; build_utilities=1 ; build_any=1 ;;
       v) build_visit=1 ; build_any=1 ;;
+      t) run_tests=1 ; build_any=1 ;;
       h) cat <<EOF
 build_all script options:
   -e: Build EPOCH components
@@ -29,6 +31,7 @@ if [ $build_any -eq 0 ]; then
    build_c=1
    build_utilities=1
    build_visit=1
+   run_tests=1
 fi
 
 if [ $build_epoch -ne 0 ]; then
@@ -37,6 +40,11 @@ if [ $build_epoch -ne 0 ]; then
    echo Building ${dir}...
    make cleanall
    make $makeflags || failed="$failed $dir"
+   if [ $run_tests -ne 0 ]; then
+      cp example_decks/two_stream.deck Data/input.deck
+      echo Data | mpirun -np 4 ./bin/$dir || failed="$failed $dir/tests"
+      rm -f Data/*
+   fi
    cd -
 
    dir=epoch2d
