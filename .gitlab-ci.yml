@@ -1,42 +1,14 @@
 before_script:
   - git submodule update --recursive --init SDF
 
-epoch1d_compilation:
+test_ubuntu:
   script:
-    - cd epoch1d
-    - make cleanall
-    - make -j8 COMPILER=gfortran
-    - cd ..
+    - COMPILER=gfortran sh -x test_all.sh
+  tags:
+    - ubuntu
 
-epoch2d_compilation:
+test_osx:
   script:
-    - cd epoch2d
-    - make clean
-    - make -j8 COMPILER=gfortran
-    - cd ..
-
-epoch3d_compilation:
-  script:
-    - cd epoch3d
-    - make clean
-    - make -j8 COMPILER=gfortran
-    - cd ..
-
-SDF_C_compilation:
-  script:
-    - cd SDF/C
-    - make clean
-    - make
-    - cd ../..
-
-SDF_utilities_compilation:
-  script:
-    - cd SDF/utilities
-    - sh -x build -r
-    - cd ../..
-
-SDF_VisIt_compilation:
-  script:
-    - cd SDF/VisIt
-    - sh -x build
-    - cd ../..
+    - COMPILER=gfortran sh -x test_all.sh
+  tags:
+    - osx
