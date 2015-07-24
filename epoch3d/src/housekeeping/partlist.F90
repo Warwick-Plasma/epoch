@@ -143,8 +143,7 @@ CONTAINS
     CALL create_empty_partlist(partlist)
 
     DO ipart = 0, n_elements-1
-      ALLOCATE(new_particle)
-      CALL init_particle(new_particle)
+      CALL create_particle(new_particle)
       CALL add_particle_to_partlist(partlist, new_particle)
       NULLIFY(new_particle)
     ENDDO
@@ -477,6 +476,17 @@ CONTAINS
 #endif
 
   END SUBROUTINE init_particle
+
+
+
+  SUBROUTINE create_particle(new_particle)
+
+    TYPE(particle), POINTER :: new_particle
+
+    ALLOCATE(new_particle)
+    CALL init_particle(new_particle)
+
+  END SUBROUTINE create_particle
 
 
 
