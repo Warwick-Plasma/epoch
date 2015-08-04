@@ -120,8 +120,7 @@ CONTAINS
         current%pvol = 1.0_num / distribution
 
 #if DELTAF_DEBUG
-        f0_back = f0(ispecies, mass, current%part_p(1), current%part_p(2), &
-            current%part_p(3))
+        f0_back = f0(ispecies, mass, current%part_p)
 
         ! Checks for correct particle weight calculation.
         weight_back = f0_back * current%pvol
