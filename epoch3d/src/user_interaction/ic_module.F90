@@ -28,6 +28,7 @@ MODULE ic_module
 
 CONTAINS
 
+#ifdef DELTAF_METHOD
   ! Find local particle temperature: at the moment, just copied and
   ! pasted from particle_temperature.F90
   SUBROUTINE params_local(current,temperature,drift, temp_local,drift_local)
@@ -54,8 +55,10 @@ CONTAINS
        ENDDO
     ENDDO
   END SUBROUTINE params_local
+#endif
 
   SUBROUTINE manual_load
+#ifdef DELTAF_METHOD
     REAL(num) :: Tx,Ty,Tz,driftx,drifty,driftz
     REAL(num) :: f0_exponent, distribution, mass, npart_per_cell
     TYPE(particle_list), POINTER :: partlist
@@ -63,7 +66,6 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     INTEGER :: ipart, ispecies
     REAL(num) :: part_weight,weight_back, f0_back
-#ifdef DELTAF_METHOD
     ! f0 calculation: mainly, we need to calculate the phase space volumes.
     ! Calculate this based on the loading parameters. Easy to check
     ! that this is OK for a Maxwellian load by setting f0 = f0_back,

@@ -567,7 +567,7 @@ CONTAINS
     INTEGER, INTENT(IN)   :: ispecies
     REAL(num) :: Tx,Ty,Tz,driftx,drifty,driftz,density
     REAL(num) :: f0_exponent,norm
-    IF (initial_conditions(ispecies)%density_back/=0) THEN
+    IF (ABS(initial_conditions(ispecies)%density_back) < c_tiny) THEN
        Tx = initial_conditions(ispecies)%temp_back(1)
        Ty = initial_conditions(ispecies)%temp_back(2)
        Tz = initial_conditions(ispecies)%temp_back(3)
