@@ -66,13 +66,15 @@ CONTAINS
 
 #ifdef DELTAF_METHOD
     REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz
-    REAL(num) :: f0_exponent, distribution, mass, npart_per_cell
+    REAL(num) :: f0_exponent, distribution, mass, npart_per_cell, idx
+    REAL(num) :: two_kb_mass, two_pi_kb_mass3, part_weight
+    REAL(num), PARAMETER :: two_kb = 2.0_num * kb
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current
     TYPE(particle_species), POINTER :: species
     INTEGER :: ipart, ispecies
 #if DELTAF_DEBUG
-    REAL(num) :: part_weight, weight_back, f0_back
+    REAL(num) :: weight_back, f0_back
 #endif
 
     ! f0 calculation: mainly, we need to calculate the phase space volumes.
@@ -80,16 +82,24 @@ CONTAINS
     ! that this is OK for a Maxwellian load by setting f0 = f0_back,
     ! and making sure the weights cancel.
 
+    idx = 1.0_num / dx / dy / dz
+
     DO ispecies = 1, n_species
       species => species_list(ispecies)
       partlist => species%attached_list
       current => partlist%head
+
+      mass = species%mass
+      two_kb_mass = two_kb * mass
+      two_pi_kb_mass3 = (pi * two_kb_mass)**3
+      part_weight = species_list(ispecies)%weight
+
       ipart = 0
       DO WHILE(ipart < partlist%count)
 #ifdef PER_PARTICLE_CHARGE_MASS
         mass = current%mass
-#else
-        mass = species%mass
+        two_kb_mass = two_kb * mass
+        two_pi_kb_mass3 = (pi * two_kb_mass)**3
 #endif
         CALL params_local(current, initial_conditions(ispecies)%temp(:,:,:,1), &
             initial_conditions(ispecies)%drift(:,:,:,1), Tx, driftx)
@@ -100,13 +110,13 @@ CONTAINS
 
         f0_exponent = ((current%part_p(1) - driftx)**2 / Tx &
                      + (current%part_p(2) - drifty)**2 / Ty &
-                     + (current%part_p(3) - driftz)**2 / Tz) / (2 * kb * mass)
+                     + (current%part_p(3) - driftz)**2 / Tz) / two_kb_mass
 
         npart_per_cell = current%pvol
 
         ! We want to calculate the distribution of markers.
-        distribution = EXP(-f0_exponent) * (npart_per_cell / (dx * dy * dz)) &
-            / SQRT((2 * pi * kb * mass)**3 * Tx * Ty * Tz)
+        distribution = EXP(-f0_exponent) * npart_per_cell * idx &
+            / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
         current%pvol = 1.0_num / distribution
 
 #if DELTAF_DEBUG
@@ -115,15 +125,13 @@ CONTAINS
 
         ! Checks for correct particle weight calculation.
         weight_back = f0_back * current%pvol
-#ifdef PER_SPECIES_WEIGHT
-        part_weight = species_list(ispecies)%weight
-#else
+#ifndef PER_SPECIES_WEIGHT
         part_weight = current%weight
 #endif
         WRITE(*,*) ipart, distribution, f0_exponent, npart_per_cell, &
-            SQRT((2 * pi * kb * mass)**3 * Tx * Ty * Tz), kb, mass
+            SQRT(two_pi_kb_mass3 * Tx * Ty * Tz), kb, mass
         WRITE(*,*) ipart, 'R', EXP(-f0_exponent), EXP(-f0_exponent) &
-            * npart_per_cell / SQRT((2 * pi * kb * mass)**3 * Tx * Ty * Tz)
+            * npart_per_cell / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
         WRITE(*,*) ipart, 'Q', distribution, f0_back, weight_back, part_weight
 #endif
 
