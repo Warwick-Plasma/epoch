@@ -28,7 +28,6 @@ MODULE particles
 
 CONTAINS
 
-
   SUBROUTINE push_particles
 
     ! 2nd order accurate particle pusher using parabolic weighting
@@ -186,7 +185,6 @@ CONTAINS
       fcy = idtxz * part_weight
       fcz = idtxy * part_weight
 #endif
-
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_q   = species_list(ispecies)%charge
       part_mc  = c * species_list(ispecies)%mass
@@ -392,11 +390,11 @@ CONTAINS
           part_y = part_y + delta_y
           part_z = part_z + delta_z
 
-      ! Delta-f calcuation: subtract background from
-      ! calculated current.
+          ! Delta-f calcuation: subtract background from
+          ! calculated current.
 #ifdef DELTAF_METHOD
-          weight_back = current%pvol * f0(ispecies, part_mc/c, current%part_p(1), &
-             & current%part_p(2),current%part_p(3))
+          weight_back = current%pvol * f0(ispecies, part_mc / c, &
+              current%part_p(1), current%part_p(2), current%part_p(3))
           fcx = idtyz * (part_weight - weight_back)
           fcy = idtxz * (part_weight - weight_back)
           fcz = idtxy * (part_weight - weight_back)
@@ -557,34 +555,41 @@ CONTAINS
 
   END SUBROUTINE push_particles
 
+
+
   ! Background distribution function used for delta-f calculations.
-  ! Specialise to a drifting (tri)-Maxwellian
-  ! to simplify and ensure zero density/current divergence.
-  ! Can effectively switch off deltaf method by setting zero background
-  ! density.
-  REAL(num) function f0(ispecies, mass,px,py,pz)
-    REAL(num), INTENT(IN) :: mass,px,py,pz
-    INTEGER, INTENT(IN)   :: ispecies
-    REAL(num) :: Tx,Ty,Tz,driftx,drifty,driftz,density
-    REAL(num) :: f0_exponent,norm
+  ! Specialise to a drifting (tri)-Maxwellian to simplify and ensure
+  ! zero density/current divergence.
+  ! Can effectively switch off deltaf method by setting zero background density.
+
+  FUNCTION f0(ispecies, mass, px, py, pz)
+
+    INTEGER, INTENT(IN) :: ispecies
+    REAL(num), INTENT(IN) :: mass, px, py, pz
+    REAL(num) :: f0
+    REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz, density
+    REAL(num) :: f0_exponent, norm
+
     IF (ABS(initial_conditions(ispecies)%density_back) < c_tiny) THEN
        Tx = initial_conditions(ispecies)%temp_back(1)
        Ty = initial_conditions(ispecies)%temp_back(2)
        Tz = initial_conditions(ispecies)%temp_back(3)
-       driftx = initial_conditions(ispecies)%drift_back(1)
-       drifty = initial_conditions(ispecies)%drift_back(2)
-       driftz = initial_conditions(ispecies)%drift_back(3)
-       density= initial_conditions(ispecies)%density_back
-       f0_exponent =      (   (px-driftx)**2/(2*kb*Tx*mass)   & 
-            &              + (py-drifty)**2/(2*kb*Ty*mass)   &
-            &              + (pz-driftz)**2/(2*kb*Tz*mass) )
-       norm = density/sqrt( (2*pi*kb*mass)**3*Tx*Ty*Tz )
-       f0 = norm * exp(-f0_exponent)
-       !WRITE (*,*) 'L',Tx,Ty,Tz,driftx,drifty,driftz,density,f0_exponent,norm
+       driftx  = initial_conditions(ispecies)%drift_back(1)
+       drifty  = initial_conditions(ispecies)%drift_back(2)
+       driftz  = initial_conditions(ispecies)%drift_back(3)
+       density = initial_conditions(ispecies)%density_back
+       f0_exponent = ((px - driftx)**2 / (2 * kb * Tx * mass) &
+                    + (py - drifty)**2 / (2 * kb * Ty * mass) &
+                    + (pz - driftz)**2 / (2 * kb * Tz * mass))
+       norm = density / SQRT((2 * pi * kb * mass)**3 * Tx * Ty * Tz)
+       f0 = norm * EXP(-f0_exponent)
     ELSE
-       f0 = 0.0
+       f0 = 0.0_num
     ENDIF
-  END function f0
+
+  END FUNCTION f0
+
+
 
 #ifdef PHOTONS
   SUBROUTINE push_photons(ispecies)

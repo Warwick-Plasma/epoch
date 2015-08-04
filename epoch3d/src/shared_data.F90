@@ -629,7 +629,7 @@ MODULE shared_data
     REAL(num) :: density_min
     REAL(num) :: density_max
 
-    !Delta-f settings
+    ! Delta-f settings
     REAL(num) :: temp_back(3)
     REAL(num) :: drift_back(3)
     REAL(num) :: density_back
