@@ -161,7 +161,6 @@ DEFINES := $(DEFINE)
 # Set every pseudoparticle in a species to represent the same number of
 # real particles.
 #DEFINES += $(D)PER_SPECIES_WEIGHT
-DEFINES += $(D)DELTAF_METHOD
 
 # Don't enable support for tracer particles (in order to make the particle
 # push slightly faster).
@@ -219,6 +218,8 @@ DEFINES += $(D)DELTAF_METHOD
 # are enabled.
 #DEFINES += $(D)PARSER_CHECKING
 
+# Compile the delta-f version of EPOCH
+DEFINES += $(D)DELTAF_METHOD
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
