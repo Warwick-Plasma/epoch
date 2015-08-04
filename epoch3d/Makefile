@@ -221,6 +221,9 @@ DEFINES := $(DEFINE)
 # Compile the delta-f version of EPOCH
 DEFINES += $(D)DELTAF_METHOD
 
+# Debugging option for delta-f
+#DEFINES += $(D)DELTAF_DEBUG
+
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.

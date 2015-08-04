@@ -71,8 +71,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_species), POINTER :: species
     INTEGER :: ipart, ispecies
-! Set to 1 for debugging
-#if 0
+#if DELTAF_DEBUG
     REAL(num) :: part_weight, weight_back, f0_back
 #endif
 
@@ -110,8 +109,7 @@ CONTAINS
             / SQRT((2 * pi * kb * mass)**3 * Tx * Ty * Tz)
         current%pvol = 1.0_num / distribution
 
-! Set to 1 for debugging
-#if 0
+#if DELTAF_DEBUG
         f0_back = f0(ispecies, mass, current%part_p(1), current%part_p(2), &
             current%part_p(3))
 
