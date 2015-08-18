@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# run all examples for testing
+
+# a make target can be specfied. for example:
+# ./run-all clean
+MAKETARGET=$1
+
+cd laser; make $MAKETARGET; cd ..
+cd landau; make $MAKETARGET; cd ..
+cd twostream; make $MAKETARGET; cd ..
