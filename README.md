@@ -1,3 +1,8 @@
+## EPOCH Build Status
+
+Here is the result of the most recent automated build: 
+[![build status](https://cfsa-pmw.warwick.ac.uk:3389/projects/7/status.png?ref=master)](https://cfsa-pmw.warwick.ac.uk:3389/projects/7?ref=master)
+
 ## DOWNLOADING AND BUILDING THE CODE
 
 The easiest method of downloading the code is to grab a copy of the latest
