@@ -33,7 +33,7 @@ CONTAINS
 
   SUBROUTINE deallocate_laser(laser)
 
-    TYPE(laser_block), POINTER, INTENT(INOUT) :: laser
+    TYPE(laser_block), POINTER :: laser
 
     IF (laser%use_profile_function) &
         CALL deallocate_stack(laser%profile_function)

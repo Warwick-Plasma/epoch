@@ -37,7 +37,7 @@ CONTAINS
 
   SUBROUTINE deallocate_laser(laser)
 
-    TYPE(laser_block), POINTER, INTENT(INOUT) :: laser
+    TYPE(laser_block), POINTER :: laser
 
     IF (ASSOCIATED(laser%profile)) DEALLOCATE(laser%profile)
     IF (ASSOCIATED(laser%phase)) DEALLOCATE(laser%phase)
