@@ -54,16 +54,16 @@ if got_argparse:
     args = argp.parse_args()
 else:
     args = type("", (), dict(dummy=1))()
-    args.prefix = sys.argv[1]
+    args.prefix = sys.argv[2]
     (args.pack_source_code,
      args.pack_git_diff,
      args.pack_git_diff_from_origin,
      args.generate_checksum,
-     args.f77_output,) = map(str2bool, sys.argv[2:7])
-    args.outfile = sys.argv[7]
+     args.f77_output,) = map(str2bool, sys.argv[3:8])
+    args.outfile = sys.argv[8]
     (args.compiler_info,
-     args.compiler_flags,) = map(stripped, sys.argv[8:10])
-    args.filelist = sys.argv[10:]
+     args.compiler_flags,) = map(stripped, sys.argv[9:11])
+    args.filelist = sys.argv[11:]
 
 prefix = args.prefix
 pack_source_code = args.pack_source_code
