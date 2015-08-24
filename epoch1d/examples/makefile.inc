@@ -12,13 +12,11 @@ EPOCH=../../bin/epoch1d
 # $export MPRIPROCS=8
 MPIPROCS?=2
 
-default: normal.visit postprocess
+default: epoch1d.dat
 
-normal.visit: input.deck $(EPOCH)
+epoch1d.dat: input.deck $(EPOCH)
 	echo . | mpirun -n $(MPIPROCS) $(EPOCH)
-
-postprocess: normal.visit
-	./postprocessing.py
 
 clean:
 	rm -rf *.png *.sdf deck.status epoch{1,2,3}d.dat *.visit
+	rm -rf __pycache__

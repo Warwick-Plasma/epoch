@@ -6,6 +6,8 @@ import numpy as np
 import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import unittest
+
 
 def showdatafields(sdffile):
     data = sdf.read(sdffile, dict=True)
@@ -24,33 +26,41 @@ def plotdump2d(sdffile, key, ax):
     ax.imshow(array)
     ax.set_title(r'{:2.1f} ms'.format(data['Header']['time']*1e3))
 
-
 def plotevolution(key):
     print('plotting: ' + key)
-    sdffiles = ['{:04d}.sdf'.format(i) for i in range(0,101,7)]
+    sdffiles = ['{:04d}.sdf'.format(i) for i in range(0,200,14)]
     fig, axarr = plt.subplots(3,5, figsize=(20,11))
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
         plotdump(sdffile, key, ax)
     fig.suptitle(key)
     fig.savefig(key.replace('/','_') + '.png', dpi=160)
 
-
 def plot2devolution(key):
     print('plotting: ' + key)
-    sdffiles = ['{:04d}.sdf'.format(i) for i in range(0,101,7)]
+    sdffiles = ['{:04d}.sdf'.format(i) for i in range(0,200,14)]
     fig, axarr = plt.subplots(3,5, figsize=(20,11))
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
         plotdump2d(sdffile, key, ax)
     fig.suptitle(key)
     fig.savefig(key.replace('/','_') + '.png', dpi=160)
 
-
-if __name__=='__main__':
+def createplots():
     showdatafields('0000.sdf')
     plotevolution('Electric Field/Ex')
-    plotevolution('Derived/Number_Density/Right')
-    plotevolution('Derived/Number_Density/Left')
+    plotevolution('Derived/Number_Density/electrons')
+    plotevolution('Derived/Number_Density/protons')
     plotevolution('Derived/Charge_Density')
-    plotevolution('Current/Jx')
-    plot2devolution('dist_fn/x_px/Right')
-    plot2devolution('dist_fn/x_px/Left')
+    plot2devolution('dist_fn/x_px/electrons')
+    plot2devolution('dist_fn/x_px/protons')
+
+
+class test_landau(unittest.TestCase):
+
+    def test_creatplots(self):
+        createplots()
+
+
+if __name__=='__main__':
+    unittest.main()
+
+
