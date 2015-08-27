@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Stephan Kuschel, 150818
 
@@ -7,7 +7,7 @@ import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import unittest
-import os
+import os, subprocess
 
 
 def showdatafields(sdffile):
@@ -30,13 +30,18 @@ def plotevolution(key):
     fig.savefig(key.replace('/','_') + '.png', dpi=160)
 
 def createplots():
-    showdatafields('0000.sdf')
+    #showdatafields('0000.sdf')
     plotevolution('Electric Field/Ey')
 
 
-@unittest.skipIf(not os.path.isfile('epoch1d.dat'),
-                 'Skipping because EPOCH has not been run on this directory')
 class test_laser(unittest.TestCase):
+
+    def setUpClass():
+        os.chdir('laser')
+        subprocess.call('make', shell=True)
+
+    def tearDownClass():
+        os.chdir('..')
 
     def totaleyassert(self, dump, val):
         data = sdf.read(dump, dict=True)
@@ -50,10 +55,10 @@ class test_laser(unittest.TestCase):
         self.totaleyassert('0000.sdf', 0.0)
 
     def test_Eey0001(self):
-        self.totaleyassert('0001.sdf',206954574900.52179)
+        self.totaleyassert('0001.sdf', 206954574900.52179)
 
     def test_Eey0003 (self):
-        self.totaleyassert('0003.sdf',121431247301.71188)
+        self.totaleyassert('0003.sdf', 121431247301.71188)
 
     def test_Eey0007(self):
         self.totaleyassert('0007.sdf', -9490905.2679244578)

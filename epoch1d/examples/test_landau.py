@@ -7,6 +7,7 @@ import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import unittest
+import os, subprocess
 
 
 def showdatafields(sdffile):
@@ -45,7 +46,7 @@ def plot2devolution(key):
     fig.savefig(key.replace('/','_') + '.png', dpi=160)
 
 def createplots():
-    showdatafields('0000.sdf')
+    #showdatafields('0000.sdf')
     plotevolution('Electric Field/Ex')
     plotevolution('Derived/Number_Density/electrons')
     plotevolution('Derived/Number_Density/protons')
@@ -55,6 +56,13 @@ def createplots():
 
 
 class test_landau(unittest.TestCase):
+
+    def setUpClass():
+        os.chdir('landau')
+        subprocess.call('make', shell=True)
+
+    def tearDownClass():
+        os.chdir('..')
 
     def test_creatplots(self):
         createplots()
