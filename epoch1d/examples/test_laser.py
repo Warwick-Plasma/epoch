@@ -38,7 +38,11 @@ class test_laser(unittest.TestCase):
 
     def setUpClass():
         os.chdir('laser')
-        subprocess.call('make', shell=True)
+        exitcode = subprocess.call('make', shell=True)
+        if exitcode != 0:
+            # that means the execution of 'make' returned an error
+            os.chdir('..')
+            raise unittest.FailTest('running EPOCH errored.')
 
     def tearDownClass():
         os.chdir('..')
