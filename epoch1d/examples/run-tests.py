@@ -15,10 +15,28 @@ def getsuite(folder):
         testcases.append(loader.loadTestsFromModule(mod))
     return unittest.TestSuite(testcases)
 
-def main():
+def run_tests():
     runner = unittest.TextTestRunner(verbosity=0)
     suite = getsuite('.')
     runner.run(suite)
+
+def cleanup():
+    for d in ['landau', 'laser', 'twostream']:
+        os.chdir(d)
+        subprocess.call(['make', 'clean'])
+        os.chdir('..')
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--clean', '-c', action='store_true')
+    args = parser.parse_args()
+
+    if args.clean:
+        cleanup()
+    else:
+        run_tests()
+
 
 
 if __name__=='__main__':
