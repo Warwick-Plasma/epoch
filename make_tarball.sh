@@ -10,8 +10,6 @@ sdfdir=$(git rev-parse --git-dir)
 cd C
 subdir=$(git rev-parse --git-dir)
 subdir=$(dirname $subdir)
-cd $toplevel/manuals
-mandir=$(git rev-parse --git-dir)
 
 cd $cur
 git init -q $dir/$repo
@@ -20,7 +18,6 @@ cd $dir/$repo
 git checkout -q tmp
 git submodule init
 git config --replace-all submodule.SDF.url $sdfdir
-git config --replace-all submodule.manuals.url $mandir
 git submodule update
 cd SDF
 git submodule init
