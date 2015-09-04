@@ -1,6 +1,3 @@
 [submodule "SDF"]
 	path = SDF
 	url = git://github.com/keithbennett/SDF.git
-[submodule "manuals"]
-	path = manuals
-	url = ../manuals.git
