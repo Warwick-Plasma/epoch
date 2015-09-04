@@ -202,8 +202,7 @@ CONTAINS
           IF (ipart == 0) THEN
             IF (npart_frac < random()) CYCLE
           ENDIF
-          ALLOCATE(current)
-          CALL init_particle(current)
+          CALL create_particle(current)
           current%part_pos(1) = x_grid_max + dx + (random() - 0.5_num) * dx
           current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
 

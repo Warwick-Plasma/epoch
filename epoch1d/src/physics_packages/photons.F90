@@ -878,7 +878,7 @@ CONTAINS
     IF (photon_energy > photon_energy_min .AND. produce_photons) THEN
       IF (photon_energy < c_tiny) photon_energy = c_tiny
 
-      ALLOCATE(new_photon)
+      CALL create_particle(new_photon)
       new_photon%part_pos = generating_electron%part_pos
 
       new_photon%part_p(1) = dir_x * photon_energy / c
@@ -924,8 +924,8 @@ CONTAINS
     REAL(num) :: probability_split, epsilon_frac, norm
     TYPE(particle), POINTER :: new_electron, new_positron
 
-    ALLOCATE(new_electron)
-    ALLOCATE(new_positron)
+    CALL create_particle(new_electron)
+    CALL create_particle(new_positron)
 
     new_electron%part_pos = generating_photon%part_pos
     new_positron%part_pos = generating_photon%part_pos
@@ -986,8 +986,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: ielectron, ipositron
     TYPE(particle), POINTER :: new_electron, new_positron
 
-    ALLOCATE(new_electron)
-    ALLOCATE(new_positron)
+    CALL create_particle(new_electron)
+    CALL create_particle(new_positron)
 
     new_electron%part_pos = generating_electron%part_pos
     new_positron%part_pos = generating_electron%part_pos

@@ -596,7 +596,7 @@ CONTAINS
           ! function modelling ionisation in a field as an exponential decay
           IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
-              ALLOCATE(new)
+              CALL create_particle(new)
               ! Create electron for release
 #ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
@@ -886,7 +886,7 @@ CONTAINS
           ! function modelling ionisation in a field as an exponential decay
           IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
-              ALLOCATE(new)
+              CALL create_particle(new)
               ! Create electron for release
 #ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
@@ -1179,7 +1179,7 @@ CONTAINS
           ! function modelling ionisation in a field as an exponential decay
           IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
-              ALLOCATE(new)
+              CALL create_particle(new)
               ! Create electron for release
 #ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
@@ -1444,7 +1444,7 @@ CONTAINS
           ! function modelling ionisation in a field as an exponential decay
           IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
-              ALLOCATE(new)
+              CALL create_particle(new)
               ! Create electron for release
 #ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
