@@ -52,6 +52,7 @@ fi
 cp epoch1d/src/COMMIT epoch2d/src/
 cp epoch1d/src/COMMIT epoch3d/src/
 rm -rf .git*
+find * -name ".git" -o -name ".gitignore" -exec rm -rf {} \;
 cd $dir
 mv $repo $repo-$cstring
 tar -cf - $repo-$cstring | gzip -c > $repo-$cstring.tar.gz
