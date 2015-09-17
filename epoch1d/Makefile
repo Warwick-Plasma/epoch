@@ -328,9 +328,10 @@ epoch_source_info.o: $(OBJDIR)/epoch_source_info.f90 $(SOURCE_ALL)
 $(SDFMOD):
 	$(MAKE) -C $(SDF)
 
-clean:
+rm:
 	@rm -rf $(BINDIR) $(OBJDIR)
 
+clean: tidy
 cleanall: tidy
 
 tidy:
