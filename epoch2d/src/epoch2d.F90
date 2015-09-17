@@ -75,7 +75,7 @@ PROGRAM pic
     CALL cleanup_stop_files
   ENDIF
 
-  IF (data_dir == 'VERSION') THEN
+  IF (data_dir == 'VERSION_INFO') THEN
     STOP  ! version check only, exit silently
   ENDIF
 
