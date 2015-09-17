@@ -75,11 +75,11 @@ PROGRAM pic
     CALL cleanup_stop_files
   ENDIF
 
-  IF (data_dir == 'VERSION_INFO') THEN
-    STOP  ! version check only, exit silently
-  ENDIF
-
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
+
+  ! version check only, exit silently
+  IF (TRIM(data_dir) == 'VERSION_INFO') CALL finalise
+
   CALL read_deck(deck_file, .TRUE., c_ds_first)
   IF (use_exact_restart) CALL read_cpu_split
   CALL setup_particle_boundaries ! boundary.f90

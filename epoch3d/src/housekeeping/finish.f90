@@ -23,8 +23,9 @@ CONTAINS
   SUBROUTINE finalise
 
     CALL close_files
-    CALL deallocate_memory
+    IF (done_mpi_initialise) CALL deallocate_memory
     CALL MPI_FINALIZE(errcode)
+    STOP
 
   END SUBROUTINE finalise
 
