@@ -56,11 +56,8 @@ PROGRAM pic
   CALL mpi_minimal_init ! mpi_routines.f90
   real_walltime_start = MPI_WTIME()
   CALL minimal_init     ! setup.f90
-  CALL timer_init
-  CALL setup_partlists  ! partlist.f90
   CALL get_job_id(jobid)
   CALL welcome_message  ! welcome.f90
-  CALL register_objects ! custom.f90
 
   IF (rank == 0) THEN
     OPEN(unit=lu, status='OLD', file=TRIM(data_dir_file), iostat=ierr)
@@ -76,7 +73,16 @@ PROGRAM pic
   ENDIF
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
+
+  ! version check only, exit silently
+  IF (TRIM(data_dir) == 'VERSION_INFO') CALL finalise
+
   CALL read_deck(deck_file, .TRUE., c_ds_first)
+
+  CALL setup_partlists  ! partlist.f90
+  CALL register_objects ! custom.f90
+  CALL timer_init
+
   IF (use_exact_restart) CALL read_cpu_split
   CALL setup_particle_boundaries ! boundary.f90
   CALL mpi_initialise  ! mpi_routines.f90

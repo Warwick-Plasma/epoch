@@ -429,6 +429,7 @@ CONTAINS
     CALL allocate_ic
 
     start_time = MPI_WTIME()
+    done_mpi_initialise = .TRUE.
 
   END SUBROUTINE mpi_initialise
 
