@@ -4,6 +4,7 @@ MODULE balance
   USE mpi_subtype_control
   USE redblack_module
   USE timer
+  USE utilities
 
   IMPLICIT NONE
 
@@ -2146,7 +2147,7 @@ CONTAINS
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_send
     TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: pointers_recv
     TYPE(particle), POINTER :: current, next
-    INTEGER :: part_proc, iproc, ispecies, ierr
+    INTEGER :: part_proc, iproc, ispecies
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: sendcounts, recvcounts
 
     ALLOCATE(pointers_send(0:nproc-1), pointers_recv(0:nproc-1))
@@ -2164,7 +2165,7 @@ CONTAINS
         part_proc = get_particle_processor(current)
         IF (part_proc < 0) THEN
           PRINT *, 'Unlocatable particle on processor', rank, current%part_pos
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+          CALL abort_code(c_err_bad_value)
           STOP
         ENDIF
 #ifdef PARTICLE_DEBUG

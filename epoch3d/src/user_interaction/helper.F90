@@ -283,7 +283,7 @@ CONTAINS
     INTEGER(i8) :: cell_y
     INTEGER(i8) :: cell_z
     INTEGER(i8) :: i, ipos
-    INTEGER :: ierr, ix, iy, iz
+    INTEGER :: ix, iy, iz
     CHARACTER(LEN=15) :: string
     LOGICAL :: sweep
 
@@ -323,7 +323,7 @@ CONTAINS
               // 'where particles may'
           WRITE(*,*) 'validly be placed for species "' // TRIM(species%name) &
               // '". ', 'Code will now terminate.'
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
+          CALL abort_code(c_err_bad_setup)
         ENDIF
       ENDIF
 

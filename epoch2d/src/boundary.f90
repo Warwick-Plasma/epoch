@@ -4,6 +4,7 @@ MODULE boundary
   USE particle_temperature
   USE laser
   USE mpi_subtype_control
+  USE utilities
 
   IMPLICIT NONE
 
@@ -11,7 +12,7 @@ CONTAINS
 
   SUBROUTINE setup_particle_boundaries
 
-    INTEGER :: i, ierr
+    INTEGER :: i
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max' /)
@@ -66,7 +67,7 @@ CONTAINS
       errcode = c_err_bad_value
     ENDDO
 
-    IF (error) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    IF (error) CALL abort_code(errcode)
 
   END SUBROUTINE setup_particle_boundaries
 

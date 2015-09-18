@@ -1,6 +1,7 @@
 MODULE shunt
 
   USE tokenizer_blocks
+  USE utilities
 
   IMPLICIT NONE
 
@@ -434,7 +435,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
     TYPE(stack_element) :: block2
-    INTEGER :: ipoint, io, iu, ierr
+    INTEGER :: ipoint, io, iu
 
     IF (ICHAR(current(1:1)) == 0) RETURN
 
@@ -452,7 +453,7 @@ CONTAINS
           WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
         ENDDO
         CALL check_deprecated(current)
-        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+        CALL abort_code(c_err_bad_value)
       ENDIF
       err = c_err_bad_value
       CALL deallocate_stack(stack)
@@ -577,7 +578,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: stack, output
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
-    INTEGER :: ipoint, io, iu, ierr
+    INTEGER :: ipoint, io, iu
 
     IF (ICHAR(current(1:1)) == 0) RETURN
 
@@ -594,7 +595,7 @@ CONTAINS
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
       ENDDO
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+      CALL abort_code(c_err_bad_value)
       err = c_err_bad_value
       CALL deallocate_stack(stack)
       RETURN

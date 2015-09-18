@@ -2,6 +2,7 @@ MODULE deck_dist_fn_block
 
   USE strings_advanced
   USE dist_fn
+  USE utilities
 
   IMPLICIT NONE
   SAVE
@@ -45,7 +46,7 @@ CONTAINS
 
   SUBROUTINE dist_fn_block_end
 
-    INTEGER :: i, dir, n, iu, io, ierr
+    INTEGER :: i, dir, n, iu, io
     REAL(num) :: r1, r2
     REAL(num), PARAMETER :: pi2 = 2.0_num * pi
 
@@ -59,7 +60,7 @@ CONTAINS
           WRITE(io,*) 'name not set for "dist_fn" block.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_missing_elements, ierr)
+      CALL abort_code(c_err_missing_elements)
       RETURN
     ENDIF
 
@@ -72,7 +73,7 @@ CONTAINS
               // TRIM(working_block%name) // '"'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_missing_elements, ierr)
+      CALL abort_code(c_err_missing_elements)
       RETURN
     ENDIF
 
@@ -87,7 +88,7 @@ CONTAINS
               'distribution function.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+      CALL abort_code(c_err_bad_value)
       RETURN
     ENDIF
 
