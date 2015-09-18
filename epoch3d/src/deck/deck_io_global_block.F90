@@ -65,7 +65,7 @@ CONTAINS
               'conjunction with ', 'unnamed "output" blocks.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
     ENDIF
 
   END SUBROUTINE io_global_block_start

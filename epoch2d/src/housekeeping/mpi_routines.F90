@@ -47,7 +47,7 @@ CONTAINS
         PRINT*,'There must be at least ' // TRIM(str) // &
             ' cells in each direction.'
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
     ENDIF
 
     reset = .FALSE.
@@ -110,7 +110,7 @@ CONTAINS
           PRINT*,'Cannot split the domain using the requested number of CPUs.'
           PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
         STOP
       ENDIF
       IF (rank == 0) THEN

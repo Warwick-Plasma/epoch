@@ -63,6 +63,7 @@ CONTAINS
             boundary(i), '" boundary.'
       ENDIF
       error = .TRUE.
+      errcode = c_err_bad_value
     ENDDO
 
     IF (error) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)

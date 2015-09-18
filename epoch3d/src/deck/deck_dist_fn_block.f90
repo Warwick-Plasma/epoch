@@ -59,7 +59,7 @@ CONTAINS
           WRITE(io,*) 'name not set for "dist_fn" block.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_missing_elements, ierr)
       RETURN
     ENDIF
 
@@ -72,7 +72,7 @@ CONTAINS
               // TRIM(working_block%name) // '"'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_missing_elements, ierr)
       RETURN
     ENDIF
 
@@ -87,7 +87,7 @@ CONTAINS
               'distribution function.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
       RETURN
     ENDIF
 

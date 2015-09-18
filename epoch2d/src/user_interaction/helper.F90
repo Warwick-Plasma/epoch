@@ -302,7 +302,7 @@ CONTAINS
               // 'where particles may'
           WRITE(*,*) 'validly be placed for species "' // TRIM(species%name) &
               // '". ', 'Code will now terminate.'
-          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
         ENDIF
       ENDIF
 
