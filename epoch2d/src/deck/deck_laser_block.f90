@@ -89,7 +89,7 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Cannot set laser properties before boundary is set'
         ENDDO
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_required_element_not_set, ierr)
       ENDIF
       extended_error_string = 'boundary'
       errcode = c_err_required_element_not_set

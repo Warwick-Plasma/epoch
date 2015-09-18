@@ -41,7 +41,7 @@ CONTAINS
           WRITE(io,*) 'Unable to find QED tables in the ', &
               'directory "' // TRIM(qed_table_location) // '"'
         ENDDO
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_io_error, ierr)
       ENDIF
     ENDIF
 
@@ -56,7 +56,7 @@ CONTAINS
           WRITE(io,*) 'Please recompile with the -DPHOTONS preprocessor flag.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_pp_options_missing, ierr)
     ENDIF
 #endif
 

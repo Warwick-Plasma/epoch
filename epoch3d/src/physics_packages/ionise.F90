@@ -158,7 +158,7 @@ CONTAINS
               WRITE(io,*) 'the boundaries. Please adjust your input deck.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
         CASE (2)
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
@@ -169,7 +169,7 @@ CONTAINS
                   'deck'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
         CASE DEFAULT
       END SELECT
     ENDIF

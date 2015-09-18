@@ -179,7 +179,7 @@ CONTAINS
                 // '" must have a positive mass.'
           ENDDO
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
       ENDDO
 
       IF (track_ejected_particles) THEN
@@ -699,7 +699,7 @@ CONTAINS
           WRITE(io,*) 'Please choose a different name and try again.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
     ENDIF
 
     n_species = n_species + 1

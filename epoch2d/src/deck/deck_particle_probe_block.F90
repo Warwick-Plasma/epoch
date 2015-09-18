@@ -73,7 +73,7 @@ CONTAINS
           WRITE(io,*) '"probe" block does not have a "name" entry.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_required_element_not_set, ierr)
     ENDIF
 
     discard = .FALSE.

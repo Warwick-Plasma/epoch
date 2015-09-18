@@ -82,7 +82,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
         STOP
       ENDIF
     ENDDO
@@ -121,7 +121,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
         STOP
       ENDIF
     ENDDO
@@ -198,7 +198,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
         STOP
       ENDIF
     ENDDO
@@ -383,7 +383,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
         STOP
       ENDIF
     ENDDO
