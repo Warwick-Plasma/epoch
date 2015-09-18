@@ -30,7 +30,7 @@ CONTAINS
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    CALL MPI_ABORT(MPI_COMM_WORLD, c_err_pp_options_missing, ierr)
 #endif
 
   END SUBROUTINE initialise_window
@@ -215,8 +215,7 @@ CONTAINS
             IF (ipart == 0) THEN
               IF (npart_frac < random()) CYCLE
             ENDIF
-            ALLOCATE(current)
-            CALL init_particle(current)
+            CALL create_particle(current)
             current%part_pos(1) = x_grid_max + dx + (random() - 0.5_num) * dx
             current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
             current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
@@ -351,7 +350,7 @@ CONTAINS
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    CALL MPI_ABORT(MPI_COMM_WORLD, c_err_pp_options_missing, ierr)
 #endif
 
   END SUBROUTINE moving_window

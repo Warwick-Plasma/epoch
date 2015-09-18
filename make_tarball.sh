@@ -1,35 +1,31 @@
 #! /bin/sh
 
-repo=epoch
+repo=$(git rev-parse --show-toplevel)
+repo=$(basename $repo)
 cur=`pwd`
-dir=$(mktemp -d -t$repo)
+dir=$(mktemp -d -t $repo.XXXXX)
 
-toplevel=$(git rev-parse --show-toplevel)
-cd $toplevel/SDF
-sdfdir=$(git rev-parse --git-dir)
-cd C
-subdir=$(git rev-parse --git-dir)
-subdir=$(dirname $subdir)
-cd $toplevel/manuals
-mandir=$(git rev-parse --git-dir)
-
-cd $cur
 git init -q $dir/$repo
 git push -q --tags $dir/$repo HEAD:tmp
 cd $dir/$repo
 git checkout -q tmp
-git submodule init
-git config --replace-all submodule.SDF.url $sdfdir
-git config --replace-all submodule.manuals.url $mandir
-git submodule update
-cd SDF
-git submodule init
-for d in $(git config --get-regexp 'submodule\.*' | cut -f2 -d\.); do
-  git config --replace-all submodule.${d}.url $subdir/$d
-done
-cd ..
 
-git submodule update --init --recursive
+# Update two levels of submodules
+git submodule init
+for sub1 in $(git config --local --get-regexp submodule | cut -f2 -d\.); do
+  git config --local --replace-all submodule.$sub1.url $cur/$sub1
+done
+git submodule update
+
+for sub1 in $(git config --local --get-regexp submodule | cut -f2 -d\.); do
+  git submodule foreach \
+    "git submodule init; \
+    for sub2 in \$(git config --local --get-regexp submodule|cut -f2 -d\.); do \
+      git config --local --replace-all submodule.\$sub2.url $cur/$sub1/\$sub2; \
+    done; \
+    git submodule update"
+done
+
 cstring=$(git describe --abbrev=0 --match v[0-9]* HEAD | cut -c2-)
 fullstring=$(git describe --match v[0-9]* HEAD | cut -c2-)
 
@@ -55,7 +51,8 @@ fi
 /bin/sh src/gen_commit_string.sh)
 cp epoch1d/src/COMMIT epoch2d/src/
 cp epoch1d/src/COMMIT epoch3d/src/
-rm -rf .git
+rm -rf .git*
+find * -name ".git" -o -name ".gitignore" -exec rm -rf {} \;
 cd $dir
 mv $repo $repo-$cstring
 tar -cf - $repo-$cstring | gzip -c > $repo-$cstring.tar.gz

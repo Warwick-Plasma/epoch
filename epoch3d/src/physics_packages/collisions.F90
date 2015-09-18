@@ -643,7 +643,7 @@ CONTAINS
       IF (k <= ion_count) THEN
         next_ion => ion%next
         IF (was_ionised(k)) THEN
-          ALLOCATE(ejected_electron)
+          CALL create_particle(ejected_electron)
           ejected_electron%weight = ion%weight
           ejected_electron%part_pos = ion%part_pos
           ! Ionise whilst conserving momentum
@@ -1527,8 +1527,8 @@ CONTAINS
 
     INTEGER :: i, N
 
-    ALLOCATE(part1)
-    ALLOCATE(part2)
+    CALL create_particle(part1)
+    CALL create_particle(part2)
 
     N = 1000000
 

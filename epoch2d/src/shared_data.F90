@@ -74,6 +74,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_generic_warning = 2**12
   INTEGER, PARAMETER :: c_err_generic_error = 2**13
   INTEGER, PARAMETER :: c_err_pp_options_wrong = 2**14
+  INTEGER, PARAMETER :: c_err_io_error = 2**15
+  INTEGER, PARAMETER :: c_err_bad_setup = 2**16
 
   INTEGER, PARAMETER :: c_ds_first = 1
   INTEGER, PARAMETER :: c_ds_last = 2
@@ -191,6 +193,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_trident_photons = 2**16
   INTEGER(i8), PARAMETER :: c_def_prefetch = 2**17
   INTEGER(i8), PARAMETER :: c_def_mpi_debug = 2**18
+  INTEGER(i8), PARAMETER :: c_def_parser_checking = 2**19
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -885,6 +888,7 @@ MODULE shared_data
   LOGICAL :: simplify_deck
   LOGICAL :: print_deck_constants
   LOGICAL :: allow_missing_restart
+  LOGICAL :: done_mpi_initialise = .FALSE.
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
   CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename

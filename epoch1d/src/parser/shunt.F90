@@ -452,7 +452,7 @@ CONTAINS
           WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
         ENDDO
         CALL check_deprecated(current)
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
       ENDIF
       err = c_err_bad_value
       CALL deallocate_stack(stack)
@@ -594,7 +594,7 @@ CONTAINS
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
       ENDDO
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
       err = c_err_bad_value
       CALL deallocate_stack(stack)
       RETURN

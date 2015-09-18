@@ -90,7 +90,7 @@ CONTAINS
               WRITE(io,*) 'the boundaries. Please adjust your input deck.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
         CASE (2)
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
@@ -101,7 +101,7 @@ CONTAINS
                   'deck'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
         CASE DEFAULT
       END SELECT
     ENDIF
@@ -496,7 +496,7 @@ CONTAINS
           ! function modelling ionisation in a field as an exponential decay
           IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
-              ALLOCATE(new)
+              CALL create_particle(new)
               ! Create electron for release
 #ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
@@ -744,7 +744,7 @@ CONTAINS
           ! function modelling ionisation in a field as an exponential decay
           IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
-              ALLOCATE(new)
+              CALL create_particle(new)
               ! Create electron for release
 #ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
@@ -995,7 +995,7 @@ CONTAINS
           ! function modelling ionisation in a field as an exponential decay
           IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
-              ALLOCATE(new)
+              CALL create_particle(new)
               ! Create electron for release
 #ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight
@@ -1218,7 +1218,7 @@ CONTAINS
           ! function modelling ionisation in a field as an exponential decay
           IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
-              ALLOCATE(new)
+              CALL create_particle(new)
               ! Create electron for release
 #ifndef PER_SPECIES_WEIGHT
               new%weight = current%weight

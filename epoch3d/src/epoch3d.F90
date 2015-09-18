@@ -43,7 +43,7 @@ PROGRAM pic
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
-  REAL(num) :: runtime, dt0
+  REAL(num) :: runtime
 
   step = 0
   time = 0.0_num
@@ -56,11 +56,8 @@ PROGRAM pic
   CALL mpi_minimal_init ! mpi_routines.f90
   real_walltime_start = MPI_WTIME()
   CALL minimal_init     ! setup.f90
-  CALL timer_init
-  CALL setup_partlists  ! partlist.f90
   CALL get_job_id(jobid)
   CALL welcome_message  ! welcome.f90
-  CALL register_objects ! custom.f90
 
   IF (rank == 0) THEN
     OPEN(unit=lu, status='OLD', file=TRIM(data_dir_file), iostat=ierr)
@@ -76,7 +73,16 @@ PROGRAM pic
   ENDIF
 
   CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
+
+  ! version check only, exit silently
+  IF (TRIM(data_dir) == 'VERSION_INFO') CALL finalise
+
   CALL read_deck(deck_file, .TRUE., c_ds_first)
+
+  CALL setup_partlists  ! partlist.f90
+  CALL register_objects ! custom.f90
+  CALL timer_init
+
   IF (use_exact_restart) CALL read_cpu_split
   CALL setup_particle_boundaries ! boundary.f90
   CALL mpi_initialise  ! mpi_routines.f90
@@ -111,19 +117,14 @@ PROGRAM pic
 
   CALL particle_bcs
   CALL efield_bcs
-
   IF (ic_from_restart) THEN
-    dt0 = dt
-    IF (dt_from_restart .GT. 0) dt0 = dt_from_restart
-    time = time - dt0 / 2.0_num
     CALL bfield_bcs(.TRUE.)
-    CALL update_eb_restart
+    CALL update_eb_fields_final
     CALL moving_window
   ELSE
     CALL bfield_final_bcs
+    time = time + dt / 2.0_num
   ENDIF
-
-  time = time + dt / 2.0_num
 
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration

@@ -69,6 +69,9 @@ CONTAINS
 #ifdef PARSER_DEBUG
     found = .TRUE.
 #endif
+#ifdef PARSER_CHECKING
+    found = .TRUE.
+#endif
 #ifdef PARTICLE_SHAPE_BSPLINE3
     found = .TRUE.
 #endif
@@ -129,6 +132,10 @@ CONTAINS
 #ifdef PARSER_DEBUG
     defines = IOR(defines, c_def_parser_debug)
     WRITE(*,*) 'Particle Debug information -DPARSER_DEBUG'
+#endif
+#ifdef PARSER_CHECKING
+    defines = IOR(defines, c_def_parser_checking)
+    WRITE(*,*) 'Parser FPE handling -DPARSER_CHECKING'
 #endif
 #ifdef PARTICLE_SHAPE_BSPLINE3
     defines = IOR(defines, c_def_particle_shape_bspline3)

@@ -176,7 +176,7 @@ CONTAINS
               WRITE(io,*) 'Cannot have multiple unnamed "output" blocks.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
         ENDIF
 
         ALLOCATE(io_prefixes(n_io_blocks+1))
@@ -305,7 +305,7 @@ CONTAINS
                 'or a single unnamed one.'
           ENDDO
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
       ENDIF
       io_block%name = 'normal'
     ENDIF
@@ -365,7 +365,7 @@ CONTAINS
               WRITE(io,*) 'Cannot have multiple "rolling_restart" blocks.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
         ENDIF
         rolling_restart_io_block = block_number
       ENDIF
@@ -439,7 +439,7 @@ CONTAINS
           WRITE(io,*) 'Please use the "import" directive instead'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_unknown_element, ierr)
     CASE(8)
       io_block%dt_average = as_real_print(value, element, errcode)
     CASE(9)
@@ -471,7 +471,7 @@ CONTAINS
                   // '" already defined.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
         ENDIF
       ENDDO
       io_block%name = value

@@ -61,7 +61,15 @@ CONTAINS
 
     IF (opcode == c_opcode_divide) THEN
       CALL get_values(2, values)
+#ifdef PARSER_CHECKING
+      IF (ABS(values(2)) < c_tiny) THEN
+        CALL push_on_eval(0.0_num)
+      ELSE
+        CALL push_on_eval(values(1)/values(2))
+      ENDIF
+#else
       CALL push_on_eval(values(1)/values(2))
+#endif
       RETURN
     ENDIF
 

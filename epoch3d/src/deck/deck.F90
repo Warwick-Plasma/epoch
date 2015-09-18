@@ -366,7 +366,7 @@ CONTAINS
           WRITE(*,*) '*** ERROR ***'
           WRITE(*,*) 'Unable to open lun for input deck read'
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_io_error, ierr)
       ENDIF
     ENDDO
 
@@ -462,7 +462,7 @@ CONTAINS
         PRINT *, 'Input deck file "' // TRIM(deck_filename) &
             // '" does not exist.'
         PRINT *, 'Create the file and rerun the code.'
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_io_error, ierr)
       ENDIF
 
       ! Get a free lun. Don't use a constant lun to allow for recursion
@@ -623,7 +623,7 @@ CONTAINS
                   'of "string_length" in ','shared_data.F90 to be at least ', &
                   TRIM(len_string)
             ENDDO
-            CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+            CALL MPI_ABORT(MPI_COMM_WORLD, c_err_io_error, ierr)
           ENDIF
           elements = elements+1
           flip = 1
@@ -710,7 +710,7 @@ CONTAINS
     IF (first_call) CLOSE(du)
 #endif
 
-    IF (terminate) CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+    IF (terminate) CALL MPI_ABORT(MPI_COMM_WORLD, c_err_generic_error, ierr)
 
     CALL MPI_BARRIER(comm, errcode)
 

@@ -194,7 +194,7 @@ CONTAINS
               ' of the domain.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
     ENDIF
 
   END FUNCTION boundary_block_check
