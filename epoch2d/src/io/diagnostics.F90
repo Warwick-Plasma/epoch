@@ -2729,12 +2729,12 @@ CONTAINS
     CALL sdf_safe_copy_id(h, 'epoch_source/info', stitched_ids(n))
     WRITE(time_string, '(I20)') epoch_bytes_compile_date
 
-    string_array(1) = TRIM(epoch_bytes_git_version)
-    string_array(2) = TRIM(epoch_bytes_compile_date_string)
-    string_array(3) = TRIM(ADJUSTL(time_string))
-    string_array(4) = TRIM(epoch_bytes_compile_machine_info)
-    string_array(5) = TRIM(epoch_bytes_compiler_info)
-    string_array(6) = TRIM(epoch_bytes_compiler_flags)
+    string_array(1) = trim_string(epoch_bytes_git_version)
+    string_array(2) = trim_string(epoch_bytes_compile_date_string)
+    string_array(3) = trim_string(time_string)
+    string_array(4) = trim_string(epoch_bytes_compile_machine_info)
+    string_array(5) = trim_string(epoch_bytes_compiler_info)
+    string_array(6) = trim_string(epoch_bytes_compiler_flags)
 
     ! Prevent truncation warning
     DO i = 1, 6
@@ -2766,5 +2766,21 @@ CONTAINS
     !CALL write_input_decks(h)
 
   END SUBROUTINE write_source_info
+
+
+
+  FUNCTION trim_string(string)
+
+    CHARACTER(LEN=c_max_string_length) :: trim_string
+    CHARACTER(LEN=*) :: string
+
+    string = ADJUSTL(string)
+    IF (LEN_TRIM(string) > c_max_string_length) THEN
+      trim_string = string(1:c_max_string_length)
+    ELSE
+      trim_string = TRIM(string)
+    ENDIF
+
+  END FUNCTION trim_string
 
 END MODULE diagnostics
