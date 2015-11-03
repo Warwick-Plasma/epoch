@@ -12,6 +12,7 @@ CONTAINS
 #else
   USE strings_advanced
   USE probes
+  USE utilities
 
   IMPLICIT NONE
   SAVE
@@ -55,7 +56,7 @@ CONTAINS
   SUBROUTINE probe_block_end
 
     LOGICAL :: discard
-    INTEGER :: io, iu, ierr
+    INTEGER :: io, iu
 
     IF (deck_state == c_ds_first) RETURN
 
@@ -67,7 +68,7 @@ CONTAINS
           WRITE(io,*) '"probe" block does not have a "name" entry.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_required_element_not_set, ierr)
+      CALL abort_code(c_err_required_element_not_set)
     ENDIF
 
     discard = .NOT.(got_point .AND. got_normal)

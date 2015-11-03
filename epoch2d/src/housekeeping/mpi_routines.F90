@@ -28,7 +28,7 @@ CONTAINS
   SUBROUTINE setup_communicator
 
     INTEGER, PARAMETER :: ndims = 2
-    INTEGER :: dims(ndims), idim, old_comm, ierr
+    INTEGER :: dims(ndims), idim, old_comm
     LOGICAL :: periods(ndims), reorder, op, reset
     INTEGER :: test_coords(ndims)
     INTEGER :: ix, iy
@@ -47,7 +47,7 @@ CONTAINS
         PRINT*,'There must be at least ' // TRIM(str) // &
             ' cells in each direction.'
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
+      CALL abort_code(c_err_bad_setup)
     ENDIF
 
     reset = .FALSE.
@@ -110,7 +110,7 @@ CONTAINS
           PRINT*,'Cannot split the domain using the requested number of CPUs.'
           PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
+        CALL abort_code(c_err_bad_setup)
         STOP
       ENDIF
       IF (rank == 0) THEN

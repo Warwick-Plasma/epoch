@@ -2,6 +2,7 @@ MODULE evaluator
 
   USE evaluator_blocks
   USE shunt
+  USE utilities
 
   IMPLICIT NONE
 
@@ -60,7 +61,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(IN) :: ix
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ierr
+    INTEGER :: i
     TYPE(stack_element) :: block
 
     CALL eval_reset()
@@ -82,7 +83,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
+        CALL abort_code(err)
         STOP
       ENDIF
     ENDDO
@@ -97,7 +98,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(IN) :: ix
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ierr
+    INTEGER :: i
     TYPE(stack_element) :: block
 
     IF (input_stack%should_simplify) CALL simplify_stack(input_stack, err)
@@ -121,7 +122,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
+        CALL abort_code(err)
         STOP
       ENDIF
     ENDDO
@@ -155,7 +156,7 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ierr
+    INTEGER :: i
     TYPE(stack_element) :: block
     TYPE(primitive_stack) :: output_stack
 
@@ -198,7 +199,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
+        CALL abort_code(err)
         STOP
       ENDIF
     ENDDO
@@ -361,7 +362,7 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(OUT) :: n_elements
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ierr
+    INTEGER :: i
     TYPE(stack_element) :: block
 
     array(1) = 0
@@ -383,7 +384,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
+        CALL abort_code(err)
         STOP
       ENDIF
     ENDDO

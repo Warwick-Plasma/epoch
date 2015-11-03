@@ -2,6 +2,7 @@ MODULE deck_laser_block
 
   USE strings_advanced
   USE laser
+  USE utilities
 
   IMPLICIT NONE
   SAVE
@@ -59,7 +60,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
     REAL(num) :: dummy
-    INTEGER :: ierr, io, iu
+    INTEGER :: io, iu
 
     errcode = c_err_none
     IF (deck_state == c_ds_first) RETURN
@@ -89,7 +90,7 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Cannot set laser properties before boundary is set'
         ENDDO
-        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_required_element_not_set, ierr)
+        CALL abort_code(c_err_required_element_not_set)
       ENDIF
       extended_error_string = 'boundary'
       errcode = c_err_required_element_not_set

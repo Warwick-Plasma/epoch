@@ -61,7 +61,7 @@ CONTAINS
 
     INTEGER :: i, j, io, iu, nlevels, nrelease
     CHARACTER(LEN=8) :: string
-    INTEGER :: errcode, ierr
+    INTEGER :: errcode
     TYPE(primitive_stack) :: stack
 
     IF (deck_state == c_ds_first) THEN
@@ -179,7 +179,7 @@ CONTAINS
                 // '" must have a positive mass.'
           ENDDO
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+        CALL abort_code(c_err_bad_value)
       ENDDO
 
       IF (track_ejected_particles) THEN
@@ -676,7 +676,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: name
     INTEGER :: create_species_number_from_name
-    INTEGER :: i, io, iu, ierr
+    INTEGER :: i, io, iu
     TYPE(stack_element) :: block
 
     DO i = 1, n_species
@@ -699,7 +699,7 @@ CONTAINS
           WRITE(io,*) 'Please choose a different name and try again.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+      CALL abort_code(c_err_bad_value)
     ENDIF
 
     n_species = n_species + 1
@@ -820,7 +820,7 @@ CONTAINS
     LOGICAL, INTENT(IN) :: got_file
     TYPE(stack_element) :: block
     TYPE(primitive_stack) :: stack
-    INTEGER :: io, iu, ix, iy, iz, ierr
+    INTEGER :: io, iu, ix, iy, iz
 
     CALL initialise_stack(stack)
     IF (got_file) THEN
@@ -858,7 +858,7 @@ CONTAINS
             WRITE(io,*) 'Unable to parse input deck.'
           ENDDO
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, errcode, ierr)
+        CALL abort_code(errcode)
       ENDIF
 
       DO iz = -2, nz+3

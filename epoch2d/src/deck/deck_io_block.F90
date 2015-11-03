@@ -1,6 +1,7 @@
 MODULE deck_io_block
 
   USE strings_advanced
+  USE utilities
 
   IMPLICIT NONE
   SAVE
@@ -153,7 +154,7 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
-    INTEGER :: i, io, iu, ierr
+    INTEGER :: i, io, iu
 #ifndef NO_IO
     CHARACTER(LEN=c_max_string_length) :: list_filename
 #endif
@@ -172,7 +173,7 @@ CONTAINS
               WRITE(io,*) 'Cannot have multiple unnamed "output" blocks.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
+          CALL abort_code(c_err_preset_element)
         ENDIF
 
         ALLOCATE(io_prefixes(n_io_blocks+1))
@@ -273,7 +274,7 @@ CONTAINS
 
   SUBROUTINE io_block_end
 
-    INTEGER :: io, iu, ierr, mask
+    INTEGER :: io, iu, mask
 #ifndef NO_IO
     CHARACTER(LEN=c_max_string_length) :: list_filename
 #endif
@@ -301,7 +302,7 @@ CONTAINS
                 'or a single unnamed one.'
           ENDDO
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+        CALL abort_code(c_err_bad_value)
       ENDIF
       io_block%name = 'normal'
     ENDIF
@@ -340,7 +341,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
     INTEGER :: loop, elementselected, mask, fullmask = 0, mask_element
-    INTEGER :: i, is, subset, n_list, ierr, io, iu
+    INTEGER :: i, is, subset, n_list, io, iu
     INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad, found
     INTEGER, PARAMETER :: c_err_new_style_ignore = 1
@@ -361,7 +362,7 @@ CONTAINS
               WRITE(io,*) 'Cannot have multiple "rolling_restart" blocks.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
+          CALL abort_code(c_err_preset_element)
         ENDIF
         rolling_restart_io_block = block_number
       ENDIF
@@ -435,7 +436,7 @@ CONTAINS
           WRITE(io,*) 'Please use the "import" directive instead'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_unknown_element, ierr)
+      CALL abort_code(c_err_unknown_element)
     CASE(8)
       io_block%dt_average = as_real_print(value, element, errcode)
     CASE(9)
@@ -467,7 +468,7 @@ CONTAINS
                   // '" already defined.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
+          CALL abort_code(c_err_preset_element)
         ENDIF
       ENDDO
       io_block%name = value

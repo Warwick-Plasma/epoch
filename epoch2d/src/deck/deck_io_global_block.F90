@@ -1,6 +1,7 @@
 MODULE deck_io_global_block
 
   USE strings_advanced
+  USE utilities
 
   IMPLICIT NONE
 
@@ -52,7 +53,7 @@ CONTAINS
 
   SUBROUTINE io_global_block_start
 
-    INTEGER :: io, iu, ierr
+    INTEGER :: io, iu
 
     IF (deck_state == c_ds_first) RETURN
 
@@ -65,7 +66,7 @@ CONTAINS
               'conjunction with ', 'unnamed "output" blocks.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
+      CALL abort_code(c_err_preset_element)
     ENDIF
 
   END SUBROUTINE io_global_block_start

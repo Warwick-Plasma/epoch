@@ -97,4 +97,28 @@ CONTAINS
 
   END SUBROUTINE grow_string_array
 
+
+
+  SUBROUTINE abort_code(errcode)
+
+    USE mpi
+
+    INTEGER, INTENT(IN) :: errcode
+    INTEGER :: i, newcode, ierr
+
+    ! Translate error code bitmask into 0-255 range.
+    ! Only the lowest bit is kept
+    newcode = errcode
+    DO i = 0, 255
+      IF (newcode == 0) THEN
+        newcode = i
+        EXIT
+      ENDIF
+      newcode = newcode / 2
+    ENDDO
+
+    CALL MPI_ABORT(MPI_COMM_WORLD, newcode, ierr)
+
+  END SUBROUTINE abort_code
+
 END MODULE utilities
