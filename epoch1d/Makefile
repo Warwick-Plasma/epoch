@@ -87,7 +87,10 @@ ifeq ($(strip $(COMPILER)),gfortran)
       endif
     endif
   endif
-  MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
+  MODULEFLAG = -I$(OBJDIR) -J$(OBJDIR)
+  ifneq ($(wildcard /usr/include/.),)
+    MODULEFLAG += -I/usr/include
+  endif
   INFO_FLAGS = -Wno-conversion -fno-range-check
 endif
 
