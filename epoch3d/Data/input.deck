@@ -1,0 +1,91 @@
+begin:constant
+  lambda0 = 0.8 * micron
+
+  theta = 0.0
+end:constant
+
+
+begin:control
+  nx = 200
+  ny = nx
+  nz = nx / 5.0
+  npart=1e7
+
+  # final time of simulation
+  t_end = 50 * femto
+
+  # size of domain
+  x_min = -5 * micron
+  x_max = -x_min
+  y_min = x_min
+  y_max = x_max
+  z_min = x_min / 5.0
+  z_max = x_max / 5.0
+
+  stdout_frequency = 10
+
+  field_ionisation = T
+end:control
+
+
+begin:boundaries
+  bc_x_min = periodic
+  bc_x_max = periodic
+  bc_y_min = periodic
+  bc_y_max = periodic
+  bc_z_min = simple_laser
+  bc_z_max = open
+end:boundaries
+
+
+begin:laser
+  boundary = z_min
+  intensity_w_cm2 = 2.0e13
+  lambda = lambda0 * cos(theta)
+  phase = -2.0 * pi * y * sin(theta) / lambda0
+  #pol_angle = pi / 2.0
+  profile = 1.0
+  t_profile = gauss(time,15*femto,10*femto)
+end:laser
+
+begin:species
+  name=silicon
+  charge=0.0
+  mass=1836.2*28.0
+  frac=1.0
+  rho=if((z gt 0),4.994e28,0.0)
+
+  ionisation_electron_species=electron
+  ionisation_energies=(4*ev) #I know, this is not the real value, I'm still testing stuff.
+end:species
+
+
+begin:species
+  name=electron
+  charge=-1.0
+  mass=1.0
+  frac=0.0
+end:species
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = 1 * femto
+
+  particles = full
+  particle_weight = full
+
+  # Properties on grid
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  bx = always
+  by = always
+  bz = always
+  jx = always
+  jy = always
+  jz = always
+  number_density = always + species
+end:output
+
