@@ -10,6 +10,7 @@ MODULE deck_io_global_block
   PUBLIC :: io_global_block_start, io_global_block_end
   PUBLIC :: io_global_block_handle_element, io_global_block_check
   LOGICAL, SAVE :: dump_first, dump_last, got_dump_first, got_dump_last
+  LOGICAL, SAVE :: got_dump_first_after_restart, dump_first_after_restart
 
 CONTAINS
 
@@ -21,6 +22,7 @@ CONTAINS
     nstep_stop  = HUGE(1)
     got_dump_first = .FALSE.
     got_dump_last = .FALSE.
+    got_dump_first_after_restart = .FALSE.
     ! Set point data buffer size to 64MB by default.
     sdf_buffer_size = 64 * 1024 * 1024
     filesystem = ''
@@ -44,6 +46,12 @@ CONTAINS
     IF (got_dump_last) THEN
       DO i = 1, n_io_blocks
         io_block_list(i)%dump_last = dump_last
+      ENDDO
+    ENDIF
+
+    IF (got_dump_first_after_restart) THEN
+      DO i = 1, n_io_blocks
+        io_block_list(i)%dump_first_after_restart = dump_first_after_restart
       ENDDO
     ENDIF
 
@@ -134,6 +142,12 @@ CONTAINS
         .OR. str_cmp(element, 'dump_final')) THEN
       got_dump_last = .TRUE.
       dump_last = as_logical_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'dump_first_after_restart')) THEN
+      got_dump_first_after_restart = .TRUE.
+      dump_first_after_restart = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
 

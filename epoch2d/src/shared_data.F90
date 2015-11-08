@@ -697,6 +697,7 @@ MODULE shared_data
     INTEGER :: dump_cycle_first_index
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
     LOGICAL :: dump_source_code, dump_input_decks, rolling_restart
+    LOGICAL :: dump_first_after_restart
     LOGICAL :: disabled
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
