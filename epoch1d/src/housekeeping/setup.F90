@@ -693,7 +693,11 @@ CONTAINS
 
     ! Reset io_block parameters
     DO i = 1, n_io_blocks
-      io_block_list(i)%dump_first = .FALSE.
+      IF (io_block_list(i)%dump_first_after_restart) THEN
+        io_block_list(i)%dump_first = .TRUE.
+      ELSE
+        io_block_list(i)%dump_first = .FALSE.
+      ENDIF
       IF (io_block_list(i)%dt_snapshot > 0.0_num) THEN
         io_block_list(i)%time_prev = time
       ELSE

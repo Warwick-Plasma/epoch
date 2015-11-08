@@ -11,7 +11,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: ov = 28
+  INTEGER, PARAMETER :: ov = 29
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + ov
   INTEGER :: block_number, nfile_prefixes
   INTEGER :: rolling_restart_io_block
@@ -135,6 +135,7 @@ CONTAINS
     io_block_name (i+25) = 'rolling_restart'
     io_block_name (i+26) = 'dump_cycle_first_index'
     io_block_name (i+27) = 'filesystem'
+    io_block_name (i+28) = 'dump_first_after_restart'
     io_block_name (i+ov) = 'disabled'
 
     track_ejected_particles = .FALSE.
@@ -506,6 +507,9 @@ CONTAINS
       filesystem = TRIM(value) // ':'
     CASE(28)
       io_block%disabled = as_logical_print(value, element, errcode)
+    CASE(29)
+      io_block%dump_first_after_restart = &
+          as_logical_print(value, element, errcode)
     END SELECT
 
     IF (style_error == c_err_old_style_ignore) THEN
@@ -760,6 +764,7 @@ CONTAINS
     io_block%dump_last = .TRUE.
     io_block%dump_source_code = .FALSE.
     io_block%dump_input_decks = .FALSE.
+    io_block%dump_first_after_restart = .FALSE.
     io_block%dumpmask = c_io_none
     io_block%time_start = -1.0_num
     io_block%time_stop  = HUGE(1.0_num)
