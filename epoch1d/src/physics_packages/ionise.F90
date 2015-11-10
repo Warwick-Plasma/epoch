@@ -4,6 +4,8 @@ MODULE ionise
   USE random_generator
   USE partlist
   USE mpi
+  USE boundary
+  USE current_smooth
 
   IMPLICIT NONE
 
@@ -324,6 +326,11 @@ CONTAINS
         ! Soviet Physics JETP 1986 Vol. 64 Pg. 1191-1194
       ENDIF
     ENDIF
+
+    CALL current_bcs
+    CALL particle_bcs
+
+    IF (smooth_currents) CALL smooth_current()
 
   END SUBROUTINE ionise_particles
 

@@ -516,10 +516,12 @@ CONTAINS
       ENDDO
     ENDDO
 
-    CALL current_bcs
-    CALL particle_bcs
+    IF (.NOT.use_field_ionisation) THEN
+      CALL current_bcs
+      CALL particle_bcs
 
-    IF (smooth_currents) CALL smooth_current()
+      IF (smooth_currents) CALL smooth_current()
+    END IF
 
   END SUBROUTINE push_particles
 
