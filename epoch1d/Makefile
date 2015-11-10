@@ -415,7 +415,8 @@ finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
   laser.o partlist.o setup.o shared_data.o shunt.o window.o
 helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
-ionise.o: ionise.F90 numerics.o partlist.o random_generator.o utilities.o
+ionise.o: ionise.F90 boundary.o current_smooth.o numerics.o partlist.o \
+  random_generator.o utilities.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 helper.o
