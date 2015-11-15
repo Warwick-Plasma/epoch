@@ -230,9 +230,8 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: nvalues
     INTEGER :: sp, i, n
-    INTEGER, PARAMETER :: max_entries = 128
-    REAL(num) :: entries(max_entries)
-    INTEGER :: flags(max_entries)
+    REAL(num), ALLOCATABLE :: entries(:)
+    INTEGER, ALLOCATABLE :: flags(:)
     TYPE(stack_list), POINTER :: sl_tmp, sl_part
     TYPE(stack_element) :: new_block
 
@@ -240,6 +239,9 @@ CONTAINS
     new_block%value = 0
 
     sp = eval_stack%stack_point
+
+    ALLOCATE(entries(nvalues))
+    ALLOCATE(flags(nvalues))
 
     n = nvalues
     DO i = 1, nvalues
@@ -267,6 +269,9 @@ CONTAINS
         sl_part => sl_tmp
       ENDIF
     ENDDO
+
+    DEALLOCATE(entries)
+    DEALLOCATE(flags)
 
   END SUBROUTINE update_stack
 
