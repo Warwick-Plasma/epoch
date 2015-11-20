@@ -411,7 +411,7 @@ epoch1d.o: epoch1d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
   particles.o photons.o setup.o split_particle.o welcome.o window.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o utilities.o
-evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o
+evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o
 fields.o: fields.f90 boundary.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
@@ -441,7 +441,7 @@ setup.o: setup.F90 fields.o helper.o laser.o mpi_subtype_control.o \
   window.o
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 $(SDFMOD)
-shunt.o: shunt.F90 tokenizer_blocks.o utilities.o
+shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o
 simple_io.o: simple_io.f90 boundary.o mpi_subtype_control.o
 split_particle.o: split_particle.F90 boundary.o
 stack.o: stack.f90 shared_data.o

@@ -106,6 +106,8 @@ CONTAINS
     ALLOCATE(x(1))
     x = 0.0_num
 
+    CALL eval_stack_init
+
   END SUBROUTINE minimal_init
 
 
