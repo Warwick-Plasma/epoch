@@ -111,6 +111,8 @@ CONTAINS
     x = 0.0_num
     y = 0.0_num
 
+    CALL eval_stack_init
+
   END SUBROUTINE minimal_init
 
 
