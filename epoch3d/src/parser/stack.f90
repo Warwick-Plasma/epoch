@@ -143,4 +143,16 @@ CONTAINS
 
   END SUBROUTINE stack_point_fix
 
+
+
+  SUBROUTINE get_stack_point_and_value(stack_point, value)
+
+    INTEGER, INTENT(OUT) :: stack_point
+    REAL(num), INTENT(OUT) :: value
+
+    stack_point = eval_stack_stack_point
+    value = eval_stack_entries(stack_point)
+
+  END SUBROUTINE get_stack_point_and_value
+
 END MODULE stack

@@ -2,6 +2,7 @@ MODULE evaluator_blocks
 
   USE custom_parser
   USE stack
+  USE strings
 
   IMPLICIT NONE
 
@@ -831,5 +832,36 @@ CONTAINS
     err = c_err_unknown_element
 
   END SUBROUTINE do_functions
+
+
+
+  SUBROUTINE do_sanity_check(opcode, err)
+
+    INTEGER, INTENT(IN) :: opcode
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: val
+    INTEGER :: stack_point, nargs
+    CHARACTER(LEN=64) :: arg1, arg2
+
+    err = c_err_none
+
+    IF (opcode == c_func_interpolate) THEN
+      CALL get_stack_point_and_value(stack_point, val)
+      nargs = 2 * NINT(val) + 2
+      IF (stack_point /= nargs) THEN
+        IF (rank == 0) THEN
+          CALL integer_as_string(stack_point, arg1)
+          CALL integer_as_string(nargs, arg2)
+          PRINT*, 'ERROR: Interpolation function has ', TRIM(arg1), &
+              ' arguments but should have ', TRIM(arg2)
+        ENDIF
+        err = c_err_bad_value
+      ENDIF
+      RETURN
+    ENDIF
+
+    err = c_err_unknown_element
+
+  END SUBROUTINE do_sanity_check
 
 END MODULE evaluator_blocks
