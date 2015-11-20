@@ -4,21 +4,22 @@ MODULE stack
 
   IMPLICIT NONE
 
-  TYPE float_stack
-    REAL(num) :: entries(1024)
-    INTEGER :: flags(1024)
-    INTEGER :: stack_point, nvalues
-  END TYPE float_stack
+  SAVE
 
-  TYPE(float_stack), SAVE :: eval_stack
+  INTEGER, PARAMETER, PRIVATE :: stack_size = 1024
+
+  REAL(num) :: eval_stack_entries(stack_size)
+  INTEGER :: eval_stack_flags(stack_size)
+  INTEGER :: eval_stack_stack_point, eval_stack_nvalues
+
   INTEGER, PRIVATE :: flag
 
 CONTAINS
 
   SUBROUTINE eval_reset()
 
-    eval_stack%stack_point = 0
-    eval_stack%nvalues = 0
+    eval_stack_stack_point = 0
+    eval_stack_nvalues = 0
     flag = 0
 
   END SUBROUTINE eval_reset
@@ -29,9 +30,9 @@ CONTAINS
 
     REAL(num), INTENT(IN) :: value
 
-    eval_stack%stack_point = eval_stack%stack_point + 1
-    eval_stack%entries(eval_stack%stack_point) = value
-    eval_stack%flags(eval_stack%stack_point) = 0
+    eval_stack_stack_point = eval_stack_stack_point + 1
+    eval_stack_entries(eval_stack_stack_point) = value
+    eval_stack_flags(eval_stack_stack_point) = 0
 
   END SUBROUTINE push_on_eval
 
@@ -39,8 +40,8 @@ CONTAINS
 
   SUBROUTINE push_eval_flag()
 
-    eval_stack%stack_point = eval_stack%stack_point + 1
-    eval_stack%flags(eval_stack%stack_point) = 1
+    eval_stack_stack_point = eval_stack_stack_point + 1
+    eval_stack_flags(eval_stack_stack_point) = 1
 
   END SUBROUTINE push_eval_flag
 
@@ -51,32 +52,12 @@ CONTAINS
     REAL(num) :: value
     INTEGER :: sp
 
-    sp = eval_stack%stack_point
-    value = eval_stack%entries(sp)
-    flag = flag + eval_stack%flags(sp)
-    eval_stack%stack_point = sp - 1
+    sp = eval_stack_stack_point
+    value = eval_stack_entries(sp)
+    flag = flag + eval_stack_flags(sp)
+    eval_stack_stack_point = sp - 1
 
   END FUNCTION pop_off_eval
-
-
-
-  SUBROUTINE pop_off_eval_always(value, flag_set)
-
-    REAL(num), INTENT(OUT) :: value
-    LOGICAL, INTENT(OUT) :: flag_set
-    INTEGER :: sp
-
-    sp = eval_stack%stack_point
-    value = eval_stack%entries(sp)
-    eval_stack%stack_point = sp - 1
-
-    IF (eval_stack%flags(sp) == 0) THEN
-      flag_set = .FALSE.
-    ELSE
-      flag_set = .TRUE.
-    ENDIF
-
-  END SUBROUTINE pop_off_eval_always
 
 
 
@@ -92,8 +73,8 @@ CONTAINS
     ENDDO
 
     IF (flag /= 0) THEN
-      eval_stack%nvalues = count
-      eval_stack%stack_point = eval_stack%stack_point + count
+      eval_stack_nvalues = count
+      eval_stack_stack_point = eval_stack_stack_point + count
       flag = 0
     ENDIF
 
@@ -103,9 +84,9 @@ CONTAINS
 
   SUBROUTINE stack_point_fix()
 
-    IF (eval_stack%nvalues > 0) THEN
-      eval_stack%nvalues = eval_stack%nvalues + 1
-      eval_stack%stack_point = eval_stack%stack_point + 1
+    IF (eval_stack_nvalues > 0) THEN
+      eval_stack_nvalues = eval_stack_nvalues + 1
+      eval_stack_stack_point = eval_stack_stack_point + 1
     ENDIF
 
   END SUBROUTINE stack_point_fix
