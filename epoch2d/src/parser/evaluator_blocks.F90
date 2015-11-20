@@ -522,10 +522,9 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
     REAL(num) :: val
-    INTEGER :: count, ipoint, n, err_simplify
-    LOGICAL :: done
+    INTEGER :: count, ipoint, ipoint_val, n, err_simplify
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
-    REAL(num) :: point, t0
+    REAL(num) :: point, t0, p0, p1, x0, x1
 
     err = c_err_none
     err_simplify = c_err_none
@@ -702,23 +701,46 @@ CONTAINS
       ! For now, not too bad for small count
 
       ! var_length_values(0) = position in domain
-      done = .FALSE.
       point = var_length_values(0)
 
-      DO ipoint = 1, count-1
-        IF (point >= var_length_values(ipoint*2-1) &
-            .AND. point <= var_length_values(ipoint*2+1)) THEN
-          val = (point-var_length_values(ipoint*2-1)) &
-              / (var_length_values(ipoint*2+1)-var_length_values(ipoint*2-1)) &
-              * (var_length_values(ipoint*2+2) - var_length_values(ipoint*2)) &
-              + var_length_values(ipoint*2)
-          done = .TRUE.
-          CALL push_on_eval(val)
-          EXIT
-        ENDIF
-      ENDDO
+      p0 = var_length_values(1)
+      p1 = var_length_values(count*2-1)
+
+      IF (point < p0) THEN
+        ipoint_val = 1
+        p1 = var_length_values(3)
+        IF (ABS(point - p0) > ABS(p1 - p0)) err = c_err_bad_value
+      ELSE IF (point > p1) THEN
+        ipoint_val = count - 1
+        p0 = var_length_values(count - 3)
+        IF (ABS(point - p1) > ABS(p1 - p0)) err = c_err_bad_value
+      ELSE
+        DO ipoint = 1, count-1
+          p0 = var_length_values(ipoint*2-1)
+          p1 = var_length_values(ipoint*2+1)
+          IF (point >= p0 .AND. point <= p1) THEN
+            ipoint_val = ipoint
+            EXIT
+          ENDIF
+        ENDDO
+      ENDIF
+
+      IF (err /= c_err_none .AND. rank == 0) THEN
+        PRINT'('' WARNING: '', g11.4, &
+            & '' not within interpolation range ('', g11.4, '','', g11.4, &
+            & '')'')', point, var_length_values(1), var_length_values(count*2-1)
+      ENDIF
+
+      err = c_err_none
+
+      p0 = var_length_values(ipoint_val*2-1)
+      x0 = var_length_values(ipoint_val*2  )
+      p1 = var_length_values(ipoint_val*2+1)
+      x1 = var_length_values(ipoint_val*2+2)
       DEALLOCATE(var_length_values)
-      IF (.NOT. done) err = c_err_bad_value
+
+      val = (point - p0) / (p1 - p0) * (x1 - x0) + x0
+      CALL push_on_eval(val)
       RETURN
     ENDIF
 
