@@ -118,9 +118,17 @@ CONTAINS
   SUBROUTINE control_deck_finalise
 
     CHARACTER(LEN=22) :: filename_fmt
+    INTEGER :: io, iu
 
     IF (n_zeros_control > 0) THEN
       IF (n_zeros_control < 4) THEN
+        IF (rank == 0) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'n_zeros was less than 4 and has been ignored'
+          ENDDO
+        ENDIF
         n_zeros_control = -1
       ELSE
         n_zeros = n_zeros_control
