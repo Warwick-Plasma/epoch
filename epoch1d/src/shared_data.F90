@@ -616,7 +616,7 @@ MODULE shared_data
   LOGICAL :: force_first_to_be_restartable
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid
-  INTEGER :: n_zeros = 4
+  INTEGER :: n_zeros_control, n_zeros = 4
   INTEGER, PARAMETER :: c_max_zeros = 9
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
   INTEGER, PARAMETER :: c_dump_grid              = 2
