@@ -36,6 +36,7 @@ CONTAINS
     INTEGER :: area, minarea, nprocyz
     INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
+    CHARACTER(LEN=1) :: dir
 
     nproc_orig = nproc
 
@@ -53,13 +54,30 @@ CONTAINS
     reset = .FALSE.
     IF (MAX(nprocx,1) * MAX(nprocy,1) * MAX(nprocz,1) > nproc) THEN
       reset = .TRUE.
+      IF (rank == 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Requested domain split exceeds CPUs. Ignoring'
+      ENDIF
     ELSE IF (nprocx * nprocy * nprocz > 0) THEN
       ! Sanity check
       nxsplit = nx_global / nprocx
       nysplit = ny_global / nprocy
       nzsplit = nz_global / nprocz
-      IF (nxsplit < ng .OR. nysplit < ng .OR. nzsplit < ng) &
-          reset = .TRUE.
+      IF (nxsplit < ng .OR. nysplit < ng .OR. nzsplit < ng) THEN
+        reset = .TRUE.
+        IF (rank == 0) THEN
+          IF (nxsplit < ng) THEN
+            dir = 'x'
+          ELSE IF (nysplit < ng) THEN
+            dir = 'y'
+          ELSE IF (nzsplit < ng) THEN
+            dir = 'z'
+          ENDIF
+          PRINT*,'*** WARNING ***'
+          PRINT'('' Requested domain split gives less than '', I1, &
+              &  '' cells in the '', A, ''-direction. Ignoring'')', ng, dir
+        ENDIF
+      ENDIF
     ENDIF
 
     IF (reset) THEN
