@@ -408,7 +408,18 @@ CONTAINS
         io_block%dt_snapshot = 0.0_num
       ELSE IF (io_block%dt_snapshot > 0.0_num) THEN
         io = MAX(n_zeros, FLOOR(LOG10(t_end / io_block%dt_snapshot)) + 1)
-        IF (io > n_zeros) THEN
+        IF (n_zeros_control > 0 .AND. io /= n_zeros_control) THEN
+          n_zeros = io
+          IF (n_zeros > n_zeros_control .AND. rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) '*** WARNING ***'
+              WRITE(io,'(A,I1,A)') ' Estimated value of n_zeros (', n_zeros, &
+                  ') has been overidden by input deck'
+            ENDDO
+          ENDIF
+          n_zeros = n_zeros_control
+        ELSE IF (io > n_zeros) THEN
           n_zeros = io
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
