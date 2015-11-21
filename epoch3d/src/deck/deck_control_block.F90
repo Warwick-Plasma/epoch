@@ -116,6 +116,7 @@ CONTAINS
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
       restart_filename = ''
+      n_zeros_control = -1
     ENDIF
 
   END SUBROUTINE control_deck_initialise
@@ -125,6 +126,14 @@ CONTAINS
   SUBROUTINE control_deck_finalise
 
     CHARACTER(LEN=22) :: filename_fmt
+
+    IF (n_zeros_control > 0) THEN
+      IF (n_zeros_control < 4) THEN
+        n_zeros_control = -1
+      ELSE
+        n_zeros = n_zeros_control
+      ENDIF
+    ENDIF
 
     IF (ic_from_restart) THEN
       IF (TRIM(restart_filename) == '') THEN
@@ -314,7 +323,7 @@ CONTAINS
     CASE(4*c_ndims+27)
       print_eta_string = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+28)
-      n_zeros = MAX(as_integer_print(value, element, errcode), 4)
+      n_zeros_control = as_integer_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
