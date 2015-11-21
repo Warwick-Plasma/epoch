@@ -407,7 +407,18 @@ CONTAINS
       IF (io_block%dt_snapshot < 0.0_num) THEN
         io_block%dt_snapshot = 0.0_num
       ELSE IF (io_block%dt_snapshot > 0.0_num) THEN
-        n_zeros = MAX(n_zeros, FLOOR(LOG10(t_end / io_block%dt_snapshot)) + 1)
+        io = MAX(n_zeros, FLOOR(LOG10(t_end / io_block%dt_snapshot)) + 1)
+        IF (io > n_zeros) THEN
+          n_zeros = io
+          IF (rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) '*** WARNING ***'
+              WRITE(io,'(A,I1,A)') ' n_zeros changed to ', n_zeros, &
+                  ' to accomodate requested number of snapshots'
+            ENDDO
+          ENDIF
+        ENDIF
       ENDIF
     CASE(2)
       IF (new_style_io_block) THEN
