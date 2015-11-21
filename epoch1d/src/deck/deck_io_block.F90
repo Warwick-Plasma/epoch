@@ -41,6 +41,7 @@ CONTAINS
     alternate_name(c_dump_grid             ) = 'field_grid'
     io_block_name (c_dump_part_species     ) = 'species_id'
     io_block_name (c_dump_part_weight      ) = 'particle_weight'
+    alternate_name(c_dump_part_weight      ) = 'weight'
     io_block_name (c_dump_part_px          ) = 'px'
     io_block_name (c_dump_part_py          ) = 'py'
     io_block_name (c_dump_part_pz          ) = 'pz'
