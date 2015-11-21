@@ -53,6 +53,10 @@ CONTAINS
     reset = .FALSE.
     IF (MAX(nprocx,1) * MAX(nprocy,1) > nproc) THEN
       reset = .TRUE.
+      IF (rank == 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Requested domain split exceeds CPUs. Ignoring'
+      ENDIF
     ELSE IF (nprocx * nprocy > 0) THEN
       ! Sanity check
       nxsplit = nx_global / nprocx
