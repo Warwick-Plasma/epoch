@@ -77,7 +77,7 @@ CONTAINS
     REAL(num) :: elapsed_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced, y_reduced
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
-    INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped
+    INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
@@ -171,6 +171,27 @@ CONTAINS
             CALL timer_start(c_timer_io, .TRUE.)
           ENDIF
         ENDIF
+      ENDIF
+
+      ! Increase n_zeros if needed
+
+      io = file_numbers(iprefix)
+      rn = 1
+      nval = 1
+      DO i = 1, 1000
+        IF (rn > io) THEN
+          nval = i - 1
+          EXIT
+        ENDIF
+        rn = rn * 10
+      ENDDO
+
+      IF (nval > n_zeros) THEN
+        IF (rank == 0) THEN
+          WRITE(*,*) '*** WARNING ***'
+          WRITE(*,*) 'n_zeros increased to enable further output'
+        ENDIF
+        n_zeros = nval
       ENDIF
 
       ! Allows a maximum of 10^999 output dumps, should be enough for anyone
