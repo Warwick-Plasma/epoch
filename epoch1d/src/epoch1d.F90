@@ -43,7 +43,7 @@ PROGRAM pic
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
-  REAL(num) :: runtime
+  REAL(num) :: runtime, dt0
 
   step = 0
   time = 0.0_num
@@ -117,13 +117,16 @@ PROGRAM pic
 
   CALL particle_bcs
   CALL efield_bcs
+
   IF (ic_from_restart) THEN
-    CALL bfield_bcs(.TRUE.)
+    dt0 = dt
+    IF (dt_from_restart .GT. 0) dt0 = dt_from_restart
+    time = time + dt0 / 2.0_num
     CALL update_eb_fields_final
     CALL moving_window
   ELSE
-    CALL bfield_final_bcs
     time = time + dt / 2.0_num
+    CALL bfield_final_bcs
   ENDIF
 
   ! Setup particle migration between species
@@ -187,10 +190,9 @@ PROGRAM pic
     step = step + 1
     time = time + dt / 2.0_num
     CALL output_routines(step)
-    time = time - dt / 2.0_num
+    time = time + dt / 2.0_num
 
     CALL update_eb_fields_final
-    time = time + dt
 
     CALL moving_window
 
