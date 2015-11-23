@@ -81,7 +81,7 @@ CONTAINS
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER, SAVE :: nstep_prev = 0
+    INTEGER, SAVE :: nstep_prev = -1
     LOGICAL :: convert, force, any_written, restart_id, print_arrays
     LOGICAL, SAVE :: first_call = .TRUE.
     TYPE(particle_species), POINTER :: species
@@ -122,7 +122,10 @@ CONTAINS
 
     IF (n_io_blocks <= 0) RETURN
 
-    IF (step == nstep_prev) RETURN
+    force = .FALSE.
+    IF (PRESENT(force_write)) force = force_write
+
+    IF (step == nstep_prev .AND. .NOT.force) RETURN
 
     IF (first_call) THEN
       ALLOCATE(dumped_skip_dir(c_ndims,n_subsets))
@@ -140,9 +143,6 @@ CONTAINS
       sdf_max_string_length = sdf_get_max_string_length()
       max_string_length = MIN(sdf_max_string_length, c_max_string_length)
     ENDIF
-
-    force = .FALSE.
-    IF (PRESENT(force_write)) force = force_write
 
     dims = (/nx_global, ny_global, nz_global/)
 
@@ -997,7 +997,10 @@ CONTAINS
     IF (first_call(iprefix) .AND. force_first_to_be_restartable) &
         restart_flag = .TRUE.
     IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
-    IF (force) restart_flag = .TRUE.
+    IF (force) THEN
+      restart_flag = .TRUE.
+      print_arrays = .TRUE.
+    ENDIF
 
     IF (.NOT.restart_flag .AND. .NOT.new_style_io_block) THEN
       dump_source_code = .FALSE.
