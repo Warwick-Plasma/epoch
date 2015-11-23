@@ -4,6 +4,7 @@ MODULE ionise
   USE random_generator
   USE partlist
   USE mpi
+  USE utilities
   USE boundary
   USE current_smooth
 
@@ -36,7 +37,7 @@ CONTAINS
 
   SUBROUTINE initialise_ionisation
 
-    INTEGER :: i, io, iu, ierr, bessel_error, err_laser
+    INTEGER :: i, io, iu, bessel_error, err_laser
     LOGICAL :: laser_set
     TYPE(laser_block), POINTER :: current_laser
 
@@ -160,7 +161,7 @@ CONTAINS
               WRITE(io,*) 'the boundaries. Please adjust your input deck.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
+          CALL abort_code(c_err_bad_setup)
         CASE (2)
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
@@ -171,7 +172,7 @@ CONTAINS
                   'deck'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
+          CALL abort_code(c_err_bad_setup)
         CASE DEFAULT
       END SELECT
     ENDIF

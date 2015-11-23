@@ -1,6 +1,7 @@
 MODULE deck_io_block
 
   USE strings_advanced
+  USE utilities
 
   IMPLICIT NONE
   SAVE
@@ -10,7 +11,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check
 
-  INTEGER, PARAMETER :: ov = 28
+  INTEGER, PARAMETER :: ov = 29
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + ov
   INTEGER :: block_number, nfile_prefixes
   INTEGER :: rolling_restart_io_block
@@ -40,6 +41,7 @@ CONTAINS
     alternate_name(c_dump_grid             ) = 'field_grid'
     io_block_name (c_dump_part_species     ) = 'species_id'
     io_block_name (c_dump_part_weight      ) = 'particle_weight'
+    alternate_name(c_dump_part_weight      ) = 'weight'
     io_block_name (c_dump_part_px          ) = 'px'
     io_block_name (c_dump_part_py          ) = 'py'
     io_block_name (c_dump_part_pz          ) = 'pz'
@@ -134,6 +136,7 @@ CONTAINS
     io_block_name (i+25) = 'rolling_restart'
     io_block_name (i+26) = 'dump_cycle_first_index'
     io_block_name (i+27) = 'filesystem'
+    io_block_name (i+28) = 'dump_first_after_restart'
     io_block_name (i+ov) = 'disabled'
 
     track_ejected_particles = .FALSE.
@@ -149,7 +152,7 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
-    INTEGER :: i, io, iu, ierr
+    INTEGER :: i, io, iu
 #ifndef NO_IO
     CHARACTER(LEN=c_max_string_length) :: list_filename
 #endif
@@ -168,7 +171,7 @@ CONTAINS
               WRITE(io,*) 'Cannot have multiple unnamed "output" blocks.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
+          CALL abort_code(c_err_preset_element)
         ENDIF
 
         ALLOCATE(io_prefixes(n_io_blocks+1))
@@ -269,7 +272,7 @@ CONTAINS
 
   SUBROUTINE io_block_end
 
-    INTEGER :: io, iu, ierr, mask
+    INTEGER :: io, iu, mask
 #ifndef NO_IO
     CHARACTER(LEN=c_max_string_length) :: list_filename
 #endif
@@ -297,7 +300,7 @@ CONTAINS
                 'or a single unnamed one.'
           ENDDO
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+        CALL abort_code(c_err_bad_value)
       ENDIF
       io_block%name = 'normal'
     ENDIF
@@ -336,7 +339,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
     INTEGER :: loop, elementselected, mask, fullmask = 0, mask_element
-    INTEGER :: i, is, subset, n_list, ierr, io, iu
+    INTEGER :: i, is, subset, n_list, io, iu
     INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad, found
     INTEGER, PARAMETER :: c_err_new_style_ignore = 1
@@ -357,7 +360,7 @@ CONTAINS
               WRITE(io,*) 'Cannot have multiple "rolling_restart" blocks.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
+          CALL abort_code(c_err_preset_element)
         ENDIF
         rolling_restart_io_block = block_number
       ENDIF
@@ -397,7 +400,29 @@ CONTAINS
       IF (io_block%dt_snapshot < 0.0_num) THEN
         io_block%dt_snapshot = 0.0_num
       ELSE IF (io_block%dt_snapshot > 0.0_num) THEN
-        n_zeros = MAX(n_zeros, FLOOR(LOG10(t_end / io_block%dt_snapshot)) + 1)
+        io = MAX(n_zeros, FLOOR(LOG10(t_end / io_block%dt_snapshot)) + 1)
+        IF (n_zeros_control > 0 .AND. io /= n_zeros_control) THEN
+          n_zeros = io
+          IF (n_zeros > n_zeros_control .AND. rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) '*** WARNING ***'
+              WRITE(io,'(A,I1,A)') ' Estimated value of n_zeros (', n_zeros, &
+                  ') has been overidden by input deck'
+            ENDDO
+          ENDIF
+          n_zeros = n_zeros_control
+        ELSE IF (io > n_zeros) THEN
+          n_zeros = io
+          IF (rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) '*** WARNING ***'
+              WRITE(io,'(A,I1,A)') ' n_zeros changed to ', n_zeros, &
+                  ' to accomodate requested number of snapshots'
+            ENDDO
+          ENDIF
+        ENDIF
       ENDIF
     CASE(2)
       IF (new_style_io_block) THEN
@@ -431,7 +456,7 @@ CONTAINS
           WRITE(io,*) 'Please use the "import" directive instead'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_unknown_element, ierr)
+      CALL abort_code(c_err_unknown_element)
     CASE(8)
       io_block%dt_average = as_real_print(value, element, errcode)
     CASE(9)
@@ -463,7 +488,7 @@ CONTAINS
                   // '" already defined.'
             ENDDO
           ENDIF
-          CALL MPI_ABORT(MPI_COMM_WORLD, c_err_preset_element, ierr)
+          CALL abort_code(c_err_preset_element)
         ENDIF
       ENDDO
       io_block%name = value
@@ -505,6 +530,9 @@ CONTAINS
       filesystem = TRIM(value) // ':'
     CASE(28)
       io_block%disabled = as_logical_print(value, element, errcode)
+    CASE(29)
+      io_block%dump_first_after_restart = &
+          as_logical_print(value, element, errcode)
     END SELECT
 
     IF (style_error == c_err_old_style_ignore) THEN
@@ -759,6 +787,7 @@ CONTAINS
     io_block%dump_last = .TRUE.
     io_block%dump_source_code = .FALSE.
     io_block%dump_input_decks = .FALSE.
+    io_block%dump_first_after_restart = .FALSE.
     io_block%dumpmask = c_io_none
     io_block%time_start = -1.0_num
     io_block%time_stop  = HUGE(1.0_num)

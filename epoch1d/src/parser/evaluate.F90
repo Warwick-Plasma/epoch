@@ -2,6 +2,7 @@ MODULE evaluator
 
   USE evaluator_blocks
   USE shunt
+  USE utilities
 
   IMPLICIT NONE
 
@@ -27,7 +28,7 @@ CONTAINS
     IF (input_stack%should_simplify) THEN
       CALL basic_evaluate_standard(input_stack, ix, err)
 
-      n_elements = eval_stack%stack_point
+      n_elements = eval_stack_stack_point
       ALLOCATE(array(1:n_elements))
 
       ! Pop off the final answers
@@ -41,8 +42,8 @@ CONTAINS
 
       ! Check the final answers
       DO i = 1, n_elements
-        IF (eval_stack%entries(i) /= array(i)) THEN
-          PRINT*,i,eval_stack%entries(i),array(i),eval_stack%entries(i)-array(i)
+        IF (eval_stack_entries(i) /= array(i)) THEN
+          PRINT*,i,eval_stack_entries(i),array(i),eval_stack_entries(i)-array(i)
         ENDIF
       ENDDO
 
@@ -60,7 +61,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(IN) :: ix
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ierr
+    INTEGER :: i
     TYPE(stack_element) :: block
 
     CALL eval_reset()
@@ -82,7 +83,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
+        CALL abort_code(err)
         STOP
       ENDIF
     ENDDO
@@ -97,7 +98,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(IN) :: ix
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ierr
+    INTEGER :: i
     TYPE(stack_element) :: block
 
     IF (input_stack%should_simplify) CALL simplify_stack(input_stack, err)
@@ -121,7 +122,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
+        CALL abort_code(err)
         STOP
       ENDIF
     ENDDO
@@ -155,7 +156,7 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ierr
+    INTEGER :: i
     TYPE(stack_element) :: block
     TYPE(primitive_stack) :: output_stack
 
@@ -198,14 +199,14 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
+        CALL abort_code(err)
         STOP
       ENDIF
     ENDDO
 
     ! We may now just be left with a list of values on the eval_stack
     ! If so, push them onto sl_tail%stack
-    i = eval_stack%stack_point
+    i = eval_stack_stack_point
     IF (i > 0) CALL update_stack(i)
 
     ! Now populate output_stack with the simplified expression
@@ -216,7 +217,7 @@ CONTAINS
       CALL append_stack(output_stack, sl_tail%stack)
       DEALLOCATE(sl_tail)
       sl_size = 0
-      eval_stack%stack_point = 0
+      eval_stack_stack_point = 0
     ENDIF
 
     CALL deallocate_stack(input_stack)
@@ -238,15 +239,15 @@ CONTAINS
     new_block%ptype = c_pt_variable
     new_block%value = 0
 
-    sp = eval_stack%stack_point
+    sp = eval_stack_stack_point
 
     ALLOCATE(entries(nvalues))
     ALLOCATE(flags(nvalues))
 
     n = nvalues
     DO i = 1, nvalues
-      entries(n) = eval_stack%entries(sp)
-      flags(n) = eval_stack%flags(sp)
+      entries(n) = eval_stack_entries(sp)
+      flags(n) = eval_stack_flags(sp)
       IF (flags(n) /= 0) THEN
         sl_size = sl_size - 1
         sl_part => sl_tail
@@ -255,7 +256,7 @@ CONTAINS
       n = n - 1
       sp = sp - 1
     ENDDO
-    eval_stack%stack_point = sp
+    eval_stack_stack_point = sp
 
     CALL sl_append()
     DO i = 1, nvalues
@@ -286,7 +287,7 @@ CONTAINS
     IF (err == c_err_other) THEN
       err = c_err_none
       ! Operator just pushed a bogus value to stack, so we'll ignore it
-      eval_stack%stack_point = eval_stack%stack_point - 1
+      eval_stack_stack_point = eval_stack_stack_point - 1
       CALL push_eval_flag()
       CALL sl_append()
       CALL push_to_stack(sl_tail%stack, block)
@@ -295,12 +296,12 @@ CONTAINS
     ENDIF
 
     ! Number of eval_stack entries consumed by operator
-    nvalues = eval_stack%nvalues
+    nvalues = eval_stack_nvalues
     IF (nvalues == 0) RETURN
 
-    eval_stack%nvalues = 0
+    eval_stack_nvalues = 0
     ! Operator just pushed a bogus value to stack, so we'll ignore it
-    eval_stack%stack_point = eval_stack%stack_point - 1
+    eval_stack_stack_point = eval_stack_stack_point - 1
 
     CALL update_stack(nvalues)
 
@@ -323,10 +324,10 @@ CONTAINS
 
     CALL basic_evaluate(input_stack, ix, err)
 
-    IF (eval_stack%stack_point /= n_elements) err = IOR(err, c_err_bad_value)
+    IF (eval_stack_stack_point /= n_elements) err = IOR(err, c_err_bad_value)
 
     ! Pop off the final answers
-    DO i = MIN(eval_stack%stack_point,n_elements),1,-1
+    DO i = MIN(eval_stack_stack_point,n_elements),1,-1
       array(i) = pop_off_eval()
     ENDDO
 
@@ -348,7 +349,7 @@ CONTAINS
 
     CALL basic_evaluate(input_stack, ix, err)
 
-    n_elements = eval_stack%stack_point
+    n_elements = eval_stack_stack_point
     ALLOCATE(array(1:n_elements))
 
     ! Pop off the final answers
@@ -366,7 +367,7 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(OUT) :: n_elements
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ierr
+    INTEGER :: i
     TYPE(stack_element) :: block
 
     array(1) = 0
@@ -388,7 +389,7 @@ CONTAINS
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, block%ptype, i, block%value
-        CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
+        CALL abort_code(err)
         STOP
       ENDIF
     ENDDO

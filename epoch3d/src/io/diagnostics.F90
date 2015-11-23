@@ -77,11 +77,11 @@ CONTAINS
     REAL(num) :: elapsed_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced, y_reduced, z_reduced
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
-    INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped
+    INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER, SAVE :: nstep_prev = 0
+    INTEGER, SAVE :: nstep_prev = -1
     LOGICAL :: convert, force, any_written, restart_id, print_arrays
     LOGICAL, SAVE :: first_call = .TRUE.
     TYPE(particle_species), POINTER :: species
@@ -122,7 +122,10 @@ CONTAINS
 
     IF (n_io_blocks <= 0) RETURN
 
-    IF (step == nstep_prev) RETURN
+    force = .FALSE.
+    IF (PRESENT(force_write)) force = force_write
+
+    IF (step == nstep_prev .AND. .NOT.force) RETURN
 
     IF (first_call) THEN
       ALLOCATE(dumped_skip_dir(c_ndims,n_subsets))
@@ -140,9 +143,6 @@ CONTAINS
       sdf_max_string_length = sdf_get_max_string_length()
       max_string_length = MIN(sdf_max_string_length, c_max_string_length)
     ENDIF
-
-    force = .FALSE.
-    IF (PRESENT(force_write)) force = force_write
 
     dims = (/nx_global, ny_global, nz_global/)
 
@@ -171,6 +171,27 @@ CONTAINS
             CALL timer_start(c_timer_io, .TRUE.)
           ENDIF
         ENDIF
+      ENDIF
+
+      ! Increase n_zeros if needed
+
+      io = file_numbers(iprefix)
+      rn = 1
+      nval = 1
+      DO i = 1, 1000
+        IF (rn > io) THEN
+          nval = i - 1
+          EXIT
+        ENDIF
+        rn = rn * 10
+      ENDDO
+
+      IF (nval > n_zeros) THEN
+        IF (rank == 0) THEN
+          WRITE(*,*) '*** WARNING ***'
+          WRITE(*,*) 'n_zeros increased to enable further output'
+        ENDIF
+        n_zeros = nval
       ENDIF
 
       ! Allows a maximum of 10^999 output dumps, should be enough for anyone
@@ -335,6 +356,39 @@ CONTAINS
           ENDDO
         ENDIF
 #endif
+
+#ifdef PER_PARTICLE_CHARGE_MASS
+        CALL write_particle_variable(c_dump_part_charge, code, &
+            'Q', 'C', it_output_real)
+        CALL write_particle_variable(c_dump_part_mass, code, &
+            'Mass', 'kg', it_output_real)
+#else
+        IF (IAND(iomask(c_dump_part_charge), code) /= 0) THEN
+          CALL build_species_subset
+
+          DO ispecies = 1, n_species
+            species => io_list(ispecies)
+            IF (IAND(species%dumpmask, code) /= 0 &
+                .OR. IAND(code, c_io_restartable) /= 0) THEN
+              CALL sdf_write_srl(sdf_handle, 'charge/' // TRIM(species%name), &
+                  'Particles/Charge/' // TRIM(species%name), species%charge)
+            ENDIF
+          ENDDO
+        ENDIF
+
+        IF (IAND(iomask(c_dump_part_mass), code) /= 0) THEN
+          CALL build_species_subset
+
+          DO ispecies = 1, n_species
+            species => io_list(ispecies)
+            IF (IAND(species%dumpmask, code) /= 0 &
+                .OR. IAND(code, c_io_restartable) /= 0) THEN
+              CALL sdf_write_srl(sdf_handle, 'mass/' // TRIM(species%name), &
+                  'Particles/Mass/' // TRIM(species%name), species%mass)
+            ENDIF
+          ENDDO
+        ENDIF
+#endif
         CALL write_particle_variable(c_dump_part_px, code, &
             'Px', 'kg.m/s', it_output_real)
         CALL write_particle_variable(c_dump_part_py, code, &
@@ -349,10 +403,6 @@ CONTAINS
         CALL write_particle_variable(c_dump_part_vz, code, &
             'Vz', 'm/s', it_output_real)
 
-        CALL write_particle_variable(c_dump_part_charge, code, &
-            'Q', 'C', it_output_real)
-        CALL write_particle_variable(c_dump_part_mass, code, &
-            'Mass', 'kg', it_output_real)
         CALL write_particle_variable(c_dump_part_ek, code, &
             'Ek', 'J', it_output_real)
         CALL write_particle_variable(c_dump_part_rel_mass, code, &
@@ -947,7 +997,10 @@ CONTAINS
     IF (first_call(iprefix) .AND. force_first_to_be_restartable) &
         restart_flag = .TRUE.
     IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
-    IF (force) restart_flag = .TRUE.
+    IF (force) THEN
+      restart_flag = .TRUE.
+      print_arrays = .TRUE.
+    ENDIF
 
     IF (.NOT.restart_flag .AND. .NOT.new_style_io_block) THEN
       dump_source_code = .FALSE.

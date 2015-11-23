@@ -28,7 +28,7 @@ CONTAINS
   SUBROUTINE setup_communicator
 
     INTEGER, PARAMETER :: ndims = 3
-    INTEGER :: dims(ndims), idim, old_comm, ierr
+    INTEGER :: dims(ndims), idim, old_comm
     LOGICAL :: periods(ndims), reorder, op, reset
     INTEGER :: test_coords(ndims)
     INTEGER :: ix, iy, iz
@@ -36,6 +36,7 @@ CONTAINS
     INTEGER :: area, minarea, nprocyz
     INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
+    CHARACTER(LEN=1) :: dir
 
     nproc_orig = nproc
 
@@ -47,19 +48,36 @@ CONTAINS
         PRINT*,'There must be at least ' // TRIM(str) // &
             ' cells in each direction.'
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
+      CALL abort_code(c_err_bad_setup)
     ENDIF
 
     reset = .FALSE.
     IF (MAX(nprocx,1) * MAX(nprocy,1) * MAX(nprocz,1) > nproc) THEN
       reset = .TRUE.
+      IF (rank == 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Requested domain split exceeds CPUs. Ignoring'
+      ENDIF
     ELSE IF (nprocx * nprocy * nprocz > 0) THEN
       ! Sanity check
       nxsplit = nx_global / nprocx
       nysplit = ny_global / nprocy
       nzsplit = nz_global / nprocz
-      IF (nxsplit < ng .OR. nysplit < ng .OR. nzsplit < ng) &
-          reset = .TRUE.
+      IF (nxsplit < ng .OR. nysplit < ng .OR. nzsplit < ng) THEN
+        reset = .TRUE.
+        IF (rank == 0) THEN
+          IF (nxsplit < ng) THEN
+            dir = 'x'
+          ELSE IF (nysplit < ng) THEN
+            dir = 'y'
+          ELSE IF (nzsplit < ng) THEN
+            dir = 'z'
+          ENDIF
+          PRINT*,'*** WARNING ***'
+          PRINT'('' Requested domain split gives less than '', I1, &
+              &  '' cells in the '', A, ''-direction. Ignoring'')', ng, dir
+        ENDIF
+      ENDIF
     ENDIF
 
     IF (reset) THEN
@@ -124,7 +142,7 @@ CONTAINS
           PRINT*,'Cannot split the domain using the requested number of CPUs.'
           PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
         ENDIF
-        CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_setup, ierr)
+        CALL abort_code(c_err_bad_setup)
         STOP
       ENDIF
       IF (rank == 0) THEN

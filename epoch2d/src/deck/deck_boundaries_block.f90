@@ -1,6 +1,7 @@
 MODULE deck_boundaries_block
 
   USE strings_advanced
+  USE utilities
 
   IMPLICIT NONE
   SAVE
@@ -173,7 +174,7 @@ CONTAINS
   FUNCTION boundary_block_check() RESULT(errcode)
 
     INTEGER :: errcode
-    INTEGER :: index, io, iu, ierr
+    INTEGER :: index, io, iu
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
     LOGICAL :: error
 
@@ -226,7 +227,7 @@ CONTAINS
               ' of the domain.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_bad_value, ierr)
+      CALL abort_code(c_err_bad_value)
     ENDIF
 
   END FUNCTION boundary_block_check

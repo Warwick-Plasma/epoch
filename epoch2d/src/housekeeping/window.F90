@@ -30,7 +30,7 @@ CONTAINS
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(MPI_COMM_WORLD, c_err_pp_options_missing, ierr)
+    CALL abort_code(c_err_pp_options_missing)
 #endif
 
   END SUBROUTINE initialise_window
@@ -317,7 +317,7 @@ CONTAINS
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
     ENDIF
-    CALL MPI_ABORT(MPI_COMM_WORLD, c_err_pp_options_missing, ierr)
+    CALL abort_code(c_err_pp_options_missing)
 #endif
 
   END SUBROUTINE moving_window

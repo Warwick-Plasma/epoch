@@ -12,6 +12,7 @@ CONTAINS
 #else
   USE strings_advanced
   USE probes
+  USE utilities
 
   IMPLICIT NONE
   SAVE
@@ -62,7 +63,7 @@ CONTAINS
 
     LOGICAL :: discard
     REAL(num), DIMENSION(c_ndims) :: r1, r2
-    INTEGER :: io, iu, i, ierr, scount, sarr(ndim)
+    INTEGER :: io, iu, i, scount, sarr(ndim)
 
     IF (deck_state == c_ds_first) RETURN
 
@@ -74,7 +75,7 @@ CONTAINS
           WRITE(io,*) '"probe" block does not have a "name" entry.'
         ENDDO
       ENDIF
-      CALL MPI_ABORT(MPI_COMM_WORLD, c_err_required_element_not_set, ierr)
+      CALL abort_code(c_err_required_element_not_set)
     ENDIF
 
     discard = .FALSE.
