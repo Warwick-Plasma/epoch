@@ -805,7 +805,8 @@ CONTAINS
     IF (.NOT. restart_flag) THEN
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
-        PRINT*, 'SDF file is not a restart dump. Unable to continue.'
+        PRINT*, 'SDF file ', TRIM(full_restart_filename), &
+            ' is not a restart dump. Unable to continue.'
       ENDIF
       CALL abort_code(c_err_io_error)
       STOP
@@ -1316,7 +1317,8 @@ CONTAINS
     IF (.NOT. restart_flag) THEN
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
-        PRINT*, 'SDF file is not a restart dump. Unable to continue.'
+        PRINT*, 'SDF file ', TRIM(full_restart_filename), &
+            ' is not a restart dump. Unable to continue.'
       ENDIF
       CALL abort_code(c_err_io_error)
       STOP
