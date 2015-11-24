@@ -161,7 +161,7 @@ CONTAINS
               TRIM(species_list(first_positron)%name), ' instead.'
         ENDDO
       ENDIF
-      trident_electron_species = first_positron
+      trident_positron_species = first_positron
     ENDIF
 #endif
 
