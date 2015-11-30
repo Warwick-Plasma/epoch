@@ -1,7 +1,14 @@
-## EPOCH Build Status
+# *** PLEASE READ THIS NOTE ***
 
-Here is the result of the most recent automated build: 
-[![build status](https://cfsa-pmw.warwick.ac.uk/ci/projects/7/status.png?ref=master)](https://cfsa-pmw.warwick.ac.uk/ci/projects/7?ref=master)
+If you are obtaining this code from the gitlab server *DO NOT* use the
+"Download zip" buttons. They will only download the EPOCH code and not the SDF
+subdirectory.
+
+The latest version of the code can be found
+[here](https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/wikis/Downloads)
+
+For similar reasons, if cloning the repository using git you *MUST* add the
+"--recursive" flag.
 
 ## DOWNLOADING AND BUILDING THE CODE
 
