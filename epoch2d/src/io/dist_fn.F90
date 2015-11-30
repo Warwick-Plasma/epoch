@@ -1,6 +1,7 @@
 MODULE dist_fn
 
   USE mpi_subtype_control
+  USE sdf
 
   IMPLICIT NONE
 

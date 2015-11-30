@@ -2,6 +2,7 @@ MODULE probes
 
 #ifndef NO_PARTICLE_PROBES
   USE partlist
+  USE sdf
 
   IMPLICIT NONE
 
