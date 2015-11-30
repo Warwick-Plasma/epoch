@@ -388,7 +388,8 @@ deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o \
   utilities.o
 deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
 deck_constant_block.o: deck_constant_block.f90 evaluate.o shunt.o
-deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o timer.o
+deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o \
+  timer.o $(SDFMOD)
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o \
   utilities.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o
@@ -405,7 +406,7 @@ deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
   random_generator.o setup.o shared_data.o strings.o timer.o version_data.o \
   window.o $(SDFMOD) $(ENCODED_SOURCE)
-dist_fn.o: dist_fn.F90 mpi_subtype_control.o
+dist_fn.o: dist_fn.F90 mpi_subtype_control.o $(SDFMOD)
 epoch3d.o: epoch3d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
   finish.o helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
   particles.o photons.o setup.o split_particle.o welcome.o window.o
@@ -433,12 +434,12 @@ particles.o: particles.F90 boundary.o current_smooth.o partlist.o prefetch.o
 partlist.o: partlist.F90 random_generator.o shared_data.o
 photons.o: photons.F90 partlist.o
 prefetch.o: prefetch.F90 shared_data.o
-probes.o: probes.F90 partlist.o
+probes.o: probes.F90 partlist.o $(SDFMOD)
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
 setup.o: setup.F90 fields.o helper.o laser.o mpi_subtype_control.o \
   shared_data.o shunt.o split_particle.o timer.o version_data.o welcome.o \
-  window.o
+  window.o $(SDFMOD)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 $(SDFMOD)
 shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o
