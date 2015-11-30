@@ -3,6 +3,7 @@ MODULE deck_control_block
   USE strings_advanced
   USE fields
   USE timer
+  USE sdf
 
   IMPLICIT NONE
   SAVE

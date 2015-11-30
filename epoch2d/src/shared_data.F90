@@ -4,7 +4,9 @@
 
 MODULE constants
 
-  USE sdf
+  USE sdf, ONLY : c_stagger_edge_x, c_stagger_edge_y, c_stagger_edge_z, &
+      c_stagger_face_x, c_stagger_face_y, c_stagger_face_z, &
+      c_stagger_cell_centre, c_stagger_vertex, c_id_length
 
   IMPLICIT NONE
 
