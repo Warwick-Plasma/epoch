@@ -734,6 +734,10 @@ CONTAINS
         ELSE
           CALL do_functions(block%value, .FALSE., 1, 1, err)
         ENDIF
+      ELSE
+        ! Not yet implemented. Reset the stack and exit
+        CALL eval_reset()
+        RETURN
       ENDIF
 
       IF (err /= c_err_none) THEN
