@@ -197,6 +197,46 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'restrict_en')) THEN
+      CALL split_range(value, work1, work2, errcode)
+      IF (errcode /= c_err_none) RETURN
+      working_block%use_restrictions(c_dir_en) = .TRUE.
+      working_block%restrictions(:,c_dir_en) = (/work1, work2/)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'restrict_gamma_m1')) THEN
+      CALL split_range(value, work1, work2, errcode)
+      IF (errcode /= c_err_none) RETURN
+      working_block%use_restrictions(c_dir_gamma_m1) = .TRUE.
+      working_block%restrictions(:,c_dir_gamma_m1) = (/work1, work2/)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'restrict_xy_angle')) THEN
+      CALL split_range(value, work1, work2, errcode)
+      IF (errcode /= c_err_none) RETURN
+      working_block%use_restrictions(c_dir_xy_angle) = .TRUE.
+      working_block%restrictions(:,c_dir_xy_angle) = (/work1, work2/)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'restrict_yz_angle')) THEN
+      CALL split_range(value, work1, work2, errcode)
+      IF (errcode /= c_err_none) RETURN
+      working_block%use_restrictions(c_dir_yz_angle) = .TRUE.
+      working_block%restrictions(:,c_dir_yz_angle) = (/work1, work2/)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'restrict_zx_angle')) THEN
+      CALL split_range(value, work1, work2, errcode)
+      IF (errcode /= c_err_none) RETURN
+      working_block%use_restrictions(c_dir_zx_angle) = .TRUE.
+      working_block%restrictions(:,c_dir_zx_angle) = (/work1, work2/)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'include_species')) THEN
       ispecies = as_integer_print(value, element, errcode)
       IF (errcode == c_err_none) THEN
