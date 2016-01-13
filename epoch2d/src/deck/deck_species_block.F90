@@ -388,7 +388,7 @@ CONTAINS
     IF (str_cmp(element, 'frac') .OR. str_cmp(element, 'fraction')) THEN
       IF (npart_global >= 0) THEN
         species_list(species_id)%count = &
-            INT(as_real_print(value, element, errcode) * npart_global)
+            INT(as_real_print(value, element, errcode) * npart_global, i8)
       ELSE
         species_list(species_id)%count = 0
       ENDIF
