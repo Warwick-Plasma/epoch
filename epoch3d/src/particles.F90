@@ -570,7 +570,7 @@ CONTAINS
     REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz, density
     REAL(num) :: f0_exponent, norm, two_kb_mass, two_pi_kb_mass3
 
-    IF (ABS(initial_conditions(ispecies)%density_back) < c_tiny) THEN
+    IF (ABS(initial_conditions(ispecies)%density_back) > c_tiny) THEN
        two_kb_mass = 2.0_num * kb * mass
        two_pi_kb_mass3 = (pi * two_kb_mass)**3
 
