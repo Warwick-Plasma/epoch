@@ -19,7 +19,7 @@
  * Added "ndims" constant to input.deck
    The input.deck now accepts an additional constant "ndims" returning the
    total number of dimensions in the simulation. So this is 1, if the
-   input.deck was started using epoch2d; 2, if started using epoch2d and 3, if
+   input.deck was started using epoch1d; 2, if started using epoch2d and 3, if
    started using epoch3d.
 
  * added variable 'r_xyz' to input.deck parser.
