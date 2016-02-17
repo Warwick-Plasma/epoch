@@ -113,6 +113,9 @@ CONTAINS
       initial_conditions(ispecies)%drift = 0.0_num
       initial_conditions(ispecies)%density_min = EPSILON(1.0_num)
       initial_conditions(ispecies)%density_max = HUGE(1.0_num)
+      initial_conditions(ispecies)%density_back = 0.0_num
+      initial_conditions(ispecies)%drift_back = 0.0_num
+      initial_conditions(ispecies)%temp_back = 0.0_num
     ENDDO
 
   END SUBROUTINE allocate_ic
@@ -128,7 +131,9 @@ CONTAINS
       DEALLOCATE(initial_conditions(ispecies)%temp)
       DEALLOCATE(initial_conditions(ispecies)%drift)
     ENDDO
+#ifndef DELTAF_METHOD
     IF (.NOT. move_window) DEALLOCATE(initial_conditions)
+#endif
 
   END SUBROUTINE deallocate_ic
 
@@ -207,6 +212,11 @@ CONTAINS
         ! can easily over_ride)
         current%charge = species%charge
         current%mass = species%mass
+#endif
+#ifdef DELTAF_METHOD
+        ! Store the number of particles per cell to allow calculation
+        ! of phase space volume later
+        current%pvol = npart_per_cell
 #endif
         current%part_pos = x(ix) + (random() - 0.5_num) * dx
 
@@ -387,6 +397,11 @@ CONTAINS
           ! can easily over_ride)
           current%charge = species%charge
           current%mass = species%mass
+#endif
+#ifdef DELTAF_METHOD
+          ! Store the number of particles per cell to allow calculation
+          ! of phase space volume later
+          current%pvol = npart_per_cell
 #endif
           current%part_pos = x(ix) + (random() - 0.5_num) * dx
 
