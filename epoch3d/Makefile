@@ -55,10 +55,11 @@ endif
 # gfortran
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
-  FFLAGS = -O3
+  FFLAGS = -O3 -fno-range-check
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
-             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
+             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter \
+             -fno-range-check
     #FFLAGS += -ffpe-trap=underflow,denormal
 
     GNUVER := $(shell gfortran -dumpversion | head -1 \
@@ -93,6 +94,16 @@ ifeq ($(strip $(COMPILER)),gfortran)
   endif
   INFO_FLAGS = -Wno-conversion -fno-range-check
 endif
+
+# mpif90 using gfortran
+# ========
+ifeq ($(strip $(COMPILER)),MPIgfortran)
+   MPIF90 = mpif90
+   FFLAGS += -frecord-marker=4
+   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
+   FFLAGS += -fno-range-check
+endif
+
 
 # g95
 # ========
