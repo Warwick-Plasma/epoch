@@ -1130,12 +1130,11 @@ CONTAINS
     REAL(num) :: c1(3), c2(3), c3(3)
     REAL(num) :: phi
 
-    en_after = (1 - wtr) * en + wtr * en_scat
-    p_after  = (1 - wtr) * p  + wtr * p_scat
+    en_after = (1.0_num - wtr) * en + wtr * en_scat
+    p_after  = (1.0_num - wtr) * p  + wtr * p_scat
     p_mag = SQRT(DOT_PRODUCT(p_after, p_after))
-!    gamma_en = 1 + en_after / (mass * c**2)
     gamma_en = en_after / (mass * c**2)
-    gamma_p = SQRT(1 + (p_mag / mass / c)**2)
+    gamma_p = SQRT(1.0_num + (p_mag / mass / c)**2)
 
     ! This if-statement is just to take care of possible rounding errors
     ! gamma_p should always be smaller than gamma_en
