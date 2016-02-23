@@ -796,7 +796,7 @@ CONTAINS
       p_list2%tail%next => p_list2%head
 
 #ifdef PER_SPECIES_WEIGHT
-      np = pcount * weight1
+      np = icount * weight1
       factor = pcount * MIN(weight1, weight2)
 #else
       current => p_list1%head
