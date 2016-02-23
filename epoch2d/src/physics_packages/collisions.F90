@@ -701,12 +701,12 @@ CONTAINS
 
 #ifdef PER_SPECIES_WEIGHT
     np = icount * weight
-    factor = 0.5_num * user_factor
+    factor = user_factor
 #else
     current => p_list%head
     impact => current%next
     DO k = 2, icount-2, 2
-      np = np + current%weight + impact%weight
+      np = np + current%weight
       factor = factor + MIN(current%weight, impact%weight)
       current => impact%next
       impact => current%next
@@ -715,16 +715,17 @@ CONTAINS
       CALL prefetch_particle(impact)
 #endif
     ENDDO
-    np = np + current%weight + impact%weight
+    np = np + current%weight
     factor = factor + MIN(current%weight, impact%weight)
 
     IF (MOD(icount, 2_i8) /= 0) THEN
       np = np + impact%next%weight
       factor = factor + MIN(current%weight, impact%next%weight)
+      np = np + impact%weight
       factor = factor + MIN(impact%weight, impact%next%weight)
     ENDIF
 
-    factor = 0.5_num * user_factor * np / factor
+    factor = user_factor * np / factor
 #endif
 
     current => p_list%head
