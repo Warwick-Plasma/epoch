@@ -66,6 +66,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
@@ -78,6 +79,7 @@ CONTAINS
     ALLOCATE(meany(-2:nx+3,-2:ny+3,-2:nz+3))
     ALLOCATE(meanz(-2:nx+3,-2:ny+3,-2:nz+3))
     ALLOCATE(part_count(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(iekbar(-2:nx+3,-2:ny+3,-2:nz+3))
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -100,6 +102,7 @@ CONTAINS
 
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
+      CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
@@ -134,7 +137,8 @@ CONTAINS
         jtemp = jtemp * kb / q0
 
         IF (coulomb_log_auto) THEN
-          log_lambda = calc_coulomb_log(itemp, jdens, q1, q2)
+          log_lambda = calc_coulomb_log(itemp, jtemp, iekbar, idens, jdens, &
+              q1, q2, m1)
         ELSE
           log_lambda = coulomb_log
         ENDIF
@@ -163,6 +167,7 @@ CONTAINS
 
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
+    DEALLOCATE(iekbar)
 
   END SUBROUTINE particle_collisions
 
@@ -178,6 +183,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: idens, jdens, e_dens
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: itemp, jtemp, e_temp
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: log_lambda, e_log_lambda
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar, e_ekbar
     REAL(num) :: user_factor, e_user_factor, q1, q2, m1, m2, w1, w2
     REAL(num) :: q_e, m_e, w_e, q_full, ionisation_energy
     LOGICAL :: use_coulomb_log_auto_i, use_coulomb_log_auto
@@ -205,6 +211,8 @@ CONTAINS
     ALLOCATE(meany(-2:nx+3,-2:ny+3,-2:nz+3))
     ALLOCATE(meanz(-2:nx+3,-2:ny+3,-2:nz+3))
     ALLOCATE(part_count(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(iekbar(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(e_ekbar(-2:nx+3,-2:ny+3,-2:nz+3))
 
     CALL create_empty_partlist(ionising_e)
     CALL create_empty_partlist(ejected_e)
@@ -222,6 +230,7 @@ CONTAINS
       ENDIF
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
+      CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
@@ -232,6 +241,7 @@ CONTAINS
         e_species = species_list(ispecies)%release_species
         CALL calc_coll_number_density(e_dens, e_species)
         CALL calc_coll_temperature(e_temp, e_species)
+        CALL calc_coll_ekbar(e_ekbar, e_species)
         m_e = species_list(e_species)%mass
         q_e = species_list(e_species)%charge
         w_e = species_list(e_species)%weight
@@ -294,17 +304,20 @@ CONTAINS
 
         IF (coulomb_log_auto) THEN
           IF (use_coulomb_log_auto) THEN
-            log_lambda = calc_coulomb_log(itemp, jdens, q1, q2)
+            log_lambda = calc_coulomb_log(itemp, jtemp, iekbar, idens, jdens, &
+                q1, q2, m1)
           ELSE
             log_lambda = 0
           ENDIF
           IF (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise) THEN
-            e_log_lambda = calc_coulomb_log(itemp, e_dens, q1, q_e)
+            e_log_lambda = calc_coulomb_log(itemp, e_temp, iekbar, idens, &
+                e_dens, q1, q_e, m1)
             e_user_factor = coll_pairs(ispecies, ion_species)
           ELSE IF (species_list(ispecies)%ionise &
               .AND. species_list(jspecies)%electron) THEN
-            e_log_lambda = calc_coulomb_log(e_temp, jdens, q_e, q2)
+            e_log_lambda = calc_coulomb_log(e_temp, jtemp, e_ekbar, e_dens, &
+                jdens, q_e, q2, m_e)
             e_user_factor = coll_pairs(ion_species, jspecies)
           ENDIF
         ELSE
@@ -419,6 +432,7 @@ CONTAINS
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
     DEALLOCATE(e_dens, e_temp, e_log_lambda)
+    DEALLOCATE(iekbar, e_ekbar)
 #endif
 
   END SUBROUTINE collisional_ionisation
@@ -1255,41 +1269,40 @@ CONTAINS
 
 
 
-  PURE FUNCTION calc_coulomb_log(temp, dens, q1, q2)
+  PURE FUNCTION calc_coulomb_log(temp1, temp2, ekbar1, dens1, dens2, q1, q2, m1)
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: temp, dens
-    REAL(num), INTENT(IN) :: q1, q2
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: temp1, temp2, ekbar1
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: dens1, dens2
+    REAL(num), INTENT(IN) :: q1, q2, m1
     REAL(num), DIMENSION(-2:nx+3,-2:ny+3,-2:nz+3) :: calc_coulomb_log
-    REAL(num), PARAMETER :: cfac = 4.13d6 * SQRT((q0 / kb)**3)
-    REAL(num), PARAMETER :: exp1 = 2.7182818284590452353602874713526625_num
-    REAL(num) :: fac, efac, lfac, temp3, den, ratio
+    REAL(num) :: kDeSq, kDiSq, b0, dB, bmin, bmax
+    REAL(num) :: local_temp1, local_temp2, local_ekbar1, gamm
     INTEGER :: i, j, k
 
-    fac  = cfac * (q0 / q1)**2 * ABS(q0 / q2)
-    efac = (exp1 / fac)**2
-    lfac = LOG(fac)
-
+    calc_coulomb_log = 0.0_num
     DO k = -2, nz+3
     DO j = -2, ny+3
     DO i = -2, nx+3
-      temp3 = temp(i,j,k)**3
-      den = dens(i,j,k)
-      IF (den <= 0.0_num &
-          .OR. EXPONENT(temp3) - EXPONENT(den) >= c_maxexponent) THEN
+      local_temp1 = MAX(temp1(i,j,k), 100.0_num)
+      local_temp2 = MAX(temp2(i,j,k), 100.0_num)
+      local_ekbar1 = MAX(ekbar1(i,j,k), 100.0_num)
+      IF (dens1(i,j,k) <= 1.0_num .OR. dens2(i,j,k) <= 1.0_num) THEN
         calc_coulomb_log(i,j,k) = 1.0_num
       ELSE
-        ratio = temp3 / den
-        IF (ratio <= efac) THEN
-          calc_coulomb_log(i,j,k) = 1.0_num
-        ELSE
-          calc_coulomb_log(i,j,k) = lfac + 0.5_num * LOG(ratio)
-        ENDIF
+        kDeSq = dens1(i,j,k) * q1**2 / (epsilon0 * q0 * local_temp1)
+        kDiSq = dens2(i,j,k) * q2**2 / (epsilon0 * q0 * local_temp2)
+        bmax = 1.0_num / SQRT(kDeSq + kDiSq)
+        b0 = ABS(q1 * q2) / (4.0_num * pi * epsilon0 * local_ekbar1)
+        gamm = (local_ekbar1 / (m1 * c**2)) + 1.0_num
+        dB = 2.0_num * pi * h_bar / (SQRT(gamm**2 - 1.0_num) * m1 * c)
+        bmin = MAX(b0, dB)
+        calc_coulomb_log(i,j,k) = MAX(1.0_num, LOG(bmax / bmin))
       ENDIF
     ENDDO
     ENDDO
     ENDDO
 
-  END FUNCTION
+  END FUNCTION calc_coulomb_log
 
 
 
@@ -1477,6 +1490,74 @@ CONTAINS
     sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
 
   END SUBROUTINE calc_coll_temperature
+
+
+
+  SUBROUTINE calc_coll_ekbar(data_array, ispecies)
+
+    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: ispecies
+    REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_w
+    REAL(num) :: gamm, wdata, fac, gf
+    INTEGER :: ix, iy, iz
+    INTEGER :: jx, jy, jz
+    TYPE(particle), POINTER :: current
+#include "particle_head.inc"
+
+    data_array = 0.0_num
+    part_count = 0.0_num
+#ifndef PER_PARTICLE_CHARGE_MASS
+    part_mc = c * species_list(ispecies)%mass
+#endif
+#ifdef PER_SPECIES_WEIGHT
+    part_w = species_list(ispecies)%weight
+#endif
+
+    DO jz = 1, nz
+    DO jy = 1, ny
+    DO jx = 1, nx
+      current => species_list(ispecies)%secondary_list(jx,jy,jz)%head
+      DO WHILE (ASSOCIATED(current))
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_mc = c * current%mass
+#endif
+#ifndef PER_SPECIES_WEIGHT
+        part_w = current%weight
+#endif
+        fac = part_mc * part_w * c
+
+        part_ux = current%part_p(1) / part_mc
+        part_uy = current%part_p(2) / part_mc
+        part_uz = current%part_p(3) / part_mc
+        gamm = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        wdata = (gamm - 1.0_num) * fac
+
+#include "particle_to_grid.inc"
+
+        DO iz = sf_min, sf_max
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy) * gz(iz)
+          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+          part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_w
+        ENDDO ! ix
+        ENDDO ! iy
+        ENDDO ! iz
+
+        current => current%next
+      ENDDO
+    ENDDO ! jx
+    ENDDO ! jy
+    ENDDO ! jz
+
+    CALL calc_boundary(data_array)
+    CALL calc_boundary(part_count)
+
+    data_array = data_array / MAX(part_count, c_tiny)
+
+  END SUBROUTINE calc_coll_ekbar
 
 
 
