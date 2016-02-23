@@ -980,6 +980,7 @@ CONTAINS
     ! and using it later
     ! SQRT(-2.0_num * nu * LOG(ran1)) * COS(ran2)
     delta = SQRT(-2.0_num * nu * LOG(ran1)) * SIN(ran2)
+    ran2 = 2.0_num * pi * random()
 
     ! angle theta in the One Particle at Rest frame
     sin_theta = delta / SQRT(1.0_num + delta**2)
