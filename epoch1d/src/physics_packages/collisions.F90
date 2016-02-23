@@ -88,7 +88,7 @@ CONTAINS
           CYCLE
 
       collide_species = .FALSE.
-      DO jspecies = ispecies, n_species
+      DO jspecies = 1, n_species
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor > 0) THEN
           collide_species = .TRUE.
@@ -111,7 +111,7 @@ CONTAINS
         CALL shuffle_particle_list_random(p_list1)
       ENDDO ! ix
 
-      DO jspecies = ispecies, n_species
+      DO jspecies = 1, n_species
         ! Currently no support for photon collisions so just cycle round
         IF (species_list(jspecies)%species_type == c_species_id_photon) &
             CYCLE
