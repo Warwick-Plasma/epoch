@@ -804,7 +804,7 @@ CONTAINS
 
       DO k = 1, icount
         np = np + current%weight
-        current => current%weight
+        current => current%next
       ENDDO
 
       current => p_list1%head
