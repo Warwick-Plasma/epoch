@@ -133,7 +133,7 @@ CONTAINS
         jtemp = jtemp * kb / q0
 
         IF (coulomb_log_auto) THEN
-          log_lambda = calc_coulomb_log(itemp, jtemp, iekbar, idens, jdens, &
+          log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
               q1, q2, m1)
         ELSE
           log_lambda = coulomb_log
@@ -292,20 +292,20 @@ CONTAINS
 
         IF (coulomb_log_auto) THEN
           IF (use_coulomb_log_auto) THEN
-            log_lambda = calc_coulomb_log(itemp, jtemp, iekbar, idens, jdens, &
+            log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
                 q1, q2, m1)
           ELSE
             log_lambda = 0
           ENDIF
           IF (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise) THEN
-            e_log_lambda = calc_coulomb_log(itemp, e_temp, iekbar, idens, &
-                e_dens, q1, q_e, m1)
+            e_log_lambda = calc_coulomb_log(iekbar, e_temp, idens, e_dens, &
+                q1, q_e, m1)
             e_user_factor = coll_pairs(ispecies, ion_species)
           ELSE IF (species_list(ispecies)%ionise &
               .AND. species_list(jspecies)%electron) THEN
-            e_log_lambda = calc_coulomb_log(e_temp, jtemp, e_ekbar, e_dens, &
-                jdens, q_e, q2, m_e)
+            e_log_lambda = calc_coulomb_log(e_ekbar, jtemp, e_dens, jdens, &
+                q_e, q2, m_e)
             e_user_factor = coll_pairs(ion_species, jspecies)
           ENDIF
         ELSE
@@ -1242,28 +1242,25 @@ CONTAINS
 
 
 
-  PURE FUNCTION calc_coulomb_log(temp1, temp2, ekbar1, dens1, dens2, q1, q2, m1)
+  PURE FUNCTION calc_coulomb_log(ekbar1, temp2, dens1, dens2, q1, q2, m1)
 
-    REAL(num), DIMENSION(-2:), INTENT(IN) :: temp1, temp2, ekbar1
+    REAL(num), DIMENSION(-2:), INTENT(IN) :: ekbar1, temp2
     REAL(num), DIMENSION(-2:), INTENT(IN) :: dens1, dens2
     REAL(num), INTENT(IN) :: q1, q2, m1
     REAL(num), DIMENSION(-2:nx+3) :: calc_coulomb_log
-    REAL(num) :: kDeSq, kDiSq, b0, dB, bmin, bmax
-    REAL(num) :: local_temp1, local_temp2, local_ekbar1, gamm
+    REAL(num) :: b0, dB, bmin, bmax
+    REAL(num) :: local_ekbar1, local_temp2, gamm
     INTEGER :: i
 
     calc_coulomb_log = 0.0_num
     DO i = -2, nx+3
-      local_temp1 = MAX(temp1(i), 100.0_num)
-      local_temp2 = MAX(temp2(i), 100.0_num)
       local_ekbar1 = MAX(ekbar1(i), 100.0_num * q0)
+      local_temp2 = MAX(temp2(i), 100.0_num)
       IF (dens1(i) <= 1.0_num .OR. dens2(i) <= 1.0_num) THEN
         calc_coulomb_log(i) = 1.0_num
       ELSE
-        kDeSq = dens1(i) * q1**2 / (epsilon0 * q0 * local_temp1)
-        kDiSq = dens2(i) * q2**2 / (epsilon0 * q0 * local_temp2)
-        bmax = 1.0_num / SQRT(kDeSq + kDiSq)
-        b0 = ABS(q1 * q2) / (4.0_num * pi * epsilon0 * local_ekbar1)
+        bmax = SQRT(epsilon0 * q0 * local_temp2 / (ABS(q2) * q0 * dens2(i)))
+        b0 = ABS(q1 * q2) / (8.0_num * pi * epsilon0 * local_ekbar1)
         gamm = (local_ekbar1 / (m1 * c**2)) + 1.0_num
         dB = 2.0_num * pi * h_bar / (SQRT(gamm**2 - 1.0_num) * m1 * c)
         bmin = MAX(b0, dB)
