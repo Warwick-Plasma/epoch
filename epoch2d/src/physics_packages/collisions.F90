@@ -1270,7 +1270,7 @@ CONTAINS
     DO i = -2, nx+3
       local_temp1 = MAX(temp1(i,j), 100.0_num)
       local_temp2 = MAX(temp2(i,j), 100.0_num)
-      local_ekbar1 = MAX(ekbar1(i,j), 100.0_num)
+      local_ekbar1 = MAX(ekbar1(i,j), 100.0_num * q0)
       IF (dens1(i,j) <= 1.0_num .OR. dens2(i,j) <= 1.0_num) THEN
         calc_coulomb_log(i,j) = 1.0_num
       ELSE
