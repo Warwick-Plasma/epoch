@@ -774,8 +774,15 @@ CONTAINS
       current => p_list1%head
       impact => p_list2%head
 
-      DO k = 1, pcount
+      DO k = 1, icount
         np = np + current%weight
+        current => current%next
+      ENDDO
+
+      current => p_list1%head
+      impact => p_list2%head
+
+      DO k = 1, pcount
         factor = factor + MIN(current%weight, impact%weight)
         current => current%next
         impact => impact%next
