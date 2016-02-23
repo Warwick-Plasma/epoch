@@ -701,7 +701,7 @@ CONTAINS
 
 #ifdef PER_SPECIES_WEIGHT
     np = icount * weight
-    factor = user_factor
+    factor = 0.5_num * user_factor
 #else
     current => p_list%head
     impact => current%next
@@ -724,7 +724,7 @@ CONTAINS
       factor = factor + MIN(impact%weight, impact%next%weight)
     ENDIF
 
-    factor = user_factor * np / factor
+    factor = 0.5_num * user_factor * np / factor
 #endif
 
     current => p_list%head
