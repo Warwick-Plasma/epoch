@@ -1,3 +1,561 @@
+v4.7.0 to v4.7.6 2016-02-12
+
+ * Fixed typo in check_qed_variable() routine
+
+ * Updated README.md to prevent use of "Download zip"
+
+ * Fixed compilation performance witn Intel compiler
+   The intel compiler doesn't like inheriting the SDF module.
+
+ * Handle unknown entries during stack sanity check
+   Commit aa45aeb introduced sanity checking of the stack but not all block
+   types are checked. This meant that the evaluation stack could be depleted
+   and lead to out of bounds errors.
+
+ * Fixed overflow when calculating particle count
+
+ * Added GPL licensing headers
+
+ * Moved the Changelog to the top-level directory
+
+
+v4.6.0 to v4.7.0 2015-11-23
+
+ * Fixed build status URL
+
+ * Updated submodules to point to GitLab server
+
+ * Change MPI_ABORT exit codes to be less than 255
+
+ * Disable dump_first flag when restarting
+
+ * Added "dump_first_after_restart" flag to io block
+   In the past, a "dump_first" flag in the output block would cause an output
+   dump immediately after restarting. Since this is rarely the desired
+   behaviour, the flag is now ignored when restarting. To force a dump to
+   occur immediately after restart, set
+   "dump_first_after_restart = T" in the output block.
+
+ * Apply current boundary conditions after ionisation
+   This fixes issue #1308 in which artefacts are visible at CPU boundaries
+   when ionisation is enabled.
+
+ * Fixed makefile to remove warning messages
+   We now test for the existence of /usr/local before adding it to the include
+   path.
+
+ * Don't use fixed sizes for stack arrays
+   This was causing SEGFAULTS when the input deck had a large number of terms
+   on the right-hand side. Since we already know how many elements there are,
+   we can just dynamically allocate them.
+
+ * Use plain arrays for the eval_stack
+
+ * Changed eval_stack to be dynamically sized
+
+ * Perform sanity check on interpolation parameters
+
+ * Issue a warning when interpolation range exceeded
+   Previous versions of the code would exit with an error if the value of a
+   point lay outside the range of values provided for interpolation. Now, the
+   interpolation is performed and a warning message printed.
+
+ * Issue a warning message when changing n_zeros
+   EPOCH automatically adjusts the number of digits used for SDF files to
+   accommodate more than 10000 dumps. This is now accompanied by a warning
+   message so that the user knows why this is happening.
+
+ * Store value of n_zeros specified from input deck
+
+ * Print warning if requested n_zeros is invalid
+
+ * Print warning if n_zeros is insufficient for t_end / dt_snapshots
+
+ * Increase n_zeros if needed for further output
+
+ * Added warning for when CPU split is too large
+
+ * Give useful warning when domain split is too small
+
+ * Output per-species charge and mass as scalar variables
+   It was previously only possible to output these quantities as per-particle
+   variables.
+
+ * Print the name of invalid restart file.
+
+ * Fixes for exact restarting from restart dumps
+
+ * Allow forced write on same timestep
+
+ * Updated SDF submodules
+  SDF/C
+   - Added support for the station_file flag
+   - Bumped file and library revision numbers
+   - Fixed some compiler warnings
+   - Removed uthash submodule
+   - Updated uthash.h symbolic link for new location
+   - Use nblocks from header info when building summary
+   - Added a flag for ignoring the nblocks header value
+   - Fixed some coding-style issues
+   - Fixed some memory leaks
+   - Added routine for printing extension info.
+   - Fixed double free SEGFAULT
+  SDF/FORTRAN
+   - Set station_file flag when a station block is found
+   - Add symbolic names for the header offsets
+   - Added station_file flag to the SDF header
+   - Fixed makefile to remove warning messages
+  SDF/IDL
+   - Added support for station_flag
+   - Fixed station_file typo
+   - Bumped SDF file compatible revision
+   - Allow for files with other than 4 digits
+   - Fixed format specifier for previous patch
+   - Specify minimum number of zeros for SDF file format
+   - Fixed IDL load of 0th SDF snapshot
+  SDF/VisIt
+   - Added support for station_flag
+   - Fixed station_file typo
+   - Fix a concatenated string.
+  SDF/utilities
+   - fix segfaults when building against python3
+   - Eliminated memory leak from previous change
+   - Fix compilation on Ubuntu and add exit code
+   - Fixed build script for python3
+   - Fixed compiler warnings
+   - Added support for station_flag
+   - Fixed show-stopping typo
+   - Added option to ignore header value of nblocks
+   - Don't look for dictionary item by name
+   - Removed incorrect Py_DECREF for Py_{True,False}
+   - Added option for printing the loaded extension module
+   - Added printing of file header to sdffilter
+   - Add open limits to block ranges
+   - Don't print header block when specifying block id
+   - Store string properties as unicode for python3
+
+
+v4.5.0 to v4.6.0 2015-09-18
+
+ * Exit with error if no valid COMPILER specified
+
+ * Added basic gitlab continuous integration script.
+
+ * Added more build targets to gitlab-ci script
+
+ * Fixed missing script entries
+
+ * Added VisIt to the gitlab-ci build script
+
+ * Added test_all.sh script
+
+ * Added separate gfortran and intel builds
+
+ * Added -DPARSER_CHECKING for divide in input.deck parser
+
+ * Show -DPARSER_CHECKING in welcome message
+
+ * Added CI build status to README.md
+
+ * Correctly initialise particles in ionisation routines
+
+ * Properly initialise all newly created particles.
+
+ * Revert "Fixed field setup when restarting."
+
+ * Removed INTENT attribute to POINTER argument
+
+ * Fixed pack.py when the argparse module is not found
+
+ * Removed the "manuals" submodule
+
+ * Removed manuals submodule from make_tarball.sh
+
+ * Only match version tags in gen_commit_string.sh
+
+ * Synced make_tarball script with ODIN.
+
+ * Remove .git files and directories from tarball
+
+ * add keyword 'VERSION' to exit after welcome message.
+   In order to check the EPOCH version, the code will now exit with status 0,
+   if 'VERSION' is given as data directory.
+
+ * Renamed VERSION flag to VERSION_INFO
+
+ * Correctly exit code in parallel
+
+ * Reorganised setup routines
+
+ * Change default behaviour of "make clean"
+   In the old Makefile, "make clean" only cleans up the EPOCH object files and
+   leaves the SDF module untouched. There is a separate "make cleanall"
+   command which cleans up everything, but most users don't know about it and
+   find the default behaviour unintuitive.
+   "make clean" now does the same as "make cleanall" and there is a new rule
+   "make rm" which performs the minimal clean.
+
+ * Exit with a non-zero status when an error is found
+
+ * Fixed warning messages about string truncation.
+
+ * Update SDF submodules
+  SDF/C
+   - Add submodule uthash
+   - Add members to sdf_block and sdf_file for hashing.
+   - Add functions sdf_hash_block and sdf_hash_block_list
+   - Use hash lookup table to retrieve blocks by id.
+   - Use hash table lookup to find duplicate block ids.
+   - Add newly read blocks to the hash table.
+   - Add function sdf_delete_hash_block
+   - Delete the blocks from the hash table when they are removed.
+   - Add derived blocks to the hash table.
+   - Delete blocks from the hash table before their ID gets mangled.
+   - Define HASH_DEBUG when debugging.
+   - Hash blocks by name, as well as id.
+   - Added -fPIC flag to the Makefile.
+   - Increase the length of the arrays dims and local_dims.
+   - Fix some memory leaks.
+   - Free extension data when closing a file.
+   - Avoid freeing memory twice.
+   - Add an option for compiling with valgrind support.
+   - Increase the length of the arrays dims and local_dims.
+   - Re-order sdf_block members.
+   - Changed array dimensions to SDF_MAXDIMS
+   - Fixed Makefile flags
+   - Updated Doxygen version string
+   - Fixed declarations
+  SDF/FORTRAN
+   - Fixed pack.py when the argparse module is not found
+   - Fix the file path 'incfile', used by pack.py.
+  SDF/VisIt
+   - Added some missing library files to the build process
+  SDF/utilities
+   - Allow selective building of Python interface
+   - Fix compiler flags.
+   - Fix compiler option that only applies to gcc.
+   - Use a dict object to find mesh blocks by id, instead of iterating through
+     a list of items.
+   - Add the function 'Block_setdata'
+   - Fix some memory leaks.
+
+
+v4.4.2 to v4.5.0 2015-06-19
+
+ * Fixed COMMIT file generation scripts.
+
+ * Possible fix for recursive make.
+
+ * Fixes for output of field variables.
+   The recent addition of subset grid reduction broke normal ouput of field
+   variables. This ought to be fixed now.
+
+ * Prevent git error messages in pack.sh
+
+ * Synced gen_commit_string.sh script with other repos
+
+ * Added fix for the pack.sh shell script
+
+ * Added functions for querying the SDF string length
+   Also increased the default maximum size.
+
+ * Check for name truncation due to the SDF library.
+
+ * Fixed the MPI subarrays used for field subsets
+
+ * Fixed reduced grid calculation.
+
+ * Fixes for final memory deallocation.
+
+ * Removed unnecessary repetition of subset name.
+
+ * Removed gfortran floating underflow compilation flags.
+
+ * Fixed GIT_DIR when CWD does not equal GIT_WORK_TREE
+
+ * Fixed sdf_write_namevalue when h%string_length changes.
+   Care must be taken when writing the array of strings in the 
+   sdf_write_namevalue routine since the strings are of length 
+   c_max_string_length which might be longer than the current value of
+   h%string_length.
+
+   It is also necessary to truncate the strings being passed into this routine
+   in order to prevent warning messages being printed to screen.
+
+ * Used the stack allocator in sdf_derived
+
+ * Fixed building of SDF utility man pages on OSX
+
+ * Added an error when no COMPILER is set for "make"
+
+ * Added README.txt with full build instructions.
+
+ * Disable the -ipo flag for Intel by default.
+
+ * Fixed reading of integer arrays in parallel.
+
+ * Removed unused variables.
+
+ * Attempt to calculate GIT_DIR as an absolute pathname.
+
+ * Changed mmap of data to be on a per-block basis.
+
+ * Fix VisIt build script when PATH contains spaces
+
+ * Added type conversion for integer arrays.
+
+ * Added better load balancing heuristics
+
+ * Removed the "error" spam from the io block parser.
+
+ * Added some missing deallocations during finalise.
+
+ * Use a persistent buffer for packed particle data
+
+ * Always put .mod files into the include/ directory
+
+ * Added control of n_zeros to the input deck
+
+ * Added documentations to the SDF submodule.
+
+ * Bugfixes for mmap'ed file access
+
+ * Fixed memory corruption bug in python reader.
+   The python reader called sdf_close() once the reference count of the SDF
+   object reached zero. This would then deallocate all of the memory allocated
+   by the SDF library, including the arrays containing the data. For now, I
+   have removed the sdf_close() call entirely so there is now a massive memory
+   leak. The obvious fix is to close the file once the last reference to the
+   file's contents has reached zero, but first we need to return a data
+   structure which tracks the returned items.
+
+ * Fix memory leak in python reader.
+   The memory leak introduced by the previous patch has now been fixed. The
+   numpy arrays are now created with the sdf module as a base class. This way,
+   the reference count for the sdf module only becomes zero once all the numpy
+   arrays have gone out of scope.
+
+ * Fixed lines longer than 80 columns
+
+ * Minor fixes and tidying to the photons module.
+
+ * Moved README.txt to README.md
+
+ * Abort execution when the input deck is invalid.
+
+ * Fixed field setup when restarting.
+
+ * Fixed a compiler warning about formatting.
+
+ * Added a floating-point consistency option.
+   If the code uses 80-bit precision arithmetic for the current arrays, the
+   answer will be inconsistent when run in parallel since only 64-bits of
+   precision is communicated to neighbouring processes. This change adds a
+   flag "CONS=1" that can be passed to to "make" which enforces 64-bit
+   arithmetic in the field solver. Currently, it is only used for the Intel
+   compiler.
+
+ * strip non-ascii before packing source
+   non-ascii chars are not supported in fortran. The code doesnt compile, if
+   i.e. 'gfortran --version' outputs non-ascii characters, which it does in
+   certain languages (i.e. German). This has now been fixed.
+
+ * Added "manuals" repository as a submodule.
+
+ * Avoid duplicate restart dumps.
+   Fixes issue #384
+
+ * A few small changes to the README file.
+   References to CCPForge have been changed to GitLab now that the hosting
+   location has changed
+
+ * Fix a 'raise' statement.
+   'Raise' should return an instance, not the class itself.
+
+ * Made Downloads location more explicit in README.md
+
+ * Fixed typos introduced by commit 761e415c
+   This fixes issue #1259
+
+ * Fixes for make_tarball.sh
+   Added generation of commit_info.h for SDF/C and SDF/utilities submodules. 
+   Replaced submodule search paths with local versions.
+
+ * Updated manuals submodule to latest master
+   * Merge branch 'kuschel/manuals-master'
+   - use hyperref to set links in pdf
+
+ * Updated pack.py to match the version in SDF/FORTRAN
+
+ * Call sdf_write_datablock() from all CPUs
+   Commit 920465f removed MPI_BCAST from the sdf_write_datablock() routines
+   but this had unintended consequences. This has now been reverted and the
+   call is a collective operation so must be called by all CPUs in the
+   communicator. This provides an alternative fix to issue #1256
+
+ * Fixed gfortran detection for versions > 4.x
+
+ * Apply commit ad6a808b to 1d and 3d
+
+ * Updated SDF submodules
+  SDF/C
+   - Used the stack allocator in sdf_derived
+   - Fixed a few integer sizes.
+   - Changed mmap of data to be on a per-block basis.
+   - Bugfixes for mmap'ed file access
+   - Fixed lines longer than 80 columns
+   - Bugfixes for setting up current CPU mesh
+   - Added a routine for destroying the SDF stack.
+   - Fixed the free'ing of NAMEVALUE and RUN_INFO blocks.
+   - Fix copying of info_length.
+   - Replaced a couple of numeric constants with symbols.
+   - Fix for allocation of derived station blodk
+   - Added a derived flag to the block type.
+   - Added a handle to the stack allocator.
+   - Fixed a memory leak for derived variables.
+   - Fixed a few more memory leaks
+   - Changed doxygen version to match library version.
+   - Add a mechanism for including a layer of ghost cells for the VisIt reader.
+   - Tidy-up of ghost-cell changes.
+   - Added a few fields to the blocktype.
+   - Use the field "offset" for station file offsets.
+   - Fixed generation of CPU meshes with internal boundaries.
+   - Fix a compiler option that only applies to gcc.
+   - Fix compilation using clang
+   - Don't mark data as read in contiguous stitched blocks.
+   - Ensure that blocklist contains no duplicate IDs.
+   - Always populate required variables
+   - Don't modify local_dims for station variables.
+   - Ensure that newly created block IDs are unique.
+   - Added commit info to the SDF C library
+   - Added generation of commit_info.h to CMakeLists.txt
+   - Changed C library name to libsdfc.a
+  SDF/FORTRAN
+   - Fixed COMMIT file generation scripts.
+   - Prevent git error messages in pack.sh
+   - Synced gen_commit_string.sh script with other repos
+   - Added fix for the pack.sh shell script
+   - Added functions for querying the SDF string length
+   - Fixed GIT_DIR when CWD does not equal GIT_WORK_TREE
+   - Fixed sdf_write_namevalue when h%string_length changes.
+   - Disable the -ipo flag for Intel by default.
+   - Attempt to calculate GIT_DIR as an absolute pathname.
+   - Force GIT_DIR to be an absoulte path.
+   - Fix a spelling mistake.
+   - Guarantee a clean GIT_DIR1, when finding the absolute GIT_DIR.
+   - Added type conversion for integer arrays.
+   - Always put .mod files into the include/ directory
+   - Fixed lines longer than 80 columns
+   - Fix the file view when reading in 2D and 3D Cartesian meshes.
+   - Added SDF minor revision number.
+   - Fix compiler options.
+   - strip non-ascii before packing source
+   - Fix a 'raise' statement.
+   - Ensure pack.py complies with PEP8 guidelines.
+   - Removed MPI_BCAST calls from serial routines.
+   - Revert "Removed MPI_BCAST calls from serial routines."
+   - Fixed gfortran detection for versions > 4.x
+  SDF/Matlab
+   - Added support for Lagrangian meshes to Matlab
+   - Added a missing semicolon to the Matlab reader
+   - Added missing support for INTEGER datatypes
+  SDF/VisIt
+   - Fixed COMMIT file generation scripts.
+   - Fix VisIt build script when PATH contains spaces
+   - Fixed lines longer than 80 columns
+   - Added a handle to the stack allocator.
+   - Remove unnecessary memory allocation.
+   - Move a #include statement.
+   - Include a layer of ghost cells at mesh boundaries when vieweing in parallel.
+   - Allow freeing the stack when there is no filehandle.
+   - Stop build after specified build type
+   - Fixes to build script for VisIt 2.9.0
+   - Fill in ghost cells for lagrangian meshes.
+   - Tidy-up of ghost-cell changes.
+   - Fixed generation of CPU meshes with internal boundaries.
+   - Add an option to configure the installation directory.
+   - Changed the names of commit info defines
+   - Updated VisIt patches for the latest version.
+  SDF/utilities
+   - Fixed building of SDF utility man pages on OSX
+   - Fixed memory corruption bug in python reader.
+   - Fix memory leak in python reader.
+   - Added NPY_1_7_API_VERSION to python reader.
+   - Added backwards compatibility for older versions of numpy
+   - Fixed indentation levels.
+   - Added "mmap" flag to SDF_open
+   - Added Array type for tracking numpy arrays
+   - Free block data when numpy arrays are destroyed.
+   - Added a python datatype for returning SDF blocks.
+   - Return block structures instead of arrays.
+   - Reorganised sdf_python file.
+   - Added a set of python types to represent SDF block types.
+   - Added more metadata fields to the block type.
+   - Added BlockMesh members
+   - Added __version__ atribute to python module
+   - Removed redundant file handle from Array type
+   - Replaced file handle with pointer to sdf in block type.
+   - Export Block type
+   - Removed a bunch of typecasts
+   - Renamed SDF_type
+   - Changed the python SDF read call to be a class method.
+   - Added better docstring for the SDF read method
+   - Removed some of the temporary "sub" objects
+   - Made setup_* calls more consistent with each other.
+   - Added a reference counter for the Block structure.
+   - Changed mesh block to be closer to that of SDF
+   - Added a getter routine for BlockArray variables.
+   - Added a getter routine for the BlockMesh variables.
+   - Add links to the meshes for mesh-based variables.
+   - Return blocklist as member names instead of dictionary.
+   - Add derived variables to the python reader.
+   - Added more metadata to the Block entries.
+   - Added support for namevalue blocks
+   - Changed namevalue entries to be members.
+   - Fix data population of array blocks
+   - Fixed calculation of median mesh.
+   - Removed broken stpncpy call
+   - Added a routine for destroying the SDF stack.
+   - Fixed a few reference counting errors in the python module
+   - Free up all memory in sdffilter
+   - Added an sdf_legacy module for backwards compatibility.
+   - Add sdf_legacy to cmake build.
+   - Perform a type check before trying to recast 'PyObject *value' as a 'Block *'.
+   - Remove an incorrect Py_DECREF(value).
+   - Removed incorrect incref to the blocklist dictionary.
+   - Removed unnecessary python keyword substitutions.
+   - Only modify the dictionary if an entry has changed.
+   - Removed stack_destroy() call from SDF_dealloc.
+   - Removed unnecessary DECREFs when error handling.
+   - Added stitched material as a block type.
+   - Added material block to sdf_legacy.py
+   - Added grid_id block member.
+   - Added {PLAIN,POINT}_DERIVED blocktype support
+   - Added a handle to the stack allocator.
+   - Fixed a memory leak for derived variables.
+   - Fix some variable names.
+   - Fix Python setup when building.
+   - Removed unused and confusing return values.
+   - Removed unnecessary NULL tests before Py_XDECREF
+   - Use the field "offset" for station file offsets.
+   - Fix compilation using clang
+   - Added BlockList type to the module
+   - Don't add arrays which contain no data
+   - Speed up location of numpy header file
+   - Increment the reference count when adding to list.
+   - Added an option for purging duplicate block IDs
+   - Fixed creation of python install prefix.
+   - A few fixes for building the reader with python3.
+   - Fix build script for python module
+   - Build using libsdf.a
+   - Added git commit info to python reader
+   - Added git commit info to sdffilter and sdf2ascii
+   - Added commit info from SDF library.
+   - Added generation of commit_info.h to CMakeLists.txt
+   - Changed C library name to libsdfc.a
+   - Added error message to build script.
+
+
 10-01-2015 Changes for version 4.4.2
 
  * Added data reduction for grid-based variables.
@@ -19,7 +577,7 @@
  * Added "ndims" constant to input.deck
    The input.deck now accepts an additional constant "ndims" returning the
    total number of dimensions in the simulation. So this is 1, if the
-   input.deck was started using epoch2d; 2, if started using epoch2d and 3, if
+   input.deck was started using epoch1d; 2, if started using epoch2d and 3, if
    started using epoch3d.
 
  * added variable 'r_xyz' to input.deck parser.
