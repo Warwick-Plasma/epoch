@@ -969,8 +969,13 @@ CONTAINS
     ran2 = 2.0_num * pi * random()
 
     ! angle theta in the One Particle at Rest frame
-    sin_theta = delta / SQRT(1.0_num + delta**2)
-    cos_theta = sin_theta / delta
+    IF (delta == 0.0_num) THEN
+      sin_theta = 0.0_num
+      cos_theta = 1.0_num
+    ELSE
+      sin_theta = delta / SQRT(1.0_num + delta**2)
+      cos_theta = sin_theta / delta
+    ENDIF
 
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
