@@ -196,6 +196,19 @@ CONTAINS
     REAL(num) :: c1, c2, c3
     REAL(num) :: cx1, cx2, cx3
 
+    REAL(num) :: alphax, deltax
+
+    INTEGER :: maxwell_solver
+
+    maxwell_solver = 0 ! 0=Yee 1=Lehe
+
+    IF (maxwell_solver == 1) THEN    
+
+    deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
+    alphax = (1 - 3*deltax)
+
+    ENDIF
+
     IF (cpml_boundaries) THEN
       cpml_x = hdtx
 
@@ -203,11 +216,24 @@ CONTAINS
         DO ix = 1, nx
           cpml_x = hdtx / cpml_kappa_bx(ix)
 
-          by(ix) = by(ix) &
-              + cpml_x * (ez(ix+1) - ez(ix  ))
+          IF (maxwell_solver == 0) THEN
+            by(ix) = by(ix) &
+                + cpml_x * (ez(ix+1) - ez(ix  ))
 
-          bz(ix) = bz(ix) &
-              - cpml_x * (ey(ix+1) - ey(ix  ))
+            bz(ix) = bz(ix) &
+                - cpml_x * (ey(ix+1) - ey(ix  ))
+          ELSE  IF (maxwell_solver == 1) THEN
+            by(ix) = by(ix) &
+               + cpml_x*(alphax*(ez(ix+1) - ez(ix  )) &
+                        +deltax*(ez(ix+2) - ez(ix-1)) &
+                        )
+
+            bz(ix) = bz(ix) &
+               - cpml_x*(alphax*(ey(ix+1) - ey(ix  )) &
+                        +deltax*(ey(ix+2) - ey(ix-1)) &
+                        )
+          ENDIF
+
         ENDDO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
@@ -253,11 +279,24 @@ CONTAINS
     ELSE
       IF (field_order == 2) THEN
         DO ix = 1, nx
-          by(ix) = by(ix) &
-              + hdtx * (ez(ix+1) - ez(ix  ))
+          IF (maxwell_solver == 0) THEN
+            by(ix) = by(ix) &
+                + hdtx * (ez(ix+1) - ez(ix  ))
 
-          bz(ix) = bz(ix) &
-              - hdtx * (ey(ix+1) - ey(ix  ))
+            bz(ix) = bz(ix) &
+                - hdtx * (ey(ix+1) - ey(ix  ))
+          ELSE  IF (maxwell_solver == 1) THEN
+            by(ix) = by(ix) &
+               + hdtx*(alphax*(ez(ix+1) - ez(ix  )) &
+                        +deltax*(ez(ix+2) - ez(ix-1)) &
+                        )
+
+            bz(ix) = bz(ix) &
+               - hdtx*(alphax*(ey(ix+1) - ey(ix  )) &
+                        +deltax*(ey(ix+2) - ey(ix-1)) &
+                        )
+          ENDIF
+
         ENDDO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
