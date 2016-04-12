@@ -248,11 +248,11 @@ CONTAINS
     REAL(num) :: cx1, cx2, cx3
     REAL(num) :: cy1, cy2, cy3
 
-    REAL(num) :: betaxy, betayx, deltax, alphax, alphay 
+    REAL(num) :: betaxy, betayx, deltax, alphax, alphay, delta
 
     INTEGER :: maxwell_solver
 
-    maxwell_solver = 0 ! 0=Yee 1=Lehe
+    maxwell_solver = 1 ! 0=Yee 1=Lehe 2=Cowan
 
     IF (maxwell_solver == 1) THEN      
 
@@ -261,6 +261,18 @@ CONTAINS
       deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
       alphax = (1 - 2*betaxy - 3*deltax)
       alphay = (1 - 2*betayx)
+
+    ENDIF
+
+    IF (maxwell_solver == 2) THEN
+
+      delta = min(dx, dy)
+
+      betaxy = (1.0_num / 8.0_num)*(delta/dy)**2
+      betayx = (1.0_num / 8.0_num)*(delta/dx)**2
+      deltax = 0
+      alphax = 1 - (1.0_num / 4.0_num)*(delta/dy)**2
+      alphay = 1 - (1.0_num / 4.0_num)*(delta/dx)**2
 
     ENDIF
 
@@ -285,7 +297,7 @@ CONTAINS
                     - cpml_x * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
                     + cpml_y * (ex(ix  , iy+1) - ex(ix  , iy  ))
 
-            ELSE IF (maxwell_solver == 1) THEN
+            ELSE IF ((maxwell_solver == 1) .OR. (maxwell_solver == 2)) THEN
               bx(ix, iy) = bx(ix, iy) &
                   - cpml_y*(alphay*(ez(ix  , iy+1) - ez(ix  , iy  )) &
                          +betayx*(ez(ix+1, iy+1) - ez(ix+1, iy  )) &
@@ -394,7 +406,7 @@ CONTAINS
                   - hdtx * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
                   + hdty * (ex(ix  , iy+1) - ex(ix  , iy  ))
 
-            ELSE IF (maxwell_solver == 1) THEN
+            ELSE IF ((maxwell_solver == 1) .OR. (maxwell_solver == 2)) THEN
               bx(ix, iy) = bx(ix, iy) &
                   - hdty*(alphay*(ez(ix  , iy+1) - ez(ix  , iy  )) &
                          +betayx*(ez(ix+1, iy+1) - ez(ix+1, iy  )) &
