@@ -923,12 +923,14 @@ CONTAINS
 #ifndef PHOTONS
     extended_error_string = 'Cannot identify species "' &
         // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
-        // '" because compiler option -DPHOTONS has not been set.'
+        // '" because' // CHAR(10) &
+        // ' compiler option -DPHOTONS has not been set.'
 #else
 #ifndef TRIDENT_PHOTONS
     extended_error_string = 'Cannot identify species "' &
         // TRIM(species_list(species_id)%name) // '" as "' // TRIM(value) &
-        // '" because compiler option -DTRIDENT_PHOTONS has not been set.'
+        // '" because' // CHAR(10) &
+        // ' compiler option -DTRIDENT_PHOTONS has not been set.'
 #endif
 #endif
 
