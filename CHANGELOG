@@ -1,3 +1,24 @@
+v4.7.6 to v4.8.0 2016-04-17
+
+ * Corrections for various issues in EPOCH's collisions
+
+ * Updated SDF submodules
+
+ * Added Makefile rule for making SDF utilities
+
+ * Fixed operator precedence and associativity (issue #1295)
+
+ * Fixed ETA timestring to be less than 80 columns
+
+ * Warn about the use of -DPREFETCH (issue #1318)
+
+ * Enforce nproc{x,y,z} if supplied (issues #1321 and #1322)
+
+ * Added c_const_{xb,yb,zb} to the deck parser
+
+ * Stagger grid when evaluating field components (issue #1337)
+
+
 v4.7.0 to v4.7.6 2016-02-12
 
  * Fixed typo in check_qed_variable() routine
