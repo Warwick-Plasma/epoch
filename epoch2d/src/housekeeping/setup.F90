@@ -172,15 +172,11 @@ CONTAINS
     ! Setup global grid
     DO ix = -2, nx_global + 3
       x_global(ix) = x_grid_min + (ix - 1) * dx
-    ENDDO
-    DO ix = 1, nx_global + 1
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
     DO iy = -2, ny_global + 3
       y_global(iy) = y_grid_min + (iy - 1) * dy
-    ENDDO
-    DO iy = 1, ny_global + 1
       yb_global(iy) = yb_min + (iy - 1) * dy
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
@@ -205,12 +201,8 @@ CONTAINS
     y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
 
     ! Setup local grid
-    DO ix = -2, nx + 3
-      x(ix) = x_global(nx_global_min+ix-1)
-    ENDDO
-    DO iy = -2, ny + 3
-      y(iy) = y_global(ny_global_min+iy-1)
-    ENDDO
+    x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
+    y(-2:ny+3) = y_global(ny_global_min-3:ny_global_max+3)
 
   END SUBROUTINE setup_grid
 
