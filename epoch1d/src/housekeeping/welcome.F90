@@ -210,6 +210,7 @@ CONTAINS
 #ifdef PREFETCH
     defines = IOR(defines, c_def_prefetch)
     WRITE(*,*) 'Particle prefetching -DPREFETCH'
+    WRITE(*,*) 'WARNING: sometimes causes errors'
 #endif
 #ifdef MPI_DEBUG
     defines = IOR(defines, c_def_mpi_debug)

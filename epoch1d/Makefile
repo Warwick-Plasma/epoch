@@ -196,6 +196,7 @@ DEFINES := $(DEFINE)
 
 # Use Intel-specific 'mm_prefetch' calls to load next particle in the list
 # into cache ahead of time. Gives ~10% speed-up with Intel 12 compilers.
+# WARNING: Under some circumstances this causes SEGFAULTS or incorrect results
 #DEFINES += $(D)PREFETCH
 
 # Turn on debugging.
