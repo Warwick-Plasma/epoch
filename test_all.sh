@@ -65,14 +65,14 @@ if [ $build_epoch -ne 0 ]; then
    dir=epoch2d
    cd $dir
    echo Building ${dir}...
-   make clean
+   make rm
    make $makeflags || failed="$failed $dir"
    cd -
 
    dir=epoch3d
    cd $dir
    echo Building ${dir}...
-   make clean
+   make rm
    make $makeflags || failed="$failed $dir"
    cd -
 fi
