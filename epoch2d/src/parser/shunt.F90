@@ -764,4 +764,14 @@ CONTAINS
 
   END SUBROUTINE stack_sanity_check
 
+
+
+  SUBROUTINE set_tokenizer_stagger(stagger)
+
+    INTEGER, INTENT(IN) :: stagger
+
+    tokenize_stagger = stagger
+
+  END SUBROUTINE set_tokenizer_stagger
+
 END MODULE shunt

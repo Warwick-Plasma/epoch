@@ -121,6 +121,8 @@ CONTAINS
     stagger(c_dir_y,c_stagger_by) = .FALSE.
     stagger(c_dir_z,c_stagger_bz) = .FALSE.
 
+    CALL set_tokenizer_stagger(c_stagger_centre)
+
     ALLOCATE(x(1))
     x = 0.0_num
 

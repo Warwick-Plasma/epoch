@@ -32,7 +32,7 @@ MODULE tokenizer_blocks
   INTEGER :: n_new_constant = 0
   TYPE(string_type), DIMENSION(c_max_new_const) :: new_constant_name
   INTEGER, DIMENSION(c_max_new_const) :: new_constant_code
-  INTEGER :: last_block_type
+  INTEGER :: last_block_type, tokenize_stagger
 
 CONTAINS
 
@@ -198,6 +198,11 @@ CONTAINS
     IF (str_cmp(name, 'dir_yz_angle')) as_constant = c_const_dir_yz_angle
     IF (str_cmp(name, 'dir_zx_angle')) as_constant = c_const_dir_zx_angle
 
+    IF (as_constant == c_const_x .AND. stagger(c_dir_x,tokenize_stagger)) &
+        as_constant = c_const_xb
+    IF (as_constant == c_const_y .AND. stagger(c_dir_y,tokenize_stagger)) &
+        as_constant = c_const_yb
+
     ! User submitted constant using 'Register'
     DO i = 1, n_new_constant
       IF (str_cmp(TRIM(name), TRIM(new_constant_name(i)%value))) &
@@ -233,6 +238,9 @@ CONTAINS
     IF (str_cmp(name, 'r_xyz')) as_constant = c_const_r_xyz
     IF (str_cmp(name, 'nprocz')) as_constant = c_const_nprocz
     IF (str_cmp(name, 'dir_z')) as_constant = c_const_dir_z
+
+    IF (as_constant == c_const_z .AND. stagger(c_dir_z,tokenize_stagger)) &
+        as_constant = c_const_zb
 
     IF (warn .AND. as_constant /= c_prc_not_this_type) THEN
       warn = .FALSE.
