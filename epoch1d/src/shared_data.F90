@@ -289,11 +289,11 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_assoc_ra = 3
 
   INTEGER, DIMENSION(c_num_ops), PARAMETER :: &
-      opcode_precedence = (/1, 1, 2, 2, 3, 4, 1, 1, 1, 2, 2, 5, 5/)
+      opcode_precedence = (/2, 2, 3, 3, 4, 4, 1, 1, 1, 0, 0, 4, 4/)
   INTEGER, DIMENSION(c_num_ops), PARAMETER :: &
       opcode_assoc = (/c_assoc_a, c_assoc_la, c_assoc_a, c_assoc_la, &
-          c_assoc_la, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, c_assoc_a, &
-          c_assoc_a, c_assoc_ra, c_assoc_ra/)
+          c_assoc_ra, c_assoc_ra, c_assoc_la, c_assoc_la, c_assoc_la, &
+          c_assoc_la, c_assoc_la, c_assoc_ra, c_assoc_ra/)
 
   INTEGER, PARAMETER :: c_paren_left_bracket = 1
   INTEGER, PARAMETER :: c_paren_right_bracket = 2
@@ -317,6 +317,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_atto = 16
 
   ! Constants refering to grid properties
+  INTEGER, PARAMETER :: c_const_xb = 22
+  INTEGER, PARAMETER :: c_const_yb = 23
+  INTEGER, PARAMETER :: c_const_zb = 24
   INTEGER, PARAMETER :: c_const_x = 25
   INTEGER, PARAMETER :: c_const_y = 26
   INTEGER, PARAMETER :: c_const_z = 27
@@ -851,7 +854,7 @@ MODULE shared_data
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
   TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data
 
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: x
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: x, xb
 
   INTEGER, PARAMETER :: data_dir_max_length = 64
   CHARACTER(LEN=data_dir_max_length) :: data_dir, filesystem

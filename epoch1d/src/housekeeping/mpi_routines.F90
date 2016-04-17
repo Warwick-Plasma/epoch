@@ -64,6 +64,9 @@ CONTAINS
     ENDIF
 
     nproc_orig = nproc
+
+    IF (nprocx > 0) nproc = nprocx
+
     DO WHILE (nproc > 1)
       nxsplit = nx_global / nproc
       ! Actual domain must be bigger than the number of ghostcells
@@ -212,10 +215,12 @@ CONTAINS
     subtype_field = 0
 
     DEALLOCATE(x)
+    DEALLOCATE(xb)
     ALLOCATE(x(1-ng:nx+ng))
+    ALLOCATE(xb(1-ng:nx+ng))
     ALLOCATE(x_global(1-ng:nx_global+ng))
-    ALLOCATE(xb_global(nx_global+1))
-    ALLOCATE(xb_offset_global(nx_global+1))
+    ALLOCATE(xb_global(1-ng:nx_global+ng))
+    ALLOCATE(xb_offset_global(1-ng:nx_global+ng))
     ALLOCATE(ex(1-ng:nx+ng))
     ALLOCATE(ey(1-ng:nx+ng))
     ALLOCATE(ez(1-ng:nx+ng))

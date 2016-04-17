@@ -49,6 +49,7 @@ CONTAINS
     INTEGER :: test_coords(ndims)
     INTEGER :: ix, iy, iz
     INTEGER :: nxsplit, nysplit, nzsplit
+    INTEGER :: nproc1, nproc2, nproc3, n2_global, n3_global, n
     INTEGER :: area, minarea, nprocyz
     INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
@@ -65,6 +66,17 @@ CONTAINS
             ' cells in each direction.'
       ENDIF
       CALL abort_code(c_err_bad_setup)
+    ENDIF
+
+    IF (nprocx == 0) THEN
+      area = nprocy * nprocz
+      IF (area > 0) nprocx = nproc / area
+    ELSE IF (nprocy == 0) THEN
+      area = nprocx * nprocz
+      IF (area > 0) nprocy = nproc / area
+    ELSE
+      area = nprocx * nprocy
+      IF (area > 0) nprocz = nproc / area
     ENDIF
 
     reset = .FALSE.
@@ -106,7 +118,7 @@ CONTAINS
       nprocz = 0
     ENDIF
 
-    IF (nprocx * nprocy * nprocz == 0) THEN
+    IF (nprocx == 0 .AND. nprocy == 0 .AND. nprocz == 0) THEN
       DO WHILE (nproc > 1)
         ! Find the processor split which minimizes surface area of
         ! the resulting domain
@@ -148,6 +160,75 @@ CONTAINS
 
         nproc = nproc - 1
       ENDDO
+    ELSE IF ((nprocx == 0 .AND. nprocy == 0) &
+        .OR. (nprocx == 0 .AND. nprocz == 0) &
+        .OR. (nprocy == 0 .AND. nprocz == 0)) THEN
+      IF (nprocx /= 0) THEN
+        n = 1
+        nproc1 = nprocx
+        n2_global = ny_global
+        n3_global = nz_global
+      ELSE IF (nprocy /= 0) THEN
+        n = 2
+        nproc1 = nprocy
+        n2_global = nx_global
+        n3_global = nz_global
+      ELSE
+        n = 3
+        nproc1 = nprocz
+        n2_global = nx_global
+        n3_global = ny_global
+      ENDIF
+
+      nproc = nproc_orig / nproc1
+      nproc2 = 1
+      nproc3 = 1
+
+      DO WHILE (nproc > 1)
+        ! Find the processor split which minimizes surface area of
+        ! the resulting domain
+
+        minarea = n2_global + n3_global
+
+        DO ix = 1, nproc
+          iy = nproc / ix
+          IF (ix * iy /= nproc) CYCLE
+
+          nxsplit = n2_global / ix
+          nysplit = n3_global / iy
+          ! Actual domain must be bigger than the number of ghostcells
+          IF (nxsplit < ng .OR. nysplit < ng) CYCLE
+
+          area = nxsplit + nysplit
+          IF (area < minarea) THEN
+            nproc2 = ix
+            nproc3 = iy
+            minarea = area
+          ENDIF
+        ENDDO
+
+        IF (nproc2 > 0) EXIT
+
+        ! If we get here then no suitable split could be found. Decrease the
+        ! number of processors and try again.
+
+        nproc = nproc - 1
+      ENDDO
+
+      nproc = nproc1 * nproc2 * nproc3
+      IF (n == 1) THEN
+        nprocx = nproc1
+        nprocy = nproc2
+        nprocz = nproc3
+      ELSE IF (n == 2) THEN
+        nprocy = nproc1
+        nprocx = nproc2
+        nprocz = nproc3
+      ELSE
+        nprocz = nproc1
+        nprocx = nproc2
+        nprocy = nproc3
+      ENDIF
     ENDIF
 
     IF (nproc_orig /= nproc) THEN
@@ -395,16 +476,18 @@ CONTAINS
     subtype_field = 0
 
     DEALLOCATE(x, y, z)
+    DEALLOCATE(xb, yb, zb)
     ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng), z(1-ng:nz+ng))
+    ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng), zb(1-ng:nz+ng))
     ALLOCATE(x_global(1-ng:nx_global+ng))
     ALLOCATE(y_global(1-ng:ny_global+ng))
     ALLOCATE(z_global(1-ng:nz_global+ng))
-    ALLOCATE(xb_global(nx_global+1))
-    ALLOCATE(yb_global(ny_global+1))
-    ALLOCATE(zb_global(nz_global+1))
-    ALLOCATE(xb_offset_global(nx_global+1))
-    ALLOCATE(yb_offset_global(ny_global+1))
-    ALLOCATE(zb_offset_global(nz_global+1))
+    ALLOCATE(xb_global(1-ng:nx_global+ng))
+    ALLOCATE(yb_global(1-ng:ny_global+ng))
+    ALLOCATE(zb_global(1-ng:nz_global+ng))
+    ALLOCATE(xb_offset_global(1-ng:nx_global+ng))
+    ALLOCATE(yb_offset_global(1-ng:ny_global+ng))
+    ALLOCATE(zb_offset_global(1-ng:nz_global+ng))
     ALLOCATE(ex(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
     ALLOCATE(ey(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
     ALLOCATE(ez(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))

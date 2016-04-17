@@ -74,8 +74,11 @@ CONTAINS
         PRINT*,'*** WARNING ***'
         PRINT*,'Requested domain split exceeds CPUs. Ignoring'
       ENDIF
-    ELSE IF (nprocx * nprocy > 0) THEN
+    ELSE IF (nprocx > 0 .OR. nprocy > 0) THEN
       ! Sanity check
+      IF (nprocx == 0) nprocx = nproc / nprocy
+      IF (nprocy == 0) nprocy = nproc / nprocx
+      nproc = nprocx * nprocy
       nxsplit = nx_global / nprocx
       nysplit = ny_global / nprocy
       IF (nxsplit < ng .OR. nysplit < ng) THEN
@@ -329,13 +332,15 @@ CONTAINS
     subtype_field = 0
 
     DEALLOCATE(x, y)
+    DEALLOCATE(xb, yb)
     ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng))
+    ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng))
     ALLOCATE(x_global(1-ng:nx_global+ng))
     ALLOCATE(y_global(1-ng:ny_global+ng))
-    ALLOCATE(xb_global(nx_global+1))
-    ALLOCATE(yb_global(ny_global+1))
-    ALLOCATE(xb_offset_global(nx_global+1))
-    ALLOCATE(yb_offset_global(ny_global+1))
+    ALLOCATE(xb_global(1-ng:nx_global+ng))
+    ALLOCATE(yb_global(1-ng:ny_global+ng))
+    ALLOCATE(xb_offset_global(1-ng:nx_global+ng))
+    ALLOCATE(yb_offset_global(1-ng:ny_global+ng))
     ALLOCATE(ex(1-ng:nx+ng, 1-ng:ny+ng))
     ALLOCATE(ey(1-ng:nx+ng, 1-ng:ny+ng))
     ALLOCATE(ez(1-ng:nx+ng, 1-ng:ny+ng))

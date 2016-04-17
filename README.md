@@ -19,8 +19,13 @@ project page and then follow the "Downloads" link. You can also get there by
 following
 [this link](https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/wikis/Downloads).
 
-For more advanced users, the code is also hosted on a git repository. Further
-details on this are provided below.
+All EPOCH development is carried out using the [git](https://git-scm.com)
+revision control system. The master repository is hosted on a web-based
+collaborative development site
+[here](https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch).
+Further details on this are provided below.
+
+## Compiling the code
 
 The "Downloads" section of the GitLab site contains files in the form
 "epoch-4.4.5.tar.gz". These are tarred and gzipped packages of the code
@@ -85,9 +90,9 @@ change the behaviour of the code. These flags are described in the Makefile
 with the lines beginning "#DEFINES += " and they are commented out by default.
 Rather than uncommenting these lines, it is possible to set them on the
 command-line using the "DEFINE" variable. For example, to compile a
-single-precision version with Qmono viscosity you would type:
+single-precision version with global particle IDs you would type:
 ```
-  $> make DEFINE="-DQMONO -DSINGLE"
+  $> make DEFINE="-DPARTICLE_ID -DSINGLE"
 ```
 
 
