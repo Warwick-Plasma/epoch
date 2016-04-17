@@ -74,8 +74,11 @@ CONTAINS
         PRINT*,'*** WARNING ***'
         PRINT*,'Requested domain split exceeds CPUs. Ignoring'
       ENDIF
-    ELSE IF (nprocx * nprocy > 0) THEN
+    ELSE IF (nprocx > 0 .OR. nprocy > 0) THEN
       ! Sanity check
+      IF (nprocx == 0) nprocx = nproc / nprocy
+      IF (nprocy == 0) nprocy = nproc / nprocx
+      nproc = nprocx * nprocy
       nxsplit = nx_global / nprocx
       nysplit = ny_global / nprocy
       IF (nxsplit < ng .OR. nysplit < ng) THEN
