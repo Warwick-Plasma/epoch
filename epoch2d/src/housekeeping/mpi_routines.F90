@@ -332,7 +332,9 @@ CONTAINS
     subtype_field = 0
 
     DEALLOCATE(x, y)
+    DEALLOCATE(xb, yb)
     ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng))
+    ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng))
     ALLOCATE(x_global(1-ng:nx_global+ng))
     ALLOCATE(y_global(1-ng:ny_global+ng))
     ALLOCATE(xb_global(1-ng:nx_global+ng))

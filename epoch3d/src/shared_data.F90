@@ -895,7 +895,7 @@ MODULE shared_data
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
   TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data
 
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: x, y, z
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: x, xb, y, yb, z, zb
 
   INTEGER, PARAMETER :: data_dir_max_length = 64
   CHARACTER(LEN=data_dir_max_length) :: data_dir, filesystem

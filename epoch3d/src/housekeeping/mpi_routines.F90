@@ -476,7 +476,9 @@ CONTAINS
     subtype_field = 0
 
     DEALLOCATE(x, y, z)
+    DEALLOCATE(xb, yb, zb)
     ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng), z(1-ng:nz+ng))
+    ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng), zb(1-ng:nz+ng))
     ALLOCATE(x_global(1-ng:nx_global+ng))
     ALLOCATE(y_global(1-ng:ny_global+ng))
     ALLOCATE(z_global(1-ng:nz_global+ng))

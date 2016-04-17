@@ -124,6 +124,9 @@ CONTAINS
     ALLOCATE(x(1))
     x = 0.0_num
 
+    ALLOCATE(xb(1))
+    xb = 0.0_num
+
     CALL eval_stack_init
 
   END SUBROUTINE minimal_init
@@ -176,6 +179,8 @@ CONTAINS
 
     ! Setup local grid
     x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
+
+    xb(-2:nx+3) = xb_global(nx_global_min-3:nx_global_max+3)
 
   END SUBROUTINE setup_grid
 

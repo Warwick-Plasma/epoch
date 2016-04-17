@@ -134,6 +134,11 @@ CONTAINS
     y = 0.0_num
     z = 0.0_num
 
+    ALLOCATE(xb(1), yb(1), zb(1))
+    xb = 0.0_num
+    yb = 0.0_num
+    zb = 0.0_num
+
     CALL eval_stack_init
 
   END SUBROUTINE minimal_init
@@ -230,6 +235,10 @@ CONTAINS
     x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
     y(-2:ny+3) = y_global(ny_global_min-3:ny_global_max+3)
     z(-2:nz+3) = z_global(nz_global_min-3:nz_global_max+3)
+
+    xb(-2:nx+3) = xb_global(nx_global_min-3:nx_global_max+3)
+    yb(-2:ny+3) = yb_global(ny_global_min-3:ny_global_max+3)
+    zb(-2:nz+3) = zb_global(nz_global_min-3:nz_global_max+3)
 
   END SUBROUTINE setup_grid
 
