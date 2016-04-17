@@ -64,6 +64,9 @@ CONTAINS
     ENDIF
 
     nproc_orig = nproc
+
+    IF (nprocx > 0) nproc = nprocx
+
     DO WHILE (nproc > 1)
       nxsplit = nx_global / nproc
       ! Actual domain must be bigger than the number of ghostcells
