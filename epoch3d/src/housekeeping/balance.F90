@@ -238,6 +238,12 @@ CONTAINS
       y(-2:ny+3) = y_global(ny_global_min-3:ny_global_max+3)
       z(-2:nz+3) = z_global(nz_global_min-3:nz_global_max+3)
 
+      DEALLOCATE(xb, yb, zb)
+      ALLOCATE(xb(-2:nx+3), yb(-2:ny+3), zb(-2:nz+3))
+      xb(-2:nx+3) = xb_global(nx_global_min-3:nx_global_max+3)
+      yb(-2:ny+3) = yb_global(ny_global_min-3:ny_global_max+3)
+      zb(-2:nz+3) = zb_global(nz_global_min-3:nz_global_max+3)
+
       ! Recalculate x_grid_mins/maxs so that rebalancing works next time
       DO iproc = 0, nprocx - 1
         x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
