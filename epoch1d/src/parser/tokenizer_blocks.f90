@@ -145,6 +145,7 @@ CONTAINS
     IF (str_cmp(name, 'atto')) as_constant = c_const_atto
     IF (str_cmp(name, 'time')) as_constant = c_const_time
     IF (str_cmp(name, 'x'))  as_constant = c_const_x
+    IF (str_cmp(name, 'xb')) as_constant = c_const_xb
     IF (str_cmp(name, 'ix')) as_constant = c_const_ix
     IF (str_cmp(name, 'nx')) as_constant = c_const_nx
     IF (str_cmp(name, 'dx')) as_constant = c_const_dx
@@ -204,6 +205,8 @@ CONTAINS
 
     IF (str_cmp(name, 'y'))  as_constant = c_const_y
     IF (str_cmp(name, 'z'))  as_constant = c_const_z
+    IF (str_cmp(name, 'yb')) as_constant = c_const_yb
+    IF (str_cmp(name, 'zb')) as_constant = c_const_zb
     IF (str_cmp(name, 'iy')) as_constant = c_const_iy
     IF (str_cmp(name, 'iz')) as_constant = c_const_iz
     IF (str_cmp(name, 'ny')) as_constant = c_const_ny

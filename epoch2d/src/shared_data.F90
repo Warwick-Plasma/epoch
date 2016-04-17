@@ -317,6 +317,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_atto = 16
 
   ! Constants refering to grid properties
+  INTEGER, PARAMETER :: c_const_xb = 22
+  INTEGER, PARAMETER :: c_const_yb = 23
+  INTEGER, PARAMETER :: c_const_zb = 24
   INTEGER, PARAMETER :: c_const_x = 25
   INTEGER, PARAMETER :: c_const_y = 26
   INTEGER, PARAMETER :: c_const_z = 27

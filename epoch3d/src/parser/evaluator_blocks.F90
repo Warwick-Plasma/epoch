@@ -179,6 +179,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_xb) THEN
+      CALL push_on_eval(xb(ix))
+      err = err_simplify
+      RETURN
+    ENDIF
+
     IF (opcode == c_const_ix) THEN
       CALL push_on_eval(REAL(ix, num))
       err = err_simplify
@@ -191,6 +197,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_yb) THEN
+      CALL push_on_eval(yb(iy))
+      err = err_simplify
+      RETURN
+    ENDIF
+
     IF (opcode == c_const_iy) THEN
       CALL push_on_eval(REAL(iy, num))
       err = err_simplify
@@ -199,6 +211,12 @@ CONTAINS
 
     IF (opcode == c_const_z) THEN
       CALL push_on_eval(z(iz))
+      err = err_simplify
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_zb) THEN
+      CALL push_on_eval(zb(iy))
       err = err_simplify
       RETURN
     ENDIF
