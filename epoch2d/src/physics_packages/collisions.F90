@@ -986,7 +986,7 @@ CONTAINS
     ran2 = 2.0_num * pi * random()
 
     ! angle theta in the One Particle at Rest frame
-    IF (delta == 0.0_num) THEN
+    IF (ABS(delta) < c_tiny) THEN
       sin_theta = 0.0_num
       cos_theta = 1.0_num
     ELSE
@@ -1285,7 +1285,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: dens1, dens2
     REAL(num), INTENT(IN) :: q1, q2, m1
     REAL(num), DIMENSION(-2:nx+3,-2:ny+3) :: calc_coulomb_log
-    REAL(num) :: kDeSq, kDiSq, b0, dB, bmin, bmax
+    REAL(num) :: b0, dB, bmin, bmax
     REAL(num) :: local_ekbar1, local_temp2, gamm
     INTEGER :: i, j
 

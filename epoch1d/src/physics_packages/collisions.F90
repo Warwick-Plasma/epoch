@@ -972,7 +972,7 @@ CONTAINS
     ran2 = 2.0_num * pi * random()
 
     ! angle theta in the One Particle at Rest frame
-    IF (delta == 0.0_num) THEN
+    IF (ABS(delta) < c_tiny) THEN
       sin_theta = 0.0_num
       cos_theta = 1.0_num
     ELSE
