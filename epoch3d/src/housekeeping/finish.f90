@@ -51,8 +51,8 @@ CONTAINS
     INTEGER :: i, n, stat
 
     DEALLOCATE(x, xb, x_global, xb_global, xb_offset_global)
-    DEALLOCATE(y, xb, y_global, yb_global, yb_offset_global)
-    DEALLOCATE(z, xb, z_global, zb_global, zb_offset_global)
+    DEALLOCATE(y, yb, y_global, yb_global, yb_offset_global)
+    DEALLOCATE(z, zb, z_global, zb_global, zb_offset_global)
     DEALLOCATE(ex, ey, ez, bx, by, bz, jx, jy, jz)
 
     DEALLOCATE(npart_each_rank)
