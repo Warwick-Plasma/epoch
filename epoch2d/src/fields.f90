@@ -252,7 +252,7 @@ CONTAINS
 
     INTEGER :: maxwell_solver
 
-    maxwell_solver = 1 ! 0=Yee 1=Lehe 2=Cowan
+    maxwell_solver = 1 ! 0=Yee 1=Lehe 2=Cowan 3=Pukhov
 
     IF (maxwell_solver == 1) THEN      
 
@@ -273,6 +273,18 @@ CONTAINS
       deltax = 0
       alphax = 1 - (1.0_num / 4.0_num)*(delta/dy)**2
       alphay = 1 - (1.0_num / 4.0_num)*(delta/dx)**2
+
+    ENDIF
+
+    IF (maxwell_solver == 3) THEN
+
+      delta = dx
+
+      betaxy = (1.0_num / 8.0_num)*(delta/dy)**2
+      betayx = (1.0_num / 8.0_num)
+      deltax = 0
+      alphax = 1 - (1.0_num / 4.0_num)*(delta/dy)**2
+      alphay = 6_num / 8_num
 
     ENDIF
 
@@ -297,7 +309,7 @@ CONTAINS
                     - cpml_x * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
                     + cpml_y * (ex(ix  , iy+1) - ex(ix  , iy  ))
 
-            ELSE IF ((maxwell_solver == 1) .OR. (maxwell_solver == 2)) THEN
+            ELSE IF ((maxwell_solver == 1) .OR. (maxwell_solver == 2) .OR. (maxwell_solver == 3)) THEN
               bx(ix, iy) = bx(ix, iy) &
                   - cpml_y*(alphay*(ez(ix  , iy+1) - ez(ix  , iy  )) &
                          +betayx*(ez(ix+1, iy+1) - ez(ix+1, iy  )) &
@@ -406,7 +418,7 @@ CONTAINS
                   - hdtx * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
                   + hdty * (ex(ix  , iy+1) - ex(ix  , iy  ))
 
-            ELSE IF ((maxwell_solver == 1) .OR. (maxwell_solver == 2)) THEN
+            ELSE IF ((maxwell_solver == 1) .OR. (maxwell_solver == 2) .OR. (maxwell_solver == 3)) THEN
               bx(ix, iy) = bx(ix, iy) &
                   - hdty*(alphay*(ez(ix  , iy+1) - ez(ix  , iy  )) &
                          +betayx*(ez(ix+1, iy+1) - ez(ix+1, iy  )) &
