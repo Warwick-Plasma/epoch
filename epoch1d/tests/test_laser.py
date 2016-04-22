@@ -6,8 +6,9 @@ import numpy as np
 import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import os
 import unittest
-import os, subprocess
+from . import SimTest
 
 
 def showdatafields(sdffile):
@@ -34,18 +35,7 @@ def createplots():
     plotevolution('Electric Field/Ey')
 
 
-class test_laser(unittest.TestCase):
-
-    def setUpClass():
-        os.chdir('laser')
-        exitcode = subprocess.call('make', shell=True)
-        if exitcode != 0:
-            # that means the execution of 'make' returned an error
-            os.chdir('..')
-            raise unittest.FailTest('running EPOCH errored.')
-
-    def tearDownClass():
-        os.chdir('..')
+class test_laser(SimTest):
 
     def totaleyassert(self, dump, val):
         data = sdf.read(dump, dict=True)

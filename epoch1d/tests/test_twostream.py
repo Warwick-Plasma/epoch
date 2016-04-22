@@ -7,7 +7,8 @@ import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import unittest
-import os, subprocess
+import os
+from . import SimTest
 
 
 def showdatafields(sdffile):
@@ -56,18 +57,7 @@ def createplots():
     plot2devolution('dist_fn/x_px/Left')
 
 
-class test_twostream(unittest.TestCase):
-
-    def setUpClass():
-        os.chdir('twostream')
-        exitcode = subprocess.call('make', shell=True)
-        if exitcode != 0:
-            # that means the execution of 'make' returned an error
-            os.chdir('..')
-            raise unittest.FailTest('running EPOCH errored.')
-
-    def tearDownClass():
-        os.chdir('..')
+class test_twostream(SimTest):
 
     def test_createplots(self):
         createplots()

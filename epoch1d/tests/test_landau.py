@@ -7,7 +7,7 @@ import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import unittest
-import os, subprocess
+from . import SimTest
 
 
 def showdatafields(sdffile):
@@ -55,18 +55,7 @@ def createplots():
     plot2devolution('dist_fn/x_px/protons')
 
 
-class test_landau(unittest.TestCase):
-
-    def setUpClass():
-        os.chdir('landau')
-        exitcode = subprocess.call('make', shell=True)
-        if exitcode != 0:
-            # that means the execution of 'make' returned an error
-            os.chdir('..')
-            raise unittest.FailTest('running EPOCH errored.')
-
-    def tearDownClass():
-        os.chdir('..')
+class test_landau(SimTest):
 
     def test_creatplots(self):
         createplots()
