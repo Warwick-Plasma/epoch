@@ -508,14 +508,14 @@ CONTAINS
       IF (dump_field_grid) THEN
         IF (.NOT. use_offset_grid) THEN
           CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
-              xb_global(0:nx_global), yb_global(0:ny_global), convert)
+              xb_global(1:nx_global+1), yb_global(1:ny_global+1), convert)
         ELSE
           CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
-              xb_offset_global(0:nx_global), yb_offset_global(0:ny_global), &
-              convert)
+              xb_offset_global(1:nx_global+1), &
+              yb_offset_global(1:ny_global+1), convert)
           CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid_full', &
-              'Grid/Grid_Full', xb_global(0:nx_global), &
-              yb_global(0:ny_global), convert)
+              'Grid/Grid_Full', xb_global(1:nx_global+1), &
+              yb_global(1:ny_global+1), convert)
         ENDIF
       ENDIF
 
