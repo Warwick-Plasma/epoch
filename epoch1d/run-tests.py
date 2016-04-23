@@ -4,9 +4,13 @@
 
 import nose
 import subprocess
+import os
 
+def setcwd():
+    os.chdir(os.path.dirname(__file__))
 
 def compileepoch(exitonerror=True):
+    setcwd()
     exitcode = subprocess.call('make', shell=True)
     if exitcode != 0:
         print('compiling EPOCH errored (exitcode {})'.format(exitcode))
@@ -20,6 +24,7 @@ def run_tests(args):
     noseargv = ['']
     if args.test:
         noseargv += ['tests.test_' + args.test]
+    setcwd()
     nose.run(argv=noseargv)
 
 
