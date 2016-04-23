@@ -37,10 +37,10 @@ def createplots():
 
 class test_laser(SimTest):
 
-    def totaleyassert(self, dump, val):
+    def totaleyassert(self, dump, val, digits=4):
         data = sdf.read(dump, dict=True)
-        ey = data['Electric Field/Ey'].data
-        self.assertAlmostEqual(np.sum(ey), val)
+        ey = data['Electric Field/Ey'].data**2
+        self.assertAlmostEqual(np.sum(ey), val, digits)
 
     def test_createplots(self):
         createplots()
@@ -49,13 +49,13 @@ class test_laser(SimTest):
         self.totaleyassert('0000.sdf', 0.0)
 
     def test_Eey0001(self):
-        self.totaleyassert('0001.sdf', 206954574900.52179)
+        self.totaleyassert('0001.sdf', 1.3863746041123297e+23)
 
     def test_Eey0003 (self):
-        self.totaleyassert('0003.sdf', 121431247301.71188)
+        self.totaleyassert('0003.sdf', 1.4061852974870318e+23)
 
     def test_Eey0007(self):
-        self.totaleyassert('0007.sdf', -9490905.2679244578)
+        self.totaleyassert('0007.sdf', 2.0129257716385798e+17)
 
 if __name__=='__main__':
     unittest.main()
