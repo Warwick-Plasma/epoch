@@ -6,8 +6,13 @@ import nose
 import subprocess
 import os
 
-def setcwd():
-    os.chdir(os.path.dirname(__file__))
+_curfiledir = os.path.dirname(os.path.abspath(__file__))
+
+def setcwd(relative=None):
+    # reset current working dir to path of this file
+    os.chdir(_curfiledir)
+    if relative:
+        os.chdir(relative)
 
 def compileepoch():
     setcwd()
@@ -26,12 +31,39 @@ def run_tests(args):
     return testsok
 
 
+def clean():
+    '''
+    clean the tests directory and all its subdirectoryies
+    by calling 'make clean' in each of them
+    '''
+    import shutil
+    try:
+        setcwd()
+        shutil.rmtree('tests/__pycache__')
+    except (FileNotFoundError):
+        pass
+    setcwd()
+    files = [os.path.join('tests', f) for f in os.listdir('tests')]
+    dirs = [d for d in files if os.path.isdir(d)]
+    for d in dirs:
+        # call 'make clean' in every subdir
+        setcwd(d)
+        subprocess.call('make clean', shell=True)
+
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('test', nargs='?')
+    parser.add_argument('test', nargs='?', help='''
+    run only a single test specified by its name, i.e. 'laser'
+    ''')
+    parser.add_argument('--clean', '-c', action='store_true', help=clean.__doc__)
     args = parser.parse_args()
 
+    if args.clean:
+        clean()
+        exit()
     epochexitcode = compileepoch()
     if epochexitcode != 0:
         exit(epochexitcode)
