@@ -1,5 +1,5 @@
 begin:control
-  nx = 400
+  nx = 140
   ny = nx
   nz = nx
 
@@ -47,7 +47,7 @@ end:laser
 
 begin:output
   # number of timesteps between output dumps
-  dt_snapshot = 10 * femto
+  dt_snapshot = 7 * femto
 
   # Properties on grid
   grid = always

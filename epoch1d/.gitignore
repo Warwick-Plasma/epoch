@@ -7,7 +7,7 @@ USE_DATA_DIRECTORY
 *.sdf
 *.visit
 *.png
-epoch1d.dat
+epoch[1,2,3]d.dat
 deck.status
 __pycache__
 *.py[cod]

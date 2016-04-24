@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2016 Stephan Kuschel <Stephan.Kuschel@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import numpy as np
+import sdf
+import matplotlib; matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import os
+import unittest
+from . import SimTest
+
+
+def showdatafields(sdffile):
+    data = sdf.read(sdffile, dict=True)
+    print('Data fields present in "' + sdffile + '":')
+    print(data.keys())
+
+def plotdump(sdffile, key, ax):
+    data = sdf.read(sdffile, dict=True)
+    array = data[key].data[:,80,:]
+    ax.imshow(array.T, origin='lower')
+    ax.set_title('{:2.1f} fs'.format(data['Header']['time']*1e15))
+
+def plotevolution(key):
+    sdffiles = ['{:04d}.sdf'.format(i) for i in range(8)]
+    fig, axarr = plt.subplots(2,4, figsize=(16,9))
+    for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
+        plotdump(sdffile, key, ax)
+    fig.suptitle(key)
+    fig.savefig(key.replace('/','_') + '.png', dpi=160)
+
+def createplots():
+    #showdatafields('0000.sdf')
+    plotevolution('Electric Field/Ex')
+
+
+class test_laser(SimTest):
+
+    def totaleyassert(self, dump, val, digits=4):
+        data = sdf.read(dump, dict=True)
+        ey = data['Electric Field/Ex'].data**2
+        self.assertAlmostEqual(np.sum(ey), val, digits)
+
+    def test_createplots(self):
+        createplots()
+
+    def test_Eex0000(self):
+        self.totaleyassert('0000.sdf', 0.0)
+
+    def test_Eex0001(self):
+        self.totaleyassert('0001.sdf', 9.655775255668219e+24)
+
+    def test_Eex0003 (self):
+        self.totaleyassert('0003.sdf', 2.8181721274619696e+25)
+
+    def test_Eex0007(self):
+        self.totaleyassert('0007.sdf', 6.5331948154961507e+25)
+
+if __name__=='__main__':
+    unittest.main()
+
+
