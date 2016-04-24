@@ -83,6 +83,9 @@ def main():
     run only a single test specified by its name, i.e. 'laser'
     ''')
     parser.add_argument('--clean', '-c', action='store_true', help=clean.__doc__)
+    parser.add_argument('--build', '-b', action='store_true', help='''
+    build only. Do not run the code.
+    ''')
     args = parser.parse_args()
 
     if args.clean:
@@ -91,6 +94,8 @@ def main():
     epochexitcode = compileepoch()
     if epochexitcode != 0:
         exit(epochexitcode)
+    if args.build:
+        exit()
     testsok = run_tests(args)
     exit(int(not testsok))
 

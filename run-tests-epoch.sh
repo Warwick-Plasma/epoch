@@ -19,9 +19,12 @@
 
 set -e
 
+# All arguments given to run this script will be forwareded
+# to 'epoch{1,2,3}d/run-tests.py'.
+
 # Build SDF/C and install python sdf reader
 (cd SDF/C; make)
 SDF/utilities/build
 
 # run the actual tests
-epoch1d/run-tests.py
+epoch1d/run-tests.py $@
