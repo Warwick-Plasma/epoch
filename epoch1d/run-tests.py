@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python
 
 # Stephan Kuschel, 2015-2016
 
@@ -36,12 +36,9 @@ def clean():
     clean the tests directory and all its subdirectoryies
     by calling 'make clean' in each of them
     '''
-    import shutil
-    try:
-        setcwd()
-        shutil.rmtree('tests/__pycache__')
-    except (FileNotFoundError):
-        pass
+    setcwd()
+    subprocess.call('rm -rf tests/__pycache__', shell=True)  # python3
+    subprocess.call('rm -rf tests/*.pyc', shell=True)  # python2
     setcwd()
     files = [os.path.join('tests', f) for f in os.listdir('tests')]
     dirs = [d for d in files if os.path.isdir(d)]

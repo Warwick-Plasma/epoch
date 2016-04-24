@@ -29,5 +29,6 @@ class SimTest(unittest.TestCase):
         if self.epochexitcode:
             self.fail('running EPOCH errored (exitcode {:})'.format(self.epochexitcode))
 
-    def tearDownClass():
+    @classmethod
+    def tearDownClass(cls):
         os.chdir('..')
