@@ -19,7 +19,7 @@
 
 set -e
 
-# All arguments given to run this script will be forwareded
+# All arguments given to this script will be forwarded
 # to 'epoch{1,2,3}d/run-tests.py'.
 
 # Build SDF/C and install python sdf reader
