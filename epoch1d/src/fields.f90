@@ -198,15 +198,9 @@ CONTAINS
 
     REAL(num) :: alphax, deltax
 
-    INTEGER :: maxwell_solver
-
-    maxwell_solver = 0 ! 0=Yee 1=Lehe
-
     IF (maxwell_solver == 1) THEN    
-
-    deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
-    alphax = (1 - 3*deltax)
-
+      deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
+      alphax = (1 - 3*deltax)
     ENDIF
 
     IF (cpml_boundaries) THEN

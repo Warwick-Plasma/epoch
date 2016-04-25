@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 28 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 29 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -65,7 +65,8 @@ MODULE deck_control_block
           'print_constants          ', &
           'allow_missing_restart    ', &
           'print_eta_string         ', &
-          'n_zeros                  ' /)
+          'n_zeros                  ', &
+          'maxwell_solver           '/)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -99,7 +100,8 @@ MODULE deck_control_block
           'print_constants          ', &
           'allow_missing_restart    ', &
           'print_eta_string         ', &
-          'n_zeros                  ' /)
+          'n_zeros                  ', &
+          'maxwell_solver           '/)
 
 CONTAINS
 
@@ -318,6 +320,8 @@ CONTAINS
       print_eta_string = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+28)
       n_zeros_control = as_integer_print(value, element, errcode)
+    CASE(4*c_ndims+29)
+      maxwell_solver = as_integer_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

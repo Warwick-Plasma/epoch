@@ -250,10 +250,6 @@ CONTAINS
 
     REAL(num) :: betaxy, betayx, deltax, alphax, alphay, delta, deltay
 
-    INTEGER :: maxwell_solver
-
-    maxwell_solver = 1 ! 0=Yee 1=Lehe 2=Cowan 3=Pukhov
-
     IF (maxwell_solver == 1) THEN      
 
       betaxy = (1.0_num / 8.0_num) * (dx/dy)**2
