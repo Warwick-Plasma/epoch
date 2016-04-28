@@ -221,6 +221,9 @@ CONTAINS
     IF (as_constant == c_const_z .AND. stagger(c_dir_z,tokenize_stagger)) &
         as_constant = c_const_zb
 
+    IF (str_cmp(name, "yee")) as_constant = c_const_maxwell_solver_yee
+    IF (str_cmp(name, "lehe")) as_constant = c_const_maxwell_solver_lehe
+
     ! User submitted constant using 'Register'
     DO i = 1, n_new_constant
       IF (str_cmp(TRIM(name), TRIM(new_constant_name(i)%value))) &
