@@ -50,10 +50,13 @@ def createplots():
 
 class test_laser(SimTest):
 
-    def totaleyassert(self, dump, val, digits=4):
+    def totaleyassert(self, dump, val):
         data = sdf.read(dump, dict=True)
         ey = data['Electric Field/Ey'].data**2
-        self.assertAlmostEqual(np.sum(ey), val, digits)
+        eysum = np.sum(ey)
+        test = np.isclose(eysum, val)
+        msg = '{:} != {:} within the given tolerances.'.format(eysum, val)
+        self.assertTrue(test, msg=msg)
 
     def test_createplots(self):
         createplots()
