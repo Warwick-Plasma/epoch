@@ -20,6 +20,7 @@ import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import unittest
+import platform
 from . import SimTest
 
 
@@ -59,6 +60,9 @@ def plot2devolution(key):
     fig.savefig(key.replace('/','_') + '.png', dpi=160)
 
 def createplots():
+    if platform.system() == 'Darwin':
+        print('macosx backend')
+        plt.switch_backend('macosx')
     #showdatafields('0000.sdf')
     plotevolution('Electric Field/Ex')
     plotevolution('Derived/Number_Density/electrons')
