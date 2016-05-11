@@ -20,8 +20,27 @@
 set -e
 
 # chdir to epoch top level path
-curdir=$(dirname "$(readlink -f "$0")")
-cd $curdir/..
+
+# The following complicated section simulates the use of "readlink -f" to find
+# the source directory on platforms which don't support the "-f" flag (eg. OS X)
+# It is equivalent to: cd $(dirname "$(readlink -f "$0")")/..
+target="$0"
+cd $(dirname "$target")
+target=$(basename "$target")
+
+# Iterate down a (possible) chain of symlinks
+n=0
+while [ -L "$target" ]; do
+  n=$((n+1))
+  if [ $n -gt 1000 ]; then
+    echo "ERROR finding source directory."
+    exit 1
+  fi
+  target=$(readlink "$target")
+  cd $(dirname "$target")
+  target=$(basename "$target")
+done
+cd ..
 
 # Build SDF/C and install python sdf reader
 (cd SDF/C; make)
