@@ -19,7 +19,7 @@
 # BE AWARE THAT THIS WILL ONLY BUILD THE CODE. It will not run any tests!
 # It is highly recommended to link it as the git pre-commit hook via:
 
-# ln -s ../../pre-commit .git/hooks/pre-commit
+# ln -s ../../scripts/pre-commit .git/hooks/pre-commit
 
 # once installed, git commit will run the script and abort the comit process,
 # if the execution errors. Use 'git commit --no-verify' to bypass pre-commit
@@ -42,7 +42,7 @@ if git diff-index --quiet HEAD --; then
     exitcode=0
 else
     git stash -q --keep-index
-    ./run-tests-epoch.sh --build
+    scripts/run-tests-epoch-all.sh --build
     exitcode=$?
     git reset --hard -q && git stash apply --index -q && git stash drop -q
 fi

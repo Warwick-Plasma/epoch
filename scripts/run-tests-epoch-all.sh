@@ -19,14 +19,18 @@
 
 set -e
 
-# All arguments given to this script will be forwarded
-# to 'epoch{1,2,3}d/run-tests.py'.
+# chdir to epoch top level path
+curdir=$(dirname "$(readlink -f "$0")")
+cd $curdir/..
 
 # Build SDF/C and install python sdf reader
 (cd SDF/C; make)
 SDF/utilities/build
 
+# show system info
+scripts/system_info.sh
+
 # run the actual tests
-epoch1d/run-tests.py $@
-epoch2d/run-tests.py $@
-epoch3d/run-tests.py $@
+scripts/run-tests.py 1d $@
+scripts/run-tests.py 2d $@
+scripts/run-tests.py 3d $@

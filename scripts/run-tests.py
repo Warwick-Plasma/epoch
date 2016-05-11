@@ -19,14 +19,17 @@ import nose
 import subprocess
 import os
 
-_curfiledir = os.path.dirname(os.path.abspath(__file__))
+_epochdir = os.path.dirname(os.path.abspath(__file__))
+_epochdir = os.path.join(_epochdir, '..')
+_subdir = None
 
 def setcwd(relative=None):
     '''
     resets the current working directiory to the path
     of this file.
     '''
-    os.chdir(_curfiledir)
+    os.chdir(_epochdir)
+    os.chdir(_subdir)
     if relative:
         os.chdir(relative)
 
@@ -79,6 +82,10 @@ def main():
     It does NOT: install the python SDF reader or any other dependencies,
     which might be needed!
     ''')
+    parser.add_argument('codeversion', help='''
+    specify the  code version to run the tests on.
+    ''',
+    choices=['epoch1d', '1d', 'epoch2d', '2d', 'epoch3d', '3d'])
     parser.add_argument('test', nargs='?', help='''
     run only a single test specified by its name, i.e. 'laser'
     ''')
@@ -87,6 +94,14 @@ def main():
     build only. Do not run the code.
     ''')
     args = parser.parse_args()
+    subdirdict = {
+        '1d': 'epoch1d',
+        '2d': 'epoch2d',
+        '3d': 'epoch3d'}
+    global _subdir
+    _subdir = args.codeversion
+    if args.codeversion in subdirdict:
+        _subdir = subdirdict[_subdir]
 
     if args.clean:
         clean()
