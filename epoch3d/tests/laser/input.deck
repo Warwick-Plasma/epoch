@@ -52,5 +52,5 @@ begin:output
   # Properties on grid
   grid = always
   ex = always
-  bx = always
+  #bx = always
 end:output

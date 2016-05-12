@@ -46,10 +46,10 @@ begin:output
 
   # Properties on grid
   grid = always
-  ex = always
+  #ex = always
   ey = always
-  ez = always
-  bx = always
-  by = always
-  bz = always
+  #ez = always
+  #bx = always
+  #by = always
+  #bz = always
 end:output

@@ -55,23 +55,23 @@ begin:output
   full_dump_every = 1
 
   # Properties at particle positions
-  particles = always
-  px = always
+  #particles = always
+  #px = always
 
   # Properties on grid
   grid = always
   ex = always
-  ey = always
-  ez = always
-  bx = always
-  by = always
-  bz = always
+  #ey = always
+  #ez = always
+  #bx = always
+  #by = always
+  #bz = always
   jx = always
-  ekbar = always
-  mass_density = never + species
+  #ekbar = always
+  #mass_density = never + species
   charge_density = always
   number_density = always + species
-  temperature = always + species
+  #temperature = always + species
 
   # extended io
   distribution_functions = always
