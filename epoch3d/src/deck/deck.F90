@@ -629,7 +629,7 @@ CONTAINS
           ! it in the buffer
           ! ACHAR(9) = tab
           IF (u1 /= '=' .AND. u1 /= ACHAR(9) .AND. u1 /= ':' &
-              .AND. f == 0) THEN
+              .AND. u1 /= ACHAR(13) .AND. f == 0) THEN
             IF (u1 /= ' ' .OR. u0 /= ' ') THEN
               deck_values(flip)%value(pos:pos) = u1
               pos = pos + 1
