@@ -37,8 +37,8 @@ def plotdump(sdffile, key, ax):
     ax.set_title('{:2.1f} fs'.format(data['Header']['time']*1e15))
 
 def plotevolution(key):
-    sdffiles = ['{:04d}.sdf'.format(i) for i in range(8)]
-    fig, axarr = plt.subplots(2,4, figsize=(16,9))
+    sdffiles = ['{:04d}.sdf'.format(i) for i in range(3)]
+    fig, axarr = plt.subplots(1,3, figsize=(10,4))
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
         plotdump(sdffile, key, ax)
     fig.suptitle(key)
@@ -69,13 +69,10 @@ class test_laser(SimTest):
         self.totaleyassert('0000.sdf', 0.0)
 
     def test_Eey0001(self):
-        self.totaleyassert('0001.sdf', 1.5640793088638487e+25)
+        self.totaleyassert('0001.sdf', 7.74328435325e+25)
 
-    def test_Eey0003 (self):
-        self.totaleyassert('0003.sdf', 4.6520663187955518e+25)
-
-    def test_Eey0007(self):
-        self.totaleyassert('0007.sdf', 1.0864806291569095e+26)
+    def test_Eey0002 (self):
+        self.totaleyassert('0002.sdf', 1.55195983123e+26)
 
 if __name__=='__main__':
     unittest.main()

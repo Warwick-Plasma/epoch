@@ -43,7 +43,7 @@ def plotdump2d(sdffile, key, ax):
 
 def plotevolution(key):
     print('plotting: ' + key)
-    sdffiles = ['{:04d}.sdf'.format(i) for i in range(0,200,14)]
+    sdffiles = ['{:04d}.sdf'.format(i) for i in range(15)]
     fig, axarr = plt.subplots(3,5, figsize=(20,11))
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
         plotdump(sdffile, key, ax)
@@ -52,7 +52,7 @@ def plotevolution(key):
 
 def plot2devolution(key):
     print('plotting: ' + key)
-    sdffiles = ['{:04d}.sdf'.format(i) for i in range(0,200,14)]
+    sdffiles = ['{:04d}.sdf'.format(i) for i in range(15)]
     fig, axarr = plt.subplots(3,5, figsize=(20,11))
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
         plotdump2d(sdffile, key, ax)
