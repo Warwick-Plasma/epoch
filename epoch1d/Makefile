@@ -101,7 +101,8 @@ ifeq ($(strip $(COMPILER)),MPIgfortran)
    MPIF90 = mpif90
    FFLAGS += -frecord-marker=4 
    MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
-   FFLAGS += -fno-range-check
+   FFLAGS += -fno-range-check -O3
+   #FFLAGS += -fno-range-check -g -O0 -C -finit-real=snan -ffpe-trap=invalid -fcheck=all -fbacktrace -fdump-core 
 endif
 
 
