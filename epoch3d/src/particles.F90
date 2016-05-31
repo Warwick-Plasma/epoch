@@ -556,8 +556,6 @@ CONTAINS
 
   END SUBROUTINE push_particles
 
-<<<<<<< HEAD
-
 
   ! Background distribution function used for delta-f calculations.
   ! Specialise to a drifting (tri)-Maxwellian to simplify and ensure
@@ -595,37 +593,6 @@ CONTAINS
 
   END FUNCTION f0
 
-
-=======
-  ! Background distribution function used for delta-f calculations.
-  ! Specialise to a drifting (tri)-Maxwellian
-  ! to simplify and ensure zero density/current divergence.
-  ! Can effectively switch off deltaf method by setting zero background
-  ! density.
-  REAL(num) function f0(ispecies, mass,px,py,pz)
-    REAL(num), INTENT(IN) :: mass,px,py,pz
-    INTEGER, INTENT(IN)   :: ispecies
-    REAL(num) :: Tx,Ty,Tz,driftx,drifty,driftz,density
-    REAL(num) :: f0_exponent,norm
-    IF (initial_conditions(ispecies)%density_back/=0) THEN
-       Tx = initial_conditions(ispecies)%temp_back(1)
-       Ty = initial_conditions(ispecies)%temp_back(2)
-       Tz = initial_conditions(ispecies)%temp_back(3)
-       driftx = initial_conditions(ispecies)%drift_back(1)
-       drifty = initial_conditions(ispecies)%drift_back(2)
-       driftz = initial_conditions(ispecies)%drift_back(3)
-       density= initial_conditions(ispecies)%density_back
-       f0_exponent =      (   (px-driftx)**2/(2*kb*Tx*mass)   & 
-            &              + (py-drifty)**2/(2*kb*Ty*mass)   &
-            &              + (pz-driftz)**2/(2*kb*Tz*mass) )
-       norm = density/sqrt( (2*pi*kb*mass)**3*Tx*Ty*Tz )
-       f0 = norm * exp(-f0_exponent)
-       !WRITE (*,*) 'L',Tx,Ty,Tz,driftx,drifty,driftz,density,f0_exponent,norm
-    ELSE
-       f0 = 0.0
-    ENDIF
-  END function f0
->>>>>>> master
 
 #ifdef PHOTONS
   SUBROUTINE push_photons(ispecies)
