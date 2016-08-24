@@ -141,19 +141,45 @@ CONTAINS
           WRITE(io,*) 'Please use the element name "omega" instead.'
         ENDDO
       ENDIF
-      working_laser%omega = as_real_print(value, element, errcode)
+
+      CALL initialise_stack(working_laser%omega_function)
+      CALL tokenize(value, working_laser%omega_function,errcode)
+      working_laser%omega = 0.0_num
+      working_laser%omega_func_type = c_of_omega
+      CALL laser_update_omega(working_laser)
+      IF (working_laser%omega_function%is_time_varying) THEN
+        working_laser%use_omega_function = .TRUE.
+      ELSE
+        CALL deallocate_stack(working_laser%omega_function)
+      ENDIF
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'frequency')) THEN
-      working_laser%omega = &
-          2.0_num * pi * as_real_print(value, element, errcode)
+      CALL initialise_stack(working_laser%omega_function)
+      CALL tokenize(value, working_laser%omega_function,errcode)
+      working_laser%omega = 0.0_num
+      working_laser%omega_func_type = c_of_freq
+      CALL laser_update_omega(working_laser)
+      IF (working_laser%omega_function%is_time_varying) THEN
+        working_laser%use_omega_function = .TRUE.
+      ELSE
+        CALL deallocate_stack(working_laser%omega_function)
+      ENDIF
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'lambda')) THEN
-      working_laser%omega = &
-          2.0_num * pi * c / as_real_print(value, element, errcode)
+      CALL initialise_stack(working_laser%omega_function)
+      CALL tokenize(value, working_laser%omega_function,errcode)
+      working_laser%omega = 0.0_num
+      working_laser%omega_func_type = c_of_lambda
+      CALL laser_update_omega(working_laser)
+      IF (working_laser%omega_function%is_time_varying) THEN
+        working_laser%use_omega_function = .TRUE.
+      ELSE
+        CALL deallocate_stack(working_laser%omega_function)
+      ENDIF
       RETURN
     ENDIF
 

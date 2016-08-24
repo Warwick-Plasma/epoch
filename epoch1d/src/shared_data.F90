@@ -69,6 +69,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_cpml_laser = 12
   INTEGER, PARAMETER :: c_bc_cpml_outflow = 13
 
+  ! Frequency function type codes
+  INTEGER, PARAMETER :: c_of_omega = 1
+  INTEGER, PARAMETER :: c_of_freq = 2
+  INTEGER, PARAMETER :: c_of_lambda = 3
+
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
   INTEGER, PARAMETER :: c_bd_x_max = 2
@@ -986,9 +991,12 @@ MODULE shared_data
     REAL(num) :: phase
 
     LOGICAL :: use_time_function, use_phase_function, use_profile_function
+    LOGICAL :: use_omega_function
     TYPE(primitive_stack) :: time_function, phase_function, profile_function
+    TYPE(primitive_stack) :: omega_function
 
     REAL(num) :: amp, omega, pol_angle, t_start, t_end
+    INTEGER :: omega_func_type
 
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block
