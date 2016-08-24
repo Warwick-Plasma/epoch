@@ -65,6 +65,9 @@ CONTAINS
         CALL deallocate_stack(laser%phase_function)
     IF (laser%use_time_function) &
         CALL deallocate_stack(laser%time_function)
+    IF (laser%use_omega_function) &
+       CALL deallocate_stack(laser%omega_function)
+
     DEALLOCATE(laser)
 
   END SUBROUTINE deallocate_laser
@@ -193,6 +196,21 @@ CONTAINS
 
 
 
+  SUBROUTINE laser_update_omega(laser)
+
+    TYPE(laser_block), POINTER :: laser
+    INTEGER :: err
+
+    err = 0
+    laser%omega = evaluate(laser%omega_function, err)
+    IF (laser%omega_func_type == c_of_freq) &
+        laser%omega = 2.0_num * pi * laser%omega
+    IF (laser%omega_func_type == c_of_lambda) &
+        laser%omega = 2.0_num * pi * c / laser%omega
+
+  END SUBROUTINE laser_update_omega
+
+
 
   ! Actually does the attaching of the laser to the correct list
   SUBROUTINE attach_laser_to_list(list, laser)
@@ -308,6 +326,7 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
+          IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
           DO i = 1,ny
             base = t_env * current%profile(i) &

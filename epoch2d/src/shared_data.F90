@@ -76,6 +76,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_y_max = 4
   INTEGER, PARAMETER :: c_bd_z_min = 5
   INTEGER, PARAMETER :: c_bd_z_max = 6
+  
+  ! Frequency function type codes
+  INTEGER, PARAMETER :: c_of_omega = 1
+  INTEGER, PARAMETER :: c_of_freq = 2
+  INTEGER, PARAMETER :: c_of_lambda = 3  
 
   ! Error codes
   INTEGER, PARAMETER :: c_err_none = 0
@@ -1016,9 +1021,12 @@ MODULE shared_data
     REAL(num), DIMENSION(:), POINTER :: phase
 
     LOGICAL :: use_time_function, use_phase_function, use_profile_function
+    LOGICAL :: use_omega_function	
     TYPE(primitive_stack) :: time_function, phase_function, profile_function
+    TYPE(primitive_stack) :: omega_function
 
     REAL(num) :: amp, omega, pol_angle, t_start, t_end
+    INTEGER :: omega_func_type
 
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block
