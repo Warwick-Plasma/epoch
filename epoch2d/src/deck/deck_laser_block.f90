@@ -55,7 +55,7 @@ CONTAINS
     working_laser%use_time_function = .FALSE.
     working_laser%use_phase_function = .TRUE.
     working_laser%use_profile_function = .TRUE.
-	working_laser%use_omega_function = .FALSE.
+    working_laser%use_omega_function = .FALSE.
 
   END SUBROUTINE laser_block_start
 
