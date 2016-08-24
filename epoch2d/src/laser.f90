@@ -34,6 +34,7 @@ CONTAINS
     laser%use_time_function = .FALSE.
     laser%use_phase_function = .FALSE.
     laser%use_profile_function = .FALSE.
+    laser%use_omega_function = .FALSE.
     laser%amp = -1.0_num
     laser%omega = -1.0_num
     laser%pol_angle = 0.0_num
