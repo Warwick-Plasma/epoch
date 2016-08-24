@@ -1021,7 +1021,7 @@ MODULE shared_data
     REAL(num), DIMENSION(:), POINTER :: phase
 
     LOGICAL :: use_time_function, use_phase_function, use_profile_function
-    LOGICAL :: use_omega_function	
+    LOGICAL :: use_omega_function
     TYPE(primitive_stack) :: time_function, phase_function, profile_function
     TYPE(primitive_stack) :: omega_function
 
