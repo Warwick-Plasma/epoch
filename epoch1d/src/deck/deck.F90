@@ -563,6 +563,8 @@ CONTAINS
           got_eor = .FALSE.
         END IF
 
+        IF (.NOT.ignore .AND. IACHAR(u1) > 127) CYCLE
+
 10      IF (.NOT. already_parsed) THEN
           ! Store character in a buffer so that we can write the input deck
           ! contents to a restart dump
