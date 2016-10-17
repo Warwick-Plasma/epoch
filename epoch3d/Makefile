@@ -420,7 +420,7 @@ deck_window_block.o: deck_window_block.f90 strings_advanced.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
   random_generator.o setup.o shared_data.o strings.o timer.o version_data.o \
   window.o $(SDFMOD) $(ENCODED_SOURCE)
-dist_fn.o: dist_fn.F90 mpi_subtype_control.o $(SDFMOD)
+dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
 epoch3d.o: epoch3d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
   finish.o helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
   particles.o photons.o setup.o split_particle.o welcome.o window.o

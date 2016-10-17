@@ -772,6 +772,9 @@ MODULE shared_data
     REAL(num), DIMENSION(2,c_df_maxdirs) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
 
+    ! Whether to output deltaf or totalf
+    LOGICAL :: output_deltaf
+
     ! Pointer to next distribution function
     TYPE(distribution_function_block), POINTER :: next
   END TYPE distribution_function_block
