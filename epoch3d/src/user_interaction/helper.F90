@@ -20,6 +20,7 @@ MODULE helper
   USE strings
   USE partlist
   USE calc_df
+  USE deltaf_loader
 
   IMPLICIT NONE
 
@@ -109,6 +110,8 @@ CONTAINS
         ENDIF
       ENDDO
     ENDIF
+
+    CALL deltaf_load
 
   END SUBROUTINE auto_load
 

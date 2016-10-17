@@ -1,5 +1,5 @@
-! Copyright (C) 2010-2014 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2016      Ben McMillan <B.F.McMillan@warwick.ac.uk>
+! Copyright (C) 2016      Keith Bennett <K.Bennett@warwick.ac.uk>
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -14,17 +14,11 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-MODULE ic_module
+MODULE deltaf_loader
 
   USE shared_data
-  USE helper
-  USE particles
 
   IMPLICIT NONE
-
-  PRIVATE
-
-  PUBLIC :: manual_load
 
 CONTAINS
 
@@ -62,7 +56,7 @@ CONTAINS
 
 
 
-  SUBROUTINE manual_load
+  SUBROUTINE deltaf_load
 
 #ifdef DELTAF_METHOD
     REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz
@@ -140,6 +134,6 @@ CONTAINS
     ENDDO
 #endif
 
-  END SUBROUTINE manual_load
+  END SUBROUTINE deltaf_load
 
-END MODULE ic_module
+END MODULE deltaf_loader
