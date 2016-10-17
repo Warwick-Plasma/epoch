@@ -304,7 +304,8 @@ CONTAINS
     REAL(num) :: betaxy, betayx, betazx, betaxz, deltax, alphax, alphay, alphaz
 
     IF (maxwell_solver == 1) THEN      
-
+      !lehe
+      !R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
       betaxy = (1.0_num / 8.0_num) * (dx/dy)**2
       betaxz = (1.0_num / 8.0_num) * (dx/dz)**2
       betayx = 1.0_num / 8.0_num

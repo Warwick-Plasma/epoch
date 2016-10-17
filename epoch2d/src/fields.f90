@@ -251,7 +251,8 @@ CONTAINS
     REAL(num) :: betaxy, betayx, deltax, alphax, alphay, delta, deltay
 
     IF (maxwell_solver == 1) THEN      
-
+      !lehe
+      !R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
       betaxy = (1.0_num / 8.0_num) * (dx/dy)**2
       betayx = 1.0_num / 8.0_num
       deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
@@ -262,7 +263,9 @@ CONTAINS
     ENDIF
 
     IF (maxwell_solver == 2) THEN
-
+      !cowan
+      !Cowan et al. J. Comput. Phys. 230, 61 (2011)
+      !Nuter et al. Eur. Phys. J. 68, 177 (2014)
       delta = min(dx, dy)
 
       betaxy = (1.0_num / 8.0_num)*(delta/dy)**2
@@ -275,7 +278,8 @@ CONTAINS
     ENDIF
 
     IF (maxwell_solver == 3) THEN
-
+      !pukhov
+      !Nuter et al. Eur. Phys. J. 68, 177 (2014)
       delta = dx
 
       betaxy = (1.0_num / 8.0_num)*(delta/dy)**2

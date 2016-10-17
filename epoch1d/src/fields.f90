@@ -199,6 +199,8 @@ CONTAINS
     REAL(num) :: alphax, deltax
 
     IF (maxwell_solver == 1) THEN    
+      !lehe
+      !R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
       deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
       alphax = (1 - 3*deltax)
     ENDIF
