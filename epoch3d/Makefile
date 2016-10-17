@@ -55,11 +55,10 @@ endif
 # gfortran
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
-  FFLAGS = -O3 -fno-range-check
+  FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
-             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter \
-             -fno-range-check
+             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
     #FFLAGS += -ffpe-trap=underflow,denormal
 
     GNUVER := $(shell gfortran -dumpversion | head -1 \
@@ -94,16 +93,6 @@ ifeq ($(strip $(COMPILER)),gfortran)
   endif
   INFO_FLAGS = -Wno-conversion -fno-range-check
 endif
-
-# mpif90 using gfortran
-# ========
-ifeq ($(strip $(COMPILER)),MPIgfortran)
-   MPIF90 = mpif90
-   FFLAGS += -frecord-marker=4
-   MODULEFLAG = -I/usr/include -I$(OBJDIR) -J$(OBJDIR)
-   FFLAGS += -fno-range-check
-endif
-
 
 # g95
 # ========
@@ -172,7 +161,6 @@ DEFINES := $(DEFINE)
 # Set every pseudoparticle in a species to represent the same number of
 # real particles.
 #DEFINES += $(D)PER_SPECIES_WEIGHT
-DEFINES += $(D)DELTAF_METHOD
 
 # Don't enable support for tracer particles (in order to make the particle
 # push slightly faster).
@@ -231,7 +219,7 @@ DEFINES += $(D)DELTAF_METHOD
 #DEFINES += $(D)PARSER_CHECKING
 
 # Compile the delta-f version of EPOCH
-DEFINES += $(D)DELTAF_METHOD
+#DEFINES += $(D)DELTAF_METHOD
 
 # Debugging option for delta-f
 #DEFINES += $(D)DELTAF_DEBUG

@@ -17,7 +17,7 @@
 MODULE dist_fn
 
   USE mpi_subtype_control
-  USE particles, only: f0
+  USE particles, ONLY: f0
   USE sdf
 
   IMPLICIT NONE
