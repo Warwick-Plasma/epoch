@@ -28,7 +28,6 @@ MODULE particles
 
 CONTAINS
 
-
   SUBROUTINE push_particles
 
     ! 2nd order accurate particle pusher using parabolic weighting
@@ -186,7 +185,6 @@ CONTAINS
       fcy = idtxz * part_weight
       fcz = idtxy * part_weight
 #endif
-
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_q   = species_list(ispecies)%charge
       part_mc  = c * species_list(ispecies)%mass
@@ -557,6 +555,7 @@ CONTAINS
   END SUBROUTINE push_particles
 
 
+
   ! Background distribution function used for delta-f calculations.
   ! Specialise to a drifting (tri)-Maxwellian to simplify and ensure
   ! zero density/current divergence.
@@ -592,6 +591,7 @@ CONTAINS
     ENDIF
 
   END FUNCTION f0
+
 
 
 #ifdef PHOTONS

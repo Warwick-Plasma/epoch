@@ -764,7 +764,7 @@ MODULE shared_data
 
     ! Whether to output deltaf or totalf
     LOGICAL :: output_deltaf
-    
+
     ! Pointer to next distribution function
     TYPE(distribution_function_block), POINTER :: next
   END TYPE distribution_function_block

@@ -60,7 +60,7 @@ CONTAINS
     ALLOCATE(block%use_species(n_species))
     block%use_species = .FALSE.
     block%output_deltaf = .FALSE.
-      
+
   END SUBROUTINE init_dist_fn
 
 
@@ -401,9 +401,10 @@ CONTAINS
 #endif
 #ifdef DELTAF_METHOD
       IF (output_deltaf) THEN
-         part_weight = current%weight - current%pvol * f0(species, part_mc / c, current%part_p)
+         part_weight = current%weight &
+             - current%pvol * f0(species, part_mc / c, current%part_p)
       END IF
-#endif      
+#endif
       gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
       px = current%part_p(1)
       py = current%part_p(2)
