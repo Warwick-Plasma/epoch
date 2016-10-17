@@ -503,6 +503,9 @@ MODULE shared_data
 #if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     REAL(num) :: weight
 #endif
+#ifdef DELTAF_METHOD
+    REAL(num) :: pvol
+#endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     REAL(num) :: charge
     REAL(num) :: mass
@@ -624,6 +627,11 @@ MODULE shared_data
 
     REAL(num) :: density_min
     REAL(num) :: density_max
+
+    ! Delta-f settings
+    REAL(num) :: temp_back(3)
+    REAL(num) :: drift_back(3)
+    REAL(num) :: density_back
   END TYPE initial_condition_block
 
   INTEGER :: deck_state
@@ -758,6 +766,9 @@ MODULE shared_data
     LOGICAL, DIMENSION(:), POINTER :: use_species
     REAL(num), DIMENSION(2,c_df_maxdirs) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
+
+    ! Whether to output deltaf or totalf
+    LOGICAL :: output_deltaf
 
     ! Pointer to next distribution function
     TYPE(distribution_function_block), POINTER :: next
