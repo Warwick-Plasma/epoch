@@ -248,7 +248,7 @@ CONTAINS
     REAL(num) :: cx1, cx2, cx3
     REAL(num) :: cy1, cy2, cy3
 
-    REAL(num) :: betaxy, betayx, deltax, alphax, alphay, delta
+    REAL(num) :: betaxy, betayx, deltax, alphax, alphay, delta, deltay
 
     INTEGER :: maxwell_solver
 
@@ -259,6 +259,7 @@ CONTAINS
       betaxy = (1.0_num / 8.0_num) * (dx/dy)**2
       betayx = 1.0_num / 8.0_num
       deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
+      deltay = 0
       alphax = (1 - 2*betaxy - 3*deltax)
       alphay = (1 - 2*betayx)
 
@@ -271,6 +272,7 @@ CONTAINS
       betaxy = (1.0_num / 8.0_num)*(delta/dy)**2
       betayx = (1.0_num / 8.0_num)*(delta/dx)**2
       deltax = 0
+      deltay = 0
       alphax = 1 - (1.0_num / 4.0_num)*(delta/dy)**2
       alphay = 1 - (1.0_num / 4.0_num)*(delta/dx)**2
 
@@ -283,6 +285,7 @@ CONTAINS
       betaxy = (1.0_num / 8.0_num)*(delta/dy)**2
       betayx = (1.0_num / 8.0_num)
       deltax = 0
+      deltay = 0
       alphax = 1 - (1.0_num / 4.0_num)*(delta/dy)**2
       alphay = 6_num / 8_num
 
