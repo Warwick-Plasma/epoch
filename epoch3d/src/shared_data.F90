@@ -375,8 +375,10 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_xy_angle = 88
   INTEGER, PARAMETER :: c_const_dir_yz_angle = 89
   INTEGER, PARAMETER :: c_const_dir_zx_angle = 90
-  INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 91 
-  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 92 
+  INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 91
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 92
+  !93 & 94 are used in the 1D & 2D version of the code for the Cowan and Pukhov
+  !solvers. Do not assign these codes differently.
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -960,7 +962,7 @@ MODULE shared_data
   LOGICAL :: use_field_ionisation, use_collisional_ionisation
   LOGICAL :: use_multiphoton, use_bsi
 
-  INTEGER :: maxwell_solver = 0 
+  INTEGER :: maxwell_solver = 0
 
   !----------------------------------------------------------------------------
   ! Moving window
