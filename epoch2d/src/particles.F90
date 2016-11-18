@@ -104,7 +104,7 @@ CONTAINS
     REAL(num) :: idty, idtx, idxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, dtfac, gamma, third, igamma
+    REAL(num) :: root, dtfac, gamma_rel, gamma_rel_m1, part_u2, third, igamma
     REAL(num) :: delta_x, delta_y, part_vz
     REAL(num) :: hy_iy, xfac1, yfac1, yfac2
     INTEGER :: ispecies, ix, iy, dcellx, dcelly, cx, cy
@@ -328,8 +328,9 @@ CONTAINS
         part_uz = uzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        igamma = 1.0_num / gamma
+        part_u2 = part_ux**2 + part_uy**2 + part_uz**2
+        gamma_rel = SQRT(part_u2 + 1.0_num)
+        igamma = 1.0_num / gamma_rel
         root = dtco2 * igamma
 
         delta_x = part_ux * root
@@ -449,12 +450,13 @@ CONTAINS
           ! output file.
 
           current_probe => species_list(ispecies)%attached_probes
+          gamma_rel_m1 = part_u2/(gamma_rel + 1.0_num)
 
           ! Cycle through probes
           DO WHILE(ASSOCIATED(current_probe))
             ! Note that this is the energy of a single REAL particle in the
             ! pseudoparticle, NOT the energy of the pseudoparticle
-            probe_energy = (gamma - 1.0_num) * part_mc2
+            probe_energy = gamma_rel_m1 * part_mc2
 
             ! Unidirectional probe
             IF (probe_energy > current_probe%ek_min) THEN

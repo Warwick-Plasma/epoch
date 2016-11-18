@@ -889,7 +889,7 @@ CONTAINS
     REAL(num) :: m1, m2, q1, q2, w1, w2 ! Masses and charges
     REAL(num) :: e1, e2 ! Pre-collision energies
     REAL(num) :: e3, e4, e5, e6
-    REAL(num) :: gc, gcr
+    REAL(num) :: gamma_rel_inv, gamma_rel, gamma_rel_m1, gamma_rel_r
     REAL(num) :: tvar ! Dummy variable for temporarily storing values
     REAL(num) :: vc_sq, vc_mag, p1_vc, p2_vc, p3_mag
     REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
@@ -932,21 +932,24 @@ CONTAINS
     vc = (p1 + p2) * c**2 / (e1 + e2)
     vc_sq = DOT_PRODUCT(vc, vc)
     vc_mag = SQRT(vc_sq)
-    gc = 1.0_num / SQRT(1.0_num - vc_sq / c**2)
+
+    gamma_rel_inv = SQRT(1.0_num - vc_sq / c**2)
+    gamma_rel = 1.0_num / gamma_rel_inv
+    gamma_rel_m1 = vc_sq / c**2 / (gamma_rel_inv + gamma_rel_inv*gamma_rel_inv)
 
     ! Lorentz momentum transform to get into COM frame
     p1_vc = DOT_PRODUCT(p1, vc)
     p2_vc = DOT_PRODUCT(p2, vc)
-    tvar = p1_vc * (gc - 1.0_num) / (vc_sq + c_tiny)
-    p3 = p1 + vc * (tvar - gc * e1 / c**2)
-    tvar = p2_vc * (gc - 1.0_num) / (vc_sq + c_tiny)
-    p4 = p2 + vc * (tvar - gc * e2 / c**2)
+    tvar = p1_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+    p3 = p1 + vc * (tvar - gamma_rel * e1 / c**2)
+    tvar = p2_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+    p4 = p2 + vc * (tvar - gamma_rel * e2 / c**2)
 
     p3_mag = SQRT(DOT_PRODUCT(p3, p3))
 
     ! Lorentz energy transform
-    e3 = gc * (e1 - p1_vc)
-    e4 = gc * (e2 - p2_vc)
+    e3 = gamma_rel * (e1 - p1_vc)
+    e4 = gamma_rel * (e2 - p2_vc)
     ! Pre-collision velocities in COM frame
     v3 = p3 * c**2 / e3
     v4 = p4 * c**2 / e4
@@ -963,7 +966,7 @@ CONTAINS
 !    m_red = mass1 * mass2 / (mass1 + mass2)
 !    nu = ((idens * (charge1 * charge2)**2 * log_lambda) &
 !        / (8.0_num * pi * (epsilon0**2) * (m_red**2) * (vrabs**3))) &
-!        * gc * dt * factor
+!        * gamma_rel * dt * factor
 
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
     ! frequency
@@ -997,10 +1000,10 @@ CONTAINS
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
     vcr = -v4
-    gcr = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
+    gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
 
     tan_theta_cm = sin_theta &
-        / (gcr * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) / vrabs))
+        / (gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) / vrabs))
     tan_theta_cm2 = tan_theta_cm**2
 
     sin_theta = SQRT(tan_theta_cm2 / (1.0_num + tan_theta_cm2))
@@ -1012,10 +1015,10 @@ CONTAINS
     p4 = -p3
 
     ! Lorentz momentum transform to get back to lab frame
-    tvar = DOT_PRODUCT(p3, vc) * (gc - 1.0_num) / vc_sq
-    p5 = p3 + vc * (tvar + gc * e3 / c**2)
-    tvar = DOT_PRODUCT(p4, vc) * (gc - 1.0_num) / vc_sq
-    p6 = p4 + vc * (tvar + gc * e4 / c**2)
+    tvar = DOT_PRODUCT(p3, vc) * gamma_rel_m1 / vc_sq
+    p5 = p3 + vc * (tvar + gamma_rel * e3 / c**2)
+    tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
+    p6 = p4 + vc * (tvar + gamma_rel * e4 / c**2)
 
     e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
     e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
@@ -1106,14 +1109,16 @@ CONTAINS
       jtemp, jdens)
 
     REAL(num), INTENT(IN) :: vrabs, log_lambda, m1, m2, q1, q2, jtemp, jdens
-    REAL(num) :: gr, mu, ek, slow, fast
+    REAL(num) :: sc, grm1, mu, ek, slow, fast
     REAL(num) :: manheimer_collisions
 
     ! Manheimer-like collision operator
     ! Valid for e-i and e-e collisions
-    gr = 1.0_num / SQRT(1.0_num - (vrabs / c)**2)
+    sc = SQRT(1.0_num - (vrabs / c)**2)
+    grm1 = (vrabs / c)**2 / (sc + sc*sc)
+
     mu = m2 / 1.6726d-27
-    ek = (gr - 1.0_num) * m1 * c**2 / q0
+    ek = grm1 * m1 * c**2 / q0
 
     IF (jtemp <= 0.0_num) THEN
       IF (ek <= 0.0_num) THEN
@@ -1489,7 +1494,7 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_w
-    REAL(num) :: gamm, wdata, fac, gf
+    REAL(num) :: part_p_mc_2, gamma_m1, wdata, fac, gf
     INTEGER :: ix, iy
     INTEGER :: jx, jy
     TYPE(particle), POINTER :: current
@@ -1519,8 +1524,9 @@ CONTAINS
         part_ux = current%part_p(1) / part_mc
         part_uy = current%part_p(2) / part_mc
         part_uz = current%part_p(3) / part_mc
-        gamm = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        wdata = (gamm - 1.0_num) * fac
+        part_p_mc_2 = part_ux**2 + part_uy**2 + part_uz**2
+        gamma_m1 = part_p_mc_2/(SQRT(part_p_mc_2 + 1.0_num)+1.0_num)
+        wdata = gamma_m1 * fac
 
 #include "particle_to_grid.inc"
 
