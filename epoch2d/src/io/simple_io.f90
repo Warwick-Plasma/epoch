@@ -65,4 +65,50 @@ CONTAINS
 
   END SUBROUTINE load_single_array_from_file
 
+
+
+  SUBROUTINE load_real_array(filename, array, offset, records, err)
+
+    CHARACTER(*) , INTENT(IN) :: filename
+    REAL(num), DIMENSION(:), POINTER, INTENT(INOUT) :: array
+    INTEGER, INTENT(IN) :: offset
+    INTEGER, INTENT(INOUT) :: records, err
+    INTEGER :: fu, reclen, i, ioerr
+
+    ! Make sure we have memory to write to
+    IF (.NOT.ASSOCIATED(array)) THEN
+      ALLOCATE(array(records))
+    ELSEIF (SIZE(array) < records) THEN
+      PRINT*, "***DEVERLOPER WARNING***"
+      PRINT*, "Undersized array passed, reading to fill array"
+      records = SIZE(array)
+    ENDIF
+
+    ! So far unused in EPOCH, really need F2008's NEWUNIT=
+    fu = 43
+    ! Get length of a single REAL(num)
+    INQUIRE(iolength=reclen) array(1)
+    ! Open file or fall over gracefully
+    OPEN(unit=fu, file=filename, status='OLD', iostat=ioerr,  access='DIRECT', RECL=reclen)
+    IF (ioerr /= 0) THEN
+      PRINT*, 'Failed to open file "', filename, '"'
+      records = 0
+      err = IOR(err,c_err_io_error)
+      RETURN
+    ENDIF
+
+    ! read value by value into array, wishing all the time for STREAMIO
+    DO i = 1, records
+      READ(fu, REC=i+offset, iostat=ioerr) array(i)
+      ! cannot avoid checking every time if we want an accurate count of values read
+      IF (ioerr /= 0) THEN
+        records = i - 1
+        err = IOR(err,c_err_io_error)
+        EXIT
+      ENDIF
+    ENDDO
+    CLOSE(fu, iostat=ioerr)
+
+  END SUBROUTINE load_real_array
+
 END MODULE simple_io

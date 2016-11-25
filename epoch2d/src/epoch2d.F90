@@ -119,6 +119,7 @@ PROGRAM pic
     time = 0.0_num
   ENDIF
 
+  CALL custom_particle_load
   CALL manual_load
   CALL initialise_window ! window.f90
   CALL set_dt
