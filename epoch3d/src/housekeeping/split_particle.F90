@@ -38,10 +38,10 @@ CONTAINS
       local_count = species_list(ispecies)%attached_list%count
       CALL MPI_ALLREDUCE(local_count, species_list(ispecies)%global_count, &
           1, MPI_INTEGER8, MPI_SUM, comm, errcode)
-      ALLOCATE(species_list(ispecies)%secondary_list(nx,ny,nz))
-      DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
+      ALLOCATE(species_list(ispecies)%secondary_list(0:nx+1,0:ny+1,0:nz+1))
+      DO iz = 0, nz + 1
+        DO iy = 0, ny + 1
+          DO ix = 0, nx + 1
             CALL create_empty_partlist(&
                 species_list(ispecies)%secondary_list(ix,iy,iz))
           ENDDO
@@ -72,9 +72,9 @@ CONTAINS
     INTEGER :: ispecies, ix, iy, iz
 
     DO ispecies = 1, n_species
-      DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
+      DO iz = 0, nz + 1
+        DO iy = 0, ny + 1
+          DO ix = 0, nx + 1
             CALL append_partlist(species_list(ispecies)%attached_list, &
                 species_list(ispecies)%secondary_list(ix,iy,iz))
           ENDDO
@@ -127,9 +127,9 @@ CONTAINS
 
       CALL create_empty_partlist(append_list)
 
-      DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
+      DO iz = 0, nz + 1
+        DO iy = 0, ny + 1
+          DO ix = 0, nx + 1
             count = species_list(ispecies)%secondary_list(ix,iy,iz)%count
             IF (count > 0 .AND. count <= npart_per_cell_min) THEN
               current => species_list(ispecies)%secondary_list(ix,iy,iz)%head
