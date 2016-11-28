@@ -33,13 +33,18 @@ CONTAINS
     INTEGER :: cell_x
     TYPE(particle), POINTER :: current, next
     INTEGER(i8) :: local_count
+    INTEGER :: i0, i1
+
+    i0 = 1
+    IF (use_field_ionisation) i0 = 0
+    i1 = 1 - i0
 
     DO ispecies = 1, n_species
       local_count = species_list(ispecies)%attached_list%count
       CALL MPI_ALLREDUCE(local_count, species_list(ispecies)%global_count, &
           1, MPI_INTEGER8, MPI_SUM, comm, errcode)
-      ALLOCATE(species_list(ispecies)%secondary_list(0:nx+1))
-      DO ix = 0, nx + 1
+      ALLOCATE(species_list(ispecies)%secondary_list(i0:nx+i1))
+      DO ix = i0, nx + i1
         CALL create_empty_partlist(&
             species_list(ispecies)%secondary_list(ix))
       ENDDO
@@ -63,9 +68,14 @@ CONTAINS
   SUBROUTINE reattach_particles_to_mainlist
 
     INTEGER :: ispecies, ix
+    INTEGER :: i0, i1
+
+    i0 = 1
+    IF (use_field_ionisation) i0 = 0
+    i1 = 1 - i0
 
     DO ispecies = 1, n_species
-      DO ix = 0, nx + 1
+      DO ix = i0, nx + i1
         CALL append_partlist(species_list(ispecies)%attached_list, &
             species_list(ispecies)%secondary_list(ix))
       ENDDO
@@ -107,6 +117,11 @@ CONTAINS
     TYPE(particle), POINTER :: current, new_particle
     TYPE(particle_list) :: append_list
     REAL(num) :: jitter_x
+    INTEGER :: i0, i1
+
+    i0 = 1
+    IF (use_field_ionisation) i0 = 0
+    i1 = 1 - i0
 
     DO ispecies = 1, n_species
       IF (.NOT. species_list(ispecies)%split) CYCLE
@@ -116,7 +131,7 @@ CONTAINS
 
       CALL create_empty_partlist(append_list)
 
-      DO ix = 0, nx + 1
+      DO ix = i0, nx + i1
         count = species_list(ispecies)%secondary_list(ix)%count
         IF (count > 0 .AND. count <= npart_per_cell_min) THEN
           current => species_list(ispecies)%secondary_list(ix)%head
