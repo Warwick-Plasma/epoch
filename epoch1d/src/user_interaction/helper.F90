@@ -723,8 +723,8 @@ CONTAINS
         IF (part_in_chunk /= c_loader_chunk_size) eof_reached = .TRUE.
 
         DO part_count = 1,part_in_chunk
-          belongs_on_proc = (xbuf(part_count) > x_grid_min_local) .AND. &
-                            (xbuf(part_count) < x_grid_max_local) 
+          belongs_on_proc = (xbuf(part_count) > x_grid_min_local - dx/2.0_num) .AND. &
+                            (xbuf(part_count) < x_grid_max_local + dx/2.0_num) 
           IF (.NOT.belongs_on_proc) CYCLE
 
           CALL create_particle(new_particle)
