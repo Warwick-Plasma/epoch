@@ -68,7 +68,10 @@ CONTAINS
         CALL abort_code(c_err_bad_value) 
       ENDIF
       CALL setup_custom_loaders_list
+      RETURN
     ENDIF
+    DEALLOCATE(loader_block_ids)
+    DEALLOCATE(loader_targets)
 
   END SUBROUTINE particles_deck_finalise
 
