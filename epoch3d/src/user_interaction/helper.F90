@@ -1,5 +1,5 @@
 ! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 MODULE helper
 
+  USE balance
   USE boundary
   USE strings
   USE partlist
@@ -703,21 +704,21 @@ CONTAINS
 
   SUBROUTINE custom_particle_load
 
-    LOGICAL :: eof_reached, belongs_on_proc
+    LOGICAL :: file_inconsistencies
     INTEGER :: current_loader_num
-    INTEGER :: buffer_count, buffer_len
-    INTEGER :: part_in_chunk, current_offset, part_count, insert_count
-    CHARACTER(LEN=string_length) :: stra, strb
+    INTEGER :: part_count, read_count
+    CHARACTER(LEN=string_length) :: stra
 
-    REAL(num), POINTER :: part_in_chunk_real
-    REAL(num), DIMENSION(:), POINTER :: buffer
     REAL(num), DIMENSION(:), POINTER :: xbuf, ybuf, zbuf
     REAL(num), DIMENSION(:), POINTER :: pxbuf, pybuf, pzbuf
 #if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
     REAL(num), DIMENSION(:), POINTER :: wbuf
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    REAL(num), DIMENSION(:), POINTER :: idbuf
+    INTEGER(KIND=4), DIMENSION(:), POINTER :: idbuf4
+    INTEGER(KIND=8), DIMENSION(:), POINTER :: idbuf8
+    INTEGER :: id_offset
+    INTEGER, DIMENSION(:), POINTER :: part_counts
 #endif
 
     TYPE(particle_species), POINTER :: species
@@ -731,8 +732,8 @@ CONTAINS
     ! For every custom loader
     DO current_loader_num = 1, n_custom_loaders
 
-      eof_reached = .FALSE.
-      current_offset = 0
+      file_inconsistencies = .FALSE.
+
       curr_loader => custom_loaders_list(current_loader_num)
 
       ! Grab associated particle lists
@@ -743,153 +744,133 @@ CONTAINS
       CALL destroy_partlist(partlist)
       CALL create_empty_partlist(partlist)
 
-      ! Calculate buffer size
-      buffer_count = 3
-#if !defined_PER_SPECIES_WEIGHT || defined(PHOTONS)
-      buffer_count = buffer_count + 1
+      !MPI read files
+      part_count = load_1d_real_array(curr_loader%x_data, xbuf, curr_loader%x_data_offset, &
+                                      errcode)
+      read_count = load_1d_real_array(curr_loader%y_data, ybuf, curr_loader%y_data_offset, &
+                                      errcode)
+      read_count = load_1d_real_array(curr_loader%z_data, zbuf, curr_loader%z_data_offset, &
+                                      errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
+      read_count = load_1d_real_array(curr_loader%w_data, wbuf, curr_loader%w_data_offset, &
+                                      errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
 #endif
-      IF (curr_loader%px_data_given) buffer_count = buffer_count + 1
-      IF (curr_loader%py_data_given) buffer_count = buffer_count + 1
-      IF (curr_loader%pz_data_given) buffer_count = buffer_count + 1
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-      IF (curr_loader%id_data_given) buffer_count = buffer_count + 1
-#endif
-      buffer_len = buffer_count * c_loader_chunk_size + 1
-
-      ! Allocate buffer and set up pointers
-      ALLOCATE(buffer(buffer_len))
-      ! Let this ride shotgun to avoid another MPI_BCAST call
-      part_in_chunk_real => buffer(buffer_len)
-      buffer_count = 1
-      xbuf => buffer((buffer_count-1)*c_loader_chunk_size+1:buffer_count*c_loader_chunk_size)
-      buffer_count = buffer_count + 1
-      ybuf => buffer((buffer_count-1)*c_loader_chunk_size+1:buffer_count*c_loader_chunk_size)
-      buffer_count = buffer_count + 1
-      zbuf => buffer((buffer_count-1)*c_loader_chunk_size+1:buffer_count*c_loader_chunk_size)
-#if !defined_PER_SPECIES_WEIGHT || defined(PHOTONS)
-      buffer_count = buffer_count + 1
-      wbuf => buffer((buffer_count-1)*c_loader_chunk_size+1:buffer_count*c_loader_chunk_size)
-#endif
-
       IF (curr_loader%px_data_given) THEN
-        buffer_count = buffer_count + 1
-        pxbuf => buffer((buffer_count - 1)*c_loader_chunk_size+1:buffer_count*c_loader_chunk_size)
+        read_count = load_1d_real_array(curr_loader%px_data, pxbuf, &
+                                        curr_loader%px_data_offset, errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
       ENDIF
       IF (curr_loader%py_data_given) THEN
-        buffer_count = buffer_count + 1
-        pybuf => buffer((buffer_count - 1)*c_loader_chunk_size+1:buffer_count*c_loader_chunk_size)
+        read_count = load_1d_real_array(curr_loader%py_data, pybuf, &
+                                        curr_loader%py_data_offset, errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
       ENDIF
       IF (curr_loader%pz_data_given) THEN
-        buffer_count = buffer_count + 1
-        pzbuf => buffer((buffer_count - 1)*c_loader_chunk_size+1:buffer_count*c_loader_chunk_size)
+        read_count = load_1d_real_array(curr_loader%pz_data, pzbuf, &
+                                        curr_loader%pz_data_offset, errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
       ENDIF
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       IF (curr_loader%id_data_given) THEN
-        buffer_count = buffer_count + 1
-        idbuf => buffer((buffer_count - 1)*c_loader_chunk_size+1:buffer_count*c_loader_chunk_size)
+        IF (curr_loader%id_data_4byte) THEN
+          read_count = load_1d_integer4_array(curr_loader%id_data, idbuf4, &
+                                              curr_loader%id_data_offset, errcode)
+        ELSE
+          read_count = load_1d_integer8_array(curr_loader%id_data, idbuf8, &
+                                              curr_loader%id_data_offset, errcode)
+        ENDIF
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
       ENDIF
 #endif
 
-      ! Grab chunks of data from files, broadcast and add particles local to rank
-      ! N.B Use the chunking strategy as there is no portable way to check the size of a file
-      ! in F90 other than to open it and keep grabbing records.
-      ! Therefore better to not waste time and just pick a (hopefully) sensible chunk size.
-      DO WHILE (.NOT.eof_reached)
-        IF (rank == 0) THEN
-          !read files
-          part_in_chunk = c_loader_chunk_size
-          CALL load_real_array(TRIM(curr_loader%x_data), xbuf, current_offset, &
-                                          part_in_chunk, errcode)
-          CALL load_real_array(TRIM(curr_loader%y_data), ybuf, current_offset, &
-                                          part_in_chunk, errcode)
-          CALL load_real_array(TRIM(curr_loader%z_data), zbuf, current_offset, &
-                                          part_in_chunk, errcode)
-#if !defined_PER_SPECIES_WEIGHT || defined(PHOTONS)
-          CALL load_real_array(TRIM(curr_loader%w_data), wbuf, current_offset, &
-                                          part_in_chunk, errcode)
-#endif
-          IF (curr_loader%px_data_given) CALL load_real_array(curr_loader%px_data, &
-                                         pxbuf, current_offset, part_in_chunk, errcode)
-          IF (curr_loader%py_data_given) CALL load_real_array(curr_loader%py_data, &
-                                         pybuf, current_offset, part_in_chunk, errcode)
-          IF (curr_loader%pz_data_given) CALL load_real_array(curr_loader%pz_data, &
-                                         pzbuf, current_offset, part_in_chunk, errcode)
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-          IF (curr_loader%id_data_given) CALL load_real_array(curr_loader%id_data, &
-                                         idbuf, current_offset, part_in_chunk, errcode)
-#endif
-          part_in_chunk_real = part_in_chunk
+      CALL MPI_ALLREDUCE(MPI_IN_PLACE, file_inconsistencies, 1, MPI_LOGICAL, MPI_LOR, comm, errcode)
 
+      IF (file_inconsistencies) THEN
+        IF (RANK == 0) THEN
+          PRINT *, '***ERROR***'
+          PRINT *, 'Error while loading particles for species ', curr_loader%target_name
+          PRINT *, 'failed to read datafiles or file lengths inconsistent.'
         ENDIF
+        RETURN
+      ENDIF
 
-        ! Broadcast the data
-        CALL MPI_BCAST(buffer, buffer_len, mpireal, 0, comm, errcode)
+!This is needed to get the IDs assigned properly
+#if defined(PARTICLEID) || defined(PARTICLE_ID4)
+      IF (.NOT.curr_loader%id_data_given) THEN
+        ALLOCATE(part_counts(0:nproc-1))
+        CALL MPI_ALLGATHER(part_count, 1, MPI_INTEGER4, part_counts, 1, MPI_INTEGER4, comm)
+        id_offset = 0
+        i = 0
+        DO WHILE (i < RANK)
+          id_offset = id_offset + part_counts(i)
+        ENDDO
+      ENDIF
+#endif
 
-        ! Can now check if we are going to be done this iteration
-        part_in_chunk = NINT(part_in_chunk_real)
-        IF (part_in_chunk /= c_loader_chunk_size) eof_reached = .TRUE.
-
-        DO part_count = 1,part_in_chunk
-          belongs_on_proc = (xbuf(part_count) > x_grid_min_local - dx/2.0_num) .AND. &
-                            (xbuf(part_count) < x_grid_max_local + dx/2.0_num) .AND. &
-                            (ybuf(part_count) > y_grid_min_local - dy/2.0_num) .AND. &
-                            (ybuf(part_count) < y_grid_max_local + dy/2.0_num) .AND. &
-                            (zbuf(part_count) > z_grid_min_local - dz/2.0_num) .AND. &
-                            (zbuf(part_count) < z_grid_max_local + dz/2.0_num)
-          IF (.NOT.belongs_on_proc) CYCLE
-
+  
+      DO read_count = 1, part_count
           CALL create_particle(new_particle)
           CALL add_particle_to_partlist(partlist, new_particle)
-          insert_count = insert_count + 1
 
           ! Insert data to particle
-          new_particle%part_pos(1) = xbuf(part_count)
-          new_particle%part_pos(2) = ybuf(part_count)
-          new_particle%part_pos(3) = zbuf(part_count)
-          new_particle%weight = wbuf(part_count)
+          new_particle%part_pos(1) = xbuf(read_count)
+          new_particle%part_pos(2) = ybuf(read_count)
+          new_particle%part_pos(3) = zbuf(read_count)
+          new_particle%weight = wbuf(read_count)
           IF (curr_loader%px_data_given) THEN
-            new_particle%part_p(1) = pxbuf(part_count)
+            new_particle%part_p(1) = pxbuf(read_count)
           ENDIF
           IF (curr_loader%py_data_given) THEN
-            new_particle%part_p(2) = pybuf(part_count)
+            new_particle%part_p(2) = pybuf(read_count)
           ENDIF
           IF (curr_loader%pz_data_given) THEN
-            new_particle%part_p(3) = pzbuf(part_count)
+            new_particle%part_p(3) = pzbuf(read_count)
           ENDIF
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
           IF (curr_loader%id_data_given) THEN
-            new_particle%id = NINT(idbuf(part_count))
+#if defined(PARTICLE_ID4)
+            IF (curr_loader%id_data_4byte) THEN
+              new_particle%id = idbuf4(read_count)
+            ELSE
+              new_particle%id = INT(idbuf8(read_count),4)
+            ENDIF
+#else
+            IF (curr_loader%id_data_4byte) THEN
+              new_particle%id = INT(idbuf4(read_count),8)
+            ELSE
+              new_particle%id = idbuf8(read_count)
+            ENDIF
+#endif         
           ELSE
-            new_particle%id = current_offset + part_count
+#if defined(PARTICLE_ID4)
+            new_particle%id = INT(id_offset + read_count,4)
+#else
+            new_particle%id = INT(id_offset + read_count,8)
+#endif
           ENDIF
 #endif
           ! just being careful
           NULLIFY(new_particle)
         ENDDO
 
-        ! Update our starting point for ID assignment
-        current_offset = current_offset + part_in_chunk
-
-      ENDDO
-
-      ! We would need an IF anyway to decide who is printing, may as well save a variable
+      ! Need to keep totals accurate
+      CALL MPI_ALLREDUCE(partlist%count, species%count,1, MPI_INTEGER8, &
+                        MPI_SUM, comm, errcode)
       IF (rank == 0) THEN
-        CALL MPI_REDUCE(MPI_IN_PLACE, insert_count, 1, MPI_INTEGER8, &
-                        MPI_SUM, 0, comm, errcode)
-        CALL integer_as_string(insert_count, stra)
-        CALL integer_as_string(current_offset, strb)
-        WRITE(*,*) "Inserted ", TRIM(stra), "/", TRIM(strb), " custom particles"
-        WRITE(*,*) "of species ", species%name
+        CALL integer_as_string(species%count, stra)
+        WRITE(*,*) 'Inserted ', TRIM(stra), ' custom particles of species "', &
+                   TRIM(species%name), '"'
 #ifndef NO_IO
-        WRITE(stat_unit,*) "Inserted ", TRIM(stra), "/", TRIM(strb), " custom particles"
-        WRITE(stat_unit,*) "of species ", species%name
+        WRITE(stat_unit,*) 'Inserted ', TRIM(stra), ' custom particles of species "', &
+                           TRIM(species%name), '"'
 #endif
-      ELSE
-        CALL MPI_REDUCE(insert_count, insert_count, 1, MPI_INTEGER, &
-                        MPI_SUM, 0, comm, errcode)
       ENDIF
 
     ENDDO
+
+    CALL distribute_particles
 
   END SUBROUTINE custom_particle_load
 

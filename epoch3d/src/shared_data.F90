@@ -1124,6 +1124,7 @@ MODULE shared_data
     CHARACTER(LEN=string_length) :: id_data
     INTEGER(KIND=8) :: id_data_offset
     LOGICAL :: id_data_given
+    LOGICAL :: id_data_4byte
 #endif
 
   END TYPE custom_particle_loader

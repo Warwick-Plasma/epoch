@@ -58,6 +58,7 @@ CONTAINS
   END SUBROUTINE particles_deck_initialise
 
 
+
   SUBROUTINE particles_deck_finalise
   
     ! First pass: Validate loader targets and abort on error
@@ -68,11 +69,9 @@ CONTAINS
       ENDIF
       CALL setup_custom_loaders_list
     ENDIF
-    IF (deck_state == c_ds_last) THEN
-      CALL loader_debug_print
-    ENDIF
 
   END SUBROUTINE particles_deck_finalise
+
 
 
   SUBROUTINE particles_block_start
@@ -96,6 +95,7 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE particles_block_start
+
 
 
   SUBROUTINE particles_block_end
@@ -152,7 +152,6 @@ CONTAINS
       
     ! below here only expect to be dealing with filenames
     CALL get_filename(value, filename, got_filename, filename_error_ignore)
-    PRINT*, '"', filename, '"'
 
     IF (str_cmp(element, 'x_data')) THEN
       IF (got_filename) THEN
@@ -209,10 +208,22 @@ CONTAINS
     ENDIF
 #endif
 #if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
-    IF (str_cmp(element, 'id_data')) THEN
+    IF (str_cmp(element, 'id4_data')) THEN
       IF (got_filename) THEN
         custom_loaders_list(current_loader_id)%id_data = TRIM(filename)
         custom_loaders_list(current_loader_id)%id_data_given = .TRUE.
+        custom_loaders_list(current_loader_id)%id_data_4byte = .TRUE.
+        custom_loaders_list(current_loader_id)%id_data_offset = current_offset
+        RETURN
+      ENDIF
+      errcode = c_err_bad_value
+      RETURN
+    ENDIF
+    IF (str_cmp(element, 'id8_data')) THEN
+      IF (got_filename) THEN
+        custom_loaders_list(current_loader_id)%id_data = TRIM(filename)
+        custom_loaders_list(current_loader_id)%id_data_given = .TRUE.
+        custom_loaders_list(current_loader_id)%id_data_4byte = .FALSE.
         custom_loaders_list(current_loader_id)%id_data_offset = current_offset
         RETURN
       ENDIF
@@ -225,6 +236,7 @@ CONTAINS
     errcode = c_err_unknown_element
 
   END FUNCTION particles_block_handle_element
+
 
 
   FUNCTION particles_block_check() RESULT(errcode)
@@ -271,6 +283,7 @@ CONTAINS
   END FUNCTION particles_block_check
 
 
+
   FUNCTION index_by_target_as_needed(target)
 
     CHARACTER(LEN=string_length), INTENT(IN) :: target
@@ -291,6 +304,8 @@ CONTAINS
     loader_targets(n_custom_loaders) = TRIM(target)
     
   END FUNCTION index_by_target_as_needed
+
+
 
   FUNCTION crosscheck_loader_species() RESULT(errcode)
     
@@ -316,6 +331,8 @@ CONTAINS
     errcode = c_err_none
 
   END FUNCTION crosscheck_loader_species
+
+
 
   SUBROUTINE setup_custom_loaders_list
 
@@ -348,61 +365,6 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE setup_custom_loaders_list
- 
-  SUBROUTINE loader_debug_print
-
-    INTEGER :: i
-    CHARACTER(LEN=string_length) :: offset_as_str
-
-    IF (rank /= 0) RETURN
-
-    PRINT*, "*** Custom Loader Debug***"
-    PRINT*, ""
-
-    DO i = 1, n_custom_loaders
-      CALL integer_as_string(i, offset_as_str)
-      PRINT*, "** Loader ", TRIM(offset_as_str), " target: ", &
-              TRIM(custom_loaders_list(i)%target_name)
-      CALL integer_as_string(custom_loaders_list(i)%x_data_offset, offset_as_str)
-      PRINT*, "x_data: ", TRIM(custom_loaders_list(i)%x_data), ":", TRIM(offset_as_str)
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
-      CALL integer_as_string(custom_loaders_list(i)%w_data_offset, offset_as_str)
-      PRINT*, "w_data: ", TRIM(custom_loaders_list(i)%w_data), ":", TRIM(offset_as_str)
-#endif
-      IF (custom_loaders_list(i)%px_data_given) THEN
-        CALL integer_as_string(custom_loaders_list(i)%px_data_offset, offset_as_str)
-        PRINT*, "px_data: ", custom_loaders_list(i)%px_data, TRIM(offset_as_str)
-      ELSE
-        PRINT*, "px_data: NULL"
-      ENDIF
-      IF (custom_loaders_list(i)%py_data_given) THEN
-        CALL integer_as_string(custom_loaders_list(i)%py_data_offset, offset_as_str)
-        PRINT*, "py_data: ", custom_loaders_list(i)%px_data, TRIM(offset_as_str)
-      ELSE
-        PRINT*, "py_data: NULL"
-      ENDIF
-      IF (custom_loaders_list(i)%pz_data_given) THEN
-        CALL integer_as_string(custom_loaders_list(i)%pz_data_offset, offset_as_str)
-        PRINT*, "pz_data: ", custom_loaders_list(i)%pz_data, TRIM(offset_as_str)
-      ELSE
-        PRINT*, "pz_data: NULL"
-      ENDIF
-#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
-      IF (custom_loaders_list(i)%id_data_given) THEN
-        CALL integer_as_string(custom_loaders_list(i)%id_data_offset, offset_as_str)
-        PRINT*, "id_data: ", custom_loaders_list(i)%id_data, TRIM(offset_as_str)
-      ELSE
-        PRINT*, "id_data: NULL"
-      ENDIF
-#endif
-      PRINT*, ""
-    ENDDO
-
-    PRINT*, "*** End Debug ***"
-    PRINT*, ""
-
-  END SUBROUTINE loader_debug_print
 
 END MODULE deck_particles_block
-
 

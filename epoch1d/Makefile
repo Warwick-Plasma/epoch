@@ -429,7 +429,7 @@ fields.o: fields.f90 boundary.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
   laser.o partlist.o setup.o shared_data.o shunt.o window.o
-helper.o: helper.F90 boundary.o calc_df.o partlist.o strings.o simple_io.o
+helper.o: helper.F90 balance.o boundary.o calc_df.o partlist.o strings.o simple_io.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 ionise.o: ionise.F90 boundary.o current_smooth.o numerics.o partlist.o \
   random_generator.o utilities.o
