@@ -2013,7 +2013,7 @@ CONTAINS
     INTEGER :: i, l
     TYPE(particle), POINTER :: current, next
     LOGICAL :: use_particle
-    REAL(num) :: gamma, random_num, part_mc
+    REAL(num) :: gamma_rel, random_num, part_mc
 
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
@@ -2048,11 +2048,11 @@ CONTAINS
 #ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = c * current%mass
 #endif
-          gamma = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
+          gamma_rel = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
           IF (subset_list(l)%use_gamma_min &
-              .AND. gamma < subset_list(l)%gamma_min) use_particle = .FALSE.
+              .AND. gamma_rel < subset_list(l)%gamma_min) use_particle = .FALSE.
           IF (subset_list(l)%use_gamma_max &
-              .AND. gamma > subset_list(l)%gamma_max) use_particle = .FALSE.
+              .AND. gamma_rel > subset_list(l)%gamma_max) use_particle = .FALSE.
         ENDIF
 
         IF (subset_list(l)%use_x_min &
