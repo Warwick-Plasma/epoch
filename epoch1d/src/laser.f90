@@ -155,13 +155,14 @@ CONTAINS
     INTEGER :: err
 
     err = 0
-    laser%omega = evaluate_at_point(laser%omega_function, 0, err)
+    laser%omega = evaluate(laser%omega_function, err)
     IF (laser%omega_func_type == c_of_freq) &
         laser%omega = 2.0_num * pi * laser%omega
     IF (laser%omega_func_type == c_of_lambda) &
         laser%omega = 2.0_num * pi * c / laser%omega
 
   END SUBROUTINE laser_update_omega
+
 
 
   ! Actually does the attaching of the laser to the correct list

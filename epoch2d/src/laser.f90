@@ -67,7 +67,7 @@ CONTAINS
     IF (laser%use_time_function) &
         CALL deallocate_stack(laser%time_function)
     IF (laser%use_omega_function) &
-       CALL deallocate_stack(laser%omega_function)
+        CALL deallocate_stack(laser%omega_function)
     DEALLOCATE(laser)
 
   END SUBROUTINE deallocate_laser

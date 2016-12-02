@@ -68,7 +68,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_thermal = 11
   INTEGER, PARAMETER :: c_bc_cpml_laser = 12
   INTEGER, PARAMETER :: c_bc_cpml_outflow = 13
-  
+
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
   INTEGER, PARAMETER :: c_bd_x_max = 2
@@ -76,7 +76,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_y_max = 4
   INTEGER, PARAMETER :: c_bd_z_min = 5
   INTEGER, PARAMETER :: c_bd_z_max = 6
-  
+
   ! Frequency function type codes
   INTEGER, PARAMETER :: c_of_omega = 1
   INTEGER, PARAMETER :: c_of_freq = 2

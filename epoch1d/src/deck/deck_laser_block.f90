@@ -55,6 +55,7 @@ CONTAINS
     working_laser%use_time_function = .FALSE.
     working_laser%use_phase_function = .TRUE.
     working_laser%use_profile_function = .TRUE.
+    working_laser%use_omega_function = .FALSE.
 
   END SUBROUTINE laser_block_start
 
@@ -141,9 +142,8 @@ CONTAINS
           WRITE(io,*) 'Please use the element name "omega" instead.'
         ENDDO
       ENDIF
-
       CALL initialise_stack(working_laser%omega_function)
-      CALL tokenize(value, working_laser%omega_function,errcode)
+      CALL tokenize(value, working_laser%omega_function, errcode)
       working_laser%omega = 0.0_num
       working_laser%omega_func_type = c_of_omega
       CALL laser_update_omega(working_laser)
@@ -157,7 +157,7 @@ CONTAINS
 
     IF (str_cmp(element, 'frequency')) THEN
       CALL initialise_stack(working_laser%omega_function)
-      CALL tokenize(value, working_laser%omega_function,errcode)
+      CALL tokenize(value, working_laser%omega_function, errcode)
       working_laser%omega = 0.0_num
       working_laser%omega_func_type = c_of_freq
       CALL laser_update_omega(working_laser)
@@ -171,7 +171,7 @@ CONTAINS
 
     IF (str_cmp(element, 'lambda')) THEN
       CALL initialise_stack(working_laser%omega_function)
-      CALL tokenize(value, working_laser%omega_function,errcode)
+      CALL tokenize(value, working_laser%omega_function, errcode)
       working_laser%omega = 0.0_num
       working_laser%omega_func_type = c_of_lambda
       CALL laser_update_omega(working_laser)
@@ -274,7 +274,7 @@ CONTAINS
       current => current%next
     ENDDO
 
-    IF (IAND(error,1) /= 0) THEN
+    IF (IAND(error, 1) /= 0) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -285,7 +285,7 @@ CONTAINS
       errcode = c_err_missing_elements
     ENDIF
 
-    IF (IAND(error,2) /= 0) THEN
+    IF (IAND(error, 2) /= 0) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)

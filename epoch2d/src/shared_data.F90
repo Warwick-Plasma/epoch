@@ -76,11 +76,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_y_max = 4
   INTEGER, PARAMETER :: c_bd_z_min = 5
   INTEGER, PARAMETER :: c_bd_z_max = 6
-  
+
   ! Frequency function type codes
   INTEGER, PARAMETER :: c_of_omega = 1
   INTEGER, PARAMETER :: c_of_freq = 2
-  INTEGER, PARAMETER :: c_of_lambda = 3  
+  INTEGER, PARAMETER :: c_of_lambda = 3
 
   ! Error codes
   INTEGER, PARAMETER :: c_err_none = 0
