@@ -1493,8 +1493,8 @@ CONTAINS
 
     REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
-    REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_w
-    REAL(num) :: part_p_mc_2, gamma_m1, wdata, fac, gf
+    REAL(num) :: part_mc, part_w
+    REAL(num) :: part_u2, gamma_rel, gamma_rel_m1, wdata, fac, gf
     INTEGER :: ix, iy
     INTEGER :: jx, jy
     TYPE(particle), POINTER :: current
@@ -1521,12 +1521,10 @@ CONTAINS
 #endif
         fac = part_mc * part_w * c
 
-        part_ux = current%part_p(1) / part_mc
-        part_uy = current%part_p(2) / part_mc
-        part_uz = current%part_p(3) / part_mc
-        part_p_mc_2 = part_ux**2 + part_uy**2 + part_uz**2
-        gamma_m1 = part_p_mc_2 / (SQRT(part_p_mc_2 + 1.0_num) + 1.0_num)
-        wdata = gamma_m1 * fac
+        part_u2 = SUM((current%part_p / part_mc)**2)
+        gamma_rel = SQRT(part_u2 + 1.0_num)
+        gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
+        wdata = gamma_rel_m1 * fac
 
 #include "particle_to_grid.inc"
 
