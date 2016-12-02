@@ -397,8 +397,10 @@ CONTAINS
           ! the system. These particles are copied into a separate part of the
           ! output file.
 
+          gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
+
           current_probe => species_list(ispecies)%attached_probes
-          gamma_rel_m1 = part_u2/(gamma_rel + 1.0_num)
+
           ! Cycle through probes
           DO WHILE(ASSOCIATED(current_probe))
             ! Note that this is the energy of a single REAL particle in the

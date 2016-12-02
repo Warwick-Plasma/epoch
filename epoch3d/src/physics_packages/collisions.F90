@@ -949,7 +949,7 @@ CONTAINS
 
     gamma_rel_inv = SQRT(1.0_num - vc_sq / c**2)
     gamma_rel = 1.0_num / gamma_rel_inv
-    gamma_rel_m1 = vc_sq / c**2 / (gamma_rel_inv + gamma_rel_inv*gamma_rel_inv)
+    gamma_rel_m1 = vc_sq / c**2 / (gamma_rel_inv + gamma_rel_inv**2)
 
     ! Lorentz momentum transform to get into COM frame
     p1_vc = DOT_PRODUCT(p1, vc)
@@ -1129,7 +1129,7 @@ CONTAINS
     ! Manheimer-like collision operator
     ! Valid for e-i and e-e collisions
     sc = SQRT(1.0_num - (vrabs / c)**2)
-    grm1 = (vrabs / c)**2 / (sc + sc*sc)
+    grm1 = (vrabs / c)**2 / (sc + sc**2)
 
     mu = m2 / 1.6726d-27
     ek = grm1 * m1 * c**2 / q0
@@ -1556,7 +1556,7 @@ CONTAINS
         part_uy = current%part_p(2) / part_mc
         part_uz = current%part_p(3) / part_mc
         part_p_mc_2 = part_ux**2 + part_uy**2 + part_uz**2
-        gamma_m1 = part_p_mc_2/(SQRT(part_p_mc_2 + 1.0_num)+1.0_num)
+        gamma_m1 = part_p_mc_2 / (SQRT(part_p_mc_2 + 1.0_num) + 1.0_num)
         wdata = gamma_m1 * fac
 
 #include "particle_to_grid.inc"

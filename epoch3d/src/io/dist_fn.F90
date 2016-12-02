@@ -307,7 +307,7 @@ CONTAINS
         part_mc2 = part_mc * c
 #endif
         part_p_mc_2 = SUM((current%part_p / part_mc)**2)
-        gamma_m1 = part_p_mc_2/(SQRT(part_p_mc_2 + 1.0_num) + 1.0_num)
+        gamma_m1 = part_p_mc_2 / (SQRT(part_p_mc_2 + 1.0_num) + 1.0_num)
         px = current%part_p(1)
         py = current%part_p(2)
         pz = current%part_p(3)
@@ -428,7 +428,7 @@ CONTAINS
       part_weight = current%weight
 #endif
       part_p_mc_2 = SUM((current%part_p / part_mc)**2)
-      gamma_m1 = part_p_mc_2/(SQRT(part_p_mc_2 + 1.0_num) + 1.0_num)
+      gamma_m1 = part_p_mc_2 / (SQRT(part_p_mc_2 + 1.0_num) + 1.0_num)
       px = current%part_p(1)
       py = current%part_p(2)
       pz = current%part_p(3)
