@@ -66,49 +66,212 @@ CONTAINS
   END SUBROUTINE load_single_array_from_file
 
 
+  !--------------------------------------------------------------------------------
+  ! These subroutines allow loading of a simple 1D array of data from a raw binary
+  ! file.  The file is assumed to contain complete valid data after a specified
+  ! header of length offset.
+  !--------------------------------------------------------------------------------
 
-  SUBROUTINE load_real_array(filename, array, offset, records, err)
+  FUNCTION load_1d_real_array(filename, array, offset, err) RESULT(records)
 
     CHARACTER(*) , INTENT(IN) :: filename
+    INTEGER(KIND=8), INTENT(IN) :: offset
     REAL(num), DIMENSION(:), POINTER, INTENT(INOUT) :: array
-    INTEGER, INTENT(IN) :: offset
-    INTEGER, INTENT(INOUT) :: records, err
-    INTEGER :: fu, reclen, i, ioerr
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
+    INTEGER(KIND=8) :: total_records, remainder, tail
+    INTEGER :: fh, typesize, records
+    INTEGER :: stat(MPI_STATUS_SIZE)
+    INTEGER :: datatype
+    
+    datatype = mpireal
 
-    ! Make sure we have memory to write to
-    IF (.NOT.ASSOCIATED(array)) THEN
-      ALLOCATE(array(records))
-    ELSEIF (SIZE(array) < records) THEN
-      PRINT*, "***DEVERLOPER WARNING***"
-      PRINT*, "Undersized array passed, reading to fill array"
-      records = SIZE(array)
-    ENDIF
+    records = 0
 
-    ! So far unused in EPOCH, really need F2008's NEWUNIT=
-    fu = 43
-    ! Get length of a single REAL(num)
-    INQUIRE(iolength=reclen) array(1)
-    ! Open file or fall over gracefully
-    OPEN(unit=fu, file=filename, status='OLD', iostat=ioerr,  access='DIRECT', RECL=reclen)
-    IF (ioerr /= 0) THEN
-      PRINT*, 'Failed to open file "', filename, '"'
-      records = 0
-      err = IOR(err,c_err_io_error)
+    CALL MPI_TYPE_SIZE(datatype, typesize, errcode)
+
+    IF (errcode /= 0) THEN
+      IF (rank == 0) THEN
+        PRINT *, '***DEVELOPER WARNING***'
+        PRINT *, 'Unknown MPI_DATATYPE passed'
+      ENDIF
+      err = IOR(err, c_err_io_error)
       RETURN
     ENDIF
 
-    ! read value by value into array, wishing all the time for STREAMIO
-    DO i = 1, records
-      READ(fu, REC=i+offset, iostat=ioerr) array(i)
-      ! cannot avoid checking every time if we want an accurate count of values read
-      IF (ioerr /= 0) THEN
-        records = i - 1
-        err = IOR(err,c_err_io_error)
-        EXIT
-      ENDIF
-    ENDDO
-    CLOSE(fu, iostat=ioerr)
+    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
+        MPI_INFO_NULL, fh, errcode)
 
-  END SUBROUTINE load_real_array
+    IF (errcode /= 0) THEN
+      IF (rank == 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
+      err = IOR(err, c_err_io_error)
+      RETURN
+    ENDIF
+
+    CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
+
+    tail = MOD(INT(filesize,8) - offset, INT(typesize,8)) 
+    IF ((RANK == 0) .AND. ( tail /= 0)) THEN
+      PRINT *, '***WARNING***'
+      PRINT *, 'Length (less offset) of ', filename, ' not an integer multiple of datasize'
+      PRINT *, 'Corrupt data?'
+    ENDIF
+    total_records = (filesize - offset - tail)/typesize
+    records = INT(total_records / nproc,4)
+    remainder = MOD(total_records, INT(nproc,8))
+    IF (RANK < remainder) THEN
+      records = records + 1
+      disp = offset + RANK * records * typesize 
+    ELSE
+      disp = offset + (records + 1)*remainder*typesize + records*(RANK - remainder)*typesize
+    ENDIF
+
+    ALLOCATE(array(records))
+
+    CALL MPI_FILE_SET_VIEW(fh, disp, datatype, datatype, 'native', &
+         MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(fh, array, records, datatype, stat, errcode)
+
+    CALL MPI_GET_COUNT(stat, datatype, records, errcode)
+
+    CALL MPI_FILE_CLOSE(fh, errcode)
+
+  END FUNCTION load_1d_real_array
+
+
+
+
+  FUNCTION load_1d_integer4_array(filename, array, offset, err) RESULT(records)
+
+    CHARACTER(*) , INTENT(IN) :: filename
+    INTEGER(KIND=8), INTENT(IN) :: offset
+    INTEGER(KIND=4), DIMENSION(:), POINTER, INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
+    INTEGER(KIND=8) :: total_records, remainder, tail
+    INTEGER :: fh, typesize, records
+    INTEGER :: stat(MPI_STATUS_SIZE)
+    INTEGER :: datatype = MPI_INTEGER4
+
+    records = 0
+
+    CALL MPI_TYPE_SIZE(datatype, typesize, errcode)
+
+    IF (errcode /= 0) THEN
+      IF (rank == 0) THEN
+        PRINT *, '***DEVELOPER WARNING***'
+        PRINT *, 'Unknown MPI_DATATYPE passed'
+      ENDIF
+      err = IOR(err, c_err_io_error)
+      RETURN
+    ENDIF
+
+    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
+        MPI_INFO_NULL, fh, errcode)
+
+    IF (errcode /= 0) THEN
+      IF (rank == 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
+      err = IOR(err, c_err_io_error)
+      RETURN
+    ENDIF
+
+    CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
+
+    tail = MOD(INT(filesize,8) - offset, INT(typesize,8)) 
+    IF ((RANK == 0) .AND. ( tail /= 0)) THEN
+      PRINT *, '***WARNING***'
+      PRINT *, 'Length (less offset) of ', filename, ' not an integer multiple of datasize'
+      PRINT *, 'Corrupt data?'
+    ENDIF
+    total_records = (filesize - offset - tail)/typesize
+    records = INT(total_records / nproc,4)
+    remainder = MOD(total_records, INT(nproc,8))
+    IF (RANK < remainder) THEN
+      records = records + 1
+      disp = offset + RANK * records * typesize 
+    ELSE
+      disp = offset + (records + 1)*remainder*typesize + records*(RANK - remainder)*typesize
+    ENDIF
+
+    ALLOCATE(array(records))
+
+    CALL MPI_FILE_SET_VIEW(fh, disp, datatype, datatype, 'native', &
+         MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(fh, array, records, datatype, stat, errcode)
+
+    CALL MPI_GET_COUNT(stat, datatype, records, errcode)
+
+    CALL MPI_FILE_CLOSE(fh, errcode)
+
+  END FUNCTION load_1d_integer4_array
+
+
+
+  FUNCTION load_1d_integer8_array(filename, array, offset, err) RESULT(records)
+
+    CHARACTER(*) , INTENT(IN) :: filename
+    INTEGER(KIND=8), INTENT(IN) :: offset
+    INTEGER(KIND=8), DIMENSION(:), POINTER, INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
+    INTEGER(KIND=8) :: total_records, remainder, tail
+    INTEGER :: fh, typesize, records
+    INTEGER :: stat(MPI_STATUS_SIZE)
+    INTEGER :: datatype = MPI_INTEGER8
+
+    records = 0
+
+    CALL MPI_TYPE_SIZE(datatype, typesize, errcode)
+
+    IF (errcode /= 0) THEN
+      IF (rank == 0) THEN
+        PRINT *, '***DEVELOPER WARNING***'
+        PRINT *, 'Unknown MPI_DATATYPE passed'
+      ENDIF
+      err = IOR(err, c_err_io_error)
+      RETURN
+    ENDIF
+
+    CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
+        MPI_INFO_NULL, fh, errcode)
+
+    IF (errcode /= 0) THEN
+      IF (rank == 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
+      err = IOR(err, c_err_io_error)
+      RETURN
+    ENDIF
+
+    CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
+
+    tail = MOD(INT(filesize,8) - offset, INT(typesize,8)) 
+    IF ((RANK == 0) .AND. ( tail /= 0)) THEN
+      PRINT *, '***WARNING***'
+      PRINT *, 'Length (less offset) of ', filename, ' not an integer multiple of datasize'
+      PRINT *, 'Corrupt data?'
+    ENDIF
+    total_records = (filesize - offset - tail)/typesize
+    records = INT(total_records / nproc,4)
+    remainder = MOD(total_records, INT(nproc,8))
+    IF (RANK < remainder) THEN
+      records = records + 1
+      disp = offset + RANK * records * typesize 
+    ELSE
+      disp = offset + (records + 1)*remainder*typesize + records*(RANK - remainder)*typesize
+    ENDIF
+
+    ALLOCATE(array(records))
+
+    CALL MPI_FILE_SET_VIEW(fh, disp, datatype, datatype, 'native', &
+         MPI_INFO_NULL, errcode)
+
+    CALL MPI_FILE_READ_ALL(fh, array, records, datatype, stat, errcode)
+
+    CALL MPI_GET_COUNT(stat, datatype, records, errcode)
+
+    CALL MPI_FILE_CLOSE(fh, errcode)
+
+  END FUNCTION load_1d_integer8_array
 
 END MODULE simple_io
