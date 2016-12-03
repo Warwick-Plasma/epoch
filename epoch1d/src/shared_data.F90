@@ -375,9 +375,9 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_xy_angle = 88
   INTEGER, PARAMETER :: c_const_dir_yz_angle = 89
   INTEGER, PARAMETER :: c_const_dir_zx_angle = 90
-  INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 91 
-  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 92 
-  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 93 
+  INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 91
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 92
+  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 93
   INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 94
 
   ! Custom constants

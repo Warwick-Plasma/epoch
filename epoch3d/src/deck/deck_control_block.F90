@@ -353,7 +353,7 @@ CONTAINS
     CASE(4*c_ndims+28)
       n_zeros_control = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+29)
-      maxwell_solver = as_integer_print(value, element, errcode)      
+      maxwell_solver = as_integer_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

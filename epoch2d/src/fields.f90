@@ -247,48 +247,45 @@ CONTAINS
     REAL(num) :: c1, c2, c3
     REAL(num) :: cx1, cx2, cx3
     REAL(num) :: cy1, cy2, cy3
+    REAL(num) :: alphax, alphay
+    REAL(num) :: betaxy, betayx
+    REAL(num) :: delta, deltax, deltay, dx_cdt
 
-    REAL(num) :: betaxy, betayx, deltax, alphax, alphay, delta, deltay
-
-    IF (maxwell_solver == 1) THEN      
-      !lehe
-      !R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
-      betaxy = (1.0_num / 8.0_num) * (dx/dy)**2
-      betayx = 1.0_num / 8.0_num
-      deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
-      deltay = 0
-      alphax = (1 - 2*betaxy - 3*deltax)
-      alphay = (1 - 2*betayx)
-
+    IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
+      ! R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
+      delta  = dx
+      dx_cdt = dx / (c * dt)
+      betaxy = 0.125_num * (delta / dy)**2
+      betayx = 0.125_num
+      deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
+      deltay = 0.0_num
+      alphax = 1.0_num - 2.0_num * betaxy - 3.0_num * deltax
+      alphay = 1.0_num - 2.0_num * betayx
     ENDIF
 
-    IF (maxwell_solver == 2) THEN
-      !cowan
-      !Cowan et al. J. Comput. Phys. 230, 61 (2011)
-      !Nuter et al. Eur. Phys. J. 68, 177 (2014)
+    IF (maxwell_solver == c_const_maxwell_solver_cowan) THEN
+      ! Cowan et al. J. Comput. Phys. 230, 61 (2011)
+      ! Nuter et al. Eur. Phys. J. 68, 177 (2014)
       delta = min(dx, dy)
 
-      betaxy = (1.0_num / 8.0_num)*(delta/dy)**2
-      betayx = (1.0_num / 8.0_num)*(delta/dx)**2
-      deltax = 0
-      deltay = 0
-      alphax = 1 - (1.0_num / 4.0_num)*(delta/dy)**2
-      alphay = 1 - (1.0_num / 4.0_num)*(delta/dx)**2
-
+      betaxy = 0.125_num * (delta / dy)**2
+      betayx = 0.125_num * (delta / dx)**2
+      deltax = 0.0_num
+      deltay = 0.0_num
+      alphax = 1.0_num - 2.0_num * betaxy
+      alphay = 1.0_num - 2.0_num * betayx
     ENDIF
 
-    IF (maxwell_solver == 3) THEN
-      !pukhov
-      !Nuter et al. Eur. Phys. J. 68, 177 (2014)
+    IF (maxwell_solver == c_const_maxwell_solver_pukhov) THEN
+      ! Nuter et al. Eur. Phys. J. 68, 177 (2014)
       delta = dx
 
-      betaxy = (1.0_num / 8.0_num)*(delta/dy)**2
-      betayx = (1.0_num / 8.0_num)
-      deltax = 0
-      deltay = 0
-      alphax = 1 - (1.0_num / 4.0_num)*(delta/dy)**2
-      alphay = 6_num / 8_num
-
+      betaxy = 0.125_num * (delta / dy)**2
+      betayx = 0.125_num
+      deltax = 0.0_num
+      deltay = 0.0_num
+      alphax = 1.0_num - 2.0_num * betaxy
+      alphay = 0.75_num
     ENDIF
 
     IF (cpml_boundaries) THEN
@@ -296,49 +293,51 @@ CONTAINS
       cpml_y = hdty
 
       IF (field_order == 2) THEN
-        DO iy = 1, ny
-          cpml_y = hdty / cpml_kappa_by(iy)
-          DO ix = 1, nx
-            cpml_x = hdtx / cpml_kappa_bx(ix)
+        IF (maxwell_solver == 0) THEN
+          DO iy = 1, ny
+            cpml_y = hdty / cpml_kappa_by(iy)
+            DO ix = 1, nx
+              cpml_x = hdtx / cpml_kappa_bx(ix)
 
-            IF (maxwell_solver == 0) THEN
               bx(ix, iy) = bx(ix, iy) &
                   - cpml_y * (ez(ix  , iy+1) - ez(ix  , iy  ))
-  
+
               by(ix, iy) = by(ix, iy) &
-                    + cpml_x * (ez(ix+1, iy  ) - ez(ix  , iy  ))
-  
+                  + cpml_x * (ez(ix+1, iy  ) - ez(ix  , iy  ))
+
               bz(ix, iy) = bz(ix, iy) &
-                    - cpml_x * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
-                    + cpml_y * (ex(ix  , iy+1) - ex(ix  , iy  ))
+                  - cpml_x * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
+                  + cpml_y * (ex(ix  , iy+1) - ex(ix  , iy  ))
+            ENDDO
+          ENDDO
+        ELSE
+          DO iy = 1, ny
+            cpml_y = hdty / cpml_kappa_by(iy)
+            DO ix = 1, nx
+              cpml_x = hdtx / cpml_kappa_bx(ix)
 
-            ELSE IF ((maxwell_solver == 1) .OR. (maxwell_solver == 2) .OR. (maxwell_solver == 3)) THEN
               bx(ix, iy) = bx(ix, iy) &
-                  - cpml_y*(alphay*(ez(ix  , iy+1) - ez(ix  , iy  )) &
-                         +betayx*(ez(ix+1, iy+1) - ez(ix+1, iy  )) &
-                         +betayx*(ez(ix-1, iy+1) - ez(ix-1, iy  )) &
-                         )
+                  - cpml_y * (alphay * (ez(ix  , iy+1) - ez(ix  , iy  ))  &
+                           +  betayx * (ez(ix+1, iy+1) - ez(ix+1, iy  )   &
+                                     +  ez(ix-1, iy+1) - ez(ix-1, iy  )))
 
               by(ix, iy) = by(ix, iy) &
-                  + cpml_x*(alphax*(ez(ix+1, iy  ) - ez(ix  , iy  )) &
-                         +betaxy*(ez(ix+1, iy+1) - ez(ix  , iy+1)) &
-                         +betaxy*(ez(ix+1, iy-1) - ez(ix  , iy-1)) &
-                         +deltax*(ez(ix+2, iy  ) - ez(ix-1, iy  )) &
-                       )
+                  + cpml_x * (alphax * (ez(ix+1, iy  ) - ez(ix  , iy  ))  &
+                           +  betaxy * (ez(ix+1, iy+1) - ez(ix  , iy+1)   &
+                                     +  ez(ix+1, iy-1) - ez(ix  , iy-1))  &
+                           +  deltax * (ez(ix+2, iy  ) - ez(ix-1, iy  )))
 
-              bz(ix ,iy) = bz(ix, iy) &
-                  - cpml_x*(alphax*(ey(ix+1, iy  ) - ey(ix  , iy  )) &
-                         +betaxy*(ey(ix+1, iy+1) - ey(ix  , iy+1)) &
-                         +betaxy*(ey(ix+1, iy-1) - ey(ix  , iy-1)) &
-                         +deltax*(ey(ix+2, iy  ) - ey(ix-1, iy  )) &
-                         ) &
-                  + cpml_y*(alphay*(ex(ix  , iy+1) - ex(ix  , iy  )) &
-                         +betayx*(ex(ix+1, iy+1) - ex(ix+1, iy  )) &
-                         +betayx*(ex(ix-1, iy+1) - ex(ix-1, iy  )) &
-                         )
-            ENDIF
+              bz(ix, iy) = bz(ix, iy) &
+                  - cpml_x * (alphax * (ey(ix+1, iy  ) - ey(ix  , iy  ))  &
+                           +  betaxy * (ey(ix+1, iy+1) - ey(ix  , iy+1)   &
+                                     +  ey(ix+1, iy-1) - ey(ix  , iy-1))  &
+                           +  deltax * (ey(ix+2, iy  ) - ey(ix-1, iy  ))) &
+                  + cpml_y * (alphay * (ex(ix  , iy+1) - ex(ix  , iy  ))  &
+                           +  betayx * (ex(ix+1, iy+1) - ex(ix+1, iy  )   &
+                                     +  ex(ix-1, iy+1) - ex(ix-1, iy  )))
+            ENDDO
           ENDDO
-        ENDDO
+        ENDIF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -407,10 +406,9 @@ CONTAINS
       CALL cpml_advance_b_currents(hdt)
     ELSE
       IF (field_order == 2) THEN
-        DO iy = 1, ny
-          DO ix = 1, nx
-
-            IF (maxwell_solver == 0) THEN
+        IF (maxwell_solver == 0) THEN
+          DO iy = 1, ny
+            DO ix = 1, nx
               bx(ix, iy) = bx(ix, iy) &
                   - hdty * (ez(ix  , iy+1) - ez(ix  , iy  ))
 
@@ -420,34 +418,33 @@ CONTAINS
               bz(ix, iy) = bz(ix, iy) &
                   - hdtx * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
                   + hdty * (ex(ix  , iy+1) - ex(ix  , iy  ))
-
-            ELSE IF ((maxwell_solver == 1) .OR. (maxwell_solver == 2) .OR. (maxwell_solver == 3)) THEN
+            ENDDO
+          ENDDO
+        ELSE
+          DO iy = 1, ny
+            DO ix = 1, nx
               bx(ix, iy) = bx(ix, iy) &
-                  - hdty*(alphay*(ez(ix  , iy+1) - ez(ix  , iy  )) &
-                         +betayx*(ez(ix+1, iy+1) - ez(ix+1, iy  )) &
-                         +betayx*(ez(ix-1, iy+1) - ez(ix-1, iy  )) &
-                         )
+                  - hdty * (alphay * (ez(ix  , iy+1) - ez(ix  , iy  ))  &
+                         +  betayx * (ez(ix+1, iy+1) - ez(ix+1, iy  )   &
+                                   +  ez(ix-1, iy+1) - ez(ix-1, iy  )))
 
               by(ix, iy) = by(ix, iy) &
-                  + hdtx*(alphax*(ez(ix+1, iy  ) - ez(ix  , iy  )) &
-                         +betaxy*(ez(ix+1, iy+1) - ez(ix  , iy+1)) &
-                         +betaxy*(ez(ix+1, iy-1) - ez(ix  , iy-1)) &
-                         +deltax*(ez(ix+2, iy  ) - ez(ix-1, iy  )) &
-                         )
+                  + hdtx * (alphax * (ez(ix+1, iy  ) - ez(ix  , iy  ))  &
+                         +  betaxy * (ez(ix+1, iy+1) - ez(ix  , iy+1)   &
+                                   +  ez(ix+1, iy-1) - ez(ix  , iy-1))  &
+                         +  deltax * (ez(ix+2, iy  ) - ez(ix-1, iy  )))
 
-              bz(ix ,iy) = bz(ix, iy) &
-                  - hdtx*(alphax*(ey(ix+1, iy  ) - ey(ix  , iy  )) &
-                         +betaxy*(ey(ix+1, iy+1) - ey(ix  , iy+1)) &
-                         +betaxy*(ey(ix+1, iy-1) - ey(ix  , iy-1)) &
-                         +deltax*(ey(ix+2, iy  ) - ey(ix-1, iy  )) &
-                         ) &
-                  + hdty*(alphay*(ex(ix  , iy+1) - ex(ix  , iy  )) &
-                         +betayx*(ex(ix+1, iy+1) - ex(ix+1, iy  )) &
-                         +betayx*(ex(ix-1, iy+1) - ex(ix-1, iy  )) &
-                         )
-            ENDIF
+              bz(ix, iy) = bz(ix, iy) &
+                  - hdtx * (alphax * (ey(ix+1, iy  ) - ey(ix  , iy  ))  &
+                         +  betaxy * (ey(ix+1, iy+1) - ey(ix  , iy+1)   &
+                                   +  ey(ix+1, iy-1) - ey(ix  , iy-1))  &
+                         +  deltax * (ey(ix+2, iy  ) - ey(ix-1, iy  ))) &
+                  + hdty * (alphay * (ex(ix  , iy+1) - ex(ix  , iy  ))  &
+                         +  betayx * (ex(ix+1, iy+1) - ex(ix+1, iy  )   &
+                                   +  ex(ix-1, iy+1) - ex(ix-1, iy  )))
+            ENDDO
           ENDDO
-        ENDDO
+        ENDIF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num

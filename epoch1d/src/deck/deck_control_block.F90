@@ -66,7 +66,7 @@ MODULE deck_control_block
           'allow_missing_restart    ', &
           'print_eta_string         ', &
           'n_zeros                  ', &
-          'maxwell_solver           '/)
+          'maxwell_solver           ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -101,7 +101,7 @@ MODULE deck_control_block
           'allow_missing_restart    ', &
           'print_eta_string         ', &
           'n_zeros                  ', &
-          'maxwell_solver           '/)
+          'maxwell_solver           ' /)
 
 CONTAINS
 

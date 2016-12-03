@@ -195,42 +195,42 @@ CONTAINS
     REAL(num) :: cpml_x
     REAL(num) :: c1, c2, c3
     REAL(num) :: cx1, cx2, cx3
+    REAL(num) :: alphax, deltax, dx_cdt
 
-    REAL(num) :: alphax, deltax
-
-    IF (maxwell_solver == 1) THEN    
-      !lehe
-      !R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
-      deltax = (1.0_num / 4.0_num)*(1 - ((dx/(c*dt))**2)*(sin(pi*c*dt/(2*dx)))**2)
-      alphax = (1 - 3*deltax)
+    IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
+      ! R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
+      dx_cdt = dx / (c * dt)
+      deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
+      alphax = 1.0_num - 3.0_num * deltax
     ENDIF
 
     IF (cpml_boundaries) THEN
       cpml_x = hdtx
 
       IF (field_order == 2) THEN
-        DO ix = 1, nx
-          cpml_x = hdtx / cpml_kappa_bx(ix)
+        IF (maxwell_solver == 0) THEN
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_bx(ix)
 
-          IF (maxwell_solver == 0) THEN
             by(ix) = by(ix) &
                 + cpml_x * (ez(ix+1) - ez(ix  ))
 
             bz(ix) = bz(ix) &
                 - cpml_x * (ey(ix+1) - ey(ix  ))
-          ELSE  IF (maxwell_solver == 1) THEN
+          ENDDO
+        ELSE
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_bx(ix)
+
             by(ix) = by(ix) &
-               + cpml_x*(alphax*(ez(ix+1) - ez(ix  )) &
-                        +deltax*(ez(ix+2) - ez(ix-1)) &
-                        )
+                + cpml_x * (alphax * (ez(ix+1) - ez(ix  ))  &
+                         +  deltax * (ez(ix+2) - ez(ix-1)))
 
             bz(ix) = bz(ix) &
-               - cpml_x*(alphax*(ey(ix+1) - ey(ix  )) &
-                        +deltax*(ey(ix+2) - ey(ix-1)) &
-                        )
-          ENDIF
-
-        ENDDO
+                - cpml_x * (alphax * (ey(ix+1) - ey(ix  ))  &
+                         +  deltax * (ey(ix+2) - ey(ix-1)))
+          ENDDO
+        ENDIF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -274,26 +274,25 @@ CONTAINS
       CALL cpml_advance_b_currents(hdt)
     ELSE
       IF (field_order == 2) THEN
-        DO ix = 1, nx
-          IF (maxwell_solver == 0) THEN
+        IF (maxwell_solver == 0) THEN
+          DO ix = 1, nx
             by(ix) = by(ix) &
                 + hdtx * (ez(ix+1) - ez(ix  ))
 
             bz(ix) = bz(ix) &
                 - hdtx * (ey(ix+1) - ey(ix  ))
-          ELSE  IF (maxwell_solver == 1) THEN
+          ENDDO
+        ELSE
+          DO ix = 1, nx
             by(ix) = by(ix) &
-               + hdtx*(alphax*(ez(ix+1) - ez(ix  )) &
-                        +deltax*(ez(ix+2) - ez(ix-1)) &
-                        )
+                + hdtx * (alphax * (ez(ix+1) - ez(ix  ))  &
+                       +  deltax * (ez(ix+2) - ez(ix-1)))
 
             bz(ix) = bz(ix) &
-               - hdtx*(alphax*(ey(ix+1) - ey(ix  )) &
-                        +deltax*(ey(ix+2) - ey(ix-1)) &
-                        )
-          ENDIF
-
-        ENDDO
+                - hdtx * (alphax * (ey(ix+1) - ey(ix  ))  &
+                       +  deltax * (ey(ix+2) - ey(ix-1)))
+          ENDDO
+        ENDIF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
