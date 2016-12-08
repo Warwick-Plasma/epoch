@@ -29,7 +29,7 @@ MODULE deck
   USE deck_window_block
   USE deck_subset_block
   USE deck_collision_block
-  USE deck_particles_block
+  USE deck_part_from_file_block
 #ifdef PHOTONS
   USE photons
 #endif
@@ -95,7 +95,7 @@ CONTAINS
     CALL qed_deck_initialise
     CALL species_deck_initialise
     CALL window_deck_initialise
-    CALL particles_deck_initialise
+    CALL part_from_file_deck_initialise
 
   END SUBROUTINE deck_initialise
 
@@ -121,7 +121,7 @@ CONTAINS
 #endif
     CALL qed_deck_finalise
     CALL species_deck_finalise
-    CALL particles_deck_finalise ! Must be called after species_deck_finalise
+    CALL part_from_file_deck_finalise ! Must be called after species_deck_finalise
     CALL window_deck_finalise
 
   END SUBROUTINE deck_finalise
@@ -164,8 +164,8 @@ CONTAINS
       CALL species_block_start
     ELSE IF (str_cmp(block_name, 'window')) THEN
       CALL window_block_start
-    ELSE IF (str_cmp(block_name, 'particles')) THEN
-      CALL particles_block_start
+    ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
+      CALL part_from_file_block_start
     ENDIF
 
   END SUBROUTINE start_block
@@ -209,8 +209,8 @@ CONTAINS
       CALL species_block_end
     ELSE IF (str_cmp(block_name, 'window')) THEN
       CALL window_block_end
-    ELSE IF (str_cmp(block_name, 'particles')) THEN
-      CALL particles_block_end
+    ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
+      CALL part_from_file_block_end
     ENDIF
 
   END SUBROUTINE end_block
@@ -289,8 +289,8 @@ CONTAINS
     ELSE IF (str_cmp(block_name, 'window')) THEN
       handle_block = window_block_handle_element(block_element, block_value)
       RETURN
-    ELSE IF (str_cmp(block_name, 'particles')) THEN
-      handle_block = particles_block_handle_element(block_element, block_value)
+    ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
+      handle_block = part_from_file_block_handle_element(block_element, block_value)
       RETURN
     ENDIF
 
@@ -337,7 +337,7 @@ CONTAINS
 #endif
     errcode_deck = IOR(errcode_deck, species_block_check())
     errcode_deck = IOR(errcode_deck, window_block_check())
-    errcode_deck = IOR(errcode_deck, particles_block_check())
+    errcode_deck = IOR(errcode_deck, part_from_file_block_check())
 
     errcode_deck = IOR(errcode_deck, custom_blocks_check())
 

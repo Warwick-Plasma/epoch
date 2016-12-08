@@ -739,7 +739,7 @@ CONTAINS
       IF (file_inconsistencies) THEN
         IF (rank == 0) THEN
           WRITE(*,*) '*** ERROR ***'
-          WRITE(*,*) 'Error while loading particles for species ', &
+          WRITE(*,*) 'Error while loading particles_from_file for species ', &
               TRIM(curr_loader%target_name)
         ENDIF
         CALL abort_code(c_err_bad_setup)

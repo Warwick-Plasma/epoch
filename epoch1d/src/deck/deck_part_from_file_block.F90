@@ -15,7 +15,7 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-MODULE deck_particles_block
+MODULE deck_part_from_file_block
 
   USE strings_advanced
   USE setup
@@ -29,9 +29,9 @@ MODULE deck_particles_block
 
   PRIVATE
 
-  PUBLIC :: particles_deck_initialise, particles_deck_finalise
-  PUBLIC :: particles_block_start, particles_block_end
-  PUBLIC :: particles_block_handle_element, particles_block_check
+  PUBLIC :: part_from_file_deck_initialise, part_from_file_deck_finalise
+  PUBLIC :: part_from_file_block_start, part_from_file_block_end
+  PUBLIC :: part_from_file_block_handle_element, part_from_file_block_check
 
   LOGICAL :: got_target
   INTEGER :: check_block
@@ -43,7 +43,7 @@ MODULE deck_particles_block
 
 CONTAINS
 
-  SUBROUTINE particles_deck_initialise
+  SUBROUTINE part_from_file_deck_initialise
 
     check_block = c_err_none
     current_loader_id = -1
@@ -55,11 +55,11 @@ CONTAINS
       ALLOCATE(loader_targets(1))
     ENDIF
 
-  END SUBROUTINE particles_deck_initialise
+  END SUBROUTINE part_from_file_deck_initialise
 
 
 
-  SUBROUTINE particles_deck_finalise
+  SUBROUTINE part_from_file_deck_finalise
 
     ! First pass: Validate loader targets and abort on error
     ! Allocate loader data structures for second pass
@@ -73,11 +73,11 @@ CONTAINS
     DEALLOCATE(loader_block_ids)
     DEALLOCATE(loader_targets)
 
-  END SUBROUTINE particles_deck_finalise
+  END SUBROUTINE part_from_file_deck_finalise
 
 
 
-  SUBROUTINE particles_block_start
+  SUBROUTINE part_from_file_block_start
 
 #ifdef PER_PARTICLE_CHARGE_MASS
     INTEGER :: io iu
@@ -86,8 +86,8 @@ CONTAINS
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*) '*** ERROR ***'
-        WRITE(io,*) '"particles" block not supported when used with ', &
-            '"PER_PARTICLE_CHARGE_MASS"'
+        WRITE(io,*) '"particles_from_file" block not supported when used ', &
+            'with "PER_PARTICLE_CHARGE_MASS"'
       ENDDO
     ENDIF
     CALL abort_code(c_err_bad_setup)
@@ -98,11 +98,11 @@ CONTAINS
       current_loader_id = loader_block_ids(current_block_num)
     ENDIF
 
-  END SUBROUTINE particles_block_start
+  END SUBROUTINE part_from_file_block_start
 
 
 
-  SUBROUTINE particles_block_end
+  SUBROUTINE part_from_file_block_end
 
     CHARACTER(LEN=8) :: id_string
     INTEGER :: io, iu
@@ -120,11 +120,11 @@ CONTAINS
       check_block = c_err_missing_elements
     ENDIF
 
-  END SUBROUTINE particles_block_end
+  END SUBROUTINE part_from_file_block_end
 
 
 
-  FUNCTION particles_block_handle_element(element, value) RESULT(errcode)
+  FUNCTION part_from_file_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(LEN=string_length), INTENT(IN) :: element, value
     INTEGER :: errcode, filename_error_ignore
@@ -146,7 +146,7 @@ CONTAINS
       loader_block_ids(current_block_num) = index_by_target_as_needed(value)
     ENDIF
 
-    ! First pass just setup for each particles block
+    ! First pass just setup for each particles_from_file block
     IF (deck_state == c_ds_first) RETURN
 
     ! Second pass: Continue to read elements and write to loader structure
@@ -265,11 +265,11 @@ CONTAINS
     ! If we got to here, then element is not specified
     errcode = c_err_unknown_element
 
-  END FUNCTION particles_block_handle_element
+  END FUNCTION part_from_file_block_handle_element
 
 
 
-  FUNCTION particles_block_check() RESULT(errcode)
+  FUNCTION part_from_file_block_check() RESULT(errcode)
 
     INTEGER :: errcode
     INTEGER :: i, io, iu
@@ -311,7 +311,7 @@ CONTAINS
 #endif
     ENDDO
 
-  END FUNCTION particles_block_check
+  END FUNCTION part_from_file_block_check
 
 
 
@@ -399,4 +399,4 @@ CONTAINS
 
   END SUBROUTINE setup_custom_loaders_list
 
-END MODULE deck_particles_block
+END MODULE deck_part_from_file_block
