@@ -66,24 +66,25 @@ CONTAINS
   END SUBROUTINE load_single_array_from_file
 
 
-  !--------------------------------------------------------------------------------
-  ! These subroutines allow loading of a simple 1D array of data from a raw binary
-  ! file.  The file is assumed to contain complete valid data after a specified
-  ! header of length offset.
-  !--------------------------------------------------------------------------------
+
+  !----------------------------------------------------------------------------
+  ! These subroutines allow loading of a simple 1D array of data from a raw
+  ! binary file. The file is assumed to contain complete valid data after a
+  ! specified header of length offset.
+  !----------------------------------------------------------------------------
 
   FUNCTION load_1d_real_array(filename, array, offset, err) RESULT(records)
 
-    CHARACTER(*) , INTENT(IN) :: filename
-    INTEGER(KIND=8), INTENT(IN) :: offset
+    CHARACTER(LEN=*), INTENT(IN) :: filename
+    INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     REAL(num), DIMENSION(:), POINTER, INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
-    INTEGER(KIND=8) :: total_records, remainder, tail
+    INTEGER(KIND=MPI_OFFSET_KIND) :: total_records, remainder, tail
     INTEGER :: fh, typesize, records
     INTEGER :: stat(MPI_STATUS_SIZE)
     INTEGER :: datatype
-    
+
     datatype = mpireal
 
     records = 0
@@ -92,7 +93,7 @@ CONTAINS
 
     IF (errcode /= 0) THEN
       IF (rank == 0) THEN
-        PRINT *, '***DEVELOPER WARNING***'
+        PRINT *, '*** DEVELOPER WARNING ***'
         PRINT *, 'Unknown MPI_DATATYPE passed'
       ENDIF
       err = IOR(err, c_err_io_error)
@@ -110,26 +111,29 @@ CONTAINS
 
     CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
 
-    tail = MOD(INT(filesize,8) - offset, INT(typesize,8)) 
-    IF ((RANK == 0) .AND. ( tail /= 0)) THEN
+    tail = MOD(INT(filesize, i8) - offset, INT(typesize, i8))
+    IF (rank == 0 .AND. tail /= 0) THEN
       PRINT *, '***WARNING***'
-      PRINT *, 'Length (less offset) of ', filename, ' not an integer multiple of datasize'
+      PRINT *, 'Length (less offset) of ', TRIM(filename), &
+          ' not an integer multiple of datasize'
       PRINT *, 'Corrupt data?'
     ENDIF
-    total_records = (filesize - offset - tail)/typesize
-    records = INT(total_records / nproc,4)
-    remainder = MOD(total_records, INT(nproc,8))
-    IF (RANK < remainder) THEN
+
+    total_records = (filesize - offset - tail) / typesize
+    records = INT(total_records / nproc, i4)
+    remainder = MOD(total_records, INT(nproc, i8))
+    IF (rank < remainder) THEN
       records = records + 1
-      disp = offset + RANK * records * typesize 
+      disp = offset + rank * records * typesize
     ELSE
-      disp = offset + (records + 1)*remainder*typesize + records*(RANK - remainder)*typesize
+      disp = offset + (records + 1) * remainder * typesize &
+          + records * (rank - remainder) * typesize
     ENDIF
 
     ALLOCATE(array(records))
 
     CALL MPI_FILE_SET_VIEW(fh, disp, datatype, datatype, 'native', &
-         MPI_INFO_NULL, errcode)
+        MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(fh, array, records, datatype, stat, errcode)
 
@@ -141,15 +145,14 @@ CONTAINS
 
 
 
-
   FUNCTION load_1d_integer4_array(filename, array, offset, err) RESULT(records)
 
-    CHARACTER(*) , INTENT(IN) :: filename
-    INTEGER(KIND=8), INTENT(IN) :: offset
-    INTEGER(KIND=4), DIMENSION(:), POINTER, INTENT(INOUT) :: array
+    CHARACTER(LEN=*), INTENT(IN) :: filename
+    INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
+    INTEGER(KIND=i4), DIMENSION(:), POINTER, INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
-    INTEGER(KIND=8) :: total_records, remainder, tail
+    INTEGER(KIND=MPI_OFFSET_KIND) :: total_records, remainder, tail
     INTEGER :: fh, typesize, records
     INTEGER :: stat(MPI_STATUS_SIZE)
     INTEGER :: datatype = MPI_INTEGER4
@@ -160,7 +163,7 @@ CONTAINS
 
     IF (errcode /= 0) THEN
       IF (rank == 0) THEN
-        PRINT *, '***DEVELOPER WARNING***'
+        PRINT *, '*** DEVELOPER WARNING ***'
         PRINT *, 'Unknown MPI_DATATYPE passed'
       ENDIF
       err = IOR(err, c_err_io_error)
@@ -178,26 +181,29 @@ CONTAINS
 
     CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
 
-    tail = MOD(INT(filesize,8) - offset, INT(typesize,8)) 
-    IF ((RANK == 0) .AND. ( tail /= 0)) THEN
+    tail = MOD(INT(filesize, i8) - offset, INT(typesize, i8))
+    IF (rank == 0 .AND. tail /= 0) THEN
       PRINT *, '***WARNING***'
-      PRINT *, 'Length (less offset) of ', filename, ' not an integer multiple of datasize'
+      PRINT *, 'Length (less offset) of ', TRIM(filename), &
+          ' not an integer multiple of datasize'
       PRINT *, 'Corrupt data?'
     ENDIF
-    total_records = (filesize - offset - tail)/typesize
-    records = INT(total_records / nproc,4)
-    remainder = MOD(total_records, INT(nproc,8))
-    IF (RANK < remainder) THEN
+
+    total_records = (filesize - offset - tail) / typesize
+    records = INT(total_records / nproc, i4)
+    remainder = MOD(total_records, INT(nproc, i8))
+    IF (rank < remainder) THEN
       records = records + 1
-      disp = offset + RANK * records * typesize 
+      disp = offset + rank * records * typesize
     ELSE
-      disp = offset + (records + 1)*remainder*typesize + records*(RANK - remainder)*typesize
+      disp = offset + (records + 1) * remainder * typesize &
+          + records * (rank - remainder) * typesize
     ENDIF
 
     ALLOCATE(array(records))
 
     CALL MPI_FILE_SET_VIEW(fh, disp, datatype, datatype, 'native', &
-         MPI_INFO_NULL, errcode)
+        MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(fh, array, records, datatype, stat, errcode)
 
@@ -211,12 +217,12 @@ CONTAINS
 
   FUNCTION load_1d_integer8_array(filename, array, offset, err) RESULT(records)
 
-    CHARACTER(*) , INTENT(IN) :: filename
-    INTEGER(KIND=8), INTENT(IN) :: offset
-    INTEGER(KIND=8), DIMENSION(:), POINTER, INTENT(INOUT) :: array
+    CHARACTER(LEN=*), INTENT(IN) :: filename
+    INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
+    INTEGER(KIND=i8), DIMENSION(:), POINTER, INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
-    INTEGER(KIND=8) :: total_records, remainder, tail
+    INTEGER(KIND=MPI_OFFSET_KIND) :: total_records, remainder, tail
     INTEGER :: fh, typesize, records
     INTEGER :: stat(MPI_STATUS_SIZE)
     INTEGER :: datatype = MPI_INTEGER8
@@ -227,7 +233,7 @@ CONTAINS
 
     IF (errcode /= 0) THEN
       IF (rank == 0) THEN
-        PRINT *, '***DEVELOPER WARNING***'
+        PRINT *, '*** DEVELOPER WARNING ***'
         PRINT *, 'Unknown MPI_DATATYPE passed'
       ENDIF
       err = IOR(err, c_err_io_error)
@@ -245,26 +251,29 @@ CONTAINS
 
     CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
 
-    tail = MOD(INT(filesize,8) - offset, INT(typesize,8)) 
-    IF ((RANK == 0) .AND. ( tail /= 0)) THEN
+    tail = MOD(INT(filesize, i8) - offset, INT(typesize, i8))
+    IF (rank == 0 .AND. tail /= 0) THEN
       PRINT *, '***WARNING***'
-      PRINT *, 'Length (less offset) of ', filename, ' not an integer multiple of datasize'
+      PRINT *, 'Length (less offset) of ', TRIM(filename), &
+          ' not an integer multiple of datasize'
       PRINT *, 'Corrupt data?'
     ENDIF
-    total_records = (filesize - offset - tail)/typesize
-    records = INT(total_records / nproc,4)
-    remainder = MOD(total_records, INT(nproc,8))
-    IF (RANK < remainder) THEN
+
+    total_records = (filesize - offset - tail) / typesize
+    records = INT(total_records / nproc, i4)
+    remainder = MOD(total_records, INT(nproc, i8))
+    IF (rank < remainder) THEN
       records = records + 1
-      disp = offset + RANK * records * typesize 
+      disp = offset + rank * records * typesize
     ELSE
-      disp = offset + (records + 1)*remainder*typesize + records*(RANK - remainder)*typesize
+      disp = offset + (records + 1) * remainder * typesize &
+          + records * (rank - remainder) * typesize
     ENDIF
 
     ALLOCATE(array(records))
 
     CALL MPI_FILE_SET_VIEW(fh, disp, datatype, datatype, 'native', &
-         MPI_INFO_NULL, errcode)
+        MPI_INFO_NULL, errcode)
 
     CALL MPI_FILE_READ_ALL(fh, array, records, datatype, stat, errcode)
 

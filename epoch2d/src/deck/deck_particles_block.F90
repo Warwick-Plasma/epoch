@@ -37,10 +37,10 @@ MODULE deck_particles_block
   INTEGER :: check_block
   INTEGER(KIND=8) :: current_offset
   INTEGER :: current_block_num
-  INTEGER :: current_loader_id 
+  INTEGER :: current_loader_id
   INTEGER, DIMENSION(:), POINTER :: loader_block_ids
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: loader_targets
-  
+
 CONTAINS
 
   SUBROUTINE particles_deck_initialise
@@ -60,12 +60,12 @@ CONTAINS
 
 
   SUBROUTINE particles_deck_finalise
-  
+
     ! First pass: Validate loader targets and abort on error
     ! Allocate loader data structures for second pass
     IF (deck_state == c_ds_first) THEN
       IF (crosscheck_loader_species() /= c_err_none) THEN
-        CALL abort_code(c_err_bad_value) 
+        CALL abort_code(c_err_bad_value)
       ENDIF
       CALL setup_custom_loaders_list
       RETURN
@@ -86,7 +86,8 @@ CONTAINS
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*) '*** ERROR ***'
-        WRITE(io,*) '"particles" block not supported when used with "PER_PARTICLE_CHARGE_MASS'
+        WRITE(io,*) '"particles" block not supported when used with ', &
+            '"PER_PARTICLE_CHARGE_MASS"'
       ENDDO
     ENDIF
     CALL abort_code(c_err_bad_setup)
@@ -106,7 +107,7 @@ CONTAINS
     CHARACTER(LEN=8) :: id_string
     INTEGER :: io, iu
 
-     IF (.NOT.got_target) THEN
+    IF (.NOT.got_target) THEN
       IF (rank == 0) THEN
         CALL integer_as_string(current_block_num, id_string)
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -120,6 +121,7 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE particles_block_end
+
 
 
   FUNCTION particles_block_handle_element(element, value) RESULT(errcode)
@@ -144,15 +146,15 @@ CONTAINS
     ENDIF
 
     ! First pass just setup for each particles block
-    IF (deck_state == c_ds_first) RETURN 
+    IF (deck_state == c_ds_first) RETURN
 
-    ! Second pass: Continue to read elements and write to loader structure 
-    
+    ! Second pass: Continue to read elements and write to loader structure
+
     IF (str_cmp(element, 'offset')) THEN
-        current_offset = as_long_integer_print(value, element, errcode)
+      current_offset = as_long_integer_print(value, element, errcode)
       RETURN
     ENDIF
-      
+
     ! below here only expect to be dealing with filenames
     CALL get_filename(value, filename, got_filename, filename_error_ignore)
 
@@ -165,7 +167,7 @@ CONTAINS
       errcode = c_err_bad_value
       RETURN
     ENDIF
- 
+
     IF (str_cmp(element, 'y_data')) THEN
       IF (got_filename) THEN
         custom_loaders_list(current_loader_id)%y_data = TRIM(filename)
@@ -175,7 +177,7 @@ CONTAINS
       errcode = c_err_bad_value
       RETURN
     ENDIF
- 
+
     IF (str_cmp(element, 'px_data')) THEN
       IF (got_filename) THEN
         custom_loaders_list(current_loader_id)%px_data = TRIM(filename)
@@ -186,7 +188,7 @@ CONTAINS
       errcode = c_err_bad_value
       RETURN
     ENDIF
- 
+
     IF (str_cmp(element, 'py_data')) THEN
       IF (got_filename) THEN
         custom_loaders_list(current_loader_id)%py_data = TRIM(filename)
@@ -197,7 +199,7 @@ CONTAINS
       errcode = c_err_bad_value
       RETURN
     ENDIF
- 
+
     IF (str_cmp(element, 'pz_data')) THEN
       IF (got_filename) THEN
         custom_loaders_list(current_loader_id)%pz_data = TRIM(filename)
@@ -208,7 +210,7 @@ CONTAINS
       errcode = c_err_bad_value
       RETURN
     ENDIF
- 
+
 #if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     IF (str_cmp(element, 'w_data')) THEN
       IF (got_filename) THEN
@@ -257,7 +259,7 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: i, io, iu
     CHARACTER(LEN=string_length) :: id_string
-  
+
     errcode = check_block
 
     IF (deck_state == c_ds_first) RETURN
@@ -270,12 +272,13 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-                ' (target = "', TRIM(custom_loaders_list(i)%target_name), '")', &
-                ' has no "x_data" element.'
+                ' (target = "', TRIM(custom_loaders_list(i)%target_name), &
+                '") ', 'has no "x_data" element.'
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
-      ENDIF      
+      ENDIF
+
       IF (str_cmp(custom_loaders_list(i)%y_data, '')) THEN
         IF (rank == 0) THEN
           CALL integer_as_string(current_block_num, id_string)
@@ -283,13 +286,14 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-                ' (target = "', TRIM(custom_loaders_list(i)%target_name), '")', &
-                ' has no "y_data" element.'
+                ' (target = "', TRIM(custom_loaders_list(i)%target_name), &
+                '") ', 'has no "y_data" element.'
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
-      ENDIF      
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) 
+      ENDIF
+
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
       IF (str_cmp(custom_loaders_list(i)%w_data, '')) THEN
         IF (rank == 0) THEN
           CALL integer_as_string(current_block_num, id_string)
@@ -297,8 +301,8 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-                ' (target = "', TRIM(custom_loaders_list(i)%target_name), '")', &
-                ' has no "w_data" element.'
+                ' (target = "', TRIM(custom_loaders_list(i)%target_name), &
+                '") ', 'has no "w_data" element.'
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
@@ -322,19 +326,19 @@ CONTAINS
         RETURN
       ENDIF
     ENDDO
-  
+
     n_custom_loaders = n_custom_loaders + 1
     index_by_target_as_needed = n_custom_loaders
 
     CALL grow_array(loader_targets, n_custom_loaders)
     loader_targets(n_custom_loaders) = TRIM(target)
-    
+
   END FUNCTION index_by_target_as_needed
 
 
 
   FUNCTION crosscheck_loader_species() RESULT(errcode)
-    
+
     INTEGER :: errcode
     INTEGER :: i, io, iu
 
@@ -346,8 +350,9 @@ CONTAINS
           DO iu = 1, nio_units  ! Print to all registered output buffers
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
-            WRITE(io,*) 'Particle block with target "' // TRIM(loader_targets(i)) &
-              // '" must have a matching species defined/'
+            WRITE(io,*) 'Particle block with target "' &
+                // TRIM(loader_targets(i)) // '" ', &
+                'must have a matching species defined'
           ENDDO
         ENDIF
         RETURN
@@ -363,11 +368,12 @@ CONTAINS
   SUBROUTINE setup_custom_loaders_list
 
     INTEGER :: i
-    
+
     ALLOCATE(custom_loaders_list(n_custom_loaders))
     DO i = 1, n_custom_loaders
       custom_loaders_list(i)%target_name = loader_targets(i)
-      custom_loaders_list(i)%target_id = species_number_from_name(loader_targets(i)) 
+      custom_loaders_list(i)%target_id = &
+          species_number_from_name(loader_targets(i))
       custom_loaders_list(i)%x_data = ''
       custom_loaders_list(i)%x_data_offset = 0
       custom_loaders_list(i)%y_data = ''
@@ -395,4 +401,3 @@ CONTAINS
   END SUBROUTINE setup_custom_loaders_list
 
 END MODULE deck_particles_block
-
