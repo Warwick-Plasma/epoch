@@ -752,7 +752,7 @@ CONTAINS
       ENDDO
 
       ! Need to keep totals accurate
-      CALL MPI_ALLREDUCE(partlist%count, species%count,1, MPI_INTEGER8, &
+      CALL MPI_ALLREDUCE(partlist%count, species%count, 1, MPI_INTEGER8, &
           MPI_SUM, comm, errcode)
 
       IF (rank == 0) THEN
