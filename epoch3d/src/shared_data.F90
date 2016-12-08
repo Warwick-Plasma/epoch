@@ -1092,7 +1092,6 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_loader_chunk_size = 131072 ! 1MB/variable data chunks
 
   TYPE custom_particle_loader
-    CHARACTER(LEN=string_length) :: species_name
     INTEGER :: species_id
 
     ! Position Data

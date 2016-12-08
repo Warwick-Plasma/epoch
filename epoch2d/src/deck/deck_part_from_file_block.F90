@@ -271,12 +271,15 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: i, io, iu
     CHARACTER(LEN=string_length) :: id_string
+    TYPE(particle_species), POINTER :: species
 
     errcode = check_block
 
     IF (deck_state == c_ds_first) RETURN
 
     DO i = 1, n_custom_loaders
+      species => species_list(custom_loaders_list(i)%species_id)
+
       IF (str_cmp(custom_loaders_list(i)%x_data, '')) THEN
         IF (rank == 0) THEN
           CALL integer_as_string(current_block_num, id_string)
@@ -284,8 +287,8 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-                ' (target = "', TRIM(custom_loaders_list(i)%species_name), &
-                '") ', 'has no "x_data" element.'
+                ' (species = "', TRIM(species%name), '") ', &
+                'has no "x_data" element.'
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
@@ -298,8 +301,8 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-                ' (target = "', TRIM(custom_loaders_list(i)%species_name), &
-                '") ', 'has no "y_data" element.'
+                ' (species = "', TRIM(species%name), '") ', &
+                'has no "y_data" element.'
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
@@ -313,8 +316,8 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-                ' (target = "', TRIM(custom_loaders_list(i)%species_name), &
-                '") ', 'has no "w_data" element.'
+                ' (species = "', TRIM(species%name), '") ', &
+                'has no "w_data" element.'
           ENDDO
         ENDIF
         errcode = c_err_missing_elements
@@ -383,7 +386,6 @@ CONTAINS
 
     ALLOCATE(custom_loaders_list(n_custom_loaders))
     DO i = 1, n_custom_loaders
-      custom_loaders_list(i)%species_name = loader_species(i)
       custom_loaders_list(i)%species_id = &
           species_number_from_name(loader_species(i))
       custom_loaders_list(i)%x_data = ''

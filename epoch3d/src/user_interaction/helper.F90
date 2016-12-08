@@ -796,7 +796,7 @@ CONTAINS
         IF (rank == 0) THEN
           WRITE(*,*) '*** ERROR ***'
           WRITE(*,*) 'Error while loading particles_from_file for species ', &
-              TRIM(curr_loader%species_name)
+              TRIM(species%name)
         ENDIF
         CALL abort_code(c_err_bad_setup)
       ENDIF
