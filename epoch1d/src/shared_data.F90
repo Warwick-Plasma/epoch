@@ -850,6 +850,8 @@ MODULE shared_data
   REAL(num) :: by_x_min, by_x_max
   REAL(num) :: bz_x_min, bz_x_max
 
+  REAL(num) :: initial_jx, initial_jy, initial_jz
+
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
   TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data

@@ -894,6 +894,8 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: by_z_min, by_z_max
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bz_z_min, bz_z_max
 
+  REAL(num) :: initial_jx, initial_jy, initial_jz
+
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
   TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data

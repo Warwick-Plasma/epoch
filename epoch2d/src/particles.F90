@@ -491,6 +491,10 @@ CONTAINS
       IF (smooth_currents) CALL smooth_current()
     END IF
 
+    jx = jx - initial_jx
+    jy = jy - initial_jy
+    jz = jz - initial_jz
+
   END SUBROUTINE push_particles
 
 #ifdef PHOTONS
