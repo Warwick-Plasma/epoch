@@ -682,7 +682,7 @@ CONTAINS
       curr_loader => custom_loaders_list(current_loader_num)
 
       ! Grab associated particle lists
-      species => species_list(curr_loader%target_id)
+      species => species_list(curr_loader%species_id)
       partlist => species%attached_list
 
       ! Just to be sure
@@ -740,7 +740,7 @@ CONTAINS
         IF (rank == 0) THEN
           WRITE(*,*) '*** ERROR ***'
           WRITE(*,*) 'Error while loading particles_from_file for species ', &
-              TRIM(curr_loader%target_name)
+              TRIM(curr_loader%species_name)
         ENDIF
         CALL abort_code(c_err_bad_setup)
       ENDIF

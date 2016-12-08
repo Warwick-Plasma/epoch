@@ -32,13 +32,13 @@ MODULE deck_part_from_file_block
   PUBLIC :: part_from_file_block_start, part_from_file_block_end
   PUBLIC :: part_from_file_block_handle_element, part_from_file_block_check
 
-  LOGICAL :: got_target
+  LOGICAL :: got_species
   INTEGER :: check_block
   INTEGER(KIND=8) :: current_offset
   INTEGER :: current_block_num
   INTEGER :: current_loader_id
   INTEGER, DIMENSION(:), POINTER :: loader_block_ids
-  CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: loader_targets
+  CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: loader_species
 
 CONTAINS
 
@@ -51,7 +51,7 @@ CONTAINS
     IF (deck_state == c_ds_first) THEN
       n_custom_loaders = 0
       ALLOCATE(loader_block_ids(1))
-      ALLOCATE(loader_targets(1))
+      ALLOCATE(loader_species(1))
     ENDIF
 
   END SUBROUTINE part_from_file_deck_initialise
@@ -60,7 +60,7 @@ CONTAINS
 
   SUBROUTINE part_from_file_deck_finalise
 
-    ! First pass: Validate loader targets and abort on error
+    ! First pass: Validate loader species and abort on error
     ! Allocate loader data structures for second pass
     IF (deck_state == c_ds_first) THEN
       IF (crosscheck_loader_species() /= c_err_none) THEN
@@ -70,7 +70,7 @@ CONTAINS
       RETURN
     ENDIF
     DEALLOCATE(loader_block_ids)
-    DEALLOCATE(loader_targets)
+    DEALLOCATE(loader_species)
 
   END SUBROUTINE part_from_file_deck_finalise
 
@@ -92,7 +92,7 @@ CONTAINS
     CALL abort_code(c_err_bad_setup)
 #endif
     current_block_num = current_block_num + 1
-    got_target = .FALSE.
+    got_species = .FALSE.
     IF (deck_state == c_ds_last) THEN
       current_loader_id = loader_block_ids(current_block_num)
     ENDIF
@@ -106,14 +106,14 @@ CONTAINS
     CHARACTER(LEN=8) :: id_string
     INTEGER :: io, iu
 
-    IF (.NOT.got_target) THEN
+    IF (.NOT.got_species) THEN
       IF (rank == 0) THEN
         CALL integer_as_string(current_block_num, id_string)
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-              ' has no "target" element.'
+              ' has no "species" element.'
         ENDDO
       ENDIF
       check_block = c_err_missing_elements
@@ -134,15 +134,15 @@ CONTAINS
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
 
-    IF (str_cmp(element, 'target')) THEN
-      IF (got_target) THEN
+    IF (str_cmp(element, 'species')) THEN
+      IF (got_species) THEN
         errcode = c_err_preset_element
         RETURN
       ENDIF
-      got_target = .TRUE.
+      got_species = .TRUE.
       IF (deck_state /= c_ds_first) RETURN
       CALL grow_array(loader_block_ids, current_block_num)
-      loader_block_ids(current_block_num) = index_by_target_as_needed(value)
+      loader_block_ids(current_block_num) = index_by_species(value)
     ENDIF
 
     ! First pass just setup for each particles_from_file block
@@ -286,7 +286,7 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-                ' (target = "', TRIM(custom_loaders_list(i)%target_name), &
+                ' (target = "', TRIM(custom_loaders_list(i)%species_name), &
                 '") ', 'has no "x_data" element.'
           ENDDO
         ENDIF
@@ -301,7 +301,7 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
-                ' (target = "', TRIM(custom_loaders_list(i)%target_name), &
+                ' (target = "', TRIM(custom_loaders_list(i)%species_name), &
                 '") ', 'has no "w_data" element.'
           ENDDO
         ENDIF
@@ -314,26 +314,26 @@ CONTAINS
 
 
 
-  FUNCTION index_by_target_as_needed(target)
+  FUNCTION index_by_species(species)
 
-    CHARACTER(LEN=string_length), INTENT(IN) :: target
-    INTEGER :: index_by_target_as_needed
+    CHARACTER(LEN=string_length), INTENT(IN) :: species
+    INTEGER :: index_by_species
     INTEGER :: i
 
     DO i = 1, n_custom_loaders
-      IF (str_cmp(target, loader_targets(i))) THEN
-        index_by_target_as_needed = i
+      IF (str_cmp(species, loader_species(i))) THEN
+        index_by_species = i
         RETURN
       ENDIF
     ENDDO
 
     n_custom_loaders = n_custom_loaders + 1
-    index_by_target_as_needed = n_custom_loaders
+    index_by_species = n_custom_loaders
 
-    CALL grow_array(loader_targets, n_custom_loaders)
-    loader_targets(n_custom_loaders) = TRIM(target)
+    CALL grow_array(loader_species, n_custom_loaders)
+    loader_species(n_custom_loaders) = TRIM(species)
 
-  END FUNCTION index_by_target_as_needed
+  END FUNCTION index_by_species
 
 
 
@@ -345,13 +345,13 @@ CONTAINS
     errcode = c_err_bad_value
 
     DO i = 1, n_custom_loaders
-      IF (species_number_from_name(loader_targets(i)) <= 0) THEN
+      IF (species_number_from_name(loader_species(i)) <= 0) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units  ! Print to all registered output buffers
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
-            WRITE(io,*) 'Particle block with target "' &
-                // TRIM(loader_targets(i)) // '" ', &
+            WRITE(io,*) 'Particle block with species "' &
+                // TRIM(loader_species(i)) // '" ', &
                 'must have a matching species defined'
           ENDDO
         ENDIF
@@ -371,9 +371,9 @@ CONTAINS
 
     ALLOCATE(custom_loaders_list(n_custom_loaders))
     DO i = 1, n_custom_loaders
-      custom_loaders_list(i)%target_name = loader_targets(i)
-      custom_loaders_list(i)%target_id = &
-          species_number_from_name(loader_targets(i))
+      custom_loaders_list(i)%species_name = loader_species(i)
+      custom_loaders_list(i)%species_id = &
+          species_number_from_name(loader_species(i))
       custom_loaders_list(i)%x_data = ''
       custom_loaders_list(i)%x_data_offset = 0
       custom_loaders_list(i)%px_data = ''
