@@ -130,6 +130,7 @@ CONTAINS
     INTEGER :: errcode, filename_error_ignore
     CHARACTER(LEN=string_length) :: filename
     LOGICAL :: got_filename
+    INTEGER :: io, iu
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -175,6 +176,18 @@ CONTAINS
         RETURN
       ENDIF
       errcode = c_err_bad_value
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'z_data')) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) '"z_data" was ignored'
+          WRITE(io,*)
+        ENDDO
+      ENDIF
       RETURN
     ENDIF
 
