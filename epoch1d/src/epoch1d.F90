@@ -133,7 +133,7 @@ PROGRAM pic
   ! .TRUE. to over_ride balance fraction check
   IF (npart_global > 0) CALL balance_workload(.TRUE.)
 
-  CALL calc_initial_current
+  IF (use_current_correction) CALL calc_initial_current
   CALL particle_bcs
   CALL efield_bcs
 

@@ -540,9 +540,11 @@ CONTAINS
       IF (smooth_currents) CALL smooth_current()
     END IF
 
-    jx = jx - initial_jx
-    jy = jy - initial_jy
-    jz = jz - initial_jz
+    IF (use_current_correction) THEN
+      jx = jx - initial_jx
+      jy = jy - initial_jy
+      jz = jz - initial_jz
+    END IF
 
   END SUBROUTINE push_particles
 
