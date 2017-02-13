@@ -37,7 +37,8 @@ CONTAINS
     REAL(num), DIMENSION(:,:), INTENT(INOUT) :: array
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: subtype, subarray, fh, i
+    INTEGER :: subtype, subarray, fh, i, tsz
+    INTEGER(KIND=MPI_OFFSET_KIND) :: sz
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
         MPI_INFO_NULL, fh, errcode)
@@ -50,6 +51,16 @@ CONTAINS
 
     subtype = create_current_field_subtype()
     subarray = create_current_field_subarray(ng)
+    IF (rank == 0) THEN
+      CALL MPI_FILE_GET_SIZE(fh, sz, errcode)
+      CALL MPI_TYPE_SIZE(subtype, tsz, errcode)
+      IF (MOD(sz-offset, tsz) /= 0) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Binary input file "' // TRIM(filename) // '"', ' does not ', &
+            'appear to match the domain dimensions'
+      END IF
+    END IF
+
     CALL MPI_FILE_SET_VIEW(fh, offset, MPI_BYTE, subtype, 'native', &
         MPI_INFO_NULL, errcode)
 
