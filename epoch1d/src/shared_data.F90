@@ -865,9 +865,12 @@ MODULE shared_data
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, xb
 
-  INTEGER, PARAMETER :: data_dir_max_length = 64
-  CHARACTER(LEN=data_dir_max_length) :: data_dir, filesystem
   INTEGER, PARAMETER :: c_max_string_length = 64
+  INTEGER, PARAMETER :: c_max_prefix = 16
+  ! Maximum path length on Linux machines
+  INTEGER, PARAMETER :: c_max_path_length = 4096 + c_max_prefix
+  CHARACTER(LEN=c_max_path_length) :: data_dir
+  CHARACTER(LEN=c_max_prefix) :: filesystem
 
   LOGICAL :: neutral_background = .TRUE.
   LOGICAL :: use_random_seed = .FALSE.
@@ -900,9 +903,7 @@ MODULE shared_data
   LOGICAL :: use_current_correction
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
-  CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename
-  CHARACTER(LEN=6+data_dir_max_length+c_max_zeros+c_id_length) :: &
-      full_restart_filename
+  CHARACTER(LEN=c_max_path_length) :: full_restart_filename, restart_filename
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
