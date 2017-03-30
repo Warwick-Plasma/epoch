@@ -198,7 +198,7 @@ CONTAINS
     REAL(num) :: alphax, deltax, dx_cdt
 
     IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
-      ! R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
+      ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
       alphax = 1.0_num - 3.0_num * deltax

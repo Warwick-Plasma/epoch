@@ -306,7 +306,7 @@ CONTAINS
     REAL(num) :: gammax, gammay, gammaz
 
     IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
-      ! R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
+      ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       betaxy = 0.125_num * (dx / dy)**2
       betaxz = 0.125_num * (dx / dz)**2

@@ -252,7 +252,7 @@ CONTAINS
     REAL(num) :: delta, deltax, deltay, dx_cdt
 
     IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
-      ! R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
+      ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       delta  = dx
       dx_cdt = dx / (c * dt)
       betaxy = 0.125_num * (delta / dy)**2
