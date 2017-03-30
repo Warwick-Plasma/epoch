@@ -263,9 +263,8 @@ CONTAINS
       alphay = 1.0_num - 2.0_num * betayx
     ENDIF
 
-    IF (maxwell_solver == c_const_maxwell_solver_cowan) THEN
-      ! Cowan et al. J. Comput. Phys. 230, 61 (2011)
-      ! Nuter et al. Eur. Phys. J. 68, 177 (2014)
+    IF (maxwell_solver == c_const_maxwell_solver_pukhov) THEN
+      ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
       delta = min(dx, dy)
 
       betaxy = 0.125_num * (delta / dy)**2
@@ -274,18 +273,6 @@ CONTAINS
       deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy
       alphay = 1.0_num - 2.0_num * betayx
-    ENDIF
-
-    IF (maxwell_solver == c_const_maxwell_solver_pukhov) THEN
-      ! Nuter et al. Eur. Phys. J. 68, 177 (2014)
-      delta = dx
-
-      betaxy = 0.125_num * (delta / dy)**2
-      betayx = 0.125_num
-      deltax = 0.0_num
-      deltay = 0.0_num
-      alphax = 1.0_num - 2.0_num * betaxy
-      alphay = 0.75_num
     ENDIF
 
     IF (cpml_boundaries) THEN

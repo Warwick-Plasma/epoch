@@ -548,8 +548,14 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_maxwell_solver_cowan) THEN
+      PRINT*, '*** WARNING ***'
+      PRINT*, 'Cowan and Pukhov solvers are the same in 2D. Falling back do Pukhov solver.'
+      CALL push_on_eval(1.0_num * c_const_maxwell_solver_pukhov)
+      RETURN
+    ENDIF
+
     IF (opcode == c_const_maxwell_solver_lehe &
-        .OR. opcode == c_const_maxwell_solver_cowan &
         .OR. opcode == c_const_maxwell_solver_pukhov) THEN
       CALL push_on_eval(1.0_num * opcode)
       RETURN
