@@ -549,12 +549,6 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (opcode == c_const_maxwell_solver_cowan &
-        .OR. opcode == c_const_maxwell_solver_pukhov) THEN
-      PRINT*, '*** WARNING ***'
-      PRINT*, 'cowan and pukhov solvers are not yet implemented. Using lehe.'
-    ENDIF
-
     IF (opcode == c_const_maxwell_solver_lehe &
         .OR. opcode == c_const_maxwell_solver_cowan &
         .OR. opcode == c_const_maxwell_solver_pukhov) THEN

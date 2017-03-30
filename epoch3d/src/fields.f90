@@ -301,22 +301,75 @@ CONTAINS
     REAL(num) :: cy1, cy2, cy3
     REAL(num) :: cz1, cz2, cz3
     REAL(num) :: alphax, alphay, alphaz
-    REAL(num) :: betaxy, betayx, betazx, betaxz
-    REAL(num) :: delta, deltax, deltay, dx_cdt
+    REAL(num) :: betaxy, betayx, betazx, betaxz, betazy, betayz
+    REAL(num) :: delta, deltax, deltay, deltaz, dx_cdt
+    REAL(num) :: gammax, gammay, gammaz
 
     IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. Special Topics 16, 021301 (2013)
-      delta  = dx
       dx_cdt = dx / (c * dt)
       betaxy = 0.125_num * (dx / dy)**2
       betaxz = 0.125_num * (dx / dz)**2
       betayx = 0.125_num
       betazx = 0.125_num
+      betazy = 0.0_num
+      betayz = 0.0_num
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
       deltay = 0.0_num
+      deltaz = 0.0_num
+      gammax = 0.0_num
+      gammay = 0.0_num
+      gammaz = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz - 3.0_num * deltax
       alphay = 1.0_num - 2.0_num * betayx
       alphaz = 1.0_num - 2.0_num * betazx
+    ENDIF
+
+    IF (maxwell_solver == c_const_maxwell_solver_cowan) THEN
+      ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)
+      delta = min(dx, dy, dz)
+      c1 = (delta / dx)**2
+      c2 = (delta / dy)**2
+      c3 = (delta / dz)**2
+      cx1 = 1.0_num / ( c1*c2 + c2*c3 + c1*c3 )
+      cx2 = 1.0_num - c1*c2*c3 * cx1
+
+      betayx = 0.125_num * c1 * cx2
+      betaxy = 0.125_num * c2 * cx2
+      betaxz = 0.125_num * c3 * cx2
+      betazx = betayx
+      betazy = betaxy
+      betayz = betaxz
+      deltax = 0.0_num
+      deltay = 0.0_num
+      deltaz = 0.0_num
+      gammax = c2*c3 * (0.0625_num - 0.125_num * c2*c3 * cx1)
+      gammay = c1*c3 * (0.0625_num - 0.125_num * c1*c3 * cx1)
+      gammaz = c1*c2 * (0.0625_num - 0.125_num * c1*c2 * cx1)
+      alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz - 4.0_num * gammax
+      alphay = 1.0_num - 2.0_num * betayx - 2.0_num * betayz - 4.0_num * gammay
+      alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy - 4.0_num * gammaz
+    ENDIF
+
+    IF (maxwell_solver == c_const_maxwell_solver_pukhov) THEN
+      ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
+      delta = min(dx, dy, dz)
+
+      betayx = 0.125_num * (delta / dx)**2
+      betaxy = 0.125_num * (delta / dy)**2
+      betaxz = 0.125_num * (delta / dz)**2
+      betazx = betayx
+      betazy = betaxy
+      betayz = betaxz
+      deltax = 0.0_num
+      deltay = 0.0_num
+      deltaz = 0.0_num
+      gammax = 0.0_num
+      gammay = 0.0_num
+      gammaz = 0.0_num
+      alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz
+      alphay = 1.0_num - 2.0_num * betayx - 2.0_num * betayz
+      alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy
     ENDIF
 
     IF (cpml_boundaries) THEN
@@ -355,41 +408,77 @@ CONTAINS
               DO ix = 1, nx
                 cpml_x = hdtx / cpml_kappa_bx(ix)
 
-                bx(ix, iy, iz) = bx(ix, iy, iz) &
-                  - cpml_y * ( &
+                bx(ix, iy, iz) = bx(ix, iy, iz)                                &
+                  - cpml_y * (                                                 &
                        alphay * (ez(ix  , iy+1, iz  ) - ez(ix  , iy  , iz  ))  &
                      + betayx * (ez(ix+1, iy+1, iz  ) - ez(ix+1, iy  , iz  )   &
-                               + ez(ix-1, iy+1, iz  ) - ez(ix-1, iy  , iz  ))) &
-                  + cpml_z * ( &
+                               + ez(ix-1, iy+1, iz  ) - ez(ix-1, iy  , iz  ))  &
+                     + betayz * (ez(ix  , iy+1, iz+1) - ez(ix  , iy  , iz+1)   &
+                               + ez(ix  , iy+1, iz-1) - ez(ix  , iy  , iz-1))  &
+                     + gammay * (ez(ix+1, iy+1, iz-1) - ez(ix+1, iy  , iz-1)   &
+                               + ez(ix-1, iy+1, iz-1) - ez(ix-1, iy  , iz-1)   &
+                               + ez(ix+1, iy+1, iz+1) - ez(ix+1, iy  , iz+1)   &
+                               + ez(ix-1, iy+1, iz+1) - ez(ix-1, iy  , iz+1))  &
+                     + deltay * (ez(ix  , iy+2, iz  ) - ez(ix  , iy-1, iz  ))) &
+                  + cpml_z * (                                                 &
                        alphaz * (ey(ix  , iy  , iz+1) - ey(ix  , iy  , iz  ))  &
                      + betazx * (ey(ix+1, iy  , iz+1) - ey(ix+1, iy  , iz  )   &
-                               + ey(ix-1, iy  , iz+1) - ey(ix-1, iy  , iz  )))
+                               + ey(ix-1, iy  , iz+1) - ey(ix-1, iy  , iz  ))  &
+                     + betazy * (ey(ix  , iy+1, iz+1) - ey(ix  , iy+1, iz  )   &
+                               + ey(ix  , iy-1, iz+1) - ey(ix  , iy-1, iz  ))  &
+                     + gammaz * (ey(ix+1, iy-1, iz+1) - ey(ix+1, iy-1, iz  )   &
+                               + ey(ix-1, iy-1, iz+1) - ey(ix-1, iy-1, iz  )   &
+                               + ey(ix+1, iy+1, iz+1) - ey(ix+1, iy+1, iz  )   &
+                               + ey(ix-1, iy+1, iz+1) - ey(ix-1, iy+1, iz  ))  &
+                     + deltaz * (ey(ix  , iy  , iz+2) - ey(ix  , iy  , iz-1)))
 
-                by(ix, iy, iz) = by(ix, iy, iz) &
-                  - cpml_z * ( &
+                by(ix, iy, iz) = by(ix, iy, iz)                                &
+                  - cpml_z * (                                                 &
                        alphaz * (ex(ix  , iy  , iz+1) - ex(ix  , iy  , iz  ))  &
                      + betazx * (ex(ix+1, iy  , iz+1) - ex(ix+1, iy  , iz  )   &
-                               + ex(ix-1, iy  , iz+1) - ex(ix-1, iy  , iz  ))) &
-                  + cpml_x * ( &
+                               + ex(ix-1, iy  , iz+1) - ex(ix-1, iy  , iz  ))  &
+                     + betazy * (ex(ix  , iy+1, iz+1) - ex(ix  , iy+1, iz  )   &
+                               + ex(ix  , iy-1, iz+1) - ex(ix  , iy-1, iz  ))  &
+                     + gammaz * (ex(ix+1, iy-1, iz+1) - ex(ix+1, iy-1, iz  )   &
+                               + ex(ix-1, iy-1, iz+1) - ex(ix-1, iy-1, iz  )   &
+                               + ex(ix+1, iy+1, iz+1) - ex(ix+1, iy+1, iz  )   &
+                               + ex(ix-1, iy+1, iz+1) - ex(ix-1, iy+1, iz  ))  &
+                     + deltaz * (ex(ix  , iy  , iz+2) - ex(ix  , iy  , iz-1))) &
+                  + cpml_x * (                                                 &
                        alphax * (ez(ix+1, iy  , iz  ) - ez(ix  , iy  , iz  ))  &
                      + betaxy * (ez(ix+1, iy+1, iz  ) - ez(ix  , iy+1, iz  )   &
                                + ez(ix+1, iy-1, iz  ) - ez(ix  , iy-1, iz  ))  &
                      + betaxz * (ez(ix+1, iy  , iz+1) - ez(ix  , iy  , iz+1)   &
                                + ez(ix+1, iy  , iz-1) - ez(ix  , iy  , iz-1))  &
+                     + gammax * (ez(ix+1, iy+1, iz-1) - ez(ix  , iy+1, iz-1)   &
+                               + ez(ix+1, iy-1, iz-1) - ez(ix  , iy-1, iz-1)   &
+                               + ez(ix+1, iy+1, iz+1) - ez(ix  , iy+1, iz+1)   &
+                               + ez(ix+1, iy-1, iz+1) - ez(ix  , iy-1, iz+1))  &
                      + deltax * (ez(ix+2, iy  , iz  ) - ez(ix-1, iy  , iz  )))
 
-                bz(ix, iy, iz) = bz(ix, iy, iz) &
-                  - cpml_x * ( &
+                bz(ix, iy, iz) = bz(ix, iy, iz)                                &
+                  - cpml_x * (                                                 &
                        alphax * (ey(ix+1, iy  , iz  ) - ey(ix  , iy  , iz  ))  &
                      + betaxy * (ey(ix+1, iy+1, iz  ) - ey(ix  , iy+1, iz  )   &
                                + ey(ix+1, iy-1, iz  ) - ey(ix  , iy-1, iz  ))  &
                      + betaxz * (ey(ix+1, iy  , iz+1) - ey(ix  , iy  , iz+1)   &
                                + ey(ix+1, iy  , iz-1) - ey(ix  , iy  , iz-1))  &
+                     + gammax * (ey(ix+1, iy+1, iz-1) - ey(ix  , iy+1, iz-1)   &
+                               + ey(ix+1, iy-1, iz-1) - ey(ix  , iy-1, iz-1)   &
+                               + ey(ix+1, iy+1, iz+1) - ey(ix  , iy+1, iz+1)   &
+                               + ey(ix+1, iy-1, iz+1) - ey(ix  , iy-1, iz+1))  &
                      + deltax * (ey(ix+2, iy  , iz  ) - ey(ix-1, iy  , iz  ))) &
-                  + cpml_y * ( &
+                  + cpml_y * (                                                 &
                        alphay * (ex(ix  , iy+1, iz  ) - ex(ix  , iy  , iz  ))  &
                      + betayx * (ex(ix+1, iy+1, iz  ) - ex(ix+1, iy  , iz  )   &
-                               + ex(ix-1, iy+1, iz  ) - ex(ix-1, iy  , iz  )))
+                               + ex(ix-1, iy+1, iz  ) - ex(ix-1, iy  , iz  ))  &
+                     + betayz * (ex(ix  , iy+1, iz+1) - ex(ix  , iy  , iz+1)   &
+                               + ex(ix  , iy+1, iz-1) - ex(ix  , iy  , iz-1))  &
+                     + gammay * (ex(ix+1, iy+1, iz-1) - ex(ix+1, iy  , iz-1)   &
+                               + ex(ix-1, iy+1, iz-1) - ex(ix-1, iy  , iz-1)   &
+                               + ex(ix+1, iy+1, iz+1) - ex(ix+1, iy  , iz+1)   &
+                               + ex(ix-1, iy+1, iz+1) - ex(ix-1, iy  , iz+1))  &
+                     + deltay * (ex(ix  , iy+2, iz  ) - ex(ix  , iy-1, iz  )))
               ENDDO
             ENDDO
           ENDDO
@@ -509,23 +598,48 @@ CONTAINS
                   - hdty * ( &
                        alphay * (ez(ix  , iy+1, iz  ) - ez(ix  , iy  , iz  ))  &
                      + betayx * (ez(ix+1, iy+1, iz  ) - ez(ix+1, iy  , iz  )   &
-                               + ez(ix-1, iy+1, iz  ) - ez(ix-1, iy  , iz  ))) &
+                               + ez(ix-1, iy+1, iz  ) - ez(ix-1, iy  , iz  ))  &
+                     + betayz * (ez(ix  , iy+1, iz+1) - ez(ix  , iy  , iz+1)   &
+                               + ez(ix  , iy+1, iz-1) - ez(ix  , iy  , iz-1))  &
+                     + gammay * (ez(ix+1, iy+1, iz-1) - ez(ix+1, iy  , iz-1)   &
+                               + ez(ix-1, iy+1, iz-1) - ez(ix-1, iy  , iz-1)   &
+                               + ez(ix+1, iy+1, iz+1) - ez(ix+1, iy  , iz+1)   &
+                               + ez(ix-1, iy+1, iz+1) - ez(ix-1, iy  , iz+1))  &
+                     + deltay * (ez(ix  , iy+2, iz  ) - ez(ix  , iy-1, iz  ))) &
                   + hdtz * ( &
                        alphaz * (ey(ix  , iy  , iz+1) - ey(ix  , iy  , iz  ))  &
                      + betazx * (ey(ix+1, iy  , iz+1) - ey(ix+1, iy  , iz  )   &
-                               + ey(ix-1, iy  , iz+1) - ey(ix-1, iy  , iz  )))
+                               + ey(ix-1, iy  , iz+1) - ey(ix-1, iy  , iz  ))  &
+                     + betazy * (ey(ix  , iy+1, iz+1) - ey(ix  , iy+1, iz  )   &
+                               + ey(ix  , iy-1, iz+1) - ey(ix  , iy-1, iz  ))  &
+                     + gammaz * (ey(ix+1, iy-1, iz+1) - ey(ix+1, iy-1, iz  )   &
+                               + ey(ix-1, iy-1, iz+1) - ey(ix-1, iy-1, iz  )   &
+                               + ey(ix+1, iy+1, iz+1) - ey(ix+1, iy+1, iz  )   &
+                               + ey(ix-1, iy+1, iz+1) - ey(ix-1, iy+1, iz  ))  &
+                     + deltaz * (ey(ix  , iy  , iz+2) - ey(ix  , iy  , iz-1)))
 
                 by(ix, iy, iz) = by(ix, iy, iz) &
                   - hdtz * ( &
                        alphaz * (ex(ix  , iy  , iz+1) - ex(ix  , iy  , iz  ))  &
                      + betazx * (ex(ix+1, iy  , iz+1) - ex(ix+1, iy  , iz  )   &
-                               + ex(ix-1, iy  , iz+1) - ex(ix-1, iy  , iz  ))) &
+                               + ex(ix-1, iy  , iz+1) - ex(ix-1, iy  , iz  ))  &
+                     + betazy * (ex(ix  , iy+1, iz+1) - ex(ix  , iy+1, iz  )   &
+                               + ex(ix  , iy-1, iz+1) - ex(ix  , iy-1, iz  ))  &
+                     + gammaz * (ex(ix+1, iy-1, iz+1) - ex(ix+1, iy-1, iz  )   &
+                               + ex(ix-1, iy-1, iz+1) - ex(ix-1, iy-1, iz  )   &
+                               + ex(ix+1, iy+1, iz+1) - ex(ix+1, iy+1, iz  )   &
+                               + ex(ix-1, iy+1, iz+1) - ex(ix-1, iy+1, iz  ))  &
+                     + deltaz * (ex(ix  , iy  , iz+2) - ex(ix  , iy  , iz-1))) &
                   + hdtx * ( &
                        alphax * (ez(ix+1, iy  , iz  ) - ez(ix  , iy  , iz  ))  &
                      + betaxy * (ez(ix+1, iy+1, iz  ) - ez(ix  , iy+1, iz  )   &
                                + ez(ix+1, iy-1, iz  ) - ez(ix  , iy-1, iz  ))  &
                      + betaxz * (ez(ix+1, iy  , iz+1) - ez(ix  , iy  , iz+1)   &
                                + ez(ix+1, iy  , iz-1) - ez(ix  , iy  , iz-1))  &
+                     + gammax * (ez(ix+1, iy+1, iz-1) - ez(ix  , iy+1, iz-1)   &
+                               + ez(ix+1, iy-1, iz-1) - ez(ix  , iy-1, iz-1)   &
+                               + ez(ix+1, iy+1, iz+1) - ez(ix  , iy+1, iz+1)   &
+                               + ez(ix+1, iy-1, iz+1) - ez(ix  , iy-1, iz+1))  &
                      + deltax * (ez(ix+2, iy  , iz  ) - ez(ix-1, iy  , iz  )))
 
                 bz(ix, iy, iz) = bz(ix, iy, iz) &
@@ -535,11 +649,22 @@ CONTAINS
                                + ey(ix+1, iy-1, iz  ) - ey(ix  , iy-1, iz  ))  &
                      + betaxz * (ey(ix+1, iy  , iz+1) - ey(ix  , iy  , iz+1)   &
                                + ey(ix+1, iy  , iz-1) - ey(ix  , iy  , iz-1))  &
+                     + gammax * (ey(ix+1, iy+1, iz-1) - ey(ix  , iy+1, iz-1)   &
+                               + ey(ix+1, iy-1, iz-1) - ey(ix  , iy-1, iz-1)   &
+                               + ey(ix+1, iy+1, iz+1) - ey(ix  , iy+1, iz+1)   &
+                               + ey(ix+1, iy-1, iz+1) - ey(ix  , iy-1, iz+1))  &
                      + deltax * (ey(ix+2, iy  , iz  ) - ey(ix-1, iy  , iz  ))) &
                   + hdty * ( &
                        alphay * (ex(ix  , iy+1, iz  ) - ex(ix  , iy  , iz  ))  &
                      + betayx * (ex(ix+1, iy+1, iz  ) - ex(ix+1, iy  , iz  )   &
-                               + ex(ix-1, iy+1, iz  ) - ex(ix-1, iy  , iz  )))
+                               + ex(ix-1, iy+1, iz  ) - ex(ix-1, iy  , iz  ))  &
+                     + betayz * (ex(ix  , iy+1, iz+1) - ex(ix  , iy  , iz+1)   &
+                               + ex(ix  , iy+1, iz-1) - ex(ix  , iy  , iz-1))  &
+                     + gammay * (ex(ix+1, iy+1, iz-1) - ex(ix+1, iy  , iz-1)   &
+                               + ex(ix-1, iy+1, iz-1) - ex(ix-1, iy  , iz-1)   &
+                               + ex(ix+1, iy+1, iz+1) - ex(ix+1, iy  , iz+1)   &
+                               + ex(ix-1, iy+1, iz+1) - ex(ix-1, iy  , iz+1))  &
+                     + deltay * (ex(ix  , iy+2, iz  ) - ex(ix  , iy-1, iz  )))
               ENDDO
             ENDDO
           ENDDO
