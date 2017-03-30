@@ -547,12 +547,12 @@ CONTAINS
     IF (opcode == c_const_maxwell_solver_cowan &
         .OR. opcode == c_const_maxwell_solver_pukhov) THEN
       PRINT*, '*** WARNING ***'
-      PRINT*, 'cowan and pukhov solvers are not yet implemented. Using lehe.'
+      PRINT*, 'Cowan and Pukhov solvers reduce to Yee solver in 1D. Falling back to Yee solver.'
+      CALL push_on_eval(0.0_num)
+      RETURN
     ENDIF
 
-    IF (opcode == c_const_maxwell_solver_lehe &
-        .OR. opcode == c_const_maxwell_solver_cowan &
-        .OR. opcode == c_const_maxwell_solver_pukhov) THEN
+    IF (opcode == c_const_maxwell_solver_lehe) THEN
       CALL push_on_eval(1.0_num * opcode)
       RETURN
     ENDIF
