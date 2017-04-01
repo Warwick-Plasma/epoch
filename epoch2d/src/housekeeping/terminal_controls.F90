@@ -19,9 +19,6 @@
 MODULE terminal_controls
 
   USE, INTRINSIC :: iso_fortran_env
-#ifdef __INTEL_COMPILER
-  USE :: IFPORT
-#endif
 
   CHARACTER(LEN=5), DIMENSION(12) :: vt100_control = (/'[39m','[30m','[31m',&
       '[32m','[33m','[34m','[35m','[36m','[1m ','[2m ','[4m ','[0m '/)
@@ -43,6 +40,7 @@ MODULE terminal_controls
 
 CONTAINS
 
+ !> TODO : Other compilers support ISATTY. Work out how and support them
   SUBROUTINE set_term_attr(controlcode)
 
     INTEGER, INTENT(IN) :: controlcode
@@ -50,9 +48,6 @@ CONTAINS
 
     tty = .FALSE.
 #ifdef __GFORTRAN__
-    tty = ISATTY(output_unit)
-#endif
-#ifdef __INTEL_COMPILER
     tty = ISATTY(output_unit)
 #endif
     IF (.NOT. tty) RETURN
