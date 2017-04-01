@@ -24,6 +24,7 @@ MODULE welcome
 
   USE version_data
   USE shared_data
+  USE terminal_controls
 
   IMPLICIT NONE
 
@@ -40,6 +41,8 @@ CONTAINS
 
     IF (rank /= 0) RETURN
 
+    CALL set_term_attr(c_term_bold)
+    CALL set_term_attr(c_term_blue)
     WRITE(*,*)
     WRITE(*,*)
     WRITE(*,*)
@@ -49,8 +52,10 @@ CONTAINS
         // 'd#######  d##P      d##P'
     WRITE(*,'(A)') '       d########P  d###########    d###########     .###' &
         // '#######  d##P      d##P '
+    CALL set_term_attr(c_term_cyan)
     WRITE(*,'(A)') '      ----        ----     ----  -----     ----   ----- ' &
         // '        ----      -- P  '
+    CALL set_term_attr(c_term_blue)
     WRITE(*,'(A)') '     d########P  d####,,,####P ####.      .#### d###P   ' &
         // '       d############P   '
     WRITE(*,'(A)') '    d########P  d#########P   ####       .###P ####.    ' &
@@ -64,13 +69,12 @@ CONTAINS
     WRITE(*,*)
 
     CALL create_ascii_header
-    CALL compiler_directives
-
-    WRITE(*,*)
     WRITE(*,*) 'Welcome to ', TRIM(c_code_name), ' version ', &
         TRIM(version_string) // '   (commit ' // TRIM(c_commit_id) // ')'
     WRITE(*,*)
-
+    CALL set_term_attr(c_term_default_colour)
+    CALL set_term_attr(c_term_reset_attributes)
+    CALL compiler_directives
     CALL mpi_status_message
 
   END SUBROUTINE welcome_message
@@ -137,7 +141,9 @@ CONTAINS
 #endif
 
     IF (.NOT.found) THEN
+      WRITE(*,*) '*************************************************************'
       WRITE(*,*) 'The code was compiled with no compile time options'
+      WRITE(*,*) '*************************************************************'
       RETURN
     ENDIF
 
