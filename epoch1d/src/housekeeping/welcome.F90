@@ -69,15 +69,12 @@ CONTAINS
     WRITE(*,*)
 
     CALL create_ascii_header
-
-    WRITE(*,*)
     WRITE(*,*) 'Welcome to ', TRIM(c_code_name), ' version ', &
         TRIM(version_string) // '   (commit ' // TRIM(c_commit_id) // ')'
+    WRITE(*,*)
     CALL set_term_attr(c_term_default_colour)
     CALL set_term_attr(c_term_reset_attributes)
     CALL compiler_directives
-    WRITE(*,*)
-
     CALL mpi_status_message
 
   END SUBROUTINE welcome_message

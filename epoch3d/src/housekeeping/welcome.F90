@@ -41,6 +41,7 @@ CONTAINS
 
     IF (rank /= 0) RETURN
 
+    CALL set_term_attr(c_term_bold)
     CALL set_term_attr(c_term_blue)
     WRITE(*,*)
     WRITE(*,*)
