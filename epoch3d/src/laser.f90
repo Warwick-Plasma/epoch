@@ -300,7 +300,6 @@ CONTAINS
 
     current => laser_x_min
     DO WHILE(ASSOCIATED(current))
-      CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -308,7 +307,6 @@ CONTAINS
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
-      CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -316,7 +314,6 @@ CONTAINS
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
-      CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -324,7 +321,6 @@ CONTAINS
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
-      CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -332,7 +328,6 @@ CONTAINS
 
     current => laser_z_min
     DO WHILE(ASSOCIATED(current))
-      CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -340,7 +335,6 @@ CONTAINS
 
     current => laser_z_max
     DO WHILE(ASSOCIATED(current))
-      CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
