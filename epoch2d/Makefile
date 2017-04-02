@@ -218,6 +218,9 @@ DEFINES := $(DEFINE)
 # are enabled.
 #DEFINES += $(D)PARSER_CHECKING
 
+# Use compiler extension ISATTY to enable coloured welcome banner
+#DEFINES += $(D)USE_ISATTY
+
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the

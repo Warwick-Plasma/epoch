@@ -13,6 +13,10 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#if defined(__GFORTRAN__) || defined(__INTEL_COMPILER)
+#define USE_ISATTY
+#endif
+
 MODULE terminal_controls
 
   USE, INTRINSIC :: iso_fortran_env
@@ -37,16 +41,22 @@ MODULE terminal_controls
 
 CONTAINS
 
-  ! TODO : Other compilers support ISATTY. Work out how and support them
   SUBROUTINE set_term_attr(controlcode)
 
     INTEGER, INTENT(IN) :: controlcode
-#ifdef __GFORTRAN__
-    LOGICAL :: tty
+#ifdef USE_ISATTY
+    LOGICAL, SAVE :: first = .TRUE.
+    LOGICAL, SAVE :: tty = .FALSE.
 
-    tty = ISATTY(output_unit)
+    IF (first) THEN
+      first = .FALSE.
+      tty = ISATTY(output_unit)
+    END IF
+
     IF (.NOT. tty) RETURN
+
     IF (controlcode < 1 .OR. controlcode > c_term_max) RETURN
+
     WRITE(*,'(A)',ADVANCE='NO') ACHAR(27) // TRIM(vt100_control(controlcode))
 #endif
 
