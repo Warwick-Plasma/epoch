@@ -53,9 +53,10 @@ CONTAINS
     WRITE(*,'(A)') '       d########P  d###########    d###########     .###' &
         // '#######  d##P      d##P '
     CALL set_term_attr(c_term_cyan)
-    WRITE(*,'(A)') '      ----        ----     ----  -----     ----   ----- ' &
-        // '        ----      -- P  '
+    WRITE(*,'(A)',ADVANCE='NO') '      ----        ----     ----  -----     ' &
+        // '----   -----         ----      --'
     CALL set_term_attr(c_term_blue)
+    WRITE(*,'(A)') ' P  '
     WRITE(*,'(A)') '     d########P  d####,,,####P ####.      .#### d###P   ' &
         // '       d############P   '
     WRITE(*,'(A)') '    d########P  d#########P   ####       .###P ####.    ' &
@@ -69,6 +70,7 @@ CONTAINS
     WRITE(*,*)
 
     CALL create_ascii_header
+    CALL set_term_attr(c_term_green)
     WRITE(*,*) 'Welcome to ', TRIM(c_code_name), ' version ', &
         TRIM(version_string) // '   (commit ' // TRIM(c_commit_id) // ')'
     WRITE(*,*)
