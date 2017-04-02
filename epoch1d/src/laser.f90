@@ -40,6 +40,7 @@ CONTAINS
     laser%pol_angle = 0.0_num
     laser%t_start = 0.0_num
     laser%t_end = t_end
+    laser%current_integral_phase = 0.0_num
     NULLIFY(laser%next)
 
     laser%profile = 1.0_num
@@ -195,6 +196,7 @@ CONTAINS
 
     current => laser_x_min
     DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -202,6 +204,7 @@ CONTAINS
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -249,8 +252,10 @@ CONTAINS
           IF (current%use_profile_function) CALL laser_update_profile(current)
           IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
+          current%current_integral_phase = current%current_integral_phase &
+              + current%omega * dt
           base = t_env * current%profile &
-            * SIN(current%omega * time + current%phase)
+            * SIN(current%current_integral_phase + current%phase)
           source1 = source1 + base * COS(current%pol_angle)
           source2 = source2 + base * SIN(current%pol_angle)
         ENDIF
@@ -314,9 +319,12 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
+          IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
+          current%current_integral_phase = current%current_integral_phase &
+              + current%omega * dt
           base = t_env * current%profile &
-            * SIN(current%omega * time + current%phase)
+            * SIN(current%current_integral_phase + current%phase)
           source1 = source1 + base * COS(current%pol_angle)
           source2 = source2 + base * SIN(current%pol_angle)
         ENDIF

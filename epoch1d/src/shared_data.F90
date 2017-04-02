@@ -989,6 +989,7 @@ MODULE shared_data
     INTEGER :: id
     REAL(num) :: profile
     REAL(num) :: phase
+    REAL(num) :: current_integral_phase
 
     LOGICAL :: use_time_function, use_phase_function, use_profile_function
     LOGICAL :: use_omega_function
