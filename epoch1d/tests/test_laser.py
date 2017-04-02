@@ -75,7 +75,7 @@ class test_laser(SimTest):
         self.totaleyassert('0003.sdf', 1.4061852974870318e+23)
 
     def test_Eey0007(self):
-        self.totaleyassert('0007.sdf', 2.0129257716385798e+17)
+        self.totaleyassert('0007.sdf', 1.23187164795e17)
 
 if __name__=='__main__':
     unittest.main()
