@@ -61,6 +61,7 @@ PROGRAM pic
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
   REAL(num) :: runtime, dt0, dt_store
+
   step = 0
   time = 0.0_num
 #ifdef COLLISIONS_TEST
