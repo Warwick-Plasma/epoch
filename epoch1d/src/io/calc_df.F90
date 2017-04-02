@@ -908,4 +908,93 @@ CONTAINS
 
   END SUBROUTINE calc_total_energy_sum
 
+
+
+  SUBROUTINE calc_initial_current
+
+    REAL(num), ALLOCATABLE :: jx(:), jy(:), jz(:)
+    REAL(num) :: part_px, part_py, part_pz
+    REAL(num) :: part_q, part_mc, part_w
+    REAL(num) :: part_jx, part_jy, part_jz
+    REAL(num) :: idx, root, fac, sum_out(3), sum_in(3)
+    INTEGER :: ispecies, ix
+    INTEGER(i8) :: ipart
+    TYPE (particle), POINTER :: current, next
+#include "particle_head.inc"
+
+    ALLOCATE(jx(1-jng:nx+jng))
+    ALLOCATE(jy(1-jng:nx+jng))
+    ALLOCATE(jz(1-jng:nx+jng))
+
+    jx = 0.0_num
+    jy = 0.0_num
+    jz = 0.0_num
+
+    idx = 1.0_num / dx
+
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
+#ifndef NO_TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
+      current => species_list(ispecies)%attached_list%head
+
+      part_w = species_list(ispecies)%weight
+      part_q  = species_list(ispecies)%charge
+      part_mc = c * species_list(ispecies)%mass
+      fac = part_q * part_w
+
+      DO ipart = 1, species_list(ispecies)%attached_list%count
+        next => current%next
+#ifndef PER_SPECIES_WEIGHT
+        part_w = current%weight
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_q  = current%charge
+        part_mc = c * current%mass
+#endif
+        fac = part_q * part_w
+#else
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_q  = current%charge
+        part_mc = c * current%mass
+        fac = part_q * part_w
+#endif
+#endif
+
+        ! Copy the particle properties out for speed
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
+        root = 1.0_num / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
+
+        part_jx = fac * part_px * root
+        part_jy = fac * part_py * root
+        part_jz = fac * part_pz * root
+
+#include "particle_to_grid.inc"
+
+        DO ix = sf_min, sf_max
+          jx(cell_x+ix) = jx(cell_x+ix) + gx(ix) * part_jx
+          jy(cell_x+ix) = jy(cell_x+ix) + gx(ix) * part_jy
+          jz(cell_x+ix) = jz(cell_x+ix) + gx(ix) * part_jz
+        ENDDO
+        current => next
+      ENDDO
+    ENDDO
+
+    sum_out(1) = SUM(jx)
+    sum_out(2) = SUM(jy)
+    sum_out(3) = SUM(jz)
+    DEALLOCATE(jx, jy, jz)
+
+    CALL MPI_ALLREDUCE(sum_out, sum_in, 3, mpireal, MPI_SUM, comm, errcode)
+
+    fac = c * idx / nx_global
+
+    initial_jx = sum_in(1) * fac
+    initial_jy = sum_in(2) * fac
+    initial_jz = sum_in(3) * fac
+
+  END SUBROUTINE calc_initial_current
+
 END MODULE calc_df

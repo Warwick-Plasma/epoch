@@ -48,6 +48,7 @@ PROGRAM pic
   USE collisions
   USE particle_migration
   USE ionise
+  USE calc_df
 #ifdef PHOTONS
   USE photons
 #endif
@@ -132,6 +133,7 @@ PROGRAM pic
   ! .TRUE. to over_ride balance fraction check
   IF (npart_global > 0) CALL balance_workload(.TRUE.)
 
+  IF (use_current_correction) CALL calc_initial_current
   CALL particle_bcs
   CALL efield_bcs
 
