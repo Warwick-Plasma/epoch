@@ -123,26 +123,26 @@ CONTAINS
     ENDIF
 
   END FUNCTION momentum_from_temperature
-  
-  
-  
+
+
+
   ! Function for generating momenta of thermal particles in a particular
   ! direction, e.g. the +x direction.
   ! These satisfy a Rayleigh distribution, formed by combining two
   ! normally-distributed (~N(0,sigma)) random variables as follows:
   ! Z = SQRT(X**2 + Y**2)
   FUNCTION flux_momentum_from_temperature(mass, temperature, drift)
-    
+
     REAL(num), INTENT(IN) :: mass, temperature, drift
     REAL(num) :: flux_momentum_from_temperature
-    
+
     REAL(num) :: mom1, mom2
-    
+
     mom1 = momentum_from_temperature(mass,temperature,0.0_num)
     mom2 = momentum_from_temperature(mass,temperature,0.0_num)
-    
+
     flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
-  
+
   END FUNCTION flux_momentum_from_temperature
 
 END MODULE particle_temperature
