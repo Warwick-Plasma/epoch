@@ -133,11 +133,10 @@ CONTAINS
 
     REAL(num), INTENT(IN) :: mass, temperature, drift
     REAL(num) :: flux_momentum_from_temperature
-
     REAL(num) :: mom1, mom2
 
-    mom1 = momentum_from_temperature(mass,temperature,0.0_num)
-    mom2 = momentum_from_temperature(mass,temperature,0.0_num)
+    mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
+    mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
 
     flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
 
