@@ -1,7 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2015      Stephan Kuschel <stephan.kuschel@gmail.com>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
+! Copyright (C) 2017      Chris Brady <C.S.Brady@warwick.ac.uk>
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -40,21 +37,19 @@ MODULE terminal_controls
 
 CONTAINS
 
- !> TODO : Other compilers support ISATTY. Work out how and support them
+  ! TODO : Other compilers support ISATTY. Work out how and support them
   SUBROUTINE set_term_attr(controlcode)
 
     INTEGER, INTENT(IN) :: controlcode
+#ifdef __GFORTRAN__
     LOGICAL :: tty
 
-    tty = .FALSE.
-#ifdef __GFORTRAN__
     tty = ISATTY(output_unit)
-#endif
     IF (.NOT. tty) RETURN
     IF (controlcode < 1 .OR. controlcode > c_term_max) RETURN
-    WRITE(*,'(A)',ADVANCE='NO') achar(27) // TRIM(vt100_control(controlcode))
+    WRITE(*,'(A)',ADVANCE='NO') ACHAR(27) // TRIM(vt100_control(controlcode))
+#endif
 
   END SUBROUTINE set_term_attr
-
 
 END MODULE terminal_controls
