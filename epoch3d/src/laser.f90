@@ -40,6 +40,7 @@ CONTAINS
     laser%pol_angle = 0.0_num
     laser%t_start = 0.0_num
     laser%t_end = t_end
+    laser%current_integral_phase = 0.0_num
     NULLIFY(laser%profile)
     NULLIFY(laser%phase)
     NULLIFY(laser%next)
@@ -58,7 +59,6 @@ CONTAINS
     TYPE(laser_block), POINTER :: laser
 
     IF (ASSOCIATED(laser%profile)) DEALLOCATE(laser%profile)
-    IF (ASSOCIATED(laser%phase)) DEALLOCATE(laser%phase)
     IF (ASSOCIATED(laser%phase)) DEALLOCATE(laser%phase)
     IF (laser%use_profile_function) &
         CALL deallocate_stack(laser%profile_function)
@@ -299,6 +299,7 @@ CONTAINS
 
     current => laser_x_min
     DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -306,6 +307,7 @@ CONTAINS
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -313,6 +315,7 @@ CONTAINS
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -320,6 +323,7 @@ CONTAINS
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -327,6 +331,7 @@ CONTAINS
 
     current => laser_z_min
     DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -334,6 +339,7 @@ CONTAINS
 
     current => laser_z_max
     DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -385,10 +391,12 @@ CONTAINS
           IF (current%use_profile_function) CALL laser_update_profile(current)
           IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
+          current%current_integral_phase = current%current_integral_phase &
+              + current%omega * dt
           DO j = 1,nz
           DO i = 1,ny
             base = t_env * current%profile(i,j) &
-              * SIN(current%omega * time + current%phase(i,j))
+              * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
           ENDDO
@@ -462,11 +470,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
+          IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
+          current%current_integral_phase = current%current_integral_phase &
+              + current%omega * dt
           DO j = 1,nz
           DO i = 1,ny
             base = t_env * current%profile(i,j) &
-              * SIN(current%omega * time + current%phase(i,j))
+              * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
           ENDDO
@@ -540,11 +551,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
+          IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
+          current%current_integral_phase = current%current_integral_phase &
+              + current%omega * dt
           DO j = 1,nz
           DO i = 1,nx
             base = t_env * current%profile(i,j) &
-              * SIN(current%omega * time + current%phase(i,j))
+              * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
           ENDDO
@@ -618,11 +632,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
+          IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
+          current%current_integral_phase = current%current_integral_phase &
+              + current%omega * dt
           DO j = 1,nz
           DO i = 1,nx
             base = t_env * current%profile(i,j) &
-              * SIN(current%omega * time + current%phase(i,j))
+              * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
           ENDDO
@@ -696,11 +713,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
+          IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
+          current%current_integral_phase = current%current_integral_phase &
+              + current%omega * dt
           DO j = 1,ny
           DO i = 1,nx
             base = t_env * current%profile(i,j) &
-              * SIN(current%omega * time + current%phase(i,j))
+              * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
           ENDDO
@@ -774,11 +794,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
+          IF (current%use_omega_function) CALL laser_update_omega(current)
           t_env = laser_time_profile(current) * current%amp
+          current%current_integral_phase = current%current_integral_phase &
+              + current%omega * dt
           DO j = 1,ny
           DO i = 1,nx
             base = t_env * current%profile(i,j) &
-              * SIN(current%omega * time + current%phase(i,j))
+              * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
           ENDDO

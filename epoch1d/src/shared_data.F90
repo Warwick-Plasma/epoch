@@ -859,6 +859,8 @@ MODULE shared_data
   REAL(num) :: by_x_min, by_x_max
   REAL(num) :: bz_x_min, bz_x_max
 
+  REAL(num) :: initial_jx, initial_jy, initial_jz
+
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
   TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data
@@ -897,6 +899,7 @@ MODULE shared_data
   LOGICAL :: print_deck_constants
   LOGICAL :: allow_missing_restart
   LOGICAL :: done_mpi_initialise = .FALSE.
+  LOGICAL :: use_current_correction
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
   CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename
@@ -995,6 +998,7 @@ MODULE shared_data
     INTEGER :: id
     REAL(num) :: profile
     REAL(num) :: phase
+    REAL(num) :: current_integral_phase
 
     LOGICAL :: use_time_function, use_phase_function, use_profile_function
     LOGICAL :: use_omega_function
