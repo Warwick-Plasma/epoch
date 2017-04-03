@@ -149,7 +149,8 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
     INTEGER, DIMENSION(c_df_maxdims) :: cell
-    REAL(num) :: part_weight, part_mc, part_mc2, gamma_m1, start
+    REAL(num) :: part_weight, part_mc, part_mc2, part_u2
+    REAL(num) :: gamma_rel, gamma_rel_m1, start
     REAL(num) :: xy_max, yz_max, zx_max
     REAL(num), PARAMETER :: pi2 = 2.0_num * pi
 
@@ -292,7 +293,9 @@ CONTAINS
         part_mc  = current%mass * c
         part_mc2 = part_mc * c
 #endif
-        gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
+        part_u2 = SUM((current%part_p / part_mc)**2)
+        gamma_rel = SQRT(part_u2 + 1.0_num)
+        gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
         px = current%part_p(1)
         py = current%part_p(2)
         pz = current%part_p(3)
@@ -315,8 +318,8 @@ CONTAINS
           particle_data(c_dir_px) = px
           particle_data(c_dir_py) = py
           particle_data(c_dir_pz) = pz
-          particle_data(c_dir_en) = gamma_m1 * part_mc2
-          particle_data(c_dir_gamma_m1) = gamma_m1
+          particle_data(c_dir_en) = gamma_rel_m1 * part_mc2
+          particle_data(c_dir_gamma_m1) = gamma_rel_m1
         ENDIF
 
         IF (use_xy_angle) THEN
@@ -412,7 +415,9 @@ CONTAINS
 #ifndef PER_SPECIES_WEIGHT
       part_weight = current%weight
 #endif
-      gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
+      part_u2 = SUM((current%part_p / part_mc)**2)
+      gamma_rel = SQRT(part_u2 + 1.0_num)
+      gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
       px = current%part_p(1)
       py = current%part_p(2)
       pz = current%part_p(3)
@@ -435,8 +440,8 @@ CONTAINS
         particle_data(c_dir_px) = px
         particle_data(c_dir_py) = py
         particle_data(c_dir_pz) = pz
-        particle_data(c_dir_en) = gamma_m1 * part_mc2
-        particle_data(c_dir_gamma_m1) = gamma_m1
+        particle_data(c_dir_en) = gamma_rel_m1 * part_mc2
+        particle_data(c_dir_gamma_m1) = gamma_rel_m1
       ENDIF
 
       IF (use_xy_angle) THEN

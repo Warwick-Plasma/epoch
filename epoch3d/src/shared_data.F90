@@ -77,6 +77,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_z_min = 5
   INTEGER, PARAMETER :: c_bd_z_max = 6
 
+  ! Frequency function type codes
+  INTEGER, PARAMETER :: c_of_omega = 1
+  INTEGER, PARAMETER :: c_of_freq = 2
+  INTEGER, PARAMETER :: c_of_lambda = 3
+
   ! Error codes
   INTEGER, PARAMETER :: c_err_none = 0
   INTEGER, PARAMETER :: c_err_unknown_block = 2**0
@@ -894,6 +899,8 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: by_z_min, by_z_max
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bz_z_min, bz_z_max
 
+  REAL(num) :: initial_jx, initial_jy, initial_jz
+
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
   TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data
@@ -938,6 +945,7 @@ MODULE shared_data
   LOGICAL :: print_deck_constants
   LOGICAL :: allow_missing_restart
   LOGICAL :: done_mpi_initialise = .FALSE.
+  LOGICAL :: use_current_correction
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
   CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename
@@ -1044,11 +1052,15 @@ MODULE shared_data
     INTEGER :: id
     REAL(num), DIMENSION(:,:), POINTER :: profile
     REAL(num), DIMENSION(:,:), POINTER :: phase
+    REAL(num) :: current_integral_phase
 
     LOGICAL :: use_time_function, use_phase_function, use_profile_function
+    LOGICAL :: use_omega_function
     TYPE(primitive_stack) :: time_function, phase_function, profile_function
+    TYPE(primitive_stack) :: omega_function
 
     REAL(num) :: amp, omega, pol_angle, t_start, t_end
+    INTEGER :: omega_func_type
 
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block

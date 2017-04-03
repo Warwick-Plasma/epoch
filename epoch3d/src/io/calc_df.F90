@@ -184,12 +184,12 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_ux, part_uy, part_uz, part_mc
+    REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
     REAL(num) :: part_w
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num) :: fac, gamma
+    REAL(num) :: fac, gamma_rel, gamma_rel_m1
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
@@ -240,8 +240,12 @@ CONTAINS
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
-          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-          wdata = (gamma - 1.0_num) * fac
+
+          part_u2 = part_ux**2 + part_uy**2 + part_uz**2
+          gamma_rel = SQRT(part_u2 + 1.0_num)
+          gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
+
+          wdata = gamma_rel_m1 * fac
         ELSE
 #ifdef PHOTONS
           wdata = current%particle_energy * part_w
@@ -288,12 +292,12 @@ CONTAINS
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species, direction
     ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_ux, part_uy, part_uz, part_mc
+    REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
     REAL(num) :: part_w
     ! The data to be weighted onto the grid
     REAL(num) :: wdata = 0.0_num
-    REAL(num) :: fac, gamma, ek, part_flux, xfac, yfac, zfac
+    REAL(num) :: fac, gamma_rel, gamma_rel_m1, ek, part_flux, xfac, yfac, zfac
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wt
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
@@ -348,8 +352,12 @@ CONTAINS
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
-          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-          ek = (gamma - 1.0_num) * fac
+
+          part_u2 = part_ux**2 + part_uy**2 + part_uz**2
+          gamma_rel = SQRT(part_u2 + 1.0_num)
+          gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
+
+          ek = gamma_rel_m1 * fac
         ELSE
 #ifdef PHOTONS
           fac = c / current%particle_energy
@@ -357,37 +365,37 @@ CONTAINS
           part_uy = current%part_p(2) * fac
           part_uz = current%part_p(3) * fac
           ek = current%particle_energy * part_w
-          gamma = 1.0_num
+          gamma_rel = 1.0_num
 #else
           ek = 0.0_num
-          gamma = 1.0_num
+          gamma_rel = 1.0_num
 #endif
         ENDIF
 
         SELECT CASE(direction)
         CASE(-c_dir_x)
           ! negative flux in x
-          part_flux = xfac * part_ux / gamma
+          part_flux = xfac * part_ux / gamma_rel
           wdata = -ek * MIN(part_flux, 0.0_num)
         CASE( c_dir_x)
           ! positive flux in x
-          part_flux = xfac * part_ux / gamma
+          part_flux = xfac * part_ux / gamma_rel
           wdata =  ek * MAX(part_flux, 0.0_num)
         CASE(-c_dir_y)
           ! negative flux in y
-          part_flux = yfac * part_uy / gamma
+          part_flux = yfac * part_uy / gamma_rel
           wdata = -ek * MIN(part_flux, 0.0_num)
         CASE( c_dir_y)
           ! positive flux in y
-          part_flux = yfac * part_uy / gamma
+          part_flux = yfac * part_uy / gamma_rel
           wdata =  ek * MAX(part_flux, 0.0_num)
         CASE(-c_dir_z)
           ! negative flux in z
-          part_flux = zfac * part_uz / gamma
+          part_flux = zfac * part_uz / gamma_rel
           wdata = -ek * MIN(part_flux, 0.0_num)
         CASE( c_dir_z)
           ! positive flux in z
-          part_flux = zfac * part_uz / gamma
+          part_flux = zfac * part_uz / gamma_rel
           wdata =  ek * MAX(part_flux, 0.0_num)
         END SELECT
 
@@ -959,8 +967,8 @@ CONTAINS
   SUBROUTINE calc_total_energy_sum
 
     REAL(num) :: particle_energy, field_energy
-    REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: part_mc, part_w, fac, gamma
+    REAL(num) :: part_ux, part_uy, part_uz, part_u2
+    REAL(num) :: part_mc, part_w, fac, gamma_rel, gamma_rel_m1
     REAL(num) :: sum_out(2), sum_in(2)
     REAL(num), PARAMETER :: c2 = c**2
     INTEGER :: ispecies, i, j, k
@@ -997,8 +1005,12 @@ CONTAINS
           part_ux = current%part_p(1) / part_mc
           part_uy = current%part_p(2) / part_mc
           part_uz = current%part_p(3) / part_mc
-          gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-          particle_energy = particle_energy + (gamma - 1.0_num) * fac
+
+          part_u2 = part_ux**2 + part_uy**2 + part_uz**2
+          gamma_rel = SQRT(part_u2 + 1.0_num)
+          gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
+
+          particle_energy = particle_energy + gamma_rel_m1 * fac
 #ifdef PHOTONS
         ELSE
           particle_energy = particle_energy + current%particle_energy * part_w
@@ -1028,5 +1040,104 @@ CONTAINS
     total_field_energy = sum_in(2)
 
   END SUBROUTINE calc_total_energy_sum
+
+
+
+  SUBROUTINE calc_initial_current
+
+    REAL(num), ALLOCATABLE :: jx(:,:,:), jy(:,:,:), jz(:,:,:)
+    REAL(num) :: part_px, part_py, part_pz
+    REAL(num) :: part_q, part_mc, part_w
+    REAL(num) :: part_jx, part_jy, part_jz
+    REAL(num) :: idx, root, fac, sum_out(3), sum_in(3)
+    INTEGER :: ispecies, ix, iy, iz
+    INTEGER(i8) :: ipart
+    TYPE (particle), POINTER :: current, next
+#include "particle_head.inc"
+
+    ALLOCATE(jx(1-jng:nx+jng, 1-jng:ny+jng, 1-jng:nz+jng))
+    ALLOCATE(jy(1-jng:nx+jng, 1-jng:ny+jng, 1-jng:nz+jng))
+    ALLOCATE(jz(1-jng:nx+jng, 1-jng:ny+jng, 1-jng:nz+jng))
+
+    jx = 0.0_num
+    jy = 0.0_num
+    jz = 0.0_num
+
+    idx = 1.0_num / dx / dy / dz
+
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
+#ifndef NO_TRACER_PARTICLES
+      IF (species_list(ispecies)%tracer) CYCLE
+#endif
+      current => species_list(ispecies)%attached_list%head
+
+      part_w = species_list(ispecies)%weight
+      part_q  = species_list(ispecies)%charge
+      part_mc = c * species_list(ispecies)%mass
+      fac = part_q * part_w
+
+      DO ipart = 1, species_list(ispecies)%attached_list%count
+        next => current%next
+#ifndef PER_SPECIES_WEIGHT
+        part_w = current%weight
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_q  = current%charge
+        part_mc = c * current%mass
+#endif
+        fac = part_q * part_w
+#else
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_q  = current%charge
+        part_mc = c * current%mass
+        fac = part_q * part_w
+#endif
+#endif
+
+        ! Copy the particle properties out for speed
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
+        root = 1.0_num / SQRT(part_mc**2 + part_px**2 + part_py**2 + part_pz**2)
+
+        part_jx = fac * part_px * root
+        part_jy = fac * part_py * root
+        part_jz = fac * part_pz * root
+
+#include "particle_to_grid.inc"
+
+        DO iz = sf_min, sf_max
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          jx(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              jx(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * part_jx
+          jy(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              jy(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * part_jy
+          jz(cell_x+ix, cell_y+iy, cell_z+iz) = &
+              jz(cell_x+ix, cell_y+iy, cell_z+iz) &
+              + gx(ix) * gy(iy) * gz(iz) * part_jz
+        ENDDO
+        ENDDO
+        ENDDO
+        current => next
+      ENDDO
+    ENDDO
+
+    sum_out(1) = SUM(jx)
+    sum_out(2) = SUM(jy)
+    sum_out(3) = SUM(jz)
+    DEALLOCATE(jx, jy, jz)
+
+    CALL MPI_ALLREDUCE(sum_out, sum_in, 3, mpireal, MPI_SUM, comm, errcode)
+
+    fac = c * idx / nx_global / ny_global / nz_global
+
+    initial_jx = sum_in(1) * fac
+    initial_jy = sum_in(2) * fac
+    initial_jz = sum_in(3) * fac
+
+  END SUBROUTINE calc_initial_current
 
 END MODULE calc_df

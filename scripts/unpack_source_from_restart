@@ -1,0 +1,217 @@
+#! /bin/sh
+
+# Shell script for unpacking source code and input decks from a
+# SDF restart dump
+
+file=$1
+dir=unpacked_source
+output=$dir/epoch.tgz
+tmp=$dir/.__TMP__
+
+swap_long=0
+swap_bytes=0
+id_length=32
+
+getint() {
+    if [ $swap_bytes -ne 0 ]; then
+        n1=`od -tu1 -N1 -j$off $file | head -1 | awk '{print$2}'`
+        n2=`od -tu1 -N1 -j$((off+1)) $file | head -1 | awk '{print$2}'`
+        n3=`od -tu1 -N1 -j$((off+2)) $file | head -1 | awk '{print$2}'`
+        n4=`od -tu1 -N1 -j$((off+3)) $file | head -1 | awk '{print$2}'`
+        echo $((n4 + 256 * (n3 + 256 * (n2 + 256 * n1))))
+    else
+        od -td4 -N4 -j$off $file | head -1 | awk '{print$2}'
+    fi
+}
+
+getlong() {
+    if [ $swap_bytes -ne 0 ]; then
+        n1=`od -tu1 -N1 -j$off $file | head -1 | awk '{print$2}'`
+        n2=`od -tu1 -N1 -j$((off+1)) $file | head -1 | awk '{print$2}'`
+        n3=`od -tu1 -N1 -j$((off+2)) $file | head -1 | awk '{print$2}'`
+        n4=`od -tu1 -N1 -j$((off+3)) $file | head -1 | awk '{print$2}'`
+        n5=`od -tu1 -N1 -j$((off+4)) $file | head -1 | awk '{print$2}'`
+        n6=`od -tu1 -N1 -j$((off+5)) $file | head -1 | awk '{print$2}'`
+        n7=`od -tu1 -N1 -j$((off+6)) $file | head -1 | awk '{print$2}'`
+        n8=`od -tu1 -N1 -j$((off+7)) $file | head -1 | awk '{print$2}'`
+        echo $((n8 + 256 * (n7 + 256 * (n6 + 256 * (n5 + 256 * (n4 \
+            + 256 * (n3 + 256 * (n2 + 256 * n1))))))))
+    elif [ $swap_long -eq 0 ]; then
+        n1=`od -tu4 -N4 -j$off $file | head -1 | awk '{print$2}'`
+        n2=`od -tu4 -N4 -j$((off+4)) $file | head -1 | awk '{print$2}'`
+        echo $((n1 + n2 * 4294967296))
+    else
+        n1=`od -tu4 -N4 -j$off $file | head -1 | awk '{print$2}'`
+        n2=`od -tu4 -N4 -j$((off+4)) $file | head -1 | awk '{print$2}'`
+        echo $((n2 + n1 * 4294967296))
+    fi
+}
+
+# Sanity checking
+
+if [ "$1"x = x -o "$2"x != x ]; then
+  echo "Usage: unpack_source_from_restart <restart_file>"
+  exit 1
+fi
+
+if [ -e $output ]; then
+  echo 'ERROR: output file "'$output'" already exists. Please remove first.'
+  exit 1
+fi
+
+if [ ! -f $file ]; then
+  echo 'ERROR: restart dump "'$file'" does not exist'
+  exit 1
+fi
+
+str=`od -tc -N4 $file | head -1 | cut -c9- | tr -d ' '`
+
+if [ "$str"x != "SDF1x" ]; then
+  echo 'ERROR: "'$file'" is not a SDF file'
+  exit 1
+fi
+
+# Read SDF header
+
+off=4
+endian=$(od -tx1 -N1 -j$off $file | head -1 | awk '{print$2}')
+[ "$endian"x = "01"x ] && swap_long=1
+endian=$(getint); off=$((off+4))
+if [ $endian -ne 16911887 ]; then
+  swap_bytes=1
+  echo 'WARNING: file was generated on a machine of differing endianness.'
+  echo 'Unpacking process will be slower than usual.'
+fi
+
+version=$(getint); off=$((off+4))
+revision=$(getint); off=$((off+4))
+code_name=$(dd if=$file bs=1 skip=$off count=$id_length 2>/dev/null | \
+    sed 's, *$,,g' | tr '[A-Z]' '[a-z]')
+off=48; first_block_location=$(getlong)
+off=68; nblocks=$(getint)
+off=72; block_header_length=$(getint)
+off=96; string_length=$(getint)
+
+# Read the blocks
+
+mkdir -p $dir
+
+next_block=$first_block_location
+
+i=0
+found=0
+while [ $i -lt $nblocks ]; do
+  i=$((i+1))
+  block_off=$next_block
+  off=$block_off; next_block=$(getlong)
+  off=$((block_off+8)); data_location=$(getlong)
+  off=$((block_off+48)); data_length=$(getlong)
+  off=$((block_off+56)); block_type=$(getint)
+
+  # Only care about type_source blocks
+
+  if [ $block_type -eq 8 -o $block_type -eq 28 ]; then
+    rm -f $tmp
+    off=$((block_off+16)) # block_id location
+    dd if=$file of=$tmp bs=1 skip=$off count=$id_length > /dev/null 2>&1
+    id=$(cat $tmp | sed 's, *$,,g')
+
+    [ $? -ne 0 ] && continue
+
+    off=$((block_off+68)) # block_name location
+    dd if=$file of=$tmp bs=1 skip=$off count=$string_length > /dev/null 2>&1
+
+    [ $? -ne 0 ] && continue
+
+    # Old-style block
+    if [ $block_type -eq 8 ]; then
+      # Is it an input deck?
+      grep -abo Embedded_input_deck $tmp > /dev/null 2>&1
+    else
+      # mimetype from new-style block
+      off=$((block_off+block_header_length)) # mimetype location
+      dd if=$file of=$tmp bs=1 skip=$off count=$id_length > /dev/null 2>&1
+      mimetype=$(cat $tmp | sed 's, *$,,g')
+      grep -abo 'text/plain' $tmp > /dev/null 2>&1
+    fi
+
+    if [ $? -eq 0 ]; then
+      found=1
+
+      f=`echo $id | sed 's, *$,,g; s,input_deck/,,'`
+      d=`dirname $f`
+
+      mkdir -p $dir/$d
+      off=$data_location
+      dd if=$file of=$dir/$f bs=1 skip=$off count=$data_length > /dev/null 2>&1
+      if [ $? -ne 0 ]; then
+        echo 'WARNING: failed to unpack input deck "'"$dir/$f"'"'
+        continue
+      fi
+      echo 'Unpacked input deck into "'"$dir/$f"'"'
+    else
+    # Is it an embedded source code block?
+      if [ $block_type -eq 8 ]; then
+        grep -abo base64_packed_source_code $tmp > /dev/null 2>&1
+      else
+        echo $mimetype | grep -abo 'application/x-tar-gz' > /dev/null 2>&1
+      fi
+
+      [ $? -ne 0 ] && continue
+
+      found=1
+      off=$data_location
+      dd if=$file of=$tmp bs=1 skip=$off count=$data_length > /dev/null 2>&1
+
+      if [ $? -ne 0 ]; then
+        echo 'WARNING: failed to unpack source code'
+        continue
+      fi
+
+      if [ $block_type -eq 8 ]; then
+        which uudecode > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+          (echo begin-base64 664 $output
+          fold $tmp
+          echo
+          echo ====) | uudecode -o $output
+        else
+          perl -MMIME::Base64 -0777 -ne \
+              'print decode_base64($_)' < $tmp > $output
+        fi
+      else
+        echo $id | grep -abo 'sdf_source' > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+          odir=$dir/SDF/FORTRAN
+        else
+          echo $id | grep -abo 'epoch_source' > /dev/null 2>&1
+          if [ $? -eq 0 ]; then
+            odir=$dir/$code_name
+          else
+            echo 'WARNING: failed to unpack source code'
+            continue
+          fi
+        fi
+        mkdir -p $odir
+        tmppath=`pwd`/$tmp
+        (cd $odir
+        tar xzf $tmppath)
+        rm $tmp
+      fi
+
+      if [ $? -ne 0 ]; then
+        echo 'WARNING: failed to unpack source code'
+        continue
+      fi
+
+      echo 'Unpacked source code into "'"$output"'"'
+    fi
+  fi
+done
+
+if [ $found -eq 0 ]; then
+  echo 'WARNING: no embedded source code found in "'"$file"'".'
+  echo 'Maybe it is not a restart dump?'
+fi
+
+rm -f $tmp
