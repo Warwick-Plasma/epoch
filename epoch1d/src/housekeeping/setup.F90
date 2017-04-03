@@ -516,7 +516,15 @@ CONTAINS
     CALL set_plasma_frequency_dt
     CALL set_laser_dt
 
-    dt = cfl * dx / c
+    IF (maxwell_solver == 0) THEN
+      dt = cfl * dx / c
+    ENDIF
+
+    IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
+      ! R. Lehe, PhD Thesis (2014)
+      dt = dx / c
+    ENDIF
+
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
     IF (dt_laser > c_tiny) dt = MIN(dt, dt_laser)
     dt = dt_multiplier * dt

@@ -652,7 +652,22 @@ CONTAINS
     CALL set_plasma_frequency_dt
     CALL set_laser_dt
 
-    dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+    IF (maxwell_solver == 0) THEN
+      dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+    ENDIF
+
+    IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
+      ! R. Lehe, PhD Thesis (2014)
+      dt = 1.0_num / sqrt(max( 1.0_num / dx*2, 1.0_num / dy**2 + 1.0_num / dz**2 )) / c
+    ENDIF
+
+    IF (maxwell_solver == c_const_maxwell_solver_cowan &
+        .OR. maxwell_solver == c_const_maxwell_solver_pukhov) THEN
+      ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)
+      ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
+      dt = min(dx, dy, dz) / c
+    ENDIF
+
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
     IF (dt_laser > c_tiny) dt = MIN(dt, dt_laser)
     dt = dt_multiplier * dt
