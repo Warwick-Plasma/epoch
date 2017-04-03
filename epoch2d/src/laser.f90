@@ -330,10 +330,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
-          IF (current%use_omega_function) CALL laser_update_omega(current)
+          IF (current%use_omega_function) THEN
+            CALL laser_update_omega(current)
+            current%current_integral_phase = current%current_integral_phase &
+                + current%omega * dt
+          ELSE
+            current%current_integral_phase = current%omega * time
+          ENDIF
           t_env = laser_time_profile(current) * current%amp
-          current%current_integral_phase = current%current_integral_phase &
-              + current%omega * dt
           DO i = 1,ny
             base = t_env * current%profile(i) &
               * SIN(current%current_integral_phase + current%phase(i))
@@ -407,10 +411,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
-          IF (current%use_omega_function) CALL laser_update_omega(current)
+          IF (current%use_omega_function) THEN
+            CALL laser_update_omega(current)
+            current%current_integral_phase = current%current_integral_phase &
+                + current%omega * dt
+          ELSE
+            current%current_integral_phase = current%omega * time
+          ENDIF
           t_env = laser_time_profile(current) * current%amp
-          current%current_integral_phase = current%current_integral_phase &
-              + current%omega * dt
           DO i = 1,ny
             base = t_env * current%profile(i) &
               * SIN(current%current_integral_phase + current%phase(i))
@@ -484,10 +492,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
-          IF (current%use_omega_function) CALL laser_update_omega(current)
+          IF (current%use_omega_function) THEN
+            CALL laser_update_omega(current)
+            current%current_integral_phase = current%current_integral_phase &
+                + current%omega * dt
+          ELSE
+            current%current_integral_phase = current%omega * time
+          ENDIF
           t_env = laser_time_profile(current) * current%amp
-          current%current_integral_phase = current%current_integral_phase &
-              + current%omega * dt
           DO i = 1,nx
             base = t_env * current%profile(i) &
               * SIN(current%current_integral_phase + current%phase(i))
@@ -561,10 +573,14 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
-          IF (current%use_omega_function) CALL laser_update_omega(current)
+          IF (current%use_omega_function) THEN
+            CALL laser_update_omega(current)
+            current%current_integral_phase = current%current_integral_phase &
+                + current%omega * dt
+          ELSE
+            current%current_integral_phase = current%omega * time
+          ENDIF
           t_env = laser_time_profile(current) * current%amp
-          current%current_integral_phase = current%current_integral_phase &
-              + current%omega * dt
           DO i = 1,nx
             base = t_env * current%profile(i) &
               * SIN(current%current_integral_phase + current%phase(i))
