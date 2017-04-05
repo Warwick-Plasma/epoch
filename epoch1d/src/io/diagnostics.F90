@@ -55,6 +55,9 @@ MODULE diagnostics
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask, dumped_skip_dir
   INTEGER, SAVE :: last_step = -1
   INTEGER, SAVE :: sdf_max_string_length, max_string_length
+  REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
+  TYPE(laser_block), POINTER :: current_laser
+  INTEGER :: ilas
 
   ! Data structures for tracking the list of strings written to '.visit' files
   TYPE string_entry
@@ -251,6 +254,34 @@ CONTAINS
         IF (move_window .AND. window_started) THEN
           CALL sdf_write_srl(sdf_handle, 'window_shift_fraction', &
               'Window Shift Fraction', window_shift_fraction)
+        ENDIF
+
+        IF (n_laser_x_min > 0) THEN
+          ALLOCATE(laser_phases(n_laser_x_min))
+          ilas = 1
+          current_laser=>laser_x_min
+          DO WHILE(ASSOCIATED(current_laser))
+            laser_phases(ilas) = current_laser%current_integral_phase
+            ilas = ilas + 1
+            current_laser=>current_laser%next
+          END DO
+          CALL sdf_write_srl(sdf_handle, 'laser_x_min_phase', &
+              'laser_xmin_phase', n_laser_x_min, laser_phases, 0)
+          DEALLOCATE(laser_phases)
+        ENDIF
+
+        IF (n_laser_x_min > 0) THEN
+          ALLOCATE(laser_phases(n_laser_x_max))
+          ilas = 1
+          current_laser=>laser_x_max
+          DO WHILE(ASSOCIATED(current_laser))
+            laser_phases(ilas) = current_laser%current_integral_phase
+            ilas = ilas + 1
+            current_laser=>current_laser%next
+          END DO
+          CALL sdf_write_srl(sdf_handle, 'laser_x_max_phase', &
+              'laser_xmax_phase', n_laser_x_max, laser_phases, 0)
+          DEALLOCATE(laser_phases)
         ENDIF
 
         DO io = 1, n_io_blocks

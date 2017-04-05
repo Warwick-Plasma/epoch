@@ -669,6 +669,7 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     INTEGER, POINTER :: species_subtypes(:)
     INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
 
     got_full = .FALSE.
     npart_global = 0
@@ -884,6 +885,32 @@ CONTAINS
           ELSE
             CALL sdf_read_srl(sdf_handle, file_numbers)
           ENDIF
+        ELSE IF (str_cmp(block_id, 'laser_x_min_phase')) THEN
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (ndims /=1 .OR. dims(1) /= n_laser_x_min) THEN
+            PRINT *, '*** WARNING ***'
+            PRINT *, 'Number of laser phases on x_min does not match number &
+                &of lasers.'
+            PRINT *, 'Lasers will be populated in order, but correct operat&
+                &ion is not guaranteed'
+          ENDIF
+          ALLOCATE(laser_phases(1:dims(1)))
+          CALL sdf_read_srl(sdf_handle, laser_phases)
+          CALL setup_laser_phases(laser_x_min, laser_phases)
+          DEALLOCATE(laser_phases)
+        ELSE IF (str_cmp(block_id, 'laser_x_max_phase')) THEN
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (ndims /=1 .OR. dims(1) /= n_laser_x_max) THEN
+            PRINT *, '*** WARNING ***'
+            PRINT *, 'Number of laser phases on x_max does not match number &
+                &of lasers.'
+            PRINT *, 'Lasers will be populated in order, but correct operat&
+                &ion is not guaranteed'
+          ENDIF
+          ALLOCATE(laser_phases(1:dims(1)))
+          CALL sdf_read_srl(sdf_handle, laser_phases)
+          CALL setup_laser_phases(laser_x_max, laser_phases)
+          DEALLOCATE(laser_phases)
         ENDIF
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN

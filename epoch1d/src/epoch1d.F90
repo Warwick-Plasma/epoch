@@ -143,6 +143,7 @@ PROGRAM pic
     IF (dt_from_restart .GT. 0) dt0 = dt_from_restart
     dt = dt0 / 2.0_num
     time = time + dt
+    CALL update_laser_omegas
     CALL update_eb_fields_final
     dt = dt_store
     CALL moving_window
@@ -150,6 +151,7 @@ PROGRAM pic
     dt_store = dt
     dt = dt / 2.0_num
     time = time + dt
+    CALL update_laser_omegas
     CALL bfield_final_bcs
     dt = dt_store
   ENDIF
@@ -217,6 +219,7 @@ PROGRAM pic
     CALL output_routines(step)
     time = time + dt / 2.0_num
 
+    CALL update_laser_omegas
     CALL update_eb_fields_final
 
     CALL moving_window
