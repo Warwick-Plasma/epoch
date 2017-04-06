@@ -54,6 +54,22 @@ CONTAINS
 
 
 
+  SUBROUTINE setup_laser_phases(laser_init, phases)
+    TYPE(laser_block), POINTER :: laser_init
+    REAL(num), DIMENSION(:), INTENT(IN) :: phases
+    TYPE(laser_block), POINTER :: laser
+    INTEGER :: ilas
+    ilas = 1
+    laser => laser_init
+    DO WHILE(ASSOCIATED(laser))
+      laser%current_integral_phase = phases(ilas)
+      ilas = ilas + 1
+      laser=>laser%next
+    END DO
+  END SUBROUTINE setup_laser_phases
+
+
+
   SUBROUTINE deallocate_laser(laser)
 
     TYPE(laser_block), POINTER :: laser
@@ -119,12 +135,16 @@ CONTAINS
     boundary = laser%boundary
 
     IF (boundary == c_bd_x_min) THEN
+      n_laser_x_min = n_laser_x_min + 1
       CALL attach_laser_to_list(laser_x_min, laser)
     ELSE IF (boundary == c_bd_x_max) THEN
+      n_laser_x_max = n_laser_x_max + 1
       CALL attach_laser_to_list(laser_x_max, laser)
     ELSE IF (boundary == c_bd_y_min) THEN
+      n_laser_y_min = n_laser_y_min + 1
       CALL attach_laser_to_list(laser_y_min, laser)
     ELSE IF (boundary == c_bd_y_max) THEN
+      n_laser_y_max = n_laser_y_max + 1
       CALL attach_laser_to_list(laser_y_max, laser)
     ENDIF
 
@@ -212,6 +232,62 @@ CONTAINS
 
 
 
+  SUBROUTINE update_laser_omegas
+
+    TYPE(laser_block), POINTER :: current
+
+    current => laser_x_min
+    DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) THEN
+        CALL laser_update_omega(current)
+        current%current_integral_phase = current%current_integral_phase + &
+            current%omega * dt
+      ELSE
+        current%current_integral_phase = current%omega * time
+      END IF
+      current=>current%next
+    END DO
+
+    current => laser_x_max
+    DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) THEN
+        CALL laser_update_omega(current)
+        current%current_integral_phase = current%current_integral_phase + &
+            current%omega * dt
+      ELSE
+        current%current_integral_phase = current%omega * time
+      END IF
+      current=>current%next
+    END DO
+
+    current => laser_y_min
+    DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) THEN
+        CALL laser_update_omega(current)
+        current%current_integral_phase = current%current_integral_phase + &
+            current%omega * dt
+      ELSE
+        current%current_integral_phase = current%omega * time
+      END IF
+      current=>current%next
+    END DO
+
+    current => laser_y_max
+    DO WHILE(ASSOCIATED(current))
+      IF (current%use_omega_function) THEN
+        CALL laser_update_omega(current)
+        current%current_integral_phase = current%current_integral_phase + &
+            current%omega * dt
+      ELSE
+        current%current_integral_phase = current%omega * time
+      END IF
+      current=>current%next
+    END DO
+
+  END SUBROUTINE update_laser_omegas
+
+
+
   ! Actually does the attaching of the laser to the correct list
   SUBROUTINE attach_laser_to_list(list, laser)
 
@@ -257,7 +333,6 @@ CONTAINS
 
     current => laser_x_min
     DO WHILE(ASSOCIATED(current))
-      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -265,7 +340,6 @@ CONTAINS
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
-      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -273,7 +347,6 @@ CONTAINS
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
-      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -281,7 +354,6 @@ CONTAINS
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
-      IF (current%use_omega_function) CALL laser_update_omega(current)
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
@@ -330,13 +402,6 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
-          IF (current%use_omega_function) THEN
-            CALL laser_update_omega(current)
-            current%current_integral_phase = current%current_integral_phase &
-                + current%omega * dt
-          ELSE
-            current%current_integral_phase = current%omega * time
-          ENDIF
           t_env = laser_time_profile(current) * current%amp
           DO i = 1,ny
             base = t_env * current%profile(i) &
@@ -411,13 +476,6 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
-          IF (current%use_omega_function) THEN
-            CALL laser_update_omega(current)
-            current%current_integral_phase = current%current_integral_phase &
-                + current%omega * dt
-          ELSE
-            current%current_integral_phase = current%omega * time
-          ENDIF
           t_env = laser_time_profile(current) * current%amp
           DO i = 1,ny
             base = t_env * current%profile(i) &
@@ -492,13 +550,6 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
-          IF (current%use_omega_function) THEN
-            CALL laser_update_omega(current)
-            current%current_integral_phase = current%current_integral_phase &
-                + current%omega * dt
-          ELSE
-            current%current_integral_phase = current%omega * time
-          ENDIF
           t_env = laser_time_profile(current) * current%amp
           DO i = 1,nx
             base = t_env * current%profile(i) &
@@ -510,7 +561,6 @@ CONTAINS
         current => current%next
       ENDDO
     ENDIF
-
     bx(1:nx, laserpos-1) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ez_y_min(1:nx) + c * bx_y_min(1:nx)) &
         - 2.0_num * ez(1:nx, laserpos) &
@@ -573,13 +623,6 @@ CONTAINS
         IF (time >= current%t_start .AND. time <= current%t_end) THEN
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
-          IF (current%use_omega_function) THEN
-            CALL laser_update_omega(current)
-            current%current_integral_phase = current%current_integral_phase &
-                + current%omega * dt
-          ELSE
-            current%current_integral_phase = current%omega * time
-          ENDIF
           t_env = laser_time_profile(current) * current%amp
           DO i = 1,nx
             base = t_env * current%profile(i) &

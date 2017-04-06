@@ -55,9 +55,6 @@ MODULE diagnostics
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: iodumpmask, dumped_skip_dir
   INTEGER, SAVE :: last_step = -1
   INTEGER, SAVE :: sdf_max_string_length, max_string_length
-  REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
-  TYPE(laser_block), POINTER :: current_laser
-  INTEGER :: ilas
 
   ! Data structures for tracking the list of strings written to '.visit' files
   TYPE string_entry
@@ -256,33 +253,11 @@ CONTAINS
               'Window Shift Fraction', window_shift_fraction)
         ENDIF
 
-        IF (n_laser_x_min > 0) THEN
-          ALLOCATE(laser_phases(n_laser_x_min))
-          ilas = 1
-          current_laser=>laser_x_min
-          DO WHILE(ASSOCIATED(current_laser))
-            laser_phases(ilas) = current_laser%current_integral_phase
-            ilas = ilas + 1
-            current_laser=>current_laser%next
-          END DO
-          CALL sdf_write_srl(sdf_handle, 'laser_x_min_phase', &
-              'laser_xmin_phase', n_laser_x_min, laser_phases, 0)
-          DEALLOCATE(laser_phases)
-        ENDIF
+        CALL write_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
+            'laser_x_min_phase')
 
-        IF (n_laser_x_min > 0) THEN
-          ALLOCATE(laser_phases(n_laser_x_max))
-          ilas = 1
-          current_laser=>laser_x_max
-          DO WHILE(ASSOCIATED(current_laser))
-            laser_phases(ilas) = current_laser%current_integral_phase
-            ilas = ilas + 1
-            current_laser=>current_laser%next
-          END DO
-          CALL sdf_write_srl(sdf_handle, 'laser_x_max_phase', &
-              'laser_xmax_phase', n_laser_x_max, laser_phases, 0)
-          DEALLOCATE(laser_phases)
-        ENDIF
+        CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
+            'laser_x_max_phase')
 
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
@@ -691,6 +666,35 @@ CONTAINS
     IF (timer_collect) CALL timer_stop(c_timer_io)
 
   END SUBROUTINE output_routines
+
+
+
+  SUBROUTINE write_laser_phases(sdf_handle, laser_count, laser_base_pointer, &
+      block_name)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    INTEGER, INTENT(IN) :: laser_count
+    TYPE(laser_block), POINTER :: laser_base_pointer
+    CHARACTER(LEN=*), INTENT(IN) :: block_name
+    REAL(num), DIMENSION(:),ALLOCATABLE :: laser_phases
+    INTEGER :: ilas
+    TYPE(laser_block), POINTER :: current_laser
+
+      IF (laser_count > 0) THEN
+        ALLOCATE(laser_phases(laser_count))
+        ilas = 1
+        current_laser=>laser_base_pointer
+        DO WHILE(ASSOCIATED(current_laser))
+          laser_phases(ilas) = current_laser%current_integral_phase
+          ilas = ilas + 1
+          current_laser=>current_laser%next
+        END DO
+        CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
+            laser_count, laser_phases, 0)
+        DEALLOCATE(laser_phases)
+      ENDIF
+
+  END SUBROUTINE write_laser_phases
 
 
 
