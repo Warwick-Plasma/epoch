@@ -327,6 +327,12 @@ CONTAINS
       use_current_correction = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+30)
       maxwell_solver = as_integer_print(value, element, errcode)
+      IF (maxwell_solver /= c_maxwell_solver_yee &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe &
+          .AND. maxwell_solver /= c_maxwell_solver_cowan &
+          .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
+        errcode = c_err_bad_value
+      ENDIF
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -378,6 +384,46 @@ CONTAINS
         ENDDO
       ENDIF
       errcode = c_err_terminate
+    ENDIF
+
+    IF (maxwell_solver /= c_maxwell_solver_yee &
+        .AND. field_order /= 2) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'For "field_order" > 2 only "maxwell_solver = yee"', &
+              ' is supported in this version of EPOCH.'
+        ENDDO
+      ENDIF
+      errcode = c_err_terminate
+    ENDIF
+
+    IF (field_order == 2 .AND. maxwell_solver == c_maxwell_solver_cowan) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'In 1D "maxwell_solver = cowan" is not supported.', &
+              ' Falling back to "maxwell_solver = yee."'
+        ENDDO
+      ENDIF
+      maxwell_solver = c_maxwell_solver_pukhov
+    ENDIF
+
+    IF (field_order == 2 .AND. maxwell_solver == c_maxwell_solver_pukhov) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'In 1D "maxwell_solver = pukhov" is not supported.', &
+              ' Falling back to "maxwell_solver = yee."'
+        ENDDO
+      ENDIF
+      maxwell_solver = c_maxwell_solver_pukhov
     ENDIF
 
   END FUNCTION control_block_check

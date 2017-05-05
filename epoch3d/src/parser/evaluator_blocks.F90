@@ -545,14 +545,22 @@ CONTAINS
     ENDIF
 
     IF (opcode == c_const_maxwell_solver_yee) THEN
-      CALL push_on_eval(0.0_num)
+      CALL push_on_eval(REAL(c_maxwell_solver_yee, num))
       RETURN
     ENDIF
 
-    IF (opcode == c_const_maxwell_solver_lehe &
-        .OR. opcode == c_const_maxwell_solver_cowan &
-        .OR. opcode == c_const_maxwell_solver_pukhov) THEN
-      CALL push_on_eval(1.0_num * opcode)
+    IF (opcode == c_const_maxwell_solver_lehe) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_cowan) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_cowan, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_pukhov) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_pukhov, num))
       RETURN
     ENDIF
 

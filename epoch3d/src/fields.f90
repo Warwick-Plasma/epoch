@@ -305,7 +305,7 @@ CONTAINS
     REAL(num) :: delta, deltax, deltay, deltaz, dx_cdt
     REAL(num) :: gammax, gammay, gammaz
 
-    IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       betaxy = 0.125_num * (dx / dy)**2
@@ -325,7 +325,7 @@ CONTAINS
       alphaz = 1.0_num - 2.0_num * betazx
     ENDIF
 
-    IF (maxwell_solver == c_const_maxwell_solver_cowan) THEN
+    IF (maxwell_solver == c_maxwell_solver_cowan) THEN
       ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)
       delta = min(dx, dy, dz)
       c1 = (delta / dx)**2
@@ -351,7 +351,7 @@ CONTAINS
       alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy - 4.0_num * gammaz
     ENDIF
 
-    IF (maxwell_solver == c_const_maxwell_solver_pukhov) THEN
+    IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
       delta = min(dx, dy, dz)
 
@@ -378,7 +378,7 @@ CONTAINS
       cpml_z = hdtz
 
       IF (field_order == 2) THEN
-        IF (maxwell_solver == 0) THEN
+        IF (maxwell_solver == c_maxwell_solver_yee) THEN
           DO iz = 1, nz
             cpml_z = hdtz / cpml_kappa_bz(iz)
             DO iy = 1, ny
@@ -572,7 +572,7 @@ CONTAINS
       CALL cpml_advance_b_currents(hdt)
     ELSE
       IF (field_order == 2) THEN
-        IF (maxwell_solver == 0) THEN
+        IF (maxwell_solver == c_maxwell_solver_yee) THEN
           DO iz = 1, nz
             DO iy = 1, ny
               DO ix = 1, nx

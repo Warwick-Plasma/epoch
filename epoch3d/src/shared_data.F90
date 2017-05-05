@@ -119,6 +119,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_average_single = 2**9
   INTEGER, PARAMETER :: c_io_never = 2**10
 
+  ! Maxwell Solvers
+  INTEGER, PARAMETER :: c_maxwell_solver_yee = 0
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe = 1
+  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 2
+  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 3
+
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
   INTEGER, PARAMETER :: c_do_decomposed = 1
@@ -380,10 +386,11 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_xy_angle = 88
   INTEGER, PARAMETER :: c_const_dir_yz_angle = 89
   INTEGER, PARAMETER :: c_const_dir_zx_angle = 90
-  INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 91
-  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 92
-  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 93
-  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 94
+
+  INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 100
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 101
+  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 102
+  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 103
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -970,7 +977,7 @@ MODULE shared_data
   LOGICAL :: use_field_ionisation, use_collisional_ionisation
   LOGICAL :: use_multiphoton, use_bsi
 
-  INTEGER :: maxwell_solver = 0
+  INTEGER :: maxwell_solver = c_maxwell_solver_yee
 
   !----------------------------------------------------------------------------
   ! Moving window

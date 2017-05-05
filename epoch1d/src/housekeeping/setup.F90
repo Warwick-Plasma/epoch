@@ -517,10 +517,12 @@ CONTAINS
     CALL set_laser_dt
 
     IF (maxwell_solver == 0) THEN
+      ! Default maxwell solver with field_order = 2, 4 or 6
+      ! cfl is a function of field_order
       dt = cfl * dx / c
     ENDIF
 
-    IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe, PhD Thesis (2014)
       dt = dx / c
     ENDIF

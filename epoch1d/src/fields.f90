@@ -197,7 +197,7 @@ CONTAINS
     REAL(num) :: cx1, cx2, cx3
     REAL(num) :: alphax, deltax, dx_cdt
 
-    IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
@@ -208,7 +208,7 @@ CONTAINS
       cpml_x = hdtx
 
       IF (field_order == 2) THEN
-        IF (maxwell_solver == 0) THEN
+        IF (maxwell_solver == c_maxwell_solver_yee) THEN
           DO ix = 1, nx
             cpml_x = hdtx / cpml_kappa_bx(ix)
 
@@ -274,7 +274,7 @@ CONTAINS
       CALL cpml_advance_b_currents(hdt)
     ELSE
       IF (field_order == 2) THEN
-        IF (maxwell_solver == 0) THEN
+        IF (maxwell_solver == c_maxwell_solver_yee) THEN
           DO ix = 1, nx
             by(ix) = by(ix) &
                 + hdtx * (ez(ix+1) - ez(ix  ))

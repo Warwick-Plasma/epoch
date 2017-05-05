@@ -251,7 +251,7 @@ CONTAINS
     REAL(num) :: betaxy, betayx
     REAL(num) :: delta, deltax, deltay, dx_cdt
 
-    IF (maxwell_solver == c_const_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       delta  = dx
       dx_cdt = dx / (c * dt)
@@ -263,7 +263,7 @@ CONTAINS
       alphay = 1.0_num - 2.0_num * betayx
     ENDIF
 
-    IF (maxwell_solver == c_const_maxwell_solver_pukhov) THEN
+    IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
       delta = min(dx, dy)
 
@@ -280,7 +280,7 @@ CONTAINS
       cpml_y = hdty
 
       IF (field_order == 2) THEN
-        IF (maxwell_solver == 0) THEN
+        IF (maxwell_solver == c_maxwell_solver_yee) THEN
           DO iy = 1, ny
             cpml_y = hdty / cpml_kappa_by(iy)
             DO ix = 1, nx
@@ -393,7 +393,7 @@ CONTAINS
       CALL cpml_advance_b_currents(hdt)
     ELSE
       IF (field_order == 2) THEN
-        IF (maxwell_solver == 0) THEN
+        IF (maxwell_solver == c_maxwell_solver_yee) THEN
           DO iy = 1, ny
             DO ix = 1, nx
               bx(ix, iy) = bx(ix, iy) &
