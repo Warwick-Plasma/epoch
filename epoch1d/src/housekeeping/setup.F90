@@ -512,6 +512,7 @@ CONTAINS
   SUBROUTINE set_dt        ! sets CFL limited step
 
     INTEGER :: io
+    REAL(num) :: dt_solver
 
     CALL set_plasma_frequency_dt
     CALL set_laser_dt
@@ -527,9 +528,23 @@ CONTAINS
       dt = dx / c
     ENDIF
 
+    dt_solver = dt
+
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
     IF (dt_laser > c_tiny) dt = MIN(dt, dt_laser)
+
+    IF (maxwell_solver /= c_maxwell_solver_yee .AND. dt < dt_solver) THEN
+      IF (rank == 0) THEN
+        PRINT*,'*** WARNING ***'
+        PRINT*,'Time step "dt_plasma_frequency" or "dt_laser" is smaller than'
+        PRINT*,'time step given by CFL condition, making steps shorter than intended.'
+        PRINT*,'This may have an adverse effect on dispersion properties!'
+        PRINT*,'Increase grid resolution to fix this.'
+      ENDIF
+    ENDIF
+
     dt = dt_multiplier * dt
+
 
     IF (.NOT. any_average) RETURN
 
