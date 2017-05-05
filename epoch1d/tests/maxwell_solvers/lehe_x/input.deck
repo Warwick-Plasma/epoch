@@ -1,0 +1,36 @@
+begin:control
+  nx = 200
+
+  # final time of simulation
+  t_end = 50 * femto
+
+  # size of domain
+  x_min = -4 * micron
+  x_max = -x_min
+
+  maxwell_solver = lehe_x
+end:control
+
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = open
+end:boundaries
+
+
+begin:laser
+  boundary = x_min
+  intensity_w_cm2 = 1.0e15
+  lambda = 0.2 * micron
+  t_profile = gauss(time,4*femto,4*femto)
+  t_end = 14 * femto
+end:laser
+
+
+begin:output
+  dt_snapshot = 8 * femto
+
+  # Properties on grid
+  grid = always
+  ey = always
+end:output
