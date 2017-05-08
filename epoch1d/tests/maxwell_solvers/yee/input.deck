@@ -20,7 +20,7 @@ begin:laser
   boundary = x_min
   intensity_w_cm2 = 1.0e15
   lambda = 0.5 * micron
-  t_profile = gauss(time,8*femto,1.5*femto)
+  t_profile = gauss(time,8*femto,1.8*femto)
   t_end = 14 * femto
 end:laser
 

@@ -37,8 +37,8 @@ def plotdump(sdffile, key, ax):
     axis = data_yee[key].grid_mid.data[0]*1e6
     array_yee = data_yee[key].data
     array_lehe = data_lehe[key].data
-    ax.plot(axis, array_yee, label='Yee', linewidth=1)
     ax.plot(axis, array_lehe, label='Lehe', linewidth=1)
+    ax.plot(axis, array_yee, label='Yee', linewidth=1)
     ax.set_title('{:2.1f} fs'.format(data_yee['Header']['time']*1e15))
     ax.set_xlabel('x [µm]')
     ax.legend()
