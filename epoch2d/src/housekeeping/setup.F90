@@ -588,7 +588,7 @@ CONTAINS
     CALL set_plasma_frequency_dt
     CALL set_laser_dt
 
-    IF (maxwell_solver == 0) THEN
+    IF (maxwell_solver == c_maxwell_solver_yee) THEN
       ! Default maxwell solver with field_order = 2, 4 or 6
       ! cfl is a function of field_order
       dt = cfl * dx * dy / SQRT(dx**2 + dy**2) / c
@@ -596,13 +596,15 @@ CONTAINS
 
     IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe, PhD Thesis (2014)
-      dt = 1.0_num / sqrt(max( 1.0_num / dx*2, 1.0_num / dy**2 )) / c
+      dt = 1.0_num / sqrt(max( 1.0_num / dx**2, 1.0_num / dy**2 )) / c
     ENDIF
 
     IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
       dt = min(dx, dy) / c
     ENDIF
+
+    dt_solver = dt
 
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
     IF (dt_laser > c_tiny) dt = MIN(dt, dt_laser)

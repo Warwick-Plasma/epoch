@@ -517,7 +517,7 @@ CONTAINS
     CALL set_plasma_frequency_dt
     CALL set_laser_dt
 
-    IF (maxwell_solver == 0) THEN
+    IF (maxwell_solver == c_maxwell_solver_yee) THEN
       ! Default maxwell solver with field_order = 2, 4 or 6
       ! cfl is a function of field_order
       dt = cfl * dx / c
