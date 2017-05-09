@@ -178,6 +178,10 @@ CONTAINS
       CALL check_valid_restart
     ENDIF
 
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+      fng = 2
+    ENDIF
+
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
 
     IF (deck_state == c_ds_first) RETURN

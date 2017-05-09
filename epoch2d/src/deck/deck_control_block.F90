@@ -158,6 +158,10 @@ CONTAINS
       ENDIF
     ENDIF
 
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+      fng = 2
+    ENDIF
+
     IF (ic_from_restart) THEN
       IF (TRIM(restart_filename) == '') THEN
         WRITE(filename_fmt, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
