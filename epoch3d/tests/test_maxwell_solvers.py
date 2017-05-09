@@ -34,11 +34,14 @@ c = 2.99792458e8 # m/s
 
 nx = 240
 ny = nx//3
+nz = nx//3
 
 x_min = -12 * micron
 x_max = -x_min
 y_min = x_min
 y_max = x_max
+z_min = x_min
+z_max = x_max
 
 dt_multiplier = 0.95
 
@@ -50,11 +53,12 @@ t0 = 8 * femto # s
 k_l = 2*np.pi/lambda_l
 dx = (x_max-x_min)/nx
 dy = (y_max-y_min)/ny
+dz = (z_max-z_min)/nz
 
-dt_lehe   = dt_multiplier * 1.0/np.sqrt(max(1.0/dx**2, 1.0/dy**2)) / c
-dt_yee    = dt_multiplier * dx * dy / np.sqrt(dx**2+dy**2) / c
-dt_pukhov = dt_multiplier * min(dx,dy)/c
-
+dt_lehe   = dt_multiplier * 1.0/np.sqrt(max(1.0/dx**2, 1.0/dy**2 + 1.0/dz**2)) / c
+dt_yee    = dt_multiplier * dx * dy * dz/ np.sqrt((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+dt_pukhov = dt_multiplier * min(dx,dy,dz)/c
+dt_cowan  = dt_pukhov
 
 def showdatafields(sdffile):
     data = sdf.read(sdffile, dict=True)
@@ -63,7 +67,7 @@ def showdatafields(sdffile):
 
 def plotdump(sdffile, key, ax):
     data = sdf.read(sdffile, dict=True)
-    array = data[key].data
+    array = data[key].data[:,nz//2,:]
     xaxis = data[key].grid_mid.data[0]*1e6
     yaxis = data[key].grid_mid.data[1]*1e6
     im = ax.imshow(array.T, extent=[min(xaxis), max(xaxis), min(yaxis), max(yaxis)])
@@ -113,6 +117,9 @@ def plotevolution(path, key):
     elif path.endswith('yee'):
         dt = c * dt_yee / dx
         title = 'Yee'
+    elif path.endswith('cowan'):
+        dt = c * dt_cowan / dx
+        title = 'Cowan'
 
     fig.suptitle(key+', c*dt/dx={:0.03f}'.format(dt))
 
@@ -136,6 +143,7 @@ class test_maxwell_solvers(SimTest):
         createplots(osp.join(base, 'yee'))
         createplots(osp.join(base, 'lehe_x'))
         createplots(osp.join(base, 'pukhov'))
+        createplots(osp.join(base, 'cowan'))
 
 
 

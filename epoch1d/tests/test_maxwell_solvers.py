@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2016 Stephan Kuschel <Stephan.Kuschel@gmail.com>
+# Copyright (C) 2017 Alexander Blinne <A.Blinne@gsi.de>,
+# Stephan Kuschel <Stephan.Kuschel@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
