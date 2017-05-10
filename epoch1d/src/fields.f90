@@ -24,6 +24,7 @@ MODULE fields
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx
   REAL(num) :: cnx
+  REAL(num) :: alphax, deltax
 
 CONTAINS
 
@@ -44,6 +45,19 @@ CONTAINS
 
   END SUBROUTINE set_field_order
 
+
+  SUBROUTINE set_maxwell_solver
+
+    REAL(num) :: dx_cdt
+
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+      ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
+      dx_cdt = dx / (c * dt)
+      deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
+      alphax = 1.0_num - 3.0_num * deltax
+    ENDIF
+
+  ENDSUBROUTINE set_maxwell_solver
 
 
   SUBROUTINE update_e_field
@@ -195,14 +209,6 @@ CONTAINS
     REAL(num) :: cpml_x
     REAL(num) :: c1, c2, c3
     REAL(num) :: cx1, cx2, cx3
-    REAL(num) :: alphax, deltax, dx_cdt
-
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
-      ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
-      dx_cdt = dx / (c * dt)
-      deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
-      alphax = 1.0_num - 3.0_num * deltax
-    ENDIF
 
     IF (cpml_boundaries) THEN
       cpml_x = hdtx

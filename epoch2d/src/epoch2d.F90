@@ -123,6 +123,7 @@ PROGRAM pic
   CALL manual_load
   CALL initialise_window ! window.f90
   CALL set_dt
+  CALL set_maxwell_solver
   CALL deallocate_ic
 
   npart_global = 0
