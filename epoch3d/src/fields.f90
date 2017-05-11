@@ -24,10 +24,11 @@ MODULE fields
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx, hdty, hdtz
   REAL(num) :: cnx, cny, cnz
-  REAL(num) :: alphax, alphay, alphaz
-  REAL(num) :: betaxy, betayx, betazx, betaxz, betazy, betayz
-  REAL(num) :: deltax, deltay, deltaz
-  REAL(num) :: gammax, gammay, gammaz
+  REAL(num) :: alphax = 1.0_num, alphay = 1.0_num, alphaz = 1.0_num
+  REAL(num) :: betaxy = 0.0_num, betayx = 0.0_num, betazx = 0.0_num
+  REAL(num) :: betaxz = 0.0_num, betazy = 0.0_num, betayz = 0.0_num
+  REAL(num) :: deltax = 0.0_num, deltay = 0.0_num, deltaz = 0.0_num
+  REAL(num) :: gammax = 0.0_num, gammay = 0.0_num, gammaz = 0.0_num
 
 CONTAINS
 
@@ -53,6 +54,15 @@ CONTAINS
 
     REAL(num) :: delta, dx_cdt
     REAL(num) :: c1, c2, c3, cx1, cx2
+
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz &
+                    - 4.0_num * gammax - 3.0_num * deltax
+      alphay = 1.0_num - 2.0_num * betayx - 2.0_num * betayz &
+                    - 4.0_num * gammay - 3.0_num * deltay
+      alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy &
+                    - 4.0_num * gammaz - 3.0_num * deltaz
+    ENDIF
 
     IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)

@@ -366,7 +366,8 @@ CONTAINS
       IF (maxwell_solver /= c_maxwell_solver_yee &
           .AND. maxwell_solver /= c_maxwell_solver_lehe &
           .AND. maxwell_solver /= c_maxwell_solver_cowan &
-          .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
+          .AND. maxwell_solver /= c_maxwell_solver_pukhov &
+          .AND. maxwell_solver /= c_maxwell_solver_custom) THEN
         errcode = c_err_bad_value
       ENDIF
     END SELECT
