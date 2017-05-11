@@ -24,7 +24,7 @@ MODULE fields
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx
   REAL(num) :: cnx
-  REAL(num) :: alphax, deltax
+  REAL(num) :: alphax = 1.0_num, deltax = 0.0_num
 
 CONTAINS
 
@@ -49,6 +49,10 @@ CONTAINS
   SUBROUTINE set_maxwell_solver
 
     REAL(num) :: dx_cdt
+
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      alphax = 1.0_num - 3.0_num * deltax
+    ENDIF
 
     IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
