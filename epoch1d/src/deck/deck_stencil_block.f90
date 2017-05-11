@@ -64,7 +64,7 @@ CONTAINS
     INTEGER :: errcode
 
     errcode = c_err_none
-    IF (deck_state /= c_ds_first) RETURN
+    IF (deck_state == c_ds_first) RETURN
     IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'betaxy')) THEN
@@ -151,6 +151,7 @@ CONTAINS
 
     IF (str_cmp(element, 'dt')) THEN
       dt_custom = as_real_print(value, element, errcode)
+      dt_set = .TRUE.
       RETURN
     ENDIF
 
