@@ -77,8 +77,9 @@ def plotdump(sdffile, key, ax):
 
 
     # values below extracted from output of optimize_stencil.py using "--write-omega" option
-    vg_opt = 1.121860168990500561e+00 * c
-    vg_opt_xaxis = 1.020574838850521138 * c
+    vg_opt = 1.049403558017087956e+00 * c
+    #vg_opt_symm = 1.045047840357337332e+00 * c
+    vg_opt_xaxis = 1.019893873344021484e+00 * c
 
 
     x = (x0 + c*(t-t0))*1e6

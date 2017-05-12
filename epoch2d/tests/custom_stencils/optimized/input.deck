@@ -13,23 +13,25 @@ begin:control
 
   stdout_frequency = 10
 
-        maxwell_solver = custom
-        dt_multiplier = 1
+    maxwell_solver = custom
+    dt_multiplier = 1
 
 end:control
 
 
 begin:stencil
 
-        # These coefficients have been calculated using
-        # optimize_stencil.py 0.2+3.gf477d6f
-        # with arguments "--output epoch --dt-multiplier 0.99"
+    # These coefficients have been calculated with
+    # optimize_stencil.py version 0.2+1.g0d913ee
 
-        dt = 0.6663662933407478 * dx / c
-        betaxy = 0.10551259217828342
-        betayx = 0.10551259217828342
-        deltax = -0.13145172014063342
-        deltay = -0.13137683380907977
+    # using the command line
+    # "optimize_stencil.py --Y 3 --dt-multiplier 0.99"
+
+    dt = 0.9082126568805592 * dx / c
+    betaxy = 0.04075757835916255
+    betayx = 0.04075757835916255
+    deltax = -0.04142032920970152
+    deltay = -0.20827814817872584
 
 end:stencil
 
