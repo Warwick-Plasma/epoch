@@ -409,7 +409,7 @@ deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o utilities.o
 deck_io_global_block.o: deck_io_global_block.F90 strings_advanced.o utilities.o
 deck_laser_block.o: deck_laser_block.f90 laser.o strings_advanced.o utilities.o
-deck_stencil_block.o: deck_stencil_block.f90 laser.o strings_advanced.o
+deck_stencil_block.o: deck_stencil_block.f90 fields.o laser.o strings_advanced.o
 deck_particle_probe_block.o: deck_particle_probe_block.F90 probes.o \
   strings_advanced.o utilities.o
 deck_qed_block.o: deck_qed_block.F90 strings_advanced.o utilities.o
