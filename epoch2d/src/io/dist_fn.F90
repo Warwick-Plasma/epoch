@@ -154,6 +154,7 @@ CONTAINS
     REAL(num) :: gamma_rel, gamma_rel_m1, start
     REAL(num) :: xy_max, yz_max, zx_max
     REAL(num), PARAMETER :: pi2 = 2.0_num * pi
+    INTEGER :: rank_local
 
     TYPE(particle), POINTER :: current, next
     CHARACTER(LEN=string_length) :: var_name
@@ -544,12 +545,15 @@ CONTAINS
         ALLOCATE(array_tmp(1,1,1))
       ENDIF
       array_tmp = 0.0_num
-      CALL MPI_ALLREDUCE(array, array_tmp, &
+      CALL MPI_REDUCE(array, array_tmp, &
           resolution(1)*resolution(2)*resolution(3), mpireal, MPI_SUM, &
-          comm_new, errcode)
+          0, comm_new, errcode)
+      CALL MPI_COMM_RANK(comm_new, rank_local, errcode)
       array = array_tmp
       DEALLOCATE(array_tmp)
       CALL MPI_COMM_FREE(comm_new, errcode)
+    ELSE
+      rank_local = 0
     ENDIF
 
     ! Create grids
@@ -616,10 +620,19 @@ CONTAINS
           global_resolution, start_local)
     ENDIF
 
-    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
-        mpireal, array_type, errcode)
-    CALL MPI_TYPE_COMMIT(array_type, errcode)
 
+    IF (rank_local == 0) THEN
+      CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
+          mpireal, array_type, errcode)
+      CALL MPI_TYPE_COMMIT(array_type, errcode)
+    ELSE
+      CALL MPI_TYPE_FREE(new_type, errcode)
+      CALL MPI_TYPE_CONTIGUOUS(0, &
+         mpireal, new_type, errcode)
+      CALL MPI_TYPE_CONTIGUOUS(0, &
+         mpireal, array_type, errcode)
+      CALL MPI_TYPE_COMMIT(array_type, errcode)
+    ENDIF
 
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
         'dist_fn/' // TRIM(var_name), 'npart/cell', global_resolution, &
