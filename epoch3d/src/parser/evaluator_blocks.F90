@@ -399,6 +399,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_dir_z) THEN
+      CALL push_on_eval(REAL(c_dir_z, num))
+      RETURN
+    ENDIF
+
     IF (opcode == c_const_dir_px) THEN
       CALL push_on_eval(REAL(c_dir_px, num))
       RETURN
