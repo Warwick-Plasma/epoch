@@ -569,6 +569,7 @@ CONTAINS
 
       CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
       IF ( .NOT. proc_outside_range) THEN
+        !Can only be out of range in direction not reduced on
         ALLOCATE(array_tmp(resolution(1), resolution(2), resolution(3)))
       ELSE
         ALLOCATE(array_tmp(1,1,1))
@@ -628,6 +629,7 @@ CONTAINS
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
       IF (parallel(3)) grid3 = grid3 - ranges(1,3)
     ENDIF
+
     IF (curdims == 1) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, convert, labels, units)
@@ -658,6 +660,7 @@ CONTAINS
       CALL MPI_TYPE_FREE(new_type, errcode)
       CALL MPI_TYPE_CONTIGUOUS(0, &
          mpireal, new_type, errcode)
+      CALL MPI_TYPE_COMMIT(new_type, errcode)
       CALL MPI_TYPE_CONTIGUOUS(0, &
          mpireal, array_type, errcode)
       CALL MPI_TYPE_COMMIT(array_type, errcode)
