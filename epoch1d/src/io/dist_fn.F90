@@ -596,7 +596,7 @@ CONTAINS
           global_resolution, start_local)
     ENDIF
 
-    IF (local_rank == 0) THEN
+    IF (rank_local == 0) THEN
       CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
         mpireal, array_type, errcode)
       CALL MPI_TYPE_COMMIT(array_type, errcode)
