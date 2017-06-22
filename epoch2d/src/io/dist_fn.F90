@@ -201,15 +201,17 @@ CONTAINS
     DO idim = 1, curdims
       IF (direction(idim) == c_dir_x) THEN
         use_x = .TRUE.
-       IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
+        IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
           !If empty range, use whole domain
           ranges(1,idim) = x_grid_min_local - 0.5_num * dx
           ranges(2,idim) = x_grid_max_local + 0.5_num * dx
           global_resolution(idim) = nx_global
           start_local(idim) = nx_global_min
-       ELSE
+        ELSE
           !Else use the range including the requested range, but ending
               !on a cell boundary
+          ranges(1,idim) = MAX(ranges(1,idim), x_min)
+          ranges(2,idim) = MIN(ranges(2,idim), x_max)
           ranges(1,idim) = x_min_local &
               + FLOOR((ranges(1,idim) - x_min_local)/ dx) * dx
           ranges(2,idim) = x_min_local &
@@ -241,11 +243,38 @@ CONTAINS
 
       ELSE IF (direction(idim) == c_dir_y) THEN
         use_y = .TRUE.
-        ranges(1,idim) = y_grid_min_local - 0.5_num * dy
-        ranges(2,idim) = y_grid_max_local + 0.5_num * dy
-        resolution(idim) = ny
-        start_local(idim) = ny_global_min
-        global_resolution(idim) = ny_global
+        IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
+          !If empty range, use whole domain
+          ranges(1,idim) = y_grid_min_local - 0.5_num * dy
+          ranges(2,idim) = y_grid_max_local + 0.5_num * dy
+          global_resolution(idim) = ny_global
+          start_local(idim) = ny_global_min
+        ELSE
+          !Else use the range including the requested range, but ending
+              !on a cell boundary
+          ranges(1,idim) = MAX(ranges(1,idim), y_min)
+          ranges(2,idim) = MIN(ranges(2,idim), y_max)
+          ranges(1,idim) = y_min_local &
+              + FLOOR((ranges(1,idim) - y_min_local)/ dy) * dy
+          ranges(2,idim) = y_min_local &
+              + CEILING((ranges(2,idim) - y_min_local) / dy) * dy
+          global_resolution(idim) = (ranges(2,idim) - ranges(1,idim)) / dy
+          range_global_min(idim) = ranges(1,idim) / dy
+
+          ranges(1,idim) = MAX(ranges(1,idim), y_grid_min_local - 0.5_num * dy)
+          ranges(2,idim) = MIN(ranges(2,idim), y_grid_max_local + 0.5_num * dy)
+
+          start_local(idim) = ny_global_min &
+              + (ranges(1,idim) - y_min_local) / dy - range_global_min(idim)
+
+        ENDIF
+        !resolution is the number of pts
+        !ranges guaranteed to include integer number of grid cells
+        resolution(idim) = (ranges(2,idim) - ranges(1,idim)) / dy
+        IF (resolution(idim) == 0) THEN 
+          proc_outside_range = .TRUE.
+        ENDIF
+
         dgrid(idim) = dy
         labels(idim) = 'Y'
         units(idim)  = 'm'
