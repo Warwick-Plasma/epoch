@@ -609,7 +609,7 @@ CONTAINS
   SUBROUTINE set_plasma_frequency_dt
 
     INTEGER :: ispecies, ix, iy, iz
-    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2
+    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2, clipped_dens
 
     IF (ic_from_restart) RETURN
 
@@ -622,17 +622,33 @@ CONTAINS
       IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
         fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
         fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
-        DO iz = 1, nz
-        DO iy = 1, ny
-        DO ix = 1, nx
-          omega2 = fac1 * initial_conditions(ispecies)%density(ix,iy,iz) &
-              + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:))
-          IF (omega2 <= c_tiny) CYCLE
-          omega = SQRT(omega2)
-          IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
-        ENDDO ! ix
-        ENDDO ! iy
-        ENDDO ! iz
+        IF (initial_conditions(ispecies)%density_max > 0) THEN
+          DO iz = 1, nz
+          DO iy = 1, ny
+          DO ix = 1, nx
+            clipped_dens = MIN(initial_conditions(ispecies)%density(ix,iy,iz), &
+                initial_conditions(ispecies)%density_max)
+            omega2 = fac1 * clipped_dens &
+                + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:))
+            IF (omega2 <= c_tiny) CYCLE
+            omega = SQRT(omega2)
+            IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
+          ENDDO ! ix
+          ENDDO ! iy
+          ENDDO ! iz
+        ELSE
+          DO iz = 1, nz
+          DO iy = 1, ny
+          DO ix = 1, nx
+            omega2 = fac1 * initial_conditions(ispecies)%density(ix,iy,iz) &
+                + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:))
+            IF (omega2 <= c_tiny) CYCLE
+            omega = SQRT(omega2)
+            IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
+          ENDDO ! ix
+          ENDDO ! iy
+          ENDDO ! iz
+        ENDIF
       ENDIF
     ENDDO
 
