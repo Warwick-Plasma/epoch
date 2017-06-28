@@ -563,7 +563,7 @@ CONTAINS
           DO iy = 1, ny
           DO ix = 1, nx
             clipped_dens = MIN(initial_conditions(ispecies)%density(ix,iy), &
-              initial_conditions(ispecies)%density_max)
+                initial_conditions(ispecies)%density_max)
             omega2 = fac1 * clipped_dens &
                 + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:))
             IF (omega2 <= c_tiny) CYCLE
@@ -574,7 +574,7 @@ CONTAINS
         ELSE
           DO iy = 1, ny
           DO ix = 1, nx
-            omega2 = fac1 * initial_conditions(ispecies)%density(ix, iy) &
+            omega2 = fac1 * initial_conditions(ispecies)%density(ix,iy) &
                 + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
