@@ -265,6 +265,7 @@ CONTAINS
             'laser_z_min_phase')
         CALL write_laser_phases(sdf_handle, n_laser_z_max, laser_z_max, &
             'laser_z_max_phase')
+
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
               'time_prev/'//TRIM(io_block_list(io)%name), &
@@ -746,23 +747,25 @@ CONTAINS
     INTEGER, INTENT(IN) :: laser_count
     TYPE(laser_block), POINTER :: laser_base_pointer
     CHARACTER(LEN=*), INTENT(IN) :: block_name
-    REAL(num), DIMENSION(:),ALLOCATABLE :: laser_phases
+    REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
     INTEGER :: ilas
     TYPE(laser_block), POINTER :: current_laser
 
-      IF (laser_count > 0) THEN
-        ALLOCATE(laser_phases(laser_count))
-        ilas = 1
-        current_laser=>laser_base_pointer
-        DO WHILE(ASSOCIATED(current_laser))
-          laser_phases(ilas) = current_laser%current_integral_phase
-          ilas = ilas + 1
-          current_laser=>current_laser%next
-        END DO
-        CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
-            laser_count, laser_phases, 0)
-        DEALLOCATE(laser_phases)
-      ENDIF
+    IF (laser_count > 0) THEN
+      ALLOCATE(laser_phases(laser_count))
+      ilas = 1
+      current_laser => laser_base_pointer
+
+      DO WHILE(ASSOCIATED(current_laser))
+        laser_phases(ilas) = current_laser%current_integral_phase
+        ilas = ilas + 1
+        current_laser => current_laser%next
+      ENDDO
+
+      CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
+          laser_count, laser_phases, 0)
+      DEALLOCATE(laser_phases)
+    ENDIF
 
   END SUBROUTINE write_laser_phases
 

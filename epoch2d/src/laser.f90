@@ -55,17 +55,20 @@ CONTAINS
 
 
   SUBROUTINE setup_laser_phases(laser_init, phases)
+
     TYPE(laser_block), POINTER :: laser_init
     REAL(num), DIMENSION(:), INTENT(IN) :: phases
     TYPE(laser_block), POINTER :: laser
     INTEGER :: ilas
+
     ilas = 1
     laser => laser_init
     DO WHILE(ASSOCIATED(laser))
       laser%current_integral_phase = phases(ilas)
       ilas = ilas + 1
-      laser=>laser%next
-    END DO
+      laser => laser%next
+    ENDDO
+
   END SUBROUTINE setup_laser_phases
 
 
@@ -240,49 +243,49 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       IF (current%use_omega_function) THEN
         CALL laser_update_omega(current)
-        current%current_integral_phase = current%current_integral_phase + &
-            current%omega * dt
+        current%current_integral_phase = current%current_integral_phase &
+            + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      END IF
-      current=>current%next
-    END DO
+      ENDIF
+      current => current%next
+    ENDDO
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
       IF (current%use_omega_function) THEN
         CALL laser_update_omega(current)
-        current%current_integral_phase = current%current_integral_phase + &
-            current%omega * dt
+        current%current_integral_phase = current%current_integral_phase &
+            + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      END IF
-      current=>current%next
-    END DO
+      ENDIF
+      current => current%next
+    ENDDO
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
       IF (current%use_omega_function) THEN
         CALL laser_update_omega(current)
-        current%current_integral_phase = current%current_integral_phase + &
-            current%omega * dt
+        current%current_integral_phase = current%current_integral_phase &
+            + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      END IF
-      current=>current%next
-    END DO
+      ENDIF
+      current => current%next
+    ENDDO
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
       IF (current%use_omega_function) THEN
         CALL laser_update_omega(current)
-        current%current_integral_phase = current%current_integral_phase + &
-            current%omega * dt
+        current%current_integral_phase = current%current_integral_phase &
+            + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      END IF
-      current=>current%next
-    END DO
+      ENDIF
+      current => current%next
+    ENDDO
 
   END SUBROUTINE update_laser_omegas
 
@@ -561,6 +564,7 @@ CONTAINS
         current => current%next
       ENDDO
     ENDIF
+
     bx(1:nx, laserpos-1) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ez_y_min(1:nx) + c * bx_y_min(1:nx)) &
         - 2.0_num * ez(1:nx, laserpos) &

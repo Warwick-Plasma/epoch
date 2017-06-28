@@ -956,6 +956,7 @@ CONTAINS
             CALL sdf_read_srl(sdf_handle, file_numbers)
           ENDIF
         ENDIF
+
         CALL read_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
             block_id, ndims, 'laser_x_min_phase', 'x_min')
         CALL read_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
@@ -964,6 +965,7 @@ CONTAINS
             block_id, ndims, 'laser_y_min_phase', 'y_min')
         CALL read_laser_phases(sdf_handle, n_laser_y_max, laser_y_max, &
             block_id, ndims, 'laser_y_max_phase', 'y_max')
+
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
@@ -1251,18 +1253,20 @@ CONTAINS
 
     IF (str_cmp(block_id_in, block_id_compare)) THEN
       CALL sdf_read_array_info(sdf_handle, dims)
-      IF (ndims /=1 .OR. dims(1) /= laser_count) THEN
-        PRINT *, '*** WARNING ***'
-        PRINT *, 'Number of laser phases on ' // TRIM(direction_name) // &
-             ' does not match number of lasers.'
-        PRINT *, 'Lasers will be populated in order, but correct operat&
-            &ion is not guaranteed'
+
+      IF (ndims /= 1 .OR. dims(1) /= laser_count) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Number of laser phases on ', TRIM(direction_name), &
+            ' does not match number of lasers.'
+        PRINT*, 'Lasers will be populated in order, but correct operation ', &
+            'is not guaranteed'
       ENDIF
-      ALLOCATE(laser_phases(1:dims(1)))
+
+      ALLOCATE(laser_phases(dims(1)))
       CALL sdf_read_srl(sdf_handle, laser_phases)
       CALL setup_laser_phases(laser_base_pointer, laser_phases)
       DEALLOCATE(laser_phases)
-    END IF
+    ENDIF
 
   END SUBROUTINE read_laser_phases
 
