@@ -980,19 +980,6 @@ CONTAINS
         ENDDO
       ENDIF
     ENDDO
- 
-    DO io = 1, n_io_blocks
-      IF (.NOT. io_block_list(io)%any_accumulated) CYCLE
-
-  !    IF (time >= io_blocka_list(io)%average_time_start) THEN
-        DO id = 1, num_vars_to_dump
-          IF (IAND(io_block_list(io)%dumpmask(id), c_io_accumulated) /= 0) THEN
-            CALL accumulate_field(id, io_block_list(io)%accumulate_counter, &
-                io_block_list(io)%accumulated_data(id))
-          ENDIF
-        ENDDO
-    !  ENDIF
-    ENDDO
 
     IF (MOD(file_numbers(1), restart_dump_every) == 0 &
         .AND. restart_dump_every > -1) restart_flag = .TRUE.
@@ -1157,78 +1144,6 @@ CONTAINS
 
 
 
-  SUBROUTINE accumulate_field(ioutput, accum, accum_block)
-
-    INTEGER, INTENT(IN) :: ioutput
-    TYPE(accumulator_type) :: accum
-    TYPE(accumulated_data_block) :: accum_block
-    INTEGER :: n_species_local, ispecies
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
-
-    n_species_local = accum_block%n_species + accum_block%species_sum
-
-    IF (n_species_local <= 0) RETURN
-
-     SELECT CASE(ioutput)
-      CASE(c_dump_ex)
-        accum_block%array(:,:,accum%current_step,1) = ex
-      CASE(c_dump_ey)
-        accum_block%array(:,:,accum%current_step,1) = ey
-      CASE(c_dump_ez)
-        accum_block%array(:,:,accum%current_step,1) = ez
-      CASE(c_dump_bx)
-        accum_block%array(:,:,accum%current_step,1) = bx
-      CASE(c_dump_by)
-        accum_block%array(:,:,accum%current_step,1) = by
-      CASE(c_dump_bz)
-        accum_block%array(:,:,accum%current_step,1) = bz
-      CASE(c_dump_jx)
-        accum_block%array(:,:,accum%current_step,1) = jx
-      CASE(c_dump_jy)
-        accum_block%array(:,:,accum%current_step,1) = jy
-      CASE(c_dump_jz)
-        accum_block%array(:,:,accum%current_step,1) = jz
-      CASE(c_dump_ekbar)
-        ALLOCATE(array(-2:nx+3,-2:ny+3))
-        DO ispecies = 1, n_species_local
-          CALL calc_ekbar(array, ispecies-accum_block%species_sum)
-          accum_block%array(:,:,accum%current_step,ispecies) = array
-        ENDDO
-        DEALLOCATE(array)
-      CASE(c_dump_mass_density)
-        ALLOCATE(array(-2:nx+3,-2:ny+3))
-        DO ispecies = 1, n_species_local
-          CALL calc_mass_density(array, ispecies-accum_block%species_sum)
-          accum_block%array(:,:,accum%current_step,ispecies) = array
-        ENDDO
-        DEALLOCATE(array)
-      CASE(c_dump_charge_density)
-        ALLOCATE(array(-2:nx+3,-2:ny+3))
-        DO ispecies = 1, n_species_local
-          CALL calc_charge_density(array, ispecies-accum_block%species_sum)
-          accum_block%array(:,:,accum%current_step,ispecies) = array
-        ENDDO
-        DEALLOCATE(array)
-      CASE(c_dump_number_density)
-        ALLOCATE(array(-2:nx+3,-2:ny+3))
-        DO ispecies = 1, n_species_local
-          CALL calc_number_density(array, ispecies-accum_block%species_sum)
-          accum_block%array(:,:,accum%current_step,ispecies) = array
-        ENDDO
-        DEALLOCATE(array)
-      CASE(c_dump_temperature)
-        ALLOCATE(array(-2:nx+3,-2:ny+3))
-        DO ispecies = 1, n_species_local
-          CALL calc_temperature(array, ispecies-accum_block%species_sum)
-          accum_block%array(:,:,accum%current_step,ispecies) = array
-        ENDDO
-        DEALLOCATE(array)
-      END SELECT
-
-  END SUBROUTINE accumulate_field
-
-
-
   SUBROUTINE write_field(id, code, block_id, name, units, stagger, array)
 
     INTEGER, INTENT(IN) :: id, code
@@ -1241,7 +1156,6 @@ CONTAINS
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: convert, dump_skipped, restart_id, normal_id, unaveraged_id
-    LOGICAL :: accumulated_id
     CHARACTER(LEN=c_id_length) :: temp_block_id, temp_grid_id
     CHARACTER(LEN=c_max_string_length) :: temp_name
     TYPE(averaged_data_block), POINTER :: avg
@@ -1259,8 +1173,6 @@ CONTAINS
     ! The variable is either averaged or has snapshot specified
     unaveraged_id = IAND(mask, c_io_averaged) == 0 &
         .OR. IAND(mask, c_io_snapshot) /= 0
-    !Accumlated variables also output the snapshot right now
-    accumulated_id = IAND(mask, c_io_accumulated) /= 0
 
     convert = IAND(mask, c_io_dump_single) /= 0 .AND. .NOT.restart_id
 

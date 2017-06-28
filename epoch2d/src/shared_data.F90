@@ -118,7 +118,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_dump_single = 2**8
   INTEGER, PARAMETER :: c_io_average_single = 2**9
   INTEGER, PARAMETER :: c_io_never = 2**10
-  INTEGER, PARAMETER :: c_io_accumulated = 2**11
+
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
   INTEGER, PARAMETER :: c_do_decomposed = 1
@@ -702,24 +702,6 @@ MODULE shared_data
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
-  ! Accumulated IO
-  !----------------------------------------------------------------------------
-
-  TYPE accumulator_type
-    INTEGER :: n_accumulator_steps, current_step
-    REAL(num) :: last_accumulate, dt_accumulate
-  END TYPE accumulator_type
-
-  TYPE accumulated_data_block
-    REAL(num), DIMENSION(:,:,:,:), POINTER :: array
-    !REAL(r4), DIMENSION(:,:,:), POINTER :: r4array
-    INTEGER :: species_sum, n_species
-  END TYPE accumulated_data_block
-
-  LOGICAL :: any_accumulated = .FALSE.
-  INTEGER, PARAMETER :: max_accumulator_steps = 512
- 
-  !----------------------------------------------------------------------------
   ! Time averaged IO
   !----------------------------------------------------------------------------
   TYPE averaged_data_block
@@ -743,12 +725,10 @@ MODULE shared_data
     INTEGER :: dump_cycle_first_index
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
     LOGICAL :: dump_source_code, dump_input_decks, rolling_restart
-    LOGICAL :: dump_first_after_restart, any_accumulated
+    LOGICAL :: dump_first_after_restart
     LOGICAL :: disabled
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
-    TYPE(accumulator_type) :: accumulate_counter
-    TYPE(accumulated_data_block), DIMENSION(num_vars_to_dump) :: accumulated_data
   END TYPE io_block_type
 
   TYPE(io_block_type), POINTER :: io_block_list(:)
@@ -761,7 +741,7 @@ MODULE shared_data
   INTEGER, ALLOCATABLE :: file_numbers(:)
   INTEGER(i8) :: sdf_buffer_size
 
- !----------------------------------------------------------------------------
+  !----------------------------------------------------------------------------
   ! Extended IO information
   !----------------------------------------------------------------------------
 
