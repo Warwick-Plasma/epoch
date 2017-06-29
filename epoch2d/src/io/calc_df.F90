@@ -1066,4 +1066,71 @@ CONTAINS
 
   END SUBROUTINE calc_initial_current
 
+
+
+  SUBROUTINE calc_ex(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species !Will be ignored
+
+    data_array = ex
+
+  END SUBROUTINE calc_ex
+
+
+
+  SUBROUTINE calc_ey(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species !Will be ignored
+
+    data_array = ey
+
+  END SUBROUTINE calc_ey
+
+
+
+  SUBROUTINE calc_ez(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species !Will be ignored
+
+    data_array = ez
+
+  END SUBROUTINE calc_ez
+
+
+
+  SUBROUTINE calc_bx(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species !Will be ignored
+
+    data_array = bx
+
+  END SUBROUTINE calc_bx
+
+
+
+  SUBROUTINE calc_by(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species !Will be ignored
+
+    data_array = by
+
+  END SUBROUTINE calc_by
+
+
+
+  SUBROUTINE calc_bz(data_array, current_species)
+
+    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species !Will be ignored
+
+    data_array = bz
+
+  END SUBROUTINE calc_bz
+
+
 END MODULE calc_df

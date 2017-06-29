@@ -94,6 +94,7 @@ CONTAINS
     REAL(num) :: elapsed_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced, y_reduced
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
+    INTEGER, DIMENSION(2, c_ndims) :: ranges
     INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
@@ -109,6 +110,8 @@ CONTAINS
         (/'x_max', 'y_max', 'z_max', 'x_min', 'y_min', 'z_min'/)
     INTEGER, DIMENSION(6) :: fluxdir = &
         (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
+    INTEGER :: force_code
+
 
 #ifdef NO_IO
     RETURN
@@ -535,66 +538,38 @@ CONTAINS
         sub => subset_list(io)
         IF (.NOT.sub%dump_field_grid) CYCLE
 
-        DO i = 1, io - 1
-          dumped = dumped + SUM(dumped_skip_dir(:,i) - sub%skip_dir)
-        ENDDO
-        IF (dumped == 0) CYCLE
-        dumped = 0
-
-        dumped_skip_dir(:,io) = sub%skip_dir
-
-        dir = 1
-        rn = sub%n_global(dir) + 1
-        ALLOCATE(x_reduced(rn))
-        dr = sub%skip_dir(dir) * dx
-        i = sub%n_start(dir) + 1
-        r0 = xb_global(i) + 0.5_num * (dx - dr)
-
-        DO i = 1, rn
-          x_reduced(i) = r0 + (i - 1) * dr
-        ENDDO
-
-        dir = 2
-        rn = sub%n_global(dir) + 1
-        ALLOCATE(y_reduced(rn))
-        dr = sub%skip_dir(dir) * dy
-        i = sub%n_start(dir) + 1
-        r0 = yb_global(i) + 0.5_num * (dy - dr)
-
-        DO i = 1, rn
-          y_reduced(i) = r0 + (i - 1) * dr
-        ENDDO
-
-        IF (.NOT. use_offset_grid) THEN
-          temp_block_id = 'grid/r_' // TRIM(sub%name)
-          temp_name = 'Grid/Reduced_' // TRIM(sub%name)
+        IF (.NOT. sub%skip) THEN
+          temp_block_id = 'grid/' // TRIM(sub%name)
+          temp_name = 'Grid/' // TRIM(sub%name)
 
           CALL check_name_length('subset', &
-              'Grid/Reduced_' // TRIM(sub%name))
+              'Grid/' // TRIM(sub%name))
+          ranges = cell_global_ranges(global_ranges(sub))
 
-          CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), x_reduced, y_reduced, convert)
+          IF (.NOT. use_offset_grid) THEN
+            CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), xb_global(ranges(1,1):ranges(2,1)), &
+                yb_global(ranges(1,2):ranges(2,2)), convert)
+          ELSE
+            CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), xb_offset_global(ranges(1,1):ranges(2,1)), &
+                yb_offset_global(ranges(1,2):ranges(2,2)), convert)
+          ENDIF
         ELSE
-          temp_block_id = 'grid_full/r_' // TRIM(sub%name)
-          temp_name = 'Grid_Full/Reduced_' // TRIM(sub%name)
+          DO i = 1, io - 1
+            dumped = dumped + SUM(dumped_skip_dir(:,i) - sub%skip_dir)
+          ENDDO
+          IF (dumped == 0) CYCLE
+          dumped = 0
 
-          CALL check_name_length('subset', &
-              'Grid_Full/Reduced_' // TRIM(sub%name))
-
-          CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), x_reduced, y_reduced, convert)
-
-          temp_block_id = 'grid/r_' // TRIM(sub%name)
-          temp_name = 'Grid/Reduced_' // TRIM(sub%name)
-
-          CALL check_name_length('subset', &
-              'Grid/Reduced_' // TRIM(sub%name))
+          dumped_skip_dir(:,io) = sub%skip_dir
 
           dir = 1
           rn = sub%n_global(dir) + 1
+          ALLOCATE(x_reduced(rn))
           dr = sub%skip_dir(dir) * dx
           i = sub%n_start(dir) + 1
-          r0 = xb_offset_global(i) + 0.5_num * (dx - dr)
+          r0 = xb_global(i) + 0.5_num * (dx - dr)
 
           DO i = 1, rn
             x_reduced(i) = r0 + (i - 1) * dr
@@ -602,19 +577,66 @@ CONTAINS
 
           dir = 2
           rn = sub%n_global(dir) + 1
+          ALLOCATE(y_reduced(rn))
           dr = sub%skip_dir(dir) * dy
           i = sub%n_start(dir) + 1
-          r0 = yb_offset_global(i) + 0.5_num * (dy - dr)
+          r0 = yb_global(i) + 0.5_num * (dy - dr)
 
           DO i = 1, rn
             y_reduced(i) = r0 + (i - 1) * dr
           ENDDO
 
-          CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), x_reduced, y_reduced, convert)
-        ENDIF
+          IF (.NOT. use_offset_grid) THEN
+            temp_block_id = 'grid/r_' // TRIM(sub%name)
+            temp_name = 'Grid/Reduced_' // TRIM(sub%name)
 
-        DEALLOCATE(x_reduced, y_reduced)
+            CALL check_name_length('subset', &
+                'Grid/Reduced_' // TRIM(sub%name))
+
+            CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), x_reduced, y_reduced, convert)
+          ELSE
+            temp_block_id = 'grid_full/r_' // TRIM(sub%name)
+            temp_name = 'Grid_Full/Reduced_' // TRIM(sub%name)
+
+            CALL check_name_length('subset', &
+                'Grid_Full/Reduced_' // TRIM(sub%name))
+
+            CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), x_reduced, y_reduced, convert)
+
+            temp_block_id = 'grid/r_' // TRIM(sub%name)
+            temp_name = 'Grid/Reduced_' // TRIM(sub%name)
+
+            CALL check_name_length('subset', &
+                'Grid/Reduced_' // TRIM(sub%name))
+
+            dir = 1
+            rn = sub%n_global(dir) + 1
+            dr = sub%skip_dir(dir) * dx
+            i = sub%n_start(dir) + 1
+            r0 = xb_offset_global(i) + 0.5_num * (dx - dr)
+
+            DO i = 1, rn
+              x_reduced(i) = r0 + (i - 1) * dr
+            ENDDO
+
+            dir = 2
+            rn = sub%n_global(dir) + 1
+            dr = sub%skip_dir(dir) * dy
+            i = sub%n_start(dir) + 1
+            r0 = yb_offset_global(i) + 0.5_num * (dy - dr)
+
+            DO i = 1, rn
+              y_reduced(i) = r0 + (i - 1) * dr
+            ENDDO
+
+            CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), x_reduced, y_reduced, convert)
+          ENDIF
+
+          DEALLOCATE(x_reduced, y_reduced)
+        ENDIF
         sub%dump_field_grid = .FALSE.
       ENDDO
 
@@ -1201,6 +1223,8 @@ CONTAINS
     TYPE(averaged_data_block), POINTER :: avg
     TYPE(io_block_type), POINTER :: iob
     TYPE(subset), POINTER :: sub
+    INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_sec
+    INTEGER, DIMENSION(c_ndims) :: new_dims
 
     mask = iomask(id)
     IF (IAND(mask, code) == 0) RETURN
@@ -1248,55 +1272,86 @@ CONTAINS
       IF (IAND(iodumpmask(io+1,id), code) == 0) CYCLE
 
       sub => subset_list(io)
-      IF (.NOT.sub%skip) CYCLE
+      IF (.NOT. (sub%skip .OR. sub%any_space_restr)) CYCLE
 
-      ! This should prevent a reduced variable from being dumped multiple
-      ! times in the same output file
-      DO i = 1, io - 1
-        dumped = dumped + SUM(dumped_skip_dir(:,i) - sub%skip_dir)
-      ENDDO
-      IF (dumped == 0) CYCLE
-      dumped = 0
+      IF(.NOT. sub%skip) THEN
+        !Output every subset. Trust user not to do parts twice
+        !Calculate the subsection dimensions and ranges
+        ranges = cell_global_ranges(global_ranges(sub))
+        new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2)/)
+        ranges = cell_local_ranges(global_ranges(sub))
+        ran_sec = cell_section_ranges(ranges) + 1
 
-      dumped_skip_dir(:,io) = sub%skip_dir
+        IF(convert) THEN
+          rsubtype  = sub%subtype_r4
+          rsubarray = sub%subarray_r4
+        ELSE
+          rsubtype  = sub%subtype
+          rsubarray = sub%subarray
+        ENDIF
+        temp_grid_id = 'grid/' // TRIM(sub%name)
+        CALL check_name_length('subset', TRIM(name) &
+            // '/Core_' // TRIM(sub%name))
 
-      rnx = sub%n_local(1)
-      rny = sub%n_local(2)
+        temp_block_id = TRIM(block_id)// '/c_' // TRIM(sub%name)
+        temp_name = TRIM(name) // '/Core_' // TRIM(sub%name)
 
-      ALLOCATE(reduced(rnx,rny))
+        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+            TRIM(temp_name), TRIM(units), new_dims, stagger, &
+            TRIM(temp_grid_id), array(ran_sec(1,1):ran_sec(2,1)-1, &
+            ran_sec(1,2):ran_sec(2,2)-1), rsubtype, rsubarray, convert)
+        sub%dump_field_grid = .TRUE.
 
-      jj = sub%n_start(2) + 1
-      DO j = 1, rny
-        ii = sub%n_start(1) + 1
-        DO i = 1, rnx
-          reduced(i,j) = array(ii,jj)
-          ii = ii + sub%skip_dir(1)
-        ENDDO
-        jj = jj + sub%skip_dir(2)
-      ENDDO
-
-      IF (convert) THEN
-        rsubtype  = sub%subtype_r4
-        rsubarray = sub%subarray_r4
       ELSE
-        rsubtype  = sub%subtype
-        rsubarray = sub%subarray
+
+       ! This should prevent a reduced variable from being dumped multiple
+       ! times in the same output file
+        DO i = 1, io - 1
+          dumped = dumped + SUM(dumped_skip_dir(:,i) - sub%skip_dir)
+        ENDDO
+        IF (dumped == 0) CYCLE
+        dumped = 0
+
+        dumped_skip_dir(:,io) = sub%skip_dir
+
+        rnx = sub%n_local(1)
+        rny = sub%n_local(2)
+
+        ALLOCATE(reduced(rnx,rny))
+
+        jj = sub%n_start(2) + 1
+        DO j = 1, rny
+          ii = sub%n_start(1) + 1
+          DO i = 1, rnx
+            reduced(i,j) = array(ii,jj)
+            ii = ii + sub%skip_dir(1)
+          ENDDO
+          jj = jj + sub%skip_dir(2)
+        ENDDO
+
+        IF (convert) THEN
+          rsubtype  = sub%subtype_r4
+          rsubarray = sub%subarray_r4
+        ELSE
+          rsubtype  = sub%subtype
+          rsubarray = sub%subarray
+        ENDIF
+
+        temp_grid_id = 'grid/r_' // TRIM(sub%name)
+        temp_block_id = TRIM(block_id) // '/r_' // TRIM(sub%name)
+        temp_name = TRIM(name) // '/Reduced_' // TRIM(sub%name)
+
+        CALL check_name_length('subset', &
+            TRIM(name) // '/Reduced_' // TRIM(sub%name))
+
+        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+            TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+            TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
+
+        dump_skipped = .TRUE.
+        sub%dump_field_grid = .TRUE.
+        DEALLOCATE(reduced)
       ENDIF
-
-      temp_grid_id = 'grid/r_' // TRIM(sub%name)
-      temp_block_id = TRIM(block_id) // '/r_' // TRIM(sub%name)
-      temp_name = TRIM(name) // '/Reduced_' // TRIM(sub%name)
-
-      CALL check_name_length('subset', &
-          TRIM(name) // '/Reduced_' // TRIM(sub%name))
-
-      CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-          TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
-          TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-
-      dump_skipped = .TRUE.
-      sub%dump_field_grid = .TRUE.
-      DEALLOCATE(reduced)
     ENDDO
 
     IF (restart_id .OR. (.NOT.dump_skipped .AND. unaveraged_id)) THEN
@@ -1364,6 +1419,8 @@ CONTAINS
     TYPE(averaged_data_block), POINTER :: avg
     TYPE(io_block_type), POINTER :: iob
     TYPE(subset), POINTER :: sub
+    INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_no_ng
+    INTEGER, DIMENSION(c_ndims) :: new_dims
 
     INTERFACE
       SUBROUTINE func(data_array, current_species)
@@ -1398,6 +1455,7 @@ CONTAINS
       subarray = subarray_field
     ENDIF
 
+
     dims = (/nx_global, ny_global/)
 
     dump_sum = unaveraged_id &
@@ -1409,10 +1467,26 @@ CONTAINS
     ELSE
       sub => subset_list(isubset-1)
       dump_skipped = sub%skip
+      IF(convert) THEN
+        rsubtype  = sub%subtype_r4
+        rsubarray = sub%subarray_r4
+      ELSE
+        rsubtype  = sub%subtype
+        rsubarray = sub%subarray
+      ENDIF
     ENDIF
 
-    IF (dump_sum .OR. dump_species) CALL build_species_subset
 
+    IF (dump_sum .OR. dump_species) THEN
+      CALL build_species_subset
+      !Calculate the subsection dimensions and ranges
+      IF (isubset /= 1 .AND. subset_list(isubset-1)%any_space_restr) THEN
+        ranges = cell_global_ranges(global_ranges(subset_list(isubset-1)))
+        new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2)/)
+        ranges = cell_local_ranges(global_ranges(subset_list(isubset-1)))
+        ran_no_ng = cell_section_ranges(ranges) + ng + 1
+      ENDIF
+    ENDIF
     IF (dump_sum) THEN
       IF (isubset == 1) THEN
         temp_block_id = TRIM(block_id)
@@ -1464,11 +1538,19 @@ CONTAINS
             TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
 
         sub%dump_field_grid = .TRUE.
+      ELSE IF (sub%any_space_restr) THEN
+        temp_grid_id = 'grid/' // TRIM(sub%name)
+
+        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+            TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
+            array(ran_no_ng(1,1):ran_no_ng(2,1)-1, &
+            ran_no_ng(1,2):ran_no_ng(2,2)-1), rsubtype, rsubarray, convert)
+        sub%dump_field_grid = .TRUE.
       ELSE
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-            subtype, subarray, convert)
-        dump_field_grid = .TRUE.
+             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+             subtype, subarray, convert)
+        dump_field_grid = .FALSE.
       ENDIF
     ENDIF
 
@@ -1535,11 +1617,23 @@ CONTAINS
 
         CALL func(array, ispecies)
 
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-            subtype, subarray, convert)
-        dump_field_grid = .TRUE.
-      ENDDO
+        IF( isubset /= 1 .AND. subset_list(isubset-1)%any_space_restr) THEN
+          !1st subset is main dump so there wont be any restrictions
+         temp_grid_id = 'grid/' // TRIM(sub%name)
+
+         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
+                  array(ran_no_ng(1,1):ran_no_ng(2,1)-1, &
+                      ran_no_ng(1,2):ran_no_ng(2,2)-1), &
+                          rsubtype, rsubarray, convert)
+          sub%dump_field_grid = .TRUE.
+        ELSE
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+                  subtype, subarray, convert)
+          dump_field_grid = .TRUE.
+        ENDIF
+     ENDDO
     ENDIF
 
     IF (ALLOCATED(reduced)) DEALLOCATE(reduced)

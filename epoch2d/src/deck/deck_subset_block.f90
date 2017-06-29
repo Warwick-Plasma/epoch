@@ -70,6 +70,11 @@ CONTAINS
       DEALLOCATE(subset_blocks)
       DO i = 1, n_subsets
         subset_list(i)%skip = (SUM(subset_list(i)%skip_dir - 1) /= 0)
+
+        !Check for any spatial restrictions in place
+        subset_list(subset_id)%any_space_restr = subset_list(subset_id)%use_x_min &
+            .OR. subset_list(subset_id)%use_x_max .OR. subset_list(subset_id)%use_y_min &
+            .OR. subset_list(subset_id)%use_y_max
       ENDDO
     ENDIF
 
@@ -364,6 +369,7 @@ CONTAINS
       subset_list(i)%use_x_max      = .FALSE.
       subset_list(i)%use_y_min      = .FALSE.
       subset_list(i)%use_y_max      = .FALSE.
+      subset_list(i)%any_space_restr= .FALSE.
       subset_list(i)%use_px_min     = .FALSE.
       subset_list(i)%use_px_max     = .FALSE.
       subset_list(i)%use_py_min     = .FALSE.
