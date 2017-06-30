@@ -300,7 +300,8 @@ CONTAINS
     ENDIF
 
     ! Collect ionisation energies for the species
-    IF (str_cmp(element, 'ionisation_energies')) THEN
+    IF (str_cmp(element, 'ionisation_energies') &
+        .OR. str_cmp(element, 'ionization_energies')) THEN
       IF (deck_state == c_ds_first) THEN
         NULLIFY(species_ionisation_energies)
         CALL initialise_stack(stack)
@@ -314,7 +315,8 @@ CONTAINS
 
     IF (str_cmp(element, 'ionisation_electron_species') &
         .OR. str_cmp(element, 'electron_species') &
-        .OR. str_cmp(element, 'electron')) THEN
+        .OR. str_cmp(element, 'electron') &
+        .OR. str_cmp(element, 'ionization_electron_species')) THEN
       release_species_list = value
       RETURN
     ENDIF
