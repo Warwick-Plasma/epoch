@@ -114,7 +114,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'collisional_ionisation')) THEN
+    IF (str_cmp(element, 'collisional_ionisation') &
+        .OR. str_cmp(element, 'collisional_ionization')) THEN
       use_collisional_ionisation = as_logical_print(value, element, errcode)
       IF (use_collisional_ionisation) THEN
 #ifndef PER_SPECIES_WEIGHT
