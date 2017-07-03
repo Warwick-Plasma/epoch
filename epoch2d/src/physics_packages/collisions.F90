@@ -105,10 +105,7 @@ CONTAINS
       ! Currently no support for collisions involving chargeless particles
       IF (ABS(species_list(ispecies)%charge) <= c_tiny) &
           CYCLE
-#ifndef NO_TRACER_PARTICLES
-      !Tracer particles should not collide
-      IF (species_list(ispecies)%tracer ) CYCLE
-#endif
+
       collide_species = .FALSE.
       DO jspecies = 1, n_species
         user_factor = coll_pairs(ispecies, jspecies)
@@ -140,10 +137,6 @@ CONTAINS
         ! Currently no support for photon collisions so just cycle round
         IF (species_list(jspecies)%species_type == c_species_id_photon) &
             CYCLE
-#ifndef NO_TRACER_PARTICLES
-        !Tracers shouldn't collide
-        IF (species_list(jspecies)%tracer ) CYCLE
-#endif
         ! Currently no support for collisions involving chargeless particles
         IF (ABS(species_list(jspecies)%charge) <= c_tiny) &
             CYCLE
@@ -239,10 +232,6 @@ CONTAINS
       ! Currently no support for photon collisions so just cycle round
       IF (species_list(ispecies)%species_type == c_species_id_photon) &
           CYCLE
-#ifndef NO_TRACER_PARTICLES
-      !Tracers shouldn't collide
-      IF (species_list(ispecies)%tracer ) CYCLE
-#endif
       ! Currently no support for collisions involving chargeless particles
       ! unless ionisation occurs
       use_coulomb_log_auto_i = .TRUE.
@@ -284,10 +273,6 @@ CONTAINS
         ! Currently no support for photon collisions so just cycle round
         IF (species_list(jspecies)%species_type == c_species_id_photon) &
             CYCLE
-#ifndef NO_TRACER_PARTICLES
-        !Tracers shouldn't collide
-        IF (species_list(jspecies)%tracer ) CYCLE
-#endif
         ! Currently no support for collisions involving chargeless particles
         ! unless ionisation occurs
         use_coulomb_log_auto = use_coulomb_log_auto_i
